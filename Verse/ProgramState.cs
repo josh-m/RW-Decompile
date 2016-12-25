@@ -1,0 +1,11 @@
+using System;
+
+namespace Verse
+{
+	public enum ProgramState : byte
+	{
+		Entry,
+		MapInitializing,
+		MapPlaying
+	}
+}
