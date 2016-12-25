@@ -136,6 +136,10 @@ namespace Verse
 		{
 			get
 			{
+				if (this.displayRootCategoryInt == null)
+				{
+					return ThingCategoryNodeDatabase.RootNode;
+				}
 				return this.displayRootCategoryInt;
 			}
 			set
@@ -160,7 +164,7 @@ namespace Verse
 
 		public void ExposeData()
 		{
-			Scribe_Collections.LookList<SpecialThingFilterDef>(ref this.disallowedSpecialFilters, "disallowedSpecialFilters", LookMode.DefReference, new object[0]);
+			Scribe_Collections.LookList<SpecialThingFilterDef>(ref this.disallowedSpecialFilters, "disallowedSpecialFilters", LookMode.Def, new object[0]);
 			Scribe_Collections.LookHashSet<ThingDef>(ref this.allowedDefs, "allowedDefs", LookMode.Undefined);
 			Scribe_Values.LookValue<FloatRange>(ref this.allowedHitPointsPercents, "allowedHitPointsPercents", default(FloatRange), false);
 			Scribe_Values.LookValue<QualityRange>(ref this.allowedQualities, "allowedQualityLevels", default(QualityRange), false);
@@ -373,7 +377,7 @@ namespace Verse
 			{
 				return;
 			}
-			if (allow == this.Allowed(sfDef))
+			if (allow == this.Allows(sfDef))
 			{
 				return;
 			}
@@ -470,13 +474,13 @@ namespace Verse
 			}
 		}
 
-		public void SetDisallowAll()
+		public void SetDisallowAll(IEnumerable<ThingDef> exceptedDefs = null, IEnumerable<SpecialThingFilterDef> exceptedFilters = null)
 		{
-			this.allowedDefs.Clear();
-			this.disallowedSpecialFilters.RemoveAll((SpecialThingFilterDef sf) => sf.configurable);
+			this.allowedDefs.RemoveWhere((ThingDef d) => exceptedDefs == null || !exceptedDefs.Contains(d));
+			this.disallowedSpecialFilters.RemoveAll((SpecialThingFilterDef sf) => sf.configurable && (exceptedFilters == null || !exceptedFilters.Contains(sf)));
 			foreach (SpecialThingFilterDef current in DefDatabase<SpecialThingFilterDef>.AllDefs)
 			{
-				if (current.configurable)
+				if (current.configurable && (exceptedFilters == null || !exceptedFilters.Contains(current)))
 				{
 					this.disallowedSpecialFilters.Add(current);
 				}
@@ -556,40 +560,9 @@ namespace Verse
 			return this.allowedDefs.Contains(def);
 		}
 
-		public bool Allowed(SpecialThingFilterDef sf)
+		public bool Allows(SpecialThingFilterDef sf)
 		{
 			return !this.disallowedSpecialFilters.Contains(sf);
-		}
-
-		public MultiCheckboxState AllowanceStateOf(TreeNode_ThingCategory cat)
-		{
-			int num = 0;
-			int num2 = 0;
-			foreach (ThingDef current in cat.catDef.DescendantThingDefs)
-			{
-				num++;
-				if (this.Allows(current))
-				{
-					num2++;
-				}
-			}
-			foreach (SpecialThingFilterDef current2 in cat.catDef.DescendantSpecialThingFilterDefs)
-			{
-				num++;
-				if (this.Allowed(current2))
-				{
-					num2++;
-				}
-			}
-			if (num2 == 0)
-			{
-				return MultiCheckboxState.Off;
-			}
-			if (num == num2)
-			{
-				return MultiCheckboxState.On;
-			}
-			return MultiCheckboxState.Partial;
 		}
 
 		public ThingRequest GetThingRequest()

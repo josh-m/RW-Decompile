@@ -25,7 +25,7 @@ namespace RimWorld
 				Corpse corpse = this.Corpse;
 				if (corpse != null)
 				{
-					return corpse.innerPawn;
+					return corpse.InnerPawn;
 				}
 				return (Pawn)base.CurJob.GetTarget(TargetIndex.A).Thing;
 			}
@@ -59,7 +59,7 @@ namespace RimWorld
 		{
 			base.AddFinishAction(delegate
 			{
-				Find.AttackTargetsCache.UpdateTarget(this.<>f__this.pawn);
+				this.<>f__this.Map.attackTargetsCache.UpdateTarget(this.<>f__this.pawn);
 			});
 			Toil prepareToEatCorpse = new Toil();
 			prepareToEatCorpse.initAction = delegate
@@ -68,13 +68,13 @@ namespace RimWorld
 				Pawn prey = this.<>f__this.Prey;
 				if (prey == null)
 				{
-					actor.jobs.EndCurrentJob(JobCondition.Incompletable);
+					actor.jobs.EndCurrentJob(JobCondition.Incompletable, true);
 					return;
 				}
-				Corpse corpse = HuntJobUtility.TryFindCorpse(prey);
+				Corpse corpse = prey.Corpse;
 				if (corpse == null)
 				{
-					actor.jobs.EndCurrentJob(JobCondition.Incompletable);
+					actor.jobs.EndCurrentJob(JobCondition.Incompletable, true);
 					return;
 				}
 				if (actor.Faction == Faction.OfPlayer)
@@ -91,7 +91,7 @@ namespace RimWorld
 			{
 				initAction = delegate
 				{
-					Find.AttackTargetsCache.UpdateTarget(this.<>f__this.pawn);
+					this.<>f__this.Map.attackTargetsCache.UpdateTarget(this.<>f__this.pawn);
 				},
 				atomicWithPrevious = true,
 				defaultCompleteMode = ToilCompleteMode.Instant
@@ -111,13 +111,13 @@ namespace RimWorld
 							this.<>f__this.pawn.LabelIndefinite()
 						}).CapitalizeFirst(), prey, MessageSound.SeriousAlert);
 					}
-					Find.AttackTargetsCache.UpdateTarget(this.<>f__this.pawn);
+					this.<>f__this.Map.attackTargetsCache.UpdateTarget(this.<>f__this.pawn);
 				}
 				this.<>f__this.firstHit = false;
 			};
 			yield return Toils_Combat.FollowAndMeleeAttack(TargetIndex.A, onHitAction).JumpIfDespawnedOrNull(TargetIndex.A, prepareToEatCorpse).FailOn(() => Find.TickManager.TicksGame > this.<>f__this.startTick + 5000 && (this.<>f__this.CurJob.GetTarget(TargetIndex.A).Cell - this.<>f__this.pawn.Position).LengthHorizontalSquared > 4f);
 			yield return prepareToEatCorpse;
-			Toil gotoCorpse = Toils_Goto.GotoCell(TargetIndex.A, PathEndMode.Touch).FailOnDespawnedOrNull(TargetIndex.A);
+			Toil gotoCorpse = Toils_Goto.GotoThing(TargetIndex.A, PathEndMode.Touch);
 			yield return gotoCorpse;
 			float durationMultiplier = 1f / this.pawn.GetStatValue(StatDefOf.EatingSpeed, true);
 			yield return Toils_Ingest.ChewIngestible(this.pawn, durationMultiplier, TargetIndex.A, TargetIndex.None).FailOnDespawnedOrNull(TargetIndex.A);

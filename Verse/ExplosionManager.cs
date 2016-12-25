@@ -9,10 +9,21 @@ namespace Verse
 
 		private List<Explosion> tmpToTick = new List<Explosion>();
 
+		public ExplosionManager(Map map) : base(map)
+		{
+		}
+
 		public override void ExposeData()
 		{
 			base.ExposeData();
 			Scribe_Collections.LookList<Explosion>(ref this.explosions, "explosions", LookMode.Deep, new object[0]);
+			if (Scribe.mode == LoadSaveMode.LoadingVars)
+			{
+				for (int i = 0; i < this.explosions.Count; i++)
+				{
+					this.explosions[i].explosionManager = this;
+				}
+			}
 		}
 
 		public override void MapComponentTick()
@@ -30,6 +41,7 @@ namespace Verse
 		public void StartExplosion(Explosion explosion, SoundDef explosionSound)
 		{
 			this.explosions.Add(explosion);
+			explosion.explosionManager = this;
 			explosion.StartExplosion(explosionSound);
 		}
 	}

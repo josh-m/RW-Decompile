@@ -1,4 +1,6 @@
+using RimWorld;
 using System;
+using UnityEngine;
 
 namespace Verse
 {
@@ -14,11 +16,11 @@ namespace Verse
 		{
 			get
 			{
-				if (Current.ProgramState == ProgramState.MapPlaying)
+				if (Find.GameInitData == null || Current.ProgramState == ProgramState.Playing)
 				{
 					return Find.TickManager.TicksAbs;
 				}
-				if (Current.Game != null)
+				if (Current.Game != null && Find.GameInitData != null)
 				{
 					return GenTicks.ConfiguredTicksAbsAtGameStart;
 				}
@@ -30,8 +32,48 @@ namespace Verse
 		{
 			get
 			{
-				return 300000 * (int)Find.GameInitData.startingMonth + 15000;
+				GameInitData gameInitData = Find.GameInitData;
+				float longitude;
+				if (gameInitData.startingTile >= 0)
+				{
+					longitude = Find.WorldGrid.LongLatOf(gameInitData.startingTile).x;
+				}
+				else
+				{
+					longitude = 0f;
+				}
+				Month month;
+				if (gameInitData.startingMonth != Month.Undefined)
+				{
+					month = gameInitData.startingMonth;
+				}
+				else
+				{
+					month = Month.Jan;
+				}
+				int num = (24 - GenDate.TimeZoneAt(longitude)) % 24;
+				return 300000 * (int)month + 2500 * (6 + num);
 			}
+		}
+
+		public static float TicksToSeconds(this int numTicks)
+		{
+			return (float)numTicks / 60f;
+		}
+
+		public static int SecondsToTicks(this float numSeconds)
+		{
+			return Mathf.RoundToInt(60f * numSeconds);
+		}
+
+		public static string TickstoSecondsString(this int numTicks)
+		{
+			return numTicks.TicksToSeconds().ToString("F1") + " " + "SecondsLower".Translate();
+		}
+
+		public static string SecondsToTicksString(this float numSeconds)
+		{
+			return numSeconds.SecondsToTicks().ToString();
 		}
 	}
 }

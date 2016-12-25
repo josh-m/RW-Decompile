@@ -9,9 +9,9 @@ namespace Verse.AI
 
 		private static List<ThinkNode> workingNodes = new List<ThinkNode>();
 
-		public override ThinkNode DeepCopy()
+		public override ThinkNode DeepCopy(bool resolve = true)
 		{
-			ThinkNode_PrioritySorter thinkNode_PrioritySorter = (ThinkNode_PrioritySorter)base.DeepCopy();
+			ThinkNode_PrioritySorter thinkNode_PrioritySorter = (ThinkNode_PrioritySorter)base.DeepCopy(resolve);
 			thinkNode_PrioritySorter.minPriority = this.minPriority;
 			return thinkNode_PrioritySorter;
 		}

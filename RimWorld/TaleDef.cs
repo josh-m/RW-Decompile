@@ -25,10 +25,13 @@ namespace RimWorld
 
 		public RulePack rulePack;
 
+		[NoTranslate]
 		public string firstPawnSymbol = "firstPawn";
 
+		[NoTranslate]
 		public string secondPawnSymbol = "secondPawn";
 
+		[NoTranslate]
 		public string defSymbol = "def";
 
 		public float baseInterest;

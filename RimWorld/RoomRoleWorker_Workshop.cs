@@ -12,7 +12,7 @@ namespace RimWorld
 			List<Thing> allContainedThings = room.AllContainedThings;
 			for (int i = 0; i < allContainedThings.Count; i++)
 			{
-				if (allContainedThings[i] is Building_WorkTable)
+				if (allContainedThings[i] is Building_WorkTable && allContainedThings[i].def.designationCategory == DesignationCategoryDefOf.Production)
 				{
 					num++;
 				}

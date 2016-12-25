@@ -20,7 +20,7 @@ namespace RimWorld
 			{
 				this.disallowedDesignatorTypes.Add(type);
 			}
-			ReverseDesignatorDatabase.Reinit();
+			Find.ReverseDesignatorDatabase.Reinit();
 		}
 
 		public void SetAllowBuilding(BuildableDef building, bool allowed)

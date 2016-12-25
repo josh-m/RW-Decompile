@@ -43,7 +43,7 @@ namespace Verse
 			select m)
 			{
 				hashSet.Clear();
-				foreach (T current2 in current.AllDefs.OfType<T>())
+				foreach (T current2 in GenDefDatabase.DefsToGoInDatabase<T>(current))
 				{
 					if (hashSet.Contains(current2.defName))
 					{
@@ -150,8 +150,21 @@ namespace Verse
 			DefDatabase<T>.SetIndices();
 			for (int i = 0; i < DefDatabase<T>.defsList.Count; i++)
 			{
-				T t = DefDatabase<T>.defsList[i];
-				t.ResolveReferences();
+				try
+				{
+					T t = DefDatabase<T>.defsList[i];
+					t.ResolveReferences();
+				}
+				catch (Exception ex)
+				{
+					Log.Error(string.Concat(new object[]
+					{
+						"Error while resolving references for def ",
+						DefDatabase<T>.defsList[i],
+						": ",
+						ex
+					}));
+				}
 			}
 			DefDatabase<T>.SetIndices();
 		}

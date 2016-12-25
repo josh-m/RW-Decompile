@@ -11,7 +11,7 @@ namespace RimWorld
 			{
 				return false;
 			}
-			if (p.story.traits.DegreeOfTrait(TraitDefOf.DrugDesire) >= 0)
+			if (!p.IsTeetotaler())
 			{
 				return false;
 			}

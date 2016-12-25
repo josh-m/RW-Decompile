@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using Verse;
 
@@ -14,6 +15,8 @@ namespace RimWorld
 		private List<Pawn> soldPrisoners = new List<Pawn>();
 
 		private int randomPriceFactorSeed = -1;
+
+		private static List<string> tmpExtantNames = new List<string>();
 
 		public override string FullTitle
 		{
@@ -71,18 +74,11 @@ namespace RimWorld
 			}
 		}
 
-		public IEnumerable<Thing> ColonyThingsWillingToBuy
+		public float TradePriceImprovementOffsetForPlayer
 		{
 			get
 			{
-				foreach (Thing t in TradeUtility.AllLaunchableThings)
-				{
-					yield return t;
-				}
-				foreach (Pawn p in TradeUtility.AllSellableColonyPawns)
-				{
-					yield return p;
-				}
+				return 0f;
 			}
 		}
 
@@ -93,15 +89,59 @@ namespace RimWorld
 		public TradeShip(TraderKindDef def)
 		{
 			this.def = def;
-			this.name = NameGenerator.GenerateName(RulePackDefOf.NamerTraderGeneral, from vis in Find.PassingShipManager.passingShips
-			select vis.name);
+			TradeShip.tmpExtantNames.Clear();
+			List<Map> maps = Find.Maps;
+			for (int i = 0; i < maps.Count; i++)
+			{
+				TradeShip.tmpExtantNames.AddRange(from x in maps[i].passingShipManager.passingShips
+				select x.name);
+			}
+			this.name = NameGenerator.GenerateName(RulePackDefOf.NamerTraderGeneral, TradeShip.tmpExtantNames, false);
 			this.randomPriceFactorSeed = Rand.RangeInclusive(1, 10000000);
 			this.loadID = Find.World.uniqueIDsManager.GetNextPassingShipID();
 		}
 
+		[DebuggerHidden]
+		public IEnumerable<Thing> ColonyThingsWillingToBuy(Pawn playerNegotiator)
+		{
+			foreach (Thing t in TradeUtility.AllLaunchableThings(base.Map))
+			{
+				yield return t;
+			}
+			foreach (Pawn p in TradeUtility.AllSellableColonyPawns(base.Map))
+			{
+				yield return p;
+			}
+		}
+
 		public void GenerateThings()
 		{
-			this.things = TraderStockGenerator.GenerateTraderThings(this.def).ToList<Thing>();
+			this.things = TraderStockGenerator.GenerateTraderThings(this.def, base.Map).ToList<Thing>();
+		}
+
+		public override void PassingShipTick()
+		{
+			base.PassingShipTick();
+			for (int i = this.things.Count - 1; i >= 0; i--)
+			{
+				Pawn pawn = this.things[i] as Pawn;
+				if (pawn != null)
+				{
+					pawn.Tick();
+					if (pawn.Dead)
+					{
+						this.things.RemoveAt(i);
+					}
+				}
+			}
+			for (int j = this.soldPrisoners.Count - 1; j >= 0; j--)
+			{
+				this.soldPrisoners[j].Tick();
+				if (this.soldPrisoners[j].Dead)
+				{
+					this.soldPrisoners.RemoveAt(j);
+				}
+			}
 		}
 
 		public override void ExposeData()
@@ -121,17 +161,25 @@ namespace RimWorld
 			}
 			Find.WindowStack.Add(new Dialog_Trade(negotiator, this));
 			LessonAutoActivator.TeachOpportunity(ConceptDefOf.BuildOrbitalTradeBeacon, OpportunityType.Critical);
-			PawnRelationUtility.Notify_PawnsSeenByPlayer(this.Goods.OfType<Pawn>(), "LetterRelatedPawnsTradeShip", false);
+			string empty = string.Empty;
+			string empty2 = string.Empty;
+			PawnRelationUtility.Notify_PawnsSeenByPlayer(this.Goods.OfType<Pawn>(), ref empty, ref empty2, "LetterRelatedPawnsTradeShip".Translate(), false);
+			if (!empty2.NullOrEmpty())
+			{
+				Find.LetterStack.ReceiveLetter(empty, empty2, LetterType.Good, null);
+			}
 			TutorUtility.DoModalDialogIfNotKnown(ConceptDefOf.TradeGoodsMustBeNearBeacon);
 		}
 
-		protected override void Depart()
+		public override void Depart()
 		{
 			base.Depart();
 			foreach (Thing current in this.Goods)
 			{
-				current.DestroyOrPassToWorld();
+				current.DestroyOrPassToWorld(DestroyMode.Vanish);
 			}
+			this.things.Clear();
+			this.soldPrisoners.Clear();
 		}
 
 		public override string GetCallLabel()
@@ -149,7 +197,7 @@ namespace RimWorld
 			return 0;
 		}
 
-		public void AddToStock(Thing thing)
+		public void AddToStock(Thing thing, Pawn playerNegotiator)
 		{
 			Thing thing2 = TradeUtility.ThingFromStockMatching(this, thing);
 			if (thing2 != null)
@@ -175,7 +223,7 @@ namespace RimWorld
 			}
 		}
 
-		public void GiveSoldThingToBuyer(Thing toGive, Thing originalThingFromStock)
+		public void GiveSoldThingToPlayer(Thing toGive, Thing originalThingFromStock, Pawn playerNegotiator)
 		{
 			if (toGive == originalThingFromStock)
 			{
@@ -199,7 +247,7 @@ namespace RimWorld
 				this.soldPrisoners.Remove(pawn);
 				TradeUtility.MakePrisonerOfColony(pawn);
 			}
-			TradeUtility.SpawnDropPod(DropCellFinder.TradeDropSpot(), toGive);
+			TradeUtility.SpawnDropPod(DropCellFinder.TradeDropSpot(base.Map), base.Map, toGive);
 		}
 
 		private Thing HeldThingMatching(ThingDef thingDef, ThingDef stuffDef)

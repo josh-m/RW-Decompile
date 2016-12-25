@@ -7,13 +7,15 @@ namespace RimWorld
 	{
 		public int difficulty = -1;
 
-		public float threatScale = -1f;
+		public float threatScale;
 
-		public float colonistMoodOffset = -1f;
+		public bool allowBigThreats = true;
 
-		public float baseSellPriceFactor = -1f;
+		public float colonistMoodOffset;
 
-		public float cropYieldFactor = -1f;
+		public float tradePriceFactorLoss;
+
+		public float cropYieldFactor = 1f;
 
 		public float diseaseIntervalFactor = 1f;
 

@@ -74,15 +74,14 @@ namespace RimWorld
 			return pawnRelationDef;
 		}
 
-		public static void Notify_PawnsSeenByPlayer(IEnumerable<Pawn> seenPawns, string letterHeader, bool informEvenIfSeenBefore = false)
+		public static void Notify_PawnsSeenByPlayer(IEnumerable<Pawn> seenPawns, out string pawnRelationsInfo, bool informEvenIfSeenBefore = false)
 		{
 			StringBuilder stringBuilder = new StringBuilder();
-			stringBuilder.AppendLine(letterHeader);
 			IEnumerable<Pawn> enumerable = from x in seenPawns
 			where x.RaceProps.IsFlesh
 			select x;
-			IEnumerable<Pawn> enumerable2 = from x in Find.MapPawns.FreeColonistsAndPrisoners
-			where x.relations.everSeenByPlayer
+			IEnumerable<Pawn> enumerable2 = from x in PawnsFinder.AllMapsCaravansAndTravelingTransportPods
+			where x.RaceProps.Humanlike && (x.Faction == Faction.OfPlayer || x.HostFaction == Faction.OfPlayer) && x.relations.everSeenByPlayer
 			select x;
 			if (!informEvenIfSeenBefore)
 			{
@@ -91,7 +90,6 @@ namespace RimWorld
 				select x;
 			}
 			bool flag = false;
-			Pawn pawn = null;
 			foreach (Pawn current in enumerable)
 			{
 				bool flag2 = false;
@@ -105,12 +103,11 @@ namespace RimWorld
 							if (!flag2)
 							{
 								flag2 = true;
-								stringBuilder.AppendLine();
+								if (flag)
+								{
+									stringBuilder.AppendLine();
+								}
 								stringBuilder.AppendLine(current.KindLabel.CapitalizeFirst() + " " + current.LabelShort + ":");
-							}
-							if (current.Spawned)
-							{
-								pawn = current;
 							}
 							flag = true;
 							stringBuilder.AppendLine(string.Concat(new string[]
@@ -129,14 +126,33 @@ namespace RimWorld
 			}
 			if (flag)
 			{
-				if (pawn != null)
+				pawnRelationsInfo = stringBuilder.ToString().TrimEndNewlines();
+			}
+			else
+			{
+				pawnRelationsInfo = null;
+			}
+		}
+
+		public static void Notify_PawnsSeenByPlayer(IEnumerable<Pawn> seenPawns, ref string letterLabel, ref string letterText, string relationsInfoHeader, bool informEvenIfSeenBefore = false)
+		{
+			string text;
+			PawnRelationUtility.Notify_PawnsSeenByPlayer(seenPawns, out text, informEvenIfSeenBefore);
+			if (!text.NullOrEmpty())
+			{
+				if (letterLabel.NullOrEmpty())
 				{
-					Find.LetterStack.ReceiveLetter("LetterLabelNoticedRelatedPawns".Translate(), stringBuilder.ToString().TrimEndNewlines(), LetterType.Good, pawn, null);
+					letterLabel = "LetterLabelNoticedRelatedPawns".Translate();
 				}
 				else
 				{
-					Find.LetterStack.ReceiveLetter("LetterLabelNoticedRelatedPawns".Translate(), stringBuilder.ToString().TrimEndNewlines(), LetterType.Good, null);
+					letterLabel = letterLabel + " " + "RelationshipAppendedLetterSuffix".Translate();
 				}
+				if (!letterText.NullOrEmpty())
+				{
+					letterText += "\n\n";
+				}
+				letterText = letterText + relationsInfoHeader + "\n\n" + text;
 			}
 		}
 
@@ -181,7 +197,7 @@ namespace RimWorld
 
 		public static Pawn GetMostImportantColonyRelative(Pawn pawn)
 		{
-			IEnumerable<Pawn> enumerable = from x in Find.MapPawns.FreeColonistsAndPrisoners
+			IEnumerable<Pawn> enumerable = from x in PawnsFinder.AllMaps_FreeColonistsAndPrisoners
 			where x.relations.everSeenByPlayer
 			select x;
 			float num = 0f;

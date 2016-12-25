@@ -25,6 +25,10 @@ namespace RimWorld
 
 		public override void TransformValue(StatRequest req, ref float val)
 		{
+			if (val <= 0f)
+			{
+				return;
+			}
 			QualityCategory qc;
 			if (req.HasThing && req.Thing.TryGetQuality(out qc))
 			{
@@ -34,6 +38,10 @@ namespace RimWorld
 
 		public override string ExplanationPart(StatRequest req)
 		{
+			if (req.HasThing && req.Thing.GetStatValue(this.parentStat, true) <= 0f)
+			{
+				return null;
+			}
 			QualityCategory qc;
 			if (req.HasThing && req.Thing.TryGetQuality(out qc))
 			{

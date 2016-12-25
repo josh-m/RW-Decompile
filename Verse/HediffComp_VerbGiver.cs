@@ -7,6 +7,14 @@ namespace Verse
 	{
 		public VerbTracker verbTracker;
 
+		public HediffCompProperties_VerbGiver Props
+		{
+			get
+			{
+				return (HediffCompProperties_VerbGiver)this.props;
+			}
+		}
+
 		public VerbTracker VerbTracker
 		{
 			get
@@ -19,7 +27,7 @@ namespace Verse
 		{
 			get
 			{
-				return this.props.verbs;
+				return this.Props.verbs;
 			}
 		}
 

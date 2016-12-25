@@ -1,5 +1,6 @@
 using RimWorld;
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Verse
@@ -18,7 +19,7 @@ namespace Verse
 
 		private static float viewHeight;
 
-		public static void DoThingFilterConfigWindow(Rect rect, ref Vector2 scrollPosition, ThingFilter filter, ThingFilter parentFilter = null, int openMask = 1)
+		public static void DoThingFilterConfigWindow(Rect rect, ref Vector2 scrollPosition, ThingFilter filter, ThingFilter parentFilter = null, int openMask = 1, IEnumerable<ThingDef> forceHiddenDefs = null, IEnumerable<SpecialThingFilterDef> forceHiddenFilters = null)
 		{
 			Widgets.DrawMenuSection(rect, true);
 			Text.Font = GameFont.Tiny;
@@ -26,7 +27,7 @@ namespace Verse
 			Rect rect2 = new Rect(rect.x + 1f, rect.y + 1f, num / 2f, 24f);
 			if (Widgets.ButtonText(rect2, "ClearAll".Translate(), true, false, true))
 			{
-				filter.SetDisallowAll();
+				filter.SetDisallowAll(forceHiddenDefs, forceHiddenFilters);
 			}
 			Rect rect3 = new Rect(rect2.xMax + 1f, rect2.y, num / 2f, 24f);
 			if (Widgets.ButtonText(rect3, "AllowAll".Translate(), true, false, true))
@@ -42,7 +43,7 @@ namespace Verse
 			ThingFilterUI.DrawQualityFilterConfig(ref num2, viewRect.width, filter);
 			float num3 = num2;
 			Rect rect4 = new Rect(0f, num2, viewRect.width, 9999f);
-			Listing_TreeThingFilter listing_TreeThingFilter = new Listing_TreeThingFilter(rect4, filter, parentFilter);
+			Listing_TreeThingFilter listing_TreeThingFilter = new Listing_TreeThingFilter(rect4, filter, parentFilter, forceHiddenDefs, forceHiddenFilters);
 			TreeNode_ThingCategory node = ThingCategoryNodeDatabase.RootNode;
 			if (parentFilter != null)
 			{

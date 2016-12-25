@@ -48,13 +48,13 @@ namespace Verse.AI
 		{
 			f.AddEndCondition(delegate
 			{
-				TargetInfo target = f.GetActor().jobs.curJob.GetTarget(ind);
+				LocalTargetInfo target = f.GetActor().jobs.curJob.GetTarget(ind);
 				Thing thing = target.Thing;
 				if (thing == null && target.IsValid)
 				{
 					return JobCondition.Ongoing;
 				}
-				if (thing == null || !thing.Spawned)
+				if (thing == null || !thing.Spawned || thing.Map != f.GetActor().Map)
 				{
 					return JobCondition.Incompletable;
 				}
@@ -67,13 +67,13 @@ namespace Verse.AI
 		{
 			f.AddEndCondition(delegate
 			{
-				TargetInfo target = f.GetActor().jobs.curJob.GetTarget(ind);
+				LocalTargetInfo target = f.GetActor().jobs.curJob.GetTarget(ind);
 				Thing thing = target.Thing;
 				if (thing == null && target.IsValid)
 				{
 					return JobCondition.Ongoing;
 				}
-				if (thing == null || !thing.Spawned)
+				if (thing == null || !thing.Spawned || thing.Map != f.GetActor().Map)
 				{
 					return endCondition;
 				}
@@ -88,6 +88,20 @@ namespace Verse.AI
 			{
 				Thing thing = f.GetActor().jobs.curJob.GetTarget(ind).Thing;
 				if (((Pawn)thing).Downed)
+				{
+					return JobCondition.Incompletable;
+				}
+				return JobCondition.Ongoing;
+			});
+			return f;
+		}
+
+		public static T FailOnNotDowned<T>(this T f, TargetIndex ind) where T : IJobEndable
+		{
+			f.AddEndCondition(delegate
+			{
+				Thing thing = f.GetActor().jobs.curJob.GetTarget(ind).Thing;
+				if (!((Pawn)thing).Downed)
 				{
 					return JobCondition.Incompletable;
 				}
@@ -115,7 +129,7 @@ namespace Verse.AI
 			f.AddEndCondition(delegate
 			{
 				Thing thing = f.GetActor().jobs.curJob.GetTarget(ind).Thing;
-				if (!((Pawn)thing).CasualInterruptibleNow())
+				if (!((Pawn)thing).CanCasuallyInteractNow(false))
 				{
 					return JobCondition.Incompletable;
 				}
@@ -158,7 +172,7 @@ namespace Verse.AI
 			{
 				Pawn actor = f.GetActor();
 				Thing thing = actor.jobs.curJob.GetTarget(ind).Thing;
-				if (thing != null && Find.PhysicalInteractionReservations.IsReserved(thing) && !Find.PhysicalInteractionReservations.IsReservedBy(actor, thing))
+				if (thing != null && actor.Map.physicalInteractionReservationManager.IsReserved(thing) && !actor.Map.physicalInteractionReservationManager.IsReservedBy(actor, thing))
 				{
 					return JobCondition.Incompletable;
 				}
@@ -212,12 +226,13 @@ namespace Verse.AI
 		{
 			f.AddEndCondition(delegate
 			{
-				Job curJob = f.GetActor().jobs.curJob;
+				Pawn actor = f.GetActor();
+				Job curJob = actor.jobs.curJob;
 				if (curJob.ignoreDesignations)
 				{
 					return JobCondition.Ongoing;
 				}
-				if (Find.DesignationManager.DesignationOn(curJob.GetTarget(ind).Thing, desDef) == null)
+				if (actor.Map.designationManager.DesignationOn(curJob.GetTarget(ind).Thing, desDef) == null)
 				{
 					return JobCondition.Incompletable;
 				}
@@ -230,12 +245,13 @@ namespace Verse.AI
 		{
 			f.AddEndCondition(delegate
 			{
-				Job curJob = f.GetActor().jobs.curJob;
+				Pawn actor = f.GetActor();
+				Job curJob = actor.jobs.curJob;
 				if (curJob.ignoreDesignations)
 				{
 					return JobCondition.Ongoing;
 				}
-				if (Find.DesignationManager.DesignationAt(curJob.GetTarget(ind).Cell, desDef) == null)
+				if (actor.Map.designationManager.DesignationAt(curJob.GetTarget(ind).Cell, desDef) == null)
 				{
 					return JobCondition.Incompletable;
 				}
@@ -248,7 +264,7 @@ namespace Verse.AI
 		{
 			f.AddEndCondition(delegate
 			{
-				if (f.GetActor().jobs.curJob.GetTarget(ind).IsBurning())
+				if (f.GetActor().jobs.curJob.GetTarget(ind).ToTargetInfo(f.GetActor().Map).IsBurning())
 				{
 					return JobCondition.Incompletable;
 				}
@@ -265,9 +281,9 @@ namespace Verse.AI
 				{
 					return false;
 				}
-				foreach (ThingStackPart current in toil.actor.jobs.curJob.placedThings)
+				foreach (ThingStackPartClass current in toil.actor.jobs.curJob.placedThings)
 				{
-					if (!current.thing.Spawned || (!toil.actor.CurJob.ignoreForbidden && current.thing.IsForbidden(toil.actor)))
+					if (!current.thing.Spawned || current.thing.Map != toil.actor.Map || (!toil.actor.CurJob.ignoreForbidden && current.thing.IsForbidden(toil.actor)))
 					{
 						return true;
 					}

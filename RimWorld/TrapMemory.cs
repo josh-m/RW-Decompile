@@ -3,11 +3,13 @@ using Verse;
 
 namespace RimWorld
 {
-	public struct TrapMemory : IExposable
+	public class TrapMemory : IExposable
 	{
 		private const int TrapRecordTicksBeforeExpiry = 1680000;
 
 		public IntVec3 loc;
+
+		public Map map;
 
 		public int tick;
 
@@ -51,15 +53,21 @@ namespace RimWorld
 			}
 		}
 
-		public TrapMemory(IntVec3 cell, int tick)
+		public TrapMemory()
+		{
+		}
+
+		public TrapMemory(IntVec3 cell, Map map, int tick)
 		{
 			this.loc = cell;
+			this.map = map;
 			this.tick = tick;
 		}
 
 		public void ExposeData()
 		{
 			Scribe_Values.LookValue<IntVec3>(ref this.loc, "loc", default(IntVec3), false);
+			Scribe_References.LookReference<Map>(ref this.map, "map", false);
 			Scribe_Values.LookValue<int>(ref this.tick, "tick", 0, false);
 		}
 	}

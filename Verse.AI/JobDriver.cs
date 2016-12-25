@@ -107,7 +107,7 @@ namespace Verse.AI
 			}
 		}
 
-		protected TargetInfo TargetA
+		protected LocalTargetInfo TargetA
 		{
 			get
 			{
@@ -115,7 +115,7 @@ namespace Verse.AI
 			}
 		}
 
-		protected TargetInfo TargetB
+		protected LocalTargetInfo TargetB
 		{
 			get
 			{
@@ -123,7 +123,7 @@ namespace Verse.AI
 			}
 		}
 
-		protected TargetInfo TargetC
+		protected LocalTargetInfo TargetC
 		{
 			get
 			{
@@ -160,6 +160,14 @@ namespace Verse.AI
 			get
 			{
 				return this.pawn.jobs.curJob.targetA.Cell;
+			}
+		}
+
+		protected Map Map
+		{
+			get
+			{
+				return this.pawn.Map;
 			}
 		}
 
@@ -382,10 +390,6 @@ namespace Verse.AI
 			{
 				return;
 			}
-			if (this.CheckCurrentToilEndOrFail())
-			{
-				return;
-			}
 			if (this.HaveCurToil)
 			{
 				this.CurToil.Cleanup();
@@ -410,37 +414,40 @@ namespace Verse.AI
 			this.debugTicksSpentThisToil = 0;
 			this.ticksLeftThisToil = this.CurToil.defaultDuration;
 			this.curToilCompleteMode = this.CurToil.defaultCompleteMode;
-			if (this.CurToil.preInitActions != null)
+			if (!this.CheckCurrentToilEndOrFail())
 			{
-				for (int i = 0; i < this.CurToil.preInitActions.Count; i++)
+				if (this.CurToil.preInitActions != null)
 				{
-					this.CurToil.preInitActions[i]();
-				}
-			}
-			if (this.CurToil.initAction != null)
-			{
-				try
-				{
-					this.CurToil.initAction();
-				}
-				catch (Exception ex)
-				{
-					Log.Error(string.Concat(new object[]
+					for (int i = 0; i < this.CurToil.preInitActions.Count; i++)
 					{
-						"JobDriver threw exception in initAction. Pawn=",
-						this.pawn,
-						", Job=",
-						this.CurJob,
-						", Exception: ",
-						ex.ToString()
-					}));
-					this.EndJobWith(JobCondition.Errored);
-					return;
+						this.CurToil.preInitActions[i]();
+					}
 				}
-			}
-			if (!this.ended && this.curToilCompleteMode == ToilCompleteMode.Instant)
-			{
-				this.ReadyForNextToil();
+				if (this.CurToil.initAction != null)
+				{
+					try
+					{
+						this.CurToil.initAction();
+					}
+					catch (Exception ex)
+					{
+						Log.Error(string.Concat(new object[]
+						{
+							"JobDriver threw exception in initAction. Pawn=",
+							this.pawn,
+							", Job=",
+							this.CurJob,
+							", Exception: ",
+							ex.ToString()
+						}));
+						this.EndJobWith(JobCondition.Errored);
+						return;
+					}
+				}
+				if (!this.ended && this.curToilCompleteMode == ToilCompleteMode.Instant)
+				{
+					this.ReadyForNextToil();
+				}
 			}
 		}
 
@@ -452,7 +459,7 @@ namespace Verse.AI
 			}
 			if (!this.pawn.Destroyed)
 			{
-				this.pawn.jobs.EndCurrentJob(condition);
+				this.pawn.jobs.EndCurrentJob(condition, true);
 			}
 		}
 

@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using UnityEngine;
 using Verse;
-using Verse.AI;
+using Verse.AI.Group;
 
 namespace RimWorld
 {
@@ -25,11 +25,11 @@ namespace RimWorld
 
 		private string name;
 
-		public IntVec2 homeSquare = IntVec2.Invalid;
-
 		public int loadID = -1;
 
 		public int randomKey;
+
+		public float colorFromSpectrum;
 
 		private List<FactionRelation> relations = new List<FactionRelation>();
 
@@ -41,9 +41,21 @@ namespace RimWorld
 
 		private List<PredatorThreat> predatorThreats = new List<PredatorThreat>();
 
-		public ByteGrid avoidGridBasic;
+		public Dictionary<Map, ByteGrid> avoidGridsBasic = new Dictionary<Map, ByteGrid>();
 
-		public ByteGrid avoidGridSmart;
+		public Dictionary<Map, ByteGrid> avoidGridsSmart = new Dictionary<Map, ByteGrid>();
+
+		public bool defeated;
+
+		public int lastTraderRequestTick = -9999999;
+
+		private List<Map> avoidGridsBasicKeysWorkingList;
+
+		private List<ByteGrid> avoidGridsBasicValuesWorkingList;
+
+		private List<Map> avoidGridsSmartKeysWorkingList;
+
+		private List<ByteGrid> avoidGridsSmartValuesWorkingList;
 
 		public string Name
 		{
@@ -97,20 +109,28 @@ namespace RimWorld
 			}
 		}
 
+		public Color Color
+		{
+			get
+			{
+				if (this.def.colorSpectrum.NullOrEmpty<Color>())
+				{
+					return Color.white;
+				}
+				return ColorsFromSpectrum.Get(this.def.colorSpectrum, this.colorFromSpectrum);
+			}
+		}
+
 		public static Faction OfPlayer
 		{
 			get
 			{
-				if (Find.Map != null)
+				Faction ofPlayerSilentFail = Faction.OfPlayerSilentFail;
+				if (ofPlayerSilentFail == null)
 				{
-					return Find.FactionManager.FactionInWorldSquare(Find.Map.WorldCoords);
+					Log.Error("Could not find player faction.");
 				}
-				if (Find.GameInitData.playerFaction != null)
-				{
-					return Find.GameInitData.playerFaction;
-				}
-				Log.Error("Cannot get faction OfPlayer since both Map and MapInitData.playerFaction are null.");
-				return null;
+				return ofPlayerSilentFail;
 			}
 		}
 
@@ -130,6 +150,30 @@ namespace RimWorld
 			}
 		}
 
+		public static Faction OfPlayerSilentFail
+		{
+			get
+			{
+				if (Current.ProgramState != ProgramState.Playing)
+				{
+					GameInitData gameInitData = Find.GameInitData;
+					if (gameInitData != null && gameInitData.playerFaction != null)
+					{
+						return gameInitData.playerFaction;
+					}
+				}
+				List<Faction> allFactionsListForReading = Find.FactionManager.AllFactionsListForReading;
+				for (int i = 0; i < allFactionsListForReading.Count; i++)
+				{
+					if (allFactionsListForReading[i].def.isPlayer)
+					{
+						return allFactionsListForReading[i];
+					}
+				}
+				return null;
+			}
+		}
+
 		public Faction()
 		{
 			this.randomKey = Rand.Range(0, 2147483647);
@@ -138,12 +182,14 @@ namespace RimWorld
 
 		public void ExposeData()
 		{
+			Scribe_References.LookReference<Pawn>(ref this.leader, "leader", false);
+			Scribe_Collections.LookDictionary<Map, ByteGrid>(ref this.avoidGridsBasic, "avoidGridsBasic", LookMode.Reference, LookMode.Deep, ref this.avoidGridsBasicKeysWorkingList, ref this.avoidGridsBasicValuesWorkingList);
+			Scribe_Collections.LookDictionary<Map, ByteGrid>(ref this.avoidGridsSmart, "avoidGridsSmart", LookMode.Reference, LookMode.Deep, ref this.avoidGridsSmartKeysWorkingList, ref this.avoidGridsSmartValuesWorkingList);
 			Scribe_Defs.LookDef<FactionDef>(ref this.def, "def");
 			Scribe_Values.LookValue<string>(ref this.name, "name", null, false);
-			Scribe_Values.LookValue<IntVec2>(ref this.homeSquare, "homeSquare", IntVec2.Invalid, false);
 			Scribe_Values.LookValue<int>(ref this.loadID, "loadID", 0, false);
 			Scribe_Values.LookValue<int>(ref this.randomKey, "randomKey", 0, false);
-			Scribe_References.LookReference<Pawn>(ref this.leader, "leader", false);
+			Scribe_Values.LookValue<float>(ref this.colorFromSpectrum, "colorFromSpectrum", 0f, false);
 			Scribe_Collections.LookList<FactionRelation>(ref this.relations, "relations", LookMode.Deep, new object[0]);
 			Scribe_Deep.LookDeep<FactionTacticalMemory>(ref this.tacticalMemoryInt, "tacticalMemory", new object[0]);
 			Scribe_Deep.LookDeep<KidnappedPawnsTracker>(ref this.kidnapped, "kidnapped", new object[]
@@ -151,8 +197,8 @@ namespace RimWorld
 				this
 			});
 			Scribe_Collections.LookList<PredatorThreat>(ref this.predatorThreats, "predatorThreats", LookMode.Deep, new object[0]);
-			Scribe_Deep.LookDeep<ByteGrid>(ref this.avoidGridBasic, "avoidGridBasic", new object[0]);
-			Scribe_Deep.LookDeep<ByteGrid>(ref this.avoidGridSmart, "avoidGridSmart", new object[0]);
+			Scribe_Values.LookValue<bool>(ref this.defeated, "defeated", false, false);
+			Scribe_Values.LookValue<int>(ref this.lastTraderRequestTick, "lastTraderRequestTick", -9999999, false);
 		}
 
 		public void FactionTick()
@@ -175,16 +221,69 @@ namespace RimWorld
 				if (predatorThreat.Expired)
 				{
 					this.predatorThreats.RemoveAt(i);
-					Find.AttackTargetsCache.UpdateTarget(predatorThreat.predator);
+					if (predatorThreat.predator.Spawned)
+					{
+						predatorThreat.predator.Map.attackTargetsCache.UpdateTarget(predatorThreat.predator);
+					}
 				}
 			}
-			if (this.IsPlayer && !this.HasName && Find.TickManager.TicksGame % 1000 == 200 && GenDate.DaysPassed > 2 && Find.MapPawns.FreeColonistsSpawnedCount >= 2 && !Find.GameEnder.gameEnding)
+			if (Find.TickManager.TicksGame % 1000 == 200 && this.IsPlayer)
 			{
-				if (!Find.AttackTargetsCache.TargetsHostileToColony.Any((IAttackTarget x) => !x.ThreatDisabled()))
+				if (NamePlayerFactionAndBaseUtility.CanNameFactionNow())
 				{
-					Find.WindowStack.Add(new Dialog_NamePlayerFaction());
+					FactionBase factionBase = Find.WorldObjects.FactionBases.Find((FactionBase x) => NamePlayerFactionAndBaseUtility.CanNameFactionBaseSoon(x));
+					if (factionBase != null)
+					{
+						Find.WindowStack.Add(new Dialog_NamePlayerFactionAndBase(factionBase));
+					}
+					else
+					{
+						Find.WindowStack.Add(new Dialog_NamePlayerFaction());
+					}
+				}
+				else
+				{
+					FactionBase factionBase2 = Find.WorldObjects.FactionBases.Find((FactionBase x) => NamePlayerFactionAndBaseUtility.CanNameFactionBaseNow(x));
+					if (factionBase2 != null)
+					{
+						if (NamePlayerFactionAndBaseUtility.CanNameFactionSoon())
+						{
+							Find.WindowStack.Add(new Dialog_NamePlayerFactionAndBase(factionBase2));
+						}
+						else
+						{
+							Find.WindowStack.Add(new Dialog_NamePlayerFactionBase(factionBase2));
+						}
+					}
 				}
 			}
+		}
+
+		public ByteGrid GetAvoidGridBasic(Map map)
+		{
+			ByteGrid result;
+			if (this.avoidGridsBasic.TryGetValue(map, out result))
+			{
+				return result;
+			}
+			return null;
+		}
+
+		public ByteGrid GetAvoidGridSmart(Map map)
+		{
+			ByteGrid result;
+			if (this.avoidGridsSmart.TryGetValue(map, out result))
+			{
+				return result;
+			}
+			return null;
+		}
+
+		public void Notify_MapRemoved(Map map)
+		{
+			this.avoidGridsBasic.Remove(map);
+			this.avoidGridsSmart.Remove(map);
+			this.tacticalMemoryInt.Notify_MapRemoved(map);
 		}
 
 		public void TryMakeInitialRelationsWith(Faction other)
@@ -260,13 +359,17 @@ namespace RimWorld
 			{
 				return;
 			}
+			if (goodwillChange > 0f && ((this.IsPlayer && FactionBaseUtility.IsPlayerAttackingAnyFactionBaseOf(other)) || (other.IsPlayer && FactionBaseUtility.IsPlayerAttackingAnyFactionBaseOf(this))))
+			{
+				return;
+			}
 			float value = this.GoodwillWith(other) + goodwillChange;
 			FactionRelation factionRelation = this.RelationWith(other, false);
 			factionRelation.goodwill = Mathf.Clamp(value, -100f, 100f);
 			if (!this.HostileTo(other) && this.GoodwillWith(other) < -80f)
 			{
 				this.SetHostileTo(other, true);
-				if (Current.ProgramState == ProgramState.MapPlaying && Find.TickManager.TicksGame > 100 && other == Faction.OfPlayer)
+				if (Current.ProgramState == ProgramState.Playing && Find.TickManager.TicksGame > 100 && other == Faction.OfPlayer)
 				{
 					Find.LetterStack.ReceiveLetter("LetterLabelRelationsChangeBad".Translate(), "RelationsBrokenDown".Translate(new object[]
 					{
@@ -277,7 +380,7 @@ namespace RimWorld
 			if (this.HostileTo(other) && this.GoodwillWith(other) > 0f)
 			{
 				this.SetHostileTo(other, false);
-				if (Current.ProgramState == ProgramState.MapPlaying && Find.TickManager.TicksGame > 100 && other == Faction.OfPlayer)
+				if (Current.ProgramState == ProgramState.Playing && Find.TickManager.TicksGame > 100 && other == Faction.OfPlayer)
 				{
 					Find.LetterStack.ReceiveLetter("LetterLabelRelationsChangeGood".Translate(), "RelationsWarmed".Translate(new object[]
 					{
@@ -296,11 +399,11 @@ namespace RimWorld
 			FactionRelation factionRelation = this.RelationWith(other, false);
 			if (hostile)
 			{
-				if (Current.ProgramState == ProgramState.MapPlaying)
+				if (Current.ProgramState == ProgramState.Playing)
 				{
-					foreach (Pawn current in Find.MapPawns.PawnsInFaction(this).ToList<Pawn>())
+					foreach (Pawn current in PawnsFinder.AllMapsAndWorld_Alive.ToList<Pawn>())
 					{
-						if (current.HostFaction == other)
+						if ((current.Faction == this && current.HostFaction == other) || (current.Faction == other && current.HostFaction == this))
 						{
 							current.guest.SetGuestStatus(current.HostFaction, true);
 						}
@@ -325,9 +428,26 @@ namespace RimWorld
 					factionRelation.goodwill = 0f;
 				}
 			}
-			if (Current.ProgramState == ProgramState.MapPlaying)
+			if (Current.ProgramState == ProgramState.Playing)
 			{
-				Find.AttackTargetsCache.Notify_FactionHostilityChanged(this, other);
+				List<Map> maps = Find.Maps;
+				for (int i = 0; i < maps.Count; i++)
+				{
+					maps[i].attackTargetsCache.Notify_FactionHostilityChanged(this, other);
+					LordManager lordManager = maps[i].lordManager;
+					for (int j = 0; j < lordManager.lords.Count; j++)
+					{
+						Lord lord = lordManager.lords[j];
+						if (lord.faction == other)
+						{
+							lord.Notify_FactionRelationsChanged(this);
+						}
+						else if (lord.faction == this)
+						{
+							lord.Notify_FactionRelationsChanged(other);
+						}
+					}
+				}
 			}
 		}
 
@@ -386,7 +506,7 @@ namespace RimWorld
 				return;
 			}
 			this.SetHostileTo(violator, true);
-			Find.LetterStack.ReceiveLetter("LetterLabelRelationsChangeBad".Translate(), "RelationsBrokenCapture".Translate(new object[]
+			Find.LetterStack.ReceiveLetter("LetterLabelRelationsChangeBad".Translate().CapitalizeFirst(), "RelationsBrokenCapture".Translate(new object[]
 			{
 				member,
 				this.name
@@ -397,12 +517,34 @@ namespace RimWorld
 		{
 			Pawn pawn = this.leader;
 			this.GenerateNewLeader();
-			Find.LetterStack.ReceiveLetter("LetterLeadersDeathLabel".Translate(), "LetterLeadersDeath".Translate(new object[]
+			Find.LetterStack.ReceiveLetter("LetterLeadersDeathLabel".Translate(new object[]
+			{
+				this.name,
+				this.def.leaderTitle
+			}).CapitalizeFirst(), "LetterLeadersDeath".Translate(new object[]
 			{
 				pawn.Name.ToStringFull,
 				this.name,
-				this.leader.Name.ToStringFull
-			}).CapitalizeFirst(), LetterType.BadNonUrgent, null);
+				this.leader.Name.ToStringFull,
+				this.def.leaderTitle
+			}).CapitalizeFirst(), LetterType.Good, null);
+		}
+
+		public void Notify_LeaderLost()
+		{
+			Pawn pawn = this.leader;
+			this.GenerateNewLeader();
+			Find.LetterStack.ReceiveLetter("LetterLeaderChangedLabel".Translate(new object[]
+			{
+				this.name,
+				this.def.leaderTitle
+			}).CapitalizeFirst(), "LetterLeaderChanged".Translate(new object[]
+			{
+				pawn.Name.ToStringFull,
+				this.name,
+				this.leader.Name.ToStringFull,
+				this.def.leaderTitle
+			}).CapitalizeFirst(), LetterType.Good, null);
 		}
 
 		public void GenerateNewLeader()
@@ -410,7 +552,9 @@ namespace RimWorld
 			List<PawnKindDef> list = new List<PawnKindDef>();
 			if (this.def.pawnGroupMakers != null)
 			{
-				foreach (PawnGroupMaker_Normal current in this.def.pawnGroupMakers.OfType<PawnGroupMaker_Normal>())
+				foreach (PawnGroupMaker current in from x in this.def.pawnGroupMakers
+				where x.kindDef == PawnGroupKindDefOf.Normal
+				select x)
 				{
 					foreach (PawnGenOption current2 in current.options)
 					{
@@ -420,17 +564,18 @@ namespace RimWorld
 						}
 					}
 				}
-				PawnKindDef kindDef;
-				if (list.TryRandomElement(out kindDef))
+				PawnKindDef kind;
+				if (list.TryRandomElement(out kind))
 				{
-					this.leader = PawnGenerator.GeneratePawn(kindDef, this);
+					PawnGenerationRequest request = new PawnGenerationRequest(kind, this, PawnGenerationContext.NonPlayer, null, false, false, false, false, true, false, 1f, false, true, true, null, null, null, null, null, null);
+					this.leader = PawnGenerator.GeneratePawn(request);
 					if (this.leader.RaceProps.IsFlesh)
 					{
 						this.leader.relations.everSeenByPlayer = true;
 					}
 					if (!Find.WorldPawns.Contains(this.leader))
 					{
-						Find.WorldPawns.PassToWorld(this.leader, PawnDiscardDecideMode.Keep);
+						Find.WorldPawns.PassToWorld(this.leader, PawnDiscardDecideMode.KeepForever);
 					}
 				}
 			}
@@ -506,33 +651,39 @@ namespace RimWorld
 
 		public override string ToString()
 		{
-			return this.name;
+			if (this.name != null)
+			{
+				return this.name;
+			}
+			return this.def.defName;
 		}
 
 		public string DebugString()
 		{
 			StringBuilder stringBuilder = new StringBuilder();
-			if (this.avoidGridSmart != null)
+			ByteGrid avoidGridSmart = this.GetAvoidGridSmart(Find.VisibleMap);
+			if (avoidGridSmart != null)
 			{
 				stringBuilder.Append("Avoidgrid val at mouse: ");
-				if (Gen.MouseCell().InBounds())
+				if (UI.MouseCell().InBounds(Find.VisibleMap))
 				{
-					stringBuilder.AppendLine(this.avoidGridSmart[Gen.MouseCell()].ToString());
+					stringBuilder.AppendLine(avoidGridSmart[UI.MouseCell()].ToString());
 				}
 				stringBuilder.Append("Avoidgrid pathcost at mouse: ");
-				if (Gen.MouseCell().InBounds())
+				if (UI.MouseCell().InBounds(Find.VisibleMap))
 				{
-					stringBuilder.AppendLine(((int)(this.avoidGridSmart[Gen.MouseCell()] * 8)).ToString());
+					stringBuilder.AppendLine(((int)(avoidGridSmart[UI.MouseCell()] * 8)).ToString());
 				}
 			}
 			return stringBuilder.ToString();
 		}
 
-		public void DebugDraw()
+		public void DebugDrawOnMap()
 		{
-			if (this.avoidGridSmart != null)
+			ByteGrid avoidGridSmart = this.GetAvoidGridSmart(Find.VisibleMap);
+			if (avoidGridSmart != null)
 			{
-				this.avoidGridSmart.DebugDraw();
+				avoidGridSmart.DebugDraw();
 			}
 		}
 	}

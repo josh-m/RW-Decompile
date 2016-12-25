@@ -9,7 +9,7 @@ namespace RimWorld
 	{
 		protected override Job TryGiveJob(Pawn pawn)
 		{
-			List<Building> allBuildingsColonist = Find.ListerBuildings.allBuildingsColonist;
+			List<Building> allBuildingsColonist = pawn.Map.listerBuildings.allBuildingsColonist;
 			int count = allBuildingsColonist.Count;
 			if (count == 0)
 			{

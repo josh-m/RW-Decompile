@@ -62,7 +62,10 @@ namespace Verse
 					reg.ToString(),
 					" in link ",
 					this,
-					": > 2 regions on link!"
+					": > 2 regions on link!\nRegionA: ",
+					this.RegionA.DebugString,
+					"\nRegionB: ",
+					this.RegionB.DebugString
 				}));
 			}
 		}
@@ -74,7 +77,7 @@ namespace Verse
 				this.RegionA = null;
 				if (this.RegionB == null)
 				{
-					RegionLinkDatabase.Notify_LinkHasNoRegions(this);
+					reg.Map.regionLinkDatabase.Notify_LinkHasNoRegions(this);
 				}
 			}
 			else if (this.RegionB == reg)
@@ -82,7 +85,7 @@ namespace Verse
 				this.RegionB = null;
 				if (this.RegionA == null)
 				{
-					RegionLinkDatabase.Notify_LinkHasNoRegions(this);
+					reg.Map.regionLinkDatabase.Notify_LinkHasNoRegions(this);
 				}
 			}
 		}

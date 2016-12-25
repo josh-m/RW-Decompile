@@ -25,30 +25,35 @@ namespace RimWorld
 
 		public override IEnumerable<Thing> PotentialWorkThingsGlobal(Pawn pawn)
 		{
-			return ListerBuildingsRepairable.RepairableBuildings(pawn.Faction);
+			return pawn.Map.listerBuildingsRepairable.RepairableBuildings(pawn.Faction);
 		}
 
 		public override bool ShouldSkip(Pawn pawn)
 		{
-			return ListerBuildingsRepairable.RepairableBuildings(pawn.Faction).Count == 0;
+			return pawn.Map.listerBuildingsRepairable.RepairableBuildings(pawn.Faction).Count == 0;
 		}
 
 		public override bool HasJobOnThing(Pawn pawn, Thing t)
 		{
+			Building building = t as Building;
+			if (building == null)
+			{
+				return false;
+			}
+			if (!building.def.building.repairable)
+			{
+				return false;
+			}
 			if (t.Faction != pawn.Faction)
 			{
 				return false;
 			}
-			if (pawn.Faction == Faction.OfPlayer && !Find.AreaHome[t.Position])
+			if (pawn.Faction == Faction.OfPlayer && !pawn.Map.areaManager.Home[t.Position])
 			{
+				JobFailReason.Is(WorkGiver_FixBrokenDownBuilding.NotInHomeAreaTrans);
 				return false;
 			}
-			if (!t.def.useHitPoints || t.HitPoints == t.MaxHitPoints)
-			{
-				return false;
-			}
-			Building building = t as Building;
-			return building != null && building.def.building.repairable && pawn.CanReserve(building, 1) && Find.DesignationManager.DesignationOn(building, DesignationDefOf.Deconstruct) == null && !building.IsBurning();
+			return t.def.useHitPoints && t.HitPoints != t.MaxHitPoints && pawn.CanReserve(building, 1) && building.Map.designationManager.DesignationOn(building, DesignationDefOf.Deconstruct) == null && !building.IsBurning();
 		}
 
 		public override Job JobOnThing(Pawn pawn, Thing t)

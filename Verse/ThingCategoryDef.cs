@@ -8,6 +8,7 @@ namespace Verse
 	{
 		public ThingCategoryDef parent;
 
+		[NoTranslate]
 		public string iconPath;
 
 		public bool resourceReadoutRoot;

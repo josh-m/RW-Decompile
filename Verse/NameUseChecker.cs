@@ -10,7 +10,7 @@ namespace Verse
 		{
 			get
 			{
-				foreach (Pawn p in PawnUtility.AllPawnsMapOrWorldAliveOrDead)
+				foreach (Pawn p in PawnsFinder.AllMapsAndWorld_AliveOrDead)
 				{
 					if (p.Name != null)
 					{
@@ -40,14 +40,18 @@ namespace Verse
 			return false;
 		}
 
-		public static bool NameSingleIsUsedOnMap(string candidate)
+		public static bool NameSingleIsUsedOnAnyMap(string candidate)
 		{
-			foreach (Pawn current in Find.MapPawns.AllPawns)
+			List<Map> maps = Find.Maps;
+			for (int i = 0; i < maps.Count; i++)
 			{
-				NameSingle nameSingle = current.Name as NameSingle;
-				if (nameSingle != null && nameSingle.Name == candidate)
+				foreach (Pawn current in maps[i].mapPawns.AllPawns)
 				{
-					return true;
+					NameSingle nameSingle = current.Name as NameSingle;
+					if (nameSingle != null && nameSingle.Name == candidate)
+					{
+						return true;
+					}
 				}
 			}
 			return false;

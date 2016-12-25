@@ -13,14 +13,15 @@ namespace RimWorld
 
 		public override bool TryExecute(IncidentParms parms)
 		{
+			Map map = (Map)parms.target;
 			IntVec3 intVec;
-			if (!RCellFinder.TryFindRandomPawnEntryCell(out intVec))
+			if (!RCellFinder.TryFindRandomPawnEntryCell(out intVec, map))
 			{
 				return false;
 			}
 			PawnKindDef pawnKindDef;
 			if (!(from x in DefDatabase<PawnKindDef>.AllDefs
-			where x.RaceProps.Animal && x.RaceProps.wildness < 0.35f && GenTemperature.SeasonAndOutdoorTemperatureAcceptableFor(x.race)
+			where x.RaceProps.Animal && x.RaceProps.wildness < 0.35f && map.mapTemperature.SeasonAndOutdoorTemperatureAcceptableFor(x.race)
 			select x).TryRandomElementByWeight((PawnKindDef k) => 0.420000017f - k.RaceProps.wildness, out pawnKindDef))
 			{
 				return false;
@@ -28,9 +29,9 @@ namespace RimWorld
 			int num = Mathf.Clamp(GenMath.RoundRandom(2.5f / pawnKindDef.RaceProps.baseBodySize), 2, 10);
 			for (int i = 0; i < num; i++)
 			{
-				IntVec3 loc = CellFinder.RandomClosewalkCellNear(intVec, 12);
+				IntVec3 loc = CellFinder.RandomClosewalkCellNear(intVec, map, 12);
 				Pawn pawn = PawnGenerator.GeneratePawn(pawnKindDef, null);
-				GenSpawn.Spawn(pawn, loc, Rot4.Random);
+				GenSpawn.Spawn(pawn, loc, map, Rot4.Random);
 				pawn.SetFaction(Faction.OfPlayer, null);
 			}
 			Find.LetterStack.ReceiveLetter("LetterLabelFarmAnimalsWanderIn".Translate(new object[]
@@ -39,7 +40,7 @@ namespace RimWorld
 			}).CapitalizeFirst(), "LetterFarmAnimalsWanderIn".Translate(new object[]
 			{
 				pawnKindDef.label
-			}), LetterType.Good, intVec, null);
+			}), LetterType.Good, new TargetInfo(intVec, map, false), null);
 			return true;
 		}
 	}

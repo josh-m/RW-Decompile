@@ -27,7 +27,7 @@ namespace RimWorld
 			{
 				this.blueprints.RemoveAll((Blueprint blue) => blue.Destroyed);
 			}
-			Scribe_Collections.LookList<Blueprint>(ref this.blueprints, "blueprints", LookMode.MapReference, new object[0]);
+			Scribe_Collections.LookList<Blueprint>(ref this.blueprints, "blueprints", LookMode.Reference, new object[0]);
 		}
 	}
 }

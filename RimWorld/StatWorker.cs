@@ -253,7 +253,7 @@ namespace RimWorld
 					for (int n = 0; n < this.stat.skillNeedFactors.Count; n++)
 					{
 						SkillNeed skillNeed = this.stat.skillNeedFactors[n];
-						int level = pawn.skills.GetSkill(skillNeed.skill).level;
+						int level = pawn.skills.GetSkill(skillNeed.skill).Level;
 						stringBuilder.AppendLine(string.Concat(new object[]
 						{
 							"    ",
@@ -278,6 +278,17 @@ namespace RimWorld
 							string text = current.capacity.GetLabelFor(pawn).CapitalizeFirst();
 							float factor = current.GetFactor(pawn.health.capacities.GetEfficiency(current.capacity));
 							string text2 = factor.ToStringPercent();
+							string text3 = "HealthFactorPercentImpact".Translate(new object[]
+							{
+								current.weight.ToStringPercent()
+							});
+							if (current.max < 100f)
+							{
+								text3 = text3 + ", " + "HealthFactorMaxImpact".Translate(new object[]
+								{
+									current.max.ToStringPercent()
+								});
+							}
 							stringBuilder.AppendLine(string.Concat(new string[]
 							{
 								"    ",
@@ -285,10 +296,7 @@ namespace RimWorld
 								": x",
 								text2,
 								" (",
-								"HealthFactorPercentImpact".Translate(new object[]
-								{
-									current.weight.ToStringPercent()
-								}),
+								text3,
 								")"
 							}));
 						}
@@ -298,7 +306,7 @@ namespace RimWorld
 			return stringBuilder.ToString();
 		}
 
-		private void FinalizeValue(StatRequest req, ref float val, bool applyPostProcess)
+		public virtual void FinalizeValue(StatRequest req, ref float val, bool applyPostProcess)
 		{
 			if (this.stat.parts != null)
 			{
@@ -326,7 +334,7 @@ namespace RimWorld
 			}
 		}
 
-		public void FinalizeExplanation(StringBuilder sb, StatRequest req, ToStringNumberSense numberSense, float val)
+		public virtual void FinalizeExplanation(StringBuilder sb, StatRequest req, ToStringNumberSense numberSense, float finalVal)
 		{
 			if (this.stat.parts != null)
 			{
@@ -342,17 +350,22 @@ namespace RimWorld
 			}
 			if (this.stat.postProcessCurve != null)
 			{
-				string text2 = this.stat.ValueToString(this.GetValue(req, false), numberSense);
-				string text3 = this.stat.ValueToString(this.GetValue(req, true), numberSense);
-				sb.AppendLine(string.Concat(new string[]
+				float value = this.GetValue(req, false);
+				float value2 = this.GetValue(req, true);
+				if (!Mathf.Approximately(value, value2))
 				{
-					"StatsReport_PostProcessed".Translate(),
-					": ",
-					text2,
-					" -> ",
-					text3
-				}));
-				sb.AppendLine();
+					string text2 = this.stat.ValueToString(value, numberSense);
+					string text3 = this.stat.ValueToString(value2, numberSense);
+					sb.AppendLine(string.Concat(new string[]
+					{
+						"StatsReport_PostProcessed".Translate(),
+						": ",
+						text2,
+						" -> ",
+						text3
+					}));
+					sb.AppendLine();
+				}
 			}
 			float statFactor = Find.Scenario.GetStatFactor(this.stat);
 			if (statFactor != 1f)
@@ -360,7 +373,7 @@ namespace RimWorld
 				sb.AppendLine("StatsReport_ScenarioFactor".Translate() + ": " + statFactor.ToStringPercent());
 				sb.AppendLine();
 			}
-			sb.AppendLine("StatsReport_FinalValue".Translate() + ": " + this.stat.ValueToString(val, this.stat.toStringNumberSense));
+			sb.AppendLine("StatsReport_FinalValue".Translate() + ": " + this.stat.ValueToString(finalVal, this.stat.toStringNumberSense));
 		}
 
 		public virtual bool ShouldShowFor(BuildableDef eDef)

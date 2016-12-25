@@ -27,6 +27,7 @@ namespace Verse
 			Triangulator triangulator = new Triangulator(list.ToArray());
 			int[] triangles = triangulator.Triangulate();
 			Mesh mesh = new Mesh();
+			mesh.name = "MakePieMesh()";
 			mesh.vertices = array;
 			mesh.uv = new Vector2[list.Count];
 			mesh.triangles = triangles;
@@ -59,6 +60,7 @@ namespace Verse
 			}
 			return new Mesh
 			{
+				name = "MakeCircleMesh()",
 				vertices = array,
 				triangles = array2
 			};

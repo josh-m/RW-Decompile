@@ -24,10 +24,10 @@ namespace RimWorld
 			{
 				return;
 			}
-			if (!this.contentsKnown && this.container.Count > 0 && dinfo.Def.harmsHealth && dinfo.Instigator != null && dinfo.Instigator.Faction != null)
+			if (!this.contentsKnown && this.innerContainer.Count > 0 && dinfo.Def.harmsHealth && dinfo.Instigator != null && dinfo.Instigator.Faction != null)
 			{
 				bool flag = false;
-				foreach (Thing current in this.container)
+				foreach (Thing current in this.innerContainer)
 				{
 					Pawn pawn = current as Pawn;
 					if (pawn != null)
@@ -49,15 +49,15 @@ namespace RimWorld
 			List<Thing> list = new List<Thing>();
 			if (!this.contentsKnown)
 			{
-				list.AddRange(this.container);
-				list.AddRange(this.UnopenedCasketsInGroup().SelectMany((Building_AncientCryptosleepCasket c) => c.container));
+				list.AddRange(this.innerContainer);
+				list.AddRange(this.UnopenedCasketsInGroup().SelectMany((Building_AncientCryptosleepCasket c) => c.innerContainer));
 			}
 			bool contentsKnown = this.contentsKnown;
 			base.EjectContents();
 			if (!contentsKnown)
 			{
 				ThingDef filthSlime = ThingDefOf.FilthSlime;
-				FilthMaker.MakeFilth(base.PositionHeld, filthSlime, Rand.Range(8, 12));
+				FilthMaker.MakeFilth(base.Position, base.Map, filthSlime, Rand.Range(8, 12));
 				this.SetFaction(null, null);
 				foreach (Building_AncientCryptosleepCasket current in this.UnopenedCasketsInGroup())
 				{
@@ -72,7 +72,7 @@ namespace RimWorld
 				if (enumerable.Any<Pawn>())
 				{
 					Faction faction = Find.FactionManager.FirstFactionOfDef(FactionDefOf.SpacerHostile);
-					LordMaker.MakeNewLord(faction, new LordJob_AssaultColony(faction, false, false, false, false, false), enumerable);
+					LordMaker.MakeNewLord(faction, new LordJob_AssaultColony(faction, false, false, false, false, false), base.Map, enumerable);
 				}
 			}
 		}
@@ -83,7 +83,7 @@ namespace RimWorld
 			yield return this;
 			if (this.groupID != -1)
 			{
-				foreach (Thing t in Find.ListerThings.ThingsOfDef(ThingDefOf.AncientCryptosleepCasket))
+				foreach (Thing t in base.Map.listerThings.ThingsOfDef(ThingDefOf.AncientCryptosleepCasket))
 				{
 					Building_AncientCryptosleepCasket casket = t as Building_AncientCryptosleepCasket;
 					if (casket.groupID == this.groupID && !casket.contentsKnown)

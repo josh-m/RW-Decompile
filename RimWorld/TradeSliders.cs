@@ -44,11 +44,11 @@ namespace RimWorld
 			{
 				if (num2 > num3)
 				{
-					acceptanceReport = TradeSliders.dragTrad.TrySetToDropOneMore();
+					acceptanceReport = TradeSliders.dragTrad.TrySetToTransferOneMoreToSource();
 				}
 				if (num2 < num3)
 				{
-					acceptanceReport = TradeSliders.dragTrad.TrySetToLaunchOneMore();
+					acceptanceReport = TradeSliders.dragTrad.TrySetToTransferOneMoreToDest();
 				}
 				if (!acceptanceReport.Accepted)
 				{

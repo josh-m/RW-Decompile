@@ -17,17 +17,17 @@ namespace RimWorld
 
 		public override IEnumerable<IntVec3> PotentialWorkCellsGlobal(Pawn pawn)
 		{
-			return Find.AreaSnowClear.ActiveCells;
+			return pawn.Map.areaManager.SnowClear.ActiveCells;
 		}
 
 		public override bool ShouldSkip(Pawn pawn)
 		{
-			return Find.AreaSnowClear.TrueCount == 0;
+			return pawn.Map.areaManager.SnowClear.TrueCount == 0;
 		}
 
 		public override bool HasJobOnCell(Pawn pawn, IntVec3 c)
 		{
-			return Find.SnowGrid.GetDepth(c) >= 0.2f && pawn.CanReserveAndReach(c, PathEndMode.Touch, pawn.NormalMaxDanger(), 1);
+			return pawn.Map.snowGrid.GetDepth(c) >= 0.2f && pawn.CanReserveAndReach(c, PathEndMode.Touch, pawn.NormalMaxDanger(), 1);
 		}
 
 		public override Job JobOnCell(Pawn pawn, IntVec3 c)

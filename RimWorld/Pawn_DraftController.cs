@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using Verse;
 using Verse.AI;
+using Verse.AI.Group;
 
 namespace RimWorld
 {
@@ -10,120 +11,89 @@ namespace RimWorld
 	{
 		public Pawn pawn;
 
-		public DraftStateHandler draftStateHandler;
+		private bool draftedInt;
+
+		private bool allowFiringInt = true;
+
+		private AutoUndrafter autoUndrafter;
 
 		public bool Drafted
 		{
 			get
 			{
-				return this.draftStateHandler != null && this.draftStateHandler.Drafted;
+				return this.draftedInt;
 			}
 			set
 			{
-				this.draftStateHandler.Drafted = value;
+				if (value == this.draftedInt)
+				{
+					return;
+				}
+				this.pawn.mindState.priorityWork.Clear();
+				this.allowFiringInt = true;
+				this.draftedInt = value;
+				if (!value && this.pawn.Spawned)
+				{
+					this.pawn.Map.pawnDestinationManager.UnreserveAllFor(this.pawn);
+				}
+				if (this.pawn.jobs.curJob != null && this.pawn.jobs.CanTakeOrderedJob())
+				{
+					this.pawn.jobs.EndCurrentJob(JobCondition.InterruptForced, true);
+				}
+				if (this.draftedInt)
+				{
+					foreach (Pawn current in PawnUtility.SpawnedMasteredPawns(this.pawn))
+					{
+						current.jobs.Notify_MasterDrafted();
+					}
+					Lord lord = this.pawn.GetLord();
+					if (lord != null && lord.LordJob is LordJob_VoluntarilyJoinable)
+					{
+						lord.Notify_PawnLost(this.pawn, PawnLostCondition.Drafted);
+					}
+				}
+				else if (this.pawn.playerSettings != null)
+				{
+					this.pawn.playerSettings.animalsReleased = false;
+				}
+			}
+		}
+
+		public bool AllowFiring
+		{
+			get
+			{
+				return this.allowFiringInt;
+			}
+			set
+			{
+				this.allowFiringInt = value;
+				if (!this.allowFiringInt && this.pawn.stances.curStance is Stance_Warmup)
+				{
+					this.pawn.stances.CancelBusyStanceSoft();
+				}
 			}
 		}
 
 		public Pawn_DraftController(Pawn pawn)
 		{
 			this.pawn = pawn;
-			this.draftStateHandler = new DraftStateHandler(pawn);
+			this.autoUndrafter = new AutoUndrafter(pawn);
 		}
 
 		public void ExposeData()
 		{
-			Scribe_Deep.LookDeep<DraftStateHandler>(ref this.draftStateHandler, "drafter", new object[]
+			Scribe_Values.LookValue<bool>(ref this.draftedInt, "drafted", false, false);
+			Scribe_Values.LookValue<bool>(ref this.allowFiringInt, "allowFiring", true, false);
+			Scribe_Deep.LookDeep<AutoUndrafter>(ref this.autoUndrafter, "autoUndrafter", new object[]
 			{
 				this.pawn
 			});
 		}
 
-		public void PlayerControllerTick()
+		public void DraftControllerTick()
 		{
-			this.draftStateHandler.DrafterTick();
-		}
-
-		public bool CanTakeOrderedJob()
-		{
-			return !this.pawn.HasAttachment(ThingDefOf.Fire) && (this.pawn.CurJob == null || this.pawn.CurJob.def.playerInterruptible);
-		}
-
-		public void TakeOrderedJob(Job newJob)
-		{
-			if (this.pawn.jobs.debugLog)
-			{
-				this.pawn.jobs.DebugLogEvent("TakeOrderedJob " + newJob);
-			}
-			if (!this.CanTakeOrderedJob())
-			{
-				if (this.pawn.jobs.debugLog)
-				{
-					this.pawn.jobs.DebugLogEvent("    CanTakePlayerJob is false. Returning.");
-				}
-				return;
-			}
-			GenJob.ValidateJob(newJob);
-			if (this.pawn.jobs.curJob != null && this.pawn.jobs.curJob.JobIsSameAs(newJob))
-			{
-				return;
-			}
-			this.pawn.stances.CancelBusyStanceSoft();
-			Find.PawnDestinationManager.UnreserveAllFor(this.pawn);
-			if (newJob.def == JobDefOf.Goto)
-			{
-				Find.PawnDestinationManager.ReserveDestinationFor(this.pawn, newJob.targetA.Cell);
-			}
-			if (this.pawn.jobs.debugLog)
-			{
-				this.pawn.jobs.DebugLogEvent("    Queueing job");
-			}
-			if (this.pawn.jobs.jobQueue == null)
-			{
-				this.pawn.jobs.jobQueue = new JobQueue();
-			}
-			this.pawn.jobs.jobQueue.Clear();
-			this.pawn.jobs.jobQueue.EnqueueFirst(newJob);
-			if (this.pawn.jobs.curJob != null)
-			{
-				this.pawn.jobs.curDriver.EndJobWith(JobCondition.InterruptForced);
-			}
-			else
-			{
-				this.pawn.jobs.CheckForJobOverride();
-			}
-		}
-
-		public static IntVec3 BestGotoDestNear(IntVec3 root, Pawn searcher)
-		{
-			Predicate<IntVec3> predicate = (IntVec3 c) => !Find.PawnDestinationManager.DestinationIsReserved(c, searcher) && c.Standable() && searcher.CanReach(c, PathEndMode.OnCell, Danger.Deadly, false, TraverseMode.ByPawn);
-			if (predicate(root))
-			{
-				return root;
-			}
-			int num = 1;
-			IntVec3 result = default(IntVec3);
-			float num2 = -1000f;
-			bool flag = false;
-			while (true)
-			{
-				IntVec3 intVec = root + GenRadial.RadialPattern[num];
-				if (predicate(intVec))
-				{
-					float num3 = CoverUtility.TotalSurroundingCoverScore(intVec);
-					if (num3 > num2)
-					{
-						num2 = num3;
-						result = intVec;
-						flag = true;
-					}
-				}
-				if (num >= 8 && flag)
-				{
-					break;
-				}
-				num++;
-			}
-			return result;
+			this.autoUndrafter.AutoUndraftTick();
 		}
 
 		[DebuggerHidden]
@@ -139,15 +109,11 @@ namespace RimWorld
 			};
 			draft.defaultDesc = "CommandToggleDraftDesc".Translate();
 			draft.icon = TexCommand.Draft;
-			draft.turnOnSound = SoundDef.Named("DraftOn");
-			draft.turnOffSound = SoundDef.Named("DraftOff");
+			draft.turnOnSound = SoundDefOf.DraftOn;
+			draft.turnOffSound = SoundDefOf.DraftOff;
 			if (!this.Drafted)
 			{
 				draft.defaultLabel = "CommandDraftLabel".Translate();
-			}
-			else
-			{
-				draft.defaultLabel = "CommandUndraftLabel".Translate();
 			}
 			if (this.pawn.Downed)
 			{
@@ -165,6 +131,27 @@ namespace RimWorld
 				draft.tutorTag = "Undraft";
 			}
 			yield return draft;
+			if (this.Drafted && this.pawn.equipment.Primary != null && this.pawn.equipment.Primary.def.IsRangedWeapon)
+			{
+				yield return new Command_Toggle
+				{
+					hotKey = KeyBindingDefOf.Misc6,
+					isActive = (() => this.<>f__this.AllowFiring),
+					toggleAction = delegate
+					{
+						this.<>f__this.AllowFiring = !this.<>f__this.AllowFiring;
+					},
+					icon = TexCommand.AllowFiring,
+					defaultLabel = "CommandAllowFiringLabel".Translate(),
+					defaultDesc = "CommandAllowFiringDesc".Translate(),
+					tutorTag = "AllowFiringToggle"
+				};
+			}
+		}
+
+		internal void Notify_PrimaryWeaponChanged()
+		{
+			this.allowFiringInt = true;
 		}
 	}
 }

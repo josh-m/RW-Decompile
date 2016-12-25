@@ -49,7 +49,7 @@ namespace Verse
 			this.finalized = false;
 		}
 
-		public void FinalizeMesh(MeshParts parts)
+		public void FinalizeMesh(MeshParts parts, bool optimize = false)
 		{
 			if ((byte)(parts & MeshParts.Verts) != 0 || (byte)(parts & MeshParts.Tris) != 0)
 			{
@@ -59,7 +59,7 @@ namespace Verse
 			{
 				if (this.verts.Count > 0)
 				{
-					this.mesh.vertices = this.verts.ToArray();
+					this.mesh.SetVertices(this.verts);
 				}
 				else
 				{
@@ -70,7 +70,7 @@ namespace Verse
 			{
 				if (this.tris.Count > 0)
 				{
-					this.mesh.SetTriangles(this.tris.ToArray(), 0);
+					this.mesh.SetTriangles(this.tris, 0);
 				}
 				else
 				{
@@ -79,11 +79,15 @@ namespace Verse
 			}
 			if ((byte)(parts & MeshParts.Colors) != 0 && this.colors.Count > 0)
 			{
-				this.mesh.colors32 = this.colors.ToArray();
+				this.mesh.SetColors(this.colors);
 			}
 			if ((byte)(parts & MeshParts.UVs) != 0 && this.uvs.Count > 0)
 			{
-				this.mesh.uv = this.uvs.ToArray();
+				this.mesh.SetUVs(0, this.uvs);
+			}
+			if (optimize)
+			{
+				this.mesh.Optimize();
 			}
 			this.finalized = true;
 		}

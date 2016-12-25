@@ -6,11 +6,21 @@ namespace RimWorld
 {
 	public class MapCondition : IExposable
 	{
+		public MapConditionManager mapConditionManager;
+
 		public MapConditionDef def;
 
 		public int startTick;
 
 		public int duration = -1;
+
+		protected Map Map
+		{
+			get
+			{
+				return this.mapConditionManager.map;
+			}
+		}
 
 		public virtual string Label
 		{
@@ -85,7 +95,7 @@ namespace RimWorld
 						"\n",
 						"Started".Translate(),
 						": ",
-						GenDate.DateFullStringAt(GenDate.TickGameToAbs(this.startTick))
+						GenDate.DateFullStringAt((long)GenDate.TickGameToAbs(this.startTick), Find.WorldGrid.LongLatOf(this.Map.Tile).x)
 					});
 					text2 = text;
 					text = string.Concat(new string[]
@@ -127,7 +137,7 @@ namespace RimWorld
 			{
 				Messages.Message(this.def.endMessage, MessageSound.Standard);
 			}
-			Find.MapConditionManager.ActiveConditions.Remove(this);
+			this.mapConditionManager.ActiveConditions.Remove(this);
 		}
 
 		public virtual float TemperatureOffset()

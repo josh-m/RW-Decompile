@@ -34,7 +34,9 @@ namespace RimWorld
 
 		public static RulePackDef NamerWorld;
 
-		public static RulePackDef NamerColony;
+		public static RulePackDef NamerFactionPlayerRandomized;
+
+		public static RulePackDef NamerFactionBasePlayerRandomized;
 
 		public static RulePackDef NamerTraderGeneral;
 

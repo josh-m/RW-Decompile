@@ -6,7 +6,7 @@ using Verse;
 
 namespace RimWorld
 {
-	public class Recipe_InstallImplant : Recipe_MedicalOperation
+	public class Recipe_InstallImplant : Recipe_Surgery
 	{
 		[DebuggerHidden]
 		public override IEnumerable<BodyPartRecord> GetPartsToApplyOn(Pawn pawn, RecipeDef recipe)
@@ -20,7 +20,7 @@ namespace RimWorld
 					BodyPartRecord record = bpList[j];
 					if (record.def == part)
 					{
-						if (pawn.health.hediffSet.GetNotMissingParts(null, null).Contains(record))
+						if (pawn.health.hediffSet.GetNotMissingParts(BodyPartHeight.Undefined, BodyPartDepth.Undefined).Contains(record))
 						{
 							if (!pawn.health.hediffSet.PartOrAnyAncestorHasDirectlyAddedParts(record))
 							{
@@ -39,7 +39,7 @@ namespace RimWorld
 		{
 			if (billDoer != null)
 			{
-				if (base.CheckSurgeryFail(billDoer, pawn, ingredients))
+				if (base.CheckSurgeryFail(billDoer, pawn, ingredients, part))
 				{
 					return;
 				}

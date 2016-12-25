@@ -1,6 +1,6 @@
 using RimWorld;
 using System;
-using System.Linq;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Verse
@@ -27,6 +27,10 @@ namespace Verse
 
 		public TimeSlower slower = new TimeSlower();
 
+		private int lastNothingHappeningCheckTick = -1;
+
+		private bool nothingHappeningCached;
+
 		public int TicksGame
 		{
 			get
@@ -39,6 +43,11 @@ namespace Verse
 		{
 			get
 			{
+				if (this.gameStartAbsTick == 0)
+				{
+					Log.ErrorOnce("Accessing TicksAbs but gameStartAbsTick is not set yet.", 1049580013);
+					return this.ticksGameInt;
+				}
 				return this.ticksGameInt + this.gameStartAbsTick;
 			}
 		}
@@ -74,12 +83,20 @@ namespace Verse
 					case TimeSpeed.Fast:
 						return 3f;
 					case TimeSpeed.Superfast:
+						if (Find.VisibleMap == null)
+						{
+							return 150f;
+						}
 						if (this.NothingHappeningInGame())
 						{
 							return 12f;
 						}
 						return 6f;
 					case TimeSpeed.Ultrafast:
+						if (Find.VisibleMap == null)
+						{
+							return 250f;
+						}
 						return 15f;
 					default:
 						return -1f;
@@ -147,7 +164,41 @@ namespace Verse
 
 		private bool NothingHappeningInGame()
 		{
-			return !Find.MapPawns.FreeColonistsSpawned.Any((Pawn p) => p.Awake()) && Find.StoryWatcher.watcherDanger.DangerRating < StoryDanger.Low;
+			if (this.lastNothingHappeningCheckTick != this.TicksGame)
+			{
+				this.nothingHappeningCached = true;
+				List<Map> maps = Find.Maps;
+				for (int i = 0; i < maps.Count; i++)
+				{
+					List<Pawn> list = maps[i].mapPawns.SpawnedPawnsInFaction(Faction.OfPlayer);
+					for (int j = 0; j < list.Count; j++)
+					{
+						Pawn pawn = list[j];
+						if (pawn.HostFaction == null && pawn.RaceProps.Humanlike && pawn.Awake())
+						{
+							this.nothingHappeningCached = false;
+							break;
+						}
+					}
+					if (!this.nothingHappeningCached)
+					{
+						break;
+					}
+				}
+				if (this.nothingHappeningCached)
+				{
+					for (int k = 0; k < maps.Count; k++)
+					{
+						if (maps[k].IsPlayerHome && maps[k].dangerWatcher.DangerRating >= StoryDanger.Low)
+						{
+							this.nothingHappeningCached = false;
+							break;
+						}
+					}
+				}
+				this.lastNothingHappeningCheckTick = this.TicksGame;
+			}
+			return this.nothingHappeningCached;
 		}
 
 		public void ExposeData()
@@ -213,25 +264,10 @@ namespace Verse
 
 		public void DoSingleTick()
 		{
-			ItemAvailabilityUtility.Tick();
-			ListerHaulables.ListerHaulablesTick();
-			try
+			List<Map> maps = Find.Maps;
+			for (int i = 0; i < maps.Count; i++)
 			{
-				AutoBuildRoofZoneSetter.AutoBuildRoofZoneSetterTick_First();
-			}
-			catch (Exception ex)
-			{
-				Log.Error(ex.ToString());
-			}
-			RoofCollapseBufferResolver.CollapseRoofsMarkedToCollapse();
-			WindManager.WindManagerTick();
-			try
-			{
-				GenTemperature.GenTemperatureTick();
-			}
-			catch (Exception ex2)
-			{
-				Log.Error(ex2.ToString());
+				maps[i].MapPreTick();
 			}
 			if (!DebugSettings.fastEcology)
 			{
@@ -246,7 +282,23 @@ namespace Verse
 			this.tickListLong.Tick();
 			try
 			{
+				DateUtility.DatesTick();
+			}
+			catch (Exception ex)
+			{
+				Log.Error(ex.ToString());
+			}
+			try
+			{
 				Find.Scenario.TickScenario();
+			}
+			catch (Exception ex2)
+			{
+				Log.Error(ex2.ToString());
+			}
+			try
+			{
+				Find.World.WorldTick();
 			}
 			catch (Exception ex3)
 			{
@@ -254,7 +306,7 @@ namespace Verse
 			}
 			try
 			{
-				Find.World.WorldTick();
+				Find.StoryWatcher.StoryWatcherTick();
 			}
 			catch (Exception ex4)
 			{
@@ -262,7 +314,7 @@ namespace Verse
 			}
 			try
 			{
-				Find.StoryWatcher.StoryWatcherTick();
+				Find.GameEnder.GameEndTick();
 			}
 			catch (Exception ex5)
 			{
@@ -270,7 +322,7 @@ namespace Verse
 			}
 			try
 			{
-				Find.GameEnder.GameEndTick();
+				Find.Storyteller.StorytellerTick();
 			}
 			catch (Exception ex6)
 			{
@@ -278,15 +330,19 @@ namespace Verse
 			}
 			try
 			{
-				Find.Storyteller.StorytellerTick();
+				Current.Game.taleManager.TaleManagerTick();
 			}
 			catch (Exception ex7)
 			{
 				Log.Error(ex7.ToString());
 			}
+			for (int j = 0; j < maps.Count; j++)
+			{
+				maps[j].MapPostTick();
+			}
 			try
 			{
-				WildSpawner.WildSpawnerTick();
+				Find.History.HistoryTick();
 			}
 			catch (Exception ex8)
 			{
@@ -294,120 +350,20 @@ namespace Verse
 			}
 			try
 			{
-				PowerNetManager.PowerNetsTick();
+				Find.Autosaver.AutosaverTick();
 			}
 			catch (Exception ex9)
 			{
 				Log.Error(ex9.ToString());
 			}
-			try
-			{
-				SteadyAtmosphereEffects.SteadyAtmosphereEffectsTick();
-			}
-			catch (Exception ex10)
-			{
-				Log.Error(ex10.ToString());
-			}
-			try
-			{
-				Find.LordManager.LordManagerTick();
-			}
-			catch (Exception ex11)
-			{
-				Log.Error(ex11.ToString());
-			}
-			try
-			{
-				Find.PassingShipManager.PassingShipManagerTick();
-			}
-			catch (Exception ex12)
-			{
-				Log.Error(ex12.ToString());
-			}
-			try
-			{
-				Find.DebugDrawer.DebugDrawerTick();
-			}
-			catch (Exception ex13)
-			{
-				Log.Error(ex13.ToString());
-			}
-			try
-			{
-				Find.Map.autosaver.AutosaverTick();
-			}
-			catch (Exception ex14)
-			{
-				Log.Error(ex14.ToString());
-			}
-			try
-			{
-				Current.Game.taleManager.TaleManagerTick();
-			}
-			catch (Exception ex15)
-			{
-				Log.Error(ex15.ToString());
-			}
-			try
-			{
-				Find.VoluntarilyJoinableLordsStarter.VoluntarilyJoinableLordsStarterTick();
-			}
-			catch (Exception ex16)
-			{
-				Log.Error(ex16.ToString());
-			}
-			try
-			{
-				Find.MapConditionManager.MapConditionManagerTick();
-			}
-			catch (Exception ex17)
-			{
-				Log.Error(ex17.ToString());
-			}
-			try
-			{
-				Find.WeatherManager.WeatherManagerTick();
-			}
-			catch (Exception ex18)
-			{
-				Log.Error(ex18.ToString());
-			}
-			try
-			{
-				Find.ResourceCounter.ResourceCounterTick();
-			}
-			catch (Exception ex19)
-			{
-				Log.Error(ex19.ToString());
-			}
-			try
-			{
-				Find.History.HistoryTick();
-			}
-			catch (Exception ex20)
-			{
-				Log.Error(ex20.ToString());
-			}
-			try
-			{
-				DateUtility.DatesTick();
-			}
-			catch (Exception ex21)
-			{
-				Log.Error(ex21.ToString());
-			}
-			for (int i = 0; i < Find.Map.components.Count; i++)
-			{
-				try
-				{
-					Find.Map.components[i].MapComponentTick();
-				}
-				catch (Exception ex22)
-				{
-					Log.Error(ex22.ToString());
-				}
-			}
 			Debug.developerConsoleVisible = false;
+		}
+
+		public void RemoveAllFromMap(Map map)
+		{
+			this.tickListNormal.RemoveWhere((Thing x) => x.Map == map);
+			this.tickListRare.RemoveWhere((Thing x) => x.Map == map);
+			this.tickListLong.RemoveWhere((Thing x) => x.Map == map);
 		}
 
 		public void DebugSetTicksGame(int newTicksGame)

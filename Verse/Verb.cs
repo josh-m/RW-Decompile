@@ -1,7 +1,6 @@
 using RimWorld;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 using Verse.Sound;
 
@@ -21,7 +20,7 @@ namespace Verse
 
 		public VerbState state;
 
-		protected TargetInfo currentTarget = null;
+		protected LocalTargetInfo currentTarget = null;
 
 		protected int burstShotsLeft;
 
@@ -145,7 +144,7 @@ namespace Verse
 			return "Verb_" + this.loadID;
 		}
 
-		public bool TryStartCastOn(TargetInfo castTarg, bool surpriseAttack = false, bool canFreeIntercept = true)
+		public bool TryStartCastOn(LocalTargetInfo castTarg, bool surpriseAttack = false, bool canFreeIntercept = true)
 		{
 			if (this.caster == null)
 			{
@@ -163,7 +162,7 @@ namespace Verse
 			this.surpriseAttack = surpriseAttack;
 			this.canFreeInterceptNow = canFreeIntercept;
 			this.currentTarget = castTarg;
-			if (this.CasterIsPawn && this.verbProps.warmupTicks > 0)
+			if (this.CasterIsPawn && this.verbProps.warmupTime > 0f)
 			{
 				ShootLine newShootLine;
 				if (!this.TryFindShootLineFromTo(this.caster.Position, castTarg, out newShootLine))
@@ -172,7 +171,7 @@ namespace Verse
 				}
 				this.CasterPawn.Drawer.Notify_WarmingCastAlongLine(newShootLine, this.caster.Position);
 				float statValue = this.CasterPawn.GetStatValue(StatDefOf.AimingDelayFactor, true);
-				int ticks = Mathf.CeilToInt((float)this.verbProps.warmupTicks * statValue);
+				int ticks = (this.verbProps.warmupTime * statValue).SecondsToTicks();
 				this.CasterPawn.stances.SetStance(new Stance_Warmup(ticks, castTarg, this));
 			}
 			else
@@ -207,11 +206,11 @@ namespace Verse
 			{
 				if (this.verbProps.muzzleFlashScale > 0.01f)
 				{
-					MoteMaker.MakeStaticMote(this.caster.Position, ThingDefOf.Mote_ShotFlash, this.verbProps.muzzleFlashScale);
+					MoteMaker.MakeStaticMote(this.caster.Position, this.caster.Map, ThingDefOf.Mote_ShotFlash, this.verbProps.muzzleFlashScale);
 				}
 				if (this.verbProps.soundCast != null)
 				{
-					this.verbProps.soundCast.PlayOneShot(this.caster.Position);
+					this.verbProps.soundCast.PlayOneShot(new TargetInfo(this.caster.Position, this.caster.Map, false));
 				}
 				if (this.verbProps.soundCastTail != null)
 				{
@@ -265,7 +264,7 @@ namespace Verse
 			this.surpriseAttack = false;
 		}
 
-		public virtual void Notify_Dropped()
+		public virtual void Notify_EquipmentLost()
 		{
 			if (this.CasterIsPawn)
 			{
@@ -286,12 +285,12 @@ namespace Verse
 			return 0f;
 		}
 
-		public bool CanHitTarget(TargetInfo targ)
+		public bool CanHitTarget(LocalTargetInfo targ)
 		{
 			return this.CanHitTargetFrom(this.caster.Position, targ);
 		}
 
-		public virtual bool CanHitTargetFrom(IntVec3 root, TargetInfo targ)
+		public virtual bool CanHitTargetFrom(IntVec3 root, LocalTargetInfo targ)
 		{
 			if (targ.Thing != null && targ.Thing == this.caster)
 			{
@@ -302,7 +301,7 @@ namespace Verse
 				List<Apparel> wornApparel = this.CasterPawn.apparel.WornApparel;
 				for (int i = 0; i < wornApparel.Count; i++)
 				{
-					if (!wornApparel[i].AllowVerbCast(root, targ))
+					if (!wornApparel[i].AllowVerbCast(root, targ.ToTargetInfo(this.caster.Map)))
 					{
 						return false;
 					}
@@ -312,7 +311,7 @@ namespace Verse
 			return this.TryFindShootLineFromTo(root, targ, out shootLine);
 		}
 
-		public bool TryFindShootLineFromTo(IntVec3 root, TargetInfo targ, out ShootLine resultingLine)
+		public bool TryFindShootLineFromTo(IntVec3 root, LocalTargetInfo targ, out ShootLine resultingLine)
 		{
 			if (this.verbProps.MeleeRange)
 			{
@@ -345,7 +344,7 @@ namespace Verse
 						resultingLine = new ShootLine(root, dest);
 						return true;
 					}
-					ShootLeanUtility.LeanShootingSourcesFromTo(root, targ.Cell, Verb.tempLeanShootSources);
+					ShootLeanUtility.LeanShootingSourcesFromTo(root, targ.Cell, this.caster.Map, Verb.tempLeanShootSources);
 					for (int i = 0; i < Verb.tempLeanShootSources.Count; i++)
 					{
 						IntVec3 intVec = Verb.tempLeanShootSources[i];
@@ -376,10 +375,15 @@ namespace Verse
 			}
 		}
 
-		private bool CanHitFromCell(IntVec3 sourceCell, TargetInfo targ, out IntVec3 goodDest)
+		private bool CanHitFromCell(IntVec3 sourceCell, LocalTargetInfo targ, out IntVec3 goodDest)
 		{
 			if (targ.Thing != null)
 			{
+				if (targ.Thing.Map != this.caster.Map)
+				{
+					goodDest = IntVec3.Invalid;
+					return false;
+				}
 				ShootLeanUtility.CalcShootableCellsOf(Verb.tempDestList, targ.Thing);
 				for (int i = 0; i < Verb.tempDestList.Count; i++)
 				{
@@ -401,7 +405,7 @@ namespace Verse
 
 		private bool CanHitCellFromCellIgnoringRange(IntVec3 sourceSq, IntVec3 targetLoc)
 		{
-			return (!this.verbProps.mustCastOnOpenGround || (targetLoc.Standable() && !Find.ThingGrid.CellContains(targetLoc, ThingCategory.Pawn))) && (!this.verbProps.requireLineOfSight || GenSight.LineOfSight(sourceSq, targetLoc, true));
+			return (!this.verbProps.mustCastOnOpenGround || (targetLoc.Standable(this.caster.Map) && !this.caster.Map.thingGrid.CellContains(targetLoc, ThingCategory.Pawn))) && (!this.verbProps.requireLineOfSight || GenSight.LineOfSight(sourceSq, targetLoc, this.caster.Map, true));
 		}
 
 		public override string ToString()

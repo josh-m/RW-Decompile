@@ -27,7 +27,7 @@ namespace RimWorld
 			list.Add(new FloatMenuOption("DoXTimes".Translate(), delegate
 			{
 				bill.repeatMode = BillRepeatMode.RepeatCount;
-			}, MenuOptionPriority.Medium, null, null, 0f, null));
+			}, MenuOptionPriority.Default, null, null, 0f, null, null));
 			FloatMenuOption item = new FloatMenuOption("DoUntilYouHaveX".Translate(), delegate
 			{
 				if (!bill.recipe.WorkerCounter.CanCountProducts(bill))
@@ -38,12 +38,12 @@ namespace RimWorld
 				{
 					bill.repeatMode = BillRepeatMode.TargetCount;
 				}
-			}, MenuOptionPriority.Medium, null, null, 0f, null);
+			}, MenuOptionPriority.Default, null, null, 0f, null, null);
 			list.Add(item);
 			list.Add(new FloatMenuOption("DoForever".Translate(), delegate
 			{
 				bill.repeatMode = BillRepeatMode.Forever;
-			}, MenuOptionPriority.Medium, null, null, 0f, null));
+			}, MenuOptionPriority.Default, null, null, 0f, null, null));
 			Find.WindowStack.Add(new FloatMenu(list));
 		}
 	}

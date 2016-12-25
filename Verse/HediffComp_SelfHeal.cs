@@ -6,6 +6,14 @@ namespace Verse
 	{
 		public int ticksSinceHeal;
 
+		public HediffCompProperties_SelfHeal Props
+		{
+			get
+			{
+				return (HediffCompProperties_SelfHeal)this.props;
+			}
+		}
+
 		public override void CompExposeData()
 		{
 			Scribe_Values.LookValue<int>(ref this.ticksSinceHeal, "ticksSinceHeal", 0, false);
@@ -14,7 +22,7 @@ namespace Verse
 		public override void CompPostTick()
 		{
 			this.ticksSinceHeal++;
-			if (this.ticksSinceHeal > this.props.healIntervalTicksStanding)
+			if (this.ticksSinceHeal > this.Props.healIntervalTicksStanding)
 			{
 				this.parent.Severity -= 1f;
 				this.ticksSinceHeal = 0;

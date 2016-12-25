@@ -29,7 +29,7 @@ namespace RimWorld
 				{
 					if (this.<>f__this.CurJob.targetQueueA.Count > 0)
 					{
-						TargetInfo targetA = this.<>f__this.CurJob.targetQueueA[0];
+						LocalTargetInfo targetA = this.<>f__this.CurJob.targetQueueA[0];
 						this.<>f__this.CurJob.targetQueueA.RemoveAt(0);
 						this.<>f__this.CurJob.targetA = targetA;
 						this.<>f__this.JumpToToil(this.<goToil>__0);

@@ -39,12 +39,12 @@ namespace RimWorld
 				float num = actor.GetStatValue(StatDefOf.ResearchSpeed, true);
 				num *= this.<>f__this.TargetThingA.GetStatValue(StatDefOf.ResearchSpeedFactor, true);
 				Find.ResearchManager.ResearchPerformed(num, actor);
-				actor.skills.Learn(SkillDefOf.Research, 0.11f);
+				actor.skills.Learn(SkillDefOf.Research, 0.11f, false);
 				actor.GainComfortFromCellIfPossible();
 			};
 			research.FailOn(() => this.<>f__this.Project == null);
 			research.FailOn(() => !this.<>f__this.Project.CanBeResearchedAt(this.<>f__this.ResearchBench, false));
-			research.WithEffect("Research", TargetIndex.A);
+			research.WithEffect(EffecterDefOf.Research, TargetIndex.A);
 			research.WithProgressBar(TargetIndex.A, delegate
 			{
 				ResearchProjectDef project = this.<>f__this.Project;

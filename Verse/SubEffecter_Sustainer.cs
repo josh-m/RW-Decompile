@@ -20,7 +20,7 @@ namespace Verse
 			{
 				if (this.sustainer == null)
 				{
-					SoundInfo info = SoundInfo.InWorld(A, MaintenanceType.PerTick);
+					SoundInfo info = SoundInfo.InMap(A, MaintenanceType.PerTick);
 					this.sustainer = this.def.soundDef.TrySpawnSustainer(info);
 				}
 				else

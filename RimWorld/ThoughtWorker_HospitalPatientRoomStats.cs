@@ -7,21 +7,17 @@ namespace RimWorld
 	{
 		protected override ThoughtState CurrentStateInternal(Pawn p)
 		{
-			if (!p.InBed())
-			{
-				return ThoughtState.Inactive;
-			}
-			if (!p.health.capacities.CapableOf(PawnCapacityDefOf.Sight))
-			{
-				return ThoughtState.Inactive;
-			}
 			Building_Bed building_Bed = p.CurrentBed();
-			Room room = p.GetRoom();
-			if (!building_Bed.Medical || room == null || room.Role != RoomRoleDefOf.Hospital)
+			if (building_Bed == null || !building_Bed.Medical)
 			{
 				return ThoughtState.Inactive;
 			}
-			int scoreStageIndex = RoomStatDefOf.Beauty.GetScoreStageIndex(room.GetStat(RoomStatDefOf.Beauty));
+			Room room = p.GetRoom();
+			if (room == null || room.Role != RoomRoleDefOf.Hospital)
+			{
+				return ThoughtState.Inactive;
+			}
+			int scoreStageIndex = RoomStatDefOf.Impressiveness.GetScoreStageIndex(room.GetStat(RoomStatDefOf.Impressiveness));
 			if (this.def.stages[scoreStageIndex] != null)
 			{
 				return ThoughtState.ActiveAtStage(scoreStageIndex);

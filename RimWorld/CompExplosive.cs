@@ -72,15 +72,15 @@ namespace RimWorld
 				this.wickTicksLeft--;
 				if (this.wickTicksLeft <= 0)
 				{
-					this.Detonate();
+					this.Detonate(this.parent.MapHeld);
 				}
 			}
 		}
 
 		private void StartWickSustainer()
 		{
-			SoundDefOf.MetalHitImportant.PlayOneShot(this.parent.Position);
-			SoundInfo info = SoundInfo.InWorld(this.parent, MaintenanceType.PerTick);
+			SoundDefOf.MetalHitImportant.PlayOneShot(new TargetInfo(this.parent.Position, this.parent.Map, false));
+			SoundInfo info = SoundInfo.InMap(this.parent, MaintenanceType.PerTick);
 			this.wickSoundSustainer = SoundDefOf.HissSmall.TrySpawnSustainer(info);
 		}
 
@@ -88,20 +88,28 @@ namespace RimWorld
 		{
 			if (this.wickStarted)
 			{
-				OverlayDrawer.DrawOverlay(this.parent, OverlayTypes.BurningWick);
+				this.parent.Map.overlayDrawer.DrawOverlay(this.parent, OverlayTypes.BurningWick);
 			}
 		}
 
 		public override void PostPreApplyDamage(DamageInfo dinfo, out bool absorbed)
 		{
-			if (this.Props.startWickOnDamageTaken != null && dinfo.Def == this.Props.startWickOnDamageTaken && this.CanEverExplodeFromDamage)
+			absorbed = false;
+			if (this.CanEverExplodeFromDamage)
 			{
-				this.StartWick(dinfo.Instigator);
-				absorbed = true;
-			}
-			else
-			{
-				absorbed = false;
+				if (dinfo.Def.externalViolence && dinfo.Amount >= this.parent.HitPoints)
+				{
+					if (this.parent.MapHeld != null)
+					{
+						this.Detonate(this.parent.MapHeld);
+						absorbed = true;
+					}
+				}
+				else if (this.Props.startWickOnDamageTaken != null && dinfo.Def == this.Props.startWickOnDamageTaken)
+				{
+					this.StartWick(dinfo.Instigator);
+					absorbed = true;
+				}
 			}
 		}
 
@@ -111,21 +119,16 @@ namespace RimWorld
 			{
 				return;
 			}
-			if (this.parent.HitPoints <= 0 && this.StartWickThreshold >= 0)
+			if (!this.parent.Destroyed)
 			{
-				if (dinfo.Def.externalViolence)
+				if (this.wickStarted && dinfo.Def == DamageDefOf.Stun)
 				{
-					this.instigator = dinfo.Instigator;
-					this.Detonate();
+					this.StopWick();
 				}
-			}
-			else if (this.wickStarted && dinfo.Def == DamageDefOf.Stun)
-			{
-				this.StopWick();
-			}
-			else if (!this.wickStarted && this.parent.HitPoints <= this.StartWickThreshold && dinfo.Def.externalViolence)
-			{
-				this.StartWick(dinfo.Instigator);
+				else if (!this.wickStarted && this.parent.HitPoints <= this.StartWickThreshold && dinfo.Def.externalViolence)
+				{
+					this.StartWick(dinfo.Instigator);
+				}
 			}
 		}
 
@@ -148,7 +151,7 @@ namespace RimWorld
 			this.instigator = null;
 		}
 
-		protected void Detonate()
+		protected void Detonate(Map map)
 		{
 			if (this.detonated)
 			{
@@ -159,6 +162,11 @@ namespace RimWorld
 			{
 				this.parent.Destroy(DestroyMode.Kill);
 			}
+			if (map == null)
+			{
+				Log.Warning("Tried to detonate CompExplosive in a null map.");
+				return;
+			}
 			CompProperties_Explosive props = this.Props;
 			float num = props.explosiveRadius;
 			if (this.parent.stackCount > 1 && props.explosiveExpandPerStackcount > 0f)
@@ -168,13 +176,13 @@ namespace RimWorld
 			if (props.explosionEffect != null)
 			{
 				Effecter effecter = props.explosionEffect.Spawn();
-				effecter.Trigger(this.parent.Position, this.parent.Position);
+				effecter.Trigger(new TargetInfo(this.parent.PositionHeld, map, false), new TargetInfo(this.parent.PositionHeld, map, false));
 				effecter.Cleanup();
 			}
 			ThingDef postExplosionSpawnThingDef = props.postExplosionSpawnThingDef;
 			float postExplosionSpawnChance = props.postExplosionSpawnChance;
 			int postExplosionSpawnThingCount = props.postExplosionSpawnThingCount;
-			GenExplosion.DoExplosion(this.parent.Position, num, props.explosiveDamageType, this.instigator ?? this.parent, null, null, null, postExplosionSpawnThingDef, postExplosionSpawnChance, postExplosionSpawnThingCount, props.applyDamageToExplosionCellsNeighbors, props.preExplosionSpawnThingDef, props.preExplosionSpawnChance, props.preExplosionSpawnThingCount);
+			GenExplosion.DoExplosion(this.parent.PositionHeld, map, num, props.explosiveDamageType, this.instigator ?? this.parent, null, null, null, postExplosionSpawnThingDef, postExplosionSpawnChance, postExplosionSpawnThingCount, props.applyDamageToExplosionCellsNeighbors, props.preExplosionSpawnThingDef, props.preExplosionSpawnChance, props.preExplosionSpawnThingCount);
 		}
 	}
 }

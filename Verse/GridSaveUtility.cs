@@ -13,9 +13,9 @@ namespace Verse
 			public IntVec3 cell;
 		}
 
-		public static string CompressedStringForShortGrid(Func<IntVec3, ushort> shortGetter)
+		public static string CompressedStringForShortGrid(Func<IntVec3, ushort> shortGetter, Map map)
 		{
-			int numCells = Find.Map.info.NumCells;
+			int numCells = map.info.NumCells;
 			byte[] array = new byte[numCells * 2];
 			IntVec3 arg = new IntVec3(0, 0, 0);
 			int num = 0;
@@ -28,11 +28,11 @@ namespace Verse
 				array[num + 1] = b2;
 				num += 2;
 				arg.x++;
-				if (arg.x >= Find.Map.Size.x)
+				if (arg.x >= map.Size.x)
 				{
 					arg.x = 0;
 					arg.z++;
-					if (arg.z >= Find.Map.Size.z)
+					if (arg.z >= map.Size.z)
 					{
 						break;
 					}
@@ -43,7 +43,7 @@ namespace Verse
 		}
 
 		[DebuggerHidden]
-		public static IEnumerable<GridSaveUtility.LoadedGridShort> LoadedUShortGrid(string compressedString)
+		public static IEnumerable<GridSaveUtility.LoadedGridShort> LoadedUShortGrid(string compressedString, Map map)
 		{
 			compressedString = ArrayExposeUtility.RemoveLineBreaks(compressedString);
 			byte[] byteGrid = Convert.FromBase64String(compressedString);
@@ -57,11 +57,11 @@ namespace Verse
 				byteInd += 2;
 				yield return loadedElement;
 				curSq.x++;
-				if (curSq.x >= Find.Map.Size.x)
+				if (curSq.x >= map.Size.x)
 				{
 					curSq.x = 0;
 					curSq.z++;
-					if (curSq.z >= Find.Map.Size.z)
+					if (curSq.z >= map.Size.z)
 					{
 						break;
 					}

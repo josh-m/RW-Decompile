@@ -40,7 +40,11 @@ namespace RimWorld
 
 		public void RecentMemoryInterval()
 		{
-			if (Find.GlowGrid.PsychGlowAt(this.pawn.Position) != PsychGlow.Dark)
+			if (!this.pawn.Spawned)
+			{
+				return;
+			}
+			if (this.pawn.Map.glowGrid.PsychGlowAt(this.pawn.Position) != PsychGlow.Dark)
 			{
 				this.lastLightTick = Find.TickManager.TicksGame;
 			}
@@ -52,7 +56,7 @@ namespace RimWorld
 
 		private bool Outdoors()
 		{
-			Room room = this.pawn.Position.GetRoom();
+			Room room = this.pawn.GetRoom();
 			return room != null && room.PsychologicallyOutdoors;
 		}
 

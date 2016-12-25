@@ -9,11 +9,11 @@ namespace RimWorld
 		{
 			if (def.HasComp(typeof(CompAffectedByFacilities)))
 			{
-				CompAffectedByFacilities.DrawLinesToPotentialThingsToLinkTo(def, center, rot);
+				CompAffectedByFacilities.DrawLinesToPotentialThingsToLinkTo(def, center, rot, base.Map);
 			}
 			else
 			{
-				CompFacility.DrawLinesToPotentialThingsToLinkTo(def, center, rot);
+				CompFacility.DrawLinesToPotentialThingsToLinkTo(def, center, rot, base.Map);
 			}
 		}
 	}

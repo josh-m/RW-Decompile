@@ -8,8 +8,8 @@ namespace RimWorld
 		protected override ThoughtState CurrentStateInternal(Pawn p)
 		{
 			float statValue = p.GetStatValue(StatDefOf.ComfyTemperatureMin, true);
-			float temperatureForCell = GenTemperature.GetTemperatureForCell(p.Position);
-			float num = statValue - temperatureForCell;
+			float temperatureAtCellOrCaravanTile = GenTemperature.GetTemperatureAtCellOrCaravanTile(p);
+			float num = statValue - temperatureAtCellOrCaravanTile;
 			if (num <= 0f)
 			{
 				return ThoughtState.Inactive;

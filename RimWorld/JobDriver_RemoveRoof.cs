@@ -21,7 +21,7 @@ namespace RimWorld
 		[DebuggerHidden]
 		protected override IEnumerable<Toil> MakeNewToils()
 		{
-			this.FailOn(() => !Find.AreaNoRoof[this.<>f__this.Cell]);
+			this.FailOn(() => !this.<>f__this.Map.areaManager.NoRoof[this.<>f__this.Cell]);
 			foreach (Toil t in base.MakeNewToils())
 			{
 				yield return t;
@@ -31,15 +31,15 @@ namespace RimWorld
 		protected override void DoEffect()
 		{
 			JobDriver_RemoveRoof.removedRoofs.Clear();
-			Find.RoofGrid.SetRoof(base.Cell, null);
+			base.Map.roofGrid.SetRoof(base.Cell, null);
 			JobDriver_RemoveRoof.removedRoofs.Add(base.Cell);
-			RoofCollapseCellsFinder.CheckCollapseFlyingRoofs(JobDriver_RemoveRoof.removedRoofs, true);
+			RoofCollapseCellsFinder.CheckCollapseFlyingRoofs(JobDriver_RemoveRoof.removedRoofs, base.Map, true);
 			JobDriver_RemoveRoof.removedRoofs.Clear();
 		}
 
 		protected override bool DoWorkFailOn()
 		{
-			return !base.Cell.Roofed();
+			return !base.Cell.Roofed(base.Map);
 		}
 	}
 }

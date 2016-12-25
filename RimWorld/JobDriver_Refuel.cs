@@ -12,7 +12,7 @@ namespace RimWorld
 
 		private const TargetIndex FuelInd = TargetIndex.B;
 
-		private const int RefuelingDuration = 300;
+		private const int RefuelingDuration = 240;
 
 		protected Thing Refuelable
 		{
@@ -36,12 +36,11 @@ namespace RimWorld
 			this.FailOnDespawnedNullOrForbidden(TargetIndex.A);
 			this.FailOn(delegate
 			{
-				TargetInfo target = this.<>f__this.pawn.CurJob.GetTarget(TargetIndex.A);
-				ThingWithComps thingWithComps = target.Thing as ThingWithComps;
+				ThingWithComps thingWithComps = this.<>f__this.pawn.CurJob.GetTarget(TargetIndex.A).Thing as ThingWithComps;
 				if (thingWithComps != null)
 				{
 					CompFlickable comp = thingWithComps.GetComp<CompFlickable>();
-					if (comp != null && (!comp.SwitchIsOn || Find.DesignationManager.DesignationOn(target.Thing, DesignationDefOf.Flick) != null))
+					if (comp != null && !comp.SwitchIsOn)
 					{
 						return true;
 					}
@@ -52,10 +51,10 @@ namespace RimWorld
 			Toil reserveFuel = Toils_Reserve.Reserve(TargetIndex.B, 1);
 			yield return reserveFuel;
 			yield return Toils_Goto.GotoThing(TargetIndex.B, PathEndMode.ClosestTouch).FailOnDespawnedNullOrForbidden(TargetIndex.B).FailOnSomeonePhysicallyInteracting(TargetIndex.B);
-			yield return Toils_Haul.StartCarryThing(TargetIndex.B).FailOnDestroyedNullOrForbidden(TargetIndex.B);
-			yield return Toils_Haul.CheckForGetOpportunityDuplicate(reserveFuel, TargetIndex.B, TargetIndex.None);
+			yield return Toils_Haul.StartCarryThing(TargetIndex.B, false, false).FailOnDestroyedNullOrForbidden(TargetIndex.B);
+			yield return Toils_Haul.CheckForGetOpportunityDuplicate(reserveFuel, TargetIndex.B, TargetIndex.None, false, null);
 			yield return Toils_Goto.GotoThing(TargetIndex.A, PathEndMode.Touch);
-			yield return Toils_General.Wait(300).FailOnDestroyedNullOrForbidden(TargetIndex.B).FailOnDestroyedNullOrForbidden(TargetIndex.A).WithProgressBarToilDelay(TargetIndex.A, false, -0.5f);
+			yield return Toils_General.Wait(240).FailOnDestroyedNullOrForbidden(TargetIndex.B).FailOnDestroyedNullOrForbidden(TargetIndex.A).WithProgressBarToilDelay(TargetIndex.A, false, -0.5f);
 			yield return Toils_Refuel.FinalizeRefueling(TargetIndex.A, TargetIndex.B);
 		}
 	}

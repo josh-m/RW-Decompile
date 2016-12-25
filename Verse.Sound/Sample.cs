@@ -23,6 +23,11 @@ namespace Verse.Sound
 
 		private Dictionary<SoundParamTarget, float> volumeInMappings = new Dictionary<SoundParamTarget, float>();
 
+		public abstract Map Map
+		{
+			get;
+		}
+
 		public float AgeRealTime
 		{
 			get
@@ -35,7 +40,7 @@ namespace Verse.Sound
 		{
 			get
 			{
-				if (Current.ProgramState == ProgramState.MapPlaying)
+				if (Current.ProgramState == ProgramState.Playing)
 				{
 					return Find.TickManager.TicksGame - this.startTick;
 				}
@@ -80,6 +85,18 @@ namespace Verse.Sound
 			}
 		}
 
+		protected float ContextVolumeMultiplier
+		{
+			get
+			{
+				if (SoundDefHelper.CorrectContextNow(this.subDef.parentDef, this.Map))
+				{
+					return 1f;
+				}
+				return 0f;
+			}
+		}
+
 		protected abstract bool TestPlaying
 		{
 			get;
@@ -91,7 +108,7 @@ namespace Verse.Sound
 			this.resolvedVolume = def.RandomizedVolume();
 			this.resolvedPitch = def.pitchRange.RandomInRange;
 			this.startRealTime = Time.realtimeSinceStartup;
-			if (Current.ProgramState == ProgramState.MapPlaying)
+			if (Current.ProgramState == ProgramState.Playing)
 			{
 				this.startTick = Find.TickManager.TicksGame;
 			}

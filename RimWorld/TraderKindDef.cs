@@ -11,15 +11,6 @@ namespace RimWorld
 
 		public bool orbital;
 
-		public override void PostLoad()
-		{
-			base.PostLoad();
-			foreach (StockGenerator current in this.stockGenerators)
-			{
-				current.PostLoad();
-			}
-		}
-
 		public override void ResolveReferences()
 		{
 			base.ResolveReferences();
@@ -63,19 +54,18 @@ namespace RimWorld
 			{
 				return PriceType.Undefined;
 			}
-			for (int i = 0; i < this.stockGenerators.Count; i++)
-			{
-				PriceType result;
-				if (this.stockGenerators[i].TryGetPriceType(thingDef, action, out result))
-				{
-					return result;
-				}
-			}
 			if (action == TradeAction.PlayerBuys)
 			{
-				return PriceType.Normal;
+				for (int i = 0; i < this.stockGenerators.Count; i++)
+				{
+					PriceType result;
+					if (this.stockGenerators[i].TryGetPriceType(thingDef, action, out result))
+					{
+						return result;
+					}
+				}
 			}
-			return PriceType.Cheap;
+			return PriceType.Normal;
 		}
 	}
 }

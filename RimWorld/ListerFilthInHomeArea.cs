@@ -5,78 +5,85 @@ using Verse;
 
 namespace RimWorld
 {
-	public static class ListerFilthInHomeArea
+	public class ListerFilthInHomeArea
 	{
-		private static List<Thing> filthInHomeArea = new List<Thing>();
+		private Map map;
 
-		public static List<Thing> FilthInHomeArea
+		private List<Thing> filthInHomeArea = new List<Thing>();
+
+		public List<Thing> FilthInHomeArea
 		{
 			get
 			{
-				return ListerFilthInHomeArea.filthInHomeArea;
+				return this.filthInHomeArea;
 			}
 		}
 
-		public static void RebuildAll()
+		public ListerFilthInHomeArea(Map map)
 		{
-			ListerFilthInHomeArea.filthInHomeArea.Clear();
-			foreach (IntVec3 current in Find.Map.AllCells)
+			this.map = map;
+		}
+
+		public void RebuildAll()
+		{
+			this.filthInHomeArea.Clear();
+			foreach (IntVec3 current in this.map.AllCells)
 			{
-				ListerFilthInHomeArea.Notify_HomeAreaChanged(current);
+				this.Notify_HomeAreaChanged(current);
 			}
 		}
 
-		public static void Notify_FilthSpawned(Filth f)
+		public void Notify_FilthSpawned(Filth f)
 		{
-			if (Find.AreaHome[f.Position])
+			if (this.map.areaManager.Home[f.Position])
 			{
-				ListerFilthInHomeArea.filthInHomeArea.Add(f);
+				this.filthInHomeArea.Add(f);
 			}
 		}
 
-		public static void Notify_FilthDespawned(Filth f)
+		public void Notify_FilthDespawned(Filth f)
 		{
-			for (int i = 0; i < ListerFilthInHomeArea.filthInHomeArea.Count; i++)
+			for (int i = 0; i < this.filthInHomeArea.Count; i++)
 			{
-				if (ListerFilthInHomeArea.filthInHomeArea[i] == f)
+				if (this.filthInHomeArea[i] == f)
 				{
-					ListerFilthInHomeArea.filthInHomeArea.RemoveAt(i);
+					this.filthInHomeArea.RemoveAt(i);
 					return;
 				}
 			}
 		}
 
-		public static void Notify_HomeAreaChanged(IntVec3 c)
+		public void Notify_HomeAreaChanged(IntVec3 c)
 		{
-			if (Find.AreaHome[c])
+			if (this.map.areaManager.Home[c])
 			{
-				List<Thing> thingList = c.GetThingList();
+				List<Thing> thingList = c.GetThingList(this.map);
 				for (int i = 0; i < thingList.Count; i++)
 				{
 					Filth filth = thingList[i] as Filth;
 					if (filth != null)
 					{
-						ListerFilthInHomeArea.filthInHomeArea.Add(filth);
+						this.filthInHomeArea.Add(filth);
 					}
 				}
 			}
 			else
 			{
-				for (int j = ListerFilthInHomeArea.filthInHomeArea.Count - 1; j >= 0; j--)
+				for (int j = this.filthInHomeArea.Count - 1; j >= 0; j--)
 				{
-					if (ListerFilthInHomeArea.filthInHomeArea[j].Position == c)
+					if (this.filthInHomeArea[j].Position == c)
 					{
-						ListerFilthInHomeArea.filthInHomeArea.RemoveAt(j);
+						this.filthInHomeArea.RemoveAt(j);
 					}
 				}
 			}
 		}
 
-		internal static string DebugString()
+		internal string DebugString()
 		{
 			StringBuilder stringBuilder = new StringBuilder();
 			stringBuilder.AppendLine("======= Filth in home area");
-			foreach (Thing current in ListerFilthInHomeArea.filthInHomeArea)
+			foreach (Thing current in this.filthInHomeArea)
 			{
 				stringBuilder.AppendLine(current.ThingID + " " + current.Position);
 			}

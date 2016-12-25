@@ -12,7 +12,7 @@ namespace RimWorld
 		{
 			get
 			{
-				foreach (Pawn p in Find.MapPawns.FreeColonistsSpawned)
+				foreach (Pawn p in PawnsFinder.AllMaps_FreeColonistsSpawned)
 				{
 					if (!p.Downed && p.mindState.mentalBreaker.BreakExtremeIsImminent)
 					{
@@ -26,7 +26,7 @@ namespace RimWorld
 		{
 			get
 			{
-				foreach (Pawn p in Find.MapPawns.FreeColonistsSpawned)
+				foreach (Pawn p in PawnsFinder.AllMaps_FreeColonistsSpawned)
 				{
 					if (!p.Downed && p.mindState.mentalBreaker.BreakMajorIsImminent)
 					{
@@ -40,7 +40,7 @@ namespace RimWorld
 		{
 			get
 			{
-				foreach (Pawn p in Find.MapPawns.FreeColonistsSpawned)
+				foreach (Pawn p in PawnsFinder.AllMaps_FreeColonistsSpawned)
 				{
 					if (!p.Downed && p.mindState.mentalBreaker.BreakMinorIsImminent)
 					{

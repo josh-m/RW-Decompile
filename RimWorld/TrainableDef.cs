@@ -14,6 +14,7 @@ namespace RimWorld
 
 		public List<TrainableDef> prerequisites;
 
+		[NoTranslate]
 		public List<string> tags = new List<string>();
 
 		public bool defaultTrainable;

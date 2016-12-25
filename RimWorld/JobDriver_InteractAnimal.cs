@@ -120,17 +120,17 @@ namespace RimWorld
 				Pawn actor = toil.GetActor();
 				Pawn pawn = (Pawn)((Thing)actor.CurJob.GetTarget(tameeInd));
 				PawnUtility.ForceWait(pawn, 270, actor);
-				Thing thing = FoodUtility.BestFoodInInventory(actor, pawn, FoodPreferability.NeverForNutrition, FoodPreferability.RawTasty, 0f);
+				Thing thing = FoodUtility.BestFoodInInventory(actor, pawn, FoodPreferability.NeverForNutrition, FoodPreferability.RawTasty, 0f, false);
 				if (thing == null)
 				{
-					actor.jobs.EndCurrentJob(JobCondition.Incompletable);
+					actor.jobs.EndCurrentJob(JobCondition.Incompletable, true);
 					return;
 				}
 				actor.mindState.lastInventoryRawFoodUseTick = Find.TickManager.TicksGame;
 				int num = FoodUtility.StackCountForNutrition(thing.def, this.feedNutritionLeft);
 				int stackCount = thing.stackCount;
-				Thing thing2 = actor.inventory.container.Get(thing, Mathf.Min(num, stackCount));
-				actor.carrier.TryStartCarry(thing2);
+				Thing thing2 = actor.inventory.innerContainer.Get(thing, Mathf.Min(num, stackCount));
+				actor.carryTracker.TryStartCarry(thing2);
 				actor.CurJob.SetTarget(TargetIndex.B, thing2);
 				float num2 = (float)thing2.stackCount * thing2.def.ingestible.nutrition;
 				this.ticksLeftThisToil = Mathf.CeilToInt(270f * (num2 / JobDriver_InteractAnimal.RequiredNutritionPerFeed(pawn)));

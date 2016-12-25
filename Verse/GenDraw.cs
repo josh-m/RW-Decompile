@@ -1,3 +1,4 @@
+using RimWorld.Planet;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -30,9 +31,13 @@ namespace Verse
 
 		private const float LineWidth = 0.2f;
 
+		private const float BaseWorldLineWidth = 0.2f;
+
 		private static readonly Material TargetSquareMatSingle = MaterialPool.MatFrom("UI/Overlays/TargetHighlight_Square", ShaderDatabase.Transparent);
 
 		public static readonly string LineTexPath = "UI/Overlays/ThingLine";
+
+		public static readonly string OneSidedLineTexPath = "UI/Overlays/OneSidedLine";
 
 		private static readonly Material LineMatWhite = MaterialPool.MatFrom(GenDraw.LineTexPath, ShaderDatabase.Transparent, Color.white);
 
@@ -50,19 +55,33 @@ namespace Verse
 
 		private static readonly Material LineMatMetaOverlay = MaterialPool.MatFrom(GenDraw.LineTexPath, ShaderDatabase.MetaOverlay);
 
+		private static readonly Material WorldLineMatWhite = MaterialPool.MatFrom(GenDraw.LineTexPath, ShaderDatabase.WorldOverlayTransparent, Color.white);
+
+		private static readonly Material OneSidedWorldLineMatWhite = MaterialPool.MatFrom(GenDraw.OneSidedLineTexPath, ShaderDatabase.WorldOverlayTransparent, Color.white);
+
 		public static readonly Material InteractionCellMaterial = MaterialPool.MatFrom("UI/Overlays/InteractionCell", ShaderDatabase.Transparent);
+
+		private static List<int> cachedEdgeTiles = new List<int>();
+
+		private static int cachedEdgeTilesForCenter = -1;
+
+		private static int cachedEdgeTilesForRadius = -1;
+
+		private static int cachedEdgeTilesForWorldSeed = -1;
 
 		private static List<IntVec3> ringDrawCells = new List<IntVec3>();
 
 		private static bool maxRadiusMessaged = false;
 
-		private static bool[,] fieldGrid = null;
+		private static BoolGrid fieldGrid;
+
+		private static bool[] rotNeeded = new bool[4];
 
 		private static readonly Material AimPieMaterial = SolidColorMaterials.SimpleSolidColorMaterial(new Color(1f, 1f, 1f, 0.3f));
 
 		private static readonly Material ArrowMatWhite = MaterialPool.MatFrom("UI/Overlays/Arrow", ShaderDatabase.CutoutFlying, Color.white);
 
-		private static Material CurTargetingMat
+		public static Material CurTargetingMat
 		{
 			get
 			{
@@ -88,7 +107,7 @@ namespace Verse
 		private static void DrawMapEdgeLines(int edgeDist)
 		{
 			float y = Altitudes.AltitudeFor(AltitudeLayer.MetaOverlays);
-			IntVec3 size = Find.Map.Size;
+			IntVec3 size = Find.VisibleMap.Size;
 			Vector3 vector = new Vector3((float)edgeDist, y, (float)edgeDist);
 			Vector3 vector2 = new Vector3((float)edgeDist, y, (float)(size.z - edgeDist));
 			Vector3 vector3 = new Vector3((float)(size.x - edgeDist), y, (float)(size.z - edgeDist));
@@ -157,7 +176,100 @@ namespace Verse
 			Graphics.DrawMesh(MeshPool.plane10, matrix, mat, 0);
 		}
 
-		public static void DrawTargetHighlight(TargetInfo targ)
+		public static void DrawWorldLineBetween(Vector3 A, Vector3 B)
+		{
+			GenDraw.DrawWorldLineBetween(A, B, GenDraw.WorldLineMatWhite, 1f);
+		}
+
+		public static void DrawWorldLineBetween(Vector3 A, Vector3 B, Material material)
+		{
+			GenDraw.DrawWorldLineBetween(A, B, material, 1f);
+		}
+
+		public static void DrawWorldLineBetween(Vector3 A, Vector3 B, Material material, float widthFactor)
+		{
+			if (Mathf.Abs(A.x - B.x) < 0.005f && Mathf.Abs(A.y - B.y) < 0.005f && Mathf.Abs(A.z - B.z) < 0.005f)
+			{
+				return;
+			}
+			Vector3 pos = (A + B) / 2f;
+			float magnitude = (A - B).magnitude;
+			Quaternion q = Quaternion.LookRotation(A - B, pos.normalized);
+			Vector3 s = new Vector3(0.2f * Find.WorldGrid.averageTileSize * widthFactor, 1f, magnitude);
+			Matrix4x4 matrix = default(Matrix4x4);
+			matrix.SetTRS(pos, q, s);
+			Graphics.DrawMesh(MeshPool.plane10, matrix, material, WorldCameraManager.WorldLayer);
+		}
+
+		public static void DrawWorldRadiusRing(int center, int radius)
+		{
+			if (radius < 0)
+			{
+				return;
+			}
+			if (GenDraw.cachedEdgeTilesForCenter != center || GenDraw.cachedEdgeTilesForRadius != radius || GenDraw.cachedEdgeTilesForWorldSeed != Find.World.info.Seed)
+			{
+				GenDraw.cachedEdgeTilesForCenter = center;
+				GenDraw.cachedEdgeTilesForRadius = radius;
+				GenDraw.cachedEdgeTilesForWorldSeed = Find.World.info.Seed;
+				GenDraw.cachedEdgeTiles.Clear();
+				WorldFloodFiller.FloodFill(center, (int tile) => true, delegate(int tile, int dist)
+				{
+					if (dist > radius + 1)
+					{
+						return true;
+					}
+					if (dist == radius + 1)
+					{
+						GenDraw.cachedEdgeTiles.Add(tile);
+					}
+					return false;
+				}, 2147483647);
+				WorldGrid worldGrid = Find.WorldGrid;
+				Vector3 c = worldGrid.GetTileCenter(center);
+				Vector3 n = c.normalized;
+				GenDraw.cachedEdgeTiles.Sort(delegate(int a, int b)
+				{
+					float num = Vector3.Dot(n, Vector3.Cross(worldGrid.GetTileCenter(a) - c, worldGrid.GetTileCenter(b) - c));
+					if (Mathf.Abs(num) < 0.0001f)
+					{
+						return 0;
+					}
+					if (num < 0f)
+					{
+						return -1;
+					}
+					return 1;
+				});
+			}
+			GenDraw.DrawWorldLineStrip(GenDraw.cachedEdgeTiles, GenDraw.OneSidedWorldLineMatWhite, 5f);
+		}
+
+		public static void DrawWorldLineStrip(List<int> edgeTiles, Material material, float widthFactor)
+		{
+			if (edgeTiles.Count < 3)
+			{
+				return;
+			}
+			WorldGrid worldGrid = Find.WorldGrid;
+			float d = 0.05f;
+			for (int i = 0; i < edgeTiles.Count; i++)
+			{
+				int index = (i != 0) ? (i - 1) : (edgeTiles.Count - 1);
+				int num = edgeTiles[index];
+				int num2 = edgeTiles[i];
+				if (worldGrid.IsNeighbor(num, num2))
+				{
+					Vector3 a = worldGrid.GetTileCenter(num);
+					Vector3 vector = worldGrid.GetTileCenter(num2);
+					a += a.normalized * d;
+					vector += vector.normalized * d;
+					GenDraw.DrawWorldLineBetween(a, vector, material, widthFactor);
+				}
+			}
+		}
+
+		public static void DrawTargetHighlight(LocalTargetInfo targ)
 		{
 			if (targ.Thing != null)
 			{
@@ -189,7 +301,7 @@ namespace Verse
 		{
 			if (tDef.hasInteractionCell)
 			{
-				Vector3 position = Thing.InteractionCellWhenAt(tDef, center, placingRot).ToVector3ShiftedWithAltitude(AltitudeLayer.MetaOverlays);
+				Vector3 position = Thing.InteractionCellWhenAt(tDef, center, placingRot, Find.VisibleMap).ToVector3ShiftedWithAltitude(AltitudeLayer.MetaOverlays);
 				Graphics.DrawMesh(MeshPool.plane10, position, Quaternion.identity, GenDraw.InteractionCellMaterial, 0);
 			}
 		}
@@ -221,6 +333,7 @@ namespace Verse
 
 		public static void DrawFieldEdges(List<IntVec3> cells, Color color)
 		{
+			Map visibleMap = Find.VisibleMap;
 			Material material = MaterialPool.MatFrom(new MaterialRequest
 			{
 				shader = ShaderDatabase.Transparent,
@@ -228,54 +341,48 @@ namespace Verse
 				BaseTexPath = "UI/Overlays/TargetHighlight_Side"
 			});
 			material.GetTexture("_MainTex").wrapMode = TextureWrapMode.Clamp;
-			int x = Find.Map.Size.x;
-			int z = Find.Map.Size.z;
-			if (GenDraw.fieldGrid == null || GenDraw.fieldGrid.GetLength(0) != Find.Map.Size.x || GenDraw.fieldGrid.GetLength(1) != Find.Map.Size.z)
+			if (GenDraw.fieldGrid == null)
 			{
-				GenDraw.fieldGrid = new bool[x, z];
+				GenDraw.fieldGrid = new BoolGrid(visibleMap);
 			}
-			for (int i = 0; i < x; i++)
+			else
 			{
-				for (int j = 0; j < z; j++)
-				{
-					GenDraw.fieldGrid[i, j] = false;
-				}
+				GenDraw.fieldGrid.ClearAndResizeTo(visibleMap);
 			}
+			int x = visibleMap.Size.x;
+			int z = visibleMap.Size.z;
 			int count = cells.Count;
-			for (int k = 0; k < count; k++)
+			for (int i = 0; i < count; i++)
 			{
-				if (cells[k].InBounds())
+				if (cells[i].InBounds(visibleMap))
 				{
-					GenDraw.fieldGrid[cells[k].x, cells[k].z] = true;
+					GenDraw.fieldGrid[cells[i].x, cells[i].z] = true;
 				}
 			}
-			for (int l = 0; l < count; l++)
+			for (int j = 0; j < count; j++)
 			{
-				IntVec3 c = cells[l];
-				if (c.InBounds())
+				IntVec3 c = cells[j];
+				if (c.InBounds(visibleMap))
 				{
-					bool[] array = new bool[]
+					GenDraw.rotNeeded[0] = (c.z < z - 1 && !GenDraw.fieldGrid[c.x, c.z + 1]);
+					GenDraw.rotNeeded[1] = (c.x < x - 1 && !GenDraw.fieldGrid[c.x + 1, c.z]);
+					GenDraw.rotNeeded[2] = (c.z > 0 && !GenDraw.fieldGrid[c.x, c.z - 1]);
+					GenDraw.rotNeeded[3] = (c.x > 0 && !GenDraw.fieldGrid[c.x - 1, c.z]);
+					for (int k = 0; k < 4; k++)
 					{
-						c.z < z - 1 && !GenDraw.fieldGrid[c.x, c.z + 1],
-						c.x < x - 1 && !GenDraw.fieldGrid[c.x + 1, c.z],
-						c.z > 0 && !GenDraw.fieldGrid[c.x, c.z - 1],
-						c.x > 0 && !GenDraw.fieldGrid[c.x - 1, c.z]
-					};
-					for (int m = 0; m < 4; m++)
-					{
-						if (array[m])
+						if (GenDraw.rotNeeded[k])
 						{
-							Mesh arg_282_0 = MeshPool.plane10;
-							Vector3 arg_282_1 = c.ToVector3ShiftedWithAltitude(AltitudeLayer.MetaOverlays);
-							Rot4 rot = new Rot4(m);
-							Graphics.DrawMesh(arg_282_0, arg_282_1, rot.AsQuat, material, 0);
+							Mesh arg_219_0 = MeshPool.plane10;
+							Vector3 arg_219_1 = c.ToVector3ShiftedWithAltitude(AltitudeLayer.MetaOverlays);
+							Rot4 rot = new Rot4(k);
+							Graphics.DrawMesh(arg_219_0, arg_219_1, rot.AsQuat, material, 0);
 						}
 					}
 				}
 			}
 		}
 
-		public static void DrawAimPie(Thing shooter, TargetInfo target, int degreesWide, float offsetDist)
+		public static void DrawAimPie(Thing shooter, LocalTargetInfo target, int degreesWide, float offsetDist)
 		{
 			float facing = 0f;
 			if (target.Cell != shooter.Position)
@@ -365,7 +472,7 @@ namespace Verse
 
 		public static void DrawArrowPointingAt(Vector3 mapTarget, bool offscreenOnly = false)
 		{
-			Vector3 vector = Gen.ScreenToWorldPoint((float)(Screen.width / 2), (float)(Screen.height / 2));
+			Vector3 vector = UI.UIToMapPosition((float)(UI.screenWidth / 2), (float)(UI.screenHeight / 2));
 			if ((vector - mapTarget).MagnitudeHorizontalSquared() < 81f)
 			{
 				if (!offscreenOnly)

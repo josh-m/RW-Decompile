@@ -29,14 +29,14 @@ namespace RimWorld
 
 		public void BreathMoteMakerTick()
 		{
-			if (!this.pawn.RaceProps.Humanlike || this.pawn.RaceProps.IsMechanoid || !this.pawn.Spawned)
+			if (!this.pawn.RaceProps.Humanlike || this.pawn.RaceProps.IsMechanoid)
 			{
 				return;
 			}
 			int num = (Find.TickManager.TicksGame + this.pawn.HashOffset()) % 320;
 			if (num == 0)
 			{
-				this.doThisBreath = (this.pawn.Position.GetTemperature() < 0f && this.pawn.GetPosture() != PawnPosture.Standing);
+				this.doThisBreath = (this.pawn.Position.GetTemperature(this.pawn.Map) < 0f && this.pawn.GetPosture() != PawnPosture.Standing);
 			}
 			if (this.doThisBreath && num < 80 && num % 8 == 0)
 			{
@@ -48,7 +48,7 @@ namespace RimWorld
 		{
 			Vector3 loc = this.pawn.Drawer.DrawPos + this.pawn.Drawer.renderer.BaseHeadOffsetAt(this.pawn.Rotation) + this.pawn.Rotation.FacingCell.ToVector3() * 0.21f + PawnBreathMoteMaker.BreathOffset;
 			Vector3 lastTickTweenedVelocity = this.pawn.Drawer.tweener.LastTickTweenedVelocity;
-			MoteMaker.ThrowBreathPuff(loc, this.pawn.Rotation.AsAngle, lastTickTweenedVelocity);
+			MoteMaker.ThrowBreathPuff(loc, this.pawn.Map, this.pawn.Rotation.AsAngle, lastTickTweenedVelocity);
 		}
 	}
 }

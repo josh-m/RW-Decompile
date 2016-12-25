@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 using Verse;
 using Verse.AI;
 
@@ -21,7 +22,7 @@ namespace RimWorld
 			}
 		}
 
-		private static bool ResourceValidator(Pawn pawn, ThingCount need, Thing th)
+		private static bool ResourceValidator(Pawn pawn, ThingCountClass need, Thing th)
 		{
 			return th.def == need.thingDef && !th.IsForbidden(pawn) && pawn.CanReserve(th, 1);
 		}
@@ -32,47 +33,52 @@ namespace RimWorld
 			if (blueprint_Install == null)
 			{
 				bool flag = false;
-				List<ThingCount> list = c.MaterialsNeeded();
+				List<ThingCountClass> list = c.MaterialsNeeded();
 				int count = list.Count;
 				for (int i = 0; i < count; i++)
 				{
-					WorkGiver_ConstructDeliverResources.<ResourceDeliverJobFor>c__AnonStorey248 <ResourceDeliverJobFor>c__AnonStorey2 = new WorkGiver_ConstructDeliverResources.<ResourceDeliverJobFor>c__AnonStorey248();
-					<ResourceDeliverJobFor>c__AnonStorey2.<>f__ref$583 = <ResourceDeliverJobFor>c__AnonStorey;
-					<ResourceDeliverJobFor>c__AnonStorey2.need = list[i];
-					if (!ItemAvailabilityUtility.ThingsAvailableAnywhere(<ResourceDeliverJobFor>c__AnonStorey2.need, pawn))
+					WorkGiver_ConstructDeliverResources.<ResourceDeliverJobFor>c__AnonStorey27D <ResourceDeliverJobFor>c__AnonStorey27D = new WorkGiver_ConstructDeliverResources.<ResourceDeliverJobFor>c__AnonStorey27D();
+					<ResourceDeliverJobFor>c__AnonStorey27D.<>f__ref$636 = <ResourceDeliverJobFor>c__AnonStorey27C;
+					<ResourceDeliverJobFor>c__AnonStorey27D.need = list[i];
+					if (!pawn.Map.itemAvailability.ThingsAvailableAnywhere(<ResourceDeliverJobFor>c__AnonStorey27D.need, pawn))
 					{
 						flag = true;
 						break;
 					}
-					WorkGiver_ConstructDeliverResources.<ResourceDeliverJobFor>c__AnonStorey248 arg_13B_0 = <ResourceDeliverJobFor>c__AnonStorey2;
-					Predicate<Thing> validator = (Thing r) => WorkGiver_ConstructDeliverResources.ResourceValidator(<ResourceDeliverJobFor>c__AnonStorey2.<>f__ref$583.pawn, <ResourceDeliverJobFor>c__AnonStorey2.need, r);
-					arg_13B_0.foundRes = GenClosest.ClosestThingReachable(pawn.Position, ThingRequest.ForDef(<ResourceDeliverJobFor>c__AnonStorey2.need.thingDef), PathEndMode.ClosestTouch, TraverseParms.For(pawn, Danger.Deadly, TraverseMode.ByPawn, false), 9999f, validator, null, -1, false);
-					if (<ResourceDeliverJobFor>c__AnonStorey2.foundRes != null)
+					WorkGiver_ConstructDeliverResources.<ResourceDeliverJobFor>c__AnonStorey27D arg_158_0 = <ResourceDeliverJobFor>c__AnonStorey27D;
+					Predicate<Thing> validator = (Thing r) => WorkGiver_ConstructDeliverResources.ResourceValidator(<ResourceDeliverJobFor>c__AnonStorey27D.<>f__ref$636.pawn, <ResourceDeliverJobFor>c__AnonStorey27D.need, r);
+					arg_158_0.foundRes = GenClosest.ClosestThingReachable(pawn.Position, pawn.Map, ThingRequest.ForDef(<ResourceDeliverJobFor>c__AnonStorey27D.need.thingDef), PathEndMode.ClosestTouch, TraverseParms.For(pawn, Danger.Deadly, TraverseMode.ByPawn, false), 9999f, validator, null, -1, false);
+					if (<ResourceDeliverJobFor>c__AnonStorey27D.foundRes != null)
 					{
-						int num = 0;
+						int num = Mathf.Min(<ResourceDeliverJobFor>c__AnonStorey27D.foundRes.def.stackLimit, pawn.carryTracker.MaxStackSpaceEver(<ResourceDeliverJobFor>c__AnonStorey27D.foundRes.def));
+						int num2 = 0;
 						WorkGiver_ConstructDeliverResources.resourcesAvailable.Clear();
-						WorkGiver_ConstructDeliverResources.resourcesAvailable.Add(<ResourceDeliverJobFor>c__AnonStorey2.foundRes);
-						num += <ResourceDeliverJobFor>c__AnonStorey2.foundRes.stackCount;
-						foreach (Thing current in GenRadial.RadialDistinctThingsAround(<ResourceDeliverJobFor>c__AnonStorey2.foundRes.Position, 5f, false))
+						WorkGiver_ConstructDeliverResources.resourcesAvailable.Add(<ResourceDeliverJobFor>c__AnonStorey27D.foundRes);
+						num2 += <ResourceDeliverJobFor>c__AnonStorey27D.foundRes.stackCount;
+						if (num2 < num)
 						{
-							if (num >= <ResourceDeliverJobFor>c__AnonStorey2.foundRes.def.stackLimit)
+							foreach (Thing current in GenRadial.RadialDistinctThingsAround(<ResourceDeliverJobFor>c__AnonStorey27D.foundRes.Position, <ResourceDeliverJobFor>c__AnonStorey27D.foundRes.Map, 5f, false))
 							{
-								break;
-							}
-							if (current.def == <ResourceDeliverJobFor>c__AnonStorey2.foundRes.def)
-							{
-								if (GenAI.CanUseItemForWork(pawn, current))
+								if (num2 >= num)
 								{
-									WorkGiver_ConstructDeliverResources.resourcesAvailable.Add(current);
-									num += current.stackCount;
+									break;
+								}
+								if (current.def == <ResourceDeliverJobFor>c__AnonStorey27D.foundRes.def)
+								{
+									if (GenAI.CanUseItemForWork(pawn, current))
+									{
+										WorkGiver_ConstructDeliverResources.resourcesAvailable.Add(current);
+										num2 += current.stackCount;
+									}
 								}
 							}
 						}
-						int num2 = <ResourceDeliverJobFor>c__AnonStorey2.need.count;
+						int num3 = <ResourceDeliverJobFor>c__AnonStorey27D.need.count;
 						HashSet<Thing> hashSet = new HashSet<Thing>();
-						foreach (Thing current2 in GenRadial.RadialDistinctThingsAround(((Thing)c).Position, 8f, false))
+						Thing thing = (Thing)c;
+						foreach (Thing current2 in GenRadial.RadialDistinctThingsAround(thing.Position, thing.Map, 8f, false))
 						{
-							if (num2 >= num)
+							if (num3 >= num2)
 							{
 								break;
 							}
@@ -91,11 +97,11 @@ namespace RimWorld
 												{
 													if (GenConstruct.CanConstruct(current2, pawn))
 													{
-														int num3 = GenConstruct.AmountNeededByOf(constructible, <ResourceDeliverJobFor>c__AnonStorey2.foundRes.def);
-														if (num3 != 0)
+														int num4 = GenConstruct.AmountNeededByOf(constructible, <ResourceDeliverJobFor>c__AnonStorey27D.foundRes.def);
+														if (num4 != 0)
 														{
 															hashSet.Add(current2);
-															num2 += num3;
+															num3 += num4;
 														}
 													}
 												}
@@ -106,35 +112,35 @@ namespace RimWorld
 							}
 						}
 						hashSet.Add((Thing)c);
-						Thing thing = hashSet.MinBy((Thing nee) => IntVec3Utility.ManhattanDistanceFlat(<ResourceDeliverJobFor>c__AnonStorey2.foundRes.Position, nee.Position));
-						hashSet.Remove(thing);
-						int num4 = 0;
+						Thing thing2 = hashSet.MinBy((Thing nee) => IntVec3Utility.ManhattanDistanceFlat(<ResourceDeliverJobFor>c__AnonStorey27D.foundRes.Position, nee.Position));
+						hashSet.Remove(thing2);
+						int num5 = 0;
 						int j = 0;
 						do
 						{
-							num4 += WorkGiver_ConstructDeliverResources.resourcesAvailable[j].stackCount;
+							num5 += WorkGiver_ConstructDeliverResources.resourcesAvailable[j].stackCount;
 							j++;
 						}
-						while (num4 < num2 && j < WorkGiver_ConstructDeliverResources.resourcesAvailable.Count);
+						while (num5 < num3 && j < WorkGiver_ConstructDeliverResources.resourcesAvailable.Count);
 						WorkGiver_ConstructDeliverResources.resourcesAvailable.RemoveRange(j, WorkGiver_ConstructDeliverResources.resourcesAvailable.Count - j);
-						WorkGiver_ConstructDeliverResources.resourcesAvailable.Remove(<ResourceDeliverJobFor>c__AnonStorey2.foundRes);
+						WorkGiver_ConstructDeliverResources.resourcesAvailable.Remove(<ResourceDeliverJobFor>c__AnonStorey27D.foundRes);
 						Job job = new Job(JobDefOf.HaulToContainer);
-						job.targetA = <ResourceDeliverJobFor>c__AnonStorey2.foundRes;
-						job.targetQueueA = new List<TargetInfo>();
+						job.targetA = <ResourceDeliverJobFor>c__AnonStorey27D.foundRes;
+						job.targetQueueA = new List<LocalTargetInfo>();
 						for (j = 0; j < WorkGiver_ConstructDeliverResources.resourcesAvailable.Count; j++)
 						{
 							job.targetQueueA.Add(WorkGiver_ConstructDeliverResources.resourcesAvailable[j]);
 						}
-						job.targetB = thing;
+						job.targetB = thing2;
 						if (hashSet.Count > 0)
 						{
-							job.targetQueueB = new List<TargetInfo>();
+							job.targetQueueB = new List<LocalTargetInfo>();
 							foreach (Thing current3 in hashSet)
 							{
 								job.targetQueueB.Add(current3);
 							}
 						}
-						job.maxNumToCarry = num2;
+						job.count = num3;
 						job.haulMode = HaulMode.ToContainer;
 						return job;
 					}
@@ -154,7 +160,7 @@ namespace RimWorld
 			{
 				targetA = blueprint_Install.MiniToInstallOrBuildingToReinstall,
 				targetB = blueprint_Install,
-				maxNumToCarry = 1,
+				count = 1,
 				haulMode = HaulMode.ToContainer
 			};
 		}

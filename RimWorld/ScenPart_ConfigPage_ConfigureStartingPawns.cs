@@ -49,7 +49,7 @@ namespace RimWorld
 					Find.GameInitData.startingPawns.Add(StartingPawnUtility.NewGeneratedStartingPawn());
 				}
 				num++;
-				if (num > 30)
+				if (num > 20)
 				{
 					break;
 				}
@@ -58,7 +58,6 @@ namespace RimWorld
 					return;
 				}
 			}
-			Log.Warning("Could not create starting pawns satisfying work type requirements after " + num + " tries. This can happen legitimately due to forced traits.");
 		}
 	}
 }

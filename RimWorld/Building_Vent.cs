@@ -7,7 +7,7 @@ namespace RimWorld
 	{
 		public override void TickRare()
 		{
-			GenTemperature.EqualizeTemperaturesThroughBuilding(this, 14f);
+			GenTemperature.EqualizeTemperaturesThroughBuilding(this, 14f, true);
 		}
 	}
 }

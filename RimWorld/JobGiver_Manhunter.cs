@@ -30,7 +30,7 @@ namespace RimWorld
 			}
 			if (thing != null)
 			{
-				using (PawnPath pawnPath = PathFinder.FindPath(pawn.Position, thing.Position, TraverseParms.For(pawn, Danger.Deadly, TraverseMode.PassDoors, false), PathEndMode.OnCell))
+				using (PawnPath pawnPath = pawn.Map.pathFinder.FindPath(pawn.Position, thing.Position, TraverseParms.For(pawn, Danger.Deadly, TraverseMode.PassDoors, false), PathEndMode.OnCell))
 				{
 					Job result;
 					if (!pawnPath.Found)
@@ -45,7 +45,7 @@ namespace RimWorld
 						result = null;
 						return result;
 					}
-					IntVec3 randomCell = CellFinder.RandomRegionNear(loc.GetRegion(), 9, TraverseParms.For(pawn, Danger.Deadly, TraverseMode.ByPawn, false), null, null).RandomCell;
+					IntVec3 randomCell = CellFinder.RandomRegionNear(loc.GetRegion(pawn.Map), 9, TraverseParms.For(pawn, Danger.Deadly, TraverseMode.ByPawn, false), null, null).RandomCell;
 					Job job = new Job(JobDefOf.Goto, randomCell);
 					result = job;
 					return result;

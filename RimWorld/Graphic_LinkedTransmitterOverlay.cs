@@ -16,7 +16,7 @@ namespace RimWorld
 
 		public override bool ShouldLinkWith(IntVec3 c, Thing parent)
 		{
-			return c.InBounds() && PowerNetGrid.TransmittedPowerNetAt(c) != null;
+			return c.InBounds(parent.Map) && parent.Map.powerNetGrid.TransmittedPowerNetAt(c) != null;
 		}
 
 		public override void Print(SectionLayer layer, Thing parent)

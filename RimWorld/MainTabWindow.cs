@@ -29,13 +29,13 @@ namespace RimWorld
 			get
 			{
 				Vector2 requestedTabSize = this.RequestedTabSize;
-				if (requestedTabSize.y > (float)(Screen.height - 35))
+				if (requestedTabSize.y > (float)(UI.screenHeight - 35))
 				{
-					requestedTabSize.y = (float)(Screen.height - 35);
+					requestedTabSize.y = (float)(UI.screenHeight - 35);
 				}
-				if (requestedTabSize.x > (float)Screen.width)
+				if (requestedTabSize.x > (float)UI.screenWidth)
 				{
-					requestedTabSize.x = (float)Screen.width;
+					requestedTabSize.x = (float)UI.screenWidth;
 				}
 				return requestedTabSize;
 			}
@@ -74,9 +74,9 @@ namespace RimWorld
 			}
 			else
 			{
-				this.windowRect.x = (float)Screen.width - this.windowRect.width;
+				this.windowRect.x = (float)UI.screenWidth - this.windowRect.width;
 			}
-			this.windowRect.y = (float)(Screen.height - 35) - this.windowRect.height;
+			this.windowRect.y = (float)(UI.screenHeight - 35) - this.windowRect.height;
 		}
 	}
 }

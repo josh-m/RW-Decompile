@@ -6,23 +6,11 @@ namespace RimWorld
 	[DefOf]
 	public static class WorkTypeDefOf
 	{
-		public static WorkTypeDef Research;
-
-		public static WorkTypeDef Cleaning;
-
-		public static WorkTypeDef Hauling;
-
-		public static WorkTypeDef PlantCutting;
-
 		public static WorkTypeDef Mining;
 
 		public static WorkTypeDef Growing;
 
-		public static WorkTypeDef Repair;
-
 		public static WorkTypeDef Construction;
-
-		public static WorkTypeDef Cooking;
 
 		public static WorkTypeDef Warden;
 

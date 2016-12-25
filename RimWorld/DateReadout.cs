@@ -1,3 +1,4 @@
+using RimWorld.Planet;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -11,14 +12,29 @@ namespace RimWorld
 
 		private static string dateString;
 
-		private static int dateStringDay = -1;
+		private static int dateStringDay;
 
-		private static readonly List<string> fastHourStrings = new List<string>();
+		private static Season dateStringSeason;
 
-		public static void Reinit()
+		private static int dateStringYear;
+
+		private static readonly List<string> fastHourStrings;
+
+		static DateReadout()
+		{
+			DateReadout.dateStringDay = -1;
+			DateReadout.dateStringSeason = Season.Undefined;
+			DateReadout.dateStringYear = -1;
+			DateReadout.fastHourStrings = new List<string>();
+			DateReadout.Reset();
+		}
+
+		public static void Reset()
 		{
 			DateReadout.dateString = null;
 			DateReadout.dateStringDay = -1;
+			DateReadout.dateStringSeason = Season.Undefined;
+			DateReadout.dateStringYear = -1;
 			DateReadout.fastHourStrings.Clear();
 			for (int i = 0; i < 24; i++)
 			{
@@ -28,6 +44,27 @@ namespace RimWorld
 
 		public static void DateOnGUI(Rect dateRect)
 		{
+			float x;
+			if (WorldRendererUtility.WorldRenderedNow && Find.WorldSelector.selectedTile >= 0)
+			{
+				x = Find.WorldGrid.LongLatOf(Find.WorldSelector.selectedTile).x;
+			}
+			else if (WorldRendererUtility.WorldRenderedNow && Find.WorldSelector.NumSelectedObjects > 0)
+			{
+				x = Find.WorldGrid.LongLatOf(Find.WorldSelector.FirstSelectedObject.Tile).x;
+			}
+			else
+			{
+				if (Find.VisibleMap == null)
+				{
+					return;
+				}
+				x = Find.WorldGrid.LongLatOf(Find.VisibleMap.Tile).x;
+			}
+			int index = GenDate.HourInt((long)Find.TickManager.TicksAbs, x);
+			int num = GenDate.DayOfMonth((long)Find.TickManager.TicksAbs, x);
+			Season season = GenDate.Season((long)Find.TickManager.TicksAbs, x);
+			int num2 = GenDate.Year((long)Find.TickManager.TicksAbs, x);
 			if (Mouse.IsOver(dateRect))
 			{
 				Widgets.DrawHighlight(dateRect);
@@ -37,12 +74,14 @@ namespace RimWorld
 			Text.Anchor = TextAnchor.UpperRight;
 			Rect rect = dateRect.AtZero();
 			rect.xMax -= 7f;
-			Widgets.Label(rect, DateReadout.fastHourStrings[GenDate.HourInt]);
+			Widgets.Label(rect, DateReadout.fastHourStrings[index]);
 			rect.yMin += 26f;
-			if (GenDate.DayOfMonth != DateReadout.dateStringDay)
+			if (num != DateReadout.dateStringDay || season != DateReadout.dateStringSeason || num2 != DateReadout.dateStringYear)
 			{
-				DateReadout.dateString = GenDate.DateReadoutStringAt(Find.TickManager.TicksAbs);
-				DateReadout.dateStringDay = GenDate.DayOfMonth;
+				DateReadout.dateString = GenDate.DateReadoutStringAt((long)Find.TickManager.TicksAbs, x);
+				DateReadout.dateStringDay = num;
+				DateReadout.dateStringSeason = season;
+				DateReadout.dateStringYear = num2;
 			}
 			Widgets.Label(rect, DateReadout.dateString);
 			Text.Anchor = TextAnchor.UpperLeft;
@@ -51,7 +90,7 @@ namespace RimWorld
 			{
 				GenDate.DaysPassed,
 				15,
-				GenDate.CurrentSeason.Label()
+				season.Label()
 			}), 86423));
 		}
 	}

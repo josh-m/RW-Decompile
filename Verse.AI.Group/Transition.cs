@@ -17,6 +17,14 @@ namespace Verse.AI.Group
 
 		public bool canMoveToSameState;
 
+		public Map Map
+		{
+			get
+			{
+				return this.target.Map;
+			}
+		}
+
 		public Transition(LordToil firstSource, LordToil target)
 		{
 			this.sources = new List<LordToil>();

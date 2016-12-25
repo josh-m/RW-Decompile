@@ -29,11 +29,15 @@ namespace Verse
 
 		public void OnGUI()
 		{
-			Vector2 vector = this.c.ToScreenPosition();
-			Rect rect = new Rect(vector.x - 20f, vector.y - 20f, 40f, 40f);
 			if (this.displayString != null)
 			{
-				Widgets.Label(rect, this.displayString);
+				Vector2 vector = this.c.ToUIPosition();
+				Rect rect = new Rect(vector.x - 20f, vector.y - 20f, 40f, 40f);
+				Rect rect2 = new Rect(0f, 0f, (float)UI.screenWidth, (float)UI.screenHeight);
+				if (rect2.Overlaps(rect))
+				{
+					Widgets.Label(rect, this.displayString);
+				}
 			}
 		}
 	}

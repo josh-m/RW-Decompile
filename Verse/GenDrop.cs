@@ -5,9 +5,15 @@ namespace Verse
 {
 	public static class GenDrop
 	{
-		public static bool TryDropSpawn(Thing thing, IntVec3 dropCell, ThingPlaceMode mode, out Thing resultingThing, Action<Thing, int> placedAction = null)
+		public static bool TryDropSpawn(Thing thing, IntVec3 dropCell, Map map, ThingPlaceMode mode, out Thing resultingThing, Action<Thing, int> placedAction = null)
 		{
-			if (!dropCell.InBounds())
+			if (map == null)
+			{
+				Log.Error("Dropped " + thing + " in a null map.");
+				resultingThing = null;
+				return false;
+			}
+			if (!dropCell.InBounds(map))
 			{
 				Log.Error(string.Concat(new object[]
 				{
@@ -27,9 +33,9 @@ namespace Verse
 			}
 			if (thing.def.soundDrop != null)
 			{
-				thing.def.soundDrop.PlayOneShot(dropCell);
+				thing.def.soundDrop.PlayOneShot(new TargetInfo(dropCell, map, false));
 			}
-			return GenPlace.TryPlaceThing(thing, dropCell, mode, out resultingThing, placedAction);
+			return GenPlace.TryPlaceThing(thing, dropCell, map, mode, out resultingThing, placedAction);
 		}
 	}
 }

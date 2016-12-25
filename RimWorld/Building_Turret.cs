@@ -10,9 +10,9 @@ namespace RimWorld
 
 		protected StunHandler stunner;
 
-		protected TargetInfo forcedTarget = TargetInfo.Invalid;
+		protected LocalTargetInfo forcedTarget = LocalTargetInfo.Invalid;
 
-		public abstract TargetInfo CurrentTarget
+		public abstract LocalTargetInfo CurrentTarget
 		{
 			get;
 		}
@@ -53,7 +53,7 @@ namespace RimWorld
 			absorbed = false;
 		}
 
-		public abstract void OrderAttack(TargetInfo targ);
+		public abstract void OrderAttack(LocalTargetInfo targ);
 
 		public bool ThreatDisabled()
 		{

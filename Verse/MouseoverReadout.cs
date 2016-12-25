@@ -40,29 +40,29 @@ namespace Verse
 			{
 				return;
 			}
-			GenUI.DrawTextWinterShadow(new Rect(256f, (float)(Screen.height - 256), -256f, 256f));
+			GenUI.DrawTextWinterShadow(new Rect(256f, (float)(UI.screenHeight - 256), -256f, 256f));
 			Text.Font = GameFont.Small;
 			GUI.color = new Color(1f, 1f, 1f, 0.8f);
-			IntVec3 c = Gen.MouseCell();
-			if (!c.InBounds())
+			IntVec3 c = UI.MouseCell();
+			if (!c.InBounds(Find.VisibleMap))
 			{
 				return;
 			}
 			float num = 0f;
 			Rect rect;
-			if (c.Fogged())
+			if (c.Fogged(Find.VisibleMap))
 			{
-				rect = new Rect(MouseoverReadout.BotLeft.x, (float)Screen.height - MouseoverReadout.BotLeft.y - num, 999f, 999f);
+				rect = new Rect(MouseoverReadout.BotLeft.x, (float)UI.screenHeight - MouseoverReadout.BotLeft.y - num, 999f, 999f);
 				Widgets.Label(rect, "Undiscovered".Translate());
 				GUI.color = Color.white;
 				return;
 			}
-			rect = new Rect(MouseoverReadout.BotLeft.x, (float)Screen.height - MouseoverReadout.BotLeft.y - num, 999f, 999f);
-			int num2 = Mathf.RoundToInt(Find.GlowGrid.GameGlowAt(c) * 100f);
+			rect = new Rect(MouseoverReadout.BotLeft.x, (float)UI.screenHeight - MouseoverReadout.BotLeft.y - num, 999f, 999f);
+			int num2 = Mathf.RoundToInt(Find.VisibleMap.glowGrid.GameGlowAt(c) * 100f);
 			Widgets.Label(rect, this.glowStrings[num2]);
 			num += 19f;
-			rect = new Rect(MouseoverReadout.BotLeft.x, (float)Screen.height - MouseoverReadout.BotLeft.y - num, 999f, 999f);
-			TerrainDef terrain = c.GetTerrain();
+			rect = new Rect(MouseoverReadout.BotLeft.x, (float)UI.screenHeight - MouseoverReadout.BotLeft.y - num, 999f, 999f);
+			TerrainDef terrain = c.GetTerrain(Find.VisibleMap);
 			if (terrain != this.cachedTerrain)
 			{
 				string str = ((double)terrain.fertility <= 0.0001) ? string.Empty : (" " + "FertShort".Translate() + " " + terrain.fertility.ToStringPercent());
@@ -74,18 +74,18 @@ namespace Verse
 			}
 			Widgets.Label(rect, this.cachedTerrainString);
 			num += 19f;
-			Zone zone = c.GetZone();
+			Zone zone = c.GetZone(Find.VisibleMap);
 			if (zone != null)
 			{
-				rect = new Rect(MouseoverReadout.BotLeft.x, (float)Screen.height - MouseoverReadout.BotLeft.y - num, 999f, 999f);
+				rect = new Rect(MouseoverReadout.BotLeft.x, (float)UI.screenHeight - MouseoverReadout.BotLeft.y - num, 999f, 999f);
 				string label = zone.label;
 				Widgets.Label(rect, label);
 				num += 19f;
 			}
-			float depth = Find.SnowGrid.GetDepth(c);
+			float depth = Find.VisibleMap.snowGrid.GetDepth(c);
 			if (depth > 0.03f)
 			{
-				rect = new Rect(MouseoverReadout.BotLeft.x, (float)Screen.height - MouseoverReadout.BotLeft.y - num, 999f, 999f);
+				rect = new Rect(MouseoverReadout.BotLeft.x, (float)UI.screenHeight - MouseoverReadout.BotLeft.y - num, 999f, 999f);
 				SnowCategory snowCategory = SnowUtility.GetSnowCategory(depth);
 				string label2 = SnowUtility.GetDescription(snowCategory) + " (" + "WalkSpeed".Translate(new object[]
 				{
@@ -94,22 +94,22 @@ namespace Verse
 				Widgets.Label(rect, label2);
 				num += 19f;
 			}
-			List<Thing> thingList = c.GetThingList();
+			List<Thing> thingList = c.GetThingList(Find.VisibleMap);
 			for (int i = 0; i < thingList.Count; i++)
 			{
 				Thing thing = thingList[i];
 				if (thing.def.category != ThingCategory.Mote)
 				{
-					rect = new Rect(MouseoverReadout.BotLeft.x, (float)Screen.height - MouseoverReadout.BotLeft.y - num, 999f, 999f);
+					rect = new Rect(MouseoverReadout.BotLeft.x, (float)UI.screenHeight - MouseoverReadout.BotLeft.y - num, 999f, 999f);
 					string labelMouseover = thing.LabelMouseover;
 					Widgets.Label(rect, labelMouseover);
 					num += 19f;
 				}
 			}
-			RoofDef roof = c.GetRoof();
+			RoofDef roof = c.GetRoof(Find.VisibleMap);
 			if (roof != null)
 			{
-				rect = new Rect(MouseoverReadout.BotLeft.x, (float)Screen.height - MouseoverReadout.BotLeft.y - num, 999f, 999f);
+				rect = new Rect(MouseoverReadout.BotLeft.x, (float)UI.screenHeight - MouseoverReadout.BotLeft.y - num, 999f, 999f);
 				Widgets.Label(rect, roof.LabelCap);
 				num += 19f;
 			}

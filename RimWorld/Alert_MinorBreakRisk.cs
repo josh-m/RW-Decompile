@@ -4,39 +4,35 @@ using Verse;
 
 namespace RimWorld
 {
-	public class Alert_MinorBreakRisk : Alert_High
+	public class Alert_MinorBreakRisk : Alert
 	{
-		public override string FullLabel
+		public Alert_MinorBreakRisk()
 		{
-			get
-			{
-				return BreakRiskAlertUtility.AlertLabel;
-			}
+			this.defaultPriority = AlertPriority.High;
 		}
 
-		public override string FullExplanation
+		public override string GetLabel()
 		{
-			get
-			{
-				return BreakRiskAlertUtility.AlertExplanation;
-			}
+			return BreakRiskAlertUtility.AlertLabel;
 		}
 
-		public override AlertReport Report
+		public override string GetExplanation()
 		{
-			get
+			return BreakRiskAlertUtility.AlertExplanation;
+		}
+
+		public override AlertReport GetReport()
+		{
+			if (BreakRiskAlertUtility.PawnsAtRiskExtreme.Any<Pawn>() || BreakRiskAlertUtility.PawnsAtRiskMajor.Any<Pawn>())
 			{
-				if (BreakRiskAlertUtility.PawnsAtRiskExtreme.Any<Pawn>() || BreakRiskAlertUtility.PawnsAtRiskMajor.Any<Pawn>())
-				{
-					return false;
-				}
-				Pawn pawn = BreakRiskAlertUtility.PawnsAtRiskMinor.FirstOrDefault<Pawn>();
-				if (pawn != null)
-				{
-					return pawn;
-				}
 				return false;
 			}
+			Pawn pawn = BreakRiskAlertUtility.PawnsAtRiskMinor.FirstOrDefault<Pawn>();
+			if (pawn != null)
+			{
+				return pawn;
+			}
+			return false;
 		}
 	}
 }

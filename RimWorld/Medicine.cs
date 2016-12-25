@@ -44,8 +44,8 @@ namespace RimWorld
 			Medicine.hediffsHealedTogether.Clear();
 			foreach (Hediff current2 in pawn.health.hediffSet.GetTendableNonInjuryNonMissingPartHediffs())
 			{
-				HediffCompProperties hediffCompProperties = current2.def.CompPropsFor(typeof(HediffComp_Tendable));
-				if (hediffCompProperties != null && hediffCompProperties.tendAllAtOnce)
+				HediffCompProperties_TendDuration hediffCompProperties_TendDuration = current2.def.CompProps<HediffCompProperties_TendDuration>();
+				if (hediffCompProperties_TendDuration != null && hediffCompProperties_TendDuration.tendAllAtOnce)
 				{
 					if (Medicine.hediffsHealedTogether.Add(current2.def))
 					{

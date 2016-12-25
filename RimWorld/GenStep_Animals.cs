@@ -5,12 +5,12 @@ namespace RimWorld
 {
 	public class GenStep_Animals : GenStep
 	{
-		public override void Generate()
+		public override void Generate(Map map)
 		{
-			while (!WildSpawner.AnimalEcosystemFull)
+			while (!map.wildSpawner.AnimalEcosystemFull)
 			{
-				IntVec3 loc = RCellFinder.RandomAnimalSpawnCell_MapGen();
-				WildSpawner.SpawnRandomWildAnimalAt(loc);
+				IntVec3 loc = RCellFinder.RandomAnimalSpawnCell_MapGen(map);
+				map.wildSpawner.SpawnRandomWildAnimalAt(loc);
 			}
 		}
 	}

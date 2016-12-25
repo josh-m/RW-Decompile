@@ -9,7 +9,7 @@ namespace RimWorld
 	{
 		public static void GenerateImpliedDefs_PreResolve()
 		{
-			IEnumerable<ThingDef> enumerable = ThingDefGenerator_Buildings.ImpliedBlueprintAndFrameDefs().Concat(ThingDefGenerator_Seeds.ImpliedSeedDefs()).Concat(ThingDefGenerator_Meat.ImpliedMeatDefs()).Concat(ThingDefGenerator_Corpses.ImpliedCorpseDefs()).Concat(ThingDefGenerator_Leather.ImpliedLeatherDefs());
+			IEnumerable<ThingDef> enumerable = ThingDefGenerator_Buildings.ImpliedBlueprintAndFrameDefs().Concat(ThingDefGenerator_Meat.ImpliedMeatDefs()).Concat(ThingDefGenerator_Corpses.ImpliedCorpseDefs()).Concat(ThingDefGenerator_Leather.ImpliedLeatherDefs());
 			foreach (ThingDef current in enumerable)
 			{
 				current.PostLoad();

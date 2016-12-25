@@ -9,13 +9,14 @@ namespace RimWorld
 	{
 		private static List<Pawn> candidates = new List<Pawn>();
 
-		protected override bool CanFireNowSub()
+		protected override bool CanFireNowSub(IIncidentTarget target)
 		{
-			return this.RandomKidnappedColonist() != null && base.CanFireNowSub();
+			return this.RandomKidnappedColonist() != null && base.CanFireNowSub(target);
 		}
 
 		public override bool TryExecute(IncidentParms parms)
 		{
+			Map map = (Map)parms.target;
 			Pawn colonist = this.RandomKidnappedColonist();
 			if (colonist == null)
 			{
@@ -38,26 +39,23 @@ namespace RimWorld
 				IntVec3 intVec;
 				if (faction.def.techLevel < TechLevel.Spacer)
 				{
-					if (!CellFinder.TryFindRandomEdgeCellWith((IntVec3 c) => c.Standable() && c.CanReachColony(), out intVec))
+					if (!CellFinder.TryFindRandomEdgeCellWith((IntVec3 c) => c.Standable(map) && map.reachability.CanReachColony(c), map, out intVec) && !CellFinder.TryFindRandomEdgeCellWith((IntVec3 c) => c.Standable(map), map, out intVec))
 					{
-						if (!CellFinder.TryFindRandomEdgeCellWith((IntVec3 c) => c.Standable(), out intVec))
-						{
-							Log.Warning("Could not find any edge cell.");
-							intVec = DropCellFinder.TradeDropSpot();
-						}
+						Log.Warning("Could not find any edge cell.");
+						intVec = DropCellFinder.TradeDropSpot(map);
 					}
-					GenSpawn.Spawn(colonist, intVec);
+					GenSpawn.Spawn(colonist, intVec, map);
 				}
 				else
 				{
-					intVec = DropCellFinder.TradeDropSpot();
-					TradeUtility.SpawnDropPod(intVec, colonist);
+					intVec = DropCellFinder.TradeDropSpot(map);
+					TradeUtility.SpawnDropPod(intVec, map, colonist);
 				}
 				Find.CameraDriver.JumpTo(intVec);
-				this.LaunchSilver(fee);
+				this.LaunchSilver(map, fee);
 			};
 			diaOption.resolveTree = true;
-			if (!this.ColonyHasEnoughSilver(fee))
+			if (!this.ColonyHasEnoughSilver(map, fee))
 			{
 				diaOption.Disable("NotEnoughSilver".Translate());
 			}
@@ -98,21 +96,21 @@ namespace RimWorld
 			return Find.FactionManager.AllFactionsListForReading.Find((Faction x) => x.kidnapped.KidnappedPawnsListForReading.Contains(pawn));
 		}
 
-		private bool ColonyHasEnoughSilver(int fee)
+		private bool ColonyHasEnoughSilver(Map map, int fee)
 		{
-			return (from t in TradeUtility.AllLaunchableThings
+			return (from t in TradeUtility.AllLaunchableThings(map)
 			where t.def == ThingDefOf.Silver
 			select t).Sum((Thing t) => t.stackCount) >= fee;
 		}
 
-		private void LaunchSilver(int fee)
+		private void LaunchSilver(Map map, int fee)
 		{
-			TradeUtility.LaunchThingsOfType(ThingDefOf.Silver, fee, null);
+			TradeUtility.LaunchThingsOfType(ThingDefOf.Silver, fee, map, null);
 		}
 
 		private int RandomFee(Pawn pawn)
 		{
-			return (int)(pawn.MarketValue * Rand.Range(1f, 3f));
+			return (int)(pawn.MarketValue * Rand.Range(0.9f, 2.2f));
 		}
 	}
 }

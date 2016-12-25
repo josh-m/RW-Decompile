@@ -14,9 +14,9 @@ namespace RimWorld
 
 		private int spraySustainerStartTick = -999;
 
-		public override void SpawnSetup()
+		public override void SpawnSetup(Map map)
 		{
-			base.SpawnSetup();
+			base.SpawnSetup(map);
 			this.steamSprayer = new IntermittentSteamSprayer(this);
 			this.steamSprayer.startSprayCallback = new Action(this.StartSpray);
 			this.steamSprayer.endSprayCallback = new Action(this.EndSpray);
@@ -24,8 +24,8 @@ namespace RimWorld
 
 		private void StartSpray()
 		{
-			SnowUtility.AddSnowRadial(this.OccupiedRect().RandomCell, 4f, -0.06f);
-			this.spraySustainer = SoundDefOf.GeyserSpray.TrySpawnSustainer(base.Position);
+			SnowUtility.AddSnowRadial(this.OccupiedRect().RandomCell, base.Map, 4f, -0.06f);
+			this.spraySustainer = SoundDefOf.GeyserSpray.TrySpawnSustainer(new TargetInfo(base.Position, base.Map, false));
 			this.spraySustainerStartTick = Find.TickManager.TicksGame;
 		}
 

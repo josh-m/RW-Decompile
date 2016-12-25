@@ -4,7 +4,7 @@ namespace Verse
 {
 	public enum BodyPartDepth : byte
 	{
-		Inherit,
+		Undefined,
 		Inside,
 		Outside
 	}

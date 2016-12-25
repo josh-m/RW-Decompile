@@ -31,7 +31,7 @@ namespace RimWorld
 						list.Add(new FloatMenuOption(localM.ToStringHuman(), delegate
 						{
 							this.method = localM;
-						}, MenuOptionPriority.Medium, null, null, 0f, null));
+						}, MenuOptionPriority.Default, null, null, 0f, null, null));
 					}
 				}
 				Find.WindowStack.Add(new FloatMenu(list));
@@ -52,7 +52,7 @@ namespace RimWorld
 			this.method = ((Rand.Value >= 0.5f) ? PlayerPawnsArriveMethod.Standing : PlayerPawnsArriveMethod.DropPods);
 		}
 
-		public override void GenerateIntoMap()
+		public override void GenerateIntoMap(Map map)
 		{
 			List<List<Thing>> list = new List<List<Thing>>();
 			foreach (Pawn current in Find.GameInitData.startingPawns)
@@ -82,14 +82,14 @@ namespace RimWorld
 				}
 			}
 			bool instaDrop = Find.GameInitData.QuickStarted || this.method != PlayerPawnsArriveMethod.DropPods;
-			DropPodUtility.DropThingGroupsNear(MapGenerator.PlayerStartSpot, list, 110, instaDrop, true, true);
+			DropPodUtility.DropThingGroupsNear(MapGenerator.PlayerStartSpot, map, list, 110, instaDrop, true, true);
 		}
 
-		public override void PostMapGenerate()
+		public override void PostMapGenerate(Map map)
 		{
 			if (this.method == PlayerPawnsArriveMethod.DropPods)
 			{
-				MapIniter_NewGame.GiveAllPlayerPawnsThought(ThoughtDefOf.CrashedTogether);
+				PawnUtility.GiveAllStartingPlayerPawnsThought(ThoughtDefOf.CrashedTogether);
 			}
 		}
 	}

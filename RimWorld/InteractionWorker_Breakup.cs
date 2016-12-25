@@ -35,8 +35,8 @@ namespace RimWorld
 				recipient.needs.mood.thoughts.memories.TryGainMemoryThought(ThoughtDefOf.DivorcedMe, initiator);
 				initiator.needs.mood.thoughts.memories.RemoveMemoryThoughtsOfDef(ThoughtDefOf.GotMarried);
 				recipient.needs.mood.thoughts.memories.RemoveMemoryThoughtsOfDef(ThoughtDefOf.GotMarried);
-				initiator.needs.mood.thoughts.memories.RemoveSocialMemoryThoughts(ThoughtDefOf.HoneymoonPhase, recipient);
-				recipient.needs.mood.thoughts.memories.RemoveSocialMemoryThoughts(ThoughtDefOf.HoneymoonPhase, initiator);
+				initiator.needs.mood.thoughts.memories.RemoveMemoryThoughtsOfDefWhereOtherPawnIs(ThoughtDefOf.HoneymoonPhase, recipient);
+				recipient.needs.mood.thoughts.memories.RemoveMemoryThoughtsOfDefWhereOtherPawnIs(ThoughtDefOf.HoneymoonPhase, initiator);
 			}
 			else
 			{

@@ -13,5 +13,7 @@ namespace RimWorld
 		public static float ElevationFactorLargeHills = 1f;
 
 		public static float ElevationFactorMountains = 1.1f;
+
+		public static float ElevationFactorImpassableMountains = 1.2f;
 	}
 }

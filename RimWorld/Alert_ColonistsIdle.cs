@@ -6,7 +6,7 @@ using Verse;
 
 namespace RimWorld
 {
-	public class Alert_ColonistsIdle : Alert_Medium
+	public class Alert_ColonistsIdle : Alert
 	{
 		public const int MinDaysPassed = 1;
 
@@ -14,43 +14,45 @@ namespace RimWorld
 		{
 			get
 			{
-				return from p in Find.MapPawns.FreeColonistsSpawned
-				where p.mindState.IsIdle
-				select p;
-			}
-		}
-
-		public override string FullLabel
-		{
-			get
-			{
-				return string.Format("ColonistsIdle".Translate(), this.IdleColonists.Count<Pawn>().ToStringCached());
-			}
-		}
-
-		public override string FullExplanation
-		{
-			get
-			{
-				StringBuilder stringBuilder = new StringBuilder();
-				foreach (Pawn current in this.IdleColonists)
+				List<Map> maps = Find.Maps;
+				for (int i = 0; i < maps.Count; i++)
 				{
-					stringBuilder.AppendLine("    " + current.NameStringShort);
+					if (maps[i].IsPlayerHome)
+					{
+						foreach (Pawn p in maps[i].mapPawns.FreeColonistsSpawned)
+						{
+							if (p.mindState.IsIdle)
+							{
+								yield return p;
+							}
+						}
+					}
 				}
-				return string.Format("ColonistsIdleDesc".Translate(), stringBuilder.ToString());
 			}
 		}
 
-		public override AlertReport Report
+		public override string GetLabel()
 		{
-			get
+			return string.Format("ColonistsIdle".Translate(), this.IdleColonists.Count<Pawn>().ToStringCached());
+		}
+
+		public override string GetExplanation()
+		{
+			StringBuilder stringBuilder = new StringBuilder();
+			foreach (Pawn current in this.IdleColonists)
 			{
-				if (GenDate.DaysPassed < 1)
-				{
-					return AlertReport.Inactive;
-				}
-				return this.IdleColonists.FirstOrDefault<Pawn>();
+				stringBuilder.AppendLine("    " + current.NameStringShort);
 			}
+			return string.Format("ColonistsIdleDesc".Translate(), stringBuilder.ToString());
+		}
+
+		public override AlertReport GetReport()
+		{
+			if (GenDate.DaysPassed < 1)
+			{
+				return AlertReport.Inactive;
+			}
+			return this.IdleColonists.FirstOrDefault<Pawn>();
 		}
 	}
 }

@@ -8,34 +8,36 @@ namespace RimWorld
 	{
 		private const float HivePoints = 400f;
 
-		protected override bool CanFireNowSub()
+		protected override bool CanFireNowSub(IIncidentTarget target)
 		{
+			Map map = (Map)target;
 			IntVec3 intVec;
-			return base.CanFireNowSub() && HivesUtility.TotalSpawnedHivesCount < 30 && InfestationCellFinder.TryFindCell(out intVec);
+			return base.CanFireNowSub(target) && HivesUtility.TotalSpawnedHivesCount(map) < 30 && InfestationCellFinder.TryFindCell(out intVec, map);
 		}
 
 		public override bool TryExecute(IncidentParms parms)
 		{
+			Map map = (Map)parms.target;
 			Hive t = null;
 			int num;
 			for (int i = Mathf.Max(GenMath.RoundRandom(parms.points / 400f), 1); i > 0; i -= num)
 			{
 				num = Mathf.Min(3, i);
-				t = this.SpawnHiveCluster(num);
+				t = this.SpawnHiveCluster(num, map);
 			}
-			base.SendStandardLetter(t);
+			base.SendStandardLetter(t, new string[0]);
 			Find.TickManager.slower.SignalForceNormalSpeedShort();
 			return true;
 		}
 
-		private Hive SpawnHiveCluster(int hiveCount)
+		private Hive SpawnHiveCluster(int hiveCount, Map map)
 		{
 			IntVec3 loc;
-			if (!InfestationCellFinder.TryFindCell(out loc))
+			if (!InfestationCellFinder.TryFindCell(out loc, map))
 			{
 				return null;
 			}
-			Hive hive = (Hive)GenSpawn.Spawn(ThingMaker.MakeThing(ThingDefOf.Hive, null), loc);
+			Hive hive = (Hive)GenSpawn.Spawn(ThingMaker.MakeThing(ThingDefOf.Hive, null), loc, map);
 			hive.SetFaction(Faction.OfInsects, null);
 			IncidentWorker_Infestation.MakeHiveSpawnInitialEssentials(hive);
 			for (int i = 0; i < hiveCount - 1; i++)

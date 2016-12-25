@@ -14,13 +14,15 @@ namespace RimWorld
 
 		public List<Pawn> targetingVerbAdditionalPawns;
 
-		private Action<Thing> action;
+		private Action<LocalTargetInfo> action;
 
 		private Pawn caster;
 
 		private TargetingParameters targetParams;
 
-		private bool resolvingTargetClick;
+		private Action actionWhenFinished;
+
+		private Texture2D mouseAttachment;
 
 		public bool IsTargeting
 		{
@@ -46,19 +48,28 @@ namespace RimWorld
 			this.action = null;
 			this.caster = null;
 			this.targetParams = null;
+			this.actionWhenFinished = null;
+			this.mouseAttachment = null;
 		}
 
-		public void BeginTargeting(TargetingParameters targetParams, Action<Thing> action, Pawn caster = null)
+		public void BeginTargeting(TargetingParameters targetParams, Action<LocalTargetInfo> action, Pawn caster = null, Action actionWhenFinished = null, Texture2D mouseAttachment = null)
 		{
 			this.targetingVerb = null;
 			this.targetingVerbAdditionalPawns = null;
 			this.action = action;
 			this.targetParams = targetParams;
 			this.caster = caster;
+			this.actionWhenFinished = actionWhenFinished;
+			this.mouseAttachment = mouseAttachment;
 		}
 
 		public void StopTargeting()
 		{
+			if (this.actionWhenFinished != null)
+			{
+				this.actionWhenFinished();
+				this.actionWhenFinished = null;
+			}
 			this.targetingVerb = null;
 			this.action = null;
 		}
@@ -76,15 +87,14 @@ namespace RimWorld
 					}
 					if (this.action != null)
 					{
-						IEnumerable<TargetInfo> source = GenUI.TargetsAtMouse(this.targetParams, false);
-						if (source.Any<TargetInfo>())
+						IEnumerable<LocalTargetInfo> source = GenUI.TargetsAtMouse(this.targetParams, false);
+						if (source.Any<LocalTargetInfo>())
 						{
-							this.action(source.First<TargetInfo>().Thing);
+							this.action(source.First<LocalTargetInfo>());
 						}
 					}
 					SoundDefOf.TickHigh.PlayOneShotOnCamera();
 					this.StopTargeting();
-					this.resolvingTargetClick = true;
 					Event.current.Use();
 				}
 				if (Event.current.button == 1 && this.IsTargeting)
@@ -93,11 +103,6 @@ namespace RimWorld
 					this.StopTargeting();
 					Event.current.Use();
 				}
-			}
-			if (Event.current.type == EventType.MouseUp && this.resolvingTargetClick)
-			{
-				this.resolvingTargetClick = false;
-				Event.current.Use();
 			}
 			if (Event.current.type == EventType.KeyDown && Event.current.keyCode == KeyCode.Escape && this.IsTargeting)
 			{
@@ -113,7 +118,7 @@ namespace RimWorld
 			{
 				Vector3 vector = Event.current.mousePosition;
 				Texture2D image;
-				if (this.targetingVerb.verbProps.MeleeRange || this.targetingVerb.CanHitTarget(Gen.MouseCell()) || !Find.Targeter.targetingVerbAdditionalPawns.NullOrEmpty<Pawn>())
+				if (this.targetingVerb.verbProps.MeleeRange || this.targetingVerb.CanHitTarget(UI.MouseCell()) || !Find.Targeter.targetingVerbAdditionalPawns.NullOrEmpty<Pawn>())
 				{
 					if (this.targetingVerb.UIIcon != BaseContent.BadTex)
 					{
@@ -132,8 +137,9 @@ namespace RimWorld
 			}
 			if (this.action != null)
 			{
+				Texture2D image2 = this.mouseAttachment ?? TexCommand.Attack;
 				Vector3 vector2 = Event.current.mousePosition;
-				GUI.DrawTexture(new Rect(vector2.x + 8f, vector2.y + 8f, 32f, 32f), TexCommand.Attack);
+				GUI.DrawTexture(new Rect(vector2.x + 8f, vector2.y + 8f, 32f, 32f), image2);
 			}
 		}
 
@@ -152,8 +158,8 @@ namespace RimWorld
 						GenDraw.DrawRadiusRing(this.targetingVerb.caster.Position, this.targetingVerb.verbProps.range);
 					}
 				}
-				TargetInfo targ = TargetInfo.Invalid;
-				foreach (TargetInfo current in GenUI.TargetsAtMouse(this.targetingVerb.verbProps.targetParams, false))
+				LocalTargetInfo targ = LocalTargetInfo.Invalid;
+				foreach (LocalTargetInfo current in GenUI.TargetsAtMouse(this.targetingVerb.verbProps.targetParams, false))
 				{
 					if (this.targetingVerb.CanHitTarget(current) || this.targetingVerb.verbProps.MeleeRange)
 					{
@@ -163,10 +169,10 @@ namespace RimWorld
 				}
 				if (this.targetingVerb.CanTargetCell)
 				{
-					targ = Gen.MouseCell();
-					if (!targ.Cell.InBounds())
+					targ = UI.MouseCell();
+					if (!targ.Cell.InBounds(Find.VisibleMap))
 					{
-						targ = TargetInfo.Invalid;
+						targ = LocalTargetInfo.Invalid;
 					}
 				}
 				ShootLine shootLine;
@@ -177,7 +183,7 @@ namespace RimWorld
 			}
 			if (this.action != null)
 			{
-				foreach (TargetInfo current2 in GenUI.TargetsAtMouse(this.targetParams, false))
+				foreach (LocalTargetInfo current2 in GenUI.TargetsAtMouse(this.targetParams, false))
 				{
 					GenDraw.DrawTargetHighlight(current2);
 				}
@@ -209,14 +215,14 @@ namespace RimWorld
 
 		private void ConfirmStillValid()
 		{
-			if (this.caster != null && (this.caster.Destroyed || !Find.Selector.IsSelected(this.caster)))
+			if (this.caster != null && (this.caster.Map != Find.VisibleMap || this.caster.Destroyed || !Find.Selector.IsSelected(this.caster)))
 			{
 				this.StopTargeting();
 			}
 			if (this.targetingVerb != null)
 			{
 				Selector selector = Find.Selector;
-				if (this.targetingVerb.caster.Destroyed || !selector.IsSelected(this.targetingVerb.caster))
+				if (this.targetingVerb.caster.Map != Find.VisibleMap || this.targetingVerb.caster.Destroyed || !selector.IsSelected(this.targetingVerb.caster))
 				{
 					this.StopTargeting();
 				}
@@ -252,32 +258,36 @@ namespace RimWorld
 			}
 			else
 			{
-				TargetInfo targ = TargetInfo.Invalid;
-				if (this.targetingVerb.CanTargetCell)
+				Building_Turret building_Turret = (Building_Turret)this.targetingVerb.caster;
+				if (building_Turret.Map == Find.VisibleMap)
 				{
-					targ = Gen.MouseCell();
-					if (!targ.Cell.InBounds())
+					LocalTargetInfo targ = LocalTargetInfo.Invalid;
+					if (this.targetingVerb.CanTargetCell)
 					{
-						targ = TargetInfo.Invalid;
+						targ = UI.MouseCell();
+						if (!targ.Cell.InBounds(Find.VisibleMap))
+						{
+							targ = LocalTargetInfo.Invalid;
+						}
 					}
-				}
-				using (IEnumerator<TargetInfo> enumerator = GenUI.TargetsAtMouse(this.targetingVerb.verbProps.targetParams, false).GetEnumerator())
-				{
-					if (enumerator.MoveNext())
+					using (IEnumerator<LocalTargetInfo> enumerator = GenUI.TargetsAtMouse(this.targetingVerb.verbProps.targetParams, false).GetEnumerator())
 					{
-						TargetInfo current = enumerator.Current;
-						targ = current;
+						if (enumerator.MoveNext())
+						{
+							LocalTargetInfo current = enumerator.Current;
+							targ = current;
+						}
 					}
+					building_Turret.OrderAttack(targ);
 				}
-				((Building_Turret)this.targetingVerb.caster).OrderAttack(targ);
 			}
 		}
 
 		private void CastPawnVerb(Verb verb)
 		{
-			foreach (TargetInfo current in GenUI.TargetsAtMouse(verb.verbProps.targetParams, false))
+			foreach (LocalTargetInfo current in GenUI.TargetsAtMouse(verb.verbProps.targetParams, false))
 			{
-				TargetInfo targetA = current;
+				LocalTargetInfo targetA = current;
 				if (verb.verbProps.MeleeRange)
 				{
 					Job job = new Job(JobDefOf.AttackMelee, targetA);
@@ -287,23 +297,23 @@ namespace RimWorld
 					{
 						job.killIncappedTarget = pawn.Downed;
 					}
-					verb.CasterPawn.drafter.TakeOrderedJob(job);
+					verb.CasterPawn.jobs.TryTakeOrderedJob(job);
 				}
 				else
 				{
-					JobDef jDef;
+					JobDef def;
 					if (verb.verbProps.ai_IsWeapon)
 					{
-						jDef = JobDefOf.AttackStatic;
+						def = JobDefOf.AttackStatic;
 					}
 					else
 					{
-						jDef = JobDefOf.UseVerbOnThing;
+						def = JobDefOf.UseVerbOnThing;
 					}
-					Job job2 = new Job(jDef);
+					Job job2 = new Job(def);
 					job2.verbToUse = verb;
 					job2.targetA = targetA;
-					verb.CasterPawn.drafter.TakeOrderedJob(job2);
+					verb.CasterPawn.jobs.TryTakeOrderedJob(job2);
 				}
 			}
 		}

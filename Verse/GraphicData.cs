@@ -129,6 +129,10 @@ namespace Verse
 			{
 				yield return "does not add to map mesh but has a link drawer. Link drawers can only work on the map mesh.";
 			}
+			if ((this.shaderType == ShaderType.Cutout || this.shaderType == ShaderType.CutoutComplex) && thingDef.mote != null && (thingDef.mote.fadeInTime > 0f || thingDef.mote.fadeOutTime > 0f))
+			{
+				yield return "mote fades but uses cutout shader type. It will abruptly disappear when opacity falls under the cutout threshold.";
+			}
 		}
 	}
 }

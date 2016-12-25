@@ -4,7 +4,7 @@ namespace Verse.AI.Group
 {
 	public class LordToilData_DefendPoint : LordToilData
 	{
-		public IntVec3 defendPoint;
+		public IntVec3 defendPoint = IntVec3.Invalid;
 
 		public float defendRadius = 28f;
 

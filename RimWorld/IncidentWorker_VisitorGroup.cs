@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using Verse;
 using Verse.AI.Group;
 
@@ -12,6 +11,7 @@ namespace RimWorld
 
 		public override bool TryExecute(IncidentParms parms)
 		{
+			Map map = (Map)parms.target;
 			if (!this.TryResolveParms(parms))
 			{
 				return false;
@@ -24,11 +24,11 @@ namespace RimWorld
 			IntVec3 chillSpot;
 			RCellFinder.TryFindRandomSpotJustOutsideColony(list[0], out chillSpot);
 			LordJob_VisitColony lordJob = new LordJob_VisitColony(parms.faction, chillSpot);
-			LordMaker.MakeNewLord(parms.faction, lordJob, list);
+			LordMaker.MakeNewLord(parms.faction, lordJob, map, list);
 			bool flag = false;
 			if (Rand.Value < 0.8f)
 			{
-				flag = this.TryConvertOnePawnToSmallTrader(list, parms.faction);
+				flag = this.TryConvertOnePawnToSmallTrader(list, parms.faction, map);
 			}
 			Pawn pawn = list.Find((Pawn x) => parms.faction.leader == x);
 			string label;
@@ -40,7 +40,7 @@ namespace RimWorld
 				label = "LetterLabelSingleVisitorArrives".Translate();
 				text3 = "SingleVisitorArrives".Translate(new object[]
 				{
-					list[0].story.adulthood.title.ToLower(),
+					list[0].story.Title.ToLower(),
 					parms.faction.Name,
 					list[0].Name,
 					text,
@@ -63,11 +63,12 @@ namespace RimWorld
 					text5
 				});
 			}
+			PawnRelationUtility.Notify_PawnsSeenByPlayer(list, ref label, ref text3, "LetterRelatedPawnsNeutralGroup".Translate(), true);
 			Find.LetterStack.ReceiveLetter(label, text3, LetterType.Good, list[0], null);
 			return true;
 		}
 
-		private bool TryConvertOnePawnToSmallTrader(List<Pawn> pawns, Faction faction)
+		private bool TryConvertOnePawnToSmallTrader(List<Pawn> pawns, Faction faction, Map map)
 		{
 			if (faction.def.visitorTraderKinds.NullOrEmpty<TraderKindDef>())
 			{
@@ -80,7 +81,7 @@ namespace RimWorld
 			TraderKindDef traderKindDef = faction.def.visitorTraderKinds.RandomElement<TraderKindDef>();
 			pawn.trader.traderKind = traderKindDef;
 			pawn.inventory.DestroyAll(DestroyMode.Vanish);
-			foreach (Thing current in TraderStockGenerator.GenerateTraderThings(traderKindDef))
+			foreach (Thing current in TraderStockGenerator.GenerateTraderThings(traderKindDef, map))
 			{
 				Pawn pawn2 = current as Pawn;
 				if (pawn2 != null)
@@ -89,19 +90,16 @@ namespace RimWorld
 					{
 						pawn2.SetFaction(pawn.Faction, null);
 					}
-					IntVec3 loc = CellFinder.RandomClosewalkCellNear(pawn.Position, 5);
-					GenSpawn.Spawn(pawn2, loc);
+					IntVec3 loc = CellFinder.RandomClosewalkCellNear(pawn.Position, map, 5);
+					GenSpawn.Spawn(pawn2, loc, map);
 					lord.AddPawn(pawn2);
 				}
-				else if (!pawn.inventory.container.TryAdd(current))
+				else if (!pawn.inventory.innerContainer.TryAdd(current, true))
 				{
 					current.Destroy(DestroyMode.Vanish);
 				}
 			}
-			if (!pawn.inventory.container.Any((Thing x) => x.def.IsNutritionGivingIngestible && x.def.ingestible.preferability >= FoodPreferability.MealAwful))
-			{
-				PawnInventoryGenerator.GiveRandomFood(pawn);
-			}
+			PawnInventoryGenerator.GiveRandomFood(pawn);
 			return true;
 		}
 	}

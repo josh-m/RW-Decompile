@@ -51,7 +51,7 @@ namespace Verse.AI
 			{
 				return false;
 			}
-			if (!t.def.alwaysHaulable && Find.DesignationManager.DesignationOn(t, DesignationDefOf.Haul) == null && !t.IsInValidStorage())
+			if (!t.def.alwaysHaulable && t.Map.designationManager.DesignationOn(t, DesignationDefOf.Haul) == null && !t.IsInValidStorage())
 			{
 				return false;
 			}
@@ -83,7 +83,7 @@ namespace Verse.AI
 			{
 				return false;
 			}
-			if (!Find.Reservations.CanReserve(p, t, 1))
+			if (!p.Map.reservationManager.CanReserve(p, t, 1))
 			{
 				return false;
 			}
@@ -104,7 +104,7 @@ namespace Verse.AI
 		{
 			StoragePriority currentPriority = HaulAIUtility.StoragePriorityAtFor(t.Position, t);
 			IntVec3 storeCell;
-			if (!StoreUtility.TryFindBestBetterStoreCellFor(t, p, currentPriority, p.Faction, out storeCell, true))
+			if (!StoreUtility.TryFindBestBetterStoreCellFor(t, p, p.Map, currentPriority, p.Faction, out storeCell, true))
 			{
 				JobFailReason.Is(HaulAIUtility.NoEmptyPlaceLowerTrans);
 				return null;
@@ -115,30 +115,30 @@ namespace Verse.AI
 		public static Job HaulMaxNumToCellJob(Pawn p, Thing t, IntVec3 storeCell, bool fitInStoreCell)
 		{
 			Job job = new Job(JobDefOf.HaulToCell, t, storeCell);
-			SlotGroup slotGroup = Find.SlotGroupManager.SlotGroupAt(storeCell);
+			SlotGroup slotGroup = p.Map.slotGroupManager.SlotGroupAt(storeCell);
 			if (slotGroup != null)
 			{
-				Thing thing = Find.ThingGrid.ThingAt(storeCell, t.def);
+				Thing thing = p.Map.thingGrid.ThingAt(storeCell, t.def);
 				if (thing != null)
 				{
-					job.maxNumToCarry = t.def.stackLimit;
+					job.count = t.def.stackLimit;
 					if (fitInStoreCell)
 					{
-						job.maxNumToCarry -= thing.stackCount;
+						job.count -= thing.stackCount;
 					}
 				}
 				else
 				{
-					job.maxNumToCarry = 99999;
+					job.count = 99999;
 				}
 				int num = 0;
 				float statValue = p.GetStatValue(StatDefOf.CarryingCapacity, true);
 				List<IntVec3> cellsList = slotGroup.CellsList;
 				for (int i = 0; i < cellsList.Count; i++)
 				{
-					if (StoreUtility.IsGoodStoreCell(cellsList[i], t, p, p.Faction))
+					if (StoreUtility.IsGoodStoreCell(cellsList[i], p.Map, t, p, p.Faction))
 					{
-						Thing thing2 = Find.ThingGrid.ThingAt(cellsList[i], t.def);
+						Thing thing2 = p.Map.thingGrid.ThingAt(cellsList[i], t.def);
 						if (thing2 != null && thing2 != t)
 						{
 							num += Mathf.Max(t.def.stackLimit - thing2.stackCount, 0);
@@ -147,17 +147,17 @@ namespace Verse.AI
 						{
 							num += t.def.stackLimit;
 						}
-						if (num >= job.maxNumToCarry || (float)num >= statValue)
+						if (num >= job.count || (float)num >= statValue)
 						{
 							break;
 						}
 					}
 				}
-				job.maxNumToCarry = Mathf.Min(job.maxNumToCarry, num);
+				job.count = Mathf.Min(job.count, num);
 			}
 			else
 			{
-				job.maxNumToCarry = 99999;
+				job.count = 99999;
 			}
 			job.haulOpportunisticDuplicates = true;
 			job.haulMode = HaulMode.ToCellStorage;
@@ -170,7 +170,7 @@ namespace Verse.AI
 			{
 				return StoragePriority.Unstored;
 			}
-			SlotGroup slotGroup = Find.SlotGroupManager.SlotGroupAt(c);
+			SlotGroup slotGroup = t.Map.slotGroupManager.SlotGroupAt(c);
 			if (slotGroup == null || !slotGroup.Settings.AllowedToAccept(t))
 			{
 				return StoragePriority.Unstored;
@@ -186,14 +186,14 @@ namespace Verse.AI
 
 		public static Job HaulAsideJobFor(Pawn p, Thing t)
 		{
-			IntVec3 vec;
-			if (!HaulAIUtility.CanHaulAside(p, t, out vec))
+			IntVec3 c;
+			if (!HaulAIUtility.CanHaulAside(p, t, out c))
 			{
 				return null;
 			}
-			return new Job(JobDefOf.HaulToCell, t, vec)
+			return new Job(JobDefOf.HaulToCell, t, c)
 			{
-				maxNumToCarry = 99999,
+				count = 99999,
 				haulOpportunisticDuplicates = false,
 				haulMode = HaulMode.ToCellNonStorage,
 				ignoreDesignations = true
@@ -202,7 +202,7 @@ namespace Verse.AI
 
 		private static bool TryFindSpotToPlaceHaulableCloseTo(Thing haulable, Pawn worker, IntVec3 center, out IntVec3 spot)
 		{
-			Region region = center.GetRegion();
+			Region region = center.GetRegion(worker.Map);
 			if (region == null)
 			{
 				spot = center;
@@ -241,11 +241,11 @@ namespace Verse.AI
 			{
 				return false;
 			}
-			if (GenPlace.HaulPlaceBlockerIn(haulable, c, true) != null)
+			if (GenPlace.HaulPlaceBlockerIn(haulable, c, worker.Map, true) != null)
 			{
 				return false;
 			}
-			if (!c.Standable())
+			if (!c.Standable(worker.Map))
 			{
 				return false;
 			}
@@ -255,7 +255,7 @@ namespace Verse.AI
 			}
 			if (haulable != null && haulable.def.BlockPlanting)
 			{
-				Zone zone = Find.ZoneManager.ZoneAt(c);
+				Zone zone = worker.Map.zoneManager.ZoneAt(c);
 				if (zone is Zone_Growing)
 				{
 					return false;
@@ -266,13 +266,13 @@ namespace Verse.AI
 				for (int i = 0; i < 8; i++)
 				{
 					IntVec3 c2 = c + GenAdj.AdjacentCells[i];
-					if (Find.DesignationManager.DesignationAt(c2, DesignationDefOf.Mine) != null)
+					if (worker.Map.designationManager.DesignationAt(c2, DesignationDefOf.Mine) != null)
 					{
 						return false;
 					}
 				}
 			}
-			Building edifice = c.GetEdifice();
+			Building edifice = c.GetEdifice(worker.Map);
 			if (edifice != null)
 			{
 				Building_Trap building_Trap = edifice as Building_Trap;

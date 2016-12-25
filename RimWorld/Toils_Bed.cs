@@ -97,7 +97,7 @@ namespace RimWorld
 			toil.FailOn(() => ((Building_Bed)toil.actor.CurJob.GetTarget(bedIndex).Thing).IsBurning());
 			toil.FailOn(() => ((Building_Bed)toil.actor.CurJob.GetTarget(bedIndex).Thing).ForPrisoners != toil.actor.IsPrisoner);
 			toil.FailOnNonMedicalBedNotOwned(bedIndex, TargetIndex.None);
-			toil.FailOn(() => !toil.actor.health.PrefersMedicalRest && !toil.actor.health.NeedsMedicalRest && ((Building_Bed)toil.actor.CurJob.GetTarget(bedIndex).Thing).Medical);
+			toil.FailOn(() => !HealthAIUtility.ShouldSeekMedicalRest(toil.actor) && !HealthAIUtility.ShouldSeekMedicalRestUrgent(toil.actor) && ((Building_Bed)toil.actor.CurJob.GetTarget(bedIndex).Thing).Medical);
 			toil.FailOn(() => toil.actor.IsColonist && !toil.actor.CurJob.ignoreForbidden && !toil.actor.Downed && toil.actor.CurJob.GetTarget(bedIndex).Thing.IsForbidden(toil.actor));
 		}
 	}

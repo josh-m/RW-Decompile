@@ -6,6 +6,15 @@ namespace RimWorld
 {
 	public class JobGiver_GetFood : ThinkNode_JobGiver
 	{
+		private HungerCategory minCategory;
+
+		public override ThinkNode DeepCopy(bool resolve = true)
+		{
+			JobGiver_GetFood jobGiver_GetFood = (JobGiver_GetFood)base.DeepCopy(resolve);
+			jobGiver_GetFood.minCategory = this.minCategory;
+			return jobGiver_GetFood;
+		}
+
 		public override float GetPriority(Pawn pawn)
 		{
 			Need_Food food = pawn.needs.food;
@@ -17,7 +26,11 @@ namespace RimWorld
 			{
 				return 0f;
 			}
-			if (food.CurLevelPercentage < food.PercentageThreshHungry + 0.02f)
+			if (food.CurCategory < this.minCategory)
+			{
+				return 0f;
+			}
+			if (food.CurLevelPercentage < pawn.RaceProps.FoodLevelPercentageWantEat)
 			{
 				return 9.5f;
 			}
@@ -26,10 +39,21 @@ namespace RimWorld
 
 		protected override Job TryGiveJob(Pawn pawn)
 		{
+			bool flag;
+			if (pawn.RaceProps.Animal)
+			{
+				flag = true;
+			}
+			else
+			{
+				Hediff firstHediffOfDef = pawn.health.hediffSet.GetFirstHediffOfDef(HediffDefOf.Malnutrition);
+				flag = (firstHediffOfDef != null && firstHediffOfDef.Severity > 0.4f);
+			}
 			bool desperate = pawn.needs.food.CurCategory == HungerCategory.Starving;
+			bool allowCorpse = flag;
 			Thing thing;
 			ThingDef def;
-			if (!FoodUtility.TryFindBestFoodSourceFor(pawn, pawn, desperate, out thing, out def, true, true, false, true))
+			if (!FoodUtility.TryFindBestFoodSourceFor(pawn, pawn, desperate, out thing, out def, true, true, false, allowCorpse))
 			{
 				return null;
 			}
@@ -63,7 +87,7 @@ namespace RimWorld
 			}
 			return new Job(JobDefOf.Ingest, thing)
 			{
-				maxNumToCarry = FoodUtility.WillIngestStackCountOf(pawn, def)
+				count = FoodUtility.WillIngestStackCountOf(pawn, def)
 			};
 		}
 	}

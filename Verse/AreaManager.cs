@@ -11,6 +11,8 @@ namespace Verse
 
 		private const int MaxAllowedAreasPerMode = 5;
 
+		public Map map;
+
 		private List<Area> areas = new List<Area>();
 
 		public List<Area> AllAreas
@@ -21,14 +23,51 @@ namespace Verse
 			}
 		}
 
-		public void InitForNewGame()
+		public Area_Home Home
+		{
+			get
+			{
+				return this.Get<Area_Home>();
+			}
+		}
+
+		public Area_BuildRoof BuildRoof
+		{
+			get
+			{
+				return this.Get<Area_BuildRoof>();
+			}
+		}
+
+		public Area_NoRoof NoRoof
+		{
+			get
+			{
+				return this.Get<Area_NoRoof>();
+			}
+		}
+
+		public Area_SnowClear SnowClear
+		{
+			get
+			{
+				return this.Get<Area_SnowClear>();
+			}
+		}
+
+		public AreaManager(Map map)
+		{
+			this.map = map;
+		}
+
+		public void AddStartingAreas()
 		{
 			for (int i = 0; i < 1; i++)
 			{
-				this.areas.Add(new Area_Home());
-				this.areas.Add(new Area_BuildRoof());
-				this.areas.Add(new Area_NoRoof());
-				this.areas.Add(new Area_SnowClear());
+				this.areas.Add(new Area_Home(this));
+				this.areas.Add(new Area_BuildRoof(this));
+				this.areas.Add(new Area_NoRoof(this));
+				this.areas.Add(new Area_SnowClear(this));
 				Area_Allowed area_Allowed;
 				this.TryMakeNewAllowed(AllowedAreaMode.Humanlike, out area_Allowed);
 				this.TryMakeNewAllowed(AllowedAreaMode.Animal, out area_Allowed);
@@ -38,6 +77,10 @@ namespace Verse
 		public void ExposeData()
 		{
 			Scribe_Collections.LookList<Area>(ref this.areas, "areas", LookMode.Deep, new object[0]);
+			if (Scribe.mode == LoadSaveMode.LoadingVars)
+			{
+				this.UpdateAllAreasLinks();
+			}
 		}
 
 		public void AreaManagerUpdate()
@@ -56,7 +99,7 @@ namespace Verse
 				return;
 			}
 			this.areas.Remove(area);
-			foreach (Pawn current in PawnUtility.AllPawnsMapOrWorldAlive)
+			foreach (Pawn current in PawnsFinder.AllMapsAndWorld_Alive)
 			{
 				if (current.playerSettings != null)
 				{
@@ -99,6 +142,14 @@ namespace Verse
 			this.areas.InsertionSort((Area a, Area b) => b.ListPriority.CompareTo(a.ListPriority));
 		}
 
+		private void UpdateAllAreasLinks()
+		{
+			for (int i = 0; i < this.areas.Count; i++)
+			{
+				this.areas[i].areaManager = this;
+			}
+		}
+
 		public bool CanMakeNewAllowed(AllowedAreaMode mode)
 		{
 			return (from a in this.areas
@@ -113,7 +164,7 @@ namespace Verse
 				area = null;
 				return false;
 			}
-			area = new Area_Allowed(mode, null);
+			area = new Area_Allowed(this, mode, null);
 			this.areas.Add(area);
 			this.SortAreas();
 			return true;

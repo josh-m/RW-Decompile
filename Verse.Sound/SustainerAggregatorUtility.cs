@@ -11,7 +11,7 @@ namespace Verse.Sound
 			Sustainer sustainer = null;
 			foreach (Sustainer current in Find.SoundRoot.sustainerManager.AllSustainers)
 			{
-				if (current.def == def && current.info.Maker.Cell.InHorDistOf(info.Maker.Cell, SustainerAggregatorUtility.AggregateRadius))
+				if (current.def == def && current.info.Maker.Map == info.Maker.Map && current.info.Maker.Cell.InHorDistOf(info.Maker.Cell, SustainerAggregatorUtility.AggregateRadius))
 				{
 					sustainer = current;
 					break;

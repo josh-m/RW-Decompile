@@ -7,32 +7,26 @@ namespace RimWorld
 	{
 		public override void TransformValue(StatRequest req, ref float val)
 		{
-			if (req.HasThing)
+			float num;
+			if (this.TryGetValue(req, out num))
 			{
-				Pawn pawn = req.Thing as Pawn;
-				if (pawn != null)
-				{
-					val *= this.ValueFor(pawn);
-				}
+				val *= num;
 			}
 		}
 
 		public override string ExplanationPart(StatRequest req)
 		{
-			if (req.HasThing)
+			float f;
+			if (this.TryGetValue(req, out f))
 			{
-				Pawn pawn = req.Thing as Pawn;
-				if (pawn != null)
-				{
-					return "StatsReport_MissingBodyParts".Translate() + ": x" + this.ValueFor(pawn).ToStringPercent();
-				}
+				return "StatsReport_MissingBodyParts".Translate() + ": x" + f.ToStringPercent();
 			}
 			return null;
 		}
 
-		private float ValueFor(Pawn pawn)
+		private bool TryGetValue(StatRequest req, out float value)
 		{
-			return pawn.health.hediffSet.GetCoverageOfNotMissingNaturalParts(pawn.RaceProps.body.corePart);
+			return PawnOrCorpseStatUtility.TryGetPawnOrCorpseStat(req, (Pawn x) => x.health.hediffSet.GetCoverageOfNotMissingNaturalParts(x.RaceProps.body.corePart), (ThingDef x) => 1f, out value);
 		}
 	}
 }

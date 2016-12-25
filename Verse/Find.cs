@@ -1,10 +1,9 @@
 using RimWorld;
 using RimWorld.Planet;
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityStandardAssets.ImageEffects;
-using Verse.AI;
-using Verse.AI.Group;
 using Verse.Sound;
 
 namespace Verse
@@ -32,6 +31,22 @@ namespace Verse
 			get
 			{
 				return Current.Root.uiRoot;
+			}
+		}
+
+		public static MusicManagerEntry MusicManagerEntry
+		{
+			get
+			{
+				return ((Root_Entry)Current.Root).musicManagerEntry;
+			}
+		}
+
+		public static MusicManagerPlay MusicManagerPlay
+		{
+			get
+			{
+				return ((Root_Play)Current.Root).musicManagerPlay;
 			}
 		}
 
@@ -91,11 +106,35 @@ namespace Verse
 			}
 		}
 
+		public static Camera WorldCamera
+		{
+			get
+			{
+				return WorldCameraManager.WorldCamera;
+			}
+		}
+
+		public static WorldCameraDriver WorldCameraDriver
+		{
+			get
+			{
+				return WorldCameraManager.WorldCameraDriver;
+			}
+		}
+
 		public static MainTabsRoot MainTabsRoot
 		{
 			get
 			{
-				return ((UIRootMap)Find.UIRoot).mainTabsRoot;
+				return ((UIRoot_Play)Find.UIRoot).mainTabsRoot;
+			}
+		}
+
+		public static MapInterface MapUI
+		{
+			get
+			{
+				return ((UIRoot_Play)Find.UIRoot).mapUI;
 			}
 		}
 
@@ -103,7 +142,7 @@ namespace Verse
 		{
 			get
 			{
-				return ((UIRootMap)Find.UIRoot).selector;
+				return Find.MapUI.selector;
 			}
 		}
 
@@ -111,7 +150,7 @@ namespace Verse
 		{
 			get
 			{
-				return ((UIRootMap)Find.UIRoot).targeter;
+				return Find.MapUI.targeter;
 			}
 		}
 
@@ -119,7 +158,23 @@ namespace Verse
 		{
 			get
 			{
-				return ((UIRootMap)Find.UIRoot).colonistBar;
+				return Find.MapUI.colonistBar;
+			}
+		}
+
+		public static DesignatorManager DesignatorManager
+		{
+			get
+			{
+				return Find.MapUI.designatorManager;
+			}
+		}
+
+		public static ReverseDesignatorDatabase ReverseDesignatorDatabase
+		{
+			get
+			{
+				return Find.MapUI.reverseDesignatorDatabase;
 			}
 		}
 
@@ -171,11 +226,27 @@ namespace Verse
 			}
 		}
 
-		public static Map Map
+		public static List<Map> Maps
 		{
 			get
 			{
-				return Current.Game.Map;
+				return Current.Game.Maps;
+			}
+		}
+
+		public static Map VisibleMap
+		{
+			get
+			{
+				return Current.Game.VisibleMap;
+			}
+		}
+
+		public static Map AnyPlayerHomeMap
+		{
+			get
+			{
+				return Current.Game.AnyPlayerHomeMap;
 			}
 		}
 
@@ -267,6 +338,10 @@ namespace Verse
 		{
 			get
 			{
+				if (Current.Game == null)
+				{
+					return null;
+				}
 				return Current.Game.tutor;
 			}
 		}
@@ -283,15 +358,19 @@ namespace Verse
 		{
 			get
 			{
+				if (Current.Game == null)
+				{
+					return null;
+				}
 				return Current.Game.tutor.activeLesson;
 			}
 		}
 
-		public static WorldSquare MapWorldSquare
+		public static Autosaver Autosaver
 		{
 			get
 			{
-				return Find.World.grid.Get(Find.GameInitData.startingCoords);
+				return Current.Game.autosaver;
 			}
 		}
 
@@ -319,315 +398,91 @@ namespace Verse
 			}
 		}
 
-		public static ResourceCounter ResourceCounter
+		public static WorldObjectsHolder WorldObjects
 		{
 			get
 			{
-				return Find.Map.resourceCounter;
+				return Find.World.worldObjects;
 			}
 		}
 
-		public static ListerThings ListerThings
+		public static WorldGrid WorldGrid
 		{
 			get
 			{
-				return Find.Map.listerThings;
+				return Find.World.grid;
 			}
 		}
 
-		public static ListerBuildings ListerBuildings
+		public static WorldDebugDrawer WorldDebugDrawer
 		{
 			get
 			{
-				return Find.Map.listerBuildings;
+				return Find.World.debugDrawer;
 			}
 		}
 
-		public static DynamicDrawManager DynamicDrawManager
+		public static WorldPathGrid WorldPathGrid
 		{
 			get
 			{
-				return Find.Map.dynamicDrawManager;
+				return Find.World.pathGrid;
 			}
 		}
 
-		public static PawnDestinationManager PawnDestinationManager
+		public static WorldDynamicDrawManager WorldDynamicDrawManager
 		{
 			get
 			{
-				return Find.Map.pawnDestinationManager;
+				return Find.World.dynamicDrawManager;
 			}
 		}
 
-		public static TooltipGiverList TooltipGiverList
+		public static WorldPathFinder WorldPathFinder
 		{
 			get
 			{
-				return Find.Map.tooltipGiverList;
+				return Find.World.pathFinder;
 			}
 		}
 
-		public static ReservationManager Reservations
+		public static WorldPathPool WorldPathPool
 		{
 			get
 			{
-				return Find.Map.reservationManager;
+				return Find.World.pathPool;
 			}
 		}
 
-		public static PhysicalInteractionReservationManager PhysicalInteractionReservations
+		public static WorldReachability WorldReachability
 		{
 			get
 			{
-				return Find.Map.physicalInteractionReservationManager;
+				return Find.World.reachability;
 			}
 		}
 
-		public static DesignationManager DesignationManager
+		public static WorldInterface WorldInterface
 		{
 			get
 			{
-				return Find.Map.designationManager;
+				return Find.World.UI;
 			}
 		}
 
-		public static LordManager LordManager
+		public static WorldSelector WorldSelector
 		{
 			get
 			{
-				return Find.Map.lordManager;
+				return Find.WorldInterface.selector;
 			}
 		}
 
-		public static DebugCellDrawer DebugDrawer
+		public static WorldTargeter WorldTargeter
 		{
 			get
 			{
-				return Find.Map.debugDrawer;
-			}
-		}
-
-		public static PassingShipManager PassingShipManager
-		{
-			get
-			{
-				return Find.Map.passingShipManager;
-			}
-		}
-
-		public static SlotGroupManager SlotGroupManager
-		{
-			get
-			{
-				return Find.Map.slotGroupManager;
-			}
-		}
-
-		public static MapDrawer MapDrawer
-		{
-			get
-			{
-				return Find.Map.mapDrawer;
-			}
-		}
-
-		public static MapConditionManager MapConditionManager
-		{
-			get
-			{
-				return Find.Map.mapConditionManager;
-			}
-		}
-
-		public static WeatherManager WeatherManager
-		{
-			get
-			{
-				return Find.Map.weatherManager;
-			}
-		}
-
-		public static ZoneManager ZoneManager
-		{
-			get
-			{
-				return Find.Map.zoneManager;
-			}
-		}
-
-		public static MusicManagerMap MusicManagerMap
-		{
-			get
-			{
-				return Find.Map.musicManagerMap;
-			}
-		}
-
-		public static MapPawns MapPawns
-		{
-			get
-			{
-				return Find.Map.mapPawns;
-			}
-		}
-
-		public static AttackTargetsCache AttackTargetsCache
-		{
-			get
-			{
-				return Find.Map.attackTargetsCache;
-			}
-		}
-
-		public static AttackTargetReservationManager AttackTargetReservations
-		{
-			get
-			{
-				return Find.Map.attackTargetReservationManager;
-			}
-		}
-
-		public static VoluntarilyJoinableLordsStarter VoluntarilyJoinableLordsStarter
-		{
-			get
-			{
-				return Find.Map.lordsStarter;
-			}
-		}
-
-		public static ThingGrid ThingGrid
-		{
-			get
-			{
-				return Find.Map.thingGrid;
-			}
-		}
-
-		public static EdificeGrid EdificeGrid
-		{
-			get
-			{
-				return Find.Map.buildingGrid;
-			}
-		}
-
-		public static CoverGrid CoverGrid
-		{
-			get
-			{
-				return Find.Map.coverGrid;
-			}
-		}
-
-		public static FogGrid FogGrid
-		{
-			get
-			{
-				return Find.Map.fogGrid;
-			}
-		}
-
-		public static GlowGrid GlowGrid
-		{
-			get
-			{
-				return Find.Map.glowGrid;
-			}
-		}
-
-		public static SnowGrid SnowGrid
-		{
-			get
-			{
-				return Find.Map.snowGrid;
-			}
-		}
-
-		public static RegionGrid RegionGrid
-		{
-			get
-			{
-				return Find.Map.regionGrid;
-			}
-		}
-
-		public static TerrainGrid TerrainGrid
-		{
-			get
-			{
-				return Find.Map.terrainGrid;
-			}
-		}
-
-		public static PathGrid PathGrid
-		{
-			get
-			{
-				return Find.Map.pathGrid;
-			}
-		}
-
-		public static RoofGrid RoofGrid
-		{
-			get
-			{
-				return Find.Map.roofGrid;
-			}
-		}
-
-		public static FertilityGrid FertilityGrid
-		{
-			get
-			{
-				return Find.Map.fertilityGrid;
-			}
-		}
-
-		public static DeepResourceGrid DeepResourceGrid
-		{
-			get
-			{
-				return Find.Map.deepResourceGrid;
-			}
-		}
-
-		public static AreaManager AreaManager
-		{
-			get
-			{
-				return Find.Map.areaManager;
-			}
-		}
-
-		public static Area_Home AreaHome
-		{
-			get
-			{
-				return Find.Map.areaManager.Get<Area_Home>();
-			}
-		}
-
-		public static Area_BuildRoof AreaBuildRoof
-		{
-			get
-			{
-				return Find.Map.areaManager.Get<Area_BuildRoof>();
-			}
-		}
-
-		public static Area_NoRoof AreaNoRoof
-		{
-			get
-			{
-				return Find.Map.areaManager.Get<Area_NoRoof>();
-			}
-		}
-
-		public static Area_SnowClear AreaSnowClear
-		{
-			get
-			{
-				return Find.Map.areaManager.Get<Area_SnowClear>();
+				return Find.WorldInterface.targeter;
 			}
 		}
 	}

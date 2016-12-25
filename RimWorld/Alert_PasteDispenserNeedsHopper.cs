@@ -1,16 +1,25 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Verse;
 
 namespace RimWorld
 {
-	public class Alert_PasteDispenserNeedsHopper : Alert_High
+	public class Alert_PasteDispenserNeedsHopper : Alert
 	{
-		public override AlertReport Report
+		public Alert_PasteDispenserNeedsHopper()
 		{
-			get
+			this.defaultLabel = "NeedFoodHopper".Translate();
+			this.defaultExplanation = "NeedFoodHopperDesc".Translate();
+			this.defaultPriority = AlertPriority.High;
+		}
+
+		public override AlertReport GetReport()
+		{
+			List<Map> maps = Find.Maps;
+			for (int i = 0; i < maps.Count; i++)
 			{
-				foreach (Building current in from b in Find.ListerBuildings.allBuildingsColonist
+				foreach (Building current in from b in maps[i].listerBuildings.allBuildingsColonist
 				where b.def.IsFoodDispenser
 				select b)
 				{
@@ -18,11 +27,14 @@ namespace RimWorld
 					ThingDef hopper = ThingDefOf.Hopper;
 					foreach (IntVec3 current2 in GenAdj.CellsAdjacentCardinal(current))
 					{
-						Thing edifice = current2.GetEdifice();
-						if (edifice != null && edifice.def == hopper)
+						if (current2.InBounds(maps[i]))
 						{
-							flag = true;
-							break;
+							Thing edifice = current2.GetEdifice(current.Map);
+							if (edifice != null && edifice.def == hopper)
+							{
+								flag = true;
+								break;
+							}
 						}
 					}
 					if (!flag)
@@ -30,14 +42,8 @@ namespace RimWorld
 						return AlertReport.CulpritIs(current);
 					}
 				}
-				return AlertReport.Inactive;
 			}
-		}
-
-		public Alert_PasteDispenserNeedsHopper()
-		{
-			this.baseLabel = "NeedFoodHopper".Translate();
-			this.baseExplanation = "NeedFoodHopperDesc".Translate();
+			return AlertReport.Inactive;
 		}
 	}
 }

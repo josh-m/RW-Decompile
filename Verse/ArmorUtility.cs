@@ -73,7 +73,7 @@ namespace Verse
 			}
 			if (armorThing != null)
 			{
-				armorThing.TakeDamage(new DamageInfo(damageDef, GenMath.RoundRandom(num3), null, null, null));
+				armorThing.TakeDamage(new DamageInfo(damageDef, GenMath.RoundRandom(num3), -1f, null, null, null));
 			}
 			damAmount -= num3;
 		}

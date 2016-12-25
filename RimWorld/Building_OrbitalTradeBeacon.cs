@@ -17,7 +17,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return Building_OrbitalTradeBeacon.TradeableCellsAround(base.Position);
+				return Building_OrbitalTradeBeacon.TradeableCellsAround(base.Position, base.Map);
 			}
 		}
 
@@ -46,14 +46,14 @@ namespace RimWorld
 			select c);
 		}
 
-		public static List<IntVec3> TradeableCellsAround(IntVec3 pos)
+		public static List<IntVec3> TradeableCellsAround(IntVec3 pos, Map map)
 		{
 			Building_OrbitalTradeBeacon.tradeableCells.Clear();
-			if (!pos.InBounds())
+			if (!pos.InBounds(map))
 			{
 				return Building_OrbitalTradeBeacon.tradeableCells;
 			}
-			Region region = pos.GetRegion();
+			Region region = pos.GetRegion(map);
 			if (region == null)
 			{
 				return Building_OrbitalTradeBeacon.tradeableCells;
@@ -73,9 +73,9 @@ namespace RimWorld
 		}
 
 		[DebuggerHidden]
-		public static IEnumerable<Building_OrbitalTradeBeacon> AllPowered()
+		public static IEnumerable<Building_OrbitalTradeBeacon> AllPowered(Map map)
 		{
-			foreach (Building_OrbitalTradeBeacon b in Find.ListerBuildings.AllBuildingsColonistOfClass<Building_OrbitalTradeBeacon>())
+			foreach (Building_OrbitalTradeBeacon b in map.listerBuildings.AllBuildingsColonistOfClass<Building_OrbitalTradeBeacon>())
 			{
 				CompPowerTrader power = b.GetComp<CompPowerTrader>();
 				if (power == null || power.PowerOn)

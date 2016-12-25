@@ -61,7 +61,7 @@ namespace RimWorld
 				this.FailOnDestroyedNullOrForbidden(TargetIndex.C);
 				yield return Toils_Reserve.Reserve(TargetIndex.C, 1);
 				yield return Toils_Goto.GotoThing(TargetIndex.C, PathEndMode.OnCell).FailOnSomeonePhysicallyInteracting(TargetIndex.C);
-				yield return Toils_Haul.StartCarryThing(TargetIndex.C);
+				yield return Toils_Haul.StartCarryThing(TargetIndex.C, false, false);
 			}
 			yield return Toils_Goto.GotoCell(TargetIndex.B, PathEndMode.OnCell);
 			Toil chew = new Toil();

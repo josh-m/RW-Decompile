@@ -37,7 +37,7 @@ namespace RimWorld
 				this.sprayTicksLeft--;
 				if (Rand.Value < 0.6f)
 				{
-					MoteMaker.ThrowAirPuffUp(this.parent.TrueCenter());
+					MoteMaker.ThrowAirPuffUp(this.parent.TrueCenter(), this.parent.Map);
 				}
 				if (Find.TickManager.TicksGame % 20 == 0)
 				{

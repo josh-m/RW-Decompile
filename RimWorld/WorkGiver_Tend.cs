@@ -10,7 +10,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return PathEndMode.OnCell;
+				return PathEndMode.InteractionCell;
 			}
 		}
 
@@ -25,7 +25,16 @@ namespace RimWorld
 		public override bool HasJobOnThing(Pawn pawn, Thing t)
 		{
 			Pawn pawn2 = t as Pawn;
-			return pawn2 != null && pawn2 != pawn && pawn2.InBed() && pawn2.health.ShouldBeTendedNow && pawn.CanReserve(pawn2, 1);
+			return pawn2 != null && pawn2 != pawn && WorkGiver_Tend.GoodLayingStatusForTend(pawn2) && HealthAIUtility.ShouldBeTendedNow(pawn2) && pawn.CanReserve(pawn2, 1) && pawn.CanReach(t, PathEndMode.InteractionCell, Danger.Deadly, false, TraverseMode.ByPawn);
+		}
+
+		public static bool GoodLayingStatusForTend(Pawn patient)
+		{
+			if (patient.RaceProps.Humanlike)
+			{
+				return patient.InBed();
+			}
+			return patient.GetPosture() != PawnPosture.Standing;
 		}
 
 		public override Job JobOnThing(Pawn pawn, Thing t)
@@ -34,7 +43,7 @@ namespace RimWorld
 			Thing thing = null;
 			if (Medicine.GetMedicineCountToFullyHeal(pawn2) > 0)
 			{
-				thing = HealWorkGiverUtility.FindBestMedicine(pawn, pawn2);
+				thing = HealthAIUtility.FindBestMedicine(pawn, pawn2);
 			}
 			if (thing != null)
 			{

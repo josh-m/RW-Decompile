@@ -1,12 +1,13 @@
 using System;
 using System.Text;
+using UnityEngine;
 using Verse;
 
 namespace RimWorld
 {
 	public class StatWorker_MarketValue : StatWorker
 	{
-		private const float ValuePerWork = 0.004f;
+		public const float ValuePerWork = 0.004f;
 
 		private const float DefaultGuessStuffCost = 2f;
 
@@ -39,8 +40,8 @@ namespace RimWorld
 					num += (float)req.Def.costStuffCount * 2f;
 				}
 			}
-			float statValueAbstract = req.Def.GetStatValueAbstract(StatDefOf.WorkToMake, req.StuffDef);
-			return num + statValueAbstract * 0.004f;
+			float num2 = Mathf.Max(req.Def.GetStatValueAbstract(StatDefOf.WorkToMake, req.StuffDef), req.Def.GetStatValueAbstract(StatDefOf.WorkToBuild, req.StuffDef));
+			return num + num2 * 0.004f;
 		}
 
 		public override string GetExplanation(StatRequest req, ToStringNumberSense numberSense)

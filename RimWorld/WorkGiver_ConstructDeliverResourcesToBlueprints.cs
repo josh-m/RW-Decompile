@@ -91,7 +91,7 @@ namespace RimWorld
 				while (j <= cellRect.maxX)
 				{
 					IntVec3 c = new IntVec3(j, 0, i);
-					thing2 = c.GetEdifice();
+					thing2 = c.GetEdifice(pawn.Map);
 					if (thing2 == thing)
 					{
 						thing2 = null;

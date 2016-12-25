@@ -5,9 +5,9 @@ namespace RimWorld
 {
 	public class GenStep_ScenParts : GenStep
 	{
-		public override void Generate()
+		public override void Generate(Map map)
 		{
-			Find.Scenario.GenerateIntoMap();
+			Find.Scenario.GenerateIntoMap(map);
 		}
 	}
 }

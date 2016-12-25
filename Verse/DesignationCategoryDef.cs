@@ -73,7 +73,7 @@ namespace Verse
 				}
 			}
 			IEnumerable<BuildableDef> enumerable = from tDef in DefDatabase<ThingDef>.AllDefs.Cast<BuildableDef>().Concat(DefDatabase<TerrainDef>.AllDefs.Cast<BuildableDef>())
-			where tDef.designationCategory == this.defName
+			where tDef.designationCategory == this
 			select tDef;
 			foreach (BuildableDef current2 in enumerable)
 			{

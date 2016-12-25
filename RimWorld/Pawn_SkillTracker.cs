@@ -57,9 +57,9 @@ namespace RimWorld
 			}
 		}
 
-		public void Learn(SkillDef sDef, float xp)
+		public void Learn(SkillDef sDef, float xp, bool direct = false)
 		{
-			this.GetSkill(sDef).Learn(xp);
+			this.GetSkill(sDef).Learn(xp, direct);
 		}
 
 		public float AverageOfRelevantSkillsFor(WorkTypeDef workDef)
@@ -71,7 +71,7 @@ namespace RimWorld
 			float num = 0f;
 			for (int i = 0; i < workDef.relevantSkills.Count; i++)
 			{
-				num += (float)this.GetSkill(workDef.relevantSkills[i]).level;
+				num += (float)this.GetSkill(workDef.relevantSkills[i]).Level;
 			}
 			return num / (float)workDef.relevantSkills.Count;
 		}
@@ -92,6 +92,14 @@ namespace RimWorld
 				}
 			}
 			return passion;
+		}
+
+		public void Notify_SkillDisablesChanged()
+		{
+			for (int i = 0; i < this.skills.Count; i++)
+			{
+				this.skills[i].Notify_SkillDisablesChanged();
+			}
 		}
 	}
 }

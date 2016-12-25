@@ -2,41 +2,39 @@ using System;
 
 namespace Verse
 {
-	public static class CellIndices
+	public class CellIndices
 	{
-		private static int mapSizeX;
+		private int mapSizeX;
 
-		private static int mapSizeZ;
+		private int mapSizeZ;
 
-		public static int NumGridCells
+		public int NumGridCells
 		{
 			get
 			{
-				return CellIndices.mapSizeX * CellIndices.mapSizeZ;
+				return this.mapSizeX * this.mapSizeZ;
 			}
 		}
 
-		public static void Reinit()
+		public CellIndices(Map map)
 		{
-			CellIndices.mapSizeX = Find.Map.Size.x;
-			CellIndices.mapSizeZ = Find.Map.Size.z;
+			this.mapSizeX = map.Size.x;
+			this.mapSizeZ = map.Size.z;
 		}
 
-		public static int CellToIndex(IntVec3 c)
+		public int CellToIndex(IntVec3 c)
 		{
-			return c.z * CellIndices.mapSizeX + c.x;
+			return CellIndicesUtility.CellToIndex(c, this.mapSizeX);
 		}
 
-		public static int CellToIndex(int x, int z)
+		public int CellToIndex(int x, int z)
 		{
-			return z * CellIndices.mapSizeX + x;
+			return CellIndicesUtility.CellToIndex(x, z, this.mapSizeX);
 		}
 
-		public static IntVec3 IndexToCell(int ind)
+		public IntVec3 IndexToCell(int ind)
 		{
-			int newX = ind % CellIndices.mapSizeX;
-			int newZ = ind / CellIndices.mapSizeZ;
-			return new IntVec3(newX, 0, newZ);
+			return CellIndicesUtility.IndexToCell(ind, this.mapSizeX, this.mapSizeZ);
 		}
 	}
 }

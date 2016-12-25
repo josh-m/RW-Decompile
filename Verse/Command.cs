@@ -144,7 +144,6 @@ namespace Verse
 			if (!labelCap.NullOrEmpty())
 			{
 				float num = Text.CalcHeight(labelCap, rect.width);
-				num -= 2f;
 				Rect rect3 = new Rect(rect.x, rect.yMax - num + 12f, rect.width, num);
 				GUI.DrawTexture(rect3, TexUI.GrayTextBG);
 				GUI.color = Color.white;
@@ -159,7 +158,15 @@ namespace Verse
 				TipSignal tip = this.Desc;
 				if (this.disabled && !this.disabledReason.NullOrEmpty())
 				{
-					tip.text = tip.text + "\n\nDISABLED: " + this.disabledReason;
+					string text = tip.text;
+					tip.text = string.Concat(new string[]
+					{
+						text,
+						"\n\n",
+						"DisabledCommand".Translate(),
+						": ",
+						this.disabledReason
+					});
 				}
 				TooltipHandler.TipRegion(rect, tip);
 			}

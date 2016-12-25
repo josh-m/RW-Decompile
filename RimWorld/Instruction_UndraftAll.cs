@@ -11,13 +11,13 @@ namespace RimWorld
 		{
 			get
 			{
-				return (float)this.DraftedPawns().Count<Pawn>() / (float)Find.MapPawns.FreeColonistsSpawnedCount;
+				return 1f - (float)this.DraftedPawns().Count<Pawn>() / (float)base.Map.mapPawns.FreeColonistsSpawnedCount;
 			}
 		}
 
 		private IEnumerable<Pawn> DraftedPawns()
 		{
-			return from p in Find.MapPawns.FreeColonistsSpawned
+			return from p in base.Map.mapPawns.FreeColonistsSpawned
 			where p.Drafted
 			select p;
 		}

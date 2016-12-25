@@ -28,7 +28,7 @@ namespace RimWorld
 			select d).ToList<ThingDef>();
 			RestUtility.bedDefsBestToWorst_Medical = (from d in DefDatabase<ThingDef>.AllDefs
 			where d.IsBed
-			orderby d.building.bed_maxBodySize, d.GetStatValueAbstract(StatDefOf.MedicalTreatmentQualityFactor, null) descending, d.GetStatValueAbstract(StatDefOf.BedRestEffectiveness, null) descending
+			orderby d.building.bed_maxBodySize, d.GetStatValueAbstract(StatDefOf.MedicalTendQualityOffset, null) descending, d.GetStatValueAbstract(StatDefOf.BedRestEffectiveness, null) descending
 			select d).ToList<ThingDef>();
 		}
 
@@ -60,7 +60,7 @@ namespace RimWorld
 					{
 						return false;
 					}
-					if (!building_Bed3.Position.IsInPrisonCell())
+					if (!building_Bed3.Position.IsInPrisonCell(building_Bed3.Map))
 					{
 						return false;
 					}
@@ -78,11 +78,11 @@ namespace RimWorld
 				}
 				if (building_Bed3.Medical)
 				{
-					if (!sleeper.health.ShouldEverReceiveMedicalCare)
+					if (!HealthAIUtility.ShouldEverReceiveMedicalCare(sleeper))
 					{
 						return false;
 					}
-					if (!sleeper.health.PrefersMedicalRest)
+					if (!HealthAIUtility.ShouldSeekMedicalRest(sleeper))
 					{
 						return false;
 					}
@@ -104,7 +104,7 @@ namespace RimWorld
 				}
 				return (!checkSocialProperness || building_Bed3.IsSociallyProper(sleeper, sleeperWillBePrisoner, false)) && !building_Bed3.IsForbidden(traveler) && !building_Bed3.IsBurning();
 			};
-			if (forceCheckMedBed || sleeper.health.PrefersMedicalRest)
+			if (forceCheckMedBed || HealthAIUtility.ShouldSeekMedicalRest(sleeper))
 			{
 				if (sleeper.InBed() && sleeper.CurrentBed().Medical && bedValidator(sleeper.CurrentBed()))
 				{
@@ -113,7 +113,7 @@ namespace RimWorld
 				for (int i = 0; i < RestUtility.bedDefsBestToWorst_Medical.Count; i++)
 				{
 					Predicate<Thing> validator = (Thing b) => bedValidator(b) && ((Building_Bed)b).Medical;
-					Building_Bed building_Bed = (Building_Bed)GenClosest.ClosestThingReachable(sleeper.Position, ThingRequest.ForDef(RestUtility.bedDefsBestToWorst_Medical[i]), PathEndMode.OnCell, TraverseParms.For(traveler, Danger.Deadly, TraverseMode.ByPawn, false), 9999f, validator, null, -1, false);
+					Building_Bed building_Bed = (Building_Bed)GenClosest.ClosestThingReachable(sleeper.Position, sleeper.Map, ThingRequest.ForDef(RestUtility.bedDefsBestToWorst_Medical[i]), PathEndMode.OnCell, TraverseParms.For(traveler, Danger.Deadly, TraverseMode.ByPawn, false), 9999f, validator, null, -1, false);
 					if (building_Bed != null)
 					{
 						return building_Bed;
@@ -139,7 +139,7 @@ namespace RimWorld
 				if (RestUtility.CanUseBedEver(sleeper, thingDef))
 				{
 					Predicate<Thing> validator = (Thing b) => bedValidator(b) && !((Building_Bed)b).Medical;
-					Building_Bed building_Bed2 = (Building_Bed)GenClosest.ClosestThingReachable(sleeper.Position, ThingRequest.ForDef(thingDef), PathEndMode.OnCell, TraverseParms.For(traveler, Danger.Deadly, TraverseMode.ByPawn, false), 9999f, validator, null, -1, false);
+					Building_Bed building_Bed2 = (Building_Bed)GenClosest.ClosestThingReachable(sleeper.Position, sleeper.Map, ThingRequest.ForDef(thingDef), PathEndMode.OnCell, TraverseParms.For(traveler, Danger.Deadly, TraverseMode.ByPawn, false), 9999f, validator, null, -1, false);
 					if (building_Bed2 != null)
 					{
 						if (sleeper.ownership != null)
@@ -165,7 +165,7 @@ namespace RimWorld
 				return pawn.CurrentBed();
 			}
 			Predicate<Thing> validator = predicate;
-			Building_Bed building_Bed = (Building_Bed)GenClosest.ClosestThingReachable(pawn.Position, ThingRequest.ForGroup(ThingRequestGroup.BuildingArtificial), PathEndMode.OnCell, TraverseParms.For(pawn, Danger.Deadly, TraverseMode.ByPawn, false), 9999f, validator, null, -1, false);
+			Building_Bed building_Bed = (Building_Bed)GenClosest.ClosestThingReachable(pawn.Position, pawn.Map, ThingRequest.ForGroup(ThingRequestGroup.BuildingArtificial), PathEndMode.OnCell, TraverseParms.For(pawn, Danger.Deadly, TraverseMode.ByPawn, false), 9999f, validator, null, -1, false);
 			if (building_Bed != null)
 			{
 				return building_Bed;
@@ -215,6 +215,11 @@ namespace RimWorld
 		public static bool DisturbancePreventsLyingDown(Pawn pawn)
 		{
 			return Find.TickManager.TicksGame - pawn.mindState.lastDisturbanceTick < 400;
+		}
+
+		public static float PawnHealthRestEffectivenessFactor(Pawn pawn)
+		{
+			return pawn.health.capacities.GetEfficiency(PawnCapacityDefOf.BloodPumping) * pawn.health.capacities.GetEfficiency(PawnCapacityDefOf.Metabolism) * pawn.health.capacities.GetEfficiency(PawnCapacityDefOf.Breathing);
 		}
 
 		public static bool Awake(this Pawn p)

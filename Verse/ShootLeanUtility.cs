@@ -25,7 +25,7 @@ namespace Verse
 			}
 		}
 
-		public static void LeanShootingSourcesFromTo(IntVec3 shooterLoc, IntVec3 targetPos, List<IntVec3> listToFill)
+		public static void LeanShootingSourcesFromTo(IntVec3 shooterLoc, IntVec3 targetPos, Map map, List<IntVec3> listToFill)
 		{
 			listToFill.Clear();
 			float angleFlat = (targetPos - shooterLoc).AngleFlat;
@@ -36,7 +36,7 @@ namespace Verse
 			bool[] workingBlockedArray = ShootLeanUtility.GetWorkingBlockedArray();
 			for (int i = 0; i < 8; i++)
 			{
-				workingBlockedArray[i] = !(shooterLoc + GenAdj.AdjacentCells[i]).CanBeSeenOver();
+				workingBlockedArray[i] = !(shooterLoc + GenAdj.AdjacentCells[i]).CanBeSeenOver(map);
 			}
 			if (!workingBlockedArray[1] && ((workingBlockedArray[0] && !workingBlockedArray[5] && flag) || (workingBlockedArray[2] && !workingBlockedArray[4] && flag2)))
 			{
@@ -66,7 +66,7 @@ namespace Verse
 							{
 								if (j != 3 || flag3)
 								{
-									if ((shooterLoc + GenAdj.AdjacentCells[j]).GetCover() != null)
+									if ((shooterLoc + GenAdj.AdjacentCells[j]).GetCover(map) != null)
 									{
 										listToFill.Add(shooterLoc + GenAdj.AdjacentCells[j]);
 									}
@@ -88,7 +88,7 @@ namespace Verse
 				for (int i = 0; i < 4; i++)
 				{
 					IntVec3 intVec = t.Position + GenAdj.CardinalDirections[i];
-					if (intVec.CanBeSeenOver())
+					if (intVec.CanBeSeenOver(t.Map))
 					{
 						outCells.Add(intVec);
 					}

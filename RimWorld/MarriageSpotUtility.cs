@@ -7,9 +7,9 @@ namespace RimWorld
 {
 	public static class MarriageSpotUtility
 	{
-		public static bool IsValidMarriageSpot(IntVec3 cell, StringBuilder outFailReason = null)
+		public static bool IsValidMarriageSpot(IntVec3 cell, Map map, StringBuilder outFailReason = null)
 		{
-			if (!cell.Standable())
+			if (!cell.Standable(map))
 			{
 				if (outFailReason != null)
 				{
@@ -17,16 +17,25 @@ namespace RimWorld
 				}
 				return false;
 			}
-			return cell.Roofed() || JoyUtility.EnjoyableOutsideNow(outFailReason);
+			return cell.Roofed(map) || JoyUtility.EnjoyableOutsideNow(map, outFailReason);
 		}
 
 		public static bool IsValidMarriageSpotFor(IntVec3 cell, Pawn firstFiance, Pawn secondFiance, StringBuilder outFailReason = null)
 		{
-			if (!MarriageSpotUtility.IsValidMarriageSpot(cell, outFailReason))
+			if (!firstFiance.Spawned || !secondFiance.Spawned)
+			{
+				Log.Warning("Can't check if a marriage spot is valid because one of the fiances isn't spawned.");
+				return false;
+			}
+			if (firstFiance.Map != secondFiance.Map)
 			{
 				return false;
 			}
-			if (!cell.Roofed())
+			if (!MarriageSpotUtility.IsValidMarriageSpot(cell, firstFiance.Map, outFailReason))
+			{
+				return false;
+			}
+			if (!cell.Roofed(firstFiance.Map))
 			{
 				if (!JoyUtility.EnjoyableOutsideNow(firstFiance, outFailReason))
 				{
@@ -113,7 +122,7 @@ namespace RimWorld
 			}
 			if (!firstFiance.IsPrisoner && !secondFiance.IsPrisoner)
 			{
-				Room room = cell.GetRoom();
+				Room room = cell.GetRoom(firstFiance.Map);
 				if (room != null && room.isPrisonCell)
 				{
 					if (outFailReason != null)

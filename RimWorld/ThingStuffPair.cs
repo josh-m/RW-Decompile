@@ -38,6 +38,7 @@ namespace RimWorld
 			get
 			{
 				float num = this.commonalityMultiplier;
+				num *= this.thing.generateCommonality;
 				if (this.thing.IsApparel)
 				{
 					num *= this.thing.apparel.commonality;

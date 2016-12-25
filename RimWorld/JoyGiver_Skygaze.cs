@@ -8,16 +8,16 @@ namespace RimWorld
 	{
 		public override Job TryGiveJob(Pawn pawn)
 		{
-			if (!JoyUtility.EnjoyableOutsideNow(pawn, null) || Find.WeatherManager.curWeather.rainRate > 0.1f)
+			if (!JoyUtility.EnjoyableOutsideNow(pawn, null) || pawn.Map.weatherManager.curWeather.rainRate > 0.1f)
 			{
 				return null;
 			}
-			IntVec3 vec;
-			if (!RCellFinder.TryFindSkygazeCell(pawn.Position, pawn, out vec))
+			IntVec3 c;
+			if (!RCellFinder.TryFindSkygazeCell(pawn.Position, pawn, out c))
 			{
 				return null;
 			}
-			return new Job(this.def.jobDef, vec);
+			return new Job(this.def.jobDef, c);
 		}
 	}
 }

@@ -17,20 +17,20 @@ namespace RimWorld
 
 		private static List<Thing> tmpToSteal = new List<Thing>();
 
-		public static bool TryFindBestItemToSteal(IntVec3 root, float maxDist, out Thing item, Pawn thief, List<Thing> disallowed = null)
+		public static bool TryFindBestItemToSteal(IntVec3 root, Map map, float maxDist, out Thing item, Pawn thief, List<Thing> disallowed = null)
 		{
 			if (thief != null && !thief.health.capacities.CapableOf(PawnCapacityDefOf.Manipulation))
 			{
 				item = null;
 				return false;
 			}
-			if ((thief != null && !thief.Position.CanReachMapEdge(TraverseParms.For(thief, Danger.Some, TraverseMode.ByPawn, false))) || (thief == null && !root.CanReachMapEdge(TraverseParms.For(TraverseMode.PassDoors, Danger.Some, false))))
+			if ((thief != null && !map.reachability.CanReachMapEdge(thief.Position, TraverseParms.For(thief, Danger.Some, TraverseMode.ByPawn, false))) || (thief == null && !map.reachability.CanReachMapEdge(root, TraverseParms.For(TraverseMode.PassDoors, Danger.Some, false))))
 			{
 				item = null;
 				return false;
 			}
 			Predicate<Thing> validator = (Thing t) => (thief == null || thief.CanReserve(t, 1)) && (disallowed == null || !disallowed.Contains(t)) && t.def.stealable && !t.IsBurning();
-			item = GenClosest.ClosestThing_Regionwise_ReachablePrioritized(root, ThingRequest.ForGroup(ThingRequestGroup.HaulableEverOrMinifiable), PathEndMode.ClosestTouch, TraverseParms.For(TraverseMode.NoPassClosedDoors, Danger.Some, false), maxDist, validator, (Thing x) => StealAIUtility.GetValue(x), 15, 15);
+			item = GenClosest.ClosestThing_Regionwise_ReachablePrioritized(root, map, ThingRequest.ForGroup(ThingRequestGroup.HaulableEverOrMinifiable), PathEndMode.ClosestTouch, TraverseParms.For(TraverseMode.NoPassClosedDoors, Danger.Some, false), maxDist, validator, (Thing x) => StealAIUtility.GetValue(x), 15, 15);
 			if (item != null && StealAIUtility.GetValue(item) < 320f)
 			{
 				item = null;
@@ -47,7 +47,7 @@ namespace RimWorld
 				if (pawns[i].Spawned)
 				{
 					Thing thing;
-					if (StealAIUtility.TryFindBestItemToSteal(pawns[i].Position, 7f, out thing, pawns[i], StealAIUtility.tmpToSteal))
+					if (StealAIUtility.TryFindBestItemToSteal(pawns[i].Position, pawns[i].Map, 7f, out thing, pawns[i], StealAIUtility.tmpToSteal))
 					{
 						num += StealAIUtility.GetValue(thing);
 						StealAIUtility.tmpToSteal.Add(thing);

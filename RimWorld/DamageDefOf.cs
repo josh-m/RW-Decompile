@@ -38,14 +38,6 @@ namespace RimWorld
 
 		public static DamageDef EMP;
 
-		public static DamageDef Repair;
-
-		public static DamageDef HealInjury;
-
-		public static DamageDef HealGlobal;
-
-		public static DamageDef RestoreBodyPart;
-
 		public static DamageDef Extinguish;
 
 		public static DamageDef Deterioration;

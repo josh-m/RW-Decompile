@@ -14,7 +14,7 @@ namespace RimWorld
 
 		private Bill mouseoverBill;
 
-		private static readonly Vector2 WinSize = new Vector2(370f, 480f);
+		private static readonly Vector2 WinSize = new Vector2(420f, 480f);
 
 		protected Building_WorkTable SelTable
 		{
@@ -45,7 +45,7 @@ namespace RimWorld
 						RecipeDef recipe = this.SelTable.def.AllRecipes[i];
 						list.Add(new FloatMenuOption(recipe.LabelCap, delegate
 						{
-							if (!Find.MapPawns.FreeColonists.Any((Pawn col) => recipe.PawnSatisfiesSkillRequirements(col)))
+							if (!this.SelTable.Map.mapPawns.FreeColonists.Any((Pawn col) => recipe.PawnSatisfiesSkillRequirements(col)))
 							{
 								Bill.CreateNoPawnsWithSkillDialog(recipe);
 							}
@@ -59,16 +59,16 @@ namespace RimWorld
 							{
 								TutorSystem.Notify_Event("AddBill-" + recipe.LabelCap);
 							}
-						}, MenuOptionPriority.Medium, null, null, 0f, null));
+						}, MenuOptionPriority.Default, null, null, 0f, null, null));
 					}
 				}
 				if (!list.Any<FloatMenuOption>())
 				{
-					list.Add(new FloatMenuOption("NoneBrackets".Translate(), null, MenuOptionPriority.Medium, null, null, 0f, null));
+					list.Add(new FloatMenuOption("NoneBrackets".Translate(), null, MenuOptionPriority.Default, null, null, 0f, null, null));
 				}
 				return list;
 			};
-			this.mouseoverBill = this.SelTable.billStack.DrawListing(rect, recipeOptionsMaker, ref this.scrollPosition, ref this.viewHeight);
+			this.mouseoverBill = this.SelTable.billStack.DoListing(rect, recipeOptionsMaker, ref this.scrollPosition, ref this.viewHeight);
 		}
 
 		public override void TabUpdate()

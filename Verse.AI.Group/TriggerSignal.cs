@@ -1,3 +1,4 @@
+using RimWorld;
 using System;
 using System.Text;
 
@@ -15,6 +16,8 @@ namespace Verse.AI.Group
 
 		public PawnLostCondition condition;
 
+		public Faction faction;
+
 		public static TriggerSignal ForTick
 		{
 			get
@@ -30,6 +33,7 @@ namespace Verse.AI.Group
 			this.pawn = null;
 			this.dinfo = default(DamageInfo);
 			this.condition = PawnLostCondition.Undefined;
+			this.faction = null;
 		}
 
 		public static TriggerSignal ForMemo(string memo)

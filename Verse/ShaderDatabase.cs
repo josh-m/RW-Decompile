@@ -30,6 +30,18 @@ namespace Verse
 
 		public static readonly Shader TerrainFadeRough = ShaderDatabase.LoadShader("Map/TerrainFadeRough");
 
+		public static readonly Shader WorldTerrain = ShaderDatabase.LoadShader("World/WorldTerrain");
+
+		public static readonly Shader WorldOcean = ShaderDatabase.LoadShader("World/WorldOcean");
+
+		public static readonly Shader WorldOverlayCutout = ShaderDatabase.LoadShader("World/WorldOverlayCutout");
+
+		public static readonly Shader WorldOverlayTransparent = ShaderDatabase.LoadShader("World/WorldOverlayTransparent");
+
+		public static readonly Shader WorldOverlayTransparentLit = ShaderDatabase.LoadShader("World/WorldOverlayTransparentLit");
+
+		public static readonly Shader WorldOverlayAdditive = ShaderDatabase.LoadShader("World/WorldOverlayAdditive");
+
 		public static readonly Shader MetaOverlay = ShaderDatabase.LoadShader("Map/MetaOverlay");
 
 		public static readonly Shader SolidColor = ShaderDatabase.LoadShader("Map/SolidColor");

@@ -152,7 +152,7 @@ namespace Verse
 			{
 				DeepProfiler.End();
 			}
-			DeepProfiler.Start("Other def binding.");
+			DeepProfiler.Start("Other def binding, resetting and global operations.");
 			try
 			{
 				PlayerKnowledgeDatabase.ReloadAndRebind();
@@ -169,6 +169,10 @@ namespace Verse
 				WorkGiver_InteractAnimal.Reset();
 				MedicalCareUtility.Reset();
 				InspectPaneUtility.Reset();
+				GraphicDatabaseHeadRecords.Reset();
+				DateReadout.Reset();
+				ResearchProjectDef.GenerateNonOverlappingCoordinates();
+				WorkGiver_FixBrokenDownBuilding.CacheTranslations();
 			}
 			finally
 			{
@@ -224,28 +228,6 @@ namespace Verse
 			{
 				DeepProfiler.End();
 			}
-			LongEventHandler.ExecuteWhenFinished(delegate
-			{
-				DeepProfiler.Start("Load backstories and bios.");
-				try
-				{
-					BackstoryDatabase.ReloadAllBackstories();
-				}
-				finally
-				{
-					DeepProfiler.End();
-				}
-			});
-			DeepProfiler.Start("Inject selected language data into defs.");
-			try
-			{
-				LanguageDatabase.activeLanguage.InjectIntoDefs();
-				GenLabel.ClearCache();
-			}
-			finally
-			{
-				DeepProfiler.End();
-			}
 			DeepProfiler.Start("Short hash giving.");
 			try
 			{
@@ -255,6 +237,31 @@ namespace Verse
 			{
 				DeepProfiler.End();
 			}
+			LongEventHandler.ExecuteWhenFinished(delegate
+			{
+				DeepProfiler.Start("Load backstories.");
+				try
+				{
+					BackstoryDatabase.ReloadAllBackstories();
+				}
+				finally
+				{
+					DeepProfiler.End();
+				}
+			});
+			LongEventHandler.ExecuteWhenFinished(delegate
+			{
+				DeepProfiler.Start("Inject selected language data into game data.");
+				try
+				{
+					LanguageDatabase.activeLanguage.InjectIntoData();
+					GenLabel.ClearCache();
+				}
+				finally
+				{
+					DeepProfiler.End();
+				}
+			});
 			LongEventHandler.ExecuteWhenFinished(delegate
 			{
 				StaticConstructorOnStartupUtility.CallAll();

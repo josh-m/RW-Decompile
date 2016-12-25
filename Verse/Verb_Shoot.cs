@@ -19,18 +19,12 @@ namespace Verse
 			if (base.CasterIsPawn && base.CasterPawn.skills != null)
 			{
 				float xp = 6f;
-				if (this.currentTarget.Thing != null && this.currentTarget.Thing.def.category == ThingCategory.Pawn)
+				Pawn pawn = this.currentTarget.Thing as Pawn;
+				if (pawn != null && pawn.HostileTo(this.caster) && !pawn.Downed)
 				{
-					if (this.currentTarget.Thing.HostileTo(this.caster))
-					{
-						xp = 240f;
-					}
-					else
-					{
-						xp = 50f;
-					}
+					xp = 240f;
 				}
-				base.CasterPawn.skills.Learn(SkillDefOf.Shooting, xp);
+				base.CasterPawn.skills.Learn(SkillDefOf.Shooting, xp, false);
 			}
 		}
 

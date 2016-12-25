@@ -196,11 +196,11 @@ namespace RimWorld
 				{
 					KeyCode keyCode = (slot != KeyPrefs.BindingSlot.A) ? keyDef.defaultKeyCodeB : keyDef.defaultKeyCodeA;
 					this.keyPrefsData.SetBinding(keyDef, slot, keyCode);
-				}, MenuOptionPriority.Medium, null, null, 0f, null));
+				}, MenuOptionPriority.Default, null, null, 0f, null, null));
 				list.Add(new FloatMenuOption("ClearBinding".Translate(), delegate
 				{
 					this.keyPrefsData.SetBinding(keyDef, slot, KeyCode.None);
-				}, MenuOptionPriority.Medium, null, null, 0f, null));
+				}, MenuOptionPriority.Default, null, null, 0f, null, null));
 				Find.WindowStack.Add(new FloatMenu(list));
 			}
 		}

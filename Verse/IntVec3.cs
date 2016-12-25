@@ -146,10 +146,20 @@ namespace Verse
 			{
 				','
 			});
-			int newX = Convert.ToInt32(array[0]);
-			int newY = Convert.ToInt32(array[1]);
-			int newZ = Convert.ToInt32(array[2]);
-			return new IntVec3(newX, newY, newZ);
+			IntVec3 result;
+			try
+			{
+				int newX = Convert.ToInt32(array[0]);
+				int newY = Convert.ToInt32(array[1]);
+				int newZ = Convert.ToInt32(array[2]);
+				result = new IntVec3(newX, newY, newZ);
+			}
+			catch (Exception arg)
+			{
+				Log.Warning(str + " is not a valid IntVec3 format. Exception: " + arg);
+				result = IntVec3.Invalid;
+			}
+			return result;
 		}
 
 		public Vector3 ToVector3()
@@ -189,10 +199,9 @@ namespace Verse
 			return new IntVec3((int)v.x, newY, (int)v.z);
 		}
 
-		public Vector2 ToScreenPosition()
+		public Vector2 ToUIPosition()
 		{
-			Vector3 vector = Find.Camera.WorldToScreenPoint(this.ToVector3Shifted());
-			return new Vector2(vector.x, (float)Screen.height - vector.y);
+			return this.ToVector3Shifted().MapToUIPosition();
 		}
 
 		public bool AdjacentToCardinal(IntVec3 other)

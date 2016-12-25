@@ -19,12 +19,12 @@ namespace RimWorld
 			for (int i = 0; i < 8; i++)
 			{
 				IntVec3 c = p.Position + GenAdj.AdjacentCells[i];
-				if (c.InBounds() && c.ContainsStaticFire())
+				if (c.InBounds(p.Map) && c.ContainsStaticFire(p.Map))
 				{
 					return false;
 				}
 			}
-			return p.Position.Roofed() || Find.WeatherManager.RainRate <= 0.25f;
+			return p.Position.Roofed(p.Map) || p.Map.weatherManager.RainRate <= 0.25f;
 		}
 
 		public static bool ShouldTrashBuilding(Pawn pawn, Building b)
@@ -36,7 +36,7 @@ namespace RimWorld
 			if (b.def.building.isInert || b.def.building.isTrap)
 			{
 				Rand.PushSeed();
-				int num = GenDate.HourOfDay / 3;
+				int num = GenLocalDate.HourOfDay(pawn) / 3;
 				Rand.Seed = (b.GetHashCode() * 612361 ^ pawn.GetHashCode() * 391 ^ num * 734273247);
 				if (Rand.Value > 0.02f)
 				{

@@ -45,7 +45,7 @@ namespace RimWorld
 		{
 			if (Find.Selector.SingleSelectedThing == null || Find.Selector.SingleSelectedThing.def != this.def.thingDef)
 			{
-				foreach (Building billGiver in Find.ListerBuildings.AllBuildingsColonistOfDef(this.def.thingDef))
+				foreach (Building billGiver in base.Map.listerBuildings.AllBuildingsColonistOfDef(this.def.thingDef))
 				{
 					yield return billGiver;
 				}

@@ -1,6 +1,9 @@
 using RimWorld;
+using RimWorld.Planet;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using Verse.AI.Group;
 
 namespace Verse.AI
 {
@@ -9,6 +12,10 @@ namespace Verse.AI
 		private const int UpdateAnyCloseHostilesRecentlyEveryTicks = 120;
 
 		private const int AnyCloseHostilesRecentlyRegionsToScan = 18;
+
+		private const float HarmForgetDistance = 3f;
+
+		private const int MeleeHarmForgetDelay = 400;
 
 		public Pawn pawn;
 
@@ -74,6 +81,8 @@ namespace Verse.AI
 
 		public bool anyCloseHostilesRecently;
 
+		public bool awokeVoluntarily;
+
 		private int lastJobGiverKey = -1;
 
 		public bool Active
@@ -87,7 +96,10 @@ namespace Verse.AI
 				if (value != this.activeInt)
 				{
 					this.activeInt = value;
-					Find.MapPawns.UpdateRegistryForPawn(this.pawn);
+					if (this.pawn.Spawned)
+					{
+						this.pawn.Map.mapPawns.UpdateRegistryForPawn(this.pawn);
+					}
 				}
 			}
 		}
@@ -97,6 +109,14 @@ namespace Verse.AI
 			get
 			{
 				return !this.pawn.Downed && this.pawn.Spawned && this.lastJobTag == JobTag.Idle;
+			}
+		}
+
+		public bool MeleeThreatStillThreat
+		{
+			get
+			{
+				return this.meleeThreat != null && this.meleeThreat.Spawned && !this.meleeThreat.Downed && this.pawn.Spawned && Find.TickManager.TicksGame <= this.lastMeleeThreatHarmTick + 400 && (this.pawn.Position - this.meleeThreat.Position).LengthHorizontalSquared <= 9f && GenSight.LineOfSight(this.pawn.Position, this.meleeThreat.Position, this.pawn.Map, false);
 			}
 		}
 
@@ -143,6 +163,7 @@ namespace Verse.AI
 			this.nextMoveOrderIsWait = true;
 			this.lastTakeCombatEnancingDrugTick = -99999;
 			this.lastHarmTick = -99999;
+			this.anyCloseHostilesRecently = false;
 		}
 
 		public void ExposeData()
@@ -204,13 +225,13 @@ namespace Verse.AI
 			Scribe_Deep.LookDeep<PriorityWork>(ref this.priorityWork, "priorityWork", new object[0]);
 		}
 
-		public void MindTick()
+		public void MindStateTick()
 		{
 			if (this.wantsToTradeWithColony)
 			{
 				TradeUtility.CheckInteractWithTradersTeachOpportunity(this.pawn);
 			}
-			if (this.meleeThreat != null && (this.meleeThreat.Downed || !this.meleeThreat.Spawned || this.pawn.Downed || !this.pawn.Spawned))
+			if (this.meleeThreat != null && !this.MeleeThreatStillThreat)
 			{
 				this.meleeThreat = null;
 			}
@@ -234,6 +255,31 @@ namespace Verse.AI
 			this.lastDisturbanceTick = -9999999;
 		}
 
+		[DebuggerHidden]
+		public IEnumerable<Gizmo> GetGizmos()
+		{
+			foreach (Gizmo g in this.priorityWork.GetGizmos(this.pawn))
+			{
+				yield return g;
+			}
+			Lord lord = this.pawn.GetLord();
+			if (lord != null && lord.LordJob is LordJob_FormAndSendCaravan)
+			{
+				yield return new Command_Action
+				{
+					defaultLabel = "CommandCancelFormingCaravan".Translate(),
+					defaultDesc = "CommandCancelFormingCaravanDesc".Translate(),
+					icon = TexCommand.ClearPrioritizedWork,
+					activateSound = SoundDefOf.TickLow,
+					action = delegate
+					{
+						CaravanFormingUtility.StopFormingCaravan(this.<lord>__2);
+					},
+					hotKey = KeyBindingDefOf.DesignatorCancel
+				};
+			}
+		}
+
 		public void Notify_OutfitChanged()
 		{
 			this.nextApparelOptimizeTick = Find.TickManager.TicksGame;
@@ -244,7 +290,7 @@ namespace Verse.AI
 			JobGiver_Work jobGiver_Work = this.lastJobGiver as JobGiver_Work;
 			if (jobGiver_Work != null && this.lastGivenWorkType == wType)
 			{
-				this.pawn.jobs.EndCurrentJob(JobCondition.InterruptForced);
+				this.pawn.jobs.EndCurrentJob(JobCondition.InterruptForced, true);
 			}
 		}
 
@@ -284,9 +330,18 @@ namespace Verse.AI
 			return false;
 		}
 
+		internal void Notify_DangerousExploderAboutToExplode(Thing exploder)
+		{
+			if (this.pawn.RaceProps.intelligence >= Intelligence.Humanlike)
+			{
+				this.knownExploder = exploder;
+				this.pawn.jobs.CheckForJobOverride();
+			}
+		}
+
 		private void StartManhunterBecauseOfPawnAction(string letterTextKey)
 		{
-			if (!this.mentalStateHandler.TryStartMentalState(MentalStateDefOf.Manhunter, null, false))
+			if (!this.mentalStateHandler.TryStartMentalState(MentalStateDefOf.Manhunter, null, false, false, null))
 			{
 				return;
 			}
@@ -294,20 +349,22 @@ namespace Verse.AI
 			{
 				this.pawn.Label
 			});
+			GlobalTargetInfo letterLookTarget = this.pawn;
 			if (Rand.Value < 0.5f)
 			{
 				int num = 1;
 				Room room = this.pawn.GetRoom();
-				List<Pawn> allPawnsSpawned = Find.MapPawns.AllPawnsSpawned;
+				List<Pawn> allPawnsSpawned = this.pawn.Map.mapPawns.AllPawnsSpawned;
 				for (int i = 0; i < allPawnsSpawned.Count; i++)
 				{
-					if (this.pawn != allPawnsSpawned[i] && allPawnsSpawned[i].RaceProps == this.pawn.RaceProps && allPawnsSpawned[i].Faction == this.pawn.Faction && allPawnsSpawned[i].Position.InHorDistOf(this.pawn.Position, 24f) && allPawnsSpawned[i].GetRoom() == room && allPawnsSpawned[i].mindState.mentalStateHandler.TryStartMentalState(MentalStateDefOf.Manhunter, null, false))
+					if (this.pawn != allPawnsSpawned[i] && allPawnsSpawned[i].RaceProps == this.pawn.RaceProps && allPawnsSpawned[i].Faction == this.pawn.Faction && allPawnsSpawned[i].Position.InHorDistOf(this.pawn.Position, 24f) && allPawnsSpawned[i].GetRoom() == room && allPawnsSpawned[i].mindState.mentalStateHandler.TryStartMentalState(MentalStateDefOf.Manhunter, null, false, false, null))
 					{
 						num++;
 					}
 				}
 				if (num > 1)
 				{
+					letterLookTarget = new TargetInfo(this.pawn.Position, this.pawn.Map, false);
 					text += "\n\n";
 					text += ((!"AnimalManhunterOthers".CanTranslate()) ? "AnimalManhunterFromDamageOthers".Translate(new object[]
 					{
@@ -325,16 +382,7 @@ namespace Verse.AI
 			{
 				this.pawn.Label
 			}).CapitalizeFirst();
-			Find.LetterStack.ReceiveLetter(label, text, LetterType.BadNonUrgent, this.pawn, null);
-		}
-
-		internal void Notify_DangerousExploderAboutToExplode(Thing exploder)
-		{
-			if (this.pawn.RaceProps.intelligence >= Intelligence.Humanlike)
-			{
-				this.knownExploder = exploder;
-				this.pawn.jobs.CheckForJobOverride();
-			}
+			Find.LetterStack.ReceiveLetter(label, text, LetterType.BadNonUrgent, letterLookTarget, null);
 		}
 	}
 }

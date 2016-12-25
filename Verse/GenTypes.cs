@@ -15,7 +15,8 @@ namespace Verse
 			"Verse.AI",
 			"Verse.Sound",
 			"Verse.Grammar",
-			"RimWorld.Planet"
+			"RimWorld.Planet",
+			"RimWorld.BaseGen"
 		};
 
 		private static IEnumerable<Assembly> AllActiveAssemblies

@@ -21,6 +21,10 @@ namespace RimWorld
 
 		public static TraitDef Psychopath;
 
+		public static TraitDef Greedy;
+
+		public static TraitDef Kind;
+
 		public static TraitDef Gay;
 
 		public static TraitDef Industriousness;
@@ -38,5 +42,9 @@ namespace RimWorld
 		public static TraitDef Bloodlust;
 
 		public static TraitDef Pyromaniac;
+
+		public static TraitDef Nerves;
+
+		public static TraitDef TooSmart;
 	}
 }

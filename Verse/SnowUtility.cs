@@ -63,17 +63,17 @@ namespace Verse
 			}
 		}
 
-		public static void AddSnowRadial(IntVec3 center, float radius, float depth)
+		public static void AddSnowRadial(IntVec3 center, Map map, float radius, float depth)
 		{
 			int num = GenRadial.NumCellsInRadius(radius);
 			for (int i = 0; i < num; i++)
 			{
 				IntVec3 intVec = center + GenRadial.RadialPattern[i];
-				if (intVec.InBounds())
+				if (intVec.InBounds(map))
 				{
 					float lengthHorizontal = (center - intVec).LengthHorizontal;
 					float num2 = 1f - lengthHorizontal / radius;
-					Find.SnowGrid.AddDepth(intVec, num2 * depth);
+					map.snowGrid.AddDepth(intVec, num2 * depth);
 				}
 			}
 		}

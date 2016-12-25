@@ -14,9 +14,9 @@ namespace Verse.AI
 		public override string GetReport()
 		{
 			Thing thing;
-			if (this.pawn.carrier.CarriedThing != null)
+			if (this.pawn.carryTracker.CarriedThing != null)
 			{
-				thing = this.pawn.carrier.CarriedThing;
+				thing = this.pawn.carryTracker.CarriedThing;
 			}
 			else
 			{
@@ -32,7 +32,7 @@ namespace Verse.AI
 		[DebuggerHidden]
 		protected override IEnumerable<Toil> MakeNewToils()
 		{
-			this.FailOnDestroyedNullOrForbidden(TargetIndex.A);
+			this.FailOnDestroyedOrNull(TargetIndex.A);
 			this.FailOnDestroyedNullOrForbidden(TargetIndex.B);
 			yield return Toils_Reserve.Reserve(TargetIndex.A, 1);
 			yield return Toils_Reserve.ReserveQueue(TargetIndex.A, 1);
@@ -41,7 +41,7 @@ namespace Verse.AI
 			Toil getToHaulTarget = Toils_Goto.GotoThing(TargetIndex.A, PathEndMode.ClosestTouch).FailOnSomeonePhysicallyInteracting(TargetIndex.A);
 			yield return getToHaulTarget;
 			yield return Toils_Construct.UninstallIfMinifiable(TargetIndex.A).FailOnSomeonePhysicallyInteracting(TargetIndex.A);
-			yield return Toils_Haul.StartCarryThing(TargetIndex.A);
+			yield return Toils_Haul.StartCarryThing(TargetIndex.A, false, true);
 			yield return Toils_Haul.JumpIfAlsoCollectingNextTargetInQueue(getToHaulTarget, TargetIndex.A);
 			Toil carryToContainer = Toils_Haul.CarryHauledThingToContainer();
 			yield return carryToContainer;

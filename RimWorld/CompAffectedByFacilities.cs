@@ -33,12 +33,15 @@ namespace RimWorld
 		{
 			get
 			{
-				IEnumerable<Thing> potentialThings = CompAffectedByFacilities.PotentialThingsToLinkTo(this.parent.def, this.parent.Position, this.parent.Rotation);
-				foreach (Thing th in potentialThings)
+				if (this.parent.Spawned)
 				{
-					if (this.CanLinkTo(th))
+					IEnumerable<Thing> potentialThings = CompAffectedByFacilities.PotentialThingsToLinkTo(this.parent.def, this.parent.Position, this.parent.Rotation, this.parent.Map);
+					foreach (Thing th in potentialThings)
 					{
-						yield return th;
+						if (this.CanLinkTo(th))
+						{
+							yield return th;
+						}
 					}
 				}
 			}
@@ -143,7 +146,7 @@ namespace RimWorld
 
 		private bool IsPotentiallyValidFacilityForMe(ThingDef facilityDef, IntVec3 facilityPos, Rot4 facilityRot)
 		{
-			if (!CompAffectedByFacilities.IsPotentiallyValidFacilityForMe_Static(facilityDef, facilityPos, facilityRot, this.parent.def, this.parent.Position, this.parent.Rotation))
+			if (!CompAffectedByFacilities.IsPotentiallyValidFacilityForMe_Static(facilityDef, facilityPos, facilityRot, this.parent.def, this.parent.Position, this.parent.Rotation, this.parent.Map))
 			{
 				return false;
 			}
@@ -161,10 +164,10 @@ namespace RimWorld
 
 		private static bool IsPotentiallyValidFacilityForMe_Static(Thing facility, ThingDef myDef, IntVec3 myPos, Rot4 myRot)
 		{
-			return CompAffectedByFacilities.IsPotentiallyValidFacilityForMe_Static(facility.def, facility.Position, facility.Rotation, myDef, myPos, myRot);
+			return CompAffectedByFacilities.IsPotentiallyValidFacilityForMe_Static(facility.def, facility.Position, facility.Rotation, myDef, myPos, myRot, facility.Map);
 		}
 
-		private static bool IsPotentiallyValidFacilityForMe_Static(ThingDef facilityDef, IntVec3 facilityPos, Rot4 facilityRot, ThingDef myDef, IntVec3 myPos, Rot4 myRot)
+		private static bool IsPotentiallyValidFacilityForMe_Static(ThingDef facilityDef, IntVec3 facilityPos, Rot4 facilityRot, ThingDef myDef, IntVec3 myPos, Rot4 myRot, Map map)
 		{
 			CellRect startRect = GenAdj.OccupiedRect(myPos, myRot, myDef.size);
 			CellRect endRect = GenAdj.OccupiedRect(facilityPos, facilityRot, facilityDef.size);
@@ -179,7 +182,7 @@ namespace RimWorld
 						{
 							IntVec3 start = new IntVec3(j, 0, i);
 							IntVec3 end = new IntVec3(l, 0, k);
-							if (GenSight.LineOfSight(start, end, startRect, endRect))
+							if (GenSight.LineOfSight(start, end, map, startRect, endRect))
 							{
 								result = true;
 								return result;
@@ -243,7 +246,7 @@ namespace RimWorld
 			this.LinkToNearbyFacilities();
 		}
 
-		public override void PostDeSpawn()
+		public override void PostDeSpawn(Map map)
 		{
 			this.UnlinkAll();
 		}
@@ -286,7 +289,7 @@ namespace RimWorld
 		}
 
 		[DebuggerHidden]
-		public static IEnumerable<Thing> PotentialThingsToLinkTo(ThingDef myDef, IntVec3 myPos, Rot4 myRot)
+		public static IEnumerable<Thing> PotentialThingsToLinkTo(ThingDef myDef, IntVec3 myPos, Rot4 myRot, Map map)
 		{
 			CompAffectedByFacilities.alreadyReturnedCount.Clear();
 			CompProperties_AffectedByFacilities myProps = myDef.GetCompProperties<CompProperties_AffectedByFacilities>();
@@ -295,7 +298,7 @@ namespace RimWorld
 				IEnumerable<Thing> candidates = Enumerable.Empty<Thing>();
 				for (int i = 0; i < myProps.linkableFacilities.Count; i++)
 				{
-					candidates = candidates.Concat(Find.ListerThings.ThingsOfDef(myProps.linkableFacilities[i]));
+					candidates = candidates.Concat(map.listerThings.ThingsOfDef(myProps.linkableFacilities[i]));
 				}
 				Vector3 myTrueCenter = Gen.TrueCenter(myPos, myRot, myDef.size, myDef.Altitude);
 				IOrderedEnumerable<Thing> sortedCandidates = from x in candidates
@@ -318,21 +321,21 @@ namespace RimWorld
 							CompAffectedByFacilities.alreadyReturnedCount.Add(th.def, 0);
 						}
 						Dictionary<ThingDef, int> dictionary;
-						Dictionary<ThingDef, int> expr_229 = dictionary = CompAffectedByFacilities.alreadyReturnedCount;
+						Dictionary<ThingDef, int> expr_22F = dictionary = CompAffectedByFacilities.alreadyReturnedCount;
 						ThingDef def;
-						ThingDef expr_236 = def = th.def;
+						ThingDef expr_23C = def = th.def;
 						int num = dictionary[def];
-						expr_229[expr_236] = num + 1;
+						expr_22F[expr_23C] = num + 1;
 						yield return th;
 					}
 				}
 			}
 		}
 
-		public static void DrawLinesToPotentialThingsToLinkTo(ThingDef myDef, IntVec3 myPos, Rot4 myRot)
+		public static void DrawLinesToPotentialThingsToLinkTo(ThingDef myDef, IntVec3 myPos, Rot4 myRot, Map map)
 		{
 			Vector3 a = Gen.TrueCenter(myPos, myRot, myDef.size, myDef.Altitude);
-			foreach (Thing current in CompAffectedByFacilities.PotentialThingsToLinkTo(myDef, myPos, myRot))
+			foreach (Thing current in CompAffectedByFacilities.PotentialThingsToLinkTo(myDef, myPos, myRot, map))
 			{
 				GenDraw.DrawLineBetween(a, current.TrueCenter());
 			}
@@ -469,10 +472,13 @@ namespace RimWorld
 		private void LinkToNearbyFacilities()
 		{
 			this.UnlinkAll();
-			foreach (Thing current in this.ThingsICanLinkTo)
+			if (this.parent.Spawned)
 			{
-				this.linkedFacilities.Add(current);
-				current.TryGetComp<CompFacility>().Notify_NewLink(this.parent);
+				foreach (Thing current in this.ThingsICanLinkTo)
+				{
+					this.linkedFacilities.Add(current);
+					current.TryGetComp<CompFacility>().Notify_NewLink(this.parent);
+				}
 			}
 		}
 

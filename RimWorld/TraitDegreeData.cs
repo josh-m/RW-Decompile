@@ -7,8 +7,10 @@ namespace RimWorld
 {
 	public class TraitDegreeData
 	{
+		[MustTranslate]
 		public string label;
 
+		[MustTranslate]
 		public string description;
 
 		public int degree;

@@ -9,11 +9,9 @@ namespace RimWorld
 	{
 		private const float BaseFoodFallPerTick = 2.66666666E-05f;
 
-		private const int TicksBetweenStarveDamage = 15000;
+		private const float MalnutritionSeverityPerDay = 0.2f;
 
-		private const float MalnutritionDamAmount = 0.066666f;
-
-		private int tickToStarveDamage;
+		private const float MalnutritionSeverityPerInterval = 0.00133333332f;
 
 		private int lastNonStarvingTick = -99999;
 
@@ -29,7 +27,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return this.pawn.RaceProps.FoodLevelPercentageWantEat * 0.45f;
+				return this.pawn.RaceProps.FoodLevelPercentageWantEat * 0.4f;
 			}
 		}
 
@@ -37,7 +35,15 @@ namespace RimWorld
 		{
 			get
 			{
-				return this.pawn.RaceProps.FoodLevelPercentageWantEat * 0.9f;
+				return this.pawn.RaceProps.FoodLevelPercentageWantEat * 0.8f;
+			}
+		}
+
+		public float NutritionBetweenHungryAndFed
+		{
+			get
+			{
+				return (1f - this.PercentageThreshHungry) * this.MaxLevel;
 			}
 		}
 
@@ -45,7 +51,7 @@ namespace RimWorld
 		{
 			get
 			{
-				if (base.CurLevelPercentage < 0.01f)
+				if (base.CurLevelPercentage <= 0f)
 				{
 					return HungerCategory.Starving;
 				}
@@ -65,19 +71,15 @@ namespace RimWorld
 		{
 			get
 			{
-				switch (this.CurCategory)
-				{
-				case HungerCategory.Fed:
-					return 2.66666666E-05f * this.HungerRate;
-				case HungerCategory.Hungry:
-					return 2.66666666E-05f * this.HungerRate * 0.5f;
-				case HungerCategory.UrgentlyHungry:
-					return 2.66666666E-05f * this.HungerRate * 0.25f;
-				case HungerCategory.Starving:
-					return 2.66666666E-05f * this.HungerRate * 0.15f;
-				default:
-					return 999f;
-				}
+				return this.FoodFallPerTickAssumingCategory(this.CurCategory);
+			}
+		}
+
+		public int TicksUntilHungryWhenFed
+		{
+			get
+			{
+				return Mathf.CeilToInt(this.NutritionBetweenHungryAndFed / this.FoodFallPerTickAssumingCategory(HungerCategory.Fed));
 			}
 		}
 
@@ -138,8 +140,24 @@ namespace RimWorld
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Values.LookValue<int>(ref this.tickToStarveDamage, "ticksToNextStarveDamage", 0, false);
 			Scribe_Values.LookValue<int>(ref this.lastNonStarvingTick, "lastNonStarvingTick", -99999, false);
+		}
+
+		private float FoodFallPerTickAssumingCategory(HungerCategory cat)
+		{
+			switch (cat)
+			{
+			case HungerCategory.Fed:
+				return 2.66666666E-05f * this.HungerRate;
+			case HungerCategory.Hungry:
+				return 2.66666666E-05f * this.HungerRate * 0.5f;
+			case HungerCategory.UrgentlyHungry:
+				return 2.66666666E-05f * this.HungerRate * 0.25f;
+			case HungerCategory.Starving:
+				return 2.66666666E-05f * this.HungerRate * 0.15f;
+			default:
+				return 999f;
+			}
 		}
 
 		public override void NeedInterval()
@@ -149,18 +167,13 @@ namespace RimWorld
 			{
 				this.lastNonStarvingTick = Find.TickManager.TicksGame;
 			}
-			this.tickToStarveDamage -= 150;
-			if (this.tickToStarveDamage <= 0)
+			if (this.Starving)
 			{
-				if (this.Starving)
-				{
-					HealthUtility.AdjustSeverity(this.pawn, HediffDefOf.Malnutrition, 0.066666f);
-				}
-				else
-				{
-					HealthUtility.AdjustSeverity(this.pawn, HediffDefOf.Malnutrition, -0.066666f);
-				}
-				this.tickToStarveDamage = 15000;
+				HealthUtility.AdjustSeverity(this.pawn, HediffDefOf.Malnutrition, 0.00133333332f);
+			}
+			else
+			{
+				HealthUtility.AdjustSeverity(this.pawn, HediffDefOf.Malnutrition, -0.00133333332f);
 			}
 		}
 
@@ -174,7 +187,7 @@ namespace RimWorld
 			{
 				base.CurLevelPercentage = Rand.Range(0.5f, 0.9f);
 			}
-			if (Current.ProgramState == ProgramState.MapPlaying)
+			if (Current.ProgramState == ProgramState.Playing)
 			{
 				this.lastNonStarvingTick = Find.TickManager.TicksGame;
 			}
@@ -196,7 +209,7 @@ namespace RimWorld
 			});
 		}
 
-		public override void DrawOnGUI(Rect rect)
+		public override void DrawOnGUI(Rect rect, int maxThresholdMarkers = 2147483647, float customMargin = -1f, bool drawArrows = true, bool doTooltip = true)
 		{
 			if (this.threshPercents == null)
 			{
@@ -205,7 +218,7 @@ namespace RimWorld
 			this.threshPercents.Clear();
 			this.threshPercents.Add(this.PercentageThreshHungry);
 			this.threshPercents.Add(this.PercentageThreshUrgentlyHungry);
-			base.DrawOnGUI(rect);
+			base.DrawOnGUI(rect, maxThresholdMarkers, customMargin, drawArrows, doTooltip);
 		}
 	}
 }

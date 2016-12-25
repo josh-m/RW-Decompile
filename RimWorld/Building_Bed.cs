@@ -44,7 +44,7 @@ namespace RimWorld
 				{
 					return;
 				}
-				if (Current.ProgramState != ProgramState.MapPlaying)
+				if (Current.ProgramState != ProgramState.Playing)
 				{
 					Log.Error("Tried to set ForPrisoners while game mode was " + Current.ProgramState);
 					return;
@@ -52,8 +52,11 @@ namespace RimWorld
 				this.RemoveAllOwners();
 				this.forPrisonersInt = value;
 				this.Notify_ColorChanged();
-				Find.MapDrawer.MapMeshDirty(base.Position, MapMeshFlag.Things);
-				this.NotifyRoomBedTypeChanged();
+				if (base.Spawned)
+				{
+					base.Map.mapDrawer.MapMeshDirty(base.Position, MapMeshFlag.Things);
+					this.NotifyRoomBedTypeChanged();
+				}
 			}
 		}
 
@@ -72,8 +75,11 @@ namespace RimWorld
 				this.RemoveAllOwners();
 				this.medicalInt = value;
 				this.Notify_ColorChanged();
-				Find.MapDrawer.MapMeshDirty(base.Position, MapMeshFlag.Things);
-				this.NotifyRoomBedTypeChanged();
+				if (base.Spawned)
+				{
+					base.Map.mapDrawer.MapMeshDirty(base.Position, MapMeshFlag.Things);
+					this.NotifyRoomBedTypeChanged();
+				}
 				this.FacilityChanged();
 			}
 		}
@@ -175,7 +181,11 @@ namespace RimWorld
 		{
 			get
 			{
-				return Find.MapPawns.FreeColonists;
+				if (!base.Spawned)
+				{
+					return Enumerable.Empty<Pawn>();
+				}
+				return base.Map.mapPawns.FreeColonists;
 			}
 		}
 
@@ -195,6 +205,25 @@ namespace RimWorld
 			}
 		}
 
+		private bool PlayerCanSeeOwners
+		{
+			get
+			{
+				if (base.Faction == Faction.OfPlayer)
+				{
+					return true;
+				}
+				for (int i = 0; i < this.owners.Count; i++)
+				{
+					if (this.owners[i].Faction == Faction.OfPlayer || this.owners[i].HostFaction == Faction.OfPlayer)
+					{
+						return true;
+					}
+				}
+				return false;
+			}
+		}
+
 		public void TryAssignPawn(Pawn owner)
 		{
 			owner.ownership.ClaimBedIfNonMedical(this);
@@ -208,10 +237,10 @@ namespace RimWorld
 			}
 		}
 
-		public override void SpawnSetup()
+		public override void SpawnSetup(Map map)
 		{
-			base.SpawnSetup();
-			Room room = RoomQuery.RoomAt(base.Position);
+			base.SpawnSetup(map);
+			Room room = RoomQuery.RoomAt(this);
 			if (room != null && room.isPrisonCell)
 			{
 				this.ForPrisoners = true;
@@ -232,7 +261,7 @@ namespace RimWorld
 			this.ForPrisoners = false;
 			this.Medical = false;
 			this.alreadySetDefaultMed = false;
-			Room room = base.Position.GetRoom();
+			Room room = this.GetRoom();
 			base.DeSpawn();
 			if (room != null)
 			{
@@ -268,7 +297,7 @@ namespace RimWorld
 			{
 				yield return g;
 			}
-			if (this.def.building.bed_humanlike)
+			if (this.def.building.bed_humanlike && base.Faction == Faction.OfPlayer)
 			{
 				Command_Toggle pris = new Command_Toggle();
 				pris.defaultLabel = "CommandBedSetForPrisonersLabel".Translate();
@@ -279,7 +308,7 @@ namespace RimWorld
 				{
 					this.<>f__this.ToggleForPrisonersByInterface();
 				};
-				if (base.Position.GetRoom().TouchesMapEdge && !this.ForPrisoners)
+				if (this.GetRoom().TouchesMapEdge && !this.ForPrisoners)
 				{
 					pris.Disable("CommandBedSetForPrisonersFailOutdoors".Translate());
 				}
@@ -326,35 +355,54 @@ namespace RimWorld
 			bool newForPrisoners = !this.ForPrisoners;
 			SoundDef soundDef = (!newForPrisoners) ? SoundDefOf.CheckboxTurnedOff : SoundDefOf.CheckboxTurnedOn;
 			soundDef.PlayOneShotOnCamera();
-			Room room = RoomQuery.RoomAt(base.Position);
-			List<Building_Bed> bedsToAffect;
-			if (room == null || room.TouchesMapEdge || room.IsHuge)
+			List<Building_Bed> bedsToAffect = new List<Building_Bed>();
+			foreach (Building_Bed current in (from so in Find.Selector.SelectedObjects
+			where so is Building_Bed
+			select so).Cast<Building_Bed>())
 			{
-				bedsToAffect = new List<Building_Bed>();
-				bedsToAffect.Add(this);
-			}
-			else
-			{
-				bedsToAffect = room.ContainedBeds.ToList<Building_Bed>();
+				Room room = RoomQuery.RoomAt(current);
+				if (room == null || room.TouchesMapEdge || room.IsHuge)
+				{
+					if (!bedsToAffect.Contains(current))
+					{
+						bedsToAffect.Add(current);
+					}
+				}
+				else
+				{
+					foreach (Building_Bed current2 in room.ContainedBeds)
+					{
+						if (!bedsToAffect.Contains(current2))
+						{
+							bedsToAffect.Add(current2);
+						}
+					}
+				}
 			}
 			bedsToAffect.RemoveAll((Building_Bed b) => b.ForPrisoners == newForPrisoners);
 			Action action = delegate
 			{
-				foreach (Building_Bed current2 in bedsToAffect)
+				List<Room> list = new List<Room>();
+				foreach (Building_Bed current4 in bedsToAffect)
 				{
-					current2.ForPrisoners = newForPrisoners;
+					Room room2 = current4.GetRoom();
+					current4.ForPrisoners = (newForPrisoners && !room2.TouchesMapEdge);
 					for (int j = 0; j < this.SleepingSlotsCount; j++)
 					{
 						Pawn curOccupant = this.GetCurOccupant(j);
 						if (curOccupant != null)
 						{
-							curOccupant.jobs.EndCurrentJob(JobCondition.InterruptForced);
+							curOccupant.jobs.EndCurrentJob(JobCondition.InterruptForced, true);
 						}
 					}
+					if (!list.Contains(room2) && !room2.TouchesMapEdge)
+					{
+						list.Add(room2);
+					}
 				}
-				if (room != null)
+				foreach (Room current5 in list)
 				{
-					room.RoomChanged();
+					current5.RoomChanged();
 				}
 			};
 			if ((from b in bedsToAffect
@@ -375,21 +423,21 @@ namespace RimWorld
 					stringBuilder.Append("TurningOffPrisonerBedWarning".Translate());
 				}
 				stringBuilder.AppendLine();
-				foreach (Building_Bed current in bedsToAffect)
+				foreach (Building_Bed current3 in bedsToAffect)
 				{
-					if ((newForPrisoners && !current.ForPrisoners) || (!newForPrisoners && current.ForPrisoners))
+					if ((newForPrisoners && !current3.ForPrisoners) || (!newForPrisoners && current3.ForPrisoners))
 					{
-						for (int i = 0; i < current.owners.Count; i++)
+						for (int i = 0; i < current3.owners.Count; i++)
 						{
 							stringBuilder.AppendLine();
-							stringBuilder.Append(current.owners[i].NameStringShort);
+							stringBuilder.Append(current3.owners[i].NameStringShort);
 						}
 					}
 				}
 				stringBuilder.AppendLine();
 				stringBuilder.AppendLine();
 				stringBuilder.Append("AreYouSure".Translate());
-				Find.WindowStack.Add(new Dialog_Confirm(stringBuilder.ToString(), action, false, null, true));
+				Find.WindowStack.Add(Dialog_MessageBox.CreateConfirmation(stringBuilder.ToString(), action, false, null));
 			}
 		}
 
@@ -403,7 +451,7 @@ namespace RimWorld
 				{
 					stringBuilder.AppendLine("ForPrisonerUse".Translate());
 				}
-				else
+				else if (this.PlayerCanSeeOwners)
 				{
 					stringBuilder.AppendLine("ForColonistUse".Translate());
 				}
@@ -411,28 +459,31 @@ namespace RimWorld
 				{
 					stringBuilder.AppendLine("MedicalBed".Translate());
 				}
-				else if (this.owners.Count == 0)
+				else if (this.PlayerCanSeeOwners)
 				{
-					stringBuilder.AppendLine("Owner".Translate() + ": " + "Nobody".Translate().ToLower());
-				}
-				else if (this.owners.Count == 1)
-				{
-					stringBuilder.AppendLine("Owner".Translate() + ": " + this.owners[0].Label);
-				}
-				else
-				{
-					stringBuilder.Append("Owners".Translate() + ": ");
-					bool flag = false;
-					for (int i = 0; i < this.owners.Count; i++)
+					if (this.owners.Count == 0)
 					{
-						if (flag)
-						{
-							stringBuilder.Append(", ");
-						}
-						flag = true;
-						stringBuilder.Append(this.owners[i].LabelShort);
+						stringBuilder.AppendLine("Owner".Translate() + ": " + "Nobody".Translate().ToLower());
 					}
-					stringBuilder.AppendLine();
+					else if (this.owners.Count == 1)
+					{
+						stringBuilder.AppendLine("Owner".Translate() + ": " + this.owners[0].Label);
+					}
+					else
+					{
+						stringBuilder.Append("Owners".Translate() + ": ");
+						bool flag = false;
+						for (int i = 0; i < this.owners.Count; i++)
+						{
+							if (flag)
+							{
+								stringBuilder.Append(", ");
+							}
+							flag = true;
+							stringBuilder.Append(this.owners[i].LabelShort);
+						}
+						stringBuilder.AppendLine();
+					}
 				}
 			}
 			return stringBuilder.ToString();
@@ -441,19 +492,19 @@ namespace RimWorld
 		[DebuggerHidden]
 		public override IEnumerable<FloatMenuOption> GetFloatMenuOptions(Pawn myPawn)
 		{
-			if (myPawn.RaceProps.Humanlike && !this.ForPrisoners && this.Medical && !myPawn.Drafted)
+			if (myPawn.RaceProps.Humanlike && !this.ForPrisoners && this.Medical && !myPawn.Drafted && base.Faction == Faction.OfPlayer)
 			{
-				if (!myPawn.health.PrefersMedicalRest && !myPawn.health.NeedsMedicalRest)
+				if (!HealthAIUtility.ShouldSeekMedicalRest(myPawn) && !HealthAIUtility.ShouldSeekMedicalRestUrgent(myPawn))
 				{
-					yield return new FloatMenuOption("UseMedicalBed".Translate() + " (" + "NotInjured".Translate() + ")", null, MenuOptionPriority.Medium, null, null, 0f, null);
+					yield return new FloatMenuOption("UseMedicalBed".Translate() + " (" + "NotInjured".Translate() + ")", null, MenuOptionPriority.Default, null, null, 0f, null, null);
 				}
 				else if (!this.AnyUnoccupiedSleepingSlot)
 				{
-					yield return new FloatMenuOption("UseMedicalBed".Translate() + " (" + "SomeoneElseSleeping".Translate() + ")", null, MenuOptionPriority.Medium, null, null, 0f, null);
+					yield return new FloatMenuOption("UseMedicalBed".Translate() + " (" + "SomeoneElseSleeping".Translate() + ")", null, MenuOptionPriority.Default, null, null, 0f, null, null);
 				}
 				else if (!myPawn.CanReserve(this, this.SleepingSlotsCount))
 				{
-					yield return new FloatMenuOption("UseMedicalBed".Translate() + " (" + "Reserved".Translate() + ")", null, MenuOptionPriority.Medium, null, null, 0f, null);
+					yield return new FloatMenuOption("UseMedicalBed".Translate() + " (" + "Reserved".Translate() + ")", null, MenuOptionPriority.Default, null, null, 0f, null, null);
 				}
 				else
 				{
@@ -462,13 +513,12 @@ namespace RimWorld
 						if (!this.<>f__this.ForPrisoners && this.<>f__this.Medical && this.<>f__this.AnyUnoccupiedSleepingSlot && this.myPawn.CanReserveAndReach(this.<>f__this, PathEndMode.ClosestTouch, Danger.Deadly, this.<>f__this.SleepingSlotsCount))
 						{
 							Job job = new Job(JobDefOf.LayDown, this.<>f__this);
-							job.playerForced = true;
 							job.restUntilHealed = true;
-							this.myPawn.drafter.TakeOrderedJob(job);
+							this.myPawn.jobs.TryTakeOrderedJob(job);
 							this.myPawn.mindState.ResetLastDisturbanceTick();
 						}
 					};
-					yield return new FloatMenuOption("UseMedicalBed".Translate(), sleep, MenuOptionPriority.Medium, null, null, 0f, null);
+					yield return new FloatMenuOption("UseMedicalBed".Translate(), sleep, MenuOptionPriority.Default, null, null, 0f, null, null);
 				}
 			}
 		}
@@ -479,12 +529,12 @@ namespace RimWorld
 			{
 				return;
 			}
-			if (Find.CameraDriver.CurrentZoom == CameraZoomRange.Closest)
+			if (Find.CameraDriver.CurrentZoom == CameraZoomRange.Closest && this.PlayerCanSeeOwners)
 			{
-				Color defaultThingLabelColor = GenWorldUI.DefaultThingLabelColor;
+				Color defaultThingLabelColor = GenMapUI.DefaultThingLabelColor;
 				if (!this.owners.Any<Pawn>())
 				{
-					GenWorldUI.DrawThingLabel(this, "Unowned".Translate(), defaultThingLabelColor);
+					GenMapUI.DrawThingLabel(this, "Unowned".Translate(), defaultThingLabelColor);
 				}
 				else if (this.owners.Count == 1)
 				{
@@ -492,7 +542,7 @@ namespace RimWorld
 					{
 						return;
 					}
-					GenWorldUI.DrawThingLabel(this, this.owners[0].NameStringShort, defaultThingLabelColor);
+					GenMapUI.DrawThingLabel(this, this.owners[0].NameStringShort, defaultThingLabelColor);
 				}
 				else
 				{
@@ -501,7 +551,7 @@ namespace RimWorld
 						if (!this.owners[i].InBed() || this.owners[i].CurrentBed() != this || !(this.owners[i].Position == this.GetSleepingSlotPos(i)))
 						{
 							Vector3 multiOwnersLabelScreenPosFor = this.GetMultiOwnersLabelScreenPosFor(i);
-							GenWorldUI.DrawThingLabel(multiOwnersLabelScreenPosFor, this.owners[i].NameStringShort, defaultThingLabelColor);
+							GenMapUI.DrawThingLabel(multiOwnersLabelScreenPosFor, this.owners[i].NameStringShort, defaultThingLabelColor);
 						}
 					}
 				}
@@ -510,8 +560,12 @@ namespace RimWorld
 
 		public Pawn GetCurOccupant(int slotIndex)
 		{
+			if (!base.Spawned)
+			{
+				return null;
+			}
 			IntVec3 sleepingSlotPos = this.GetSleepingSlotPos(slotIndex);
-			List<Thing> list = Find.ThingGrid.ThingsListAt(sleepingSlotPos);
+			List<Thing> list = base.Map.thingGrid.ThingsListAt(sleepingSlotPos);
 			for (int i = 0; i < list.Count; i++)
 			{
 				Pawn pawn = list[i] as Pawn;
@@ -633,7 +687,7 @@ namespace RimWorld
 				drawPos.x = (float)sleepingSlotPos.x + 0.5f;
 				drawPos.z += -0.4f;
 			}
-			Vector2 v = drawPos.ToScreenPosition();
+			Vector2 v = drawPos.MapToUIPosition();
 			if (!base.Rotation.IsHorizontal && this.SleepingSlotsCount == 2)
 			{
 				v = this.AdjustOwnerLabelPosToAvoidOverlapping(v, slotIndex);
@@ -645,7 +699,7 @@ namespace RimWorld
 		{
 			Text.Font = GameFont.Tiny;
 			float num = Text.CalcSize(this.owners[slotIndex].NameStringShort).x + 1f;
-			Vector2 vector = this.DrawPos.ToScreenPosition();
+			Vector2 vector = this.DrawPos.MapToUIPosition();
 			float num2 = Mathf.Abs(screenPos.x - vector.x);
 			IntVec3 sleepingSlotPos = this.GetSleepingSlotPos(slotIndex);
 			if (num > num2 * 2f)

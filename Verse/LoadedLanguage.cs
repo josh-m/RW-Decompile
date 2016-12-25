@@ -48,7 +48,7 @@ namespace Verse
 			}
 		}
 
-		private IEnumerable<string> FolderPaths
+		public IEnumerable<string> FolderPaths
 		{
 			get
 			{
@@ -338,7 +338,7 @@ namespace Verse
 			return true;
 		}
 
-		public void InjectIntoDefs()
+		public void InjectIntoData()
 		{
 			if (!this.dataIsLoaded)
 			{
@@ -348,6 +348,7 @@ namespace Verse
 			{
 				current.InjectIntoDefs();
 			}
+			BackstoryTranslationUtility.LoadAndInjectBackstoryData(this);
 		}
 
 		public override string ToString()

@@ -111,7 +111,14 @@ namespace Verse
 			{
 				return;
 			}
-			Rect rect = new Rect(((float)Screen.width - LongEventHandler.GUIRectSize.x) / 2f, ((float)Screen.height - LongEventHandler.GUIRectSize.y) / 2f, LongEventHandler.GUIRectSize.x, LongEventHandler.GUIRectSize.y);
+			float num = LongEventHandler.GUIRectSize.x;
+			object currentEventTextLock = LongEventHandler.CurrentEventTextLock;
+			lock (currentEventTextLock)
+			{
+				Text.Font = GameFont.Small;
+				num = Mathf.Max(num, Text.CalcSize(LongEventHandler.currentEvent.eventText + "...").x + 40f);
+			}
+			Rect rect = new Rect(((float)UI.screenWidth - num) / 2f, ((float)UI.screenHeight - LongEventHandler.GUIRectSize.y) / 2f, num, LongEventHandler.GUIRectSize.y);
 			rect = rect.Rounded();
 			if (LongEventHandler.currentEvent.doAsynchronously || Find.UIRoot == null || Find.WindowStack == null)
 			{
@@ -133,8 +140,9 @@ namespace Verse
 			}
 		}
 
-		public static void LongEventsUpdate()
+		public static void LongEventsUpdate(out bool sceneChanged)
 		{
+			sceneChanged = false;
 			if (LongEventHandler.currentEvent != null)
 			{
 				if (LongEventHandler.currentEvent.doAsynchronously)
@@ -143,7 +151,7 @@ namespace Verse
 				}
 				else
 				{
-					LongEventHandler.UpdateCurrentSynchronousEvent();
+					LongEventHandler.UpdateCurrentSynchronousEvent(out sceneChanged);
 				}
 			}
 			if (LongEventHandler.currentEvent == null && LongEventHandler.eventQueue.Count > 0)
@@ -163,7 +171,7 @@ namespace Verse
 		public static void ExecuteWhenFinished(Action action)
 		{
 			LongEventHandler.toExecuteWhenFinished.Add(action);
-			if (LongEventHandler.currentEvent == null && !LongEventHandler.executingToExecuteWhenFinished)
+			if ((LongEventHandler.currentEvent == null || LongEventHandler.ShouldWaitUntilDisplayed(LongEventHandler.currentEvent)) && !LongEventHandler.executingToExecuteWhenFinished)
 			{
 				LongEventHandler.ExecuteToExecuteWhenFinished();
 			}
@@ -219,8 +227,9 @@ namespace Verse
 			}
 		}
 
-		private static void UpdateCurrentSynchronousEvent()
+		private static void UpdateCurrentSynchronousEvent(out bool sceneChanged)
 		{
+			sceneChanged = false;
 			if (LongEventHandler.ShouldWaitUntilDisplayed(LongEventHandler.currentEvent))
 			{
 				return;
@@ -234,6 +243,7 @@ namespace Verse
 				if (!LongEventHandler.currentEvent.levelToLoad.NullOrEmpty())
 				{
 					SceneManager.LoadScene(LongEventHandler.currentEvent.levelToLoad);
+					sceneChanged = true;
 				}
 			}
 			catch (Exception ex)

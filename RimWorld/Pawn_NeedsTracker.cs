@@ -1,3 +1,4 @@
+using RimWorld.Planet;
 using System;
 using System.Collections.Generic;
 using Verse;
@@ -29,6 +30,14 @@ namespace RimWorld
 			get
 			{
 				return this.needs;
+			}
+		}
+
+		private bool ShouldTickNeeds
+		{
+			get
+			{
+				return this.pawn.Spawned || (this.pawn.holdingContainer != null && this.pawn.holdingContainer.owner is Pawn_CarryTracker) || this.pawn.IsCaravanMember();
 			}
 		}
 
@@ -64,11 +73,7 @@ namespace RimWorld
 
 		public void NeedsTrackerTick()
 		{
-			if (!this.pawn.Spawned)
-			{
-				return;
-			}
-			if (this.pawn.IsHashIntervalTick(150))
+			if (this.pawn.IsHashIntervalTick(150) && this.ShouldTickNeeds)
 			{
 				for (int i = 0; i < this.needs.Count; i++)
 				{
@@ -144,6 +149,10 @@ namespace RimWorld
 				return false;
 			}
 			if (nd.onlyIfCausedByHediff && !this.pawn.health.hediffSet.hediffs.Any((Hediff x) => x.def.causesNeed == nd))
+			{
+				return false;
+			}
+			if (nd.neverOnPrisoner && this.pawn.IsPrisoner)
 			{
 				return false;
 			}

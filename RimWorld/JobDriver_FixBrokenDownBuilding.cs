@@ -9,9 +9,9 @@ namespace RimWorld
 {
 	public class JobDriver_FixBrokenDownBuilding : JobDriver
 	{
-		private const TargetIndex BuildingIdx = TargetIndex.A;
+		private const TargetIndex BuildingInd = TargetIndex.A;
 
-		private const TargetIndex ComponentsIdx = TargetIndex.B;
+		private const TargetIndex ComponentInd = TargetIndex.B;
 
 		private const int TicksDuration = 1000;
 
@@ -38,7 +38,7 @@ namespace RimWorld
 			yield return Toils_Reserve.Reserve(TargetIndex.A, 1);
 			yield return Toils_Reserve.Reserve(TargetIndex.B, 1);
 			yield return Toils_Goto.GotoThing(TargetIndex.B, PathEndMode.Touch).FailOnDespawnedNullOrForbidden(TargetIndex.B).FailOnSomeonePhysicallyInteracting(TargetIndex.B);
-			yield return Toils_Haul.StartCarryThing(TargetIndex.B);
+			yield return Toils_Haul.StartCarryThing(TargetIndex.B, false, false);
 			yield return Toils_Goto.GotoThing(TargetIndex.A, PathEndMode.Touch).FailOnDespawnedOrNull(TargetIndex.A);
 			Toil repair = new Toil().FailOnDespawnedOrNull(TargetIndex.A);
 			repair.defaultDuration = 1000;
@@ -55,7 +55,7 @@ namespace RimWorld
 					if (Rand.Value < statValue)
 					{
 						Vector3 loc = (this.<>f__this.pawn.DrawPos + this.<>f__this.Building.DrawPos) / 2f;
-						MoteMaker.ThrowText(loc, "TextMote_FixBrokenDownBuildingFail".Translate(), 3.65f);
+						MoteMaker.ThrowText(loc, this.<>f__this.Map, "TextMote_FixBrokenDownBuildingFail".Translate(), 3.65f);
 					}
 					else
 					{

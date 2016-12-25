@@ -30,7 +30,7 @@ namespace Verse.AI
 			Toil reserveTargetA = Toils_Reserve.Reserve(TargetIndex.A, 1);
 			yield return reserveTargetA;
 			yield return Toils_Goto.GotoThing(TargetIndex.A, PathEndMode.ClosestTouch).FailOn(() => !this.<>f__this.Prisoner.IsPrisonerOfColony || !this.<>f__this.Prisoner.guest.PrisonerIsSecure).FailOnSomeonePhysicallyInteracting(TargetIndex.A);
-			yield return Toils_Haul.StartCarryThing(TargetIndex.A);
+			yield return Toils_Haul.StartCarryThing(TargetIndex.A, false, false);
 			Toil carryToCell = Toils_Haul.CarryHauledThingToCell(TargetIndex.B);
 			yield return carryToCell;
 			yield return Toils_Haul.PlaceHauledThingInCell(TargetIndex.B, carryToCell, false);

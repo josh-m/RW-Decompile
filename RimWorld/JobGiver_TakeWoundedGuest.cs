@@ -8,8 +8,8 @@ namespace RimWorld
 	{
 		protected override Job TryGiveJob(Pawn pawn)
 		{
-			IntVec3 vec;
-			if (!RCellFinder.TryFindBestExitSpot(pawn, out vec, TraverseMode.ByPawn))
+			IntVec3 c;
+			if (!RCellFinder.TryFindBestExitSpot(pawn, out c, TraverseMode.ByPawn))
 			{
 				return null;
 			}
@@ -21,8 +21,8 @@ namespace RimWorld
 			return new Job(JobDefOf.Kidnap)
 			{
 				targetA = pawn2,
-				targetB = vec,
-				maxNumToCarry = 1
+				targetB = c,
+				count = 1
 			};
 		}
 	}

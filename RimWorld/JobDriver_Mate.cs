@@ -39,11 +39,11 @@ namespace RimWorld
 				{
 					if (this.<>f__this.pawn.IsHashIntervalTick(100))
 					{
-						MoteMaker.ThrowMetaIcon(this.<>f__this.pawn.Position, ThingDefOf.Mote_Heart);
+						MoteMaker.ThrowMetaIcon(this.<>f__this.pawn.Position, this.<>f__this.pawn.Map, ThingDefOf.Mote_Heart);
 					}
 					if (this.<>f__this.Female.IsHashIntervalTick(100))
 					{
-						MoteMaker.ThrowMetaIcon(this.<>f__this.Female.Position, ThingDefOf.Mote_Heart);
+						MoteMaker.ThrowMetaIcon(this.<>f__this.Female.Position, this.<>f__this.pawn.Map, ThingDefOf.Mote_Heart);
 					}
 				},
 				defaultCompleteMode = ToilCompleteMode.Delay,

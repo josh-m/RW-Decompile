@@ -25,24 +25,23 @@ namespace RimWorld
 		}
 
 		[DebuggerHidden]
-		public override IEnumerable<FiringIncident> MakeIntervalIncidents()
+		public override IEnumerable<FiringIncident> MakeIntervalIncidents(IIncidentTarget target)
 		{
-			float threatCycleDays = ((float)GenDate.DaysPassed - this.Props.minDaysPassed) % this.Props.threatCycleLength;
-			float threatCyclePos = threatCycleDays / this.Props.threatCycleLength;
-			if (threatCycleDays > 0f && threatCyclePos > 0.5f)
+			float curCycleDays = ((float)GenDate.DaysPassed - this.Props.minDaysPassed) % this.Props.ThreatCycleTotalDays;
+			if (curCycleDays > this.Props.threatOffDays)
 			{
-				int ticksSinceThreatBig = Find.TickManager.TicksGame - Find.StoryWatcher.storyState.LastThreatBigTick;
-				if ((float)ticksSinceThreatBig > this.Props.minDaysBetweenThreatBigs * 60000f && (((double)ticksSinceThreatBig > (double)this.Props.threatCycleLength * 0.8 && threatCyclePos > 0.85f) || Rand.MTBEventOccurs(this.Props.mtbDaysThreatBig, 60000f, 1000f)))
+				float daysSinceThreatBig = (float)(Find.TickManager.TicksGame - Find.StoryWatcher.storyState.LastThreatBigTick) / 60000f;
+				if (daysSinceThreatBig > this.Props.minDaysBetweenThreatBigs && ((daysSinceThreatBig > this.Props.ThreatCycleTotalDays * 0.9f && curCycleDays > this.Props.ThreatCycleTotalDays * 0.95f) || Rand.MTBEventOccurs(this.Props.mtbDaysThreatBig, 60000f, 1000f)))
 				{
-					FiringIncident bt = this.GenerateQueuedThreatBig();
+					FiringIncident bt = this.GenerateQueuedThreatBig(target);
 					if (bt != null)
 					{
 						yield return bt;
 					}
 				}
-				if (GenDate.DaysPassed > 8 && Rand.MTBEventOccurs(this.Props.mtbDaysThreatSmall, 60000f, 1000f))
+				if (Rand.MTBEventOccurs(this.Props.mtbDaysThreatSmall, 60000f, 1000f))
 				{
-					FiringIncident st = this.GenerateQueuedThreatSmall();
+					FiringIncident st = this.GenerateQueuedThreatSmall(target);
 					if (st != null)
 					{
 						yield return st;
@@ -51,31 +50,31 @@ namespace RimWorld
 			}
 		}
 
-		private FiringIncident GenerateQueuedThreatSmall()
+		private FiringIncident GenerateQueuedThreatSmall(IIncidentTarget target)
 		{
 			IncidentDef incidentDef;
 			if (!(from def in DefDatabase<IncidentDef>.AllDefs
-			where def.category == IncidentCategory.ThreatSmall && def.Worker.CanFireNow()
+			where def.category == IncidentCategory.ThreatSmall && def.Worker.CanFireNow(target)
 			select def).TryRandomElementByWeight(new Func<IncidentDef, float>(this.IncidentChanceAdjustedForPopulation), out incidentDef))
 			{
 				return null;
 			}
 			return new FiringIncident(incidentDef, this, null)
 			{
-				parms = this.GenerateParms(incidentDef.category)
+				parms = this.GenerateParms(incidentDef.category, target)
 			};
 		}
 
-		private FiringIncident GenerateQueuedThreatBig()
+		private FiringIncident GenerateQueuedThreatBig(IIncidentTarget target)
 		{
-			IncidentParms parms = this.GenerateParms(IncidentCategory.ThreatBig);
+			IncidentParms parms = this.GenerateParms(IncidentCategory.ThreatBig, target);
 			IncidentDef raidEnemy;
 			if (GenDate.DaysPassed < 20)
 			{
 				raidEnemy = IncidentDefOf.RaidEnemy;
 			}
 			else if (!(from def in DefDatabase<IncidentDef>.AllDefs
-			where def.category == IncidentCategory.ThreatBig && parms.points >= def.minThreatPoints && def.Worker.CanFireNow()
+			where def.category == IncidentCategory.ThreatBig && parms.points >= def.minThreatPoints && def.Worker.CanFireNow(target)
 			select def).TryRandomElementByWeight(new Func<IncidentDef, float>(this.IncidentChanceAdjustedForPopulation), out raidEnemy))
 			{
 				return null;

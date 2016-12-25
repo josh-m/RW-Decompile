@@ -112,7 +112,8 @@ namespace RimWorld
 			{
 				vertices = array,
 				uv = array2,
-				triangles = array3
+				triangles = array3,
+				name = "MeshFromVerts()"
 			};
 		}
 	}

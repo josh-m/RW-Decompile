@@ -10,7 +10,7 @@ namespace Verse.Sound
 
 		private static Dictionary<SoundDef, List<Sustainer>> playingPerDef = new Dictionary<SoundDef, List<Sustainer>>();
 
-		public IEnumerable<Sustainer> AllSustainers
+		public List<Sustainer> AllSustainers
 		{
 			get
 			{
@@ -26,6 +26,18 @@ namespace Verse.Sound
 		public void DeregisterSustainer(Sustainer oldSustainer)
 		{
 			this.allSustainers.Remove(oldSustainer);
+		}
+
+		public bool SustainerExists(SoundDef def)
+		{
+			for (int i = 0; i < this.allSustainers.Count; i++)
+			{
+				if (this.allSustainers[i].def == def)
+				{
+					return true;
+				}
+			}
+			return false;
 		}
 
 		public void SustainerManagerUpdate()

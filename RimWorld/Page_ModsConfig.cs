@@ -174,7 +174,7 @@ namespace RimWorld
 				{
 					if (widgetRow.ButtonText("Unsubscribe", null, true, false))
 					{
-						Find.WindowStack.Add(new Dialog_Confirm("ConfirmUnsubscribe".Translate(new object[]
+						Find.WindowStack.Add(Dialog_MessageBox.CreateConfirmation("ConfirmUnsubscribe".Translate(new object[]
 						{
 							this.selectedMod.Name
 						}), delegate
@@ -182,7 +182,7 @@ namespace RimWorld
 							this.selectedMod.enabled = false;
 							Workshop.Unsubscribe(this.selectedMod);
 							this.Notify_SteamItemUnsubscribed(this.selectedMod.GetPublishedFileId());
-						}, true, null, true));
+						}, true, null));
 					}
 					if (widgetRow.ButtonText("WorkshopPage".Translate(), null, true, false))
 					{
@@ -210,19 +210,19 @@ namespace RimWorld
 						}
 						else
 						{
-							Find.WindowStack.Add(new Dialog_Confirm("ConfirmSteamWorkshopUpload".Translate(), delegate
+							Find.WindowStack.Add(Dialog_MessageBox.CreateConfirmation("ConfirmSteamWorkshopUpload".Translate(), delegate
 							{
 								SoundDefOf.TickHigh.PlayOneShotOnCamera();
-								Dialog_Confirm dialog_Confirm = new Dialog_Confirm("ConfirmContentAuthor".Translate(), delegate
+								Dialog_MessageBox dialog_MessageBox = Dialog_MessageBox.CreateConfirmation("ConfirmContentAuthor".Translate(), delegate
 								{
 									SoundDefOf.TickHigh.PlayOneShotOnCamera();
 									Workshop.Upload(this.selectedMod);
-								}, true, null, true);
-								dialog_Confirm.confirmLabel = "Yes".Translate();
-								dialog_Confirm.goBackLabel = "No".Translate();
-								dialog_Confirm.interactionDelay = 6f;
-								Find.WindowStack.Add(dialog_Confirm);
-							}, true, null, true));
+								}, true, null);
+								dialog_MessageBox.buttonAText = "Yes".Translate();
+								dialog_MessageBox.buttonBText = "No".Translate();
+								dialog_MessageBox.interactionDelay = 6f;
+								Find.WindowStack.Add(dialog_MessageBox);
+							}, true, null));
 						}
 					}
 				}
@@ -263,7 +263,10 @@ namespace RimWorld
 					GUI.color = Color.red;
 					text += "ModNotMadeForThisVersion".Translate();
 				}
-				TooltipHandler.TipRegion(rect2, new TipSignal(text, mod.GetHashCode() * 3311));
+				if (!text.NullOrEmpty())
+				{
+					TooltipHandler.TipRegion(rect2, new TipSignal(text, mod.GetHashCode() * 3311));
+				}
 				if (Widgets.CheckboxLabeledSelectable(rect2, mod.Name, ref flag, ref active))
 				{
 					this.selectedMod = mod;
@@ -276,10 +279,10 @@ namespace RimWorld
 				if (mod.Active && !active && mod.Name == ModContentPack.CoreModIdentifier)
 				{
 					ModMetaData coreMod = mod;
-					Find.WindowStack.Add(new Dialog_Confirm("ConfirmDisableCoreMod".Translate(), delegate
+					Find.WindowStack.Add(Dialog_MessageBox.CreateConfirmation("ConfirmDisableCoreMod".Translate(), delegate
 					{
 						coreMod.Active = false;
-					}, false, null, true));
+					}, false, null));
 				}
 				else
 				{
@@ -328,7 +331,10 @@ namespace RimWorld
 					PlayDataLoader.LoadAllPlayData(false);
 					if (assemblyWasLoaded)
 					{
-						Find.WindowStack.Add(new Dialog_Message("ModWithAssemblyWasUnloaded".Translate(), null));
+						LongEventHandler.ExecuteWhenFinished(delegate
+						{
+							Find.WindowStack.Add(new Dialog_MessageBox("ModWithAssemblyWasUnloaded".Translate(), null, null, null, null, null, false));
+						});
 					}
 				}, "LoadingLongEvent", true, null);
 			}

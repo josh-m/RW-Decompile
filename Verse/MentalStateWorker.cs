@@ -9,7 +9,7 @@ namespace Verse
 
 		public virtual bool StateCanOccur(Pawn pawn)
 		{
-			return (this.def.prisonersCanDo || pawn.HostFaction == null) && (!this.def.colonistsOnly || pawn.Faction == Faction.OfPlayer);
+			return (this.def.unspawnedCanDo || pawn.Spawned) && (this.def.prisonersCanDo || pawn.HostFaction == null) && (!this.def.colonistsOnly || pawn.Faction == Faction.OfPlayer);
 		}
 	}
 }

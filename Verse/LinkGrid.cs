@@ -3,28 +3,32 @@ using System.Collections.Generic;
 
 namespace Verse
 {
-	public static class LinkGrid
+	public class LinkGrid
 	{
-		private static LinkFlags[] linkGrid;
+		private Map map;
 
-		public static void Reinit()
+		private LinkFlags[] linkGrid;
+
+		public LinkGrid(Map map)
 		{
-			LinkGrid.linkGrid = new LinkFlags[CellIndices.NumGridCells];
+			this.map = map;
+			this.linkGrid = new LinkFlags[map.cellIndices.NumGridCells];
 		}
 
-		public static LinkFlags LinkFlagsAt(IntVec3 c)
+		public LinkFlags LinkFlagsAt(IntVec3 c)
 		{
-			return LinkGrid.linkGrid[CellIndices.CellToIndex(c)];
+			return this.linkGrid[this.map.cellIndices.CellToIndex(c)];
 		}
 
-		public static void Notify_LinkerCreatedOrDestroyed(Thing linker)
+		public void Notify_LinkerCreatedOrDestroyed(Thing linker)
 		{
+			CellIndices cellIndices = this.map.cellIndices;
 			CellRect.CellRectIterator iterator = linker.OccupiedRect().GetIterator();
 			while (!iterator.Done())
 			{
 				IntVec3 current = iterator.Current;
 				LinkFlags linkFlags = LinkFlags.None;
-				List<Thing> list = Find.ThingGrid.ThingsListAt(current);
+				List<Thing> list = this.map.thingGrid.ThingsListAt(current);
 				for (int i = 0; i < list.Count; i++)
 				{
 					if (list[i].def.graphicData != null)
@@ -32,7 +36,7 @@ namespace Verse
 						linkFlags |= list[i].def.graphicData.linkFlags;
 					}
 				}
-				LinkGrid.linkGrid[CellIndices.CellToIndex(current)] = linkFlags;
+				this.linkGrid[cellIndices.CellToIndex(current)] = linkFlags;
 				iterator.MoveNext();
 			}
 		}

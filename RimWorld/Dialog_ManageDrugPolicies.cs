@@ -31,6 +31,8 @@ namespace RimWorld
 
 		private DrugPolicy selPolicy;
 
+		private static readonly Texture2D IconForAddiction = ContentFinder<Texture2D>.Get("UI/Icons/DrugPolicy/ForAddiction", true);
+
 		private static readonly Texture2D IconForJoy = ContentFinder<Texture2D>.Get("UI/Icons/DrugPolicy/ForJoy", true);
 
 		private static readonly Texture2D IconScheduled = ContentFinder<Texture2D>.Get("UI/Icons/DrugPolicy/Scheduled", true);
@@ -91,7 +93,7 @@ namespace RimWorld
 					list.Add(new FloatMenuOption(localAssignedDrugs.label, delegate
 					{
 						this.SelectedPolicy = localAssignedDrugs;
-					}, MenuOptionPriority.Medium, null, null, 0f, null));
+					}, MenuOptionPriority.Default, null, null, 0f, null, null));
 				}
 				Find.WindowStack.Add(new FloatMenu(list));
 			}
@@ -122,7 +124,7 @@ namespace RimWorld
 						{
 							this.SelectedPolicy = null;
 						}
-					}, MenuOptionPriority.Medium, null, null, 0f, null));
+					}, MenuOptionPriority.Default, null, null, 0f, null, null));
 				}
 				Find.WindowStack.Add(new FloatMenu(list2));
 			}
@@ -189,10 +191,11 @@ namespace RimWorld
 			}
 		}
 
-		private void CalculateColumnsWidths(Rect rect, out float allowJoyWidth, out float scheduledWidth, out float drugNameWidth, out float frequencyWidth, out float moodThresholdWidth, out float joyThresholdWidth, out float takeToInventoryWidth)
+		private void CalculateColumnsWidths(Rect rect, out float addictionWidth, out float allowJoyWidth, out float scheduledWidth, out float drugNameWidth, out float frequencyWidth, out float moodThresholdWidth, out float joyThresholdWidth, out float takeToInventoryWidth)
 		{
-			float num = rect.width - 72f;
+			float num = rect.width - 108f;
 			drugNameWidth = num * 0.2f;
+			addictionWidth = 36f;
 			allowJoyWidth = 36f;
 			scheduledWidth = 36f;
 			frequencyWidth = num * 0.35f;
@@ -211,42 +214,47 @@ namespace RimWorld
 			float num5;
 			float num6;
 			float num7;
-			this.CalculateColumnsWidths(rect, out num, out num2, out num3, out num4, out num5, out num6, out num7);
-			float num8 = rect.x;
+			float num8;
+			this.CalculateColumnsWidths(rect, out num, out num2, out num3, out num4, out num5, out num6, out num7, out num8);
+			float num9 = rect.x;
 			Text.Anchor = TextAnchor.LowerCenter;
-			Rect rect2 = new Rect(num8 + 4f, rect.y, num3, rect.height);
+			Rect rect2 = new Rect(num9 + 4f, rect.y, num4, rect.height);
 			Widgets.Label(rect2, "DrugColumnLabel".Translate());
 			TooltipHandler.TipRegion(rect2, "DrugNameColumnDesc".Translate());
-			num8 += num3;
+			num9 += num4;
 			Text.Anchor = TextAnchor.UpperCenter;
-			Rect rect3 = new Rect(num8, rect.y, num + num, rect.height / 2f);
+			Rect rect3 = new Rect(num9, rect.y, num2 + num2, rect.height / 2f);
 			Widgets.Label(rect3, "DrugUsageColumnLabel".Translate());
 			TooltipHandler.TipRegion(rect3, "DrugUsageColumnDesc".Translate());
-			Rect rect4 = new Rect(num8, rect.yMax - 24f, 24f, 24f);
-			GUI.DrawTexture(rect4, Dialog_ManageDrugPolicies.IconForJoy);
-			TooltipHandler.TipRegion(rect4, "DrugUsageTipForJoy".Translate());
-			num8 += num;
-			Rect rect5 = new Rect(num8, rect.yMax - 24f, 24f, 24f);
-			GUI.DrawTexture(rect5, Dialog_ManageDrugPolicies.IconScheduled);
-			TooltipHandler.TipRegion(rect5, "DrugUsageTipScheduled".Translate());
-			num8 += num2;
+			Rect rect4 = new Rect(num9, rect.yMax - 24f, 24f, 24f);
+			GUI.DrawTexture(rect4, Dialog_ManageDrugPolicies.IconForAddiction);
+			TooltipHandler.TipRegion(rect4, "DrugUsageTipForAddiction".Translate());
+			num9 += num;
+			Rect rect5 = new Rect(num9, rect.yMax - 24f, 24f, 24f);
+			GUI.DrawTexture(rect5, Dialog_ManageDrugPolicies.IconForJoy);
+			TooltipHandler.TipRegion(rect5, "DrugUsageTipForJoy".Translate());
+			num9 += num2;
+			Rect rect6 = new Rect(num9, rect.yMax - 24f, 24f, 24f);
+			GUI.DrawTexture(rect6, Dialog_ManageDrugPolicies.IconScheduled);
+			TooltipHandler.TipRegion(rect6, "DrugUsageTipScheduled".Translate());
+			num9 += num3;
 			Text.Anchor = TextAnchor.LowerCenter;
-			Rect rect6 = new Rect(num8, rect.y, num4, rect.height);
-			Widgets.Label(rect6, "FrequencyColumnLabel".Translate());
-			TooltipHandler.TipRegion(rect6, "FrequencyColumnDesc".Translate());
-			num8 += num4;
-			Rect rect7 = new Rect(num8, rect.y, num5, rect.height);
-			Widgets.Label(rect7, "MoodThresholdColumnLabel".Translate());
-			TooltipHandler.TipRegion(rect7, "MoodThresholdColumnDesc".Translate());
-			num8 += num5;
-			Rect rect8 = new Rect(num8, rect.y, num6, rect.height);
-			Widgets.Label(rect8, "JoyThresholdColumnLabel".Translate());
-			TooltipHandler.TipRegion(rect8, "JoyThresholdColumnDesc".Translate());
-			num8 += num6;
-			Rect rect9 = new Rect(num8, rect.y, num7, rect.height);
-			Widgets.Label(rect9, "TakeToInventoryColumnLabel".Translate());
-			TooltipHandler.TipRegion(rect9, "TakeToInventoryColumnDesc".Translate());
-			num8 += num7;
+			Rect rect7 = new Rect(num9, rect.y, num5, rect.height);
+			Widgets.Label(rect7, "FrequencyColumnLabel".Translate());
+			TooltipHandler.TipRegion(rect7, "FrequencyColumnDesc".Translate());
+			num9 += num5;
+			Rect rect8 = new Rect(num9, rect.y, num6, rect.height);
+			Widgets.Label(rect8, "MoodThresholdColumnLabel".Translate());
+			TooltipHandler.TipRegion(rect8, "MoodThresholdColumnDesc".Translate());
+			num9 += num6;
+			Rect rect9 = new Rect(num9, rect.y, num7, rect.height);
+			Widgets.Label(rect9, "JoyThresholdColumnLabel".Translate());
+			TooltipHandler.TipRegion(rect9, "JoyThresholdColumnDesc".Translate());
+			num9 += num7;
+			Rect rect10 = new Rect(num9, rect.y, num8, rect.height);
+			Widgets.Label(rect10, "TakeToInventoryColumnLabel".Translate());
+			TooltipHandler.TipRegion(rect10, "TakeToInventoryColumnDesc".Translate());
+			num9 += num8;
 			Text.Anchor = TextAnchor.UpperLeft;
 		}
 
@@ -259,23 +267,29 @@ namespace RimWorld
 			float num5;
 			float num6;
 			float num7;
-			this.CalculateColumnsWidths(rect, out num, out num2, out num3, out num4, out num5, out num6, out num7);
+			float num8;
+			this.CalculateColumnsWidths(rect, out num, out num2, out num3, out num4, out num5, out num6, out num7, out num8);
 			Text.Anchor = TextAnchor.MiddleLeft;
-			float num8 = rect.x;
-			Widgets.Label(new Rect(num8, rect.y, num3, rect.height).ContractedBy(4f), entry.drug.LabelCap);
-			Widgets.InfoCardButton(num8 + Text.CalcSize(entry.drug.LabelCap).x + 5f, rect.y + (rect.height - 24f) / 2f, entry.drug);
-			num8 += num3;
+			float num9 = rect.x;
+			Widgets.Label(new Rect(num9, rect.y, num4, rect.height).ContractedBy(4f), entry.drug.LabelCap);
+			Widgets.InfoCardButton(num9 + Text.CalcSize(entry.drug.LabelCap).x + 5f, rect.y + (rect.height - 24f) / 2f, entry.drug);
+			num9 += num4;
+			if (entry.drug.IsAddictiveDrug)
+			{
+				Widgets.Checkbox(num9, rect.y, ref entry.allowedForAddiction, 24f, false);
+			}
+			num9 += num;
 			if (entry.drug.IsPleasureDrug)
 			{
-				Widgets.Checkbox(num8, rect.y, ref entry.allowedForJoy, 24f, false);
+				Widgets.Checkbox(num9, rect.y, ref entry.allowedForJoy, 24f, false);
 			}
-			num8 += num;
-			Widgets.Checkbox(num8, rect.y, ref entry.allowScheduled, 24f, false);
-			num8 += num2;
+			num9 += num2;
+			Widgets.Checkbox(num9, rect.y, ref entry.allowScheduled, 24f, false);
+			num9 += num3;
 			if (entry.allowScheduled)
 			{
-				entry.daysFrequency = Widgets.FrequencyHorizontalSlider(new Rect(num8, rect.y, num4, rect.height).ContractedBy(4f), entry.daysFrequency, 0.1f, 25f, true);
-				num8 += num4;
+				entry.daysFrequency = Widgets.FrequencyHorizontalSlider(new Rect(num9, rect.y, num5, rect.height).ContractedBy(4f), entry.daysFrequency, 0.1f, 25f, true);
+				num9 += num5;
 				string label;
 				if (entry.onlyIfMoodBelow < 1f)
 				{
@@ -285,8 +299,8 @@ namespace RimWorld
 				{
 					label = "NoDrugUseRequirement".Translate();
 				}
-				entry.onlyIfMoodBelow = Widgets.HorizontalSlider(new Rect(num8, rect.y, num5, rect.height).ContractedBy(4f), entry.onlyIfMoodBelow, 0.01f, 1f, true, label);
-				num8 += num5;
+				entry.onlyIfMoodBelow = Widgets.HorizontalSlider(new Rect(num9, rect.y, num6, rect.height).ContractedBy(4f), entry.onlyIfMoodBelow, 0.01f, 1f, true, label, null, null, -1f);
+				num9 += num6;
 				string label2;
 				if (entry.onlyIfJoyBelow < 1f)
 				{
@@ -296,10 +310,10 @@ namespace RimWorld
 				{
 					label2 = "NoDrugUseRequirement".Translate();
 				}
-				entry.onlyIfJoyBelow = Widgets.HorizontalSlider(new Rect(num8, rect.y, num6, rect.height).ContractedBy(4f), entry.onlyIfJoyBelow, 0.01f, 1f, true, label2);
-				num8 += num6;
-				Widgets.TextFieldNumeric<int>(new Rect(num8, rect.y, num7, rect.height).ContractedBy(4f), ref entry.takeToInventory, ref entry.takeToInventoryTempBuffer, 0f, 15f);
-				num8 += num7;
+				entry.onlyIfJoyBelow = Widgets.HorizontalSlider(new Rect(num9, rect.y, num7, rect.height).ContractedBy(4f), entry.onlyIfJoyBelow, 0.01f, 1f, true, label2, null, null, -1f);
+				num9 += num7;
+				Widgets.TextFieldNumeric<int>(new Rect(num9, rect.y, num8, rect.height).ContractedBy(4f), ref entry.takeToInventory, ref entry.takeToInventoryTempBuffer, 0f, 15f);
+				num9 += num8;
 			}
 			Text.Anchor = TextAnchor.UpperLeft;
 		}

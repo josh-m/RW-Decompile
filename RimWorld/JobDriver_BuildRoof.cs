@@ -21,9 +21,9 @@ namespace RimWorld
 		[DebuggerHidden]
 		protected override IEnumerable<Toil> MakeNewToils()
 		{
-			this.FailOn(() => !Find.AreaBuildRoof[this.<>f__this.Cell]);
-			this.FailOn(() => !RoofCollapseUtility.WithinRangeOfRoofHolder(this.<>f__this.Cell));
-			this.FailOn(() => !RoofCollapseUtility.ConnectedToRoofHolder(this.<>f__this.Cell, true));
+			this.FailOn(() => !this.<>f__this.Map.areaManager.BuildRoof[this.<>f__this.Cell]);
+			this.FailOn(() => !RoofCollapseUtility.WithinRangeOfRoofHolder(this.<>f__this.Cell, this.<>f__this.Map));
+			this.FailOn(() => !RoofCollapseUtility.ConnectedToRoofHolder(this.<>f__this.Cell, this.<>f__this.Map, true));
 			foreach (Toil t in base.MakeNewToils())
 			{
 				yield return t;
@@ -36,12 +36,12 @@ namespace RimWorld
 			for (int i = 0; i < 9; i++)
 			{
 				IntVec3 intVec = base.Cell + GenAdj.AdjacentCellsAndInside[i];
-				if (intVec.InBounds())
+				if (intVec.InBounds(base.Map))
 				{
-					if (Find.AreaBuildRoof[intVec] && !intVec.Roofed() && RoofCollapseUtility.WithinRangeOfRoofHolder(intVec))
+					if (base.Map.areaManager.BuildRoof[intVec] && !intVec.Roofed(base.Map) && RoofCollapseUtility.WithinRangeOfRoofHolder(intVec, base.Map))
 					{
-						Find.RoofGrid.SetRoof(intVec, RoofDefOf.RoofConstructed);
-						MoteMaker.PlaceTempRoof(intVec);
+						base.Map.roofGrid.SetRoof(intVec, RoofDefOf.RoofConstructed);
+						MoteMaker.PlaceTempRoof(intVec, base.Map);
 						JobDriver_BuildRoof.builtRoofs.Add(intVec);
 					}
 				}
@@ -51,7 +51,7 @@ namespace RimWorld
 
 		protected override bool DoWorkFailOn()
 		{
-			return base.Cell.Roofed();
+			return base.Cell.Roofed(base.Map);
 		}
 	}
 }

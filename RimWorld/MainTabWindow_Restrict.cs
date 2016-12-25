@@ -50,7 +50,7 @@ namespace RimWorld
 			Text.Font = GameFont.Small;
 			if (Widgets.ButtonText(rect3, "ManageAreas".Translate(), true, false, true))
 			{
-				Find.WindowStack.Add(new Dialog_ManageAreas());
+				Find.WindowStack.Add(new Dialog_ManageAreas(Find.VisibleMap));
 			}
 			Text.Font = GameFont.Small;
 			Text.Anchor = TextAnchor.LowerCenter;

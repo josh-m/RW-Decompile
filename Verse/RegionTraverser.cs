@@ -96,12 +96,12 @@ namespace Verse
 			}
 		}
 
-		public static Room FloodAndSetRooms(Region root, Room existingRoom)
+		public static Room FloodAndSetRooms(Region root, Map map, Room existingRoom)
 		{
 			Room floodingRoom;
 			if (existingRoom == null)
 			{
-				floodingRoom = Room.MakeNew();
+				floodingRoom = Room.MakeNew(map);
 			}
 			else
 			{
@@ -134,18 +134,18 @@ namespace Verse
 			RegionTraverser.BreadthFirstTraverse(root, entryCondition, regionProcessor, 999999);
 		}
 
-		public static bool WithinRegions(this IntVec3 A, IntVec3 B, int regionLookCount, TraverseParms traverseParams)
+		public static bool WithinRegions(this IntVec3 A, IntVec3 B, Map map, int regionLookCount, TraverseParms traverseParams)
 		{
 			if (traverseParams.mode == TraverseMode.PassAnything)
 			{
 				throw new ArgumentException("traverseParams");
 			}
-			Region validRegionAt = Find.RegionGrid.GetValidRegionAt(A);
+			Region validRegionAt = map.regionGrid.GetValidRegionAt(A);
 			if (validRegionAt == null)
 			{
 				return false;
 			}
-			Region regB = Find.RegionGrid.GetValidRegionAt(B);
+			Region regB = map.regionGrid.GetValidRegionAt(B);
 			if (regB == null)
 			{
 				return false;
@@ -178,9 +178,9 @@ namespace Verse
 			}, maxRegions);
 		}
 
-		public static void BreadthFirstTraverse(IntVec3 start, RegionEntryPredicate entryCondition, RegionProcessor regionProcessor, int maxRegions = 999999)
+		public static void BreadthFirstTraverse(IntVec3 start, Map map, RegionEntryPredicate entryCondition, RegionProcessor regionProcessor, int maxRegions = 999999)
 		{
-			Region region = start.GetRegion();
+			Region region = start.GetRegion(map);
 			if (region == null)
 			{
 				return;

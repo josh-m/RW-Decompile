@@ -1,4 +1,5 @@
 using System;
+using UnityEngine;
 
 namespace Verse
 {
@@ -17,10 +18,6 @@ namespace Verse
 			{
 				return;
 			}
-			if (Find.TickManager.TicksGame % 2 == 0)
-			{
-				return;
-			}
 			if (this.pawn.pather.Moving)
 			{
 				if (this.pawn.pather.curPath == null || this.pawn.pather.curPath.NodesLeftCount < 1)
@@ -35,12 +32,19 @@ namespace Verse
 				Stance_Busy stance_Busy = this.pawn.stances.curStance as Stance_Busy;
 				if (stance_Busy != null && stance_Busy.focusTarg.IsValid)
 				{
-					this.FaceCell(stance_Busy.focusTarg.Cell);
+					if (stance_Busy.focusTarg.HasThing)
+					{
+						this.Face(stance_Busy.focusTarg.Thing.DrawPos);
+					}
+					else
+					{
+						this.FaceCell(stance_Busy.focusTarg.Cell);
+					}
 					return;
 				}
 				if (this.pawn.jobs.curJob != null)
 				{
-					TargetInfo target = this.pawn.CurJob.GetTarget(this.pawn.jobs.curDriver.rotateToFace);
+					LocalTargetInfo target = this.pawn.CurJob.GetTarget(this.pawn.jobs.curDriver.rotateToFace);
 					if (target.HasThing)
 					{
 						bool flag = false;
@@ -50,7 +54,18 @@ namespace Verse
 						{
 							for (int j = cellRect.minX; j <= cellRect.maxX; j++)
 							{
-								IntVec3 intVec = new IntVec3(j, 0, i);
+								if (this.pawn.Position == new IntVec3(j, 0, i))
+								{
+									this.Face(target.Thing.DrawPos);
+									return;
+								}
+							}
+						}
+						for (int k = cellRect.minZ; k <= cellRect.maxZ; k++)
+						{
+							for (int l = cellRect.minX; l <= cellRect.maxX; l++)
+							{
+								IntVec3 intVec = new IntVec3(l, 0, k);
 								if (intVec.AdjacentToCardinal(this.pawn.Position))
 								{
 									this.FaceAdjacentCell(intVec);
@@ -67,7 +82,7 @@ namespace Verse
 						{
 							if (DebugViewSettings.drawPawnRotatorTarget)
 							{
-								Find.DebugDrawer.FlashCell(this.pawn.Position, 0.6f, "jbthing");
+								this.pawn.Map.debugDrawer.FlashCell(this.pawn.Position, 0.6f, "jbthing");
 								GenDraw.DrawLineBetween(this.pawn.Position.ToVector3Shifted(), c.ToVector3Shifted());
 							}
 							this.FaceAdjacentCell(c);
@@ -78,7 +93,7 @@ namespace Verse
 					{
 						if (DebugViewSettings.drawPawnRotatorTarget)
 						{
-							Find.DebugDrawer.FlashCell(this.pawn.Position, 0.2f, "jbloc");
+							this.pawn.Map.debugDrawer.FlashCell(this.pawn.Position, 0.2f, "jbloc");
 							GenDraw.DrawLineBetween(this.pawn.Position.ToVector3Shifted(), target.Cell.ToVector3Shifted());
 						}
 						this.FaceAdjacentCell(target.Cell);
@@ -117,6 +132,12 @@ namespace Verse
 		public void FaceCell(IntVec3 c)
 		{
 			float angle = (c - this.pawn.Position).ToVector3().AngleFlat();
+			this.pawn.Rotation = PawnRotator.RotFromAngleBiased(angle);
+		}
+
+		public void Face(Vector3 p)
+		{
+			float angle = (p - this.pawn.DrawPos).AngleFlat();
 			this.pawn.Rotation = PawnRotator.RotFromAngleBiased(angle);
 		}
 

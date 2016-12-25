@@ -6,15 +6,13 @@ namespace RimWorld
 {
 	public class Thought_MemorySocial : Thought_Memory, ISocialThought
 	{
-		public int otherPawnID = -1;
-
 		public float opinionOffset;
 
 		public override bool ShouldDiscard
 		{
 			get
 			{
-				return this.opinionOffset == 0f || base.ShouldDiscard;
+				return this.otherPawn == null || this.opinionOffset == 0f || base.ShouldDiscard;
 			}
 		}
 
@@ -42,11 +40,6 @@ namespace RimWorld
 			}
 		}
 
-		public void SetOtherPawn(Pawn pawn)
-		{
-			this.otherPawnID = pawn.thingIDNumber;
-		}
-
 		public virtual float OpinionOffset()
 		{
 			if (this.ShouldDiscard)
@@ -56,15 +49,14 @@ namespace RimWorld
 			return this.opinionOffset * this.AgeFactor;
 		}
 
-		public int OtherPawnID()
+		public Pawn OtherPawn()
 		{
-			return this.otherPawnID;
+			return this.otherPawn;
 		}
 
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Values.LookValue<int>(ref this.otherPawnID, "otherPawnID", 0, false);
 			Scribe_Values.LookValue<float>(ref this.opinionOffset, "opinionOffset", 0f, false);
 		}
 
@@ -74,15 +66,16 @@ namespace RimWorld
 			this.opinionOffset = base.CurStage.baseOpinionOffset;
 		}
 
-		public override bool TryMergeWithExistingThought()
+		public override bool TryMergeWithExistingThought(out bool showBubble)
 		{
+			showBubble = false;
 			return false;
 		}
 
 		public override bool GroupsWith(Thought other)
 		{
 			Thought_MemorySocial thought_MemorySocial = other as Thought_MemorySocial;
-			return thought_MemorySocial != null && base.GroupsWith(other) && this.otherPawnID == thought_MemorySocial.otherPawnID;
+			return thought_MemorySocial != null && base.GroupsWith(other) && this.otherPawn == thought_MemorySocial.otherPawn;
 		}
 	}
 }

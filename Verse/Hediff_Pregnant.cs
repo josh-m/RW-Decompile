@@ -111,7 +111,7 @@ namespace Verse
 			{
 				num = 1;
 			}
-			PawnGenerationRequest request = new PawnGenerationRequest(mother.kindDef, mother.Faction, PawnGenerationContext.NonPlayer, false, true, false, false, true, false, 1f, false, true, true, null, null, null, null, null, null);
+			PawnGenerationRequest request = new PawnGenerationRequest(mother.kindDef, mother.Faction, PawnGenerationContext.NonPlayer, null, false, true, false, false, true, false, 1f, false, true, true, null, null, null, null, null, null);
 			Pawn pawn = null;
 			for (int i = 0; i < num; i++)
 			{
@@ -138,7 +138,7 @@ namespace Verse
 			}
 			if (mother.Spawned)
 			{
-				FilthMaker.MakeFilth(mother.Position, ThingDefOf.FilthAmnioticFluid, mother.LabelIndefinite(), 5);
+				FilthMaker.MakeFilth(mother.Position, mother.Map, ThingDefOf.FilthAmnioticFluid, mother.LabelIndefinite(), 5);
 				if (mother.caller != null)
 				{
 					mother.caller.DoCall();

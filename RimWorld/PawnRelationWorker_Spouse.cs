@@ -32,11 +32,11 @@ namespace RimWorld
 
 		private static void ResolveMySkinColor(ref PawnGenerationRequest request, Pawn generated, Pawn other)
 		{
-			if (request.FixedSkinWhiteness.HasValue)
+			if (request.FixedMelanin.HasValue)
 			{
 				return;
 			}
-			request.SetFixedSkinWhiteness(PawnSkinColors.GetRandomSkinColorSimilarTo(other.story.skinWhiteness, 0f, 1f));
+			request.SetFixedMelanin(PawnSkinColors.GetRandomMelaninSimilarTo(other.story.melanin, 0f, 1f));
 		}
 	}
 }

@@ -24,7 +24,7 @@ namespace RimWorld
 		public override void Tick()
 		{
 			base.Tick();
-			if (!GenConstruct.CanBuildOnTerrain(this.def.entityDefToBuild, base.Position, base.Rotation, null))
+			if (!GenConstruct.CanBuildOnTerrain(this.def.entityDefToBuild, base.Position, base.Map, base.Rotation, null))
 			{
 				this.Destroy(DestroyMode.Cancel);
 			}
@@ -47,7 +47,7 @@ namespace RimWorld
 			jobEnded = false;
 			if (this.FirstBlockingThing(workerPawn, null, false) != null)
 			{
-				workerPawn.jobs.EndCurrentJob(JobCondition.Incompletable);
+				workerPawn.jobs.EndCurrentJob(JobCondition.Incompletable, true);
 				jobEnded = true;
 				createdThing = null;
 				return false;
@@ -80,21 +80,22 @@ namespace RimWorld
 			{
 				this.SpawnTemporaryRegionBarriers(rect);
 			}
+			Map map = base.Map;
 			try
 			{
-				GenSpawn.WipeExistingThings(base.Position, base.Rotation, createdThing.def, true, new CellRect?(workerPawn.OccupiedRect()));
+				GenSpawn.WipeExistingThings(base.Position, base.Rotation, createdThing.def, map, DestroyMode.Deconstruct);
 				if (!base.Destroyed)
 				{
 					this.Destroy(DestroyMode.Vanish);
 				}
 				createdThing.SetFactionDirect(workerPawn.Faction);
-				GenSpawn.Spawn(createdThing, base.Position, base.Rotation);
+				GenSpawn.Spawn(createdThing, base.Position, map, base.Rotation);
 			}
 			finally
 			{
 				if (regionBarrier)
 				{
-					this.DestroyTemporaryRegionBarriers(rect);
+					this.DestroyTemporaryRegionBarriers(rect, map);
 				}
 			}
 			return true;
@@ -105,17 +106,17 @@ namespace RimWorld
 			CellRect.CellRectIterator iterator = rect.GetIterator();
 			while (!iterator.Done())
 			{
-				GenSpawn.Spawn(ThingDefOf.TemporaryRegionBarrier, iterator.Current);
+				GenSpawn.Spawn(ThingDefOf.TemporaryRegionBarrier, iterator.Current, base.Map);
 				iterator.MoveNext();
 			}
 		}
 
-		private void DestroyTemporaryRegionBarriers(CellRect rect)
+		private void DestroyTemporaryRegionBarriers(CellRect rect, Map map)
 		{
 			CellRect.CellRectIterator iterator = rect.GetIterator();
 			while (!iterator.Done())
 			{
-				Thing thing = iterator.Current.GetThingList().Find((Thing x) => x.def.temporaryRegionBarrier);
+				Thing thing = iterator.Current.GetThingList(map).Find((Thing x) => x.def.temporaryRegionBarrier);
 				if (thing == null)
 				{
 					Log.Warning("Could not destroy temporary region barrier at " + iterator.Current + " because it's not here.");
@@ -130,7 +131,7 @@ namespace RimWorld
 
 		protected abstract Thing MakeSolidThing();
 
-		public abstract List<ThingCount> MaterialsNeeded();
+		public abstract List<ThingCountClass> MaterialsNeeded();
 
 		public abstract ThingDef UIStuff();
 
@@ -143,7 +144,7 @@ namespace RimWorld
 			CellRect.CellRectIterator iterator = this.OccupiedRect().GetIterator();
 			while (!iterator.Done())
 			{
-				List<Thing> thingList = iterator.Current.GetThingList();
+				List<Thing> thingList = iterator.Current.GetThingList(base.Map);
 				for (int i = 0; i < thingList.Count; i++)
 				{
 					Thing thing = thingList[i];
@@ -162,7 +163,7 @@ namespace RimWorld
 			CellRect.CellRectIterator iterator = this.OccupiedRect().GetIterator();
 			while (!iterator.Done())
 			{
-				List<Thing> thingList = iterator.Current.GetThingList();
+				List<Thing> thingList = iterator.Current.GetThingList(base.Map);
 				for (int i = 0; i < thingList.Count; i++)
 				{
 					Thing thing = thingList[i];

@@ -34,14 +34,6 @@ namespace RimWorld
 			return !this.forcedAps.Contains(ap);
 		}
 
-		public void Notify_Destroyed(Apparel ap)
-		{
-			if (this.forcedAps.Contains(ap))
-			{
-				this.forcedAps.Remove(ap);
-			}
-		}
-
 		public void SetForced(Apparel ap, bool forced)
 		{
 			if (forced)
@@ -59,7 +51,7 @@ namespace RimWorld
 
 		public void ExposeData()
 		{
-			Scribe_Collections.LookList<Apparel>(ref this.forcedAps, "forcedAps", LookMode.MapReference, new object[0]);
+			Scribe_Collections.LookList<Apparel>(ref this.forcedAps, "forcedAps", LookMode.Reference, new object[0]);
 		}
 
 		public bool IsForced(Apparel ap)

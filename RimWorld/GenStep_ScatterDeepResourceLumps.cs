@@ -7,23 +7,26 @@ namespace RimWorld
 {
 	public class GenStep_ScatterDeepResourceLumps : GenStep_Scatterer
 	{
-		private const int CountPerCell = 150;
-
 		private const float LumpSizeFactor = 1.6f;
 
-		public override void Generate()
+		public override void Generate(Map map)
 		{
-			int num = base.CalculateFinalCount();
+			if (map.TileInfo.WaterCovered)
+			{
+				return;
+			}
+			int num = base.CalculateFinalCount(map);
 			for (int i = 0; i < num; i++)
 			{
 				IntVec3 intVec;
-				if (!this.TryFindScatterCell(out intVec))
+				if (!this.TryFindScatterCell(map, out intVec))
 				{
 					return;
 				}
-				this.ScatterAt(intVec, 1);
+				this.ScatterAt(intVec, map, 1);
 				this.usedSpots.Add(intVec);
 			}
+			this.usedSpots.Clear();
 		}
 
 		protected ThingDef ChooseThingDef()
@@ -31,25 +34,18 @@ namespace RimWorld
 			return DefDatabase<ThingDef>.AllDefs.RandomElementByWeight((ThingDef def) => def.deepCommonality);
 		}
 
-		protected override bool CanScatterAt(IntVec3 c)
+		protected override bool CanScatterAt(IntVec3 c, Map map)
 		{
-			foreach (IntVec3 current in this.usedSpots)
-			{
-				if ((current - c).LengthHorizontal < this.minSpacing)
-				{
-					return false;
-				}
-			}
-			return true;
+			return !base.NearUsedSpot(c, this.minSpacing);
 		}
 
-		protected override void ScatterAt(IntVec3 c, int stackCount = 1)
+		protected override void ScatterAt(IntVec3 c, Map map, int stackCount = 1)
 		{
-			ThingDef def = this.ChooseThingDef();
-			int numCells = Mathf.CeilToInt((float)this.GetScatterLumpSizeRange(def).RandomInRange * 1.6f);
-			foreach (IntVec3 current in GridShapeMaker.IrregularLump(c, numCells))
+			ThingDef thingDef = this.ChooseThingDef();
+			int numCells = Mathf.CeilToInt((float)this.GetScatterLumpSizeRange(thingDef).RandomInRange * 1.6f);
+			foreach (IntVec3 current in GridShapeMaker.IrregularLump(c, map, numCells))
 			{
-				Find.DeepResourceGrid.SetAt(current, def, 150);
+				map.deepResourceGrid.SetAt(current, thingDef, thingDef.deepCountPerCell);
 			}
 		}
 

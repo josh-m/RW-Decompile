@@ -7,9 +7,9 @@ namespace RimWorld
 {
 	public class IncidentWorker_RaidEnemy : IncidentWorker_Raid
 	{
-		protected override bool FactionCanBeGroupSource(Faction f, bool desperate = false)
+		protected override bool FactionCanBeGroupSource(Faction f, Map map, bool desperate = false)
 		{
-			return base.FactionCanBeGroupSource(f, desperate) && f.HostileTo(Faction.OfPlayer) && (desperate || (float)GenDate.DaysPassed >= f.def.earliestRaidDays);
+			return base.FactionCanBeGroupSource(f, map, desperate) && f.HostileTo(Faction.OfPlayer) && (desperate || (float)GenDate.DaysPassed >= f.def.earliestRaidDays);
 		}
 
 		public override bool TryExecute(IncidentParms parms)
@@ -25,6 +25,7 @@ namespace RimWorld
 
 		protected override bool TryResolveRaidFaction(IncidentParms parms)
 		{
+			Map map = (Map)parms.target;
 			if (parms.faction != null)
 			{
 				return true;
@@ -35,11 +36,11 @@ namespace RimWorld
 				maxPoints = 999999f;
 			}
 			if (!(from f in Find.FactionManager.AllFactions
-			where this.FactionCanBeGroupSource(f, false) && maxPoints >= f.def.MinPointsToGenerateNormalPawnGroup()
+			where this.FactionCanBeGroupSource(f, map, false) && maxPoints >= f.def.MinPointsToGenerateNormalPawnGroup()
 			select f).TryRandomElementByWeight((Faction f) => f.def.raidCommonality, out parms.faction))
 			{
 				if (!(from f in Find.FactionManager.AllFactions
-				where this.FactionCanBeGroupSource(f, true) && maxPoints >= f.def.MinPointsToGenerateNormalPawnGroup()
+				where this.FactionCanBeGroupSource(f, map, true) && maxPoints >= f.def.MinPointsToGenerateNormalPawnGroup()
 				select f).TryRandomElementByWeight((Faction f) => f.def.raidCommonality, out parms.faction))
 				{
 					Log.Error("IncidentWorker_RaidEnemy could not fire even though we thought we could: no faction could generate with " + maxPoints + " points.");
@@ -55,9 +56,10 @@ namespace RimWorld
 			{
 				return;
 			}
+			Map map = (Map)parms.target;
 			parms.raidStrategy = (from d in DefDatabase<RaidStrategyDef>.AllDefs
 			where d.Worker.CanUseWith(parms)
-			select d).RandomElementByWeight((RaidStrategyDef d) => d.Worker.SelectionChance);
+			select d).RandomElementByWeight((RaidStrategyDef d) => d.Worker.SelectionChance(map));
 		}
 
 		protected override string GetLetterLabel(IncidentParms parms)

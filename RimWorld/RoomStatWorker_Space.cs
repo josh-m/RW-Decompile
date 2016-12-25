@@ -15,11 +15,11 @@ namespace RimWorld
 			float num = 0f;
 			foreach (IntVec3 current in room.Cells)
 			{
-				if (current.Standable())
+				if (current.Standable(room.Map))
 				{
 					num += 1.4f;
 				}
-				else if (current.Walkable())
+				else if (current.Walkable(room.Map))
 				{
 					num += 0.5f;
 				}

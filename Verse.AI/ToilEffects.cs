@@ -1,5 +1,6 @@
 using RimWorld;
 using System;
+using UnityEngine;
 using Verse.Sound;
 
 namespace Verse.AI
@@ -10,7 +11,7 @@ namespace Verse.AI
 		{
 			toil.AddPreInitAction(delegate
 			{
-				sound.PlayOneShot(toil.GetActor().Position);
+				sound.PlayOneShot(new TargetInfo(toil.GetActor().Position, toil.GetActor().Map, false));
 			});
 			return toil;
 		}
@@ -19,7 +20,7 @@ namespace Verse.AI
 		{
 			toil.AddFinishAction(delegate
 			{
-				sound.PlayOneShot(toil.GetActor().Position);
+				sound.PlayOneShot(new TargetInfo(toil.GetActor().Position, toil.GetActor().Map, false));
 			});
 			return toil;
 		}
@@ -37,7 +38,7 @@ namespace Verse.AI
 				SoundDef soundDef = soundDefGetter();
 				if (soundDef != null && !soundDef.sustain)
 				{
-					soundDef.PlayOneShot(toil.GetActor().Position);
+					soundDef.PlayOneShot(new TargetInfo(toil.GetActor().Position, toil.GetActor().Map, false));
 				}
 			});
 			toil.AddPreTickAction(delegate
@@ -47,7 +48,7 @@ namespace Verse.AI
 					SoundDef soundDef = soundDefGetter();
 					if (soundDef != null && soundDef.sustain)
 					{
-						SoundInfo info = SoundInfo.InWorld(toil.actor, MaintenanceType.PerTick);
+						SoundInfo info = SoundInfo.InMap(toil.actor, MaintenanceType.PerTick);
 						sustainer = soundDef.TrySpawnSustainer(info);
 					}
 				}
@@ -57,11 +58,6 @@ namespace Verse.AI
 				}
 			});
 			return toil;
-		}
-
-		public static Toil WithEffect(this Toil toil, string effectDefName, TargetIndex ind)
-		{
-			return toil.WithEffect(DefDatabase<EffecterDef>.GetNamed(effectDefName, true), ind);
 		}
 
 		public static Toil WithEffect(this Toil toil, EffecterDef effectDef, TargetIndex ind)
@@ -79,7 +75,7 @@ namespace Verse.AI
 			return toil.WithEffect(effecterDefGetter, () => thing);
 		}
 
-		public static Toil WithEffect(this Toil toil, Func<EffecterDef> effecterDefGetter, Func<TargetInfo> effectTargetGetter)
+		public static Toil WithEffect(this Toil toil, Func<EffecterDef> effecterDefGetter, Func<LocalTargetInfo> effectTargetGetter)
 		{
 			Effecter effecter = null;
 			toil.AddPreTickAction(delegate
@@ -95,7 +91,7 @@ namespace Verse.AI
 				}
 				else
 				{
-					effecter.EffectTick(toil.actor, effectTargetGetter());
+					effecter.EffectTick(toil.actor, effectTargetGetter().ToTargetInfo(toil.actor.Map));
 				}
 			});
 			toil.AddFinishAction(delegate
@@ -125,23 +121,23 @@ namespace Verse.AI
 				}
 				else
 				{
-					TargetInfo target = toil.actor.CurJob.GetTarget(ind);
+					LocalTargetInfo target = toil.actor.CurJob.GetTarget(ind);
 					if (!target.IsValid || (target.HasThing && !target.Thing.Spawned))
 					{
 						effecter.EffectTick(toil.actor, TargetInfo.Invalid);
 					}
 					else if (interpolateBetweenActorAndTarget)
 					{
-						effecter.EffectTick(toil.actor.CurJob.GetTarget(ind), toil.actor);
+						effecter.EffectTick(toil.actor.CurJob.GetTarget(ind).ToTargetInfo(toil.actor.Map), toil.actor);
 					}
 					else
 					{
-						effecter.EffectTick(toil.actor.CurJob.GetTarget(ind), TargetInfo.Invalid);
+						effecter.EffectTick(toil.actor.CurJob.GetTarget(ind).ToTargetInfo(toil.actor.Map), TargetInfo.Invalid);
 					}
 					MoteProgressBar mote = ((SubEffecter_ProgressBar)effecter.children[0]).mote;
 					if (mote != null)
 					{
-						mote.progress = progressGetter();
+						mote.progress = Mathf.Clamp01(progressGetter());
 						mote.offsetZ = offsetZ;
 					}
 				}

@@ -6,18 +6,26 @@ namespace Verse
 {
 	public class HediffComp_Infecter : HediffComp
 	{
-		public float infectionChanceFactor = 1f;
+		private float infectionChanceFactor = 1f;
 
 		private int ticksUntilInfect = -1;
 
 		private bool alreadyCausedInfection;
 
+		public HediffCompProperties_Infecter Props
+		{
+			get
+			{
+				return (HediffCompProperties_Infecter)this.props;
+			}
+		}
+
 		public override void CompPostPostAdd(DamageInfo? dinfo)
 		{
-			float num = this.props.infectionChance;
+			float num = this.Props.infectionChance;
 			if (base.Pawn.RaceProps.Animal)
 			{
-				num *= 0.125f;
+				num *= 0.15f;
 			}
 			if (!this.alreadyCausedInfection && !this.parent.Part.def.IsSolid(this.parent.Part, base.Pawn.health.hediffSet.hediffs) && !base.Pawn.health.hediffSet.PartOrAnyAncestorHasDirectlyAddedParts(this.parent.Part) && !this.parent.IsOld() && Rand.Value <= num)
 			{
@@ -44,21 +52,36 @@ namespace Verse
 			}
 		}
 
+		public override void CompTended(float quality, int batchPosition = 0)
+		{
+			HediffComp_Infecter hediffComp_Infecter = this.parent.TryGetComp<HediffComp_Infecter>();
+			if (hediffComp_Infecter != null && base.Pawn.Spawned)
+			{
+				Room room = base.Pawn.GetRoom();
+				if (room != null)
+				{
+					hediffComp_Infecter.infectionChanceFactor = room.GetStat(RoomStatDefOf.InfectionChanceFactor);
+				}
+			}
+		}
+
 		private void CheckMakeInfection()
 		{
-			HediffComp_Tendable hediffComp_Tendable = this.parent.TryGetComp<HediffComp_Tendable>();
 			this.ticksUntilInfect = -1;
-			float num = 0f;
-			if (hediffComp_Tendable != null && hediffComp_Tendable.IsTended)
+			HediffComp_TendDuration hediffComp_TendDuration = this.parent.TryGetComp<HediffComp_TendDuration>();
+			if (hediffComp_TendDuration != null && hediffComp_TendDuration.IsTended)
 			{
-				num = hediffComp_Tendable.tendQuality;
+				if (Rand.Value < this.infectionChanceFactor)
+				{
+					return;
+				}
+				float num = Mathf.Clamp(hediffComp_TendDuration.tendQuality + 0.3f, 0f, 0.97f);
+				if (Rand.Value < num)
+				{
+					return;
+				}
 			}
-			num = Mathf.Clamp01(num / this.infectionChanceFactor);
-			if (Rand.Value < num)
-			{
-				return;
-			}
-			if (base.Pawn.health.immunity.ChanceToGetDisease(HediffDefOf.WoundInfection, this.parent.Part) <= 0.001f)
+			if (base.Pawn.health.immunity.DiseaseContractChanceFactor(HediffDefOf.WoundInfection, this.parent.Part) <= 0.001f)
 			{
 				return;
 			}

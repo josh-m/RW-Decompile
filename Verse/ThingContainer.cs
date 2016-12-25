@@ -14,6 +14,8 @@ namespace Verse
 
 		private int maxStacks = 99999;
 
+		private LookMode contentsLookMode = LookMode.Deep;
+
 		private List<Thing> innerList = new List<Thing>();
 
 		public Thing this[int index]
@@ -92,9 +94,10 @@ namespace Verse
 			this.owner = owner;
 		}
 
-		public ThingContainer(IThingContainerOwner owner, bool oneStackOnly) : this(owner)
+		public ThingContainer(IThingContainerOwner owner, bool oneStackOnly, LookMode contentsLookMode = LookMode.Deep) : this(owner)
 		{
 			this.maxStacks = ((!oneStackOnly) ? 99999 : 1);
+			this.contentsLookMode = contentsLookMode;
 		}
 
 		IEnumerator IEnumerable.GetEnumerator()
@@ -110,12 +113,21 @@ namespace Verse
 		public void ExposeData()
 		{
 			Scribe_Values.LookValue<int>(ref this.maxStacks, "maxStacks", 99999, false);
-			Scribe_Collections.LookList<Thing>(ref this.innerList, "innerList", LookMode.Deep, new object[0]);
-			if (Scribe.mode == LoadSaveMode.LoadingVars)
+			Scribe_Values.LookValue<LookMode>(ref this.contentsLookMode, "contentsLookMode", LookMode.Deep, false);
+			Scribe_Collections.LookList<Thing>(ref this.innerList, true, "innerList", this.contentsLookMode, new object[0]);
+			if (Scribe.mode == LoadSaveMode.LoadingVars || Scribe.mode == LoadSaveMode.PostLoadInit)
 			{
-				for (int i = 0; i < this.innerList.Count; i++)
+				for (int i = this.innerList.Count - 1; i >= 0; i--)
 				{
-					this.innerList[i].holder = this;
+					if (this.innerList[i] == null)
+					{
+						Log.Error("ThingContainer contained null.");
+						this.innerList.RemoveAt(i);
+					}
+					else
+					{
+						this.innerList[i].holdingContainer = this;
+					}
 				}
 			}
 		}
@@ -144,23 +156,36 @@ namespace Verse
 
 		public void Clear()
 		{
-			for (int i = 0; i < this.innerList.Count; i++)
+			for (int i = this.innerList.Count - 1; i >= 0; i--)
 			{
-				if (this.innerList[i].holder == this)
-				{
-					this.innerList[i].holder = null;
-				}
+				this.Remove(this.innerList[i]);
 			}
-			this.innerList.Clear();
 		}
 
 		public void ClearAndDestroyContents(DestroyMode mode = DestroyMode.Vanish)
 		{
-			for (int i = this.innerList.Count - 1; i >= 0; i--)
+			while (this.innerList.Any<Thing>())
 			{
-				this.innerList[i].Destroy(mode);
+				for (int i = this.innerList.Count - 1; i >= 0; i--)
+				{
+					Thing thing = this.innerList[i];
+					thing.Destroy(mode);
+					this.Remove(thing);
+				}
 			}
-			this.Clear();
+		}
+
+		public void ClearAndDestroyContentsOrPassToWorld(DestroyMode mode = DestroyMode.Vanish)
+		{
+			while (this.innerList.Any<Thing>())
+			{
+				for (int i = this.innerList.Count - 1; i >= 0; i--)
+				{
+					Thing thing = this.innerList[i];
+					thing.DestroyOrPassToWorld(mode);
+					this.Remove(thing);
+				}
+			}
 		}
 
 		public bool CanAcceptAnyOf(Thing item)
@@ -168,29 +193,49 @@ namespace Verse
 			return this.innerList.Count < this.maxStacks;
 		}
 
-		public bool TryAdd(Thing item, int count)
+		public int TryAdd(Thing item, int count)
 		{
-			int count2 = Mathf.Min(count, this.AvailableStackSpace);
-			Thing item2 = item.SplitOff(count2);
-			return this.TryAdd(item2);
+			if (item == null)
+			{
+				Log.Warning("Tried to add null item to ThingContainer.");
+				return 0;
+			}
+			if (this.Contains(item))
+			{
+				Log.Warning("Tried to add " + item + " to ThingContainer but this item is already here.");
+				return 0;
+			}
+			int num = Mathf.Min(count, this.AvailableStackSpace);
+			if (num <= 0)
+			{
+				return 0;
+			}
+			Thing item2 = item.SplitOff(num);
+			if (!this.TryAdd(item2, true))
+			{
+				return 0;
+			}
+			return num;
 		}
 
-		public bool TryAdd(Thing item)
+		public bool TryAdd(Thing item, bool canMergeWithExistingStacks = true)
 		{
+			if (item == null)
+			{
+				Log.Warning("Tried to add null item to ThingContainer.");
+				return false;
+			}
+			if (this.Contains(item))
+			{
+				Log.Warning("Tried to add " + item + " to ThingContainer but this item is already here.");
+				return false;
+			}
 			if (item.stackCount > this.AvailableStackSpace)
 			{
-				Log.Error(string.Concat(new object[]
-				{
-					"Add item with stackCount=",
-					item.stackCount,
-					" with only ",
-					this.AvailableStackSpace,
-					" in container. Splitting and adding..."
-				}));
-				return this.TryAdd(item, this.AvailableStackSpace);
+				return this.TryAdd(item, this.AvailableStackSpace) > 0;
 			}
 			SlotGroupUtility.Notify_TakingThing(item);
-			if (item.def.stackLimit > 1)
+			if (canMergeWithExistingStacks && item.def.stackLimit > 1)
 			{
 				for (int i = 0; i < this.innerList.Count; i++)
 				{
@@ -225,9 +270,28 @@ namespace Verse
 			{
 				item.GetAttachment(ThingDefOf.Fire).Destroy(DestroyMode.Vanish);
 			}
-			item.holder = this;
+			item.holdingContainer = this;
 			this.innerList.Add(item);
 			return true;
+		}
+
+		public void TryAddMany(IEnumerable<Thing> things)
+		{
+			List<Thing> list = things as List<Thing>;
+			if (list != null)
+			{
+				for (int i = 0; i < list.Count; i++)
+				{
+					this.TryAdd(list[i], true);
+				}
+			}
+			else
+			{
+				foreach (Thing current in things)
+				{
+					this.TryAdd(current, true);
+				}
+			}
 		}
 
 		public bool Contains(Thing item)
@@ -235,26 +299,22 @@ namespace Verse
 			return this.innerList.Contains(item);
 		}
 
-		public int TotalStackCountOfDef(ThingDef def)
-		{
-			int num = 0;
-			for (int i = 0; i < this.innerList.Count; i++)
-			{
-				if (this.innerList[i].def == def)
-				{
-					num += this.innerList[i].stackCount;
-				}
-			}
-			return num;
-		}
-
 		public void Remove(Thing item)
 		{
-			if (item.holder == this)
+			if (!this.Contains(item))
 			{
-				item.holder = null;
+				return;
+			}
+			if (item.holdingContainer == this)
+			{
+				item.holdingContainer = null;
 			}
 			this.innerList.Remove(item);
+			Pawn_InventoryTracker pawn_InventoryTracker = this.owner as Pawn_InventoryTracker;
+			if (pawn_InventoryTracker != null)
+			{
+				pawn_InventoryTracker.Notify_ItemRemoved(item);
+			}
 		}
 
 		public void RemoveAll(Predicate<Thing> match)
@@ -263,28 +323,35 @@ namespace Verse
 			{
 				if (match(this.innerList[i]))
 				{
-					if (this.innerList[i].holder == this)
-					{
-						this.innerList[i].holder = null;
-					}
-					this.innerList.RemoveAt(i);
+					this.Remove(this.innerList[i]);
 				}
 			}
 		}
 
 		public void TransferToContainer(Thing item, ThingContainer otherContainer, int stackCount)
 		{
+			Thing thing;
+			this.TransferToContainer(item, otherContainer, stackCount, out thing);
+		}
+
+		public void TransferToContainer(Thing item, ThingContainer otherContainer, int stackCount, out Thing resultingTransferredItem)
+		{
 			Thing thing = item.SplitOff(stackCount);
 			if (this.Contains(thing))
 			{
 				this.Remove(thing);
 			}
-			otherContainer.TryAdd(thing);
-			Find.DesignationManager.RemoveAllDesignationsOn(thing, false);
-			Thing thing2 = otherContainer.owner as Thing;
-			if (thing2 != null)
+			otherContainer.TryAdd(thing, true);
+			resultingTransferredItem = thing;
+			List<Map> maps = Find.Maps;
+			for (int i = 0; i < maps.Count; i++)
 			{
-				item.def.soundPickup.PlayOneShot(thing2.Position);
+				maps[i].designationManager.RemoveAllDesignationsOn(thing, false);
+			}
+			Thing thing2 = otherContainer.owner as Thing;
+			if (thing2 != null && thing2.Spawned)
+			{
+				item.def.soundPickup.PlayOneShot(new TargetInfo(thing2.Position, thing2.Map, false));
 			}
 		}
 
@@ -309,11 +376,11 @@ namespace Verse
 				return thing;
 			}
 			Thing thing2 = thing.SplitOff(count);
-			thing2.holder = null;
+			thing2.holdingContainer = null;
 			return thing2;
 		}
 
-		public bool TryDrop(Thing thing, IntVec3 dropLoc, ThingPlaceMode mode, int count, out Thing resultingThing, Action<Thing, int> placedAction = null)
+		public bool TryDrop(Thing thing, IntVec3 dropLoc, Map map, ThingPlaceMode mode, int count, out Thing resultingThing, Action<Thing, int> placedAction = null)
 		{
 			if (thing.stackCount < count)
 			{
@@ -330,7 +397,7 @@ namespace Verse
 			}
 			if (count == thing.stackCount)
 			{
-				if (GenDrop.TryDropSpawn(thing, dropLoc, mode, out resultingThing, placedAction))
+				if (GenDrop.TryDropSpawn(thing, dropLoc, map, mode, out resultingThing, placedAction))
 				{
 					this.Remove(thing);
 					return true;
@@ -340,7 +407,7 @@ namespace Verse
 			else
 			{
 				Thing thing2 = thing.SplitOff(count);
-				if (GenDrop.TryDropSpawn(thing2, dropLoc, mode, out resultingThing, placedAction))
+				if (GenDrop.TryDropSpawn(thing2, dropLoc, map, mode, out resultingThing, placedAction))
 				{
 					return true;
 				}
@@ -351,30 +418,16 @@ namespace Verse
 
 		public bool TryDrop(Thing thing, ThingPlaceMode mode, out Thing lastResultingThing, Action<Thing, int> placedAction = null)
 		{
-			Thing thing2 = this.owner as Thing;
-			if (thing2 == null)
+			if (this.owner.GetMap() == null)
 			{
-				Log.Error(string.Concat(new object[]
-				{
-					"Cannot drop ",
-					thing,
-					" without a dropLoc and with non-Thing owner ",
-					this.owner,
-					". Attempting recovery..."
-				}));
-				Pawn_CarryTracker pawn_CarryTracker = this.owner as Pawn_CarryTracker;
-				if (pawn_CarryTracker == null)
-				{
-					thing.Destroy(DestroyMode.Vanish);
-					lastResultingThing = null;
-					return false;
-				}
-				thing2 = pawn_CarryTracker.pawn;
+				Log.Error("Cannot drop " + thing + " without a dropLoc and with an owner whose map is null.");
+				lastResultingThing = null;
+				return false;
 			}
-			return this.TryDrop(thing, thing2.Position, mode, out lastResultingThing, placedAction);
+			return this.TryDrop(thing, this.owner.GetPosition(), this.owner.GetMap(), mode, out lastResultingThing, placedAction);
 		}
 
-		public bool TryDrop(Thing thing, IntVec3 dropLoc, ThingPlaceMode mode, out Thing lastResultingThing, Action<Thing, int> placedAction = null)
+		public bool TryDrop(Thing thing, IntVec3 dropLoc, Map map, ThingPlaceMode mode, out Thing lastResultingThing, Action<Thing, int> placedAction = null)
 		{
 			if (!this.innerList.Contains(thing))
 			{
@@ -388,7 +441,7 @@ namespace Verse
 				lastResultingThing = null;
 				return false;
 			}
-			if (GenDrop.TryDropSpawn(thing, dropLoc, mode, out lastResultingThing, placedAction))
+			if (GenDrop.TryDropSpawn(thing, dropLoc, map, mode, out lastResultingThing, placedAction))
 			{
 				this.Remove(thing);
 				return true;
@@ -396,17 +449,18 @@ namespace Verse
 			return false;
 		}
 
-		public bool TryDropAll(IntVec3 dropLoc, ThingPlaceMode mode)
+		public bool TryDropAll(IntVec3 dropLoc, Map map, ThingPlaceMode mode)
 		{
+			bool result = true;
 			for (int i = this.innerList.Count - 1; i >= 0; i--)
 			{
 				Thing thing;
-				if (!this.TryDrop(this.innerList[i], dropLoc, mode, out thing, null))
+				if (!this.TryDrop(this.innerList[i], dropLoc, map, mode, out thing, null))
 				{
-					return false;
+					result = false;
 				}
 			}
-			return true;
+			return result;
 		}
 
 		public bool Contains(ThingDef def)
@@ -416,6 +470,10 @@ namespace Verse
 
 		public bool Contains(ThingDef def, int minCount)
 		{
+			if (minCount <= 0)
+			{
+				return true;
+			}
 			int num = 0;
 			for (int i = 0; i < this.innerList.Count; i++)
 			{
@@ -431,7 +489,7 @@ namespace Verse
 			return false;
 		}
 
-		public int NumContained(ThingDef def)
+		public int TotalStackCountOfDef(ThingDef def)
 		{
 			int num = 0;
 			for (int i = 0; i < this.innerList.Count; i++)
@@ -446,7 +504,10 @@ namespace Verse
 
 		public void Notify_ContainedItemDestroyed(Thing t)
 		{
-			this.Remove(t);
+			if (!(this.owner is Corpse))
+			{
+				this.Remove(t);
+			}
 		}
 	}
 }

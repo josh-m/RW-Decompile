@@ -24,31 +24,31 @@ namespace RimWorld
 			{
 				this.<>f__this.ticksLeft = Rand.Range(300, 900);
 				int num = 0;
-				IntVec3 intVec;
+				IntVec3 c;
 				while (true)
 				{
-					intVec = this.<>f__this.pawn.Position + GenAdj.AdjacentCellsAndInside[Rand.Range(0, 9)];
+					c = this.<>f__this.pawn.Position + GenAdj.AdjacentCellsAndInside[Rand.Range(0, 9)];
 					num++;
 					if (num > 12)
 					{
 						break;
 					}
-					if (intVec.InBounds() && intVec.Standable())
+					if (c.InBounds(this.<>f__this.pawn.Map) && c.Standable(this.<>f__this.pawn.Map))
 					{
-						goto IL_81;
+						goto IL_A1;
 					}
 				}
-				intVec = this.<>f__this.pawn.Position;
-				IL_81:
-				this.<>f__this.pawn.CurJob.targetA = intVec;
-				this.<>f__this.pawn.Drawer.rotator.FaceCell(intVec);
+				c = this.<>f__this.pawn.Position;
+				IL_A1:
+				this.<>f__this.pawn.CurJob.targetA = c;
+				this.<>f__this.pawn.Drawer.rotator.FaceCell(c);
 				this.<>f__this.pawn.pather.StopDead();
 			};
 			to.tickAction = delegate
 			{
 				if (this.<>f__this.ticksLeft % 150 == 149)
 				{
-					FilthMaker.MakeFilth(this.<>f__this.pawn.CurJob.targetA.Cell, ThingDefOf.FilthVomit, this.<>f__this.pawn.LabelIndefinite(), 1);
+					FilthMaker.MakeFilth(this.<>f__this.pawn.CurJob.targetA.Cell, this.<>f__this.Map, ThingDefOf.FilthVomit, this.<>f__this.pawn.LabelIndefinite(), 1);
 					if (this.<>f__this.pawn.needs.food.CurLevelPercentage > 0.1f)
 					{
 						this.<>f__this.pawn.needs.food.CurLevel -= this.<>f__this.pawn.needs.food.MaxLevel * 0.04f;
@@ -65,7 +65,7 @@ namespace RimWorld
 				}
 			};
 			to.defaultCompleteMode = ToilCompleteMode.Never;
-			to.WithEffect("Vomit", TargetIndex.A);
+			to.WithEffect(EffecterDefOf.Vomit, TargetIndex.A);
 			to.PlaySustainerOrSound(() => SoundDef.Named("Vomit"));
 			yield return to;
 		}

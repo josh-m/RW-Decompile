@@ -21,10 +21,8 @@ namespace RimWorld
 				{
 					return;
 				}
-				BodyPartDamageInfo value = new BodyPartDamageInfo(brain, false, null);
 				int amount = Rand.RangeInclusive(1, 5);
-				DamageInfo dinfo = new DamageInfo(DamageDefOf.Flame, amount, user, new BodyPartDamageInfo?(value), this.parent.def);
-				pawn.TakeDamage(dinfo);
+				pawn.TakeDamage(new DamageInfo(DamageDefOf.Flame, amount, -1f, user, brain, this.parent.def));
 			}
 		}
 	}

@@ -166,10 +166,10 @@ namespace Verse.Steam
 				Workshop.uploadingHook = null;
 				Dialog_WorkshopOperationInProgress.CloseAll();
 				Log.Error("Workshop: OnItemCreated failure. Result: " + result.m_eResult.GetLabel());
-				Find.WindowStack.Add(new Dialog_Message("WorkshopSubmissionFailed".Translate(new object[]
+				Find.WindowStack.Add(new Dialog_MessageBox("WorkshopSubmissionFailed".Translate(new object[]
 				{
 					GenText.SplitCamelCase(result.m_eResult.GetLabel())
-				}), null));
+				}), null, null, null, null, null, false));
 				return;
 			}
 			Workshop.uploadingHook.PublishedFileId = result.m_nPublishedFileId;
@@ -197,10 +197,10 @@ namespace Verse.Steam
 				Workshop.uploadingHook = null;
 				Dialog_WorkshopOperationInProgress.CloseAll();
 				Log.Error("Workshop: OnItemSubmitted failure. Result: " + result.m_eResult.GetLabel());
-				Find.WindowStack.Add(new Dialog_Message("WorkshopSubmissionFailed".Translate(new object[]
+				Find.WindowStack.Add(new Dialog_MessageBox("WorkshopSubmissionFailed".Translate(new object[]
 				{
 					GenText.SplitCamelCase(result.m_eResult.GetLabel())
-				}), null));
+				}), null, null, null, null, null, false));
 			}
 			else
 			{

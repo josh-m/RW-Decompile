@@ -1,3 +1,4 @@
+using RimWorld;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,6 +14,14 @@ namespace Verse.AI.Group
 		private List<Func<bool>> failConditions = new List<Func<bool>>();
 
 		public AvoidGridMode avoidGridMode = AvoidGridMode.Basic;
+
+		public Map Map
+		{
+			get
+			{
+				return this.lord.lordManager.map;
+			}
+		}
 
 		public virtual IntVec3 FlagLoc
 		{
@@ -69,6 +78,10 @@ namespace Verse.AI.Group
 		}
 
 		public virtual void Notify_ReachedDutyLocation(Pawn pawn)
+		{
+		}
+
+		public virtual void Notify_ConstructionFailed(Pawn pawn, Frame frame, Blueprint_Build newBlueprint)
 		{
 		}
 

@@ -16,13 +16,15 @@ namespace RimWorld
 
 		public float chairSearchRadius = 25f;
 
-		public bool tastesRaw;
+		public ThoughtDef tasteThought;
 
 		public ThoughtDef specialThoughtDirect;
 
 		public ThoughtDef specialThoughtAsIngredient;
 
 		public EffecterDef ingestEffect;
+
+		public EffecterDef ingestEffectEat;
 
 		public SoundDef ingestSound;
 

@@ -7,7 +7,7 @@ namespace RimWorld
 	{
 		protected override bool Satisfied(Pawn pawn)
 		{
-			return !Reachability.CanReachMapEdge(pawn);
+			return !pawn.CanReachMapEdge();
 		}
 	}
 }

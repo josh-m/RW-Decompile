@@ -7,25 +7,25 @@ namespace RimWorld
 {
 	public static class CostListCalculator
 	{
-		private static Dictionary<int, List<ThingCount>> cachedCosts = new Dictionary<int, List<ThingCount>>(FastIntComparer.Instance);
+		private static Dictionary<int, List<ThingCountClass>> cachedCosts = new Dictionary<int, List<ThingCountClass>>(FastIntComparer.Instance);
 
 		public static void Reset()
 		{
 			CostListCalculator.cachedCosts.Clear();
 		}
 
-		public static List<ThingCount> CostListAdjusted(this Thing thing)
+		public static List<ThingCountClass> CostListAdjusted(this Thing thing)
 		{
 			return thing.def.CostListAdjusted(thing.Stuff, true);
 		}
 
-		public static List<ThingCount> CostListAdjusted(this BuildableDef entDef, ThingDef stuff, bool errorOnNullStuff = true)
+		public static List<ThingCountClass> CostListAdjusted(this BuildableDef entDef, ThingDef stuff, bool errorOnNullStuff = true)
 		{
 			int key = CostListCalculator.RequestHash(entDef, stuff);
-			List<ThingCount> list;
+			List<ThingCountClass> list;
 			if (!CostListCalculator.cachedCosts.TryGetValue(key, out list))
 			{
-				list = new List<ThingCount>();
+				list = new List<ThingCountClass>();
 				int num = 0;
 				if (entDef.MadeFromStuff)
 				{
@@ -63,21 +63,21 @@ namespace RimWorld
 				{
 					for (int i = 0; i < entDef.costList.Count; i++)
 					{
-						ThingCount thingCount = entDef.costList[i];
-						if (thingCount.thingDef == stuff)
+						ThingCountClass thingCountClass = entDef.costList[i];
+						if (thingCountClass.thingDef == stuff)
 						{
-							list.Add(new ThingCount(thingCount.thingDef, thingCount.count + num));
+							list.Add(new ThingCountClass(thingCountClass.thingDef, thingCountClass.count + num));
 							flag = true;
 						}
 						else
 						{
-							list.Add(thingCount);
+							list.Add(thingCountClass);
 						}
 					}
 				}
 				if (!flag && num > 0)
 				{
-					list.Add(new ThingCount(stuff, num));
+					list.Add(new ThingCountClass(stuff, num));
 				}
 				CostListCalculator.cachedCosts.Add(key, list);
 			}

@@ -1,3 +1,4 @@
+using RimWorld.Planet;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -124,33 +125,6 @@ namespace Verse
 			yield return val;
 		}
 
-		public static Vector3 ScreenToWorldPoint(Vector2 screenLoc)
-		{
-			Ray ray = Find.Camera.ScreenPointToRay(screenLoc);
-			Vector3 result = new Vector3(ray.origin.x, 0f, ray.origin.z);
-			return result;
-		}
-
-		public static Vector3 ScreenToWorldPoint(float x, float y)
-		{
-			return Gen.ScreenToWorldPoint(new Vector2(x, y));
-		}
-
-		public static Vector2 InvertedWorldToScreen(Vector3 worldLoc)
-		{
-			return Find.CameraDriver.InvertedWorldToScreenPoint(worldLoc);
-		}
-
-		public static Vector3 MouseMapPosVector3()
-		{
-			return Gen.ScreenToWorldPoint(Input.mousePosition);
-		}
-
-		public static IntVec3 MouseCell()
-		{
-			return Gen.ScreenToWorldPoint(Input.mousePosition).ToIntVec3();
-		}
-
 		public static int HashCombine<T>(int seed, T obj)
 		{
 			int num = (obj != null) ? obj.GetHashCode() : 0;
@@ -177,9 +151,24 @@ namespace Verse
 			return t.thingIDNumber.HashOffset();
 		}
 
+		public static int HashOffset(this WorldObject o)
+		{
+			return o.ID.HashOffset();
+		}
+
 		public static bool IsHashIntervalTick(this Thing t, int interval)
 		{
 			return (Find.TickManager.TicksGame + t.thingIDNumber.HashOffset()) % interval == 0;
+		}
+
+		public static int HashOffsetTicks(this Thing t, int interval)
+		{
+			return Find.TickManager.TicksGame + t.thingIDNumber.HashOffset();
+		}
+
+		public static bool IsHashIntervalTick(this WorldObject o, int interval)
+		{
+			return (Find.TickManager.TicksGame + o.ID.HashOffset()) % interval == 0;
 		}
 	}
 }

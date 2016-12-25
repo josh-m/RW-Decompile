@@ -7,7 +7,7 @@ namespace RimWorld
 	{
 		public override bool ShouldMeasureTimeNow(Pawn pawn)
 		{
-			return pawn.Spawned && pawn.Position.Roofed();
+			return pawn.Spawned && pawn.Position.Roofed(pawn.Map);
 		}
 	}
 }

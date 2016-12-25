@@ -13,20 +13,23 @@ namespace RimWorld
 			for (int i = 0; i < allContainedThings.Count; i++)
 			{
 				Thing thing = allContainedThings[i];
-				for (int j = 0; j < thing.def.AllRecipes.Count; j++)
+				if (thing.def.designationCategory == DesignationCategoryDefOf.Production)
 				{
-					RecipeDef recipeDef = thing.def.AllRecipes[j];
-					for (int k = 0; k < recipeDef.products.Count; k++)
+					for (int j = 0; j < thing.def.AllRecipes.Count; j++)
 					{
-						ThingDef thingDef = recipeDef.products[k].thingDef;
-						if (thingDef.IsNutritionGivingIngestible && thingDef.ingestible.HumanEdible)
+						RecipeDef recipeDef = thing.def.AllRecipes[j];
+						for (int k = 0; k < recipeDef.products.Count; k++)
 						{
-							num++;
-							goto IL_AD;
+							ThingDef thingDef = recipeDef.products[k].thingDef;
+							if (thingDef.IsNutritionGivingIngestible && thingDef.ingestible.HumanEdible)
+							{
+								num++;
+								goto IL_C7;
+							}
 						}
 					}
 				}
-				IL_AD:;
+				IL_C7:;
 			}
 			return (float)num * 14f;
 		}

@@ -23,47 +23,48 @@ namespace Verse
 			}
 		}
 
-		public static void ExposeBoolArray(ref bool[] arr, string label)
+		public static void ExposeBoolArray(ref bool[] arr, int mapSizeX, int mapSizeZ, string label)
 		{
-			int num = (int)Math.Ceiling((double)((float)(Find.Map.Size.x * Find.Map.Size.z) / 6f));
-			byte[] array = new byte[num];
+			int num = mapSizeX * mapSizeZ;
+			int num2 = (int)Math.Ceiling((double)((float)num / 6f));
+			byte[] array = new byte[num2];
 			if (Scribe.mode == LoadSaveMode.Saving)
 			{
-				int num2 = 0;
+				int num3 = 0;
 				byte b = 1;
-				for (int i = 0; i < CellIndices.NumGridCells; i++)
+				for (int i = 0; i < num; i++)
 				{
 					if (arr[i])
 					{
-						byte[] expr_65_cp_0 = array;
-						int expr_65_cp_1 = num2;
-						expr_65_cp_0[expr_65_cp_1] |= b;
+						byte[] expr_44_cp_0 = array;
+						int expr_44_cp_1 = num3;
+						expr_44_cp_0[expr_44_cp_1] |= b;
 					}
 					b *= 2;
 					if (b > 32)
 					{
 						b = 1;
-						num2++;
+						num3++;
 					}
 				}
 			}
 			ArrayExposeUtility.ExposeByteArray(ref array, label);
 			if (Scribe.mode == LoadSaveMode.LoadingVars)
 			{
-				int num3 = 0;
+				int num4 = 0;
 				byte b2 = 1;
-				for (int j = 0; j < CellIndices.NumGridCells; j++)
+				for (int j = 0; j < num; j++)
 				{
 					if (arr == null)
 					{
-						arr = new bool[CellIndices.NumGridCells];
+						arr = new bool[num];
 					}
-					arr[j] = ((array[num3] & b2) != 0);
+					arr[j] = ((array[num4] & b2) != 0);
 					b2 *= 2;
 					if (b2 > 32)
 					{
 						b2 = 1;
-						num3++;
+						num4++;
 					}
 				}
 			}

@@ -49,7 +49,7 @@ namespace RimWorld
 				this.<>f__this.pawn.Drawer.rotator.FaceCell(this.<>f__this.TargetA.Thing.OccupiedRect().ClosestCellTo(this.<>f__this.pawn.Position));
 				if (this.<>f__this.pawn.jobs.curDriver.ticksLeftThisToil == 300)
 				{
-					SoundDefOf.PlayBilliards.PlayOneShot(this.<>f__this.pawn.Position);
+					SoundDefOf.PlayBilliards.PlayOneShot(new TargetInfo(this.<>f__this.pawn.Position, this.<>f__this.pawn.Map, false));
 				}
 				if (Find.TickManager.TicksGame > this.<>f__this.startTick + this.<>f__this.CurJob.def.joyDuration)
 				{

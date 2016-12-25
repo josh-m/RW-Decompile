@@ -6,6 +6,15 @@ namespace RimWorld
 {
 	public abstract class JobGiver_AIDefendPawn : JobGiver_AIFightEnemy
 	{
+		private bool attackMeleeThreatEvenIfNotHostile;
+
+		public override ThinkNode DeepCopy(bool resolve = true)
+		{
+			JobGiver_AIDefendPawn jobGiver_AIDefendPawn = (JobGiver_AIDefendPawn)base.DeepCopy(resolve);
+			jobGiver_AIDefendPawn.attackMeleeThreatEvenIfNotHostile = this.attackMeleeThreatEvenIfNotHostile;
+			return jobGiver_AIDefendPawn;
+		}
+
 		protected abstract Pawn GetDefendee(Pawn pawn);
 
 		protected override IntVec3 GetFlagPosition(Pawn pawn)
@@ -34,6 +43,19 @@ namespace RimWorld
 				return null;
 			}
 			return base.TryGiveJob(pawn);
+		}
+
+		protected override Thing FindAttackTarget(Pawn pawn)
+		{
+			if (this.attackMeleeThreatEvenIfNotHostile)
+			{
+				Pawn defendee = this.GetDefendee(pawn);
+				if (defendee.Spawned && !defendee.InMentalState && defendee.mindState.meleeThreat != null && defendee.mindState.meleeThreat != pawn && pawn.CanReach(defendee.mindState.meleeThreat, PathEndMode.Touch, Danger.Deadly, false, TraverseMode.ByPawn))
+				{
+					return defendee.mindState.meleeThreat;
+				}
+			}
+			return base.FindAttackTarget(pawn);
 		}
 
 		protected override bool TryFindShootingPosition(Pawn pawn, out IntVec3 dest)

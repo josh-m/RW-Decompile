@@ -31,7 +31,7 @@ namespace RimWorld
 				if (this.cachedAdjCellsCardinal == null)
 				{
 					this.cachedAdjCellsCardinal = (from c in GenAdj.CellsAdjacentCardinal(this)
-					where c.InBounds()
+					where c.InBounds(base.Map)
 					select c).ToList<IntVec3>();
 				}
 				return this.cachedAdjCellsCardinal;
@@ -46,9 +46,9 @@ namespace RimWorld
 			}
 		}
 
-		public override void SpawnSetup()
+		public override void SpawnSetup(Map map)
 		{
-			base.SpawnSetup();
+			base.SpawnSetup(map);
 			this.powerComp = base.GetComp<CompPowerTrader>();
 		}
 
@@ -57,7 +57,7 @@ namespace RimWorld
 			for (int i = 0; i < this.AdjCellsCardinalInBounds.Count; i++)
 			{
 				IntVec3 c = this.AdjCellsCardinalInBounds[i];
-				Building edifice = c.GetEdifice();
+				Building edifice = c.GetEdifice(base.Map);
 				if (edifice != null && edifice.def == ThingDefOf.Hopper && reacher.CanReach(edifice, PathEndMode.Touch, Danger.Deadly, false, TraverseMode.ByPawn))
 				{
 					return (Building_Storage)edifice;
@@ -94,7 +94,7 @@ namespace RimWorld
 			Log.Error("Did not find enough food in hoppers while trying to dispense.");
 			return null;
 			Block_3:
-			this.def.building.soundDispense.PlayOneShot(base.Position);
+			this.def.building.soundDispense.PlayOneShot(new TargetInfo(base.Position, base.Map, false));
 			Thing thing2 = ThingMaker.MakeThing(ThingDefOf.MealNutrientPaste, null);
 			CompIngredients compIngredients = thing2.TryGetComp<CompIngredients>();
 			for (int i = 0; i < list.Count; i++)
@@ -110,7 +110,7 @@ namespace RimWorld
 			{
 				Thing thing = null;
 				Thing thing2 = null;
-				List<Thing> thingList = this.AdjCellsCardinalInBounds[i].GetThingList();
+				List<Thing> thingList = this.AdjCellsCardinalInBounds[i].GetThingList(base.Map);
 				for (int j = 0; j < thingList.Count; j++)
 				{
 					Thing thing3 = thingList[j];
@@ -139,7 +139,7 @@ namespace RimWorld
 				IntVec3 c = this.AdjCellsCardinalInBounds[i];
 				Thing thing = null;
 				Thing thing2 = null;
-				List<Thing> thingList = c.GetThingList();
+				List<Thing> thingList = c.GetThingList(base.Map);
 				for (int j = 0; j < thingList.Count; j++)
 				{
 					Thing thing3 = thingList[j];

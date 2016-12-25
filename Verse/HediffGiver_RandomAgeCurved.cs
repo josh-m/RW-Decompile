@@ -6,10 +6,13 @@ namespace Verse
 	{
 		public SimpleCurve ageFractionMtbDaysCurve;
 
-		public override bool CheckGiveEverySecond(Pawn pawn)
+		public override void OnIntervalPassed(Pawn pawn, Hediff cause)
 		{
 			float x = (float)pawn.ageTracker.AgeBiologicalYears / pawn.RaceProps.lifeExpectancy;
-			return Rand.MTBEventOccurs(this.ageFractionMtbDaysCurve.Evaluate(x), 60000f, 60f) && base.TryApply(pawn, null);
+			if (Rand.MTBEventOccurs(this.ageFractionMtbDaysCurve.Evaluate(x), 60000f, 60f) && base.TryApply(pawn, null))
+			{
+				base.SendLetter(pawn, cause);
+			}
 		}
 	}
 }

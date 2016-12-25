@@ -8,7 +8,7 @@ namespace RimWorld
 	public class StockGenerator_BuyWeirdOrganic : StockGenerator
 	{
 		[DebuggerHidden]
-		public override IEnumerable<Thing> GenerateThings()
+		public override IEnumerable<Thing> GenerateThings(Map forMap)
 		{
 		}
 

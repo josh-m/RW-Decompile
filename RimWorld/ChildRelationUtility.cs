@@ -44,12 +44,12 @@ namespace RimWorld
 			{
 				return 0f;
 			}
-			float? skinWhiteness = ChildRelationUtility.GetSkinWhiteness(child, childGenerationRequest);
-			float? skinWhiteness2 = ChildRelationUtility.GetSkinWhiteness(father, fatherGenerationRequest);
-			float? skinWhiteness3 = ChildRelationUtility.GetSkinWhiteness(mother, motherGenerationRequest);
+			float? melanin = ChildRelationUtility.GetMelanin(child, childGenerationRequest);
+			float? melanin2 = ChildRelationUtility.GetMelanin(father, fatherGenerationRequest);
+			float? melanin3 = ChildRelationUtility.GetMelanin(mother, motherGenerationRequest);
 			bool fatherIsNew = father != null && child.GetFather() != father;
 			bool motherIsNew = mother != null && child.GetMother() != mother;
-			float skinColorFactor = ChildRelationUtility.GetSkinColorFactor(skinWhiteness, skinWhiteness2, skinWhiteness3, fatherIsNew, motherIsNew);
+			float skinColorFactor = ChildRelationUtility.GetSkinColorFactor(melanin, melanin2, melanin3, fatherIsNew, motherIsNew);
 			if (skinColorFactor <= 0f)
 			{
 				return 0f;
@@ -158,15 +158,15 @@ namespace RimWorld
 			return result;
 		}
 
-		private static float? GetSkinWhiteness(Pawn pawn, PawnGenerationRequest? request)
+		private static float? GetMelanin(Pawn pawn, PawnGenerationRequest? request)
 		{
 			if (request.HasValue)
 			{
-				return request.Value.FixedSkinWhiteness;
+				return request.Value.FixedMelanin;
 			}
 			if (pawn != null)
 			{
-				return new float?(pawn.story.skinWhiteness);
+				return new float?(pawn.story.melanin);
 			}
 			return null;
 		}
@@ -176,17 +176,17 @@ namespace RimWorld
 			return GenMath.GetFactorInInterval(min, mid, max, 1.6f, ageAtBirth);
 		}
 
-		private static float GetSkinColorFactor(float? childSkinWhiteness, float? fatherSkinWhiteness, float? motherSkinWhiteness, bool fatherIsNew, bool motherIsNew)
+		private static float GetSkinColorFactor(float? childMelanin, float? fatherMelanin, float? motherMelanin, bool fatherIsNew, bool motherIsNew)
 		{
-			if (childSkinWhiteness.HasValue && fatherSkinWhiteness.HasValue && motherSkinWhiteness.HasValue)
+			if (childMelanin.HasValue && fatherMelanin.HasValue && motherMelanin.HasValue)
 			{
-				float num = Mathf.Min(fatherSkinWhiteness.Value, motherSkinWhiteness.Value);
-				float num2 = Mathf.Max(fatherSkinWhiteness.Value, motherSkinWhiteness.Value);
-				if (childSkinWhiteness.HasValue && childSkinWhiteness.Value < num - 0.05f)
+				float num = Mathf.Min(fatherMelanin.Value, motherMelanin.Value);
+				float num2 = Mathf.Max(fatherMelanin.Value, motherMelanin.Value);
+				if (childMelanin.HasValue && childMelanin.Value < num - 0.05f)
 				{
 					return 0f;
 				}
-				if (childSkinWhiteness.HasValue && childSkinWhiteness.Value > num2 + 0.05f)
+				if (childMelanin.HasValue && childMelanin.Value > num2 + 0.05f)
 				{
 					return 0f;
 				}
@@ -194,54 +194,54 @@ namespace RimWorld
 			float num3 = 1f;
 			if (fatherIsNew)
 			{
-				num3 *= ChildRelationUtility.GetNewParentSkinColorFactor(fatherSkinWhiteness, motherSkinWhiteness, childSkinWhiteness);
+				num3 *= ChildRelationUtility.GetNewParentSkinColorFactor(fatherMelanin, motherMelanin, childMelanin);
 			}
 			if (motherIsNew)
 			{
-				num3 *= ChildRelationUtility.GetNewParentSkinColorFactor(motherSkinWhiteness, fatherSkinWhiteness, childSkinWhiteness);
+				num3 *= ChildRelationUtility.GetNewParentSkinColorFactor(motherMelanin, fatherMelanin, childMelanin);
 			}
 			return num3;
 		}
 
-		private static float GetNewParentSkinColorFactor(float? newParentSkinWhiteness, float? otherParentSkinWhiteness, float? childSkinWhiteness)
+		private static float GetNewParentSkinColorFactor(float? newParentMelanin, float? otherParentMelanin, float? childMelanin)
 		{
-			if (newParentSkinWhiteness.HasValue)
+			if (newParentMelanin.HasValue)
 			{
-				if (!otherParentSkinWhiteness.HasValue)
+				if (!otherParentMelanin.HasValue)
 				{
-					if (childSkinWhiteness.HasValue)
+					if (childMelanin.HasValue)
 					{
-						return ChildRelationUtility.GetSkinSimilarityFactor(newParentSkinWhiteness.Value, childSkinWhiteness.Value);
+						return ChildRelationUtility.GetMelaninSimilarityFactor(newParentMelanin.Value, childMelanin.Value);
 					}
-					return PawnSkinColors.GetWhitenessCommonalityFactor(newParentSkinWhiteness.Value);
+					return PawnSkinColors.GetMelaninCommonalityFactor(newParentMelanin.Value);
 				}
 				else
 				{
-					if (childSkinWhiteness.HasValue)
+					if (childMelanin.HasValue)
 					{
-						float reflectedSkin = ChildRelationUtility.GetReflectedSkin(otherParentSkinWhiteness.Value, childSkinWhiteness.Value);
-						return ChildRelationUtility.GetSkinSimilarityFactor(newParentSkinWhiteness.Value, reflectedSkin);
+						float reflectedSkin = ChildRelationUtility.GetReflectedSkin(otherParentMelanin.Value, childMelanin.Value);
+						return ChildRelationUtility.GetMelaninSimilarityFactor(newParentMelanin.Value, reflectedSkin);
 					}
-					float skinWhiteness = (newParentSkinWhiteness.Value + otherParentSkinWhiteness.Value) / 2f;
-					return PawnSkinColors.GetWhitenessCommonalityFactor(skinWhiteness);
+					float melanin = (newParentMelanin.Value + otherParentMelanin.Value) / 2f;
+					return PawnSkinColors.GetMelaninCommonalityFactor(melanin);
 				}
 			}
-			else if (!otherParentSkinWhiteness.HasValue)
+			else if (!otherParentMelanin.HasValue)
 			{
-				if (childSkinWhiteness.HasValue)
+				if (childMelanin.HasValue)
 				{
-					return PawnSkinColors.GetWhitenessCommonalityFactor(childSkinWhiteness.Value);
+					return PawnSkinColors.GetMelaninCommonalityFactor(childMelanin.Value);
 				}
 				return 1f;
 			}
 			else
 			{
-				if (childSkinWhiteness.HasValue)
+				if (childMelanin.HasValue)
 				{
-					float reflectedSkin2 = ChildRelationUtility.GetReflectedSkin(otherParentSkinWhiteness.Value, childSkinWhiteness.Value);
-					return PawnSkinColors.GetWhitenessCommonalityFactor(reflectedSkin2);
+					float reflectedSkin2 = ChildRelationUtility.GetReflectedSkin(otherParentMelanin.Value, childMelanin.Value);
+					return PawnSkinColors.GetMelaninCommonalityFactor(reflectedSkin2);
 				}
-				return PawnSkinColors.GetWhitenessCommonalityFactor(otherParentSkinWhiteness.Value);
+				return PawnSkinColors.GetMelaninCommonalityFactor(otherParentMelanin.Value);
 			}
 		}
 
@@ -250,19 +250,19 @@ namespace RimWorld
 			return Mathf.Clamp01(GenMath.Reflection(value, mirror));
 		}
 
-		public static float GetSkinSimilarityFactor(float skinWhiteness1, float skinWhiteness2)
+		public static float GetMelaninSimilarityFactor(float melanin1, float melanin2)
 		{
-			float min = Mathf.Clamp01(skinWhiteness1 - 0.15f);
-			float max = Mathf.Clamp01(skinWhiteness1 + 0.15f);
-			return GenMath.GetFactorInInterval(min, skinWhiteness1, max, 2.5f, skinWhiteness2);
+			float min = Mathf.Clamp01(melanin1 - 0.15f);
+			float max = Mathf.Clamp01(melanin1 + 0.15f);
+			return GenMath.GetFactorInInterval(min, melanin1, max, 2.5f, melanin2);
 		}
 
-		public static float GetRandomChildSkinColor(float fatherSkinWhiteness, float motherSkinWhiteness)
+		public static float GetRandomChildSkinColor(float fatherMelanin, float motherMelanin)
 		{
-			float clampMin = Mathf.Min(fatherSkinWhiteness, motherSkinWhiteness);
-			float clampMax = Mathf.Max(fatherSkinWhiteness, motherSkinWhiteness);
-			float value = (fatherSkinWhiteness + motherSkinWhiteness) / 2f;
-			return PawnSkinColors.GetRandomSkinColorSimilarTo(value, clampMin, clampMax);
+			float clampMin = Mathf.Min(fatherMelanin, motherMelanin);
+			float clampMax = Mathf.Max(fatherMelanin, motherMelanin);
+			float value = (fatherMelanin + motherMelanin) / 2f;
+			return PawnSkinColors.GetRandomMelaninSimilarTo(value, clampMin, clampMax);
 		}
 
 		public static bool DefinitelyHasNotBirthName(Pawn pawn)

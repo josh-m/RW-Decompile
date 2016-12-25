@@ -32,7 +32,7 @@ namespace RimWorld
 				defaultCompleteMode = ToilCompleteMode.Instant,
 				initAction = delegate
 				{
-					Find.PawnDestinationManager.ReserveDestinationFor(this.<>f__this.pawn, this.<>f__this.CurJob.GetTarget(TargetIndex.A).Cell);
+					this.<>f__this.Map.pawnDestinationManager.ReserveDestinationFor(this.<>f__this.pawn, this.<>f__this.CurJob.GetTarget(TargetIndex.A).Cell);
 					if (this.<>f__this.pawn.IsColonist)
 					{
 						MoteMaker.MakeColonistActionOverlay(this.<>f__this.pawn, ThingDefOf.Mote_ColonistFleeing);

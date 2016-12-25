@@ -16,7 +16,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return Find.TickManager.TicksGame - this.lastManTick <= 1;
+				return Find.TickManager.TicksGame - this.lastManTick <= 1 && this.lastManPawn != null && this.lastManPawn.Spawned;
 			}
 		}
 
@@ -61,9 +61,9 @@ namespace RimWorld
 							this.parent.LabelShort
 						}), delegate
 						{
-							Job newJob = new Job(JobDefOf.ManTurret, this.<>f__this.parent);
-							this.pawn.drafter.TakeOrderedJob(newJob);
-						}, MenuOptionPriority.Medium, null, null, 0f, null);
+							Job job = new Job(JobDefOf.ManTurret, this.<>f__this.parent);
+							this.pawn.jobs.TryTakeOrderedJob(job);
+						}, MenuOptionPriority.Default, null, null, 0f, null, null);
 						yield return opt;
 					}
 				}

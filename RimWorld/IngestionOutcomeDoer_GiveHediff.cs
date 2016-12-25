@@ -13,20 +13,26 @@ namespace RimWorld
 
 		public ChemicalDef toleranceChemical;
 
+		private bool divideByBodySize;
+
 		protected override void DoIngestionOutcomeSpecial(Pawn pawn, Thing ingested)
 		{
 			Hediff hediff = HediffMaker.MakeHediff(this.hediffDef, pawn, null);
-			float initialSeverity;
+			float num;
 			if (this.severity > 0f)
 			{
-				initialSeverity = this.severity;
+				num = this.severity;
 			}
 			else
 			{
-				initialSeverity = this.hediffDef.initialSeverity;
+				num = this.hediffDef.initialSeverity;
 			}
-			AddictionUtility.FactorDrugEffectForTolerance(pawn, this.toleranceChemical, ref initialSeverity);
-			hediff.Severity = initialSeverity;
+			if (this.divideByBodySize)
+			{
+				num /= pawn.BodySize;
+			}
+			AddictionUtility.ModifyChemicalEffectForToleranceAndBodySize(pawn, this.toleranceChemical, ref num);
+			hediff.Severity = num;
 			pawn.health.AddHediff(hediff, null, null);
 		}
 

@@ -34,8 +34,8 @@ namespace Verse
 				return def.EverHaulable;
 			case ThingRequestGroup.HaulableAlways:
 				return def.alwaysHaulable;
-			case ThingRequestGroup.CultivatedPlant:
-				return def.category == ThingCategory.Plant && Find.Map.Biome.CommonalityOfPlant(def) == 0f;
+			case ThingRequestGroup.Plant:
+				return def.category == ThingCategory.Plant;
 			case ThingRequestGroup.FoodSource:
 				return def.IsNutritionGivingIngestible || def.thingClass == typeof(Building_NutrientPasteDispenser);
 			case ThingRequestGroup.FoodSourceNotPlantOrTree:
@@ -78,10 +78,12 @@ namespace Verse
 				return typeof(Building_Grave).IsAssignableFrom(def.thingClass);
 			case ThingRequestGroup.Art:
 				return def.HasComp(typeof(CompArt));
-			case ThingRequestGroup.Container:
-				return typeof(IThingContainerOwner).IsAssignableFrom(def.thingClass);
-			case ThingRequestGroup.DropPod:
-				return typeof(DropPod).IsAssignableFrom(def.thingClass) || typeof(DropPodIncoming).IsAssignableFrom(def.thingClass);
+			case ThingRequestGroup.ContainerEnclosure:
+				return typeof(IThingContainerOwner).IsAssignableFrom(def.thingClass) && !def.IsCorpse;
+			case ThingRequestGroup.ActiveDropPod:
+				return typeof(IActiveDropPod).IsAssignableFrom(def.thingClass);
+			case ThingRequestGroup.Transporter:
+				return def.HasComp(typeof(CompTransporter));
 			default:
 				throw new ArgumentException("group");
 			}

@@ -13,6 +13,8 @@ namespace Verse.AI
 
 		private int age;
 
+		public bool causedByMood;
+
 		public int Age
 		{
 			get
@@ -33,6 +35,7 @@ namespace Verse.AI
 		{
 			Scribe_Defs.LookDef<MentalStateDef>(ref this.def, "def");
 			Scribe_Values.LookValue<int>(ref this.age, "age", 0, false);
+			Scribe_Values.LookValue<bool>(ref this.causedByMood, "causedByMood", false, false);
 		}
 
 		public virtual void PostStart(string reason)
@@ -54,8 +57,8 @@ namespace Verse.AI
 				}
 				if (!text.NullOrEmpty())
 				{
+					Messages.Message(text.AdjustedFor(this.pawn), this.pawn, MessageSound.Silent);
 				}
-				Messages.Message(text.AdjustedFor(this.pawn), this.pawn, MessageSound.Silent);
 			}
 		}
 
@@ -95,9 +98,9 @@ namespace Verse.AI
 				}));
 			}
 			this.pawn.mindState.mentalStateHandler.ClearMentalStateDirect();
-			if (this.def.recoveryThought != null && this.pawn.needs.mood != null)
+			if (this.causedByMood && this.def.moodRecoveryThought != null && this.pawn.needs.mood != null)
 			{
-				this.pawn.needs.mood.thoughts.memories.TryGainMemoryThought(this.def.recoveryThought, null);
+				this.pawn.needs.mood.thoughts.memories.TryGainMemoryThought(this.def.moodRecoveryThought, null);
 			}
 			this.PostEnd();
 		}

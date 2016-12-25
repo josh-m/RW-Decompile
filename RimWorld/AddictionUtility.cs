@@ -44,16 +44,17 @@ namespace RimWorld
 			return pawn.health.hediffSet.hediffs.Find((Hediff x) => x.def == chemical.toleranceHediff);
 		}
 
-		public static void FactorDrugEffectForTolerance(Pawn pawn, ChemicalDef chemicalDef, ref float effect)
+		public static void ModifyChemicalEffectForToleranceAndBodySize(Pawn pawn, ChemicalDef chemicalDef, ref float effect)
 		{
 			if (chemicalDef != null)
 			{
 				List<Hediff> hediffs = pawn.health.hediffSet.hediffs;
 				for (int i = 0; i < hediffs.Count; i++)
 				{
-					hediffs[i].FactorDrugEffect(chemicalDef, ref effect);
+					hediffs[i].ModifyChemicalEffect(chemicalDef, ref effect);
 				}
 			}
+			effect /= pawn.BodySize;
 		}
 
 		public static void CheckDrugAddictionTeachOpportunity(Pawn pawn)
@@ -92,10 +93,14 @@ namespace RimWorld
 			{
 				return false;
 			}
-			List<Thing> list = Find.ListerThings.ThingsInGroup(ThingRequestGroup.Drug);
+			if (!pawn.Spawned)
+			{
+				return false;
+			}
+			List<Thing> list = pawn.Map.listerThings.ThingsInGroup(ThingRequestGroup.Drug);
 			for (int i = 0; i < list.Count; i++)
 			{
-				if (!list[i].Position.Fogged())
+				if (!list[i].Position.Fogged(list[i].Map))
 				{
 					if (drugCategory == DrugCategory.Any || list[i].def.ingestible.drugCategory == drugCategory)
 					{
@@ -104,7 +109,7 @@ namespace RimWorld
 						{
 							return true;
 						}
-						if (list[i].Position.Roofed() || !list[i].Position.InHorDistOf(pawn.Position, 45f))
+						if (list[i].Position.Roofed(list[i].Map) || !list[i].Position.InHorDistOf(pawn.Position, 45f))
 						{
 						}
 					}

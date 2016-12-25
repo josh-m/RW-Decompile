@@ -7,11 +7,25 @@ namespace Verse.AI.Group
 {
 	public sealed class LordManager : IExposable
 	{
+		public Map map;
+
 		public List<Lord> lords = new List<Lord>();
+
+		public LordManager(Map map)
+		{
+			this.map = map;
+		}
 
 		public void ExposeData()
 		{
 			Scribe_Collections.LookList<Lord>(ref this.lords, "lords", LookMode.Deep, new object[0]);
+			if (Scribe.mode == LoadSaveMode.LoadingVars)
+			{
+				for (int i = 0; i < this.lords.Count; i++)
+				{
+					this.lords[i].lordManager = this;
+				}
+			}
 		}
 
 		public void LordManagerTick()
@@ -54,7 +68,7 @@ namespace Verse.AI.Group
 			{
 				Text.Anchor = TextAnchor.MiddleCenter;
 				Text.Font = GameFont.Tiny;
-				foreach (Pawn current in Find.MapPawns.AllPawns)
+				foreach (Pawn current in this.map.mapPawns.AllPawns)
 				{
 					if (current.Spawned)
 					{
@@ -67,7 +81,7 @@ namespace Verse.AI.Group
 						{
 							text = text + "\nMentalState=" + current.MentalState.ToString();
 						}
-						Vector2 vector = current.DrawPos.ToScreenPosition();
+						Vector2 vector = current.DrawPos.MapToUIPosition();
 						Widgets.Label(new Rect(vector.x - 100f, vector.y - 100f, 200f, 200f), text);
 					}
 				}
@@ -78,6 +92,7 @@ namespace Verse.AI.Group
 		public void AddLord(Lord newLord)
 		{
 			this.lords.Add(newLord);
+			newLord.lordManager = this;
 		}
 
 		public void RemoveLord(Lord oldLord)

@@ -37,7 +37,7 @@ namespace RimWorld
 		{
 			base.Init();
 			LessonAutoActivator.TeachOpportunity(ConceptDefOf.Drafting, OpportunityType.Critical);
-			this.Data.sapperDest = GenAI.RandomRaidDest();
+			this.Data.sapperDest = GenAI.RandomRaidDest(base.Map);
 		}
 
 		public override void UpdateAllDuties()

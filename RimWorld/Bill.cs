@@ -35,6 +35,14 @@ namespace RimWorld
 
 		public int lastIngredientSearchFailTicks = -99999;
 
+		public Map Map
+		{
+			get
+			{
+				return this.billStack.billGiver.Map;
+			}
+		}
+
 		public virtual string Label
 		{
 			get
@@ -59,11 +67,11 @@ namespace RimWorld
 			}
 		}
 
-		public virtual bool ShouldBeRemovedBecauseInvalid
+		public virtual bool CompletableEver
 		{
 			get
 			{
-				return false;
+				return true;
 			}
 		}
 
@@ -107,6 +115,16 @@ namespace RimWorld
 			Scribe_Values.LookValue<bool>(ref this.suspended, "suspended", false, false);
 			Scribe_Values.LookValue<float>(ref this.ingredientSearchRadius, "ingredientSearchRadius", 999f, false);
 			Scribe_Values.LookValue<IntRange>(ref this.allowedSkillRange, "allowedSkillRange", default(IntRange), false);
+			if (Scribe.mode == LoadSaveMode.Saving && this.recipe.fixedIngredientFilter != null)
+			{
+				foreach (ThingDef current in DefDatabase<ThingDef>.AllDefs)
+				{
+					if (!this.recipe.fixedIngredientFilter.Allows(current))
+					{
+						this.ingredientFilter.SetAllow(current, false);
+					}
+				}
+			}
 			Scribe_Deep.LookDeep<ThingFilter>(ref this.ingredientFilter, "ingredientFilter", new object[0]);
 		}
 
@@ -114,7 +132,7 @@ namespace RimWorld
 		{
 			if (this.recipe.workSkill != null)
 			{
-				int level = p.skills.GetSkill(this.recipe.workSkill).level;
+				int level = p.skills.GetSkill(this.recipe.workSkill).Level;
 				if (level < this.allowedSkillRange.min || level > this.allowedSkillRange.max)
 				{
 					return false;
@@ -137,11 +155,11 @@ namespace RimWorld
 		{
 		}
 
-		protected virtual void DrawConfigInterface(Rect rect, Color baseColor)
+		protected virtual void DoConfigInterface(Rect rect, Color baseColor)
 		{
 		}
 
-		public Rect DrawInterface(float x, float y, float width, int index)
+		public Rect DoInterface(float x, float y, float width, int index)
 		{
 			Rect rect = new Rect(x, y, width, 53f);
 			if (!this.StatusString.NullOrEmpty())
@@ -177,7 +195,7 @@ namespace RimWorld
 			}
 			Rect rect2 = new Rect(28f, 0f, rect.width - 48f - 20f, 48f);
 			Widgets.Label(rect2, this.LabelCap);
-			this.DrawConfigInterface(rect.AtZero(), white);
+			this.DoConfigInterface(rect.AtZero(), white);
 			Rect rect3 = new Rect(rect.width - 24f, 0f, 24f, 24f);
 			if (Widgets.ButtonImage(rect3, TexButton.DeleteX, white))
 			{
@@ -219,7 +237,7 @@ namespace RimWorld
 			});
 			text += "\n\n";
 			text += recipe.MinSkillString;
-			Find.WindowStack.Add(Dialog_NodeTree.SimpleNotifyDialog(text, false));
+			Find.WindowStack.Add(new Dialog_MessageBox(text, null, null, null, null, null, false));
 		}
 
 		public virtual BillStoreMode GetStoreMode()

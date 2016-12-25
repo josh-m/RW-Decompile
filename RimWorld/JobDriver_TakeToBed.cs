@@ -35,6 +35,10 @@ namespace RimWorld
 			this.FailOnDestroyedOrNull(TargetIndex.A);
 			this.FailOnDestroyedOrNull(TargetIndex.B);
 			this.FailOnAggroMentalState(TargetIndex.A);
+			if (base.CurJob.def == JobDefOf.Rescue)
+			{
+				this.FailOnNotDowned(TargetIndex.A);
+			}
 			this.FailOn(delegate
 			{
 				if (this.<>f__this.CurJob.def.makeTargetPrisoner)
@@ -76,22 +80,12 @@ namespace RimWorld
 						GenClamor.DoClamor(pawn, 10f, ClamorType.Harm);
 						if (this.<>f__this.CurJob.def == JobDefOf.Arrest && !pawn.CheckAcceptArrest(this.<>f__this.pawn))
 						{
-							this.<>f__this.pawn.jobs.EndCurrentJob(JobCondition.Incompletable);
+							this.<>f__this.pawn.jobs.EndCurrentJob(JobCondition.Incompletable, true);
 						}
 					}
 				}
 			};
-			yield return new Toil
-			{
-				initAction = delegate
-				{
-					if (this.<>f__this.CurJob.applyAnesthetic)
-					{
-						HealthUtility.TryAnesthesize(this.<>f__this.Takee);
-					}
-				}
-			};
-			yield return Toils_Haul.StartCarryThing(TargetIndex.A);
+			yield return Toils_Haul.StartCarryThing(TargetIndex.A, false, false);
 			yield return Toils_Goto.GotoThing(TargetIndex.B, PathEndMode.Touch);
 			yield return new Toil
 			{
@@ -139,7 +133,7 @@ namespace RimWorld
 				{
 					IntVec3 position = this.<>f__this.DropBed.Position;
 					Thing thing;
-					this.<>f__this.pawn.carrier.TryDropCarriedThing(position, ThingPlaceMode.Direct, out thing, null);
+					this.<>f__this.pawn.carryTracker.TryDropCarriedThing(position, ThingPlaceMode.Direct, out thing, null);
 					if (!this.<>f__this.DropBed.Destroyed && (this.<>f__this.DropBed.owners.Contains(this.<>f__this.Takee) || (this.<>f__this.DropBed.Medical && this.<>f__this.DropBed.AnyUnoccupiedSleepingSlot) || this.<>f__this.Takee.ownership == null))
 					{
 						this.<>f__this.Takee.jobs.Notify_TuckedIntoBed(this.<>f__this.DropBed);

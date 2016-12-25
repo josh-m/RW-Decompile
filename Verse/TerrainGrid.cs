@@ -6,19 +6,22 @@ namespace Verse
 {
 	public sealed class TerrainGrid : IExposable
 	{
+		private Map map;
+
 		public TerrainDef[] topGrid;
 
 		private TerrainDef[] underGrid;
 
-		public TerrainGrid()
+		public TerrainGrid(Map map)
 		{
+			this.map = map;
 			this.ResetGrids();
 		}
 
 		public void ResetGrids()
 		{
-			this.topGrid = new TerrainDef[CellIndices.NumGridCells];
-			this.underGrid = new TerrainDef[CellIndices.NumGridCells];
+			this.topGrid = new TerrainDef[this.map.cellIndices.NumGridCells];
+			this.underGrid = new TerrainDef[this.map.cellIndices.NumGridCells];
 		}
 
 		public TerrainDef TerrainAt(int ind)
@@ -28,7 +31,7 @@ namespace Verse
 
 		public TerrainDef TerrainAt(IntVec3 c)
 		{
-			return this.topGrid[CellIndices.CellToIndex(c)];
+			return this.topGrid[this.map.cellIndices.CellToIndex(c)];
 		}
 
 		public void SetTerrain(IntVec3 c, TerrainDef newTerr)
@@ -38,15 +41,15 @@ namespace Verse
 				Log.Error("Tried to set terrain at " + c + " to null.");
 				return;
 			}
-			if (Current.ProgramState == ProgramState.MapPlaying)
+			if (Current.ProgramState == ProgramState.Playing)
 			{
-				Designation designation = Find.DesignationManager.DesignationAt(c, DesignationDefOf.SmoothFloor);
+				Designation designation = this.map.designationManager.DesignationAt(c, DesignationDefOf.SmoothFloor);
 				if (designation != null)
 				{
 					designation.Delete();
 				}
 			}
-			int num = CellIndices.CellToIndex(c);
+			int num = this.map.cellIndices.CellToIndex(c);
 			if (newTerr.layerable)
 			{
 				if (this.underGrid[num] == null)
@@ -71,10 +74,10 @@ namespace Verse
 
 		public void RemoveTopLayer(IntVec3 c, bool doLeavings = true)
 		{
-			int num = CellIndices.CellToIndex(c);
+			int num = this.map.cellIndices.CellToIndex(c);
 			if (doLeavings)
 			{
-				GenLeaving.DoLeavingsFor(this.topGrid[num], c);
+				GenLeaving.DoLeavingsFor(this.topGrid[num], c, this.map);
 			}
 			if (this.underGrid[num] != null)
 			{
@@ -86,14 +89,14 @@ namespace Verse
 
 		private void DoTerrainChangedEffects(IntVec3 c)
 		{
-			Find.Map.mapDrawer.MapMeshDirty(c, MapMeshFlag.Terrain, true, false);
-			Plant plant = c.GetPlant();
-			if (plant != null && Find.FertilityGrid.FertilityAt(c) < plant.def.plant.fertilityMin)
+			this.map.mapDrawer.MapMeshDirty(c, MapMeshFlag.Terrain, true, false);
+			Plant plant = c.GetPlant(this.map);
+			if (plant != null && this.map.fertilityGrid.FertilityAt(c) < plant.def.plant.fertilityMin)
 			{
 				plant.Destroy(DestroyMode.Vanish);
 			}
-			Find.PathGrid.RecalculatePerceivedPathCostAt(c);
-			Room room = RoomQuery.RoomAt(c);
+			this.map.pathGrid.RecalculatePerceivedPathCostAt(c);
+			Room room = RoomQuery.RoomAt(c, this.map);
 			if (room != null)
 			{
 				room.Notify_TerrainChanged();
@@ -113,9 +116,9 @@ namespace Verse
 			{
 				compressedString = GridSaveUtility.CompressedStringForShortGrid(delegate(IntVec3 c)
 				{
-					TerrainDef terrainDef2 = grid[CellIndices.CellToIndex(c)];
+					TerrainDef terrainDef2 = grid[this.map.cellIndices.CellToIndex(c)];
 					return (terrainDef2 == null) ? 0 : terrainDef2.shortHash;
-				});
+				}, this.map);
 			}
 			Scribe_Values.LookValue<string>(ref compressedString, label, null, false);
 			if (Scribe.mode == LoadSaveMode.LoadingVars)
@@ -125,7 +128,7 @@ namespace Verse
 				{
 					dictionary.Add(current.shortHash, current);
 				}
-				foreach (GridSaveUtility.LoadedGridShort current2 in GridSaveUtility.LoadedUShortGrid(compressedString))
+				foreach (GridSaveUtility.LoadedGridShort current2 in GridSaveUtility.LoadedUShortGrid(compressedString, this.map))
 				{
 					TerrainDef terrainDef = null;
 					try
@@ -152,17 +155,17 @@ namespace Verse
 						terrainDef = TerrainDefOf.Sand;
 						dictionary.Add(current2.val, terrainDef);
 					}
-					grid[CellIndices.CellToIndex(current2.cell)] = terrainDef;
+					grid[this.map.cellIndices.CellToIndex(current2.cell)] = terrainDef;
 				}
 			}
 		}
 
 		public string DebugStringAt(IntVec3 c)
 		{
-			if (c.InBounds())
+			if (c.InBounds(this.map))
 			{
-				TerrainDef terrain = c.GetTerrain();
-				TerrainDef terrainDef = this.underGrid[CellIndices.CellToIndex(c)];
+				TerrainDef terrain = c.GetTerrain(this.map);
+				TerrainDef terrainDef = this.underGrid[this.map.cellIndices.CellToIndex(c)];
 				return "top: " + ((terrain == null) ? "null" : terrain.defName) + ", under=" + ((terrainDef == null) ? "null" : terrainDef.defName);
 			}
 			return "out of bounds";

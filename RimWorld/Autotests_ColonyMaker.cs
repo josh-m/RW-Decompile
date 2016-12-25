@@ -13,7 +13,15 @@ namespace RimWorld
 
 		private static CellRect overRect;
 
-		private static BoolGrid usedCells = new BoolGrid();
+		private static BoolGrid usedCells;
+
+		private static Map Map
+		{
+			get
+			{
+				return Find.VisibleMap;
+			}
+		}
 
 		public static void MakeColony_Full()
 		{
@@ -47,14 +55,21 @@ namespace RimWorld
 			bool godMode = DebugSettings.godMode;
 			DebugSettings.godMode = true;
 			Thing.allowDestroyNonDestroyable = true;
-			Autotests_ColonyMaker.usedCells.Clear();
-			Autotests_ColonyMaker.overRect = new CellRect(Find.Map.Center.x - 50, Find.Map.Center.z - 50, 100, 100);
+			if (Autotests_ColonyMaker.usedCells == null)
+			{
+				Autotests_ColonyMaker.usedCells = new BoolGrid(Autotests_ColonyMaker.Map);
+			}
+			else
+			{
+				Autotests_ColonyMaker.usedCells.ClearAndResizeTo(Autotests_ColonyMaker.Map);
+			}
+			Autotests_ColonyMaker.overRect = new CellRect(Autotests_ColonyMaker.Map.Center.x - 50, Autotests_ColonyMaker.Map.Center.z - 50, 100, 100);
 			Autotests_ColonyMaker.DeleteAllSpawnedPawns();
-			GenDebug.ClearArea(Autotests_ColonyMaker.overRect);
+			GenDebug.ClearArea(Autotests_ColonyMaker.overRect, Find.VisibleMap);
 			if (flags.Contains(ColonyMakerFlag.Animals))
 			{
 				foreach (PawnKindDef current in from k in DefDatabase<PawnKindDef>.AllDefs
-				where k.RaceProps.Animal && !k.carrier
+				where k.RaceProps.Animal
 				select k)
 				{
 					CellRect cellRect;
@@ -65,13 +80,13 @@ namespace RimWorld
 					cellRect = cellRect.ContractedBy(1);
 					foreach (IntVec3 current2 in cellRect)
 					{
-						Find.TerrainGrid.SetTerrain(current2, TerrainDefOf.Concrete);
+						Autotests_ColonyMaker.Map.terrainGrid.SetTerrain(current2, TerrainDefOf.Concrete);
 					}
-					GenSpawn.Spawn(PawnGenerator.GeneratePawn(current, null), cellRect.Cells.ElementAt(0));
+					GenSpawn.Spawn(PawnGenerator.GeneratePawn(current, null), cellRect.Cells.ElementAt(0), Autotests_ColonyMaker.Map);
 					IntVec3 intVec = cellRect.Cells.ElementAt(1);
-					Pawn p = (Pawn)GenSpawn.Spawn(PawnGenerator.GeneratePawn(current, null), intVec);
+					Pawn p = (Pawn)GenSpawn.Spawn(PawnGenerator.GeneratePawn(current, null), intVec, Autotests_ColonyMaker.Map);
 					HealthUtility.GiveInjuriesToKill(p);
-					Corpse thing = (Corpse)intVec.GetThingList().First((Thing t) => t is Corpse);
+					Corpse thing = (Corpse)intVec.GetThingList(Find.VisibleMap).First((Thing t) => t is Corpse);
 					CompRottable compRottable = thing.TryGetComp<CompRottable>();
 					if (compRottable != null)
 					{
@@ -79,11 +94,11 @@ namespace RimWorld
 					}
 					if (current.RaceProps.leatherDef != null)
 					{
-						GenSpawn.Spawn(current.RaceProps.leatherDef, cellRect.Cells.ElementAt(2));
+						GenSpawn.Spawn(current.RaceProps.leatherDef, cellRect.Cells.ElementAt(2), Autotests_ColonyMaker.Map);
 					}
 					if (current.RaceProps.meatDef != null)
 					{
-						GenSpawn.Spawn(current.RaceProps.meatDef, cellRect.Cells.ElementAt(3));
+						GenSpawn.Spawn(current.RaceProps.meatDef, cellRect.Cells.ElementAt(3), Autotests_ColonyMaker.Map);
 					}
 				}
 			}
@@ -197,7 +212,7 @@ namespace RimWorld
 			{
 				foreach (IntVec3 current6 in rect)
 				{
-					GenSpawn.Spawn(ThingDefOf.FilthDirt, current6);
+					GenSpawn.Spawn(ThingDefOf.FilthDirt, current6, Autotests_ColonyMaker.Map);
 				}
 			}
 			if (flags.Contains(ColonyMakerFlag.ItemsWall))
@@ -228,13 +243,13 @@ namespace RimWorld
 				ThingDef plantTreeOak = ThingDefOf.PlantTreeOak;
 				foreach (IntVec3 current8 in cellRect3)
 				{
-					GenSpawn.Spawn(plantTreeOak, current8);
+					GenSpawn.Spawn(plantTreeOak, current8, Autotests_ColonyMaker.Map);
 				}
 				foreach (IntVec3 current9 in cellRect3)
 				{
 					if (current9.x % 7 == 0 && current9.z % 7 == 0)
 					{
-						GenExplosion.DoExplosion(current9, 3.9f, DamageDefOf.Flame, null, null, null, null, null, 0f, 1, false, null, 0f, 1);
+						GenExplosion.DoExplosion(current9, Find.VisibleMap, 3.9f, DamageDefOf.Flame, null, null, null, null, null, 0f, 1, false, null, 0f, 1);
 					}
 				}
 			}
@@ -259,7 +274,7 @@ namespace RimWorld
 					DamageDef def = (from d in DefDatabase<DamageDef>.AllDefs
 					where d.externalViolence
 					select d).RandomElement<DamageDef>();
-					col.TakeDamage(new DamageInfo(def, 10, null, null, null));
+					col.TakeDamage(new DamageInfo(def, 10, -1f, null, null, null));
 				});
 			}
 			if (flags.Contains(ColonyMakerFlag.ColonistsDiseased))
@@ -271,7 +286,7 @@ namespace RimWorld
 					Pawn pawn = PawnGenerator.GeneratePawn(Faction.OfPlayer.def.basicMemberKind, Faction.OfPlayer);
 					CellRect cellRect4;
 					Autotests_ColonyMaker.TryGetFreeRect(1, 1, out cellRect4);
-					GenSpawn.Spawn(pawn, cellRect4.CenterCell);
+					GenSpawn.Spawn(pawn, cellRect4.CenterCell, Autotests_ColonyMaker.Map);
 					pawn.health.AddHediff(current10, null, null);
 				}
 			}
@@ -280,7 +295,7 @@ namespace RimWorld
 				IEnumerable<ThingDef> source = from def in DefDatabase<ThingDef>.AllDefs
 				where def.thingClass == typeof(Building_Bed)
 				select def;
-				int freeColonistsCount = Find.MapPawns.FreeColonistsCount;
+				int freeColonistsCount = Autotests_ColonyMaker.Map.mapPawns.FreeColonistsCount;
 				for (int num = 0; num < freeColonistsCount; num++)
 				{
 					if (Autotests_ColonyMaker.TryMakeBuilding(source.RandomElement<ThingDef>()) == null)
@@ -302,14 +317,14 @@ namespace RimWorld
 						Autotests_ColonyMaker.TryGetFreeRect(7, 7, out cellRect5);
 						cellRect5 = cellRect5.ContractedBy(1);
 						designator_ZoneAddStockpile_Resources.DesignateMultiCell(cellRect5.Cells);
-						Zone_Stockpile zone_Stockpile = (Zone_Stockpile)Find.ZoneManager.ZoneAt(cellRect5.CenterCell);
+						Zone_Stockpile zone_Stockpile = (Zone_Stockpile)Autotests_ColonyMaker.Map.zoneManager.ZoneAt(cellRect5.CenterCell);
 						zone_Stockpile.settings.Priority = priority;
 					}
 				}
 			}
 			if (flags.Contains(ColonyMakerFlag.GrowingZones))
 			{
-				Zone_Growing dummyZone = new Zone_Growing();
+				Zone_Growing dummyZone = new Zone_Growing(Autotests_ColonyMaker.Map.zoneManager);
 				foreach (ThingDef current11 in from d in DefDatabase<ThingDef>.AllDefs
 				where d.plant != null && GenPlant.CanSowOnGrower(d, dummyZone)
 				select d)
@@ -322,11 +337,11 @@ namespace RimWorld
 					cellRect6 = cellRect6.ContractedBy(1);
 					foreach (IntVec3 current12 in cellRect6)
 					{
-						Find.TerrainGrid.SetTerrain(current12, TerrainDefOf.Soil);
+						Autotests_ColonyMaker.Map.terrainGrid.SetTerrain(current12, TerrainDefOf.Soil);
 					}
 					Designator_ZoneAdd_Growing designator_ZoneAdd_Growing = new Designator_ZoneAdd_Growing();
 					designator_ZoneAdd_Growing.DesignateMultiCell(cellRect6.Cells);
-					Zone_Growing zone_Growing = (Zone_Growing)Find.ZoneManager.ZoneAt(cellRect6.CenterCell);
+					Zone_Growing zone_Growing = (Zone_Growing)Autotests_ColonyMaker.Map.zoneManager.ZoneAt(cellRect6.CenterCell);
 					zone_Growing.SetPlantDefToGrow(current11);
 				}
 				dummyZone.Delete();
@@ -364,11 +379,11 @@ namespace RimWorld
 			}
 			foreach (IntVec3 current in cellRect)
 			{
-				Find.TerrainGrid.SetTerrain(current, TerrainDefOf.Concrete);
+				Autotests_ColonyMaker.Map.terrainGrid.SetTerrain(current, TerrainDefOf.Concrete);
 			}
 			Designator_Build designator_Build = new Designator_Build(def);
 			designator_Build.DesignateSingleCell(cellRect.CenterCell);
-			return cellRect.CenterCell.GetEdifice();
+			return cellRect.CenterCell.GetEdifice(Find.VisibleMap);
 		}
 
 		private static bool TryGetFreeRect(int width, int height, out CellRect result)
@@ -403,9 +418,9 @@ namespace RimWorld
 							{
 								IntVec3 c = new IntVec3(n, 0, m);
 								Autotests_ColonyMaker.usedCells.Set(c, true);
-								if (c.GetTerrain().passability == Traversability.Impassable)
+								if (c.GetTerrain(Find.VisibleMap).passability == Traversability.Impassable)
 								{
-									Find.TerrainGrid.SetTerrain(c, TerrainDefOf.Concrete);
+									Autotests_ColonyMaker.Map.terrainGrid.SetTerrain(c, TerrainDefOf.Concrete);
 								}
 							}
 						}
@@ -419,9 +434,9 @@ namespace RimWorld
 
 		private static void DoToColonists(float fraction, Action<Pawn> funcToDo)
 		{
-			int num = Rand.RangeInclusive(1, Mathf.RoundToInt((float)Find.MapPawns.FreeColonistsCount * fraction));
+			int num = Rand.RangeInclusive(1, Mathf.RoundToInt((float)Autotests_ColonyMaker.Map.mapPawns.FreeColonistsCount * fraction));
 			int num2 = 0;
-			foreach (Pawn current in Find.MapPawns.FreeColonists.InRandomOrder(null))
+			foreach (Pawn current in Autotests_ColonyMaker.Map.mapPawns.FreeColonists.InRandomOrder(null))
 			{
 				funcToDo(current);
 				num2++;
@@ -446,13 +461,13 @@ namespace RimWorld
 						pawn.workSettings.SetPriority(current, 3);
 					}
 				}
-				GenSpawn.Spawn(pawn, cellRect.CenterCell);
+				GenSpawn.Spawn(pawn, cellRect.CenterCell, Autotests_ColonyMaker.Map);
 			}
 		}
 
 		private static void DeleteAllSpawnedPawns()
 		{
-			foreach (Pawn current in Find.MapPawns.AllPawnsSpawned.ToList<Pawn>())
+			foreach (Pawn current in Autotests_ColonyMaker.Map.mapPawns.AllPawnsSpawned.ToList<Pawn>())
 			{
 				current.Destroy(DestroyMode.Vanish);
 				current.relations.ClearAllRelations();
@@ -462,9 +477,9 @@ namespace RimWorld
 
 		private static void ClearAllHomeArea()
 		{
-			foreach (IntVec3 current in Find.Map.AllCells)
+			foreach (IntVec3 current in Autotests_ColonyMaker.Map.AllCells)
 			{
-				Find.AreaHome.Clear(current);
+				Autotests_ColonyMaker.Map.areaManager.Home[current] = false;
 			}
 		}
 

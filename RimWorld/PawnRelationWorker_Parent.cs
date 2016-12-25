@@ -71,21 +71,21 @@ namespace RimWorld
 
 		private static void ResolveMySkinColor(ref PawnGenerationRequest request, Pawn generatedChild)
 		{
-			if (request.FixedSkinWhiteness.HasValue)
+			if (request.FixedMelanin.HasValue)
 			{
 				return;
 			}
 			if (generatedChild.GetFather() != null && generatedChild.GetMother() != null)
 			{
-				request.SetFixedSkinWhiteness(ChildRelationUtility.GetRandomChildSkinColor(generatedChild.GetFather().story.skinWhiteness, generatedChild.GetMother().story.skinWhiteness));
+				request.SetFixedMelanin(ChildRelationUtility.GetRandomChildSkinColor(generatedChild.GetFather().story.melanin, generatedChild.GetMother().story.melanin));
 			}
 			else if (generatedChild.GetFather() != null)
 			{
-				request.SetFixedSkinWhiteness(PawnSkinColors.GetRandomSkinColorSimilarTo(generatedChild.GetFather().story.skinWhiteness, 0f, 1f));
+				request.SetFixedMelanin(PawnSkinColors.GetRandomMelaninSimilarTo(generatedChild.GetFather().story.melanin, 0f, 1f));
 			}
 			else
 			{
-				request.SetFixedSkinWhiteness(PawnSkinColors.GetRandomSkinColorSimilarTo(generatedChild.GetMother().story.skinWhiteness, 0f, 1f));
+				request.SetFixedMelanin(PawnSkinColors.GetRandomMelaninSimilarTo(generatedChild.GetMother().story.melanin, 0f, 1f));
 			}
 		}
 	}

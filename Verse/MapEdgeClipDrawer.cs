@@ -12,9 +12,9 @@ namespace Verse
 
 		private static readonly float ClipAltitude = Altitudes.AltitudeFor(AltitudeLayer.WorldClipper);
 
-		public static void DrawClippers()
+		public static void DrawClippers(Map map)
 		{
-			IntVec3 size = Find.Map.Size;
+			IntVec3 size = map.Size;
 			Vector3 s = new Vector3(500f, 1f, (float)size.z);
 			Matrix4x4 matrix = default(Matrix4x4);
 			matrix.SetTRS(new Vector3(-250f, MapEdgeClipDrawer.ClipAltitude, (float)size.z / 2f), Quaternion.identity, s);

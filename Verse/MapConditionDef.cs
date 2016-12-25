@@ -11,6 +11,7 @@ namespace Verse
 
 		private List<MapConditionDef> exclusiveConditions;
 
+		[MustTranslate]
 		public string endMessage;
 
 		public bool canBePermanent;

@@ -36,7 +36,7 @@ namespace Verse.Sound
 			{
 				num = (float)(samp.GetHashCode() % 100);
 			}
-			if (this.timeType == TimeType.Ticks && Current.ProgramState == ProgramState.MapPlaying)
+			if (this.timeType == TimeType.Ticks && Current.ProgramState == ProgramState.Playing)
 			{
 				float num2;
 				if (this.syncType == PerlinMappingSyncType.Sync)

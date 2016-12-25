@@ -31,12 +31,7 @@ namespace Verse
 
 		static ModsConfig()
 		{
-			bool flag = File.Exists(GenFilePaths.ModsConfigFilePath);
-			bool flag2 = false;
-			if (flag)
-			{
-				LastPlayedVersion.Notify_GameHasBeenRun();
-			}
+			bool flag = false;
 			ModsConfig.data = XmlLoader.ItemFromXmlFile<ModsConfig.ModsConfigData>(GenFilePaths.ModsConfigFilePath, true);
 			if (ModsConfig.data.buildNumber < VersionControl.CurrentBuild)
 			{
@@ -49,10 +44,11 @@ namespace Verse
 					". Resetting."
 				}));
 				ModsConfig.data = new ModsConfig.ModsConfigData();
-				flag2 = true;
+				flag = true;
 			}
 			ModsConfig.data.buildNumber = VersionControl.CurrentBuild;
-			if (!flag || flag2)
+			bool flag2 = File.Exists(GenFilePaths.ModsConfigFilePath);
+			if (!flag2 || flag)
 			{
 				ModsConfig.data.activeMods.Add(ModContentPack.CoreModIdentifier);
 				ModsConfig.Save();

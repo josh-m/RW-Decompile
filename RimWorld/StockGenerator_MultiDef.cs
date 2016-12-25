@@ -10,7 +10,7 @@ namespace RimWorld
 		private List<ThingDef> thingDefs = new List<ThingDef>();
 
 		[DebuggerHidden]
-		public override IEnumerable<Thing> GenerateThings()
+		public override IEnumerable<Thing> GenerateThings(Map forMap)
 		{
 			ThingDef td = this.thingDefs.RandomElement<ThingDef>();
 			foreach (Thing th in StockGeneratorUtility.TryMakeForStock(td, base.RandomCountOf(td)))

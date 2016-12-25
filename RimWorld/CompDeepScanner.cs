@@ -17,7 +17,7 @@ namespace RimWorld
 		{
 			if (this.powerComp.PowerOn)
 			{
-				Find.DeepResourceGrid.DeepResourceGridDraw(true);
+				this.parent.Map.deepResourceGrid.DeepResourceGridDraw(true);
 			}
 		}
 	}

@@ -127,9 +127,13 @@ namespace RimWorld
 			{
 				return;
 			}
-			float b = (float)Screen.height / 2f;
+			if (Find.WindowStack.IsOpen<Screen_Credits>())
+			{
+				return;
+			}
+			float b = (float)UI.screenHeight / 2f;
 			float a = this.contentHeight + 14f;
-			Rect outRect = new Rect((float)Screen.width - 8f - 200f, 8f, 200f, Mathf.Min(a, b));
+			Rect outRect = new Rect((float)UI.screenWidth - 8f - 200f, 8f, 200f, Mathf.Min(a, b));
 			Rect outRect2 = outRect;
 			Find.WindowStack.ImmediateWindow(76136312, outRect, WindowLayer.Super, delegate
 			{
@@ -232,7 +236,7 @@ namespace RimWorld
 			float num = Time.realtimeSinceStartup - this.lastConceptActivateRealTime;
 			if (num < 1f && num > 0f)
 			{
-				GenUI.DrawFlash(outRect2.x, outRect2.center.y, (float)Screen.width * 0.6f, Pulser.PulseBrightness(1f, 1f, num) * 0.85f, new Color(0.8f, 0.77f, 0.53f));
+				GenUI.DrawFlash(outRect2.x, outRect2.center.y, (float)UI.screenWidth * 0.6f, Pulser.PulseBrightness(1f, 1f, num) * 0.85f, new Color(0.8f, 0.77f, 0.53f));
 			}
 			ConceptDef conceptDef = (this.selectedConcept == null) ? this.mouseoverConcept : this.selectedConcept;
 			if (conceptDef != null)
@@ -327,7 +331,7 @@ namespace RimWorld
 			{
 				num += 30f;
 			}
-			Rect outRect = new Rect((float)Screen.width - 8f - 200f - 8f - 310f, 8f, 310f, num);
+			Rect outRect = new Rect((float)UI.screenWidth - 8f - 200f - 8f - 310f, 8f, 310f, num);
 			Rect outRect2 = outRect;
 			Find.WindowStack.ImmediateWindow(987612111, outRect, WindowLayer.Super, delegate
 			{

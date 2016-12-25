@@ -25,9 +25,9 @@ namespace Verse
 			this.relevantChangeTypes = MapMeshFlag.Snow;
 		}
 
-		private static bool Filled(int index)
+		private bool Filled(int index)
 		{
-			Building building = Find.EdificeGrid[index];
+			Building building = base.Map.edificeGrid[index];
 			return building != null && building.def.Fillage == FillCategory.Full;
 		}
 
@@ -38,33 +38,34 @@ namespace Verse
 			{
 				SectionLayerGeometryMaker_Solid.MakeBaseGeometry(this.section, subMesh, AltitudeLayer.Terrain);
 			}
-			float[] depthGridDirect_Unsafe = Find.SnowGrid.DepthGridDirect_Unsafe;
+			float[] depthGridDirect_Unsafe = base.Map.snowGrid.DepthGridDirect_Unsafe;
 			CellRect cellRect = this.section.CellRect;
-			int num = Find.Map.Size.z - 1;
-			int num2 = Find.Map.Size.x - 1;
+			int num = base.Map.Size.z - 1;
+			int num2 = base.Map.Size.x - 1;
 			subMesh.colors = new List<Color32>(subMesh.mesh.vertexCount);
 			bool flag = false;
+			CellIndices cellIndices = base.Map.cellIndices;
 			for (int i = cellRect.minX; i <= cellRect.maxX; i++)
 			{
 				for (int j = cellRect.minZ; j <= cellRect.maxZ; j++)
 				{
-					float num3 = depthGridDirect_Unsafe[CellIndices.CellToIndex(i, j)];
-					int num4 = CellIndices.CellToIndex(i, j - 1);
-					float num5 = (j <= 0 || SectionLayer_Snow.Filled(num4)) ? num3 : depthGridDirect_Unsafe[num4];
-					num4 = CellIndices.CellToIndex(i - 1, j - 1);
-					float num6 = (j <= 0 || i <= 0 || SectionLayer_Snow.Filled(num4)) ? num3 : depthGridDirect_Unsafe[num4];
-					num4 = CellIndices.CellToIndex(i - 1, j);
-					float num7 = (i <= 0 || SectionLayer_Snow.Filled(num4)) ? num3 : depthGridDirect_Unsafe[num4];
-					num4 = CellIndices.CellToIndex(i - 1, j + 1);
-					float num8 = (j >= num || i <= 0 || SectionLayer_Snow.Filled(num4)) ? num3 : depthGridDirect_Unsafe[num4];
-					num4 = CellIndices.CellToIndex(i, j + 1);
-					float num9 = (j >= num || SectionLayer_Snow.Filled(num4)) ? num3 : depthGridDirect_Unsafe[num4];
-					num4 = CellIndices.CellToIndex(i + 1, j + 1);
-					float num10 = (j >= num || i >= num2 || SectionLayer_Snow.Filled(num4)) ? num3 : depthGridDirect_Unsafe[num4];
-					num4 = CellIndices.CellToIndex(i + 1, j);
-					float num11 = (i >= num2 || SectionLayer_Snow.Filled(num4)) ? num3 : depthGridDirect_Unsafe[num4];
-					num4 = CellIndices.CellToIndex(i + 1, j - 1);
-					float num12 = (j <= 0 || i >= num2 || SectionLayer_Snow.Filled(num4)) ? num3 : depthGridDirect_Unsafe[num4];
+					float num3 = depthGridDirect_Unsafe[cellIndices.CellToIndex(i, j)];
+					int num4 = cellIndices.CellToIndex(i, j - 1);
+					float num5 = (j <= 0 || this.Filled(num4)) ? num3 : depthGridDirect_Unsafe[num4];
+					num4 = cellIndices.CellToIndex(i - 1, j - 1);
+					float num6 = (j <= 0 || i <= 0 || this.Filled(num4)) ? num3 : depthGridDirect_Unsafe[num4];
+					num4 = cellIndices.CellToIndex(i - 1, j);
+					float num7 = (i <= 0 || this.Filled(num4)) ? num3 : depthGridDirect_Unsafe[num4];
+					num4 = cellIndices.CellToIndex(i - 1, j + 1);
+					float num8 = (j >= num || i <= 0 || this.Filled(num4)) ? num3 : depthGridDirect_Unsafe[num4];
+					num4 = cellIndices.CellToIndex(i, j + 1);
+					float num9 = (j >= num || this.Filled(num4)) ? num3 : depthGridDirect_Unsafe[num4];
+					num4 = cellIndices.CellToIndex(i + 1, j + 1);
+					float num10 = (j >= num || i >= num2 || this.Filled(num4)) ? num3 : depthGridDirect_Unsafe[num4];
+					num4 = cellIndices.CellToIndex(i + 1, j);
+					float num11 = (i >= num2 || this.Filled(num4)) ? num3 : depthGridDirect_Unsafe[num4];
+					num4 = cellIndices.CellToIndex(i + 1, j - 1);
+					float num12 = (j <= 0 || i >= num2 || this.Filled(num4)) ? num3 : depthGridDirect_Unsafe[num4];
 					this.vertDepth[0] = (num5 + num6 + num7 + num3) / 4f;
 					this.vertDepth[1] = (num7 + num3) / 2f;
 					this.vertDepth[2] = (num7 + num8 + num9 + num3) / 4f;
@@ -87,7 +88,7 @@ namespace Verse
 			if (flag)
 			{
 				subMesh.disabled = false;
-				subMesh.FinalizeMesh(MeshParts.Colors);
+				subMesh.FinalizeMesh(MeshParts.Colors, false);
 			}
 			else
 			{

@@ -96,7 +96,10 @@ namespace RimWorld
 		private static void NewlyLearned(ConceptDef conc)
 		{
 			TutorSystem.Notify_Event("ConceptLearned-" + conc.defName);
-			Find.Tutor.learningReadout.Notify_ConceptNewlyLearned(conc);
+			if (Find.Tutor != null)
+			{
+				Find.Tutor.learningReadout.Notify_ConceptNewlyLearned(conc);
+			}
 		}
 
 		public static void KnowledgeDemonstrated(ConceptDef conc, KnowledgeAmount know)
@@ -133,7 +136,10 @@ namespace RimWorld
 			}
 			PlayerKnowledgeDatabase.SetKnowledge(conc, PlayerKnowledgeDatabase.GetKnowledge(conc) + num);
 			LessonAutoActivator.Notify_KnowledgeDemonstrated(conc);
-			Find.ActiveLesson.Notify_KnowledgeDemonstrated(conc);
+			if (Find.ActiveLesson != null)
+			{
+				Find.ActiveLesson.Notify_KnowledgeDemonstrated(conc);
+			}
 		}
 	}
 }

@@ -36,28 +36,28 @@ namespace RimWorld
 
 		public override AcceptanceReport CanDesignateCell(IntVec3 c)
 		{
-			if (!c.InBounds())
+			if (!c.InBounds(base.Map))
 			{
 				return false;
 			}
-			if (c.Fogged())
+			if (c.Fogged(base.Map))
 			{
 				return false;
 			}
-			if (Find.DesignationManager.DesignationAt(c, DesignationDefOf.SmoothFloor) != null)
+			if (base.Map.designationManager.DesignationAt(c, DesignationDefOf.SmoothFloor) != null)
 			{
 				return "TerrainBeingSmoothed".Translate();
 			}
-			if (c.InNoBuildEdgeArea())
+			if (c.InNoBuildEdgeArea(base.Map))
 			{
 				return "TooCloseToMapEdge".Translate();
 			}
-			Building edifice = c.GetEdifice();
+			Building edifice = c.GetEdifice(base.Map);
 			if (edifice != null && edifice.def.Fillage == FillCategory.Full && edifice.def.passability == Traversability.Impassable)
 			{
 				return false;
 			}
-			TerrainDef terrain = c.GetTerrain();
+			TerrainDef terrain = c.GetTerrain(base.Map);
 			if (!terrain.affordances.Contains(TerrainAffordance.SmoothableStone))
 			{
 				return "MessageMustDesignateSmoothableFloor".Translate();
@@ -67,7 +67,7 @@ namespace RimWorld
 
 		public override void DesignateSingleCell(IntVec3 c)
 		{
-			Find.DesignationManager.AddDesignation(new Designation(c, DesignationDefOf.SmoothFloor));
+			base.Map.designationManager.AddDesignation(new Designation(c, DesignationDefOf.SmoothFloor));
 		}
 
 		public override void SelectedUpdate()

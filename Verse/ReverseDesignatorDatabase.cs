@@ -4,36 +4,36 @@ using System.Collections.Generic;
 
 namespace Verse
 {
-	public static class ReverseDesignatorDatabase
+	public class ReverseDesignatorDatabase
 	{
-		private static List<Designator> desList;
+		private List<Designator> desList;
 
-		public static List<Designator> AllDesignators
+		public List<Designator> AllDesignators
 		{
 			get
 			{
-				if (ReverseDesignatorDatabase.desList == null)
+				if (this.desList == null)
 				{
-					ReverseDesignatorDatabase.InitDesignators();
+					this.InitDesignators();
 				}
-				return ReverseDesignatorDatabase.desList;
+				return this.desList;
 			}
 		}
 
-		public static void Reinit()
+		public void Reinit()
 		{
-			ReverseDesignatorDatabase.desList = null;
+			this.desList = null;
 		}
 
-		public static T Get<T>() where T : Designator
+		public T Get<T>() where T : Designator
 		{
-			if (ReverseDesignatorDatabase.desList == null)
+			if (this.desList == null)
 			{
-				ReverseDesignatorDatabase.InitDesignators();
+				this.InitDesignators();
 			}
-			for (int i = 0; i < ReverseDesignatorDatabase.desList.Count; i++)
+			for (int i = 0; i < this.desList.Count; i++)
 			{
-				T t = ReverseDesignatorDatabase.desList[i] as T;
+				T t = this.desList[i] as T;
 				if (t != null)
 				{
 					return t;
@@ -42,24 +42,24 @@ namespace Verse
 			return (T)((object)null);
 		}
 
-		private static void InitDesignators()
+		private void InitDesignators()
 		{
-			ReverseDesignatorDatabase.desList = new List<Designator>();
-			ReverseDesignatorDatabase.desList.Add(new Designator_Cancel());
-			ReverseDesignatorDatabase.desList.Add(new Designator_Claim());
-			ReverseDesignatorDatabase.desList.Add(new Designator_Deconstruct());
-			ReverseDesignatorDatabase.desList.Add(new Designator_Uninstall());
-			ReverseDesignatorDatabase.desList.Add(new Designator_Haul());
-			ReverseDesignatorDatabase.desList.Add(new Designator_Hunt());
-			ReverseDesignatorDatabase.desList.Add(new Designator_Slaughter());
-			ReverseDesignatorDatabase.desList.Add(new Designator_Tame());
-			ReverseDesignatorDatabase.desList.Add(new Designator_PlantsCut());
-			ReverseDesignatorDatabase.desList.Add(new Designator_PlantsHarvest());
-			ReverseDesignatorDatabase.desList.Add(new Designator_Mine());
-			ReverseDesignatorDatabase.desList.Add(new Designator_Strip());
-			ReverseDesignatorDatabase.desList.Add(new Designator_RearmTrap());
-			ReverseDesignatorDatabase.desList.Add(new Designator_Open());
-			ReverseDesignatorDatabase.desList.RemoveAll((Designator des) => !Current.Game.Rules.DesignatorAllowed(des));
+			this.desList = new List<Designator>();
+			this.desList.Add(new Designator_Cancel());
+			this.desList.Add(new Designator_Claim());
+			this.desList.Add(new Designator_Deconstruct());
+			this.desList.Add(new Designator_Uninstall());
+			this.desList.Add(new Designator_Haul());
+			this.desList.Add(new Designator_Hunt());
+			this.desList.Add(new Designator_Slaughter());
+			this.desList.Add(new Designator_Tame());
+			this.desList.Add(new Designator_PlantsCut());
+			this.desList.Add(new Designator_PlantsHarvest());
+			this.desList.Add(new Designator_Mine());
+			this.desList.Add(new Designator_Strip());
+			this.desList.Add(new Designator_RearmTrap());
+			this.desList.Add(new Designator_Open());
+			this.desList.RemoveAll((Designator des) => !Current.Game.Rules.DesignatorAllowed(des));
 		}
 	}
 }

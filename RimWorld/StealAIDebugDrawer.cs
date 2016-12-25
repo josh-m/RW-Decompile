@@ -9,7 +9,7 @@ namespace RimWorld
 	{
 		private static List<Thing> tmpToSteal = new List<Thing>();
 
-		private static BoolGrid debugDrawGrid = new BoolGrid();
+		private static BoolGrid debugDrawGrid;
 
 		private static Lord debugDrawLord = null;
 
@@ -26,19 +26,16 @@ namespace RimWorld
 			{
 				return;
 			}
-			if (StealAIDebugDrawer.debugDrawGrid.InnerArray.Length != Find.Map.Size.x * Find.Map.Size.z)
-			{
-				StealAIDebugDrawer.debugDrawGrid = new BoolGrid();
-			}
+			StealAIDebugDrawer.CheckInitDebugDrawGrid();
 			float num = StealAIUtility.StartStealingMarketValueThreshold(StealAIDebugDrawer.debugDrawLord);
 			if (lord != StealAIDebugDrawer.debugDrawLord)
 			{
-				foreach (IntVec3 current in Find.Map.AllCells)
+				foreach (IntVec3 current in Find.VisibleMap.AllCells)
 				{
-					StealAIDebugDrawer.debugDrawGrid[current] = (StealAIDebugDrawer.TotalMarketValueAround(current, StealAIDebugDrawer.debugDrawLord.ownedPawns.Count) > num);
+					StealAIDebugDrawer.debugDrawGrid[current] = (StealAIDebugDrawer.TotalMarketValueAround(current, Find.VisibleMap, StealAIDebugDrawer.debugDrawLord.ownedPawns.Count) > num);
 				}
 			}
-			foreach (IntVec3 current2 in Find.Map.AllCells)
+			foreach (IntVec3 current2 in Find.VisibleMap.AllCells)
 			{
 				if (StealAIDebugDrawer.debugDrawGrid[current2])
 				{
@@ -50,7 +47,7 @@ namespace RimWorld
 			{
 				Pawn pawn = StealAIDebugDrawer.debugDrawLord.ownedPawns[i];
 				Thing thing;
-				if (StealAIUtility.TryFindBestItemToSteal(pawn.Position, 7f, out thing, pawn, StealAIDebugDrawer.tmpToSteal))
+				if (StealAIUtility.TryFindBestItemToSteal(pawn.Position, pawn.Map, 7f, out thing, pawn, StealAIDebugDrawer.tmpToSteal))
 				{
 					GenDraw.DrawLineBetween(pawn.TrueCenter(), thing.TrueCenter());
 					StealAIDebugDrawer.tmpToSteal.Add(thing);
@@ -65,6 +62,7 @@ namespace RimWorld
 			{
 				return;
 			}
+			StealAIDebugDrawer.CheckInitDebugDrawGrid();
 			if (thing.def.category != ThingCategory.Building && thing.def.category != ThingCategory.Item && thing.def.passability != Traversability.Impassable)
 			{
 				return;
@@ -80,17 +78,17 @@ namespace RimWorld
 				for (int i = 0; i < num; i++)
 				{
 					IntVec3 intVec = thing.Position + GenRadial.RadialPattern[i];
-					if (intVec.InBounds())
+					if (intVec.InBounds(thing.Map))
 					{
-						StealAIDebugDrawer.debugDrawGrid[intVec] = (StealAIDebugDrawer.TotalMarketValueAround(intVec, StealAIDebugDrawer.debugDrawLord.ownedPawns.Count) > num2);
+						StealAIDebugDrawer.debugDrawGrid[intVec] = (StealAIDebugDrawer.TotalMarketValueAround(intVec, Find.VisibleMap, StealAIDebugDrawer.debugDrawLord.ownedPawns.Count) > num2);
 					}
 				}
 			}
 		}
 
-		private static float TotalMarketValueAround(IntVec3 center, int pawnsCount)
+		private static float TotalMarketValueAround(IntVec3 center, Map map, int pawnsCount)
 		{
-			if (center.Impassable())
+			if (center.Impassable(map))
 			{
 				return 0f;
 			}
@@ -99,12 +97,12 @@ namespace RimWorld
 			for (int i = 0; i < pawnsCount; i++)
 			{
 				IntVec3 intVec = center + GenRadial.RadialPattern[i];
-				if (!intVec.InBounds() || intVec.Impassable() || !GenSight.LineOfSight(center, intVec, false))
+				if (!intVec.InBounds(map) || intVec.Impassable(map) || !GenSight.LineOfSight(center, intVec, map, false))
 				{
 					intVec = center;
 				}
 				Thing thing;
-				if (StealAIUtility.TryFindBestItemToSteal(intVec, 7f, out thing, null, StealAIDebugDrawer.tmpToSteal))
+				if (StealAIUtility.TryFindBestItemToSteal(intVec, map, 7f, out thing, null, StealAIDebugDrawer.tmpToSteal))
 				{
 					num += StealAIUtility.GetValue(thing);
 					StealAIDebugDrawer.tmpToSteal.Add(thing);
@@ -117,7 +115,7 @@ namespace RimWorld
 		private static Lord FindHostileLord()
 		{
 			Lord lord = null;
-			List<Lord> lords = Find.LordManager.lords;
+			List<Lord> lords = Find.VisibleMap.lordManager.lords;
 			for (int i = 0; i < lords.Count; i++)
 			{
 				if (lords[i].faction.HostileTo(Faction.OfPlayer))
@@ -129,6 +127,18 @@ namespace RimWorld
 				}
 			}
 			return lord;
+		}
+
+		private static void CheckInitDebugDrawGrid()
+		{
+			if (StealAIDebugDrawer.debugDrawGrid == null)
+			{
+				StealAIDebugDrawer.debugDrawGrid = new BoolGrid(Find.VisibleMap);
+			}
+			else if (!StealAIDebugDrawer.debugDrawGrid.MapSizeMatches(Find.VisibleMap))
+			{
+				StealAIDebugDrawer.debugDrawGrid.ClearAndResizeTo(Find.VisibleMap);
+			}
 		}
 	}
 }

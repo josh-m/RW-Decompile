@@ -136,9 +136,9 @@ namespace Verse
 			if (text != null)
 			{
 				string title = text2;
-				Dialog_Confirm dialog_Confirm = new Dialog_Confirm(text, confirmedAction, false, title, true);
-				dialog_Confirm.confirmLabel = "LoadAnyway".Translate();
-				Find.WindowStack.Add(dialog_Confirm);
+				Dialog_MessageBox dialog_MessageBox = Dialog_MessageBox.CreateConfirmation(text, confirmedAction, false, title);
+				dialog_MessageBox.buttonAText = "LoadAnyway".Translate();
+				Find.WindowStack.Add(dialog_MessageBox);
 				return true;
 			}
 			return false;

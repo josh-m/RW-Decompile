@@ -1,5 +1,6 @@
 using System;
 using UnityEngine.SceneManagement;
+using Verse.Profile;
 
 namespace Verse
 {
@@ -7,7 +8,7 @@ namespace Verse
 	{
 		public const string EntrySceneName = "Entry";
 
-		public const string MapSceneName = "Map";
+		public const string PlaySceneName = "Play";
 
 		public static bool InEntryScene
 		{
@@ -17,12 +18,22 @@ namespace Verse
 			}
 		}
 
-		public static bool InMapScene
+		public static bool InPlayScene
 		{
 			get
 			{
-				return SceneManager.GetActiveScene().name == "Map";
+				return SceneManager.GetActiveScene().name == "Play";
 			}
+		}
+
+		public static void GoToMainMenu()
+		{
+			LongEventHandler.ClearQueuedEvents();
+			LongEventHandler.QueueLongEvent(delegate
+			{
+				MemoryUtility.ClearAllMapsAndWorld();
+				Current.Game = null;
+			}, "Entry", "LoadingLongEvent", true, null);
 		}
 	}
 }

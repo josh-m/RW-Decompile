@@ -16,6 +16,8 @@ namespace RimWorld
 
 		private const float MinStoredEnergyToTurnOn = 5f;
 
+		public PowerNetManager powerNetManager;
+
 		public bool hasPowerSource;
 
 		public List<CompPower> connectors = new List<CompPower>();
@@ -162,7 +164,7 @@ namespace RimWorld
 		{
 			float num = this.CurrentEnergyGainRate();
 			float num2 = this.CurrentStoredEnergy();
-			if (num2 + num >= -1E-07f && !Find.MapConditionManager.ConditionIsActive(MapConditionDefOf.SolarFlare))
+			if (num2 + num >= -1E-07f && !this.powerNetManager.map.mapConditionManager.ConditionIsActive(MapConditionDefOf.SolarFlare))
 			{
 				float num3;
 				if (this.batteryComps.Count > 0 && num2 >= 0.1f)

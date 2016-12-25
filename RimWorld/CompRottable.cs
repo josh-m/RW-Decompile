@@ -54,7 +54,7 @@ namespace RimWorld
 		{
 			get
 			{
-				float num = GenTemperature.GetTemperatureForCell(this.parent.PositionHeld);
+				float num = GenTemperature.GetTemperatureForCell(this.parent.PositionHeld, this.parent.MapHeld);
 				num = (float)Mathf.RoundToInt(num);
 				float num2 = GenTemperature.RotRateAtTemperature(num);
 				if (num2 <= 0f)
@@ -80,12 +80,12 @@ namespace RimWorld
 		{
 			float rotProgress = this.RotProgress;
 			float num = 1f;
-			float temperatureForCell = GenTemperature.GetTemperatureForCell(this.parent.PositionHeld);
+			float temperatureForCell = GenTemperature.GetTemperatureForCell(this.parent.PositionHeld, this.parent.MapHeld);
 			num *= GenTemperature.RotRateAtTemperature(temperatureForCell);
 			this.RotProgress += Mathf.Round(num * 250f);
 			if (this.Stage == RotStage.Rotting && this.PropsRot.rotDestroys)
 			{
-				if (Find.SlotGroupManager.SlotGroupAt(this.parent.Position) != null)
+				if (this.parent.Map.slotGroupManager.SlotGroupAt(this.parent.Position) != null)
 				{
 					Messages.Message("MessageRottedAwayInStorage".Translate(new object[]
 					{
@@ -101,20 +101,20 @@ namespace RimWorld
 			{
 				if (this.Stage == RotStage.Rotting && this.PropsRot.rotDamagePerDay > 0f)
 				{
-					this.parent.TakeDamage(new DamageInfo(DamageDefOf.Rotting, GenMath.RoundRandom(this.PropsRot.rotDamagePerDay), null, null, null));
+					this.parent.TakeDamage(new DamageInfo(DamageDefOf.Rotting, GenMath.RoundRandom(this.PropsRot.rotDamagePerDay), -1f, null, null, null));
 				}
 				else if (this.Stage == RotStage.Dessicated && this.PropsRot.dessicatedDamagePerDay > 0f && this.ShouldTakeDessicateDamage())
 				{
-					this.parent.TakeDamage(new DamageInfo(DamageDefOf.Rotting, GenMath.RoundRandom(this.PropsRot.dessicatedDamagePerDay), null, null, null));
+					this.parent.TakeDamage(new DamageInfo(DamageDefOf.Rotting, GenMath.RoundRandom(this.PropsRot.dessicatedDamagePerDay), -1f, null, null, null));
 				}
 			}
 		}
 
 		private bool ShouldTakeDessicateDamage()
 		{
-			if (this.parent.holder != null)
+			if (this.parent.holdingContainer != null)
 			{
-				Thing thing = this.parent.holder.owner as Thing;
+				Thing thing = this.parent.holdingContainer.owner as Thing;
 				if (thing != null && thing.def.category == ThingCategory.Building && thing.def.building.preventDeterioration)
 				{
 					return false;
@@ -149,39 +149,40 @@ namespace RimWorld
 			switch (this.Stage)
 			{
 			case RotStage.Fresh:
-				stringBuilder.AppendLine("RotStateFresh".Translate());
+				stringBuilder.Append("RotStateFresh".Translate() + ".");
 				break;
 			case RotStage.Rotting:
-				stringBuilder.AppendLine("RotStateRotting".Translate());
+				stringBuilder.Append("RotStateRotting".Translate() + ".");
 				break;
 			case RotStage.Dessicated:
-				stringBuilder.AppendLine("RotStateDessicated".Translate());
+				stringBuilder.Append("RotStateDessicated".Translate() + ".");
 				break;
 			}
 			float num = (float)this.PropsRot.TicksToRotStart - this.RotProgress;
 			if (num > 0f)
 			{
-				float num2 = GenTemperature.GetTemperatureForCell(this.parent.PositionHeld);
+				float num2 = GenTemperature.GetTemperatureForCell(this.parent.PositionHeld, this.parent.MapHeld);
 				num2 = (float)Mathf.RoundToInt(num2);
 				float num3 = GenTemperature.RotRateAtTemperature(num2);
 				int ticksUntilRotAtCurrentTemp = this.TicksUntilRotAtCurrentTemp;
+				stringBuilder.AppendLine();
 				if (num3 < 0.001f)
 				{
-					stringBuilder.AppendLine("CurrentlyFrozen".Translate());
+					stringBuilder.Append("CurrentlyFrozen".Translate() + ".");
 				}
 				else if (num3 < 0.999f)
 				{
-					stringBuilder.AppendLine("CurrentlyRefrigerated".Translate(new object[]
+					stringBuilder.Append("CurrentlyRefrigerated".Translate(new object[]
 					{
 						ticksUntilRotAtCurrentTemp.ToStringTicksToPeriodVagueMax()
-					}));
+					}) + ".");
 				}
 				else
 				{
-					stringBuilder.AppendLine("NotRefrigerated".Translate(new object[]
+					stringBuilder.Append("NotRefrigerated".Translate(new object[]
 					{
 						ticksUntilRotAtCurrentTemp.ToStringTicksToPeriodVagueMax()
-					}));
+					}) + ".");
 				}
 			}
 			return stringBuilder.ToString();

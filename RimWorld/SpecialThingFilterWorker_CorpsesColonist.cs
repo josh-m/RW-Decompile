@@ -8,7 +8,7 @@ namespace RimWorld
 		public override bool Matches(Thing t)
 		{
 			Corpse corpse = t as Corpse;
-			return corpse != null && corpse.innerPawn.def.race.Humanlike && corpse.innerPawn.Faction == Faction.OfPlayer;
+			return corpse != null && corpse.InnerPawn.def.race.Humanlike && corpse.InnerPawn.Faction == Faction.OfPlayer;
 		}
 	}
 }

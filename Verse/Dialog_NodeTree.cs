@@ -41,6 +41,7 @@ namespace Verse
 			this.GotoNode(nodeRoot);
 			this.forcePause = true;
 			this.absorbInputAroundWindow = true;
+			this.closeOnEscapeKey = false;
 			if (delayInteractivity)
 			{
 				this.makeInteractiveAtTime = Time.realtimeSinceStartup + 0.5f;
@@ -74,7 +75,7 @@ namespace Verse
 			if (this.screenFillColor != Color.clear)
 			{
 				GUI.color = this.screenFillColor;
-				GUI.DrawTexture(new Rect(0f, 0f, (float)Screen.width, (float)Screen.height), BaseContent.WhiteTex);
+				GUI.DrawTexture(new Rect(0f, 0f, (float)UI.screenWidth, (float)UI.screenHeight), BaseContent.WhiteTex);
 				GUI.color = Color.white;
 			}
 			base.WindowOnGUI();
@@ -125,14 +126,6 @@ namespace Verse
 				current.dialog = this;
 			}
 			this.curNode = node;
-		}
-
-		public static Window SimpleNotifyDialog(string msg, bool useInteractivityDelay = false)
-		{
-			DiaNode diaNode = new DiaNode(msg);
-			diaNode.options.Add(new DiaOption("OK".Translate()));
-			diaNode.options[0].resolveTree = true;
-			return new Dialog_NodeTree(diaNode, useInteractivityDelay, false);
 		}
 	}
 }

@@ -3,121 +3,25 @@ using RimWorld.Planet;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using UnityEngine;
-using Verse.Noise;
 
 namespace Verse
 {
 	public static class GenTemperature
 	{
-		private const int CachedTempUpdateInterval = 60;
+		public static readonly Color ColorSpotHot = new Color(1f, 0f, 0f, 0.6f);
 
-		private static float cachedOutdoorTemp;
+		public static readonly Color ColorSpotCold = new Color(0f, 0f, 1f, 0.6f);
 
-		private static float cachedSeasonalTemp;
+		public static readonly Color ColorRoomHot = new Color(1f, 0f, 0f, 0.3f);
 
-		private static float[] cachedMonthlyTempAverages;
+		public static readonly Color ColorRoomCold = new Color(0f, 0f, 1f, 0.3f);
 
-		private static Perlin dailyVariationPerlinCached;
+		private static List<Room> neighRooms = new List<Room>();
 
-		private static HashSet<int> fastProcessedRoomIDs;
+		private static Room[] beqRooms = new Room[4];
 
-		public static readonly Color ColorSpotHot;
-
-		public static readonly Color ColorSpotCold;
-
-		public static readonly Color ColorRoomHot;
-
-		public static readonly Color ColorRoomCold;
-
-		private static List<Room> neighRooms;
-
-		public static float OutdoorTemp
-		{
-			get
-			{
-				if (GenTemperature.cachedOutdoorTemp == -3.40282347E+38f)
-				{
-					GenTemperature.UpdateCachedData();
-				}
-				return GenTemperature.cachedOutdoorTemp;
-			}
-		}
-
-		public static float SeasonalTemp
-		{
-			get
-			{
-				if (GenTemperature.cachedSeasonalTemp == -3.40282347E+38f)
-				{
-					GenTemperature.UpdateCachedData();
-				}
-				return GenTemperature.cachedSeasonalTemp;
-			}
-		}
-
-		private static Perlin DailyVariationPerlin
-		{
-			get
-			{
-				if (GenTemperature.dailyVariationPerlinCached == null)
-				{
-					int hashCode = Find.Map.WorldCoords.GetHashCode();
-					GenTemperature.dailyVariationPerlinCached = new Perlin(4.9999998736893758E-06, 2.0, 0.5, 3, hashCode, QualityMode.Medium);
-				}
-				return GenTemperature.dailyVariationPerlinCached;
-			}
-		}
-
-		static GenTemperature()
-		{
-			GenTemperature.cachedMonthlyTempAverages = null;
-			GenTemperature.fastProcessedRoomIDs = new HashSet<int>();
-			GenTemperature.ColorSpotHot = new Color(1f, 0f, 0f, 0.6f);
-			GenTemperature.ColorSpotCold = new Color(0f, 0f, 1f, 0.6f);
-			GenTemperature.ColorRoomHot = new Color(1f, 0f, 0f, 0.3f);
-			GenTemperature.ColorRoomCold = new Color(0f, 0f, 1f, 0.3f);
-			GenTemperature.neighRooms = new List<Room>();
-			GenTemperature.Reinit();
-		}
-
-		public static void Reinit()
-		{
-			GenTemperature.dailyVariationPerlinCached = null;
-			GenTemperature.cachedOutdoorTemp = -3.40282347E+38f;
-			GenTemperature.cachedSeasonalTemp = -3.40282347E+38f;
-			GenTemperature.cachedMonthlyTempAverages = null;
-		}
-
-		public static void GenTemperatureTick()
-		{
-			if (Find.TickManager.TicksGame % 60 == 4)
-			{
-				GenTemperature.UpdateCachedData();
-			}
-			if (Find.TickManager.TicksGame % 120 == 7)
-			{
-				GenTemperature.fastProcessedRoomIDs.Clear();
-				foreach (Region current in Find.RegionGrid.AllRegions)
-				{
-					if (current.Room != null && !GenTemperature.fastProcessedRoomIDs.Contains(current.Room.ID))
-					{
-						current.Room.TempTracker.EqualizeTemperature();
-						GenTemperature.fastProcessedRoomIDs.Add(current.Room.ID);
-					}
-				}
-			}
-		}
-
-		public static void UpdateCachedData()
-		{
-			GenTemperature.cachedOutdoorTemp = GenTemperature.OutdoorTemperatureAt(Find.TickManager.TicksAbs);
-			GenTemperature.cachedOutdoorTemp += Find.MapConditionManager.AggregateTemperatureOffset();
-			GenTemperature.cachedSeasonalTemp = GenTemperature.CalculateOutdoorTemperatureAtWorldCoords(Find.TickManager.TicksAbs, Find.Map.WorldCoords, false);
-		}
-
-		public static float AverageTemperatureAtWorldCoordsForMonth(IntVec2 worldCoords, Month month)
+		public static float AverageTemperatureAtTileForMonth(int tile, Month month)
 		{
 			int num = 30000;
 			int num2 = 300000 * (int)month;
@@ -125,24 +29,9 @@ namespace Verse
 			for (int i = 0; i < 120; i++)
 			{
 				int absTick = num2 + num + Mathf.RoundToInt((float)i / 120f * 300000f);
-				num3 += GenTemperature.GetTemperatureFromSeasonAtWorldCoords(absTick, worldCoords);
+				num3 += GenTemperature.GetTemperatureFromSeasonAtTile(absTick, tile);
 			}
 			return num3 / 120f;
-		}
-
-		public static bool SeasonAcceptableFor(ThingDef animalRace)
-		{
-			return GenTemperature.SeasonalTemp > animalRace.GetStatValueAbstract(StatDefOf.ComfyTemperatureMin, null) && GenTemperature.SeasonalTemp < animalRace.GetStatValueAbstract(StatDefOf.ComfyTemperatureMax, null);
-		}
-
-		public static bool OutdoorTemperatureAcceptableFor(ThingDef animalRace)
-		{
-			return GenTemperature.OutdoorTemp > animalRace.GetStatValueAbstract(StatDefOf.ComfyTemperatureMin, null) && GenTemperature.OutdoorTemp < animalRace.GetStatValueAbstract(StatDefOf.ComfyTemperatureMax, null);
-		}
-
-		public static bool SeasonAndOutdoorTemperatureAcceptableFor(ThingDef animalRace)
-		{
-			return GenTemperature.SeasonAcceptableFor(animalRace) && GenTemperature.OutdoorTemperatureAcceptableFor(animalRace);
 		}
 
 		public static FloatRange ComfortableTemperatureRange(this Pawn p)
@@ -158,25 +47,31 @@ namespace Verse
 			return result;
 		}
 
-		public static float GetTemperatureForCell(IntVec3 c)
+		public static float GetTemperatureForCell(IntVec3 c, Map map)
 		{
 			float result;
-			GenTemperature.TryGetTemperatureForCell(c, out result);
+			GenTemperature.TryGetTemperatureForCell(c, map, out result);
 			return result;
 		}
 
-		public static bool TryGetTemperatureForCell(IntVec3 c, out float tempResult)
+		public static bool TryGetTemperatureForCell(IntVec3 c, Map map, out float tempResult)
 		{
-			if (!c.InBounds())
+			if (map == null)
+			{
+				Log.Error("Got temperature for null map.");
+				tempResult = 21f;
+				return true;
+			}
+			if (!c.InBounds(map))
 			{
 				tempResult = 21f;
 				return false;
 			}
-			if (GenTemperature.TryGetDirectAirTemperatureForCell(c, out tempResult))
+			if (GenTemperature.TryGetDirectAirTemperatureForCell(c, map, out tempResult))
 			{
 				return true;
 			}
-			List<Thing> list = Find.ThingGrid.ThingsListAtFast(c);
+			List<Thing> list = map.thingGrid.ThingsListAtFast(c);
 			for (int i = 0; i < list.Count; i++)
 			{
 				if (list[i].def.passability == Traversability.Impassable)
@@ -187,19 +82,19 @@ namespace Verse
 			return false;
 		}
 
-		public static bool TryGetDirectAirTemperatureForCell(IntVec3 c, out float temperature)
+		public static bool TryGetDirectAirTemperatureForCell(IntVec3 c, Map map, out float temperature)
 		{
-			if (!c.InBounds())
+			if (!c.InBounds(map))
 			{
 				temperature = 21f;
 				return false;
 			}
-			if (c.Impassable())
+			if (c.Impassable(map))
 			{
 				temperature = 21f;
 				return false;
 			}
-			Room room = RoomQuery.RoomAt(c);
+			Room room = RoomQuery.RoomAt(c, map);
 			if (room == null)
 			{
 				temperature = 21f;
@@ -217,7 +112,7 @@ namespace Verse
 			for (int i = 0; i < list.Count; i++)
 			{
 				float num3;
-				if (list[i].InBounds() && GenTemperature.TryGetDirectAirTemperatureForCell(list[i], out num3))
+				if (list[i].InBounds(t.Map) && GenTemperature.TryGetDirectAirTemperatureForCell(list[i], t.Map, out num3))
 				{
 					num += num3;
 					num2++;
@@ -232,124 +127,68 @@ namespace Verse
 			return false;
 		}
 
-		private static float OutdoorTemperatureAt(int absTick)
+		public static float GetTemperatureAtCellOrCaravanTile(Pawn pawn)
 		{
-			return GenTemperature.CalculateOutdoorTemperatureAtWorldCoords(absTick, Find.Map.WorldCoords, true);
-		}
-
-		private static float CalculateOutdoorTemperatureAtWorldCoords(int absTick, IntVec2 worldCoords, bool includeDailyVariations)
-		{
-			if (absTick == 0)
+			float result;
+			if (!GenTemperature.TryGetTemperatureAtCellOrCaravanTile(pawn, out result))
 			{
-				absTick = 1;
+				result = 21f;
 			}
-			WorldSquare worldSquare = Find.World.grid.Get(worldCoords);
-			float num = worldSquare.temperature + GenTemperature.OffsetFromSeasonCycle(absTick, worldCoords);
-			if (includeDailyVariations)
+			return result;
+		}
+
+		public static bool TryGetTemperatureAtCellOrCaravanTile(Pawn pawn, out float temp)
+		{
+			if (pawn.MapHeld != null)
 			{
-				num += GenTemperature.OffsetFromDailyRandomVariation(absTick) + GenTemperature.OffsetFromSunCycle(absTick);
+				temp = GenTemperature.GetTemperatureForCell(pawn.PositionHeld, pawn.MapHeld);
+				return true;
 			}
-			return num;
+			Caravan caravan = pawn.GetCaravan();
+			if (caravan != null)
+			{
+				temp = GenTemperature.AverageTemperatureAtTileForMonth(caravan.Tile, GenLocalDate.Month(caravan.Tile));
+				return true;
+			}
+			temp = 21f;
+			return false;
 		}
 
-		private static float OffsetFromDailyRandomVariation(int absTick)
+		public static float OffsetFromSunCycle(int absTick, int tile)
 		{
-			return (float)GenTemperature.DailyVariationPerlin.GetValue((double)absTick, 0.0, 0.0) * 7f;
-		}
-
-		private static float OffsetFromSunCycle(int absTick)
-		{
-			float num = (float)(absTick % 60000) / 60000f;
+			float num = GenDate.DayPercent((long)absTick, Find.WorldGrid.LongLatOf(tile).x);
 			float f = 6.28318548f * (num + 0.32f);
 			return Mathf.Cos(f) * 7f;
 		}
 
-		private static float OffsetFromSeasonCycle(int absTick, IntVec2 worldCoords)
+		public static float OffsetFromSeasonCycle(int absTick, int tile)
 		{
 			float num = (float)(absTick / 60000 % 60) / 60f;
 			float f = 6.28318548f * num;
-			return Mathf.Cos(f) * -GenTemperature.SeasonalShiftAmplitudeAt(worldCoords);
+			return Mathf.Cos(f) * -GenTemperature.SeasonalShiftAmplitudeAt(tile);
 		}
 
-		private static float GetTemperatureFromSeasonAtWorldCoords(int absTick, IntVec2 worldCoords)
+		public static float GetTemperatureFromSeasonAtTile(int absTick, int tile)
 		{
 			if (absTick == 0)
 			{
 				absTick = 1;
 			}
-			WorldSquare worldSquare = Find.World.grid.Get(worldCoords);
-			return worldSquare.temperature + GenTemperature.OffsetFromSeasonCycle(absTick, worldCoords);
+			Tile tile2 = Find.WorldGrid[tile];
+			return tile2.temperature + GenTemperature.OffsetFromSeasonCycle(absTick, tile);
 		}
 
-		private static float SeasonalShiftAmplitudeAt(IntVec2 worldCoords)
+		public static float SeasonalShiftAmplitudeAt(int tile)
 		{
-			return TemperatureTuning.SeasonalTempVariationCurve.Evaluate(Find.World.DistanceFromEquatorNormalized(worldCoords));
+			return TemperatureTuning.SeasonalTempVariationCurve.Evaluate(Find.WorldGrid.DistanceFromEquatorNormalized(tile));
 		}
 
-		private static void RebuildMonthlyTemperatureAverages()
-		{
-			if (GenTemperature.cachedMonthlyTempAverages == null)
-			{
-				GenTemperature.cachedMonthlyTempAverages = new float[12];
-			}
-			for (int i = 0; i < 12; i++)
-			{
-				GenTemperature.cachedMonthlyTempAverages[i] = GenTemperature.AverageTemperatureAtWorldCoordsForMonth(Find.Map.WorldCoords, (Month)i);
-			}
-		}
-
-		private static float AverageTemperatureForMonth(Month month)
-		{
-			if (GenTemperature.cachedMonthlyTempAverages == null)
-			{
-				GenTemperature.RebuildMonthlyTemperatureAverages();
-			}
-			return GenTemperature.cachedMonthlyTempAverages[(int)month];
-		}
-
-		public static Month EarliestMonthInTemperatureRange(float minTemp, float maxTemp)
-		{
-			for (int i = 0; i < 12; i++)
-			{
-				float num = GenTemperature.AverageTemperatureForMonth((Month)i);
-				if (num >= minTemp && num <= maxTemp)
-				{
-					return (Month)i;
-				}
-			}
-			return Month.Undefined;
-		}
-
-		public static bool LocalSeasonsAreMeaningful()
-		{
-			bool flag = false;
-			bool flag2 = false;
-			for (int i = 0; i < 12; i++)
-			{
-				float num = GenTemperature.AverageTemperatureForMonth((Month)i);
-				if (num > 0f)
-				{
-					flag2 = true;
-				}
-				if (num < 0f)
-				{
-					flag = true;
-				}
-			}
-			return flag2 && flag;
-		}
-
-		public static List<Month> MonthsInTemperatureRange(float minTemp, float maxTemp)
-		{
-			return GenTemperature.MonthsInTemperatureRange(Find.Map.WorldCoords, minTemp, maxTemp);
-		}
-
-		public static List<Month> MonthsInTemperatureRange(IntVec2 worldCoords, float minTemp, float maxTemp)
+		public static List<Month> MonthsInTemperatureRange(int tile, float minTemp, float maxTemp)
 		{
 			List<Month> months = new List<Month>();
 			for (int i = 0; i < 12; i++)
 			{
-				float num = GenTemperature.AverageTemperatureAtWorldCoordsForMonth(worldCoords, (Month)i);
+				float num = GenTemperature.AverageTemperatureAtTileForMonth(tile, (Month)i);
 				if (num >= minTemp && num <= maxTemp)
 				{
 					months.Add((Month)i);
@@ -383,9 +222,9 @@ namespace Verse
 			return months;
 		}
 
-		public static bool PushHeat(IntVec3 c, float energy)
+		public static bool PushHeat(IntVec3 c, Map map, float energy)
 		{
-			Room room = c.GetRoom();
+			Room room = c.GetRoom(map);
 			if (room != null)
 			{
 				return room.PushHeat(energy);
@@ -394,9 +233,9 @@ namespace Verse
 			for (int i = 0; i < 8; i++)
 			{
 				IntVec3 intVec = c + GenAdj.AdjacentCells[i];
-				if (intVec.InBounds())
+				if (intVec.InBounds(map))
 				{
-					room = intVec.GetRoom();
+					room = intVec.GetRoom(map);
 					if (room != null)
 					{
 						GenTemperature.neighRooms.Add(room);
@@ -416,17 +255,17 @@ namespace Verse
 			IntVec3 c;
 			if (t.def.passability != Traversability.Impassable)
 			{
-				GenTemperature.PushHeat(t.Position, energy);
+				GenTemperature.PushHeat(t.Position, t.Map, energy);
 			}
 			else if (GenAdj.TryFindRandomWalkableAdjacentCell8Way(t, out c))
 			{
-				GenTemperature.PushHeat(c, energy);
+				GenTemperature.PushHeat(c, t.Map, energy);
 			}
 		}
 
-		public static float ControlTemperatureTempChange(IntVec3 cell, float energyLimit, float targetTemperature)
+		public static float ControlTemperatureTempChange(IntVec3 cell, Map map, float energyLimit, float targetTemperature)
 		{
-			Room room = RoomQuery.RoomAt(cell);
+			Room room = RoomQuery.RoomAt(cell, map);
 			if (room == null || room.UsesOutdoorTemperature)
 			{
 				return 0f;
@@ -447,22 +286,41 @@ namespace Verse
 			return num;
 		}
 
-		public static void EqualizeTemperaturesThroughBuilding(Building b, float rate)
+		public static void EqualizeTemperaturesThroughBuilding(Building b, float rate, bool twoWay)
 		{
-			Room[] array = new Room[4];
 			int num = 0;
 			float num2 = 0f;
-			for (int i = 0; i < 4; i++)
+			if (twoWay)
 			{
-				IntVec3 intVec = b.Position + GenAdj.CardinalDirections[i];
-				if (intVec.InBounds())
+				for (int i = 0; i < 2; i++)
 				{
-					Room room = intVec.GetRoom();
-					if (room != null)
+					IntVec3 intVec = (i != 0) ? (b.Position - b.Rotation.FacingCell) : (b.Position + b.Rotation.FacingCell);
+					if (intVec.InBounds(b.Map))
 					{
-						num2 += room.Temperature;
-						array[num] = room;
-						num++;
+						Room room = intVec.GetRoom(b.Map);
+						if (room != null)
+						{
+							num2 += room.Temperature;
+							GenTemperature.beqRooms[num] = room;
+							num++;
+						}
+					}
+				}
+			}
+			else
+			{
+				for (int j = 0; j < 4; j++)
+				{
+					IntVec3 intVec2 = b.Position + GenAdj.CardinalDirections[j];
+					if (intVec2.InBounds(b.Map))
+					{
+						Room room2 = intVec2.GetRoom(b.Map);
+						if (room2 != null)
+						{
+							num2 += room2.Temperature;
+							GenTemperature.beqRooms[num] = room2;
+							num++;
+						}
 					}
 				}
 			}
@@ -471,24 +329,49 @@ namespace Verse
 				return;
 			}
 			float num3 = num2 / (float)num;
-			Room room2 = b.Position.GetRoom();
-			if (room2 != null)
+			Room room3 = b.GetRoom();
+			if (room3 != null)
 			{
-				room2.Temperature = num3;
+				room3.Temperature = num3;
 			}
-			for (int j = 0; j < num; j++)
+			if (num == 1)
 			{
-				float temperature = array[j].Temperature;
-				float num4 = num3 - temperature;
-				float num5 = num4 * rate;
-				array[j].PushHeat(num5);
-				if (num5 > 0f && array[j].Temperature > num3)
+				return;
+			}
+			float num4 = 1f;
+			for (int k = 0; k < num; k++)
+			{
+				if (!GenTemperature.beqRooms[k].UsesOutdoorTemperature)
 				{
-					array[j].Temperature = num3;
+					float temperature = GenTemperature.beqRooms[k].Temperature;
+					float num5 = num3 - temperature;
+					float num6 = num5 * rate;
+					float num7 = num6 / (float)GenTemperature.beqRooms[k].CellCount;
+					float num8 = GenTemperature.beqRooms[k].Temperature + num7;
+					if (num6 > 0f && num8 > num3)
+					{
+						num8 = num3;
+					}
+					else if (num6 < 0f && num8 < num3)
+					{
+						num8 = num3;
+					}
+					float num9 = Mathf.Abs((num8 - temperature) * (float)GenTemperature.beqRooms[k].CellCount / num6);
+					if (num9 < num4)
+					{
+						num4 = num9;
+					}
 				}
-				if (num5 < 0f && array[j].Temperature < num3)
+			}
+			for (int l = 0; l < num; l++)
+			{
+				if (!GenTemperature.beqRooms[l].UsesOutdoorTemperature)
 				{
-					array[j].Temperature = num3;
+					float temperature2 = GenTemperature.beqRooms[l].Temperature;
+					float num10 = num3 - temperature2;
+					float num11 = num10 * rate * num4;
+					float num12 = num11 / (float)GenTemperature.beqRooms[l].CellCount;
+					GenTemperature.beqRooms[l].Temperature += num12;
 				}
 			}
 		}
@@ -506,11 +389,11 @@ namespace Verse
 			return temperature / 10f;
 		}
 
-		public static bool FactionOwnsRoomInTemperatureRange(Faction faction, FloatRange tempRange)
+		public static bool FactionOwnsRoomInTemperatureRange(Faction faction, FloatRange tempRange, Map map)
 		{
 			if (faction == Faction.OfPlayer)
 			{
-				List<Room> allRooms = Find.RegionGrid.allRooms;
+				List<Room> allRooms = map.regionGrid.allRooms;
 				for (int i = 0; i < allRooms.Count; i++)
 				{
 					if (tempRange.Includes(allRooms[i].Temperature))
@@ -568,48 +451,6 @@ namespace Verse
 				break;
 			}
 			return temp;
-		}
-
-		public static void DebugLogTemps()
-		{
-			StringBuilder stringBuilder = new StringBuilder();
-			stringBuilder.AppendLine("-----Temperature for each hour this day------");
-			stringBuilder.AppendLine("Hour    Temp    SunEffect");
-			int num = Find.TickManager.TicksAbs - Find.TickManager.TicksAbs % 60000;
-			for (int i = 0; i < 24; i++)
-			{
-				int absTick = num + i * 2500;
-				stringBuilder.Append(i.ToString().PadRight(5));
-				stringBuilder.Append(GenTemperature.OutdoorTemperatureAt(absTick).ToString("F2").PadRight(8));
-				stringBuilder.Append(GenTemperature.OffsetFromSunCycle(absTick).ToString("F2"));
-				stringBuilder.AppendLine();
-			}
-			stringBuilder.AppendLine();
-			stringBuilder.AppendLine("-----Temperature for each month this year------");
-			for (int j = 0; j < 12; j++)
-			{
-				float num2 = GenTemperature.AverageTemperatureForMonth((Month)j);
-				stringBuilder.AppendLine(((Month)j).ToString() + " " + num2.ToString("F2"));
-			}
-			stringBuilder.AppendLine();
-			stringBuilder.AppendLine("-----Temperature for each day this year------");
-			stringBuilder.AppendLine("World square avg: " + Find.Map.WorldSquare.temperature + "°C");
-			stringBuilder.AppendLine("Seasonal shift: " + GenTemperature.SeasonalShiftAmplitudeAt(Find.Map.WorldCoords));
-			stringBuilder.AppendLine("Equatorial distance: " + Find.World.DistanceFromEquatorNormalized(Find.Map.WorldCoords));
-			stringBuilder.AppendLine();
-			stringBuilder.AppendLine("Day  Lo   Hi   AvgDailyTemp RandomDailyVariation");
-			for (int k = 0; k < 180; k++)
-			{
-				int absTick2 = (int)((float)(k * 60000) + 15000f);
-				int absTick3 = (int)((float)(k * 60000) + 45000f);
-				stringBuilder.Append(k.ToString().PadRight(8));
-				stringBuilder.Append(GenTemperature.OutdoorTemperatureAt(absTick2).ToString("F2").PadRight(11));
-				stringBuilder.Append(GenTemperature.OutdoorTemperatureAt(absTick3).ToString("F2").PadRight(11));
-				stringBuilder.Append(GenTemperature.OffsetFromSeasonCycle(absTick3, Find.Map.WorldCoords).ToString("F2").PadRight(11));
-				stringBuilder.Append(GenTemperature.OffsetFromDailyRandomVariation(absTick3).ToString("F2"));
-				stringBuilder.AppendLine();
-			}
-			Log.Message(stringBuilder.ToString());
 		}
 	}
 }

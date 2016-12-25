@@ -1,3 +1,4 @@
+using RimWorld.Planet;
 using System;
 using Verse;
 
@@ -7,7 +8,7 @@ namespace RimWorld
 	{
 		public bool active;
 
-		public Thing culprit;
+		public GlobalTargetInfo culprit;
 
 		public static AlertReport Active
 		{
@@ -15,7 +16,8 @@ namespace RimWorld
 			{
 				return new AlertReport
 				{
-					active = true
+					active = true,
+					culprit = GlobalTargetInfo.Invalid
 				};
 			}
 		}
@@ -26,16 +28,17 @@ namespace RimWorld
 			{
 				return new AlertReport
 				{
-					active = false
+					active = false,
+					culprit = GlobalTargetInfo.Invalid
 				};
 			}
 		}
 
-		public static AlertReport CulpritIs(Thing culp)
+		public static AlertReport CulpritIs(GlobalTargetInfo culp)
 		{
 			return new AlertReport
 			{
-				active = (culp != null),
+				active = culp.IsValid,
 				culprit = culp
 			};
 		}
@@ -44,11 +47,22 @@ namespace RimWorld
 		{
 			return new AlertReport
 			{
-				active = b
+				active = b,
+				culprit = GlobalTargetInfo.Invalid
 			};
 		}
 
 		public static implicit operator AlertReport(Thing culprit)
+		{
+			return AlertReport.CulpritIs(culprit);
+		}
+
+		public static implicit operator AlertReport(WorldObject culprit)
+		{
+			return AlertReport.CulpritIs(culprit);
+		}
+
+		public static implicit operator AlertReport(GlobalTargetInfo culprit)
 		{
 			return AlertReport.CulpritIs(culprit);
 		}

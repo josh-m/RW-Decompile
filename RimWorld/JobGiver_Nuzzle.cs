@@ -16,10 +16,10 @@ namespace RimWorld
 			{
 				return null;
 			}
-			List<Pawn> source = Find.MapPawns.SpawnedPawnsInFaction(pawn.Faction);
+			List<Pawn> source = pawn.Map.mapPawns.SpawnedPawnsInFaction(pawn.Faction);
 			Pawn t;
 			if (!(from p in source
-			where p.RaceProps.Humanlike && p.Position.InHorDistOf(pawn.Position, 15f) && pawn.GetRoom() == p.GetRoom() && !p.Position.IsForbidden(pawn) && pawn.CasualInterruptibleNow() && !pawn.InBed()
+			where p.RaceProps.Humanlike && p.Position.InHorDistOf(pawn.Position, 15f) && pawn.GetRoom() == p.GetRoom() && !p.Position.IsForbidden(pawn) && p.CanCasuallyInteractNow(false)
 			select p).TryRandomElement(out t))
 			{
 				return null;

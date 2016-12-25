@@ -7,44 +7,52 @@ namespace RimWorld
 {
 	public static class MarriageCeremonyUtility
 	{
-		public static bool AcceptableMapConditionsToStartCeremony()
+		public static bool AcceptableMapConditionsToStartCeremony(Map map)
 		{
-			if (!MarriageCeremonyUtility.AcceptableMapConditionsToContinueCeremony())
+			if (!MarriageCeremonyUtility.AcceptableMapConditionsToContinueCeremony(map))
 			{
 				return false;
 			}
-			if (GenDate.HourInt < 5 || GenDate.HourInt > 16)
+			if (GenLocalDate.HourInt(map) < 5 || GenLocalDate.HourInt(map) > 16)
 			{
 				return false;
 			}
-			if (Find.StoryWatcher.watcherDanger.DangerRating != StoryDanger.None)
+			List<Lord> lords = map.lordManager.lords;
+			for (int i = 0; i < lords.Count; i++)
+			{
+				if (lords[i].LordJob is LordJob_Joinable_Party || lords[i].LordJob is LordJob_Joinable_MarriageCeremony)
+				{
+					return false;
+				}
+			}
+			if (map.dangerWatcher.DangerRating != StoryDanger.None)
 			{
 				return false;
 			}
 			int num = 0;
-			foreach (Pawn current in Find.MapPawns.FreeColonistsSpawned)
+			foreach (Pawn current in map.mapPawns.FreeColonistsSpawned)
 			{
 				if (current.Drafted)
 				{
 					num++;
 				}
 			}
-			return (float)num / (float)Find.MapPawns.FreeColonistsSpawnedCount < 0.5f;
+			return (float)num / (float)map.mapPawns.FreeColonistsSpawnedCount < 0.5f;
 		}
 
-		public static bool AcceptableMapConditionsToContinueCeremony()
+		public static bool AcceptableMapConditionsToContinueCeremony(Map map)
 		{
-			return Find.StoryWatcher.watcherDanger.DangerRating != StoryDanger.High;
+			return map.dangerWatcher.DangerRating != StoryDanger.High;
 		}
 
 		public static bool FianceReadyToStartCeremony(Pawn pawn)
 		{
-			return MarriageCeremonyUtility.FianceCanContinueCeremony(pawn) && pawn.health.hediffSet.BleedingRate <= 0f && !pawn.health.NeedsMedicalRest && !PawnUtility.WillSoonHaveBasicNeed(pawn) && !MarriageCeremonyUtility.IsCurrentlyMarryingSomeone(pawn) && (!pawn.Drafted && !pawn.InMentalState && pawn.Awake() && !pawn.IsBurning()) && !pawn.InBed();
+			return MarriageCeremonyUtility.FianceCanContinueCeremony(pawn) && pawn.health.hediffSet.BleedRateTotal <= 0f && !HealthAIUtility.ShouldSeekMedicalRestUrgent(pawn) && !PawnUtility.WillSoonHaveBasicNeed(pawn) && !MarriageCeremonyUtility.IsCurrentlyMarryingSomeone(pawn) && (!pawn.Drafted && !pawn.InMentalState && pawn.Awake() && !pawn.IsBurning()) && !pawn.InBed();
 		}
 
 		public static bool FianceCanContinueCeremony(Pawn pawn)
 		{
-			if (pawn.health.hediffSet.BleedingRate > 0.3f)
+			if (pawn.health.hediffSet.BleedRateTotal > 0.3f)
 			{
 				return false;
 			}
@@ -70,8 +78,8 @@ namespace RimWorld
 			firstPawn.relations.AddDirectRelation(PawnRelationDefOf.Spouse, secondPawn);
 			MarriageCeremonyUtility.AddNewlyMarriedThoughts(firstPawn, secondPawn);
 			MarriageCeremonyUtility.AddNewlyMarriedThoughts(secondPawn, firstPawn);
-			firstPawn.needs.mood.thoughts.memories.RemoveSocialMemoryThoughts(ThoughtDefOf.DivorcedMe, secondPawn);
-			secondPawn.needs.mood.thoughts.memories.RemoveSocialMemoryThoughts(ThoughtDefOf.DivorcedMe, firstPawn);
+			firstPawn.needs.mood.thoughts.memories.RemoveMemoryThoughtsOfDefWhereOtherPawnIs(ThoughtDefOf.DivorcedMe, secondPawn);
+			secondPawn.needs.mood.thoughts.memories.RemoveMemoryThoughtsOfDefWhereOtherPawnIs(ThoughtDefOf.DivorcedMe, firstPawn);
 			LovePartnerRelationUtility.TryToShareBed(firstPawn, secondPawn);
 			TaleRecorder.RecordTale(TaleDefOf.Marriage, new object[]
 			{
@@ -82,15 +90,17 @@ namespace RimWorld
 
 		private static void AddNewlyMarriedThoughts(Pawn pawn, Pawn otherPawn)
 		{
-			Thought_Memory thought_Memory = (Thought_Memory)ThoughtMaker.MakeThought(ThoughtDefOf.GotMarried);
-			thought_Memory.subject = otherPawn.LabelShort;
-			pawn.needs.mood.thoughts.memories.TryGainMemoryThought(thought_Memory, null);
+			pawn.needs.mood.thoughts.memories.TryGainMemoryThought(ThoughtDefOf.GotMarried, otherPawn);
 			pawn.needs.mood.thoughts.memories.TryGainMemoryThought(ThoughtDefOf.HoneymoonPhase, otherPawn);
 		}
 
 		private static bool IsCurrentlyMarryingSomeone(Pawn p)
 		{
-			List<Lord> lords = Find.LordManager.lords;
+			if (!p.Spawned)
+			{
+				return false;
+			}
+			List<Lord> lords = p.Map.lordManager.lords;
 			for (int i = 0; i < lords.Count; i++)
 			{
 				LordJob_Joinable_MarriageCeremony lordJob_Joinable_MarriageCeremony = lords[i].LordJob as LordJob_Joinable_MarriageCeremony;

@@ -11,6 +11,8 @@ namespace RimWorld
 
 		public static IncidentDef WandererJoin;
 
+		public static IncidentDef JourneyOffer;
+
 		public static IncidentDef RaidEnemy;
 
 		public static IncidentDef RaidFriendly;
@@ -26,5 +28,7 @@ namespace RimWorld
 		public static IncidentDef ToxicFallout;
 
 		public static IncidentDef SolarFlare;
+
+		public static IncidentDef ManhunterPack;
 	}
 }

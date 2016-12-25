@@ -13,13 +13,16 @@ namespace Verse.AI
 
 		protected bool forceCanDig;
 
-		public override ThinkNode DeepCopy()
+		protected bool failIfCantJoinOrCreateCaravan;
+
+		public override ThinkNode DeepCopy(bool resolve = true)
 		{
-			JobGiver_ExitMap jobGiver_ExitMap = (JobGiver_ExitMap)base.DeepCopy();
+			JobGiver_ExitMap jobGiver_ExitMap = (JobGiver_ExitMap)base.DeepCopy(resolve);
 			jobGiver_ExitMap.defaultLocomotion = this.defaultLocomotion;
 			jobGiver_ExitMap.jobMaxDuration = this.jobMaxDuration;
 			jobGiver_ExitMap.canBash = this.canBash;
 			jobGiver_ExitMap.forceCanDig = this.forceCanDig;
+			jobGiver_ExitMap.failIfCantJoinOrCreateCaravan = this.failIfCantJoinOrCreateCaravan;
 			return jobGiver_ExitMap;
 		}
 
@@ -30,14 +33,14 @@ namespace Verse.AI
 			{
 				flag = true;
 			}
-			IntVec3 vec;
-			if (!this.TryFindGoodExitDest(pawn, flag, out vec))
+			IntVec3 c;
+			if (!this.TryFindGoodExitDest(pawn, flag, out c))
 			{
 				return null;
 			}
 			if (flag)
 			{
-				using (PawnPath pawnPath = PathFinder.FindPath(pawn.Position, vec, TraverseParms.For(pawn, Danger.Deadly, TraverseMode.PassAnything, false), PathEndMode.OnCell))
+				using (PawnPath pawnPath = pawn.Map.pathFinder.FindPath(pawn.Position, c, TraverseParms.For(pawn, Danger.Deadly, TraverseMode.PassAnything, false), PathEndMode.OnCell))
 				{
 					IntVec3 cellBeforeBlocker;
 					Thing thing = pawnPath.FirstBlockingBuilding(out cellBeforeBlocker, pawn);
@@ -51,9 +54,10 @@ namespace Verse.AI
 					}
 				}
 			}
-			return new Job(JobDefOf.Goto, vec)
+			return new Job(JobDefOf.Goto, c)
 			{
 				exitMapOnArrival = true,
+				failIfCantJoinOrCreateCaravan = this.failIfCantJoinOrCreateCaravan,
 				locomotionUrgency = PawnUtility.ResolveLocomotion(pawn, this.defaultLocomotion, LocomotionUrgency.Jog),
 				expiryInterval = this.jobMaxDuration,
 				canBash = this.canBash

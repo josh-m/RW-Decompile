@@ -7,6 +7,8 @@ namespace RimWorld
 	{
 		private const int TicksBuffer = 30000;
 
+		private Map map;
+
 		private int growthSeasonUntilTick = -1;
 
 		private int noGrowUntilTick = -1;
@@ -19,13 +21,18 @@ namespace RimWorld
 			}
 		}
 
+		public TemperatureMemory(Map map)
+		{
+			this.map = map;
+		}
+
 		public void GrowthSeasonMemoryTick()
 		{
-			if (GenTemperature.OutdoorTemp > 0f && GenTemperature.OutdoorTemp < 58f)
+			if (this.map.mapTemperature.OutdoorTemp > 0f && this.map.mapTemperature.OutdoorTemp < 58f)
 			{
 				this.growthSeasonUntilTick = Find.TickManager.TicksGame + 30000;
 			}
-			else if (GenTemperature.OutdoorTemp < -2f)
+			else if (this.map.mapTemperature.OutdoorTemp < -2f)
 			{
 				this.growthSeasonUntilTick = -1;
 				this.noGrowUntilTick = Find.TickManager.TicksGame + 30000;

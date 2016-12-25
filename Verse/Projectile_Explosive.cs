@@ -39,10 +39,11 @@ namespace Verse
 
 		protected virtual void Explode()
 		{
+			Map map = base.Map;
 			this.Destroy(DestroyMode.Vanish);
 			ThingDef preExplosionSpawnThingDef = this.def.projectile.preExplosionSpawnThingDef;
 			float explosionSpawnChance = this.def.projectile.explosionSpawnChance;
-			GenExplosion.DoExplosion(base.Position, this.def.projectile.explosionRadius, this.def.projectile.damageDef, this.launcher, this.def.projectile.soundExplode, this.def, this.equipmentDef, this.def.projectile.postExplosionSpawnThingDef, this.def.projectile.explosionSpawnChance, 1, false, preExplosionSpawnThingDef, explosionSpawnChance, 1);
+			GenExplosion.DoExplosion(base.Position, map, this.def.projectile.explosionRadius, this.def.projectile.damageDef, this.launcher, this.def.projectile.soundExplode, this.def, this.equipmentDef, this.def.projectile.postExplosionSpawnThingDef, this.def.projectile.explosionSpawnChance, 1, false, preExplosionSpawnThingDef, explosionSpawnChance, 1);
 		}
 	}
 }

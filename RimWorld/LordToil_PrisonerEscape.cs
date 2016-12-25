@@ -68,6 +68,16 @@ namespace RimWorld
 			}
 		}
 
+		public override void LordToilTick()
+		{
+			base.LordToilTick();
+			for (int i = 0; i < this.lord.ownedPawns.Count; i++)
+			{
+				Pawn pawn = this.lord.ownedPawns[i];
+				pawn.guilt.Notify_Guilty();
+			}
+		}
+
 		private Pawn GetLeader()
 		{
 			for (int i = 0; i < this.lord.ownedPawns.Count; i++)

@@ -14,14 +14,6 @@ namespace RimWorld
 
 		private int lastActiveFrame = -1;
 
-		public override AlertPriority Priority
-		{
-			get
-			{
-				return AlertPriority.Critical;
-			}
-		}
-
 		protected override Color BGColor
 		{
 			get
@@ -31,14 +23,19 @@ namespace RimWorld
 			}
 		}
 
+		public Alert_Critical()
+		{
+			this.defaultPriority = AlertPriority.Critical;
+		}
+
 		public override void AlertActiveUpdate()
 		{
 			if (this.lastActiveFrame < Time.frameCount - 1)
 			{
 				Messages.Message("MessageCriticalAlert".Translate(new object[]
 				{
-					this.FullLabel
-				}), this.Report.culprit, MessageSound.SeriousAlert);
+					this.GetLabel()
+				}), this.GetReport().culprit, MessageSound.SeriousAlert);
 			}
 			this.lastActiveFrame = Time.frameCount;
 		}

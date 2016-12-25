@@ -52,10 +52,10 @@ namespace RimWorld
 		{
 			if (!this.UsingNutrientPasteDispenser)
 			{
-				this.FailOn(() => !this.<>f__this.IngestibleSource.IngestibleNow);
+				this.FailOn(() => !this.<>f__this.IngestibleSource.Destroyed && !this.<>f__this.IngestibleSource.IngestibleNow);
 			}
 			float durationMultiplier = 1f / this.pawn.GetStatValue(StatDefOf.EatingSpeed, true);
-			Toil chew = Toils_Ingest.ChewIngestible(this.pawn, durationMultiplier, TargetIndex.A, TargetIndex.B).FailOn((Toil x) => !this.<>f__this.IngestibleSource.Spawned && (this.<>f__this.pawn.carrier == null || this.<>f__this.pawn.carrier.CarriedThing != this.<>f__this.IngestibleSource));
+			Toil chew = Toils_Ingest.ChewIngestible(this.pawn, durationMultiplier, TargetIndex.A, TargetIndex.B).FailOn((Toil x) => !this.<>f__this.IngestibleSource.Spawned && (this.<>f__this.pawn.carryTracker == null || this.<>f__this.pawn.carryTracker.CarriedThing != this.<>f__this.IngestibleSource));
 			foreach (Toil toil in this.PrepareToIngestToils(chew))
 			{
 				yield return toil;
@@ -107,10 +107,10 @@ namespace RimWorld
 				Toil findExtraFoodToCollect = new Toil();
 				findExtraFoodToCollect.initAction = delegate
 				{
-					if (this.<>f__this.pawn.inventory.container.TotalStackCountOfDef(this.<>f__this.IngestibleSource.def) < this.<>f__this.CurJob.takeExtraIngestibles)
+					if (this.<>f__this.pawn.inventory.innerContainer.TotalStackCountOfDef(this.<>f__this.IngestibleSource.def) < this.<>f__this.CurJob.takeExtraIngestibles)
 					{
 						Predicate<Thing> validator = (Thing x) => this.<>f__this.pawn.CanReserve(x, 1) && !x.IsForbidden(this.<>f__this.pawn) && x.IsSociallyProper(this.<>f__this.pawn);
-						Thing thing = GenClosest.ClosestThingReachable(this.<>f__this.pawn.Position, ThingRequest.ForDef(this.<>f__this.IngestibleSource.def), PathEndMode.Touch, TraverseParms.For(this.<>f__this.pawn, Danger.Deadly, TraverseMode.ByPawn, false), 12f, validator, null, -1, false);
+						Thing thing = GenClosest.ClosestThingReachable(this.<>f__this.pawn.Position, this.<>f__this.pawn.Map, ThingRequest.ForDef(this.<>f__this.IngestibleSource.def), PathEndMode.Touch, TraverseParms.For(this.<>f__this.pawn, Danger.Deadly, TraverseMode.ByPawn, false), 12f, validator, null, -1, false);
 						if (thing != null)
 						{
 							this.<>f__this.pawn.CurJob.SetTarget(TargetIndex.C, thing);
@@ -122,7 +122,7 @@ namespace RimWorld
 				yield return Toils_Jump.Jump(findExtraFoodToCollect);
 				yield return reserveExtraFoodToCollect;
 				yield return Toils_Goto.GotoThing(TargetIndex.C, PathEndMode.Touch);
-				yield return Toils_Haul.TakeToInventory(TargetIndex.C, () => this.<>f__this.CurJob.takeExtraIngestibles - this.<>f__this.pawn.inventory.container.TotalStackCountOfDef(this.<>f__this.IngestibleSource.def));
+				yield return Toils_Haul.TakeToInventory(TargetIndex.C, () => this.<>f__this.CurJob.takeExtraIngestibles - this.<>f__this.pawn.inventory.innerContainer.TotalStackCountOfDef(this.<>f__this.IngestibleSource.def));
 				yield return findExtraFoodToCollect;
 			}
 			yield return Toils_Ingest.CarryIngestibleToChewSpot(this.pawn, TargetIndex.A).FailOnDestroyedNullOrForbidden(TargetIndex.A);
@@ -150,12 +150,12 @@ namespace RimWorld
 					int num = FoodUtility.WillIngestStackCountOf(this.pawn, thing.def);
 					if (num >= thing.stackCount)
 					{
-						if (!thing.Spawned || !Find.Reservations.CanReserve(this.pawn, thing, 1))
+						if (!thing.Spawned || !base.Map.reservationManager.CanReserve(this.pawn, thing, 1))
 						{
-							this.pawn.jobs.EndCurrentJob(JobCondition.Incompletable);
+							this.pawn.jobs.EndCurrentJob(JobCondition.Incompletable, true);
 							return;
 						}
-						Find.Reservations.Reserve(this.pawn, thing, 1);
+						this.pawn.Reserve(thing, 1);
 					}
 				},
 				defaultCompleteMode = ToilCompleteMode.Instant
@@ -174,12 +174,12 @@ namespace RimWorld
 			{
 				return false;
 			}
-			Thing carriedThing = pawn.carrier.CarriedThing;
+			Thing carriedThing = pawn.carryTracker.CarriedThing;
 			if (carriedThing == null || !carriedThing.IngestibleNow)
 			{
 				return false;
 			}
-			if (placeCell.IsValid && placeCell.AdjacentToCardinal(pawn.Position) && placeCell.HasEatSurface() && carriedThing.def.ingestible.ingestHoldUsesTable)
+			if (placeCell.IsValid && placeCell.AdjacentToCardinal(pawn.Position) && placeCell.HasEatSurface(pawn.Map) && carriedThing.def.ingestible.ingestHoldUsesTable)
 			{
 				drawPos = new Vector3((float)placeCell.x + 0.5f, drawPos.y, (float)placeCell.z + 0.5f);
 				return true;

@@ -46,7 +46,7 @@ namespace RimWorld
 			this.ticksSinceMaintain += 250;
 			if (this.CurStage == MaintainableStage.Damaging)
 			{
-				this.parent.TakeDamage(new DamageInfo(DamageDefOf.Deterioration, this.Props.damagePerTickRare, null, null, null));
+				this.parent.TakeDamage(new DamageInfo(DamageDefOf.Deterioration, this.Props.damagePerTickRare, -1f, null, null, null));
 			}
 		}
 

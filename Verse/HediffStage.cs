@@ -40,7 +40,7 @@ namespace Verse
 
 		public bool destroyPart;
 
-		public HediffDef makeImmuneTo;
+		public List<HediffDef> makeImmuneTo;
 
 		public TaleDef tale;
 

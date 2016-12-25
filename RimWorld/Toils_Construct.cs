@@ -62,7 +62,7 @@ namespace RimWorld
 				{
 					Thing thing = curJob.GetTarget(thingInd).Thing;
 					MinifiedThing minifiedThing = thing.MakeMinified();
-					GenSpawn.Spawn(minifiedThing, thing.Position);
+					GenSpawn.Spawn(minifiedThing, thing.Position, uninstallIfMinifiable.actor.Map);
 					curJob.SetTarget(thingInd, minifiedThing);
 					actor.jobs.curDriver.ReadyForNextToil();
 					return;

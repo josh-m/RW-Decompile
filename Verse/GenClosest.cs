@@ -9,14 +9,14 @@ namespace Verse
 	{
 		private const int DefaultLocalTraverseRegionsBeforeGlobal = 30;
 
-		private static bool EarlyOutSearch(IntVec3 start, ThingRequest thingReq, IEnumerable<Thing> customGlobalSearchSet)
+		private static bool EarlyOutSearch(IntVec3 start, Map map, ThingRequest thingReq, IEnumerable<Thing> customGlobalSearchSet)
 		{
 			if (thingReq.group == ThingRequestGroup.Everything)
 			{
 				Log.Error("Cannot do ClosestThingReachable searching everything without restriction.");
 				return true;
 			}
-			if (!start.InBounds())
+			if (!start.InBounds(map))
 			{
 				Log.Error(string.Concat(new object[]
 				{
@@ -27,17 +27,17 @@ namespace Verse
 				}));
 				return true;
 			}
-			return thingReq.group == ThingRequestGroup.Nothing || (customGlobalSearchSet == null && !thingReq.IsUndefined && Find.ListerThings.ThingsMatching(thingReq).Count == 0);
+			return thingReq.group == ThingRequestGroup.Nothing || (customGlobalSearchSet == null && !thingReq.IsUndefined && map.listerThings.ThingsMatching(thingReq).Count == 0);
 		}
 
-		public static Thing ClosestThingReachable(IntVec3 root, ThingRequest thingReq, PathEndMode peMode, TraverseParms traverseParams, float maxDistance = 9999f, Predicate<Thing> validator = null, IEnumerable<Thing> customGlobalSearchSet = null, int searchRegionsMax = -1, bool forceGlobalSearch = false)
+		public static Thing ClosestThingReachable(IntVec3 root, Map map, ThingRequest thingReq, PathEndMode peMode, TraverseParms traverseParams, float maxDistance = 9999f, Predicate<Thing> validator = null, IEnumerable<Thing> customGlobalSearchSet = null, int searchRegionsMax = -1, bool forceGlobalSearch = false)
 		{
 			ProfilerThreadCheck.BeginSample("ClosestThingReachable");
 			if (searchRegionsMax > 0 && customGlobalSearchSet != null && !forceGlobalSearch)
 			{
 				Log.ErrorOnce("searchRegionsMax > 0 && customGlobalSearchSet != null && !forceGlobalSearch. customGlobalSearchSet will never be used.", 634984);
 			}
-			if (GenClosest.EarlyOutSearch(root, thingReq, customGlobalSearchSet))
+			if (GenClosest.EarlyOutSearch(root, map, thingReq, customGlobalSearchSet))
 			{
 				ProfilerThreadCheck.EndSample();
 				return null;
@@ -46,21 +46,21 @@ namespace Verse
 			if (!thingReq.IsUndefined)
 			{
 				int maxRegions = (searchRegionsMax <= 0) ? 30 : searchRegionsMax;
-				thing = GenClosest.RegionwiseBFSWorker(root, thingReq, peMode, traverseParams, validator, null, 0, maxRegions, maxDistance);
+				thing = GenClosest.RegionwiseBFSWorker(root, map, thingReq, peMode, traverseParams, validator, null, 0, maxRegions, maxDistance);
 			}
 			if (thing == null && (searchRegionsMax < 0 || forceGlobalSearch))
 			{
-				Predicate<Thing> validator2 = (Thing t) => root.CanReach(t, peMode, traverseParams) && (validator == null || validator(t));
-				IEnumerable<Thing> searchSet = customGlobalSearchSet ?? Find.ListerThings.ThingsMatching(thingReq);
+				Predicate<Thing> validator2 = (Thing t) => map.reachability.CanReach(root, t, peMode, traverseParams) && (validator == null || validator(t));
+				IEnumerable<Thing> searchSet = customGlobalSearchSet ?? map.listerThings.ThingsMatching(thingReq);
 				thing = GenClosest.ClosestThing_Global(root, searchSet, maxDistance, validator2);
 			}
 			ProfilerThreadCheck.EndSample();
 			return thing;
 		}
 
-		public static Thing ClosestThing_Regionwise_ReachablePrioritized(IntVec3 root, ThingRequest thingReq, PathEndMode peMode, TraverseParms traverseParams, float maxDistance = 9999f, Predicate<Thing> validator = null, Func<Thing, float> priorityGetter = null, int minRegions = 24, int maxRegions = 30)
+		public static Thing ClosestThing_Regionwise_ReachablePrioritized(IntVec3 root, Map map, ThingRequest thingReq, PathEndMode peMode, TraverseParms traverseParams, float maxDistance = 9999f, Predicate<Thing> validator = null, Func<Thing, float> priorityGetter = null, int minRegions = 24, int maxRegions = 30)
 		{
-			if (GenClosest.EarlyOutSearch(root, thingReq, null))
+			if (GenClosest.EarlyOutSearch(root, map, thingReq, null))
 			{
 				return null;
 			}
@@ -72,13 +72,13 @@ namespace Verse
 			Thing result = null;
 			if (!thingReq.IsUndefined)
 			{
-				result = GenClosest.RegionwiseBFSWorker(root, thingReq, peMode, traverseParams, validator, priorityGetter, minRegions, maxRegions, maxDistance);
+				result = GenClosest.RegionwiseBFSWorker(root, map, thingReq, peMode, traverseParams, validator, priorityGetter, minRegions, maxRegions, maxDistance);
 			}
 			ProfilerThreadCheck.EndSample();
 			return result;
 		}
 
-		public static Thing RegionwiseBFSWorker(IntVec3 root, ThingRequest req, PathEndMode peMode, TraverseParms traverseParams, Predicate<Thing> validator, Func<Thing, float> priorityGetter, int minRegions, int maxRegions, float maxDistance)
+		public static Thing RegionwiseBFSWorker(IntVec3 root, Map map, ThingRequest req, PathEndMode peMode, TraverseParms traverseParams, Predicate<Thing> validator, Func<Thing, float> priorityGetter, int minRegions, int maxRegions, float maxDistance)
 		{
 			if (traverseParams.mode == TraverseMode.PassAnything)
 			{
@@ -86,7 +86,7 @@ namespace Verse
 				return null;
 			}
 			ProfilerThreadCheck.BeginSample("RegionwiseBFSWorker");
-			Region rootReg = Find.RegionGrid.GetValidRegionAt(root);
+			Region rootReg = map.regionGrid.GetValidRegionAt(root);
 			if (rootReg == null)
 			{
 				ProfilerThreadCheck.EndSample();
@@ -173,7 +173,7 @@ namespace Verse
 			return result;
 		}
 
-		public static Thing ClosestThing_Global_Reachable(IntVec3 center, IEnumerable<Thing> searchSet, PathEndMode peMode, TraverseParms traverseParams, float maxDistance = 9999f, Predicate<Thing> validator = null, Func<Thing, float> priorityGetter = null)
+		public static Thing ClosestThing_Global_Reachable(IntVec3 center, Map map, IEnumerable<Thing> searchSet, PathEndMode peMode, TraverseParms traverseParams, float maxDistance = 9999f, Predicate<Thing> validator = null, Func<Thing, float> priorityGetter = null)
 		{
 			ProfilerThreadCheck.BeginSample("ClosestThing_Global_Reachable");
 			if (searchSet == null)
@@ -203,7 +203,7 @@ namespace Verse
 					}
 					if (num4 > num3 || lengthHorizontalSquared < num6)
 					{
-						if (center.CanReach(current, peMode, traverseParams))
+						if (map.reachability.CanReach(center, current, peMode, traverseParams))
 						{
 							if (current.Spawned)
 							{

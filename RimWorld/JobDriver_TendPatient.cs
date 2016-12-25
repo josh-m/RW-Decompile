@@ -32,7 +32,7 @@ namespace RimWorld
 			this.FailOnDespawnedNullOrForbidden(TargetIndex.A);
 			this.FailOn(delegate
 			{
-				if (!this.<>f__this.Deliveree.InBed())
+				if (!WorkGiver_Tend.GoodLayingStatusForTend(this.<>f__this.Deliveree))
 				{
 					return true;
 				}
@@ -51,7 +51,7 @@ namespace RimWorld
 			});
 			this.AddEndCondition(delegate
 			{
-				if (this.<>f__this.Deliveree.health.ShouldBeTendedNow)
+				if (HealthAIUtility.ShouldBeTendedNow(this.<>f__this.Deliveree))
 				{
 					return JobCondition.Ongoing;
 				}
@@ -65,7 +65,7 @@ namespace RimWorld
 				yield return reserveTargetB;
 				yield return Toils_Goto.GotoThing(TargetIndex.B, PathEndMode.ClosestTouch).FailOnDespawnedNullOrForbidden(TargetIndex.B);
 				yield return Toils_Tend.PickupMedicine(TargetIndex.B, this.Deliveree).FailOnDestroyedOrNull(TargetIndex.B);
-				yield return Toils_Haul.CheckForGetOpportunityDuplicate(reserveTargetB, TargetIndex.B, TargetIndex.None);
+				yield return Toils_Haul.CheckForGetOpportunityDuplicate(reserveTargetB, TargetIndex.B, TargetIndex.None, false, null);
 			}
 			Toil gotoToil = Toils_Goto.GotoThing(TargetIndex.A, PathEndMode.InteractionCell);
 			yield return gotoToil;

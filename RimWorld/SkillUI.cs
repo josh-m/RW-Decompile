@@ -76,7 +76,8 @@ namespace RimWorld
 			if (!skill.TotallyDisabled)
 			{
 				Rect rect3 = new Rect(position.xMax, 0f, rect.width - position.xMax, rect.height);
-				Widgets.FillableBar(rect3, (float)skill.level / 20f, SkillUI.SkillBarFillTex, null, false);
+				float fillPercent = Mathf.Max(0.01f, (float)skill.Level / 20f);
+				Widgets.FillableBar(rect3, fillPercent, SkillUI.SkillBarFillTex, null, false);
 			}
 			Rect rect4 = new Rect(position.xMax + 4f, 0f, 999f, rect.height);
 			rect4.yMin += 3f;
@@ -88,7 +89,7 @@ namespace RimWorld
 			}
 			else
 			{
-				label = skill.level.ToStringCached();
+				label = skill.Level.ToStringCached();
 			}
 			GenUI.SetLabelAlign(TextAnchor.MiddleLeft);
 			Widgets.Label(rect4, label);
@@ -111,13 +112,13 @@ namespace RimWorld
 				{
 					"Level".Translate(),
 					" ",
-					sk.level,
+					sk.Level,
 					": ",
 					sk.LevelDescriptor
 				}));
-				if (Current.ProgramState == ProgramState.MapPlaying)
+				if (Current.ProgramState == ProgramState.Playing)
 				{
-					string text = (sk.level != 20) ? "ProgressToNextLevel".Translate() : "Experience".Translate();
+					string text = (sk.Level != 20) ? "ProgressToNextLevel".Translate() : "Experience".Translate();
 					stringBuilder.AppendLine(string.Concat(new object[]
 					{
 						text,

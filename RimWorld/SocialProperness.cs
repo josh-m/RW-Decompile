@@ -23,9 +23,9 @@ namespace RimWorld
 			IntVec3 intVec = (!t.def.hasInteractionCell) ? t.Position : t.InteractionCell;
 			if (forPrisoner)
 			{
-				return intVec.GetRoom() == p.GetRoom();
+				return intVec.GetRoom(t.Map) == p.GetRoom();
 			}
-			return !intVec.IsInPrisonCell();
+			return !intVec.IsInPrisonCell(t.Map);
 		}
 	}
 }

@@ -19,7 +19,7 @@ namespace RimWorld
 		[DebuggerHidden]
 		public override IEnumerable<Thing> PotentialWorkThingsGlobal(Pawn pawn)
 		{
-			foreach (Designation des in Find.DesignationManager.DesignationsOfDef(DesignationDefOf.Strip))
+			foreach (Designation des in pawn.Map.designationManager.DesignationsOfDef(DesignationDefOf.Strip))
 			{
 				if (!des.target.HasThing)
 				{
@@ -34,7 +34,7 @@ namespace RimWorld
 
 		public override bool HasJobOnThing(Pawn pawn, Thing t)
 		{
-			return Find.DesignationManager.DesignationOn(t, DesignationDefOf.Strip) != null && pawn.CanReserve(t, 1) && StrippableUtility.CanBeStrippedByColony(t);
+			return t.Map.designationManager.DesignationOn(t, DesignationDefOf.Strip) != null && pawn.CanReserve(t, 1) && StrippableUtility.CanBeStrippedByColony(t);
 		}
 
 		public override Job JobOnThing(Pawn pawn, Thing t)

@@ -78,7 +78,7 @@ namespace Verse
 		{
 			float num = 0f;
 			int num2 = 0;
-			IEnumerable<BodyPartRecord> enumerable = from x in diffSet.GetNotMissingParts(null, null)
+			IEnumerable<BodyPartRecord> enumerable = from x in diffSet.GetNotMissingParts(BodyPartHeight.Undefined, BodyPartDepth.Undefined)
 			where x.groups.Contains(bodyPartGroup)
 			select x;
 			foreach (BodyPartRecord current in enumerable)
@@ -135,6 +135,7 @@ namespace Verse
 			if (minEff > 0.001f)
 			{
 				float max = 99999f;
+				float postFactor = 1f;
 				Action<List<PawnCapacityModifier>, BodyPartRecord> action = delegate(List<PawnCapacityModifier> capMods, BodyPartRecord part)
 				{
 					for (int k = 0; k < capMods.Count; k++)
@@ -151,6 +152,7 @@ namespace Verse
 								}
 								minEff += pawnCapacityModifier.offset * num5;
 							}
+							postFactor *= pawnCapacityModifier.postFactor;
 							if (pawnCapacityModifier.setMax < max)
 							{
 								max = pawnCapacityModifier.setMax;
@@ -166,8 +168,9 @@ namespace Verse
 						action(capMods2, diffSet.hediffs[j].Part);
 					}
 				}
-				minEff += PawnCapacityUtility.PainCapacityEfficiencyOffset(diffSet, capacity);
-				minEff += PawnCapacityUtility.CapacityEfficiencyOffsetBasedOnOtherCapacities(diffSet, capacity);
+				minEff += PawnCapacityUtility.CapacityEfficiencyOffsetFromPain(diffSet, capacity);
+				minEff += PawnCapacityUtility.CapacityEfficiencyOffsetFromOtherCapacities(diffSet, capacity);
+				minEff *= postFactor;
 				if (minEff > max)
 				{
 					minEff = max;
@@ -176,16 +179,16 @@ namespace Verse
 			return Mathf.Max(minEff, capacity.minValue);
 		}
 
-		private static float PainCapacityEfficiencyOffset(HediffSet hediffs, PawnCapacityDef capacity)
+		private static float CapacityEfficiencyOffsetFromPain(HediffSet hediffs, PawnCapacityDef capacity)
 		{
 			if (capacity == PawnCapacityDefOf.Consciousness)
 			{
-				return -Mathf.Clamp(GenMath.LerpDouble(0.1f, 1f, 0f, 0.4f, hediffs.Pain), 0f, 0.4f);
+				return -Mathf.Clamp(GenMath.LerpDouble(0.1f, 1f, 0f, 0.4f, hediffs.PainTotal), 0f, 0.4f);
 			}
 			return 0f;
 		}
 
-		private static float CapacityEfficiencyOffsetBasedOnOtherCapacities(HediffSet hediffs, PawnCapacityDef capacity)
+		private static float CapacityEfficiencyOffsetFromOtherCapacities(HediffSet hediffs, PawnCapacityDef capacity)
 		{
 			float num = 0f;
 			if (capacity == PawnCapacityDefOf.Moving)

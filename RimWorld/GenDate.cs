@@ -30,6 +30,8 @@ namespace RimWorld
 
 		public const int TicksPerHour = 2500;
 
+		public const float TimeZoneWidth = 15f;
+
 		public const int DefaultStartingYear = 5500;
 
 		private static int TicksGame
@@ -96,91 +98,6 @@ namespace RimWorld
 			}
 		}
 
-		public static int HourOfDay
-		{
-			get
-			{
-				return GenDate.TicksAbs % 60000 / 2500;
-			}
-		}
-
-		public static int DayOfMonth
-		{
-			get
-			{
-				return GenDate.DayOfMonthZeroBasedAt((long)GenDate.TicksAbs);
-			}
-		}
-
-		public static int DayOfYear
-		{
-			get
-			{
-				if (Current.ProgramState == ProgramState.MapPlaying)
-				{
-					return GenDate.DayOfYearZeroBasedAt((long)GenDate.TicksAbs);
-				}
-				return 0;
-			}
-		}
-
-		public static Month CurrentMonth
-		{
-			get
-			{
-				return GenDate.MonthAt((long)GenDate.TicksAbs);
-			}
-		}
-
-		public static Season CurrentSeason
-		{
-			get
-			{
-				return GenDate.SeasonAt((long)GenDate.TicksAbs);
-			}
-		}
-
-		public static int CurrentYear
-		{
-			get
-			{
-				if (Current.ProgramState != ProgramState.MapPlaying)
-				{
-					return 5500;
-				}
-				return GenDate.CalendarYearAt((long)GenDate.TicksAbs);
-			}
-		}
-
-		public static float CurrentDayPercent
-		{
-			get
-			{
-				int num = GenDate.TicksAbs % 60000;
-				if (num == 0)
-				{
-					num = 1;
-				}
-				return (float)num / 60000f;
-			}
-		}
-
-		public static float DayPassedPercent
-		{
-			get
-			{
-				return (float)((Find.TickManager.TicksGame + Find.TickManager.gameStartAbsTick) % 60000) / 60000f;
-			}
-		}
-
-		public static int HourInt
-		{
-			get
-			{
-				return Mathf.FloorToInt(GenDate.DayPassedPercent * 24f);
-			}
-		}
-
 		public static int TickAbsToGame(int absTick)
 		{
 			return absTick - Find.TickManager.gameStartAbsTick;
@@ -206,119 +123,132 @@ namespace RimWorld
 			return gameTicks / 3600000;
 		}
 
-		public static Season SeasonAt(long absTicks)
+		private static long LocalTicksOffsetFromLongitude(float longitude)
 		{
-			Month month = GenDate.MonthAt(absTicks);
+			return (long)GenDate.TimeZoneAt(longitude) * 2500L;
+		}
+
+		public static int HourOfDay(long absTicks, float longitude)
+		{
+			long num = absTicks + GenDate.LocalTicksOffsetFromLongitude(longitude);
+			return (int)(num % 60000L / 2500L);
+		}
+
+		public static int DayOfMonth(long absTicks, float longitude)
+		{
+			long num = absTicks + GenDate.LocalTicksOffsetFromLongitude(longitude);
+			int num2 = (int)(num / 60000L % 5L);
+			if (num2 < 0)
+			{
+				num2 += 5;
+			}
+			return num2;
+		}
+
+		public static int DayOfYear(long absTicks, float longitude)
+		{
+			long num = absTicks + GenDate.LocalTicksOffsetFromLongitude(longitude);
+			int num2 = (int)(num / 60000L) % 60;
+			if (num2 < 0)
+			{
+				num2 += 60;
+			}
+			return num2;
+		}
+
+		public static Month Month(long absTicks, float longitude)
+		{
+			long num = absTicks + GenDate.LocalTicksOffsetFromLongitude(longitude);
+			int num2 = (int)(num / 300000L % 12L);
+			if (num2 < 0)
+			{
+				num2 += 12;
+			}
+			return (Month)num2;
+		}
+
+		public static Season Season(long absTicks, float longitude)
+		{
+			Month month = GenDate.Month(absTicks, longitude);
 			return month.GetSeason();
 		}
 
-		public static int CalendarYearAt(long absTicks)
+		public static int Year(long absTicks, float longitude)
 		{
-			int num = (int)(absTicks / 3600000L);
-			if (absTicks < 0L)
+			long num = absTicks + GenDate.LocalTicksOffsetFromLongitude(longitude);
+			int num2 = (int)(num / 3600000L);
+			if (num < 0L)
 			{
-				num--;
+				num2--;
 			}
-			return 5500 + num;
+			return 5500 + num2;
 		}
 
-		public static int DayOfYearZeroBasedAt(long absTicks)
+		public static int DayOfSeason(long absTicks, float longitude)
 		{
-			int num = (int)(absTicks / 60000L) % 60;
-			if (num < 0)
-			{
-				num += 60;
-			}
-			return num;
-		}
-
-		public static int DayOfSeasonZeroBasedAt(long absTicks)
-		{
-			int num = GenDate.DayOfYearZeroBasedAt(absTicks);
+			int num = GenDate.DayOfYear(absTicks, longitude);
 			return (num + 5) % 15;
 		}
 
-		public static int DayOfMonthZeroBasedAt(long absTicks)
+		public static float DayPercent(long absTicks, float longitude)
 		{
-			int num = (int)(absTicks / 60000L % 5L);
-			if (num < 0)
+			long num = absTicks + GenDate.LocalTicksOffsetFromLongitude(longitude);
+			int num2 = (int)(num % 60000L);
+			if (num2 == 0)
 			{
-				num += 5;
+				num2 = 1;
 			}
-			return num;
+			return (float)num2 / 60000f;
 		}
 
-		public static Month MonthAt(long absTicks)
+		public static int HourInt(long absTicks, float longitude)
 		{
-			int num = (int)(absTicks / 300000L % 12L);
-			if (num < 0)
-			{
-				num += 12;
-			}
-			return (Month)num;
+			long num = absTicks + GenDate.LocalTicksOffsetFromLongitude(longitude);
+			int num2 = (int)(num % 60000L);
+			return num2 / 2500;
 		}
 
-		public static string DateFullStringAt(int absTicks)
+		public static string DateFullStringAt(long absTicks, float longitude)
 		{
-			int num = GenDate.DayOfSeasonZeroBasedAt((long)absTicks) + 1;
+			int num = GenDate.DayOfSeason(absTicks, longitude) + 1;
 			string text = Find.ActiveLanguageWorker.OrdinalNumber(num);
 			return "FullDate".Translate(new object[]
 			{
 				text,
-				GenDate.SeasonAt((long)absTicks).Label(),
-				GenDate.CalendarYearAt((long)absTicks),
+				GenDate.Season(absTicks, longitude).Label(),
+				GenDate.Year(absTicks, longitude),
 				num
 			});
 		}
 
-		public static string DateReadoutStringAt(int absTicks)
+		public static string DateReadoutStringAt(long absTicks, float longitude)
 		{
-			int num = GenDate.DayOfSeasonZeroBasedAt((long)absTicks) + 1;
+			int num = GenDate.DayOfSeason(absTicks, longitude) + 1;
 			string text = Find.ActiveLanguageWorker.OrdinalNumber(num);
 			return "DateReadout".Translate(new object[]
 			{
 				text,
-				GenDate.SeasonAt((long)absTicks).Label(),
-				GenDate.CalendarYearAt((long)absTicks),
+				GenDate.Season(absTicks, longitude).Label(),
+				GenDate.Year(absTicks, longitude),
 				num
 			});
 		}
 
-		public static string SeasonDateStringAt(int absTicks)
+		public static string SeasonDateStringAt(long absTicks, float longitude)
 		{
-			int num = GenDate.DayOfSeasonZeroBasedAt((long)absTicks) + 1;
+			int num = GenDate.DayOfSeason(absTicks, longitude) + 1;
 			string text = Find.ActiveLanguageWorker.OrdinalNumber(num);
 			return "SeasonFullDate".Translate(new object[]
 			{
 				text,
-				GenDate.SeasonAt((long)absTicks).Label(),
+				GenDate.Season(absTicks, longitude).Label(),
 				num
 			});
 		}
 
 		public static string SeasonDateStringAt(Month month)
 		{
-			return GenDate.SeasonDateStringAt((int)month * 300000 + 1);
-		}
-
-		public static float TicksToSeconds(this int numTicks)
-		{
-			return (float)numTicks / 60f;
-		}
-
-		public static int SecondsToTicks(this float numSeconds)
-		{
-			return Mathf.RoundToInt(60f * numSeconds);
-		}
-
-		public static string TickstoSecondsString(this int numTicks)
-		{
-			return numTicks.TicksToSeconds().ToString("F1") + " " + "SecondsLower".Translate();
-		}
-
-		public static string SecondsToTicksString(this float numSeconds)
-		{
-			return numSeconds.SecondsToTicks().ToString();
+			return GenDate.SeasonDateStringAt((long)((int)month * 300000 + 1), 0f);
 		}
 
 		public static float TicksToDays(this int numTicks)
@@ -533,6 +463,11 @@ namespace RimWorld
 					num6
 				});
 			}
+		}
+
+		public static int TimeZoneAt(float longitude)
+		{
+			return Mathf.RoundToInt(longitude / 15f);
 		}
 	}
 }

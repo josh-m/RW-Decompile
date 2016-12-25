@@ -23,7 +23,7 @@ namespace Verse
 
 		private float timeGameStartDialogClosed = -1f;
 
-		private IntVec2 prevResolution = new IntVec2(Screen.width, Screen.height);
+		private IntVec2 prevResolution = new IntVec2(UI.screenWidth, UI.screenHeight);
 
 		private List<Window> windowStackOnGUITmpList = new List<Window>();
 
@@ -133,11 +133,11 @@ namespace Verse
 				Vector3 v;
 				if (Event.current != null)
 				{
-					v = GUIUtility.GUIToScreenPoint(Event.current.mousePosition);
+					v = UI.GUIToScreenPoint(Event.current.mousePosition);
 				}
 				else
 				{
-					v = GenUI.AbsMousePosition();
+					v = UI.MousePositionOnUIInverted;
 				}
 				return this.GetWindowAt(v) != this.currentlyDrawnWindow;
 			}
@@ -166,6 +166,21 @@ namespace Verse
 			}
 		}
 
+		public bool AnyWindowWantsRenderedWorld
+		{
+			get
+			{
+				for (int i = 0; i < this.windows.Count; i++)
+				{
+					if (this.windows[i].wantsRenderedWorld)
+					{
+						return true;
+					}
+				}
+				return false;
+			}
+		}
+
 		public void WindowsUpdate()
 		{
 			this.AdjustWindowsIfResolutionChanged();
@@ -177,7 +192,7 @@ namespace Verse
 
 		public void HandleEventsHighPriority()
 		{
-			if (Event.current.type == EventType.MouseDown && this.GetWindowAt(GUIUtility.GUIToScreenPoint(Event.current.mousePosition)) == null)
+			if (Event.current.type == EventType.MouseDown && this.GetWindowAt(UI.GUIToScreenPoint(Event.current.mousePosition)) == null)
 			{
 				bool flag = this.CloseWindowsBecauseClicked(null);
 				if (flag)
@@ -373,6 +388,18 @@ namespace Verse
 			return false;
 		}
 
+		public bool TryRemoveAssignableFromType(Type windowType, bool doCloseSound = true)
+		{
+			for (int i = 0; i < this.windows.Count; i++)
+			{
+				if (windowType.IsAssignableFrom(this.windows[i].GetType()))
+				{
+					return this.TryRemove(this.windows[i], doCloseSound);
+				}
+			}
+			return false;
+		}
+
 		public bool TryRemove(Window window, bool doCloseSound = true)
 		{
 			bool flag = false;
@@ -511,13 +538,17 @@ namespace Verse
 
 		private void AdjustWindowsIfResolutionChanged()
 		{
-			IntVec2 a = new IntVec2(Screen.width, Screen.height);
+			IntVec2 a = new IntVec2(UI.screenWidth, UI.screenHeight);
 			if (a != this.prevResolution)
 			{
 				this.prevResolution = a;
 				for (int i = 0; i < this.windows.Count; i++)
 				{
 					this.windows[i].Notify_ResolutionChanged();
+				}
+				if (Current.ProgramState == ProgramState.Playing)
+				{
+					Find.ColonistBar.MarkColonistsDirty();
 				}
 			}
 		}

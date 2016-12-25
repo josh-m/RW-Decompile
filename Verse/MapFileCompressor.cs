@@ -6,23 +6,33 @@ namespace Verse
 {
 	public class MapFileCompressor : IExposable
 	{
+		private Map map;
+
 		private string compressedString;
+
+		public CompressibilityDecider compressibilityDecider;
+
+		public MapFileCompressor(Map map)
+		{
+			this.map = map;
+		}
 
 		public void ExposeData()
 		{
 			Scribe_Values.LookValue<string>(ref this.compressedString, "compressedThingMap", null, false);
 		}
 
-		public void ReadDataFromMap()
+		public void BuildCompressedString()
 		{
-			CompressibilityDecider.DetermineReferences();
-			this.compressedString = GridSaveUtility.CompressedStringForShortGrid(new Func<IntVec3, ushort>(this.HashValueForSquare));
+			this.compressibilityDecider = new CompressibilityDecider(this.map);
+			this.compressibilityDecider.DetermineReferences();
+			this.compressedString = GridSaveUtility.CompressedStringForShortGrid(new Func<IntVec3, ushort>(this.HashValueForSquare), this.map);
 		}
 
 		private ushort HashValueForSquare(IntVec3 curSq)
 		{
 			ushort num = 0;
-			foreach (Thing current in Find.ThingGrid.ThingsAt(curSq))
+			foreach (Thing current in this.map.thingGrid.ThingsAt(curSq))
 			{
 				if (current.IsSaveCompressible())
 				{
@@ -65,7 +75,7 @@ namespace Verse
 					thingDefsByShortHash.Add(def.shortHash, def);
 				}
 			}
-			foreach (GridSaveUtility.LoadedGridShort gridThing in GridSaveUtility.LoadedUShortGrid(this.compressedString))
+			foreach (GridSaveUtility.LoadedGridShort gridThing in GridSaveUtility.LoadedUShortGrid(this.compressedString, this.map))
 			{
 				if (gridThing.val != 0)
 				{

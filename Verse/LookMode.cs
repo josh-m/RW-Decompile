@@ -7,8 +7,10 @@ namespace Verse
 		Undefined,
 		Value,
 		Deep,
-		MapReference,
+		Reference,
+		Def,
+		LocalTargetInfo,
 		TargetInfo,
-		DefReference
+		GlobalTargetInfo
 	}
 }

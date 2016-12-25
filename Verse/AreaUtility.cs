@@ -7,7 +7,7 @@ namespace Verse
 {
 	public static class AreaUtility
 	{
-		public static void MakeAllowedAreaListFloatMenu(Action<Area> selAction, AllowedAreaMode mode, bool addNullAreaOption, bool addManageOption)
+		public static void MakeAllowedAreaListFloatMenu(Action<Area> selAction, AllowedAreaMode mode, bool addNullAreaOption, bool addManageOption, Map map)
 		{
 			List<FloatMenuOption> list = new List<FloatMenuOption>();
 			if (addNullAreaOption)
@@ -15,9 +15,9 @@ namespace Verse
 				list.Add(new FloatMenuOption("NoAreaAllowed".Translate(), delegate
 				{
 					selAction(null);
-				}, MenuOptionPriority.High, null, null, 0f, null));
+				}, MenuOptionPriority.High, null, null, 0f, null, null));
 			}
-			foreach (Area current in from a in Find.AreaManager.AllAreas
+			foreach (Area current in from a in map.areaManager.AllAreas
 			where a.AssignableAsAllowed(mode)
 			select a)
 			{
@@ -29,15 +29,15 @@ namespace Verse
 				FloatMenuOption item = new FloatMenuOption(localArea.Label, delegate
 				{
 					selAction(localArea);
-				}, MenuOptionPriority.Medium, mouseoverGuiAction, null, 0f, null);
+				}, MenuOptionPriority.Default, mouseoverGuiAction, null, 0f, null, null);
 				list.Add(item);
 			}
 			if (addManageOption)
 			{
 				list.Add(new FloatMenuOption("ManageAreas".Translate(), delegate
 				{
-					Find.WindowStack.Add(new Dialog_ManageAreas());
-				}, MenuOptionPriority.Low, null, null, 0f, null));
+					Find.WindowStack.Add(new Dialog_ManageAreas(map));
+				}, MenuOptionPriority.Low, null, null, 0f, null, null));
 			}
 			Find.WindowStack.Add(new FloatMenu(list));
 		}

@@ -5,13 +5,13 @@ namespace Verse
 {
 	public static class GenSight
 	{
-		public static bool LineOfSight(IntVec3 start, IntVec3 end, bool skipFirstCell = false)
+		public static bool LineOfSight(IntVec3 start, IntVec3 end, Map map, bool skipFirstCell = false)
 		{
-			if (!start.InBounds() || !end.InBounds())
+			if (!start.InBounds(map) || !end.InBounds(map))
 			{
 				return false;
 			}
-			if (start.AdjacentTo8Way(end) && (skipFirstCell || start.CanBeSeenOverFast()))
+			if (start.AdjacentTo8Way(end) && (skipFirstCell || start.CanBeSeenOverFast(map)))
 			{
 				return true;
 			}
@@ -39,7 +39,7 @@ namespace Verse
 			{
 				intVec.x = num3;
 				intVec.z = num4;
-				if ((!skipFirstCell || !(intVec == start)) && !intVec.CanBeSeenOverFast())
+				if ((!skipFirstCell || !(intVec == start)) && !intVec.CanBeSeenOverFast(map))
 				{
 					return false;
 				}
@@ -58,13 +58,13 @@ namespace Verse
 			return true;
 		}
 
-		public static bool LineOfSight(IntVec3 start, IntVec3 end, CellRect startRect, CellRect endRect)
+		public static bool LineOfSight(IntVec3 start, IntVec3 end, Map map, CellRect startRect, CellRect endRect)
 		{
-			if (!start.InBounds() || !end.InBounds())
+			if (!start.InBounds(map) || !end.InBounds(map))
 			{
 				return false;
 			}
-			if (start.AdjacentTo8Way(end) && (startRect.Contains(start) || endRect.Contains(start) || start.CanBeSeenOverFast()))
+			if (start.AdjacentTo8Way(end) && (startRect.Contains(start) || endRect.Contains(start) || start.CanBeSeenOverFast(map)))
 			{
 				return true;
 			}
@@ -96,7 +96,7 @@ namespace Verse
 				{
 					return true;
 				}
-				if (!startRect.Contains(c) && !c.CanBeSeenOverFast())
+				if (!startRect.Contains(c) && !c.CanBeSeenOverFast(map))
 				{
 					return false;
 				}

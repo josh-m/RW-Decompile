@@ -9,7 +9,52 @@ namespace Verse
 {
 	internal static class DataAnalysisLogger
 	{
-		public static void DoLog_TestNames()
+		public static void DoLog_MinifiableTags()
+		{
+			StringBuilder stringBuilder = new StringBuilder();
+			foreach (ThingDef current in DefDatabase<ThingDef>.AllDefs)
+			{
+				if (current.Minifiable)
+				{
+					stringBuilder.Append(current.defName);
+					if (!current.tradeTags.NullOrEmpty<string>())
+					{
+						stringBuilder.Append(" - ");
+						stringBuilder.Append(GenText.ToCommaList(current.tradeTags, true));
+					}
+					stringBuilder.AppendLine();
+				}
+			}
+			Log.Message(stringBuilder.ToString());
+		}
+
+		public static void DoLog_ItemDeteriorationRates()
+		{
+			StringBuilder stringBuilder = new StringBuilder();
+			foreach (ThingDef current in from d in DefDatabase<ThingDef>.AllDefs
+			where d.category == ThingCategory.Item && !d.destroyOnDrop && d.useHitPoints
+			orderby d.GetStatValueAbstract(StatDefOf.DeteriorationRate, null) descending
+			select d)
+			{
+				stringBuilder.AppendLine(current.defName + "  " + current.GetStatValueAbstract(StatDefOf.DeteriorationRate, null).ToString("F1"));
+			}
+			Log.Message(stringBuilder.ToString());
+		}
+
+		public static void DoLog_ItemBeauties()
+		{
+			StringBuilder stringBuilder = new StringBuilder();
+			foreach (ThingDef current in from d in DefDatabase<ThingDef>.AllDefs
+			where d.category == ThingCategory.Item && !d.destroyOnDrop
+			orderby d.GetStatValueAbstract(StatDefOf.Beauty, null) descending
+			select d)
+			{
+				stringBuilder.AppendLine(current.defName + "  " + current.GetStatValueAbstract(StatDefOf.Beauty, null).ToString("F1"));
+			}
+			Log.Message(stringBuilder.ToString());
+		}
+
+		public static void DoLog_TestRulepack()
 		{
 			List<FloatMenuOption> list = new List<FloatMenuOption>();
 			foreach (RulePackDef current in DefDatabase<RulePackDef>.AllDefs)
@@ -20,10 +65,10 @@ namespace Verse
 					StringBuilder stringBuilder = new StringBuilder();
 					for (int i = 0; i < 200; i++)
 					{
-						stringBuilder.AppendLine(NameGenerator.GenerateName(localNamer, null));
+						stringBuilder.AppendLine(NameGenerator.GenerateName(localNamer, null, false));
 					}
 					Log.Message(stringBuilder.ToString());
-				}, MenuOptionPriority.Medium, null, null, 0f, null);
+				}, MenuOptionPriority.Default, null, null, 0f, null, null);
 				list.Add(item);
 			}
 			Find.WindowStack.Add(new FloatMenu(list));
@@ -47,10 +92,10 @@ namespace Verse
 					stringBuilder.AppendLine("Test names for " + localRp.defName + ":");
 					for (int i = 0; i < 200; i++)
 					{
-						stringBuilder.AppendLine(NameGenerator.GenerateName(localRp, null));
+						stringBuilder.AppendLine(NameGenerator.GenerateName(localRp, null, false));
 					}
 					Log.Message(stringBuilder.ToString());
-				}, MenuOptionPriority.Medium, null, null, 0f, null);
+				}, MenuOptionPriority.Default, null, null, 0f, null, null);
 				list.Add(item);
 			}
 			Find.WindowStack.Add(new FloatMenu(list));
@@ -68,7 +113,7 @@ namespace Verse
 					FloatMenuOption item = new FloatMenuOption(localRg.ToString(), delegate
 					{
 						StringBuilder stringBuilder = new StringBuilder();
-						List<Thing> list2 = Find.ListerThings.ThingsInGroup(localRg);
+						List<Thing> list2 = Find.VisibleMap.listerThings.ThingsInGroup(localRg);
 						stringBuilder.AppendLine(string.Concat(new object[]
 						{
 							"Global things in group ",
@@ -78,7 +123,7 @@ namespace Verse
 							")"
 						}));
 						Log.Message(DebugLogsUtility.ThingListToUniqueCountString(list2));
-					}, MenuOptionPriority.Medium, null, null, 0f, null);
+					}, MenuOptionPriority.Default, null, null, 0f, null, null);
 					list.Add(item);
 				}
 			}
@@ -202,43 +247,6 @@ namespace Verse
 			Log.Message(stringBuilder.ToString());
 		}
 
-		public static void DoLog_CropBalance()
-		{
-			StringBuilder stringBuilder = new StringBuilder();
-			string value = string.Concat(new string[]
-			{
-				"defName".PadRight(30),
-				"growtime".PadRight(15),
-				"nutrition".PadRight(15),
-				"nut/growtime".PadRight(15),
-				"yieldMktVal".PadRight(15),
-				"yieldMktVal/time".PadRight(15)
-			});
-			stringBuilder.AppendLine(value);
-			foreach (ThingDef current in DefDatabase<ThingDef>.AllDefs)
-			{
-				if (current.plant != null && current.plant.Sowable)
-				{
-					float growDays = current.plant.growDays;
-					float harvestYield = current.plant.harvestYield;
-					float num = (current.plant.harvestedThingDef == null || current.plant.harvestedThingDef.ingestible == null) ? 0f : current.plant.harvestedThingDef.ingestible.nutrition;
-					float num2 = harvestYield * num;
-					float num3 = (current.plant.harvestedThingDef == null) ? 0f : (harvestYield * current.plant.harvestedThingDef.GetStatValueAbstract(StatDefOf.MarketValue, null));
-					string value2 = string.Concat(new string[]
-					{
-						current.defName.PadRight(30),
-						growDays.ToString("F2").PadRight(15),
-						num2.ToString("F2").PadRight(15),
-						(num2 / growDays).ToString("F2").PadRight(15),
-						num3.ToString("F2").PadRight(15),
-						(num3 / growDays).ToString("F2").PadRight(15)
-					});
-					stringBuilder.AppendLine(value2);
-				}
-			}
-			Log.Message(stringBuilder.ToString());
-		}
-
 		public static void DoLog_AnimalsPerBiome()
 		{
 			IEnumerable<BiomeDef> enumerable = from d in DefDatabase<BiomeDef>.AllDefs
@@ -332,7 +340,7 @@ namespace Verse
 				FloatMenuOption item = new FloatMenuOption(localDef.defName, delegate
 				{
 					TaleTester.LogSpecificTale(localDef, 40);
-				}, MenuOptionPriority.Medium, null, null, 0f, null);
+				}, MenuOptionPriority.Default, null, null, 0f, null, null);
 				list.Add(item);
 			}
 			Find.WindowStack.Add(new FloatMenu(list));

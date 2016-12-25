@@ -1,3 +1,4 @@
+using RimWorld.Planet;
 using System;
 using Verse;
 
@@ -7,7 +8,7 @@ namespace RimWorld
 	{
 		protected override ThoughtState CurrentStateInternal(Pawn p)
 		{
-			if (Current.ProgramState != ProgramState.MapPlaying)
+			if (Current.ProgramState != ProgramState.Playing)
 			{
 				return ThoughtState.Inactive;
 			}
@@ -15,7 +16,15 @@ namespace RimWorld
 			{
 				return ThoughtState.ActiveAtStage(3);
 			}
-			float wealthTotal = Find.StoryWatcher.watcherWealth.WealthTotal;
+			if (p.IsCaravanMember())
+			{
+				return ThoughtState.ActiveAtStage(2);
+			}
+			if (p.MapHeld == null)
+			{
+				return ThoughtState.Inactive;
+			}
+			float wealthTotal = p.MapHeld.wealthWatcher.WealthTotal;
 			if (wealthTotal < 10000f)
 			{
 				return ThoughtState.ActiveAtStage(3);

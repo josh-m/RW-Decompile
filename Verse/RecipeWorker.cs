@@ -22,5 +22,15 @@ namespace Verse
 		{
 			return pawn.Faction != billDoerFaction && this.recipe.isViolation;
 		}
+
+		public virtual string GetLabelWhenUsedOn(Pawn pawn, BodyPartRecord part)
+		{
+			return this.recipe.LabelCap;
+		}
+
+		public virtual void ConsumeIngredient(Thing ingredient, RecipeDef recipe, Map map)
+		{
+			ingredient.Destroy(DestroyMode.Vanish);
+		}
 	}
 }

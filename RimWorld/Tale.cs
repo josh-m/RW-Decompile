@@ -98,8 +98,12 @@ namespace RimWorld
 
 		public virtual void GenerateTestData()
 		{
+			if (Find.VisibleMap == null)
+			{
+				Log.Error("Can't generate test data because there is no map.");
+			}
 			this.date = Rand.Range(-108000000, -7200000);
-			this.surroundings = TaleData_Surroundings.GenerateRandom();
+			this.surroundings = TaleData_Surroundings.GenerateRandom(Find.VisibleMap);
 		}
 
 		public virtual bool Concerns(Thing th)
@@ -145,7 +149,12 @@ namespace RimWorld
 					yield return this.def.rulePack.Rules[i];
 				}
 			}
-			yield return new Rule_String("date", GenDate.DateFullStringAt(this.date));
+			float longitude = 0f;
+			if (this.surroundings != null && this.surroundings.tile >= 0)
+			{
+				longitude = Find.WorldGrid.LongLatOf(this.surroundings.tile).x;
+			}
+			yield return new Rule_String("date", GenDate.DateFullStringAt((long)this.date, longitude));
 			if (this.surroundings != null)
 			{
 				foreach (Rule r in this.surroundings.GetRules())

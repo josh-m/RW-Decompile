@@ -22,6 +22,8 @@ namespace RimWorld
 
 			public int maxHealth;
 
+			public bool wornByCorpse;
+
 			public override bool Equals(object obj)
 			{
 				return obj is GenLabel.LabelRequest && this.Equals((GenLabel.LabelRequest)obj);
@@ -29,7 +31,7 @@ namespace RimWorld
 
 			public bool Equals(GenLabel.LabelRequest other)
 			{
-				return this.thing == other.thing && this.entDef == other.entDef && this.stuffDef == other.stuffDef && this.stackCount == other.stackCount && this.quality == other.quality && this.health == other.health && this.maxHealth == other.maxHealth;
+				return this.thing == other.thing && this.entDef == other.entDef && this.stuffDef == other.stuffDef && this.stackCount == other.stackCount && this.quality == other.quality && this.health == other.health && this.maxHealth == other.maxHealth && this.wornByCorpse == other.wornByCorpse;
 			}
 
 			public override int GetHashCode()
@@ -52,6 +54,7 @@ namespace RimWorld
 						num = Gen.HashCombineInt(num, this.health);
 						num = Gen.HashCombineInt(num, this.maxHealth);
 					}
+					num = Gen.HashCombineInt(num, (!this.wornByCorpse) ? 0 : 1);
 				}
 				return num;
 			}
@@ -131,6 +134,11 @@ namespace RimWorld
 				labelRequest.health = t.HitPoints;
 				labelRequest.maxHealth = t.MaxHitPoints;
 			}
+			Apparel apparel = t as Apparel;
+			if (apparel != null)
+			{
+				labelRequest.wornByCorpse = apparel.WornByCorpse;
+			}
 			int hashCode = labelRequest.GetHashCode();
 			string text;
 			if (!GenLabel.labelDictionary.TryGetValue(hashCode, out text))
@@ -153,7 +161,9 @@ namespace RimWorld
 			int hitPoints = t.HitPoints;
 			int maxHitPoints = t.MaxHitPoints;
 			bool flag2 = t.def.useHitPoints && hitPoints < maxHitPoints && t.def.stackLimit == 1;
-			if (flag || flag2)
+			Apparel apparel = t as Apparel;
+			bool flag3 = apparel != null && apparel.WornByCorpse;
+			if (flag || flag2 || flag3)
 			{
 				text += " (";
 				if (flag)
@@ -168,12 +178,16 @@ namespace RimWorld
 					}
 					text += ((float)hitPoints / (float)maxHitPoints).ToStringPercent();
 				}
+				if (flag3)
+				{
+					text = text + " " + "WornByCorpseChar".Translate();
+				}
 				text += ")";
 			}
 			return text;
 		}
 
-		public static string BestKindLabel(Pawn pawn, bool mustNoteGender = false, bool mustNoteLifeStage = false)
+		public static string BestKindLabel(Pawn pawn, bool mustNoteGender = false, bool mustNoteLifeStage = false, bool plural = false)
 		{
 			bool flag = false;
 			bool flag2 = false;
@@ -181,58 +195,147 @@ namespace RimWorld
 			switch (pawn.gender)
 			{
 			case Gender.None:
-				if (!pawn.RaceProps.Humanlike && pawn.ageTracker.CurKindLifeStage.label != null)
+				if (plural && !pawn.RaceProps.Humanlike && pawn.ageTracker.CurKindLifeStage.labelPlural != null)
 				{
-					text = pawn.ageTracker.CurKindLifeStage.label;
+					text = pawn.ageTracker.CurKindLifeStage.labelPlural;
 					flag2 = true;
-				}
-				else
-				{
-					text = pawn.kindDef.label;
-				}
-				break;
-			case Gender.Male:
-				if (!pawn.RaceProps.Humanlike && pawn.ageTracker.CurKindLifeStage.labelMale != null)
-				{
-					text = pawn.ageTracker.CurKindLifeStage.labelMale;
-					flag2 = true;
-					flag = true;
 				}
 				else if (!pawn.RaceProps.Humanlike && pawn.ageTracker.CurKindLifeStage.label != null)
 				{
 					text = pawn.ageTracker.CurKindLifeStage.label;
 					flag2 = true;
+					if (plural)
+					{
+						text = Find.ActiveLanguageWorker.Pluralize(text);
+					}
+				}
+				else if (plural && pawn.kindDef.labelPlural != null)
+				{
+					text = pawn.kindDef.labelPlural;
+				}
+				else
+				{
+					text = pawn.kindDef.label;
+					if (plural)
+					{
+						text = Find.ActiveLanguageWorker.Pluralize(text);
+					}
+				}
+				break;
+			case Gender.Male:
+				if (plural && !pawn.RaceProps.Humanlike && pawn.ageTracker.CurKindLifeStage.labelMalePlural != null)
+				{
+					text = pawn.ageTracker.CurKindLifeStage.labelMalePlural;
+					flag2 = true;
+					flag = true;
+				}
+				else if (!pawn.RaceProps.Humanlike && pawn.ageTracker.CurKindLifeStage.labelMale != null)
+				{
+					text = pawn.ageTracker.CurKindLifeStage.labelMale;
+					flag2 = true;
+					flag = true;
+					if (plural)
+					{
+						text = Find.ActiveLanguageWorker.Pluralize(text);
+					}
+				}
+				else if (plural && !pawn.RaceProps.Humanlike && pawn.ageTracker.CurKindLifeStage.labelPlural != null)
+				{
+					text = pawn.ageTracker.CurKindLifeStage.labelPlural;
+					flag2 = true;
+				}
+				else if (!pawn.RaceProps.Humanlike && pawn.ageTracker.CurKindLifeStage.label != null)
+				{
+					text = pawn.ageTracker.CurKindLifeStage.label;
+					flag2 = true;
+					if (plural)
+					{
+						text = Find.ActiveLanguageWorker.Pluralize(text);
+					}
+				}
+				else if (plural && pawn.kindDef.labelMalePlural != null)
+				{
+					text = pawn.kindDef.labelMalePlural;
+					flag = true;
 				}
 				else if (pawn.kindDef.labelMale != null)
 				{
 					text = pawn.kindDef.labelMale;
 					flag = true;
+					if (plural)
+					{
+						text = Find.ActiveLanguageWorker.Pluralize(text);
+					}
+				}
+				else if (plural && pawn.kindDef.labelPlural != null)
+				{
+					text = pawn.kindDef.labelPlural;
 				}
 				else
 				{
 					text = pawn.kindDef.label;
+					if (plural)
+					{
+						text = Find.ActiveLanguageWorker.Pluralize(text);
+					}
 				}
 				break;
 			case Gender.Female:
-				if (!pawn.RaceProps.Humanlike && pawn.ageTracker.CurKindLifeStage.labelFemale != null)
+				if (plural && !pawn.RaceProps.Humanlike && pawn.ageTracker.CurKindLifeStage.labelFemalePlural != null)
+				{
+					text = pawn.ageTracker.CurKindLifeStage.labelFemalePlural;
+					flag2 = true;
+					flag = true;
+				}
+				else if (!pawn.RaceProps.Humanlike && pawn.ageTracker.CurKindLifeStage.labelFemale != null)
 				{
 					text = pawn.ageTracker.CurKindLifeStage.labelFemale;
 					flag2 = true;
 					flag = true;
+					if (plural)
+					{
+						text = Find.ActiveLanguageWorker.Pluralize(text);
+					}
+				}
+				else if (plural && !pawn.RaceProps.Humanlike && pawn.ageTracker.CurKindLifeStage.labelPlural != null)
+				{
+					text = pawn.ageTracker.CurKindLifeStage.labelPlural;
+					flag2 = true;
 				}
 				else if (!pawn.RaceProps.Humanlike && pawn.ageTracker.CurKindLifeStage.label != null)
 				{
 					text = pawn.ageTracker.CurKindLifeStage.label;
 					flag2 = true;
+					if (plural)
+					{
+						text = Find.ActiveLanguageWorker.Pluralize(text);
+					}
+				}
+				else if (plural && pawn.kindDef.labelFemalePlural != null)
+				{
+					text = pawn.kindDef.labelFemalePlural;
+					flag = true;
 				}
 				else if (pawn.kindDef.labelFemale != null)
 				{
 					text = pawn.kindDef.labelFemale;
 					flag = true;
+					if (plural)
+					{
+						text = Find.ActiveLanguageWorker.Pluralize(text);
+					}
+				}
+				else if (plural && pawn.kindDef.labelPlural != null)
+				{
+					text = pawn.kindDef.labelPlural;
 				}
 				else
 				{
 					text = pawn.kindDef.label;
+					if (plural)
+					{
+						text = Find.ActiveLanguageWorker.Pluralize(text);
+					}
 				}
 				break;
 			}

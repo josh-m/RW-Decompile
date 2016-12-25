@@ -29,13 +29,13 @@ namespace RimWorld
 			}
 		}
 
-		public static void DrawLinesToPotentialThingsToLinkTo(ThingDef myDef, IntVec3 myPos, Rot4 myRot)
+		public static void DrawLinesToPotentialThingsToLinkTo(ThingDef myDef, IntVec3 myPos, Rot4 myRot, Map map)
 		{
 			CompProperties_Facility compProperties = myDef.GetCompProperties<CompProperties_Facility>();
 			Vector3 a = Gen.TrueCenter(myPos, myRot, myDef.size, myDef.Altitude);
 			for (int i = 0; i < compProperties.linkableBuildings.Count; i++)
 			{
-				foreach (Thing current in Find.ListerThings.ThingsOfDef(compProperties.linkableBuildings[i]))
+				foreach (Thing current in map.listerThings.ThingsOfDef(compProperties.linkableBuildings[i]))
 				{
 					CompAffectedByFacilities compAffectedByFacilities = current.TryGetComp<CompAffectedByFacilities>();
 					if (compAffectedByFacilities != null && compAffectedByFacilities.CanPotentiallyLinkTo(myDef, myPos, myRot))
@@ -88,7 +88,7 @@ namespace RimWorld
 			this.LinkToNearbyBuildings();
 		}
 
-		public override void PostDeSpawn()
+		public override void PostDeSpawn(Map map)
 		{
 			this.thingsToNotify.Clear();
 			for (int i = 0; i < this.linkedBuildings.Count; i++)
@@ -140,7 +140,10 @@ namespace RimWorld
 					stringBuilder.Append("InactiveFacility".Translate());
 					stringBuilder.Append(")");
 				}
-				stringBuilder.AppendLine();
+				if (i < props.statOffsets.Count - 1)
+				{
+					stringBuilder.AppendLine();
+				}
 			}
 			return stringBuilder.ToString();
 		}
@@ -160,7 +163,7 @@ namespace RimWorld
 			}
 			for (int i = 0; i < props.linkableBuildings.Count; i++)
 			{
-				foreach (Thing current in Find.ListerThings.ThingsOfDef(props.linkableBuildings[i]))
+				foreach (Thing current in this.parent.Map.listerThings.ThingsOfDef(props.linkableBuildings[i]))
 				{
 					CompAffectedByFacilities compAffectedByFacilities = current.TryGetComp<CompAffectedByFacilities>();
 					if (compAffectedByFacilities != null && compAffectedByFacilities.CanLinkTo(this.parent))

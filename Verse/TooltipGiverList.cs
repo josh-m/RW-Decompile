@@ -48,9 +48,9 @@ namespace Verse
 			for (int i = 0; i < this.givers.Count; i++)
 			{
 				Thing thing = this.givers[i];
-				if (currentViewRect.Contains(thing.Position) && !thing.Position.Fogged())
+				if (currentViewRect.Contains(thing.Position) && !thing.Position.Fogged(thing.Map))
 				{
-					Vector2 vector2 = Find.CameraDriver.InvertedWorldToScreenPoint(thing.DrawPos);
+					Vector2 vector2 = thing.DrawPos.MapToUIPosition();
 					rect.x = vector2.x - vector.x / 2f;
 					rect.y = vector2.y - vector.y / 2f;
 					if (rect.Contains(Event.current.mousePosition))

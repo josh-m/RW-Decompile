@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using UnityEngine;
 using Verse;
@@ -41,8 +42,8 @@ namespace RimWorld
 			get
 			{
 				float num = 0f;
-				num += (float)Find.MapPawns.ColonistCount;
-				return num + (float)Find.MapPawns.PrisonersOfColonyCount * 0.5f;
+				num += (float)PawnsFinder.AllMapsCaravansAndTravelingTransportPods_Colonists.Count<Pawn>();
+				return num + (float)PawnsFinder.AllMapsCaravansAndTravelingTransportPods.Count((Pawn x) => x.IsPrisonerOfColony) * 0.5f;
 			}
 		}
 
@@ -76,7 +77,7 @@ namespace RimWorld
 
 		public void Notify_PopulationGained()
 		{
-			if (Current.ProgramState == ProgramState.MapPlaying)
+			if (Current.ProgramState == ProgramState.Playing)
 			{
 				this.lastPopGainTime = Find.TickManager.TicksGame;
 			}

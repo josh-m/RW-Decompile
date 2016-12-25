@@ -35,9 +35,9 @@ namespace RimWorld
 			}
 		}
 
-		public override void SpawnSetup()
+		public override void SpawnSetup(Map map)
 		{
-			base.SpawnSetup();
+			base.SpawnSetup(map);
 			this.flickableComp = base.GetComp<CompFlickable>();
 		}
 
@@ -84,7 +84,10 @@ namespace RimWorld
 		{
 			if (this.flickableComp.SwitchIsOn != this.switchOnOld)
 			{
-				PowerNetManager.Notfiy_TransmitterTransmitsPowerNowChanged(base.PowerComp);
+				if (base.Spawned)
+				{
+					base.Map.powerNetManager.Notfiy_TransmitterTransmitsPowerNowChanged(base.PowerComp);
+				}
 				this.switchOnOld = this.flickableComp.SwitchIsOn;
 			}
 		}

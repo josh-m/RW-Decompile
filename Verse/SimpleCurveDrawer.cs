@@ -323,34 +323,32 @@ namespace Verse
 			{
 				return;
 			}
-			Vector2 vector = Event.current.mousePosition;
 			if (!Mouse.IsOver(screenRect))
 			{
 				return;
 			}
 			GUI.BeginGroup(screenRect);
-			vector = GUIUtility.ScreenToGUIPoint(GenUI.AbsMousePosition());
-			vector.x += screenRect.x;
+			Vector2 mousePosition = Event.current.mousePosition;
+			Vector2 vector = default(Vector2);
 			Vector2 vector2 = default(Vector2);
-			Vector2 vector3 = default(Vector2);
 			bool flag = false;
 			foreach (SimpleCurveDrawInfo current in curves)
 			{
 				if (current.curve.AllPoints.Any<CurvePoint>())
 				{
-					Vector2 vector4 = SimpleCurveDrawer.ScreenToCurveCoords(screenRect, viewRect, vector);
-					vector4.y = current.curve.Evaluate(vector4.x);
-					Vector2 vector5 = SimpleCurveDrawer.CurveToScreenCoordsInsideScreenRect(screenRect, viewRect, vector4);
-					if (!flag || Vector2.Distance(vector5, vector) < Vector2.Distance(vector3, vector))
+					Vector2 vector3 = SimpleCurveDrawer.ScreenToCurveCoords(screenRect, viewRect, mousePosition);
+					vector3.y = current.curve.Evaluate(vector3.x);
+					Vector2 vector4 = SimpleCurveDrawer.CurveToScreenCoordsInsideScreenRect(screenRect, viewRect, vector3);
+					if (!flag || Vector2.Distance(vector4, mousePosition) < Vector2.Distance(vector2, mousePosition))
 					{
 						flag = true;
+						vector = vector3;
 						vector2 = vector4;
-						vector3 = vector5;
 					}
 				}
 			}
-			SimpleCurveDrawer.DrawPoint(vector3);
-			Rect rect = new Rect(vector3.x, vector3.y, 100f, 60f);
+			SimpleCurveDrawer.DrawPoint(vector2);
+			Rect rect = new Rect(vector2.x, vector2.y, 100f, 60f);
 			Text.Anchor = TextAnchor.UpperLeft;
 			if (rect.x + rect.width > screenRect.width)
 			{
@@ -373,11 +371,11 @@ namespace Verse
 			{
 				labelX,
 				": ",
-				vector2.x.ToString("0.##"),
+				vector.x.ToString("0.##"),
 				"\n",
 				labelY,
 				": ",
-				vector2.y.ToString("0.##")
+				vector.y.ToString("0.##")
 			})));
 			Text.Anchor = TextAnchor.UpperLeft;
 			GUI.EndGroup();
@@ -434,8 +432,6 @@ namespace Verse
 		public static Vector2 ScreenToCurveCoords(Rect rect, Rect viewRect, Vector2 screenPoint)
 		{
 			Vector2 loc = screenPoint;
-			loc.x -= rect.x;
-			loc.y -= rect.y;
 			loc.y = rect.height - loc.y;
 			loc.x /= rect.width / viewRect.width;
 			loc.y /= rect.height / viewRect.height;

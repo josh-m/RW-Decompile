@@ -15,13 +15,14 @@ namespace RimWorld
 
 		public override bool TryExecute(IncidentParms parms)
 		{
+			Map map = (Map)parms.target;
 			IntVec3 spawnSpot;
-			if (!CellFinder.TryFindRandomEdgeCellWith((IntVec3 c) => c.CanReachColony(), out spawnSpot))
+			if (!CellFinder.TryFindRandomEdgeCellWith((IntVec3 c) => map.reachability.CanReachColony(c), map, out spawnSpot))
 			{
 				return false;
 			}
 			Faction faction = Find.FactionManager.FirstFactionOfDef(FactionDefOf.Spacer);
-			PawnGenerationRequest request = new PawnGenerationRequest(PawnKindDefOf.SpaceRefugee, faction, PawnGenerationContext.NonPlayer, false, false, false, false, true, false, 20f, false, true, true, null, null, null, null, null, null);
+			PawnGenerationRequest request = new PawnGenerationRequest(PawnKindDefOf.SpaceRefugee, faction, PawnGenerationContext.NonPlayer, null, false, false, false, false, true, false, 20f, false, true, true, null, null, null, null, null, null);
 			Pawn refugee = PawnGenerator.GeneratePawn(request);
 			refugee.relations.everSeenByPlayer = true;
 			Faction enemyFac;
@@ -34,7 +35,7 @@ namespace RimWorld
 			string text = "RefugeeChasedInitial".Translate(new object[]
 			{
 				refugee.Name.ToStringFull,
-				refugee.story.adulthood.title.ToLower(),
+				refugee.story.Title.ToLower(),
 				enemyFac.def.pawnsPlural,
 				enemyFac.Name,
 				refugee.ageTracker.AgeBiologicalYears
@@ -45,10 +46,10 @@ namespace RimWorld
 			DiaOption diaOption = new DiaOption("RefugeeChasedInitial_Accept".Translate());
 			diaOption.action = delegate
 			{
-				GenSpawn.Spawn(refugee, spawnSpot);
+				GenSpawn.Spawn(refugee, spawnSpot, map);
 				refugee.SetFaction(Faction.OfPlayer, null);
 				Find.CameraDriver.JumpTo(spawnSpot);
-				IncidentParms incidentParms = StorytellerUtility.DefaultParmsNow(Find.Storyteller.def, IncidentCategory.ThreatBig);
+				IncidentParms incidentParms = StorytellerUtility.DefaultParmsNow(Find.Storyteller.def, IncidentCategory.ThreatBig, map);
 				incidentParms.forced = true;
 				incidentParms.faction = enemyFac;
 				incidentParms.raidStrategy = RaidStrategyDefOf.ImmediateAttack;

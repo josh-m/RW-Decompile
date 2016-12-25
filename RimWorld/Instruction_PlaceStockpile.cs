@@ -29,7 +29,7 @@ namespace RimWorld
 		public override void OnActivated()
 		{
 			base.OnActivated();
-			this.stockpileRect = TutorUtility.FindClearRect(6, 6, 0f, false);
+			this.stockpileRect = TutorUtility.FindUsableRect(6, 6, base.Map, 0f, false);
 			this.RecacheCells();
 		}
 

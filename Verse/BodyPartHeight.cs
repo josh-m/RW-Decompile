@@ -4,7 +4,7 @@ namespace Verse
 {
 	public enum BodyPartHeight : byte
 	{
-		Inherit,
+		Undefined,
 		Bottom,
 		Middle,
 		Top

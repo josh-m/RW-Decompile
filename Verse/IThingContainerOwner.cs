@@ -9,7 +9,9 @@ namespace Verse
 			get;
 		}
 
-		ThingContainer GetContainer();
+		Map GetMap();
+
+		ThingContainer GetInnerContainer();
 
 		IntVec3 GetPosition();
 	}

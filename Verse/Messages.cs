@@ -1,4 +1,5 @@
 using RimWorld;
+using RimWorld.Planet;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -23,7 +24,7 @@ namespace Verse
 
 			public int startingFrame;
 
-			public TargetInfo lookTarget;
+			public GlobalTargetInfo lookTarget;
 
 			private Vector2 cachedSize = new Vector2(-1f, -1f);
 
@@ -70,13 +71,13 @@ namespace Verse
 			public LiveMessage(string text)
 			{
 				this.text = text;
-				this.lookTarget = TargetInfo.Invalid;
+				this.lookTarget = GlobalTargetInfo.Invalid;
 				this.startingFrame = Time.frameCount;
 				this.startingTime = Time.time;
 				this.ID = Messages.LiveMessage.uniqueID++;
 			}
 
-			public LiveMessage(string text, TargetInfo lookTarget) : this(text)
+			public LiveMessage(string text, GlobalTargetInfo lookTarget) : this(text)
 			{
 				this.lookTarget = lookTarget;
 			}
@@ -116,7 +117,7 @@ namespace Verse
 					}
 					Rect rect2 = new Rect(2f, 0f, rect.width - 2f, rect.height);
 					Widgets.Label(rect2, this.text);
-					if (Current.ProgramState == ProgramState.MapPlaying && this.lookTarget.IsValid && Widgets.ButtonInvisible(rect, false))
+					if (Current.ProgramState == ProgramState.Playing && this.lookTarget.IsValid && Widgets.ButtonInvisible(rect, false))
 					{
 						JumpToTargetUtility.TryJumpAndSelect(this.lookTarget);
 						PlayerKnowledgeDatabase.KnowledgeDemonstrated(ConceptDefOf.ClickingMessages, KnowledgeAmount.Total);
@@ -145,7 +146,7 @@ namespace Verse
 		{
 			get
 			{
-				if (Current.ProgramState != ProgramState.MapPlaying)
+				if (Current.ProgramState != ProgramState.Playing)
 				{
 					return true;
 				}
@@ -163,19 +164,19 @@ namespace Verse
 
 		public static void Update()
 		{
-			if (Messages.mouseoverMessageIndex >= 0 && Messages.liveMessages.Count >= Messages.mouseoverMessageIndex + 1)
+			if (Current.ProgramState == ProgramState.Playing && Messages.mouseoverMessageIndex >= 0 && Messages.liveMessages.Count >= Messages.mouseoverMessageIndex + 1)
 			{
-				TargetInfo lookTarget = Messages.liveMessages[Messages.mouseoverMessageIndex].lookTarget;
-				if (lookTarget.IsValid)
+				GlobalTargetInfo lookTarget = Messages.liveMessages[Messages.mouseoverMessageIndex].lookTarget;
+				if (lookTarget.IsValid && lookTarget.IsMapTarget && lookTarget.Map == Find.VisibleMap)
 				{
-					GenDraw.DrawArrowPointingAt(lookTarget.CenterVector3, false);
+					GenDraw.DrawArrowPointingAt(((TargetInfo)lookTarget).CenterVector3, false);
 				}
 			}
 			Messages.mouseoverMessageIndex = -1;
 			Messages.liveMessages.RemoveAll((Messages.LiveMessage m) => m.Expired);
 		}
 
-		public static void Message(string text, TargetInfo lookTarget, MessageSound sound)
+		public static void Message(string text, GlobalTargetInfo lookTarget, MessageSound sound)
 		{
 			if (!Messages.AcceptsMessage(text, lookTarget))
 			{
@@ -237,11 +238,11 @@ namespace Verse
 		{
 			for (int i = 0; i < Messages.liveMessages.Count; i++)
 			{
-				Messages.liveMessages[i].lookTarget = TargetInfo.Invalid;
+				Messages.liveMessages[i].lookTarget = GlobalTargetInfo.Invalid;
 			}
 		}
 
-		private static bool AcceptsMessage(string text, TargetInfo lookTarget)
+		private static bool AcceptsMessage(string text, GlobalTargetInfo lookTarget)
 		{
 			if (text.NullOrEmpty())
 			{

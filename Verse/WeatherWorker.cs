@@ -39,29 +39,29 @@ namespace Verse
 			this.skyTargets[3] = new WeatherWorker.SkyThreshold(def.skyColorsDay, 1f);
 		}
 
-		public void DrawWeather()
+		public void DrawWeather(Map map)
 		{
 			for (int i = 0; i < this.overlays.Count; i++)
 			{
-				this.overlays[i].DrawOverlay();
+				this.overlays[i].DrawOverlay(map);
 			}
 		}
 
-		public void WeatherTick(float lerpFactor)
+		public void WeatherTick(Map map, float lerpFactor)
 		{
 			for (int i = 0; i < this.overlays.Count; i++)
 			{
-				this.overlays[i].TickOverlay();
+				this.overlays[i].TickOverlay(map);
 			}
 			for (int j = 0; j < this.def.eventMakers.Count; j++)
 			{
-				this.def.eventMakers[j].WeatherEventMakerTick(lerpFactor);
+				this.def.eventMakers[j].WeatherEventMakerTick(map, lerpFactor);
 			}
 		}
 
-		public SkyTarget CurSkyTarget()
+		public SkyTarget CurSkyTarget(Map map)
 		{
-			float num = GenCelestial.CurCelestialSunGlow();
+			float num = GenCelestial.CurCelestialSunGlow(map);
 			int num2 = 0;
 			int num3 = 0;
 			for (int i = 0; i < this.skyTargets.Length; i++)

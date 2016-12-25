@@ -72,13 +72,13 @@ namespace Verse.AI
 					actor.jobs.curDriver.ReadyForNextToil();
 					return;
 				}
-				IntVec3 vec;
-				if (RCellFinder.TryFindGoodAdjacentSpotToTouch(actor, thing, out vec))
+				IntVec3 c;
+				if (RCellFinder.TryFindGoodAdjacentSpotToTouch(actor, thing, out c))
 				{
-					actor.pather.StartPath(vec, PathEndMode.OnCell);
+					actor.pather.StartPath(c, PathEndMode.OnCell);
 					return;
 				}
-				actor.jobs.EndCurrentJob(JobCondition.Incompletable);
+				actor.jobs.EndCurrentJob(JobCondition.Incompletable, true);
 			};
 			toil.defaultCompleteMode = ToilCompleteMode.PatherArrival;
 			return toil;

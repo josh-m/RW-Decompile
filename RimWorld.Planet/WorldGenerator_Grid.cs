@@ -8,15 +8,21 @@ namespace RimWorld.Planet
 {
 	public static class WorldGenerator_Grid
 	{
-		private const float OceanChancePerSide = 0.5f;
-
-		private const float EdgeOceanSpan = 0.2f;
-
 		private const float ElevationFrequencyMicro = 0.035f;
 
 		private const float ElevationFrequencyMacro = 0.012f;
 
 		private const float ElevationMacroFactorFrequency = 0.12f;
+
+		private const float ElevationContinentsFrequency = 0.01f;
+
+		private const float MountainLinesFrequency = 0.04f;
+
+		private const float MountainLinesHolesFrequency = 0.1f;
+
+		private const float HillsPatchesFrequencyMicro = 0.19f;
+
+		private const float HillsPatchesFrequencyMacro = 0.032f;
 
 		private const float TemperatureOffsetFrequency = 0.018f;
 
@@ -50,6 +56,12 @@ namespace RimWorld.Planet
 
 		private static ModuleBase noiseRainfall;
 
+		private static ModuleBase noiseMountainLines;
+
+		private static ModuleBase noiseHillsPatchesMicro;
+
+		private static ModuleBase noiseHillsPatchesMacro;
+
 		private static readonly FloatRange ElevationRange = new FloatRange(-500f, 5000f);
 
 		private static readonly SimpleCurve AvgTempByLatitudeCurve = new SimpleCurve
@@ -60,83 +72,115 @@ namespace RimWorld.Planet
 			new CurvePoint(1f, -37f)
 		};
 
+		private static float FreqMultiplier
+		{
+			get
+			{
+				return 1f;
+			}
+		}
+
 		public static void GenerateGridIntoWorld(string seedString)
 		{
 			Rand.Seed = GenText.StableStringHash(seedString);
 			Find.World.grid = new WorldGrid();
-			NoiseDebugUI.RenderSize = Find.World.Size;
-			float num = 1f / ((float)Find.World.Size.x / 200f);
-			ModuleBase lhs = new Perlin((double)(0.035f * num), 2.0, 0.40000000596046448, 6, Rand.Range(0, 2147483647), QualityMode.High);
-			ModuleBase moduleBase = new RidgedMultifractal((double)(0.012f * num), 2.0, 6, Rand.Range(0, 2147483647), QualityMode.High);
-			ModuleBase moduleBase2 = new Perlin((double)(0.12f * num), 2.0, 0.5, 5, Rand.Range(0, 2147483647), QualityMode.High);
+			Find.World.pathGrid = new WorldPathGrid();
+			NoiseDebugUI.ClearPlanetNoises();
+			WorldGenerator_Grid.SetupElevationNoise();
+			WorldGenerator_Grid.SetupTemperatureOffsetNoise();
+			WorldGenerator_Grid.SetupRainfallNoise();
+			WorldGenerator_Grid.SetupHillinessNoise();
+			List<Tile> tiles = Find.WorldGrid.tiles;
+			tiles.Clear();
+			int tilesCount = Find.WorldGrid.TilesCount;
+			for (int i = 0; i < tilesCount; i++)
+			{
+				Tile item = WorldGenerator_Grid.GenerateTileFor(i);
+				tiles.Add(item);
+			}
+			Rand.RandomizeSeedFromTime();
+		}
+
+		private static void SetupElevationNoise()
+		{
+			float freqMultiplier = WorldGenerator_Grid.FreqMultiplier;
+			ModuleBase lhs = new Perlin((double)(0.035f * freqMultiplier), 2.0, 0.40000000596046448, 6, Rand.Range(0, 2147483647), QualityMode.High);
+			ModuleBase moduleBase = new RidgedMultifractal((double)(0.012f * freqMultiplier), 2.0, 6, Rand.Range(0, 2147483647), QualityMode.High);
+			ModuleBase moduleBase2 = new Perlin((double)(0.12f * freqMultiplier), 2.0, 0.5, 5, Rand.Range(0, 2147483647), QualityMode.High);
+			ModuleBase moduleBase3 = new Perlin((double)(0.01f * freqMultiplier), 2.0, 0.5, 5, Rand.Range(0, 2147483647), QualityMode.High);
+			float num;
+			if (Find.World.PlanetCoverage < 0.55f)
+			{
+				ModuleBase moduleBase4 = new DistanceFromPlanetViewCenter(Find.WorldGrid.viewCenter, Find.WorldGrid.viewAngle, true);
+				moduleBase4 = new ScaleBias(2.0, -1.0, moduleBase4);
+				moduleBase3 = new Blend(moduleBase3, moduleBase4, new Const(0.40000000596046448));
+				num = Rand.Range(-0.4f, -0.35f);
+			}
+			else
+			{
+				num = Rand.Range(0.15f, 0.25f);
+			}
+			NoiseDebugUI.StorePlanetNoise(moduleBase3, "elevContinents");
 			moduleBase2 = new ScaleBias(0.5, 0.5, moduleBase2);
 			moduleBase = new Multiply(moduleBase, moduleBase2);
 			float num2 = Rand.Range(0.4f, 0.6f);
 			WorldGenerator_Grid.noiseElevation = new Blend(lhs, moduleBase, new Const((double)num2));
+			WorldGenerator_Grid.noiseElevation = new Blend(WorldGenerator_Grid.noiseElevation, moduleBase3, new Const((double)num));
 			WorldGenerator_Grid.noiseElevation = new ScaleBias(0.5, 0.5, WorldGenerator_Grid.noiseElevation);
 			WorldGenerator_Grid.noiseElevation = new Power(WorldGenerator_Grid.noiseElevation, new Const(3.0));
-			for (int i = 0; i < 4; i++)
-			{
-				if (Rand.Value < 0.5f)
-				{
-					ModuleBase moduleBase3 = new DistFromAxis((float)Find.World.Size.x * 0.2f);
-					moduleBase3 = new Clamp(0.0, 1.0, moduleBase3);
-					if (i == 1)
-					{
-						moduleBase3 = new Translate((double)(-(double)Find.World.Size.x), 0.0, 0.0, moduleBase3);
-					}
-					else if (i == 2)
-					{
-						moduleBase3 = new Rotate(0.0, 90.0, 0.0, moduleBase3);
-					}
-					else if (i == 3)
-					{
-						moduleBase3 = new Rotate(0.0, 90.0, 0.0, moduleBase3);
-						moduleBase3 = new Translate(0.0, 0.0, (double)(-(double)Find.World.Size.z), moduleBase3);
-					}
-					WorldGenerator_Grid.noiseElevation = new Multiply(WorldGenerator_Grid.noiseElevation, moduleBase3);
-				}
-			}
+			NoiseDebugUI.StorePlanetNoise(WorldGenerator_Grid.noiseElevation, "noiseElevation");
 			WorldGenerator_Grid.noiseElevation = new ScaleBias((double)WorldGenerator_Grid.ElevationRange.Span, (double)WorldGenerator_Grid.ElevationRange.min, WorldGenerator_Grid.noiseElevation);
-			WorldGenerator_Grid.noiseTemperatureOffset = new Perlin((double)(0.018f * num), 2.0, 0.5, 6, Rand.Range(0, 2147483647), QualityMode.High);
+		}
+
+		private static void SetupTemperatureOffsetNoise()
+		{
+			float freqMultiplier = WorldGenerator_Grid.FreqMultiplier;
+			WorldGenerator_Grid.noiseTemperatureOffset = new Perlin((double)(0.018f * freqMultiplier), 2.0, 0.5, 6, Rand.Range(0, 2147483647), QualityMode.High);
 			WorldGenerator_Grid.noiseTemperatureOffset = new Multiply(WorldGenerator_Grid.noiseTemperatureOffset, new Const(4.0));
-			ModuleBase moduleBase4 = new Perlin((double)(0.015f * num), 2.0, 0.5, 6, Rand.Range(0, 2147483647), QualityMode.High);
-			moduleBase4 = new ScaleBias(0.5, 0.5, moduleBase4);
-			NoiseDebugUI.StoreNoiseRender(moduleBase4, "basePerlin");
-			float num3 = 1f / Find.World.DegreesPerSquare;
-			ModuleBase moduleBase5 = new CurveFromAxis(new SimpleCurve
+		}
+
+		private static void SetupRainfallNoise()
+		{
+			float freqMultiplier = WorldGenerator_Grid.FreqMultiplier;
+			ModuleBase moduleBase = new Perlin((double)(0.015f * freqMultiplier), 2.0, 0.5, 6, Rand.Range(0, 2147483647), QualityMode.High);
+			moduleBase = new ScaleBias(0.5, 0.5, moduleBase);
+			NoiseDebugUI.StorePlanetNoise(moduleBase, "basePerlin");
+			ModuleBase moduleBase2 = new AbsLatitudeCurve(new SimpleCurve
 			{
 				{
 					0f,
 					1.12f
 				},
 				{
-					25f * num3,
+					25f,
 					0.94f
 				},
 				{
-					45f * num3,
+					45f,
 					0.7f
 				},
 				{
-					70f * num3,
+					70f,
 					0.3f
 				},
 				{
-					80f * num3,
+					80f,
+					0.05f
+				},
+				{
+					90f,
 					0.05f
 				}
-			});
-			moduleBase5 = new Rotate(0.0, 90.0, 0.0, moduleBase5);
-			NoiseDebugUI.StoreNoiseRender(moduleBase5, "latCurve");
-			WorldGenerator_Grid.noiseRainfall = new Multiply(moduleBase4, moduleBase5);
-			float num4 = 0.000222222225f;
-			float num5 = -500f * num4;
-			ModuleBase moduleBase6 = new ScaleBias((double)num4, (double)num5, WorldGenerator_Grid.noiseElevation);
-			moduleBase6 = new ScaleBias(-1.0, 1.0, moduleBase6);
-			moduleBase6 = new Clamp(0.0, 1.0, moduleBase6);
-			NoiseDebugUI.StoreNoiseRender(moduleBase6, "elevationRainfallEffect");
-			WorldGenerator_Grid.noiseRainfall = new Multiply(WorldGenerator_Grid.noiseRainfall, moduleBase6);
+			}, 100f);
+			NoiseDebugUI.StorePlanetNoise(moduleBase2, "latCurve");
+			WorldGenerator_Grid.noiseRainfall = new Multiply(moduleBase, moduleBase2);
+			float num = 0.000222222225f;
+			float num2 = -500f * num;
+			ModuleBase moduleBase3 = new ScaleBias((double)num, (double)num2, WorldGenerator_Grid.noiseElevation);
+			moduleBase3 = new ScaleBias(-1.0, 1.0, moduleBase3);
+			moduleBase3 = new Clamp(0.0, 1.0, moduleBase3);
+			NoiseDebugUI.StorePlanetNoise(moduleBase3, "elevationRainfallEffect");
+			WorldGenerator_Grid.noiseRainfall = new Multiply(WorldGenerator_Grid.noiseRainfall, moduleBase3);
 			Func<double, double> processor = delegate(double val)
 			{
 				if (val < 0.0)
@@ -156,61 +200,100 @@ namespace RimWorld.Planet
 			WorldGenerator_Grid.noiseRainfall = new Arbitrary(WorldGenerator_Grid.noiseRainfall, processor);
 			WorldGenerator_Grid.noiseRainfall = new Power(WorldGenerator_Grid.noiseRainfall, new Const(1.5));
 			WorldGenerator_Grid.noiseRainfall = new Clamp(0.0, 999.0, WorldGenerator_Grid.noiseRainfall);
-			NoiseDebugUI.StoreNoiseRender(WorldGenerator_Grid.noiseRainfall, "noiseRainfall before mm");
+			NoiseDebugUI.StorePlanetNoise(WorldGenerator_Grid.noiseRainfall, "noiseRainfall before mm");
 			WorldGenerator_Grid.noiseRainfall = new ScaleBias(4000.0, 0.0, WorldGenerator_Grid.noiseRainfall);
-			foreach (IntVec2 current in Find.World.AllSquares)
+			SimpleCurve rainfallCurve = Find.World.info.overallRainfall.GetRainfallCurve();
+			if (rainfallCurve != null)
 			{
-				WorldSquare sqDef = WorldGenerator_Grid.GenerateWorldSquareFor(current);
-				Find.World.grid.Set(current, sqDef);
+				WorldGenerator_Grid.noiseRainfall = new CurveSimple(WorldGenerator_Grid.noiseRainfall, rainfallCurve);
 			}
-			Rand.RandomizeSeedFromTime();
 		}
 
-		private static WorldSquare GenerateWorldSquareFor(IntVec2 wc)
+		private static void SetupHillinessNoise()
 		{
-			WorldSquare worldSquare = new WorldSquare();
-			worldSquare.elevation = WorldGenerator_Grid.noiseElevation.GetValue(wc);
-			if (worldSquare.elevation < 300f)
+			float freqMultiplier = WorldGenerator_Grid.FreqMultiplier;
+			WorldGenerator_Grid.noiseMountainLines = new Perlin((double)(0.04f * freqMultiplier), 2.0, 0.5, 6, Rand.Range(0, 2147483647), QualityMode.High);
+			ModuleBase moduleBase = new Perlin((double)(0.1f * freqMultiplier), 2.0, 0.5, 6, Rand.Range(0, 2147483647), QualityMode.High);
+			WorldGenerator_Grid.noiseMountainLines = new Abs(WorldGenerator_Grid.noiseMountainLines);
+			WorldGenerator_Grid.noiseMountainLines = new OneMinus(WorldGenerator_Grid.noiseMountainLines);
+			moduleBase = new Filter(moduleBase, -0.3f, 1f);
+			WorldGenerator_Grid.noiseMountainLines = new Multiply(WorldGenerator_Grid.noiseMountainLines, moduleBase);
+			WorldGenerator_Grid.noiseMountainLines = new OneMinus(WorldGenerator_Grid.noiseMountainLines);
+			NoiseDebugUI.StorePlanetNoise(WorldGenerator_Grid.noiseMountainLines, "noiseMountainLines");
+			WorldGenerator_Grid.noiseHillsPatchesMacro = new Perlin((double)(0.032f * freqMultiplier), 2.0, 0.5, 5, Rand.Range(0, 2147483647), QualityMode.Medium);
+			WorldGenerator_Grid.noiseHillsPatchesMicro = new Perlin((double)(0.19f * freqMultiplier), 2.0, 0.5, 6, Rand.Range(0, 2147483647), QualityMode.High);
+		}
+
+		private static Tile GenerateTileFor(int tileID)
+		{
+			Tile tile = new Tile();
+			Vector3 tileCenter = Find.WorldGrid.GetTileCenter(tileID);
+			tile.elevation = WorldGenerator_Grid.noiseElevation.GetValue(tileCenter);
+			float value = WorldGenerator_Grid.noiseMountainLines.GetValue(tileCenter);
+			if (value > 0.235f || tile.elevation <= 0f)
 			{
-				worldSquare.hilliness = Hilliness.Flat;
+				if (tile.elevation > 0f && WorldGenerator_Grid.noiseHillsPatchesMicro.GetValue(tileCenter) > 0.46f && WorldGenerator_Grid.noiseHillsPatchesMacro.GetValue(tileCenter) > -0.3f)
+				{
+					if (Rand.Bool)
+					{
+						tile.hilliness = Hilliness.SmallHills;
+					}
+					else
+					{
+						tile.hilliness = Hilliness.LargeHills;
+					}
+				}
+				else
+				{
+					tile.hilliness = Hilliness.Flat;
+				}
 			}
-			else if (worldSquare.elevation < 1500f)
+			else if (value > 0.12f)
 			{
 				switch (Rand.Range(0, 4))
 				{
 				case 0:
-					worldSquare.hilliness = Hilliness.Flat;
+					tile.hilliness = Hilliness.Flat;
 					break;
 				case 1:
-					worldSquare.hilliness = Hilliness.SmallHills;
+					tile.hilliness = Hilliness.SmallHills;
 					break;
 				case 2:
-					worldSquare.hilliness = Hilliness.LargeHills;
+					tile.hilliness = Hilliness.LargeHills;
 					break;
 				case 3:
-					worldSquare.hilliness = Hilliness.Mountainous;
+					tile.hilliness = Hilliness.Mountainous;
 					break;
 				}
 			}
+			else if (value > 0.0363f)
+			{
+				tile.hilliness = Hilliness.Mountainous;
+			}
 			else
 			{
-				worldSquare.hilliness = Hilliness.Mountainous;
+				tile.hilliness = Hilliness.Impassable;
 			}
-			float num = WorldGenerator_Grid.BaseTemperatureAtLatitude(Find.World.LongLatOf(wc).y);
-			num -= WorldGenerator_Grid.TemperatureReductionAtElevation(worldSquare.elevation);
-			num += WorldGenerator_Grid.noiseTemperatureOffset.GetValue(wc);
-			worldSquare.temperature = num;
-			worldSquare.rainfall = WorldGenerator_Grid.noiseRainfall.GetValue(wc);
-			if (float.IsNaN(worldSquare.rainfall))
+			float num = WorldGenerator_Grid.BaseTemperatureAtLatitude(Find.WorldGrid.LongLatOf(tileID).y);
+			num -= WorldGenerator_Grid.TemperatureReductionAtElevation(tile.elevation);
+			num += WorldGenerator_Grid.noiseTemperatureOffset.GetValue(tileCenter);
+			SimpleCurve temperatureCurve = Find.World.info.overallTemperature.GetTemperatureCurve();
+			if (temperatureCurve != null)
 			{
-				float value = WorldGenerator_Grid.noiseRainfall.GetValue(wc);
-				Log.ErrorOnce(value + " rain bad at " + wc, 694822);
+				num = temperatureCurve.Evaluate(num);
 			}
-			worldSquare.biome = WorldGenerator_Grid.BiomeFrom(worldSquare);
-			return worldSquare;
+			tile.temperature = num;
+			tile.rainfall = WorldGenerator_Grid.noiseRainfall.GetValue(tileCenter);
+			if (float.IsNaN(tile.rainfall))
+			{
+				float value2 = WorldGenerator_Grid.noiseRainfall.GetValue(tileCenter);
+				Log.ErrorOnce(value2 + " rain bad at " + tileID, 694822);
+			}
+			tile.biome = WorldGenerator_Grid.BiomeFrom(tile);
+			return tile;
 		}
 
-		private static BiomeDef BiomeFrom(WorldSquare ws)
+		private static BiomeDef BiomeFrom(Tile ws)
 		{
 			List<BiomeDef> allDefsListForReading = DefDatabase<BiomeDef>.AllDefsListForReading;
 			BiomeDef biomeDef = null;
@@ -250,7 +333,7 @@ namespace RimWorld.Planet
 
 		private static float BaseTemperatureAtLatitude(float lat)
 		{
-			float x = lat / 90f;
+			float x = Mathf.Abs(lat) / 90f;
 			return WorldGenerator_Grid.AvgTempByLatitudeCurve.Evaluate(x);
 		}
 

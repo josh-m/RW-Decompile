@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Verse;
 using Verse.AI.Group;
 
 namespace RimWorld
@@ -8,15 +9,12 @@ namespace RimWorld
 	{
 		public RaidStrategyDef def;
 
-		public virtual float SelectionChance
+		public virtual float SelectionChance(Map map)
 		{
-			get
-			{
-				return this.def.selectionChance;
-			}
+			return this.def.selectionChance;
 		}
 
-		public abstract LordJob MakeLordJob(ref IncidentParms parms);
+		public abstract LordJob MakeLordJob(IncidentParms parms, Map map);
 
 		public virtual bool CanUseWith(IncidentParms parms)
 		{

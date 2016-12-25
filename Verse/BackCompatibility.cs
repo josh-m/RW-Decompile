@@ -9,10 +9,6 @@ namespace Verse
 		{
 			if (defType == typeof(ThingDef))
 			{
-				if (defName == "Crack")
-				{
-					return "Flake";
-				}
 				if (defName == "Gun_PDW")
 				{
 					return "Gun_MachinePistol";
@@ -25,19 +21,54 @@ namespace Verse
 				{
 					return "Component";
 				}
-			}
-			else if (defType == typeof(HediffDef))
-			{
-				if (defName == "Alcohol")
+				if (defName == "Megatherium")
 				{
-					return "AlcoholHigh";
+					return "Megasloth";
+				}
+				if (defName == "MegatheriumWool")
+				{
+					return "MegaslothWool";
+				}
+				if (defName == "MalariBlock")
+				{
+					return "Penoxycyline";
+				}
+				if (defName == "ArtilleryShell")
+				{
+					return "MortarShell";
+				}
+			}
+			else if (defType == typeof(PawnKindDef))
+			{
+				if (defName == "Megatherium")
+				{
+					return "Megasloth";
+				}
+			}
+			else if (defType == typeof(ThoughtDef))
+			{
+				if (defName == "ComfortLevel")
+				{
+					return "NeedComfort";
+				}
+				if (defName == "JoyLevel")
+				{
+					return "NeedJoy";
+				}
+				if (defName == "Tired")
+				{
+					return "NeedRest";
+				}
+				if (defName == "Hungry")
+				{
+					return "NeedFood";
 				}
 			}
 			else if (defType == typeof(ResearchProjectDef))
 			{
-				if (defName == "CrackProduction")
+				if (defName == "MalariBlockProduction")
 				{
-					return "FlakeProduction";
+					return "PenoxycyclineProduction";
 				}
 			}
 			else if (defType == typeof(MentalStateDef))
@@ -86,6 +117,17 @@ namespace Verse
 				if (defName == "Extreme")
 				{
 					return "VeryHard";
+				}
+			}
+			else if (defType == typeof(RecipeDef))
+			{
+				if (defName == "MakeArtilleryShell")
+				{
+					return "MakeMortarShell";
+				}
+				if (defName == "Make_MalariBlock")
+				{
+					return "Make_Penoxycyline";
 				}
 			}
 			return defName;

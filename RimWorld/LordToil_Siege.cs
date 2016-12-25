@@ -56,7 +56,7 @@ namespace RimWorld
 			{
 				LordToilData_Siege data = this.Data;
 				float radSquared = (data.baseRadius + 10f) * (data.baseRadius + 10f);
-				List<Thing> framesList = Find.ListerThings.ThingsInGroup(ThingRequestGroup.BuildingFrame);
+				List<Thing> framesList = base.Map.listerThings.ThingsInGroup(ThingRequestGroup.BuildingFrame);
 				if (framesList.Count != 0)
 				{
 					for (int i = 0; i < framesList.Count; i++)
@@ -85,10 +85,10 @@ namespace RimWorld
 			data.baseRadius = Mathf.InverseLerp(14f, 25f, (float)this.lord.ownedPawns.Count / 50f);
 			data.baseRadius = Mathf.Clamp(data.baseRadius, 14f, 25f);
 			List<Thing> list = new List<Thing>();
-			foreach (Blueprint_Build current in SiegeBlueprintPlacer.PlaceBlueprints(data.siegeCenter, this.lord.faction, data.blueprintPoints))
+			foreach (Blueprint_Build current in SiegeBlueprintPlacer.PlaceBlueprints(data.siegeCenter, base.Map, this.lord.faction, data.blueprintPoints))
 			{
 				data.blueprints.Add(current);
-				foreach (ThingCount cost in current.MaterialsNeeded())
+				foreach (ThingCountClass cost in current.MaterialsNeeded())
 				{
 					Thing thing = list.FirstOrDefault((Thing t) => t.def == cost.thingDef);
 					if (thing != null)
@@ -144,7 +144,7 @@ namespace RimWorld
 				list4.Add(item);
 			}
 			list2.Add(list4);
-			DropPodUtility.DropThingGroupsNear(data.siegeCenter, list2, 110, false, false, true);
+			DropPodUtility.DropThingGroupsNear(data.siegeCenter, base.Map, list2, 110, false, false, true);
 			data.desiredBuilderFraction = LordToil_Siege.BuilderCountFraction.RandomInRange;
 		}
 
@@ -166,7 +166,7 @@ namespace RimWorld
 				{
 					num = 1;
 				}
-				int num2 = (from b in Find.ListerThings.ThingsInGroup(ThingRequestGroup.BuildingArtificial)
+				int num2 = (from b in base.Map.listerThings.ThingsInGroup(ThingRequestGroup.BuildingArtificial)
 				where b.def.hasInteractionCell && b.Faction == this.lord.faction && b.Position.InHorDistOf(this.FlagLoc, data.baseRadius)
 				select b).Count<Thing>();
 				if (num < num2)
@@ -218,6 +218,15 @@ namespace RimWorld
 		{
 			this.UpdateAllDuties();
 			base.Notify_PawnLost(victim, cond);
+		}
+
+		public override void Notify_ConstructionFailed(Pawn pawn, Frame frame, Blueprint_Build newBlueprint)
+		{
+			base.Notify_ConstructionFailed(pawn, frame, newBlueprint);
+			if (frame.Faction == this.lord.faction && newBlueprint != null)
+			{
+				this.Data.blueprints.Add(newBlueprint);
+			}
 		}
 
 		private bool CanBeBuilder(Pawn p)
@@ -273,7 +282,7 @@ namespace RimWorld
 				{
 					if (!(from blue in data.blueprints
 					where !blue.Destroyed
-					select blue).Any<Blueprint>() && !Find.ListerThings.ThingsInGroup(ThingRequestGroup.BuildingArtificial).Any((Thing b) => b.Faction == this.lord.faction && b.def.building.buildingTags.Contains("Artillery")))
+					select blue).Any<Blueprint>() && !base.Map.listerThings.ThingsInGroup(ThingRequestGroup.BuildingArtificial).Any((Thing b) => b.Faction == this.lord.faction && b.def.building.buildingTags.Contains("Artillery")))
 					{
 						this.lord.ReceiveMemo("NoArtillery");
 						return;
@@ -285,12 +294,12 @@ namespace RimWorld
 				for (int i = 0; i < num; i++)
 				{
 					IntVec3 c = data.siegeCenter + GenRadial.RadialPattern[i];
-					if (c.InBounds())
+					if (c.InBounds(base.Map))
 					{
-						List<Thing> thingList = c.GetThingList();
+						List<Thing> thingList = c.GetThingList(base.Map);
 						for (int j = 0; j < thingList.Count; j++)
 						{
-							if (thingList[j].def == ThingDefOf.ArtilleryShell)
+							if (thingList[j].def == ThingDefOf.MortarShell)
 							{
 								num2 += thingList[j].stackCount;
 							}
@@ -303,7 +312,7 @@ namespace RimWorld
 				}
 				if (num2 < 4)
 				{
-					this.DropSupplies(ThingDefOf.ArtilleryShell, 10);
+					this.DropSupplies(ThingDefOf.MortarShell, 10);
 				}
 				if (num3 < 5)
 				{
@@ -318,21 +327,7 @@ namespace RimWorld
 			Thing thing = ThingMaker.MakeThing(thingDef, null);
 			thing.stackCount = count;
 			list.Add(thing);
-			DropPodUtility.DropThingsNear(this.Data.siegeCenter, list, 110, false, false, true);
-		}
-
-		public void UnclaimBuildings()
-		{
-			LordToilData_Siege data = this.Data;
-			List<Thing> list = Find.ListerThings.ThingsInGroup(ThingRequestGroup.BuildingArtificial);
-			for (int i = 0; i < list.Count; i++)
-			{
-				Thing thing = list[i];
-				if (thing.Faction == this.lord.faction && thing.Position.InHorDistOf(this.FlagLoc, data.baseRadius * 2f))
-				{
-					thing.SetFaction(null, null);
-				}
-			}
+			DropPodUtility.DropThingsNear(this.Data.siegeCenter, base.Map, list, 110, false, false, true);
 		}
 
 		public override void Cleanup()
@@ -347,7 +342,6 @@ namespace RimWorld
 			{
 				current.Destroy(DestroyMode.Cancel);
 			}
-			this.UnclaimBuildings();
 		}
 	}
 }

@@ -47,14 +47,32 @@ namespace RimWorld
 					if (need != null)
 					{
 						float needLevelOffset = this.Props.needLevelOffset;
-						AddictionUtility.FactorDrugEffectForTolerance(ingester, this.Props.chemical, ref needLevelOffset);
+						AddictionUtility.ModifyChemicalEffectForToleranceAndBodySize(ingester, this.Props.chemical, ref needLevelOffset);
 						need.CurLevel += needLevelOffset;
 					}
 				}
-				float randomInRange = this.Props.overdoseSeverityOffset.RandomInRange;
-				if (randomInRange > 0f)
+				Hediff firstHediffOfDef = ingester.health.hediffSet.GetFirstHediffOfDef(HediffDefOf.DrugOverdose);
+				float num2 = (firstHediffOfDef == null) ? 0f : firstHediffOfDef.Severity;
+				if (num2 < 0.9f && Rand.Value < this.Props.largeOverdoseChance)
 				{
-					HealthUtility.AdjustSeverity(ingester, HediffDefOf.DrugOverdose, randomInRange);
+					float num3 = Rand.Range(0.85f, 0.99f);
+					HealthUtility.AdjustSeverity(ingester, HediffDefOf.DrugOverdose, num3 - num2);
+					if (ingester.Faction == Faction.OfPlayer)
+					{
+						Messages.Message("MessageAccidentalOverdose".Translate(new object[]
+						{
+							ingester.LabelIndefinite(),
+							this.parent.LabelNoCount
+						}).CapitalizeFirst(), MessageSound.Negative);
+					}
+				}
+				else
+				{
+					float num4 = this.Props.overdoseSeverityOffset.RandomInRange / ingester.BodySize;
+					if (num4 > 0f)
+					{
+						HealthUtility.AdjustSeverity(ingester, HediffDefOf.DrugOverdose, num4);
+					}
 				}
 			}
 			if (this.Props.isCombatEnhancingDrug && !ingester.Dead)

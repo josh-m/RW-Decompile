@@ -17,7 +17,7 @@ namespace RimWorld
 
 		protected override bool TryFindGoodOpportunisticTaskTarget(Pawn pawn, out Thing target, List<Thing> alreadyTakenTargets)
 		{
-			return StealAIUtility.TryFindBestItemToSteal(pawn.Position, 7f, out target, pawn, alreadyTakenTargets);
+			return StealAIUtility.TryFindBestItemToSteal(pawn.Position, pawn.Map, 7f, out target, pawn, alreadyTakenTargets);
 		}
 	}
 }

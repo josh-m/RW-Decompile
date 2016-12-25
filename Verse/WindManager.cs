@@ -6,43 +6,48 @@ using Verse.Noise;
 
 namespace Verse
 {
-	public static class WindManager
+	public class WindManager
 	{
+		private Map map;
+
 		private static List<Material> plantMaterials = new List<Material>();
 
-		private static float cachedWindSpeed;
+		private float cachedWindSpeed;
 
-		private static ModuleBase windNoise = null;
+		private ModuleBase windNoise;
 
-		private static float plantSwayHead = 0f;
+		private float plantSwayHead;
 
-		public static float WindSpeed
+		public float WindSpeed
 		{
 			get
 			{
-				return WindManager.cachedWindSpeed;
+				return this.cachedWindSpeed;
 			}
 		}
 
-		public static void Reinit()
+		public WindManager(Map map)
 		{
-			WindManager.windNoise = null;
+			this.map = map;
 		}
 
-		public static void WindManagerTick()
+		public void WindManagerTick()
 		{
-			WindManager.cachedWindSpeed = WindManager.BaseWindSpeedAt(Find.TickManager.TicksAbs) * Find.WeatherManager.CurWindSpeedFactor;
+			this.cachedWindSpeed = this.BaseWindSpeedAt(Find.TickManager.TicksAbs) * this.map.weatherManager.CurWindSpeedFactor;
 			if (Prefs.PlantWindSway)
 			{
-				WindManager.plantSwayHead += Mathf.Min(WindManager.WindSpeed, 1f);
+				this.plantSwayHead += Mathf.Min(this.WindSpeed, 1f);
 			}
 			else
 			{
-				WindManager.plantSwayHead = 0f;
+				this.plantSwayHead = 0f;
 			}
-			for (int i = 0; i < WindManager.plantMaterials.Count; i++)
+			if (Find.VisibleMap == this.map)
 			{
-				WindManager.plantMaterials[i].SetFloat("_SwayHead", WindManager.plantSwayHead);
+				for (int i = 0; i < WindManager.plantMaterials.Count; i++)
+				{
+					WindManager.plantMaterials[i].SetFloat("_SwayHead", this.plantSwayHead);
+				}
 			}
 		}
 
@@ -51,30 +56,30 @@ namespace Verse
 			WindManager.plantMaterials.Add(newMat);
 		}
 
-		private static float BaseWindSpeedAt(int ticksAbs)
+		private float BaseWindSpeedAt(int ticksAbs)
 		{
-			if (WindManager.windNoise == null)
+			if (this.windNoise == null)
 			{
-				int seed = Find.Map.WorldCoords.x + Find.Map.WorldCoords.x * 10000 ^ Find.World.info.Seed;
-				WindManager.windNoise = new Perlin(3.9999998989515007E-05, 2.0, 0.5, 4, seed, QualityMode.Medium);
-				WindManager.windNoise = new ScaleBias(1.5, 0.5, WindManager.windNoise);
-				WindManager.windNoise = new Clamp(0.039999999105930328, 2.0, WindManager.windNoise);
+				int seed = Gen.HashCombineInt(this.map.Tile, 122049541) ^ Find.World.info.Seed;
+				this.windNoise = new Perlin(3.9999998989515007E-05, 2.0, 0.5, 4, seed, QualityMode.Medium);
+				this.windNoise = new ScaleBias(1.5, 0.5, this.windNoise);
+				this.windNoise = new Clamp(0.039999999105930328, 2.0, this.windNoise);
 			}
-			return (float)WindManager.windNoise.GetValue((double)ticksAbs, 0.0, 0.0);
+			return (float)this.windNoise.GetValue((double)ticksAbs, 0.0, 0.0);
 		}
 
-		public static string DebugString()
+		public string DebugString()
 		{
 			return string.Concat(new object[]
 			{
 				"WindSpeed: ",
-				WindManager.WindSpeed,
+				this.WindSpeed,
 				"\nplantSwayHead: ",
-				WindManager.plantSwayHead
+				this.plantSwayHead
 			});
 		}
 
-		public static void LogWindSpeeds()
+		public void LogWindSpeeds()
 		{
 			StringBuilder stringBuilder = new StringBuilder();
 			stringBuilder.AppendLine("Upcoming wind speeds:");
@@ -85,7 +90,7 @@ namespace Verse
 					"Hour ",
 					i,
 					" - ",
-					WindManager.BaseWindSpeedAt(Find.TickManager.TicksAbs + 2500 * i).ToString("F2")
+					this.BaseWindSpeedAt(Find.TickManager.TicksAbs + 2500 * i).ToString("F2")
 				}));
 			}
 			Log.Message(stringBuilder.ToString());

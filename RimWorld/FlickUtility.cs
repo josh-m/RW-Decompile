@@ -21,10 +21,10 @@ namespace RimWorld
 					}
 				}
 			}
-			Designation designation = Find.DesignationManager.DesignationOn(t, DesignationDefOf.Flick);
+			Designation designation = t.Map.designationManager.DesignationOn(t, DesignationDefOf.Flick);
 			if (flag && designation == null)
 			{
-				Find.DesignationManager.AddDesignation(new Designation(t, DesignationDefOf.Flick));
+				t.Map.designationManager.AddDesignation(new Designation(t, DesignationDefOf.Flick));
 			}
 			else if (!flag && designation != null)
 			{

@@ -20,8 +20,17 @@ namespace RimWorld
 
 		private int nextLightningTicks;
 
-		public MapCondition_Flashstorm()
+		public override void ExposeData()
 		{
+			base.ExposeData();
+			Scribe_Values.LookValue<IntVec2>(ref this.centerLocation, "centerLocation", default(IntVec2), false);
+			Scribe_Values.LookValue<int>(ref this.areaRadius, "areaRadius", 0, false);
+			Scribe_Values.LookValue<int>(ref this.nextLightningTicks, "nextLightningTicks", 0, false);
+		}
+
+		public override void Init()
+		{
+			base.Init();
 			this.areaRadius = MapCondition_Flashstorm.AreaRadiusRange.RandomInRange;
 			this.FindGoodCenterLocation();
 		}
@@ -36,7 +45,7 @@ namespace RimWorld
 				IntVec3 intVec = new IntVec3((int)Math.Round((double)a.x) + this.centerLocation.x, 0, (int)Math.Round((double)a.y) + this.centerLocation.z);
 				if (this.IsGoodLocationForStrike(intVec))
 				{
-					Find.WeatherManager.eventHandler.AddEvent(new WeatherEvent_LightningStrike(intVec));
+					base.Map.weatherManager.eventHandler.AddEvent(new WeatherEvent_LightningStrike(base.Map, intVec));
 					this.nextLightningTicks = Find.TickManager.TicksGame + MapCondition_Flashstorm.TicksBetweenStrikes.RandomInRange;
 				}
 			}
@@ -44,19 +53,19 @@ namespace RimWorld
 
 		public override void End()
 		{
-			Find.Storyteller.weatherDecider.DisableRainFor(30000);
+			base.Map.weatherDecider.DisableRainFor(30000);
 			base.End();
 		}
 
 		private void FindGoodCenterLocation()
 		{
-			if (Find.Map.Size.x <= 16 || Find.Map.Size.z <= 16)
+			if (base.Map.Size.x <= 16 || base.Map.Size.z <= 16)
 			{
 				throw new Exception("Map too small for flashstorm.");
 			}
 			for (int i = 0; i < 10; i++)
 			{
-				this.centerLocation = new IntVec2(Rand.Range(8, Find.Map.Size.x - 8), Rand.Range(8, Find.Map.Size.z - 8));
+				this.centerLocation = new IntVec2(Rand.Range(8, base.Map.Size.x - 8), Rand.Range(8, base.Map.Size.z - 8));
 				if (this.IsGoodCenterLocation(this.centerLocation))
 				{
 					break;
@@ -66,7 +75,7 @@ namespace RimWorld
 
 		private bool IsGoodLocationForStrike(IntVec3 loc)
 		{
-			return loc.InBounds() && !loc.Roofed() && loc.Standable();
+			return loc.InBounds(base.Map) && !loc.Roofed(base.Map) && loc.Standable(base.Map);
 		}
 
 		private bool IsGoodCenterLocation(IntVec2 loc)

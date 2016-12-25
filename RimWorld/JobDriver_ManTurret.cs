@@ -20,7 +20,7 @@ namespace RimWorld
 		public static Thing FindAmmoForTurret(Pawn pawn, Thing gun)
 		{
 			Predicate<Thing> validator = (Thing t) => !t.IsForbidden(pawn) && pawn.CanReserve(t, 1);
-			return GenClosest.ClosestThingReachable(gun.Position, ThingRequest.ForDef(gun.def.building.turretShellDef), PathEndMode.OnCell, TraverseParms.For(pawn, Danger.Deadly, TraverseMode.ByPawn, false), 40f, validator, null, -1, false);
+			return GenClosest.ClosestThingReachable(gun.Position, gun.Map, ThingRequest.ForDef(gun.def.building.turretShellDef), PathEndMode.OnCell, TraverseParms.For(pawn, Danger.Deadly, TraverseMode.ByPawn, false), 40f, validator, null, -1, false);
 		}
 
 		[DebuggerHidden]
@@ -52,15 +52,15 @@ namespace RimWorld
 								building_TurretGun.Label
 							}).CapitalizeFirst(), building_TurretGun, MessageSound.Negative);
 						}
-						actor.jobs.EndCurrentJob(JobCondition.Incompletable);
+						actor.jobs.EndCurrentJob(JobCondition.Incompletable, true);
 					}
 					actor.CurJob.targetB = thing;
-					actor.CurJob.maxNumToCarry = 1;
+					actor.CurJob.count = 1;
 				}
 			};
 			yield return Toils_Reserve.Reserve(TargetIndex.B, 25);
 			yield return Toils_Goto.GotoThing(TargetIndex.B, PathEndMode.OnCell).FailOnSomeonePhysicallyInteracting(TargetIndex.B);
-			yield return Toils_Haul.StartCarryThing(TargetIndex.B);
+			yield return Toils_Haul.StartCarryThing(TargetIndex.B, false, false);
 			yield return Toils_Goto.GotoThing(TargetIndex.A, PathEndMode.Touch);
 			yield return new Toil
 			{
@@ -69,9 +69,9 @@ namespace RimWorld
 					Pawn actor = this.<loadIfNeeded>__1.actor;
 					Building building = (Building)actor.CurJob.targetA.Thing;
 					Building_TurretGun building_TurretGun = building as Building_TurretGun;
-					SoundDef.Named("ArtilleryShellLoaded").PlayOneShot(building_TurretGun.Position);
+					SoundDefOf.ArtilleryShellLoaded.PlayOneShot(new TargetInfo(building_TurretGun.Position, building_TurretGun.Map, false));
 					building_TurretGun.loaded = true;
-					actor.carrier.container.ClearAndDestroyContents(DestroyMode.Vanish);
+					actor.carryTracker.innerContainer.ClearAndDestroyContents(DestroyMode.Vanish);
 				}
 			};
 			yield return gotoTurret;

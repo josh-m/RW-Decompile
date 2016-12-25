@@ -44,6 +44,10 @@ namespace RimWorld
 			{
 				return;
 			}
+			if (pawn.story != null && pawn.story.WorkTagIsDisabled(WorkTags.Violent))
+			{
+				return;
+			}
 			float randomInRange = pawn.kindDef.weaponMoney.RandomInRange;
 			for (int i = 0; i < PawnWeaponGenerator.potentialWeapons.Count; i++)
 			{

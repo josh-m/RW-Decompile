@@ -14,6 +14,7 @@ namespace Verse
 			FadeRough
 		}
 
+		[NoTranslate]
 		public string texturePath;
 
 		public TerrainDef.TerrainEdgeType edgeType;
@@ -24,6 +25,7 @@ namespace Verse
 
 		public bool layerable;
 
+		[NoTranslate]
 		public string scatterType;
 
 		public bool takeFootprints;

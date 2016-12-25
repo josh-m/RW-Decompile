@@ -1,13 +1,19 @@
 using System;
+using UnityEngine;
 using Verse;
 
 namespace RimWorld
 {
+	[StaticConstructorOnStartup]
 	public abstract class Thought : IExposable
 	{
 		public Pawn pawn;
 
 		public ThoughtDef def;
+
+		private static readonly Texture2D DefaultGoodIcon = ContentFinder<Texture2D>.Get("Things/Mote/ThoughtSymbol/GenericGood", true);
+
+		private static readonly Texture2D DefaultBadIcon = ContentFinder<Texture2D>.Get("Things/Mote/ThoughtSymbol/GenericBad", true);
 
 		public abstract int CurStageIndex
 		{
@@ -71,6 +77,22 @@ namespace RimWorld
 			}
 		}
 
+		public Texture2D Icon
+		{
+			get
+			{
+				if (this.def.Icon != null)
+				{
+					return this.def.Icon;
+				}
+				if (this.MoodOffset() > 0f)
+				{
+					return Thought.DefaultGoodIcon;
+				}
+				return Thought.DefaultBadIcon;
+			}
+		}
+
 		public virtual void ExposeData()
 		{
 			Scribe_Defs.LookDef<ThoughtDef>(ref this.def, "def");
@@ -97,8 +119,9 @@ namespace RimWorld
 			return num;
 		}
 
-		public virtual bool TryMergeWithExistingThought()
+		public virtual bool TryMergeWithExistingThought(out bool showBubble)
 		{
+			showBubble = false;
 			return false;
 		}
 

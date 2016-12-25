@@ -42,7 +42,7 @@ namespace RimWorld
 				}
 				if (actor.skills != null)
 				{
-					actor.skills.Learn(SkillDefOf.Mining, 0.11f);
+					actor.skills.Learn(SkillDefOf.Mining, 0.11f, false);
 				}
 				this.<>f__this.ticksToPickHit--;
 				if (this.<>f__this.ticksToPickHit <= 0)
@@ -53,17 +53,17 @@ namespace RimWorld
 					}
 					this.<>f__this.effecter.Trigger(actor, mineable);
 					int amount = 80;
-					BodyPartDamageInfo value = new BodyPartDamageInfo(new BodyPartHeight?(BodyPartHeight.Top), new BodyPartDepth?(BodyPartDepth.Outside));
-					DamageInfo dinfo = new DamageInfo(DamageDefOf.Mining, amount, this.<mine>__0.actor, new BodyPartDamageInfo?(value), null);
+					Pawn actor2 = this.<mine>__0.actor;
+					DamageInfo dinfo = new DamageInfo(DamageDefOf.Mining, amount, -1f, actor2, null, null);
 					IntVec3 position = mineable.Position;
 					mineable.TakeDamage(dinfo);
 					if (mineable.Destroyed)
 					{
-						MineStrikeManager.CheckStruckOre(position, mineable.def, actor);
+						actor.Map.mineStrikeManager.CheckStruckOre(position, mineable.def, actor);
 						actor.records.Increment(RecordDefOf.CellsMined);
 						if (this.<>f__this.pawn.Faction != Faction.OfPlayer)
 						{
-							List<Thing> thingList = position.GetThingList();
+							List<Thing> thingList = position.GetThingList(this.<>f__this.Map);
 							for (int i = 0; i < thingList.Count; i++)
 							{
 								thingList[i].SetForbidden(true, false);

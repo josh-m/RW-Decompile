@@ -130,9 +130,9 @@ namespace Verse
 		{
 		}
 
-		public override void SpawnSetup()
+		public override void SpawnSetup(Map map)
 		{
-			base.SpawnSetup();
+			base.SpawnSetup(map);
 			for (int i = 0; i < this.comps.Count; i++)
 			{
 				this.comps[i].PostSpawnSetup();
@@ -141,20 +141,21 @@ namespace Verse
 
 		public override void DeSpawn()
 		{
+			Map map = base.Map;
 			base.DeSpawn();
 			for (int i = 0; i < this.comps.Count; i++)
 			{
-				this.comps[i].PostDeSpawn();
+				this.comps[i].PostDeSpawn(map);
 			}
 		}
 
 		public override void Destroy(DestroyMode mode = DestroyMode.Vanish)
 		{
-			bool spawned = base.Spawned;
+			Map map = base.Map;
 			base.Destroy(mode);
 			for (int i = 0; i < this.comps.Count; i++)
 			{
-				this.comps[i].PostDestroy(mode, spawned);
+				this.comps[i].PostDestroy(mode, map);
 			}
 		}
 
@@ -311,6 +312,11 @@ namespace Verse
 				string text = this.comps[i].CompInspectStringExtra();
 				if (!text.NullOrEmpty())
 				{
+					if (Prefs.DevMode && char.IsWhiteSpace(text[text.Length - 1]))
+					{
+						Log.ErrorOnce(this.comps[i].GetType() + " CompInspectStringExtra ended with whitespace: " + text, 25612);
+						text = text.TrimEndNewlines();
+					}
 					stringBuilder.AppendLine(text);
 				}
 			}

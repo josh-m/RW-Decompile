@@ -16,11 +16,6 @@ namespace RimWorld
 			get;
 		}
 
-		IEnumerable<Thing> ColonyThingsWillingToBuy
-		{
-			get;
-		}
-
 		int RandomPriceFactorSeed
 		{
 			get;
@@ -36,8 +31,15 @@ namespace RimWorld
 			get;
 		}
 
-		void AddToStock(Thing thing);
+		float TradePriceImprovementOffsetForPlayer
+		{
+			get;
+		}
 
-		void GiveSoldThingToBuyer(Thing toGive, Thing originalThingFromStock);
+		IEnumerable<Thing> ColonyThingsWillingToBuy(Pawn playerNegotiator);
+
+		void AddToStock(Thing thing, Pawn playerNegotiator);
+
+		void GiveSoldThingToPlayer(Thing toGive, Thing originalThingFromStock, Pawn playerNegotiator);
 	}
 }

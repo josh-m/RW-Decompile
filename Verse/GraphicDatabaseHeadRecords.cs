@@ -66,7 +66,7 @@ namespace Verse
 
 		private static readonly string SkullPath = "Things/Pawn/Humanlike/Heads/None_Average_Skull";
 
-		public static void Reinit()
+		public static void Reset()
 		{
 			GraphicDatabaseHeadRecords.heads.Clear();
 			GraphicDatabaseHeadRecords.skull = null;

@@ -13,11 +13,11 @@ namespace RimWorld
 				return null;
 			}
 			FloatRange tempRange = pawn.ComfortableTemperatureRange();
-			if (tempRange.Includes(pawn.Position.GetTemperature()))
+			if (tempRange.Includes(pawn.Position.GetTemperature(pawn.Map)))
 			{
 				return new Job(JobDefOf.WaitSafeTemperature, 500, true);
 			}
-			Region region = JobGiver_SeekSafeTemperature.ClosestRegionWithinTemperatureRange(pawn.Position, tempRange, TraverseParms.For(pawn, Danger.Deadly, TraverseMode.ByPawn, false));
+			Region region = JobGiver_SeekSafeTemperature.ClosestRegionWithinTemperatureRange(pawn.Position, pawn.Map, tempRange, TraverseParms.For(pawn, Danger.Deadly, TraverseMode.ByPawn, false));
 			if (region != null)
 			{
 				return new Job(JobDefOf.GotoSafeTemperature, region.RandomCell);
@@ -25,10 +25,10 @@ namespace RimWorld
 			return null;
 		}
 
-		private static Region ClosestRegionWithinTemperatureRange(IntVec3 root, FloatRange tempRange, TraverseParms traverseParms)
+		private static Region ClosestRegionWithinTemperatureRange(IntVec3 root, Map map, FloatRange tempRange, TraverseParms traverseParms)
 		{
-			RegionAndRoomUpdater.RebuildDirtyRegionsAndRooms();
-			Region validRegionAt = Find.RegionGrid.GetValidRegionAt(root);
+			map.regionAndRoomUpdater.RebuildDirtyRegionsAndRooms();
+			Region validRegionAt = map.regionGrid.GetValidRegionAt(root);
 			if (validRegionAt == null)
 			{
 				return null;

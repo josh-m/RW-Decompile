@@ -6,6 +6,8 @@ namespace Verse
 {
 	public sealed class MapDrawer
 	{
+		private Map map;
+
 		private Section[,] sections;
 
 		private IntVec2 SectionCount
@@ -14,10 +16,15 @@ namespace Verse
 			{
 				return new IntVec2
 				{
-					x = Mathf.CeilToInt((float)Find.Map.Size.x / 17f),
-					z = Mathf.CeilToInt((float)Find.Map.Size.z / 17f)
+					x = Mathf.CeilToInt((float)this.map.Size.x / 17f),
+					z = Mathf.CeilToInt((float)this.map.Size.z / 17f)
 				};
 			}
+		}
+
+		public MapDrawer(Map map)
+		{
+			this.map = map;
 		}
 
 		public void MapMeshDirty(IntVec3 loc, MapMeshFlag dirtyFlags)
@@ -29,7 +36,7 @@ namespace Verse
 
 		public void MapMeshDirty(IntVec3 loc, MapMeshFlag dirtyFlags, bool regenAdjacentCells, bool regenAdjacentSections)
 		{
-			if (Current.ProgramState != ProgramState.MapPlaying)
+			if (Current.ProgramState != ProgramState.Playing)
 			{
 				return;
 			}
@@ -40,7 +47,7 @@ namespace Verse
 				for (int i = 0; i < 8; i++)
 				{
 					IntVec3 intVec = loc + GenAdj.AdjacentCells[i];
-					if (intVec.InBounds())
+					if (intVec.InBounds(this.map))
 					{
 						this.SectionAt(intVec).dirtyFlags |= dirtyFlags;
 					}
@@ -66,9 +73,13 @@ namespace Verse
 		public void MapMeshDrawerUpdate_First()
 		{
 			CellRect currentViewRect = Find.CameraDriver.CurrentViewRect;
-			currentViewRect.ClipInsideMap();
+			currentViewRect.ClipInsideMap(this.map);
 			IntVec2 intVec = this.SectionCoordsAt(currentViewRect.BottomLeft);
 			IntVec2 intVec2 = this.SectionCoordsAt(currentViewRect.TopRight);
+			if (intVec2.x < intVec.x || intVec2.z < intVec.z)
+			{
+				return;
+			}
 			CellRect cellRect = CellRect.FromLimits(intVec.x, intVec.z, intVec2.x, intVec2.z);
 			bool flag = false;
 			CellRect.CellRectIterator iterator = cellRect.GetIterator();
@@ -160,7 +171,7 @@ namespace Verse
 				{
 					if (this.sections[i, j] == null)
 					{
-						this.sections[i, j] = new Section(new IntVec3(i, 0, j));
+						this.sections[i, j] = new Section(new IntVec3(i, 0, j), this.map);
 					}
 					this.sections[i, j].RegenerateAllLayers();
 				}
@@ -180,7 +191,7 @@ namespace Verse
 
 		private CellRect GetSunShadowsViewRect(CellRect rect)
 		{
-			Vector2 vector = GenCelestial.CurShadowVector();
+			Vector2 vector = GenCelestial.CurShadowVector(this.map);
 			if (vector.x < 0f)
 			{
 				rect.maxX -= Mathf.FloorToInt(vector.x);

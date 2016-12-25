@@ -6,6 +6,6 @@ namespace Verse
 	{
 		Entry,
 		MapInitializing,
-		MapPlaying
+		Playing
 	}
 }

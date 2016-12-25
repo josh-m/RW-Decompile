@@ -6,38 +6,29 @@ namespace RimWorld
 {
 	public class Alert_MajorOrExtremeBreakRisk : Alert_Critical
 	{
-		public override string FullLabel
+		public override string GetLabel()
 		{
-			get
-			{
-				return BreakRiskAlertUtility.AlertLabel;
-			}
+			return BreakRiskAlertUtility.AlertLabel;
 		}
 
-		public override string FullExplanation
+		public override string GetExplanation()
 		{
-			get
-			{
-				return BreakRiskAlertUtility.AlertExplanation;
-			}
+			return BreakRiskAlertUtility.AlertExplanation;
 		}
 
-		public override AlertReport Report
+		public override AlertReport GetReport()
 		{
-			get
+			Pawn pawn = BreakRiskAlertUtility.PawnsAtRiskExtreme.FirstOrDefault<Pawn>();
+			if (pawn != null)
 			{
-				Pawn pawn = BreakRiskAlertUtility.PawnsAtRiskExtreme.FirstOrDefault<Pawn>();
-				if (pawn != null)
-				{
-					return pawn;
-				}
-				pawn = BreakRiskAlertUtility.PawnsAtRiskMajor.FirstOrDefault<Pawn>();
-				if (pawn != null)
-				{
-					return pawn;
-				}
-				return false;
+				return pawn;
 			}
+			pawn = BreakRiskAlertUtility.PawnsAtRiskMajor.FirstOrDefault<Pawn>();
+			if (pawn != null)
+			{
+				return pawn;
+			}
+			return false;
 		}
 	}
 }

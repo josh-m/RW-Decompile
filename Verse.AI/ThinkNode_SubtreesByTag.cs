@@ -11,22 +11,15 @@ namespace Verse.AI
 		[Unsaved]
 		private List<ThinkTreeDef> matchedTrees;
 
-		public override ThinkNode DeepCopy()
+		public override ThinkNode DeepCopy(bool resolve = true)
 		{
-			ThinkNode_SubtreesByTag thinkNode_SubtreesByTag = (ThinkNode_SubtreesByTag)base.DeepCopy();
+			ThinkNode_SubtreesByTag thinkNode_SubtreesByTag = (ThinkNode_SubtreesByTag)base.DeepCopy(resolve);
 			thinkNode_SubtreesByTag.insertTag = this.insertTag;
 			return thinkNode_SubtreesByTag;
 		}
 
 		protected override void ResolveSubnodes()
 		{
-			if (this.matchedTrees != null)
-			{
-				foreach (ThinkTreeDef current in this.matchedTrees)
-				{
-					this.subNodes.Add(current.thinkRoot);
-				}
-			}
 		}
 
 		public override ThinkResult TryIssueJobPackage(Pawn pawn)

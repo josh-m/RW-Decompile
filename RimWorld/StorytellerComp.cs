@@ -11,17 +11,17 @@ namespace RimWorld
 	{
 		public StorytellerCompProperties props;
 
-		public abstract IEnumerable<FiringIncident> MakeIntervalIncidents();
+		public abstract IEnumerable<FiringIncident> MakeIntervalIncidents(IIncidentTarget target);
 
-		public virtual IncidentParms GenerateParms(IncidentCategory incCat)
+		public virtual IncidentParms GenerateParms(IncidentCategory incCat, IIncidentTarget target)
 		{
-			return StorytellerUtility.DefaultParmsNow(Find.Storyteller.def, incCat);
+			return StorytellerUtility.DefaultParmsNow(Find.Storyteller.def, incCat, target);
 		}
 
-		protected virtual IEnumerable<IncidentDef> UsableIncidentsInCategory(IncidentCategory cat)
+		protected virtual IEnumerable<IncidentDef> UsableIncidentsInCategory(IncidentCategory cat, IIncidentTarget target)
 		{
 			return from x in DefDatabase<IncidentDef>.AllDefsListForReading
-			where x.category == cat && x.Worker.CanFireNow()
+			where x.category == cat && x.Worker.CanFireNow(target)
 			select x;
 		}
 
@@ -51,7 +51,7 @@ namespace RimWorld
 				", AdjustedPopulation: ",
 				Find.Storyteller.intenderPopulation.AdjustedPopulation
 			}));
-			foreach (IncidentDef current in from d in this.UsableIncidentsInCategory(cat)
+			foreach (IncidentDef current in from d in this.UsableIncidentsInCategory(cat, Find.VisibleMap)
 			orderby this.IncidentChanceAdjustedForPopulation(d) descending
 			select d)
 			{

@@ -14,7 +14,7 @@ namespace RimWorld
 			{
 				return 1f;
 			}
-			int level = pawn.skills.GetSkill(this.skill).level;
+			int level = pawn.skills.GetSkill(this.skill).Level;
 			if (this.factorsPerLevel.Count > level)
 			{
 				return this.factorsPerLevel[level];

@@ -6,8 +6,10 @@ namespace Verse
 	{
 		public int listOrder;
 
+		[MustTranslate]
 		public string labelMechanoids = string.Empty;
 
+		[MustTranslate]
 		public string labelAnimals = string.Empty;
 
 		public bool showOnHumanlikes = true;
@@ -23,6 +25,8 @@ namespace Verse
 		public float minForCapable;
 
 		public float minValue;
+
+		public bool showOnCaravanHealthTab;
 
 		public string GetLabelFor(Pawn pawn)
 		{

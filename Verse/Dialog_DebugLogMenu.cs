@@ -37,7 +37,7 @@ namespace Verse
 			});
 			base.DebugAction("Song selection info", delegate
 			{
-				Find.MusicManagerMap.LogSongSelectionData();
+				Find.MusicManagerPlay.LogSongSelectionData();
 			});
 			base.DebugAction("Plant data", delegate
 			{
@@ -77,7 +77,7 @@ namespace Verse
 			});
 			base.DebugAction("Lords", delegate
 			{
-				Find.LordManager.LogLords();
+				Find.VisibleMap.lordManager.LogLords();
 			});
 			base.DebugAction("Tribal solid backstories", delegate
 			{
@@ -113,7 +113,7 @@ namespace Verse
 					});
 				}
 			}
-			if (Current.ProgramState == ProgramState.MapPlaying)
+			if (Current.ProgramState == ProgramState.Playing)
 			{
 				base.DebugAction("Plant proportions", delegate
 				{
@@ -141,11 +141,11 @@ namespace Verse
 				});
 				base.DebugAction("Temperature data", delegate
 				{
-					GenTemperature.DebugLogTemps();
+					Find.VisibleMap.mapTemperature.DebugLogTemps();
 				});
 				base.DebugAction("Weather chances", delegate
 				{
-					Find.Storyteller.weatherDecider.LogWeatherChances();
+					Find.VisibleMap.weatherDecider.LogWeatherChances();
 				});
 				base.DebugAction("Celestial glow", delegate
 				{
@@ -153,11 +153,11 @@ namespace Verse
 				});
 				base.DebugAction("ListerPawns", delegate
 				{
-					Find.MapPawns.LogListedPawns();
+					Find.VisibleMap.mapPawns.LogListedPawns();
 				});
 				base.DebugAction("Wind speeds", delegate
 				{
-					WindManager.LogWindSpeeds();
+					Find.VisibleMap.windManager.LogWindSpeeds();
 				});
 				base.DebugAction("Kidnapped pawns", delegate
 				{
@@ -169,7 +169,7 @@ namespace Verse
 				});
 				base.DebugAction("Draw list", delegate
 				{
-					Find.DynamicDrawManager.LogDynamicDrawThings();
+					Find.VisibleMap.dynamicDrawManager.LogDynamicDrawThings();
 				});
 				base.DebugAction("Future incidents", delegate
 				{

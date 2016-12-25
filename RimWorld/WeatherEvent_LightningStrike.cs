@@ -14,11 +14,11 @@ namespace RimWorld
 
 		private static readonly Material LightningMat = MatLoader.LoadMat("Weather/LightningBolt");
 
-		public WeatherEvent_LightningStrike()
+		public WeatherEvent_LightningStrike(Map map) : base(map)
 		{
 		}
 
-		public WeatherEvent_LightningStrike(IntVec3 forcedStrikeLoc) : this()
+		public WeatherEvent_LightningStrike(Map map, IntVec3 forcedStrikeLoc) : base(map)
 		{
 			this.strikeLoc = forcedStrikeLoc;
 		}
@@ -28,18 +28,18 @@ namespace RimWorld
 			base.FireEvent();
 			if (!this.strikeLoc.IsValid)
 			{
-				this.strikeLoc = CellFinderLoose.RandomCellWith((IntVec3 sq) => sq.Standable() && !Find.RoofGrid.Roofed(sq), 1000);
+				this.strikeLoc = CellFinderLoose.RandomCellWith((IntVec3 sq) => sq.Standable(this.map) && !this.map.roofGrid.Roofed(sq), this.map, 1000);
 			}
 			this.boltMesh = LightningBoltMeshPool.RandomBoltMesh;
-			GenExplosion.DoExplosion(this.strikeLoc, 1.9f, DamageDefOf.Flame, null, null, null, null, null, 0f, 1, false, null, 0f, 1);
+			GenExplosion.DoExplosion(this.strikeLoc, this.map, 1.9f, DamageDefOf.Flame, null, null, null, null, null, 0f, 1, false, null, 0f, 1);
 			Vector3 loc = this.strikeLoc.ToVector3Shifted();
 			for (int i = 0; i < 4; i++)
 			{
-				MoteMaker.ThrowSmoke(loc, 1.5f);
-				MoteMaker.ThrowMicroSparks(loc);
-				MoteMaker.ThrowLightningGlow(loc, 1.5f);
+				MoteMaker.ThrowSmoke(loc, this.map, 1.5f);
+				MoteMaker.ThrowMicroSparks(loc, this.map);
+				MoteMaker.ThrowLightningGlow(loc, this.map, 1.5f);
 			}
-			SoundInfo info = SoundInfo.InWorld(this.strikeLoc, MaintenanceType.None);
+			SoundInfo info = SoundInfo.InMap(new TargetInfo(this.strikeLoc, this.map, false), MaintenanceType.None);
 			SoundDefOf.Thunder_OnMap.PlayOneShot(info);
 		}
 

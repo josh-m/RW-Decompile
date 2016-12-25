@@ -10,8 +10,6 @@ namespace RimWorld
 
 		private const float ArrowMoveDist = 300f;
 
-		private Alert alert;
-
 		private float lastAlertStartTime = -9999f;
 
 		private float ArrowSize
@@ -32,7 +30,6 @@ namespace RimWorld
 
 		public AlertArrow(Alert alert)
 		{
-			this.alert = alert;
 		}
 
 		public void DoAlertStartEffect()
@@ -53,12 +50,12 @@ namespace RimWorld
 			{
 				return;
 			}
-			Color arrowColor = this.alert.ArrowColor;
+			Color white = Color.white;
 			float x;
 			if (this.TimeSinceAppear < 1.5f)
 			{
 				float num = this.TimeSinceAppear / 1.5f;
-				arrowColor.a = num;
+				white.a = num;
 				float num2 = (1f - num) * 300f;
 				x = attachX - this.ArrowSize - num2;
 			}
@@ -66,7 +63,7 @@ namespace RimWorld
 			{
 				x = attachX - this.ArrowSize;
 			}
-			GUI.color = arrowColor;
+			GUI.color = white;
 			GUI.DrawTexture(new Rect(x, y, this.ArrowSize, this.ArrowSize), TexUI.ArrowTex);
 			GUI.color = Color.white;
 		}

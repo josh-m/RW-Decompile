@@ -12,7 +12,7 @@ namespace Verse.AI.Group
 			{
 				if (ownedPawns[i].CurJob != null && ownedPawns[i].jobs.curDriver.layingDown)
 				{
-					ownedPawns[i].jobs.EndCurrentJob(JobCondition.InterruptForced);
+					ownedPawns[i].jobs.EndCurrentJob(JobCondition.InterruptForced, true);
 				}
 			}
 		}

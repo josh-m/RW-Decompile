@@ -6,6 +6,7 @@ namespace Verse
 {
 	public class ScatterableDef : Def
 	{
+		[NoTranslate]
 		public string texturePath;
 
 		public List<string> relevantTerrains = new List<string>();
@@ -16,6 +17,7 @@ namespace Verse
 
 		public float selectionWeight = 100f;
 
+		[NoTranslate]
 		public string scatterType = string.Empty;
 
 		public Material mat;

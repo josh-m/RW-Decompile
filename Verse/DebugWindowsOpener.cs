@@ -13,14 +13,14 @@ namespace Verse
 			{
 				return;
 			}
-			Vector2 vector = new Vector2((float)Screen.width * 0.5f, 3f);
+			Vector2 vector = new Vector2((float)UI.screenWidth * 0.5f, 3f);
 			int num = 6;
-			if (Current.ProgramState == ProgramState.MapPlaying)
+			if (Current.ProgramState == ProgramState.Playing)
 			{
 				num += 2;
 			}
 			float num2 = 25f;
-			if (Current.ProgramState == ProgramState.MapPlaying && DebugSettings.godMode)
+			if (Current.ProgramState == ProgramState.Playing && DebugSettings.godMode)
 			{
 				num2 += 15f;
 			}
@@ -53,7 +53,7 @@ namespace Verse
 				this.ToggleDebugInspector();
 				Event.current.Use();
 			}
-			if (Current.ProgramState == ProgramState.MapPlaying && KeyBindingDefOf.ToggleGodMode.KeyDownEvent)
+			if (Current.ProgramState == ProgramState.Playing && KeyBindingDefOf.ToggleGodMode.KeyDownEvent)
 			{
 				this.ToggleGodMode();
 				Event.current.Use();
@@ -87,7 +87,7 @@ namespace Verse
 			{
 				this.ToggleDebugInspector();
 			}
-			if (Current.ProgramState == ProgramState.MapPlaying)
+			if (Current.ProgramState == ProgramState.Playing)
 			{
 				if (widgetRow.ButtonIcon(TexButton.ToggleGodMode, "Toggle god mode.\n\nWhen god mode is on, you can build stuff instantly, for free, and sell things that aren't yours."))
 				{
@@ -118,12 +118,12 @@ namespace Verse
 			FloatMenuOption item = new FloatMenuOption("SoundDefs", delegate
 			{
 				Find.WindowStack.Add(new EditWindow_PackageEditor<SoundDef>("SoundDefs"));
-			}, MenuOptionPriority.Medium, null, null, 0f, null);
+			}, MenuOptionPriority.Default, null, null, 0f, null, null);
 			list.Add(item);
 			item = new FloatMenuOption("HairDefs", delegate
 			{
 				Find.WindowStack.Add(new EditWindow_PackageEditor<HairDef>("HairDefs"));
-			}, MenuOptionPriority.Medium, null, null, 0f, null);
+			}, MenuOptionPriority.Default, null, null, 0f, null, null);
 			list.Add(item);
 			Find.WindowStack.Add(new FloatMenu(list));
 		}

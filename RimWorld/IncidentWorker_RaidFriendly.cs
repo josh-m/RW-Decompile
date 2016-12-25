@@ -8,20 +8,21 @@ namespace RimWorld
 {
 	public class IncidentWorker_RaidFriendly : IncidentWorker_Raid
 	{
-		protected override bool FactionCanBeGroupSource(Faction f, bool desperate = false)
+		protected override bool FactionCanBeGroupSource(Faction f, Map map, bool desperate = false)
 		{
-			IEnumerable<Faction> source = (from p in Find.AttackTargetsCache.TargetsHostileToColony
+			IEnumerable<Faction> source = (from p in map.attackTargetsCache.TargetsHostileToColony
 			select ((Thing)p).Faction).Distinct<Faction>();
-			return base.FactionCanBeGroupSource(f, desperate) && !f.def.hidden && !f.HostileTo(Faction.OfPlayer) && (!source.Any<Faction>() || source.Any((Faction hf) => hf.HostileTo(f)));
+			return base.FactionCanBeGroupSource(f, map, desperate) && !f.def.hidden && !f.HostileTo(Faction.OfPlayer) && (!source.Any<Faction>() || source.Any((Faction hf) => hf.HostileTo(f)));
 		}
 
-		protected override bool CanFireNowSub()
+		protected override bool CanFireNowSub(IIncidentTarget target)
 		{
-			if (!base.CanFireNowSub())
+			if (!base.CanFireNowSub(target))
 			{
 				return false;
 			}
-			return (from p in Find.AttackTargetsCache.TargetsHostileToColony
+			Map map = (Map)target;
+			return (from p in map.attackTargetsCache.TargetsHostileToColony
 			where !p.ThreatDisabled()
 			select p).Sum(delegate(IAttackTarget p)
 			{
@@ -36,15 +37,16 @@ namespace RimWorld
 
 		protected override bool TryResolveRaidFaction(IncidentParms parms)
 		{
+			Map map = (Map)parms.target;
 			if (parms.faction != null)
 			{
 				return true;
 			}
-			if (!base.CandidateFactions(false).Any<Faction>())
+			if (!base.CandidateFactions(map, false).Any<Faction>())
 			{
 				return false;
 			}
-			parms.faction = base.CandidateFactions(false).RandomElementByWeight((Faction fac) => fac.PlayerGoodwill + 120.000008f);
+			parms.faction = base.CandidateFactions(map, false).RandomElementByWeight((Faction fac) => fac.PlayerGoodwill + 120.000008f);
 			return true;
 		}
 

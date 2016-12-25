@@ -12,7 +12,7 @@ namespace RimWorld
 		{
 			if (this.compPowerTrader.PowerOn)
 			{
-				float temperature = base.Position.GetTemperature();
+				float temperature = base.Position.GetTemperature(base.Map);
 				float num;
 				if (temperature < 20f)
 				{
@@ -27,12 +27,12 @@ namespace RimWorld
 					num = Mathf.InverseLerp(120f, 20f, temperature);
 				}
 				float energyLimit = this.compTempControl.Props.energyPerSecond * num * 4.16666651f;
-				float num2 = GenTemperature.ControlTemperatureTempChange(base.Position, energyLimit, this.compTempControl.targetTemperature);
+				float num2 = GenTemperature.ControlTemperatureTempChange(base.Position, base.Map, energyLimit, this.compTempControl.targetTemperature);
 				bool flag = !Mathf.Approximately(num2, 0f);
 				CompProperties_Power props = this.compPowerTrader.Props;
 				if (flag)
 				{
-					base.Position.GetRoom().Temperature += num2;
+					this.GetRoom().Temperature += num2;
 					this.compPowerTrader.PowerOutput = -props.basePowerConsumption;
 				}
 				else

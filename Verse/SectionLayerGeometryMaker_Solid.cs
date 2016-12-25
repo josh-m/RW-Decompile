@@ -8,7 +8,7 @@ namespace Verse
 		public static void MakeBaseGeometry(Section section, LayerSubMesh sm, AltitudeLayer altitudeLayer)
 		{
 			CellRect cellRect = new CellRect(section.botLeft.x, section.botLeft.z, 17, 17);
-			cellRect.ClipInsideMap();
+			cellRect.ClipInsideMap(section.map);
 			float y = Altitudes.AltitudeFor(altitudeLayer);
 			sm.verts.Capacity = cellRect.Area * 9;
 			for (int i = cellRect.minX; i <= cellRect.maxX; i++)
@@ -57,7 +57,7 @@ namespace Verse
 				sm.tris.Add(num2 + 8);
 				num2 += 9;
 			}
-			sm.FinalizeMesh(MeshParts.Verts | MeshParts.Tris);
+			sm.FinalizeMesh(MeshParts.Verts | MeshParts.Tris, false);
 		}
 	}
 }

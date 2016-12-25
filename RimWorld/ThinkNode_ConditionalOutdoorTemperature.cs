@@ -7,7 +7,7 @@ namespace RimWorld
 	{
 		protected override bool Satisfied(Pawn pawn)
 		{
-			return pawn.Position.UsesOutdoorTemperature();
+			return pawn.Position.UsesOutdoorTemperature(pawn.Map);
 		}
 	}
 }

@@ -65,9 +65,9 @@ namespace Verse
 				GizmoGridDrawer.firstGizmos.Add(gizmo);
 			}
 			GizmoGridDrawer.drawnHotKeys.Clear();
-			float num = (float)(Screen.width - 140);
+			float num = (float)(UI.screenWidth - 140);
 			Text.Font = GameFont.Tiny;
-			Vector2 topLeft = new Vector2(startX, (float)(Screen.height - 35) - GizmoGridDrawer.GizmoSpacing.y - 75f);
+			Vector2 topLeft = new Vector2(startX, (float)(UI.screenHeight - 35) - GizmoGridDrawer.GizmoSpacing.y - 75f);
 			mouseoverGizmo = null;
 			Gizmo interactedGiz = null;
 			Event ev = null;
@@ -82,7 +82,7 @@ namespace Verse
 						topLeft.y -= 75f + GizmoGridDrawer.GizmoSpacing.x;
 					}
 					GizmoGridDrawer.heightDrawnFrame = Time.frameCount;
-					GizmoGridDrawer.heightDrawn = (float)Screen.height - topLeft.y;
+					GizmoGridDrawer.heightDrawn = (float)UI.screenHeight - topLeft.y;
 					GizmoResult gizmoResult = gizmo2.GizmoOnGUI(topLeft);
 					if (gizmoResult.State == GizmoState.Interacted)
 					{

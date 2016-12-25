@@ -154,7 +154,7 @@ namespace Verse
 						owningNode.RebuildChildNodes();
 					}
 				};
-				list2.Add(new FloatMenuOption(current.ToString(), action, MenuOptionPriority.Medium, null, null, 0f, null));
+				list2.Add(new FloatMenuOption(current.ToString(), action, MenuOptionPriority.Default, null, null, 0f, null, null));
 			}
 			Find.WindowStack.Add(new FloatMenu(list2));
 		}
@@ -207,7 +207,7 @@ namespace Verse
 				{
 					float num2 = (float)obj;
 					Rect rect2 = new Rect(this.LabelWidth + 60f + 4f, this.curY, base.EditAreaWidth - 60f - 8f, this.lineHeight);
-					num2 = Widgets.HorizontalSlider(rect2, num2, array[0].min, array[0].max, false, null);
+					num2 = Widgets.HorizontalSlider(rect2, num2, array[0].min, array[0].max, false, null, null, null, -1f);
 					obj = num2;
 				}
 				rect.width = 60f;
@@ -230,7 +230,7 @@ namespace Verse
 						list.Add(new FloatMenuOption(current.ToString(), delegate
 						{
 							node.Value = localVal;
-						}, MenuOptionPriority.Medium, null, null, 0f, null));
+						}, MenuOptionPriority.Default, null, null, 0f, null, null));
 					}
 					Find.WindowStack.Add(new FloatMenu(list));
 				}

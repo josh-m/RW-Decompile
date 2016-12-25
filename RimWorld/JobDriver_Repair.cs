@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using UnityEngine;
 using Verse;
 using Verse.AI;
 
@@ -8,7 +9,9 @@ namespace RimWorld
 {
 	public class JobDriver_Repair : JobDriver
 	{
-		private const float TicksBetweenRepairs = 12f;
+		private const float WarmupTicks = 80f;
+
+		private const float TicksBetweenRepairs = 16f;
 
 		protected float ticksToNextRepair;
 
@@ -19,20 +22,25 @@ namespace RimWorld
 			yield return Toils_Reserve.Reserve(TargetIndex.A, 1);
 			yield return Toils_Goto.GotoThing(TargetIndex.A, PathEndMode.Touch);
 			Toil repair = new Toil();
+			repair.initAction = delegate
+			{
+				this.<>f__this.ticksToNextRepair = 80f;
+			};
 			repair.tickAction = delegate
 			{
 				Pawn actor = this.<repair>__0.actor;
-				actor.skills.Learn(SkillDefOf.Construction, 0.275f);
+				actor.skills.Learn(SkillDefOf.Construction, 0.275f, false);
 				float statValue = actor.GetStatValue(StatDefOf.ConstructionSpeed, true);
 				this.<>f__this.ticksToNextRepair -= statValue;
 				if (this.<>f__this.ticksToNextRepair <= 0f)
 				{
-					this.<>f__this.ticksToNextRepair += 12f;
-					this.<>f__this.TargetThingA.TakeDamage(new DamageInfo(DamageDefOf.Repair, 1, actor, null, null));
+					this.<>f__this.ticksToNextRepair += 16f;
+					this.<>f__this.TargetThingA.HitPoints++;
+					this.<>f__this.TargetThingA.HitPoints = Mathf.Min(this.<>f__this.TargetThingA.HitPoints, this.<>f__this.TargetThingA.MaxHitPoints);
 					if (this.<>f__this.TargetThingA.HitPoints == this.<>f__this.TargetThingA.MaxHitPoints)
 					{
 						actor.records.Increment(RecordDefOf.ThingsRepaired);
-						actor.jobs.EndCurrentJob(JobCondition.Succeeded);
+						actor.jobs.EndCurrentJob(JobCondition.Succeeded, true);
 					}
 				}
 			};

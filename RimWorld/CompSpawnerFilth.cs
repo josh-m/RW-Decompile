@@ -33,11 +33,11 @@ namespace RimWorld
 		public void TrySpawnFilth()
 		{
 			IntVec3 c;
-			if (!CellFinder.TryFindRandomReachableCellNear(this.parent.Position, this.Props.spawnRadius, TraverseParms.For(TraverseMode.NoPassClosedDoors, Danger.Deadly, false), (IntVec3 x) => x.Standable(), (Region x) => true, out c, 999999))
+			if (!CellFinder.TryFindRandomReachableCellNear(this.parent.Position, this.parent.Map, this.Props.spawnRadius, TraverseParms.For(TraverseMode.NoPassClosedDoors, Danger.Deadly, false), (IntVec3 x) => x.Standable(this.parent.Map), (Region x) => true, out c, 999999))
 			{
 				return;
 			}
-			FilthMaker.MakeFilth(c, ThingDefOf.FilthSlime, 1);
+			FilthMaker.MakeFilth(c, this.parent.Map, ThingDefOf.FilthSlime, 1);
 		}
 	}
 }

@@ -20,7 +20,7 @@ namespace RimWorld
 			}
 			foreach (IntVec3 current in room.Cells)
 			{
-				num += current.GetTerrain().GetStatValueAbstract(StatDefOf.MarketValue, null);
+				num += current.GetTerrain(room.Map).GetStatValueAbstract(StatDefOf.MarketValue, null);
 			}
 			return num;
 		}

@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using UnityEngine;
 using Verse;
+using Verse.Profile;
 
 namespace RimWorld
 {
@@ -40,13 +41,13 @@ namespace RimWorld
 		public static void MainMenuOnGUI()
 		{
 			VersionControl.DrawInfoInCorner();
-			Rect rect = new Rect((float)(Screen.width / 2) - MainMenuDrawer.PaneSize.x / 2f, (float)(Screen.height / 2) - MainMenuDrawer.PaneSize.y / 2f + 50f, MainMenuDrawer.PaneSize.x, MainMenuDrawer.PaneSize.y);
-			rect.x = (float)Screen.width - rect.width - 30f;
-			Rect rect2 = new Rect(0f, rect.y - 30f, (float)Screen.width - 85f, 30f);
+			Rect rect = new Rect((float)(UI.screenWidth / 2) - MainMenuDrawer.PaneSize.x / 2f, (float)(UI.screenHeight / 2) - MainMenuDrawer.PaneSize.y / 2f + 50f, MainMenuDrawer.PaneSize.x, MainMenuDrawer.PaneSize.y);
+			rect.x = (float)UI.screenWidth - rect.width - 30f;
+			Rect rect2 = new Rect(0f, rect.y - 30f, (float)UI.screenWidth - 85f, 30f);
 			Text.Font = GameFont.Medium;
 			Text.Anchor = TextAnchor.UpperRight;
 			string text = "MainPageCredit".Translate();
-			if (Screen.width < 990)
+			if (UI.screenWidth < 990)
 			{
 				Rect position = rect2;
 				position.xMin = position.xMax - Text.CalcSize(text).x;
@@ -60,15 +61,15 @@ namespace RimWorld
 			Text.Anchor = TextAnchor.UpperLeft;
 			Text.Font = GameFont.Small;
 			Vector2 a = MainMenuDrawer.TitleSize;
-			if (a.x > (float)Screen.width)
+			if (a.x > (float)UI.screenWidth)
 			{
-				a *= (float)Screen.width / a.x;
+				a *= (float)UI.screenWidth / a.x;
 			}
 			a *= 0.7f;
-			Rect position2 = new Rect((float)Screen.width - a.x - 50f, rect2.y - a.y, a.x, a.y);
+			Rect position2 = new Rect((float)UI.screenWidth - a.x - 50f, rect2.y - a.y, a.x, a.y);
 			GUI.DrawTexture(position2, MainMenuDrawer.TexTitle, ScaleMode.StretchToFill, true);
 			GUI.color = new Color(1f, 1f, 1f, 0.5f);
-			Rect position3 = new Rect((float)(Screen.width - 8) - MainMenuDrawer.LudeonLogoSize.x, 8f, MainMenuDrawer.LudeonLogoSize.x, MainMenuDrawer.LudeonLogoSize.y);
+			Rect position3 = new Rect((float)(UI.screenWidth - 8) - MainMenuDrawer.LudeonLogoSize.x, 8f, MainMenuDrawer.LudeonLogoSize.x, MainMenuDrawer.LudeonLogoSize.y);
 			GUI.DrawTexture(position3, MainMenuDrawer.TexLudeonLogo, ScaleMode.StretchToFill, true);
 			GUI.color = Color.white;
 			rect.yMin += 17f;
@@ -102,29 +103,31 @@ namespace RimWorld
 					Find.WindowStack.Add(new Page_SelectScenario());
 				}, null));
 			}
-			if (Current.ProgramState == ProgramState.MapPlaying && !Current.Game.Info.permadeathMode)
+			if (Current.ProgramState == ProgramState.Playing && !Current.Game.Info.permadeathMode)
 			{
 				list.Add(new ListableOption("Save".Translate(), delegate
 				{
 					MainMenuDrawer.CloseMainTab();
-					Find.WindowStack.Add(new Dialog_MapList_Save());
+					Find.WindowStack.Add(new Dialog_SaveFileList_Save());
 				}, null));
 			}
 			ListableOption item;
-			if (anyMapFiles && (Current.ProgramState != ProgramState.MapPlaying || !Current.Game.Info.permadeathMode))
+			if (anyMapFiles && (Current.ProgramState != ProgramState.Playing || !Current.Game.Info.permadeathMode))
 			{
 				item = new ListableOption("LoadGame".Translate(), delegate
 				{
 					MainMenuDrawer.CloseMainTab();
-					Find.WindowStack.Add(new Dialog_MapList_Load());
+					Find.WindowStack.Add(new Dialog_SaveFileList_Load());
 				}, null);
 				list.Add(item);
 			}
-			if (Current.ProgramState == ProgramState.MapPlaying)
+			if (Current.ProgramState == ProgramState.Playing)
 			{
 				list.Add(new ListableOption("ReviewScenario".Translate(), delegate
 				{
-					Find.WindowStack.Add(new Dialog_Message(Find.Scenario.GetFullInformationText(), Find.Scenario.name));
+					WindowStack arg_25_0 = Find.WindowStack;
+					string name = Find.Scenario.name;
+					arg_25_0.Add(new Dialog_MessageBox(Find.Scenario.GetFullInformationText(), null, null, null, null, name, false));
 				}, null));
 			}
 			item = new ListableOption("Options".Translate(), delegate
@@ -146,7 +149,7 @@ namespace RimWorld
 				}, null);
 				list.Add(item);
 			}
-			if (Current.ProgramState == ProgramState.MapPlaying)
+			if (Current.ProgramState == ProgramState.Playing)
 			{
 				if (Current.Game.Info.permadeathMode)
 				{
@@ -155,6 +158,7 @@ namespace RimWorld
 						LongEventHandler.QueueLongEvent(delegate
 						{
 							GameDataSaveLoader.SaveGame(Current.Game.Info.permadeathModeUniqueName);
+							MemoryUtility.ClearAllMapsAndWorld();
 						}, "Entry", "SavingLongEvent", false, null);
 					}, null);
 					list.Add(item);
@@ -175,28 +179,28 @@ namespace RimWorld
 				{
 					Action action = delegate
 					{
-						if (GameDataSaveLoader.CurrentMapStateIsValuable)
+						if (GameDataSaveLoader.CurrentGameStateIsValuable)
 						{
-							Find.WindowStack.Add(new Dialog_Confirm("ConfirmQuit".Translate(), delegate
+							Find.WindowStack.Add(Dialog_MessageBox.CreateConfirmation("ConfirmQuit".Translate(), delegate
 							{
-								RootMap.GoToMainMenu();
-							}, true, null, true));
+								GenScene.GoToMainMenu();
+							}, true, null));
 						}
 						else
 						{
-							RootMap.GoToMainMenu();
+							GenScene.GoToMainMenu();
 						}
 					};
 					item = new ListableOption("QuitToMainMenu".Translate(), action, null);
 					list.Add(item);
 					Action action2 = delegate
 					{
-						if (GameDataSaveLoader.CurrentMapStateIsValuable)
+						if (GameDataSaveLoader.CurrentGameStateIsValuable)
 						{
-							Find.WindowStack.Add(new Dialog_Confirm("ConfirmQuit".Translate(), delegate
+							Find.WindowStack.Add(Dialog_MessageBox.CreateConfirmation("ConfirmQuit".Translate(), delegate
 							{
 								Root.Shutdown();
-							}, true, null, true));
+							}, true, null));
 						}
 						else
 						{
@@ -246,7 +250,7 @@ namespace RimWorld
 					{
 						LanguageDatabase.SelectLanguage(localLang);
 						Prefs.Save();
-					}, MenuOptionPriority.Medium, null, null, 0f, null));
+					}, MenuOptionPriority.Default, null, null, 0f, null, null));
 				}
 				Find.WindowStack.Add(new FloatMenu(list3));
 			}
@@ -269,7 +273,7 @@ namespace RimWorld
 
 		private static void CloseMainTab()
 		{
-			if (Current.ProgramState == ProgramState.MapPlaying)
+			if (Current.ProgramState == ProgramState.Playing)
 			{
 				Find.MainTabsRoot.EscapeCurrentTab(false);
 			}

@@ -34,7 +34,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return this.SelPawnForGear.RaceProps.ToolUser || this.SelPawnForGear.inventory.container.Any<Thing>();
+				return this.SelPawnForGear.RaceProps.ToolUser || this.SelPawnForGear.inventory.innerContainer.Count > 0;
 			}
 		}
 
@@ -57,7 +57,7 @@ namespace RimWorld
 				Corpse corpse = base.SelThing as Corpse;
 				if (corpse != null)
 				{
-					return corpse.innerPawn;
+					return corpse.InnerPawn;
 				}
 				throw new InvalidOperationException("Gear tab on non-pawn non-corpse " + base.SelThing);
 			}
@@ -83,6 +83,7 @@ namespace RimWorld
 			Rect viewRect = new Rect(0f, 0f, position.width - 16f, this.scrollViewHeight);
 			Widgets.BeginScrollView(outRect, ref this.scrollPosition, viewRect);
 			float num = 0f;
+			this.TryDrawMassInfo(ref num, viewRect.width);
 			this.TryDrawComfyTemperatureRange(ref num, viewRect.width);
 			if (this.SelPawnForGear.apparel != null)
 			{
@@ -97,7 +98,7 @@ namespace RimWorld
 				Widgets.ListSeparator(ref num, viewRect.width, "Equipment".Translate());
 				foreach (ThingWithComps current in this.SelPawnForGear.equipment.AllEquipment)
 				{
-					this.DrawThingRow(ref num, viewRect.width, current);
+					this.DrawThingRow(ref num, viewRect.width, current, false);
 				}
 			}
 			if (this.SelPawnForGear.apparel != null)
@@ -107,17 +108,17 @@ namespace RimWorld
 				orderby ap.def.apparel.bodyPartGroups[0].listOrder descending
 				select ap)
 				{
-					this.DrawThingRow(ref num, viewRect.width, current2);
+					this.DrawThingRow(ref num, viewRect.width, current2, false);
 				}
 			}
 			if (this.SelPawnForGear.inventory != null)
 			{
 				Widgets.ListSeparator(ref num, viewRect.width, "Inventory".Translate());
 				ITab_Pawn_Gear.workingInvList.Clear();
-				ITab_Pawn_Gear.workingInvList.AddRange(this.SelPawnForGear.inventory.container);
+				ITab_Pawn_Gear.workingInvList.AddRange(this.SelPawnForGear.inventory.innerContainer);
 				for (int i = 0; i < ITab_Pawn_Gear.workingInvList.Count; i++)
 				{
-					this.DrawThingRow(ref num, viewRect.width, ITab_Pawn_Gear.workingInvList[i]);
+					this.DrawThingRow(ref num, viewRect.width, ITab_Pawn_Gear.workingInvList[i], true);
 				}
 			}
 			if (Event.current.type == EventType.Layout)
@@ -130,12 +131,12 @@ namespace RimWorld
 			Text.Anchor = TextAnchor.UpperLeft;
 		}
 
-		private void DrawThingRow(ref float y, float width, Thing thing)
+		private void DrawThingRow(ref float y, float width, Thing thing, bool showDropButtonIfPrisoner = false)
 		{
 			Rect rect = new Rect(0f, y, width, 28f);
 			Widgets.InfoCardButton(rect.width - 24f, y, thing);
 			rect.width -= 24f;
-			if (this.CanControl)
+			if (this.CanControl || (this.SelPawnForGear.Faction == Faction.OfPlayer && this.SelPawnForGear.RaceProps.packAnimal) || (showDropButtonIfPrisoner && this.SelPawnForGear.HostFaction == Faction.OfPlayer))
 			{
 				Rect rect2 = new Rect(rect.width - 24f, y, 24f, 24f);
 				TooltipHandler.TipRegion(rect2, "DropThing".Translate());
@@ -146,6 +147,20 @@ namespace RimWorld
 				}
 				rect.width -= 24f;
 			}
+			if (this.CanControl && thing.def.IsNutritionGivingIngestible && thing.IngestibleNow && base.SelPawn.RaceProps.CanEverEat(thing))
+			{
+				Rect rect3 = new Rect(rect.width - 24f, y, 24f, 24f);
+				TooltipHandler.TipRegion(rect3, "ConsumeThing".Translate(new object[]
+				{
+					thing.LabelNoCount
+				}));
+				if (Widgets.ButtonImage(rect3, TexButton.Ingest))
+				{
+					SoundDefOf.TickHigh.PlayOneShotOnCamera();
+					this.InterfaceIngest(thing);
+				}
+				rect.width -= 24f;
+			}
 			if (Mouse.IsOver(rect))
 			{
 				GUI.color = ITab_Pawn_Gear.HighlightColor;
@@ -153,17 +168,18 @@ namespace RimWorld
 			}
 			if (thing.def.DrawMatSingle != null && thing.def.DrawMatSingle.mainTexture != null)
 			{
-				Widgets.ThingIcon(new Rect(4f, y, 28f, 28f), thing);
+				Widgets.ThingIcon(new Rect(4f, y, 28f, 28f), thing, 1f);
 			}
 			Text.Anchor = TextAnchor.MiddleLeft;
 			GUI.color = ITab_Pawn_Gear.ThingLabelColor;
-			Rect rect3 = new Rect(36f, y, width - 36f, 28f);
+			Rect rect4 = new Rect(36f, y, width - 36f, 28f);
 			string text = thing.LabelCap;
-			if (thing is Apparel && this.SelPawnForGear.outfits != null && this.SelPawnForGear.outfits.forcedHandler.IsForced((Apparel)thing))
+			Apparel apparel = thing as Apparel;
+			if (apparel != null && this.SelPawnForGear.outfits != null && this.SelPawnForGear.outfits.forcedHandler.IsForced(apparel))
 			{
 				text = text + ", " + "ApparelForcedLower".Translate();
 			}
-			Widgets.Label(rect3, text);
+			Widgets.Label(rect4, text);
 			y += 28f;
 		}
 
@@ -187,12 +203,29 @@ namespace RimWorld
 					separatorDrawn = true;
 					Widgets.ListSeparator(ref curY, width, "AverageArmor".Translate());
 				}
-				Rect rect = new Rect(0f, curY, width, curY + 22f);
+				Rect rect = new Rect(0f, curY, width, 100f);
 				Widgets.Label(rect, label);
 				rect.xMin += 100f;
 				Widgets.Label(rect, num.ToStringPercent());
 				curY += 22f;
 			}
+		}
+
+		private void TryDrawMassInfo(ref float curY, float width)
+		{
+			if (this.SelPawnForGear.Dead)
+			{
+				return;
+			}
+			Rect rect = new Rect(0f, curY, width, 22f);
+			float num = MassUtility.GearAndInventoryMass(this.SelPawnForGear);
+			float num2 = MassUtility.Capacity(this.SelPawnForGear);
+			Widgets.Label(rect, "MassCarried".Translate(new object[]
+			{
+				num.ToString("0.##"),
+				num2.ToString("0.##")
+			}));
+			curY += 22f;
 		}
 
 		private void TryDrawComfyTemperatureRange(ref float curY, float width)
@@ -219,26 +252,26 @@ namespace RimWorld
 		{
 			ThingWithComps thingWithComps = t as ThingWithComps;
 			Apparel apparel = t as Apparel;
-			if (apparel != null)
+			if (apparel != null && this.SelPawnForGear.apparel != null && this.SelPawnForGear.apparel.WornApparel.Contains(apparel))
 			{
-				Pawn selPawnForGear = this.SelPawnForGear;
-				if (selPawnForGear.drafter.CanTakeOrderedJob())
-				{
-					Job job = new Job(JobDefOf.RemoveApparel, apparel);
-					job.playerForced = true;
-					selPawnForGear.drafter.TakeOrderedJob(job);
-				}
+				this.SelPawnForGear.jobs.TryTakeOrderedJob(new Job(JobDefOf.RemoveApparel, apparel));
 			}
-			else if (thingWithComps != null && this.SelPawnForGear.equipment.AllEquipment.Contains(thingWithComps))
+			else if (thingWithComps != null && this.SelPawnForGear.equipment != null && this.SelPawnForGear.equipment.AllEquipment.Contains(thingWithComps))
 			{
-				ThingWithComps thingWithComps2;
-				this.SelPawnForGear.equipment.TryDropEquipment(thingWithComps, out thingWithComps2, this.SelPawnForGear.Position, true);
+				this.SelPawnForGear.jobs.TryTakeOrderedJob(new Job(JobDefOf.DropEquipment, thingWithComps));
 			}
 			else if (!t.def.destroyOnDrop)
 			{
 				Thing thing;
-				this.SelPawnForGear.inventory.container.TryDrop(t, this.SelPawnForGear.Position, ThingPlaceMode.Near, out thing, null);
+				this.SelPawnForGear.inventory.innerContainer.TryDrop(t, this.SelPawnForGear.Position, this.SelPawnForGear.Map, ThingPlaceMode.Near, out thing, null);
 			}
+		}
+
+		private void InterfaceIngest(Thing t)
+		{
+			Job job = new Job(JobDefOf.Ingest, t);
+			job.count = Mathf.Min(t.stackCount, t.def.ingestible.maxNumToIngestAtOnce);
+			this.SelPawnForGear.jobs.TryTakeOrderedJob(job);
 		}
 	}
 }

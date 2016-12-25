@@ -16,7 +16,7 @@ namespace RimWorld
 				for (int i = 0; i < this.mineCells.Count; i++)
 				{
 					IntVec3 c = this.mineCells[i];
-					if (Find.DesignationManager.DesignationAt(c, DesignationDefOf.Mine) != null || c.GetEdifice() == null || c.GetEdifice().def != ThingDefOf.MineableSteel)
+					if (base.Map.designationManager.DesignationAt(c, DesignationDefOf.Mine) != null || c.GetEdifice(base.Map) == null || c.GetEdifice(base.Map).def != ThingDefOf.MineableSteel)
 					{
 						num++;
 					}
@@ -34,7 +34,7 @@ namespace RimWorld
 		public override void OnActivated()
 		{
 			base.OnActivated();
-			CellRect cellRect = TutorUtility.FindClearRect(10, 10, 0f, true);
+			CellRect cellRect = TutorUtility.FindUsableRect(10, 10, base.Map, 0f, true);
 			new GenStep_ScatterLumpsMineable
 			{
 				forcedDefToScatter = ThingDefOf.MineableSteel
@@ -42,7 +42,7 @@ namespace RimWorld
 			this.mineCells = new List<IntVec3>();
 			foreach (IntVec3 current in cellRect)
 			{
-				Building edifice = current.GetEdifice();
+				Building edifice = current.GetEdifice(base.Map);
 				if (edifice != null && edifice.def == ThingDefOf.MineableSteel)
 				{
 					this.mineCells.Add(current);

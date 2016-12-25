@@ -22,7 +22,7 @@ namespace RimWorld
 				current.ResolveReferences();
 				foreach (string current2 in current.ConfigErrors(false))
 				{
-					Log.Error(current.title + ": " + current2);
+					Log.Error(current.Title + ": " + current2);
 				}
 				BackstoryDatabase.AddBackstory(current);
 			}
@@ -32,36 +32,25 @@ namespace RimWorld
 		public static void AddBackstory(Backstory bs)
 		{
 			BackstoryHardcodedData.InjectHardcodedData(bs);
-			if (BackstoryDatabase.allBackstories.ContainsKey(bs.uniqueSaveKey))
+			if (BackstoryDatabase.allBackstories.ContainsKey(bs.identifier))
 			{
 				Log.Error(string.Concat(new string[]
 				{
 					"Backstory ",
-					bs.title,
+					bs.Title,
 					" has same unique save key ",
-					bs.uniqueSaveKey,
+					bs.identifier,
 					" as old backstory ",
-					BackstoryDatabase.allBackstories[bs.uniqueSaveKey].title
+					BackstoryDatabase.allBackstories[bs.identifier].Title
 				}));
 				return;
 			}
-			BackstoryDatabase.allBackstories.Add(bs.uniqueSaveKey, bs);
+			BackstoryDatabase.allBackstories.Add(bs.identifier, bs);
 		}
 
-		public static Backstory GetWithKey(string saveKey)
+		public static bool TryGetWithIdentifier(string identifier, out Backstory bs)
 		{
-			if (saveKey == null)
-			{
-				Log.Error("Null backstory defName requested. Giving random...");
-				return BackstoryDatabase.RandomBackstory(BackstorySlot.Adulthood);
-			}
-			Backstory result;
-			if (BackstoryDatabase.allBackstories.TryGetValue(saveKey, out result))
-			{
-				return result;
-			}
-			Log.Error("Backstory named " + saveKey + " not found. Giving random...");
-			return BackstoryDatabase.RandomBackstory(BackstorySlot.Adulthood);
+			return BackstoryDatabase.allBackstories.TryGetValue(identifier, out bs);
 		}
 
 		public static Backstory RandomBackstory(BackstorySlot slot)

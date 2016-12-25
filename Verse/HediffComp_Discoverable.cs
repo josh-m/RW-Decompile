@@ -7,6 +7,14 @@ namespace Verse
 	{
 		private bool discovered;
 
+		public HediffCompProperties_Discoverable Props
+		{
+			get
+			{
+				return (HediffCompProperties_Discoverable)this.props;
+			}
+		}
+
 		public override void CompExposeData()
 		{
 			Scribe_Values.LookValue<bool>(ref this.discovered, "discovered", false, false);
@@ -45,21 +53,21 @@ namespace Verse
 				return;
 			}
 			this.discovered = true;
-			if (this.props.sendLetterWhenDiscovered && PawnUtility.ShouldSendNotificationAbout(base.Pawn))
+			if (this.Props.sendLetterWhenDiscovered && PawnUtility.ShouldSendNotificationAbout(base.Pawn))
 			{
 				string label;
-				if (!this.props.discoverLetterLabel.NullOrEmpty())
+				if (!this.Props.discoverLetterLabel.NullOrEmpty())
 				{
-					label = string.Format(this.props.discoverLetterLabel, base.Pawn.LabelShort).CapitalizeFirst();
+					label = string.Format(this.Props.discoverLetterLabel, base.Pawn.LabelShort).CapitalizeFirst();
 				}
 				else
 				{
 					label = "LetterLabelNewDisease".Translate() + " (" + base.Def.label + ")";
 				}
 				string text;
-				if (!this.props.discoverLetterText.NullOrEmpty())
+				if (!this.Props.discoverLetterText.NullOrEmpty())
 				{
-					text = string.Format(this.props.discoverLetterText, base.Pawn.LabelIndefinite()).AdjustedFor(base.Pawn).CapitalizeFirst();
+					text = string.Format(this.Props.discoverLetterText, base.Pawn.LabelIndefinite()).AdjustedFor(base.Pawn).CapitalizeFirst();
 				}
 				else if (this.parent.Part == null)
 				{
@@ -93,7 +101,6 @@ namespace Verse
 
 		public override void Notify_PawnDied()
 		{
-			base.Notify_PawnDied();
 			this.CheckDiscovered();
 		}
 

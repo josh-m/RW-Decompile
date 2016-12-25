@@ -18,9 +18,9 @@ namespace RimWorld
 			d.targetParams.canTargetFires = true;
 			d.targetParams.canTargetPawns = false;
 			d.targetParams.canTargetBuildings = false;
-			d.targetParams.worldObjectTargetsMustBeAutoAttackable = false;
-			d.warmupTicks = 0;
-			d.defaultCooldownTicks = 65;
+			d.targetParams.mapObjectTargetsMustBeAutoAttackable = false;
+			d.warmupTime = 0f;
+			d.defaultCooldownTime = 1.1f;
 			d.soundCast = SoundDef.Named("Interact_BeatFire");
 			yield return d;
 			d = new VerbProperties();
@@ -31,9 +31,9 @@ namespace RimWorld
 			d.targetParams.onlyTargetFlammables = true;
 			d.targetParams.canTargetBuildings = true;
 			d.targetParams.canTargetPawns = false;
-			d.targetParams.worldObjectTargetsMustBeAutoAttackable = false;
-			d.warmupTicks = 180;
-			d.defaultCooldownTicks = 80;
+			d.targetParams.mapObjectTargetsMustBeAutoAttackable = false;
+			d.warmupTime = 3f;
+			d.defaultCooldownTime = 1.3f;
 			d.soundCast = SoundDef.Named("Interact_Ignite");
 			yield return d;
 		}

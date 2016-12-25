@@ -30,7 +30,7 @@ namespace RimWorld
 				initAction = delegate
 				{
 					Thing thing = this.<>f__this.CurJob.targetA.Thing;
-					Designation designation = Find.DesignationManager.DesignationOn(thing, DesignationDefOf.Strip);
+					Designation designation = this.<>f__this.Map.designationManager.DesignationOn(thing, DesignationDefOf.Strip);
 					if (designation != null)
 					{
 						designation.Delete();

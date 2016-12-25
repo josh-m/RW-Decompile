@@ -7,6 +7,7 @@ using Verse;
 
 namespace RimWorld
 {
+	[StaticConstructorOnStartup]
 	public class CompRefuelable : ThingComp
 	{
 		public const string RefueledSignal = "Refueled";
@@ -15,7 +16,37 @@ namespace RimWorld
 
 		private float fuel;
 
+		private float configuredTargetFuelLevel = -1f;
+
 		private CompFlickable flickComp;
+
+		private static readonly Texture2D SetTargetFuelLevelCommand = ContentFinder<Texture2D>.Get("UI/Commands/SetTargetFuelLevel", true);
+
+		private static readonly Vector2 FuelBarSize = new Vector2(1f, 0.2f);
+
+		private static readonly Material FuelBarFilledMat = SolidColorMaterials.SimpleSolidColorMaterial(new Color(0.6f, 0.56f, 0.13f));
+
+		private static readonly Material FuelBarUnfilledMat = SolidColorMaterials.SimpleSolidColorMaterial(new Color(0.3f, 0.3f, 0.3f));
+
+		public float TargetFuelLevel
+		{
+			get
+			{
+				if (this.configuredTargetFuelLevel >= 0f)
+				{
+					return this.configuredTargetFuelLevel;
+				}
+				if (this.Props.targetFuelLevelConfigurable)
+				{
+					return this.Props.initialConfigurableTargetFuelLevel;
+				}
+				return this.Props.fuelCapacity;
+			}
+			set
+			{
+				this.configuredTargetFuelLevel = Mathf.Clamp(value, 0f, this.Props.fuelCapacity);
+			}
+		}
 
 		public CompProperties_Refuelable Props
 		{
@@ -25,7 +56,23 @@ namespace RimWorld
 			}
 		}
 
-		public float FuelPercent
+		public float Fuel
+		{
+			get
+			{
+				return this.fuel;
+			}
+		}
+
+		public float FuelPercentOfTarget
+		{
+			get
+			{
+				return this.fuel / this.TargetFuelLevel;
+			}
+		}
+
+		public float FuelPercentOfMax
 		{
 			get
 			{
@@ -37,7 +84,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return this.Props.fuelCapacity - this.fuel < 1f;
+				return this.TargetFuelLevel - this.fuel < 1f;
 			}
 		}
 
@@ -61,7 +108,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return this.FuelPercent <= this.Props.autoRefuelPercent && !this.parent.IsBurning() && (this.flickComp == null || this.flickComp.SwitchIsOn) && Find.DesignationManager.DesignationOn(this.parent, DesignationDefOf.Flick) == null && Find.DesignationManager.DesignationOn(this.parent, DesignationDefOf.Deconstruct) == null;
+				return this.FuelPercentOfTarget <= this.Props.autoRefuelPercent && !this.IsFull && this.TargetFuelLevel > 0f && !this.parent.IsBurning() && (this.flickComp == null || this.flickComp.SwitchIsOn) && this.parent.Map.designationManager.DesignationOn(this.parent, DesignationDefOf.Flick) == null && this.parent.Map.designationManager.DesignationOn(this.parent, DesignationDefOf.Deconstruct) == null;
 			}
 		}
 
@@ -79,21 +126,36 @@ namespace RimWorld
 		{
 			base.PostExposeData();
 			Scribe_Values.LookValue<float>(ref this.fuel, "fuel", 0f, false);
+			Scribe_Values.LookValue<float>(ref this.configuredTargetFuelLevel, "configuredTargetFuelLevel", -1f, false);
 		}
 
 		public override void PostDraw()
 		{
 			base.PostDraw();
-			if (!this.HasFuel)
+			if (!this.HasFuel && this.Props.drawOutOfFuelOverlay)
 			{
-				OverlayDrawer.DrawOverlay(this.parent, OverlayTypes.OutOfFuel);
+				this.parent.Map.overlayDrawer.DrawOverlay(this.parent, OverlayTypes.OutOfFuel);
+			}
+			if (this.Props.drawFuelGaugeInMap)
+			{
+				GenDraw.FillableBarRequest r = default(GenDraw.FillableBarRequest);
+				r.center = this.parent.DrawPos + Vector3.up * 0.1f;
+				r.size = CompRefuelable.FuelBarSize;
+				r.fillPercent = this.FuelPercentOfMax;
+				r.filledMat = CompRefuelable.FuelBarFilledMat;
+				r.unfilledMat = CompRefuelable.FuelBarUnfilledMat;
+				r.margin = 0.15f;
+				Rot4 rotation = this.parent.Rotation;
+				rotation.Rotate(RotationDirection.Clockwise);
+				r.rotation = rotation;
+				GenDraw.DrawFillableBar(r);
 			}
 		}
 
-		public override void PostDestroy(DestroyMode mode, bool wasSpawned)
+		public override void PostDestroy(DestroyMode mode, Map previousMap)
 		{
-			base.PostDestroy(mode, wasSpawned);
-			if (wasSpawned && this.Props.fuelFilter.AllowedDefCount == 1)
+			base.PostDestroy(mode, previousMap);
+			if (previousMap != null && this.Props.fuelFilter.AllowedDefCount == 1)
 			{
 				ThingDef thingDef = this.Props.fuelFilter.AllowedThingDefs.First<ThingDef>();
 				float num = 1f;
@@ -103,7 +165,7 @@ namespace RimWorld
 					Thing thing = ThingMaker.MakeThing(thingDef, null);
 					thing.stackCount = Mathf.Min(i, thingDef.stackLimit);
 					i -= thing.stackCount;
-					GenPlace.TryPlaceThing(thing, this.parent.Position, ThingPlaceMode.Near, null);
+					GenPlace.TryPlaceThing(thing, this.parent.Position, previousMap, ThingPlaceMode.Near, null);
 				}
 			}
 		}
@@ -123,6 +185,13 @@ namespace RimWorld
 				int numTicks = (int)(this.fuel / this.Props.fuelConsumptionRate * 60000f);
 				text = text + " (" + numTicks.ToStringTicksToPeriod(true) + ")";
 			}
+			if (this.Props.targetFuelLevelConfigurable)
+			{
+				text = text + "\n" + "ConfiguredTargetFuelLevel".Translate(new object[]
+				{
+					this.TargetFuelLevel.ToStringDecimalIfSmall()
+				});
+			}
 			return text;
 		}
 
@@ -133,7 +202,7 @@ namespace RimWorld
 			{
 				this.ConsumeFuel(this.ConsumptionRatePerTick);
 			}
-			if (this.Props.fuelConsumptionPerTickInRain > 0f && this.parent.Spawned && Find.WeatherManager.RainRate > 0.4f && !Find.RoofGrid.Roofed(this.parent.Position))
+			if (this.Props.fuelConsumptionPerTickInRain > 0f && this.parent.Spawned && this.parent.Map.weatherManager.RainRate > 0.4f && !this.parent.Map.roofGrid.Roofed(this.parent.Position))
 			{
 				this.ConsumeFuel(this.Props.fuelConsumptionPerTickInRain);
 			}
@@ -175,13 +244,30 @@ namespace RimWorld
 
 		public int GetFuelCountToFullyRefuel()
 		{
-			float f = this.Props.fuelCapacity - this.fuel;
+			float f = this.TargetFuelLevel - this.fuel;
 			return Mathf.Max(Mathf.CeilToInt(f), 1);
 		}
 
 		[DebuggerHidden]
-		public override IEnumerable<Command> CompGetGizmosExtra()
+		public override IEnumerable<Gizmo> CompGetGizmosExtra()
 		{
+			if (this.Props.targetFuelLevelConfigurable)
+			{
+				yield return new Command_SetTargetFuelLevel
+				{
+					refuelable = this,
+					defaultLabel = "CommandSetTargetFuelLevel".Translate(),
+					defaultDesc = "CommandSetTargetFuelLevelDesc".Translate(),
+					icon = CompRefuelable.SetTargetFuelLevelCommand
+				};
+			}
+			if (this.Props.showFuelGizmo && Find.Selector.SingleSelectedThing == this.parent)
+			{
+				yield return new Gizmo_RefuelableFuelStatus
+				{
+					refuelable = this
+				};
+			}
 			if (Prefs.DevMode)
 			{
 				yield return new Command_Action
@@ -190,6 +276,16 @@ namespace RimWorld
 					action = delegate
 					{
 						this.<>f__this.fuel = 0.1f;
+						this.<>f__this.parent.BroadcastCompSignal("Refueled");
+					}
+				};
+				yield return new Command_Action
+				{
+					defaultLabel = "Debug: Set fuel to max",
+					action = delegate
+					{
+						this.<>f__this.fuel = this.<>f__this.Props.fuelCapacity;
+						this.<>f__this.parent.BroadcastCompSignal("Refueled");
 					}
 				};
 			}

@@ -11,31 +11,28 @@ namespace RimWorld
 
 		private static List<Thing> tmpCandidates = new List<Thing>();
 
-		protected virtual List<Thing> SearchSet
-		{
-			get
-			{
-				if (this.def.thingDefs == null)
-				{
-					JoyGiver.tmpCandidates.Clear();
-					return JoyGiver.tmpCandidates;
-				}
-				if (this.def.thingDefs.Count == 1)
-				{
-					return Find.ListerThings.ThingsOfDef(this.def.thingDefs[0]);
-				}
-				JoyGiver.tmpCandidates.Clear();
-				for (int i = 0; i < this.def.thingDefs.Count; i++)
-				{
-					JoyGiver.tmpCandidates.AddRange(Find.ListerThings.ThingsOfDef(this.def.thingDefs[i]));
-				}
-				return JoyGiver.tmpCandidates;
-			}
-		}
-
 		public virtual float GetChance(Pawn pawn)
 		{
 			return this.def.baseChance;
+		}
+
+		protected virtual List<Thing> GetSearchSet(Pawn pawn)
+		{
+			if (this.def.thingDefs == null)
+			{
+				JoyGiver.tmpCandidates.Clear();
+				return JoyGiver.tmpCandidates;
+			}
+			if (this.def.thingDefs.Count == 1)
+			{
+				return pawn.Map.listerThings.ThingsOfDef(this.def.thingDefs[0]);
+			}
+			JoyGiver.tmpCandidates.Clear();
+			for (int i = 0; i < this.def.thingDefs.Count; i++)
+			{
+				JoyGiver.tmpCandidates.AddRange(pawn.Map.listerThings.ThingsOfDef(this.def.thingDefs[i]));
+			}
+			return JoyGiver.tmpCandidates;
 		}
 
 		public abstract Job TryGiveJob(Pawn pawn);

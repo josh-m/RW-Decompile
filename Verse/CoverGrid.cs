@@ -5,6 +5,8 @@ namespace Verse
 {
 	public sealed class CoverGrid
 	{
+		private Map map;
+
 		public Thing[] innerArray;
 
 		public Thing[] InnerArray
@@ -27,13 +29,14 @@ namespace Verse
 		{
 			get
 			{
-				return this.innerArray[CellIndices.CellToIndex(c)];
+				return this.innerArray[this.map.cellIndices.CellToIndex(c)];
 			}
 		}
 
-		public CoverGrid()
+		public CoverGrid(Map map)
 		{
-			this.innerArray = new Thing[CellIndices.NumGridCells];
+			this.map = map;
+			this.innerArray = new Thing[map.cellIndices.NumGridCells];
 		}
 
 		public void Register(Thing t)
@@ -74,7 +77,7 @@ namespace Verse
 		{
 			Thing thing = null;
 			float num = 0.001f;
-			List<Thing> list = Find.ThingGrid.ThingsListAtFast(c);
+			List<Thing> list = this.map.thingGrid.ThingsListAtFast(c);
 			for (int i = 0; i < list.Count; i++)
 			{
 				Thing thing2 = list[i];
@@ -87,7 +90,7 @@ namespace Verse
 					}
 				}
 			}
-			this.innerArray[CellIndices.CellToIndex(c)] = thing;
+			this.innerArray[this.map.cellIndices.CellToIndex(c)] = thing;
 		}
 	}
 }

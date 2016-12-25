@@ -44,6 +44,18 @@ namespace Verse
 			return str;
 		}
 
+		public override string ToTitleCase(string str)
+		{
+			str = base.ToTitleCase(str);
+			str = str.Replace(" No. ", " no. ");
+			str = str.Replace(" The ", " the ");
+			str = str.Replace(" A ", " a ");
+			str = str.Replace(" For ", " for ");
+			str = str.Replace(" In ", " in ");
+			str = str.Replace(" With ", " with ");
+			return str;
+		}
+
 		public override string OrdinalNumber(int number)
 		{
 			int num = number % 10;
@@ -64,6 +76,23 @@ namespace Verse
 				}
 			}
 			return number + "th";
+		}
+
+		public override string Pluralize(string str)
+		{
+			if (str.NullOrEmpty())
+			{
+				return str;
+			}
+			char c = str[str.Length - 1];
+			char c2 = (str.Length != 1) ? str[str.Length - 2] : '\0';
+			bool flag = char.IsLetter(c2) && "oaieuyOAIEUY".IndexOf(c2) >= 0;
+			bool flag2 = char.IsLetter(c2) && !flag;
+			if (c == 'y' && flag2)
+			{
+				return str.Substring(0, str.Length - 1) + "ies";
+			}
+			return str + "s";
 		}
 	}
 }

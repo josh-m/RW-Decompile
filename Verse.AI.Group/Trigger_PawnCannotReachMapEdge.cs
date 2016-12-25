@@ -13,7 +13,7 @@ namespace Verse.AI.Group
 					Pawn pawn = lord.ownedPawns[i];
 					if (pawn.Spawned && !pawn.Dead && !pawn.Downed)
 					{
-						if (!Reachability.CanReachMapEdge(pawn))
+						if (!pawn.CanReachMapEdge())
 						{
 							return true;
 						}

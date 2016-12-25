@@ -8,6 +8,8 @@ namespace Verse
 {
 	public sealed class MapPawns
 	{
+		private Map map;
+
 		private List<Pawn> pawnsSpawned = new List<Pawn>();
 
 		private Dictionary<Faction, List<Pawn>> pawnsInFactionSpawned = new Dictionary<Faction, List<Pawn>>();
@@ -35,49 +37,40 @@ namespace Verse
 			{
 				for (int i = 0; i < this.pawnsSpawned.Count; i++)
 				{
-					Pawn p = this.pawnsSpawned[i].carrier.CarriedThing as Pawn;
+					Pawn p = this.pawnsSpawned[i].carryTracker.CarriedThing as Pawn;
 					if (p != null)
 					{
 						yield return p;
 					}
 				}
-				List<Thing> containersList = Find.ListerThings.ThingsInGroup(ThingRequestGroup.Container);
+				List<Thing> containersList = this.map.listerThings.ThingsInGroup(ThingRequestGroup.ContainerEnclosure);
 				for (int j = 0; j < containersList.Count; j++)
 				{
-					ThingContainer container = ((IThingContainerOwner)containersList[j]).GetContainer();
-					for (int k = 0; k < container.Count; k++)
+					ThingContainer innerCont = ((IThingContainerOwner)containersList[j]).GetInnerContainer();
+					for (int k = 0; k < innerCont.Count; k++)
 					{
-						Pawn p2 = container[k] as Pawn;
+						Pawn p2 = innerCont[k] as Pawn;
 						if (p2 != null)
 						{
 							yield return p2;
 						}
 					}
 				}
-				List<Thing> dropPodsList = Find.ListerThings.ThingsInGroup(ThingRequestGroup.DropPod);
-				for (int l = 0; l < dropPodsList.Count; l++)
+				List<Thing> transportersList = this.map.listerThings.ThingsInGroup(ThingRequestGroup.Transporter);
+				for (int l = 0; l < transportersList.Count; l++)
 				{
-					Thing dropPod = dropPodsList[l];
-					DropPodIncoming dropPodIncoming = dropPod as DropPodIncoming;
-					DropPodInfo contents;
-					if (dropPodIncoming != null)
+					CompTransporter transporter = transportersList[l].TryGetComp<CompTransporter>();
+					ThingContainer things = transporter.GetInnerContainer();
+					for (int m = 0; m < things.Count; m++)
 					{
-						contents = dropPodIncoming.contents;
-					}
-					else
-					{
-						contents = ((DropPod)dropPod).info;
-					}
-					for (int m = 0; m < contents.containedThings.Count; m++)
-					{
-						Pawn p3 = contents.containedThings[m] as Pawn;
+						Pawn p3 = things[m] as Pawn;
 						if (p3 != null)
 						{
 							yield return p3;
 						}
 					}
 				}
-				List<PassingShip> shipList = Find.PassingShipManager.passingShips;
+				List<PassingShip> shipList = this.map.passingShipManager.passingShips;
 				for (int n = 0; n < shipList.Count; n++)
 				{
 					TradeShip ts = shipList[n] as TradeShip;
@@ -100,9 +93,7 @@ namespace Verse
 		{
 			get
 			{
-				return from p in this.PawnsInFaction(Faction.OfPlayer)
-				where p.HostFaction == null && p.RaceProps.Humanlike
-				select p;
+				return this.FreeHumanlikesOfFaction(Faction.OfPlayer);
 			}
 		}
 
@@ -128,7 +119,7 @@ namespace Verse
 		{
 			get
 			{
-				if (Current.ProgramState != ProgramState.MapPlaying)
+				if (Current.ProgramState != ProgramState.Playing)
 				{
 					Log.Error("ColonistCount while not playing. This should get the starting player pawn count.");
 					return 3;
@@ -179,6 +170,36 @@ namespace Verse
 			}
 		}
 
+		public bool AnyColonistTameAnimalOrPrisonerOfColony
+		{
+			get
+			{
+				Faction ofPlayer = Faction.OfPlayer;
+				for (int i = 0; i < this.pawnsSpawned.Count; i++)
+				{
+					if (this.pawnsSpawned[i].Faction == ofPlayer || this.pawnsSpawned[i].HostFaction == ofPlayer)
+					{
+						return true;
+					}
+				}
+				List<Thing> list = this.map.listerThings.ThingsInGroup(ThingRequestGroup.ActiveDropPod);
+				for (int j = 0; j < list.Count; j++)
+				{
+					IActiveDropPod activeDropPod = (IActiveDropPod)list[j];
+					ThingContainer innerContainer = activeDropPod.Contents.innerContainer;
+					for (int k = 0; k < innerContainer.Count; k++)
+					{
+						Pawn pawn = innerContainer[k] as Pawn;
+						if (pawn != null && (pawn.Faction == ofPlayer || pawn.HostFaction == ofPlayer))
+						{
+							return true;
+						}
+					}
+				}
+				return false;
+			}
+		}
+
 		public List<Pawn> AllPawnsSpawned
 		{
 			get
@@ -191,9 +212,7 @@ namespace Verse
 		{
 			get
 			{
-				return from p in this.SpawnedPawnsInFaction(Faction.OfPlayer)
-				where p.HostFaction == null && p.RaceProps.Humanlike
-				select p;
+				return this.FreeHumanlikesSpawnedOfFaction(Faction.OfPlayer);
 			}
 		}
 
@@ -274,7 +293,7 @@ namespace Verse
 						num++;
 					}
 				}
-				List<Thing> list = Find.ListerThings.ThingsInGroup(ThingRequestGroup.Container);
+				List<Thing> list = this.map.listerThings.ThingsInGroup(ThingRequestGroup.ContainerEnclosure);
 				for (int j = 0; j < list.Count; j++)
 				{
 					Building_CryptosleepCasket building_CryptosleepCasket = list[j] as Building_CryptosleepCasket;
@@ -292,6 +311,11 @@ namespace Verse
 				}
 				return num;
 			}
+		}
+
+		public MapPawns(Map map)
+		{
+			this.map = map;
 		}
 
 		private void EnsureFactionsListsInit()
@@ -329,6 +353,20 @@ namespace Verse
 			return this.pawnsInFactionSpawned[faction];
 		}
 
+		public IEnumerable<Pawn> FreeHumanlikesOfFaction(Faction faction)
+		{
+			return from p in this.PawnsInFaction(faction)
+			where p.HostFaction == null && p.RaceProps.Humanlike
+			select p;
+		}
+
+		public IEnumerable<Pawn> FreeHumanlikesSpawnedOfFaction(Faction faction)
+		{
+			return from p in this.SpawnedPawnsInFaction(faction)
+			where p.HostFaction == null && p.RaceProps.Humanlike
+			select p;
+		}
+
 		public void RegisterPawn(Pawn p)
 		{
 			if (p.Dead)
@@ -353,6 +391,11 @@ namespace Verse
 					base.GetType(),
 					"."
 				}));
+				return;
+			}
+			if (p.Map != this.map)
+			{
+				Log.Warning("Tried to register pawn " + p + " but his Map is not this one.");
 				return;
 			}
 			if (!p.mindState.Active)
@@ -401,7 +444,7 @@ namespace Verse
 		public void UpdateRegistryForPawn(Pawn p)
 		{
 			this.DeRegisterPawn(p);
-			if (p.Spawned)
+			if (p.Spawned && p.Map == this.map)
 			{
 				this.RegisterPawn(p);
 			}
@@ -424,7 +467,7 @@ namespace Verse
 			}
 			if (Find.ColonistBar != null)
 			{
-				Find.ColonistBar.MarkColonistsListDirty();
+				Find.ColonistBar.MarkColonistsDirty();
 			}
 		}
 

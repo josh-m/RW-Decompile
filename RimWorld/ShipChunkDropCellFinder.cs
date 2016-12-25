@@ -6,24 +6,24 @@ namespace RimWorld
 {
 	public static class ShipChunkDropCellFinder
 	{
-		public static bool TryFindShipChunkDropCell(out IntVec3 pos, IntVec3 nearLoc, int maxDist)
+		public static bool TryFindShipChunkDropCell(IntVec3 nearLoc, Map map, int maxDist, out IntVec3 pos)
 		{
 			ThingDef chunkDef = ThingDefOf.ShipChunk;
-			return CellFinder.TryFindRandomCellNear(nearLoc, maxDist, delegate(IntVec3 x)
+			return CellFinder.TryFindRandomCellNear(nearLoc, map, maxDist, delegate(IntVec3 x)
 			{
 				foreach (IntVec3 current in GenAdj.OccupiedRect(x, Rot4.North, chunkDef.size))
 				{
-					if (!current.InBounds() || current.Fogged() || !current.Standable() || (current.Roofed() && current.GetRoof().isThickRoof))
+					if (!current.InBounds(map) || current.Fogged(map) || !current.Standable(map) || (current.Roofed(map) && current.GetRoof(map).isThickRoof))
 					{
 						bool result = false;
 						return result;
 					}
-					if (!current.SupportsStructureType(chunkDef.terrainAffordanceNeeded))
+					if (!current.SupportsStructureType(map, chunkDef.terrainAffordanceNeeded))
 					{
 						bool result = false;
 						return result;
 					}
-					List<Thing> thingList = current.GetThingList();
+					List<Thing> thingList = current.GetThingList(map);
 					for (int i = 0; i < thingList.Count; i++)
 					{
 						Thing thing = thingList[i];

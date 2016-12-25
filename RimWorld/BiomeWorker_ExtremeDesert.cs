@@ -5,17 +5,17 @@ namespace RimWorld
 {
 	public class BiomeWorker_ExtremeDesert : BiomeWorker
 	{
-		public override float GetScore(WorldSquare square)
+		public override float GetScore(Tile tile)
 		{
-			if (square.elevation <= 0f)
+			if (tile.WaterCovered)
 			{
 				return -100f;
 			}
-			if (square.rainfall >= 340f)
+			if (tile.rainfall >= 340f)
 			{
 				return 0f;
 			}
-			return square.temperature * 2.7f - 13f - square.rainfall * 0.14f;
+			return tile.temperature * 2.7f - 13f - tile.rainfall * 0.14f;
 		}
 	}
 }

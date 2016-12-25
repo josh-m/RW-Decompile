@@ -30,6 +30,14 @@ namespace RimWorld
 			}
 		}
 
+		public Area_Home()
+		{
+		}
+
+		public Area_Home(AreaManager areaManager) : base(areaManager)
+		{
+		}
+
 		public override bool AssignableAsAllowed(AllowedAreaMode mode)
 		{
 			return (byte)(mode & AllowedAreaMode.Any) != 0;
@@ -37,7 +45,17 @@ namespace RimWorld
 
 		public override string GetUniqueLoadID()
 		{
-			return "Area_Home";
+			return "Area_" + this.ID + "_Home";
+		}
+
+		protected override void Set(IntVec3 c, bool val)
+		{
+			if (base[c] == val)
+			{
+				return;
+			}
+			base.Set(c, val);
+			base.Map.listerFilthInHomeArea.Notify_HomeAreaChanged(c);
 		}
 	}
 }

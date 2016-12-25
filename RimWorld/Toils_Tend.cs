@@ -16,14 +16,14 @@ namespace RimWorld
 				Job curJob = actor.jobs.curJob;
 				Thing thing = curJob.GetTarget(ind).Thing;
 				int medicineCountToFullyHeal = Medicine.GetMedicineCountToFullyHeal(injured);
-				curJob.maxNumToCarry = medicineCountToFullyHeal;
+				curJob.count = medicineCountToFullyHeal;
 				int count = Mathf.Min(thing.stackCount, medicineCountToFullyHeal);
-				actor.carrier.TryStartCarry(thing, count);
+				actor.carryTracker.TryStartCarry(thing, count);
 				if (thing.Spawned)
 				{
-					Find.Reservations.Release(thing, actor);
+					toil.actor.Map.reservationManager.Release(thing, actor);
 				}
-				curJob.SetTarget(ind, actor.carrier.CarriedThing);
+				curJob.SetTarget(ind, actor.carryTracker.CarriedThing);
 			};
 			toil.defaultCompleteMode = ToilCompleteMode.Instant;
 			return toil;
@@ -38,11 +38,11 @@ namespace RimWorld
 				Medicine medicine = (Medicine)actor.jobs.curJob.targetB.Thing;
 				float num = (!patient.RaceProps.Animal) ? 500f : 175f;
 				float num2 = (medicine != null) ? medicine.def.MedicineTendXpGainFactor : 0.5f;
-				actor.skills.Learn(SkillDefOf.Medicine, num * num2);
+				actor.skills.Learn(SkillDefOf.Medicine, num * num2, false);
 				TendUtility.DoTend(actor, patient, medicine);
 				if (medicine != null && medicine.Destroyed)
 				{
-					actor.CurJob.SetTarget(TargetIndex.B, TargetInfo.Invalid);
+					actor.CurJob.SetTarget(TargetIndex.B, LocalTargetInfo.Invalid);
 				}
 			};
 			toil.defaultCompleteMode = ToilCompleteMode.Instant;

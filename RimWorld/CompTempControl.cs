@@ -48,9 +48,9 @@ namespace RimWorld
 		}
 
 		[DebuggerHidden]
-		public override IEnumerable<Command> CompGetGizmosExtra()
+		public override IEnumerable<Gizmo> CompGetGizmosExtra()
 		{
-			foreach (Command c in base.CompGetGizmosExtra())
+			foreach (Gizmo c in base.CompGetGizmosExtra())
 			{
 				yield return c;
 			}
@@ -134,7 +134,7 @@ namespace RimWorld
 
 		private void ThrowCurrentTemperatureText()
 		{
-			MoteMaker.ThrowText(this.parent.TrueCenter() + new Vector3(0.5f, 0f, 0.5f), this.targetTemperature.ToStringTemperature("F0"), Color.white, -1f);
+			MoteMaker.ThrowText(this.parent.TrueCenter() + new Vector3(0.5f, 0f, 0.5f), this.parent.Map, this.targetTemperature.ToStringTemperature("F0"), Color.white, -1f);
 		}
 
 		public override string CompInspectStringExtra()
@@ -145,11 +145,11 @@ namespace RimWorld
 			stringBuilder.Append("PowerConsumptionMode".Translate() + ": ");
 			if (this.operatingAtHighPower)
 			{
-				stringBuilder.AppendLine("PowerConsumptionHigh".Translate());
+				stringBuilder.Append("PowerConsumptionHigh".Translate());
 			}
 			else
 			{
-				stringBuilder.AppendLine("PowerConsumptionLow".Translate());
+				stringBuilder.Append("PowerConsumptionLow".Translate());
 			}
 			return stringBuilder.ToString();
 		}

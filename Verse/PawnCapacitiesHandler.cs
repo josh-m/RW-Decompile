@@ -8,7 +8,7 @@ namespace Verse
 	{
 		private Pawn pawn;
 
-		private DefMap<PawnCapacityDef, float> cachedActivitiesEfficiency;
+		private DefMap<PawnCapacityDef, float> cachedCapacitiesEfficiency;
 
 		public bool CanBeAwake
 		{
@@ -25,41 +25,39 @@ namespace Verse
 
 		public void Clear()
 		{
-			this.cachedActivitiesEfficiency = null;
+			this.cachedCapacitiesEfficiency = null;
 		}
 
-		public float GetEfficiency(PawnCapacityDef activity)
+		public float GetEfficiency(PawnCapacityDef capacity)
 		{
 			if (this.pawn.health.Dead)
 			{
 				return 0f;
 			}
-			if (this.cachedActivitiesEfficiency == null)
+			if (this.cachedCapacitiesEfficiency == null)
 			{
-				this.Notify_ActivitiesEfficiencyDirty();
+				this.Notify_CapacityEfficienciesDirty();
 			}
-			return this.cachedActivitiesEfficiency[activity];
+			return this.cachedCapacitiesEfficiency[capacity];
 		}
 
-		public bool CapableOf(PawnCapacityDef activity)
+		public bool CapableOf(PawnCapacityDef capacity)
 		{
-			return this.GetEfficiency(activity) > activity.minForCapable;
+			return this.GetEfficiency(capacity) > capacity.minForCapable;
 		}
 
-		public void Notify_ActivitiesEfficiencyDirty()
+		public void Notify_CapacityEfficienciesDirty()
 		{
-			if (this.cachedActivitiesEfficiency == null)
+			if (this.cachedCapacitiesEfficiency == null)
 			{
-				this.cachedActivitiesEfficiency = new DefMap<PawnCapacityDef, float>();
+				this.cachedCapacitiesEfficiency = new DefMap<PawnCapacityDef, float>();
 			}
-			ProfilerThreadCheck.BeginSample("Calculate and cache activity efficiencies");
-			this.cachedActivitiesEfficiency.SetAll(0f);
+			this.cachedCapacitiesEfficiency.SetAll(0f);
 			List<PawnCapacityDef> pawnCapacityDefsListInProcessingOrder = PawnCapacityUtility.PawnCapacityDefsListInProcessingOrder;
 			for (int i = 0; i < pawnCapacityDefsListInProcessingOrder.Count; i++)
 			{
-				this.cachedActivitiesEfficiency[pawnCapacityDefsListInProcessingOrder[i]] = PawnCapacityUtility.CalculateEfficiency(this.pawn.health.hediffSet, pawnCapacityDefsListInProcessingOrder[i]);
+				this.cachedCapacitiesEfficiency[pawnCapacityDefsListInProcessingOrder[i]] = PawnCapacityUtility.CalculateEfficiency(this.pawn.health.hediffSet, pawnCapacityDefsListInProcessingOrder[i]);
 			}
-			ProfilerThreadCheck.EndSample();
 		}
 	}
 }

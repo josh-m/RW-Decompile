@@ -22,17 +22,20 @@ namespace RimWorld
 					return;
 				}
 				this.forbiddenInt = value;
-				if (this.forbiddenInt)
+				if (this.parent.Spawned)
 				{
-					ListerHaulables.Notify_Forbidden(this.parent);
-				}
-				else
-				{
-					ListerHaulables.Notify_Unforbidden(this.parent);
-				}
-				if (this.parent is Building_Door)
-				{
-					Reachability.ClearCache();
+					if (this.forbiddenInt)
+					{
+						this.parent.Map.listerHaulables.Notify_Forbidden(this.parent);
+					}
+					else
+					{
+						this.parent.Map.listerHaulables.Notify_Unforbidden(this.parent);
+					}
+					if (this.parent is Building_Door)
+					{
+						this.parent.Map.reachability.ClearCache();
+					}
 				}
 			}
 		}
@@ -50,20 +53,20 @@ namespace RimWorld
 				{
 					if (this.parent.def.size.x > 1 || this.parent.def.size.z > 1)
 					{
-						OverlayDrawer.DrawOverlay(this.parent, OverlayTypes.ForbiddenBig);
+						this.parent.Map.overlayDrawer.DrawOverlay(this.parent, OverlayTypes.ForbiddenBig);
 					}
 					else
 					{
-						OverlayDrawer.DrawOverlay(this.parent, OverlayTypes.Forbidden);
+						this.parent.Map.overlayDrawer.DrawOverlay(this.parent, OverlayTypes.Forbidden);
 					}
 				}
 				else if (this.parent.def.category == ThingCategory.Building)
 				{
-					OverlayDrawer.DrawOverlay(this.parent, OverlayTypes.ForbiddenBig);
+					this.parent.Map.overlayDrawer.DrawOverlay(this.parent, OverlayTypes.ForbiddenBig);
 				}
 				else
 				{
-					OverlayDrawer.DrawOverlay(this.parent, OverlayTypes.Forbidden);
+					this.parent.Map.overlayDrawer.DrawOverlay(this.parent, OverlayTypes.Forbidden);
 				}
 			}
 		}
@@ -74,12 +77,13 @@ namespace RimWorld
 		}
 
 		[DebuggerHidden]
-		public override IEnumerable<Command> CompGetGizmosExtra()
+		public override IEnumerable<Gizmo> CompGetGizmosExtra()
 		{
 			Command_Toggle com = new Command_Toggle();
 			com.hotKey = KeyBindingDefOf.CommandItemForbid;
 			com.icon = TexCommand.Forbidden;
 			com.isActive = (() => !this.<>f__this.forbiddenInt);
+			com.defaultLabel = "CommandForbid".Translate();
 			if (this.forbiddenInt)
 			{
 				com.defaultDesc = "CommandForbiddenDesc".Translate();

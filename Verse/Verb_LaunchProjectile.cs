@@ -8,6 +8,10 @@ namespace Verse
 	{
 		protected override bool TryCastShot()
 		{
+			if (this.currentTarget.HasThing && this.currentTarget.Thing.Map != this.caster.Map)
+			{
+				return false;
+			}
 			ShootLine shootLine;
 			bool flag = base.TryFindShootLineFromTo(this.caster.Position, this.currentTarget, out shootLine);
 			if (this.verbProps.stopBurstWithoutLos && !flag)
@@ -15,7 +19,7 @@ namespace Verse
 				return false;
 			}
 			Vector3 drawPos = this.caster.DrawPos;
-			Projectile projectile = (Projectile)GenSpawn.Spawn(this.verbProps.projectileDef, shootLine.Source);
+			Projectile projectile = (Projectile)GenSpawn.Spawn(this.verbProps.projectileDef, shootLine.Source, this.caster.Map);
 			projectile.FreeIntercept = (this.canFreeInterceptNow && !projectile.def.projectile.flyOverhead);
 			if (this.verbProps.forcedMissRadius > 0.5f)
 			{
@@ -45,9 +49,9 @@ namespace Verse
 					{
 						if (DebugViewSettings.drawShooting)
 						{
-							MoteMaker.ThrowText(this.caster.DrawPos, "ToForRad", -1f);
+							MoteMaker.ThrowText(this.caster.DrawPos, this.caster.Map, "ToForRad", -1f);
 						}
-						IntVec3 vec = this.currentTarget.Cell + GenRadial.RadialPattern[num2];
+						IntVec3 c = this.currentTarget.Cell + GenRadial.RadialPattern[num2];
 						if (this.currentTarget.HasThing)
 						{
 							projectile.ThingToNeverIntercept = this.currentTarget.Thing;
@@ -56,7 +60,7 @@ namespace Verse
 						{
 							projectile.InterceptWalls = true;
 						}
-						projectile.Launch(this.caster, drawPos, vec, this.ownerEquipment);
+						projectile.Launch(this.caster, drawPos, c, this.ownerEquipment);
 						return true;
 					}
 				}
@@ -66,7 +70,7 @@ namespace Verse
 			{
 				if (DebugViewSettings.drawShooting)
 				{
-					MoteMaker.ThrowText(this.caster.DrawPos, "ToWild", -1f);
+					MoteMaker.ThrowText(this.caster.DrawPos, this.caster.Map, "ToWild", -1f);
 				}
 				shootLine.ChangeDestToMissWild();
 				if (this.currentTarget.HasThing)
@@ -84,7 +88,7 @@ namespace Verse
 			{
 				if (DebugViewSettings.drawShooting)
 				{
-					MoteMaker.ThrowText(this.caster.DrawPos, "ToCover", -1f);
+					MoteMaker.ThrowText(this.caster.DrawPos, this.caster.Map, "ToCover", -1f);
 				}
 				if (this.currentTarget.Thing != null && this.currentTarget.Thing.def.category == ThingCategory.Pawn)
 				{
@@ -99,7 +103,7 @@ namespace Verse
 			}
 			if (DebugViewSettings.drawShooting)
 			{
-				MoteMaker.ThrowText(this.caster.DrawPos, "ToHit", -1f);
+				MoteMaker.ThrowText(this.caster.DrawPos, this.caster.Map, "ToHit", -1f);
 			}
 			if (!projectile.def.projectile.flyOverhead)
 			{

@@ -5,6 +5,11 @@ namespace Verse
 {
 	public static class GenList
 	{
+		public static int CountAllowNull<T>(this IList<T> list)
+		{
+			return (list == null) ? 0 : list.Count;
+		}
+
 		public static bool NullOrEmpty<T>(this IList<T> list)
 		{
 			return list == null || list.Count == 0;

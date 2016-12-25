@@ -29,7 +29,7 @@ namespace RimWorld
 				{
 					Thing thing = ThingMaker.MakeThing(ThingDefOf.Snowman, null);
 					thing.SetFaction(this.<>f__this.pawn.Faction, null);
-					GenSpawn.Spawn(thing, this.<>f__this.TargetLocA);
+					GenSpawn.Spawn(thing, this.<>f__this.TargetLocA, this.<>f__this.Map);
 					this.<>f__this.ReadyForNextToil();
 					return;
 				}

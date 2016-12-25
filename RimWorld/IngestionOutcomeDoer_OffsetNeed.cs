@@ -25,7 +25,7 @@ namespace RimWorld
 				return;
 			}
 			float num = this.offset;
-			AddictionUtility.FactorDrugEffectForTolerance(pawn, this.toleranceChemical, ref num);
+			AddictionUtility.ModifyChemicalEffectForToleranceAndBodySize(pawn, this.toleranceChemical, ref num);
 			need.CurLevel += num;
 		}
 

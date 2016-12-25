@@ -17,7 +17,7 @@ namespace RimWorld
 				int num2 = 0;
 				foreach (IntVec3 current in this.sandbagCells)
 				{
-					if (TutorUtility.BuildingOrBlueprintOrFrameCenterExists(current, ThingDefOf.Sandbags))
+					if (TutorUtility.BuildingOrBlueprintOrFrameCenterExists(current, base.Map, ThingDefOf.Sandbags))
 					{
 						num2++;
 					}
@@ -30,7 +30,7 @@ namespace RimWorld
 		public override void OnActivated()
 		{
 			base.OnActivated();
-			Find.TutorialState.sandbagsRect = TutorUtility.FindClearRect(7, 7, 0f, false);
+			Find.TutorialState.sandbagsRect = TutorUtility.FindUsableRect(7, 7, base.Map, 0f, false);
 			this.sandbagCells = new List<IntVec3>();
 			foreach (IntVec3 current in Find.TutorialState.sandbagsRect.EdgeCells)
 			{
@@ -43,7 +43,7 @@ namespace RimWorld
 			{
 				if (!Find.TutorialState.sandbagsRect.ContractedBy(2).Contains(current2))
 				{
-					List<Thing> thingList = current2.GetThingList();
+					List<Thing> thingList = current2.GetThingList(base.Map);
 					for (int i = thingList.Count - 1; i >= 0; i--)
 					{
 						Thing thing = thingList[i];
@@ -71,7 +71,7 @@ namespace RimWorld
 		public override void LessonUpdate()
 		{
 			List<IntVec3> cells = (from c in this.sandbagCells
-			where !TutorUtility.BuildingOrBlueprintOrFrameCenterExists(c, ThingDefOf.Sandbags)
+			where !TutorUtility.BuildingOrBlueprintOrFrameCenterExists(c, base.Map, ThingDefOf.Sandbags)
 			select c).ToList<IntVec3>();
 			GenDraw.DrawFieldEdges(cells);
 			GenDraw.DrawArrowPointingAt(Gen.AveragePosition(this.sandbagCells), false);

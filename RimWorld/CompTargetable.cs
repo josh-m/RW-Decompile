@@ -25,11 +25,11 @@ namespace RimWorld
 		{
 			if (this.PlayerChoosesTarget)
 			{
-				Find.Targeter.BeginTargeting(this.GetTargetingParameters(), delegate(Thing t)
+				Find.Targeter.BeginTargeting(this.GetTargetingParameters(), delegate(LocalTargetInfo t)
 				{
-					this.target = t;
+					this.target = t.Thing;
 					this.parent.GetComp<CompUsable>().TryStartUseJob(p);
-				}, p);
+				}, p, null, null);
 				return true;
 			}
 			this.target = null;

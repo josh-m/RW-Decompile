@@ -6,7 +6,7 @@ using Verse;
 
 namespace RimWorld
 {
-	public static class WildSpawner
+	public class WildSpawner
 	{
 		private const int AnimalCheckInterval = 1210;
 
@@ -14,50 +14,52 @@ namespace RimWorld
 
 		private const int PlantTrySpawnIntervalAt100EdgeLength = 650;
 
-		private static float DesiredAnimalDensity
+		private Map map;
+
+		private float DesiredAnimalDensity
 		{
 			get
 			{
-				float num = Find.Map.Biome.animalDensity;
+				float num = this.map.Biome.animalDensity;
 				float num2 = 0f;
 				float num3 = 0f;
-				foreach (PawnKindDef current in Find.Map.Biome.AllWildAnimals)
+				foreach (PawnKindDef current in this.map.Biome.AllWildAnimals)
 				{
 					num3 += current.wildSpawn_EcoSystemWeight;
-					if (GenTemperature.SeasonAcceptableFor(current.race))
+					if (this.map.mapTemperature.SeasonAcceptableFor(current.race))
 					{
 						num2 += current.wildSpawn_EcoSystemWeight;
 					}
 				}
 				num *= num2 / num3;
-				num *= Find.MapConditionManager.AggregateAnimalDensityFactor();
+				num *= this.map.mapConditionManager.AggregateAnimalDensityFactor();
 				return num;
 			}
 		}
 
-		private static float DesiredTotalAnimalWeight
+		private float DesiredTotalAnimalWeight
 		{
 			get
 			{
-				float desiredAnimalDensity = WildSpawner.DesiredAnimalDensity;
+				float desiredAnimalDensity = this.DesiredAnimalDensity;
 				if (desiredAnimalDensity == 0f)
 				{
 					return 0f;
 				}
 				int num = (int)(10000f / desiredAnimalDensity);
-				return (float)(Find.Map.Area / num);
+				return (float)(this.map.Area / num);
 			}
 		}
 
-		private static float CurrentTotalAnimalWeight
+		private float CurrentTotalAnimalWeight
 		{
 			get
 			{
 				float num = 0f;
-				List<Pawn> allPawnsSpawned = Find.MapPawns.AllPawnsSpawned;
+				List<Pawn> allPawnsSpawned = this.map.mapPawns.AllPawnsSpawned;
 				for (int i = 0; i < allPawnsSpawned.Count; i++)
 				{
-					if (allPawnsSpawned[i].kindDef.wildSpawn_spawnWild)
+					if (allPawnsSpawned[i].kindDef.wildSpawn_spawnWild && allPawnsSpawned[i].Faction == null)
 					{
 						num += allPawnsSpawned[i].kindDef.wildSpawn_EcoSystemWeight;
 					}
@@ -66,49 +68,58 @@ namespace RimWorld
 			}
 		}
 
-		public static bool AnimalEcosystemFull
+		public bool AnimalEcosystemFull
 		{
 			get
 			{
-				return WildSpawner.CurrentTotalAnimalWeight >= WildSpawner.DesiredTotalAnimalWeight;
+				return this.CurrentTotalAnimalWeight >= this.DesiredTotalAnimalWeight;
 			}
 		}
 
-		public static void WildSpawnerTick()
+		public WildSpawner(Map map)
+		{
+			this.map = map;
+		}
+
+		public void WildSpawnerTick()
 		{
 			IntVec3 loc;
-			if (Find.TickManager.TicksGame % 1210 == 0 && !WildSpawner.AnimalEcosystemFull && Rand.Value < 0.0268888883f * WildSpawner.DesiredAnimalDensity && RCellFinder.TryFindRandomPawnEntryCell(out loc))
+			if (Find.TickManager.TicksGame % 1210 == 0 && !this.AnimalEcosystemFull && Rand.Value < 0.0268888883f * this.DesiredAnimalDensity && RCellFinder.TryFindRandomPawnEntryCell(out loc, this.map))
 			{
-				WildSpawner.SpawnRandomWildAnimalAt(loc);
+				this.SpawnRandomWildAnimalAt(loc);
 			}
-			float num = Find.MapConditionManager.AggregatePlantDensityFactor();
+			float num = this.map.mapConditionManager.AggregatePlantDensityFactor();
 			if (num > 0.0001f)
 			{
-				int num2 = Find.Map.Size.x * 2 + Find.Map.Size.z * 2;
+				int num2 = this.map.Size.x * 2 + this.map.Size.z * 2;
 				int num3 = 650 / (num2 / 100);
 				num3 = GenMath.RoundRandom((float)num3 / num);
 				if (Find.TickManager.TicksGame % num3 == 0)
 				{
-					WildSpawner.TrySpawnPlantFromMapEdge();
+					this.TrySpawnPlantFromMapEdge();
 				}
 			}
 		}
 
-		private static void TrySpawnPlantFromMapEdge()
+		private void TrySpawnPlantFromMapEdge()
 		{
-			ThingDef plantDef = Find.Map.Biome.AllWildPlants.RandomElementByWeight((ThingDef def) => Find.Map.Biome.CommonalityOfPlant(def));
-			IntVec3 cell;
-			if (RCellFinder.TryFindRandomCellToPlantInFromOffMap(plantDef, out cell))
+			ThingDef plantDef;
+			if (!this.map.Biome.AllWildPlants.TryRandomElementByWeight((ThingDef def) => this.map.Biome.CommonalityOfPlant(def), out plantDef))
 			{
-				GenPlantReproduction.TrySpawnSeed(cell, plantDef, SeedTargFindMode.MapEdge, null);
+				return;
+			}
+			IntVec3 source;
+			if (RCellFinder.TryFindRandomCellToPlantInFromOffMap(plantDef, this.map, out source))
+			{
+				GenPlantReproduction.TryReproduceFrom(source, plantDef, SeedTargFindMode.MapEdge, this.map);
 			}
 		}
 
-		public static void SpawnRandomWildAnimalAt(IntVec3 loc)
+		public void SpawnRandomWildAnimalAt(IntVec3 loc)
 		{
-			PawnKindDef pawnKindDef = (from a in Find.Map.Biome.AllWildAnimals
-			where GenTemperature.SeasonAcceptableFor(a.race)
-			select a).RandomElementByWeight((PawnKindDef def) => Find.Map.Biome.CommonalityOfAnimal(def) / def.wildSpawn_GroupSizeRange.Average);
+			PawnKindDef pawnKindDef = (from a in this.map.Biome.AllWildAnimals
+			where this.map.mapTemperature.SeasonAcceptableFor(a.race)
+			select a).RandomElementByWeight((PawnKindDef def) => this.map.Biome.CommonalityOfAnimal(def) / def.wildSpawn_GroupSizeRange.Average);
 			if (pawnKindDef == null)
 			{
 				Log.Error("No spawnable animals right now.");
@@ -118,22 +129,22 @@ namespace RimWorld
 			int radius = Mathf.CeilToInt(Mathf.Sqrt((float)pawnKindDef.wildSpawn_GroupSizeRange.max));
 			for (int i = 0; i < randomInRange; i++)
 			{
-				IntVec3 loc2 = CellFinder.RandomClosewalkCellNear(loc, radius);
+				IntVec3 loc2 = CellFinder.RandomClosewalkCellNear(loc, this.map, radius);
 				Pawn newThing = PawnGenerator.GeneratePawn(pawnKindDef, null);
-				GenSpawn.Spawn(newThing, loc2);
+				GenSpawn.Spawn(newThing, loc2, this.map);
 			}
 		}
 
-		public static string DebugString()
+		public string DebugString()
 		{
 			return string.Concat(new object[]
 			{
 				"CurrentTotalAnimalWeight: ",
-				WildSpawner.CurrentTotalAnimalWeight,
+				this.CurrentTotalAnimalWeight,
 				"\nDesiredAnimalDensity: ",
-				WildSpawner.DesiredAnimalDensity,
+				this.DesiredAnimalDensity,
 				"\nDesiredTotalAnimalWeight: ",
-				WildSpawner.DesiredTotalAnimalWeight
+				this.DesiredTotalAnimalWeight
 			});
 		}
 	}

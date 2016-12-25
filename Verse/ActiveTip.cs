@@ -14,7 +14,7 @@ namespace Verse
 
 		public int lastTriggerFrame;
 
-		private static readonly Texture2D TooltipBGAtlas = ContentFinder<Texture2D>.Get("UI/Widgets/TooltipBG", true);
+		public static readonly Texture2D TooltipBGAtlas = ContentFinder<Texture2D>.Get("UI/Widgets/TooltipBG", true);
 
 		private string FinalText
 		{

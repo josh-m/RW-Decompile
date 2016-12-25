@@ -99,7 +99,7 @@ namespace RimWorld
 					list.Add(new FloatMenuOption(localOut.label, delegate
 					{
 						p.outfits.CurrentOutfit = localOut;
-					}, MenuOptionPriority.Medium, null, null, 0f, null));
+					}, MenuOptionPriority.Default, null, null, 0f, null, null));
 				}
 				Find.WindowStack.Add(new FloatMenu(list));
 			}
@@ -142,6 +142,10 @@ namespace RimWorld
 				if (trait != null)
 				{
 					text = text + " (" + trait.Label + ")";
+					if (text.Length > 35)
+					{
+						text = text.TrimmedToLength(32) + "...";
+					}
 				}
 			}
 			if (Widgets.ButtonText(rect2, text, true, false, true))
@@ -153,7 +157,7 @@ namespace RimWorld
 					list.Add(new FloatMenuOption(current.label, delegate
 					{
 						p.drugs.CurrentPolicy = localAssignedDrugs;
-					}, MenuOptionPriority.Medium, null, null, 0f, null));
+					}, MenuOptionPriority.Default, null, null, 0f, null, null));
 				}
 				Find.WindowStack.Add(new FloatMenu(list));
 				PlayerKnowledgeDatabase.KnowledgeDemonstrated(ConceptDefOf.DrugPolicies, KnowledgeAmount.Total);

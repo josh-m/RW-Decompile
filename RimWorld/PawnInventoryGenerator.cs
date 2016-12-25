@@ -12,16 +12,16 @@ namespace RimWorld
 			p.inventory.DestroyAll(DestroyMode.Vanish);
 			for (int i = 0; i < p.kindDef.fixedInventory.Count; i++)
 			{
-				ThingCount thingCount = p.kindDef.fixedInventory[i];
-				Thing thing = ThingMaker.MakeThing(thingCount.thingDef, null);
-				thing.stackCount = thingCount.count;
-				p.inventory.container.TryAdd(thing);
+				ThingCountClass thingCountClass = p.kindDef.fixedInventory[i];
+				Thing thing = ThingMaker.MakeThing(thingCountClass.thingDef, null);
+				thing.stackCount = thingCountClass.count;
+				p.inventory.innerContainer.TryAdd(thing, true);
 			}
 			if (p.kindDef.inventoryOptions != null)
 			{
 				foreach (Thing current in p.kindDef.inventoryOptions.GenerateThings())
 				{
-					p.inventory.container.TryAdd(current);
+					p.inventory.innerContainer.TryAdd(current, true);
 				}
 			}
 			if (request.AllowFood)
@@ -59,7 +59,7 @@ namespace RimWorld
 				}
 				Thing thing = ThingMaker.MakeThing(thingDef, null);
 				thing.stackCount = GenMath.RoundRandom(p.kindDef.invNutrition / thingDef.ingestible.nutrition);
-				p.inventory.container.TryAdd(thing);
+				p.inventory.TryAddItemNotForSale(thing);
 			}
 		}
 
@@ -91,7 +91,7 @@ namespace RimWorld
 					int stackCount = Rand.RangeInclusive(2, 5);
 					Thing thing = ThingMaker.MakeThing(def, null);
 					thing.stackCount = stackCount;
-					p.inventory.container.TryAdd(thing);
+					p.inventory.TryAddItemNotForSale(thing);
 				}
 			}
 		}
@@ -102,13 +102,13 @@ namespace RimWorld
 			{
 				return;
 			}
-			if (pawn.story != null && pawn.story.traits.DegreeOfTrait(TraitDefOf.DrugDesire) < 0)
+			if (pawn.IsTeetotaler())
 			{
 				return;
 			}
-			for (int i = 0; i < pawn.inventory.container.Count; i++)
+			for (int i = 0; i < pawn.inventory.innerContainer.Count; i++)
 			{
-				CompDrug compDrug = pawn.inventory.container[i].TryGetComp<CompDrug>();
+				CompDrug compDrug = pawn.inventory.innerContainer[i].TryGetComp<CompDrug>();
 				if (compDrug != null && compDrug.Props.isCombatEnhancingDrug)
 				{
 					return;
@@ -139,7 +139,7 @@ namespace RimWorld
 				{
 					break;
 				}
-				pawn.inventory.container.TryAdd(ThingMaker.MakeThing(def, null));
+				pawn.inventory.innerContainer.TryAdd(ThingMaker.MakeThing(def, null), true);
 			}
 		}
 	}

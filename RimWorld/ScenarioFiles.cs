@@ -33,8 +33,11 @@ namespace RimWorld
 			ScenarioFiles.scenariosLocal.Clear();
 			foreach (FileInfo current in GenFilePaths.AllCustomScenarioFiles)
 			{
-				Scenario item = GameDataSaveLoader.LoadScenario(current.FullName, ScenarioCategory.CustomLocal);
-				ScenarioFiles.scenariosLocal.Add(item);
+				Scenario item;
+				if (GameDataSaveLoader.TryLoadScenario(current.FullName, ScenarioCategory.CustomLocal, out item))
+				{
+					ScenarioFiles.scenariosLocal.Add(item);
+				}
 			}
 			ScenarioFiles.scenariosWorkshop.Clear();
 			foreach (WorkshopItem current2 in WorkshopItems.AllSubscribedItems)

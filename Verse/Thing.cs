@@ -11,19 +11,23 @@ namespace Verse
 {
 	public class Thing : Entity, ILoadReferenceable, IExposable, ISelectable
 	{
+		private const sbyte UnspawnedState = -1;
+
+		private const sbyte MemoryState = -2;
+
+		private const sbyte DiscardedState = -3;
+
 		public ThingDef def;
 
 		public int thingIDNumber = -1;
 
-		private ThingState thingStateInt = ThingState.Unspawned;
+		private sbyte mapIndexOrState = -1;
 
 		private IntVec3 positionInt = IntVec3.Invalid;
 
 		private Rot4 rotationInt = Rot4.North;
 
 		public int stackCount = 1;
-
-		public ThingContainer holder;
 
 		protected Faction factionInt;
 
@@ -32,6 +36,8 @@ namespace Verse
 		private Graphic graphicInt;
 
 		private int hitPointsInt = -1;
+
+		public ThingContainer holdingContainer;
 
 		public static bool allowDestroyNonDestroyable;
 
@@ -63,14 +69,6 @@ namespace Verse
 			}
 		}
 
-		public ThingState ThingState
-		{
-			get
-			{
-				return this.thingStateInt;
-			}
-		}
-
 		public bool FlammableNow
 		{
 			get
@@ -81,7 +79,7 @@ namespace Verse
 				}
 				if (this.Spawned)
 				{
-					List<Thing> thingList = this.Position.GetThingList();
+					List<Thing> thingList = this.Position.GetThingList(this.Map);
 					if (thingList != null)
 					{
 						for (int i = 0; i < thingList.Count; i++)
@@ -101,7 +99,15 @@ namespace Verse
 		{
 			get
 			{
-				return this.thingStateInt == ThingState.Memory || this.thingStateInt == ThingState.Discarded;
+				return (int)this.mapIndexOrState == -2 || (int)this.mapIndexOrState == -3;
+			}
+		}
+
+		public bool Discarded
+		{
+			get
+			{
+				return (int)this.mapIndexOrState == -3;
 			}
 		}
 
@@ -109,7 +115,31 @@ namespace Verse
 		{
 			get
 			{
-				return this.thingStateInt == ThingState.Spawned;
+				return (int)this.mapIndexOrState >= 0;
+			}
+		}
+
+		public Map Map
+		{
+			get
+			{
+				if ((int)this.mapIndexOrState >= 0)
+				{
+					return Find.Maps[(int)this.mapIndexOrState];
+				}
+				return null;
+			}
+		}
+
+		public Map MapHeld
+		{
+			get
+			{
+				if (this.holdingContainer == null)
+				{
+					return this.Map;
+				}
+				return this.holdingContainer.owner.GetMap();
 			}
 		}
 
@@ -125,40 +155,18 @@ namespace Verse
 				{
 					return;
 				}
-				if (ListerThings.EverListable(this.def, ListerThingsUse.Region) && this.def.passability != Traversability.Impassable)
+				if (this.Spawned)
 				{
-					RegionGrid regionGrid = Find.RegionGrid;
-					if (regionGrid != null)
-					{
-						Region region = null;
-						if (this.positionInt.InBounds())
-						{
-							region = regionGrid.GetValidRegionAt(this.positionInt);
-						}
-						Region region2 = null;
-						if (value.InBounds())
-						{
-							region2 = regionGrid.GetValidRegionAt(value);
-						}
-						if (region2 != region)
-						{
-							if (region != null)
-							{
-								region.ListerThings.Remove(this);
-							}
-							if (region2 != null)
-							{
-								region2.ListerThings.Add(this);
-							}
-						}
-					}
+					ThingUtility.UpdateRegionListers(this.positionInt, value, this.Map, this);
 				}
-				ThingGrid thingGrid = Find.ThingGrid;
-				if (thingGrid != null)
+				if (this.Spawned)
 				{
-					thingGrid.Deregister(this);
-					this.positionInt = value;
-					thingGrid.Register(this);
+					this.Map.thingGrid.Deregister(this, false);
+				}
+				this.positionInt = value;
+				if (this.Spawned)
+				{
+					this.Map.thingGrid.Register(this);
 				}
 			}
 		}
@@ -167,23 +175,23 @@ namespace Verse
 		{
 			get
 			{
-				if (this.holder == null)
+				if (this.holdingContainer == null)
 				{
 					return this.Position;
 				}
-				if (this.holder.owner == null)
+				if (this.holdingContainer.owner == null)
 				{
 					Log.Error(string.Concat(new object[]
 					{
 						"Holder of ",
 						this,
 						" is ",
-						this.holder,
+						this.holdingContainer,
 						" and it has a null owner."
 					}));
 					return this.Position;
 				}
-				return this.holder.owner.GetPosition();
+				return this.holdingContainer.owner.GetPosition();
 			}
 		}
 
@@ -207,7 +215,7 @@ namespace Verse
 		{
 			get
 			{
-				return !this.def.smeltProducts.NullOrEmpty<ThingCount>() || (this.def.MadeFromStuff && this.Stuff.stuffProps.smeltable);
+				return this.def.smeltable && (!this.def.MadeFromStuff || this.Stuff.stuffProps.smeltable);
 			}
 		}
 
@@ -335,7 +343,7 @@ namespace Verse
 		{
 			get
 			{
-				return Thing.InteractionCellWhenAt(this.def, this.Position, this.Rotation);
+				return Thing.InteractionCellWhenAt(this.def, this.Position, this.Rotation, this.Map);
 			}
 		}
 
@@ -423,7 +431,7 @@ namespace Verse
 			return "Thing_" + this.ThingID;
 		}
 
-		public override void SpawnSetup()
+		public override void SpawnSetup(Map map)
 		{
 			if (this.Destroyed)
 			{
@@ -435,7 +443,7 @@ namespace Verse
 					this.Position,
 					". Correcting."
 				}));
-				this.thingStateInt = ThingState.Unspawned;
+				this.mapIndexOrState = -1;
 				if (this.HitPoints <= 0 && this.def.useHitPoints)
 				{
 					this.HitPoints = 1;
@@ -452,6 +460,12 @@ namespace Verse
 				}));
 				return;
 			}
+			int num = Find.Maps.IndexOf(map);
+			if (num < 0)
+			{
+				Log.Error("Tried to spawn thing " + this + ", but the map provided does not exist.");
+				return;
+			}
 			if (this.stackCount > this.def.stackLimit)
 			{
 				Log.Error(string.Concat(new object[]
@@ -466,9 +480,9 @@ namespace Verse
 				}));
 				this.stackCount = this.def.stackLimit;
 			}
-			this.holder = null;
-			this.thingStateInt = ThingState.Spawned;
-			Find.Map.listerThings.Add(this);
+			this.holdingContainer = null;
+			this.mapIndexOrState = (sbyte)num;
+			this.Map.listerThings.Add(this);
 			if (Find.TickManager != null)
 			{
 				Find.TickManager.RegisterAllTickabilityFor(this);
@@ -478,46 +492,46 @@ namespace Verse
 				CellRect.CellRectIterator iterator = this.OccupiedRect().GetIterator();
 				while (!iterator.Done())
 				{
-					Find.Map.mapDrawer.MapMeshDirty(iterator.Current, MapMeshFlag.Things);
+					this.Map.mapDrawer.MapMeshDirty(iterator.Current, MapMeshFlag.Things);
 					iterator.MoveNext();
 				}
 			}
 			if (this.def.drawerType != DrawerType.MapMeshOnly)
 			{
-				Find.DynamicDrawManager.RegisterDrawable(this);
+				this.Map.dynamicDrawManager.RegisterDrawable(this);
 			}
 			if (this.def.hasTooltip)
 			{
-				Find.TooltipGiverList.RegisterTooltipGiver(this);
+				this.Map.tooltipGiverList.RegisterTooltipGiver(this);
 			}
 			if (this.def.graphicData != null && this.def.graphicData.Linked)
 			{
-				LinkGrid.Notify_LinkerCreatedOrDestroyed(this);
-				Find.MapDrawer.MapMeshDirty(this.Position, MapMeshFlag.Things, true, false);
+				this.Map.linkGrid.Notify_LinkerCreatedOrDestroyed(this);
+				this.Map.mapDrawer.MapMeshDirty(this.Position, MapMeshFlag.Things, true, false);
 			}
 			if (!this.def.CanOverlapZones)
 			{
-				Find.ZoneManager.Notify_NoZoneOverlapThingSpawned(this);
+				this.Map.zoneManager.Notify_NoZoneOverlapThingSpawned(this);
 			}
 			if (this.def.regionBarrier)
 			{
-				RegionDirtyer.Notify_BarrierSpawned(this);
+				this.Map.regionDirtyer.Notify_BarrierSpawned(this);
 			}
 			if (this.def.pathCost != 0 || this.def.passability == Traversability.Impassable)
 			{
-				Find.PathGrid.RecalculatePerceivedPathCostUnderThing(this);
+				this.Map.pathGrid.RecalculatePerceivedPathCostUnderThing(this);
 			}
 			if (this.def.passability == Traversability.Impassable)
 			{
-				Reachability.ClearCache();
+				this.Map.reachability.ClearCache();
 			}
-			Find.CoverGrid.Register(this);
+			this.Map.coverGrid.Register(this);
 			if (this.def.category == ThingCategory.Item)
 			{
-				ListerHaulables.Notify_Spawned(this);
+				this.Map.listerHaulables.Notify_Spawned(this);
 			}
-			Find.AttackTargetsCache.Notify_ThingSpawned(this);
-			Region validRegionAt_NoRebuild = Find.RegionGrid.GetValidRegionAt_NoRebuild(this.Position);
+			this.Map.attackTargetsCache.Notify_ThingSpawned(this);
+			Region validRegionAt_NoRebuild = this.Map.regionGrid.GetValidRegionAt_NoRebuild(this.Position);
 			Room room = (validRegionAt_NoRebuild != null) ? validRegionAt_NoRebuild.Room : null;
 			if (room != null)
 			{
@@ -525,13 +539,17 @@ namespace Verse
 			}
 			if (this.def.category == ThingCategory.Item)
 			{
-				Building_Door building_Door = this.Position.GetEdifice() as Building_Door;
+				Building_Door building_Door = this.Position.GetEdifice(this.Map) as Building_Door;
 				if (building_Door != null)
 				{
 					building_Door.Notify_ItemSpawnedOrDespawnedOnTop(this);
 				}
 			}
 			StealAIDebugDrawer.Notify_ThingChanged(this);
+			if (this is IThingContainerOwner && Find.ColonistBar != null)
+			{
+				Find.ColonistBar.MarkColonistsDirty();
+			}
 		}
 
 		public override void DeSpawn()
@@ -546,29 +564,30 @@ namespace Verse
 				Log.Error("Tried to despawn " + this + " which is not spawned.");
 				return;
 			}
-			Find.Map.listerThings.Remove(this);
+			Map map = this.Map;
+			map.listerThings.Remove(this);
 			if (this.def.passability != Traversability.Impassable)
 			{
-				Region validRegionAt = Find.RegionGrid.GetValidRegionAt(this.Position);
+				Region validRegionAt = map.regionGrid.GetValidRegionAt(this.Position);
 				if (validRegionAt != null)
 				{
 					validRegionAt.ListerThings.Remove(this);
 				}
-				if (this.def.size == IntVec2.One && !this.Position.Walkable())
+				if (this.def.size == IntVec2.One && !this.Position.Walkable(map))
 				{
 					this.DeregisterInAdjacentRegions();
 				}
 			}
-			Find.ThingGrid.Deregister(this);
-			Find.CoverGrid.DeRegister(this);
+			map.thingGrid.Deregister(this, false);
+			map.coverGrid.DeRegister(this);
 			if (this.def.hasTooltip)
 			{
-				Find.TooltipGiverList.DeregisterTooltipGiver(this);
+				map.tooltipGiverList.DeregisterTooltipGiver(this);
 			}
 			if (this.def.graphicData != null && this.def.graphicData.Linked)
 			{
-				LinkGrid.Notify_LinkerCreatedOrDestroyed(this);
-				Find.MapDrawer.MapMeshDirty(this.Position, MapMeshFlag.Things, true, false);
+				map.linkGrid.Notify_LinkerCreatedOrDestroyed(this);
+				map.mapDrawer.MapMeshDirty(this.Position, MapMeshFlag.Things, true, false);
 			}
 			Find.Selector.Deselect(this);
 			if (this.def.drawerType != DrawerType.RealtimeOnly)
@@ -578,15 +597,15 @@ namespace Verse
 				{
 					for (int j = cellRect.minX; j <= cellRect.maxX; j++)
 					{
-						Find.Map.mapDrawer.MapMeshDirty(new IntVec3(j, 0, i), MapMeshFlag.Things);
+						map.mapDrawer.MapMeshDirty(new IntVec3(j, 0, i), MapMeshFlag.Things);
 					}
 				}
 			}
 			if (this.def.drawerType != DrawerType.MapMeshOnly)
 			{
-				Find.DynamicDrawManager.DeRegisterDrawable(this);
+				map.dynamicDrawManager.DeRegisterDrawable(this);
 			}
-			Region validRegionAt_NoRebuild = Find.RegionGrid.GetValidRegionAt_NoRebuild(this.Position);
+			Region validRegionAt_NoRebuild = map.regionGrid.GetValidRegionAt_NoRebuild(this.Position);
 			Room room = (validRegionAt_NoRebuild != null) ? validRegionAt_NoRebuild.Room : null;
 			if (room != null)
 			{
@@ -594,32 +613,36 @@ namespace Verse
 			}
 			if (this.def.regionBarrier)
 			{
-				RegionDirtyer.Notify_BarrierDespawned(this);
+				map.regionDirtyer.Notify_BarrierDespawned(this);
 			}
 			if (this.def.pathCost != 0 || this.def.passability == Traversability.Impassable)
 			{
-				Find.PathGrid.RecalculatePerceivedPathCostUnderThing(this);
+				map.pathGrid.RecalculatePerceivedPathCostUnderThing(this);
 			}
 			if (this.def.passability == Traversability.Impassable)
 			{
-				Reachability.ClearCache();
+				map.reachability.ClearCache();
 			}
 			Find.TickManager.DeRegisterAllTickabilityFor(this);
-			this.thingStateInt = ThingState.Unspawned;
+			this.mapIndexOrState = -1;
 			if (this.def.category == ThingCategory.Item)
 			{
-				ListerHaulables.Notify_DeSpawned(this);
+				map.listerHaulables.Notify_DeSpawned(this);
 			}
-			Find.AttackTargetsCache.Notify_ThingDespawned(this);
+			map.attackTargetsCache.Notify_ThingDespawned(this);
 			if (this.def.category == ThingCategory.Item)
 			{
-				Building_Door building_Door = this.Position.GetEdifice() as Building_Door;
+				Building_Door building_Door = this.Position.GetEdifice(map) as Building_Door;
 				if (building_Door != null)
 				{
 					building_Door.Notify_ItemSpawnedOrDespawnedOnTop(this);
 				}
 			}
 			StealAIDebugDrawer.Notify_ThingChanged(this);
+			if (this is IThingContainerOwner && Find.ColonistBar != null)
+			{
+				Find.ColonistBar.MarkColonistsDirty();
+			}
 		}
 
 		public virtual void Destroy(DestroyMode mode = DestroyMode.Vanish)
@@ -635,36 +658,39 @@ namespace Verse
 				return;
 			}
 			bool spawned = this.Spawned;
+			Map map = this.Map;
 			if (this.Spawned)
 			{
 				this.DeSpawn();
 			}
-			this.thingStateInt = ThingState.Memory;
+			this.mapIndexOrState = -2;
 			if (this.def.DiscardOnDestroyed)
 			{
 				this.Discard();
 			}
 			if (spawned)
 			{
-				GenLeaving.DoLeavingsFor(this, mode);
+				GenLeaving.DoLeavingsFor(this, map, mode);
 			}
-			if (this.holder != null)
+			if (this.holdingContainer != null)
 			{
-				this.holder.Notify_ContainedItemDestroyed(this);
+				this.holdingContainer.Notify_ContainedItemDestroyed(this);
 			}
-			if (Find.Map != null)
+			this.ClearMapReferencesToMeForDestroy(map);
+		}
+
+		public void ClearMapReferencesToMeForDestroy(Map map)
+		{
+			if (map != null && this.def.category != ThingCategory.Mote)
 			{
-				Find.Reservations.ReleaseAllForTarget(this);
-				Find.PhysicalInteractionReservations.ReleaseAllForTarget(this);
+				map.reservationManager.ReleaseAllForTarget(this);
+				map.physicalInteractionReservationManager.ReleaseAllForTarget(this);
 				IAttackTarget attackTarget = this as IAttackTarget;
 				if (attackTarget != null)
 				{
-					Find.AttackTargetReservations.ReleaseAllForTarget(attackTarget);
+					map.attackTargetReservationManager.ReleaseAllForTarget(attackTarget);
 				}
-				if (this.def.category != ThingCategory.Mote)
-				{
-					Find.DesignationManager.RemoveAllDesignationsOn(this, false);
-				}
+				map.designationManager.RemoveAllDesignationsOn(this, false);
 			}
 		}
 
@@ -677,15 +703,39 @@ namespace Verse
 			for (int i = 0; i < 8; i++)
 			{
 				IntVec3 c = this.positionInt + GenAdj.AdjacentCells[i];
-				if (c.InBounds())
+				if (c.InBounds(this.Map))
 				{
-					Region validRegionAt = Find.RegionGrid.GetValidRegionAt(c);
+					Region validRegionAt = this.Map.regionGrid.GetValidRegionAt(c);
 					if (validRegionAt != null && validRegionAt.ListerThings.Contains(this))
 					{
 						validRegionAt.ListerThings.Remove(this);
 					}
 				}
 			}
+		}
+
+		public void Notify_MyMapRemoved()
+		{
+			if (this.Spawned)
+			{
+				this.mapIndexOrState = -1;
+			}
+		}
+
+		public void DecrementMapIndex()
+		{
+			if ((int)this.mapIndexOrState <= 0)
+			{
+				Log.Warning(string.Concat(new object[]
+				{
+					"Tried to decrement map index for ",
+					this,
+					", but mapIndexOrState=",
+					this.mapIndexOrState
+				}));
+				return;
+			}
+			this.mapIndexOrState -= 1;
 		}
 
 		public virtual void ExposeData()
@@ -696,6 +746,11 @@ namespace Verse
 				string thingID = this.ThingID;
 				Scribe_Values.LookValue<string>(ref thingID, "id", null, false);
 				this.ThingID = thingID;
+			}
+			Scribe_Values.LookValue<sbyte>(ref this.mapIndexOrState, "map", -1, false);
+			if (Scribe.mode == LoadSaveMode.LoadingVars && (int)this.mapIndexOrState >= 0)
+			{
+				this.mapIndexOrState = -1;
 			}
 			Scribe_Values.LookValue<IntVec3>(ref this.positionInt, "pos", IntVec3.Invalid, false);
 			Scribe_Values.LookValue<Rot4>(ref this.rotationInt, "rot", Rot4.North, false);
@@ -743,11 +798,11 @@ namespace Verse
 				QualityCategory cat;
 				if (this.def.stackLimit > 1)
 				{
-					GenWorldUI.DrawThingLabel(this, this.stackCount.ToStringCached());
+					GenMapUI.DrawThingLabel(this, this.stackCount.ToStringCached());
 				}
 				else if (this.TryGetQuality(out cat))
 				{
-					GenWorldUI.DrawThingLabel(this, cat.GetLabelShort());
+					GenMapUI.DrawThingLabel(this, cat.GetLabelShort());
 				}
 			}
 		}
@@ -776,6 +831,15 @@ namespace Verse
 			return string.Empty;
 		}
 
+		public virtual string GetInspectStringLowPriority()
+		{
+			if (SteadyAtmosphereEffects.InDeterioratingPosition(this) && SteadyAtmosphereEffects.FinalDeteriorationRate(this) > 0.001f)
+			{
+				return "DeterioratingDueToBeingUnroofed".Translate();
+			}
+			return null;
+		}
+
 		[DebuggerHidden]
 		public virtual IEnumerable<Gizmo> GetGizmos()
 		{
@@ -784,6 +848,11 @@ namespace Verse
 		[DebuggerHidden]
 		public virtual IEnumerable<FloatMenuOption> GetFloatMenuOptions(Pawn selPawn)
 		{
+		}
+
+		public virtual IEnumerable<InspectTabBase> GetInspectTabs()
+		{
+			return this.def.inspectorTabsResolved;
 		}
 
 		public void TakeDamage(DamageInfo dinfo)
@@ -814,9 +883,9 @@ namespace Verse
 				return;
 			}
 			float num = dinfo.Def.Worker.Apply(dinfo, this);
-			if (dinfo.Def.harmsHealth)
+			if (dinfo.Def.harmsHealth && this.MapHeld != null)
 			{
-				Find.StoryWatcher.watcherDamage.Notify_DamageTaken(this, num);
+				this.MapHeld.damageWatcher.Notify_DamageTaken(this, num);
 			}
 			if (dinfo.Def.externalViolence)
 			{
@@ -951,10 +1020,13 @@ namespace Verse
 				return;
 			}
 			this.factionInt = newFaction;
-			IAttackTarget attackTarget = this as IAttackTarget;
-			if (attackTarget != null)
+			if (this.Spawned)
 			{
-				Find.AttackTargetsCache.UpdateTarget(attackTarget);
+				IAttackTarget attackTarget = this as IAttackTarget;
+				if (attackTarget != null)
+				{
+					this.Map.attackTargetsCache.UpdateTarget(attackTarget);
+				}
 			}
 		}
 
@@ -989,19 +1061,19 @@ namespace Verse
 
 		public virtual void Discard()
 		{
-			if (this.thingStateInt != ThingState.Memory)
+			if ((int)this.mapIndexOrState != -2)
 			{
 				Log.Warning(string.Concat(new object[]
 				{
 					"Tried to discard ",
 					this,
 					" whose state is ",
-					this.thingStateInt,
+					this.mapIndexOrState,
 					"."
 				}));
 				return;
 			}
-			this.thingStateInt = ThingState.Discarded;
+			this.mapIndexOrState = -3;
 		}
 
 		[DebuggerHidden]
@@ -1011,10 +1083,14 @@ namespace Verse
 			{
 				for (int i = 0; i < this.def.butcherProducts.Count; i++)
 				{
-					ThingCount ta = this.def.butcherProducts[i];
-					Thing t = ThingMaker.MakeThing(ta.thingDef, null);
-					t.stackCount = ta.count;
-					yield return t;
+					ThingCountClass ta = this.def.butcherProducts[i];
+					int count = GenMath.RoundRandom((float)ta.count * efficiency);
+					if (count > 0)
+					{
+						Thing t = ThingMaker.MakeThing(ta.thingDef, null);
+						t.stackCount = count;
+						yield return t;
+					}
 				}
 			}
 		}
@@ -1022,7 +1098,7 @@ namespace Verse
 		[DebuggerHidden]
 		public virtual IEnumerable<Thing> SmeltProducts(float efficiency)
 		{
-			List<ThingCount> costListAdj = this.def.CostListAdjusted(this.Stuff, true);
+			List<ThingCountClass> costListAdj = this.def.CostListAdjusted(this.Stuff, true);
 			for (int i = 0; i < costListAdj.Count; i++)
 			{
 				if (!costListAdj[i].thingDef.intricate)
@@ -1041,7 +1117,7 @@ namespace Verse
 			{
 				for (int j = 0; j < this.def.smeltProducts.Count; j++)
 				{
-					ThingCount ta = this.def.smeltProducts[j];
+					ThingCountClass ta = this.def.smeltProducts[j];
 					Thing t2 = ThingMaker.MakeThing(ta.thingDef, null);
 					t2.stackCount = ta.count;
 					yield return t2;
@@ -1124,7 +1200,7 @@ namespace Verse
 			nutritionIngested = (float)numTaken * this.def.ingestible.nutrition;
 		}
 
-		public static IntVec3 InteractionCellWhenAt(ThingDef def, IntVec3 center, Rot4 rot)
+		public static IntVec3 InteractionCellWhenAt(ThingDef def, IntVec3 center, Rot4 rot, Map map)
 		{
 			if (def.hasInteractionCell)
 			{
@@ -1136,7 +1212,7 @@ namespace Verse
 				for (int i = 0; i < 8; i++)
 				{
 					IntVec3 intVec = center + GenAdj.AdjacentCells[i];
-					if (intVec.Standable())
+					if (intVec.Standable(map) && intVec.GetDoor(map) == null)
 					{
 						return intVec;
 					}
@@ -1144,26 +1220,41 @@ namespace Verse
 				for (int j = 0; j < 8; j++)
 				{
 					IntVec3 intVec2 = center + GenAdj.AdjacentCells[j];
-					if (intVec2.Walkable())
+					if (intVec2.Standable(map))
 					{
 						return intVec2;
+					}
+				}
+				for (int k = 0; k < 8; k++)
+				{
+					IntVec3 intVec3 = center + GenAdj.AdjacentCells[k];
+					if (intVec3.Walkable(map))
+					{
+						return intVec3;
 					}
 				}
 				return center;
 			}
 			List<IntVec3> list = GenAdjFast.AdjacentCells8Way(center);
-			for (int k = 0; k < list.Count; k++)
-			{
-				if (list[k].Standable())
-				{
-					return list[k];
-				}
-			}
 			for (int l = 0; l < list.Count; l++)
 			{
-				if (list[l].Walkable())
+				if (list[l].Standable(map) && list[l].GetDoor(map) == null)
 				{
 					return list[l];
+				}
+			}
+			for (int m = 0; m < list.Count; m++)
+			{
+				if (list[m].Standable(map))
+				{
+					return list[m];
+				}
+			}
+			for (int n = 0; n < list.Count; n++)
+			{
+				if (list[n].Walkable(map))
+				{
+					return list[n];
 				}
 			}
 			return center;

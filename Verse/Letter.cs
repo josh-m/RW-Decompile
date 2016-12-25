@@ -1,4 +1,5 @@
 using RimWorld;
+using RimWorld.Planet;
 using System;
 using UnityEngine;
 using Verse.Sound;
@@ -20,7 +21,7 @@ namespace Verse
 
 		public string text = string.Empty;
 
-		public TargetInfo lookTarget = TargetInfo.Invalid;
+		public GlobalTargetInfo lookTarget = GlobalTargetInfo.Invalid;
 
 		private LetterType letterType;
 
@@ -40,7 +41,7 @@ namespace Verse
 		{
 			get
 			{
-				return this.lookTarget.Thing == null || !this.lookTarget.Thing.Destroyed;
+				return (this.lookTarget.Thing == null || !this.lookTarget.Thing.Destroyed) && (this.lookTarget.WorldObject == null || this.lookTarget.WorldObject.Spawned);
 			}
 		}
 
@@ -79,10 +80,10 @@ namespace Verse
 			this.label = label;
 			this.text = text;
 			this.letterType = gameEventType;
-			this.lookTarget = TargetInfo.Invalid;
+			this.lookTarget = GlobalTargetInfo.Invalid;
 		}
 
-		public Letter(string label, string text, LetterType gameEventType, TargetInfo lookTarget) : this(label, text, gameEventType)
+		public Letter(string label, string text, LetterType gameEventType, GlobalTargetInfo lookTarget) : this(label, text, gameEventType)
 		{
 			this.lookTarget = lookTarget;
 		}
@@ -94,14 +95,14 @@ namespace Verse
 			Scribe_Values.LookValue<LetterType>(ref this.letterType, "letterType", LetterType.Good, false);
 			if (Scribe.mode == LoadSaveMode.Saving && this.lookTarget.HasThing && this.lookTarget.Thing.Destroyed)
 			{
-				this.lookTarget = this.lookTarget.Cell;
+				this.lookTarget = GlobalTargetInfo.Invalid;
 			}
 			Scribe_TargetInfo.LookTargetInfo(ref this.lookTarget, "lookTarget");
 		}
 
 		public void DrawButtonAt(float topY)
 		{
-			float num = (float)Screen.width - 38f - 12f;
+			float num = (float)UI.screenWidth - 38f - 12f;
 			Rect rect = new Rect(num, topY, 38f, 30f);
 			Rect rect2 = new Rect(rect);
 			float num2 = Time.time - this.arrivalTime;
@@ -113,14 +114,15 @@ namespace Verse
 			}
 			if (!Mouse.IsOver(rect) && this.LetterType == LetterType.BadUrgent && num2 > 15f && Time.time % 5f < 1f)
 			{
-				float num3 = (float)Screen.width * 0.06f;
+				float num3 = (float)UI.screenWidth * 0.06f;
 				float num4 = 2f * (Time.time % 1f) - 1f;
-				rect2.x -= num3 * (1f - num4 * num4);
+				float num5 = num3 * (1f - num4 * num4);
+				rect2.x -= num5;
 			}
-			float num5 = Time.time - (this.arrivalTime + 1f);
-			if (num5 > 0f && num5 % this.FlashInterval < 1f)
+			float num6 = Time.time - (this.arrivalTime + 1f);
+			if (num6 > 0f && num6 % this.FlashInterval < 1f)
 			{
-				GenUI.DrawFlash(num, topY, (float)Screen.width * 0.6f, Pulser.PulseBrightness(1f, 1f, num5) * 0.55f, this.LetterType.GetColorFlash());
+				GenUI.DrawFlash(num, topY, (float)UI.screenWidth * 0.6f, Pulser.PulseBrightness(1f, 1f, num6) * 0.55f, this.LetterType.GetColorFlash());
 			}
 			GUI.color = color;
 			Widgets.DrawShadowAround(rect2);
@@ -132,10 +134,10 @@ namespace Verse
 			float x = vector.x;
 			float y = vector.y;
 			Vector2 vector2 = new Vector2(rect2.x + rect2.width / 2f, rect2.center.y - y / 4f);
-			float num6 = vector2.x + x / 2f - (float)(Screen.width - 2);
-			if (num6 > 0f)
+			float num7 = vector2.x + x / 2f - (float)(UI.screenWidth - 2);
+			if (num7 > 0f)
 			{
-				vector2.x -= num6;
+				vector2.x -= num7;
 			}
 			Rect position = new Rect(vector2.x - x / 2f - 4f - 1f, vector2.y, x + 8f, 12f);
 			GUI.DrawTexture(position, TexUI.GrayTextBG);
@@ -160,7 +162,7 @@ namespace Verse
 
 		public void CheckForMouseOverTextAt(float topY)
 		{
-			float num = (float)Screen.width - 38f - 12f;
+			float num = (float)UI.screenWidth - 38f - 12f;
 			Rect rect = new Rect(num, topY, 38f, 30f);
 			if (Mouse.IsOver(rect))
 			{
@@ -169,8 +171,9 @@ namespace Verse
 				Text.Anchor = TextAnchor.UpperLeft;
 				float num2 = Text.CalcHeight(this.text, 310f);
 				num2 += 20f;
-				Rect infoRect = new Rect(num - 330f - 10f, topY - num2 / 2f, 330f, num2);
-				Find.WindowStack.ImmediateWindow(2768333, infoRect, WindowLayer.GameUI, delegate
+				float x = num - 330f - 10f;
+				Rect infoRect = new Rect(x, topY - num2 / 2f, 330f, num2);
+				Find.WindowStack.ImmediateWindow(2768333, infoRect, WindowLayer.Super, delegate
 				{
 					Text.Font = GameFont.Small;
 					Rect position = infoRect.AtZero().ContractedBy(10f);
@@ -196,7 +199,7 @@ namespace Verse
 				DiaOption diaOption2 = new DiaOption("JumpToLocation".Translate());
 				diaOption2.action = delegate
 				{
-					Find.CameraDriver.JumpTo(this.lookTarget.Cell);
+					JumpToTargetUtility.TryJumpAndSelect(this.lookTarget);
 					Find.LetterStack.RemoveLetter(this);
 				};
 				diaOption2.resolveTree = true;

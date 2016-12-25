@@ -5,13 +5,13 @@ namespace RimWorld
 {
 	public class BiomeWorker_Tundra : BiomeWorker
 	{
-		public override float GetScore(WorldSquare square)
+		public override float GetScore(Tile tile)
 		{
-			if (square.elevation <= 0f)
+			if (tile.WaterCovered)
 			{
 				return -100f;
 			}
-			return -square.temperature;
+			return -tile.temperature;
 		}
 	}
 }

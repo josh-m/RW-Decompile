@@ -21,7 +21,7 @@ namespace RimWorld
 			get
 			{
 				Building building = base.Building;
-				int value = Mathf.RoundToInt(building.GetStatValue(StatDefOf.WorkToMake, true));
+				int value = Mathf.RoundToInt(building.GetStatValue(StatDefOf.WorkToBuild, true));
 				return Mathf.Clamp(value, 20, 3000);
 			}
 		}
@@ -34,7 +34,7 @@ namespace RimWorld
 
 		protected override void TickAction()
 		{
-			this.pawn.skills.Learn(SkillDefOf.Construction, 0.275f);
+			this.pawn.skills.Learn(SkillDefOf.Construction, 0.275f, false);
 		}
 	}
 }

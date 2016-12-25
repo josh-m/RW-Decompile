@@ -29,7 +29,7 @@ namespace RimWorld
 			{
 				return;
 			}
-			if (Current.ProgramState != ProgramState.MapPlaying)
+			if (Current.ProgramState != ProgramState.Playing)
 			{
 				return;
 			}
@@ -41,19 +41,19 @@ namespace RimWorld
 			Text.Font = GameFont.Small;
 			if (!Prefs.ResourceReadoutCategorized)
 			{
-				Rect rect = new Rect(7f, 7f, 200f, (float)(Screen.height - 7) - 200f);
+				Rect rect = new Rect(7f, 7f, 200f, (float)(UI.screenHeight - 7) - 200f);
 				this.DoReadoutSimple(rect);
 			}
 			else
 			{
-				Rect rect2 = new Rect(2f, 7f, 150f, (float)(Screen.height - 7) - 200f);
+				Rect rect2 = new Rect(2f, 7f, 150f, (float)(UI.screenHeight - 7) - 200f);
 				this.DoReadoutCategorized(rect2);
 			}
 		}
 
 		private void DoReadoutCategorized(Rect rect)
 		{
-			Listing_ResourceReadout listing_ResourceReadout = new Listing_ResourceReadout(rect);
+			Listing_ResourceReadout listing_ResourceReadout = new Listing_ResourceReadout(rect, Find.VisibleMap);
 			listing_ResourceReadout.nestIndentWidth = 7f;
 			listing_ResourceReadout.lineHeight = 24f;
 			listing_ResourceReadout.verticalSpacing = 0f;
@@ -67,8 +67,9 @@ namespace RimWorld
 		private void DoReadoutSimple(Rect rect)
 		{
 			GUI.BeginGroup(rect);
+			Text.Anchor = TextAnchor.MiddleLeft;
 			float num = 0f;
-			foreach (KeyValuePair<ThingDef, int> current in Find.ResourceCounter.AllCountedAmounts)
+			foreach (KeyValuePair<ThingDef, int> current in Find.VisibleMap.resourceCounter.AllCountedAmounts)
 			{
 				if (current.Value > 0 || current.Key.resourceReadoutAlwaysShow)
 				{
@@ -77,15 +78,27 @@ namespace RimWorld
 					num += 24f;
 				}
 			}
+			Text.Anchor = TextAnchor.UpperLeft;
 			GUI.EndGroup();
 		}
 
 		public void DrawResourceSimple(Rect rect, ThingDef thingDef)
 		{
-			TradeUI.DrawIcon(rect.x, rect.y, thingDef);
-			int count = Find.ResourceCounter.GetCount(thingDef);
+			this.DrawIcon(rect.x, rect.y, thingDef);
+			rect.y += 2f;
+			int count = Find.VisibleMap.resourceCounter.GetCount(thingDef);
 			Rect rect2 = new Rect(34f, rect.y, rect.width - 34f, rect.height);
 			Widgets.Label(rect2, count.ToStringCached());
+		}
+
+		private void DrawIcon(float x, float y, ThingDef thingDef)
+		{
+			Rect rect = new Rect(x, y, 27f, 27f);
+			Color color = GUI.color;
+			GUI.color = thingDef.graphicData.color;
+			GUI.DrawTexture(rect, thingDef.uiIcon);
+			GUI.color = color;
+			TooltipHandler.TipRegion(rect, new TipSignal(() => thingDef.LabelCap + ": " + thingDef.description, thingDef.GetHashCode()));
 		}
 	}
 }

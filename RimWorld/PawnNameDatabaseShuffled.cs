@@ -25,12 +25,12 @@ namespace RimWorld
 				}
 			}
 			NameBank nameBank = PawnNameDatabaseShuffled.BankOf(PawnNameCategory.HumanStandard);
-			nameBank.AddNamesFromFile(Gender.Male, PawnNameSlot.First, "First_Male");
-			nameBank.AddNamesFromFile(Gender.Female, PawnNameSlot.First, "First_Female");
-			nameBank.AddNamesFromFile(Gender.Male, PawnNameSlot.Nick, "Nick_Male");
-			nameBank.AddNamesFromFile(Gender.Female, PawnNameSlot.Nick, "Nick_Female");
-			nameBank.AddNamesFromFile(Gender.None, PawnNameSlot.Nick, "Nick_Unisex");
-			nameBank.AddNamesFromFile(Gender.None, PawnNameSlot.Last, "Last");
+			nameBank.AddNamesFromFile(PawnNameSlot.First, Gender.Male, "First_Male");
+			nameBank.AddNamesFromFile(PawnNameSlot.First, Gender.Female, "First_Female");
+			nameBank.AddNamesFromFile(PawnNameSlot.Nick, Gender.Male, "Nick_Male");
+			nameBank.AddNamesFromFile(PawnNameSlot.Nick, Gender.Female, "Nick_Female");
+			nameBank.AddNamesFromFile(PawnNameSlot.Nick, Gender.None, "Nick_Unisex");
+			nameBank.AddNamesFromFile(PawnNameSlot.Last, Gender.None, "Last");
 			foreach (NameBank current in PawnNameDatabaseShuffled.banks.Values)
 			{
 				current.ErrorCheck();

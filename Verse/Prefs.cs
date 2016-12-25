@@ -245,6 +245,18 @@ namespace Verse
 			}
 		}
 
+		public static int MaxNumberOfPlayerHomes
+		{
+			get
+			{
+				return Prefs.data.maxNumberOfPlayerHomes;
+			}
+			set
+			{
+				Prefs.data.maxNumberOfPlayerHomes = value;
+			}
+		}
+
 		public static bool PlantWindSway
 		{
 			get
@@ -274,18 +286,15 @@ namespace Verse
 			}
 		}
 
-		public static string RandomPreferredName
+		public static float UIScale
 		{
 			get
 			{
-				string result;
-				if ((from name in Prefs.PreferredNames
-				where !name.NullOrEmpty()
-				select name).TryRandomElement(out result))
-				{
-					return result;
-				}
-				return null;
+				return Prefs.data.uiScale;
+			}
+			set
+			{
+				Prefs.data.uiScale = value;
 			}
 		}
 
@@ -323,6 +332,18 @@ namespace Verse
 		public static void Apply()
 		{
 			Prefs.data.Apply();
+		}
+
+		public static NameTriple RandomPreferredName()
+		{
+			string rawName;
+			if ((from name in Prefs.PreferredNames
+			where !name.NullOrEmpty()
+			select name).TryRandomElement(out rawName))
+			{
+				return NameTriple.FromString(rawName);
+			}
+			return null;
 		}
 	}
 }

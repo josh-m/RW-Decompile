@@ -25,7 +25,7 @@ namespace Verse
 			base.ClearSubMeshes(MeshParts.All);
 			foreach (IntVec3 current in this.section.CellRect)
 			{
-				List<Thing> list = Find.ThingGrid.ThingsListAt(current);
+				List<Thing> list = base.Map.thingGrid.ThingsListAt(current);
 				int count = list.Count;
 				for (int i = 0; i < count; i++)
 				{
@@ -34,7 +34,7 @@ namespace Verse
 					{
 						if (thing.def.drawerType != DrawerType.RealtimeOnly || !this.requireAddToMapMesh)
 						{
-							if (thing.def.hideAtSnowDepth >= 1f || Find.SnowGrid.GetDepth(thing.Position) <= thing.def.hideAtSnowDepth)
+							if (thing.def.hideAtSnowDepth >= 1f || base.Map.snowGrid.GetDepth(thing.Position) <= thing.def.hideAtSnowDepth)
 							{
 								if (thing.Position.x == current.x && thing.Position.z == current.z)
 								{

@@ -11,9 +11,9 @@ namespace Verse
 	{
 		private const float MaxTabWidth = 200f;
 
-		private const float TabHeight = 32f;
+		public const float TabHeight = 32f;
 
-		private const float TabHoriztonalOverlap = 10f;
+		public const float TabHoriztonalOverlap = 10f;
 
 		private static List<TabRecord> tabList = new List<TabRecord>();
 

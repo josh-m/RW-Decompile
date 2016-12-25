@@ -1,4 +1,5 @@
 using System;
+using Verse;
 using Verse.Sound;
 
 namespace RimWorld
@@ -15,7 +16,11 @@ namespace RimWorld
 
 		public override float ValueFor(Sample samp)
 		{
-			return GenDate.DayPassedPercent * 24f;
+			if (Find.VisibleMap == null)
+			{
+				return 0f;
+			}
+			return GenLocalDate.DayPercent(Find.VisibleMap) * 24f;
 		}
 	}
 }

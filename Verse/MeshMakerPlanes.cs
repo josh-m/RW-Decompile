@@ -72,6 +72,7 @@ namespace Verse
 			array3[4] = 2;
 			array3[5] = 3;
 			Mesh mesh = new Mesh();
+			mesh.name = "NewPlaneMesh()";
 			mesh.vertices = array;
 			mesh.uv = array2;
 			mesh.SetTriangles(array3, 0);

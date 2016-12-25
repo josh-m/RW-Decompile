@@ -40,7 +40,7 @@ namespace Verse
 		{
 			get
 			{
-				return DesignatorManager.SelectedDesignator;
+				return Find.DesignatorManager.SelectedDesignator;
 			}
 		}
 
@@ -65,7 +65,7 @@ namespace Verse
 		public void StartDrag()
 		{
 			this.dragging = true;
-			this.startDragCell = Gen.MouseCell();
+			this.startDragCell = UI.MouseCell();
 		}
 
 		public void EndDrag()
@@ -116,19 +116,19 @@ namespace Verse
 		{
 			if (this.dragging && this.SelDes != null && this.SelDes.DragDrawMeasurements)
 			{
-				IntVec3 intVec = this.startDragCell - Gen.MouseCell();
+				IntVec3 intVec = this.startDragCell - UI.MouseCell();
 				intVec.x = Mathf.Abs(intVec.x) + 1;
 				intVec.z = Mathf.Abs(intVec.z) + 1;
 				if (intVec.x >= 3)
 				{
-					Vector2 screenPos = (this.startDragCell.ToScreenPosition() + Gen.MouseCell().ToScreenPosition()) / 2f;
-					screenPos.y = this.startDragCell.ToScreenPosition().y;
+					Vector2 screenPos = (this.startDragCell.ToUIPosition() + UI.MouseCell().ToUIPosition()) / 2f;
+					screenPos.y = this.startDragCell.ToUIPosition().y;
 					this.DrawNumber(screenPos, intVec.x);
 				}
 				if (intVec.z >= 3)
 				{
-					Vector2 screenPos2 = (this.startDragCell.ToScreenPosition() + Gen.MouseCell().ToScreenPosition()) / 2f;
-					screenPos2.x = this.startDragCell.ToScreenPosition().x;
+					Vector2 screenPos2 = (this.startDragCell.ToUIPosition() + UI.MouseCell().ToUIPosition()) / 2f;
+					screenPos2.x = this.startDragCell.ToUIPosition().x;
 					this.DrawNumber(screenPos2, intVec.z);
 				}
 				Text.Font = GameFont.Small;
@@ -156,7 +156,7 @@ namespace Verse
 			this.dragCells.Clear();
 			this.failureReasonInt = null;
 			IntVec3 intVec = this.startDragCell;
-			IntVec3 intVec2 = Gen.MouseCell();
+			IntVec3 intVec2 = UI.MouseCell();
 			if (this.SelDes.DraggableDimensions == 1)
 			{
 				bool flag = true;

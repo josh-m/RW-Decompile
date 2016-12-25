@@ -91,7 +91,7 @@ namespace Verse
 					action = delegate
 					{
 						this.<>f__this.Clear();
-						this.pawn.jobs.EndCurrentJob(JobCondition.InterruptForced);
+						this.pawn.jobs.EndCurrentJob(JobCondition.InterruptForced, true);
 					},
 					hotKey = KeyBindingDefOf.DesignatorCancel,
 					groupKey = 6165612

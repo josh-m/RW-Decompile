@@ -17,6 +17,8 @@ namespace RimWorld
 
 		public bool onlyIfCausedByHediff;
 
+		public bool neverOnPrisoner;
+
 		public bool showOnNeedList = true;
 
 		public float baseLevel = 0.5f;
@@ -26,6 +28,8 @@ namespace RimWorld
 		public int listPriority;
 
 		public string tutorHighlightTag;
+
+		public bool showForCaravanMembers;
 
 		public float fallPerDay = 0.5f;
 

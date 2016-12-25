@@ -14,8 +14,6 @@ namespace Verse
 
 		private const float NonPawnShooterHitFactorPerDistance = 0.96f;
 
-		private const float DarknessFactor = 0.85f;
-
 		private const float ExecutionMaxDistance = 3.9f;
 
 		private const float ExecutionFactor = 7.5f;
@@ -36,23 +34,7 @@ namespace Verse
 
 		private float factorFromWeather;
 
-		private float factorFromSightEfficiency;
-
-		private PsychGlow targetLighting;
-
 		private float forcedMissRadius;
-
-		private float FactorFromDarkness
-		{
-			get
-			{
-				if (this.targetLighting == PsychGlow.Dark)
-				{
-					return 0.85f;
-				}
-				return 1f;
-			}
-		}
 
 		private float FactorFromPosture
 		{
@@ -98,7 +80,7 @@ namespace Verse
 		{
 			get
 			{
-				return this.factorFromShooterAndDist * this.factorFromEquipment * this.factorFromWeather * this.factorFromTargetSize * this.factorFromSightEfficiency * this.FactorFromDarkness * this.FactorFromExecution;
+				return this.factorFromShooterAndDist * this.factorFromEquipment * this.factorFromWeather * this.factorFromTargetSize * this.FactorFromExecution;
 			}
 		}
 
@@ -111,13 +93,13 @@ namespace Verse
 			}
 		}
 
-		public static ShotReport HitReportFor(Thing caster, Verb verb, TargetInfo target)
+		public static ShotReport HitReportFor(Thing caster, Verb verb, LocalTargetInfo target)
 		{
 			Pawn pawn = caster as Pawn;
 			IntVec3 cell = target.Cell;
 			ShotReport result;
 			result.distance = (cell - caster.Position).LengthHorizontal;
-			result.target = target;
+			result.target = target.ToTargetInfo(caster.Map);
 			float f;
 			if (pawn != null)
 			{
@@ -132,20 +114,12 @@ namespace Verse
 			{
 				result.factorFromShooterAndDist = 0.0201f;
 			}
-			if (pawn != null)
-			{
-				result.factorFromSightEfficiency = pawn.health.capacities.GetEfficiency(PawnCapacityDefOf.Sight);
-			}
-			else
-			{
-				result.factorFromSightEfficiency = 1f;
-			}
 			result.factorFromEquipment = verb.verbProps.GetHitChanceFactor(verb.ownerEquipment, result.distance);
-			result.covers = CoverUtility.CalculateCoverGiverSet(cell, caster.Position);
-			result.coversOverallBlockChance = CoverUtility.CalculateOverallBlockChance(cell, caster.Position);
-			if (!caster.Position.Roofed() && !target.Cell.Roofed())
+			result.covers = CoverUtility.CalculateCoverGiverSet(cell, caster.Position, caster.Map);
+			result.coversOverallBlockChance = CoverUtility.CalculateOverallBlockChance(cell, caster.Position, caster.Map);
+			if (!caster.Position.Roofed(caster.Map) && !target.Cell.Roofed(caster.Map))
 			{
-				result.factorFromWeather = Find.WeatherManager.CurWeatherAccuracyMultiplier;
+				result.factorFromWeather = caster.Map.weatherManager.CurWeatherAccuracyMultiplier;
 			}
 			else
 			{
@@ -165,7 +139,6 @@ namespace Verse
 				}
 				result.factorFromTargetSize = Mathf.Clamp(result.factorFromTargetSize, 0.5f, 2f);
 			}
-			result.targetLighting = Find.GlowGrid.PsychGlowAt(cell);
 			result.forcedMissRadius = verb.verbProps.forcedMissRadius;
 			return result;
 		}
@@ -193,10 +166,6 @@ namespace Verse
 				if (this.factorFromWeather < 0.99f)
 				{
 					stringBuilder.AppendLine("   " + "Weather".Translate() + "         " + this.factorFromWeather.ToStringPercent());
-				}
-				if (this.FactorFromDarkness < 0.99999f)
-				{
-					stringBuilder.AppendLine("   " + "Darkness".Translate() + "       " + this.FactorFromDarkness.ToStringPercent());
 				}
 				if (this.FactorFromPosture < 0.9999f)
 				{

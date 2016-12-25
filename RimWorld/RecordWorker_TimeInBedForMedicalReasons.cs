@@ -7,7 +7,7 @@ namespace RimWorld
 	{
 		public override bool ShouldMeasureTimeNow(Pawn pawn)
 		{
-			return pawn.InBed() && (pawn.health.NeedsMedicalRest || (pawn.health.PrefersMedicalRest && (pawn.needs.rest.CurLevel >= 1f || pawn.CurJob.restUntilHealed)));
+			return pawn.InBed() && (HealthAIUtility.ShouldSeekMedicalRestUrgent(pawn) || (HealthAIUtility.ShouldSeekMedicalRest(pawn) && (pawn.needs.rest.CurLevel >= 1f || pawn.CurJob.restUntilHealed)));
 		}
 	}
 }

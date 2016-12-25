@@ -6,9 +6,12 @@ namespace Verse
 	{
 		public float mtbDays;
 
-		public override bool CheckGiveEverySecond(Pawn pawn)
+		public override void OnIntervalPassed(Pawn pawn, Hediff cause)
 		{
-			return Rand.MTBEventOccurs(this.mtbDays, 60000f, 60f) && base.TryApply(pawn, null);
+			if (Rand.MTBEventOccurs(this.mtbDays, 60000f, 60f) && base.TryApply(pawn, null))
+			{
+				base.SendLetter(pawn, cause);
+			}
 		}
 	}
 }

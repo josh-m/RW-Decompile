@@ -35,8 +35,15 @@ namespace RimWorld
 			{
 				if (this.listing.ButtonText(Dialog_Options.ResToString(current.width, current.height), null))
 				{
-					Find.WindowStack.TryRemove(this, true);
-					ResolutionUtility.SafeSetResolution(current);
+					if (!ResolutionUtility.UIScaleSafeWithResolution(Prefs.UIScale, current))
+					{
+						Messages.Message("MessageScreenResTooSmallForUIScale".Translate(), MessageSound.RejectInput);
+					}
+					else
+					{
+						Find.WindowStack.TryRemove(this, true);
+						ResolutionUtility.SafeSetResolution(current);
+					}
 				}
 			}
 		}

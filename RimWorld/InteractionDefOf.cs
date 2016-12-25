@@ -9,6 +9,8 @@ namespace RimWorld
 
 		public static InteractionDef DeepTalk;
 
+		public static InteractionDef Insult;
+
 		public static InteractionDef RomanceAttempt;
 
 		public static InteractionDef MarriageProposal;

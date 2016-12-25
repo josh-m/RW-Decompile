@@ -9,21 +9,23 @@ namespace RimWorld
 {
 	public class IncidentWorker_ShortCircuit : IncidentWorker
 	{
-		private IEnumerable<Building_Battery> FullBatteries()
+		private IEnumerable<Building_Battery> FullBatteries(Map map)
 		{
-			return from Building_Battery bat in Find.ListerBuildings.AllBuildingsColonistOfDef(ThingDefOf.Battery)
+			return from Building_Battery bat in map.listerBuildings.AllBuildingsColonistOfDef(ThingDefOf.Battery)
 			where bat.GetComp<CompPowerBattery>().StoredEnergy > 50f
 			select bat;
 		}
 
-		protected override bool CanFireNowSub()
+		protected override bool CanFireNowSub(IIncidentTarget target)
 		{
-			return this.FullBatteries().Any<Building_Battery>();
+			Map map = (Map)target;
+			return this.FullBatteries(map).Any<Building_Battery>();
 		}
 
 		public override bool TryExecute(IncidentParms parms)
 		{
-			List<Building_Battery> source = this.FullBatteries().ToList<Building_Battery>();
+			Map map = (Map)parms.target;
+			List<Building_Battery> source = this.FullBatteries(map).ToList<Building_Battery>();
 			if (source.Count<Building_Battery>() == 0)
 			{
 				return false;
@@ -48,14 +50,14 @@ namespace RimWorld
 				num2 = 14.9f;
 			}
 			Thing parent = list.RandomElement<CompPower>().parent;
-			GenExplosion.DoExplosion(parent.Position, num2, DamageDefOf.Flame, null, null, null, null, null, 0f, 1, false, null, 0f, 1);
+			GenExplosion.DoExplosion(parent.Position, map, num2, DamageDefOf.Flame, null, null, null, null, null, 0f, 1, false, null, 0f, 1);
 			if (num2 > 3.5f)
 			{
-				GenExplosion.DoExplosion(parent.Position, num2 * 0.3f, DamageDefOf.Bomb, null, null, null, null, null, 0f, 1, false, null, 0f, 1);
+				GenExplosion.DoExplosion(parent.Position, map, num2 * 0.3f, DamageDefOf.Bomb, null, null, null, null, null, 0f, 1, false, null, 0f, 1);
 			}
 			if (!parent.Destroyed)
 			{
-				parent.TakeDamage(new DamageInfo(DamageDefOf.Bomb, 200, null, null, null));
+				parent.TakeDamage(new DamageInfo(DamageDefOf.Bomb, 200, -1f, null, null, null));
 			}
 			string text = "something";
 			if (parent.def == ThingDefOf.PowerConduit)
@@ -80,7 +82,7 @@ namespace RimWorld
 				stringBuilder.AppendLine();
 				stringBuilder.Append("ShortCircuitWasHuge".Translate());
 			}
-			Find.LetterStack.ReceiveLetter("LetterLabelShortCircuit".Translate(), stringBuilder.ToString(), LetterType.BadNonUrgent, parent.Position, null);
+			Find.LetterStack.ReceiveLetter("LetterLabelShortCircuit".Translate(), stringBuilder.ToString(), LetterType.BadNonUrgent, new TargetInfo(parent.Position, map, false), null);
 			return true;
 		}
 	}

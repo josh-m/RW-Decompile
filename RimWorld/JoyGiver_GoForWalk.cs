@@ -18,7 +18,7 @@ namespace RimWorld
 				return null;
 			}
 			Region reg;
-			if (!CellFinder.TryFindClosestRegionWith(pawn.Position.GetRegion(), TraverseParms.For(pawn, Danger.Deadly, TraverseMode.ByPawn, false), (Region r) => r.Room.PsychologicallyOutdoors && !r.IsForbiddenEntirely(pawn), 100, out reg))
+			if (!CellFinder.TryFindClosestRegionWith(pawn.GetRegion(), TraverseParms.For(pawn, Danger.Deadly, TraverseMode.ByPawn, false), (Region r) => r.Room.PsychologicallyOutdoors && !r.IsForbiddenEntirely(pawn), 100, out reg))
 			{
 				return null;
 			}
@@ -33,7 +33,7 @@ namespace RimWorld
 				return null;
 			}
 			Job job = new Job(this.def.jobDef, list[0]);
-			job.targetQueueA = new List<TargetInfo>();
+			job.targetQueueA = new List<LocalTargetInfo>();
 			for (int i = 1; i < list.Count; i++)
 			{
 				job.targetQueueA.Add(list[i]);

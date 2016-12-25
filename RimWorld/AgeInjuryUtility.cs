@@ -57,7 +57,7 @@ namespace RimWorld
 			{
 				DamageDef dam = AgeInjuryUtility.RandomOldInjuryDamageType();
 				int num2 = Rand.RangeInclusive(2, 6);
-				IEnumerable<BodyPartRecord> source = from x in pawn.health.hediffSet.GetNotMissingParts(null, null)
+				IEnumerable<BodyPartRecord> source = from x in pawn.health.hediffSet.GetNotMissingParts(BodyPartHeight.Undefined, BodyPartDepth.Undefined)
 				where x.depth == BodyPartDepth.Outside && !Mathf.Approximately(x.def.oldInjuryBaseChance, 0f) && !pawn.health.hediffSet.PartOrAnyAncestorHasDirectlyAddedParts(x)
 				select x;
 				if (source.Any<BodyPartRecord>())

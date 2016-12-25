@@ -12,30 +12,26 @@ namespace RimWorld
 
 		public static readonly int SampleNumCells_Beauty = GenRadial.NumCellsInRadius(8.9f);
 
-		public static readonly int SampleNumCells_Space = GenRadial.NumCellsInRadius(4.9f);
-
 		private static List<Thing> tempCountedThings = new List<Thing>();
 
-		private static List<Room> scanRooms = new List<Room>();
-
-		public static float AverageBeautyPerceptible(IntVec3 root)
+		public static float AverageBeautyPerceptible(IntVec3 root, Map map)
 		{
 			BeautyUtility.tempCountedThings.Clear();
 			float num = 0f;
 			int num2 = 0;
-			BeautyUtility.FillBeautyRelevantCells(root);
+			BeautyUtility.FillBeautyRelevantCells(root, map);
 			for (int i = 0; i < BeautyUtility.beautyRelevantCells.Count; i++)
 			{
-				num += BeautyUtility.CellBeauty(BeautyUtility.beautyRelevantCells[i], BeautyUtility.tempCountedThings);
+				num += BeautyUtility.CellBeauty(BeautyUtility.beautyRelevantCells[i], map, BeautyUtility.tempCountedThings);
 				num2++;
 			}
 			return num / (float)num2;
 		}
 
-		public static void FillBeautyRelevantCells(IntVec3 root)
+		public static void FillBeautyRelevantCells(IntVec3 root, Map map)
 		{
 			BeautyUtility.beautyRelevantCells.Clear();
-			Room room = RoomQuery.RoomAt(root);
+			Room room = RoomQuery.RoomAt(root, map);
 			if (room == null)
 			{
 				return;
@@ -55,16 +51,16 @@ namespace RimWorld
 			for (int i = 0; i < BeautyUtility.SampleNumCells_Beauty; i++)
 			{
 				IntVec3 intVec = root + GenRadial.RadialPattern[i];
-				if (intVec.InBounds() && !intVec.Fogged())
+				if (intVec.InBounds(map) && !intVec.Fogged(map))
 				{
-					Room item = RoomQuery.RoomAt(intVec);
+					Room item = RoomQuery.RoomAt(intVec, map);
 					if (!BeautyUtility.visibleRooms.Contains(item))
 					{
 						bool flag = false;
 						for (int j = 0; j < 8; j++)
 						{
 							IntVec3 loc = intVec + GenAdj.AdjacentCells[j];
-							if (BeautyUtility.visibleRooms.Contains(loc.GetRoom()))
+							if (BeautyUtility.visibleRooms.Contains(loc.GetRoom(map)))
 							{
 								flag = true;
 								break;
@@ -72,28 +68,28 @@ namespace RimWorld
 						}
 						if (!flag)
 						{
-							goto IL_176;
+							goto IL_17B;
 						}
 					}
 					BeautyUtility.beautyRelevantCells.Add(intVec);
 				}
-				IL_176:;
+				IL_17B:;
 			}
 		}
 
-		public static float CellBeauty(IntVec3 c, List<Thing> countedThings = null)
+		public static float CellBeauty(IntVec3 c, Map map, List<Thing> countedThings = null)
 		{
 			float num = 0f;
 			float num2 = 0f;
 			bool flag = false;
-			List<Thing> list = Find.ThingGrid.ThingsListAt(c);
+			List<Thing> list = map.thingGrid.ThingsListAt(c);
 			int i = 0;
 			while (i < list.Count)
 			{
 				Thing thing = list[i];
 				if (countedThings == null)
 				{
-					goto IL_7B;
+					goto IL_7C;
 				}
 				bool flag2 = false;
 				for (int j = 0; j < countedThings.Count; j++)
@@ -107,14 +103,14 @@ namespace RimWorld
 				if (!flag2)
 				{
 					countedThings.Add(thing);
-					goto IL_7B;
+					goto IL_7C;
 				}
-				IL_D3:
+				IL_D5:
 				i++;
 				continue;
-				IL_7B:
+				IL_7C:
 				float num3 = thing.GetStatValue(StatDefOf.Beauty, true);
-				if (thing is Filth && !Find.RoofGrid.Roofed(c))
+				if (thing is Filth && !map.roofGrid.Roofed(c))
 				{
 					num3 *= 0.3f;
 				}
@@ -122,48 +118,16 @@ namespace RimWorld
 				{
 					flag = true;
 					num2 += num3;
-					goto IL_D3;
+					goto IL_D5;
 				}
 				num += num3;
-				goto IL_D3;
+				goto IL_D5;
 			}
 			if (flag)
 			{
 				return num2;
 			}
-			return num + Find.TerrainGrid.TerrainAt(c).GetStatValueAbstract(StatDefOf.Beauty, null);
-		}
-
-		public static float SpacePerceptible(IntVec3 root)
-		{
-			BeautyUtility.scanRooms.Clear();
-			for (int i = 0; i < 5; i++)
-			{
-				IntVec3 loc = root + GenRadial.RadialPattern[i];
-				Room room = loc.GetRoom();
-				if (room != null && !BeautyUtility.scanRooms.Contains(room))
-				{
-					BeautyUtility.scanRooms.Add(room);
-				}
-			}
-			float num = (float)BeautyUtility.SampleNumCells_Space;
-			for (int j = 0; j < BeautyUtility.SampleNumCells_Space; j++)
-			{
-				IntVec3 c = root + GenRadial.RadialPattern[j];
-				if (!BeautyUtility.scanRooms.Contains(RoomQuery.RoomAt(c)))
-				{
-					num -= 1f;
-				}
-				else if (!c.Standable())
-				{
-					num -= 0.5f;
-				}
-				else if (!c.Walkable())
-				{
-					num -= 1f;
-				}
-			}
-			return num / (float)BeautyUtility.SampleNumCells_Space;
+			return num + map.terrainGrid.TerrainAt(c).GetStatValueAbstract(StatDefOf.Beauty, null);
 		}
 	}
 }

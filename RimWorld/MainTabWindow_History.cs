@@ -39,7 +39,11 @@ namespace RimWorld
 			{
 				this.graphSection = new Vector2(0f, (float)Find.TickManager.TicksGame / 60000f);
 			}
-			Find.StoryWatcher.watcherWealth.ForceRecount();
+			List<Map> maps = Find.Maps;
+			for (int i = 0; i < maps.Count; i++)
+			{
+				maps[i].wealthWatcher.ForceRecount(false);
+			}
 		}
 
 		public override void DoWindowContents(Rect rect)
@@ -96,15 +100,21 @@ namespace RimWorld
 			stringBuilder.AppendLine("Storyteller".Translate() + ": " + Find.Storyteller.def.label);
 			DifficultyDef difficulty = Find.Storyteller.difficulty;
 			stringBuilder.AppendLine("Difficulty".Translate() + ": " + difficulty.label);
-			stringBuilder.AppendLine();
-			stringBuilder.AppendLine("ColonyWealthTotal".Translate() + ": " + Find.StoryWatcher.watcherWealth.WealthTotal.ToString("F0"));
-			stringBuilder.AppendLine("ColonyWealthItems".Translate() + ": " + Find.StoryWatcher.watcherWealth.WealthItems.ToString("F0"));
-			stringBuilder.AppendLine("ColonyWealthBuildings".Translate() + ": " + Find.StoryWatcher.watcherWealth.WealthBuildings.ToString("F0"));
+			if (Find.VisibleMap != null)
+			{
+				stringBuilder.AppendLine();
+				stringBuilder.AppendLine("ThisMapColonyWealthTotal".Translate() + ": " + Find.VisibleMap.wealthWatcher.WealthTotal.ToString("F0"));
+				stringBuilder.AppendLine("ThisMapColonyWealthItems".Translate() + ": " + Find.VisibleMap.wealthWatcher.WealthItems.ToString("F0"));
+				stringBuilder.AppendLine("ThisMapColonyWealthBuildings".Translate() + ": " + Find.VisibleMap.wealthWatcher.WealthBuildings.ToString("F0"));
+			}
 			stringBuilder.AppendLine();
 			stringBuilder.AppendLine("NumThreatBigs".Translate() + ": " + Find.StoryWatcher.statsRecord.numThreatBigs);
 			stringBuilder.AppendLine("NumEnemyRaids".Translate() + ": " + Find.StoryWatcher.statsRecord.numRaidsEnemy);
 			stringBuilder.AppendLine();
-			stringBuilder.AppendLine("DamageTaken".Translate() + ": " + Find.StoryWatcher.watcherDamage.DamageTakenEver);
+			if (Find.VisibleMap != null)
+			{
+				stringBuilder.AppendLine("ThisMapDamageTaken".Translate() + ": " + Find.VisibleMap.damageWatcher.DamageTakenEver);
+			}
 			stringBuilder.AppendLine("ColonistsKilled".Translate() + ": " + Find.StoryWatcher.statsRecord.colonistsKilled);
 			stringBuilder.AppendLine();
 			stringBuilder.AppendLine("ColonistsLaunched".Translate() + ": " + Find.StoryWatcher.statsRecord.colonistsLaunched);
@@ -163,7 +173,7 @@ namespace RimWorld
 					list.Add(new FloatMenuOption(groupLocal.def.LabelCap, delegate
 					{
 						this.historyAutoRecorderGroup = groupLocal;
-					}, MenuOptionPriority.Medium, null, null, 0f, null));
+					}, MenuOptionPriority.Default, null, null, 0f, null, null));
 				}
 				FloatMenu window = new FloatMenu(list, "SelectGraph".Translate(), false);
 				Find.WindowStack.Add(window);

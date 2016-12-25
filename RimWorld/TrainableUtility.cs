@@ -63,11 +63,11 @@ namespace RimWorld
 			list.Add(new FloatMenuOption("(" + "NoneLower".Translate() + ")", delegate
 			{
 				p.playerSettings.master = null;
-			}, MenuOptionPriority.Medium, null, null, 0f, null));
-			foreach (Pawn current in Find.MapPawns.FreeColonistsSpawned)
+			}, MenuOptionPriority.Default, null, null, 0f, null, null));
+			foreach (Pawn current in PawnsFinder.AllMaps_FreeColonistsSpawned)
 			{
 				string text = RelationsUtility.LabelWithBondInfo(current, p);
-				int level = current.skills.GetSkill(SkillDefOf.Animals).level;
+				int level = current.skills.GetSkill(SkillDefOf.Animals).Level;
 				int num = Mathf.RoundToInt(p.GetStatValue(StatDefOf.MinimumHandlingSkill, true));
 				Action action;
 				if (level >= num)
@@ -88,7 +88,7 @@ namespace RimWorld
 						num
 					}) + ")";
 				}
-				list.Add(new FloatMenuOption(text, action, MenuOptionPriority.Medium, null, null, 0f, null));
+				list.Add(new FloatMenuOption(text, action, MenuOptionPriority.Default, null, null, 0f, null, null));
 			}
 			Find.WindowStack.Add(new FloatMenu(list));
 		}

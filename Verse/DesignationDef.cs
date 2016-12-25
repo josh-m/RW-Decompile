@@ -5,6 +5,7 @@ namespace Verse
 {
 	public class DesignationDef : Def
 	{
+		[NoTranslate]
 		public string texturePath;
 
 		public TargetType targetType;

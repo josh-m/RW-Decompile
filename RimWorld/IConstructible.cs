@@ -6,7 +6,7 @@ namespace RimWorld
 {
 	public interface IConstructible
 	{
-		List<ThingCount> MaterialsNeeded();
+		List<ThingCountClass> MaterialsNeeded();
 
 		ThingDef UIStuff();
 	}

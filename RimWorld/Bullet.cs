@@ -8,18 +8,19 @@ namespace RimWorld
 	{
 		protected override void Impact(Thing hitThing)
 		{
+			Map map = base.Map;
 			base.Impact(hitThing);
 			if (hitThing != null)
 			{
 				int damageAmountBase = this.def.projectile.damageAmountBase;
-				BodyPartDamageInfo value = new BodyPartDamageInfo(null, null);
-				DamageInfo dinfo = new DamageInfo(this.def.projectile.damageDef, damageAmountBase, this.launcher, this.ExactRotation.eulerAngles.y, new BodyPartDamageInfo?(value), this.equipmentDef);
+				ThingDef equipmentDef = this.equipmentDef;
+				DamageInfo dinfo = new DamageInfo(this.def.projectile.damageDef, damageAmountBase, this.ExactRotation.eulerAngles.y, this.launcher, null, equipmentDef);
 				hitThing.TakeDamage(dinfo);
 			}
 			else
 			{
-				SoundDefOf.BulletImpactGround.PlayOneShot(base.Position);
-				MoteMaker.MakeStaticMote(this.ExactPosition, ThingDefOf.Mote_ShotHit_Dirt, 1f);
+				SoundDefOf.BulletImpactGround.PlayOneShot(new TargetInfo(base.Position, map, false));
+				MoteMaker.MakeStaticMote(this.ExactPosition, map, ThingDefOf.Mote_ShotHit_Dirt, 1f);
 			}
 		}
 	}

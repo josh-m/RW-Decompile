@@ -12,7 +12,7 @@ namespace RimWorld
 		[LoadAlias("priority")]
 		private StoragePriority priorityInt = StoragePriority.Normal;
 
-		private bool IsOwnerSlotGroupParent
+		private bool OwnerIsSlotGroupParent
 		{
 			get
 			{
@@ -37,9 +37,9 @@ namespace RimWorld
 			set
 			{
 				this.priorityInt = value;
-				if (Current.ProgramState == ProgramState.MapPlaying && this.IsOwnerSlotGroupParent)
+				if (Current.ProgramState == ProgramState.Playing && this.OwnerIsSlotGroupParent && this.SlotGroupParentOwner.Map != null)
 				{
-					Find.SlotGroupManager.Notify_GroupChangedPriority();
+					this.SlotGroupParentOwner.Map.slotGroupManager.Notify_GroupChangedPriority();
 				}
 			}
 		}
@@ -100,9 +100,9 @@ namespace RimWorld
 
 		private void TryNotifyChanged()
 		{
-			if (this.owner != null && this.IsOwnerSlotGroupParent && this.SlotGroupParentOwner.GetSlotGroup() != null)
+			if (this.owner != null && this.OwnerIsSlotGroupParent && this.SlotGroupParentOwner.GetSlotGroup() != null)
 			{
-				ListerHaulables.Notify_SlotGroupChanged(this.SlotGroupParentOwner.GetSlotGroup());
+				this.SlotGroupParentOwner.Map.listerHaulables.Notify_SlotGroupChanged(this.SlotGroupParentOwner.GetSlotGroup());
 			}
 		}
 	}

@@ -16,8 +16,12 @@ namespace RimWorld
 			}
 		}
 
-		public bool CanFireNow()
+		public bool CanFireNow(IIncidentTarget target)
 		{
+			if (!this.def.TargetAllowed(target))
+			{
+				return false;
+			}
 			if (GenDate.DaysPassed < this.def.earliestDay)
 			{
 				return false;
@@ -26,7 +30,8 @@ namespace RimWorld
 			{
 				return false;
 			}
-			if (this.def.allowedBiomes != null && !this.def.allowedBiomes.Contains(Find.Map.Biome))
+			BiomeDef biome = Find.WorldGrid[target.Tile].biome;
+			if (this.def.allowedBiomes != null && !this.def.allowedBiomes.Contains(biome))
 			{
 				return false;
 			}
@@ -64,10 +69,10 @@ namespace RimWorld
 					}
 				}
 			}
-			return this.CanFireNowSub();
+			return this.CanFireNowSub(target);
 		}
 
-		protected virtual bool CanFireNowSub()
+		protected virtual bool CanFireNowSub(IIncidentTarget target)
 		{
 			return true;
 		}
@@ -87,13 +92,14 @@ namespace RimWorld
 			Find.LetterStack.ReceiveLetter(this.def.letterLabel, this.def.letterText, this.def.letterType, null);
 		}
 
-		protected void SendStandardLetter(TargetInfo target)
+		protected void SendStandardLetter(TargetInfo target, params string[] textArgs)
 		{
 			if (this.def.letterLabel.NullOrEmpty() || this.def.letterText.NullOrEmpty())
 			{
 				Log.Error("Sending standard incident letter with no label or text.");
 			}
-			Find.LetterStack.ReceiveLetter(this.def.letterLabel, this.def.letterText, this.def.letterType, target, null);
+			string text = string.Format(this.def.letterText, textArgs);
+			Find.LetterStack.ReceiveLetter(this.def.letterLabel, text, this.def.letterType, target, null);
 		}
 	}
 }

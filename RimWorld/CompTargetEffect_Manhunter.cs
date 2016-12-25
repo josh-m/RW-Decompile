@@ -12,7 +12,7 @@ namespace RimWorld
 			{
 				return;
 			}
-			pawn.mindState.mentalStateHandler.TryStartMentalState(MentalStateDefOf.Manhunter, null, false);
+			pawn.mindState.mentalStateHandler.TryStartMentalState(MentalStateDefOf.Manhunter, null, false, false, null);
 		}
 	}
 }

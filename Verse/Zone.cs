@@ -11,6 +11,8 @@ namespace Verse
 	{
 		private const int StaticFireCheckInterval = 1000;
 
+		public ZoneManager zoneManager;
+
 		public string label;
 
 		public List<IntVec3> cells = new List<IntVec3>();
@@ -27,9 +29,17 @@ namespace Verse
 
 		private bool lastStaticFireCheckResult;
 
-		private static BoolGrid extantGrid = new BoolGrid();
+		private static BoolGrid extantGrid;
 
-		private static BoolGrid foundGrid = new BoolGrid();
+		private static BoolGrid foundGrid;
+
+		public Map Map
+		{
+			get
+			{
+				return this.zoneManager.map;
+			}
+		}
 
 		public Material Material
 		{
@@ -61,7 +71,7 @@ namespace Verse
 		{
 			get
 			{
-				ThingGrid grids = Find.ThingGrid;
+				ThingGrid grids = this.Map.thingGrid;
 				for (int i = 0; i < this.cells.Count; i++)
 				{
 					List<Thing> thingList = grids.ThingsListAt(this.cells[i]);
@@ -82,7 +92,7 @@ namespace Verse
 					this.lastStaticFireCheckResult = false;
 					for (int i = 0; i < this.cells.Count; i++)
 					{
-						if (this.cells[i].ContainsStaticFire())
+						if (this.cells[i].ContainsStaticFire(this.Map))
 						{
 							this.lastStaticFireCheckResult = true;
 							break;
@@ -110,11 +120,12 @@ namespace Verse
 		{
 		}
 
-		public Zone(string baseName)
+		public Zone(string baseName, ZoneManager zoneManager)
 		{
-			this.label = Find.ZoneManager.NewZoneName(baseName);
+			this.label = zoneManager.NewZoneName(baseName);
+			this.zoneManager = zoneManager;
 			this.color = this.NextZoneColor;
-			Find.ZoneManager.RegisterZone(this);
+			zoneManager.RegisterZone(this);
 		}
 
 		[DebuggerHidden]
@@ -147,7 +158,7 @@ namespace Verse
 				}));
 				return;
 			}
-			List<Thing> list = Find.ThingGrid.ThingsListAt(c);
+			List<Thing> list = this.Map.thingGrid.ThingsListAt(c);
 			for (int i = 0; i < list.Count; i++)
 			{
 				Thing thing = list[i];
@@ -158,9 +169,9 @@ namespace Verse
 				}
 			}
 			this.cells.Add(c);
-			Find.ZoneManager.AddZoneGridCell(this, c);
-			Find.MapDrawer.MapMeshDirty(c, MapMeshFlag.Zone);
-			AutoHomeAreaMaker.Notify_ZoneCellAdded(c);
+			this.zoneManager.AddZoneGridCell(this, c);
+			this.Map.mapDrawer.MapMeshDirty(c, MapMeshFlag.Zone);
+			AutoHomeAreaMaker.Notify_ZoneCellAdded(c, this);
 			this.cellsShuffled = false;
 		}
 
@@ -178,8 +189,8 @@ namespace Verse
 				return;
 			}
 			this.cells.Remove(c);
-			Find.ZoneManager.ClearZoneGridCell(c);
-			Find.MapDrawer.MapMeshDirty(c, MapMeshFlag.Zone);
+			this.zoneManager.ClearZoneGridCell(c);
+			this.Map.mapDrawer.MapMeshDirty(c, MapMeshFlag.Zone);
 			this.cellsShuffled = false;
 			if (this.cells.Count == 0)
 			{
@@ -206,7 +217,7 @@ namespace Verse
 
 		public virtual void Deregister()
 		{
-			Find.ZoneManager.DeregisterZone(this);
+			this.zoneManager.DeregisterZone(this);
 		}
 
 		public bool ContainsCell(IntVec3 c)
@@ -227,7 +238,7 @@ namespace Verse
 		}
 
 		[DebuggerHidden]
-		public virtual IEnumerable<ITab> GetInspectionTabs()
+		public virtual IEnumerable<InspectTabBase> GetInspectTabs()
 		{
 		}
 
@@ -256,7 +267,7 @@ namespace Verse
 					this.<>f__this.hidden = !this.<>f__this.hidden;
 					foreach (IntVec3 current in this.<>f__this.Cells)
 					{
-						Find.MapDrawer.MapMeshDirty(current, MapMeshFlag.Zone);
+						this.<>f__this.Map.mapDrawer.MapMeshDirty(current, MapMeshFlag.Zone);
 					}
 				},
 				hotKey = KeyBindingDefOf.Misc2
@@ -277,16 +288,22 @@ namespace Verse
 			{
 				return;
 			}
-			if (Zone.extantGrid.InnerArray.Length != Find.Map.Area)
+			if (Zone.extantGrid == null)
 			{
-				Zone.extantGrid = new BoolGrid();
+				Zone.extantGrid = new BoolGrid(this.Map);
 			}
-			Zone.extantGrid.Clear();
-			if (Zone.foundGrid.InnerArray.Length != Find.Map.Area)
+			else
 			{
-				Zone.foundGrid = new BoolGrid();
+				Zone.extantGrid.ClearAndResizeTo(this.Map);
 			}
-			Zone.foundGrid.Clear();
+			if (Zone.foundGrid == null)
+			{
+				Zone.foundGrid = new BoolGrid(this.Map);
+			}
+			else
+			{
+				Zone.foundGrid.ClearAndResizeTo(this.Map);
+			}
 			for (int i = 0; i < this.cells.Count; i++)
 			{
 				Zone.extantGrid.Set(this.cells[i], true);
@@ -298,10 +315,10 @@ namespace Verse
 				Zone.foundGrid.Set(c, true);
 				numFound++;
 			};
-			FloodFiller.FloodFill(this.cells[0], passCheck, processor);
+			this.Map.floodFiller.FloodFill(this.cells[0], passCheck, processor);
 			if (numFound < this.cells.Count)
 			{
-				foreach (IntVec3 current in Find.Map.AllCells)
+				foreach (IntVec3 current in this.Map.AllCells)
 				{
 					if (Zone.extantGrid[current] && !Zone.foundGrid[current])
 					{

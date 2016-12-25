@@ -28,7 +28,7 @@ namespace Verse.Sound
 		{
 			get
 			{
-				return this.endRealTime > 0f;
+				return this.endRealTime >= 0f;
 			}
 		}
 
@@ -189,16 +189,19 @@ namespace Verse.Sound
 			}
 			if (this.def.sustainStopSound != string.Empty)
 			{
-				SoundInfo soundInfo;
 				if (this.worldRootObject != null)
 				{
-					soundInfo = SoundInfo.InWorld(this.worldRootObject.transform.position.ToIntVec3(), MaintenanceType.None);
+					Map map = this.info.Maker.Map;
+					if (map != null)
+					{
+						SoundInfo soundInfo = SoundInfo.InMap(new TargetInfo(this.worldRootObject.transform.position.ToIntVec3(), map, false), MaintenanceType.None);
+						SoundDef.Named(this.def.sustainStopSound).PlayOneShot(soundInfo);
+					}
 				}
 				else
 				{
-					soundInfo = SoundInfo.OnCamera(MaintenanceType.None);
+					SoundDef.Named(this.def.sustainStopSound).PlayOneShot(SoundInfo.OnCamera(MaintenanceType.None));
 				}
-				SoundDef.Named(this.def.sustainStopSound).PlayOneShot(soundInfo);
 			}
 			if (this.worldRootObject != null)
 			{

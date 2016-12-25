@@ -7,6 +7,8 @@ namespace Verse
 {
 	public class Explosion : IExposable
 	{
+		public ExplosionManager explosionManager;
+
 		public IntVec3 position;
 
 		public float radius;
@@ -17,7 +19,7 @@ namespace Verse
 
 		public Thing instigator;
 
-		public ThingDef source;
+		public ThingDef weaponGear;
 
 		public bool applyDamageToExplosionCellsNeighbors;
 
@@ -44,6 +46,14 @@ namespace Verse
 		private HashSet<IntVec3> addedCellsAffectedOnlyByDamage;
 
 		private static HashSet<IntVec3> tmpCells = new HashSet<IntVec3>();
+
+		public Map Map
+		{
+			get
+			{
+				return this.explosionManager.map;
+			}
+		}
 
 		public void StartExplosion(SoundDef explosionSound)
 		{
@@ -108,7 +118,7 @@ namespace Verse
 			Scribe_Defs.LookDef<DamageDef>(ref this.damType, "damType");
 			Scribe_Values.LookValue<int>(ref this.damAmount, "damAmount", 0, false);
 			Scribe_References.LookReference<Thing>(ref this.instigator, "instigator", false);
-			Scribe_Defs.LookDef<ThingDef>(ref this.source, "source");
+			Scribe_Defs.LookDef<ThingDef>(ref this.weaponGear, "weaponGear");
 			Scribe_Values.LookValue<bool>(ref this.applyDamageToExplosionCellsNeighbors, "applyDamageToExplosionCellsNeighbors", false, false);
 			Scribe_Defs.LookDef<ThingDef>(ref this.preExplosionSpawnThingDef, "preExplosionSpawnThingDef");
 			Scribe_Values.LookValue<float>(ref this.preExplosionSpawnChance, "preExplosionSpawnChance", 0f, false);
@@ -119,7 +129,7 @@ namespace Verse
 			Scribe_Values.LookValue<bool>(ref this.finished, "finished", false, false);
 			Scribe_Values.LookValue<int>(ref this.startTick, "startTick", 0, false);
 			Scribe_Collections.LookList<IntVec3>(ref this.cellsToAffect, "cellsToAffect", LookMode.Value, new object[0]);
-			Scribe_Collections.LookList<Thing>(ref this.damagedThings, "damagedThings", LookMode.MapReference, new object[0]);
+			Scribe_Collections.LookList<Thing>(ref this.damagedThings, "damagedThings", LookMode.Reference, new object[0]);
 			Scribe_Collections.LookHashSet<IntVec3>(ref this.addedCellsAffectedOnlyByDamage, "addedCellsAffectedOnlyByDamage", LookMode.Value);
 		}
 
@@ -131,12 +141,12 @@ namespace Verse
 		private void AffectCell(IntVec3 c)
 		{
 			bool flag = this.ShouldCellBeAffectedOnlyByDamage(c);
-			if (!flag && c.Walkable() && Rand.Value < this.preExplosionSpawnChance)
+			if (!flag && c.Walkable(this.Map) && Rand.Value < this.preExplosionSpawnChance)
 			{
 				this.TrySpawnExplosionThing(this.preExplosionSpawnThingDef, c, this.preExplosionSpawnThingCount);
 			}
 			this.damType.Worker.ExplosionAffectCell(this, c, this.damagedThings, !flag);
-			if (!flag && c.Walkable() && Rand.Value < this.postExplosionSpawnChance)
+			if (!flag && c.Walkable(this.Map) && Rand.Value < this.postExplosionSpawnChance)
 			{
 				this.TrySpawnExplosionThing(this.postExplosionSpawnThingDef, c, this.postExplosionSpawnThingCount);
 			}
@@ -150,13 +160,13 @@ namespace Verse
 			}
 			if (thingDef.IsFilth)
 			{
-				FilthMaker.MakeFilth(c, thingDef, count);
+				FilthMaker.MakeFilth(c, this.Map, thingDef, count);
 			}
 			else
 			{
 				Thing thing = ThingMaker.MakeThing(thingDef, null);
 				thing.stackCount = count;
-				GenSpawn.Spawn(thing, c);
+				GenSpawn.Spawn(thing, c, this.Map);
 			}
 		}
 
@@ -173,11 +183,11 @@ namespace Verse
 			}
 			if (flag)
 			{
-				explosionSound.PlayOneShot(this.position);
+				explosionSound.PlayOneShot(new TargetInfo(this.position, this.Map, false));
 			}
 			else
 			{
-				this.damType.soundExplosion.PlayOneShot(this.position);
+				this.damType.soundExplosion.PlayOneShot(new TargetInfo(this.position, this.Map, false));
 			}
 		}
 
@@ -191,12 +201,12 @@ namespace Verse
 			}
 			for (int j = 0; j < cells.Count; j++)
 			{
-				if (cells[j].Walkable())
+				if (cells[j].Walkable(this.Map))
 				{
 					for (int k = 0; k < GenAdj.AdjacentCells.Length; k++)
 					{
 						IntVec3 intVec = cells[j] + GenAdj.AdjacentCells[k];
-						if (intVec.InBounds())
+						if (intVec.InBounds(this.Map))
 						{
 							bool flag = Explosion.tmpCells.Add(intVec);
 							if (flag)

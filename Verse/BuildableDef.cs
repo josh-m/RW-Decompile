@@ -18,7 +18,7 @@ namespace Verse
 
 		public float fertility = -1f;
 
-		public List<ThingCount> costList;
+		public List<ThingCountClass> costList;
 
 		public int costStuffCount = -1;
 
@@ -63,7 +63,8 @@ namespace Verse
 
 		public List<Type> placeWorkers;
 
-		public string designationCategory;
+		[NoTranslate]
+		public DesignationCategoryDef designationCategory;
 
 		public KeyBindingDef designationHotKey;
 

@@ -6,9 +6,9 @@ namespace Verse.AI
 	{
 		private MentalStateDef state;
 
-		public override ThinkNode DeepCopy()
+		public override ThinkNode DeepCopy(bool resolve = true)
 		{
-			ThinkNode_ConditionalMentalState thinkNode_ConditionalMentalState = (ThinkNode_ConditionalMentalState)base.DeepCopy();
+			ThinkNode_ConditionalMentalState thinkNode_ConditionalMentalState = (ThinkNode_ConditionalMentalState)base.DeepCopy(resolve);
 			thinkNode_ConditionalMentalState.state = this.state;
 			return thinkNode_ConditionalMentalState;
 		}

@@ -4,88 +4,111 @@ using System.Collections.Generic;
 
 namespace Verse
 {
-	public static class RegionMaker
+	public class RegionMaker
 	{
-		private static Region newReg;
+		private Map map;
 
-		private static int[] processedIndices = null;
+		private Region newReg;
 
-		private static Queue<FloodFillRange> newClosedRanges = new Queue<FloodFillRange>(1000);
+		private int[] processedIndices;
 
-		private static int mapWidth;
+		private Queue<FloodFillRange> newClosedRanges = new Queue<FloodFillRange>(1000);
 
-		private static RegionGrid regionGrid;
+		private bool working;
 
-		private static int[] leftEdgeOpenIDs;
+		private int mapWidth;
 
-		private static int[] rightEdgeOpenIDs;
+		private RegionGrid regionGrid;
 
-		private static int[] bottomEdgeOpenIDs;
+		private int[] leftEdgeOpenIDs;
 
-		private static int[] topEdgeOpenIDs;
+		private int[] rightEdgeOpenIDs;
 
-		public static void Reinit()
+		private int[] bottomEdgeOpenIDs;
+
+		private int[] topEdgeOpenIDs;
+
+		public RegionMaker(Map map)
 		{
-			RegionMaker.processedIndices = null;
-			RegionMaker.newClosedRanges.Clear();
-			RegionMaker.regionGrid = null;
-			RegionMaker.leftEdgeOpenIDs = new int[Find.Map.Size.z];
-			RegionMaker.rightEdgeOpenIDs = new int[Find.Map.Size.z];
-			RegionMaker.bottomEdgeOpenIDs = new int[Find.Map.Size.x];
-			RegionMaker.topEdgeOpenIDs = new int[Find.Map.Size.x];
+			this.map = map;
+			this.leftEdgeOpenIDs = new int[map.Size.z];
+			this.rightEdgeOpenIDs = new int[map.Size.z];
+			this.bottomEdgeOpenIDs = new int[map.Size.x];
+			this.topEdgeOpenIDs = new int[map.Size.x];
 		}
 
-		public static Region TryGenerateRegionFrom(IntVec3 root)
+		public Region TryGenerateRegionFrom(IntVec3 root)
 		{
-			if (!root.Walkable())
+			if (!root.Walkable(this.map))
 			{
 				return null;
 			}
-			RegionMaker.regionGrid = Find.RegionGrid;
-			Thing edifice = root.GetEdifice();
-			if (edifice == null || !edifice.def.regionBarrier)
+			if (this.working)
 			{
-				RegionMaker.newReg = Region.MakeNewUnfilled(root);
-				RegionMaker.FloodRegionFrom(root);
-				RegionMaker.AddNeighborThings();
-				RegionMaker.ResolveSpanLinks();
-				return RegionMaker.newReg;
+				Log.Error("Trying to generate a new region but we are currently generating one. Nested calls are not allowed.");
+				return null;
 			}
-			Building_Door building_Door = edifice as Building_Door;
-			if (building_Door != null)
+			this.working = true;
+			Region result;
+			try
 			{
-				return RegionMaker.MakePortalRegion(building_Door);
-			}
-			if (Current.ProgramState == ProgramState.MapPlaying)
-			{
-				Log.Error(string.Concat(new object[]
+				this.regionGrid = this.map.regionGrid;
+				Thing edifice = root.GetEdifice(this.map);
+				if (edifice != null && edifice.def.regionBarrier)
 				{
-					"Tried to generate region in walkable cell with non-door building. root=",
-					root,
-					" building=",
-					edifice
-				}));
+					Building_Door building_Door = edifice as Building_Door;
+					if (building_Door != null)
+					{
+						result = this.MakePortalRegion(building_Door);
+					}
+					else
+					{
+						if (Current.ProgramState == ProgramState.Playing)
+						{
+							Log.Error(string.Concat(new object[]
+							{
+								"Tried to generate region in walkable cell with non-door building. root=",
+								root,
+								" building=",
+								edifice
+							}));
+						}
+						result = null;
+					}
+				}
+				else
+				{
+					this.newReg = Region.MakeNewUnfilled(root, this.map);
+					this.FloodRegionFrom(root);
+					this.AddNeighborThings();
+					this.ResolveSpanLinks();
+					result = this.newReg;
+				}
 			}
-			return null;
+			finally
+			{
+				this.working = false;
+			}
+			return result;
 		}
 
-		private static void AddNeighborThings()
+		private void AddNeighborThings()
 		{
-			CellRect cellRect = RegionMaker.newReg.extentsLimit;
+			CellRect cellRect = this.newReg.extentsLimit;
 			cellRect = cellRect.ExpandedBy(1);
-			cellRect.ClipInsideMap();
+			cellRect.ClipInsideMap(this.map);
 			foreach (IntVec3 current in cellRect)
 			{
-				if (RegionMaker.regionGrid.GetValidRegionAt(current) == RegionMaker.newReg)
+				if (this.regionGrid.GetValidRegionAt(current) == this.newReg)
 				{
 					for (int i = 0; i < 8; i++)
 					{
 						IntVec3 c = current + GenAdj.AdjacentCells[i];
-						if (c.InBounds())
+						if (c.InBounds(this.map))
 						{
-							if (!c.Walkable())
+							if (!c.Walkable(this.map))
 							{
-								RegionMaker.AddThingsInCellToLister_Neigh(c);
+								this.AddThingsInCellToLister_Neigh(c);
 							}
 						}
 					}
@@ -93,111 +116,112 @@ namespace Verse
 			}
 		}
 
-		private static void AddCell(IntVec3 c)
+		private void AddCell(IntVec3 c)
 		{
-			RegionMaker.regionGrid.SetRegionAt(c, RegionMaker.newReg);
-			if (c.x < RegionMaker.newReg.extentsClose.minX)
+			this.regionGrid.SetRegionAt(c, this.newReg);
+			if (c.x < this.newReg.extentsClose.minX)
 			{
-				RegionMaker.newReg.extentsClose.minX = c.x;
+				this.newReg.extentsClose.minX = c.x;
 			}
-			if (c.x > RegionMaker.newReg.extentsClose.maxX)
+			if (c.x > this.newReg.extentsClose.maxX)
 			{
-				RegionMaker.newReg.extentsClose.maxX = c.x;
+				this.newReg.extentsClose.maxX = c.x;
 			}
-			if (c.z < RegionMaker.newReg.extentsClose.minZ)
+			if (c.z < this.newReg.extentsClose.minZ)
 			{
-				RegionMaker.newReg.extentsClose.minZ = c.z;
+				this.newReg.extentsClose.minZ = c.z;
 			}
-			if (c.z > RegionMaker.newReg.extentsClose.maxZ)
+			if (c.z > this.newReg.extentsClose.maxZ)
 			{
-				RegionMaker.newReg.extentsClose.maxZ = c.z;
+				this.newReg.extentsClose.maxZ = c.z;
 			}
-			RegionMaker.AddThingsInCellToLister(c);
+			this.AddThingsInCellToLister(c);
 		}
 
-		private static void AddThingsInCellToLister(IntVec3 c)
+		private void AddThingsInCellToLister(IntVec3 c)
 		{
-			List<Thing> list = Find.ThingGrid.ThingsListAt(c);
+			List<Thing> list = this.map.thingGrid.ThingsListAt(c);
 			int count = list.Count;
 			for (int i = 0; i < count; i++)
 			{
 				Thing thing = list[i];
-				if (!RegionMaker.newReg.ListerThings.Contains(thing) && (thing.Position == c || thing.def.regionBarrier))
+				if (!this.newReg.ListerThings.Contains(thing) && (thing.Position == c || thing.def.regionBarrier))
 				{
-					RegionMaker.newReg.ListerThings.Add(thing);
+					this.newReg.ListerThings.Add(thing);
 				}
 			}
 		}
 
-		private static void AddThingsInCellToLister_Neigh(IntVec3 c)
+		private void AddThingsInCellToLister_Neigh(IntVec3 c)
 		{
-			List<Thing> list = Find.ThingGrid.ThingsListAt(c);
+			List<Thing> list = this.map.thingGrid.ThingsListAt(c);
 			int count = list.Count;
 			for (int i = 0; i < count; i++)
 			{
 				Thing thing = list[i];
-				if (thing.def.category != ThingCategory.Pawn && !RegionMaker.newReg.ListerThings.Contains(thing) && (thing.Position == c || thing.def.regionBarrier))
+				if (thing.def.category != ThingCategory.Pawn && !this.newReg.ListerThings.Contains(thing) && (thing.Position == c || thing.def.regionBarrier))
 				{
-					RegionMaker.newReg.ListerThings.Add(thing);
+					this.newReg.ListerThings.Add(thing);
 				}
 			}
 		}
 
-		private static Region MakePortalRegion(Building_Door door)
+		private Region MakePortalRegion(Building_Door door)
 		{
 			IntVec3 position = door.Position;
-			RegionMaker.newReg = Region.MakeNewUnfilled(position);
-			RegionMaker.newReg.portal = door;
-			RegionMaker.AddCell(position);
-			if ((position + IntVec3.East).Walkable())
+			this.newReg = Region.MakeNewUnfilled(position, door.Map);
+			this.newReg.portal = door;
+			this.AddCell(position);
+			if ((position + IntVec3.East).Walkable(this.map))
 			{
 				EdgeSpan edgeSpan = new EdgeSpan(position + IntVec3.East, SpanDirection.North, 1);
-				RegionMaker.FinalizeSpanIfValid(ref edgeSpan);
+				this.FinalizeSpanIfValid(ref edgeSpan);
 			}
-			if ((position + IntVec3.North).Walkable())
+			if ((position + IntVec3.North).Walkable(this.map))
 			{
 				EdgeSpan edgeSpan2 = new EdgeSpan(position + IntVec3.North, SpanDirection.East, 1);
-				RegionMaker.FinalizeSpanIfValid(ref edgeSpan2);
+				this.FinalizeSpanIfValid(ref edgeSpan2);
 			}
-			if ((position + IntVec3.West).Walkable())
+			if ((position + IntVec3.West).Walkable(this.map))
 			{
 				EdgeSpan edgeSpan3 = new EdgeSpan(position, SpanDirection.North, 1);
-				RegionMaker.FinalizeSpanIfValid(ref edgeSpan3);
+				this.FinalizeSpanIfValid(ref edgeSpan3);
 			}
-			if ((position + IntVec3.South).Walkable())
+			if ((position + IntVec3.South).Walkable(this.map))
 			{
 				EdgeSpan edgeSpan4 = new EdgeSpan(position, SpanDirection.East, 1);
-				RegionMaker.FinalizeSpanIfValid(ref edgeSpan4);
+				this.FinalizeSpanIfValid(ref edgeSpan4);
 			}
-			return RegionMaker.newReg;
+			return this.newReg;
 		}
 
-		private static void FloodRegionFrom(IntVec3 root)
+		private void FloodRegionFrom(IntVec3 root)
 		{
-			RegionMaker.mapWidth = Find.Map.Size.x;
-			if (RegionMaker.processedIndices == null)
+			CellIndices cellIndices = this.map.cellIndices;
+			this.mapWidth = this.map.Size.x;
+			if (this.processedIndices == null)
 			{
-				RegionMaker.processedIndices = new int[CellIndices.NumGridCells];
+				this.processedIndices = new int[cellIndices.NumGridCells];
 			}
-			RegionMaker.newClosedRanges.Clear();
+			this.newClosedRanges.Clear();
 			ProfilerThreadCheck.BeginSample("FloodRegionFrom " + root);
-			RegionMaker.FillRowFrom(root.x, root.z);
-			while (RegionMaker.newClosedRanges.Count > 0)
+			this.FillRowFrom(root.x, root.z);
+			while (this.newClosedRanges.Count > 0)
 			{
-				FloodFillRange floodFillRange = RegionMaker.newClosedRanges.Dequeue();
+				FloodFillRange floodFillRange = this.newClosedRanges.Dequeue();
 				int num = floodFillRange.z - 1;
 				int num2 = floodFillRange.z + 1;
-				int num3 = CellIndices.CellToIndex(floodFillRange.minX, num2);
-				int num4 = CellIndices.CellToIndex(floodFillRange.minX, num);
+				int num3 = cellIndices.CellToIndex(floodFillRange.minX, num2);
+				int num4 = cellIndices.CellToIndex(floodFillRange.minX, num);
 				for (int i = floodFillRange.minX; i <= floodFillRange.maxX; i++)
 				{
-					if (floodFillRange.z > RegionMaker.newReg.extentsLimit.minZ && !RegionMaker.IndexWasProcessed(num4) && RegionMaker.CheckRegionableAndProcessNeighbor(num4, Rot4.South))
+					if (floodFillRange.z > this.newReg.extentsLimit.minZ && !this.IndexWasProcessed(num4) && this.CheckRegionableAndProcessNeighbor(num4, Rot4.South))
 					{
-						RegionMaker.FillRowFrom(i, num);
+						this.FillRowFrom(i, num);
 					}
-					if (floodFillRange.z < RegionMaker.newReg.extentsLimit.maxZ && !RegionMaker.IndexWasProcessed(num3) && RegionMaker.CheckRegionableAndProcessNeighbor(num3, Rot4.North))
+					if (floodFillRange.z < this.newReg.extentsLimit.maxZ && !this.IndexWasProcessed(num3) && this.CheckRegionableAndProcessNeighbor(num3, Rot4.North))
 					{
-						RegionMaker.FillRowFrom(i, num2);
+						this.FillRowFrom(i, num2);
 					}
 					num3++;
 					num4++;
@@ -206,47 +230,48 @@ namespace Verse
 			ProfilerThreadCheck.EndSample();
 		}
 
-		private static void FillRowFrom(int rootX, int rootZ)
+		private void FillRowFrom(int rootX, int rootZ)
 		{
-			int num = CellIndices.CellToIndex(rootX, rootZ);
-			bool flag = rootZ == RegionMaker.newReg.extentsLimit.minZ;
-			bool flag2 = rootZ == RegionMaker.newReg.extentsLimit.maxZ;
+			CellIndices cellIndices = this.map.cellIndices;
+			int num = cellIndices.CellToIndex(rootX, rootZ);
+			bool flag = rootZ == this.newReg.extentsLimit.minZ;
+			bool flag2 = rootZ == this.newReg.extentsLimit.maxZ;
 			int num2 = rootX;
 			int num3 = num;
 			while (true)
 			{
-				IntVec3 intVec = CellIndices.IndexToCell(num3);
-				RegionMaker.AddCell(intVec);
-				RegionMaker.processedIndices[num3] = RegionMaker.newReg.id;
+				IntVec3 intVec = cellIndices.IndexToCell(num3);
+				this.AddCell(intVec);
+				this.processedIndices[num3] = this.newReg.id;
 				if (flag)
 				{
-					if (RegionMaker.CheckRegionableAndProcessNeighbor(intVec + IntVec3.South, Rot4.South))
+					if (this.CheckRegionableAndProcessNeighbor(intVec + IntVec3.South, Rot4.South))
 					{
-						RegionMaker.bottomEdgeOpenIDs[intVec.x] = RegionMaker.newReg.id;
+						this.bottomEdgeOpenIDs[intVec.x] = this.newReg.id;
 					}
 				}
-				else if (flag2 && RegionMaker.CheckRegionableAndProcessNeighbor(intVec + IntVec3.North, Rot4.North))
+				else if (flag2 && this.CheckRegionableAndProcessNeighbor(intVec + IntVec3.North, Rot4.North))
 				{
-					RegionMaker.topEdgeOpenIDs[intVec.x] = RegionMaker.newReg.id;
+					this.topEdgeOpenIDs[intVec.x] = this.newReg.id;
 				}
 				num2--;
 				num3--;
-				if (num2 < RegionMaker.newReg.extentsLimit.minX)
+				if (num2 < this.newReg.extentsLimit.minX)
 				{
 					break;
 				}
-				if (!RegionMaker.CheckRegionableAndProcessNeighbor(num3, Rot4.West))
+				if (!this.CheckRegionableAndProcessNeighbor(num3, Rot4.West))
 				{
 					goto Block_9;
 				}
 			}
-			if (num2 >= 0 && RegionMaker.CheckRegionableAndProcessNeighbor(num3, Rot4.West))
+			if (num2 >= 0 && this.CheckRegionableAndProcessNeighbor(num3, Rot4.West))
 			{
-				RegionMaker.leftEdgeOpenIDs[rootZ] = RegionMaker.newReg.id;
+				this.leftEdgeOpenIDs[rootZ] = this.newReg.id;
 			}
 			else if (num2 < 0)
 			{
-				RegionMaker.newReg.touchesMapEdge = true;
+				this.newReg.touchesMapEdge = true;
 			}
 			Block_9:
 			num2++;
@@ -256,72 +281,72 @@ namespace Verse
 			{
 				num4++;
 				num3++;
-				if (num4 > RegionMaker.newReg.extentsLimit.maxX)
+				if (num4 > this.newReg.extentsLimit.maxX)
 				{
 					break;
 				}
-				if (!RegionMaker.CheckRegionableAndProcessNeighbor(num3, Rot4.East))
+				if (!this.CheckRegionableAndProcessNeighbor(num3, Rot4.East))
 				{
 					goto Block_14;
 				}
-				IntVec3 intVec2 = CellIndices.IndexToCell(num3);
-				RegionMaker.AddCell(intVec2);
-				RegionMaker.processedIndices[num3] = RegionMaker.newReg.id;
+				IntVec3 intVec2 = cellIndices.IndexToCell(num3);
+				this.AddCell(intVec2);
+				this.processedIndices[num3] = this.newReg.id;
 				if (flag)
 				{
-					if (RegionMaker.CheckRegionableAndProcessNeighbor(intVec2 + IntVec3.South, Rot4.South))
+					if (this.CheckRegionableAndProcessNeighbor(intVec2 + IntVec3.South, Rot4.South))
 					{
-						RegionMaker.bottomEdgeOpenIDs[intVec2.x] = RegionMaker.newReg.id;
+						this.bottomEdgeOpenIDs[intVec2.x] = this.newReg.id;
 					}
 				}
-				else if (flag2 && RegionMaker.CheckRegionableAndProcessNeighbor(intVec2 + IntVec3.North, Rot4.North))
+				else if (flag2 && this.CheckRegionableAndProcessNeighbor(intVec2 + IntVec3.North, Rot4.North))
 				{
-					RegionMaker.topEdgeOpenIDs[intVec2.x] = RegionMaker.newReg.id;
+					this.topEdgeOpenIDs[intVec2.x] = this.newReg.id;
 				}
 			}
-			if (num4 < RegionMaker.mapWidth && RegionMaker.CheckRegionableAndProcessNeighbor(num3, Rot4.East))
+			if (num4 < this.mapWidth && this.CheckRegionableAndProcessNeighbor(num3, Rot4.East))
 			{
-				RegionMaker.rightEdgeOpenIDs[rootZ] = RegionMaker.newReg.id;
+				this.rightEdgeOpenIDs[rootZ] = this.newReg.id;
 			}
-			else if (num4 >= RegionMaker.mapWidth)
+			else if (num4 >= this.mapWidth)
 			{
-				RegionMaker.newReg.touchesMapEdge = true;
+				this.newReg.touchesMapEdge = true;
 			}
 			Block_14:
 			num4--;
 			FloodFillRange item = new FloodFillRange(num2, num4, rootZ);
-			RegionMaker.newClosedRanges.Enqueue(item);
+			this.newClosedRanges.Enqueue(item);
 		}
 
-		private static bool CheckRegionableAndProcessNeighbor(int index, Rot4 processingDirection)
+		private bool CheckRegionableAndProcessNeighbor(int index, Rot4 processingDirection)
 		{
-			return RegionMaker.CheckRegionableAndProcessNeighbor(CellIndices.IndexToCell(index), processingDirection);
+			return this.CheckRegionableAndProcessNeighbor(this.map.cellIndices.IndexToCell(index), processingDirection);
 		}
 
-		private static bool CheckRegionableAndProcessNeighbor(IntVec3 c, Rot4 processingDirection)
+		private bool CheckRegionableAndProcessNeighbor(IntVec3 c, Rot4 processingDirection)
 		{
-			if (!c.InBounds())
+			if (!c.InBounds(this.map))
 			{
-				RegionMaker.newReg.touchesMapEdge = true;
+				this.newReg.touchesMapEdge = true;
 				return false;
 			}
-			if (!c.Walkable())
+			if (!c.Walkable(this.map))
 			{
 				return false;
 			}
-			Thing regionBarrier = c.GetRegionBarrier();
+			Thing regionBarrier = c.GetRegionBarrier(this.map);
 			if (regionBarrier != null)
 			{
 				if (regionBarrier.def.IsDoor)
 				{
-					RegionMaker.TryMakePortalSpan(c, processingDirection);
+					this.TryMakePortalSpan(c, processingDirection);
 				}
 				return false;
 			}
 			return true;
 		}
 
-		private static void TryMakePortalSpan(IntVec3 c, Rot4 processingDirection)
+		private void TryMakePortalSpan(IntVec3 c, Rot4 processingDirection)
 		{
 			EdgeSpan edgeSpan;
 			if (processingDirection == Rot4.West)
@@ -340,65 +365,65 @@ namespace Verse
 			{
 				edgeSpan = new EdgeSpan(c + IntVec3.North, SpanDirection.East, 1);
 			}
-			RegionMaker.FinalizeSpanIfValid(ref edgeSpan);
+			this.FinalizeSpanIfValid(ref edgeSpan);
 		}
 
-		private static bool IndexWasProcessed(int index)
+		private bool IndexWasProcessed(int index)
 		{
-			return RegionMaker.processedIndices[index] == RegionMaker.newReg.id;
+			return this.processedIndices[index] == this.newReg.id;
 		}
 
-		private static void ResolveSpanLinks()
+		private void ResolveSpanLinks()
 		{
 			EdgeSpan edgeSpan = default(EdgeSpan);
 			EdgeSpan edgeSpan2 = default(EdgeSpan);
-			for (int i = RegionMaker.newReg.extentsLimit.minZ; i <= RegionMaker.newReg.extentsLimit.maxZ; i++)
+			for (int i = this.newReg.extentsLimit.minZ; i <= this.newReg.extentsLimit.maxZ; i++)
 			{
-				if (RegionMaker.leftEdgeOpenIDs[i] == RegionMaker.newReg.id)
+				if (this.leftEdgeOpenIDs[i] == this.newReg.id)
 				{
-					RegionMaker.MakeOrExpandSpan(ref edgeSpan, SpanDirection.North, RegionMaker.newReg.extentsLimit.minX, i);
+					this.MakeOrExpandSpan(ref edgeSpan, SpanDirection.North, this.newReg.extentsLimit.minX, i);
 				}
 				else
 				{
-					RegionMaker.FinalizeSpanIfValid(ref edgeSpan);
+					this.FinalizeSpanIfValid(ref edgeSpan);
 				}
-				if (RegionMaker.rightEdgeOpenIDs[i] == RegionMaker.newReg.id)
+				if (this.rightEdgeOpenIDs[i] == this.newReg.id)
 				{
-					RegionMaker.MakeOrExpandSpan(ref edgeSpan2, SpanDirection.North, RegionMaker.newReg.extentsLimit.maxX + 1, i);
+					this.MakeOrExpandSpan(ref edgeSpan2, SpanDirection.North, this.newReg.extentsLimit.maxX + 1, i);
 				}
 				else
 				{
-					RegionMaker.FinalizeSpanIfValid(ref edgeSpan2);
+					this.FinalizeSpanIfValid(ref edgeSpan2);
 				}
 			}
-			RegionMaker.FinalizeSpanIfValid(ref edgeSpan);
-			RegionMaker.FinalizeSpanIfValid(ref edgeSpan2);
+			this.FinalizeSpanIfValid(ref edgeSpan);
+			this.FinalizeSpanIfValid(ref edgeSpan2);
 			EdgeSpan edgeSpan3 = default(EdgeSpan);
 			EdgeSpan edgeSpan4 = default(EdgeSpan);
-			for (int j = RegionMaker.newReg.extentsLimit.minX; j <= RegionMaker.newReg.extentsLimit.maxX; j++)
+			for (int j = this.newReg.extentsLimit.minX; j <= this.newReg.extentsLimit.maxX; j++)
 			{
-				if (RegionMaker.bottomEdgeOpenIDs[j] == RegionMaker.newReg.id)
+				if (this.bottomEdgeOpenIDs[j] == this.newReg.id)
 				{
-					RegionMaker.MakeOrExpandSpan(ref edgeSpan3, SpanDirection.East, j, RegionMaker.newReg.extentsLimit.minZ);
+					this.MakeOrExpandSpan(ref edgeSpan3, SpanDirection.East, j, this.newReg.extentsLimit.minZ);
 				}
 				else
 				{
-					RegionMaker.FinalizeSpanIfValid(ref edgeSpan3);
+					this.FinalizeSpanIfValid(ref edgeSpan3);
 				}
-				if (RegionMaker.topEdgeOpenIDs[j] == RegionMaker.newReg.id)
+				if (this.topEdgeOpenIDs[j] == this.newReg.id)
 				{
-					RegionMaker.MakeOrExpandSpan(ref edgeSpan4, SpanDirection.East, j, RegionMaker.newReg.extentsLimit.maxZ + 1);
+					this.MakeOrExpandSpan(ref edgeSpan4, SpanDirection.East, j, this.newReg.extentsLimit.maxZ + 1);
 				}
 				else
 				{
-					RegionMaker.FinalizeSpanIfValid(ref edgeSpan4);
+					this.FinalizeSpanIfValid(ref edgeSpan4);
 				}
 			}
-			RegionMaker.FinalizeSpanIfValid(ref edgeSpan3);
-			RegionMaker.FinalizeSpanIfValid(ref edgeSpan4);
+			this.FinalizeSpanIfValid(ref edgeSpan3);
+			this.FinalizeSpanIfValid(ref edgeSpan4);
 		}
 
-		private static void MakeOrExpandSpan(ref EdgeSpan span, SpanDirection dir, int x, int z)
+		private void MakeOrExpandSpan(ref EdgeSpan span, SpanDirection dir, int x, int z)
 		{
 			if (!span.IsValid)
 			{
@@ -413,13 +438,13 @@ namespace Verse
 			}
 		}
 
-		private static void FinalizeSpanIfValid(ref EdgeSpan span)
+		private void FinalizeSpanIfValid(ref EdgeSpan span)
 		{
 			if (span.IsValid)
 			{
-				RegionLink regionLink = RegionLinkDatabase.LinkFrom(span);
-				regionLink.Register(RegionMaker.newReg);
-				RegionMaker.newReg.links.Add(regionLink);
+				RegionLink regionLink = this.map.regionLinkDatabase.LinkFrom(span);
+				regionLink.Register(this.newReg);
+				this.newReg.links.Add(regionLink);
 				span = default(EdgeSpan);
 			}
 		}

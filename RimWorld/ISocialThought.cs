@@ -1,4 +1,5 @@
 using System;
+using Verse;
 
 namespace RimWorld
 {
@@ -6,6 +7,6 @@ namespace RimWorld
 	{
 		float OpinionOffset();
 
-		int OtherPawnID();
+		Pawn OtherPawn();
 	}
 }

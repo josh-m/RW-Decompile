@@ -33,7 +33,7 @@ namespace RimWorld
 				for (int i = 0; i < this.lord.ownedPawns.Count; i++)
 				{
 					Pawn pawn2 = this.lord.ownedPawns[i];
-					switch (pawn2.GetCaravanRole())
+					switch (pawn2.GetTraderCaravanRole())
 					{
 					case TraderCaravanRole.Carrier:
 						pawn2.mindState.duty = new PawnDuty(DutyDefOf.Follow, pawn, 5f);

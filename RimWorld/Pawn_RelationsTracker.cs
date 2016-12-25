@@ -13,11 +13,11 @@ namespace RimWorld
 
 		private const float MaxBondRelationCheckDist = 12f;
 
-		private const float BondRelationPerIntervalChance = 0.01f;
+		private const float BondRelationPerIntervalChance = 0.001f;
 
-		private const int FriendOpinionThreshold = 20;
+		public const int FriendOpinionThreshold = 20;
 
-		private const int RivalOpinionThreshold = -20;
+		public const int RivalOpinionThreshold = -20;
 
 		private Pawn pawn;
 
@@ -28,6 +28,8 @@ namespace RimWorld
 		public bool canGetRescuedThought = true;
 
 		private HashSet<Pawn> pawnsWithDirectRelationsWithMe = new HashSet<Pawn>();
+
+		private static List<ISocialThought> dsThoughts = new List<ISocialThought>();
 
 		public List<DirectPawnRelation> DirectRelations
 		{
@@ -318,7 +320,7 @@ namespace RimWorld
 				}));
 				return;
 			}
-			int startTicks = (Current.ProgramState != ProgramState.MapPlaying) ? 0 : Find.TickManager.TicksGame;
+			int startTicks = (Current.ProgramState != ProgramState.Playing) ? 0 : Find.TickManager.TicksGame;
 			this.directRelations.Add(new DirectPawnRelation(def, otherPawn, startTicks));
 			otherPawn.relations.pawnsWithDirectRelationsWithMe.Add(this.pawn);
 			if (def.reflexive)
@@ -412,20 +414,22 @@ namespace RimWorld
 			if (this.pawn.RaceProps.Humanlike)
 			{
 				ThoughtHandler thoughts = this.pawn.needs.mood.thoughts;
-				foreach (ISocialThought current2 in this.pawn.needs.mood.thoughts.DistinctSocialThoughtGroups(other))
+				this.pawn.needs.mood.thoughts.GetDistinctSocialThoughtGroups(other, Pawn_RelationsTracker.dsThoughts);
+				for (int i = 0; i < Pawn_RelationsTracker.dsThoughts.Count; i++)
 				{
-					num += thoughts.OpinionOffsetOfThoughtGroup(current2, other);
+					num += thoughts.OpinionOffsetOfThoughtGroup(Pawn_RelationsTracker.dsThoughts[i], other);
 				}
+				Pawn_RelationsTracker.dsThoughts.Clear();
 			}
 			if (num != 0)
 			{
 				float num2 = 1f;
 				List<Hediff> hediffs = this.pawn.health.hediffSet.hediffs;
-				for (int i = 0; i < hediffs.Count; i++)
+				for (int j = 0; j < hediffs.Count; j++)
 				{
-					if (hediffs[i].CurStage != null)
+					if (hediffs[j].CurStage != null)
 					{
-						num2 *= hediffs[i].CurStage.opinionOfOthersFactor;
+						num2 *= hediffs[j].CurStage.opinionOfOthersFactor;
 					}
 				}
 				num = Mathf.RoundToInt((float)num * num2);
@@ -472,30 +476,32 @@ namespace RimWorld
 				if (this.pawn.RaceProps.Humanlike)
 				{
 					ThoughtHandler thoughts = this.pawn.needs.mood.thoughts;
-					foreach (ISocialThought current2 in thoughts.DistinctSocialThoughtGroups(other))
+					thoughts.GetDistinctSocialThoughtGroups(other, Pawn_RelationsTracker.dsThoughts);
+					for (int i = 0; i < Pawn_RelationsTracker.dsThoughts.Count; i++)
 					{
+						ISocialThought socialThought = Pawn_RelationsTracker.dsThoughts[i];
 						int num = 1;
-						Thought thought = (Thought)current2;
+						Thought thought = (Thought)socialThought;
 						if (thought.def.IsMemory)
 						{
-							num = thoughts.memories.NumSocialMemoryThoughtsInGroup((Thought_MemorySocial)current2, other.thingIDNumber);
+							num = thoughts.memories.NumMemoryThoughtsInGroup((Thought_MemorySocial)socialThought);
 						}
 						stringBuilder.Append(thought.LabelCapSocial);
 						if (num != 1)
 						{
 							stringBuilder.Append(" x" + num);
 						}
-						stringBuilder.AppendLine(": " + thoughts.OpinionOffsetOfThoughtGroup(current2, other).ToStringWithSign());
+						stringBuilder.AppendLine(": " + thoughts.OpinionOffsetOfThoughtGroup(socialThought, other).ToStringWithSign());
 						flag = true;
 					}
 				}
 				List<Hediff> hediffs = this.pawn.health.hediffSet.hediffs;
-				for (int i = 0; i < hediffs.Count; i++)
+				for (int j = 0; j < hediffs.Count; j++)
 				{
-					HediffStage curStage = hediffs[i].CurStage;
+					HediffStage curStage = hediffs[j].CurStage;
 					if (curStage != null && curStage.opinionOfOthersFactor != 1f)
 					{
-						stringBuilder.Append(hediffs[i].LabelBase.CapitalizeFirst());
+						stringBuilder.Append(hediffs[j].LabelBase.CapitalizeFirst());
 						if (curStage.opinionOfOthersFactor != 0f)
 						{
 							stringBuilder.AppendLine(": x" + curStage.opinionOfOthersFactor.ToStringPercent());
@@ -520,43 +526,53 @@ namespace RimWorld
 			return stringBuilder.ToString().TrimEndNewlines();
 		}
 
-		public float AttractionTo(Pawn otherPawn)
+		public float SecondaryRomanceChanceFactor(Pawn otherPawn)
 		{
 			if (this.pawn.def != otherPawn.def || this.pawn == otherPawn)
 			{
 				return 0f;
 			}
+			Rand.PushSeed();
+			Rand.Seed = this.pawn.HashOffset();
+			bool flag = Rand.Value < 0.015f;
+			Rand.PopSeed();
 			float num = 1f;
 			float num2 = 1f;
 			float ageBiologicalYearsFloat = this.pawn.ageTracker.AgeBiologicalYearsFloat;
 			float ageBiologicalYearsFloat2 = otherPawn.ageTracker.AgeBiologicalYearsFloat;
 			if (this.pawn.gender == Gender.Male)
 			{
-				if (this.pawn.RaceProps.Humanlike && this.pawn.story.traits.HasTrait(TraitDefOf.Gay))
+				if (!flag)
 				{
-					if (otherPawn.gender == Gender.Female)
+					if (this.pawn.RaceProps.Humanlike && this.pawn.story.traits.HasTrait(TraitDefOf.Gay))
+					{
+						if (otherPawn.gender == Gender.Female)
+						{
+							return 0f;
+						}
+					}
+					else if (otherPawn.gender == Gender.Male)
 					{
 						return 0f;
 					}
 				}
-				else if (otherPawn.gender == Gender.Male)
-				{
-					return 0f;
-				}
-				num2 = GenMath.FlatHill(16f, 20f, ageBiologicalYearsFloat, ageBiologicalYearsFloat + 15f, ageBiologicalYearsFloat2);
+				num2 = GenMath.FlatHill(0f, 16f, 20f, ageBiologicalYearsFloat, ageBiologicalYearsFloat + 15f, 0.07f, ageBiologicalYearsFloat2);
 			}
 			else if (this.pawn.gender == Gender.Female)
 			{
-				if (this.pawn.RaceProps.Humanlike && this.pawn.story.traits.HasTrait(TraitDefOf.Gay))
+				if (!flag)
 				{
-					if (otherPawn.gender == Gender.Male)
+					if (this.pawn.RaceProps.Humanlike && this.pawn.story.traits.HasTrait(TraitDefOf.Gay))
 					{
-						return 0f;
+						if (otherPawn.gender == Gender.Male)
+						{
+							return 0f;
+						}
 					}
-				}
-				else if (otherPawn.gender == Gender.Female)
-				{
-					num = 0.15f;
+					else if (otherPawn.gender == Gender.Female)
+					{
+						num = 0f;
+					}
 				}
 				if (ageBiologicalYearsFloat2 < ageBiologicalYearsFloat - 10f)
 				{
@@ -568,7 +584,7 @@ namespace RimWorld
 				}
 				else
 				{
-					num2 = GenMath.FlatHill(0.2f, ageBiologicalYearsFloat - 3f, ageBiologicalYearsFloat, ageBiologicalYearsFloat + 10f, ageBiologicalYearsFloat + 40f, 0.1f, ageBiologicalYearsFloat2);
+					num2 = GenMath.FlatHill(0.2f, ageBiologicalYearsFloat - 3f, ageBiologicalYearsFloat, ageBiologicalYearsFloat + 10f, ageBiologicalYearsFloat + 30f, 0.1f, ageBiologicalYearsFloat2);
 				}
 			}
 			float num3 = 1f;
@@ -642,7 +658,7 @@ namespace RimWorld
 			}
 		}
 
-		internal void Notify_PawnDied(DamageInfo? dinfo)
+		internal void Notify_PawnKilled(DamageInfo? dinfo, Map mapBeforeDeath)
 		{
 			foreach (Pawn current in this.PotentiallyRelatedPawns)
 			{
@@ -654,94 +670,9 @@ namespace RimWorld
 			this.RemoveMySpouseMarriageRelatedThoughts();
 			if (this.everSeenByPlayer && !PawnGenerator.IsBeingGenerated(this.pawn))
 			{
-				foreach (Pawn current2 in this.PotentiallyRelatedPawns)
-				{
-					if (!current2.Dead && current2.needs.mood != null)
-					{
-						PawnRelationDef mostImportantRelation = current2.GetMostImportantRelation(this.pawn);
-						if (mostImportantRelation != null)
-						{
-							ThoughtDef genderSpecificDiedThought = mostImportantRelation.GetGenderSpecificDiedThought(this.pawn);
-							if (genderSpecificDiedThought != null)
-							{
-								Thought_Memory thought_Memory = (Thought_Memory)ThoughtMaker.MakeThought(genderSpecificDiedThought);
-								thought_Memory.subject = this.pawn.LabelShort;
-								current2.needs.mood.thoughts.memories.TryGainMemoryThought(thought_Memory, null);
-							}
-						}
-					}
-				}
-				if (dinfo.HasValue)
-				{
-					Pawn pawn = dinfo.Value.Instigator as Pawn;
-					if (pawn != null && pawn != this.pawn)
-					{
-						foreach (Pawn current3 in this.PotentiallyRelatedPawns)
-						{
-							if (pawn != current3)
-							{
-								if (!current3.Dead)
-								{
-									if (current3.needs.mood != null)
-									{
-										PawnRelationDef mostImportantRelation2 = current3.GetMostImportantRelation(this.pawn);
-										if (mostImportantRelation2 != null)
-										{
-											ThoughtDef genderSpecificKilledThought = mostImportantRelation2.GetGenderSpecificKilledThought(this.pawn);
-											if (genderSpecificKilledThought != null)
-											{
-												current3.needs.mood.thoughts.memories.TryGainMemoryThought(genderSpecificKilledThought, pawn);
-											}
-										}
-										if (current3.RaceProps.IsFlesh)
-										{
-											int num = current3.relations.OpinionOf(this.pawn);
-											if (num >= 20)
-											{
-												Thought_MemorySocial thought_MemorySocial = (Thought_MemorySocial)ThoughtMaker.MakeThought(ThoughtDefOf.KilledMyFriend);
-												thought_MemorySocial.opinionOffset *= this.GetFriendDiedThoughtPowerFactor(num);
-												current3.needs.mood.thoughts.memories.TryGainMemoryThought(thought_MemorySocial, pawn);
-											}
-											else if (num <= -20)
-											{
-												Thought_MemorySocial thought_MemorySocial2 = (Thought_MemorySocial)ThoughtMaker.MakeThought(ThoughtDefOf.KilledMyRival);
-												thought_MemorySocial2.opinionOffset *= this.GetRivalDiedThoughtPowerFactor(num);
-												current3.needs.mood.thoughts.memories.TryGainMemoryThought(thought_MemorySocial2, pawn);
-											}
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-				if (this.pawn.RaceProps.Humanlike)
-				{
-					foreach (Pawn current4 in Find.MapPawns.AllPawns)
-					{
-						if (!current4.Dead && current4.RaceProps.IsFlesh && current4.needs.mood != null)
-						{
-							int num2 = current4.relations.OpinionOf(this.pawn);
-							if (num2 >= 20)
-							{
-								Thought_Memory thought_Memory2 = (Thought_Memory)ThoughtMaker.MakeThought(ThoughtDefOf.PawnWithGoodOpinionDied);
-								thought_Memory2.moodPowerFactor = this.GetFriendDiedThoughtPowerFactor(num2);
-								thought_Memory2.subject = this.pawn.LabelShort;
-								current4.needs.mood.thoughts.memories.TryGainMemoryThought(thought_Memory2, null);
-							}
-							else if (num2 <= -20)
-							{
-								Thought_Memory thought_Memory3 = (Thought_Memory)ThoughtMaker.MakeThought(ThoughtDefOf.PawnWithBadOpinionDied);
-								thought_Memory3.moodPowerFactor = this.GetRivalDiedThoughtPowerFactor(num2);
-								thought_Memory3.subject = this.pawn.LabelShort;
-								current4.needs.mood.thoughts.memories.TryGainMemoryThought(thought_Memory3, null);
-							}
-						}
-					}
-				}
 				if (this.pawn.RaceProps.Animal)
 				{
-					this.SendBondedAnimalDiedLetter();
+					this.SendBondedAnimalDiedLetter(mapBeforeDeath);
 				}
 				else
 				{
@@ -759,14 +690,7 @@ namespace RimWorld
 					PawnRelationDef mostImportantRelation = current.GetMostImportantRelation(this.pawn);
 					if (mostImportantRelation != null && mostImportantRelation.soldThought != null)
 					{
-						Thought_Memory thought_Memory = (Thought_Memory)ThoughtMaker.MakeThought(mostImportantRelation.soldThought);
-						Thought_MemorySocial thought_MemorySocial = thought_Memory as Thought_MemorySocial;
-						if (thought_MemorySocial != null)
-						{
-							thought_MemorySocial.SetOtherPawn(playerNegotiator);
-						}
-						thought_Memory.subject = this.pawn.LabelShort;
-						current.needs.mood.thoughts.memories.TryGainMemoryThought(thought_Memory, null);
+						current.needs.mood.thoughts.memories.TryGainMemoryThought(mostImportantRelation.soldThought, playerNegotiator);
 					}
 				}
 			}
@@ -787,12 +711,12 @@ namespace RimWorld
 			}
 		}
 
-		private float GetFriendDiedThoughtPowerFactor(int opinion)
+		public float GetFriendDiedThoughtPowerFactor(int opinion)
 		{
 			return Mathf.Lerp(0.15f, 1f, Mathf.InverseLerp(20f, 100f, (float)opinion));
 		}
 
-		private float GetRivalDiedThoughtPowerFactor(int opinion)
+		public float GetRivalDiedThoughtPowerFactor(int opinion)
 		{
 			return Mathf.Lerp(0.15f, 1f, Mathf.InverseLerp(-20f, -100f, (float)opinion));
 		}
@@ -808,7 +732,7 @@ namespace RimWorld
 			}
 		}
 
-		private void SendBondedAnimalDiedLetter()
+		private void SendBondedAnimalDiedLetter(Map mapBeforeDeath)
 		{
 			Predicate<Pawn> isAffected = (Pawn x) => !x.Dead && (!x.RaceProps.Humanlike || !x.story.traits.HasTrait(TraitDefOf.Psychopath));
 			int num = 0;
@@ -873,7 +797,8 @@ namespace RimWorld
 					});
 				}
 			}
-			Find.LetterStack.ReceiveLetter("LetterLabelBondedAnimalDied".Translate(), str.CapitalizeFirst(), LetterType.BadNonUrgent, this.pawn.Position, null);
+			TargetInfo target = (mapBeforeDeath == null) ? TargetInfo.Invalid : new TargetInfo(this.pawn.Position, mapBeforeDeath, false);
+			Find.LetterStack.ReceiveLetter("LetterLabelBondedAnimalDied".Translate(), str.CapitalizeFirst(), LetterType.BadNonUrgent, target, null);
 		}
 
 		private void AffectBondedAnimalsOnMyDeath()
@@ -904,7 +829,7 @@ namespace RimWorld
 					{
 						stateDef = MentalStateDefOf.Manhunter;
 					}
-					this.directRelations[i].otherPawn.mindState.mentalStateHandler.TryStartMentalState(stateDef, null, true);
+					this.directRelations[i].otherPawn.mindState.mentalStateHandler.TryStartMentalState(stateDef, null, true, false, null);
 				}
 			}
 			if (num == 1)
@@ -951,9 +876,9 @@ namespace RimWorld
 				for (int i = 0; i < this.directRelations.Count; i++)
 				{
 					float num = (float)(ticksGame - this.directRelations[i].startTicks) / 60000f;
-					if (this.directRelations[i].def == PawnRelationDefOf.Fiance && this.pawn.thingIDNumber < this.directRelations[i].otherPawn.thingIDNumber && num > 10f && Rand.MTBEventOccurs(2f, 60000f, 1017f) && MarriageCeremonyUtility.AcceptableMapConditionsToStartCeremony() && MarriageCeremonyUtility.FianceReadyToStartCeremony(this.pawn) && MarriageCeremonyUtility.FianceReadyToStartCeremony(this.directRelations[i].otherPawn))
+					if (this.directRelations[i].def == PawnRelationDefOf.Fiance && this.pawn.thingIDNumber < this.directRelations[i].otherPawn.thingIDNumber && num > 10f && Rand.MTBEventOccurs(2f, 60000f, 1017f) && this.pawn.Map == this.directRelations[i].otherPawn.Map && this.pawn.Map.IsPlayerHome && MarriageCeremonyUtility.AcceptableMapConditionsToStartCeremony(this.pawn.Map) && MarriageCeremonyUtility.FianceReadyToStartCeremony(this.pawn) && MarriageCeremonyUtility.FianceReadyToStartCeremony(this.directRelations[i].otherPawn))
 					{
-						Find.VoluntarilyJoinableLordsStarter.TryStartMarriageCeremony(this.pawn, this.directRelations[i].otherPawn);
+						this.pawn.Map.lordsStarter.TryStartMarriageCeremony(this.pawn, this.directRelations[i].otherPawn);
 					}
 				}
 			}
@@ -966,15 +891,15 @@ namespace RimWorld
 				return;
 			}
 			Pawn master = this.pawn.playerSettings.master;
-			if (this.pawn.IsHashIntervalTick(2500) && this.pawn.Position.InHorDistOf(master.Position, 12f) && GenSight.LineOfSight(this.pawn.Position, master.Position, false))
+			if (this.pawn.IsHashIntervalTick(2500) && this.pawn.Position.InHorDistOf(master.Position, 12f) && GenSight.LineOfSight(this.pawn.Position, master.Position, this.pawn.Map, false))
 			{
-				RelationsUtility.TryDevelopBondRelation(master, this.pawn, 0.01f);
+				RelationsUtility.TryDevelopBondRelation(master, this.pawn, 0.001f);
 			}
 		}
 
 		private void GainedOrLostDirectRelation()
 		{
-			if (Current.ProgramState == ProgramState.MapPlaying && !this.pawn.Dead && this.pawn.needs.mood != null)
+			if (Current.ProgramState == ProgramState.Playing && !this.pawn.Dead && this.pawn.needs.mood != null)
 			{
 				this.pawn.needs.mood.thoughts.situational.Notify_SituationalThoughtsDirty();
 			}

@@ -6,8 +6,6 @@ namespace RimWorld
 {
 	public class CompDeepDrill : ThingComp
 	{
-		private const int ResourceLumpSize = 75;
-
 		private const float ResourceLumpWork = 14000f;
 
 		private CompPowerTrader powerComp;
@@ -27,7 +25,7 @@ namespace RimWorld
 			this.powerComp = this.parent.TryGetComp<CompPowerTrader>();
 		}
 
-		public void ExposeData()
+		public override void PostExposeData()
 		{
 			Scribe_Values.LookValue<float>(ref this.progressOnLump, "progressOnLump", 0f, false);
 		}
@@ -45,16 +43,21 @@ namespace RimWorld
 
 		private void ProduceLump()
 		{
-			ThingDef def;
+			ThingDef thingDef;
 			int num;
 			IntVec3 c;
-			if (this.TryGetNextResource(out def, out num, out c))
+			if (this.TryGetNextResource(out thingDef, out num, out c))
 			{
-				int num2 = Mathf.Min(num, 75);
-				Find.DeepResourceGrid.SetAt(c, def, num - num2);
-				Thing thing = ThingMaker.MakeThing(def, null);
+				int num2 = Mathf.Min(new int[]
+				{
+					num,
+					thingDef.deepCountPerCell / 2,
+					thingDef.stackLimit
+				});
+				this.parent.Map.deepResourceGrid.SetAt(c, thingDef, num - num2);
+				Thing thing = ThingMaker.MakeThing(thingDef, null);
 				thing.stackCount = num2;
-				GenPlace.TryPlaceThing(thing, this.parent.InteractionCell, ThingPlaceMode.Near, null);
+				GenPlace.TryPlaceThing(thing, this.parent.InteractionCell, this.parent.Map, ThingPlaceMode.Near, null);
 				return;
 			}
 			Log.Error("Drill tried to ProduceLump but couldn't.");
@@ -65,13 +68,13 @@ namespace RimWorld
 			for (int i = 0; i < 9; i++)
 			{
 				IntVec3 intVec = this.parent.Position + GenRadial.RadialPattern[i];
-				if (intVec.InBounds())
+				if (intVec.InBounds(this.parent.Map))
 				{
-					ThingDef thingDef = Find.DeepResourceGrid.ThingDefAt(intVec);
+					ThingDef thingDef = this.parent.Map.deepResourceGrid.ThingDefAt(intVec);
 					if (thingDef != null)
 					{
 						resDef = thingDef;
-						countPresent = Find.DeepResourceGrid.CountAt(intVec);
+						countPresent = this.parent.Map.deepResourceGrid.CountAt(intVec);
 						cell = intVec;
 						return true;
 					}

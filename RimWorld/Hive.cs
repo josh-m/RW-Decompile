@@ -37,31 +37,34 @@ namespace RimWorld
 					return lord != null && lord.LordJob is LordJob_DefendAndExpandHive;
 				};
 				Pawn foundPawn = this.spawnedPawns.Find(hasDefendHiveLord);
-				if (foundPawn == null)
+				if (base.Spawned)
 				{
-					RegionTraverser.BreadthFirstTraverse(base.Position.GetRegion(), (Region from, Region to) => true, delegate(Region r)
+					if (foundPawn == null)
 					{
-						List<Thing> list = r.ListerThings.ThingsOfDef(ThingDefOf.Hive);
-						for (int i = 0; i < list.Count; i++)
+						RegionTraverser.BreadthFirstTraverse(this.GetRegion(), (Region from, Region to) => true, delegate(Region r)
 						{
-							if (list[i] != this)
+							List<Thing> list = r.ListerThings.ThingsOfDef(ThingDefOf.Hive);
+							for (int i = 0; i < list.Count; i++)
 							{
-								if (list[i].Faction == this.Faction)
+								if (list[i] != this)
 								{
-									foundPawn = ((Hive)list[i]).spawnedPawns.Find(hasDefendHiveLord);
-									if (foundPawn != null)
+									if (list[i].Faction == this.Faction)
 									{
-										return true;
+										foundPawn = ((Hive)list[i]).spawnedPawns.Find(hasDefendHiveLord);
+										if (foundPawn != null)
+										{
+											return true;
+										}
 									}
 								}
 							}
-						}
-						return false;
-					}, 20);
-				}
-				if (foundPawn != null)
-				{
-					return foundPawn.GetLord();
+							return false;
+						}, 20);
+					}
+					if (foundPawn != null)
+					{
+						return foundPawn.GetLord();
+					}
 				}
 				return null;
 			}
@@ -81,9 +84,9 @@ namespace RimWorld
 			}
 		}
 
-		public override void SpawnSetup()
+		public override void SpawnSetup(Map map)
 		{
-			base.SpawnSetup();
+			base.SpawnSetup(map);
 			if (base.Faction == null)
 			{
 				this.SetFaction(Faction.OfInsects, null);
@@ -112,41 +115,45 @@ namespace RimWorld
 		public override void TickRare()
 		{
 			base.TickRare();
-			this.FilterOutUnspawnedPawns();
-			if (!this.active && !base.Position.Fogged())
+			if (base.Spawned)
 			{
-				this.Activate();
-			}
-			if (this.active)
-			{
-				if (this.ticksToSpawnInitialPawns > 0)
+				this.FilterOutUnspawnedPawns();
+				if (!this.active && !base.Position.Fogged(base.Map))
 				{
-					this.ticksToSpawnInitialPawns -= 250;
-					if (this.ticksToSpawnInitialPawns <= 0)
-					{
-						this.SpawnInitialPawnsNow();
-					}
+					this.Activate();
 				}
-				if (Find.TickManager.TicksGame >= this.nextPawnSpawnTick)
+				if (this.active)
 				{
-					if (this.SpawnedPawnsPoints < 500f)
+					if (this.ticksToSpawnInitialPawns > 0)
 					{
-						Pawn pawn;
-						bool flag = this.TrySpawnPawn(out pawn);
-						if (flag && pawn.caller != null)
+						this.ticksToSpawnInitialPawns -= 250;
+						if (this.ticksToSpawnInitialPawns <= 0)
 						{
-							pawn.caller.DoCall();
+							this.SpawnInitialPawnsNow();
 						}
 					}
-					this.CalculateNextPawnSpawnTick();
+					if (Find.TickManager.TicksGame >= this.nextPawnSpawnTick)
+					{
+						if (this.SpawnedPawnsPoints < 500f)
+						{
+							Pawn pawn;
+							bool flag = this.TrySpawnPawn(out pawn);
+							if (flag && pawn.caller != null)
+							{
+								pawn.caller.DoCall();
+							}
+						}
+						this.CalculateNextPawnSpawnTick();
+					}
 				}
 			}
 		}
 
 		public override void DeSpawn()
 		{
+			Map map = base.Map;
 			base.DeSpawn();
-			List<Lord> lords = Find.LordManager.lords;
+			List<Lord> lords = map.lordManager.lords;
 			for (int i = 0; i < lords.Count; i++)
 			{
 				lords[i].ReceiveMemo("HiveDestroyed");
@@ -175,7 +182,7 @@ namespace RimWorld
 			base.ExposeData();
 			Scribe_Values.LookValue<bool>(ref this.active, "active", false, false);
 			Scribe_Values.LookValue<int>(ref this.nextPawnSpawnTick, "nextPawnSpawnTick", 0, false);
-			Scribe_Collections.LookList<Pawn>(ref this.spawnedPawns, "spawnedPawns", LookMode.MapReference, new object[0]);
+			Scribe_Collections.LookList<Pawn>(ref this.spawnedPawns, "spawnedPawns", LookMode.Reference, new object[0]);
 			Scribe_Values.LookValue<int>(ref this.ticksToSpawnInitialPawns, "ticksToSpawnInitialPawns", 0, false);
 			if (Scribe.mode == LoadSaveMode.PostLoadInit)
 			{
@@ -222,7 +229,7 @@ namespace RimWorld
 				return false;
 			}
 			pawn = PawnGenerator.GeneratePawn(kindDef, base.Faction);
-			GenSpawn.Spawn(pawn, CellFinder.RandomClosewalkCellNear(base.Position, 5));
+			GenSpawn.Spawn(pawn, CellFinder.RandomClosewalkCellNear(base.Position, base.Map, 5), base.Map);
 			this.spawnedPawns.Add(pawn);
 			Lord lord = this.Lord;
 			if (lord == null)
@@ -271,7 +278,7 @@ namespace RimWorld
 
 		private Lord CreateNewLord()
 		{
-			return LordMaker.MakeNewLord(base.Faction, new LordJob_DefendAndExpandHive(), null);
+			return LordMaker.MakeNewLord(base.Faction, new LordJob_DefendAndExpandHive(), base.Map, null);
 		}
 	}
 }

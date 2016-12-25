@@ -8,6 +8,8 @@ namespace RimWorld
 	{
 		private const float OpinionOffsetChangePerDay = 1f;
 
+		private static List<Thought> tmpThoughts = new List<Thought>();
+
 		public override bool ShouldDiscard
 		{
 			get
@@ -50,22 +52,25 @@ namespace RimWorld
 			}
 		}
 
-		public override bool TryMergeWithExistingThought()
+		public override bool TryMergeWithExistingThought(out bool showBubble)
 		{
+			showBubble = false;
 			ThoughtHandler thoughts = this.pawn.needs.mood.thoughts;
-			List<Thought> thoughts2 = thoughts.Thoughts;
-			for (int i = 0; i < thoughts2.Count; i++)
+			thoughts.GetMainThoughts(Thought_MemorySocialCumulative.tmpThoughts);
+			for (int i = 0; i < Thought_MemorySocialCumulative.tmpThoughts.Count; i++)
 			{
-				if (thoughts2[i].def == this.def)
+				if (Thought_MemorySocialCumulative.tmpThoughts[i].def == this.def)
 				{
-					Thought_MemorySocialCumulative thought_MemorySocialCumulative = (Thought_MemorySocialCumulative)thoughts2[i];
-					if (this.otherPawnID == thought_MemorySocialCumulative.otherPawnID)
+					Thought_MemorySocialCumulative thought_MemorySocialCumulative = (Thought_MemorySocialCumulative)Thought_MemorySocialCumulative.tmpThoughts[i];
+					if (this.otherPawn == thought_MemorySocialCumulative.otherPawn)
 					{
 						thought_MemorySocialCumulative.opinionOffset += this.opinionOffset;
+						Thought_MemorySocialCumulative.tmpThoughts.Clear();
 						return true;
 					}
 				}
 			}
+			Thought_MemorySocialCumulative.tmpThoughts.Clear();
 			return false;
 		}
 	}

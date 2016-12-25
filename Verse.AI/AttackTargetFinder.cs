@@ -88,7 +88,7 @@ namespace Verse.AI
 			if (AttackTargetFinder.HasRangedAttack(searcher))
 			{
 				AttackTargetFinder.tmpTargets.Clear();
-				List<IAttackTarget> potentialTargetsFor = Find.AttackTargetsCache.GetPotentialTargetsFor(searcher);
+				List<IAttackTarget> potentialTargetsFor = searcher.Map.attackTargetsCache.GetPotentialTargetsFor(searcher);
 				for (int i = 0; i < potentialTargetsFor.Count; i++)
 				{
 					AttackTargetFinder.tmpTargets.Add((Thing)potentialTargetsFor[i]);
@@ -112,7 +112,7 @@ namespace Verse.AI
 						else
 						{
 							TraverseMode mode = (!canBash) ? TraverseMode.NoPassClosedDoors : TraverseMode.PassDoors;
-							if (!searcher.Position.CanReach(t, PathEndMode.Touch, TraverseParms.For(mode, Danger.Deadly, false)))
+							if (!searcher.Map.reachability.CanReach(searcher.Position, t, PathEndMode.Touch, TraverseParms.For(mode, Danger.Deadly, false)))
 							{
 								return false;
 							}
@@ -130,11 +130,12 @@ namespace Verse.AI
 				predicate = ((Thing t) => oldValidator(t) && t.Position.InHorDistOf(searcherPawn.mindState.duty.focus.Cell, searcherPawn.mindState.duty.radius));
 			}
 			int searchRegionsMax = (maxDist <= 800f) ? 40 : -1;
-			IntVec3 arg_25D_0 = searcher.Position;
-			ThingRequest arg_25D_1 = ThingRequest.ForGroup(ThingRequestGroup.AttackTarget);
-			PathEndMode arg_25D_2 = PathEndMode.Touch;
+			IntVec3 arg_275_0 = searcher.Position;
+			Map arg_275_1 = searcher.Map;
+			ThingRequest arg_275_2 = ThingRequest.ForGroup(ThingRequestGroup.AttackTarget);
+			PathEndMode arg_275_3 = PathEndMode.Touch;
 			bool canBash2 = canBash;
-			Thing thing = GenClosest.ClosestThingReachable(arg_25D_0, arg_25D_1, arg_25D_2, TraverseParms.For(searcherPawn, Danger.Deadly, TraverseMode.ByPawn, canBash2), maxDist, predicate, null, searchRegionsMax, false);
+			Thing thing = GenClosest.ClosestThingReachable(arg_275_0, arg_275_1, arg_275_2, arg_275_3, TraverseParms.For(searcherPawn, Danger.Deadly, TraverseMode.ByPawn, canBash2), maxDist, predicate, null, searchRegionsMax, false);
 			if (thing != null && PawnUtility.ShouldCollideWithPawns(searcherPawn))
 			{
 				Thing thing2 = AttackTargetFinder.FindBestReachableMeleeTarget(predicate, searcherPawn, maxDist, canBash);
@@ -157,7 +158,7 @@ namespace Verse.AI
 			Thing reachableTarget = null;
 			Func<IntVec3, Thing> bestTargetOnCell = delegate(IntVec3 x)
 			{
-				List<Thing> thingList = x.GetThingList();
+				List<Thing> thingList = x.GetThingList(searcherPawn.Map);
 				for (int i = 0; i < thingList.Count; i++)
 				{
 					Thing thing = thingList[i];
@@ -166,7 +167,7 @@ namespace Verse.AI
 					{
 						if (validator(thing))
 						{
-							if (searcherPawn.Position.IsAdjacentTo8WayOrInside(thing.Position, thing.Rotation, thing.def.size) || Find.AttackTargetReservations.CanReserve(searcherPawn, attackTarget))
+							if (searcherPawn.Position.IsAdjacentTo8WayOrInside(thing.Position, thing.Rotation, thing.def.size) || searcherPawn.Map.attackTargetReservationManager.CanReserve(searcherPawn, attackTarget))
 							{
 								return thing;
 							}
@@ -175,13 +176,13 @@ namespace Verse.AI
 				}
 				return null;
 			};
-			FloodFiller.FloodFill(searcherPawn.Position, delegate(IntVec3 x)
+			searcherPawn.Map.floodFiller.FloodFill(searcherPawn.Position, delegate(IntVec3 x)
 			{
 				if (reachableTarget != null)
 				{
 					return false;
 				}
-				if (!x.Walkable())
+				if (!x.Walkable(searcherPawn.Map))
 				{
 					return false;
 				}
@@ -191,7 +192,7 @@ namespace Verse.AI
 				}
 				if (!canBash)
 				{
-					Building_Door building_Door = x.GetEdifice() as Building_Door;
+					Building_Door building_Door = x.GetEdifice(searcherPawn.Map) as Building_Door;
 					if (building_Door != null && !building_Door.CanPhysicallyPass(searcherPawn))
 					{
 						return false;
@@ -203,7 +204,7 @@ namespace Verse.AI
 				for (int i = 0; i < 8; i++)
 				{
 					IntVec3 intVec = x + GenAdj.AdjacentCells[i];
-					if (intVec.InBounds())
+					if (intVec.InBounds(searcherPawn.Map))
 					{
 						Thing thing = bestTargetOnCell(intVec);
 						if (thing != null)
@@ -263,17 +264,17 @@ namespace Verse.AI
 			ShootLeanUtility.CalcShootableCellsOf(AttackTargetFinder.tempDestList, target);
 			for (int i = 0; i < AttackTargetFinder.tempDestList.Count; i++)
 			{
-				if (GenSight.LineOfSight(seer.Position, AttackTargetFinder.tempDestList[i], true))
+				if (GenSight.LineOfSight(seer.Position, AttackTargetFinder.tempDestList[i], seer.Map, true))
 				{
 					return true;
 				}
 			}
-			ShootLeanUtility.LeanShootingSourcesFromTo(seer.Position, target.Position, AttackTargetFinder.tempSourceList);
+			ShootLeanUtility.LeanShootingSourcesFromTo(seer.Position, target.Position, seer.Map, AttackTargetFinder.tempSourceList);
 			for (int j = 0; j < AttackTargetFinder.tempSourceList.Count; j++)
 			{
 				for (int k = 0; k < AttackTargetFinder.tempDestList.Count; k++)
 				{
-					if (GenSight.LineOfSight(AttackTargetFinder.tempSourceList[j], AttackTargetFinder.tempDestList[k], true))
+					if (GenSight.LineOfSight(AttackTargetFinder.tempSourceList[j], AttackTargetFinder.tempDestList[k], seer.Map, true))
 					{
 						return true;
 					}

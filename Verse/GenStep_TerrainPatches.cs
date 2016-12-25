@@ -11,19 +11,19 @@ namespace Verse
 
 		public FloatRange patchSizeRange;
 
-		public override void Generate()
+		public override void Generate(Map map)
 		{
-			int num = Mathf.RoundToInt((float)Find.Map.Area / 10000f * this.patchesPer10kCellsRange.RandomInRange);
+			int num = Mathf.RoundToInt((float)map.Area / 10000f * this.patchesPer10kCellsRange.RandomInRange);
 			for (int i = 0; i < num; i++)
 			{
 				float randomInRange = this.patchSizeRange.RandomInRange;
-				IntVec3 a = CellFinder.RandomCell();
+				IntVec3 a = CellFinder.RandomCell(map);
 				foreach (IntVec3 current in GenRadial.RadialPatternInRadius(randomInRange / 2f))
 				{
 					IntVec3 c = a + current;
-					if (c.InBounds())
+					if (c.InBounds(map))
 					{
-						Find.TerrainGrid.SetTerrain(c, this.terrainDef);
+						map.terrainGrid.SetTerrain(c, this.terrainDef);
 					}
 				}
 			}

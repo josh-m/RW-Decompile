@@ -10,7 +10,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return (Zone_Growing)Find.ZoneManager.AllZones.FirstOrDefault((Zone z) => z is Zone_Growing);
+				return (Zone_Growing)base.Map.zoneManager.AllZones.FirstOrDefault((Zone z) => z is Zone_Growing);
 			}
 		}
 

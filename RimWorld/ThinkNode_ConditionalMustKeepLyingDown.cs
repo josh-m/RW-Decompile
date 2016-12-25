@@ -17,7 +17,7 @@ namespace RimWorld
 				{
 					return false;
 				}
-				if (!pawn.CurJob.restUntilHealed || !pawn.health.PrefersMedicalRest)
+				if (!pawn.CurJob.restUntilHealed || !HealthAIUtility.ShouldSeekMedicalRest(pawn))
 				{
 					if (!pawn.jobs.curDriver.asleep)
 					{

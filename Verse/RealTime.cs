@@ -21,9 +21,10 @@ namespace Verse
 
 		public static void Update()
 		{
-			RealTime.realDeltaTime = Time.realtimeSinceStartup - RealTime.lastRealTime;
-			RealTime.lastRealTime = Time.realtimeSinceStartup;
-			if (Current.ProgramState == ProgramState.MapPlaying)
+			float realtimeSinceStartup = Time.realtimeSinceStartup;
+			RealTime.realDeltaTime = realtimeSinceStartup - RealTime.lastRealTime;
+			RealTime.lastRealTime = realtimeSinceStartup;
+			if (Current.ProgramState == ProgramState.Playing)
 			{
 				RealTime.moteList.MoteListUpdate();
 			}

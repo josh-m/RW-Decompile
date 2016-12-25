@@ -9,14 +9,18 @@ namespace Verse
 
 		private static CellRect viewRect;
 
-		public static bool ShouldSpawnMotesAt(this Vector3 loc)
+		public static bool ShouldSpawnMotesAt(this Vector3 loc, Map map)
 		{
-			return loc.ToIntVec3().ShouldSpawnMotesAt();
+			return loc.ToIntVec3().ShouldSpawnMotesAt(map);
 		}
 
-		public static bool ShouldSpawnMotesAt(this IntVec3 loc)
+		public static bool ShouldSpawnMotesAt(this IntVec3 loc, Map map)
 		{
-			if (!loc.InBounds())
+			if (map != Find.VisibleMap)
+			{
+				return false;
+			}
+			if (!loc.InBounds(map))
 			{
 				return false;
 			}
@@ -29,7 +33,7 @@ namespace Verse
 		{
 			GenView.viewRect = Find.CameraDriver.CurrentViewRect;
 			GenView.viewRect = GenView.viewRect.ExpandedBy(5);
-			GenView.viewRect.ClipInsideMap();
+			GenView.viewRect.ClipInsideMap(Find.VisibleMap);
 			return GenView.viewRect.RandomVector3;
 		}
 	}

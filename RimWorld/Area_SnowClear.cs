@@ -30,9 +30,17 @@ namespace RimWorld
 			}
 		}
 
+		public Area_SnowClear()
+		{
+		}
+
+		public Area_SnowClear(AreaManager areaManager) : base(areaManager)
+		{
+		}
+
 		public override string GetUniqueLoadID()
 		{
-			return "Area_SnowClear";
+			return "Area_" + this.ID + "_SnowClear";
 		}
 	}
 }

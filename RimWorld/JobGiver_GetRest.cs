@@ -7,10 +7,16 @@ namespace RimWorld
 {
 	public class JobGiver_GetRest : ThinkNode_JobGiver
 	{
+		private RestCategory minCategory;
+
 		public override float GetPriority(Pawn pawn)
 		{
 			Need_Rest rest = pawn.needs.rest;
 			if (rest == null)
+			{
+				return 0f;
+			}
+			if (rest.CurCategory < this.minCategory)
 			{
 				return 0f;
 			}
@@ -30,8 +36,8 @@ namespace RimWorld
 			}
 			else
 			{
-				int hourOfDay = GenDate.HourOfDay;
-				if (hourOfDay < 7 || hourOfDay > 21)
+				int num = GenLocalDate.HourOfDay(pawn);
+				if (num < 7 || num > 21)
 				{
 					timeAssignmentDef = TimeAssignmentDefOf.Sleep;
 				}
@@ -89,16 +95,8 @@ namespace RimWorld
 			{
 				return new Job(JobDefOf.LayDown, building_Bed);
 			}
-			IntVec3 vec;
-			if (pawn.playerSettings != null && pawn.playerSettings.AreaRestriction != null)
-			{
-				vec = CellFinder.RandomClosewalkCellNear(pawn.Position, 4, pawn.playerSettings.AreaRestriction);
-			}
-			else
-			{
-				vec = CellFinder.RandomClosewalkCellNear(pawn.Position, 4);
-			}
-			return new Job(JobDefOf.LayDown, vec);
+			IntVec3 c = CellFinder.RandomClosewalkCellNearNotForbidden(pawn.Position, pawn.Map, 4, pawn);
+			return new Job(JobDefOf.LayDown, c);
 		}
 	}
 }

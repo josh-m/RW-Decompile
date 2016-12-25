@@ -16,9 +16,9 @@ namespace RimWorld
 
 		private IntRange WaitTicks = new IntRange(30, 80);
 
-		public override ThinkNode DeepCopy()
+		public override ThinkNode DeepCopy(bool resolve = true)
 		{
-			JobGiver_GotoTravelDestination jobGiver_GotoTravelDestination = (JobGiver_GotoTravelDestination)base.DeepCopy();
+			JobGiver_GotoTravelDestination jobGiver_GotoTravelDestination = (JobGiver_GotoTravelDestination)base.DeepCopy(resolve);
 			jobGiver_GotoTravelDestination.locomotionUrgency = this.locomotionUrgency;
 			jobGiver_GotoTravelDestination.maxDanger = this.maxDanger;
 			jobGiver_GotoTravelDestination.jobMaxDuration = this.jobMaxDuration;
@@ -45,12 +45,12 @@ namespace RimWorld
 			{
 				return null;
 			}
-			IntVec3 vec = cell;
+			IntVec3 c = cell;
 			if (!this.exactCell)
 			{
-				vec = CellFinder.RandomClosewalkCellNear(cell, 6);
+				c = CellFinder.RandomClosewalkCellNear(cell, pawn.Map, 6);
 			}
-			return new Job(JobDefOf.Goto, vec)
+			return new Job(JobDefOf.Goto, c)
 			{
 				locomotionUrgency = PawnUtility.ResolveLocomotion(pawn, this.locomotionUrgency),
 				expiryInterval = this.jobMaxDuration

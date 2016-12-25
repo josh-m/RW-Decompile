@@ -5,6 +5,8 @@ namespace Verse
 {
 	public sealed class ZoneManager : IExposable
 	{
+		public Map map;
+
 		private List<Zone> allZones = new List<Zone>();
 
 		private Zone[] zoneGrid;
@@ -17,12 +19,10 @@ namespace Verse
 			}
 		}
 
-		public ZoneManager()
+		public ZoneManager(Map map)
 		{
-			if (this.zoneGrid == null)
-			{
-				this.zoneGrid = new Zone[CellIndices.NumGridCells];
-			}
+			this.map = map;
+			this.zoneGrid = new Zone[map.cellIndices.NumGridCells];
 		}
 
 		public void ExposeData()
@@ -30,18 +30,28 @@ namespace Verse
 			Scribe_Collections.LookList<Zone>(ref this.allZones, "allZones", LookMode.Deep, new object[0]);
 			if (Scribe.mode == LoadSaveMode.LoadingVars)
 			{
+				this.UpdateZoneManagerLinks();
 				this.RebuildZoneGrid();
+			}
+		}
+
+		private void UpdateZoneManagerLinks()
+		{
+			for (int i = 0; i < this.allZones.Count; i++)
+			{
+				this.allZones[i].zoneManager = this;
 			}
 		}
 
 		private void RebuildZoneGrid()
 		{
-			this.zoneGrid = new Zone[CellIndices.NumGridCells];
+			CellIndices cellIndices = this.map.cellIndices;
+			this.zoneGrid = new Zone[cellIndices.NumGridCells];
 			foreach (Zone current in this.allZones)
 			{
 				foreach (IntVec3 current2 in current)
 				{
-					this.zoneGrid[CellIndices.CellToIndex(current2)] = current;
+					this.zoneGrid[cellIndices.CellToIndex(current2)] = current;
 				}
 			}
 		}
@@ -58,17 +68,17 @@ namespace Verse
 
 		internal void AddZoneGridCell(Zone zone, IntVec3 c)
 		{
-			this.zoneGrid[CellIndices.CellToIndex(c)] = zone;
+			this.zoneGrid[this.map.cellIndices.CellToIndex(c)] = zone;
 		}
 
 		internal void ClearZoneGridCell(IntVec3 c)
 		{
-			this.zoneGrid[CellIndices.CellToIndex(c)] = null;
+			this.zoneGrid[this.map.cellIndices.CellToIndex(c)] = null;
 		}
 
 		public Zone ZoneAt(IntVec3 c)
 		{
-			return this.zoneGrid[CellIndices.CellToIndex(c)];
+			return this.zoneGrid[this.map.cellIndices.CellToIndex(c)];
 		}
 
 		public string NewZoneName(string nameBase)

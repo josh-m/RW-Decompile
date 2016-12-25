@@ -13,8 +13,10 @@ namespace RimWorld
 
 		public int priorityInType;
 
+		[MustTranslate]
 		public string verb;
 
+		[MustTranslate]
 		public string gerund;
 
 		public bool scanThings = true;

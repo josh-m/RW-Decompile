@@ -5,7 +5,7 @@ using Verse;
 
 namespace RimWorld
 {
-	public static class PowerNetManager
+	public class PowerNetManager
 	{
 		private enum DelayedActionType
 		{
@@ -28,101 +28,103 @@ namespace RimWorld
 			}
 		}
 
-		private static List<PowerNet> allNets = new List<PowerNet>();
+		public Map map;
 
-		private static List<PowerNetManager.DelayedAction> delayedActions = new List<PowerNetManager.DelayedAction>();
+		private List<PowerNet> allNets = new List<PowerNet>();
 
-		public static void Reinit()
+		private List<PowerNetManager.DelayedAction> delayedActions = new List<PowerNetManager.DelayedAction>();
+
+		public PowerNetManager(Map map)
 		{
-			PowerNetManager.allNets.Clear();
-			PowerNetManager.delayedActions.Clear();
+			this.map = map;
 		}
 
-		public static void Notify_TransmitterSpawned(CompPower newTransmitter)
+		public void Notify_TransmitterSpawned(CompPower newTransmitter)
 		{
-			PowerNetManager.delayedActions.Add(new PowerNetManager.DelayedAction(PowerNetManager.DelayedActionType.RegisterTransmitter, newTransmitter));
-			PowerNetManager.NotifyDrawersForWireUpdate(newTransmitter.parent.Position);
+			this.delayedActions.Add(new PowerNetManager.DelayedAction(PowerNetManager.DelayedActionType.RegisterTransmitter, newTransmitter));
+			this.NotifyDrawersForWireUpdate(newTransmitter.parent.Position);
 		}
 
-		public static void Notify_TransmitterDespawned(CompPower oldTransmitter)
+		public void Notify_TransmitterDespawned(CompPower oldTransmitter)
 		{
-			PowerNetManager.delayedActions.Add(new PowerNetManager.DelayedAction(PowerNetManager.DelayedActionType.DeregisterTransmitter, oldTransmitter));
-			PowerNetManager.NotifyDrawersForWireUpdate(oldTransmitter.parent.Position);
+			this.delayedActions.Add(new PowerNetManager.DelayedAction(PowerNetManager.DelayedActionType.DeregisterTransmitter, oldTransmitter));
+			this.NotifyDrawersForWireUpdate(oldTransmitter.parent.Position);
 		}
 
-		public static void Notfiy_TransmitterTransmitsPowerNowChanged(CompPower transmitter)
+		public void Notfiy_TransmitterTransmitsPowerNowChanged(CompPower transmitter)
 		{
 			if (!transmitter.parent.Spawned)
 			{
 				return;
 			}
-			PowerNetManager.delayedActions.Add(new PowerNetManager.DelayedAction(PowerNetManager.DelayedActionType.DeregisterTransmitter, transmitter));
-			PowerNetManager.delayedActions.Add(new PowerNetManager.DelayedAction(PowerNetManager.DelayedActionType.RegisterTransmitter, transmitter));
-			PowerNetManager.NotifyDrawersForWireUpdate(transmitter.parent.Position);
+			this.delayedActions.Add(new PowerNetManager.DelayedAction(PowerNetManager.DelayedActionType.DeregisterTransmitter, transmitter));
+			this.delayedActions.Add(new PowerNetManager.DelayedAction(PowerNetManager.DelayedActionType.RegisterTransmitter, transmitter));
+			this.NotifyDrawersForWireUpdate(transmitter.parent.Position);
 		}
 
-		public static void Notify_ConnectorWantsConnect(CompPower wantingCon)
+		public void Notify_ConnectorWantsConnect(CompPower wantingCon)
 		{
-			if (Scribe.mode == LoadSaveMode.Inactive && !PowerNetManager.HasRegisterConnectorDuplicate(wantingCon))
+			if (Scribe.mode == LoadSaveMode.Inactive && !this.HasRegisterConnectorDuplicate(wantingCon))
 			{
-				PowerNetManager.delayedActions.Add(new PowerNetManager.DelayedAction(PowerNetManager.DelayedActionType.RegisterConnector, wantingCon));
+				this.delayedActions.Add(new PowerNetManager.DelayedAction(PowerNetManager.DelayedActionType.RegisterConnector, wantingCon));
 			}
-			PowerNetManager.NotifyDrawersForWireUpdate(wantingCon.parent.Position);
+			this.NotifyDrawersForWireUpdate(wantingCon.parent.Position);
 		}
 
-		public static void Notify_ConnectorDespawned(CompPower oldCon)
+		public void Notify_ConnectorDespawned(CompPower oldCon)
 		{
-			PowerNetManager.delayedActions.Add(new PowerNetManager.DelayedAction(PowerNetManager.DelayedActionType.DeregisterConnector, oldCon));
-			PowerNetManager.NotifyDrawersForWireUpdate(oldCon.parent.Position);
+			this.delayedActions.Add(new PowerNetManager.DelayedAction(PowerNetManager.DelayedActionType.DeregisterConnector, oldCon));
+			this.NotifyDrawersForWireUpdate(oldCon.parent.Position);
 		}
 
-		public static void NotifyDrawersForWireUpdate(IntVec3 root)
+		public void NotifyDrawersForWireUpdate(IntVec3 root)
 		{
-			Find.MapDrawer.MapMeshDirty(root, MapMeshFlag.Things, true, false);
-			Find.MapDrawer.MapMeshDirty(root, MapMeshFlag.PowerGrid, true, false);
+			this.map.mapDrawer.MapMeshDirty(root, MapMeshFlag.Things, true, false);
+			this.map.mapDrawer.MapMeshDirty(root, MapMeshFlag.PowerGrid, true, false);
 		}
 
-		public static void RegisterPowerNet(PowerNet newNet)
+		public void RegisterPowerNet(PowerNet newNet)
 		{
-			PowerNetManager.allNets.Add(newNet);
-			PowerNetGrid.Notify_PowerNetCreated(newNet);
+			this.allNets.Add(newNet);
+			newNet.powerNetManager = this;
+			this.map.powerNetGrid.Notify_PowerNetCreated(newNet);
 			PowerNetMaker.UpdateVisualLinkagesFor(newNet);
 		}
 
-		public static void DeletePowerNet(PowerNet oldNet)
+		public void DeletePowerNet(PowerNet oldNet)
 		{
-			PowerNetManager.allNets.Remove(oldNet);
-			PowerNetGrid.Notify_PowerNetDeleted(oldNet);
+			this.allNets.Remove(oldNet);
+			this.map.powerNetGrid.Notify_PowerNetDeleted(oldNet);
 		}
 
-		public static void PowerNetsTick()
+		public void PowerNetsTick()
 		{
-			for (int i = 0; i < PowerNetManager.allNets.Count; i++)
+			for (int i = 0; i < this.allNets.Count; i++)
 			{
-				PowerNetManager.allNets[i].PowerNetTick();
+				this.allNets[i].PowerNetTick();
 			}
 		}
 
-		public static void UpdatePowerNetsAndConnections_First()
+		public void UpdatePowerNetsAndConnections_First()
 		{
-			int count = PowerNetManager.delayedActions.Count;
+			int count = this.delayedActions.Count;
 			for (int i = 0; i < count; i++)
 			{
-				PowerNetManager.DelayedAction delayedAction = PowerNetManager.delayedActions[i];
-				PowerNetManager.DelayedActionType type = PowerNetManager.delayedActions[i].type;
+				PowerNetManager.DelayedAction delayedAction = this.delayedActions[i];
+				PowerNetManager.DelayedActionType type = this.delayedActions[i].type;
 				if (type != PowerNetManager.DelayedActionType.RegisterTransmitter)
 				{
 					if (type == PowerNetManager.DelayedActionType.DeregisterTransmitter)
 					{
-						PowerNetManager.TryDestroyNetAt(delayedAction.compPower.parent.Position);
-						PowerConnectionMaker.DisconnectAllFromTransmitterAndSetWantConnect(delayedAction.compPower);
+						this.TryDestroyNetAt(delayedAction.compPower.parent.Position);
+						PowerConnectionMaker.DisconnectAllFromTransmitterAndSetWantConnect(delayedAction.compPower, this.map);
 						delayedAction.compPower.ResetPowerVars();
 					}
 				}
 				else
 				{
 					ThingWithComps parent = delayedAction.compPower.parent;
-					if (PowerNetGrid.TransmittedPowerNetAt(parent.Position) != null)
+					if (this.map.powerNetGrid.TransmittedPowerNetAt(parent.Position) != null)
 					{
 						Log.Warning(string.Concat(new object[]
 						{
@@ -136,26 +138,26 @@ namespace RimWorld
 					delayedAction.compPower.SetUpPowerVars();
 					foreach (IntVec3 current in GenAdj.CellsAdjacentCardinal(parent))
 					{
-						PowerNetManager.TryDestroyNetAt(current);
+						this.TryDestroyNetAt(current);
 					}
 				}
 			}
 			for (int j = 0; j < count; j++)
 			{
-				PowerNetManager.DelayedAction delayedAction2 = PowerNetManager.delayedActions[j];
+				PowerNetManager.DelayedAction delayedAction2 = this.delayedActions[j];
 				if (delayedAction2.type == PowerNetManager.DelayedActionType.RegisterTransmitter || delayedAction2.type == PowerNetManager.DelayedActionType.DeregisterTransmitter)
 				{
-					PowerNetManager.TryCreateNetAt(delayedAction2.compPower.parent.Position);
+					this.TryCreateNetAt(delayedAction2.compPower.parent.Position);
 					foreach (IntVec3 current2 in GenAdj.CellsAdjacentCardinal(delayedAction2.compPower.parent))
 					{
-						PowerNetManager.TryCreateNetAt(current2);
+						this.TryCreateNetAt(current2);
 					}
 				}
 			}
 			for (int k = 0; k < count; k++)
 			{
-				PowerNetManager.DelayedAction delayedAction3 = PowerNetManager.delayedActions[k];
-				PowerNetManager.DelayedActionType type = PowerNetManager.delayedActions[k].type;
+				PowerNetManager.DelayedAction delayedAction3 = this.delayedActions[k];
+				PowerNetManager.DelayedActionType type = this.delayedActions[k].type;
 				if (type != PowerNetManager.DelayedActionType.RegisterConnector)
 				{
 					if (type == PowerNetManager.DelayedActionType.DeregisterConnector)
@@ -170,24 +172,24 @@ namespace RimWorld
 					PowerConnectionMaker.TryConnectToAnyPowerNet(delayedAction3.compPower, null);
 				}
 			}
-			PowerNetManager.delayedActions.RemoveRange(0, count);
+			this.delayedActions.RemoveRange(0, count);
 			if (DebugViewSettings.drawPower)
 			{
-				PowerNetManager.DrawDebugPowerNets();
+				this.DrawDebugPowerNets();
 			}
 		}
 
-		private static bool HasRegisterConnectorDuplicate(CompPower compPower)
+		private bool HasRegisterConnectorDuplicate(CompPower compPower)
 		{
-			for (int i = PowerNetManager.delayedActions.Count - 1; i >= 0; i--)
+			for (int i = this.delayedActions.Count - 1; i >= 0; i--)
 			{
-				if (PowerNetManager.delayedActions[i].compPower == compPower)
+				if (this.delayedActions[i].compPower == compPower)
 				{
-					if (PowerNetManager.delayedActions[i].type == PowerNetManager.DelayedActionType.DeregisterConnector)
+					if (this.delayedActions[i].type == PowerNetManager.DelayedActionType.DeregisterConnector)
 					{
 						return false;
 					}
-					if (PowerNetManager.delayedActions[i].type == PowerNetManager.DelayedActionType.RegisterConnector)
+					if (this.delayedActions[i].type == PowerNetManager.DelayedActionType.RegisterConnector)
 					{
 						return true;
 					}
@@ -196,19 +198,19 @@ namespace RimWorld
 			return false;
 		}
 
-		private static void TryCreateNetAt(IntVec3 cell)
+		private void TryCreateNetAt(IntVec3 cell)
 		{
-			if (!cell.InBounds())
+			if (!cell.InBounds(this.map))
 			{
 				return;
 			}
-			if (PowerNetGrid.TransmittedPowerNetAt(cell) == null)
+			if (this.map.powerNetGrid.TransmittedPowerNetAt(cell) == null)
 			{
-				Building transmitter = cell.GetTransmitter();
+				Building transmitter = cell.GetTransmitter(this.map);
 				if (transmitter != null && transmitter.TransmitsPowerNow)
 				{
 					PowerNet powerNet = PowerNetMaker.NewPowerNetStartingFrom(transmitter);
-					PowerNetManager.RegisterPowerNet(powerNet);
+					this.RegisterPowerNet(powerNet);
 					for (int i = 0; i < powerNet.transmitters.Count; i++)
 					{
 						PowerConnectionMaker.ConnectAllConnectorsToTransmitter(powerNet.transmitters[i]);
@@ -217,27 +219,27 @@ namespace RimWorld
 			}
 		}
 
-		private static void TryDestroyNetAt(IntVec3 cell)
+		private void TryDestroyNetAt(IntVec3 cell)
 		{
-			if (!cell.InBounds())
+			if (!cell.InBounds(this.map))
 			{
 				return;
 			}
-			PowerNet powerNet = PowerNetGrid.TransmittedPowerNetAt(cell);
+			PowerNet powerNet = this.map.powerNetGrid.TransmittedPowerNetAt(cell);
 			if (powerNet != null)
 			{
-				PowerNetManager.DeletePowerNet(powerNet);
+				this.DeletePowerNet(powerNet);
 			}
 		}
 
-		private static void DrawDebugPowerNets()
+		private void DrawDebugPowerNets()
 		{
-			if (Current.ProgramState != ProgramState.MapPlaying)
+			if (Current.ProgramState != ProgramState.Playing)
 			{
 				return;
 			}
 			int num = 0;
-			foreach (PowerNet current in PowerNetManager.allNets)
+			foreach (PowerNet current in this.allNets)
 			{
 				foreach (CompPower current2 in current.transmitters.Concat(current.connectors))
 				{

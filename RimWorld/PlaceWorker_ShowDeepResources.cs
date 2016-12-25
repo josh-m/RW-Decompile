@@ -8,7 +8,7 @@ namespace RimWorld
 	{
 		public override void DrawGhost(ThingDef def, IntVec3 center, Rot4 rot)
 		{
-			List<Building> allBuildingsColonist = Find.ListerBuildings.allBuildingsColonist;
+			List<Building> allBuildingsColonist = base.Map.listerBuildings.allBuildingsColonist;
 			for (int i = 0; i < allBuildingsColonist.Count; i++)
 			{
 				Building thing = allBuildingsColonist[i];
@@ -18,7 +18,7 @@ namespace RimWorld
 					CompPowerTrader compPowerTrader = thing.TryGetComp<CompPowerTrader>();
 					if (compPowerTrader == null || compPowerTrader.PowerOn)
 					{
-						Find.DeepResourceGrid.DeepResourceGridDraw(true);
+						base.Map.deepResourceGrid.DeepResourceGridDraw(true);
 					}
 				}
 			}

@@ -1,13 +1,14 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using UnityEngine;
 
 namespace Verse
 {
 	public struct CellRect : IEquatable<CellRect>
 	{
-		public struct Enumerator : IDisposable, IEnumerator, IEnumerator<IntVec3>
+		public struct Enumerator : IEnumerator, IDisposable, IEnumerator<IntVec3>
 		{
 			private CellRect ir;
 
@@ -193,14 +194,6 @@ namespace Verse
 			}
 		}
 
-		public static CellRect WholeMap
-		{
-			get
-			{
-				return new CellRect(0, 0, Find.Map.Size.x, Find.Map.Size.z);
-			}
-		}
-
 		public IEnumerable<IntVec3> Cells
 		{
 			get
@@ -210,6 +203,20 @@ namespace Verse
 					for (int x = this.minX; x <= this.maxX; x++)
 					{
 						yield return new IntVec3(x, 0, z);
+					}
+				}
+			}
+		}
+
+		public IEnumerable<IntVec2> Cells2D
+		{
+			get
+			{
+				for (int z = this.minZ; z <= this.maxZ; z++)
+				{
+					for (int x = this.minX; x <= this.maxX; x++)
+					{
+						yield return new IntVec2(x, z);
 					}
 				}
 			}
@@ -244,20 +251,6 @@ namespace Verse
 			}
 		}
 
-		public IEnumerable<IntVec2> Squares
-		{
-			get
-			{
-				for (int z = this.minZ; z <= this.maxZ; z++)
-				{
-					for (int x = this.minX; x <= this.maxX; x++)
-					{
-						yield return new IntVec2(x, z);
-					}
-				}
-			}
-		}
-
 		public CellRect(int minX, int minZ, int width, int height)
 		{
 			this.minX = minX;
@@ -271,14 +264,19 @@ namespace Verse
 			return new CellRect.CellRectIterator(this);
 		}
 
+		public static CellRect WholeMap(Map map)
+		{
+			return new CellRect(0, 0, map.Size.x, map.Size.z);
+		}
+
 		public static CellRect FromLimits(int minX, int minZ, int maxX, int maxZ)
 		{
 			return new CellRect
 			{
-				minX = minX,
-				minZ = minZ,
-				maxX = maxX,
-				maxZ = maxZ
+				minX = Mathf.Min(minX, maxX),
+				minZ = Mathf.Min(minZ, maxZ),
+				maxX = Mathf.Max(maxX, minX),
+				maxZ = Mathf.Max(maxZ, minZ)
 			};
 		}
 
@@ -309,7 +307,19 @@ namespace Verse
 			return new CellRect(c.x, c.z, 1, 1);
 		}
 
-		public CellRect ClipInsideMap()
+		public bool InBounds(Map map)
+		{
+			return this.minX >= 0 && this.minZ >= 0 && this.maxX <= map.Size.x - 1 && this.maxZ <= map.Size.z - 1;
+		}
+
+		public bool FullyContainedWithin(CellRect within)
+		{
+			CellRect rhs = this;
+			rhs.ClipInsideRect(within);
+			return this == rhs;
+		}
+
+		public CellRect ClipInsideMap(Map map)
 		{
 			if (this.minX < 0)
 			{
@@ -319,13 +329,13 @@ namespace Verse
 			{
 				this.minZ = 0;
 			}
-			if (this.maxX > Find.Map.Size.x - 1)
+			if (this.maxX > map.Size.x - 1)
 			{
-				this.maxX = Find.Map.Size.x - 1;
+				this.maxX = map.Size.x - 1;
 			}
-			if (this.maxZ > Find.Map.Size.z - 1)
+			if (this.maxZ > map.Size.z - 1)
 			{
-				this.maxZ = Find.Map.Size.z - 1;
+				this.maxZ = map.Size.z - 1;
 			}
 			return this;
 		}
@@ -433,6 +443,39 @@ namespace Verse
 					return new IntVec3(c.x, 0, this.minZ);
 				}
 				return new IntVec3(c.x, 0, this.maxZ);
+			}
+		}
+
+		[DebuggerHidden]
+		public IEnumerable<IntVec3> GetEdgeCells(Rot4 dir)
+		{
+			if (dir == Rot4.North)
+			{
+				for (int x = this.minX; x <= this.maxX; x++)
+				{
+					yield return new IntVec3(x, 0, this.maxZ);
+				}
+			}
+			else if (dir == Rot4.South)
+			{
+				for (int x2 = this.minX; x2 <= this.maxX; x2++)
+				{
+					yield return new IntVec3(x2, 0, this.minZ);
+				}
+			}
+			else if (dir == Rot4.West)
+			{
+				for (int z = this.minZ; z <= this.maxZ; z++)
+				{
+					yield return new IntVec3(this.minX, 0, z);
+				}
+			}
+			else if (dir == Rot4.East)
+			{
+				for (int z2 = this.minZ; z2 <= this.maxZ; z2++)
+				{
+					yield return new IntVec3(this.maxX, 0, z2);
+				}
 			}
 		}
 

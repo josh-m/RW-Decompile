@@ -12,5 +12,7 @@ namespace RimWorld
 		public static MainTabDef Research;
 
 		public static MainTabDef Menu;
+
+		public static MainTabDef World;
 	}
 }

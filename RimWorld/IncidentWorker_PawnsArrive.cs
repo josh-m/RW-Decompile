@@ -8,21 +8,22 @@ namespace RimWorld
 {
 	public abstract class IncidentWorker_PawnsArrive : IncidentWorker
 	{
-		protected IEnumerable<Faction> CandidateFactions(bool desperate = false)
+		protected IEnumerable<Faction> CandidateFactions(Map map, bool desperate = false)
 		{
 			return from f in Find.FactionManager.AllFactions
-			where this.FactionCanBeGroupSource(f, desperate)
+			where this.FactionCanBeGroupSource(f, map, desperate)
 			select f;
 		}
 
-		protected virtual bool FactionCanBeGroupSource(Faction f, bool desperate = false)
+		protected virtual bool FactionCanBeGroupSource(Faction f, Map map, bool desperate = false)
 		{
-			return !f.IsPlayer && (desperate || (f.def.allowedArrivalTemperatureRange.Includes(GenTemperature.OutdoorTemp) && f.def.allowedArrivalTemperatureRange.Includes(GenTemperature.SeasonalTemp)));
+			return !f.IsPlayer && !f.defeated && (desperate || (f.def.allowedArrivalTemperatureRange.Includes(map.mapTemperature.OutdoorTemp) && f.def.allowedArrivalTemperatureRange.Includes(map.mapTemperature.SeasonalTemp)));
 		}
 
-		protected override bool CanFireNowSub()
+		protected override bool CanFireNowSub(IIncidentTarget target)
 		{
-			return this.CandidateFactions(false).Any<Faction>();
+			Map map = (Map)target;
+			return this.CandidateFactions(map, false).Any<Faction>();
 		}
 
 		public string DebugListingOfGroupSources()
@@ -31,11 +32,11 @@ namespace RimWorld
 			foreach (Faction current in Find.FactionManager.AllFactions)
 			{
 				stringBuilder.Append(current.Name);
-				if (this.FactionCanBeGroupSource(current, false))
+				if (this.FactionCanBeGroupSource(current, Find.VisibleMap, false))
 				{
 					stringBuilder.Append("    YES");
 				}
-				else if (this.FactionCanBeGroupSource(current, true))
+				else if (this.FactionCanBeGroupSource(current, Find.VisibleMap, true))
 				{
 					stringBuilder.Append("    YES-DESPERATE");
 				}

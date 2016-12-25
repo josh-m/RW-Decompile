@@ -23,7 +23,14 @@ namespace RimWorld
 		public void LoadDataFromXmlCustom(XmlNode xmlRoot)
 		{
 			this.def = DefDatabase<TraitDef>.GetNamed(xmlRoot.Name, true);
-			this.degree = (int)ParseHelper.FromString(xmlRoot.FirstChild.Value, typeof(int));
+			if (xmlRoot.HasChildNodes)
+			{
+				this.degree = (int)ParseHelper.FromString(xmlRoot.FirstChild.Value, typeof(int));
+			}
+			else
+			{
+				this.degree = 0;
+			}
 		}
 	}
 }

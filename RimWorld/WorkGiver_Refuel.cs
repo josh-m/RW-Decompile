@@ -37,7 +37,7 @@ namespace RimWorld
 			Thing t2 = this.FindBestFuel(pawn, t);
 			return new Job(JobDefOf.Refuel, t, t2)
 			{
-				maxNumToCarry = t.TryGetComp<CompRefuelable>().GetFuelCountToFullyRefuel()
+				count = t.TryGetComp<CompRefuelable>().GetFuelCountToFullyRefuel()
 			};
 		}
 
@@ -56,6 +56,15 @@ namespace RimWorld
 			{
 				return false;
 			}
+			ThingWithComps thingWithComps = t as ThingWithComps;
+			if (thingWithComps != null)
+			{
+				CompFlickable comp = thingWithComps.GetComp<CompFlickable>();
+				if (comp != null && !comp.SwitchIsOn)
+				{
+					return false;
+				}
+			}
 			if (this.FindBestFuel(pawn, t) == null)
 			{
 				ThingFilter fuelFilter = t.TryGetComp<CompRefuelable>().Props.fuelFilter;
@@ -73,7 +82,7 @@ namespace RimWorld
 			ThingFilter filter = refuelable.TryGetComp<CompRefuelable>().Props.fuelFilter;
 			Predicate<Thing> predicate = (Thing x) => !x.IsForbidden(pawn) && pawn.CanReserve(x, 1) && filter.Allows(x);
 			Predicate<Thing> validator = predicate;
-			return GenClosest.ClosestThingReachable(pawn.Position, filter.BestThingRequest, PathEndMode.ClosestTouch, TraverseParms.For(pawn, Danger.Deadly, TraverseMode.ByPawn, false), 9999f, validator, null, -1, false);
+			return GenClosest.ClosestThingReachable(pawn.Position, pawn.Map, filter.BestThingRequest, PathEndMode.ClosestTouch, TraverseParms.For(pawn, Danger.Deadly, TraverseMode.ByPawn, false), 9999f, validator, null, -1, false);
 		}
 	}
 }

@@ -3,9 +3,11 @@ using System.Collections.Generic;
 
 namespace Verse.AI
 {
-	public static class PawnPathPool
+	public class PawnPathPool
 	{
-		private static List<PawnPath> paths;
+		private Map map;
+
+		private List<PawnPath> paths = new List<PawnPath>(64);
 
 		private static readonly PawnPath NotFoundPathInt;
 
@@ -17,34 +19,33 @@ namespace Verse.AI
 			}
 		}
 
+		public PawnPathPool(Map map)
+		{
+			this.map = map;
+		}
+
 		static PawnPathPool()
 		{
-			PawnPathPool.paths = new List<PawnPath>(64);
 			PawnPathPool.NotFoundPathInt = PawnPath.NewNotFound();
 		}
 
-		public static void Reinit()
+		public PawnPath GetEmptyPawnPath()
 		{
-			PawnPathPool.paths.Clear();
-		}
-
-		public static PawnPath GetEmptyPawnPath()
-		{
-			for (int i = 0; i < PawnPathPool.paths.Count; i++)
+			for (int i = 0; i < this.paths.Count; i++)
 			{
-				if (!PawnPathPool.paths[i].inUse)
+				if (!this.paths[i].inUse)
 				{
-					PawnPathPool.paths[i].inUse = true;
-					return PawnPathPool.paths[i];
+					this.paths[i].inUse = true;
+					return this.paths[i];
 				}
 			}
-			if (PawnPathPool.paths.Count > Find.MapPawns.AllPawnsSpawnedCount)
+			if (this.paths.Count > this.map.mapPawns.AllPawnsSpawnedCount + 2)
 			{
 				Log.ErrorOnce("PawnPathPool leak: more paths than spawned pawns. Force-recovering.", 664788);
-				PawnPathPool.paths.Clear();
+				this.paths.Clear();
 			}
 			PawnPath pawnPath = new PawnPath();
-			PawnPathPool.paths.Add(pawnPath);
+			this.paths.Add(pawnPath);
 			pawnPath.inUse = true;
 			return pawnPath;
 		}

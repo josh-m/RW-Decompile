@@ -39,7 +39,7 @@ namespace RimWorld
 			}
 			if (pawn.skills != null)
 			{
-				num *= PriceUtility.AverageSkillCurve.Evaluate(pawn.skills.skills.Average((SkillRecord sk) => (float)sk.level));
+				num *= PriceUtility.AverageSkillCurve.Evaluate(pawn.skills.skills.Average((SkillRecord sk) => (float)sk.Level));
 			}
 			return num * pawn.ageTracker.CurLifeStage.marketValueFactor;
 		}

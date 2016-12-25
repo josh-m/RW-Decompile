@@ -13,6 +13,8 @@ namespace Verse
 
 		private bool oldFullscreen;
 
+		private float oldUIScale;
+
 		private float TimeUntilRevert
 		{
 			get
@@ -40,12 +42,21 @@ namespace Verse
 		{
 			this.oldFullscreen = oldFullscreen;
 			this.oldRes = new IntVec2(Screen.width, Screen.height);
+			this.oldUIScale = Prefs.UIScale;
 		}
 
 		public Dialog_ResolutionConfirm(IntVec2 oldRes) : this()
 		{
 			this.oldFullscreen = Screen.fullScreen;
 			this.oldRes = oldRes;
+			this.oldUIScale = Prefs.UIScale;
+		}
+
+		public Dialog_ResolutionConfirm(float oldUIScale) : this()
+		{
+			this.oldFullscreen = Screen.fullScreen;
+			this.oldRes = new IntVec2(Screen.width, Screen.height);
+			this.oldUIScale = oldUIScale;
 		}
 
 		public override void DoWindowContents(Rect inRect)
@@ -82,6 +93,7 @@ namespace Verse
 				}));
 			}
 			Screen.SetResolution(this.oldRes.x, this.oldRes.z, this.oldFullscreen);
+			Prefs.UIScale = this.oldUIScale;
 		}
 
 		public override void WindowUpdate()

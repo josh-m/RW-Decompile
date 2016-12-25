@@ -93,7 +93,7 @@ namespace RimWorld
 
 		public static RecordDef SwitchesFlicked;
 
-		public static RecordDef TimeAsColonist;
+		public static RecordDef TimeAsColonistOrColonyAnimal;
 
 		public static RecordDef TimeAsPrisoner;
 	}

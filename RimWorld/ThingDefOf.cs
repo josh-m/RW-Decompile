@@ -24,7 +24,7 @@ namespace RimWorld
 
 		public static ThingDef Plasteel;
 
-		public static ThingDef ArtilleryShell;
+		public static ThingDef MortarShell;
 
 		public static ThingDef Beer;
 
@@ -56,11 +56,19 @@ namespace RimWorld
 
 		public static ThingDef MealFine;
 
+		public static ThingDef Pemmican;
+
+		public static ThingDef Kibble;
+
+		public static ThingDef Hay;
+
 		public static ThingDef Luciferium;
 
-		public static ThingDef DropPod;
+		public static ThingDef ActiveDropPod;
 
 		public static ThingDef DropPodIncoming;
+
+		public static ThingDef DropPodLeaving;
 
 		public static ThingDef Fire;
 
@@ -110,9 +118,13 @@ namespace RimWorld
 
 		public static ThingDef MineableSteel;
 
+		public static ThingDef Door;
+
 		public static ThingDef Wall;
 
 		public static ThingDef Bed;
+
+		public static ThingDef SleepingSpot;
 
 		public static ThingDef OrbitalTradeBeacon;
 
@@ -166,6 +178,16 @@ namespace RimWorld
 
 		public static ThingDef DeepDrill;
 
+		public static ThingDef CollapsedRocks;
+
+		public static ThingDef TorchLamp;
+
+		public static ThingDef Campfire;
+
+		public static ThingDef FirefoamPopper;
+
+		public static ThingDef PassiveCooler;
+
 		public static ThingDef PlantPotato;
 
 		public static ThingDef PlantTreeOak;
@@ -173,6 +195,10 @@ namespace RimWorld
 		public static ThingDef PlantGrass;
 
 		public static ThingDef Human;
+
+		public static ThingDef Muffalo;
+
+		public static ThingDef Dromedary;
 
 		public static ThingDef Cow;
 
@@ -203,8 +229,6 @@ namespace RimWorld
 		public static ThingDef Mote_HealingCross;
 
 		public static ThingDef Mote_SleepZ;
-
-		public static ThingDef Mote_SleepDisturbed;
 
 		public static ThingDef Mote_Heart;
 
@@ -241,6 +265,10 @@ namespace RimWorld
 		public static ThingDef Mote_ColonistAttacking;
 
 		public static ThingDef Mote_Speech;
+
+		public static ThingDef Mote_ThoughtBad;
+
+		public static ThingDef Mote_ThoughtGood;
 
 		public static ThingDef Mote_MetaPuff;
 

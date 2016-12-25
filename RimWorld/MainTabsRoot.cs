@@ -56,7 +56,7 @@ namespace RimWorld
 			this.DoTabButtons();
 			for (int i = 0; i < this.allTabs.Count; i++)
 			{
-				if (this.allTabs[i].toggleHotKey != null && this.allTabs[i].toggleHotKey.KeyDownEvent)
+				if ((this.allTabs[i].validWithoutMap || Find.VisibleMap != null) && this.allTabs[i].toggleHotKey != null && this.allTabs[i].toggleHotKey.KeyDownEvent)
 				{
 					this.InterfaceTryToggleTab(this.allTabs[i], true);
 					Event.current.Use();
@@ -71,15 +71,22 @@ namespace RimWorld
 			{
 				this.EscapeCurrentTab(false);
 			}
-			if (Find.Selector.NumSelected == 0 && Event.current.type == EventType.MouseDown && Event.current.button == 1)
+			if (Find.VisibleMap == null && this.OpenTab == null)
 			{
-				Event.current.Use();
-				this.InterfaceTryToggleTab(MainTabDefOf.Architect, true);
+				this.SetCurrentTab(MainTabDefOf.World, false);
 			}
-			if (this.OpenTab != MainTabDefOf.Inspect && Event.current.type == EventType.MouseDown && Event.current.button != 2)
+			if (this.OpenTab != MainTabDefOf.World)
 			{
-				this.EscapeCurrentTab(true);
-				Find.Selector.ClearSelection();
+				if (Find.Selector.NumSelected == 0 && Event.current.type == EventType.MouseDown && Event.current.button == 1)
+				{
+					Event.current.Use();
+					this.InterfaceTryToggleTab(MainTabDefOf.Architect, true);
+				}
+				if (this.OpenTab != MainTabDefOf.Inspect && Event.current.type == EventType.MouseDown && Event.current.button != 2)
+				{
+					this.EscapeCurrentTab(true);
+					Find.Selector.ClearSelection();
+				}
 			}
 		}
 
@@ -146,13 +153,21 @@ namespace RimWorld
 					TutorSystem.Notify_Event("Open-MainTab-" + newTab.defName);
 				}
 			}
+			if (this.OpenTab == MainTabDefOf.World)
+			{
+				Find.Targeter.StopTargeting();
+			}
+			else
+			{
+				Find.WorldTargeter.StopTargeting();
+			}
 		}
 
 		private void DoTabButtons()
 		{
 			GUI.color = Color.white;
 			int tabButtonsCount = this.TabButtonsCount;
-			int num = (int)((float)Screen.width / (float)tabButtonsCount);
+			int num = (int)((float)UI.screenWidth / (float)tabButtonsCount);
 			int num2 = this.allTabs.FindLastIndex((MainTabDef x) => x.showTabButton);
 			int num3 = 0;
 			for (int i = 0; i < this.allTabs.Count; i++)
@@ -162,7 +177,7 @@ namespace RimWorld
 					int num4 = num;
 					if (i == num2)
 					{
-						num4 = Screen.width - num3;
+						num4 = UI.screenWidth - num3;
 					}
 					this.DoTabButton(this.allTabs[i], (float)num3, (float)num4);
 					num3 += num;
@@ -173,20 +188,31 @@ namespace RimWorld
 		private void DoTabButton(MainTabDef def, float posX, float width)
 		{
 			Text.Font = GameFont.Small;
-			Rect rect = new Rect(posX, (float)(Screen.height - 35), width, 35f);
+			Rect rect = new Rect(posX, (float)(UI.screenHeight - 35), width, 35f);
 			string labelCap = def.LabelCap;
-			SoundDef mouseoverCategory = SoundDefOf.MouseoverCategory;
-			if (Widgets.ButtonTextSubtle(rect, labelCap, def.Window.TabButtonBarPercent, -1f, mouseoverCategory))
+			if ((!def.validWithoutMap || def == MainTabDefOf.World) && Find.VisibleMap == null)
 			{
-				this.InterfaceTryToggleTab(def, true);
+				Widgets.DrawAtlas(rect, Widgets.ButtonSubtleAtlas);
+				if (Event.current.type == EventType.MouseDown && Mouse.IsOver(rect))
+				{
+					Event.current.Use();
+				}
 			}
-			if (this.OpenTab != def && !Find.WindowStack.NonImmediateDialogWindowOpen)
+			else
 			{
-				UIHighlighter.HighlightOpportunity(rect, def.cachedHighlightTagClosed);
-			}
-			if (!def.description.NullOrEmpty())
-			{
-				TooltipHandler.TipRegion(rect, def.description);
+				SoundDef mouseoverCategory = SoundDefOf.MouseoverCategory;
+				if (Widgets.ButtonTextSubtle(rect, labelCap, def.Window.TabButtonBarPercent, -1f, mouseoverCategory))
+				{
+					this.InterfaceTryToggleTab(def, true);
+				}
+				if (this.OpenTab != def && !Find.WindowStack.NonImmediateDialogWindowOpen)
+				{
+					UIHighlighter.HighlightOpportunity(rect, def.cachedHighlightTagClosed);
+				}
+				if (!def.description.NullOrEmpty())
+				{
+					TooltipHandler.TipRegion(rect, def.description);
+				}
 			}
 		}
 	}

@@ -8,6 +8,7 @@ namespace RimWorld.Planet
 		Flat,
 		SmallHills,
 		LargeHills,
-		Mountainous
+		Mountainous,
+		Impassable
 	}
 }

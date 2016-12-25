@@ -17,6 +17,22 @@ namespace RimWorld
 
 		public bool pirateKing;
 
+		public PawnBioType BioType
+		{
+			get
+			{
+				if (this.pirateKing)
+				{
+					return PawnBioType.PirateKing;
+				}
+				if (this.adulthood != null)
+				{
+					return PawnBioType.BackstoryInGame;
+				}
+				return PawnBioType.Undefined;
+			}
+		}
+
 		public void PostLoad()
 		{
 			if (this.childhood != null)
@@ -56,7 +72,7 @@ namespace RimWorld
 					{
 						this.name,
 						", ",
-						this.childhood.title,
+						this.childhood.Title,
 						": ",
 						error
 					});
@@ -70,7 +86,7 @@ namespace RimWorld
 					{
 						this.name,
 						", ",
-						this.adulthood.title,
+						this.adulthood.Title,
 						": ",
 						error2
 					});

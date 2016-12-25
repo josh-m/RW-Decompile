@@ -10,8 +10,9 @@ namespace RimWorld
 
 		public override bool TryExecute(IncidentParms parms)
 		{
+			Map map = (Map)parms.target;
 			IntVec3 loc;
-			if (!CellFinder.TryFindRandomEdgeCellWith((IntVec3 c) => c.CanReachColony(), out loc))
+			if (!CellFinder.TryFindRandomEdgeCellWith((IntVec3 c) => map.reachability.CanReachColony(c), map, out loc))
 			{
 				return false;
 			}
@@ -19,13 +20,13 @@ namespace RimWorld
 			{
 				PawnKindDefOf.Villager
 			}.RandomElement<PawnKindDef>();
-			PawnGenerationRequest request = new PawnGenerationRequest(pawnKindDef, Faction.OfPlayer, PawnGenerationContext.NonPlayer, false, false, false, false, true, false, 20f, false, true, true, null, null, null, null, null, null);
+			PawnGenerationRequest request = new PawnGenerationRequest(pawnKindDef, Faction.OfPlayer, PawnGenerationContext.NonPlayer, null, false, false, false, false, true, false, 20f, false, true, true, null, null, null, null, null, null);
 			Pawn pawn = PawnGenerator.GeneratePawn(request);
-			GenSpawn.Spawn(pawn, loc);
+			GenSpawn.Spawn(pawn, loc, map);
 			string text = "WandererJoin".Translate(new object[]
 			{
 				pawnKindDef.label,
-				pawn.story.adulthood.title.ToLower()
+				pawn.story.Title.ToLower()
 			});
 			text = text.AdjustedFor(pawn);
 			string label = "LetterLabelWandererJoin".Translate();

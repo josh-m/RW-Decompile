@@ -10,28 +10,15 @@ namespace RimWorld
 	[StaticConstructorOnStartup]
 	public class Building_FermentingBarrel : Building
 	{
-		private enum SpoilReason
-		{
-			None,
-			Freezing,
-			HighTemperature
-		}
-
 		private const int MaxCapacity = 25;
 
 		private const int BaseFermentationDuration = 600000;
 
-		public const float MinTemperature = -1f;
-
 		private const float MinIdealTemperature = 7f;
-
-		public const float MaxTemperature = 30f;
 
 		private int wortCount;
 
 		private float progressInt;
-
-		private Building_FermentingBarrel.SpoilReason spoilReason;
 
 		private Material barFilledCachedMat;
 
@@ -76,7 +63,12 @@ namespace RimWorld
 		{
 			get
 			{
-				return this.GetInnerIfMinified().PositionHeld.GetTemperature();
+				if (base.MapHeld == null)
+				{
+					Log.ErrorOnce("Tried to get a fermenting barrel temperature but MapHeld is null.", 847163513);
+					return 7f;
+				}
+				return base.PositionHeld.GetTemperature(base.MapHeld);
 			}
 		}
 
@@ -112,14 +104,15 @@ namespace RimWorld
 		{
 			get
 			{
+				CompProperties_TemperatureRuinable compProperties = this.def.GetCompProperties<CompProperties_TemperatureRuinable>();
 				float temperature = this.Temperature;
-				if (temperature < -1f)
+				if (temperature < compProperties.minSafeTemperature)
 				{
 					return 0.1f;
 				}
 				if (temperature < 7f)
 				{
-					return GenMath.LerpDouble(-1f, 7f, 0.1f, 1f, temperature);
+					return GenMath.LerpDouble(compProperties.minSafeTemperature, 7f, 0.1f, 1f, temperature);
 				}
 				return 1f;
 			}
@@ -141,29 +134,11 @@ namespace RimWorld
 			}
 		}
 
-		private string SpoilReasonLabel
-		{
-			get
-			{
-				Building_FermentingBarrel.SpoilReason spoilReason = this.spoilReason;
-				if (spoilReason == Building_FermentingBarrel.SpoilReason.Freezing)
-				{
-					return "SpoilReason_Freezing".Translate();
-				}
-				if (spoilReason != Building_FermentingBarrel.SpoilReason.HighTemperature)
-				{
-					throw new NotImplementedException();
-				}
-				return "SpoilReason_HighTemperature".Translate();
-			}
-		}
-
 		public override void ExposeData()
 		{
 			base.ExposeData();
 			Scribe_Values.LookValue<int>(ref this.wortCount, "wortCount", 0, false);
 			Scribe_Values.LookValue<float>(ref this.progressInt, "progress", 0f, false);
-			Scribe_Values.LookValue<Building_FermentingBarrel.SpoilReason>(ref this.spoilReason, "spoilReason", Building_FermentingBarrel.SpoilReason.None, false);
 		}
 
 		public override void TickRare()
@@ -172,7 +147,6 @@ namespace RimWorld
 			if (!this.Empty)
 			{
 				this.Progress = Mathf.Min(this.Progress + 250f * this.ProgressPerTickAtCurrentTemp, 1f);
-				this.CheckSpoiled();
 			}
 		}
 
@@ -190,11 +164,30 @@ namespace RimWorld
 			}
 			this.Progress = GenMath.WeightedAverage(0f, (float)num, this.Progress, (float)this.wortCount);
 			this.wortCount += num;
-			this.spoilReason = Building_FermentingBarrel.SpoilReason.None;
+			base.GetComp<CompTemperatureRuinable>().Reset();
+		}
+
+		protected override void ReceiveCompSignal(string signal)
+		{
+			if (signal == "RuinedByTemperature")
+			{
+				this.Reset();
+			}
+		}
+
+		private void Reset()
+		{
+			this.wortCount = 0;
+			this.Progress = 0f;
 		}
 
 		public void AddWort(Thing wort)
 		{
+			CompTemperatureRuinable comp = base.GetComp<CompTemperatureRuinable>();
+			if (comp.Ruined)
+			{
+				comp.Reset();
+			}
 			this.AddWort(wort.stackCount);
 			wort.Destroy(DestroyMode.Vanish);
 		}
@@ -203,25 +196,25 @@ namespace RimWorld
 		{
 			StringBuilder stringBuilder = new StringBuilder();
 			stringBuilder.Append(base.GetInspectString());
-			if (this.Empty && this.spoilReason != Building_FermentingBarrel.SpoilReason.None)
+			CompTemperatureRuinable comp = base.GetComp<CompTemperatureRuinable>();
+			if (!this.Empty && !comp.Ruined)
 			{
-				stringBuilder.AppendLine(this.SpoilReasonLabel);
-			}
-			else if (this.Fermented)
-			{
-				stringBuilder.AppendLine("ContainsBeer".Translate(new object[]
+				if (this.Fermented)
 				{
-					this.wortCount,
-					25
-				}));
-			}
-			else
-			{
-				stringBuilder.AppendLine("ContainsWort".Translate(new object[]
+					stringBuilder.AppendLine("ContainsBeer".Translate(new object[]
+					{
+						this.wortCount,
+						25
+					}));
+				}
+				else
 				{
-					this.wortCount,
-					25
-				}));
+					stringBuilder.AppendLine("ContainsWort".Translate(new object[]
+					{
+						this.wortCount,
+						25
+					}));
+				}
 			}
 			if (!this.Empty)
 			{
@@ -245,14 +238,17 @@ namespace RimWorld
 					}
 				}
 			}
-			stringBuilder.AppendLine("Temperature".Translate() + ": " + GenTemperature.GetTemperatureForCell(base.Position).ToStringTemperature("F0"));
+			if (base.MapHeld != null)
+			{
+				stringBuilder.AppendLine("Temperature".Translate() + ": " + this.Temperature.ToStringTemperature("F0"));
+			}
 			stringBuilder.AppendLine(string.Concat(new string[]
 			{
 				"IdealFermentingTemperature".Translate(),
 				": ",
 				7f.ToStringTemperature("F0"),
 				" ~ ",
-				30f.ToStringTemperature("F0")
+				comp.Props.maxSafeTemperature.ToStringTemperature("F0")
 			}));
 			return stringBuilder.ToString();
 		}
@@ -309,36 +305,6 @@ namespace RimWorld
 					}
 				};
 			}
-		}
-
-		private void CheckSpoiled()
-		{
-			if (this.Empty || this.Fermented)
-			{
-				return;
-			}
-			float temperature = this.Temperature;
-			if (temperature < -1f)
-			{
-				this.Spoiled(Building_FermentingBarrel.SpoilReason.Freezing);
-			}
-			else if (temperature > 30f)
-			{
-				this.Spoiled(Building_FermentingBarrel.SpoilReason.HighTemperature);
-			}
-		}
-
-		private void Spoiled(Building_FermentingBarrel.SpoilReason reason)
-		{
-			this.Reset();
-			this.spoilReason = reason;
-		}
-
-		private void Reset()
-		{
-			this.wortCount = 0;
-			this.Progress = 0f;
-			this.spoilReason = Building_FermentingBarrel.SpoilReason.None;
 		}
 	}
 }

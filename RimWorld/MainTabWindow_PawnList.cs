@@ -56,7 +56,7 @@ namespace RimWorld
 		protected virtual void BuildPawnList()
 		{
 			this.pawns.Clear();
-			this.pawns.AddRange(Find.MapPawns.FreeColonists);
+			this.pawns.AddRange(Find.VisibleMap.mapPawns.FreeColonists);
 			this.pawnListDirty = false;
 		}
 
@@ -106,7 +106,7 @@ namespace RimWorld
 				rect3.xMin -= 4f;
 				rect3.yMin += 4f;
 				rect3.yMax -= 6f;
-				Widgets.FillableBar(rect3, p.health.summaryHealth.SummaryHealthPercent, GenWorldUI.OverlayHealthTex, BaseContent.ClearTex, false);
+				Widgets.FillableBar(rect3, p.health.summaryHealth.SummaryHealthPercent, GenMapUI.OverlayHealthTex, BaseContent.ClearTex, false);
 			}
 			if (Mouse.IsOver(rect2))
 			{

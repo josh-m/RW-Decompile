@@ -36,7 +36,7 @@ namespace RimWorld
 			yield return Toils_Reserve.Reserve(TargetIndex.A, 1);
 			yield return Toils_Reserve.Reserve(TargetIndex.B, 1);
 			yield return Toils_Goto.GotoThing(TargetIndex.A, PathEndMode.ClosestTouch).FailOnSomeonePhysicallyInteracting(TargetIndex.A);
-			yield return Toils_Haul.StartCarryThing(TargetIndex.A);
+			yield return Toils_Haul.StartCarryThing(TargetIndex.A, false, false);
 			yield return Toils_Haul.CarryHauledThingToContainer();
 			Toil prepare = new Toil();
 			prepare.defaultCompleteMode = ToilCompleteMode.Delay;
@@ -47,14 +47,14 @@ namespace RimWorld
 			{
 				initAction = delegate
 				{
-					if (this.<>f__this.pawn.carrier.CarriedThing == null)
+					if (this.<>f__this.pawn.carryTracker.CarriedThing == null)
 					{
 						Log.Error(this.<>f__this.pawn + " tried to place hauled corpse in grave but is not hauling anything.");
 						return;
 					}
 					if (this.<>f__this.Grave.TryAcceptThing(this.<>f__this.Corpse, true))
 					{
-						this.<>f__this.pawn.carrier.container.Remove(this.<>f__this.Corpse);
+						this.<>f__this.pawn.carryTracker.innerContainer.Remove(this.<>f__this.Corpse);
 						this.<>f__this.Grave.Notify_CorpseBuried(this.<>f__this.pawn);
 						this.<>f__this.pawn.records.Increment(RecordDefOf.CorpsesBuried);
 					}

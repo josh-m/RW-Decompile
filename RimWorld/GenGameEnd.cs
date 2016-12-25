@@ -23,7 +23,7 @@ namespace RimWorld
 			DiaOption diaOption2 = new DiaOption("GameOverMainMenu".Translate());
 			diaOption2.action = delegate
 			{
-				RootMap.GoToMainMenu();
+				GenScene.GoToMainMenu();
 			};
 			diaOption2.resolveTree = true;
 			diaNode.options.Add(diaOption2);

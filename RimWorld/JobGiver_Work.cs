@@ -9,9 +9,9 @@ namespace RimWorld
 	{
 		public bool emergency;
 
-		public override ThinkNode DeepCopy()
+		public override ThinkNode DeepCopy(bool resolve = true)
 		{
-			JobGiver_Work jobGiver_Work = (JobGiver_Work)base.DeepCopy();
+			JobGiver_Work jobGiver_Work = (JobGiver_Work)base.DeepCopy(resolve);
 			jobGiver_Work.emergency = this.emergency;
 			return jobGiver_Work;
 		}
@@ -50,7 +50,7 @@ namespace RimWorld
 				for (int i = 0; i < workGiversByPriority.Count; i++)
 				{
 					WorkGiver worker = workGiversByPriority[i].Worker;
-					Job job = this.GiverTryGiveJobTargeted(pawn, worker, pawn.mindState.priorityWork.Cell);
+					Job job = this.GiverTryGiveJobPrioritized(pawn, worker, pawn.mindState.priorityWork.Cell);
 					if (job != null)
 					{
 						job.playerForced = true;
@@ -70,7 +70,7 @@ namespace RimWorld
 				{
 					break;
 				}
-				if (this.GiverCanGiveJobToPawn(pawn, workGiver))
+				if (this.PawnCanUseWorkGiver(pawn, workGiver))
 				{
 					try
 					{
@@ -92,15 +92,15 @@ namespace RimWorld
 									IEnumerable<Thing> enumerable2 = enumerable;
 									if (enumerable2 == null)
 									{
-										enumerable2 = Find.ListerThings.ThingsMatching(scanner.PotentialWorkThingRequest);
+										enumerable2 = pawn.Map.listerThings.ThingsMatching(scanner.PotentialWorkThingRequest);
 									}
 									Predicate<Thing> validator = predicate;
-									thing = GenClosest.ClosestThing_Global_Reachable(pawn.Position, enumerable2, scanner.PathEndMode, TraverseParms.For(pawn, Danger.Deadly, TraverseMode.ByPawn, false), 9999f, validator, (Thing x) => scanner.GetPriority(pawn, x));
+									thing = GenClosest.ClosestThing_Global_Reachable(pawn.Position, pawn.Map, enumerable2, scanner.PathEndMode, TraverseParms.For(pawn, Danger.Deadly, TraverseMode.ByPawn, false), 9999f, validator, (Thing x) => scanner.GetPriority(pawn, x));
 								}
 								else
 								{
 									Predicate<Thing> validator = predicate;
-									thing = GenClosest.ClosestThingReachable(pawn.Position, scanner.PotentialWorkThingRequest, scanner.PathEndMode, TraverseParms.For(pawn, Danger.Deadly, TraverseMode.ByPawn, false), 9999f, validator, enumerable, scanner.LocalRegionsToScanFirst, enumerable != null);
+									thing = GenClosest.ClosestThingReachable(pawn.Position, pawn.Map, scanner.PotentialWorkThingRequest, scanner.PathEndMode, TraverseParms.For(pawn, Danger.Deadly, TraverseMode.ByPawn, false), 9999f, validator, enumerable, scanner.LocalRegionsToScanFirst, enumerable != null);
 								}
 								if (thing != null)
 								{
@@ -136,7 +136,7 @@ namespace RimWorld
 									}
 									if (flag)
 									{
-										targetInfo = current;
+										targetInfo = new TargetInfo(current, pawn.Map, false);
 										workGiver_Scanner = scanner;
 										num2 = lengthHorizontalSquared;
 									}
@@ -190,14 +190,14 @@ namespace RimWorld
 			return null;
 		}
 
-		private bool GiverCanGiveJobToPawn(Pawn pawn, WorkGiver giver)
+		private bool PawnCanUseWorkGiver(Pawn pawn, WorkGiver giver)
 		{
 			return (giver.def.canBeDoneByNonColonists || pawn.IsColonist) && giver.MissingRequiredCapacity(pawn) == null && !giver.ShouldSkip(pawn);
 		}
 
-		private Job GiverTryGiveJobTargeted(Pawn pawn, WorkGiver giver, IntVec3 cell)
+		private Job GiverTryGiveJobPrioritized(Pawn pawn, WorkGiver giver, IntVec3 cell)
 		{
-			if (!this.GiverCanGiveJobToPawn(pawn, giver))
+			if (!this.PawnCanUseWorkGiver(pawn, giver))
 			{
 				return null;
 			}
@@ -215,7 +215,7 @@ namespace RimWorld
 					if (giver.def.scanThings)
 					{
 						Predicate<Thing> predicate = (Thing t) => !t.IsForbidden(pawn) && scanner.HasJobOnThing(pawn, t);
-						List<Thing> thingList = cell.GetThingList();
+						List<Thing> thingList = cell.GetThingList(pawn.Map);
 						for (int i = 0; i < thingList.Count; i++)
 						{
 							Thing thing = thingList[i];
@@ -247,22 +247,6 @@ namespace RimWorld
 				}));
 			}
 			return null;
-		}
-
-		public void TryStartPrioritizedWorkOn(Pawn pawn, Job job, WorkGiver giver, IntVec3 cell)
-		{
-			if (!pawn.IsColonistPlayerControlled || !pawn.drafter.CanTakeOrderedJob())
-			{
-				return;
-			}
-			job.playerForced = true;
-			pawn.mindState.lastGivenWorkType = giver.def.workType;
-			if (giver.def.prioritizeSustains)
-			{
-				pawn.mindState.priorityWork.Set(cell, giver.def.workType);
-			}
-			pawn.QueueJob(job);
-			pawn.jobs.EndCurrentJob(JobCondition.InterruptForced);
 		}
 	}
 }

@@ -13,9 +13,33 @@ namespace RimWorld.Planet
 
 		private const float RainfallMax = 5000f;
 
-		public static Material matHill;
+		public static readonly Material WorldTerrain;
 
-		public static Material matMountain;
+		public static readonly Material WorldOcean;
+
+		public static readonly Material UngeneratedPlanetParts;
+
+		public static readonly Material MouseTile;
+
+		public static readonly Material SelectedTile;
+
+		public static readonly Material CurrentMapTile;
+
+		public static readonly Material Stars;
+
+		public static readonly Material Sun;
+
+		public static readonly Material PlanetGlow;
+
+		public static readonly Material SmallHills;
+
+		public static readonly Material LargeHills;
+
+		public static readonly Material Mountains;
+
+		public static readonly Material ImpassableMountains;
+
+		public static readonly Material VertexColor;
 
 		private static int NumMatsPerMode;
 
@@ -39,8 +63,20 @@ namespace RimWorld.Planet
 
 		static WorldMaterials()
 		{
-			WorldMaterials.matHill = MaterialPool.MatFrom("World/Hill");
-			WorldMaterials.matMountain = MaterialPool.MatFrom("World/Mountain");
+			WorldMaterials.WorldTerrain = MatLoader.LoadMat("World/WorldTerrain");
+			WorldMaterials.WorldOcean = MatLoader.LoadMat("World/WorldOcean");
+			WorldMaterials.UngeneratedPlanetParts = MatLoader.LoadMat("World/UngeneratedPlanetParts");
+			WorldMaterials.MouseTile = MaterialPool.MatFrom("World/MouseTile", ShaderDatabase.WorldOverlayAdditive);
+			WorldMaterials.SelectedTile = MaterialPool.MatFrom("World/SelectedTile", ShaderDatabase.WorldOverlayAdditive);
+			WorldMaterials.CurrentMapTile = MaterialPool.MatFrom("World/CurrentMapTile", ShaderDatabase.WorldOverlayTransparent);
+			WorldMaterials.Stars = MatLoader.LoadMat("World/Stars");
+			WorldMaterials.Sun = MatLoader.LoadMat("World/Sun");
+			WorldMaterials.PlanetGlow = MatLoader.LoadMat("World/PlanetGlow");
+			WorldMaterials.SmallHills = MaterialPool.MatFrom("World/Hills/SmallHills", ShaderDatabase.WorldOverlayTransparentLit);
+			WorldMaterials.LargeHills = MaterialPool.MatFrom("World/Hills/LargeHills", ShaderDatabase.WorldOverlayTransparentLit);
+			WorldMaterials.Mountains = MaterialPool.MatFrom("World/Hills/Mountains", ShaderDatabase.WorldOverlayTransparentLit);
+			WorldMaterials.ImpassableMountains = MaterialPool.MatFrom("World/Hills/Impassable", ShaderDatabase.WorldOverlayTransparentLit);
+			WorldMaterials.VertexColor = MatLoader.LoadMat("World/WorldVertexColor");
 			WorldMaterials.NumMatsPerMode = 50;
 			WorldMaterials.OverlayModeMatOcean = SolidColorMaterials.NewSolidColorMaterial(new Color(0.09f, 0.18f, 0.2f), ShaderDatabase.Transparent);
 			WorldMaterials.FertilitySpectrum = new Color[]

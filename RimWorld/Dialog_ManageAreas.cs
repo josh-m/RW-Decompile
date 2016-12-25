@@ -8,6 +8,8 @@ namespace RimWorld
 {
 	public class Dialog_ManageAreas : Window
 	{
+		private Map map;
+
 		private static Regex validNameRegex = new Regex("^[a-zA-Z0-9 '\\-]*$");
 
 		public override Vector2 InitialSize
@@ -18,8 +20,9 @@ namespace RimWorld
 			}
 		}
 
-		public Dialog_ManageAreas()
+		public Dialog_ManageAreas(Map map)
 		{
+			this.map = map;
 			this.forcePause = true;
 			this.doCloseX = true;
 			this.closeOnEscapeKey = true;
@@ -32,7 +35,7 @@ namespace RimWorld
 		{
 			Listing_Standard listing_Standard = new Listing_Standard(inRect);
 			listing_Standard.ColumnWidth = inRect.width;
-			List<Area> allAreas = Find.AreaManager.AllAreas;
+			List<Area> allAreas = this.map.areaManager.AllAreas;
 			for (int i = 0; i < allAreas.Count; i++)
 			{
 				if (allAreas[i].Mutable)
@@ -43,15 +46,15 @@ namespace RimWorld
 				}
 			}
 			listing_Standard.ColumnWidth = inRect.width / 2f;
-			if (Find.AreaManager.CanMakeNewAllowed(AllowedAreaMode.Humanlike) && listing_Standard.ButtonText("NewArea".Translate(), null))
+			if (this.map.areaManager.CanMakeNewAllowed(AllowedAreaMode.Humanlike) && listing_Standard.ButtonText("NewArea".Translate(), null))
 			{
 				Area_Allowed area_Allowed;
-				Find.AreaManager.TryMakeNewAllowed(AllowedAreaMode.Humanlike, out area_Allowed);
+				this.map.areaManager.TryMakeNewAllowed(AllowedAreaMode.Humanlike, out area_Allowed);
 			}
-			if (Find.AreaManager.CanMakeNewAllowed(AllowedAreaMode.Animal) && listing_Standard.ButtonText("NewAreaAnimal".Translate(), null))
+			if (this.map.areaManager.CanMakeNewAllowed(AllowedAreaMode.Animal) && listing_Standard.ButtonText("NewAreaAnimal".Translate(), null))
 			{
 				Area_Allowed area_Allowed2;
-				Find.AreaManager.TryMakeNewAllowed(AllowedAreaMode.Animal, out area_Allowed2);
+				this.map.areaManager.TryMakeNewAllowed(AllowedAreaMode.Animal, out area_Allowed2);
 			}
 			listing_Standard.End();
 		}

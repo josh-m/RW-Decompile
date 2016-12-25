@@ -8,47 +8,44 @@ namespace Verse.AI
 {
 	public class Toils_Haul
 	{
-		public static bool ErrorCheckForCarry(Thing haulThing, Pawn actor)
+		public static void ErrorCheckForCarry(Pawn pawn, Thing haulThing)
 		{
 			if (!haulThing.Spawned)
 			{
 				Log.Message(string.Concat(new object[]
 				{
-					actor,
+					pawn,
 					" tried to start carry ",
 					haulThing,
 					" which isn't spawned."
 				}));
-				actor.jobs.EndCurrentJob(JobCondition.Incompletable);
-				return true;
+				pawn.jobs.EndCurrentJob(JobCondition.Incompletable, true);
 			}
 			if (haulThing.stackCount == 0)
 			{
 				Log.Message(string.Concat(new object[]
 				{
-					actor,
+					pawn,
 					" tried to start carry ",
 					haulThing,
 					" which had stackcount 0."
 				}));
-				actor.jobs.EndCurrentJob(JobCondition.Incompletable);
-				return true;
+				pawn.jobs.EndCurrentJob(JobCondition.Incompletable, true);
 			}
-			if (actor.jobs.curJob.maxNumToCarry <= 0)
+			if (pawn.jobs.curJob.count <= 0)
 			{
 				Log.Error(string.Concat(new object[]
 				{
-					"Invalid maxNumToCarry: ",
-					actor.jobs.curJob.maxNumToCarry,
+					"Invalid count: ",
+					pawn.jobs.curJob.count,
 					", setting to 1. Job was ",
-					actor.jobs.curJob
+					pawn.jobs.curJob
 				}));
-				actor.jobs.curJob.maxNumToCarry = 1;
+				pawn.jobs.curJob.count = 1;
 			}
-			return false;
 		}
 
-		public static Toil StartCarryThing(TargetIndex haulableInd)
+		public static Toil StartCarryThing(TargetIndex haulableInd, bool putRemainderInQueue = false, bool subtractNumTakenFromJobCount = false)
 		{
 			Toil toil = new Toil();
 			toil.initAction = delegate
@@ -56,33 +53,70 @@ namespace Verse.AI
 				Pawn actor = toil.actor;
 				Job curJob = actor.jobs.curJob;
 				Thing thing = curJob.GetTarget(haulableInd).Thing;
-				if (Toils_Haul.ErrorCheckForCarry(thing, actor))
+				Toils_Haul.ErrorCheckForCarry(actor, thing);
+				if (curJob.count == 0)
 				{
-					return;
+					throw new Exception(string.Concat(new object[]
+					{
+						"StartCarryThing job had count = ",
+						curJob.count,
+						". Job: ",
+						curJob
+					}));
 				}
-				int num = Mathf.Min(new int[]
+				int num = actor.carryTracker.AvailableStackSpace(thing.def);
+				if (num == 0)
 				{
-					curJob.maxNumToCarry - actor.carrier.container.TotalStackCount,
-					actor.carrier.AvailableStackSpace(thing.def),
+					throw new Exception(string.Concat(new object[]
+					{
+						"StartCarryThing got availableStackSpace ",
+						num,
+						" for haulTarg ",
+						thing,
+						". Job: ",
+						curJob
+					}));
+				}
+				int num2 = Mathf.Min(new int[]
+				{
+					curJob.count,
+					num,
 					thing.stackCount
 				});
-				if (num > 0 && actor.carrier.TryStartCarry(thing, num))
+				if (num2 <= 0)
 				{
-					if (thing.Spawned && Find.Reservations.IsReserved(thing, actor.Faction) && (curJob.targetQueueA == null || !curJob.targetQueueA.Contains(thing)) && (curJob.targetQueueB == null || !curJob.targetQueueB.Contains(thing)))
+					throw new Exception("StartCarryThing desiredNumToTake = " + num2);
+				}
+				int stackCount = thing.stackCount;
+				int num3 = actor.carryTracker.TryStartCarry(thing, num2);
+				if (num3 == 0)
+				{
+					actor.jobs.EndCurrentJob(JobCondition.Incompletable, true);
+				}
+				if (num3 < stackCount)
+				{
+					int num4 = curJob.count - num3;
+					if (putRemainderInQueue && num4 > 0)
 					{
-						Find.Reservations.Release(thing, actor);
+						curJob.GetTargetQueue(haulableInd).Insert(0, thing);
+						if (curJob.countQueue == null)
+						{
+							curJob.countQueue = new List<int>();
+						}
+						curJob.countQueue.Insert(0, num4);
 					}
-					actor.records.Increment(RecordDefOf.ThingsHauled);
+					else if (actor.Map.reservationManager.IsReserved(thing, actor.Faction))
+					{
+						actor.Map.reservationManager.Release(thing, actor);
+					}
 				}
-				if (actor.carrier.CarriedThing != null)
+				if (subtractNumTakenFromJobCount)
 				{
-					curJob.SetTarget(haulableInd, actor.carrier.CarriedThing);
-					actor.Reserve(actor.carrier.CarriedThing, 1);
+					curJob.count -= num3;
 				}
-				else
-				{
-					actor.jobs.EndCurrentJob(JobCondition.Incompletable);
-				}
+				curJob.SetTarget(haulableInd, actor.carryTracker.CarriedThing);
+				actor.Reserve(actor.carryTracker.CarriedThing, 1);
+				actor.records.Increment(RecordDefOf.ThingsHauled);
 			};
 			return toil;
 		}
@@ -94,12 +128,12 @@ namespace Verse.AI
 			{
 				Pawn actor = toil.actor;
 				Job curJob = actor.jobs.curJob;
-				List<TargetInfo> targetQueue = curJob.GetTargetQueue(ind);
-				if (targetQueue.NullOrEmpty<TargetInfo>())
+				List<LocalTargetInfo> targetQueue = curJob.GetTargetQueue(ind);
+				if (targetQueue.NullOrEmpty<LocalTargetInfo>())
 				{
 					return;
 				}
-				if (actor.carrier.CarriedThing == null)
+				if (actor.carryTracker.CarriedThing == null)
 				{
 					Log.Error("JumpToAlsoCollectTargetInQueue run on " + actor + " who is not carrying something.");
 					return;
@@ -108,10 +142,10 @@ namespace Verse.AI
 				{
 					if (!GenAI.CanUseItemForWork(actor, targetQueue[i].Thing))
 					{
-						actor.jobs.EndCurrentJob(JobCondition.Incompletable);
+						actor.jobs.EndCurrentJob(JobCondition.Incompletable, true);
 						return;
 					}
-					if (targetQueue[i].Thing.def == actor.carrier.CarriedThing.def)
+					if (targetQueue[i].Thing.def == actor.carryTracker.CarriedThing.def)
 					{
 						curJob.SetTarget(ind, targetQueue[i].Thing);
 						targetQueue.RemoveAt(i);
@@ -123,28 +157,28 @@ namespace Verse.AI
 			return toil;
 		}
 
-		public static Toil CheckForGetOpportunityDuplicate(Toil getHaulTargetToil, TargetIndex haulableInd, TargetIndex storeCellInd)
+		public static Toil CheckForGetOpportunityDuplicate(Toil getHaulTargetToil, TargetIndex haulableInd, TargetIndex storeCellInd, bool takeFromValidStorage = false, Predicate<Thing> extraValidator = null)
 		{
 			Toil toil = new Toil();
 			toil.initAction = delegate
 			{
 				Pawn actor = toil.actor;
 				Job curJob = actor.jobs.curJob;
-				if (actor.carrier.CarriedThing.def.stackLimit == 1)
+				if (actor.carryTracker.CarriedThing.def.stackLimit == 1)
 				{
 					return;
 				}
-				if (actor.carrier.Full)
+				if (actor.carryTracker.Full)
 				{
 					return;
 				}
-				int num = curJob.maxNumToCarry - actor.carrier.CarriedThing.stackCount;
+				int num = curJob.count - actor.carryTracker.CarriedThing.stackCount;
 				if (num <= 0)
 				{
 					return;
 				}
-				Predicate<Thing> validator = (Thing t) => t.Spawned && t.def == actor.carrier.CarriedThing.def && t.CanStackWith(actor.carrier.CarriedThing) && !t.IsForbidden(actor) && !t.IsInValidStorage() && (storeCellInd == TargetIndex.None || curJob.GetTarget(storeCellInd).Cell.IsValidStorageFor(t)) && actor.CanReserve(t, 1);
-				Thing thing = GenClosest.ClosestThingReachable(actor.Position, ThingRequest.ForGroup(ThingRequestGroup.HaulableAlways), PathEndMode.ClosestTouch, TraverseParms.For(actor, Danger.Deadly, TraverseMode.ByPawn, false), 8f, validator, null, -1, false);
+				Predicate<Thing> validator = (Thing t) => t.Spawned && t.def == actor.carryTracker.CarriedThing.def && t.CanStackWith(actor.carryTracker.CarriedThing) && !t.IsForbidden(actor) && (takeFromValidStorage || !t.IsInValidStorage()) && (storeCellInd == TargetIndex.None || curJob.GetTarget(storeCellInd).Cell.IsValidStorageFor(actor.Map, t)) && actor.CanReserve(t, 1) && (extraValidator == null || extraValidator(t));
+				Thing thing = GenClosest.ClosestThingReachable(actor.Position, actor.Map, ThingRequest.ForGroup(ThingRequestGroup.HaulableAlways), PathEndMode.ClosestTouch, TraverseParms.For(actor, Danger.Deadly, TraverseMode.ByPawn, false), 8f, validator, null, -1, false);
 				if (thing != null)
 				{
 					curJob.SetTarget(haulableInd, thing);
@@ -168,7 +202,7 @@ namespace Verse.AI
 			{
 				Pawn actor = toil.actor;
 				IntVec3 cell = actor.jobs.curJob.GetTarget(squareIndex).Cell;
-				return actor.jobs.curJob.haulMode == HaulMode.ToCellStorage && !cell.IsValidStorageFor(actor.carrier.CarriedThing);
+				return actor.jobs.curJob.haulMode == HaulMode.ToCellStorage && !cell.IsValidStorageFor(actor.Map, actor.carryTracker.CarriedThing);
 			});
 			return toil;
 		}
@@ -179,7 +213,7 @@ namespace Verse.AI
 			toil.initAction = delegate
 			{
 				Pawn actor = toil.actor;
-				TargetInfo target = actor.CurJob.GetTarget(facingTargetInd);
+				LocalTargetInfo target = actor.CurJob.GetTarget(facingTargetInd);
 				IntVec3 b;
 				if (target.HasThing)
 				{
@@ -191,9 +225,9 @@ namespace Verse.AI
 				}
 				IntVec3 dropLoc = actor.Position + PawnRotator.RotFromAngleBiased((actor.Position - b).AngleFlat).FacingCell;
 				Thing thing;
-				if (!actor.carrier.TryDropCarriedThing(dropLoc, ThingPlaceMode.Direct, out thing, null))
+				if (!actor.carryTracker.TryDropCarriedThing(dropLoc, ThingPlaceMode.Direct, out thing, null))
 				{
-					actor.jobs.EndCurrentJob(JobCondition.Incompletable);
+					actor.jobs.EndCurrentJob(JobCondition.Incompletable, true);
 				}
 			};
 			return toil;
@@ -207,10 +241,10 @@ namespace Verse.AI
 				Pawn actor = toil.actor;
 				Job curJob = actor.jobs.curJob;
 				IntVec3 cell = curJob.GetTarget(cellInd).Cell;
-				SlotGroup slotGroup = Find.SlotGroupManager.SlotGroupAt(cell);
-				if (slotGroup != null && slotGroup.Settings.AllowedToAccept(actor.carrier.CarriedThing))
+				SlotGroup slotGroup = actor.Map.slotGroupManager.SlotGroupAt(cell);
+				if (slotGroup != null && slotGroup.Settings.AllowedToAccept(actor.carryTracker.CarriedThing))
 				{
-					Find.DesignationManager.RemoveAllDesignationsOn(actor.carrier.CarriedThing, false);
+					actor.Map.designationManager.RemoveAllDesignationsOn(actor.carryTracker.CarriedThing, false);
 				}
 				Action<Thing, int> placedAction = null;
 				if (curJob.def == JobDefOf.DoBill)
@@ -219,38 +253,42 @@ namespace Verse.AI
 					{
 						if (curJob.placedThings == null)
 						{
-							curJob.placedThings = new List<ThingStackPart>();
+							curJob.placedThings = new List<ThingStackPartClass>();
 						}
-						ThingStackPart thingStackPart = curJob.placedThings.Find((ThingStackPart x) => x.thing == th);
-						if (thingStackPart != null)
+						ThingStackPartClass thingStackPartClass = curJob.placedThings.Find((ThingStackPartClass x) => x.thing == th);
+						if (thingStackPartClass != null)
 						{
-							thingStackPart.Count += added;
+							thingStackPartClass.Count += added;
 						}
 						else
 						{
-							curJob.placedThings.Add(new ThingStackPart(th, added));
+							curJob.placedThings.Add(new ThingStackPartClass(th, added));
 						}
 					};
 				}
 				Thing thing;
-				if (!actor.carrier.TryDropCarriedThing(cell, ThingPlaceMode.Direct, out thing, placedAction))
+				if (!actor.carryTracker.TryDropCarriedThing(cell, ThingPlaceMode.Direct, out thing, placedAction))
 				{
 					if (storageMode)
 					{
-						IntVec3 vec;
-						if (nextToilOnPlaceFailOrIncomplete != null && StoreUtility.TryFindBestBetterStoreCellFor(actor.carrier.CarriedThing, actor, StoragePriority.Unstored, actor.Faction, out vec, true))
+						IntVec3 c;
+						if (nextToilOnPlaceFailOrIncomplete != null && StoreUtility.TryFindBestBetterStoreCellFor(actor.carryTracker.CarriedThing, actor, actor.Map, StoragePriority.Unstored, actor.Faction, out c, true))
 						{
-							actor.CurJob.SetTarget(cellInd, vec);
+							if (actor.CanReserve(c, 1))
+							{
+								actor.Reserve(c, 1);
+							}
+							actor.CurJob.SetTarget(cellInd, c);
 							actor.jobs.curDriver.SetNextToil(nextToilOnPlaceFailOrIncomplete);
 							return;
 						}
-						Job job = HaulAIUtility.HaulAsideJobFor(actor, actor.carrier.CarriedThing);
+						Job job = HaulAIUtility.HaulAsideJobFor(actor, actor.carryTracker.CarriedThing);
 						if (job != null)
 						{
 							curJob.targetA = job.targetA;
 							curJob.targetB = job.targetB;
 							curJob.targetC = job.targetC;
-							curJob.maxNumToCarry = job.maxNumToCarry;
+							curJob.count = job.count;
 							curJob.haulOpportunisticDuplicates = job.haulOpportunisticDuplicates;
 							curJob.haulMode = job.haulMode;
 							actor.jobs.curDriver.JumpToToil(nextToilOnPlaceFailOrIncomplete);
@@ -262,12 +300,12 @@ namespace Verse.AI
 								"Incomplete haul for ",
 								actor,
 								": Could not find anywhere to put ",
-								actor.carrier.CarriedThing,
+								actor.carryTracker.CarriedThing,
 								" near ",
 								actor.Position,
 								". Destroying. This should never happen!"
 							}));
-							actor.carrier.CarriedThing.Destroy(DestroyMode.Vanish);
+							actor.carryTracker.CarriedThing.Destroy(DestroyMode.Vanish);
 						}
 					}
 					else if (nextToilOnPlaceFailOrIncomplete != null)
@@ -297,8 +335,8 @@ namespace Verse.AI
 				IThingContainerOwner thingContainerOwner = thing as IThingContainerOwner;
 				if (thingContainerOwner != null)
 				{
-					ThingContainer container = thingContainerOwner.GetContainer();
-					if (!container.CanAcceptAnyOf(gotoDest.actor.carrier.CarriedThing))
+					ThingContainer innerContainer = thingContainerOwner.GetInnerContainer();
+					if (!innerContainer.CanAcceptAnyOf(gotoDest.actor.carryTracker.CarriedThing))
 					{
 						return true;
 					}
@@ -316,29 +354,57 @@ namespace Verse.AI
 			{
 				Pawn actor = toil.actor;
 				Job curJob = actor.jobs.curJob;
-				if (actor.carrier.CarriedThing == null)
+				if (actor.carryTracker.CarriedThing == null)
 				{
 					Log.Error(actor + " tried to place hauled thing in container but is not hauling anything.");
 					return;
 				}
-				IThingContainerOwner thingContainerOwner = curJob.GetTarget(containerInd).Thing as IThingContainerOwner;
+				Thing thing = curJob.GetTarget(containerInd).Thing;
+				IThingContainerOwner thingContainerOwner = thing as IThingContainerOwner;
 				if (thingContainerOwner != null)
 				{
-					int num = actor.carrier.CarriedThing.stackCount;
+					int num = actor.carryTracker.CarriedThing.stackCount;
 					if (thingContainerOwner is IConstructible)
 					{
-						int a = GenConstruct.AmountNeededByOf((IConstructible)thingContainerOwner, actor.carrier.CarriedThing.def);
+						int a = GenConstruct.AmountNeededByOf((IConstructible)thingContainerOwner, actor.carryTracker.CarriedThing.def);
 						num = Mathf.Min(a, num);
 					}
-					actor.carrier.container.TransferToContainer(actor.carrier.CarriedThing, thingContainerOwner.GetContainer(), num);
-				}
-				else if (curJob.GetTarget(containerInd).Thing.def.Minifiable)
-				{
-					actor.carrier.container.Clear();
+					actor.carryTracker.innerContainer.TransferToContainer(actor.carryTracker.CarriedThing, thingContainerOwner.GetInnerContainer(), num);
 				}
 				else
 				{
-					Log.Error("Could not deposit hauled thing in container: " + curJob.GetTarget(containerInd).Thing);
+					bool flag = false;
+					ThingWithComps thingWithComps = thing as ThingWithComps;
+					if (thingWithComps != null)
+					{
+						List<ThingComp> allComps = thingWithComps.AllComps;
+						for (int i = 0; i < allComps.Count; i++)
+						{
+							IThingContainerOwner thingContainerOwner2 = allComps[i] as IThingContainerOwner;
+							if (thingContainerOwner2 != null)
+							{
+								CompTransporter compTransporter = allComps[i] as CompTransporter;
+								if (compTransporter != null)
+								{
+									compTransporter.Notify_DepositedThingInContainer(actor.carryTracker.CarriedThing);
+								}
+								actor.carryTracker.innerContainer.TransferToContainer(actor.carryTracker.CarriedThing, thingContainerOwner2.GetInnerContainer(), actor.carryTracker.CarriedThing.stackCount);
+								flag = true;
+								break;
+							}
+						}
+					}
+					if (!flag)
+					{
+						if (curJob.GetTarget(containerInd).Thing.def.Minifiable)
+						{
+							actor.carryTracker.innerContainer.Clear();
+						}
+						else
+						{
+							Log.Error("Could not deposit hauled thing in container: " + curJob.GetTarget(containerInd).Thing);
+						}
+					}
 				}
 			};
 			return toil;
@@ -351,18 +417,18 @@ namespace Verse.AI
 			{
 				Pawn actor = toil.actor;
 				Job curJob = actor.jobs.curJob;
-				if (actor.carrier.CarriedThing == null)
+				if (actor.carryTracker.CarriedThing == null)
 				{
 					return;
 				}
 				if (curJob.targetQueueB != null && curJob.targetQueueB.Count > 0)
 				{
-					Predicate<Thing> validator = (Thing th) => GenConstruct.CanConstruct(th, actor) && ((IConstructible)th).MaterialsNeeded().Any((ThingCount need) => need.thingDef == actor.carrier.CarriedThing.def);
-					Thing nextTarget = GenClosest.ClosestThing_Global_Reachable(actor.Position, from targ in curJob.targetQueueB
+					Predicate<Thing> validator = (Thing th) => GenConstruct.CanConstruct(th, actor) && ((IConstructible)th).MaterialsNeeded().Any((ThingCountClass need) => need.thingDef == actor.carryTracker.CarriedThing.def);
+					Thing nextTarget = GenClosest.ClosestThing_Global_Reachable(actor.Position, actor.Map, from targ in curJob.targetQueueB
 					select targ.Thing, PathEndMode.Touch, TraverseParms.For(actor, Danger.Deadly, TraverseMode.ByPawn, false), 99999f, validator, null);
 					if (nextTarget != null)
 					{
-						curJob.targetQueueB.RemoveAll((TargetInfo targ) => targ.Thing == nextTarget);
+						curJob.targetQueueB.RemoveAll((LocalTargetInfo targ) => targ.Thing == nextTarget);
 						curJob.targetB = nextTarget;
 						actor.jobs.curDriver.JumpToToil(carryToContainerToil);
 					}
@@ -383,10 +449,7 @@ namespace Verse.AI
 			{
 				Pawn actor = takeThing.actor;
 				Thing thing = actor.CurJob.GetTarget(ind).Thing;
-				if (Toils_Haul.ErrorCheckForCarry(thing, actor))
-				{
-					return;
-				}
+				Toils_Haul.ErrorCheckForCarry(actor, thing);
 				int num = Mathf.Min(countGetter(), thing.stackCount);
 				if (num <= 0)
 				{
@@ -394,7 +457,7 @@ namespace Verse.AI
 				}
 				else
 				{
-					takeThing.actor.inventory.GetContainer().TryAdd(thing, num);
+					takeThing.actor.inventory.GetInnerContainer().TryAdd(thing, num);
 					if (thing.def.ingestible != null && thing.def.ingestible.preferability <= FoodPreferability.RawTasty)
 					{
 						actor.mindState.lastInventoryRawFoodUseTick = Find.TickManager.TicksGame;

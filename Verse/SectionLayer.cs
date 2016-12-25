@@ -12,6 +12,14 @@ namespace Verse
 
 		public List<LayerSubMesh> subMeshes = new List<LayerSubMesh>();
 
+		protected Map Map
+		{
+			get
+			{
+				return this.section.map;
+			}
+		}
+
 		public virtual bool Visible
 		{
 			get
@@ -34,7 +42,18 @@ namespace Verse
 					return this.subMeshes[i];
 				}
 			}
-			LayerSubMesh layerSubMesh = new LayerSubMesh(new Mesh(), material);
+			Mesh mesh = new Mesh();
+			if (UnityData.isEditor)
+			{
+				mesh.name = string.Concat(new object[]
+				{
+					"SectionLayerSubMesh_",
+					base.GetType().Name,
+					"_",
+					this.Map.Tile
+				});
+			}
+			LayerSubMesh layerSubMesh = new LayerSubMesh(mesh, material);
 			this.subMeshes.Add(layerSubMesh);
 			return layerSubMesh;
 		}
@@ -45,7 +64,7 @@ namespace Verse
 			{
 				if (this.subMeshes[i].verts.Count > 0)
 				{
-					this.subMeshes[i].FinalizeMesh(tags);
+					this.subMeshes[i].FinalizeMesh(tags, false);
 				}
 			}
 		}

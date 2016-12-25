@@ -33,7 +33,7 @@ namespace RimWorld
 
 		public override AcceptanceReport CanDesignateCell(IntVec3 c)
 		{
-			if (!c.InBounds())
+			if (!c.InBounds(base.Map))
 			{
 				return false;
 			}
@@ -55,7 +55,7 @@ namespace RimWorld
 		public override AcceptanceReport CanDesignateThing(Thing t)
 		{
 			Pawn pawn = t as Pawn;
-			if (pawn != null && pawn.def.race.Animal && pawn.Faction == null && Find.DesignationManager.DesignationOn(pawn, DesignationDefOf.Hunt) == null)
+			if (pawn != null && pawn.def.race.Animal && pawn.Faction == null && base.Map.designationManager.DesignationOn(pawn, DesignationDefOf.Hunt) == null)
 			{
 				return true;
 			}
@@ -64,8 +64,8 @@ namespace RimWorld
 
 		public override void DesignateThing(Thing t)
 		{
-			Find.DesignationManager.RemoveAllDesignationsOn(t, false);
-			Find.DesignationManager.AddDesignation(new Designation(t, DesignationDefOf.Hunt));
+			base.Map.designationManager.RemoveAllDesignationsOn(t, false);
+			base.Map.designationManager.AddDesignation(new Designation(t, DesignationDefOf.Hunt));
 			this.justDesignated.Add((Pawn)t);
 		}
 
@@ -89,9 +89,9 @@ namespace RimWorld
 		[DebuggerHidden]
 		private IEnumerable<Pawn> HuntablesInCell(IntVec3 c)
 		{
-			if (!c.Fogged())
+			if (!c.Fogged(base.Map))
 			{
-				List<Thing> thingList = c.GetThingList();
+				List<Thing> thingList = c.GetThingList(base.Map);
 				for (int i = 0; i < thingList.Count; i++)
 				{
 					if (this.CanDesignateThing(thingList[i]).Accepted)

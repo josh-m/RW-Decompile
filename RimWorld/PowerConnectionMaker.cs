@@ -15,12 +15,12 @@ namespace RimWorld
 			{
 				if (current.connectParent == null)
 				{
-					current.ConnectToTransmitter(newTransmitter);
+					current.ConnectToTransmitter(newTransmitter, false);
 				}
 			}
 		}
 
-		public static void DisconnectAllFromTransmitterAndSetWantConnect(CompPower deadPc)
+		public static void DisconnectAllFromTransmitterAndSetWantConnect(CompPower deadPc, Map map)
 		{
 			if (deadPc.connectChildren == null)
 			{
@@ -35,7 +35,7 @@ namespace RimWorld
 				{
 					compPowerTrader.PowerOn = false;
 				}
-				PowerNetManager.Notify_ConnectorWantsConnect(compPower);
+				map.powerNetManager.Notify_ConnectorWantsConnect(compPower);
 			}
 		}
 
@@ -45,10 +45,14 @@ namespace RimWorld
 			{
 				return;
 			}
-			CompPower compPower = PowerConnectionMaker.BestTransmitterForConnector(pc.parent.Position, disallowedNets);
+			if (!pc.parent.Spawned)
+			{
+				return;
+			}
+			CompPower compPower = PowerConnectionMaker.BestTransmitterForConnector(pc.parent.Position, pc.parent.Map, disallowedNets);
 			if (compPower != null)
 			{
-				pc.ConnectToTransmitter(compPower);
+				pc.ConnectToTransmitter(compPower, false);
 			}
 			else
 			{
@@ -74,33 +78,41 @@ namespace RimWorld
 					pc.connectParent.connectChildren = null;
 				}
 			}
+			pc.connectParent = null;
 		}
 
 		[DebuggerHidden]
 		private static IEnumerable<CompPower> PotentialConnectorsForTransmitter(CompPower b)
 		{
-			CellRect rect = b.parent.OccupiedRect().ExpandedBy(6);
-			for (int z = rect.minZ; z <= rect.maxZ; z++)
+			if (!b.parent.Spawned)
 			{
-				for (int x = rect.minX; x <= rect.maxX; x++)
+				Log.Warning("Can't check potential connectors for " + b + " because it's unspawned.");
+			}
+			else
+			{
+				CellRect rect = b.parent.OccupiedRect().ExpandedBy(6).ClipInsideMap(b.parent.Map);
+				for (int z = rect.minZ; z <= rect.maxZ; z++)
 				{
-					IntVec3 c = new IntVec3(x, 0, z);
-					List<Thing> thingList = Find.ThingGrid.ThingsListAt(c);
-					for (int i = 0; i < thingList.Count; i++)
+					for (int x = rect.minX; x <= rect.maxX; x++)
 					{
-						if (thingList[i].def.ConnectToPower)
+						IntVec3 c = new IntVec3(x, 0, z);
+						List<Thing> thingList = b.parent.Map.thingGrid.ThingsListAt(c);
+						for (int i = 0; i < thingList.Count; i++)
 						{
-							yield return ((Building)thingList[i]).PowerComp;
+							if (thingList[i].def.ConnectToPower)
+							{
+								yield return ((Building)thingList[i]).PowerComp;
+							}
 						}
 					}
 				}
 			}
 		}
 
-		public static CompPower BestTransmitterForConnector(IntVec3 connectorPos, List<PowerNet> disallowedNets = null)
+		public static CompPower BestTransmitterForConnector(IntVec3 connectorPos, Map map, List<PowerNet> disallowedNets = null)
 		{
-			CellRect cellRect = CellRect.SingleCell(connectorPos).ExpandedBy(6);
-			cellRect.ClipInsideMap();
+			CellRect cellRect = CellRect.SingleCell(connectorPos).ExpandedBy(6).ClipInsideMap(map);
+			cellRect.ClipInsideMap(map);
 			float num = 999999f;
 			CompPower result = null;
 			for (int i = cellRect.minZ; i <= cellRect.maxZ; i++)
@@ -108,7 +120,7 @@ namespace RimWorld
 				for (int j = cellRect.minX; j <= cellRect.maxX; j++)
 				{
 					IntVec3 c = new IntVec3(j, 0, i);
-					Building transmitter = c.GetTransmitter();
+					Building transmitter = c.GetTransmitter(map);
 					if (transmitter != null && !transmitter.Destroyed)
 					{
 						CompPower powerComp = transmitter.PowerComp;

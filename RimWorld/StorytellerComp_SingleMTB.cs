@@ -16,11 +16,14 @@ namespace RimWorld
 		}
 
 		[DebuggerHidden]
-		public override IEnumerable<FiringIncident> MakeIntervalIncidents()
+		public override IEnumerable<FiringIncident> MakeIntervalIncidents(IIncidentTarget target)
 		{
-			if (Rand.MTBEventOccurs(this.Props.mtbDays, 60000f, 1000f))
+			if (this.Props.incident.TargetAllowed(target))
 			{
-				yield return new FiringIncident(this.Props.incident, this, this.GenerateParms(this.Props.incident.category));
+				if (Rand.MTBEventOccurs(this.Props.mtbDays, 60000f, 1000f))
+				{
+					yield return new FiringIncident(this.Props.incident, this, this.GenerateParms(this.Props.incident.category, target));
+				}
 			}
 		}
 	}

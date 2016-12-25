@@ -12,7 +12,7 @@ namespace Verse
 		protected void MakeMote(TargetInfo A)
 		{
 			Vector3 vector = (!A.HasThing) ? A.Cell.ToVector3Shifted() : A.Thing.DrawPos;
-			if (vector.ShouldSpawnMotesAt())
+			if (vector.ShouldSpawnMotesAt(A.Map))
 			{
 				int randomInRange = this.def.burstCount.RandomInRange;
 				for (int i = 0; i < randomInRange; i++)
@@ -32,7 +32,7 @@ namespace Verse
 					{
 						mote.Attach(A);
 					}
-					GenSpawn.Spawn(mote, vector.ToIntVec3());
+					GenSpawn.Spawn(mote, vector.ToIntVec3(), A.Map);
 				}
 			}
 		}

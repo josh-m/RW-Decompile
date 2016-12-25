@@ -19,7 +19,7 @@ namespace RimWorld
 			{
 				num = ownedRoom.GetStat(RoomStatDefOf.Impressiveness);
 			}
-			List<Pawn> list = Find.MapPawns.SpawnedPawnsInFaction(Faction.OfPlayer);
+			List<Pawn> list = p.Map.mapPawns.SpawnedPawnsInFaction(Faction.OfPlayer);
 			for (int i = 0; i < list.Count; i++)
 			{
 				if (list[i].HostFaction == null && p.RaceProps.Humanlike && list[i].ownership != null)
@@ -30,7 +30,7 @@ namespace RimWorld
 						float stat = ownedRoom2.GetStat(RoomStatDefOf.Impressiveness);
 						if (stat - num >= Mathf.Abs(num * 0.1f))
 						{
-							return true;
+							return ThoughtState.ActiveWithReason(list[i].LabelShort);
 						}
 					}
 				}

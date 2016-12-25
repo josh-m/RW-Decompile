@@ -12,9 +12,9 @@ namespace RimWorld
 		{
 			get
 			{
-				foreach (Pawn p in Find.MapPawns.FreeColonistsSpawned)
+				foreach (Pawn p in PawnsFinder.AllMaps_FreeColonistsSpawned)
 				{
-					if (!p.SafeTemperatureRange().Includes(GenTemperature.GetTemperatureForCell(p.Position)))
+					if (!p.SafeTemperatureRange().Includes(GenTemperature.GetTemperatureForCell(p.Position, p.Map)))
 					{
 						Hediff hypo = p.health.hediffSet.GetFirstHediffOfDef(HediffDefOf.Hypothermia);
 						if (hypo != null && hypo.CurStageIndex >= 3)
@@ -26,38 +26,32 @@ namespace RimWorld
 			}
 		}
 
-		public override string FullExplanation
-		{
-			get
-			{
-				StringBuilder stringBuilder = new StringBuilder();
-				foreach (Pawn current in this.HypothermiaDangerColonists)
-				{
-					stringBuilder.AppendLine("    " + current.NameStringShort);
-				}
-				return "AlertHypothermiaDesc".Translate(new object[]
-				{
-					stringBuilder.ToString()
-				});
-			}
-		}
-
-		public override AlertReport Report
-		{
-			get
-			{
-				Pawn pawn = this.HypothermiaDangerColonists.FirstOrDefault<Pawn>();
-				if (pawn == null)
-				{
-					return false;
-				}
-				return AlertReport.CulpritIs(pawn);
-			}
-		}
-
 		public Alert_Hypothermia()
 		{
-			this.baseLabel = "AlertHypothermia".Translate();
+			this.defaultLabel = "AlertHypothermia".Translate();
+		}
+
+		public override string GetExplanation()
+		{
+			StringBuilder stringBuilder = new StringBuilder();
+			foreach (Pawn current in this.HypothermiaDangerColonists)
+			{
+				stringBuilder.AppendLine("    " + current.NameStringShort);
+			}
+			return "AlertHypothermiaDesc".Translate(new object[]
+			{
+				stringBuilder.ToString()
+			});
+		}
+
+		public override AlertReport GetReport()
+		{
+			Pawn pawn = this.HypothermiaDangerColonists.FirstOrDefault<Pawn>();
+			if (pawn == null)
+			{
+				return false;
+			}
+			return AlertReport.CulpritIs(pawn);
 		}
 	}
 }

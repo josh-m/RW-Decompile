@@ -88,7 +88,7 @@ namespace Verse
 
 		public static bool writeCellContents;
 
-		public static bool writeMusicManagerMap;
+		public static bool writeMusicManagerPlay;
 
 		public static bool writeStoryteller;
 

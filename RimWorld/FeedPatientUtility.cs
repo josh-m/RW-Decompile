@@ -26,7 +26,7 @@ namespace RimWorld
 					return false;
 				}
 			}
-			if (!p.health.PrefersMedicalRest)
+			if (!HealthAIUtility.ShouldSeekMedicalRest(p))
 			{
 				return false;
 			}

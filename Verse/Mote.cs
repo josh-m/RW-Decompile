@@ -19,11 +19,11 @@ namespace Verse
 
 		private int lastMaintainTick;
 
-		protected int spawnTick;
+		public int spawnTick;
 
-		protected float spawnRealTime;
+		public float spawnRealTime;
 
-		protected MoteAttachLink link1 = MoteAttachLink.Invalid;
+		public MoteAttachLink link1 = MoteAttachLink.Invalid;
 
 		protected float skidSpeedMultiplierPerTick = Rand.Range(0.3f, 0.95f);
 
@@ -63,21 +63,22 @@ namespace Verse
 			}
 		}
 
-		public override void SpawnSetup()
+		public override void SpawnSetup(Map map)
 		{
-			base.SpawnSetup();
+			base.SpawnSetup(map);
 			this.spawnTick = Find.TickManager.TicksGame;
 			this.spawnRealTime = Time.realtimeSinceStartup;
 			RealTime.moteList.MoteSpawned(this);
-			MoteCounter.Notify_MoteSpawned();
+			base.Map.moteCounter.Notify_MoteSpawned();
 			this.exactPosition.y = Altitudes.AltitudeFor(this.def.altitudeLayer);
 		}
 
 		public override void DeSpawn()
 		{
+			Map map = base.Map;
 			base.DeSpawn();
 			RealTime.moteList.MoteDespawned(this);
-			MoteCounter.Notify_MoteDespawned();
+			map.moteCounter.Notify_MoteDespawned();
 		}
 
 		public override void Tick()

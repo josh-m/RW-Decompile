@@ -39,7 +39,7 @@ namespace Verse
 				hediff_MissingPart.IsFresh = true;
 				hediff_MissingPart.lastInjury = HediffDefOf.SurgicalCut;
 				hediff_MissingPart.Part = base.Part.parts[i];
-				this.pawn.health.hediffSet.AddHediffDirect(hediff_MissingPart, null);
+				this.pawn.health.hediffSet.AddDirect(hediff_MissingPart, null);
 			}
 		}
 	}

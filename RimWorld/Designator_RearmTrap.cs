@@ -31,7 +31,7 @@ namespace RimWorld
 
 		public override AcceptanceReport CanDesignateCell(IntVec3 c)
 		{
-			if (!c.InBounds())
+			if (!c.InBounds(base.Map))
 			{
 				return false;
 			}
@@ -53,20 +53,20 @@ namespace RimWorld
 		public override AcceptanceReport CanDesignateThing(Thing t)
 		{
 			Building_TrapRearmable building_TrapRearmable = t as Building_TrapRearmable;
-			return building_TrapRearmable != null && !building_TrapRearmable.Armed && Find.DesignationManager.DesignationOn(building_TrapRearmable, DesignationDefOf.RearmTrap) == null;
+			return building_TrapRearmable != null && !building_TrapRearmable.Armed && base.Map.designationManager.DesignationOn(building_TrapRearmable, DesignationDefOf.RearmTrap) == null;
 		}
 
 		public override void DesignateThing(Thing t)
 		{
-			Find.DesignationManager.AddDesignation(new Designation(t, DesignationDefOf.RearmTrap));
+			base.Map.designationManager.AddDesignation(new Designation(t, DesignationDefOf.RearmTrap));
 		}
 
 		[DebuggerHidden]
 		private IEnumerable<Thing> RearmablesInCell(IntVec3 c)
 		{
-			if (!c.Fogged())
+			if (!c.Fogged(base.Map))
 			{
-				List<Thing> thingList = c.GetThingList();
+				List<Thing> thingList = c.GetThingList(base.Map);
 				for (int i = 0; i < thingList.Count; i++)
 				{
 					if (this.CanDesignateThing(thingList[i]).Accepted)

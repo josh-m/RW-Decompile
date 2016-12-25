@@ -238,7 +238,7 @@ namespace RimWorld
 
 		private static bool IsAnimated(Pawn pawn)
 		{
-			return Current.ProgramState == ProgramState.MapPlaying && pawn.Drawer.renderer.graphics.flasher.FlashingNowOrRecently;
+			return Current.ProgramState == ProgramState.Playing && pawn.Drawer.renderer.graphics.flasher.FlashingNowOrRecently;
 		}
 	}
 }

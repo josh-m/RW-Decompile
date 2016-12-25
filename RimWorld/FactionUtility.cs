@@ -21,9 +21,14 @@ namespace RimWorld
 			{
 				return Faction.OfPlayer;
 			}
-			return (from fac in Find.FactionManager.AllFactions
+			Faction result;
+			if ((from fac in Find.FactionManager.AllFactions
 			where fac.def == ft
-			select fac).RandomElement<Faction>();
+			select fac).TryRandomElement(out result))
+			{
+				return result;
+			}
+			return null;
 		}
 	}
 }

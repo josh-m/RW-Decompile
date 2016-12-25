@@ -7,13 +7,13 @@ namespace RimWorld
 {
 	public static class GridShapeMaker
 	{
-		public static IEnumerable<IntVec3> IrregularLump(IntVec3 center, int numCells)
+		public static IEnumerable<IntVec3> IrregularLump(IntVec3 center, Map map, int numCells)
 		{
 			List<IntVec3> lumpCells = new List<IntVec3>();
 			for (int i = 0; i < numCells * 2; i++)
 			{
 				IntVec3 intVec = center + GenRadial.RadialPattern[i];
-				if (intVec.InBounds())
+				if (intVec.InBounds(map))
 				{
 					lumpCells.Add(intVec);
 				}

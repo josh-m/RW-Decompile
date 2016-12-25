@@ -11,29 +11,30 @@ namespace Verse
 
 		private static List<IntVec3> cellsToUnfog = new List<IntVec3>(1024);
 
-		public static FloodUnfogResult FloodUnfog(IntVec3 root)
+		public static FloodUnfogResult FloodUnfog(IntVec3 root, Map map)
 		{
-			ProfilerThreadCheck.BeginSample("FloodUnfogFrom");
+			ProfilerThreadCheck.BeginSample("FloodUnfog");
+			FloodFillerFog.cellsToUnfog.Clear();
 			FloodUnfogResult result = default(FloodUnfogResult);
-			bool[] fogGridDirect = Find.FogGrid.fogGrid;
-			FogGrid fogGrid = Find.FogGrid;
+			bool[] fogGridDirect = map.fogGrid.fogGrid;
+			FogGrid fogGrid = map.fogGrid;
 			List<IntVec3> newlyUnfoggedCells = new List<IntVec3>();
 			int numUnfogged = 0;
 			bool expanding = false;
 			Predicate<IntVec3> predicate = delegate(IntVec3 c)
 			{
-				if (!fogGridDirect[CellIndices.CellToIndex(c)])
+				if (!fogGridDirect[map.cellIndices.CellToIndex(c)])
 				{
 					return false;
 				}
-				Thing edifice = c.GetEdifice();
+				Thing edifice = c.GetEdifice(map);
 				return (edifice == null || !edifice.def.MakeFog) && (!FloodFillerFog.testMode || expanding || numUnfogged <= 500);
 			};
 			Action<IntVec3> processor = delegate(IntVec3 c)
 			{
 				fogGrid.Unfog(c);
 				newlyUnfoggedCells.Add(c);
-				List<Thing> thingList = c.GetThingList();
+				List<Thing> thingList = c.GetThingList(map);
 				for (int l = 0; l < thingList.Count; l++)
 				{
 					Pawn pawn = thingList[l] as Pawn;
@@ -49,10 +50,10 @@ namespace Verse
 				if (FloodFillerFog.testMode)
 				{
 					numUnfogged++;
-					Find.DebugDrawer.FlashCell(c, (float)numUnfogged / 200f, numUnfogged.ToStringCached());
+					map.debugDrawer.FlashCell(c, (float)numUnfogged / 200f, numUnfogged.ToStringCached());
 				}
 			};
-			FloodFiller.FloodFill(root, predicate, processor);
+			map.floodFiller.FloodFill(root, predicate, processor);
 			expanding = true;
 			for (int i = 0; i < newlyUnfoggedCells.Count; i++)
 			{
@@ -60,7 +61,7 @@ namespace Verse
 				for (int j = 0; j < 8; j++)
 				{
 					IntVec3 intVec = a + GenAdj.AdjacentCells[j];
-					if (intVec.InBounds() && fogGrid.IsFogged(intVec))
+					if (intVec.InBounds(map) && fogGrid.IsFogged(intVec))
 					{
 						if (!predicate(intVec))
 						{
@@ -74,7 +75,7 @@ namespace Verse
 				fogGrid.Unfog(FloodFillerFog.cellsToUnfog[k]);
 				if (FloodFillerFog.testMode)
 				{
-					Find.DebugDrawer.FlashCell(FloodFillerFog.cellsToUnfog[k], 0.3f, "x");
+					map.debugDrawer.FlashCell(FloodFillerFog.cellsToUnfog[k], 0.3f, "x");
 				}
 			}
 			FloodFillerFog.cellsToUnfog.Clear();
@@ -82,26 +83,26 @@ namespace Verse
 			return result;
 		}
 
-		internal static void TestFloodUnfog(IntVec3 root)
+		internal static void DebugFloodUnfog(IntVec3 root, Map map)
 		{
-			Find.FogGrid.SetAllFogged();
-			foreach (IntVec3 current in Find.Map.AllCells)
+			map.fogGrid.SetAllFogged();
+			foreach (IntVec3 current in map.AllCells)
 			{
-				Find.MapDrawer.MapMeshDirty(current, MapMeshFlag.FogOfWar);
+				map.mapDrawer.MapMeshDirty(current, MapMeshFlag.FogOfWar);
 			}
 			FloodFillerFog.testMode = true;
-			FloodFillerFog.FloodUnfog(root);
+			FloodFillerFog.FloodUnfog(root, map);
 			FloodFillerFog.testMode = false;
 		}
 
-		internal static void TestRefogMap()
+		internal static void DebugRefogMap(Map map)
 		{
-			Find.FogGrid.SetAllFogged();
-			foreach (IntVec3 current in Find.Map.AllCells)
+			map.fogGrid.SetAllFogged();
+			foreach (IntVec3 current in map.AllCells)
 			{
-				Find.MapDrawer.MapMeshDirty(current, MapMeshFlag.FogOfWar);
+				map.mapDrawer.MapMeshDirty(current, MapMeshFlag.FogOfWar);
 			}
-			FloodFillerFog.FloodUnfog(Find.MapPawns.FreeColonistsSpawned.RandomElement<Pawn>().Position);
+			FloodFillerFog.FloodUnfog(map.mapPawns.FreeColonistsSpawned.RandomElement<Pawn>().Position, map);
 		}
 	}
 }

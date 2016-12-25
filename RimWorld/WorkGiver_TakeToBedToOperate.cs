@@ -25,7 +25,7 @@ namespace RimWorld
 		public override bool HasJobOnThing(Pawn pawn, Thing t)
 		{
 			Pawn pawn2 = t as Pawn;
-			if (pawn2 == null || pawn2 == pawn || pawn2.InBed() || !pawn2.RaceProps.IsFlesh || !pawn2.health.ShouldDoSurgeryNow || !pawn.CanReserve(pawn2, 1) || (pawn2.InMentalState && pawn2.MentalStateDef.IsAggro))
+			if (pawn2 == null || pawn2 == pawn || pawn2.InBed() || !pawn2.RaceProps.IsFlesh || !HealthAIUtility.ShouldHaveSurgeryDoneNow(pawn2) || !pawn.CanReserve(pawn2, 1) || (pawn2.InMentalState && pawn2.MentalStateDef.IsAggro))
 			{
 				return false;
 			}
@@ -50,8 +50,7 @@ namespace RimWorld
 			Thing t2 = base.FindBed(pawn, pawn2);
 			return new Job(JobDefOf.TakeToBedToOperate, pawn2, t2)
 			{
-				maxNumToCarry = 1,
-				applyAnesthetic = true
+				count = 1
 			};
 		}
 	}

@@ -7,6 +7,8 @@ namespace Verse
 	{
 		public const float MaxDepth = 1f;
 
+		private Map map;
+
 		private float[] depthGrid;
 
 		private double totalDepth;
@@ -27,12 +29,10 @@ namespace Verse
 			}
 		}
 
-		public SnowGrid()
+		public SnowGrid(Map map)
 		{
-			if (this.depthGrid == null)
-			{
-				this.depthGrid = new float[CellIndices.NumGridCells];
-			}
+			this.map = map;
+			this.depthGrid = new float[map.cellIndices.NumGridCells];
 		}
 
 		public void ExposeData()
@@ -40,16 +40,16 @@ namespace Verse
 			string compressedString = null;
 			if (Scribe.mode == LoadSaveMode.Saving)
 			{
-				compressedString = GridSaveUtility.CompressedStringForShortGrid((IntVec3 c) => SnowGrid.SnowFloatToShort(this.GetDepth(c)));
+				compressedString = GridSaveUtility.CompressedStringForShortGrid((IntVec3 c) => SnowGrid.SnowFloatToShort(this.GetDepth(c)), this.map);
 			}
 			Scribe_Values.LookValue<string>(ref compressedString, "depthGrid", null, false);
 			if (Scribe.mode == LoadSaveMode.LoadingVars)
 			{
 				this.totalDepth = 0.0;
-				foreach (GridSaveUtility.LoadedGridShort current in GridSaveUtility.LoadedUShortGrid(compressedString))
+				foreach (GridSaveUtility.LoadedGridShort current in GridSaveUtility.LoadedUShortGrid(compressedString, this.map))
 				{
 					ushort val = current.val;
-					this.depthGrid[CellIndices.CellToIndex(current.cell)] = SnowGrid.SnowShortToFloat(val);
+					this.depthGrid[this.map.cellIndices.CellToIndex(current.cell)] = SnowGrid.SnowShortToFloat(val);
 					this.totalDepth += (double)val;
 				}
 			}
@@ -67,14 +67,14 @@ namespace Verse
 			return (float)depth / 65535f;
 		}
 
-		private static bool CanHaveSnow(int ind)
+		private bool CanHaveSnow(int ind)
 		{
-			Building building = Find.EdificeGrid[ind];
+			Building building = this.map.edificeGrid[ind];
 			if (building != null && !SnowGrid.CanCoexistWithSnow(building.def))
 			{
 				return false;
 			}
-			TerrainDef terrainDef = Find.TerrainGrid.TerrainAt(ind);
+			TerrainDef terrainDef = this.map.terrainGrid.TerrainAt(ind);
 			return terrainDef == null || terrainDef.holdSnow;
 		}
 
@@ -85,7 +85,7 @@ namespace Verse
 
 		public void AddDepth(IntVec3 c, float depthToAdd)
 		{
-			int num = CellIndices.CellToIndex(c);
+			int num = this.map.cellIndices.CellToIndex(c);
 			float num2 = this.depthGrid[num];
 			if (num2 <= 0f && depthToAdd < 0f)
 			{
@@ -95,7 +95,7 @@ namespace Verse
 			{
 				return;
 			}
-			if (!SnowGrid.CanHaveSnow(num))
+			if (!this.CanHaveSnow(num))
 			{
 				this.depthGrid[num] = 0f;
 				return;
@@ -113,8 +113,8 @@ namespace Verse
 
 		public void SetDepth(IntVec3 c, float newDepth)
 		{
-			int num = CellIndices.CellToIndex(c);
-			if (!SnowGrid.CanHaveSnow(num))
+			int num = this.map.cellIndices.CellToIndex(c);
+			if (!this.CanHaveSnow(num))
 			{
 				this.depthGrid[num] = 0f;
 				return;
@@ -133,27 +133,27 @@ namespace Verse
 			{
 				if (Mathf.Abs(oldDepth - newDepth) > 0.15f || Rand.Value < 0.0125f)
 				{
-					Find.MapDrawer.MapMeshDirty(c, MapMeshFlag.Snow, true, false);
-					Find.MapDrawer.MapMeshDirty(c, MapMeshFlag.Things, true, false);
+					this.map.mapDrawer.MapMeshDirty(c, MapMeshFlag.Snow, true, false);
+					this.map.mapDrawer.MapMeshDirty(c, MapMeshFlag.Things, true, false);
 				}
 				else if (newDepth == 0f)
 				{
-					Find.MapDrawer.MapMeshDirty(c, MapMeshFlag.Snow, true, false);
+					this.map.mapDrawer.MapMeshDirty(c, MapMeshFlag.Snow, true, false);
 				}
 				if (SnowUtility.GetSnowCategory(oldDepth) != SnowUtility.GetSnowCategory(newDepth))
 				{
-					Find.PathGrid.RecalculatePerceivedPathCostAt(c);
+					this.map.pathGrid.RecalculatePerceivedPathCostAt(c);
 				}
 			}
 		}
 
 		public float GetDepth(IntVec3 c)
 		{
-			if (!c.InBounds())
+			if (!c.InBounds(this.map))
 			{
 				return 0f;
 			}
-			return this.depthGrid[CellIndices.CellToIndex(c)];
+			return this.depthGrid[this.map.cellIndices.CellToIndex(c)];
 		}
 
 		public SnowCategory GetCategory(IntVec3 c)

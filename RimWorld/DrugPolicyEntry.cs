@@ -7,6 +7,8 @@ namespace RimWorld
 	{
 		public ThingDef drug;
 
+		public bool allowedForAddiction;
+
 		public bool allowedForJoy;
 
 		public bool allowScheduled;
@@ -24,6 +26,7 @@ namespace RimWorld
 		public void ExposeData()
 		{
 			Scribe_Defs.LookDef<ThingDef>(ref this.drug, "drug");
+			Scribe_Values.LookValue<bool>(ref this.allowedForAddiction, "allowedForAddiction", false, false);
 			Scribe_Values.LookValue<bool>(ref this.allowedForJoy, "allowedForJoy", false, false);
 			Scribe_Values.LookValue<bool>(ref this.allowScheduled, "allowScheduled", false, false);
 			Scribe_Values.LookValue<float>(ref this.daysFrequency, "daysFrequency", 1f, false);

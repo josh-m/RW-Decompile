@@ -34,41 +34,43 @@ namespace RimWorld
 
 		public override bool TryExecute(IncidentParms parms)
 		{
+			Map map = (Map)parms.target;
 			IntVec3 intVec;
-			if (!ShipChunkDropCellFinder.TryFindShipChunkDropCell(out intVec, Find.Map.Center, 999999))
+			if (!ShipChunkDropCellFinder.TryFindShipChunkDropCell(map.Center, map, 999999, out intVec))
 			{
 				return false;
 			}
-			this.SpawnShipChunks(intVec, this.RandomCountToDrop);
-			Messages.Message("MessageShipChunkDrop".Translate(), intVec, MessageSound.Standard);
+			this.SpawnShipChunks(intVec, map, this.RandomCountToDrop);
+			Messages.Message("MessageShipChunkDrop".Translate(), new TargetInfo(intVec, map, false), MessageSound.Standard);
 			return true;
 		}
 
-		private void SpawnShipChunks(IntVec3 firstChunkPos, int count)
+		private void SpawnShipChunks(IntVec3 firstChunkPos, Map map, int count)
 		{
-			this.SpawnChunk(firstChunkPos);
+			this.SpawnChunk(firstChunkPos, map);
 			for (int i = 0; i < count - 1; i++)
 			{
 				IntVec3 pos;
-				if (ShipChunkDropCellFinder.TryFindShipChunkDropCell(out pos, firstChunkPos, 5))
+				if (ShipChunkDropCellFinder.TryFindShipChunkDropCell(firstChunkPos, map, 5, out pos))
 				{
-					this.SpawnChunk(pos);
+					this.SpawnChunk(pos, map);
 				}
 			}
 		}
 
-		private void SpawnChunk(IntVec3 pos)
+		private void SpawnChunk(IntVec3 pos, Map map)
 		{
-			IncidentWorker_ShipChunkDrop.<SpawnChunk>c__AnonStorey266 <SpawnChunk>c__AnonStorey = new IncidentWorker_ShipChunkDrop.<SpawnChunk>c__AnonStorey266();
-			<SpawnChunk>c__AnonStorey.cr = CellRect.SingleCell(pos);
-			IncidentWorker_ShipChunkDrop.<SpawnChunk>c__AnonStorey266 expr_18_cp_0 = <SpawnChunk>c__AnonStorey;
-			expr_18_cp_0.cr.Width = expr_18_cp_0.cr.Width + 1;
-			IncidentWorker_ShipChunkDrop.<SpawnChunk>c__AnonStorey266 expr_2B_cp_0 = <SpawnChunk>c__AnonStorey;
-			expr_2B_cp_0.cr.Height = expr_2B_cp_0.cr.Height + 1;
-			RoofCollapserImmediate.DropRoofInCells(from c in <SpawnChunk>c__AnonStorey.cr.ExpandedBy(1).ClipInsideMap().Cells
-			where <SpawnChunk>c__AnonStorey.cr.Contains(c) || !Find.ThingGrid.CellContains(c, ThingCategory.Pawn)
-			select c);
-			GenSpawn.Spawn(ThingDefOf.ShipChunk, pos);
+			IncidentWorker_ShipChunkDrop.<SpawnChunk>c__AnonStorey2A5 <SpawnChunk>c__AnonStorey2A = new IncidentWorker_ShipChunkDrop.<SpawnChunk>c__AnonStorey2A5();
+			<SpawnChunk>c__AnonStorey2A.map = map;
+			<SpawnChunk>c__AnonStorey2A.cr = CellRect.SingleCell(pos);
+			IncidentWorker_ShipChunkDrop.<SpawnChunk>c__AnonStorey2A5 expr_1F_cp_0 = <SpawnChunk>c__AnonStorey2A;
+			expr_1F_cp_0.cr.Width = expr_1F_cp_0.cr.Width + 1;
+			IncidentWorker_ShipChunkDrop.<SpawnChunk>c__AnonStorey2A5 expr_32_cp_0 = <SpawnChunk>c__AnonStorey2A;
+			expr_32_cp_0.cr.Height = expr_32_cp_0.cr.Height + 1;
+			RoofCollapserImmediate.DropRoofInCells(from c in <SpawnChunk>c__AnonStorey2A.cr.ExpandedBy(1).ClipInsideMap(<SpawnChunk>c__AnonStorey2A.map).Cells
+			where <SpawnChunk>c__AnonStorey2A.cr.Contains(c) || !<SpawnChunk>c__AnonStorey2A.map.thingGrid.CellContains(c, ThingCategory.Pawn)
+			select c, <SpawnChunk>c__AnonStorey2A.map);
+			GenSpawn.Spawn(ThingDefOf.ShipChunk, pos, <SpawnChunk>c__AnonStorey2A.map);
 		}
 	}
 }

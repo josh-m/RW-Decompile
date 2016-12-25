@@ -87,12 +87,12 @@ namespace Verse
 			IntVec3 intVec = new IntVec3(vector);
 			if (intVec != base.Position)
 			{
-				if (!intVec.InBounds())
+				if (!intVec.InBounds(base.Map))
 				{
 					this.Destroy(DestroyMode.Vanish);
 					return;
 				}
-				if (this.def.mote.collide && intVec.Filled())
+				if (this.def.mote.collide && intVec.Filled(base.Map))
 				{
 					this.WallHit();
 					return;
@@ -115,7 +115,7 @@ namespace Verse
 				}
 				if (this.airTimeLeft <= 0f && !this.def.mote.landSound.NullOrUndefined())
 				{
-					this.def.mote.landSound.PlayOneShot(base.Position);
+					this.def.mote.landSound.PlayOneShot(new TargetInfo(base.Position, base.Map, false));
 				}
 			}
 			if (this.Skidding)

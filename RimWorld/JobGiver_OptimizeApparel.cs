@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using UnityEngine;
 using Verse;
 using Verse.AI;
 
@@ -8,9 +9,11 @@ namespace RimWorld
 {
 	public class JobGiver_OptimizeApparel : ThinkNode_JobGiver
 	{
-		private const int ApparelOptimizeCheckInterval = 3000;
+		private const int ApparelOptimizeCheckIntervalMin = 6000;
 
-		private const float MinScoreGainToCare = 0.09f;
+		private const int ApparelOptimizeCheckIntervalMax = 9000;
+
+		private const float MinScoreGainToCare = 0.05f;
 
 		private const float ScoreFactorIfNotReplacing = 10f;
 
@@ -27,14 +30,16 @@ namespace RimWorld
 		private static readonly SimpleCurve HitPointsPercentScoreFactorCurve = new SimpleCurve
 		{
 			new CurvePoint(0f, 0f),
-			new CurvePoint(0.25f, 0.15f),
-			new CurvePoint(0.5f, 0.7f),
+			new CurvePoint(0.2f, 0.15f),
+			new CurvePoint(0.25f, 0.3f),
+			new CurvePoint(0.5f, 0.4f),
+			new CurvePoint(0.55f, 0.85f),
 			new CurvePoint(1f, 1f)
 		};
 
 		private void SetNextOptimizeTick(Pawn pawn)
 		{
-			pawn.mindState.nextApparelOptimizeTick = Find.TickManager.TicksGame + 3000;
+			pawn.mindState.nextApparelOptimizeTick = Find.TickManager.TicksGame + UnityEngine.Random.Range(6000, 9000);
 		}
 
 		protected override Job TryGiveJob(Pawn pawn)
@@ -81,19 +86,19 @@ namespace RimWorld
 			}
 			Thing thing = null;
 			float num = 0f;
-			List<Thing> list = Find.ListerThings.ThingsInGroup(ThingRequestGroup.Apparel);
+			List<Thing> list = pawn.Map.listerThings.ThingsInGroup(ThingRequestGroup.Apparel);
 			if (list.Count == 0)
 			{
 				this.SetNextOptimizeTick(pawn);
 				return null;
 			}
-			JobGiver_OptimizeApparel.neededWarmth = PawnApparelGenerator.CalculateNeededWarmth(pawn, GenDate.CurrentMonth);
+			JobGiver_OptimizeApparel.neededWarmth = PawnApparelGenerator.CalculateNeededWarmth(pawn, pawn.Map, GenLocalDate.Month(pawn));
 			for (int j = 0; j < list.Count; j++)
 			{
 				Apparel apparel = (Apparel)list[j];
 				if (currentOutfit.filter.Allows(apparel))
 				{
-					if (Find.SlotGroupManager.SlotGroupAt(apparel.Position) != null)
+					if (apparel.Map.slotGroupManager.SlotGroupAt(apparel.Position) != null)
 					{
 						if (!apparel.IsForbidden(pawn))
 						{
@@ -102,7 +107,7 @@ namespace RimWorld
 							{
 								JobGiver_OptimizeApparel.debugSb.AppendLine(apparel.LabelCap + ": " + num2.ToString("F2"));
 							}
-							if (num2 >= 0.09f && num2 >= num)
+							if (num2 >= 0.05f && num2 >= num)
 							{
 								if (ApparelUtility.HasPartsToWear(pawn, apparel.def))
 								{
@@ -161,21 +166,31 @@ namespace RimWorld
 
 		public static float ApparelScoreRaw(Apparel ap)
 		{
-			float num = 0.2f;
-			float num2 = ap.def.GetStatValueAbstract(StatDefOf.ArmorRating_Sharp, null) + ap.def.GetStatValueAbstract(StatDefOf.ArmorRating_Blunt, null) * 0.75f;
+			float num = 0.1f;
+			float num2 = ap.GetStatValue(StatDefOf.ArmorRating_Sharp, true) + ap.GetStatValue(StatDefOf.ArmorRating_Blunt, true);
 			num += num2;
 			if (ap.def.useHitPoints)
 			{
 				float x = (float)ap.HitPoints / (float)ap.MaxHitPoints;
 				num *= JobGiver_OptimizeApparel.HitPointsPercentScoreFactorCurve.Evaluate(x);
 			}
+			num += ap.GetSpecialApparelScoreOffset();
 			float num3 = 1f;
 			if (JobGiver_OptimizeApparel.neededWarmth == NeededWarmth.Warm)
 			{
-				float statValueAbstract = ap.def.GetStatValueAbstract(StatDefOf.Insulation_Cold, null);
-				num3 *= JobGiver_OptimizeApparel.InsulationColdScoreFactorCurve_NeedWarm.Evaluate(statValueAbstract);
+				float statValue = ap.GetStatValue(StatDefOf.Insulation_Cold, true);
+				num3 *= JobGiver_OptimizeApparel.InsulationColdScoreFactorCurve_NeedWarm.Evaluate(statValue);
 			}
-			return num * num3;
+			num *= num3;
+			if (ap.WornByCorpse)
+			{
+				num -= 0.5f;
+				if (num > 0f)
+				{
+					num *= 0.1f;
+				}
+			}
+			return num;
 		}
 	}
 }

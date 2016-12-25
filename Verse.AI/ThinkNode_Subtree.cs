@@ -9,17 +9,21 @@ namespace Verse.AI
 		[Unsaved]
 		public ThinkNode subtreeNode;
 
-		public override ThinkNode DeepCopy()
+		public override ThinkNode DeepCopy(bool resolve = true)
 		{
-			ThinkNode_Subtree thinkNode_Subtree = (ThinkNode_Subtree)base.DeepCopy();
+			ThinkNode_Subtree thinkNode_Subtree = (ThinkNode_Subtree)base.DeepCopy(false);
 			thinkNode_Subtree.treeDef = this.treeDef;
-			thinkNode_Subtree.subtreeNode = thinkNode_Subtree.subNodes[this.subNodes.IndexOf(this.subtreeNode)];
+			if (resolve)
+			{
+				thinkNode_Subtree.ResolveSubnodesAndRecur();
+				thinkNode_Subtree.subtreeNode = thinkNode_Subtree.subNodes[this.subNodes.IndexOf(this.subtreeNode)];
+			}
 			return thinkNode_Subtree;
 		}
 
 		protected override void ResolveSubnodes()
 		{
-			this.subtreeNode = this.treeDef.thinkRoot.DeepCopy();
+			this.subtreeNode = this.treeDef.thinkRoot.DeepCopy(true);
 			this.subNodes.Add(this.subtreeNode);
 		}
 

@@ -34,17 +34,25 @@ namespace RimWorld
 
 		private const float MinCellTempToSpawnHive = -17f;
 
+		private const float MaxDistanceToColonyBuilding = 30f;
+
 		private static List<InfestationCellFinder.LocationCandidate> locationCandidates = new List<InfestationCellFinder.LocationCandidate>();
 
 		private static Dictionary<Region, float> regionsDistanceToUnroofed = new Dictionary<Region, float>();
 
-		private static ByteGrid closedAreaSize = new ByteGrid();
+		private static ByteGrid closedAreaSize;
+
+		private static ByteGrid distToColonyBuilding;
 
 		private static HashSet<Region> tempUnroofedRegions = new HashSet<Region>();
 
-		public static bool TryFindCell(out IntVec3 cell)
+		private static List<IntVec3> tmpColonyBuildingsLocs = new List<IntVec3>();
+
+		private static List<KeyValuePair<IntVec3, float>> tmpDistanceResult = new List<KeyValuePair<IntVec3, float>>();
+
+		public static bool TryFindCell(out IntVec3 cell, Map map)
 		{
-			InfestationCellFinder.CalculateLocationCandidates();
+			InfestationCellFinder.CalculateLocationCandidates(map);
 			InfestationCellFinder.LocationCandidate locationCandidate;
 			if (!InfestationCellFinder.locationCandidates.TryRandomElementByWeight((InfestationCellFinder.LocationCandidate x) => x.score, out locationCandidate))
 			{
@@ -55,25 +63,29 @@ namespace RimWorld
 			return true;
 		}
 
-		private static float GetScoreAt(IntVec3 cell)
+		private static float GetScoreAt(IntVec3 cell, Map map)
 		{
-			if (!cell.Standable())
+			if ((float)InfestationCellFinder.distToColonyBuilding[cell] > 30f)
 			{
 				return 0f;
 			}
-			if (cell.Fogged())
+			if (!cell.Standable(map))
 			{
 				return 0f;
 			}
-			if (InfestationCellFinder.CellHasBlockingThings(cell))
+			if (cell.Fogged(map))
 			{
 				return 0f;
 			}
-			if (!cell.Roofed() || !cell.GetRoof().isThickRoof)
+			if (InfestationCellFinder.CellHasBlockingThings(cell, map))
 			{
 				return 0f;
 			}
-			Region region = cell.GetRegion();
+			if (!cell.Roofed(map) || !cell.GetRoof(map).isThickRoof)
+			{
+				return 0f;
+			}
+			Region region = cell.GetRegion(map);
 			if (region == null)
 			{
 				return 0f;
@@ -82,17 +94,17 @@ namespace RimWorld
 			{
 				return 0f;
 			}
-			float temperature = cell.GetTemperature();
+			float temperature = cell.GetTemperature(map);
 			if (temperature < -17f)
 			{
 				return 0f;
 			}
-			float mountainousnessScoreAt = InfestationCellFinder.GetMountainousnessScoreAt(cell);
+			float mountainousnessScoreAt = InfestationCellFinder.GetMountainousnessScoreAt(cell, map);
 			if (mountainousnessScoreAt < 0.17f)
 			{
 				return 0f;
 			}
-			int num = InfestationCellFinder.StraightLineDistToUnroofed(cell);
+			int num = InfestationCellFinder.StraightLineDistToUnroofed(cell, map);
 			float num2;
 			if (!InfestationCellFinder.regionsDistanceToUnroofed.TryGetValue(region, out num2))
 			{
@@ -104,8 +116,8 @@ namespace RimWorld
 			}
 			num2 = Mathf.Pow(num2, 1.55f);
 			float num3 = Mathf.InverseLerp(0f, 12f, (float)num);
-			float num4 = Mathf.Lerp(1f, 0.18f, Find.GlowGrid.GameGlowAt(cell));
-			float num5 = 1f - Mathf.Clamp(InfestationCellFinder.DistToBlocker(cell) / 11f, 0f, 0.6f);
+			float num4 = Mathf.Lerp(1f, 0.18f, map.glowGrid.GameGlowAt(cell));
+			float num5 = 1f - Mathf.Clamp(InfestationCellFinder.DistToBlocker(cell, map) / 11f, 0f, 0.6f);
 			float num6 = Mathf.InverseLerp(-17f, -7f, temperature);
 			float num7 = num2 * num3 * num5 * mountainousnessScoreAt * num4 * num6;
 			num7 = Mathf.Pow(num7, 1.2f);
@@ -120,32 +132,34 @@ namespace RimWorld
 		{
 			if (DebugViewSettings.drawInfestationChance)
 			{
+				Map visibleMap = Find.VisibleMap;
 				CellRect cellRect = Find.CameraDriver.CurrentViewRect;
-				cellRect.ClipInsideMap();
+				cellRect.ClipInsideMap(visibleMap);
 				cellRect = cellRect.ExpandedBy(1);
-				InfestationCellFinder.CalculateTraversalDistancesToUnroofed();
-				InfestationCellFinder.CalculateClosedAreaSizeGrid();
+				InfestationCellFinder.CalculateTraversalDistancesToUnroofed(visibleMap);
+				InfestationCellFinder.CalculateClosedAreaSizeGrid(visibleMap);
+				InfestationCellFinder.CalculateDistanceToColonyBuildingGrid(visibleMap);
 				float num = 0.001f;
-				for (int i = 0; i < Find.Map.Size.z; i++)
+				for (int i = 0; i < visibleMap.Size.z; i++)
 				{
-					for (int j = 0; j < Find.Map.Size.x; j++)
+					for (int j = 0; j < visibleMap.Size.x; j++)
 					{
 						IntVec3 cell = new IntVec3(j, 0, i);
-						float scoreAt = InfestationCellFinder.GetScoreAt(cell);
+						float scoreAt = InfestationCellFinder.GetScoreAt(cell, visibleMap);
 						if (scoreAt > num)
 						{
 							num = scoreAt;
 						}
 					}
 				}
-				for (int k = 0; k < Find.Map.Size.z; k++)
+				for (int k = 0; k < visibleMap.Size.z; k++)
 				{
-					for (int l = 0; l < Find.Map.Size.x; l++)
+					for (int l = 0; l < visibleMap.Size.x; l++)
 					{
 						IntVec3 intVec = new IntVec3(l, 0, k);
 						if (cellRect.Contains(intVec))
 						{
-							float scoreAt2 = InfestationCellFinder.GetScoreAt(intVec);
+							float scoreAt2 = InfestationCellFinder.GetScoreAt(intVec, visibleMap);
 							if (scoreAt2 > 0f)
 							{
 								float a = GenMath.LerpDouble(7.5f, num, 0f, 1f, scoreAt2);
@@ -157,17 +171,18 @@ namespace RimWorld
 			}
 		}
 
-		private static void CalculateLocationCandidates()
+		private static void CalculateLocationCandidates(Map map)
 		{
 			InfestationCellFinder.locationCandidates.Clear();
-			InfestationCellFinder.CalculateTraversalDistancesToUnroofed();
-			InfestationCellFinder.CalculateClosedAreaSizeGrid();
-			for (int i = 0; i < Find.Map.Size.z; i++)
+			InfestationCellFinder.CalculateTraversalDistancesToUnroofed(map);
+			InfestationCellFinder.CalculateClosedAreaSizeGrid(map);
+			InfestationCellFinder.CalculateDistanceToColonyBuildingGrid(map);
+			for (int i = 0; i < map.Size.z; i++)
 			{
-				for (int j = 0; j < Find.Map.Size.x; j++)
+				for (int j = 0; j < map.Size.x; j++)
 				{
 					IntVec3 cell = new IntVec3(j, 0, i);
-					float scoreAt = InfestationCellFinder.GetScoreAt(cell);
+					float scoreAt = InfestationCellFinder.GetScoreAt(cell, map);
 					if (scoreAt > 0f)
 					{
 						InfestationCellFinder.locationCandidates.Add(new InfestationCellFinder.LocationCandidate(cell, scoreAt));
@@ -176,16 +191,16 @@ namespace RimWorld
 			}
 		}
 
-		private static bool CellHasBlockingThings(IntVec3 cell)
+		private static bool CellHasBlockingThings(IntVec3 cell, Map map)
 		{
-			List<Thing> thingList = cell.GetThingList();
+			List<Thing> thingList = cell.GetThingList(map);
 			for (int i = 0; i < thingList.Count; i++)
 			{
 				if (thingList[i] is Pawn)
 				{
 					return true;
 				}
-				if (thingList[i].def.category == ThingCategory.Building || thingList[i].def.category == ThingCategory.Item)
+				if ((thingList[i].def.category == ThingCategory.Building || thingList[i].def.category == ThingCategory.Item) && GenSpawn.SpawningWipes(ThingDefOf.Hive, thingList[i].def))
 				{
 					return true;
 				}
@@ -193,7 +208,7 @@ namespace RimWorld
 			return false;
 		}
 
-		private static int StraightLineDistToUnroofed(IntVec3 cell)
+		private static int StraightLineDistToUnroofed(IntVec3 cell, Map map)
 		{
 			int num = 2147483647;
 			int i = 0;
@@ -206,18 +221,18 @@ namespace RimWorld
 				while (true)
 				{
 					IntVec3 intVec = cell + facingCell * num2;
-					if (!intVec.InBounds())
+					if (!intVec.InBounds(map))
 					{
 						goto Block_1;
 					}
 					num3 = num2;
-					if (InfestationCellFinder.NoRoofAroundAndWalkable(intVec))
+					if (InfestationCellFinder.NoRoofAroundAndWalkable(intVec, map))
 					{
 						break;
 					}
 					num2++;
 				}
-				IL_6D:
+				IL_6F:
 				if (num3 < num)
 				{
 					num = num3;
@@ -226,16 +241,16 @@ namespace RimWorld
 				continue;
 				Block_1:
 				num3 = 2147483647;
-				goto IL_6D;
+				goto IL_6F;
 			}
 			if (num == 2147483647)
 			{
-				return Find.Map.Size.x;
+				return map.Size.x;
 			}
 			return num;
 		}
 
-		private static float DistToBlocker(IntVec3 cell)
+		private static float DistToBlocker(IntVec3 cell, Map map)
 		{
 			int num = -2147483648;
 			int num2 = -2147483648;
@@ -249,7 +264,7 @@ namespace RimWorld
 				{
 					IntVec3 c = cell + facingCell * num3;
 					num4 = num3;
-					if (!c.InBounds() || !c.Walkable())
+					if (!c.InBounds(map) || !c.Walkable(map))
 					{
 						break;
 					}
@@ -268,13 +283,13 @@ namespace RimWorld
 			return (float)Mathf.Min(num, num2);
 		}
 
-		private static bool NoRoofAroundAndWalkable(IntVec3 cell)
+		private static bool NoRoofAroundAndWalkable(IntVec3 cell, Map map)
 		{
-			if (!cell.Walkable())
+			if (!cell.Walkable(map))
 			{
 				return false;
 			}
-			if (cell.Roofed())
+			if (cell.Roofed(map))
 			{
 				return false;
 			}
@@ -282,7 +297,7 @@ namespace RimWorld
 			{
 				Rot4 rot = new Rot4(i);
 				IntVec3 c = rot.FacingCell + cell;
-				if (c.InBounds() && c.Roofed())
+				if (c.InBounds(map) && c.Roofed(map))
 				{
 					return false;
 				}
@@ -290,21 +305,21 @@ namespace RimWorld
 			return true;
 		}
 
-		private static float GetMountainousnessScoreAt(IntVec3 cell)
+		private static float GetMountainousnessScoreAt(IntVec3 cell, Map map)
 		{
 			float num = 0f;
 			int num2 = 0;
 			for (int i = 0; i < 700; i += 10)
 			{
 				IntVec3 c = cell + GenRadial.RadialPattern[i];
-				if (c.InBounds())
+				if (c.InBounds(map))
 				{
-					Building edifice = c.GetEdifice();
+					Building edifice = c.GetEdifice(map);
 					if (edifice != null && edifice.def.category == ThingCategory.Building && edifice.def.building.isNaturalRock)
 					{
 						num += 1f;
 					}
-					else if (c.Roofed() && c.GetRoof().isThickRoof)
+					else if (c.Roofed(map) && c.GetRoof(map).isThickRoof)
 					{
 						num += 0.5f;
 					}
@@ -314,16 +329,16 @@ namespace RimWorld
 			return num / (float)num2;
 		}
 
-		private static void CalculateTraversalDistancesToUnroofed()
+		private static void CalculateTraversalDistancesToUnroofed(Map map)
 		{
 			InfestationCellFinder.tempUnroofedRegions.Clear();
-			for (int i = 0; i < Find.Map.Size.z; i++)
+			for (int i = 0; i < map.Size.z; i++)
 			{
-				for (int j = 0; j < Find.Map.Size.x; j++)
+				for (int j = 0; j < map.Size.x; j++)
 				{
 					IntVec3 intVec = new IntVec3(j, 0, i);
-					Region region = intVec.GetRegion();
-					if (region != null && InfestationCellFinder.NoRoofAroundAndWalkable(intVec))
+					Region region = intVec.GetRegion(map);
+					if (region != null && InfestationCellFinder.NoRoofAroundAndWalkable(intVec, map))
 					{
 						InfestationCellFinder.tempUnroofedRegions.Add(region);
 					}
@@ -333,32 +348,66 @@ namespace RimWorld
 			InfestationCellFinder.tempUnroofedRegions.Clear();
 		}
 
-		private static void CalculateClosedAreaSizeGrid()
+		private static void CalculateClosedAreaSizeGrid(Map map)
 		{
-			if (InfestationCellFinder.closedAreaSize.CellsCount != CellIndices.NumGridCells)
+			if (InfestationCellFinder.closedAreaSize == null)
 			{
-				InfestationCellFinder.closedAreaSize = new ByteGrid();
+				InfestationCellFinder.closedAreaSize = new ByteGrid(map);
 			}
-			InfestationCellFinder.closedAreaSize.Clear();
-			for (int i = 0; i < Find.Map.Size.z; i++)
+			else
 			{
-				for (int j = 0; j < Find.Map.Size.x; j++)
+				InfestationCellFinder.closedAreaSize.ClearAndResizeTo(map);
+			}
+			for (int i = 0; i < map.Size.z; i++)
+			{
+				for (int j = 0; j < map.Size.x; j++)
 				{
 					IntVec3 intVec = new IntVec3(j, 0, i);
-					if (InfestationCellFinder.closedAreaSize[j, i] == 0 && !intVec.Impassable())
+					if (InfestationCellFinder.closedAreaSize[j, i] == 0 && !intVec.Impassable(map))
 					{
 						int area = 0;
-						FloodFiller.FloodFill(intVec, (IntVec3 c) => !c.Impassable(), delegate(IntVec3 c)
+						map.floodFiller.FloodFill(intVec, (IntVec3 c) => !c.Impassable(map), delegate(IntVec3 c)
 						{
 							area++;
 						});
 						area = Mathf.Min(area, 255);
-						FloodFiller.FloodFill(intVec, (IntVec3 c) => !c.Impassable(), delegate(IntVec3 c)
+						map.floodFiller.FloodFill(intVec, (IntVec3 c) => !c.Impassable(map), delegate(IntVec3 c)
 						{
 							InfestationCellFinder.closedAreaSize[c] = (byte)area;
 						});
 					}
 				}
+			}
+		}
+
+		private static void CalculateDistanceToColonyBuildingGrid(Map map)
+		{
+			if (InfestationCellFinder.distToColonyBuilding == null)
+			{
+				InfestationCellFinder.distToColonyBuilding = new ByteGrid(map);
+			}
+			else if (!InfestationCellFinder.distToColonyBuilding.MapSizeMatches(map))
+			{
+				InfestationCellFinder.distToColonyBuilding.ClearAndResizeTo(map);
+			}
+			InfestationCellFinder.distToColonyBuilding.Clear(255);
+			InfestationCellFinder.tmpColonyBuildingsLocs.Clear();
+			List<Building> allBuildingsColonist = map.listerBuildings.allBuildingsColonist;
+			for (int i = 0; i < allBuildingsColonist.Count; i++)
+			{
+				InfestationCellFinder.tmpColonyBuildingsLocs.Add(allBuildingsColonist[i].Position);
+			}
+			Dijkstra<IntVec3>.Run(InfestationCellFinder.tmpColonyBuildingsLocs, (IntVec3 x) => DijkstraUtility.AdjacentCellsNeighborsGetter(x, map), delegate(IntVec3 a, IntVec3 b)
+			{
+				if (a.x == b.x || a.z == b.z)
+				{
+					return 1f;
+				}
+				return 1.41421354f;
+			}, ref InfestationCellFinder.tmpDistanceResult);
+			for (int j = 0; j < InfestationCellFinder.tmpDistanceResult.Count; j++)
+			{
+				InfestationCellFinder.distToColonyBuilding[InfestationCellFinder.tmpDistanceResult[j].Key] = (byte)Mathf.Min(InfestationCellFinder.tmpDistanceResult[j].Value, 254.999f);
 			}
 		}
 	}

@@ -3,25 +3,29 @@ using System.Collections.Generic;
 
 namespace Verse
 {
-	public static class MapCellsInRandomOrder
+	public class MapCellsInRandomOrder
 	{
-		private static List<IntVec3> randomizedCells;
+		private Map map;
 
-		private static IntVec3 lastMapSize;
+		private List<IntVec3> randomizedCells;
 
-		public static IntVec3 Get(int index)
+		public MapCellsInRandomOrder(Map map)
 		{
-			if (MapCellsInRandomOrder.randomizedCells == null || Find.Map.Size != MapCellsInRandomOrder.lastMapSize)
+			this.map = map;
+		}
+
+		public IntVec3 Get(int index)
+		{
+			if (this.randomizedCells == null)
 			{
-				MapCellsInRandomOrder.randomizedCells = new List<IntVec3>(Find.Map.Area);
-				foreach (IntVec3 current in Find.Map.AllCells)
+				this.randomizedCells = new List<IntVec3>(this.map.Area);
+				foreach (IntVec3 current in this.map.AllCells)
 				{
-					MapCellsInRandomOrder.randomizedCells.Add(current);
+					this.randomizedCells.Add(current);
 				}
-				MapCellsInRandomOrder.randomizedCells.Shuffle<IntVec3>();
-				MapCellsInRandomOrder.lastMapSize = Find.Map.Size;
+				this.randomizedCells.Shuffle<IntVec3>();
 			}
-			return MapCellsInRandomOrder.randomizedCells[index];
+			return this.randomizedCells[index];
 		}
 	}
 }

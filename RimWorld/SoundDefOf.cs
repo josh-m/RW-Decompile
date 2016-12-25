@@ -58,6 +58,10 @@ namespace RimWorld
 
 		public static SoundDef LessonDeactivated;
 
+		public static SoundDef DraftOn;
+
+		public static SoundDef DraftOff;
+
 		public static SoundDef CommsWindow_Open;
 
 		public static SoundDef CommsWindow_Close;
@@ -79,6 +83,8 @@ namespace RimWorld
 		public static SoundDef ThingSelected;
 
 		public static SoundDef ZoneSelected;
+
+		public static SoundDef MapSelected;
 
 		public static SoundDef ColonistSelected;
 
@@ -154,7 +160,11 @@ namespace RimWorld
 
 		public static SoundDef BulletImpactMetal;
 
+		public static SoundDef BulletImpactFlesh;
+
 		public static SoundDef AmbientAltitudeWind;
+
+		public static SoundDef AmbientSpace;
 
 		public static SoundDef PowerOnSmall;
 
@@ -206,6 +216,8 @@ namespace RimWorld
 
 		public static SoundDef DropPodFall;
 
+		public static SoundDef DropPodLeaving;
+
 		public static SoundDef PersonalShieldAbsorbDamage;
 
 		public static SoundDef PersonalShieldReset;
@@ -217,6 +229,8 @@ namespace RimWorld
 		public static SoundDef Pawn_Melee_Punch_HitBuilding;
 
 		public static SoundDef Pawn_Melee_Punch_Miss;
+
+		public static SoundDef ArtilleryShellLoaded;
 
 		public static SoundDef GameStartSting;
 

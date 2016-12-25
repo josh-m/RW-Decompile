@@ -9,6 +9,8 @@ namespace RimWorld
 {
 	public class Designator_Slaughter : Designator
 	{
+		private List<Pawn> justDesignated = new List<Pawn>();
+
 		public override int DraggableDimensions
 		{
 			get
@@ -31,7 +33,7 @@ namespace RimWorld
 
 		public override AcceptanceReport CanDesignateCell(IntVec3 c)
 		{
-			if (!c.InBounds())
+			if (!c.InBounds(base.Map))
 			{
 				return false;
 			}
@@ -53,7 +55,7 @@ namespace RimWorld
 		public override AcceptanceReport CanDesignateThing(Thing t)
 		{
 			Pawn pawn = t as Pawn;
-			if (pawn != null && pawn.def.race.Animal && pawn.Faction == Faction.OfPlayer && Find.DesignationManager.DesignationOn(pawn, DesignationDefOf.Slaughter) == null && !pawn.InAggroMentalState)
+			if (pawn != null && pawn.def.race.Animal && pawn.Faction == Faction.OfPlayer && base.Map.designationManager.DesignationOn(pawn, DesignationDefOf.Slaughter) == null && !pawn.InAggroMentalState)
 			{
 				return true;
 			}
@@ -62,15 +64,26 @@ namespace RimWorld
 
 		public override void DesignateThing(Thing t)
 		{
-			Find.DesignationManager.AddDesignation(new Designation(t, DesignationDefOf.Slaughter));
+			base.Map.designationManager.AddDesignation(new Designation(t, DesignationDefOf.Slaughter));
+			this.justDesignated.Add((Pawn)t);
+		}
+
+		protected override void FinalizeDesignationSucceeded()
+		{
+			base.FinalizeDesignationSucceeded();
+			for (int i = 0; i < this.justDesignated.Count; i++)
+			{
+				SlaughterDesignatorUtility.CheckWarnAboutBondedAnimal(this.justDesignated[i]);
+			}
+			this.justDesignated.Clear();
 		}
 
 		[DebuggerHidden]
 		private IEnumerable<Pawn> SlaughterablesInCell(IntVec3 c)
 		{
-			if (!c.Fogged())
+			if (!c.Fogged(base.Map))
 			{
-				List<Thing> thingList = c.GetThingList();
+				List<Thing> thingList = c.GetThingList(base.Map);
 				for (int i = 0; i < thingList.Count; i++)
 				{
 					if (this.CanDesignateThing(thingList[i]).Accepted)

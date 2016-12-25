@@ -62,6 +62,7 @@ namespace RimWorld
 
 		protected virtual void ResolveRaidSpawnCenter(IncidentParms parms)
 		{
+			Map map = (Map)parms.target;
 			if (parms.spawnCenter.IsValid)
 			{
 				return;
@@ -71,11 +72,11 @@ namespace RimWorld
 				if (parms.raidArrivalMode == PawnsArriveMode.CenterDrop)
 				{
 					parms.raidPodOpenDelay = 520;
-					if (Rand.Value < 0.4f && Find.ListerBuildings.ColonistsHaveBuildingWithPowerOn(ThingDefOf.OrbitalTradeBeacon))
+					if (Rand.Value < 0.4f && map.listerBuildings.ColonistsHaveBuildingWithPowerOn(ThingDefOf.OrbitalTradeBeacon))
 					{
-						parms.spawnCenter = DropCellFinder.TradeDropSpot();
+						parms.spawnCenter = DropCellFinder.TradeDropSpot(map);
 					}
-					else if (!DropCellFinder.TryFindRaiderDropCenterClose(out parms.spawnCenter))
+					else if (!DropCellFinder.TryFindRaidDropCenterClose(out parms.spawnCenter, map))
 					{
 						parms.raidArrivalMode = PawnsArriveMode.EdgeDrop;
 					}
@@ -83,17 +84,18 @@ namespace RimWorld
 				if (parms.raidArrivalMode == PawnsArriveMode.EdgeDrop)
 				{
 					parms.raidPodOpenDelay = 140;
-					parms.spawnCenter = DropCellFinder.FindRaiderDropCenterDistant();
+					parms.spawnCenter = DropCellFinder.FindRaidDropCenterDistant(map);
 				}
 			}
 			else
 			{
-				RCellFinder.TryFindRandomPawnEntryCell(out parms.spawnCenter);
+				RCellFinder.TryFindRandomPawnEntryCell(out parms.spawnCenter, map);
 			}
 		}
 
 		public override bool TryExecute(IncidentParms parms)
 		{
+			Map map = (Map)parms.target;
 			this.ResolveRaidPoints(parms);
 			if (!this.TryResolveRaidFaction(parms))
 			{
@@ -102,26 +104,27 @@ namespace RimWorld
 			this.ResolveRaidStrategy(parms);
 			this.ResolveRaidArriveMode(parms);
 			this.ResolveRaidSpawnCenter(parms);
-			PawnGroupMakerUtility.AdjustPointsForGroupArrivalParams(parms);
-			List<Pawn> list = PawnGroupMakerUtility.GenerateArrivingPawns(parms, true).ToList<Pawn>();
+			IncidentParmsUtility.AdjustPointsForGroupArrivalParams(parms);
+			PawnGroupMakerParms defaultPawnGroupMakerParms = IncidentParmsUtility.GetDefaultPawnGroupMakerParms(parms);
+			List<Pawn> list = PawnGroupMakerUtility.GeneratePawns(PawnGroupKindDefOf.Normal, defaultPawnGroupMakerParms, true).ToList<Pawn>();
 			if (list.Count == 0)
 			{
 				Log.Error("Got no pawns spawning raid from parms " + parms);
 				return false;
 			}
-			TargetInfo letterLookTarget = TargetInfo.Invalid;
+			TargetInfo target = TargetInfo.Invalid;
 			if (parms.raidArrivalMode == PawnsArriveMode.CenterDrop || parms.raidArrivalMode == PawnsArriveMode.EdgeDrop)
 			{
-				DropPodUtility.DropThingsNear(parms.spawnCenter, list.Cast<Thing>(), parms.raidPodOpenDelay, false, true, true);
-				letterLookTarget = parms.spawnCenter;
+				DropPodUtility.DropThingsNear(parms.spawnCenter, map, list.Cast<Thing>(), parms.raidPodOpenDelay, false, true, true);
+				target = new TargetInfo(parms.spawnCenter, map, false);
 			}
 			else
 			{
 				foreach (Pawn current in list)
 				{
-					IntVec3 loc = CellFinder.RandomClosewalkCellNear(parms.spawnCenter, 8);
-					GenSpawn.Spawn(current, loc);
-					letterLookTarget = current;
+					IntVec3 loc = CellFinder.RandomClosewalkCellNear(parms.spawnCenter, map, 8);
+					GenSpawn.Spawn(current, loc, map);
+					target = current;
 				}
 			}
 			StringBuilder stringBuilder = new StringBuilder();
@@ -131,14 +134,16 @@ namespace RimWorld
 				string str = (current2.equipment == null || current2.equipment.Primary == null) ? "unarmed" : current2.equipment.Primary.LabelCap;
 				stringBuilder.AppendLine(current2.KindLabel + " - " + str);
 			}
-			Find.LetterStack.ReceiveLetter(this.GetLetterLabel(parms), this.GetLetterText(parms, list), this.GetLetterType(), letterLookTarget, stringBuilder.ToString());
+			string letterLabel = this.GetLetterLabel(parms);
+			string letterText = this.GetLetterText(parms, list);
+			PawnRelationUtility.Notify_PawnsSeenByPlayer(list, ref letterLabel, ref letterText, this.GetRelatedPawnsInfoLetterText(parms), true);
+			Find.LetterStack.ReceiveLetter(letterLabel, letterText, this.GetLetterType(), target, stringBuilder.ToString());
 			if (this.GetLetterType() == LetterType.BadUrgent)
 			{
 				TaleRecorder.RecordTale(TaleDefOf.RaidArrived, new object[0]);
 			}
-			PawnRelationUtility.Notify_PawnsSeenByPlayer(list, this.GetRelatedPawnsInfoLetterText(parms), true);
-			Lord lord = LordMaker.MakeNewLord(parms.faction, parms.raidStrategy.Worker.MakeLordJob(ref parms), list);
-			AvoidGridMaker.RegenerateAvoidGridsFor(parms.faction);
+			Lord lord = LordMaker.MakeNewLord(parms.faction, parms.raidStrategy.Worker.MakeLordJob(parms, map), map, list);
+			AvoidGridMaker.RegenerateAvoidGridsFor(parms.faction, map);
 			LessonAutoActivator.TeachOpportunity(ConceptDefOf.EquippingWeapons, OpportunityType.Critical);
 			if (!PlayerKnowledgeDatabase.IsComplete(ConceptDefOf.PersonalShields))
 			{
@@ -159,7 +164,7 @@ namespace RimWorld
 					"Market value threshold to start stealing: ",
 					StealAIUtility.StartStealingMarketValueThreshold(lord),
 					" (colony wealth = ",
-					Find.StoryWatcher.watcherWealth.WealthTotal,
+					map.wealthWatcher.WealthTotal,
 					")"
 				}));
 			}

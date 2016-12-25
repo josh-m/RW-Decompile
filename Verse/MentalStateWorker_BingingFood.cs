@@ -6,7 +6,7 @@ namespace Verse
 	{
 		public override bool StateCanOccur(Pawn pawn)
 		{
-			return base.StateCanOccur(pawn) && Find.ResourceCounter.TotalHumanEdibleNutrition > 10f;
+			return base.StateCanOccur(pawn) && (!pawn.Spawned || pawn.Map.resourceCounter.TotalHumanEdibleNutrition > 10f);
 		}
 	}
 }

@@ -7,16 +7,16 @@ namespace Verse
 	{
 		public const float CoverPercent_Corner = 0.75f;
 
-		public static List<CoverInfo> CalculateCoverGiverSet(IntVec3 targetLoc, IntVec3 shooterLoc)
+		public static List<CoverInfo> CalculateCoverGiverSet(IntVec3 targetLoc, IntVec3 shooterLoc, Map map)
 		{
 			List<CoverInfo> list = new List<CoverInfo>();
 			for (int i = 0; i < 8; i++)
 			{
 				IntVec3 intVec = targetLoc + GenAdj.AdjacentCells[i];
-				if (intVec.InBounds())
+				if (intVec.InBounds(map))
 				{
 					CoverInfo item;
-					if (CoverUtility.TryFindAdjustedCoverInCell(shooterLoc, targetLoc, intVec, out item))
+					if (CoverUtility.TryFindAdjustedCoverInCell(shooterLoc, targetLoc, intVec, map, out item))
 					{
 						list.Add(item);
 					}
@@ -25,16 +25,16 @@ namespace Verse
 			return list;
 		}
 
-		public static float CalculateOverallBlockChance(IntVec3 targetLoc, IntVec3 shooterLoc)
+		public static float CalculateOverallBlockChance(IntVec3 targetLoc, IntVec3 shooterLoc, Map map)
 		{
 			float num = 0f;
 			for (int i = 0; i < 8; i++)
 			{
 				IntVec3 intVec = targetLoc + GenAdj.AdjacentCells[i];
-				if (intVec.InBounds())
+				if (intVec.InBounds(map))
 				{
 					CoverInfo coverInfo;
-					if (CoverUtility.TryFindAdjustedCoverInCell(shooterLoc, targetLoc, intVec, out coverInfo))
+					if (CoverUtility.TryFindAdjustedCoverInCell(shooterLoc, targetLoc, intVec, map, out coverInfo))
 					{
 						num += (1f - num) * coverInfo.BlockChance;
 					}
@@ -43,9 +43,9 @@ namespace Verse
 			return num;
 		}
 
-		private static bool TryFindAdjustedCoverInCell(IntVec3 shooterLoc, IntVec3 targetLoc, IntVec3 adjCell, out CoverInfo result)
+		private static bool TryFindAdjustedCoverInCell(IntVec3 shooterLoc, IntVec3 targetLoc, IntVec3 adjCell, Map map, out CoverInfo result)
 		{
-			Thing cover = adjCell.GetCover();
+			Thing cover = adjCell.GetCover(map);
 			if (cover == null || shooterLoc == targetLoc)
 			{
 				result = CoverInfo.Invalid;
@@ -106,15 +106,15 @@ namespace Verse
 			return def.fillPercent;
 		}
 
-		public static float TotalSurroundingCoverScore(IntVec3 c)
+		public static float TotalSurroundingCoverScore(IntVec3 c, Map map)
 		{
 			float num = 0f;
 			for (int i = 0; i < 8; i++)
 			{
 				IntVec3 c2 = c + GenAdj.AdjacentCells[i];
-				if (c2.InBounds())
+				if (c2.InBounds(map))
 				{
-					Thing cover = c2.GetCover();
+					Thing cover = c2.GetCover(map);
 					if (cover != null)
 					{
 						num += cover.def.BaseBlockChance();

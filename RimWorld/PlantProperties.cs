@@ -47,7 +47,7 @@ namespace RimWorld
 
 		public float growDays = 2f;
 
-		public float lifespanFraction = 3f;
+		public float lifespanFraction = 6f;
 
 		public float growMinGlow = 0.5f;
 
@@ -57,17 +57,13 @@ namespace RimWorld
 
 		public float fertilityMin = 0.9f;
 
-		public float fertilityFactorGrowthRate = 0.5f;
+		public float fertilitySensitivity = 0.5f;
 
-		public float fertilityFactorPlantChance;
+		public bool reproduces = true;
 
-		public bool shootsSeeds = true;
+		public float reproduceRadius = 20f;
 
-		public ThingDef seedDef;
-
-		public float seedShootRadius = 10f;
-
-		public float seedEmitMTBDays = 18f;
+		public float reproduceMtbDays = 10f;
 
 		public float topWindExposure = 0.25f;
 
@@ -104,7 +100,7 @@ namespace RimWorld
 				{
 					return this.wildClusterRadius;
 				}
-				return this.seedShootRadius;
+				return this.reproduceRadius;
 			}
 		}
 
@@ -189,8 +185,7 @@ namespace RimWorld
 				overrideReportText = "GrowingTimeDesc".Translate()
 			};
 			yield return new StatDrawEntry(StatCategoryDefOf.Basics, "FertilityRequirement".Translate(), this.fertilityMin.ToStringPercent(), 0);
-			yield return new StatDrawEntry(StatCategoryDefOf.Basics, "SoilFertilitySensitivityGrowthRate".Translate(), this.fertilityFactorGrowthRate.ToStringPercent(), 0);
-			yield return new StatDrawEntry(StatCategoryDefOf.Basics, "SoilFertilitySensitivityPlantChance".Translate(), this.fertilityFactorPlantChance.ToStringPercent(), 0);
+			yield return new StatDrawEntry(StatCategoryDefOf.Basics, "FertilitySensitivity".Translate(), this.fertilitySensitivity.ToStringPercent(), 0);
 			yield return new StatDrawEntry(StatCategoryDefOf.Basics, "LightRequirement".Translate(), this.growMinGlow.ToStringPercent(), 0);
 			if (!attributes.NullOrEmpty())
 			{

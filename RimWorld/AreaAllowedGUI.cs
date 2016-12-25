@@ -10,7 +10,11 @@ namespace RimWorld
 	{
 		public static void DoAllowedAreaSelectors(Rect rect, Pawn p, AllowedAreaMode mode)
 		{
-			List<Area> allAreas = Find.AreaManager.AllAreas;
+			if (Find.VisibleMap == null)
+			{
+				return;
+			}
+			List<Area> allAreas = Find.VisibleMap.areaManager.AllAreas;
 			int num = 1;
 			for (int i = 0; i < allAreas.Count; i++)
 			{

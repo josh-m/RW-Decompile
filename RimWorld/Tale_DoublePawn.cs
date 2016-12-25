@@ -45,9 +45,9 @@ namespace RimWorld
 			{
 				this.secondPawnData = TaleData_Pawn.GenerateFrom(secondPawn);
 			}
-			if (firstPawn.Spawned || firstPawn.holder != null)
+			if (firstPawn.MapHeld != null)
 			{
-				this.surroundings = TaleData_Surroundings.GenerateFrom(firstPawn.PositionHeld);
+				this.surroundings = TaleData_Surroundings.GenerateFrom(firstPawn.PositionHeld, firstPawn.MapHeld);
 			}
 		}
 

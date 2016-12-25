@@ -13,7 +13,7 @@ namespace RimWorld
 		[DebuggerHidden]
 		public override IEnumerable<Thing> PotentialWorkThingsGlobal(Pawn pawn)
 		{
-			List<Pawn> pawnList = Find.MapPawns.SpawnedPawnsInFaction(pawn.Faction);
+			List<Pawn> pawnList = pawn.Map.mapPawns.SpawnedPawnsInFaction(pawn.Faction);
 			for (int i = 0; i < pawnList.Count; i++)
 			{
 				yield return pawnList[i];

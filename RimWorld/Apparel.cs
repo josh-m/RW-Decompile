@@ -9,6 +9,30 @@ namespace RimWorld
 	{
 		public Pawn wearer;
 
+		private bool wornByCorpseInt;
+
+		public bool WornByCorpse
+		{
+			get
+			{
+				return this.wornByCorpseInt;
+			}
+		}
+
+		public void Notify_Stripped(Pawn pawn)
+		{
+			if (pawn.Dead && this.def.apparel.careIfWornByCorpse)
+			{
+				this.wornByCorpseInt = true;
+			}
+		}
+
+		public override void ExposeData()
+		{
+			base.ExposeData();
+			Scribe_Values.LookValue<bool>(ref this.wornByCorpseInt, "wornByCorpse", false, false);
+		}
+
 		public virtual void DrawWornExtras()
 		{
 		}
@@ -35,6 +59,21 @@ namespace RimWorld
 			{
 				this.wearer.apparel.Notify_WornApparelDestroyed(this);
 			}
+		}
+
+		public override string GetInspectString()
+		{
+			string text = base.GetInspectString();
+			if (this.WornByCorpse)
+			{
+				text += "WasWornByCorpse".Translate();
+			}
+			return text;
+		}
+
+		public virtual float GetSpecialApparelScoreOffset()
+		{
+			return 0f;
 		}
 	}
 }

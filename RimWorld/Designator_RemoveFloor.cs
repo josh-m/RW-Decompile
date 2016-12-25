@@ -36,24 +36,20 @@ namespace RimWorld
 
 		public override AcceptanceReport CanDesignateCell(IntVec3 c)
 		{
-			if (!c.InBounds() || c.Fogged())
+			if (!c.InBounds(base.Map) || c.Fogged(base.Map))
 			{
 				return false;
 			}
-			if (Find.DesignationManager.DesignationAt(c, DesignationDefOf.RemoveFloor) != null)
+			if (base.Map.designationManager.DesignationAt(c, DesignationDefOf.RemoveFloor) != null)
 			{
 				return false;
 			}
-			if (c.InNoBuildEdgeArea())
-			{
-				return "TooCloseToMapEdge".Translate();
-			}
-			Building edifice = c.GetEdifice();
+			Building edifice = c.GetEdifice(base.Map);
 			if (edifice != null && edifice.def.Fillage == FillCategory.Full && edifice.def.passability == Traversability.Impassable)
 			{
 				return false;
 			}
-			if (!Find.TerrainGrid.TerrainAt(c).layerable)
+			if (!base.Map.terrainGrid.TerrainAt(c).layerable)
 			{
 				return "TerrainMustBeRemovable".Translate();
 			}
@@ -64,10 +60,10 @@ namespace RimWorld
 		{
 			if (DebugSettings.godMode)
 			{
-				Find.TerrainGrid.RemoveTopLayer(c, true);
+				base.Map.terrainGrid.RemoveTopLayer(c, true);
 				return;
 			}
-			Find.DesignationManager.AddDesignation(new Designation(c, DesignationDefOf.RemoveFloor));
+			base.Map.designationManager.AddDesignation(new Designation(c, DesignationDefOf.RemoveFloor));
 		}
 
 		public override void SelectedUpdate()

@@ -1,14 +1,29 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using Verse;
+using Verse.Sound;
 
 namespace RimWorld
 {
 	public class Dialog_Options : Window
 	{
 		private const float SubOptionTabWidth = 40f;
+
+		private static readonly float[] UIScales = new float[]
+		{
+			1f,
+			1.25f,
+			1.5f,
+			1.75f,
+			2f,
+			2.5f,
+			3f,
+			3.5f,
+			4f
+		};
 
 		public override Vector2 InitialSize
 		{
@@ -56,6 +71,23 @@ namespace RimWorld
 			{
 				ResolutionUtility.SafeSetFullscreen(fullScreen);
 			}
+			listing_Standard.Label("UIScale".Translate());
+			float[] uIScales = Dialog_Options.UIScales;
+			for (int i = 0; i < uIScales.Length; i++)
+			{
+				float num = uIScales[i];
+				if (listing_Standard.RadioButton(num.ToString() + "x", Prefs.UIScale == num, 8f))
+				{
+					if (!ResolutionUtility.UIScaleSafeWithResolution(num, Screen.currentResolution))
+					{
+						Messages.Message("MessageScreenResTooSmallForUIScale".Translate(), MessageSound.RejectInput);
+					}
+					else
+					{
+						ResolutionUtility.SafeSetUIScale(num);
+					}
+				}
+			}
 			listing_Standard.NewColumn();
 			Text.Font = GameFont.Medium;
 			listing_Standard.Label("Gameplay".Translate());
@@ -68,7 +100,7 @@ namespace RimWorld
 			}
 			if (listing_Standard.ButtonText("ChooseLanguage".Translate(), null))
 			{
-				if (Current.ProgramState == ProgramState.MapPlaying)
+				if (Current.ProgramState == ProgramState.Playing)
 				{
 					Messages.Message("ChangeLanguageFromMainMenu".Translate(), MessageSound.RejectInput);
 				}
@@ -81,7 +113,7 @@ namespace RimWorld
 						list.Add(new FloatMenuOption(localLang.FriendlyNameNative, delegate
 						{
 							LanguageDatabase.SelectLanguage(localLang);
-						}, MenuOptionPriority.Medium, null, null, 0f, null));
+						}, MenuOptionPriority.Default, null, null, 0f, null, null));
 					}
 					Find.WindowStack.Add(new FloatMenu(list));
 				}
@@ -116,6 +148,17 @@ namespace RimWorld
 			bool plantWindSway = Prefs.PlantWindSway;
 			listing_Standard.CheckboxLabeled("PlantWindSway".Translate(), ref plantWindSway, null);
 			Prefs.PlantWindSway = plantWindSway;
+			int maxNumberOfPlayerHomes = Prefs.MaxNumberOfPlayerHomes;
+			listing_Standard.Label("MaxNumberOfPlayerHomes".Translate(new object[]
+			{
+				maxNumberOfPlayerHomes
+			}));
+			int num2 = Mathf.RoundToInt(listing_Standard.Slider((float)maxNumberOfPlayerHomes, 1f, 5f));
+			Prefs.MaxNumberOfPlayerHomes = num2;
+			if (maxNumberOfPlayerHomes != num2 && num2 > 1)
+			{
+				TutorUtility.DoModalDialogIfNotKnown(ConceptDefOf.MaxNumberOfPlayerHomes);
+			}
 			if (listing_Standard.ButtonTextLabeled("TemperatureMode".Translate(), Prefs.TemperatureMode.ToStringHuman()))
 			{
 				List<FloatMenuOption> list2 = new List<FloatMenuOption>();
@@ -128,7 +171,7 @@ namespace RimWorld
 						list2.Add(new FloatMenuOption(localTmode.ToString(), delegate
 						{
 							Prefs.TemperatureMode = localTmode;
-						}, MenuOptionPriority.Medium, null, null, 0f, null));
+						}, MenuOptionPriority.Default, null, null, 0f, null, null));
 					}
 				}
 				Find.WindowStack.Add(new FloatMenu(list2));
@@ -144,35 +187,35 @@ namespace RimWorld
 					list3.Add(new FloatMenuOption("0.125 " + text + "(debug)", delegate
 					{
 						Prefs.AutosaveIntervalDays = 0.125f;
-					}, MenuOptionPriority.Medium, null, null, 0f, null));
+					}, MenuOptionPriority.Default, null, null, 0f, null, null));
 					list3.Add(new FloatMenuOption("0.25 " + text + "(debug)", delegate
 					{
 						Prefs.AutosaveIntervalDays = 0.25f;
-					}, MenuOptionPriority.Medium, null, null, 0f, null));
+					}, MenuOptionPriority.Default, null, null, 0f, null, null));
 				}
 				list3.Add(new FloatMenuOption("0.5 " + text + string.Empty, delegate
 				{
 					Prefs.AutosaveIntervalDays = 0.5f;
-				}, MenuOptionPriority.Medium, null, null, 0f, null));
+				}, MenuOptionPriority.Default, null, null, 0f, null, null));
 				list3.Add(new FloatMenuOption(1.ToString() + " " + text2, delegate
 				{
 					Prefs.AutosaveIntervalDays = 1f;
-				}, MenuOptionPriority.Medium, null, null, 0f, null));
+				}, MenuOptionPriority.Default, null, null, 0f, null, null));
 				list3.Add(new FloatMenuOption(3.ToString() + " " + text, delegate
 				{
 					Prefs.AutosaveIntervalDays = 3f;
-				}, MenuOptionPriority.Medium, null, null, 0f, null));
+				}, MenuOptionPriority.Default, null, null, 0f, null, null));
 				list3.Add(new FloatMenuOption(7.ToString() + " " + text, delegate
 				{
 					Prefs.AutosaveIntervalDays = 7f;
-				}, MenuOptionPriority.Medium, null, null, 0f, null));
+				}, MenuOptionPriority.Default, null, null, 0f, null, null));
 				list3.Add(new FloatMenuOption(14.ToString() + " " + text, delegate
 				{
 					Prefs.AutosaveIntervalDays = 14f;
-				}, MenuOptionPriority.Medium, null, null, 0f, null));
+				}, MenuOptionPriority.Default, null, null, 0f, null, null));
 				Find.WindowStack.Add(new FloatMenu(list3));
 			}
-			if (Current.ProgramState == ProgramState.MapPlaying && Current.Game.Info.permadeathMode && Prefs.AutosaveIntervalDays > 1f)
+			if (Current.ProgramState == ProgramState.Playing && Current.Game.Info.permadeathMode && Prefs.AutosaveIntervalDays > 1f)
 			{
 				GUI.color = Color.red;
 				listing_Standard.Label("MaxPermadeathAutosaveIntervalInfo".Translate(new object[]
@@ -181,7 +224,7 @@ namespace RimWorld
 				}));
 				GUI.color = Color.white;
 			}
-			if (Current.ProgramState == ProgramState.MapPlaying && listing_Standard.ButtonText("ChangeStoryteller".Translate(), "OptionsButton-ChooseStoryteller") && TutorSystem.AllowAction("ChooseStoryteller"))
+			if (Current.ProgramState == ProgramState.Playing && listing_Standard.ButtonText("ChangeStoryteller".Translate(), "OptionsButton-ChooseStoryteller") && TutorSystem.AllowAction("ChooseStoryteller"))
 			{
 				Find.WindowStack.Add(new Page_SelectStorytellerInGame());
 			}
@@ -197,7 +240,7 @@ namespace RimWorld
 						list4.Add(new FloatMenuOption(localMode.ToStringHuman(), delegate
 						{
 							Prefs.AnimalNameMode = localMode;
-						}, MenuOptionPriority.Medium, null, null, 0f, null));
+						}, MenuOptionPriority.Default, null, null, 0f, null, null));
 					}
 				}
 				Find.WindowStack.Add(new FloatMenu(list4));
@@ -221,15 +264,44 @@ namespace RimWorld
 			listing_Standard.Gap(12f);
 			listing_Standard.Gap(12f);
 			listing_Standard.Label("NamesYouWantToSee".Translate());
-			while (Prefs.PreferredNames.Count < 4)
+			Prefs.PreferredNames.RemoveAll((string n) => n.NullOrEmpty());
+			for (int j = 0; j < Prefs.PreferredNames.Count; j++)
 			{
-				Prefs.PreferredNames.Add(string.Empty);
+				string name = Prefs.PreferredNames[j];
+				PawnBio pawnBio = (from b in SolidBioDatabase.allBios
+				where b.name.ToString() == name
+				select b).FirstOrDefault<PawnBio>();
+				if (pawnBio == null)
+				{
+					name += " [N]";
+				}
+				else
+				{
+					PawnBioType bioType = pawnBio.BioType;
+					if (bioType != PawnBioType.BackstoryInGame)
+					{
+						if (bioType == PawnBioType.PirateKing)
+						{
+							name += " [PK]";
+						}
+					}
+					else
+					{
+						name += " [B]";
+					}
+				}
+				Rect rect2 = listing_Standard.GetRect(24f);
+				Widgets.Label(rect2, name);
+				Rect butRect = new Rect(rect2.xMax - 24f, rect2.y, 24f, 24f);
+				if (Widgets.ButtonImage(butRect, TexButton.DeleteX))
+				{
+					Prefs.PreferredNames.RemoveAt(j);
+					SoundDefOf.TickLow.PlayOneShotOnCamera();
+				}
 			}
-			for (int i = 0; i < 4; i++)
+			if (Prefs.PreferredNames.Count < 6 && listing_Standard.ButtonText("AddName".Translate() + "...", null))
 			{
-				string text3 = Prefs.PreferredNames[i];
-				text3 = listing_Standard.TextEntry(text3, 1);
-				Prefs.PreferredNames[i] = text3;
+				Find.WindowStack.Add(new Dialog_AddPreferredName());
 			}
 			listing_Standard.End();
 		}

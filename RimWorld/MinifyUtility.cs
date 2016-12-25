@@ -56,9 +56,10 @@ namespace RimWorld
 				Log.Warning("Can't uninstall unspawned thing " + th);
 				return null;
 			}
+			Map map = th.Map;
 			MinifiedThing minifiedThing = th.MakeMinified();
-			GenPlace.TryPlaceThing(minifiedThing, th.Position, ThingPlaceMode.Near, null);
-			SoundDef.Named("ThingUninstalled").PlayOneShot(th.Position);
+			GenPlace.TryPlaceThing(minifiedThing, th.Position, map, ThingPlaceMode.Near, null);
+			SoundDef.Named("ThingUninstalled").PlayOneShot(new TargetInfo(th.Position, map, false));
 			return minifiedThing;
 		}
 	}

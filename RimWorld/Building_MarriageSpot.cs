@@ -31,7 +31,7 @@ namespace RimWorld
 						});
 					}
 				}
-				else if (!MarriageSpotUtility.IsValidMarriageSpot(base.Position, stringBuilder))
+				else if (!MarriageSpotUtility.IsValidMarriageSpot(base.Position, base.Map, stringBuilder))
 				{
 					return "MarriageSpotNotUsable".Translate(new object[]
 					{
@@ -44,7 +44,7 @@ namespace RimWorld
 
 		private bool AnyCoupleForWhichIsValid()
 		{
-			return Find.MapPawns.FreeColonistsSpawned.Any(delegate(Pawn p)
+			return base.Map.mapPawns.FreeColonistsSpawned.Any(delegate(Pawn p)
 			{
 				Pawn firstDirectRelationPawn = p.relations.GetFirstDirectRelationPawn(PawnRelationDefOf.Fiance, (Pawn x) => x.Spawned);
 				return firstDirectRelationPawn != null && MarriageSpotUtility.IsValidMarriageSpotFor(base.Position, p, firstDirectRelationPawn, null);
@@ -53,7 +53,7 @@ namespace RimWorld
 
 		private bool TryFindAnyFiancesCouple(out Pair<Pawn, Pawn> fiances)
 		{
-			foreach (Pawn current in Find.MapPawns.FreeColonistsSpawned)
+			foreach (Pawn current in base.Map.mapPawns.FreeColonistsSpawned)
 			{
 				Pawn firstDirectRelationPawn = current.relations.GetFirstDirectRelationPawn(PawnRelationDefOf.Fiance, (Pawn x) => x.Spawned);
 				if (firstDirectRelationPawn != null)

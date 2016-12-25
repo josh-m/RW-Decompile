@@ -19,13 +19,13 @@ namespace RimWorld
 		[DebuggerHidden]
 		public override IEnumerable<Thing> PotentialWorkThingsGlobal(Pawn pawn)
 		{
-			foreach (Designation des in Find.DesignationManager.DesignationsOfDef(DesignationDefOf.Mine))
+			foreach (Designation des in pawn.Map.designationManager.DesignationsOfDef(DesignationDefOf.Mine))
 			{
 				bool mayBeAccessible = false;
 				for (int i = 0; i < 4; i++)
 				{
 					IntVec3 c = des.target.Cell + GenAdj.CardinalDirections[i];
-					if (c.InBounds() && c.Walkable())
+					if (c.InBounds(pawn.Map) && c.Walkable(pawn.Map))
 					{
 						mayBeAccessible = true;
 						break;
@@ -33,7 +33,7 @@ namespace RimWorld
 				}
 				if (mayBeAccessible)
 				{
-					Thing j = MineUtility.MineableInCell(des.target.Cell);
+					Thing j = MineUtility.MineableInCell(des.target.Cell, pawn.Map);
 					if (j != null)
 					{
 						yield return j;
@@ -48,7 +48,7 @@ namespace RimWorld
 			{
 				return null;
 			}
-			if (Find.DesignationManager.DesignationAt(t.Position, DesignationDefOf.Mine) == null)
+			if (pawn.Map.designationManager.DesignationAt(t.Position, DesignationDefOf.Mine) == null)
 			{
 				return null;
 			}
@@ -60,7 +60,7 @@ namespace RimWorld
 			for (int i = 0; i < 8; i++)
 			{
 				IntVec3 c = t.Position + GenAdj.AdjacentCells[i];
-				if (c.InBounds() && c.Standable())
+				if (c.InBounds(pawn.Map) && c.Standable(pawn.Map))
 				{
 					flag = true;
 					break;
@@ -71,11 +71,11 @@ namespace RimWorld
 				for (int j = 0; j < 8; j++)
 				{
 					IntVec3 c2 = t.Position + GenAdj.AdjacentCells[j];
-					if (c2.InBounds())
+					if (c2.InBounds(t.Map))
 					{
-						if (c2.Walkable() && !c2.Standable())
+						if (c2.Walkable(t.Map) && !c2.Standable(t.Map))
 						{
-							Thing firstHaulable = c2.GetFirstHaulable();
+							Thing firstHaulable = c2.GetFirstHaulable(t.Map);
 							if (firstHaulable != null && firstHaulable.def.passability == Traversability.PassThroughOnly)
 							{
 								return HaulAIUtility.HaulAsideJobFor(pawn, firstHaulable);

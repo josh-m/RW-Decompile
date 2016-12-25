@@ -5,6 +5,8 @@ namespace Verse
 {
 	public abstract class WeatherEvent
 	{
+		protected Map map;
+
 		public abstract bool Expired
 		{
 			get;
@@ -40,6 +42,11 @@ namespace Verse
 			{
 				return null;
 			}
+		}
+
+		public WeatherEvent(Map map)
+		{
+			this.map = map;
 		}
 
 		public abstract void FireEvent();

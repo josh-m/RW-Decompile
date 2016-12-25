@@ -35,7 +35,7 @@ namespace Verse
 		{
 			float a = 1f - (base.AgeSecs - this.TimeBeforeStartFadeout) / this.def.mote.fadeOutTime;
 			Color color = new Color(this.textColor.r, this.textColor.g, this.textColor.b, a);
-			GenWorldUI.DrawText(new Vector2(this.exactPosition.x, this.exactPosition.z), this.text, color);
+			GenMapUI.DrawText(new Vector2(this.exactPosition.x, this.exactPosition.z), this.text, color);
 		}
 	}
 }

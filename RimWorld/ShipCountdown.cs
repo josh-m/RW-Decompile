@@ -1,3 +1,4 @@
+using RimWorld.Planet;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,6 +17,10 @@ namespace RimWorld
 
 		private static Building shipRoot;
 
+		private static int journeyDestinationTile;
+
+		private static List<Caravan> caravans = new List<Caravan>();
+
 		public static bool CountingDown
 		{
 			get
@@ -24,10 +29,11 @@ namespace RimWorld
 			}
 		}
 
-		public static void InitiateCountdown(Building launchingShipRoot)
+		public static void InitiateCountdown(Building launchingShipRoot, int journeyDestinationTile)
 		{
 			SoundDef.Named("ShipTakeoff").PlayOneShotOnCamera();
 			ShipCountdown.shipRoot = launchingShipRoot;
+			ShipCountdown.journeyDestinationTile = journeyDestinationTile;
 			ShipCountdown.timeLeft = 7.2f;
 			ScreenFader.StartFade(Color.white, 7.2f);
 		}
@@ -51,40 +57,56 @@ namespace RimWorld
 
 		private static void CountdownEnded()
 		{
-			List<Building> list = ShipUtility.ShipBuildingsAttachedTo(ShipCountdown.shipRoot).ToList<Building>();
-			StringBuilder stringBuilder = new StringBuilder();
-			foreach (Building current in list)
+			if (ShipCountdown.journeyDestinationTile >= 0)
 			{
-				Building_CryptosleepCasket building_CryptosleepCasket = current as Building_CryptosleepCasket;
-				if (building_CryptosleepCasket != null && building_CryptosleepCasket.HasAnyContents)
+				CaravanJourneyDestinationUtility.PlayerCaravansAt(ShipCountdown.journeyDestinationTile, ShipCountdown.caravans);
+				StringBuilder stringBuilder = new StringBuilder();
+				for (int i = 0; i < ShipCountdown.caravans.Count; i++)
 				{
-					stringBuilder.AppendLine("   " + building_CryptosleepCasket.ContainedThing.LabelCap);
-					Find.StoryWatcher.statsRecord.colonistsLaunched++;
+					Caravan caravan = ShipCountdown.caravans[i];
+					List<Pawn> pawnsListForReading = caravan.PawnsListForReading;
+					for (int j = 0; j < pawnsListForReading.Count; j++)
+					{
+						stringBuilder.Append("   ");
+						stringBuilder.AppendLine(pawnsListForReading[j].LabelCap);
+						pawnsListForReading[j].Destroy(DestroyMode.Vanish);
+					}
+					pawnsListForReading.Clear();
+					Find.WorldObjects.Remove(caravan);
 				}
-				current.Destroy(DestroyMode.Vanish);
-			}
-			StringBuilder stringBuilder2 = new StringBuilder();
-			foreach (Pawn current2 in Find.MapPawns.FreeColonists)
-			{
-				if (current2.Spawned)
+				WorldObject worldObject = CaravanJourneyDestinationUtility.JurneyDestinationAt(ShipCountdown.journeyDestinationTile);
+				if (worldObject != null)
 				{
-					stringBuilder2.AppendLine("   " + current2.LabelCap);
+					Find.WorldObjects.Remove(worldObject);
 				}
+				string victoryText = "GameOverArrivedAtJourneyDestination".Translate(new object[]
+				{
+					stringBuilder.ToString(),
+					GameVictoryUtility.PawnsLeftBehind()
+				});
+				GameVictoryUtility.ShowCredits(victoryText);
 			}
-			if (stringBuilder2.Length == 0)
+			else
 			{
-				stringBuilder2.AppendLine("Nobody".Translate().ToLower());
+				List<Building> list = ShipUtility.ShipBuildingsAttachedTo(ShipCountdown.shipRoot).ToList<Building>();
+				StringBuilder stringBuilder2 = new StringBuilder();
+				foreach (Building current in list)
+				{
+					Building_CryptosleepCasket building_CryptosleepCasket = current as Building_CryptosleepCasket;
+					if (building_CryptosleepCasket != null && building_CryptosleepCasket.HasAnyContents)
+					{
+						stringBuilder2.AppendLine("   " + building_CryptosleepCasket.ContainedThing.LabelCap);
+						Find.StoryWatcher.statsRecord.colonistsLaunched++;
+					}
+					current.Destroy(DestroyMode.Vanish);
+				}
+				string victoryText2 = "GameOverShipLaunched".Translate(new object[]
+				{
+					stringBuilder2.ToString(),
+					GameVictoryUtility.PawnsLeftBehind()
+				});
+				GameVictoryUtility.ShowCredits(victoryText2);
 			}
-			string preCreditsMessage = "GameOverShipLaunched".Translate(new object[]
-			{
-				stringBuilder.ToString(),
-				stringBuilder2.ToString()
-			});
-			Screen_Credits screen_Credits = new Screen_Credits(preCreditsMessage);
-			screen_Credits.wonGame = true;
-			Find.WindowStack.Add(screen_Credits);
-			Find.MusicManagerMap.ForceSilenceFor(999f);
-			ScreenFader.StartFade(Color.clear, 3f);
 		}
 	}
 }

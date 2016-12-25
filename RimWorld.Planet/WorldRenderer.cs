@@ -1,47 +1,86 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
+using Verse;
 
 namespace RimWorld.Planet
 {
+	[StaticConstructorOnStartup]
 	public class WorldRenderer
 	{
-		private WorldRenderMode curModeInt;
+		private List<WorldLayer> layers = new List<WorldLayer>();
 
-		public Texture WorldTexture
+		public WorldRenderer()
 		{
-			get
+			foreach (Type current in typeof(WorldLayer).AllLeafSubclasses())
 			{
-				return this.CurMode.WorldTex;
+				this.layers.Add((WorldLayer)Activator.CreateInstance(current));
 			}
 		}
 
-		public WorldRenderMode CurMode
+		public void SetAllLayersDirty()
 		{
-			get
+			for (int i = 0; i < this.layers.Count; i++)
 			{
-				if (this.curModeInt == null)
+				this.layers[i].SetDirty();
+			}
+		}
+
+		public void RegenerateAllLayersNow()
+		{
+			for (int i = 0; i < this.layers.Count; i++)
+			{
+				this.layers[i].RegenerateNow();
+			}
+		}
+
+		public void Notify_StaticWorldObjectPosChanged()
+		{
+			for (int i = 0; i < this.layers.Count; i++)
+			{
+				WorldLayer_WorldObjects worldLayer_WorldObjects = this.layers[i] as WorldLayer_WorldObjects;
+				if (worldLayer_WorldObjects != null)
 				{
-					this.curModeInt = WorldRenderModeDatabase.ModeOfType<WorldRenderMode_Full>();
+					worldLayer_WorldObjects.SetDirty();
 				}
-				return this.curModeInt;
-			}
-			set
-			{
-				this.curModeInt = value;
 			}
 		}
 
-		public void Notify_WorldChanged()
+		public void CheckActivateWorldCamera()
 		{
-			foreach (WorldRenderMode current in WorldRenderModeDatabase.AllModes)
+			if (WorldRendererUtility.WorldRenderedNow)
 			{
-				current.Notify_WorldChanged();
+				Find.WorldCamera.gameObject.SetActive(true);
+			}
+			else
+			{
+				Find.WorldCamera.gameObject.SetActive(false);
 			}
 		}
 
-		public void Draw(WorldView view)
+		public void DrawWorldLayers()
 		{
-			GUI.DrawTextureWithTexCoords(view.screenRect, this.WorldTexture, view.NormalizedTexViewCoords);
+			WorldRendererUtility.UpdateWorldShadersParams();
+			for (int i = 0; i < this.layers.Count; i++)
+			{
+				this.layers[i].Render();
+			}
+		}
+
+		public int GetTileIDFromRayHit(RaycastHit hit)
+		{
+			int i = 0;
+			int count = this.layers.Count;
+			while (i < count)
+			{
+				WorldLayer_Terrain worldLayer_Terrain = this.layers[i] as WorldLayer_Terrain;
+				if (worldLayer_Terrain != null)
+				{
+					return worldLayer_Terrain.GetTileIDFromRayHit(hit);
+				}
+				i++;
+			}
+			return -1;
 		}
 	}
 }

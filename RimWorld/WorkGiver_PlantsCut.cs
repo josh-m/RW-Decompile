@@ -19,7 +19,7 @@ namespace RimWorld
 		[DebuggerHidden]
 		public override IEnumerable<Thing> PotentialWorkThingsGlobal(Pawn pawn)
 		{
-			List<Designation> desList = Find.DesignationManager.allDesignations;
+			List<Designation> desList = pawn.Map.designationManager.allDesignations;
 			for (int i = 0; i < desList.Count; i++)
 			{
 				Designation des = desList[i];
@@ -44,12 +44,16 @@ namespace RimWorld
 			{
 				return null;
 			}
-			foreach (Designation current in Find.DesignationManager.AllDesignationsOn(t))
+			if (t.IsBurning())
+			{
+				return null;
+			}
+			foreach (Designation current in pawn.Map.designationManager.AllDesignationsOn(t))
 			{
 				if (current.def == DesignationDefOf.HarvestPlant)
 				{
 					Job result;
-					if (current.def == DesignationDefOf.HarvestPlant && !((Plant)t).HarvestableNow)
+					if (!((Plant)t).HarvestableNow)
 					{
 						result = null;
 						return result;

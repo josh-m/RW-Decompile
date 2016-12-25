@@ -51,15 +51,15 @@ namespace RimWorld
 
 		private Thing FindBestGame(Pawn pawn, bool inBed, IntVec3 partySpot)
 		{
-			List<Thing> searchSet = this.SearchSet;
+			List<Thing> searchSet = this.GetSearchSet(pawn);
 			Predicate<Thing> predicate = (Thing t) => this.CanInteractWith(pawn, t, inBed);
 			if (partySpot.IsValid)
 			{
 				Predicate<Thing> oldValidator = predicate;
-				predicate = ((Thing x) => PartyUtility.InPartyArea(x.Position, partySpot) && oldValidator(x));
+				predicate = ((Thing x) => PartyUtility.InPartyArea(x.Position, partySpot, pawn.Map) && oldValidator(x));
 			}
 			Predicate<Thing> validator = predicate;
-			return GenClosest.ClosestThing_Global_Reachable(pawn.Position, searchSet, PathEndMode.OnCell, TraverseParms.For(pawn, Danger.Deadly, TraverseMode.ByPawn, false), 9999f, validator, null);
+			return GenClosest.ClosestThing_Global_Reachable(pawn.Position, pawn.Map, searchSet, PathEndMode.OnCell, TraverseParms.For(pawn, Danger.Deadly, TraverseMode.ByPawn, false), 9999f, validator, null);
 		}
 
 		protected virtual bool CanInteractWith(Pawn pawn, Thing t, bool inBed)
@@ -77,7 +77,7 @@ namespace RimWorld
 				return false;
 			}
 			CompPowerTrader compPowerTrader = t.TryGetComp<CompPowerTrader>();
-			return (compPowerTrader == null || compPowerTrader.PowerOn) && (!this.def.unroofedOnly || !t.Position.Roofed());
+			return (compPowerTrader == null || compPowerTrader.PowerOn) && (!this.def.unroofedOnly || !t.Position.Roofed(t.Map));
 		}
 
 		protected abstract Job TryGivePlayJob(Pawn pawn, Thing bestGame);

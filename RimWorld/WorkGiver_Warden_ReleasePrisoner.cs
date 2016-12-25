@@ -17,14 +17,14 @@ namespace RimWorld
 			{
 				return null;
 			}
-			IntVec3 vec;
-			if (!RCellFinder.TryFindPrisonerReleaseCell(pawn2, pawn, out vec))
+			IntVec3 c;
+			if (!RCellFinder.TryFindPrisonerReleaseCell(pawn2, pawn, out c))
 			{
 				return null;
 			}
-			return new Job(JobDefOf.ReleasePrisoner, pawn2, vec)
+			return new Job(JobDefOf.ReleasePrisoner, pawn2, c)
 			{
-				maxNumToCarry = 1
+				count = 1
 			};
 		}
 	}

@@ -6,6 +6,8 @@ namespace RimWorld
 {
 	internal static class InspectGizmoGrid
 	{
+		public static Gizmo mouseoverGizmo;
+
 		private static List<object> objList = new List<object>();
 
 		private static List<Gizmo> gizmoList = new List<Gizmo>();
@@ -33,7 +35,7 @@ namespace RimWorld
 					Thing t = InspectGizmoGrid.objList[j] as Thing;
 					if (t != null)
 					{
-						List<Designator> allDesignators = ReverseDesignatorDatabase.AllDesignators;
+						List<Designator> allDesignators = Find.ReverseDesignatorDatabase.AllDesignators;
 						for (int k = 0; k < allDesignators.Count; k++)
 						{
 							Designator des = allDesignators[k];
@@ -59,8 +61,7 @@ namespace RimWorld
 						}
 					}
 				}
-				Gizmo gizmo;
-				GizmoGridDrawer.DrawGizmoGrid(InspectGizmoGrid.gizmoList, MainTabWindow_Inspect.PaneSize.x + 20f, out gizmo);
+				GizmoGridDrawer.DrawGizmoGrid(InspectGizmoGrid.gizmoList, InspectPaneUtility.PaneSize.x + 20f, out InspectGizmoGrid.mouseoverGizmo);
 			}
 			catch (Exception ex)
 			{

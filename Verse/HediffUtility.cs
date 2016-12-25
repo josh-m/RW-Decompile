@@ -32,19 +32,8 @@ namespace Verse
 			{
 				return false;
 			}
-			HediffComp_Tendable hediffComp_Tendable = hediffWithComps.TryGetComp<HediffComp_Tendable>();
-			return hediffComp_Tendable != null && hediffComp_Tendable.IsTended;
-		}
-
-		public static bool IsTendedWell(this Hediff hd)
-		{
-			HediffWithComps hediffWithComps = hd as HediffWithComps;
-			if (hediffWithComps == null)
-			{
-				return false;
-			}
-			HediffComp_Tendable hediffComp_Tendable = hediffWithComps.TryGetComp<HediffComp_Tendable>();
-			return hediffComp_Tendable != null && hediffComp_Tendable.IsTendedWell;
+			HediffComp_TendDuration hediffComp_TendDuration = hediffWithComps.TryGetComp<HediffComp_TendDuration>();
+			return hediffComp_TendDuration != null && hediffComp_TendDuration.IsTended;
 		}
 
 		public static bool IsOld(this Hediff hd)
@@ -69,24 +58,14 @@ namespace Verse
 			return hediffComp_Immunizable != null && hediffComp_Immunizable.FullyImmune;
 		}
 
-		public static bool IsTendedAndHealing(this Hediff hd)
+		public static bool CanHealFromTending(this Hediff_Injury hd)
 		{
 			return hd.IsTended() && !hd.IsOld();
 		}
 
-		public static bool NotNaturallyHealingBecauseNeedsTending(this Hediff hd)
+		public static bool CanHealNaturally(this Hediff_Injury hd)
 		{
-			return hd.FullyHealableOnlyByTend() && hd.Severity <= 2f;
-		}
-
-		public static bool FullyHealableOnlyByTend(this Hediff hd)
-		{
-			return hd.def.naturallyHealed && !hd.IsTended() && hd.def.injuryProps.fullyHealableOnlyByTend;
-		}
-
-		public static bool IsNaturallyHealing(this Hediff hd)
-		{
-			return !hd.NotNaturallyHealingBecauseNeedsTending() && hd.def.naturallyHealed && !hd.IsOld();
+			return !hd.IsOld();
 		}
 	}
 }

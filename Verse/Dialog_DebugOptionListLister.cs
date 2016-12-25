@@ -23,7 +23,7 @@ namespace Verse
 				}
 				if (current.mode == DebugMenuOptionMode.Tool)
 				{
-					base.DebugTool(current.label, current.method);
+					base.DebugToolMap(current.label, current.method);
 				}
 			}
 		}

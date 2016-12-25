@@ -25,6 +25,7 @@ namespace Verse.AI.Group
 			Transition transition = new Transition(lordToil_Travel, lordToil_DefendPoint);
 			transition.AddTrigger(new Trigger_PawnHarmed());
 			transition.AddPreAction(new TransitionAction_SetDefendLocalGroup());
+			transition.AddPreAction(new TransitionAction_EndAllJobs());
 			stateGraph.AddTransition(transition);
 			Transition transition2 = new Transition(lordToil_DefendPoint, lordToil_Travel);
 			transition2.AddTrigger(new Trigger_TicksPassedWithoutHarm(1200));

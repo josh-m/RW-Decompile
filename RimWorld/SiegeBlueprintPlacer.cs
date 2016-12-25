@@ -27,33 +27,33 @@ namespace RimWorld
 		private static readonly IntRange SandbagLengthRange = new IntRange(2, 7);
 
 		[DebuggerHidden]
-		public static IEnumerable<Blueprint_Build> PlaceBlueprints(IntVec3 placeCenter, Faction placeFaction, float points)
+		public static IEnumerable<Blueprint_Build> PlaceBlueprints(IntVec3 placeCenter, Map map, Faction placeFaction, float points)
 		{
 			SiegeBlueprintPlacer.center = placeCenter;
 			SiegeBlueprintPlacer.faction = placeFaction;
-			foreach (Blueprint_Build blue in SiegeBlueprintPlacer.PlaceSandbagBlueprints())
+			foreach (Blueprint_Build blue in SiegeBlueprintPlacer.PlaceSandbagBlueprints(map))
 			{
 				yield return blue;
 			}
-			foreach (Blueprint_Build blue2 in SiegeBlueprintPlacer.PlaceArtilleryBlueprints(points))
+			foreach (Blueprint_Build blue2 in SiegeBlueprintPlacer.PlaceArtilleryBlueprints(points, map))
 			{
 				yield return blue2;
 			}
 		}
 
-		private static bool CanPlaceBlueprintAt(IntVec3 root, Rot4 rot, ThingDef buildingDef)
+		private static bool CanPlaceBlueprintAt(IntVec3 root, Rot4 rot, ThingDef buildingDef, Map map)
 		{
-			return GenConstruct.CanPlaceBlueprintAt(buildingDef, root, rot, false, null).Accepted;
+			return GenConstruct.CanPlaceBlueprintAt(buildingDef, root, rot, map, false, null).Accepted;
 		}
 
 		[DebuggerHidden]
-		private static IEnumerable<Blueprint_Build> PlaceSandbagBlueprints()
+		private static IEnumerable<Blueprint_Build> PlaceSandbagBlueprints(Map map)
 		{
 			SiegeBlueprintPlacer.placedSandbagLocs.Clear();
 			int numSandbags = SiegeBlueprintPlacer.NumSandbagRange.RandomInRange;
 			for (int i = 0; i < numSandbags; i++)
 			{
-				IntVec3 bagRoot = SiegeBlueprintPlacer.FindSandbagRoot();
+				IntVec3 bagRoot = SiegeBlueprintPlacer.FindSandbagRoot(map);
 				if (!bagRoot.IsValid)
 				{
 					break;
@@ -76,12 +76,12 @@ namespace RimWorld
 				{
 					growDirB = Rot4.North;
 				}
-				foreach (Blueprint_Build bag in SiegeBlueprintPlacer.MakeSandbagLine(bagRoot, growDirA, SiegeBlueprintPlacer.SandbagLengthRange.RandomInRange))
+				foreach (Blueprint_Build bag in SiegeBlueprintPlacer.MakeSandbagLine(bagRoot, map, growDirA, SiegeBlueprintPlacer.SandbagLengthRange.RandomInRange))
 				{
 					yield return bag;
 				}
 				bagRoot += growDirB.FacingCell;
-				foreach (Blueprint_Build bag2 in SiegeBlueprintPlacer.MakeSandbagLine(bagRoot, growDirB, SiegeBlueprintPlacer.SandbagLengthRange.RandomInRange))
+				foreach (Blueprint_Build bag2 in SiegeBlueprintPlacer.MakeSandbagLine(bagRoot, map, growDirB, SiegeBlueprintPlacer.SandbagLengthRange.RandomInRange))
 				{
 					yield return bag2;
 				}
@@ -89,23 +89,23 @@ namespace RimWorld
 		}
 
 		[DebuggerHidden]
-		private static IEnumerable<Blueprint_Build> MakeSandbagLine(IntVec3 root, Rot4 growDir, int maxLength)
+		private static IEnumerable<Blueprint_Build> MakeSandbagLine(IntVec3 root, Map map, Rot4 growDir, int maxLength)
 		{
 			IntVec3 cur = root;
 			for (int i = 0; i < maxLength; i++)
 			{
-				if (!SiegeBlueprintPlacer.CanPlaceBlueprintAt(cur, Rot4.North, ThingDefOf.Sandbags))
+				if (!SiegeBlueprintPlacer.CanPlaceBlueprintAt(cur, Rot4.North, ThingDefOf.Sandbags, map))
 				{
 					break;
 				}
-				yield return GenConstruct.PlaceBlueprintForBuild(ThingDefOf.Sandbags, cur, Rot4.North, SiegeBlueprintPlacer.faction, null);
+				yield return GenConstruct.PlaceBlueprintForBuild(ThingDefOf.Sandbags, cur, map, Rot4.North, SiegeBlueprintPlacer.faction, null);
 				SiegeBlueprintPlacer.placedSandbagLocs.Add(cur);
 				cur += growDir.FacingCell;
 			}
 		}
 
 		[DebuggerHidden]
-		private static IEnumerable<Blueprint_Build> PlaceArtilleryBlueprints(float points)
+		private static IEnumerable<Blueprint_Build> PlaceArtilleryBlueprints(float points, Map map)
 		{
 			IEnumerable<ThingDef> artyDefs = from def in DefDatabase<ThingDef>.AllDefs
 			where def.building != null && def.building.buildingTags.Contains("Artillery_BaseDestroyer")
@@ -116,22 +116,22 @@ namespace RimWorld
 			{
 				Rot4 rot = Rot4.Random;
 				ThingDef artyDef = artyDefs.RandomElement<ThingDef>();
-				IntVec3 artySpot = SiegeBlueprintPlacer.FindArtySpot(artyDef, rot);
+				IntVec3 artySpot = SiegeBlueprintPlacer.FindArtySpot(artyDef, rot, map);
 				if (!artySpot.IsValid)
 				{
 					break;
 				}
-				yield return GenConstruct.PlaceBlueprintForBuild(artyDef, artySpot, rot, SiegeBlueprintPlacer.faction, ThingDefOf.Steel);
+				yield return GenConstruct.PlaceBlueprintForBuild(artyDef, artySpot, map, rot, SiegeBlueprintPlacer.faction, ThingDefOf.Steel);
 				points -= 60f;
 			}
 		}
 
-		private static IntVec3 FindSandbagRoot()
+		private static IntVec3 FindSandbagRoot(Map map)
 		{
 			CellRect cellRect = CellRect.CenteredOn(SiegeBlueprintPlacer.center, 13);
-			cellRect.ClipInsideMap();
+			cellRect.ClipInsideMap(map);
 			CellRect cellRect2 = CellRect.CenteredOn(SiegeBlueprintPlacer.center, 8);
-			cellRect2.ClipInsideMap();
+			cellRect2.ClipInsideMap(map);
 			int num = 0;
 			while (true)
 			{
@@ -143,9 +143,9 @@ namespace RimWorld
 				IntVec3 randomCell = cellRect.RandomCell;
 				if (!cellRect2.Contains(randomCell))
 				{
-					if (randomCell.CanReach(SiegeBlueprintPlacer.center, PathEndMode.OnCell, TraverseMode.NoPassClosedDoors, Danger.Deadly))
+					if (map.reachability.CanReach(randomCell, SiegeBlueprintPlacer.center, PathEndMode.OnCell, TraverseMode.NoPassClosedDoors, Danger.Deadly))
 					{
-						if (SiegeBlueprintPlacer.CanPlaceBlueprintAt(randomCell, Rot4.North, ThingDefOf.Sandbags))
+						if (SiegeBlueprintPlacer.CanPlaceBlueprintAt(randomCell, Rot4.North, ThingDefOf.Sandbags, map))
 						{
 							bool flag = false;
 							for (int i = 0; i < SiegeBlueprintPlacer.placedSandbagLocs.Count; i++)
@@ -167,10 +167,10 @@ namespace RimWorld
 			return IntVec3.Invalid;
 		}
 
-		private static IntVec3 FindArtySpot(ThingDef artyDef, Rot4 rot)
+		private static IntVec3 FindArtySpot(ThingDef artyDef, Rot4 rot, Map map)
 		{
 			CellRect cellRect = CellRect.CenteredOn(SiegeBlueprintPlacer.center, 8);
-			cellRect.ClipInsideMap();
+			cellRect.ClipInsideMap(map);
 			int num = 0;
 			while (true)
 			{
@@ -180,11 +180,11 @@ namespace RimWorld
 					break;
 				}
 				IntVec3 randomCell = cellRect.RandomCell;
-				if (randomCell.CanReach(SiegeBlueprintPlacer.center, PathEndMode.OnCell, TraverseMode.NoPassClosedDoors, Danger.Deadly))
+				if (map.reachability.CanReach(randomCell, SiegeBlueprintPlacer.center, PathEndMode.OnCell, TraverseMode.NoPassClosedDoors, Danger.Deadly))
 				{
-					if (!randomCell.Roofed())
+					if (!randomCell.Roofed(map))
 					{
-						if (SiegeBlueprintPlacer.CanPlaceBlueprintAt(randomCell, rot, artyDef))
+						if (SiegeBlueprintPlacer.CanPlaceBlueprintAt(randomCell, rot, artyDef, map))
 						{
 							return randomCell;
 						}

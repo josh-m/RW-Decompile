@@ -8,9 +8,9 @@ namespace RimWorld
 	{
 		private bool preferBuildingDestroyers;
 
-		public override ThinkNode DeepCopy()
+		public override ThinkNode DeepCopy(bool resolve = true)
 		{
-			JobGiver_PickUpOpportunisticWeapon jobGiver_PickUpOpportunisticWeapon = (JobGiver_PickUpOpportunisticWeapon)base.DeepCopy();
+			JobGiver_PickUpOpportunisticWeapon jobGiver_PickUpOpportunisticWeapon = (JobGiver_PickUpOpportunisticWeapon)base.DeepCopy(resolve);
 			jobGiver_PickUpOpportunisticWeapon.preferBuildingDestroyers = this.preferBuildingDestroyers;
 			return jobGiver_PickUpOpportunisticWeapon;
 		}
@@ -33,11 +33,11 @@ namespace RimWorld
 			{
 				return null;
 			}
-			if (pawn.Position.GetRegion() == null)
+			if (pawn.GetRegion() == null)
 			{
 				return null;
 			}
-			Thing thing = GenClosest.ClosestThingReachable(pawn.Position, ThingRequest.ForGroup(ThingRequestGroup.Weapon), PathEndMode.OnCell, TraverseParms.For(pawn, Danger.Deadly, TraverseMode.ByPawn, false), 8f, (Thing x) => pawn.CanReserve(x, 1) && this.ShouldEquip(x, pawn), null, 15, false);
+			Thing thing = GenClosest.ClosestThingReachable(pawn.Position, pawn.Map, ThingRequest.ForGroup(ThingRequestGroup.Weapon), PathEndMode.OnCell, TraverseParms.For(pawn, Danger.Deadly, TraverseMode.ByPawn, false), 8f, (Thing x) => pawn.CanReserve(x, 1) && this.ShouldEquip(x, pawn), null, 15, false);
 			if (thing != null)
 			{
 				return new Job(JobDefOf.Equip, thing);

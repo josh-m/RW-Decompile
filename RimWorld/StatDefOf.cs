@@ -21,6 +21,10 @@ namespace RimWorld
 
 		public static StatDef WorkToMake;
 
+		public static StatDef WorkToBuild;
+
+		public static StatDef Mass;
+
 		public static StatDef MoveSpeed;
 
 		public static StatDef GlobalLearningFactor;
@@ -55,7 +59,7 @@ namespace RimWorld
 
 		public static StatDef ConstructionSpeed;
 
-		public static StatDef BaseHealingQuality;
+		public static StatDef HealingQuality;
 
 		public static StatDef HealingSpeed;
 
@@ -139,7 +143,7 @@ namespace RimWorld
 
 		public static StatDef ResearchSpeedFactor;
 
-		public static StatDef MedicalTreatmentQualityFactor;
+		public static StatDef MedicalTendQualityOffset;
 
 		public static StatDef WorkTableWorkSpeedFactor;
 

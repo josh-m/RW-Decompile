@@ -39,8 +39,9 @@ namespace RimWorld
 			{
 				return false;
 			}
-			float temperature = building_FermentingBarrel.Position.GetTemperature();
-			if (temperature < 1f || temperature > 28f)
+			float temperature = building_FermentingBarrel.Position.GetTemperature(building_FermentingBarrel.Map);
+			CompProperties_TemperatureRuinable compProperties = building_FermentingBarrel.def.GetCompProperties<CompProperties_TemperatureRuinable>();
+			if (temperature < compProperties.minSafeTemperature + 2f || temperature > compProperties.maxSafeTemperature - 2f)
 			{
 				JobFailReason.Is(WorkGiver_FillFermentingBarrel.TemperatureTrans);
 				return false;
@@ -49,7 +50,7 @@ namespace RimWorld
 			{
 				return false;
 			}
-			if (Find.DesignationManager.DesignationOn(t, DesignationDefOf.Deconstruct) != null)
+			if (pawn.Map.designationManager.DesignationOn(t, DesignationDefOf.Deconstruct) != null)
 			{
 				return false;
 			}
@@ -67,7 +68,7 @@ namespace RimWorld
 			Thing t2 = this.FindWort(pawn, building_FermentingBarrel);
 			return new Job(JobDefOf.FillFermentingBarrel, t, t2)
 			{
-				maxNumToCarry = building_FermentingBarrel.SpaceLeftForWort
+				count = building_FermentingBarrel.SpaceLeftForWort
 			};
 		}
 
@@ -75,7 +76,7 @@ namespace RimWorld
 		{
 			Predicate<Thing> predicate = (Thing x) => !x.IsForbidden(pawn) && pawn.CanReserve(x, 1);
 			Predicate<Thing> validator = predicate;
-			return GenClosest.ClosestThingReachable(pawn.Position, ThingRequest.ForDef(ThingDefOf.Wort), PathEndMode.ClosestTouch, TraverseParms.For(pawn, Danger.Deadly, TraverseMode.ByPawn, false), 9999f, validator, null, -1, false);
+			return GenClosest.ClosestThingReachable(pawn.Position, pawn.Map, ThingRequest.ForDef(ThingDefOf.Wort), PathEndMode.ClosestTouch, TraverseParms.For(pawn, Danger.Deadly, TraverseMode.ByPawn, false), 9999f, validator, null, -1, false);
 		}
 	}
 }

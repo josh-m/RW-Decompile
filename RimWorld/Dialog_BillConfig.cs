@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using UnityEngine;
 using Verse;
@@ -94,7 +95,7 @@ namespace RimWorld
 						list.Add(new FloatMenuOption(("BillStoreMode_" + billStoreMode).Translate(), delegate
 						{
 							this.bill.storeMode = smLocal;
-						}, MenuOptionPriority.Medium, null, null, 0f, null));
+						}, MenuOptionPriority.Default, null, null, 0f, null, null));
 					}
 				}
 				Find.WindowStack.Add(new FloatMenu(list));
@@ -151,9 +152,18 @@ namespace RimWorld
 				listing_Standard.IntRange(ref this.bill.allowedSkillRange, 0, 20);
 			}
 			listing_Standard.End();
+			List<ThingDef> list2 = new List<ThingDef>();
+			for (int i = 0; i < this.bill.recipe.ingredients.Count; i++)
+			{
+				IngredientCount ingredientCount = this.bill.recipe.ingredients[i];
+				if (!ingredientCount.filter.AllowedThingDefs.Skip(1).Any<ThingDef>())
+				{
+					list2.Add(ingredientCount.filter.AllowedThingDefs.First<ThingDef>());
+				}
+			}
 			Rect rect3 = new Rect(rect2.xMax + 6f, 50f, 280f, -1f);
 			rect3.yMax = inRect.height - this.CloseButSize.y - 6f;
-			ThingFilterUI.DoThingFilterConfigWindow(rect3, ref this.scrollPosition, this.bill.ingredientFilter, this.bill.recipe.fixedIngredientFilter, 4);
+			ThingFilterUI.DoThingFilterConfigWindow(rect3, ref this.scrollPosition, this.bill.ingredientFilter, this.bill.recipe.fixedIngredientFilter, 4, list2, this.bill.recipe.forceHiddenSpecialFilters);
 			Rect rect4 = new Rect(rect3.xMax + 6f, rect3.y + 30f, 0f, 0f);
 			rect4.xMax = inRect.xMax;
 			rect4.yMax = inRect.height - this.CloseButSize.y - 6f;
@@ -165,12 +175,12 @@ namespace RimWorld
 			}
 			stringBuilder.AppendLine("WorkAmount".Translate() + ": " + this.bill.recipe.WorkAmountTotal(null).ToStringWorkAmount());
 			stringBuilder.AppendLine();
-			for (int i = 0; i < this.bill.recipe.ingredients.Count; i++)
+			for (int j = 0; j < this.bill.recipe.ingredients.Count; j++)
 			{
-				IngredientCount ingredientCount = this.bill.recipe.ingredients[i];
-				if (!ingredientCount.filter.Summary.NullOrEmpty())
+				IngredientCount ingredientCount2 = this.bill.recipe.ingredients[j];
+				if (!ingredientCount2.filter.Summary.NullOrEmpty())
 				{
-					stringBuilder.AppendLine(this.bill.recipe.IngredientValueGetter.BillRequirementsDescription(ingredientCount));
+					stringBuilder.AppendLine(this.bill.recipe.IngredientValueGetter.BillRequirementsDescription(ingredientCount2));
 				}
 			}
 			stringBuilder.AppendLine();

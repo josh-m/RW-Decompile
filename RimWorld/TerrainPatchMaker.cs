@@ -7,6 +7,8 @@ namespace RimWorld
 {
 	public class TerrainPatchMaker
 	{
+		private Map currentlyInitializedForMap;
+
 		public List<TerrainThreshold> thresholds = new List<TerrainThreshold>();
 
 		public float perlinFrequency = 0.01f;
@@ -20,27 +22,29 @@ namespace RimWorld
 		[Unsaved]
 		private ModuleBase noise;
 
-		private void Init()
+		private void Init(Map map)
 		{
-			if (this.noise != null)
-			{
-				return;
-			}
 			this.noise = new Perlin((double)this.perlinFrequency, (double)this.perlinLacunarity, (double)this.perlinPersistence, this.perlinOctaves, Rand.Range(0, 2147483647), QualityMode.Medium);
-			NoiseDebugUI.RenderSize = new IntVec2(Find.Map.Size.x, Find.Map.Size.z);
+			NoiseDebugUI.RenderSize = new IntVec2(map.Size.x, map.Size.z);
 			NoiseDebugUI.StoreNoiseRender(this.noise, "TerrainPatchMaker " + this.thresholds[0].terrain.defName);
+			this.currentlyInitializedForMap = map;
 		}
 
 		public void Cleanup()
 		{
 			this.noise = null;
+			this.currentlyInitializedForMap = null;
 		}
 
-		public TerrainDef TerrainAt(IntVec3 c)
+		public TerrainDef TerrainAt(IntVec3 c, Map map)
 		{
+			if (this.noise != null && map != this.currentlyInitializedForMap)
+			{
+				this.Cleanup();
+			}
 			if (this.noise == null)
 			{
-				this.Init();
+				this.Init(map);
 			}
 			return TerrainThreshold.TerrainAtValue(this.thresholds, this.noise.GetValue(c));
 		}

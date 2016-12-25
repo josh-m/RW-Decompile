@@ -17,6 +17,8 @@ namespace Verse
 
 		public bool prisonersCanDo = true;
 
+		public bool unspawnedCanDo;
+
 		public bool colonistsOnly;
 
 		public bool blockNormalThoughts;
@@ -39,18 +41,22 @@ namespace Verse
 
 		public bool recoverFromDowned;
 
-		public ThoughtDef recoveryThought;
+		public ThoughtDef moodRecoveryThought;
 
+		[MustTranslate]
 		public string beginLetter;
 
+		[MustTranslate]
 		public string beginLetterLabel;
 
 		public LetterType beginLetterType = LetterType.BadUrgent;
 
 		public Color nameColor = Color.green;
 
+		[MustTranslate]
 		public string recoveryMessage;
 
+		[MustTranslate]
 		public string baseInspectLine;
 
 		private MentalStateWorker workerInt;
@@ -73,6 +79,22 @@ namespace Verse
 			get
 			{
 				return this.category == MentalStateCategory.Aggro;
+			}
+		}
+
+		public bool IsExtreme
+		{
+			get
+			{
+				List<MentalBreakDef> allDefsListForReading = DefDatabase<MentalBreakDef>.AllDefsListForReading;
+				for (int i = 0; i < allDefsListForReading.Count; i++)
+				{
+					if (allDefsListForReading[i].intensity == MentalBreakIntensity.Extreme && allDefsListForReading[i].mentalState == this)
+					{
+						return true;
+					}
+				}
+				return false;
 			}
 		}
 

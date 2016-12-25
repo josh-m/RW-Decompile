@@ -23,6 +23,12 @@ namespace Verse
 			private set;
 		}
 
+		public Map Map
+		{
+			get;
+			private set;
+		}
+
 		public bool ForceGenerateNewPawn
 		{
 			get;
@@ -107,7 +113,7 @@ namespace Verse
 			private set;
 		}
 
-		public float? FixedSkinWhiteness
+		public float? FixedMelanin
 		{
 			get;
 			private set;
@@ -119,7 +125,7 @@ namespace Verse
 			private set;
 		}
 
-		public PawnGenerationRequest(PawnKindDef kind, Faction faction = null, PawnGenerationContext context = PawnGenerationContext.NonPlayer, bool forceGenerateNewPawn = false, bool newborn = false, bool allowDead = false, bool allowDowned = false, bool canGeneratePawnRelations = true, bool mustBeCapableOfViolence = false, float colonistRelationChanceFactor = 1f, bool forceAddFreeWarmLayerIfNeeded = false, bool allowGay = true, bool allowFood = true, Predicate<Pawn> validator = null, float? fixedBiologicalAge = null, float? fixedChronologicalAge = null, Gender? fixedGender = null, float? fixedSkinWhiteness = null, string fixedLastName = null)
+		public PawnGenerationRequest(PawnKindDef kind, Faction faction = null, PawnGenerationContext context = PawnGenerationContext.NonPlayer, Map map = null, bool forceGenerateNewPawn = false, bool newborn = false, bool allowDead = false, bool allowDowned = false, bool canGeneratePawnRelations = true, bool mustBeCapableOfViolence = false, float colonistRelationChanceFactor = 1f, bool forceAddFreeWarmLayerIfNeeded = false, bool allowGay = true, bool allowFood = true, Predicate<Pawn> validator = null, float? fixedBiologicalAge = null, float? fixedChronologicalAge = null, Gender? fixedGender = null, float? fixedMelanin = null, string fixedLastName = null)
 		{
 			if (context == PawnGenerationContext.All)
 			{
@@ -128,6 +134,7 @@ namespace Verse
 			this.KindDef = kind;
 			this.Context = context;
 			this.Faction = faction;
+			this.Map = (map ?? Find.AnyPlayerHomeMap);
 			this.ForceGenerateNewPawn = forceGenerateNewPawn;
 			this.Newborn = newborn;
 			this.AllowDead = allowDead;
@@ -142,7 +149,7 @@ namespace Verse
 			this.FixedBiologicalAge = fixedBiologicalAge;
 			this.FixedChronologicalAge = fixedChronologicalAge;
 			this.FixedGender = fixedGender;
-			this.FixedSkinWhiteness = fixedSkinWhiteness;
+			this.FixedMelanin = fixedMelanin;
 			this.FixedLastName = fixedLastName;
 		}
 
@@ -171,14 +178,14 @@ namespace Verse
 			this.FixedLastName = fixedLastName;
 		}
 
-		public void SetFixedSkinWhiteness(float fixedSkinWhiteness)
+		public void SetFixedMelanin(float fixedMelanin)
 		{
-			if (this.FixedSkinWhiteness.HasValue)
+			if (this.FixedMelanin.HasValue)
 			{
-				Log.Error("Skin whiteness is already a fixed value: " + this.FixedSkinWhiteness + ".");
+				Log.Error("Melanin is already a fixed value: " + this.FixedMelanin + ".");
 				return;
 			}
-			this.FixedSkinWhiteness = new float?(fixedSkinWhiteness);
+			this.FixedMelanin = new float?(fixedMelanin);
 		}
 
 		public override string ToString()
@@ -187,8 +194,12 @@ namespace Verse
 			{
 				"kindDef=",
 				this.KindDef,
+				", context=",
+				this.Context,
 				", faction=",
 				this.Faction,
+				", map=",
+				this.Map,
 				", forceGenerateNewPawn=",
 				this.ForceGenerateNewPawn,
 				", newborn=",
@@ -217,8 +228,8 @@ namespace Verse
 				this.FixedChronologicalAge,
 				", fixedGender=",
 				this.FixedGender,
-				", fixedSkinWhiteness=",
-				this.FixedSkinWhiteness,
+				", fixedMelanin=",
+				this.FixedMelanin,
 				", fixedLastName=",
 				this.FixedLastName
 			});

@@ -6,9 +6,9 @@ namespace Verse.AI
 	{
 		public float minPriority = 0.5f;
 
-		public override ThinkNode DeepCopy()
+		public override ThinkNode DeepCopy(bool resolve = true)
 		{
-			ThinkNode_FilterPriority thinkNode_FilterPriority = (ThinkNode_FilterPriority)base.DeepCopy();
+			ThinkNode_FilterPriority thinkNode_FilterPriority = (ThinkNode_FilterPriority)base.DeepCopy(resolve);
 			thinkNode_FilterPriority.minPriority = this.minPriority;
 			return thinkNode_FilterPriority;
 		}

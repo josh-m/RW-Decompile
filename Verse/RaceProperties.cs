@@ -44,6 +44,8 @@ namespace Verse
 
 		public float petness;
 
+		public bool packAnimal;
+
 		public bool herdAnimal;
 
 		public bool predator;
@@ -409,6 +411,13 @@ namespace Verse
 					{
 						1000.ToString()
 					})
+				};
+			}
+			if (this.packAnimal)
+			{
+				yield return new StatDrawEntry(StatCategoryDefOf.Basics, "PackAnimal".Translate(), "Yes".Translate(), 0)
+				{
+					overrideReportText = "PackAnimalExplanation".Translate()
 				};
 			}
 		}

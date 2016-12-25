@@ -14,7 +14,7 @@ namespace RimWorld
 			pawn.inventory = new Pawn_InventoryTracker(pawn);
 			pawn.meleeVerbs = new Pawn_MeleeVerbs(pawn);
 			pawn.verbTracker = new VerbTracker(pawn);
-			pawn.carrier = new Pawn_CarryTracker(pawn);
+			pawn.carryTracker = new Pawn_CarryTracker(pawn);
 			pawn.needs = new Pawn_NeedsTracker(pawn);
 			pawn.mindState = new Pawn_MindState(pawn);
 			if (pawn.RaceProps.ToolUser)
@@ -28,6 +28,7 @@ namespace RimWorld
 				pawn.skills = new Pawn_SkillTracker(pawn);
 				pawn.story = new Pawn_StoryTracker(pawn);
 				pawn.guest = new Pawn_GuestTracker(pawn);
+				pawn.guilt = new Pawn_GuiltTracker();
 				pawn.workSettings = new Pawn_WorkSettings(pawn);
 			}
 			if (pawn.RaceProps.IsFlesh)
@@ -76,7 +77,7 @@ namespace RimWorld
 
 		public static void RemoveComponentsOnKilled(Pawn pawn)
 		{
-			pawn.carrier = null;
+			pawn.carryTracker = null;
 			pawn.needs = null;
 			pawn.mindState = null;
 			pawn.workSettings = null;
@@ -128,7 +129,7 @@ namespace RimWorld
 					}
 					if (pawn.timetable == null)
 					{
-						pawn.timetable = new Pawn_TimetableTracker();
+						pawn.timetable = new Pawn_TimetableTracker(pawn);
 					}
 					if ((pawn.Spawned || actAsIfSpawned) && pawn.drafter == null)
 					{

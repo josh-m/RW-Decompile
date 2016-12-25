@@ -20,7 +20,7 @@ namespace RimWorld
 		public override void OnActivated()
 		{
 			base.OnActivated();
-			this.growingZoneRect = TutorUtility.FindClearRect(10, 8, 0.5f, false);
+			this.growingZoneRect = TutorUtility.FindUsableRect(10, 8, base.Map, 0.5f, false);
 			this.cachedCells = this.growingZoneRect.Cells.ToList<IntVec3>();
 		}
 

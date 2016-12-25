@@ -7,9 +7,9 @@ namespace Verse.AI
 	{
 		public DutyDef def;
 
-		public TargetInfo focus = TargetInfo.Invalid;
+		public LocalTargetInfo focus = LocalTargetInfo.Invalid;
 
-		public TargetInfo focusSecond = TargetInfo.Invalid;
+		public LocalTargetInfo focusSecond = LocalTargetInfo.Invalid;
 
 		public float radius = -1f;
 
@@ -23,6 +23,10 @@ namespace Verse.AI
 
 		public bool canDig;
 
+		public PawnsToGather pawnsToGather;
+
+		public int transportersGroup = -1;
+
 		public PawnDuty()
 		{
 		}
@@ -32,13 +36,13 @@ namespace Verse.AI
 			this.def = def;
 		}
 
-		public PawnDuty(DutyDef def, TargetInfo focus, float radius = -1f) : this(def)
+		public PawnDuty(DutyDef def, LocalTargetInfo focus, float radius = -1f) : this(def)
 		{
 			this.focus = focus;
 			this.radius = radius;
 		}
 
-		public PawnDuty(DutyDef def, TargetInfo focus, TargetInfo focusSecond, float radius = -1f) : this(def, focus, radius)
+		public PawnDuty(DutyDef def, LocalTargetInfo focus, LocalTargetInfo focusSecond, float radius = -1f) : this(def, focus, radius)
 		{
 			this.focusSecond = focusSecond;
 		}
@@ -46,14 +50,16 @@ namespace Verse.AI
 		public void ExposeData()
 		{
 			Scribe_Defs.LookDef<DutyDef>(ref this.def, "def");
-			Scribe_TargetInfo.LookTargetInfo(ref this.focus, "focus", TargetInfo.Invalid);
-			Scribe_TargetInfo.LookTargetInfo(ref this.focusSecond, "focusSecond", TargetInfo.Invalid);
+			Scribe_TargetInfo.LookTargetInfo(ref this.focus, "focus", LocalTargetInfo.Invalid);
+			Scribe_TargetInfo.LookTargetInfo(ref this.focusSecond, "focusSecond", LocalTargetInfo.Invalid);
 			Scribe_Values.LookValue<float>(ref this.radius, "radius", -1f, false);
 			Scribe_Values.LookValue<LocomotionUrgency>(ref this.locomotion, "locomotion", LocomotionUrgency.None, false);
 			Scribe_Values.LookValue<Danger>(ref this.maxDanger, "maxDanger", Danger.Unspecified, false);
 			Scribe_Values.LookValue<CellRect>(ref this.spectateRect, "spectateRect", default(CellRect), false);
 			Scribe_Values.LookValue<SpectateRectSide>(ref this.spectateRectAllowedSides, "spectateRectAllowedSides", SpectateRectSide.All, false);
 			Scribe_Values.LookValue<bool>(ref this.canDig, "canDig", false, false);
+			Scribe_Values.LookValue<PawnsToGather>(ref this.pawnsToGather, "pawnsToGather", PawnsToGather.None, false);
+			Scribe_Values.LookValue<int>(ref this.transportersGroup, "transportersGroup", -1, false);
 		}
 
 		public override string ToString()

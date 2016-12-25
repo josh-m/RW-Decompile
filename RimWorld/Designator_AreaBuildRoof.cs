@@ -33,15 +33,15 @@ namespace RimWorld
 
 		public override AcceptanceReport CanDesignateCell(IntVec3 c)
 		{
-			if (!c.InBounds())
+			if (!c.InBounds(base.Map))
 			{
 				return false;
 			}
-			if (c.Fogged())
+			if (c.Fogged(base.Map))
 			{
 				return false;
 			}
-			bool flag = Find.AreaBuildRoof[c];
+			bool flag = base.Map.areaManager.BuildRoof[c];
 			if (this.mode == DesignateMode.Add)
 			{
 				return !flag;
@@ -53,20 +53,20 @@ namespace RimWorld
 		{
 			if (this.mode == DesignateMode.Add)
 			{
-				Find.AreaBuildRoof.Set(c);
-				Find.AreaNoRoof.Clear(c);
+				base.Map.areaManager.BuildRoof[c] = true;
+				base.Map.areaManager.NoRoof[c] = false;
 			}
 			else if (this.mode == DesignateMode.Remove)
 			{
-				Find.AreaBuildRoof.Clear(c);
+				base.Map.areaManager.BuildRoof[c] = false;
 			}
 		}
 
 		public override void SelectedUpdate()
 		{
 			GenUI.RenderMouseoverBracket();
-			Find.AreaNoRoof.MarkForDraw();
-			Find.AreaBuildRoof.MarkForDraw();
+			base.Map.areaManager.NoRoof.MarkForDraw();
+			base.Map.areaManager.BuildRoof.MarkForDraw();
 		}
 	}
 }

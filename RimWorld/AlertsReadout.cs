@@ -1,3 +1,4 @@
+using RimWorld.Planet;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -111,12 +112,12 @@ namespace RimWorld
 					this.activeAlerts.RemoveAt(k);
 				}
 			}
-			if (this.mouseoverAlertIndex > 0 && this.mouseoverAlertIndex < this.activeAlerts.Count)
+			if (this.mouseoverAlertIndex >= 0 && this.mouseoverAlertIndex < this.activeAlerts.Count)
 			{
-				Thing culprit = this.activeAlerts[this.mouseoverAlertIndex].Report.culprit;
-				if (culprit != null)
+				GlobalTargetInfo culprit = this.activeAlerts[this.mouseoverAlertIndex].GetReport().culprit;
+				if (culprit.IsValid && culprit.IsMapTarget && Find.VisibleMap != null && culprit.Map == Find.VisibleMap)
 				{
-					GenDraw.DrawArrowPointingAt(culprit.DrawPos, false);
+					GenDraw.DrawArrowPointingAt(((TargetInfo)culprit).CenterVector3, false);
 				}
 			}
 			this.mouseoverAlertIndex = -1;
@@ -136,7 +137,7 @@ namespace RimWorld
 			AlertPriority alertPriority = AlertPriority.Critical;
 			bool flag = false;
 			float num = Find.LetterStack.LastTopY - (float)this.activeAlerts.Count * 28f;
-			Rect rect = new Rect((float)Screen.width - 154f, num, 154f, this.lastFinalY - num);
+			Rect rect = new Rect((float)UI.screenWidth - 154f, num, 154f, this.lastFinalY - num);
 			float num2 = GenUI.BackgroundDarkAlphaForText();
 			if (num2 > 0.001f)
 			{

@@ -10,16 +10,16 @@ namespace RimWorld
 
 		protected override Job TryGiveJob(Pawn pawn)
 		{
-			Room room = pawn.Position.GetRoom();
+			Room room = pawn.GetRoom();
 			int num = 0;
 			while ((float)num < JobGiver_MaintainHives.CellsInScanRadius)
 			{
 				IntVec3 intVec = pawn.Position + GenRadial.RadialPattern[num];
-				if (intVec.InBounds())
+				if (intVec.InBounds(pawn.Map))
 				{
-					if (intVec.GetRoom() == room)
+					if (intVec.GetRoom(pawn.Map) == room)
 					{
-						Hive hive = (Hive)Find.ThingGrid.ThingAt(intVec, ThingDefOf.Hive);
+						Hive hive = (Hive)pawn.Map.thingGrid.ThingAt(intVec, ThingDefOf.Hive);
 						if (hive != null)
 						{
 							CompMaintainable compMaintainable = hive.TryGetComp<CompMaintainable>();

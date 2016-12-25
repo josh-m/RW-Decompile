@@ -1,4 +1,5 @@
 using RimWorld;
+using RimWorld.Planet;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -43,7 +44,7 @@ namespace Verse
 		public override void WindowUpdate()
 		{
 			base.WindowUpdate();
-			if (Current.ProgramState == ProgramState.MapPlaying)
+			if (Current.ProgramState == ProgramState.Playing)
 			{
 				GenUI.RenderMouseoverBracket();
 			}
@@ -103,10 +104,15 @@ namespace Verse
 		private string CurrentDebugString()
 		{
 			StringBuilder stringBuilder = new StringBuilder();
+			if (WorldRendererUtility.WorldRenderedNow || Find.VisibleMap == null)
+			{
+				stringBuilder.AppendLine("World view");
+				return stringBuilder.ToString();
+			}
 			if (DebugViewSettings.writeMapConditions)
 			{
 				stringBuilder.AppendLine("---");
-				stringBuilder.AppendLine(Find.MapConditionManager.DebugString());
+				stringBuilder.AppendLine(Find.VisibleMap.mapConditionManager.DebugString());
 			}
 			if (DebugViewSettings.writePlayingSounds)
 			{
@@ -153,21 +159,21 @@ namespace Verse
 				stringBuilder.AppendLine("Mono heap size: " + Profiler.GetMonoHeapSize().ToStringBytes("F2"));
 				stringBuilder.AppendLine("Mono used size: " + Profiler.GetMonoUsedSize().ToStringBytes("F2"));
 			}
-			if (Current.ProgramState == ProgramState.MapPlaying)
+			if (Current.ProgramState == ProgramState.Playing)
 			{
-				IntVec3 intVec = Gen.MouseCell();
+				IntVec3 intVec = UI.MouseCell();
 				stringBuilder.AppendLine("Tick " + Find.TickManager.TicksGame);
 				stringBuilder.AppendLine("Inspecting " + intVec.ToString());
 				if (DebugViewSettings.writeCellContents || this.fullMode)
 				{
 					stringBuilder.AppendLine("---");
-					if (intVec.InBounds())
+					if (intVec.InBounds(Find.VisibleMap))
 					{
-						foreach (Designation current3 in Find.DesignationManager.AllDesignationsAt(intVec))
+						foreach (Designation current3 in Find.VisibleMap.designationManager.AllDesignationsAt(intVec))
 						{
 							stringBuilder.AppendLine(current3.ToString());
 						}
-						foreach (Thing current4 in Find.ThingGrid.ThingsAt(intVec))
+						foreach (Thing current4 in Find.VisibleMap.thingGrid.ThingsAt(intVec))
 						{
 							if (!this.fullMode)
 							{
@@ -184,7 +190,7 @@ namespace Verse
 				if (DebugViewSettings.debugApparelOptimize)
 				{
 					stringBuilder.AppendLine("---");
-					foreach (Thing current5 in Find.ThingGrid.ThingsAt(intVec))
+					foreach (Thing current5 in Find.VisibleMap.thingGrid.ThingsAt(intVec))
 					{
 						Apparel apparel = current5 as Apparel;
 						if (apparel != null)
@@ -203,44 +209,44 @@ namespace Verse
 				if (DebugViewSettings.drawPawnDebug)
 				{
 					stringBuilder.AppendLine("---");
-					stringBuilder.AppendLine(Find.Reservations.DebugString());
+					stringBuilder.AppendLine(Find.VisibleMap.reservationManager.DebugString());
 				}
 				if (DebugViewSettings.writeMoteSaturation)
 				{
 					stringBuilder.AppendLine("---");
-					stringBuilder.AppendLine("Mote count: " + MoteCounter.MoteCount);
-					stringBuilder.AppendLine("Mote saturation: " + MoteCounter.Saturation);
+					stringBuilder.AppendLine("Mote count: " + Find.VisibleMap.moteCounter.MoteCount);
+					stringBuilder.AppendLine("Mote saturation: " + Find.VisibleMap.moteCounter.Saturation);
 				}
 				if (DebugViewSettings.writeSnowDepth)
 				{
 					stringBuilder.AppendLine("---");
-					stringBuilder.AppendLine("Snow depth: " + Find.SnowGrid.GetDepth(intVec));
+					stringBuilder.AppendLine("Snow depth: " + Find.VisibleMap.snowGrid.GetDepth(intVec));
 				}
 				if (DebugViewSettings.drawDeepResources)
 				{
 					stringBuilder.AppendLine("---");
-					stringBuilder.AppendLine("Deep resource def: " + Find.DeepResourceGrid.ThingDefAt(intVec));
-					stringBuilder.AppendLine("Deep resource count: " + Find.DeepResourceGrid.CountAt(intVec));
+					stringBuilder.AppendLine("Deep resource def: " + Find.VisibleMap.deepResourceGrid.ThingDefAt(intVec));
+					stringBuilder.AppendLine("Deep resource count: " + Find.VisibleMap.deepResourceGrid.CountAt(intVec));
 				}
 				if (DebugViewSettings.writeEcosystem)
 				{
 					stringBuilder.AppendLine("---");
-					stringBuilder.AppendLine(WildSpawner.DebugString());
+					stringBuilder.AppendLine(Find.VisibleMap.wildSpawner.DebugString());
 				}
 				if (DebugViewSettings.writeTotalSnowDepth)
 				{
 					stringBuilder.AppendLine("---");
-					stringBuilder.AppendLine("Total snow depth: " + Find.SnowGrid.TotalDepth);
+					stringBuilder.AppendLine("Total snow depth: " + Find.VisibleMap.snowGrid.TotalDepth);
 				}
 				if (DebugViewSettings.writeCanReachColony)
 				{
 					stringBuilder.AppendLine("---");
-					stringBuilder.AppendLine("CanReachColony: " + Gen.MouseCell().CanReachColony());
+					stringBuilder.AppendLine("CanReachColony: " + Find.VisibleMap.reachability.CanReachColony(UI.MouseCell()));
 				}
 				if (DebugViewSettings.writeMentalStateCalcs)
 				{
 					stringBuilder.AppendLine("---");
-					foreach (Pawn current6 in (from t in Find.ThingGrid.ThingsAt(Gen.MouseCell())
+					foreach (Pawn current6 in (from t in Find.VisibleMap.thingGrid.ThingsAt(UI.MouseCell())
 					where t is Pawn
 					select t).Cast<Pawn>())
 					{
@@ -250,11 +256,11 @@ namespace Verse
 				if (DebugViewSettings.writeWind)
 				{
 					stringBuilder.AppendLine("---");
-					stringBuilder.AppendLine(WindManager.DebugString());
+					stringBuilder.AppendLine(Find.VisibleMap.windManager.DebugString());
 				}
 				if (DebugViewSettings.writeWorkSettings)
 				{
-					foreach (Pawn current7 in (from t in Find.ThingGrid.ThingsAt(Gen.MouseCell())
+					foreach (Pawn current7 in (from t in Find.VisibleMap.thingGrid.ThingsAt(UI.MouseCell())
 					where t is Pawn
 					select t).Cast<Pawn>())
 					{
@@ -268,9 +274,9 @@ namespace Verse
 				if (DebugViewSettings.writeApparelScore)
 				{
 					stringBuilder.AppendLine("---");
-					if (intVec.InBounds())
+					if (intVec.InBounds(Find.VisibleMap))
 					{
-						foreach (Thing current8 in intVec.GetThingList())
+						foreach (Thing current8 in intVec.GetThingList(Find.VisibleMap))
 						{
 							Apparel apparel2 = current8 as Apparel;
 							if (apparel2 != null)
@@ -283,7 +289,7 @@ namespace Verse
 				if (DebugViewSettings.writeRecentStrikes)
 				{
 					stringBuilder.AppendLine("---");
-					stringBuilder.AppendLine(MineStrikeManager.DebugStrikeRecords());
+					stringBuilder.AppendLine(Find.VisibleMap.mineStrikeManager.DebugStrikeRecords());
 				}
 				if (DebugViewSettings.writeStoryteller)
 				{
@@ -295,43 +301,43 @@ namespace Verse
 				if (DebugViewSettings.writeListRepairableBldgs)
 				{
 					stringBuilder.AppendLine("---");
-					stringBuilder.AppendLine(ListerBuildingsRepairable.DebugString());
+					stringBuilder.AppendLine(Find.VisibleMap.listerBuildingsRepairable.DebugString());
 				}
 				if (DebugViewSettings.writeListFilthInHomeArea)
 				{
 					stringBuilder.AppendLine("---");
-					stringBuilder.AppendLine(ListerFilthInHomeArea.DebugString());
+					stringBuilder.AppendLine(Find.VisibleMap.listerFilthInHomeArea.DebugString());
 				}
 				if (DebugViewSettings.writeTerrain)
 				{
 					stringBuilder.AppendLine("---");
-					stringBuilder.AppendLine(Find.TerrainGrid.DebugStringAt(intVec));
+					stringBuilder.AppendLine(Find.VisibleMap.terrainGrid.DebugStringAt(intVec));
 				}
 				if (DebugViewSettings.writeListHaulables)
 				{
 					stringBuilder.AppendLine("---");
-					stringBuilder.AppendLine(ListerHaulables.DebugString());
+					stringBuilder.AppendLine(Find.VisibleMap.listerHaulables.DebugString());
 				}
 				if (DebugViewSettings.drawLords)
 				{
-					foreach (Lord current9 in Find.LordManager.lords)
+					foreach (Lord current9 in Find.VisibleMap.lordManager.lords)
 					{
 						stringBuilder.AppendLine("---");
 						stringBuilder.AppendLine(current9.DebugString());
 					}
 				}
-				if (DebugViewSettings.writeMusicManagerMap)
+				if (DebugViewSettings.writeMusicManagerPlay)
 				{
 					stringBuilder.AppendLine("---");
-					stringBuilder.AppendLine(Find.MusicManagerMap.DebugString());
+					stringBuilder.AppendLine(Find.MusicManagerPlay.DebugString());
 				}
 				if (DebugViewSettings.writeAttackTargets)
 				{
-					foreach (Pawn current10 in Find.ThingGrid.ThingsAt(Gen.MouseCell()).OfType<Pawn>())
+					foreach (Pawn current10 in Find.VisibleMap.thingGrid.ThingsAt(UI.MouseCell()).OfType<Pawn>())
 					{
 						stringBuilder.AppendLine("---");
 						stringBuilder.AppendLine("Potential attack targets for " + current10.LabelShort + ":");
-						List<IAttackTarget> potentialTargetsFor = Find.AttackTargetsCache.GetPotentialTargetsFor(current10);
+						List<IAttackTarget> potentialTargetsFor = Find.VisibleMap.attackTargetsCache.GetPotentialTargetsFor(current10);
 						for (int i = 0; i < potentialTargetsFor.Count; i++)
 						{
 							Thing thing = (Thing)potentialTargetsFor[i];
@@ -345,18 +351,18 @@ namespace Verse
 						}
 					}
 				}
-				if (intVec.InBounds())
+				if (intVec.InBounds(Find.VisibleMap))
 				{
 					if (DebugViewSettings.drawRegions)
 					{
 						stringBuilder.AppendLine("---");
-						Region regionAt_InvalidAllowed = Find.RegionGrid.GetRegionAt_InvalidAllowed(intVec);
+						Region regionAt_InvalidAllowed = Find.VisibleMap.regionGrid.GetRegionAt_InvalidAllowed(intVec);
 						stringBuilder.AppendLine("Region:\n" + ((regionAt_InvalidAllowed == null) ? "null" : regionAt_InvalidAllowed.DebugString));
 					}
 					if (DebugViewSettings.drawRooms)
 					{
 						stringBuilder.AppendLine("---");
-						Room room = RoomQuery.RoomAt(intVec);
+						Room room = RoomQuery.RoomAt(intVec, Find.VisibleMap);
 						if (room != null)
 						{
 							stringBuilder.AppendLine(room.DebugString());
@@ -369,21 +375,22 @@ namespace Verse
 					if (DebugViewSettings.drawGlow)
 					{
 						stringBuilder.AppendLine("---");
-						stringBuilder.AppendLine("Psych glow: " + Find.GlowGrid.PsychGlowAt(intVec));
-						stringBuilder.AppendLine("GridGlow: " + Find.GlowGrid.VisualGlowAt(intVec));
-						stringBuilder.AppendLine("GlowReport:\n" + ((SectionLayer_LightingOverlay)Find.Map.mapDrawer.SectionAt(intVec).GetLayer(typeof(SectionLayer_LightingOverlay))).GlowReportAt(intVec));
-						stringBuilder.AppendLine("SkyManager.CurSkyGlow: " + SkyManager.CurSkyGlow);
+						stringBuilder.AppendLine("Game glow: " + Find.VisibleMap.glowGrid.GameGlowAt(intVec));
+						stringBuilder.AppendLine("Psych glow: " + Find.VisibleMap.glowGrid.PsychGlowAt(intVec));
+						stringBuilder.AppendLine("Visual Glow: " + Find.VisibleMap.glowGrid.VisualGlowAt(intVec));
+						stringBuilder.AppendLine("GlowReport:\n" + ((SectionLayer_LightingOverlay)Find.VisibleMap.mapDrawer.SectionAt(intVec).GetLayer(typeof(SectionLayer_LightingOverlay))).GlowReportAt(intVec));
+						stringBuilder.AppendLine("SkyManager.CurSkyGlow: " + Find.VisibleMap.skyManager.CurSkyGlow);
 					}
 					if (DebugViewSettings.writePathCosts)
 					{
 						stringBuilder.AppendLine("---");
-						stringBuilder.AppendLine("Perceived path cost: " + Find.PathGrid.PerceivedPathCostAt(intVec));
-						stringBuilder.AppendLine("Real path cost: " + PathGrid.CalculatedCostAt(intVec, false, IntVec3.Invalid));
+						stringBuilder.AppendLine("Perceived path cost: " + Find.VisibleMap.pathGrid.PerceivedPathCostAt(intVec));
+						stringBuilder.AppendLine("Real path cost: " + Find.VisibleMap.pathGrid.CalculatedCostAt(intVec, false, IntVec3.Invalid));
 					}
 					if (DebugViewSettings.writeFertility)
 					{
 						stringBuilder.AppendLine("---");
-						stringBuilder.AppendLine("\nFertility: " + Find.FertilityGrid.FertilityAt(intVec).ToString("##0.00"));
+						stringBuilder.AppendLine("\nFertility: " + Find.VisibleMap.fertilityGrid.FertilityAt(intVec).ToString("##0.00"));
 					}
 					if (DebugViewSettings.writeLinkFlags)
 					{
@@ -391,7 +398,7 @@ namespace Verse
 						stringBuilder.AppendLine("\nLinkFlags: ");
 						foreach (object current11 in Enum.GetValues(typeof(LinkFlags)))
 						{
-							if ((LinkGrid.LinkFlagsAt(intVec) & (LinkFlags)((int)current11)) != LinkFlags.None)
+							if ((Find.VisibleMap.linkGrid.LinkFlagsAt(intVec) & (LinkFlags)((int)current11)) != LinkFlags.None)
 							{
 								stringBuilder.Append(" " + current11);
 							}
@@ -400,13 +407,13 @@ namespace Verse
 					if (DebugViewSettings.writeSkyManager)
 					{
 						stringBuilder.AppendLine("---");
-						stringBuilder.AppendLine(SkyManager.DebugString());
+						stringBuilder.AppendLine(Find.VisibleMap.skyManager.DebugString());
 					}
 					if (DebugViewSettings.writeCover)
 					{
 						stringBuilder.AppendLine("---");
 						stringBuilder.Append("Cover: ");
-						Thing thing2 = Find.CoverGrid[intVec];
+						Thing thing2 = Find.VisibleMap.coverGrid[intVec];
 						if (thing2 == null)
 						{
 							stringBuilder.AppendLine("null");
@@ -419,7 +426,7 @@ namespace Verse
 					if (DebugViewSettings.drawPower)
 					{
 						stringBuilder.AppendLine("---");
-						foreach (Thing current12 in Find.ThingGrid.ThingsAt(intVec))
+						foreach (Thing current12 in Find.VisibleMap.thingGrid.ThingsAt(intVec))
 						{
 							ThingWithComps thingWithComps = current12 as ThingWithComps;
 							if (thingWithComps != null && thingWithComps.GetComp<CompPowerTrader>() != null)
@@ -427,7 +434,7 @@ namespace Verse
 								stringBuilder.AppendLine(" " + thingWithComps.GetComp<CompPowerTrader>().DebugString);
 							}
 						}
-						PowerNet powerNet = PowerNetGrid.TransmittedPowerNetAt(intVec);
+						PowerNet powerNet = Find.VisibleMap.powerNetGrid.TransmittedPowerNetAt(intVec);
 						if (powerNet != null)
 						{
 							stringBuilder.AppendLine(string.Empty + powerNet.DebugString());
@@ -442,7 +449,7 @@ namespace Verse
 						Pawn pawn2 = Find.Selector.SingleSelectedThing as Pawn;
 						if (pawn2 != null)
 						{
-							List<Thing> thingList = intVec.GetThingList();
+							List<Thing> thingList = intVec.GetThingList(Find.VisibleMap);
 							for (int j = 0; j < thingList.Count; j++)
 							{
 								Pawn pawn3 = thingList[j] as Pawn;

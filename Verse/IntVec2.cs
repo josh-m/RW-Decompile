@@ -168,6 +168,11 @@ namespace Verse
 			return new IntVec2(newX, newZ);
 		}
 
+		public Vector2 ToVector2Shifted()
+		{
+			return new Vector2((float)this.x + 0.5f, (float)this.z + 0.5f);
+		}
+
 		public override bool Equals(object obj)
 		{
 			return obj is IntVec2 && this.Equals((IntVec2)obj);

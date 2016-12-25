@@ -6,9 +6,9 @@ namespace Verse.AI
 	{
 		public float maxDistToSquadFlag = -1f;
 
-		public override ThinkNode DeepCopy()
+		public override ThinkNode DeepCopy(bool resolve = true)
 		{
-			ThinkNode_FilterFlagDistance thinkNode_FilterFlagDistance = (ThinkNode_FilterFlagDistance)base.DeepCopy();
+			ThinkNode_FilterFlagDistance thinkNode_FilterFlagDistance = (ThinkNode_FilterFlagDistance)base.DeepCopy(resolve);
 			thinkNode_FilterFlagDistance.maxDistToSquadFlag = this.maxDistToSquadFlag;
 			return thinkNode_FilterFlagDistance;
 		}

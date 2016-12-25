@@ -1,5 +1,4 @@
 using RimWorld;
-using RimWorld.Planet;
 using System;
 using System.IO;
 
@@ -17,17 +16,15 @@ namespace Verse
 
 		public const string WorldNodeName = "world";
 
-		public const string MapNodeName = "map";
-
 		public const string ScenarioNodeName = "scenario";
 
 		private static int lastSaveTick = -9999;
 
-		public static bool CurrentMapStateIsValuable
+		public static bool CurrentGameStateIsValuable
 		{
 			get
 			{
-				return Find.Map != null && Find.TickManager.TicksGame > GameDataSaveLoader.lastSaveTick + 60;
+				return Find.TickManager.TicksGame > GameDataSaveLoader.lastSaveTick + 60;
 			}
 		}
 
@@ -48,46 +45,26 @@ namespace Verse
 			}
 		}
 
-		public static Scenario LoadScenario(string absPath, ScenarioCategory category)
+		public static bool TryLoadScenario(string absPath, ScenarioCategory category, out Scenario scen)
 		{
-			Scribe.InitLoading(absPath);
-			ScribeMetaHeaderUtility.LoadGameDataHeader(ScribeMetaHeaderUtility.ScribeHeaderMode.Scenario, true);
-			Scenario scenario = null;
-			Scribe_Deep.LookDeep<Scenario>(ref scenario, "scenario", new object[0]);
-			CrossRefResolver.ResolveAllCrossReferences();
-			PostLoadInitter.DoAllPostLoadInits();
-			scenario.fileName = Path.GetFileNameWithoutExtension(new FileInfo(absPath).Name);
-			scenario.Category = category;
-			return scenario;
-		}
-
-		public static void SaveWorld(World world, string fileName)
-		{
+			scen = null;
 			try
 			{
-				string path = GenFilePaths.FilePathForWorld(fileName);
-				SafeSaver.Save(path, "savedworld", delegate
-				{
-					ScribeMetaHeaderUtility.WriteMetaHeader();
-					Scribe_Deep.LookDeep<World>(ref world, "world", new object[0]);
-				});
+				Scribe.InitLoading(absPath);
+				ScribeMetaHeaderUtility.LoadGameDataHeader(ScribeMetaHeaderUtility.ScribeHeaderMode.Scenario, true);
+				Scribe_Deep.LookDeep<Scenario>(ref scen, "scenario", new object[0]);
+				CrossRefResolver.ResolveAllCrossReferences();
+				PostLoadInitter.DoAllPostLoadInits();
+				scen.fileName = Path.GetFileNameWithoutExtension(new FileInfo(absPath).Name);
+				scen.Category = category;
 			}
 			catch (Exception ex)
 			{
-				Log.Error("Exception while saving world: " + ex.ToString());
+				Log.Error("Exception loading scenario: " + ex.ToString());
+				scen = null;
+				Scribe.ForceStop();
 			}
-		}
-
-		public static void LoadWorldFromFileIntoGame(string filePath)
-		{
-			Scribe.InitLoading(filePath);
-			ScribeMetaHeaderUtility.LoadGameDataHeader(ScribeMetaHeaderUtility.ScribeHeaderMode.World, true);
-			Current.Game.World = new World();
-			Scribe.EnterNode("world");
-			Find.World.ExposeData();
-			Scribe.ExitNode();
-			CrossRefResolver.ResolveAllCrossReferences();
-			PostLoadInitter.DoAllPostLoadInits();
+			return scen != null;
 		}
 
 		public static void SaveGame(string fileName)

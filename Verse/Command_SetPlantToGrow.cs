@@ -78,9 +78,9 @@ namespace Verse
 							")"
 						});
 					}
-					List<FloatMenuOption> arg_120_0 = list;
+					List<FloatMenuOption> arg_121_0 = list;
 					Func<Rect, bool> extraPartOnGUI = (Rect rect) => Widgets.InfoCardButton(rect.x + 5f, rect.y + (rect.height - 24f) / 2f, localPlantDef);
-					arg_120_0.Add(new FloatMenuOption(text, delegate
+					arg_121_0.Add(new FloatMenuOption(text, delegate
 					{
 						string s = this.tutorTag + "-" + localPlantDef.defName;
 						if (!TutorSystem.AllowAction(s))
@@ -94,7 +94,7 @@ namespace Verse
 						PlayerKnowledgeDatabase.KnowledgeDemonstrated(ConceptDefOf.SetGrowingZonePlant, KnowledgeAmount.Total);
 						this.WarnAsAppropriate(localPlantDef);
 						TutorSystem.Notify_Event(s);
-					}, MenuOptionPriority.Medium, null, null, 29f, extraPartOnGUI));
+					}, MenuOptionPriority.Default, null, null, 29f, extraPartOnGUI, null));
 				}
 			}
 			Find.WindowStack.Add(new FloatMenu(list));
@@ -114,18 +114,18 @@ namespace Verse
 		{
 			if (plantDef.plant.sowMinSkill > 0)
 			{
-				foreach (Pawn current in Find.MapPawns.FreeColonistsSpawned)
+				foreach (Pawn current in this.settable.Map.mapPawns.FreeColonistsSpawned)
 				{
-					if (current.skills.GetSkill(SkillDefOf.Growing).level >= plantDef.plant.sowMinSkill && !current.Downed && current.workSettings.WorkIsActive(WorkTypeDefOf.Growing))
+					if (current.skills.GetSkill(SkillDefOf.Growing).Level >= plantDef.plant.sowMinSkill && !current.Downed && current.workSettings.WorkIsActive(WorkTypeDefOf.Growing))
 					{
 						return;
 					}
 				}
-				Find.WindowStack.Add(Dialog_NodeTree.SimpleNotifyDialog("NoGrowerCanPlant".Translate(new object[]
+				Find.WindowStack.Add(new Dialog_MessageBox("NoGrowerCanPlant".Translate(new object[]
 				{
 					plantDef.label,
 					plantDef.plant.sowMinSkill
-				}).CapitalizeFirst(), true));
+				}).CapitalizeFirst(), null, null, null, null, null, false));
 			}
 		}
 

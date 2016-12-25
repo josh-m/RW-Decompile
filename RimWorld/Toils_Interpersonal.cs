@@ -126,7 +126,7 @@ namespace RimWorld
 							trainableDef.LabelCap,
 							num.ToStringPercent()
 						});
-						RelationsUtility.TryDevelopBondRelation(actor, pawn, 0.015f);
+						RelationsUtility.TryDevelopBondRelation(actor, pawn, 0.007f);
 						TaleRecorder.RecordTale(TaleDefOf.TrainedAnimal, new object[]
 						{
 							actor,
@@ -151,7 +151,7 @@ namespace RimWorld
 						" / ",
 						trainableDef.steps
 					});
-					MoteMaker.ThrowText((actor.DrawPos + pawn.DrawPos) / 2f, text, 5f);
+					MoteMaker.ThrowText((actor.DrawPos + pawn.DrawPos) / 2f, actor.Map, text, 5f);
 				}
 			};
 			toil.defaultCompleteMode = ToilCompleteMode.Delay;

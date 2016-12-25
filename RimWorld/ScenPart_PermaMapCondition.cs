@@ -65,10 +65,10 @@ namespace RimWorld
 			}
 		}
 
-		public override void GenerateIntoMap()
+		public override void GenerateIntoMap(Map map)
 		{
 			MapCondition cond = MapConditionMaker.MakeConditionPermanent(this.mapCondition);
-			Find.MapConditionManager.RegisterCondition(cond);
+			map.mapConditionManager.RegisterCondition(cond);
 		}
 
 		public override bool CanCoexistWith(ScenPart other)

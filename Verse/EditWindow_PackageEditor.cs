@@ -135,10 +135,10 @@ namespace Verse
 					}
 					if (deletingDef != null)
 					{
-						Find.WindowStack.Add(new Dialog_Confirm("Really delete Def " + deletingDef.defName + "?", delegate
+						Find.WindowStack.Add(Dialog_MessageBox.CreateConfirmation("Really delete Def " + deletingDef.defName + "?", delegate
 						{
 							this.curPackage.RemoveDef(deletingDef);
-						}, true, null, true));
+						}, true, null));
 					}
 				}
 				if (listing_Standard.ButtonImage(TexButton.Add, 24f, 24f))

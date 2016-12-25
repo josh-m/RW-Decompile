@@ -14,11 +14,11 @@ namespace Verse.Sound
 
 		public override float ValueFor(Sample samp)
 		{
-			if (Current.ProgramState != ProgramState.MapPlaying || Find.Map == null || Find.MusicManagerMap == null)
+			if (Current.ProgramState != ProgramState.Playing || Find.MusicManagerPlay == null)
 			{
 				return 1f;
 			}
-			return Find.MusicManagerMap.subtleAmbienceSoundVolumeMultiplier;
+			return Find.MusicManagerPlay.subtleAmbienceSoundVolumeMultiplier;
 		}
 	}
 }

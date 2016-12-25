@@ -6,10 +6,6 @@ namespace RimWorld
 {
 	public class JobGiver_ReactToCloseMeleeThreat : ThinkNode_JobGiver
 	{
-		private const float HarmForgetDistance = 3f;
-
-		private const int MeleeHarmForgetDelay = 400;
-
 		private const int MaxMeleeChaseTicks = 200;
 
 		protected override Job TryGiveJob(Pawn pawn)
@@ -31,7 +27,7 @@ namespace RimWorld
 			{
 				return null;
 			}
-			if (meleeThreat.Destroyed || meleeThreat.Downed || Find.TickManager.TicksGame > pawn.mindState.lastMeleeThreatHarmTick + 400 || (pawn.Position - meleeThreat.Position).LengthHorizontalSquared > 9f || !GenSight.LineOfSight(pawn.Position, meleeThreat.Position, false))
+			if (!pawn.mindState.MeleeThreatStillThreat)
 			{
 				pawn.mindState.meleeThreat = null;
 				return null;

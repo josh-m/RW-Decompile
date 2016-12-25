@@ -17,16 +17,16 @@ namespace Verse
 
 		public static List<RockNoises.RockNoise> rockNoises;
 
-		public static void Init()
+		public static void Init(Map map)
 		{
 			RockNoises.rockNoises = new List<RockNoises.RockNoise>();
-			foreach (ThingDef current in Find.World.NaturalRockTypesIn(Find.Map.WorldCoords))
+			foreach (ThingDef current in Find.World.NaturalRockTypesIn(map.Tile))
 			{
 				RockNoises.RockNoise rockNoise = new RockNoises.RockNoise();
 				rockNoise.rockDef = current;
 				rockNoise.noise = new Perlin(0.004999999888241291, 2.0, 0.5, 6, Rand.Range(0, 2147483647), QualityMode.Medium);
 				RockNoises.rockNoises.Add(rockNoise);
-				NoiseDebugUI.StoreNoiseRender(rockNoise.noise, rockNoise.rockDef + " score", Find.Map.Size.ToIntVec2);
+				NoiseDebugUI.StoreNoiseRender(rockNoise.noise, rockNoise.rockDef + " score", map.Size.ToIntVec2);
 			}
 		}
 

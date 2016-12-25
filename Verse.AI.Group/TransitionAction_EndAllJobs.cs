@@ -13,7 +13,7 @@ namespace Verse.AI.Group
 				Pawn pawn = ownedPawns[i];
 				if (pawn.jobs != null && pawn.jobs.curJob != null)
 				{
-					pawn.jobs.EndCurrentJob(JobCondition.InterruptForced);
+					pawn.jobs.EndCurrentJob(JobCondition.InterruptForced, true);
 				}
 			}
 		}

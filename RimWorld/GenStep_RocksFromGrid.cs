@@ -37,9 +37,13 @@ namespace RimWorld
 			return thingDef;
 		}
 
-		public override void Generate()
+		public override void Generate(Map map)
 		{
-			RegionAndRoomUpdater.Enabled = false;
+			if (map.TileInfo.WaterCovered)
+			{
+				return;
+			}
+			map.regionAndRoomUpdater.Enabled = false;
 			float num = 0.7f;
 			List<GenStep_RocksFromGrid.RoofThreshold> list = new List<GenStep_RocksFromGrid.RoofThreshold>();
 			list.Add(new GenStep_RocksFromGrid.RoofThreshold
@@ -53,33 +57,33 @@ namespace RimWorld
 				minGridVal = num * 1.04f
 			});
 			MapGenFloatGrid elevation = MapGenerator.Elevation;
-			foreach (IntVec3 current in Find.Map.AllCells)
+			foreach (IntVec3 current in map.AllCells)
 			{
 				float num2 = elevation[current];
 				if (num2 > num)
 				{
 					ThingDef def = GenStep_RocksFromGrid.RockDefAt(current);
-					GenSpawn.Spawn(def, current);
+					GenSpawn.Spawn(def, current, map);
 					for (int i = 0; i < list.Count; i++)
 					{
 						if (num2 > list[i].minGridVal)
 						{
-							Find.RoofGrid.SetRoof(current, list[i].roofDef);
+							map.roofGrid.SetRoof(current, list[i].roofDef);
 							break;
 						}
 					}
 				}
 			}
-			BoolGrid visited = new BoolGrid();
+			BoolGrid visited = new BoolGrid(map);
 			List<IntVec3> toRemove = new List<IntVec3>();
-			foreach (IntVec3 current2 in Find.Map.AllCells)
+			foreach (IntVec3 current2 in map.AllCells)
 			{
 				if (!visited[current2])
 				{
-					if (this.IsNaturalRoofAt(current2))
+					if (this.IsNaturalRoofAt(current2, map))
 					{
 						toRemove.Clear();
-						FloodFiller.FloodFill(current2, new Predicate<IntVec3>(this.IsNaturalRoofAt), delegate(IntVec3 x)
+						map.floodFiller.FloodFill(current2, (IntVec3 x) => this.IsNaturalRoofAt(x, map), delegate(IntVec3 x)
 						{
 							visited[x] = true;
 							toRemove.Add(x);
@@ -88,7 +92,7 @@ namespace RimWorld
 						{
 							for (int j = 0; j < toRemove.Count; j++)
 							{
-								Find.RoofGrid.SetRoof(toRemove[j], null);
+								map.roofGrid.SetRoof(toRemove[j], null);
 							}
 						}
 					}
@@ -96,7 +100,7 @@ namespace RimWorld
 			}
 			GenStep_ScatterLumpsMineable genStep_ScatterLumpsMineable = new GenStep_ScatterLumpsMineable();
 			float num3 = 10f;
-			switch (Find.World.grid.Get(Find.GameInitData.startingCoords).hilliness)
+			switch (Find.WorldGrid[map.Tile].hilliness)
 			{
 			case Hilliness.Flat:
 				num3 = 4f;
@@ -110,15 +114,18 @@ namespace RimWorld
 			case Hilliness.Mountainous:
 				num3 = 15f;
 				break;
+			case Hilliness.Impassable:
+				num3 = 16f;
+				break;
 			}
 			genStep_ScatterLumpsMineable.countPer10kCellsRange = new FloatRange(num3, num3);
-			genStep_ScatterLumpsMineable.Generate();
-			RegionAndRoomUpdater.Enabled = true;
+			genStep_ScatterLumpsMineable.Generate(map);
+			map.regionAndRoomUpdater.Enabled = true;
 		}
 
-		private bool IsNaturalRoofAt(IntVec3 c)
+		private bool IsNaturalRoofAt(IntVec3 c, Map map)
 		{
-			return c.Roofed() && c.GetRoof().isNatural;
+			return c.Roofed(map) && c.GetRoof(map).isNatural;
 		}
 	}
 }

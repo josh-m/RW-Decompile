@@ -21,30 +21,41 @@ namespace Verse
 			set
 			{
 				this.rect = value;
-				this.rect.ClipInsideMap();
+				if (base.Spawned)
+				{
+					this.rect.ClipInsideMap(base.Map);
+				}
 			}
+		}
+
+		public override void SpawnSetup(Map map)
+		{
+			base.SpawnSetup(map);
+			this.rect.ClipInsideMap(base.Map);
 		}
 
 		public override void Tick()
 		{
-			if (this.destroyIfUnfogged && !this.rect.CenterCell.Fogged())
+			if (this.destroyIfUnfogged && !this.rect.CenterCell.Fogged(base.Map))
 			{
 				this.Destroy(DestroyMode.Vanish);
 				return;
 			}
 			if (this.IsHashIntervalTick(60))
 			{
+				Map map = base.Map;
 				for (int i = this.rect.minZ; i <= this.rect.maxZ; i++)
 				{
 					for (int j = this.rect.minX; j <= this.rect.maxX; j++)
 					{
 						IntVec3 c = new IntVec3(j, 0, i);
-						List<Thing> thingList = c.GetThingList();
+						List<Thing> thingList = c.GetThingList(map);
 						for (int k = 0; k < thingList.Count; k++)
 						{
 							if (thingList[k].def.category == ThingCategory.Pawn && thingList[k].def.race.intelligence == Intelligence.Humanlike && thingList[k].Faction == Faction.OfPlayer)
 							{
 								this.ActivatedBy((Pawn)thingList[k]);
+								return;
 							}
 						}
 					}

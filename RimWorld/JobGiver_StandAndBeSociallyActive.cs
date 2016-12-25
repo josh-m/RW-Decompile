@@ -8,9 +8,9 @@ namespace RimWorld
 	{
 		public IntRange ticksRange = new IntRange(300, 600);
 
-		public override ThinkNode DeepCopy()
+		public override ThinkNode DeepCopy(bool resolve = true)
 		{
-			JobGiver_StandAndBeSociallyActive jobGiver_StandAndBeSociallyActive = (JobGiver_StandAndBeSociallyActive)base.DeepCopy();
+			JobGiver_StandAndBeSociallyActive jobGiver_StandAndBeSociallyActive = (JobGiver_StandAndBeSociallyActive)base.DeepCopy(resolve);
 			jobGiver_StandAndBeSociallyActive.ticksRange = this.ticksRange;
 			return jobGiver_StandAndBeSociallyActive;
 		}

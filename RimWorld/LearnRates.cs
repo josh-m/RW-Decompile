@@ -26,8 +26,6 @@ namespace RimWorld
 
 		public const float XpPerBurstFiredPractice = 6f;
 
-		public const float XpPerBurstFiredNeutralPawn = 50f;
-
 		public const float XpPerBurstFiredInAnger = 240f;
 
 		public const float XpPerMeleeHit = 250f;

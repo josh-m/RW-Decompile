@@ -30,7 +30,7 @@ namespace RimWorld
 			}
 			return new Job(JobDefOf.FeedPatient, t2, pawn2)
 			{
-				maxNumToCarry = FoodUtility.WillIngestStackCountOf(pawn2, def)
+				count = FoodUtility.WillIngestStackCountOf(pawn2, def)
 			};
 		}
 	}

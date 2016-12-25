@@ -21,7 +21,7 @@ namespace Verse.AI
 
 		public JobDriver curDriver;
 
-		public JobQueue jobQueue;
+		public JobQueue jobQueue = new JobQueue();
 
 		private int jobsGivenThisTick;
 
@@ -71,7 +71,7 @@ namespace Verse.AI
 						}
 						if (!this.curJob.checkOverrideOnExpire)
 						{
-							this.EndCurrentJob(JobCondition.Succeeded);
+							this.EndCurrentJob(JobCondition.Succeeded, true);
 						}
 						else
 						{
@@ -166,7 +166,7 @@ namespace Verse.AI
 				}
 				if (resumeCurJobAfterwards && this.curJob.def.suspendable)
 				{
-					this.EnqueueJob(this.curJob);
+					this.jobQueue.EnqueueFirst(this.curJob);
 					if (this.debugLog)
 					{
 						this.DebugLogEvent("   JobQueue EnqueueFirst curJob: " + this.curJob);
@@ -194,7 +194,7 @@ namespace Verse.AI
 			this.curDriver.ReadyForNextToil();
 		}
 
-		public void EndCurrentJob(JobCondition condition)
+		public void EndCurrentJob(JobCondition condition, bool startNewJob = true)
 		{
 			if (this.debugLog)
 			{
@@ -215,13 +215,16 @@ namespace Verse.AI
 				this.StartJob(new Job(JobDefOf.Wait, 250, false), JobCondition.None, null, false, true, null);
 				return;
 			}
-			if (condition == JobCondition.Succeeded && job != null && job.def != JobDefOf.Wait && !this.pawn.pather.Moving)
+			if (startNewJob)
 			{
-				this.StartJob(new Job(JobDefOf.Wait, 1, false), JobCondition.None, null, false, false, null);
-			}
-			else
-			{
-				this.TryFindAndStartJob();
+				if (condition == JobCondition.Succeeded && job != null && job.def != JobDefOf.Wait && !this.pawn.pather.Moving)
+				{
+					this.StartJob(new Job(JobDefOf.Wait, 1, false), JobCondition.None, null, false, false, null);
+				}
+				else
+				{
+					this.TryFindAndStartJob();
+				}
 			}
 		}
 
@@ -247,18 +250,18 @@ namespace Verse.AI
 			this.curJob = null;
 			if (releaseReservations)
 			{
-				Find.Reservations.ReleaseAllClaimedBy(this.pawn);
-				Find.PhysicalInteractionReservations.ReleaseAllClaimedBy(this.pawn);
-				Find.AttackTargetReservations.ReleaseAllClaimedBy(this.pawn);
+				this.pawn.Map.reservationManager.ReleaseAllClaimedBy(this.pawn);
+				this.pawn.Map.physicalInteractionReservationManager.ReleaseAllClaimedBy(this.pawn);
+				this.pawn.Map.attackTargetReservationManager.ReleaseAllClaimedBy(this.pawn);
 			}
 			if (cancelBusyStancesSoft)
 			{
 				this.pawn.stances.CancelBusyStanceSoft();
 			}
-			if (!this.pawn.Destroyed && this.pawn.carrier != null && this.pawn.carrier.CarriedThing != null)
+			if (!this.pawn.Destroyed && this.pawn.carryTracker != null && this.pawn.carryTracker.CarriedThing != null)
 			{
 				Thing thing;
-				this.pawn.carrier.TryDropCarriedThing(this.pawn.Position, ThingPlaceMode.Near, out thing, null);
+				this.pawn.carryTracker.TryDropCarriedThing(this.pawn.Position, ThingPlaceMode.Near, out thing, null);
 			}
 		}
 
@@ -284,15 +287,6 @@ namespace Verse.AI
 				return;
 			}
 			this.CleanupCurrentJob(JobCondition.InterruptForced, true, true);
-		}
-
-		public void EnqueueJob(Job job)
-		{
-			if (this.jobQueue == null)
-			{
-				this.jobQueue = new JobQueue();
-			}
-			this.jobQueue.EnqueueFirst(job);
 		}
 
 		private void TryFindAndStartJob()
@@ -424,7 +418,7 @@ namespace Verse.AI
 			Log.Error(text);
 			if (this.curJob != null)
 			{
-				this.EndCurrentJob(JobCondition.Errored);
+				this.EndCurrentJob(JobCondition.Errored, true);
 			}
 			else
 			{
@@ -464,12 +458,73 @@ namespace Verse.AI
 
 		private bool CanDoAnyJob()
 		{
-			return !this.pawn.Dead && this.pawn.Spawned && this.pawn.holder == null;
+			return !this.pawn.Dead && this.pawn.Spawned && this.pawn.holdingContainer == null;
 		}
 
 		private bool ShouldStartJobFromThinkTree(ThinkResult thinkResult)
 		{
 			return this.curJob == null || (thinkResult.Job.def != this.curJob.def || thinkResult.SourceNode != this.pawn.mindState.lastJobGiver || !this.curDriver.IsContinuation(thinkResult.Job));
+		}
+
+		public bool CanTakeOrderedJob()
+		{
+			return (this.curJob == null || this.curJob.def.playerInterruptible) && !this.pawn.HasAttachment(ThingDefOf.Fire);
+		}
+
+		public bool TryTakeOrderedJobPrioritizedWork(Job job, WorkGiver giver, IntVec3 cell)
+		{
+			if (this.TryTakeOrderedJob(job))
+			{
+				this.pawn.mindState.lastGivenWorkType = giver.def.workType;
+				if (giver.def.prioritizeSustains)
+				{
+					this.pawn.mindState.priorityWork.Set(cell, giver.def.workType);
+				}
+				return true;
+			}
+			return false;
+		}
+
+		public bool TryTakeOrderedJob(Job job)
+		{
+			if (this.pawn.jobs.debugLog)
+			{
+				this.pawn.jobs.DebugLogEvent("TakeOrderedJob " + job);
+			}
+			if (!this.CanTakeOrderedJob())
+			{
+				if (this.pawn.jobs.debugLog)
+				{
+					this.pawn.jobs.DebugLogEvent("    CanTakeOrderedJob is false. Returning.");
+				}
+				return false;
+			}
+			job.playerForced = true;
+			if (this.curJob != null && this.curJob.JobIsSameAs(job))
+			{
+				return true;
+			}
+			this.pawn.stances.CancelBusyStanceSoft();
+			this.pawn.Map.pawnDestinationManager.UnreserveAllFor(this.pawn);
+			if (job.def == JobDefOf.Goto)
+			{
+				this.pawn.Map.pawnDestinationManager.ReserveDestinationFor(this.pawn, job.targetA.Cell);
+			}
+			if (this.pawn.jobs.debugLog)
+			{
+				this.pawn.jobs.DebugLogEvent("    Queueing job");
+			}
+			this.jobQueue.Clear();
+			this.jobQueue.EnqueueFirst(job);
+			if (this.pawn.jobs.curJob != null)
+			{
+				this.pawn.jobs.curDriver.EndJobWith(JobCondition.InterruptForced);
+			}
+			else
+			{
+				this.pawn.jobs.CheckForJobOverride();
+			}
+			return true;
 		}
 
 		public void Notify_TuckedIntoBed(Building_Bed bed)
@@ -499,7 +554,7 @@ namespace Verse.AI
 
 		internal void Notify_MasterDrafted()
 		{
-			this.EndCurrentJob(JobCondition.InterruptForced);
+			this.EndCurrentJob(JobCondition.InterruptForced, true);
 		}
 
 		public void DebugLogEvent(string s)

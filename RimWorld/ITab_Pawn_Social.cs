@@ -6,6 +6,8 @@ namespace RimWorld
 {
 	public class ITab_Pawn_Social : ITab
 	{
+		public const float Width = 540f;
+
 		public override bool IsVisible
 		{
 			get
@@ -25,7 +27,7 @@ namespace RimWorld
 				Corpse corpse = base.SelThing as Corpse;
 				if (corpse != null)
 				{
-					return corpse.innerPawn;
+					return corpse.InnerPawn;
 				}
 				throw new InvalidOperationException("Social tab on non-pawn non-corpse " + base.SelThing);
 			}

@@ -13,9 +13,9 @@ namespace RimWorld
 
 		private static List<Thing> potentialTargets = new List<Thing>();
 
-		public override ThinkNode DeepCopy()
+		public override ThinkNode DeepCopy(bool resolve = true)
 		{
-			JobGiver_FireStartingSpree jobGiver_FireStartingSpree = (JobGiver_FireStartingSpree)base.DeepCopy();
+			JobGiver_FireStartingSpree jobGiver_FireStartingSpree = (JobGiver_FireStartingSpree)base.DeepCopy(resolve);
 			jobGiver_FireStartingSpree.waitTicks = this.waitTicks;
 			return jobGiver_FireStartingSpree;
 		}
@@ -42,7 +42,7 @@ namespace RimWorld
 			if (intVec.IsValid)
 			{
 				pawn.mindState.nextMoveOrderIsWait = true;
-				Find.PawnDestinationManager.ReserveDestinationFor(pawn, intVec);
+				pawn.Map.pawnDestinationManager.ReserveDestinationFor(pawn, intVec);
 				return new Job(JobDefOf.GotoWander, intVec);
 			}
 			return null;
@@ -51,7 +51,7 @@ namespace RimWorld
 		private Thing TryFindRandomIgniteTarget(Pawn pawn)
 		{
 			Region region;
-			if (!CellFinder.TryFindClosestRegionWith(pawn.Position.GetRegion(), TraverseParms.For(pawn, Danger.Deadly, TraverseMode.ByPawn, false), (Region candidateRegion) => !candidateRegion.IsForbiddenEntirely(pawn), 100, out region))
+			if (!CellFinder.TryFindClosestRegionWith(pawn.GetRegion(), TraverseParms.For(pawn, Danger.Deadly, TraverseMode.ByPawn, false), (Region candidateRegion) => !candidateRegion.IsForbiddenEntirely(pawn), 100, out region))
 			{
 				return null;
 			}

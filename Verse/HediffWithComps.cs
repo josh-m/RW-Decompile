@@ -92,6 +92,22 @@ namespace Verse
 			}
 		}
 
+		public override TextureAndColor StateIcon
+		{
+			get
+			{
+				for (int i = 0; i < this.comps.Count; i++)
+				{
+					TextureAndColor compStateIcon = this.comps[i].CompStateIcon;
+					if (compStateIcon.HasValue)
+					{
+						return compStateIcon;
+					}
+				}
+				return TextureAndColor.None;
+			}
+		}
+
 		public override void PostAdd(DamageInfo? dinfo)
 		{
 			if (this.comps != null)
@@ -161,11 +177,11 @@ namespace Verse
 			}
 		}
 
-		public override void FactorDrugEffect(ChemicalDef chem, ref float effect)
+		public override void ModifyChemicalEffect(ChemicalDef chem, ref float effect)
 		{
 			for (int i = 0; i < this.comps.Count; i++)
 			{
-				this.comps[i].CompFactorDrugEffect(chem, ref effect);
+				this.comps[i].CompModifyChemicalEffect(chem, ref effect);
 			}
 		}
 

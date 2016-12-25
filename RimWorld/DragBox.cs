@@ -16,7 +16,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return Math.Min(this.start.x, Gen.MouseMapPosVector3().x);
+				return Math.Min(this.start.x, UI.MouseMapPosition().x);
 			}
 		}
 
@@ -24,7 +24,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return Math.Max(this.start.x, Gen.MouseMapPosVector3().x);
+				return Math.Max(this.start.x, UI.MouseMapPosition().x);
 			}
 		}
 
@@ -32,7 +32,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return Math.Min(this.start.z, Gen.MouseMapPosVector3().z);
+				return Math.Min(this.start.z, UI.MouseMapPosition().z);
 			}
 		}
 
@@ -40,7 +40,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return Math.Max(this.start.z, Gen.MouseMapPosVector3().z);
+				return Math.Max(this.start.z, UI.MouseMapPosition().z);
 			}
 		}
 
@@ -48,7 +48,7 @@ namespace RimWorld
 		{
 			get
 			{
-				Vector2 vector = Find.CameraDriver.InvertedWorldToScreenPoint(this.start);
+				Vector2 vector = this.start.MapToUIPosition();
 				Vector2 mousePosition = Event.current.mousePosition;
 				if (mousePosition.x < vector.x)
 				{
@@ -76,13 +76,21 @@ namespace RimWorld
 		{
 			get
 			{
-				return (this.start - Gen.MouseMapPosVector3()).magnitude > 0.5f;
+				return (this.start - UI.MouseMapPosition()).magnitude > 0.5f;
+			}
+		}
+
+		public bool IsValidAndActive
+		{
+			get
+			{
+				return this.active && this.IsValid;
 			}
 		}
 
 		public void DragBoxOnGUI()
 		{
-			if (this.active && this.IsValid)
+			if (this.IsValidAndActive)
 			{
 				Widgets.DrawBox(this.ScreenRect, 2);
 			}

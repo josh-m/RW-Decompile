@@ -13,7 +13,7 @@ namespace Verse
 		{
 			ShortHashGiver.takenHashesPerDeftype.Clear();
 			List<Def> list = new List<Def>();
-			foreach (Type current in typeof(Def).AllSubclassesNonAbstract())
+			foreach (Type current in GenDefDatabase.AllDefTypesWithDatabases())
 			{
 				Type type = typeof(DefDatabase<>).MakeGenericType(new Type[]
 				{

@@ -7,9 +7,13 @@ namespace Verse
 	{
 		public const string MaskTexName = "_MaskTex";
 
+		public const string ColorName = "_Color";
+
 		public const string ColorTwoName = "_ColorTwo";
 
 		private static int cachedMaskTexID = -1;
+
+		private static int cachedColorID = -1;
 
 		private static int cachedColorTwoID = -1;
 
@@ -22,6 +26,18 @@ namespace Verse
 					ShaderIDs.cachedMaskTexID = Shader.PropertyToID("_MaskTex");
 				}
 				return ShaderIDs.cachedMaskTexID;
+			}
+		}
+
+		public static int ColorId
+		{
+			get
+			{
+				if (ShaderIDs.cachedColorID == -1)
+				{
+					ShaderIDs.cachedColorID = Shader.PropertyToID("_Color");
+				}
+				return ShaderIDs.cachedColorID;
 			}
 		}
 

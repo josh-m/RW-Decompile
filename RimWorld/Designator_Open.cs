@@ -36,7 +36,7 @@ namespace RimWorld
 
 		public override AcceptanceReport CanDesignateCell(IntVec3 c)
 		{
-			if (!c.InBounds())
+			if (!c.InBounds(base.Map))
 			{
 				return false;
 			}
@@ -58,7 +58,7 @@ namespace RimWorld
 		public override AcceptanceReport CanDesignateThing(Thing t)
 		{
 			IOpenable openable = t as IOpenable;
-			if (openable == null || !openable.CanOpen || Find.DesignationManager.DesignationOn(t, DesignationDefOf.Open) != null)
+			if (openable == null || !openable.CanOpen || base.Map.designationManager.DesignationOn(t, DesignationDefOf.Open) != null)
 			{
 				return false;
 			}
@@ -67,15 +67,15 @@ namespace RimWorld
 
 		public override void DesignateThing(Thing t)
 		{
-			Find.DesignationManager.AddDesignation(new Designation(t, DesignationDefOf.Open));
+			base.Map.designationManager.AddDesignation(new Designation(t, DesignationDefOf.Open));
 		}
 
 		[DebuggerHidden]
 		private IEnumerable<Thing> OpenablesInCell(IntVec3 c)
 		{
-			if (!c.Fogged())
+			if (!c.Fogged(base.Map))
 			{
-				List<Thing> thingList = c.GetThingList();
+				List<Thing> thingList = c.GetThingList(base.Map);
 				for (int i = 0; i < thingList.Count; i++)
 				{
 					if (this.CanDesignateThing(thingList[i]).Accepted)

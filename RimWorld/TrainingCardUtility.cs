@@ -13,7 +13,7 @@ namespace RimWorld
 
 		private const float InfoHeaderHeight = 50f;
 
-		private static readonly Texture2D TrainedTrainableTex = ContentFinder<Texture2D>.Get("UI/Icons/TrainedTrainable", true);
+		private static readonly Texture2D TrainedTrainableTex = ContentFinder<Texture2D>.Get("UI/Icons/FixedCheck", true);
 
 		public static void DrawTrainingCard(Rect rect, Pawn pawn)
 		{
@@ -82,7 +82,7 @@ namespace RimWorld
 				rect4.xMin = rect4.xMax - 10f;
 				if (Widgets.ButtonText(rect4, "+", true, false, true))
 				{
-					pawn.training.Train(td, Find.MapPawns.FreeColonistsSpawned.RandomElement<Pawn>());
+					pawn.training.Train(td, pawn.Map.mapPawns.FreeColonistsSpawned.RandomElement<Pawn>());
 				}
 			}
 			TrainingCardUtility.DoTrainableTooltip(rect, pawn, td, canTrain);

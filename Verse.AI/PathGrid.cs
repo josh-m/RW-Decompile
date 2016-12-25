@@ -9,36 +9,39 @@ namespace Verse.AI
 	{
 		private const int ImpassableCost = 10000;
 
+		private Map map;
+
 		public int[] pathGrid;
 
-		public PathGrid()
+		public PathGrid(Map map)
 		{
+			this.map = map;
 			this.ResetPathGrid();
 		}
 
 		public void ResetPathGrid()
 		{
-			this.pathGrid = new int[CellIndices.NumGridCells];
+			this.pathGrid = new int[this.map.cellIndices.NumGridCells];
 		}
 
 		public bool Walkable(IntVec3 loc)
 		{
-			return loc.InBounds() && this.pathGrid[CellIndices.CellToIndex(loc)] < 10000;
+			return loc.InBounds(this.map) && this.pathGrid[this.map.cellIndices.CellToIndex(loc)] < 10000;
 		}
 
 		public bool WalkableFast(IntVec3 loc)
 		{
-			return this.pathGrid[CellIndices.CellToIndex(loc)] < 10000;
+			return this.pathGrid[this.map.cellIndices.CellToIndex(loc)] < 10000;
 		}
 
 		public bool WalkableFast(int x, int z)
 		{
-			return this.pathGrid[CellIndices.CellToIndex(x, z)] < 10000;
+			return this.pathGrid[this.map.cellIndices.CellToIndex(x, z)] < 10000;
 		}
 
 		public int PerceivedPathCostAt(IntVec3 loc)
 		{
-			return this.pathGrid[CellIndices.CellToIndex(loc)];
+			return this.pathGrid[this.map.cellIndices.CellToIndex(loc)];
 		}
 
 		public void RecalculatePerceivedPathCostUnderThing(Thing t)
@@ -63,30 +66,30 @@ namespace Verse.AI
 
 		public void RecalculatePerceivedPathCostAt(IntVec3 c)
 		{
-			if (!c.InBounds())
+			if (!c.InBounds(this.map))
 			{
 				return;
 			}
 			bool flag = this.WalkableFast(c);
-			this.pathGrid[CellIndices.CellToIndex(c)] = PathGrid.CalculatedCostAt(c, true, IntVec3.Invalid);
+			this.pathGrid[this.map.cellIndices.CellToIndex(c)] = this.CalculatedCostAt(c, true, IntVec3.Invalid);
 			if (this.WalkableFast(c) != flag)
 			{
-				RegionDirtyer.Notify_WalkabilityChanged(c);
+				this.map.regionDirtyer.Notify_WalkabilityChanged(c);
 			}
 		}
 
 		public void RecalculateAllPerceivedPathCosts()
 		{
-			foreach (IntVec3 current in Find.Map.AllCells)
+			foreach (IntVec3 current in this.map.AllCells)
 			{
 				this.RecalculatePerceivedPathCostAt(current);
 			}
 		}
 
-		public static int CalculatedCostAt(IntVec3 c, bool perceivedStatic, IntVec3 prevCell)
+		public int CalculatedCostAt(IntVec3 c, bool perceivedStatic, IntVec3 prevCell)
 		{
 			int num = 0;
-			TerrainDef terrainDef = Find.TerrainGrid.TerrainAt(c);
+			TerrainDef terrainDef = this.map.terrainGrid.TerrainAt(c);
 			if (terrainDef == null || terrainDef.passability == Traversability.Impassable)
 			{
 				num = 10000;
@@ -95,9 +98,9 @@ namespace Verse.AI
 			{
 				num += terrainDef.pathCost;
 			}
-			int num2 = SnowUtility.MovementTicksAddOn(Find.SnowGrid.GetCategory(c));
+			int num2 = SnowUtility.MovementTicksAddOn(this.map.snowGrid.GetCategory(c));
 			num += num2;
-			List<Thing> list = Find.ThingGrid.ThingsListAt(c);
+			List<Thing> list = this.map.thingGrid.ThingsListAt(c);
 			for (int i = 0; i < list.Count; i++)
 			{
 				Thing thing = list[i];
@@ -105,7 +108,7 @@ namespace Verse.AI
 				{
 					return 10000;
 				}
-				if (!PathGrid.IsPathCostIgnoreRepeater(thing.def) || !prevCell.IsValid || !PathGrid.ContainsPathCostIgnoreRepeater(prevCell))
+				if (!PathGrid.IsPathCostIgnoreRepeater(thing.def) || !prevCell.IsValid || !this.ContainsPathCostIgnoreRepeater(prevCell))
 				{
 					num += thing.def.pathCost;
 				}
@@ -116,10 +119,10 @@ namespace Verse.AI
 				{
 					IntVec3 b = GenAdj.AdjacentCellsAndInside[j];
 					IntVec3 c2 = c + b;
-					if (c2.InBounds())
+					if (c2.InBounds(this.map))
 					{
 						Fire fire = null;
-						list = Find.ThingGrid.ThingsListAtFast(c2);
+						list = this.map.thingGrid.ThingsListAtFast(c2);
 						for (int k = 0; k < list.Count; k++)
 						{
 							fire = (list[k] as Fire);
@@ -145,9 +148,9 @@ namespace Verse.AI
 			return num;
 		}
 
-		private static bool ContainsPathCostIgnoreRepeater(IntVec3 c)
+		private bool ContainsPathCostIgnoreRepeater(IntVec3 c)
 		{
-			List<Thing> list = Find.ThingGrid.ThingsListAt(c);
+			List<Thing> list = this.map.thingGrid.ThingsListAt(c);
 			for (int i = 0; i < list.Count; i++)
 			{
 				if (PathGrid.IsPathCostIgnoreRepeater(list[i].def))

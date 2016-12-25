@@ -26,7 +26,7 @@ namespace Verse
 							label
 						}));
 					}
-					else if (thing.ThingState == ThingState.Discarded)
+					else if (thing.Discarded)
 					{
 						Log.Warning(string.Concat(new object[]
 						{
@@ -65,7 +65,7 @@ namespace Verse
 					exposable.ExposeData();
 					Scribe.ExitNode();
 				}
-				DebugLoadIDsSavingErrorsChecker.RegisterDeepSaved(target);
+				DebugLoadIDsSavingErrorsChecker.RegisterDeepSaved(target, label);
 			}
 			else if (Scribe.mode == LoadSaveMode.LoadingVars)
 			{

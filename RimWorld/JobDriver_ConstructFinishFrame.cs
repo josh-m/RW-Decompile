@@ -20,7 +20,7 @@ namespace RimWorld
 			{
 				Pawn actor = this.<build>__0.actor;
 				Frame frame = (Frame)actor.jobs.curJob.GetTarget(TargetIndex.A).Thing;
-				actor.skills.Learn(SkillDefOf.Construction, 0.275f);
+				actor.skills.Learn(SkillDefOf.Construction, 0.275f, false);
 				float statValue = actor.GetStatValue(StatDefOf.ConstructionSpeed, true);
 				float workToMake = frame.WorkToMake;
 				float statValue2 = actor.GetStatValue(StatDefOf.ConstructFailChance, true);
@@ -36,7 +36,7 @@ namespace RimWorld
 				}
 				if (frame.def.entityDefToBuild is TerrainDef)
 				{
-					Find.SnowGrid.SetDepth(frame.Position, 0f);
+					this.<>f__this.Map.snowGrid.SetDepth(frame.Position, 0f);
 				}
 				frame.workDone += statValue;
 				if (workToMake - frame.workDone <= 0f)

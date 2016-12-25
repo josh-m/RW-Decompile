@@ -27,6 +27,19 @@ namespace Verse
 			base.Gap(this.verticalSpacing);
 		}
 
+		public void LabelDouble(string leftLabel, string rightLabel)
+		{
+			float num = base.ColumnWidth / 2f;
+			float width = base.ColumnWidth - num;
+			float a = Text.CalcHeight(leftLabel, num);
+			float b = Text.CalcHeight(rightLabel, width);
+			float height = Mathf.Max(a, b);
+			Rect rect = base.GetRect(height);
+			Widgets.Label(rect.LeftHalf(), leftLabel);
+			Widgets.Label(rect.RightHalf(), rightLabel);
+			base.Gap(this.verticalSpacing);
+		}
+
 		public bool RadioButton(string label, bool active, float tabIn = 0f)
 		{
 			float lineHeight = Text.LineHeight;
@@ -138,7 +151,7 @@ namespace Verse
 		public float Slider(float val, float min, float max)
 		{
 			Rect rect = base.GetRect(30f);
-			float result = Widgets.HorizontalSlider(rect, val, min, max, false, null);
+			float result = Widgets.HorizontalSlider(rect, val, min, max, false, null, null, null, -1f);
 			base.Gap(this.verticalSpacing);
 			return result;
 		}

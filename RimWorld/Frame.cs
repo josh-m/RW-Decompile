@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using UnityEngine;
 using Verse;
+using Verse.AI.Group;
 using Verse.Sound;
 
 namespace RimWorld
@@ -30,13 +31,13 @@ namespace RimWorld
 
 		private static readonly Texture2D TileTex = ContentFinder<Texture2D>.Get("Things/Building/BuildingFrame/Tile", true);
 
-		private List<ThingCount> cachedMaterialsNeeded = new List<ThingCount>();
+		private List<ThingCountClass> cachedMaterialsNeeded = new List<ThingCountClass>();
 
 		public float WorkToMake
 		{
 			get
 			{
-				return this.def.entityDefToBuild.GetStatValueAbstract(StatDefOf.WorkToMake, base.Stuff);
+				return this.def.entityDefToBuild.GetStatValueAbstract(StatDefOf.WorkToBuild, base.Stuff);
 			}
 		}
 
@@ -75,7 +76,7 @@ namespace RimWorld
 			{
 				if (!this.def.MadeFromStuff)
 				{
-					List<ThingCount> costList = this.def.entityDefToBuild.costList;
+					List<ThingCountClass> costList = this.def.entityDefToBuild.costList;
 					if (costList != null)
 					{
 						for (int i = 0; i < costList.Count; i++)
@@ -135,17 +136,22 @@ namespace RimWorld
 
 		public Frame()
 		{
-			this.resourceContainer = new ThingContainer(this, false);
+			this.resourceContainer = new ThingContainer(this, false, LookMode.Deep);
 		}
 
-		public ThingContainer GetContainer()
+		public ThingContainer GetInnerContainer()
 		{
 			return this.resourceContainer;
 		}
 
 		public IntVec3 GetPosition()
 		{
-			return base.Position;
+			return base.PositionHeld;
+		}
+
+		public Map GetMap()
+		{
+			return base.MapHeld;
 		}
 
 		public override void ExposeData()
@@ -163,18 +169,18 @@ namespace RimWorld
 			return base.Stuff;
 		}
 
-		public List<ThingCount> MaterialsNeeded()
+		public List<ThingCountClass> MaterialsNeeded()
 		{
 			this.cachedMaterialsNeeded.Clear();
-			List<ThingCount> list = this.def.entityDefToBuild.CostListAdjusted(base.Stuff, true);
+			List<ThingCountClass> list = this.def.entityDefToBuild.CostListAdjusted(base.Stuff, true);
 			for (int i = 0; i < list.Count; i++)
 			{
-				ThingCount thingCount = list[i];
-				int num = this.resourceContainer.NumContained(thingCount.thingDef);
-				int num2 = thingCount.count - num;
+				ThingCountClass thingCountClass = list[i];
+				int num = this.resourceContainer.TotalStackCountOfDef(thingCountClass.thingDef);
+				int num2 = thingCountClass.count - num;
 				if (num2 > 0)
 				{
-					this.cachedMaterialsNeeded.Add(new ThingCount(thingCount.thingDef, num2));
+					this.cachedMaterialsNeeded.Add(new ThingCountClass(thingCountClass.thingDef, num2));
 				}
 			}
 			return this.cachedMaterialsNeeded;
@@ -183,10 +189,11 @@ namespace RimWorld
 		public void CompleteConstruction(Pawn worker)
 		{
 			this.resourceContainer.Clear();
+			Map map = base.Map;
 			this.Destroy(DestroyMode.Vanish);
-			if (this.GetStatValue(StatDefOf.WorkToMake, true) > 150f && this.def.entityDefToBuild is ThingDef && ((ThingDef)this.def.entityDefToBuild).category == ThingCategory.Building)
+			if (this.GetStatValue(StatDefOf.WorkToBuild, true) > 150f && this.def.entityDefToBuild is ThingDef && ((ThingDef)this.def.entityDefToBuild).category == ThingCategory.Building)
 			{
-				SoundDefOf.BuildingComplete.PlayOneShot(base.Position);
+				SoundDefOf.BuildingComplete.PlayOneShot(new TargetInfo(base.Position, map, false));
 			}
 			ThingDef thingDef = this.def.entityDefToBuild as ThingDef;
 			if (thingDef != null)
@@ -196,7 +203,7 @@ namespace RimWorld
 				CompQuality compQuality = thing.TryGetComp<CompQuality>();
 				if (compQuality != null)
 				{
-					int level = worker.skills.GetSkill(SkillDefOf.Construction).level;
+					int level = worker.skills.GetSkill(SkillDefOf.Construction).Level;
 					compQuality.SetQuality(QualityUtility.RandomCreationQuality(level), ArtGenerationContext.Colony);
 				}
 				CompArt compArt = thing.TryGetComp<CompArt>();
@@ -209,33 +216,40 @@ namespace RimWorld
 					compArt.JustCreatedBy(worker);
 				}
 				thing.HitPoints = Mathf.CeilToInt((float)this.HitPoints / (float)base.MaxHitPoints * (float)thing.MaxHitPoints);
-				GenSpawn.Spawn(thing, base.Position, base.Rotation);
+				GenSpawn.Spawn(thing, base.Position, map, base.Rotation);
 			}
 			else
 			{
-				Find.TerrainGrid.SetTerrain(base.Position, (TerrainDef)this.def.entityDefToBuild);
+				map.terrainGrid.SetTerrain(base.Position, (TerrainDef)this.def.entityDefToBuild);
 			}
 			worker.records.Increment(RecordDefOf.ThingsConstructed);
 		}
 
 		public void FailConstruction(Pawn worker)
 		{
-			this.Destroy(DestroyMode.Cancel);
+			Map map = base.Map;
+			this.Destroy(DestroyMode.FailConstruction);
+			Blueprint_Build blueprint_Build = null;
 			if (this.def.entityDefToBuild.blueprintDef != null)
 			{
-				Blueprint_Build blueprint_Build = (Blueprint_Build)ThingMaker.MakeThing(this.def.entityDefToBuild.blueprintDef, null);
+				blueprint_Build = (Blueprint_Build)ThingMaker.MakeThing(this.def.entityDefToBuild.blueprintDef, null);
 				blueprint_Build.stuffToUse = base.Stuff;
 				blueprint_Build.SetFactionDirect(base.Faction);
-				GenSpawn.Spawn(blueprint_Build, base.Position, base.Rotation);
+				GenSpawn.Spawn(blueprint_Build, base.Position, map, base.Rotation);
 			}
-			MoteMaker.ThrowText(this.DrawPos, "TextMote_ConstructionFail".Translate(), 6f);
+			Lord lord = worker.GetLord();
+			if (lord != null)
+			{
+				lord.Notify_ConstructionFailed(worker, this, blueprint_Build);
+			}
+			MoteMaker.ThrowText(this.DrawPos, map, "TextMote_ConstructionFail".Translate(), 6f);
 			if (base.Faction == Faction.OfPlayer && this.WorkToMake > 1400f)
 			{
 				Messages.Message("MessageConstructionFailed".Translate(new object[]
 				{
 					this.Label,
 					worker.LabelShort
-				}), base.Position, MessageSound.Negative);
+				}), new TargetInfo(base.Position, map, false), MessageSound.Negative);
 			}
 		}
 
@@ -318,12 +332,12 @@ namespace RimWorld
 			StringBuilder stringBuilder = new StringBuilder();
 			stringBuilder.Append(base.GetInspectString());
 			stringBuilder.AppendLine("ContainedResources".Translate() + ":");
-			List<ThingCount> list = this.def.entityDefToBuild.CostListAdjusted(base.Stuff, true);
+			List<ThingCountClass> list = this.def.entityDefToBuild.CostListAdjusted(base.Stuff, true);
 			for (int i = 0; i < list.Count; i++)
 			{
-				ThingCount need = list[i];
+				ThingCountClass need = list[i];
 				int num = need.count;
-				foreach (ThingCount current in from needed in this.MaterialsNeeded()
+				foreach (ThingCountClass current in from needed in this.MaterialsNeeded()
 				where needed.thingDef == need.thingDef
 				select needed)
 				{

@@ -7,11 +7,23 @@ namespace Verse
 {
 	public abstract class Area : ICellBoolGiver, ILoadReferenceable, IExposable
 	{
-		private BoolGrid innerGrid = new BoolGrid();
+		public AreaManager areaManager;
+
+		public int ID = -1;
+
+		private BoolGrid innerGrid;
 
 		private CellBoolDrawer drawer;
 
 		private Texture2D colorTextureInt;
+
+		public Map Map
+		{
+			get
+			{
+				return this.areaManager.map;
+			}
+		}
 
 		public int TrueCount
 		{
@@ -54,13 +66,21 @@ namespace Verse
 			{
 				return this.innerGrid[index];
 			}
+			set
+			{
+				this.Set(this.Map.cellIndices.IndexToCell(index), value);
+			}
 		}
 
 		public bool this[IntVec3 c]
 		{
 			get
 			{
-				return this.innerGrid[CellIndices.CellToIndex(c)];
+				return this.innerGrid[this.Map.cellIndices.CellToIndex(c)];
+			}
+			set
+			{
+				this.Set(c, value);
 			}
 		}
 
@@ -70,7 +90,7 @@ namespace Verse
 			{
 				if (this.drawer == null)
 				{
-					this.drawer = new CellBoolDrawer(this);
+					this.drawer = new CellBoolDrawer(this, this.Map.Size.x, this.Map.Size.z);
 				}
 				return this.drawer;
 			}
@@ -92,8 +112,20 @@ namespace Verse
 			}
 		}
 
+		public Area()
+		{
+		}
+
+		public Area(AreaManager areaManager)
+		{
+			this.areaManager = areaManager;
+			this.innerGrid = new BoolGrid(areaManager.map);
+			this.ID = Find.UniqueIDsManager.GetNextAreaID();
+		}
+
 		public virtual void ExposeData()
 		{
+			Scribe_Values.LookValue<int>(ref this.ID, "ID", -1, false);
 			Scribe_Deep.LookDeep<BoolGrid>(ref this.innerGrid, "innerGrid", new object[0]);
 		}
 
@@ -112,30 +144,21 @@ namespace Verse
 			throw new NotImplementedException();
 		}
 
-		public void Set(IntVec3 c)
+		protected virtual void Set(IntVec3 c, bool val)
 		{
-			if (this.innerGrid[c])
+			int index = this.Map.cellIndices.CellToIndex(c);
+			if (this.innerGrid[index] == val)
 			{
 				return;
 			}
-			this.innerGrid[c] = true;
-			this.SetDirty(c);
+			this.innerGrid[index] = val;
+			this.MarkDirty(c);
 		}
 
-		public void Clear(IntVec3 c)
-		{
-			if (!this.innerGrid[c])
-			{
-				return;
-			}
-			this.innerGrid[c] = false;
-			this.SetDirty(c);
-		}
-
-		private void SetDirty(IntVec3 c)
+		private void MarkDirty(IntVec3 c)
 		{
 			this.Drawer.SetDirty();
-			Region region = c.GetRegion();
+			Region region = c.GetRegion(this.Map);
 			if (region != null)
 			{
 				region.Notify_AreaChanged(this);
@@ -144,12 +167,15 @@ namespace Verse
 
 		public void Delete()
 		{
-			Find.AreaManager.Remove(this);
+			this.areaManager.Remove(this);
 		}
 
 		public void MarkForDraw()
 		{
-			this.Drawer.MarkForDraw();
+			if (this.Map == Find.VisibleMap)
+			{
+				this.Drawer.MarkForDraw();
+			}
 		}
 
 		public void AreaUpdate()

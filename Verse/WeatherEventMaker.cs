@@ -8,12 +8,15 @@ namespace Verse
 
 		public Type eventClass;
 
-		public void WeatherEventMakerTick(float strength)
+		public void WeatherEventMakerTick(Map map, float strength)
 		{
 			if (Rand.Value < 1f / this.averageInterval * strength)
 			{
-				WeatherEvent newEvent = (WeatherEvent)Activator.CreateInstance(this.eventClass);
-				Find.WeatherManager.eventHandler.AddEvent(newEvent);
+				WeatherEvent newEvent = (WeatherEvent)Activator.CreateInstance(this.eventClass, new object[]
+				{
+					map
+				});
+				map.weatherManager.eventHandler.AddEvent(newEvent);
 			}
 		}
 	}

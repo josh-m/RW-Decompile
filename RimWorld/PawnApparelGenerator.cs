@@ -308,7 +308,7 @@ namespace RimWorld
 
 		public static void GenerateStartingApparelFor(Pawn pawn, PawnGenerationRequest request)
 		{
-			if (!pawn.RaceProps.ToolUser)
+			if (!pawn.RaceProps.ToolUser || !pawn.RaceProps.IsFlesh)
 			{
 				return;
 			}
@@ -343,13 +343,13 @@ namespace RimWorld
 					}
 					if (num >= 10 || Rand.Value >= 0.85f)
 					{
-						goto IL_1EA;
+						goto IL_1FA;
 					}
 					float num2 = Rand.Range(0.45f, 0.8f);
 					float totalPrice = PawnApparelGenerator.workingSet.TotalPrice;
 					if (totalPrice >= randomInRange * num2)
 					{
-						goto IL_1EA;
+						goto IL_1FA;
 					}
 					if (DebugViewSettings.logApparelGeneration)
 					{
@@ -362,17 +362,17 @@ namespace RimWorld
 							"% of money."
 						}));
 					}
-					IL_34E:
+					IL_35E:
 					num++;
 					continue;
-					IL_1EA:
+					IL_1FA:
 					if (num < 20 && Rand.Value < 0.97f && !PawnApparelGenerator.workingSet.Covers(BodyPartGroupDefOf.Torso))
 					{
 						if (DebugViewSettings.logApparelGeneration)
 						{
 							PawnApparelGenerator.debugSb.AppendLine(" -- Failed: Does not cover torso.");
 						}
-						goto IL_34E;
+						goto IL_35E;
 					}
 					if (num < 30 && Rand.Value < 0.8f && PawnApparelGenerator.workingSet.CoatButNoShirt())
 					{
@@ -380,7 +380,7 @@ namespace RimWorld
 						{
 							PawnApparelGenerator.debugSb.AppendLine(" -- Failed: Coat but no shirt.");
 						}
-						goto IL_34E;
+						goto IL_35E;
 					}
 					if (num < 50 && !PawnApparelGenerator.workingSet.SatisfiesNeededWarmth(neededWarmth))
 					{
@@ -388,7 +388,7 @@ namespace RimWorld
 						{
 							PawnApparelGenerator.debugSb.AppendLine(" -- Failed: Wrong warmth.");
 						}
-						goto IL_34E;
+						goto IL_35E;
 					}
 					if (num < 80 && PawnApparelGenerator.workingSet.IsNaked(pawn.gender))
 					{
@@ -396,7 +396,7 @@ namespace RimWorld
 						{
 							PawnApparelGenerator.debugSb.AppendLine(" -- Failed: Naked.");
 						}
-						goto IL_34E;
+						goto IL_35E;
 					}
 					break;
 				}
@@ -502,15 +502,15 @@ namespace RimWorld
 
 		private static NeededWarmth ApparelWarmthNeededNow(Pawn pawn, PawnGenerationRequest request)
 		{
-			if (Current.ProgramState != ProgramState.MapPlaying)
+			if (request.Map == null)
 			{
 				return NeededWarmth.Any;
 			}
 			NeededWarmth neededWarmth = NeededWarmth.Any;
-			Month month = GenDate.CurrentMonth;
+			Month month = GenLocalDate.Month(request.Map);
 			for (int i = 0; i < 2; i++)
 			{
-				NeededWarmth neededWarmth2 = PawnApparelGenerator.CalculateNeededWarmth(pawn, month);
+				NeededWarmth neededWarmth2 = PawnApparelGenerator.CalculateNeededWarmth(pawn, request.Map, month);
 				if (neededWarmth2 != NeededWarmth.Any)
 				{
 					neededWarmth = neededWarmth2;
@@ -536,9 +536,9 @@ namespace RimWorld
 			return NeededWarmth.Any;
 		}
 
-		public static NeededWarmth CalculateNeededWarmth(Pawn pawn, Month month)
+		public static NeededWarmth CalculateNeededWarmth(Pawn pawn, Map map, Month month)
 		{
-			float num = GenTemperature.AverageTemperatureAtWorldCoordsForMonth(Find.Map.WorldCoords, month);
+			float num = GenTemperature.AverageTemperatureAtTileForMonth(map.Tile, month);
 			if (num < pawn.def.GetStatValueAbstract(StatDefOf.ComfyTemperatureMin, null) - 4f)
 			{
 				return NeededWarmth.Warm;

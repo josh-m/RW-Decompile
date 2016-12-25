@@ -42,20 +42,20 @@ namespace RimWorld
 			}
 			return new Job(JobDefOf.DeliverFood, thing, pawn2)
 			{
-				maxNumToCarry = FoodUtility.WillIngestStackCountOf(pawn2, def),
+				count = FoodUtility.WillIngestStackCountOf(pawn2, def),
 				targetC = RCellFinder.SpotToChewStandingNear(pawn2, thing)
 			};
 		}
 
 		private static bool FoodAvailableInRoomTo(Pawn prisoner)
 		{
-			if (prisoner.carrier.CarriedThing != null && WorkGiver_Warden_DeliverFood.NutritionAvailableForFrom(prisoner, prisoner.carrier.CarriedThing) > 0f)
+			if (prisoner.carryTracker.CarriedThing != null && WorkGiver_Warden_DeliverFood.NutritionAvailableForFrom(prisoner, prisoner.carryTracker.CarriedThing) > 0f)
 			{
 				return true;
 			}
 			float num = 0f;
 			float num2 = 0f;
-			Room room = RoomQuery.RoomAt(prisoner.Position);
+			Room room = RoomQuery.RoomAt(prisoner);
 			if (room == null)
 			{
 				return false;
@@ -80,7 +80,7 @@ namespace RimWorld
 				for (int k = 0; k < list2.Count; k++)
 				{
 					Pawn pawn = list2[k] as Pawn;
-					if (pawn.IsPrisonerOfColony && pawn.needs.food.CurLevelPercentage < pawn.needs.food.PercentageThreshHungry + 0.02f && (pawn.carrier.CarriedThing == null || !pawn.RaceProps.WillAutomaticallyEat(pawn.carrier.CarriedThing)))
+					if (pawn.IsPrisonerOfColony && pawn.needs.food.CurLevelPercentage < pawn.needs.food.PercentageThreshHungry + 0.02f && (pawn.carryTracker.CarriedThing == null || !pawn.RaceProps.WillAutomaticallyEat(pawn.carryTracker.CarriedThing)))
 					{
 						num += pawn.needs.food.NutritionWanted;
 					}

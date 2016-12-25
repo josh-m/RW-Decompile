@@ -17,15 +17,31 @@ namespace Verse.AI
 			{
 				Pawn actor = toil.actor;
 				Job curJob = actor.jobs.curJob;
-				List<TargetInfo> targetQueue = curJob.GetTargetQueue(ind);
-				if (targetQueue.NullOrEmpty<TargetInfo>())
+				List<LocalTargetInfo> targetQueue = curJob.GetTargetQueue(ind);
+				if (targetQueue.NullOrEmpty<LocalTargetInfo>())
 				{
 					return;
 				}
-				curJob.maxNumToCarry = curJob.numToBringList[0];
-				curJob.SetTarget(ind, targetQueue[0].Thing);
+				curJob.SetTarget(ind, targetQueue[0]);
 				targetQueue.RemoveAt(0);
-				curJob.numToBringList.RemoveAt(0);
+				if (!curJob.countQueue.NullOrEmpty<int>())
+				{
+					curJob.count = curJob.countQueue[0];
+					curJob.countQueue.RemoveAt(0);
+				}
+			};
+			return toil;
+		}
+
+		public static Toil ClearDespawnedNullOrForbiddenQueuedTargets(TargetIndex ind)
+		{
+			Toil toil = new Toil();
+			toil.initAction = delegate
+			{
+				Pawn actor = toil.actor;
+				Job curJob = actor.jobs.curJob;
+				List<LocalTargetInfo> targetQueue = curJob.GetTargetQueue(ind);
+				targetQueue.RemoveAll((LocalTargetInfo ta) => !ta.HasThing || !ta.Thing.Spawned || ta.Thing.IsForbidden(actor));
 			};
 			return toil;
 		}
@@ -47,7 +63,7 @@ namespace Verse.AI
 				IntVec3 c2 = interactCell + GenRadial.RadialPattern[i];
 				if (!Toils_JobTransforms.yieldedIngPlaceCells.Contains(c2))
 				{
-					Building ed = c2.GetEdifice();
+					Building ed = c2.GetEdifice(billGiver.Map);
 					if (ed == null || ed.def.passability != Traversability.Impassable || ed.def.surfaceType != SurfaceType.None)
 					{
 						yield return c2;
@@ -65,15 +81,15 @@ namespace Verse.AI
 				Job curJob = actor.jobs.curJob;
 				Thing thing = curJob.GetTarget(carryItemInd).Thing;
 				IBillGiver billGiver = curJob.GetTarget(billGiverInd).Thing as IBillGiver;
-				IntVec3 vec = IntVec3.Invalid;
+				IntVec3 c = IntVec3.Invalid;
 				foreach (IntVec3 current in Toils_JobTransforms.IngredientPlaceCellsInOrder(billGiver))
 				{
-					if (!vec.IsValid)
+					if (!c.IsValid)
 					{
-						vec = current;
+						c = current;
 					}
 					bool flag = false;
-					List<Thing> list = Find.ThingGrid.ThingsListAt(current);
+					List<Thing> list = actor.Map.thingGrid.ThingsListAt(current);
 					for (int i = 0; i < list.Count; i++)
 					{
 						if (list[i].def.category == ThingCategory.Item && (list[i].def != thing.def || list[i].stackCount == list[i].def.stackLimit))
@@ -88,7 +104,31 @@ namespace Verse.AI
 						return;
 					}
 				}
-				curJob.SetTarget(cellTargetInd, vec);
+				curJob.SetTarget(cellTargetInd, c);
+			};
+			return toil;
+		}
+
+		public static Toil MoveCurrentTargetIntoQueue(TargetIndex ind)
+		{
+			Toil toil = new Toil();
+			toil.initAction = delegate
+			{
+				Job curJob = toil.actor.CurJob;
+				LocalTargetInfo target = curJob.GetTarget(ind);
+				if (target.IsValid)
+				{
+					List<LocalTargetInfo> targetQueue = curJob.GetTargetQueue(ind);
+					if (targetQueue == null)
+					{
+						curJob.AddQueuedTarget(ind, target);
+					}
+					else
+					{
+						targetQueue.Insert(0, target);
+					}
+					curJob.SetTarget(ind, null);
+				}
 			};
 			return toil;
 		}

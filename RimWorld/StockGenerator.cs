@@ -19,15 +19,7 @@ namespace RimWorld
 
 		public TechLevel maxTechLevelBuy = TechLevel.Transcendent;
 
-		public PriceType price;
-
-		public virtual void PostLoad()
-		{
-			if (this.price == PriceType.Undefined)
-			{
-				this.price = PriceType.Normal;
-			}
-		}
+		public PriceType price = PriceType.Normal;
 
 		public virtual void ResolveReferences(TraderKindDef trader)
 		{
@@ -39,7 +31,7 @@ namespace RimWorld
 		{
 		}
 
-		public abstract IEnumerable<Thing> GenerateThings();
+		public abstract IEnumerable<Thing> GenerateThings(Map forMap);
 
 		public abstract bool HandlesThingDef(ThingDef thingDef);
 
@@ -47,17 +39,10 @@ namespace RimWorld
 		{
 			if (!this.HandlesThingDef(thingDef))
 			{
-				priceType = PriceType.Normal;
+				priceType = PriceType.Undefined;
 				return false;
 			}
-			if (action == TradeAction.PlayerBuys)
-			{
-				priceType = this.price;
-			}
-			else
-			{
-				priceType = (PriceType)(this.price - PriceType.VeryCheap);
-			}
+			priceType = this.price;
 			return true;
 		}
 

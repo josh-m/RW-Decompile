@@ -110,11 +110,11 @@ namespace RimWorld
 		{
 		}
 
-		public virtual void GenerateIntoMap()
+		public virtual void GenerateIntoMap(Map map)
 		{
 		}
 
-		public virtual void PostMapGenerate()
+		public virtual void PostMapGenerate(Map map)
 		{
 		}
 

@@ -62,7 +62,7 @@ namespace Verse.AI
 			}
 			if (CastPositionFinder.req.maxRegionsRadius > 0)
 			{
-				Region region = CastPositionFinder.casterLoc.GetRegion();
+				Region region = CastPositionFinder.casterLoc.GetRegion(CastPositionFinder.req.caster.Map);
 				if (region == null)
 				{
 					Log.Error("TryFindCastPosition requiring region traversal but root region is null.");
@@ -73,7 +73,7 @@ namespace Verse.AI
 				RegionTraverser.MarkRegionsBFS(region, null, newReq.maxRegionsRadius, CastPositionFinder.inRadiusMark);
 				if (CastPositionFinder.req.maxRangeFromLocus > 0.01f)
 				{
-					Region region2 = CastPositionFinder.req.locus.GetRegion();
+					Region region2 = CastPositionFinder.req.locus.GetRegion(CastPositionFinder.req.caster.Map);
 					if (region2 == null)
 					{
 						Log.Error("locus " + CastPositionFinder.req.locus + " has no region");
@@ -95,21 +95,21 @@ namespace Verse.AI
 					}
 				}
 			}
-			CellRect wholeMap = CellRect.WholeMap;
+			CellRect cellRect = CellRect.WholeMap(CastPositionFinder.req.caster.Map);
 			if (CastPositionFinder.req.maxRangeFromCaster > 0.01f)
 			{
 				int num = Mathf.CeilToInt(CastPositionFinder.req.maxRangeFromCaster);
 				CellRect otherRect = new CellRect(CastPositionFinder.casterLoc.x - num, CastPositionFinder.casterLoc.z - num, num * 2 + 1, num * 2 + 1);
-				wholeMap.ClipInsideRect(otherRect);
+				cellRect.ClipInsideRect(otherRect);
 			}
 			int num2 = Mathf.CeilToInt(CastPositionFinder.req.maxRangeFromTarget);
 			CellRect otherRect2 = new CellRect(CastPositionFinder.targetLoc.x - num2, CastPositionFinder.targetLoc.z - num2, num2 * 2 + 1, num2 * 2 + 1);
-			wholeMap.ClipInsideRect(otherRect2);
+			cellRect.ClipInsideRect(otherRect2);
 			if (CastPositionFinder.req.maxRangeFromLocus > 0.01f)
 			{
 				int num3 = Mathf.CeilToInt(CastPositionFinder.req.maxRangeFromLocus);
 				CellRect otherRect3 = new CellRect(CastPositionFinder.targetLoc.x - num3, CastPositionFinder.targetLoc.z - num3, num3 * 2 + 1, num3 * 2 + 1);
-				wholeMap.ClipInsideRect(otherRect3);
+				cellRect.ClipInsideRect(otherRect3);
 			}
 			CastPositionFinder.bestSpot = IntVec3.Invalid;
 			CastPositionFinder.bestSpotPref = 0.001f;
@@ -128,11 +128,11 @@ namespace Verse.AI
 			float slope = -1f / CellLine.Between(CastPositionFinder.req.target.Position, CastPositionFinder.req.caster.Position).Slope;
 			CellLine cellLine = new CellLine(CastPositionFinder.req.target.Position, slope);
 			bool flag = cellLine.CellIsAbove(CastPositionFinder.req.caster.Position);
-			CellRect.CellRectIterator iterator = wholeMap.GetIterator();
+			CellRect.CellRectIterator iterator = cellRect.GetIterator();
 			while (!iterator.Done())
 			{
 				IntVec3 current = iterator.Current;
-				if (cellLine.CellIsAbove(current) == flag && wholeMap.Contains(current))
+				if (cellLine.CellIsAbove(current) == flag && cellRect.Contains(current))
 				{
 					CastPositionFinder.EvaluateCell(current);
 				}
@@ -143,11 +143,11 @@ namespace Verse.AI
 				dest = CastPositionFinder.bestSpot;
 				return true;
 			}
-			CellRect.CellRectIterator iterator2 = wholeMap.GetIterator();
+			CellRect.CellRectIterator iterator2 = cellRect.GetIterator();
 			while (!iterator2.Done())
 			{
 				IntVec3 current2 = iterator2.Current;
-				if (cellLine.CellIsAbove(current2) != flag && wholeMap.Contains(current2))
+				if (cellLine.CellIsAbove(current2) != flag && cellRect.Contains(current2))
 				{
 					CastPositionFinder.EvaluateCell(current2);
 				}
@@ -168,7 +168,7 @@ namespace Verse.AI
 			{
 				if (DebugViewSettings.drawCastPositionSearch)
 				{
-					Find.DebugDrawer.FlashCell(c, 0f, "range target");
+					CastPositionFinder.req.caster.Map.debugDrawer.FlashCell(c, 0f, "range target");
 				}
 				return;
 			}
@@ -176,7 +176,7 @@ namespace Verse.AI
 			{
 				if (DebugViewSettings.drawCastPositionSearch)
 				{
-					Find.DebugDrawer.FlashCell(c, 0.1f, "range home");
+					CastPositionFinder.req.caster.Map.debugDrawer.FlashCell(c, 0.1f, "range home");
 				}
 				return;
 			}
@@ -187,28 +187,28 @@ namespace Verse.AI
 				{
 					if (DebugViewSettings.drawCastPositionSearch)
 					{
-						Find.DebugDrawer.FlashCell(c, 0.2f, "range caster");
+						CastPositionFinder.req.caster.Map.debugDrawer.FlashCell(c, 0.2f, "range caster");
 					}
 					return;
 				}
 			}
-			if (!c.Walkable())
+			if (!c.Walkable(CastPositionFinder.req.caster.Map))
 			{
 				return;
 			}
-			if (CastPositionFinder.req.maxRegionsRadius > 0 && c.GetRegion().mark != CastPositionFinder.inRadiusMark)
+			if (CastPositionFinder.req.maxRegionsRadius > 0 && c.GetRegion(CastPositionFinder.req.caster.Map).mark != CastPositionFinder.inRadiusMark)
 			{
 				if (DebugViewSettings.drawCastPositionSearch)
 				{
-					Find.DebugDrawer.FlashCell(c, 0.64f, "reg radius");
+					CastPositionFinder.req.caster.Map.debugDrawer.FlashCell(c, 0.64f, "reg radius");
 				}
 				return;
 			}
-			if (!CastPositionFinder.req.caster.Position.CanReach(c, PathEndMode.OnCell, TraverseParms.For(CastPositionFinder.req.caster, Danger.Some, TraverseMode.ByPawn, false)))
+			if (!CastPositionFinder.req.caster.Map.reachability.CanReach(CastPositionFinder.req.caster.Position, c, PathEndMode.OnCell, TraverseParms.For(CastPositionFinder.req.caster, Danger.Some, TraverseMode.ByPawn, false)))
 			{
 				if (DebugViewSettings.drawCastPositionSearch)
 				{
-					Find.DebugDrawer.FlashCell(c, 0.4f, "can't reach");
+					CastPositionFinder.req.caster.Map.debugDrawer.FlashCell(c, 0.4f, "can't reach");
 				}
 				return;
 			}
@@ -220,7 +220,7 @@ namespace Verse.AI
 			}
 			if (DebugViewSettings.drawCastPositionSearch)
 			{
-				Find.DebugDrawer.FlashCell(c, num / 4f, num.ToString("F3"));
+				CastPositionFinder.req.caster.Map.debugDrawer.FlashCell(c, num / 4f, num.ToString("F3"));
 			}
 			if (num < CastPositionFinder.bestSpotPref)
 			{
@@ -230,15 +230,15 @@ namespace Verse.AI
 			{
 				if (DebugViewSettings.drawCastPositionSearch)
 				{
-					Find.DebugDrawer.FlashCell(c, 0.6f, "can't hit");
+					CastPositionFinder.req.caster.Map.debugDrawer.FlashCell(c, 0.6f, "can't hit");
 				}
 				return;
 			}
-			if (Find.PawnDestinationManager.DestinationIsReserved(c, CastPositionFinder.req.caster))
+			if (CastPositionFinder.req.caster.Map.pawnDestinationManager.DestinationIsReserved(c, CastPositionFinder.req.caster))
 			{
 				if (DebugViewSettings.drawCastPositionSearch)
 				{
-					Find.DebugDrawer.FlashCell(c, num * 0.9f, "resvd");
+					CastPositionFinder.req.caster.Map.debugDrawer.FlashCell(c, num * 0.9f, "resvd");
 				}
 				return;
 			}
@@ -249,7 +249,7 @@ namespace Verse.AI
 		private static float CastPositionPreference(IntVec3 c)
 		{
 			bool flag = true;
-			List<Thing> list = Find.ThingGrid.ThingsListAtFast(c);
+			List<Thing> list = CastPositionFinder.req.caster.Map.thingGrid.ThingsListAtFast(c);
 			for (int i = 0; i < list.Count; i++)
 			{
 				Thing thing = list[i];
@@ -266,11 +266,11 @@ namespace Verse.AI
 			float num = 0.3f;
 			if (CastPositionFinder.req.caster.kindDef.aiAvoidCover)
 			{
-				num += 8f - CoverUtility.TotalSurroundingCoverScore(c);
+				num += 8f - CoverUtility.TotalSurroundingCoverScore(c, CastPositionFinder.req.caster.Map);
 			}
 			if (CastPositionFinder.req.wantCoverFromTarget)
 			{
-				num += CoverUtility.CalculateOverallBlockChance(c, CastPositionFinder.req.target.Position);
+				num += CoverUtility.CalculateOverallBlockChance(c, CastPositionFinder.req.target.Position, CastPositionFinder.req.caster.Map);
 			}
 			float num2 = (CastPositionFinder.req.caster.Position - c).LengthHorizontal;
 			if (CastPositionFinder.rangeFromTarget > 100f)

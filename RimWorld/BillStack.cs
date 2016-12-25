@@ -112,11 +112,11 @@ namespace RimWorld
 			}
 		}
 
-		public void RemoveInvalidBills()
+		public void RemoveIncompletableBills()
 		{
 			for (int i = this.bills.Count - 1; i >= 0; i--)
 			{
-				if (this.bills[i].ShouldBeRemovedBecauseInvalid)
+				if (!this.bills[i].CompletableEver)
 				{
 					this.bills.Remove(this.bills[i]);
 				}
@@ -140,7 +140,7 @@ namespace RimWorld
 			}
 		}
 
-		public Bill DrawListing(Rect rect, Func<List<FloatMenuOption>> recipeOptionsMaker, ref Vector2 scrollPosition, ref float viewHeight)
+		public Bill DoListing(Rect rect, Func<List<FloatMenuOption>> recipeOptionsMaker, ref Vector2 scrollPosition, ref float viewHeight)
 		{
 			Bill result = null;
 			GUI.BeginGroup(rect);
@@ -163,7 +163,7 @@ namespace RimWorld
 			for (int i = 0; i < this.Count; i++)
 			{
 				Bill bill = this.bills[i];
-				Rect rect3 = bill.DrawInterface(0f, num, viewRect.width, i);
+				Rect rect3 = bill.DoInterface(0f, num, viewRect.width, i);
 				if (!bill.DeletedOrDereferenced && Mouse.IsOver(rect3))
 				{
 					result = bill;

@@ -6,7 +6,7 @@ using Verse;
 
 namespace RimWorld
 {
-	public class Recipe_InstallArtificialBodyPart : Recipe_MedicalOperation
+	public class Recipe_InstallArtificialBodyPart : Recipe_Surgery
 	{
 		[DebuggerHidden]
 		public override IEnumerable<BodyPartRecord> GetPartsToApplyOn(Pawn pawn, RecipeDef recipe)
@@ -25,7 +25,7 @@ namespace RimWorld
 						select x;
 						if (diffs.Count<Hediff>() != 1 || diffs.First<Hediff>().def != recipe.addsHediff)
 						{
-							if (record.parent == null || pawn.health.hediffSet.GetNotMissingParts(null, null).Contains(record.parent))
+							if (record.parent == null || pawn.health.hediffSet.GetNotMissingParts(BodyPartHeight.Undefined, BodyPartDepth.Undefined).Contains(record.parent))
 							{
 								if (!pawn.health.hediffSet.PartOrAnyAncestorHasDirectlyAddedParts(record) || pawn.health.hediffSet.HasDirectlyAddedPartFor(record))
 								{
@@ -42,7 +42,7 @@ namespace RimWorld
 		{
 			if (billDoer != null)
 			{
-				if (base.CheckSurgeryFail(billDoer, pawn, ingredients))
+				if (base.CheckSurgeryFail(billDoer, pawn, ingredients, part))
 				{
 					return;
 				}
@@ -51,7 +51,7 @@ namespace RimWorld
 					billDoer,
 					pawn
 				});
-				MedicalRecipesUtility.RestorePartAndSpawnAllPreviousParts(pawn, part, billDoer.Position);
+				MedicalRecipesUtility.RestorePartAndSpawnAllPreviousParts(pawn, part, billDoer.Position, billDoer.Map);
 			}
 			pawn.health.AddHediff(this.recipe.addsHediff, part, null);
 		}

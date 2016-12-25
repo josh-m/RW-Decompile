@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace Verse.AI
 {
-	public static class PathFinder
+	public class PathFinder
 	{
 		internal struct PathFinderNodeFast
 		{
@@ -69,79 +69,81 @@ namespace Verse.AI
 
 		private const int HeuristicStrengthAnimal = 30;
 
-		private static FastPriorityQueue<int> openList = null;
+		private Map map;
 
-		private static PathFinder.PathFinderNodeFast[] calcGrid = null;
+		private FastPriorityQueue<int> openList;
 
-		private static ushort statusOpenValue = 1;
+		private PathFinder.PathFinderNodeFast[] calcGrid;
 
-		private static ushort statusClosedValue = 2;
+		private ushort statusOpenValue = 1;
 
-		private static int mapSizePowTwo;
+		private ushort statusClosedValue = 2;
 
-		private static ushort gridSizeX = 0;
+		private int mapSizePowTwo;
 
-		private static ushort gridSizeZ = 0;
+		private ushort gridSizeX;
 
-		private static ushort gridSizeXMinus1 = 0;
+		private ushort gridSizeZ;
 
-		private static ushort gridSizeZLog2 = 0;
+		private ushort gridSizeXMinus1;
 
-		private static int mapSizeX;
+		private ushort gridSizeZLog2;
 
-		private static int mapSizeZ;
+		private int mapSizeX;
 
-		private static PathGrid pathGrid;
+		private int mapSizeZ;
 
-		private static int[] pathGridDirect;
+		private PathGrid pathGrid;
 
-		private static Building[] edificeGrid;
+		private int[] pathGridDirect;
 
-		private static PawnPath newPath = null;
+		private Building[] edificeGrid;
 
-		private static int moveTicksCardinal;
+		private PawnPath newPath;
 
-		private static int moveTicksDiagonal;
+		private int moveTicksCardinal;
 
-		private static int curIndex = 0;
+		private int moveTicksDiagonal;
 
-		private static ushort curX = 0;
+		private int curIndex;
 
-		private static ushort curZ = 0;
+		private ushort curX;
 
-		private static IntVec3 curIntVec3 = default(IntVec3);
+		private ushort curZ;
 
-		private static int neighIndex = 0;
+		private IntVec3 curIntVec3 = default(IntVec3);
 
-		private static ushort neighX = 0;
+		private int neighIndex;
 
-		private static ushort neighZ = 0;
+		private ushort neighX;
 
-		private static int neighCostThroughCur = 0;
+		private ushort neighZ;
 
-		private static int neighCost = 0;
+		private int neighCostThroughCur;
 
-		private static int h = 0;
+		private int neighCost;
 
-		private static int closedCellCount = 0;
+		private int h;
 
-		private static int destinationIndex = 0;
+		private int closedCellCount;
 
-		private static int destinationX = -1;
+		private int destinationIndex;
 
-		private static int destinationZ = -1;
+		private int destinationX = -1;
 
-		private static CellRect destinationRect;
+		private int destinationZ = -1;
 
-		private static bool destinationIsOneCell;
+		private CellRect destinationRect;
 
-		private static int heuristicStrength;
+		private bool destinationIsOneCell;
 
-		private static bool debug_pathFailMessaged = false;
+		private int heuristicStrength;
 
-		private static int debug_totalOpenListCount = 0;
+		private bool debug_pathFailMessaged;
 
-		private static int debug_openCellsPopped = 0;
+		private int debug_totalOpenListCount;
+
+		private int debug_openCellsPopped;
 
 		private static readonly sbyte[] Directions = new sbyte[]
 		{
@@ -169,20 +171,21 @@ namespace Verse.AI
 			new CurvePoint(130f, 35f)
 		};
 
-		public static void Reinit()
+		public PathFinder(Map map)
 		{
-			PathFinder.mapSizePowTwo = Find.Map.info.PowerOfTwoOverMapSize;
-			PathFinder.gridSizeX = (ushort)PathFinder.mapSizePowTwo;
-			PathFinder.gridSizeZ = (ushort)PathFinder.mapSizePowTwo;
-			PathFinder.gridSizeXMinus1 = PathFinder.gridSizeX - 1;
-			PathFinder.gridSizeZLog2 = (ushort)Math.Log((double)PathFinder.gridSizeZ, 2.0);
-			PathFinder.mapSizeX = Find.Map.Size.x;
-			PathFinder.mapSizeZ = Find.Map.Size.z;
-			PathFinder.calcGrid = new PathFinder.PathFinderNodeFast[(int)(PathFinder.gridSizeX * PathFinder.gridSizeZ)];
-			PathFinder.openList = new FastPriorityQueue<int>(new PathFinder.PathFinderNodeFastCostComparer(PathFinder.calcGrid));
+			this.map = map;
+			this.mapSizePowTwo = map.info.PowerOfTwoOverMapSize;
+			this.gridSizeX = (ushort)this.mapSizePowTwo;
+			this.gridSizeZ = (ushort)this.mapSizePowTwo;
+			this.gridSizeXMinus1 = this.gridSizeX - 1;
+			this.gridSizeZLog2 = (ushort)Math.Log((double)this.gridSizeZ, 2.0);
+			this.mapSizeX = map.Size.x;
+			this.mapSizeZ = map.Size.z;
+			this.calcGrid = new PathFinder.PathFinderNodeFast[(int)(this.gridSizeX * this.gridSizeZ)];
+			this.openList = new FastPriorityQueue<int>(new PathFinder.PathFinderNodeFastCostComparer(this.calcGrid));
 		}
 
-		public static PawnPath FindPath(IntVec3 start, TargetInfo dest, Pawn pawn, PathEndMode peMode = PathEndMode.OnCell)
+		public PawnPath FindPath(IntVec3 start, LocalTargetInfo dest, Pawn pawn, PathEndMode peMode = PathEndMode.OnCell)
 		{
 			bool flag = false;
 			if (pawn != null && pawn.CurJob != null && pawn.CurJob.canBash)
@@ -190,10 +193,10 @@ namespace Verse.AI
 				flag = true;
 			}
 			bool canBash = flag;
-			return PathFinder.FindPath(start, dest, TraverseParms.For(pawn, Danger.Deadly, TraverseMode.ByPawn, canBash), peMode);
+			return this.FindPath(start, dest, TraverseParms.For(pawn, Danger.Deadly, TraverseMode.ByPawn, canBash), peMode);
 		}
 
-		public static PawnPath FindPath(IntVec3 start, TargetInfo dest, TraverseParms traverseParms, PathEndMode peMode = PathEndMode.OnCell)
+		public PawnPath FindPath(IntVec3 start, LocalTargetInfo dest, TraverseParms traverseParms, PathEndMode peMode = PathEndMode.OnCell)
 		{
 			if (DebugSettings.pathThroughWalls)
 			{
@@ -202,6 +205,19 @@ namespace Verse.AI
 			Pawn pawn = traverseParms.pawn;
 			bool flag = traverseParms.mode == TraverseMode.PassAnything;
 			bool flag2 = !flag;
+			if (pawn != null && pawn.Map != this.map)
+			{
+				Log.Error(string.Concat(new object[]
+				{
+					"Tried to FindPath for pawn which is spawned in another map. His map PathFinder should have been used, not this one. pawn=",
+					pawn,
+					" pawn.Map=",
+					pawn.Map,
+					" map=",
+					this.map
+				}));
+				return PawnPath.NotFound;
+			}
 			if (!start.IsValid)
 			{
 				Log.Error(string.Concat(new object[]
@@ -233,13 +249,17 @@ namespace Verse.AI
 						return PawnPath.NotFound;
 					}
 				}
-				else if (!start.CanReach(dest, peMode, traverseParms))
+				else if (!this.map.reachability.CanReach(start, dest, peMode, traverseParms))
 				{
 					return PawnPath.NotFound;
 				}
 			}
+			else if (dest.HasThing && dest.Thing.Map != this.map)
+			{
+				return PawnPath.NotFound;
+			}
 			ByteGrid byteGrid = (pawn == null) ? null : pawn.GetAvoidGrid();
-			PathFinder.PfProfilerBeginSample(string.Concat(new object[]
+			this.PfProfilerBeginSample(string.Concat(new object[]
 			{
 				"FindPath for ",
 				pawn,
@@ -249,66 +269,68 @@ namespace Verse.AI
 				dest,
 				(!dest.HasThing) ? string.Empty : (" at " + dest.Cell)
 			}));
-			PathFinder.destinationX = dest.Cell.x;
-			PathFinder.destinationZ = dest.Cell.z;
-			PathFinder.curIndex = CellIndices.CellToIndex(start);
-			PathFinder.destinationIndex = CellIndices.CellToIndex(dest.Cell);
+			this.destinationX = dest.Cell.x;
+			this.destinationZ = dest.Cell.z;
+			CellIndices cellIndices = this.map.cellIndices;
+			this.curIndex = cellIndices.CellToIndex(start);
+			this.destinationIndex = cellIndices.CellToIndex(dest.Cell);
 			if (!dest.HasThing || peMode == PathEndMode.OnCell)
 			{
-				PathFinder.destinationRect = CellRect.SingleCell(dest.Cell);
+				this.destinationRect = CellRect.SingleCell(dest.Cell);
 			}
 			else
 			{
-				PathFinder.destinationRect = dest.Thing.OccupiedRect();
+				this.destinationRect = dest.Thing.OccupiedRect();
 			}
 			if (peMode == PathEndMode.Touch)
 			{
-				PathFinder.destinationRect = PathFinder.destinationRect.ExpandedBy(1);
+				this.destinationRect = this.destinationRect.ExpandedBy(1);
 			}
-			PathFinder.destinationIsOneCell = (PathFinder.destinationRect.Width == 1 && PathFinder.destinationRect.Height == 1);
-			PathFinder.pathGrid = Find.PathGrid;
-			PathFinder.pathGridDirect = Find.PathGrid.pathGrid;
-			PathFinder.edificeGrid = Find.EdificeGrid.InnerArray;
-			PathFinder.statusOpenValue += 2;
-			PathFinder.statusClosedValue += 2;
-			if (PathFinder.statusClosedValue >= 65435)
+			this.destinationIsOneCell = (this.destinationRect.Width == 1 && this.destinationRect.Height == 1);
+			this.pathGrid = this.map.pathGrid;
+			this.pathGridDirect = this.map.pathGrid.pathGrid;
+			EdificeGrid edificeGrid = this.map.edificeGrid;
+			this.edificeGrid = edificeGrid.InnerArray;
+			this.statusOpenValue += 2;
+			this.statusClosedValue += 2;
+			if (this.statusClosedValue >= 65435)
 			{
-				PathFinder.ResetStatuses();
+				this.ResetStatuses();
 			}
 			if (pawn != null && pawn.RaceProps.Animal)
 			{
-				PathFinder.heuristicStrength = 30;
+				this.heuristicStrength = 30;
 			}
 			else
 			{
 				float lengthHorizontal = (start - dest.Cell).LengthHorizontal;
-				PathFinder.heuristicStrength = Mathf.RoundToInt(PathFinder.HeuristicStrengthHuman_DistanceCurve.Evaluate(lengthHorizontal));
+				this.heuristicStrength = Mathf.RoundToInt(PathFinder.HeuristicStrengthHuman_DistanceCurve.Evaluate(lengthHorizontal));
 			}
-			PathFinder.closedCellCount = 0;
-			PathFinder.openList.Clear();
-			PathFinder.debug_pathFailMessaged = false;
-			PathFinder.debug_totalOpenListCount = 0;
-			PathFinder.debug_openCellsPopped = 0;
+			this.closedCellCount = 0;
+			this.openList.Clear();
+			this.debug_pathFailMessaged = false;
+			this.debug_totalOpenListCount = 0;
+			this.debug_openCellsPopped = 0;
 			if (pawn != null)
 			{
-				PathFinder.moveTicksCardinal = pawn.TicksPerMoveCardinal;
-				PathFinder.moveTicksDiagonal = pawn.TicksPerMoveDiagonal;
+				this.moveTicksCardinal = pawn.TicksPerMoveCardinal;
+				this.moveTicksDiagonal = pawn.TicksPerMoveDiagonal;
 			}
 			else
 			{
-				PathFinder.moveTicksCardinal = 13;
-				PathFinder.moveTicksDiagonal = 18;
+				this.moveTicksCardinal = 13;
+				this.moveTicksDiagonal = 18;
 			}
-			PathFinder.calcGrid[PathFinder.curIndex].knownCost = 0;
-			PathFinder.calcGrid[PathFinder.curIndex].totalCostEstimate = 0;
-			PathFinder.calcGrid[PathFinder.curIndex].parentX = (ushort)start.x;
-			PathFinder.calcGrid[PathFinder.curIndex].parentZ = (ushort)start.z;
-			PathFinder.calcGrid[PathFinder.curIndex].status = PathFinder.statusOpenValue;
-			PathFinder.openList.Push(PathFinder.curIndex);
+			this.calcGrid[this.curIndex].knownCost = 0;
+			this.calcGrid[this.curIndex].totalCostEstimate = 0;
+			this.calcGrid[this.curIndex].parentX = (ushort)start.x;
+			this.calcGrid[this.curIndex].parentZ = (ushort)start.z;
+			this.calcGrid[this.curIndex].status = this.statusOpenValue;
+			this.openList.Push(this.curIndex);
 			Area area = null;
 			if (pawn != null && pawn.playerSettings != null && !pawn.Drafted)
 			{
-				area = pawn.playerSettings.AreaRestriction;
+				area = pawn.playerSettings.AreaRestrictionInPawnCurrentMap;
 			}
 			bool flag3 = false;
 			if (pawn != null)
@@ -317,157 +339,158 @@ namespace Verse.AI
 			}
 			while (true)
 			{
-				PathFinder.PfProfilerBeginSample("Open cell");
-				if (PathFinder.openList.Count <= 0)
+				this.PfProfilerBeginSample("Open cell");
+				if (this.openList.Count <= 0)
 				{
 					break;
 				}
-				PathFinder.debug_totalOpenListCount += PathFinder.openList.Count;
-				PathFinder.debug_openCellsPopped++;
-				PathFinder.curIndex = PathFinder.openList.Pop();
-				if (PathFinder.calcGrid[PathFinder.curIndex].status == PathFinder.statusClosedValue)
+				this.debug_totalOpenListCount += this.openList.Count;
+				this.debug_openCellsPopped++;
+				this.curIndex = this.openList.Pop();
+				if (this.calcGrid[this.curIndex].status == this.statusClosedValue)
 				{
-					PathFinder.PfProfilerEndSample();
+					this.PfProfilerEndSample();
 				}
 				else
 				{
-					PathFinder.curIntVec3 = CellIndices.IndexToCell(PathFinder.curIndex);
-					PathFinder.curX = (ushort)PathFinder.curIntVec3.x;
-					PathFinder.curZ = (ushort)PathFinder.curIntVec3.z;
+					this.curIntVec3 = cellIndices.IndexToCell(this.curIndex);
+					this.curX = (ushort)this.curIntVec3.x;
+					this.curZ = (ushort)this.curIntVec3.z;
 					if (DebugViewSettings.drawPaths)
 					{
-						PathFinder.DebugFlash(PathFinder.curIntVec3, (float)PathFinder.calcGrid[PathFinder.curIndex].knownCost / 1500f, PathFinder.calcGrid[PathFinder.curIndex].knownCost.ToString());
+						this.DebugFlash(this.curIntVec3, (float)this.calcGrid[this.curIndex].knownCost / 1500f, this.calcGrid[this.curIndex].knownCost.ToString());
 					}
-					if (PathFinder.destinationIsOneCell)
+					if (this.destinationIsOneCell)
 					{
-						if (PathFinder.curIndex == PathFinder.destinationIndex)
+						if (this.curIndex == this.destinationIndex)
 						{
-							goto Block_30;
+							goto Block_34;
 						}
 					}
-					else if (PathFinder.destinationRect.Contains(PathFinder.curIntVec3))
+					else if (this.destinationRect.Contains(this.curIntVec3))
 					{
-						goto Block_31;
+						goto Block_35;
 					}
-					if (PathFinder.closedCellCount > 160000)
+					if (this.closedCellCount > 160000)
 					{
-						goto Block_32;
+						goto Block_36;
 					}
-					PathFinder.PfProfilerEndSample();
-					PathFinder.PfProfilerBeginSample("Neighbor consideration");
+					this.PfProfilerEndSample();
+					this.PfProfilerBeginSample("Neighbor consideration");
 					for (int i = 0; i < 8; i++)
 					{
-						PathFinder.neighX = (ushort)((int)PathFinder.curX + (int)PathFinder.Directions[i]);
-						PathFinder.neighZ = (ushort)((int)PathFinder.curZ + (int)PathFinder.Directions[i + 8]);
-						IntVec3 intVec = new IntVec3((int)PathFinder.neighX, 0, (int)PathFinder.neighZ);
-						PathFinder.neighIndex = CellIndices.CellToIndex((int)PathFinder.neighX, (int)PathFinder.neighZ);
-						if ((int)PathFinder.neighX >= PathFinder.mapSizeX || (int)PathFinder.neighZ >= PathFinder.mapSizeZ)
+						this.neighX = (ushort)((int)this.curX + (int)PathFinder.Directions[i]);
+						this.neighZ = (ushort)((int)this.curZ + (int)PathFinder.Directions[i + 8]);
+						IntVec3 intVec = new IntVec3((int)this.neighX, 0, (int)this.neighZ);
+						this.neighIndex = cellIndices.CellToIndex((int)this.neighX, (int)this.neighZ);
+						if ((int)this.neighX >= this.mapSizeX || (int)this.neighZ >= this.mapSizeZ)
 						{
-							PathFinder.DebugFlash(intVec, 0.75f, "oob");
+							this.DebugFlash(intVec, 0.75f, "oob");
 						}
-						else if (PathFinder.calcGrid[PathFinder.neighIndex].status != PathFinder.statusClosedValue)
+						else if (this.calcGrid[this.neighIndex].status != this.statusClosedValue)
 						{
 							int num = 0;
 							bool flag4 = false;
-							if (!PathFinder.pathGrid.WalkableFast(intVec))
+							if (!this.pathGrid.WalkableFast(intVec))
 							{
 								if (!flag)
 								{
-									PathFinder.DebugFlash(intVec, 0.22f, "walk");
-									goto IL_DF1;
+									this.DebugFlash(intVec, 0.22f, "walk");
+									goto IL_FB2;
 								}
 								flag4 = true;
 								num += 60;
-								Thing edifice = intVec.GetEdifice();
-								if (edifice != null)
+								Building building = edificeGrid[intVec];
+								if (building == null)
 								{
-									if (!edifice.def.useHitPoints)
-									{
-										goto IL_DF1;
-									}
-									num += (int)((float)edifice.HitPoints * 0.1f);
+									goto IL_FB2;
 								}
+								if (!building.def.useHitPoints || !building.def.destroyable)
+								{
+									goto IL_FB2;
+								}
+								num += (int)((float)building.HitPoints * 0.1f);
 							}
 							if (i > 3)
 							{
 								switch (i)
 								{
 								case 4:
-									if (!PathFinder.pathGrid.WalkableFast((int)PathFinder.curX, (int)(PathFinder.curZ - 1)))
+									if (!this.pathGrid.WalkableFast((int)this.curX, (int)(this.curZ - 1)))
 									{
 										if (!flag || !flag2)
 										{
-											PathFinder.DebugFlash(new IntVec3((int)PathFinder.curX, 0, (int)(PathFinder.curZ - 1)), 0.9f, "corn");
-											goto IL_DF1;
+											this.DebugFlash(new IntVec3((int)this.curX, 0, (int)(this.curZ - 1)), 0.9f, "corn");
+											goto IL_FB2;
 										}
 										num += 60;
 									}
-									if (!PathFinder.pathGrid.WalkableFast((int)(PathFinder.curX + 1), (int)PathFinder.curZ))
+									if (!this.pathGrid.WalkableFast((int)(this.curX + 1), (int)this.curZ))
 									{
 										if (!flag || !flag2)
 										{
-											PathFinder.DebugFlash(new IntVec3((int)(PathFinder.curX + 1), 0, (int)PathFinder.curZ), 0.9f, "corn");
-											goto IL_DF1;
+											this.DebugFlash(new IntVec3((int)(this.curX + 1), 0, (int)this.curZ), 0.9f, "corn");
+											goto IL_FB2;
 										}
 										num += 60;
 									}
 									break;
 								case 5:
-									if (!PathFinder.pathGrid.WalkableFast((int)PathFinder.curX, (int)(PathFinder.curZ + 1)))
+									if (!this.pathGrid.WalkableFast((int)this.curX, (int)(this.curZ + 1)))
 									{
 										if (!flag || !flag2)
 										{
-											PathFinder.DebugFlash(new IntVec3((int)PathFinder.curX, 0, (int)(PathFinder.curZ + 1)), 0.9f, "corn");
-											goto IL_DF1;
+											this.DebugFlash(new IntVec3((int)this.curX, 0, (int)(this.curZ + 1)), 0.9f, "corn");
+											goto IL_FB2;
 										}
 										num += 60;
 									}
-									if (!PathFinder.pathGrid.WalkableFast((int)(PathFinder.curX + 1), (int)PathFinder.curZ))
+									if (!this.pathGrid.WalkableFast((int)(this.curX + 1), (int)this.curZ))
 									{
 										if (!flag || !flag2)
 										{
-											PathFinder.DebugFlash(new IntVec3((int)(PathFinder.curX + 1), 0, (int)PathFinder.curZ), 0.9f, "corn");
-											goto IL_DF1;
+											this.DebugFlash(new IntVec3((int)(this.curX + 1), 0, (int)this.curZ), 0.9f, "corn");
+											goto IL_FB2;
 										}
 										num += 60;
 									}
 									break;
 								case 6:
-									if (!PathFinder.pathGrid.WalkableFast((int)PathFinder.curX, (int)(PathFinder.curZ + 1)))
+									if (!this.pathGrid.WalkableFast((int)this.curX, (int)(this.curZ + 1)))
 									{
 										if (!flag || !flag2)
 										{
-											PathFinder.DebugFlash(new IntVec3((int)PathFinder.curX, 0, (int)(PathFinder.curZ + 1)), 0.9f, "corn");
-											goto IL_DF1;
+											this.DebugFlash(new IntVec3((int)this.curX, 0, (int)(this.curZ + 1)), 0.9f, "corn");
+											goto IL_FB2;
 										}
 										num += 60;
 									}
-									if (!PathFinder.pathGrid.WalkableFast((int)(PathFinder.curX - 1), (int)PathFinder.curZ))
+									if (!this.pathGrid.WalkableFast((int)(this.curX - 1), (int)this.curZ))
 									{
 										if (!flag || !flag2)
 										{
-											PathFinder.DebugFlash(new IntVec3((int)(PathFinder.curX - 1), 0, (int)PathFinder.curZ), 0.9f, "corn");
-											goto IL_DF1;
+											this.DebugFlash(new IntVec3((int)(this.curX - 1), 0, (int)this.curZ), 0.9f, "corn");
+											goto IL_FB2;
 										}
 										num += 60;
 									}
 									break;
 								case 7:
-									if (!PathFinder.pathGrid.WalkableFast((int)PathFinder.curX, (int)(PathFinder.curZ - 1)))
+									if (!this.pathGrid.WalkableFast((int)this.curX, (int)(this.curZ - 1)))
 									{
 										if (!flag || !flag2)
 										{
-											PathFinder.DebugFlash(new IntVec3((int)PathFinder.curX, 0, (int)(PathFinder.curZ - 1)), 0.9f, "corn");
-											goto IL_DF1;
+											this.DebugFlash(new IntVec3((int)this.curX, 0, (int)(this.curZ - 1)), 0.9f, "corn");
+											goto IL_FB2;
 										}
 										num += 60;
 									}
-									if (!PathFinder.pathGrid.WalkableFast((int)(PathFinder.curX - 1), (int)PathFinder.curZ))
+									if (!this.pathGrid.WalkableFast((int)(this.curX - 1), (int)this.curZ))
 									{
 										if (!flag || !flag2)
 										{
-											PathFinder.DebugFlash(new IntVec3((int)(PathFinder.curX - 1), 0, (int)PathFinder.curZ), 0.9f, "corn");
-											goto IL_DF1;
+											this.DebugFlash(new IntVec3((int)(this.curX - 1), 0, (int)this.curZ), 0.9f, "corn");
+											goto IL_FB2;
 										}
 										num += 60;
 									}
@@ -476,34 +499,34 @@ namespace Verse.AI
 							}
 							if (i > 3)
 							{
-								PathFinder.neighCost = PathFinder.moveTicksDiagonal;
+								this.neighCost = this.moveTicksDiagonal;
 							}
 							else
 							{
-								PathFinder.neighCost = PathFinder.moveTicksCardinal;
+								this.neighCost = this.moveTicksCardinal;
 							}
-							PathFinder.neighCost += num;
+							this.neighCost += num;
 							if (!flag4)
 							{
-								PathFinder.neighCost += PathFinder.pathGridDirect[PathFinder.neighIndex];
+								this.neighCost += this.pathGridDirect[this.neighIndex];
 							}
 							if (byteGrid != null)
 							{
-								PathFinder.neighCost += (int)(byteGrid[PathFinder.neighIndex] * 8);
+								this.neighCost += (int)(byteGrid[this.neighIndex] * 8);
 							}
 							if (area != null && !area[intVec])
 							{
-								PathFinder.neighCost += 600;
+								this.neighCost += 600;
 							}
 							if (flag3 && PawnUtility.AnyPawnBlockingPathAt(intVec, pawn, false, false))
 							{
-								PathFinder.neighCost += 800;
+								this.neighCost += 800;
 							}
-							Building building = PathFinder.edificeGrid[CellIndices.CellToIndex((int)PathFinder.neighX, (int)PathFinder.neighZ)];
-							if (building != null)
+							Building building2 = this.edificeGrid[cellIndices.CellToIndex((int)this.neighX, (int)this.neighZ)];
+							if (building2 != null)
 							{
-								PathFinder.PfProfilerBeginSample("Edifices");
-								Building_Door building_Door = building as Building_Door;
+								this.PfProfilerBeginSample("Edifices");
+								Building_Door building_Door = building2 as Building_Door;
 								if (building_Door != null)
 								{
 									switch (traverseParms.mode)
@@ -513,16 +536,16 @@ namespace Verse.AI
 										{
 											if (DebugViewSettings.drawPaths)
 											{
-												PathFinder.DebugFlash(building.Position, 0.77f, "forbid");
+												this.DebugFlash(building2.Position, 0.77f, "forbid");
 											}
-											PathFinder.PfProfilerEndSample();
-											goto IL_DF1;
+											this.PfProfilerEndSample();
+											goto IL_FB2;
 										}
 										if (!building_Door.FreePassage)
 										{
 											if (building_Door.PawnCanOpen(pawn))
 											{
-												PathFinder.neighCost += building_Door.TicksToOpenNow;
+												this.neighCost += building_Door.TicksToOpenNow;
 											}
 											else
 											{
@@ -530,54 +553,54 @@ namespace Verse.AI
 												{
 													if (DebugViewSettings.drawPaths)
 													{
-														PathFinder.DebugFlash(building.Position, 0.34f, "cant pass");
+														this.DebugFlash(building2.Position, 0.34f, "cant pass");
 													}
-													PathFinder.PfProfilerEndSample();
-													goto IL_DF1;
+													this.PfProfilerEndSample();
+													goto IL_FB2;
 												}
-												PathFinder.neighCost += 300;
+												this.neighCost += 300;
 											}
 										}
 										break;
 									case TraverseMode.NoPassClosedDoors:
 										if (!building_Door.FreePassage)
 										{
-											PathFinder.PfProfilerEndSample();
-											goto IL_DF1;
+											this.PfProfilerEndSample();
+											goto IL_FB2;
 										}
 										break;
 									}
 								}
 								else if (pawn != null)
 								{
-									PathFinder.neighCost += (int)building.PathFindCostFor(pawn);
+									this.neighCost += (int)building2.PathFindCostFor(pawn);
 								}
-								PathFinder.PfProfilerEndSample();
+								this.PfProfilerEndSample();
 							}
-							PathFinder.neighCostThroughCur = PathFinder.neighCost + PathFinder.calcGrid[PathFinder.curIndex].knownCost;
-							if ((PathFinder.calcGrid[PathFinder.neighIndex].status != PathFinder.statusClosedValue && PathFinder.calcGrid[PathFinder.neighIndex].status != PathFinder.statusOpenValue) || PathFinder.calcGrid[PathFinder.neighIndex].knownCost > PathFinder.neighCostThroughCur)
+							this.neighCostThroughCur = this.neighCost + this.calcGrid[this.curIndex].knownCost;
+							if ((this.calcGrid[this.neighIndex].status != this.statusClosedValue && this.calcGrid[this.neighIndex].status != this.statusOpenValue) || this.calcGrid[this.neighIndex].knownCost > this.neighCostThroughCur)
 							{
-								int status = (int)PathFinder.calcGrid[PathFinder.neighIndex].status;
-								PathFinder.calcGrid[PathFinder.neighIndex].parentX = PathFinder.curX;
-								PathFinder.calcGrid[PathFinder.neighIndex].parentZ = PathFinder.curZ;
-								PathFinder.calcGrid[PathFinder.neighIndex].knownCost = PathFinder.neighCostThroughCur;
-								PathFinder.calcGrid[PathFinder.neighIndex].status = PathFinder.statusOpenValue;
-								PathFinder.h = PathFinder.heuristicStrength * (Mathf.Abs((int)PathFinder.neighX - PathFinder.destinationX) + Mathf.Abs((int)PathFinder.neighZ - PathFinder.destinationZ));
-								PathFinder.calcGrid[PathFinder.neighIndex].totalCostEstimate = PathFinder.neighCostThroughCur + PathFinder.h;
-								if (status != (int)PathFinder.statusOpenValue)
+								int status = (int)this.calcGrid[this.neighIndex].status;
+								this.calcGrid[this.neighIndex].parentX = this.curX;
+								this.calcGrid[this.neighIndex].parentZ = this.curZ;
+								this.calcGrid[this.neighIndex].knownCost = this.neighCostThroughCur;
+								this.calcGrid[this.neighIndex].status = this.statusOpenValue;
+								this.h = this.heuristicStrength * (Mathf.Abs((int)this.neighX - this.destinationX) + Mathf.Abs((int)this.neighZ - this.destinationZ));
+								this.calcGrid[this.neighIndex].totalCostEstimate = this.neighCostThroughCur + this.h;
+								if (status != (int)this.statusOpenValue)
 								{
-									PathFinder.openList.Push(PathFinder.neighIndex);
+									this.openList.Push(this.neighIndex);
 								}
 							}
 						}
-						IL_DF1:;
+						IL_FB2:;
 					}
-					PathFinder.PfProfilerEndSample();
-					PathFinder.closedCellCount++;
-					PathFinder.calcGrid[PathFinder.curIndex].status = PathFinder.statusClosedValue;
+					this.PfProfilerEndSample();
+					this.closedCellCount++;
+					this.calcGrid[this.curIndex].status = this.statusClosedValue;
 				}
 			}
-			if (!PathFinder.debug_pathFailMessaged)
+			if (!this.debug_pathFailMessaged)
 			{
 				string text = (pawn == null || pawn.CurJob == null) ? "null" : pawn.CurJob.ToString();
 				string text2 = (pawn == null || pawn.Faction == null) ? "null" : pawn.Faction.ToString();
@@ -594,18 +617,18 @@ namespace Verse.AI
 					text2,
 					"\n\nThis will be the last message to avoid spam."
 				}));
-				PathFinder.debug_pathFailMessaged = true;
+				this.debug_pathFailMessaged = true;
 			}
-			PathFinder.DebugDrawRichData();
-			PathFinder.PfProfilerEndSample();
+			this.DebugDrawRichData();
+			this.PfProfilerEndSample();
 			return PawnPath.NotFound;
-			Block_30:
-			PathFinder.PfProfilerEndSample();
-			return PathFinder.FinalizedPath();
-			Block_31:
-			PathFinder.PfProfilerEndSample();
-			return PathFinder.FinalizedPath();
-			Block_32:
+			Block_34:
+			this.PfProfilerEndSample();
+			return this.FinalizedPath();
+			Block_35:
+			this.PfProfilerEndSample();
+			return this.FinalizedPath();
+			Block_36:
 			Log.Warning(string.Concat(new object[]
 			{
 				pawn,
@@ -617,71 +640,72 @@ namespace Verse.AI
 				160000,
 				" cells."
 			}));
-			PathFinder.DebugDrawRichData();
-			PathFinder.PfProfilerEndSample();
+			this.DebugDrawRichData();
+			this.PfProfilerEndSample();
 			return PawnPath.NotFound;
 		}
 
-		private static void DebugFlash(IntVec3 c, float colorPct, string str)
+		private void DebugFlash(IntVec3 c, float colorPct, string str)
 		{
 			if (DebugViewSettings.drawPaths)
 			{
-				Find.DebugDrawer.FlashCell(c, colorPct, str);
+				this.map.debugDrawer.FlashCell(c, colorPct, str);
 			}
 		}
 
-		private static PawnPath FinalizedPath()
+		private PawnPath FinalizedPath()
 		{
-			PathFinder.newPath = PawnPathPool.GetEmptyPawnPath();
-			IntVec3 parentPosition = new IntVec3((int)PathFinder.curX, 0, (int)PathFinder.curZ);
+			this.newPath = this.map.pawnPathPool.GetEmptyPawnPath();
+			IntVec3 parentPosition = new IntVec3((int)this.curX, 0, (int)this.curZ);
+			CellIndices cellIndices = this.map.cellIndices;
 			while (true)
 			{
-				PathFinder.PathFinderNodeFast pathFinderNodeFast = PathFinder.calcGrid[CellIndices.CellToIndex(parentPosition)];
+				PathFinder.PathFinderNodeFast pathFinderNodeFast = this.calcGrid[cellIndices.CellToIndex(parentPosition)];
 				PathFinder.PathFinderNode pathFinderNode;
 				pathFinderNode.parentPosition = new IntVec3((int)pathFinderNodeFast.parentX, 0, (int)pathFinderNodeFast.parentZ);
 				pathFinderNode.position = parentPosition;
-				PathFinder.newPath.AddNode(pathFinderNode.position);
+				this.newPath.AddNode(pathFinderNode.position);
 				if (pathFinderNode.position == pathFinderNode.parentPosition)
 				{
 					break;
 				}
 				parentPosition = pathFinderNode.parentPosition;
 			}
-			PathFinder.newPath.SetupFound((float)PathFinder.calcGrid[PathFinder.curIndex].knownCost);
-			PathFinder.PfProfilerEndSample();
-			return PathFinder.newPath;
+			this.newPath.SetupFound((float)this.calcGrid[this.curIndex].knownCost);
+			this.PfProfilerEndSample();
+			return this.newPath;
 		}
 
-		private static void ResetStatuses()
+		private void ResetStatuses()
 		{
-			int num = PathFinder.calcGrid.Length;
+			int num = this.calcGrid.Length;
 			for (int i = 0; i < num; i++)
 			{
-				PathFinder.calcGrid[i].status = 0;
+				this.calcGrid[i].status = 0;
 			}
-			PathFinder.statusOpenValue = 1;
-			PathFinder.statusClosedValue = 2;
+			this.statusOpenValue = 1;
+			this.statusClosedValue = 2;
 		}
 
 		[Conditional("PFPROFILE")]
-		private static void PfProfilerBeginSample(string s)
+		private void PfProfilerBeginSample(string s)
 		{
 		}
 
 		[Conditional("PFPROFILE")]
-		private static void PfProfilerEndSample()
+		private void PfProfilerEndSample()
 		{
 		}
 
-		private static void DebugDrawRichData()
+		private void DebugDrawRichData()
 		{
 			if (DebugViewSettings.drawPaths)
 			{
-				while (PathFinder.openList.Count > 0)
+				while (this.openList.Count > 0)
 				{
-					int num = PathFinder.openList.Pop();
-					IntVec3 c = new IntVec3(num & (int)PathFinder.gridSizeXMinus1, 0, num >> (int)PathFinder.gridSizeZLog2);
-					Find.DebugDrawer.FlashCell(c, 0f, "open");
+					int num = this.openList.Pop();
+					IntVec3 c = new IntVec3(num & (int)this.gridSizeXMinus1, 0, num >> (int)this.gridSizeZLog2);
+					this.map.debugDrawer.FlashCell(c, 0f, "open");
 				}
 			}
 		}

@@ -4,6 +4,6 @@ namespace RimWorld
 {
 	public interface IBillGiverWithTickAction
 	{
-		void BillTick();
+		void UsedThisTick();
 	}
 }

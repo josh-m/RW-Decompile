@@ -85,6 +85,16 @@ namespace Verse
 			this.curY += gapHeight;
 		}
 
+		public void GapLine(float gapHeight = 12f)
+		{
+			float y = this.curY + gapHeight / 2f;
+			Color color = GUI.color;
+			GUI.color = color * new Color(1f, 1f, 1f, 0.4f);
+			Widgets.DrawLineHorizontal(this.curX, y, this.ColumnWidth);
+			GUI.color = color;
+			this.curY += gapHeight;
+		}
+
 		public virtual void End()
 		{
 			GUI.EndGroup();

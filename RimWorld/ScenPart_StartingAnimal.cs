@@ -56,14 +56,14 @@ namespace RimWorld
 				list.Add(new FloatMenuOption("RandomPet".Translate().CapitalizeFirst(), delegate
 				{
 					this.animalKind = null;
-				}, MenuOptionPriority.Medium, null, null, 0f, null));
+				}, MenuOptionPriority.Default, null, null, 0f, null, null));
 				foreach (PawnKindDef current in this.PossibleAnimals())
 				{
 					PawnKindDef localKind = current;
 					list.Add(new FloatMenuOption(localKind.LabelCap, delegate
 					{
 						this.animalKind = localKind;
-					}, MenuOptionPriority.Medium, null, null, 0f, null));
+					}, MenuOptionPriority.Default, null, null, 0f, null, null));
 				}
 				Find.WindowStack.Add(new FloatMenu(list));
 			}
@@ -72,7 +72,7 @@ namespace RimWorld
 		private IEnumerable<PawnKindDef> PossibleAnimals()
 		{
 			return from td in DefDatabase<PawnKindDef>.AllDefs
-			where td.RaceProps.Animal && !td.carrier
+			where td.RaceProps.Animal
 			select td;
 		}
 
@@ -144,12 +144,15 @@ namespace RimWorld
 				Pawn animal = PawnGenerator.GeneratePawn(kind, Faction.OfPlayer);
 				if (animal.Name == null || animal.Name.Numerical)
 				{
-					animal.Name = NameGenerator.GeneratePawnName(animal, NameStyle.Full, null);
+					animal.Name = PawnBioAndNameGenerator.GeneratePawnName(animal, NameStyle.Full, null);
 				}
 				if (Rand.Value < this.bondToRandomPlayerPawnChance)
 				{
 					Pawn col = Find.GameInitData.startingPawns.RandomElement<Pawn>();
-					col.relations.AddDirectRelation(PawnRelationDefOf.Bond, animal);
+					if (!col.story.traits.HasTrait(TraitDefOf.Psychopath))
+					{
+						col.relations.AddDirectRelation(PawnRelationDefOf.Bond, animal);
+					}
 				}
 				yield return animal;
 			}

@@ -26,12 +26,13 @@ namespace RimWorld
 
 		public override void Destroy(DestroyMode mode)
 		{
+			Map map = base.Map;
 			base.Destroy(mode);
 			if (mode == DestroyMode.Kill)
 			{
 				if (this.def.building.soundMined != null)
 				{
-					this.def.building.soundMined.PlayOneShot(base.Position);
+					this.def.building.soundMined.PlayOneShot(new TargetInfo(base.Position, map, false));
 				}
 				if (this.def.building.mineableThing != null && Rand.Value < this.def.building.mineableDropChance)
 				{
@@ -45,7 +46,7 @@ namespace RimWorld
 						float num = this.def.building.mineableNonMinedEfficiency + (1f - this.def.building.mineableNonMinedEfficiency) * (1f - (float)this.nonMiningDamageTaken / (float)base.MaxHitPoints);
 						thing.stackCount = Mathf.CeilToInt((float)this.def.building.mineableYield * num);
 					}
-					GenSpawn.Spawn(thing, base.Position);
+					GenSpawn.Spawn(thing, base.Position, map);
 				}
 			}
 		}

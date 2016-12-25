@@ -19,7 +19,7 @@ namespace Verse
 			{
 				return result;
 			}
-			if (Find.AreaManager.AllAreas.Any((Area a) => a.Label == name))
+			if (this.area.Map.areaManager.AllAreas.Any((Area a) => a.Label == name))
 			{
 				return "NameIsInUse".Translate();
 			}

@@ -48,7 +48,7 @@ namespace Verse
 		{
 			get
 			{
-				return new Vector2((float)Screen.width / 2f, (float)Screen.height / 2f);
+				return new Vector2((float)UI.screenWidth / 2f, (float)UI.screenHeight / 2f);
 			}
 		}
 

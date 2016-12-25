@@ -26,8 +26,10 @@ namespace RimWorld
 			{
 				initAction = delegate
 				{
-					BodyPartDamageInfo value = new BodyPartDamageInfo(this.<>f__this.Victim.health.hediffSet.GetBrain(), false, null);
-					this.<>f__this.Victim.TakeDamage(new DamageInfo(DamageDefOf.ExecutionCut, 99999, this.<execute>__0.actor, new BodyPartDamageInfo?(value), null));
+					Pawn actor = this.<execute>__0.actor;
+					DamageInfo dinfo = new DamageInfo(DamageDefOf.ExecutionCut, 99999, -1f, actor, null, null);
+					dinfo.SetForcedHitPart(this.<>f__this.Victim.health.hediffSet.GetBrain());
+					this.<>f__this.Victim.TakeDamage(dinfo);
 					ThoughtUtility.GiveThoughtsForPawnExecuted(this.<>f__this.Victim, PawnExecutionKind.GenericBrutal);
 					TaleRecorder.RecordTale(TaleDefOf.ExecutedPrisoner, new object[]
 					{

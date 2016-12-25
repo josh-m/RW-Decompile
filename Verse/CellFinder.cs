@@ -2,6 +2,7 @@ using RimWorld;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using UnityEngine;
 using Verse.AI;
 
 namespace Verse
@@ -20,14 +21,20 @@ namespace Verse
 
 		private static IntVec3 mapEdgeCellsSize;
 
-		private static Dictionary<IntVec3, float> tmpDistances = new Dictionary<IntVec3, float>();
+		private static List<IntVec3>[] mapSingleEdgeCells = new List<IntVec3>[4];
 
-		public static IntVec3 RandomCell()
+		private static IntVec3 mapSingleEdgeCellsSize;
+
+		private static List<KeyValuePair<IntVec3, float>> tmpDistances = new List<KeyValuePair<IntVec3, float>>();
+
+		private static List<IntVec3> tmpCells = new List<IntVec3>();
+
+		public static IntVec3 RandomCell(Map map)
 		{
-			return new IntVec3(Rand.Range(0, Find.Map.Size.x), 0, Rand.Range(0, Find.Map.Size.z));
+			return new IntVec3(Rand.Range(0, map.Size.x), 0, Rand.Range(0, map.Size.z));
 		}
 
-		public static IntVec3 RandomEdgeCell()
+		public static IntVec3 RandomEdgeCell(Map map)
 		{
 			IntVec3 result = default(IntVec3);
 			if (Rand.Value < 0.5f)
@@ -38,9 +45,9 @@ namespace Verse
 				}
 				else
 				{
-					result.x = Find.Map.Size.x - 1;
+					result.x = map.Size.x - 1;
 				}
-				result.z = Rand.Range(0, Find.Map.Size.z);
+				result.z = Rand.Range(0, map.Size.z);
 			}
 			else
 			{
@@ -50,17 +57,38 @@ namespace Verse
 				}
 				else
 				{
-					result.z = Find.Map.Size.z - 1;
+					result.z = map.Size.z - 1;
 				}
-				result.x = Rand.Range(0, Find.Map.Size.x);
+				result.x = Rand.Range(0, map.Size.x);
 			}
 			return result;
 		}
 
-		public static IntVec3 RandomNotEdgeCell(int minEdgeDistance)
+		public static IntVec3 RandomEdgeCell(Rot4 dir, Map map)
 		{
-			int newX = Rand.Range(minEdgeDistance, Find.Map.Size.x - minEdgeDistance);
-			int newZ = Rand.Range(minEdgeDistance, Find.Map.Size.z - minEdgeDistance);
+			if (dir == Rot4.North)
+			{
+				return new IntVec3(Rand.Range(0, map.Size.x), 0, map.Size.z - 1);
+			}
+			if (dir == Rot4.South)
+			{
+				return new IntVec3(Rand.Range(0, map.Size.x), 0, 0);
+			}
+			if (dir == Rot4.West)
+			{
+				return new IntVec3(0, 0, Rand.Range(0, map.Size.z));
+			}
+			if (dir == Rot4.East)
+			{
+				return new IntVec3(map.Size.x - 1, 0, Rand.Range(0, map.Size.z));
+			}
+			return IntVec3.Invalid;
+		}
+
+		public static IntVec3 RandomNotEdgeCell(int minEdgeDistance, Map map)
+		{
+			int newX = Rand.Range(minEdgeDistance, map.Size.x - minEdgeDistance);
+			int newZ = Rand.Range(minEdgeDistance, map.Size.z - minEdgeDistance);
 			return new IntVec3(newX, 0, newZ);
 		}
 
@@ -104,9 +132,9 @@ namespace Verse
 			return CellFinder.workingRegions.RandomElementByWeight((Region r) => (float)r.CellCount);
 		}
 
-		public static bool TryFindRandomReachableCellNear(IntVec3 root, float radius, TraverseParms traverseParms, Predicate<IntVec3> cellValidator, Predicate<Region> regionValidator, out IntVec3 result, int maxRegions = 999999)
+		public static bool TryFindRandomReachableCellNear(IntVec3 root, Map map, float radius, TraverseParms traverseParms, Predicate<IntVec3> cellValidator, Predicate<Region> regionValidator, out IntVec3 result, int maxRegions = 999999)
 		{
-			Region region = root.GetRegion();
+			Region region = root.GetRegion(map);
 			if (region == null)
 			{
 				result = IntVec3.Invalid;
@@ -132,27 +160,27 @@ namespace Verse
 			return false;
 		}
 
-		public static IntVec3 RandomClosewalkCellNear(IntVec3 root, int radius)
+		public static IntVec3 RandomClosewalkCellNear(IntVec3 root, Map map, int radius)
 		{
 			IntVec3 result;
-			if (!CellFinder.TryFindRandomReachableCellNear(root, (float)radius, TraverseParms.For(TraverseMode.NoPassClosedDoors, Danger.Deadly, false), (IntVec3 c) => c.Standable(), null, out result, 999999))
+			if (CellFinder.TryFindRandomReachableCellNear(root, map, (float)radius, TraverseParms.For(TraverseMode.NoPassClosedDoors, Danger.Deadly, false), (IntVec3 c) => c.Standable(map), null, out result, 999999))
 			{
-				return root;
+				return result;
 			}
-			return result;
+			return root;
 		}
 
-		public static bool TryRandomClosewalkCellNear(IntVec3 root, int radius, out IntVec3 result)
+		public static bool TryRandomClosewalkCellNear(IntVec3 root, Map map, int radius, out IntVec3 result)
 		{
-			return CellFinder.TryFindRandomReachableCellNear(root, (float)radius, TraverseParms.For(TraverseMode.NoPassClosedDoors, Danger.Deadly, false), (IntVec3 c) => c.Standable(), null, out result, 999999);
+			return CellFinder.TryFindRandomReachableCellNear(root, map, (float)radius, TraverseParms.For(TraverseMode.NoPassClosedDoors, Danger.Deadly, false), (IntVec3 c) => c.Standable(map), null, out result, 999999);
 		}
 
-		public static IntVec3 RandomClosewalkCellNear(IntVec3 root, int radius, Area area)
+		public static IntVec3 RandomClosewalkCellNearNotForbidden(IntVec3 root, Map map, int radius, Pawn pawn)
 		{
 			IntVec3 result;
-			if (area == null || !CellFinder.TryFindRandomReachableCellNear(root, (float)radius, TraverseParms.For(TraverseMode.NoPassClosedDoors, Danger.Deadly, false), (IntVec3 c) => area[c] && c.Standable(), null, out result, 999999))
+			if (!CellFinder.TryFindRandomReachableCellNear(root, map, (float)radius, TraverseParms.For(TraverseMode.NoPassClosedDoors, Danger.Deadly, false), (IntVec3 c) => !c.IsForbidden(pawn) && c.Standable(map), null, out result, 999999))
 			{
-				return CellFinder.RandomClosewalkCellNear(root, radius);
+				return CellFinder.RandomClosewalkCellNear(root, map, radius);
 			}
 			return result;
 		}
@@ -182,7 +210,7 @@ namespace Verse
 			return false;
 		}
 
-		public static bool TryFindRandomCellNear(IntVec3 root, int squareRadius, Predicate<IntVec3> validator, out IntVec3 result)
+		public static bool TryFindRandomCellNear(IntVec3 root, Map map, int squareRadius, Predicate<IntVec3> validator, out IntVec3 result)
 		{
 			int num = root.x - squareRadius;
 			int num2 = root.x + squareRadius;
@@ -196,13 +224,13 @@ namespace Verse
 			{
 				num3 = 0;
 			}
-			if (num2 > Find.Map.Size.x)
+			if (num2 > map.Size.x)
 			{
-				num2 = Find.Map.Size.x;
+				num2 = map.Size.x;
 			}
-			if (num4 > Find.Map.Size.z)
+			if (num4 > map.Size.z)
 			{
-				num4 = Find.Map.Size.z;
+				num4 = map.Size.z;
 			}
 			int num5 = 0;
 			IntVec3 intVec;
@@ -215,7 +243,7 @@ namespace Verse
 				}
 				if (DebugViewSettings.drawDestSearch)
 				{
-					Find.DebugDrawer.FlashCell(intVec, 0f, "inv");
+					map.debugDrawer.FlashCell(intVec, 0f, "inv");
 				}
 				num5++;
 				if (num5 > 20)
@@ -225,7 +253,7 @@ namespace Verse
 			}
 			if (DebugViewSettings.drawDestSearch)
 			{
-				Find.DebugDrawer.FlashCell(intVec, 0.5f, "found");
+				map.debugDrawer.FlashCell(intVec, 0.5f, "found");
 			}
 			result = intVec;
 			return true;
@@ -251,14 +279,14 @@ namespace Verse
 					{
 						if (DebugViewSettings.drawDestSearch)
 						{
-							Find.DebugDrawer.FlashCell(intVec, 0.6f, "found2");
+							map.debugDrawer.FlashCell(intVec, 0.6f, "found2");
 						}
 						result = intVec;
 						return true;
 					}
 					if (DebugViewSettings.drawDestSearch)
 					{
-						Find.DebugDrawer.FlashCell(intVec, 0.25f, "inv2");
+						map.debugDrawer.FlashCell(intVec, 0.25f, "inv2");
 					}
 				}
 			}
@@ -268,24 +296,24 @@ namespace Verse
 
 		public static bool TryFindRandomPawnExitCell(Pawn searcher, out IntVec3 result)
 		{
-			return CellFinder.TryFindRandomEdgeCellWith((IntVec3 c) => !Find.RoofGrid.Roofed(c) && c.Walkable() && searcher.CanReach(c, PathEndMode.OnCell, Danger.Some, false, TraverseMode.ByPawn), out result);
+			return CellFinder.TryFindRandomEdgeCellWith((IntVec3 c) => !searcher.Map.roofGrid.Roofed(c) && c.Walkable(searcher.Map) && searcher.CanReach(c, PathEndMode.OnCell, Danger.Some, false, TraverseMode.ByPawn), searcher.Map, out result);
 		}
 
-		public static bool TryFindRandomEdgeCellWith(Predicate<IntVec3> validator, out IntVec3 result)
+		public static bool TryFindRandomEdgeCellWith(Predicate<IntVec3> validator, Map map, out IntVec3 result)
 		{
 			for (int i = 0; i < 100; i++)
 			{
-				result = CellFinder.RandomEdgeCell();
+				result = CellFinder.RandomEdgeCell(map);
 				if (validator(result))
 				{
 					return true;
 				}
 			}
-			if (CellFinder.mapEdgeCells == null || Find.Map.Size != CellFinder.mapEdgeCellsSize)
+			if (CellFinder.mapEdgeCells == null || map.Size != CellFinder.mapEdgeCellsSize)
 			{
-				CellFinder.mapEdgeCellsSize = Find.Map.Size;
+				CellFinder.mapEdgeCellsSize = map.Size;
 				CellFinder.mapEdgeCells = new List<IntVec3>();
-				foreach (IntVec3 current in CellRect.WholeMap.EdgeCells)
+				foreach (IntVec3 current in CellRect.WholeMap(map).EdgeCells)
 				{
 					CellFinder.mapEdgeCells.Add(current);
 				}
@@ -316,6 +344,56 @@ namespace Verse
 			return false;
 		}
 
+		public static bool TryFindRandomEdgeCellWith(Predicate<IntVec3> validator, Map map, Rot4 dir, out IntVec3 result)
+		{
+			for (int i = 0; i < 100; i++)
+			{
+				result = CellFinder.RandomEdgeCell(dir, map);
+				if (validator(result))
+				{
+					return true;
+				}
+			}
+			int asInt = dir.AsInt;
+			if (CellFinder.mapSingleEdgeCells[asInt] == null || map.Size != CellFinder.mapSingleEdgeCellsSize)
+			{
+				CellFinder.mapSingleEdgeCellsSize = map.Size;
+				CellFinder.mapSingleEdgeCells[asInt] = new List<IntVec3>();
+				foreach (IntVec3 current in CellRect.WholeMap(map).GetEdgeCells(dir))
+				{
+					CellFinder.mapSingleEdgeCells[asInt].Add(current);
+				}
+			}
+			List<IntVec3> list = CellFinder.mapSingleEdgeCells[asInt];
+			list.Shuffle<IntVec3>();
+			int j = 0;
+			int count = list.Count;
+			while (j < count)
+			{
+				try
+				{
+					if (validator(list[j]))
+					{
+						result = list[j];
+						return true;
+					}
+				}
+				catch (Exception ex)
+				{
+					Log.Error(string.Concat(new object[]
+					{
+						"TryFindRandomEdgeCellWith exception validating ",
+						list[j],
+						": ",
+						ex.ToString()
+					}));
+				}
+				j++;
+			}
+			result = IntVec3.Invalid;
+			return false;
+		}
+
 		public static bool TryFindBestPawnStandCell(Pawn forPawn, out IntVec3 cell)
 		{
 			cell = IntVec3.Invalid;
@@ -331,13 +409,13 @@ namespace Verse
 					{
 						num3 = 1.41421354f;
 					}
-					if (!to.Standable())
+					if (!to.Standable(forPawn.Map))
 					{
 						num3 += 3f;
 					}
 					if (PawnUtility.AnyPawnBlockingPathAt(to, forPawn, false, false))
 					{
-						bool flag = to.GetThingList().Find((Thing x) => x is Pawn && x.HostileTo(forPawn)) != null;
+						bool flag = to.GetThingList(forPawn.Map).Find((Thing x) => x is Pawn && x.HostileTo(forPawn)) != null;
 						if (flag)
 						{
 							num3 += 40f;
@@ -347,7 +425,7 @@ namespace Verse
 							num3 += 15f;
 						}
 					}
-					Building_Door building_Door2 = to.GetEdifice() as Building_Door;
+					Building_Door building_Door2 = to.GetEdifice(forPawn.Map) as Building_Door;
 					if (building_Door2 != null && !building_Door2.FreePassage)
 					{
 						num3 += 6f;
@@ -363,11 +441,11 @@ namespace Verse
 				{
 					if (!cell.IsValid || current.Value < num2)
 					{
-						if (current.Key.Walkable())
+						if (current.Key.Walkable(forPawn.Map))
 						{
 							if (!PawnUtility.AnyPawnBlockingPathAt(current.Key, forPawn, false, false))
 							{
-								Building_Door building_Door = current.Key.GetEdifice() as Building_Door;
+								Building_Door building_Door = current.Key.GetEdifice(forPawn.Map) as Building_Door;
 								if (building_Door == null || building_Door.FreePassage)
 								{
 									cell = current.Key;
@@ -381,7 +459,7 @@ namespace Verse
 				{
 					return true;
 				}
-				if (radius > (float)Find.Map.Size.x && radius > (float)Find.Map.Size.z)
+				if (radius > (float)forPawn.Map.Size.x && radius > (float)forPawn.Map.Size.z)
 				{
 					return false;
 				}
@@ -389,6 +467,81 @@ namespace Verse
 				num = CellFinder.tmpDistances.Count;
 			}
 			return false;
+		}
+
+		public static bool TryFindRandomCellInsideWith(CellRect cellRect, Predicate<IntVec3> predicate, out IntVec3 result)
+		{
+			int area = cellRect.Area;
+			int num = Mathf.Max(Mathf.RoundToInt(Mathf.Sqrt((float)area)), 5);
+			for (int i = 0; i < num; i++)
+			{
+				IntVec3 randomCell = cellRect.RandomCell;
+				if (predicate(randomCell))
+				{
+					result = randomCell;
+					return true;
+				}
+			}
+			CellFinder.tmpCells.Clear();
+			CellRect.CellRectIterator iterator = cellRect.GetIterator();
+			while (!iterator.Done())
+			{
+				CellFinder.tmpCells.Add(iterator.Current);
+				iterator.MoveNext();
+			}
+			CellFinder.tmpCells.Shuffle<IntVec3>();
+			int j = 0;
+			int count = CellFinder.tmpCells.Count;
+			while (j < count)
+			{
+				if (predicate(CellFinder.tmpCells[j]))
+				{
+					result = CellFinder.tmpCells[j];
+					return true;
+				}
+				j++;
+			}
+			result = IntVec3.Invalid;
+			return false;
+		}
+
+		public static IntVec3 RandomSpawnCellForPawnNear(IntVec3 root, Map map)
+		{
+			IntVec3 result;
+			if (CellFinder.TryFindRandomSpawnCellForPawnNear(root, map, out result))
+			{
+				return result;
+			}
+			return root;
+		}
+
+		public static bool TryFindRandomSpawnCellForPawnNear(IntVec3 root, Map map, out IntVec3 result)
+		{
+			if (root.Standable(map) && !root.Fogged(map) && root.GetFirstPawn(map) == null)
+			{
+				result = root;
+				return true;
+			}
+			int num = 4;
+			for (int i = 0; i < 3; i++)
+			{
+				if (CellFinder.TryFindRandomReachableCellNear(root, map, (float)num, TraverseParms.For(TraverseMode.NoPassClosedDoors, Danger.Deadly, false), (IntVec3 c) => c.Standable(map) && !c.Fogged(map) && c.GetFirstPawn(map) == null, null, out result, 999999))
+				{
+					return true;
+				}
+				num *= 2;
+			}
+			num = 5;
+			while (!CellFinder.TryRandomClosewalkCellNear(root, map, num, out result))
+			{
+				if (num > map.Size.x / 2 && num > map.Size.z / 2)
+				{
+					result = root;
+					return false;
+				}
+				num *= 2;
+			}
+			return true;
 		}
 
 		[DebuggerHidden]
@@ -399,9 +552,9 @@ namespace Verse
 				for (int i = 0; i < 8; i++)
 				{
 					IntVec3 c = x + GenAdj.AdjacentCells[i];
-					if (c.InBounds() && c.Walkable())
+					if (c.InBounds(pawn.Map) && c.Walkable(pawn.Map))
 					{
-						Building_Door door = c.GetEdifice() as Building_Door;
+						Building_Door door = c.GetEdifice(pawn.Map) as Building_Door;
 						if (door == null || door.CanPhysicallyPass(pawn))
 						{
 							yield return c;

@@ -13,12 +13,12 @@ namespace RimWorld
 			foreach (T current in objects)
 			{
 				T arg = current;
-				list.Add(new FloatMenuOption(labelGetter(arg), actionGetter(arg), MenuOptionPriority.Medium, null, null, 0f, null));
+				list.Add(new FloatMenuOption(labelGetter(arg), actionGetter(arg), MenuOptionPriority.Default, null, null, 0f, null, null));
 			}
 			Find.WindowStack.Add(new FloatMenu(list));
 		}
 
-		public static Action GetRangedAttackAction(Pawn pawn, TargetInfo target, out string failStr)
+		public static Action GetRangedAttackAction(Pawn pawn, LocalTargetInfo target, out string failStr)
 		{
 			failStr = string.Empty;
 			if (pawn.equipment.Primary == null)
@@ -59,8 +59,7 @@ namespace RimWorld
 					return delegate
 					{
 						Job job = new Job(JobDefOf.AttackStatic, target);
-						job.playerForced = true;
-						pawn.drafter.TakeOrderedJob(job);
+						pawn.jobs.TryTakeOrderedJob(job);
 					};
 				}
 				failStr = "IsIncapableOfViolenceLower".Translate(new object[]
@@ -71,7 +70,7 @@ namespace RimWorld
 			return null;
 		}
 
-		public static Action GetMeleeAttackAction(Pawn pawn, TargetInfo target, out string failStr)
+		public static Action GetMeleeAttackAction(Pawn pawn, LocalTargetInfo target, out string failStr)
 		{
 			failStr = string.Empty;
 			if (!pawn.Drafted)
@@ -103,13 +102,12 @@ namespace RimWorld
 					return delegate
 					{
 						Job job = new Job(JobDefOf.AttackMelee, target);
-						job.playerForced = true;
 						Pawn pawn2 = target.Thing as Pawn;
 						if (pawn2 != null)
 						{
 							job.killIncappedTarget = pawn2.Downed;
 						}
-						pawn.drafter.TakeOrderedJob(job);
+						pawn.jobs.TryTakeOrderedJob(job);
 					};
 				}
 				failStr = "Incapable".Translate();
@@ -117,7 +115,7 @@ namespace RimWorld
 			return null;
 		}
 
-		public static Action GetAttackAction(Pawn pawn, TargetInfo target, out string failStr)
+		public static Action GetAttackAction(Pawn pawn, LocalTargetInfo target, out string failStr)
 		{
 			if (pawn.equipment.Primary != null && !pawn.equipment.PrimaryEq.PrimaryVerb.verbProps.MeleeRange)
 			{

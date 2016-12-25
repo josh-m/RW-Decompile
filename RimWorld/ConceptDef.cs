@@ -15,7 +15,7 @@ namespace RimWorld
 
 		public bool opportunityDecays = true;
 
-		public ProgramState gameMode = ProgramState.MapPlaying;
+		public ProgramState gameMode = ProgramState.Playing;
 
 		private string helpText;
 

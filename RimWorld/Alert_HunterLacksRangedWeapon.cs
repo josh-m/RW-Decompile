@@ -3,27 +3,25 @@ using Verse;
 
 namespace RimWorld
 {
-	public class Alert_HunterLacksRangedWeapon : Alert_High
+	public class Alert_HunterLacksRangedWeapon : Alert
 	{
-		public override AlertReport Report
-		{
-			get
-			{
-				foreach (Pawn current in Find.MapPawns.FreeColonistsSpawned)
-				{
-					if (current.workSettings.WorkIsActive(WorkTypeDefOf.Hunting) && !WorkGiver_HunterHunt.HasHuntingWeapon(current) && !current.Downed)
-					{
-						return current;
-					}
-				}
-				return false;
-			}
-		}
-
 		public Alert_HunterLacksRangedWeapon()
 		{
-			this.baseLabel = "HunterLacksWeapon".Translate();
-			this.baseExplanation = "HunterLacksWeaponDesc".Translate();
+			this.defaultLabel = "HunterLacksWeapon".Translate();
+			this.defaultExplanation = "HunterLacksWeaponDesc".Translate();
+			this.defaultPriority = AlertPriority.High;
+		}
+
+		public override AlertReport GetReport()
+		{
+			foreach (Pawn current in PawnsFinder.AllMaps_FreeColonistsSpawned)
+			{
+				if (current.workSettings.WorkIsActive(WorkTypeDefOf.Hunting) && !WorkGiver_HunterHunt.HasHuntingWeapon(current) && !current.Downed)
+				{
+					return current;
+				}
+			}
+			return false;
 		}
 	}
 }

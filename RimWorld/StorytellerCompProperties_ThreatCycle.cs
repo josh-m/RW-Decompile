@@ -8,9 +8,19 @@ namespace RimWorld
 
 		public float mtbDaysThreatBig;
 
-		public float threatCycleLength;
+		public float threatOffDays;
+
+		public float threatOnDays;
 
 		public float minDaysBetweenThreatBigs;
+
+		public float ThreatCycleTotalDays
+		{
+			get
+			{
+				return this.threatOffDays + this.threatOnDays;
+			}
+		}
 
 		public StorytellerCompProperties_ThreatCycle()
 		{

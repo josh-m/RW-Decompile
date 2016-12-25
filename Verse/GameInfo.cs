@@ -32,7 +32,7 @@ namespace Verse
 
 		public void GameInfoUpdate()
 		{
-			if (Time.realtimeSinceStartup < this.lastInputRealTime + 90f && Find.MainTabsRoot.OpenTab != MainTabDefOf.Menu && Current.ProgramState == ProgramState.MapPlaying && !Find.WindowStack.IsOpen<Dialog_Options>())
+			if (Time.realtimeSinceStartup < this.lastInputRealTime + 90f && Find.MainTabsRoot.OpenTab != MainTabDefOf.Menu && Current.ProgramState == ProgramState.Playing && !Find.WindowStack.IsOpen<Dialog_Options>())
 			{
 				this.realPlayTimeInteracting += RealTime.realDeltaTime;
 			}

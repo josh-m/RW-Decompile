@@ -134,15 +134,15 @@ namespace RimWorld
 					else
 					{
 						SoundDefOf.TickHigh.PlayOneShotOnCamera();
-						Find.WindowStack.Add(new Dialog_Confirm("ConfirmSteamWorkshopUpload".Translate(), delegate
+						Find.WindowStack.Add(Dialog_MessageBox.CreateConfirmation("ConfirmSteamWorkshopUpload".Translate(), delegate
 						{
 							SoundDefOf.TickHigh.PlayOneShotOnCamera();
-							Find.WindowStack.Add(new Dialog_Confirm("ConfirmContentAuthor".Translate(), delegate
+							Find.WindowStack.Add(Dialog_MessageBox.CreateConfirmation("ConfirmContentAuthor".Translate(), delegate
 							{
 								SoundDefOf.TickHigh.PlayOneShotOnCamera();
 								Workshop.Upload(this.curScen);
-							}, true, null, true));
-						}, true, null, true));
+							}, true, null));
+						}, true, null));
 					}
 				}
 			}

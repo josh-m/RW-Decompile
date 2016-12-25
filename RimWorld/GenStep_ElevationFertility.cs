@@ -1,5 +1,6 @@
 using RimWorld.Planet;
 using System;
+using UnityEngine;
 using Verse;
 using Verse.Noise;
 
@@ -13,14 +14,14 @@ namespace RimWorld
 
 		private const float EdgeMountainSpan = 0.42f;
 
-		public override void Generate()
+		public override void Generate(Map map)
 		{
-			NoiseRenderer.renderSize = new IntVec2(Find.Map.Size.x, Find.Map.Size.z);
+			NoiseRenderer.renderSize = new IntVec2(map.Size.x, map.Size.z);
 			ModuleBase moduleBase = new Perlin(0.020999999716877937, 2.0, 0.5, 6, Rand.Range(0, 2147483647), QualityMode.High);
 			moduleBase = new ScaleBias(0.5, 0.5, moduleBase);
 			NoiseDebugUI.StoreNoiseRender(moduleBase, "elev base");
 			float num = 1f;
-			switch (Find.MapWorldSquare.hilliness)
+			switch (map.TileInfo.hilliness)
 			{
 			case Hilliness.Flat:
 				num = MapGenTuning.ElevationFactorFlat;
@@ -34,12 +35,15 @@ namespace RimWorld
 			case Hilliness.Mountainous:
 				num = MapGenTuning.ElevationFactorMountains;
 				break;
+			case Hilliness.Impassable:
+				num = MapGenTuning.ElevationFactorImpassableMountains;
+				break;
 			}
 			moduleBase = new Multiply(moduleBase, new Const((double)num));
 			NoiseDebugUI.StoreNoiseRender(moduleBase, "elev world-factored");
-			if (Find.MapWorldSquare.hilliness == Hilliness.Mountainous)
+			if (map.TileInfo.hilliness == Hilliness.Mountainous || map.TileInfo.hilliness == Hilliness.Impassable)
 			{
-				ModuleBase moduleBase2 = new DistFromAxis((float)Find.Map.Size.x * 0.42f);
+				ModuleBase moduleBase2 = new DistFromAxis((float)map.Size.x * 0.42f);
 				moduleBase2 = new Clamp(0.0, 1.0, moduleBase2);
 				moduleBase2 = new Invert(moduleBase2);
 				moduleBase2 = new ScaleBias(1.0, 1.0, moduleBase2);
@@ -48,15 +52,15 @@ namespace RimWorld
 				{
 					random = Rot4.Random;
 				}
-				while (random == Find.World.CoastDirectionAt(Find.GameInitData.startingCoords));
+				while (random == Find.World.CoastDirectionAt(map.Tile));
 				if (random == Rot4.North)
 				{
 					moduleBase2 = new Rotate(0.0, 90.0, 0.0, moduleBase2);
-					moduleBase2 = new Translate(0.0, 0.0, (double)(-(double)Find.Map.Size.z), moduleBase2);
+					moduleBase2 = new Translate(0.0, 0.0, (double)(-(double)map.Size.z), moduleBase2);
 				}
 				else if (random == Rot4.East)
 				{
-					moduleBase2 = new Translate((double)(-(double)Find.Map.Size.x), 0.0, 0.0, moduleBase2);
+					moduleBase2 = new Translate((double)(-(double)map.Size.x), 0.0, 0.0, moduleBase2);
 				}
 				else if (random == Rot4.South)
 				{
@@ -69,23 +73,19 @@ namespace RimWorld
 				moduleBase = new Add(moduleBase, moduleBase2);
 				NoiseDebugUI.StoreNoiseRender(moduleBase, "elev + mountain");
 			}
-			MapGenFloatGrid mapGenFloatGrid = MapGenerator.FloatGridNamed("Elevation");
-			foreach (IntVec3 current in Find.Map.AllCells)
+			float b = (!map.TileInfo.WaterCovered) ? 3.40282347E+38f : 0f;
+			MapGenFloatGrid mapGenFloatGrid = MapGenerator.FloatGridNamed("Elevation", map);
+			foreach (IntVec3 current in map.AllCells)
 			{
-				MapGenFloatGrid mapGenFloatGrid2;
-				MapGenFloatGrid expr_2BF = mapGenFloatGrid2 = mapGenFloatGrid;
-				IntVec3 c;
-				IntVec3 expr_2C4 = c = current;
-				float num2 = mapGenFloatGrid2[c];
-				expr_2BF[expr_2C4] = num2 + moduleBase.GetValue(current);
+				mapGenFloatGrid[current] = Mathf.Min(moduleBase.GetValue(current), b);
 			}
 			ModuleBase moduleBase3 = new Perlin(0.020999999716877937, 2.0, 0.5, 6, Rand.Range(0, 2147483647), QualityMode.High);
 			moduleBase3 = new ScaleBias(0.5, 0.5, moduleBase3);
 			NoiseDebugUI.StoreNoiseRender(moduleBase3, "noiseFert base");
-			MapGenFloatGrid mapGenFloatGrid3 = MapGenerator.FloatGridNamed("Fertility");
-			foreach (IntVec3 current2 in Find.Map.AllCells)
+			MapGenFloatGrid mapGenFloatGrid2 = MapGenerator.FloatGridNamed("Fertility", map);
+			foreach (IntVec3 current2 in map.AllCells)
 			{
-				mapGenFloatGrid3[current2] = moduleBase3.GetValue(current2);
+				mapGenFloatGrid2[current2] = moduleBase3.GetValue(current2);
 			}
 		}
 	}

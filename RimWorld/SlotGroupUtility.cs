@@ -11,7 +11,7 @@ namespace RimWorld
 			{
 				return;
 			}
-			SlotGroup slotGroup = t.Position.GetSlotGroup();
+			SlotGroup slotGroup = t.GetSlotGroup();
 			if (slotGroup != null && slotGroup.parent != null)
 			{
 				slotGroup.parent.Notify_LostThing(t);

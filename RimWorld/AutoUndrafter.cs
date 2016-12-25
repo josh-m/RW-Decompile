@@ -50,7 +50,7 @@ namespace RimWorld
 			{
 				return false;
 			}
-			return !Find.AttackTargetsCache.GetPotentialTargetsFor(this.pawn).Any((IAttackTarget x) => !x.ThreatDisabled());
+			return !this.pawn.Map.attackTargetsCache.GetPotentialTargetsFor(this.pawn).Any((IAttackTarget x) => !x.ThreatDisabled());
 		}
 	}
 }

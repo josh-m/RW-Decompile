@@ -6,59 +6,69 @@ using Verse;
 
 namespace RimWorld
 {
-	public class Alert_NeedDoctor : Alert_High
+	public class Alert_NeedDoctor : Alert
 	{
 		private IEnumerable<Pawn> Patients
 		{
 			get
 			{
-				foreach (Pawn p in Find.MapPawns.FreeColonistsSpawned)
+				List<Map> maps = Find.Maps;
+				for (int i = 0; i < maps.Count; i++)
 				{
-					if ((p.Downed && p.needs.food.CurCategory < HungerCategory.Fed && p.InBed()) || p.health.ShouldBeTendedNow)
+					if (maps[i].IsPlayerHome)
 					{
-						yield return p;
+						bool healthyDoc = false;
+						foreach (Pawn p in maps[i].mapPawns.FreeColonistsSpawned)
+						{
+							if (!p.Downed && p.workSettings != null && p.workSettings.WorkIsActive(WorkTypeDefOf.Doctor))
+							{
+								healthyDoc = true;
+								break;
+							}
+						}
+						if (!healthyDoc)
+						{
+							foreach (Pawn p2 in maps[i].mapPawns.FreeColonistsSpawned)
+							{
+								if ((p2.Downed && p2.needs.food.CurCategory < HungerCategory.Fed && p2.InBed()) || HealthAIUtility.ShouldBeTendedNow(p2))
+								{
+									yield return p2;
+								}
+							}
+						}
 					}
 				}
-			}
-		}
-
-		public override string FullExplanation
-		{
-			get
-			{
-				StringBuilder stringBuilder = new StringBuilder();
-				foreach (Pawn current in this.Patients)
-				{
-					stringBuilder.AppendLine("    " + current.NameStringShort);
-				}
-				return string.Format("NeedDoctorDesc".Translate(), stringBuilder.ToString());
-			}
-		}
-
-		public override AlertReport Report
-		{
-			get
-			{
-				foreach (Pawn current in Find.MapPawns.FreeColonistsSpawned)
-				{
-					if (!current.Downed && current.workSettings != null && current.workSettings.WorkIsActive(WorkTypeDefOf.Doctor))
-					{
-						AlertReport inactive = AlertReport.Inactive;
-						return inactive;
-					}
-				}
-				Pawn pawn = this.Patients.FirstOrDefault<Pawn>();
-				if (pawn == null)
-				{
-					return false;
-				}
-				return AlertReport.CulpritIs(pawn);
 			}
 		}
 
 		public Alert_NeedDoctor()
 		{
-			this.baseLabel = "NeedDoctor".Translate();
+			this.defaultLabel = "NeedDoctor".Translate();
+			this.defaultPriority = AlertPriority.High;
+		}
+
+		public override string GetExplanation()
+		{
+			StringBuilder stringBuilder = new StringBuilder();
+			foreach (Pawn current in this.Patients)
+			{
+				stringBuilder.AppendLine("    " + current.NameStringShort);
+			}
+			return string.Format("NeedDoctorDesc".Translate(), stringBuilder.ToString());
+		}
+
+		public override AlertReport GetReport()
+		{
+			if (Find.AnyPlayerHomeMap == null)
+			{
+				return false;
+			}
+			Pawn pawn = this.Patients.FirstOrDefault<Pawn>();
+			if (pawn == null)
+			{
+				return false;
+			}
+			return AlertReport.CulpritIs(pawn);
 		}
 	}
 }

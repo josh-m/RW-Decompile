@@ -10,17 +10,21 @@ namespace RimWorld
 
 		public override bool TryExecute(IncidentParms parms)
 		{
-			List<Thing> list = Find.Map.listerThings.ThingsInGroup(ThingRequestGroup.CultivatedPlant);
+			Map map = (Map)parms.target;
+			List<Thing> list = map.listerThings.ThingsInGroup(ThingRequestGroup.Plant);
 			bool flag = false;
 			for (int i = list.Count - 1; i >= 0; i--)
 			{
 				Plant plant = (Plant)list[i];
-				if (plant.def.plant.growDays <= 16f)
+				if (map.Biome.CommonalityOfPlant(plant.def) == 0f)
 				{
-					if (plant.LifeStage == PlantLifeStage.Growing || plant.LifeStage == PlantLifeStage.Mature)
+					if (plant.def.plant.growDays <= 16f)
 					{
-						plant.CropBlighted();
-						flag = true;
+						if (plant.LifeStage == PlantLifeStage.Growing || plant.LifeStage == PlantLifeStage.Mature)
+						{
+							plant.CropBlighted();
+							flag = true;
+						}
 					}
 				}
 			}

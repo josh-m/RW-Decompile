@@ -11,6 +11,9 @@ namespace Verse
 		[DefaultValue(false), Description("If checked, this sound is a sustainer.\n\nSustainers are used for sounds with a defined beginning and end (as opposed to OneShots, which just fire at a given instant).\n\nThis value must match what the game expects from the SubSoundDef with this name.")]
 		public bool sustain;
 
+		[DefaultValue(SoundContext.Any), Description("When the sound is allowed to play: only when the map view is active, only when the world view is active, or always (map + world + main menu).")]
+		public SoundContext context;
+
 		[Description("Event names for this sound. \n\nThe code will look up sounds to play them according to their name. If the code finds the event name it wants in this list, it will trigger this sound.\n\nThe Def name is also used as an event name.")]
 		public List<string> eventNames = new List<string>();
 
@@ -100,6 +103,10 @@ namespace Verse
 			{
 				yield return "Sound slots only work for on-camera sounds.";
 			}
+			if (this.HasSubSoundsInWorld && this.context != SoundContext.MapOnly)
+			{
+				yield return "Sounds with non-on-camera subsounds should use MapOnly context.";
+			}
 			if (this.priorityMode == VoicePriorityMode.PrioritizeNewest && this.sustain)
 			{
 				yield return "PrioritizeNewest is not supported with sustainers.";
@@ -149,10 +156,10 @@ namespace Verse
 					if (this.HasSubSoundsInWorld)
 					{
 						IntVec3 mapPosition = Find.CameraDriver.MapPosition;
-						info = SoundInfo.InWorld(mapPosition, MaintenanceType.PerFrame);
+						info = SoundInfo.InMap(new TargetInfo(mapPosition, Find.VisibleMap, false), MaintenanceType.PerFrame);
 						for (int i = 0; i < 5; i++)
 						{
-							MoteMaker.ThrowDustPuff(mapPosition, 1.5f);
+							MoteMaker.ThrowDustPuff(mapPosition, Find.VisibleMap, 1.5f);
 						}
 					}
 					else

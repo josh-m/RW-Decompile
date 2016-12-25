@@ -96,7 +96,7 @@ namespace RimWorld
 			}
 			if (this.CanShowArt)
 			{
-				if (Current.ProgramState == ProgramState.MapPlaying)
+				if (Current.ProgramState == ProgramState.Playing)
 				{
 					if (relatedThing != null)
 					{
@@ -165,9 +165,9 @@ namespace RimWorld
 			});
 		}
 
-		public override void PostDestroy(DestroyMode mode, bool wasSpawned)
+		public override void PostDestroy(DestroyMode mode, Map previousMap)
 		{
-			base.PostDestroy(mode, wasSpawned);
+			base.PostDestroy(mode, previousMap);
 			if (this.taleRef != null)
 			{
 				this.taleRef.ReferenceDestroyed();
@@ -181,7 +181,17 @@ namespace RimWorld
 			{
 				return null;
 			}
-			return this.GenerateImageDescription();
+			string str = string.Empty;
+			str += this.Title;
+			str += "\n\n";
+			str += this.GenerateImageDescription();
+			str += "\n\n";
+			return str + "Author".Translate() + ": " + this.AuthorName;
+		}
+
+		public override bool AllowStackWith(Thing other)
+		{
+			return !this.Active;
 		}
 
 		public string GenerateImageDescription()
@@ -201,7 +211,7 @@ namespace RimWorld
 				Log.Error("Did CompArt.GenerateTitle without initializing art: " + this.parent);
 				this.InitializeArt(ArtGenerationContext.Outsider);
 			}
-			return this.taleRef.GenerateText(TextGenerationPurpose.ArtName, this.Props.nameMaker.Rules);
+			return GenText.CapitalizeAsTitle(this.taleRef.GenerateText(TextGenerationPurpose.ArtName, this.Props.nameMaker.Rules));
 		}
 	}
 }

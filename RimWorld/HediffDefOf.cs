@@ -40,8 +40,6 @@ namespace RimWorld
 
 		public static HediffDef Anesthetic;
 
-		public static HediffDef Concussion;
-
 		public static HediffDef CryptosleepSickness;
 
 		public static HediffDef FoodPoisoning;

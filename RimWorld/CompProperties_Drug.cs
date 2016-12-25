@@ -19,6 +19,8 @@ namespace RimWorld
 
 		public FloatRange overdoseSeverityOffset = FloatRange.Zero;
 
+		public float largeOverdoseChance;
+
 		public bool isCombatEnhancingDrug;
 
 		public float listOrder;

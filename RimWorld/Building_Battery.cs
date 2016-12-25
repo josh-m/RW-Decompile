@@ -45,9 +45,9 @@ namespace RimWorld
 			rotation.Rotate(RotationDirection.Clockwise);
 			r.rotation = rotation;
 			GenDraw.DrawFillableBar(r);
-			if (this.ticksToExplode > 0)
+			if (this.ticksToExplode > 0 && base.Spawned)
 			{
-				OverlayDrawer.DrawOverlay(this, OverlayTypes.BurningWick);
+				base.Map.overlayDrawer.DrawOverlay(this, OverlayTypes.BurningWick);
 			}
 		}
 
@@ -69,7 +69,7 @@ namespace RimWorld
 				{
 					IntVec3 randomCell = this.OccupiedRect().RandomCell;
 					float radius = Rand.Range(0.5f, 1f) * 3f;
-					GenExplosion.DoExplosion(randomCell, radius, DamageDefOf.Flame, null, null, null, null, null, 0f, 1, false, null, 0f, 1);
+					GenExplosion.DoExplosion(randomCell, base.Map, radius, DamageDefOf.Flame, null, null, null, null, null, 0f, 1, false, null, 0f, 1);
 					base.GetComp<CompPowerBattery>().DrawPower(400f);
 				}
 			}
@@ -86,7 +86,7 @@ namespace RimWorld
 
 		private void StartWickSustainer()
 		{
-			SoundInfo info = SoundInfo.InWorld(this, MaintenanceType.PerTick);
+			SoundInfo info = SoundInfo.InMap(this, MaintenanceType.PerTick);
 			this.wickSustainer = SoundDefOf.HissSmall.TrySpawnSustainer(info);
 		}
 	}

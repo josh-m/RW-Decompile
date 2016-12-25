@@ -27,7 +27,7 @@ namespace Verse
 		public override void Regenerate()
 		{
 			base.ClearSubMeshes(MeshParts.All);
-			TerrainGrid terrainGrid = Find.TerrainGrid;
+			TerrainGrid terrainGrid = base.Map.terrainGrid;
 			CellRect cellRect = this.section.CellRect;
 			TerrainDef[] array = new TerrainDef[8];
 			HashSet<TerrainDef> hashSet = new HashSet<TerrainDef>();
@@ -55,14 +55,14 @@ namespace Verse
 				for (int i = 0; i < 8; i++)
 				{
 					IntVec3 c = current + GenAdj.AdjacentCellsAroundBottom[i];
-					if (!c.InBounds())
+					if (!c.InBounds(base.Map))
 					{
 						array[i] = terrainDef;
 					}
 					else
 					{
 						TerrainDef terrainDef2 = terrainGrid.TerrainAt(c);
-						Thing edifice = c.GetEdifice();
+						Thing edifice = c.GetEdifice(base.Map);
 						if (edifice != null && edifice.def.coversFloor)
 						{
 							terrainDef2 = TerrainDefOf.Underwall;

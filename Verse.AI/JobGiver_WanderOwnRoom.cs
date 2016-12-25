@@ -12,8 +12,8 @@ namespace Verse.AI
 			this.wanderDestValidator = delegate(Pawn pawn, IntVec3 loc)
 			{
 				IntVec3 wanderRoot = this.GetWanderRoot(pawn);
-				Room room = wanderRoot.GetRoom();
-				return room == null || room.IsDoor || WanderUtility.InSameRoom(wanderRoot, loc);
+				Room room = wanderRoot.GetRoom(pawn.Map);
+				return room == null || room.IsDoor || WanderUtility.InSameRoom(wanderRoot, loc, pawn.Map);
 			};
 		}
 

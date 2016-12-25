@@ -16,8 +16,8 @@ namespace Verse
 			{
 				return 0f;
 			}
-			HediffCompProperties hediffCompProperties = this.hediffDef.CompPropsFor(typeof(HediffComp_Immunizable));
-			float num = (!sick) ? hediffCompProperties.immunityPerDayNotSick : hediffCompProperties.immunityPerDaySick;
+			HediffCompProperties_Immunizable hediffCompProperties_Immunizable = this.hediffDef.CompProps<HediffCompProperties_Immunizable>();
+			float num = (!sick) ? hediffCompProperties_Immunizable.immunityPerDayNotSick : hediffCompProperties_Immunizable.immunityPerDaySick;
 			num /= 60000f;
 			float num2 = pawn.GetStatValue(StatDefOf.ImmunityGainSpeed, true);
 			if (diseaseInstance != null)

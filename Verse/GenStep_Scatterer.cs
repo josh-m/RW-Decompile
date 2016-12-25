@@ -1,3 +1,4 @@
+using RimWorld;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -14,6 +15,8 @@ namespace Verse
 
 		public bool nearPlayerStart;
 
+		public bool nearMapCenter;
+
 		public float minSpacing = 10f;
 
 		public bool spotMustBeStandable;
@@ -24,40 +27,55 @@ namespace Verse
 
 		public int extraNoBuildEdgeDist;
 
-		public bool buildableAreaOnly;
-
 		public List<ScattererValidator> validators = new List<ScattererValidator>();
+
+		public bool allowOnWater = true;
 
 		public bool warnOnFail = true;
 
 		[Unsaved]
-		protected HashSet<IntVec3> usedSpots = new HashSet<IntVec3>();
+		protected List<IntVec3> usedSpots = new List<IntVec3>();
 
-		public override void Generate()
+		public override void Generate(Map map)
 		{
-			int num = this.CalculateFinalCount();
+			if (!this.allowOnWater && map.TileInfo.WaterCovered)
+			{
+				return;
+			}
+			int num = this.CalculateFinalCount(map);
 			for (int i = 0; i < num; i++)
 			{
 				IntVec3 intVec;
-				if (!this.TryFindScatterCell(out intVec))
+				if (!this.TryFindScatterCell(map, out intVec))
 				{
 					return;
 				}
-				this.ScatterAt(intVec, 1);
+				this.ScatterAt(intVec, map, 1);
 				this.usedSpots.Add(intVec);
 			}
+			this.usedSpots.Clear();
 		}
 
-		protected virtual bool TryFindScatterCell(out IntVec3 result)
+		protected virtual bool TryFindScatterCell(Map map, out IntVec3 result)
 		{
-			if (this.nearPlayerStart)
+			if (this.nearMapCenter)
 			{
-				result = CellFinder.RandomClosewalkCellNear(MapGenerator.PlayerStartSpot, 20);
-				return true;
+				if (RCellFinder.TryFindRandomCellNearWith(map.Center, (IntVec3 x) => this.CanScatterAt(x, map), map, out result, 3))
+				{
+					return true;
+				}
 			}
-			if (CellFinderLoose.TryFindRandomNotEdgeCellWith(5, new Predicate<IntVec3>(this.CanScatterAt), out result))
+			else
 			{
-				return true;
+				if (this.nearPlayerStart)
+				{
+					result = CellFinder.RandomClosewalkCellNear(MapGenerator.PlayerStartSpot, map, 20);
+					return true;
+				}
+				if (CellFinderLoose.TryFindRandomNotEdgeCellWith(5, (IntVec3 x) => this.CanScatterAt(x, map), map, out result))
+				{
+					return true;
+				}
 			}
 			if (this.warnOnFail)
 			{
@@ -66,35 +84,27 @@ namespace Verse
 			return false;
 		}
 
-		protected abstract void ScatterAt(IntVec3 loc, int count = 1);
+		protected abstract void ScatterAt(IntVec3 loc, Map map, int count = 1);
 
-		protected virtual bool CanScatterAt(IntVec3 loc)
+		protected virtual bool CanScatterAt(IntVec3 loc, Map map)
 		{
-			if (this.buildableAreaOnly && loc.InNoBuildEdgeArea())
+			if (this.extraNoBuildEdgeDist > 0 && loc.CloseToEdge(map, this.extraNoBuildEdgeDist + 10))
 			{
 				return false;
 			}
-			if (this.extraNoBuildEdgeDist > 0 && loc.CloseToEdge(this.extraNoBuildEdgeDist + 10))
+			if (this.minEdgeDist > 0 && loc.CloseToEdge(map, this.minEdgeDist))
 			{
 				return false;
 			}
-			if (this.minEdgeDist > 0 && loc.CloseToEdge(this.minEdgeDist))
+			if (this.NearUsedSpot(loc, this.minSpacing))
 			{
 				return false;
 			}
-			foreach (IntVec3 current in this.usedSpots)
-			{
-				if ((current - loc).LengthHorizontal < this.minSpacing)
-				{
-					bool result = false;
-					return result;
-				}
-			}
-			if ((Find.Map.Center - loc).LengthHorizontalSquared < (float)(this.minDistToPlayerStart * this.minDistToPlayerStart))
+			if ((map.Center - loc).LengthHorizontalSquared < (float)(this.minDistToPlayerStart * this.minDistToPlayerStart))
 			{
 				return false;
 			}
-			if (this.spotMustBeStandable && !loc.Standable())
+			if (this.spotMustBeStandable && !loc.Standable(map))
 			{
 				return false;
 			}
@@ -102,7 +112,7 @@ namespace Verse
 			{
 				for (int i = 0; i < this.validators.Count; i++)
 				{
-					if (!this.validators[i].Allows(loc))
+					if (!this.validators[i].Allows(loc, map))
 					{
 						return false;
 					}
@@ -111,20 +121,32 @@ namespace Verse
 			return true;
 		}
 
-		protected int CalculateFinalCount()
+		protected bool NearUsedSpot(IntVec3 c, float dist)
+		{
+			for (int i = 0; i < this.usedSpots.Count; i++)
+			{
+				if ((this.usedSpots[i] - c).LengthHorizontalSquared <= dist * dist)
+				{
+					return true;
+				}
+			}
+			return false;
+		}
+
+		protected int CalculateFinalCount(Map map)
 		{
 			if (this.count < 0)
 			{
-				return GenStep_Scatterer.CountFromPer10kCells(this.countPer10kCellsRange.RandomInRange, -1);
+				return GenStep_Scatterer.CountFromPer10kCells(this.countPer10kCellsRange.RandomInRange, map, -1);
 			}
 			return this.count;
 		}
 
-		public static int CountFromPer10kCells(float countPer10kCells, int mapSize = -1)
+		public static int CountFromPer10kCells(float countPer10kCells, Map map, int mapSize = -1)
 		{
 			if (mapSize < 0)
 			{
-				mapSize = Find.Map.Size.x;
+				mapSize = map.Size.x;
 			}
 			int num = Mathf.RoundToInt(10000f / countPer10kCells);
 			return Mathf.RoundToInt((float)(mapSize * mapSize) / (float)num);
@@ -132,7 +154,7 @@ namespace Verse
 
 		public void DebugForceScatterAt(IntVec3 loc)
 		{
-			this.ScatterAt(loc, 1);
+			this.ScatterAt(loc, Find.VisibleMap, 1);
 		}
 	}
 }

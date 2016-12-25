@@ -4,17 +4,16 @@ namespace Verse.AI
 {
 	public static class GenPath
 	{
-		public static void ResolvePathMode(ref TargetInfo dest, ref PathEndMode peMode)
+		public static TargetInfo ResolvePathMode(TargetInfo dest, ref PathEndMode peMode)
 		{
 			if (peMode == PathEndMode.InteractionCell)
 			{
-				dest = dest.Thing.InteractionCell;
 				peMode = PathEndMode.OnCell;
-				return;
+				return new TargetInfo(dest.Thing.InteractionCell, dest.Thing.Map, false);
 			}
 			if (peMode == PathEndMode.ClosestTouch)
 			{
-				if (Find.PathGrid.PerceivedPathCostAt(dest.Cell) > 30 || !dest.Cell.Walkable())
+				if (dest.Map.pathGrid.PerceivedPathCostAt(dest.Cell) > 30 || !dest.Cell.Walkable(dest.Map))
 				{
 					peMode = PathEndMode.Touch;
 				}
@@ -23,6 +22,7 @@ namespace Verse.AI
 					peMode = PathEndMode.OnCell;
 				}
 			}
+			return dest;
 		}
 	}
 }

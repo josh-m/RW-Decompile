@@ -63,7 +63,7 @@ namespace RimWorld
 					JoyUtility.JoyTickCheckEnd(this.<>f__this.pawn, JoyTickFullJoyAction.None, 1f);
 					if (this.<>f__this.pawn.needs.joy.CurLevelPercentage > 0.9999f && this.<>f__this.Patient.needs.joy.CurLevelPercentage > 0.9999f)
 					{
-						this.<>f__this.pawn.jobs.EndCurrentJob(JobCondition.Succeeded);
+						this.<>f__this.pawn.jobs.EndCurrentJob(JobCondition.Succeeded, true);
 					}
 				},
 				socialMode = RandomSocialMode.Off,

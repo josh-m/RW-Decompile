@@ -12,10 +12,35 @@ namespace RimWorld
 	{
 		private const string MeleeWeaponTag = "Melee";
 
-		[DebuggerHidden]
-		public static IEnumerable<Pawn> GenerateArrivingPawns(IncidentParms parms, bool warnOnZeroResults = true)
+		[Unsaved]
+		private static List<Pawn> pawnsBeingGeneratedNow = new List<Pawn>();
+
+		public static List<Pawn> PawnsBeingGeneratedNow
 		{
-			if (parms.faction.def.pawnGroupMakers == null)
+			get
+			{
+				return PawnGroupMakerUtility.pawnsBeingGeneratedNow;
+			}
+		}
+
+		public static void AddToPawnsBeingGeneratedNow(Pawn p)
+		{
+			PawnGroupMakerUtility.pawnsBeingGeneratedNow.Add(p);
+		}
+
+		public static void ClearPawnsBeingGeneratedNow()
+		{
+			PawnGroupMakerUtility.pawnsBeingGeneratedNow.Clear();
+		}
+
+		[DebuggerHidden]
+		public static IEnumerable<Pawn> GeneratePawns(PawnGroupKindDef groupKind, PawnGroupMakerParms parms, bool warnOnZeroResults = true)
+		{
+			if (groupKind == null)
+			{
+				Log.Error("Tried to generate pawns with null pawn group kind def. parms=" + parms);
+			}
+			else if (parms.faction.def.pawnGroupMakers == null)
 			{
 				Log.Error(string.Concat(new object[]
 				{
@@ -29,7 +54,7 @@ namespace RimWorld
 			else
 			{
 				IEnumerable<PawnGroupMaker> usableGroupMakers = from gm in parms.faction.def.pawnGroupMakers
-				where gm.CanGenerateFrom(this.parms)
+				where gm.kindDef == this.groupKind && gm.CanGenerateFrom(this.parms)
 				select gm;
 				PawnGroupMaker chosenGroupMaker;
 				if (!usableGroupMakers.TryRandomElementByWeight((PawnGroupMaker gm) => gm.commonality, out chosenGroupMaker))
@@ -46,7 +71,7 @@ namespace RimWorld
 				}
 				else
 				{
-					foreach (Pawn p in chosenGroupMaker.GenerateArrivingPawns(parms, warnOnZeroResults))
+					foreach (Pawn p in chosenGroupMaker.GeneratePawns(parms, warnOnZeroResults))
 					{
 						yield return p;
 					}
@@ -54,31 +79,7 @@ namespace RimWorld
 			}
 		}
 
-		public static void AdjustPointsForGroupArrivalParams(IncidentParms parms)
-		{
-			if (parms.raidStrategy != null)
-			{
-				parms.points *= parms.raidStrategy.pointsFactor;
-			}
-			switch (parms.raidArrivalMode)
-			{
-			case PawnsArriveMode.EdgeWalkIn:
-				parms.points *= 1f;
-				break;
-			case PawnsArriveMode.EdgeDrop:
-				parms.points *= 1f;
-				break;
-			case PawnsArriveMode.CenterDrop:
-				parms.points *= 0.45f;
-				break;
-			}
-			if (parms.raidStrategy != null)
-			{
-				parms.points = Mathf.Max(parms.points, parms.raidStrategy.Worker.MinimumPoints(parms.faction) * 1.05f);
-			}
-		}
-
-		public static IEnumerable<PawnGenOption> ChoosePawnGenOptionsByPoints(float points, List<PawnGenOption> options, IncidentParms parms)
+		public static IEnumerable<PawnGenOption> ChoosePawnGenOptionsByPoints(float points, List<PawnGenOption> options, PawnGroupMakerParms parms)
 		{
 			float num = points;
 			List<PawnGenOption> list = new List<PawnGenOption>();
@@ -181,11 +182,12 @@ namespace RimWorld
 						{
 							return;
 						}
-						IncidentParms incidentParms = new IncidentParms();
-						incidentParms.points = points;
-						sb.AppendLine("Group with " + incidentParms.points + " points");
+						PawnGroupMakerParms pawnGroupMakerParms = new PawnGroupMakerParms();
+						pawnGroupMakerParms.map = Find.VisibleMap;
+						pawnGroupMakerParms.points = points;
+						sb.AppendLine("Group with " + pawnGroupMakerParms.points + " points");
 						float num = 0f;
-						foreach (Pawn current in PawnGroupMakerUtility.GenerateArrivingPawns(incidentParms, false))
+						foreach (Pawn current in PawnGroupMakerUtility.GeneratePawns(PawnGroupKindDefOf.Normal, pawnGroupMakerParms, false))
 						{
 							string text;
 							if (current.equipment.Primary != null)

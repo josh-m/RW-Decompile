@@ -7,6 +7,8 @@ namespace RimWorld
 {
 	public static class RelationsUtility
 	{
+		private static List<Thought> tmpThoughts = new List<Thought>();
+
 		public static bool PawnsKnowEachOther(Pawn p1, Pawn p2)
 		{
 			return (p1.Faction != null && p1.Faction == p2.Faction) || (p1.RaceProps.IsFlesh && p1.relations.DirectRelations.Find((DirectPawnRelation x) => x.otherPawn == p2) != null) || (p2.RaceProps.IsFlesh && p2.relations.DirectRelations.Find((DirectPawnRelation x) => x.otherPawn == p1) != null) || RelationsUtility.HasAnySocialMemoryWith(p1, p2) || RelationsUtility.HasAnySocialMemoryWith(p2, p1);
@@ -74,7 +76,10 @@ namespace RimWorld
 			}
 			if (Rand.Value < baseChance)
 			{
-				humanlike.relations.AddDirectRelation(PawnRelationDefOf.Bond, animal);
+				if (!humanlike.story.traits.HasTrait(TraitDefOf.Psychopath))
+				{
+					humanlike.relations.AddDirectRelation(PawnRelationDefOf.Bond, animal);
+				}
 				if (humanlike.Faction == Faction.OfPlayer || animal.Faction == Faction.OfPlayer)
 				{
 					TaleRecorder.RecordTale(TaleDefOf.BondedWithAnimal, new object[]
@@ -89,7 +94,7 @@ namespace RimWorld
 				{
 					flag = true;
 					text = ((animal.Name != null) ? animal.Name.ToStringFull : animal.LabelIndefinite());
-					animal.Name = NameGenerator.GeneratePawnName(animal, NameStyle.Full, null);
+					animal.Name = PawnBioAndNameGenerator.GeneratePawnName(animal, NameStyle.Full, null);
 				}
 				if (PawnUtility.ShouldSendNotificationAbout(humanlike) || PawnUtility.ShouldSendNotificationAbout(animal))
 				{
@@ -138,15 +143,16 @@ namespace RimWorld
 			{
 				return false;
 			}
-			List<Thought> thoughts = p.needs.mood.thoughts.Thoughts;
-			for (int i = 0; i < thoughts.Count; i++)
+			p.needs.mood.thoughts.GetMainThoughts(RelationsUtility.tmpThoughts);
+			for (int i = 0; i < RelationsUtility.tmpThoughts.Count; i++)
 			{
-				Thought_MemorySocial thought_MemorySocial = thoughts[i] as Thought_MemorySocial;
-				if (thought_MemorySocial != null && thought_MemorySocial.otherPawnID == otherPawn.thingIDNumber)
+				Thought_MemorySocial thought_MemorySocial = RelationsUtility.tmpThoughts[i] as Thought_MemorySocial;
+				if (thought_MemorySocial != null && thought_MemorySocial.otherPawn == otherPawn)
 				{
 					return true;
 				}
 			}
+			RelationsUtility.tmpThoughts.Clear();
 			return false;
 		}
 	}

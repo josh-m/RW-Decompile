@@ -8,7 +8,7 @@ namespace Verse
 	{
 		private const byte RoofedAreaMinSkyCover = 100;
 
-		private static Color32[] glowGrid;
+		private Color32[] glowGrid;
 
 		private int firstCenterInd;
 
@@ -64,8 +64,9 @@ namespace Verse
 			int maxX = this.sectRect.maxX;
 			int maxZ = this.sectRect.maxZ;
 			bool[] array2 = new bool[4];
-			Thing[] innerArray = Find.EdificeGrid.InnerArray;
-			RoofGrid roofGrid = Find.RoofGrid;
+			Thing[] innerArray = base.Map.edificeGrid.InnerArray;
+			RoofGrid roofGrid = base.Map.roofGrid;
+			CellIndices cellIndices = base.Map.cellIndices;
 			for (int i = this.sectRect.minX; i <= maxX + 1; i++)
 			{
 				for (int j = this.sectRect.minZ; j <= maxZ + 1; j++)
@@ -81,13 +82,13 @@ namespace Verse
 					for (int k = 0; k < 4; k++)
 					{
 						IntVec3 c = a + SectionLayer_LightingOverlay.CheckSquareOffsets[k];
-						if (!c.InBounds())
+						if (!c.InBounds(base.Map))
 						{
 							array2[k] = true;
 						}
 						else
 						{
-							Thing thing = innerArray[CellIndices.CellToIndex(c)];
+							Thing thing = innerArray[cellIndices.CellToIndex(c)];
 							RoofDef roofDef = roofGrid.RoofAt(c.x, c.z);
 							if (roofDef != null && (roofDef.isThickRoof || thing == null || !thing.def.holdsRoof))
 							{
@@ -107,22 +108,22 @@ namespace Verse
 					int num6 = 0;
 					if (!array2[0])
 					{
-						colorInt += SectionLayer_LightingOverlay.glowGrid[CellIndices.CellToIndex(i, j - 1)].AsColorInt();
+						colorInt += this.glowGrid[cellIndices.CellToIndex(i, j - 1)].AsColorInt();
 						num6++;
 					}
 					if (!array2[1])
 					{
-						colorInt += SectionLayer_LightingOverlay.glowGrid[CellIndices.CellToIndex(i - 1, j - 1)].AsColorInt();
+						colorInt += this.glowGrid[cellIndices.CellToIndex(i - 1, j - 1)].AsColorInt();
 						num6++;
 					}
 					if (!array2[2])
 					{
-						colorInt += SectionLayer_LightingOverlay.glowGrid[CellIndices.CellToIndex(i - 1, j)].AsColorInt();
+						colorInt += this.glowGrid[cellIndices.CellToIndex(i - 1, j)].AsColorInt();
 						num6++;
 					}
 					if (!array2[3])
 					{
-						colorInt += SectionLayer_LightingOverlay.glowGrid[CellIndices.CellToIndex(i, j)].AsColorInt();
+						colorInt += this.glowGrid[cellIndices.CellToIndex(i, j)].AsColorInt();
 						num6++;
 					}
 					if (num6 > 0)
@@ -155,7 +156,7 @@ namespace Verse
 					colorInt2 += array[num9];
 					colorInt2 += array[num10];
 					array[num11] = (colorInt2 / 4f).ToColor32;
-					Thing thing = innerArray[CellIndices.CellToIndex(l, m)];
+					Thing thing = innerArray[cellIndices.CellToIndex(l, m)];
 					if (roofGrid.Roofed(l, m) && (thing == null || !thing.def.holdsRoof) && array[num11].a < 100)
 					{
 						array[num11].a = 100;
@@ -167,9 +168,9 @@ namespace Verse
 
 		private void MakeBaseGeometry(LayerSubMesh sm)
 		{
-			SectionLayer_LightingOverlay.glowGrid = Find.GlowGrid.glowGrid;
+			this.glowGrid = base.Map.glowGrid.glowGrid;
 			this.sectRect = new CellRect(this.section.botLeft.x, this.section.botLeft.z, 17, 17);
-			this.sectRect.ClipInsideMap();
+			this.sectRect.ClipInsideMap(base.Map);
 			int capacity = (this.sectRect.Width + 1) * (this.sectRect.Height + 1) + this.sectRect.Area;
 			float y = Altitudes.AltitudeFor(AltitudeLayer.LightingOverlay);
 			sm.verts.Capacity = capacity;
@@ -213,7 +214,7 @@ namespace Verse
 					sm.tris.Add(item5);
 				}
 			}
-			sm.FinalizeMesh(MeshParts.Verts | MeshParts.Tris);
+			sm.FinalizeMesh(MeshParts.Verts | MeshParts.Tris, false);
 		}
 
 		private void CalculateVertexIndices(int worldX, int worldZ, out int botLeft, out int topLeft, out int topRight, out int botRight, out int center)

@@ -5,31 +5,31 @@ namespace Verse
 {
 	public class JitterHandler
 	{
-		protected Vector3 JitterOffset = new Vector3(0f, 0f, 0f);
+		private Vector3 curOffset = new Vector3(0f, 0f, 0f);
 
-		public float DamageJitterDistance = 0.17f;
+		private float DamageJitterDistance = 0.17f;
 
-		public float JitterDropPerTick = 0.018f;
+		private float JitterDropPerTick = 0.018f;
 
-		public float JitterMax = 0.35f;
+		private float JitterMax = 0.35f;
 
-		public Vector3 CurrentJitterOffset
+		public Vector3 CurrentOffset
 		{
 			get
 			{
-				return this.JitterOffset;
+				return this.curOffset;
 			}
 		}
 
 		public void JitterHandlerTick()
 		{
-			if (this.JitterOffset.sqrMagnitude < this.JitterDropPerTick * this.JitterDropPerTick)
+			if (this.curOffset.sqrMagnitude < this.JitterDropPerTick * this.JitterDropPerTick)
 			{
-				this.JitterOffset = new Vector3(0f, 0f, 0f);
+				this.curOffset = new Vector3(0f, 0f, 0f);
 			}
 			else
 			{
-				this.JitterOffset -= this.JitterOffset.normalized * this.JitterDropPerTick;
+				this.curOffset -= this.curOffset.normalized * this.JitterDropPerTick;
 			}
 		}
 
@@ -41,12 +41,12 @@ namespace Verse
 			}
 		}
 
-		public void AddOffset(float Distance, float Direction)
+		public void AddOffset(float dist, float dir)
 		{
-			this.JitterOffset += Quaternion.AngleAxis(Direction, Vector3.up) * Vector3.forward * Distance;
-			if (this.JitterOffset.sqrMagnitude > this.JitterMax * this.JitterMax)
+			this.curOffset += Quaternion.AngleAxis(dir, Vector3.up) * Vector3.forward * dist;
+			if (this.curOffset.sqrMagnitude > this.JitterMax * this.JitterMax)
 			{
-				this.JitterOffset *= this.JitterMax / this.JitterOffset.magnitude;
+				this.curOffset *= this.JitterMax / this.curOffset.magnitude;
 			}
 		}
 	}

@@ -13,6 +13,8 @@ namespace Verse
 
 		public int id = -1;
 
+		public sbyte mapIndex = -1;
+
 		private Room roomInt;
 
 		public List<RegionLink> links = new List<RegionLink>();
@@ -49,11 +51,19 @@ namespace Verse
 
 		private static int nextId = 1;
 
+		public Map Map
+		{
+			get
+			{
+				return ((int)this.mapIndex >= 0) ? Find.Maps[(int)this.mapIndex] : null;
+			}
+		}
+
 		public IEnumerable<IntVec3> Cells
 		{
 			get
 			{
-				RegionGrid regions = Find.RegionGrid;
+				RegionGrid regions = this.Map.regionGrid;
 				for (int z = this.extentsClose.minZ; z <= this.extentsClose.maxZ; z++)
 				{
 					for (int x = this.extentsClose.minX; x <= this.extentsClose.maxX; x++)
@@ -147,12 +157,29 @@ namespace Verse
 				for (int i = 0; i < 1000; i++)
 				{
 					IntVec3 randomCell = this.extentsClose.RandomCell;
-					if (randomCell.GetRegion() == this)
+					if (randomCell.GetRegion(this.Map) == this)
 					{
 						return randomCell;
 					}
 				}
-				Log.Error("Couldn't find random cell in region " + this.ToString());
+				return this.AnyCell;
+			}
+		}
+
+		public IntVec3 AnyCell
+		{
+			get
+			{
+				CellRect.CellRectIterator iterator = this.extentsClose.GetIterator();
+				while (!iterator.Done())
+				{
+					if (iterator.Current.GetRegion(this.Map) == this)
+					{
+						return iterator.Current;
+					}
+					iterator.MoveNext();
+				}
+				Log.Error("Couldn't find any cell in region " + this.ToString());
 				return this.extentsClose.RandomCell;
 			}
 		}
@@ -163,6 +190,7 @@ namespace Verse
 			{
 				StringBuilder stringBuilder = new StringBuilder();
 				stringBuilder.AppendLine("id: " + this.id);
+				stringBuilder.AppendLine("mapIndex: " + this.mapIndex);
 				stringBuilder.AppendLine("links count: " + this.links.Count);
 				foreach (RegionLink current in this.links)
 				{
@@ -205,12 +233,13 @@ namespace Verse
 		{
 		}
 
-		public static Region MakeNewUnfilled(IntVec3 root)
+		public static Region MakeNewUnfilled(IntVec3 root, Map map)
 		{
 			Region region = new Region();
 			region.debug_makeTick = Find.TickManager.TicksGame;
 			region.id = Region.nextId;
 			Region.nextId++;
+			region.mapIndex = (sbyte)map.Index;
 			region.precalculatedHashCode = Gen.HashCombineInt(region.id, 1295813358);
 			region.extentsClose.minX = root.x;
 			region.extentsClose.maxX = root.x;
@@ -220,7 +249,7 @@ namespace Verse
 			region.extentsLimit.maxX = root.x + 12 - (root.x + 12) % 12 - 1;
 			region.extentsLimit.minZ = root.z - root.z % 12;
 			region.extentsLimit.maxZ = root.z + 12 - (root.z + 12) % 12 - 1;
-			region.extentsLimit.ClipInsideMap();
+			region.extentsLimit.ClipInsideMap(map);
 			return region;
 		}
 
@@ -280,6 +309,14 @@ namespace Verse
 
 		public AreaOverlap OverlapWith(Area a)
 		{
+			if (a.TrueCount == 0)
+			{
+				return AreaOverlap.None;
+			}
+			if (this.Map != a.Map)
+			{
+				return AreaOverlap.None;
+			}
 			if (this.cachedAreaOverlaps == null)
 			{
 				this.cachedAreaOverlaps = new Dictionary<Area, AreaOverlap>();
@@ -326,6 +363,27 @@ namespace Verse
 			}
 		}
 
+		public void DecrementMapIndex()
+		{
+			if ((int)this.mapIndex <= 0)
+			{
+				Log.Warning(string.Concat(new object[]
+				{
+					"Tried to decrement map index for region ",
+					this.id,
+					", but mapIndex=",
+					this.mapIndex
+				}));
+				return;
+			}
+			this.mapIndex -= 1;
+		}
+
+		public void Notify_MyMapRemoved()
+		{
+			this.mapIndex = -1;
+		}
+
 		public override string ToString()
 		{
 			string str;
@@ -341,6 +399,8 @@ namespace Verse
 			{
 				"Region(id=",
 				this.id,
+				", mapIndex=",
+				this.mapIndex,
 				", center=",
 				this.extentsClose.CenterCell,
 				", links=",

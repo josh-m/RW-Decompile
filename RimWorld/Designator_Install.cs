@@ -115,34 +115,34 @@ namespace RimWorld
 
 		public override AcceptanceReport CanDesignateCell(IntVec3 c)
 		{
-			if (!(this.MiniToInstallOrBuildingToReinstall is MinifiedThing) && c.GetThingList().Find((Thing x) => x.Position == c && x.Rotation == this.placingRot && x.def == this.PlacingDef) != null)
+			if (!(this.MiniToInstallOrBuildingToReinstall is MinifiedThing) && c.GetThingList(base.Map).Find((Thing x) => x.Position == c && x.Rotation == this.placingRot && x.def == this.PlacingDef) != null)
 			{
 				return new AcceptanceReport("IdenticalThingExists".Translate());
 			}
 			Thing miniToInstallOrBuildingToReinstall = this.MiniToInstallOrBuildingToReinstall;
-			return GenConstruct.CanPlaceBlueprintAt(this.PlacingDef, c, this.placingRot, false, miniToInstallOrBuildingToReinstall);
+			return GenConstruct.CanPlaceBlueprintAt(this.PlacingDef, c, this.placingRot, base.Map, false, miniToInstallOrBuildingToReinstall);
 		}
 
 		public override void DesignateSingleCell(IntVec3 c)
 		{
-			GenSpawn.WipeExistingThings(c, this.placingRot, this.PlacingDef.installBlueprintDef, true);
+			GenSpawn.WipeExistingThings(c, this.placingRot, this.PlacingDef.installBlueprintDef, base.Map, DestroyMode.Deconstruct);
 			MinifiedThing minifiedThing = this.MiniToInstallOrBuildingToReinstall as MinifiedThing;
 			if (minifiedThing != null)
 			{
-				GenConstruct.PlaceBlueprintForInstall(minifiedThing, c, this.placingRot, Faction.OfPlayer);
+				GenConstruct.PlaceBlueprintForInstall(minifiedThing, c, base.Map, this.placingRot, Faction.OfPlayer);
 			}
 			else
 			{
-				GenConstruct.PlaceBlueprintForReinstall((Building)this.MiniToInstallOrBuildingToReinstall, c, this.placingRot, Faction.OfPlayer);
+				GenConstruct.PlaceBlueprintForReinstall((Building)this.MiniToInstallOrBuildingToReinstall, c, base.Map, this.placingRot, Faction.OfPlayer);
 			}
-			MoteMaker.ThrowMetaPuffs(GenAdj.OccupiedRect(c, this.placingRot, this.PlacingDef.Size));
-			DesignatorManager.Deselect();
+			MoteMaker.ThrowMetaPuffs(GenAdj.OccupiedRect(c, this.placingRot, this.PlacingDef.Size), base.Map);
+			Find.DesignatorManager.Deselect();
 		}
 
 		protected override void DrawGhost(Color ghostCol)
 		{
 			Graphic baseGraphic = this.ThingToInstall.Graphic.ExtractInnerGraphicFor(this.ThingToInstall);
-			GhostDrawer.DrawGhostThing(Gen.MouseCell(), this.placingRot, (ThingDef)this.PlacingDef, baseGraphic, ghostCol, AltitudeLayer.Blueprint);
+			GhostDrawer.DrawGhostThing(UI.MouseCell(), this.placingRot, (ThingDef)this.PlacingDef, baseGraphic, ghostCol, AltitudeLayer.Blueprint);
 		}
 	}
 }

@@ -38,7 +38,7 @@ namespace Verse.AI
 				{
 					return false;
 				}
-				List<Pawn> allPawnsSpawned = Find.MapPawns.AllPawnsSpawned;
+				List<Pawn> allPawnsSpawned = pawn.Map.mapPawns.AllPawnsSpawned;
 				for (int i = 0; i < allPawnsSpawned.Count; i++)
 				{
 					Pawn pawn2 = allPawnsSpawned[i];
@@ -49,7 +49,7 @@ namespace Verse.AI
 				}
 				return true;
 			};
-			Thing thing = GenClosest.ClosestThingReachable(pawn.Position, ThingRequest.ForGroup(ThingRequestGroup.Pawn), PathEndMode.OnCell, TraverseParms.For(pawn, Danger.Deadly, TraverseMode.ByPawn, false), 35f, validator, null, -1, false);
+			Thing thing = GenClosest.ClosestThingReachable(pawn.Position, pawn.Map, ThingRequest.ForGroup(ThingRequestGroup.Pawn), PathEndMode.OnCell, TraverseParms.For(pawn, Danger.Deadly, TraverseMode.ByPawn, false), 35f, validator, null, -1, false);
 			if (thing != null)
 			{
 				return thing.Position;

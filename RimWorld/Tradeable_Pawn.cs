@@ -50,7 +50,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return (Pawn)base.AnyThing;
+				return (Pawn)this.AnyThing;
 			}
 		}
 
@@ -63,10 +63,12 @@ namespace RimWorld
 				{
 					Pawn pawn = list[i];
 					pawn.PreTraded(TradeAction.PlayerSells, TradeSession.playerNegotiator, TradeSession.trader);
-					TradeSession.trader.AddToStock(pawn);
+					TradeSession.trader.AddToStock(pawn, TradeSession.playerNegotiator);
 					if (pawn.RaceProps.Humanlike)
 					{
-						foreach (Pawn current in Find.MapPawns.FreeColonistsAndPrisoners)
+						foreach (Pawn current in from x in PawnsFinder.AllMapsCaravansAndTravelingTransportPods
+						where x.IsColonist || x.IsPrisonerOfColony
+						select x)
 						{
 							current.needs.mood.thoughts.memories.TryGainMemoryThought(ThoughtDefOf.KnowPrisonerSold, null);
 						}
@@ -79,7 +81,7 @@ namespace RimWorld
 				for (int j = 0; j < list2.Count; j++)
 				{
 					Pawn pawn2 = list2[j];
-					TradeSession.trader.GiveSoldThingToBuyer(pawn2, pawn2);
+					TradeSession.trader.GiveSoldThingToPlayer(pawn2, pawn2, TradeSession.playerNegotiator);
 					pawn2.PreTraded(TradeAction.PlayerBuys, TradeSession.playerNegotiator, TradeSession.trader);
 				}
 			}

@@ -143,7 +143,7 @@ namespace RimWorld
 		private void SetCurMeleeVerb(Verb v)
 		{
 			this.curMeleeVerb = v;
-			if (Current.ProgramState != ProgramState.MapPlaying)
+			if (Current.ProgramState != ProgramState.Playing)
 			{
 				this.curMeleeVerbUpdateTick = 0;
 			}

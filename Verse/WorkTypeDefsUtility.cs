@@ -90,5 +90,19 @@ namespace Verse
 			}
 			goto IL_1C;
 		}
+
+		public static bool OverlapsWithOnAnyWorkType(this WorkTags a, WorkTags b)
+		{
+			List<WorkTypeDef> allDefsListForReading = DefDatabase<WorkTypeDef>.AllDefsListForReading;
+			for (int i = 0; i < allDefsListForReading.Count; i++)
+			{
+				WorkTypeDef workTypeDef = allDefsListForReading[i];
+				if ((workTypeDef.workTags & a) != WorkTags.None && (workTypeDef.workTags & b) != WorkTags.None)
+				{
+					return true;
+				}
+			}
+			return false;
+		}
 	}
 }

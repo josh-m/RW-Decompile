@@ -7,13 +7,13 @@ using Verse.Sound;
 
 namespace RimWorld
 {
-	public class MinifiedThing : ThingWithComps
+	public class MinifiedThing : ThingWithComps, IThingContainerOwner
 	{
 		private const float MaxMinifiedGraphicSize = 1.1f;
 
 		private const float CrateToGraphicScale = 1.16f;
 
-		protected Thing innerThing;
+		private ThingContainer innerContainer;
 
 		private Graphic cachedGraphic;
 
@@ -23,11 +23,23 @@ namespace RimWorld
 		{
 			get
 			{
-				return this.innerThing;
+				if (this.innerContainer.Count == 0)
+				{
+					return null;
+				}
+				return this.innerContainer[0];
 			}
 			set
 			{
-				this.innerThing = value;
+				if (value == this.InnerThing)
+				{
+					return;
+				}
+				if (this.innerContainer.Count != 0)
+				{
+					this.innerContainer.ClearAndDestroyContents(DestroyMode.Vanish);
+				}
+				this.innerContainer.TryAdd(value, true);
 			}
 		}
 
@@ -37,11 +49,11 @@ namespace RimWorld
 			{
 				if (this.cachedGraphic == null)
 				{
-					this.cachedGraphic = this.innerThing.Graphic.ExtractInnerGraphicFor(this.innerThing);
-					if ((float)this.innerThing.def.size.x > 1.1f || (float)this.innerThing.def.size.z > 1.1f)
+					this.cachedGraphic = this.InnerThing.Graphic.ExtractInnerGraphicFor(this.InnerThing);
+					if ((float)this.InnerThing.def.size.x > 1.1f || (float)this.InnerThing.def.size.z > 1.1f)
 					{
-						Vector2 minifiedDrawSize = this.GetMinifiedDrawSize(this.innerThing.def.size.ToVector2(), 1.1f);
-						Vector2 newDrawSize = new Vector2(minifiedDrawSize.x / (float)this.innerThing.def.size.x * this.cachedGraphic.drawSize.x, minifiedDrawSize.y / (float)this.innerThing.def.size.z * this.cachedGraphic.drawSize.y);
+						Vector2 minifiedDrawSize = this.GetMinifiedDrawSize(this.InnerThing.def.size.ToVector2(), 1.1f);
+						Vector2 newDrawSize = new Vector2(minifiedDrawSize.x / (float)this.InnerThing.def.size.x * this.cachedGraphic.drawSize.x, minifiedDrawSize.y / (float)this.InnerThing.def.size.z * this.cachedGraphic.drawSize.y);
 						this.cachedGraphic = this.cachedGraphic.GetCopy(newDrawSize);
 					}
 				}
@@ -53,8 +65,28 @@ namespace RimWorld
 		{
 			get
 			{
-				return this.innerThing.LabelNoCount;
+				return this.InnerThing.LabelNoCount;
 			}
+		}
+
+		public MinifiedThing()
+		{
+			this.innerContainer = new ThingContainer(this, true, LookMode.Deep);
+		}
+
+		public Map GetMap()
+		{
+			return base.MapHeld;
+		}
+
+		public ThingContainer GetInnerContainer()
+		{
+			return this.innerContainer;
+		}
+
+		public IntVec3 GetPosition()
+		{
+			return base.PositionHeld;
 		}
 
 		public override Thing SplitOff(int count)
@@ -62,13 +94,13 @@ namespace RimWorld
 			MinifiedThing minifiedThing = (MinifiedThing)base.SplitOff(count);
 			if (minifiedThing != this)
 			{
-				minifiedThing.innerThing = ThingMaker.MakeThing(this.innerThing.def, this.innerThing.Stuff);
-				ThingWithComps thingWithComps = this.innerThing as ThingWithComps;
+				minifiedThing.InnerThing = ThingMaker.MakeThing(this.InnerThing.def, this.InnerThing.Stuff);
+				ThingWithComps thingWithComps = this.InnerThing as ThingWithComps;
 				if (thingWithComps != null)
 				{
 					for (int i = 0; i < thingWithComps.AllComps.Count; i++)
 					{
-						thingWithComps.AllComps[i].PostSplitOff(minifiedThing.innerThing);
+						thingWithComps.AllComps[i].PostSplitOff(minifiedThing.InnerThing);
 					}
 				}
 			}
@@ -78,13 +110,16 @@ namespace RimWorld
 		public override bool CanStackWith(Thing other)
 		{
 			MinifiedThing minifiedThing = other as MinifiedThing;
-			return minifiedThing != null && base.CanStackWith(other) && this.innerThing.CanStackWith(minifiedThing.innerThing);
+			return minifiedThing != null && base.CanStackWith(other) && this.InnerThing.CanStackWith(minifiedThing.InnerThing);
 		}
 
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Deep.LookDeep<Thing>(ref this.innerThing, "innerThing", new object[0]);
+			Scribe_Deep.LookDeep<ThingContainer>(ref this.innerContainer, "innerContainer", new object[]
+			{
+				this
+			});
 		}
 
 		public override void DrawExtraSelectionOverlays()
@@ -101,7 +136,7 @@ namespace RimWorld
 		{
 			if (this.crateFrontGraphic == null)
 			{
-				this.crateFrontGraphic = GraphicDatabase.Get<Graphic_Single>("Things/Item/Minified/CrateFront", ShaderDatabase.Cutout, this.GetMinifiedDrawSize(this.innerThing.def.size.ToVector2(), 1.1f) * 1.16f, Color.white);
+				this.crateFrontGraphic = GraphicDatabase.Get<Graphic_Single>("Things/Item/Minified/CrateFront", ShaderDatabase.Cutout, this.GetMinifiedDrawSize(this.InnerThing.def.size.ToVector2(), 1.1f) * 1.16f, Color.white);
 			}
 			this.crateFrontGraphic.DrawFromDef(drawLoc + Altitudes.AltIncVect * 0.1f, Rot4.North, null);
 			if (this.Graphic is Graphic_Single)
@@ -117,14 +152,15 @@ namespace RimWorld
 		public override void Destroy(DestroyMode mode = DestroyMode.Vanish)
 		{
 			bool spawned = base.Spawned;
+			Map map = base.Map;
 			base.Destroy(mode);
 			InstallBlueprintUtility.CancelBlueprintsFor(this);
 			if (mode == DestroyMode.Deconstruct)
 			{
-				SoundDef.Named("BuildingDeconstructed").PlayOneShot(base.Position);
+				SoundDef.Named("BuildingDeconstructed").PlayOneShot(new TargetInfo(base.Position, base.Map, false));
 				if (spawned)
 				{
-					GenLeaving.DoLeavingsFor(this.innerThing, mode, this.OccupiedRect());
+					GenLeaving.DoLeavingsFor(this.InnerThing, map, mode, this.OccupiedRect());
 				}
 			}
 		}
@@ -160,6 +196,11 @@ namespace RimWorld
 				return drawSize;
 			}
 			return drawSize * num;
+		}
+
+		virtual bool get_Spawned()
+		{
+			return base.Spawned;
 		}
 	}
 }

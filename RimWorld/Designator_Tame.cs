@@ -34,7 +34,7 @@ namespace RimWorld
 
 		public override AcceptanceReport CanDesignateCell(IntVec3 c)
 		{
-			if (!c.InBounds())
+			if (!c.InBounds(base.Map))
 			{
 				return false;
 			}
@@ -56,7 +56,7 @@ namespace RimWorld
 		public override AcceptanceReport CanDesignateThing(Thing t)
 		{
 			Pawn pawn = t as Pawn;
-			if (pawn != null && pawn.def.race.Animal && pawn.Faction == null && pawn.RaceProps.wildness < 1f && !pawn.HostileTo(t) && Find.DesignationManager.DesignationOn(pawn, DesignationDefOf.Tame) == null)
+			if (pawn != null && pawn.def.race.Animal && pawn.Faction == null && pawn.RaceProps.wildness < 1f && !pawn.HostileTo(t) && base.Map.designationManager.DesignationOn(pawn, DesignationDefOf.Tame) == null)
 			{
 				return true;
 			}
@@ -78,17 +78,17 @@ namespace RimWorld
 					}), this.justDesignated.First((Pawn x) => x.kindDef == kind), MessageSound.Standard);
 				}
 			}
-			IEnumerable<Pawn> source = from c in Find.MapPawns.FreeColonistsSpawned
+			IEnumerable<Pawn> source = from c in base.Map.mapPawns.FreeColonistsSpawned
 			where c.workSettings.WorkIsActive(WorkTypeDefOf.Handling)
 			select c;
 			if (!source.Any<Pawn>())
 			{
-				source = Find.MapPawns.FreeColonistsSpawned;
+				source = base.Map.mapPawns.FreeColonistsSpawned;
 			}
 			if (source.Any<Pawn>())
 			{
-				Pawn pawn = source.MaxBy((Pawn c) => c.skills.GetSkill(SkillDefOf.Animals).level);
-				int level = pawn.skills.GetSkill(SkillDefOf.Animals).level;
+				Pawn pawn = source.MaxBy((Pawn c) => c.skills.GetSkill(SkillDefOf.Animals).Level);
+				int level = pawn.skills.GetSkill(SkillDefOf.Animals).Level;
 				foreach (ThingDef ad in (from t in this.justDesignated
 				select t.def).Distinct<ThingDef>())
 				{
@@ -112,17 +112,17 @@ namespace RimWorld
 
 		public override void DesignateThing(Thing t)
 		{
-			Find.DesignationManager.RemoveAllDesignationsOn(t, false);
-			Find.DesignationManager.AddDesignation(new Designation(t, DesignationDefOf.Tame));
+			base.Map.designationManager.RemoveAllDesignationsOn(t, false);
+			base.Map.designationManager.AddDesignation(new Designation(t, DesignationDefOf.Tame));
 			this.justDesignated.Add((Pawn)t);
 		}
 
 		[DebuggerHidden]
 		private IEnumerable<Pawn> TameablesInCell(IntVec3 c)
 		{
-			if (!c.Fogged())
+			if (!c.Fogged(base.Map))
 			{
-				List<Thing> thingList = c.GetThingList();
+				List<Thing> thingList = c.GetThingList(base.Map);
 				for (int i = 0; i < thingList.Count; i++)
 				{
 					if (this.CanDesignateThing(thingList[i]).Accepted)

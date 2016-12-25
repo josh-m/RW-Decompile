@@ -32,7 +32,7 @@ namespace RimWorld
 				{
 					foreach (IntVec3 current3 in GenAdj.CellsAdjacentCardinal(current2))
 					{
-						List<Thing> thingList = current3.GetThingList();
+						List<Thing> thingList = current3.GetThingList(current2.Map);
 						for (int i = 0; i < thingList.Count; i++)
 						{
 							Building building = thingList[i] as Building;

@@ -28,11 +28,11 @@ namespace Verse
 		{
 		}
 
-		public virtual void PostDeSpawn()
+		public virtual void PostDeSpawn(Map map)
 		{
 		}
 
-		public virtual void PostDestroy(DestroyMode mode, bool wasSpawned)
+		public virtual void PostDestroy(DestroyMode mode, Map previousMap)
 		{
 		}
 
@@ -83,7 +83,7 @@ namespace Verse
 		}
 
 		[DebuggerHidden]
-		public virtual IEnumerable<Command> CompGetGizmosExtra()
+		public virtual IEnumerable<Gizmo> CompGetGizmosExtra()
 		{
 		}
 
@@ -113,6 +113,19 @@ namespace Verse
 
 		public virtual void PostIngested(Pawn ingester)
 		{
+		}
+
+		public override string ToString()
+		{
+			return string.Concat(new object[]
+			{
+				base.GetType().Name,
+				"(parent=",
+				this.parent,
+				" at=",
+				(this.parent == null) ? IntVec3.Invalid : this.parent.Position,
+				")"
+			});
 		}
 	}
 }

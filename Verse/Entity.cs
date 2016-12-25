@@ -30,7 +30,7 @@ namespace Verse
 			}
 		}
 
-		public abstract void SpawnSetup();
+		public abstract void SpawnSetup(Map map);
 
 		public abstract void DeSpawn();
 

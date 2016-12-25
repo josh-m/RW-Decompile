@@ -80,7 +80,7 @@ namespace RimWorld
 			}
 			if (Scribe.mode == LoadSaveMode.PostLoadInit && this.connectParent != null)
 			{
-				this.ConnectToTransmitter(this.connectParent);
+				this.ConnectToTransmitter(this.connectParent, true);
 			}
 		}
 
@@ -89,22 +89,22 @@ namespace RimWorld
 			base.PostSpawnSetup();
 			if (this.Props.transmitsPower || this.parent.def.ConnectToPower)
 			{
-				Find.MapDrawer.MapMeshDirty(this.parent.Position, MapMeshFlag.PowerGrid, true, false);
+				this.parent.Map.mapDrawer.MapMeshDirty(this.parent.Position, MapMeshFlag.PowerGrid, true, false);
 				if (this.Props.transmitsPower)
 				{
-					PowerNetManager.Notify_TransmitterSpawned(this);
+					this.parent.Map.powerNetManager.Notify_TransmitterSpawned(this);
 				}
 				if (this.parent.def.ConnectToPower)
 				{
-					PowerNetManager.Notify_ConnectorWantsConnect(this);
+					this.parent.Map.powerNetManager.Notify_ConnectorWantsConnect(this);
 				}
 				this.SetUpPowerVars();
 			}
 		}
 
-		public override void PostDeSpawn()
+		public override void PostDeSpawn(Map map)
 		{
-			base.PostDeSpawn();
+			base.PostDeSpawn(map);
 			if (this.Props.transmitsPower || this.parent.def.ConnectToPower)
 			{
 				if (this.Props.transmitsPower)
@@ -116,20 +116,20 @@ namespace RimWorld
 							this.connectChildren[i].LostConnectParent();
 						}
 					}
-					PowerNetManager.Notify_TransmitterDespawned(this);
+					map.powerNetManager.Notify_TransmitterDespawned(this);
 				}
 				if (this.parent.def.ConnectToPower)
 				{
-					PowerNetManager.Notify_ConnectorDespawned(this);
+					map.powerNetManager.Notify_ConnectorDespawned(this);
 				}
-				Find.MapDrawer.MapMeshDirty(this.parent.Position, MapMeshFlag.PowerGrid, true, false);
+				map.mapDrawer.MapMeshDirty(this.parent.Position, MapMeshFlag.PowerGrid, true, false);
 			}
 		}
 
 		public virtual void LostConnectParent()
 		{
 			this.connectParent = null;
-			PowerNetManager.Notify_ConnectorWantsConnect(this);
+			this.parent.Map.powerNetManager.Notify_ConnectorWantsConnect(this);
 		}
 
 		public override void PostPrintOnto(SectionLayer layer)
@@ -158,9 +158,9 @@ namespace RimWorld
 		}
 
 		[DebuggerHidden]
-		public override IEnumerable<Command> CompGetGizmosExtra()
+		public override IEnumerable<Gizmo> CompGetGizmosExtra()
 		{
-			foreach (Command c in base.CompGetGizmosExtra())
+			foreach (Gizmo c in base.CompGetGizmosExtra())
 			{
 				yield return c;
 			}
@@ -192,27 +192,41 @@ namespace RimWorld
 			{
 				CompPower.recentlyConnectedNets.Add(this.PowerNet);
 			}
-			CompPower compPower = PowerConnectionMaker.BestTransmitterForConnector(this.parent.Position, CompPower.recentlyConnectedNets);
+			CompPower compPower = PowerConnectionMaker.BestTransmitterForConnector(this.parent.Position, this.parent.Map, CompPower.recentlyConnectedNets);
 			if (compPower == null)
 			{
 				CompPower.recentlyConnectedNets.Clear();
-				compPower = PowerConnectionMaker.BestTransmitterForConnector(this.parent.Position, null);
+				compPower = PowerConnectionMaker.BestTransmitterForConnector(this.parent.Position, this.parent.Map, null);
 			}
 			if (compPower != null)
 			{
 				PowerConnectionMaker.DisconnectFromPowerNet(this);
-				this.ConnectToTransmitter(compPower);
+				this.ConnectToTransmitter(compPower, false);
 				for (int i = 0; i < 5; i++)
 				{
-					MoteMaker.ThrowMetaPuff(compPower.parent.Position.ToVector3Shifted());
+					MoteMaker.ThrowMetaPuff(compPower.parent.Position.ToVector3Shifted(), compPower.parent.Map);
 				}
-				Find.MapDrawer.MapMeshDirty(this.parent.Position, MapMeshFlag.PowerGrid);
-				Find.MapDrawer.MapMeshDirty(this.parent.Position, MapMeshFlag.Things);
+				this.parent.Map.mapDrawer.MapMeshDirty(this.parent.Position, MapMeshFlag.PowerGrid);
+				this.parent.Map.mapDrawer.MapMeshDirty(this.parent.Position, MapMeshFlag.Things);
 			}
 		}
 
-		public void ConnectToTransmitter(CompPower transmitter)
+		public void ConnectToTransmitter(CompPower transmitter, bool reconnectingAfterLoading = false)
 		{
+			if (this.connectParent != null && (!reconnectingAfterLoading || this.connectParent != transmitter))
+			{
+				Log.Error(string.Concat(new object[]
+				{
+					"Tried to connect ",
+					this,
+					" to transmitter ",
+					transmitter,
+					" but it's already connected to ",
+					this.connectParent,
+					"."
+				}));
+				return;
+			}
 			this.connectParent = transmitter;
 			if (this.connectParent.connectChildren == null)
 			{

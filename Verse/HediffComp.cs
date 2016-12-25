@@ -41,12 +41,24 @@ namespace Verse
 			}
 		}
 
+		public virtual TextureAndColor CompStateIcon
+		{
+			get
+			{
+				return TextureAndColor.None;
+			}
+		}
+
 		public virtual bool CompShouldRemove
 		{
 			get
 			{
 				return false;
 			}
+		}
+
+		public virtual void CompPostMake()
+		{
 		}
 
 		public virtual void CompPostTick()
@@ -57,7 +69,11 @@ namespace Verse
 		{
 		}
 
-		public virtual void CompFactorDrugEffect(ChemicalDef chem, ref float effect)
+		public virtual void CompPostPostAdd(DamageInfo? dinfo)
+		{
+		}
+
+		public virtual void CompPostMerged(Hediff other)
 		{
 		}
 
@@ -66,23 +82,15 @@ namespace Verse
 			return false;
 		}
 
-		public virtual void CompPostPostAdd(DamageInfo? dinfo)
+		public virtual void CompModifyChemicalEffect(ChemicalDef chem, ref float effect)
 		{
 		}
 
-		public virtual void CompPostDirectHeal(float amount)
+		public virtual void CompPostInjuryHeal(float amount)
 		{
 		}
 
 		public virtual void CompTended(float quality, int batchPosition = 0)
-		{
-		}
-
-		public virtual void CompPostMerged(Hediff other)
-		{
-		}
-
-		public virtual void CompPostMake()
 		{
 		}
 

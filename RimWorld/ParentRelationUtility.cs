@@ -113,7 +113,7 @@ namespace RimWorld
 			{
 				clampMax = num;
 			}
-			return PawnSkinColors.GetRandomSkinColorSimilarTo(reflectedSkin, clampMin, clampMax);
+			return PawnSkinColors.GetRandomMelaninSimilarTo(reflectedSkin, clampMin, clampMax);
 		}
 	}
 }

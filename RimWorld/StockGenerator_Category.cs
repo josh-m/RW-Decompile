@@ -15,7 +15,7 @@ namespace RimWorld
 		private List<ThingDef> excludedThingDefs;
 
 		[DebuggerHidden]
-		public override IEnumerable<Thing> GenerateThings()
+		public override IEnumerable<Thing> GenerateThings(Map forMap)
 		{
 			List<ThingDef> generatedDefs = new List<ThingDef>();
 			int numThingDefsToUse = this.thingDefCountRange.RandomInRange;

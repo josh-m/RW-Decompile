@@ -14,9 +14,15 @@ namespace RimWorld
 
 		public bool useReciprocal;
 
+		public float max = 9999f;
+
 		public float GetFactor(float capacityEfficiency)
 		{
 			float num = capacityEfficiency;
+			if (num > this.max)
+			{
+				num = this.max;
+			}
 			if (this.useReciprocal)
 			{
 				if (Mathf.Abs(num) < 0.001f)

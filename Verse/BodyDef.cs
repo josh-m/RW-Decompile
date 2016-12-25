@@ -151,21 +151,21 @@ namespace Verse
 				node.fleshCoverage = 0f;
 			}
 			node.absoluteFleshCoverage = node.absoluteCoverage * node.fleshCoverage;
-			if (node.height == BodyPartHeight.Inherit)
+			if (node.height == BodyPartHeight.Undefined)
 			{
 				node.height = BodyPartHeight.Middle;
 			}
-			if (node.depth == BodyPartDepth.Inherit)
+			if (node.depth == BodyPartDepth.Undefined)
 			{
 				node.depth = BodyPartDepth.Outside;
 			}
 			for (int k = 0; k < node.parts.Count; k++)
 			{
-				if (node.parts[k].height == BodyPartHeight.Inherit)
+				if (node.parts[k].height == BodyPartHeight.Undefined)
 				{
 					node.parts[k].height = node.height;
 				}
-				if (node.parts[k].depth == BodyPartDepth.Inherit)
+				if (node.parts[k].depth == BodyPartDepth.Undefined)
 				{
 					node.parts[k].depth = node.depth;
 				}

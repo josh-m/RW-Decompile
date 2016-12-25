@@ -9,21 +9,19 @@ namespace RimWorld
 	public class StorytellerComp_Disease : StorytellerComp
 	{
 		[DebuggerHidden]
-		public override IEnumerable<FiringIncident> MakeIntervalIncidents()
+		public override IEnumerable<FiringIncident> MakeIntervalIncidents(IIncidentTarget target)
 		{
 			if (DebugSettings.enableRandomDiseases)
 			{
-				float mtb = Find.Map.Biome.diseaseMtbDays;
+				BiomeDef biome = Find.WorldGrid[target.Tile].biome;
+				float mtb = biome.diseaseMtbDays;
 				mtb *= Find.Storyteller.difficulty.diseaseIntervalFactor;
-				if (Rand.MTBEventOccurs(mtb, 60000f, 1000f))
+				IncidentDef inc;
+				if (Rand.MTBEventOccurs(mtb, 60000f, 1000f) && (from d in DefDatabase<IncidentDef>.AllDefs
+				where d.TargetAllowed(this.target) && d.category == IncidentCategory.Disease
+				select d).TryRandomElementByWeight((IncidentDef d) => this.<biome>__0.CommonalityOfDisease(d), out inc))
 				{
-					IncidentDef inc;
-					if ((from d in DefDatabase<IncidentDef>.AllDefs
-					where d.category == IncidentCategory.Disease
-					select d).TryRandomElementByWeight((IncidentDef d) => Find.Map.Biome.CommonalityOfDisease(d), out inc))
-					{
-						yield return new FiringIncident(inc, this, this.GenerateParms(inc.category));
-					}
+					yield return new FiringIncident(inc, this, this.GenerateParms(inc.category, target));
 				}
 			}
 		}

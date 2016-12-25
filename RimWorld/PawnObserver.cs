@@ -22,6 +22,10 @@ namespace RimWorld
 
 		public void ObserverInterval()
 		{
+			if (!this.pawn.Spawned)
+			{
+				return;
+			}
 			this.intervalsUntilObserve--;
 			if (this.intervalsUntilObserve <= 0)
 			{
@@ -36,16 +40,16 @@ namespace RimWorld
 			{
 				return;
 			}
-			Room room = RoomQuery.RoomAt(this.pawn.Position);
+			Room room = RoomQuery.RoomAt(this.pawn);
 			int num = 0;
 			while ((float)num < 100f)
 			{
 				IntVec3 c = this.pawn.Position + GenRadial.RadialPattern[num];
-				if (c.InBounds())
+				if (c.InBounds(this.pawn.Map))
 				{
-					if (RoomQuery.RoomAt(c) == room)
+					if (RoomQuery.RoomAt(c, this.pawn.Map) == room)
 					{
-						List<Thing> thingList = c.GetThingList();
+						List<Thing> thingList = c.GetThingList(this.pawn.Map);
 						for (int i = 0; i < thingList.Count; i++)
 						{
 							IThoughtGiver thoughtGiver = thingList[i] as IThoughtGiver;

@@ -11,7 +11,7 @@ namespace RimWorld
 	{
 		public static Pawn FindRandomSickPawn(Pawn pawn, JoyCategory maxPatientJoy)
 		{
-			IEnumerable<Pawn> source = from x in Find.MapPawns.FreeColonistsSpawned
+			IEnumerable<Pawn> source = from x in pawn.Map.mapPawns.FreeColonistsSpawned
 			where SickPawnVisitUtility.CanVisit(pawn, x, maxPatientJoy)
 			select x;
 			Pawn result;
@@ -39,7 +39,7 @@ namespace RimWorld
 				{
 					return false;
 				}
-				if (!GenSight.LineOfSight(x.Position, nearPawn.Position, false))
+				if (!GenSight.LineOfSight(x.Position, nearPawn.Position, nearPawn.Map, false))
 				{
 					return false;
 				}
@@ -57,34 +57,34 @@ namespace RimWorld
 				}
 				return true;
 			};
-			return GenClosest.ClosestThingReachable(nearPawn.Position, ThingRequest.ForGroup(ThingRequestGroup.BuildingArtificial), PathEndMode.OnCell, TraverseParms.For(forPawn, Danger.Deadly, TraverseMode.ByPawn, false), 2.2f, validator, null, 5, false);
+			return GenClosest.ClosestThingReachable(nearPawn.Position, nearPawn.Map, ThingRequest.ForGroup(ThingRequestGroup.BuildingArtificial), PathEndMode.OnCell, TraverseParms.For(forPawn, Danger.Deadly, TraverseMode.ByPawn, false), 2.2f, validator, null, 5, false);
 		}
 
-		private static bool AboutToRecover(Pawn sick)
+		private static bool AboutToRecover(Pawn pawn)
 		{
-			if (sick.Downed)
+			if (pawn.Downed)
 			{
 				return false;
 			}
-			if (!sick.health.NeedsMedicalRest && !sick.health.PrefersMedicalRest)
+			if (!HealthAIUtility.ShouldSeekMedicalRestUrgent(pawn) && !HealthAIUtility.ShouldSeekMedicalRest(pawn))
 			{
 				return true;
 			}
-			if (sick.health.hediffSet.HasTendedImmunizableNonInjuryNonMissingPartHediff)
+			if (HealthAIUtility.HasTendedImmunizableNonInjuryNonMissingPartHediff(pawn))
 			{
 				return false;
 			}
 			float num = 0f;
-			List<Hediff> hediffs = sick.health.hediffSet.hediffs;
+			List<Hediff> hediffs = pawn.health.hediffSet.hediffs;
 			for (int i = 0; i < hediffs.Count; i++)
 			{
 				Hediff_Injury hediff_Injury = hediffs[i] as Hediff_Injury;
-				if (hediff_Injury != null && (hediff_Injury.IsTendedAndHealing() || hediff_Injury.IsNaturallyHealing() || hediff_Injury.BleedRate > 0.0001f))
+				if (hediff_Injury != null && (hediff_Injury.CanHealFromTending() || hediff_Injury.CanHealNaturally() || hediff_Injury.BleedRate > 0.0001f))
 				{
 					num += hediff_Injury.Severity;
 				}
 			}
-			return num < 8f * sick.RaceProps.baseHealthScale;
+			return num < 8f * pawn.RaceProps.baseHealthScale;
 		}
 
 		private static float VisitChanceScore(Pawn pawn, Pawn sick)

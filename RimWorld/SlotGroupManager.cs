@@ -7,6 +7,8 @@ namespace RimWorld
 {
 	public sealed class SlotGroupManager
 	{
+		private Map map;
+
 		private List<SlotGroup> allGroups = new List<SlotGroup>();
 
 		private SlotGroup[,,] groupGrid;
@@ -52,9 +54,10 @@ namespace RimWorld
 			}
 		}
 
-		public SlotGroupManager()
+		public SlotGroupManager(Map map)
 		{
-			this.groupGrid = new SlotGroup[Find.Map.Size.x, Find.Map.Size.y, Find.Map.Size.z];
+			this.map = map;
+			this.groupGrid = new SlotGroup[map.Size.x, map.Size.y, map.Size.z];
 		}
 
 		public void AddGroup(SlotGroup newGroup)
@@ -78,7 +81,7 @@ namespace RimWorld
 			{
 				this.SetCellFor(cellsList[i], newGroup);
 			}
-			ListerHaulables.Notify_SlotGroupChanged(newGroup);
+			this.map.listerHaulables.Notify_SlotGroupChanged(newGroup);
 		}
 
 		public void RemoveGroup(SlotGroup oldGroup)
@@ -95,7 +98,7 @@ namespace RimWorld
 				IntVec3 intVec = cellsList[i];
 				this.groupGrid[intVec.x, intVec.y, intVec.z] = null;
 			}
-			ListerHaulables.Notify_SlotGroupChanged(oldGroup);
+			this.map.listerHaulables.Notify_SlotGroupChanged(oldGroup);
 		}
 
 		public void Notify_GroupChangedPriority()

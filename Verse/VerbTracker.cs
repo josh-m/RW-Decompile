@@ -76,6 +76,7 @@ namespace Verse
 						Command_VerbTarget newOpt = new Command_VerbTarget();
 						newOpt.defaultDesc = ownerThing.LabelCap + ": " + ownerThing.def.description;
 						newOpt.icon = ownerThing.def.uiIcon;
+						newOpt.tutorTag = "VerbTarget";
 						newOpt.verb = verb;
 						if (verb.caster.Faction != Faction.OfPlayer)
 						{

@@ -6,6 +6,24 @@ namespace Verse
 {
 	public static class DebugTools_Health
 	{
+		public static List<DebugMenuOption> Options_RestorePart(Pawn p)
+		{
+			if (p == null)
+			{
+				throw new ArgumentNullException("p");
+			}
+			List<DebugMenuOption> list = new List<DebugMenuOption>();
+			foreach (BodyPartRecord current in p.health.hediffSet.GetNotMissingParts(BodyPartHeight.Undefined, BodyPartDepth.Undefined))
+			{
+				BodyPartRecord localPart = current;
+				list.Add(new DebugMenuOption(localPart.def.LabelCap, DebugMenuOptionMode.Action, delegate
+				{
+					p.health.RestorePart(localPart, null, true);
+				}));
+			}
+			return list;
+		}
+
 		public static List<DebugMenuOption> Options_ApplyDamage()
 		{
 			List<DebugMenuOption> list = new List<DebugMenuOption>();
@@ -14,7 +32,7 @@ namespace Verse
 				DamageDef localDef = current;
 				list.Add(new DebugMenuOption(localDef.LabelCap, DebugMenuOptionMode.Tool, delegate
 				{
-					Pawn pawn = (from t in Find.ThingGrid.ThingsAt(Gen.MouseCell())
+					Pawn pawn = (from t in Find.VisibleMap.thingGrid.ThingsAt(UI.MouseCell())
 					where t is Pawn
 					select t).Cast<Pawn>().FirstOrDefault<Pawn>();
 					if (pawn != null)
@@ -35,15 +53,16 @@ namespace Verse
 			List<DebugMenuOption> list = new List<DebugMenuOption>();
 			list.Add(new DebugMenuOption("(no body part)", DebugMenuOptionMode.Action, delegate
 			{
-				p.TakeDamage(new DamageInfo(def, 5, null, null, null));
+				p.TakeDamage(new DamageInfo(def, 5, -1f, null, null, null));
 			}));
 			foreach (BodyPartRecord current in p.RaceProps.body.AllParts)
 			{
 				BodyPartRecord localPart = current;
 				list.Add(new DebugMenuOption(localPart.def.LabelCap, DebugMenuOptionMode.Action, delegate
 				{
-					BodyPartDamageInfo value = new BodyPartDamageInfo(localPart, false, null);
-					p.TakeDamage(new DamageInfo(def, 5, null, new BodyPartDamageInfo?(value), null));
+					Thing arg_2B_0 = p;
+					BodyPartRecord localPart = localPart;
+					arg_2B_0.TakeDamage(new DamageInfo(def, 5, -1f, null, localPart, null));
 				}));
 			}
 			return list;
@@ -78,7 +97,7 @@ namespace Verse
 				HediffDef localDef = current;
 				list.Add(new DebugMenuOption(localDef.LabelCap, DebugMenuOptionMode.Tool, delegate
 				{
-					Pawn pawn = Find.ThingGrid.ThingsAt(Gen.MouseCell()).Where((Thing t) => t is Pawn).Cast<Pawn>().FirstOrDefault<Pawn>();
+					Pawn pawn = Find.VisibleMap.thingGrid.ThingsAt(UI.MouseCell()).Where((Thing t) => t is Pawn).Cast<Pawn>().FirstOrDefault<Pawn>();
 					if (pawn != null)
 					{
 						Find.WindowStack.Add(new Dialog_DebugOptionListLister(DebugTools_Health.Options_Hediff_BodyParts(pawn, localDef)));

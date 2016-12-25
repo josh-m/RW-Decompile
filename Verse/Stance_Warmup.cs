@@ -13,7 +13,7 @@ namespace Verse
 		{
 		}
 
-		public Stance_Warmup(int ticks, TargetInfo focusTarg, Verb verb) : base(ticks, focusTarg)
+		public Stance_Warmup(int ticks, LocalTargetInfo focusTarg, Verb verb) : base(ticks, focusTarg)
 		{
 			this.verb = verb;
 			if (focusTarg.HasThing && focusTarg.Thing is Pawn)

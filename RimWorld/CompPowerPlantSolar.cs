@@ -21,7 +21,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return Mathf.Lerp(0f, 1700f, SkyManager.CurSkyGlow) * this.RoofedPowerOutputFactor;
+				return Mathf.Lerp(0f, 1700f, this.parent.Map.skyManager.CurSkyGlow) * this.RoofedPowerOutputFactor;
 			}
 		}
 
@@ -34,7 +34,7 @@ namespace RimWorld
 				foreach (IntVec3 current in this.parent.OccupiedRect())
 				{
 					num++;
-					if (Find.RoofGrid.Roofed(current))
+					if (this.parent.Map.roofGrid.Roofed(current))
 					{
 						num2++;
 					}

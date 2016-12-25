@@ -1,4 +1,6 @@
+using RimWorld.Planet;
 using System;
+using System.Collections.Generic;
 using Verse;
 
 namespace RimWorld
@@ -27,9 +29,29 @@ namespace RimWorld
 			{
 				return;
 			}
-			if (Find.MapPawns.FreeColonistsSpawnedOrInPlayerEjectablePodsCount >= 1)
+			List<Map> maps = Find.Maps;
+			for (int i = 0; i < maps.Count; i++)
 			{
-				return;
+				if (maps[i].mapPawns.FreeColonistsSpawnedOrInPlayerEjectablePodsCount >= 1)
+				{
+					return;
+				}
+			}
+			List<Caravan> caravans = Find.WorldObjects.Caravans;
+			for (int j = 0; j < caravans.Count; j++)
+			{
+				if (this.IsPlayerControlledWithFreeColonist(caravans[j]))
+				{
+					return;
+				}
+			}
+			List<TravelingTransportPods> travelingTransportPods = Find.WorldObjects.TravelingTransportPods;
+			for (int k = 0; k < travelingTransportPods.Count; k++)
+			{
+				if (travelingTransportPods[k].PodsHaveAnyFreeColonist)
+				{
+					return;
+				}
 			}
 			this.gameEnding = true;
 			this.ticksToGameOver = 400;
@@ -45,6 +67,24 @@ namespace RimWorld
 					GenGameEnd.EndGameDialogMessage("GameOverEveryoneDead".Translate(), true);
 				}
 			}
+		}
+
+		private bool IsPlayerControlledWithFreeColonist(Caravan caravan)
+		{
+			if (!caravan.IsPlayerControlled)
+			{
+				return false;
+			}
+			List<Pawn> pawnsListForReading = caravan.PawnsListForReading;
+			for (int i = 0; i < pawnsListForReading.Count; i++)
+			{
+				Pawn pawn = pawnsListForReading[i];
+				if (pawn.IsColonist && pawn.HostFaction == null)
+				{
+					return true;
+				}
+			}
+			return false;
 		}
 	}
 }

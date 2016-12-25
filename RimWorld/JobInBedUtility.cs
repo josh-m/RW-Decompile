@@ -13,7 +13,7 @@ namespace RimWorld
 				Pawn pawn = driver.pawn;
 				if (!pawn.Drafted)
 				{
-					pawn.jobs.EnqueueJob(new Job(JobDefOf.LayDown, pawn.CurJob.GetTarget(bedIndex)));
+					pawn.jobs.jobQueue.EnqueueFirst(new Job(JobDefOf.LayDown, pawn.CurJob.GetTarget(bedIndex)));
 				}
 			});
 		}

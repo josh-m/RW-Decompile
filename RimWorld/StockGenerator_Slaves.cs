@@ -9,7 +9,7 @@ namespace RimWorld
 	public class StockGenerator_Slaves : StockGenerator
 	{
 		[DebuggerHidden]
-		public override IEnumerable<Thing> GenerateThings()
+		public override IEnumerable<Thing> GenerateThings(Map forMap)
 		{
 			if (Rand.Value < Find.Storyteller.intenderPopulation.PopulationIntent)
 			{
@@ -23,8 +23,7 @@ namespace RimWorld
 					{
 						break;
 					}
-					bool forceAddFreeWarmLayerIfNeeded = !this.trader.orbital;
-					PawnGenerationRequest request = new PawnGenerationRequest(PawnKindDefOf.Slave, slaveFaction, PawnGenerationContext.NonPlayer, false, false, false, false, true, false, 1f, forceAddFreeWarmLayerIfNeeded, true, true, null, null, null, null, null, null);
+					PawnGenerationRequest request = new PawnGenerationRequest(PawnKindDefOf.Slave, slaveFaction, PawnGenerationContext.NonPlayer, forMap, false, false, false, false, true, false, 1f, !this.trader.orbital, true, true, null, null, null, null, null, null);
 					yield return PawnGenerator.GeneratePawn(request);
 				}
 			}

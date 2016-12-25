@@ -50,7 +50,7 @@ namespace Verse
 				this.ticksToIncapIcon--;
 				if (this.ticksToIncapIcon <= 0)
 				{
-					MoteMaker.ThrowMetaIcon(this.pawn.Position, ThingDefOf.Mote_IncapIcon);
+					MoteMaker.ThrowMetaIcon(this.pawn.Position, this.pawn.Map, ThingDefOf.Mote_IncapIcon);
 					this.ticksToIncapIcon = 200;
 				}
 				if (this.pawn.Awake())

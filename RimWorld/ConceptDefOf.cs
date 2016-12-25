@@ -61,6 +61,10 @@ namespace RimWorld
 
 		public static ConceptDef SpoilageAndFreezers;
 
+		public static ConceptDef FormCaravan;
+
+		public static ConceptDef ReformCaravan;
+
 		public static ConceptDef Capturing;
 
 		public static ConceptDef Rescuing;
@@ -96,5 +100,7 @@ namespace RimWorld
 		public static ConceptDef TradeGoodsMustBeNearBeacon;
 
 		public static ConceptDef SwitchFlickingDesignation;
+
+		public static ConceptDef MaxNumberOfPlayerHomes;
 	}
 }

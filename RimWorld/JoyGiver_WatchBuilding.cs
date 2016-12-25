@@ -22,13 +22,13 @@ namespace RimWorld
 
 		protected override Job TryGivePlayJob(Pawn pawn, Thing t)
 		{
-			IntVec3 vec;
+			IntVec3 c;
 			Building t2;
-			if (!WatchBuildingUtility.TryFindBestWatchCell(t, pawn, this.def.desireSit, out vec, out t2))
+			if (!WatchBuildingUtility.TryFindBestWatchCell(t, pawn, this.def.desireSit, out c, out t2))
 			{
 				return null;
 			}
-			return new Job(this.def.jobDef, t, vec, t2);
+			return new Job(this.def.jobDef, t, c, t2);
 		}
 	}
 }

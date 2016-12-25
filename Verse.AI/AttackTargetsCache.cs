@@ -6,6 +6,8 @@ namespace Verse.AI
 {
 	public class AttackTargetsCache
 	{
+		private Map map;
+
 		private HashSet<IAttackTarget> allTargets = new HashSet<IAttackTarget>();
 
 		private Dictionary<Faction, HashSet<IAttackTarget>> targetsHostileToFaction = new Dictionary<Faction, HashSet<IAttackTarget>>();
@@ -28,6 +30,11 @@ namespace Verse.AI
 			}
 		}
 
+		public AttackTargetsCache(Map map)
+		{
+			this.map = map;
+		}
+
 		public void UpdateTarget(IAttackTarget t)
 		{
 			if (!this.allTargets.Contains(t))
@@ -35,7 +42,11 @@ namespace Verse.AI
 				return;
 			}
 			this.DeregisterTarget(t);
-			this.RegisterTarget(t);
+			Thing thing = (Thing)t;
+			if (thing.Spawned && thing.Map == this.map)
+			{
+				this.RegisterTarget(t);
+			}
 		}
 
 		public List<IAttackTarget> GetPotentialTargetsFor(Thing th)
@@ -67,7 +78,7 @@ namespace Verse.AI
 			if (pawn != null && PrisonBreakUtility.IsPrisonBreaking(pawn))
 			{
 				Faction hostFaction = pawn.guest.HostFaction;
-				List<Pawn> list = Find.MapPawns.SpawnedPawnsInFaction(hostFaction);
+				List<Pawn> list = this.map.mapPawns.SpawnedPawnsInFaction(hostFaction);
 				for (int i = 0; i < list.Count; i++)
 				{
 					if (th.HostileTo(list[i]))
@@ -152,6 +163,11 @@ namespace Verse.AI
 					" in ",
 					base.GetType()
 				}));
+				return;
+			}
+			if (thing.Map != this.map)
+			{
+				Log.Warning("Tried to register attack target " + thing + " but its Map is not this one.");
 				return;
 			}
 			this.allTargets.Add(target);

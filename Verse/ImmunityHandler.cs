@@ -20,7 +20,7 @@ namespace Verse
 			Scribe_Collections.LookList<ImmunityRecord>(ref this.immunityList, "imList", LookMode.Deep, new object[0]);
 		}
 
-		public float ChanceToGetDisease(HediffDef diseaseDef, BodyPartRecord part = null)
+		public float DiseaseContractChanceFactor(HediffDef diseaseDef, BodyPartRecord part = null)
 		{
 			if (!this.pawn.RaceProps.IsFlesh)
 			{
@@ -87,9 +87,16 @@ namespace Verse
 						hediff = hediffs[k];
 					}
 					HediffStage curStage = hediffs[k].CurStage;
-					if (curStage != null && curStage.makeImmuneTo == immunityRecord2.hediffDef)
+					if (curStage != null && curStage.makeImmuneTo != null)
 					{
-						flag = true;
+						for (int l = 0; l < curStage.makeImmuneTo.Count; l++)
+						{
+							if (curStage.makeImmuneTo[l] == immunityRecord2.hediffDef)
+							{
+								flag = true;
+								break;
+							}
+						}
 					}
 				}
 				immunityRecord2.ImmunityTick(this.pawn, hediff != null, hediff);

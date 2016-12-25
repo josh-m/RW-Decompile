@@ -28,7 +28,7 @@ namespace RimWorld
 				{
 					return null;
 				}
-				Room room = RoomQuery.RoomAt(this.OwnedBed.Position);
+				Room room = RoomQuery.RoomAt(this.OwnedBed);
 				if (room == null)
 				{
 					return null;

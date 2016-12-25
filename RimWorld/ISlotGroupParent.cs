@@ -6,6 +6,11 @@ namespace RimWorld
 {
 	public interface ISlotGroupParent : IStoreSettingsParent
 	{
+		Map Map
+		{
+			get;
+		}
+
 		IEnumerable<IntVec3> AllSlotCells();
 
 		List<IntVec3> AllSlotCellsList();

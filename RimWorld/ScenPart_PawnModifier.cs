@@ -48,7 +48,7 @@ namespace RimWorld
 						list.Add(new FloatMenuOption(localCont.ToStringHuman(), delegate
 						{
 							this.context = localCont;
-						}, MenuOptionPriority.Medium, null, null, 0f, null));
+						}, MenuOptionPriority.Default, null, null, 0f, null, null));
 					}
 				}
 				Find.WindowStack.Add(new FloatMenu(list));

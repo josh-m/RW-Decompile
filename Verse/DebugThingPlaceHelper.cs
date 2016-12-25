@@ -9,7 +9,7 @@ namespace Verse
 	{
 		public static bool IsDebugSpawnable(ThingDef def)
 		{
-			return def.forceDebugSpawnable || (def.thingClass != typeof(Corpse) && !def.IsBlueprint && !def.IsFrame && def != ThingDefOf.DropPod && def.thingClass != typeof(MinifiedThing) && def.thingClass != typeof(UnfinishedThing) && !def.destroyOnDrop && (def.category == ThingCategory.Filth || def.category == ThingCategory.Item || def.category == ThingCategory.Plant || def.category == ThingCategory.Ethereal || (def.category == ThingCategory.Building && def.building.isNaturalRock) || (def.category == ThingCategory.Building && def.designationCategory.NullOrEmpty())));
+			return def.forceDebugSpawnable || (def.thingClass != typeof(Corpse) && !def.IsBlueprint && !def.IsFrame && def != ThingDefOf.ActiveDropPod && def.thingClass != typeof(MinifiedThing) && def.thingClass != typeof(UnfinishedThing) && !def.destroyOnDrop && (def.category == ThingCategory.Filth || def.category == ThingCategory.Item || def.category == ThingCategory.Plant || def.category == ThingCategory.Ethereal || (def.category == ThingCategory.Building && def.building.isNaturalRock) || (def.category == ThingCategory.Building && def.designationCategory == null)));
 		}
 
 		public static void DebugSpawn(ThingDef def, IntVec3 c, int stackCount = -1, bool direct = false)
@@ -32,11 +32,11 @@ namespace Verse
 			thing.stackCount = stackCount;
 			if (direct)
 			{
-				GenPlace.TryPlaceThing(thing, c, ThingPlaceMode.Direct, null);
+				GenPlace.TryPlaceThing(thing, c, Find.VisibleMap, ThingPlaceMode.Direct, null);
 			}
 			else
 			{
-				GenPlace.TryPlaceThing(thing, c, ThingPlaceMode.Near, null);
+				GenPlace.TryPlaceThing(thing, c, Find.VisibleMap, ThingPlaceMode.Near, null);
 			}
 		}
 
@@ -51,7 +51,7 @@ namespace Verse
 				ThingDef localDef = current;
 				list.Add(new DebugMenuOption(localDef.LabelCap, DebugMenuOptionMode.Tool, delegate
 				{
-					DebugThingPlaceHelper.DebugSpawn(localDef, Gen.MouseCell(), stackCount, direct);
+					DebugThingPlaceHelper.DebugSpawn(localDef, UI.MouseCell(), stackCount, direct);
 				}));
 			}
 			if (stackCount == 1)
@@ -63,7 +63,7 @@ namespace Verse
 					ThingDef localDef = current2;
 					list.Add(new DebugMenuOption(localDef.LabelCap + " (minified)", DebugMenuOptionMode.Tool, delegate
 					{
-						DebugThingPlaceHelper.DebugSpawn(localDef, Gen.MouseCell(), stackCount, direct);
+						DebugThingPlaceHelper.DebugSpawn(localDef, UI.MouseCell(), stackCount, direct);
 					}));
 				}
 			}

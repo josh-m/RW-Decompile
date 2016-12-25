@@ -59,7 +59,7 @@ namespace RimWorld
 							list.Add(new FloatMenuOption(localPr.Label().CapitalizeFirst(), delegate
 							{
 								settings.Priority = localPr;
-							}, MenuOptionPriority.Medium, null, null, 0f, null));
+							}, MenuOptionPriority.Default, null, null, 0f, null, null));
 						}
 					}
 				}
@@ -72,7 +72,7 @@ namespace RimWorld
 				parentFilter = selStoreSettingsParent.GetParentStoreSettings().filter;
 			}
 			Rect rect2 = new Rect(0f, 35f, position.width, position.height - 35f);
-			ThingFilterUI.DoThingFilterConfigWindow(rect2, ref this.scrollPosition, settings.filter, parentFilter, 8);
+			ThingFilterUI.DoThingFilterConfigWindow(rect2, ref this.scrollPosition, settings.filter, parentFilter, 8, null, null);
 			PlayerKnowledgeDatabase.KnowledgeDemonstrated(ConceptDefOf.StorageTab, KnowledgeAmount.FrameDisplayed);
 			GUI.EndGroup();
 		}

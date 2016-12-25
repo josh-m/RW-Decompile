@@ -34,8 +34,8 @@ namespace Verse
 				{
 					winRect.height = this.minWindowSize.y;
 				}
-				winRect.xMax = Mathf.Min((float)Screen.width, winRect.xMax);
-				winRect.yMax = Mathf.Min((float)Screen.height, winRect.yMax);
+				winRect.xMax = Mathf.Min((float)UI.screenWidth, winRect.xMax);
+				winRect.yMax = Mathf.Min((float)UI.screenHeight, winRect.yMax);
 				if (Event.current.type == EventType.MouseUp)
 				{
 					this.isResizing = false;

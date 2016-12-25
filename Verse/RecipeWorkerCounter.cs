@@ -15,19 +15,19 @@ namespace Verse
 
 		public virtual int CountProducts(Bill_Production bill)
 		{
-			ThingCount thingCount = this.recipe.products[0];
-			if (thingCount.thingDef.CountAsResource)
+			ThingCountClass thingCountClass = this.recipe.products[0];
+			if (thingCountClass.thingDef.CountAsResource)
 			{
-				return Find.ResourceCounter.GetCount(thingCount.thingDef);
+				return bill.Map.resourceCounter.GetCount(thingCountClass.thingDef);
 			}
-			int num = Find.ListerThings.ThingsOfDef(thingCount.thingDef).Count;
-			if (thingCount.thingDef.Minifiable)
+			int num = bill.Map.listerThings.ThingsOfDef(thingCountClass.thingDef).Count;
+			if (thingCountClass.thingDef.Minifiable)
 			{
-				List<Thing> list = Find.ListerThings.ThingsInGroup(ThingRequestGroup.MinifiedThing);
+				List<Thing> list = bill.Map.listerThings.ThingsInGroup(ThingRequestGroup.MinifiedThing);
 				for (int i = 0; i < list.Count; i++)
 				{
 					MinifiedThing minifiedThing = (MinifiedThing)list[i];
-					if (minifiedThing.InnerThing.def == thingCount.thingDef)
+					if (minifiedThing.InnerThing.def == thingCountClass.thingDef)
 					{
 						num++;
 					}

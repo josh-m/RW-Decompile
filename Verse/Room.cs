@@ -13,6 +13,8 @@ namespace Verse
 
 		private const float UseOutdoorTemperatureUnroofedFraction = 0.25f;
 
+		public sbyte mapIndex = -1;
+
 		private List<Region> regions = new List<Region>();
 
 		public int ID = -16161616;
@@ -46,6 +48,14 @@ namespace Verse
 		private List<Thing> uniqueContainedThings = new List<Thing>();
 
 		private static List<IntVec3> fields = new List<IntVec3>();
+
+		public Map Map
+		{
+			get
+			{
+				return ((int)this.mapIndex >= 0) ? Find.Maps[(int)this.mapIndex] : null;
+			}
+		}
 
 		public RoomTempTracker TempTracker
 		{
@@ -146,12 +156,15 @@ namespace Verse
 				if (this.cachedOpenRoofCount == -1)
 				{
 					this.cachedOpenRoofCount = 0;
-					RoofGrid roofGrid = Find.RoofGrid;
-					foreach (IntVec3 current in this.Cells)
+					if (this.Map != null)
 					{
-						if (!roofGrid.Roofed(current))
+						RoofGrid roofGrid = this.Map.roofGrid;
+						foreach (IntVec3 current in this.Cells)
 						{
-							this.cachedOpenRoofCount++;
+							if (!roofGrid.Roofed(current))
+							{
+								this.cachedOpenRoofCount++;
+							}
 						}
 					}
 				}
@@ -244,6 +257,14 @@ namespace Verse
 			}
 		}
 
+		public bool Fogged
+		{
+			get
+			{
+				return this.regions.Count != 0 && this.regions[0].AnyCell.Fogged(this.Map);
+			}
+		}
+
 		public List<Thing> AllContainedThings
 		{
 			get
@@ -289,7 +310,7 @@ namespace Verse
 				{
 					return false;
 				}
-				Building edifice = this.Cells.FirstOrDefault<IntVec3>().GetEdifice();
+				Building edifice = this.Cells.FirstOrDefault<IntVec3>().GetEdifice(this.Map);
 				return edifice != null && edifice is Building_Door;
 			}
 		}
@@ -303,9 +324,10 @@ namespace Verse
 			}
 		}
 
-		public static Room MakeNew()
+		public static Room MakeNew(Map map)
 		{
 			Room room = new Room();
+			room.mapIndex = (sbyte)map.Index;
 			room.ID = Room.nextRoomID;
 			room.tempTracker = new RoomTempTracker(room);
 			Room.nextRoomID++;
@@ -321,7 +343,7 @@ namespace Verse
 			}
 			if (this.regions.Count == 1)
 			{
-				Find.RegionGrid.allRooms.Add(this);
+				this.Map.regionGrid.allRooms.Add(this);
 			}
 		}
 
@@ -334,7 +356,7 @@ namespace Verse
 			}
 			if (this.regions.Count == 0)
 			{
-				Find.RegionGrid.allRooms.Remove(this);
+				this.Map.regionGrid.allRooms.Remove(this);
 			}
 		}
 
@@ -349,10 +371,10 @@ namespace Verse
 			ProfilerThreadCheck.BeginSample("RoomChanged");
 			this.cachedCellCount = -1;
 			this.cachedOpenRoofCount = -1;
-			if (Current.ProgramState == ProgramState.MapPlaying)
+			if (Current.ProgramState == ProgramState.Playing && !this.Fogged)
 			{
 				ProfilerThreadCheck.BeginSample("RoofGenerationRequest");
-				AutoBuildRoofZoneSetter.TryGenerateRoofFor(this);
+				this.Map.autoBuildRoofAreaSetter.TryGenerateAreaFor(this);
 				ProfilerThreadCheck.EndSample();
 			}
 			this.isPrisonCell = false;
@@ -369,7 +391,7 @@ namespace Verse
 					}
 				}
 			}
-			if (Current.ProgramState == ProgramState.MapPlaying && this.isPrisonCell)
+			if (Current.ProgramState == ProgramState.Playing && this.isPrisonCell)
 			{
 				foreach (Building_Bed current in this.ContainedBeds)
 				{
@@ -381,6 +403,27 @@ namespace Verse
 			this.statsAndRoleDirty = true;
 			FacilitiesUtility.NotifyFacilitiesAboutChangedLOSBlockers(this.regions);
 			ProfilerThreadCheck.EndSample();
+		}
+
+		public void DecrementMapIndex()
+		{
+			if ((int)this.mapIndex <= 0)
+			{
+				Log.Warning(string.Concat(new object[]
+				{
+					"Tried to decrement map index for room ",
+					this.ID,
+					", but mapIndex=",
+					this.mapIndex
+				}));
+				return;
+			}
+			this.mapIndex -= 1;
+		}
+
+		public void Notify_MyMapRemoved()
+		{
+			this.mapIndex = -1;
 		}
 
 		public void Notify_ContainedThingSpawnedOrDespawned(Thing th)

@@ -52,10 +52,10 @@ namespace RimWorld
 			{
 				initiator.relations.RemoveDirectRelation(PawnRelationDefOf.Lover, recipient);
 				initiator.relations.AddDirectRelation(PawnRelationDefOf.Fiance, recipient);
-				initiator.needs.mood.thoughts.memories.RemoveSocialMemoryThoughts(ThoughtDefOf.RejectedMyProposal, recipient);
-				recipient.needs.mood.thoughts.memories.RemoveSocialMemoryThoughts(ThoughtDefOf.RejectedMyProposal, initiator);
-				initiator.needs.mood.thoughts.memories.RemoveSocialMemoryThoughts(ThoughtDefOf.IRejectedTheirProposal, recipient);
-				recipient.needs.mood.thoughts.memories.RemoveSocialMemoryThoughts(ThoughtDefOf.IRejectedTheirProposal, initiator);
+				initiator.needs.mood.thoughts.memories.RemoveMemoryThoughtsOfDefWhereOtherPawnIs(ThoughtDefOf.RejectedMyProposal, recipient);
+				recipient.needs.mood.thoughts.memories.RemoveMemoryThoughtsOfDefWhereOtherPawnIs(ThoughtDefOf.RejectedMyProposal, initiator);
+				initiator.needs.mood.thoughts.memories.RemoveMemoryThoughtsOfDefWhereOtherPawnIs(ThoughtDefOf.IRejectedTheirProposal, recipient);
+				recipient.needs.mood.thoughts.memories.RemoveMemoryThoughtsOfDefWhereOtherPawnIs(ThoughtDefOf.IRejectedTheirProposal, initiator);
 				extraSentencePacks.Add(RulePackDefOf.Sentence_MarriageProposalAccepted);
 			}
 			else

@@ -11,36 +11,45 @@ namespace RimWorld
 		[DebuggerHidden]
 		public static IEnumerable<RecipeDef> ImpliedRecipeDefs()
 		{
-			foreach (ThingDef t in from d in DefDatabase<ThingDef>.AllDefs
+			foreach (RecipeDef r in RecipeDefGenerator.DefsFromRecipeMakers().Concat(RecipeDefGenerator.DrugAdministerDefs()))
+			{
+				yield return r;
+			}
+		}
+
+		[DebuggerHidden]
+		private static IEnumerable<RecipeDef> DefsFromRecipeMakers()
+		{
+			foreach (ThingDef def in from d in DefDatabase<ThingDef>.AllDefs
 			where d.recipeMaker != null
 			select d)
 			{
-				RecipeMakerProperties rm = t.recipeMaker;
+				RecipeMakerProperties rm = def.recipeMaker;
 				RecipeDef r = new RecipeDef();
-				r.defName = "Make_" + t.defName;
+				r.defName = "Make_" + def.defName;
 				r.label = "RecipeMake".Translate(new object[]
 				{
-					t.label
+					def.label
 				});
 				r.jobString = "RecipeMakeJobString".Translate(new object[]
 				{
-					t.label
+					def.label
 				});
 				r.workAmount = (float)rm.workAmount;
 				r.workSpeedStat = rm.workSpeedStat;
 				r.efficiencyStat = rm.efficiencyStat;
-				if (t.MadeFromStuff)
+				if (def.MadeFromStuff)
 				{
 					IngredientCount ic = new IngredientCount();
-					ic.SetBaseCount((float)t.costStuffCount);
-					ic.filter.SetAllowAllWhoCanMake(t);
+					ic.SetBaseCount((float)def.costStuffCount);
+					ic.filter.SetAllowAllWhoCanMake(def);
 					r.ingredients.Add(ic);
-					r.fixedIngredientFilter.SetAllowAllWhoCanMake(t);
+					r.fixedIngredientFilter.SetAllowAllWhoCanMake(def);
 					r.productHasIngredientStuff = true;
 				}
-				if (t.costList != null)
+				if (def.costList != null)
 				{
-					foreach (ThingCount c in t.costList)
+					foreach (ThingCountClass c in def.costList)
 					{
 						IngredientCount ic2 = new IngredientCount();
 						ic2.SetBaseCount((float)c.count);
@@ -50,7 +59,7 @@ namespace RimWorld
 					}
 				}
 				r.defaultIngredientFilter = rm.defaultIngredientFilter;
-				r.products.Add(new ThingCount(t, rm.productCount));
+				r.products.Add(new ThingCountClass(def, rm.productCount));
 				r.skillRequirements = rm.skillRequirements.ListFullCopyOrNull<SkillRequirement>();
 				r.workSkill = rm.workSkill;
 				r.workSkillLearnFactor = rm.workSkillLearnPerTick;
@@ -59,6 +68,41 @@ namespace RimWorld
 				r.effectWorking = rm.effectWorking;
 				r.soundWorking = rm.soundWorking;
 				r.researchPrerequisite = rm.researchPrerequisite;
+				yield return r;
+			}
+		}
+
+		[DebuggerHidden]
+		private static IEnumerable<RecipeDef> DrugAdministerDefs()
+		{
+			foreach (ThingDef def in from d in DefDatabase<ThingDef>.AllDefs
+			where d.IsDrug
+			select d)
+			{
+				RecipeDef r = new RecipeDef();
+				r.defName = "Administer_" + def.defName;
+				r.label = "RecipeAdminister".Translate(new object[]
+				{
+					def.label
+				});
+				r.jobString = "RecipeAdministerJobString".Translate(new object[]
+				{
+					def.label
+				});
+				r.workerClass = typeof(Recipe_AdministerIngestible);
+				r.targetsBodyPart = false;
+				r.anesthesize = false;
+				r.workAmount = (float)def.ingestible.baseIngestTicks;
+				IngredientCount ic = new IngredientCount();
+				ic.SetBaseCount(1f);
+				ic.filter.SetAllow(def, true);
+				r.ingredients.Add(ic);
+				r.fixedIngredientFilter.SetAllow(def, true);
+				r.recipeUsers = new List<ThingDef>();
+				foreach (ThingDef fleshRace in DefDatabase<ThingDef>.AllDefs.Where((ThingDef d) => d.category == ThingCategory.Pawn && d.race.IsFlesh))
+				{
+					r.recipeUsers.Add(fleshRace);
+				}
 				yield return r;
 			}
 		}

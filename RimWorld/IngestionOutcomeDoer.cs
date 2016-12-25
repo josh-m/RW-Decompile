@@ -9,6 +9,8 @@ namespace RimWorld
 	{
 		public float chance = 1f;
 
+		public bool doToGeneratedPawnIfAddicted;
+
 		public void DoIngestionOutcome(Pawn pawn, Thing ingested)
 		{
 			if (Rand.Value < this.chance)

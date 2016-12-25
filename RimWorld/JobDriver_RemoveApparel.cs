@@ -10,7 +10,7 @@ namespace RimWorld
 	{
 		private const int DurationTicks = 60;
 
-		private Apparel Apparel
+		private Apparel TargetApparel
 		{
 			get
 			{
@@ -34,21 +34,21 @@ namespace RimWorld
 			{
 				initAction = delegate
 				{
-					if (this.<>f__this.pawn.apparel.WornApparel.Contains(this.<>f__this.Apparel))
+					if (this.<>f__this.pawn.apparel.WornApparel.Contains(this.<>f__this.TargetApparel))
 					{
 						Apparel apparel;
-						if (this.<>f__this.pawn.apparel.TryDrop(this.<>f__this.Apparel, out apparel))
+						if (this.<>f__this.pawn.apparel.TryDrop(this.<>f__this.TargetApparel, out apparel))
 						{
 							this.<>f__this.CurJob.targetA = apparel;
 							if (this.<>f__this.CurJob.haulDroppedApparel)
 							{
 								apparel.SetForbidden(false, false);
 								StoragePriority currentPriority = HaulAIUtility.StoragePriorityAtFor(apparel.Position, apparel);
-								IntVec3 vec;
-								if (StoreUtility.TryFindBestBetterStoreCellFor(apparel, this.<>f__this.pawn, currentPriority, this.<>f__this.pawn.Faction, out vec, true))
+								IntVec3 c;
+								if (StoreUtility.TryFindBestBetterStoreCellFor(apparel, this.<>f__this.pawn, this.<>f__this.Map, currentPriority, this.<>f__this.pawn.Faction, out c, true))
 								{
-									this.<>f__this.CurJob.maxNumToCarry = apparel.stackCount;
-									this.<>f__this.CurJob.targetB = vec;
+									this.<>f__this.CurJob.count = apparel.stackCount;
+									this.<>f__this.CurJob.targetB = c;
 								}
 								else
 								{
@@ -74,7 +74,8 @@ namespace RimWorld
 			if (base.CurJob.haulDroppedApparel)
 			{
 				yield return Toils_Reserve.Reserve(TargetIndex.B, 1);
-				yield return Toils_Haul.StartCarryThing(TargetIndex.A).FailOn(() => !this.<>f__this.pawn.health.capacities.CapableOf(PawnCapacityDefOf.Manipulation));
+				yield return Toils_Reserve.Reserve(TargetIndex.A, 1);
+				yield return Toils_Haul.StartCarryThing(TargetIndex.A, false, false).FailOn(() => !this.<>f__this.pawn.health.capacities.CapableOf(PawnCapacityDefOf.Manipulation));
 				Toil carryToCell = Toils_Haul.CarryHauledThingToCell(TargetIndex.B);
 				yield return carryToCell;
 				yield return Toils_Haul.PlaceHauledThingInCell(TargetIndex.B, carryToCell, true);

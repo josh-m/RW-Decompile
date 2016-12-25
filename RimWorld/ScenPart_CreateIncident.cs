@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using UnityEngine;
 using Verse;
 
@@ -86,6 +87,10 @@ namespace RimWorld
 		public override void Tick()
 		{
 			base.Tick();
+			if (Find.AnyPlayerHomeMap == null)
+			{
+				return;
+			}
 			if (this.isFinished)
 			{
 				return;
@@ -98,7 +103,9 @@ namespace RimWorld
 			}
 			if ((float)Find.TickManager.TicksGame >= this.occurTick)
 			{
-				IncidentParms parms = StorytellerUtility.DefaultParmsNow(Find.Storyteller.def, this.incident.category);
+				IncidentParms parms = StorytellerUtility.DefaultParmsNow(Find.Storyteller.def, this.incident.category, (from x in Find.Maps
+				where x.IsPlayerHome
+				select x).RandomElement<Map>());
 				if (!this.incident.Worker.TryExecute(parms))
 				{
 					this.isFinished = true;

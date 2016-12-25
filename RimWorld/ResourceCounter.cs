@@ -7,6 +7,8 @@ namespace RimWorld
 {
 	public sealed class ResourceCounter
 	{
+		private Map map;
+
 		private Dictionary<ThingDef, int> countedAmounts = new Dictionary<ThingDef, int>();
 
 		public int Silver
@@ -49,8 +51,9 @@ namespace RimWorld
 			}
 		}
 
-		public ResourceCounter()
+		public ResourceCounter(Map map)
 		{
+			this.map = map;
 			this.ResetResourceCounts();
 		}
 
@@ -123,7 +126,7 @@ namespace RimWorld
 		public void UpdateResourceCounts()
 		{
 			this.ResetResourceCounts();
-			List<SlotGroup> allGroupsListForReading = Find.SlotGroupManager.AllGroupsListForReading;
+			List<SlotGroup> allGroupsListForReading = this.map.slotGroupManager.AllGroupsListForReading;
 			for (int i = 0; i < allGroupsListForReading.Count; i++)
 			{
 				SlotGroup slotGroup = allGroupsListForReading[i];
@@ -132,11 +135,11 @@ namespace RimWorld
 					if (current.def.CountAsResource && this.ShouldCount(current))
 					{
 						Dictionary<ThingDef, int> dictionary;
-						Dictionary<ThingDef, int> expr_5C = dictionary = this.countedAmounts;
+						Dictionary<ThingDef, int> expr_62 = dictionary = this.countedAmounts;
 						ThingDef def;
-						ThingDef expr_65 = def = current.def;
+						ThingDef expr_6B = def = current.def;
 						int num = dictionary[def];
-						expr_5C[expr_65] = num + current.stackCount;
+						expr_62[expr_6B] = num + current.stackCount;
 					}
 				}
 			}

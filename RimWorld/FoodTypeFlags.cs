@@ -10,7 +10,7 @@ namespace RimWorld
 		Meat = 2,
 		Fluid = 4,
 		Corpse = 8,
-		Seeds = 16,
+		Seed = 16,
 		AnimalProduct = 32,
 		Plant = 64,
 		Tree = 128,
@@ -18,14 +18,14 @@ namespace RimWorld
 		Processed = 512,
 		Liquor = 1024,
 		Kibble = 2048,
-		VegetarianAnimal = 3345,
-		VegetarianRoughAnimal = 3409,
-		CarnivoreAnimal = 2314,
+		VegetarianAnimal = 3857,
+		VegetarianRoughAnimal = 3921,
+		CarnivoreAnimal = 2826,
 		CarnivoreAnimalStrict = 10,
-		OmnivoreAnimal = 3355,
-		OmnivoreRoughAnimal = 3419,
-		DendrovoreAnimal = 2193,
-		OvivoreAnimal = 2336,
-		OmnivoreHuman = 1855
+		OmnivoreAnimal = 3867,
+		OmnivoreRoughAnimal = 3931,
+		DendrovoreAnimal = 2705,
+		OvivoreAnimal = 2848,
+		OmnivoreHuman = 3903
 	}
 }

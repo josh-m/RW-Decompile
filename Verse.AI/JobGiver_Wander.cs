@@ -15,9 +15,9 @@ namespace Verse.AI
 
 		protected Danger maxDanger = Danger.None;
 
-		public override ThinkNode DeepCopy()
+		public override ThinkNode DeepCopy(bool resolve = true)
 		{
-			JobGiver_Wander jobGiver_Wander = (JobGiver_Wander)base.DeepCopy();
+			JobGiver_Wander jobGiver_Wander = (JobGiver_Wander)base.DeepCopy(resolve);
 			jobGiver_Wander.wanderRadius = this.wanderRadius;
 			jobGiver_Wander.wanderDestValidator = this.wanderDestValidator;
 			jobGiver_Wander.ticksBetweenWandersRange = this.ticksBetweenWandersRange;
@@ -41,7 +41,7 @@ namespace Verse.AI
 			{
 				return null;
 			}
-			Find.PawnDestinationManager.ReserveDestinationFor(pawn, exactWanderDest);
+			pawn.Map.pawnDestinationManager.ReserveDestinationFor(pawn, exactWanderDest);
 			return new Job(JobDefOf.GotoWander, exactWanderDest)
 			{
 				locomotionUrgency = this.locomotionUrgency

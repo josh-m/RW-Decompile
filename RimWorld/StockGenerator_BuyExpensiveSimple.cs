@@ -10,7 +10,7 @@ namespace RimWorld
 		public float minValuePerUnit = 15f;
 
 		[DebuggerHidden]
-		public override IEnumerable<Thing> GenerateThings()
+		public override IEnumerable<Thing> GenerateThings(Map forMap)
 		{
 		}
 

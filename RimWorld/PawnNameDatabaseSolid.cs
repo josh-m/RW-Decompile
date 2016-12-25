@@ -1,7 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
+using System.Diagnostics;
 using Verse;
 
 namespace RimWorld
@@ -30,50 +30,21 @@ namespace RimWorld
 			PawnNameDatabaseSolid.solidNames[genderPos].Add(newName);
 		}
 
-		public static NameTriple RandomUnusedSolidName(Gender gender, string forcedLastName = null)
+		public static List<NameTriple> GetListForGender(GenderPossibility gp)
 		{
-			List<NameTriple> list = PawnNameDatabaseSolid.solidNames[GenderPossibility.Either];
-			List<NameTriple> list2 = (gender != Gender.Male) ? PawnNameDatabaseSolid.solidNames[GenderPossibility.Female] : PawnNameDatabaseSolid.solidNames[GenderPossibility.Male];
-			float num = ((float)list.Count + 0.1f) / ((float)(list.Count + list2.Count) + 0.1f);
-			List<NameTriple> list3;
-			if (Rand.Value < num)
+			return PawnNameDatabaseSolid.solidNames[gp];
+		}
+
+		[DebuggerHidden]
+		public static IEnumerable<NameTriple> AllNames()
+		{
+			foreach (KeyValuePair<GenderPossibility, List<NameTriple>> kvp in PawnNameDatabaseSolid.solidNames)
 			{
-				list3 = list;
-			}
-			else
-			{
-				list3 = list2;
-			}
-			if (Rand.Value < 0.5f)
-			{
-				string prefName = Prefs.RandomPreferredName;
-				if (prefName != null && (forcedLastName == null || prefName == forcedLastName))
+				foreach (NameTriple name in kvp.Value)
 				{
-					List<NameTriple> list4 = (from name in list3
-					where !(name.Last != prefName) && !name.UsedThisGame
-					select name).ToList<NameTriple>();
-					if (list4.Count > 0)
-					{
-						return list4.RandomElement<NameTriple>();
-					}
+					yield return name;
 				}
 			}
-			int num2 = 0;
-			while (list3.Count != 0)
-			{
-				NameTriple nameTriple = list3.RandomElement<NameTriple>();
-				if ((forcedLastName == null || nameTriple.Last == forcedLastName) && !nameTriple.UsedThisGame)
-				{
-					return nameTriple;
-				}
-				num2++;
-				if (num2 > 30)
-				{
-					return null;
-				}
-			}
-			Log.Warning("Empty solid pawn name list for gender: " + gender + ".");
-			return null;
 		}
 	}
 }

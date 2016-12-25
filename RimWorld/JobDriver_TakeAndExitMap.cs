@@ -27,15 +27,23 @@ namespace RimWorld
 			yield return Toils_Reserve.Reserve(TargetIndex.A, 1);
 			yield return Toils_Goto.GotoThing(TargetIndex.A, PathEndMode.ClosestTouch).FailOnSomeonePhysicallyInteracting(TargetIndex.A);
 			yield return Toils_Construct.UninstallIfMinifiable(TargetIndex.A).FailOnSomeonePhysicallyInteracting(TargetIndex.A);
-			yield return Toils_Haul.StartCarryThing(TargetIndex.A);
-			yield return Toils_Goto.GotoCell(TargetIndex.B, PathEndMode.OnCell);
+			yield return Toils_Haul.StartCarryThing(TargetIndex.A, false, false);
+			Toil gotoCell = Toils_Goto.GotoCell(TargetIndex.B, PathEndMode.OnCell);
+			gotoCell.AddPreTickAction(delegate
+			{
+				if (this.<>f__this.Map.exitMapGrid.IsExitCell(this.<>f__this.pawn.Position))
+				{
+					this.<>f__this.pawn.ExitMap(true);
+				}
+			});
+			yield return gotoCell;
 			yield return new Toil
 			{
 				initAction = delegate
 				{
-					if (this.<>f__this.pawn.Position.OnEdge())
+					if (this.<>f__this.pawn.Position.OnEdge(this.<>f__this.pawn.Map) || this.<>f__this.pawn.Map.exitMapGrid.IsExitCell(this.<>f__this.pawn.Position))
 					{
-						this.<>f__this.pawn.ExitMap();
+						this.<>f__this.pawn.ExitMap(true);
 					}
 				},
 				defaultCompleteMode = ToilCompleteMode.Instant

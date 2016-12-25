@@ -25,6 +25,8 @@ namespace RimWorld
 
 		public static readonly Texture2D Attack = ContentFinder<Texture2D>.Get("UI/Commands/Attack", true);
 
+		public static readonly Texture2D AllowFiring = ContentFinder<Texture2D>.Get("UI/Commands/AllowFiring", true);
+
 		public static readonly Texture2D RearmTrap = ContentFinder<Texture2D>.Get("UI/Designators/RearmTrap", true);
 
 		public static readonly Texture2D TreeChop = ContentFinder<Texture2D>.Get("UI/Designators/HarvestWood", true);

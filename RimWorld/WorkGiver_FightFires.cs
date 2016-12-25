@@ -42,7 +42,7 @@ namespace RimWorld
 				{
 					return false;
 				}
-				if ((pawn2.Faction == pawn.Faction || pawn2.HostFaction == pawn.Faction || pawn2.HostFaction == pawn.HostFaction) && !Find.AreaHome[fire.Position] && IntVec3Utility.ManhattanDistanceFlat(pawn.Position, pawn2.Position) > 15)
+				if ((pawn2.Faction == pawn.Faction || pawn2.HostFaction == pawn.Faction || pawn2.HostFaction == pawn.HostFaction) && !pawn.Map.areaManager.Home[fire.Position] && IntVec3Utility.ManhattanDistanceFlat(pawn.Position, pawn2.Position) > 15)
 				{
 					return false;
 				}
@@ -57,7 +57,7 @@ namespace RimWorld
 				{
 					return false;
 				}
-				if (!Find.AreaHome[fire.Position])
+				if (!pawn.Map.areaManager.Home[fire.Position])
 				{
 					return false;
 				}
@@ -76,7 +76,11 @@ namespace RimWorld
 
 		public static bool FireIsBeingHandled(Fire f, Pawn potentialHandler)
 		{
-			Pawn pawn = Find.Reservations.FirstReserverOf(f, potentialHandler.Faction, true);
+			if (!f.Spawned)
+			{
+				return false;
+			}
+			Pawn pawn = f.Map.reservationManager.FirstReserverOf(f, potentialHandler.Faction, true);
 			return pawn != null && pawn.Position.InHorDistOf(f.Position, 5f);
 		}
 	}

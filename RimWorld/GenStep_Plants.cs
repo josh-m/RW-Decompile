@@ -13,34 +13,34 @@ namespace RimWorld
 
 		private static Dictionary<ThingDef, int> numExtant = new Dictionary<ThingDef, int>();
 
-		private static int totalExtant = 0;
-
 		private static Dictionary<ThingDef, float> desiredProportions = new Dictionary<ThingDef, float>();
 
-		public override void Generate()
+		private static int totalExtant = 0;
+
+		public override void Generate(Map map)
 		{
-			RegionAndRoomUpdater.Enabled = false;
-			List<ThingDef> list = Find.Map.Biome.AllWildPlants.ToList<ThingDef>();
+			map.regionAndRoomUpdater.Enabled = false;
+			List<ThingDef> list = map.Biome.AllWildPlants.ToList<ThingDef>();
 			for (int i = 0; i < list.Count; i++)
 			{
 				GenStep_Plants.numExtant.Add(list[i], 0);
 			}
-			GenStep_Plants.desiredProportions = GenPlant.CalculateDesiredPlantProportions(Find.Map.Biome);
-			float num = Find.Map.Biome.plantDensity * Find.MapConditionManager.AggregatePlantDensityFactor();
-			foreach (IntVec3 c in Find.Map.AllCells.InRandomOrder(null))
+			GenStep_Plants.desiredProportions = GenPlant.CalculateDesiredPlantProportions(map.Biome);
+			float num = map.Biome.plantDensity * map.mapConditionManager.AggregatePlantDensityFactor();
+			foreach (IntVec3 c in map.AllCells.InRandomOrder(null))
 			{
-				if (c.GetEdifice() == null && c.GetCover() == null)
+				if (c.GetEdifice(map) == null && c.GetCover(map) == null)
 				{
-					float num2 = Find.FertilityGrid.FertilityAt(c);
+					float num2 = map.fertilityGrid.FertilityAt(c);
 					float num3 = num2 * num;
 					if (Rand.Value < num3)
 					{
 						IEnumerable<ThingDef> source = from def in list
-						where def.CanEverPlantAt(c)
+						where def.CanEverPlantAt(c, map)
 						select def;
 						if (source.Any<ThingDef>())
 						{
-							ThingDef thingDef = source.RandomElementByWeight(new Func<ThingDef, float>(GenStep_Plants.PlantChoiceWeight));
+							ThingDef thingDef = source.RandomElementByWeight((ThingDef x) => GenStep_Plants.PlantChoiceWeight(x, map));
 							int randomInRange = thingDef.plant.wildClusterSizeRange.RandomInRange;
 							for (int j = 0; j < randomInRange; j++)
 							{
@@ -49,7 +49,7 @@ namespace RimWorld
 								{
 									c2 = c;
 								}
-								else if (!GenPlantReproduction.TryFindSeedTargFor(thingDef, c, SeedTargFindMode.Cluster, out c2))
+								else if (!GenPlantReproduction.TryFindReproductionDestination(c, thingDef, SeedTargFindMode.MapGenCluster, map, out c2))
 								{
 									break;
 								}
@@ -59,7 +59,7 @@ namespace RimWorld
 								{
 									plant.Age = Rand.Range(0, plant.def.plant.LifespanTicks - 50);
 								}
-								GenSpawn.Spawn(plant, c2);
+								GenSpawn.Spawn(plant, c2, map);
 								GenStep_Plants.RecordAdded(thingDef);
 							}
 						}
@@ -69,12 +69,12 @@ namespace RimWorld
 			GenStep_Plants.numExtant.Clear();
 			GenStep_Plants.desiredProportions.Clear();
 			GenStep_Plants.totalExtant = 0;
-			RegionAndRoomUpdater.Enabled = true;
+			map.regionAndRoomUpdater.Enabled = true;
 		}
 
-		private static float PlantChoiceWeight(ThingDef def)
+		private static float PlantChoiceWeight(ThingDef def, Map map)
 		{
-			float num = Find.Map.Biome.CommonalityOfPlant(def);
+			float num = map.Biome.CommonalityOfPlant(def);
 			if (GenStep_Plants.totalExtant > 100)
 			{
 				float num2 = (float)GenStep_Plants.numExtant[def] / (float)GenStep_Plants.totalExtant;

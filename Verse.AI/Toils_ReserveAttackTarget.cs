@@ -13,7 +13,7 @@ namespace Verse.AI
 				IAttackTarget attackTarget = actor.CurJob.GetTarget(ind).Thing as IAttackTarget;
 				if (attackTarget != null)
 				{
-					Find.AttackTargetReservations.Reserve(actor, attackTarget);
+					actor.Map.attackTargetReservationManager.Reserve(actor, attackTarget);
 				}
 			};
 			toil.defaultCompleteMode = ToilCompleteMode.Instant;

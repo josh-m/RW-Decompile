@@ -66,31 +66,38 @@ namespace RimWorld
 						text += ", ";
 					}
 					text += SeasonUtility.SeasonsContinuousRangeLabel(months, month);
-					while (i < 12 && months.Contains((Month)i))
-					{
-						i++;
-					}
 				}
 			}
 			return text;
 		}
 
-		private static string SeasonsContinuousRangeLabel(List<Month> months, Month month)
+		private static string SeasonsContinuousRangeLabel(List<Month> months, Month rootMonth)
 		{
-			Month leftMostMonth = SeasonUtility.GetLeftMostMonth(months, month);
-			Month month2 = SeasonUtility.GetRightMostMonth(months, month);
-			if (month2 == Month.Dec)
+			Month leftMostMonth = SeasonUtility.GetLeftMostMonth(months, rootMonth);
+			Month rightMostMonth = SeasonUtility.GetRightMostMonth(months, rootMonth);
+			for (Month month = leftMostMonth; month != rightMostMonth; month = SeasonUtility.MonthAfter(month))
 			{
-				month2 = Month.Jan;
+				if (!months.Contains(month))
+				{
+					Log.Error(string.Concat(new object[]
+					{
+						"Months doesn't contain ",
+						month,
+						" (",
+						leftMostMonth,
+						"..",
+						rightMostMonth,
+						")"
+					}));
+					break;
+				}
+				months.Remove(month);
 			}
-			else
-			{
-				month2 += 1;
-			}
-			return GenDate.SeasonDateStringAt(leftMostMonth) + " - " + GenDate.SeasonDateStringAt(month2);
+			months.Remove(rightMostMonth);
+			return GenDate.SeasonDateStringAt(leftMostMonth) + " - " + GenDate.SeasonDateStringAt(rightMostMonth);
 		}
 
-		private static Month GetLeftMostMonth(List<Month> months, Month month)
+		private static Month GetLeftMostMonth(List<Month> months, Month rootMonth)
 		{
 			if (months.Count >= 12)
 			{
@@ -99,41 +106,45 @@ namespace RimWorld
 			Month result;
 			do
 			{
-				result = month;
-				if (month == Month.Jan)
-				{
-					month = Month.Dec;
-				}
-				else
-				{
-					month -= 1;
-				}
+				result = rootMonth;
+				rootMonth = SeasonUtility.MonthBefore(rootMonth);
 			}
-			while (months.Contains(month));
+			while (months.Contains(rootMonth));
 			return result;
 		}
 
-		private static Month GetRightMostMonth(List<Month> months, Month month)
+		private static Month GetRightMostMonth(List<Month> months, Month rootMonth)
 		{
 			if (months.Count >= 12)
 			{
 				return Month.Undefined;
 			}
-			Month result;
+			Month m;
 			do
 			{
-				result = month;
-				if (month == Month.Dec)
-				{
-					month = Month.Jan;
-				}
-				else
-				{
-					month += 1;
-				}
+				m = rootMonth;
+				rootMonth = SeasonUtility.MonthAfter(rootMonth);
 			}
-			while (months.Contains(month));
-			return result;
+			while (months.Contains(rootMonth));
+			return SeasonUtility.MonthAfter(m);
+		}
+
+		private static Month MonthBefore(Month m)
+		{
+			if (m == Month.Jan)
+			{
+				return Month.Dec;
+			}
+			return (Month)(m - Month.Feb);
+		}
+
+		private static Month MonthAfter(Month m)
+		{
+			if (m == Month.Dec)
+			{
+				return Month.Jan;
+			}
+			return m + 1;
 		}
 	}
 }

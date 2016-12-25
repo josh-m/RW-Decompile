@@ -11,7 +11,7 @@ namespace RimWorld
 		{
 			if (this.pawn.IsHashIntervalTick(400))
 			{
-				MoteMaker.ThrowHorseshoe(this.pawn, base.TargetA.Center);
+				MoteMaker.ThrowHorseshoe(this.pawn, base.TargetA.Cell);
 			}
 			base.WatchTickAction();
 		}

@@ -9,7 +9,7 @@ namespace Verse
 		Everything,
 		HaulableEver,
 		HaulableAlways,
-		CultivatedPlant,
+		Plant,
 		FoodSource,
 		FoodSourceNotPlantOrTree,
 		Corpse,
@@ -31,7 +31,8 @@ namespace Verse
 		MinifiedThing,
 		Grave,
 		Art,
-		Container,
-		DropPod
+		ContainerEnclosure,
+		ActiveDropPod,
+		Transporter
 	}
 }

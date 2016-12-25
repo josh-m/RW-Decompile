@@ -6,7 +6,7 @@ namespace RimWorld
 {
 	public class Building_Casket : Building, IOpenable, IThingContainerOwner
 	{
-		protected ThingContainer container;
+		protected ThingContainer innerContainer;
 
 		protected bool contentsKnown;
 
@@ -14,7 +14,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return this.container.Count > 0;
+				return this.innerContainer.Count > 0;
 			}
 		}
 
@@ -22,7 +22,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return (this.container.Count != 0) ? this.container[0] : null;
+				return (this.innerContainer.Count != 0) ? this.innerContainer[0] : null;
 			}
 		}
 
@@ -36,17 +36,22 @@ namespace RimWorld
 
 		public Building_Casket()
 		{
-			this.container = new ThingContainer(this, false);
+			this.innerContainer = new ThingContainer(this, false, LookMode.Deep);
 		}
 
-		public ThingContainer GetContainer()
+		public ThingContainer GetInnerContainer()
 		{
-			return this.container;
+			return this.innerContainer;
 		}
 
 		public IntVec3 GetPosition()
 		{
 			return base.PositionHeld;
+		}
+
+		public Map GetMap()
+		{
+			return base.MapHeld;
 		}
 
 		public virtual void Open()
@@ -61,16 +66,16 @@ namespace RimWorld
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Deep.LookDeep<ThingContainer>(ref this.container, "container", new object[]
+			Scribe_Deep.LookDeep<ThingContainer>(ref this.innerContainer, "innerContainer", new object[]
 			{
 				this
 			});
 			Scribe_Values.LookValue<bool>(ref this.contentsKnown, "contentsKnown", false, false);
 		}
 
-		public override void SpawnSetup()
+		public override void SpawnSetup(Map map)
 		{
-			base.SpawnSetup();
+			base.SpawnSetup(map);
 			if (base.Faction != null && base.Faction.IsPlayer)
 			{
 				this.contentsKnown = true;
@@ -79,13 +84,13 @@ namespace RimWorld
 
 		public override bool ClaimableBy(Faction fac)
 		{
-			if (this.container.Count == 0)
+			if (this.innerContainer.Count == 0)
 			{
 				return true;
 			}
-			for (int i = 0; i < this.container.Count; i++)
+			for (int i = 0; i < this.innerContainer.Count; i++)
 			{
-				if (this.container[i].Faction == fac)
+				if (this.innerContainer[i].Faction == fac)
 				{
 					return true;
 				}
@@ -95,7 +100,7 @@ namespace RimWorld
 
 		public virtual bool Accepts(Thing thing)
 		{
-			return this.container.CanAcceptAnyOf(thing);
+			return this.innerContainer.CanAcceptAnyOf(thing);
 		}
 
 		public virtual bool TryAcceptThing(Thing thing, bool allowSpecialEffects = true)
@@ -105,14 +110,14 @@ namespace RimWorld
 				return false;
 			}
 			bool flag;
-			if (thing.holder != null)
+			if (thing.holdingContainer != null)
 			{
-				thing.holder.TransferToContainer(thing, this.container, thing.stackCount);
+				thing.holdingContainer.TransferToContainer(thing, this.innerContainer, thing.stackCount);
 				flag = true;
 			}
 			else
 			{
-				flag = this.container.TryAdd(thing);
+				flag = this.innerContainer.TryAdd(thing, true);
 			}
 			if (flag)
 			{
@@ -127,12 +132,12 @@ namespace RimWorld
 
 		public override void Destroy(DestroyMode mode = DestroyMode.Vanish)
 		{
-			if (this.container.Count > 0 && (mode == DestroyMode.Deconstruct || mode == DestroyMode.Kill))
+			if (this.innerContainer.Count > 0 && (mode == DestroyMode.Deconstruct || mode == DestroyMode.Kill))
 			{
 				if (mode != DestroyMode.Deconstruct)
 				{
 					List<Pawn> list = new List<Pawn>();
-					foreach (Thing current in this.container)
+					foreach (Thing current in this.innerContainer)
 					{
 						Pawn pawn = current as Pawn;
 						if (pawn != null)
@@ -147,37 +152,29 @@ namespace RimWorld
 				}
 				this.EjectContents();
 			}
-			this.container.ClearAndDestroyContents(DestroyMode.Vanish);
+			this.innerContainer.ClearAndDestroyContents(DestroyMode.Vanish);
 			base.Destroy(mode);
 		}
 
 		public virtual void EjectContents()
 		{
-			this.container.TryDropAll(this.InteractionCell, ThingPlaceMode.Near);
+			this.innerContainer.TryDropAll(this.InteractionCell, base.Map, ThingPlaceMode.Near);
 			this.contentsKnown = true;
 		}
 
 		public override string GetInspectString()
 		{
 			string inspectString = base.GetInspectString();
-			string text;
+			string str;
 			if (!this.contentsKnown)
 			{
-				text = "UnknownLower".Translate();
+				str = "UnknownLower".Translate();
 			}
 			else
 			{
-				text = this.container.ContentsString;
+				str = this.innerContainer.ContentsString;
 			}
-			string text2 = inspectString;
-			return string.Concat(new string[]
-			{
-				text2,
-				"\n",
-				"CasketContains".Translate(),
-				": ",
-				text
-			});
+			return inspectString + "CasketContains".Translate() + ": " + str;
 		}
 
 		virtual bool get_Spawned()

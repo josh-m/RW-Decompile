@@ -10,7 +10,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return (float)(from d in Find.DesignationManager.DesignationsOfDef(DesignationDefOf.HarvestPlant)
+				return (float)(from d in base.Map.designationManager.DesignationsOfDef(DesignationDefOf.HarvestPlant)
 				where d.target.Thing.def.plant.IsTree
 				select d).Count<Designation>() / (float)this.def.targetCount;
 			}

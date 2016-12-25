@@ -85,7 +85,7 @@ namespace Verse
 			DebugLoadIDsSavingErrorsChecker.Clear();
 		}
 
-		public static void RegisterDeepSaved(object obj)
+		public static void RegisterDeepSaved(object obj, string label)
 		{
 			if (!Prefs.DevMode)
 			{
@@ -98,7 +98,14 @@ namespace Verse
 			ILoadReferenceable loadReferenceable = obj as ILoadReferenceable;
 			if (loadReferenceable != null && !DebugLoadIDsSavingErrorsChecker.deepSaved.Add(loadReferenceable.GetUniqueLoadID()))
 			{
-				Log.Warning("DebugLoadIDsSavingErrorsChecker error: tried to register deep-saved object with loadID " + loadReferenceable.GetUniqueLoadID() + ", but it's already here. (not cleared after the previous save? different objects have the same load ID?)");
+				Log.Warning(string.Concat(new string[]
+				{
+					"DebugLoadIDsSavingErrorsChecker error: tried to register deep-saved object with loadID ",
+					loadReferenceable.GetUniqueLoadID(),
+					", but it's already here. label=",
+					label,
+					" (not cleared after the previous save? different objects have the same load ID? the same object is deep-saved twice?)"
+				}));
 			}
 		}
 

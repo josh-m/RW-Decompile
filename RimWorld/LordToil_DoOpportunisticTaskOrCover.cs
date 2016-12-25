@@ -35,7 +35,7 @@ namespace RimWorld
 				if (!this.cover || (this.TryFindGoodOpportunisticTaskTarget(pawn, out item, list) && !GenAI.InDangerousCombat(pawn)))
 				{
 					pawn.mindState.duty = new PawnDuty(this.DutyDef);
-					pawn.jobs.EndCurrentJob(JobCondition.InterruptForced);
+					pawn.jobs.EndCurrentJob(JobCondition.InterruptForced, true);
 					if (list == null)
 					{
 						list = new List<Thing>();
@@ -60,10 +60,10 @@ namespace RimWorld
 					if (!pawn.Downed && pawn.mindState.duty.def == DutyDefOf.AssaultColony)
 					{
 						Thing thing = null;
-						if (this.TryFindGoodOpportunisticTaskTarget(pawn, out thing, list) && !Find.Reservations.IsReserved(thing, this.lord.faction) && !GenAI.InDangerousCombat(pawn))
+						if (this.TryFindGoodOpportunisticTaskTarget(pawn, out thing, list) && !base.Map.reservationManager.IsReserved(thing, this.lord.faction) && !GenAI.InDangerousCombat(pawn))
 						{
 							pawn.mindState.duty = new PawnDuty(this.DutyDef);
-							pawn.jobs.EndCurrentJob(JobCondition.InterruptForced);
+							pawn.jobs.EndCurrentJob(JobCondition.InterruptForced, true);
 							if (list == null)
 							{
 								list = new List<Thing>();

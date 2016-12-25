@@ -26,7 +26,7 @@ namespace RimWorld
 				initAction = delegate
 				{
 					Pawn actor = this.<finalize>__1.actor;
-					Thing forbiddenIfOutsideHomeArea = GenSpawn.Spawn(actor.GetComp<CompEggLayer>().ProduceEgg(), actor.Position);
+					Thing forbiddenIfOutsideHomeArea = GenSpawn.Spawn(actor.GetComp<CompEggLayer>().ProduceEgg(), actor.Position, this.<>f__this.Map);
 					forbiddenIfOutsideHomeArea.SetForbiddenIfOutsideHomeArea();
 				},
 				defaultCompleteMode = ToilCompleteMode.Instant

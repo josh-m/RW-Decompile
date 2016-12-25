@@ -20,13 +20,13 @@ namespace Verse
 
 		private bool HideRainPrimary(IntVec3 c)
 		{
-			if (Find.FogGrid.IsFogged(c))
+			if (base.Map.fogGrid.IsFogged(c))
 			{
 				return false;
 			}
-			if (c.Roofed())
+			if (c.Roofed(base.Map))
 			{
-				Building edifice = c.GetEdifice();
+				Building edifice = c.GetEdifice(base.Map);
 				if (edifice == null)
 				{
 					return true;
@@ -51,12 +51,13 @@ namespace Verse
 			}
 			LayerSubMesh subMesh = base.GetSubMesh(MatBases.IndoorMask);
 			subMesh.Clear(MeshParts.All);
-			Building[] innerArray = Find.EdificeGrid.InnerArray;
+			Building[] innerArray = base.Map.edificeGrid.InnerArray;
 			CellRect cellRect = new CellRect(this.section.botLeft.x, this.section.botLeft.z, 17, 17);
-			cellRect.ClipInsideMap();
+			cellRect.ClipInsideMap(base.Map);
 			subMesh.verts.Capacity = cellRect.Area * 2;
 			subMesh.tris.Capacity = cellRect.Area * 4;
 			float y = Altitudes.AltitudeFor(AltitudeLayer.MetaOverlays);
+			CellIndices cellIndices = base.Map.cellIndices;
 			for (int i = cellRect.minX; i <= cellRect.maxX; i++)
 			{
 				int j = cellRect.minZ;
@@ -65,16 +66,16 @@ namespace Verse
 					IntVec3 intVec = new IntVec3(i, 0, j);
 					if (this.HideRainPrimary(intVec))
 					{
-						goto IL_149;
+						goto IL_16E;
 					}
-					bool flag = intVec.Roofed();
+					bool flag = intVec.Roofed(base.Map);
 					bool flag2 = false;
 					if (flag)
 					{
 						for (int k = 0; k < 8; k++)
 						{
 							IntVec3 c = intVec + GenAdj.AdjacentCells[k];
-							if (c.InBounds())
+							if (c.InBounds(base.Map))
 							{
 								if (this.HideRainPrimary(c))
 								{
@@ -86,13 +87,13 @@ namespace Verse
 					}
 					if (flag && flag2)
 					{
-						goto IL_149;
+						goto IL_16E;
 					}
-					IL_276:
+					IL_29D:
 					j++;
 					continue;
-					IL_149:
-					Thing thing = innerArray[CellIndices.CellToIndex(i, j)];
+					IL_16E:
+					Thing thing = innerArray[cellIndices.CellToIndex(i, j)];
 					float num;
 					if (thing != null && (thing.def.passability == Traversability.Impassable || thing.def.IsDoor))
 					{
@@ -113,12 +114,12 @@ namespace Verse
 					subMesh.tris.Add(count - 4);
 					subMesh.tris.Add(count - 2);
 					subMesh.tris.Add(count - 1);
-					goto IL_276;
+					goto IL_29D;
 				}
 			}
 			if (subMesh.verts.Count > 0)
 			{
-				subMesh.FinalizeMesh(MeshParts.Verts | MeshParts.Tris);
+				subMesh.FinalizeMesh(MeshParts.Verts | MeshParts.Tris, false);
 			}
 		}
 	}

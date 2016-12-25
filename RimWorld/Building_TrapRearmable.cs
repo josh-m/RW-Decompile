@@ -56,20 +56,19 @@ namespace RimWorld
 			this.DamagePawn(p);
 			if (this.autoRearm)
 			{
-				Find.DesignationManager.AddDesignation(new Designation(this, DesignationDefOf.RearmTrap));
+				base.Map.designationManager.AddDesignation(new Designation(this, DesignationDefOf.RearmTrap));
 			}
 		}
 
 		public void Rearm()
 		{
 			this.armedInt = true;
-			SoundDef.Named("TrapArm").PlayOneShot(base.Position);
+			SoundDef.Named("TrapArm").PlayOneShot(new TargetInfo(base.Position, base.Map, false));
 		}
 
 		private void DamagePawn(Pawn p)
 		{
-			BodyPartHeight value = (Rand.Value >= 0.666f) ? BodyPartHeight.Middle : BodyPartHeight.Top;
-			BodyPartDamageInfo value2 = new BodyPartDamageInfo(new BodyPartHeight?(value), new BodyPartDepth?(BodyPartDepth.Outside));
+			BodyPartHeight height = (Rand.Value >= 0.666f) ? BodyPartHeight.Middle : BodyPartHeight.Top;
 			int num = Mathf.RoundToInt(this.GetStatValue(StatDefOf.TrapMeleeDamage, true) * Building_TrapRearmable.TrapDamageFactor.RandomInRange);
 			int randomInRange = Building_TrapRearmable.DamageCount.RandomInRange;
 			for (int i = 0; i < randomInRange; i++)
@@ -80,7 +79,9 @@ namespace RimWorld
 				}
 				int num2 = Mathf.Max(1, Mathf.RoundToInt(Rand.Value * (float)num));
 				num -= num2;
-				p.TakeDamage(new DamageInfo(DamageDefOf.Stab, num2, this, new BodyPartDamageInfo?(value2), null));
+				DamageInfo dinfo = new DamageInfo(DamageDefOf.Stab, num2, -1f, this, null, null);
+				dinfo.SetBodyRegion(height, BodyPartDepth.Outside);
+				p.TakeDamage(dinfo);
 			}
 		}
 

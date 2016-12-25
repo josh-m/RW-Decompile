@@ -10,9 +10,9 @@ namespace RimWorld
 	{
 		public ThinkTreeDutyHook dutyHook;
 
-		public override ThinkNode DeepCopy()
+		public override ThinkNode DeepCopy(bool resolve = true)
 		{
-			ThinkNode_JoinVoluntarilyJoinableLord thinkNode_JoinVoluntarilyJoinableLord = (ThinkNode_JoinVoluntarilyJoinableLord)base.DeepCopy();
+			ThinkNode_JoinVoluntarilyJoinableLord thinkNode_JoinVoluntarilyJoinableLord = (ThinkNode_JoinVoluntarilyJoinableLord)base.DeepCopy(resolve);
 			thinkNode_JoinVoluntarilyJoinableLord.dutyHook = this.dutyHook;
 			return thinkNode_JoinVoluntarilyJoinableLord;
 		}
@@ -61,7 +61,7 @@ namespace RimWorld
 				lord2 = lord;
 				num = lordJob_VoluntarilyJoinable.VoluntaryJoinPriorityFor(pawn);
 			}
-			List<Lord> lords = Find.LordManager.lords;
+			List<Lord> lords = pawn.Map.lordManager.lords;
 			for (int i = 0; i < lords.Count; i++)
 			{
 				LordJob_VoluntarilyJoinable lordJob_VoluntarilyJoinable2 = lords[i].LordJob as LordJob_VoluntarilyJoinable;

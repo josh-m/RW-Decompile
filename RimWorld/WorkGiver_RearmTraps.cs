@@ -19,7 +19,7 @@ namespace RimWorld
 		[DebuggerHidden]
 		public override IEnumerable<Thing> PotentialWorkThingsGlobal(Pawn pawn)
 		{
-			foreach (Designation des in Find.DesignationManager.DesignationsOfDef(DesignationDefOf.RearmTrap))
+			foreach (Designation des in pawn.Map.designationManager.DesignationsOfDef(DesignationDefOf.RearmTrap))
 			{
 				yield return des.target.Thing;
 			}
@@ -27,7 +27,7 @@ namespace RimWorld
 
 		public override bool HasJobOnThing(Pawn pawn, Thing t)
 		{
-			if (Find.DesignationManager.DesignationOn(t, DesignationDefOf.RearmTrap) == null)
+			if (pawn.Map.designationManager.DesignationOn(t, DesignationDefOf.RearmTrap) == null)
 			{
 				return false;
 			}
@@ -35,7 +35,7 @@ namespace RimWorld
 			{
 				return false;
 			}
-			List<Thing> thingList = t.Position.GetThingList();
+			List<Thing> thingList = t.Position.GetThingList(t.Map);
 			for (int i = 0; i < thingList.Count; i++)
 			{
 				IntVec3 intVec;
@@ -49,7 +49,7 @@ namespace RimWorld
 
 		public override Job JobOnThing(Pawn pawn, Thing t)
 		{
-			List<Thing> thingList = t.Position.GetThingList();
+			List<Thing> thingList = t.Position.GetThingList(t.Map);
 			for (int i = 0; i < thingList.Count; i++)
 			{
 				if (thingList[i] != t && thingList[i].def.category == ThingCategory.Item)

@@ -1,34 +1,33 @@
 using System;
+using System.Collections.Generic;
 using Verse;
 
 namespace RimWorld
 {
-	public class Alert_NeedBatteries : Alert_Medium
+	public class Alert_NeedBatteries : Alert
 	{
-		public override AlertReport Report
-		{
-			get
-			{
-				if (Find.ListerBuildings.ColonistsHaveBuilding(ThingDefOf.Battery))
-				{
-					return false;
-				}
-				if (!Find.ListerBuildings.ColonistsHaveBuilding(ThingDefOf.SolarGenerator) && !Find.ListerBuildings.ColonistsHaveBuilding(ThingDefOf.WindTurbine))
-				{
-					return false;
-				}
-				if (Find.ListerBuildings.ColonistsHaveBuilding(ThingDefOf.GeothermalGenerator))
-				{
-					return false;
-				}
-				return true;
-			}
-		}
-
 		public Alert_NeedBatteries()
 		{
-			this.baseLabel = "NeedBatteries".Translate();
-			this.baseExplanation = "NeedBatteriesDesc".Translate();
+			this.defaultLabel = "NeedBatteries".Translate();
+			this.defaultExplanation = "NeedBatteriesDesc".Translate();
+		}
+
+		public override AlertReport GetReport()
+		{
+			List<Map> maps = Find.Maps;
+			for (int i = 0; i < maps.Count; i++)
+			{
+				if (this.NeedBatteries(maps[i]))
+				{
+					return true;
+				}
+			}
+			return false;
+		}
+
+		private bool NeedBatteries(Map map)
+		{
+			return map.IsPlayerHome && !map.listerBuildings.ColonistsHaveBuilding(ThingDefOf.Battery) && (map.listerBuildings.ColonistsHaveBuilding(ThingDefOf.SolarGenerator) || map.listerBuildings.ColonistsHaveBuilding(ThingDefOf.WindTurbine)) && !map.listerBuildings.ColonistsHaveBuilding(ThingDefOf.GeothermalGenerator);
 		}
 	}
 }

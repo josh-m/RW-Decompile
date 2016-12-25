@@ -4,8 +4,14 @@ namespace Verse
 {
 	public enum MenuOptionPriority : byte
 	{
+		DisabledOption,
+		VeryLow,
 		Low,
-		Medium,
-		High
+		GoHere,
+		Default,
+		High,
+		AttackEnemy,
+		InitiateSocial,
+		RescueOrCapture
 	}
 }

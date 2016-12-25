@@ -36,8 +36,8 @@ namespace RimWorld
 
 		protected override void DoEffect(IntVec3 c)
 		{
-			TerrainDef smoothedTerrain = base.TargetLocA.GetTerrain().smoothedTerrain;
-			Find.TerrainGrid.SetTerrain(base.TargetLocA, smoothedTerrain);
+			TerrainDef smoothedTerrain = base.TargetLocA.GetTerrain(base.Map).smoothedTerrain;
+			base.Map.terrainGrid.SetTerrain(base.TargetLocA, smoothedTerrain);
 		}
 	}
 }

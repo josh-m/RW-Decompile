@@ -40,6 +40,26 @@ namespace Verse
 			}
 		}
 
+		public void Reset()
+		{
+			for (int i = 0; i < this.thingLists.Count; i++)
+			{
+				this.thingLists[i].Clear();
+			}
+			this.thingsToRegister.Clear();
+			this.thingsToDeregister.Clear();
+		}
+
+		public void RemoveWhere(Predicate<Thing> predicate)
+		{
+			for (int i = 0; i < this.thingLists.Count; i++)
+			{
+				this.thingLists[i].RemoveAll(predicate);
+			}
+			this.thingsToRegister.RemoveAll(predicate);
+			this.thingsToDeregister.RemoveAll(predicate);
+		}
+
 		public void RegisterThing(Thing t)
 		{
 			this.thingsToRegister.Add(t);
@@ -64,36 +84,40 @@ namespace Verse
 			this.thingsToDeregister.Clear();
 			if (DebugSettings.fastEcology)
 			{
-				GenTemperature.UpdateCachedData();
-				for (int k = 0; k < this.thingLists.Count; k++)
+				List<Map> maps = Find.Maps;
+				for (int k = 0; k < maps.Count; k++)
 				{
-					List<Thing> list = this.thingLists[k];
-					for (int l = 0; l < list.Count; l++)
+					maps[k].mapTemperature.UpdateCachedData();
+				}
+				for (int l = 0; l < this.thingLists.Count; l++)
+				{
+					List<Thing> list = this.thingLists[l];
+					for (int m = 0; m < list.Count; m++)
 					{
-						if (list[l].def.category == ThingCategory.Plant)
+						if (list[m].def.category == ThingCategory.Plant)
 						{
-							list[l].TickLong();
+							list[m].TickLong();
 						}
 					}
 				}
 			}
 			List<Thing> list2 = this.thingLists[Find.TickManager.TicksGame % this.TickInterval];
-			for (int m = 0; m < list2.Count; m++)
+			for (int n = 0; n < list2.Count; n++)
 			{
-				if (!list2[m].Destroyed)
+				if (!list2[n].Destroyed)
 				{
 					try
 					{
 						switch (this.tickType)
 						{
 						case TickerType.Normal:
-							list2[m].Tick();
+							list2[n].Tick();
 							break;
 						case TickerType.Rare:
-							list2[m].TickRare();
+							list2[n].TickRare();
 							break;
 						case TickerType.Long:
-							list2[m].TickLong();
+							list2[n].TickLong();
 							break;
 						}
 					}
@@ -101,7 +125,7 @@ namespace Verse
 					{
 						if (Prefs.DevMode)
 						{
-							Log.Error("Exception ticking " + list2[m].ToString() + ": " + ex.ToString());
+							Log.Error("Exception ticking " + list2[n].ToString() + ": " + ex.ToString());
 						}
 					}
 				}

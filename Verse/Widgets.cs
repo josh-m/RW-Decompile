@@ -1,5 +1,6 @@
 using RimWorld;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
@@ -33,6 +34,8 @@ namespace Verse
 		private const float CloseButtonMargin = 4f;
 
 		private const float SeparatorLabelHeight = 20f;
+
+		public const float ListSeparatorHeight = 25f;
 
 		public const float RangeControlIdealHeight = 31f;
 
@@ -84,11 +87,13 @@ namespace Verse
 
 		public static readonly Color MouseoverOptionColor;
 
-		private static readonly Color SeparatorLabelColor;
+		private static Dictionary<string, float> LabelCache;
+
+		public static readonly Color SeparatorLabelColor;
 
 		private static readonly Color SeparatorLineColor;
 
-		private static readonly Texture2D ButtonSubtleAtlas;
+		public static readonly Texture2D ButtonSubtleAtlas;
 
 		private static readonly Texture2D ButtonBarTex;
 
@@ -140,6 +145,7 @@ namespace Verse
 			Widgets.AltTexture = SolidColorMaterials.NewSolidColorTexture(new Color(1f, 1f, 1f, 0.05f));
 			Widgets.NormalOptionColor = new Color(0.8f, 0.85f, 1f);
 			Widgets.MouseoverOptionColor = Color.yellow;
+			Widgets.LabelCache = new Dictionary<string, float>();
 			Widgets.SeparatorLabelColor = new Color(0.8f, 0.8f, 0.8f, 1f);
 			Widgets.SeparatorLineColor = new Color(0.3f, 0.3f, 0.3f, 1f);
 			Widgets.ButtonSubtleAtlas = ContentFinder<Texture2D>.Get("UI/Widgets/ButtonSubtleAtlas", true);
@@ -173,7 +179,7 @@ namespace Verse
 			Widgets.LineMat = (Material)typeof(GUI).GetMethod("get_blendMaterial", BindingFlags.Static | BindingFlags.NonPublic).Invoke(null, null);
 		}
 
-		public static void ThingIcon(Rect rect, Thing thing)
+		public static void ThingIcon(Rect rect, Thing thing, float alpha = 1f)
 		{
 			GUI.color = thing.DrawColor;
 			Texture resolvedIcon;
@@ -181,20 +187,40 @@ namespace Verse
 			{
 				resolvedIcon = thing.def.uiIcon;
 			}
-			else if (thing is Pawn)
+			else if (thing is Pawn || thing is Corpse)
 			{
-				Pawn pawn = (Pawn)thing;
-				if (!pawn.Drawer.renderer.graphics.AllResolved)
+				Pawn pawn = thing as Pawn;
+				if (pawn == null)
 				{
-					pawn.Drawer.renderer.graphics.ResolveAllGraphics();
+					pawn = ((Corpse)thing).InnerPawn;
 				}
-				Material matSingle = pawn.Drawer.renderer.graphics.nakedGraphic.MatSingle;
-				resolvedIcon = matSingle.mainTexture;
-				GUI.color = matSingle.color;
+				if (!pawn.RaceProps.Humanlike)
+				{
+					if (!pawn.Drawer.renderer.graphics.AllResolved)
+					{
+						pawn.Drawer.renderer.graphics.ResolveAllGraphics();
+					}
+					Material matSingle = pawn.Drawer.renderer.graphics.nakedGraphic.MatSingle;
+					resolvedIcon = matSingle.mainTexture;
+					GUI.color = matSingle.color;
+				}
+				else
+				{
+					rect = rect.ScaledBy(1.8f);
+					rect.y += 3f;
+					rect = rect.Rounded();
+					resolvedIcon = PortraitsCache.Get(pawn, new Vector2(rect.width, rect.height), default(Vector3), 1f);
+				}
 			}
 			else
 			{
 				resolvedIcon = thing.Graphic.ExtractInnerGraphicFor(thing).MatSingle.mainTexture;
+			}
+			if (alpha != 1f)
+			{
+				Color color = GUI.color;
+				color.a *= alpha;
+				GUI.color = color;
 			}
 			Widgets.ThingIconWorker(rect, thing.def, resolvedIcon);
 			GUI.color = Color.white;
@@ -306,6 +332,29 @@ namespace Verse
 			GUI.DrawTexture(new Rect(a.x - (float)thickness, b.y, (float)thickness, vector.y), BaseContent.WhiteTex);
 			GUI.DrawTexture(new Rect(b.x + (float)thickness, b.y, vector.x - (float)(thickness * 2), (float)thickness), BaseContent.WhiteTex);
 			GUI.DrawTexture(new Rect(b.x + (float)thickness, a.y - (float)thickness, vector.x - (float)(thickness * 2), (float)thickness), BaseContent.WhiteTex);
+		}
+
+		public static void LabelCacheHeight(ref Rect rect, string label, bool renderLabel = true, bool forceInvalidation = false)
+		{
+			bool flag = Widgets.LabelCache.ContainsKey(label);
+			if (forceInvalidation)
+			{
+				flag = false;
+			}
+			float height;
+			if (flag)
+			{
+				height = Widgets.LabelCache[label];
+			}
+			else
+			{
+				height = Text.CurFontStyle.CalcHeight(new GUIContent(label), rect.width);
+			}
+			rect.height = height;
+			if (renderLabel)
+			{
+				GUI.Label(rect, label, Text.CurFontStyle);
+			}
 		}
 
 		public static void Label(Rect rect, GUIContent content)
@@ -558,6 +607,45 @@ namespace Verse
 			return active && Widgets.ButtonInvisible(rect, false);
 		}
 
+		public static void DrawRectFast(Rect position, Color color, GUIContent content = null)
+		{
+			Color backgroundColor = GUI.backgroundColor;
+			GUI.backgroundColor = color;
+			GUI.Box(position, content ?? GUIContent.none, TexUI.FastFillStyle);
+			GUI.backgroundColor = backgroundColor;
+		}
+
+		public static bool CustomButtonText(ref Rect rect, string label, Color bgColor, Color textColor, Color borderColor, bool cacheHeight = false, int borderSize = 1, bool doMouseoverSound = true, bool active = true)
+		{
+			if (cacheHeight)
+			{
+				Widgets.LabelCacheHeight(ref rect, label, false, false);
+			}
+			Rect position = new Rect(rect);
+			position.x += (float)borderSize;
+			position.y += (float)borderSize;
+			position.width -= (float)(borderSize * 2);
+			position.height -= (float)(borderSize * 2);
+			Widgets.DrawRectFast(rect, borderColor, null);
+			Widgets.DrawRectFast(position, bgColor, null);
+			TextAnchor anchor = Text.Anchor;
+			Color color = GUI.color;
+			if (doMouseoverSound)
+			{
+				MouseoverSounds.DoRegion(rect);
+			}
+			GUI.color = textColor;
+			if (Mouse.IsOver(rect))
+			{
+				GUI.color = Widgets.MouseoverOptionColor;
+			}
+			Text.Anchor = TextAnchor.MiddleCenter;
+			Widgets.Label(rect, label);
+			Text.Anchor = anchor;
+			GUI.color = color;
+			return active && Widgets.ButtonInvisible(rect, false);
+		}
+
 		public static bool ButtonTextSubtle(Rect rect, string label, float barPercent = 0f, float textLeftMargin = -1f, SoundDef mouseoverSound = null)
 		{
 			bool flag = false;
@@ -612,6 +700,10 @@ namespace Verse
 			if (Mouse.IsOver(butRect))
 			{
 				GUI.color = mouseoverColor;
+			}
+			else
+			{
+				GUI.color = baseColor;
 			}
 			GUI.DrawTexture(butRect, tex);
 			GUI.color = baseColor;
@@ -880,7 +972,7 @@ namespace Verse
 			return (T)((object)Convert.ChangeType(obj, typeof(T)));
 		}
 
-		public static float HorizontalSlider(Rect rect, float value, float leftValue, float rightValue, bool middleAlignment = false, string label = null)
+		public static float HorizontalSlider(Rect rect, float value, float leftValue, float rightValue, bool middleAlignment = false, string label = null, string leftAlignedLabel = null, string rightAlignedLabel = null, float roundTo = -1f)
 		{
 			if (middleAlignment || !label.NullOrEmpty())
 			{
@@ -890,19 +982,37 @@ namespace Verse
 			{
 				rect.y += 5f;
 			}
-			float result = GUI.HorizontalSlider(rect, value, leftValue, rightValue);
-			if (!label.NullOrEmpty())
+			float num = GUI.HorizontalSlider(rect, value, leftValue, rightValue);
+			if (!label.NullOrEmpty() || !leftAlignedLabel.NullOrEmpty() || !rightAlignedLabel.NullOrEmpty())
 			{
-				rect.y -= 15f;
 				TextAnchor anchor = Text.Anchor;
-				Text.Anchor = TextAnchor.UpperCenter;
 				GameFont font = Text.Font;
 				Text.Font = GameFont.Tiny;
-				Widgets.Label(rect, label);
+				float num2 = (!label.NullOrEmpty()) ? Text.CalcSize(label).y : 18f;
+				rect.y = rect.y - num2 + 3f;
+				if (!leftAlignedLabel.NullOrEmpty())
+				{
+					Text.Anchor = TextAnchor.UpperLeft;
+					Widgets.Label(rect, leftAlignedLabel);
+				}
+				if (!rightAlignedLabel.NullOrEmpty())
+				{
+					Text.Anchor = TextAnchor.UpperRight;
+					Widgets.Label(rect, rightAlignedLabel);
+				}
+				if (!label.NullOrEmpty())
+				{
+					Text.Anchor = TextAnchor.UpperCenter;
+					Widgets.Label(rect, label);
+				}
 				Text.Anchor = anchor;
 				Text.Font = font;
 			}
-			return result;
+			if (roundTo > 0f)
+			{
+				num = (float)Mathf.RoundToInt(num / roundTo) * roundTo;
+			}
+			return num;
 		}
 
 		public static float FrequencyHorizontalSlider(Rect rect, float freq, float minFreq, float maxFreq, bool roundToInt = false)
@@ -936,7 +1046,7 @@ namespace Verse
 					freq.ToString("0.##")
 				});
 			}
-			float num2 = Widgets.HorizontalSlider(rect, num, 0f, 1f, true, label);
+			float num2 = Widgets.HorizontalSlider(rect, num, 0f, 1f, true, label, null, null, -1f);
 			if (num != num2)
 			{
 				float num3;
@@ -1495,6 +1605,25 @@ namespace Verse
 			GUI.DrawTextureWithTexCoords(drawRect, tex, uvRect);
 		}
 
+		public static void ScrollHorizontal(Rect outRect, ref Vector2 scrollPosition, Rect viewRect, float ScrollWheelSpeed = 20f)
+		{
+			if (Event.current.type == EventType.ScrollWheel && Mouse.IsOver(outRect))
+			{
+				scrollPosition.x += Event.current.delta.y * ScrollWheelSpeed;
+				float num = 1f;
+				float num2 = viewRect.width - outRect.width - 1f;
+				if (scrollPosition.x < num)
+				{
+					scrollPosition.x = num;
+				}
+				if (scrollPosition.x > num2)
+				{
+					scrollPosition.x = num2;
+				}
+				Event.current.Use();
+			}
+		}
+
 		public static void BeginScrollView(Rect outRect, ref Vector2 scrollPosition, Rect viewRect)
 		{
 			Vector2 vector = scrollPosition;
@@ -1635,7 +1764,7 @@ namespace Verse
 				return;
 			}
 			Matrix4x4 matrix = GUI.matrix;
-			GUIUtility.RotateAroundPivot(angle, rect.center);
+			UI.RotateAroundPivot(angle, rect.center);
 			GUI.DrawTexture(rect, tex);
 			GUI.matrix = matrix;
 		}

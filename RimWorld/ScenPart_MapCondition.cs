@@ -48,10 +48,10 @@ namespace RimWorld
 			Widgets.TextFieldNumericLabeled<float>(scenPartRect, "durationDays".Translate(), ref this.durationDays, ref this.durationDaysBuf, 0f, 1E+09f);
 		}
 
-		public override void GenerateIntoMap()
+		public override void GenerateIntoMap(Map map)
 		{
 			MapCondition cond = MapConditionMaker.MakeCondition(this.def.mapCondition, (int)(this.durationDays * 60000f), 0);
-			Find.MapConditionManager.RegisterCondition(cond);
+			map.mapConditionManager.RegisterCondition(cond);
 		}
 
 		public override bool CanCoexistWith(ScenPart other)

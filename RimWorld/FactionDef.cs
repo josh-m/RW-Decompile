@@ -13,6 +13,8 @@ namespace RimWorld
 
 		public RulePackDef factionNameMaker;
 
+		public RulePackDef factionBaseNameMaker;
+
 		public string fixedName;
 
 		public bool humanlikeFaction = true;
@@ -21,11 +23,9 @@ namespace RimWorld
 
 		public List<PawnGroupMaker> pawnGroupMakers;
 
-		public string pawnsPlural = "characters";
-
 		public float raidCommonality;
 
-		public bool canFlee = true;
+		public bool autoFlee = true;
 
 		public bool canSiege;
 
@@ -35,19 +35,26 @@ namespace RimWorld
 
 		public float earliestRaidDays;
 
-		public string leaderTitle = "Leader";
-
 		public FloatRange allowedArrivalTemperatureRange = new FloatRange(-1000f, 1000f);
 
 		public PawnKindDef basicMemberKind;
 
 		public List<string> startingResearchTags;
 
+		public bool rescueesCanJoin;
+
+		[MustTranslate]
+		public string pawnsPlural = "members";
+
+		public string leaderTitle = "leader";
+
 		public int requiredCountAtGameStart;
 
 		public int maxCountAtGameStart = 9999;
 
 		public bool canMakeRandomly;
+
+		public float factionBaseSelectionWeight;
 
 		public RulePackDef pawnNameMaker;
 
@@ -63,6 +70,8 @@ namespace RimWorld
 
 		public List<TraderKindDef> visitorTraderKinds = new List<TraderKindDef>();
 
+		public List<TraderKindDef> factionBaseTraderKinds = new List<TraderKindDef>();
+
 		public FloatRange startingGoodwill = FloatRange.Zero;
 
 		public bool mustStartOneEnemy;
@@ -77,10 +86,12 @@ namespace RimWorld
 
 		public string homeIconPath;
 
-		public Color homeIconColor = Color.white;
+		public string expandingIconTexture;
+
+		public List<Color> colorSpectrum;
 
 		[Unsaved]
-		public Material baseRenderMaterial = BaseContent.BadMat;
+		private Texture2D expandingIconTextureInt;
 
 		public bool CanEverBeNonHostile
 		{
@@ -90,15 +101,22 @@ namespace RimWorld
 			}
 		}
 
-		public override void PostLoad()
+		public Texture2D ExpandingIconTexture
 		{
-			base.PostLoad();
-			if (!this.homeIconPath.NullOrEmpty())
+			get
 			{
-				LongEventHandler.ExecuteWhenFinished(delegate
+				if (this.expandingIconTextureInt == null)
 				{
-					this.baseRenderMaterial = MaterialPool.MatFrom(this.homeIconPath, ShaderDatabase.Transparent, this.homeIconColor);
-				});
+					if (!this.expandingIconTexture.NullOrEmpty())
+					{
+						this.expandingIconTextureInt = ContentFinder<Texture2D>.Get(this.expandingIconTexture, true);
+					}
+					else
+					{
+						this.expandingIconTextureInt = BaseContent.BadTex;
+					}
+				}
+				return this.expandingIconTextureInt;
 			}
 		}
 
@@ -109,7 +127,7 @@ namespace RimWorld
 				return 2.14748365E+09f;
 			}
 			IEnumerable<PawnGroupMaker> source = from x in this.pawnGroupMakers
-			where x is PawnGroupMaker_Normal
+			where x.kindDef == PawnGroupKindDefOf.Normal
 			select x;
 			if (!source.Any<PawnGroupMaker>())
 			{
@@ -139,7 +157,7 @@ namespace RimWorld
 			{
 				yield return error;
 			}
-			if (this.factionNameMaker == null && this.fixedName == null)
+			if (!this.isPlayer && this.factionNameMaker == null && this.fixedName == null)
 			{
 				yield return "FactionTypeDef " + this.defName + " lacks a factionNameMaker and a fixedName.";
 			}

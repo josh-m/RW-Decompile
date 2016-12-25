@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using UnityEngine;
 using Verse;
+using Verse.Profile;
 
 namespace RimWorld
 {
@@ -57,7 +57,7 @@ namespace RimWorld
 
 		private void DoMemoryCleanup()
 		{
-			Resources.UnloadUnusedAssets();
+			MemoryUtility.UnloadUnusedUnityAssets();
 		}
 
 		private string NewAutosaveFileName()

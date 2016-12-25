@@ -9,28 +9,22 @@ namespace Verse
 		{
 			string str = GenText.ToCommaList(from mod in LoadedModManager.RunningMods
 			select mod.ToString(), true);
-			Log.Message("Initializing map from file " + fileName + " with mods " + str);
-			DeepProfiler.Start("Loading map from file " + fileName);
+			Log.Message("Loading game from file " + fileName + " with mods " + str);
+			DeepProfiler.Start("Loading game from file " + fileName);
 			Current.Game = new Game();
 			DeepProfiler.Start("InitLoading (read file)");
-			Current.ProgramState = ProgramState.MapInitializing;
-			RegionAndRoomUpdater.Enabled = false;
 			Scribe.InitLoading(GenFilePaths.FilePathForSavedGame(fileName));
 			DeepProfiler.End();
 			ScribeMetaHeaderUtility.LoadGameDataHeader(ScribeMetaHeaderUtility.ScribeHeaderMode.Map, true);
-			Scribe.EnterNode("game");
-			Current.Game = new Game();
-			Current.Game.LoadData();
-			if (Prefs.PauseOnLoad)
+			if (Scribe.EnterNode("game"))
 			{
-				LongEventHandler.ExecuteWhenFinished(delegate
-				{
-					Find.TickManager.DoSingleTick();
-					Find.TickManager.CurTimeSpeed = TimeSpeed.Paused;
-				});
+				Current.Game = new Game();
+				Current.Game.LoadGame();
+				PermadeathModeUtility.CheckUpdatePermadeathModeUniqueNameOnGameLoad(fileName);
+				DeepProfiler.End();
+				return;
 			}
-			PermadeathModeUtility.CheckUpdatePermadeathModeUniqueNameOnGameLoad(fileName);
-			DeepProfiler.End();
+			Log.Error("Could not find game XML node.");
 		}
 	}
 }

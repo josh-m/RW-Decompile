@@ -34,7 +34,7 @@ namespace RimWorld
 					list.Add(new FloatMenuOption(localSd.LabelCap, delegate
 					{
 						this.stat = localSd;
-					}, MenuOptionPriority.Medium, null, null, 0f, null));
+					}, MenuOptionPriority.Default, null, null, 0f, null, null));
 				}
 				Find.WindowStack.Add(new FloatMenu(list));
 			}
@@ -111,6 +111,7 @@ namespace RimWorld
 			yield return StatDefOf.RangedWeapon_Cooldown;
 			yield return StatDefOf.WorkSpeedGlobal;
 			yield return StatDefOf.WorkToMake;
+			yield return StatDefOf.WorkToBuild;
 		}
 	}
 }

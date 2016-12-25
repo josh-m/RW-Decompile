@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using Verse;
 
 namespace RimWorld
@@ -43,11 +44,15 @@ namespace RimWorld
 			}
 		}
 
-		public void Notify_ColonistIncappedOrKilled(Pawn p)
+		public void Notify_PlayerPawnIncappedOrKilled(Pawn p)
 		{
+			if (!p.RaceProps.Humanlike)
+			{
+				return;
+			}
 			float num = this.shortTermFactor - 1f;
 			float num2 = this.longTermFactor - 1f;
-			switch (Find.MapPawns.FreeColonistsCount)
+			switch (PawnsFinder.AllMapsCaravansAndTravelingTransportPods_FreeColonists.Count<Pawn>())
 			{
 			case 0:
 				num *= 0f;

@@ -9,9 +9,9 @@ namespace RimWorld
 {
 	public static class TendUtility
 	{
-		public const float NoMedicinePotency = 0.5f;
+		public const float NoMedicinePotency = 0.2f;
 
-		private const float ChanceToDevelopBondRelationOnTended = 0.01f;
+		private const float ChanceToDevelopBondRelationOnTended = 0.004f;
 
 		private static List<Hediff_MissingPart> bleedingStumps = new List<Hediff_MissingPart>();
 
@@ -28,16 +28,18 @@ namespace RimWorld
 				Log.Warning("Tried to use destroyed medicine.");
 				medicine = null;
 			}
-			float num = (medicine == null) ? 0f : medicine.def.GetStatValueAbstract(StatDefOf.MedicalPotency, null);
-			float num2 = (medicine == null) ? 0.5f : num;
+			float num = (medicine == null) ? 0.2f : medicine.def.GetStatValueAbstract(StatDefOf.MedicalPotency, null);
+			float num2 = num;
+			Building_Bed building_Bed = patient.CurrentBed();
+			if (building_Bed != null)
+			{
+				num2 += building_Bed.GetStatValue(StatDefOf.MedicalTendQualityOffset, true);
+			}
 			if (doctor != null)
 			{
-				num2 *= doctor.GetStatValue(StatDefOf.BaseHealingQuality, true);
+				num2 *= doctor.GetStatValue(StatDefOf.HealingQuality, true);
 			}
-			if (patient.InBed())
-			{
-				num2 *= patient.CurrentBed().GetStatValue(StatDefOf.MedicalTreatmentQualityFactor, true);
-			}
+			num2 = Mathf.Clamp01(num2);
 			if (patient.health.hediffSet.GetInjuriesTendable().Any<Hediff_Injury>())
 			{
 				float num3 = 0f;
@@ -83,8 +85,8 @@ namespace RimWorld
 					Hediff hediff;
 					if (TendUtility.otherHediffs.TryRandomElement(out hediff))
 					{
-						HediffCompProperties hediffCompProperties = hediff.def.CompPropsFor(typeof(HediffComp_Tendable));
-						if (hediffCompProperties != null && hediffCompProperties.tendAllAtOnce)
+						HediffCompProperties_TendDuration hediffCompProperties_TendDuration = hediff.def.CompProps<HediffCompProperties_TendDuration>();
+						if (hediffCompProperties_TendDuration != null && hediffCompProperties_TendDuration.tendAllAtOnce)
 						{
 							int num6 = 0;
 							for (int j = 0; j < TendUtility.otherHediffs.Count; j++)
@@ -108,7 +110,7 @@ namespace RimWorld
 			{
 				patient.Faction.AffectGoodwillWith(doctor.Faction, 0.3f);
 			}
-			if (doctor != null && doctor.RaceProps.Humanlike && patient.RaceProps.Animal && RelationsUtility.TryDevelopBondRelation(doctor, patient, 0.01f) && doctor.Faction != null && doctor.Faction != patient.Faction)
+			if (doctor != null && doctor.RaceProps.Humanlike && patient.RaceProps.Animal && RelationsUtility.TryDevelopBondRelation(doctor, patient, 0.004f) && doctor.Faction != null && doctor.Faction != patient.Faction)
 			{
 				InteractionWorker_RecruitAttempt.DoRecruit(doctor, patient, 1f, false);
 			}
@@ -119,9 +121,9 @@ namespace RimWorld
 			}
 			if (medicine != null)
 			{
-				if ((patient.Spawned || (doctor != null && doctor.Spawned)) && num > 0.9f)
+				if ((patient.Spawned || (doctor != null && doctor.Spawned)) && num > 1f)
 				{
-					SoundDef.Named("TechMedicineUsed").PlayOneShot(patient.Position);
+					SoundDef.Named("TechMedicineUsed").PlayOneShot(new TargetInfo(patient.Position, patient.Map, false));
 				}
 				if (medicine.stackCount > 1)
 				{

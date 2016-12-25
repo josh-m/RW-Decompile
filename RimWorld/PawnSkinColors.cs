@@ -8,15 +8,15 @@ namespace RimWorld
 	{
 		private struct SkinColorData
 		{
-			public float whiteness;
+			public float melanin;
 
 			public float selector;
 
 			public Color color;
 
-			public SkinColorData(float whiteness, float selector, Color color)
+			public SkinColorData(float melanin, float selector, Color color)
 			{
-				this.whiteness = whiteness;
+				this.melanin = melanin;
 				this.selector = selector;
 				this.color = color;
 			}
@@ -24,12 +24,12 @@ namespace RimWorld
 
 		private static readonly PawnSkinColors.SkinColorData[] SkinColors = new PawnSkinColors.SkinColorData[]
 		{
-			new PawnSkinColors.SkinColorData(0f, 0f, new Color(0.3882353f, 0.274509817f, 0.141176477f)),
-			new PawnSkinColors.SkinColorData(0.1f, 0.05f, new Color(0.509803951f, 0.356862754f, 0.1882353f)),
-			new PawnSkinColors.SkinColorData(0.25f, 0.2f, new Color(0.894117653f, 0.619607866f, 0.3529412f)),
-			new PawnSkinColors.SkinColorData(0.5f, 0.285f, new Color(1f, 0.9372549f, 0.7411765f)),
-			new PawnSkinColors.SkinColorData(0.75f, 0.785f, new Color(1f, 0.9372549f, 0.8352941f)),
-			new PawnSkinColors.SkinColorData(1f, 1f, new Color(0.9490196f, 0.929411769f, 0.8784314f))
+			new PawnSkinColors.SkinColorData(0f, 0f, new Color(0.9490196f, 0.929411769f, 0.8784314f)),
+			new PawnSkinColors.SkinColorData(0.25f, 0.215f, new Color(1f, 0.9372549f, 0.8352941f)),
+			new PawnSkinColors.SkinColorData(0.5f, 0.715f, new Color(1f, 0.9372549f, 0.7411765f)),
+			new PawnSkinColors.SkinColorData(0.75f, 0.8f, new Color(0.894117653f, 0.619607866f, 0.3529412f)),
+			new PawnSkinColors.SkinColorData(0.9f, 0.95f, new Color(0.509803951f, 0.356862754f, 0.1882353f)),
+			new PawnSkinColors.SkinColorData(1f, 1f, new Color(0.3882353f, 0.274509817f, 0.141176477f))
 		};
 
 		public static bool IsDarkSkin(Color color)
@@ -38,18 +38,18 @@ namespace RimWorld
 			return color.r + color.g + color.b <= skinColor.r + skinColor.g + skinColor.b + 0.01f;
 		}
 
-		public static Color GetSkinColor(float skinWhiteness)
+		public static Color GetSkinColor(float melanin)
 		{
-			int skinDataLeftIndexByWhiteness = PawnSkinColors.GetSkinDataLeftIndexByWhiteness(skinWhiteness);
-			if (skinDataLeftIndexByWhiteness == PawnSkinColors.SkinColors.Length - 1)
+			int skinDataIndexOfMelanin = PawnSkinColors.GetSkinDataIndexOfMelanin(melanin);
+			if (skinDataIndexOfMelanin == PawnSkinColors.SkinColors.Length - 1)
 			{
-				return PawnSkinColors.SkinColors[skinDataLeftIndexByWhiteness].color;
+				return PawnSkinColors.SkinColors[skinDataIndexOfMelanin].color;
 			}
-			float t = Mathf.InverseLerp(PawnSkinColors.SkinColors[skinDataLeftIndexByWhiteness].whiteness, PawnSkinColors.SkinColors[skinDataLeftIndexByWhiteness + 1].whiteness, skinWhiteness);
-			return Color.Lerp(PawnSkinColors.SkinColors[skinDataLeftIndexByWhiteness].color, PawnSkinColors.SkinColors[skinDataLeftIndexByWhiteness + 1].color, t);
+			float t = Mathf.InverseLerp(PawnSkinColors.SkinColors[skinDataIndexOfMelanin].melanin, PawnSkinColors.SkinColors[skinDataIndexOfMelanin + 1].melanin, melanin);
+			return Color.Lerp(PawnSkinColors.SkinColors[skinDataIndexOfMelanin].color, PawnSkinColors.SkinColors[skinDataIndexOfMelanin + 1].color, t);
 		}
 
-		public static float RandomSkinWhiteness()
+		public static float RandomMelanin()
 		{
 			float value = Rand.Value;
 			int num = 0;
@@ -63,29 +63,29 @@ namespace RimWorld
 			}
 			if (num == PawnSkinColors.SkinColors.Length - 1)
 			{
-				return PawnSkinColors.SkinColors[num].whiteness;
+				return PawnSkinColors.SkinColors[num].melanin;
 			}
 			float t = Mathf.InverseLerp(PawnSkinColors.SkinColors[num].selector, PawnSkinColors.SkinColors[num + 1].selector, value);
-			return Mathf.Lerp(PawnSkinColors.SkinColors[num].whiteness, PawnSkinColors.SkinColors[num + 1].whiteness, t);
+			return Mathf.Lerp(PawnSkinColors.SkinColors[num].melanin, PawnSkinColors.SkinColors[num + 1].melanin, t);
 		}
 
-		public static float GetWhitenessCommonalityFactor(float skinWhiteness)
+		public static float GetMelaninCommonalityFactor(float melanin)
 		{
-			int skinDataLeftIndexByWhiteness = PawnSkinColors.GetSkinDataLeftIndexByWhiteness(skinWhiteness);
-			if (skinDataLeftIndexByWhiteness == PawnSkinColors.SkinColors.Length - 1)
+			int skinDataIndexOfMelanin = PawnSkinColors.GetSkinDataIndexOfMelanin(melanin);
+			if (skinDataIndexOfMelanin == PawnSkinColors.SkinColors.Length - 1)
 			{
-				return PawnSkinColors.GetSkinCommonalityFactor(skinDataLeftIndexByWhiteness);
+				return PawnSkinColors.GetSkinDataCommonalityFactor(skinDataIndexOfMelanin);
 			}
-			float t = Mathf.InverseLerp(PawnSkinColors.SkinColors[skinDataLeftIndexByWhiteness].whiteness, PawnSkinColors.SkinColors[skinDataLeftIndexByWhiteness + 1].whiteness, skinWhiteness);
-			return Mathf.Lerp(PawnSkinColors.GetSkinCommonalityFactor(skinDataLeftIndexByWhiteness), PawnSkinColors.GetSkinCommonalityFactor(skinDataLeftIndexByWhiteness + 1), t);
+			float t = Mathf.InverseLerp(PawnSkinColors.SkinColors[skinDataIndexOfMelanin].melanin, PawnSkinColors.SkinColors[skinDataIndexOfMelanin + 1].melanin, melanin);
+			return Mathf.Lerp(PawnSkinColors.GetSkinDataCommonalityFactor(skinDataIndexOfMelanin), PawnSkinColors.GetSkinDataCommonalityFactor(skinDataIndexOfMelanin + 1), t);
 		}
 
-		public static float GetRandomSkinColorSimilarTo(float value, float clampMin = 0f, float clampMax = 1f)
+		public static float GetRandomMelaninSimilarTo(float value, float clampMin = 0f, float clampMax = 1f)
 		{
 			return Mathf.Clamp01(Mathf.Clamp(Rand.Gaussian(value, 0.05f), clampMin, clampMax));
 		}
 
-		private static float GetSkinCommonalityFactor(int skinDataIndex)
+		private static float GetSkinDataCommonalityFactor(int skinDataIndex)
 		{
 			float num = 0f;
 			for (int i = 0; i < PawnSkinColors.SkinColors.Length; i++)
@@ -117,12 +117,12 @@ namespace RimWorld
 			return num;
 		}
 
-		private static int GetSkinDataLeftIndexByWhiteness(float skinWhiteness)
+		private static int GetSkinDataIndexOfMelanin(float melanin)
 		{
 			int result = 0;
 			for (int i = 0; i < PawnSkinColors.SkinColors.Length; i++)
 			{
-				if (skinWhiteness < PawnSkinColors.SkinColors[i].whiteness)
+				if (melanin < PawnSkinColors.SkinColors[i].melanin)
 				{
 					break;
 				}

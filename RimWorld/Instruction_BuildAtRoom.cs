@@ -27,7 +27,7 @@ namespace RimWorld
 			int num = 0;
 			foreach (IntVec3 current in this.BuildableRect)
 			{
-				if (TutorUtility.BuildingOrBlueprintOrFrameCenterExists(current, this.def.thingDef))
+				if (TutorUtility.BuildingOrBlueprintOrFrameCenterExists(current, base.Map, this.def.thingDef))
 				{
 					num++;
 				}

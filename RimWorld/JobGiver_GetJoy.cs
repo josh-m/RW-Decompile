@@ -34,7 +34,7 @@ namespace RimWorld
 
 		protected override Job TryGiveJob(Pawn pawn)
 		{
-			if (!this.CanDoDuringMedicalRest && pawn.InBed() && pawn.health.PrefersMedicalRest)
+			if (!this.CanDoDuringMedicalRest && pawn.InBed() && HealthAIUtility.ShouldSeekMedicalRest(pawn))
 			{
 				return null;
 			}
@@ -55,7 +55,7 @@ namespace RimWorld
 							if (Rand.Value >= joyGiverDef.pctPawnsEverDo)
 							{
 								Rand.PopSeed();
-								goto IL_105;
+								goto IL_100;
 							}
 							Rand.PopSeed();
 						}
@@ -65,7 +65,7 @@ namespace RimWorld
 						this.joyGiverChances[joyGiverDef] = num;
 					}
 				}
-				IL_105:;
+				IL_100:;
 			}
 			for (int j = 0; j < this.joyGiverChances.Count; j++)
 			{

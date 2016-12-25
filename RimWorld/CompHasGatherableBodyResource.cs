@@ -6,7 +6,7 @@ namespace RimWorld
 {
 	public abstract class CompHasGatherableBodyResource : ThingComp
 	{
-		private float fullness;
+		protected float fullness;
 
 		protected abstract int GatherResourcesIntervalDays
 		{
@@ -89,7 +89,7 @@ namespace RimWorld
 				i -= num;
 				Thing thing = ThingMaker.MakeThing(this.ResourceDef, null);
 				thing.stackCount = num;
-				GenPlace.TryPlaceThing(thing, doer.Position, ThingPlaceMode.Near, null);
+				GenPlace.TryPlaceThing(thing, doer.Position, doer.Map, ThingPlaceMode.Near, null);
 			}
 			this.fullness = 0f;
 		}

@@ -11,12 +11,13 @@ namespace RimWorld
 
 		public override bool TryExecute(IncidentParms parms)
 		{
+			Map map = (Map)parms.target;
 			int maxPoints = 150;
 			if (GenDate.DaysPassed < 7)
 			{
 				maxPoints = 40;
 			}
-			List<Pawn> list = (from p in Find.MapPawns.AllPawnsSpawned
+			List<Pawn> list = (from p in map.mapPawns.AllPawnsSpawned
 			where p.RaceProps.Animal && p.kindDef.combatPower <= (float)maxPoints && IncidentWorker_AnimalInsanityMass.AnimalUsable(p)
 			select p).ToList<Pawn>();
 			if (list.Count == 0)

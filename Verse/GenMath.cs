@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Text;
 using UnityEngine;
 
@@ -10,6 +12,10 @@ namespace Verse
 		public const float BigEpsilon = 1E-07f;
 
 		public const float Sqrt2 = 1.41421354f;
+
+		private static List<float> tmpScores = new List<float>();
+
+		private static List<float> tmpCalcList = new List<float>();
 
 		public static float RoundedHundredth(float f)
 		{
@@ -249,6 +255,38 @@ namespace Verse
 				}
 				return c;
 			}
+		}
+
+		public static float SphericalDistance(Vector3 normalizedA, Vector3 normalizedB)
+		{
+			return Mathf.Acos(Vector3.Dot(normalizedA, normalizedB));
+		}
+
+		public static void DHondtDistribution(List<int> candidates, Func<int, float> scoreGetter, int numToDistribute)
+		{
+			GenMath.tmpScores.Clear();
+			GenMath.tmpCalcList.Clear();
+			for (int i = 0; i < candidates.Count; i++)
+			{
+				float item = scoreGetter(i);
+				candidates[i] = 0;
+				GenMath.tmpScores.Add(item);
+				GenMath.tmpCalcList.Add(item);
+			}
+			for (int j = 0; j < numToDistribute; j++)
+			{
+				int num = GenMath.tmpCalcList.IndexOf(GenMath.tmpCalcList.Max());
+				int num2;
+				int expr_72 = num2 = num;
+				num2 = candidates[num2];
+				candidates[expr_72] = num2 + 1;
+				GenMath.tmpCalcList[num] = GenMath.tmpScores[num] / ((float)candidates[num] + 1f);
+			}
+		}
+
+		public static int PositiveMod(int x, int m)
+		{
+			return (x % m + m) % m;
 		}
 	}
 }

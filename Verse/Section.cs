@@ -11,6 +11,8 @@ namespace Verse
 
 		public IntVec3 botLeft;
 
+		public Map map;
+
 		public MapMeshFlag dirtyFlags;
 
 		private List<SectionLayer> layers = new List<SectionLayer>();
@@ -26,16 +28,17 @@ namespace Verse
 				if (!this.foundRect)
 				{
 					this.calculatedRect = new CellRect(this.botLeft.x, this.botLeft.z, 17, 17);
-					this.calculatedRect.ClipInsideMap();
+					this.calculatedRect.ClipInsideMap(this.map);
 					this.foundRect = true;
 				}
 				return this.calculatedRect;
 			}
 		}
 
-		public Section(IntVec3 sectCoords)
+		public Section(IntVec3 sectCoords, Map map)
 		{
 			this.botLeft = sectCoords * 17;
+			this.map = map;
 			foreach (Type current in typeof(SectionLayer).AllLeafSubclasses())
 			{
 				this.layers.Add((SectionLayer)Activator.CreateInstance(current, new object[]

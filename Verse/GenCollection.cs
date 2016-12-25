@@ -384,6 +384,10 @@ namespace Verse
 
 		public static void SortBy<T, TSortBy>(this List<T> list, Func<T, TSortBy> selector) where TSortBy : IComparable<TSortBy>
 		{
+			if (list.Count <= 1)
+			{
+				return;
+			}
 			list.Sort(delegate(T a, T b)
 			{
 				TSortBy tSortBy = selector(a);
@@ -393,6 +397,10 @@ namespace Verse
 
 		public static void SortBy<T, TSortBy, TThenBy>(this List<T> list, Func<T, TSortBy> selector, Func<T, TThenBy> thenBySelector) where TSortBy : IComparable<TSortBy>, IEquatable<TSortBy> where TThenBy : IComparable<TThenBy>
 		{
+			if (list.Count <= 1)
+			{
+				return;
+			}
 			list.Sort(delegate(T a, T b)
 			{
 				TSortBy tSortBy = selector(a);
@@ -408,6 +416,10 @@ namespace Verse
 
 		public static void SortByDescending<T, TSortByDescending>(this List<T> list, Func<T, TSortByDescending> selector) where TSortByDescending : IComparable<TSortByDescending>
 		{
+			if (list.Count <= 1)
+			{
+				return;
+			}
 			list.Sort(delegate(T a, T b)
 			{
 				TSortByDescending tSortByDescending = selector(b);
@@ -417,6 +429,10 @@ namespace Verse
 
 		public static void SortByDescending<T, TSortByDescending, TThenByDescending>(this List<T> list, Func<T, TSortByDescending> selector, Func<T, TThenByDescending> thenByDescendingSelector) where TSortByDescending : IComparable<TSortByDescending>, IEquatable<TSortByDescending> where TThenByDescending : IComparable<TThenByDescending>
 		{
+			if (list.Count <= 1)
+			{
+				return;
+			}
 			list.Sort(delegate(T a, T b)
 			{
 				TSortByDescending other = selector(a);
@@ -472,6 +488,32 @@ namespace Verse
 				}
 			}
 			return result;
+		}
+
+		public static void RemoveAll<T>(this List<T> list, Func<T, int, bool> predicate)
+		{
+			int num = 0;
+			int count = list.Count;
+			while (num < count && !predicate(list[num], num))
+			{
+				num++;
+			}
+			if (num >= count)
+			{
+				return;
+			}
+			int i = num + 1;
+			while (i < count)
+			{
+				while (i < count && predicate(list[i], i))
+				{
+					i++;
+				}
+				if (i < count)
+				{
+					list[num++] = list[i++];
+				}
+			}
 		}
 
 		public static void RemoveLast<T>(this List<T> list)

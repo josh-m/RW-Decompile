@@ -26,12 +26,12 @@ namespace RimWorld
 
 		public override IEnumerable<IntVec3> PotentialWorkCellsGlobal(Pawn pawn)
 		{
-			return Find.AreaNoRoof.ActiveCells;
+			return pawn.Map.areaManager.NoRoof.ActiveCells;
 		}
 
 		public override bool HasJobOnCell(Pawn pawn, IntVec3 c)
 		{
-			return Find.AreaNoRoof[c] && c.Roofed() && pawn.CanReserveAndReach(c, PathEndMode.ClosestTouch, pawn.NormalMaxDanger(), 1);
+			return pawn.Map.areaManager.NoRoof[c] && c.Roofed(pawn.Map) && pawn.CanReserveAndReach(c, PathEndMode.ClosestTouch, pawn.NormalMaxDanger(), 1);
 		}
 
 		public override Job JobOnCell(Pawn pawn, IntVec3 c)
@@ -46,14 +46,14 @@ namespace RimWorld
 			for (int i = 0; i < 8; i++)
 			{
 				IntVec3 c = cell + GenAdj.AdjacentCells[i];
-				if (c.InBounds())
+				if (c.InBounds(t.Map))
 				{
-					Building edifice = c.GetEdifice();
+					Building edifice = c.GetEdifice(t.Map);
 					if (edifice != null && edifice.def.holdsRoof)
 					{
 						return -60f;
 					}
-					if (c.Roofed())
+					if (c.Roofed(pawn.Map))
 					{
 						num++;
 					}

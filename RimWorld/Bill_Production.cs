@@ -81,7 +81,6 @@ namespace RimWorld
 
 		public override void Notify_IterationCompleted(Pawn billDoer, List<Thing> ingredients)
 		{
-			base.Notify_IterationCompleted(billDoer, ingredients);
 			if (this.repeatMode == BillRepeatMode.RepeatCount)
 			{
 				this.repeatCount--;
@@ -95,7 +94,7 @@ namespace RimWorld
 			}
 		}
 
-		protected override void DrawConfigInterface(Rect baseRect, Color baseColor)
+		protected override void DoConfigInterface(Rect baseRect, Color baseColor)
 		{
 			Rect rect = new Rect(28f, 32f, 100f, 30f);
 			GUI.color = new Color(1f, 1f, 1f, 0.65f);

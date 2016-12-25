@@ -10,18 +10,18 @@ namespace RimWorld
 	{
 		public const float BaseJoyGainPerHour = 0.36f;
 
-		public static bool EnjoyableOutsideNow(StringBuilder outFailReason = null)
+		public static bool EnjoyableOutsideNow(Map map, StringBuilder outFailReason = null)
 		{
-			if (Find.WeatherManager.RainRate >= 0.25f)
+			if (map.weatherManager.RainRate >= 0.25f)
 			{
 				if (outFailReason != null)
 				{
-					outFailReason.Append(Find.WeatherManager.curWeather.label);
+					outFailReason.Append(map.weatherManager.curWeather.label);
 				}
 				return false;
 			}
 			MapConditionDef mapConditionDef;
-			if (!Find.MapConditionManager.AllowEnjoyableOutsideNow(out mapConditionDef))
+			if (!map.mapConditionManager.AllowEnjoyableOutsideNow(out mapConditionDef))
 			{
 				if (outFailReason != null)
 				{
@@ -34,11 +34,11 @@ namespace RimWorld
 
 		public static bool EnjoyableOutsideNow(Pawn pawn, StringBuilder outFailReason = null)
 		{
-			if (!JoyUtility.EnjoyableOutsideNow(outFailReason))
+			if (!JoyUtility.EnjoyableOutsideNow(pawn.Map, outFailReason))
 			{
 				return false;
 			}
-			if (!pawn.ComfortableTemperatureRange().Includes(GenTemperature.OutdoorTemp))
+			if (!pawn.ComfortableTemperatureRange().Includes(pawn.Map.mapTemperature.OutdoorTemp))
 			{
 				if (outFailReason != null)
 				{
@@ -60,7 +60,7 @@ namespace RimWorld
 			pawn.needs.joy.GainJoy(extraJoyGainFactor * curJob.def.joyGainRate * 0.000144f, curJob.def.joyKind);
 			if (curJob.def.joySkill != null)
 			{
-				pawn.skills.GetSkill(curJob.def.joySkill).Learn(curJob.def.joyXpPerTick);
+				pawn.skills.GetSkill(curJob.def.joySkill).Learn(curJob.def.joyXpPerTick, false);
 			}
 			if (!curJob.ignoreJoyTimeAssignment && !pawn.GetTimeAssignment().allowJoy)
 			{
@@ -82,7 +82,7 @@ namespace RimWorld
 		public static void TryGainRecRoomThought(Pawn pawn)
 		{
 			Room room = pawn.GetRoom();
-			if (room != null && room.Role == RoomRoleDefOf.RecRoom)
+			if (room != null)
 			{
 				int scoreStageIndex = RoomStatDefOf.Impressiveness.GetScoreStageIndex(room.GetStat(RoomStatDefOf.Impressiveness));
 				if (ThoughtDefOf.AteInImpressiveDiningRoom.stages[scoreStageIndex] != null)

@@ -12,6 +12,10 @@ namespace RimWorld
 
 		public HashSet<Thing> brokenDownThings = new HashSet<Thing>();
 
+		public BreakdownManager(Map map) : base(map)
+		{
+		}
+
 		public void Register(CompBreakdownable c)
 		{
 			this.comps.Add(c);

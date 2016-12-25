@@ -10,6 +10,8 @@ namespace Verse
 
 		public float volumeMusic = 0.4f;
 
+		public float uiScale = 1f;
+
 		public bool adaptiveTrainingEnabled = true;
 
 		public List<string> preferredNames = new List<string>();
@@ -27,6 +29,8 @@ namespace Verse
 		public float autosaveIntervalDays = 1f;
 
 		public bool showRealtimeClock;
+
+		public int maxNumberOfPlayerHomes = 1;
 
 		public bool plantWindSway = true;
 

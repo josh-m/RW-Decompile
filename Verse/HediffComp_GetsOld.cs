@@ -11,6 +11,14 @@ namespace Verse
 
 		public float painFactor = 1f;
 
+		public HediffCompProperties_GetsOld Props
+		{
+			get
+			{
+				return (HediffCompProperties_GetsOld)this.props;
+			}
+		}
+
 		public bool IsOld
 		{
 			get
@@ -31,6 +39,14 @@ namespace Verse
 			}
 		}
 
+		private bool Active
+		{
+			get
+			{
+				return this.oldDamageThreshold < 9000f;
+			}
+		}
+
 		public override void CompExposeData()
 		{
 			Scribe_Values.LookValue<bool>(ref this.isOldInt, "isOld", false, false);
@@ -38,18 +54,21 @@ namespace Verse
 			Scribe_Values.LookValue<float>(ref this.painFactor, "painFactor", 1f, false);
 		}
 
-		public override void CompPostDirectHeal(float amount)
+		public override void CompPostInjuryHeal(float amount)
 		{
-			if (!this.IsOld && this.oldDamageThreshold <= this.parent.Severity + amount && this.oldDamageThreshold >= this.parent.Severity)
+			if (!this.Active || this.IsOld)
 			{
-				HediffComp_Tendable hediffComp_Tendable = this.parent.TryGetComp<HediffComp_Tendable>();
-				float num = (hediffComp_Tendable == null) ? 0f : hediffComp_Tendable.tendQuality;
-				float num2 = Mathf.Clamp01(1f - num);
-				if (num2 < 0.9f)
+				return;
+			}
+			if (this.parent.Severity <= this.oldDamageThreshold && this.parent.Severity >= this.oldDamageThreshold - amount)
+			{
+				float num = 0.2f;
+				HediffComp_TendDuration hediffComp_TendDuration = this.parent.TryGetComp<HediffComp_TendDuration>();
+				if (hediffComp_TendDuration != null)
 				{
-					num2 *= 0.65f;
+					num *= Mathf.Clamp01(1f - hediffComp_TendDuration.tendQuality);
 				}
-				if (Rand.Value < num2)
+				if (Rand.Value < num)
 				{
 					this.parent.Severity = this.oldDamageThreshold;
 					this.IsOld = true;

@@ -12,10 +12,10 @@ namespace RimWorld
 		public override Job TryGiveJob(Pawn pawn)
 		{
 			bool allowedOutside = JoyUtility.EnjoyableOutsideNow(pawn, null);
-			IEnumerable<Thing> source = Find.ListerThings.ThingsInGroup(ThingRequestGroup.Grave).Where(delegate(Thing x)
+			IEnumerable<Thing> source = pawn.Map.listerThings.ThingsInGroup(ThingRequestGroup.Grave).Where(delegate(Thing x)
 			{
 				Building_Grave building_Grave = (Building_Grave)x;
-				return x.Faction == Faction.OfPlayer && building_Grave.HasCorpse && !building_Grave.IsForbidden(pawn) && building_Grave.Corpse.innerPawn.Faction == Faction.OfPlayer && (allowedOutside || building_Grave.Position.Roofed()) && pawn.CanReserveAndReach(x, PathEndMode.Touch, Danger.None, 1);
+				return x.Faction == Faction.OfPlayer && building_Grave.HasCorpse && !building_Grave.IsForbidden(pawn) && building_Grave.Corpse.InnerPawn.Faction == Faction.OfPlayer && (allowedOutside || building_Grave.Position.Roofed(building_Grave.Map)) && pawn.CanReserveAndReach(x, PathEndMode.Touch, Danger.None, 1);
 			});
 			Thing t;
 			if (!source.TryRandomElementByWeight(delegate(Thing x)

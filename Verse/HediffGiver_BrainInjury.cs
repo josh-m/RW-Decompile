@@ -11,7 +11,7 @@ namespace Verse
 
 		public string letter;
 
-		public override bool CheckGiveHediffAdded(Pawn pawn, Hediff hediff)
+		public override bool OnHediffAdded(Pawn pawn, Hediff hediff)
 		{
 			if (!(hediff is Hediff_Injury))
 			{

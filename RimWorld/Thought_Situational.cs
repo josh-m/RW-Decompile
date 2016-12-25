@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using Verse;
 
@@ -9,6 +10,8 @@ namespace RimWorld
 		private int curStageIndex = -1;
 
 		protected string reason;
+
+		private static List<Thought> tmpThoughts = new List<Thought>();
 
 		public bool Active
 		{
@@ -52,9 +55,13 @@ namespace RimWorld
 			}
 		}
 
-		public override bool TryMergeWithExistingThought()
+		public override bool TryMergeWithExistingThought(out bool showBubble)
 		{
-			return this.pawn.needs.mood.thoughts.Thoughts.Find((Thought x) => x.def == this.def) != null;
+			showBubble = false;
+			this.pawn.needs.mood.thoughts.GetMainThoughts(Thought_Situational.tmpThoughts);
+			bool result = Thought_Situational.tmpThoughts.Any((Thought x) => x.def == this.def);
+			Thought_Situational.tmpThoughts.Clear();
+			return result;
 		}
 
 		protected virtual ThoughtState CurrentStateInternal()

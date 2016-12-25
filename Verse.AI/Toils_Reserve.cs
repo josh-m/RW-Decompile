@@ -10,9 +10,9 @@ namespace Verse.AI
 			Toil toil = new Toil();
 			toil.initAction = delegate
 			{
-				if (!Find.Reservations.Reserve(toil.actor, toil.actor.jobs.curJob.GetTarget(ind), maxPawns))
+				if (!toil.actor.Reserve(toil.actor.jobs.curJob.GetTarget(ind), maxPawns))
 				{
-					toil.actor.jobs.EndCurrentJob(JobCondition.Incompletable);
+					toil.actor.jobs.EndCurrentJob(JobCondition.Incompletable, true);
 				}
 			};
 			toil.defaultCompleteMode = ToilCompleteMode.Instant;
@@ -25,14 +25,14 @@ namespace Verse.AI
 			Toil toil = new Toil();
 			toil.initAction = delegate
 			{
-				List<TargetInfo> targetQueue = toil.actor.jobs.curJob.GetTargetQueue(ind);
+				List<LocalTargetInfo> targetQueue = toil.actor.jobs.curJob.GetTargetQueue(ind);
 				if (targetQueue != null)
 				{
 					for (int i = 0; i < targetQueue.Count; i++)
 					{
-						if (!Find.Reservations.Reserve(toil.actor, targetQueue[i], maxPawns))
+						if (!toil.actor.Reserve(targetQueue[i], maxPawns))
 						{
-							toil.actor.jobs.EndCurrentJob(JobCondition.Incompletable);
+							toil.actor.jobs.EndCurrentJob(JobCondition.Incompletable, true);
 						}
 					}
 				}
@@ -47,7 +47,7 @@ namespace Verse.AI
 			Toil toil = new Toil();
 			toil.initAction = delegate
 			{
-				Find.Reservations.Release(toil.actor.jobs.curJob.GetTarget(ind), toil.actor);
+				toil.actor.Map.reservationManager.Release(toil.actor.jobs.curJob.GetTarget(ind), toil.actor);
 			};
 			toil.defaultCompleteMode = ToilCompleteMode.Instant;
 			toil.atomicWithPrevious = true;

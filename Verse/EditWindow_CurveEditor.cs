@@ -177,14 +177,14 @@ namespace Verse
 					list.Add(new FloatMenuOption("Add point at " + mouseCurveCoords.ToString(), delegate
 					{
 						this.curve.Add(new CurvePoint(mouseCurveCoords));
-					}, MenuOptionPriority.Medium, null, null, 0f, null));
+					}, MenuOptionPriority.Default, null, null, 0f, null, null));
 					foreach (CurvePoint current in this.PointsNearMouse(screenRect))
 					{
 						CurvePoint localPoint = current;
 						list.Add(new FloatMenuOption("Remove point at " + localPoint.ToString(), delegate
 						{
 							this.curve.RemovePointNear(localPoint);
-						}, MenuOptionPriority.Medium, null, null, 0f, null));
+						}, MenuOptionPriority.Default, null, null, 0f, null, null));
 					}
 					Find.WindowStack.Add(new FloatMenu(list));
 					Event.current.Use();
@@ -205,10 +205,10 @@ namespace Verse
 				if (Event.current.type == EventType.MouseDrag)
 				{
 					Vector2 delta = Event.current.delta;
-					SimpleCurveView expr_62C_cp_0 = this.curve.View;
-					expr_62C_cp_0.rect.x = expr_62C_cp_0.rect.x - delta.x * this.curve.View.rect.width * 0.002f;
-					SimpleCurveView expr_66B_cp_0 = this.curve.View;
-					expr_66B_cp_0.rect.y = expr_66B_cp_0.rect.y + delta.y * this.curve.View.rect.height * 0.002f;
+					SimpleCurveView expr_62E_cp_0 = this.curve.View;
+					expr_62E_cp_0.rect.x = expr_62E_cp_0.rect.x - delta.x * this.curve.View.rect.width * 0.002f;
+					SimpleCurveView expr_66D_cp_0 = this.curve.View;
+					expr_66D_cp_0.rect.y = expr_66D_cp_0.rect.y + delta.y * this.curve.View.rect.height * 0.002f;
 					Event.current.Use();
 				}
 				if (Event.current.type == EventType.MouseUp && Event.current.button == this.draggingButton)

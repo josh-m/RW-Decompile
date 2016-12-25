@@ -30,12 +30,12 @@ namespace RimWorld
 			Transition transition = new Transition(lordToil_Party, lordToil_End);
 			transition.AddTrigger(new Trigger_TickCondition(() => this.ShouldBeCalledOff()));
 			transition.AddTrigger(new Trigger_PawnLostViolently());
-			transition.AddPreAction(new TransitionAction_Message("MessagePartyCalledOff".Translate(), MessageSound.Negative, this.spot));
+			transition.AddPreAction(new TransitionAction_Message("MessagePartyCalledOff".Translate(), MessageSound.Negative, new TargetInfo(this.spot, base.Map, false)));
 			stateGraph.AddTransition(transition);
 			this.timeoutTrigger = new Trigger_TicksPassed(Rand.RangeInclusive(5000, 15000));
 			Transition transition2 = new Transition(lordToil_Party, lordToil_End);
 			transition2.AddTrigger(this.timeoutTrigger);
-			transition2.AddPreAction(new TransitionAction_Message("MessagePartyFinished".Translate(), MessageSound.Negative, this.spot));
+			transition2.AddPreAction(new TransitionAction_Message("MessagePartyFinished".Translate(), MessageSound.Negative, new TargetInfo(this.spot, base.Map, false)));
 			transition2.AddPreAction(new TransitionAction_Custom(delegate
 			{
 				this.Finished();
@@ -46,7 +46,7 @@ namespace RimWorld
 
 		private bool ShouldBeCalledOff()
 		{
-			return !PartyUtility.AcceptableMapConditionsToContinueParty() || (!this.spot.Roofed() && !JoyUtility.EnjoyableOutsideNow(null));
+			return !PartyUtility.AcceptableMapConditionsToContinueParty(base.Map) || (!this.spot.Roofed(base.Map) && !JoyUtility.EnjoyableOutsideNow(base.Map, null));
 		}
 
 		private void Finished()
@@ -54,7 +54,7 @@ namespace RimWorld
 			List<Pawn> ownedPawns = this.lord.ownedPawns;
 			for (int i = 0; i < ownedPawns.Count; i++)
 			{
-				if (PartyUtility.InPartyArea(ownedPawns[i].Position, this.spot))
+				if (PartyUtility.InPartyArea(ownedPawns[i].Position, this.spot, base.Map))
 				{
 					ownedPawns[i].needs.mood.thoughts.memories.TryGainMemoryThought(ThoughtDefOf.AttendedParty, null);
 				}

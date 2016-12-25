@@ -16,7 +16,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return 100f * Find.SnowGrid.GetDepth(base.TargetLocA);
+				return 100f * base.Map.snowGrid.GetDepth(base.TargetLocA);
 			}
 		}
 
@@ -34,13 +34,13 @@ namespace RimWorld
 				this.<>f__this.workDone += num;
 				if (this.<>f__this.workDone >= this.<>f__this.TotalNeededWork)
 				{
-					Find.SnowGrid.SetDepth(this.<>f__this.TargetLocA, 0f);
+					this.<>f__this.Map.snowGrid.SetDepth(this.<>f__this.TargetLocA, 0f);
 					this.<>f__this.ReadyForNextToil();
 					return;
 				}
 			};
 			clearToil.defaultCompleteMode = ToilCompleteMode.Never;
-			clearToil.WithEffect("ClearSnow", TargetIndex.A);
+			clearToil.WithEffect(EffecterDefOf.ClearSnow, TargetIndex.A);
 			clearToil.PlaySustainerOrSound(() => SoundDefOf.Interact_ClearSnow);
 			clearToil.WithProgressBar(TargetIndex.A, () => this.<>f__this.workDone / this.<>f__this.TotalNeededWork, true, -0.5f);
 			yield return clearToil;

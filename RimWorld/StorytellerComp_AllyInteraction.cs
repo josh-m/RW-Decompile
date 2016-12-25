@@ -19,48 +19,67 @@ namespace RimWorld
 			}
 		}
 
-		[DebuggerHidden]
-		public override IEnumerable<FiringIncident> MakeIntervalIncidents()
+		private float IncidentMTBDays
 		{
-			List<Faction> factions = Find.FactionManager.AllFactionsListForReading;
-			int nonHostileCount = 0;
-			int canBeNonHostileCount = 0;
-			for (int i = 0; i < factions.Count; i++)
+			get
 			{
-				if (!factions[i].def.hidden && !factions[i].IsPlayer)
+				List<Faction> allFactionsListForReading = Find.FactionManager.AllFactionsListForReading;
+				int num = 0;
+				int num2 = 0;
+				for (int i = 0; i < allFactionsListForReading.Count; i++)
 				{
-					if (factions[i].def.CanEverBeNonHostile)
+					if (!allFactionsListForReading[i].def.hidden && !allFactionsListForReading[i].IsPlayer)
 					{
-						canBeNonHostileCount++;
-					}
-					if (!factions[i].HostileTo(Faction.OfPlayer))
-					{
-						nonHostileCount++;
+						if (allFactionsListForReading[i].def.CanEverBeNonHostile)
+						{
+							num2++;
+						}
+						if (!allFactionsListForReading[i].HostileTo(Faction.OfPlayer))
+						{
+							num++;
+						}
 					}
 				}
-			}
-			if (nonHostileCount != 0)
-			{
-				float freqFraction = (float)nonHostileCount / Mathf.Max((float)canBeNonHostileCount, 1f);
-				float adjustedMtb = this.Props.baseMtb / freqFraction;
-				IncidentDef incDef;
-				if (Rand.MTBEventOccurs(adjustedMtb, 60000f, 1000f) && this.TryChooseIncident(out incDef))
+				if (num == 0)
 				{
-					yield return new FiringIncident(incDef, this, this.GenerateParms(incDef.category));
+					return -1f;
+				}
+				float num3 = (float)num / Mathf.Max((float)num2, 1f);
+				return this.Props.baseMtb / num3;
+			}
+		}
+
+		[DebuggerHidden]
+		public override IEnumerable<FiringIncident> MakeIntervalIncidents(IIncidentTarget target)
+		{
+			float mtb = this.IncidentMTBDays;
+			if (mtb >= 0f)
+			{
+				IncidentDef incDef;
+				if (Rand.MTBEventOccurs(mtb, 60000f, 1000f) && this.TryChooseIncident(target, out incDef))
+				{
+					yield return new FiringIncident(incDef, this, this.GenerateParms(incDef.category, target));
 				}
 			}
 		}
 
-		private bool TryChooseIncident(out IncidentDef result)
+		private bool TryChooseIncident(IIncidentTarget target, out IncidentDef result)
 		{
-			int num;
-			if (Find.StoryWatcher.storyState.lastFireTicks.TryGetValue(IncidentDefOf.TraderCaravanArrival, out num) && Find.TickManager.TicksGame > num + 780000)
+			if (IncidentDefOf.TraderCaravanArrival.TargetAllowed(target))
 			{
-				result = IncidentDefOf.TraderCaravanArrival;
-				return true;
+				int num = 0;
+				if (!Find.StoryWatcher.storyState.lastFireTicks.TryGetValue(IncidentDefOf.TraderCaravanArrival, out num))
+				{
+					num = (int)(this.props.minDaysPassed * 60000f);
+				}
+				if (Find.TickManager.TicksGame > num + 780000)
+				{
+					result = IncidentDefOf.TraderCaravanArrival;
+					return true;
+				}
 			}
 			return (from d in DefDatabase<IncidentDef>.AllDefs
-			where d.category == IncidentCategory.AllyArrival && d.Worker.CanFireNow()
+			where d.category == IncidentCategory.AllyArrival && d.TargetAllowed(target) && d.Worker.CanFireNow(target)
 			select d).TryRandomElementByWeight((IncidentDef d) => d.baseChance, out result);
 		}
 	}

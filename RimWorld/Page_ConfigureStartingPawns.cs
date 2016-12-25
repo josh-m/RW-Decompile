@@ -80,11 +80,22 @@ namespace RimWorld
 			{
 				return;
 			}
-			do
+			int num = 0;
+			while (true)
 			{
 				this.curPawn = StartingPawnUtility.RandomizeInPlace(this.curPawn);
+				num++;
+				if (num > 15)
+				{
+					break;
+				}
+				if (StartingPawnUtility.WorkTypeRequirementsSatisfied())
+				{
+					goto Block_3;
+				}
 			}
-			while (!StartingPawnUtility.WorkTypeRequirementsSatisfied());
+			return;
+			Block_3:
 			TutorSystem.Notify_Event("RandomizePawn");
 		}
 

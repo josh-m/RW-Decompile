@@ -7,10 +7,6 @@ namespace RimWorld
 {
 	public class CompHatcher : ThingComp
 	{
-		private const float MinEmbryoTemperatureThreshold = -25f;
-
-		private const float FrozenPercentageChangeSpeed = 5E-05f;
-
 		private float gestateProgress;
 
 		public Pawn hatcheeParent;
@@ -19,23 +15,28 @@ namespace RimWorld
 
 		public Faction hatcheeFaction;
 
-		public float frozenPercentage;
-
-		public bool damagedEmbryo;
-
-		private bool Frozen
-		{
-			get
-			{
-				return this.frozenPercentage >= 1f;
-			}
-		}
-
 		public CompProperties_Hatcher Props
 		{
 			get
 			{
 				return (CompProperties_Hatcher)this.props;
+			}
+		}
+
+		private CompTemperatureRuinable FreezerComp
+		{
+			get
+			{
+				return this.parent.GetComp<CompTemperatureRuinable>();
+			}
+		}
+
+		protected bool TemperatureDamaged
+		{
+			get
+			{
+				CompTemperatureRuinable freezerComp = this.FreezerComp;
+				return freezerComp != null && this.FreezerComp.Ruined;
 			}
 		}
 
@@ -46,42 +47,24 @@ namespace RimWorld
 			Scribe_References.LookReference<Pawn>(ref this.hatcheeParent, "hatcheeParent", false);
 			Scribe_References.LookReference<Pawn>(ref this.otherParent, "otherParent", false);
 			Scribe_References.LookReference<Faction>(ref this.hatcheeFaction, "hatcheeFaction", false);
-			Scribe_Values.LookValue<float>(ref this.frozenPercentage, "frozenPercentage", 0f, false);
-			Scribe_Values.LookValue<bool>(ref this.damagedEmbryo, "damagedEmbryo", false, false);
 		}
 
 		public override void CompTick()
 		{
-			if (!this.damagedEmbryo)
+			if (!this.TemperatureDamaged)
 			{
-				float temperature = this.parent.Position.GetTemperature();
-				if (this.parent.holder == null)
+				float num = 1f / (this.Props.hatcherDaystoHatch * 60000f);
+				this.gestateProgress += num;
+				if (this.gestateProgress > 1f)
 				{
-					this.frozenPercentage -= (temperature - -25f) * 5E-05f;
-				}
-				if (this.frozenPercentage >= 1f)
-				{
-					this.damagedEmbryo = true;
-				}
-				else if (this.frozenPercentage < 0f)
-				{
-					this.frozenPercentage = 0f;
-				}
-				if (!this.damagedEmbryo)
-				{
-					float num = 1f / (this.Props.hatcherDaystoHatch * 60000f);
-					this.gestateProgress += num;
-					if (this.gestateProgress > 1f)
-					{
-						this.Hatch();
-					}
+					this.Hatch();
 				}
 			}
 		}
 
 		public void Hatch()
 		{
-			PawnGenerationRequest request = new PawnGenerationRequest(this.Props.hatcherPawn, this.hatcheeFaction, PawnGenerationContext.NonPlayer, false, true, false, false, true, false, 1f, false, true, true, null, null, null, null, null, null);
+			PawnGenerationRequest request = new PawnGenerationRequest(this.Props.hatcherPawn, this.hatcheeFaction, PawnGenerationContext.NonPlayer, null, false, true, false, false, true, false, 1f, false, true, true, null, null, null, null, null, null);
 			for (int i = 0; i < this.parent.stackCount; i++)
 			{
 				Pawn pawn = PawnGenerator.GeneratePawn(request);
@@ -107,7 +90,7 @@ namespace RimWorld
 					}
 					if (this.parent.Spawned)
 					{
-						FilthMaker.MakeFilth(this.parent.Position, ThingDefOf.FilthAmnioticFluid, 1);
+						FilthMaker.MakeFilth(this.parent.Position, this.parent.Map, ThingDefOf.FilthAmnioticFluid, 1);
 					}
 				}
 				else
@@ -124,22 +107,12 @@ namespace RimWorld
 			CompHatcher comp = ((ThingWithComps)otherStack).GetComp<CompHatcher>();
 			float b = comp.gestateProgress;
 			this.gestateProgress = Mathf.Lerp(this.gestateProgress, b, t);
-			float b2 = comp.frozenPercentage;
-			this.frozenPercentage = Mathf.Lerp(this.frozenPercentage, b2, t);
-		}
-
-		public override bool AllowStackWith(Thing other)
-		{
-			CompHatcher comp = ((ThingWithComps)other).GetComp<CompHatcher>();
-			return this.damagedEmbryo == comp.damagedEmbryo;
 		}
 
 		public override void PostSplitOff(Thing piece)
 		{
 			CompHatcher comp = ((ThingWithComps)piece).GetComp<CompHatcher>();
 			comp.gestateProgress = this.gestateProgress;
-			comp.frozenPercentage = this.frozenPercentage;
-			comp.damagedEmbryo = this.damagedEmbryo;
 			comp.hatcheeParent = this.hatcheeParent;
 			comp.otherParent = this.otherParent;
 			comp.hatcheeFaction = this.hatcheeFaction;
@@ -159,16 +132,11 @@ namespace RimWorld
 
 		public override string CompInspectStringExtra()
 		{
-			string text = "EggProgress".Translate() + ": ";
-			if (this.damagedEmbryo)
+			if (!this.TemperatureDamaged)
 			{
-				text += "EggDamagedEmbryo".Translate();
+				return "EggProgress".Translate() + ": " + this.gestateProgress.ToStringPercent();
 			}
-			else
-			{
-				text += this.gestateProgress.ToStringPercent();
-			}
-			return text;
+			return null;
 		}
 	}
 }

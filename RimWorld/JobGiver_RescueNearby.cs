@@ -10,9 +10,9 @@ namespace RimWorld
 
 		private float radius = 30f;
 
-		public override ThinkNode DeepCopy()
+		public override ThinkNode DeepCopy(bool resolve = true)
 		{
-			JobGiver_RescueNearby jobGiver_RescueNearby = (JobGiver_RescueNearby)base.DeepCopy();
+			JobGiver_RescueNearby jobGiver_RescueNearby = (JobGiver_RescueNearby)base.DeepCopy(resolve);
 			jobGiver_RescueNearby.radius = this.radius;
 			return jobGiver_RescueNearby;
 		}
@@ -24,7 +24,7 @@ namespace RimWorld
 				Pawn pawn3 = (Pawn)t;
 				return pawn3.Downed && pawn3.Faction == pawn.Faction && !pawn3.InBed() && pawn.CanReserve(pawn3, 1) && !pawn3.IsForbidden(pawn) && !GenAI.EnemyIsNear(pawn3, 25f);
 			};
-			Pawn pawn2 = (Pawn)GenClosest.ClosestThingReachable(pawn.Position, ThingRequest.ForGroup(ThingRequestGroup.Pawn), PathEndMode.OnCell, TraverseParms.For(pawn, Danger.Deadly, TraverseMode.ByPawn, false), this.radius, validator, null, -1, false);
+			Pawn pawn2 = (Pawn)GenClosest.ClosestThingReachable(pawn.Position, pawn.Map, ThingRequest.ForGroup(ThingRequestGroup.Pawn), PathEndMode.OnCell, TraverseParms.For(pawn, Danger.Deadly, TraverseMode.ByPawn, false), this.radius, validator, null, -1, false);
 			if (pawn2 == null)
 			{
 				return null;
@@ -36,7 +36,7 @@ namespace RimWorld
 			}
 			return new Job(JobDefOf.Rescue, pawn2, thing)
 			{
-				maxNumToCarry = 1
+				count = 1
 			};
 		}
 	}

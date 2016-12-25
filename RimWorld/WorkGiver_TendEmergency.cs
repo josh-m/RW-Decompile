@@ -7,7 +7,7 @@ namespace RimWorld
 	{
 		public override bool HasJobOnThing(Pawn pawn, Thing t)
 		{
-			return base.HasJobOnThing(pawn, t) && HealthUtility.PawnShouldGetImmediateTending((Pawn)t);
+			return base.HasJobOnThing(pawn, t) && HealthAIUtility.ShouldBeTendedNowUrgent((Pawn)t);
 		}
 	}
 }

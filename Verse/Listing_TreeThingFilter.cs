@@ -13,10 +13,22 @@ namespace Verse
 
 		private List<SpecialThingFilterDef> hiddenSpecialFilters;
 
-		public Listing_TreeThingFilter(Rect rect, ThingFilter filter, ThingFilter parentFilter) : base(rect)
+		private List<ThingDef> forceHiddenDefs;
+
+		private List<SpecialThingFilterDef> tempForceHiddenSpecialFilters;
+
+		public Listing_TreeThingFilter(Rect rect, ThingFilter filter, ThingFilter parentFilter, IEnumerable<ThingDef> forceHiddenDefs, IEnumerable<SpecialThingFilterDef> forceHiddenFilters) : base(rect)
 		{
 			this.filter = filter;
 			this.parentFilter = parentFilter;
+			if (forceHiddenDefs != null)
+			{
+				this.forceHiddenDefs = forceHiddenDefs.ToList<ThingDef>();
+			}
+			if (forceHiddenFilters != null)
+			{
+				this.tempForceHiddenSpecialFilters = forceHiddenFilters.ToList<SpecialThingFilterDef>();
+			}
 		}
 
 		public void DoCategoryChildren(TreeNode_ThingCategory node, int indentLevel, int openMask, bool isRoot = false)
@@ -25,33 +37,34 @@ namespace Verse
 			{
 				foreach (SpecialThingFilterDef current in node.catDef.ParentsSpecialThingFilterDefs)
 				{
-					if ((this.parentFilter == null || this.parentFilter.Allowed(current)) && !this.IsSpecialFilterHidden(current))
+					if (this.Visible(current))
 					{
 						this.DoSpecialFilter(current, indentLevel);
 					}
 				}
 			}
-			foreach (SpecialThingFilterDef current2 in node.catDef.childSpecialFilters)
+			List<SpecialThingFilterDef> childSpecialFilters = node.catDef.childSpecialFilters;
+			for (int i = 0; i < childSpecialFilters.Count; i++)
 			{
-				if ((this.parentFilter == null || this.parentFilter.Allowed(current2)) && !this.IsSpecialFilterHidden(current2))
+				if (this.Visible(childSpecialFilters[i]))
 				{
-					this.DoSpecialFilter(current2, indentLevel);
+					this.DoSpecialFilter(childSpecialFilters[i], indentLevel);
 				}
 			}
-			foreach (TreeNode_ThingCategory current3 in node.ChildCategoryNodes)
+			foreach (TreeNode_ThingCategory current2 in node.ChildCategoryNodes)
 			{
-				if (this.parentFilter == null || this.parentFilter.AllowanceStateOf(current3) != MultiCheckboxState.Off)
+				if (this.Visible(current2))
 				{
-					this.DoCategory(current3, indentLevel, openMask);
+					this.DoCategory(current2, indentLevel, openMask);
 				}
 			}
-			foreach (ThingDef current4 in from n in node.catDef.childThingDefs
+			foreach (ThingDef current3 in from n in node.catDef.childThingDefs
 			orderby n.label
 			select n)
 			{
-				if (!current4.menuHidden && (this.parentFilter == null || this.parentFilter.Allows(current4)) && (this.parentFilter == null || !this.parentFilter.IsAlwaysDisallowedDueToSpecialFilters(current4)))
+				if (this.Visible(current3))
 				{
-					this.DoThingDef(current4, indentLevel);
+					this.DoThingDef(current3, indentLevel);
 				}
 			}
 		}
@@ -63,7 +76,7 @@ namespace Verse
 				return;
 			}
 			base.LabelLeft("*" + sfDef.LabelCap, sfDef.description, nestLevel);
-			bool flag = this.filter.Allowed(sfDef);
+			bool flag = this.filter.Allows(sfDef);
 			bool flag2 = flag;
 			Widgets.Checkbox(new Vector2(this.LabelWidth, this.curY), ref flag, this.lineHeight, false);
 			if (flag != flag2)
@@ -77,7 +90,7 @@ namespace Verse
 		{
 			base.OpenCloseWidget(node, indentLevel, openMask);
 			base.LabelLeft(node.LabelCap, node.catDef.description, indentLevel);
-			MultiCheckboxState multiCheckboxState = this.filter.AllowanceStateOf(node);
+			MultiCheckboxState multiCheckboxState = this.AllowanceStateOf(node);
 			if (Widgets.CheckboxMulti(new Vector2(this.LabelWidth, this.curY), multiCheckboxState, this.lineHeight))
 			{
 				bool allow = multiCheckboxState == MultiCheckboxState.Off;
@@ -118,12 +131,98 @@ namespace Verse
 			base.EndLine();
 		}
 
+		public MultiCheckboxState AllowanceStateOf(TreeNode_ThingCategory cat)
+		{
+			int num = 0;
+			int num2 = 0;
+			foreach (ThingDef current in cat.catDef.DescendantThingDefs)
+			{
+				if (this.Visible(current))
+				{
+					num++;
+					if (this.filter.Allows(current))
+					{
+						num2++;
+					}
+				}
+			}
+			foreach (SpecialThingFilterDef current2 in cat.catDef.DescendantSpecialThingFilterDefs)
+			{
+				if (this.Visible(current2))
+				{
+					num++;
+					if (this.filter.Allows(current2))
+					{
+						num2++;
+					}
+				}
+			}
+			if (num2 == 0)
+			{
+				return MultiCheckboxState.Off;
+			}
+			if (num == num2)
+			{
+				return MultiCheckboxState.On;
+			}
+			return MultiCheckboxState.Partial;
+		}
+
+		private bool Visible(ThingDef td)
+		{
+			if (td.menuHidden)
+			{
+				return false;
+			}
+			if (this.forceHiddenDefs != null && this.forceHiddenDefs.Contains(td))
+			{
+				return false;
+			}
+			if (this.parentFilter != null)
+			{
+				if (!this.parentFilter.Allows(td))
+				{
+					return false;
+				}
+				if (this.parentFilter.IsAlwaysDisallowedDueToSpecialFilters(td))
+				{
+					return false;
+				}
+			}
+			return true;
+		}
+
+		private bool Visible(TreeNode_ThingCategory node)
+		{
+			return node.catDef.DescendantThingDefs.Any(new Func<ThingDef, bool>(this.Visible));
+		}
+
+		private bool Visible(SpecialThingFilterDef filter)
+		{
+			if (this.parentFilter != null && !this.parentFilter.Allows(filter))
+			{
+				return false;
+			}
+			if (this.hiddenSpecialFilters == null)
+			{
+				this.CalculateHiddenSpecialFilters();
+			}
+			for (int i = 0; i < this.hiddenSpecialFilters.Count; i++)
+			{
+				if (this.hiddenSpecialFilters[i] == filter)
+				{
+					return false;
+				}
+			}
+			return true;
+		}
+
 		private void CalculateHiddenSpecialFilters()
 		{
 			this.hiddenSpecialFilters = new List<SpecialThingFilterDef>();
-			if (this.filter.DisplayRootCategory == null)
+			if (this.tempForceHiddenSpecialFilters != null)
 			{
-				return;
+				this.hiddenSpecialFilters.AddRange(this.tempForceHiddenSpecialFilters);
 			}
 			IEnumerable<SpecialThingFilterDef> enumerable = this.filter.DisplayRootCategory.catDef.DescendantSpecialThingFilterDefs.Concat(this.filter.DisplayRootCategory.catDef.ParentsSpecialThingFilterDefs);
 			IEnumerable<ThingDef> enumerable2 = this.filter.DisplayRootCategory.catDef.DescendantThingDefs;
@@ -138,7 +237,7 @@ namespace Verse
 				bool flag = false;
 				foreach (ThingDef current2 in enumerable2)
 				{
-					if (current.Worker.PotentiallyMatches(current2))
+					if (current.Worker.CanEverMatch(current2))
 					{
 						flag = true;
 						break;
@@ -149,22 +248,6 @@ namespace Verse
 					this.hiddenSpecialFilters.Add(current);
 				}
 			}
-		}
-
-		private bool IsSpecialFilterHidden(SpecialThingFilterDef filter)
-		{
-			if (this.hiddenSpecialFilters == null)
-			{
-				this.CalculateHiddenSpecialFilters();
-			}
-			for (int i = 0; i < this.hiddenSpecialFilters.Count; i++)
-			{
-				if (this.hiddenSpecialFilters[i] == filter)
-				{
-					return true;
-				}
-			}
-			return false;
 		}
 	}
 }

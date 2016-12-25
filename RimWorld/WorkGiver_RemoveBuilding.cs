@@ -29,7 +29,7 @@ namespace RimWorld
 		[DebuggerHidden]
 		public override IEnumerable<Thing> PotentialWorkThingsGlobal(Pawn pawn)
 		{
-			foreach (Designation des in Find.DesignationManager.DesignationsOfDef(this.Designation))
+			foreach (Designation des in pawn.Map.designationManager.DesignationsOfDef(this.Designation))
 			{
 				yield return des.target.Thing;
 			}
@@ -48,7 +48,7 @@ namespace RimWorld
 			{
 				return false;
 			}
-			return pawn.CanReserve(t, 1) && Find.DesignationManager.DesignationOn(t, this.Designation) != null;
+			return pawn.CanReserve(t, 1) && pawn.Map.designationManager.DesignationOn(t, this.Designation) != null;
 		}
 
 		public override Job JobOnThing(Pawn pawn, Thing t)

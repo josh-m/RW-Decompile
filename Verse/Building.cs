@@ -38,13 +38,13 @@ namespace Verse
 			}
 		}
 
-		public override void SpawnSetup()
+		public override void SpawnSetup(Map map)
 		{
-			base.SpawnSetup();
-			Find.ListerBuildings.Add(this);
+			base.SpawnSetup(map);
+			base.Map.listerBuildings.Add(this);
 			if (this.def.coversFloor)
 			{
-				Find.MapDrawer.MapMeshDirty(base.Position, MapMeshFlag.Terrain, true, false);
+				base.Map.mapDrawer.MapMeshDirty(base.Position, MapMeshFlag.Terrain, true, false);
 			}
 			CellRect cellRect = this.OccupiedRect();
 			for (int i = cellRect.minZ; i <= cellRect.maxZ; i++)
@@ -52,17 +52,17 @@ namespace Verse
 				for (int j = cellRect.minX; j <= cellRect.maxX; j++)
 				{
 					IntVec3 intVec = new IntVec3(j, 0, i);
-					Find.MapDrawer.MapMeshDirty(intVec, MapMeshFlag.Buildings);
-					Find.GlowGrid.MarkGlowGridDirty(intVec);
+					base.Map.mapDrawer.MapMeshDirty(intVec, MapMeshFlag.Buildings);
+					base.Map.glowGrid.MarkGlowGridDirty(intVec);
 					if (!SnowGrid.CanCoexistWithSnow(this.def))
 					{
-						Find.SnowGrid.SetDepth(intVec, 0f);
+						base.Map.snowGrid.SetDepth(intVec, 0f);
 					}
 				}
 			}
 			if (this.def.IsEdifice())
 			{
-				Find.EdificeGrid.Register(this);
+				base.Map.edificeGrid.Register(this);
 			}
 			if (base.Faction == Faction.OfPlayer && this.def.building != null && this.def.building.spawnedConceptLearnOpportunity != null)
 			{
@@ -73,31 +73,32 @@ namespace Verse
 			{
 				LongEventHandler.ExecuteWhenFinished(delegate
 				{
-					SoundInfo info = SoundInfo.InWorld(this, MaintenanceType.None);
+					SoundInfo info = SoundInfo.InMap(this, MaintenanceType.None);
 					this.sustainerAmbient = this.def.building.soundAmbient.TrySpawnSustainer(info);
 				});
 			}
-			ListerBuildingsRepairable.Notify_BuildingSpawned(this);
+			base.Map.listerBuildingsRepairable.Notify_BuildingSpawned(this);
+			if (!this.CanBeSeenOver())
+			{
+				base.Map.exitMapGrid.Notify_LOSBlockerSpawned();
+			}
 		}
 
 		public override void DeSpawn()
 		{
 			if (this.def.IsEdifice())
 			{
-				Find.EdificeGrid.DeRegister(this);
+				base.Map.edificeGrid.DeRegister(this);
 			}
+			Map map = base.Map;
 			base.DeSpawn();
-			if (this.def.building.ai_combatDangerous)
-			{
-				AvoidGridMaker.Notify_CombatDangerousBuildingDespawned(this);
-			}
 			if (this.def.MakeFog)
 			{
-				Find.FogGrid.Notify_FogBlockerRemoved(base.Position);
+				map.fogGrid.Notify_FogBlockerRemoved(base.Position);
 			}
 			if (this.def.holdsRoof)
 			{
-				RoofCollapseCellsFinder.Notify_RoofHolderDespawned(this);
+				RoofCollapseCellsFinder.Notify_RoofHolderDespawned(this, map);
 			}
 			if (this.sustainerAmbient != null)
 			{
@@ -119,31 +120,49 @@ namespace Verse
 						mapMeshFlag |= MapMeshFlag.Roofs;
 						mapMeshFlag |= MapMeshFlag.Snow;
 					}
-					Find.Map.mapDrawer.MapMeshDirty(loc, mapMeshFlag);
-					Find.GlowGrid.MarkGlowGridDirty(loc);
+					map.mapDrawer.MapMeshDirty(loc, mapMeshFlag);
+					map.glowGrid.MarkGlowGridDirty(loc);
 				}
 			}
-			Find.ListerBuildings.Remove(this);
-			ListerBuildingsRepairable.Notify_BuildingDeSpawned(this);
-			if (this.def.leaveTerrain != null && Current.ProgramState == ProgramState.MapPlaying)
+			map.listerBuildings.Remove(this);
+			map.listerBuildingsRepairable.Notify_BuildingDeSpawned(this);
+			if (this.def.leaveTerrain != null && Current.ProgramState == ProgramState.Playing)
 			{
 				CellRect.CellRectIterator iterator = this.OccupiedRect().GetIterator();
 				while (!iterator.Done())
 				{
-					Find.TerrainGrid.SetTerrain(iterator.Current, this.def.leaveTerrain);
+					map.terrainGrid.SetTerrain(iterator.Current, this.def.leaveTerrain);
 					iterator.MoveNext();
 				}
 			}
-			Find.DesignationManager.Notify_BuildingDespawned(this);
+			map.designationManager.Notify_BuildingDespawned(this);
+			if (!this.CanBeSeenOver())
+			{
+				map.exitMapGrid.Notify_LOSBlockerDespawned();
+			}
+			if (this.def.building.hasFuelingPort)
+			{
+				IntVec3 fuelingPortCell = FuelingPortUtility.GetFuelingPortCell(base.Position, base.Rotation);
+				CompLaunchable compLaunchable = FuelingPortUtility.LaunchableAt(fuelingPortCell, map);
+				if (compLaunchable != null)
+				{
+					compLaunchable.Notify_FuelingPortSourceDeSpawned();
+				}
+			}
+			if (this.def.building.ai_combatDangerous)
+			{
+				AvoidGridMaker.Notify_CombatDangerousBuildingDespawned(this, map);
+			}
 		}
 
 		public override void Destroy(DestroyMode mode = DestroyMode.Vanish)
 		{
+			Map map = base.Map;
 			base.Destroy(mode);
 			InstallBlueprintUtility.CancelBlueprintsFor(this);
 			if (mode == DestroyMode.Deconstruct)
 			{
-				SoundDef.Named("BuildingDeconstructed").PlayOneShot(base.Position);
+				SoundDef.Named("BuildingDeconstructed").PlayOneShot(new TargetInfo(base.Position, map, false));
 			}
 		}
 
@@ -159,13 +178,19 @@ namespace Verse
 		public override void SetFaction(Faction newFaction, Pawn recruiter = null)
 		{
 			base.SetFaction(newFaction, recruiter);
-			ListerBuildingsRepairable.Notify_BuildingFactionChanged(this);
+			if (base.Spawned)
+			{
+				base.Map.listerBuildingsRepairable.Notify_BuildingFactionChanged(this);
+			}
 		}
 
 		public override void PostApplyDamage(DamageInfo dinfo, float totalDamageDealt)
 		{
 			base.PostApplyDamage(dinfo, totalDamageDealt);
-			ListerBuildingsRepairable.Notify_BuildingTookDamage(this);
+			if (base.Spawned)
+			{
+				base.Map.listerBuildingsRepairable.Notify_BuildingTookDamage(this);
+			}
 		}
 
 		public override void DrawExtraSelectionOverlays()
@@ -185,7 +210,7 @@ namespace Verse
 			{
 				yield return c;
 			}
-			if (this.def.Minifiable)
+			if (this.def.Minifiable && base.Faction == Faction.OfPlayer)
 			{
 				yield return InstallationDesignatorDatabase.DesignatorFor(this.def);
 			}
@@ -196,9 +221,24 @@ namespace Verse
 			}
 		}
 
-		public virtual bool ClaimableBy(Faction faction)
+		public virtual bool ClaimableBy(Faction by)
 		{
-			return !this.def.building.isNaturalRock && this.def.building.claimable;
+			if (this.def.building.isNaturalRock || !this.def.building.claimable)
+			{
+				return false;
+			}
+			if (base.Faction != null)
+			{
+				List<Pawn> list = base.Map.mapPawns.SpawnedPawnsInFaction(base.Faction);
+				for (int i = 0; i < list.Count; i++)
+				{
+					if (list[i].RaceProps.Humanlike && !PawnUtility.ThreatDisabledOrFleeing(list[i]))
+					{
+						return false;
+					}
+				}
+			}
+			return true;
 		}
 
 		public virtual ushort PathFindCostFor(Pawn p)

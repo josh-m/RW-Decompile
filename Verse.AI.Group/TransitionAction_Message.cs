@@ -35,16 +35,16 @@ namespace Verse.AI.Group
 
 		public override void DoAction(Transition trans)
 		{
-			TargetInfo targetInfo;
+			TargetInfo target;
 			if (this.lookTarget.IsValid)
 			{
-				targetInfo = this.lookTarget;
+				target = this.lookTarget;
 			}
 			else
 			{
-				targetInfo = trans.target.lord.ownedPawns.FirstOrDefault<Pawn>();
+				target = trans.target.lord.ownedPawns.FirstOrDefault<Pawn>();
 			}
-			Messages.Message(this.message, targetInfo, this.sound);
+			Messages.Message(this.message, target, this.sound);
 		}
 	}
 }

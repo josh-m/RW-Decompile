@@ -8,9 +8,9 @@ namespace RimWorld
 {
 	public static class TutorUtility
 	{
-		public static bool BuildingOrBlueprintOrFrameCenterExists(IntVec3 c, ThingDef buildingDef)
+		public static bool BuildingOrBlueprintOrFrameCenterExists(IntVec3 c, Map map, ThingDef buildingDef)
 		{
-			List<Thing> thingList = c.GetThingList();
+			List<Thing> thingList = c.GetThingList(map);
 			for (int i = 0; i < thingList.Count; i++)
 			{
 				Thing thing = thingList[i];
@@ -29,9 +29,9 @@ namespace RimWorld
 			return false;
 		}
 
-		public static CellRect FindClearRect(int width, int height, float minFertility = 0f, bool noItems = false)
+		public static CellRect FindUsableRect(int width, int height, Map map, float minFertility = 0f, bool noItems = false)
 		{
-			IntVec3 center = Find.Map.Center;
+			IntVec3 center = map.Center;
 			float num = 1f;
 			CellRect cellRect;
 			while (true)
@@ -46,7 +46,7 @@ namespace RimWorld
 				while (!iterator.Done())
 				{
 					IntVec3 current = iterator.Current;
-					if (!current.Walkable() || !current.GetTerrain().affordances.Contains(TerrainAffordance.Heavy) || current.GetTerrain().fertility < minFertility || current.GetZone() != null || TutorUtility.ContainsBlockingThing(current, noItems) || current.InNoBuildEdgeArea() || current.InNoZoneEdgeArea())
+					if (current.Fogged(map) || !current.Walkable(map) || !current.GetTerrain(map).affordances.Contains(TerrainAffordance.Heavy) || current.GetTerrain(map).fertility < minFertility || current.GetZone(map) != null || TutorUtility.ContainsBlockingThing(current, map, noItems) || current.InNoBuildEdgeArea(map) || current.InNoZoneEdgeArea(map))
 					{
 						flag = false;
 						break;
@@ -62,9 +62,9 @@ namespace RimWorld
 			return cellRect.ContractedBy(1);
 		}
 
-		private static bool ContainsBlockingThing(IntVec3 cell, bool noItems)
+		private static bool ContainsBlockingThing(IntVec3 cell, Map map, bool noItems)
 		{
-			List<Thing> thingList = cell.GetThingList();
+			List<Thing> thingList = cell.GetThingList(map);
 			for (int i = 0; i < thingList.Count; i++)
 			{
 				if (thingList[i].def.category == ThingCategory.Building)
@@ -85,7 +85,7 @@ namespace RimWorld
 
 		public static void DrawLabelOnThingOnGUI(Thing t, string label)
 		{
-			Vector2 vector = (t.DrawPos + new Vector3(0f, 0f, 0.5f)).ToScreenPosition();
+			Vector2 vector = (t.DrawPos + new Vector3(0f, 0f, 0.5f)).MapToUIPosition();
 			Vector2 vector2 = Text.CalcSize(label);
 			Rect rect = new Rect(vector.x - vector2.x / 2f, vector.y - vector2.y / 2f, vector2.x, vector2.y);
 			GUI.DrawTexture(rect, TexUI.GrayTextBG);
@@ -97,7 +97,7 @@ namespace RimWorld
 
 		public static void DrawLabelOnGUI(Vector3 mapPos, string label)
 		{
-			Vector2 vector = mapPos.ToScreenPosition();
+			Vector2 vector = mapPos.MapToUIPosition();
 			Vector2 vector2 = Text.CalcSize(label);
 			Rect rect = new Rect(vector.x - vector2.x / 2f, vector.y - vector2.y / 2f, vector2.x, vector2.y);
 			GUI.DrawTexture(rect, TexUI.GrayTextBG);
@@ -131,7 +131,7 @@ namespace RimWorld
 			if (!PlayerKnowledgeDatabase.IsComplete(conc))
 			{
 				string helpTextAdjusted = conc.HelpTextAdjusted;
-				Find.WindowStack.Add(Dialog_NodeTree.SimpleNotifyDialog(helpTextAdjusted, true));
+				Find.WindowStack.Add(new Dialog_MessageBox(helpTextAdjusted, null, null, null, null, null, false));
 				PlayerKnowledgeDatabase.KnowledgeDemonstrated(conc, KnowledgeAmount.Total);
 			}
 		}

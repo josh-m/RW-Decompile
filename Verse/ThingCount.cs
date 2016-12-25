@@ -1,50 +1,49 @@
 using System;
-using System.Xml;
 
 namespace Verse
 {
-	public sealed class ThingCount
+	public struct ThingCount
 	{
-		public ThingDef thingDef;
+		private ThingDef thingDef;
 
-		public int count;
+		private int count;
 
-		public ThingCount()
+		public ThingDef ThingDef
 		{
+			get
+			{
+				return this.thingDef;
+			}
+		}
+
+		public int Count
+		{
+			get
+			{
+				return this.count;
+			}
 		}
 
 		public ThingCount(ThingDef thingDef, int count)
 		{
+			if (count < 0)
+			{
+				Log.Warning(string.Concat(new object[]
+				{
+					"Tried to set ThingCount count to ",
+					count,
+					". thingDef=",
+					thingDef
+				}));
+				count = 0;
+			}
 			this.thingDef = thingDef;
 			this.count = count;
 		}
 
-		public void LoadDataFromXmlCustom(XmlNode xmlRoot)
+		public ThingCount WithCount(int newCount)
 		{
-			if (xmlRoot.ChildNodes.Count != 1)
-			{
-				Log.Error("Misconfigured ThingCount: " + xmlRoot.OuterXml);
-				return;
-			}
-			CrossRefLoader.RegisterObjectWantsCrossRef(this, "thingDef", xmlRoot.Name);
-			this.count = (int)ParseHelper.FromString(xmlRoot.FirstChild.Value, typeof(int));
-		}
-
-		public override string ToString()
-		{
-			return string.Concat(new object[]
-			{
-				"(",
-				this.count,
-				"x ",
-				(this.thingDef == null) ? "null" : this.thingDef.defName,
-				")"
-			});
-		}
-
-		public override int GetHashCode()
-		{
-			return (int)this.thingDef.shortHash + this.count << 16;
+			return new ThingCount(this.thingDef, newCount);
 		}
 	}
 }

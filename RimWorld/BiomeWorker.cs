@@ -5,6 +5,6 @@ namespace RimWorld
 {
 	public abstract class BiomeWorker
 	{
-		public abstract float GetScore(WorldSquare square);
+		public abstract float GetScore(Tile tile);
 	}
 }

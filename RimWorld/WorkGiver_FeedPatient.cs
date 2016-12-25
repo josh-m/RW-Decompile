@@ -62,7 +62,7 @@ namespace RimWorld
 				{
 					targetA = t2,
 					targetB = pawn2,
-					maxNumToCarry = FoodUtility.WillIngestStackCountOf(pawn2, def)
+					count = FoodUtility.WillIngestStackCountOf(pawn2, def)
 				};
 			}
 			return null;

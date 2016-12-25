@@ -65,10 +65,10 @@ namespace RimWorld
 			return this.ThingToInstall.Stuff;
 		}
 
-		public override List<ThingCount> MaterialsNeeded()
+		public override List<ThingCountClass> MaterialsNeeded()
 		{
 			Log.Error("Called MaterialsNeeded on a Blueprint_Install.");
-			return new List<ThingCount>();
+			return new List<ThingCountClass>();
 		}
 
 		protected override Thing MakeSolidThing()
@@ -78,10 +78,11 @@ namespace RimWorld
 
 		public override bool TryReplaceWithSolidThing(Pawn workerPawn, out Thing createdThing, out bool jobEnded)
 		{
+			Map map = base.Map;
 			bool flag = base.TryReplaceWithSolidThing(workerPawn, out createdThing, out jobEnded);
 			if (flag)
 			{
-				SoundDefOf.BuildingComplete.PlayOneShot(base.Position);
+				SoundDefOf.BuildingComplete.PlayOneShot(new TargetInfo(base.Position, map, false));
 				workerPawn.records.Increment(RecordDefOf.ThingsInstalled);
 			}
 			return flag;

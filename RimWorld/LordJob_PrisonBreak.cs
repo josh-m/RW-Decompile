@@ -78,12 +78,17 @@ namespace RimWorld
 
 		public override void Notify_PawnAdded(Pawn p)
 		{
-			Reachability.ClearCache();
+			ReachabilityUtility.ClearCache();
 		}
 
 		public override void Notify_PawnLost(Pawn p, PawnLostCondition condition)
 		{
-			Reachability.ClearCache();
+			ReachabilityUtility.ClearCache();
+		}
+
+		public override bool CanOpenAnyDoor(Pawn p)
+		{
+			return true;
 		}
 	}
 }

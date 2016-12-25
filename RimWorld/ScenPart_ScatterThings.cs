@@ -10,18 +10,18 @@ namespace RimWorld
 			get;
 		}
 
-		public override void GenerateIntoMap()
+		public override void GenerateIntoMap(Map map)
 		{
 			new GenStep_ScatterThings
 			{
 				nearPlayerStart = this.NearPlayerStart,
 				thingDef = this.thingDef,
 				stuff = this.stuff,
-				clusterSize = 4,
 				count = this.count,
 				spotMustBeStandable = true,
-				minSpacing = 5f
-			}.Generate();
+				minSpacing = 5f,
+				clusterSize = ((this.thingDef.category != ThingCategory.Building) ? 4 : 1)
+			}.Generate(map);
 		}
 	}
 }

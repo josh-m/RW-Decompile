@@ -24,7 +24,7 @@ namespace Verse.Noise
 		{
 			Texture2D texture2D = new Texture2D(rect.Width, rect.Height);
 			texture2D.name = "NoiseRender";
-			foreach (IntVec2 current in rect.Squares)
+			foreach (IntVec2 current in rect.Cells2D)
 			{
 				texture2D.SetPixel(current.x, current.z, NoiseRenderer.ColorForValue(noise.GetValue(current)));
 			}

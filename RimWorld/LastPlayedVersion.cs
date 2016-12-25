@@ -10,17 +10,11 @@ namespace RimWorld
 
 		private static Version lastPlayedVersionInt;
 
-		private static bool gameWasRun;
-
 		public static Version Version
 		{
 			get
 			{
 				LastPlayedVersion.InitializeIfNeeded();
-				if (LastPlayedVersion.lastPlayedVersionInt == null && LastPlayedVersion.gameWasRun)
-				{
-					return new Version(0, 13, 1241);
-				}
 				return LastPlayedVersion.lastPlayedVersionInt;
 			}
 		}
@@ -65,11 +59,6 @@ namespace RimWorld
 			{
 				LastPlayedVersion.initialized = true;
 			}
-		}
-
-		internal static void Notify_GameHasBeenRun()
-		{
-			LastPlayedVersion.gameWasRun = true;
 		}
 	}
 }

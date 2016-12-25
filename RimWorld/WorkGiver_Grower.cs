@@ -10,7 +10,7 @@ namespace RimWorld
 	{
 		protected static ThingDef wantedPlantDef;
 
-		protected virtual bool ExtraRequirements(IPlantToGrowSettable settable)
+		protected virtual bool ExtraRequirements(IPlantToGrowSettable settable, Pawn pawn)
 		{
 			return true;
 		}
@@ -19,13 +19,13 @@ namespace RimWorld
 		public override IEnumerable<IntVec3> PotentialWorkCellsGlobal(Pawn pawn)
 		{
 			Danger maxDanger = pawn.NormalMaxDanger();
-			List<Building> bList = Find.ListerBuildings.allBuildingsColonist;
+			List<Building> bList = pawn.Map.listerBuildings.allBuildingsColonist;
 			for (int i = 0; i < bList.Count; i++)
 			{
 				Building_PlantGrower b = bList[i] as Building_PlantGrower;
 				if (b != null)
 				{
-					if (this.ExtraRequirements(b))
+					if (this.ExtraRequirements(b, pawn))
 					{
 						if (!b.IsForbidden(pawn))
 						{
@@ -47,7 +47,7 @@ namespace RimWorld
 				}
 			}
 			WorkGiver_Grower.wantedPlantDef = null;
-			List<Zone> zonesList = Find.ZoneManager.AllZones;
+			List<Zone> zonesList = pawn.Map.zoneManager.AllZones;
 			for (int j = 0; j < zonesList.Count; j++)
 			{
 				Zone_Growing growZone = zonesList[j] as Zone_Growing;
@@ -57,7 +57,7 @@ namespace RimWorld
 					{
 						Log.ErrorOnce("Grow zone has 0 cells: " + growZone, -563487);
 					}
-					else if (this.ExtraRequirements(growZone))
+					else if (this.ExtraRequirements(growZone, pawn))
 					{
 						if (!growZone.ContainsStaticFire)
 						{
@@ -76,21 +76,18 @@ namespace RimWorld
 			WorkGiver_Grower.wantedPlantDef = null;
 		}
 
-		protected void DetermineWantedPlantDef(IntVec3 c)
+		public static ThingDef CalculateWantedPlantDef(IntVec3 c, Map map)
 		{
-			IPlantToGrowSettable plantToGrowSettable = c.GetEdifice() as IPlantToGrowSettable;
+			IPlantToGrowSettable plantToGrowSettable = c.GetEdifice(map) as IPlantToGrowSettable;
 			if (plantToGrowSettable == null)
 			{
-				plantToGrowSettable = (Find.ZoneManager.ZoneAt(c) as IPlantToGrowSettable);
+				plantToGrowSettable = (map.zoneManager.ZoneAt(c) as IPlantToGrowSettable);
 			}
 			if (plantToGrowSettable == null)
 			{
-				WorkGiver_Grower.wantedPlantDef = null;
+				return null;
 			}
-			else
-			{
-				WorkGiver_Grower.wantedPlantDef = plantToGrowSettable.GetPlantDefToGrow();
-			}
+			return plantToGrowSettable.GetPlantDefToGrow();
 		}
 	}
 }

@@ -8,7 +8,7 @@ namespace RimWorld
 	{
 		private const float ColumnWidth = 200f;
 
-		private IntVec2 selCoords = IntVec2.Invalid;
+		private int selTile = -1;
 
 		private static readonly int[] MapSizes = new int[]
 		{
@@ -30,13 +30,13 @@ namespace RimWorld
 			}
 		}
 
-		public Dialog_AdvancedGameConfig(IntVec2 selCoords)
+		public Dialog_AdvancedGameConfig(int selTile)
 		{
 			this.doCloseButton = true;
 			this.closeOnEscapeKey = true;
 			this.forcePause = true;
 			this.absorbInputAroundWindow = true;
-			this.selCoords = selCoords;
+			this.selTile = selTile;
 		}
 
 		public override void DoWindowContents(Rect inRect)
@@ -116,7 +116,7 @@ namespace RimWorld
 				Find.GameInitData.startingMonth = season2.GetFirstMonth();
 			}
 			GenUI.ResetLabelAlign();
-			if (this.selCoords.IsValid && Find.GameInitData.startingMonth != Month.Undefined && GenTemperature.AverageTemperatureAtWorldCoordsForMonth(this.selCoords, Find.GameInitData.startingMonth) < 3f)
+			if (this.selTile >= 0 && Find.GameInitData.startingMonth != Month.Undefined && GenTemperature.AverageTemperatureAtTileForMonth(this.selTile, Find.GameInitData.startingMonth) < 3f)
 			{
 				listing_Standard.Label("MapTemperatureDangerWarning".Translate());
 			}

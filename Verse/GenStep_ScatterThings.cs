@@ -7,6 +7,8 @@ namespace Verse
 {
 	public class GenStep_ScatterThings : GenStep_Scatterer
 	{
+		private const int ClusterRadius = 4;
+
 		public ThingDef thingDef;
 
 		public ThingDef stuff;
@@ -17,15 +19,19 @@ namespace Verse
 
 		public int clusterSize = 1;
 
-		private int leftInCluster;
-
+		[Unsaved]
 		private IntVec3 clusterCenter;
 
-		private int ClusterRadius = 4;
+		[Unsaved]
+		private int leftInCluster;
 
-		public override void Generate()
+		public override void Generate(Map map)
 		{
-			int count = base.CalculateFinalCount();
+			if (!this.allowOnWater && map.TileInfo.WaterCovered)
+			{
+				return;
+			}
+			int count = base.CalculateFinalCount(map);
 			IntRange one;
 			if (this.thingDef.ingestible != null && this.thingDef.ingestible.IsMeal && this.thingDef.stackLimit <= 10)
 			{
@@ -43,57 +49,76 @@ namespace Verse
 			for (int i = 0; i < list.Count; i++)
 			{
 				IntVec3 intVec;
-				if (!this.TryFindScatterCell(out intVec))
+				if (!this.TryFindScatterCell(map, out intVec))
 				{
 					return;
 				}
-				this.ScatterAt(intVec, list[i]);
+				this.ScatterAt(intVec, map, list[i]);
 				this.usedSpots.Add(intVec);
 			}
+			this.usedSpots.Clear();
+			this.clusterCenter = IntVec3.Invalid;
+			this.leftInCluster = 0;
 		}
 
-		protected override bool TryFindScatterCell(out IntVec3 result)
+		protected override bool TryFindScatterCell(Map map, out IntVec3 result)
 		{
 			if (this.clusterSize > 1)
 			{
 				if (this.leftInCluster <= 0)
 				{
+					if (!base.TryFindScatterCell(map, out this.clusterCenter))
+					{
+						Log.Error("Could not find cluster center to scatter " + this.thingDef);
+					}
 					this.leftInCluster = this.clusterSize;
-					this.FindNewClusterCenter();
 				}
 				this.leftInCluster--;
-				result = CellFinder.RandomClosewalkCellNear(this.clusterCenter, this.ClusterRadius);
+				result = CellFinder.RandomClosewalkCellNear(this.clusterCenter, map, 4);
 				return result.IsValid;
 			}
-			return base.TryFindScatterCell(out result);
+			return base.TryFindScatterCell(map, out result);
 		}
 
-		private void FindNewClusterCenter()
+		protected override void ScatterAt(IntVec3 loc, Map map, int stackCount = 1)
 		{
-			if (!base.TryFindScatterCell(out this.clusterCenter))
+			Rot4 rot = (!this.thingDef.rotatable) ? Rot4.North : Rot4.Random;
+			CellRect cellRect = GenAdj.OccupiedRect(loc, rot, this.thingDef.size);
+			if (!cellRect.InBounds(map))
 			{
-				Log.Error("Could not find cluster center to scatter " + this.thingDef);
-			}
-		}
-
-		protected override void ScatterAt(IntVec3 loc, int stackCount = 1)
-		{
-			Rot4 rotation = (!this.thingDef.rotatable) ? Rot4.North : Rot4.Random;
-			if (this.neededTerrainAffordance != TerrainAffordance.Undefined)
-			{
-				foreach (IntVec3 current in GenAdj.CellsOccupiedBy(loc, rotation, this.thingDef.size))
+				Log.Warning(string.Concat(new object[]
 				{
-					if (!current.SupportsStructureType(this.neededTerrainAffordance))
+					"Failed to scatter ",
+					this.thingDef.defName,
+					" at ",
+					loc,
+					" due to being out of bounds."
+				}));
+				return;
+			}
+			CellRect.CellRectIterator iterator = cellRect.GetIterator();
+			while (!iterator.Done())
+			{
+				IntVec3 current = iterator.Current;
+				if (this.neededTerrainAffordance != TerrainAffordance.Undefined && !current.SupportsStructureType(map, this.neededTerrainAffordance))
+				{
+					Log.Warning(string.Concat(new object[]
 					{
-						return;
-					}
+						"Failed to scatter ",
+						this.thingDef.defName,
+						" at ",
+						loc,
+						" due to missing terrain affordance."
+					}));
+					return;
 				}
+				iterator.MoveNext();
 			}
 			if (this.clearSpaceSize > 0)
 			{
-				foreach (IntVec3 current2 in GridShapeMaker.IrregularLump(loc, this.clearSpaceSize))
+				foreach (IntVec3 current2 in GridShapeMaker.IrregularLump(loc, map, this.clearSpaceSize))
 				{
-					Thing edifice = current2.GetEdifice();
+					Thing edifice = current2.GetEdifice(map);
 					if (edifice != null)
 					{
 						edifice.Destroy(DestroyMode.Vanish);
@@ -105,14 +130,20 @@ namespace Verse
 			{
 				thing = thing.MakeMinified();
 			}
-			thing.Rotation = rotation;
-			thing.stackCount = stackCount;
-			thing.SetForbidden(true, false);
-			Thing thing2;
-			GenPlace.TryPlaceThing(thing, loc, ThingPlaceMode.Near, out thing2, null);
-			if (this.nearPlayerStart && thing2 != null && thing2.def.category == ThingCategory.Item && Find.TutorialState != null)
+			if (thing.def.category == ThingCategory.Item)
 			{
-				Find.TutorialState.AddStartingItem(thing2);
+				thing.stackCount = stackCount;
+				thing.SetForbidden(true, false);
+				Thing thing2;
+				GenPlace.TryPlaceThing(thing, loc, map, ThingPlaceMode.Near, out thing2, null);
+				if (this.nearPlayerStart && thing2 != null && thing2.def.category == ThingCategory.Item && TutorSystem.TutorialMode)
+				{
+					Find.TutorialState.AddStartingItem(thing2);
+				}
+			}
+			else
+			{
+				GenSpawn.Spawn(thing, loc, map, rot);
 			}
 		}
 

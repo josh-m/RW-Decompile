@@ -6,6 +6,11 @@ namespace RimWorld
 {
 	public interface IBillGiver
 	{
+		Map Map
+		{
+			get;
+		}
+
 		BillStack BillStack
 		{
 			get;

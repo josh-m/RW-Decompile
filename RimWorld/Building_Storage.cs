@@ -82,9 +82,9 @@ namespace RimWorld
 			}
 		}
 
-		public override void SpawnSetup()
+		public override void SpawnSetup(Map map)
 		{
-			base.SpawnSetup();
+			base.SpawnSetup(map);
 			this.cachedOccupiedCells = this.AllSlotCells().ToList<IntVec3>();
 			this.slotGroup = new SlotGroup(this);
 		}
@@ -118,6 +118,11 @@ namespace RimWorld
 			{
 				yield return g2;
 			}
+		}
+
+		virtual Map get_Map()
+		{
+			return base.Map;
 		}
 	}
 }

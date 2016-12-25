@@ -7,7 +7,7 @@ namespace RimWorld
 	{
 		protected override bool Satisfied(Pawn pawn)
 		{
-			return !pawn.SafeTemperatureRange().Includes(pawn.Position.GetTemperature());
+			return !pawn.SafeTemperatureRange().Includes(pawn.Position.GetTemperature(pawn.Map));
 		}
 	}
 }

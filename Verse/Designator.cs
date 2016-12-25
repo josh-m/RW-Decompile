@@ -24,6 +24,14 @@ namespace Verse
 
 		protected string cachedHighlightTag;
 
+		protected Map Map
+		{
+			get
+			{
+				return Find.VisibleMap;
+			}
+		}
+
 		public virtual int DraggableDimensions
 		{
 			get
@@ -109,7 +117,7 @@ namespace Verse
 				return;
 			}
 			base.ProcessInput(ev);
-			DesignatorManager.Select(this);
+			Find.DesignatorManager.Select(this);
 		}
 
 		public virtual AcceptanceReport CanDesignateThing(Thing t)
@@ -184,9 +192,9 @@ namespace Verse
 			{
 				this.soundFailed.PlayOneShotOnCamera();
 			}
-			if (DesignatorManager.Dragger.FailureReason != null)
+			if (Find.DesignatorManager.Dragger.FailureReason != null)
 			{
-				Messages.Message(DesignatorManager.Dragger.FailureReason, MessageSound.RejectInput);
+				Messages.Message(Find.DesignatorManager.Dragger.FailureReason, MessageSound.RejectInput);
 			}
 		}
 

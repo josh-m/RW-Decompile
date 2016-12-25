@@ -31,7 +31,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return this.def.entityDefToBuild.GetStatValueAbstract(StatDefOf.WorkToMake, this.stuffToUse);
+				return this.def.entityDefToBuild.GetStatValueAbstract(StatDefOf.WorkToBuild, this.stuffToUse);
 			}
 		}
 
@@ -46,7 +46,7 @@ namespace RimWorld
 			return this.stuffToUse;
 		}
 
-		public override List<ThingCount> MaterialsNeeded()
+		public override List<ThingCountClass> MaterialsNeeded()
 		{
 			return this.def.entityDefToBuild.CostListAdjusted(this.stuffToUse, true);
 		}
@@ -75,7 +75,7 @@ namespace RimWorld
 			StringBuilder stringBuilder = new StringBuilder();
 			stringBuilder.AppendLine(base.GetInspectString());
 			stringBuilder.AppendLine("ContainedResources".Translate() + ":");
-			foreach (ThingCount current in this.MaterialsNeeded())
+			foreach (ThingCountClass current in this.MaterialsNeeded())
 			{
 				stringBuilder.AppendLine(current.thingDef.LabelCap + ": 0 / " + current.count);
 			}

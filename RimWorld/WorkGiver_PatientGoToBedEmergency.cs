@@ -8,7 +8,7 @@ namespace RimWorld
 	{
 		public override Job NonScanJob(Pawn pawn)
 		{
-			if (!HealthUtility.PawnShouldGetImmediateTending(pawn))
+			if (!HealthAIUtility.ShouldBeTendedNowUrgent(pawn))
 			{
 				return null;
 			}

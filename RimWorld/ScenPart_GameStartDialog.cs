@@ -30,7 +30,7 @@ namespace RimWorld
 		{
 			if (Find.GameInitData.startedFromEntry)
 			{
-				Find.MusicManagerMap.disabled = true;
+				Find.MusicManagerPlay.disabled = true;
 				Find.WindowStack.Notify_GameStartDialogOpened();
 				DiaNode diaNode = new DiaNode((!this.text.NullOrEmpty()) ? this.text : this.textKey.Translate());
 				DiaOption diaOption = new DiaOption();
@@ -41,8 +41,8 @@ namespace RimWorld
 				dialog_NodeTree.soundClose = ((this.closeSound == null) ? SoundDefOf.GameStartSting : this.closeSound);
 				dialog_NodeTree.closeAction = delegate
 				{
-					Find.MusicManagerMap.ForceSilenceFor(7f);
-					Find.MusicManagerMap.disabled = false;
+					Find.MusicManagerPlay.ForceSilenceFor(7f);
+					Find.MusicManagerPlay.disabled = false;
 					Find.WindowStack.Notify_GameStartDialogClosed();
 					Find.TickManager.CurTimeSpeed = TimeSpeed.Normal;
 					TutorSystem.Notify_Event("GameStartDialogClosed");

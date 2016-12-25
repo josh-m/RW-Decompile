@@ -15,7 +15,7 @@ namespace RimWorld
 			}
 		}
 
-		protected override bool ExtraRequirements(IPlantToGrowSettable settable)
+		protected override bool ExtraRequirements(IPlantToGrowSettable settable, Pawn pawn)
 		{
 			if (!settable.CanAcceptSowNow())
 			{
@@ -35,7 +35,7 @@ namespace RimWorld
 			{
 				c = ((Thing)settable).Position;
 			}
-			base.DetermineWantedPlantDef(c);
+			WorkGiver_Grower.wantedPlantDef = WorkGiver_Grower.CalculateWantedPlantDef(c, pawn.Map);
 			return WorkGiver_Grower.wantedPlantDef != null;
 		}
 
@@ -45,19 +45,19 @@ namespace RimWorld
 			{
 				return null;
 			}
-			if (!GenPlant.GrowthSeasonNow(c))
+			if (!GenPlant.GrowthSeasonNow(c, pawn.Map))
 			{
 				return null;
 			}
 			if (WorkGiver_Grower.wantedPlantDef == null)
 			{
-				base.DetermineWantedPlantDef(c);
+				WorkGiver_Grower.wantedPlantDef = WorkGiver_Grower.CalculateWantedPlantDef(c, pawn.Map);
 				if (WorkGiver_Grower.wantedPlantDef == null)
 				{
 					return null;
 				}
 			}
-			List<Thing> thingList = c.GetThingList();
+			List<Thing> thingList = c.GetThingList(pawn.Map);
 			for (int i = 0; i < thingList.Count; i++)
 			{
 				Thing thing = thingList[i];
@@ -70,7 +70,7 @@ namespace RimWorld
 					return null;
 				}
 			}
-			Plant plant = c.GetPlant();
+			Plant plant = c.GetPlant(pawn.Map);
 			if (plant != null && plant.def.plant.blockAdjacentSow)
 			{
 				if (!pawn.CanReserve(plant, 1) || plant.IsForbidden(pawn))
@@ -81,13 +81,13 @@ namespace RimWorld
 			}
 			else
 			{
-				Thing thing2 = GenPlant.AdjacentSowBlocker(WorkGiver_Grower.wantedPlantDef, c);
+				Thing thing2 = GenPlant.AdjacentSowBlocker(WorkGiver_Grower.wantedPlantDef, c, pawn.Map);
 				if (thing2 != null)
 				{
 					Plant plant2 = thing2 as Plant;
 					if (plant2 != null && pawn.CanReserve(plant2, 1) && !plant2.IsForbidden(pawn))
 					{
-						Zone_Growing zone_Growing = Find.ZoneManager.ZoneAt(plant2.Position) as Zone_Growing;
+						Zone_Growing zone_Growing = pawn.Map.zoneManager.ZoneAt(plant2.Position) as Zone_Growing;
 						if (zone_Growing == null || zone_Growing.GetPlantDefToGrow() != plant2.def)
 						{
 							return new Job(JobDefOf.CutPlant, plant2);
@@ -95,7 +95,7 @@ namespace RimWorld
 					}
 					return null;
 				}
-				if (WorkGiver_Grower.wantedPlantDef.plant.sowMinSkill > 0 && pawn.skills != null && pawn.skills.GetSkill(SkillDefOf.Growing).level < WorkGiver_Grower.wantedPlantDef.plant.sowMinSkill)
+				if (WorkGiver_Grower.wantedPlantDef.plant.sowMinSkill > 0 && pawn.skills != null && pawn.skills.GetSkill(SkillDefOf.Growing).Level < WorkGiver_Grower.wantedPlantDef.plant.sowMinSkill)
 				{
 					return null;
 				}
@@ -131,7 +131,7 @@ namespace RimWorld
 						j++;
 					}
 				}
-				if (!WorkGiver_Grower.wantedPlantDef.CanEverPlantAt(c) || !GenPlant.GrowthSeasonNow(c) || !pawn.CanReserve(c, 1))
+				if (!WorkGiver_Grower.wantedPlantDef.CanEverPlantAt(c, pawn.Map) || !GenPlant.GrowthSeasonNow(c, pawn.Map) || !pawn.CanReserve(c, 1))
 				{
 					return null;
 				}

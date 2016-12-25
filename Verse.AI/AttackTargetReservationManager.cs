@@ -19,7 +19,14 @@ namespace Verse.AI
 			}
 		}
 
+		private Map map;
+
 		private List<AttackTargetReservationManager.AttackTargetReservation> reservations = new List<AttackTargetReservationManager.AttackTargetReservation>();
+
+		public AttackTargetReservationManager(Map map)
+		{
+			this.map = map;
+		}
 
 		public void Reserve(Pawn claimant, IAttackTarget target)
 		{
@@ -123,14 +130,15 @@ namespace Verse.AI
 		private int GetMaxPreferredReservationsCount(IAttackTarget target)
 		{
 			int num = 0;
-			CellRect cellRect = ((Thing)target).OccupiedRect();
+			Thing t = (Thing)target;
+			CellRect cellRect = t.OccupiedRect();
 			foreach (IntVec3 current in cellRect.ExpandedBy(1))
 			{
 				if (!cellRect.Contains(current))
 				{
-					if (current.InBounds())
+					if (current.InBounds(this.map))
 					{
-						if (current.Standable())
+						if (current.Standable(this.map))
 						{
 							num++;
 						}

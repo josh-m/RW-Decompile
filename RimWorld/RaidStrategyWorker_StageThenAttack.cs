@@ -6,9 +6,9 @@ namespace RimWorld
 {
 	public class RaidStrategyWorker_StageThenAttack : RaidStrategyWorker
 	{
-		public override LordJob MakeLordJob(ref IncidentParms parms)
+		public override LordJob MakeLordJob(IncidentParms parms, Map map)
 		{
-			IntVec3 stageLoc = RCellFinder.FindSiegePositionFrom(parms.spawnCenter);
+			IntVec3 stageLoc = RCellFinder.FindSiegePositionFrom(parms.spawnCenter, map);
 			return new LordJob_StageThenAttack(parms.faction, stageLoc);
 		}
 

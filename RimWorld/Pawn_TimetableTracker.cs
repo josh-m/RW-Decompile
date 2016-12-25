@@ -6,18 +6,21 @@ namespace RimWorld
 {
 	public class Pawn_TimetableTracker : IExposable
 	{
+		private Pawn pawn;
+
 		public List<TimeAssignmentDef> times;
 
 		public TimeAssignmentDef CurrentAssignment
 		{
 			get
 			{
-				return this.times[GenDate.HourOfDay];
+				return this.times[GenLocalDate.HourOfDay(this.pawn)];
 			}
 		}
 
-		public Pawn_TimetableTracker()
+		public Pawn_TimetableTracker(Pawn pawn)
 		{
+			this.pawn = pawn;
 			this.times = new List<TimeAssignmentDef>(24);
 			for (int i = 0; i < 24; i++)
 			{

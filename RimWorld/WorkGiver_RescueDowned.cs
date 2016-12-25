@@ -41,7 +41,7 @@ namespace RimWorld
 			Thing t2 = base.FindBed(pawn, pawn2);
 			return new Job(JobDefOf.Rescue, pawn2, t2)
 			{
-				maxNumToCarry = 1
+				count = 1
 			};
 		}
 	}

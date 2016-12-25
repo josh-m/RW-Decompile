@@ -4,21 +4,29 @@ using System.Text;
 
 namespace Verse
 {
-	public static class RoofCollapseBufferResolver
+	public class RoofCollapseBufferResolver
 	{
-		public static void CollapseRoofsMarkedToCollapse()
+		private Map map;
+
+		public RoofCollapseBufferResolver(Map map)
 		{
-			if (RoofCollapseBuffer.CellsMarkedToCollapse.Count > 0)
+			this.map = map;
+		}
+
+		public void CollapseRoofsMarkedToCollapse()
+		{
+			RoofCollapseBuffer roofCollapseBuffer = this.map.roofCollapseBuffer;
+			if (roofCollapseBuffer.CellsMarkedToCollapse.Count > 0)
 			{
-				RoofCollapserImmediate.DropRoofInCells(RoofCollapseBuffer.CellsMarkedToCollapse);
-				if (RoofCollapseBuffer.CrushedThingsForLetter.Count > 0)
+				RoofCollapserImmediate.DropRoofInCells(roofCollapseBuffer.CellsMarkedToCollapse, this.map);
+				if (roofCollapseBuffer.CrushedThingsForLetter.Count > 0)
 				{
 					StringBuilder stringBuilder = new StringBuilder();
 					stringBuilder.AppendLine("RoofCollapsed".Translate());
 					stringBuilder.AppendLine();
 					stringBuilder.AppendLine("TheseThingsCrushed".Translate());
 					HashSet<string> hashSet = new HashSet<string>();
-					foreach (Thing current in RoofCollapseBuffer.CrushedThingsForLetter)
+					foreach (Thing current in roofCollapseBuffer.CrushedThingsForLetter)
 					{
 						string item = current.LabelShort.CapitalizeFirst();
 						if (current.def.category == ThingCategory.Pawn)
@@ -34,15 +42,15 @@ namespace Verse
 					{
 						stringBuilder.AppendLine("    -" + current2);
 					}
-					Letter let = new Letter("LetterLabelRoofCollapsed".Translate(), stringBuilder.ToString(), LetterType.BadNonUrgent, RoofCollapseBuffer.CellsMarkedToCollapse[0]);
+					Letter let = new Letter("LetterLabelRoofCollapsed".Translate(), stringBuilder.ToString(), LetterType.BadNonUrgent, new TargetInfo(roofCollapseBuffer.CellsMarkedToCollapse[0], this.map, false));
 					Find.LetterStack.ReceiveLetter(let, null);
 				}
 				else
 				{
 					string text = "RoofCollapsed".Translate();
-					Messages.Message(text, RoofCollapseBuffer.CellsMarkedToCollapse[0], MessageSound.Negative);
+					Messages.Message(text, new TargetInfo(roofCollapseBuffer.CellsMarkedToCollapse[0], this.map, false), MessageSound.Negative);
 				}
-				RoofCollapseBuffer.Clear();
+				roofCollapseBuffer.Clear();
 			}
 		}
 	}

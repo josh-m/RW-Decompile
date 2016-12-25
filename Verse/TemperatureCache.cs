@@ -5,21 +5,27 @@ namespace Verse
 {
 	public sealed class TemperatureCache : IExposable
 	{
+		private Map map;
+
+		internal TemperatureSaveLoad temperatureSaveLoad;
+
 		public CachedTempInfo[] tempCache;
 
 		private HashSet<int> processedRoomIDs = new HashSet<int>();
 
 		private List<CachedTempInfo> relevantTempInfoList = new List<CachedTempInfo>();
 
-		public TemperatureCache()
+		public TemperatureCache(Map map)
 		{
-			GenTemperature.UpdateCachedData();
-			this.tempCache = new CachedTempInfo[CellIndices.NumGridCells];
+			this.map = map;
+			this.tempCache = new CachedTempInfo[map.cellIndices.NumGridCells];
+			this.temperatureSaveLoad = new TemperatureSaveLoad(map);
 		}
 
 		public void ResetTemperatureCache()
 		{
-			for (int i = 0; i < CellIndices.NumGridCells; i++)
+			int numGridCells = this.map.cellIndices.NumGridCells;
+			for (int i = 0; i < numGridCells; i++)
 			{
 				this.tempCache[i].Reset();
 			}
@@ -27,17 +33,17 @@ namespace Verse
 
 		public void ExposeData()
 		{
-			TemperatureSaveLoad.DoExposeWork();
+			this.temperatureSaveLoad.DoExposeWork();
 		}
 
 		public void ResetCachedCellInfo(IntVec3 c)
 		{
-			this.tempCache[CellIndices.CellToIndex(c)].Reset();
+			this.tempCache[this.map.cellIndices.CellToIndex(c)].Reset();
 		}
 
 		private void SetCachedCellInfo(IntVec3 c, CachedTempInfo info)
 		{
-			this.tempCache[CellIndices.CellToIndex(c)] = info;
+			this.tempCache[this.map.cellIndices.CellToIndex(c)] = info;
 		}
 
 		public void TryCacheRegionTempInfo(IntVec3 c, Region reg)
@@ -51,9 +57,10 @@ namespace Verse
 
 		public bool TryGetAverageCachedRoomTemp(Room r, out float result)
 		{
+			CellIndices cellIndices = this.map.cellIndices;
 			foreach (IntVec3 current in r.Cells)
 			{
-				CachedTempInfo item = Find.Map.temperatureCache.tempCache[CellIndices.CellToIndex(current)];
+				CachedTempInfo item = this.map.temperatureCache.tempCache[cellIndices.CellToIndex(current)];
 				if (item.numCells > 0 && !this.processedRoomIDs.Contains(item.roomID))
 				{
 					this.relevantTempInfoList.Add(item);

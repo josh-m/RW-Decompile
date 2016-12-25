@@ -9,15 +9,6 @@ namespace RimWorld
 	{
 		private SimpleCurve curve;
 
-		[DebuggerHidden]
-		public override IEnumerable<string> ConfigErrors()
-		{
-			if (this.curve == null)
-			{
-				yield return "curve is null.";
-			}
-		}
-
 		public override void TransformValue(StatRequest req, ref float val)
 		{
 			if (req.HasThing)
@@ -49,6 +40,15 @@ namespace RimWorld
 		private float AgeMultiplier(int age)
 		{
 			return this.curve.Evaluate((float)age);
+		}
+
+		[DebuggerHidden]
+		public override IEnumerable<string> ConfigErrors()
+		{
+			if (this.curve == null)
+			{
+				yield return "curve is null.";
+			}
 		}
 	}
 }

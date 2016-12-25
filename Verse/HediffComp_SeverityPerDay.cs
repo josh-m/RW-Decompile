@@ -7,24 +7,28 @@ namespace Verse
 	{
 		protected const int SeverityUpdateInterval = 200;
 
+		private HediffCompProperties_SeverityPerDay Props
+		{
+			get
+			{
+				return (HediffCompProperties_SeverityPerDay)this.props;
+			}
+		}
+
 		public override void CompPostTick()
 		{
 			base.CompPostTick();
 			if (base.Pawn.IsHashIntervalTick(200))
 			{
-				this.parent.Severity += this.SeverityChangePerInterval();
+				float num = this.SeverityChangePerDay();
+				num *= 0.00333333341f;
+				this.parent.Severity += num;
 			}
-		}
-
-		protected float SeverityChangePerInterval()
-		{
-			float num = this.SeverityChangePerDay();
-			return num * 0.00333333341f;
 		}
 
 		protected virtual float SeverityChangePerDay()
 		{
-			return this.props.severityPerDay;
+			return this.Props.severityPerDay;
 		}
 
 		public override string CompDebugString()
@@ -33,7 +37,7 @@ namespace Verse
 			stringBuilder.Append(base.CompDebugString());
 			if (!base.Pawn.Dead)
 			{
-				stringBuilder.AppendLine("severity change per day: " + (this.SeverityChangePerInterval() / 200f * 60000f).ToString("F3"));
+				stringBuilder.AppendLine("severity change per day: " + this.SeverityChangePerDay().ToString("F3"));
 			}
 			return stringBuilder.ToString();
 		}

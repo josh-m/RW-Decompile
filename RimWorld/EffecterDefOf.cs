@@ -6,6 +6,8 @@ namespace RimWorld
 	[DefOf]
 	public static class EffecterDefOf
 	{
+		public static EffecterDef Clean;
+
 		public static EffecterDef ConstructMetal;
 
 		public static EffecterDef ConstructWood;
@@ -23,5 +25,15 @@ namespace RimWorld
 		public static EffecterDef ArmorDeflect;
 
 		public static EffecterDef Drill;
+
+		public static EffecterDef Research;
+
+		public static EffecterDef ClearSnow;
+
+		public static EffecterDef Sow;
+
+		public static EffecterDef Harvest;
+
+		public static EffecterDef Vomit;
 	}
 }

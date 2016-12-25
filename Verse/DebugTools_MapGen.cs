@@ -14,7 +14,7 @@ namespace Verse
 				list.Add(new DebugMenuOption(localSt.ToString(), DebugMenuOptionMode.Tool, delegate
 				{
 					GenStep_Scatterer genStep_Scatterer = (GenStep_Scatterer)Activator.CreateInstance(localSt);
-					genStep_Scatterer.DebugForceScatterAt(Gen.MouseCell());
+					genStep_Scatterer.DebugForceScatterAt(UI.MouseCell());
 				}));
 			}
 			return list;

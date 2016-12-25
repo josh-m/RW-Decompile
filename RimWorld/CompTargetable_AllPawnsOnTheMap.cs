@@ -28,12 +28,15 @@ namespace RimWorld
 		[DebuggerHidden]
 		public override IEnumerable<Thing> GetTargets(Thing targetChosenByPlayer = null)
 		{
-			TargetingParameters tp = this.GetTargetingParameters();
-			foreach (Pawn p in Find.MapPawns.AllPawnsSpawned)
+			if (this.parent.MapHeld != null)
 			{
-				if (tp.CanTarget(p))
+				TargetingParameters tp = this.GetTargetingParameters();
+				foreach (Pawn p in this.parent.MapHeld.mapPawns.AllPawnsSpawned)
 				{
-					yield return p;
+					if (tp.CanTarget(p))
+					{
+						yield return p;
+					}
 				}
 			}
 		}

@@ -64,27 +64,27 @@ namespace RimWorld
 			}
 		}
 
-		private List<string> NamesFor(Gender gender, PawnNameSlot slot)
+		private List<string> NamesFor(PawnNameSlot slot, Gender gender)
 		{
 			return this.names[(int)gender, (int)slot];
 		}
 
-		public void AddNames(Gender gender, PawnNameSlot slot, IEnumerable<string> namesToAdd)
+		public void AddNames(PawnNameSlot slot, Gender gender, IEnumerable<string> namesToAdd)
 		{
 			foreach (string current in namesToAdd)
 			{
-				this.NamesFor(gender, slot).Add(current);
+				this.NamesFor(slot, gender).Add(current);
 			}
 		}
 
-		public void AddNamesFromFile(Gender gender, PawnNameSlot slot, string fileName)
+		public void AddNamesFromFile(PawnNameSlot slot, Gender gender, string fileName)
 		{
-			this.AddNames(gender, slot, GenFile.LinesFromFile("Names/" + fileName));
+			this.AddNames(slot, gender, GenFile.LinesFromFile("Names/" + fileName));
 		}
 
-		public string GetName(Gender gender, PawnNameSlot slot)
+		public string GetName(PawnNameSlot slot, Gender gender = Gender.None)
 		{
-			List<string> list = this.NamesFor(gender, slot);
+			List<string> list = this.NamesFor(slot, gender);
 			int num = 0;
 			if (list.Count == 0)
 			{

@@ -24,7 +24,7 @@ namespace RimWorld
 
 		public override bool ShouldSkip(Pawn pawn)
 		{
-			return Find.ListerThings.ThingsInGroup(ThingRequestGroup.Corpse).Count == 0;
+			return pawn.Map.listerThings.ThingsInGroup(ThingRequestGroup.Corpse).Count == 0;
 		}
 
 		public override Job JobOnThing(Pawn pawn, Thing t)
@@ -46,24 +46,24 @@ namespace RimWorld
 			}
 			return new Job(JobDefOf.BuryCorpse, t, building_Grave)
 			{
-				maxNumToCarry = corpse.stackCount
+				count = corpse.stackCount
 			};
 		}
 
 		private Building_Grave FindBestGrave(Pawn p, Corpse corpse)
 		{
 			Predicate<Thing> predicate = (Thing m) => !m.IsForbidden(p) && p.CanReserve(m, 1) && ((Building_Grave)m).Accepts(corpse);
-			if (corpse.innerPawn.ownership != null && corpse.innerPawn.ownership.AssignedGrave != null)
+			if (corpse.InnerPawn.ownership != null && corpse.InnerPawn.ownership.AssignedGrave != null)
 			{
-				Building_Grave assignedGrave = corpse.innerPawn.ownership.AssignedGrave;
-				if (predicate(assignedGrave) && corpse.Position.CanReach(assignedGrave, PathEndMode.ClosestTouch, TraverseParms.For(p, Danger.Deadly, TraverseMode.ByPawn, false)))
+				Building_Grave assignedGrave = corpse.InnerPawn.ownership.AssignedGrave;
+				if (predicate(assignedGrave) && p.Map.reachability.CanReach(corpse.Position, assignedGrave, PathEndMode.ClosestTouch, TraverseParms.For(p, Danger.Deadly, TraverseMode.ByPawn, false)))
 				{
 					return assignedGrave;
 				}
 			}
 			Func<Thing, float> priorityGetter = (Thing t) => (float)((IStoreSettingsParent)t).GetStoreSettings().Priority;
 			Predicate<Thing> validator = predicate;
-			return (Building_Grave)GenClosest.ClosestThing_Global_Reachable(corpse.Position, Find.ListerThings.ThingsInGroup(ThingRequestGroup.Grave), PathEndMode.ClosestTouch, TraverseParms.For(p, Danger.Deadly, TraverseMode.ByPawn, false), 9999f, validator, priorityGetter);
+			return (Building_Grave)GenClosest.ClosestThing_Global_Reachable(corpse.Position, corpse.Map, corpse.Map.listerThings.ThingsInGroup(ThingRequestGroup.Grave), PathEndMode.ClosestTouch, TraverseParms.For(p, Danger.Deadly, TraverseMode.ByPawn, false), 9999f, validator, priorityGetter);
 		}
 	}
 }

@@ -34,11 +34,11 @@ namespace RimWorld
 
 		public override AcceptanceReport CanDesignateCell(IntVec3 c)
 		{
-			if (!c.InBounds())
+			if (!c.InBounds(base.Map))
 			{
 				return false;
 			}
-			bool flag = Find.AreaHome[c];
+			bool flag = base.Map.areaManager.Home[c];
 			if (this.mode == DesignateMode.Add)
 			{
 				return !flag;
@@ -50,11 +50,11 @@ namespace RimWorld
 		{
 			if (this.mode == DesignateMode.Add)
 			{
-				Find.AreaHome.Set(c);
+				base.Map.areaManager.Home[c] = true;
 			}
 			else
 			{
-				Find.AreaHome.Clear(c);
+				base.Map.areaManager.Home[c] = false;
 			}
 		}
 
@@ -67,7 +67,7 @@ namespace RimWorld
 		public override void SelectedUpdate()
 		{
 			GenUI.RenderMouseoverBracket();
-			Find.AreaHome.MarkForDraw();
+			base.Map.areaManager.Home.MarkForDraw();
 		}
 	}
 }

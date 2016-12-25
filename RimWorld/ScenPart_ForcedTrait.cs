@@ -37,7 +37,7 @@ namespace RimWorld
 						{
 							this.trait = localDef;
 							this.degree = localDeg.degree;
-						}, MenuOptionPriority.Medium, null, null, 0f, null));
+						}, MenuOptionPriority.Default, null, null, 0f, null, null));
 					}
 				}
 				Find.WindowStack.Add(new FloatMenu(list));
@@ -89,7 +89,7 @@ namespace RimWorld
 			else
 			{
 				IEnumerable<Trait> source = from tr in pawn.story.traits.allTraits
-				where !ScenPart_ForcedTrait.PawnHasTraitForced(pawn, tr.def)
+				where !tr.ScenForced && !ScenPart_ForcedTrait.PawnHasTraitForcedByBackstory(pawn, tr.def)
 				select tr;
 				if (source.Any<Trait>())
 				{
@@ -106,12 +106,12 @@ namespace RimWorld
 					}
 				}
 			}
-			pawn.story.traits.GainTrait(new Trait(this.trait, this.degree));
+			pawn.story.traits.GainTrait(new Trait(this.trait, this.degree, true));
 		}
 
-		private static bool PawnHasTraitForced(Pawn pawn, TraitDef trait)
+		private static bool PawnHasTraitForcedByBackstory(Pawn pawn, TraitDef trait)
 		{
-			return (pawn.story.childhood.forcedTraits != null && pawn.story.childhood.forcedTraits.Any((TraitEntry te) => te.def == trait)) || (pawn.story.adulthood.forcedTraits != null && pawn.story.adulthood.forcedTraits.Any((TraitEntry te) => te.def == trait));
+			return (pawn.story.childhood != null && pawn.story.childhood.forcedTraits != null && pawn.story.childhood.forcedTraits.Any((TraitEntry te) => te.def == trait)) || (pawn.story.adulthood != null && pawn.story.adulthood.forcedTraits != null && pawn.story.adulthood.forcedTraits.Any((TraitEntry te) => te.def == trait));
 		}
 	}
 }

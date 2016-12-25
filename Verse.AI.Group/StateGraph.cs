@@ -53,6 +53,10 @@ namespace Verse.AI.Group
 
 		public void ErrorCheck()
 		{
+			if (this.lordToils.Count == 0)
+			{
+				Log.Error("Graph has 0 lord toils.");
+			}
 			foreach (LordToil toil in this.lordToils.Distinct<LordToil>())
 			{
 				int num = (from s in this.lordToils

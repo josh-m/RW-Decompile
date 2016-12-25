@@ -25,7 +25,7 @@ namespace RimWorld
 			foreach (ThingDef def in DefDatabase<ThingDef>.AllDefs.ToList<ThingDef>())
 			{
 				ThingDef blueprint = null;
-				if (!def.designationCategory.NullOrEmpty())
+				if (def.designationCategory != null)
 				{
 					blueprint = ThingDefGenerator_Buildings.NewBlueprintDef_Thing(def, false, null);
 					yield return blueprint;
@@ -37,7 +37,7 @@ namespace RimWorld
 			}
 			foreach (TerrainDef terrDef in DefDatabase<TerrainDef>.AllDefs)
 			{
-				if (!terrDef.designationCategory.NullOrEmpty())
+				if (terrDef.designationCategory != null)
 				{
 					yield return ThingDefGenerator_Buildings.NewBlueprintDef_Terrain(terrDef);
 				}
@@ -77,7 +77,9 @@ namespace RimWorld
 				comps = 
 				{
 					new CompProperties_Forbiddable()
-				}
+				},
+				scatterableOnMapGen = false,
+				leaveResourcesWhenKilled = true
 			};
 		}
 
@@ -169,7 +171,7 @@ namespace RimWorld
 			thingDef.selectable = def.selectable;
 			thingDef.constructEffect = def.constructEffect;
 			thingDef.building.isEdifice = def.building.isEdifice;
-			if (!def.designationCategory.NullOrEmpty())
+			if (def.designationCategory != null)
 			{
 				thingDef.stuffCategories = def.stuffCategories;
 			}

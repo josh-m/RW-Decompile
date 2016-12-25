@@ -28,7 +28,7 @@ namespace RimWorld
 			{
 				if (flag)
 				{
-					thing = FoodUtility.BestFoodInInventory(getter, null, FoodPreferability.MealAwful, FoodPreferability.MealLavish, 0f);
+					thing = FoodUtility.BestFoodInInventory(getter, null, FoodPreferability.MealAwful, FoodPreferability.MealLavish, 0f, false);
 				}
 				if (thing != null)
 				{
@@ -53,7 +53,7 @@ namespace RimWorld
 			{
 				if (canUseInventory && flag)
 				{
-					thing = FoodUtility.BestFoodInInventory(getter, null, FoodPreferability.DesperateOnly, FoodPreferability.MealLavish, 0f);
+					thing = FoodUtility.BestFoodInInventory(getter, null, FoodPreferability.DesperateOnly, FoodPreferability.MealLavish, 0f, false);
 					if (thing != null)
 					{
 						foodSource = thing;
@@ -116,7 +116,7 @@ namespace RimWorld
 			return foodSource.def;
 		}
 
-		public static Thing BestFoodInInventory(Pawn holder, Pawn eater = null, FoodPreferability minFoodPref = FoodPreferability.NeverForNutrition, FoodPreferability maxFoodPref = FoodPreferability.MealLavish, float minStackNutrition = 0f)
+		public static Thing BestFoodInInventory(Pawn holder, Pawn eater = null, FoodPreferability minFoodPref = FoodPreferability.NeverForNutrition, FoodPreferability maxFoodPref = FoodPreferability.MealLavish, float minStackNutrition = 0f, bool allowDrug = false)
 		{
 			if (holder.inventory == null)
 			{
@@ -126,11 +126,11 @@ namespace RimWorld
 			{
 				eater = holder;
 			}
-			ThingContainer container = holder.inventory.container;
-			for (int i = 0; i < container.Count; i++)
+			ThingContainer innerContainer = holder.inventory.innerContainer;
+			for (int i = 0; i < innerContainer.Count; i++)
 			{
-				Thing thing = container[i];
-				if (thing.def.IsNutritionGivingIngestible && thing.IngestibleNow && eater.RaceProps.CanEverEat(thing) && thing.def.ingestible.preferability >= minFoodPref && thing.def.ingestible.preferability <= maxFoodPref)
+				Thing thing = innerContainer[i];
+				if (thing.def.IsNutritionGivingIngestible && thing.IngestibleNow && eater.RaceProps.CanEverEat(thing) && thing.def.ingestible.preferability >= minFoodPref && thing.def.ingestible.preferability <= maxFoodPref && (allowDrug || !thing.def.IsDrug))
 				{
 					float num = thing.def.ingestible.nutrition * (float)thing.stackCount;
 					if (num >= minStackNutrition)
@@ -176,7 +176,7 @@ namespace RimWorld
 				Building_NutrientPasteDispenser building_NutrientPasteDispenser = t as Building_NutrientPasteDispenser;
 				if (building_NutrientPasteDispenser != null)
 				{
-					if (!allowDispenserFull || ThingDefOf.MealNutrientPaste.ingestible.preferability < minPref || ThingDefOf.MealNutrientPaste.ingestible.preferability > maxPref || !getterCanManipulate || (!allowForbidden && t.IsForbidden(getter)) || (t.Faction != getter.Faction && t.Faction != getter.HostFaction) || (!building_NutrientPasteDispenser.powerComp.PowerOn || !t.IsSociallyProper(getter) || (!allowDispenserEmpty && !building_NutrientPasteDispenser.HasEnoughFeedstockInHoppers())) || !t.InteractionCell.Standable() || !getter.Position.CanReach(t.InteractionCell, PathEndMode.OnCell, TraverseParms.For(getter, Danger.Some, TraverseMode.ByPawn, false)))
+					if (!allowDispenserFull || ThingDefOf.MealNutrientPaste.ingestible.preferability < minPref || ThingDefOf.MealNutrientPaste.ingestible.preferability > maxPref || !getterCanManipulate || (!allowForbidden && t.IsForbidden(getter)) || (t.Faction != getter.Faction && t.Faction != getter.HostFaction) || (!building_NutrientPasteDispenser.powerComp.PowerOn || !t.IsSociallyProper(getter) || (!allowDispenserEmpty && !building_NutrientPasteDispenser.HasEnoughFeedstockInHoppers())) || !t.InteractionCell.Standable(t.Map) || !getter.Map.reachability.CanReachNonLocal(getter.Position, new TargetInfo(t.InteractionCell, t.Map, false), PathEndMode.OnCell, TraverseParms.For(getter, Danger.Some, TraverseMode.ByPawn, false)))
 					{
 						return false;
 					}
@@ -211,23 +211,23 @@ namespace RimWorld
 			if (getter.RaceProps.Humanlike)
 			{
 				Predicate<Thing> validator = foodValidator;
-				thing = FoodUtility.SpawnedFoodSearchInnerScan(eater, getter.Position, Find.ListerThings.ThingsMatching(thingRequest), PathEndMode.ClosestTouch, TraverseParms.For(getter, Danger.Deadly, TraverseMode.ByPawn, false), 9999f, validator);
+				thing = FoodUtility.SpawnedFoodSearchInnerScan(eater, getter.Position, getter.Map.listerThings.ThingsMatching(thingRequest), PathEndMode.ClosestTouch, TraverseParms.For(getter, Danger.Deadly, TraverseMode.ByPawn, false), 9999f, validator);
 			}
 			else
 			{
 				int searchRegionsMax = 30;
 				if (getter.Faction == Faction.OfPlayer)
 				{
-					searchRegionsMax = 60;
+					searchRegionsMax = 100;
 				}
 				Predicate<Thing> predicate = (Thing t) => foodValidator(t) && t.def.ingestible.preferability > FoodPreferability.DesperateOnly && !t.IsNotFresh();
 				Predicate<Thing> validator = predicate;
-				thing = GenClosest.ClosestThingReachable(getter.Position, thingRequest, PathEndMode.ClosestTouch, TraverseParms.For(getter, Danger.Deadly, TraverseMode.ByPawn, false), 9999f, validator, null, searchRegionsMax, false);
+				thing = GenClosest.ClosestThingReachable(getter.Position, getter.Map, thingRequest, PathEndMode.ClosestTouch, TraverseParms.For(getter, Danger.Deadly, TraverseMode.ByPawn, false), 9999f, validator, null, searchRegionsMax, false);
 				if (thing == null)
 				{
 					desperate = true;
 					validator = foodValidator;
-					thing = GenClosest.ClosestThingReachable(getter.Position, thingRequest, PathEndMode.ClosestTouch, TraverseParms.For(getter, Danger.Deadly, TraverseMode.ByPawn, false), 9999f, validator, null, searchRegionsMax, false);
+					thing = GenClosest.ClosestThingReachable(getter.Position, getter.Map, thingRequest, PathEndMode.ClosestTouch, TraverseParms.For(getter, Danger.Deadly, TraverseMode.ByPawn, false), 9999f, validator, null, searchRegionsMax, false);
 				}
 			}
 			return thing;
@@ -280,6 +280,7 @@ namespace RimWorld
 			{
 				return null;
 			}
+			Pawn pawn = traverseParams.pawn ?? eater;
 			int num = 0;
 			int num2 = 0;
 			Thing result = null;
@@ -294,7 +295,7 @@ namespace RimWorld
 					float num5 = FoodUtility.FoodSourceOptimality(eater, thing, num4);
 					if (num5 >= num3)
 					{
-						if (root.CanReach(thing, peMode, traverseParams))
+						if (pawn.Map.reachability.CanReach(root, thing, peMode, traverseParams))
 						{
 							if (thing.Spawned)
 							{
@@ -314,13 +315,17 @@ namespace RimWorld
 
 		public static void DebugFoodSearchFromMouse_Update()
 		{
-			IntVec3 root = Gen.MouseCell();
+			IntVec3 root = UI.MouseCell();
 			Pawn pawn = Find.Selector.SingleSelectedThing as Pawn;
 			if (pawn == null)
 			{
 				return;
 			}
-			Thing thing = FoodUtility.SpawnedFoodSearchInnerScan(pawn, root, Find.ListerThings.ThingsInGroup(ThingRequestGroup.FoodSourceNotPlantOrTree), PathEndMode.ClosestTouch, TraverseParms.For(TraverseMode.PassDoors, Danger.Deadly, false), 9999f, null);
+			if (pawn.Map != Find.VisibleMap)
+			{
+				return;
+			}
+			Thing thing = FoodUtility.SpawnedFoodSearchInnerScan(pawn, root, Find.VisibleMap.listerThings.ThingsInGroup(ThingRequestGroup.FoodSourceNotPlantOrTree), PathEndMode.ClosestTouch, TraverseParms.For(TraverseMode.PassDoors, Danger.Deadly, false), 9999f, null);
 			if (thing != null)
 			{
 				GenDraw.DrawLineBetween(root.ToVector3Shifted(), thing.Position.ToVector3Shifted());
@@ -329,18 +334,22 @@ namespace RimWorld
 
 		public static void DebugFoodSearchFromMouse_OnGUI()
 		{
-			IntVec3 a = Gen.MouseCell();
+			IntVec3 a = UI.MouseCell();
 			Pawn pawn = Find.Selector.SingleSelectedThing as Pawn;
 			if (pawn == null)
 			{
 				return;
 			}
+			if (pawn.Map != Find.VisibleMap)
+			{
+				return;
+			}
 			Text.Anchor = TextAnchor.MiddleCenter;
 			Text.Font = GameFont.Tiny;
-			foreach (Thing current in Find.ListerThings.ThingsInGroup(ThingRequestGroup.FoodSourceNotPlantOrTree))
+			foreach (Thing current in Find.VisibleMap.listerThings.ThingsInGroup(ThingRequestGroup.FoodSourceNotPlantOrTree))
 			{
 				float num = FoodUtility.FoodSourceOptimality(pawn, current, (a - current.Position).LengthHorizontal);
-				Vector2 vector = current.DrawPos.ToScreenPosition();
+				Vector2 vector = current.DrawPos.MapToUIPosition();
 				Rect rect = new Rect(vector.x - 100f, vector.y - 100f, 200f, 200f);
 				string text = num.ToString("F0");
 				List<ThoughtDef> list = FoodUtility.ThoughtsFromIngesting(pawn, current);
@@ -374,9 +383,10 @@ namespace RimWorld
 			{
 				flag = true;
 			}
-			List<Pawn> allPawnsSpawned = Find.MapPawns.AllPawnsSpawned;
+			List<Pawn> allPawnsSpawned = predator.Map.mapPawns.AllPawnsSpawned;
 			Pawn pawn = null;
 			float num = 0f;
+			bool tutorialMode = TutorSystem.TutorialMode;
 			for (int i = 0; i < allPawnsSpawned.Count; i++)
 			{
 				Pawn pawn2 = allPawnsSpawned[i];
@@ -392,11 +402,14 @@ namespace RimWorld
 								{
 									if (!pawn2.IsForbidden(predator))
 									{
-										float preyScoreFor = FoodUtility.GetPreyScoreFor(predator, pawn2);
-										if (preyScoreFor > num || pawn == null)
+										if (!tutorialMode || pawn2.Faction != Faction.OfPlayer)
 										{
-											num = preyScoreFor;
-											pawn = pawn2;
+											float preyScoreFor = FoodUtility.GetPreyScoreFor(predator, pawn2);
+											if (preyScoreFor > num || pawn == null)
+											{
+												num = preyScoreFor;
+												pawn = pawn2;
+											}
 										}
 									}
 								}
@@ -491,29 +504,9 @@ namespace RimWorld
 			{
 				thingDef = ThingDefOf.MealNutrientPaste;
 			}
-			Corpse corpse = t as Corpse;
-			if (!ingester.story.traits.HasTrait(TraitDefOf.Ascetic))
+			if (!ingester.story.traits.HasTrait(TraitDefOf.Ascetic) && thingDef.ingestible.tasteThought != null)
 			{
-				if (thingDef.ingestible.preferability == FoodPreferability.MealLavish)
-				{
-					FoodUtility.ingestThoughts.Add(ThoughtDefOf.AteLavishMeal);
-				}
-				else if (thingDef.ingestible.preferability == FoodPreferability.MealFine)
-				{
-					FoodUtility.ingestThoughts.Add(ThoughtDefOf.AteFineMeal);
-				}
-				else if (thingDef.ingestible.preferability == FoodPreferability.MealAwful)
-				{
-					FoodUtility.ingestThoughts.Add(ThoughtDefOf.AteAwfulMeal);
-				}
-				else if (thingDef.ingestible.tastesRaw)
-				{
-					FoodUtility.ingestThoughts.Add(ThoughtDefOf.AteRawFood);
-				}
-				else if (corpse != null)
-				{
-					FoodUtility.ingestThoughts.Add(ThoughtDefOf.AteCorpse);
-				}
+				FoodUtility.ingestThoughts.Add(thingDef.ingestible.tasteThought);
 			}
 			CompIngredients compIngredients = t.TryGetComp<CompIngredients>();
 			if (FoodUtility.IsHumanlikeMeat(thingDef) && ingester.RaceProps.Humanlike)
@@ -561,7 +554,7 @@ namespace RimWorld
 				return true;
 			}
 			Corpse corpse = thing as Corpse;
-			return corpse != null && corpse.innerPawn.RaceProps.Humanlike;
+			return corpse != null && corpse.InnerPawn.RaceProps.Humanlike;
 		}
 
 		public static int WillIngestStackCountOf(Pawn ingester, ThingDef def)

@@ -9,7 +9,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return Find.AreaHome;
+				return base.Map.areaManager.Home;
 			}
 		}
 	}

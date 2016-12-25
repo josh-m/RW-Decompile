@@ -30,8 +30,11 @@ namespace Verse
 		{
 			get
 			{
+				ProfilerThreadCheck.BeginSample("tweener.PreDrawPosCalculation()");
+				this.tweener.PreDrawPosCalculation();
+				ProfilerThreadCheck.EndSample();
 				Vector3 vector = this.tweener.TweenedPos;
-				vector += this.jitterer.CurrentJitterOffset;
+				vector += this.jitterer.CurrentOffset;
 				vector += this.leaner.LeanOffset;
 				vector.y = this.pawn.def.Altitude;
 				return vector;
@@ -57,8 +60,11 @@ namespace Verse
 			{
 				return;
 			}
+			if (Current.ProgramState == ProgramState.Playing && !Find.CameraDriver.CurrentViewRect.ExpandedBy(3).Contains(this.pawn.Position))
+			{
+				return;
+			}
 			this.jitterer.JitterHandlerTick();
-			this.tweener.TweenerTick();
 			this.footprintMaker.FootprintMakerTick();
 			this.breathMoteMaker.BreathMoteMakerTick();
 			this.leaner.LeanerTick();
@@ -66,9 +72,14 @@ namespace Verse
 			this.renderer.RendererTick();
 		}
 
+		public void DrawAt(Vector3 loc)
+		{
+			this.renderer.RenderPawnAt(loc, RotDrawMode.Fresh);
+		}
+
 		public void Notify_Spawned()
 		{
-			this.tweener.ResetToPosition();
+			this.tweener.ResetTweenedPosToRoot();
 		}
 
 		public void Notify_WarmingCastAlongLine(ShootLine newShootLine, IntVec3 ShootPosition)
@@ -92,13 +103,17 @@ namespace Verse
 			{
 				this.jitterer.AddOffset(0.5f, (Target.Position - this.pawn.Position).AngleFlat);
 			}
+			else if (Target.DrawPos != this.pawn.DrawPos)
+			{
+				this.jitterer.AddOffset(0.25f, (Target.DrawPos - this.pawn.DrawPos).AngleFlat());
+			}
 		}
 
 		public void Notify_DebugAffected()
 		{
 			for (int i = 0; i < 10; i++)
 			{
-				MoteMaker.ThrowAirPuffUp(this.pawn.DrawPos);
+				MoteMaker.ThrowAirPuffUp(this.pawn.DrawPos, this.pawn.Map);
 			}
 			this.jitterer.AddOffset(0.05f, (float)Rand.Range(0, 360));
 		}

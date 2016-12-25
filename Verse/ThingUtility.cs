@@ -11,16 +11,19 @@ namespace Verse
 			return t == null || t.Destroyed;
 		}
 
-		public static void DestroyOrPassToWorld(this Thing t)
+		public static void DestroyOrPassToWorld(this Thing t, DestroyMode mode = DestroyMode.Vanish)
 		{
 			Pawn pawn = t as Pawn;
 			if (pawn != null)
 			{
-				Find.WorldPawns.PassToWorld(pawn, PawnDiscardDecideMode.Decide);
+				if (!Find.WorldPawns.Contains(pawn))
+				{
+					Find.WorldPawns.PassToWorld(pawn, PawnDiscardDecideMode.Decide);
+				}
 			}
 			else
 			{
-				t.Destroy(DestroyMode.Vanish);
+				t.Destroy(mode);
 			}
 		}
 
@@ -36,6 +39,36 @@ namespace Verse
 				result = other.stackCount;
 			}
 			return result;
+		}
+
+		public static void UpdateRegionListers(IntVec3 prevPos, IntVec3 newPos, Map map, Thing thing)
+		{
+			ThingDef def = thing.def;
+			if (ListerThings.EverListable(def, ListerThingsUse.Region) && def.passability != Traversability.Impassable)
+			{
+				RegionGrid regionGrid = map.regionGrid;
+				Region region = null;
+				if (prevPos.InBounds(map))
+				{
+					region = regionGrid.GetValidRegionAt(prevPos);
+				}
+				Region region2 = null;
+				if (newPos.InBounds(map))
+				{
+					region2 = regionGrid.GetValidRegionAt(newPos);
+				}
+				if (region2 != region)
+				{
+					if (region != null)
+					{
+						region.ListerThings.Remove(thing);
+					}
+					if (region2 != null)
+					{
+						region2.ListerThings.Add(thing);
+					}
+				}
+			}
 		}
 	}
 }

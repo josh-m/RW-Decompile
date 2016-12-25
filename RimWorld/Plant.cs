@@ -88,7 +88,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return this.def.plant.IsTree || (this.growthInt >= this.def.plant.harvestMinGrowth && !this.LeaflessNow && base.Position.GetSnowDepth() <= this.def.hideAtSnowDepth);
+				return this.def.plant.IsTree || (this.growthInt >= this.def.plant.harvestMinGrowth && !this.LeaflessNow && (!base.Spawned || base.Position.GetSnowDepth(base.Map) <= this.def.hideAtSnowDepth));
 			}
 		}
 
@@ -104,7 +104,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return GenDate.CurrentDayPercent < 0.25f || GenDate.CurrentDayPercent > 0.8f;
+				return GenLocalDate.DayPercent(this) < 0.25f || GenLocalDate.DayPercent(this) > 0.8f;
 			}
 		}
 
@@ -133,7 +133,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return Find.FertilityGrid.FertilityAt(base.Position) * this.def.plant.fertilityFactorGrowthRate + (1f - this.def.plant.fertilityFactorGrowthRate);
+				return base.Map.fertilityGrid.FertilityAt(base.Position) * this.def.plant.fertilitySensitivity + (1f - this.def.plant.fertilitySensitivity);
 			}
 		}
 
@@ -141,7 +141,7 @@ namespace RimWorld
 		{
 			get
 			{
-				float value = Mathf.InverseLerp(this.def.plant.growMinGlow, this.def.plant.growOptimalGlow, Find.GlowGrid.GameGlowAt(base.Position));
+				float value = Mathf.InverseLerp(this.def.plant.growMinGlow, this.def.plant.growOptimalGlow, base.Map.glowGrid.GameGlowAt(base.Position));
 				return Mathf.Clamp01(value);
 			}
 		}
@@ -151,7 +151,7 @@ namespace RimWorld
 			get
 			{
 				float num;
-				if (!GenTemperature.TryGetTemperatureForCell(base.Position, out num))
+				if (!GenTemperature.TryGetTemperatureForCell(base.Position, base.Map, out num))
 				{
 					return 1f;
 				}
@@ -267,15 +267,32 @@ namespace RimWorld
 			}
 		}
 
+		public bool IsCrop
+		{
+			get
+			{
+				if (!this.def.plant.Sowable)
+				{
+					return false;
+				}
+				if (!base.Spawned)
+				{
+					Log.Warning("Can't determine if crop when unspawned.");
+					return false;
+				}
+				return this.def == WorkGiver_Grower.CalculateWantedPlantDef(base.Position, base.Map);
+			}
+		}
+
 		public override void Destroy(DestroyMode mode = DestroyMode.Vanish)
 		{
 			base.Destroy(mode);
 		}
 
-		public override void SpawnSetup()
+		public override void SpawnSetup(Map map)
 		{
-			base.SpawnSetup();
-			if (Current.ProgramState == ProgramState.MapPlaying)
+			base.SpawnSetup(map);
+			if (Current.ProgramState == ProgramState.Playing)
 			{
 				this.CheckTemperatureMakeLeafless();
 			}
@@ -317,7 +334,10 @@ namespace RimWorld
 				{
 					this.growthInt = 0.08f;
 				}
-				Find.MapDrawer.MapMeshDirty(base.Position, MapMeshFlag.Things);
+				if (base.Spawned)
+				{
+					base.Map.mapDrawer.MapMeshDirty(base.Position, MapMeshFlag.Things);
+				}
 				numTaken = 0;
 			}
 			nutritionIngested = num;
@@ -332,36 +352,48 @@ namespace RimWorld
 			else
 			{
 				this.growthInt = 0.08f;
-				Find.MapDrawer.MapMeshDirty(base.Position, MapMeshFlag.Things);
+				base.Map.mapDrawer.MapMeshDirty(base.Position, MapMeshFlag.Things);
 			}
 		}
 
 		protected virtual void CheckTemperatureMakeLeafless()
 		{
-			if (base.Position.GetTemperature() < this.LeaflessTemperatureThresh)
+			if (base.Position.GetTemperature(base.Map) < this.LeaflessTemperatureThresh)
 			{
-				this.MakeLeafless();
+				this.MakeLeafless(true);
 			}
 		}
 
-		public virtual void MakeLeafless()
+		public virtual void MakeLeafless(bool causedByCold = false)
 		{
 			bool flag = !this.LeaflessNow;
+			Map map = base.Map;
 			this.madeLeaflessTick = Find.TickManager.TicksGame;
 			if (this.def.plant.dieIfLeafless)
 			{
-				base.TakeDamage(new DamageInfo(DamageDefOf.Rotting, 99999, null, null, null));
+				if (causedByCold && this.IsCrop && MessagesRepeatAvoider.MessageShowAllowed("MessagePlantDiedOfCold-" + this.def.defName, 240f))
+				{
+					Messages.Message("MessagePlantDiedOfCold".Translate(new object[]
+					{
+						this.Label
+					}).CapitalizeFirst(), new TargetInfo(base.Position, map, false), MessageSound.Negative);
+				}
+				base.TakeDamage(new DamageInfo(DamageDefOf.Rotting, 99999, -1f, null, null, null));
 			}
 			if (flag)
 			{
-				Find.MapDrawer.MapMeshDirty(base.Position, MapMeshFlag.Things);
+				map.mapDrawer.MapMeshDirty(base.Position, MapMeshFlag.Things);
 			}
 		}
 
 		public override void TickLong()
 		{
 			this.CheckTemperatureMakeLeafless();
-			if (GenPlant.GrowthSeasonNow(base.Position))
+			if (base.Destroyed)
+			{
+				return;
+			}
+			if (GenPlant.GrowthSeasonNow(base.Position, base.Map))
 			{
 				if (!this.HasEnoughLightToGrow)
 				{
@@ -380,24 +412,37 @@ namespace RimWorld
 				}
 				if (((!flag && this.LifeStage == PlantLifeStage.Mature) || (int)(num * 10f) != (int)(this.growthInt * 10f)) && this.CurrentlyCultivated())
 				{
-					Find.MapDrawer.MapMeshDirty(base.Position, MapMeshFlag.Things);
+					base.Map.mapDrawer.MapMeshDirty(base.Position, MapMeshFlag.Things);
 				}
 				if (this.def.plant.LimitedLifespan)
 				{
 					this.ageInt += 2000;
 					if (this.Dying)
 					{
+						Map map = base.Map;
+						bool isCrop = this.IsCrop;
 						int amount = Mathf.CeilToInt(10f);
-						base.TakeDamage(new DamageInfo(DamageDefOf.Rotting, amount, null, null, null));
+						base.TakeDamage(new DamageInfo(DamageDefOf.Rotting, amount, -1f, null, null, null));
+						if (base.Destroyed)
+						{
+							if (isCrop && this.def.plant.Harvestable && MessagesRepeatAvoider.MessageShowAllowed("MessagePlantDiedOfRot-" + this.def.defName, 240f))
+							{
+								Messages.Message("MessagePlantDiedOfRot".Translate(new object[]
+								{
+									this.Label
+								}).CapitalizeFirst(), new TargetInfo(base.Position, map, false), MessageSound.Negative);
+							}
+							return;
+						}
 					}
 				}
-				if (!base.Destroyed && this.def.plant.shootsSeeds && this.growthInt >= 0.6f && Rand.MTBEventOccurs(this.def.plant.seedEmitMTBDays, 60000f, 2000f))
+				if (this.def.plant.reproduces && this.growthInt >= 0.6f && Rand.MTBEventOccurs(this.def.plant.reproduceMtbDays, 60000f, 2000f))
 				{
-					if (!GenPlant.SnowAllowsPlanting(base.Position))
+					if (!GenPlant.SnowAllowsPlanting(base.Position, base.Map))
 					{
 						return;
 					}
-					GenPlantReproduction.TrySpawnSeed(base.Position, this.def, SeedTargFindMode.ReproduceSeed, this);
+					GenPlantReproduction.TryReproduceFrom(base.Position, this.def, SeedTargFindMode.Reproduce, base.Map);
 				}
 			}
 			this.cachedLabelMouseover = null;
@@ -409,12 +454,16 @@ namespace RimWorld
 			{
 				return false;
 			}
-			Zone zone = Find.ZoneManager.ZoneAt(base.Position);
+			if (!base.Spawned)
+			{
+				return false;
+			}
+			Zone zone = base.Map.zoneManager.ZoneAt(base.Position);
 			if (zone != null && zone is Zone_Growing)
 			{
 				return true;
 			}
-			Building edifice = base.Position.GetEdifice();
+			Building edifice = base.Position.GetEdifice(base.Map);
 			return edifice != null && edifice.def.building.SupportsPlants;
 		}
 

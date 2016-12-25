@@ -23,7 +23,7 @@ namespace RimWorld
 
 		protected override Zone MakeNewZone()
 		{
-			return new Zone_Stockpile(this.preset);
+			return new Zone_Stockpile(this.preset, Find.VisibleMap.zoneManager);
 		}
 
 		public override AcceptanceReport CanDesignateCell(IntVec3 c)
@@ -33,12 +33,12 @@ namespace RimWorld
 			{
 				return result;
 			}
-			TerrainDef terrain = c.GetTerrain();
+			TerrainDef terrain = c.GetTerrain(base.Map);
 			if (terrain.passability == Traversability.Impassable)
 			{
 				return false;
 			}
-			List<Thing> list = Find.ThingGrid.ThingsListAt(c);
+			List<Thing> list = base.Map.thingGrid.ThingsListAt(c);
 			for (int i = 0; i < list.Count; i++)
 			{
 				if (!list[i].def.CanOverlapZones)

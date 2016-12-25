@@ -5,10 +5,10 @@ namespace RimWorld
 {
 	public class GenStep_Snow : GenStep
 	{
-		public override void Generate()
+		public override void Generate(Map map)
 		{
 			int num = 0;
-			for (int i = (int)(GenDate.CurrentMonth - Month.Mar); i <= (int)GenDate.CurrentMonth; i++)
+			for (int i = (int)(GenLocalDate.Month(map) - Month.Mar); i <= (int)GenLocalDate.Month(map); i++)
 			{
 				int num2 = i;
 				if (num2 < 0)
@@ -16,7 +16,7 @@ namespace RimWorld
 					num2 += 12;
 				}
 				Month month = (Month)num2;
-				float num3 = GenTemperature.AverageTemperatureAtWorldCoordsForMonth(Find.Map.WorldCoords, month);
+				float num3 = GenTemperature.AverageTemperatureAtTileForMonth(map.Tile, month);
 				if (num3 < 0f)
 				{
 					num++;
@@ -37,7 +37,7 @@ namespace RimWorld
 				num4 = 1f;
 				break;
 			}
-			if (GenTemperature.SeasonalTemp > 0f)
+			if (map.mapTemperature.SeasonalTemp > 0f)
 			{
 				num4 *= 0.4f;
 			}
@@ -45,11 +45,11 @@ namespace RimWorld
 			{
 				return;
 			}
-			foreach (IntVec3 current in Find.Map.AllCells)
+			foreach (IntVec3 current in map.AllCells)
 			{
-				if (!current.Roofed())
+				if (!current.Roofed(map))
 				{
-					SteadyAtmosphereEffects.AddFallenSnowAt(current, num4);
+					map.steadyAtmosphereEffects.AddFallenSnowAt(current, num4);
 				}
 			}
 		}

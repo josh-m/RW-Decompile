@@ -13,7 +13,7 @@ namespace Verse
 				bool result = false;
 				for (int i = 0; i < countToAffect; i++)
 				{
-					IEnumerable<BodyPartRecord> source = pawn.health.hediffSet.GetNotMissingParts(null, null);
+					IEnumerable<BodyPartRecord> source = pawn.health.hediffSet.GetNotMissingParts(BodyPartHeight.Undefined, BodyPartDepth.Undefined);
 					if (partsToAffect != null)
 					{
 						source = from p in source

@@ -15,16 +15,16 @@ namespace Verse.AI
 		{
 			IntVec3 cell = this.pawn.jobs.curJob.targetB.Cell;
 			Thing thing;
-			if (this.pawn.carrier.CarriedThing != null)
+			if (this.pawn.carryTracker.CarriedThing != null)
 			{
-				thing = this.pawn.carrier.CarriedThing;
+				thing = this.pawn.carryTracker.CarriedThing;
 			}
 			else
 			{
 				thing = base.TargetThingA;
 			}
 			string text = null;
-			SlotGroup slotGroup = cell.GetSlotGroup();
+			SlotGroup slotGroup = cell.GetSlotGroup(base.Map);
 			if (slotGroup != null)
 			{
 				text = slotGroup.parent.SlotYielderLabel();
@@ -69,7 +69,7 @@ namespace Verse.AI
 				{
 					Thing thing = curJob.GetTarget(TargetIndex.A).Thing;
 					IntVec3 cell = actor.jobs.curJob.GetTarget(TargetIndex.B).Cell;
-					if (!cell.IsValidStorageFor(thing))
+					if (!cell.IsValidStorageFor(this.<>f__this.Map, thing))
 					{
 						return true;
 					}
@@ -77,10 +77,10 @@ namespace Verse.AI
 				return false;
 			});
 			yield return toilGoto;
-			yield return Toils_Haul.StartCarryThing(TargetIndex.A);
+			yield return Toils_Haul.StartCarryThing(TargetIndex.A, false, false);
 			if (base.CurJob.haulOpportunisticDuplicates)
 			{
-				yield return Toils_Haul.CheckForGetOpportunityDuplicate(reserveTargetA, TargetIndex.A, TargetIndex.B);
+				yield return Toils_Haul.CheckForGetOpportunityDuplicate(reserveTargetA, TargetIndex.A, TargetIndex.B, false, null);
 			}
 			Toil carryToCell = Toils_Haul.CarryHauledThingToCell(TargetIndex.B);
 			yield return carryToCell;

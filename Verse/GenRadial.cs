@@ -187,23 +187,23 @@ namespace Verse
 		}
 
 		[DebuggerHidden]
-		public static IEnumerable<Thing> RadialDistinctThingsAround(IntVec3 center, float radius, bool useCenter)
+		public static IEnumerable<Thing> RadialDistinctThingsAround(IntVec3 center, Map map, float radius, bool useCenter)
 		{
 			int numCells = GenRadial.NumCellsInRadius(radius);
 			HashSet<Thing> returnedThings = null;
 			for (int i = (!useCenter) ? 1 : 0; i < numCells; i++)
 			{
 				IntVec3 cell = GenRadial.RadialPattern[i] + center;
-				if (cell.InBounds())
+				if (cell.InBounds(map))
 				{
-					List<Thing> thingList = cell.GetThingList();
+					List<Thing> thingList = cell.GetThingList(map);
 					int j = 0;
 					while (j < thingList.Count)
 					{
 						Thing t = thingList[j];
 						if (t.def.size.x <= 1 || t.def.size.z <= 1)
 						{
-							goto IL_13E;
+							goto IL_14A;
 						}
 						if (returnedThings == null)
 						{
@@ -212,14 +212,14 @@ namespace Verse
 						if (!returnedThings.Contains(t))
 						{
 							returnedThings.Add(t);
-							goto IL_13E;
+							goto IL_14A;
 						}
-						IL_156:
+						IL_162:
 						j++;
 						continue;
-						IL_13E:
+						IL_14A:
 						yield return t;
-						goto IL_156;
+						goto IL_162;
 					}
 				}
 			}

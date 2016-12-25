@@ -71,6 +71,7 @@ namespace Verse
 			MeshMakerShadows.trianglesList.Add(count3);
 			return new Mesh
 			{
+				name = "NewShadowMesh()",
 				vertices = MeshMakerShadows.vertsList.ToArray(),
 				colors32 = MeshMakerShadows.colorsList.ToArray(),
 				triangles = MeshMakerShadows.trianglesList.ToArray()

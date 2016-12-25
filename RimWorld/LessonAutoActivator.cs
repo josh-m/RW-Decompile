@@ -97,7 +97,7 @@ namespace RimWorld
 				return;
 			}
 			LessonAutoActivator.timeSinceLastLesson += RealTime.realDeltaTime;
-			if (Current.ProgramState == ProgramState.MapPlaying && (Time.timeSinceLevelLoad < 8f || Find.WindowStack.SecondsSinceClosedGameStartDialog < 8f || Find.TickManager.NotPlaying))
+			if (Current.ProgramState == ProgramState.Playing && (Time.timeSinceLevelLoad < 8f || Find.WindowStack.SecondsSinceClosedGameStartDialog < 8f || Find.TickManager.NotPlaying))
 			{
 				return;
 			}

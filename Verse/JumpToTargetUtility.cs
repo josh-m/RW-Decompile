@@ -1,94 +1,257 @@
+using RimWorld;
+using RimWorld.Planet;
 using System;
+using Verse.Sound;
 
 namespace Verse
 {
 	public static class JumpToTargetUtility
 	{
-		public static void TryJumpAndSelect(Thing thing)
+		public static void TryJumpAndSelect(GlobalTargetInfo target)
 		{
-			if (Current.ProgramState != ProgramState.MapPlaying)
-			{
-				return;
-			}
-			JumpToTargetUtility.TryJump(thing);
-			JumpToTargetUtility.TrySelect(thing);
-		}
-
-		public static void TryJumpAndSelect(TargetInfo target)
-		{
-			if (Current.ProgramState != ProgramState.MapPlaying)
-			{
-				return;
-			}
 			if (!target.IsValid)
 			{
 				return;
 			}
+			JumpToTargetUtility.TryJump(target);
+			JumpToTargetUtility.TrySelect(target);
+		}
+
+		public static void TrySelect(GlobalTargetInfo target)
+		{
+			if (!target.IsValid)
+			{
+				return;
+			}
+			target = JumpToTargetUtility.GetAdjustedLookTarget(target);
 			if (target.HasThing)
 			{
-				JumpToTargetUtility.TryJumpAndSelect(target.Thing);
+				JumpToTargetUtility.TrySelect(target.Thing);
 			}
-			else
+			else if (target.HasWorldObject)
 			{
-				JumpToTargetUtility.TryJump(target);
+				JumpToTargetUtility.TrySelect(target.WorldObject);
 			}
 		}
 
-		public static void TrySelect(Thing thing)
+		private static void TrySelect(Thing thing)
 		{
-			if (Current.ProgramState != ProgramState.MapPlaying)
+			if (Current.ProgramState != ProgramState.Playing)
 			{
 				return;
 			}
-			Thing corpseIfDeadPawn = JumpToTargetUtility.GetCorpseIfDeadPawn(thing);
-			if (corpseIfDeadPawn.Spawned)
+			if (thing.Spawned)
 			{
+				bool flag = JumpToTargetUtility.CloseWorldTab();
+				bool flag2 = false;
+				if (thing.Map != Current.Game.VisibleMap)
+				{
+					Current.Game.VisibleMap = thing.Map;
+					flag2 = true;
+					if (!flag)
+					{
+						SoundDefOf.MapSelected.PlayOneShotOnCamera();
+					}
+				}
+				if (flag || flag2)
+				{
+					Find.CameraDriver.JumpTo(thing.Position);
+				}
 				Find.Selector.ClearSelection();
-				Find.Selector.Select(corpseIfDeadPawn, true, true);
+				Find.Selector.Select(thing, true, true);
 			}
 		}
 
-		public static void TryJump(Thing thing)
+		private static void TrySelect(WorldObject worldObject)
 		{
-			if (Current.ProgramState != ProgramState.MapPlaying)
+			if (Find.World == null)
 			{
 				return;
 			}
-			Thing corpseIfDeadPawn = JumpToTargetUtility.GetCorpseIfDeadPawn(thing);
-			if (corpseIfDeadPawn.PositionHeld.IsValid)
+			if (worldObject.Spawned)
 			{
-				Find.CameraDriver.JumpTo(corpseIfDeadPawn.PositionHeld);
+				JumpToTargetUtility.OpenWorldTab();
+				Find.WorldSelector.ClearSelection();
+				Find.WorldSelector.Select(worldObject, true);
 			}
 		}
 
-		public static void TryJump(TargetInfo target)
+		public static void TryJump(GlobalTargetInfo target)
 		{
-			if (Current.ProgramState != ProgramState.MapPlaying)
-			{
-				return;
-			}
 			if (!target.IsValid)
 			{
 				return;
 			}
+			target = JumpToTargetUtility.GetAdjustedLookTarget(target);
 			if (target.HasThing)
 			{
 				JumpToTargetUtility.TryJump(target.Thing);
 			}
+			else if (target.HasWorldObject)
+			{
+				JumpToTargetUtility.TryJump(target.WorldObject);
+			}
+			else if (target.Cell.IsValid)
+			{
+				JumpToTargetUtility.TryJump(target.Cell, target.Map);
+			}
 			else
 			{
-				Find.CameraDriver.JumpTo(target.Cell);
+				JumpToTargetUtility.TryJump(target.Tile);
 			}
 		}
 
-		private static Thing GetCorpseIfDeadPawn(Thing thing)
+		private static void TryJump(Thing thing)
 		{
-			Pawn pawn = thing as Pawn;
-			if (pawn != null && pawn.Dead && pawn.corpse != null)
+			if (Current.ProgramState != ProgramState.Playing)
 			{
-				return pawn.corpse;
+				return;
 			}
-			return thing;
+			if (thing.MapHeld != null && thing.PositionHeld.IsValid)
+			{
+				bool flag = JumpToTargetUtility.CloseWorldTab();
+				if (Current.Game.VisibleMap != thing.MapHeld)
+				{
+					Current.Game.VisibleMap = thing.MapHeld;
+					if (!flag)
+					{
+						SoundDefOf.MapSelected.PlayOneShotOnCamera();
+					}
+				}
+				Find.CameraDriver.JumpTo(thing.PositionHeld);
+			}
+		}
+
+		private static void TryJump(IntVec3 cell, Map map)
+		{
+			if (Current.ProgramState != ProgramState.Playing)
+			{
+				return;
+			}
+			if (map == null || !Find.Maps.Contains(map))
+			{
+				return;
+			}
+			bool flag = JumpToTargetUtility.CloseWorldTab();
+			if (Current.Game.VisibleMap != map)
+			{
+				Current.Game.VisibleMap = map;
+				if (!flag)
+				{
+					SoundDefOf.MapSelected.PlayOneShotOnCamera();
+				}
+			}
+			Find.CameraDriver.JumpTo(cell);
+		}
+
+		private static void TryJump(WorldObject worldObject)
+		{
+			if (Find.World == null)
+			{
+				return;
+			}
+			if (worldObject.Tile >= 0)
+			{
+				JumpToTargetUtility.OpenWorldTab();
+				Find.WorldCameraDriver.JumpTo(worldObject.Tile);
+			}
+		}
+
+		private static void TryJump(int tile)
+		{
+			if (Find.World == null)
+			{
+				return;
+			}
+			JumpToTargetUtility.OpenWorldTab();
+			Find.WorldCameraDriver.JumpTo(tile);
+		}
+
+		private static GlobalTargetInfo GetAdjustedLookTarget(GlobalTargetInfo target)
+		{
+			if (target.HasThing)
+			{
+				Thing thing = target.Thing;
+				Pawn pawn = thing as Pawn;
+				if (pawn != null)
+				{
+					if (pawn.IsCaravanMember())
+					{
+						return pawn.GetCaravan();
+					}
+					if (pawn.Dead && pawn.Corpse != null)
+					{
+						return JumpToTargetUtility.GetAdjustedLookTarget(pawn.Corpse);
+					}
+				}
+				if (thing.holdingContainer != null)
+				{
+					IThingContainerOwner owner = thing.holdingContainer.owner;
+					Thing thing2 = owner as Thing;
+					if (thing2 != null)
+					{
+						return thing2;
+					}
+					if (owner.Spawned)
+					{
+						return new GlobalTargetInfo(owner.GetPosition(), owner.GetMap(), false);
+					}
+				}
+			}
+			return target;
+		}
+
+		public static GlobalTargetInfo GetWorldTarget(GlobalTargetInfo target)
+		{
+			GlobalTargetInfo adjustedLookTarget = JumpToTargetUtility.GetAdjustedLookTarget(target);
+			if (!adjustedLookTarget.IsValid)
+			{
+				return GlobalTargetInfo.Invalid;
+			}
+			if (adjustedLookTarget.IsWorldTarget)
+			{
+				return adjustedLookTarget;
+			}
+			return JumpToTargetUtility.GetGlobalTargetInfoForMap(adjustedLookTarget.Map);
+		}
+
+		public static bool CloseWorldTab()
+		{
+			if (Current.ProgramState != ProgramState.Playing)
+			{
+				return false;
+			}
+			if (Find.MainTabsRoot.OpenTab == MainTabDefOf.World && Find.VisibleMap != null)
+			{
+				Find.MainTabsRoot.EscapeCurrentTab(true);
+				return true;
+			}
+			return false;
+		}
+
+		public static GlobalTargetInfo GetGlobalTargetInfoForMap(Map map)
+		{
+			if (map == null)
+			{
+				return GlobalTargetInfo.Invalid;
+			}
+			if (map.info.parent != null)
+			{
+				return map.info.parent;
+			}
+			return new GlobalTargetInfo(map.info.tile);
+		}
+
+		private static void OpenWorldTab()
+		{
+			if (Current.ProgramState != ProgramState.Playing)
+			{
+				return;
+			}
+			if (Find.MainTabsRoot.OpenTab != MainTabDefOf.World)
+			{
+				Find.MainTabsRoot.SetCurrentTab(MainTabDefOf.World, true);
+			}
 		}
 	}
 }

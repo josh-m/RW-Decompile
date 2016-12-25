@@ -19,22 +19,27 @@ namespace Verse
 
 		private static List<T> singleNodeList = new List<T>();
 
-		public static void Run(T startingNode, Func<T, IEnumerable<T>> neighborsGetter, Func<T, T, float> distanceGetter, ref Dictionary<T, float> outDistances)
+		private static List<KeyValuePair<T, float>> tmpResult = new List<KeyValuePair<T, float>>();
+
+		public static void Run(T startingNode, Func<T, IEnumerable<T>> neighborsGetter, Func<T, T, float> distanceGetter, ref List<KeyValuePair<T, float>> outDistances)
 		{
 			Dijkstra<T>.singleNodeList.Clear();
 			Dijkstra<T>.singleNodeList.Add(startingNode);
 			Dijkstra<T>.Run(Dijkstra<T>.singleNodeList, neighborsGetter, distanceGetter, ref outDistances);
 		}
 
-		public static void Run(IEnumerable<T> startingNodes, Func<T, IEnumerable<T>> neighborsGetter, Func<T, T, float> distanceGetter, ref Dictionary<T, float> outDistances)
+		public static void Run(IEnumerable<T> startingNodes, Func<T, IEnumerable<T>> neighborsGetter, Func<T, T, float> distanceGetter, ref List<KeyValuePair<T, float>> outDistances)
 		{
 			outDistances.Clear();
 			Dijkstra<T>.distances.Clear();
 			Dijkstra<T>.queue.Clear();
 			foreach (T current in startingNodes)
 			{
-				Dijkstra<T>.distances.Add(current, 0f);
-				Dijkstra<T>.queue.Push(new KeyValuePair<T, float>(current, 0f));
+				if (!Dijkstra<T>.distances.ContainsKey(current))
+				{
+					Dijkstra<T>.distances.Add(current, 0f);
+					Dijkstra<T>.queue.Push(new KeyValuePair<T, float>(current, 0f));
+				}
 			}
 			while (Dijkstra<T>.queue.Count != 0)
 			{
@@ -64,9 +69,20 @@ namespace Verse
 			}
 			foreach (KeyValuePair<T, float> current3 in Dijkstra<T>.distances)
 			{
-				outDistances.Add(current3.Key, current3.Value);
+				outDistances.Add(current3);
 			}
 			Dijkstra<T>.distances.Clear();
+		}
+
+		public static void Run(IEnumerable<T> startingNodes, Func<T, IEnumerable<T>> neighborsGetter, Func<T, T, float> distanceGetter, ref Dictionary<T, float> outDistances)
+		{
+			Dijkstra<T>.Run(startingNodes, neighborsGetter, distanceGetter, ref Dijkstra<T>.tmpResult);
+			outDistances.Clear();
+			for (int i = 0; i < Dijkstra<T>.tmpResult.Count; i++)
+			{
+				outDistances.Add(Dijkstra<T>.tmpResult[i].Key, Dijkstra<T>.tmpResult[i].Value);
+			}
+			Dijkstra<T>.tmpResult.Clear();
 		}
 	}
 }

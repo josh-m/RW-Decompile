@@ -12,6 +12,14 @@ namespace Verse.Sound
 
 		public bool resolvedSkipAttack;
 
+		public override Map Map
+		{
+			get
+			{
+				return this.subSustainer.Info.Maker.Map;
+			}
+		}
+
 		public override float ParentStartRealTime
 		{
 			get
@@ -104,7 +112,7 @@ namespace Verse.Sound
 
 		public void UpdateSourceVolume()
 		{
-			float num = this.resolvedVolume * this.subSustainer.parent.scopeFader.inScopePercent * base.MappedVolumeMultiplier;
+			float num = this.resolvedVolume * this.subSustainer.parent.scopeFader.inScopePercent * base.MappedVolumeMultiplier * base.ContextVolumeMultiplier;
 			if (base.AgeRealTime < this.subDef.sustainAttack)
 			{
 				if (this.resolvedSkipAttack || this.subDef.sustainAttack < 0.01f)
@@ -148,7 +156,10 @@ namespace Verse.Sound
 		public override void SampleCleanup()
 		{
 			base.SampleCleanup();
-			UnityEngine.Object.Destroy(this.source.gameObject);
+			if (this.source != null && this.source.gameObject != null)
+			{
+				UnityEngine.Object.Destroy(this.source.gameObject);
+			}
 		}
 	}
 }

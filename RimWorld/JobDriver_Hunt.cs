@@ -25,7 +25,7 @@ namespace RimWorld
 				Corpse corpse = this.Corpse;
 				if (corpse != null)
 				{
-					return corpse.innerPawn;
+					return corpse.InnerPawn;
 				}
 				return (Pawn)base.CurJob.GetTarget(TargetIndex.A).Thing;
 			}
@@ -58,7 +58,7 @@ namespace RimWorld
 				if (!this.<>f__this.CurJob.ignoreDesignations)
 				{
 					Pawn victim = this.<>f__this.Victim;
-					if (victim != null && !victim.Dead && Find.DesignationManager.DesignationOn(victim, DesignationDefOf.Hunt) == null)
+					if (victim != null && !victim.Dead && this.<>f__this.Map.designationManager.DesignationOn(victim, DesignationDefOf.Hunt) == null)
 					{
 						return true;
 					}
@@ -85,7 +85,7 @@ namespace RimWorld
 			yield return Toils_Jump.Jump(moveIfCannotHit);
 			yield return startCollectCorpse;
 			yield return Toils_Goto.GotoCell(TargetIndex.A, PathEndMode.ClosestTouch).FailOnDespawnedNullOrForbidden(TargetIndex.A).FailOnSomeonePhysicallyInteracting(TargetIndex.A);
-			yield return Toils_Haul.StartCarryThing(TargetIndex.A);
+			yield return Toils_Haul.StartCarryThing(TargetIndex.A, false, false);
 			Toil carryToCell = Toils_Haul.CarryHauledThingToCell(TargetIndex.B);
 			yield return carryToCell;
 			yield return Toils_Haul.PlaceHauledThingInCell(TargetIndex.B, carryToCell, true);
@@ -98,7 +98,7 @@ namespace RimWorld
 			{
 				if (this.Victim == null)
 				{
-					toil.actor.jobs.EndCurrentJob(JobCondition.Incompletable);
+					toil.actor.jobs.EndCurrentJob(JobCondition.Incompletable, true);
 					return;
 				}
 				TaleRecorder.RecordTale(TaleDefOf.Hunted, new object[]
@@ -106,25 +106,25 @@ namespace RimWorld
 					this.pawn,
 					this.Victim
 				});
-				Corpse corpse = HuntJobUtility.TryFindCorpse(this.Victim);
+				Corpse corpse = this.Victim.Corpse;
 				if (corpse == null || !this.pawn.CanReserveAndReach(corpse, PathEndMode.ClosestTouch, Danger.Deadly, 1))
 				{
-					this.pawn.jobs.EndCurrentJob(JobCondition.Incompletable);
+					this.pawn.jobs.EndCurrentJob(JobCondition.Incompletable, true);
 					return;
 				}
 				corpse.SetForbidden(false, true);
-				IntVec3 vec;
-				if (StoreUtility.TryFindBestBetterStoreCellFor(corpse, this.pawn, StoragePriority.Unstored, this.pawn.Faction, out vec, true))
+				IntVec3 c;
+				if (StoreUtility.TryFindBestBetterStoreCellFor(corpse, this.pawn, this.Map, StoragePriority.Unstored, this.pawn.Faction, out c, true))
 				{
-					Find.Reservations.Reserve(this.pawn, corpse, 1);
-					Find.Reservations.Reserve(this.pawn, vec, 1);
-					this.pawn.CurJob.SetTarget(TargetIndex.B, vec);
+					this.pawn.Reserve(corpse, 1);
+					this.pawn.Reserve(c, 1);
+					this.pawn.CurJob.SetTarget(TargetIndex.B, c);
 					this.pawn.CurJob.SetTarget(TargetIndex.A, corpse);
-					this.pawn.CurJob.maxNumToCarry = 1;
+					this.pawn.CurJob.count = 1;
 					this.pawn.CurJob.haulMode = HaulMode.ToCellStorage;
 					return;
 				}
-				this.pawn.jobs.EndCurrentJob(JobCondition.Succeeded);
+				this.pawn.jobs.EndCurrentJob(JobCondition.Succeeded, true);
 			};
 			return toil;
 		}

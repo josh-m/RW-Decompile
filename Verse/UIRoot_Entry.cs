@@ -1,4 +1,5 @@
 using RimWorld;
+using RimWorld.Planet;
 using System;
 using UnityEngine;
 using Verse.Steam;
@@ -32,44 +33,59 @@ namespace Verse
 			if (!SteamManager.Initialized)
 			{
 				string text = "SteamClientMissing".Translate();
-				if (Application.isEditor)
-				{
-					text = "(The below message is for players. In the editor, you can continue without Steam, though anything might break.)\n\n" + text;
-				}
-				Dialog_Confirm dialog_Confirm = new Dialog_Confirm(text, delegate
+				Dialog_MessageBox window = new Dialog_MessageBox(text, "Quit".Translate(), delegate
 				{
 					Application.Quit();
-				}, false, null, false);
-				dialog_Confirm.confirmLabel = "OK".Translate();
-				Find.WindowStack.Add(dialog_Confirm);
+				}, "Ignore".Translate(), null, null, false);
+				Find.WindowStack.Add(window);
 			}
 		}
 
 		public override void UIRootOnGUI()
 		{
 			base.UIRootOnGUI();
-			UIMenuBackgroundManager.background.BackgroundOnGUI();
-			if (this.ShouldDoMainMenu)
+			if (Find.World != null)
 			{
-				Current.Game = null;
-				MainMenuDrawer.MainMenuOnGUI();
+				Find.World.UI.WorldInterfaceOnGUI();
 			}
+			this.DoMainMenu();
 			if (Current.Game != null)
 			{
 				Find.Tutor.TutorOnGUI();
 			}
 			this.windows.WindowStackOnGUI();
 			ReorderableWidget.ReorderableWidgetOnGUI();
+			if (Find.World != null)
+			{
+				Find.World.UI.HandleLowPriorityInput();
+			}
 		}
 
 		public override void UIRootUpdate()
 		{
+			base.UIRootUpdate();
+			if (Find.World != null)
+			{
+				Find.World.UI.WorldInterfaceUpdate();
+			}
 			if (Current.Game != null)
 			{
 				LessonAutoActivator.LessonAutoActivatorUpdate();
 				Find.Tutor.TutorUpdate();
 			}
-			base.UIRootUpdate();
+		}
+
+		private void DoMainMenu()
+		{
+			if (!WorldRendererUtility.WorldRenderedNow)
+			{
+				UIMenuBackgroundManager.background.BackgroundOnGUI();
+				if (this.ShouldDoMainMenu)
+				{
+					Current.Game = null;
+					MainMenuDrawer.MainMenuOnGUI();
+				}
+			}
 		}
 	}
 }

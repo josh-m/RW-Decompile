@@ -10,6 +10,8 @@ namespace RimWorld
 	{
 		public const float TransitionTicks = 4000f;
 
+		public Map map;
+
 		public WeatherEventHandler eventHandler = new WeatherEventHandler();
 
 		public WeatherDef curWeather = WeatherDefOf.Clear;
@@ -20,7 +22,7 @@ namespace RimWorld
 
 		private List<Sustainer> ambienceSustainers = new List<Sustainer>();
 
-		public TemperatureMemory growthSeasonMemory = new TemperatureMemory();
+		public TemperatureMemory growthSeasonMemory;
 
 		public float TransitionLerpFactor
 		{
@@ -75,12 +77,21 @@ namespace RimWorld
 			}
 		}
 
+		public WeatherManager(Map map)
+		{
+			this.map = map;
+			this.growthSeasonMemory = new TemperatureMemory(map);
+		}
+
 		public void ExposeData()
 		{
 			Scribe_Defs.LookDef<WeatherDef>(ref this.curWeather, "curWeather");
 			Scribe_Defs.LookDef<WeatherDef>(ref this.lastWeather, "lastWeather");
 			Scribe_Values.LookValue<int>(ref this.curWeatherAge, "curWeatherAge", 0, true);
-			Scribe_Deep.LookDeep<TemperatureMemory>(ref this.growthSeasonMemory, "growthSeasonMemory", new object[0]);
+			Scribe_Deep.LookDeep<TemperatureMemory>(ref this.growthSeasonMemory, "growthSeasonMemory", new object[]
+			{
+				this.map
+			});
 			if (Scribe.mode == LoadSaveMode.PostLoadInit)
 			{
 				this.ambienceSustainers.Clear();
@@ -112,8 +123,8 @@ namespace RimWorld
 		{
 			this.eventHandler.WeatherEventHandlerTick();
 			this.curWeatherAge++;
-			this.curWeather.Worker.WeatherTick(this.TransitionLerpFactor);
-			this.lastWeather.Worker.WeatherTick(1f - this.TransitionLerpFactor);
+			this.curWeather.Worker.WeatherTick(this.map, this.TransitionLerpFactor);
+			this.lastWeather.Worker.WeatherTick(this.map, 1f - this.TransitionLerpFactor);
 			this.growthSeasonMemory.GrowthSeasonMemoryTick();
 			for (int i = 0; i < this.curWeather.ambientSounds.Count; i++)
 			{
@@ -126,7 +137,7 @@ namespace RimWorld
 						break;
 					}
 				}
-				if (!flag)
+				if (!flag && this.VolumeOfAmbientSound(this.curWeather.ambientSounds[i]) > 0.0001f)
 				{
 					SoundInfo info = SoundInfo.OnCamera(MaintenanceType.None);
 					Sustainer sustainer = this.curWeather.ambientSounds[i].TrySpawnSustainer(info);
@@ -162,6 +173,10 @@ namespace RimWorld
 
 		private float VolumeOfAmbientSound(SoundDef soundDef)
 		{
+			if (this.map != Find.VisibleMap)
+			{
+				return 0f;
+			}
 			for (int i = 0; i < Find.WindowStack.Count; i++)
 			{
 				if (Find.WindowStack[i].silenceAmbientSound)
@@ -190,8 +205,8 @@ namespace RimWorld
 		public void DrawAllWeather()
 		{
 			this.eventHandler.WeatherEventsDraw();
-			this.lastWeather.Worker.DrawWeather();
-			this.curWeather.Worker.DrawWeather();
+			this.lastWeather.Worker.DrawWeather(this.map);
+			this.curWeather.Worker.DrawWeather(this.map);
 		}
 	}
 }

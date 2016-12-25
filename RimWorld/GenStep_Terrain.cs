@@ -7,32 +7,32 @@ namespace RimWorld
 	{
 		private static bool debug_WarnedMissingTerrain;
 
-		public override void Generate()
+		public override void Generate(Map map)
 		{
-			BeachMaker.Init();
-			MapGenFloatGrid mapGenFloatGrid = MapGenerator.FloatGridNamed("Elevation");
-			MapGenFloatGrid mapGenFloatGrid2 = MapGenerator.FloatGridNamed("Fertility");
-			TerrainGrid terrainGrid = Find.TerrainGrid;
-			foreach (IntVec3 current in Find.Map.AllCells)
+			BeachMaker.Init(map);
+			MapGenFloatGrid mapGenFloatGrid = MapGenerator.FloatGridNamed("Elevation", map);
+			MapGenFloatGrid mapGenFloatGrid2 = MapGenerator.FloatGridNamed("Fertility", map);
+			TerrainGrid terrainGrid = map.terrainGrid;
+			foreach (IntVec3 current in map.AllCells)
 			{
-				Building edifice = current.GetEdifice();
+				Building edifice = current.GetEdifice(map);
 				if (edifice != null && edifice.def.Fillage == FillCategory.Full)
 				{
-					terrainGrid.SetTerrain(current, this.TerrainFrom(current, mapGenFloatGrid[current], mapGenFloatGrid2[current], true));
+					terrainGrid.SetTerrain(current, this.TerrainFrom(current, map, mapGenFloatGrid[current], mapGenFloatGrid2[current], true));
 				}
 				else
 				{
-					terrainGrid.SetTerrain(current, this.TerrainFrom(current, mapGenFloatGrid[current], mapGenFloatGrid2[current], false));
+					terrainGrid.SetTerrain(current, this.TerrainFrom(current, map, mapGenFloatGrid[current], mapGenFloatGrid2[current], false));
 				}
 			}
 			BeachMaker.Cleanup();
-			foreach (TerrainPatchMaker current2 in Find.Map.Biome.terrainPatchMakers)
+			foreach (TerrainPatchMaker current2 in map.Biome.terrainPatchMakers)
 			{
 				current2.Cleanup();
 			}
 		}
 
-		private TerrainDef TerrainFrom(IntVec3 c, float elevation, float fertility, bool requireSolid)
+		private TerrainDef TerrainFrom(IntVec3 c, Map map, float elevation, float fertility, bool requireSolid)
 		{
 			if (requireSolid)
 			{
@@ -43,9 +43,9 @@ namespace RimWorld
 			{
 				return terrainDef;
 			}
-			for (int i = 0; i < Find.Map.Biome.terrainPatchMakers.Count; i++)
+			for (int i = 0; i < map.Biome.terrainPatchMakers.Count; i++)
 			{
-				terrainDef = Find.Map.Biome.terrainPatchMakers[i].TerrainAt(c);
+				terrainDef = map.Biome.terrainPatchMakers[i].TerrainAt(c, map);
 				if (terrainDef != null)
 				{
 					return terrainDef;
@@ -59,7 +59,7 @@ namespace RimWorld
 			{
 				return GenStep_RocksFromGrid.RockDefAt(c).naturalTerrain;
 			}
-			terrainDef = TerrainThreshold.TerrainAtValue(Find.Map.Biome.terrainsByFertility, fertility);
+			terrainDef = TerrainThreshold.TerrainAtValue(map.Biome.terrainsByFertility, fertility);
 			if (terrainDef != null)
 			{
 				return terrainDef;
@@ -69,7 +69,7 @@ namespace RimWorld
 				Log.Error(string.Concat(new object[]
 				{
 					"No terrain found in biome ",
-					Find.Map.Biome.defName,
+					map.Biome.defName,
 					" for elevation=",
 					elevation,
 					", fertility=",

@@ -29,6 +29,10 @@ namespace RimWorld
 				{
 					return 0.5f;
 				}
+				if (!this.pawn.Spawned)
+				{
+					return 0.5f;
+				}
 				return this.LevelFromBeauty(this.CurrentInstantBeauty());
 			}
 		}
@@ -81,7 +85,11 @@ namespace RimWorld
 
 		public float CurrentInstantBeauty()
 		{
-			return BeautyUtility.AverageBeautyPerceptible(this.pawn.Position);
+			if (this.pawn.MapHeld == null)
+			{
+				return 0.5f;
+			}
+			return BeautyUtility.AverageBeautyPerceptible(this.pawn.PositionHeld, this.pawn.MapHeld);
 		}
 	}
 }

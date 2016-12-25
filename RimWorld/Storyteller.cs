@@ -1,3 +1,4 @@
+using RimWorld.Planet;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -19,8 +20,6 @@ namespace RimWorld
 
 		public List<StorytellerComp> storytellerComps;
 
-		public WeatherDecider weatherDecider = new WeatherDecider();
-
 		public IncidentQueue incidentQueue = new IncidentQueue();
 
 		public StoryIntender_Population intenderPopulation;
@@ -28,6 +27,30 @@ namespace RimWorld
 		public static readonly Vector2 PortraitSizeTiny = new Vector2(116f, 124f);
 
 		public static readonly Vector2 PortraitSizeLarge = new Vector2(580f, 620f);
+
+		private static List<IIncidentTarget> tmpAllIncidentTargets = new List<IIncidentTarget>();
+
+		private List<IIncidentTarget> AllIncidentTargets
+		{
+			get
+			{
+				Storyteller.tmpAllIncidentTargets.Clear();
+				List<Map> maps = Find.Maps;
+				for (int i = 0; i < maps.Count; i++)
+				{
+					Storyteller.tmpAllIncidentTargets.Add(maps[i]);
+				}
+				List<Caravan> caravans = Find.WorldObjects.Caravans;
+				for (int j = 0; j < caravans.Count; j++)
+				{
+					if (caravans[j].IsPlayerControlled)
+					{
+						Storyteller.tmpAllIncidentTargets.Add(caravans[j]);
+					}
+				}
+				return Storyteller.tmpAllIncidentTargets;
+			}
+		}
 
 		public Storyteller()
 		{
@@ -56,7 +79,6 @@ namespace RimWorld
 		{
 			Scribe_Defs.LookDef<StorytellerDef>(ref this.def, "def");
 			Scribe_Defs.LookDef<DifficultyDef>(ref this.difficulty, "difficulty");
-			Scribe_Deep.LookDeep<WeatherDecider>(ref this.weatherDecider, "weatherDecider", new object[0]);
 			Scribe_Deep.LookDeep<IncidentQueue>(ref this.incidentQueue, "incidentQueue", new object[0]);
 			Scribe_Deep.LookDeep<StoryIntender_Population>(ref this.intenderPopulation, "intenderPopulation", new object[]
 			{
@@ -75,7 +97,6 @@ namespace RimWorld
 
 		public void StorytellerTick()
 		{
-			this.weatherDecider.WeatherDeciderTick();
 			this.incidentQueue.IncidentQueueTick();
 			if (Find.TickManager.TicksGame % 1000 == 0)
 			{
@@ -92,9 +113,8 @@ namespace RimWorld
 
 		public void TryFire(FiringIncident fi)
 		{
-			if (fi.def.Worker.CanFireNow())
+			if ((fi.parms.forced || fi.def.Worker.CanFireNow(fi.parms.target)) && fi.def.Worker.TryExecute(fi.parms))
 			{
-				fi.def.Worker.TryExecute(fi.parms);
 				Find.StoryWatcher.storyState.Notify_IncidentFired(fi);
 			}
 		}
@@ -107,9 +127,16 @@ namespace RimWorld
 				StorytellerComp c = this.storytellerComps[i];
 				if (GenDate.DaysPassedFloat > c.props.minDaysPassed)
 				{
-					foreach (FiringIncident fi in this.storytellerComps[i].MakeIntervalIncidents())
+					List<IIncidentTarget> targets = this.AllIncidentTargets;
+					for (int j = 0; j < targets.Count; j++)
 					{
-						yield return fi;
+						foreach (FiringIncident fi in this.storytellerComps[i].MakeIntervalIncidents(targets[j]))
+						{
+							if (Find.Storyteller.difficulty.allowBigThreats || fi.def.category != IncidentCategory.ThreatBig)
+							{
+								yield return fi;
+							}
+						}
 					}
 				}
 			}
@@ -125,8 +152,11 @@ namespace RimWorld
 			StringBuilder stringBuilder = new StringBuilder();
 			stringBuilder.AppendLine("Storyteller : " + this.def.label);
 			stringBuilder.AppendLine(this.intenderPopulation.DebugReadout);
-			stringBuilder.AppendLine("Wealth: " + Find.StoryWatcher.watcherWealth.WealthTotal);
-			stringBuilder.AppendLine("DaysSinceSeriousDamage: " + Find.StoryWatcher.watcherDamage.DaysSinceSeriousDamage);
+			if (Find.VisibleMap != null)
+			{
+				stringBuilder.AppendLine("VisibleMap: Wealth: " + Find.VisibleMap.wealthWatcher.WealthTotal);
+				stringBuilder.AppendLine("VisibleMap: DaysSinceSeriousDamage: " + Find.VisibleMap.damageWatcher.DaysSinceSeriousDamage);
+			}
 			stringBuilder.AppendLine("numRaidsEnemy: " + Find.StoryWatcher.statsRecord.numRaidsEnemy);
 			stringBuilder.AppendLine("LastThreatBigQueueTick: " + Find.StoryWatcher.storyState.LastThreatBigTick.ToStringTicksToPeriod(true));
 			stringBuilder.AppendLine("TotalThreatFactor: " + Find.StoryWatcher.watcherRampUp.TotalThreatPointsFactor.ToString("F5"));
@@ -134,7 +164,7 @@ namespace RimWorld
 			stringBuilder.AppendLine("   LongFactor: " + Find.StoryWatcher.watcherRampUp.LongTermFactor.ToString("F5"));
 			for (int i = 0; i < this.storytellerComps.Count; i++)
 			{
-				IncidentParms incidentParms = this.storytellerComps[i].GenerateParms(IncidentCategory.ThreatBig);
+				IncidentParms incidentParms = this.storytellerComps[i].GenerateParms(IncidentCategory.ThreatBig, Find.VisibleMap);
 				stringBuilder.AppendLine("Current default threat params (" + this.storytellerComps[i].GetType() + "):");
 				stringBuilder.AppendLine("    ThreatBig points: " + incidentParms.points);
 			}

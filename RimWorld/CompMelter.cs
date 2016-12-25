@@ -9,7 +9,7 @@ namespace RimWorld
 
 		public override void CompTickRare()
 		{
-			float temperature = this.parent.Position.GetTemperature();
+			float temperature = this.parent.Position.GetTemperature(this.parent.Map);
 			if (temperature < 0f)
 			{
 				return;
@@ -18,7 +18,7 @@ namespace RimWorld
 			int num = GenMath.RoundRandom(f);
 			if (num > 0)
 			{
-				this.parent.TakeDamage(new DamageInfo(DamageDefOf.Rotting, num, null, null, null));
+				this.parent.TakeDamage(new DamageInfo(DamageDefOf.Rotting, num, -1f, null, null, null));
 			}
 		}
 	}

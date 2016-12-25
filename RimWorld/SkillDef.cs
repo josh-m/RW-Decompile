@@ -9,7 +9,7 @@ namespace RimWorld
 
 		public string pawnLabel;
 
-		public bool definedInBackstories = true;
+		public bool usuallyDefinedInBackstories = true;
 
 		public WorkTags disablingWorkTags;
 

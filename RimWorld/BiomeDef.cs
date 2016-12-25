@@ -1,3 +1,4 @@
+using RimWorld.Planet;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -19,6 +20,12 @@ namespace RimWorld
 
 		public float diseaseMtbDays = 60f;
 
+		public float factionBaseSelectionWeight = 1f;
+
+		public bool impassable;
+
+		public SimpleCurve pathCost;
+
 		public List<WeatherCommonalityRecord> baseWeatherCommonalities = new List<WeatherCommonalityRecord>();
 
 		public List<TerrainThreshold> terrainsByFertility = new List<TerrainThreshold>();
@@ -35,11 +42,9 @@ namespace RimWorld
 
 		private List<ThingDef> allowedPackAnimals = new List<ThingDef>();
 
-		public Texture2D baseTexture = BaseContent.WhiteTex;
-
-		public Color baseColor = Color.red;
-
 		public bool hideTerrain;
+
+		public string texture;
 
 		[Unsaved]
 		private Dictionary<PawnKindDef, float> cachedAnimalCommonalities;
@@ -49,6 +54,9 @@ namespace RimWorld
 
 		[Unsaved]
 		private Dictionary<IncidentDef, float> cachedDiseaseCommonalities;
+
+		[Unsaved]
+		private Material cachedMat;
 
 		[Unsaved]
 		private BiomeWorker workerInt;
@@ -69,12 +77,23 @@ namespace RimWorld
 		{
 			get
 			{
-				return MaterialPool.MatFrom(new MaterialRequest
+				if (this.cachedMat == null)
 				{
-					shader = ShaderDatabase.Transparent,
-					mainTex = this.baseTexture,
-					color = this.baseColor
-				});
+					if (this.texture.NullOrEmpty())
+					{
+						return null;
+					}
+					if (this == BiomeDefOf.Ocean)
+					{
+						this.cachedMat = new Material(WorldMaterials.WorldOcean);
+					}
+					else
+					{
+						this.cachedMat = new Material(WorldMaterials.WorldTerrain);
+					}
+					this.cachedMat.mainTexture = ContentFinder<Texture2D>.Get(this.texture, true);
+				}
+				return this.cachedMat;
 			}
 		}
 

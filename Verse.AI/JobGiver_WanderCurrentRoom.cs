@@ -11,8 +11,8 @@ namespace Verse.AI
 			this.locomotionUrgency = LocomotionUrgency.Amble;
 			this.wanderDestValidator = delegate(Pawn pawn, IntVec3 loc)
 			{
-				Room room = pawn.Position.GetRoom();
-				return room == null || room.IsDoor || WanderUtility.InSameRoom(pawn.Position, loc);
+				Room room = pawn.GetRoom();
+				return room == null || room.IsDoor || WanderUtility.InSameRoom(pawn.Position, loc, pawn.Map);
 			};
 		}
 

@@ -29,7 +29,11 @@ namespace RimWorld
 			}
 		}
 
-		public Zone_Growing() : base("GrowingZone".Translate())
+		public Zone_Growing()
+		{
+		}
+
+		public Zone_Growing(ZoneManager zoneManager) : base("GrowingZone".Translate(), zoneManager)
 		{
 		}
 
@@ -46,42 +50,37 @@ namespace RimWorld
 			if (!base.Cells.NullOrEmpty<IntVec3>())
 			{
 				IntVec3 c = base.Cells.First<IntVec3>();
-				if (c.UsesOutdoorTemperature())
+				if (c.UsesOutdoorTemperature(base.Map))
 				{
-					text += Zone_Growing.GrowingMonthsDescription(Find.Map.WorldCoords);
+					text = text + "OutdoorGrowingPeriod".Translate() + ": " + Zone_Growing.GrowingMonthsDescription(base.Map.Tile);
 				}
-				if (GenPlant.GrowthSeasonNow(c))
+				if (GenPlant.GrowthSeasonNow(c, base.Map))
 				{
 					text = text + "\n" + "GrowSeasonHereNow".Translate();
 				}
 				else
 				{
-					text = text + "\n" + "CannotGrowTooCold".Translate();
+					text = text + "\n" + "CannotGrowBadSeasonTemperature".Translate();
 				}
 			}
 			return text;
 		}
 
-		public static string GrowingMonthsDescription(IntVec2 worldCoords)
+		public static string GrowingMonthsDescription(int tile)
 		{
-			List<Month> list = GenTemperature.MonthsInTemperatureRange(worldCoords, 10f, 42f);
-			string text;
+			List<Month> list = GenTemperature.MonthsInTemperatureRange(tile, 10f, 42f);
 			if (list.NullOrEmpty<Month>())
 			{
-				text = "NoGrowingPeriod".Translate();
+				return "NoGrowingPeriod".Translate();
 			}
-			else if (list.Count == 12)
+			if (list.Count == 12)
 			{
-				text = "GrowYearRound".Translate();
+				return "GrowYearRound".Translate();
 			}
-			else
+			return "PeriodDays".Translate(new object[]
 			{
-				text = SeasonUtility.SeasonsRangeLabel(list);
-			}
-			return "OutdoorGrowingPeriod".Translate(new object[]
-			{
-				text
-			});
+				list.Count * 5
+			}) + " (" + SeasonUtility.SeasonsRangeLabel(list) + ")";
 		}
 
 		[DebuggerHidden]
@@ -119,6 +118,11 @@ namespace RimWorld
 		public bool CanAcceptSowNow()
 		{
 			return true;
+		}
+
+		virtual Map get_Map()
+		{
+			return base.Map;
 		}
 	}
 }

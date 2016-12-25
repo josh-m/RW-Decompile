@@ -32,11 +32,11 @@ namespace RimWorld
 		{
 			Action preLoadLevelAction = delegate
 			{
-				MapIniter_NewGame.PrepForMapGen();
+				Find.GameInitData.PrepForMapGen();
 				Find.GameInitData.startedFromEntry = true;
 				Find.Scenario.PreMapGenerate();
 			};
-			LongEventHandler.QueueLongEvent(preLoadLevelAction, "Map", "GeneratingMap", true, null);
+			LongEventHandler.QueueLongEvent(preLoadLevelAction, "Play", "GeneratingMap", true, null);
 		}
 	}
 }

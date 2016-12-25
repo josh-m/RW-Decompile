@@ -42,19 +42,17 @@ namespace Verse
 		public override string CompInspectStringExtra()
 		{
 			string text = base.CompInspectStringExtra();
+			string result = string.Empty;
 			int num = this.Props.lifespanTicks - this.age;
 			if (num > 0)
 			{
-				text = string.Concat(new string[]
+				result = "LifespanExpiry".Translate() + " " + num.ToStringTicksToPeriod(true);
+				if (!text.NullOrEmpty())
 				{
-					"LifespanExpiry".Translate(),
-					" ",
-					num.ToStringTicksToPeriod(true),
-					"\n",
-					text
-				});
+					result = "\n" + text;
+				}
 			}
-			return text;
+			return result;
 		}
 	}
 }

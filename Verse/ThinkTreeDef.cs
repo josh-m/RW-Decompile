@@ -9,6 +9,7 @@ namespace Verse
 	{
 		public ThinkNode thinkRoot;
 
+		[NoTranslate]
 		public string insertTag;
 
 		public float insertPriority;

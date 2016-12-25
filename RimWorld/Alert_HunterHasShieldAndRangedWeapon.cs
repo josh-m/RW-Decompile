@@ -3,30 +3,17 @@ using Verse;
 
 namespace RimWorld
 {
-	public class Alert_HunterHasShieldAndRangedWeapon : Alert_Medium
+	public class Alert_HunterHasShieldAndRangedWeapon : Alert
 	{
-		public override AlertReport Report
-		{
-			get
-			{
-				Pawn pawn = this.BadHunter();
-				if (pawn == null)
-				{
-					return false;
-				}
-				return AlertReport.CulpritIs(pawn);
-			}
-		}
-
 		public Alert_HunterHasShieldAndRangedWeapon()
 		{
-			this.baseLabel = "HunterHasShieldAndRangedWeapon".Translate();
-			this.baseExplanation = "HunterHasShieldAndRangedWeaponDesc".Translate();
+			this.defaultLabel = "HunterHasShieldAndRangedWeapon".Translate();
+			this.defaultExplanation = "HunterHasShieldAndRangedWeaponDesc".Translate();
 		}
 
 		private Pawn BadHunter()
 		{
-			foreach (Pawn current in Find.MapPawns.FreeColonistsSpawned)
+			foreach (Pawn current in PawnsFinder.AllMaps_FreeColonistsSpawned)
 			{
 				if (current.workSettings.WorkIsActive(WorkTypeDefOf.Hunting) && WorkGiver_HunterHunt.HasShieldAndRangedWeapon(current))
 				{
@@ -34,6 +21,16 @@ namespace RimWorld
 				}
 			}
 			return null;
+		}
+
+		public override AlertReport GetReport()
+		{
+			Pawn pawn = this.BadHunter();
+			if (pawn == null)
+			{
+				return false;
+			}
+			return AlertReport.CulpritIs(pawn);
 		}
 	}
 }

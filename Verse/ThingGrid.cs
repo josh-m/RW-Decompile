@@ -6,14 +6,18 @@ namespace Verse
 {
 	public sealed class ThingGrid
 	{
+		private Map map;
+
 		private List<Thing>[] thingGrid;
 
 		private static readonly List<Thing> EmptyThingList = new List<Thing>();
 
-		public ThingGrid()
+		public ThingGrid(Map map)
 		{
-			this.thingGrid = new List<Thing>[CellIndices.NumGridCells];
-			for (int i = 0; i < CellIndices.NumGridCells; i++)
+			this.map = map;
+			CellIndices cellIndices = map.cellIndices;
+			this.thingGrid = new List<Thing>[cellIndices.NumGridCells];
+			for (int i = 0; i < cellIndices.NumGridCells; i++)
 			{
 				this.thingGrid[i] = new List<Thing>(16);
 			}
@@ -40,7 +44,7 @@ namespace Verse
 
 		private void RegisterInCell(Thing t, IntVec3 c)
 		{
-			if (!c.InBounds())
+			if (!c.InBounds(this.map))
 			{
 				Log.Warning(string.Concat(new object[]
 				{
@@ -52,12 +56,12 @@ namespace Verse
 				t.Destroy(DestroyMode.Vanish);
 				return;
 			}
-			this.thingGrid[CellIndices.CellToIndex(c)].Add(t);
+			this.thingGrid[this.map.cellIndices.CellToIndex(c)].Add(t);
 		}
 
-		public void Deregister(Thing t)
+		public void Deregister(Thing t, bool doEvenIfDespawned = false)
 		{
-			if (!t.Spawned)
+			if (!t.Spawned && !doEvenIfDespawned)
 			{
 				return;
 			}
@@ -80,12 +84,12 @@ namespace Verse
 
 		private void DeregisterInCell(Thing t, IntVec3 c)
 		{
-			if (!c.InBounds())
+			if (!c.InBounds(this.map))
 			{
 				Log.Error(t + " tried to de-register out of bounds at " + c);
 				return;
 			}
-			int num = CellIndices.CellToIndex(c);
+			int num = this.map.cellIndices.CellToIndex(c);
 			if (this.thingGrid[num].Contains(t))
 			{
 				this.thingGrid[num].Remove(t);
@@ -95,9 +99,9 @@ namespace Verse
 		[DebuggerHidden]
 		public IEnumerable<Thing> ThingsAt(IntVec3 c)
 		{
-			if (c.InBounds())
+			if (c.InBounds(this.map))
 			{
-				List<Thing> list = this.thingGrid[CellIndices.CellToIndex(c)];
+				List<Thing> list = this.thingGrid[this.map.cellIndices.CellToIndex(c)];
 				for (int i = 0; i < list.Count; i++)
 				{
 					yield return list[i];
@@ -107,17 +111,17 @@ namespace Verse
 
 		public List<Thing> ThingsListAt(IntVec3 c)
 		{
-			if (!c.InBounds())
+			if (!c.InBounds(this.map))
 			{
 				Log.ErrorOnce("Got ThingsListAt out of bounds: " + c, 495287);
 				return ThingGrid.EmptyThingList;
 			}
-			return this.thingGrid[CellIndices.CellToIndex(c)];
+			return this.thingGrid[this.map.cellIndices.CellToIndex(c)];
 		}
 
 		public List<Thing> ThingsListAtFast(IntVec3 c)
 		{
-			return this.thingGrid[CellIndices.CellToIndex(c)];
+			return this.thingGrid[this.map.cellIndices.CellToIndex(c)];
 		}
 
 		public List<Thing> ThingsListAtFast(int index)
@@ -132,11 +136,11 @@ namespace Verse
 
 		public Thing ThingAt(IntVec3 c, ThingCategory cat)
 		{
-			if (!c.InBounds())
+			if (!c.InBounds(this.map))
 			{
 				return null;
 			}
-			List<Thing> list = this.thingGrid[CellIndices.CellToIndex(c)];
+			List<Thing> list = this.thingGrid[this.map.cellIndices.CellToIndex(c)];
 			for (int i = 0; i < list.Count; i++)
 			{
 				if (list[i].def.category == cat)
@@ -154,11 +158,11 @@ namespace Verse
 
 		public Thing ThingAt(IntVec3 c, ThingDef def)
 		{
-			if (!c.InBounds())
+			if (!c.InBounds(this.map))
 			{
 				return null;
 			}
-			List<Thing> list = this.thingGrid[CellIndices.CellToIndex(c)];
+			List<Thing> list = this.thingGrid[this.map.cellIndices.CellToIndex(c)];
 			for (int i = 0; i < list.Count; i++)
 			{
 				if (list[i].def == def)
@@ -171,11 +175,11 @@ namespace Verse
 
 		public T ThingAt<T>(IntVec3 c) where T : Thing
 		{
-			if (!c.InBounds())
+			if (!c.InBounds(this.map))
 			{
 				return (T)((object)null);
 			}
-			List<Thing> list = this.thingGrid[CellIndices.CellToIndex(c)];
+			List<Thing> list = this.thingGrid[this.map.cellIndices.CellToIndex(c)];
 			for (int i = 0; i < list.Count; i++)
 			{
 				T t = list[i] as T;

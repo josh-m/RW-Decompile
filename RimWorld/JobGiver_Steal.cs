@@ -13,19 +13,19 @@ namespace RimWorld
 
 		protected override Job TryGiveJob(Pawn pawn)
 		{
-			IntVec3 vec;
-			if (!RCellFinder.TryFindBestExitSpot(pawn, out vec, TraverseMode.ByPawn))
+			IntVec3 c;
+			if (!RCellFinder.TryFindBestExitSpot(pawn, out c, TraverseMode.ByPawn))
 			{
 				return null;
 			}
 			Thing thing;
-			if (StealAIUtility.TryFindBestItemToSteal(pawn.Position, 12f, out thing, pawn, null) && !GenAI.InDangerousCombat(pawn))
+			if (StealAIUtility.TryFindBestItemToSteal(pawn.Position, pawn.Map, 12f, out thing, pawn, null) && !GenAI.InDangerousCombat(pawn))
 			{
 				return new Job(JobDefOf.Steal)
 				{
 					targetA = thing,
-					targetB = vec,
-					maxNumToCarry = Mathf.Min(thing.stackCount, (int)(pawn.GetStatValue(StatDefOf.CarryingCapacity, true) / thing.def.VolumePerUnit))
+					targetB = c,
+					count = Mathf.Min(thing.stackCount, (int)(pawn.GetStatValue(StatDefOf.CarryingCapacity, true) / thing.def.VolumePerUnit))
 				};
 			}
 			return null;

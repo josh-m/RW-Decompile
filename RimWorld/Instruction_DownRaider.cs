@@ -29,7 +29,8 @@ namespace RimWorld
 				}
 			}
 			IncidentParms incidentParms = new IncidentParms();
-			incidentParms.points = 60f;
+			incidentParms.target = base.Map;
+			incidentParms.points = 30f;
 			incidentParms.raidArrivalMode = PawnsArriveMode.EdgeWalkIn;
 			incidentParms.raidStrategy = RaidStrategyDefOf.ImmediateAttack;
 			incidentParms.raidForceOneIncap = true;
@@ -39,7 +40,7 @@ namespace RimWorld
 
 		private bool AllColonistsInCover()
 		{
-			foreach (Pawn current in Find.MapPawns.FreeColonistsSpawned)
+			foreach (Pawn current in base.Map.mapPawns.FreeColonistsSpawned)
 			{
 				if (!this.coverCells.Contains(current.Position))
 				{
@@ -68,7 +69,18 @@ namespace RimWorld
 					Graphics.DrawMesh(MeshPool.plane10, position, Quaternion.identity, GenDraw.InteractionCellMaterial, 0);
 				}
 			}
-			if ((from p in Find.MapPawns.AllPawnsSpawned
+			IEnumerable<Pawn> source = base.Map.mapPawns.PawnsInFaction(Faction.OfPlayer);
+			if (source.Any((Pawn p) => p.Downed))
+			{
+				foreach (Pawn current in base.Map.mapPawns.AllPawns)
+				{
+					if (current.HostileTo(Faction.OfPlayer))
+					{
+						HealthUtility.GiveInjuriesToForceDowned(current);
+					}
+				}
+			}
+			if ((from p in base.Map.mapPawns.AllPawnsSpawned
 			where p.HostileTo(Faction.OfPlayer) && !p.Downed
 			select p).Count<Pawn>() == 0)
 			{

@@ -6,6 +6,14 @@ namespace Verse
 	{
 		private int ticksToDisappear;
 
+		public HediffCompProperties_Disappears Props
+		{
+			get
+			{
+				return (HediffCompProperties_Disappears)this.props;
+			}
+		}
+
 		public override bool CompShouldRemove
 		{
 			get
@@ -17,7 +25,7 @@ namespace Verse
 		public override void CompPostMake()
 		{
 			base.CompPostMake();
-			this.ticksToDisappear = this.props.disappearsAfterTicks.RandomInRange;
+			this.ticksToDisappear = this.Props.disappearsAfterTicks.RandomInRange;
 		}
 
 		public override void CompPostTick()

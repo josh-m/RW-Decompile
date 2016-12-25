@@ -9,6 +9,14 @@ namespace RimWorld
 	{
 		public ISlotGroupParent parent;
 
+		private Map Map
+		{
+			get
+			{
+				return this.parent.Map;
+			}
+		}
+
 		public StorageSettings Settings
 		{
 			get
@@ -23,7 +31,7 @@ namespace RimWorld
 			{
 				for (int i = 0; i < this.CellsList.Count; i++)
 				{
-					List<Thing> thingList = Find.ThingGrid.ThingsListAt(this.CellsList[i]);
+					List<Thing> thingList = this.Map.thingGrid.ThingsListAt(this.CellsList[i]);
 					for (int j = 0; j < thingList.Count; j++)
 					{
 						if (thingList[j].def.EverStoreable)
@@ -46,7 +54,7 @@ namespace RimWorld
 		public SlotGroup(ISlotGroupParent parent)
 		{
 			this.parent = parent;
-			Find.SlotGroupManager.AddGroup(this);
+			this.Map.slotGroupManager.AddGroup(this);
 		}
 
 		[DebuggerHidden]
@@ -60,19 +68,19 @@ namespace RimWorld
 
 		public void Notify_AddedCell(IntVec3 c)
 		{
-			Find.SlotGroupManager.SetCellFor(c, this);
-			ListerHaulables.RecalcAllInCell(c);
+			this.Map.slotGroupManager.SetCellFor(c, this);
+			this.Map.listerHaulables.RecalcAllInCell(c);
 		}
 
 		public void Notify_LostCell(IntVec3 c)
 		{
-			Find.SlotGroupManager.ClearCellFor(c, this);
-			ListerHaulables.RecalcAllInCell(c);
+			this.Map.slotGroupManager.ClearCellFor(c, this);
+			this.Map.listerHaulables.RecalcAllInCell(c);
 		}
 
 		public void Notify_ParentDestroying()
 		{
-			Find.SlotGroupManager.RemoveGroup(this);
+			this.Map.slotGroupManager.RemoveGroup(this);
 		}
 
 		public override string ToString()

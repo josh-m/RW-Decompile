@@ -37,12 +37,12 @@ namespace Verse
 			DragSliderManager.dragging = true;
 			DragSliderManager.draggingUpdateMethod = newDraggingUpdateMethod;
 			DragSliderManager.completedMethod = newCompletedMethod;
-			DragSliderManager.rootX = Input.mousePosition.x;
+			DragSliderManager.rootX = UI.MousePositionOnUI.x;
 		}
 
 		private static float CurMouseOffset()
 		{
-			return Input.mousePosition.x - DragSliderManager.rootX;
+			return UI.MousePositionOnUI.x - DragSliderManager.rootX;
 		}
 
 		public static void DragSlidersOnGUI()

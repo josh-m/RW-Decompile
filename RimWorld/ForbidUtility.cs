@@ -43,7 +43,7 @@ namespace RimWorld
 			{
 				Log.Error("SetForbiddenIfOutsideHomeArea unspawned thing " + t);
 			}
-			if (t.Position.InBounds() && !Find.AreaHome[t.Position])
+			if (t.Position.InBounds(t.Map) && !t.Map.areaManager.Home[t.Position])
 			{
 				t.SetForbidden(true, false);
 			}
@@ -51,22 +51,20 @@ namespace RimWorld
 
 		private static bool CaresAboutForbidden(Pawn pawn, bool cellTarget)
 		{
-			return !pawn.InMentalState && pawn.HostFaction == null && (!cellTarget || pawn.playerSettings == null || pawn.playerSettings.master == null || !pawn.playerSettings.master.Drafted);
-		}
-
-		private static Area GetApplicableAllowedArea(Pawn pawn)
-		{
-			if (pawn.playerSettings != null && pawn.playerSettings.AreaRestriction != null && pawn.playerSettings.AreaRestriction.TrueCount > 0)
-			{
-				return pawn.playerSettings.AreaRestriction;
-			}
-			return null;
+			return !pawn.InMentalState && pawn.HostFaction == null && (!cellTarget || !ThinkNode_ConditionalShouldFollowMaster.ShouldFollowMaster(pawn));
 		}
 
 		public static bool InAllowedArea(this IntVec3 c, Pawn forPawn)
 		{
-			Area applicableAllowedArea = ForbidUtility.GetApplicableAllowedArea(forPawn);
-			return applicableAllowedArea == null || applicableAllowedArea[c];
+			if (forPawn.playerSettings != null)
+			{
+				Area areaRestrictionInPawnCurrentMap = forPawn.playerSettings.AreaRestrictionInPawnCurrentMap;
+				if (areaRestrictionInPawnCurrentMap != null && areaRestrictionInPawnCurrentMap.TrueCount > 0 && !areaRestrictionInPawnCurrentMap[c])
+				{
+					return false;
+				}
+			}
+			return true;
 		}
 
 		public static bool IsForbidden(this Thing t, Pawn pawn)
@@ -103,8 +101,15 @@ namespace RimWorld
 			{
 				return false;
 			}
-			Area applicableAllowedArea = ForbidUtility.GetApplicableAllowedArea(pawn);
-			return applicableAllowedArea != null && r.OverlapWith(applicableAllowedArea) == AreaOverlap.None;
+			if (pawn.playerSettings != null)
+			{
+				Area areaRestriction = pawn.playerSettings.AreaRestriction;
+				if (areaRestriction != null && areaRestriction.TrueCount > 0 && areaRestriction.Map == r.Map && r.OverlapWith(areaRestriction) == AreaOverlap.None)
+				{
+					return true;
+				}
+			}
+			return false;
 		}
 
 		public static bool IsForbidden(this Thing t, Faction faction)

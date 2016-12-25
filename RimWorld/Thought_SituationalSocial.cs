@@ -15,14 +15,14 @@ namespace RimWorld
 			}
 		}
 
+		public Pawn OtherPawn()
+		{
+			return this.otherPawn;
+		}
+
 		public virtual float OpinionOffset()
 		{
 			return base.CurStage.baseOpinionOffset;
-		}
-
-		public int OtherPawnID()
-		{
-			return this.otherPawn.thingIDNumber;
 		}
 
 		public override bool GroupsWith(Thought other)

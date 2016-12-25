@@ -28,11 +28,11 @@ namespace RimWorld
 
 		public override AcceptanceReport CanDesignateCell(IntVec3 c)
 		{
-			if (!c.InBounds() || c.Fogged())
+			if (!c.InBounds(base.Map) || c.Fogged(base.Map))
 			{
 				return false;
 			}
-			Thing firstHaulable = c.GetFirstHaulable();
+			Thing firstHaulable = c.GetFirstHaulable(base.Map);
 			if (firstHaulable == null)
 			{
 				return "MessageMustDesignateHaulable".Translate();
@@ -47,7 +47,7 @@ namespace RimWorld
 
 		public override void DesignateSingleCell(IntVec3 c)
 		{
-			this.DesignateThing(c.GetFirstHaulable());
+			this.DesignateThing(c.GetFirstHaulable(base.Map));
 		}
 
 		public override AcceptanceReport CanDesignateThing(Thing t)
@@ -56,7 +56,7 @@ namespace RimWorld
 			{
 				return false;
 			}
-			if (Find.DesignationManager.DesignationOn(t, DesignationDefOf.Haul) != null)
+			if (base.Map.designationManager.DesignationOn(t, DesignationDefOf.Haul) != null)
 			{
 				return false;
 			}
@@ -69,7 +69,7 @@ namespace RimWorld
 
 		public override void DesignateThing(Thing t)
 		{
-			Find.DesignationManager.AddDesignation(new Designation(t, DesignationDefOf.Haul));
+			base.Map.designationManager.AddDesignation(new Designation(t, DesignationDefOf.Haul));
 		}
 
 		public override void SelectedUpdate()

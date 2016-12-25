@@ -14,6 +14,14 @@ namespace Verse.AI.Group
 			}
 		}
 
+		protected Map Map
+		{
+			get
+			{
+				return this.lord.lordManager.map;
+			}
+		}
+
 		public abstract StateGraph CreateGraph();
 
 		public virtual void ExposeData()
@@ -35,6 +43,11 @@ namespace Verse.AI.Group
 		public virtual string GetReport()
 		{
 			return null;
+		}
+
+		public virtual bool CanOpenAnyDoor(Pawn p)
+		{
+			return false;
 		}
 	}
 }

@@ -25,7 +25,7 @@ namespace RimWorld
 			{
 				return false;
 			}
-			if (Find.DesignationManager.DesignationOn(t, this.designationDef) != null)
+			if (base.Map.designationManager.DesignationOn(t, this.designationDef) != null)
 			{
 				return false;
 			}
@@ -34,11 +34,11 @@ namespace RimWorld
 
 		public override AcceptanceReport CanDesignateCell(IntVec3 c)
 		{
-			if (!c.InBounds() || c.Fogged())
+			if (!c.InBounds(base.Map) || c.Fogged(base.Map))
 			{
 				return false;
 			}
-			Plant plant = c.GetPlant();
+			Plant plant = c.GetPlant(base.Map);
 			if (plant == null)
 			{
 				return "MessageMustDesignatePlants".Translate();
@@ -53,13 +53,13 @@ namespace RimWorld
 
 		public override void DesignateSingleCell(IntVec3 c)
 		{
-			this.DesignateThing(c.GetPlant());
+			this.DesignateThing(c.GetPlant(base.Map));
 		}
 
 		public override void DesignateThing(Thing t)
 		{
-			Find.DesignationManager.RemoveAllDesignationsOn(t, false);
-			Find.DesignationManager.AddDesignation(new Designation(t, this.designationDef));
+			base.Map.designationManager.RemoveAllDesignationsOn(t, false);
+			base.Map.designationManager.AddDesignation(new Designation(t, this.designationDef));
 		}
 
 		public override void SelectedUpdate()

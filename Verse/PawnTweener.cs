@@ -9,7 +9,9 @@ namespace Verse
 
 		private Pawn pawn;
 
-		private Vector3 springPos = new Vector3(0f, 0f, 0f);
+		private Vector3 tweenedPos = new Vector3(0f, 0f, 0f);
+
+		private int lastDrawFrame = -1;
 
 		private Vector3 lastTickSpringPos;
 
@@ -17,52 +19,7 @@ namespace Verse
 		{
 			get
 			{
-				return this.springPos;
-			}
-		}
-
-		public Vector3 TweenedPosRoot
-		{
-			get
-			{
-				if (this.pawn.Destroyed)
-				{
-					return this.pawn.Position.ToVector3Shifted();
-				}
-				float num;
-				if (!this.pawn.pather.Moving)
-				{
-					num = 0f;
-				}
-				else if (Current.ProgramState == ProgramState.MapPlaying && !Find.CameraDriver.CurrentViewRect.ExpandedBy(3).Contains(this.pawn.Position))
-				{
-					num = 0f;
-				}
-				else if (this.pawn.stances.FullBodyBusy)
-				{
-					num = 0f;
-				}
-				else if (this.pawn.pather.BuildingBlockingNextPathCell() != null)
-				{
-					num = 0f;
-				}
-				else if (this.pawn.pather.NextCellDoorToManuallyOpen() != null)
-				{
-					num = 0f;
-				}
-				else if (this.pawn.pather.WillCollideWithPawnOnNextPathCell())
-				{
-					num = 0f;
-				}
-				else
-				{
-					num = 1f - this.pawn.pather.nextCellCostLeft / this.pawn.pather.nextCellCostTotal;
-				}
-				if (num < 0.0001f)
-				{
-					return this.pawn.Position.ToVector3Shifted();
-				}
-				return this.pawn.pather.nextCell.ToVector3Shifted() * num + this.pawn.Position.ToVector3Shifted() * (1f - num) + PawnCollisionTweenerUtility.PawnCollisionPosOffsetFor(this.pawn);
+				return this.tweenedPos;
 			}
 		}
 
@@ -79,16 +36,72 @@ namespace Verse
 			this.pawn = pawn;
 		}
 
-		public void TweenerTick()
+		public void PreDrawPosCalculation()
 		{
-			this.lastTickSpringPos = this.springPos;
-			Vector3 a = this.TweenedPosRoot - this.springPos;
-			this.springPos += a * 0.09f;
+			if (this.lastDrawFrame == Time.frameCount)
+			{
+				return;
+			}
+			if (this.lastDrawFrame < Time.frameCount - 1)
+			{
+				this.ResetTweenedPosToRoot();
+			}
+			else
+			{
+				this.lastTickSpringPos = this.tweenedPos;
+				float tickRateMultiplier = Find.TickManager.TickRateMultiplier;
+				if (tickRateMultiplier < 5f)
+				{
+					Vector3 a = this.TweenedPosRoot() - this.tweenedPos;
+					this.tweenedPos += a * 0.09f * (Time.deltaTime * 60f * tickRateMultiplier);
+				}
+				else
+				{
+					this.tweenedPos = this.TweenedPosRoot();
+				}
+			}
+			this.lastDrawFrame = Time.frameCount;
 		}
 
-		public void ResetToPosition()
+		public void ResetTweenedPosToRoot()
 		{
-			this.springPos = this.TweenedPosRoot;
+			this.tweenedPos = this.TweenedPosRoot();
+			this.lastTickSpringPos = this.tweenedPos;
+		}
+
+		private Vector3 TweenedPosRoot()
+		{
+			if (!this.pawn.Spawned)
+			{
+				return this.pawn.Position.ToVector3Shifted();
+			}
+			float num = this.MovedPercent();
+			return this.pawn.pather.nextCell.ToVector3Shifted() * num + this.pawn.Position.ToVector3Shifted() * (1f - num) + PawnCollisionTweenerUtility.PawnCollisionPosOffsetFor(this.pawn);
+		}
+
+		private float MovedPercent()
+		{
+			if (!this.pawn.pather.Moving)
+			{
+				return 0f;
+			}
+			if (this.pawn.stances.FullBodyBusy)
+			{
+				return 0f;
+			}
+			if (this.pawn.pather.BuildingBlockingNextPathCell() != null)
+			{
+				return 0f;
+			}
+			if (this.pawn.pather.NextCellDoorToManuallyOpen() != null)
+			{
+				return 0f;
+			}
+			if (this.pawn.pather.WillCollideWithPawnOnNextPathCell())
+			{
+				return 0f;
+			}
+			return 1f - this.pawn.pather.nextCellCostLeft / this.pawn.pather.nextCellCostTotal;
 		}
 	}
 }

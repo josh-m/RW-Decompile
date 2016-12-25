@@ -4,23 +4,26 @@ namespace Verse
 {
 	public class MapGenFloatGrid
 	{
+		private Map map;
+
 		private float[] grid;
 
 		public float this[IntVec3 c]
 		{
 			get
 			{
-				return this.grid[CellIndices.CellToIndex(c)];
+				return this.grid[this.map.cellIndices.CellToIndex(c)];
 			}
 			set
 			{
-				this.grid[CellIndices.CellToIndex(c)] = value;
+				this.grid[this.map.cellIndices.CellToIndex(c)] = value;
 			}
 		}
 
-		public MapGenFloatGrid(string name)
+		public MapGenFloatGrid(string name, Map map)
 		{
-			this.grid = new float[CellIndices.NumGridCells];
+			this.map = map;
+			this.grid = new float[map.cellIndices.NumGridCells];
 		}
 	}
 }

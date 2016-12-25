@@ -7,24 +7,38 @@ namespace Verse
 {
 	public static class GridsUtility
 	{
-		public static float GetTemperature(this IntVec3 loc)
+		public static float GetTemperature(this IntVec3 loc, Map map)
 		{
-			return GenTemperature.GetTemperatureForCell(loc);
+			return GenTemperature.GetTemperatureForCell(loc, map);
 		}
 
-		public static Region GetRegion(this IntVec3 loc)
+		public static Region GetRegion(this IntVec3 loc, Map map)
 		{
-			return Find.RegionGrid.GetValidRegionAt(loc);
+			return map.regionGrid.GetValidRegionAt(loc);
 		}
 
-		public static Room GetRoom(this IntVec3 loc)
+		public static Region GetRegion(this Thing thing)
 		{
-			return RoomQuery.RoomAt(loc);
+			if (!thing.Spawned)
+			{
+				return null;
+			}
+			return thing.Position.GetRegion(thing.Map);
 		}
 
-		public static Room GetRoomOrAdjacent(this IntVec3 loc)
+		public static Room GetRoom(this IntVec3 loc, Map map)
 		{
-			Room room = RoomQuery.RoomAt(loc);
+			return RoomQuery.RoomAt(loc, map);
+		}
+
+		public static Room GetRoom(this Thing t)
+		{
+			return RoomQuery.RoomAt(t);
+		}
+
+		public static Room GetRoomOrAdjacent(this IntVec3 loc, Map map)
+		{
+			Room room = RoomQuery.RoomAt(loc, map);
 			if (room != null)
 			{
 				return room;
@@ -32,7 +46,7 @@ namespace Verse
 			for (int i = 0; i < 8; i++)
 			{
 				IntVec3 c = loc + GenAdj.AdjacentCells[i];
-				room = RoomQuery.RoomAt(c);
+				room = RoomQuery.RoomAt(c, map);
 				if (room != null)
 				{
 					return room;
@@ -41,60 +55,55 @@ namespace Verse
 			return room;
 		}
 
-		public static Room GetRoom(this Thing t)
+		public static List<Thing> GetThingList(this IntVec3 c, Map map)
 		{
-			return RoomQuery.RoomAt(t.Position);
+			return map.thingGrid.ThingsListAt(c);
 		}
 
-		public static List<Thing> GetThingList(this IntVec3 c)
+		public static float GetSnowDepth(this IntVec3 c, Map map)
 		{
-			return Find.ThingGrid.ThingsListAt(c);
+			return map.snowGrid.GetDepth(c);
 		}
 
-		public static float GetSnowDepth(this IntVec3 c)
+		public static bool Fogged(this IntVec3 c, Map map)
 		{
-			return Find.SnowGrid.GetDepth(c);
+			return map.fogGrid.IsFogged(c);
 		}
 
-		public static bool Fogged(this IntVec3 c)
+		public static RoofDef GetRoof(this IntVec3 c, Map map)
 		{
-			return Find.FogGrid.IsFogged(c);
+			return map.roofGrid.RoofAt(c);
 		}
 
-		public static RoofDef GetRoof(this IntVec3 c)
+		public static bool Roofed(this IntVec3 c, Map map)
 		{
-			return Find.RoofGrid.RoofAt(c);
+			return map.roofGrid.Roofed(c);
 		}
 
-		public static bool Roofed(this IntVec3 c)
+		public static bool Filled(this IntVec3 c, Map map)
 		{
-			return Find.RoofGrid.Roofed(c);
-		}
-
-		public static bool Filled(this IntVec3 c)
-		{
-			Building edifice = c.GetEdifice();
+			Building edifice = c.GetEdifice(map);
 			return edifice != null && edifice.def.Fillage == FillCategory.Full;
 		}
 
-		public static TerrainDef GetTerrain(this IntVec3 c)
+		public static TerrainDef GetTerrain(this IntVec3 c, Map map)
 		{
-			return Find.TerrainGrid.TerrainAt(c);
+			return map.terrainGrid.TerrainAt(c);
 		}
 
-		public static Zone GetZone(this IntVec3 c)
+		public static Zone GetZone(this IntVec3 c, Map map)
 		{
-			return Find.ZoneManager.ZoneAt(c);
+			return map.zoneManager.ZoneAt(c);
 		}
 
-		public static Thing GetRegionBarrier(this IntVec3 c)
+		public static Thing GetRegionBarrier(this IntVec3 c, Map map)
 		{
-			return c.GetThingList().Find((Thing x) => x.def.regionBarrier);
+			return c.GetThingList(map).Find((Thing x) => x.def.regionBarrier);
 		}
 
-		public static Plant GetPlant(this IntVec3 c)
+		public static Plant GetPlant(this IntVec3 c, Map map)
 		{
-			List<Thing> list = Find.ThingGrid.ThingsListAt(c);
+			List<Thing> list = map.thingGrid.ThingsListAt(c);
 			for (int i = 0; i < list.Count; i++)
 			{
 				if (list[i].def.category == ThingCategory.Plant)
@@ -105,9 +114,9 @@ namespace Verse
 			return null;
 		}
 
-		public static Thing GetFirstThing(this IntVec3 c, ThingDef def)
+		public static Thing GetFirstThing(this IntVec3 c, Map map, ThingDef def)
 		{
-			List<Thing> thingList = c.GetThingList();
+			List<Thing> thingList = c.GetThingList(map);
 			for (int i = 0; i < thingList.Count; i++)
 			{
 				if (thingList[i].def == def)
@@ -118,9 +127,9 @@ namespace Verse
 			return null;
 		}
 
-		public static Thing GetFirstHaulable(this IntVec3 c)
+		public static Thing GetFirstHaulable(this IntVec3 c, Map map)
 		{
-			List<Thing> list = Find.ThingGrid.ThingsListAt(c);
+			List<Thing> list = map.thingGrid.ThingsListAt(c);
 			for (int i = 0; i < list.Count; i++)
 			{
 				if (list[i].def.designateHaulable)
@@ -131,9 +140,9 @@ namespace Verse
 			return null;
 		}
 
-		public static Thing GetFirstItem(this IntVec3 c)
+		public static Thing GetFirstItem(this IntVec3 c, Map map)
 		{
-			List<Thing> list = Find.ThingGrid.ThingsListAt(c);
+			List<Thing> list = map.thingGrid.ThingsListAt(c);
 			for (int i = 0; i < list.Count; i++)
 			{
 				if (list[i].def.category == ThingCategory.Item)
@@ -144,14 +153,28 @@ namespace Verse
 			return null;
 		}
 
-		public static Pawn GetFirstPawn(this IntVec3 c)
+		public static Building GetFirstBuilding(this IntVec3 c, Map map)
 		{
-			return (Pawn)c.GetThingList().Find((Thing x) => x is Pawn);
+			List<Thing> list = map.thingGrid.ThingsListAt(c);
+			for (int i = 0; i < list.Count; i++)
+			{
+				Building building = list[i] as Building;
+				if (building != null)
+				{
+					return building;
+				}
+			}
+			return null;
 		}
 
-		public static Building GetTransmitter(this IntVec3 c)
+		public static Pawn GetFirstPawn(this IntVec3 c, Map map)
 		{
-			List<Thing> list = Find.ThingGrid.ThingsListAt(c);
+			return (Pawn)c.GetThingList(map).Find((Thing x) => x is Pawn);
+		}
+
+		public static Building GetTransmitter(this IntVec3 c, Map map)
+		{
+			List<Thing> list = map.thingGrid.ThingsListAt(c);
 			for (int i = 0; i < list.Count; i++)
 			{
 				if (list[i].def.EverTransmitsPower)
@@ -162,19 +185,33 @@ namespace Verse
 			return null;
 		}
 
-		public static Building GetEdifice(this IntVec3 c)
+		public static Building_Door GetDoor(this IntVec3 c, Map map)
 		{
-			return Find.EdificeGrid[c];
+			List<Thing> list = map.thingGrid.ThingsListAt(c);
+			for (int i = 0; i < list.Count; i++)
+			{
+				Building_Door building_Door = list[i] as Building_Door;
+				if (building_Door != null)
+				{
+					return building_Door;
+				}
+			}
+			return null;
 		}
 
-		public static Thing GetCover(this IntVec3 c)
+		public static Building GetEdifice(this IntVec3 c, Map map)
 		{
-			return Find.CoverGrid[c];
+			return map.edificeGrid[c];
 		}
 
-		public static bool IsInPrisonCell(this IntVec3 c)
+		public static Thing GetCover(this IntVec3 c, Map map)
 		{
-			Room room = RoomQuery.RoomAt(c);
+			return map.coverGrid[c];
+		}
+
+		public static bool IsInPrisonCell(this IntVec3 c, Map map)
+		{
+			Room room = RoomQuery.RoomAt(c, map);
 			if (room != null)
 			{
 				return room.isPrisonCell;
@@ -182,7 +219,7 @@ namespace Verse
 			for (int i = 0; i < 8; i++)
 			{
 				IntVec3 c2 = c + GenAdj.AdjacentCells[i];
-				Room room2 = RoomQuery.RoomAt(c2);
+				Room room2 = RoomQuery.RoomAt(c2, map);
 				if (room2 != null)
 				{
 					return room2.isPrisonCell;
@@ -192,26 +229,26 @@ namespace Verse
 			return false;
 		}
 
-		public static bool UsesOutdoorTemperature(this IntVec3 c)
+		public static bool UsesOutdoorTemperature(this IntVec3 c, Map map)
 		{
-			Room room = c.GetRoom();
+			Room room = c.GetRoom(map);
 			if (room != null)
 			{
 				return room.UsesOutdoorTemperature;
 			}
-			if (!c.Impassable())
+			if (!c.Impassable(map))
 			{
 				return true;
 			}
-			Building edifice = c.GetEdifice();
+			Building edifice = c.GetEdifice(map);
 			if (edifice != null)
 			{
 				IntVec3[] array = GenAdj.CellsAdjacent8Way(edifice).ToArray<IntVec3>();
 				for (int i = 0; i < array.Count<IntVec3>(); i++)
 				{
-					if (array[i].InBounds() && !array[i].Impassable())
+					if (array[i].InBounds(map) && !array[i].Impassable(map))
 					{
-						room = array[i].GetRoom();
+						room = array[i].GetRoom(map);
 						if (room == null || room.UsesOutdoorTemperature)
 						{
 							return true;

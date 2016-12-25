@@ -5,6 +5,8 @@ namespace RimWorld
 {
 	public class PassingShip : ICommunicable, ILoadReferenceable, IExposable
 	{
+		public PassingShipManager passingShipManager;
+
 		public string name = "Nameless";
 
 		protected int loadID = -1;
@@ -27,6 +29,14 @@ namespace RimWorld
 			}
 		}
 
+		public Map Map
+		{
+			get
+			{
+				return this.passingShipManager.map;
+			}
+		}
+
 		public virtual void ExposeData()
 		{
 			Scribe_Values.LookValue<string>(ref this.name, "name", null, false);
@@ -34,25 +44,25 @@ namespace RimWorld
 			Scribe_Values.LookValue<int>(ref this.ticksUntilDeparture, "ticksUntilDeparture", 0, false);
 		}
 
-		public void VisitorTick()
+		public virtual void PassingShipTick()
 		{
 			this.ticksUntilDeparture--;
-			if (this.ticksUntilDeparture <= 0)
+			if (this.Departed)
 			{
 				this.Depart();
 			}
 		}
 
-		protected virtual void Depart()
+		public virtual void Depart()
 		{
-			if (Find.ListerBuildings.ColonistsHaveBuilding((Thing b) => b.def.IsCommsConsole))
+			if (this.Map.listerBuildings.ColonistsHaveBuilding((Thing b) => b.def.IsCommsConsole))
 			{
 				Messages.Message("MessageShipHasLeftCommsRange".Translate(new object[]
 				{
 					this.FullTitle
 				}), MessageSound.Silent);
 			}
-			Find.PassingShipManager.RemoveShip(this);
+			this.passingShipManager.RemoveShip(this);
 		}
 
 		public virtual void TryOpenComms(Pawn negotiator)

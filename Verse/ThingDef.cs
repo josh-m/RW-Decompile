@@ -31,11 +31,13 @@ namespace Verse
 
 		public List<CompProperties> comps = new List<CompProperties>();
 
-		public List<ThingCount> killedLeavings;
+		public List<ThingCountClass> killedLeavings;
 
-		public List<ThingCount> butcherProducts;
+		public List<ThingCountClass> butcherProducts;
 
-		public List<ThingCount> smeltProducts;
+		public List<ThingCountClass> smeltProducts;
+
+		public bool smeltable;
 
 		public bool randomizeRotationOnSpawn;
 
@@ -67,11 +69,15 @@ namespace Verse
 
 		public bool intricate;
 
-		public bool canMakeOnMapGen = true;
+		public bool scatterableOnMapGen = true;
 
 		public bool temporaryRegionBarrier;
 
 		public float deepCommonality;
+
+		public int deepCountPerCell = 150;
+
+		public float generateCommonality = 1f;
 
 		public GraphicData graphicData;
 
@@ -93,14 +99,14 @@ namespace Verse
 
 		public bool neverMultiSelect;
 
-		public bool isAutoAttackableWorldObject;
+		public bool isAutoAttackableMapObject;
 
 		public bool hasTooltip;
 
 		public List<Type> inspectorTabs;
 
 		[Unsaved]
-		public List<ITab> inspectorTabsResolved;
+		public List<InspectTabBase> inspectorTabsResolved;
 
 		public bool seeThroughFog;
 
@@ -113,6 +119,8 @@ namespace Verse
 		public bool drawPlaceWorkersWhileSelected;
 
 		public ConceptDef storedConceptLearnOpportunity;
+
+		public float iconDrawScale = -1f;
 
 		public bool alwaysHaulable;
 
@@ -159,6 +167,7 @@ namespace Verse
 
 		public Tradeability tradeability = Tradeability.Stockable;
 
+		[NoTranslate]
 		public List<string> tradeTags;
 
 		public bool tradeNeverStack;
@@ -183,8 +192,10 @@ namespace Verse
 
 		public TechLevel techLevel;
 
+		[NoTranslate]
 		public List<string> weaponTags;
 
+		[NoTranslate]
 		public List<string> techHediffsTags;
 
 		public bool canBeSpawningInventory = true;
@@ -194,8 +205,6 @@ namespace Verse
 		public List<StatModifier> equippedStatOffsets;
 
 		public BuildableDef entityDefToBuild;
-
-		public ThingDef seed_PlantDefToMake;
 
 		public IngestibleProperties ingestible;
 
@@ -405,7 +414,7 @@ namespace Verse
 		{
 			get
 			{
-				return this.Fillage == FillCategory.Full;
+				return this.Fillage == FillCategory.Full && !this.IsDoor;
 			}
 		}
 
@@ -600,7 +609,7 @@ namespace Verse
 		{
 			get
 			{
-				return !this.verbs.NullOrEmpty<VerbProperties>() && this.category == ThingCategory.Item;
+				return this.category == ThingCategory.Item && !this.verbs.NullOrEmpty<VerbProperties>();
 			}
 		}
 
@@ -640,7 +649,16 @@ namespace Verse
 		{
 			get
 			{
-				return this.ingestible != null && this.ingestible.drugCategory != DrugCategory.None && this.ingestible.joy > 0f;
+				return this.IsDrug && this.ingestible.joy > 0f;
+			}
+		}
+
+		public bool IsAddictiveDrug
+		{
+			get
+			{
+				CompProperties_Drug compProperties = this.GetCompProperties<CompProperties_Drug>();
+				return compProperties != null && compProperties.addictiveness > 0f;
 			}
 		}
 
@@ -757,9 +775,22 @@ namespace Verse
 				{
 					if (this.inspectorTabsResolved == null)
 					{
-						this.inspectorTabsResolved = new List<ITab>();
+						this.inspectorTabsResolved = new List<InspectTabBase>();
 					}
-					this.inspectorTabsResolved.Add(ITabManager.GetSharedInstance(this.inspectorTabs[i]));
+					try
+					{
+						this.inspectorTabsResolved.Add(InspectTabManager.GetSharedInstance(this.inspectorTabs[i]));
+					}
+					catch (Exception ex)
+					{
+						Log.Error(string.Concat(new object[]
+						{
+							"Could not instantiate inspector tab of type ",
+							this.inspectorTabs[i],
+							": ",
+							ex
+						}));
+					}
 				}
 			}
 			if (this.passability == Traversability.Impassable || this.thingClass == typeof(Building_Door) || this.temporaryRegionBarrier)
@@ -877,7 +908,7 @@ namespace Verse
 			}
 			if (this.costList != null)
 			{
-				foreach (ThingCount cost in this.costList)
+				foreach (ThingCountClass cost in this.costList)
 				{
 					if (cost.count == 0)
 					{
@@ -960,7 +991,7 @@ namespace Verse
 			{
 				yield return "madeFromStuff but has no stuffCategories.";
 			}
-			if (this.costList.NullOrEmpty<ThingCount>() && this.costStuffCount <= 0 && this.recipeMaker != null)
+			if (this.costList.NullOrEmpty<ThingCountClass>() && this.costStuffCount <= 0 && this.recipeMaker != null)
 			{
 				yield return "has a recipeMaker but no costList or costStuffCount.";
 			}
@@ -975,15 +1006,19 @@ namespace Verse
 					yield return "drawerType=MapMeshOnly but has a CompForbiddable, which must draw in real time.";
 				}
 			}
+			if (this.smeltProducts != null && this.smeltable)
+			{
+				yield return "has smeltProducts but has smeltable=false";
+			}
 			if (this.graphicData != null && this.graphicData.shadowData != null)
 			{
 				if (this.castEdgeShadows)
 				{
-					yield return "graphicData defines a shadowInfo by castEdgeShadows is also true";
+					yield return "graphicData defines a shadowInfo but castEdgeShadows is also true";
 				}
 				if (this.staticSunShadowHeight > 0f)
 				{
-					yield return "graphicData defines a shadowInfo by staticSunShadowHeight > 0";
+					yield return "graphicData defines a shadowInfo but staticSunShadowHeight > 0";
 				}
 			}
 			if (this.race != null && this.verbs != null)
@@ -1080,7 +1115,7 @@ namespace Verse
 				where x.isPrimary
 				select x).First<VerbProperties>();
 				StatCategoryDef verbStatCategory = (this.category != ThingCategory.Pawn) ? (verbStatCategory = StatCategoryDefOf.Weapon) : (verbStatCategory = StatCategoryDefOf.PawnCombat);
-				float warmup = verb.warmupTicks.TicksToSeconds();
+				float warmup = verb.warmupTime;
 				if (warmup > 0f)
 				{
 					string warmupLabel = (this.category != ThingCategory.Pawn) ? "WarmupTime".Translate() : "MeleeWarmupTime".Translate();
@@ -1142,7 +1177,7 @@ namespace Verse
 						{
 							yield return s4;
 						}
-						HediffCompProperties vg = diff.CompPropsFor(typeof(HediffComp_VerbGiver));
+						HediffCompProperties_VerbGiver vg = diff.CompProps<HediffCompProperties_VerbGiver>();
 						if (vg != null)
 						{
 							VerbProperties verb2 = vg.verbs.FirstOrDefault<VerbProperties>();

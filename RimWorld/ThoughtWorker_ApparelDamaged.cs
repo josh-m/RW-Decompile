@@ -6,9 +6,9 @@ namespace RimWorld
 {
 	public class ThoughtWorker_ApparelDamaged : ThoughtWorker
 	{
-		private const float MinForFrayed = 0.5f;
+		public const float MinForFrayed = 0.5f;
 
-		private const float MinForTattered = 0.2f;
+		public const float MinForTattered = 0.2f;
 
 		protected override ThoughtState CurrentStateInternal(Pawn p)
 		{

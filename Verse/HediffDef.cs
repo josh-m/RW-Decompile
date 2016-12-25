@@ -12,19 +12,17 @@ namespace Verse
 
 		public List<HediffCompProperties> comps;
 
-		public bool isBad = true;
-
-		public float initialSeverity = 0.001f;
-
-		public bool naturallyHealed;
+		public float initialSeverity = 0.5f;
 
 		public float lethalSeverity = -1f;
 
 		public List<HediffStage> stages;
 
-		public ThingDef spawnThingOnRemoved;
-
 		public bool tendable;
+
+		public bool isBad = true;
+
+		public ThingDef spawnThingOnRemoved;
 
 		public float chanceToCauseNoPain;
 
@@ -39,6 +37,8 @@ namespace Verse
 		public float maxSeverity = 3.40282347E+38f;
 
 		public bool scenarioCanAdd;
+
+		public List<HediffGiver> hediffGivers;
 
 		public bool displayWound;
 
@@ -56,6 +56,21 @@ namespace Verse
 			}
 		}
 
+		public bool HasComp(Type compClass)
+		{
+			if (this.comps != null)
+			{
+				for (int i = 0; i < this.comps.Count; i++)
+				{
+					if (this.comps[i].compClass == compClass)
+					{
+						return true;
+					}
+				}
+			}
+			return false;
+		}
+
 		public HediffCompProperties CompPropsFor(Type compClass)
 		{
 			if (this.comps != null)
@@ -71,24 +86,26 @@ namespace Verse
 			return null;
 		}
 
-		public bool HasComp(Type compClass)
+		public T CompProps<T>() where T : class
 		{
-			return this.CompPropsFor(compClass) != null;
-		}
-
-		public override void ResolveReferences()
-		{
-			base.ResolveReferences();
-			if (!this.tendable && this.CompPropsFor(typeof(HediffComp_Tendable)) != null)
+			if (this.comps != null)
 			{
-				this.tendable = true;
+				for (int i = 0; i < this.comps.Count; i++)
+				{
+					T t = this.comps[i] as T;
+					if (t != null)
+					{
+						return t;
+					}
+				}
 			}
+			return (T)((object)null);
 		}
 
 		public bool PossibleToDevelopImmunity()
 		{
-			HediffCompProperties hediffCompProperties = this.CompPropsFor(typeof(HediffComp_Immunizable));
-			return hediffCompProperties != null && (hediffCompProperties.immunityPerDayNotSick > 0f || hediffCompProperties.immunityPerDaySick > 0f);
+			HediffCompProperties_Immunizable hediffCompProperties_Immunizable = this.CompProps<HediffCompProperties_Immunizable>();
+			return hediffCompProperties_Immunizable != null && (hediffCompProperties_Immunizable.immunityPerDayNotSick > 0f || hediffCompProperties_Immunizable.immunityPerDaySick > 0f);
 		}
 
 		[DebuggerHidden]
@@ -114,6 +131,10 @@ namespace Verse
 			{
 				yield return "maxSeverity is lower than initialSeverity";
 			}
+			if (!this.tendable && this.HasComp(typeof(HediffComp_TendDuration)))
+			{
+				yield return "has HediffComp_TendDuration but tendable = false";
+			}
 			if (this.comps != null)
 			{
 				for (int i = 0; i < this.comps.Count; i++)
@@ -138,9 +159,12 @@ namespace Verse
 				}
 				for (int k = 0; k < this.stages.Count; k++)
 				{
-					if (this.stages[k].makeImmuneTo != null && !this.stages[k].makeImmuneTo.HasComp(typeof(HediffComp_Immunizable)))
+					if (this.stages[k].makeImmuneTo != null)
 					{
-						yield return "makes immune to hediff which doesn't have comp immunizable";
+						if (!this.stages[k].makeImmuneTo.Any((HediffDef im) => im.HasComp(typeof(HediffComp_Immunizable))))
+						{
+							yield return "makes immune to hediff which doesn't have comp immunizable";
+						}
 					}
 				}
 			}

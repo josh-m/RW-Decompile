@@ -22,8 +22,10 @@ namespace RimWorld
 
 		public DifficultyDef forcedDifficulty;
 
+		[NoTranslate]
 		private string portraitLarge;
 
+		[NoTranslate]
 		private string portraitTiny;
 
 		public List<StorytellerCompProperties> comps = new List<StorytellerCompProperties>();

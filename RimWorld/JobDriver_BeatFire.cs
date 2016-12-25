@@ -23,7 +23,7 @@ namespace RimWorld
 			Toil approach = new Toil();
 			approach.initAction = delegate
 			{
-				if (Find.Reservations.CanReserve(this.<>f__this.pawn, this.<>f__this.TargetFire, 1))
+				if (this.<>f__this.Map.reservationManager.CanReserve(this.<>f__this.pawn, this.<>f__this.TargetFire, 1))
 				{
 					this.<>f__this.pawn.Reserve(this.<>f__this.TargetFire, 1);
 				}
@@ -33,7 +33,7 @@ namespace RimWorld
 			{
 				if (this.<>f__this.pawn.pather.Moving && this.<>f__this.pawn.pather.nextCell != this.<>f__this.TargetFire.Position)
 				{
-					List<Thing> thingList = this.<>f__this.pawn.pather.nextCell.GetThingList();
+					List<Thing> thingList = this.<>f__this.pawn.pather.nextCell.GetThingList(this.<>f__this.Map);
 					for (int i = 0; i < thingList.Count; i++)
 					{
 						Fire fire = thingList[i] as Fire;
@@ -49,6 +49,7 @@ namespace RimWorld
 			};
 			approach.FailOnDespawnedOrNull(TargetIndex.A);
 			approach.defaultCompleteMode = ToilCompleteMode.PatherArrival;
+			approach.atomicWithPrevious = true;
 			yield return approach;
 			Toil beat = new Toil();
 			beat.tickAction = delegate
@@ -63,7 +64,7 @@ namespace RimWorld
 					if (this.<>f__this.TargetFire.Destroyed)
 					{
 						this.<>f__this.pawn.records.Increment(RecordDefOf.FiresExtinguished);
-						this.<>f__this.pawn.jobs.EndCurrentJob(JobCondition.Succeeded);
+						this.<>f__this.pawn.jobs.EndCurrentJob(JobCondition.Succeeded, true);
 						return;
 					}
 				}

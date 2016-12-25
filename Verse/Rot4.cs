@@ -275,6 +275,23 @@ namespace Verse
 			return this.rotInt.ToString();
 		}
 
+		public string ToStringHuman()
+		{
+			switch (this.rotInt)
+			{
+			case 0:
+				return "North".Translate();
+			case 1:
+				return "East".Translate();
+			case 2:
+				return "South".Translate();
+			case 3:
+				return "West".Translate();
+			default:
+				return "error";
+			}
+		}
+
 		public static Rot4 FromString(string str)
 		{
 			int num;

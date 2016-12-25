@@ -12,6 +12,33 @@ namespace Verse
 
 		private ThingWithComps primaryInt;
 
+		private List<ThingWithComps> cachedAllEquipment = new List<ThingWithComps>();
+
+		private bool cachedAllEquipmentDirty = true;
+
+		private static List<ThingWithComps> tmpEquipment = new List<ThingWithComps>();
+
+		public ThingWithComps Primary
+		{
+			get
+			{
+				return this.primaryInt;
+			}
+			private set
+			{
+				if (this.primaryInt == value)
+				{
+					return;
+				}
+				this.primaryInt = value;
+				this.cachedAllEquipmentDirty = true;
+				if (this.pawn.drafter != null)
+				{
+					this.pawn.drafter.Notify_PrimaryWeaponChanged();
+				}
+			}
+		}
+
 		public CompEquippable PrimaryEq
 		{
 			get
@@ -20,22 +47,20 @@ namespace Verse
 			}
 		}
 
-		public ThingWithComps Primary
+		public List<ThingWithComps> AllEquipment
 		{
 			get
 			{
-				return this.primaryInt;
-			}
-		}
-
-		public IEnumerable<ThingWithComps> AllEquipment
-		{
-			get
-			{
-				if (this.primaryInt != null)
+				if (this.cachedAllEquipmentDirty)
 				{
-					yield return this.primaryInt;
+					this.cachedAllEquipment.Clear();
+					if (this.primaryInt != null)
+					{
+						this.cachedAllEquipment.Add(this.primaryInt);
+					}
+					this.cachedAllEquipmentDirty = false;
 				}
+				return this.cachedAllEquipment;
 			}
 		}
 
@@ -43,8 +68,9 @@ namespace Verse
 		{
 			get
 			{
-				foreach (ThingWithComps eq in this.AllEquipment)
+				for (int i = 0; i < this.AllEquipment.Count; i++)
 				{
+					ThingWithComps eq = this.AllEquipment[i];
 					foreach (Verb verb in eq.GetComp<CompEquippable>().AllVerbs)
 					{
 						yield return verb;
@@ -61,14 +87,19 @@ namespace Verse
 		public void ExposeData()
 		{
 			Scribe_Deep.LookDeep<ThingWithComps>(ref this.primaryInt, "primary", new object[0]);
+			if (Scribe.mode != LoadSaveMode.Saving)
+			{
+				this.cachedAllEquipmentDirty = true;
+			}
 			if (Scribe.mode == LoadSaveMode.LoadingVars)
 			{
-				foreach (ThingWithComps current in this.AllEquipment)
+				for (int i = 0; i < this.AllEquipment.Count; i++)
 				{
-					foreach (Verb current2 in current.GetComp<CompEquippable>().AllVerbs)
+					ThingWithComps thingWithComps = this.AllEquipment[i];
+					foreach (Verb current in thingWithComps.GetComp<CompEquippable>().AllVerbs)
 					{
-						current2.caster = this.pawn;
-						current2.ownerEquipment = current;
+						current.caster = this.pawn;
+						current.ownerEquipment = thingWithComps;
 					}
 				}
 			}
@@ -76,9 +107,10 @@ namespace Verse
 
 		public void EquipmentTrackerTick()
 		{
-			foreach (ThingWithComps current in this.AllEquipment)
+			for (int i = 0; i < this.AllEquipment.Count; i++)
 			{
-				current.GetComp<CompEquippable>().verbTracker.VerbsTick();
+				ThingWithComps thingWithComps = this.AllEquipment[i];
+				thingWithComps.GetComp<CompEquippable>().verbTracker.VerbsTick();
 			}
 		}
 
@@ -89,10 +121,10 @@ namespace Verse
 
 		public void MakeRoomFor(ThingWithComps eq)
 		{
-			if (eq.def.equipmentType == EquipmentType.Primary && this.primaryInt != null)
+			if (eq.def.equipmentType == EquipmentType.Primary && this.Primary != null)
 			{
 				ThingWithComps t;
-				if (this.TryDropEquipment(this.primaryInt, out t, this.pawn.Position, true))
+				if (this.TryDropEquipment(this.Primary, out t, this.pawn.Position, true))
 				{
 					t.SetForbidden(false, true);
 				}
@@ -101,6 +133,25 @@ namespace Verse
 					Log.Error(this.pawn + " couldn't make room for equipment " + eq);
 				}
 			}
+		}
+
+		public void Remove(ThingWithComps eq)
+		{
+			if (!this.AllEquipment.Contains(eq))
+			{
+				Log.Warning("Tried to remove equipment " + eq + " but it's not here.");
+				return;
+			}
+			if (this.Primary == eq)
+			{
+				this.Primary = null;
+			}
+			else
+			{
+				Log.Error("Tried to remove equipment " + eq + " but it's not Primary. Where is it?");
+			}
+			eq.GetComp<CompEquippable>().Notify_EquipmentLost();
+			this.pawn.meleeVerbs.Notify_EquipmentLost();
 		}
 
 		public bool TryDropEquipment(ThingWithComps eq, out ThingWithComps resultingEq, IntVec3 pos, bool forbid = true)
@@ -123,27 +174,19 @@ namespace Verse
 				resultingEq = null;
 				return false;
 			}
-			if (this.primaryInt == eq)
-			{
-				this.primaryInt = null;
-			}
+			this.Remove(eq);
 			Thing thing = null;
-			bool flag = GenThing.TryDropAndSetForbidden(eq, pos, ThingPlaceMode.Near, out thing, forbid);
+			bool result = GenThing.TryDropAndSetForbidden(eq, pos, this.pawn.MapHeld, ThingPlaceMode.Near, out thing, forbid);
 			resultingEq = (thing as ThingWithComps);
-			if (flag && resultingEq != null)
-			{
-				resultingEq.GetComp<CompEquippable>().Notify_Dropped();
-			}
-			this.pawn.meleeVerbs.Notify_EquipmentLost();
-			return flag;
+			return result;
 		}
 
 		public void DropAllEquipment(IntVec3 pos, bool forbid = true)
 		{
-			if (this.primaryInt != null)
+			if (this.Primary != null)
 			{
 				ThingWithComps thingWithComps;
-				this.TryDropEquipment(this.primaryInt, out thingWithComps, pos, forbid);
+				this.TryDropEquipment(this.Primary, out thingWithComps, pos, forbid);
 			}
 		}
 
@@ -155,7 +198,7 @@ namespace Verse
 				resultingEq = null;
 				return false;
 			}
-			if (container.TryAdd(eq))
+			if (container.TryAdd(eq, true))
 			{
 				resultingEq = null;
 			}
@@ -163,38 +206,34 @@ namespace Verse
 			{
 				resultingEq = eq;
 			}
-			if (this.primaryInt == eq)
-			{
-				this.primaryInt = null;
-			}
-			this.pawn.meleeVerbs.Notify_EquipmentLost();
+			this.Remove(eq);
 			return resultingEq == null;
 		}
 
 		public void DestroyEquipment(ThingWithComps eq)
 		{
-			if (eq != null && eq == this.primaryInt)
+			if (!this.AllEquipment.Contains(eq))
 			{
-				this.primaryInt.Destroy(DestroyMode.Vanish);
-				this.primaryInt = null;
+				Log.Warning("Tried to destroy equipment " + eq + " but it's not here.");
+				return;
 			}
-			this.pawn.meleeVerbs.Notify_EquipmentLost();
+			this.Remove(eq);
+			eq.Destroy(DestroyMode.Vanish);
 		}
 
 		public void DestroyAllEquipment(DestroyMode mode = DestroyMode.Vanish)
 		{
-			if (this.primaryInt != null)
+			Pawn_EquipmentTracker.tmpEquipment.Clear();
+			Pawn_EquipmentTracker.tmpEquipment.AddRange(this.AllEquipment);
+			for (int i = 0; i < Pawn_EquipmentTracker.tmpEquipment.Count; i++)
 			{
-				this.primaryInt.Destroy(mode);
-				this.primaryInt = null;
+				this.DestroyEquipment(Pawn_EquipmentTracker.tmpEquipment[i]);
 			}
-			this.pawn.meleeVerbs.Notify_EquipmentLost();
 		}
 
 		internal void Notify_PrimaryDestroyed()
 		{
-			this.primaryInt = null;
-			this.pawn.meleeVerbs.Notify_EquipmentLost();
+			this.Remove(this.Primary);
 			if (this.pawn.Spawned)
 			{
 				this.pawn.stances.CancelBusyStanceSoft();
@@ -218,7 +257,7 @@ namespace Verse
 				}));
 				return;
 			}
-			if (newEq.def.equipmentType == EquipmentType.Primary && this.primaryInt != null)
+			if (newEq.def.equipmentType == EquipmentType.Primary && this.Primary != null)
 			{
 				Log.Error(string.Concat(new object[]
 				{
@@ -227,13 +266,17 @@ namespace Verse
 					" got primaryInt equipment ",
 					newEq,
 					" while already having primaryInt equipment ",
-					this.primaryInt
+					this.Primary
 				}));
 				return;
 			}
 			if (newEq.def.equipmentType == EquipmentType.Primary)
 			{
-				this.primaryInt = newEq;
+				this.Primary = newEq;
+			}
+			else
+			{
+				Log.Error("Tried to equip " + newEq + " but it's not Primary. Secondary weapons are not supported.");
 			}
 			foreach (Verb current in newEq.GetComp<CompEquippable>().AllVerbs)
 			{
@@ -251,12 +294,12 @@ namespace Verse
 			}
 			else
 			{
-				int index = 0;
-				foreach (ThingWithComps equipment in this.AllEquipment)
+				for (int i = 0; i < this.AllEquipment.Count; i++)
 				{
-					foreach (Command command in equipment.GetComp<CompEquippable>().GetVerbsCommands())
+					ThingWithComps eq = this.AllEquipment[i];
+					foreach (Command command in eq.GetComp<CompEquippable>().GetVerbsCommands())
 					{
-						switch (index)
+						switch (i)
 						{
 						case 0:
 							command.hotKey = KeyBindingDefOf.Misc1;
@@ -274,7 +317,7 @@ namespace Verse
 			}
 		}
 
-		public bool TryStartAttack(TargetInfo targ)
+		public bool TryStartAttack(LocalTargetInfo targ)
 		{
 			if (this.pawn.stances.FullBodyBusy)
 			{
@@ -335,7 +378,7 @@ namespace Verse
 			command_Target.hotKey = KeyBindingDefOf.Misc1;
 			command_Target.icon = TexCommand.SquadAttack;
 			string str;
-			if (FloatMenuUtility.GetAttackAction(this.pawn, TargetInfo.Invalid, out str) == null)
+			if (FloatMenuUtility.GetAttackAction(this.pawn, LocalTargetInfo.Invalid, out str) == null)
 			{
 				command_Target.Disable(str.CapitalizeFirst() + ".");
 			}

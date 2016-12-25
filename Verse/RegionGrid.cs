@@ -7,7 +7,9 @@ namespace Verse
 	{
 		private const int CleanSquaresPerFrame = 16;
 
-		private Region[] regionGrid = new Region[CellIndices.NumGridCells];
+		private Map map;
+
+		private Region[] regionGrid;
 
 		private int curCleanIndex;
 
@@ -22,7 +24,7 @@ namespace Verse
 			get
 			{
 				RegionGrid.allRegionsYielded.Clear();
-				int count = CellIndices.NumGridCells;
+				int count = this.map.cellIndices.NumGridCells;
 				for (int i = 0; i < count; i++)
 				{
 					if (this.regionGrid[i] != null && !RegionGrid.allRegionsYielded.Contains(this.regionGrid[i]))
@@ -34,15 +36,21 @@ namespace Verse
 			}
 		}
 
+		public RegionGrid(Map map)
+		{
+			this.map = map;
+			this.regionGrid = new Region[map.cellIndices.NumGridCells];
+		}
+
 		public Region GetValidRegionAt(IntVec3 c)
 		{
-			if (!c.InBounds())
+			if (!c.InBounds(this.map))
 			{
 				Log.Error("Tried to get valid region out of bounds at " + c);
 				return null;
 			}
-			RegionAndRoomUpdater.RebuildDirtyRegionsAndRooms();
-			Region region = this.regionGrid[CellIndices.CellToIndex(c)];
+			this.map.regionAndRoomUpdater.RebuildDirtyRegionsAndRooms();
+			Region region = this.regionGrid[this.map.cellIndices.CellToIndex(c)];
 			if (region != null && region.valid)
 			{
 				return region;
@@ -52,12 +60,12 @@ namespace Verse
 
 		public Region GetValidRegionAt_NoRebuild(IntVec3 c)
 		{
-			if (!c.InBounds())
+			if (!c.InBounds(this.map))
 			{
 				Log.Error("Tried to get valid region out of bounds at " + c);
 				return null;
 			}
-			Region region = this.regionGrid[CellIndices.CellToIndex(c)];
+			Region region = this.regionGrid[this.map.cellIndices.CellToIndex(c)];
 			if (region != null && region.valid)
 			{
 				return region;
@@ -67,12 +75,12 @@ namespace Verse
 
 		public Region GetRegionAt_InvalidAllowed(IntVec3 c)
 		{
-			return this.regionGrid[CellIndices.CellToIndex(c)];
+			return this.regionGrid[this.map.cellIndices.CellToIndex(c)];
 		}
 
 		public void SetRegionAt(IntVec3 c, Region reg)
 		{
-			this.regionGrid[CellIndices.CellToIndex(c)] = reg;
+			this.regionGrid[this.map.cellIndices.CellToIndex(c)] = reg;
 		}
 
 		public void UpdateClean()
@@ -94,10 +102,14 @@ namespace Verse
 
 		public void DebugDraw()
 		{
+			if (this.map != Find.VisibleMap)
+			{
+				return;
+			}
 			if (DebugViewSettings.drawRegionTraversal)
 			{
 				CellRect currentViewRect = Find.CameraDriver.CurrentViewRect;
-				currentViewRect.ClipInsideMap();
+				currentViewRect.ClipInsideMap(this.map);
 				foreach (IntVec3 current in currentViewRect)
 				{
 					Region validRegionAt = this.GetValidRegionAt(current);
@@ -109,12 +121,12 @@ namespace Verse
 				}
 				this.drawnRegions.Clear();
 			}
-			IntVec3 c = Gen.MouseCell();
-			if (c.InBounds())
+			IntVec3 c = UI.MouseCell();
+			if (c.InBounds(this.map))
 			{
 				if (DebugViewSettings.drawRooms)
 				{
-					Room room = RoomQuery.RoomAt(c);
+					Room room = RoomQuery.RoomAt(c, this.map);
 					if (room != null)
 					{
 						room.DebugDraw();

@@ -11,6 +11,14 @@ namespace Verse
 			new CurvePoint(1f, 0.25f)
 		};
 
+		public HediffCompProperties_DrugEffectFactor Props
+		{
+			get
+			{
+				return (HediffCompProperties_DrugEffectFactor)this.props;
+			}
+		}
+
 		private float CurrentFactor
 		{
 			get
@@ -25,14 +33,14 @@ namespace Verse
 			{
 				return "DrugEffectMultiplier".Translate(new object[]
 				{
-					this.props.chemical
+					this.Props.chemical
 				}) + ": " + this.CurrentFactor.ToStringPercent();
 			}
 		}
 
-		public override void CompFactorDrugEffect(ChemicalDef chem, ref float effect)
+		public override void CompModifyChemicalEffect(ChemicalDef chem, ref float effect)
 		{
-			if (this.props.chemical == chem)
+			if (this.Props.chemical == chem)
 			{
 				effect *= this.CurrentFactor;
 			}

@@ -68,7 +68,7 @@ namespace RimWorld
 				initAction = delegate
 				{
 					Thing thing;
-					this.<>f__this.pawn.carrier.TryDropCarriedThing(this.<toil>__1.actor.jobs.curJob.targetC.Cell, ThingPlaceMode.Direct, out thing, null);
+					this.<>f__this.pawn.carryTracker.TryDropCarriedThing(this.<toil>__1.actor.jobs.curJob.targetC.Cell, ThingPlaceMode.Direct, out thing, null);
 				},
 				defaultCompleteMode = ToilCompleteMode.Instant
 			};

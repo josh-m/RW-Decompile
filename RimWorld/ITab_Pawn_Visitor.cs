@@ -25,35 +25,45 @@ namespace RimWorld
 			rect2.yMin += 24f;
 			bool isPrisonerOfColony = base.SelPawn.IsPrisonerOfColony;
 			Listing_Standard listing_Standard = new Listing_Standard(rect2);
+			Rect rect3 = listing_Standard.GetRect(Text.LineHeight);
+			rect3.width *= 0.75f;
 			bool getsFood = base.SelPawn.guest.GetsFood;
-			listing_Standard.CheckboxLabeled("GetsFood".Translate(), ref getsFood, null);
+			Widgets.CheckboxLabeled(rect3, "GetsFood".Translate(), ref getsFood, false);
 			base.SelPawn.guest.GetsFood = getsFood;
-			Rect rect3 = listing_Standard.GetRect(28f);
-			rect3.width = 140f;
-			MedicalCareUtility.MedicalCareSetter(rect3, ref base.SelPawn.playerSettings.medCare);
+			listing_Standard.Gap(12f);
+			Rect rect4 = listing_Standard.GetRect(28f);
+			rect4.width = 140f;
+			MedicalCareUtility.MedicalCareSetter(rect4, ref base.SelPawn.playerSettings.medCare);
 			listing_Standard.Gap(4f);
 			if (isPrisonerOfColony)
 			{
 				listing_Standard.Label("RecruitmentDifficulty".Translate() + ": " + base.SelPawn.RecruitDifficulty(Faction.OfPlayer, false).ToStringPercent());
+				if (base.SelPawn.guilt.IsGuilty)
+				{
+					listing_Standard.Label("ConsideredGuilty".Translate(new object[]
+					{
+						base.SelPawn.guilt.TicksUntilInnocent.ToStringTicksToPeriod(true)
+					}));
+				}
 				if (Prefs.DevMode)
 				{
 					listing_Standard.Label("Dev: Prison break MTB days: " + (int)PrisonBreakUtility.InitiatePrisonBreakMtbDays(base.SelPawn));
 				}
-				Rect rect4 = listing_Standard.GetRect(200f).Rounded();
-				Widgets.DrawMenuSection(rect4, true);
-				Rect position = rect4.ContractedBy(10f);
+				Rect rect5 = listing_Standard.GetRect(200f).Rounded();
+				Widgets.DrawMenuSection(rect5, true);
+				Rect position = rect5.ContractedBy(10f);
 				GUI.BeginGroup(position);
-				Rect rect5 = new Rect(0f, 0f, position.width, 30f);
+				Rect rect6 = new Rect(0f, 0f, position.width, 30f);
 				using (IEnumerator enumerator = Enum.GetValues(typeof(PrisonerInteractionMode)).GetEnumerator())
 				{
 					while (enumerator.MoveNext())
 					{
 						PrisonerInteractionMode prisonerInteractionMode = (PrisonerInteractionMode)((byte)enumerator.Current);
-						if (Widgets.RadioButtonLabeled(rect5, prisonerInteractionMode.GetLabel(), base.SelPawn.guest.interactionMode == prisonerInteractionMode))
+						if (Widgets.RadioButtonLabeled(rect6, prisonerInteractionMode.GetLabel(), base.SelPawn.guest.interactionMode == prisonerInteractionMode))
 						{
 							base.SelPawn.guest.interactionMode = prisonerInteractionMode;
 						}
-						rect5.y += 28f;
+						rect6.y += 28f;
 					}
 				}
 				GUI.EndGroup();

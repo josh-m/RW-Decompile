@@ -7,7 +7,7 @@ namespace Verse
 	{
 		public class PhysicalInteractionReservation : IExposable
 		{
-			public TargetInfo target;
+			public LocalTargetInfo target;
 
 			public Pawn claimant;
 
@@ -20,7 +20,7 @@ namespace Verse
 
 		private List<PhysicalInteractionReservationManager.PhysicalInteractionReservation> reservations = new List<PhysicalInteractionReservationManager.PhysicalInteractionReservation>();
 
-		public void Reserve(Pawn claimant, TargetInfo target)
+		public void Reserve(Pawn claimant, LocalTargetInfo target)
 		{
 			if (this.IsReservedBy(claimant, target))
 			{
@@ -32,7 +32,7 @@ namespace Verse
 			this.reservations.Add(physicalInteractionReservation);
 		}
 
-		public void Release(Pawn claimant, TargetInfo target)
+		public void Release(Pawn claimant, LocalTargetInfo target)
 		{
 			for (int i = 0; i < this.reservations.Count; i++)
 			{
@@ -52,7 +52,7 @@ namespace Verse
 			}));
 		}
 
-		public bool IsReservedBy(Pawn claimant, TargetInfo target)
+		public bool IsReservedBy(Pawn claimant, LocalTargetInfo target)
 		{
 			for (int i = 0; i < this.reservations.Count; i++)
 			{
@@ -65,12 +65,12 @@ namespace Verse
 			return false;
 		}
 
-		public bool IsReserved(TargetInfo target)
+		public bool IsReserved(LocalTargetInfo target)
 		{
 			return this.FirstReserverOf(target) != null;
 		}
 
-		public Pawn FirstReserverOf(TargetInfo target)
+		public Pawn FirstReserverOf(LocalTargetInfo target)
 		{
 			for (int i = 0; i < this.reservations.Count; i++)
 			{
@@ -83,7 +83,7 @@ namespace Verse
 			return null;
 		}
 
-		public void ReleaseAllForTarget(TargetInfo target)
+		public void ReleaseAllForTarget(LocalTargetInfo target)
 		{
 			this.reservations.RemoveAll((PhysicalInteractionReservationManager.PhysicalInteractionReservation x) => x.target == target);
 		}

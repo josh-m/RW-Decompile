@@ -1,27 +1,31 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Verse
 {
 	public static class ColorsFromSpectrum
 	{
-		public static Color Get(Color[] spectrum, float val)
+		public static Color Get(IList<Color> spectrum, float val)
 		{
-			val = Mathf.Clamp01(val);
-			val *= (float)(spectrum.Length - 1);
-			int num = 0;
-			while (val > 1f)
+			if (spectrum.Count == 0)
 			{
-				val -= 1f;
-				num++;
-				if (num > spectrum.Length - 1)
-				{
-					Log.Error("Hit spectrum limit.");
-					num--;
-					break;
-				}
+				Log.Warning("Color spectrum empty.");
+				return Color.white;
 			}
-			return Color.Lerp(spectrum[num], spectrum[num + 1], val);
+			if (spectrum.Count == 1)
+			{
+				return spectrum[0];
+			}
+			val = Mathf.Clamp01(val);
+			float num = 1f / (float)(spectrum.Count - 1);
+			int num2 = (int)(val / num);
+			if (num2 == spectrum.Count - 1)
+			{
+				return spectrum[spectrum.Count - 1];
+			}
+			float t = (val - (float)num2 * num) / num;
+			return Color.Lerp(spectrum[num2], spectrum[num2 + 1], t);
 		}
 	}
 }

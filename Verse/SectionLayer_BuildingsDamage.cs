@@ -18,7 +18,7 @@ namespace Verse
 			base.ClearSubMeshes(MeshParts.All);
 			foreach (IntVec3 current in this.section.CellRect)
 			{
-				List<Thing> list = Find.ThingGrid.ThingsListAt(current);
+				List<Thing> list = base.Map.thingGrid.ThingsListAt(current);
 				int count = list.Count;
 				for (int i = 0; i < count; i++)
 				{

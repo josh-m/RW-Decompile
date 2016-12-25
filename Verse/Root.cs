@@ -16,6 +16,8 @@ namespace Verse
 
 		private static bool prefsApplied;
 
+		protected bool destroyed;
+
 		public SoundRoot soundRoot;
 
 		public UIRoot uiRoot;
@@ -27,9 +29,9 @@ namespace Verse
 			Action action = delegate
 			{
 				this.soundRoot = new SoundRoot();
-				if (GenScene.InMapScene)
+				if (GenScene.InPlayScene)
 				{
-					this.uiRoot = new UIRootMap();
+					this.uiRoot = new UIRoot_Play();
 				}
 				else if (GenScene.InEntryScene)
 				{
@@ -87,8 +89,13 @@ namespace Verse
 			try
 			{
 				RealTime.Update();
-				LongEventHandler.LongEventsUpdate();
-				if (!LongEventHandler.ShouldWaitForEvent)
+				bool flag;
+				LongEventHandler.LongEventsUpdate(out flag);
+				if (flag)
+				{
+					this.destroyed = true;
+				}
+				else if (!LongEventHandler.ShouldWaitForEvent)
 				{
 					Rand.EnsureSeedStackEmpty();
 					SteamManager.Update();
@@ -111,14 +118,22 @@ namespace Verse
 
 		public void OnGUI()
 		{
+			UI.ApplyPixelScale();
 			try
 			{
-				LongEventHandler.LongEventsOnGUI();
-				if (!LongEventHandler.ShouldWaitForEvent)
+				if (!this.destroyed)
 				{
-					this.uiRoot.UIRootOnGUI();
+					LongEventHandler.LongEventsOnGUI();
+					if (LongEventHandler.ShouldWaitForEvent)
+					{
+						ScreenFader.OverlayOnGUI(new Vector2((float)UI.screenWidth, (float)UI.screenHeight));
+					}
+					else
+					{
+						this.uiRoot.UIRootOnGUI();
+						ScreenFader.OverlayOnGUI(new Vector2((float)UI.screenWidth, (float)UI.screenHeight));
+					}
 				}
-				ScreenFader.OverlayOnGUI(new Vector2((float)Screen.width, (float)Screen.height));
 			}
 			catch (Exception e)
 			{

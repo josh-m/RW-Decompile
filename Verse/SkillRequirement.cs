@@ -11,7 +11,7 @@ namespace Verse
 
 		public bool PawnSatisfies(Pawn pawn)
 		{
-			return pawn.skills != null && pawn.skills.GetSkill(this.skill).level >= this.minLevel;
+			return pawn.skills != null && pawn.skills.GetSkill(this.skill).Level >= this.minLevel;
 		}
 	}
 }

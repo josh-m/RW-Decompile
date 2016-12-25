@@ -25,6 +25,7 @@ namespace Verse
 		{
 			this.use = use;
 			this.listsByGroup = new List<Thing>[ThingListGroupHelper.AllGroups.Length];
+			this.listsByGroup[2] = new List<Thing>();
 		}
 
 		public List<Thing> ThingsInGroup(ThingRequestGroup group)

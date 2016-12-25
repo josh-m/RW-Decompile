@@ -6,10 +6,15 @@ namespace RimWorld
 {
 	public static class ImpactSoundUtility
 	{
-		public static void PlayImpactSound(Thing hitThing, ImpactSoundType ist)
+		public static void PlayImpactSound(Thing hitThing, ImpactSoundType ist, Map map)
 		{
 			if (ist == ImpactSoundType.None)
 			{
+				return;
+			}
+			if (map == null)
+			{
+				Log.Warning("Can't play impact sound because map is null.");
 				return;
 			}
 			SoundDef soundDef;
@@ -25,7 +30,7 @@ namespace RimWorld
 			{
 				soundDef = SoundDefOf.BulletImpactGround;
 			}
-			soundDef.PlayOneShot(hitThing.Position);
+			soundDef.PlayOneShot(new TargetInfo(hitThing.PositionHeld, map, false));
 		}
 	}
 }

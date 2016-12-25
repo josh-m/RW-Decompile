@@ -157,7 +157,7 @@ namespace RimWorld
 			{
 				return null;
 			}
-			billGiver.BillStack.RemoveInvalidBills();
+			billGiver.BillStack.RemoveIncompletableBills();
 			return this.StartOrResumeBillJob(pawn, billGiver);
 		}
 
@@ -165,7 +165,7 @@ namespace RimWorld
 		{
 			Predicate<Thing> predicate = (Thing t) => !t.IsForbidden(pawn) && ((UnfinishedThing)t).Recipe == bill.recipe && ((UnfinishedThing)t).Creator == pawn && ((UnfinishedThing)t).ingredients.TrueForAll((Thing x) => bill.ingredientFilter.Allows(x.def)) && pawn.CanReserve(t, 1);
 			Predicate<Thing> validator = predicate;
-			return (UnfinishedThing)GenClosest.ClosestThingReachable(pawn.Position, ThingRequest.ForDef(bill.recipe.unfinishedThingDef), PathEndMode.InteractionCell, TraverseParms.For(pawn, pawn.NormalMaxDanger(), TraverseMode.ByPawn, false), 9999f, validator, null, -1, false);
+			return (UnfinishedThing)GenClosest.ClosestThingReachable(pawn.Position, pawn.Map, ThingRequest.ForDef(bill.recipe.unfinishedThingDef), PathEndMode.InteractionCell, TraverseParms.For(pawn, pawn.NormalMaxDanger(), TraverseMode.ByPawn, false), 9999f, validator, null, -1, false);
 		}
 
 		private static Job FinishUftJob(Pawn pawn, UnfinishedThing uft, Bill_ProductionWithUft bill)
@@ -191,11 +191,11 @@ namespace RimWorld
 			return new Job(JobDefOf.DoBill, (Thing)bill.billStack.billGiver)
 			{
 				bill = bill,
-				targetQueueB = new List<TargetInfo>
+				targetQueueB = new List<LocalTargetInfo>
 				{
 					uft
 				},
-				numToBringList = new List<int>
+				countQueue = new List<int>
 				{
 					1
 				},
@@ -272,12 +272,12 @@ namespace RimWorld
 				return job;
 			}
 			Job job2 = new Job(JobDefOf.DoBill, (Thing)giver);
-			job2.targetQueueB = new List<TargetInfo>(this.chosenIngThings.Count);
-			job2.numToBringList = new List<int>(this.chosenIngThings.Count);
+			job2.targetQueueB = new List<LocalTargetInfo>(this.chosenIngThings.Count);
+			job2.countQueue = new List<int>(this.chosenIngThings.Count);
 			for (int i = 0; i < this.chosenIngThings.Count; i++)
 			{
 				job2.targetQueueB.Add(this.chosenIngThings[i].thing);
-				job2.numToBringList.Add(this.chosenIngThings[i].count);
+				job2.countQueue.Add(this.chosenIngThings[i].count);
 			}
 			job2.haulMode = HaulMode.ToCellNonStorage;
 			job2.bill = bill;
@@ -291,7 +291,7 @@ namespace RimWorld
 			Pawn pawn2 = null;
 			if (corpse != null)
 			{
-				pawn2 = corpse.innerPawn;
+				pawn2 = corpse.InnerPawn;
 			}
 			if (this.def.fixedBillGiverDefs != null && this.def.fixedBillGiverDefs.Contains(thing.def))
 			{
@@ -338,7 +338,7 @@ namespace RimWorld
 				return true;
 			}
 			IntVec3 billGiverRootCell = WorkGiver_DoBill.GetBillGiverRootCell(billGiver, pawn);
-			Region validRegionAt = Find.RegionGrid.GetValidRegionAt(billGiverRootCell);
+			Region validRegionAt = pawn.Map.regionGrid.GetValidRegionAt(billGiverRootCell);
 			if (validRegionAt == null)
 			{
 				return false;
@@ -350,12 +350,14 @@ namespace RimWorld
 			bool billGiverIsPawn = billGiver is Pawn;
 			if (billGiverIsPawn)
 			{
-				WorkGiver_DoBill.AddEveryMedicineToRelevantThings(billGiver, WorkGiver_DoBill.relevantThings, baseValidator);
+				WorkGiver_DoBill.AddEveryMedicineToRelevantThings(pawn, billGiver, WorkGiver_DoBill.relevantThings, baseValidator, pawn.Map);
 				if (WorkGiver_DoBill.TryFindBestBillIngredientsInSet(WorkGiver_DoBill.relevantThings, bill, chosen))
 				{
 					return true;
 				}
 			}
+			TraverseParms traverseParams = TraverseParms.For(pawn, Danger.Deadly, TraverseMode.ByPawn, false);
+			RegionEntryPredicate entryCondition = (Region from, Region r) => r.Allows(traverseParams, false);
 			RegionProcessor regionProcessor = delegate(Region r)
 			{
 				WorkGiver_DoBill.newRelevantThings.Clear();
@@ -387,8 +389,6 @@ namespace RimWorld
 				}
 				return false;
 			};
-			TraverseParms traverseParams = TraverseParms.For(pawn, Danger.Deadly, TraverseMode.ByPawn, false);
-			RegionEntryPredicate entryCondition = (Region from, Region r) => r.Allows(traverseParams, false);
 			RegionTraverser.BreadthFirstTraverse(validRegionAt, entryCondition, regionProcessor, 99999);
 			return foundAll;
 		}
@@ -408,16 +408,17 @@ namespace RimWorld
 			return forPawn.Position;
 		}
 
-		private static void AddEveryMedicineToRelevantThings(Thing billGiver, List<Thing> relevantThings, Predicate<Thing> baseValidator)
+		private static void AddEveryMedicineToRelevantThings(Pawn pawn, Thing billGiver, List<Thing> relevantThings, Predicate<Thing> baseValidator, Map map)
 		{
 			MedicalCareCategory medicalCareCategory = WorkGiver_DoBill.GetMedicalCareCategory(billGiver);
-			List<Thing> list = Find.ListerThings.ThingsInGroup(ThingRequestGroup.Medicine);
+			List<Thing> list = map.listerThings.ThingsInGroup(ThingRequestGroup.Medicine);
 			WorkGiver_DoBill.tmpMedicine.Clear();
 			for (int i = 0; i < list.Count; i++)
 			{
-				if (medicalCareCategory.AllowsMedicine(list[i].def) && baseValidator(list[i]))
+				Thing thing = list[i];
+				if (medicalCareCategory.AllowsMedicine(thing.def) && baseValidator(thing) && pawn.CanReach(thing, PathEndMode.OnCell, Danger.Deadly, false, TraverseMode.ByPawn))
 				{
-					WorkGiver_DoBill.tmpMedicine.Add(list[i]);
+					WorkGiver_DoBill.tmpMedicine.Add(thing);
 				}
 			}
 			WorkGiver_DoBill.tmpMedicine.SortBy((Thing x) => -x.GetStatValue(StatDefOf.MedicalPotency, true), (Thing x) => x.Position.DistanceToSquared(billGiver.Position));

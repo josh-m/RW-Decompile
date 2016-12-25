@@ -5,7 +5,7 @@ namespace RimWorld
 {
 	public class CompBreakdownable : ThingComp
 	{
-		private const int BreakdownMTBTicks = 18000000;
+		private const int BreakdownMTBTicks = 13680000;
 
 		public const string BreakdownSignal = "Breakdown";
 
@@ -31,7 +31,7 @@ namespace RimWorld
 		{
 			if (this.brokenDownInt)
 			{
-				OverlayDrawer.DrawOverlay(this.parent, OverlayTypes.BrokenDown);
+				this.parent.Map.overlayDrawer.DrawOverlay(this.parent, OverlayTypes.BrokenDown);
 			}
 		}
 
@@ -39,18 +39,18 @@ namespace RimWorld
 		{
 			base.PostSpawnSetup();
 			this.powerComp = this.parent.GetComp<CompPowerTrader>();
-			Find.Map.GetComponent<BreakdownManager>().Register(this);
+			this.parent.Map.GetComponent<BreakdownManager>().Register(this);
 		}
 
-		public override void PostDeSpawn()
+		public override void PostDeSpawn(Map map)
 		{
-			base.PostDeSpawn();
-			Find.Map.GetComponent<BreakdownManager>().Deregister(this);
+			base.PostDeSpawn(map);
+			map.GetComponent<BreakdownManager>().Deregister(this);
 		}
 
 		public void CheckForBreakdown()
 		{
-			if (this.CanBreakdownNow() && Rand.MTBEventOccurs(1.8E+07f, 1f, 1041f))
+			if (this.CanBreakdownNow() && Rand.MTBEventOccurs(1.368E+07f, 1f, 1041f))
 			{
 				this.DoBreakdown();
 			}
@@ -64,10 +64,10 @@ namespace RimWorld
 		public void Notify_Repaired()
 		{
 			this.brokenDownInt = false;
-			Find.Map.GetComponent<BreakdownManager>().Notify_Repaired(this.parent);
+			this.parent.Map.GetComponent<BreakdownManager>().Notify_Repaired(this.parent);
 			if (this.parent is Building_PowerSwitch)
 			{
-				PowerNetManager.Notfiy_TransmitterTransmitsPowerNowChanged(this.parent.GetComp<CompPower>());
+				this.parent.Map.powerNetManager.Notfiy_TransmitterTransmitsPowerNowChanged(this.parent.GetComp<CompPower>());
 			}
 		}
 
@@ -75,7 +75,7 @@ namespace RimWorld
 		{
 			this.brokenDownInt = true;
 			this.parent.BroadcastCompSignal("Breakdown");
-			Find.Map.GetComponent<BreakdownManager>().Notify_BrokenDown(this.parent);
+			this.parent.Map.GetComponent<BreakdownManager>().Notify_BrokenDown(this.parent);
 			if (this.parent.Faction == Faction.OfPlayer)
 			{
 				Find.LetterStack.ReceiveLetter("LetterLabelBuildingBrokenDown".Translate(new object[]

@@ -20,12 +20,12 @@ namespace RimWorld
 
 		public override AcceptanceReport CanDesignateCell(IntVec3 c)
 		{
-			return c.InBounds() && Designator_AreaAllowed.SelectedArea != null && !Designator_AreaAllowed.SelectedArea[c];
+			return c.InBounds(base.Map) && Designator_AreaAllowed.SelectedArea != null && !Designator_AreaAllowed.SelectedArea[c];
 		}
 
 		public override void DesignateSingleCell(IntVec3 c)
 		{
-			Designator_AreaAllowed.SelectedArea.Set(c);
+			Designator_AreaAllowed.SelectedArea[c] = true;
 		}
 	}
 }

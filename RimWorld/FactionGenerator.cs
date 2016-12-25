@@ -1,6 +1,8 @@
 using RimWorld.Planet;
 using System;
+using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
 using Verse;
 
 namespace RimWorld
@@ -9,8 +11,11 @@ namespace RimWorld
 	{
 		private const int MinStartVisibleFactions = 5;
 
-		public static void GenerateFactionsIntoWorld()
+		private static readonly FloatRange FactionBasesPer100kTiles = new FloatRange(75f, 85f);
+
+		public static void GenerateFactionsIntoWorld(string seedString)
 		{
+			Rand.Seed = GenText.StableStringHash(seedString);
 			int i = 0;
 			foreach (FactionDef current in DefDatabase<FactionDef>.AllDefs)
 			{
@@ -33,6 +38,20 @@ namespace RimWorld
 				Find.World.factionManager.Add(faction2);
 				i++;
 			}
+			int num = GenMath.RoundRandom((float)Find.WorldGrid.TilesCount / 100000f * FactionGenerator.FactionBasesPer100kTiles.RandomInRange);
+			num -= Find.WorldObjects.FactionBases.Count;
+			for (int k = 0; k < num; k++)
+			{
+				Faction faction3 = (from x in Find.World.factionManager.AllFactionsListForReading
+				where !x.def.isPlayer && !x.def.hidden
+				select x).RandomElementByWeight((Faction x) => x.def.factionBaseSelectionWeight);
+				FactionBase factionBase = (FactionBase)WorldObjectMaker.MakeWorldObject(WorldObjectDefOf.FactionBase);
+				factionBase.SetFaction(faction3);
+				factionBase.Tile = TileFinder.RandomFactionBaseTileFor(faction3);
+				factionBase.Name = FactionBaseNameGenerator.GenerateFactionBaseName(factionBase);
+				Find.WorldObjects.Add(factionBase);
+			}
+			Rand.RandomizeSeedFromTime();
 		}
 
 		public static void EnsureRequiredEnemies(Faction player)
@@ -60,6 +79,7 @@ namespace RimWorld
 			Faction faction = new Faction();
 			faction.def = facDef;
 			faction.loadID = Find.World.uniqueIDsManager.GetNextFactionID();
+			faction.colorFromSpectrum = FactionGenerator.NewRandomColorFromSpectrum(faction);
 			if (!facDef.isPlayer)
 			{
 				if (facDef.fixedName != null)
@@ -69,37 +89,53 @@ namespace RimWorld
 				else
 				{
 					faction.Name = NameGenerator.GenerateName(facDef.factionNameMaker, from fac in Find.FactionManager.AllFactionsVisible
-					select fac.Name);
+					select fac.Name, false);
 				}
 			}
 			foreach (Faction current in Find.FactionManager.AllFactionsListForReading)
 			{
 				faction.TryMakeInitialRelationsWith(current);
 			}
-			if (!facDef.hidden)
+			if (!facDef.hidden && !facDef.isPlayer)
 			{
-				faction.homeSquare = FactionGenerator.RandomHomeSquareFor(faction);
+				FactionBase factionBase = (FactionBase)WorldObjectMaker.MakeWorldObject(WorldObjectDefOf.FactionBase);
+				factionBase.SetFaction(faction);
+				factionBase.Tile = TileFinder.RandomFactionBaseTileFor(faction);
+				factionBase.Name = FactionBaseNameGenerator.GenerateFactionBaseName(factionBase);
+				Find.WorldObjects.Add(factionBase);
 			}
 			faction.GenerateNewLeader();
 			return faction;
 		}
 
-		private static IntVec2 RandomHomeSquareFor(Faction faction)
+		private static float NewRandomColorFromSpectrum(Faction faction)
 		{
-			for (int i = 0; i < 2000; i++)
+			float num = -1f;
+			float result = 0f;
+			for (int i = 0; i < 10; i++)
 			{
-				IntVec2 intVec = new IntVec2(Rand.Range(0, Find.World.Size.x), Rand.Range(0, Find.World.Size.z));
-				WorldSquare worldSquare = Find.World.grid.Get(intVec);
-				if (worldSquare.biome.canBuildBase)
+				float value = Rand.Value;
+				float num2 = 1f;
+				List<Faction> allFactionsListForReading = Find.FactionManager.AllFactionsListForReading;
+				for (int j = 0; j < allFactionsListForReading.Count; j++)
 				{
-					if (Find.FactionManager.FactionInWorldSquare(intVec) == null)
+					Faction faction2 = allFactionsListForReading[j];
+					if (faction2 != faction && faction2.def == faction.def)
 					{
-						return intVec;
+						float num3 = Mathf.Abs(value - faction2.colorFromSpectrum);
+						if (num3 < num2)
+						{
+							num2 = num3;
+						}
 					}
 				}
+				if (num2 > num)
+				{
+					num = num2;
+					result = value;
+				}
 			}
-			Log.Error("Failed to find home square for " + faction);
-			return new IntVec2(0, 0);
+			return result;
 		}
 	}
 }

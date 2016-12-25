@@ -37,7 +37,7 @@ namespace Verse
 		{
 			get
 			{
-				return new MoteAttachLink(IntVec3.Invalid);
+				return new MoteAttachLink(TargetInfo.Invalid);
 			}
 		}
 

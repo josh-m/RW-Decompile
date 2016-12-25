@@ -2,27 +2,30 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
+using UnityEngine;
 using Verse;
 
 namespace RimWorld
 {
 	public class Backstory
 	{
-		public string uniqueSaveKey;
-
-		public string title;
-
-		public string titleShort;
-
-		public string baseDesc;
+		public string identifier;
 
 		public BackstorySlot slot;
+
+		private string title;
+
+		private string titleShort;
+
+		public string baseDesc;
 
 		public Dictionary<string, int> skillGains = new Dictionary<string, int>();
 
 		public Dictionary<SkillDef, int> skillGainsResolved = new Dictionary<SkillDef, int>();
 
 		public WorkTags workDisables;
+
+		public WorkTags requiredWorkTags;
 
 		public List<string> spawnCategories = new List<string>();
 
@@ -53,6 +56,26 @@ namespace RimWorld
 						yield return list[i];
 					}
 				}
+			}
+		}
+
+		public string Title
+		{
+			get
+			{
+				return this.title;
+			}
+		}
+
+		public string TitleShort
+		{
+			get
+			{
+				if (!this.titleShort.NullOrEmpty())
+				{
+					return this.titleShort;
+				}
+				return this.title;
 			}
 		}
 
@@ -112,9 +135,26 @@ namespace RimWorld
 			return (this.workDisables & workDef.workTags) == WorkTags.None;
 		}
 
+		internal void AddForcedTrait(TraitDef traitDef, int degree = 0)
+		{
+			if (this.forcedTraits == null)
+			{
+				this.forcedTraits = new List<TraitEntry>();
+			}
+			this.forcedTraits.Add(new TraitEntry(traitDef, degree));
+		}
+
+		internal void AddDisallowedTrait(TraitDef traitDef, int degree = 0)
+		{
+			if (this.disallowedTraits == null)
+			{
+				this.disallowedTraits = new List<TraitEntry>();
+			}
+			this.disallowedTraits.Add(new TraitEntry(traitDef, degree));
+		}
+
 		public void PostLoad()
 		{
-			this.uniqueSaveKey = GenText.CapitalizedNoSpaces(this.title + GenText.StableStringHash(this.baseDesc).ToString());
 			if (!this.title.Equals(GenText.ToNewsCase(this.title)))
 			{
 				Log.Warning("Bad capitalization on backstory title: " + this.title);
@@ -136,26 +176,12 @@ namespace RimWorld
 			this.baseDesc = this.baseDesc.TrimEnd(new char[0]);
 		}
 
-		internal void AddForcedTrait(TraitDef traitDef, int degree)
-		{
-			if (this.forcedTraits == null)
-			{
-				this.forcedTraits = new List<TraitEntry>();
-			}
-			this.forcedTraits.Add(new TraitEntry(traitDef, degree));
-		}
-
-		internal void AddDisallowedTrait(TraitDef traitDef, int degree)
-		{
-			if (this.disallowedTraits == null)
-			{
-				this.disallowedTraits = new List<TraitEntry>();
-			}
-			this.disallowedTraits.Add(new TraitEntry(traitDef, degree));
-		}
-
 		public void ResolveReferences()
 		{
+			int num = Mathf.Abs(GenText.StableStringHash(this.baseDesc) % 100);
+			string s = this.title.Replace('-', ' ');
+			s = GenText.CapitalizedNoSpaces(s);
+			this.identifier = GenText.RemoveNonAlphanumeric(s) + num.ToString();
 			foreach (KeyValuePair<string, int> current in this.skillGains)
 			{
 				this.skillGainsResolved.Add(DefDatabase<SkillDef>.GetNamed(current.Key, true), current.Value);
@@ -170,13 +196,13 @@ namespace RimWorld
 			{
 				yield return "null title, baseDesc is " + this.baseDesc;
 			}
-			if (this.slot == BackstorySlot.Adulthood && this.titleShort.NullOrEmpty())
+			if (this.titleShort.NullOrEmpty())
 			{
-				yield return "adulthood with null titleShort, baseDesc is " + this.baseDesc;
+				yield return "null titleShort, baseDesc is " + this.baseDesc;
 			}
 			if ((this.workDisables & WorkTags.Violent) != WorkTags.None && this.spawnCategories.Contains("Raider"))
 			{
-				yield return "cannot do Violent work but can spawn as a raider.";
+				yield return "cannot do Violent work but can spawn as a raider";
 			}
 			if (this.spawnCategories.Count == 0 && !ignoreNoSpawnCategories)
 			{
@@ -190,13 +216,40 @@ namespace RimWorld
 			{
 				if (char.IsWhiteSpace(this.baseDesc[0]))
 				{
-					yield return "baseDesc starts with whitepspace.";
+					yield return "baseDesc starts with whitepspace";
 				}
 				if (char.IsWhiteSpace(this.baseDesc[this.baseDesc.Length - 1]))
 				{
-					yield return "baseDesc ends with whitespace.";
+					yield return "baseDesc ends with whitespace";
 				}
 			}
+			if (Prefs.DevMode)
+			{
+				foreach (KeyValuePair<SkillDef, int> kvp in this.skillGainsResolved)
+				{
+					if ((kvp.Key.disablingWorkTags & this.workDisables) != WorkTags.None)
+					{
+						yield return "modifies skill " + kvp.Key + " but also disables this skill";
+					}
+				}
+				foreach (KeyValuePair<string, Backstory> kvp2 in BackstoryDatabase.allBackstories)
+				{
+					if (kvp2.Value != this && kvp2.Value.identifier == this.identifier)
+					{
+						yield return "backstory identifier used more than once: " + this.identifier;
+					}
+				}
+			}
+		}
+
+		public void SetTitle(string newTitle)
+		{
+			this.title = newTitle;
+		}
+
+		public void SetTitleShort(string newTitleShort)
+		{
+			this.titleShort = newTitleShort;
 		}
 
 		public override string ToString()
@@ -210,7 +263,7 @@ namespace RimWorld
 
 		public override int GetHashCode()
 		{
-			return this.uniqueSaveKey.GetHashCode();
+			return this.identifier.GetHashCode();
 		}
 	}
 }

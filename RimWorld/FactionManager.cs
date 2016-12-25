@@ -1,3 +1,4 @@
+using RimWorld.Planet;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -39,9 +40,9 @@ namespace RimWorld
 		{
 			get
 			{
-				return from fa in this.AllFactionsVisible
-				orderby fa.def.startingGoodwill.Average descending
-				select fa;
+				return (from x in this.AllFactionsVisible
+				orderby x.defeated
+				select x).ThenByDescending((Faction fa) => fa.def.startingGoodwill.Average);
 			}
 		}
 
@@ -53,7 +54,6 @@ namespace RimWorld
 		public void Add(Faction faction)
 		{
 			this.allFactions.Add(faction);
-			Find.World.renderer.Notify_WorldChanged();
 		}
 
 		public void FactionManagerTick()
@@ -64,13 +64,13 @@ namespace RimWorld
 			}
 		}
 
-		public void FactionManagerUpdate()
+		public void FactionsDebugDrawOnMap()
 		{
 			if (DebugViewSettings.drawFactions)
 			{
 				for (int i = 0; i < this.allFactions.Count; i++)
 				{
-					this.allFactions[i].DebugDraw();
+					this.allFactions[i].DebugDrawOnMap();
 				}
 			}
 		}
@@ -87,22 +87,23 @@ namespace RimWorld
 			return null;
 		}
 
-		public Faction FactionInWorldSquare(IntVec2 coords)
+		public Faction FactionAtTile(int tileID)
 		{
-			for (int i = 0; i < this.allFactions.Count; i++)
+			List<FactionBase> factionBases = Find.WorldObjects.FactionBases;
+			for (int i = 0; i < factionBases.Count; i++)
 			{
-				if (this.allFactions[i].homeSquare == coords)
+				if (factionBases[i].Tile == tileID)
 				{
-					return this.allFactions[i];
+					return factionBases[i].Faction;
 				}
 			}
 			return null;
 		}
 
-		public bool TryGetRandomNonColonyHumanlikeFaction(out Faction faction, bool tryMedievalOrBetter)
+		public bool TryGetRandomNonColonyHumanlikeFaction(out Faction faction, bool tryMedievalOrBetter, bool allowDefeated = false)
 		{
 			IEnumerable<Faction> source = from x in this.AllFactions
-			where x != Faction.OfPlayer && !x.def.hidden && x.def.humanlikeFaction
+			where x != Faction.OfPlayer && !x.def.hidden && x.def.humanlikeFaction && (allowDefeated || !x.defeated)
 			select x;
 			return source.TryRandomElementByWeight(delegate(Faction x)
 			{
@@ -112,6 +113,13 @@ namespace RimWorld
 				}
 				return 1f;
 			}, out faction);
+		}
+
+		public Faction RandomEnemyFaction(bool allowHidden = false, bool allowDefeated = false)
+		{
+			return (from x in this.AllFactions
+			where (allowHidden || !x.def.hidden) && (allowDefeated || !x.defeated) && x.HostileTo(Faction.OfPlayer)
+			select x).RandomElement<Faction>();
 		}
 
 		public void LogKidnappedPawns()

@@ -27,7 +27,7 @@ namespace Verse
 			{
 				return;
 			}
-			Find.MapDrawer.MapMeshDirty(b.Position, MapMeshFlag.BuildingsDamage);
+			b.Map.mapDrawer.MapMeshDirty(b.Position, MapMeshFlag.BuildingsDamage);
 		}
 
 		public static bool UsesLinkableCornersAndEdges(Building b)
@@ -273,11 +273,11 @@ namespace Verse
 		private static bool DifferentAt(Building b, int x, int z)
 		{
 			IntVec3 c = new IntVec3(x, 0, z);
-			if (!c.InBounds())
+			if (!c.InBounds(b.Map))
 			{
 				return true;
 			}
-			List<Thing> thingList = c.GetThingList();
+			List<Thing> thingList = c.GetThingList(b.Map);
 			for (int i = 0; i < thingList.Count; i++)
 			{
 				if (thingList[i].def == b.def)
@@ -291,11 +291,11 @@ namespace Verse
 		private static bool SameAndDamagedAt(Building b, int x, int z)
 		{
 			IntVec3 c = new IntVec3(x, 0, z);
-			if (!c.InBounds())
+			if (!c.InBounds(b.Map))
 			{
 				return false;
 			}
-			List<Thing> thingList = c.GetThingList();
+			List<Thing> thingList = c.GetThingList(b.Map);
 			for (int i = 0; i < thingList.Count; i++)
 			{
 				if (thingList[i].def == b.def && thingList[i].HitPoints < thingList[i].MaxHitPoints)

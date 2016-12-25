@@ -39,7 +39,7 @@ namespace Verse.AI
 					this.<>f__this.pawn.equipment.AddEquipment(thingWithComps2);
 					if (thingWithComps.def.soundInteract != null)
 					{
-						thingWithComps.def.soundInteract.PlayOneShot(this.<>f__this.pawn.Position);
+						thingWithComps.def.soundInteract.PlayOneShot(new TargetInfo(this.<>f__this.pawn.Position, this.<>f__this.pawn.Map, false));
 					}
 					if (flag)
 					{

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Verse;
 
@@ -8,11 +9,12 @@ namespace RimWorld
 	{
 		public override float PullRecord()
 		{
-			if (Find.MapPawns.FreeColonistsCount == 0)
+			IEnumerable<Pawn> allMaps_FreeColonists = PawnsFinder.AllMaps_FreeColonists;
+			if (!allMaps_FreeColonists.Any<Pawn>())
 			{
 				return 0f;
 			}
-			return Find.MapPawns.FreeColonists.Average((Pawn x) => x.needs.mood.CurLevel * 100f);
+			return allMaps_FreeColonists.Average((Pawn x) => x.needs.mood.CurLevel * 100f);
 		}
 	}
 }

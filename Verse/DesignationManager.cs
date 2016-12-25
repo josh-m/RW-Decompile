@@ -7,31 +7,45 @@ namespace Verse
 {
 	public sealed class DesignationManager : IExposable
 	{
+		public Map map;
+
 		public List<Designation> allDesignations = new List<Designation>();
+
+		public DesignationManager(Map map)
+		{
+			this.map = map;
+		}
 
 		public void ExposeData()
 		{
 			Scribe_Collections.LookList<Designation>(ref this.allDesignations, "allDesignations", LookMode.Deep, new object[0]);
+			if (Scribe.mode == LoadSaveMode.LoadingVars)
+			{
+				for (int i = 0; i < this.allDesignations.Count; i++)
+				{
+					this.allDesignations[i].designationManager = this;
+				}
+			}
 			if (Scribe.mode == LoadSaveMode.PostLoadInit)
 			{
-				for (int i = this.allDesignations.Count - 1; i >= 0; i--)
+				for (int j = this.allDesignations.Count - 1; j >= 0; j--)
 				{
-					TargetType targetType = this.allDesignations[i].def.targetType;
+					TargetType targetType = this.allDesignations[j].def.targetType;
 					if (targetType != TargetType.Thing)
 					{
 						if (targetType == TargetType.Cell)
 						{
-							if (!this.allDesignations[i].target.Cell.IsValid)
+							if (!this.allDesignations[j].target.Cell.IsValid)
 							{
-								Log.Error("Cell-needing designation " + this.allDesignations[i] + " had no cell target. Removing...");
-								this.allDesignations.RemoveAt(i);
+								Log.Error("Cell-needing designation " + this.allDesignations[j] + " had no cell target. Removing...");
+								this.allDesignations.RemoveAt(j);
 							}
 						}
 					}
-					else if (!this.allDesignations[i].target.HasThing)
+					else if (!this.allDesignations[j].target.HasThing)
 					{
-						Log.Error("Thing-needing designation " + this.allDesignations[i] + " had no thing target. Removing...");
-						this.allDesignations.RemoveAt(i);
+						Log.Error("Thing-needing designation " + this.allDesignations[j] + " had no thing target. Removing...");
+						this.allDesignations.RemoveAt(j);
 					}
 				}
 			}
@@ -62,8 +76,9 @@ namespace Verse
 				newDes.target.Thing.SetForbidden(false, false);
 			}
 			this.allDesignations.Add(newDes);
+			newDes.designationManager = this;
 			newDes.Notify_Added();
-			MoteMaker.ThrowMetaPuffs(newDes.target);
+			MoteMaker.ThrowMetaPuffs(newDes.target.ToTargetInfo(this.map));
 		}
 
 		public Designation DesignationOn(Thing t)

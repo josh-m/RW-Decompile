@@ -31,7 +31,7 @@ namespace RimWorld
 
 		protected override void DoEffect(IntVec3 c)
 		{
-			Find.TerrainGrid.RemoveTopLayer(base.TargetLocA, true);
+			base.Map.terrainGrid.RemoveTopLayer(base.TargetLocA, true);
 		}
 	}
 }

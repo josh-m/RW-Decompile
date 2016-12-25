@@ -4,6 +4,7 @@ using System.Diagnostics;
 using UnityEngine;
 using Verse;
 using Verse.AI;
+using Verse.AI.Group;
 using Verse.Sound;
 
 namespace RimWorld
@@ -62,7 +63,7 @@ namespace RimWorld
 		{
 			get
 			{
-				List<Thing> thingList = base.Position.GetThingList();
+				List<Thing> thingList = base.Position.GetThingList(base.Map);
 				for (int i = 0; i < thingList.Count; i++)
 				{
 					Thing thing = thingList[i];
@@ -79,7 +80,7 @@ namespace RimWorld
 		{
 			get
 			{
-				List<Thing> thingList = base.Position.GetThingList();
+				List<Thing> thingList = base.Position.GetThingList(base.Map);
 				for (int i = 0; i < thingList.Count; i++)
 				{
 					Thing thing = thingList[i];
@@ -135,9 +136,9 @@ namespace RimWorld
 			this.powerComp = base.GetComp<CompPowerTrader>();
 		}
 
-		public override void SpawnSetup()
+		public override void SpawnSetup(Map map)
 		{
-			base.SpawnSetup();
+			base.SpawnSetup(map);
 			this.powerComp = base.GetComp<CompPowerTrader>();
 		}
 
@@ -165,7 +166,7 @@ namespace RimWorld
 				}
 				if ((Find.TickManager.TicksGame + this.thingIDNumber.HashOffset()) % 375 == 0)
 				{
-					GenTemperature.EqualizeTemperaturesThroughBuilding(this, 1f);
+					GenTemperature.EqualizeTemperaturesThroughBuilding(this, 1f, false);
 				}
 			}
 			else if (this.openInt)
@@ -176,7 +177,7 @@ namespace RimWorld
 				}
 				if (!this.holdOpenInt)
 				{
-					if (Find.ThingGrid.CellContains(base.Position, ThingCategory.Pawn))
+					if (base.Map.thingGrid.CellContains(base.Position, ThingCategory.Pawn))
 					{
 						this.ticksUntilClose = 60;
 					}
@@ -191,7 +192,7 @@ namespace RimWorld
 				}
 				if ((Find.TickManager.TicksGame + this.thingIDNumber.HashOffset()) % 22 == 0)
 				{
-					GenTemperature.EqualizeTemperaturesThroughBuilding(this, 1f);
+					GenTemperature.EqualizeTemperaturesThroughBuilding(this, 1f, false);
 				}
 			}
 		}
@@ -216,7 +217,8 @@ namespace RimWorld
 
 		public virtual bool PawnCanOpen(Pawn p)
 		{
-			return PrisonBreakUtility.IsPrisonBreaking(p) || GenAI.MachinesLike(base.Faction, p);
+			Lord lord = p.GetLord();
+			return (lord != null && lord.LordJob != null && lord.LordJob.CanOpenAnyDoor(p)) || base.Faction == null || GenAI.MachinesLike(base.Faction, p);
 		}
 
 		public override bool BlocksPawn(Pawn p)
@@ -233,15 +235,18 @@ namespace RimWorld
 				if (this.holdOpenInt)
 				{
 					this.freePassageUntilClosed = true;
-					Reachability.ClearCache();
+					if (base.Spawned)
+					{
+						base.Map.reachability.ClearCache();
+					}
 				}
 				if (this.DoorPowerOn)
 				{
-					this.def.building.soundDoorOpenPowered.PlayOneShot(base.Position);
+					this.def.building.soundDoorOpenPowered.PlayOneShot(new TargetInfo(base.Position, base.Map, false));
 				}
 				else
 				{
-					this.def.building.soundDoorOpenManual.PlayOneShot(base.Position);
+					this.def.building.soundDoorOpenManual.PlayOneShot(new TargetInfo(base.Position, base.Map, false));
 				}
 			}
 		}
@@ -256,15 +261,18 @@ namespace RimWorld
 			if (this.freePassageUntilClosed)
 			{
 				this.freePassageUntilClosed = false;
-				Reachability.ClearCache();
+				if (base.Spawned)
+				{
+					base.Map.reachability.ClearCache();
+				}
 			}
 			if (this.DoorPowerOn)
 			{
-				this.def.building.soundDoorClosePowered.PlayOneShot(base.Position);
+				this.def.building.soundDoorClosePowered.PlayOneShot(new TargetInfo(base.Position, base.Map, false));
 			}
 			else
 			{
-				this.def.building.soundDoorCloseManual.PlayOneShot(base.Position);
+				this.def.building.soundDoorCloseManual.PlayOneShot(new TargetInfo(base.Position, base.Map, false));
 			}
 		}
 
@@ -280,7 +288,7 @@ namespace RimWorld
 
 		public override void Draw()
 		{
-			base.Rotation = Building_Door.DoorRotationAt(base.Position);
+			base.Rotation = Building_Door.DoorRotationAt(base.Position, base.Map);
 			float num = Mathf.Clamp01((float)this.visualTicksOpen / (float)this.VisualTicksToOpen);
 			float d = 0f + 0.45f * num;
 			for (int i = 0; i < 2; i++)
@@ -308,17 +316,17 @@ namespace RimWorld
 			base.Comps_PostDraw();
 		}
 
-		private static int AlignQualityAgainst(IntVec3 c)
+		private static int AlignQualityAgainst(IntVec3 c, Map map)
 		{
-			if (!c.InBounds())
+			if (!c.InBounds(map))
 			{
 				return 0;
 			}
-			if (!c.Walkable())
+			if (!c.Walkable(map))
 			{
 				return 9;
 			}
-			List<Thing> thingList = c.GetThingList();
+			List<Thing> thingList = c.GetThingList(map);
 			for (int i = 0; i < thingList.Count; i++)
 			{
 				Thing thing = thingList[i];
@@ -342,14 +350,14 @@ namespace RimWorld
 			return 0;
 		}
 
-		public static Rot4 DoorRotationAt(IntVec3 loc)
+		public static Rot4 DoorRotationAt(IntVec3 loc, Map map)
 		{
 			int num = 0;
 			int num2 = 0;
-			num += Building_Door.AlignQualityAgainst(loc + IntVec3.East);
-			num += Building_Door.AlignQualityAgainst(loc + IntVec3.West);
-			num2 += Building_Door.AlignQualityAgainst(loc + IntVec3.North);
-			num2 += Building_Door.AlignQualityAgainst(loc + IntVec3.South);
+			num += Building_Door.AlignQualityAgainst(loc + IntVec3.East, map);
+			num += Building_Door.AlignQualityAgainst(loc + IntVec3.West, map);
+			num2 += Building_Door.AlignQualityAgainst(loc + IntVec3.North, map);
+			num2 += Building_Door.AlignQualityAgainst(loc + IntVec3.South, map);
 			if (num >= num2)
 			{
 				return Rot4.North;
@@ -359,7 +367,7 @@ namespace RimWorld
 
 		public void Notify_ItemSpawnedOrDespawnedOnTop(Thing t)
 		{
-			Reachability.ClearCache();
+			base.Map.reachability.ClearCache();
 		}
 
 		[DebuggerHidden]
@@ -369,23 +377,26 @@ namespace RimWorld
 			{
 				yield return g;
 			}
-			yield return new Command_Toggle
+			if (base.Faction == Faction.OfPlayer)
 			{
-				defaultLabel = "CommandToggleDoorHoldOpen".Translate(),
-				defaultDesc = "CommandToggleDoorHoldOpenDesc".Translate(),
-				hotKey = KeyBindingDefOf.Misc3,
-				icon = TexCommand.HoldOpen,
-				isActive = (() => this.<>f__this.holdOpenInt),
-				toggleAction = delegate
+				yield return new Command_Toggle
 				{
-					this.<>f__this.holdOpenInt = !this.<>f__this.holdOpenInt;
-					Reachability.ClearCache();
-					if (this.<>f__this.Open && this.<>f__this.holdOpenInt)
+					defaultLabel = "CommandToggleDoorHoldOpen".Translate(),
+					defaultDesc = "CommandToggleDoorHoldOpenDesc".Translate(),
+					hotKey = KeyBindingDefOf.Misc3,
+					icon = TexCommand.HoldOpen,
+					isActive = (() => this.<>f__this.holdOpenInt),
+					toggleAction = delegate
 					{
-						this.<>f__this.freePassageUntilClosed = true;
+						this.<>f__this.holdOpenInt = !this.<>f__this.holdOpenInt;
+						this.<>f__this.Map.reachability.ClearCache();
+						if (this.<>f__this.Open && this.<>f__this.holdOpenInt)
+						{
+							this.<>f__this.freePassageUntilClosed = true;
+						}
 					}
-				}
-			};
+				};
+			}
 		}
 	}
 }

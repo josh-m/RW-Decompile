@@ -51,6 +51,10 @@ namespace RimWorld
 				this.pawn.workSettings.Notify_GainedTrait();
 			}
 			this.pawn.story.Notify_TraitChanged();
+			if (this.pawn.skills != null)
+			{
+				this.pawn.skills.Notify_SkillDisablesChanged();
+			}
 			if (!this.pawn.Dead && this.pawn.RaceProps.Humanlike)
 			{
 				this.pawn.needs.mood.thoughts.situational.Notify_SituationalThoughtsDirty();

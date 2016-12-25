@@ -18,9 +18,11 @@ namespace RimWorld
 
 		public const float InfoRectWidth = 330f;
 
-		protected string baseLabel;
+		protected AlertPriority defaultPriority;
 
-		protected string baseExplanation;
+		protected string defaultLabel;
+
+		protected string defaultExplanation;
 
 		protected float lastBellTime = -1000f;
 
@@ -30,21 +32,11 @@ namespace RimWorld
 
 		private static readonly Texture2D AlertBGTexHighlight = TexUI.HighlightTex;
 
-		public abstract AlertPriority Priority
-		{
-			get;
-		}
-
-		public abstract AlertReport Report
-		{
-			get;
-		}
-
-		public virtual Color ArrowColor
+		public virtual AlertPriority Priority
 		{
 			get
 			{
-				return Color.white;
+				return this.defaultPriority;
 			}
 		}
 
@@ -60,24 +52,20 @@ namespace RimWorld
 		{
 			get
 			{
-				return this.Report.active;
+				return this.GetReport().active;
 			}
 		}
 
-		public virtual string FullLabel
+		public abstract AlertReport GetReport();
+
+		public virtual string GetExplanation()
 		{
-			get
-			{
-				return this.baseLabel;
-			}
+			return this.defaultExplanation;
 		}
 
-		public virtual string FullExplanation
+		public virtual string GetLabel()
 		{
-			get
-			{
-				return this.baseExplanation;
-			}
+			return this.defaultLabel;
 		}
 
 		public void Notify_Started()
@@ -104,9 +92,9 @@ namespace RimWorld
 		public virtual Rect DrawAt(float topY, bool minimized)
 		{
 			Text.Font = GameFont.Small;
-			string fullLabel = this.FullLabel;
-			float height = Text.CalcHeight(fullLabel, 148f);
-			Rect rect = new Rect((float)Screen.width - 154f, topY, 154f, height);
+			string label = this.GetLabel();
+			float height = Text.CalcHeight(label, 148f);
+			Rect rect = new Rect((float)UI.screenWidth - 154f, topY, 154f, height);
 			if (this.alertArrow != null)
 			{
 				this.alertArrow.AlertArrowOnGUI(rect.x, rect.y);
@@ -116,15 +104,15 @@ namespace RimWorld
 			GUI.color = Color.white;
 			GUI.BeginGroup(rect);
 			Text.Anchor = TextAnchor.MiddleRight;
-			Widgets.Label(new Rect(0f, 0f, 148f, height), fullLabel);
+			Widgets.Label(new Rect(0f, 0f, 148f, height), label);
 			GUI.EndGroup();
 			if (Mouse.IsOver(rect))
 			{
 				GUI.DrawTexture(rect, Alert.AlertBGTexHighlight);
 			}
-			if (this.Report.culprit != null && Widgets.ButtonInvisible(rect, false))
+			if (this.GetReport().culprit.IsValid && Widgets.ButtonInvisible(rect, false))
 			{
-				JumpToTargetUtility.TryJumpAndSelect(this.Report.culprit);
+				JumpToTargetUtility.TryJumpAndSelect(this.GetReport().culprit);
 			}
 			Text.Anchor = TextAnchor.UpperLeft;
 			return rect;
@@ -132,22 +120,21 @@ namespace RimWorld
 
 		public void DrawInfoPane()
 		{
-			Alert.<DrawInfoPane>c__AnonStorey234 <DrawInfoPane>c__AnonStorey = new Alert.<DrawInfoPane>c__AnonStorey234();
-			<DrawInfoPane>c__AnonStorey.<>f__this = this;
+			Alert.<DrawInfoPane>c__AnonStorey362 <DrawInfoPane>c__AnonStorey = new Alert.<DrawInfoPane>c__AnonStorey362();
 			Text.Font = GameFont.Small;
 			Text.Anchor = TextAnchor.UpperLeft;
-			<DrawInfoPane>c__AnonStorey.expString = this.FullExplanation;
-			if (this.Report.culprit != null)
+			<DrawInfoPane>c__AnonStorey.expString = this.GetExplanation();
+			if (this.GetReport().culprit.IsValid)
 			{
 				<DrawInfoPane>c__AnonStorey.expString = <DrawInfoPane>c__AnonStorey.expString + "\n\n(" + "ClickToJumpToProblem".Translate() + ")";
 			}
 			float num = Text.CalcHeight(<DrawInfoPane>c__AnonStorey.expString, 310f);
 			num += 20f;
-			<DrawInfoPane>c__AnonStorey.infoRect = new Rect((float)Screen.width - 154f - 330f - 8f, Mathf.Max(Mathf.Min(Event.current.mousePosition.y, (float)Screen.height - num), 0f), 330f, num);
-			if (<DrawInfoPane>c__AnonStorey.infoRect.yMax > (float)Screen.height)
+			<DrawInfoPane>c__AnonStorey.infoRect = new Rect((float)UI.screenWidth - 154f - 330f - 8f, Mathf.Max(Mathf.Min(Event.current.mousePosition.y, (float)UI.screenHeight - num), 0f), 330f, num);
+			if (<DrawInfoPane>c__AnonStorey.infoRect.yMax > (float)UI.screenHeight)
 			{
-				Alert.<DrawInfoPane>c__AnonStorey234 expr_E4_cp_0 = <DrawInfoPane>c__AnonStorey;
-				expr_E4_cp_0.infoRect.y = expr_E4_cp_0.infoRect.y - ((float)Screen.height - <DrawInfoPane>c__AnonStorey.infoRect.yMax);
+				Alert.<DrawInfoPane>c__AnonStorey362 expr_E2_cp_0 = <DrawInfoPane>c__AnonStorey;
+				expr_E2_cp_0.infoRect.y = expr_E2_cp_0.infoRect.y - ((float)UI.screenHeight - <DrawInfoPane>c__AnonStorey.infoRect.yMax);
 			}
 			if (<DrawInfoPane>c__AnonStorey.infoRect.y < 0f)
 			{
@@ -157,14 +144,7 @@ namespace RimWorld
 			{
 				Text.Font = GameFont.Small;
 				Rect rect = <DrawInfoPane>c__AnonStorey.infoRect.AtZero();
-				if (<DrawInfoPane>c__AnonStorey.<>f__this.Priority == AlertPriority.Tutorial)
-				{
-					Widgets.DrawWindowBackgroundTutor(rect);
-				}
-				else
-				{
-					Widgets.DrawWindowBackground(rect);
-				}
+				Widgets.DrawWindowBackground(rect);
 				Rect position = rect.ContractedBy(10f);
 				GUI.BeginGroup(position);
 				Widgets.Label(new Rect(0f, 0f, position.width, position.height), <DrawInfoPane>c__AnonStorey.expString);

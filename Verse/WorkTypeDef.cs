@@ -10,12 +10,16 @@ namespace Verse
 	{
 		public WorkTags workTags;
 
+		[MustTranslate]
 		public string labelShort;
 
+		[MustTranslate]
 		public string pawnLabel;
 
+		[MustTranslate]
 		public string gerundLabel;
 
+		[MustTranslate]
 		public string verb;
 
 		public bool visible = true;

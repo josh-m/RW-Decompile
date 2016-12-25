@@ -10,9 +10,16 @@ namespace Verse.AI
 	[StaticConstructorOnStartup]
 	public sealed class ReservationManager : IExposable
 	{
+		private Map map;
+
 		private List<Reservation> reservations = new List<Reservation>();
 
 		private static readonly Material DebugReservedThingIcon = MaterialPool.MatFrom("UI/Overlays/ReservedForWork", ShaderDatabase.Cutout);
+
+		public ReservationManager(Map map)
+		{
+			this.map = map;
+		}
 
 		public void ExposeData()
 		{
@@ -41,14 +48,22 @@ namespace Verse.AI
 			}
 		}
 
-		public bool CanReserve(Pawn claimant, TargetInfo target, int maxPawns = 1)
+		public bool CanReserve(Pawn claimant, LocalTargetInfo target, int maxPawns = 1)
 		{
 			if (claimant == null)
 			{
 				Log.Error("CanReserve with claimant==null");
 				return false;
 			}
-			if (Find.PhysicalInteractionReservations.IsReserved(target) && !Find.PhysicalInteractionReservations.IsReservedBy(claimant, target))
+			if (!claimant.Spawned || claimant.Map != this.map)
+			{
+				return false;
+			}
+			if (target.HasThing && target.Thing.Spawned && target.Thing.Map != this.map)
+			{
+				return false;
+			}
+			if (this.map.physicalInteractionReservationManager.IsReserved(target) && !this.map.physicalInteractionReservationManager.IsReservedBy(claimant, target))
 			{
 				return false;
 			}
@@ -80,7 +95,7 @@ namespace Verse.AI
 			return true;
 		}
 
-		public bool Reserve(Pawn claimant, TargetInfo target, int maxPawns = 1)
+		public bool Reserve(Pawn claimant, LocalTargetInfo target, int maxPawns = 1)
 		{
 			if (this.ReservedBy(target, claimant))
 			{
@@ -109,7 +124,7 @@ namespace Verse.AI
 			return true;
 		}
 
-		public void Release(TargetInfo target, Pawn claimant)
+		public void Release(LocalTargetInfo target, Pawn claimant)
 		{
 			if (target.ThingDestroyed)
 			{
@@ -156,12 +171,12 @@ namespace Verse.AI
 			this.reservations.RemoveAll((Reservation r) => r.Claimant == claimant);
 		}
 
-		public bool IsReserved(TargetInfo target, Faction faction)
+		public bool IsReserved(LocalTargetInfo target, Faction faction)
 		{
 			return this.FirstReserverOf(target, faction, true) != null;
 		}
 
-		public Pawn FirstReserverOf(TargetInfo target, Faction faction, bool includePhysicalInteractions = true)
+		public Pawn FirstReserverOf(LocalTargetInfo target, Faction faction, bool includePhysicalInteractions = true)
 		{
 			int count = this.reservations.Count;
 			for (int i = 0; i < count; i++)
@@ -174,12 +189,12 @@ namespace Verse.AI
 			}
 			if (includePhysicalInteractions)
 			{
-				return Find.PhysicalInteractionReservations.FirstReserverOf(target);
+				return this.map.physicalInteractionReservationManager.FirstReserverOf(target);
 			}
 			return null;
 		}
 
-		public bool ReservedBy(TargetInfo target, Pawn claimant)
+		public bool ReservedBy(LocalTargetInfo target, Pawn claimant)
 		{
 			int count = this.reservations.Count;
 			for (int i = 0; i < count; i++)
@@ -277,7 +292,7 @@ namespace Verse.AI
 			}
 		}
 
-		private void LogCouldNotReserveError(Pawn claimant, TargetInfo target, int maxPawns)
+		private void LogCouldNotReserveError(Pawn claimant, LocalTargetInfo target, int maxPawns)
 		{
 			Job curJob = claimant.CurJob;
 			string text = "null";

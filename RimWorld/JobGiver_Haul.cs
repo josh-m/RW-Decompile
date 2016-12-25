@@ -9,7 +9,7 @@ namespace RimWorld
 		protected override Job TryGiveJob(Pawn pawn)
 		{
 			Predicate<Thing> validator = (Thing t) => !t.IsForbidden(pawn) && HaulAIUtility.PawnCanAutomaticallyHaulFast(pawn, t);
-			Thing thing = GenClosest.ClosestThing_Global_Reachable(pawn.Position, ListerHaulables.ThingsPotentiallyNeedingHauling(), PathEndMode.OnCell, TraverseParms.For(pawn, Danger.Deadly, TraverseMode.ByPawn, false), 9999f, validator, null);
+			Thing thing = GenClosest.ClosestThing_Global_Reachable(pawn.Position, pawn.Map, pawn.Map.listerHaulables.ThingsPotentiallyNeedingHauling(), PathEndMode.OnCell, TraverseParms.For(pawn, Danger.Deadly, TraverseMode.ByPawn, false), 9999f, validator, null);
 			if (thing != null)
 			{
 				return HaulAIUtility.HaulToStorageJob(pawn, thing);

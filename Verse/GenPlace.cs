@@ -20,21 +20,27 @@ namespace Verse
 
 		private static readonly int PlaceNearMiddleRadialCells = GenRadial.NumCellsInRadius(3f);
 
-		public static bool TryPlaceThing(Thing thing, IntVec3 center, ThingPlaceMode mode, Action<Thing, int> placedAction = null)
+		public static bool TryPlaceThing(Thing thing, IntVec3 center, Map map, ThingPlaceMode mode, Action<Thing, int> placedAction = null)
 		{
 			Thing thing2;
-			return GenPlace.TryPlaceThing(thing, center, mode, out thing2, placedAction);
+			return GenPlace.TryPlaceThing(thing, center, map, mode, out thing2, placedAction);
 		}
 
-		public static bool TryPlaceThing(Thing thing, IntVec3 center, ThingPlaceMode mode, out Thing lastResultingThing, Action<Thing, int> placedAction = null)
+		public static bool TryPlaceThing(Thing thing, IntVec3 center, Map map, ThingPlaceMode mode, out Thing lastResultingThing, Action<Thing, int> placedAction = null)
 		{
+			if (map == null)
+			{
+				Log.Error("Tried to place thing " + thing + " in a null map.");
+				lastResultingThing = null;
+				return false;
+			}
 			if (thing.def.category == ThingCategory.Filth)
 			{
 				mode = ThingPlaceMode.Direct;
 			}
 			if (mode == ThingPlaceMode.Direct)
 			{
-				return GenPlace.TryPlaceDirect(thing, center, out lastResultingThing, placedAction);
+				return GenPlace.TryPlaceDirect(thing, center, map, out lastResultingThing, placedAction);
 			}
 			if (mode == ThingPlaceMode.Near)
 			{
@@ -43,21 +49,21 @@ namespace Verse
 				{
 					int stackCount = thing.stackCount;
 					IntVec3 loc;
-					if (!GenPlace.TryFindPlaceSpotNear(center, thing, out loc))
+					if (!GenPlace.TryFindPlaceSpotNear(center, map, thing, out loc))
 					{
 						break;
 					}
-					if (GenPlace.TryPlaceDirect(thing, loc, out lastResultingThing, placedAction))
+					if (GenPlace.TryPlaceDirect(thing, loc, map, out lastResultingThing, placedAction))
 					{
 						return true;
 					}
 					if (thing.stackCount == stackCount)
 					{
-						goto Block_6;
+						goto Block_7;
 					}
 				}
 				return false;
-				Block_6:
+				Block_7:
 				Log.Error(string.Concat(new object[]
 				{
 					"Failed to place ",
@@ -74,14 +80,14 @@ namespace Verse
 			throw new InvalidOperationException();
 		}
 
-		private static bool TryFindPlaceSpotNear(IntVec3 center, Thing thing, out IntVec3 bestSpot)
+		private static bool TryFindPlaceSpotNear(IntVec3 center, Map map, Thing thing, out IntVec3 bestSpot)
 		{
 			GenPlace.PlaceSpotQuality placeSpotQuality = GenPlace.PlaceSpotQuality.Unusable;
 			bestSpot = center;
 			for (int i = 0; i < 9; i++)
 			{
 				IntVec3 intVec = center + GenRadial.RadialPattern[i];
-				GenPlace.PlaceSpotQuality placeSpotQuality2 = GenPlace.PlaceSpotQualityAt(intVec, thing, center);
+				GenPlace.PlaceSpotQuality placeSpotQuality2 = GenPlace.PlaceSpotQualityAt(intVec, map, thing, center);
 				if (placeSpotQuality2 > placeSpotQuality)
 				{
 					bestSpot = intVec;
@@ -99,7 +105,7 @@ namespace Verse
 			for (int j = 0; j < GenPlace.PlaceNearMiddleRadialCells; j++)
 			{
 				IntVec3 intVec = center + GenRadial.RadialPattern[j];
-				GenPlace.PlaceSpotQuality placeSpotQuality2 = GenPlace.PlaceSpotQualityAt(intVec, thing, center);
+				GenPlace.PlaceSpotQuality placeSpotQuality2 = GenPlace.PlaceSpotQualityAt(intVec, map, thing, center);
 				if (placeSpotQuality2 > placeSpotQuality)
 				{
 					bestSpot = intVec;
@@ -117,7 +123,7 @@ namespace Verse
 			for (int k = 0; k < GenPlace.PlaceNearMaxRadialCells; k++)
 			{
 				IntVec3 intVec = center + GenRadial.RadialPattern[k];
-				GenPlace.PlaceSpotQuality placeSpotQuality2 = GenPlace.PlaceSpotQualityAt(intVec, thing, center);
+				GenPlace.PlaceSpotQuality placeSpotQuality2 = GenPlace.PlaceSpotQualityAt(intVec, map, thing, center);
 				if (placeSpotQuality2 > placeSpotQuality)
 				{
 					bestSpot = intVec;
@@ -136,13 +142,13 @@ namespace Verse
 			return false;
 		}
 
-		private static GenPlace.PlaceSpotQuality PlaceSpotQualityAt(IntVec3 c, Thing thing, IntVec3 center)
+		private static GenPlace.PlaceSpotQuality PlaceSpotQualityAt(IntVec3 c, Map map, Thing thing, IntVec3 center)
 		{
-			if (!c.InBounds() || !c.Walkable())
+			if (!c.InBounds(map) || !c.Walkable(map))
 			{
 				return GenPlace.PlaceSpotQuality.Unusable;
 			}
-			List<Thing> list = Find.ThingGrid.ThingsListAt(c);
+			List<Thing> list = map.thingGrid.ThingsListAt(c);
 			for (int i = 0; i < list.Count; i++)
 			{
 				Thing thing2 = list[i];
@@ -155,7 +161,7 @@ namespace Verse
 					return GenPlace.PlaceSpotQuality.Unusable;
 				}
 			}
-			if (c.GetRoom() == center.GetRoom())
+			if (c.GetRoom(map) == center.GetRoom(map))
 			{
 				for (int j = 0; j < list.Count; j++)
 				{
@@ -196,14 +202,14 @@ namespace Verse
 				}
 				return placeSpotQuality;
 			}
-			if (!center.CanReach(c, PathEndMode.OnCell, TraverseMode.PassDoors, Danger.Deadly))
+			if (!map.reachability.CanReach(center, c, PathEndMode.OnCell, TraverseMode.PassDoors, Danger.Deadly))
 			{
 				return GenPlace.PlaceSpotQuality.Awful;
 			}
 			return GenPlace.PlaceSpotQuality.Bad;
 		}
 
-		private static bool TryPlaceDirect(Thing thing, IntVec3 loc, out Thing resultingThing, Action<Thing, int> placedAction = null)
+		private static bool TryPlaceDirect(Thing thing, IntVec3 loc, Map map, out Thing resultingThing, Action<Thing, int> placedAction = null)
 		{
 			Thing thing2 = thing;
 			bool flag = false;
@@ -214,7 +220,7 @@ namespace Verse
 			}
 			if (thing.def.stackLimit > 1)
 			{
-				List<Thing> thingList = loc.GetThingList();
+				List<Thing> thingList = loc.GetThingList(map);
 				int i = 0;
 				while (i < thingList.Count)
 				{
@@ -248,12 +254,12 @@ namespace Verse
 					}
 				}
 			}
-			resultingThing = GenSpawn.Spawn(thing, loc);
+			resultingThing = GenSpawn.Spawn(thing, loc, map);
 			if (placedAction != null)
 			{
 				placedAction(thing, thing.stackCount);
 			}
-			SlotGroup slotGroup = loc.GetSlotGroup();
+			SlotGroup slotGroup = loc.GetSlotGroup(map);
 			if (slotGroup != null && slotGroup.parent != null)
 			{
 				slotGroup.parent.Notify_ReceivedThing(resultingThing);
@@ -261,9 +267,9 @@ namespace Verse
 			return !flag;
 		}
 
-		public static Thing HaulPlaceBlockerIn(Thing haulThing, IntVec3 c, bool checkBlueprints)
+		public static Thing HaulPlaceBlockerIn(Thing haulThing, IntVec3 c, Map map, bool checkBlueprints)
 		{
-			List<Thing> list = Find.ThingGrid.ThingsListAt(c);
+			List<Thing> list = map.thingGrid.ThingsListAt(c);
 			for (int i = 0; i < list.Count; i++)
 			{
 				Thing thing = list[i];

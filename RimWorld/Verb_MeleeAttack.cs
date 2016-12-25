@@ -31,10 +31,10 @@ namespace RimWorld
 					" from out of melee position."
 				}));
 			}
-			casterPawn.Drawer.rotator.FaceCell(thing.Position);
+			casterPawn.Drawer.rotator.Face(thing.DrawPos);
 			if (!this.IsTargetImmobile(this.currentTarget) && casterPawn.skills != null)
 			{
-				casterPawn.skills.Learn(SkillDefOf.Melee, 250f);
+				casterPawn.skills.Learn(SkillDefOf.Melee, 250f, false);
 			}
 			bool result;
 			SoundDef soundDef;
@@ -56,7 +56,7 @@ namespace RimWorld
 				result = false;
 				soundDef = this.SoundMiss();
 			}
-			soundDef.PlayOneShot(thing.Position);
+			soundDef.PlayOneShot(new TargetInfo(thing.Position, casterPawn.Map, false));
 			casterPawn.Drawer.Notify_MeleeAttackOn(thing);
 			Pawn pawn = thing as Pawn;
 			if (pawn != null && !pawn.Dead)
@@ -77,7 +77,7 @@ namespace RimWorld
 		}
 
 		[DebuggerHidden]
-		private IEnumerable<DamageInfo> DamageInfosToApply(TargetInfo target)
+		private IEnumerable<DamageInfo> DamageInfosToApply(LocalTargetInfo target)
 		{
 			float damAmount = (float)this.verbProps.AdjustedMeleeDamageAmount(this, base.CasterPawn, this.ownerEquipment);
 			DamageDef damDef = this.verbProps.meleeDamageDef;
@@ -99,7 +99,6 @@ namespace RimWorld
 					damDef = DamageDefOf.Blunt;
 				}
 			}
-			BodyPartDamageInfo part = new BodyPartDamageInfo(null, new BodyPartDepth?(BodyPartDepth.Outside));
 			ThingDef source;
 			if (this.ownerEquipment != null)
 			{
@@ -110,9 +109,12 @@ namespace RimWorld
 				source = base.CasterPawn.def;
 			}
 			Vector3 direction = (target.Thing.Position - base.CasterPawn.Position).ToVector3();
-			DamageInfo mainDinfo = new DamageInfo(damDef, GenMath.RoundRandom(damAmount), this.caster, direction, new BodyPartDamageInfo?(part), source);
-			mainDinfo.SetLinkedBodyPartGroup(bodyPartGroupDef);
-			mainDinfo.SetLinkedHediffDef(hediffDef);
+			Thing caster = this.caster;
+			DamageInfo mainDinfo = new DamageInfo(damDef, GenMath.RoundRandom(damAmount), -1f, caster, null, source);
+			mainDinfo.SetBodyRegion(BodyPartHeight.Undefined, BodyPartDepth.Outside);
+			mainDinfo.SetWeaponBodyPartGroup(bodyPartGroupDef);
+			mainDinfo.SetWeaponHediff(hediffDef);
+			mainDinfo.SetAngle(direction);
 			yield return mainDinfo;
 			if (this.surpriseAttack && this.verbProps.surpriseAttack != null && this.verbProps.surpriseAttack.extraMeleeDamages != null)
 			{
@@ -121,15 +123,18 @@ namespace RimWorld
 				{
 					ExtraMeleeDamage extraDamage = extraDamages[i];
 					int amount = GenMath.RoundRandom((float)extraDamage.amount * base.GetDamageFactorFor(base.CasterPawn));
-					DamageInfo extraDinfo = new DamageInfo(extraDamage.def, amount, this.caster, direction, new BodyPartDamageInfo?(part), source);
-					extraDinfo.SetLinkedBodyPartGroup(bodyPartGroupDef);
-					extraDinfo.SetLinkedHediffDef(hediffDef);
+					caster = this.caster;
+					DamageInfo extraDinfo = new DamageInfo(extraDamage.def, amount, -1f, caster, null, source);
+					extraDinfo.SetBodyRegion(BodyPartHeight.Undefined, BodyPartDepth.Outside);
+					extraDinfo.SetWeaponBodyPartGroup(bodyPartGroupDef);
+					extraDinfo.SetWeaponHediff(hediffDef);
+					extraDinfo.SetAngle(direction);
 					yield return extraDinfo;
 				}
 			}
 		}
 
-		private float GetHitChance(TargetInfo target)
+		private float GetHitChance(LocalTargetInfo target)
 		{
 			if (this.surpriseAttack)
 			{
@@ -146,14 +151,14 @@ namespace RimWorld
 			return 0.6f;
 		}
 
-		private bool IsTargetImmobile(TargetInfo target)
+		private bool IsTargetImmobile(LocalTargetInfo target)
 		{
 			Thing thing = target.Thing;
 			Pawn pawn = thing as Pawn;
 			return thing.def.category != ThingCategory.Pawn || pawn.Downed || pawn.GetPosture() != PawnPosture.Standing;
 		}
 
-		private void ApplyMeleeDamageToTarget(TargetInfo target)
+		private void ApplyMeleeDamageToTarget(LocalTargetInfo target)
 		{
 			foreach (DamageInfo current in this.DamageInfosToApply(target))
 			{

@@ -7,31 +7,37 @@ namespace RimWorld
 {
 	public static class GenPlantReproduction
 	{
-		public static bool TrySpawnSeed(IntVec3 cell, ThingDef plantDef, SeedTargFindMode mode, Thing plant = null)
+		public static Plant TryReproduceFrom(IntVec3 source, ThingDef plantDef, SeedTargFindMode mode, Map map)
 		{
-			IntVec3 vec;
-			if (!GenPlantReproduction.TryFindSeedTargFor(plantDef, cell, mode, out vec))
+			IntVec3 dest;
+			if (!GenPlantReproduction.TryFindReproductionDestination(source, plantDef, mode, map, out dest))
 			{
-				return false;
+				return null;
 			}
-			Seed seed = (Seed)ThingMaker.MakeThing(plantDef.plant.seedDef, null);
-			GenSpawn.Spawn(seed, cell, Rot4.Random);
-			seed.Launch(plant, vec, null);
-			if (DebugSettings.fastEcology)
-			{
-				seed.ForceInstantImpact();
-			}
-			return true;
+			return GenPlantReproduction.TryReproduceInto(dest, plantDef, map);
 		}
 
-		public static bool TryFindSeedTargFor(ThingDef plantDef, IntVec3 root, SeedTargFindMode mode, out IntVec3 foundCell)
+		public static Plant TryReproduceInto(IntVec3 dest, ThingDef plantDef, Map map)
+		{
+			if (!plantDef.CanEverPlantAt(dest, map))
+			{
+				return null;
+			}
+			if (!GenPlant.SnowAllowsPlanting(dest, map))
+			{
+				return null;
+			}
+			return (Plant)GenSpawn.Spawn(plantDef, dest, map);
+		}
+
+		public static bool TryFindReproductionDestination(IntVec3 source, ThingDef plantDef, SeedTargFindMode mode, Map map, out IntVec3 foundCell)
 		{
 			float radius = -1f;
-			if (mode == SeedTargFindMode.ReproduceSeed)
+			if (mode == SeedTargFindMode.Reproduce)
 			{
-				radius = plantDef.plant.seedShootRadius;
+				radius = plantDef.plant.reproduceRadius;
 			}
-			else if (mode == SeedTargFindMode.Cluster)
+			else if (mode == SeedTargFindMode.MapGenCluster)
 			{
 				radius = plantDef.plant.WildClusterRadiusActual;
 			}
@@ -42,14 +48,14 @@ namespace RimWorld
 			int num = 0;
 			int num2 = 0;
 			float num3 = 0f;
-			CellRect cellRect = CellRect.CenteredOn(root, Mathf.RoundToInt(radius));
-			cellRect.ClipInsideMap();
+			CellRect cellRect = CellRect.CenteredOn(source, Mathf.RoundToInt(radius));
+			cellRect.ClipInsideMap(map);
 			for (int i = cellRect.minZ; i <= cellRect.maxZ; i++)
 			{
 				for (int j = cellRect.minX; j <= cellRect.maxX; j++)
 				{
 					IntVec3 c2 = new IntVec3(j, 0, i);
-					Plant plant = c2.GetPlant();
+					Plant plant = c2.GetPlant(map);
 					if (plant != null)
 					{
 						num++;
@@ -58,10 +64,10 @@ namespace RimWorld
 							num2++;
 						}
 					}
-					num3 += c2.GetTerrain().fertility;
+					num3 += c2.GetTerrain(map).fertility;
 				}
 			}
-			float num4 = num3 * Find.Map.Biome.plantDensity;
+			float num4 = num3 * map.Biome.plantDensity;
 			bool flag = (float)num > num4;
 			bool flag2 = (float)num > num4 * 1.25f;
 			if (flag2)
@@ -69,7 +75,7 @@ namespace RimWorld
 				foundCell = IntVec3.Invalid;
 				return false;
 			}
-			BiomeDef curBiome = Find.Map.Biome;
+			BiomeDef curBiome = map.Biome;
 			float num5 = curBiome.AllWildPlants.Sum((ThingDef pd) => curBiome.CommonalityOfPlant(pd));
 			float num6 = curBiome.CommonalityOfPlant(plantDef) / num5;
 			float num7 = curBiome.CommonalityOfPlant(plantDef) * plantDef.plant.wildCommonalityMaxFraction / num5;
@@ -86,8 +92,8 @@ namespace RimWorld
 				foundCell = IntVec3.Invalid;
 				return false;
 			}
-			Predicate<IntVec3> validator = (IntVec3 c) => plantDef.CanEverPlantAt(c) && GenPlant.SnowAllowsPlanting(c) && root.InHorDistOf(c, radius) && GenSight.LineOfSight(root, c, true);
-			return CellFinder.TryFindRandomCellNear(root, Mathf.CeilToInt(radius), validator, out foundCell);
+			Predicate<IntVec3> validator = (IntVec3 c) => plantDef.CanEverPlantAt(c, map) && GenPlant.SnowAllowsPlanting(c, map) && source.InHorDistOf(c, radius) && GenSight.LineOfSight(source, c, map, true);
+			return CellFinder.TryFindRandomCellNear(source, map, Mathf.CeilToInt(radius), validator, out foundCell);
 		}
 	}
 }

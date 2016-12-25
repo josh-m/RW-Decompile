@@ -126,7 +126,7 @@ namespace RimWorld
 			this.CurLevelPercentage = levelPercent;
 		}
 
-		public virtual void DrawOnGUI(Rect rect)
+		public virtual void DrawOnGUI(Rect rect, int maxThresholdMarkers = 2147483647, float customMargin = -1f, bool drawArrows = true, bool doTooltip = true)
 		{
 			if (rect.height > 70f)
 			{
@@ -138,9 +138,12 @@ namespace RimWorld
 			{
 				Widgets.DrawHighlight(rect);
 			}
-			TooltipHandler.TipRegion(rect, new TipSignal(() => this.GetTipString(), rect.GetHashCode()));
+			if (doTooltip)
+			{
+				TooltipHandler.TipRegion(rect, new TipSignal(() => this.GetTipString(), rect.GetHashCode()));
+			}
 			float num2 = 14f;
-			float num3 = num2 + 15f;
+			float num3 = (customMargin < 0f) ? (num2 + 15f) : customMargin;
 			if (rect.height < 50f)
 			{
 				num2 *= Mathf.InverseLerp(0f, 50f, rect.height);
@@ -153,10 +156,13 @@ namespace RimWorld
 			Rect rect3 = new Rect(rect.x, rect.y + rect.height / 2f, rect.width, rect.height / 2f);
 			rect3 = new Rect(rect3.x + num3, rect3.y, rect3.width - num3 * 2f, rect3.height - num2);
 			Widgets.FillableBar(rect3, this.CurLevelPercentage);
-			Widgets.FillableBarChangeArrows(rect3, this.GUIChangeArrow);
+			if (drawArrows)
+			{
+				Widgets.FillableBarChangeArrows(rect3, this.GUIChangeArrow);
+			}
 			if (this.threshPercents != null)
 			{
-				for (int i = 0; i < this.threshPercents.Count; i++)
+				for (int i = 0; i < Mathf.Min(this.threshPercents.Count, maxThresholdMarkers); i++)
 				{
 					this.DrawBarThreshold(rect3, this.threshPercents[i]);
 				}

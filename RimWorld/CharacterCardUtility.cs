@@ -18,6 +18,10 @@ namespace RimWorld
 
 		private const int ConfigRectTitlesHeight = 40;
 
+		private const int MaxNameLength = 12;
+
+		private const int MaxNickLength = 9;
+
 		public static Vector2 PawnCardSize = new Vector2(570f, 470f);
 
 		private static Regex validNameRegex = new Regex("^[a-zA-Z0-9 '\\-]*$");
@@ -109,22 +113,26 @@ namespace RimWorld
 				while (enumerator.MoveNext())
 				{
 					BackstorySlot backstorySlot = (BackstorySlot)((byte)enumerator.Current);
-					Rect rect9 = new Rect(0f, num, position.width, 24f);
-					if (Mouse.IsOver(rect9))
+					Backstory backstory = pawn.story.GetBackstory(backstorySlot);
+					if (backstory != null)
 					{
-						Widgets.DrawHighlight(rect9);
+						Rect rect9 = new Rect(0f, num, position.width, 24f);
+						if (Mouse.IsOver(rect9))
+						{
+							Widgets.DrawHighlight(rect9);
+						}
+						TooltipHandler.TipRegion(rect9, backstory.FullDescriptionFor(pawn));
+						Text.Anchor = TextAnchor.MiddleLeft;
+						string str = (backstorySlot != BackstorySlot.Adulthood) ? "Childhood".Translate() : "Adulthood".Translate();
+						Widgets.Label(rect9, str + ":");
+						Text.Anchor = TextAnchor.UpperLeft;
+						Rect rect10 = new Rect(rect9);
+						rect10.x += 90f;
+						rect10.width -= 90f;
+						string title = backstory.Title;
+						Widgets.Label(rect10, title);
+						num += rect9.height + 2f;
 					}
-					TooltipHandler.TipRegion(rect9, pawn.story.GetBackstory(backstorySlot).FullDescriptionFor(pawn));
-					Text.Anchor = TextAnchor.MiddleLeft;
-					string str = (backstorySlot != BackstorySlot.Adulthood) ? "Childhood".Translate() : "Adulthood".Translate();
-					Widgets.Label(rect9, str + ":");
-					Text.Anchor = TextAnchor.UpperLeft;
-					Rect rect10 = new Rect(rect9);
-					rect10.x += 90f;
-					rect10.width -= 90f;
-					string title = pawn.story.GetBackstory(backstorySlot).title;
-					Widgets.Label(rect10, title);
-					num += rect9.height + 2f;
 				}
 			}
 			num += 25f;
@@ -183,7 +191,7 @@ namespace RimWorld
 			Text.Font = GameFont.Medium;
 			Widgets.Label(new Rect(0f, 0f, 200f, 30f), "Skills".Translate());
 			SkillUI.SkillDrawMode mode;
-			if (Current.ProgramState == ProgramState.MapPlaying)
+			if (Current.ProgramState == ProgramState.Playing)
 			{
 				mode = SkillUI.SkillDrawMode.Gameplay;
 			}

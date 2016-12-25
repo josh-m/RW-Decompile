@@ -9,6 +9,7 @@ namespace RimWorld
 	{
 		public Type workerClass = typeof(PawnRelationWorker);
 
+		[MustTranslate]
 		public string labelFemale;
 
 		public float importance;

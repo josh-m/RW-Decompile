@@ -7,35 +7,35 @@ namespace RimWorld
 {
 	public static class FilthMaker
 	{
-		public static void MakeFilth(IntVec3 c, ThingDef filthDef, int count = 1)
+		public static void MakeFilth(IntVec3 c, Map map, ThingDef filthDef, int count = 1)
 		{
 			for (int i = 0; i < count; i++)
 			{
-				FilthMaker.MakeFilth(c, filthDef, null, true);
+				FilthMaker.MakeFilth(c, map, filthDef, null, true);
 			}
 		}
 
-		public static bool MakeFilth(IntVec3 c, ThingDef filthDef, string source, int count = 1)
+		public static bool MakeFilth(IntVec3 c, Map map, ThingDef filthDef, string source, int count = 1)
 		{
 			bool flag = false;
 			for (int i = 0; i < count; i++)
 			{
-				flag |= FilthMaker.MakeFilth(c, filthDef, Gen.YieldSingle<string>(source), true);
+				flag |= FilthMaker.MakeFilth(c, map, filthDef, Gen.YieldSingle<string>(source), true);
 			}
 			return flag;
 		}
 
-		public static void MakeFilth(IntVec3 c, ThingDef filthDef, IEnumerable<string> sources)
+		public static void MakeFilth(IntVec3 c, Map map, ThingDef filthDef, IEnumerable<string> sources)
 		{
-			FilthMaker.MakeFilth(c, filthDef, sources, true);
+			FilthMaker.MakeFilth(c, map, filthDef, sources, true);
 		}
 
-		private static bool MakeFilth(IntVec3 c, ThingDef filthDef, IEnumerable<string> sources, bool shouldPropagate)
+		private static bool MakeFilth(IntVec3 c, Map map, ThingDef filthDef, IEnumerable<string> sources, bool shouldPropagate)
 		{
-			Filth filth = (Filth)(from t in c.GetThingList()
+			Filth filth = (Filth)(from t in c.GetThingList(map)
 			where t.def == filthDef
 			select t).FirstOrDefault<Thing>();
-			if (!c.Walkable() || (filth != null && !filth.CanBeThickened))
+			if (!c.Walkable(map) || (filth != null && !filth.CanBeThickened))
 			{
 				if (shouldPropagate)
 				{
@@ -43,9 +43,9 @@ namespace RimWorld
 					for (int i = 0; i < 8; i++)
 					{
 						IntVec3 c2 = c + list[i];
-						if (c2.InBounds())
+						if (c2.InBounds(map))
 						{
-							if (FilthMaker.MakeFilth(c2, filthDef, sources, false))
+							if (FilthMaker.MakeFilth(c2, map, filthDef, sources, false))
 							{
 								return true;
 							}
@@ -67,7 +67,7 @@ namespace RimWorld
 			{
 				Filth filth2 = (Filth)ThingMaker.MakeThing(filthDef, null);
 				filth2.AddSources(sources);
-				GenSpawn.Spawn(filth2, c);
+				GenSpawn.Spawn(filth2, c, map);
 			}
 			return true;
 		}

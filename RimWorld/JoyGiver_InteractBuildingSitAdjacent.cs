@@ -14,7 +14,7 @@ namespace RimWorld
 				IntVec3 c = t.Position + GenAdj.CardinalDirections[i];
 				if (!c.IsForbidden(pawn))
 				{
-					Building edifice = c.GetEdifice();
+					Building edifice = c.GetEdifice(pawn.Map);
 					if (edifice != null && edifice.def.building.isSittable && pawn.CanReserve(edifice, 1))
 					{
 						thing = edifice;

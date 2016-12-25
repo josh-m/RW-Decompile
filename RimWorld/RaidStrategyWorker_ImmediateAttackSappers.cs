@@ -9,24 +9,21 @@ namespace RimWorld
 {
 	public class RaidStrategyWorker_ImmediateAttackSappers : RaidStrategyWorker
 	{
-		public override float SelectionChance
+		public override float SelectionChance(Map map)
 		{
-			get
+			float num = base.SelectionChance(map);
+			float strengthRating = map.strengthWatcher.StrengthRating;
+			if (strengthRating > 10f)
 			{
-				float num = base.SelectionChance;
-				float strengthRating = Find.StoryWatcher.watcherStrength.StrengthRating;
-				if (strengthRating > 10f)
-				{
-					float num2 = 1f + Mathf.Clamp01(Mathf.InverseLerp(10f, 30f, strengthRating));
-					num *= num2;
-				}
-				return num;
+				float num2 = 1f + Mathf.Clamp01(Mathf.InverseLerp(10f, 30f, strengthRating));
+				num *= num2;
 			}
+			return num;
 		}
 
 		public override bool CanUseWith(IncidentParms parms)
 		{
-			return parms.faction.def.humanlikeFaction && parms.faction.def.techLevel >= TechLevel.Industrial && this.PawnGenOptionsWithSappers(parms.faction).Any<PawnGroupMaker_Normal>() && base.CanUseWith(parms);
+			return parms.faction.def.humanlikeFaction && parms.faction.def.techLevel >= TechLevel.Industrial && this.PawnGenOptionsWithSappers(parms.faction).Any<PawnGroupMaker>() && base.CanUseWith(parms);
 		}
 
 		public override float MinimumPoints(Faction faction)
@@ -41,8 +38,8 @@ namespace RimWorld
 
 		private float CheapestSapperCost(Faction faction)
 		{
-			IEnumerable<PawnGroupMaker_Normal> enumerable = this.PawnGenOptionsWithSappers(faction);
-			if (!enumerable.Any<PawnGroupMaker_Normal>())
+			IEnumerable<PawnGroupMaker> enumerable = this.PawnGenOptionsWithSappers(faction);
+			if (!enumerable.Any<PawnGroupMaker>())
 			{
 				Log.Error(string.Concat(new string[]
 				{
@@ -55,7 +52,7 @@ namespace RimWorld
 				return 99999f;
 			}
 			float num = 9999999f;
-			foreach (PawnGroupMaker_Normal current in enumerable)
+			foreach (PawnGroupMaker current in enumerable)
 			{
 				foreach (PawnGenOption current2 in from op in current.options
 				where RaidStrategyWorker_ImmediateAttackSappers.CanBeSapper(op.kind)
@@ -75,11 +72,21 @@ namespace RimWorld
 			return chosenOpts.Count != 0 || (opt.kind.weaponTags.Count == 1 && RaidStrategyWorker_ImmediateAttackSappers.CanBeSapper(opt.kind));
 		}
 
-		private IEnumerable<PawnGroupMaker_Normal> PawnGenOptionsWithSappers(Faction faction)
+		private IEnumerable<PawnGroupMaker> PawnGenOptionsWithSappers(Faction faction)
 		{
-			return from gm in faction.def.pawnGroupMakers.OfType<PawnGroupMaker_Normal>()
-			where gm.options.Any((PawnGenOption op) => RaidStrategyWorker_ImmediateAttackSappers.CanBeSapper(op.kind))
-			select gm;
+			return faction.def.pawnGroupMakers.Where(delegate(PawnGroupMaker gm)
+			{
+				bool arg_3B_0;
+				if (gm.kindDef == PawnGroupKindDefOf.Normal)
+				{
+					arg_3B_0 = gm.options.Any((PawnGenOption op) => RaidStrategyWorker_ImmediateAttackSappers.CanBeSapper(op.kind));
+				}
+				else
+				{
+					arg_3B_0 = false;
+				}
+				return arg_3B_0;
+			});
 		}
 
 		public static bool CanBeSapper(PawnKindDef kind)
@@ -87,7 +94,7 @@ namespace RimWorld
 			return !kind.weaponTags.NullOrEmpty<string>() && kind.weaponTags[0] == "GrenadeDestructive";
 		}
 
-		public override LordJob MakeLordJob(ref IncidentParms parms)
+		public override LordJob MakeLordJob(IncidentParms parms, Map map)
 		{
 			return new LordJob_AssaultColony(parms.faction, true, true, true, true, true);
 		}

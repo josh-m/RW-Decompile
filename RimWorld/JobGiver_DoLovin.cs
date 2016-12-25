@@ -25,6 +25,8 @@ namespace RimWorld
 			{
 				return null;
 			}
+			pawn.mindState.awokeVoluntarily = true;
+			partnerInMyBed.mindState.awokeVoluntarily = true;
 			return new Job(JobDefOf.Lovin, partnerInMyBed, pawn.jobs.curDriver.layingDownBed);
 		}
 	}

@@ -32,7 +32,7 @@ namespace RimWorld
 				for (int j = WalkPathFinder.StartRadialIndex; j > WalkPathFinder.EndRadialIndex; j -= WalkPathFinder.RadialIndexStride)
 				{
 					IntVec3 intVec3 = intVec + GenRadial.RadialPattern[j];
-					if (intVec3.InBounds() && intVec3.Standable() && !intVec3.IsForbidden(pawn) && GenSight.LineOfSight(intVec, intVec3, false) && !intVec3.Roofed())
+					if (intVec3.InBounds(pawn.Map) && intVec3.Standable(pawn.Map) && !intVec3.IsForbidden(pawn) && GenSight.LineOfSight(intVec, intVec3, pawn.Map, false) && !intVec3.Roofed(pawn.Map))
 					{
 						float num2 = 10000f;
 						for (int k = 0; k < list.Count; k++)
@@ -89,18 +89,19 @@ namespace RimWorld
 
 		public static void DebugFlashWalkPath(IntVec3 root, int numEntries = 8)
 		{
+			Map visibleMap = Find.VisibleMap;
 			List<IntVec3> list;
-			if (!WalkPathFinder.TryFindWalkPath(Find.MapPawns.FreeColonistsSpawned.First<Pawn>(), root, out list))
+			if (!WalkPathFinder.TryFindWalkPath(visibleMap.mapPawns.FreeColonistsSpawned.First<Pawn>(), root, out list))
 			{
-				Find.DebugDrawer.FlashCell(root, 0.2f, "NOPATH");
+				visibleMap.debugDrawer.FlashCell(root, 0.2f, "NOPATH");
 				return;
 			}
 			for (int i = 0; i < list.Count; i++)
 			{
-				Find.DebugDrawer.FlashCell(list[i], (float)i / (float)numEntries, i.ToString());
+				visibleMap.debugDrawer.FlashCell(list[i], (float)i / (float)numEntries, i.ToString());
 				if (i > 0)
 				{
-					Find.DebugDrawer.FlashLine(list[i], list[i - 1]);
+					visibleMap.debugDrawer.FlashLine(list[i], list[i - 1]);
 				}
 			}
 		}

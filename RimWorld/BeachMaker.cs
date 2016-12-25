@@ -18,9 +18,9 @@ namespace RimWorld
 
 		private static readonly FloatRange CoastWidthRange = new FloatRange(20f, 60f);
 
-		public static void Init()
+		public static void Init(Map map)
 		{
-			Rot4 a = Find.World.CoastDirectionAt(Find.GameInitData.startingCoords);
+			Rot4 a = Find.World.CoastDirectionAt(map.Tile);
 			if (!a.IsValid)
 			{
 				BeachMaker.beachNoise = null;
@@ -28,16 +28,16 @@ namespace RimWorld
 			}
 			ModuleBase moduleBase = new Perlin(0.029999999329447746, 2.0, 0.5, 3, Rand.Range(0, 2147483647), QualityMode.Medium);
 			moduleBase = new ScaleBias(0.5, 0.5, moduleBase);
-			NoiseDebugUI.StoreNoiseRender(moduleBase, "BeachMaker base", new IntVec2(Find.Map.Size.x, Find.Map.Size.z));
+			NoiseDebugUI.StoreNoiseRender(moduleBase, "BeachMaker base", new IntVec2(map.Size.x, map.Size.z));
 			ModuleBase moduleBase2 = new DistFromAxis(BeachMaker.CoastWidthRange.RandomInRange);
 			if (a == Rot4.North)
 			{
 				moduleBase2 = new Rotate(0.0, 90.0, 0.0, moduleBase2);
-				moduleBase2 = new Translate(0.0, 0.0, (double)(-(double)Find.Map.Size.z), moduleBase2);
+				moduleBase2 = new Translate(0.0, 0.0, (double)(-(double)map.Size.z), moduleBase2);
 			}
 			else if (a == Rot4.East)
 			{
-				moduleBase2 = new Translate((double)(-(double)Find.Map.Size.x), 0.0, 0.0, moduleBase2);
+				moduleBase2 = new Translate((double)(-(double)map.Size.x), 0.0, 0.0, moduleBase2);
 			}
 			else if (a == Rot4.South)
 			{

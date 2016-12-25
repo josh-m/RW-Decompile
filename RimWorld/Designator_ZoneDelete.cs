@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using Verse;
 
@@ -6,6 +7,8 @@ namespace RimWorld
 {
 	public class Designator_ZoneDelete : Designator_Zone
 	{
+		private List<Zone> justDesignated = new List<Zone>();
+
 		public Designator_ZoneDelete()
 		{
 			this.defaultLabel = "DesignatorZoneDelete".Translate();
@@ -20,15 +23,15 @@ namespace RimWorld
 
 		public override AcceptanceReport CanDesignateCell(IntVec3 sq)
 		{
-			if (!sq.InBounds())
+			if (!sq.InBounds(base.Map))
 			{
 				return false;
 			}
-			if (sq.Fogged() || !sq.InBounds())
+			if (sq.Fogged(base.Map))
 			{
 				return false;
 			}
-			if (Find.ZoneManager.ZoneAt(sq) == null)
+			if (base.Map.zoneManager.ZoneAt(sq) == null)
 			{
 				return false;
 			}
@@ -37,9 +40,22 @@ namespace RimWorld
 
 		public override void DesignateSingleCell(IntVec3 c)
 		{
-			Zone zone = Find.ZoneManager.ZoneAt(c);
+			Zone zone = base.Map.zoneManager.ZoneAt(c);
 			zone.RemoveCell(c);
-			zone.CheckContiguous();
+			if (!this.justDesignated.Contains(zone))
+			{
+				this.justDesignated.Add(zone);
+			}
+		}
+
+		protected override void FinalizeDesignationSucceeded()
+		{
+			base.FinalizeDesignationSucceeded();
+			for (int i = 0; i < this.justDesignated.Count; i++)
+			{
+				this.justDesignated[i].CheckContiguous();
+			}
+			this.justDesignated.Clear();
 		}
 	}
 }

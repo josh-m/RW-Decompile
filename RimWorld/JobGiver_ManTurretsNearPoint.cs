@@ -9,9 +9,9 @@ namespace RimWorld
 	{
 		public float maxDistFromPoint = -1f;
 
-		public override ThinkNode DeepCopy()
+		public override ThinkNode DeepCopy(bool resolve = true)
 		{
-			JobGiver_ManTurretsNearPoint jobGiver_ManTurretsNearPoint = (JobGiver_ManTurretsNearPoint)base.DeepCopy();
+			JobGiver_ManTurretsNearPoint jobGiver_ManTurretsNearPoint = (JobGiver_ManTurretsNearPoint)base.DeepCopy(resolve);
 			jobGiver_ManTurretsNearPoint.maxDistFromPoint = this.maxDistFromPoint;
 			return jobGiver_ManTurretsNearPoint;
 		}
@@ -35,7 +35,7 @@ namespace RimWorld
 				}
 				return flag && pawn.CanReserve(t, 1) && JobDriver_ManTurret.FindAmmoForTurret(pawn, t) != null;
 			};
-			Thing thing = GenClosest.ClosestThingReachable(pawn.GetLord().CurLordToil.FlagLoc, ThingRequest.ForGroup(ThingRequestGroup.BuildingArtificial), PathEndMode.InteractionCell, TraverseParms.For(pawn, Danger.Deadly, TraverseMode.ByPawn, false), this.maxDistFromPoint, validator, null, -1, false);
+			Thing thing = GenClosest.ClosestThingReachable(pawn.GetLord().CurLordToil.FlagLoc, pawn.Map, ThingRequest.ForGroup(ThingRequestGroup.BuildingArtificial), PathEndMode.InteractionCell, TraverseParms.For(pawn, Danger.Deadly, TraverseMode.ByPawn, false), this.maxDistFromPoint, validator, null, -1, false);
 			if (thing != null)
 			{
 				return new Job(JobDefOf.ManTurret, thing)

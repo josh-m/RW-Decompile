@@ -28,19 +28,19 @@ namespace RimWorld
 
 		public override Job TryGiveJobInPartyArea(Pawn pawn, IntVec3 partySpot)
 		{
-			return this.TryGiveJobInt(pawn, (CompGatherSpot x) => PartyUtility.InPartyArea(x.parent.Position, partySpot));
+			return this.TryGiveJobInt(pawn, (CompGatherSpot x) => PartyUtility.InPartyArea(x.parent.Position, partySpot, pawn.Map));
 		}
 
 		private Job TryGiveJobInt(Pawn pawn, Predicate<CompGatherSpot> gatherSpotValidator)
 		{
-			if (GatherSpotLister.activeSpots.Count == 0)
+			if (pawn.Map.gatherSpotLister.activeSpots.Count == 0)
 			{
 				return null;
 			}
 			JoyGiver_SocialRelax.workingSpots.Clear();
-			for (int i = 0; i < GatherSpotLister.activeSpots.Count; i++)
+			for (int i = 0; i < pawn.Map.gatherSpotLister.activeSpots.Count; i++)
 			{
-				JoyGiver_SocialRelax.workingSpots.Add(GatherSpotLister.activeSpots[i]);
+				JoyGiver_SocialRelax.workingSpots.Add(pawn.Map.gatherSpotLister.activeSpots[i]);
 			}
 			CompGatherSpot compGatherSpot;
 			while (JoyGiver_SocialRelax.workingSpots.TryRandomElement(out compGatherSpot))
@@ -65,18 +65,18 @@ namespace RimWorld
 					}
 					else
 					{
-						IntVec3 vec;
-						if (!JoyGiver_SocialRelax.TryFindSitSpotOnGroundNear(compGatherSpot.parent.Position, pawn, out vec))
+						IntVec3 c;
+						if (!JoyGiver_SocialRelax.TryFindSitSpotOnGroundNear(compGatherSpot.parent.Position, pawn, out c))
 						{
 							return null;
 						}
-						job = new Job(JobDefOf.SocialRelax, compGatherSpot.parent, vec);
+						job = new Job(JobDefOf.SocialRelax, compGatherSpot.parent, c);
 					}
 					Thing thing;
 					if (pawn.health.capacities.CapableOf(PawnCapacityDefOf.Manipulation) && JoyGiver_SocialRelax.TryFindIngestibleToNurse(compGatherSpot.parent.Position, pawn, out thing))
 					{
 						job.targetC = thing;
-						job.maxNumToCarry = Mathf.Min(thing.stackCount, thing.def.ingestible.maxNumToIngestAtOnce);
+						job.count = Mathf.Min(thing.stackCount, thing.def.ingestible.maxNumToIngestAtOnce);
 					}
 					return job;
 				}
@@ -86,7 +86,7 @@ namespace RimWorld
 
 		private static bool TryFindIngestibleToNurse(IntVec3 center, Pawn ingester, out Thing ingestible)
 		{
-			if (ingester.story != null && ingester.story.traits.DegreeOfTrait(TraitDefOf.DrugDesire) < 0)
+			if (ingester.IsTeetotaler())
 			{
 				ingestible = null;
 				return false;
@@ -108,11 +108,11 @@ namespace RimWorld
 			JoyGiver_SocialRelax.nurseableDrugs.Shuffle<ThingDef>();
 			for (int j = 0; j < JoyGiver_SocialRelax.nurseableDrugs.Count; j++)
 			{
-				List<Thing> list = Find.ListerThings.ThingsOfDef(JoyGiver_SocialRelax.nurseableDrugs[j]);
+				List<Thing> list = ingester.Map.listerThings.ThingsOfDef(JoyGiver_SocialRelax.nurseableDrugs[j]);
 				if (list.Count > 0)
 				{
 					Predicate<Thing> validator = (Thing t) => ingester.CanReserve(t, 1) && !t.IsForbidden(ingester);
-					ingestible = GenClosest.ClosestThing_Global_Reachable(center, list, PathEndMode.OnCell, TraverseParms.For(ingester, Danger.Deadly, TraverseMode.ByPawn, false), 40f, validator, null);
+					ingestible = GenClosest.ClosestThing_Global_Reachable(center, ingester.Map, list, PathEndMode.OnCell, TraverseParms.For(ingester, Danger.Deadly, TraverseMode.ByPawn, false), 40f, validator, null);
 					if (ingestible != null)
 					{
 						return true;
@@ -128,7 +128,7 @@ namespace RimWorld
 			for (int i = 0; i < 30; i++)
 			{
 				IntVec3 c = table.RandomAdjacentCellCardinal();
-				Building edifice = c.GetEdifice();
+				Building edifice = c.GetEdifice(table.Map);
 				if (edifice != null && edifice.def.building.isSittable && sitter.CanReserve(edifice, 1))
 				{
 					chair = edifice;
@@ -144,8 +144,8 @@ namespace RimWorld
 			for (int i = 0; i < JoyGiver_SocialRelax.RadialPatternMiddleOutward.Count; i++)
 			{
 				IntVec3 c = center + JoyGiver_SocialRelax.RadialPatternMiddleOutward[i];
-				Building edifice = c.GetEdifice();
-				if (edifice != null && edifice.def.building.isSittable && sitter.CanReserve(edifice, 1) && !edifice.IsForbidden(sitter) && GenSight.LineOfSight(center, edifice.Position, true))
+				Building edifice = c.GetEdifice(sitter.Map);
+				if (edifice != null && edifice.def.building.isSittable && sitter.CanReserve(edifice, 1) && !edifice.IsForbidden(sitter) && GenSight.LineOfSight(center, edifice.Position, sitter.Map, true))
 				{
 					chair = edifice;
 					return true;
@@ -160,7 +160,7 @@ namespace RimWorld
 			for (int i = 0; i < 30; i++)
 			{
 				IntVec3 intVec = center + GenRadial.RadialPattern[Rand.Range(1, JoyGiver_SocialRelax.NumRadiusCells)];
-				if (sitter.CanReserveAndReach(intVec, PathEndMode.OnCell, Danger.None, 1) && intVec.GetEdifice() == null && GenSight.LineOfSight(center, intVec, true))
+				if (sitter.CanReserveAndReach(intVec, PathEndMode.OnCell, Danger.None, 1) && intVec.GetEdifice(sitter.Map) == null && GenSight.LineOfSight(center, intVec, sitter.Map, true))
 				{
 					result = intVec;
 					return true;

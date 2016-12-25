@@ -41,12 +41,12 @@ namespace RimWorld
 			{
 				if (this.pawn.timetable == null)
 				{
-					return GenDate.CurrentDayPercent;
+					return GenLocalDate.DayPercent(this.pawn);
 				}
 				float num = 0f;
-				int hourOfDay = GenDate.HourOfDay;
+				int b = GenLocalDate.HourOfDay(this.pawn);
 				float num2 = 0.0416666679f;
-				for (int i = 0; i < Mathf.Min(this.pawn.timetable.times.Count, hourOfDay); i++)
+				for (int i = 0; i < Mathf.Min(this.pawn.timetable.times.Count, b); i++)
 				{
 					if (this.pawn.timetable.times[i] != TimeAssignmentDefOf.Sleep)
 					{
@@ -101,7 +101,7 @@ namespace RimWorld
 				return false;
 			}
 			DrugPolicyEntry drugPolicyEntry = this.CurrentPolicy[thingDef];
-			return drugPolicyEntry.allowScheduled && (!thingDef.IsPleasureDrug || this.pawn.story == null || this.pawn.story.traits.DegreeOfTrait(TraitDefOf.DrugDesire) >= 0);
+			return drugPolicyEntry.allowScheduled && (!thingDef.IsPleasureDrug || !this.pawn.IsTeetotaler());
 		}
 
 		public bool AllowedToTakeScheduledNow(ThingDef thingDef)

@@ -19,9 +19,9 @@ namespace Verse
 			}
 		}
 
-		public override void PostDestroy(DestroyMode mode, bool wasSpawned)
+		public override void PostDestroy(DestroyMode mode, Map previousMap)
 		{
-			base.PostDestroy(mode, wasSpawned);
+			base.PostDestroy(mode, previousMap);
 			if (this.attachments != null)
 			{
 				for (int i = this.attachments.Count - 1; i >= 0; i--)
@@ -40,7 +40,7 @@ namespace Verse
 				{
 					stringBuilder.AppendLine(this.attachments[i].InspectStringAddon);
 				}
-				return stringBuilder.ToString();
+				return stringBuilder.ToString().TrimEndNewlines();
 			}
 			return null;
 		}

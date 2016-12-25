@@ -14,22 +14,22 @@ namespace RimWorld
 			{
 				return null;
 			}
-			if (Find.SnowGrid.TotalDepth < 200f)
+			if (pawn.Map.snowGrid.TotalDepth < 200f)
 			{
 				return null;
 			}
-			IntVec3 vec = JoyGiver_BuildSnowman.TryFindSnowmanBuildCell(pawn);
-			if (!vec.IsValid)
+			IntVec3 c = JoyGiver_BuildSnowman.TryFindSnowmanBuildCell(pawn);
+			if (!c.IsValid)
 			{
 				return null;
 			}
-			return new Job(this.def.jobDef, vec);
+			return new Job(this.def.jobDef, c);
 		}
 
 		private static IntVec3 TryFindSnowmanBuildCell(Pawn pawn)
 		{
 			Region rootReg;
-			if (!CellFinder.TryFindClosestRegionWith(pawn.Position.GetRegion(), TraverseParms.For(pawn, Danger.Deadly, TraverseMode.ByPawn, false), (Region r) => r.Room.PsychologicallyOutdoors, 100, out rootReg))
+			if (!CellFinder.TryFindClosestRegionWith(pawn.GetRegion(), TraverseParms.For(pawn, Danger.Deadly, TraverseMode.ByPawn, false), (Region r) => r.Room.PsychologicallyOutdoors, 100, out rootReg))
 			{
 				return IntVec3.Invalid;
 			}
@@ -52,7 +52,7 @@ namespace RimWorld
 
 		private static bool IsGoodSnowmanCell(IntVec3 c, Pawn pawn)
 		{
-			if (Find.SnowGrid.GetDepth(c) < 0.5f)
+			if (pawn.Map.snowGrid.GetDepth(c) < 0.5f)
 			{
 				return false;
 			}
@@ -60,22 +60,22 @@ namespace RimWorld
 			{
 				return false;
 			}
-			if (c.GetEdifice() != null)
+			if (c.GetEdifice(pawn.Map) != null)
 			{
 				return false;
 			}
 			for (int i = 0; i < 9; i++)
 			{
-				IntVec3 intVec = c + GenAdj.AdjacentCellsAndInside[i];
-				if (!intVec.InBounds())
+				IntVec3 c2 = c + GenAdj.AdjacentCellsAndInside[i];
+				if (!c2.InBounds(pawn.Map))
 				{
 					return false;
 				}
-				if (!intVec.Standable())
+				if (!c2.Standable(pawn.Map))
 				{
 					return false;
 				}
-				if (Find.Reservations.IsReserved(intVec, pawn.Faction))
+				if (pawn.Map.reservationManager.IsReserved(c2, pawn.Faction))
 				{
 					return false;
 				}

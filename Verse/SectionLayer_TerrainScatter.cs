@@ -9,6 +9,8 @@ namespace Verse
 	{
 		private class Scatterable
 		{
+			private Map map;
+
 			public ScatterableDef def;
 
 			public Vector3 loc;
@@ -22,15 +24,16 @@ namespace Verse
 				get
 				{
 					IntVec3 c = this.loc.ToIntVec3();
-					TerrainDef terrainDef = Find.TerrainGrid.TerrainAt(c);
-					return this.def.scatterType == terrainDef.scatterType && !c.Filled();
+					TerrainDef terrainDef = this.map.terrainGrid.TerrainAt(c);
+					return this.def.scatterType == terrainDef.scatterType && !c.Filled(this.map);
 				}
 			}
 
-			public Scatterable(ScatterableDef def, Vector3 loc)
+			public Scatterable(ScatterableDef def, Vector3 loc, Map map)
 			{
 				this.def = def;
 				this.loc = loc;
+				this.map = map;
 				this.size = Rand.Range(def.minSize, def.maxSize);
 				this.rotation = Rand.Range(0f, 360f);
 			}
@@ -61,13 +64,14 @@ namespace Verse
 			base.ClearSubMeshes(MeshParts.All);
 			this.scats.RemoveAll((SectionLayer_TerrainScatter.Scatterable scat) => !scat.IsOnValidTerrain);
 			int num = 0;
-			TerrainDef[] topGrid = Find.TerrainGrid.topGrid;
+			TerrainDef[] topGrid = base.Map.terrainGrid.topGrid;
 			CellRect cellRect = this.section.CellRect;
+			CellIndices cellIndices = base.Map.cellIndices;
 			for (int i = cellRect.minZ; i <= cellRect.maxZ; i++)
 			{
 				for (int j = cellRect.minX; j <= cellRect.maxX; j++)
 				{
-					if (topGrid[CellIndices.CellToIndex(j, i)].scatterType != null)
+					if (topGrid[cellIndices.CellToIndex(j, i)].scatterType != null)
 					{
 						num++;
 					}
@@ -79,8 +83,8 @@ namespace Verse
 			{
 				num2++;
 				IntVec3 randomCell = this.section.CellRect.RandomCell;
-				string terrScatType = Find.TerrainGrid.TerrainAt(randomCell).scatterType;
-				if (terrScatType != null && !randomCell.Filled())
+				string terrScatType = base.Map.terrainGrid.TerrainAt(randomCell).scatterType;
+				if (terrScatType != null && !randomCell.Filled(base.Map))
 				{
 					ScatterableDef def2;
 					if ((from def in DefDatabase<ScatterableDef>.AllDefs
@@ -88,7 +92,7 @@ namespace Verse
 					select def).TryRandomElement(out def2))
 					{
 						Vector3 loc = new Vector3((float)randomCell.x + Rand.Value, (float)randomCell.y, (float)randomCell.z + Rand.Value);
-						SectionLayer_TerrainScatter.Scatterable scatterable = new SectionLayer_TerrainScatter.Scatterable(def2, loc);
+						SectionLayer_TerrainScatter.Scatterable scatterable = new SectionLayer_TerrainScatter.Scatterable(def2, loc, base.Map);
 						this.scats.Add(scatterable);
 						scatterable.PrintOnto(this);
 					}

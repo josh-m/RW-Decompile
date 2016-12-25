@@ -37,19 +37,19 @@ namespace RimWorld
 
 		public override AcceptanceReport CanDesignateCell(IntVec3 c)
 		{
-			if (!c.InBounds())
+			if (!c.InBounds(base.Map))
 			{
 				return false;
 			}
-			if (Find.DesignationManager.DesignationAt(c, DesignationDefOf.Mine) != null)
+			if (base.Map.designationManager.DesignationAt(c, DesignationDefOf.Mine) != null)
 			{
 				return AcceptanceReport.WasRejected;
 			}
-			if (c.Fogged())
+			if (c.Fogged(base.Map))
 			{
 				return true;
 			}
-			Thing thing = MineUtility.MineableInCell(c);
+			Thing thing = MineUtility.MineableInCell(c, base.Map);
 			if (thing == null)
 			{
 				return "MessageMustDesignateMineable".Translate();
@@ -68,7 +68,7 @@ namespace RimWorld
 			{
 				return false;
 			}
-			if (Find.DesignationManager.DesignationAt(t.Position, DesignationDefOf.Mine) != null)
+			if (base.Map.designationManager.DesignationAt(t.Position, DesignationDefOf.Mine) != null)
 			{
 				return AcceptanceReport.WasRejected;
 			}
@@ -77,7 +77,7 @@ namespace RimWorld
 
 		public override void DesignateSingleCell(IntVec3 loc)
 		{
-			Find.DesignationManager.AddDesignation(new Designation(loc, DesignationDefOf.Mine));
+			base.Map.designationManager.AddDesignation(new Designation(loc, DesignationDefOf.Mine));
 		}
 
 		public override void DesignateThing(Thing t)

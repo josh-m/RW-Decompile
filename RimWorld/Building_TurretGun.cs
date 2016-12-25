@@ -25,7 +25,7 @@ namespace RimWorld
 
 		private bool holdFire;
 
-		protected TargetInfo currentTargetInt = TargetInfo.Invalid;
+		protected LocalTargetInfo currentTargetInt = LocalTargetInfo.Invalid;
 
 		protected int burstWarmupTicksLeft;
 
@@ -41,7 +41,7 @@ namespace RimWorld
 			}
 		}
 
-		public override TargetInfo CurrentTarget
+		public override LocalTargetInfo CurrentTarget
 		{
 			get
 			{
@@ -112,12 +112,12 @@ namespace RimWorld
 			this.top = new TurretTop(this);
 		}
 
-		public override void SpawnSetup()
+		public override void SpawnSetup(Map map)
 		{
-			base.SpawnSetup();
+			base.SpawnSetup(map);
 			this.powerComp = base.GetComp<CompPowerTrader>();
 			this.mannableComp = base.GetComp<CompMannable>();
-			this.currentTargetInt = TargetInfo.Invalid;
+			this.currentTargetInt = LocalTargetInfo.Invalid;
 			this.burstWarmupTicksLeft = 0;
 			this.burstCooldownTicksLeft = 0;
 		}
@@ -130,7 +130,7 @@ namespace RimWorld
 			Scribe_Values.LookValue<bool>(ref this.holdFire, "holdFire", false, false);
 		}
 
-		public override void OrderAttack(TargetInfo targ)
+		public override void OrderAttack(LocalTargetInfo targ)
 		{
 			if ((targ.Cell - base.Position).LengthHorizontal < this.GunCompEq.PrimaryVerb.verbProps.minRange)
 			{
@@ -204,6 +204,10 @@ namespace RimWorld
 
 		protected void TryStartShootSomething()
 		{
+			if (!base.Spawned)
+			{
+				return;
+			}
 			if (this.forcedTarget.ThingDestroyed)
 			{
 				this.forcedTarget = null;
@@ -212,7 +216,7 @@ namespace RimWorld
 			{
 				return;
 			}
-			if (this.GunCompEq.PrimaryVerb.verbProps.projectileDef.projectile.flyOverhead && Find.RoofGrid.Roofed(base.Position))
+			if (this.GunCompEq.PrimaryVerb.verbProps.projectileDef.projectile.flyOverhead && base.Map.roofGrid.Roofed(base.Position))
 			{
 				return;
 			}
@@ -227,13 +231,13 @@ namespace RimWorld
 			}
 			if (!isValid && this.currentTargetInt.IsValid)
 			{
-				SoundDefOf.TurretAcquireTarget.PlayOneShot(base.Position);
+				SoundDefOf.TurretAcquireTarget.PlayOneShot(new TargetInfo(base.Position, base.Map, false));
 			}
 			if (this.currentTargetInt.IsValid)
 			{
-				if (this.def.building.turretBurstWarmupTicks > 0)
+				if (this.def.building.turretBurstWarmupTime > 0f)
 				{
-					this.burstWarmupTicksLeft = this.def.building.turretBurstWarmupTicks;
+					this.burstWarmupTicksLeft = this.def.building.turretBurstWarmupTime.SecondsToTicks();
 				}
 				else
 				{
@@ -242,14 +246,14 @@ namespace RimWorld
 			}
 		}
 
-		protected TargetInfo TryFindNewTarget()
+		protected LocalTargetInfo TryFindNewTarget()
 		{
 			Thing thing = this.TargSearcher();
 			Faction faction = thing.Faction;
 			float range = this.GunCompEq.PrimaryVerb.verbProps.range;
 			float minRange = this.GunCompEq.PrimaryVerb.verbProps.minRange;
 			Building t;
-			if (Rand.Value < 0.5f && this.GunCompEq.PrimaryVerb.verbProps.projectileDef.projectile.flyOverhead && faction.HostileTo(Faction.OfPlayer) && Find.ListerBuildings.allBuildingsColonist.Where(delegate(Building x)
+			if (Rand.Value < 0.5f && this.GunCompEq.PrimaryVerb.verbProps.projectileDef.projectile.flyOverhead && faction.HostileTo(Faction.OfPlayer) && base.Map.listerBuildings.allBuildingsColonist.Where(delegate(Building x)
 			{
 				float num = x.Position.DistanceToSquared(this.Position);
 				return num > minRange * minRange && num < range * range;
@@ -285,7 +289,7 @@ namespace RimWorld
 			{
 				if (this.GunCompEq.PrimaryVerb.verbProps.projectileDef.projectile.flyOverhead)
 				{
-					RoofDef roofDef = Find.RoofGrid.RoofAt(t.Position);
+					RoofDef roofDef = base.Map.roofGrid.RoofAt(t.Position);
 					if (roofDef != null && roofDef.isThickRoof)
 					{
 						return false;
@@ -310,13 +314,13 @@ namespace RimWorld
 
 		protected void BurstComplete()
 		{
-			if (this.def.building.turretBurstCooldownTicks >= 0)
+			if (this.def.building.turretBurstCooldownTime >= 0f)
 			{
-				this.burstCooldownTicksLeft = this.def.building.turretBurstCooldownTicks;
+				this.burstCooldownTicksLeft = this.def.building.turretBurstCooldownTime.SecondsToTicks();
 			}
 			else
 			{
-				this.burstCooldownTicksLeft = this.GunCompEq.PrimaryVerb.verbProps.defaultCooldownTicks;
+				this.burstCooldownTicksLeft = this.GunCompEq.PrimaryVerb.verbProps.defaultCooldownTime.SecondsToTicks();
 			}
 			this.loaded = false;
 		}
@@ -439,7 +443,7 @@ namespace RimWorld
 						this.<>f__this.holdFire = !this.<>f__this.holdFire;
 						if (this.<>f__this.holdFire)
 						{
-							this.<>f__this.currentTargetInt = TargetInfo.Invalid;
+							this.<>f__this.currentTargetInt = LocalTargetInfo.Invalid;
 							this.<>f__this.burstWarmupTicksLeft = 0;
 						}
 					},
@@ -450,7 +454,7 @@ namespace RimWorld
 
 		private void ResetForcedTarget()
 		{
-			this.forcedTarget = TargetInfo.Invalid;
+			this.forcedTarget = LocalTargetInfo.Invalid;
 			if (this.burstCooldownTicksLeft <= 0)
 			{
 				this.TryStartShootSomething();

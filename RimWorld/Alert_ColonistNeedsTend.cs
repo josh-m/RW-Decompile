@@ -6,13 +6,13 @@ using Verse;
 
 namespace RimWorld
 {
-	public class Alert_ColonistNeedsTend : Alert_High
+	public class Alert_ColonistNeedsTend : Alert
 	{
 		private IEnumerable<Pawn> NeedingColonists
 		{
 			get
 			{
-				foreach (Pawn p in Find.MapPawns.FreeColonistsSpawned)
+				foreach (Pawn p in PawnsFinder.AllMaps_FreeColonistsSpawned)
 				{
 					if (p.health.HasHediffsNeedingTendByColony(true))
 					{
@@ -29,35 +29,30 @@ namespace RimWorld
 			}
 		}
 
-		public override string FullExplanation
-		{
-			get
-			{
-				StringBuilder stringBuilder = new StringBuilder();
-				foreach (Pawn current in this.NeedingColonists)
-				{
-					stringBuilder.AppendLine("    " + current.NameStringShort);
-				}
-				return string.Format("ColonistNeedsTreatmentDesc".Translate(), stringBuilder.ToString());
-			}
-		}
-
-		public override AlertReport Report
-		{
-			get
-			{
-				Pawn pawn = this.NeedingColonists.FirstOrDefault<Pawn>();
-				if (pawn == null)
-				{
-					return false;
-				}
-				return AlertReport.CulpritIs(pawn);
-			}
-		}
-
 		public Alert_ColonistNeedsTend()
 		{
-			this.baseLabel = "ColonistNeedsTreatment".Translate();
+			this.defaultLabel = "ColonistNeedsTreatment".Translate();
+			this.defaultPriority = AlertPriority.High;
+		}
+
+		public override string GetExplanation()
+		{
+			StringBuilder stringBuilder = new StringBuilder();
+			foreach (Pawn current in this.NeedingColonists)
+			{
+				stringBuilder.AppendLine("    " + current.NameStringShort);
+			}
+			return string.Format("ColonistNeedsTreatmentDesc".Translate(), stringBuilder.ToString());
+		}
+
+		public override AlertReport GetReport()
+		{
+			Pawn pawn = this.NeedingColonists.FirstOrDefault<Pawn>();
+			if (pawn == null)
+			{
+				return false;
+			}
+			return AlertReport.CulpritIs(pawn);
 		}
 	}
 }

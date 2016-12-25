@@ -168,29 +168,40 @@ namespace RimWorld
 				AreaUtility.MakeAllowedAreaListFloatMenu(delegate(Area a)
 				{
 					pawn.playerSettings.AreaRestriction = a;
-				}, mode, true, true);
+				}, mode, true, true, pawn.Map);
 			}
 		}
 
-		public static void DrawInspectStringFor(ISelectable t, ref float y)
+		public static void DrawInspectStringFor(ISelectable sel, ref float y)
 		{
 			string text;
 			try
 			{
-				text = t.GetInspectString();
+				text = sel.GetInspectString();
+				Thing thing = sel as Thing;
+				if (thing != null)
+				{
+					string inspectStringLowPriority = thing.GetInspectStringLowPriority();
+					if (!inspectStringLowPriority.NullOrEmpty())
+					{
+						if (!text.NullOrEmpty())
+						{
+							text = text.TrimEndNewlines() + "\n";
+						}
+						text += inspectStringLowPriority;
+					}
+				}
 			}
 			catch (Exception ex)
 			{
-				text = "GetInspectString exception on " + t.ToString() + ":\n" + ex.ToString();
+				text = "GetInspectString exception on " + sel.ToString() + ":\n" + ex.ToString();
 				if (!InspectPaneFiller.debug_inspectStringExceptionErrored)
 				{
 					Log.Error(text);
 					InspectPaneFiller.debug_inspectStringExceptionErrored = true;
 				}
 			}
-			Text.Font = GameFont.Small;
-			Rect rect = new Rect(0f, y, MainTabWindow_Inspect.PaneInnerSize.x, 100f);
-			Widgets.Label(rect, text);
+			InspectPaneFiller.DrawInspectString(text, ref y);
 			if (Prefs.DevMode)
 			{
 				text = text.Trim();
@@ -200,7 +211,7 @@ namespace RimWorld
 					{
 						Log.ErrorOnce(string.Concat(new object[]
 						{
-							t,
+							sel,
 							" gave an inspect string over six lines (some may be empty):\n",
 							text,
 							"END"
@@ -209,6 +220,13 @@ namespace RimWorld
 					}
 				}
 			}
+		}
+
+		public static void DrawInspectString(string str, ref float y)
+		{
+			Text.Font = GameFont.Small;
+			Rect rect = new Rect(0f, y, InspectPaneUtility.PaneInnerSize.x, 200f);
+			Widgets.Label(rect, str);
 		}
 	}
 }

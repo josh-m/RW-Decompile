@@ -40,7 +40,7 @@ namespace Verse
 			});
 		}
 
-		public virtual void TickOverlay()
+		public virtual void TickOverlay(Map map)
 		{
 			if (this.worldOverlayMat != null)
 			{
@@ -52,11 +52,11 @@ namespace Verse
 			}
 		}
 
-		public void DrawOverlay()
+		public void DrawOverlay(Map map)
 		{
 			if (this.worldOverlayMat != null)
 			{
-				Vector3 position = Find.Map.Center.ToVector3ShiftedWithAltitude(AltitudeLayer.Weather);
+				Vector3 position = map.Center.ToVector3ShiftedWithAltitude(AltitudeLayer.Weather);
 				Graphics.DrawMesh(MeshPool.wholeMapPlane, position, Quaternion.identity, this.worldOverlayMat, 0);
 			}
 			if (this.screenOverlayMat != null)

@@ -34,7 +34,7 @@ namespace RimWorld
 		{
 		}
 
-		public Zone_Stockpile(StorageSettingsPreset preset) : base(preset.PresetName())
+		public Zone_Stockpile(StorageSettingsPreset preset, ZoneManager zoneManager) : base(preset.PresetName(), zoneManager)
 		{
 			this.settings = new StorageSettings(this);
 			this.settings.SetFromPreset(preset);
@@ -48,7 +48,7 @@ namespace RimWorld
 			{
 				this
 			});
-			if (Scribe.mode == LoadSaveMode.LoadingVars)
+			if (Scribe.mode == LoadSaveMode.PostLoadInit)
 			{
 				this.slotGroup = new SlotGroup(this);
 			}
@@ -76,7 +76,7 @@ namespace RimWorld
 		}
 
 		[DebuggerHidden]
-		public override IEnumerable<ITab> GetInspectionTabs()
+		public override IEnumerable<InspectTabBase> GetInspectTabs()
 		{
 			yield return Zone_Stockpile.StorageTab;
 		}
@@ -138,6 +138,11 @@ namespace RimWorld
 
 		public void Notify_LostThing(Thing newItem)
 		{
+		}
+
+		virtual Map get_Map()
+		{
+			return base.Map;
 		}
 	}
 }

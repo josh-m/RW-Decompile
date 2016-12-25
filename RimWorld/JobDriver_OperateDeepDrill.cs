@@ -27,7 +27,7 @@ namespace RimWorld
 				Building building = (Building)actor.CurJob.targetA.Thing;
 				CompDeepDrill comp = building.GetComp<CompDeepDrill>();
 				comp.DrillWorkDone(actor);
-				actor.skills.Learn(SkillDefOf.Mining, 0.0714999959f);
+				actor.skills.Learn(SkillDefOf.Mining, 0.0714999959f, false);
 			};
 			work.defaultCompleteMode = ToilCompleteMode.Never;
 			work.WithEffect(EffecterDefOf.Drill, TargetIndex.A);

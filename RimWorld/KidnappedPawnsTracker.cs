@@ -35,7 +35,7 @@ namespace RimWorld
 			{
 				this.kidnappedPawns.RemoveAll((Pawn x) => x.Destroyed);
 			}
-			Scribe_Collections.LookList<Pawn>(ref this.kidnappedPawns, "kidnappedPawns", LookMode.MapReference, new object[0]);
+			Scribe_Collections.LookList<Pawn>(ref this.kidnappedPawns, "kidnappedPawns", LookMode.Reference, new object[0]);
 		}
 
 		public void KidnapPawn(Pawn pawn, Pawn kidnapper)
@@ -56,7 +56,15 @@ namespace RimWorld
 				pawn.DeSpawn();
 			}
 			this.kidnappedPawns.Add(pawn);
-			Find.WorldPawns.PassToWorld(pawn, PawnDiscardDecideMode.Keep);
+			if (!Find.WorldPawns.Contains(pawn))
+			{
+				Find.WorldPawns.PassToWorld(pawn, PawnDiscardDecideMode.Decide);
+				if (!Find.WorldPawns.Contains(pawn))
+				{
+					Log.Error("WorldPawns discarded kidnapped pawn.");
+					this.kidnappedPawns.Remove(pawn);
+				}
+			}
 		}
 
 		public void RemoveKidnappedPawn(Pawn pawn)
@@ -80,7 +88,7 @@ namespace RimWorld
 
 		public void KidnappedPawnsTrackerTick()
 		{
-			this.kidnappedPawns.RemoveAll((Pawn x) => x.Dead);
+			this.kidnappedPawns.RemoveAll((Pawn x) => x.DestroyedOrNull());
 			if (Find.TickManager.TicksGame % 15051 == 0)
 			{
 				for (int i = this.kidnappedPawns.Count - 1; i >= 0; i--)

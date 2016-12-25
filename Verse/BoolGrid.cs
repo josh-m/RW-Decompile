@@ -9,7 +9,9 @@ namespace Verse
 
 		private int trueCountInt;
 
-		private MapMeshFlag mapChangeType;
+		private int mapSizeX;
+
+		private int mapSizeZ;
 
 		public int TrueCount
 		{
@@ -19,25 +21,23 @@ namespace Verse
 			}
 		}
 
-		public bool[] InnerArray
-		{
-			get
-			{
-				return this.arr;
-			}
-		}
-
 		public IEnumerable<IntVec3> ActiveCells
 		{
 			get
 			{
 				if (this.trueCountInt != 0)
 				{
+					int yieldedCount = 0;
 					for (int i = 0; i < this.arr.Length; i++)
 					{
 						if (this.arr[i])
 						{
-							yield return CellIndices.IndexToCell(i);
+							yield return CellIndicesUtility.IndexToCell(i, this.mapSizeX, this.mapSizeZ);
+							yieldedCount++;
+							if (yieldedCount >= this.trueCountInt)
+							{
+								break;
+							}
 						}
 					}
 				}
@@ -60,7 +60,7 @@ namespace Verse
 		{
 			get
 			{
-				return this.arr[CellIndices.CellToIndex(c)];
+				return this.arr[CellIndicesUtility.CellToIndex(c, this.mapSizeX)];
 			}
 			set
 			{
@@ -72,45 +72,57 @@ namespace Verse
 		{
 			get
 			{
-				return this.arr[CellIndices.CellToIndex(x, z)];
+				return this.arr[CellIndicesUtility.CellToIndex(x, z, this.mapSizeX)];
 			}
 			set
 			{
-				this.Set(CellIndices.CellToIndex(x, z), value);
+				this.Set(CellIndicesUtility.CellToIndex(x, z, this.mapSizeX), value);
 			}
 		}
 
 		public BoolGrid()
 		{
-			if (this.arr == null)
-			{
-				this.arr = new bool[CellIndices.NumGridCells];
-			}
 		}
 
-		public BoolGrid(MapMeshFlag mapChangeType) : this()
+		public BoolGrid(Map map)
 		{
-			this.mapChangeType = mapChangeType;
+			this.ClearAndResizeTo(map);
+		}
+
+		public bool MapSizeMatches(Map map)
+		{
+			return this.mapSizeX == map.Size.x && this.mapSizeZ == map.Size.z;
+		}
+
+		public void ClearAndResizeTo(Map map)
+		{
+			if (this.MapSizeMatches(map) && this.arr != null)
+			{
+				this.Clear();
+				return;
+			}
+			this.mapSizeX = map.Size.x;
+			this.mapSizeZ = map.Size.z;
+			this.arr = new bool[this.mapSizeX * this.mapSizeZ];
 		}
 
 		public void ExposeData()
 		{
 			Scribe_Values.LookValue<int>(ref this.trueCountInt, "trueCount", 0, false);
-			ArrayExposeUtility.ExposeBoolArray(ref this.arr, "arr");
+			Scribe_Values.LookValue<int>(ref this.mapSizeX, "mapSizeX", 0, false);
+			Scribe_Values.LookValue<int>(ref this.mapSizeZ, "mapSizeZ", 0, false);
+			ArrayExposeUtility.ExposeBoolArray(ref this.arr, this.mapSizeX, this.mapSizeZ, "arr");
 		}
 
 		public void Clear()
 		{
-			int numGridCells = CellIndices.NumGridCells;
-			for (int i = 0; i < numGridCells; i++)
-			{
-				this.arr[i] = false;
-			}
+			Array.Clear(this.arr, 0, this.arr.Length);
+			this.trueCountInt = 0;
 		}
 
 		public virtual void Set(IntVec3 c, bool value)
 		{
-			this.Set(CellIndices.CellToIndex(c), value);
+			this.Set(CellIndicesUtility.CellToIndex(c, this.mapSizeX), value);
 		}
 
 		public virtual void Set(int index, bool value)
@@ -118,10 +130,6 @@ namespace Verse
 			if (this.arr[index] == value)
 			{
 				return;
-			}
-			if (this.mapChangeType != MapMeshFlag.None)
-			{
-				Find.MapDrawer.MapMeshDirty(CellIndices.IndexToCell(index), this.mapChangeType);
 			}
 			this.arr[index] = value;
 			if (value)
@@ -139,10 +147,6 @@ namespace Verse
 			for (int i = 0; i < this.arr.Length; i++)
 			{
 				this.arr[i] = !this.arr[i];
-				if (this.mapChangeType != MapMeshFlag.None)
-				{
-					Find.MapDrawer.MapMeshDirty(CellIndices.IndexToCell(i), this.mapChangeType);
-				}
 			}
 			this.trueCountInt = this.arr.Length - this.trueCountInt;
 		}

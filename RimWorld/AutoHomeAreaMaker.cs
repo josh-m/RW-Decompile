@@ -9,7 +9,7 @@ namespace RimWorld
 
 		private static bool ShouldAdd()
 		{
-			return Find.PlaySettings.autoHomeArea && Current.ProgramState == ProgramState.MapPlaying;
+			return Find.PlaySettings.autoHomeArea && Current.ProgramState == ProgramState.Playing;
 		}
 
 		public static void Notify_BuildingSpawned(Thing b)
@@ -19,23 +19,23 @@ namespace RimWorld
 				return;
 			}
 			CellRect cellRect = new CellRect(b.Position.x - b.RotatedSize.x / 2 - 4, b.Position.z - b.RotatedSize.z / 2 - 4, b.RotatedSize.x + 8, b.RotatedSize.z + 8);
-			cellRect.ClipInsideMap();
+			cellRect.ClipInsideMap(b.Map);
 			foreach (IntVec3 current in cellRect)
 			{
-				Find.AreaHome.Set(current);
+				b.Map.areaManager.Home[current] = true;
 			}
 		}
 
-		public static void Notify_ZoneCellAdded(IntVec3 c)
+		public static void Notify_ZoneCellAdded(IntVec3 c, Zone zone)
 		{
 			if (!AutoHomeAreaMaker.ShouldAdd())
 			{
 				return;
 			}
-			CellRect.CellRectIterator iterator = CellRect.CenteredOn(c, 4).ClipInsideMap().GetIterator();
+			CellRect.CellRectIterator iterator = CellRect.CenteredOn(c, 4).ClipInsideMap(zone.Map).GetIterator();
 			while (!iterator.Done())
 			{
-				Find.AreaHome.Set(iterator.Current);
+				zone.Map.areaManager.Home[iterator.Current] = true;
 				iterator.MoveNext();
 			}
 		}

@@ -49,5 +49,10 @@ namespace Verse
 		{
 			this.catDef = def;
 		}
+
+		public override string ToString()
+		{
+			return this.catDef.defName;
+		}
 	}
 }

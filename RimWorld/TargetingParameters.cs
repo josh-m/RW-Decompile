@@ -37,7 +37,7 @@ namespace RimWorld
 
 		public bool onlyTargetDamagedThings;
 
-		public bool worldObjectTargetsMustBeAutoAttackable = true;
+		public bool mapObjectTargetsMustBeAutoAttackable = true;
 
 		public bool onlyTargetIncapacitatedPawns;
 
@@ -63,7 +63,7 @@ namespace RimWorld
 			{
 				return false;
 			}
-			if (this.mustBeSelectable && !targ.Thing.SelectableNow())
+			if (this.mustBeSelectable && !ThingSelectionUtility.SelectableByMapClick(targ.Thing))
 			{
 				return false;
 			}
@@ -94,7 +94,7 @@ namespace RimWorld
 			{
 				return (!this.onlyTargetBarriers || targ.Thing.def.regionBarrier) && (this.onlyTargetFactions == null || this.onlyTargetFactions.Contains(targ.Thing.Faction));
 			}
-			return this.canTargetItems && (!this.worldObjectTargetsMustBeAutoAttackable || targ.Thing.def.isAutoAttackableWorldObject);
+			return this.canTargetItems && (!this.mapObjectTargetsMustBeAutoAttackable || targ.Thing.def.isAutoAttackableMapObject);
 		}
 
 		public static TargetingParameters ForSelf(Pawn p)
@@ -104,7 +104,7 @@ namespace RimWorld
 				targetSpecificThing = p,
 				canTargetPawns = false,
 				canTargetBuildings = false,
-				worldObjectTargetsMustBeAutoAttackable = false
+				mapObjectTargetsMustBeAutoAttackable = false
 			};
 		}
 
@@ -114,7 +114,7 @@ namespace RimWorld
 			{
 				canTargetPawns = true,
 				canTargetBuildings = false,
-				worldObjectTargetsMustBeAutoAttackable = false,
+				mapObjectTargetsMustBeAutoAttackable = false,
 				validator = delegate(TargetInfo targ)
 				{
 					if (!targ.HasThing)
@@ -133,7 +133,7 @@ namespace RimWorld
 			targetingParameters.canTargetPawns = true;
 			targetingParameters.canTargetBuildings = true;
 			targetingParameters.canTargetItems = true;
-			targetingParameters.worldObjectTargetsMustBeAutoAttackable = true;
+			targetingParameters.mapObjectTargetsMustBeAutoAttackable = true;
 			targetingParameters.validator = ((TargetInfo targ) => targ.HasThing && (targ.Thing.HostileTo(Faction.OfPlayer) || (targ.Thing is Pawn && !((Pawn)targ.Thing).RaceProps.Humanlike)));
 			return targetingParameters;
 		}
@@ -145,7 +145,7 @@ namespace RimWorld
 				canTargetPawns = true,
 				canTargetBuildings = true,
 				canTargetItems = true,
-				worldObjectTargetsMustBeAutoAttackable = true
+				mapObjectTargetsMustBeAutoAttackable = true
 			};
 		}
 
@@ -156,7 +156,7 @@ namespace RimWorld
 				canTargetPawns = true,
 				onlyTargetIncapacitatedPawns = true,
 				canTargetBuildings = false,
-				worldObjectTargetsMustBeAutoAttackable = false
+				mapObjectTargetsMustBeAutoAttackable = false
 			};
 		}
 
@@ -165,7 +165,7 @@ namespace RimWorld
 			TargetingParameters targetingParameters = new TargetingParameters();
 			targetingParameters.canTargetPawns = true;
 			targetingParameters.canTargetItems = true;
-			targetingParameters.worldObjectTargetsMustBeAutoAttackable = false;
+			targetingParameters.mapObjectTargetsMustBeAutoAttackable = false;
 			targetingParameters.validator = ((TargetInfo targ) => targ.HasThing && StrippableUtility.CanBeStrippedByColony(targ.Thing));
 			return targetingParameters;
 		}
@@ -175,12 +175,25 @@ namespace RimWorld
 			TargetingParameters targetingParameters = new TargetingParameters();
 			targetingParameters.canTargetPawns = true;
 			targetingParameters.canTargetBuildings = false;
-			targetingParameters.worldObjectTargetsMustBeAutoAttackable = false;
+			targetingParameters.mapObjectTargetsMustBeAutoAttackable = false;
 			targetingParameters.validator = delegate(TargetInfo x)
 			{
 				ITrader trader = x.Thing as ITrader;
 				return trader != null && trader.CanTradeNow;
 			};
+			return targetingParameters;
+		}
+
+		public static TargetingParameters ForDropPodsDestination()
+		{
+			TargetingParameters targetingParameters = new TargetingParameters();
+			targetingParameters.canTargetLocations = true;
+			targetingParameters.canTargetSelf = false;
+			targetingParameters.canTargetPawns = false;
+			targetingParameters.canTargetFires = false;
+			targetingParameters.canTargetBuildings = false;
+			targetingParameters.canTargetItems = false;
+			targetingParameters.validator = ((TargetInfo x) => DropCellFinder.IsGoodDropSpot(x.Cell, x.Map, false, true));
 			return targetingParameters;
 		}
 	}

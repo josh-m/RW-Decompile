@@ -29,11 +29,11 @@ namespace RimWorld
 
 		public override AcceptanceReport CanDesignateCell(IntVec3 c)
 		{
-			if (!c.InBounds())
+			if (!c.InBounds(base.Map))
 			{
 				return false;
 			}
-			if (!DebugSettings.godMode && c.Fogged())
+			if (!DebugSettings.godMode && c.Fogged(base.Map))
 			{
 				return false;
 			}
@@ -51,7 +51,7 @@ namespace RimWorld
 
 		private Thing TopDeconstructibleInCell(IntVec3 loc)
 		{
-			foreach (Thing current in from t in Find.ThingGrid.ThingsAt(loc)
+			foreach (Thing current in from t in base.Map.thingGrid.ThingsAt(loc)
 			orderby t.def.altitudeLayer descending
 			select t)
 			{
@@ -70,13 +70,13 @@ namespace RimWorld
 				t.SetFaction(Faction.OfPlayer, null);
 			}
 			Thing innerIfMinified = t.GetInnerIfMinified();
-			if (DebugSettings.godMode || innerIfMinified.GetStatValue(StatDefOf.WorkToMake, true) == 0f || t.def.IsFrame)
+			if (DebugSettings.godMode || innerIfMinified.GetStatValue(StatDefOf.WorkToBuild, true) == 0f || t.def.IsFrame)
 			{
 				t.Destroy(DestroyMode.Deconstruct);
 			}
 			else
 			{
-				Find.DesignationManager.AddDesignation(new Designation(t, DesignationDefOf.Deconstruct));
+				base.Map.designationManager.AddDesignation(new Designation(t, DesignationDefOf.Deconstruct));
 			}
 		}
 
@@ -109,11 +109,11 @@ namespace RimWorld
 					}
 				}
 			}
-			if (Find.DesignationManager.DesignationOn(t, DesignationDefOf.Deconstruct) != null)
+			if (base.Map.designationManager.DesignationOn(t, DesignationDefOf.Deconstruct) != null)
 			{
 				return false;
 			}
-			if (Find.DesignationManager.DesignationOn(t, DesignationDefOf.Uninstall) != null)
+			if (base.Map.designationManager.DesignationOn(t, DesignationDefOf.Uninstall) != null)
 			{
 				return false;
 			}

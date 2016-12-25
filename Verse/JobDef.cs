@@ -9,6 +9,7 @@ namespace Verse
 	{
 		public Type driverClass;
 
+		[MustTranslate]
 		public string reportString = "Doing something.";
 
 		public bool playerInterruptible = true;

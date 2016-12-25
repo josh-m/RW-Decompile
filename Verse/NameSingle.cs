@@ -48,6 +48,72 @@ namespace Verse
 			}
 		}
 
+		private int FirstDigitPosition
+		{
+			get
+			{
+				if (!this.numerical)
+				{
+					return -1;
+				}
+				if (this.nameInt.NullOrEmpty() || !char.IsDigit(this.nameInt[this.nameInt.Length - 1]))
+				{
+					return -1;
+				}
+				for (int i = this.nameInt.Length - 2; i >= 0; i--)
+				{
+					if (!char.IsDigit(this.nameInt[i]))
+					{
+						return i + 1;
+					}
+				}
+				return 0;
+			}
+		}
+
+		public string NameWithoutNumber
+		{
+			get
+			{
+				if (!this.numerical)
+				{
+					return this.nameInt;
+				}
+				int firstDigitPosition = this.FirstDigitPosition;
+				if (firstDigitPosition < 0)
+				{
+					return this.nameInt;
+				}
+				int num = firstDigitPosition;
+				if (num - 1 >= 0 && this.nameInt[num - 1] == ' ')
+				{
+					num--;
+				}
+				if (num <= 0)
+				{
+					return string.Empty;
+				}
+				return this.nameInt.Substring(0, num);
+			}
+		}
+
+		public int Number
+		{
+			get
+			{
+				if (!this.numerical)
+				{
+					return 0;
+				}
+				int firstDigitPosition = this.FirstDigitPosition;
+				if (firstDigitPosition < 0)
+				{
+					return 0;
+				}
+				return int.Parse(this.nameInt.Substring(firstDigitPosition));
+			}
+		}
+
 		public NameSingle()
 		{
 		}

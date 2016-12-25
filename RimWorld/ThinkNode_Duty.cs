@@ -26,7 +26,8 @@ namespace RimWorld
 		{
 			foreach (DutyDef current in DefDatabase<DutyDef>.AllDefs)
 			{
-				this.subNodes.Add(current.thinkNode.DeepCopy());
+				current.thinkNode.ResolveSubnodesAndRecur();
+				this.subNodes.Add(current.thinkNode.DeepCopy(true));
 			}
 		}
 	}

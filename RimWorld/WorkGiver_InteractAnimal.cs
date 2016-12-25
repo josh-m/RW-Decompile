@@ -38,11 +38,11 @@ namespace RimWorld
 			{
 				return false;
 			}
-			if (!animal.CasualInterruptibleNow())
+			if (!animal.CanCasuallyInteractNow(false))
 			{
 				return false;
 			}
-			if (Mathf.RoundToInt(animal.GetStatValue(StatDefOf.MinimumHandlingSkill, true)) > pawn.skills.GetSkill(SkillDefOf.Animals).level)
+			if (Mathf.RoundToInt(animal.GetStatValue(StatDefOf.MinimumHandlingSkill, true)) > pawn.skills.GetSkill(SkillDefOf.Animals).Level)
 			{
 				JobFailReason.Is(WorkGiver_InteractAnimal.AnimalsSkillTooLowTrans);
 				return false;
@@ -52,14 +52,14 @@ namespace RimWorld
 
 		protected bool HasFoodToInteractAnimal(Pawn pawn, Pawn tamee)
 		{
-			ThingContainer container = pawn.inventory.container;
+			ThingContainer innerContainer = pawn.inventory.innerContainer;
 			int num = 0;
 			float num2 = JobDriver_InteractAnimal.RequiredNutritionPerFeed(tamee);
 			float num3 = 0f;
-			for (int i = 0; i < container.Count; i++)
+			for (int i = 0; i < innerContainer.Count; i++)
 			{
-				Thing thing = container[i];
-				if (tamee.RaceProps.CanEverEat(thing) && thing.def.ingestible.preferability <= FoodPreferability.RawTasty)
+				Thing thing = innerContainer[i];
+				if (tamee.RaceProps.CanEverEat(thing) && thing.def.ingestible.preferability <= FoodPreferability.RawTasty && !thing.def.IsDrug)
 				{
 					for (int j = 0; j < thing.stackCount; j++)
 					{
@@ -89,7 +89,7 @@ namespace RimWorld
 			}
 			return new Job(JobDefOf.TakeInventory, thing)
 			{
-				maxNumToCarry = Mathf.CeilToInt(num / thing.def.ingestible.nutrition)
+				count = Mathf.CeilToInt(num / thing.def.ingestible.nutrition)
 			};
 		}
 	}

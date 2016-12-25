@@ -6,45 +6,36 @@ using Verse;
 
 namespace RimWorld
 {
-	public class Alert_AwaitingMedicalOperation : Alert_Medium
+	public class Alert_AwaitingMedicalOperation : Alert
 	{
 		private IEnumerable<Pawn> AwaitingMedicalOperation
 		{
 			get
 			{
-				return from p in Find.MapPawns.SpawnedPawnsInFaction(Faction.OfPlayer).Concat(Find.MapPawns.PrisonersOfColonySpawned)
-				where p.health.ShouldDoSurgeryNow && p.InBed()
+				return from p in PawnsFinder.AllMaps_SpawnedPawnsInFaction(Faction.OfPlayer).Concat(PawnsFinder.AllMaps_PrisonersOfColonySpawned)
+				where HealthAIUtility.ShouldHaveSurgeryDoneNow(p) && p.InBed()
 				select p;
 			}
 		}
 
-		public override string FullLabel
+		public override string GetLabel()
 		{
-			get
-			{
-				return string.Format("PatientsAwaitingMedicalOperation".Translate(), this.AwaitingMedicalOperation.Count<Pawn>().ToStringCached());
-			}
+			return string.Format("PatientsAwaitingMedicalOperation".Translate(), this.AwaitingMedicalOperation.Count<Pawn>().ToStringCached());
 		}
 
-		public override string FullExplanation
+		public override string GetExplanation()
 		{
-			get
+			StringBuilder stringBuilder = new StringBuilder();
+			foreach (Pawn current in this.AwaitingMedicalOperation)
 			{
-				StringBuilder stringBuilder = new StringBuilder();
-				foreach (Pawn current in this.AwaitingMedicalOperation)
-				{
-					stringBuilder.AppendLine("    " + current.NameStringShort);
-				}
-				return string.Format("PatientsAwaitingMedicalOperationDesc".Translate(), stringBuilder.ToString());
+				stringBuilder.AppendLine("    " + current.NameStringShort);
 			}
+			return string.Format("PatientsAwaitingMedicalOperationDesc".Translate(), stringBuilder.ToString());
 		}
 
-		public override AlertReport Report
+		public override AlertReport GetReport()
 		{
-			get
-			{
-				return this.AwaitingMedicalOperation.FirstOrDefault<Pawn>();
-			}
+			return this.AwaitingMedicalOperation.FirstOrDefault<Pawn>();
 		}
 	}
 }

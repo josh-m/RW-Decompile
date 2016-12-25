@@ -96,7 +96,7 @@ namespace RimWorld
 					{
 						soundDef = SoundDefOf.PowerOnSmall;
 					}
-					soundDef.PlayOneShot(this.parent.Position);
+					soundDef.PlayOneShot(new TargetInfo(this.parent.Position, this.parent.Map, false));
 					this.StartSustainerPoweredIfInactive();
 				}
 				else
@@ -111,7 +111,7 @@ namespace RimWorld
 					{
 						soundDef2 = SoundDefOf.PowerOffSmall;
 					}
-					soundDef2.PlayOneShot(this.parent.Position);
+					soundDef2.PlayOneShot(new TargetInfo(this.parent.Position, this.parent.Map, false));
 					this.EndSustainerPoweredIfActive();
 				}
 			}
@@ -147,9 +147,9 @@ namespace RimWorld
 			this.flickableComp = this.parent.GetComp<CompFlickable>();
 		}
 
-		public override void PostDeSpawn()
+		public override void PostDeSpawn(Map map)
 		{
-			base.PostDeSpawn();
+			base.PostDeSpawn(map);
 			this.EndSustainerPoweredIfActive();
 			this.powerOutputInt = 0f;
 		}
@@ -167,11 +167,11 @@ namespace RimWorld
 			{
 				if (!this.DesirePowerOn)
 				{
-					OverlayDrawer.DrawOverlay(this.parent, OverlayTypes.PowerOff);
+					this.parent.Map.overlayDrawer.DrawOverlay(this.parent, OverlayTypes.PowerOff);
 				}
 				else if (!this.PowerOn)
 				{
-					OverlayDrawer.DrawOverlay(this.parent, OverlayTypes.NeedsPower);
+					this.parent.Map.overlayDrawer.DrawOverlay(this.parent, OverlayTypes.NeedsPower);
 				}
 			}
 		}
@@ -222,7 +222,7 @@ namespace RimWorld
 			CompProperties_Power props = base.Props;
 			if (!props.soundAmbientPowered.NullOrUndefined() && this.sustainerPowered == null)
 			{
-				SoundInfo info = SoundInfo.InWorld(this.parent, MaintenanceType.None);
+				SoundInfo info = SoundInfo.InMap(this.parent, MaintenanceType.None);
 				this.sustainerPowered = props.soundAmbientPowered.TrySpawnSustainer(info);
 			}
 		}

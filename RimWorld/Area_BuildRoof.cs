@@ -30,9 +30,17 @@ namespace RimWorld
 			}
 		}
 
+		public Area_BuildRoof()
+		{
+		}
+
+		public Area_BuildRoof(AreaManager areaManager) : base(areaManager)
+		{
+		}
+
 		public override string GetUniqueLoadID()
 		{
-			return "Area_BuildRoof";
+			return "Area_" + this.ID + "_BuildRoof";
 		}
 	}
 }

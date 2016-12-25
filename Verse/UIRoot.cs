@@ -12,7 +12,7 @@ namespace Verse
 
 		protected DebugWindowsOpener debugWindowOpener = new DebugWindowsOpener();
 
-		protected ScreenshotModeHandler screenshotMode = new ScreenshotModeHandler();
+		public ScreenshotModeHandler screenshotMode = new ScreenshotModeHandler();
 
 		private ShortcutKeys shortcutKeys = new ShortcutKeys();
 
@@ -53,6 +53,7 @@ namespace Verse
 			this.windows.WindowsUpdate();
 			MouseoverSounds.ResolveFrame();
 			UIHighlighter.UIHighlighterUpdate();
+			Messages.Update();
 		}
 
 		private void CheckOpenLogWindow()

@@ -13,6 +13,8 @@ namespace RimWorld
 
 		private int degree;
 
+		private bool scenForced;
+
 		public int Degree
 		{
 			get
@@ -37,25 +39,6 @@ namespace RimWorld
 			}
 		}
 
-		public IEnumerable<WorkTypeDef> DisabledWorkTypes
-		{
-			get
-			{
-				foreach (WorkTypeDef workTypeDef in this.def.disabledWorkTypes)
-				{
-					yield return workTypeDef;
-				}
-				List<WorkTypeDef> workTypeDefList = DefDatabase<WorkTypeDef>.AllDefsListForReading;
-				foreach (WorkTypeDef workTypeDef2 in workTypeDefList)
-				{
-					if (!this.AllowsWorkType(workTypeDef2))
-					{
-						yield return workTypeDef2;
-					}
-				}
-			}
-		}
-
 		public string LabelCap
 		{
 			get
@@ -64,20 +47,30 @@ namespace RimWorld
 			}
 		}
 
+		public bool ScenForced
+		{
+			get
+			{
+				return this.scenForced;
+			}
+		}
+
 		public Trait()
 		{
 		}
 
-		public Trait(TraitDef def, int degree = 0)
+		public Trait(TraitDef def, int degree = 0, bool forced = false)
 		{
 			this.def = def;
 			this.degree = degree;
+			this.scenForced = forced;
 		}
 
 		public void ExposeData()
 		{
 			Scribe_Defs.LookDef<TraitDef>(ref this.def, "def");
 			Scribe_Values.LookValue<int>(ref this.degree, "degree", 0, false);
+			Scribe_Values.LookValue<bool>(ref this.scenForced, "scenForced", false, false);
 			if (Scribe.mode == LoadSaveMode.ResolvingCrossRefs && this.def == null)
 			{
 				this.def = DefDatabase<TraitDef>.GetRandom();
@@ -228,6 +221,24 @@ namespace RimWorld
 		private bool AllowsWorkType(WorkTypeDef workDef)
 		{
 			return (this.def.disabledWorkTags & workDef.workTags) == WorkTags.None;
+		}
+
+		[DebuggerHidden]
+		public IEnumerable<WorkTypeDef> GetDisabledWorkTypes()
+		{
+			for (int i = 0; i < this.def.disabledWorkTypes.Count; i++)
+			{
+				yield return this.def.disabledWorkTypes[i];
+			}
+			List<WorkTypeDef> workTypeDefList = DefDatabase<WorkTypeDef>.AllDefsListForReading;
+			for (int j = 0; j < workTypeDefList.Count; j++)
+			{
+				WorkTypeDef w = workTypeDefList[j];
+				if (!this.AllowsWorkType(w))
+				{
+					yield return w;
+				}
+			}
 		}
 	}
 }

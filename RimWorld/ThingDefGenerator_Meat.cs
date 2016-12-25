@@ -41,7 +41,7 @@ namespace RimWorld
 							d.comps.Add(rotProps);
 							d.comps.Add(new CompProperties_FoodPoisoningChance());
 							d.tickerType = TickerType.Rare;
-							d.SetStatBaseValue(StatDefOf.Beauty, -30f);
+							d.SetStatBaseValue(StatDefOf.Beauty, -20f);
 							d.alwaysHaulable = true;
 							d.rotatable = false;
 							d.pathCost = 15;
@@ -55,6 +55,7 @@ namespace RimWorld
 							d.useHitPoints = true;
 							d.SetStatBaseValue(StatDefOf.MaxHitPoints, 50f);
 							d.SetStatBaseValue(StatDefOf.DeteriorationRate, 10f);
+							d.SetStatBaseValue(StatDefOf.Mass, 0.03f);
 							d.BaseMarketValue = ThingDefGenerator_Meat.GetMeatMarketValue(sourceDef);
 							if (d.thingCategories == null)
 							{
@@ -64,7 +65,7 @@ namespace RimWorld
 							d.ingestible = new IngestibleProperties();
 							d.ingestible.foodType = FoodTypeFlags.Meat;
 							d.ingestible.preferability = FoodPreferability.RawBad;
-							d.ingestible.tastesRaw = true;
+							CrossRefLoader.RegisterObjectWantsCrossRef(d.ingestible, "tasteThought", ThoughtDefOf.AteRawFood.defName);
 							d.ingestible.nutrition = 0.05f;
 							d.ingestible.ingestEffect = EffecterDefOf.EatMeat;
 							d.ingestible.ingestSound = SoundDef.Named("RawMeat_Eat");

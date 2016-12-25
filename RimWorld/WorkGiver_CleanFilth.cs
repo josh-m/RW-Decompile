@@ -35,7 +35,7 @@ namespace RimWorld
 
 		public override IEnumerable<Thing> PotentialWorkThingsGlobal(Pawn pawn)
 		{
-			return ListerFilthInHomeArea.FilthInHomeArea;
+			return pawn.Map.listerFilthInHomeArea.FilthInHomeArea;
 		}
 
 		public override bool HasJobOnThing(Pawn pawn, Thing t)
@@ -45,12 +45,41 @@ namespace RimWorld
 				return false;
 			}
 			Filth filth = t as Filth;
-			return filth != null && Find.AreaHome[filth.Position] && pawn.CanReserveAndReach(t, PathEndMode.ClosestTouch, pawn.NormalMaxDanger(), 1) && filth.TicksSinceThickened >= this.MinTicksSinceThickened;
+			return filth != null && filth.Map.areaManager.Home[filth.Position] && pawn.CanReserveAndReach(t, PathEndMode.ClosestTouch, pawn.NormalMaxDanger(), 1) && filth.TicksSinceThickened >= this.MinTicksSinceThickened;
 		}
 
 		public override Job JobOnThing(Pawn pawn, Thing t)
 		{
-			return new Job(JobDefOf.Clean, t);
+			Job job = new Job(JobDefOf.Clean);
+			job.AddQueuedTarget(TargetIndex.A, t);
+			int num = 15;
+			Map map = t.Map;
+			Room room = t.Position.GetRoom(map);
+			for (int i = 0; i < 100; i++)
+			{
+				IntVec3 intVec = t.Position + GenRadial.RadialPattern[i];
+				if (intVec.InBounds(map) && intVec.GetRoom(map) == room)
+				{
+					List<Thing> thingList = intVec.GetThingList(map);
+					for (int j = 0; j < thingList.Count; j++)
+					{
+						Thing thing = thingList[j];
+						if (this.HasJobOnThing(pawn, thing) && thing != t)
+						{
+							job.AddQueuedTarget(TargetIndex.A, thing);
+						}
+					}
+					if (job.GetTargetQueue(TargetIndex.A).Count >= num)
+					{
+						break;
+					}
+				}
+			}
+			if (job.targetQueueA != null && job.targetQueueA.Count >= 5)
+			{
+				job.targetQueueA.SortBy((LocalTargetInfo targ) => targ.Cell.DistanceToSquared(pawn.Position));
+			}
+			return job;
 		}
 	}
 }

@@ -13,12 +13,13 @@ namespace RimWorld
 				return false;
 			}
 			CompRottable comp = thingWithComps.GetComp<CompRottable>();
-			return comp != null && comp.Stage != RotStage.Fresh;
+			return comp != null && !((CompProperties_Rottable)comp.props).rotDestroys && comp.Stage != RotStage.Fresh;
 		}
 
-		public override bool PotentiallyMatches(ThingDef def)
+		public override bool CanEverMatch(ThingDef def)
 		{
-			return def.HasComp(typeof(CompRottable));
+			CompProperties_Rottable compProperties = def.GetCompProperties<CompProperties_Rottable>();
+			return compProperties != null && !compProperties.rotDestroys;
 		}
 	}
 }

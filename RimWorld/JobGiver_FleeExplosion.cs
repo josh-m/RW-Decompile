@@ -32,12 +32,12 @@ namespace RimWorld
 			{
 				return null;
 			}
-			IntVec3 vec;
-			if (!RCellFinder.TryFindDirectFleeDestination(knownExploder.Position, 9f, pawn, out vec))
+			IntVec3 c;
+			if (!RCellFinder.TryFindDirectFleeDestination(knownExploder.Position, 9f, pawn, out c))
 			{
 				return null;
 			}
-			return new Job(JobDefOf.Goto, vec)
+			return new Job(JobDefOf.Goto, c)
 			{
 				locomotionUrgency = LocomotionUrgency.Sprint
 			};

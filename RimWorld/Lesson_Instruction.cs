@@ -13,6 +13,14 @@ namespace RimWorld
 
 		public InstructionDef def;
 
+		protected Map Map
+		{
+			get
+			{
+				return Find.AnyPlayerHomeMap;
+			}
+		}
+
 		protected virtual float ProgressPercent
 		{
 			get
@@ -50,7 +58,7 @@ namespace RimWorld
 			{
 				Thing thing = ThingMaker.MakeThing(this.def.giveOnActivateDef, null);
 				thing.stackCount = this.def.giveOnActivateCount;
-				GenSpawn.Spawn(thing, TutorUtility.FindClearRect(2, 2, 0f, false).CenterCell);
+				GenSpawn.Spawn(thing, TutorUtility.FindUsableRect(2, 2, this.Map, 0f, false).CenterCell, this.Map);
 			}
 			if (this.def.resetBuildDesignatorStuffs)
 			{
@@ -78,13 +86,13 @@ namespace RimWorld
 			{
 				num2 += 47f;
 			}
-			Vector2 b = new Vector2((float)Screen.width - 17f - 155f, 17f + num2 / 2f);
+			Vector2 b = new Vector2((float)UI.screenWidth - 17f - 155f, 17f + num2 / 2f);
 			if (!Find.TutorialState.introDone)
 			{
 				float screenOverlayAlpha = 0f;
 				if (this.def.startCentered)
 				{
-					Vector2 vector = new Vector2((float)(Screen.width / 2), (float)(Screen.height / 2));
+					Vector2 vector = new Vector2((float)(UI.screenWidth / 2), (float)(UI.screenHeight / 2));
 					if (base.AgeSeconds < 4f)
 					{
 						b = vector;
@@ -99,7 +107,7 @@ namespace RimWorld
 				}
 				if (screenOverlayAlpha > 0f)
 				{
-					Rect fullScreenRect = new Rect(0f, 0f, (float)Screen.width, (float)Screen.height);
+					Rect fullScreenRect = new Rect(0f, 0f, (float)UI.screenWidth, (float)UI.screenHeight);
 					Find.WindowStack.ImmediateWindow(972651, fullScreenRect, WindowLayer.SubSuper, delegate
 					{
 						GUI.color = new Color(1f, 1f, 1f, screenOverlayAlpha);

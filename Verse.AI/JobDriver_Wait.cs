@@ -29,7 +29,7 @@ namespace Verse.AI
 			{
 				initAction = delegate
 				{
-					Find.PawnDestinationManager.ReserveDestinationFor(this.<>f__this.pawn, this.<>f__this.pawn.Position);
+					this.<>f__this.Map.pawnDestinationManager.ReserveDestinationFor(this.<>f__this.pawn, this.<>f__this.pawn.Position);
 					this.<>f__this.pawn.pather.StopDead();
 					this.<>f__this.CheckForAutoAttack();
 				},
@@ -68,25 +68,29 @@ namespace Verse.AI
 			{
 				return;
 			}
-			if (this.pawn.story == null || !this.pawn.story.WorkTagIsDisabled(WorkTags.Violent))
+			bool flag = this.pawn.story == null || !this.pawn.story.WorkTagIsDisabled(WorkTags.Violent);
+			bool flag2 = this.pawn.RaceProps.ToolUser && this.pawn.Faction == Faction.OfPlayer && !this.pawn.story.WorkTagIsDisabled(WorkTags.Firefighting);
+			if (flag || flag2)
 			{
-				bool flag = this.pawn.RaceProps.ToolUser && this.pawn.Faction == Faction.OfPlayer && !this.pawn.story.WorkTagIsDisabled(WorkTags.Firefighting);
 				Fire fire = null;
 				for (int i = 0; i < 9; i++)
 				{
 					IntVec3 c = this.pawn.Position + GenAdj.AdjacentCellsAndInside[i];
-					if (c.InBounds())
+					if (c.InBounds(this.pawn.Map))
 					{
-						List<Thing> thingList = c.GetThingList();
+						List<Thing> thingList = c.GetThingList(base.Map);
 						for (int j = 0; j < thingList.Count; j++)
 						{
-							Pawn pawn = thingList[j] as Pawn;
-							if (pawn != null && !pawn.Downed && this.pawn.HostileTo(pawn))
-							{
-								this.pawn.meleeVerbs.TryMeleeAttack(pawn, null, false);
-								return;
-							}
 							if (flag)
+							{
+								Pawn pawn = thingList[j] as Pawn;
+								if (pawn != null && !pawn.Downed && this.pawn.HostileTo(pawn))
+								{
+									this.pawn.meleeVerbs.TryMeleeAttack(pawn, null, false);
+									return;
+								}
+							}
+							if (flag2)
 							{
 								Fire fire2 = thingList[j] as Fire;
 								if (fire2 != null && (fire == null || fire2.fireSize < fire.fireSize || i == 8) && (fire2.parent == null || fire2.parent != this.pawn))
@@ -102,7 +106,7 @@ namespace Verse.AI
 					this.pawn.natives.TryBeatFire(fire);
 					return;
 				}
-				if (this.pawn.Faction != null && this.pawn.jobs.curJob.def == JobDefOf.WaitCombat)
+				if (flag && this.pawn.Faction != null && this.pawn.jobs.curJob.def == JobDefOf.WaitCombat && (this.pawn.drafter == null || this.pawn.drafter.AllowFiring))
 				{
 					bool allowManualCastWeapons = !this.pawn.IsColonist;
 					Verb verb = this.pawn.TryGetAttackVerb(allowManualCastWeapons);

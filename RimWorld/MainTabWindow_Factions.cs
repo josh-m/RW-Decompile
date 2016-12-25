@@ -7,6 +7,10 @@ namespace RimWorld
 {
 	public class MainTabWindow_Factions : MainTabWindow
 	{
+		private const float FactionColorRectSize = 15f;
+
+		private const float FactionColorRectGap = 10f;
+
 		private const float RowMinHeight = 80f;
 
 		private const float LabelRowHeight = 50f;
@@ -54,7 +58,7 @@ namespace RimWorld
 
 		private float DrawFactionRow(Faction faction, float rowY, Rect fillRect)
 		{
-			Rect rect = new Rect(0f, rowY, 220f, 80f);
+			Rect rect = new Rect(35f, rowY, 220f, 80f);
 			StringBuilder stringBuilder = new StringBuilder();
 			foreach (Faction current in Find.FactionManager.AllFactionsVisible)
 			{
@@ -73,6 +77,7 @@ namespace RimWorld
 			float width = fillRect.width - rect.xMax;
 			float num = Text.CalcHeight(text, width);
 			float num2 = Mathf.Max(80f, num);
+			Rect position = new Rect(10f, rowY + 10f, 15f, 15f);
 			Rect rect2 = new Rect(0f, rowY, fillRect.width, num2);
 			if (Mouse.IsOver(rect2))
 			{
@@ -80,6 +85,7 @@ namespace RimWorld
 			}
 			Text.Font = GameFont.Small;
 			Text.Anchor = TextAnchor.UpperLeft;
+			Widgets.DrawRectFast(position, faction.Color, null);
 			string label = string.Concat(new string[]
 			{
 				faction.Name,
@@ -96,6 +102,10 @@ namespace RimWorld
 			if (Faction.OfPlayer.HostileTo(faction))
 			{
 				text2 = text2 + "\n" + "Hostile".Translate();
+			}
+			if (faction.defeated)
+			{
+				text2 = text2 + "\n(" + "DefeatedLower".Translate() + ")";
 			}
 			if (faction.PlayerGoodwill < 0f)
 			{

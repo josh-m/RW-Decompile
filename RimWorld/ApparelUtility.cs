@@ -67,7 +67,7 @@ namespace RimWorld
 			{
 				return true;
 			}
-			IEnumerable<BodyPartRecord> notMissingParts = p.health.hediffSet.GetNotMissingParts(null, null);
+			IEnumerable<BodyPartRecord> notMissingParts = p.health.hediffSet.GetNotMissingParts(BodyPartHeight.Undefined, BodyPartDepth.Undefined);
 			List<BodyPartGroupDef> groups = apparel.apparel.bodyPartGroups;
 			int i;
 			for (i = 0; i < groups.Count; i++)

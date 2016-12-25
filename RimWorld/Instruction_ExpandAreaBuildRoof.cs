@@ -9,7 +9,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return Find.AreaBuildRoof;
+				return base.Map.areaManager.BuildRoof;
 			}
 		}
 	}

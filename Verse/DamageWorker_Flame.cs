@@ -25,7 +25,7 @@ namespace Verse
 			base.ExplosionAffectCell(explosion, c, damagedThings, canThrowMotes);
 			if (this.def == DamageDefOf.Flame)
 			{
-				FireUtility.TryStartFireIn(c, Rand.Range(0.2f, 0.6f));
+				FireUtility.TryStartFireIn(c, explosion.Map, Rand.Range(0.2f, 0.6f));
 			}
 		}
 	}

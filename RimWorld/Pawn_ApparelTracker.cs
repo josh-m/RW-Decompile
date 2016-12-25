@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using UnityEngine;
 using Verse;
 
@@ -16,6 +15,10 @@ namespace RimWorld
 		private List<Apparel> wornApparel = new List<Apparel>();
 
 		private int lastApparelWearoutTick = -1;
+
+		private static List<Apparel> tmpApparelList = new List<Apparel>();
+
+		private static List<Apparel> tmpApparel = new List<Apparel>();
 
 		public List<Apparel> WornApparel
 		{
@@ -122,7 +125,7 @@ namespace RimWorld
 			int num = GenMath.RoundRandom(ap.def.apparel.wearPerDay);
 			if (num > 0)
 			{
-				ap.TakeDamage(new DamageInfo(DamageDefOf.Deterioration, num, null, null, null));
+				ap.TakeDamage(new DamageInfo(DamageDefOf.Deterioration, num, -1f, null, null, null));
 			}
 			if (ap.Destroyed && PawnUtility.ShouldSendNotificationAbout(this.pawn) && !this.pawn.Dead)
 			{
@@ -183,14 +186,42 @@ namespace RimWorld
 					}
 					else
 					{
-						this.wornApparel.Remove(apparel);
+						this.Remove(apparel);
 					}
 				}
+			}
+			if (newApparel.wearer != null)
+			{
+				Log.Warning(string.Concat(new object[]
+				{
+					this.pawn,
+					" is trying to wear ",
+					newApparel,
+					" but this apparel already has a wearer (",
+					newApparel.wearer,
+					"). This may or may not cause bugs."
+				}));
 			}
 			this.wornApparel.Add(newApparel);
 			newApparel.wearer = this.pawn;
 			this.SortWornApparelIntoDrawOrder();
 			this.ApparelChanged();
+		}
+
+		public void Remove(Apparel ap)
+		{
+			if (!this.wornApparel.Contains(ap))
+			{
+				Log.Warning("Tried to remove apparel " + ap + " but it's not here.");
+				return;
+			}
+			this.wornApparel.Remove(ap);
+			ap.wearer = null;
+			this.ApparelChanged();
+			if (this.pawn.outfits != null && this.pawn.outfits.forcedHandler != null)
+			{
+				this.pawn.outfits.forcedHandler.SetForced(ap, false);
+			}
 		}
 
 		public bool TryDrop(Apparel ap, out Apparel resultingAp)
@@ -206,25 +237,28 @@ namespace RimWorld
 				resultingAp = null;
 				return false;
 			}
-			this.wornApparel.Remove(ap);
-			ap.wearer = null;
-			Thing thing = null;
-			bool flag = GenThing.TryDropAndSetForbidden(ap, pos, ThingPlaceMode.Near, out thing, forbid);
-			resultingAp = (thing as Apparel);
-			this.ApparelChanged();
-			if (flag && this.pawn.outfits != null)
+			if (this.pawn.MapHeld == null)
 			{
-				this.pawn.outfits.forcedHandler.SetForced(ap, false);
+				Log.Warning(this.pawn.LabelCap + " tried to drop apparel but his MapHeld is null.");
+				resultingAp = null;
+				return false;
 			}
-			return flag;
+			ap.Notify_Stripped(this.pawn);
+			this.Remove(ap);
+			Thing thing = null;
+			bool result = GenThing.TryDropAndSetForbidden(ap, pos, this.pawn.MapHeld, ThingPlaceMode.Near, out thing, forbid);
+			resultingAp = (thing as Apparel);
+			return result;
 		}
 
 		public void DropAll(IntVec3 pos, bool forbid = true)
 		{
-			while (this.wornApparel.Any<Apparel>())
+			Pawn_ApparelTracker.tmpApparelList.Clear();
+			Pawn_ApparelTracker.tmpApparelList.AddRange(this.wornApparel);
+			for (int i = 0; i < Pawn_ApparelTracker.tmpApparelList.Count; i++)
 			{
 				Apparel apparel;
-				this.TryDrop(this.wornApparel.First<Apparel>(), out apparel, pos, forbid);
+				this.TryDrop(Pawn_ApparelTracker.tmpApparelList[i], out apparel, pos, forbid);
 			}
 		}
 
@@ -246,8 +280,8 @@ namespace RimWorld
 				{
 					if (this.wornApparel[i].def.useHitPoints)
 					{
-						int amount = Mathf.RoundToInt((float)this.wornApparel[i].HitPoints * Rand.Range(0.25f, 0.75f));
-						this.wornApparel[i].TakeDamage(new DamageInfo(dinfo.Value.Def, amount, null, null, null));
+						int amount = Mathf.RoundToInt((float)this.wornApparel[i].HitPoints * Rand.Range(0.15f, 0.4f));
+						this.wornApparel[i].TakeDamage(new DamageInfo(dinfo.Value.Def, amount, -1f, null, null, null));
 					}
 				}
 			}
@@ -255,9 +289,15 @@ namespace RimWorld
 
 		public void Notify_LostBodyPart()
 		{
-			if (this.wornApparel.RemoveAll((Apparel x) => !ApparelUtility.HasPartsToWear(this.pawn, x.def)) != 0)
+			Pawn_ApparelTracker.tmpApparel.Clear();
+			Pawn_ApparelTracker.tmpApparel.AddRange(this.wornApparel);
+			for (int i = 0; i < Pawn_ApparelTracker.tmpApparel.Count; i++)
 			{
-				this.ApparelChanged();
+				Apparel apparel = Pawn_ApparelTracker.tmpApparel[i];
+				if (!ApparelUtility.HasPartsToWear(this.pawn, apparel.def))
+				{
+					this.Remove(apparel);
+				}
 			}
 		}
 
@@ -321,12 +361,7 @@ namespace RimWorld
 
 		internal void Notify_WornApparelDestroyed(Apparel apparel)
 		{
-			this.wornApparel.Remove(apparel);
-			this.ApparelChanged();
-			if (this.pawn.outfits != null && this.pawn.outfits.forcedHandler != null)
-			{
-				this.pawn.outfits.forcedHandler.Notify_Destroyed(apparel);
-			}
+			this.Remove(apparel);
 		}
 
 		private void ApparelChanged()

@@ -1,5 +1,7 @@
+using RimWorld.Planet;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using Verse;
 
 namespace RimWorld
@@ -7,6 +9,8 @@ namespace RimWorld
 	public class IncidentDef : Def
 	{
 		public Type workerClass;
+
+		public IncidentTargetType targetType;
 
 		public float baseChance;
 
@@ -30,8 +34,10 @@ namespace RimWorld
 
 		public List<string> refireCheckTags;
 
+		[MustTranslate]
 		public string letterText;
 
+		[MustTranslate]
 		public string letterLabel;
 
 		public LetterType letterType;
@@ -53,6 +59,8 @@ namespace RimWorld
 		public List<BodyPartDef> diseasePartsToAffect;
 
 		public ThingDef shipPart;
+
+		public List<MTBByBiome> mtbDaysByBiome;
 
 		[Unsaved]
 		private IncidentWorker workerInt;
@@ -131,6 +139,41 @@ namespace RimWorld
 				}
 			}
 			return false;
+		}
+
+		[DebuggerHidden]
+		public override IEnumerable<string> ConfigErrors()
+		{
+			foreach (string c in base.ConfigErrors())
+			{
+				yield return c;
+			}
+			if (this.targetType == IncidentTargetType.None)
+			{
+				yield return "no target type";
+			}
+		}
+
+		public bool TargetTypeAllowed(IncidentTargetType target)
+		{
+			return (byte)(this.targetType & target) != 0;
+		}
+
+		public bool TargetAllowed(IIncidentTarget target)
+		{
+			Map map = target as Map;
+			if (map != null)
+			{
+				if (this.TargetTypeAllowed(IncidentTargetType.BaseMap) && map.IsPlayerHome)
+				{
+					return true;
+				}
+				if (this.TargetTypeAllowed(IncidentTargetType.TempMap) && !map.IsPlayerHome)
+				{
+					return true;
+				}
+			}
+			return this.TargetTypeAllowed(IncidentTargetType.Caravan) && target is Caravan;
 		}
 	}
 }

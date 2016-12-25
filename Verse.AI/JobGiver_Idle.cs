@@ -7,9 +7,9 @@ namespace Verse.AI
 	{
 		public int ticks = 50;
 
-		public override ThinkNode DeepCopy()
+		public override ThinkNode DeepCopy(bool resolve = true)
 		{
-			JobGiver_Idle jobGiver_Idle = (JobGiver_Idle)base.DeepCopy();
+			JobGiver_Idle jobGiver_Idle = (JobGiver_Idle)base.DeepCopy(resolve);
 			jobGiver_Idle.ticks = this.ticks;
 			return jobGiver_Idle;
 		}

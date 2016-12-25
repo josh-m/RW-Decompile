@@ -8,5 +8,7 @@ namespace Verse
 		IEnumerable<Gizmo> GetGizmos();
 
 		string GetInspectString();
+
+		IEnumerable<InspectTabBase> GetInspectTabs();
 	}
 }

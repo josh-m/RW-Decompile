@@ -43,6 +43,10 @@ namespace Verse.Sound
 
 		public bool CanAddPlayingOneShot(SoundDef def, SoundInfo info)
 		{
+			if (!SoundDefHelper.CorrectContextNow(def, info.Maker.Map))
+			{
+				return false;
+			}
 			if ((from s in this.samples
 			where s.subDef.parentDef == def && s.AgeRealTime < 0.05f
 			select s).Count<SampleOneShot>() >= def.MaxSimultaneousSamples)
@@ -91,8 +95,12 @@ namespace Verse.Sound
 			for (int j = 0; j < this.samples.Count; j++)
 			{
 				SampleOneShot sampleOneShot = this.samples[j];
-				if (sampleOneShot.source == null || !sampleOneShot.source.isPlaying)
+				if (sampleOneShot.source == null || !sampleOneShot.source.isPlaying || !SoundDefHelper.CorrectContextNow(sampleOneShot.subDef.parentDef, sampleOneShot.Map))
 				{
+					if (sampleOneShot.source != null && sampleOneShot.source.isPlaying)
+					{
+						sampleOneShot.source.Stop();
+					}
 					sampleOneShot.SampleCleanup();
 					this.cleanupList.Add(sampleOneShot);
 				}

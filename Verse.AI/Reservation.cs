@@ -7,7 +7,7 @@ namespace Verse.AI
 	{
 		private Pawn claimant;
 
-		private TargetInfo target;
+		private LocalTargetInfo target;
 
 		private int maxPawns;
 
@@ -19,7 +19,7 @@ namespace Verse.AI
 			}
 		}
 
-		public TargetInfo Target
+		public LocalTargetInfo Target
 		{
 			get
 			{
@@ -47,7 +47,7 @@ namespace Verse.AI
 		{
 		}
 
-		public Reservation(Pawn claimant, int maxPawns, TargetInfo target)
+		public Reservation(Pawn claimant, int maxPawns, LocalTargetInfo target)
 		{
 			this.claimant = claimant;
 			this.maxPawns = maxPawns;

@@ -80,24 +80,24 @@ namespace RimWorld
 
 		public override AcceptanceReport CanDesignateCell(IntVec3 c)
 		{
-			if (!c.InBounds())
+			if (!c.InBounds(base.Map))
 			{
 				return false;
 			}
-			if (c.Fogged())
+			if (c.Fogged(base.Map))
 			{
 				return false;
 			}
-			if (c.InNoZoneEdgeArea())
+			if (c.InNoZoneEdgeArea(base.Map))
 			{
 				return "TooCloseToMapEdge".Translate();
 			}
-			Zone zone = Find.ZoneManager.ZoneAt(c);
+			Zone zone = base.Map.zoneManager.ZoneAt(c);
 			if (zone != null && zone.GetType() != this.zoneTypeToPlace)
 			{
 				return false;
 			}
-			foreach (Thing current in Find.ThingGrid.ThingsAt(c))
+			foreach (Thing current in base.Map.thingGrid.ThingsAt(c))
 			{
 				if (!current.def.CanOverlapZones)
 				{
@@ -112,7 +112,7 @@ namespace RimWorld
 			List<IntVec3> list = cells.ToList<IntVec3>();
 			if (list.Count == 1)
 			{
-				Zone zone = Find.ZoneManager.ZoneAt(list[0]);
+				Zone zone = base.Map.zoneManager.ZoneAt(list[0]);
 				if (zone != null)
 				{
 					if (zone.GetType() == this.zoneTypeToPlace)
@@ -127,7 +127,7 @@ namespace RimWorld
 				Zone zone2 = null;
 				foreach (IntVec3 current in cells)
 				{
-					Zone zone3 = Find.ZoneManager.ZoneAt(current);
+					Zone zone3 = base.Map.zoneManager.ZoneAt(current);
 					if (zone3 != null && zone3.GetType() == this.zoneTypeToPlace)
 					{
 						if (zone2 == null)
@@ -143,7 +143,7 @@ namespace RimWorld
 				}
 				this.SelectedZone = zone2;
 			}
-			list.RemoveAll((IntVec3 c) => Find.ZoneManager.ZoneAt(c) != null);
+			list.RemoveAll((IntVec3 c) => base.Map.zoneManager.ZoneAt(c) != null);
 			if (list.Count == 0)
 			{
 				return;
@@ -169,9 +169,9 @@ namespace RimWorld
 					for (int j = 0; j < 4; j++)
 					{
 						IntVec3 c2 = list[i] + GenAdj.CardinalDirections[j];
-						if (c2.InBounds())
+						if (c2.InBounds(base.Map))
 						{
-							if (Find.ZoneManager.ZoneAt(c2) == this.SelectedZone)
+							if (base.Map.zoneManager.ZoneAt(c2) == this.SelectedZone)
 							{
 								flag = true;
 								break;

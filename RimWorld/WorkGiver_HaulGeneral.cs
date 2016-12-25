@@ -9,12 +9,12 @@ namespace RimWorld
 	{
 		public override IEnumerable<Thing> PotentialWorkThingsGlobal(Pawn pawn)
 		{
-			return ListerHaulables.ThingsPotentiallyNeedingHauling();
+			return pawn.Map.listerHaulables.ThingsPotentiallyNeedingHauling();
 		}
 
 		public override bool ShouldSkip(Pawn pawn)
 		{
-			return ListerHaulables.ThingsPotentiallyNeedingHauling().Count == 0;
+			return pawn.Map.listerHaulables.ThingsPotentiallyNeedingHauling().Count == 0;
 		}
 
 		public override Job JobOnThing(Pawn pawn, Thing t)

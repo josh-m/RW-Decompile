@@ -5,6 +5,10 @@ namespace Verse
 {
 	public class MapGeneratorDef : Def
 	{
+		public MapGeneratorDef parent;
+
+		public float selectionWeight = 1f;
+
 		[Unsaved]
 		private List<GenStepDef> genSteps;
 
@@ -15,6 +19,10 @@ namespace Verse
 				if (this.genSteps == null)
 				{
 					this.genSteps = new List<GenStepDef>();
+					if (this.parent != null)
+					{
+						this.genSteps.AddRange(this.parent.GenStepsInOrder);
+					}
 					List<GenStepDef> allDefsListForReading = DefDatabase<GenStepDef>.AllDefsListForReading;
 					for (int i = 0; i < allDefsListForReading.Count; i++)
 					{

@@ -8,6 +8,9 @@ namespace RimWorld.Planet
 		Free,
 		Dead,
 		FactionLeader,
-		Kidnapped
+		Kidnapped,
+		CaravanMember,
+		InTravelingTransportPod,
+		NonPlayerFactionBasePrisoner
 	}
 }

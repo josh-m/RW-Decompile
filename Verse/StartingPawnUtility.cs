@@ -15,25 +15,6 @@ namespace Verse
 			}
 		}
 
-		public static Pawn RandomizeInPlace(Pawn p)
-		{
-			int index = StartingPawnUtility.StartingPawns.IndexOf(p);
-			PawnUtility.TryDestroyStartingColonistFamily(p);
-			p.relations.ClearAllRelations();
-			Find.WorldPawns.PassToWorld(p, PawnDiscardDecideMode.Discard);
-			StartingPawnUtility.StartingPawns[index] = null;
-			for (int i = 0; i < Find.GameInitData.startingPawns.Count; i++)
-			{
-				if (StartingPawnUtility.StartingPawns[i] != null)
-				{
-					PawnUtility.TryDestroyStartingColonistFamily(Find.GameInitData.startingPawns[i]);
-				}
-			}
-			Pawn pawn = StartingPawnUtility.NewGeneratedStartingPawn();
-			Find.GameInitData.startingPawns[index] = pawn;
-			return pawn;
-		}
-
 		public static void ClearAllStartingPawns()
 		{
 			for (int i = StartingPawnUtility.StartingPawns.Count - 1; i >= 0; i--)
@@ -48,9 +29,39 @@ namespace Verse
 			}
 		}
 
+		public static Pawn RandomizeInPlace(Pawn p)
+		{
+			int index = StartingPawnUtility.StartingPawns.IndexOf(p);
+			Pawn pawn = StartingPawnUtility.RegenerateStartingPawnInPlace(index);
+			if (pawn.story.WorkTagIsDisabled(WorkTags.ManualDumb) || pawn.story.WorkTagIsDisabled(WorkTags.Violent))
+			{
+				pawn = StartingPawnUtility.RegenerateStartingPawnInPlace(index);
+			}
+			return pawn;
+		}
+
+		private static Pawn RegenerateStartingPawnInPlace(int index)
+		{
+			Pawn pawn = StartingPawnUtility.StartingPawns[index];
+			PawnUtility.TryDestroyStartingColonistFamily(pawn);
+			pawn.relations.ClearAllRelations();
+			Find.WorldPawns.PassToWorld(pawn, PawnDiscardDecideMode.Discard);
+			StartingPawnUtility.StartingPawns[index] = null;
+			for (int i = 0; i < Find.GameInitData.startingPawns.Count; i++)
+			{
+				if (StartingPawnUtility.StartingPawns[i] != null)
+				{
+					PawnUtility.TryDestroyStartingColonistFamily(Find.GameInitData.startingPawns[i]);
+				}
+			}
+			Pawn pawn2 = StartingPawnUtility.NewGeneratedStartingPawn();
+			Find.GameInitData.startingPawns[index] = pawn2;
+			return pawn2;
+		}
+
 		public static Pawn NewGeneratedStartingPawn()
 		{
-			PawnGenerationRequest request = new PawnGenerationRequest(Faction.OfPlayer.def.basicMemberKind, Faction.OfPlayer, PawnGenerationContext.PlayerStarter, true, false, false, false, true, false, 26f, false, true, true, null, null, null, null, null, null);
+			PawnGenerationRequest request = new PawnGenerationRequest(Faction.OfPlayer.def.basicMemberKind, Faction.OfPlayer, PawnGenerationContext.PlayerStarter, null, true, false, false, false, true, false, 26f, false, true, true, null, null, null, null, null, null);
 			Pawn pawn = null;
 			try
 			{

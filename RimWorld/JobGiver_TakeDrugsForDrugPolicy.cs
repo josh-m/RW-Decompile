@@ -38,16 +38,16 @@ namespace RimWorld
 
 		private Thing FindDrugFor(Pawn pawn, ThingDef drugDef)
 		{
-			ThingContainer container = pawn.inventory.container;
-			for (int i = 0; i < container.Count; i++)
+			ThingContainer innerContainer = pawn.inventory.innerContainer;
+			for (int i = 0; i < innerContainer.Count; i++)
 			{
-				if (container[i].def == drugDef && this.DrugValidator(pawn, container[i]))
+				if (innerContainer[i].def == drugDef && this.DrugValidator(pawn, innerContainer[i]))
 				{
-					return container[i];
+					return innerContainer[i];
 				}
 			}
 			Predicate<Thing> validator = (Thing x) => this.DrugValidator(pawn, x);
-			return GenClosest.ClosestThingReachable(pawn.Position, ThingRequest.ForDef(drugDef), PathEndMode.Touch, TraverseParms.For(pawn, Danger.Deadly, TraverseMode.ByPawn, false), 9999f, validator, null, -1, false);
+			return GenClosest.ClosestThingReachable(pawn.Position, pawn.Map, ThingRequest.ForDef(drugDef), PathEndMode.Touch, TraverseParms.For(pawn, Danger.Deadly, TraverseMode.ByPawn, false), 9999f, validator, null, -1, false);
 		}
 
 		private bool DrugValidator(Pawn pawn, Thing drug)

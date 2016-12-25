@@ -11,7 +11,7 @@ namespace Verse
 
 		public override void SubTrigger(TargetInfo A, TargetInfo B)
 		{
-			this.def.soundDef.PlayOneShot(A.Cell);
+			this.def.soundDef.PlayOneShot(new TargetInfo(A.Cell, A.Map, false));
 		}
 	}
 }

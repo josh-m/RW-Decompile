@@ -8,9 +8,9 @@ namespace RimWorld
 	{
 		public bool invert;
 
-		public override ThinkNode DeepCopy()
+		public override ThinkNode DeepCopy(bool resolve = true)
 		{
-			ThinkNode_Conditional thinkNode_Conditional = (ThinkNode_Conditional)base.DeepCopy();
+			ThinkNode_Conditional thinkNode_Conditional = (ThinkNode_Conditional)base.DeepCopy(resolve);
 			thinkNode_Conditional.invert = this.invert;
 			return thinkNode_Conditional;
 		}

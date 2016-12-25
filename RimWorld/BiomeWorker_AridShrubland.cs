@@ -5,21 +5,21 @@ namespace RimWorld
 {
 	public class BiomeWorker_AridShrubland : BiomeWorker
 	{
-		public override float GetScore(WorldSquare square)
+		public override float GetScore(Tile tile)
 		{
-			if (square.elevation <= 0f)
+			if (tile.WaterCovered)
 			{
 				return -100f;
 			}
-			if (square.temperature < -10f)
+			if (tile.temperature < -10f)
 			{
 				return 0f;
 			}
-			if (square.rainfall < 600f || square.rainfall >= 2000f)
+			if (tile.rainfall < 600f || tile.rainfall >= 2000f)
 			{
 				return 0f;
 			}
-			return 22.5f + (square.temperature - 20f) * 2.2f + (square.rainfall - 600f) / 100f;
+			return 22.5f + (tile.temperature - 20f) * 2.2f + (tile.rainfall - 600f) / 100f;
 		}
 	}
 }

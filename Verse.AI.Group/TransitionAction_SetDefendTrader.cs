@@ -18,7 +18,7 @@ namespace Verse.AI.Group
 			else
 			{
 				IEnumerable<Pawn> source = from x in lordToil_DefendPoint.lord.ownedPawns
-				where x.GetCaravanRole() == TraderCaravanRole.Carrier
+				where x.GetTraderCaravanRole() == TraderCaravanRole.Carrier
 				select x;
 				if (source.Any<Pawn>())
 				{

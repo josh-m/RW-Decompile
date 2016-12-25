@@ -7,9 +7,15 @@ namespace RimWorld.Planet
 	{
 		public string name = "DefaultWorldName";
 
-		public IntVec2 size = IntVec2.Invalid;
+		public float planetCoverage;
 
 		public string seedString = "SeedError";
+
+		public OverallRainfall overallRainfall = OverallRainfall.Normal;
+
+		public OverallTemperature overallTemperature = OverallTemperature.Normal;
+
+		public IntVec3 initialMapSize = new IntVec3(250, 1, 250);
 
 		public string FileNameNoExtension
 		{
@@ -30,8 +36,11 @@ namespace RimWorld.Planet
 		public void ExposeData()
 		{
 			Scribe_Values.LookValue<string>(ref this.name, "name", null, false);
-			Scribe_Values.LookValue<IntVec2>(ref this.size, "size", default(IntVec2), false);
+			Scribe_Values.LookValue<float>(ref this.planetCoverage, "planetCoverage", 0f, false);
 			Scribe_Values.LookValue<string>(ref this.seedString, "seedString", null, false);
+			Scribe_Values.LookValue<OverallRainfall>(ref this.overallRainfall, "overallRainfall", OverallRainfall.AlmostNone, false);
+			Scribe_Values.LookValue<OverallTemperature>(ref this.overallTemperature, "overallTemperature", OverallTemperature.VeryCold, false);
+			Scribe_Values.LookValue<IntVec3>(ref this.initialMapSize, "initialMapSize", default(IntVec3), false);
 		}
 	}
 }

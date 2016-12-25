@@ -6,9 +6,9 @@ namespace RimWorld
 {
 	public class ITab_Pawn_Health : ITab
 	{
-		private const float TopPadding = 20f;
-
 		private const int HideBloodLossTicksThreshold = 60000;
+
+		public const float Width = 630f;
 
 		private Pawn PawnForHealth
 		{
@@ -21,7 +21,7 @@ namespace RimWorld
 				Corpse corpse = base.SelThing as Corpse;
 				if (corpse != null)
 				{
-					return corpse.innerPawn;
+					return corpse.InnerPawn;
 				}
 				return null;
 			}

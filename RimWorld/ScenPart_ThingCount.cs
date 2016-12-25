@@ -58,7 +58,7 @@ namespace RimWorld
 					{
 						this.thingDef = localTd;
 						this.stuff = GenStuff.DefaultStuffFor(localTd);
-					}, MenuOptionPriority.Medium, null, null, 0f, null));
+					}, MenuOptionPriority.Default, null, null, 0f, null, null));
 				}
 				Find.WindowStack.Add(new FloatMenu(list));
 			}
@@ -73,7 +73,7 @@ namespace RimWorld
 					list2.Add(new FloatMenuOption(localSd.LabelCap, delegate
 					{
 						this.stuff = localSd;
-					}, MenuOptionPriority.Medium, null, null, 0f, null));
+					}, MenuOptionPriority.Default, null, null, 0f, null, null));
 				}
 				Find.WindowStack.Add(new FloatMenu(list2));
 			}
@@ -94,7 +94,7 @@ namespace RimWorld
 		protected virtual IEnumerable<ThingDef> PossibleThingDefs()
 		{
 			return from d in DefDatabase<ThingDef>.AllDefs
-			where (d.category == ThingCategory.Item && d.canMakeOnMapGen && !d.destroyOnDrop) || (d.category == ThingCategory.Building && d.Minifiable)
+			where (d.category == ThingCategory.Item && d.scatterableOnMapGen && !d.destroyOnDrop) || (d.category == ThingCategory.Building && d.Minifiable) || (d.category == ThingCategory.Building && d.scatterableOnMapGen)
 			select d;
 		}
 	}

@@ -51,6 +51,8 @@ namespace Verse
 
 		public bool silenceAmbientSound;
 
+		public bool wantsRenderedWorld;
+
 		protected readonly Vector2 CloseButSize = new Vector2(120f, 40f);
 
 		public int ID;
@@ -112,11 +114,18 @@ namespace Verse
 		public virtual void PreOpen()
 		{
 			this.SetInitialSizeAndPosition();
-			if (Current.ProgramState == ProgramState.MapPlaying && this.layer == WindowLayer.Dialog)
+			if (this.layer == WindowLayer.Dialog)
 			{
-				DesignatorManager.Dragger.EndDrag();
-				DesignatorManager.Deselect();
-				Find.Selector.Notify_DialogOpened();
+				if (Current.ProgramState == ProgramState.Playing)
+				{
+					Find.DesignatorManager.Dragger.EndDrag();
+					Find.DesignatorManager.Deselect();
+					Find.Selector.Notify_DialogOpened();
+				}
+				if (Find.World != null)
+				{
+					Find.WorldSelector.Notify_DialogOpened();
+				}
 			}
 		}
 
@@ -255,7 +264,7 @@ namespace Verse
 
 		protected virtual void SetInitialSizeAndPosition()
 		{
-			this.windowRect = new Rect(((float)Screen.width - this.InitialSize.x) / 2f, ((float)Screen.height - this.InitialSize.y) / 2f, this.InitialSize.x, this.InitialSize.y).Rounded();
+			this.windowRect = new Rect(((float)UI.screenWidth - this.InitialSize.x) / 2f, ((float)UI.screenHeight - this.InitialSize.y) / 2f, this.InitialSize.x, this.InitialSize.y).Rounded();
 		}
 
 		public virtual void Notify_ResolutionChanged()

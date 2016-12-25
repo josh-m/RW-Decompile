@@ -17,10 +17,17 @@ namespace RimWorld.Planet
 				return "Hilliness_LargeHills".Translate();
 			case Hilliness.Mountainous:
 				return "Hilliness_Mountainous".Translate();
+			case Hilliness.Impassable:
+				return "Hilliness_Impassable".Translate();
 			default:
 				Log.ErrorOnce("Hilliness label unknown: " + h.ToString(), 694362);
 				return h.ToString();
 			}
+		}
+
+		public static string GetLabelCap(this Hilliness h)
+		{
+			return h.GetLabel().CapitalizeFirst();
 		}
 	}
 }

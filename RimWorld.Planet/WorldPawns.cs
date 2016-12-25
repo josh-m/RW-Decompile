@@ -10,6 +10,8 @@ namespace RimWorld.Planet
 	{
 		private const float PctOfHumanlikesAlwaysKept = 0.1f;
 
+		private const float PctOfUnnamedColonyAnimalsAlwaysKept = 0.05f;
+
 		private const int TendIntervalTicks = 7500;
 
 		private HashSet<Pawn> pawnsAlive = new HashSet<Pawn>();
@@ -59,7 +61,7 @@ namespace RimWorld.Planet
 			for (int i = 0; i < WorldPawns.tmpPawnsToTick.Count; i++)
 			{
 				WorldPawns.tmpPawnsToTick[i].Tick();
-				if (!WorldPawns.tmpPawnsToTick[i].Dead && !WorldPawns.tmpPawnsToTick[i].Destroyed && WorldPawns.tmpPawnsToTick[i].IsHashIntervalTick(7500))
+				if (!WorldPawns.tmpPawnsToTick[i].Dead && !WorldPawns.tmpPawnsToTick[i].Destroyed && WorldPawns.tmpPawnsToTick[i].IsHashIntervalTick(7500) && !WorldPawns.tmpPawnsToTick[i].IsCaravanMember() && !PawnUtility.IsTravelingInTransportPodWorldObject(WorldPawns.tmpPawnsToTick[i]))
 				{
 					TendUtility.DoTend(null, WorldPawns.tmpPawnsToTick[i], null);
 				}
@@ -69,7 +71,7 @@ namespace RimWorld.Planet
 			{
 				if (current2.Dead || current2.Destroyed)
 				{
-					if (current2.ThingState == ThingState.Discarded)
+					if (current2.Discarded)
 					{
 						Log.Error("World pawn " + current2 + " has been discarded while still being a world pawn. This should never happen, because discard destroy mode means that the pawn is no longer managed by anything. Pawn should have been removed from the world first.");
 					}
@@ -84,7 +86,7 @@ namespace RimWorld.Planet
 
 		public void ExposeData()
 		{
-			Scribe_Collections.LookHashSet<Pawn>(ref this.pawnsForcefullyKeptAsWorldPawns, true, "pawnsForcefullyKeptAsWorldPawns", LookMode.MapReference);
+			Scribe_Collections.LookHashSet<Pawn>(ref this.pawnsForcefullyKeptAsWorldPawns, true, "pawnsForcefullyKeptAsWorldPawns", LookMode.Reference);
 			Scribe_Collections.LookHashSet<Pawn>(ref this.pawnsAlive, "pawnsAlive", LookMode.Deep);
 			Scribe_Collections.LookHashSet<Pawn>(ref this.pawnsDead, true, "pawnsDead", LookMode.Deep);
 		}
@@ -106,7 +108,7 @@ namespace RimWorld.Planet
 				Log.Error("Tried to pass pawn " + pawn + " to world, but it's already here.");
 				return;
 			}
-			if (discardMode == PawnDiscardDecideMode.Keep && pawn.ThingState == ThingState.Discarded)
+			if (discardMode == PawnDiscardDecideMode.KeepForever && pawn.Discarded)
 			{
 				Log.Error("Tried to pass a discarded pawn " + pawn + " to world with discardMode=Keep. Discarded pawns should never be stored in WorldPawns.");
 				discardMode = PawnDiscardDecideMode.Decide;
@@ -123,7 +125,7 @@ namespace RimWorld.Planet
 					this.DiscardPawn(pawn);
 				}
 				break;
-			case PawnDiscardDecideMode.Keep:
+			case PawnDiscardDecideMode.KeepForever:
 				this.pawnsForcefullyKeptAsWorldPawns.Add(pawn);
 				this.AddPawn(pawn);
 				break;
@@ -161,17 +163,25 @@ namespace RimWorld.Planet
 			{
 				return WorldPawnSituation.Dead;
 			}
-			List<Faction> allFactionsListForReading = Find.FactionManager.AllFactionsListForReading;
-			for (int i = 0; i < allFactionsListForReading.Count; i++)
+			if (PawnUtility.IsFactionLeader(p))
 			{
-				if (allFactionsListForReading[i].leader == p)
-				{
-					return WorldPawnSituation.FactionLeader;
-				}
-				if (allFactionsListForReading[i].kidnapped.KidnappedPawnsListForReading.Contains(p))
-				{
-					return WorldPawnSituation.Kidnapped;
-				}
+				return WorldPawnSituation.FactionLeader;
+			}
+			if (PawnUtility.IsKidnappedPawn(p))
+			{
+				return WorldPawnSituation.Kidnapped;
+			}
+			if (p.IsCaravanMember())
+			{
+				return WorldPawnSituation.CaravanMember;
+			}
+			if (PawnUtility.IsTravelingInTransportPodWorldObject(p))
+			{
+				return WorldPawnSituation.InTravelingTransportPod;
+			}
+			if (PawnUtility.IsNonPlayerFactionBasePrisoner(p))
+			{
+				return WorldPawnSituation.NonPlayerFactionBasePrisoner;
 			}
 			return WorldPawnSituation.Free;
 		}
@@ -256,19 +266,30 @@ namespace RimWorld.Planet
 
 		private bool ShouldKeep(Pawn pawn)
 		{
-			if (pawn.ThingState == ThingState.Discarded)
+			if (pawn.Discarded)
 			{
 				return false;
 			}
-			if (pawn.records.GetAsInt(RecordDefOf.TimeAsColonist) > 0)
+			if (pawn.records.GetAsInt(RecordDefOf.TimeAsColonistOrColonyAnimal) > 0)
 			{
-				return true;
+				if (pawn.RaceProps.Humanlike || (pawn.Name != null && !pawn.Name.Numerical))
+				{
+					return true;
+				}
+				Rand.PushSeed();
+				Rand.Seed = pawn.thingIDNumber * 153;
+				bool flag = Rand.Chance(0.05f);
+				Rand.PopSeed();
+				if (flag)
+				{
+					return true;
+				}
 			}
 			if (pawn.records.GetAsInt(RecordDefOf.TimeAsPrisoner) > 0)
 			{
 				return true;
 			}
-			if (pawn.corpse != null)
+			if (pawn.Corpse != null)
 			{
 				return true;
 			}
@@ -284,32 +305,47 @@ namespace RimWorld.Planet
 			{
 				Rand.PushSeed();
 				Rand.Seed = pawn.thingIDNumber * 681;
-				bool flag = Rand.Value < 0.1f;
+				bool flag2 = Rand.Chance(0.1f);
 				Rand.PopSeed();
-				if (flag)
+				if (flag2)
 				{
 					return true;
 				}
 			}
-			List<Faction> allFactionsListForReading = Find.FactionManager.AllFactionsListForReading;
-			for (int i = 0; i < allFactionsListForReading.Count; i++)
+			if (PawnUtility.IsFactionLeader(pawn))
 			{
-				if (allFactionsListForReading[i].leader == pawn)
-				{
-					return true;
-				}
-				if (allFactionsListForReading[i].kidnapped.KidnappedPawnsListForReading.Contains(pawn))
-				{
-					return true;
-				}
+				return true;
 			}
-			if (Current.ProgramState == ProgramState.MapPlaying)
+			if (PawnUtility.IsKidnappedPawn(pawn))
+			{
+				return true;
+			}
+			if (pawn.IsCaravanMember())
+			{
+				return true;
+			}
+			if (PawnUtility.IsTravelingInTransportPodWorldObject(pawn))
+			{
+				return true;
+			}
+			if (PawnUtility.IsNonPlayerFactionBasePrisoner(pawn))
+			{
+				return true;
+			}
+			if (Current.ProgramState == ProgramState.Playing)
 			{
 				if (Find.PlayLog.AnyEntryConcerns(pawn))
 				{
 					return true;
 				}
 				if (Find.TaleManager.AnyTaleConcerns(pawn))
+				{
+					return true;
+				}
+			}
+			foreach (Pawn current in PawnsFinder.AllMapsAndWorld_Alive)
+			{
+				if (current.needs.mood != null && current.needs.mood.thoughts.memories.AnyMemoryThoughtConcerns(pawn))
 				{
 					return true;
 				}
@@ -334,11 +370,11 @@ namespace RimWorld.Planet
 			{
 				this.pawnsAlive.Add(p);
 			}
-			if ((p.Faction == null || p.Faction.IsPlayer) && p.RaceProps.Humanlike && !p.Dead && this.GetSituation(p) != WorldPawnSituation.Kidnapped)
+			if ((p.Faction == null || p.Faction.IsPlayer) && p.RaceProps.Humanlike && !p.Dead && this.GetSituation(p) == WorldPawnSituation.Free)
 			{
 				bool tryMedievalOrBetter = p.Faction != null && p.Faction.def.techLevel >= TechLevel.Medieval;
 				Faction newFaction;
-				if (Find.FactionManager.TryGetRandomNonColonyHumanlikeFaction(out newFaction, tryMedievalOrBetter))
+				if (Find.FactionManager.TryGetRandomNonColonyHumanlikeFaction(out newFaction, tryMedievalOrBetter, false))
 				{
 					p.SetFaction(newFaction, null);
 				}
@@ -355,7 +391,7 @@ namespace RimWorld.Planet
 				{
 					p.Destroy(DestroyMode.Vanish);
 				}
-				if (p.ThingState != ThingState.Discarded)
+				if (!p.Discarded)
 				{
 					p.Discard();
 				}

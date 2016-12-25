@@ -9,12 +9,12 @@ namespace RimWorld
 		protected override ThoughtState CurrentStateInternal(Pawn p)
 		{
 			PsychicDroneLevel psychicDroneLevel = PsychicDroneLevel.None;
-			Building_PsychicEmanator building_PsychicEmanator = ThoughtWorker_PsychicDrone.ExtantShipPart();
+			Building_PsychicEmanator building_PsychicEmanator = ThoughtWorker_PsychicDrone.ExtantShipPart(p.Map);
 			if (building_PsychicEmanator != null)
 			{
 				psychicDroneLevel = building_PsychicEmanator.droneLevel;
 			}
-			MapCondition_PsychicEmanation activeCondition = Find.MapConditionManager.GetActiveCondition<MapCondition_PsychicEmanation>();
+			MapCondition_PsychicEmanation activeCondition = p.Map.mapConditionManager.GetActiveCondition<MapCondition_PsychicEmanation>();
 			if (activeCondition != null && activeCondition.gender == p.gender && activeCondition.def.droneLevel > psychicDroneLevel)
 			{
 				psychicDroneLevel = activeCondition.def.droneLevel;
@@ -38,9 +38,9 @@ namespace RimWorld
 			}
 		}
 
-		private static Building_PsychicEmanator ExtantShipPart()
+		private static Building_PsychicEmanator ExtantShipPart(Map map)
 		{
-			List<Thing> list = Find.ListerThings.ThingsOfDef(ThingDefOf.CrashedPsychicEmanatorShipPart);
+			List<Thing> list = map.listerThings.ThingsOfDef(ThingDefOf.CrashedPsychicEmanatorShipPart);
 			if (list.Count == 0)
 			{
 				return null;

@@ -45,7 +45,7 @@ namespace RimWorld
 		{
 			if (this.CanLaunchNow)
 			{
-				ShipCountdown.InitiateCountdown(this);
+				ShipCountdown.InitiateCountdown(this, -1);
 			}
 		}
 	}

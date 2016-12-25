@@ -33,12 +33,12 @@ namespace RimWorld
 			for (int i = 0; i < 24; i++)
 			{
 				IntVec3 intVec = position + GenRadial.RadialPattern[i];
-				if (intVec.InBounds())
+				if (intVec.InBounds(base.Map))
 				{
-					Thing thing = intVec.GetThingList().Find((Thing x) => x is Pawn);
+					Thing thing = intVec.GetThingList(base.Map).Find((Thing x) => x is Pawn);
 					if (thing != null && thing != this.pawn)
 					{
-						if (GenSight.LineOfSight(position, intVec, false))
+						if (GenSight.LineOfSight(position, intVec, base.Map, false))
 						{
 							return (Pawn)thing;
 						}

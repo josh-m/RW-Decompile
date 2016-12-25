@@ -19,7 +19,7 @@ namespace RimWorld
 			{
 				return;
 			}
-			if (pawn.story != null && pawn.story.traits.DegreeOfTrait(TraitDefOf.DrugDesire) < 0)
+			if (pawn.IsTeetotaler())
 			{
 				return;
 			}
@@ -44,6 +44,7 @@ namespace RimWorld
 						Hediff hediff = HediffMaker.MakeHediff(chemicalDef.addictionHediff, pawn, null);
 						hediff.Severity = PawnAddictionHediffsGenerator.GeneratedAddictionSeverityRange.RandomInRange;
 						pawn.health.AddHediff(hediff, null, null);
+						PawnAddictionHediffsGenerator.DoIngestionOutcomeDoers(pawn, chemicalDef);
 						i++;
 						continue;
 					}
@@ -55,6 +56,25 @@ namespace RimWorld
 		private static bool PossibleWithTechLevel(ChemicalDef chemical, Faction faction)
 		{
 			return faction == null || PawnAddictionHediffsGenerator.allDrugs.Any((ThingDef x) => x.GetCompProperties<CompProperties_Drug>().chemical == chemical && x.techLevel <= faction.def.techLevel);
+		}
+
+		private static void DoIngestionOutcomeDoers(Pawn pawn, ChemicalDef chemical)
+		{
+			for (int i = 0; i < PawnAddictionHediffsGenerator.allDrugs.Count; i++)
+			{
+				CompProperties_Drug compProperties = PawnAddictionHediffsGenerator.allDrugs[i].GetCompProperties<CompProperties_Drug>();
+				if (compProperties.chemical == chemical)
+				{
+					List<IngestionOutcomeDoer> outcomeDoers = PawnAddictionHediffsGenerator.allDrugs[i].ingestible.outcomeDoers;
+					for (int j = 0; j < outcomeDoers.Count; j++)
+					{
+						if (outcomeDoers[j].doToGeneratedPawnIfAddicted)
+						{
+							outcomeDoers[j].DoIngestionOutcome(pawn, null);
+						}
+					}
+				}
+			}
 		}
 	}
 }

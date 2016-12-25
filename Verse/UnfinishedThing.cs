@@ -156,7 +156,7 @@ namespace Verse
 					if (num > 0)
 					{
 						this.ingredients[i].stackCount = num;
-						GenPlace.TryPlaceThing(this.ingredients[i], base.Position, ThingPlaceMode.Near, null);
+						GenPlace.TryPlaceThing(this.ingredients[i], base.Position, base.Map, ThingPlaceMode.Near, null);
 					}
 				}
 				this.ingredients.Clear();
@@ -220,16 +220,12 @@ namespace Verse
 		public override string GetInspectString()
 		{
 			string text = base.GetInspectString();
-			string text2 = text;
-			text = string.Concat(new string[]
+			if (!text.NullOrEmpty())
 			{
-				text2,
-				"\n",
-				"Author".Translate(),
-				": ",
-				this.creatorName
-			});
-			text2 = text;
+				text += "\n";
+			}
+			text = text + "Author".Translate() + ": " + this.creatorName;
+			string text2 = text;
 			return string.Concat(new string[]
 			{
 				text2,

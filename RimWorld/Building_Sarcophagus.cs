@@ -29,10 +29,10 @@ namespace RimWorld
 		public override void Notify_CorpseBuried(Pawn worker)
 		{
 			base.Notify_CorpseBuried(worker);
-			if (this.thisIsFirstBodyEver && worker.IsColonist && base.Corpse.innerPawn.def.race.Humanlike && !base.Corpse.everBuriedInSarcophagus)
+			if (this.thisIsFirstBodyEver && worker.IsColonist && base.Corpse.InnerPawn.def.race.Humanlike && !base.Corpse.everBuriedInSarcophagus)
 			{
 				base.Corpse.everBuriedInSarcophagus = true;
-				foreach (Pawn current in Find.MapPawns.FreeColonists)
+				foreach (Pawn current in base.Map.mapPawns.FreeColonists)
 				{
 					if (current.needs.mood != null)
 					{

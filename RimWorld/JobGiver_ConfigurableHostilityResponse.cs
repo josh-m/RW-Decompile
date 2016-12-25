@@ -65,7 +65,7 @@ namespace RimWorld
 				return null;
 			}
 			JobGiver_ConfigurableHostilityResponse.tmpThreats.Clear();
-			List<IAttackTarget> potentialTargetsFor = Find.AttackTargetsCache.GetPotentialTargetsFor(pawn);
+			List<IAttackTarget> potentialTargetsFor = pawn.Map.attackTargetsCache.GetPotentialTargetsFor(pawn);
 			for (int i = 0; i < potentialTargetsFor.Count; i++)
 			{
 				IAttackTarget attackTarget = potentialTargetsFor[i];
@@ -89,12 +89,12 @@ namespace RimWorld
 			IntVec3 bestPos = pawn.Position;
 			float bestScore = -1f;
 			TraverseParms traverseParms = TraverseParms.For(pawn, Danger.Deadly, TraverseMode.ByPawn, false);
-			RegionTraverser.BreadthFirstTraverse(pawn.Position.GetRegion(), (Region from, Region reg) => reg.Allows(traverseParms, false), delegate(Region reg)
+			RegionTraverser.BreadthFirstTraverse(pawn.GetRegion(), (Region from, Region reg) => reg.Allows(traverseParms, false), delegate(Region reg)
 			{
 				Danger danger = reg.DangerFor(pawn);
 				foreach (IntVec3 current in reg.Cells)
 				{
-					if (current.Standable())
+					if (current.Standable(pawn.Map))
 					{
 						if (reg.portal == null)
 						{
@@ -113,7 +113,7 @@ namespace RimWorld
 							float f = Mathf.Min(num3, 23f);
 							float num4 = Mathf.Pow(f, 1.2f);
 							num4 *= Mathf.InverseLerp(50f, 0f, (current - pawn.Position).LengthHorizontal);
-							if (current.GetRoom() != thing.GetRoom())
+							if (current.GetRoom(pawn.Map) != thing.GetRoom())
 							{
 								num4 *= 4.2f;
 							}
@@ -121,7 +121,7 @@ namespace RimWorld
 							{
 								num4 *= 0.05f;
 							}
-							if (Find.PawnDestinationManager.DestinationIsReserved(current, pawn))
+							if (pawn.Map.pawnDestinationManager.DestinationIsReserved(current, pawn))
 							{
 								num4 *= 0.5f;
 							}

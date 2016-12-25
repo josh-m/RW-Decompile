@@ -30,7 +30,7 @@ namespace RimWorld
 			{
 				return false;
 			}
-			if (Find.FertilityGrid.FertilityAt(c) < ThingDefOf.PlantPotato.plant.fertilityMin)
+			if (base.Map.fertilityGrid.FertilityAt(c) < ThingDefOf.PlantPotato.plant.fertilityMin)
 			{
 				return false;
 			}
@@ -40,7 +40,7 @@ namespace RimWorld
 		protected override Zone MakeNewZone()
 		{
 			PlayerKnowledgeDatabase.KnowledgeDemonstrated(ConceptDefOf.GrowingFood, KnowledgeAmount.Total);
-			return new Zone_Growing();
+			return new Zone_Growing(Find.VisibleMap.zoneManager);
 		}
 	}
 }

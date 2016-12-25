@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEngine;
 using Verse;
+using Verse.Noise;
 
 namespace RimWorld.Planet
 {
@@ -12,114 +12,143 @@ namespace RimWorld.Planet
 
 		public WorldGrid grid;
 
-		public WorldRenderer renderer = new WorldRenderer();
+		public WorldPathGrid pathGrid;
 
-		public FactionManager factionManager = new FactionManager();
+		public WorldRenderer renderer;
 
-		public UniqueIDsManager uniqueIDsManager = new UniqueIDsManager();
+		public WorldObjectsHolder worldObjects;
 
-		public WorldPawns worldPawns = new WorldPawns();
+		public WorldInterface UI;
 
-		public static readonly float MaxLatitude = 80f;
+		public WorldDebugDrawer debugDrawer;
 
-		public IntVec2 Size
+		public WorldDynamicDrawManager dynamicDrawManager;
+
+		public WorldPathFinder pathFinder;
+
+		public WorldPathPool pathPool;
+
+		public WorldReachability reachability;
+
+		public FactionManager factionManager;
+
+		public UniqueIDsManager uniqueIDsManager;
+
+		public WorldPawns worldPawns;
+
+		private static List<int> tmpNeighbors = new List<int>();
+
+		private static List<Rot4> tmpOceanDirs = new List<Rot4>();
+
+		public float PlanetCoverage
 		{
 			get
 			{
-				return this.info.size;
-			}
-		}
-
-		public float DegreesPerSquare
-		{
-			get
-			{
-				return World.MaxLatitude / (float)this.Size.z;
-			}
-		}
-
-		public IEnumerable<IntVec2> AllSquares
-		{
-			get
-			{
-				for (int i = 0; i < this.Size.x; i++)
-				{
-					for (int j = 0; j < this.Size.z; j++)
-					{
-						yield return new IntVec2(i, j);
-					}
-				}
+				return this.info.planetCoverage;
 			}
 		}
 
 		public void ExposeData()
 		{
 			Scribe_Deep.LookDeep<WorldInfo>(ref this.info, "info", new object[0]);
-			Scribe_Deep.LookDeep<UniqueIDsManager>(ref this.uniqueIDsManager, "uniqueIDsManager", new object[0]);
 			if (Scribe.mode == LoadSaveMode.LoadingVars)
 			{
 				WorldGenerator_Grid.GenerateGridIntoWorld(this.info.seedString);
+				this.ConstructComponents();
 			}
+			this.ExposeComponents();
+		}
+
+		private void ExposeComponents()
+		{
+			Scribe_Deep.LookDeep<UniqueIDsManager>(ref this.uniqueIDsManager, "uniqueIDsManager", new object[0]);
 			Scribe_Deep.LookDeep<FactionManager>(ref this.factionManager, "factionManager", new object[0]);
 			Scribe_Deep.LookDeep<WorldPawns>(ref this.worldPawns, "worldPawns", new object[0]);
+			Scribe_Deep.LookDeep<WorldObjectsHolder>(ref this.worldObjects, "worldObjects", new object[0]);
+		}
+
+		public void ConstructComponents()
+		{
+			this.renderer = new WorldRenderer();
+			this.worldObjects = new WorldObjectsHolder();
+			this.UI = new WorldInterface();
+			this.debugDrawer = new WorldDebugDrawer();
+			this.dynamicDrawManager = new WorldDynamicDrawManager();
+			this.pathFinder = new WorldPathFinder();
+			this.pathPool = new WorldPathPool();
+			this.reachability = new WorldReachability();
+			this.factionManager = new FactionManager();
+			this.uniqueIDsManager = new UniqueIDsManager();
+			this.worldPawns = new WorldPawns();
+		}
+
+		public void FinalizeInit()
+		{
+			this.pathGrid.RecalculateAllPerceivedPathCosts();
+			AmbientSoundManager.EnsureWorldAmbientSoundCreated();
 		}
 
 		public void WorldTick()
 		{
 			this.worldPawns.WorldPawnsTick();
 			this.factionManager.FactionManagerTick();
+			this.worldObjects.WorldObjectsHolderTick();
+			this.debugDrawer.WorldDebugDrawerTick();
+			this.pathGrid.WorldPathGridTick();
 		}
 
-		public bool InBounds(IntVec2 c)
+		public void WorldUpdate()
 		{
-			return c.x >= 0 && c.z >= 0 && c.x < this.Size.x && c.z < this.Size.z;
+			bool worldRenderedNow = WorldRendererUtility.WorldRenderedNow;
+			this.renderer.CheckActivateWorldCamera();
+			if (worldRenderedNow)
+			{
+				ExpandableWorldObjectsUtility.ExpandableWorldObjectsUpdate();
+				this.renderer.DrawWorldLayers();
+				this.dynamicDrawManager.DrawDynamicWorldObjects();
+				NoiseDebugUI.RenderPlanetNoise();
+			}
 		}
 
-		public Vector2 LongLatOf(IntVec2 c)
+		public Rot4 CoastDirectionAt(int tileID)
 		{
-			float x = (float)c.x * this.DegreesPerSquare;
-			float y = (float)c.z * this.DegreesPerSquare;
-			return new Vector2(x, y);
-		}
-
-		public Rot4 CoastDirectionAt(IntVec2 c)
-		{
-			WorldSquare worldSquare = this.grid.Get(c);
-			if (!worldSquare.biome.canBuildBase)
+			Tile tile = this.grid[tileID];
+			if (!tile.biome.canBuildBase)
 			{
 				return Rot4.Invalid;
 			}
-			Rot4[] array = new Rot4[4];
-			int num = 0;
-			for (int i = 0; i < 4; i++)
+			World.tmpOceanDirs.Clear();
+			this.grid.GetTileNeighbors(tileID, World.tmpNeighbors);
+			int i = 0;
+			int count = World.tmpNeighbors.Count;
+			while (i < count)
 			{
-				IntVec2 toIntVec = GenAdj.CardinalDirections[i].ToIntVec2;
-				IntVec2 intVec = c + toIntVec;
-				if (this.InBounds(intVec))
+				Tile tile2 = this.grid[World.tmpNeighbors[i]];
+				if (tile2.biome == BiomeDefOf.Ocean)
 				{
-					WorldSquare worldSquare2 = this.grid.Get(intVec);
-					if (worldSquare2.biome == BiomeDefOf.Ocean)
+					Rot4 rotFromTo = this.grid.GetRotFromTo(tileID, World.tmpNeighbors[i]);
+					if (!World.tmpOceanDirs.Contains(rotFromTo))
 					{
-						array[num] = Rot4.FromIntVec2(toIntVec);
-						num++;
+						World.tmpOceanDirs.Add(rotFromTo);
 					}
 				}
+				i++;
 			}
-			if (num == 0)
+			if (World.tmpOceanDirs.Count == 0)
 			{
 				return Rot4.Invalid;
 			}
 			Rand.PushSeed();
-			Rand.Seed = c.GetHashCode();
-			int num2 = Rand.Range(0, num);
+			Rand.Seed = tileID;
+			int index = Rand.Range(0, World.tmpOceanDirs.Count);
 			Rand.PopSeed();
-			return array[num2];
+			return World.tmpOceanDirs[index];
 		}
 
-		public IEnumerable<ThingDef> NaturalRockTypesIn(IntVec2 c)
+		public IEnumerable<ThingDef> NaturalRockTypesIn(int tile)
 		{
 			Rand.PushSeed();
-			Rand.Seed = c.GetHashCode();
+			Rand.Seed = tile;
 			List<ThingDef> list = (from d in DefDatabase<ThingDef>.AllDefs
 			where d.category == ThingCategory.Building && d.building.isNaturalRock && !d.building.isResourceRock
 			select d).ToList<ThingDef>();
@@ -139,9 +168,9 @@ namespace RimWorld.Planet
 			return list2;
 		}
 
-		public float DistanceFromEquatorNormalized(IntVec2 coords)
+		public bool Impassable(int tileID)
 		{
-			return (float)coords.z / (float)this.Size.z;
+			return !this.pathGrid.Passable(tileID);
 		}
 	}
 }

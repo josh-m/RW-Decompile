@@ -4,43 +4,47 @@ using Verse;
 
 namespace RimWorld
 {
-	public abstract class PawnGroupMaker
+	public class PawnGroupMaker
 	{
+		public PawnGroupKindDef kindDef;
+
 		public float commonality = 100f;
 
-		private List<RaidStrategyDef> disallowedStrategies;
+		public List<RaidStrategyDef> disallowedStrategies;
 
-		[Unsaved]
-		private static List<Pawn> makingPawns = new List<Pawn>();
+		public List<PawnGenOption> options = new List<PawnGenOption>();
 
-		public static List<Pawn> MakingPawns
+		public List<PawnGenOption> traders = new List<PawnGenOption>();
+
+		public List<PawnGenOption> carriers = new List<PawnGenOption>();
+
+		public List<PawnGenOption> guards = new List<PawnGenOption>();
+
+		public float MinPointsToGenerateAnything
 		{
 			get
 			{
-				return PawnGroupMaker.makingPawns;
+				return this.kindDef.Worker.MinPointsToGenerateAnything(this);
 			}
 		}
 
-		public abstract float MinPointsToGenerateAnything
+		public IEnumerable<Pawn> GeneratePawns(PawnGroupMakerParms parms, bool errorOnZeroResults = true)
 		{
-			get;
+			IEnumerable<Pawn> result;
+			try
+			{
+				result = this.kindDef.Worker.GeneratePawns(parms, this, errorOnZeroResults);
+			}
+			finally
+			{
+				PawnGroupMakerUtility.ClearPawnsBeingGeneratedNow();
+			}
+			return result;
 		}
 
-		public abstract IEnumerable<Pawn> GenerateArrivingPawns(IncidentParms parms, bool errorOnZeroResults = true);
-
-		protected virtual void PostGenerate(Pawn pawn)
+		public bool CanGenerateFrom(PawnGroupMakerParms parms)
 		{
-			PawnGroupMaker.makingPawns.Add(pawn);
-		}
-
-		protected virtual void FinishedGeneratingPawns()
-		{
-			PawnGroupMaker.makingPawns.Clear();
-		}
-
-		public virtual bool CanGenerateFrom(IncidentParms parms)
-		{
-			return this.disallowedStrategies == null || !this.disallowedStrategies.Contains(parms.raidStrategy);
+			return (this.disallowedStrategies == null || !this.disallowedStrategies.Contains(parms.raidStrategy)) && this.kindDef.Worker.CanGenerateFrom(parms, this);
 		}
 	}
 }

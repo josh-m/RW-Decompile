@@ -47,7 +47,8 @@ namespace Verse
 		{
 			get
 			{
-				return this.LabelBase + ((!this.LabelInBrackets.NullOrEmpty()) ? (" (" + this.LabelInBrackets + ")") : string.Empty);
+				string labelInBrackets = this.LabelInBrackets;
+				return this.LabelBase + ((!labelInBrackets.NullOrEmpty()) ? (" (" + labelInBrackets + ")") : string.Empty);
 			}
 		}
 
@@ -75,11 +76,11 @@ namespace Verse
 			}
 		}
 
-		public virtual string DamageLabel
+		public virtual string SeverityLabel
 		{
 			get
 			{
-				return (this.def.lethalSeverity >= 0f) ? (this.Severity / this.def.lethalSeverity).ToStringPercent() : null;
+				return (this.def.lethalSeverity > 0f) ? (this.Severity / this.def.lethalSeverity).ToStringPercent() : null;
 			}
 		}
 
@@ -139,14 +140,6 @@ namespace Verse
 			}
 		}
 
-		public virtual float MaxBleeding
-		{
-			get
-			{
-				return 0f;
-			}
-		}
-
 		public virtual float PainOffset
 		{
 			get
@@ -179,6 +172,14 @@ namespace Verse
 			}
 		}
 
+		public virtual TextureAndColor StateIcon
+		{
+			get
+			{
+				return TextureAndColor.None;
+			}
+		}
+
 		public virtual int CurStageIndex
 		{
 			get
@@ -188,9 +189,10 @@ namespace Verse
 					return 0;
 				}
 				List<HediffStage> stages = this.def.stages;
+				float severity = this.Severity;
 				for (int i = stages.Count - 1; i >= 0; i--)
 				{
-					if (this.Severity >= stages[i].minSeverity)
+					if (severity >= stages[i].minSeverity)
 					{
 						return i;
 					}
@@ -207,13 +209,15 @@ namespace Verse
 			}
 			set
 			{
-				if (this.def.lethalSeverity > 0f && value > this.def.lethalSeverity)
+				bool flag = false;
+				if (this.def.lethalSeverity > 0f && value >= this.def.lethalSeverity)
 				{
 					value = this.def.lethalSeverity;
+					flag = true;
 				}
 				int curStageIndex = this.CurStageIndex;
 				this.severityInt = Mathf.Clamp(value, this.def.minSeverity, this.def.maxSeverity);
-				if (this.CurStageIndex != curStageIndex)
+				if (this.CurStageIndex != curStageIndex || flag)
 				{
 					this.pawn.health.Notify_HediffChanged(this);
 					if (!this.pawn.Dead && this.pawn.needs.mood != null)
@@ -282,36 +286,30 @@ namespace Verse
 		public virtual void Tick()
 		{
 			this.ageTicks++;
+			if (this.def.hediffGivers != null && this.pawn.IsHashIntervalTick(60))
+			{
+				for (int i = 0; i < this.def.hediffGivers.Count; i++)
+				{
+					this.def.hediffGivers[i].OnIntervalPassed(this.pawn, this);
+				}
+			}
 			if (this.CurStage != null)
 			{
 				if (this.CurStage.hediffGivers != null && this.pawn.IsHashIntervalTick(60))
 				{
-					for (int i = 0; i < this.CurStage.hediffGivers.Count; i++)
+					for (int j = 0; j < this.CurStage.hediffGivers.Count; j++)
 					{
-						HediffGiver hediffGiver = this.CurStage.hediffGivers[i];
-						if (hediffGiver.CheckGiveEverySecond(this.pawn) && (this.pawn.IsColonist || this.pawn.IsPrisonerOfColony))
-						{
-							Find.LetterStack.ReceiveLetter(new Letter("LetterHealthComplicationsLabel".Translate(new object[]
-							{
-								this.pawn.LabelShort,
-								hediffGiver.hediff.label
-							}), "LetterHealthComplications".Translate(new object[]
-							{
-								this.pawn.LabelShort,
-								hediffGiver.hediff.label,
-								this.def.label
-							}), LetterType.BadNonUrgent, this.pawn), null);
-						}
+						this.CurStage.hediffGivers[j].OnIntervalPassed(this.pawn, this);
 					}
 				}
 				if (this.CurStage.mentalStateGivers != null && !this.pawn.InMentalState && this.pawn.IsHashIntervalTick(60))
 				{
-					for (int j = 0; j < this.CurStage.mentalStateGivers.Count; j++)
+					for (int k = 0; k < this.CurStage.mentalStateGivers.Count; k++)
 					{
-						MentalStateGiver mentalStateGiver = this.CurStage.mentalStateGivers[j];
+						MentalStateGiver mentalStateGiver = this.CurStage.mentalStateGivers[k];
 						if (Rand.MTBEventOccurs(mentalStateGiver.mtbDays, 60000f, 60f))
 						{
-							this.pawn.mindState.mentalStateHandler.TryStartMentalState(mentalStateGiver.mentalState, null, false);
+							this.pawn.mindState.mentalStateHandler.TryStartMentalState(mentalStateGiver.mentalState, null, false, false, null);
 						}
 					}
 				}
@@ -354,6 +352,14 @@ namespace Verse
 		{
 		}
 
+		public virtual void PostRemoved()
+		{
+			if (this.def.causesNeed != null && !this.pawn.Dead)
+			{
+				this.pawn.needs.AddOrRemoveNeedsAsAppropriate();
+			}
+		}
+
 		public virtual void PostTick()
 		{
 		}
@@ -362,7 +368,17 @@ namespace Verse
 		{
 		}
 
-		public virtual void FactorDrugEffect(ChemicalDef chem, ref float effect)
+		public virtual void Heal(float amount)
+		{
+			if (amount <= 0f)
+			{
+				return;
+			}
+			this.Severity -= amount;
+			this.pawn.health.Notify_HediffChanged(this);
+		}
+
+		public virtual void ModifyChemicalEffect(ChemicalDef chem, ref float effect)
 		{
 		}
 
@@ -377,26 +393,9 @@ namespace Verse
 			return true;
 		}
 
-		public virtual void DirectHeal(float amount)
-		{
-			if (amount <= 0f)
-			{
-				return;
-			}
-			this.Severity -= amount;
-		}
-
 		public virtual bool CauseDeathNow()
 		{
 			return this.def.lethalSeverity >= 0f && this.Severity >= this.def.lethalSeverity;
-		}
-
-		public virtual void HediffRemoved()
-		{
-			if (this.def.causesNeed != null && !this.pawn.Dead)
-			{
-				this.pawn.needs.AddOrRemoveNeedsAsAppropriate();
-			}
 		}
 
 		public virtual void Notify_PawnDied()

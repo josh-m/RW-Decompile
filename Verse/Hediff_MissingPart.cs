@@ -68,7 +68,51 @@ namespace Verse
 			}
 		}
 
-		private bool IsParentMissing
+		public override float BleedRate
+		{
+			get
+			{
+				if (this.pawn.Dead)
+				{
+					return 0f;
+				}
+				if (!this.IsFresh)
+				{
+					return 0f;
+				}
+				if (this.ParentIsMissing)
+				{
+					return 0f;
+				}
+				return base.Part.def.GetMaxHealth(this.pawn) * this.def.injuryProps.bleedRate * base.Part.def.bleedingRateMultiplier;
+			}
+		}
+
+		public override float PainOffset
+		{
+			get
+			{
+				if (this.pawn.Dead)
+				{
+					return 0f;
+				}
+				if (this.causesNoPain)
+				{
+					return 0f;
+				}
+				if (!this.IsFresh)
+				{
+					return 0f;
+				}
+				if (this.ParentIsMissing)
+				{
+					return 0f;
+				}
+				return base.Part.def.GetMaxHealth(this.pawn) * this.def.injuryProps.painPerSeverity;
+			}
+		}
+
+		private bool ParentIsMissing
 		{
 			get
 			{
@@ -84,63 +128,11 @@ namespace Verse
 			}
 		}
 
-		public override float BleedRate
-		{
-			get
-			{
-				if (this.pawn.health.Dead)
-				{
-					return 0f;
-				}
-				if (!this.IsFresh)
-				{
-					return 0f;
-				}
-				if (this.IsParentMissing)
-				{
-					return 0f;
-				}
-				return base.Part.def.GetMaxHealth(this.pawn) * 0.75f;
-			}
-		}
-
-		public override float PainOffset
-		{
-			get
-			{
-				if (this.causesNoPain)
-				{
-					return 0f;
-				}
-				if (this.pawn.health.Dead)
-				{
-					return 0f;
-				}
-				if (!this.IsFresh)
-				{
-					return 0f;
-				}
-				if (this.IsParentMissing)
-				{
-					return 0f;
-				}
-				return base.Part.def.GetMaxHealth(this.pawn) / 80f;
-			}
-		}
-
-		public override float MaxBleeding
-		{
-			get
-			{
-				return base.Part.def.GetMaxHealth(this.pawn) * 0.75f;
-			}
-		}
-
 		public bool IsFresh
 		{
 			get
 			{
-				return Current.ProgramState != ProgramState.Entry && this.isFreshInt && base.Part.depth != BodyPartDepth.Inside && !this.TicksAfterMissingBodyPartNoLongerFreshPassed && !base.Part.def.IsSolid(base.Part, this.pawn.health.hediffSet.hediffs) && !this.IsParentMissing;
+				return Current.ProgramState != ProgramState.Entry && this.isFreshInt && base.Part.depth != BodyPartDepth.Inside && !this.TicksAfterMissingBodyPartNoLongerFreshPassed && !base.Part.def.IsSolid(base.Part, this.pawn.health.hediffSet.hediffs) && !this.ParentIsMissing;
 			}
 			set
 			{
@@ -152,7 +144,7 @@ namespace Verse
 		{
 			get
 			{
-				return this.ageTicks >= 70000;
+				return this.ageTicks >= 90000;
 			}
 		}
 
@@ -176,7 +168,7 @@ namespace Verse
 				hediff_MissingPart.IsFresh = false;
 				hediff_MissingPart.lastInjury = this.lastInjury;
 				hediff_MissingPart.Part = base.Part.parts[i];
-				this.pawn.health.hediffSet.AddHediffDirect(hediff_MissingPart, null);
+				this.pawn.health.hediffSet.AddDirect(hediff_MissingPart, null);
 			}
 		}
 

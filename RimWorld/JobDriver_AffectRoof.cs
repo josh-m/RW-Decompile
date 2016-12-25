@@ -56,7 +56,7 @@ namespace RimWorld
 				this.<>f__this.workLeft -= statValue;
 				if (this.<doWork>__0.actor.skills != null)
 				{
-					this.<doWork>__0.actor.skills.Learn(SkillDefOf.Construction, 0.11f);
+					this.<doWork>__0.actor.skills.Learn(SkillDefOf.Construction, 0.11f, false);
 				}
 				if (this.<>f__this.workLeft <= 0f)
 				{

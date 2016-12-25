@@ -8,11 +8,11 @@ using UnityEngine;
 
 namespace Verse
 {
-	public class Corpse : ThingWithComps, IBillGiver, IThoughtGiver, IStrippable
+	public class Corpse : ThingWithComps, IBillGiver, IThoughtGiver, IStrippable, IThingContainerOwner
 	{
 		private const int VanishAfterTicks = 3000000;
 
-		public Pawn innerPawn;
+		private ThingContainer innerContainer;
 
 		private int timeOfDeath = -1000;
 
@@ -21,6 +21,27 @@ namespace Verse
 		private BillStack operationsBillStack;
 
 		public bool everBuriedInSarcophagus;
+
+		public Pawn InnerPawn
+		{
+			get
+			{
+				if (this.innerContainer.Count > 0)
+				{
+					return (Pawn)this.innerContainer[0];
+				}
+				return null;
+			}
+			set
+			{
+				if (this.innerContainer.Count > 0)
+				{
+					Log.Error("Setting InnerPawn in corpse that already has one.");
+					this.innerContainer.Clear();
+				}
+				this.innerContainer.TryAdd(value, true);
+			}
+		}
 
 		public int Age
 		{
@@ -40,7 +61,7 @@ namespace Verse
 			{
 				return "DeadLabel".Translate(new object[]
 				{
-					this.innerPawn.LabelCap
+					this.InnerPawn.LabelCap
 				});
 			}
 		}
@@ -49,7 +70,12 @@ namespace Verse
 		{
 			get
 			{
-				return this.innerPawn.RaceProps.IsFlesh && this.GetRotStage() != RotStage.Dessicated;
+				if (this.Bugged)
+				{
+					Log.Error("IngestibleNow on Corpse while Bugged.");
+					return false;
+				}
+				return this.InnerPawn.RaceProps.IsFlesh && this.GetRotStage() != RotStage.Dessicated;
 			}
 		}
 
@@ -77,7 +103,7 @@ namespace Verse
 		{
 			get
 			{
-				return this.innerPawn.RaceProps.Animal && this.vanishAfterTimestamp > 0 && this.Age >= this.vanishAfterTimestamp && this.holder == null && this.GetRoom().TouchesMapEdge && !Find.RoofGrid.Roofed(base.Position);
+				return this.InnerPawn.RaceProps.Animal && this.vanishAfterTimestamp > 0 && this.Age >= this.vanishAfterTimestamp && this.holdingContainer == null && this.GetRoom().TouchesMapEdge && !base.Map.roofGrid.Roofed(base.Position);
 			}
 		}
 
@@ -89,11 +115,11 @@ namespace Verse
 				{
 					yield return s;
 				}
-				yield return new StatDrawEntry(StatCategoryDefOf.Basics, "Nutrition".Translate(), FoodUtility.GetBodyPartNutrition(this.innerPawn, this.innerPawn.RaceProps.body.corePart).ToString("0.##"), 0);
+				yield return new StatDrawEntry(StatCategoryDefOf.Basics, "Nutrition".Translate(), FoodUtility.GetBodyPartNutrition(this.InnerPawn, this.InnerPawn.RaceProps.body.corePart).ToString("0.##"), 0);
 				StatDef meatAmount = StatDefOf.MeatAmount;
-				yield return new StatDrawEntry(meatAmount.category, meatAmount, this.innerPawn.GetStatValue(meatAmount, true), StatRequest.For(this.innerPawn), ToStringNumberSense.Undefined);
+				yield return new StatDrawEntry(meatAmount.category, meatAmount, this.InnerPawn.GetStatValue(meatAmount, true), StatRequest.For(this.InnerPawn), ToStringNumberSense.Undefined);
 				StatDef leatherAmount = StatDefOf.LeatherAmount;
-				yield return new StatDrawEntry(leatherAmount.category, leatherAmount, this.innerPawn.GetStatValue(leatherAmount, true), StatRequest.For(this.innerPawn), ToStringNumberSense.Undefined);
+				yield return new StatDrawEntry(leatherAmount.category, leatherAmount, this.InnerPawn.GetStatValue(leatherAmount, true), StatRequest.For(this.InnerPawn), ToStringNumberSense.Undefined);
 			}
 		}
 
@@ -117,13 +143,14 @@ namespace Verse
 		{
 			get
 			{
-				return this.innerPawn == null;
+				return this.innerContainer.Count == 0 || this.innerContainer[0] == null;
 			}
 		}
 
 		public Corpse()
 		{
 			this.operationsBillStack = new BillStack(this);
+			this.innerContainer = new ThingContainer(this, true, LookMode.Reference);
 		}
 
 		public bool CurrentlyUsable()
@@ -133,22 +160,37 @@ namespace Verse
 
 		public bool AnythingToStrip()
 		{
-			return this.innerPawn.AnythingToStrip();
+			return this.InnerPawn.AnythingToStrip();
 		}
 
-		public override void SpawnSetup()
+		public ThingContainer GetInnerContainer()
 		{
-			base.SpawnSetup();
+			return this.innerContainer;
+		}
+
+		public IntVec3 GetPosition()
+		{
+			return base.PositionHeld;
+		}
+
+		public Map GetMap()
+		{
+			return base.MapHeld;
+		}
+
+		public override void SpawnSetup(Map map)
+		{
 			if (this.Bugged)
 			{
-				Log.Error(this + " spawned in bugged state. Null innerPawn");
+				Log.Error(this + " spawned in bugged state.");
 				return;
 			}
+			base.SpawnSetup(map);
 			if (this.timeOfDeath < 0)
 			{
 				this.timeOfDeath = Find.TickManager.TicksGame;
 			}
-			this.innerPawn.Rotation = Rot4.South;
+			this.InnerPawn.Rotation = Rot4.South;
 			this.NotifyColonistBar();
 		}
 
@@ -163,28 +205,30 @@ namespace Verse
 
 		public override void Destroy(DestroyMode mode = DestroyMode.Vanish)
 		{
+			Pawn pawn = null;
 			if (!this.Bugged)
 			{
-				if (this.innerPawn.ownership != null)
+				pawn = this.InnerPawn;
+				this.NotifyColonistBar();
+				if (pawn.ownership != null)
 				{
-					this.innerPawn.ownership.UnclaimAll();
+					pawn.ownership.UnclaimAll();
 				}
-				if (this.innerPawn.equipment != null)
+				if (pawn.equipment != null)
 				{
-					this.innerPawn.equipment.DestroyAllEquipment(DestroyMode.Vanish);
+					pawn.equipment.DestroyAllEquipment(DestroyMode.Vanish);
 				}
-				this.innerPawn.inventory.DestroyAll(DestroyMode.Vanish);
-				if (this.innerPawn.apparel != null)
+				pawn.inventory.DestroyAll(DestroyMode.Vanish);
+				if (pawn.apparel != null)
 				{
-					this.innerPawn.apparel.DestroyAll(DestroyMode.Vanish);
+					pawn.apparel.DestroyAll(DestroyMode.Vanish);
 				}
-				this.innerPawn.corpse = null;
+				this.innerContainer.Clear();
 			}
 			base.Destroy(mode);
-			if (!this.Bugged)
+			if (pawn != null)
 			{
-				Find.WorldPawns.DiscardIfUnimportant(this.innerPawn);
-				this.NotifyColonistBar();
+				Find.WorldPawns.DiscardIfUnimportant(pawn);
 			}
 		}
 
@@ -197,7 +241,7 @@ namespace Verse
 				this.Destroy(DestroyMode.Vanish);
 				return;
 			}
-			this.innerPawn.TickRare();
+			this.InnerPawn.TickRare();
 			if (this.vanishAfterTimestamp < 0 || this.GetRotStage() != RotStage.Dessicated)
 			{
 				this.vanishAfterTimestamp = this.Age + 3000000;
@@ -220,16 +264,16 @@ namespace Verse
 					this,
 					" but no body part was found. Replacing with core part."
 				}));
-				bodyPartRecord = this.innerPawn.RaceProps.body.corePart;
+				bodyPartRecord = this.InnerPawn.RaceProps.body.corePart;
 			}
-			float bodyPartNutrition = FoodUtility.GetBodyPartNutrition(this.innerPawn, bodyPartRecord);
-			if (bodyPartRecord == this.innerPawn.RaceProps.body.corePart)
+			float bodyPartNutrition = FoodUtility.GetBodyPartNutrition(this.InnerPawn, bodyPartRecord);
+			if (bodyPartRecord == this.InnerPawn.RaceProps.body.corePart)
 			{
-				if (PawnUtility.ShouldSendNotificationAbout(this.innerPawn) && this.innerPawn.RaceProps.Humanlike)
+				if (PawnUtility.ShouldSendNotificationAbout(this.InnerPawn) && this.InnerPawn.RaceProps.Humanlike)
 				{
 					Messages.Message("MessageEatenByPredator".Translate(new object[]
 					{
-						this.innerPawn.LabelShort,
+						this.InnerPawn.LabelShort,
 						ingester.LabelIndefinite()
 					}).CapitalizeFirst(), ingester, MessageSound.Negative);
 				}
@@ -237,10 +281,10 @@ namespace Verse
 			}
 			else
 			{
-				Hediff_MissingPart hediff_MissingPart = (Hediff_MissingPart)HediffMaker.MakeHediff(HediffDefOf.MissingBodyPart, this.innerPawn, bodyPartRecord);
+				Hediff_MissingPart hediff_MissingPart = (Hediff_MissingPart)HediffMaker.MakeHediff(HediffDefOf.MissingBodyPart, this.InnerPawn, bodyPartRecord);
 				hediff_MissingPart.lastInjury = HediffDefOf.Bite;
 				hediff_MissingPart.IsFresh = true;
-				this.innerPawn.health.AddHediff(hediff_MissingPart, null, null);
+				this.InnerPawn.health.AddHediff(hediff_MissingPart, null, null);
 				numTaken = 0;
 			}
 			if (ingester.RaceProps.Humanlike && Rand.Value < 0.05f)
@@ -253,18 +297,18 @@ namespace Verse
 		[DebuggerHidden]
 		public override IEnumerable<Thing> ButcherProducts(Pawn butcher, float efficiency)
 		{
-			foreach (Thing t in this.innerPawn.ButcherProducts(butcher, efficiency))
+			foreach (Thing t in this.InnerPawn.ButcherProducts(butcher, efficiency))
 			{
 				yield return t;
 			}
-			if (this.innerPawn.RaceProps.BloodDef != null)
+			if (this.InnerPawn.RaceProps.BloodDef != null)
 			{
-				FilthMaker.MakeFilth(butcher.Position, this.innerPawn.RaceProps.BloodDef, this.innerPawn.LabelIndefinite(), 1);
+				FilthMaker.MakeFilth(butcher.Position, butcher.Map, this.InnerPawn.RaceProps.BloodDef, this.InnerPawn.LabelIndefinite(), 1);
 			}
-			if (this.innerPawn.RaceProps.Humanlike)
+			if (this.InnerPawn.RaceProps.Humanlike)
 			{
 				butcher.needs.mood.thoughts.memories.TryGainMemoryThought(ThoughtDefOf.ButcheredHumanlikeCorpse, null);
-				foreach (Pawn p in Find.MapPawns.SpawnedPawnsInFaction(butcher.Faction))
+				foreach (Pawn p in butcher.Map.mapPawns.SpawnedPawnsInFaction(butcher.Faction))
 				{
 					if (p != butcher && p.needs != null && p.needs.mood != null && p.needs.mood.thoughts != null)
 					{
@@ -288,22 +332,25 @@ namespace Verse
 			{
 				this
 			});
-			Scribe_References.LookReference<Pawn>(ref this.innerPawn, "innerPawn", true);
+			Scribe_Deep.LookDeep<ThingContainer>(ref this.innerContainer, "innerContainer", new object[]
+			{
+				this
+			});
 		}
 
 		public void Strip()
 		{
-			if (this.innerPawn.equipment != null)
+			if (this.InnerPawn.equipment != null)
 			{
-				this.innerPawn.equipment.DropAllEquipment(base.Position, false);
+				this.InnerPawn.equipment.DropAllEquipment(base.PositionHeld, false);
 			}
-			if (this.innerPawn.apparel != null)
+			if (this.InnerPawn.apparel != null)
 			{
-				this.innerPawn.apparel.DropAll(base.Position, false);
+				this.InnerPawn.apparel.DropAll(base.PositionHeld, false);
 			}
-			if (this.innerPawn.inventory != null)
+			if (this.InnerPawn.inventory != null)
 			{
-				this.innerPawn.inventory.DropAllNearPawn(base.Position, false);
+				this.InnerPawn.inventory.DropAllNearPawn(base.PositionHeld, false, false);
 			}
 		}
 
@@ -314,12 +361,12 @@ namespace Verse
 			{
 				return;
 			}
-			this.innerPawn.Drawer.renderer.RenderPawnAt(drawLoc, this.CurRotDrawMode);
+			this.InnerPawn.Drawer.renderer.RenderPawnAt(drawLoc, this.CurRotDrawMode);
 		}
 
 		public Thought_Memory GiveObservedThought()
 		{
-			if (!this.innerPawn.RaceProps.Humanlike)
+			if (!this.InnerPawn.RaceProps.Humanlike)
 			{
 				return null;
 			}
@@ -343,15 +390,15 @@ namespace Verse
 		public override string GetInspectString()
 		{
 			StringBuilder stringBuilder = new StringBuilder();
-			if (this.innerPawn.Faction != null)
+			if (this.InnerPawn.Faction != null)
 			{
-				stringBuilder.AppendLine("Faction".Translate() + ": " + this.innerPawn.Faction);
+				stringBuilder.AppendLine("Faction".Translate() + ": " + this.InnerPawn.Faction);
 			}
 			stringBuilder.AppendLine("DeadTime".Translate(new object[]
 			{
 				this.Age.ToStringTicksToPeriod(false)
 			}));
-			float num = 1f - this.innerPawn.health.hediffSet.GetCoverageOfNotMissingNaturalParts(this.innerPawn.RaceProps.body.corePart);
+			float num = 1f - this.InnerPawn.health.hediffSet.GetCoverageOfNotMissingNaturalParts(this.InnerPawn.RaceProps.body.corePart);
 			if (num != 0f)
 			{
 				stringBuilder.AppendLine("CorpsePercentMissing".Translate() + ": " + num.ToStringPercent());
@@ -362,28 +409,38 @@ namespace Verse
 
 		public void RotStageChanged()
 		{
-			PortraitsCache.SetDirty(this.innerPawn);
+			PortraitsCache.SetDirty(this.InnerPawn);
 			this.NotifyColonistBar();
 		}
 
 		private BodyPartRecord GetBestBodyPartToEat(Pawn ingester, float nutritionWanted)
 		{
-			IEnumerable<BodyPartRecord> source = from x in this.innerPawn.health.hediffSet.GetNotMissingParts(null, null)
-			where x.depth == BodyPartDepth.Outside && FoodUtility.GetBodyPartNutrition(this.innerPawn, x) > 0.001f
+			IEnumerable<BodyPartRecord> source = from x in this.InnerPawn.health.hediffSet.GetNotMissingParts(BodyPartHeight.Undefined, BodyPartDepth.Undefined)
+			where x.depth == BodyPartDepth.Outside && FoodUtility.GetBodyPartNutrition(this.InnerPawn, x) > 0.001f
 			select x;
 			if (!source.Any<BodyPartRecord>())
 			{
 				return null;
 			}
-			return source.MinBy((BodyPartRecord x) => Mathf.Abs(FoodUtility.GetBodyPartNutrition(this.innerPawn, x) - nutritionWanted));
+			return source.MinBy((BodyPartRecord x) => Mathf.Abs(FoodUtility.GetBodyPartNutrition(this.InnerPawn, x) - nutritionWanted));
 		}
 
 		private void NotifyColonistBar()
 		{
-			if (this.innerPawn.Faction == Faction.OfPlayer && Current.ProgramState == ProgramState.MapPlaying)
+			if (this.InnerPawn.Faction == Faction.OfPlayer && Current.ProgramState == ProgramState.Playing)
 			{
-				Find.ColonistBar.MarkColonistsListDirty();
+				Find.ColonistBar.MarkColonistsDirty();
 			}
+		}
+
+		virtual bool get_Spawned()
+		{
+			return base.Spawned;
+		}
+
+		virtual Map get_Map()
+		{
+			return base.Map;
 		}
 	}
 }

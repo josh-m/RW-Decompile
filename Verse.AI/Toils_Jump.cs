@@ -49,7 +49,7 @@ namespace Verse.AI
 			{
 				Pawn actor = toil.actor;
 				Job curJob = actor.jobs.curJob;
-				TargetInfo target = curJob.GetTarget(ind);
+				LocalTargetInfo target = curJob.GetTarget(ind);
 				if (!curJob.verbToUse.CanHitTarget(target))
 				{
 					actor.jobs.curDriver.JumpToToil(jumpToil);
@@ -82,8 +82,8 @@ namespace Verse.AI
 			{
 				Pawn actor = toil.actor;
 				Job curJob = actor.jobs.curJob;
-				List<TargetInfo> targetQueue = curJob.GetTargetQueue(ind);
-				if (!targetQueue.NullOrEmpty<TargetInfo>())
+				List<LocalTargetInfo> targetQueue = curJob.GetTargetQueue(ind);
+				if (!targetQueue.NullOrEmpty<LocalTargetInfo>())
 				{
 					actor.jobs.curDriver.JumpToToil(jumpToil);
 				}

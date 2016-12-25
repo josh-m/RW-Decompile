@@ -45,14 +45,14 @@ namespace RimWorld
 				initAction = delegate
 				{
 					Thing thing = this.<>f__this.Barrel.TakeOutBeer();
-					GenPlace.TryPlaceThing(thing, this.<>f__this.pawn.Position, ThingPlaceMode.Near, null);
+					GenPlace.TryPlaceThing(thing, this.<>f__this.pawn.Position, this.<>f__this.Map, ThingPlaceMode.Near, null);
 					StoragePriority currentPriority = HaulAIUtility.StoragePriorityAtFor(thing.Position, thing);
-					IntVec3 vec;
-					if (StoreUtility.TryFindBestBetterStoreCellFor(thing, this.<>f__this.pawn, currentPriority, this.<>f__this.pawn.Faction, out vec, true))
+					IntVec3 c;
+					if (StoreUtility.TryFindBestBetterStoreCellFor(thing, this.<>f__this.pawn, this.<>f__this.Map, currentPriority, this.<>f__this.pawn.Faction, out c, true))
 					{
-						this.<>f__this.CurJob.SetTarget(TargetIndex.C, vec);
+						this.<>f__this.CurJob.SetTarget(TargetIndex.C, c);
 						this.<>f__this.CurJob.SetTarget(TargetIndex.B, thing);
-						this.<>f__this.CurJob.maxNumToCarry = thing.stackCount;
+						this.<>f__this.CurJob.count = thing.stackCount;
 					}
 					else
 					{
@@ -64,7 +64,7 @@ namespace RimWorld
 			yield return Toils_Reserve.Reserve(TargetIndex.B, 1);
 			yield return Toils_Reserve.Reserve(TargetIndex.C, 1);
 			yield return Toils_Goto.GotoThing(TargetIndex.B, PathEndMode.ClosestTouch);
-			yield return Toils_Haul.StartCarryThing(TargetIndex.B);
+			yield return Toils_Haul.StartCarryThing(TargetIndex.B, false, false);
 			Toil carryToCell = Toils_Haul.CarryHauledThingToCell(TargetIndex.C);
 			yield return carryToCell;
 			yield return Toils_Haul.PlaceHauledThingInCell(TargetIndex.C, carryToCell, true);

@@ -27,7 +27,7 @@ namespace RimWorld
 				{
 					if (!this.<>f__this.Openable.CanOpen)
 					{
-						Designation designation = Find.DesignationManager.DesignationOn(this.<>f__this.CurJob.targetA.Thing, DesignationDefOf.Open);
+						Designation designation = this.<>f__this.Map.designationManager.DesignationOn(this.<>f__this.CurJob.targetA.Thing, DesignationDefOf.Open);
 						if (designation != null)
 						{
 							designation.Delete();
@@ -43,7 +43,7 @@ namespace RimWorld
 				initAction = delegate
 				{
 					Thing thing = this.<>f__this.CurJob.targetA.Thing;
-					Designation designation = Find.DesignationManager.DesignationOn(thing, DesignationDefOf.Open);
+					Designation designation = this.<>f__this.Map.designationManager.DesignationOn(thing, DesignationDefOf.Open);
 					if (designation != null)
 					{
 						designation.Delete();

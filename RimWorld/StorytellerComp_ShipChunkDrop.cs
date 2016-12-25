@@ -24,12 +24,15 @@ namespace RimWorld
 		}
 
 		[DebuggerHidden]
-		public override IEnumerable<FiringIncident> MakeIntervalIncidents()
+		public override IEnumerable<FiringIncident> MakeIntervalIncidents(IIncidentTarget target)
 		{
 			if (Rand.MTBEventOccurs(this.ShipChunkDropMTBDays, 60000f, 1000f))
 			{
 				IncidentDef def = IncidentDefOf.ShipChunkDrop;
-				yield return new FiringIncident(def, this, this.GenerateParms(def.category));
+				if (def.TargetAllowed(target))
+				{
+					yield return new FiringIncident(def, this, this.GenerateParms(def.category, target));
+				}
 			}
 		}
 	}

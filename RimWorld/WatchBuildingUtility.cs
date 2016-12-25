@@ -12,14 +12,14 @@ namespace RimWorld
 		private static List<int> allowedDirections = new List<int>();
 
 		[DebuggerHidden]
-		public static IEnumerable<IntVec3> CalculateWatchCells(ThingDef def, IntVec3 center, Rot4 rot)
+		public static IEnumerable<IntVec3> CalculateWatchCells(ThingDef def, IntVec3 center, Rot4 rot, Map map)
 		{
 			List<int> allowedDirections = WatchBuildingUtility.CalculateAllowedDirections(def, rot);
 			for (int i = 0; i < allowedDirections.Count; i++)
 			{
 				foreach (IntVec3 c in WatchBuildingUtility.GetWatchCellRect(def, center, rot, allowedDirections[i]))
 				{
-					if (WatchBuildingUtility.EverPossibleToWatchFrom(c, center, true))
+					if (WatchBuildingUtility.EverPossibleToWatchFrom(c, center, map, true))
 					{
 						yield return c;
 					}
@@ -43,17 +43,17 @@ namespace RimWorld
 					{
 						bool flag = false;
 						Building building = null;
-						if (WatchBuildingUtility.EverPossibleToWatchFrom(intVec2, toWatch.Position, false))
+						if (WatchBuildingUtility.EverPossibleToWatchFrom(intVec2, toWatch.Position, toWatch.Map, false))
 						{
 							if (desireSit)
 							{
-								building = intVec2.GetEdifice();
+								building = intVec2.GetEdifice(pawn.Map);
 								if (building != null && building.def.building.isSittable && pawn.CanReserve(building, 1))
 								{
 									flag = true;
 								}
 							}
-							else if (!intVec2.IsForbidden(pawn) && pawn.CanReserve(intVec2, 1) && !Find.PawnDestinationManager.DestinationIsReserved(intVec2, pawn))
+							else if (!intVec2.IsForbidden(pawn) && pawn.CanReserve(intVec2, 1) && !pawn.Map.pawnDestinationManager.DestinationIsReserved(intVec2, pawn))
 							{
 								flag = true;
 							}
@@ -62,12 +62,12 @@ namespace RimWorld
 						{
 							if (desireSit)
 							{
-								Rot4 arg_145_0 = building.Rotation;
+								Rot4 arg_157_0 = building.Rotation;
 								Rot4 rot = new Rot4(list[i]);
-								if (arg_145_0 != rot.Opposite)
+								if (arg_157_0 != rot.Opposite)
 								{
 									intVec = intVec2;
-									goto IL_166;
+									goto IL_178;
 								}
 							}
 							result = intVec2;
@@ -75,13 +75,13 @@ namespace RimWorld
 							return true;
 						}
 					}
-					IL_166:;
+					IL_178:;
 				}
 			}
 			if (intVec.IsValid)
 			{
 				result = intVec;
-				chair = intVec.GetEdifice();
+				chair = intVec.GetEdifice(pawn.Map);
 				return true;
 			}
 			result = IntVec3.Invalid;
@@ -91,7 +91,7 @@ namespace RimWorld
 
 		public static bool CanWatchFromBed(Pawn pawn, Building_Bed bed, Thing toWatch)
 		{
-			if (!WatchBuildingUtility.EverPossibleToWatchFrom(pawn.Position, toWatch.Position, true))
+			if (!WatchBuildingUtility.EverPossibleToWatchFrom(pawn.Position, toWatch.Position, pawn.Map, true))
 			{
 				return false;
 			}
@@ -172,9 +172,9 @@ namespace RimWorld
 			return result;
 		}
 
-		private static bool EverPossibleToWatchFrom(IntVec3 watchCell, IntVec3 buildingCenter, bool bedAllowed)
+		private static bool EverPossibleToWatchFrom(IntVec3 watchCell, IntVec3 buildingCenter, Map map, bool bedAllowed)
 		{
-			return (watchCell.Standable() || (bedAllowed && watchCell.GetEdifice() is Building_Bed)) && GenSight.LineOfSight(buildingCenter, watchCell, true);
+			return (watchCell.Standable(map) || (bedAllowed && watchCell.GetEdifice(map) is Building_Bed)) && GenSight.LineOfSight(buildingCenter, watchCell, map, true);
 		}
 
 		private static List<int> CalculateAllowedDirections(ThingDef toWatchDef, Rot4 toWatchRot)

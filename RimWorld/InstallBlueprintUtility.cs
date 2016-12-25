@@ -22,13 +22,17 @@ namespace RimWorld
 			{
 				return null;
 			}
-			List<Thing> list = Find.ListerThings.ThingsMatching(ThingRequest.ForDef(installBlueprintDef));
-			for (int i = 0; i < list.Count; i++)
+			List<Map> maps = Find.Maps;
+			for (int i = 0; i < maps.Count; i++)
 			{
-				Blueprint_Install blueprint_Install = list[i] as Blueprint_Install;
-				if (blueprint_Install != null && blueprint_Install.MiniToInstallOrBuildingToReinstall == th)
+				List<Thing> list = maps[i].listerThings.ThingsMatching(ThingRequest.ForDef(installBlueprintDef));
+				for (int j = 0; j < list.Count; j++)
 				{
-					return blueprint_Install;
+					Blueprint_Install blueprint_Install = list[j] as Blueprint_Install;
+					if (blueprint_Install != null && blueprint_Install.MiniToInstallOrBuildingToReinstall == th)
+					{
+						return blueprint_Install;
+					}
 				}
 			}
 			return null;

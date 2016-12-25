@@ -8,9 +8,19 @@ namespace Verse
 	{
 		public const float ClaimedDesignationDrawAltitude = 15f;
 
+		public DesignationManager designationManager;
+
 		public DesignationDef def;
 
-		public TargetInfo target;
+		public LocalTargetInfo target;
+
+		private Map Map
+		{
+			get
+			{
+				return this.designationManager.map;
+			}
+		}
 
 		public float DesignationDrawAltitude
 		{
@@ -24,7 +34,7 @@ namespace Verse
 		{
 		}
 
-		public Designation(TargetInfo target, DesignationDef def)
+		public Designation(LocalTargetInfo target, DesignationDef def)
 		{
 			this.target = target;
 			this.def = def;
@@ -45,7 +55,7 @@ namespace Verse
 		{
 			if (this.def == DesignationDefOf.Haul)
 			{
-				ListerHaulables.HaulDesignationAdded(this.target.Thing);
+				this.Map.listerHaulables.HaulDesignationAdded(this.target.Thing);
 			}
 		}
 
@@ -53,7 +63,7 @@ namespace Verse
 		{
 			if (this.def == DesignationDefOf.Haul && this.target.HasThing)
 			{
-				ListerHaulables.HaulDesignationRemoved(this.target.Thing);
+				this.Map.listerHaulables.HaulDesignationRemoved(this.target.Thing);
 			}
 		}
 
@@ -78,7 +88,7 @@ namespace Verse
 
 		public void Delete()
 		{
-			Find.DesignationManager.RemoveDesignation(this);
+			this.Map.designationManager.RemoveDesignation(this);
 		}
 
 		public override string ToString()

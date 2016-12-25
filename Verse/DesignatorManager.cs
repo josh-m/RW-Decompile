@@ -5,122 +5,122 @@ using Verse.Sound;
 
 namespace Verse
 {
-	public static class DesignatorManager
+	public class DesignatorManager
 	{
-		private static Designator selectedDesignator;
+		private Designator selectedDesignator;
 
-		private static DesignationDragger dragger = new DesignationDragger();
+		private DesignationDragger dragger = new DesignationDragger();
 
-		public static Designator SelectedDesignator
+		public Designator SelectedDesignator
 		{
 			get
 			{
-				return DesignatorManager.selectedDesignator;
+				return this.selectedDesignator;
 			}
 		}
 
-		public static DesignationDragger Dragger
+		public DesignationDragger Dragger
 		{
 			get
 			{
-				return DesignatorManager.dragger;
+				return this.dragger;
 			}
 		}
 
-		public static void Reinit()
+		public void ResetSelectedDesignator()
 		{
-			DesignatorManager.selectedDesignator = null;
+			this.selectedDesignator = null;
 		}
 
-		public static void Select(Designator des)
+		public void Select(Designator des)
 		{
-			DesignatorManager.Deselect();
-			DesignatorManager.selectedDesignator = des;
-			DesignatorManager.selectedDesignator.Selected();
+			this.Deselect();
+			this.selectedDesignator = des;
+			this.selectedDesignator.Selected();
 		}
 
-		public static void Deselect()
+		public void Deselect()
 		{
-			if (DesignatorManager.selectedDesignator != null)
+			if (this.selectedDesignator != null)
 			{
-				DesignatorManager.selectedDesignator = null;
+				this.selectedDesignator = null;
 			}
 		}
 
-		private static bool CheckSelectedDesignatorValid()
+		private bool CheckSelectedDesignatorValid()
 		{
-			if (DesignatorManager.selectedDesignator == null)
+			if (this.selectedDesignator == null)
 			{
 				return false;
 			}
-			if (!DesignatorManager.selectedDesignator.CanRemainSelected())
+			if (!this.selectedDesignator.CanRemainSelected())
 			{
-				DesignatorManager.Deselect();
+				this.Deselect();
 				return false;
 			}
 			return true;
 		}
 
-		public static void ProcessInputEvents()
+		public void ProcessInputEvents()
 		{
-			if (!DesignatorManager.CheckSelectedDesignatorValid())
+			if (!this.CheckSelectedDesignatorValid())
 			{
 				return;
 			}
 			if (Event.current.type == EventType.MouseDown && Event.current.button == 0)
 			{
-				if (DesignatorManager.selectedDesignator.DraggableDimensions == 0)
+				if (this.selectedDesignator.DraggableDimensions == 0)
 				{
-					Designator designator = DesignatorManager.selectedDesignator;
-					AcceptanceReport acceptanceReport = DesignatorManager.selectedDesignator.CanDesignateCell(Gen.MouseCell());
+					Designator designator = this.selectedDesignator;
+					AcceptanceReport acceptanceReport = this.selectedDesignator.CanDesignateCell(UI.MouseCell());
 					if (acceptanceReport.Accepted)
 					{
-						designator.DesignateSingleCell(Gen.MouseCell());
+						designator.DesignateSingleCell(UI.MouseCell());
 						designator.Finalize(true);
 					}
 					else
 					{
 						Messages.Message(acceptanceReport.Reason, MessageSound.Silent);
-						DesignatorManager.selectedDesignator.Finalize(false);
+						this.selectedDesignator.Finalize(false);
 					}
 				}
 				else
 				{
-					DesignatorManager.dragger.StartDrag();
+					this.dragger.StartDrag();
 				}
 				Event.current.Use();
 			}
 			if ((Event.current.type == EventType.MouseDown && Event.current.button == 1) || (Event.current.type == EventType.KeyDown && Event.current.keyCode == KeyCode.Escape))
 			{
 				SoundDefOf.CancelMode.PlayOneShotOnCamera();
-				DesignatorManager.Deselect();
-				DesignatorManager.dragger.EndDrag();
+				this.Deselect();
+				this.dragger.EndDrag();
 				Event.current.Use();
 				TutorSystem.Notify_Event("ClearDesignatorSelection");
 			}
-			if (Event.current.type == EventType.MouseUp && Event.current.button == 0 && DesignatorManager.dragger.Dragging)
+			if (Event.current.type == EventType.MouseUp && Event.current.button == 0 && this.dragger.Dragging)
 			{
-				DesignatorManager.selectedDesignator.DesignateMultiCell(DesignatorManager.dragger.DragCells);
-				DesignatorManager.dragger.EndDrag();
+				this.selectedDesignator.DesignateMultiCell(this.dragger.DragCells);
+				this.dragger.EndDrag();
 				Event.current.Use();
 			}
 		}
 
-		public static void DesignationManagerOnGUI()
+		public void DesignationManagerOnGUI()
 		{
-			DesignatorManager.dragger.DraggerOnGUI();
-			if (DesignatorManager.CheckSelectedDesignatorValid())
+			this.dragger.DraggerOnGUI();
+			if (this.CheckSelectedDesignatorValid())
 			{
-				DesignatorManager.selectedDesignator.DrawMouseAttachments();
+				this.selectedDesignator.DrawMouseAttachments();
 			}
 		}
 
-		public static void DesignatorManagerUpdate()
+		public void DesignatorManagerUpdate()
 		{
-			DesignatorManager.dragger.DraggerUpdate();
-			if (DesignatorManager.CheckSelectedDesignatorValid())
+			this.dragger.DraggerUpdate();
+			if (this.CheckSelectedDesignatorValid())
 			{
-				DesignatorManager.selectedDesignator.SelectedUpdate();
+				this.selectedDesignator.SelectedUpdate();
 			}
 		}
 	}

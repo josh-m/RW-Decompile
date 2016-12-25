@@ -229,19 +229,27 @@ namespace RimWorld
 			}
 		}
 
-		public void GenerateIntoMap()
+		public void GenerateIntoMap(Map map)
 		{
+			if (Find.GameInitData == null)
+			{
+				return;
+			}
 			foreach (ScenPart current in this.AllParts)
 			{
-				current.GenerateIntoMap();
+				current.GenerateIntoMap(map);
 			}
 		}
 
-		public void PostMapGenerate()
+		public void PostMapGenerate(Map map)
 		{
+			if (Find.GameInitData == null)
+			{
+				return;
+			}
 			foreach (ScenPart current in this.AllParts)
 			{
-				current.PostMapGenerate();
+				current.PostMapGenerate(map);
 			}
 		}
 

@@ -25,7 +25,7 @@ namespace Verse.Grammar
 			{
 				gender = ((Rand.Value >= 0.5f) ? Gender.Female : Gender.Male);
 			}
-			return nameBank.GetName(gender, PawnNameSlot.First);
+			return nameBank.GetName(PawnNameSlot.First, gender);
 		}
 
 		public override string ToString()

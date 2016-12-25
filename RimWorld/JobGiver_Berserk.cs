@@ -25,6 +25,10 @@ namespace RimWorld
 					expiryInterval = 90
 				};
 			}
+			if (pawn.TryGetAttackVerb(false) == null)
+			{
+				return null;
+			}
 			Pawn pawn2 = this.FindPawnTarget(pawn);
 			if (pawn2 != null)
 			{

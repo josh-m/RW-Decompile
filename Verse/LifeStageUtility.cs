@@ -15,7 +15,11 @@ namespace Verse
 			{
 				return;
 			}
-			SoundInfo info = SoundInfo.InWorld(pawn.Position, MaintenanceType.None);
+			if (pawn.MapHeld == null)
+			{
+				return;
+			}
+			SoundInfo info = SoundInfo.InMap(new TargetInfo(pawn.PositionHeld, pawn.MapHeld, false), MaintenanceType.None);
 			info.pitchFactor = pitchFactor;
 			info.volumeFactor = num * volumeFactor;
 			soundDef.PlayOneShot(info);

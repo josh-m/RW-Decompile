@@ -1,3 +1,4 @@
+using RimWorld.Planet;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -137,12 +138,20 @@ namespace RimWorld
 					SocialCardUtility.tmpToCache.Add(current);
 				}
 			}
-			if (Current.ProgramState == ProgramState.MapPlaying)
+			List<Pawn> list = null;
+			if (selPawnForSocialInfo.MapHeld != null)
 			{
-				List<Pawn> allPawnsSpawned = Find.MapPawns.AllPawnsSpawned;
-				for (int i = 0; i < allPawnsSpawned.Count; i++)
+				list = selPawnForSocialInfo.MapHeld.mapPawns.AllPawnsSpawned;
+			}
+			else if (selPawnForSocialInfo.IsCaravanMember())
+			{
+				list = selPawnForSocialInfo.GetCaravan().PawnsListForReading;
+			}
+			if (list != null)
+			{
+				for (int i = 0; i < list.Count; i++)
 				{
-					Pawn pawn = allPawnsSpawned[i];
+					Pawn pawn = list[i];
 					if (pawn.RaceProps.Humanlike && pawn != selPawnForSocialInfo && SocialCardUtility.ShouldShowPawnRelations(pawn, selPawnForSocialInfo) && !SocialCardUtility.tmpToCache.Contains(pawn))
 					{
 						if (selPawnForSocialInfo.relations.OpinionOf(pawn) != 0 || pawn.relations.OpinionOf(selPawnForSocialInfo) != 0)
@@ -196,7 +205,7 @@ namespace RimWorld
 		public static void DrawRelationsAndOpinions(Rect rect, Pawn selPawnForSocialInfo)
 		{
 			SocialCardUtility.CheckRecache(selPawnForSocialInfo);
-			if (Current.ProgramState != ProgramState.MapPlaying)
+			if (Current.ProgramState != ProgramState.Playing)
 			{
 				SocialCardUtility.showAllRelations = false;
 			}
@@ -248,18 +257,18 @@ namespace RimWorld
 			TooltipHandler.TipRegion(rect, () => SocialCardUtility.GetPawnRowTooltip(entry, selPawnForSocialInfo), entry.otherPawn.thingIDNumber * 13 + selPawnForSocialInfo.thingIDNumber);
 			if (Widgets.ButtonInvisible(rect, false))
 			{
-				if (Current.ProgramState == ProgramState.MapPlaying)
+				if (Current.ProgramState == ProgramState.Playing)
 				{
-					if (otherPawn.Spawned || otherPawn.holder != null)
-					{
-						JumpToTargetUtility.TryJumpAndSelect(otherPawn);
-					}
-					else if (otherPawn.Dead)
+					if (otherPawn.Dead)
 					{
 						Messages.Message("MessageCantSelectDeadPawn".Translate(new object[]
 						{
 							otherPawn.LabelShort
 						}).CapitalizeFirst(), MessageSound.RejectInput);
+					}
+					else if (otherPawn.MapHeld != null || otherPawn.IsCaravanMember())
+					{
+						JumpToTargetUtility.TryJumpAndSelect(otherPawn);
 					}
 					else
 					{
@@ -314,8 +323,8 @@ namespace RimWorld
 		private static void CalculateColumnsWidths(float rowWidth, out float relationsWidth, out float pawnLabelWidth, out float myOpinionWidth, out float hisOpinionWidth, out float pawnSituationLabelWidth)
 		{
 			float num = rowWidth - 10f;
-			relationsWidth = num * 0.21f;
-			pawnLabelWidth = num * 0.43f;
+			relationsWidth = num * 0.23f;
+			pawnLabelWidth = num * 0.41f;
 			myOpinionWidth = num * 0.075f;
 			hisOpinionWidth = num * 0.085f;
 			pawnSituationLabelWidth = num * 0.2f;
@@ -405,24 +414,17 @@ namespace RimWorld
 			{
 				return "Dead".Translate();
 			}
-			List<Faction> allFactionsListForReading = Find.FactionManager.AllFactionsListForReading;
-			for (int i = 0; i < allFactionsListForReading.Count; i++)
+			if (PawnUtility.IsKidnappedPawn(pawn))
 			{
-				if (allFactionsListForReading[i].kidnapped.KidnappedPawnsListForReading.Contains(pawn))
-				{
-					return "Kidnapped".Translate();
-				}
+				return "Kidnapped".Translate();
 			}
 			if (pawn.kindDef == PawnKindDefOf.Slave)
 			{
 				return "Slave".Translate();
 			}
-			for (int j = 0; j < allFactionsListForReading.Count; j++)
+			if (PawnUtility.IsFactionLeader(pawn))
 			{
-				if (allFactionsListForReading[j].leader == pawn)
-				{
-					return "FactionLeader".Translate();
-				}
+				return "FactionLeader".Translate();
 			}
 			Faction faction = pawn.Faction;
 			if (faction == fromPOV.Faction)
@@ -443,19 +445,31 @@ namespace RimWorld
 		private static string GetRelationsString(SocialCardUtility.CachedSocialTabEntry entry, Pawn selPawnForSocialInfo)
 		{
 			string text = string.Empty;
-			for (int i = 0; i < entry.relations.Count; i++)
+			if (entry.relations.Count != 0)
 			{
-				PawnRelationDef pawnRelationDef = entry.relations[i];
-				if (!text.NullOrEmpty())
+				for (int i = 0; i < entry.relations.Count; i++)
 				{
-					text = text + ", " + pawnRelationDef.GetGenderSpecificLabel(entry.otherPawn);
+					PawnRelationDef pawnRelationDef = entry.relations[i];
+					if (!text.NullOrEmpty())
+					{
+						text = text + ", " + pawnRelationDef.GetGenderSpecificLabel(entry.otherPawn);
+					}
+					else
+					{
+						text = pawnRelationDef.GetGenderSpecificLabelCap(entry.otherPawn);
+					}
 				}
-				else
-				{
-					text = pawnRelationDef.GetGenderSpecificLabelCap(entry.otherPawn);
-				}
+				return text;
 			}
-			return text;
+			if (entry.opinionOfOtherPawn < -20)
+			{
+				return "Rival".Translate();
+			}
+			if (entry.opinionOfOtherPawn > 20)
+			{
+				return "Friend".Translate();
+			}
+			return "Acquaintance".Translate();
 		}
 
 		private static string GetPawnRowTooltip(SocialCardUtility.CachedSocialTabEntry entry, Pawn selPawnForSocialInfo)
@@ -487,7 +501,7 @@ namespace RimWorld
 			{
 				stringBuilder.AppendLine();
 				stringBuilder.AppendLine("(debug) Compatibility: " + selPawnForSocialInfo.relations.CompatibilityWith(entry.otherPawn).ToString("F2"));
-				stringBuilder.Append("(debug) Attraction: " + selPawnForSocialInfo.relations.AttractionTo(entry.otherPawn).ToString("F2"));
+				stringBuilder.Append("(debug) RomanceChanceFactor: " + selPawnForSocialInfo.relations.SecondaryRomanceChanceFactor(entry.otherPawn).ToString("F2"));
 			}
 			return stringBuilder.ToString();
 		}
@@ -557,9 +571,9 @@ namespace RimWorld
 					stringBuilder.AppendLine("My gender: " + pawn.gender);
 					stringBuilder.AppendLine("My age: " + pawn.ageTracker.AgeBiologicalYears);
 					stringBuilder.AppendLine();
-					IOrderedEnumerable<Pawn> orderedEnumerable = from x in Find.MapPawns.AllPawnsSpawned
+					IOrderedEnumerable<Pawn> orderedEnumerable = from x in pawn.Map.mapPawns.AllPawnsSpawned
 					where x.def == pawn.def
-					orderby pawn.relations.AttractionTo(x) descending
+					orderby pawn.relations.SecondaryRomanceChanceFactor(x) descending
 					select x;
 					foreach (Pawn current in orderedEnumerable)
 					{
@@ -575,21 +589,21 @@ namespace RimWorld
 								", compat: ",
 								pawn.relations.CompatibilityWith(current).ToString("F2"),
 								"): ",
-								pawn.relations.AttractionTo(current).ToStringPercent("F0"),
+								pawn.relations.SecondaryRomanceChanceFactor(current).ToStringPercent("F0"),
 								"        [vs ",
-								current.relations.AttractionTo(pawn).ToStringPercent("F0"),
+								current.relations.SecondaryRomanceChanceFactor(pawn).ToStringPercent("F0"),
 								"]"
 							}));
 						}
 					}
-					Find.WindowStack.Add(new Dialog_Message(stringBuilder.ToString(), null));
-				}, MenuOptionPriority.Medium, null, null, 0f, null));
+					Find.WindowStack.Add(new Dialog_MessageBox(stringBuilder.ToString(), null, null, null, null, null, false));
+				}, MenuOptionPriority.Default, null, null, 0f, null, null));
 				list.Add(new FloatMenuOption("CompatibilityTo", delegate
 				{
 					StringBuilder stringBuilder = new StringBuilder();
 					stringBuilder.AppendLine("My age: " + pawn.ageTracker.AgeBiologicalYears);
 					stringBuilder.AppendLine();
-					IOrderedEnumerable<Pawn> orderedEnumerable = from x in Find.MapPawns.AllPawnsSpawned
+					IOrderedEnumerable<Pawn> orderedEnumerable = from x in pawn.Map.mapPawns.AllPawnsSpawned
 					where x.def == pawn.def
 					orderby pawn.relations.CompatibilityWith(x) descending
 					select x;
@@ -609,8 +623,8 @@ namespace RimWorld
 							}));
 						}
 					}
-					Find.WindowStack.Add(new Dialog_Message(stringBuilder.ToString(), null));
-				}, MenuOptionPriority.Medium, null, null, 0f, null));
+					Find.WindowStack.Add(new Dialog_MessageBox(stringBuilder.ToString(), null, null, null, null, null, false));
+				}, MenuOptionPriority.Default, null, null, 0f, null, null));
 				if (pawn.RaceProps.Humanlike)
 				{
 					list.Add(new FloatMenuOption("Interaction chance", delegate
@@ -619,7 +633,7 @@ namespace RimWorld
 						stringBuilder.AppendLine("(selected pawn is the initiator)");
 						stringBuilder.AppendLine("(\"fight chance\" is the chance that the receiver will start social fight)");
 						stringBuilder.AppendLine("Interaction chance (real chance, not just weights):");
-						IOrderedEnumerable<Pawn> orderedEnumerable = from x in Find.MapPawns.AllPawnsSpawned
+						IOrderedEnumerable<Pawn> orderedEnumerable = from x in pawn.Map.mapPawns.AllPawnsSpawned
 						where x.RaceProps.Humanlike
 						orderby (x.Faction != null) ? x.Faction.loadID : -1
 						select x;
@@ -640,7 +654,7 @@ namespace RimWorld
 									", compat: ",
 									pawn.relations.CompatibilityWith(c).ToString("F2"),
 									", attr: ",
-									pawn.relations.AttractionTo(c).ToStringPercent("F0"),
+									pawn.relations.SecondaryRomanceChanceFactor(c).ToStringPercent("F0"),
 									"):"
 								}));
 								List<InteractionDef> list2 = (from x in DefDatabase<InteractionDef>.AllDefs
@@ -673,17 +687,17 @@ namespace RimWorld
 								}
 							}
 						}
-						Find.WindowStack.Add(new Dialog_Message(stringBuilder.ToString(), null));
-					}, MenuOptionPriority.Medium, null, null, 0f, null));
+						Find.WindowStack.Add(new Dialog_MessageBox(stringBuilder.ToString(), null, null, null, null, null, false));
+					}, MenuOptionPriority.Default, null, null, 0f, null, null));
 					list.Add(new FloatMenuOption("Lovin' MTB", delegate
 					{
 						StringBuilder stringBuilder = new StringBuilder();
 						stringBuilder.AppendLine("Lovin' MTB hours with pawn X.");
 						stringBuilder.AppendLine("Assuming both pawns are in bed and are partners.");
 						stringBuilder.AppendLine();
-						IOrderedEnumerable<Pawn> orderedEnumerable = from x in Find.MapPawns.AllPawnsSpawned
+						IOrderedEnumerable<Pawn> orderedEnumerable = from x in pawn.Map.mapPawns.AllPawnsSpawned
 						where x.def == pawn.def
-						orderby pawn.relations.AttractionTo(x) descending
+						orderby pawn.relations.SecondaryRomanceChanceFactor(x) descending
 						select x;
 						foreach (Pawn current in orderedEnumerable)
 						{
@@ -702,8 +716,8 @@ namespace RimWorld
 								}));
 							}
 						}
-						Find.WindowStack.Add(new Dialog_Message(stringBuilder.ToString(), null));
-					}, MenuOptionPriority.Medium, null, null, 0f, null));
+						Find.WindowStack.Add(new Dialog_MessageBox(stringBuilder.ToString(), null, null, null, null, null, false));
+					}, MenuOptionPriority.Default, null, null, 0f, null, null));
 				}
 				list.Add(new FloatMenuOption("Test per pawns pair compatibility factor probability", delegate
 				{
@@ -775,8 +789,8 @@ namespace RimWorld
 					stringBuilder.AppendLine("trials: " + 10000);
 					stringBuilder.AppendLine("min: " + num10);
 					stringBuilder.AppendLine("max: " + num9);
-					Find.WindowStack.Add(new Dialog_Message(stringBuilder.ToString(), null));
-				}, MenuOptionPriority.Medium, null, null, 0f, null));
+					Find.WindowStack.Add(new Dialog_MessageBox(stringBuilder.ToString(), null, null, null, null, null, false));
+				}, MenuOptionPriority.Default, null, null, 0f, null, null));
 				Find.WindowStack.Add(new FloatMenu(list));
 			}
 			GUI.EndGroup();

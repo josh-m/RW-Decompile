@@ -76,9 +76,9 @@ namespace Verse
 			if (this.pawn.GetPosture() == PawnPosture.Standing)
 			{
 				this.RenderPawnInternal(drawLoc, Quaternion.identity, true, bodyDrawType);
-				if (this.pawn.carrier != null)
+				if (this.pawn.carryTracker != null)
 				{
-					Thing carriedThing = this.pawn.carrier.CarriedThing;
+					Thing carriedThing = this.pawn.carryTracker.CarriedThing;
 					if (carriedThing != null)
 					{
 						Vector3 vector = drawLoc;
@@ -191,9 +191,9 @@ namespace Verse
 				quat = Quaternion.identity;
 			}
 			RotDrawMode bodyDrawType = RotDrawMode.Fresh;
-			if (this.pawn.Dead && this.pawn.corpse != null)
+			if (this.pawn.Dead && this.pawn.Corpse != null)
 			{
-				bodyDrawType = this.pawn.corpse.CurRotDrawMode;
+				bodyDrawType = this.pawn.Corpse.CurRotDrawMode;
 			}
 			this.RenderPawnInternal(zero, quat, true, Rot4.South, Rot4.South, bodyDrawType, true);
 		}
@@ -243,17 +243,17 @@ namespace Verse
 					}
 				}
 			}
-			Vector3 loc2 = rootLoc;
+			Vector3 vector = rootLoc;
 			Vector3 a = rootLoc;
 			if (bodyFacing != Rot4.North)
 			{
 				a.y += 0.03f;
-				loc2.y += 0.0249999985f;
+				vector.y += 0.0249999985f;
 			}
 			else
 			{
 				a.y += 0.0249999985f;
-				loc2.y += 0.03f;
+				vector.y += 0.03f;
 			}
 			if (this.graphics.headGraphic != null)
 			{
@@ -261,8 +261,8 @@ namespace Verse
 				Mesh mesh2 = MeshPool.humanlikeHeadSet.MeshAt(headFacing);
 				Material mat = this.graphics.HeadMatAt(headFacing, bodyDrawType);
 				GenDraw.DrawMeshNowOrLater(mesh2, a + b, quat, mat, portrait);
-				Vector3 loc3 = rootLoc + b;
-				loc3.y += 0.035f;
+				Vector3 loc2 = rootLoc + b;
+				loc2.y += 0.035f;
 				bool flag = false;
 				Mesh mesh3 = this.graphics.HairMeshSet.MeshAt(headFacing);
 				List<ApparelGraphicRecord> apparelGraphics = this.graphics.apparelGraphics;
@@ -273,14 +273,14 @@ namespace Verse
 						flag = true;
 						Material material = apparelGraphics[j].graphic.MatAt(bodyFacing, null);
 						material = this.graphics.flasher.GetDamagedMat(material);
-						GenDraw.DrawMeshNowOrLater(mesh3, loc3, quat, material, portrait);
+						GenDraw.DrawMeshNowOrLater(mesh3, loc2, quat, material, portrait);
 					}
 				}
 				if (!flag && bodyDrawType != RotDrawMode.Dessicated)
 				{
 					Mesh mesh4 = this.graphics.HairMeshSet.MeshAt(headFacing);
 					Material mat2 = this.graphics.HairMatAt(headFacing);
-					GenDraw.DrawMeshNowOrLater(mesh4, loc3, quat, mat2, portrait);
+					GenDraw.DrawMeshNowOrLater(mesh4, loc2, quat, mat2, portrait);
 				}
 			}
 			if (renderBody)
@@ -292,9 +292,13 @@ namespace Verse
 					{
 						Material material2 = apparelGraphicRecord.graphic.MatAt(bodyFacing, null);
 						material2 = this.graphics.flasher.GetDamagedMat(material2);
-						GenDraw.DrawMeshNowOrLater(mesh, loc2, quat, material2, portrait);
+						GenDraw.DrawMeshNowOrLater(mesh, vector, quat, material2, portrait);
 					}
 				}
+			}
+			if (!portrait && this.pawn.RaceProps.Animal && this.pawn.inventory != null && this.pawn.inventory.innerContainer.Count > 0)
+			{
+				Graphics.DrawMesh(mesh, vector, quat, this.graphics.packGraphic.MatAt(this.pawn.Rotation, null), 0);
 			}
 			if (!portrait)
 			{
@@ -413,7 +417,7 @@ namespace Verse
 
 		private bool CarryWeaponOpenly()
 		{
-			return (this.pawn.carrier == null || this.pawn.carrier.CarriedThing == null) && (this.pawn.Drafted || (this.pawn.CurJob != null && this.pawn.CurJob.def.alwaysShowWeapon) || (this.pawn.mindState.duty != null && this.pawn.mindState.duty.def.alwaysShowWeapon));
+			return (this.pawn.carryTracker == null || this.pawn.carryTracker.CarriedThing == null) && (this.pawn.Drafted || (this.pawn.CurJob != null && this.pawn.CurJob.def.alwaysShowWeapon) || (this.pawn.mindState.duty != null && this.pawn.mindState.duty.def.alwaysShowWeapon));
 		}
 
 		private Rot4 LayingFacing()
@@ -455,7 +459,7 @@ namespace Verse
 
 		public Vector3 BaseHeadOffsetAt(Rot4 rotation)
 		{
-			float num = PawnRenderer.HorHeadOffsets[(int)this.pawn.story.BodyType];
+			float num = PawnRenderer.HorHeadOffsets[(int)this.pawn.story.bodyType];
 			switch (rotation.AsInt)
 			{
 			case 0:

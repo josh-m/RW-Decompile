@@ -38,7 +38,7 @@ namespace RimWorld
 		{
 			if (!pawn.CanReserve(blocker, 1))
 			{
-				return new Job(JobDefOf.Goto, CellFinder.RandomClosewalkCellNear(cellBeforeBlocker, 10), 500, true);
+				return new Job(JobDefOf.Goto, CellFinder.RandomClosewalkCellNear(cellBeforeBlocker, pawn.Map, 10), 500, true);
 			}
 			return new Job(JobDefOf.AttackMelee, blocker)
 			{
@@ -52,7 +52,7 @@ namespace RimWorld
 		{
 			if (!pawn.CanReserve(blocker, 1))
 			{
-				return new Job(JobDefOf.Goto, CellFinder.RandomClosewalkCellNear(cellBeforeBlocker, 10), 500, true);
+				return new Job(JobDefOf.Goto, CellFinder.RandomClosewalkCellNear(cellBeforeBlocker, pawn.Map, 10), 500, true);
 			}
 			return new Job(JobDefOf.Mine, blocker)
 			{

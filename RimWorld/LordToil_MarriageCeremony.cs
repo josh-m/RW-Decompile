@@ -44,7 +44,7 @@ namespace RimWorld
 			{
 				allowedSides = SpectateRectSide.Horizontal;
 			}
-			this.Data.spectateRectAllowedSides = SpectatorCellFinder.FindSingleBestSide(this.Data.spectateRect, allowedSides, 1);
+			this.Data.spectateRectAllowedSides = SpectatorCellFinder.FindSingleBestSide(this.Data.spectateRect, base.Map, allowedSides, 1);
 		}
 
 		public override ThinkTreeDutyHook VoluntaryJoinDutyHookFor(Pawn p)
@@ -109,7 +109,7 @@ namespace RimWorld
 
 		private Thing GetMarriageSpotAt(IntVec3 cell)
 		{
-			return cell.GetThingList().Find((Thing x) => x.def == ThingDefOf.MarriageSpot);
+			return cell.GetThingList(base.Map).Find((Thing x) => x.def == ThingDefOf.MarriageSpot);
 		}
 
 		private IntVec3 FindCellForOtherPawnAtMarriageSpot(IntVec3 cell)

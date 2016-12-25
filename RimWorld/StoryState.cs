@@ -33,7 +33,7 @@ namespace RimWorld
 		public void ExposeData()
 		{
 			Scribe_Values.LookValue<int>(ref this.lastThreatBigTick, "lastThreatBigTick", 0, true);
-			Scribe_Collections.LookDictionary<IncidentDef, int>(ref this.lastFireTicks, "lastFireTicks", LookMode.DefReference, LookMode.Value);
+			Scribe_Collections.LookDictionary<IncidentDef, int>(ref this.lastFireTicks, "lastFireTicks", LookMode.Def, LookMode.Value);
 		}
 
 		public void Notify_IncidentFired(FiringIncident qi)

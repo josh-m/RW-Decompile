@@ -6,6 +6,8 @@ namespace RimWorld
 {
 	public class Pawn_GuestTracker : IExposable
 	{
+		private const int DefaultWaitInsteadOfEscapingTicks = 12500;
+
 		private const int CheckInitiatePrisonBreakIntervalTicks = 2500;
 
 		private Pawn pawn;
@@ -19,6 +21,10 @@ namespace RimWorld
 		public bool isPrisonerInt;
 
 		public bool released;
+
+		private int ticksWhenAllowedToEscapeAgain;
+
+		public IntVec3 spotToWaitInsteadOfEscaping = IntVec3.Invalid;
 
 		public int MinInteractionInterval = 7500;
 
@@ -102,6 +108,19 @@ namespace RimWorld
 			}
 		}
 
+		public bool ShouldWaitInsteadOfEscaping
+		{
+			get
+			{
+				if (!this.IsPrisoner)
+				{
+					return false;
+				}
+				Map mapHeld = this.pawn.MapHeld;
+				return mapHeld != null && mapHeld.mapPawns.FreeColonistsSpawnedCount != 0 && Find.TickManager.TicksGame < this.ticksWhenAllowedToEscapeAgain;
+			}
+		}
+
 		public Pawn_GuestTracker()
 		{
 		}
@@ -130,6 +149,8 @@ namespace RimWorld
 			Scribe_Values.LookValue<bool>(ref this.getsFoodInt, "getsFood", false, false);
 			Scribe_Values.LookValue<PrisonerInteractionMode>(ref this.interactionMode, "interactionMode", PrisonerInteractionMode.NoInteraction, false);
 			Scribe_Values.LookValue<bool>(ref this.released, "released", false, false);
+			Scribe_Values.LookValue<int>(ref this.ticksWhenAllowedToEscapeAgain, "ticksWhenAllowedToEscapeAgain", 0, false);
+			Scribe_Values.LookValue<IntVec3>(ref this.spotToWaitInsteadOfEscaping, "spotToWaitInsteadOfEscaping", default(IntVec3), false);
 		}
 
 		public void SetGuestStatus(Faction newHost, bool prisoner = false)
@@ -192,14 +213,60 @@ namespace RimWorld
 			{
 				this.pawn.ownership.Notify_ChangedGuestStatus();
 			}
-			Reachability.ClearCache();
-			Find.MapPawns.UpdateRegistryForPawn(this.pawn);
-			Find.AttackTargetsCache.UpdateTarget(this.pawn);
+			ReachabilityUtility.ClearCache();
+			if (this.pawn.Spawned)
+			{
+				this.pawn.Map.mapPawns.UpdateRegistryForPawn(this.pawn);
+				this.pawn.Map.attackTargetsCache.UpdateTarget(this.pawn);
+			}
 			AddictionUtility.CheckDrugAddictionTeachOpportunity(this.pawn);
+			if (prisoner && this.pawn.playerSettings != null)
+			{
+				this.pawn.playerSettings.Notify_MadePrisoner();
+			}
+		}
+
+		public void WaitInsteadOfEscapingForDefaultTicks()
+		{
+			this.WaitInsteadOfEscapingFor(12500);
+		}
+
+		public void WaitInsteadOfEscapingFor(int ticks)
+		{
+			if (!this.IsPrisoner)
+			{
+				return;
+			}
+			this.ticksWhenAllowedToEscapeAgain = Find.TickManager.TicksGame + ticks;
+			this.spotToWaitInsteadOfEscaping = IntVec3.Invalid;
 		}
 
 		internal void Notify_PawnUndowned()
 		{
+			if (this.pawn.RaceProps.Humanlike && this.HostFaction == Faction.OfPlayer && (this.pawn.Faction == null || this.pawn.Faction.def.rescueesCanJoin) && !this.IsPrisoner)
+			{
+				float num;
+				if (!this.pawn.SafeTemperatureRange().Includes(this.pawn.Map.mapTemperature.OutdoorTemp) || this.pawn.Map.mapConditionManager.ConditionIsActive(MapConditionDefOf.ToxicFallout))
+				{
+					num = 1f;
+				}
+				else
+				{
+					num = 0.5f;
+				}
+				Rand.PushSeed();
+				Rand.Seed = this.pawn.HashOffset();
+				float value = Rand.Value;
+				Rand.PopSeed();
+				if (value < num)
+				{
+					this.pawn.SetFaction(Faction.OfPlayer, null);
+					Messages.Message("MessageRescueeJoined".Translate(new object[]
+					{
+						this.pawn.LabelShort
+					}).AdjustedFor(this.pawn), this.pawn, MessageSound.Benefit);
+				}
+			}
 		}
 	}
 }

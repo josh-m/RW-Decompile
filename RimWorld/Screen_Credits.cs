@@ -18,6 +18,8 @@ namespace RimWorld
 
 		private const float SongStartDelay = 5f;
 
+		private const GameFont Font = GameFont.Medium;
+
 		private List<CreditsEntry> creds;
 
 		public bool wonGame;
@@ -34,7 +36,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return new Vector2((float)Screen.width, (float)Screen.height);
+				return new Vector2((float)UI.screenWidth, (float)UI.screenHeight);
 			}
 		}
 
@@ -58,7 +60,11 @@ namespace RimWorld
 		{
 			get
 			{
-				return this.creds.Sum((CreditsEntry c) => c.DrawHeight(this.ViewWidth)) + 200f;
+				GameFont font = Text.Font;
+				Text.Font = GameFont.Medium;
+				float result = this.creds.Sum((CreditsEntry c) => c.DrawHeight(this.ViewWidth)) + 20f;
+				Text.Font = font;
+				return result;
 			}
 		}
 
@@ -66,7 +72,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return this.ViewHeight - 400f;
+				return Mathf.Max(this.ViewHeight - (float)UI.screenHeight / 2f, 0f);
 			}
 		}
 
@@ -133,14 +139,14 @@ namespace RimWorld
 			}
 			if (this.wonGame && !this.playedMusic && Time.realtimeSinceStartup > this.creationRealtime + 5f)
 			{
-				Find.MusicManagerMap.ForceStartSong(SongDefOf.EndCreditsSong, true);
+				Find.MusicManagerPlay.ForceStartSong(SongDefOf.EndCreditsSong, true);
 				this.playedMusic = true;
 			}
 		}
 
 		public override void DoWindowContents(Rect inRect)
 		{
-			Rect rect = new Rect(0f, 0f, (float)Screen.width, (float)Screen.height);
+			Rect rect = new Rect(0f, 0f, (float)UI.screenWidth, (float)UI.screenHeight);
 			GUI.DrawTexture(rect, BaseContent.BlackTex);
 			Rect position = new Rect(rect);
 			position.yMin += 30f;

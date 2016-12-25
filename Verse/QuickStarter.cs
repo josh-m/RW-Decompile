@@ -12,7 +12,7 @@ namespace Verse
 			if (GenCommandLine.CommandLineArgPassed("quicktest") && !QuickStarter.quickStarted && GenScene.InEntryScene)
 			{
 				QuickStarter.quickStarted = true;
-				SceneManager.LoadScene("Map");
+				SceneManager.LoadScene("Play");
 				return true;
 			}
 			return false;

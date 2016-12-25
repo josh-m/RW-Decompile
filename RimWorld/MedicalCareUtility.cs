@@ -63,9 +63,9 @@ namespace RimWorld
 			case MedicalCareCategory.NoMeds:
 				return false;
 			case MedicalCareCategory.HerbalOrWorse:
-				return meds.GetStatValueAbstract(StatDefOf.MedicalPotency, null) <= 0.99f;
+				return meds.GetStatValueAbstract(StatDefOf.MedicalPotency, null) <= ThingDefOf.HerbalMedicine.GetStatValueAbstract(StatDefOf.MedicalPotency, null);
 			case MedicalCareCategory.NormalOrWorse:
-				return meds.GetStatValueAbstract(StatDefOf.MedicalPotency, null) <= 1.01f;
+				return meds.GetStatValueAbstract(StatDefOf.MedicalPotency, null) <= ThingDefOf.Medicine.GetStatValueAbstract(StatDefOf.MedicalPotency, null);
 			case MedicalCareCategory.Best:
 				return true;
 			default:

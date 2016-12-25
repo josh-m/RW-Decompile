@@ -9,7 +9,7 @@ namespace RimWorld
 	{
 		public static bool TryFindGoodKidnapVictim(Pawn kidnapper, float maxDist, out Pawn victim, List<Thing> disallowed = null)
 		{
-			if (!kidnapper.health.capacities.CapableOf(PawnCapacityDefOf.Manipulation) || !kidnapper.Position.CanReachMapEdge(TraverseParms.For(kidnapper, Danger.Some, TraverseMode.ByPawn, false)))
+			if (!kidnapper.health.capacities.CapableOf(PawnCapacityDefOf.Manipulation) || !kidnapper.Map.reachability.CanReachMapEdge(kidnapper.Position, TraverseParms.For(kidnapper, Danger.Some, TraverseMode.ByPawn, false)))
 			{
 				victim = null;
 				return false;
@@ -19,18 +19,19 @@ namespace RimWorld
 				Pawn pawn = t as Pawn;
 				return pawn.RaceProps.Humanlike && pawn.Downed && pawn.Faction == Faction.OfPlayer && pawn.Faction.HostileTo(kidnapper.Faction) && kidnapper.CanReserve(pawn, 1) && (disallowed == null || !disallowed.Contains(pawn));
 			};
-			victim = (Pawn)GenClosest.ClosestThingReachable(kidnapper.Position, ThingRequest.ForGroup(ThingRequestGroup.Pawn), PathEndMode.OnCell, TraverseParms.For(TraverseMode.NoPassClosedDoors, Danger.Some, false), maxDist, validator, null, -1, false);
+			victim = (Pawn)GenClosest.ClosestThingReachable(kidnapper.Position, kidnapper.Map, ThingRequest.ForGroup(ThingRequestGroup.Pawn), PathEndMode.OnCell, TraverseParms.For(TraverseMode.NoPassClosedDoors, Danger.Some, false), maxDist, validator, null, -1, false);
 			return victim != null;
 		}
 
 		public static Pawn ReachableWoundedGuest(Pawn searcher)
 		{
-			List<Pawn> list = Find.MapPawns.SpawnedPawnsInFaction(searcher.Faction);
+			List<Pawn> list = searcher.Map.mapPawns.SpawnedPawnsInFaction(searcher.Faction);
 			for (int i = 0; i < list.Count; i++)
 			{
-				if (list[i].guest != null && list[i].Downed && searcher.CanReserveAndReach(list[i], PathEndMode.OnCell, Danger.Some, 1))
+				Pawn pawn = list[i];
+				if (pawn.guest != null && !pawn.IsPrisoner && pawn.Downed && searcher.CanReserveAndReach(pawn, PathEndMode.OnCell, Danger.Some, 1))
 				{
-					return list[i];
+					return pawn;
 				}
 			}
 			return null;

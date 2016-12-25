@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using UnityEngine;
 using Verse;
 using Verse.AI;
 using Verse.AI.Group;
@@ -11,7 +10,7 @@ namespace RimWorld
 {
 	public static class PrisonBreakUtility
 	{
-		private const float BaseInitiatePrisonBreakMtbDays = 48f;
+		private const float BaseInitiatePrisonBreakMtbDays = 60f;
 
 		private const float DistanceToJoinPrisonBreak = 20f;
 
@@ -42,11 +41,7 @@ namespace RimWorld
 			{
 				return -1f;
 			}
-			float ageBiologicalYearsFloat = pawn.ageTracker.AgeBiologicalYearsFloat;
-			float num = Mathf.Lerp(2.3f, 0.8f, GenMath.GetFactorInInterval(12f, 18f, 65f, 0.67f, ageBiologicalYearsFloat));
-			float num2 = Mathf.Lerp(3f, 1f, pawn.health.summaryHealth.SummaryHealthPercent);
-			float num3 = Mathf.Lerp(0.7f, 2f, pawn.needs.mood.CurLevelPercentage);
-			return 48f * num * num2 * num3;
+			return 60f;
 		}
 
 		public static bool CanParticipateInPrisonBreak(Pawn pawn)
@@ -65,9 +60,9 @@ namespace RimWorld
 			PrisonBreakUtility.participatingRooms.Clear();
 			foreach (IntVec3 current in GenRadial.RadialCellsAround(initiator.Position, 20f, true))
 			{
-				if (current.InBounds())
+				if (current.InBounds(initiator.Map))
 				{
-					Room room = current.GetRoom();
+					Room room = current.GetRoom(initiator.Map);
 					if (room != null && room.isPrisonCell)
 					{
 						PrisonBreakUtility.participatingRooms.Add(room);
@@ -142,13 +137,13 @@ namespace RimWorld
 			{
 				return;
 			}
-			LordMaker.MakeNewLord(PrisonBreakUtility.escapingPrisonersGroup[0].Faction, new LordJob_PrisonBreak(groupUpLoc, exitPoint, sapperThingID), PrisonBreakUtility.escapingPrisonersGroup);
+			LordMaker.MakeNewLord(PrisonBreakUtility.escapingPrisonersGroup[0].Faction, new LordJob_PrisonBreak(groupUpLoc, exitPoint, sapperThingID), room.Map, PrisonBreakUtility.escapingPrisonersGroup);
 			for (int i = 0; i < PrisonBreakUtility.escapingPrisonersGroup.Count; i++)
 			{
 				Pawn pawn = PrisonBreakUtility.escapingPrisonersGroup[i];
 				if (pawn.CurJob != null && pawn.jobs.curDriver.layingDown)
 				{
-					pawn.jobs.EndCurrentJob(JobCondition.InterruptForced);
+					pawn.jobs.EndCurrentJob(JobCondition.InterruptForced, true);
 				}
 				else
 				{
@@ -174,7 +169,8 @@ namespace RimWorld
 		private static bool TryFindGroupUpLoc(List<Pawn> escapingPrisoners, IntVec3 exitPoint, out IntVec3 groupUpLoc)
 		{
 			groupUpLoc = IntVec3.Invalid;
-			using (PawnPath pawnPath = PathFinder.FindPath(escapingPrisoners[0].Position, exitPoint, TraverseParms.For(escapingPrisoners[0], Danger.Deadly, TraverseMode.PassDoors, false), PathEndMode.OnCell))
+			Map map = escapingPrisoners[0].Map;
+			using (PawnPath pawnPath = map.pathFinder.FindPath(escapingPrisoners[0].Position, exitPoint, TraverseParms.For(escapingPrisoners[0], Danger.Deadly, TraverseMode.PassDoors, false), PathEndMode.OnCell))
 			{
 				if (!pawnPath.Found)
 				{
@@ -184,22 +180,17 @@ namespace RimWorld
 				for (int i = 0; i < pawnPath.NodesLeftCount; i++)
 				{
 					IntVec3 intVec = pawnPath.Peek(pawnPath.NodesLeftCount - i - 1);
-					Room room = intVec.GetRoom();
+					Room room = intVec.GetRoom(map);
 					if (room != null)
 					{
 						if (!room.isPrisonCell)
 						{
-							if (!room.TouchesMapEdge && !room.IsHuge)
+							if (room.TouchesMapEdge || room.IsHuge || room.Cells.Count((IntVec3 x) => x.Standable(map)) >= 5)
 							{
-								if (room.Cells.Count((IntVec3 x) => x.Standable()) < 5)
-								{
-									goto IL_F1;
-								}
+								groupUpLoc = CellFinder.RandomClosewalkCellNear(intVec, map, 3);
 							}
-							groupUpLoc = CellFinder.RandomClosewalkCellNear(intVec, 3);
 						}
 					}
-					IL_F1:;
 				}
 			}
 			if (!groupUpLoc.IsValid)
@@ -211,14 +202,18 @@ namespace RimWorld
 
 		private static bool RoomsAreCloseToEachOther(Room a, Room b)
 		{
-			IntVec3 intVec = a.Cells.RandomElement<IntVec3>();
-			IntVec3 intVec2 = b.Cells.RandomElement<IntVec3>();
-			if (!intVec.WithinRegions(intVec2, 18, TraverseParms.For(TraverseMode.PassDoors, Danger.Deadly, false)))
+			IntVec3 anyCell = a.Regions[0].AnyCell;
+			IntVec3 anyCell2 = b.Regions[0].AnyCell;
+			if (a.Map != b.Map)
+			{
+				return false;
+			}
+			if (!anyCell.WithinRegions(anyCell2, a.Map, 18, TraverseParms.For(TraverseMode.PassDoors, Danger.Deadly, false)))
 			{
 				return false;
 			}
 			bool result;
-			using (PawnPath pawnPath = PathFinder.FindPath(intVec, intVec2, TraverseParms.For(TraverseMode.PassDoors, Danger.Deadly, false), PathEndMode.OnCell))
+			using (PawnPath pawnPath = a.Map.pathFinder.FindPath(anyCell, anyCell2, TraverseParms.For(TraverseMode.PassDoors, Danger.Deadly, false), PathEndMode.OnCell))
 			{
 				if (!pawnPath.Found)
 				{

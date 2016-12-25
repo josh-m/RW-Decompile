@@ -12,7 +12,7 @@ namespace RimWorld
 			{
 				return null;
 			}
-			Region validRegionAt = Find.RegionGrid.GetValidRegionAt(pawn.Position);
+			Region validRegionAt = pawn.Map.regionGrid.GetValidRegionAt(pawn.Position);
 			if (validRegionAt == null)
 			{
 				return null;
@@ -38,12 +38,12 @@ namespace RimWorld
 			{
 				return null;
 			}
-			IntVec3 vec;
-			if (!reg.TryFindRandomCellInRegionUnforbidden(pawn, null, out vec))
+			IntVec3 c;
+			if (!reg.TryFindRandomCellInRegionUnforbidden(pawn, null, out c))
 			{
 				return null;
 			}
-			return new Job(JobDefOf.Goto, vec);
+			return new Job(JobDefOf.Goto, c);
 		}
 	}
 }

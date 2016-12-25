@@ -21,11 +21,11 @@ namespace Verse
 			{
 				Vector3 vector2 = (!A.HasThing) ? A.Cell.ToVector3Shifted() : A.Thing.DrawPos;
 				Vector3 vector3 = (!B.HasThing) ? B.Cell.ToVector3Shifted() : B.Thing.DrawPos;
-				if (A.HasThing && A.Thing.holder != null)
+				if (A.HasThing && A.Thing.holdingContainer != null)
 				{
 					vector = vector3;
 				}
-				else if (B.HasThing && B.Thing.holder != null)
+				else if (B.HasThing && B.Thing.holdingContainer != null)
 				{
 					vector = vector2;
 				}
@@ -53,13 +53,14 @@ namespace Verse
 				break;
 			}
 			}
-			if (vector.ShouldSpawnMotesAt())
+			Map map = A.Map ?? B.Map;
+			if (map != null && vector.ShouldSpawnMotesAt(map))
 			{
 				int randomInRange = this.def.burstCount.RandomInRange;
 				for (int i = 0; i < randomInRange; i++)
 				{
 					Mote mote = (Mote)ThingMaker.MakeThing(this.def.moteDef, null);
-					GenSpawn.Spawn(mote, vector.ToIntVec3());
+					GenSpawn.Spawn(mote, vector.ToIntVec3(), map);
 					mote.Scale = this.def.scale.RandomInRange;
 					mote.exactPosition = vector + Gen.RandomHorizontalVector(this.def.positionRadius);
 					mote.rotationRate = this.def.rotationRate.RandomInRange;

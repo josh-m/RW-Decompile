@@ -29,15 +29,14 @@ namespace RimWorld
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Collections.LookList<Pawn>(ref this.touchingPawns, "testees", LookMode.MapReference, new object[0]);
+			Scribe_Collections.LookList<Pawn>(ref this.touchingPawns, "testees", LookMode.Reference, new object[0]);
 		}
 
 		public override void Tick()
 		{
-			base.Tick();
 			if (this.Armed)
 			{
-				List<Thing> thingList = base.Position.GetThingList();
+				List<Thing> thingList = base.Position.GetThingList(base.Map);
 				for (int i = 0; i < thingList.Count; i++)
 				{
 					Pawn pawn = thingList[i] as Pawn;
@@ -56,6 +55,7 @@ namespace RimWorld
 					this.touchingPawns.Remove(pawn2);
 				}
 			}
+			base.Tick();
 		}
 
 		protected virtual float SpringChance(Pawn p)
@@ -90,7 +90,7 @@ namespace RimWorld
 					}), "LetterFriendlyTrapSprung".Translate(new object[]
 					{
 						p.NameStringShort
-					}), LetterType.BadNonUrgent, base.Position);
+					}), LetterType.BadNonUrgent, new TargetInfo(base.Position, base.Map, false));
 					Find.LetterStack.ReceiveLetter(let, null);
 				}
 			}
@@ -144,10 +144,10 @@ namespace RimWorld
 
 		private void Spring(Pawn p)
 		{
-			SoundDef.Named("DeadfallSpring").PlayOneShot(base.Position);
+			SoundDef.Named("DeadfallSpring").PlayOneShot(new TargetInfo(base.Position, base.Map, false));
 			if (p.Faction != null)
 			{
-				p.Faction.TacticalMemory.TrapRevealed(base.Position);
+				p.Faction.TacticalMemory.TrapRevealed(base.Position, base.Map);
 			}
 			this.SpringSub(p);
 		}

@@ -11,13 +11,13 @@ namespace RimWorld
 
 		protected override Thing BestIngestItem(Pawn pawn, Predicate<Thing> extraValidator)
 		{
-			Predicate<Thing> predicate = (Thing t) => this.CanUseIngestItemForJoy(pawn, t) && (extraValidator == null || extraValidator(t));
-			ThingContainer container = pawn.inventory.container;
-			for (int i = 0; i < container.Count; i++)
+			Predicate<Thing> predicate = (Thing t) => this.CanIngestForJoy(pawn, t) && (extraValidator == null || extraValidator(t));
+			ThingContainer innerContainer = pawn.inventory.innerContainer;
+			for (int i = 0; i < innerContainer.Count; i++)
 			{
-				if (predicate(container[i]))
+				if (predicate(innerContainer[i]))
 				{
-					return container[i];
+					return innerContainer[i];
 				}
 			}
 			JoyGiver_TakeDrug.takeableDrugs.Clear();
@@ -32,11 +32,11 @@ namespace RimWorld
 			JoyGiver_TakeDrug.takeableDrugs.Shuffle<ThingDef>();
 			for (int k = 0; k < JoyGiver_TakeDrug.takeableDrugs.Count; k++)
 			{
-				List<Thing> list = Find.ListerThings.ThingsOfDef(JoyGiver_TakeDrug.takeableDrugs[k]);
+				List<Thing> list = pawn.Map.listerThings.ThingsOfDef(JoyGiver_TakeDrug.takeableDrugs[k]);
 				if (list.Count > 0)
 				{
 					Predicate<Thing> validator = predicate;
-					Thing thing = GenClosest.ClosestThing_Global_Reachable(pawn.Position, list, PathEndMode.OnCell, TraverseParms.For(pawn, Danger.Deadly, TraverseMode.ByPawn, false), 9999f, validator, null);
+					Thing thing = GenClosest.ClosestThing_Global_Reachable(pawn.Position, pawn.Map, list, PathEndMode.OnCell, TraverseParms.For(pawn, Danger.Deadly, TraverseMode.ByPawn, false), 9999f, validator, null);
 					if (thing != null)
 					{
 						return thing;

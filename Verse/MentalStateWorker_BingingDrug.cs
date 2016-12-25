@@ -12,6 +12,10 @@ namespace Verse
 			{
 				return false;
 			}
+			if (!pawn.Spawned)
+			{
+				return false;
+			}
 			List<ChemicalDef> allDefsListForReading = DefDatabase<ChemicalDef>.AllDefsListForReading;
 			for (int i = 0; i < allDefsListForReading.Count; i++)
 			{

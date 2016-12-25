@@ -3,32 +3,57 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using Verse;
-using Verse.Sound;
 
 namespace RimWorld
 {
 	[StaticConstructorOnStartup]
-	public class MainTabWindow_Inspect : MainTabWindow
+	public class MainTabWindow_Inspect : MainTabWindow, IInspectPane
 	{
-		private const float PaneWidth = 432f;
-
-		private const float PaneInnerMargin = 12f;
-
-		protected const float TabWidth = 72f;
-
-		public const float TabHeight = 30f;
-
 		private Type openTabType;
 
 		private float recentHeight;
 
-		public static readonly Vector2 PaneSize = new Vector2(432f, 165f);
-
-		public static readonly Vector2 PaneInnerSize = new Vector2(MainTabWindow_Inspect.PaneSize.x - 24f, MainTabWindow_Inspect.PaneSize.y - 24f);
-
-		private static readonly Texture2D InspectTabButtonFillTex = SolidColorMaterials.NewSolidColorTexture(new Color(0.07450981f, 0.08627451f, 0.105882354f, 1f));
-
 		private static IntVec3 lastSelectCell;
+
+		public Type OpenTabType
+		{
+			get
+			{
+				return this.openTabType;
+			}
+			set
+			{
+				this.openTabType = value;
+			}
+		}
+
+		public float RecentHeight
+		{
+			get
+			{
+				return this.recentHeight;
+			}
+			set
+			{
+				this.recentHeight = value;
+			}
+		}
+
+		protected override float Margin
+		{
+			get
+			{
+				return 0f;
+			}
+		}
+
+		public override Vector2 RequestedTabSize
+		{
+			get
+			{
+				return InspectPaneUtility.PaneSize;
+			}
+		}
 
 		private IEnumerable<object> Selected
 		{
@@ -66,19 +91,35 @@ namespace RimWorld
 		{
 			get
 			{
-				return (float)Screen.height - MainTabWindow_Inspect.PaneSize.y - 35f;
+				return (float)UI.screenHeight - InspectPaneUtility.PaneSize.y - 35f;
 			}
 		}
 
-		public float CurDrawHeight
+		public bool AnythingSelected
 		{
 			get
 			{
-				return this.recentHeight;
+				return this.NumSelected > 0;
 			}
 		}
 
-		public IEnumerable<ITab> CurTabs
+		public bool ShouldShowSelectNextInCellButton
+		{
+			get
+			{
+				return this.NumSelected == 1 && (Find.Selector.SelectedZone == null || Find.Selector.SelectedZone.ContainsCell(MainTabWindow_Inspect.lastSelectCell));
+			}
+		}
+
+		public bool ShouldShowPaneContents
+		{
+			get
+			{
+				return this.NumSelected == 1;
+			}
+		}
+
+		public IEnumerable<InspectTabBase> CurTabs
 		{
 			get
 			{
@@ -86,30 +127,14 @@ namespace RimWorld
 				{
 					if (this.SelThing != null && this.SelThing.def.inspectorTabsResolved != null)
 					{
-						return this.SelThing.def.inspectorTabsResolved;
+						return this.SelThing.GetInspectTabs();
 					}
 					if (this.SelZone != null)
 					{
-						return this.SelZone.GetInspectionTabs();
+						return this.SelZone.GetInspectTabs();
 					}
 				}
-				return Enumerable.Empty<ITab>();
-			}
-		}
-
-		public override Vector2 RequestedTabSize
-		{
-			get
-			{
-				return MainTabWindow_Inspect.PaneSize;
-			}
-		}
-
-		protected override float Margin
-		{
-			get
-			{
-				return 0f;
+				return Enumerable.Empty<InspectTabBase>();
 			}
 		}
 
@@ -118,208 +143,91 @@ namespace RimWorld
 			this.closeOnEscapeKey = false;
 		}
 
-		public override void PreOpen()
-		{
-			base.PreOpen();
-			this.Reset();
-		}
-
-		public override void WindowUpdate()
-		{
-			base.WindowUpdate();
-			foreach (ITab current in this.CurTabs)
-			{
-				if (current.IsVisible)
-				{
-					if (current.GetType() == this.openTabType)
-					{
-						current.TabUpdate();
-					}
-				}
-			}
-		}
-
 		public override void ExtraOnGUI()
 		{
 			base.ExtraOnGUI();
-			if (this.NumSelected > 0)
+			InspectPaneUtility.ExtraOnGUI(this);
+			if (this.AnythingSelected && Find.DesignatorManager.SelectedDesignator != null)
 			{
-				if (KeyBindingDefOf.SelectNextInCell.KeyDownEvent)
-				{
-					this.SelectNextInCell();
-				}
-				if (DesignatorManager.SelectedDesignator != null)
-				{
-					DesignatorManager.SelectedDesignator.DoExtraGuiControls(0f, this.PaneTopY);
-				}
-				InspectGizmoGrid.DrawInspectGizmoGridFor(this.Selected);
-				this.DoTabs(this.CurTabs);
+				Find.DesignatorManager.SelectedDesignator.DoExtraGuiControls(0f, this.PaneTopY);
 			}
 		}
 
 		public override void DoWindowContents(Rect inRect)
 		{
 			base.DoWindowContents(inRect);
-			this.recentHeight = MainTabWindow_Inspect.PaneSize.y;
-			if (this.NumSelected > 0)
+			InspectPaneUtility.InspectPaneOnGUI(inRect, this);
+		}
+
+		public string GetLabel(Rect rect)
+		{
+			return InspectPaneUtility.AdjustedLabelFor(this.Selected, rect);
+		}
+
+		public void DrawInspectGizmos()
+		{
+			InspectGizmoGrid.DrawInspectGizmoGridFor(this.Selected);
+		}
+
+		public void DoPaneContents(Rect rect)
+		{
+			InspectPaneFiller.DoPaneContentsFor((ISelectable)Find.Selector.FirstSelectedObject, rect);
+		}
+
+		public void DoInspectPaneButtons(Rect rect, ref float lineEndWidth)
+		{
+			if (this.NumSelected == 1)
 			{
-				try
+				Thing singleSelectedThing = Find.Selector.SingleSelectedThing;
+				if (singleSelectedThing != null)
 				{
-					Rect rect = inRect.ContractedBy(12f);
-					rect.yMin -= 4f;
-					GUI.BeginGroup(rect);
-					float num = 0f;
-					bool flag = true;
-					if (this.NumSelected > 1)
+					Widgets.InfoCardButton(rect.width - 48f, 0f, Find.Selector.SingleSelectedThing);
+					lineEndWidth += 24f;
+					Pawn pawn = singleSelectedThing as Pawn;
+					if (pawn != null && pawn.playerSettings != null && pawn.playerSettings.UsesConfigurableHostilityResponse)
 					{
-						flag = !(from t in this.Selected
-						where !InspectPaneUtility.CanInspectTogether(this.Selected.First<object>(), t)
-						select t).Any<object>();
+						HostilityResponseModeUtility.DrawResponseButton(new Vector2(rect.width - 72f, 0f), pawn);
+						lineEndWidth += 24f;
 					}
-					else
-					{
-						Rect rect2 = new Rect(rect.width - 24f, 0f, 24f, 24f);
-						if (Find.Selector.SelectedZone == null || Find.Selector.SelectedZone.ContainsCell(MainTabWindow_Inspect.lastSelectCell))
-						{
-							if (Widgets.ButtonImage(rect2, TexButton.SelectOverlappingNext))
-							{
-								this.SelectNextInCell();
-							}
-							num += 24f;
-							TooltipHandler.TipRegion(rect2, "SelectNextInSquareTip".Translate(new object[]
-							{
-								KeyBindingDefOf.SelectNextInCell.MainKeyLabel
-							}));
-						}
-						Thing singleSelectedThing = Find.Selector.SingleSelectedThing;
-						if (singleSelectedThing != null)
-						{
-							Widgets.InfoCardButton(rect.width - 48f, 0f, Find.Selector.SingleSelectedThing);
-							num += 24f;
-							Pawn pawn = singleSelectedThing as Pawn;
-							if (pawn != null && pawn.playerSettings != null && pawn.playerSettings.UsesConfigurableHostilityResponse)
-							{
-								HostilityResponseModeUtility.DrawResponseButton(new Vector2(rect.width - 72f, 0f), pawn);
-								num += 24f;
-							}
-						}
-					}
-					Rect rect3 = new Rect(0f, 0f, rect.width - num, 50f);
-					string label = InspectPaneUtility.AdjustedLabelFor(this.Selected, rect3);
-					rect3.width += 300f;
-					Text.Font = GameFont.Medium;
-					Text.Anchor = TextAnchor.UpperLeft;
-					Widgets.Label(rect3, label);
-					if (flag && this.NumSelected == 1)
-					{
-						Rect rect4 = rect.AtZero();
-						rect4.yMin += 26f;
-						InspectPaneFiller.DoPaneContentsFor((ISelectable)Find.Selector.FirstSelectedObject, rect4);
-					}
-				}
-				catch (Exception ex)
-				{
-					Log.Error("Exception doing inspect pane: " + ex.ToString());
-				}
-				finally
-				{
-					GUI.EndGroup();
 				}
 			}
 		}
 
-		private void SelectNextInCell()
+		public void SelectNextInCell()
 		{
 			if (this.NumSelected == 0)
 			{
 				return;
 			}
-			if (Find.Selector.SelectedZone == null || Find.Selector.SelectedZone.ContainsCell(MainTabWindow_Inspect.lastSelectCell))
+			Selector selector = Find.Selector;
+			if (selector.SelectedZone == null || selector.SelectedZone.ContainsCell(MainTabWindow_Inspect.lastSelectCell))
 			{
-				if (Find.Selector.SelectedZone == null)
+				if (selector.SelectedZone == null)
 				{
-					MainTabWindow_Inspect.lastSelectCell = Find.Selector.SingleSelectedThing.Position;
+					MainTabWindow_Inspect.lastSelectCell = selector.SingleSelectedThing.Position;
 				}
-				Find.Selector.SelectNextAt(MainTabWindow_Inspect.lastSelectCell);
+				Map map;
+				if (selector.SingleSelectedThing != null)
+				{
+					map = selector.SingleSelectedThing.Map;
+				}
+				else
+				{
+					map = selector.SelectedZone.Map;
+				}
+				selector.SelectNextAt(MainTabWindow_Inspect.lastSelectCell, map);
 			}
 		}
 
-		private void DoTabs(IEnumerable<ITab> tabs)
+		public override void WindowUpdate()
 		{
-			try
-			{
-				float y = this.PaneTopY - 30f;
-				float num = 360f;
-				float width = 0f;
-				bool flag = false;
-				foreach (ITab current in tabs)
-				{
-					if (current.IsVisible)
-					{
-						Rect rect = new Rect(num, y, 72f, 30f);
-						width = num;
-						Text.Font = GameFont.Small;
-						if (Widgets.ButtonText(rect, current.labelKey.Translate(), true, false, true))
-						{
-							this.ToggleTab(current);
-						}
-						bool flag2 = current.GetType() == this.openTabType;
-						if (!flag2 && !current.TutorHighlightTagClosed.NullOrEmpty())
-						{
-							UIHighlighter.HighlightOpportunity(rect, current.TutorHighlightTagClosed);
-						}
-						if (flag2)
-						{
-							current.DoTabGUI();
-							this.recentHeight = 700f;
-							flag = true;
-						}
-						num -= 72f;
-					}
-				}
-				if (flag)
-				{
-					GUI.DrawTexture(new Rect(0f, y, width, 30f), MainTabWindow_Inspect.InspectTabButtonFillTex);
-				}
-			}
-			catch (Exception ex)
-			{
-				Log.ErrorOnce(ex.ToString(), 742783);
-			}
+			base.WindowUpdate();
+			InspectPaneUtility.UpdateTabs(this);
 		}
 
 		public void CloseOpenTab()
 		{
 			this.openTabType = null;
-		}
-
-		private bool IsOpen(ITab tab)
-		{
-			return tab.GetType() == this.openTabType;
-		}
-
-		private void InterfaceToggleTab(ITab tab)
-		{
-			if (TutorSystem.TutorialMode && !this.IsOpen(tab) && !TutorSystem.AllowAction("ITab-" + tab.tutorTag + "-Open"))
-			{
-				return;
-			}
-			this.ToggleTab(tab);
-		}
-
-		private void ToggleTab(ITab tab)
-		{
-			if (this.IsOpen(tab) || (tab == null && this.openTabType == null))
-			{
-				this.openTabType = null;
-				SoundDefOf.TabClose.PlayOneShotOnCamera();
-			}
-			else
-			{
-				tab.OnOpen();
-				this.openTabType = tab.GetType();
-				SoundDefOf.TabOpen.PlayOneShotOnCamera();
-			}
 		}
 
 		public void Reset()

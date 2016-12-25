@@ -5,9 +5,14 @@ namespace RimWorld
 {
 	public class IncidentWorker_ColdSnap : IncidentWorker_MakeMapCondition
 	{
-		protected override bool CanFireNowSub()
+		protected override bool CanFireNowSub(IIncidentTarget target)
 		{
-			return base.CanFireNowSub() && GenTemperature.SeasonalTemp >= 0f && GenTemperature.SeasonalTemp <= 10f;
+			if (!base.CanFireNowSub(target))
+			{
+				return false;
+			}
+			Map map = (Map)target;
+			return map.mapTemperature.SeasonalTemp >= 0f && map.mapTemperature.SeasonalTemp <= 10f;
 		}
 	}
 }

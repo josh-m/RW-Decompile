@@ -31,7 +31,7 @@ namespace RimWorld
 			int int2 = Rand.Int;
 			ScenarioMaker.scen = new Scenario();
 			ScenarioMaker.scen.Category = ScenarioCategory.CustomLocal;
-			ScenarioMaker.scen.name = NameGenerator.GenerateName(RulePackDefOf.NamerScenario, null);
+			ScenarioMaker.scen.name = NameGenerator.GenerateName(RulePackDefOf.NamerScenario, null, false);
 			ScenarioMaker.scen.description = null;
 			ScenarioMaker.scen.summary = null;
 			Rand.Seed = @int;

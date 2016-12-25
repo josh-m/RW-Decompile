@@ -14,9 +14,9 @@ namespace RimWorld
 
 		private bool canMineNonMineables = true;
 
-		public override ThinkNode DeepCopy()
+		public override ThinkNode DeepCopy(bool resolve = true)
 		{
-			JobGiver_AISapper jobGiver_AISapper = (JobGiver_AISapper)base.DeepCopy();
+			JobGiver_AISapper jobGiver_AISapper = (JobGiver_AISapper)base.DeepCopy(resolve);
 			jobGiver_AISapper.canMineNonMineables = this.canMineNonMineables;
 			return jobGiver_AISapper;
 		}
@@ -24,7 +24,7 @@ namespace RimWorld
 		protected override Job TryGiveJob(Pawn pawn)
 		{
 			IntVec3 intVec = (IntVec3)pawn.mindState.duty.focus;
-			if (intVec.IsValid && intVec.DistanceToSquared(pawn.Position) < 100f && intVec.GetRoom() == pawn.GetRoom() && intVec.WithinRegions(pawn.Position, 9, TraverseMode.NoPassClosedDoors))
+			if (intVec.IsValid && intVec.DistanceToSquared(pawn.Position) < 100f && intVec.GetRoom(pawn.Map) == pawn.GetRoom() && intVec.WithinRegions(pawn.Position, pawn.Map, 9, TraverseMode.NoPassClosedDoors))
 			{
 				pawn.GetLord().Notify_ReachedDutyLocation(pawn);
 				return null;
@@ -32,7 +32,7 @@ namespace RimWorld
 			if (!intVec.IsValid)
 			{
 				IAttackTarget attackTarget;
-				if (!(from x in Find.AttackTargetsCache.GetPotentialTargetsFor(pawn)
+				if (!(from x in pawn.Map.attackTargetsCache.GetPotentialTargetsFor(pawn)
 				where !x.ThreatDisabled() && ((Thing)x).Faction == Faction.OfPlayer
 				select x).TryRandomElement(out attackTarget))
 				{
@@ -40,7 +40,7 @@ namespace RimWorld
 				}
 				intVec = ((Thing)attackTarget).Position;
 			}
-			using (PawnPath pawnPath = PathFinder.FindPath(pawn.Position, intVec, TraverseParms.For(pawn, Danger.Deadly, TraverseMode.PassAnything, false), PathEndMode.OnCell))
+			using (PawnPath pawnPath = pawn.Map.pathFinder.FindPath(pawn.Position, intVec, TraverseParms.For(pawn, Danger.Deadly, TraverseMode.PassAnything, false), PathEndMode.OnCell))
 			{
 				IntVec3 cellBeforeBlocker;
 				Thing thing = pawnPath.FirstBlockingBuilding(out cellBeforeBlocker, pawn);

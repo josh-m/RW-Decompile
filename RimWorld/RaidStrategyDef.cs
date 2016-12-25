@@ -8,16 +8,20 @@ namespace RimWorld
 	{
 		public Type workerClass;
 
+		[MustTranslate]
 		public string arrivalTextFriendly;
 
+		[MustTranslate]
 		public string arrivalTextEnemy;
 
 		public float pointsFactor = 1f;
 
 		public float selectionChance = 1f;
 
+		[MustTranslate]
 		public string letterLabelEnemy;
 
+		[MustTranslate]
 		public string letterLabelFriendly;
 
 		public List<PawnsArriveMode> arriveModes;
@@ -26,7 +30,7 @@ namespace RimWorld
 
 		public float minDaysPassed;
 
-		public bool pawnsCanBringFood = true;
+		public bool pawnsCanBringFood;
 
 		private RaidStrategyWorker workerInt;
 

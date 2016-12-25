@@ -23,11 +23,11 @@ namespace RimWorld
 			return string.Concat(new string[]
 			{
 				"(",
-				this.kind.ToString(),
+				(this.kind == null) ? "null" : this.kind.ToString(),
 				" w=",
 				this.selectionWeight.ToString("F2"),
 				" c=",
-				this.Cost.ToString("F2"),
+				(this.kind == null) ? "null" : this.Cost.ToString("F2"),
 				")"
 			});
 		}

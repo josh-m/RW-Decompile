@@ -6,9 +6,15 @@ namespace Verse
 	{
 		public string label;
 
+		public string labelPlural;
+
 		public string labelMale;
 
+		public string labelMalePlural;
+
 		public string labelFemale;
+
+		public string labelFemalePlural;
 
 		public GraphicData bodyGraphicData;
 

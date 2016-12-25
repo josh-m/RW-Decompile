@@ -5,7 +5,7 @@ using Verse;
 
 namespace RimWorld
 {
-	public class Recipe_RemoveHediff : Recipe_MedicalOperation
+	public class Recipe_RemoveHediff : Recipe_Surgery
 	{
 		[DebuggerHidden]
 		public override IEnumerable<BodyPartRecord> GetPartsToApplyOn(Pawn pawn, RecipeDef recipe)
@@ -27,7 +27,7 @@ namespace RimWorld
 		{
 			if (billDoer != null)
 			{
-				if (base.CheckSurgeryFail(billDoer, pawn, ingredients))
+				if (base.CheckSurgeryFail(billDoer, pawn, ingredients, part))
 				{
 					return;
 				}

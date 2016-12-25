@@ -29,18 +29,18 @@ namespace RimWorld
 			};
 			this.gaze.defaultCompleteMode = ToilCompleteMode.Delay;
 			this.gaze.defaultDuration = base.CurJob.def.joyDuration;
-			this.gaze.FailOn(() => this.<>f__this.pawn.Position.Roofed());
+			this.gaze.FailOn(() => this.<>f__this.pawn.Position.Roofed(this.<>f__this.pawn.Map));
 			this.gaze.FailOn(() => !JoyUtility.EnjoyableOutsideNow(this.<>f__this.pawn, null));
 			yield return this.gaze;
 		}
 
 		public override string GetReport()
 		{
-			if (Find.MapConditionManager.ConditionIsActive(MapConditionDefOf.Eclipse))
+			if (base.Map.mapConditionManager.ConditionIsActive(MapConditionDefOf.Eclipse))
 			{
 				return "WatchingEclipse".Translate();
 			}
-			float num = GenCelestial.CurCelestialSunGlow();
+			float num = GenCelestial.CurCelestialSunGlow(base.Map);
 			if (num < 0.1f)
 			{
 				return "Stargazing".Translate();
@@ -49,7 +49,7 @@ namespace RimWorld
 			{
 				return "CloudWatching".Translate();
 			}
-			if (GenDate.CurrentDayPercent < 0.5f)
+			if (GenLocalDate.DayPercent(this.pawn) < 0.5f)
 			{
 				return "WatchingSunrise".Translate();
 			}

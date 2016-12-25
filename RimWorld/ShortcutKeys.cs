@@ -8,15 +8,18 @@ namespace RimWorld
 	{
 		public void ShortcutKeysOnGUI()
 		{
-			if (KeyBindingDefOf.NextColonist.KeyDownEvent)
+			if (Current.ProgramState == ProgramState.Playing)
 			{
-				Find.Selector.SelectNextColonist();
-				Event.current.Use();
-			}
-			if (KeyBindingDefOf.PreviousColonist.KeyDownEvent)
-			{
-				Find.Selector.SelectPreviousColonist();
-				Event.current.Use();
+				if (KeyBindingDefOf.NextColonist.KeyDownEvent)
+				{
+					ThingSelectionUtility.SelectNextColonist();
+					Event.current.Use();
+				}
+				if (KeyBindingDefOf.PreviousColonist.KeyDownEvent)
+				{
+					ThingSelectionUtility.SelectPreviousColonist();
+					Event.current.Use();
+				}
 			}
 		}
 	}

@@ -70,7 +70,7 @@ namespace RimWorld
 			}
 		}
 
-		public WeatherEvent_LightningFlash()
+		public WeatherEvent_LightningFlash(Map map) : base(map)
 		{
 			this.duration = Rand.Range(15, 60);
 			this.shadowVector = new Vector2(Rand.Range(-5f, 5f), Rand.Range(-5f, 0f));

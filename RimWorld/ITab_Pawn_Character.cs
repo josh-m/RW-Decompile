@@ -20,7 +20,7 @@ namespace RimWorld
 					Corpse corpse = base.SelThing as Corpse;
 					if (corpse != null)
 					{
-						pawn = corpse.innerPawn;
+						pawn = corpse.InnerPawn;
 					}
 				}
 				if (pawn == null)

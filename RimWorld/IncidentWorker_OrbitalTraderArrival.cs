@@ -8,7 +8,8 @@ namespace RimWorld
 	{
 		public override bool TryExecute(IncidentParms parms)
 		{
-			if (Find.PassingShipManager.passingShips.Count >= 5)
+			Map map = (Map)parms.target;
+			if (map.passingShipManager.passingShips.Count >= 5)
 			{
 				return false;
 			}
@@ -18,7 +19,7 @@ namespace RimWorld
 			select x).TryRandomElement(out def))
 			{
 				TradeShip tradeShip = new TradeShip(def);
-				if (Find.ListerBuildings.allBuildingsColonist.Any((Building b) => b.def.IsCommsConsole && b.GetComp<CompPowerTrader>().PowerOn))
+				if (map.listerBuildings.allBuildingsColonist.Any((Building b) => b.def.IsCommsConsole && b.GetComp<CompPowerTrader>().PowerOn))
 				{
 					Find.LetterStack.ReceiveLetter(tradeShip.def.LabelCap, "TraderArrival".Translate(new object[]
 					{
@@ -26,7 +27,7 @@ namespace RimWorld
 						tradeShip.def.label
 					}), LetterType.Good, null);
 				}
-				Find.PassingShipManager.AddShip(tradeShip);
+				map.passingShipManager.AddShip(tradeShip);
 				tradeShip.GenerateThings();
 				return true;
 			}

@@ -83,7 +83,7 @@ namespace RimWorld
 			this.ticksSinceWeatherUpdate++;
 			if (this.ticksSinceWeatherUpdate >= this.updateWeatherEveryXTicks)
 			{
-				float num = Mathf.Min(WindManager.WindSpeed, 1.5f);
+				float num = Mathf.Min(this.parent.Map.windManager.WindSpeed, 1.5f);
 				this.ticksSinceWeatherUpdate = 0;
 				this.cachedPowerOutput = -(base.Props.basePowerConsumption * num);
 				this.RecalculateBlockages();
@@ -145,9 +145,10 @@ namespace RimWorld
 		public override string CompInspectStringExtra()
 		{
 			StringBuilder stringBuilder = new StringBuilder();
-			stringBuilder.AppendLine(base.CompInspectStringExtra());
+			stringBuilder.Append(base.CompInspectStringExtra());
 			if (this.windPathBlockedCells.Count > 0)
 			{
+				stringBuilder.AppendLine();
 				Thing thing = null;
 				if (this.windPathBlockedByThings != null)
 				{
@@ -177,14 +178,14 @@ namespace RimWorld
 			for (int i = 0; i < this.windPathCells.Count; i++)
 			{
 				IntVec3 intVec = this.windPathCells[i];
-				if (Find.RoofGrid.Roofed(intVec))
+				if (this.parent.Map.roofGrid.Roofed(intVec))
 				{
 					this.windPathBlockedByThings.Add(null);
 					this.windPathBlockedCells.Add(intVec);
 				}
 				else
 				{
-					List<Thing> list = Find.ThingGrid.ThingsListAt(intVec);
+					List<Thing> list = this.parent.Map.thingGrid.ThingsListAt(intVec);
 					for (int j = 0; j < list.Count; j++)
 					{
 						Thing thing = list[j];

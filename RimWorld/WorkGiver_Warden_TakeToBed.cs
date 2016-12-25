@@ -16,13 +16,13 @@ namespace RimWorld
 			Room room = pawn2.GetRoom();
 			if (!pawn2.Downed && pawn.CanReserve(pawn2, 1))
 			{
-				bool flag = pawn2.ownership.OwnedBed != null && RoomQuery.RoomAt(pawn2.ownership.OwnedBed.Position) != RoomQuery.RoomAt(pawn2.Position);
+				bool flag = pawn2.ownership.OwnedBed != null && RoomQuery.RoomAt(pawn2.ownership.OwnedBed) != RoomQuery.RoomAt(pawn2);
 				bool flag2 = false;
 				if (!flag && room != null && !room.TouchesMapEdge)
 				{
 					foreach (Building_Bed current in room.ContainedBeds)
 					{
-						if (current.ForPrisoners && (!current.owners.Any<Pawn>() || current.owners.Contains(pawn2)) && (current.AnyUnoccupiedSleepingSlot || (pawn2.InBed() && pawn2.CurrentBed() == current)) && (!current.Medical || (pawn2.health.PrefersMedicalRest && pawn2.health.ShouldEverReceiveMedicalCare)))
+						if (current.ForPrisoners && (!current.owners.Any<Pawn>() || current.owners.Contains(pawn2)) && (current.AnyUnoccupiedSleepingSlot || (pawn2.InBed() && pawn2.CurrentBed() == current)) && (!current.Medical || (HealthAIUtility.ShouldSeekMedicalRest(pawn2) && HealthAIUtility.ShouldEverReceiveMedicalCare(pawn2))))
 						{
 							flag2 = true;
 							break;
@@ -38,7 +38,7 @@ namespace RimWorld
 						{
 							return new Job(JobDefOf.EscortPrisonerToBed, pawn2, building_Bed)
 							{
-								maxNumToCarry = 1
+								count = 1
 							};
 						}
 						Log.Error(string.Concat(new object[]
@@ -53,14 +53,14 @@ namespace RimWorld
 					}
 				}
 			}
-			if (pawn2.Downed && pawn2.health.NeedsMedicalRest && !pawn2.InBed() && pawn.CanReserve(pawn2, 1))
+			if (pawn2.Downed && HealthAIUtility.ShouldSeekMedicalRestUrgent(pawn2) && !pawn2.InBed() && pawn.CanReserve(pawn2, 1))
 			{
 				Building_Bed building_Bed2 = RestUtility.FindBedFor(pawn2, pawn, true, true, false);
 				if (building_Bed2 != null && pawn2.CanReserve(building_Bed2, building_Bed2.SleepingSlotsCount))
 				{
 					return new Job(JobDefOf.TakeWoundedPrisonerToBed, pawn2, building_Bed2)
 					{
-						maxNumToCarry = 1
+						count = 1
 					};
 				}
 			}

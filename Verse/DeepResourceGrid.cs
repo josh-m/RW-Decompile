@@ -5,16 +5,19 @@ namespace Verse
 {
 	public sealed class DeepResourceGrid : IExposable
 	{
+		private Map map;
+
 		private ushort[] defGrid;
 
 		private ushort[] countGrid;
 
 		private int lastDrawFrame = -1;
 
-		public DeepResourceGrid()
+		public DeepResourceGrid(Map map)
 		{
-			this.defGrid = new ushort[CellIndices.NumGridCells];
-			this.countGrid = new ushort[CellIndices.NumGridCells];
+			this.map = map;
+			this.defGrid = new ushort[map.cellIndices.NumGridCells];
+			this.countGrid = new ushort[map.cellIndices.NumGridCells];
 		}
 
 		public void ExposeData()
@@ -23,32 +26,32 @@ namespace Verse
 			string compressedString2 = string.Empty;
 			if (Scribe.mode == LoadSaveMode.Saving)
 			{
-				compressedString = GridSaveUtility.CompressedStringForShortGrid((IntVec3 c) => this.defGrid[CellIndices.CellToIndex(c)]);
-				compressedString2 = GridSaveUtility.CompressedStringForShortGrid((IntVec3 c) => this.countGrid[CellIndices.CellToIndex(c)]);
+				compressedString = GridSaveUtility.CompressedStringForShortGrid((IntVec3 c) => this.defGrid[this.map.cellIndices.CellToIndex(c)], this.map);
+				compressedString2 = GridSaveUtility.CompressedStringForShortGrid((IntVec3 c) => this.countGrid[this.map.cellIndices.CellToIndex(c)], this.map);
 			}
 			Scribe_Values.LookValue<string>(ref compressedString, "defGrid", null, false);
 			Scribe_Values.LookValue<string>(ref compressedString2, "countGrid", null, false);
 			if (Scribe.mode == LoadSaveMode.LoadingVars)
 			{
-				foreach (GridSaveUtility.LoadedGridShort current in GridSaveUtility.LoadedUShortGrid(compressedString))
+				foreach (GridSaveUtility.LoadedGridShort current in GridSaveUtility.LoadedUShortGrid(compressedString, this.map))
 				{
-					this.defGrid[CellIndices.CellToIndex(current.cell)] = current.val;
+					this.defGrid[this.map.cellIndices.CellToIndex(current.cell)] = current.val;
 				}
-				foreach (GridSaveUtility.LoadedGridShort current2 in GridSaveUtility.LoadedUShortGrid(compressedString2))
+				foreach (GridSaveUtility.LoadedGridShort current2 in GridSaveUtility.LoadedUShortGrid(compressedString2, this.map))
 				{
-					this.countGrid[CellIndices.CellToIndex(current2.cell)] = current2.val;
+					this.countGrid[this.map.cellIndices.CellToIndex(current2.cell)] = current2.val;
 				}
 			}
 		}
 
 		public ThingDef ThingDefAt(IntVec3 c)
 		{
-			return DefDatabase<ThingDef>.GetByShortHash(this.defGrid[CellIndices.CellToIndex(c)]);
+			return DefDatabase<ThingDef>.GetByShortHash(this.defGrid[this.map.cellIndices.CellToIndex(c)]);
 		}
 
 		public int CountAt(IntVec3 c)
 		{
-			return (int)this.countGrid[CellIndices.CellToIndex(c)];
+			return (int)this.countGrid[this.map.cellIndices.CellToIndex(c)];
 		}
 
 		public void SetAt(IntVec3 c, ThingDef def, int count)
@@ -77,7 +80,7 @@ namespace Verse
 				Log.Error("Cannot store count " + count + " in DeepResourceGrid: out of ushort range.");
 				num2 = 0;
 			}
-			int num3 = CellIndices.CellToIndex(c);
+			int num3 = this.map.cellIndices.CellToIndex(c);
 			if (this.defGrid[num3] == num && this.countGrid[num3] == num2)
 			{
 				return;
@@ -88,14 +91,19 @@ namespace Verse
 
 		public void DeepResourceGridDraw(bool forceDraw)
 		{
+			if (this.map != Find.VisibleMap)
+			{
+				return;
+			}
 			if ((DebugViewSettings.drawDeepResources || forceDraw) && this.lastDrawFrame != Time.frameCount)
 			{
-				foreach (IntVec3 current in Find.Map.AllCells)
+				foreach (IntVec3 current in this.map.AllCells)
 				{
 					int num = this.CountAt(current);
 					if (num > 0)
 					{
-						CellRenderer.RenderCell(current, (float)num / 500f);
+						ThingDef thingDef = this.ThingDefAt(current);
+						CellRenderer.RenderCell(current, (float)num / (float)thingDef.deepCountPerCell / 2f);
 					}
 				}
 				this.lastDrawFrame = Time.frameCount;

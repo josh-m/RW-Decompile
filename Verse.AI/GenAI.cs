@@ -24,12 +24,12 @@ namespace Verse.AI
 
 		public static bool CanBeArrested(this Pawn pawn)
 		{
-			return pawn.RaceProps.Humanlike && !pawn.InAggroMentalState && !pawn.HostileTo(Faction.OfPlayer) && (!pawn.IsPrisonerOfColony || !pawn.Position.IsInPrisonCell());
+			return pawn.RaceProps.Humanlike && !pawn.InAggroMentalState && !pawn.HostileTo(Faction.OfPlayer) && (!pawn.IsPrisonerOfColony || !pawn.Position.IsInPrisonCell(pawn.Map));
 		}
 
 		public static bool InDangerousCombat(Pawn pawn)
 		{
-			Region root = pawn.Position.GetRegion();
+			Region root = pawn.GetRegion();
 			bool found = false;
 			RegionTraverser.BreadthFirstTraverse(root, (Region r1, Region r2) => r2.Room == root.Room, (Region r) => r.ListerThings.ThingsInGroup(ThingRequestGroup.Pawn).Any(delegate(Thing t)
 			{
@@ -44,13 +44,13 @@ namespace Verse.AI
 			return found;
 		}
 
-		public static IntVec3 RandomRaidDest()
+		public static IntVec3 RandomRaidDest(Map map)
 		{
 			List<ThingDef> allBedDefBestToWorst = RestUtility.AllBedDefBestToWorst;
-			List<Building> list = new List<Building>(Find.MapPawns.FreeColonistsAndPrisonersSpawnedCount);
+			List<Building> list = new List<Building>(map.mapPawns.FreeColonistsAndPrisonersSpawnedCount);
 			for (int i = 0; i < allBedDefBestToWorst.Count; i++)
 			{
-				foreach (Building current in Find.ListerBuildings.AllBuildingsColonistOfDef(allBedDefBestToWorst[i]))
+				foreach (Building current in map.listerBuildings.AllBuildingsColonistOfDef(allBedDefBestToWorst[i]))
 				{
 					if (((Building_Bed)current).owners.Any<Pawn>())
 					{
@@ -63,7 +63,7 @@ namespace Verse.AI
 			{
 				return building.Position;
 			}
-			IEnumerable<Building> source = from b in Find.ListerBuildings.allBuildingsColonist
+			IEnumerable<Building> source = from b in map.listerBuildings.allBuildingsColonist
 			where !b.def.building.ai_combatDangerous && !b.def.building.isInert
 			select b;
 			if (source.Any<Building>())
@@ -72,26 +72,32 @@ namespace Verse.AI
 				{
 					Building t = source.RandomElement<Building>();
 					IntVec3 intVec = t.RandomAdjacentCell8Way();
-					if (intVec.Walkable())
+					if (intVec.Walkable(map))
 					{
 						return intVec;
 					}
 				}
 			}
-			if (Find.MapPawns.FreeColonistsSpawnedCount > 0)
+			if (map.mapPawns.FreeColonistsSpawnedCount > 0)
 			{
-				return Find.MapPawns.FreeColonistsSpawned.RandomElement<Pawn>().Position;
+				return map.mapPawns.FreeColonistsSpawned.RandomElement<Pawn>().Position;
 			}
-			return Find.Map.Center;
+			return map.Center;
 		}
 
 		public static bool EnemyIsNear(Pawn p, float radius)
 		{
-			foreach (IAttackTarget current in Find.AttackTargetsCache.GetPotentialTargetsFor(p))
+			if (!p.Spawned)
 			{
-				if (!current.ThreatDisabled())
+				return false;
+			}
+			List<IAttackTarget> potentialTargetsFor = p.Map.attackTargetsCache.GetPotentialTargetsFor(p);
+			for (int i = 0; i < potentialTargetsFor.Count; i++)
+			{
+				IAttackTarget attackTarget = potentialTargetsFor[i];
+				if (!attackTarget.ThreatDisabled())
 				{
-					if (p.Position.InHorDistOf(((Thing)current).Position, radius))
+					if (p.Position.InHorDistOf(((Thing)attackTarget).Position, radius))
 					{
 						return true;
 					}

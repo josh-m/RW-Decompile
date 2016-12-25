@@ -99,7 +99,17 @@ namespace RimWorld
 
 		public static ThoughtDef DebugBad;
 
+		public static ThoughtDef ColonistAbandoned;
+
+		public static ThoughtDef ColonistAbandonedToDie;
+
+		public static ThoughtDef PrisonerAbandonedToDie;
+
+		public static ThoughtDef BondedAnimalAbandoned;
+
 		public static ThoughtDef ApparelDamaged;
+
+		public static ThoughtDef Naked;
 
 		public static ThoughtDef Chitchat;
 
@@ -120,6 +130,8 @@ namespace RimWorld
 		public static ThoughtDef RebuffedMyRomanceAttempt;
 
 		public static ThoughtDef FailedRomanceAttemptOnMe;
+
+		public static ThoughtDef FailedRomanceAttemptOnMeLowOpinionMood;
 
 		public static ThoughtDef BrokeUpWithMe;
 
@@ -145,10 +157,16 @@ namespace RimWorld
 
 		public static ThoughtDef Insulted;
 
+		public static ThoughtDef KindWords;
+
 		public static ThoughtDef GotSomeLovin;
 
 		public static ThoughtDef KilledMyFriend;
 
 		public static ThoughtDef KilledMyRival;
+
+		public static ThoughtDef DefeatedHostileFactionLeader;
+
+		public static ThoughtDef DefeatedMajorEnemy;
 	}
 }

@@ -36,6 +36,8 @@ namespace RimWorld
 
 		public static JobDef RemoveApparel;
 
+		public static JobDef DropEquipment;
+
 		public static JobDef Strip;
 
 		public static JobDef Open;
@@ -88,11 +90,19 @@ namespace RimWorld
 
 		public static JobDef Maintain;
 
+		public static JobDef GiveToPackAnimal;
+
+		public static JobDef EnterTransporter;
+
 		public static JobDef MarryAdjacentPawn;
 
 		public static JobDef SpectateCeremony;
 
 		public static JobDef StandAndBeSociallyActive;
+
+		public static JobDef PrepareCaravan_GatherItems;
+
+		public static JobDef PrepareCaravan_GatherPawns;
 
 		public static JobDef Ignite;
 
@@ -118,6 +128,10 @@ namespace RimWorld
 
 		public static JobDef TakeBeerOutOfFermentingBarrel;
 
+		public static JobDef UnloadInventory;
+
+		public static JobDef UnloadYourInventory;
+
 		public static JobDef Rescue;
 
 		public static JobDef Arrest;
@@ -135,6 +149,8 @@ namespace RimWorld
 		public static JobDef ReleasePrisoner;
 
 		public static JobDef Kidnap;
+
+		public static JobDef CarryDownedPawnToExit;
 
 		public static JobDef PlaceNoCostFrame;
 

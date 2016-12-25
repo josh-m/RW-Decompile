@@ -7,18 +7,27 @@ namespace RimWorld
 {
 	public class IncidentWorker_NeutralGroup : IncidentWorker_PawnsArrive
 	{
-		protected override bool FactionCanBeGroupSource(Faction f, bool desperate = false)
+		protected virtual PawnGroupKindDef PawnGroupKindDef
 		{
-			return base.FactionCanBeGroupSource(f, desperate) && !f.def.hidden && !f.HostileTo(Faction.OfPlayer);
+			get
+			{
+				return PawnGroupKindDefOf.Normal;
+			}
+		}
+
+		protected override bool FactionCanBeGroupSource(Faction f, Map map, bool desperate = false)
+		{
+			return base.FactionCanBeGroupSource(f, map, desperate) && !f.def.hidden && !f.HostileTo(Faction.OfPlayer);
 		}
 
 		protected virtual bool TryResolveParms(IncidentParms parms)
 		{
-			if (!parms.spawnCenter.IsValid)
+			Map map = (Map)parms.target;
+			if (!parms.spawnCenter.IsValid && !RCellFinder.TryFindRandomPawnEntryCell(out parms.spawnCenter, map))
 			{
-				RCellFinder.TryFindRandomPawnEntryCell(out parms.spawnCenter);
+				return false;
 			}
-			if (parms.faction == null && !base.CandidateFactions(false).TryRandomElement(out parms.faction) && !base.CandidateFactions(true).TryRandomElement(out parms.faction))
+			if (parms.faction == null && !base.CandidateFactions(map, false).TryRandomElement(out parms.faction) && !base.CandidateFactions(map, true).TryRandomElement(out parms.faction))
 			{
 				return false;
 			}
@@ -38,19 +47,20 @@ namespace RimWorld
 					parms.points = (float)Rand.Range(200, 500);
 				}
 			}
-			PawnGroupMakerUtility.AdjustPointsForGroupArrivalParams(parms);
+			IncidentParmsUtility.AdjustPointsForGroupArrivalParams(parms);
 			return true;
 		}
 
 		protected List<Pawn> SpawnPawns(IncidentParms parms)
 		{
-			List<Pawn> list = PawnGroupMakerUtility.GenerateArrivingPawns(parms, false).ToList<Pawn>();
+			Map map = (Map)parms.target;
+			PawnGroupMakerParms defaultPawnGroupMakerParms = IncidentParmsUtility.GetDefaultPawnGroupMakerParms(parms);
+			List<Pawn> list = PawnGroupMakerUtility.GeneratePawns(this.PawnGroupKindDef, defaultPawnGroupMakerParms, false).ToList<Pawn>();
 			foreach (Pawn current in list)
 			{
-				IntVec3 loc = CellFinder.RandomClosewalkCellNear(parms.spawnCenter, 5);
-				GenSpawn.Spawn(current, loc);
+				IntVec3 loc = CellFinder.RandomClosewalkCellNear(parms.spawnCenter, map, 5);
+				GenSpawn.Spawn(current, loc, map);
 			}
-			PawnRelationUtility.Notify_PawnsSeenByPlayer(list, "LetterRelatedPawnsNeutralGroup".Translate(), true);
 			return list;
 		}
 	}

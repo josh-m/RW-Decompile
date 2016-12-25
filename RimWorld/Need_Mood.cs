@@ -83,10 +83,6 @@ namespace RimWorld
 		public override void NeedInterval()
 		{
 			base.NeedInterval();
-			if (!this.pawn.Spawned)
-			{
-				return;
-			}
 			this.recentMemory.RecentMemoryInterval();
 			this.thoughts.ThoughtInterval();
 			this.observer.ObserverInterval();
@@ -103,7 +99,7 @@ namespace RimWorld
 			return stringBuilder.ToString();
 		}
 
-		public override void DrawOnGUI(Rect rect)
+		public override void DrawOnGUI(Rect rect, int maxThresholdMarkers = 2147483647, float customMargin = -1f, bool drawArrows = true, bool doTooltip = true)
 		{
 			if (this.threshPercents == null)
 			{
@@ -113,7 +109,7 @@ namespace RimWorld
 			this.threshPercents.Add(this.pawn.mindState.mentalBreaker.BreakThresholdExtreme);
 			this.threshPercents.Add(this.pawn.mindState.mentalBreaker.BreakThresholdMajor);
 			this.threshPercents.Add(this.pawn.mindState.mentalBreaker.BreakThresholdMinor);
-			base.DrawOnGUI(rect);
+			base.DrawOnGUI(rect, maxThresholdMarkers, customMargin, drawArrows, doTooltip);
 		}
 	}
 }

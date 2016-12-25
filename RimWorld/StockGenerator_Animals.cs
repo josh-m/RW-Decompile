@@ -29,7 +29,7 @@ namespace RimWorld
 		};
 
 		[DebuggerHidden]
-		public override IEnumerable<Thing> GenerateThings()
+		public override IEnumerable<Thing> GenerateThings(Map forMap)
 		{
 			int numKinds = this.kindCountRange.RandomInRange;
 			int count = this.countRange.RandomInRange;
@@ -38,7 +38,7 @@ namespace RimWorld
 			{
 				PawnKindDef kind;
 				if (!(from k in DefDatabase<PawnKindDef>.AllDefs
-				where !this.<kinds>__2.Contains(k) && this.<>f__this.PawnKindAllowed(k)
+				where !this.<kinds>__2.Contains(k) && this.<>f__this.PawnKindAllowed(k, this.forMap)
 				select k).TryRandomElementByWeight((PawnKindDef k) => this.<>f__this.SelectionChance(k), out kind))
 				{
 					break;
@@ -52,7 +52,8 @@ namespace RimWorld
 				{
 					break;
 				}
-				yield return PawnGenerator.GeneratePawn(kind2, null);
+				PawnGenerationRequest request = new PawnGenerationRequest(kind2, null, PawnGenerationContext.NonPlayer, forMap, false, false, false, false, true, false, 1f, false, true, true, null, null, null, null, null, null);
+				yield return PawnGenerator.GeneratePawn(request);
 			}
 		}
 
@@ -66,9 +67,21 @@ namespace RimWorld
 			return thingDef.category == ThingCategory.Pawn && thingDef.race.Animal;
 		}
 
-		private bool PawnKindAllowed(PawnKindDef kind)
+		private bool PawnKindAllowed(PawnKindDef kind, Map map)
 		{
-			return kind.RaceProps.Animal && kind.RaceProps.wildness >= this.minWildness && kind.RaceProps.wildness <= this.maxWildness && kind.RaceProps.wildness <= 1f && (!this.checkTemperature || GenTemperature.SeasonAndOutdoorTemperatureAcceptableFor(kind.race)) && kind.race.tradeTags != null && this.tradeTags.Find((string x) => kind.race.tradeTags.Contains(x)) != null;
+			if (!kind.RaceProps.Animal || kind.RaceProps.wildness < this.minWildness || kind.RaceProps.wildness > this.maxWildness || kind.RaceProps.wildness > 1f)
+			{
+				return false;
+			}
+			if (this.checkTemperature)
+			{
+				Map map2 = map ?? Find.AnyPlayerHomeMap;
+				if (map2 != null && !map2.mapTemperature.SeasonAndOutdoorTemperatureAcceptableFor(kind.race))
+				{
+					return false;
+				}
+			}
+			return kind.race.tradeTags != null && this.tradeTags.Find((string x) => kind.race.tradeTags.Contains(x)) != null;
 		}
 
 		public void LogAnimalChances()

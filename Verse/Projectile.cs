@@ -177,12 +177,12 @@ namespace Verse
 			Scribe_References.LookReference<Thing>(ref this.neverInterceptTargetInt, "neverInterceptTarget", false);
 		}
 
-		public void Launch(Thing launcher, TargetInfo targ, Thing equipment = null)
+		public void Launch(Thing launcher, LocalTargetInfo targ, Thing equipment = null)
 		{
-			this.Launch(launcher, base.Position.ToVector3Shifted(), targ, null);
+			this.Launch(launcher, base.Position.ToVector3Shifted(), targ, equipment);
 		}
 
-		public void Launch(Thing launcher, Vector3 origin, TargetInfo targ, Thing equipment = null)
+		public void Launch(Thing launcher, Vector3 origin, LocalTargetInfo targ, Thing equipment = null)
 		{
 			this.launcher = launcher;
 			this.origin = origin;
@@ -202,7 +202,7 @@ namespace Verse
 			this.ticksToImpact = this.StartingTicksToImpact;
 			if (!this.def.projectile.soundAmbient.NullOrUndefined())
 			{
-				SoundInfo info = SoundInfo.InWorld(this, MaintenanceType.PerTick);
+				SoundInfo info = SoundInfo.InMap(this, MaintenanceType.PerTick);
 				this.ambientSustainer = this.def.projectile.soundAmbient.TrySpawnSustainer(info);
 			}
 		}
@@ -216,7 +216,7 @@ namespace Verse
 			}
 			Vector3 exactPosition = this.ExactPosition;
 			this.ticksToImpact--;
-			if (!this.ExactPosition.InBounds())
+			if (!this.ExactPosition.InBounds(base.Map))
 			{
 				this.ticksToImpact++;
 				base.Position = this.ExactPosition.ToIntVec3();
@@ -235,7 +235,7 @@ namespace Verse
 			}
 			if (this.ticksToImpact <= 0)
 			{
-				if (this.DestinationCell.InBounds())
+				if (this.DestinationCell.InBounds(base.Map))
 				{
 					base.Position = this.DestinationCell;
 				}
@@ -256,7 +256,7 @@ namespace Verse
 			{
 				return false;
 			}
-			if (!intVec.InBounds() || !intVec2.InBounds())
+			if (!intVec.InBounds(base.Map) || !intVec2.InBounds(base.Map))
 			{
 				return false;
 			}
@@ -267,11 +267,11 @@ namespace Verse
 				{
 					if (flag)
 					{
-						MoteMaker.ThrowText(intVec2.ToVector3Shifted(), "x", -1f);
+						MoteMaker.ThrowText(intVec2.ToVector3Shifted(), base.Map, "x", -1f);
 					}
 					else
 					{
-						MoteMaker.ThrowText(intVec2.ToVector3Shifted(), "o", -1f);
+						MoteMaker.ThrowText(intVec2.ToVector3Shifted(), base.Map, "o", -1f);
 					}
 				}
 				return flag;
@@ -298,7 +298,7 @@ namespace Verse
 					}
 					if (DebugViewSettings.drawInterceptChecks)
 					{
-						MoteMaker.ThrowText(vector, "o", -1f);
+						MoteMaker.ThrowText(vector, base.Map, "o", -1f);
 					}
 					num2++;
 					if (num2 > num)
@@ -312,7 +312,7 @@ namespace Verse
 				}
 				if (DebugViewSettings.drawInterceptChecks)
 				{
-					MoteMaker.ThrowText(vector, "x", -1f);
+					MoteMaker.ThrowText(vector, base.Map, "x", -1f);
 				}
 				return true;
 			}
@@ -326,7 +326,7 @@ namespace Verse
 			{
 				return false;
 			}
-			List<Thing> list = Find.ThingGrid.ThingsListAt(c);
+			List<Thing> list = base.Map.thingGrid.ThingsListAt(c);
 			for (int i = 0; i < list.Count; i++)
 			{
 				Thing thing = list[i];
@@ -372,7 +372,7 @@ namespace Verse
 								}
 								if (DebugViewSettings.drawShooting)
 								{
-									MoteMaker.ThrowText(this.ExactPosition, num2.ToStringPercent(), -1f);
+									MoteMaker.ThrowText(this.ExactPosition, base.Map, num2.ToStringPercent(), -1f);
 								}
 								if (Rand.Value < num2)
 								{
@@ -397,18 +397,18 @@ namespace Verse
 		{
 			if (this.def.projectile.flyOverhead)
 			{
-				RoofDef roofDef = Find.RoofGrid.RoofAt(base.Position);
+				RoofDef roofDef = base.Map.roofGrid.RoofAt(base.Position);
 				if (roofDef != null)
 				{
 					if (roofDef.isThickRoof)
 					{
-						this.def.projectile.soundHitThickRoof.PlayOneShot(base.Position);
+						this.def.projectile.soundHitThickRoof.PlayOneShot(new TargetInfo(base.Position, base.Map, false));
 						this.Destroy(DestroyMode.Vanish);
 						return;
 					}
-					if (base.Position.GetEdifice() == null || base.Position.GetEdifice().def.Fillage != FillCategory.Full)
+					if (base.Position.GetEdifice(base.Map) == null || base.Position.GetEdifice(base.Map).def.Fillage != FillCategory.Full)
 					{
-						RoofCollapserImmediate.DropRoofInCells(base.Position);
+						RoofCollapserImmediate.DropRoofInCells(base.Position, base.Map);
 					}
 				}
 			}
@@ -426,7 +426,7 @@ namespace Verse
 			else
 			{
 				Projectile.cellThingsFiltered.Clear();
-				List<Thing> thingList = base.Position.GetThingList();
+				List<Thing> thingList = base.Position.GetThingList(base.Map);
 				for (int i = 0; i < thingList.Count; i++)
 				{
 					Pawn pawn2 = thingList[i] as Pawn;
@@ -466,7 +466,7 @@ namespace Verse
 
 		public void ForceInstantImpact()
 		{
-			if (!this.DestinationCell.InBounds())
+			if (!this.DestinationCell.InBounds(base.Map))
 			{
 				this.Destroy(DestroyMode.Vanish);
 				return;

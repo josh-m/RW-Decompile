@@ -11,48 +11,48 @@ namespace Verse
 
 		public const int NoZoneEdgeWidth = 5;
 
-		public static bool InNoBuildEdgeArea(this IntVec3 c)
+		public static bool InNoBuildEdgeArea(this IntVec3 c, Map map)
 		{
-			return c.CloseToEdge(10);
+			return c.CloseToEdge(map, 10);
 		}
 
-		public static bool InNoZoneEdgeArea(this IntVec3 c)
+		public static bool InNoZoneEdgeArea(this IntVec3 c, Map map)
 		{
-			return c.CloseToEdge(5);
+			return c.CloseToEdge(map, 5);
 		}
 
-		public static bool CloseToEdge(this IntVec3 c, int edgeDist)
+		public static bool CloseToEdge(this IntVec3 c, Map map, int edgeDist)
 		{
-			return c.x < edgeDist || c.z < edgeDist || c.x >= Find.Map.Size.x - edgeDist || c.z >= Find.Map.Size.z - edgeDist;
+			return c.x < edgeDist || c.z < edgeDist || c.x >= map.Size.x - edgeDist || c.z >= map.Size.z - edgeDist;
 		}
 
-		public static bool OnEdge(this IntVec3 c)
+		public static bool OnEdge(this IntVec3 c, Map map)
 		{
-			return c.x == 0 || c.x == Find.Map.Size.x - 1 || c.z == 0 || c.z == Find.Map.Size.z - 1;
+			return c.x == 0 || c.x == map.Size.x - 1 || c.z == 0 || c.z == map.Size.z - 1;
 		}
 
-		public static bool InBounds(this IntVec3 c)
+		public static bool InBounds(this IntVec3 c, Map map)
 		{
-			return c.x >= 0 && c.z >= 0 && c.x < Find.Map.Size.x && c.z < Find.Map.Size.z;
+			return c.x >= 0 && c.z >= 0 && c.x < map.Size.x && c.z < map.Size.z;
 		}
 
-		public static bool InBounds(this Vector3 v)
+		public static bool InBounds(this Vector3 v, Map map)
 		{
-			return v.x >= 0f && v.z >= 0f && v.x < (float)Find.Map.Size.x && v.z < (float)Find.Map.Size.z;
+			return v.x >= 0f && v.z >= 0f && v.x < (float)map.Size.x && v.z < (float)map.Size.z;
 		}
 
-		public static bool Walkable(this IntVec3 c)
+		public static bool Walkable(this IntVec3 c, Map map)
 		{
-			return Find.PathGrid.Walkable(c);
+			return map.pathGrid.Walkable(c);
 		}
 
-		public static bool Standable(this IntVec3 c)
+		public static bool Standable(this IntVec3 c, Map map)
 		{
-			if (!Find.PathGrid.Walkable(c))
+			if (!map.pathGrid.Walkable(c))
 			{
 				return false;
 			}
-			List<Thing> list = Find.ThingGrid.ThingsListAt(c);
+			List<Thing> list = map.thingGrid.ThingsListAt(c);
 			for (int i = 0; i < list.Count; i++)
 			{
 				if (list[i].def.passability != Traversability.Standable)
@@ -63,9 +63,9 @@ namespace Verse
 			return true;
 		}
 
-		public static bool Impassable(this IntVec3 c)
+		public static bool Impassable(this IntVec3 c, Map map)
 		{
-			List<Thing> list = Find.ThingGrid.ThingsListAtFast(c);
+			List<Thing> list = map.thingGrid.ThingsListAtFast(c);
 			for (int i = 0; i < list.Count; i++)
 			{
 				if (list[i].def.passability == Traversability.Impassable)
@@ -76,44 +76,44 @@ namespace Verse
 			return false;
 		}
 
-		public static bool SupportsStructureType(this IntVec3 c, TerrainAffordance surfaceType)
+		public static bool SupportsStructureType(this IntVec3 c, Map map, TerrainAffordance surfaceType)
 		{
-			return c.GetTerrain().affordances.Contains(surfaceType);
+			return c.GetTerrain(map).affordances.Contains(surfaceType);
 		}
 
-		public static bool CanBeSeenOver(this IntVec3 c)
+		public static bool CanBeSeenOver(this IntVec3 c, Map map)
 		{
-			if (!c.InBounds())
+			if (!c.InBounds(map))
 			{
 				return false;
 			}
-			Building edifice = c.GetEdifice();
-			if (edifice != null && edifice.def.Fillage == FillCategory.Full)
+			Building edifice = c.GetEdifice(map);
+			return edifice == null || edifice.CanBeSeenOver();
+		}
+
+		public static bool CanBeSeenOverFast(this IntVec3 c, Map map)
+		{
+			Building edifice = c.GetEdifice(map);
+			return edifice == null || edifice.CanBeSeenOver();
+		}
+
+		public static bool CanBeSeenOver(this Building b)
+		{
+			if (b.def.Fillage == FillCategory.Full)
 			{
-				Building_Door building_Door = edifice as Building_Door;
+				Building_Door building_Door = b as Building_Door;
 				return building_Door != null && building_Door.Open;
 			}
 			return true;
 		}
 
-		public static bool CanBeSeenOverFast(this IntVec3 c)
+		public static bool HasEatSurface(this IntVec3 c, Map map)
 		{
-			Building edifice = c.GetEdifice();
-			if (edifice != null && edifice.def.Fillage == FillCategory.Full)
-			{
-				Building_Door building_Door = edifice as Building_Door;
-				return building_Door != null && building_Door.Open;
-			}
-			return true;
-		}
-
-		public static bool HasEatSurface(this IntVec3 c)
-		{
-			if (!c.InBounds())
+			if (!c.InBounds(map))
 			{
 				return false;
 			}
-			List<Thing> list = Find.ThingGrid.ThingsListAt(c);
+			List<Thing> list = map.thingGrid.ThingsListAt(c);
 			for (int i = 0; i < list.Count; i++)
 			{
 				if (list[i].def.surfaceType == SurfaceType.Eat)

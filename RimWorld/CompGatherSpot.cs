@@ -26,11 +26,11 @@ namespace RimWorld
 				{
 					if (this.active)
 					{
-						GatherSpotLister.RegisterActivated(this);
+						this.parent.Map.gatherSpotLister.RegisterActivated(this);
 					}
 					else
 					{
-						GatherSpotLister.RegisterDeactivated(this);
+						this.parent.Map.gatherSpotLister.RegisterDeactivated(this);
 					}
 				}
 			}
@@ -46,21 +46,21 @@ namespace RimWorld
 			base.PostSpawnSetup();
 			if (this.Active)
 			{
-				GatherSpotLister.RegisterActivated(this);
+				this.parent.Map.gatherSpotLister.RegisterActivated(this);
 			}
 		}
 
-		public override void PostDeSpawn()
+		public override void PostDeSpawn(Map map)
 		{
-			base.PostDeSpawn();
+			base.PostDeSpawn(map);
 			if (this.Active)
 			{
-				GatherSpotLister.RegisterDeactivated(this);
+				map.gatherSpotLister.RegisterDeactivated(this);
 			}
 		}
 
 		[DebuggerHidden]
-		public override IEnumerable<Command> CompGetGizmosExtra()
+		public override IEnumerable<Gizmo> CompGetGizmosExtra()
 		{
 			Command_Toggle com = new Command_Toggle();
 			com.hotKey = KeyBindingDefOf.CommandTogglePower;

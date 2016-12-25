@@ -8,6 +8,8 @@ namespace Verse
 {
 	public class Pawn_AgeTracker : IExposable
 	{
+		private const float BornAtLongitude = 0f;
+
 		private Pawn pawn;
 
 		private long ageBiologicalTicksInt = -1L;
@@ -91,7 +93,7 @@ namespace Verse
 		{
 			get
 			{
-				return GenDate.CalendarYearAt(this.birthAbsTicksInt);
+				return GenDate.Year(this.birthAbsTicksInt, 0f);
 			}
 		}
 
@@ -99,7 +101,7 @@ namespace Verse
 		{
 			get
 			{
-				return GenDate.DayOfSeasonZeroBasedAt(this.birthAbsTicksInt);
+				return GenDate.DayOfSeason(this.birthAbsTicksInt, 0f);
 			}
 		}
 
@@ -107,7 +109,7 @@ namespace Verse
 		{
 			get
 			{
-				return GenDate.DayOfYearZeroBasedAt(this.birthAbsTicksInt);
+				return GenDate.DayOfYear(this.birthAbsTicksInt, 0f);
 			}
 		}
 
@@ -115,7 +117,7 @@ namespace Verse
 		{
 			get
 			{
-				return GenDate.SeasonAt(this.birthAbsTicksInt);
+				return GenDate.Season(this.birthAbsTicksInt, 0f);
 			}
 		}
 
@@ -256,7 +258,7 @@ namespace Verse
 			}
 			if (Find.TickManager.TicksGame % 60000 == 20000)
 			{
-				if (GenDate.DayOfYear == this.BirthDayOfYear)
+				if (GenLocalDate.DayOfYear(this.pawn) == this.BirthDayOfYear)
 				{
 					this.BirthdayChronological();
 				}
@@ -291,11 +293,12 @@ namespace Verse
 				{
 					this.pawn.Drawer.renderer.graphics.ResolveAllGraphics();
 				});
+				this.CheckChangePawnKindName();
 			}
 			if (this.cachedLifeStageIndex < lifeStageAges.Count - 1)
 			{
 				float num2 = lifeStageAges[this.cachedLifeStageIndex + 1].minAge - this.AgeBiologicalYearsFloat;
-				int num3 = (Current.ProgramState != ProgramState.MapPlaying) ? 0 : Find.TickManager.TicksGame;
+				int num3 = (Current.ProgramState != ProgramState.Playing) ? 0 : Find.TickManager.TicksGame;
 				this.nextLifeStageChangeTick = num3 + Mathf.CeilToInt(num2 * 3600000f);
 			}
 		}
@@ -333,6 +336,35 @@ namespace Verse
 		public void DebugForceBirthdayBiological()
 		{
 			this.BirthdayBiological();
+		}
+
+		private void CheckChangePawnKindName()
+		{
+			NameSingle nameSingle = this.pawn.Name as NameSingle;
+			if (nameSingle == null || !nameSingle.Numerical)
+			{
+				return;
+			}
+			string kindLabel = this.pawn.KindLabel;
+			if (nameSingle.NameWithoutNumber == kindLabel)
+			{
+				return;
+			}
+			int number = nameSingle.Number;
+			string text = this.pawn.KindLabel + " " + number;
+			if (!NameUseChecker.NameSingleIsUsedOnAnyMap(text))
+			{
+				this.pawn.Name = new NameSingle(text, true);
+				return;
+			}
+			this.pawn.Name = PawnBioAndNameGenerator.GeneratePawnName(this.pawn, NameStyle.Numeric, null);
+		}
+
+		public void DebugMake1YearOlder()
+		{
+			this.ageBiologicalTicksInt += 3600000L;
+			this.birthAbsTicksInt -= 3600000L;
+			this.RecalculateLifeStageIndex();
 		}
 	}
 }

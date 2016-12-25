@@ -36,6 +36,8 @@ namespace RimWorld
 
 		private int KeepDisplayingTicks = 1000;
 
+		private float ApparelScorePerEnergyMax = 0.25f;
+
 		private static readonly Material BubbleMat = MaterialPool.MatFrom("Other/ShieldBubble", ShaderDatabase.Transparent);
 
 		private float EnergyMax
@@ -93,10 +95,18 @@ namespace RimWorld
 		[DebuggerHidden]
 		public override IEnumerable<Gizmo> GetWornGizmos()
 		{
-			yield return new Gizmo_PersonalShieldStatus
+			if (Find.Selector.SingleSelectedThing == this.wearer)
 			{
-				shield = this
-			};
+				yield return new Gizmo_PersonalShieldStatus
+				{
+					shield = this
+				};
+			}
+		}
+
+		public override float GetSpecialApparelScoreOffset()
+		{
+			return this.EnergyMax * this.ApparelScorePerEnergyMax;
 		}
 
 		public override void Tick()
@@ -162,15 +172,15 @@ namespace RimWorld
 
 		private void AbsorbedDamage(DamageInfo dinfo)
 		{
-			SoundDefOf.PersonalShieldAbsorbDamage.PlayOneShot(this.wearer.Position);
+			SoundDefOf.PersonalShieldAbsorbDamage.PlayOneShot(new TargetInfo(this.wearer.Position, this.wearer.Map, false));
 			this.impactAngleVect = Vector3Utility.HorizontalVectorFromAngle(dinfo.Angle);
 			Vector3 loc = this.wearer.TrueCenter() + this.impactAngleVect.RotatedBy(180f) * 0.5f;
 			float num = Mathf.Min(10f, 2f + (float)dinfo.Amount / 10f);
-			MoteMaker.MakeStaticMote(loc, ThingDefOf.Mote_ExplosionFlash, num);
+			MoteMaker.MakeStaticMote(loc, this.wearer.Map, ThingDefOf.Mote_ExplosionFlash, num);
 			int num2 = (int)num;
 			for (int i = 0; i < num2; i++)
 			{
-				MoteMaker.ThrowDustPuff(loc, Rand.Range(0.8f, 1.2f));
+				MoteMaker.ThrowDustPuff(loc, this.wearer.Map, Rand.Range(0.8f, 1.2f));
 			}
 			this.lastAbsorbDamageTick = Find.TickManager.TicksGame;
 			this.KeepDisplaying();
@@ -178,12 +188,12 @@ namespace RimWorld
 
 		private void Break()
 		{
-			SoundDefOf.PersonalShieldBroken.PlayOneShot(this.wearer.Position);
-			MoteMaker.MakeStaticMote(this.wearer.TrueCenter(), ThingDefOf.Mote_ExplosionFlash, 12f);
+			SoundDefOf.PersonalShieldBroken.PlayOneShot(new TargetInfo(this.wearer.Position, this.wearer.Map, false));
+			MoteMaker.MakeStaticMote(this.wearer.TrueCenter(), this.wearer.Map, ThingDefOf.Mote_ExplosionFlash, 12f);
 			for (int i = 0; i < 6; i++)
 			{
 				Vector3 loc = this.wearer.TrueCenter() + Vector3Utility.HorizontalVectorFromAngle((float)Rand.Range(0, 360)) * Rand.Range(0.3f, 0.6f);
-				MoteMaker.ThrowDustPuff(loc, Rand.Range(0.8f, 1.2f));
+				MoteMaker.ThrowDustPuff(loc, this.wearer.Map, Rand.Range(0.8f, 1.2f));
 			}
 			this.energy = 0f;
 			this.ticksToReset = this.StartingTicksToReset;
@@ -191,8 +201,11 @@ namespace RimWorld
 
 		private void Reset()
 		{
-			SoundDefOf.PersonalShieldReset.PlayOneShot(this.wearer.Position);
-			MoteMaker.ThrowLightningGlow(this.wearer.TrueCenter(), 3f);
+			if (this.wearer.Spawned)
+			{
+				SoundDefOf.PersonalShieldReset.PlayOneShot(new TargetInfo(this.wearer.Position, this.wearer.Map, false));
+				MoteMaker.ThrowLightningGlow(this.wearer.TrueCenter(), this.wearer.Map, 3f);
+			}
 			this.ticksToReset = -1;
 			this.energy = this.EnergyOnReset;
 		}

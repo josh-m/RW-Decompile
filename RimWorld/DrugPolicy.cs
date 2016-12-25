@@ -72,6 +72,7 @@ namespace RimWorld
 				{
 					DrugPolicyEntry drugPolicyEntry = new DrugPolicyEntry();
 					drugPolicyEntry.drug = allDefsListForReading[i];
+					drugPolicyEntry.allowedForAddiction = true;
 					this.entriesInt.Add(drugPolicyEntry);
 				}
 			}

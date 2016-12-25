@@ -75,7 +75,7 @@ namespace RimWorld
 				initAction = delegate
 				{
 					this.<>f__this.FinishedRemoving();
-					Find.DesignationManager.RemoveAllDesignationsOn(this.<>f__this.Target, false);
+					this.<>f__this.Map.designationManager.RemoveAllDesignationsOn(this.<>f__this.Target, false);
 				},
 				defaultCompleteMode = ToilCompleteMode.Instant
 			};

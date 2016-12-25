@@ -23,8 +23,8 @@ namespace RimWorld
 			for (int i = 0; i < this.lord.ownedPawns.Count; i++)
 			{
 				Pawn p = this.lord.ownedPawns[i];
-				TraderCaravanRole caravanRole = p.GetCaravanRole();
-				if (caravanRole != TraderCaravanRole.Carrier && caravanRole != TraderCaravanRole.Trader)
+				TraderCaravanRole traderCaravanRole = p.GetTraderCaravanRole();
+				if (traderCaravanRole != TraderCaravanRole.Carrier && traderCaravanRole != TraderCaravanRole.Trader)
 				{
 					this.UpdateDutyForChattelOrGuard(p, trader);
 				}
@@ -46,7 +46,7 @@ namespace RimWorld
 			for (int i = 0; i < this.lord.ownedPawns.Count; i++)
 			{
 				Pawn pawn = this.lord.ownedPawns[i];
-				if (pawn.GetCaravanRole() == TraderCaravanRole.Carrier)
+				if (pawn.GetTraderCaravanRole() == TraderCaravanRole.Carrier)
 				{
 					if (trader != null)
 					{
@@ -63,8 +63,8 @@ namespace RimWorld
 
 		private void UpdateDutyForChattelOrGuard(Pawn p, Pawn trader)
 		{
-			TraderCaravanRole caravanRole = p.GetCaravanRole();
-			if (caravanRole == TraderCaravanRole.Chattel)
+			TraderCaravanRole traderCaravanRole = p.GetTraderCaravanRole();
+			if (traderCaravanRole == TraderCaravanRole.Chattel)
 			{
 				if (trader != null)
 				{
@@ -93,15 +93,15 @@ namespace RimWorld
 		private bool TryToDefendClosestCarrier(Pawn p, float escortRadius)
 		{
 			Pawn closestCarrier = this.GetClosestCarrier(p);
-			Thing thing = GenClosest.ClosestThingReachable(p.Position, ThingRequest.ForGroup(ThingRequestGroup.Corpse), PathEndMode.ClosestTouch, TraverseParms.For(p, Danger.Deadly, TraverseMode.ByPawn, false), 20f, delegate(Thing x)
+			Thing thing = GenClosest.ClosestThingReachable(p.Position, p.Map, ThingRequest.ForGroup(ThingRequestGroup.Corpse), PathEndMode.ClosestTouch, TraverseParms.For(p, Danger.Deadly, TraverseMode.ByPawn, false), 20f, delegate(Thing x)
 			{
-				Pawn innerPawn = ((Corpse)x).innerPawn;
-				return innerPawn.Faction == p.Faction && innerPawn.GetCaravanRole() == TraderCaravanRole.Carrier;
+				Pawn innerPawn = ((Corpse)x).InnerPawn;
+				return innerPawn.Faction == p.Faction && innerPawn.GetTraderCaravanRole() == TraderCaravanRole.Carrier;
 			}, null, 15, false);
-			Thing thing2 = GenClosest.ClosestThingReachable(p.Position, ThingRequest.ForGroup(ThingRequestGroup.Pawn), PathEndMode.ClosestTouch, TraverseParms.For(p, Danger.Deadly, TraverseMode.ByPawn, false), 20f, delegate(Thing x)
+			Thing thing2 = GenClosest.ClosestThingReachable(p.Position, p.Map, ThingRequest.ForGroup(ThingRequestGroup.Pawn), PathEndMode.ClosestTouch, TraverseParms.For(p, Danger.Deadly, TraverseMode.ByPawn, false), 20f, delegate(Thing x)
 			{
 				Pawn pawn = (Pawn)x;
-				return pawn.Downed && pawn.Faction == p.Faction && pawn.GetCaravanRole() == TraderCaravanRole.Carrier;
+				return pawn.Downed && pawn.Faction == p.Faction && pawn.GetTraderCaravanRole() == TraderCaravanRole.Carrier;
 			}, null, 15, false);
 			Thing thing3 = null;
 			if (closestCarrier != null)
@@ -138,7 +138,7 @@ namespace RimWorld
 			for (int i = 0; i < this.lord.ownedPawns.Count; i++)
 			{
 				Pawn pawn2 = this.lord.ownedPawns[i];
-				if (pawn2.GetCaravanRole() == TraderCaravanRole.Carrier)
+				if (pawn2.GetTraderCaravanRole() == TraderCaravanRole.Carrier)
 				{
 					float num2 = pawn2.Position.DistanceToSquared(closestTo.Position);
 					if (pawn == null || num2 < num)

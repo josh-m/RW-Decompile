@@ -30,9 +30,9 @@ namespace Verse
 		public override void Regenerate()
 		{
 			float y = Altitudes.AltitudeFor(AltitudeLayer.Zone);
-			ZoneManager zoneManager = Find.ZoneManager;
+			ZoneManager zoneManager = base.Map.zoneManager;
 			CellRect cellRect = new CellRect(this.section.botLeft.x, this.section.botLeft.z, 17, 17);
-			cellRect.ClipInsideMap();
+			cellRect.ClipInsideMap(base.Map);
 			base.ClearSubMeshes(MeshParts.All);
 			for (int i = cellRect.minX; i <= cellRect.maxX; i++)
 			{

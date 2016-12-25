@@ -16,19 +16,22 @@ namespace RimWorld
 		{
 			get
 			{
-				CellRect.CellRectIterator cri = this.OccupiedRect().GetIterator();
-				while (!cri.Done())
+				if (base.Spawned)
 				{
-					List<Thing> thingList = Find.ThingGrid.ThingsListAt(cri.Current);
-					for (int i = 0; i < thingList.Count; i++)
+					CellRect.CellRectIterator cri = this.OccupiedRect().GetIterator();
+					while (!cri.Done())
 					{
-						Plant p = thingList[i] as Plant;
-						if (p != null)
+						List<Thing> thingList = base.Map.thingGrid.ThingsListAt(cri.Current);
+						for (int i = 0; i < thingList.Count; i++)
 						{
-							yield return p;
+							Plant p = thingList[i] as Plant;
+							if (p != null)
+							{
+								yield return p;
+							}
 						}
+						cri.MoveNext();
 					}
-					cri.MoveNext();
 				}
 			}
 		}
@@ -49,9 +52,9 @@ namespace RimWorld
 			this.plantDefToGrow = this.def.building.defaultPlantToGrow;
 		}
 
-		public override void SpawnSetup()
+		public override void SpawnSetup(Map map)
 		{
-			base.SpawnSetup();
+			base.SpawnSetup(map);
 			this.compPower = base.GetComp<CompPowerTrader>();
 			PlayerKnowledgeDatabase.KnowledgeDemonstrated(ConceptDefOf.GrowingFood, KnowledgeAmount.Total);
 		}
@@ -68,7 +71,7 @@ namespace RimWorld
 			{
 				foreach (Plant current in this.PlantsOnMe)
 				{
-					DamageInfo dinfo = new DamageInfo(DamageDefOf.Rotting, 4, null, null, null);
+					DamageInfo dinfo = new DamageInfo(DamageDefOf.Rotting, 4, -1f, null, null, null);
 					current.TakeDamage(dinfo);
 				}
 			}
@@ -76,26 +79,26 @@ namespace RimWorld
 
 		public override void DeSpawn()
 		{
-			base.DeSpawn();
-			if (this.def.building.plantsDestroyWithMe)
+			foreach (Plant current in this.PlantsOnMe.ToList<Plant>())
 			{
-				foreach (Plant current in this.PlantsOnMe.ToList<Plant>())
-				{
-					current.Destroy(DestroyMode.Vanish);
-				}
+				current.Destroy(DestroyMode.Vanish);
 			}
+			base.DeSpawn();
 		}
 
 		public override string GetInspectString()
 		{
 			string text = base.GetInspectString();
-			if (GenPlant.GrowthSeasonNow(base.Position))
+			if (base.Spawned)
 			{
-				text = text + "\n" + "GrowSeasonHereNow".Translate();
-			}
-			else
-			{
-				text = text + "\n" + "CannotGrowTooCold".Translate();
+				if (GenPlant.GrowthSeasonNow(base.Position, base.Map))
+				{
+					text = text + "\n" + "GrowSeasonHereNow".Translate();
+				}
+				else
+				{
+					text = text + "\n" + "CannotGrowTooCold".Translate();
+				}
 			}
 			return text;
 		}
@@ -113,6 +116,11 @@ namespace RimWorld
 		public bool CanAcceptSowNow()
 		{
 			return this.compPower == null || this.compPower.PowerOn;
+		}
+
+		virtual Map get_Map()
+		{
+			return base.Map;
 		}
 	}
 }

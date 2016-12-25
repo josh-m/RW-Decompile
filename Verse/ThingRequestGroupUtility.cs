@@ -18,7 +18,7 @@ namespace Verse
 				return true;
 			case ThingRequestGroup.HaulableAlways:
 				return true;
-			case ThingRequestGroup.CultivatedPlant:
+			case ThingRequestGroup.Plant:
 				return false;
 			case ThingRequestGroup.FoodSource:
 				return true;
@@ -62,9 +62,11 @@ namespace Verse
 				return false;
 			case ThingRequestGroup.Art:
 				return false;
-			case ThingRequestGroup.Container:
+			case ThingRequestGroup.ContainerEnclosure:
 				return false;
-			case ThingRequestGroup.DropPod:
+			case ThingRequestGroup.ActiveDropPod:
+				return false;
+			case ThingRequestGroup.Transporter:
 				return false;
 			default:
 				throw new ArgumentException("group");

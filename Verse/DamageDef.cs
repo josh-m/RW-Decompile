@@ -22,6 +22,7 @@ namespace Verse
 
 		public bool canInterruptJobs = true;
 
+		[MustTranslate]
 		public string deathMessage = "{0} has been killed.";
 
 		public ImpactSoundType impactSoundType;

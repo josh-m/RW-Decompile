@@ -11,7 +11,7 @@ namespace Verse
 			return false;
 		}
 
-		public virtual bool PotentiallyMatches(ThingDef def)
+		public virtual bool CanEverMatch(ThingDef def)
 		{
 			return true;
 		}

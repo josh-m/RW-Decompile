@@ -1,3 +1,4 @@
+using RimWorld.Planet;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -31,7 +32,7 @@ namespace RimWorld
 					list.Add(new FloatMenuOption(localFd.LabelCap, delegate
 					{
 						this.factionDef = localFd;
-					}, MenuOptionPriority.Medium, null, null, 0f, null));
+					}, MenuOptionPriority.Default, null, null, 0f, null, null));
 				}
 				Find.WindowStack.Add(new FloatMenu(list));
 			}
@@ -59,8 +60,12 @@ namespace RimWorld
 
 		public override void PreMapGenerate()
 		{
-			Find.GameInitData.playerFaction.homeSquare = Find.GameInitData.startingCoords;
 			Find.FactionManager.Add(Find.GameInitData.playerFaction);
+			FactionBase factionBase = (FactionBase)WorldObjectMaker.MakeWorldObject(WorldObjectDefOf.FactionBase);
+			factionBase.SetFaction(Find.GameInitData.playerFaction);
+			factionBase.Tile = Find.GameInitData.startingTile;
+			factionBase.Name = FactionBaseNameGenerator.GenerateFactionBaseName(factionBase);
+			Find.WorldObjects.Add(factionBase);
 			FactionGenerator.EnsureRequiredEnemies(Find.GameInitData.playerFaction);
 		}
 

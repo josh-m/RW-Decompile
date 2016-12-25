@@ -164,11 +164,15 @@ namespace RimWorld
 			{
 				return -1f;
 			}
+			if (DebugSettings.alwaysDoLovin)
+			{
+				return 0.1f;
+			}
 			if (pawn.needs.food.Starving || partner.needs.food.Starving)
 			{
 				return -1f;
 			}
-			if (pawn.health.hediffSet.BleedingRate > 0f || partner.health.hediffSet.BleedingRate > 0f)
+			if (pawn.health.hediffSet.BleedRateTotal > 0f || partner.health.hediffSet.BleedRateTotal > 0f)
 			{
 				return -1f;
 			}
@@ -185,8 +189,8 @@ namespace RimWorld
 			float num3 = 12f;
 			num3 *= num;
 			num3 *= num2;
-			num3 /= Mathf.Max(pawn.relations.AttractionTo(partner), 0.1f);
-			num3 /= Mathf.Max(partner.relations.AttractionTo(pawn), 0.1f);
+			num3 /= Mathf.Max(pawn.relations.SecondaryRomanceChanceFactor(partner), 0.1f);
+			num3 /= Mathf.Max(partner.relations.SecondaryRomanceChanceFactor(pawn), 0.1f);
 			num3 *= GenMath.LerpDouble(-100f, 100f, 1.3f, 0.7f, (float)pawn.relations.OpinionOf(partner));
 			return num3 * GenMath.LerpDouble(-100f, 100f, 1.3f, 0.7f, (float)partner.relations.OpinionOf(pawn));
 		}
@@ -194,7 +198,7 @@ namespace RimWorld
 		private static float LovinMtbSinglePawnFactor(Pawn pawn)
 		{
 			float num = 1f;
-			num /= 1f - pawn.health.hediffSet.Pain;
+			num /= 1f - pawn.health.hediffSet.PainTotal;
 			float efficiency = pawn.health.capacities.GetEfficiency(PawnCapacityDefOf.Consciousness);
 			if (efficiency < 0.5f)
 			{
@@ -269,13 +273,13 @@ namespace RimWorld
 				num4 = 0.01f;
 			}
 			float num5;
-			if (request.FixedSkinWhiteness.HasValue)
+			if (request.FixedMelanin.HasValue)
 			{
-				num5 = ChildRelationUtility.GetSkinSimilarityFactor(request.FixedSkinWhiteness.Value, other.story.skinWhiteness);
+				num5 = ChildRelationUtility.GetMelaninSimilarityFactor(request.FixedMelanin.Value, other.story.melanin);
 			}
 			else
 			{
-				num5 = PawnSkinColors.GetWhitenessCommonalityFactor(other.story.skinWhiteness);
+				num5 = PawnSkinColors.GetMelaninCommonalityFactor(other.story.melanin);
 			}
 			return num * generationChanceAgeFactor * generationChanceAgeFactor2 * generationChanceAgeGapFactor * num3 * num5 * num4;
 		}

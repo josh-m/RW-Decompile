@@ -1,3 +1,4 @@
+using RimWorld.Planet;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -61,14 +62,14 @@ namespace RimWorld
 
 		private void AddAllTradeables()
 		{
-			foreach (Thing current in TradeSession.trader.ColonyThingsWillingToBuy)
+			foreach (Thing current in TradeSession.trader.ColonyThingsWillingToBuy(TradeSession.playerNegotiator))
 			{
-				string item;
-				if (!this.InSellablePosition(current, out item))
+				string text;
+				if (!TradeSession.playerNegotiator.IsWorldPawn() && !this.InSellablePosition(current, out text))
 				{
-					if (!this.cannotSellReasons.Contains(item))
+					if (text != null && !this.cannotSellReasons.Contains(text))
 					{
-						this.cannotSellReasons.Add(item);
+						this.cannotSellReasons.Add(text);
 					}
 				}
 				else
@@ -90,19 +91,24 @@ namespace RimWorld
 
 		private bool InSellablePosition(Thing t, out string reason)
 		{
-			if (t.Position.Fogged())
+			if (!t.Spawned)
 			{
 				reason = null;
 				return false;
 			}
-			Room room = t.Position.GetRoom();
+			if (t.Position.Fogged(t.Map))
+			{
+				reason = null;
+				return false;
+			}
+			Room room = t.GetRoom();
 			int num = GenRadial.NumCellsInRadius(6.9f);
 			for (int i = 0; i < num; i++)
 			{
 				IntVec3 intVec = t.Position + GenRadial.RadialPattern[i];
-				if (intVec.InBounds() && intVec.GetRoom() == room)
+				if (intVec.InBounds(t.Map) && intVec.GetRoom(t.Map) == room)
 				{
-					List<Thing> thingList = intVec.GetThingList();
+					List<Thing> thingList = intVec.GetThingList(t.Map);
 					for (int j = 0; j < thingList.Count; j++)
 					{
 						if (thingList[j].PreventPlayerSellingThingsNearby(out reason))
@@ -118,7 +124,7 @@ namespace RimWorld
 
 		private void AddToTradeables(Thing t, Transactor trans)
 		{
-			Tradeable tradeable = this.TradeableMatching(t);
+			Tradeable tradeable = TransferableUtility.TransferableMatching<Tradeable>(t, this.tradeables);
 			if (tradeable == null)
 			{
 				Pawn pawn = t as Pawn;
@@ -133,18 +139,6 @@ namespace RimWorld
 				this.tradeables.Add(tradeable);
 			}
 			tradeable.AddThing(t, trans);
-		}
-
-		private Tradeable TradeableMatching(Thing thing)
-		{
-			foreach (Tradeable current in this.tradeables)
-			{
-				if (TradeUtility.TradeAsOne(thing, current.AnyThing))
-				{
-					return current;
-				}
-			}
-			return null;
 		}
 
 		public void UpdateCurrencyCount()

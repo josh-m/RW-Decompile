@@ -59,6 +59,7 @@ namespace RimWorld
 			transition3.AddTrigger(new Trigger_PawnHarmed());
 			transition3.AddPreAction(new TransitionAction_WakeAll());
 			transition3.AddPreAction(new TransitionAction_SetDefendTrader());
+			transition3.AddPreAction(new TransitionAction_EndAllJobs());
 			stateGraph.AddTransition(transition3);
 			Transition transition4 = new Transition(lordToil_Travel, lordToil_DefendTraderCaravan2);
 			transition4.AddTrigger(new Trigger_Memo("TravelArrived"));
@@ -88,9 +89,10 @@ namespace RimWorld
 				lordToil_Travel,
 				lordToil_DefendTraderCaravan
 			});
-			transition9.AddTrigger(new Trigger_ImportantCaravanPeopleLost());
+			transition9.AddTrigger(new Trigger_ImportantTraderCaravanPeopleLost());
 			transition9.AddTrigger(new Trigger_BecameColonyEnemy());
 			transition9.AddPreAction(new TransitionAction_WakeAll());
+			transition9.AddPreAction(new TransitionAction_EndAllJobs());
 			stateGraph.AddTransition(transition9);
 			return stateGraph;
 		}

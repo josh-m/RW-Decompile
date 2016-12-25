@@ -8,7 +8,7 @@ namespace RimWorld
 	{
 		protected override Job TryGiveJob(Pawn pawn)
 		{
-			Region region = pawn.Position.GetRegion();
+			Region region = pawn.GetRegion();
 			if (region == null)
 			{
 				return null;
@@ -19,8 +19,8 @@ namespace RimWorld
 				for (int j = 0; j < 4; j++)
 				{
 					IntVec3 c = randomCell + GenAdj.CardinalDirections[j];
-					Building edifice = c.GetEdifice();
-					if (edifice != null && edifice.def.passability == Traversability.Impassable && edifice.def.size == IntVec2.One && pawn.CanReserve(edifice, 1))
+					Building edifice = c.GetEdifice(pawn.Map);
+					if (edifice != null && (edifice.def.passability == Traversability.Impassable || edifice.def.IsDoor) && edifice.def.size == IntVec2.One && edifice.def != ThingDefOf.CollapsedRocks && pawn.CanReserve(edifice, 1))
 					{
 						return new Job(JobDefOf.Mine, edifice)
 						{

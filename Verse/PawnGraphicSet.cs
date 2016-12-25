@@ -15,6 +15,8 @@ namespace Verse
 
 		public Graphic dessicatedGraphic;
 
+		public Graphic packGraphic;
+
 		public DamageFlasher flasher;
 
 		public Graphic headGraphic;
@@ -128,8 +130,8 @@ namespace Verse
 			this.ClearCache();
 			if (this.pawn.RaceProps.Humanlike)
 			{
-				this.nakedGraphic = GraphicGetter_NakedHumanlike.GetNakedBodyGraphic(this.pawn.story.BodyType, ShaderDatabase.CutoutSkin, this.pawn.story.SkinColor);
-				this.rottingGraphic = GraphicGetter_NakedHumanlike.GetNakedBodyGraphic(this.pawn.story.BodyType, ShaderDatabase.CutoutSkin, PawnGraphicSet.RottingColor);
+				this.nakedGraphic = GraphicGetter_NakedHumanlike.GetNakedBodyGraphic(this.pawn.story.bodyType, ShaderDatabase.CutoutSkin, this.pawn.story.SkinColor);
+				this.rottingGraphic = GraphicGetter_NakedHumanlike.GetNakedBodyGraphic(this.pawn.story.bodyType, ShaderDatabase.CutoutSkin, PawnGraphicSet.RottingColor);
 				this.dessicatedGraphic = GraphicDatabase.Get<Graphic_Multi>("Things/Pawn/Humanlike/HumanoidDessicated", ShaderDatabase.Cutout);
 				this.headGraphic = GraphicDatabaseHeadRecords.GetHeadNamed(this.pawn.story.HeadGraphicPath, this.pawn.story.SkinColor);
 				this.desiccatedHeadGraphic = GraphicDatabaseHeadRecords.GetHeadNamed(this.pawn.story.HeadGraphicPath, PawnGraphicSet.RottingColor);
@@ -149,6 +151,10 @@ namespace Verse
 					this.nakedGraphic = curKindLifeStage.femaleGraphicData.Graphic;
 				}
 				this.rottingGraphic = this.nakedGraphic.GetColoredVersion(ShaderDatabase.CutoutSkin, PawnGraphicSet.RottingColor, PawnGraphicSet.RottingColor);
+				if (this.pawn.RaceProps.packAnimal)
+				{
+					this.packGraphic = GraphicDatabase.Get<Graphic_Multi>(this.nakedGraphic.path + "Pack", ShaderDatabase.Cutout, this.nakedGraphic.drawSize, Color.white);
+				}
 				if (curKindLifeStage.dessicatedBodyGraphicData != null)
 				{
 					this.dessicatedGraphic = curKindLifeStage.dessicatedBodyGraphicData.GraphicColoredFor(this.pawn);
@@ -163,7 +169,7 @@ namespace Verse
 			foreach (Apparel current in this.pawn.apparel.WornApparelInDrawOrder)
 			{
 				ApparelGraphicRecord item;
-				if (ApparelGraphicRecordGetter.TryGetGraphicApparel(current, this.pawn.story.BodyType, out item))
+				if (ApparelGraphicRecordGetter.TryGetGraphicApparel(current, this.pawn.story.bodyType, out item))
 				{
 					this.apparelGraphics.Add(item);
 				}

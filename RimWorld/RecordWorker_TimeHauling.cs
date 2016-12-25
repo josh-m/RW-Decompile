@@ -7,7 +7,7 @@ namespace RimWorld
 	{
 		public override bool ShouldMeasureTimeNow(Pawn pawn)
 		{
-			return !pawn.Dead && pawn.carrier.CarriedThing != null;
+			return !pawn.Dead && pawn.carryTracker.CarriedThing != null;
 		}
 	}
 }

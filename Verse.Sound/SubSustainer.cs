@@ -47,7 +47,7 @@ namespace Verse.Sound
 			{
 				this.creationFrame = Time.frameCount;
 				this.creationRealTime = Time.realtimeSinceStartup;
-				if (Current.ProgramState == ProgramState.MapPlaying)
+				if (Current.ProgramState == ProgramState.Playing)
 				{
 					this.creationTick = Find.TickManager.TicksGame;
 				}

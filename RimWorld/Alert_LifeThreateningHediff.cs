@@ -12,7 +12,7 @@ namespace RimWorld
 		{
 			get
 			{
-				foreach (Pawn p in Find.MapPawns.FreeColonistsAndPrisonersSpawned)
+				foreach (Pawn p in PawnsFinder.AllMaps_FreeColonistsAndPrisonersSpawned)
 				{
 					foreach (Hediff diff in p.health.hediffSet.hediffs)
 					{
@@ -25,46 +25,37 @@ namespace RimWorld
 			}
 		}
 
-		public override string FullLabel
+		public override string GetLabel()
 		{
-			get
-			{
-				return "PawnsWithLifeThreateningDisease".Translate();
-			}
+			return "PawnsWithLifeThreateningDisease".Translate();
 		}
 
-		public override string FullExplanation
+		public override string GetExplanation()
 		{
-			get
+			StringBuilder stringBuilder = new StringBuilder();
+			bool flag = false;
+			foreach (Pawn current in this.SickPawns)
 			{
-				StringBuilder stringBuilder = new StringBuilder();
-				bool flag = false;
-				foreach (Pawn current in this.SickPawns)
+				stringBuilder.AppendLine("    " + current.NameStringShort);
+				foreach (Hediff current2 in current.health.hediffSet.hediffs)
 				{
-					stringBuilder.AppendLine("    " + current.NameStringShort);
-					foreach (Hediff current2 in current.health.hediffSet.hediffs)
+					if (current2.CurStage != null && current2.CurStage.lifeThreatening && current2.Part != null && current2.Part != current.RaceProps.body.corePart)
 					{
-						if (current2.CurStage != null && current2.CurStage.lifeThreatening && current2.Part != null && current2.Part != current.RaceProps.body.corePart)
-						{
-							flag = true;
-							break;
-						}
+						flag = true;
+						break;
 					}
 				}
-				if (flag)
-				{
-					return string.Format("PawnsWithLifeThreateningDiseaseAmputationDesc".Translate(), stringBuilder.ToString());
-				}
-				return string.Format("PawnsWithLifeThreateningDiseaseDesc".Translate(), stringBuilder.ToString());
 			}
+			if (flag)
+			{
+				return string.Format("PawnsWithLifeThreateningDiseaseAmputationDesc".Translate(), stringBuilder.ToString());
+			}
+			return string.Format("PawnsWithLifeThreateningDiseaseDesc".Translate(), stringBuilder.ToString());
 		}
 
-		public override AlertReport Report
+		public override AlertReport GetReport()
 		{
-			get
-			{
-				return AlertReport.CulpritIs(this.SickPawns.FirstOrDefault<Pawn>());
-			}
+			return AlertReport.CulpritIs(this.SickPawns.FirstOrDefault<Pawn>());
 		}
 	}
 }

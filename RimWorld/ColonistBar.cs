@@ -1,3 +1,4 @@
+using RimWorld.Planet;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -8,357 +9,266 @@ namespace RimWorld
 	[StaticConstructorOnStartup]
 	public class ColonistBar
 	{
-		private const float PawnTextureCameraZoom = 1.28205f;
+		public struct Entry
+		{
+			public Pawn pawn;
 
-		private const float PawnTextureHorizontalPadding = 1f;
+			public Map map;
 
-		private const float MarginTop = 21f;
+			public int group;
 
-		private const float BaseSpacingHorizontal = 24f;
+			public Entry(Pawn pawn, Map map, int group)
+			{
+				this.pawn = pawn;
+				this.map = map;
+				this.group = group;
+			}
+		}
 
-		private const float BaseSpacingVertical = 32f;
+		public const float BaseSelectedTexJump = 20f;
 
-		private const float BaseSelectedTexJump = 20f;
+		public const float BaseSelectedTexScale = 0.4f;
 
-		private const float BaseIconSize = 20f;
+		public const float EntryInAnotherMapAlpha = 0.4f;
 
-		private const float DoubleClickTime = 0.5f;
+		public const float BaseSpaceBetweenGroups = 25f;
 
-		private List<Pawn> cachedColonists = new List<Pawn>();
+		public const float BaseSpaceBetweenColonistsHorizontal = 24f;
+
+		public const float BaseSpaceBetweenColonistsVertical = 32f;
+
+		public ColonistBarColonistDrawer drawer = new ColonistBarColonistDrawer();
+
+		private ColonistBarDrawLocsFinder drawLocsFinder = new ColonistBarDrawLocsFinder();
+
+		private List<ColonistBar.Entry> cachedEntries = new List<ColonistBar.Entry>();
 
 		private List<Vector2> cachedDrawLocs = new List<Vector2>();
 
-		private bool colonistsDirty = true;
+		private float cachedScale = 1f;
 
-		private Dictionary<string, string> pawnLabelsCache = new Dictionary<string, string>();
+		private bool entriesDirty = true;
 
-		private Pawn clickedColonist;
+		public static readonly Texture2D BGTex = Command.BGTex;
 
-		private float clickedAt;
+		public static readonly Vector2 BaseSize = new Vector2(48f, 48f);
 
-		private static readonly Texture2D BGTex = Command.BGTex;
+		private static List<Pawn> tmpPawns = new List<Pawn>();
 
-		private static readonly Texture2D SelectedTex = ContentFinder<Texture2D>.Get("UI/Overlays/SelectionBracketGUI", true);
+		private static List<Map> tmpMaps = new List<Map>();
 
-		private static readonly Texture2D DeadColonistTex = ContentFinder<Texture2D>.Get("UI/Misc/DeadColonist", true);
+		private static List<Caravan> tmpCaravans = new List<Caravan>();
 
-		private static readonly Texture2D Icon_MentalStateNonAggro = ContentFinder<Texture2D>.Get("UI/Icons/ColonistBar/MentalStateNonAggro", true);
+		private static List<Pawn> tmpColonistsInOrder = new List<Pawn>();
 
-		private static readonly Texture2D Icon_MentalStateAggro = ContentFinder<Texture2D>.Get("UI/Icons/ColonistBar/MentalStateAggro", true);
-
-		private static readonly Texture2D Icon_MedicalRest = ContentFinder<Texture2D>.Get("UI/Icons/ColonistBar/MedicalRest", true);
-
-		private static readonly Texture2D Icon_Sleeping = ContentFinder<Texture2D>.Get("UI/Icons/ColonistBar/Sleeping", true);
-
-		private static readonly Texture2D Icon_Fleeing = ContentFinder<Texture2D>.Get("UI/Icons/ColonistBar/Fleeing", true);
-
-		private static readonly Texture2D Icon_Attacking = ContentFinder<Texture2D>.Get("UI/Icons/ColonistBar/Attacking", true);
-
-		private static readonly Texture2D Icon_Idle = ContentFinder<Texture2D>.Get("UI/Icons/ColonistBar/Idle", true);
-
-		private static readonly Texture2D Icon_Burning = ContentFinder<Texture2D>.Get("UI/Icons/ColonistBar/Burning", true);
-
-		private static readonly Texture2D MoodBGTex = SolidColorMaterials.NewSolidColorTexture(new Color(0.4f, 0.47f, 0.53f, 0.44f));
-
-		private static readonly Vector2 BaseSize = new Vector2(48f, 48f);
-
-		public static readonly Vector2 PawnTextureSize = new Vector2(ColonistBar.BaseSize.x - 2f, 75f);
-
-		private static readonly Vector3 PawnTextureCameraOffset = new Vector3(0f, 0f, 0.3f);
+		private static List<Pair<Thing, Map>> tmpColonistsWithMap = new List<Pair<Thing, Map>>();
 
 		private static List<Thing> tmpColonists = new List<Thing>();
 
-		public List<Pawn> ColonistsInOrder
+		private static List<Thing> tmpMapColonistsOrCorpsesInScreenRect = new List<Thing>();
+
+		private static List<Pawn> tmpCaravanPawns = new List<Pawn>();
+
+		public List<ColonistBar.Entry> Entries
 		{
 			get
 			{
-				this.CheckRecacheColonistsRaw();
-				return this.cachedColonists;
+				this.CheckRecacheEntries();
+				return this.cachedEntries;
 			}
 		}
 
-		private float Scale
+		private bool ShowGroupFrames
 		{
 			get
 			{
-				float num = 1f;
-				while (true)
+				List<ColonistBar.Entry> entries = this.Entries;
+				int num = -1;
+				for (int i = 0; i < entries.Count; i++)
 				{
-					int allowedRowsCountForScale = ColonistBar.GetAllowedRowsCountForScale(num);
-					int num2 = this.RowsCountAssumingScale(num);
-					if (num2 <= allowedRowsCountForScale)
-					{
-						break;
-					}
-					num *= 0.95f;
+					num = Mathf.Max(num, entries[i].group);
 				}
-				return num;
+				return num >= 1;
 			}
 		}
 
-		private static float MaxColonistBarWidth
+		public float Scale
 		{
 			get
 			{
-				return (float)Screen.width - 320f;
+				return this.cachedScale;
 			}
 		}
 
-		private Vector2 Size
+		public List<Vector2> DrawLocs
 		{
 			get
 			{
-				return ColonistBar.SizeAssumingScale(this.Scale);
+				return this.cachedDrawLocs;
 			}
 		}
 
-		private float SpacingHorizontal
+		public Vector2 Size
 		{
 			get
 			{
-				return ColonistBar.SpacingHorizontalAssumingScale(this.Scale);
+				return ColonistBar.BaseSize * this.Scale;
 			}
 		}
 
-		private float SpacingVertical
+		public float SpaceBetweenColonistsHorizontal
 		{
 			get
 			{
-				return ColonistBar.SpacingVerticalAssumingScale(this.Scale);
+				return 24f * this.Scale;
 			}
 		}
 
-		private int ColonistsPerRow
+		private bool Visible
 		{
 			get
 			{
-				return ColonistBar.ColonistsPerRowAssumingScale(this.Scale);
+				return UI.screenWidth >= 1000 && UI.screenHeight >= 760;
 			}
 		}
 
-		private static Vector2 SizeAssumingScale(float scale)
+		public void MarkColonistsDirty()
 		{
-			return ColonistBar.BaseSize * scale;
-		}
-
-		private int RowsCountAssumingScale(float scale)
-		{
-			return Mathf.CeilToInt((float)this.cachedDrawLocs.Count / (float)ColonistBar.ColonistsPerRowAssumingScale(scale));
-		}
-
-		private static int ColonistsPerRowAssumingScale(float scale)
-		{
-			return Mathf.FloorToInt((ColonistBar.MaxColonistBarWidth + ColonistBar.SpacingHorizontalAssumingScale(scale)) / (ColonistBar.SizeAssumingScale(scale).x + ColonistBar.SpacingHorizontalAssumingScale(scale)));
-		}
-
-		private static float SpacingHorizontalAssumingScale(float scale)
-		{
-			return 24f * scale;
-		}
-
-		private static float SpacingVerticalAssumingScale(float scale)
-		{
-			return 32f * scale;
-		}
-
-		private static int GetAllowedRowsCountForScale(float scale)
-		{
-			if (scale > 0.58f)
-			{
-				return 1;
-			}
-			if (scale > 0.42f)
-			{
-				return 2;
-			}
-			return 3;
-		}
-
-		public void MarkColonistsListDirty()
-		{
-			this.colonistsDirty = true;
+			this.entriesDirty = true;
 		}
 
 		public void ColonistBarOnGUI()
 		{
-			if (!Find.PlaySettings.showColonistBar)
+			if (!this.Visible)
 			{
 				return;
 			}
-			if (Event.current.type == EventType.Layout)
+			if (Event.current.type != EventType.Layout)
 			{
-				this.RecacheDrawLocs();
-			}
-			else
-			{
+				List<ColonistBar.Entry> entries = this.Entries;
+				int num = -1;
+				bool showGroupFrames = this.ShowGroupFrames;
 				for (int i = 0; i < this.cachedDrawLocs.Count; i++)
 				{
 					Rect rect = new Rect(this.cachedDrawLocs[i].x, this.cachedDrawLocs[i].y, this.Size.x, this.Size.y);
-					Pawn colonist = this.cachedColonists[i];
-					this.HandleColonistClicks(rect, colonist);
+					ColonistBar.Entry entry = entries[i];
+					bool flag = num != entry.group;
+					num = entry.group;
+					if (entry.pawn != null)
+					{
+						this.drawer.HandleClicks(rect, entry.pawn);
+					}
 					if (Event.current.type == EventType.Repaint)
 					{
-						this.DrawColonist(rect, colonist);
-					}
-				}
-			}
-		}
-
-		public List<Thing> ColonistsInScreenRect(Rect rect)
-		{
-			ColonistBar.tmpColonists.Clear();
-			this.RecacheDrawLocs();
-			for (int i = 0; i < this.cachedDrawLocs.Count; i++)
-			{
-				if (rect.Overlaps(new Rect(this.cachedDrawLocs[i].x, this.cachedDrawLocs[i].y, this.Size.x, this.Size.y)))
-				{
-					Thing thing;
-					if (this.cachedColonists[i].Dead)
-					{
-						thing = this.cachedColonists[i].corpse;
-					}
-					else
-					{
-						thing = this.cachedColonists[i];
-					}
-					if (thing != null && thing.Spawned)
-					{
-						ColonistBar.tmpColonists.Add(thing);
-					}
-				}
-			}
-			return ColonistBar.tmpColonists;
-		}
-
-		public Thing ColonistAt(Vector2 pos)
-		{
-			Pawn pawn = null;
-			this.RecacheDrawLocs();
-			for (int i = 0; i < this.cachedDrawLocs.Count; i++)
-			{
-				Rect rect = new Rect(this.cachedDrawLocs[i].x, this.cachedDrawLocs[i].y, this.Size.x, this.Size.y);
-				if (rect.Contains(pos))
-				{
-					pawn = this.cachedColonists[i];
-				}
-			}
-			Thing thing;
-			if (pawn != null && pawn.Dead)
-			{
-				thing = pawn.corpse;
-			}
-			else
-			{
-				thing = pawn;
-			}
-			if (thing != null && thing.Spawned)
-			{
-				return thing;
-			}
-			return null;
-		}
-
-		private void RecacheDrawLocs()
-		{
-			this.CheckRecacheColonistsRaw();
-			Vector2 size = this.Size;
-			int colonistsPerRow = this.ColonistsPerRow;
-			float spacingHorizontal = this.SpacingHorizontal;
-			float spacingVertical = this.SpacingVertical;
-			float num = 0f;
-			float num2 = 21f;
-			this.cachedDrawLocs.Clear();
-			for (int i = 0; i < this.cachedColonists.Count; i++)
-			{
-				if (i % colonistsPerRow == 0)
-				{
-					int num3 = Mathf.Min(colonistsPerRow, this.cachedColonists.Count - i);
-					float num4 = (float)num3 * size.x + (float)(num3 - 1) * spacingHorizontal;
-					num = ((float)Screen.width - num4) / 2f;
-					if (i != 0)
-					{
-						num2 += size.y + spacingVertical;
-					}
-				}
-				else
-				{
-					num += size.x + spacingHorizontal;
-				}
-				this.cachedDrawLocs.Add(new Vector2(num, num2));
-			}
-		}
-
-		private void CheckRecacheColonistsRaw()
-		{
-			if (!this.colonistsDirty)
-			{
-				return;
-			}
-			this.cachedColonists.Clear();
-			this.cachedColonists.AddRange(Find.MapPawns.FreeColonists);
-			List<Thing> list = Find.ListerThings.ThingsInGroup(ThingRequestGroup.Corpse);
-			for (int i = 0; i < list.Count; i++)
-			{
-				if (!list[i].IsDessicated())
-				{
-					Pawn innerPawn = ((Corpse)list[i]).innerPawn;
-					if (innerPawn != null)
-					{
-						if (innerPawn.IsColonist)
+						if (flag && showGroupFrames)
 						{
-							this.cachedColonists.Add(innerPawn);
+							this.drawer.DrawGroupFrame(entry.group);
+						}
+						if (entry.pawn != null)
+						{
+							this.drawer.DrawColonist(rect, entry.pawn, entry.map);
+						}
+					}
+				}
+				num = -1;
+				if (showGroupFrames)
+				{
+					for (int j = 0; j < this.cachedDrawLocs.Count; j++)
+					{
+						ColonistBar.Entry entry2 = entries[j];
+						bool flag2 = num != entry2.group;
+						num = entry2.group;
+						if (flag2)
+						{
+							this.drawer.HandleGroupFrameClicks(entry2.group);
 						}
 					}
 				}
 			}
-			List<Pawn> allPawnsSpawned = Find.MapPawns.AllPawnsSpawned;
-			for (int j = 0; j < allPawnsSpawned.Count; j++)
+		}
+
+		private void CheckRecacheEntries()
+		{
+			if (!this.entriesDirty)
 			{
-				Corpse corpse = allPawnsSpawned[j].carrier.CarriedThing as Corpse;
-				if (corpse != null && !corpse.IsDessicated() && corpse.innerPawn.IsColonist)
+				return;
+			}
+			this.entriesDirty = false;
+			this.cachedEntries.Clear();
+			if (Find.PlaySettings.showColonistBar)
+			{
+				ColonistBar.tmpMaps.Clear();
+				ColonistBar.tmpMaps.AddRange(Find.Maps);
+				ColonistBar.tmpMaps.SortBy((Map x) => !x.IsPlayerHome, (Map x) => x.uniqueID);
+				int num = 0;
+				for (int i = 0; i < ColonistBar.tmpMaps.Count; i++)
 				{
-					this.cachedColonists.Add(corpse.innerPawn);
+					ColonistBar.tmpPawns.Clear();
+					ColonistBar.tmpPawns.AddRange(ColonistBar.tmpMaps[i].mapPawns.FreeColonists);
+					List<Thing> list = ColonistBar.tmpMaps[i].listerThings.ThingsInGroup(ThingRequestGroup.Corpse);
+					for (int j = 0; j < list.Count; j++)
+					{
+						if (!list[j].IsDessicated())
+						{
+							Pawn innerPawn = ((Corpse)list[j]).InnerPawn;
+							if (innerPawn != null)
+							{
+								if (innerPawn.IsColonist)
+								{
+									ColonistBar.tmpPawns.Add(innerPawn);
+								}
+							}
+						}
+					}
+					List<Pawn> allPawnsSpawned = ColonistBar.tmpMaps[i].mapPawns.AllPawnsSpawned;
+					for (int k = 0; k < allPawnsSpawned.Count; k++)
+					{
+						Corpse corpse = allPawnsSpawned[k].carryTracker.CarriedThing as Corpse;
+						if (corpse != null && !corpse.IsDessicated() && corpse.InnerPawn.IsColonist)
+						{
+							ColonistBar.tmpPawns.Add(corpse.InnerPawn);
+						}
+					}
+					ColonistBar.tmpPawns.SortBy((Pawn x) => x.thingIDNumber);
+					for (int l = 0; l < ColonistBar.tmpPawns.Count; l++)
+					{
+						this.cachedEntries.Add(new ColonistBar.Entry(ColonistBar.tmpPawns[l], ColonistBar.tmpMaps[i], num));
+					}
+					if (!ColonistBar.tmpPawns.Any<Pawn>())
+					{
+						this.cachedEntries.Add(new ColonistBar.Entry(null, ColonistBar.tmpMaps[i], num));
+					}
+					num++;
+				}
+				ColonistBar.tmpCaravans.Clear();
+				ColonistBar.tmpCaravans.AddRange(Find.WorldObjects.Caravans);
+				ColonistBar.tmpCaravans.SortBy((Caravan x) => x.ID);
+				for (int m = 0; m < ColonistBar.tmpCaravans.Count; m++)
+				{
+					if (ColonistBar.tmpCaravans[m].IsPlayerControlled)
+					{
+						ColonistBar.tmpPawns.Clear();
+						ColonistBar.tmpPawns.AddRange(ColonistBar.tmpCaravans[m].PawnsListForReading);
+						ColonistBar.tmpPawns.SortBy((Pawn x) => x.thingIDNumber);
+						for (int n = 0; n < ColonistBar.tmpPawns.Count; n++)
+						{
+							if (ColonistBar.tmpPawns[n].IsColonist)
+							{
+								this.cachedEntries.Add(new ColonistBar.Entry(ColonistBar.tmpPawns[n], null, num));
+							}
+						}
+						num++;
+					}
 				}
 			}
-			this.cachedColonists.SortBy((Pawn x) => x.thingIDNumber);
-			this.pawnLabelsCache.Clear();
-			this.colonistsDirty = false;
+			this.drawer.Notify_RecachedEntries();
+			ColonistBar.tmpPawns.Clear();
+			ColonistBar.tmpMaps.Clear();
+			ColonistBar.tmpCaravans.Clear();
+			this.drawLocsFinder.CalculateDrawLocs(this.cachedDrawLocs, out this.cachedScale);
 		}
 
-		private void DrawColonist(Rect rect, Pawn colonist)
-		{
-			float colonistRectAlpha = this.GetColonistRectAlpha(rect);
-			bool flag = (!colonist.Dead) ? Find.Selector.SelectedObjects.Contains(colonist) : Find.Selector.SelectedObjects.Contains(colonist.corpse);
-			Color color = new Color(1f, 1f, 1f, colonistRectAlpha);
-			GUI.color = color;
-			GUI.DrawTexture(rect, ColonistBar.BGTex);
-			if (colonist.needs != null && colonist.needs.mood != null)
-			{
-				Rect position = rect.ContractedBy(2f);
-				float num = position.height * colonist.needs.mood.CurLevelPercentage;
-				position.yMin = position.yMax - num;
-				position.height = num;
-				GUI.DrawTexture(position, ColonistBar.MoodBGTex);
-			}
-			if (flag)
-			{
-				this.DrawSelectionOverlayOnGUI(colonist, rect.ContractedBy(-2f * this.Scale));
-			}
-			GUI.DrawTexture(this.GetPawnTextureRect(rect.x, rect.y), PortraitsCache.Get(colonist, ColonistBar.PawnTextureSize, ColonistBar.PawnTextureCameraOffset, 1.28205f));
-			GUI.color = new Color(1f, 1f, 1f, colonistRectAlpha * 0.8f);
-			this.DrawIcons(rect, colonist);
-			GUI.color = color;
-			if (colonist.Dead)
-			{
-				GUI.DrawTexture(rect, ColonistBar.DeadColonistTex);
-			}
-			float num2 = 4f * this.Scale;
-			Vector2 pos = new Vector2(rect.center.x, rect.yMax - num2);
-			GenWorldUI.DrawPawnLabel(colonist, pos, colonistRectAlpha, rect.width + this.SpacingHorizontal - 2f, this.pawnLabelsCache);
-			GUI.color = Color.white;
-		}
-
-		private float GetColonistRectAlpha(Rect rect)
+		public float GetEntryRectAlpha(Rect rect)
 		{
 			float t;
 			if (Messages.CollidesWithAnyMessage(rect, out t))
@@ -368,116 +278,180 @@ namespace RimWorld
 			return 1f;
 		}
 
-		private Rect GetPawnTextureRect(float x, float y)
+		public bool AnyColonistOrCorpseAt(Vector2 pos)
 		{
-			Vector2 vector = ColonistBar.PawnTextureSize * this.Scale;
-			Rect rect = new Rect(x + 1f, y - (vector.y - this.Size.y) - 1f, vector.x, vector.y);
-			rect = rect.ContractedBy(1f);
-			return rect;
+			ColonistBar.Entry entry;
+			return this.TryGetEntryAt(pos, out entry) && entry.pawn != null;
 		}
 
-		private void DrawIcons(Rect rect, Pawn colonist)
+		public bool TryGetEntryAt(Vector2 pos, out ColonistBar.Entry entry)
 		{
-			if (colonist.Dead)
+			List<Vector2> drawLocs = this.DrawLocs;
+			List<ColonistBar.Entry> entries = this.Entries;
+			Vector2 size = this.Size;
+			for (int i = 0; i < drawLocs.Count; i++)
 			{
-				return;
-			}
-			float num = 20f * this.Scale;
-			Vector2 vector = new Vector2(rect.x + 1f, rect.yMax - num - 1f);
-			bool flag = false;
-			if (colonist.CurJob != null)
-			{
-				JobDef def = colonist.CurJob.def;
-				if (def == JobDefOf.AttackMelee || def == JobDefOf.AttackStatic)
+				Rect rect = new Rect(drawLocs[i].x, drawLocs[i].y, size.x, size.y);
+				if (rect.Contains(pos))
 				{
-					flag = true;
+					entry = entries[i];
+					return true;
 				}
-				else if (def == JobDefOf.WaitCombat)
+			}
+			entry = default(ColonistBar.Entry);
+			return false;
+		}
+
+		public List<Pawn> GetColonistsInOrder()
+		{
+			List<ColonistBar.Entry> entries = this.Entries;
+			ColonistBar.tmpColonistsInOrder.Clear();
+			for (int i = 0; i < entries.Count; i++)
+			{
+				if (entries[i].pawn != null)
 				{
-					Stance_Busy stance_Busy = colonist.stances.curStance as Stance_Busy;
-					if (stance_Busy != null && stance_Busy.focusTarg.IsValid)
+					ColonistBar.tmpColonistsInOrder.Add(entries[i].pawn);
+				}
+			}
+			return ColonistBar.tmpColonistsInOrder;
+		}
+
+		public List<Thing> ColonistsOrCorpsesInScreenRect(Rect rect)
+		{
+			List<Vector2> drawLocs = this.DrawLocs;
+			List<ColonistBar.Entry> entries = this.Entries;
+			Vector2 size = this.Size;
+			ColonistBar.tmpColonistsWithMap.Clear();
+			for (int i = 0; i < drawLocs.Count; i++)
+			{
+				if (rect.Overlaps(new Rect(drawLocs[i].x, drawLocs[i].y, size.x, size.y)))
+				{
+					Pawn pawn = entries[i].pawn;
+					if (pawn != null)
 					{
-						flag = true;
+						Thing first;
+						if (pawn.Dead && pawn.Corpse != null && pawn.Corpse.MapHeld != null)
+						{
+							first = pawn.Corpse;
+						}
+						else
+						{
+							first = pawn;
+						}
+						ColonistBar.tmpColonistsWithMap.Add(new Pair<Thing, Map>(first, entries[i].map));
 					}
 				}
 			}
-			if (colonist.InAggroMentalState)
+			if (WorldRendererUtility.WorldRenderedNow)
 			{
-				this.DrawIcon(ColonistBar.Icon_MentalStateAggro, ref vector, colonist.MentalStateDef.LabelCap);
-			}
-			else if (colonist.InMentalState)
-			{
-				this.DrawIcon(ColonistBar.Icon_MentalStateNonAggro, ref vector, colonist.MentalStateDef.LabelCap);
-			}
-			else if (colonist.InBed() && colonist.CurrentBed().Medical)
-			{
-				this.DrawIcon(ColonistBar.Icon_MedicalRest, ref vector, "ActivityIconMedicalRest".Translate());
-			}
-			else if (colonist.CurJob != null && colonist.jobs.curDriver.asleep)
-			{
-				this.DrawIcon(ColonistBar.Icon_Sleeping, ref vector, "ActivityIconSleeping".Translate());
-			}
-			else if (colonist.CurJob != null && colonist.CurJob.def == JobDefOf.FleeAndCower)
-			{
-				this.DrawIcon(ColonistBar.Icon_Fleeing, ref vector, "ActivityIconFleeing".Translate());
-			}
-			else if (flag)
-			{
-				this.DrawIcon(ColonistBar.Icon_Attacking, ref vector, "ActivityIconAttacking".Translate());
-			}
-			else if (colonist.mindState.IsIdle && GenDate.DaysPassed >= 1)
-			{
-				this.DrawIcon(ColonistBar.Icon_Idle, ref vector, "ActivityIconIdle".Translate());
-			}
-			if (colonist.IsBurning())
-			{
-				this.DrawIcon(ColonistBar.Icon_Burning, ref vector, "ActivityIconBurning".Translate());
-			}
-		}
-
-		private void DrawIcon(Texture2D icon, ref Vector2 pos, string tooltip)
-		{
-			float num = 20f * this.Scale;
-			Rect rect = new Rect(pos.x, pos.y, num, num);
-			GUI.DrawTexture(rect, icon);
-			TooltipHandler.TipRegion(rect, tooltip);
-			pos.x += num;
-		}
-
-		private void HandleColonistClicks(Rect rect, Pawn colonist)
-		{
-			if (Mouse.IsOver(rect) && Event.current.type == EventType.MouseDown)
-			{
-				if (this.clickedColonist == colonist && Time.time - this.clickedAt < 0.5f)
+				if (ColonistBar.tmpColonistsWithMap.Any((Pair<Thing, Map> x) => x.Second == null))
 				{
-					Event.current.Use();
-					JumpToTargetUtility.TryJump(colonist);
-					this.clickedColonist = null;
-				}
-				else
-				{
-					this.clickedColonist = colonist;
-					this.clickedAt = Time.time;
+					ColonistBar.tmpColonistsWithMap.RemoveAll((Pair<Thing, Map> x) => x.Second != null);
+					goto IL_1A1;
 				}
 			}
+			if (ColonistBar.tmpColonistsWithMap.Any((Pair<Thing, Map> x) => x.Second == Find.VisibleMap))
+			{
+				ColonistBar.tmpColonistsWithMap.RemoveAll((Pair<Thing, Map> x) => x.Second != Find.VisibleMap);
+			}
+			IL_1A1:
+			ColonistBar.tmpColonists.Clear();
+			for (int j = 0; j < ColonistBar.tmpColonistsWithMap.Count; j++)
+			{
+				ColonistBar.tmpColonists.Add(ColonistBar.tmpColonistsWithMap[j].First);
+			}
+			ColonistBar.tmpColonistsWithMap.Clear();
+			return ColonistBar.tmpColonists;
 		}
 
-		private void DrawSelectionOverlayOnGUI(Pawn colonist, Rect rect)
+		public List<Thing> MapColonistsOrCorpsesInScreenRect(Rect rect)
 		{
-			Thing thing = colonist;
-			if (colonist.Dead)
+			ColonistBar.tmpMapColonistsOrCorpsesInScreenRect.Clear();
+			if (!this.Visible)
 			{
-				thing = colonist.corpse;
+				return ColonistBar.tmpMapColonistsOrCorpsesInScreenRect;
 			}
-			float num = 0.4f * this.Scale;
-			Vector2 textureSize = new Vector2((float)ColonistBar.SelectedTex.width * num, (float)ColonistBar.SelectedTex.height * num);
-			Vector3[] array = SelectionDrawer.SelectionBracketPartsPos(thing, rect.center, rect.size, textureSize, 20f * this.Scale);
-			int num2 = 90;
-			for (int i = 0; i < 4; i++)
+			List<Thing> list = this.ColonistsOrCorpsesInScreenRect(rect);
+			for (int i = 0; i < list.Count; i++)
 			{
-				Widgets.DrawTextureRotated(new Vector2(array[i].x, array[i].z), ColonistBar.SelectedTex, (float)num2, num);
-				num2 += 90;
+				if (list[i].Spawned)
+				{
+					ColonistBar.tmpMapColonistsOrCorpsesInScreenRect.Add(list[i]);
+				}
 			}
+			return ColonistBar.tmpMapColonistsOrCorpsesInScreenRect;
+		}
+
+		public List<Pawn> CaravanMembersInScreenRect(Rect rect)
+		{
+			ColonistBar.tmpCaravanPawns.Clear();
+			if (!this.Visible)
+			{
+				return ColonistBar.tmpCaravanPawns;
+			}
+			List<Thing> list = this.ColonistsOrCorpsesInScreenRect(rect);
+			for (int i = 0; i < list.Count; i++)
+			{
+				Pawn pawn = list[i] as Pawn;
+				if (pawn != null && pawn.IsCaravanMember())
+				{
+					ColonistBar.tmpCaravanPawns.Add(pawn);
+				}
+			}
+			return ColonistBar.tmpCaravanPawns;
+		}
+
+		public List<Caravan> CaravanMembersCaravansInScreenRect(Rect rect)
+		{
+			ColonistBar.tmpCaravans.Clear();
+			if (!this.Visible)
+			{
+				return ColonistBar.tmpCaravans;
+			}
+			List<Pawn> list = this.CaravanMembersInScreenRect(rect);
+			for (int i = 0; i < list.Count; i++)
+			{
+				ColonistBar.tmpCaravans.Add(list[i].GetCaravan());
+			}
+			return ColonistBar.tmpCaravans;
+		}
+
+		public Caravan CaravanMemberCaravanAt(Vector2 at)
+		{
+			if (!this.Visible)
+			{
+				return null;
+			}
+			Pawn pawn = this.ColonistOrCorpseAt(at) as Pawn;
+			if (pawn != null && pawn.IsCaravanMember())
+			{
+				return pawn.GetCaravan();
+			}
+			return null;
+		}
+
+		public Thing ColonistOrCorpseAt(Vector2 pos)
+		{
+			if (!this.Visible)
+			{
+				return null;
+			}
+			ColonistBar.Entry entry;
+			if (!this.TryGetEntryAt(pos, out entry))
+			{
+				return null;
+			}
+			Pawn pawn = entry.pawn;
+			Thing result;
+			if (pawn != null && pawn.Dead && pawn.Corpse != null && pawn.Corpse.MapHeld != null)
+			{
+				result = pawn.Corpse;
+			}
+			else
+			{
+				result = pawn;
+			}
+			return result;
 		}
 	}
 }

@@ -21,7 +21,7 @@ namespace Verse.AI
 			}
 			for (int i = nodesReversed.Count - 2; i >= 1; i--)
 			{
-				Building edifice = nodesReversed[i].GetEdifice();
+				Building edifice = nodesReversed[i].GetEdifice(pawn.Map);
 				if (edifice != null)
 				{
 					Building_Door building_Door = edifice as Building_Door;
@@ -36,7 +36,7 @@ namespace Verse.AI
 			return null;
 		}
 
-		public static IntVec3 FinalWalkableNonDoorCell(this PawnPath path)
+		public static IntVec3 FinalWalkableNonDoorCell(this PawnPath path, Map map)
 		{
 			if (path.NodesReversed.Count == 1)
 			{
@@ -45,7 +45,7 @@ namespace Verse.AI
 			List<IntVec3> nodesReversed = path.NodesReversed;
 			for (int i = 0; i < nodesReversed.Count; i++)
 			{
-				Building edifice = nodesReversed[i].GetEdifice();
+				Building edifice = nodesReversed[i].GetEdifice(map);
 				if (edifice == null || edifice.def.passability != Traversability.Impassable)
 				{
 					Building_Door building_Door = edifice as Building_Door;
@@ -58,7 +58,7 @@ namespace Verse.AI
 			return nodesReversed[0];
 		}
 
-		public static IntVec3 LastCellBeforeBlockerOrFinalCell(this PawnPath path)
+		public static IntVec3 LastCellBeforeBlockerOrFinalCell(this PawnPath path, Map map)
 		{
 			if (path.NodesReversed.Count == 1)
 			{
@@ -67,7 +67,7 @@ namespace Verse.AI
 			List<IntVec3> nodesReversed = path.NodesReversed;
 			for (int i = nodesReversed.Count - 2; i >= 1; i--)
 			{
-				Building edifice = nodesReversed[i].GetEdifice();
+				Building edifice = nodesReversed[i].GetEdifice(map);
 				if (edifice != null)
 				{
 					if (edifice.def.passability == Traversability.Impassable)
@@ -94,7 +94,7 @@ namespace Verse.AI
 			List<IntVec3> nodesReversed = path.NodesReversed;
 			for (int i = nodesReversed.Count - 2; i >= 1; i--)
 			{
-				Building_Door building_Door = nodesReversed[i].GetEdifice() as Building_Door;
+				Building_Door building_Door = nodesReversed[i].GetEdifice(pawn.Map) as Building_Door;
 				if (building_Door != null && !building_Door.CanPhysicallyPass(pawn))
 				{
 					result = nodesReversed[i + 1];
@@ -107,7 +107,7 @@ namespace Verse.AI
 
 		public static bool TryFindCellAtIndex(PawnPath path, int index, out IntVec3 result)
 		{
-			if (path.NodesReversed.Count < index)
+			if (path.NodesReversed.Count <= index || index < 0)
 			{
 				result = IntVec3.Invalid;
 				return false;

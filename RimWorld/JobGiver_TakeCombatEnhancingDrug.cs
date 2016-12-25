@@ -12,16 +12,16 @@ namespace RimWorld
 
 		private bool onlyIfInDanger;
 
-		public override ThinkNode DeepCopy()
+		public override ThinkNode DeepCopy(bool resolve = true)
 		{
-			JobGiver_TakeCombatEnhancingDrug jobGiver_TakeCombatEnhancingDrug = (JobGiver_TakeCombatEnhancingDrug)base.DeepCopy();
+			JobGiver_TakeCombatEnhancingDrug jobGiver_TakeCombatEnhancingDrug = (JobGiver_TakeCombatEnhancingDrug)base.DeepCopy(resolve);
 			jobGiver_TakeCombatEnhancingDrug.onlyIfInDanger = this.onlyIfInDanger;
 			return jobGiver_TakeCombatEnhancingDrug;
 		}
 
 		protected override Job TryGiveJob(Pawn pawn)
 		{
-			if (pawn.story != null && pawn.story.traits.DegreeOfTrait(TraitDefOf.DrugDesire) < 0)
+			if (pawn.IsTeetotaler())
 			{
 				return null;
 			}
@@ -67,7 +67,7 @@ namespace RimWorld
 			}
 			return new Job(JobDefOf.Ingest, thing)
 			{
-				maxNumToCarry = 1
+				count = 1
 			};
 		}
 
@@ -78,9 +78,9 @@ namespace RimWorld
 
 		private Thing FindCombatEnhancingDrug(Pawn pawn)
 		{
-			for (int i = 0; i < pawn.inventory.container.Count; i++)
+			for (int i = 0; i < pawn.inventory.innerContainer.Count; i++)
 			{
-				Thing thing = pawn.inventory.container[i];
+				Thing thing = pawn.inventory.innerContainer[i];
 				CompDrug compDrug = thing.TryGetComp<CompDrug>();
 				if (compDrug != null)
 				{

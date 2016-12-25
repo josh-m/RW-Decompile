@@ -7,40 +7,40 @@ namespace Verse
 {
 	public class HediffGiver_Hypothermia : HediffGiver
 	{
-		public override bool CheckGiveEverySecond(Pawn pawn)
+		public override void OnIntervalPassed(Pawn pawn, Hediff cause)
 		{
-			if (!pawn.Spawned)
+			float num;
+			if (!GenTemperature.TryGetTemperatureAtCellOrCaravanTile(pawn, out num))
 			{
-				return false;
+				return;
 			}
 			FloatRange floatRange = pawn.ComfortableTemperatureRange();
 			FloatRange floatRange2 = pawn.SafeTemperatureRange();
-			float temperatureForCell = GenTemperature.GetTemperatureForCell(pawn.Position);
 			HediffSet hediffSet = pawn.health.hediffSet;
 			Hediff firstHediffOfDef = hediffSet.GetFirstHediffOfDef(this.hediff);
-			if (temperatureForCell < floatRange2.min)
+			if (num < floatRange2.min)
 			{
-				float num = Mathf.Abs(temperatureForCell - floatRange2.min);
-				float num2 = num * 6.45E-05f;
-				num2 = Mathf.Max(num2, 0.00075f);
-				HealthUtility.AdjustSeverity(pawn, this.hediff, num2);
+				float num2 = Mathf.Abs(num - floatRange2.min);
+				float num3 = num2 * 6.45E-05f;
+				num3 = Mathf.Max(num3, 0.00075f);
+				HealthUtility.AdjustSeverity(pawn, this.hediff, num3);
 				if (pawn.Dead)
 				{
-					return false;
+					return;
 				}
 			}
 			if (firstHediffOfDef != null)
 			{
-				if (temperatureForCell > floatRange.min)
+				if (num > floatRange.min)
 				{
-					float num3 = firstHediffOfDef.Severity * 0.027f;
-					num3 = Mathf.Clamp(num3, 0.0015f, 0.015f);
-					firstHediffOfDef.Severity -= num3;
+					float num4 = firstHediffOfDef.Severity * 0.027f;
+					num4 = Mathf.Clamp(num4, 0.0015f, 0.015f);
+					firstHediffOfDef.Severity -= num4;
 				}
-				else if (temperatureForCell < 0f && firstHediffOfDef.Severity > 0.37f)
+				else if (num < 0f && firstHediffOfDef.Severity > 0.37f)
 				{
-					float num4 = 0.025f * firstHediffOfDef.Severity;
-					if (Rand.Value < num4)
+					float num5 = 0.025f * firstHediffOfDef.Severity;
+					if (Rand.Value < num5)
 					{
 						BodyPartRecord bodyPartRecord;
 						if ((from x in pawn.RaceProps.body.AllPartsVulnerableToFrostbite
@@ -48,13 +48,13 @@ namespace Verse
 						select x).TryRandomElementByWeight((BodyPartRecord x) => x.def.frostbiteVulnerability, out bodyPartRecord))
 						{
 							int amount = Mathf.CeilToInt((float)bodyPartRecord.def.hitPoints * 0.5f);
-							DamageInfo dinfo = new DamageInfo(DamageDefOf.Frostbite, amount, null, new BodyPartDamageInfo?(new BodyPartDamageInfo(bodyPartRecord, false, null)), null);
+							BodyPartRecord forceHitPart = bodyPartRecord;
+							DamageInfo dinfo = new DamageInfo(DamageDefOf.Frostbite, amount, -1f, null, forceHitPart, null);
 							pawn.TakeDamage(dinfo);
 						}
 					}
 				}
 			}
-			return false;
 		}
 	}
 }

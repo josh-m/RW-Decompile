@@ -23,6 +23,8 @@ namespace RimWorld
 
 		public float wearPerDay = 0.4f;
 
+		public bool careIfWornByCorpse = true;
+
 		[Unsaved]
 		private float cachedHumanBodyCoverage = -1f;
 

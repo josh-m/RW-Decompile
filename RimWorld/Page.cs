@@ -18,7 +18,7 @@ namespace RimWorld
 
 		public static readonly Vector2 StandardSize = new Vector2(1020f, 764f);
 
-		private static readonly Vector2 BottomButSize = new Vector2(150f, 38f);
+		protected static readonly Vector2 BottomButSize = new Vector2(150f, 38f);
 
 		public override Vector2 InitialSize
 		{
@@ -64,7 +64,7 @@ namespace RimWorld
 			float y = rect.height - 38f;
 			Text.Font = GameFont.Small;
 			string label = "Back".Translate();
-			Rect rect2 = new Rect(0f, y, Page.BottomButSize.x, Page.BottomButSize.y);
+			Rect rect2 = new Rect(rect.x, y, Page.BottomButSize.x, Page.BottomButSize.y);
 			if (Widgets.ButtonText(rect2, label, true, false, true) && this.CanDoBack())
 			{
 				this.DoBack();
@@ -75,7 +75,7 @@ namespace RimWorld
 				{
 					nextLabel = "Next".Translate();
 				}
-				Rect rect3 = new Rect(rect.width - Page.BottomButSize.x, y, Page.BottomButSize.x, Page.BottomButSize.y);
+				Rect rect3 = new Rect(rect.x + rect.width - Page.BottomButSize.x, y, Page.BottomButSize.x, Page.BottomButSize.y);
 				if (Widgets.ButtonText(rect3, nextLabel, true, false, true) && this.CanDoNext())
 				{
 					this.DoNext();
@@ -84,7 +84,7 @@ namespace RimWorld
 			}
 			if (midAct != null)
 			{
-				Rect rect4 = new Rect(rect.width / 2f - Page.BottomButSize.x / 2f, y, Page.BottomButSize.x, Page.BottomButSize.y);
+				Rect rect4 = new Rect(rect.x + rect.width / 2f - Page.BottomButSize.x / 2f, y, Page.BottomButSize.x, Page.BottomButSize.y);
 				if (Widgets.ButtonText(rect4, midLabel, true, false, true))
 				{
 					midAct();

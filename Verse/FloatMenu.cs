@@ -57,7 +57,7 @@ namespace Verse
 		{
 			get
 			{
-				return (float)Screen.height * 0.9f;
+				return (float)UI.screenHeight * 0.9f;
 			}
 		}
 
@@ -159,7 +159,7 @@ namespace Verse
 		{
 			get
 			{
-				return Mathf.FloorToInt(((float)Screen.width - 16f) / this.ColumnWidth);
+				return Mathf.FloorToInt(((float)UI.screenWidth - 16f) / this.ColumnWidth);
 			}
 		}
 
@@ -247,14 +247,14 @@ namespace Verse
 
 		protected override void SetInitialSizeAndPosition()
 		{
-			Vector2 vector = GenUI.AbsMousePosition() + FloatMenu.InitialPositionShift;
-			if (vector.x + this.InitialSize.x > (float)Screen.width)
+			Vector2 vector = UI.MousePositionOnUIInverted + FloatMenu.InitialPositionShift;
+			if (vector.x + this.InitialSize.x > (float)UI.screenWidth)
 			{
-				vector.x = (float)Screen.width - this.InitialSize.x;
+				vector.x = (float)UI.screenWidth - this.InitialSize.x;
 			}
-			if (vector.y + this.InitialSize.y > (float)Screen.height)
+			if (vector.y + this.InitialSize.y > (float)UI.screenHeight)
 			{
-				vector.y = (float)Screen.height - this.InitialSize.y;
+				vector.y = (float)UI.screenHeight - this.InitialSize.y;
 			}
 			this.windowRect = new Rect(vector.x, vector.y, this.InitialSize.x, this.InitialSize.y);
 		}
@@ -304,7 +304,7 @@ namespace Verse
 				Widgets.BeginScrollView(rect, ref this.scrollPosition, new Rect(0f, 0f, this.TotalWidth - 16f, this.TotalViewHeight));
 			}
 			foreach (FloatMenuOption current in from op in this.options
-			orderby op.priority descending
+			orderby op.Priority descending
 			select op)
 			{
 				float requiredHeight = current.RequiredHeight;

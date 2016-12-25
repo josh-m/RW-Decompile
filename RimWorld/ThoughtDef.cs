@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using UnityEngine;
 using Verse;
 
 namespace RimWorld
@@ -21,7 +22,7 @@ namespace RimWorld
 
 		public bool invert;
 
-		public bool validWhileInMentalState;
+		public bool validWhileDespawned;
 
 		public ThoughtDef nextThought;
 
@@ -41,6 +42,11 @@ namespace RimWorld
 
 		public ThoughtDef thoughtToMake;
 
+		[NoTranslate]
+		private string icon;
+
+		public bool showBubble;
+
 		public int stackLimitPerPawn = -1;
 
 		public float lerpOpinionToZeroAfterDurationPct = 0.7f;
@@ -53,6 +59,8 @@ namespace RimWorld
 
 		[Unsaved]
 		private ThoughtWorker workerInt;
+
+		private Texture2D iconInt;
 
 		public string Label
 		{
@@ -144,6 +152,22 @@ namespace RimWorld
 					return typeof(Thought_Memory);
 				}
 				return typeof(Thought_Situational);
+			}
+		}
+
+		public Texture2D Icon
+		{
+			get
+			{
+				if (this.iconInt == null)
+				{
+					if (this.icon == null)
+					{
+						return null;
+					}
+					this.iconInt = ContentFinder<Texture2D>.Get(this.icon, true);
+				}
+				return this.iconInt;
 			}
 		}
 

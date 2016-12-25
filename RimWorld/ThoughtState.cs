@@ -61,6 +61,15 @@ namespace RimWorld
 			};
 		}
 
+		public static ThoughtState ActiveAtStage(int stageIndex, string reason)
+		{
+			return new ThoughtState
+			{
+				stageIndex = stageIndex,
+				reason = reason
+			};
+		}
+
 		public static ThoughtState ActiveWithReason(string reason)
 		{
 			ThoughtState activeDefault = ThoughtState.ActiveDefault;

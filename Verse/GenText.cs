@@ -14,7 +14,11 @@ namespace Verse
 {
 	public static class GenText
 	{
-		private const int SaveNameMaxLength = 28;
+		private const int SaveNameMaxLength = 30;
+
+		private const char DegreeSymbol = '°';
+
+		private static StringBuilder tmpSb = new StringBuilder();
 
 		public static string Possessive(this Pawn p)
 		{
@@ -112,7 +116,7 @@ namespace Verse
 			{
 				return pawn.LabelShort;
 			}
-			string str = Find.ActiveLanguageWorker.WithIndefiniteArticle(GenLabel.BestKindLabel(pawn, false, false));
+			string str = Find.ActiveLanguageWorker.WithIndefiniteArticle(GenLabel.BestKindLabel(pawn, false, false, false));
 			return Find.ActiveLanguageWorker.PostProcessed(str);
 		}
 
@@ -122,7 +126,7 @@ namespace Verse
 			{
 				return pawn.LabelShort;
 			}
-			string str = Find.ActiveLanguageWorker.WithDefiniteArticle(GenLabel.BestKindLabel(pawn, false, false));
+			string str = Find.ActiveLanguageWorker.WithDefiniteArticle(GenLabel.BestKindLabel(pawn, false, false, false));
 			return Find.ActiveLanguageWorker.PostProcessed(str);
 		}
 
@@ -246,11 +250,11 @@ namespace Verse
 
 		public static bool IsValidFilename(string str)
 		{
-			if (str.Length > 28)
+			if (str.Length > 30)
 			{
 				return false;
 			}
-			string str2 = new string(Path.GetInvalidFileNameChars());
+			string str2 = new string(Path.GetInvalidFileNameChars()) + "/\\{}<>:*|!@#$%^&*?";
 			Regex regex = new Regex("[" + Regex.Escape(str2) + "]");
 			return !regex.IsMatch(str);
 		}
@@ -286,6 +290,19 @@ namespace Verse
 				}
 			}
 			return stringBuilder.ToString();
+		}
+
+		public static string RemoveNonAlphanumeric(string s)
+		{
+			GenText.tmpSb.Length = 0;
+			for (int i = 0; i < s.Length; i++)
+			{
+				if (char.IsLetterOrDigit(s[i]))
+				{
+					GenText.tmpSb.Append(s[i]);
+				}
+			}
+			return GenText.tmpSb.ToString();
 		}
 
 		public static bool EqualsIgnoreCase(this string A, string B)
@@ -418,6 +435,11 @@ namespace Verse
 				}
 			}
 			return input;
+		}
+
+		public static string CapitalizeAsTitle(string str)
+		{
+			return Find.ActiveLanguageWorker.ToTitleCase(str);
 		}
 
 		public static string ToCommaList(IEnumerable<object> items, bool useAnd = true)
@@ -566,7 +588,7 @@ namespace Verse
 			switch (style)
 			{
 			case ToStringStyle.Integer:
-				text = f.ToString("F0");
+				text = Mathf.RoundToInt(f).ToString();
 				break;
 			case ToStringStyle.FloatOne:
 				text = f.ToString("F1");
@@ -647,6 +669,49 @@ namespace Verse
 		public static string ToStringKilobytes(this int bytes, string format = "F2")
 		{
 			return ((float)bytes / 1024f).ToString(format) + "Kb";
+		}
+
+		public static string ToStringLongitude(this float longitude)
+		{
+			bool flag = longitude < 0f;
+			if (flag)
+			{
+				longitude = -longitude;
+			}
+			return longitude.ToString("F2") + '°' + ((!flag) ? "E" : "W");
+		}
+
+		public static string ToStringLatitude(this float latitude)
+		{
+			bool flag = latitude < 0f;
+			if (flag)
+			{
+				latitude = -latitude;
+			}
+			return latitude.ToString("F2") + '°' + ((!flag) ? "N" : "S");
+		}
+
+		public static string ToStringMass(this float mass)
+		{
+			if (mass == 0f)
+			{
+				return "0 kg";
+			}
+			if (Mathf.Abs(mass) < 0.01f)
+			{
+				return (mass * 1000f).ToString("0.##") + " g";
+			}
+			return mass.ToString("0.##") + " kg";
+		}
+
+		public static string ToStringMassOffset(this float mass)
+		{
+			string text = mass.ToStringMass();
+			if (mass > 0f)
+			{
+				return "+" + text;
+			}
+			return text;
 		}
 
 		public static string ToStringTemperature(this float celsiusTemp, string format = "F1")

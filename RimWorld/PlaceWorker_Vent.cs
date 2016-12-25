@@ -20,8 +20,8 @@ namespace RimWorld
 			{
 				intVec2
 			}, Color.white);
-			Room room = intVec2.GetRoom();
-			Room room2 = intVec.GetRoom();
+			Room room = intVec2.GetRoom(base.Map);
+			Room room2 = intVec.GetRoom(base.Map);
 			if (room != null && room2 != null)
 			{
 				if (room == room2 && !room.UsesOutdoorTemperature)
@@ -42,11 +42,11 @@ namespace RimWorld
 			}
 		}
 
-		public override AcceptanceReport AllowsPlacing(BuildableDef def, IntVec3 center, Rot4 rot)
+		public override AcceptanceReport AllowsPlacing(BuildableDef def, IntVec3 center, Rot4 rot, Thing thingToIgnore = null)
 		{
 			IntVec3 c = center + IntVec3.South.RotatedBy(rot);
 			IntVec3 c2 = center + IntVec3.North.RotatedBy(rot);
-			if (c.Impassable() || c2.Impassable())
+			if (c.Impassable(base.Map) || c2.Impassable(base.Map))
 			{
 				return "MustPlaceVentWithFreeSpaces".Translate();
 			}

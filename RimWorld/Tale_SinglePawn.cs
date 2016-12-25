@@ -34,9 +34,9 @@ namespace RimWorld
 		public Tale_SinglePawn(Pawn pawn)
 		{
 			this.pawnData = TaleData_Pawn.GenerateFrom(pawn);
-			if (pawn.Spawned || pawn.holder != null)
+			if (pawn.MapHeld != null)
 			{
-				this.surroundings = TaleData_Surroundings.GenerateFrom(pawn.PositionHeld);
+				this.surroundings = TaleData_Surroundings.GenerateFrom(pawn.PositionHeld, pawn.MapHeld);
 			}
 		}
 

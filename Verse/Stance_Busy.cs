@@ -6,7 +6,7 @@ namespace Verse
 	{
 		public int ticksLeft;
 
-		public TargetInfo focusTarg;
+		public LocalTargetInfo focusTarg;
 
 		public bool neverAimWeapon;
 
@@ -25,7 +25,7 @@ namespace Verse
 			this.SetPieSizeFactor();
 		}
 
-		public Stance_Busy(int ticks, TargetInfo focusTarg)
+		public Stance_Busy(int ticks, LocalTargetInfo focusTarg)
 		{
 			this.ticksLeft = ticks;
 			this.focusTarg = focusTarg;

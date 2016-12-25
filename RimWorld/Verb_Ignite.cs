@@ -18,7 +18,7 @@ namespace RimWorld
 			{
 				return false;
 			}
-			FireUtility.TryStartFireIn(thing.OccupiedRect().ClosestCellTo(casterPawn.Position), 0.3f);
+			FireUtility.TryStartFireIn(thing.OccupiedRect().ClosestCellTo(casterPawn.Position), casterPawn.Map, 0.3f);
 			casterPawn.Drawer.Notify_MeleeAttackOn(thing);
 			return true;
 		}

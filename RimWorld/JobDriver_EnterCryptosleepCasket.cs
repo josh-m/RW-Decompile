@@ -30,11 +30,10 @@ namespace RimWorld
 					};
 					if (!pod.def.building.isPlayerEjectable)
 					{
-						int freeColonistsSpawnedOrInPlayerEjectablePodsCount = Find.MapPawns.FreeColonistsSpawnedOrInPlayerEjectablePodsCount;
+						int freeColonistsSpawnedOrInPlayerEjectablePodsCount = this.<>f__this.Map.mapPawns.FreeColonistsSpawnedOrInPlayerEjectablePodsCount;
 						if (freeColonistsSpawnedOrInPlayerEjectablePodsCount <= 1)
 						{
-							Log.Message("Can't add this to pod! This is the last colonist!");
-							Find.WindowStack.Add(new Dialog_Confirm("CasketWarning".Translate().AdjustedFor(actor), action, false, null, true));
+							Find.WindowStack.Add(Dialog_MessageBox.CreateConfirmation("CasketWarning".Translate().AdjustedFor(actor), action, false, null));
 						}
 						else
 						{

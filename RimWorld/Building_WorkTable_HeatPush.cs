@@ -7,12 +7,12 @@ namespace RimWorld
 	{
 		private const int HeatPushInterval = 30;
 
-		public override void BillTick()
+		public override void UsedThisTick()
 		{
-			base.BillTick();
+			base.UsedThisTick();
 			if (Find.TickManager.TicksGame % 30 == 4)
 			{
-				GenTemperature.PushHeat(this, this.def.building.heatPerTickWhileWorking / 30f);
+				GenTemperature.PushHeat(this, this.def.building.heatPerTickWhileWorking * 30f);
 			}
 		}
 	}

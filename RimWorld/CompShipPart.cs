@@ -11,7 +11,7 @@ namespace RimWorld
 	public class CompShipPart : ThingComp
 	{
 		[DebuggerHidden]
-		public override IEnumerable<Command> CompGetGizmosExtra()
+		public override IEnumerable<Gizmo> CompGetGizmosExtra()
 		{
 			yield return new Command_Action
 			{
@@ -39,7 +39,7 @@ namespace RimWorld
 					stringBuilder.AppendLine(current);
 				}
 			}
-			Dialog_Message window = new Dialog_Message(stringBuilder.ToString(), null);
+			Dialog_MessageBox window = new Dialog_MessageBox(stringBuilder.ToString(), null, null, null, null, null, false);
 			Find.WindowStack.Add(window);
 		}
 	}

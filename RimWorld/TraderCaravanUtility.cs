@@ -6,7 +6,7 @@ namespace RimWorld
 {
 	public static class TraderCaravanUtility
 	{
-		public static TraderCaravanRole GetCaravanRole(this Pawn p)
+		public static TraderCaravanRole GetTraderCaravanRole(this Pawn p)
 		{
 			if (p.kindDef == PawnKindDefOf.Slave)
 			{
@@ -16,7 +16,7 @@ namespace RimWorld
 			{
 				return TraderCaravanRole.Trader;
 			}
-			if (p.kindDef.carrier)
+			if (p.kindDef.RaceProps.packAnimal)
 			{
 				return TraderCaravanRole.Carrier;
 			}
@@ -31,7 +31,7 @@ namespace RimWorld
 		{
 			for (int i = 0; i < lord.ownedPawns.Count; i++)
 			{
-				if (lord.ownedPawns[i].GetCaravanRole() == TraderCaravanRole.Trader)
+				if (lord.ownedPawns[i].GetTraderCaravanRole() == TraderCaravanRole.Trader)
 				{
 					return lord.ownedPawns[i];
 				}

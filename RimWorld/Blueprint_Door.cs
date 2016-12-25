@@ -6,7 +6,7 @@ namespace RimWorld
 	{
 		public override void Draw()
 		{
-			base.Rotation = Building_Door.DoorRotationAt(base.Position);
+			base.Rotation = Building_Door.DoorRotationAt(base.Position, base.Map);
 			base.Draw();
 		}
 	}

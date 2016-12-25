@@ -67,7 +67,7 @@ namespace RimWorld
 			{
 				Designator_AreaAllowed.selectedArea = a;
 				this.ProcessInput(ev);
-			}, AllowedAreaMode.Any, false, true);
+			}, AllowedAreaMode.Any, false, true, base.Map);
 		}
 
 		protected override void FinalizeDesignationSucceeded()

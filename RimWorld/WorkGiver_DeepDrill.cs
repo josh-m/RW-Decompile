@@ -26,12 +26,12 @@ namespace RimWorld
 
 		public override IEnumerable<Thing> PotentialWorkThingsGlobal(Pawn pawn)
 		{
-			return Find.ListerBuildings.AllBuildingsColonistOfDef(ThingDefOf.DeepDrill).Cast<Thing>();
+			return pawn.Map.listerBuildings.AllBuildingsColonistOfDef(ThingDefOf.DeepDrill).Cast<Thing>();
 		}
 
 		public override bool ShouldSkip(Pawn pawn)
 		{
-			List<Building> allBuildingsColonist = Find.ListerBuildings.allBuildingsColonist;
+			List<Building> allBuildingsColonist = pawn.Map.listerBuildings.allBuildingsColonist;
 			for (int i = 0; i < allBuildingsColonist.Count; i++)
 			{
 				if (allBuildingsColonist[i].def == ThingDefOf.DeepDrill)

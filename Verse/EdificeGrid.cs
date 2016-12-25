@@ -4,6 +4,8 @@ namespace Verse
 {
 	public sealed class EdificeGrid
 	{
+		private Map map;
+
 		private Building[] innerArray;
 
 		public Building[] InnerArray
@@ -26,17 +28,19 @@ namespace Verse
 		{
 			get
 			{
-				return this.innerArray[CellIndices.CellToIndex(c)];
+				return this.innerArray[this.map.cellIndices.CellToIndex(c)];
 			}
 		}
 
-		public EdificeGrid()
+		public EdificeGrid(Map map)
 		{
-			this.innerArray = new Building[CellIndices.NumGridCells];
+			this.map = map;
+			this.innerArray = new Building[map.cellIndices.NumGridCells];
 		}
 
 		public void Register(Building ed)
 		{
+			CellIndices cellIndices = this.map.cellIndices;
 			CellRect cellRect = ed.OccupiedRect();
 			for (int i = cellRect.minZ; i <= cellRect.maxZ; i++)
 			{
@@ -58,19 +62,20 @@ namespace Verse
 						this[intVec].Destroy(DestroyMode.Vanish);
 						return;
 					}
-					this.innerArray[CellIndices.CellToIndex(intVec)] = ed;
+					this.innerArray[cellIndices.CellToIndex(intVec)] = ed;
 				}
 			}
 		}
 
 		public void DeRegister(Building ed)
 		{
+			CellIndices cellIndices = this.map.cellIndices;
 			CellRect cellRect = ed.OccupiedRect();
 			for (int i = cellRect.minZ; i <= cellRect.maxZ; i++)
 			{
 				for (int j = cellRect.minX; j <= cellRect.maxX; j++)
 				{
-					this.innerArray[CellIndices.CellToIndex(j, i)] = null;
+					this.innerArray[cellIndices.CellToIndex(j, i)] = null;
 				}
 			}
 		}

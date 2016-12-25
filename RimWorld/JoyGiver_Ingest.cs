@@ -15,7 +15,7 @@ namespace RimWorld
 
 		public override Job TryGiveJobInPartyArea(Pawn pawn, IntVec3 partySpot)
 		{
-			return this.TryGiveJobInternal(pawn, (Thing x) => !x.Spawned || PartyUtility.InPartyArea(x.Position, partySpot));
+			return this.TryGiveJobInternal(pawn, (Thing x) => !x.Spawned || PartyUtility.InPartyArea(x.Position, partySpot, pawn.Map));
 		}
 
 		private Job TryGiveJobInternal(Pawn pawn, Predicate<Thing> extraValidator)
@@ -30,27 +30,27 @@ namespace RimWorld
 
 		protected virtual Thing BestIngestItem(Pawn pawn, Predicate<Thing> extraValidator)
 		{
-			Predicate<Thing> predicate = (Thing t) => this.CanUseIngestItemForJoy(pawn, t) && (extraValidator == null || extraValidator(t));
-			ThingContainer container = pawn.inventory.container;
-			for (int i = 0; i < container.Count; i++)
+			Predicate<Thing> predicate = (Thing t) => this.CanIngestForJoy(pawn, t) && (extraValidator == null || extraValidator(t));
+			ThingContainer innerContainer = pawn.inventory.innerContainer;
+			for (int i = 0; i < innerContainer.Count; i++)
 			{
-				if (this.SearchSetWouldInclude(container[i]) && predicate(container[i]))
+				if (this.SearchSetWouldInclude(innerContainer[i]) && predicate(innerContainer[i]))
 				{
-					return container[i];
+					return innerContainer[i];
 				}
 			}
-			List<Thing> searchSet = this.SearchSet;
+			List<Thing> searchSet = this.GetSearchSet(pawn);
 			if (searchSet.Count == 0)
 			{
 				return null;
 			}
 			Predicate<Thing> validator = predicate;
-			return GenClosest.ClosestThing_Global_Reachable(pawn.Position, searchSet, PathEndMode.OnCell, TraverseParms.For(pawn, Danger.Deadly, TraverseMode.ByPawn, false), 9999f, validator, null);
+			return GenClosest.ClosestThing_Global_Reachable(pawn.Position, pawn.Map, searchSet, PathEndMode.OnCell, TraverseParms.For(pawn, Danger.Deadly, TraverseMode.ByPawn, false), 9999f, validator, null);
 		}
 
-		protected virtual bool CanUseIngestItemForJoy(Pawn pawn, Thing t)
+		protected virtual bool CanIngestForJoy(Pawn pawn, Thing t)
 		{
-			if (t.def.ingestible.joyKind == null || t.def.ingestible.joy <= 0f)
+			if (!t.def.IsIngestible || t.def.ingestible.joyKind == null || t.def.ingestible.joy <= 0f)
 			{
 				return false;
 			}
@@ -89,7 +89,7 @@ namespace RimWorld
 		{
 			return new Job(JobDefOf.Ingest, ingestible)
 			{
-				maxNumToCarry = Mathf.Min(ingestible.stackCount, ingestible.def.ingestible.maxNumToIngestAtOnce)
+				count = Mathf.Min(ingestible.stackCount, ingestible.def.ingestible.maxNumToIngestAtOnce)
 			};
 		}
 	}

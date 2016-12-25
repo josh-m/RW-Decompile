@@ -64,7 +64,7 @@ namespace RimWorld
 				ShipUtility.closedSet.Add(building);
 				foreach (IntVec3 current in GenAdj.CellsAdjacentCardinal(building))
 				{
-					Building edifice = current.GetEdifice();
+					Building edifice = current.GetEdifice(building.Map);
 					if (edifice != null && edifice.def.building.shipPart && !ShipUtility.closedSet.Contains(edifice) && !ShipUtility.openSet.Contains(edifice))
 					{
 						ShipUtility.openSet.Add(edifice);

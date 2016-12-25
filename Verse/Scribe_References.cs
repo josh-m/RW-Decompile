@@ -69,7 +69,7 @@ namespace Verse
 				Scribe.WriteElement(label, "null");
 				return true;
 			}
-			if (th.ThingState == ThingState.Discarded)
+			if (th.Discarded)
 			{
 				Log.Warning(string.Concat(new object[]
 				{

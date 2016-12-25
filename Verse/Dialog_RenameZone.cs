@@ -19,7 +19,7 @@ namespace Verse
 			{
 				return result;
 			}
-			if (Find.ZoneManager.AllZones.Any((Zone z) => z.label == name))
+			if (this.zone.Map.zoneManager.AllZones.Any((Zone z) => z.label == name))
 			{
 				return "NameIsInUse".Translate();
 			}

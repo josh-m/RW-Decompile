@@ -22,9 +22,9 @@ namespace RimWorld
 			return false;
 		}
 
-		public override void Notify_Dropped()
+		public override void Notify_EquipmentLost()
 		{
-			base.Notify_Dropped();
+			base.Notify_EquipmentLost();
 			if (this.state == VerbState.Bursting && this.burstShotsLeft < this.verbProps.burstShotCount)
 			{
 				this.SelfConsume();

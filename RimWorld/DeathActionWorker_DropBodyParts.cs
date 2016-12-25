@@ -8,7 +8,7 @@ namespace RimWorld
 	{
 		public override void PawnDied(Corpse corpse)
 		{
-			Pawn innerPawn = corpse.innerPawn;
+			Pawn innerPawn = corpse.InnerPawn;
 			PawnKindLifeStage lifeStage = innerPawn.ageTracker.CurKindLifeStage;
 			if (lifeStage.dropBodyPart != null)
 			{
@@ -22,7 +22,7 @@ namespace RimWorld
 				}
 				while (true)
 				{
-					BodyPartRecord bodyPartRecord = (from x in innerPawn.health.hediffSet.GetNotMissingParts(null, null)
+					BodyPartRecord bodyPartRecord = (from x in innerPawn.health.hediffSet.GetNotMissingParts(BodyPartHeight.Undefined, BodyPartDepth.Undefined)
 					where x.IsInGroup(lifeStage.dropBodyPart.bodyPartGroup)
 					select x).FirstOrDefault<BodyPartRecord>();
 					if (bodyPartRecord == null)
@@ -40,7 +40,7 @@ namespace RimWorld
 						thing = ThingMaker.MakeThing(bodyPartRecord.def.spawnThingOnRemoved, null);
 					}
 					Thing forbiddenIfOutsideHomeArea;
-					GenPlace.TryPlaceThing(thing, corpse.Position, ThingPlaceMode.Near, out forbiddenIfOutsideHomeArea, null);
+					GenPlace.TryPlaceThing(thing, corpse.Position, corpse.Map, ThingPlaceMode.Near, out forbiddenIfOutsideHomeArea, null);
 					forbiddenIfOutsideHomeArea.SetForbiddenIfOutsideHomeArea();
 				}
 			}

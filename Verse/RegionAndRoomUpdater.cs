@@ -3,84 +3,86 @@ using System.Collections.Generic;
 
 namespace Verse
 {
-	public static class RegionAndRoomUpdater
+	public class RegionAndRoomUpdater
 	{
-		private static List<Region> newRegions = new List<Region>();
+		private Map map;
 
-		private static HashSet<Room> reusedOldRooms = new HashSet<Room>();
+		private List<Region> newRegions = new List<Region>();
 
-		private static List<Room> newRooms = new List<Room>();
+		private HashSet<Room> reusedOldRooms = new HashSet<Room>();
 
-		private static List<Region> regionGroup = new List<Region>();
+		private List<Room> newRooms = new List<Room>();
 
-		private static bool initialized = false;
+		private List<Region> regionGroup = new List<Region>();
 
-		private static bool working = false;
+		private bool initialized;
 
-		private static bool enabledInt = true;
+		private bool working;
 
-		public static bool Enabled
+		private bool enabledInt = true;
+
+		public bool Enabled
 		{
 			get
 			{
-				return RegionAndRoomUpdater.enabledInt;
+				return this.enabledInt;
 			}
 			set
 			{
-				RegionAndRoomUpdater.enabledInt = value;
+				this.enabledInt = value;
 			}
 		}
 
-		public static void Reinit()
+		public RegionAndRoomUpdater(Map map)
 		{
-			RegionAndRoomUpdater.initialized = false;
+			this.map = map;
 		}
 
-		public static void RebuildAllRegionsAndRooms()
+		public void RebuildAllRegionsAndRooms()
 		{
-			Find.Map.temperatureCache.ResetTemperatureCache();
-			RegionDirtyer.SetAllDirty();
-			RegionAndRoomUpdater.RebuildDirtyRegionsAndRooms();
+			this.map.temperatureCache.ResetTemperatureCache();
+			this.map.regionDirtyer.SetAllDirty();
+			this.RebuildDirtyRegionsAndRooms();
 		}
 
-		public static void RebuildDirtyRegionsAndRooms()
+		public void RebuildDirtyRegionsAndRooms()
 		{
-			if (RegionAndRoomUpdater.working || !RegionAndRoomUpdater.Enabled)
+			if (this.working || !this.Enabled)
 			{
 				return;
 			}
-			RegionAndRoomUpdater.working = true;
-			if (!RegionAndRoomUpdater.initialized)
+			this.working = true;
+			if (!this.initialized)
 			{
-				RegionAndRoomUpdater.RebuildAllRegionsAndRooms();
+				this.RebuildAllRegionsAndRooms();
 			}
-			if (!RegionDirtyer.AnyDirty)
+			if (!this.map.regionDirtyer.AnyDirty)
 			{
-				RegionAndRoomUpdater.working = false;
+				this.working = false;
 				return;
 			}
 			ProfilerThreadCheck.BeginSample("RebuildDirtyRegionsAndRooms");
 			ProfilerThreadCheck.BeginSample("Regenerate new regions from dirty cells");
-			for (int i = 0; i < RegionDirtyer.DirtyCells.Count; i++)
+			for (int i = 0; i < this.map.regionDirtyer.DirtyCells.Count; i++)
 			{
-				IntVec3 intVec = RegionDirtyer.DirtyCells[i];
-				if (Find.RegionGrid.GetValidRegionAt(intVec) == null)
+				IntVec3 intVec = this.map.regionDirtyer.DirtyCells[i];
+				if (this.map.regionGrid.GetValidRegionAt(intVec) == null)
 				{
-					Region region = RegionMaker.TryGenerateRegionFrom(intVec);
+					Region region = this.map.regionMaker.TryGenerateRegionFrom(intVec);
 					if (region != null)
 					{
-						RegionAndRoomUpdater.newRegions.Add(region);
+						this.newRegions.Add(region);
 					}
 				}
 			}
 			ProfilerThreadCheck.EndSample();
 			ProfilerThreadCheck.BeginSample("Combine new regions into contiguous groups");
 			int num = 0;
-			for (int j = 0; j < RegionAndRoomUpdater.newRegions.Count; j++)
+			for (int j = 0; j < this.newRegions.Count; j++)
 			{
-				if (RegionAndRoomUpdater.newRegions[j].newRegionGroupIndex < 0)
+				if (this.newRegions[j].newRegionGroupIndex < 0)
 				{
-					RegionTraverser.FloodAndSetNewRegionIndex(RegionAndRoomUpdater.newRegions[j], num);
+					RegionTraverser.FloodAndSetNewRegionIndex(this.newRegions[j], num);
 					num++;
 				}
 			}
@@ -89,33 +91,33 @@ namespace Verse
 			for (int k = 0; k < num; k++)
 			{
 				ProfilerThreadCheck.BeginSample("Remake regionGroup list");
-				RegionAndRoomUpdater.regionGroup.Clear();
-				for (int l = 0; l < RegionAndRoomUpdater.newRegions.Count; l++)
+				this.regionGroup.Clear();
+				for (int l = 0; l < this.newRegions.Count; l++)
 				{
-					if (RegionAndRoomUpdater.newRegions[l].newRegionGroupIndex == k)
+					if (this.newRegions[l].newRegionGroupIndex == k)
 					{
-						RegionAndRoomUpdater.regionGroup.Add(RegionAndRoomUpdater.newRegions[l]);
+						this.regionGroup.Add(this.newRegions[l]);
 					}
 				}
 				ProfilerThreadCheck.EndSample();
-				if (RegionAndRoomUpdater.regionGroup.Count == 1 && RegionAndRoomUpdater.regionGroup[0].portal != null)
+				if (this.regionGroup.Count == 1 && this.regionGroup[0].portal != null)
 				{
-					RegionAndRoomUpdater.regionGroup[0].Room = Room.MakeNew();
+					this.regionGroup[0].Room = Room.MakeNew(this.map);
 				}
 				else
 				{
 					ProfilerThreadCheck.BeginSample("Determine neighboring old rooms");
 					Room room = null;
 					bool flag = false;
-					for (int m = 0; m < RegionAndRoomUpdater.regionGroup.Count; m++)
+					for (int m = 0; m < this.regionGroup.Count; m++)
 					{
-						foreach (Region current in RegionAndRoomUpdater.regionGroup[m].NonPortalNeighbors)
+						foreach (Region current in this.regionGroup[m].NonPortalNeighbors)
 						{
 							if (current.Room != null)
 							{
 								if (room == null)
 								{
-									if (!RegionAndRoomUpdater.reusedOldRooms.Contains(current.Room))
+									if (!this.reusedOldRooms.Contains(current.Room))
 									{
 										room = current.Room;
 									}
@@ -123,7 +125,7 @@ namespace Verse
 								else if (current.Room != room)
 								{
 									flag = true;
-									if (current.Room.RegionCount > room.RegionCount && !RegionAndRoomUpdater.reusedOldRooms.Contains(current.Room))
+									if (current.Room.RegionCount > room.RegionCount && !this.reusedOldRooms.Contains(current.Room))
 									{
 										room = current.Room;
 									}
@@ -135,46 +137,46 @@ namespace Verse
 					ProfilerThreadCheck.BeginSample("Apply final result");
 					if (room == null)
 					{
-						Room item = RegionTraverser.FloodAndSetRooms(RegionAndRoomUpdater.regionGroup[0], null);
-						RegionAndRoomUpdater.newRooms.Add(item);
+						Room item = RegionTraverser.FloodAndSetRooms(this.regionGroup[0], this.map, null);
+						this.newRooms.Add(item);
 					}
 					else if (!flag)
 					{
-						for (int n = 0; n < RegionAndRoomUpdater.regionGroup.Count; n++)
+						for (int n = 0; n < this.regionGroup.Count; n++)
 						{
-							RegionAndRoomUpdater.regionGroup[n].Room = room;
+							this.regionGroup[n].Room = room;
 						}
-						RegionAndRoomUpdater.reusedOldRooms.Add(room);
+						this.reusedOldRooms.Add(room);
 					}
 					else
 					{
-						RegionTraverser.FloodAndSetRooms(RegionAndRoomUpdater.regionGroup[0], room);
-						RegionAndRoomUpdater.reusedOldRooms.Add(room);
+						RegionTraverser.FloodAndSetRooms(this.regionGroup[0], this.map, room);
+						this.reusedOldRooms.Add(room);
 					}
 					ProfilerThreadCheck.EndSample();
 				}
 			}
 			ProfilerThreadCheck.EndSample();
-			foreach (Room current2 in RegionAndRoomUpdater.reusedOldRooms)
+			foreach (Room current2 in this.reusedOldRooms)
 			{
 				current2.RoomChanged();
 			}
-			for (int num2 = 0; num2 < RegionAndRoomUpdater.newRooms.Count; num2++)
+			for (int num2 = 0; num2 < this.newRooms.Count; num2++)
 			{
-				Room room2 = RegionAndRoomUpdater.newRooms[num2];
+				Room room2 = this.newRooms[num2];
 				room2.RoomChanged();
 				float temperature;
-				if (Find.Map.temperatureCache.TryGetAverageCachedRoomTemp(room2, out temperature))
+				if (this.map.temperatureCache.TryGetAverageCachedRoomTemp(room2, out temperature))
 				{
 					room2.Temperature = temperature;
 				}
 			}
-			RegionAndRoomUpdater.newRegions.Clear();
-			RegionAndRoomUpdater.newRooms.Clear();
-			RegionAndRoomUpdater.reusedOldRooms.Clear();
-			RegionDirtyer.SetAllClean();
-			RegionAndRoomUpdater.initialized = true;
-			RegionAndRoomUpdater.working = false;
+			this.newRegions.Clear();
+			this.newRooms.Clear();
+			this.reusedOldRooms.Clear();
+			this.map.regionDirtyer.SetAllClean();
+			this.initialized = true;
+			this.working = false;
 			ProfilerThreadCheck.EndSample();
 		}
 	}

@@ -345,16 +345,16 @@ namespace Verse
 
 		public static bool TryFindRandomWalkableAdjacentCell8Way(Thing t, out IntVec3 result)
 		{
-			return GenAdj.TryFindRandomWalkableAdjacentCell8Way(t.Position, t.Rotation, t.def.size, out result);
+			return GenAdj.TryFindRandomWalkableAdjacentCell8Way(t.Position, t.Rotation, t.def.size, t.Map, out result);
 		}
 
-		public static bool TryFindRandomWalkableAdjacentCell8Way(IntVec3 center, Rot4 rot, IntVec2 size, out IntVec3 result)
+		public static bool TryFindRandomWalkableAdjacentCell8Way(IntVec3 center, Rot4 rot, IntVec2 size, Map map, out IntVec3 result)
 		{
 			GenAdj.AdjustForRotation(ref center, ref size, rot);
 			GenAdj.validCells.Clear();
 			foreach (IntVec3 current in GenAdj.CellsAdjacent8Way(center, rot, size))
 			{
-				if (current.InBounds() && current.Walkable())
+				if (current.InBounds(map) && current.Walkable(map))
 				{
 					GenAdj.validCells.Add(current);
 				}
@@ -362,7 +362,7 @@ namespace Verse
 			return GenAdj.validCells.TryRandomElement(out result);
 		}
 
-		public static bool AdjacentTo8WayOrInside(this IntVec3 me, TargetInfo other)
+		public static bool AdjacentTo8WayOrInside(this IntVec3 me, LocalTargetInfo other)
 		{
 			if (other.HasThing)
 			{
@@ -403,6 +403,51 @@ namespace Verse
 				num2 *= -1;
 			}
 			return num <= 1 && num2 <= 1;
+		}
+
+		public static bool IsAdjacentToCardinalOrInside(this Thing t1, Thing t2)
+		{
+			CellRect cellRect = t1.OccupiedRect().ExpandedBy(1);
+			CellRect cellRect2 = t2.OccupiedRect();
+			int minX = cellRect.minX;
+			int maxX = cellRect.maxX;
+			int minZ = cellRect.minZ;
+			int maxZ = cellRect.maxZ;
+			int i = minX;
+			int j = minZ;
+			while (i <= maxX)
+			{
+				if (cellRect2.Contains(new IntVec3(i, 0, j)) && (i != minX || j != minZ) && (i != minX || j != maxZ) && (i != maxX || j != minZ) && (i != maxX || j != maxZ))
+				{
+					return true;
+				}
+				i++;
+			}
+			i--;
+			for (j++; j <= maxZ; j++)
+			{
+				if (cellRect2.Contains(new IntVec3(i, 0, j)) && (i != minX || j != minZ) && (i != minX || j != maxZ) && (i != maxX || j != minZ) && (i != maxX || j != maxZ))
+				{
+					return true;
+				}
+			}
+			j--;
+			for (i--; i >= minX; i--)
+			{
+				if (cellRect2.Contains(new IntVec3(i, 0, j)) && (i != minX || j != minZ) && (i != minX || j != maxZ) && (i != maxX || j != minZ) && (i != maxX || j != maxZ))
+				{
+					return true;
+				}
+			}
+			i++;
+			for (j--; j > minZ; j--)
+			{
+				if (cellRect2.Contains(new IntVec3(i, 0, j)) && (i != minX || j != minZ) && (i != minX || j != maxZ) && (i != maxX || j != minZ) && (i != maxX || j != maxZ))
+				{
+					return true;
+				}
+			}
+			return false;
 		}
 
 		public static bool AdjacentTo8WayOrInside(this IntVec3 root, Thing t)

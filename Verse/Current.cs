@@ -11,9 +11,9 @@ namespace Verse
 
 		private static Root rootInt;
 
-		private static RootEntry rootEntryInt;
+		private static Root_Entry rootEntryInt;
 
-		private static RootMap rootMapInt;
+		private static Root_Play rootPlayInt;
 
 		private static Camera cameraInt;
 
@@ -33,7 +33,7 @@ namespace Verse
 			}
 		}
 
-		public static RootEntry RootEntry
+		public static Root_Entry Root_Entry
 		{
 			get
 			{
@@ -41,11 +41,11 @@ namespace Verse
 			}
 		}
 
-		public static RootMap RootMap
+		public static Root_Play Root_Play
 		{
 			get
 			{
-				return Current.rootMapInt;
+				return Current.rootPlayInt;
 			}
 		}
 
@@ -115,18 +115,18 @@ namespace Verse
 			if (GenScene.InEntryScene)
 			{
 				Current.ProgramState = ProgramState.Entry;
-				Current.rootEntryInt = GameObject.Find("GameRoot").GetComponent<RootEntry>();
-				Current.rootMapInt = null;
+				Current.rootEntryInt = GameObject.Find("GameRoot").GetComponent<Root_Entry>();
+				Current.rootPlayInt = null;
 				Current.rootInt = Current.rootEntryInt;
 				Current.cameraDriverInt = null;
 				Current.colorCorrectionCurvesInt = null;
 			}
-			else if (GenScene.InMapScene)
+			else if (GenScene.InPlayScene)
 			{
 				Current.ProgramState = ProgramState.MapInitializing;
 				Current.rootEntryInt = null;
-				Current.rootMapInt = GameObject.Find("GameRoot").GetComponent<RootMap>();
-				Current.rootInt = Current.rootMapInt;
+				Current.rootPlayInt = GameObject.Find("GameRoot").GetComponent<Root_Play>();
+				Current.rootInt = Current.rootPlayInt;
 				Current.cameraDriverInt = Current.cameraInt.GetComponent<CameraDriver>();
 				Current.colorCorrectionCurvesInt = Current.cameraInt.GetComponent<ColorCorrectionCurves>();
 			}

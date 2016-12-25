@@ -16,7 +16,7 @@ namespace Verse.AI
 				Verb verb = actor.TryGetAttackVerb(allowManualCastWeapons);
 				if (verb == null)
 				{
-					actor.jobs.EndCurrentJob(JobCondition.Incompletable);
+					actor.jobs.EndCurrentJob(JobCondition.Incompletable, true);
 					return;
 				}
 				curJob.verbToUse = verb;
@@ -43,11 +43,11 @@ namespace Verse.AI
 					wantCoverFromTarget = false
 				}, out intVec))
 				{
-					toil.actor.jobs.EndCurrentJob(JobCondition.Incompletable);
+					toil.actor.jobs.EndCurrentJob(JobCondition.Incompletable, true);
 					return;
 				}
 				toil.actor.pather.StartPath(intVec, PathEndMode.OnCell);
-				Find.PawnDestinationManager.ReserveDestinationFor(actor, intVec);
+				actor.Map.pawnDestinationManager.ReserveDestinationFor(actor, intVec);
 			};
 			toil.FailOnDespawnedOrNull(targetInd);
 			toil.defaultCompleteMode = ToilCompleteMode.PatherArrival;

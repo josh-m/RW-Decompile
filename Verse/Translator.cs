@@ -11,9 +11,30 @@ namespace Verse
 			return LanguageDatabase.activeLanguage.HaveTextForKey(key);
 		}
 
+		public static bool TryTranslate(this string key, out string result)
+		{
+			if (key.NullOrEmpty())
+			{
+				result = key;
+				return false;
+			}
+			if (LanguageDatabase.activeLanguage == null)
+			{
+				Log.Error("No active language! Cannot translate from key " + key + ".");
+				result = key;
+				return true;
+			}
+			if (LanguageDatabase.activeLanguage.TryGetTextFromKey(key, out result))
+			{
+				return true;
+			}
+			result = key;
+			return false;
+		}
+
 		public static string Translate(this string key)
 		{
-			if (key == null || key == string.Empty)
+			if (key.NullOrEmpty())
 			{
 				return key;
 			}
@@ -23,13 +44,14 @@ namespace Verse
 				return key;
 			}
 			string text;
-			if (!LanguageDatabase.activeLanguage.TryGetTextFromKey(key, out text))
+			if (LanguageDatabase.activeLanguage.TryGetTextFromKey(key, out text))
 			{
-				LanguageDatabase.defaultLanguage.TryGetTextFromKey(key, out text);
-				if (Prefs.DevMode)
-				{
-					text = Translator.PseudoTranslated(text);
-				}
+				return text;
+			}
+			LanguageDatabase.defaultLanguage.TryGetTextFromKey(key, out text);
+			if (Prefs.DevMode)
+			{
+				text = Translator.PseudoTranslated(text);
 			}
 			return text;
 		}

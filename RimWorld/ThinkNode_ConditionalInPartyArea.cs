@@ -12,7 +12,7 @@ namespace RimWorld
 				return false;
 			}
 			IntVec3 cell = pawn.mindState.duty.focus.Cell;
-			return PartyUtility.InPartyArea(pawn.Position, cell);
+			return PartyUtility.InPartyArea(pawn.Position, cell, pawn.Map);
 		}
 	}
 }

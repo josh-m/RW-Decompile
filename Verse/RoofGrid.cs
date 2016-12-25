@@ -5,6 +5,8 @@ namespace Verse
 {
 	public sealed class RoofGrid : ICellBoolGiver, IExposable
 	{
+		private Map map;
+
 		private ushort[] roofGrid;
 
 		private CellBoolDrawer drawerInt;
@@ -15,7 +17,7 @@ namespace Verse
 			{
 				if (this.drawerInt == null)
 				{
-					this.drawerInt = new CellBoolDrawer(this);
+					this.drawerInt = new CellBoolDrawer(this, this.map.Size.x, this.map.Size.z);
 				}
 				return this.drawerInt;
 			}
@@ -29,9 +31,10 @@ namespace Verse
 			}
 		}
 
-		public RoofGrid()
+		public RoofGrid(Map map)
 		{
-			this.roofGrid = new ushort[CellIndices.NumGridCells];
+			this.map = map;
+			this.roofGrid = new ushort[map.cellIndices.NumGridCells];
 		}
 
 		public void ExposeData()
@@ -39,12 +42,12 @@ namespace Verse
 			string compressedString = string.Empty;
 			if (Scribe.mode == LoadSaveMode.Saving)
 			{
-				compressedString = GridSaveUtility.CompressedStringForShortGrid((IntVec3 c) => this.roofGrid[CellIndices.CellToIndex(c)]);
+				compressedString = GridSaveUtility.CompressedStringForShortGrid((IntVec3 c) => this.roofGrid[this.map.cellIndices.CellToIndex(c)], this.map);
 			}
 			Scribe_Values.LookValue<string>(ref compressedString, "roofs", null, false);
 			if (Scribe.mode == LoadSaveMode.LoadingVars)
 			{
-				foreach (GridSaveUtility.LoadedGridShort current in GridSaveUtility.LoadedUShortGrid(compressedString))
+				foreach (GridSaveUtility.LoadedGridShort current in GridSaveUtility.LoadedUShortGrid(compressedString, this.map))
 				{
 					this.SetRoof(current.cell, DefDatabase<RoofDef>.GetByShortHash(current.val));
 				}
@@ -53,27 +56,27 @@ namespace Verse
 
 		public bool GetCellBool(int index)
 		{
-			return this.roofGrid[index] != 0 && !Find.FogGrid.IsFogged(index);
+			return this.roofGrid[index] != 0 && !this.map.fogGrid.IsFogged(index);
 		}
 
 		public bool Roofed(int x, int z)
 		{
-			return this.roofGrid[CellIndices.CellToIndex(x, z)] != 0;
+			return this.roofGrid[this.map.cellIndices.CellToIndex(x, z)] != 0;
 		}
 
 		public bool Roofed(IntVec3 c)
 		{
-			return this.roofGrid[CellIndices.CellToIndex(c)] != 0;
+			return this.roofGrid[this.map.cellIndices.CellToIndex(c)] != 0;
 		}
 
 		public RoofDef RoofAt(IntVec3 c)
 		{
-			return DefDatabase<RoofDef>.GetByShortHash(this.roofGrid[CellIndices.CellToIndex(c)]);
+			return DefDatabase<RoofDef>.GetByShortHash(this.roofGrid[this.map.cellIndices.CellToIndex(c)]);
 		}
 
 		public RoofDef RoofAt(int x, int z)
 		{
-			return DefDatabase<RoofDef>.GetByShortHash(this.roofGrid[CellIndices.CellToIndex(x, z)]);
+			return DefDatabase<RoofDef>.GetByShortHash(this.roofGrid[this.map.cellIndices.CellToIndex(x, z)]);
 		}
 
 		public void SetRoof(IntVec3 c, RoofDef def)
@@ -87,13 +90,13 @@ namespace Verse
 			{
 				num = def.shortHash;
 			}
-			if (this.roofGrid[CellIndices.CellToIndex(c)] == num)
+			if (this.roofGrid[this.map.cellIndices.CellToIndex(c)] == num)
 			{
 				return;
 			}
-			this.roofGrid[CellIndices.CellToIndex(c)] = num;
-			Find.GlowGrid.MarkGlowGridDirty(c);
-			Room room = c.GetRoom();
+			this.roofGrid[this.map.cellIndices.CellToIndex(c)] = num;
+			this.map.glowGrid.MarkGlowGridDirty(c);
+			Room room = c.GetRoom(this.map);
 			if (room != null)
 			{
 				room.RoofChanged();
@@ -102,7 +105,7 @@ namespace Verse
 			{
 				this.drawerInt.SetDirty();
 			}
-			Find.MapDrawer.MapMeshDirty(c, MapMeshFlag.Roofs);
+			this.map.mapDrawer.MapMeshDirty(c, MapMeshFlag.Roofs);
 		}
 
 		public void RoofGridUpdate()

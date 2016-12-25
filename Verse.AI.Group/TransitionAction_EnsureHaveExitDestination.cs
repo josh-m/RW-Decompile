@@ -12,11 +12,11 @@ namespace Verse.AI.Group
 			{
 				return;
 			}
-			Pawn searcher = lordToil_Travel.lord.ownedPawns.RandomElement<Pawn>();
+			Pawn pawn = lordToil_Travel.lord.ownedPawns.RandomElement<Pawn>();
 			IntVec3 destination;
-			if (!CellFinder.TryFindRandomPawnExitCell(searcher, out destination))
+			if (!CellFinder.TryFindRandomPawnExitCell(pawn, out destination))
 			{
-				RCellFinder.TryFindRandomPawnEntryCell(out destination);
+				RCellFinder.TryFindRandomPawnEntryCell(out destination, pawn.Map);
 			}
 			lordToil_Travel.SetDestination(destination);
 		}

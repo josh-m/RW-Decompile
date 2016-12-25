@@ -96,12 +96,12 @@ namespace Verse.AI
 					}
 				}
 			};
-			yield return Toils_Jump.JumpIf(gotoBillGiver, () => this.<>f__this.CurJob.GetTargetQueue(TargetIndex.B).NullOrEmpty<TargetInfo>());
+			yield return Toils_Jump.JumpIf(gotoBillGiver, () => this.<>f__this.CurJob.GetTargetQueue(TargetIndex.B).NullOrEmpty<LocalTargetInfo>());
 			Toil extract = Toils_JobTransforms.ExtractNextTargetFromQueue(TargetIndex.B);
 			yield return extract;
 			Toil getToHaulTarget = Toils_Goto.GotoThing(TargetIndex.B, PathEndMode.ClosestTouch).FailOnDespawnedNullOrForbidden(TargetIndex.B).FailOnSomeonePhysicallyInteracting(TargetIndex.B);
 			yield return getToHaulTarget;
-			yield return Toils_Haul.StartCarryThing(TargetIndex.B);
+			yield return Toils_Haul.StartCarryThing(TargetIndex.B, true, false);
 			yield return JobDriver_DoBill.JumpToCollectNextIntoHandsForBill(getToHaulTarget, TargetIndex.B);
 			yield return Toils_Goto.GotoThing(TargetIndex.A, PathEndMode.InteractionCell).FailOnDestroyedOrNull(TargetIndex.B);
 			Toil findPlaceTarget = Toils_JobTransforms.SetTargetToIngredientPlaceCell(TargetIndex.A, TargetIndex.B, TargetIndex.C);
@@ -112,7 +112,7 @@ namespace Verse.AI
 			yield return Toils_Recipe.MakeUnfinishedThingIfNeeded();
 			yield return Toils_Recipe.DoRecipeWork().FailOnDespawnedOrForbiddenPlacedThings();
 			yield return Toils_Recipe.FinishRecipeAndStartStoringProduct();
-			if (!base.CurJob.RecipeDef.products.NullOrEmpty<ThingCount>() || !base.CurJob.RecipeDef.specialProducts.NullOrEmpty<SpecialProductType>())
+			if (!base.CurJob.RecipeDef.products.NullOrEmpty<ThingCountClass>() || !base.CurJob.RecipeDef.specialProducts.NullOrEmpty<SpecialProductType>())
 			{
 				yield return Toils_Reserve.Reserve(TargetIndex.B, 1);
 				Toil carryToCell = Toils_Haul.CarryHauledThingToCell(TargetIndex.B);
@@ -125,7 +125,7 @@ namespace Verse.AI
 						Bill_Production bill_Production = this.<recount>__6.actor.jobs.curJob.bill as Bill_Production;
 						if (bill_Production != null && bill_Production.repeatMode == BillRepeatMode.TargetCount)
 						{
-							Find.ResourceCounter.UpdateResourceCounts();
+							this.<>f__this.Map.resourceCounter.UpdateResourceCounts();
 						}
 					}
 				};
@@ -138,42 +138,46 @@ namespace Verse.AI
 			toil.initAction = delegate
 			{
 				Pawn actor = toil.actor;
-				Job curJob = actor.jobs.curJob;
-				List<TargetInfo> targetQueue = curJob.GetTargetQueue(ind);
-				if (targetQueue.NullOrEmpty<TargetInfo>())
+				if (actor.carryTracker.CarriedThing == null)
+				{
+					Log.Error("JumpToAlsoCollectTargetInQueue run on " + actor + " who is not carrying something.");
+					return;
+				}
+				if (actor.carryTracker.Full)
 				{
 					return;
 				}
-				if (actor.carrier.CarriedThing == null)
+				Job curJob = actor.jobs.curJob;
+				List<LocalTargetInfo> targetQueue = curJob.GetTargetQueue(ind);
+				if (targetQueue.NullOrEmpty<LocalTargetInfo>())
 				{
-					Log.Error("JumpToAlsoCollectTargetInQueue run on " + actor + " who is not carrying something.");
 					return;
 				}
 				for (int i = 0; i < targetQueue.Count; i++)
 				{
 					if (GenAI.CanUseItemForWork(actor, targetQueue[i].Thing))
 					{
-						if (targetQueue[i].Thing.CanStackWith(actor.carrier.CarriedThing))
+						if (targetQueue[i].Thing.CanStackWith(actor.carryTracker.CarriedThing))
 						{
 							if ((actor.Position - targetQueue[i].Thing.Position).LengthHorizontalSquared <= 64f)
 							{
-								int num = (actor.carrier.CarriedThing != null) ? actor.carrier.CarriedThing.stackCount : 0;
-								int num2 = curJob.numToBringList[i];
+								int num = (actor.carryTracker.CarriedThing != null) ? actor.carryTracker.CarriedThing.stackCount : 0;
+								int num2 = curJob.countQueue[i];
 								num2 = Mathf.Min(num2, targetQueue[i].Thing.def.stackLimit - num);
-								num2 = Mathf.Min(num2, actor.carrier.AvailableStackSpace(targetQueue[i].Thing.def));
+								num2 = Mathf.Min(num2, actor.carryTracker.AvailableStackSpace(targetQueue[i].Thing.def));
 								if (num2 > 0)
 								{
-									List<int> numToBringList;
-									List<int> expr_17F = numToBringList = curJob.numToBringList;
-									int num3;
-									int expr_184 = num3 = i;
-									num3 = numToBringList[num3];
-									expr_17F[expr_184] = num3 - num2;
-									curJob.maxNumToCarry = num + num2;
+									curJob.count = num2;
 									curJob.SetTarget(ind, targetQueue[i].Thing);
-									if (curJob.numToBringList[i] == 0)
+									List<int> countQueue;
+									List<int> expr_1B2 = countQueue = curJob.countQueue;
+									int num3;
+									int expr_1B6 = num3 = i;
+									num3 = countQueue[num3];
+									expr_1B2[expr_1B6] = num3 - num2;
+									if (curJob.countQueue[i] == 0)
 									{
-										curJob.numToBringList.RemoveAt(i);
+										curJob.countQueue.RemoveAt(i);
 										targetQueue.RemoveAt(i);
 									}
 									actor.jobs.curDriver.JumpToToil(gotoGetTargetToil);

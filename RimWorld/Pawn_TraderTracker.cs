@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using Verse;
 using Verse.AI;
@@ -19,12 +20,16 @@ namespace RimWorld
 		{
 			get
 			{
-				Lord lord = Find.LordManager.LordOf(this.pawn);
+				Lord lord = this.pawn.GetLord();
 				if (lord == null || !(lord.LordJob is LordJob_TradeWithColony))
 				{
-					for (int i = 0; i < this.pawn.inventory.container.Count; i++)
+					for (int i = 0; i < this.pawn.inventory.innerContainer.Count; i++)
 					{
-						yield return this.pawn.inventory.container[i];
+						Thing t = this.pawn.inventory.innerContainer[i];
+						if (!this.pawn.inventory.NotForSale(t))
+						{
+							yield return t;
+						}
 					}
 				}
 				if (lord != null)
@@ -32,42 +37,18 @@ namespace RimWorld
 					for (int j = 0; j < lord.ownedPawns.Count; j++)
 					{
 						Pawn p = lord.ownedPawns[j];
-						TraderCaravanRole role = p.GetCaravanRole();
+						TraderCaravanRole role = p.GetTraderCaravanRole();
 						if (role == TraderCaravanRole.Carrier)
 						{
-							for (int k = 0; k < p.inventory.container.Count; k++)
+							for (int k = 0; k < p.inventory.innerContainer.Count; k++)
 							{
-								yield return p.inventory.container[k];
+								yield return p.inventory.innerContainer[k];
 							}
 						}
 						else if (role == TraderCaravanRole.Chattel)
 						{
 							yield return p;
 						}
-					}
-				}
-			}
-		}
-
-		public IEnumerable<Thing> ColonyThingsWillingToBuy
-		{
-			get
-			{
-				IEnumerable<Thing> items = from x in Find.ListerThings.AllThings
-				where TradeUtility.EverTradeable(x.def) && x.def.category == ThingCategory.Item && !x.Position.Fogged() && (Find.AreaHome[x.Position] || x.IsInAnyStorage()) && TradeUtility.TradeableNow(x) && this.<>f__this.ReachableForTrade(x)
-				select x;
-				foreach (Thing t in items)
-				{
-					yield return t;
-				}
-				bool hasLord = this.pawn.GetLord() != null;
-				if (hasLord)
-				{
-					foreach (Pawn p in from x in TradeUtility.AllSellableColonyPawns
-					where !x.Downed && this.<>f__this.ReachableForTrade(x)
-					select x)
-					{
-						yield return p;
 					}
 				}
 			}
@@ -93,7 +74,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return !this.pawn.Dead && this.pawn.Spawned && this.pawn.mindState.wantsToTradeWithColony && this.pawn.CasualInterruptibleNow() && !this.pawn.Downed && !this.pawn.IsPrisoner && this.pawn.Faction != Faction.OfPlayer && (this.pawn.Faction == null || !this.pawn.Faction.HostileTo(Faction.OfPlayer)) && this.Goods.Any((Thing x) => this.traderKind.WillTrade(x.def));
+				return !this.pawn.Dead && this.pawn.Spawned && this.pawn.mindState.wantsToTradeWithColony && this.pawn.CanCasuallyInteractNow(false) && !this.pawn.Downed && !this.pawn.IsPrisoner && this.pawn.Faction != Faction.OfPlayer && (this.pawn.Faction == null || !this.pawn.Faction.HostileTo(Faction.OfPlayer)) && this.Goods.Any((Thing x) => this.traderKind.WillTrade(x.def));
 			}
 		}
 
@@ -109,10 +90,32 @@ namespace RimWorld
 				this.soldPrisoners.RemoveAll((Pawn x) => x.Destroyed);
 			}
 			Scribe_Defs.LookDef<TraderKindDef>(ref this.traderKind, "traderKind");
-			Scribe_Collections.LookList<Pawn>(ref this.soldPrisoners, "soldPrisoners", LookMode.MapReference, new object[0]);
+			Scribe_Collections.LookList<Pawn>(ref this.soldPrisoners, "soldPrisoners", LookMode.Reference, new object[0]);
 		}
 
-		public void AddToStock(Thing thing)
+		[DebuggerHidden]
+		public IEnumerable<Thing> ColonyThingsWillingToBuy(Pawn playerNegotiator)
+		{
+			IEnumerable<Thing> items = from x in this.pawn.Map.listerThings.AllThings
+			where TradeUtility.EverTradeable(x.def) && x.def.category == ThingCategory.Item && !x.Position.Fogged(x.Map) && (this.<>f__this.pawn.Map.areaManager.Home[x.Position] || x.IsInAnyStorage()) && TradeUtility.TradeableNow(x) && this.<>f__this.ReachableForTrade(x)
+			select x;
+			foreach (Thing t in items)
+			{
+				yield return t;
+			}
+			bool hasLord = this.pawn.GetLord() != null;
+			if (hasLord)
+			{
+				foreach (Pawn p in from x in TradeUtility.AllSellableColonyPawns(this.pawn.Map)
+				where !x.Downed && this.<>f__this.ReachableForTrade(x)
+				select x)
+				{
+					yield return p;
+				}
+			}
+		}
+
+		public void AddToStock(Thing thing, Pawn playerNegotiator)
 		{
 			if (this.Goods.Contains(thing))
 			{
@@ -139,7 +142,7 @@ namespace RimWorld
 			}
 		}
 
-		public void GiveSoldThingToBuyer(Thing toGive, Thing originalThingFromStock)
+		public void GiveSoldThingToPlayer(Thing toGive, Thing originalThingFromStock, Pawn playerNegotiator)
 		{
 			Pawn pawn = toGive as Pawn;
 			if (pawn != null)
@@ -152,13 +155,13 @@ namespace RimWorld
 				return;
 			}
 			Pawn pawn2 = null;
-			Lord lord = Find.LordManager.LordOf(this.pawn);
+			Lord lord = this.pawn.GetLord();
 			if (lord != null)
 			{
 				for (int i = 0; i < lord.ownedPawns.Count; i++)
 				{
 					Pawn pawn3 = lord.ownedPawns[i];
-					if (pawn3.GetCaravanRole() == TraderCaravanRole.Carrier && pawn3.inventory.Contains(originalThingFromStock))
+					if (pawn3.GetTraderCaravanRole() == TraderCaravanRole.Carrier && pawn3.inventory.Contains(originalThingFromStock))
 					{
 						pawn2 = pawn3;
 						break;
@@ -183,9 +186,9 @@ namespace RimWorld
 			}
 			if (toGive == originalThingFromStock)
 			{
-				pawn2.inventory.container.Remove(originalThingFromStock);
+				pawn2.inventory.innerContainer.Remove(originalThingFromStock);
 			}
-			if (GenPlace.TryPlaceThing(toGive, pawn2.Position, ThingPlaceMode.Near, null))
+			if (GenPlace.TryPlaceThing(toGive, pawn2.Position, this.pawn.Map, ThingPlaceMode.Near, null))
 			{
 				if (lord != null)
 				{
@@ -209,7 +212,7 @@ namespace RimWorld
 		{
 			if (!newPawn.Spawned)
 			{
-				GenSpawn.Spawn(newPawn, this.pawn.Position);
+				GenSpawn.Spawn(newPawn, this.pawn.Position, this.pawn.Map);
 			}
 			if (newPawn.Faction != this.pawn.Faction)
 			{
@@ -219,7 +222,7 @@ namespace RimWorld
 			{
 				newPawn.kindDef = PawnKindDefOf.Slave;
 			}
-			Lord lord = Find.LordManager.LordOf(this.pawn);
+			Lord lord = this.pawn.GetLord();
 			if (lord == null)
 			{
 				newPawn.Destroy(DestroyMode.Vanish);
@@ -244,22 +247,22 @@ namespace RimWorld
 
 		private void AddThingToRandomInventory(Thing thing)
 		{
-			Lord lord = Find.LordManager.LordOf(this.pawn);
+			Lord lord = this.pawn.GetLord();
 			IEnumerable<Pawn> source = Enumerable.Empty<Pawn>();
 			if (lord != null)
 			{
 				source = from x in lord.ownedPawns
-				where x.GetCaravanRole() == TraderCaravanRole.Carrier
+				where x.GetTraderCaravanRole() == TraderCaravanRole.Carrier
 				select x;
 			}
 			if (source.Any<Pawn>())
 			{
-				if (!source.RandomElement<Pawn>().inventory.container.TryAdd(thing))
+				if (!source.RandomElement<Pawn>().inventory.innerContainer.TryAdd(thing, true))
 				{
 					thing.Destroy(DestroyMode.Vanish);
 				}
 			}
-			else if (!this.pawn.inventory.container.TryAdd(thing))
+			else if (!this.pawn.inventory.innerContainer.TryAdd(thing, true))
 			{
 				thing.Destroy(DestroyMode.Vanish);
 			}
@@ -267,7 +270,7 @@ namespace RimWorld
 
 		private bool ReachableForTrade(Thing thing)
 		{
-			return this.pawn.Position.CanReach(thing, PathEndMode.Touch, TraverseMode.PassDoors, Danger.Some);
+			return this.pawn.Map == thing.Map && this.pawn.Map.reachability.CanReach(this.pawn.Position, thing, PathEndMode.Touch, TraverseMode.PassDoors, Danger.Some);
 		}
 	}
 }

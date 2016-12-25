@@ -8,9 +8,9 @@ namespace RimWorld
 	{
 		private TrainableDef trainable;
 
-		public override ThinkNode DeepCopy()
+		public override ThinkNode DeepCopy(bool resolve = true)
 		{
-			ThinkNode_ConditionalTrainableCompleted thinkNode_ConditionalTrainableCompleted = (ThinkNode_ConditionalTrainableCompleted)base.DeepCopy();
+			ThinkNode_ConditionalTrainableCompleted thinkNode_ConditionalTrainableCompleted = (ThinkNode_ConditionalTrainableCompleted)base.DeepCopy(resolve);
 			thinkNode_ConditionalTrainableCompleted.trainable = this.trainable;
 			return thinkNode_ConditionalTrainableCompleted;
 		}

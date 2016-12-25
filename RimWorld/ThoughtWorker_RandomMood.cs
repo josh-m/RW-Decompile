@@ -7,7 +7,7 @@ namespace RimWorld
 	{
 		protected override ThoughtState CurrentStateInternal(Pawn p)
 		{
-			switch ((p.GetHashCode() ^ (GenDate.DayOfYear + GenDate.CurrentYear * 60) * 391) % 10)
+			switch ((p.GetHashCode() ^ (GenLocalDate.DayOfYear(p) + GenLocalDate.Year(p) * 60) * 391) % 10)
 			{
 			case 0:
 				return ThoughtState.ActiveAtStage(0);

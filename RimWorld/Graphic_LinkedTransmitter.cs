@@ -12,7 +12,7 @@ namespace RimWorld
 
 		public override bool ShouldLinkWith(IntVec3 c, Thing parent)
 		{
-			return c.InBounds() && (base.ShouldLinkWith(c, parent) || PowerNetGrid.TransmittedPowerNetAt(c) != null);
+			return c.InBounds(parent.Map) && (base.ShouldLinkWith(c, parent) || parent.Map.powerNetGrid.TransmittedPowerNetAt(c) != null);
 		}
 
 		public override void Print(SectionLayer layer, Thing thing)
@@ -21,9 +21,9 @@ namespace RimWorld
 			for (int i = 0; i < 4; i++)
 			{
 				IntVec3 intVec = thing.Position + GenAdj.CardinalDirections[i];
-				if (intVec.InBounds())
+				if (intVec.InBounds(thing.Map))
 				{
-					Building transmitter = intVec.GetTransmitter();
+					Building transmitter = intVec.GetTransmitter(thing.Map);
 					if (transmitter != null && !transmitter.def.graphicData.Linked)
 					{
 						Material mat = base.LinkedDrawMatFrom(thing, intVec);

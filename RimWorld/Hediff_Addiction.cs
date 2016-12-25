@@ -42,7 +42,7 @@ namespace RimWorld
 		{
 			get
 			{
-				if (this.CurStageIndex == 1)
+				if (this.CurStageIndex == 1 && this.def.CompProps<HediffCompProperties_SeverityPerDay>() != null)
 				{
 					return base.LabelInBrackets + " " + (1f - this.Severity).ToStringPercent();
 				}

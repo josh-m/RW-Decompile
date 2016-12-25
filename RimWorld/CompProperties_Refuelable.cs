@@ -19,6 +19,16 @@ namespace RimWorld
 
 		public bool consumeFuelOnlyWhenUsed;
 
+		public bool showFuelGizmo;
+
+		public bool targetFuelLevelConfigurable;
+
+		public float initialConfigurableTargetFuelLevel;
+
+		public bool drawOutOfFuelOverlay = true;
+
+		public bool drawFuelGaugeInMap;
+
 		public CompProperties_Refuelable()
 		{
 			this.compClass = typeof(CompRefuelable);

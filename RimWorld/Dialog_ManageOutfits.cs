@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using UnityEngine;
 using Verse;
 
@@ -78,7 +79,7 @@ namespace RimWorld
 					list.Add(new FloatMenuOption(localOut.label, delegate
 					{
 						this.SelectedOutfit = localOut;
-					}, MenuOptionPriority.Medium, null, null, 0f, null));
+					}, MenuOptionPriority.Default, null, null, 0f, null, null));
 				}
 				Find.WindowStack.Add(new FloatMenu(list));
 			}
@@ -109,7 +110,7 @@ namespace RimWorld
 						{
 							this.SelectedOutfit = null;
 						}
-					}, MenuOptionPriority.Medium, null, null, 0f, null));
+					}, MenuOptionPriority.Default, null, null, 0f, null, null));
 				}
 				Find.WindowStack.Add(new FloatMenu(list2));
 			}
@@ -127,8 +128,15 @@ namespace RimWorld
 			Rect rect5 = new Rect(0f, 0f, 200f, 30f);
 			Dialog_ManageOutfits.DoNameInputRect(rect5, ref this.SelectedOutfit.label);
 			Rect rect6 = new Rect(0f, 40f, 300f, rect4.height - 45f - 10f);
-			ThingFilterUI.DoThingFilterConfigWindow(rect6, ref this.scrollPosition, this.SelectedOutfit.filter, Dialog_ManageOutfits.apparelGlobalFilter, 16);
+			IEnumerable<SpecialThingFilterDef> forceHiddenFilters = this.HiddenSpecialThingFilters();
+			ThingFilterUI.DoThingFilterConfigWindow(rect6, ref this.scrollPosition, this.SelectedOutfit.filter, Dialog_ManageOutfits.apparelGlobalFilter, 16, null, forceHiddenFilters);
 			GUI.EndGroup();
+		}
+
+		[DebuggerHidden]
+		private IEnumerable<SpecialThingFilterDef> HiddenSpecialThingFilters()
+		{
+			yield return SpecialThingFilterDefOf.AllowNonDeadmansApparel;
 		}
 
 		public override void PreClose()

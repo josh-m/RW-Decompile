@@ -1,4 +1,5 @@
 using RimWorld;
+using RimWorld.Planet;
 using System;
 
 namespace Verse.AI
@@ -58,9 +59,9 @@ namespace Verse.AI
 				{
 					this.curStateInt.pawn = this.pawn;
 				}
-				if (Current.ProgramState != ProgramState.Entry)
+				if (Current.ProgramState != ProgramState.Entry && this.pawn.Spawned)
 				{
-					Find.AttackTargetsCache.UpdateTarget(this.pawn);
+					this.pawn.Map.attackTargetsCache.UpdateTarget(this.pawn);
 				}
 			}
 		}
@@ -84,9 +85,13 @@ namespace Verse.AI
 			}
 		}
 
-		public bool TryStartMentalState(MentalStateDef stateDef, string reason = null, bool forceWake = false)
+		public bool TryStartMentalState(MentalStateDef stateDef, string reason = null, bool forceWake = false, bool causedByMood = false, Pawn otherPawn = null)
 		{
-			if (this.pawn.holder != null || this.CurStateDef == stateDef || this.pawn.Downed || (!forceWake && !this.pawn.Awake()))
+			if (this.pawn.holdingContainer != null || this.CurStateDef == stateDef || this.pawn.Downed || (!forceWake && !this.pawn.Awake()))
+			{
+				return false;
+			}
+			if (TutorSystem.TutorialMode && this.pawn.Faction == Faction.OfPlayer)
 			{
 				return false;
 			}
@@ -110,6 +115,10 @@ namespace Verse.AI
 				}
 				Find.LetterStack.ReceiveLetter(label, text, stateDef.beginLetterType, this.pawn, null);
 			}
+			if (stateDef.IsExtreme && this.pawn.IsPlayerControlledCaravanMember())
+			{
+				Messages.Message("MessageCaravanMemberHasExtremeMentalBreak".Translate(), this.pawn.GetCaravan(), MessageSound.Negative);
+			}
 			this.pawn.records.Increment(RecordDefOf.TimesInMentalState);
 			if (this.pawn.Drafted)
 			{
@@ -118,6 +127,11 @@ namespace Verse.AI
 			this.curStateInt = (MentalState)Activator.CreateInstance(stateDef.stateClass);
 			this.curStateInt.pawn = this.pawn;
 			this.curStateInt.def = stateDef;
+			this.curStateInt.causedByMood = causedByMood;
+			if (otherPawn != null)
+			{
+				((MentalState_SocialFighting)this.curStateInt).otherPawn = otherPawn;
+			}
 			if (this.pawn.needs.mood != null)
 			{
 				this.pawn.needs.mood.thoughts.situational.Notify_SituationalThoughtsDirty();
@@ -126,18 +140,21 @@ namespace Verse.AI
 			{
 				this.pawn.caller.Notify_InAggroMentalState();
 			}
-			if (this.pawn.CurJob != null)
-			{
-				this.pawn.jobs.EndCurrentJob(JobCondition.InterruptForced);
-			}
 			if (this.CurState != null)
 			{
 				this.CurState.PostStart(reason);
 			}
-			Find.AttackTargetsCache.UpdateTarget(this.pawn);
-			if (forceWake && !this.pawn.Awake())
+			if (this.pawn.CurJob != null)
 			{
-				this.pawn.jobs.EndCurrentJob(JobCondition.InterruptForced);
+				this.pawn.jobs.EndCurrentJob(JobCondition.InterruptForced, true);
+			}
+			if (this.pawn.Spawned)
+			{
+				this.pawn.Map.attackTargetsCache.UpdateTarget(this.pawn);
+			}
+			if (this.pawn.Spawned && forceWake && !this.pawn.Awake())
+			{
+				this.pawn.jobs.EndCurrentJob(JobCondition.InterruptForced, true);
 			}
 			return true;
 		}
@@ -150,7 +167,7 @@ namespace Verse.AI
 				float num = this.pawn.kindDef.fleeHealthThresholdRange.LerpThroughRange(lerpPct);
 				if (this.pawn.health.summaryHealth.SummaryHealthPercent < num && this.pawn.Faction != Faction.OfPlayer && this.pawn.HostFaction == null)
 				{
-					this.TryStartMentalState(MentalStateDefOf.PanicFlee, null, false);
+					this.TryStartMentalState(MentalStateDefOf.PanicFlee, null, false, false, null);
 				}
 			}
 		}
@@ -162,7 +179,10 @@ namespace Verse.AI
 				return;
 			}
 			this.curStateInt = null;
-			Find.AttackTargetsCache.UpdateTarget(this.pawn);
+			if (this.pawn.Spawned)
+			{
+				this.pawn.Map.attackTargetsCache.UpdateTarget(this.pawn);
+			}
 		}
 	}
 }

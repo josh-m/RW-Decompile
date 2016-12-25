@@ -40,20 +40,20 @@ namespace RimWorld
 
 		public override AcceptanceReport CanDesignateCell(IntVec3 c)
 		{
-			if (!c.InBounds())
+			if (!c.InBounds(base.Map))
 			{
 				return false;
 			}
-			if (c.Fogged())
+			if (c.Fogged(base.Map))
 			{
 				return false;
 			}
-			RoofDef roofDef = Find.RoofGrid.RoofAt(c);
+			RoofDef roofDef = base.Map.roofGrid.RoofAt(c);
 			if (roofDef != null && roofDef.isThickRoof)
 			{
 				return "MessageNothingCanRemoveThickRoofs".Translate();
 			}
-			bool flag = Find.AreaNoRoof[c];
+			bool flag = base.Map.areaManager.NoRoof[c];
 			if (this.mode == DesignateMode.Add)
 			{
 				return !flag;
@@ -65,12 +65,12 @@ namespace RimWorld
 		{
 			if (this.mode == DesignateMode.Add)
 			{
-				Find.AreaNoRoof.Set(c);
+				base.Map.areaManager.NoRoof[c] = true;
 				Designator_AreaNoRoof.justAddedCells.Add(c);
 			}
 			else if (this.mode == DesignateMode.Remove)
 			{
-				Find.AreaNoRoof.Clear(c);
+				base.Map.areaManager.NoRoof[c] = false;
 				Designator_AreaNoRoof.justRemovedCells.Add(c);
 			}
 		}
@@ -82,7 +82,7 @@ namespace RimWorld
 			{
 				for (int i = 0; i < Designator_AreaNoRoof.justAddedCells.Count; i++)
 				{
-					Find.AreaBuildRoof.Clear(Designator_AreaNoRoof.justAddedCells[i]);
+					base.Map.areaManager.BuildRoof[Designator_AreaNoRoof.justAddedCells[i]] = false;
 				}
 				Designator_AreaNoRoof.justAddedCells.Clear();
 			}
@@ -91,14 +91,14 @@ namespace RimWorld
 				for (int j = 0; j < Designator_AreaNoRoof.justRemovedCells.Count; j++)
 				{
 					IntVec3 intVec = Designator_AreaNoRoof.justRemovedCells[j];
-					Room room = intVec.GetRoom();
+					Room room = intVec.GetRoom(base.Map);
 					if (room == null)
 					{
-						AutoBuildRoofZoneSetter.TryGenerateRoofOnImpassable(intVec);
+						base.Map.autoBuildRoofAreaSetter.TryGenerateAreaOnImpassable(intVec);
 					}
 					else if (!Designator_AreaNoRoof.requestedRooms.Contains(room))
 					{
-						AutoBuildRoofZoneSetter.TryGenerateRoofFor(room);
+						base.Map.autoBuildRoofAreaSetter.TryGenerateAreaFor(room);
 						Designator_AreaNoRoof.requestedRooms.Add(room);
 					}
 				}
@@ -110,8 +110,8 @@ namespace RimWorld
 		public override void SelectedUpdate()
 		{
 			GenUI.RenderMouseoverBracket();
-			Find.AreaNoRoof.MarkForDraw();
-			Find.AreaBuildRoof.MarkForDraw();
+			base.Map.areaManager.NoRoof.MarkForDraw();
+			base.Map.areaManager.BuildRoof.MarkForDraw();
 		}
 	}
 }

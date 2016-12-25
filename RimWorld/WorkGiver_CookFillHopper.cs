@@ -35,7 +35,7 @@ namespace RimWorld
 				return null;
 			}
 			int num = 0;
-			List<Thing> list = Find.ThingGrid.ThingsListAt(thing.Position);
+			List<Thing> list = pawn.Map.thingGrid.ThingsListAt(thing.Position);
 			for (int i = 0; i < list.Count; i++)
 			{
 				Thing thing2 = list[i];
@@ -60,7 +60,7 @@ namespace RimWorld
 				return null;
 			}
 			ThingDef thingDef = null;
-			Thing firstItem = building.Position.GetFirstItem();
+			Thing firstItem = building.Position.GetFirstItem(building.Map);
 			if (firstItem != null)
 			{
 				if (Building_NutrientPasteDispenser.IsAcceptableFeedstock(firstItem.def))
@@ -79,11 +79,11 @@ namespace RimWorld
 			List<Thing> list;
 			if (thingDef == null)
 			{
-				list = Find.Map.listerThings.ThingsInGroup(ThingRequestGroup.FoodSourceNotPlantOrTree);
+				list = pawn.Map.listerThings.ThingsInGroup(ThingRequestGroup.FoodSourceNotPlantOrTree);
 			}
 			else
 			{
-				list = Find.Map.listerThings.ThingsOfDef(thingDef);
+				list = pawn.Map.listerThings.ThingsOfDef(thingDef);
 			}
 			for (int i = 0; i < list.Count; i++)
 			{
@@ -94,7 +94,7 @@ namespace RimWorld
 					{
 						if (HaulAIUtility.PawnCanAutomaticallyHaul(pawn, thing))
 						{
-							if (Find.SlotGroupManager.SlotGroupAt(building.Position).Settings.AllowedToAccept(thing))
+							if (pawn.Map.slotGroupManager.SlotGroupAt(building.Position).Settings.AllowedToAccept(thing))
 							{
 								StoragePriority storagePriority = HaulAIUtility.StoragePriorityAtFor(thing.Position, thing);
 								if (storagePriority < hopperSgp.GetSlotGroup().Settings.Priority)

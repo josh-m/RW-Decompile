@@ -20,8 +20,6 @@ namespace Verse
 
 		public const string SavedGameExtension = ".rws";
 
-		public const string WorldExtension = ".rww";
-
 		public const string ScenarioExtension = ".rsc";
 
 		public const string ExternalHistoryFileExtension = ".rwh";
@@ -214,7 +212,7 @@ namespace Verse
 						{
 							GenFilePaths.saveDataPath = Path.Combine(directoryInfo.Parent.ToString(), "SaveData");
 						}
-						else if (UnityData.platform == RuntimePlatform.OSXPlayer || UnityData.platform == RuntimePlatform.OSXWebPlayer || UnityData.platform == RuntimePlatform.OSXEditor || UnityData.platform == RuntimePlatform.OSXDashboardPlayer)
+						else if (UnityData.platform == RuntimePlatform.OSXPlayer || UnityData.platform == RuntimePlatform.OSXEditor || UnityData.platform == RuntimePlatform.OSXDashboardPlayer)
 						{
 							DirectoryInfo parent = Directory.GetParent(UnityData.persistentDataPath);
 							string path = Path.Combine(parent.ToString(), "RimWorld");
@@ -318,14 +316,6 @@ namespace Verse
 			}
 		}
 
-		private static string WorldsFolderPath
-		{
-			get
-			{
-				return GenFilePaths.FolderUnderSaveData("Worlds");
-			}
-		}
-
 		private static string ExternalHistoryFolderPath
 		{
 			get
@@ -339,6 +329,14 @@ namespace Verse
 			get
 			{
 				return GenFilePaths.FolderUnderSaveData("Screenshots");
+			}
+		}
+
+		public static string DevOutputFolderPath
+		{
+			get
+			{
+				return GenFilePaths.FolderUnderSaveData("DevOutput");
 			}
 		}
 
@@ -382,6 +380,14 @@ namespace Verse
 			}
 		}
 
+		public static string BackstoryOutputFilePath
+		{
+			get
+			{
+				return Path.Combine(GenFilePaths.DevOutputFolderPath, "Fresh_Backstories.xml");
+			}
+		}
+
 		public static string TempFolderPath
 		{
 			get
@@ -401,22 +407,6 @@ namespace Verse
 				}
 				return from f in directoryInfo.GetFiles()
 				where f.Extension == ".rws"
-				orderby f.LastWriteTime descending
-				select f;
-			}
-		}
-
-		public static IEnumerable<FileInfo> AllWorldFiles
-		{
-			get
-			{
-				DirectoryInfo directoryInfo = new DirectoryInfo(GenFilePaths.WorldsFolderPath);
-				if (!directoryInfo.Exists)
-				{
-					directoryInfo.Create();
-				}
-				return from f in directoryInfo.GetFiles()
-				where f.Extension == ".rww"
 				orderby f.LastWriteTime descending
 				select f;
 			}
@@ -468,11 +458,6 @@ namespace Verse
 		public static string FilePathForSavedGame(string gameName)
 		{
 			return Path.Combine(GenFilePaths.SavedGamesFolderPath, gameName + ".rws");
-		}
-
-		public static string FilePathForWorld(string worldName)
-		{
-			return Path.Combine(GenFilePaths.WorldsFolderPath, worldName + ".rww");
 		}
 
 		public static string AbsPathForScenario(string scenarioName)

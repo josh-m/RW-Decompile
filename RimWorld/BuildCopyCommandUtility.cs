@@ -23,7 +23,7 @@ namespace RimWorld
 			{
 				SoundDefOf.SelectDesignator.PlayOneShotOnCamera();
 				des.SetStuffDef(stuff);
-				DesignatorManager.Select(des);
+				Find.DesignatorManager.Select(des);
 			};
 			command_Action.defaultLabel = "CommandBuildCopy".Translate();
 			command_Action.defaultDesc = "CommandBuildCopyDesc".Translate();

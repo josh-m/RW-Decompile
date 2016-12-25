@@ -1,3 +1,4 @@
+using RimWorld.Planet;
 using System;
 using System.Linq;
 using System.Text;
@@ -21,19 +22,37 @@ namespace RimWorld
 
 		private const float HalveLimitHi = 2000f;
 
-		public static IncidentParms DefaultParmsNow(StorytellerDef tellerDef, IncidentCategory incCat)
+		public static IncidentParms DefaultParmsNow(StorytellerDef tellerDef, IncidentCategory incCat, IIncidentTarget target)
 		{
 			IncidentParms incidentParms = new IncidentParms();
+			incidentParms.target = target;
 			if (incCat == IncidentCategory.ThreatSmall || incCat == IncidentCategory.ThreatBig)
 			{
-				float num = Find.StoryWatcher.watcherWealth.WealthItems + Find.StoryWatcher.watcherWealth.WealthBuildings * 0.5f;
+				Map map = target as Map;
+				float num = 0f;
+				if (map != null)
+				{
+					num = map.wealthWatcher.WealthItems + map.wealthWatcher.WealthBuildings * 0.5f;
+				}
 				num -= 2000f;
 				if (num < 0f)
 				{
 					num = 0f;
 				}
 				float num2 = num / 1000f * 11f;
-				float num3 = (float)Find.MapPawns.FreeColonistsCount * 40f;
+				float num3 = 0f;
+				if (map != null)
+				{
+					num3 = (float)map.mapPawns.FreeColonistsCount * 40f;
+				}
+				else
+				{
+					Caravan caravan = target as Caravan;
+					if (caravan != null)
+					{
+						num3 = (float)caravan.PawnsListForReading.Count((Pawn x) => x.IsColonist && x.HostFaction == null) * 40f;
+					}
+				}
 				incidentParms.points = num2 + num3;
 				incidentParms.points *= Find.StoryWatcher.watcherRampUp.TotalThreatPointsFactor;
 				incidentParms.points *= Find.Storyteller.difficulty.threatScale;

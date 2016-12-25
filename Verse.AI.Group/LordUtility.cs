@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace Verse.AI.Group
 {
@@ -6,7 +7,16 @@ namespace Verse.AI.Group
 	{
 		public static Lord GetLord(this Pawn p)
 		{
-			return Find.LordManager.LordOf(p);
+			List<Map> maps = Find.Maps;
+			for (int i = 0; i < maps.Count; i++)
+			{
+				Lord lord = maps[i].lordManager.LordOf(p);
+				if (lord != null)
+				{
+					return lord;
+				}
+			}
+			return null;
 		}
 	}
 }

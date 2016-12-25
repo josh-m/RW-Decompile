@@ -1,4 +1,3 @@
-using RimWorld;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,11 +14,21 @@ namespace Verse
 
 		private static uint iterations = 0u;
 
+		private static List<int> tmpRange = new List<int>();
+
 		public static float Value
 		{
 			get
 			{
 				return Rand.random.GetFloat(Rand.iterations++);
+			}
+		}
+
+		public static bool Bool
+		{
+			get
+			{
+				return Rand.Value < 0.5f;
 			}
 		}
 
@@ -40,6 +49,15 @@ namespace Verse
 			}
 		}
 
+		public static Vector3 PointOnSphere
+		{
+			get
+			{
+				Vector3 vector = new Vector3(Rand.Gaussian(0f, 1f), Rand.Gaussian(0f, 1f), Rand.Gaussian(0f, 1f));
+				return vector.normalized;
+			}
+		}
+
 		public static void EnsureSeedStackEmpty()
 		{
 			if (Rand.stateStack.Any<ulong>())
@@ -47,6 +65,11 @@ namespace Verse
 				Log.Warning("There were more calls to PushSeed() than PopSeed(). Fixing.");
 				Rand.stateStack.Clear();
 			}
+		}
+
+		public static bool Chance(float chance)
+		{
+			return chance >= 1f || Rand.Value < chance;
 		}
 
 		public static float Gaussian(float centerX = 0f, float widthFactor = 1f)
@@ -292,8 +315,42 @@ namespace Verse
 		public static int RandSeedForHour(this Thing t, int salt)
 		{
 			int seed = t.HashOffset();
-			seed = Gen.HashCombineInt(seed, GenDate.HourOfDay);
+			seed = Gen.HashCombineInt(seed, Find.TickManager.TicksAbs / 2500);
 			return Gen.HashCombineInt(seed, salt);
+		}
+
+		public static bool TryRangeInclusiveWhere(int from, int to, Predicate<int> predicate, out int value)
+		{
+			int num = to - from + 1;
+			int num2 = Mathf.Max(Mathf.RoundToInt(Mathf.Sqrt((float)num)), 5);
+			for (int i = 0; i < num2; i++)
+			{
+				int num3 = Rand.RangeInclusive(from, to);
+				if (predicate(num3))
+				{
+					value = num3;
+					return true;
+				}
+			}
+			Rand.tmpRange.Clear();
+			for (int j = from; j <= to; j++)
+			{
+				Rand.tmpRange.Add(j);
+			}
+			Rand.tmpRange.Shuffle<int>();
+			int k = 0;
+			int count = Rand.tmpRange.Count;
+			while (k < count)
+			{
+				if (predicate(Rand.tmpRange[k]))
+				{
+					value = Rand.tmpRange[k];
+					return true;
+				}
+				k++;
+			}
+			value = 0;
+			return false;
 		}
 	}
 }

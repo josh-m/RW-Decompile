@@ -15,7 +15,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return new Rect(0f, (float)(Screen.height - 35) - ((MainTabWindow_Architect)MainTabDefOf.Architect.Window).WinHeight - 230f, 200f, 230f);
+				return new Rect(0f, (float)(UI.screenHeight - 35) - ((MainTabWindow_Architect)MainTabDefOf.Architect.Window).WinHeight - 230f, 200f, 230f);
 			}
 		}
 
@@ -26,21 +26,21 @@ namespace RimWorld
 
 		public void PanelClosing()
 		{
-			DesignatorManager.Deselect();
+			Find.DesignatorManager.Deselect();
 		}
 
 		public void DesignationTabOnGUI()
 		{
-			if (DesignatorManager.SelectedDesignator != null)
+			if (Find.DesignatorManager.SelectedDesignator != null)
 			{
-				DesignatorManager.SelectedDesignator.DoExtraGuiControls(0f, (float)(Screen.height - 35) - ((MainTabWindow_Architect)MainTabDefOf.Architect.Window).WinHeight - 230f);
+				Find.DesignatorManager.SelectedDesignator.DoExtraGuiControls(0f, (float)(UI.screenHeight - 35) - ((MainTabWindow_Architect)MainTabDefOf.Architect.Window).WinHeight - 230f);
 			}
 			float startX = 210f;
 			Gizmo selectedDesignator;
 			GizmoGridDrawer.DrawGizmoGrid(this.def.ResolvedAllowedDesignators.Cast<Gizmo>(), startX, out selectedDesignator);
-			if (selectedDesignator == null && DesignatorManager.SelectedDesignator != null)
+			if (selectedDesignator == null && Find.DesignatorManager.SelectedDesignator != null)
 			{
-				selectedDesignator = DesignatorManager.SelectedDesignator;
+				selectedDesignator = Find.DesignatorManager.SelectedDesignator;
 			}
 			this.DoInfoBox(ArchitectCategoryTab.InfoRect, (Designator)selectedDesignator);
 		}

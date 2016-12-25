@@ -7,9 +7,9 @@ namespace RimWorld
 	{
 		private const int SeverityChangeInterval = 5000;
 
-		private const float TendReduction = 0.3f;
+		private const float TendSuccessChanceFactor = 0.65f;
 
-		private const float TendSuccessChance = 0.4f;
+		private const float TendSeverityReduction = 0.3f;
 
 		private float intervalFactor;
 
@@ -37,12 +37,12 @@ namespace RimWorld
 		public override void Tended(float quality, int batchPosition = 0)
 		{
 			base.Tended(quality, 0);
-			float num = 0.4f * quality;
+			float num = 0.65f * quality;
 			if (Rand.Value < num)
 			{
 				if (batchPosition == 0 && this.pawn.Spawned)
 				{
-					MoteMaker.ThrowText(this.pawn.DrawPos, "TextMote_TreatSuccess".Translate(new object[]
+					MoteMaker.ThrowText(this.pawn.DrawPos, this.pawn.Map, "TextMote_TreatSuccess".Translate(new object[]
 					{
 						num.ToStringPercent()
 					}), 6.5f);
@@ -51,7 +51,7 @@ namespace RimWorld
 			}
 			else if (batchPosition == 0 && this.pawn.Spawned)
 			{
-				MoteMaker.ThrowText(this.pawn.DrawPos, "TextMote_TreatFailed".Translate(new object[]
+				MoteMaker.ThrowText(this.pawn.DrawPos, this.pawn.Map, "TextMote_TreatFailed".Translate(new object[]
 				{
 					num.ToStringPercent()
 				}), 6.5f);

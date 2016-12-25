@@ -9,9 +9,9 @@ namespace RimWorld
 	{
 		private const float MinPointsForSiege = 350f;
 
-		public override LordJob MakeLordJob(ref IncidentParms parms)
+		public override LordJob MakeLordJob(IncidentParms parms, Map map)
 		{
-			IntVec3 siegeSpot = RCellFinder.FindSiegePositionFrom(parms.spawnCenter);
+			IntVec3 siegeSpot = RCellFinder.FindSiegePositionFrom(parms.spawnCenter, map);
 			float num = parms.points * Rand.Range(0.2f, 0.3f);
 			if (num < 60f)
 			{

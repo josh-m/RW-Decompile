@@ -10,6 +10,8 @@ namespace RimWorld
 		AllyArrival,
 		OrbitalVisitor,
 		ShipChunkDrop,
-		Disease
+		JourneyOffer,
+		Disease,
+		CaravanTarget
 	}
 }

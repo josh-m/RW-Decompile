@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace Verse
 {
@@ -57,6 +58,15 @@ namespace Verse
 				result = i;
 			}
 			return result;
+		}
+
+		public string ScoreToString(float score)
+		{
+			if (this.displayRounded)
+			{
+				return Mathf.RoundToInt(score).ToString();
+			}
+			return score.ToString("F2");
 		}
 	}
 }

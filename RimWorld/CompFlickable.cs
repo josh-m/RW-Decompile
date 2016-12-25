@@ -55,7 +55,7 @@ namespace RimWorld
 		public void DoFlick()
 		{
 			this.SwitchIsOn = !this.SwitchIsOn;
-			SoundDefOf.FlickSwitch.PlayOneShot(this.parent.Position);
+			SoundDefOf.FlickSwitch.PlayOneShot(new TargetInfo(this.parent.Position, this.parent.Map, false));
 		}
 
 		public void ResetToOn()
@@ -65,9 +65,9 @@ namespace RimWorld
 		}
 
 		[DebuggerHidden]
-		public override IEnumerable<Command> CompGetGizmosExtra()
+		public override IEnumerable<Gizmo> CompGetGizmosExtra()
 		{
-			foreach (Command c in base.CompGetGizmosExtra())
+			foreach (Gizmo c in base.CompGetGizmosExtra())
 			{
 				yield return c;
 			}

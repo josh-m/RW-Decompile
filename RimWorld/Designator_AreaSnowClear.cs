@@ -35,11 +35,11 @@ namespace RimWorld
 
 		public override AcceptanceReport CanDesignateCell(IntVec3 c)
 		{
-			if (!c.InBounds())
+			if (!c.InBounds(base.Map))
 			{
 				return false;
 			}
-			bool flag = Find.AreaSnowClear[c];
+			bool flag = base.Map.areaManager.SnowClear[c];
 			if (this.mode == DesignateMode.Add)
 			{
 				return !flag;
@@ -51,18 +51,18 @@ namespace RimWorld
 		{
 			if (this.mode == DesignateMode.Add)
 			{
-				Find.AreaSnowClear.Set(c);
+				base.Map.areaManager.SnowClear[c] = true;
 			}
 			else
 			{
-				Find.AreaSnowClear.Clear(c);
+				base.Map.areaManager.SnowClear[c] = false;
 			}
 		}
 
 		public override void SelectedUpdate()
 		{
 			GenUI.RenderMouseoverBracket();
-			Find.AreaSnowClear.MarkForDraw();
+			base.Map.areaManager.SnowClear.MarkForDraw();
 		}
 	}
 }

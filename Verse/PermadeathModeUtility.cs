@@ -7,7 +7,7 @@ namespace Verse
 	{
 		public static string GeneratePermadeathSaveName()
 		{
-			string text = NameGenerator.GenerateName(RulePackDefOf.NamerColony, null);
+			string text = NameGenerator.GenerateName(RulePackDefOf.NamerFactionPlayerRandomized, null, false);
 			int num = 0;
 			string text2;
 			do

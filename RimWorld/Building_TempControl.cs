@@ -9,9 +9,9 @@ namespace RimWorld
 
 		public CompPowerTrader compPowerTrader;
 
-		public override void SpawnSetup()
+		public override void SpawnSetup(Map map)
 		{
-			base.SpawnSetup();
+			base.SpawnSetup(map);
 			this.compTempControl = base.GetComp<CompTempControl>();
 			this.compPowerTrader = base.GetComp<CompPowerTrader>();
 		}

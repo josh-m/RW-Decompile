@@ -23,7 +23,7 @@ namespace RimWorld
 		public void ExposeData()
 		{
 			Scribe_Defs.LookDef<ResearchProjectDef>(ref this.currentProj, "currentProj");
-			Scribe_Collections.LookDictionary<ResearchProjectDef, float>(ref this.progress, "progress", LookMode.DefReference, LookMode.Value);
+			Scribe_Collections.LookDictionary<ResearchProjectDef, float>(ref this.progress, "progress", LookMode.Def, LookMode.Value);
 		}
 
 		public float GetProgress(ResearchProjectDef proj)

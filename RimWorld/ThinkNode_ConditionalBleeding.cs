@@ -7,7 +7,7 @@ namespace RimWorld
 	{
 		protected override bool Satisfied(Pawn pawn)
 		{
-			return pawn.health.hediffSet.BleedingRate > 0.001f;
+			return pawn.health.hediffSet.BleedRateTotal > 0.001f;
 		}
 	}
 }

@@ -7,7 +7,7 @@ namespace RimWorld
 	{
 		public override void PawnDied(Corpse corpse)
 		{
-			GenExplosion.DoExplosion(corpse.Position, 1.9f, DamageDefOf.Flame, corpse.innerPawn, null, null, null, null, 0f, 1, false, null, 0f, 1);
+			GenExplosion.DoExplosion(corpse.Position, corpse.Map, 1.9f, DamageDefOf.Flame, corpse.InnerPawn, null, null, null, null, 0f, 1, false, null, 0f, 1);
 		}
 	}
 }

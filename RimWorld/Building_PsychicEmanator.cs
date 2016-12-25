@@ -30,12 +30,15 @@ namespace RimWorld
 			}
 		}
 
-		public override void SpawnSetup()
+		public override void SpawnSetup(Map map)
 		{
-			base.SpawnSetup();
+			base.SpawnSetup(map);
 			this.ticksToInsanityPulse = Building_PsychicEmanator.InsanityPulseInterval.RandomInRange;
 			this.ticksToIncreaseDroneLevel = 150000;
-			SoundDefOf.PsychicPulseGlobal.PlayOneShotOnCamera();
+			if (map == Find.VisibleMap)
+			{
+				SoundDefOf.PsychicPulseGlobal.PlayOneShotOnCamera();
+			}
 		}
 
 		public override void ExposeData()
@@ -99,21 +102,27 @@ namespace RimWorld
 			this.droneLevel += 1;
 			string text = "LetterPsychicDroneLevelIncreased".Translate();
 			Find.LetterStack.ReceiveLetter("LetterLabelPsychicDroneLevelIncreased".Translate(), text, LetterType.BadNonUrgent, null);
-			SoundDefOf.PsychicPulseGlobal.PlayOneShotOnCamera();
+			if (base.Map == Find.VisibleMap)
+			{
+				SoundDefOf.PsychicPulseGlobal.PlayOneShotOnCamera();
+			}
 		}
 
 		private void DoAnimalInsanityPulse()
 		{
-			IEnumerable<Pawn> enumerable = from p in Find.MapPawns.AllPawnsSpawned
+			IEnumerable<Pawn> enumerable = from p in base.Map.mapPawns.AllPawnsSpawned
 			where p.RaceProps.Animal && p.Position.InHorDistOf(base.Position, 25f)
 			select p;
 			foreach (Pawn current in enumerable)
 			{
-				current.mindState.mentalStateHandler.TryStartMentalState(MentalStateDefOf.Manhunter, null, false);
+				current.mindState.mentalStateHandler.TryStartMentalState(MentalStateDefOf.Manhunter, null, false, false, null);
 			}
 			Messages.Message("MessageAnimalInsanityPulse".Translate(), this, MessageSound.Negative);
-			Find.CameraDriver.shaker.DoShake(4f);
-			SoundDefOf.PsychicPulseGlobal.PlayOneShotOnCamera();
+			if (base.Map == Find.VisibleMap)
+			{
+				Find.CameraDriver.shaker.DoShake(4f);
+				SoundDefOf.PsychicPulseGlobal.PlayOneShotOnCamera();
+			}
 		}
 	}
 }

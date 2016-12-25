@@ -9,6 +9,7 @@ namespace Verse.AI.Group
 		Memo,
 		PawnDamaged,
 		PawnArrestAttempted,
-		PawnLost
+		PawnLost,
+		FactionRelationsChanged
 	}
 }

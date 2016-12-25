@@ -18,7 +18,7 @@ namespace Verse.AI
 			gotoThing.defaultCompleteMode = ToilCompleteMode.PatherArrival;
 			gotoThing.FailOnDespawnedNullOrForbidden(TargetIndex.A);
 			yield return gotoThing;
-			yield return Toils_Haul.TakeToInventory(TargetIndex.A, base.CurJob.maxNumToCarry);
+			yield return Toils_Haul.TakeToInventory(TargetIndex.A, base.CurJob.count);
 		}
 	}
 }

@@ -7,51 +7,51 @@ namespace RimWorld
 {
 	public static class GenConstruct
 	{
-		public static Blueprint_Build PlaceBlueprintForBuild(BuildableDef sourceDef, IntVec3 center, Rot4 rotation, Faction faction, ThingDef stuff)
+		public static Blueprint_Build PlaceBlueprintForBuild(BuildableDef sourceDef, IntVec3 center, Map map, Rot4 rotation, Faction faction, ThingDef stuff)
 		{
 			Blueprint_Build blueprint_Build = (Blueprint_Build)ThingMaker.MakeThing(sourceDef.blueprintDef, null);
 			blueprint_Build.SetFactionDirect(faction);
 			blueprint_Build.stuffToUse = stuff;
-			GenSpawn.Spawn(blueprint_Build, center, rotation);
+			GenSpawn.Spawn(blueprint_Build, center, map, rotation);
 			return blueprint_Build;
 		}
 
-		public static Blueprint_Install PlaceBlueprintForInstall(MinifiedThing itemToInstall, IntVec3 center, Rot4 rotation, Faction faction)
+		public static Blueprint_Install PlaceBlueprintForInstall(MinifiedThing itemToInstall, IntVec3 center, Map map, Rot4 rotation, Faction faction)
 		{
 			Blueprint_Install blueprint_Install = (Blueprint_Install)ThingMaker.MakeThing(itemToInstall.InnerThing.def.installBlueprintDef, null);
 			blueprint_Install.SetThingToInstallFromMinified(itemToInstall);
 			blueprint_Install.SetFactionDirect(faction);
-			GenSpawn.Spawn(blueprint_Install, center, rotation);
+			GenSpawn.Spawn(blueprint_Install, center, map, rotation);
 			return blueprint_Install;
 		}
 
-		public static Blueprint_Install PlaceBlueprintForReinstall(Building buildingToReinstall, IntVec3 center, Rot4 rotation, Faction faction)
+		public static Blueprint_Install PlaceBlueprintForReinstall(Building buildingToReinstall, IntVec3 center, Map map, Rot4 rotation, Faction faction)
 		{
 			Blueprint_Install blueprint_Install = (Blueprint_Install)ThingMaker.MakeThing(buildingToReinstall.def.installBlueprintDef, null);
 			blueprint_Install.SetBuildingToReinstall(buildingToReinstall);
 			blueprint_Install.SetFactionDirect(faction);
-			GenSpawn.Spawn(blueprint_Install, center, rotation);
+			GenSpawn.Spawn(blueprint_Install, center, map, rotation);
 			return blueprint_Install;
 		}
 
-		public static bool CanBuildOnTerrain(BuildableDef entDef, IntVec3 c, Rot4 rot, Thing thingToIgnore = null)
+		public static bool CanBuildOnTerrain(BuildableDef entDef, IntVec3 c, Map map, Rot4 rot, Thing thingToIgnore = null)
 		{
 			TerrainDef terrainDef = entDef as TerrainDef;
-			if (terrainDef != null && !c.GetTerrain().changeable)
+			if (terrainDef != null && !c.GetTerrain(map).changeable)
 			{
 				return false;
 			}
 			CellRect cellRect = GenAdj.OccupiedRect(c, rot, entDef.Size);
-			cellRect.ClipInsideMap();
+			cellRect.ClipInsideMap(map);
 			CellRect.CellRectIterator iterator = cellRect.GetIterator();
 			while (!iterator.Done())
 			{
-				TerrainDef terrainDef2 = Find.TerrainGrid.TerrainAt(iterator.Current);
+				TerrainDef terrainDef2 = map.terrainGrid.TerrainAt(iterator.Current);
 				if (!terrainDef2.affordances.Contains(entDef.terrainAffordanceNeeded))
 				{
 					return false;
 				}
-				List<Thing> thingList = iterator.Current.GetThingList();
+				List<Thing> thingList = iterator.Current.GetThingList(map);
 				for (int i = 0; i < thingList.Count; i++)
 				{
 					if (thingList[i] != thingToIgnore)
@@ -94,7 +94,7 @@ namespace RimWorld
 
 		public static int AmountNeededByOf(IConstructible c, ThingDef resDef)
 		{
-			foreach (ThingCount current in c.MaterialsNeeded())
+			foreach (ThingCountClass current in c.MaterialsNeeded())
 			{
 				if (current.thingDef == resDef)
 				{
@@ -104,28 +104,28 @@ namespace RimWorld
 			return 0;
 		}
 
-		public static AcceptanceReport CanPlaceBlueprintAt(BuildableDef entDef, IntVec3 center, Rot4 rot, bool godMode = false, Thing thingToIgnore = null)
+		public static AcceptanceReport CanPlaceBlueprintAt(BuildableDef entDef, IntVec3 center, Rot4 rot, Map map, bool godMode = false, Thing thingToIgnore = null)
 		{
 			CellRect cellRect = GenAdj.OccupiedRect(center, rot, entDef.Size);
 			CellRect.CellRectIterator iterator = cellRect.GetIterator();
 			while (!iterator.Done())
 			{
 				IntVec3 current = iterator.Current;
-				if (!current.InBounds())
+				if (!current.InBounds(map))
 				{
 					return new AcceptanceReport("OutOfBounds".Translate());
 				}
-				if (current.InNoBuildEdgeArea())
+				if (current.InNoBuildEdgeArea(map) && !DebugSettings.godMode)
 				{
 					return "TooCloseToMapEdge".Translate();
 				}
 				iterator.MoveNext();
 			}
-			if (center.Fogged())
+			if (center.Fogged(map))
 			{
 				return "CannotPlaceInUndiscovered".Translate();
 			}
-			List<Thing> thingList = center.GetThingList();
+			List<Thing> thingList = center.GetThingList(map);
 			for (int i = 0; i < thingList.Count; i++)
 			{
 				Thing thing = thingList[i];
@@ -151,12 +151,12 @@ namespace RimWorld
 			ThingDef thingDef = entDef as ThingDef;
 			if (thingDef != null && thingDef.hasInteractionCell)
 			{
-				IntVec3 c = Thing.InteractionCellWhenAt(thingDef, center, rot);
-				if (!c.InBounds())
+				IntVec3 c = Thing.InteractionCellWhenAt(thingDef, center, rot, map);
+				if (!c.InBounds(map))
 				{
 					return new AcceptanceReport("InteractionSpotOutOfBounds".Translate());
 				}
-				List<Thing> list = Find.ThingGrid.ThingsListAtFast(c);
+				List<Thing> list = map.thingGrid.ThingsListAtFast(c);
 				for (int j = 0; j < list.Count; j++)
 				{
 					if (list[j] != thingToIgnore)
@@ -183,9 +183,9 @@ namespace RimWorld
 			{
 				foreach (IntVec3 current2 in GenAdj.CellsAdjacentCardinal(center, rot, entDef.Size))
 				{
-					if (current2.InBounds())
+					if (current2.InBounds(map))
 					{
-						thingList = current2.GetThingList();
+						thingList = current2.GetThingList(map);
 						for (int k = 0; k < thingList.Count; k++)
 						{
 							Thing thing2 = thingList[k];
@@ -198,7 +198,7 @@ namespace RimWorld
 									ThingDef thingDef2 = blueprint2.def.entityDefToBuild as ThingDef;
 									if (thingDef2 == null)
 									{
-										goto IL_364;
+										goto IL_37E;
 									}
 									thingDef3 = thingDef2;
 								}
@@ -206,7 +206,7 @@ namespace RimWorld
 								{
 									thingDef3 = thing2.def;
 								}
-								if (thingDef3.hasInteractionCell && cellRect.Contains(Thing.InteractionCellWhenAt(thingDef3, thing2.Position, thing2.Rotation)))
+								if (thingDef3.hasInteractionCell && cellRect.Contains(Thing.InteractionCellWhenAt(thingDef3, thing2.Position, thing2.Rotation, thing2.Map)))
 								{
 									return new AcceptanceReport("WouldBlockInteractionSpot".Translate(new object[]
 									{
@@ -215,7 +215,7 @@ namespace RimWorld
 									}).CapitalizeFirst());
 								}
 							}
-							IL_364:;
+							IL_37E:;
 						}
 					}
 				}
@@ -223,19 +223,19 @@ namespace RimWorld
 			TerrainDef terrainDef = entDef as TerrainDef;
 			if (terrainDef != null)
 			{
-				if (Find.TerrainGrid.TerrainAt(center) == terrainDef)
+				if (map.terrainGrid.TerrainAt(center) == terrainDef)
 				{
 					return new AcceptanceReport("TerrainIsAlready".Translate(new object[]
 					{
 						terrainDef.label
 					}));
 				}
-				if (Find.DesignationManager.DesignationAt(center, DesignationDefOf.SmoothFloor) != null)
+				if (map.designationManager.DesignationAt(center, DesignationDefOf.SmoothFloor) != null)
 				{
 					return new AcceptanceReport("BeingSmoothed".Translate());
 				}
 			}
-			if (!GenConstruct.CanBuildOnTerrain(entDef, center, rot, thingToIgnore))
+			if (!GenConstruct.CanBuildOnTerrain(entDef, center, map, rot, thingToIgnore))
 			{
 				return new AcceptanceReport("TerrainCannotSupport".Translate());
 			}
@@ -244,7 +244,7 @@ namespace RimWorld
 				CellRect.CellRectIterator iterator2 = cellRect.GetIterator();
 				while (!iterator2.Done())
 				{
-					thingList = iterator2.Current.GetThingList();
+					thingList = iterator2.Current.GetThingList(map);
 					for (int l = 0; l < thingList.Count; l++)
 					{
 						Thing thing3 = thingList[l];
@@ -263,7 +263,7 @@ namespace RimWorld
 			{
 				for (int m = 0; m < entDef.PlaceWorkers.Count; m++)
 				{
-					AcceptanceReport result = entDef.PlaceWorkers[m].AllowsPlacing(entDef, center, rot);
+					AcceptanceReport result = entDef.PlaceWorkers[m].AllowsPlacing(entDef, center, rot, thingToIgnore);
 					if (!result.Accepted)
 					{
 						return result;

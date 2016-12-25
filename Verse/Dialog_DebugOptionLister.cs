@@ -1,3 +1,4 @@
+using RimWorld;
 using System;
 using System.Linq;
 using UnityEngine;
@@ -24,8 +25,12 @@ namespace Verse
 			}
 		}
 
-		protected void DebugTool(string label, Action toolAction)
+		protected void DebugToolMap(string label, Action toolAction)
 		{
+			if (Find.MainTabsRoot.OpenTab == MainTabDefOf.World)
+			{
+				return;
+			}
 			if (!base.FilterAllows(label))
 			{
 				GUI.color = new Color(1f, 1f, 1f, 0.3f);
@@ -42,13 +47,13 @@ namespace Verse
 			}
 		}
 
-		protected void DebugToolForPawns(string label, Action<Pawn> pawnAction)
+		protected void DebugToolMapForPawns(string label, Action<Pawn> pawnAction)
 		{
-			this.DebugTool(label, delegate
+			this.DebugToolMap(label, delegate
 			{
-				if (Gen.MouseCell().InBounds())
+				if (UI.MouseCell().InBounds(Find.VisibleMap))
 				{
-					foreach (Pawn current in (from t in Find.ThingGrid.ThingsAt(Gen.MouseCell())
+					foreach (Pawn current in (from t in Find.VisibleMap.thingGrid.ThingsAt(UI.MouseCell())
 					where t is Pawn
 					select t).Cast<Pawn>().ToList<Pawn>())
 					{
@@ -56,6 +61,28 @@ namespace Verse
 					}
 				}
 			});
+		}
+
+		protected void DebugToolWorld(string label, Action toolAction)
+		{
+			if (Find.MainTabsRoot.OpenTab != MainTabDefOf.World)
+			{
+				return;
+			}
+			if (!base.FilterAllows(label))
+			{
+				GUI.color = new Color(1f, 1f, 1f, 0.3f);
+			}
+			if (this.listing.ButtonDebug(label))
+			{
+				this.Close(true);
+				DebugTools.curTool = new DebugTool(label, toolAction, null);
+			}
+			GUI.color = Color.white;
+			if (Event.current.type == EventType.Layout)
+			{
+				this.totalOptionsHeight += 24f;
+			}
 		}
 
 		protected void CheckboxLabeledDebug(string label, ref bool checkOn)

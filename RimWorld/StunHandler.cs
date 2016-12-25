@@ -91,7 +91,7 @@ namespace RimWorld
 				else
 				{
 					Vector3 loc = new Vector3((float)this.parent.Position.x + 1f, (float)this.parent.Position.y, (float)this.parent.Position.z + 1f);
-					MoteMaker.ThrowText(loc, "Adapted".Translate(), Color.white, -1f);
+					MoteMaker.ThrowText(loc, this.parent.Map, "Adapted".Translate(), Color.white, -1f);
 				}
 			}
 		}

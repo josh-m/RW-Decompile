@@ -41,7 +41,8 @@ namespace Verse
 			Widgets.DrawTexturePart(drawRect3, uvRect2, TabRecord.TabAtlas);
 			Widgets.DrawTexturePart(drawRect2, uvRect, TabRecord.TabAtlas);
 			Rect rect2 = rect;
-			if (Mouse.IsOver(rect))
+			rect2.width -= 10f;
+			if (Mouse.IsOver(rect2))
 			{
 				GUI.color = Color.yellow;
 				rect2.x += 2f;

@@ -8,11 +8,9 @@ namespace Verse
 
 		public float averagePainPerSeverityOld = 0.5f;
 
-		public float bleeding = 2f;
+		public float bleedRate;
 
 		public bool canMerge;
-
-		public bool fullyHealableOnlyByTend;
 
 		public string destroyedLabel;
 

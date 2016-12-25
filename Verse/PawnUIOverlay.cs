@@ -23,7 +23,7 @@ namespace Verse
 
 		public void DrawPawnGUIOverlay()
 		{
-			if (!this.pawn.Spawned || Find.FogGrid.IsFogged(this.pawn.Position))
+			if (!this.pawn.Spawned || this.pawn.Map.fogGrid.IsFogged(this.pawn.Position))
 			{
 				return;
 			}
@@ -47,11 +47,11 @@ namespace Verse
 					break;
 				}
 			}
-			Vector2 pos = GenWorldUI.LabelDrawPosFor(this.pawn, -0.6f);
-			GenWorldUI.DrawPawnLabel(this.pawn, pos, 1f, 9999f, null);
+			Vector2 pos = GenMapUI.LabelDrawPosFor(this.pawn, -0.6f);
+			GenMapUI.DrawPawnLabel(this.pawn, pos, 1f, 9999f, null, GameFont.Tiny, true, true);
 			if (this.pawn.CanTradeNow)
 			{
-				OverlayDrawer.DrawOverlay(this.pawn, OverlayTypes.QuestionMark);
+				this.pawn.Map.overlayDrawer.DrawOverlay(this.pawn, OverlayTypes.QuestionMark);
 			}
 		}
 	}

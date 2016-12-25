@@ -8,8 +8,16 @@ namespace Verse.AI
 		{
 			for (int i = 0; i < 50; i++)
 			{
-				IntVec3 intVec = trueWanderRoot + GenRadial.RadialPattern[i] * 7;
-				if (intVec.InBounds() && intVec.Walkable() && pawn.CanReach(intVec, PathEndMode.OnCell, Danger.Some, false, TraverseMode.ByPawn))
+				IntVec3 intVec;
+				if (i < 8)
+				{
+					intVec = trueWanderRoot + GenRadial.RadialPattern[i];
+				}
+				else
+				{
+					intVec = trueWanderRoot + GenRadial.RadialPattern[i - 8 + 1] * 7;
+				}
+				if (intVec.InBounds(pawn.Map) && intVec.Walkable(pawn.Map) && pawn.CanReach(intVec, PathEndMode.OnCell, Danger.Some, false, TraverseMode.ByPawn))
 				{
 					return intVec;
 				}
@@ -17,10 +25,10 @@ namespace Verse.AI
 			return IntVec3.Invalid;
 		}
 
-		public static bool InSameRoom(IntVec3 locA, IntVec3 locB)
+		public static bool InSameRoom(IntVec3 locA, IntVec3 locB, Map map)
 		{
-			Room room = locA.GetRoom();
-			return room == null || room == locB.GetRoom();
+			Room room = locA.GetRoom(map);
+			return room == null || room == locB.GetRoom(map);
 		}
 	}
 }

@@ -5,22 +5,22 @@ namespace RimWorld
 {
 	public class GenStep_FindPlayerStartSpot : GenStep
 	{
-		public override void Generate()
+		public override void Generate(Map map)
 		{
 			DeepProfiler.Start("RebuildAllRegions");
-			RegionAndRoomUpdater.RebuildAllRegionsAndRooms();
+			map.regionAndRoomUpdater.RebuildAllRegionsAndRooms();
 			DeepProfiler.End();
 			int debug_numStand = 0;
 			int debug_numRoom = 0;
 			int debug_numTouch = 0;
 			Predicate<IntVec3> validator = delegate(IntVec3 c)
 			{
-				if (!c.Standable())
+				if (!c.Standable(map))
 				{
 					debug_numStand++;
 					return false;
 				}
-				Room room = c.GetRoom();
+				Room room = c.GetRoom(map);
 				if (room == null)
 				{
 					debug_numRoom++;
@@ -38,9 +38,9 @@ namespace RimWorld
 			int i;
 			for (i = 7; i > 2; i--)
 			{
-				int num = Find.Map.Size.x / i;
-				int minEdgeDistance = (Find.Map.Size.x - num) / 2;
-				if (CellFinderLoose.TryFindRandomNotEdgeCellWith(minEdgeDistance, validator, out playerStartSpot))
+				int num = map.Size.x / i;
+				int minEdgeDistance = (map.Size.x - num) / 2;
+				if (CellFinderLoose.TryFindRandomNotEdgeCellWith(minEdgeDistance, validator, map, out playerStartSpot))
 				{
 					flag = true;
 					break;
@@ -60,7 +60,7 @@ namespace RimWorld
 					", numTouch=",
 					debug_numTouch
 				}));
-				playerStartSpot = CellFinderLoose.RandomCellWith(validator, 1000);
+				playerStartSpot = CellFinderLoose.RandomCellWith(validator, map, 1000);
 			}
 			MapGenerator.PlayerStartSpot = playerStartSpot;
 		}

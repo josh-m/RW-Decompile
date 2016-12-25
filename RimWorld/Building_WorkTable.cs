@@ -68,15 +68,15 @@ namespace RimWorld
 			});
 		}
 
-		public override void SpawnSetup()
+		public override void SpawnSetup(Map map)
 		{
-			base.SpawnSetup();
+			base.SpawnSetup(map);
 			this.powerComp = base.GetComp<CompPowerTrader>();
 			this.refuelableComp = base.GetComp<CompRefuelable>();
 			this.breakdownableComp = base.GetComp<CompBreakdownable>();
 		}
 
-		public virtual void BillTick()
+		public virtual void UsedThisTick()
 		{
 			if (this.refuelableComp != null)
 			{
@@ -87,6 +87,11 @@ namespace RimWorld
 		public bool CurrentlyUsable()
 		{
 			return this.UsableNow;
+		}
+
+		virtual Map get_Map()
+		{
+			return base.Map;
 		}
 	}
 }

@@ -30,10 +30,10 @@ namespace Verse
 
 		public override void Regenerate()
 		{
-			SectionLayer_EdgeShadows.edificeGrid = Find.EdificeGrid.InnerArray;
+			SectionLayer_EdgeShadows.edificeGrid = base.Map.edificeGrid.InnerArray;
 			float y = Altitudes.AltitudeFor(AltitudeLayer.Shadows);
 			CellRect cellRect = new CellRect(this.section.botLeft.x, this.section.botLeft.z, 17, 17);
-			cellRect.ClipInsideMap();
+			cellRect.ClipInsideMap(base.Map);
 			LayerSubMesh sm = base.GetSubMesh(MatBases.EdgeShadow);
 			sm.Clear(MeshParts.All);
 			sm.verts.Capacity = cellRect.Area * 4;
@@ -42,11 +42,12 @@ namespace Verse
 			bool[] array = new bool[4];
 			bool[] array2 = new bool[4];
 			bool[] array3 = new bool[4];
+			CellIndices cellIndices = base.Map.cellIndices;
 			for (int i = cellRect.minX; i <= cellRect.maxX; i++)
 			{
 				for (int j = cellRect.minZ; j <= cellRect.maxZ; j++)
 				{
-					Thing thing = SectionLayer_EdgeShadows.edificeGrid[CellIndices.CellToIndex(i, j)];
+					Thing thing = SectionLayer_EdgeShadows.edificeGrid[cellIndices.CellToIndex(i, j)];
 					if (thing != null && thing.def.castEdgeShadows)
 					{
 						sm.verts.Add(new Vector3((float)i, y, (float)j));
@@ -84,9 +85,9 @@ namespace Verse
 						for (int k = 0; k < 4; k++)
 						{
 							IntVec3 c = a + cardinalDirectionsAround[k];
-							if (c.InBounds())
+							if (c.InBounds(base.Map))
 							{
-								thing = SectionLayer_EdgeShadows.edificeGrid[CellIndices.CellToIndex(c)];
+								thing = SectionLayer_EdgeShadows.edificeGrid[cellIndices.CellToIndex(c)];
 								if (thing != null && thing.def.castEdgeShadows)
 								{
 									array2[k] = true;
@@ -101,9 +102,9 @@ namespace Verse
 							if (!array[l])
 							{
 								IntVec3 c = a + diagonalDirectionsAround[l];
-								if (c.InBounds())
+								if (c.InBounds(base.Map))
 								{
-									thing = SectionLayer_EdgeShadows.edificeGrid[CellIndices.CellToIndex(c)];
+									thing = SectionLayer_EdgeShadows.edificeGrid[cellIndices.CellToIndex(c)];
 									if (thing != null && thing.def.castEdgeShadows)
 									{
 										array[l] = true;
@@ -260,7 +261,7 @@ namespace Verse
 			}
 			if (sm.verts.Count > 0)
 			{
-				sm.FinalizeMesh(MeshParts.Verts | MeshParts.Tris | MeshParts.Colors);
+				sm.FinalizeMesh(MeshParts.Verts | MeshParts.Tris | MeshParts.Colors, false);
 			}
 		}
 	}

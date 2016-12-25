@@ -20,11 +20,11 @@ namespace RimWorld
 			}
 		}
 
-		public override bool ShouldBeRemovedBecauseInvalid
+		public override bool CompletableEver
 		{
 			get
 			{
-				return !this.recipe.Worker.GetPartsToApplyOn(this.GiverPawn, this.recipe).Contains(this.part);
+				return !this.recipe.targetsBodyPart || this.recipe.Worker.GetPartsToApplyOn(this.GiverPawn, this.recipe).Contains(this.part);
 			}
 		}
 
@@ -65,7 +65,7 @@ namespace RimWorld
 				Corpse corpse = this.billStack.billGiver as Corpse;
 				if (corpse != null)
 				{
-					pawn = corpse.innerPawn;
+					pawn = corpse.InnerPawn;
 				}
 				if (pawn == null)
 				{
@@ -80,19 +80,10 @@ namespace RimWorld
 			get
 			{
 				StringBuilder stringBuilder = new StringBuilder();
-				if (this.recipe == RecipeDefOf.RemoveBodyPart)
-				{
-					stringBuilder.Append(HealthCardUtility.RemoveBodyPartSpecialLabel(this.GiverPawn, this.part));
-				}
-				else
-				{
-					stringBuilder.Append(this.recipe.label);
-				}
+				stringBuilder.Append(this.recipe.Worker.GetLabelWhenUsedOn(this.GiverPawn, this.part));
 				if (this.Part != null && !this.recipe.hideBodyPartNames)
 				{
-					stringBuilder.Append(" (");
-					stringBuilder.Append(this.Part.def.label);
-					stringBuilder.Append(")");
+					stringBuilder.Append(" (" + this.Part.def.label + ")");
 				}
 				return stringBuilder.ToString();
 			}
@@ -113,10 +104,9 @@ namespace RimWorld
 
 		public override void Notify_IterationCompleted(Pawn billDoer, List<Thing> ingredients)
 		{
-			base.Notify_IterationCompleted(billDoer, ingredients);
-			Pawn giverPawn = this.GiverPawn;
-			if (this.recipe.Worker.GetPartsToApplyOn(giverPawn, this.recipe).Contains(this.Part))
+			if (this.CompletableEver)
 			{
+				Pawn giverPawn = this.GiverPawn;
 				this.recipe.Worker.ApplyOnPawn(giverPawn, this.Part, billDoer, ingredients);
 				if (giverPawn.RaceProps.IsFlesh)
 				{
@@ -129,7 +119,7 @@ namespace RimWorld
 
 		public override void Notify_DoBillStarted()
 		{
-			if (!this.GiverPawn.Dead)
+			if (!this.GiverPawn.Dead && this.recipe.anesthesize)
 			{
 				HealthUtility.TryAnesthesize(this.GiverPawn);
 			}
@@ -141,7 +131,14 @@ namespace RimWorld
 			Scribe_Values.LookValue<int>(ref this.partIndex, "partIndex", 0, false);
 			if (Scribe.mode == LoadSaveMode.ResolvingCrossRefs)
 			{
-				this.part = this.GiverPawn.RaceProps.body.GetPartAtIndex(this.partIndex);
+				if (this.partIndex < 0)
+				{
+					this.part = null;
+				}
+				else
+				{
+					this.part = this.GiverPawn.RaceProps.body.GetPartAtIndex(this.partIndex);
+				}
 			}
 		}
 	}

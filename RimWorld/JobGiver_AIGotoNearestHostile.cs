@@ -11,7 +11,7 @@ namespace RimWorld
 		{
 			float num = 3.40282347E+38f;
 			Thing thing = null;
-			List<IAttackTarget> potentialTargetsFor = Find.AttackTargetsCache.GetPotentialTargetsFor(pawn);
+			List<IAttackTarget> potentialTargetsFor = pawn.Map.attackTargetsCache.GetPotentialTargetsFor(pawn);
 			for (int i = 0; i < potentialTargetsFor.Count; i++)
 			{
 				IAttackTarget attackTarget = potentialTargetsFor[i];

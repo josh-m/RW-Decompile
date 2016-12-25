@@ -64,7 +64,7 @@ namespace RimWorld
 			this.powerComp = this.parent.TryGetComp<CompPowerTrader>();
 		}
 
-		public override void PostDeSpawn()
+		public override void PostDeSpawn(Map map)
 		{
 			this.progressTicks = 0;
 		}
@@ -125,7 +125,7 @@ namespace RimWorld
 		}
 
 		[DebuggerHidden]
-		public override IEnumerable<Command> CompGetGizmosExtra()
+		public override IEnumerable<Gizmo> CompGetGizmosExtra()
 		{
 			if (Prefs.DevMode)
 			{

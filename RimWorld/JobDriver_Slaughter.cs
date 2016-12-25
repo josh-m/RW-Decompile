@@ -46,15 +46,16 @@ namespace RimWorld
 					{
 						this.<>f__this.Victim.health.DropBloodFilth();
 					}
-					BodyPartRecord part = JobDriver_Slaughter.SlaughterCutPart(this.<>f__this.Victim);
-					BodyPartDamageInfo value = new BodyPartDamageInfo(part, false, null);
-					int amount = Mathf.Clamp((int)this.<>f__this.Victim.health.hediffSet.GetPartHealth(part) - 1, 1, 5);
-					this.<>f__this.Victim.TakeDamage(new DamageInfo(DamageDefOf.Cut, amount, this.<execute>__1.actor, new BodyPartDamageInfo?(value), null));
+					BodyPartRecord bodyPartRecord = JobDriver_Slaughter.SlaughterCutPart(this.<>f__this.Victim);
+					int amount = Mathf.Clamp((int)this.<>f__this.Victim.health.hediffSet.GetPartHealth(bodyPartRecord) - 1, 1, 5);
+					Thing arg_BF_0 = this.<>f__this.Victim;
+					Pawn actor = this.<execute>__1.actor;
+					arg_BF_0.TakeDamage(new DamageInfo(DamageDefOf.Cut, amount, -1f, actor, bodyPartRecord, null));
 					if (!this.<>f__this.Victim.Dead)
 					{
 						this.<>f__this.Victim.health.Kill(null, null);
 					}
-					Thing thing = position.GetThingList().FirstOrDefault((Thing t) => t is Corpse && ((Corpse)t).innerPawn == this.<>f__this.Victim);
+					Thing thing = position.GetThingList(this.<>f__this.Map).FirstOrDefault((Thing t) => t is Corpse && ((Corpse)t).InnerPawn == this.<>f__this.Victim);
 					if (thing != null)
 					{
 						thing.SetForbidden(false, true);
@@ -67,32 +68,32 @@ namespace RimWorld
 
 		private static BodyPartRecord SlaughterCutPart(Pawn pawn)
 		{
-			BodyPartRecord bodyPartRecord = pawn.health.hediffSet.GetNotMissingParts(null, null).FirstOrDefault((BodyPartRecord x) => x.def == BodyPartDefOf.Neck);
+			BodyPartRecord bodyPartRecord = pawn.health.hediffSet.GetNotMissingParts(BodyPartHeight.Undefined, BodyPartDepth.Undefined).FirstOrDefault((BodyPartRecord x) => x.def == BodyPartDefOf.Neck);
 			if (bodyPartRecord != null)
 			{
 				return bodyPartRecord;
 			}
-			bodyPartRecord = pawn.health.hediffSet.GetNotMissingParts(null, null).FirstOrDefault((BodyPartRecord x) => x.def == BodyPartDefOf.Head);
+			bodyPartRecord = pawn.health.hediffSet.GetNotMissingParts(BodyPartHeight.Undefined, BodyPartDepth.Undefined).FirstOrDefault((BodyPartRecord x) => x.def == BodyPartDefOf.Head);
 			if (bodyPartRecord != null)
 			{
 				return bodyPartRecord;
 			}
-			bodyPartRecord = pawn.health.hediffSet.GetNotMissingParts(null, null).FirstOrDefault((BodyPartRecord x) => x.def == BodyPartDefOf.InsectHead);
+			bodyPartRecord = pawn.health.hediffSet.GetNotMissingParts(BodyPartHeight.Undefined, BodyPartDepth.Undefined).FirstOrDefault((BodyPartRecord x) => x.def == BodyPartDefOf.InsectHead);
 			if (bodyPartRecord != null)
 			{
 				return bodyPartRecord;
 			}
-			bodyPartRecord = pawn.health.hediffSet.GetNotMissingParts(null, null).FirstOrDefault((BodyPartRecord x) => x.def == BodyPartDefOf.Body);
+			bodyPartRecord = pawn.health.hediffSet.GetNotMissingParts(BodyPartHeight.Undefined, BodyPartDepth.Undefined).FirstOrDefault((BodyPartRecord x) => x.def == BodyPartDefOf.Body);
 			if (bodyPartRecord != null)
 			{
 				return bodyPartRecord;
 			}
-			bodyPartRecord = pawn.health.hediffSet.GetNotMissingParts(null, null).FirstOrDefault((BodyPartRecord x) => x.def == BodyPartDefOf.Torso);
+			bodyPartRecord = pawn.health.hediffSet.GetNotMissingParts(BodyPartHeight.Undefined, BodyPartDepth.Undefined).FirstOrDefault((BodyPartRecord x) => x.def == BodyPartDefOf.Torso);
 			if (bodyPartRecord != null)
 			{
 				return bodyPartRecord;
 			}
-			return pawn.health.hediffSet.GetNotMissingParts(null, null).RandomElementByWeight((BodyPartRecord x) => x.absoluteCoverage);
+			return pawn.health.hediffSet.GetNotMissingParts(BodyPartHeight.Undefined, BodyPartDepth.Undefined).RandomElementByWeight((BodyPartRecord x) => x.absoluteCoverage);
 		}
 	}
 }

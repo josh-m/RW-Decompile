@@ -26,14 +26,12 @@ namespace RimWorld
 					ThingDef d = new ThingDef();
 					d.category = ThingCategory.Item;
 					d.thingClass = typeof(Corpse);
-					d.category = ThingCategory.Item;
 					d.selectable = true;
 					d.tickerType = TickerType.Rare;
 					d.altitudeLayer = AltitudeLayer.ItemImportant;
-					d.canMakeOnMapGen = false;
-					d.SetStatBaseValue(StatDefOf.Flammability, 1f);
-					d.soundImpactDefault = SoundDef.Named("BulletImpactFlesh");
+					d.scatterableOnMapGen = false;
 					d.SetStatBaseValue(StatDefOf.Beauty, -150f);
+					d.SetStatBaseValue(StatDefOf.DeteriorationRate, 2f);
 					d.alwaysHaulable = true;
 					d.soundDrop = SoundDef.Named("Corpse_Drop");
 					d.pathCost = 15;
@@ -54,7 +52,6 @@ namespace RimWorld
 					{
 						d.recipes.Add(RecipeDefOf.RemoveBodyPart);
 					}
-					CompProperties_Rottable rottable = new CompProperties_Rottable();
 					d.defName = raceDef.defName + "_Corpse";
 					d.label = "CorpseLabel".Translate(new object[]
 					{
@@ -64,12 +61,16 @@ namespace RimWorld
 					{
 						raceDef.label
 					});
+					d.soundImpactDefault = raceDef.soundImpactDefault;
+					d.SetStatBaseValue(StatDefOf.Flammability, raceDef.GetStatValueAbstract(StatDefOf.Flammability, null));
 					d.SetStatBaseValue(StatDefOf.MaxHitPoints, (float)raceDef.BaseMaxHitPoints);
+					d.SetStatBaseValue(StatDefOf.Mass, raceDef.statBases.GetStatOffsetFromList(StatDefOf.Mass));
 					d.ingestible = new IngestibleProperties();
 					IngestibleProperties ing = d.ingestible;
 					ing.foodType = FoodTypeFlags.Corpse;
 					ing.sourceDef = raceDef;
 					ing.preferability = FoodPreferability.DesperateOnly;
+					CrossRefLoader.RegisterObjectWantsCrossRef(ing, "tasteThought", ThoughtDefOf.AteCorpse.defName);
 					ing.nutrition = 1f;
 					ing.maxNumToIngestAtOnce = 1;
 					ing.ingestEffect = EffecterDefOf.EatMeat;
@@ -80,7 +81,7 @@ namespace RimWorld
 					}
 					if (raceDef.race.IsFlesh)
 					{
-						rottable.compClass = typeof(CompRottable);
+						CompProperties_Rottable rottable = new CompProperties_Rottable();
 						rottable.daysToRotStart = 2.5f;
 						rottable.daysToDessicated = 5f;
 						rottable.rotDamagePerDay = 2.5f;
@@ -93,19 +94,19 @@ namespace RimWorld
 					}
 					if (raceDef.race.Humanlike)
 					{
-						CrossRefLoader.RegisterListWantsCrossRef<ThingCategoryDef>(d.thingCategories, "CorpsesHumanlike");
+						CrossRefLoader.RegisterListWantsCrossRef<ThingCategoryDef>(d.thingCategories, ThingCategoryDefOf.CorpsesHumanlike.defName);
 					}
 					else if (!raceDef.race.IsFlesh)
 					{
-						CrossRefLoader.RegisterListWantsCrossRef<ThingCategoryDef>(d.thingCategories, "CorpsesMechanoid");
+						CrossRefLoader.RegisterListWantsCrossRef<ThingCategoryDef>(d.thingCategories, ThingCategoryDefOf.CorpsesMechanoid.defName);
 					}
 					else if (raceDef.race.fleshType == FleshType.Insectoid)
 					{
-						CrossRefLoader.RegisterListWantsCrossRef<ThingCategoryDef>(d.thingCategories, "CorpsesInsect");
+						CrossRefLoader.RegisterListWantsCrossRef<ThingCategoryDef>(d.thingCategories, ThingCategoryDefOf.CorpsesInsect.defName);
 					}
 					else
 					{
-						CrossRefLoader.RegisterListWantsCrossRef<ThingCategoryDef>(d.thingCategories, "CorpsesAnimal");
+						CrossRefLoader.RegisterListWantsCrossRef<ThingCategoryDef>(d.thingCategories, ThingCategoryDefOf.CorpsesAnimal.defName);
 					}
 					raceDef.race.corpseDef = d;
 					yield return d;

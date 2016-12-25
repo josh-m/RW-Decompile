@@ -5,7 +5,7 @@ namespace Verse
 {
 	public class RealtimeMoteList
 	{
-		private List<Mote> allMotes = new List<Mote>();
+		public List<Mote> allMotes = new List<Mote>();
 
 		public void Clear()
 		{
@@ -28,6 +28,11 @@ namespace Verse
 			{
 				this.allMotes[i].RealtimeUpdate();
 			}
+		}
+
+		public void RemoveAllFromMap(Map map)
+		{
+			this.allMotes.RemoveAll((Mote x) => x.Map == map);
 		}
 	}
 }

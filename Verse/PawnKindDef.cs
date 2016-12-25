@@ -15,6 +15,8 @@ namespace Verse
 
 		public string backstoryCategory;
 
+		public string labelPlural;
+
 		public float backstoryCryptosleepCommonality;
 
 		public bool forceNormalGearQuality;
@@ -61,7 +63,7 @@ namespace Verse
 
 		public QualityCategory itemQuality = QualityCategory.Normal;
 
-		public List<ThingCount> fixedInventory = new List<ThingCount>();
+		public List<ThingCountClass> fixedInventory = new List<ThingCountClass>();
 
 		public PawnInventoryOption inventoryOptions;
 
@@ -75,13 +77,15 @@ namespace Verse
 
 		public IntRange combatEnhancingDrugsCount = IntRange.zero;
 
-		public bool carrier;
-
 		public bool trader;
 
 		public string labelMale;
 
+		public string labelMalePlural;
+
 		public string labelFemale;
+
+		public string labelFemalePlural;
 
 		public bool wildSpawn_spawnWild;
 

@@ -44,7 +44,7 @@ namespace RimWorld
 			{
 				foreach (IntVec3 current in room.Cells)
 				{
-					List<Thing> thingList = current.GetThingList();
+					List<Thing> thingList = current.GetThingList(pawn.Map);
 					for (int i = 0; i < thingList.Count; i++)
 					{
 						Apparel apparel = thingList[i] as Apparel;

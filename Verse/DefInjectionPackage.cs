@@ -1,5 +1,7 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -348,6 +350,66 @@ namespace Verse
 				}
 			}
 			return field;
+		}
+
+		[DebuggerHidden]
+		public IEnumerable<string> MissingInjections()
+		{
+			Type databaseType = typeof(DefDatabase<>).MakeGenericType(new Type[]
+			{
+				this.defType
+			});
+			PropertyInfo allDefsProperty = databaseType.GetProperty("AllDefs");
+			MethodInfo allDefsMethod = allDefsProperty.GetGetMethod();
+			IEnumerable allDefsEnum = (IEnumerable)allDefsMethod.Invoke(null, null);
+			foreach (Def def in allDefsEnum)
+			{
+				foreach (string mi in this.MissingInjectionsFromDef(def))
+				{
+					yield return mi;
+				}
+			}
+		}
+
+		[DebuggerHidden]
+		private IEnumerable<string> MissingInjectionsFromDef(Def def)
+		{
+			if (!def.label.NullOrEmpty())
+			{
+				string path = def.defName + ".label";
+				if (!this.injections.ContainsKey(path))
+				{
+					yield return path + " '" + def.label + "'";
+				}
+			}
+			if (!def.description.NullOrEmpty())
+			{
+				string path2 = def.defName + ".description";
+				if (!this.injections.ContainsKey(path2))
+				{
+					yield return path2 + " '" + def.description + "'";
+				}
+			}
+			FieldInfo[] fields = def.GetType().GetFields();
+			for (int i = 0; i < fields.Length; i++)
+			{
+				FieldInfo fi = fields[i];
+				if (fi.FieldType == typeof(string))
+				{
+					string val = (string)fi.GetValue(def);
+					if (!val.NullOrEmpty() && !(fi.Name == "defName") && !(fi.Name == "label") && !(fi.Name == "description") && !fi.HasAttribute<NoTranslateAttribute>() && !fi.HasAttribute<UnsavedAttribute>())
+					{
+						if (fi.HasAttribute<MustTranslateAttribute>() || (val != null && val.Contains(' ')))
+						{
+							string path3 = def.defName + "." + fi.Name;
+							if (!this.injections.ContainsKey(path3))
+							{
+								yield return path3 + " '" + val + "'";
+							}
+						}
+					}
+				}
+			}
 		}
 	}
 }

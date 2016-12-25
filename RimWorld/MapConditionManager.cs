@@ -8,6 +8,8 @@ namespace RimWorld
 {
 	public sealed class MapConditionManager : IExposable
 	{
+		public Map map;
+
 		private List<MapCondition> activeConditions = new List<MapCondition>();
 
 		public List<MapCondition> ActiveConditions
@@ -18,15 +20,28 @@ namespace RimWorld
 			}
 		}
 
+		public MapConditionManager(Map map)
+		{
+			this.map = map;
+		}
+
 		public void RegisterCondition(MapCondition cond)
 		{
 			this.activeConditions.Add(cond);
+			cond.mapConditionManager = this;
 			cond.Init();
 		}
 
 		public void ExposeData()
 		{
 			Scribe_Collections.LookList<MapCondition>(ref this.activeConditions, "activeConditions", LookMode.Deep, new object[0]);
+			if (Scribe.mode == LoadSaveMode.LoadingVars)
+			{
+				for (int i = 0; i < this.activeConditions.Count; i++)
+				{
+					this.activeConditions[i].mapConditionManager = this;
+				}
+			}
 		}
 
 		public void MapConditionManagerTick()

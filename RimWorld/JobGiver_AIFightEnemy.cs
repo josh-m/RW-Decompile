@@ -41,9 +41,9 @@ namespace RimWorld
 			return true;
 		}
 
-		public override ThinkNode DeepCopy()
+		public override ThinkNode DeepCopy(bool resolve = true)
 		{
-			JobGiver_AIFightEnemy jobGiver_AIFightEnemy = (JobGiver_AIFightEnemy)base.DeepCopy();
+			JobGiver_AIFightEnemy jobGiver_AIFightEnemy = (JobGiver_AIFightEnemy)base.DeepCopy(resolve);
 			jobGiver_AIFightEnemy.targetAcquireRadius = this.targetAcquireRadius;
 			jobGiver_AIFightEnemy.targetKeepRadius = this.targetKeepRadius;
 			jobGiver_AIFightEnemy.needLOSToAcquireNonPawnTargets = this.needLOSToAcquireNonPawnTargets;
@@ -69,8 +69,8 @@ namespace RimWorld
 			{
 				return this.MeleeAttackJob(enemyTarget);
 			}
-			bool flag = CoverUtility.CalculateOverallBlockChance(pawn.Position, enemyTarget.Position) > 0.01f;
-			bool flag2 = pawn.Position.Standable();
+			bool flag = CoverUtility.CalculateOverallBlockChance(pawn.Position, enemyTarget.Position, pawn.Map) > 0.01f;
+			bool flag2 = pawn.Position.Standable(pawn.Map);
 			bool flag3 = verb.CanHitTarget(enemyTarget);
 			bool flag4 = (pawn.Position - enemyTarget.Position).LengthHorizontalSquared < 25f;
 			if ((flag && flag2 && flag3) || (flag4 && flag3))
@@ -86,7 +86,7 @@ namespace RimWorld
 			{
 				return new Job(JobDefOf.WaitCombat, JobGiver_AIFightEnemy.ExpiryInterval_ShooterSucceeded.RandomInRange, true);
 			}
-			Find.PawnDestinationManager.ReserveDestinationFor(pawn, intVec);
+			pawn.Map.pawnDestinationManager.ReserveDestinationFor(pawn, intVec);
 			return new Job(JobDefOf.Goto, intVec)
 			{
 				expiryInterval = JobGiver_AIFightEnemy.ExpiryInterval_ShooterSucceeded.RandomInRange,
@@ -113,11 +113,11 @@ namespace RimWorld
 			}
 			if (thing == null)
 			{
-				thing = this.FindAttackTarget(pawn);
+				thing = this.FindAttackTargetIfPossible(pawn);
 				if (thing != null)
 				{
 					pawn.mindState.Notify_EngagedTarget();
-					Lord lord = Find.LordManager.LordOf(pawn);
+					Lord lord = pawn.GetLord();
 					if (lord != null)
 					{
 						lord.Notify_PawnAcquiredTarget(pawn, thing);
@@ -126,7 +126,7 @@ namespace RimWorld
 			}
 			else
 			{
-				Thing thing2 = this.FindAttackTarget(pawn);
+				Thing thing2 = this.FindAttackTargetIfPossible(pawn);
 				if (thing2 == null && !this.chaseTarget)
 				{
 					thing = null;
@@ -145,12 +145,17 @@ namespace RimWorld
 			}
 		}
 
-		private Thing FindAttackTarget(Pawn pawn)
+		private Thing FindAttackTargetIfPossible(Pawn pawn)
 		{
 			if (pawn.TryGetAttackVerb(!pawn.IsColonist) == null)
 			{
 				return null;
 			}
+			return this.FindAttackTarget(pawn);
+		}
+
+		protected virtual Thing FindAttackTarget(Pawn pawn)
+		{
 			TargetScanFlags targetScanFlags = TargetScanFlags.NeedLOSToPawns | TargetScanFlags.NeedReachable | TargetScanFlags.NeedThreat;
 			if (this.needLOSToAcquireNonPawnTargets)
 			{

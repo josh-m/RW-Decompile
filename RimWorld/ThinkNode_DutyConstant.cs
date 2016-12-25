@@ -43,7 +43,8 @@ namespace RimWorld
 				if (current.constantThinkNode != null)
 				{
 					this.dutyDefToSubNode[current] = this.subNodes.Count;
-					this.subNodes.Add(current.constantThinkNode.DeepCopy());
+					current.constantThinkNode.ResolveSubnodesAndRecur();
+					this.subNodes.Add(current.constantThinkNode.DeepCopy(true));
 				}
 			}
 		}

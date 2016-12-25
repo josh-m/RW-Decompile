@@ -9,7 +9,7 @@ namespace Verse
 
 		private static bool working = false;
 
-		public static List<IntVec3> AdjacentCells8Way(TargetInfo pack)
+		public static List<IntVec3> AdjacentCells8Way(LocalTargetInfo pack)
 		{
 			if (pack.HasThing)
 			{
@@ -18,7 +18,7 @@ namespace Verse
 			return GenAdjFast.AdjacentCells8Way((IntVec3)pack);
 		}
 
-		private static List<IntVec3> AdjacentCells8Way(IntVec3 root)
+		public static List<IntVec3> AdjacentCells8Way(IntVec3 root)
 		{
 			if (GenAdjFast.working)
 			{

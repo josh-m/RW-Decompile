@@ -84,5 +84,10 @@ namespace RimWorld
 		{
 			return 0f;
 		}
+
+		public float GetPriority(Pawn pawn, IntVec3 cell)
+		{
+			return this.GetPriority(pawn, new TargetInfo(cell, pawn.Map, false));
+		}
 	}
 }

@@ -58,9 +58,9 @@ namespace Verse
 
 		public SurpriseAttackProps surpriseAttack;
 
-		public int warmupTicks;
+		public float warmupTime;
 
-		public int defaultCooldownTicks;
+		public float defaultCooldownTime;
 
 		public SoundDef soundCast;
 
@@ -155,13 +155,13 @@ namespace Verse
 		{
 			if (equipment == null)
 			{
-				return this.defaultCooldownTicks;
+				return this.defaultCooldownTime.SecondsToTicks();
 			}
 			if (this.MeleeRange)
 			{
-				return Mathf.RoundToInt(equipment.GetStatValue(StatDefOf.MeleeWeapon_Cooldown, true) * 60f);
+				return equipment.GetStatValue(StatDefOf.MeleeWeapon_Cooldown, true).SecondsToTicks();
 			}
-			return Mathf.RoundToInt(equipment.GetStatValue(StatDefOf.RangedWeapon_Cooldown, true) * 60f);
+			return equipment.GetStatValue(StatDefOf.RangedWeapon_Cooldown, true).SecondsToTicks();
 		}
 
 		private float AdjustedAccuracy(VerbProperties.RangeCategory cat, Thing equipment)

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using Verse;
 using Verse.AI;
 
@@ -29,7 +30,7 @@ namespace RimWorld
 		{
 			if (!myPawn.CanReserve(this.parent, 1))
 			{
-				yield return new FloatMenuOption(this.FloatMenuOptionLabel + " (" + "Reserved".Translate() + ")", null, MenuOptionPriority.Medium, null, null, 0f, null);
+				yield return new FloatMenuOption(this.FloatMenuOptionLabel + " (" + "Reserved".Translate() + ")", null, MenuOptionPriority.Default, null, null, 0f, null, null);
 			}
 			else
 			{
@@ -46,7 +47,7 @@ namespace RimWorld
 						}
 						this.<>f__this.TryStartUseJob(this.myPawn);
 					}
-				}, MenuOptionPriority.Medium, null, null, 0f, null);
+				}, MenuOptionPriority.Default, null, null, 0f, null, null);
 				yield return useopt;
 			}
 		}
@@ -57,15 +58,24 @@ namespace RimWorld
 			{
 				return;
 			}
-			Job newJob = new Job(this.Props.useJob, this.parent);
-			user.drafter.TakeOrderedJob(newJob);
+			Job job = new Job(this.Props.useJob, this.parent);
+			user.jobs.TryTakeOrderedJob(job);
 		}
 
 		public void UsedBy(Pawn p)
 		{
-			foreach (CompUseEffect current in this.parent.GetComps<CompUseEffect>())
+			foreach (CompUseEffect current in from x in this.parent.GetComps<CompUseEffect>()
+			orderby x.OrderPriority descending
+			select x)
 			{
-				current.DoEffect(p);
+				try
+				{
+					current.DoEffect(p);
+				}
+				catch (Exception arg)
+				{
+					Log.Error("Error in CompUseEffect: " + arg);
+				}
 			}
 		}
 	}

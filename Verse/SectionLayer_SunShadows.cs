@@ -28,20 +28,21 @@ namespace Verse
 			{
 				return;
 			}
-			SectionLayer_SunShadows.edificeGrid = Find.EdificeGrid.InnerArray;
+			SectionLayer_SunShadows.edificeGrid = base.Map.edificeGrid.InnerArray;
 			float y = Altitudes.AltitudeFor(AltitudeLayer.Shadows);
 			CellRect cellRect = new CellRect(this.section.botLeft.x, this.section.botLeft.z, 17, 17);
-			cellRect.ClipInsideMap();
+			cellRect.ClipInsideMap(base.Map);
 			LayerSubMesh subMesh = base.GetSubMesh(MatBases.SunShadow);
 			subMesh.Clear(MeshParts.All);
 			subMesh.verts.Capacity = cellRect.Area * 2;
 			subMesh.tris.Capacity = cellRect.Area * 4;
 			subMesh.colors.Capacity = cellRect.Area * 2;
+			CellIndices cellIndices = base.Map.cellIndices;
 			for (int i = cellRect.minX; i <= cellRect.maxX; i++)
 			{
 				for (int j = cellRect.minZ; j <= cellRect.maxZ; j++)
 				{
-					Thing thing = SectionLayer_SunShadows.edificeGrid[CellIndices.CellToIndex(i, j)];
+					Thing thing = SectionLayer_SunShadows.edificeGrid[cellIndices.CellToIndex(i, j)];
 					if (thing != null && thing.def.staticSunShadowHeight > 0f)
 					{
 						float staticSunShadowHeight = thing.def.staticSunShadowHeight;
@@ -64,7 +65,7 @@ namespace Verse
 						subMesh.tris.Add(count2 - 1);
 						if (i > 0)
 						{
-							thing = SectionLayer_SunShadows.edificeGrid[CellIndices.CellToIndex(i - 1, j)];
+							thing = SectionLayer_SunShadows.edificeGrid[cellIndices.CellToIndex(i - 1, j)];
 							if (thing == null || thing.def.staticSunShadowHeight < staticSunShadowHeight)
 							{
 								int count3 = subMesh.verts.Count;
@@ -80,9 +81,9 @@ namespace Verse
 								subMesh.tris.Add(count + 1);
 							}
 						}
-						if (i < Find.Map.Size.x - 1)
+						if (i < base.Map.Size.x - 1)
 						{
-							thing = SectionLayer_SunShadows.edificeGrid[CellIndices.CellToIndex(i + 1, j)];
+							thing = SectionLayer_SunShadows.edificeGrid[cellIndices.CellToIndex(i + 1, j)];
 							if (thing == null || thing.def.staticSunShadowHeight < staticSunShadowHeight)
 							{
 								int count4 = subMesh.verts.Count;
@@ -100,7 +101,7 @@ namespace Verse
 						}
 						if (j > 0)
 						{
-							thing = SectionLayer_SunShadows.edificeGrid[CellIndices.CellToIndex(i, j - 1)];
+							thing = SectionLayer_SunShadows.edificeGrid[cellIndices.CellToIndex(i, j - 1)];
 							if (thing == null || thing.def.staticSunShadowHeight < staticSunShadowHeight)
 							{
 								int count5 = subMesh.verts.Count;
@@ -121,7 +122,7 @@ namespace Verse
 			}
 			if (subMesh.verts.Count > 0)
 			{
-				subMesh.FinalizeMesh(MeshParts.Verts | MeshParts.Tris | MeshParts.Colors);
+				subMesh.FinalizeMesh(MeshParts.Verts | MeshParts.Tris | MeshParts.Colors, false);
 				float num = Mathf.Max(15f, 15f);
 				Vector3 size = subMesh.mesh.bounds.size;
 				size.x += 2f * num + 2f;

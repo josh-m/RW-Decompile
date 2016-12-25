@@ -4,9 +4,20 @@ using UnityEngine;
 
 namespace Verse
 {
+	[StaticConstructorOnStartup]
 	public class HediffComp_Immunizable : HediffComp_SeverityPerDay
 	{
 		private float severityPerDayNotImmuneRandomFactor = 1f;
+
+		private static readonly Texture2D IconImmune = ContentFinder<Texture2D>.Get("UI/Icons/Medical/IconImmune", true);
+
+		public HediffCompProperties_Immunizable Props
+		{
+			get
+			{
+				return (HediffCompProperties_Immunizable)this.props;
+			}
+		}
 
 		public override string CompLabelInBracketsExtra
 		{
@@ -48,10 +59,22 @@ namespace Verse
 			}
 		}
 
+		public override TextureAndColor CompStateIcon
+		{
+			get
+			{
+				if (this.FullyImmune)
+				{
+					return HediffComp_Immunizable.IconImmune;
+				}
+				return TextureAndColor.None;
+			}
+		}
+
 		public override void CompPostPostAdd(DamageInfo? dinfo)
 		{
 			base.CompPostPostAdd(dinfo);
-			this.severityPerDayNotImmuneRandomFactor = this.props.severityPerDayNotImmuneRandomFactor.RandomInRange;
+			this.severityPerDayNotImmuneRandomFactor = this.Props.severityPerDayNotImmuneRandomFactor.RandomInRange;
 		}
 
 		public override void CompExposeData()
@@ -62,7 +85,7 @@ namespace Verse
 
 		protected override float SeverityChangePerDay()
 		{
-			return (!this.FullyImmune) ? (this.props.severityPerDayNotImmune * this.severityPerDayNotImmuneRandomFactor) : this.props.severityPerDayImmune;
+			return (!this.FullyImmune) ? (this.Props.severityPerDayNotImmune * this.severityPerDayNotImmuneRandomFactor) : this.Props.severityPerDayImmune;
 		}
 
 		public override string CompDebugString()

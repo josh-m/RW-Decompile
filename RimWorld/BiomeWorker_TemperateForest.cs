@@ -5,21 +5,21 @@ namespace RimWorld
 {
 	public class BiomeWorker_TemperateForest : BiomeWorker
 	{
-		public override float GetScore(WorldSquare square)
+		public override float GetScore(Tile tile)
 		{
-			if (square.elevation <= 0f)
+			if (tile.WaterCovered)
 			{
 				return -100f;
 			}
-			if (square.temperature < -10f)
+			if (tile.temperature < -10f)
 			{
 				return 0f;
 			}
-			if (square.rainfall < 600f)
+			if (tile.rainfall < 600f)
 			{
 				return 0f;
 			}
-			return 15f + (square.temperature - 7f) + (square.rainfall - 600f) / 180f;
+			return 15f + (tile.temperature - 7f) + (tile.rainfall - 600f) / 180f;
 		}
 	}
 }

@@ -9,12 +9,17 @@ namespace RimWorld
 
 		public static void DatesTick()
 		{
-			Season currentSeason = GenDate.CurrentSeason;
-			if (currentSeason != DateUtility.lastSeason)
+			Map anyPlayerHomeMap = Find.AnyPlayerHomeMap;
+			if (anyPlayerHomeMap == null)
 			{
-				if (DateUtility.lastSeason != Season.Undefined && GenTemperature.LocalSeasonsAreMeaningful())
+				return;
+			}
+			Season season = GenLocalDate.Season(anyPlayerHomeMap);
+			if (season != DateUtility.lastSeason)
+			{
+				if (DateUtility.lastSeason != Season.Undefined && anyPlayerHomeMap.mapTemperature.LocalSeasonsAreMeaningful())
 				{
-					if (GenDate.YearsPassed == 0 && currentSeason == Season.Summer && GenTemperature.AverageTemperatureAtWorldCoordsForMonth(Find.Map.WorldCoords, Month.Jan) < 8f)
+					if (GenDate.YearsPassed == 0 && season == Season.Summer && GenTemperature.AverageTemperatureAtTileForMonth(anyPlayerHomeMap.Tile, Month.Jan) < 8f)
 					{
 						Find.LetterStack.ReceiveLetter(new Letter("LetterLabelFirstSummerWarning".Translate(), "FirstSummerWarning".Translate(), LetterType.Good), null);
 					}
@@ -22,11 +27,11 @@ namespace RimWorld
 					{
 						Messages.Message("MessageSeasonBegun".Translate(new object[]
 						{
-							currentSeason.Label()
+							season.Label()
 						}).CapitalizeFirst(), MessageSound.Standard);
 					}
 				}
-				DateUtility.lastSeason = currentSeason;
+				DateUtility.lastSeason = season;
 			}
 		}
 	}

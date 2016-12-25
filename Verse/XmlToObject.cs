@@ -243,7 +243,14 @@ namespace Verse
 						}
 						else if (typeof(Def).IsAssignableFrom(fieldInfo.FieldType))
 						{
-							CrossRefLoader.RegisterObjectWantsCrossRef(t2, fieldInfo, xmlNode.InnerText);
+							if (xmlNode.InnerText.NullOrEmpty())
+							{
+								fieldInfo.SetValue(t2, null);
+							}
+							else
+							{
+								CrossRefLoader.RegisterObjectWantsCrossRef(t2, fieldInfo, xmlNode.InnerText);
+							}
 						}
 						else
 						{
@@ -264,7 +271,7 @@ namespace Verse
 							catch (Exception ex3)
 							{
 								Log.Error("Exception loading from " + xmlNode.ToString() + ": " + ex3.ToString());
-								goto IL_7CE;
+								goto IL_7F3;
 							}
 							if (!typeof(T).IsValueType)
 							{
@@ -278,7 +285,7 @@ namespace Verse
 							}
 						}
 					}
-					IL_7CE:;
+					IL_7F3:;
 				}
 				if (doPostLoad)
 				{

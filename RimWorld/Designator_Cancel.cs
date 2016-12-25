@@ -31,15 +31,15 @@ namespace RimWorld
 
 		public override AcceptanceReport CanDesignateCell(IntVec3 c)
 		{
-			if (!c.InBounds())
+			if (!c.InBounds(base.Map))
 			{
 				return false;
 			}
-			if (Find.DesignationManager.AllDesignationsAt(c).Count<Designation>() > 0)
+			if (this.CancelableDesignationsAt(c).Count<Designation>() > 0)
 			{
 				return true;
 			}
-			List<Thing> thingList = c.GetThingList();
+			List<Thing> thingList = c.GetThingList(base.Map);
 			for (int i = 0; i < thingList.Count; i++)
 			{
 				if (this.CanDesignateThing(thingList[i]).Accepted)
@@ -52,14 +52,14 @@ namespace RimWorld
 
 		public override void DesignateSingleCell(IntVec3 c)
 		{
-			foreach (Designation current in Find.DesignationManager.AllDesignationsAt(c).ToList<Designation>())
+			foreach (Designation current in this.CancelableDesignationsAt(c).ToList<Designation>())
 			{
 				if (current.def.designateCancelable)
 				{
-					Find.DesignationManager.RemoveDesignation(current);
+					base.Map.designationManager.RemoveDesignation(current);
 				}
 			}
-			List<Thing> thingList = c.GetThingList();
+			List<Thing> thingList = c.GetThingList(base.Map);
 			for (int i = thingList.Count - 1; i >= 0; i--)
 			{
 				if (this.CanDesignateThing(thingList[i]).Accepted)
@@ -71,9 +71,9 @@ namespace RimWorld
 
 		public override AcceptanceReport CanDesignateThing(Thing t)
 		{
-			if (Find.DesignationManager.DesignationOn(t) != null)
+			if (base.Map.designationManager.DesignationOn(t) != null)
 			{
-				foreach (Designation current in Find.DesignationManager.AllDesignationsOn(t))
+				foreach (Designation current in base.Map.designationManager.AllDesignationsOn(t))
 				{
 					if (current.def.designateCancelable)
 					{
@@ -81,7 +81,7 @@ namespace RimWorld
 					}
 				}
 			}
-			if (t.def.mineable && Find.DesignationManager.DesignationAt(t.Position, DesignationDefOf.Mine) != null)
+			if (t.def.mineable && base.Map.designationManager.DesignationAt(t.Position, DesignationDefOf.Mine) != null)
 			{
 				return true;
 			}
@@ -96,13 +96,13 @@ namespace RimWorld
 			}
 			else
 			{
-				Find.DesignationManager.RemoveAllDesignationsOn(t, true);
+				base.Map.designationManager.RemoveAllDesignationsOn(t, true);
 				if (t.def.mineable)
 				{
-					Designation designation = Find.DesignationManager.DesignationAt(t.Position, DesignationDefOf.Mine);
+					Designation designation = base.Map.designationManager.DesignationAt(t.Position, DesignationDefOf.Mine);
 					if (designation != null)
 					{
-						Find.DesignationManager.RemoveDesignation(designation);
+						base.Map.designationManager.RemoveDesignation(designation);
 					}
 				}
 			}
@@ -111,6 +111,13 @@ namespace RimWorld
 		public override void SelectedUpdate()
 		{
 			GenUI.RenderMouseoverBracket();
+		}
+
+		private IEnumerable<Designation> CancelableDesignationsAt(IntVec3 c)
+		{
+			return from x in base.Map.designationManager.AllDesignationsAt(c)
+			where x.def != DesignationDefOf.Plan
+			select x;
 		}
 	}
 }

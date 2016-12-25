@@ -14,22 +14,22 @@ namespace RimWorld
 		public override void BackgroundOnGUI()
 		{
 			bool flag = true;
-			if ((float)Screen.width > (float)Screen.height * (UI_BackgroundMain.BGPlanetSize.x / UI_BackgroundMain.BGPlanetSize.y))
+			if ((float)UI.screenWidth > (float)UI.screenHeight * (UI_BackgroundMain.BGPlanetSize.x / UI_BackgroundMain.BGPlanetSize.y))
 			{
 				flag = false;
 			}
 			Rect position;
 			if (flag)
 			{
-				float height = (float)Screen.height;
-				float num = (float)Screen.height * (UI_BackgroundMain.BGPlanetSize.x / UI_BackgroundMain.BGPlanetSize.y);
-				position = new Rect((float)(Screen.width / 2) - num / 2f, 0f, num, height);
+				float height = (float)UI.screenHeight;
+				float num = (float)UI.screenHeight * (UI_BackgroundMain.BGPlanetSize.x / UI_BackgroundMain.BGPlanetSize.y);
+				position = new Rect((float)(UI.screenWidth / 2) - num / 2f, 0f, num, height);
 			}
 			else
 			{
-				float width = (float)Screen.width;
-				float num2 = (float)Screen.width * (UI_BackgroundMain.BGPlanetSize.y / UI_BackgroundMain.BGPlanetSize.x);
-				position = new Rect(0f, (float)(Screen.height / 2) - num2 / 2f, width, num2);
+				float width = (float)UI.screenWidth;
+				float num2 = (float)UI.screenWidth * (UI_BackgroundMain.BGPlanetSize.y / UI_BackgroundMain.BGPlanetSize.x);
+				position = new Rect(0f, (float)(UI.screenHeight / 2) - num2 / 2f, width, num2);
 			}
 			GUI.DrawTexture(position, UI_BackgroundMain.BGPlanet, ScaleMode.ScaleToFit);
 		}

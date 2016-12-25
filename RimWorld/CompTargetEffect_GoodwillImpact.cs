@@ -5,7 +5,7 @@ namespace RimWorld
 {
 	public class CompTargetEffect_GoodwillImpact : CompTargetEffect
 	{
-		public float goodwillImpact = -50f;
+		public float goodwillImpact = -200f;
 
 		public override void DoEffectOn(Pawn user, Thing target)
 		{

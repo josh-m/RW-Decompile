@@ -30,7 +30,7 @@ namespace Verse
 			int num = 0;
 			for (int i = 0; i < this.stoneBlocksDefs.Count; i++)
 			{
-				num += Find.ResourceCounter.GetCount(this.stoneBlocksDefs[i]);
+				num += bill.Map.resourceCounter.GetCount(this.stoneBlocksDefs[i]);
 			}
 			return num;
 		}

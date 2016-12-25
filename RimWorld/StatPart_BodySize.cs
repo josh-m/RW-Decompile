@@ -7,30 +7,29 @@ namespace RimWorld
 	{
 		public override void TransformValue(StatRequest req, ref float val)
 		{
-			if (req.HasThing)
+			float num;
+			if (this.TryGetBodySize(req, out num))
 			{
-				Pawn pawn = req.Thing as Pawn;
-				if (pawn != null)
-				{
-					val *= pawn.BodySize;
-				}
+				val *= num;
 			}
 		}
 
 		public override string ExplanationPart(StatRequest req)
 		{
-			if (req.HasThing)
+			float f;
+			if (this.TryGetBodySize(req, out f))
 			{
-				Pawn pawn = req.Thing as Pawn;
-				if (pawn != null && pawn.ageTracker != null)
+				return "StatsReport_BodySize".Translate(new object[]
 				{
-					return "StatsReport_BodySize".Translate(new object[]
-					{
-						pawn.BodySize.ToString("F2")
-					}) + ": x" + pawn.BodySize.ToStringPercent();
-				}
+					f.ToString("F2")
+				}) + ": x" + f.ToStringPercent();
 			}
 			return null;
+		}
+
+		private bool TryGetBodySize(StatRequest req, out float bodySize)
+		{
+			return PawnOrCorpseStatUtility.TryGetPawnOrCorpseStat(req, (Pawn x) => x.BodySize, (ThingDef x) => x.race.baseBodySize, out bodySize);
 		}
 	}
 }

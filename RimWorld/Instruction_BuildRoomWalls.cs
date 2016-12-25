@@ -29,7 +29,7 @@ namespace RimWorld
 				int num2 = 0;
 				foreach (IntVec3 current in this.RoomRect.EdgeCells)
 				{
-					if (TutorUtility.BuildingOrBlueprintOrFrameCenterExists(current, ThingDefOf.Wall))
+					if (TutorUtility.BuildingOrBlueprintOrFrameCenterExists(current, base.Map, ThingDefOf.Wall))
 					{
 						num2++;
 					}
@@ -42,7 +42,7 @@ namespace RimWorld
 		public override void OnActivated()
 		{
 			base.OnActivated();
-			this.RoomRect = TutorUtility.FindClearRect(12, 8, 0f, false);
+			this.RoomRect = TutorUtility.FindUsableRect(12, 8, base.Map, 0f, false);
 		}
 
 		public override void LessonOnGUI()
@@ -55,10 +55,10 @@ namespace RimWorld
 		{
 			this.cachedEdgeCells.Clear();
 			this.cachedEdgeCells.AddRange((from c in this.RoomRect.EdgeCells
-			where !TutorUtility.BuildingOrBlueprintOrFrameCenterExists(c, ThingDefOf.Wall)
+			where !TutorUtility.BuildingOrBlueprintOrFrameCenterExists(c, base.Map, ThingDefOf.Wall)
 			select c).ToList<IntVec3>());
 			GenDraw.DrawFieldEdges((from c in this.cachedEdgeCells
-			where c.GetEdifice() == null
+			where c.GetEdifice(base.Map) == null
 			select c).ToList<IntVec3>());
 			GenDraw.DrawArrowPointingAt(this.RoomRect.CenterVector3, false);
 			if (this.ProgressPercent > 0.9999f)

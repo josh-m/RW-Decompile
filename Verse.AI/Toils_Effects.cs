@@ -11,7 +11,7 @@ namespace Verse.AI
 			toil.initAction = delegate
 			{
 				Pawn actor = toil.actor;
-				SoundDef.Named(soundDefName).PlayOneShot(actor.Position);
+				SoundDef.Named(soundDefName).PlayOneShot(new TargetInfo(actor.Position, actor.Map, false));
 			};
 			return toil;
 		}

@@ -6,9 +6,9 @@ namespace Verse.AI
 	{
 		public Func<bool> condition;
 
-		public override ThinkNode DeepCopy()
+		public override ThinkNode DeepCopy(bool resolve = true)
 		{
-			ThinkNode_ConditionalFunc thinkNode_ConditionalFunc = (ThinkNode_ConditionalFunc)base.DeepCopy();
+			ThinkNode_ConditionalFunc thinkNode_ConditionalFunc = (ThinkNode_ConditionalFunc)base.DeepCopy(resolve);
 			thinkNode_ConditionalFunc.condition = this.condition;
 			return thinkNode_ConditionalFunc;
 		}

@@ -19,6 +19,16 @@ namespace RimWorld
 
 		private int nextPassingShipID;
 
+		private int nextWorldObjectID;
+
+		private int nextMapID;
+
+		private int nextAreaID;
+
+		private int nextTransporterGroupID;
+
+		private int nextAncientCryptosleepCasketGroupID;
+
 		public UniqueIDsManager()
 		{
 			this.nextThingID = Rand.Range(0, 1000);
@@ -59,6 +69,31 @@ namespace RimWorld
 			return UniqueIDsManager.GetNextID(ref this.nextPassingShipID);
 		}
 
+		public int GetNextWorldObjectID()
+		{
+			return UniqueIDsManager.GetNextID(ref this.nextWorldObjectID);
+		}
+
+		public int GetNextMapID()
+		{
+			return UniqueIDsManager.GetNextID(ref this.nextMapID);
+		}
+
+		public int GetNextAreaID()
+		{
+			return UniqueIDsManager.GetNextID(ref this.nextAreaID);
+		}
+
+		public int GetNextTransporterGroupID()
+		{
+			return UniqueIDsManager.GetNextID(ref this.nextTransporterGroupID);
+		}
+
+		public int GetNextAncientCryptosleepCasketGroupID()
+		{
+			return UniqueIDsManager.GetNextID(ref this.nextAncientCryptosleepCasketGroupID);
+		}
+
 		private static int GetNextID(ref int nextID)
 		{
 			if (Scribe.mode == LoadSaveMode.Saving || Scribe.mode == LoadSaveMode.LoadingVars)
@@ -84,6 +119,11 @@ namespace RimWorld
 			Scribe_Values.LookValue<int>(ref this.nextLordID, "nextLordID", 0, false);
 			Scribe_Values.LookValue<int>(ref this.nextTaleID, "nextTaleID", 0, false);
 			Scribe_Values.LookValue<int>(ref this.nextPassingShipID, "nextPassingShipID", 0, false);
+			Scribe_Values.LookValue<int>(ref this.nextWorldObjectID, "nextWorldObjectID", 0, false);
+			Scribe_Values.LookValue<int>(ref this.nextMapID, "nextMapID", 0, false);
+			Scribe_Values.LookValue<int>(ref this.nextAreaID, "nextAreaID", 0, false);
+			Scribe_Values.LookValue<int>(ref this.nextTransporterGroupID, "nextTransporterGroupID", 0, false);
+			Scribe_Values.LookValue<int>(ref this.nextAncientCryptosleepCasketGroupID, "nextAncientCryptosleepCasketGroupID", 0, false);
 		}
 	}
 }

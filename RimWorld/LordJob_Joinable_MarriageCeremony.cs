@@ -59,7 +59,7 @@ namespace RimWorld
 			{
 				this.firstPawn.LabelShort,
 				this.secondPawn.LabelShort
-			}), MessageSound.Benefit, this.spot));
+			}), MessageSound.Benefit, new TargetInfo(this.spot, base.Map, false)));
 			transition2.AddPreAction(new TransitionAction_Custom(delegate
 			{
 				this.AddAttendedWeddingThoughts();
@@ -72,7 +72,7 @@ namespace RimWorld
 			{
 				this.firstPawn.LabelShort,
 				this.secondPawn.LabelShort
-			}), MessageSound.Negative, this.spot));
+			}), MessageSound.Negative, new TargetInfo(this.spot, base.Map, false)));
 			stateGraph.AddTransition(transition3);
 			this.afterPartyTimeoutTrigger = new Trigger_TicksPassed(7500);
 			Transition transition4 = new Transition(lordToil_Party2, lordToil_End);
@@ -90,7 +90,7 @@ namespace RimWorld
 			{
 				this.firstPawn.LabelShort,
 				this.secondPawn.LabelShort
-			}), MessageSound.Negative, this.spot));
+			}), MessageSound.Negative, new TargetInfo(this.spot, base.Map, false)));
 			stateGraph.AddTransition(transition5);
 			Transition transition6 = new Transition(lordToil_MarriageCeremony, lordToil_End);
 			transition6.AddSource(lordToil_Party);
@@ -100,24 +100,24 @@ namespace RimWorld
 			{
 				this.firstPawn.LabelShort,
 				this.secondPawn.LabelShort
-			}), MessageSound.Negative, this.spot));
+			}), MessageSound.Negative, new TargetInfo(this.spot, base.Map, false)));
 			stateGraph.AddTransition(transition6);
 			return stateGraph;
 		}
 
 		private bool AreFiancesInPartyArea()
 		{
-			return this.lord.ownedPawns.Contains(this.firstPawn) && this.lord.ownedPawns.Contains(this.secondPawn) && PartyUtility.InPartyArea(this.firstPawn.Position, this.spot) && PartyUtility.InPartyArea(this.secondPawn.Position, this.spot);
+			return this.lord.ownedPawns.Contains(this.firstPawn) && this.lord.ownedPawns.Contains(this.secondPawn) && this.firstPawn.Map == base.Map && PartyUtility.InPartyArea(this.firstPawn.Position, this.spot, base.Map) && this.secondPawn.Map == base.Map && PartyUtility.InPartyArea(this.secondPawn.Position, this.spot, base.Map);
 		}
 
 		private bool ShouldCeremonyBeCalledOff()
 		{
-			return this.firstPawn.Destroyed || this.secondPawn.Destroyed || !this.firstPawn.relations.DirectRelationExists(PawnRelationDefOf.Fiance, this.secondPawn) || (this.spot.GetDangerFor(this.firstPawn) != Danger.None || this.spot.GetDangerFor(this.secondPawn) != Danger.None) || (!MarriageCeremonyUtility.AcceptableMapConditionsToContinueCeremony() || !MarriageCeremonyUtility.FianceCanContinueCeremony(this.firstPawn) || !MarriageCeremonyUtility.FianceCanContinueCeremony(this.secondPawn));
+			return this.firstPawn.Destroyed || this.secondPawn.Destroyed || !this.firstPawn.relations.DirectRelationExists(PawnRelationDefOf.Fiance, this.secondPawn) || (this.spot.GetDangerFor(this.firstPawn) != Danger.None || this.spot.GetDangerFor(this.secondPawn) != Danger.None) || (!MarriageCeremonyUtility.AcceptableMapConditionsToContinueCeremony(base.Map) || !MarriageCeremonyUtility.FianceCanContinueCeremony(this.firstPawn) || !MarriageCeremonyUtility.FianceCanContinueCeremony(this.secondPawn));
 		}
 
 		private bool ShouldAfterPartyBeCalledOff()
 		{
-			return this.firstPawn.Destroyed || this.secondPawn.Destroyed || (this.spot.GetDangerFor(this.firstPawn) != Danger.None || this.spot.GetDangerFor(this.secondPawn) != Danger.None) || !PartyUtility.AcceptableMapConditionsToContinueParty();
+			return this.firstPawn.Destroyed || this.secondPawn.Destroyed || (this.spot.GetDangerFor(this.firstPawn) != Danger.None || this.spot.GetDangerFor(this.secondPawn) != Danger.None) || !PartyUtility.AcceptableMapConditionsToContinueParty(base.Map);
 		}
 
 		public override float VoluntaryJoinPriorityFor(Pawn p)
@@ -148,7 +148,7 @@ namespace RimWorld
 					}
 					LordToil_MarriageCeremony lordToil_MarriageCeremony = this.lord.CurLordToil as LordToil_MarriageCeremony;
 					IntVec3 intVec;
-					if (lordToil_MarriageCeremony != null && !SpectatorCellFinder.TryFindSpectatorCellFor(p, lordToil_MarriageCeremony.Data.spectateRect, out intVec, lordToil_MarriageCeremony.Data.spectateRectAllowedSides, 1, null))
+					if (lordToil_MarriageCeremony != null && !SpectatorCellFinder.TryFindSpectatorCellFor(p, lordToil_MarriageCeremony.Data.spectateRect, base.Map, out intVec, lordToil_MarriageCeremony.Data.spectateRectAllowedSides, 1, null))
 					{
 						return 0f;
 					}

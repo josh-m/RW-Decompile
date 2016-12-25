@@ -1,4 +1,7 @@
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
 
 namespace Verse
 {
@@ -23,6 +26,40 @@ namespace Verse
 			{
 				targetDefName
 			});
+		}
+
+		[DebuggerHidden]
+		public static IEnumerable<Type> AllDefTypesWithDatabases()
+		{
+			foreach (Type defType in typeof(Def).AllSubclasses())
+			{
+				if (!defType.IsAbstract)
+				{
+					if (defType != typeof(Def))
+					{
+						bool foundNonAbstractAncestor = false;
+						Type parent = defType.BaseType;
+						while (parent != null && parent != typeof(Def))
+						{
+							if (!parent.IsAbstract)
+							{
+								foundNonAbstractAncestor = true;
+								break;
+							}
+							parent = parent.BaseType;
+						}
+						if (!foundNonAbstractAncestor)
+						{
+							yield return defType;
+						}
+					}
+				}
+			}
+		}
+
+		public static IEnumerable<T> DefsToGoInDatabase<T>(ModContentPack mod)
+		{
+			return mod.AllDefs.OfType<T>();
 		}
 	}
 }

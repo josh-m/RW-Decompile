@@ -10,6 +10,14 @@ namespace Verse.Sound
 
 		private SoundParams externalParams = new SoundParams();
 
+		public override Map Map
+		{
+			get
+			{
+				return this.info.Maker.Map;
+			}
+		}
+
 		public override float ParentStartRealTime
 		{
 			get

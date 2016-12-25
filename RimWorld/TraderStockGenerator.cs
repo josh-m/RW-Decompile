@@ -9,11 +9,11 @@ namespace RimWorld
 	public static class TraderStockGenerator
 	{
 		[DebuggerHidden]
-		public static IEnumerable<Thing> GenerateTraderThings(TraderKindDef traderDef)
+		public static IEnumerable<Thing> GenerateTraderThings(TraderKindDef traderDef, Map forMap)
 		{
 			foreach (StockGenerator stock in traderDef.stockGenerators)
 			{
-				foreach (Thing t in stock.GenerateThings())
+				foreach (Thing t in stock.GenerateThings(forMap))
 				{
 					if (t.def.tradeability != Tradeability.Stockable)
 					{
@@ -56,7 +56,7 @@ namespace RimWorld
 			foreach (TraderKindDef current in DefDatabase<TraderKindDef>.AllDefs)
 			{
 				stringBuilder.AppendLine("Generated stock for " + current.defName + ":");
-				foreach (Thing current2 in TraderStockGenerator.GenerateTraderThings(current))
+				foreach (Thing current2 in TraderStockGenerator.GenerateTraderThings(current, null))
 				{
 					MinifiedThing minifiedThing = current2 as MinifiedThing;
 					Thing thing;

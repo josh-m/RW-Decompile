@@ -40,7 +40,8 @@ namespace RimWorld
 						d.altitudeLayer = AltitudeLayer.Item;
 						d.stackLimit = 75;
 						d.comps.Add(new CompProperties_Forbiddable());
-						d.SetStatBaseValue(StatDefOf.Beauty, -30f);
+						d.SetStatBaseValue(StatDefOf.Beauty, -20f);
+						d.SetStatBaseValue(StatDefOf.DeteriorationRate, 2f);
 						d.alwaysHaulable = true;
 						d.drawGUIOverlay = true;
 						d.rotatable = false;
@@ -53,6 +54,7 @@ namespace RimWorld
 						d.useHitPoints = true;
 						d.SetStatBaseValue(StatDefOf.MaxHitPoints, 100f);
 						d.SetStatBaseValue(StatDefOf.MarketValue, sourceDef.race.leatherMarketValueFactor * 3.1f);
+						d.SetStatBaseValue(StatDefOf.Mass, 0.03f);
 						if (d.thingCategories == null)
 						{
 							d.thingCategories = new List<ThingCategoryDef>();

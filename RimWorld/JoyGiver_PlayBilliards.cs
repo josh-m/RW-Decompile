@@ -32,7 +32,7 @@ namespace RimWorld
 				IntVec3 current = iterator.Current;
 				if (!cellRect.Contains(current))
 				{
-					if (!current.Standable())
+					if (!current.Standable(t.Map))
 					{
 						return false;
 					}

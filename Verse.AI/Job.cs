@@ -8,17 +8,19 @@ namespace Verse.AI
 	{
 		public JobDef def;
 
-		public TargetInfo targetA = TargetInfo.Invalid;
+		public LocalTargetInfo targetA = LocalTargetInfo.Invalid;
 
-		public TargetInfo targetB = TargetInfo.Invalid;
+		public LocalTargetInfo targetB = LocalTargetInfo.Invalid;
 
-		public TargetInfo targetC = TargetInfo.Invalid;
+		public LocalTargetInfo targetC = LocalTargetInfo.Invalid;
 
-		public List<TargetInfo> targetQueueA;
+		public List<LocalTargetInfo> targetQueueA;
 
-		public List<TargetInfo> targetQueueB;
+		public List<LocalTargetInfo> targetQueueB;
 
-		public bool playerForced;
+		public int count = -1;
+
+		public List<int> countQueue;
 
 		public int startTick = -1;
 
@@ -26,11 +28,9 @@ namespace Verse.AI
 
 		public bool checkOverrideOnExpire;
 
-		public List<ThingStackPart> placedThings;
+		public bool playerForced;
 
-		public List<int> numToBringList;
-
-		public int maxNumToCarry = -1;
+		public List<ThingStackPartClass> placedThings;
 
 		public int maxNumMeleeAttacks = 2147483647;
 
@@ -50,9 +50,9 @@ namespace Verse.AI
 
 		public bool exitMapOnArrival;
 
-		public bool killIncappedTarget;
+		public bool failIfCantJoinOrCreateCaravan;
 
-		public bool applyAnesthetic;
+		public bool killIncappedTarget;
 
 		public bool ignoreForbidden;
 
@@ -86,45 +86,45 @@ namespace Verse.AI
 		{
 		}
 
-		public Job(JobDef jDef) : this(jDef, null)
+		public Job(JobDef def) : this(def, null)
 		{
 		}
 
-		public Job(JobDef jDef, TargetInfo targetA) : this(jDef, targetA, null)
+		public Job(JobDef def, LocalTargetInfo targetA) : this(def, targetA, null)
 		{
 		}
 
-		public Job(JobDef jDef, TargetInfo targetA, TargetInfo targetB)
+		public Job(JobDef def, LocalTargetInfo targetA, LocalTargetInfo targetB)
 		{
-			this.def = jDef;
+			this.def = def;
 			this.targetA = targetA;
 			this.targetB = targetB;
 		}
 
-		public Job(JobDef jDef, TargetInfo targetA, TargetInfo targetB, TargetInfo targetC)
+		public Job(JobDef def, LocalTargetInfo targetA, LocalTargetInfo targetB, LocalTargetInfo targetC)
 		{
-			this.def = jDef;
+			this.def = def;
 			this.targetA = targetA;
 			this.targetB = targetB;
 			this.targetC = targetC;
 		}
 
-		public Job(JobDef jDef, TargetInfo targetA, int expiryInterval, bool checkOverrideOnExpiry = false)
+		public Job(JobDef def, LocalTargetInfo targetA, int expiryInterval, bool checkOverrideOnExpiry = false)
 		{
-			this.def = jDef;
+			this.def = def;
 			this.targetA = targetA;
 			this.expiryInterval = expiryInterval;
 			this.checkOverrideOnExpire = checkOverrideOnExpiry;
 		}
 
-		public Job(JobDef jDef, int expiryInterval, bool checkOverrideOnExpiry = false)
+		public Job(JobDef def, int expiryInterval, bool checkOverrideOnExpiry = false)
 		{
-			this.def = jDef;
+			this.def = def;
 			this.expiryInterval = expiryInterval;
 			this.checkOverrideOnExpire = checkOverrideOnExpiry;
 		}
 
-		public TargetInfo GetTarget(TargetIndex ind)
+		public LocalTargetInfo GetTarget(TargetIndex ind)
 		{
 			switch (ind)
 			{
@@ -139,20 +139,28 @@ namespace Verse.AI
 			}
 		}
 
-		public List<TargetInfo> GetTargetQueue(TargetIndex ind)
+		public List<LocalTargetInfo> GetTargetQueue(TargetIndex ind)
 		{
 			if (ind == TargetIndex.A)
 			{
+				if (this.targetQueueA == null)
+				{
+					this.targetQueueA = new List<LocalTargetInfo>();
+				}
 				return this.targetQueueA;
 			}
 			if (ind != TargetIndex.B)
 			{
 				throw new ArgumentException();
 			}
+			if (this.targetQueueB == null)
+			{
+				this.targetQueueB = new List<LocalTargetInfo>();
+			}
 			return this.targetQueueB;
 		}
 
-		public void SetTarget(TargetIndex ind, TargetInfo pack)
+		public void SetTarget(TargetIndex ind, LocalTargetInfo pack)
 		{
 			switch (ind)
 			{
@@ -170,6 +178,11 @@ namespace Verse.AI
 			}
 		}
 
+		public void AddQueuedTarget(TargetIndex ind, LocalTargetInfo target)
+		{
+			this.GetTargetQueue(ind).Add(target);
+		}
+
 		public void ExposeData()
 		{
 			ILoadReferenceable loadReferenceable = (ILoadReferenceable)this.commTarget;
@@ -181,24 +194,24 @@ namespace Verse.AI
 			Scribe_TargetInfo.LookTargetInfo(ref this.targetA, "targetA");
 			Scribe_TargetInfo.LookTargetInfo(ref this.targetB, "targetB");
 			Scribe_TargetInfo.LookTargetInfo(ref this.targetC, "targetC");
-			Scribe_Collections.LookList<TargetInfo>(ref this.targetQueueA, "targetQueueA", LookMode.Undefined, new object[0]);
-			Scribe_Collections.LookList<TargetInfo>(ref this.targetQueueB, "targetQueueB", LookMode.Undefined, new object[0]);
-			Scribe_Collections.LookList<int>(ref this.numToBringList, "numToBring", LookMode.Undefined, new object[0]);
-			Scribe_Collections.LookList<ThingStackPart>(ref this.placedThings, "placedThings", LookMode.Undefined, new object[0]);
+			Scribe_Collections.LookList<LocalTargetInfo>(ref this.targetQueueA, "targetQueueA", LookMode.Undefined, new object[0]);
+			Scribe_Collections.LookList<LocalTargetInfo>(ref this.targetQueueB, "targetQueueB", LookMode.Undefined, new object[0]);
+			Scribe_Values.LookValue<int>(ref this.count, "count", -1, false);
+			Scribe_Collections.LookList<int>(ref this.countQueue, "countQueue", LookMode.Undefined, new object[0]);
 			Scribe_Values.LookValue<int>(ref this.startTick, "startTick", -1, false);
 			Scribe_Values.LookValue<int>(ref this.expiryInterval, "expiryInterval", -1, false);
+			Scribe_Values.LookValue<bool>(ref this.checkOverrideOnExpire, "checkOverrideOnExpire", false, false);
+			Scribe_Values.LookValue<bool>(ref this.playerForced, "playerForced", false, false);
+			Scribe_Collections.LookList<ThingStackPartClass>(ref this.placedThings, "placedThings", LookMode.Undefined, new object[0]);
 			Scribe_Values.LookValue<int>(ref this.maxNumMeleeAttacks, "maxNumMeleeAttacks", 2147483647, false);
 			Scribe_Values.LookValue<bool>(ref this.exitMapOnArrival, "exitMapOnArrival", false, false);
+			Scribe_Values.LookValue<bool>(ref this.failIfCantJoinOrCreateCaravan, "failIfCantJoinOrCreateCaravan", false, false);
 			Scribe_Values.LookValue<bool>(ref this.killIncappedTarget, "killIncappedTarget", false, false);
-			Scribe_Values.LookValue<int>(ref this.maxNumToCarry, "maxNumToHaul", -1, false);
 			Scribe_Values.LookValue<bool>(ref this.haulOpportunisticDuplicates, "haulOpportunisticDuplicates", false, false);
 			Scribe_Values.LookValue<HaulMode>(ref this.haulMode, "haulMode", HaulMode.Undefined, false);
 			Scribe_Defs.LookDef<ThingDef>(ref this.plantDefToSow, "plantDefToSow");
-			Scribe_Values.LookValue<bool>(ref this.playerForced, "playerForced", false, false);
 			Scribe_Values.LookValue<LocomotionUrgency>(ref this.locomotionUrgency, "locomotionUrgency", LocomotionUrgency.Jog, false);
-			Scribe_Values.LookValue<bool>(ref this.applyAnesthetic, "applyAnesthetic", false, false);
 			Scribe_Values.LookValue<bool>(ref this.ignoreDesignations, "ignoreDesignations", false, false);
-			Scribe_Values.LookValue<bool>(ref this.checkOverrideOnExpire, "checkOverrideOnExpire", false, false);
 			Scribe_Values.LookValue<bool>(ref this.canBash, "canBash", false, false);
 			Scribe_Values.LookValue<bool>(ref this.haulDroppedApparel, "haulDroppedApparel", false, false);
 			Scribe_Values.LookValue<bool>(ref this.restUntilHealed, "restUntilHealed", false, false);

@@ -30,9 +30,17 @@ namespace RimWorld
 			}
 		}
 
+		public Area_NoRoof()
+		{
+		}
+
+		public Area_NoRoof(AreaManager areaManager) : base(areaManager)
+		{
+		}
+
 		public override string GetUniqueLoadID()
 		{
-			return "Area_NoRoof";
+			return "Area_" + this.ID + "_NoRoof";
 		}
 	}
 }

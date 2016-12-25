@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using Verse;
 
@@ -6,9 +7,17 @@ namespace RimWorld
 {
 	public static class MoteMaker
 	{
-		public static Mote ThrowMetaIcon(IntVec3 cell, ThingDef moteDef)
+		private static IntVec3[] UpRightPattern = new IntVec3[]
 		{
-			if (!cell.ShouldSpawnMotesAt() || MoteCounter.Saturated)
+			new IntVec3(0, 0, 0),
+			new IntVec3(1, 0, 0),
+			new IntVec3(0, 0, 1),
+			new IntVec3(1, 0, 1)
+		};
+
+		public static Mote ThrowMetaIcon(IntVec3 cell, Map map, ThingDef moteDef)
+		{
+			if (!cell.ShouldSpawnMotesAt(map) || map.moteCounter.Saturated)
 			{
 				return null;
 			}
@@ -19,36 +28,36 @@ namespace RimWorld
 			moteThrown.exactPosition += new Vector3(0.35f, 0f, 0.35f);
 			moteThrown.exactPosition += new Vector3(Rand.Value, 0f, Rand.Value) * 0.1f;
 			moteThrown.SetVelocity((float)Rand.Range(30, 60), 0.42f);
-			GenSpawn.Spawn(moteThrown, cell);
+			GenSpawn.Spawn(moteThrown, cell, map);
 			return moteThrown;
 		}
 
-		public static void MakeStaticMote(IntVec3 cell, ThingDef moteDef, float scale = 1f)
+		public static void MakeStaticMote(IntVec3 cell, Map map, ThingDef moteDef, float scale = 1f)
 		{
-			MoteMaker.MakeStaticMote(cell.ToVector3Shifted(), moteDef, scale);
+			MoteMaker.MakeStaticMote(cell.ToVector3Shifted(), map, moteDef, scale);
 		}
 
-		public static void MakeStaticMote(Vector3 loc, ThingDef moteDef, float scale = 1f)
+		public static void MakeStaticMote(Vector3 loc, Map map, ThingDef moteDef, float scale = 1f)
 		{
-			if (!loc.ShouldSpawnMotesAt() || MoteCounter.Saturated)
+			if (!loc.ShouldSpawnMotesAt(map) || map.moteCounter.Saturated)
 			{
 				return;
 			}
 			Mote mote = (Mote)ThingMaker.MakeThing(moteDef, null);
 			mote.exactPosition = loc;
 			mote.Scale = scale;
-			GenSpawn.Spawn(mote, loc.ToIntVec3());
+			GenSpawn.Spawn(mote, loc.ToIntVec3(), map);
 		}
 
-		public static void ThrowText(Vector3 loc, string text, float timeBeforeStartFadeout = -1f)
+		public static void ThrowText(Vector3 loc, Map map, string text, float timeBeforeStartFadeout = -1f)
 		{
-			MoteMaker.ThrowText(loc, text, Color.white, timeBeforeStartFadeout);
+			MoteMaker.ThrowText(loc, map, text, Color.white, timeBeforeStartFadeout);
 		}
 
-		public static void ThrowText(Vector3 loc, string text, Color color, float timeBeforeStartFadeout = -1f)
+		public static void ThrowText(Vector3 loc, Map map, string text, Color color, float timeBeforeStartFadeout = -1f)
 		{
 			IntVec3 intVec = loc.ToIntVec3();
-			if (!intVec.InBounds())
+			if (!intVec.InBounds(map))
 			{
 				return;
 			}
@@ -61,10 +70,10 @@ namespace RimWorld
 			{
 				moteText.overrideTimeBeforeStartFadeout = timeBeforeStartFadeout;
 			}
-			GenSpawn.Spawn(moteText, intVec);
+			GenSpawn.Spawn(moteText, intVec, map);
 		}
 
-		public static void ThrowMetaPuffs(CellRect rect)
+		public static void ThrowMetaPuffs(CellRect rect, Map map)
 		{
 			if (!Find.TickManager.Paused)
 			{
@@ -72,7 +81,7 @@ namespace RimWorld
 				{
 					for (int j = rect.minZ; j <= rect.maxZ; j++)
 					{
-						MoteMaker.ThrowMetaPuffs(new IntVec3(i, 0, j));
+						MoteMaker.ThrowMetaPuffs(new TargetInfo(new IntVec3(i, 0, j), map, false));
 					}
 				}
 			}
@@ -85,13 +94,13 @@ namespace RimWorld
 			for (int i = 0; i < num; i++)
 			{
 				Vector3 loc = a + new Vector3(Rand.Range(-0.5f, 0.5f), 0f, Rand.Range(-0.5f, 0.5f));
-				MoteMaker.ThrowMetaPuff(loc);
+				MoteMaker.ThrowMetaPuff(loc, targ.Map);
 			}
 		}
 
-		public static void ThrowMetaPuff(Vector3 loc)
+		public static void ThrowMetaPuff(Vector3 loc, Map map)
 		{
-			if (!loc.ShouldSpawnMotesAt())
+			if (!loc.ShouldSpawnMotesAt(map))
 			{
 				return;
 			}
@@ -100,7 +109,7 @@ namespace RimWorld
 			moteThrown.rotationRate = (float)Rand.Range(-60, 60);
 			moteThrown.exactPosition = loc;
 			moteThrown.SetVelocity((float)Rand.Range(0, 360), Rand.Range(0.6f, 0.78f));
-			GenSpawn.Spawn(moteThrown, loc.ToIntVec3());
+			GenSpawn.Spawn(moteThrown, loc.ToIntVec3(), map);
 		}
 
 		private static MoteThrown NewBaseAirPuff()
@@ -111,9 +120,9 @@ namespace RimWorld
 			return moteThrown;
 		}
 
-		public static void ThrowAirPuffUp(Vector3 loc)
+		public static void ThrowAirPuffUp(Vector3 loc, Map map)
 		{
-			if (!loc.ToIntVec3().ShouldSpawnMotesAt() || MoteCounter.SaturatedLowPriority)
+			if (!loc.ToIntVec3().ShouldSpawnMotesAt(map) || map.moteCounter.SaturatedLowPriority)
 			{
 				return;
 			}
@@ -121,12 +130,12 @@ namespace RimWorld
 			moteThrown.exactPosition = loc;
 			moteThrown.exactPosition += new Vector3(Rand.Range(-0.02f, 0.02f), 0f, Rand.Range(-0.02f, 0.02f));
 			moteThrown.SetVelocity((float)Rand.Range(-45, 45), Rand.Range(1.2f, 1.5f));
-			GenSpawn.Spawn(moteThrown, loc.ToIntVec3());
+			GenSpawn.Spawn(moteThrown, loc.ToIntVec3(), map);
 		}
 
-		internal static void ThrowBreathPuff(Vector3 loc, float throwAngle, Vector3 inheritVelocity)
+		internal static void ThrowBreathPuff(Vector3 loc, Map map, float throwAngle, Vector3 inheritVelocity)
 		{
-			if (!loc.ToIntVec3().ShouldSpawnMotesAt() || MoteCounter.SaturatedLowPriority)
+			if (!loc.ToIntVec3().ShouldSpawnMotesAt(map) || map.moteCounter.SaturatedLowPriority)
 			{
 				return;
 			}
@@ -136,12 +145,32 @@ namespace RimWorld
 			moteThrown.SetVelocity(throwAngle + (float)Rand.Range(-10, 10), Rand.Range(0.1f, 0.8f));
 			moteThrown.Velocity += inheritVelocity * 0.5f;
 			moteThrown.Scale = Rand.Range(0.6f, 0.7f);
-			GenSpawn.Spawn(moteThrown, loc.ToIntVec3());
+			GenSpawn.Spawn(moteThrown, loc.ToIntVec3(), map);
 		}
 
-		public static void ThrowSmoke(Vector3 loc, float size)
+		public static void ThrowDustPuff(IntVec3 cell, Map map, float scale)
 		{
-			if (!loc.ShouldSpawnMotesAt() || MoteCounter.SaturatedLowPriority)
+			Vector3 loc = cell.ToVector3() + new Vector3(Rand.Value, 0f, Rand.Value);
+			MoteMaker.ThrowDustPuff(loc, map, scale);
+		}
+
+		public static void ThrowDustPuff(Vector3 loc, Map map, float scale)
+		{
+			if (!loc.ShouldSpawnMotesAt(map) || map.moteCounter.SaturatedLowPriority)
+			{
+				return;
+			}
+			MoteThrown moteThrown = (MoteThrown)ThingMaker.MakeThing(ThingDefOf.Mote_DustPuff, null);
+			moteThrown.Scale = 1.9f * scale;
+			moteThrown.rotationRate = (float)Rand.Range(-60, 60);
+			moteThrown.exactPosition = loc;
+			moteThrown.SetVelocity((float)Rand.Range(0, 360), Rand.Range(0.6f, 0.75f));
+			GenSpawn.Spawn(moteThrown, loc.ToIntVec3(), map);
+		}
+
+		public static void ThrowSmoke(Vector3 loc, Map map, float size)
+		{
+			if (!loc.ShouldSpawnMotesAt(map) || map.moteCounter.SaturatedLowPriority)
 			{
 				return;
 			}
@@ -150,18 +179,18 @@ namespace RimWorld
 			moteThrown.rotationRate = Rand.Range(-30f, 30f);
 			moteThrown.exactPosition = loc;
 			moteThrown.SetVelocity((float)Rand.Range(30, 40), Rand.Range(0.5f, 0.7f));
-			GenSpawn.Spawn(moteThrown, loc.ToIntVec3());
+			GenSpawn.Spawn(moteThrown, loc.ToIntVec3(), map);
 		}
 
-		public static void ThrowFireGlow(IntVec3 c, float size)
+		public static void ThrowFireGlow(IntVec3 c, Map map, float size)
 		{
 			Vector3 vector = c.ToVector3Shifted();
-			if (!vector.ShouldSpawnMotesAt() || MoteCounter.SaturatedLowPriority)
+			if (!vector.ShouldSpawnMotesAt(map) || map.moteCounter.SaturatedLowPriority)
 			{
 				return;
 			}
 			vector += size * new Vector3(Rand.Value - 0.5f, 0f, Rand.Value - 0.5f);
-			if (!vector.InBounds())
+			if (!vector.InBounds(map))
 			{
 				return;
 			}
@@ -170,18 +199,18 @@ namespace RimWorld
 			moteThrown.rotationRate = Rand.Range(-3f, 3f);
 			moteThrown.exactPosition = vector;
 			moteThrown.SetVelocity((float)Rand.Range(0, 360), 0.12f);
-			GenSpawn.Spawn(moteThrown, vector.ToIntVec3());
+			GenSpawn.Spawn(moteThrown, vector.ToIntVec3(), map);
 		}
 
-		public static void ThrowHeatGlow(IntVec3 c, float size)
+		public static void ThrowHeatGlow(IntVec3 c, Map map, float size)
 		{
 			Vector3 vector = c.ToVector3Shifted();
-			if (!vector.ShouldSpawnMotesAt() || MoteCounter.SaturatedLowPriority)
+			if (!vector.ShouldSpawnMotesAt(map) || map.moteCounter.SaturatedLowPriority)
 			{
 				return;
 			}
 			vector += size * new Vector3(Rand.Value - 0.5f, 0f, Rand.Value - 0.5f);
-			if (!vector.InBounds())
+			if (!vector.InBounds(map))
 			{
 				return;
 			}
@@ -190,12 +219,12 @@ namespace RimWorld
 			moteThrown.rotationRate = Rand.Range(-3f, 3f);
 			moteThrown.exactPosition = vector;
 			moteThrown.SetVelocity((float)Rand.Range(0, 360), 0.12f);
-			GenSpawn.Spawn(moteThrown, vector.ToIntVec3());
+			GenSpawn.Spawn(moteThrown, vector.ToIntVec3(), map);
 		}
 
-		public static void ThrowMicroSparks(Vector3 loc)
+		public static void ThrowMicroSparks(Vector3 loc, Map map)
 		{
-			if (!loc.ShouldSpawnMotesAt() || MoteCounter.SaturatedLowPriority)
+			if (!loc.ShouldSpawnMotesAt(map) || map.moteCounter.SaturatedLowPriority)
 			{
 				return;
 			}
@@ -206,12 +235,12 @@ namespace RimWorld
 			moteThrown.exactPosition -= new Vector3(0.5f, 0f, 0.5f);
 			moteThrown.exactPosition += new Vector3(Rand.Value, 0f, Rand.Value);
 			moteThrown.SetVelocity((float)Rand.Range(35, 45), 1.2f);
-			GenSpawn.Spawn(moteThrown, loc.ToIntVec3());
+			GenSpawn.Spawn(moteThrown, loc.ToIntVec3(), map);
 		}
 
-		public static void ThrowLightningGlow(Vector3 loc, float size)
+		public static void ThrowLightningGlow(Vector3 loc, Map map, float size)
 		{
-			if (!loc.ShouldSpawnMotesAt() || MoteCounter.SaturatedLowPriority)
+			if (!loc.ShouldSpawnMotesAt(map) || map.moteCounter.SaturatedLowPriority)
 			{
 				return;
 			}
@@ -220,12 +249,12 @@ namespace RimWorld
 			moteThrown.rotationRate = Rand.Range(-3f, 3f);
 			moteThrown.exactPosition = loc + size * new Vector3(Rand.Value - 0.5f, 0f, Rand.Value - 0.5f);
 			moteThrown.SetVelocity((float)Rand.Range(0, 360), 1.2f);
-			GenSpawn.Spawn(moteThrown, loc.ToIntVec3());
+			GenSpawn.Spawn(moteThrown, loc.ToIntVec3(), map);
 		}
 
-		public static void PlaceFootprint(Vector3 loc, float rot)
+		public static void PlaceFootprint(Vector3 loc, Map map, float rot)
 		{
-			if (!loc.ShouldSpawnMotesAt() || MoteCounter.SaturatedLowPriority)
+			if (!loc.ShouldSpawnMotesAt(map) || map.moteCounter.SaturatedLowPriority)
 			{
 				return;
 			}
@@ -233,17 +262,17 @@ namespace RimWorld
 			moteThrown.Scale = 0.5f;
 			moteThrown.exactRotation = rot;
 			moteThrown.exactPosition = loc;
-			GenSpawn.Spawn(moteThrown, loc.ToIntVec3());
+			GenSpawn.Spawn(moteThrown, loc.ToIntVec3(), map);
 		}
 
 		public static void ThrowHorseshoe(Pawn thrower, IntVec3 targetCell)
 		{
-			if (!thrower.Position.ShouldSpawnMotesAt() || MoteCounter.Saturated)
+			if (!thrower.Position.ShouldSpawnMotesAt(thrower.Map) || thrower.Map.moteCounter.Saturated)
 			{
 				return;
 			}
 			float num = Rand.Range(3.8f, 5.6f);
-			Vector3 vector = targetCell.ToVector3Shifted() + Vector3Utility.RandomHorizontalOffset((1f - (float)thrower.skills.GetSkill(SkillDefOf.Shooting).level / 20f) * 1.8f);
+			Vector3 vector = targetCell.ToVector3Shifted() + Vector3Utility.RandomHorizontalOffset((1f - (float)thrower.skills.GetSkill(SkillDefOf.Shooting).Level / 20f) * 1.8f);
 			vector.y = thrower.DrawPos.y;
 			MoteThrown moteThrown = (MoteThrown)ThingMaker.MakeThing(ThingDefOf.Mote_Horseshoe, null);
 			moteThrown.Scale = 1f;
@@ -251,24 +280,15 @@ namespace RimWorld
 			moteThrown.exactPosition = thrower.DrawPos;
 			moteThrown.SetVelocity((vector - moteThrown.exactPosition).AngleFlat(), num);
 			moteThrown.airTimeLeft = (float)Mathf.RoundToInt((moteThrown.exactPosition - vector).MagnitudeHorizontal() / num);
-			GenSpawn.Spawn(moteThrown, thrower.Position);
+			GenSpawn.Spawn(moteThrown, thrower.Position, thrower.Map);
 		}
 
 		public static Mote MakeStunOverlay(Thing stunnedThing)
 		{
 			Mote mote = (Mote)ThingMaker.MakeThing(ThingDefOf.Mote_Stun, null);
 			mote.Attach(stunnedThing);
-			GenSpawn.Spawn(mote, stunnedThing.Position);
+			GenSpawn.Spawn(mote, stunnedThing.Position, stunnedThing.Map);
 			return mote;
-		}
-
-		public static void MakeInteractionMote(Pawn initiator, Pawn recipient, ThingDef interactionMote, Texture2D symbol)
-		{
-			MoteInteraction moteInteraction = (MoteInteraction)ThingMaker.MakeThing(interactionMote, null);
-			moteInteraction.Scale = 1.25f;
-			moteInteraction.SetupInteractionMote(symbol, recipient);
-			moteInteraction.Attach(initiator);
-			GenSpawn.Spawn(moteInteraction, initiator.Position);
 		}
 
 		public static MoteDualAttached MakeInteractionOverlay(ThingDef moteDef, TargetInfo A, TargetInfo B)
@@ -276,7 +296,7 @@ namespace RimWorld
 			MoteDualAttached moteDualAttached = (MoteDualAttached)ThingMaker.MakeThing(moteDef, null);
 			moteDualAttached.Scale = 0.5f;
 			moteDualAttached.Attach(A, B);
-			GenSpawn.Spawn(moteDualAttached, A.Cell);
+			GenSpawn.Spawn(moteDualAttached, A.Cell, A.Map ?? B.Map);
 			return moteDualAttached;
 		}
 
@@ -286,43 +306,94 @@ namespace RimWorld
 			moteThrownAttached.Attach(pawn);
 			moteThrownAttached.Scale = 1.5f;
 			moteThrownAttached.SetVelocity(Rand.Range(20f, 25f), 0.4f);
-			GenSpawn.Spawn(moteThrownAttached, pawn.Position);
+			GenSpawn.Spawn(moteThrownAttached, pawn.Position, pawn.Map);
 		}
 
-		public static void ThrowDustPuff(IntVec3 cell, float scale)
+		private static MoteBubble ExistingMoteBubbleOn(Pawn pawn)
 		{
-			Vector3 loc = cell.ToVector3() + new Vector3(Rand.Value, 0f, Rand.Value);
-			MoteMaker.ThrowDustPuff(loc, scale);
-		}
-
-		public static void ThrowDustPuff(Vector3 loc, float scale)
-		{
-			if (!loc.ShouldSpawnMotesAt() || MoteCounter.SaturatedLowPriority)
+			if (!pawn.Spawned)
 			{
-				return;
+				return null;
 			}
-			MoteThrown moteThrown = (MoteThrown)ThingMaker.MakeThing(ThingDefOf.Mote_DustPuff, null);
-			moteThrown.Scale = 1.9f * scale;
-			moteThrown.rotationRate = (float)Rand.Range(-60, 60);
-			moteThrown.exactPosition = loc;
-			moteThrown.SetVelocity((float)Rand.Range(0, 360), Rand.Range(0.6f, 0.75f));
-			GenSpawn.Spawn(moteThrown, loc.ToIntVec3());
-		}
-
-		public static void PlaceTempRoof(IntVec3 cell)
-		{
-			if (!cell.ShouldSpawnMotesAt())
+			for (int i = 0; i < 4; i++)
 			{
-				return;
+				IntVec3 c = pawn.Position + MoteMaker.UpRightPattern[i];
+				if (c.InBounds(pawn.Map))
+				{
+					List<Thing> thingList = pawn.Position.GetThingList(pawn.Map);
+					for (int j = 0; j < thingList.Count; j++)
+					{
+						Thing thing = thingList[j];
+						MoteBubble moteBubble = thing as MoteBubble;
+						if (moteBubble != null && moteBubble.link1.Linked && moteBubble.link1.Target.HasThing && moteBubble.link1.Target == pawn)
+						{
+							return moteBubble;
+						}
+					}
+				}
 			}
-			Mote mote = (Mote)ThingMaker.MakeThing(ThingDefOf.Mote_TempRoof, null);
-			mote.exactPosition = cell.ToVector3Shifted();
-			GenSpawn.Spawn(mote, cell);
+			return null;
 		}
 
-		public static void ThrowExplosionCell(IntVec3 cell, ThingDef moteDef, Color color)
+		public static MoteBubble MakeMoodThoughtBubble(Pawn pawn, Thought thought)
 		{
-			if (!cell.ShouldSpawnMotesAt())
+			if (Current.ProgramState != ProgramState.Playing)
+			{
+				return null;
+			}
+			if (!pawn.Spawned)
+			{
+				return null;
+			}
+			float num = thought.MoodOffset();
+			if (num == 0f)
+			{
+				return null;
+			}
+			MoteBubble moteBubble = MoteMaker.ExistingMoteBubbleOn(pawn);
+			if (moteBubble != null)
+			{
+				if (moteBubble.def == ThingDefOf.Mote_Speech)
+				{
+					return null;
+				}
+				if (moteBubble.def == ThingDefOf.Mote_ThoughtBad || moteBubble.def == ThingDefOf.Mote_ThoughtGood)
+				{
+					moteBubble.Destroy(DestroyMode.Vanish);
+				}
+			}
+			ThingDef def = (num <= 0f) ? ThingDefOf.Mote_ThoughtBad : ThingDefOf.Mote_ThoughtGood;
+			MoteBubble moteBubble2 = (MoteBubble)ThingMaker.MakeThing(def, null);
+			moteBubble2.SetupMoteBubble(thought.Icon, null);
+			moteBubble2.Attach(pawn);
+			GenSpawn.Spawn(moteBubble2, pawn.Position, pawn.Map);
+			return moteBubble2;
+		}
+
+		public static MoteBubble MakeInteractionBubble(Pawn initiator, Pawn recipient, ThingDef interactionMote, Texture2D symbol)
+		{
+			MoteBubble moteBubble = MoteMaker.ExistingMoteBubbleOn(initiator);
+			if (moteBubble != null)
+			{
+				if (moteBubble.def == ThingDefOf.Mote_Speech)
+				{
+					moteBubble.Destroy(DestroyMode.Vanish);
+				}
+				if (moteBubble.def == ThingDefOf.Mote_ThoughtBad || moteBubble.def == ThingDefOf.Mote_ThoughtGood)
+				{
+					moteBubble.Destroy(DestroyMode.Vanish);
+				}
+			}
+			MoteBubble moteBubble2 = (MoteBubble)ThingMaker.MakeThing(interactionMote, null);
+			moteBubble2.SetupMoteBubble(symbol, recipient);
+			moteBubble2.Attach(initiator);
+			GenSpawn.Spawn(moteBubble2, initiator.Position, initiator.Map);
+			return moteBubble2;
+		}
+
+		public static void ThrowExplosionCell(IntVec3 cell, Map map, ThingDef moteDef, Color color)
+		{
+			if (!cell.ShouldSpawnMotesAt(map))
 			{
 				return;
 			}
@@ -330,16 +401,16 @@ namespace RimWorld
 			mote.exactRotation = (float)(90 * Rand.RangeInclusive(0, 3));
 			mote.exactPosition = cell.ToVector3Shifted();
 			mote.instanceColor = color;
-			GenSpawn.Spawn(mote, cell);
+			GenSpawn.Spawn(mote, cell, map);
 			if (Rand.Value < 0.7f)
 			{
-				MoteMaker.ThrowDustPuff(cell, 1.2f);
+				MoteMaker.ThrowDustPuff(cell, map, 1.2f);
 			}
 		}
 
-		public static void ThrowExplosionInteriorMote(Vector3 loc, ThingDef moteDef)
+		public static void ThrowExplosionInteriorMote(Vector3 loc, Map map, ThingDef moteDef)
 		{
-			if (!loc.ShouldSpawnMotesAt() || MoteCounter.SaturatedLowPriority)
+			if (!loc.ShouldSpawnMotesAt(map) || map.moteCounter.SaturatedLowPriority)
 			{
 				return;
 			}
@@ -348,7 +419,18 @@ namespace RimWorld
 			moteThrown.rotationRate = Rand.Range(-30f, 30f);
 			moteThrown.exactPosition = loc;
 			moteThrown.SetVelocity((float)Rand.Range(0, 360), Rand.Range(0.48f, 0.72f));
-			GenSpawn.Spawn(moteThrown, loc.ToIntVec3());
+			GenSpawn.Spawn(moteThrown, loc.ToIntVec3(), map);
+		}
+
+		public static void PlaceTempRoof(IntVec3 cell, Map map)
+		{
+			if (!cell.ShouldSpawnMotesAt(map))
+			{
+				return;
+			}
+			Mote mote = (Mote)ThingMaker.MakeThing(ThingDefOf.Mote_TempRoof, null);
+			mote.exactPosition = cell.ToVector3Shifted();
+			GenSpawn.Spawn(mote, cell, map);
 		}
 	}
 }

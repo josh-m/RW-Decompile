@@ -153,7 +153,7 @@ namespace RimWorld
 			{
 				this.ticksAtZero = 0;
 			}
-			if (this.ticksAtZero > 1000)
+			if (this.ticksAtZero > 1000 && this.pawn.Spawned)
 			{
 				float mtb;
 				if (this.ticksAtZero < 15000)

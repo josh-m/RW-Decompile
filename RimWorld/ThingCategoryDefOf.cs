@@ -24,8 +24,6 @@ namespace RimWorld
 
 		public static ThingCategoryDef BodyParts;
 
-		public static ThingCategoryDef Corpses;
-
 		public static ThingCategoryDef Chunks;
 
 		public static ThingCategoryDef StoneBlocks;
@@ -33,5 +31,15 @@ namespace RimWorld
 		public static ThingCategoryDef MeatRaw;
 
 		public static ThingCategoryDef Leathers;
+
+		public static ThingCategoryDef Corpses;
+
+		public static ThingCategoryDef CorpsesHumanlike;
+
+		public static ThingCategoryDef CorpsesMechanoid;
+
+		public static ThingCategoryDef CorpsesInsect;
+
+		public static ThingCategoryDef CorpsesAnimal;
 	}
 }

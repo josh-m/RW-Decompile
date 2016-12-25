@@ -10,13 +10,15 @@ namespace Verse
 
 		public const int AlphaOfOverlit = 1;
 
-		private const float MaxGameGlowFromNonOverlitGroundLights = 0.6f;
-
 		private const float GameGlowLitThreshold = 0.3f;
 
 		private const float GameGlowOverlitThreshold = 0.9f;
 
-		private const float GroundGameGlowFactorUp = 6f;
+		private const float GroundGameGlowFactor = 3.6f;
+
+		private const float MaxGameGlowFromNonOverlitGroundLights = 0.5f;
+
+		private Map map;
 
 		public Color32[] glowGrid;
 
@@ -26,41 +28,36 @@ namespace Verse
 
 		private List<IntVec3> initialGlowerLocs = new List<IntVec3>();
 
-		public GlowGrid()
+		public GlowGrid(Map map)
 		{
-			this.glowGrid = new Color32[CellIndices.NumGridCells];
+			this.map = map;
+			this.glowGrid = new Color32[map.cellIndices.NumGridCells];
 		}
 
 		public Color32 VisualGlowAt(IntVec3 c)
 		{
-			return this.glowGrid[CellIndices.CellToIndex(c)];
+			return this.glowGrid[this.map.cellIndices.CellToIndex(c)];
 		}
 
 		public float GameGlowAt(IntVec3 c)
 		{
 			float num = 0f;
-			if (!Find.RoofGrid.Roofed(c))
+			if (!this.map.roofGrid.Roofed(c))
 			{
-				num += SkyManager.CurSkyGlow;
+				num = this.map.skyManager.CurSkyGlow;
+				if (num == 1f)
+				{
+					return num;
+				}
 			}
-			Color32 color = this.glowGrid[CellIndices.CellToIndex(c)];
+			Color32 color = this.glowGrid[this.map.cellIndices.CellToIndex(c)];
 			if (color.a == 1)
 			{
 				return 1f;
 			}
-			int num2 = (int)color.r;
-			if ((int)color.g > num2)
-			{
-				num2 = (int)color.g;
-			}
-			if ((int)color.b > num2)
-			{
-				num2 = (int)color.b;
-			}
-			float num3 = (float)num2 / 255f * 0.6f;
-			num3 *= 6f;
-			num3 = Mathf.Min(0.6f, num3);
-			return Mathf.Max(num, num3);
+			float b = (float)(color.r + color.g + color.b) / 3f / 255f * 3.6f;
+			b = Mathf.Min(0.5f, b);
+			return Mathf.Max(num, b);
 		}
 
 		public PsychGlow PsychGlowAt(IntVec3 c)
@@ -86,7 +83,7 @@ namespace Verse
 		{
 			this.litGlowers.Add(newGlow);
 			this.MarkGlowGridDirty(newGlow.parent.Position);
-			if (Current.ProgramState != ProgramState.MapPlaying)
+			if (Current.ProgramState != ProgramState.Playing)
 			{
 				this.initialGlowerLocs.Add(newGlow.parent.Position);
 			}
@@ -101,7 +98,7 @@ namespace Verse
 		public void MarkGlowGridDirty(IntVec3 loc)
 		{
 			this.glowGridDirty = true;
-			Find.MapDrawer.MapMeshDirty(loc, MapMeshFlag.GroundGlow);
+			this.map.mapDrawer.MapMeshDirty(loc, MapMeshFlag.GroundGlow);
 		}
 
 		public void GlowGridUpdate_First()
@@ -115,7 +112,7 @@ namespace Verse
 
 		private void RecalculateAllGlow()
 		{
-			if (Current.ProgramState != ProgramState.MapPlaying)
+			if (Current.ProgramState != ProgramState.Playing)
 			{
 				return;
 			}
@@ -127,13 +124,14 @@ namespace Verse
 				}
 				this.initialGlowerLocs = null;
 			}
-			for (int i = 0; i < CellIndices.NumGridCells; i++)
+			int numGridCells = this.map.cellIndices.NumGridCells;
+			for (int i = 0; i < numGridCells; i++)
 			{
 				this.glowGrid[i] = new Color32(0, 0, 0, 0);
 			}
 			foreach (CompGlower current2 in this.litGlowers)
 			{
-				GlowFlooder.AddFloodGlowFor(current2);
+				this.map.glowFlooder.AddFloodGlowFor(current2);
 			}
 		}
 	}

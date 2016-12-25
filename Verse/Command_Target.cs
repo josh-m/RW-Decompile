@@ -15,10 +15,10 @@ namespace Verse
 		{
 			base.ProcessInput(ev);
 			SoundDefOf.TickTiny.PlayOneShotOnCamera();
-			Find.Targeter.BeginTargeting(this.targetingParams, delegate(Thing target)
+			Find.Targeter.BeginTargeting(this.targetingParams, delegate(LocalTargetInfo target)
 			{
-				this.action(target);
-			}, null);
+				this.action(target.Thing);
+			}, null, null, null);
 		}
 
 		public override bool InheritInteractionsFrom(Gizmo other)

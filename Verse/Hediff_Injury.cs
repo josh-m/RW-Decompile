@@ -16,10 +16,6 @@ namespace Verse
 				if (this.IsTended())
 				{
 					num = Gen.HashCombineInt(num, 152235495);
-					if (this.IsTendedWell())
-					{
-						num = Gen.HashCombineInt(num, 135738120);
-					}
 				}
 				return num;
 			}
@@ -30,19 +26,18 @@ namespace Verse
 			get
 			{
 				HediffComp_GetsOld hediffComp_GetsOld = this.TryGetComp<HediffComp_GetsOld>();
-				if (hediffComp_GetsOld == null || !hediffComp_GetsOld.IsOld)
+				if (hediffComp_GetsOld != null && hediffComp_GetsOld.IsOld)
 				{
-					return this.def.LabelCap;
+					if (base.Part.def.IsDelicate && !hediffComp_GetsOld.Props.instantlyOldLabel.NullOrEmpty())
+					{
+						return hediffComp_GetsOld.Props.instantlyOldLabel;
+					}
+					if (!hediffComp_GetsOld.Props.oldLabel.NullOrEmpty())
+					{
+						return hediffComp_GetsOld.Props.oldLabel;
+					}
 				}
-				if (base.Part.def.IsDelicate && !hediffComp_GetsOld.props.instantlyOldLabel.NullOrEmpty())
-				{
-					return hediffComp_GetsOld.props.instantlyOldLabel.CapitalizeFirst();
-				}
-				if (!hediffComp_GetsOld.props.oldLabel.NullOrEmpty())
-				{
-					return hediffComp_GetsOld.props.oldLabel.CapitalizeFirst();
-				}
-				return this.def.LabelCap;
+				return base.LabelBase;
 			}
 		}
 
@@ -89,7 +84,7 @@ namespace Verse
 			}
 		}
 
-		public override string DamageLabel
+		public override string SeverityLabel
 		{
 			get
 			{
@@ -117,7 +112,7 @@ namespace Verse
 		{
 			get
 			{
-				if (this.pawn.health.Dead || this.pawn.health.hediffSet.PartOrAnyAncestorHasDirectlyAddedParts(base.Part) || this.causesNoPain)
+				if (this.pawn.Dead || this.pawn.health.hediffSet.PartOrAnyAncestorHasDirectlyAddedParts(base.Part) || this.causesNoPain)
 				{
 					return 0f;
 				}
@@ -134,7 +129,11 @@ namespace Verse
 		{
 			get
 			{
-				if (this.pawn.health.Dead)
+				if (this.pawn.Dead)
+				{
+					return 0f;
+				}
+				if (this.BleedingStoppedDueToAge)
 				{
 					return 0f;
 				}
@@ -146,66 +145,55 @@ namespace Verse
 				{
 					return 0f;
 				}
-				if (this.TicksAfterNoLongerBleedingPassed)
+				float num = this.Severity * this.def.injuryProps.bleedRate;
+				if (base.Part != null)
 				{
-					return 0f;
+					num *= base.Part.def.bleedingRateMultiplier;
 				}
-				return this.Severity * this.def.injuryProps.bleeding;
+				return num;
 			}
 		}
 
-		public override float MaxBleeding
+		private int AgeTicksToStopBleeding
 		{
 			get
 			{
-				return base.Part.def.GetMaxHealth(this.pawn);
-			}
-		}
-
-		private int TicksAfterNoLongerBleeding
-		{
-			get
-			{
-				int num = 80000;
+				int num = 90000;
 				float t = Mathf.Clamp(Mathf.InverseLerp(1f, 30f, this.Severity), 0f, 1f);
-				return num + Mathf.RoundToInt(Mathf.Lerp(0f, 80000f, t));
+				return num + Mathf.RoundToInt(Mathf.Lerp(0f, 90000f, t));
 			}
 		}
 
-		private bool TicksAfterNoLongerBleedingPassed
+		private bool BleedingStoppedDueToAge
 		{
 			get
 			{
-				return this.ageTicks >= this.TicksAfterNoLongerBleeding;
+				return this.ageTicks >= this.AgeTicksToStopBleeding;
 			}
 		}
 
 		public override void Tick()
 		{
-			bool ticksAfterNoLongerBleedingPassed = this.TicksAfterNoLongerBleedingPassed;
+			bool bleedingStoppedDueToAge = this.BleedingStoppedDueToAge;
 			base.Tick();
-			bool ticksAfterNoLongerBleedingPassed2 = this.TicksAfterNoLongerBleedingPassed;
-			if (ticksAfterNoLongerBleedingPassed != ticksAfterNoLongerBleedingPassed2)
+			bool bleedingStoppedDueToAge2 = this.BleedingStoppedDueToAge;
+			if (bleedingStoppedDueToAge != bleedingStoppedDueToAge2)
 			{
 				this.pawn.health.Notify_HediffChanged(this);
 			}
 		}
 
-		public override void DirectHeal(float amount)
+		public override void Heal(float amount)
 		{
-			if (amount <= 0f)
-			{
-				return;
-			}
-			if (this.FullyHealableOnlyByTend() && this.Severity - amount <= 2f)
-			{
-				amount = this.Severity - 2f;
-			}
-			if (amount <= 0f)
-			{
-				return;
-			}
 			this.Severity -= amount;
+			if (this.comps != null)
+			{
+				for (int i = 0; i < this.comps.Count; i++)
+				{
+					this.comps[i].CompPostInjuryHeal(amount);
+				}
+			}
+			this.pawn.health.Notify_HediffChanged(this);
 		}
 
 		public override bool TryMergeWith(Hediff other)

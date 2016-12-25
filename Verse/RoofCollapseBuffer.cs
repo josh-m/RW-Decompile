@@ -3,50 +3,50 @@ using System.Collections.Generic;
 
 namespace Verse
 {
-	public static class RoofCollapseBuffer
+	public class RoofCollapseBuffer
 	{
-		private static List<IntVec3> cellsToCollapse = new List<IntVec3>();
+		private List<IntVec3> cellsToCollapse = new List<IntVec3>();
 
-		private static List<Thing> crushedThingsToReport = new List<Thing>();
+		private List<Thing> crushedThingsToReport = new List<Thing>();
 
-		public static List<IntVec3> CellsMarkedToCollapse
+		public List<IntVec3> CellsMarkedToCollapse
 		{
 			get
 			{
-				return RoofCollapseBuffer.cellsToCollapse;
+				return this.cellsToCollapse;
 			}
 		}
 
-		public static List<Thing> CrushedThingsForLetter
+		public List<Thing> CrushedThingsForLetter
 		{
 			get
 			{
-				return RoofCollapseBuffer.crushedThingsToReport;
+				return this.crushedThingsToReport;
 			}
 		}
 
-		public static bool IsMarkedToCollapse(IntVec3 c)
+		public bool IsMarkedToCollapse(IntVec3 c)
 		{
-			return RoofCollapseBuffer.cellsToCollapse.Contains(c);
+			return this.cellsToCollapse.Contains(c);
 		}
 
-		public static void MarkToCollapse(IntVec3 c)
+		public void MarkToCollapse(IntVec3 c)
 		{
-			if (!RoofCollapseBuffer.cellsToCollapse.Contains(c))
+			if (!this.cellsToCollapse.Contains(c))
 			{
-				RoofCollapseBuffer.cellsToCollapse.Add(c);
+				this.cellsToCollapse.Add(c);
 			}
 		}
 
-		public static void Notify_Crushed(Thing t)
+		public void Notify_Crushed(Thing t)
 		{
-			if (!RoofCollapseBuffer.crushedThingsToReport.Contains(t) && RoofCollapseBuffer.WorthMentioningInCrushLetter(t))
+			if (!this.crushedThingsToReport.Contains(t) && this.WorthMentioningInCrushLetter(t))
 			{
-				RoofCollapseBuffer.crushedThingsToReport.Add(t);
+				this.crushedThingsToReport.Add(t);
 			}
 		}
 
-		private static bool WorthMentioningInCrushLetter(Thing t)
+		private bool WorthMentioningInCrushLetter(Thing t)
 		{
 			if (!t.def.destroyable)
 			{
@@ -64,10 +64,10 @@ namespace Verse
 			return false;
 		}
 
-		public static void Clear()
+		public void Clear()
 		{
-			RoofCollapseBuffer.cellsToCollapse.Clear();
-			RoofCollapseBuffer.crushedThingsToReport.Clear();
+			this.cellsToCollapse.Clear();
+			this.crushedThingsToReport.Clear();
 		}
 	}
 }

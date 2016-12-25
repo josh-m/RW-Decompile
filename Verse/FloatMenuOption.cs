@@ -1,4 +1,5 @@
 using RimWorld;
+using RimWorld.Planet;
 using System;
 using UnityEngine;
 using Verse.Sound;
@@ -25,13 +26,15 @@ namespace Verse
 
 		public Action action;
 
-		public MenuOptionPriority priority = MenuOptionPriority.Medium;
+		private MenuOptionPriority priorityInt = MenuOptionPriority.Default;
 
 		public bool autoTakeable;
 
 		public Action mouseoverGuiAction;
 
 		public Thing revalidateClickTarget;
+
+		public WorldObject revalidateWorldClickTarget;
 
 		public float extraPartWidth;
 
@@ -127,19 +130,41 @@ namespace Verse
 			}
 		}
 
-		public FloatMenuOption()
+		public MenuOptionPriority Priority
 		{
+			get
+			{
+				if (this.Disabled)
+				{
+					return MenuOptionPriority.DisabledOption;
+				}
+				return this.priorityInt;
+			}
+			set
+			{
+				if (this.Disabled)
+				{
+					Log.Error("Setting priority on disabled FloatMenuOption: " + this.Label);
+				}
+				this.priorityInt = value;
+			}
 		}
 
-		public FloatMenuOption(string label, Action action, MenuOptionPriority priority = MenuOptionPriority.Medium, Action mouseoverGuiAction = null, Thing revalidateClickTarget = null, float extraPartWidth = 0f, Func<Rect, bool> extraPartOnGUI = null)
+		public FloatMenuOption(MenuOptionPriority priority = MenuOptionPriority.Default)
+		{
+			this.priorityInt = priority;
+		}
+
+		public FloatMenuOption(string label, Action action, MenuOptionPriority priority = MenuOptionPriority.Default, Action mouseoverGuiAction = null, Thing revalidateClickTarget = null, float extraPartWidth = 0f, Func<Rect, bool> extraPartOnGUI = null, WorldObject revalidateWorldClickTarget = null)
 		{
 			this.Label = label;
 			this.action = action;
-			this.priority = priority;
+			this.priorityInt = priority;
 			this.revalidateClickTarget = revalidateClickTarget;
 			this.mouseoverGuiAction = mouseoverGuiAction;
 			this.extraPartWidth = extraPartWidth;
 			this.extraPartOnGUI = extraPartOnGUI;
+			this.revalidateWorldClickTarget = revalidateWorldClickTarget;
 		}
 
 		static FloatMenuOption()
@@ -159,7 +184,8 @@ namespace Verse
 		{
 			this.sizeMode = newSizeMode;
 			Text.Font = this.CurrentFont;
-			this.cachedRequiredHeight = Text.CalcHeight(this.Label, 300f - 2f * this.HorizontalMargin - 4f - this.extraPartWidth) + 2f * this.VerticalMargin;
+			float width = 300f - (2f * this.HorizontalMargin + 4f + this.extraPartWidth);
+			this.cachedRequiredHeight = 2f * this.VerticalMargin + Text.CalcHeight(this.Label, width);
 			this.cachedRequiredWidth = this.HorizontalMargin + 4f + Text.CalcSize(this.Label).x + this.extraPartWidth + this.HorizontalMargin;
 		}
 
@@ -189,8 +215,9 @@ namespace Verse
 			Text.Font = this.CurrentFont;
 			Rect rect2 = rect;
 			rect2.xMin += this.HorizontalMargin;
-			rect2.width -= this.HorizontalMargin;
-			rect2.width -= this.extraPartWidth;
+			rect2.xMax -= this.HorizontalMargin;
+			rect2.xMax -= 4f;
+			rect2.xMax -= this.extraPartWidth;
 			if (flag)
 			{
 				rect2.x += 4f;
@@ -223,7 +250,7 @@ namespace Verse
 			GUI.color = (this.Disabled ? FloatMenuOption.ColorTextDisabled : FloatMenuOption.ColorTextActive) * color;
 			if (this.sizeMode == FloatMenuSizeMode.Tiny)
 			{
-				rect2.y += 3f;
+				rect2.y += 1f;
 			}
 			Widgets.DrawAtlas(rect, TexUI.FloatMenuOptionBG);
 			Text.Anchor = TextAnchor.MiddleLeft;

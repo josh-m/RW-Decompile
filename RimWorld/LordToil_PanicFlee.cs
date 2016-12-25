@@ -21,7 +21,7 @@ namespace RimWorld
 			for (int i = 0; i < this.lord.ownedPawns.Count; i++)
 			{
 				Pawn pawn = this.lord.ownedPawns[i];
-				pawn.mindState.mentalStateHandler.TryStartMentalState(MentalStateDefOf.PanicFlee, null, false);
+				pawn.mindState.mentalStateHandler.TryStartMentalState(MentalStateDefOf.PanicFlee, null, false, false, null);
 			}
 		}
 

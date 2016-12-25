@@ -40,7 +40,7 @@ namespace Verse
 
 		public override void PostOpen()
 		{
-			while (this.windowRect.x <= (float)Screen.width - 200f && this.windowRect.y <= (float)Screen.height - 200f)
+			while (this.windowRect.x <= (float)UI.screenWidth - 200f && this.windowRect.y <= (float)UI.screenHeight - 200f)
 			{
 				bool flag = false;
 				foreach (EditWindow current in (from di in Find.WindowStack.Windows

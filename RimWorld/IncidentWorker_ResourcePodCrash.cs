@@ -38,6 +38,7 @@ namespace RimWorld
 
 		public override bool TryExecute(IncidentParms parms)
 		{
+			Map map = (Map)parms.target;
 			ThingDef thingDef = IncidentWorker_ResourcePodCrash.RandomPodContentsDef();
 			List<Thing> list = new List<Thing>();
 			float num = (float)Rand.Range(150, 900);
@@ -62,9 +63,9 @@ namespace RimWorld
 				num -= (float)num2 * thingDef.BaseMarketValue;
 			}
 			while (list.Count < 8 && num > thingDef.BaseMarketValue);
-			IntVec3 intVec = DropCellFinder.RandomDropSpot();
-			DropPodUtility.DropThingsNear(intVec, list, 110, false, true, true);
-			Find.LetterStack.ReceiveLetter("LetterLabelCargoPodCrash".Translate(), "CargoPodCrash".Translate(), LetterType.Good, intVec, null);
+			IntVec3 intVec = DropCellFinder.RandomDropSpot(map);
+			DropPodUtility.DropThingsNear(intVec, map, list, 110, false, true, true);
+			Find.LetterStack.ReceiveLetter("LetterLabelCargoPodCrash".Translate(), "CargoPodCrash".Translate(), LetterType.Good, new TargetInfo(intVec, map, false), null);
 			return true;
 		}
 

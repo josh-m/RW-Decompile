@@ -4,13 +4,13 @@ using Verse;
 
 namespace RimWorld
 {
-	public static class MusicManagerEntry
+	public class MusicManagerEntry
 	{
 		private const string SourceGameObjectName = "MusicAudioSourceDummy";
 
-		private static AudioSource audioSource;
+		private AudioSource audioSource;
 
-		private static float CurVolume
+		private float CurVolume
 		{
 			get
 			{
@@ -18,20 +18,20 @@ namespace RimWorld
 			}
 		}
 
-		public static void MusicManagerEntryUpdate()
+		public void MusicManagerEntryUpdate()
 		{
-			if (MusicManagerEntry.audioSource == null || !MusicManagerEntry.audioSource.isPlaying)
+			if (this.audioSource == null || !this.audioSource.isPlaying)
 			{
-				MusicManagerEntry.StartPlaying();
+				this.StartPlaying();
 			}
-			MusicManagerEntry.audioSource.volume = MusicManagerEntry.CurVolume;
+			this.audioSource.volume = this.CurVolume;
 		}
 
-		private static void StartPlaying()
+		private void StartPlaying()
 		{
-			if (MusicManagerEntry.audioSource != null && !MusicManagerEntry.audioSource.isPlaying)
+			if (this.audioSource != null && !this.audioSource.isPlaying)
 			{
-				MusicManagerEntry.audioSource.Play();
+				this.audioSource.Play();
 				return;
 			}
 			if (GameObject.Find("MusicAudioSourceDummy") != null)
@@ -39,22 +39,22 @@ namespace RimWorld
 				Log.Error("MusicManagerEntry did StartPlaying but there is already a music source GameObject.");
 				return;
 			}
-			MusicManagerEntry.audioSource = new GameObject("MusicAudioSourceDummy")
+			this.audioSource = new GameObject("MusicAudioSourceDummy")
 			{
 				transform = 
 				{
 					parent = Camera.main.transform
 				}
 			}.AddComponent<AudioSource>();
-			MusicManagerEntry.audioSource.bypassEffects = true;
-			MusicManagerEntry.audioSource.bypassListenerEffects = true;
-			MusicManagerEntry.audioSource.bypassReverbZones = true;
-			MusicManagerEntry.audioSource.priority = 0;
-			MusicManagerEntry.audioSource.clip = SongDefOf.EntrySong.clip;
-			MusicManagerEntry.audioSource.volume = MusicManagerEntry.CurVolume;
-			MusicManagerEntry.audioSource.loop = true;
-			MusicManagerEntry.audioSource.spatialBlend = 0f;
-			MusicManagerEntry.audioSource.Play();
+			this.audioSource.bypassEffects = true;
+			this.audioSource.bypassListenerEffects = true;
+			this.audioSource.bypassReverbZones = true;
+			this.audioSource.priority = 0;
+			this.audioSource.clip = SongDefOf.EntrySong.clip;
+			this.audioSource.volume = this.CurVolume;
+			this.audioSource.loop = true;
+			this.audioSource.spatialBlend = 0f;
+			this.audioSource.Play();
 		}
 	}
 }

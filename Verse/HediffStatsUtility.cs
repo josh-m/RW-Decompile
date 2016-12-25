@@ -2,8 +2,8 @@ using RimWorld;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Text;
-using UnityEngine;
 
 namespace Verse
 {
@@ -12,6 +12,10 @@ namespace Verse
 		[DebuggerHidden]
 		public static IEnumerable<StatDrawEntry> SpecialDisplayStats(HediffStage stage, Hediff instance)
 		{
+			if (instance != null && instance.BleedRate > 0.001f)
+			{
+				yield return new StatDrawEntry(StatCategoryDefOf.Basics, "BleedingRate".Translate(), instance.BleedRate.ToStringPercent() + "/" + "LetterDay".Translate(), 0);
+			}
 			float painOffsetToDisplay = 0f;
 			if (instance != null)
 			{
@@ -23,7 +27,15 @@ namespace Verse
 			}
 			if (painOffsetToDisplay != 0f)
 			{
-				yield return new StatDrawEntry(StatCategoryDefOf.Basics, "Pain".Translate(), (painOffsetToDisplay * 100f).ToString("+#;-#") + "%", 0);
+				if (painOffsetToDisplay > 0f && painOffsetToDisplay < 0.01f)
+				{
+					painOffsetToDisplay = 0.01f;
+				}
+				if (painOffsetToDisplay < 0f && painOffsetToDisplay > -0.01f)
+				{
+					painOffsetToDisplay = -0.01f;
+				}
+				yield return new StatDrawEntry(StatCategoryDefOf.Basics, "Pain".Translate(), (painOffsetToDisplay * 100f).ToString("+###0;-###0") + "%", 0);
 			}
 			float painFactorToDisplay = 1f;
 			if (instance != null)
@@ -51,9 +63,13 @@ namespace Verse
 			{
 				for (int i = 0; i < capModsToDisplay.Count; i++)
 				{
-					if (!Mathf.Approximately(capModsToDisplay[i].offset, 0f))
+					if (capModsToDisplay[i].offset != 0f)
 					{
 						yield return new StatDrawEntry(StatCategoryDefOf.Basics, capModsToDisplay[i].capacity.GetLabelFor(true, true).CapitalizeFirst(), (capModsToDisplay[i].offset * 100f).ToString("+#;-#") + "%", 0);
+					}
+					if (capModsToDisplay[i].postFactor != 1f)
+					{
+						yield return new StatDrawEntry(StatCategoryDefOf.Basics, capModsToDisplay[i].capacity.GetLabelFor(true, true).CapitalizeFirst(), "x" + capModsToDisplay[i].postFactor.ToStringPercent(), 0);
 					}
 					if (capModsToDisplay[i].SetMaxDefined)
 					{
@@ -94,7 +110,8 @@ namespace Verse
 				}
 				if (stage.makeImmuneTo != null)
 				{
-					yield return new StatDrawEntry(StatCategoryDefOf.Basics, "PreventsInfection".Translate(), stage.makeImmuneTo.LabelCap, 0);
+					yield return new StatDrawEntry(StatCategoryDefOf.Basics, "PreventsInfection".Translate(), GenText.ToCommaList(from im in stage.makeImmuneTo
+					select im.label, false).CapitalizeFirst(), 0);
 				}
 				if (stage.statOffsets != null)
 				{
@@ -104,10 +121,6 @@ namespace Verse
 						yield return new StatDrawEntry(StatCategoryDefOf.Basics, sm.stat.LabelCap, sm.ToStringAsOffset, 0);
 					}
 				}
-			}
-			if (instance != null && instance.BleedRate > 0.001f)
-			{
-				yield return new StatDrawEntry(StatCategoryDefOf.Basics, "BleedingRate".Translate(), (instance.BleedRate / instance.MaxBleeding).ToStringPercent(), 0);
 			}
 		}
 	}

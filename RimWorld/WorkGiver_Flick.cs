@@ -9,9 +9,9 @@ namespace RimWorld
 	public class WorkGiver_Flick : WorkGiver_Scanner
 	{
 		[DebuggerHidden]
-		public override IEnumerable<Thing> PotentialWorkThingsGlobal(Pawn Pawn)
+		public override IEnumerable<Thing> PotentialWorkThingsGlobal(Pawn pawn)
 		{
-			List<Designation> desList = Find.DesignationManager.allDesignations;
+			List<Designation> desList = pawn.Map.designationManager.allDesignations;
 			for (int i = 0; i < desList.Count; i++)
 			{
 				if (desList[i].def == DesignationDefOf.Flick)
@@ -23,7 +23,7 @@ namespace RimWorld
 
 		public override bool HasJobOnThing(Pawn pawn, Thing t)
 		{
-			return Find.DesignationManager.DesignationOn(t, DesignationDefOf.Flick) != null && pawn.CanReserveAndReach(t, PathEndMode.Touch, pawn.NormalMaxDanger(), 1);
+			return pawn.Map.designationManager.DesignationOn(t, DesignationDefOf.Flick) != null && pawn.CanReserveAndReach(t, PathEndMode.Touch, pawn.NormalMaxDanger(), 1);
 		}
 
 		public override Job JobOnThing(Pawn pawn, Thing t)

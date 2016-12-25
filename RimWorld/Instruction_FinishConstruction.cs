@@ -27,7 +27,7 @@ namespace RimWorld
 
 		private IEnumerable<Thing> ConstructionNeeders()
 		{
-			return from b in Find.ListerThings.ThingsInGroup(ThingRequestGroup.Blueprint).Concat(Find.ListerThings.ThingsInGroup(ThingRequestGroup.BuildingFrame))
+			return from b in base.Map.listerThings.ThingsInGroup(ThingRequestGroup.Blueprint).Concat(base.Map.listerThings.ThingsInGroup(ThingRequestGroup.BuildingFrame))
 			where b.Faction == Faction.OfPlayer
 			select b;
 		}

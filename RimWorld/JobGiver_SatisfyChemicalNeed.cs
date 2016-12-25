@@ -60,16 +60,16 @@ namespace RimWorld
 			{
 				return null;
 			}
-			ThingContainer container = pawn.inventory.container;
-			for (int i = 0; i < container.Count; i++)
+			ThingContainer innerContainer = pawn.inventory.innerContainer;
+			for (int i = 0; i < innerContainer.Count; i++)
 			{
-				if (this.DrugValidator(pawn, addictionHediff, container[i]))
+				if (this.DrugValidator(pawn, addictionHediff, innerContainer[i]))
 				{
-					return container[i];
+					return innerContainer[i];
 				}
 			}
 			Predicate<Thing> validator = (Thing x) => this.DrugValidator(pawn, addictionHediff, x);
-			return GenClosest.ClosestThingReachable(pawn.Position, ThingRequest.ForGroup(ThingRequestGroup.Drug), PathEndMode.Touch, TraverseParms.For(pawn, Danger.Deadly, TraverseMode.ByPawn, false), 9999f, validator, null, -1, false);
+			return GenClosest.ClosestThingReachable(pawn.Position, pawn.Map, ThingRequest.ForGroup(ThingRequestGroup.Drug), PathEndMode.Touch, TraverseParms.For(pawn, Danger.Deadly, TraverseMode.ByPawn, false), 9999f, validator, null, -1, false);
 		}
 
 		private bool DrugValidator(Pawn pawn, Hediff_Addiction addiction, Thing drug)
@@ -102,7 +102,7 @@ namespace RimWorld
 			{
 				return false;
 			}
-			if (pawn.drugs != null && !pawn.drugs.CurrentPolicy[drug.def].allowedForJoy && pawn.story != null)
+			if (pawn.drugs != null && !pawn.drugs.CurrentPolicy[drug.def].allowedForAddiction && pawn.story != null)
 			{
 				int num = pawn.story.traits.DegreeOfTrait(TraitDefOf.DrugDesire);
 				if (num <= 0 && !pawn.InMentalState)

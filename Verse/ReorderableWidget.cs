@@ -104,7 +104,7 @@ namespace Verse
 				ReorderableWidget.ReorderableInstance item = default(ReorderableWidget.ReorderableInstance);
 				item.groupID = groupID;
 				item.rect = rect;
-				item.absRect = new Rect(GUIUtility.GUIToScreenPoint(rect.position), rect.size);
+				item.absRect = new Rect(UI.GUIToScreenPoint(rect.position), rect.size);
 				ReorderableWidget.reorderables.Add(item);
 				int num = ReorderableWidget.reorderables.Count - 1;
 				if (Vector2.Distance(ReorderableWidget.clickedAt, Event.current.mousePosition) > 5f)

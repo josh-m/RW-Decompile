@@ -59,15 +59,15 @@ namespace RimWorld
 			{
 				this.TryPickupFilth();
 			}
-			if (!this.pawn.RaceProps.Humanlike && Rand.Value < PawnUtility.AnimalFilthChancePerCell(this.pawn.def, this.pawn.BodySize) && this.pawn.Position.GetTerrain().acceptTerrainSourceFilth)
+			if (!this.pawn.RaceProps.Humanlike && Rand.Value < PawnUtility.AnimalFilthChancePerCell(this.pawn.def, this.pawn.BodySize) && this.pawn.Position.GetTerrain(this.pawn.Map).acceptTerrainSourceFilth)
 			{
-				FilthMaker.MakeFilth(this.pawn.Position, ThingDefOf.FilthAnimalFilth, 1);
+				FilthMaker.MakeFilth(this.pawn.Position, this.pawn.Map, ThingDefOf.FilthAnimalFilth, 1);
 			}
 		}
 
 		private void TryPickupFilth()
 		{
-			TerrainDef terrDef = Find.TerrainGrid.TerrainAt(this.pawn.Position);
+			TerrainDef terrDef = this.pawn.Map.terrainGrid.TerrainAt(this.pawn.Position);
 			if (terrDef.terrainFilthDef != null)
 			{
 				for (int i = this.carriedFilth.Count - 1; i >= 0; i--)
@@ -85,7 +85,7 @@ namespace RimWorld
 					this.GainFilth(terrDef.terrainFilthDef);
 				}
 			}
-			List<Thing> thingList = this.pawn.Position.GetThingList();
+			List<Thing> thingList = this.pawn.Position.GetThingList(this.pawn.Map);
 			for (int j = thingList.Count - 1; j >= 0; j--)
 			{
 				Filth filth2 = thingList[j] as Filth;
@@ -105,7 +105,7 @@ namespace RimWorld
 			}
 			for (int i = this.carriedFilth.Count - 1; i >= 0; i--)
 			{
-				if (this.carriedFilth[i].CanDropAt(this.pawn.Position))
+				if (this.carriedFilth[i].CanDropAt(this.pawn.Position, this.pawn.Map))
 				{
 					this.DropCarriedFilth(this.carriedFilth[i]);
 				}
@@ -115,7 +115,7 @@ namespace RimWorld
 		private void DropCarriedFilth(Filth f)
 		{
 			this.ThinCarriedFilth(f);
-			FilthMaker.MakeFilth(this.pawn.Position, f.def, f.sources);
+			FilthMaker.MakeFilth(this.pawn.Position, this.pawn.Map, f.def, f.sources);
 		}
 
 		private void ThinCarriedFilth(Filth f)

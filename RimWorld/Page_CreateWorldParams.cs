@@ -3,24 +3,36 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Verse;
+using Verse.Profile;
 using Verse.Sound;
 
 namespace RimWorld
 {
 	public class Page_CreateWorldParams : Page
 	{
-		public static IntVec2 size;
+		private bool initialized;
 
-		public static string seedString;
+		private string seedString;
 
-		private static readonly int[] WorldSizes = new int[]
+		private float planetCoverage;
+
+		private OverallRainfall rainfall;
+
+		private OverallTemperature temperature;
+
+		private static readonly float[] PlanetCoverages = new float[]
 		{
-			150,
-			200,
-			250,
-			300,
-			350,
-			400
+			0.3f,
+			0.5f,
+			1f
+		};
+
+		private static readonly float[] PlanetCoveragesDev = new float[]
+		{
+			0.05f,
+			0.3f,
+			0.5f,
+			1f
 		};
 
 		public override string PageTitle
@@ -34,7 +46,11 @@ namespace RimWorld
 		public override void PreOpen()
 		{
 			base.PreOpen();
-			Page_CreateWorldParams.Reset();
+			if (!this.initialized)
+			{
+				this.Reset();
+				this.initialized = true;
+			}
 		}
 
 		public override void PostOpen()
@@ -43,10 +59,12 @@ namespace RimWorld
 			TutorSystem.Notify_Event("PageStart-CreateWorldParams");
 		}
 
-		public static void Reset()
+		public void Reset()
 		{
-			Page_CreateWorldParams.size = WorldGenerator.DefaultSize;
-			Page_CreateWorldParams.seedString = GenText.RandomSeedString();
+			this.seedString = GenText.RandomSeedString();
+			this.planetCoverage = ((Prefs.DevMode && UnityData.isEditor) ? 0.05f : 0.3f);
+			this.rainfall = OverallRainfall.Normal;
+			this.temperature = OverallTemperature.Normal;
 		}
 
 		public override void DoWindowContents(Rect rect)
@@ -57,35 +75,55 @@ namespace RimWorld
 			float num = 0f;
 			Widgets.Label(new Rect(0f, num, 200f, 30f), "WorldSeed".Translate());
 			Rect rect2 = new Rect(200f, num, 200f, 30f);
-			Page_CreateWorldParams.seedString = Widgets.TextField(rect2, Page_CreateWorldParams.seedString);
+			this.seedString = Widgets.TextField(rect2, this.seedString);
 			num += 40f;
 			Rect rect3 = new Rect(200f, num, 200f, 30f);
 			if (Widgets.ButtonText(rect3, "RandomizeSeed".Translate(), true, false, true))
 			{
 				SoundDefOf.TickTiny.PlayOneShotOnCamera();
-				Page_CreateWorldParams.seedString = GenText.RandomSeedString();
+				this.seedString = GenText.RandomSeedString();
 			}
 			num += 40f;
-			Widgets.Label(new Rect(0f, num, 200f, 30f), "WorldSize".Translate());
+			Widgets.Label(new Rect(0f, num, 200f, 30f), "PlanetCoverage".Translate());
 			Rect rect4 = new Rect(200f, num, 200f, 30f);
-			if (Widgets.ButtonText(rect4, Page_CreateWorldParams.size.ToStringCross(), true, false, true))
+			if (Widgets.ButtonText(rect4, this.planetCoverage.ToStringPercent(), true, false, true))
 			{
 				List<FloatMenuOption> list = new List<FloatMenuOption>();
-				int[] worldSizes = Page_CreateWorldParams.WorldSizes;
-				for (int i = 0; i < worldSizes.Length; i++)
+				float[] array = (!Prefs.DevMode) ? Page_CreateWorldParams.PlanetCoverages : Page_CreateWorldParams.PlanetCoveragesDev;
+				for (int i = 0; i < array.Length; i++)
 				{
-					int intSize = worldSizes[i];
-					IntVec2 sizeVec = WorldGenerator.WorldSizeVectorFromInt(intSize);
-					FloatMenuOption item = new FloatMenuOption(sizeVec.ToStringCross(), delegate
+					float coverage = array[i];
+					string text = coverage.ToStringPercent();
+					if (coverage <= 0.1f)
 					{
-						Page_CreateWorldParams.size = sizeVec;
-					}, MenuOptionPriority.Medium, null, null, 0f, null);
+						text += " (dev)";
+					}
+					FloatMenuOption item = new FloatMenuOption(text, delegate
+					{
+						if (this.planetCoverage != coverage)
+						{
+							this.planetCoverage = coverage;
+							if (this.planetCoverage == 1f)
+							{
+								Messages.Message("MessageMaxPlanetCoveragePerformanceWarning".Translate(), MessageSound.Standard);
+							}
+						}
+					}, MenuOptionPriority.Default, null, null, 0f, null, null);
 					list.Add(item);
 				}
 				Find.WindowStack.Add(new FloatMenu(list));
 			}
+			TooltipHandler.TipRegion(new Rect(0f, num, rect4.xMax, rect4.height), "PlanetCoverageTip".Translate());
+			num += 40f;
+			Widgets.Label(new Rect(0f, num, 200f, 30f), "PlanetRainfall".Translate());
+			Rect rect5 = new Rect(200f, num, 200f, 30f);
+			this.rainfall = (OverallRainfall)Mathf.RoundToInt(Widgets.HorizontalSlider(rect5, (float)this.rainfall, 0f, (float)(OverallRainfallUtility.EnumValuesCount - 1), true, "PlanetRainfall_Normal".Translate(), "PlanetRainfall_Low".Translate(), "PlanetRainfall_High".Translate(), 1f));
+			num += 40f;
+			Widgets.Label(new Rect(0f, num, 200f, 30f), "PlanetTemperature".Translate());
+			Rect rect6 = new Rect(200f, num, 200f, 30f);
+			this.temperature = (OverallTemperature)Mathf.RoundToInt(Widgets.HorizontalSlider(rect6, (float)this.temperature, 0f, (float)(OverallTemperatureUtility.EnumValuesCount - 1), true, "PlanetTemperature_Normal".Translate(), "PlanetTemperature_Low".Translate(), "PlanetTemperature_High".Translate(), 1f));
 			GUI.EndGroup();
-			base.DoBottomButtons(rect, "WorldGenerate".Translate(), "Reset".Translate(), new Action(Page_CreateWorldParams.Reset), true);
+			base.DoBottomButtons(rect, "WorldGenerate".Translate(), "Reset".Translate(), new Action(this.Reset), true);
 		}
 
 		protected override bool CanDoNext()
@@ -97,7 +135,7 @@ namespace RimWorld
 			LongEventHandler.QueueLongEvent(delegate
 			{
 				Find.GameInitData.ResetWorldRelatedMapInitData();
-				Current.Game.World = WorldGenerator.GenerateWorld(Page_CreateWorldParams.size, Page_CreateWorldParams.seedString);
+				Current.Game.World = WorldGenerator.GenerateWorld(this.planetCoverage, this.seedString, this.rainfall, this.temperature);
 				LongEventHandler.ExecuteWhenFinished(delegate
 				{
 					Find.Scenario.PostWorldLoad();
@@ -105,6 +143,8 @@ namespace RimWorld
 					{
 						Find.WindowStack.Add(this.next);
 					}
+					MemoryUtility.UnloadUnusedUnityAssets();
+					Find.World.renderer.RegenerateAllLayersNow();
 					this.Close(true);
 				});
 			}, "GeneratingWorld", true, null);

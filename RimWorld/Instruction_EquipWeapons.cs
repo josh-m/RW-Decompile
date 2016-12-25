@@ -11,9 +11,9 @@ namespace RimWorld
 		{
 			get
 			{
-				return (float)(from c in Find.MapPawns.FreeColonists
+				return (float)(from c in base.Map.mapPawns.FreeColonists
 				where c.equipment.Primary != null
-				select c).Count<Pawn>() / (float)Find.MapPawns.FreeColonistsCount;
+				select c).Count<Pawn>() / (float)base.Map.mapPawns.FreeColonistsCount;
 			}
 		}
 

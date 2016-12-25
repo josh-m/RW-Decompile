@@ -33,12 +33,12 @@ namespace Verse
 				}
 				int num = 0;
 				int vertexIndex = 0;
-				PawnCollisionTweenerUtility.GetPawnsStandingAtOrAboutToStandAt(at, out num, out vertexIndex, pawn);
+				PawnCollisionTweenerUtility.GetPawnsStandingAtOrAboutToStandAt(at, pawn.Map, out num, out vertexIndex, pawn);
 				if (num == 0)
 				{
 					return Vector3.zero;
 				}
-				return GenGeo.RegularPolygonVertexPosition(num, vertexIndex) * 0.32f;
+				return GenGeo.RegularPolygonVertexPositionVec3(num, vertexIndex) * 0.32f;
 			}
 			else
 			{
@@ -67,15 +67,17 @@ namespace Verse
 			}
 		}
 
-		private static void GetPawnsStandingAtOrAboutToStandAt(IntVec3 at, out int pawnsCount, out int pawnsWithLowerIdCount, Pawn forPawn)
+		private static void GetPawnsStandingAtOrAboutToStandAt(IntVec3 at, Map map, out int pawnsCount, out int pawnsWithLowerIdCount, Pawn forPawn)
 		{
 			pawnsCount = 0;
 			pawnsWithLowerIdCount = 0;
-			foreach (IntVec3 current in CellRect.SingleCell(at).ExpandedBy(1))
+			CellRect.CellRectIterator iterator = CellRect.SingleCell(at).ExpandedBy(1).GetIterator();
+			while (!iterator.Done())
 			{
-				if (current.InBounds())
+				IntVec3 current = iterator.Current;
+				if (current.InBounds(map))
 				{
-					List<Thing> thingList = current.GetThingList();
+					List<Thing> thingList = current.GetThingList(map);
 					for (int i = 0; i < thingList.Count; i++)
 					{
 						Pawn pawn = thingList[i] as Pawn;
@@ -87,12 +89,12 @@ namespace Verse
 								{
 									if (!pawn.pather.MovingNow || pawn.pather.nextCell != pawn.pather.Destination.Cell || pawn.pather.Destination.Cell != at)
 									{
-										goto IL_11B;
+										goto IL_120;
 									}
 								}
 								else if (pawn.pather.MovingNow)
 								{
-									goto IL_11B;
+									goto IL_120;
 								}
 								pawnsCount++;
 								if (pawn.thingIDNumber < forPawn.thingIDNumber)
@@ -101,20 +103,23 @@ namespace Verse
 								}
 							}
 						}
-						IL_11B:;
+						IL_120:;
 					}
 				}
+				iterator.MoveNext();
 			}
 		}
 
 		private static bool CanGoDirectlyToNextCell(Pawn pawn)
 		{
 			IntVec3 nextCell = pawn.pather.nextCell;
-			foreach (IntVec3 current in CellRect.FromLimits(nextCell, pawn.Position).ExpandedBy(1))
+			CellRect.CellRectIterator iterator = CellRect.FromLimits(nextCell, pawn.Position).ExpandedBy(1).GetIterator();
+			while (!iterator.Done())
 			{
-				if (current.InBounds())
+				IntVec3 current = iterator.Current;
+				if (current.InBounds(pawn.Map))
 				{
-					List<Thing> thingList = current.GetThingList();
+					List<Thing> thingList = current.GetThingList(pawn.Map);
 					for (int i = 0; i < thingList.Count; i++)
 					{
 						Pawn pawn2 = thingList[i] as Pawn;
@@ -126,19 +131,18 @@ namespace Verse
 								{
 									if (((pawn2.Position == nextCell && PawnCollisionTweenerUtility.WillBeFasterOnNextCell(pawn, pawn2)) || pawn2.pather.nextCell == nextCell || pawn2.Position == pawn.Position || (pawn2.pather.nextCell == pawn.Position && PawnCollisionTweenerUtility.WillBeFasterOnNextCell(pawn2, pawn))) && pawn2.thingIDNumber < pawn.thingIDNumber)
 									{
-										bool result = false;
-										return result;
+										return false;
 									}
 								}
 								else if (pawn2.Position == pawn.Position || pawn2.Position == nextCell)
 								{
-									bool result = false;
-									return result;
+									return false;
 								}
 							}
 						}
 					}
 				}
+				iterator.MoveNext();
 			}
 			return true;
 		}

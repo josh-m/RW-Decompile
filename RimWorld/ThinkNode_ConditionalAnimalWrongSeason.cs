@@ -7,7 +7,7 @@ namespace RimWorld
 	{
 		protected override bool Satisfied(Pawn pawn)
 		{
-			return pawn.RaceProps.Animal && !GenTemperature.SeasonAcceptableFor(pawn.def);
+			return pawn.RaceProps.Animal && !pawn.Map.mapTemperature.SeasonAcceptableFor(pawn.def);
 		}
 	}
 }

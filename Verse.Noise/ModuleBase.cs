@@ -1,5 +1,6 @@
 using System;
 using System.Xml.Serialization;
+using UnityEngine;
 
 namespace Verse.Noise
 {
@@ -71,6 +72,11 @@ namespace Verse.Noise
 		}
 
 		public float GetValue(IntVec3 coordinate)
+		{
+			return (float)this.GetValue((double)coordinate.x, (double)coordinate.y, (double)coordinate.z);
+		}
+
+		public float GetValue(Vector3 coordinate)
 		{
 			return (float)this.GetValue((double)coordinate.x, (double)coordinate.y, (double)coordinate.z);
 		}

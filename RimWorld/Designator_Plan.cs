@@ -37,22 +37,22 @@ namespace RimWorld
 
 		public override AcceptanceReport CanDesignateCell(IntVec3 c)
 		{
-			if (!c.InBounds())
+			if (!c.InBounds(base.Map))
 			{
 				return false;
 			}
-			if (c.InNoBuildEdgeArea())
+			if (c.InNoBuildEdgeArea(base.Map))
 			{
 				return "TooCloseToMapEdge".Translate();
 			}
 			if (this.mode == DesignateMode.Add)
 			{
-				if (Find.DesignationManager.DesignationAt(c, this.desDef) != null)
+				if (base.Map.designationManager.DesignationAt(c, this.desDef) != null)
 				{
 					return false;
 				}
 			}
-			else if (this.mode == DesignateMode.Remove && Find.DesignationManager.DesignationAt(c, this.desDef) == null)
+			else if (this.mode == DesignateMode.Remove && base.Map.designationManager.DesignationAt(c, this.desDef) == null)
 			{
 				return false;
 			}
@@ -63,11 +63,11 @@ namespace RimWorld
 		{
 			if (this.mode == DesignateMode.Add)
 			{
-				Find.DesignationManager.AddDesignation(new Designation(c, this.desDef));
+				base.Map.designationManager.AddDesignation(new Designation(c, this.desDef));
 			}
 			else if (this.mode == DesignateMode.Remove)
 			{
-				Find.DesignationManager.DesignationAt(c, this.desDef).Delete();
+				base.Map.designationManager.DesignationAt(c, this.desDef).Delete();
 			}
 		}
 

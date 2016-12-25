@@ -17,7 +17,7 @@ namespace RimWorld
 			{
 				return 1f;
 			}
-			int level = pawn.skills.GetSkill(this.skill).level;
+			int level = pawn.skills.GetSkill(this.skill).Level;
 			return this.FactorAt(level);
 		}
 

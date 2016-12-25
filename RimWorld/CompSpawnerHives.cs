@@ -24,7 +24,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return HivesUtility.TotalSpawnedHivesCount < 30;
+				return HivesUtility.TotalSpawnedHivesCount(this.parent.Map) < 30;
 			}
 		}
 
@@ -69,11 +69,11 @@ namespace RimWorld
 			for (int i = 0; i < num2; i++)
 			{
 				IntVec3 intVec = this.parent.Position + GenRadial.RadialPattern[i];
-				if (intVec.InBounds())
+				if (intVec.InBounds(this.parent.Map))
 				{
-					if (intVec.GetRoom() == room)
+					if (intVec.GetRoom(this.parent.Map) == room)
 					{
-						if (intVec.GetThingList().Any((Thing t) => t is Hive))
+						if (intVec.GetThingList(this.parent.Map).Any((Thing t) => t is Hive))
 						{
 							num++;
 						}
@@ -104,12 +104,12 @@ namespace RimWorld
 					newHive = null;
 					return false;
 				}
-				if (CellFinder.TryFindRandomReachableCellNear(this.parent.Position, this.Props.HiveSpawnRadius, TraverseParms.For(TraverseMode.NoPassClosedDoors, Danger.Deadly, false), (IntVec3 c) => this.CanSpawnHiveAt(c, minDist, ignoreRoofedRequirement), null, out invalid, 999999))
+				if (CellFinder.TryFindRandomReachableCellNear(this.parent.Position, this.parent.Map, this.Props.HiveSpawnRadius, TraverseParms.For(TraverseMode.NoPassClosedDoors, Danger.Deadly, false), (IntVec3 c) => this.CanSpawnHiveAt(c, minDist, ignoreRoofedRequirement), null, out invalid, 999999))
 				{
 					break;
 				}
 			}
-			newHive = (Hive)GenSpawn.Spawn(this.parent.def, invalid);
+			newHive = (Hive)GenSpawn.Spawn(this.parent.def, invalid, this.parent.Map);
 			if (newHive.Faction != this.parent.Faction)
 			{
 				newHive.SetFaction(this.parent.Faction, null);
@@ -125,16 +125,16 @@ namespace RimWorld
 
 		private bool CanSpawnHiveAt(IntVec3 c, float minDist, bool ignoreRoofedRequirement)
 		{
-			if ((!ignoreRoofedRequirement && !c.Roofed()) || !c.Standable() || (minDist != 0f && c.DistanceToSquared(this.parent.Position) < minDist * minDist))
+			if ((!ignoreRoofedRequirement && !c.Roofed(this.parent.Map)) || !c.Standable(this.parent.Map) || (minDist != 0f && c.DistanceToSquared(this.parent.Position) < minDist * minDist))
 			{
 				return false;
 			}
 			for (int i = 0; i < 8; i++)
 			{
 				IntVec3 c2 = c + GenAdj.AdjacentCells[i];
-				if (c2.InBounds())
+				if (c2.InBounds(this.parent.Map))
 				{
-					List<Thing> thingList = c2.GetThingList();
+					List<Thing> thingList = c2.GetThingList(this.parent.Map);
 					for (int j = 0; j < thingList.Count; j++)
 					{
 						if (thingList[j] is Hive)
@@ -144,11 +144,20 @@ namespace RimWorld
 					}
 				}
 			}
-			return c.GetThingList().Find((Thing x) => x.def.category == ThingCategory.Building || x.def.category == ThingCategory.Item) == null;
+			List<Thing> thingList2 = c.GetThingList(this.parent.Map);
+			for (int k = 0; k < thingList2.Count; k++)
+			{
+				Thing thing = thingList2[k];
+				if ((thing.def.category == ThingCategory.Item || thing.def.category == ThingCategory.Building) && GenSpawn.SpawningWipes(this.parent.def, thing.def))
+				{
+					return false;
+				}
+			}
+			return true;
 		}
 
 		[DebuggerHidden]
-		public override IEnumerable<Command> CompGetGizmosExtra()
+		public override IEnumerable<Gizmo> CompGetGizmosExtra()
 		{
 			if (Prefs.DevMode)
 			{

@@ -88,7 +88,13 @@ namespace Verse
 			return num4 <= radius * radius;
 		}
 
-		public static Vector3 RegularPolygonVertexPosition(int polygonVertices, int vertexIndex)
+		public static Vector3 RegularPolygonVertexPositionVec3(int polygonVertices, int vertexIndex)
+		{
+			Vector2 vector = GenGeo.RegularPolygonVertexPosition(polygonVertices, vertexIndex);
+			return new Vector3(vector.x, 0f, vector.y);
+		}
+
+		public static Vector2 RegularPolygonVertexPosition(int polygonVertices, int vertexIndex)
 		{
 			if (vertexIndex < 0 || vertexIndex >= polygonVertices)
 			{
@@ -99,21 +105,21 @@ namespace Verse
 					" vertexIndex=",
 					vertexIndex
 				}));
-				return Vector3.zero;
+				return Vector2.zero;
 			}
 			if (polygonVertices == 1)
 			{
-				return Vector3.zero;
+				return Vector2.zero;
 			}
 			return GenGeo.CalculatePolygonVertexPosition(polygonVertices, vertexIndex);
 		}
 
-		private static Vector3 CalculatePolygonVertexPosition(int polygonVertices, int vertexIndex)
+		private static Vector2 CalculatePolygonVertexPosition(int polygonVertices, int vertexIndex)
 		{
 			float num = 6.28318548f / (float)polygonVertices;
 			float num2 = num * (float)vertexIndex;
 			num2 += 3.14159274f;
-			return new Vector3(Mathf.Cos(num2), 0f, Mathf.Sin(num2));
+			return new Vector3(Mathf.Cos(num2), Mathf.Sin(num2));
 		}
 	}
 }

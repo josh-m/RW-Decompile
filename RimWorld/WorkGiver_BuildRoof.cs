@@ -17,21 +17,21 @@ namespace RimWorld
 
 		public override IEnumerable<IntVec3> PotentialWorkCellsGlobal(Pawn pawn)
 		{
-			return Find.AreaBuildRoof.ActiveCells;
+			return pawn.Map.areaManager.BuildRoof.ActiveCells;
 		}
 
 		public override bool HasJobOnCell(Pawn pawn, IntVec3 c)
 		{
-			return Find.AreaBuildRoof[c] && !c.Roofed() && pawn.CanReserve(c, 1) && (pawn.CanReach(c, PathEndMode.Touch, pawn.NormalMaxDanger(), false, TraverseMode.ByPawn) || this.BuildingToTouchToBeAbleToBuildRoof(c, pawn) != null) && RoofCollapseUtility.WithinRangeOfRoofHolder(c) && RoofCollapseUtility.ConnectedToRoofHolder(c, true);
+			return pawn.Map.areaManager.BuildRoof[c] && !c.Roofed(pawn.Map) && pawn.CanReserve(c, 1) && (pawn.CanReach(c, PathEndMode.Touch, pawn.NormalMaxDanger(), false, TraverseMode.ByPawn) || this.BuildingToTouchToBeAbleToBuildRoof(c, pawn) != null) && RoofCollapseUtility.WithinRangeOfRoofHolder(c, pawn.Map) && RoofCollapseUtility.ConnectedToRoofHolder(c, pawn.Map, true);
 		}
 
 		private Building BuildingToTouchToBeAbleToBuildRoof(IntVec3 c, Pawn pawn)
 		{
-			if (c.Standable())
+			if (c.Standable(pawn.Map))
 			{
 				return null;
 			}
-			Building edifice = c.GetEdifice();
+			Building edifice = c.GetEdifice(pawn.Map);
 			if (edifice == null)
 			{
 				return null;
@@ -45,7 +45,7 @@ namespace RimWorld
 
 		public override Job JobOnCell(Pawn pawn, IntVec3 c)
 		{
-			TargetInfo targetB = c;
+			LocalTargetInfo targetB = c;
 			if (!pawn.CanReach(c, PathEndMode.Touch, pawn.NormalMaxDanger(), false, TraverseMode.ByPawn))
 			{
 				targetB = this.BuildingToTouchToBeAbleToBuildRoof(c, pawn);

@@ -10,7 +10,7 @@ namespace RimWorld
 		{
 			foreach (IntVec3 current in giver.IngredientStackCells)
 			{
-				Thing thing = Find.ThingGrid.ThingAt(current, ThingCategory.Item);
+				Thing thing = pawn.Map.thingGrid.ThingAt(current, ThingCategory.Item);
 				if (thing != null)
 				{
 					if (thing != thingToIgnore)

@@ -37,7 +37,7 @@ namespace RimWorld
 
 		private void TryPlaceFootprint()
 		{
-			if (!Find.TerrainGrid.TerrainAt(this.pawn.Position).takeFootprints && Find.SnowGrid.GetDepth(this.pawn.Position) < 0.4f)
+			if (!this.pawn.Map.terrainGrid.TerrainAt(this.pawn.Position).takeFootprints && this.pawn.Map.snowGrid.GetDepth(this.pawn.Position) < 0.4f)
 			{
 				return;
 			}
@@ -47,7 +47,7 @@ namespace RimWorld
 			float angle = (float)((!this.lastFootprintRight) ? -90 : 90);
 			Vector3 b = normalized.RotatedBy(angle) * 0.17f;
 			Vector3 loc = drawPos + PawnFootprintMaker.FootprintOffset + b;
-			MoteMaker.PlaceFootprint(loc, rot);
+			MoteMaker.PlaceFootprint(loc, this.pawn.Map, rot);
 			this.lastFootprintPlacePos = drawPos;
 			this.lastFootprintRight = !this.lastFootprintRight;
 		}

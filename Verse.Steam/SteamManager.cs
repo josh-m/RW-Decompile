@@ -58,7 +58,7 @@ namespace Verse.Steam
 			SteamManager.initializedInt = SteamAPI.Init();
 			if (!SteamManager.initializedInt)
 			{
-				Log.Error("[Steamworks.NET] SteamAPI.Init() failed. Possible causes: Steam client not running, launched from outside Steam without steam_appid.txt in place, running with different privileges than Steam client (e.g. \"as administrator\")");
+				Log.Warning("[Steamworks.NET] SteamAPI.Init() failed. Possible causes: Steam client not running, launched from outside Steam without steam_appid.txt in place, running with different privileges than Steam client (e.g. \"as administrator\")");
 			}
 			else
 			{

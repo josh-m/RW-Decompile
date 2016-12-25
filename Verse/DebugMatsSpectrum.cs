@@ -12,7 +12,7 @@ namespace Verse
 
 		private static readonly Material[] spectrumMats;
 
-		private static readonly Color[] DebugSpectrum;
+		public static readonly Color[] DebugSpectrum;
 
 		static DebugMatsSpectrum()
 		{

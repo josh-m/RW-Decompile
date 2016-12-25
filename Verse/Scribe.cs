@@ -32,6 +32,15 @@ namespace Verse
 			Scribe.mode = Scribe.oldMode;
 		}
 
+		public static void ForceStop()
+		{
+			Scribe.mode = LoadSaveMode.Inactive;
+			Scribe.curParent = null;
+			Scribe.writingForDebug = false;
+			Scribe.saveStream = null;
+			Scribe.writer = null;
+		}
+
 		public static bool EnterNode(string elementName)
 		{
 			if (Scribe.mode == LoadSaveMode.Saving)

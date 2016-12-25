@@ -1,4 +1,5 @@
 using RimWorld;
+using RimWorld.Planet;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -26,7 +27,7 @@ namespace Verse
 			}
 		}
 
-		public void ReceiveLetter(string label, string text, LetterType type, TargetInfo letterLookTarget, string debugText = null)
+		public void ReceiveLetter(string label, string text, LetterType type, GlobalTargetInfo letterLookTarget, string debugText = null)
 		{
 			Letter let = new Letter(label, text, type, letterLookTarget);
 			this.ReceiveLetter(let, debugText);
@@ -34,7 +35,7 @@ namespace Verse
 
 		public void ReceiveLetter(string label, string text, LetterType type, string debugText = null)
 		{
-			Letter let = new Letter(label, text, type, TargetInfo.Invalid);
+			Letter let = new Letter(label, text, type, GlobalTargetInfo.Invalid);
 			this.ReceiveLetter(let, debugText);
 		}
 
@@ -84,10 +85,10 @@ namespace Verse
 		{
 			if (this.mouseoverLetterIndex >= 0 && this.letters.Count >= this.mouseoverLetterIndex + 1)
 			{
-				TargetInfo lookTarget = this.letters[this.mouseoverLetterIndex].lookTarget;
-				if (lookTarget.IsValid)
+				GlobalTargetInfo lookTarget = this.letters[this.mouseoverLetterIndex].lookTarget;
+				if (lookTarget.IsValid && lookTarget.IsMapTarget && lookTarget.Map == Find.VisibleMap)
 				{
-					GenDraw.DrawArrowPointingAt(lookTarget.CenterVector3, false);
+					GenDraw.DrawArrowPointingAt(((TargetInfo)lookTarget).CenterVector3, false);
 				}
 			}
 			this.mouseoverLetterIndex = -1;

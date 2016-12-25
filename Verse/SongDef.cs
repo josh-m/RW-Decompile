@@ -7,6 +7,7 @@ namespace Verse
 {
 	public class SongDef : Def
 	{
+		[NoTranslate]
 		public string clipPath;
 
 		public float volume = 1f;

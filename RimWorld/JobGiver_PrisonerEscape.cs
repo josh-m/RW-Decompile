@@ -10,8 +10,8 @@ namespace RimWorld
 
 		protected override Job TryGiveJob(Pawn pawn)
 		{
-			IntVec3 vec;
-			if (this.ShouldStartEscaping(pawn) && RCellFinder.TryFindBestExitSpot(pawn, out vec, TraverseMode.ByPawn))
+			IntVec3 c;
+			if (this.ShouldStartEscaping(pawn) && RCellFinder.TryFindBestExitSpot(pawn, out c, TraverseMode.ByPawn))
 			{
 				if (!pawn.guest.released)
 				{
@@ -20,7 +20,7 @@ namespace RimWorld
 						pawn.NameStringShort
 					}), pawn, MessageSound.SeriousAlert);
 				}
-				return new Job(JobDefOf.Goto, vec)
+				return new Job(JobDefOf.Goto, c)
 				{
 					exitMapOnArrival = true
 				};
@@ -34,7 +34,7 @@ namespace RimWorld
 			{
 				return false;
 			}
-			Room room = RoomQuery.RoomAt(pawn.Position);
+			Room room = RoomQuery.RoomAt(pawn);
 			if (room.TouchesMapEdge)
 			{
 				return true;

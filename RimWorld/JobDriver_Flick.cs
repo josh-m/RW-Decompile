@@ -13,7 +13,7 @@ namespace RimWorld
 		{
 			this.FailOn(delegate
 			{
-				Designation designation = Find.DesignationManager.DesignationOn(this.<>f__this.TargetThingA, DesignationDefOf.Flick);
+				Designation designation = this.<>f__this.Map.designationManager.DesignationOn(this.<>f__this.TargetThingA, DesignationDefOf.Flick);
 				return designation == null;
 			});
 			yield return Toils_Reserve.Reserve(TargetIndex.A, 1);
@@ -38,7 +38,7 @@ namespace RimWorld
 						}
 					}
 					actor.records.Increment(RecordDefOf.SwitchesFlicked);
-					Designation designation = Find.DesignationManager.DesignationOn(thingWithComps, DesignationDefOf.Flick);
+					Designation designation = this.<>f__this.Map.designationManager.DesignationOn(thingWithComps, DesignationDefOf.Flick);
 					if (designation != null)
 					{
 						designation.Delete();

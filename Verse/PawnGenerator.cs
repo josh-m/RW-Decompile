@@ -48,9 +48,35 @@ namespace Verse
 			new CurvePoint(1.25f, 0f)
 		};
 
+		private static readonly SimpleCurve AgeSkillMaxFactorCurve = new SimpleCurve
+		{
+			new CurvePoint(0f, 0f),
+			new CurvePoint(10f, 0.7f),
+			new CurvePoint(35f, 1f),
+			new CurvePoint(60f, 1.6f)
+		};
+
+		private static readonly SimpleCurve LevelFinalAdjustmentCurve = new SimpleCurve
+		{
+			new CurvePoint(0f, 0f),
+			new CurvePoint(10f, 10f),
+			new CurvePoint(20f, 16f),
+			new CurvePoint(27f, 20f)
+		};
+
+		private static readonly SimpleCurve LevelRandomCurve = new SimpleCurve
+		{
+			new CurvePoint(0f, 0f),
+			new CurvePoint(0.5f, 150f),
+			new CurvePoint(4f, 150f),
+			new CurvePoint(5f, 25f),
+			new CurvePoint(10f, 5f),
+			new CurvePoint(15f, 0f)
+		};
+
 		public static Pawn GeneratePawn(PawnKindDef kindDef, Faction faction = null)
 		{
-			return PawnGenerator.GeneratePawn(new PawnGenerationRequest(kindDef, faction, PawnGenerationContext.NonPlayer, false, false, false, false, true, false, 1f, false, true, true, null, null, null, null, null, null));
+			return PawnGenerator.GeneratePawn(new PawnGenerationRequest(kindDef, faction, PawnGenerationContext.NonPlayer, null, false, false, false, false, true, false, 1f, false, true, true, null, null, null, null, null, null));
 		}
 
 		public static Pawn GeneratePawn(PawnGenerationRequest request)
@@ -94,7 +120,7 @@ namespace Verse
 
 		public static void RedressPawn(Pawn pawn, PawnGenerationRequest request)
 		{
-			pawn.kindDef = request.KindDef;
+			pawn.ChangeKind(request.KindDef);
 			PawnGenerator.GenerateGearFor(pawn, request);
 		}
 
@@ -121,7 +147,7 @@ namespace Verse
 			{
 				return false;
 			}
-			if (pawn.health.hediffSet.BleedingRate > 0.001f)
+			if (pawn.health.hediffSet.BleedRateTotal > 0.001f)
 			{
 				return false;
 			}
@@ -153,7 +179,7 @@ namespace Verse
 			{
 				return false;
 			}
-			if (request.FixedSkinWhiteness.HasValue && pawn.story != null && pawn.story.skinWhiteness != request.FixedSkinWhiteness)
+			if (request.FixedMelanin.HasValue && pawn.story != null && pawn.story.melanin != request.FixedMelanin)
 			{
 				return false;
 			}
@@ -246,21 +272,22 @@ namespace Verse
 				}
 				PawnGenerator.GenerateRandomAge(pawn, request);
 				pawn.needs.SetInitialLevels();
-				PawnGenerator.GenerateInitialHediffs(pawn, request);
 				if (!request.Newborn && request.CanGeneratePawnRelations)
 				{
 					PawnGenerator.GeneratePawnRelations(pawn, ref request);
 				}
 				if (pawn.RaceProps.Humanlike)
 				{
-					pawn.story.skinWhiteness = ((!request.FixedSkinWhiteness.HasValue) ? PawnSkinColors.RandomSkinWhiteness() : request.FixedSkinWhiteness.Value);
+					pawn.story.melanin = ((!request.FixedMelanin.HasValue) ? PawnSkinColors.RandomMelanin() : request.FixedMelanin.Value);
 					pawn.story.crownType = ((Rand.Value >= 0.5f) ? CrownType.Narrow : CrownType.Average);
 					pawn.story.hairColor = PawnHairColors.RandomHairColor(pawn.story.SkinColor, pawn.ageTracker.AgeBiologicalYears);
-					PawnBioGenerator.GiveAppropriateBioTo(pawn, request.FixedLastName);
+					PawnBioAndNameGenerator.GiveAppropriateBioAndNameTo(pawn, request.FixedLastName);
 					pawn.story.hairDef = PawnHairChooser.RandomHairDefFor(pawn, request.Faction.def);
-					PawnGenerator.GiveRandomTraits(pawn, request.AllowGay);
-					pawn.story.GenerateSkillsFromBackstory();
+					PawnGenerator.GenerateTraits(pawn, request.AllowGay);
+					PawnGenerator.GenerateBodyType(pawn);
+					PawnGenerator.GenerateSkills(pawn);
 				}
+				PawnGenerator.GenerateInitialHediffs(pawn, request);
 				if (pawn.workSettings != null && request.Faction.IsPlayer)
 				{
 					pawn.workSettings.EnableAndInitialize();
@@ -477,11 +504,11 @@ namespace Verse
 					}
 					if (num2 <= (float)pawn.kindDef.maxGenerationAge && num2 >= (float)pawn.kindDef.minGenerationAge)
 					{
-						goto IL_1D7;
+						goto IL_1DB;
 					}
 				}
 				Log.Error("Tried 300 times to generate age for " + pawn);
-				IL_1D7:
+				IL_1DB:
 				pawn.ageTracker.AgeBiologicalTicks = (long)(num2 * 3600000f) + (long)Rand.Range(0, 3600000);
 			}
 			if (request.Newborn)
@@ -508,7 +535,7 @@ namespace Verse
 					}
 					else
 					{
-						int max = GenDate.CurrentYear - 2026 - pawn.ageTracker.AgeBiologicalYears;
+						int max = GenDate.Year((long)GenTicks.TicksAbs, 0f) - 2026 - pawn.ageTracker.AgeBiologicalYears;
 						num3 = Rand.Range(1000, max);
 					}
 				}
@@ -536,7 +563,7 @@ namespace Verse
 			return traitDef.degreeDatas.RandomElementByWeight((TraitDegreeData dd) => dd.Commonality).degree;
 		}
 
-		private static void GiveRandomTraits(Pawn pawn, bool allowGay)
+		private static void GenerateTraits(Pawn pawn, bool allowGay)
 		{
 			if (pawn.story == null)
 			{
@@ -554,11 +581,11 @@ namespace Verse
 					}
 					else if (!pawn.story.traits.HasTrait(traitEntry.def))
 					{
-						pawn.story.traits.GainTrait(new Trait(traitEntry.def, traitEntry.degree));
+						pawn.story.traits.GainTrait(new Trait(traitEntry.def, traitEntry.degree, false));
 					}
 				}
 			}
-			if (pawn.story.adulthood.forcedTraits != null)
+			if (pawn.story.adulthood != null && pawn.story.adulthood.forcedTraits != null)
 			{
 				List<TraitEntry> forcedTraits2 = pawn.story.adulthood.forcedTraits;
 				for (int j = 0; j < forcedTraits2.Count; j++)
@@ -570,14 +597,14 @@ namespace Verse
 					}
 					else if (!pawn.story.traits.HasTrait(traitEntry2.def))
 					{
-						pawn.story.traits.GainTrait(new Trait(traitEntry2.def, traitEntry2.degree));
+						pawn.story.traits.GainTrait(new Trait(traitEntry2.def, traitEntry2.degree, false));
 					}
 				}
 			}
 			int num = Rand.RangeInclusive(2, 3);
 			if (allowGay && (LovePartnerRelationUtility.HasAnyLovePartnerOfTheSameGender(pawn) || LovePartnerRelationUtility.HasAnyExLovePartnerOfTheSameGender(pawn)))
 			{
-				Trait trait = new Trait(TraitDefOf.Gay, PawnGenerator.RandomTraitDegree(TraitDefOf.Gay));
+				Trait trait = new Trait(TraitDefOf.Gay, PawnGenerator.RandomTraitDegree(TraitDefOf.Gay), false);
 				pawn.story.traits.GainTrait(trait);
 			}
 			while (pawn.story.traits.allTraits.Count < num)
@@ -603,9 +630,9 @@ namespace Verse
 							if (!pawn.story.WorkTagIsDisabled(newTraitDef.requiredWorkTags))
 							{
 								int degree = PawnGenerator.RandomTraitDegree(newTraitDef);
-								if (!pawn.story.childhood.DisallowsTrait(newTraitDef, degree) && !pawn.story.adulthood.DisallowsTrait(newTraitDef, degree))
+								if (!pawn.story.childhood.DisallowsTrait(newTraitDef, degree) && (pawn.story.adulthood == null || !pawn.story.adulthood.DisallowsTrait(newTraitDef, degree)))
 								{
-									Trait trait2 = new Trait(newTraitDef, degree);
+									Trait trait2 = new Trait(newTraitDef, degree, false);
 									if (pawn.mindState == null || pawn.mindState.mentalBreaker == null || pawn.mindState.mentalBreaker.BreakThresholdExtreme + trait2.OffsetOfStat(StatDefOf.MentalBreakThreshold) <= 40f)
 									{
 										pawn.story.traits.GainTrait(trait2);
@@ -616,6 +643,88 @@ namespace Verse
 					}
 				}
 			}
+		}
+
+		private static void GenerateBodyType(Pawn pawn)
+		{
+			if (pawn.story.adulthood != null)
+			{
+				pawn.story.bodyType = pawn.story.adulthood.BodyTypeFor(pawn.gender);
+			}
+			else if (Rand.Value < 0.5f)
+			{
+				pawn.story.bodyType = BodyType.Thin;
+			}
+			else
+			{
+				pawn.story.bodyType = ((pawn.gender != Gender.Female) ? BodyType.Male : BodyType.Female);
+			}
+		}
+
+		private static void GenerateSkills(Pawn pawn)
+		{
+			List<SkillDef> allDefsListForReading = DefDatabase<SkillDef>.AllDefsListForReading;
+			for (int i = 0; i < allDefsListForReading.Count; i++)
+			{
+				SkillDef skillDef = allDefsListForReading[i];
+				int num = PawnGenerator.FinalLevelOfSkill(pawn, skillDef);
+				SkillRecord skill = pawn.skills.GetSkill(skillDef);
+				skill.Level = num;
+				if (!skill.TotallyDisabled)
+				{
+					float num2 = (float)num * 0.11f;
+					float value = Rand.Value;
+					if (value < num2)
+					{
+						if (value < num2 * 0.2f)
+						{
+							skill.passion = Passion.Major;
+						}
+						else
+						{
+							skill.passion = Passion.Minor;
+						}
+					}
+					skill.xpSinceLastLevel = Rand.Range(skill.XpRequiredForLevelUp * 0.1f, skill.XpRequiredForLevelUp * 0.9f);
+				}
+			}
+		}
+
+		private static int FinalLevelOfSkill(Pawn pawn, SkillDef sk)
+		{
+			float num;
+			if (sk.usuallyDefinedInBackstories)
+			{
+				num = (float)Rand.RangeInclusive(0, 4);
+			}
+			else
+			{
+				num = Rand.ByCurve(PawnGenerator.LevelRandomCurve, 100);
+			}
+			foreach (Backstory current in from bs in pawn.story.AllBackstories
+			where bs != null
+			select bs)
+			{
+				foreach (KeyValuePair<SkillDef, int> current2 in current.skillGainsResolved)
+				{
+					if (current2.Key == sk)
+					{
+						num += (float)current2.Value * Rand.Range(1f, 1.4f);
+					}
+				}
+			}
+			for (int i = 0; i < pawn.story.traits.allTraits.Count; i++)
+			{
+				int num2 = 0;
+				if (pawn.story.traits.allTraits[i].CurrentData.skillGains.TryGetValue(sk, out num2))
+				{
+					num += (float)num2;
+				}
+			}
+			float num3 = Rand.Range(1f, PawnGenerator.AgeSkillMaxFactorCurve.Evaluate((float)pawn.ageTracker.AgeBiologicalYears));
+			num *= num3;
+			num = PawnGenerator.LevelFinalAdjustmentCurve.Evaluate(num);
+			return Mathf.Clamp(Mathf.RoundToInt(num), 0, 20);
 		}
 
 		public static void PostProcessGeneratedGear(Thing gear, Pawn pawn)
@@ -645,12 +754,12 @@ namespace Verse
 			}
 			List<KeyValuePair<Pawn, PawnRelationDef>> list = new List<KeyValuePair<Pawn, PawnRelationDef>>();
 			List<PawnRelationDef> allDefsListForReading = DefDatabase<PawnRelationDef>.AllDefsListForReading;
-			IEnumerable<Pawn> enumerable = from x in PawnUtility.AllPawnsMapOrWorldAliveOrDead
+			IEnumerable<Pawn> enumerable = from x in PawnsFinder.AllMapsAndWorld_AliveOrDead
 			where x.def == pawn.def
 			select x;
 			foreach (Pawn current in enumerable)
 			{
-				if (current.ThingState == ThingState.Discarded)
+				if (current.Discarded)
 				{
 					Log.Warning(string.Concat(new object[]
 					{

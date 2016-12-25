@@ -7,15 +7,18 @@ namespace RimWorld
 	[StaticConstructorOnStartup]
 	public class Listing_ResourceReadout : Listing_Tree
 	{
+		private Map map;
+
 		private static Texture2D SolidCategoryBG = SolidColorMaterials.NewSolidColorTexture(new Color(0.1f, 0.1f, 0.1f, 0.6f));
 
-		public Listing_ResourceReadout(Rect rect) : base(rect)
+		public Listing_ResourceReadout(Rect rect, Map map) : base(rect)
 		{
+			this.map = map;
 		}
 
 		public void DoCategory(TreeNode_ThingCategory node, int nestLevel, int openMask)
 		{
-			int countIn = Find.ResourceCounter.GetCountIn(node.catDef);
+			int countIn = this.map.resourceCounter.GetCountIn(node.catDef);
 			if (countIn == 0)
 			{
 				return;
@@ -70,7 +73,7 @@ namespace RimWorld
 
 		private void DoThingDef(ThingDef thingDef, int nestLevel)
 		{
-			int count = Find.ResourceCounter.GetCount(thingDef);
+			int count = this.map.resourceCounter.GetCount(thingDef);
 			if (count == 0)
 			{
 				return;

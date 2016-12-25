@@ -51,7 +51,7 @@ namespace Verse.Sound
 							list.Add(new FloatMenuOption(audioReverbPreset.ToString(), delegate
 							{
 								this.SetupAs(localPreset);
-							}, MenuOptionPriority.Medium, null, null, 0f, null));
+							}, MenuOptionPriority.Default, null, null, 0f, null, null));
 						}
 					}
 				}

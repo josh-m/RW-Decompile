@@ -60,9 +60,12 @@ namespace RimWorld
 			Widgets.CheckboxLabeled(rect2, "ManualPriorities".Translate(), ref Current.Game.playSettings.useWorkPriorities, false);
 			if (useWorkPriorities != Current.Game.playSettings.useWorkPriorities)
 			{
-				foreach (Pawn current in Find.MapPawns.FreeColonists)
+				foreach (Pawn current in PawnsFinder.AllMapsAndWorld_Alive)
 				{
-					current.workSettings.Notify_UseWorkPrioritiesChanged();
+					if (current.Faction == Faction.OfPlayer && current.workSettings != null)
+					{
+						current.workSettings.Notify_UseWorkPrioritiesChanged();
+					}
 				}
 			}
 			if (!Current.Game.playSettings.useWorkPriorities)
@@ -177,8 +180,8 @@ namespace RimWorld
 				bool flag = true;
 				for (int j = 0; j < work.workGiversByPriority[i].requiredCapacities.Count; j++)
 				{
-					PawnCapacityDef activity = work.workGiversByPriority[i].requiredCapacities[j];
-					if (!p.health.capacities.CapableOf(activity))
+					PawnCapacityDef capacity = work.workGiversByPriority[i].requiredCapacities[j];
+					if (!p.health.capacities.CapableOf(capacity))
 					{
 						flag = false;
 						break;

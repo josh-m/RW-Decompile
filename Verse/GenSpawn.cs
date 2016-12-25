@@ -6,19 +6,24 @@ namespace Verse
 {
 	public static class GenSpawn
 	{
-		public static Thing Spawn(ThingDef def, IntVec3 loc)
+		public static Thing Spawn(ThingDef def, IntVec3 loc, Map map)
 		{
-			return GenSpawn.Spawn(ThingMaker.MakeThing(def, null), loc);
+			return GenSpawn.Spawn(ThingMaker.MakeThing(def, null), loc, map);
 		}
 
-		public static Thing Spawn(Thing newThing, IntVec3 loc)
+		public static Thing Spawn(Thing newThing, IntVec3 loc, Map map)
 		{
-			return GenSpawn.Spawn(newThing, loc, Rot4.North);
+			return GenSpawn.Spawn(newThing, loc, map, Rot4.North);
 		}
 
-		public static Thing Spawn(Thing newThing, IntVec3 loc, Rot4 rot)
+		public static Thing Spawn(Thing newThing, IntVec3 loc, Map map, Rot4 rot)
 		{
-			if (!loc.InBounds())
+			if (map == null)
+			{
+				Log.Error("Tried to spawn " + newThing + " in a null map.");
+				return null;
+			}
+			if (!loc.InBounds(map))
 			{
 				Log.Error(string.Concat(new object[]
 				{
@@ -30,7 +35,12 @@ namespace Verse
 				}));
 				return null;
 			}
-			GenSpawn.WipeExistingThings(loc, rot, newThing.def, false);
+			if (newThing.Spawned)
+			{
+				Log.Error("Tried to spawn " + newThing + " but it's already spawned.");
+				return newThing;
+			}
+			GenSpawn.WipeExistingThings(loc, rot, newThing.def, map, DestroyMode.Vanish);
 			if (newThing.def.randomizeRotationOnSpawn)
 			{
 				newThing.Rotation = Rot4.Random;
@@ -39,45 +49,54 @@ namespace Verse
 			{
 				newThing.Rotation = rot;
 			}
-			newThing.SetPositionDirect(IntVec3.Invalid);
 			newThing.Position = loc;
-			newThing.SpawnSetup();
-			if (newThing.stackCount == 0)
+			ThingUtility.UpdateRegionListers(IntVec3.Invalid, loc, map, newThing);
+			map.thingGrid.Register(newThing);
+			newThing.SpawnSetup(map);
+			if (newThing.Spawned)
 			{
-				Log.Error("Spawned thing with 0 stackCount: " + newThing);
-				newThing.Destroy(DestroyMode.Vanish);
-				return null;
+				if (newThing.stackCount == 0)
+				{
+					Log.Error("Spawned thing with 0 stackCount: " + newThing);
+					newThing.Destroy(DestroyMode.Vanish);
+					return null;
+				}
+			}
+			else
+			{
+				ThingUtility.UpdateRegionListers(loc, IntVec3.Invalid, map, newThing);
+				map.thingGrid.Deregister(newThing, true);
 			}
 			return newThing;
 		}
 
-		public static void WipeExistingThings(IntVec3 thingPos, Rot4 thingRot, BuildableDef thingDef, bool reclaimResources)
-		{
-			GenSpawn.WipeExistingThings(thingPos, thingRot, thingDef, reclaimResources, null);
-		}
-
-		public static void WipeExistingThings(IntVec3 thingPos, Rot4 thingRot, BuildableDef thingDef, bool reclaimResources, CellRect? leavingsRect)
+		public static void WipeExistingThings(IntVec3 thingPos, Rot4 thingRot, BuildableDef thingDef, Map map, DestroyMode mode)
 		{
 			foreach (IntVec3 current in GenAdj.CellsOccupiedBy(thingPos, thingRot, thingDef.Size))
 			{
-				foreach (Thing current2 in Find.ThingGrid.ThingsAt(current).ToList<Thing>())
+				foreach (Thing current2 in map.thingGrid.ThingsAt(current).ToList<Thing>())
 				{
 					if (GenSpawn.SpawningWipes(thingDef, current2.def))
 					{
-						if (reclaimResources && current2 is Building)
-						{
-							CellRect leavingsRect2 = current2.OccupiedRect();
-							if (leavingsRect.HasValue)
-							{
-								leavingsRect2 = leavingsRect.Value;
-							}
-							GenLeaving.DoLeavingsFor(current2, DestroyMode.Deconstruct, leavingsRect2);
-						}
-						DestroyMode mode = (!reclaimResources) ? DestroyMode.Vanish : DestroyMode.Cancel;
 						current2.Destroy(mode);
 					}
 				}
 			}
+		}
+
+		public static bool WouldWipeAnythingWith(IntVec3 thingPos, Rot4 thingRot, BuildableDef thingDef, Map map, Predicate<Thing> predicate)
+		{
+			foreach (IntVec3 current in GenAdj.CellsOccupiedBy(thingPos, thingRot, thingDef.Size))
+			{
+				foreach (Thing current2 in map.thingGrid.ThingsAt(current).ToList<Thing>())
+				{
+					if (GenSpawn.SpawningWipes(thingDef, current2.def) && predicate(current2))
+					{
+						return true;
+					}
+				}
+			}
+			return false;
 		}
 
 		public static bool SpawningWipes(BuildableDef newEntDef, BuildableDef oldEntDef)
@@ -149,13 +168,13 @@ namespace Verse
 					return true;
 				}
 			}
-			if (thingDef2 == ThingDefOf.DropPod)
+			if (thingDef2 == ThingDefOf.ActiveDropPod)
 			{
 				return false;
 			}
-			if (thingDef == ThingDefOf.DropPod)
+			if (thingDef == ThingDefOf.ActiveDropPod)
 			{
-				return thingDef2 != ThingDefOf.DropPod && (thingDef2.category == ThingCategory.Building && thingDef2.passability == Traversability.Impassable);
+				return thingDef2 != ThingDefOf.ActiveDropPod && (thingDef2.category == ThingCategory.Building && thingDef2.passability == Traversability.Impassable);
 			}
 			if (thingDef.IsEdifice())
 			{

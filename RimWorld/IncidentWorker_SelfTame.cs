@@ -7,25 +7,24 @@ namespace RimWorld
 {
 	public class IncidentWorker_SelfTame : IncidentWorker
 	{
-		private IEnumerable<Pawn> Candidates
+		private IEnumerable<Pawn> Candidates(Map map)
 		{
-			get
-			{
-				return from x in Find.MapPawns.AllPawnsSpawned
-				where x.RaceProps.Animal && x.Faction == null && !x.Position.Fogged() && !x.InMentalState && !x.Downed && x.RaceProps.wildness > 0f
-				select x;
-			}
+			return from x in map.mapPawns.AllPawnsSpawned
+			where x.RaceProps.Animal && x.Faction == null && !x.Position.Fogged(x.Map) && !x.InMentalState && !x.Downed && x.RaceProps.wildness > 0f
+			select x;
 		}
 
-		protected override bool CanFireNowSub()
+		protected override bool CanFireNowSub(IIncidentTarget target)
 		{
-			return this.Candidates.Any<Pawn>();
+			Map map = (Map)target;
+			return this.Candidates(map).Any<Pawn>();
 		}
 
 		public override bool TryExecute(IncidentParms parms)
 		{
+			Map map = (Map)parms.target;
 			Pawn pawn = null;
-			if (!this.Candidates.TryRandomElementByWeight((Pawn x) => x.RaceProps.wildness, out pawn))
+			if (!this.Candidates(map).TryRandomElementByWeight((Pawn x) => x.RaceProps.wildness, out pawn))
 			{
 				return false;
 			}
@@ -65,7 +64,7 @@ namespace RimWorld
 			}
 			Find.LetterStack.ReceiveLetter("LetterLabelAnimalSelfTame".Translate(new object[]
 			{
-				GenLabel.BestKindLabel(pawn, false, false)
+				GenLabel.BestKindLabel(pawn, false, false, false)
 			}).CapitalizeFirst(), text2, LetterType.Good, pawn, null);
 			return true;
 		}

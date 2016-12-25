@@ -8,11 +8,11 @@ namespace RimWorld
 	{
 		public override ThinkResult TryIssueJobPackage(Pawn pawn)
 		{
-			if (!pawn.health.PrefersMedicalRest)
+			if (!HealthAIUtility.ShouldSeekMedicalRest(pawn))
 			{
 				return ThinkResult.NoJob;
 			}
-			if (RestUtility.TimetablePreventsLayDown(pawn) && !pawn.health.ShouldDoSurgeryNow && !pawn.health.ShouldBeTendedNow)
+			if (RestUtility.TimetablePreventsLayDown(pawn) && !HealthAIUtility.ShouldHaveSurgeryDoneNow(pawn) && !HealthAIUtility.ShouldBeTendedNow(pawn))
 			{
 				return ThinkResult.NoJob;
 			}

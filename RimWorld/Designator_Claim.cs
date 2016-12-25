@@ -30,15 +30,15 @@ namespace RimWorld
 
 		public override AcceptanceReport CanDesignateCell(IntVec3 c)
 		{
-			if (!c.InBounds())
+			if (!c.InBounds(base.Map))
 			{
 				return false;
 			}
-			if (c.Fogged())
+			if (c.Fogged(base.Map))
 			{
 				return false;
 			}
-			if (!(from t in c.GetThingList()
+			if (!(from t in c.GetThingList(base.Map)
 			where this.CanDesignateThing(t).Accepted
 			select t).Any<Thing>())
 			{
@@ -49,7 +49,7 @@ namespace RimWorld
 
 		public override void DesignateSingleCell(IntVec3 c)
 		{
-			List<Thing> thingList = c.GetThingList();
+			List<Thing> thingList = c.GetThingList(base.Map);
 			for (int i = 0; i < thingList.Count; i++)
 			{
 				if (this.CanDesignateThing(thingList[i]).Accepted)
@@ -62,7 +62,7 @@ namespace RimWorld
 		public override AcceptanceReport CanDesignateThing(Thing t)
 		{
 			Building building = t as Building;
-			if (building != null && building.Faction == null && building.ClaimableBy(Faction.OfPlayer))
+			if (building != null && building.Faction != Faction.OfPlayer && building.ClaimableBy(Faction.OfPlayer))
 			{
 				return true;
 			}
@@ -75,7 +75,7 @@ namespace RimWorld
 			CellRect.CellRectIterator iterator = t.OccupiedRect().GetIterator();
 			while (!iterator.Done())
 			{
-				MoteMaker.ThrowMetaPuffs(iterator.Current);
+				MoteMaker.ThrowMetaPuffs(new TargetInfo(iterator.Current, base.Map, false));
 				iterator.MoveNext();
 			}
 		}

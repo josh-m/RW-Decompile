@@ -1,4 +1,5 @@
 using RimWorld;
+using RimWorld.Planet;
 using System;
 using UnityEngine;
 
@@ -6,7 +7,7 @@ namespace Verse
 {
 	public class CameraDriver : MonoBehaviour
 	{
-		private const float MaxDeltaTime = 0.025f;
+		public const float MaxDeltaTime = 0.025f;
 
 		private const float ScreenDollyEdgeWidth = 20f;
 
@@ -16,7 +17,7 @@ namespace Verse
 
 		private const float MapEdgeClampMarginCells = -2f;
 
-		private const float StartingSize = 24f;
+		public const float StartingSize = 24f;
 
 		private const float MinSize = 11f;
 
@@ -139,7 +140,7 @@ namespace Verse
 				if (Time.frameCount != CameraDriver.lastViewRectGetFrame)
 				{
 					CameraDriver.lastViewRect = default(CellRect);
-					float num = (float)Screen.width / (float)Screen.height;
+					float num = (float)UI.screenWidth / (float)UI.screenHeight;
 					CameraDriver.lastViewRect.minX = Mathf.FloorToInt(this.CurrentRealPosition.x - this.rootSize * num - 1f);
 					CameraDriver.lastViewRect.maxX = Mathf.CeilToInt(this.CurrentRealPosition.x + this.rootSize * num);
 					CameraDriver.lastViewRect.minZ = Mathf.FloorToInt(this.CurrentRealPosition.z - this.rootSize - 1f);
@@ -150,7 +151,7 @@ namespace Verse
 			}
 		}
 
-		private float HitchReduceFactor
+		public static float HitchReduceFactor
 		{
 			get
 			{
@@ -167,7 +168,7 @@ namespace Verse
 		{
 			get
 			{
-				return (float)Screen.height / (this.rootSize * 2f);
+				return (float)UI.screenHeight / (this.rootSize * 2f);
 			}
 		}
 
@@ -185,7 +186,14 @@ namespace Verse
 			{
 				return;
 			}
-			Find.WeatherManager.DrawAllWeather();
+			if (Find.VisibleMap == null)
+			{
+				return;
+			}
+			if (!WorldRendererUtility.WorldRenderedNow)
+			{
+				Find.VisibleMap.weatherManager.DrawAllWeather();
+			}
 		}
 
 		public void OnGUI()
@@ -194,43 +202,47 @@ namespace Verse
 			{
 				return;
 			}
+			if (Find.VisibleMap == null)
+			{
+				return;
+			}
 			this.mouseCoveredByUI = false;
-			if (Find.WindowStack.GetWindowAt(GenUI.AbsMousePosition()) != null)
+			if (Find.WindowStack.GetWindowAt(UI.MousePositionOnUIInverted) != null)
 			{
 				this.mouseCoveredByUI = true;
 			}
-			if (Event.current.type == EventType.MouseDrag && Event.current.button == 2)
-			{
-				this.mouseDragVect = Event.current.delta;
-				Event.current.Use();
-			}
-			float num = 0f;
-			if (Event.current.type == EventType.ScrollWheel)
-			{
-				num -= Event.current.delta.y * 0.35f;
-				PlayerKnowledgeDatabase.KnowledgeDemonstrated(ConceptDefOf.CameraZoom, KnowledgeAmount.TinyInteraction);
-			}
-			if (KeyBindingDefOf.MapZoomIn.KeyDownEvent)
-			{
-				num -= 4f;
-				PlayerKnowledgeDatabase.KnowledgeDemonstrated(ConceptDefOf.CameraZoom, KnowledgeAmount.SmallInteraction);
-			}
-			if (KeyBindingDefOf.MapZoomOut.KeyDownEvent)
-			{
-				num += 4f;
-				PlayerKnowledgeDatabase.KnowledgeDemonstrated(ConceptDefOf.CameraZoom, KnowledgeAmount.SmallInteraction);
-			}
-			this.desiredSize -= num * 2.6f * this.rootSize / 35f;
-			if (this.desiredSize < 11f)
-			{
-				this.desiredSize = 11f;
-			}
-			if (this.desiredSize > 60f)
-			{
-				this.desiredSize = 60f;
-			}
 			if (!Find.WindowStack.WindowsPreventCameraMotion)
 			{
+				if (Event.current.type == EventType.MouseDrag && Event.current.button == 2)
+				{
+					this.mouseDragVect = Event.current.delta;
+					Event.current.Use();
+				}
+				float num = 0f;
+				if (Event.current.type == EventType.ScrollWheel)
+				{
+					num -= Event.current.delta.y * 0.35f;
+					PlayerKnowledgeDatabase.KnowledgeDemonstrated(ConceptDefOf.CameraZoom, KnowledgeAmount.TinyInteraction);
+				}
+				if (KeyBindingDefOf.MapZoomIn.KeyDownEvent)
+				{
+					num += 4f;
+					PlayerKnowledgeDatabase.KnowledgeDemonstrated(ConceptDefOf.CameraZoom, KnowledgeAmount.SmallInteraction);
+				}
+				if (KeyBindingDefOf.MapZoomOut.KeyDownEvent)
+				{
+					num -= 4f;
+					PlayerKnowledgeDatabase.KnowledgeDemonstrated(ConceptDefOf.CameraZoom, KnowledgeAmount.SmallInteraction);
+				}
+				this.desiredSize -= num * 2.6f * this.rootSize / 35f;
+				if (this.desiredSize < 11f)
+				{
+					this.desiredSize = 11f;
+				}
+				if (this.desiredSize > 60f)
+				{
+					this.desiredSize = 60f;
+				}
 				this.desiredDolly = Vector3.zero;
 				if (KeyBindingDefOf.MapDollyLeft.IsDown)
 				{
@@ -250,7 +262,7 @@ namespace Verse
 				}
 				if (this.mouseDragVect != Vector2.zero)
 				{
-					this.mouseDragVect *= this.HitchReduceFactor;
+					this.mouseDragVect *= CameraDriver.HitchReduceFactor;
 					this.mouseDragVect.x = this.mouseDragVect.x * -1f;
 					this.desiredDolly += this.mouseDragVect * this.config.dollyRateMouseDrag;
 					this.mouseDragVect = Vector2.zero;
@@ -264,6 +276,10 @@ namespace Verse
 			{
 				return;
 			}
+			if (Find.VisibleMap == null)
+			{
+				return;
+			}
 			Vector2 lhs = this.CalculateCurInputDollyVect();
 			if (lhs != Vector2.zero)
 			{
@@ -273,15 +289,15 @@ namespace Verse
 			}
 			if (!Find.WindowStack.WindowsPreventCameraMotion)
 			{
-				float d2 = Time.deltaTime * this.HitchReduceFactor;
+				float d2 = Time.deltaTime * CameraDriver.HitchReduceFactor;
 				this.rootPos += this.velocity * d2 * this.config.moveSpeedScale;
-				if (this.rootPos.x > (float)Find.Map.Size.x + -2f)
+				if (this.rootPos.x > (float)Find.VisibleMap.Size.x + -2f)
 				{
-					this.rootPos.x = (float)Find.Map.Size.x + -2f;
+					this.rootPos.x = (float)Find.VisibleMap.Size.x + -2f;
 				}
-				if (this.rootPos.z > (float)Find.Map.Size.z + -2f)
+				if (this.rootPos.z > (float)Find.VisibleMap.Size.z + -2f)
 				{
-					this.rootPos.z = (float)Find.Map.Size.z + -2f;
+					this.rootPos.z = (float)Find.VisibleMap.Size.z + -2f;
 				}
 				if (this.rootPos.x < 2f)
 				{
@@ -304,6 +320,12 @@ namespace Verse
 			this.rootSize += num * 0.4f;
 			this.shaker.Update();
 			this.ApplyPositionToGameObject();
+			if (Find.VisibleMap != null)
+			{
+				RememberedCameraPos rememberedCameraPos = Find.VisibleMap.rememberedCameraPos;
+				rememberedCameraPos.rootPos = this.rootPos;
+				rememberedCameraPos.rootSize = this.rootSize;
+			}
 		}
 
 		private void ApplyPositionToGameObject()
@@ -322,34 +344,34 @@ namespace Verse
 			bool flag = false;
 			if ((UnityData.isEditor || Screen.fullScreen) && Prefs.EdgeScreenScroll && !this.mouseCoveredByUI)
 			{
-				Vector2 vector2 = Input.mousePosition;
-				Vector2 point = vector2;
-				point.y = (float)Screen.height - point.y;
+				Vector2 mousePositionOnUI = UI.MousePositionOnUI;
+				Vector2 point = mousePositionOnUI;
+				point.y = (float)UI.screenHeight - point.y;
 				Rect rect = new Rect(0f, 0f, 200f, 200f);
-				Rect rect2 = new Rect((float)(Screen.width - 250), 0f, 255f, 255f);
-				Rect rect3 = new Rect(0f, (float)(Screen.height - 250), 225f, 255f);
-				Rect rect4 = new Rect((float)(Screen.width - 250), (float)(Screen.height - 250), 255f, 255f);
+				Rect rect2 = new Rect((float)(UI.screenWidth - 250), 0f, 255f, 255f);
+				Rect rect3 = new Rect(0f, (float)(UI.screenHeight - 250), 225f, 255f);
+				Rect rect4 = new Rect((float)(UI.screenWidth - 250), (float)(UI.screenHeight - 250), 255f, 255f);
 				MainTabWindow_Inspect mainTabWindow_Inspect = (MainTabWindow_Inspect)MainTabDefOf.Inspect.Window;
-				if (Find.MainTabsRoot.OpenTab == MainTabDefOf.Inspect && mainTabWindow_Inspect.CurDrawHeight > rect3.height)
+				if (Find.MainTabsRoot.OpenTab == MainTabDefOf.Inspect && mainTabWindow_Inspect.RecentHeight > rect3.height)
 				{
-					rect3.yMin = (float)Screen.height - mainTabWindow_Inspect.CurDrawHeight;
+					rect3.yMin = (float)UI.screenHeight - mainTabWindow_Inspect.RecentHeight;
 				}
 				if (!rect.Contains(point) && !rect3.Contains(point) && !rect2.Contains(point) && !rect4.Contains(point))
 				{
 					Vector2 b = new Vector2(0f, 0f);
-					if (vector2.x >= 0f && vector2.x < 20f)
+					if (mousePositionOnUI.x >= 0f && mousePositionOnUI.x < 20f)
 					{
 						b.x -= this.config.dollyRateScreenEdge;
 					}
-					if (vector2.x <= (float)Screen.width && vector2.x > (float)Screen.width - 20f)
+					if (mousePositionOnUI.x <= (float)UI.screenWidth && mousePositionOnUI.x > (float)UI.screenWidth - 20f)
 					{
 						b.x += this.config.dollyRateScreenEdge;
 					}
-					if (vector2.y <= (float)Screen.height && vector2.y > (float)Screen.height - 20f)
+					if (mousePositionOnUI.y <= (float)UI.screenHeight && mousePositionOnUI.y > (float)UI.screenHeight - 20f)
 					{
 						b.y += this.config.dollyRateScreenEdge;
 					}
-					if (vector2.y >= 0f && vector2.y < this.ScreenDollyEdgeWidthBottom)
+					if (mousePositionOnUI.y >= 0f && mousePositionOnUI.y < this.ScreenDollyEdgeWidthBottom)
 					{
 						if (this.mouseTouchingScreenBottomEdgeStartTime < 0f)
 						{
@@ -400,11 +422,13 @@ namespace Verse
 			this.JumpTo(IntLoc.ToVector3Shifted());
 		}
 
-		public Vector2 InvertedWorldToScreenPoint(Vector3 worldLoc)
+		public void SetRootPosAndSize(Vector3 rootPos, float rootSize)
 		{
-			Vector3 vector = this.MyCamera.WorldToScreenPoint(worldLoc);
-			vector.y = (float)Screen.height - vector.y;
-			return new Vector2(vector.x, vector.y);
+			this.rootPos = rootPos;
+			this.rootSize = rootSize;
+			this.desiredDolly = Vector2.zero;
+			this.desiredSize = rootSize;
+			LongEventHandler.ExecuteWhenFinished(new Action(this.ApplyPositionToGameObject));
 		}
 	}
 }

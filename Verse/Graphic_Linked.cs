@@ -66,11 +66,11 @@ namespace Verse
 
 		public virtual bool ShouldLinkWith(IntVec3 c, Thing parent)
 		{
-			if (!c.InBounds())
+			if (!c.InBounds(parent.Map))
 			{
 				return (parent.def.graphicData.linkFlags & LinkFlags.MapEdge) != LinkFlags.None;
 			}
-			return (LinkGrid.LinkFlagsAt(c) & parent.def.graphicData.linkFlags) != LinkFlags.None;
+			return (parent.Map.linkGrid.LinkFlagsAt(c) & parent.def.graphicData.linkFlags) != LinkFlags.None;
 		}
 	}
 }

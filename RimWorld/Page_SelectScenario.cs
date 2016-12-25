@@ -129,31 +129,31 @@ namespace RimWorld
 			Widgets.DrawHighlightIfMouseover(rect);
 			MouseoverSounds.DoRegion(rect);
 			Rect rect2 = rect.ContractedBy(4f);
+			Text.Font = GameFont.Small;
 			Rect rect3 = rect2;
 			rect3.height = Text.CalcHeight(scen.name, rect3.width);
-			Rect rect4 = rect2;
-			rect4.yMin = rect3.yMax;
-			Text.Font = GameFont.Small;
 			Widgets.Label(rect3, scen.name);
 			Text.Font = GameFont.Tiny;
+			Rect rect4 = rect2;
+			rect4.yMin = rect3.yMax;
 			Widgets.Label(rect4, scen.GetSummary());
 			if (scen.enabled)
 			{
 				WidgetRow widgetRow = new WidgetRow(rect.xMax, rect.y, UIDirection.LeftThenDown, 99999f, 4f);
 				if (scen.Category == ScenarioCategory.CustomLocal && widgetRow.ButtonIcon(TexButton.DeleteX, "Delete".Translate()))
 				{
-					Find.WindowStack.Add(new Dialog_Confirm("ConfirmDelete".Translate(new object[]
+					Find.WindowStack.Add(Dialog_MessageBox.CreateConfirmation("ConfirmDelete".Translate(new object[]
 					{
 						scen.File.Name
 					}), delegate
 					{
 						scen.File.Delete();
 						ScenarioLister.MarkDirty();
-					}, true, null, true));
+					}, true, null));
 				}
 				if (scen.Category == ScenarioCategory.SteamWorkshop && widgetRow.ButtonIcon(TexButton.DeleteX, "Unsubscribe".Translate()))
 				{
-					Find.WindowStack.Add(new Dialog_Confirm("ConfirmUnsubscribe".Translate(new object[]
+					Find.WindowStack.Add(Dialog_MessageBox.CreateConfirmation("ConfirmUnsubscribe".Translate(new object[]
 					{
 						scen.File.Name
 					}), delegate
@@ -165,7 +165,7 @@ namespace RimWorld
 							this.EnsureValidSelection();
 						}
 						Workshop.Unsubscribe(scen);
-					}, true, null, true));
+					}, true, null));
 				}
 				if (scen.GetPublishedFileId() != PublishedFileId_t.Invalid)
 				{

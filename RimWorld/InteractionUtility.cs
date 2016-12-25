@@ -7,6 +7,8 @@ namespace RimWorld
 {
 	public static class InteractionUtility
 	{
+		private static List<Thought> tmpThoughts = new List<Thought>();
+
 		public static bool CanInitiateInteraction(Pawn pawn)
 		{
 			return pawn.interactions != null && pawn.health.capacities.CapableOf(PawnCapacityDefOf.Talking) && pawn.Awake() && !pawn.IsBurning();
@@ -70,16 +72,18 @@ namespace RimWorld
 				thought = null;
 				return false;
 			}
-			List<Thought> thoughts = pawn.needs.mood.thoughts.Thoughts;
-			return thoughts.Where(delegate(Thought x)
+			pawn.needs.mood.thoughts.GetMainThoughts(InteractionUtility.tmpThoughts);
+			bool result = InteractionUtility.tmpThoughts.Where(delegate(Thought x)
 			{
 				if (x.def == ThoughtDefOf.HadAngeringFight || x.def == ThoughtDefOf.HadCatharticFight)
 				{
 					return false;
 				}
 				ISocialThought socialThought = x as ISocialThought;
-				return socialThought != null && socialThought.OtherPawnID() == otherPawn.thingIDNumber && socialThought.OpinionOffset() < 0f;
+				return socialThought != null && socialThought.OtherPawn() == otherPawn && socialThought.OpinionOffset() < 0f;
 			}).TryRandomElementByWeight((Thought x) => -((ISocialThought)x).OpinionOffset(), out thought);
+			InteractionUtility.tmpThoughts.Clear();
+			return result;
 		}
 	}
 }

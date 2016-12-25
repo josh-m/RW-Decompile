@@ -2,57 +2,52 @@ using System;
 
 namespace Verse
 {
-	public static class MoteCounter
+	public class MoteCounter
 	{
 		private const int SaturatedCount = 250;
 
-		private static int moteCount;
+		private int moteCount;
 
-		public static int MoteCount
+		public int MoteCount
 		{
 			get
 			{
-				return MoteCounter.moteCount;
+				return this.moteCount;
 			}
 		}
 
-		public static float Saturation
+		public float Saturation
 		{
 			get
 			{
-				return (float)MoteCounter.moteCount / 250f;
+				return (float)this.moteCount / 250f;
 			}
 		}
 
-		public static bool Saturated
+		public bool Saturated
 		{
 			get
 			{
-				return MoteCounter.Saturation > 1f;
+				return this.Saturation > 1f;
 			}
 		}
 
-		public static bool SaturatedLowPriority
+		public bool SaturatedLowPriority
 		{
 			get
 			{
-				return MoteCounter.Saturation > 0.8f;
+				return this.Saturation > 0.8f;
 			}
 		}
 
-		public static void Reinit()
+		public void Notify_MoteSpawned()
 		{
-			MoteCounter.moteCount = 0;
+			this.moteCount++;
 		}
 
-		public static void Notify_MoteSpawned()
+		public void Notify_MoteDespawned()
 		{
-			MoteCounter.moteCount++;
-		}
-
-		public static void Notify_MoteDespawned()
-		{
-			MoteCounter.moteCount--;
+			this.moteCount--;
 		}
 	}
 }

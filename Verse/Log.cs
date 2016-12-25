@@ -32,7 +32,7 @@ namespace Verse
 
 		public static void Error(string text)
 		{
-			if (Prefs.PauseOnError && Current.ProgramState == ProgramState.MapPlaying)
+			if (Prefs.PauseOnError && Current.ProgramState == ProgramState.Playing)
 			{
 				Find.TickManager.CurTimeSpeed = TimeSpeed.Paused;
 			}

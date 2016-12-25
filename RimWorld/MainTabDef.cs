@@ -18,6 +18,8 @@ namespace RimWorld
 
 		public bool canBeTutorDenied = true;
 
+		public bool validWithoutMap;
+
 		[Unsaved]
 		public KeyBindingDef toggleHotKey;
 
@@ -49,9 +51,13 @@ namespace RimWorld
 			this.cachedHighlightTagClosed = "MainTab-" + this.defName + "-Closed";
 		}
 
-		public void Notify_MapLoaded()
+		public void Notify_SwitchedMap()
 		{
-			this.windowInt = null;
+			if (this.windowInt != null)
+			{
+				Find.WindowStack.TryRemove(this.windowInt, true);
+				this.windowInt = null;
+			}
 		}
 	}
 }

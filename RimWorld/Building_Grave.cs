@@ -48,9 +48,9 @@ namespace RimWorld
 		{
 			get
 			{
-				for (int i = 0; i < this.container.Count; i++)
+				for (int i = 0; i < this.innerContainer.Count; i++)
 				{
-					Corpse corpse = this.container[i] as Corpse;
+					Corpse corpse = this.innerContainer[i] as Corpse;
 					if (corpse != null)
 					{
 						return corpse;
@@ -64,10 +64,14 @@ namespace RimWorld
 		{
 			get
 			{
-				IEnumerable<Pawn> second = from Corpse x in Find.ListerThings.ThingsInGroup(ThingRequestGroup.Corpse)
-				where x.Spawned && x.innerPawn.IsColonist
-				select x.innerPawn;
-				return Find.MapPawns.FreeColonistsSpawned.Concat(second);
+				if (!base.Spawned)
+				{
+					return Enumerable.Empty<Pawn>();
+				}
+				IEnumerable<Pawn> second = from Corpse x in base.Map.listerThings.ThingsInGroup(ThingRequestGroup.Corpse)
+				where x.InnerPawn.IsColonist
+				select x.InnerPawn;
+				return base.Map.mapPawns.FreeColonistsSpawned.Concat(second);
 			}
 		}
 
@@ -134,7 +138,7 @@ namespace RimWorld
 		public override void TickRare()
 		{
 			base.TickRare();
-			this.container.ThingContainerTickRare();
+			this.innerContainer.ThingContainerTickRare();
 		}
 
 		public override void ExposeData()
@@ -149,7 +153,10 @@ namespace RimWorld
 		public override void EjectContents()
 		{
 			base.EjectContents();
-			Find.MapDrawer.MapMeshDirty(base.Position, MapMeshFlag.Things);
+			if (base.Spawned)
+			{
+				base.Map.mapDrawer.MapMeshDirty(base.Position, MapMeshFlag.Things);
+			}
 		}
 
 		public virtual void Notify_CorpseBuried(Pawn worker)
@@ -158,9 +165,9 @@ namespace RimWorld
 			if (comp != null && !comp.Active)
 			{
 				comp.JustCreatedBy(worker);
-				comp.InitializeArt(this.Corpse.innerPawn);
+				comp.InitializeArt(this.Corpse.InnerPawn);
 			}
-			Find.MapDrawer.MapMeshDirty(base.Position, MapMeshFlag.Buildings);
+			base.Map.mapDrawer.MapMeshDirty(base.Position, MapMeshFlag.Buildings);
 		}
 
 		public override bool Accepts(Thing thing)
@@ -180,7 +187,7 @@ namespace RimWorld
 				{
 					return false;
 				}
-				if (corpse.innerPawn != this.assignedPawn)
+				if (corpse.InnerPawn != this.assignedPawn)
 				{
 					return false;
 				}
@@ -197,11 +204,14 @@ namespace RimWorld
 			if (base.TryAcceptThing(thing, allowSpecialEffects))
 			{
 				Corpse corpse = thing as Corpse;
-				if (corpse != null && corpse.innerPawn.ownership != null && corpse.innerPawn.ownership.AssignedGrave != this)
+				if (corpse != null && corpse.InnerPawn.ownership != null && corpse.InnerPawn.ownership.AssignedGrave != this)
 				{
-					corpse.innerPawn.ownership.UnclaimGrave();
+					corpse.InnerPawn.ownership.UnclaimGrave();
 				}
-				Find.MapDrawer.MapMeshDirty(base.Position, MapMeshFlag.Things);
+				if (base.Spawned)
+				{
+					base.Map.mapDrawer.MapMeshDirty(base.Position, MapMeshFlag.Things);
+				}
 				return true;
 			}
 			return false;

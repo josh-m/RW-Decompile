@@ -88,7 +88,7 @@ namespace RimWorld
 						num.ToStringPercent()
 					});
 				}
-				MoteMaker.ThrowText((initiator.DrawPos + recipient.DrawPos) / 2f, text, 8f);
+				MoteMaker.ThrowText((initiator.DrawPos + recipient.DrawPos) / 2f, initiator.Map, text, 8f);
 				extraSentencePacks.Add(RulePackDefOf.Sentence_RecruitAttemptRejected);
 			}
 		}
@@ -147,13 +147,13 @@ namespace RimWorld
 							recruitChance.ToStringPercent()
 						}), recruitee, MessageSound.Benefit);
 					}
-					MoteMaker.ThrowText((recruiter.DrawPos + recruitee.DrawPos) / 2f, "TextMote_TameSuccess".Translate(new object[]
+					MoteMaker.ThrowText((recruiter.DrawPos + recruitee.DrawPos) / 2f, recruiter.Map, "TextMote_TameSuccess".Translate(new object[]
 					{
 						recruitChance.ToStringPercent()
 					}), 8f);
 				}
 				recruiter.records.Increment(RecordDefOf.AnimalsTamed);
-				RelationsUtility.TryDevelopBondRelation(recruiter, recruitee, 0.05f);
+				RelationsUtility.TryDevelopBondRelation(recruiter, recruitee, 0.01f);
 				float num = Mathf.Lerp(0.02f, 1f, recruitee.RaceProps.wildness);
 				if (Rand.Value < num)
 				{

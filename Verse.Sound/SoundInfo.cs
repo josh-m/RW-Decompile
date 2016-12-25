@@ -56,7 +56,7 @@ namespace Verse.Sound
 			return result;
 		}
 
-		public static SoundInfo InWorld(TargetInfo maker, MaintenanceType maint = MaintenanceType.None)
+		public static SoundInfo InMap(TargetInfo maker, MaintenanceType maint = MaintenanceType.None)
 		{
 			SoundInfo result = default(SoundInfo);
 			result.IsOnCamera = false;
@@ -116,14 +116,14 @@ namespace Verse.Sound
 			});
 		}
 
-		public static implicit operator SoundInfo(IntVec3 sourceLoc)
+		public static implicit operator SoundInfo(TargetInfo source)
 		{
-			return SoundInfo.InWorld(sourceLoc, MaintenanceType.None);
+			return SoundInfo.InMap(source, MaintenanceType.None);
 		}
 
 		public static implicit operator SoundInfo(Thing sourceThing)
 		{
-			return SoundInfo.InWorld(sourceThing, MaintenanceType.None);
+			return SoundInfo.InMap(sourceThing, MaintenanceType.None);
 		}
 	}
 }

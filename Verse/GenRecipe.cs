@@ -24,7 +24,7 @@ namespace Verse
 			{
 				for (int i = 0; i < recipeDef.products.Count; i++)
 				{
-					ThingCount prod = recipeDef.products[i];
+					ThingCountClass prod = recipeDef.products[i];
 					ThingDef stuffDef;
 					if (prod.thingDef.MadeFromStuff)
 					{
@@ -69,22 +69,26 @@ namespace Verse
 			{
 				for (int k = 0; k < recipeDef.specialProducts.Count; k++)
 				{
-					SpecialProductType specialProductType = recipeDef.specialProducts[k];
-					if (specialProductType != SpecialProductType.Butchery)
+					for (int l = 0; l < ingredients.Count; l++)
 					{
-						if (specialProductType == SpecialProductType.Smelted)
+						Thing ing = ingredients[l];
+						SpecialProductType specialProductType = recipeDef.specialProducts[k];
+						if (specialProductType != SpecialProductType.Butchery)
 						{
-							foreach (Thing product2 in dominantIngredient.SmeltProducts(efficiency))
+							if (specialProductType == SpecialProductType.Smelted)
 							{
-								yield return GenRecipe.PostProcessProduct(product2, recipeDef, worker);
+								foreach (Thing product2 in ing.SmeltProducts(efficiency))
+								{
+									yield return GenRecipe.PostProcessProduct(product2, recipeDef, worker);
+								}
 							}
 						}
-					}
-					else
-					{
-						foreach (Thing product3 in dominantIngredient.ButcherProducts(worker, efficiency))
+						else
 						{
-							yield return GenRecipe.PostProcessProduct(product3, recipeDef, worker);
+							foreach (Thing product3 in ing.ButcherProducts(worker, efficiency))
+							{
+								yield return GenRecipe.PostProcessProduct(product3, recipeDef, worker);
+							}
 						}
 					}
 				}
@@ -100,7 +104,7 @@ namespace Verse
 				{
 					Log.Error(recipeDef + " needs workSkill because it creates a product with a quality.");
 				}
-				int level = worker.skills.GetSkill(recipeDef.workSkill).level;
+				int level = worker.skills.GetSkill(recipeDef.workSkill).Level;
 				compQuality.SetQuality(QualityUtility.RandomCreationQuality(level), ArtGenerationContext.Colony);
 			}
 			CompArt compArt = product.TryGetComp<CompArt>();

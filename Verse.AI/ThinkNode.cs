@@ -88,17 +88,20 @@ namespace Verse.AI
 		{
 		}
 
-		public virtual ThinkNode DeepCopy()
+		public virtual ThinkNode DeepCopy(bool resolve = true)
 		{
 			ThinkNode thinkNode = (ThinkNode)Activator.CreateInstance(base.GetType());
 			for (int i = 0; i < this.subNodes.Count; i++)
 			{
-				thinkNode.subNodes.Add(this.subNodes[i].DeepCopy());
+				thinkNode.subNodes.Add(this.subNodes[i].DeepCopy(resolve));
 			}
 			thinkNode.priority = this.priority;
 			thinkNode.leaveJoinableLordIfIssuesJob = this.leaveJoinableLordIfIssuesJob;
 			thinkNode.uniqueSaveKeyInt = this.uniqueSaveKeyInt;
-			thinkNode.ResolveSubnodesAndRecur();
+			if (resolve)
+			{
+				thinkNode.ResolveSubnodesAndRecur();
+			}
 			ThinkTreeKeyAssigner.AssignSingleKey(thinkNode, 0);
 			return thinkNode;
 		}

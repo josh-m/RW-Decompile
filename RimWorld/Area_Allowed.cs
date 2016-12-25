@@ -60,8 +60,9 @@ namespace RimWorld
 		{
 		}
 
-		public Area_Allowed(AllowedAreaMode mode, string label = null)
+		public Area_Allowed(AreaManager areaManager, AllowedAreaMode mode, string label = null) : base(areaManager)
 		{
+			this.areaManager = areaManager;
 			this.mode = mode;
 			if (!label.NullOrEmpty())
 			{
@@ -86,7 +87,7 @@ namespace RimWorld
 							num
 						});
 					}
-					if (Find.AreaManager.GetLabeled(this.labelInt) == null)
+					if (areaManager.GetLabeled(this.labelInt) == null)
 					{
 						break;
 					}
@@ -117,7 +118,13 @@ namespace RimWorld
 
 		public override string GetUniqueLoadID()
 		{
-			return "Area_Named_" + this.labelInt;
+			return string.Concat(new object[]
+			{
+				"Area_",
+				this.ID,
+				"_Named_",
+				this.labelInt
+			});
 		}
 
 		public override string ToString()

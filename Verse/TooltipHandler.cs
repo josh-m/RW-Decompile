@@ -130,7 +130,7 @@ namespace Verse
 			}
 			Vector3 vector = Event.current.mousePosition;
 			float y;
-			if (vector.y + 14f + num < (float)Screen.height)
+			if (vector.y + 14f + num < (float)UI.screenHeight)
 			{
 				y = vector.y + 14f;
 			}
@@ -143,7 +143,7 @@ namespace Verse
 				y = 0f;
 			}
 			float x;
-			if (vector.x + 16f + num2 < (float)Screen.width)
+			if (vector.x + 16f + num2 < (float)UI.screenWidth)
 			{
 				x = vector.x + 16f;
 			}

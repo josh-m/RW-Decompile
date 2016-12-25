@@ -7,6 +7,8 @@ namespace Verse
 	{
 		private const float AngryCallOnMeleeChance = 0.5f;
 
+		private const int AggressiveDurationAfterEngagingTarget = 360;
+
 		public Pawn pawn;
 
 		private int ticksToNextCall = -1;
@@ -19,7 +21,7 @@ namespace Verse
 		{
 			get
 			{
-				return this.pawn.InAggroMentalState || this.pawn.mindState.enemyTarget != null || (this.pawn.CurJob != null && this.pawn.CurJob.def == JobDefOf.AttackMelee);
+				return this.pawn.InAggroMentalState || (this.pawn.mindState.enemyTarget != null && this.pawn.mindState.enemyTarget.Spawned && Find.TickManager.TicksGame - this.pawn.mindState.lastEngageTargetTick <= 360) || (this.pawn.CurJob != null && this.pawn.CurJob.def == JobDefOf.AttackMelee);
 			}
 		}
 
@@ -83,7 +85,7 @@ namespace Verse
 			{
 				return;
 			}
-			if (this.pawn.Position.Fogged())
+			if (this.pawn.Position.Fogged(this.pawn.Map))
 			{
 				return;
 			}

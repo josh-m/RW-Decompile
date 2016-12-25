@@ -12,6 +12,8 @@ namespace Verse.AI.Group
 	{
 		private const int AttackTargetCacheInterval = 60;
 
+		public LordManager lordManager;
+
 		private LordToil curLordToil;
 
 		private StateGraph graph;
@@ -45,6 +47,14 @@ namespace Verse.AI.Group
 		private Dictionary<int, LordToilData> tmpLordToilData = new Dictionary<int, LordToilData>();
 
 		private Dictionary<int, TriggerData> tmpTriggerData = new Dictionary<int, TriggerData>();
+
+		public Map Map
+		{
+			get
+			{
+				return this.lordManager.map;
+			}
+		}
 
 		public StateGraph Graph
 		{
@@ -81,7 +91,7 @@ namespace Verse.AI.Group
 		private void Init()
 		{
 			this.initialized = true;
-			this.initialColonyHealthTotal = Find.StoryWatcher.watcherWealth.HealthTotal;
+			this.initialColonyHealthTotal = this.Map.wealthWatcher.HealthTotal;
 		}
 
 		public string GetUniqueLoadID()
@@ -93,7 +103,8 @@ namespace Verse.AI.Group
 		{
 			Scribe_Values.LookValue<int>(ref this.loadID, "loadID", 0, false);
 			Scribe_References.LookReference<Faction>(ref this.faction, "faction", false);
-			Scribe_Collections.LookList<Pawn>(ref this.ownedPawns, "ownedPawns", LookMode.MapReference, new object[0]);
+			Scribe_Collections.LookList<Thing>(ref this.extraForbiddenThings, "extraForbiddenThings", LookMode.Reference, new object[0]);
+			Scribe_Collections.LookList<Pawn>(ref this.ownedPawns, "ownedPawns", LookMode.Reference, new object[0]);
 			Scribe_Deep.LookDeep<LordJob>(ref this.curJob, "lordJob", new object[0]);
 			Scribe_Values.LookValue<bool>(ref this.initialized, "initialized", true, false);
 			Scribe_Values.LookValue<int>(ref this.ticksInToil, "ticksInToil", 0, false);
@@ -101,7 +112,6 @@ namespace Verse.AI.Group
 			Scribe_Values.LookValue<int>(ref this.numPawnsLostViolently, "numPawnsLostViolently", 0, false);
 			Scribe_Values.LookValue<int>(ref this.initialColonyHealthTotal, "initialColonyHealthTotal", 0, false);
 			Scribe_Values.LookValue<int>(ref this.lastPawnHarmTick, "lastPawnHarmTick", -99999, false);
-			Scribe_Collections.LookList<Thing>(ref this.extraForbiddenThings, "extraForbiddenThings", LookMode.MapReference, new object[0]);
 			if (Scribe.mode == LoadSaveMode.PostLoadInit)
 			{
 				this.extraForbiddenThings.RemoveAll((Thing x) => x == null);
@@ -143,7 +153,7 @@ namespace Verse.AI.Group
 			{
 				if (this.curJob.LostImportantReferenceDuringLoading)
 				{
-					Find.LordManager.RemoveLord(this);
+					this.lordManager.RemoveLord(this);
 				}
 				else
 				{
@@ -223,7 +233,7 @@ namespace Verse.AI.Group
 			this.graph = lordJob.CreateGraph();
 			Rand.PopSeed();
 			this.graph.ErrorCheck();
-			if (this.faction.def.canFlee)
+			if (this.faction.def.autoFlee)
 			{
 				LordToil_PanicFlee lordToil_PanicFlee = new LordToil_PanicFlee();
 				lordToil_PanicFlee.avoidGridMode = AvoidGridMode.Smart;
@@ -246,7 +256,7 @@ namespace Verse.AI.Group
 			}
 			for (int k = 0; k < this.ownedPawns.Count; k++)
 			{
-				Find.AttackTargetsCache.UpdateTarget(this.ownedPawns[k]);
+				this.Map.attackTargetsCache.UpdateTarget(this.ownedPawns[k]);
 			}
 		}
 
@@ -263,7 +273,7 @@ namespace Verse.AI.Group
 				{
 					this.ownedPawns[i].mindState.duty = null;
 				}
-				Find.AttackTargetsCache.UpdateTarget(this.ownedPawns[i]);
+				this.Map.attackTargetsCache.UpdateTarget(this.ownedPawns[i]);
 			}
 		}
 
@@ -297,7 +307,7 @@ namespace Verse.AI.Group
 			}
 			this.ownedPawns.Add(p);
 			this.numPawnsEverGained++;
-			Find.AttackTargetsCache.UpdateTarget(p);
+			this.Map.attackTargetsCache.UpdateTarget(p);
 			this.curLordToil.UpdateAllDuties();
 			this.curJob.Notify_PawnAdded(p);
 		}
@@ -309,11 +319,7 @@ namespace Verse.AI.Group
 			{
 				p.mindState.duty = null;
 			}
-			Find.AttackTargetsCache.UpdateTarget(p);
-			if (this.ownedPawns.Count == 0 && !this.CanExistWithoutPawns)
-			{
-				Find.LordManager.RemoveLord(this);
-			}
+			this.Map.attackTargetsCache.UpdateTarget(p);
 		}
 
 		public void GotoToil(LordToil newLordToil)
@@ -327,7 +333,7 @@ namespace Verse.AI.Group
 			this.ticksInToil = 0;
 			if (this.curLordToil.lord != this)
 			{
-				Log.Error("curLordToil lord is " + this.curLordToil.lord);
+				Log.Error("curLordToil lord is " + ((this.curLordToil.lord != null) ? this.curLordToil.lord.ToString() : "null (forgot to add toil to graph?)"));
 				this.curLordToil.lord = this;
 			}
 			this.curLordToil.Init();
@@ -374,6 +380,15 @@ namespace Verse.AI.Group
 			this.CheckTransitionOnSignal(TriggerSignal.ForMemo(memo));
 		}
 
+		public void Notify_FactionRelationsChanged(Faction otherFaction)
+		{
+			this.CheckTransitionOnSignal(new TriggerSignal
+			{
+				type = TriggerSignalType.FactionRelationsChanged,
+				faction = otherFaction
+			});
+		}
+
 		public void Notify_PawnLost(Pawn pawn, PawnLostCondition cond)
 		{
 			if (this.ownedPawns.Contains(pawn))
@@ -383,14 +398,21 @@ namespace Verse.AI.Group
 				{
 					this.numPawnsLostViolently++;
 				}
-				this.curLordToil.Notify_PawnLost(pawn, cond);
-				this.curJob.Notify_PawnLost(pawn, cond);
-				this.CheckTransitionOnSignal(new TriggerSignal
+				if (this.ownedPawns.Count == 0 && !this.CanExistWithoutPawns)
 				{
-					type = TriggerSignalType.PawnLost,
-					pawn = pawn,
-					condition = cond
-				});
+					this.lordManager.RemoveLord(this);
+				}
+				else
+				{
+					this.curLordToil.Notify_PawnLost(pawn, cond);
+					this.curJob.Notify_PawnLost(pawn, cond);
+					this.CheckTransitionOnSignal(new TriggerSignal
+					{
+						type = TriggerSignalType.PawnLost,
+						pawn = pawn,
+						condition = cond
+					});
+				}
 				return;
 			}
 			Log.Error(string.Concat(new object[]
@@ -430,12 +452,13 @@ namespace Verse.AI.Group
 			this.curLordToil.Notify_ReachedDutyLocation(pawn);
 		}
 
+		public void Notify_ConstructionFailed(Pawn pawn, Frame frame, Blueprint_Build newBlueprint)
+		{
+			this.curLordToil.Notify_ConstructionFailed(pawn, frame, newBlueprint);
+		}
+
 		private bool CheckTransitionOnSignal(TriggerSignal signal)
 		{
-			if (this.ownedPawns.Count == 0)
-			{
-				return false;
-			}
 			if (Trigger_PawnHarmed.SignalIsHarm(signal))
 			{
 				this.lastPawnHarmTick = Find.TickManager.TicksGame;
@@ -452,7 +475,7 @@ namespace Verse.AI.Group
 
 		private Vector3 DebugCenter()
 		{
-			Vector3 result = Find.Map.Center.ToVector3ShiftedWithAltitude(AltitudeLayer.MetaOverlays);
+			Vector3 result = this.Map.Center.ToVector3ShiftedWithAltitude(AltitudeLayer.MetaOverlays);
 			if ((from p in this.ownedPawns
 			where p.Spawned
 			select p).Any<Pawn>())
@@ -502,7 +525,7 @@ namespace Verse.AI.Group
 			{
 				label = "toil=NULL";
 			}
-			Vector2 vector = this.DebugCenter().ToScreenPosition();
+			Vector2 vector = this.DebugCenter().MapToUIPosition();
 			Widgets.Label(new Rect(vector.x - 100f, vector.y - 100f, 200f, 200f), label);
 			Text.Anchor = TextAnchor.UpperLeft;
 		}
@@ -531,7 +554,7 @@ namespace Verse.AI.Group
 
 		private bool ShouldDoDebugOutput()
 		{
-			IntVec3 a = Gen.MouseCell();
+			IntVec3 a = UI.MouseCell();
 			IntVec3 flagLoc = this.curLordToil.FlagLoc;
 			if (flagLoc.IsValid && a == flagLoc)
 			{

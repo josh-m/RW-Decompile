@@ -67,8 +67,12 @@ namespace Verse
 
 		public static float BackgroundDarkAlphaForText()
 		{
-			float num = GenCelestial.CurCelestialSunGlow();
-			float num2 = (Find.Map.Biome != BiomeDefOf.IceSheet) ? Mathf.Clamp01(Find.SnowGrid.TotalDepth / 1000f) : 1f;
+			if (Find.VisibleMap == null)
+			{
+				return 0f;
+			}
+			float num = GenCelestial.CurCelestialSunGlow(Find.VisibleMap);
+			float num2 = (Find.VisibleMap.Biome != BiomeDefOf.IceSheet) ? Mathf.Clamp01(Find.VisibleMap.snowGrid.TotalDepth / 1000f) : 1f;
 			return num * num2 * 0.41f;
 		}
 
@@ -89,6 +93,10 @@ namespace Verse
 			{
 				return 1f;
 			}
+			if (tDef.iconDrawScale > 0f)
+			{
+				return tDef.iconDrawScale;
+			}
 			if (tDef.graphicData.drawSize.x > (float)tDef.Size.x && tDef.graphicData.drawSize.y > (float)tDef.Size.z)
 			{
 				return Mathf.Min(tDef.graphicData.drawSize.x / (float)tDef.Size.x, tDef.graphicData.drawSize.y / (float)tDef.Size.z);
@@ -100,7 +108,7 @@ namespace Verse
 		{
 			if (Find.WindowStack != null)
 			{
-				Find.WindowStack.Add(new Dialog_Message(message, null));
+				Find.WindowStack.Add(new Dialog_MessageBox(message, null, null, null, null, null, false));
 			}
 		}
 
@@ -133,21 +141,6 @@ namespace Verse
 		public static Rect Rounded(this Rect r)
 		{
 			return new Rect((float)((int)r.x), (float)((int)r.y), (float)((int)r.width), (float)((int)r.height));
-		}
-
-		public static Vector2 AbsMousePosition()
-		{
-			Vector2 result = Input.mousePosition;
-			result.y = (float)Screen.height - result.y;
-			return result;
-		}
-
-		public static Vector2 AbsUIPositionOf(Vector2 localPos)
-		{
-			Vector2 mousePosition = Event.current.mousePosition;
-			Vector2 b = GenUI.AbsMousePosition();
-			Vector2 b2 = mousePosition - b;
-			return localPos - b2;
 		}
 
 		public static float DistFromRect(Rect r, Vector2 p)
@@ -184,7 +177,7 @@ namespace Verse
 
 		public static void RenderMouseoverBracket()
 		{
-			Vector3 position = Gen.MouseCell().ToVector3ShiftedWithAltitude(AltitudeLayer.MetaOverlays);
+			Vector3 position = UI.MouseCell().ToVector3ShiftedWithAltitude(AltitudeLayer.MetaOverlays);
 			Graphics.DrawMesh(MeshPool.plane10, position, Quaternion.identity, GenUI.MouseoverBracketMaterial, 0);
 		}
 
@@ -204,13 +197,13 @@ namespace Verse
 			}
 		}
 
-		public static IEnumerable<TargetInfo> TargetsAtMouse(TargetingParameters clickParams, bool thingsOnly = false)
+		public static IEnumerable<LocalTargetInfo> TargetsAtMouse(TargetingParameters clickParams, bool thingsOnly = false)
 		{
-			return GenUI.TargetsAt(Gen.MouseMapPosVector3(), clickParams, thingsOnly);
+			return GenUI.TargetsAt(UI.MouseMapPosition(), clickParams, thingsOnly);
 		}
 
 		[DebuggerHidden]
-		public static IEnumerable<TargetInfo> TargetsAt(Vector3 clickPos, TargetingParameters clickParams, bool thingsOnly = false)
+		public static IEnumerable<LocalTargetInfo> TargetsAt(Vector3 clickPos, TargetingParameters clickParams, bool thingsOnly = false)
 		{
 			List<Thing> clickableList = GenUI.ThingsUnderMouse(clickPos, 0.8f, clickParams);
 			if (clickableList.Count > 0)
@@ -222,8 +215,8 @@ namespace Verse
 			}
 			if (!thingsOnly)
 			{
-				TargetInfo cellTarg = Gen.MouseCell();
-				if (clickParams.CanTarget(cellTarg))
+				LocalTargetInfo cellTarg = UI.MouseCell();
+				if (clickParams.CanTarget(cellTarg.ToTargetInfo(Find.VisibleMap)))
 				{
 					yield return cellTarg;
 				}
@@ -235,7 +228,7 @@ namespace Verse
 			IntVec3 c = IntVec3.FromVector3(clickPos);
 			List<Thing> list = new List<Thing>();
 			GenUI.clickedPawns.Clear();
-			List<Pawn> allPawnsSpawned = Find.MapPawns.AllPawnsSpawned;
+			List<Pawn> allPawnsSpawned = Find.VisibleMap.mapPawns.AllPawnsSpawned;
 			for (int i = 0; i < allPawnsSpawned.Count; i++)
 			{
 				Pawn pawn = allPawnsSpawned[i];
@@ -250,7 +243,7 @@ namespace Verse
 				list.Add(GenUI.clickedPawns[j]);
 			}
 			List<Thing> list2 = new List<Thing>();
-			foreach (Thing current in Find.ThingGrid.ThingsAt(c))
+			foreach (Thing current in Find.VisibleMap.thingGrid.ThingsAt(c))
 			{
 				if (!list.Contains(current) && clickParams.CanTarget(current))
 				{
@@ -260,7 +253,7 @@ namespace Verse
 			list2.Sort(new Comparison<Thing>(GenUI.CompareThingsByDrawAltitude));
 			list.AddRange(list2);
 			GenUI.clickedPawns.Clear();
-			List<Pawn> allPawnsSpawned2 = Find.MapPawns.AllPawnsSpawned;
+			List<Pawn> allPawnsSpawned2 = Find.VisibleMap.mapPawns.AllPawnsSpawned;
 			for (int k = 0; k < allPawnsSpawned2.Count; k++)
 			{
 				Pawn pawn2 = allPawnsSpawned2[k];
@@ -284,7 +277,7 @@ namespace Verse
 
 		private static int CompareThingsByDistanceToMousePointer(Thing a, Thing b)
 		{
-			Vector3 b2 = Gen.MouseMapPosVector3();
+			Vector3 b2 = UI.MouseMapPosition();
 			float num = (a.DrawPos - b2).MagnitudeHorizontalSquared();
 			float num2 = (b.DrawPos - b2).MagnitudeHorizontalSquared();
 			if (num < num2)
@@ -319,6 +312,15 @@ namespace Verse
 		public static Rect ContractedBy(this Rect rect, float margin)
 		{
 			return new Rect(rect.x + margin, rect.y + margin, rect.width - margin * 2f, rect.height - margin * 2f);
+		}
+
+		public static Rect ScaledBy(this Rect rect, float scale)
+		{
+			rect.x -= rect.width * (scale - 1f) / 2f;
+			rect.y -= rect.height * (scale - 1f) / 2f;
+			rect.width *= scale;
+			rect.height *= scale;
+			return rect;
 		}
 
 		public static Rect CenteredOnXIn(this Rect rect, Rect otherRect)

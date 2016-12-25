@@ -10,20 +10,21 @@ namespace RimWorld
 	{
 		public static bool AnimalUsable(Pawn p)
 		{
-			return p.Spawned && !p.Position.Fogged() && (!p.InMentalState || !p.MentalStateDef.IsAggro) && !p.Downed && p.Faction == null;
+			return p.Spawned && !p.Position.Fogged(p.Map) && (!p.InMentalState || !p.MentalStateDef.IsAggro) && !p.Downed && p.Faction == null;
 		}
 
 		public static void DriveInsane(Pawn p)
 		{
-			p.mindState.mentalStateHandler.TryStartMentalState(MentalStateDefOf.Manhunter, null, true);
+			p.mindState.mentalStateHandler.TryStartMentalState(MentalStateDefOf.Manhunter, null, true, false, null);
 		}
 
 		public override bool TryExecute(IncidentParms parms)
 		{
+			Map map = (Map)parms.target;
 			if (parms.points <= 0f)
 			{
 				Log.Error("AnimalInsanity running without points.");
-				parms.points = (float)((int)(Find.StoryWatcher.watcherStrength.StrengthRating * 50f));
+				parms.points = (float)((int)(map.strengthWatcher.StrengthRating * 50f));
 			}
 			float adjustedPoints = parms.points;
 			if (adjustedPoints > 250f)
@@ -33,7 +34,7 @@ namespace RimWorld
 				adjustedPoints += 250f;
 			}
 			IEnumerable<PawnKindDef> source = from def in DefDatabase<PawnKindDef>.AllDefs
-			where def.RaceProps.Animal && def.combatPower <= adjustedPoints && (from p in Find.MapPawns.AllPawnsSpawned
+			where def.RaceProps.Animal && def.combatPower <= adjustedPoints && (from p in map.mapPawns.AllPawnsSpawned
 			where p.kindDef == def && IncidentWorker_AnimalInsanityMass.AnimalUsable(p)
 			select p).Count<Pawn>() >= 3
 			select def;
@@ -42,7 +43,7 @@ namespace RimWorld
 			{
 				return false;
 			}
-			List<Pawn> list = (from p in Find.MapPawns.AllPawnsSpawned
+			List<Pawn> list = (from p in map.mapPawns.AllPawnsSpawned
 			where p.kindDef == animalDef && IncidentWorker_AnimalInsanityMass.AnimalUsable(p)
 			select p).ToList<Pawn>();
 			float combatPower = animalDef.combatPower;
@@ -84,8 +85,11 @@ namespace RimWorld
 				});
 			}
 			Find.LetterStack.ReceiveLetter(label, text, LetterType.BadUrgent, pawn, null);
-			SoundDefOf.PsychicPulseGlobal.PlayOneShotOnCamera();
-			Find.CameraDriver.shaker.DoShake(1f);
+			if (map == Find.VisibleMap)
+			{
+				SoundDefOf.PsychicPulseGlobal.PlayOneShotOnCamera();
+				Find.CameraDriver.shaker.DoShake(1f);
+			}
 			return true;
 		}
 	}

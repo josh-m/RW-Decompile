@@ -1,4 +1,5 @@
 using RimWorld;
+using RimWorld.Planet;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -30,6 +31,8 @@ namespace Verse
 
 		private int ticksBelowMinor;
 
+		private static List<Thought> tmpThoughts = new List<Thought>();
+
 		public float BreakThresholdExtreme
 		{
 			get
@@ -51,6 +54,14 @@ namespace Verse
 			get
 			{
 				return this.pawn.GetStatValue(StatDefOf.MentalBreakThreshold, true) + 0.15f + 0.15f;
+			}
+		}
+
+		private bool CanDoRandomMentalBreaks
+		{
+			get
+			{
+				return this.pawn.RaceProps.Humanlike && (this.pawn.Spawned || this.pawn.IsCaravanMember());
 			}
 		}
 
@@ -174,7 +185,7 @@ namespace Verse
 
 		public void MentalStateStarterTick()
 		{
-			if (this.pawn.RaceProps.Humanlike && this.pawn.Spawned && this.pawn.MentalStateDef == null && this.pawn.IsHashIntervalTick(150) && !TutorSystem.TutorialMode)
+			if (this.CanDoRandomMentalBreaks && this.pawn.MentalStateDef == null && this.pawn.IsHashIntervalTick(150))
 			{
 				if (!DebugSettings.enableRandomMentalStates)
 				{
@@ -217,7 +228,7 @@ namespace Verse
 						if (currentData.randomMentalState != null)
 						{
 							float mtb = currentData.randomMentalStateMtbDaysMoodCurve.Evaluate(this.CurMood);
-							if (Rand.MTBEventOccurs(mtb, 60000f, 150f) && currentData.randomMentalState.Worker.StateCanOccur(this.pawn) && this.pawn.mindState.mentalStateHandler.TryStartMentalState(currentData.randomMentalState, null, false))
+							if (Rand.MTBEventOccurs(mtb, 60000f, 150f) && currentData.randomMentalState.Worker.StateCanOccur(this.pawn) && this.pawn.mindState.mentalStateHandler.TryStartMentalState(currentData.randomMentalState, null, false, false, null))
 							{
 								return;
 							}
@@ -242,7 +253,7 @@ namespace Verse
 
 		public bool TryDoRandomMoodCausedMentalBreak()
 		{
-			if (!this.pawn.Spawned || this.pawn.Downed || !this.pawn.Awake())
+			if (!this.CanDoRandomMentalBreaks || this.pawn.Downed || !this.pawn.Awake())
 			{
 				return false;
 			}
@@ -256,17 +267,18 @@ namespace Verse
 				return false;
 			}
 			Thought thought = this.RandomMentalBreakReason();
-			this.pawn.mindState.mentalStateHandler.TryStartMentalState(mentalBreakDef.mentalState, (thought == null) ? null : thought.LabelCap, false);
+			string reason = (thought == null) ? null : thought.LabelCap;
+			this.pawn.mindState.mentalStateHandler.TryStartMentalState(mentalBreakDef.mentalState, reason, false, true, null);
 			return true;
 		}
 
 		private Thought RandomMentalBreakReason()
 		{
-			List<Thought> list = this.pawn.needs.mood.thoughts.Thoughts.ListFullCopy<Thought>();
+			this.pawn.needs.mood.thoughts.GetMainThoughts(MentalBreaker.tmpThoughts);
 			float num = 0f;
-			for (int i = 0; i < list.Count; i++)
+			for (int i = 0; i < MentalBreaker.tmpThoughts.Count; i++)
 			{
-				float num2 = list[i].MoodOffset();
+				float num2 = MentalBreaker.tmpThoughts[i].MoodOffset();
 				if (num2 < num)
 				{
 					num = num2;
@@ -274,9 +286,10 @@ namespace Verse
 			}
 			float maxMoodOffset = num * 0.5f;
 			Thought result = null;
-			(from x in list
+			(from x in MentalBreaker.tmpThoughts
 			where x.MoodOffset() <= maxMoodOffset
 			select x).TryRandomElementByWeight((Thought x) => -x.MoodOffset(), out result);
+			MentalBreaker.tmpThoughts.Clear();
 			return result;
 		}
 

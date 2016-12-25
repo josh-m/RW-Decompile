@@ -69,15 +69,15 @@ namespace RimWorld
 			}
 		}
 
-		public override void SpawnSetup()
+		public override void SpawnSetup(Map map)
 		{
-			base.SpawnSetup();
+			base.SpawnSetup(map);
 			this.growTick = Find.TickManager.TicksGame;
-			if (Current.ProgramState == ProgramState.MapPlaying)
+			if (Current.ProgramState == ProgramState.Playing)
 			{
-				ListerFilthInHomeArea.Notify_FilthSpawned(this);
+				base.Map.listerFilthInHomeArea.Notify_FilthSpawned(this);
 			}
-			if (!Find.TerrainGrid.TerrainAt(base.Position).acceptFilth)
+			if (!base.Map.terrainGrid.TerrainAt(base.Position).acceptFilth)
 			{
 				this.Destroy(DestroyMode.Vanish);
 			}
@@ -85,10 +85,11 @@ namespace RimWorld
 
 		public override void DeSpawn()
 		{
+			Map map = base.Map;
 			base.DeSpawn();
-			if (Current.ProgramState == ProgramState.MapPlaying)
+			if (Current.ProgramState == ProgramState.Playing)
 			{
-				ListerFilthInHomeArea.Notify_FilthDespawned(this);
+				map.listerFilthInHomeArea.Notify_FilthDespawned(this);
 			}
 		}
 
@@ -154,13 +155,13 @@ namespace RimWorld
 		{
 			if (base.Spawned)
 			{
-				Find.MapDrawer.MapMeshDirty(base.Position, MapMeshFlag.Things);
+				base.Map.mapDrawer.MapMeshDirty(base.Position, MapMeshFlag.Things);
 			}
 		}
 
-		public bool CanDropAt(IntVec3 c)
+		public bool CanDropAt(IntVec3 c, Map map)
 		{
-			TerrainDef terrainDef = Find.TerrainGrid.TerrainAt(c);
+			TerrainDef terrainDef = map.terrainGrid.TerrainAt(c);
 			return terrainDef.acceptFilth && (!this.def.filth.terrainSourced || terrainDef.acceptTerrainSourceFilth);
 		}
 	}

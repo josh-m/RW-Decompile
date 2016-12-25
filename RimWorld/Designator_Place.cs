@@ -68,9 +68,9 @@ namespace RimWorld
 		public override void SelectedUpdate()
 		{
 			GenDraw.DrawNoBuildEdgeLines();
-			if (!ArchitectCategoryTab.InfoRect.Contains(GenUI.AbsMousePosition()))
+			if (!ArchitectCategoryTab.InfoRect.Contains(UI.MousePositionOnUIInverted))
 			{
-				IntVec3 intVec = Gen.MouseCell();
+				IntVec3 intVec = UI.MouseCell();
 				if (this.PlacingDef is TerrainDef)
 				{
 					GenUI.RenderMouseoverBracket();
@@ -88,7 +88,7 @@ namespace RimWorld
 				this.DrawGhost(ghostCol);
 				if (this.CanDesignateCell(intVec).Accepted && this.PlacingDef.specialDisplayRadius > 0.01f)
 				{
-					GenDraw.DrawRadiusRing(Gen.MouseCell(), this.PlacingDef.specialDisplayRadius);
+					GenDraw.DrawRadiusRing(UI.MouseCell(), this.PlacingDef.specialDisplayRadius);
 				}
 				GenDraw.DrawInteractionCell((ThingDef)this.PlacingDef, intVec, this.placingRot);
 			}
@@ -96,7 +96,7 @@ namespace RimWorld
 
 		protected virtual void DrawGhost(Color ghostCol)
 		{
-			GhostDrawer.DrawGhostThing(Gen.MouseCell(), this.placingRot, (ThingDef)this.PlacingDef, null, ghostCol, AltitudeLayer.Blueprint);
+			GhostDrawer.DrawGhostThing(UI.MouseCell(), this.placingRot, (ThingDef)this.PlacingDef, null, ghostCol, AltitudeLayer.Blueprint);
 		}
 
 		private void HandleRotationShortcuts()

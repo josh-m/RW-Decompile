@@ -12,8 +12,8 @@ namespace RimWorld
 		public override Job TryGiveJob(Pawn pawn)
 		{
 			bool allowedOutside = JoyUtility.EnjoyableOutsideNow(pawn, null);
-			IEnumerable<Thing> source = from thing in Find.ListerThings.ThingsInGroup(ThingRequestGroup.Art)
-			where thing.Faction == Faction.OfPlayer && !thing.IsForbidden(pawn) && (allowedOutside || thing.Position.Roofed()) && pawn.CanReserveAndReach(thing, PathEndMode.Touch, Danger.None, 1)
+			IEnumerable<Thing> source = from thing in pawn.Map.listerThings.ThingsInGroup(ThingRequestGroup.Art)
+			where thing.Faction == Faction.OfPlayer && !thing.IsForbidden(pawn) && (allowedOutside || thing.Position.Roofed(thing.Map)) && pawn.CanReserveAndReach(thing, PathEndMode.Touch, Danger.None, 1)
 			select thing;
 			Thing t;
 			if (!source.TryRandomElementByWeight(delegate(Thing target)

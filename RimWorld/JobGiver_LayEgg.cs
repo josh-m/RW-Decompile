@@ -15,8 +15,8 @@ namespace RimWorld
 			{
 				return null;
 			}
-			IntVec3 vec = RCellFinder.RandomWanderDestFor(pawn, pawn.Position, 5f, null, Danger.Some);
-			return new Job(JobDefOf.LayEgg, vec);
+			IntVec3 c = RCellFinder.RandomWanderDestFor(pawn, pawn.Position, 5f, null, Danger.Some);
+			return new Job(JobDefOf.LayEgg, c);
 		}
 	}
 }

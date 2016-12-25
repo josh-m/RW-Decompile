@@ -124,7 +124,8 @@ namespace Verse
 					T t;
 					try
 					{
-						t = (T)((object)Manager.Load(absFilePath, false, true, true));
+						bool doStream = ModContentLoader<T>.ShouldStreamAudioClipFromPath(absFilePath);
+						t = (T)((object)Manager.Load(absFilePath, doStream, true, true));
 					}
 					finally
 					{
@@ -161,6 +162,16 @@ namespace Verse
 				return (LoadedContentItem<T>)new LoadedContentItem<Texture2D>(absFilePath, BaseContent.BadTex);
 			}
 			return null;
+		}
+
+		private static bool ShouldStreamAudioClipFromPath(string absPath)
+		{
+			if (!File.Exists(absPath))
+			{
+				return false;
+			}
+			FileInfo fileInfo = new FileInfo(absPath);
+			return fileInfo.Length > 307200L;
 		}
 
 		private static Texture2D LoadPNG(string filePath)

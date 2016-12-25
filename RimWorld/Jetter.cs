@@ -31,7 +31,7 @@ namespace RimWorld
 		{
 			if (this.JState == Jetter.JetterState.WickBurning)
 			{
-				OverlayDrawer.DrawOverlay(this, OverlayTypes.BurningWick);
+				base.Map.overlayDrawer.DrawOverlay(this, OverlayTypes.BurningWick);
 				this.WickTicksLeft--;
 				if (this.WickTicksLeft == 0)
 				{
@@ -77,10 +77,10 @@ namespace RimWorld
 		protected void MoveJetter()
 		{
 			IntVec3 intVec = base.Position + base.Rotation.FacingCell;
-			if (!intVec.Walkable() || Find.ThingGrid.CellContains(intVec, ThingCategory.Pawn) || intVec.GetEdifice() != null)
+			if (!intVec.Walkable(base.Map) || base.Map.thingGrid.CellContains(intVec, ThingCategory.Pawn) || intVec.GetEdifice(base.Map) != null)
 			{
 				this.Destroy(DestroyMode.Vanish);
-				GenExplosion.DoExplosion(base.Position, 2.9f, DamageDefOf.Bomb, null, null, null, null, null, 0f, 1, false, null, 0f, 1);
+				GenExplosion.DoExplosion(base.Position, base.Map, 2.9f, DamageDefOf.Bomb, null, null, null, null, null, 0f, 1, false, null, 0f, 1);
 				return;
 			}
 			base.Position = intVec;

@@ -40,6 +40,10 @@ namespace Verse
 				{
 					result = double.Parse(str, CultureInfo.InvariantCulture);
 				}
+				else if (itemType == typeof(sbyte))
+				{
+					result = sbyte.Parse(str, CultureInfo.InvariantCulture);
+				}
 				else
 				{
 					if (itemType.IsEnum)
@@ -259,7 +263,7 @@ namespace Verse
 
 		public static bool HandlesType(Type type)
 		{
-			return type == typeof(string) || type.IsPrimitive || type.IsEnum || type == typeof(Type) || type == typeof(Action) || type == typeof(Vector3) || type == typeof(Vector2) || type == typeof(Rect) || type == typeof(Color) || type == typeof(PublishedFileId_t) || type == typeof(IntVec2) || type == typeof(IntVec3) || type == typeof(Rot4) || type == typeof(CellRect) || type == typeof(NameTriple) || type == typeof(FloatRange) || type == typeof(IntRange) || type == typeof(QualityRange) || type == typeof(ColorInt);
+			return type.IsPrimitive || type.IsEnum || type == typeof(string) || type == typeof(IntVec3) || type == typeof(IntVec2) || type == typeof(Type) || type == typeof(Action) || type == typeof(Vector3) || type == typeof(Vector2) || type == typeof(Rect) || type == typeof(Color) || type == typeof(PublishedFileId_t) || type == typeof(Rot4) || type == typeof(CellRect) || type == typeof(NameTriple) || type == typeof(FloatRange) || type == typeof(IntRange) || type == typeof(QualityRange) || type == typeof(ColorInt);
 		}
 
 		private static Vector3 FromStringVector3(string Str)

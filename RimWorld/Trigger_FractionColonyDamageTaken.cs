@@ -1,6 +1,5 @@
 using System;
 using UnityEngine;
-using Verse;
 using Verse.AI.Group;
 
 namespace RimWorld
@@ -30,7 +29,7 @@ namespace RimWorld
 		{
 			if (!transition.sources.Contains(previousToil))
 			{
-				this.Data.startColonyDamage = Find.StoryWatcher.watcherDamage.DamageTakenEver;
+				this.Data.startColonyDamage = transition.Map.damageWatcher.DamageTakenEver;
 			}
 		}
 
@@ -39,7 +38,7 @@ namespace RimWorld
 			if (signal.type == TriggerSignalType.Tick)
 			{
 				float num = Mathf.Max((float)lord.initialColonyHealthTotal * this.desiredColonyDamageFraction, this.minDamage);
-				return Find.StoryWatcher.watcherDamage.DamageTakenEver > this.Data.startColonyDamage + num;
+				return lord.Map.damageWatcher.DamageTakenEver > this.Data.startColonyDamage + num;
 			}
 			return false;
 		}

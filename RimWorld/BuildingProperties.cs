@@ -60,11 +60,13 @@ namespace RimWorld
 
 		public float roofCollapseDamageMultiplier = 1f;
 
+		public bool hasFuelingPort;
+
 		public bool isPlayerEjectable;
 
 		public GraphicData fullGraveGraphicData;
 
-		public int bed_healTickInterval = 5000;
+		public float bed_healPerDay;
 
 		public bool bed_defaultMedical;
 
@@ -82,9 +84,9 @@ namespace RimWorld
 
 		public ThingDef turretShellDef;
 
-		public int turretBurstWarmupTicks;
+		public float turretBurstWarmupTime;
 
-		public int turretBurstCooldownTicks = -1;
+		public float turretBurstCooldownTime = -1f;
 
 		public string turretTopGraphicPath;
 
@@ -92,6 +94,8 @@ namespace RimWorld
 		public Material turretTopMat;
 
 		public bool ai_combatDangerous;
+
+		public bool ai_chillDestination = true;
 
 		public SoundDef soundDoorOpenPowered = SoundDefOf.DoorOpen;
 
@@ -104,8 +108,6 @@ namespace RimWorld
 		public string sowTag;
 
 		public ThingDef defaultPlantToGrow;
-
-		public bool plantsDestroyWithMe;
 
 		public SoundDef soundMined;
 
@@ -135,6 +137,10 @@ namespace RimWorld
 		public Graphic trapUnarmedGraphic;
 
 		public float unpoweredWorkTableWorkSpeedFactor;
+
+		public bool workSpeedPenaltyOutdoors;
+
+		public bool workSpeedPenaltyTemperature;
 
 		public IntRange watchBuildingStandDistanceRange = IntRange.one;
 

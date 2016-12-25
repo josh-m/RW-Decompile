@@ -21,7 +21,7 @@ namespace Verse.AI
 			Toil toil = new Toil();
 			toil.initAction = delegate
 			{
-				Find.DesignationManager.RemoveAllDesignationsOn(toil.actor.jobs.curJob.GetTarget(ind).Thing, false);
+				toil.actor.Map.designationManager.RemoveAllDesignationsOn(toil.actor.jobs.curJob.GetTarget(ind).Thing, false);
 			};
 			return toil;
 		}
@@ -42,16 +42,16 @@ namespace Verse.AI
 			toil.initAction = delegate
 			{
 				Pawn actor = toil.GetActor();
-				if (actor.carrier.CarriedThing != null)
+				if (actor.carryTracker.CarriedThing != null)
 				{
-					if (actor.inventory.container.TryAdd(actor.carrier.CarriedThing))
+					if (actor.inventory.innerContainer.TryAdd(actor.carryTracker.CarriedThing, true))
 					{
-						actor.carrier.container.Clear();
+						actor.carryTracker.innerContainer.Clear();
 					}
 					else
 					{
 						Thing thing;
-						actor.carrier.TryDropCarriedThing(actor.Position, actor.carrier.CarriedThing.stackCount, ThingPlaceMode.Near, out thing, null);
+						actor.carryTracker.TryDropCarriedThing(actor.Position, actor.carryTracker.CarriedThing.stackCount, ThingPlaceMode.Near, out thing, null);
 					}
 				}
 			};

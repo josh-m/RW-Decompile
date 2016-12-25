@@ -27,7 +27,7 @@ namespace RimWorld
 
 		public SkillDef def;
 
-		public int level;
+		public int levelInt;
 
 		public Passion passion;
 
@@ -35,11 +35,29 @@ namespace RimWorld
 
 		public float xpSinceMidnight;
 
+		private BoolUnknown cachedTotallyDisabled = BoolUnknown.Unknown;
+
+		public int Level
+		{
+			get
+			{
+				if (this.TotallyDisabled)
+				{
+					return 0;
+				}
+				return this.levelInt;
+			}
+			set
+			{
+				this.levelInt = value;
+			}
+		}
+
 		public float XpRequiredForLevelUp
 		{
 			get
 			{
-				return this.XpRequiredToLevelUpFrom(this.level);
+				return this.XpRequiredToLevelUpFrom(this.levelInt);
 			}
 		}
 
@@ -56,7 +74,7 @@ namespace RimWorld
 			get
 			{
 				float num = 0f;
-				for (int i = 0; i < this.level; i++)
+				for (int i = 0; i < this.levelInt; i++)
 				{
 					num += this.XpRequiredToLevelUpFrom(i);
 				}
@@ -68,28 +86,11 @@ namespace RimWorld
 		{
 			get
 			{
-				if (this.pawn.story.WorkTagIsDisabled(this.def.disablingWorkTags))
+				if (this.cachedTotallyDisabled == BoolUnknown.Unknown)
 				{
-					return true;
+					this.cachedTotallyDisabled = ((!this.CalculateTotallyDisabled()) ? BoolUnknown.False : BoolUnknown.True);
 				}
-				List<WorkTypeDef> allDefsListForReading = DefDatabase<WorkTypeDef>.AllDefsListForReading;
-				bool result = false;
-				for (int i = 0; i < allDefsListForReading.Count; i++)
-				{
-					WorkTypeDef workTypeDef = allDefsListForReading[i];
-					for (int j = 0; j < workTypeDef.relevantSkills.Count; j++)
-					{
-						if (workTypeDef.relevantSkills[j] == this.def)
-						{
-							if (!this.pawn.story.WorkTypeIsDisabled(workTypeDef))
-							{
-								return false;
-							}
-							result = true;
-						}
-					}
-				}
-				return result;
+				return this.cachedTotallyDisabled == BoolUnknown.True;
 			}
 		}
 
@@ -97,7 +98,7 @@ namespace RimWorld
 		{
 			get
 			{
-				switch (this.level)
+				switch (this.levelInt)
 				{
 				case 0:
 					return "Skill0".Translate();
@@ -147,38 +148,6 @@ namespace RimWorld
 			}
 		}
 
-		public float LearningFactor
-		{
-			get
-			{
-				if (DebugSettings.fastLearning)
-				{
-					return 200f;
-				}
-				float num = this.pawn.GetStatValue(StatDefOf.GlobalLearningFactor, true) - 1f;
-				switch (this.passion)
-				{
-				case Passion.None:
-					IL_46:
-					num += 0.333f;
-					goto IL_6D;
-				case Passion.Minor:
-					num += 1f;
-					goto IL_6D;
-				case Passion.Major:
-					num += 1.5f;
-					goto IL_6D;
-				}
-				goto IL_46;
-				IL_6D:
-				if (this.LearningSaturatedToday)
-				{
-					num *= 0.2f;
-				}
-				return num;
-			}
-		}
-
 		public bool LearningSaturatedToday
 		{
 			get
@@ -205,7 +174,7 @@ namespace RimWorld
 		public void ExposeData()
 		{
 			Scribe_Defs.LookDef<SkillDef>(ref this.def, "def");
-			Scribe_Values.LookValue<int>(ref this.level, "level", 0, false);
+			Scribe_Values.LookValue<int>(ref this.levelInt, "level", 0, false);
 			Scribe_Values.LookValue<float>(ref this.xpSinceLastLevel, "xpSinceLastLevel", 0f, false);
 			Scribe_Values.LookValue<Passion>(ref this.passion, "passion", Passion.None, false);
 			Scribe_Values.LookValue<float>(ref this.xpSinceMidnight, "xpSinceMidnight", 0f, false);
@@ -217,40 +186,40 @@ namespace RimWorld
 			{
 				this.xpSinceMidnight = 0f;
 			}
-			switch (this.level)
+			switch (this.levelInt)
 			{
 			case 10:
-				this.Learn(-0.1f);
+				this.Learn(-0.1f, false);
 				break;
 			case 11:
-				this.Learn(-0.2f);
+				this.Learn(-0.2f, false);
 				break;
 			case 12:
-				this.Learn(-0.4f);
+				this.Learn(-0.4f, false);
 				break;
 			case 13:
-				this.Learn(-0.65f);
+				this.Learn(-0.65f, false);
 				break;
 			case 14:
-				this.Learn(-1f);
+				this.Learn(-1f, false);
 				break;
 			case 15:
-				this.Learn(-1.5f);
+				this.Learn(-1.5f, false);
 				break;
 			case 16:
-				this.Learn(-2f);
+				this.Learn(-2f, false);
 				break;
 			case 17:
-				this.Learn(-3f);
+				this.Learn(-3f, false);
 				break;
 			case 18:
-				this.Learn(-4f);
+				this.Learn(-4f, false);
 				break;
 			case 19:
-				this.Learn(-6f);
+				this.Learn(-6f, false);
 				break;
 			case 20:
-				this.Learn(-8f);
+				this.Learn(-8f, false);
 				break;
 			}
 		}
@@ -260,9 +229,13 @@ namespace RimWorld
 			return (float)(1000 + startingLevel * 1000);
 		}
 
-		public void Learn(float xp)
+		public void Learn(float xp, bool direct = false)
 		{
-			if (xp < 0f && this.level == 0)
+			if (this.TotallyDisabled)
+			{
+				return;
+			}
+			if (xp < 0f && this.levelInt == 0)
 			{
 				return;
 			}
@@ -277,44 +250,110 @@ namespace RimWorld
 						amount = 0f * xp;
 						break;
 					case Passion.Minor:
-						amount = 1.5E-05f * xp;
+						amount = 2E-05f * xp;
 						break;
 					case Passion.Major:
-						amount = 3E-05f * xp;
+						amount = 4E-05f * xp;
 						break;
 					}
 					this.pawn.needs.joy.GainJoy(amount, JoyKindDefOf.Work);
 				}
-				xp *= this.LearningFactor;
+				xp *= this.LearnRateFactor(direct);
 			}
 			this.xpSinceLastLevel += xp;
-			this.xpSinceMidnight += xp;
-			if (this.level == 20 && this.xpSinceLastLevel > this.XpRequiredForLevelUp - 1f)
+			if (!direct)
+			{
+				this.xpSinceMidnight += xp;
+			}
+			if (this.levelInt == 20 && this.xpSinceLastLevel > this.XpRequiredForLevelUp - 1f)
 			{
 				this.xpSinceLastLevel = this.XpRequiredForLevelUp - 1f;
 			}
 			while (this.xpSinceLastLevel >= this.XpRequiredForLevelUp)
 			{
 				this.xpSinceLastLevel -= this.XpRequiredForLevelUp;
-				this.level++;
-				if (this.level >= 20)
+				this.levelInt++;
+				if (this.levelInt >= 20)
 				{
-					this.level = 20;
+					this.levelInt = 20;
 					this.xpSinceLastLevel = Mathf.Clamp(this.xpSinceLastLevel, 0f, this.XpRequiredForLevelUp - 1f);
 					break;
 				}
 			}
 			while (this.xpSinceLastLevel < 0f)
 			{
-				this.level--;
+				this.levelInt--;
 				this.xpSinceLastLevel += this.XpRequiredForLevelUp;
-				if (this.level <= 0)
+				if (this.levelInt <= 0)
 				{
-					this.level = 0;
+					this.levelInt = 0;
 					this.xpSinceLastLevel = 0f;
 					break;
 				}
 			}
+		}
+
+		public float LearnRateFactor(bool direct = false)
+		{
+			if (DebugSettings.fastLearning)
+			{
+				return 200f;
+			}
+			float num;
+			switch (this.passion)
+			{
+			case Passion.None:
+				num = 0.333f;
+				break;
+			case Passion.Minor:
+				num = 1f;
+				break;
+			case Passion.Major:
+				num = 1.5f;
+				break;
+			default:
+				throw new NotImplementedException("Passion level " + this.passion);
+			}
+			if (!direct)
+			{
+				num *= this.pawn.GetStatValue(StatDefOf.GlobalLearningFactor, true);
+				if (this.LearningSaturatedToday)
+				{
+					num *= 0.2f;
+				}
+			}
+			return num;
+		}
+
+		public void Notify_SkillDisablesChanged()
+		{
+			this.cachedTotallyDisabled = BoolUnknown.Unknown;
+		}
+
+		private bool CalculateTotallyDisabled()
+		{
+			if (this.pawn.story.WorkTagIsDisabled(this.def.disablingWorkTags))
+			{
+				return true;
+			}
+			List<WorkTypeDef> allDefsListForReading = DefDatabase<WorkTypeDef>.AllDefsListForReading;
+			bool result = false;
+			for (int i = 0; i < allDefsListForReading.Count; i++)
+			{
+				WorkTypeDef workTypeDef = allDefsListForReading[i];
+				for (int j = 0; j < workTypeDef.relevantSkills.Count; j++)
+				{
+					if (workTypeDef.relevantSkills[j] == this.def)
+					{
+						if (!this.pawn.story.WorkTypeIsDisabled(workTypeDef))
+						{
+							return false;
+						}
+						result = true;
+					}
+				}
+			}
+			return result;
 		}
 
 		public override string ToString()
@@ -323,7 +362,7 @@ namespace RimWorld
 			{
 				this.def.defName,
 				": ",
-				this.level,
+				this.levelInt,
 				" (",
 				this.xpSinceLastLevel,
 				"xp)"

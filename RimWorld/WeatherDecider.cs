@@ -7,9 +7,16 @@ namespace RimWorld
 {
 	public class WeatherDecider : IExposable
 	{
+		private Map map;
+
 		private int curWeatherDuration = 10000;
 
 		private int ticksWhenRainAllowedAgain;
+
+		public WeatherDecider(Map map)
+		{
+			this.map = map;
+		}
 
 		public void ExposeData()
 		{
@@ -20,12 +27,12 @@ namespace RimWorld
 		public void WeatherDeciderTick()
 		{
 			int num = this.curWeatherDuration;
-			bool flag = Find.StoryWatcher.watcherFire.LargeFireDangerPresent || !Find.WeatherManager.curWeather.temperatureRange.Includes(GenTemperature.OutdoorTemp);
+			bool flag = this.map.fireWatcher.LargeFireDangerPresent || !this.map.weatherManager.curWeather.temperatureRange.Includes(this.map.mapTemperature.OutdoorTemp);
 			if (flag)
 			{
 				num = (int)((float)num * 0.25f);
 			}
-			if (Find.WeatherManager.curWeatherAge > num)
+			if (this.map.weatherManager.curWeatherAge > num)
 			{
 				this.StartNextWeather();
 			}
@@ -34,7 +41,7 @@ namespace RimWorld
 		public void StartNextWeather()
 		{
 			WeatherDef weatherDef = this.ChooseNextWeather();
-			Find.WeatherManager.TransitionTo(weatherDef);
+			this.map.weatherManager.TransitionTo(weatherDef);
 			this.curWeatherDuration = weatherDef.durationRange.RandomInRange;
 		}
 
@@ -54,11 +61,11 @@ namespace RimWorld
 
 		private float CurrentWeatherCommonality(WeatherDef weather)
 		{
-			if (!Find.WeatherManager.curWeather.repeatable && weather == Find.WeatherManager.curWeather)
+			if (!this.map.weatherManager.curWeather.repeatable && weather == this.map.weatherManager.curWeather)
 			{
 				return 0f;
 			}
-			if (!weather.temperatureRange.Includes(GenTemperature.OutdoorTemp))
+			if (!weather.temperatureRange.Includes(this.map.mapTemperature.OutdoorTemp))
 			{
 				return 0f;
 			}
@@ -72,25 +79,25 @@ namespace RimWorld
 			}
 			if (weather.rainRate > 0.1f)
 			{
-				if (Find.MapConditionManager.ActiveConditions.Any((MapCondition x) => x.def.preventRain))
+				if (this.map.mapConditionManager.ActiveConditions.Any((MapCondition x) => x.def.preventRain))
 				{
 					return 0f;
 				}
 			}
-			BiomeDef biome = Find.Map.Biome;
+			BiomeDef biome = this.map.Biome;
 			for (int i = 0; i < biome.baseWeatherCommonalities.Count; i++)
 			{
 				WeatherCommonalityRecord weatherCommonalityRecord = biome.baseWeatherCommonalities[i];
 				if (weatherCommonalityRecord.weather == weather)
 				{
 					float num = weatherCommonalityRecord.commonality;
-					if (Find.StoryWatcher.watcherFire.LargeFireDangerPresent && weather.rainRate > 0.1f)
+					if (this.map.fireWatcher.LargeFireDangerPresent && weather.rainRate > 0.1f)
 					{
 						num *= 15f;
 					}
 					if (weatherCommonalityRecord.weather.commonalityRainfallFactor != null)
 					{
-						num *= weatherCommonalityRecord.weather.commonalityRainfallFactor.Evaluate(Find.Map.WorldSquare.rainfall);
+						num *= weatherCommonalityRecord.weather.commonalityRainfallFactor.Evaluate(this.map.TileInfo.rainfall);
 					}
 					return num;
 				}

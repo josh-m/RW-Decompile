@@ -38,7 +38,7 @@ namespace Verse
 			}
 		}
 
-		public void UpdateLit()
+		public void UpdateLit(Map map)
 		{
 			bool shouldBeLitNow = this.ShouldBeLitNow;
 			if (this.glowOnInt == shouldBeLitNow)
@@ -48,13 +48,13 @@ namespace Verse
 			this.glowOnInt = shouldBeLitNow;
 			if (!this.glowOnInt)
 			{
-				Find.MapDrawer.MapMeshDirty(this.parent.Position, MapMeshFlag.Things);
-				Find.GlowGrid.DeRegisterGlower(this);
+				map.mapDrawer.MapMeshDirty(this.parent.Position, MapMeshFlag.Things);
+				map.glowGrid.DeRegisterGlower(this);
 			}
 			else
 			{
-				Find.MapDrawer.MapMeshDirty(this.parent.Position, MapMeshFlag.Things);
-				Find.GlowGrid.RegisterGlower(this);
+				map.mapDrawer.MapMeshDirty(this.parent.Position, MapMeshFlag.Things);
+				map.glowGrid.RegisterGlower(this);
 			}
 		}
 
@@ -62,12 +62,12 @@ namespace Verse
 		{
 			if (this.ShouldBeLitNow)
 			{
-				this.UpdateLit();
-				Find.GlowGrid.RegisterGlower(this);
+				this.UpdateLit(this.parent.Map);
+				this.parent.Map.glowGrid.RegisterGlower(this);
 			}
 			else
 			{
-				this.UpdateLit();
+				this.UpdateLit(this.parent.Map);
 			}
 		}
 
@@ -75,7 +75,7 @@ namespace Verse
 		{
 			if (signal == "PowerTurnedOn" || signal == "PowerTurnedOff" || signal == "FlickedOn" || signal == "FlickedOff" || signal == "Refueled" || signal == "RanOutOfFuel")
 			{
-				this.UpdateLit();
+				this.UpdateLit(this.parent.Map);
 			}
 		}
 
@@ -84,10 +84,10 @@ namespace Verse
 			Scribe_Values.LookValue<bool>(ref this.glowOnInt, "glowOn", false, false);
 		}
 
-		public override void PostDeSpawn()
+		public override void PostDeSpawn(Map map)
 		{
-			base.PostDeSpawn();
-			this.UpdateLit();
+			base.PostDeSpawn(map);
+			this.UpdateLit(map);
 		}
 	}
 }

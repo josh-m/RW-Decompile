@@ -58,9 +58,9 @@ namespace Verse
 			return this.verbTracker.GetVerbsCommands(KeyCode.None);
 		}
 
-		public override void PostDestroy(DestroyMode mode, bool wasSpawned)
+		public override void PostDestroy(DestroyMode mode, Map previousMap)
 		{
-			base.PostDestroy(mode, wasSpawned);
+			base.PostDestroy(mode, previousMap);
 			if (this.Holder != null && this.Holder.equipment != null && this.Holder.equipment.Primary == this.parent)
 			{
 				this.Holder.equipment.Notify_PrimaryDestroyed();
@@ -82,12 +82,12 @@ namespace Verse
 			this.verbTracker.VerbsTick();
 		}
 
-		public void Notify_Dropped()
+		public void Notify_EquipmentLost()
 		{
 			List<Verb> allVerbs = this.AllVerbs;
 			for (int i = 0; i < allVerbs.Count; i++)
 			{
-				allVerbs[i].Notify_Dropped();
+				allVerbs[i].Notify_EquipmentLost();
 			}
 		}
 	}

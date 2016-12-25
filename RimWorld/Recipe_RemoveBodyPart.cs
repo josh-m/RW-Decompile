@@ -5,14 +5,14 @@ using Verse;
 
 namespace RimWorld
 {
-	internal class Recipe_RemoveBodyPart : Recipe_MedicalOperation
+	internal class Recipe_RemoveBodyPart : Recipe_Surgery
 	{
 		private const float ViolationGoodwillImpact = 20f;
 
 		[DebuggerHidden]
 		public override IEnumerable<BodyPartRecord> GetPartsToApplyOn(Pawn pawn, RecipeDef recipe)
 		{
-			IEnumerable<BodyPartRecord> parts = pawn.health.hediffSet.GetNotMissingParts(null, null);
+			IEnumerable<BodyPartRecord> parts = pawn.health.hediffSet.GetNotMissingParts(BodyPartHeight.Undefined, BodyPartDepth.Undefined);
 			foreach (BodyPartRecord part in parts)
 			{
 				if (pawn.health.hediffSet.HasDirectlyAddedPartFor(part))
@@ -41,7 +41,7 @@ namespace RimWorld
 			bool flag2 = this.IsViolationOnPawn(pawn, part, Faction.OfPlayer);
 			if (billDoer != null)
 			{
-				if (base.CheckSurgeryFail(billDoer, pawn, ingredients))
+				if (base.CheckSurgeryFail(billDoer, pawn, ingredients, part))
 				{
 					return;
 				}
@@ -50,12 +50,10 @@ namespace RimWorld
 					billDoer,
 					pawn
 				});
-				MedicalRecipesUtility.SpawnNaturalPartIfClean(pawn, part, billDoer.Position);
-				MedicalRecipesUtility.SpawnThingsFromHediffs(pawn, part, billDoer.Position);
+				MedicalRecipesUtility.SpawnNaturalPartIfClean(pawn, part, billDoer.Position, billDoer.Map);
+				MedicalRecipesUtility.SpawnThingsFromHediffs(pawn, part, billDoer.Position, billDoer.Map);
 			}
-			BodyPartDamageInfo value = new BodyPartDamageInfo(part, false, null);
-			DamageInfo dinfo = new DamageInfo(DamageDefOf.SurgicalCut, 99999, null, new BodyPartDamageInfo?(value), null);
-			pawn.TakeDamage(dinfo);
+			pawn.TakeDamage(new DamageInfo(DamageDefOf.SurgicalCut, 99999, -1f, null, part, null));
 			if (flag)
 			{
 				if (pawn.Dead)
@@ -71,6 +69,28 @@ namespace RimWorld
 			{
 				pawn.Faction.AffectGoodwillWith(billDoer.Faction, -20f);
 			}
+		}
+
+		public override string GetLabelWhenUsedOn(Pawn pawn, BodyPartRecord part)
+		{
+			if (pawn.RaceProps.IsMechanoid || pawn.health.hediffSet.PartOrAnyAncestorHasDirectlyAddedParts(part))
+			{
+				return RecipeDefOf.RemoveBodyPart.LabelCap;
+			}
+			BodyPartRemovalIntent bodyPartRemovalIntent = HealthUtility.PartRemovalIntent(pawn, part);
+			if (bodyPartRemovalIntent == BodyPartRemovalIntent.Harvest)
+			{
+				return "Harvest".Translate();
+			}
+			if (bodyPartRemovalIntent != BodyPartRemovalIntent.Amputate)
+			{
+				throw new InvalidOperationException();
+			}
+			if (part.depth == BodyPartDepth.Inside)
+			{
+				return "RemoveOrgan".Translate();
+			}
+			return "Amputate".Translate();
 		}
 	}
 }

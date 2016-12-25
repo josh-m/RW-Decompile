@@ -38,7 +38,7 @@ namespace Verse.AI
 
 		private int lastMovedTick = -999999;
 
-		private TargetInfo destination;
+		private LocalTargetInfo destination;
 
 		private PathEndMode peMode;
 
@@ -50,7 +50,7 @@ namespace Verse.AI
 
 		private int failedToFindCloseUnoccupiedCellTicks = -999999;
 
-		public TargetInfo Destination
+		public LocalTargetInfo Destination
 		{
 			get
 			{
@@ -92,19 +92,17 @@ namespace Verse.AI
 			{
 				Scribe_TargetInfo.LookTargetInfo(ref this.destination, "destination");
 			}
-			if (Scribe.mode == LoadSaveMode.PostLoadInit && Current.ProgramState != ProgramState.Entry)
-			{
-				if (this.moving)
-				{
-					this.StartPath(this.destination, this.peMode);
-				}
-				Find.PawnDestinationManager.ReserveDestinationFor(this.pawn, this.destination.Cell);
-			}
 		}
 
-		public void StartPath(TargetInfo dest, PathEndMode peMode)
+		public void StartPath(LocalTargetInfo dest, PathEndMode peMode)
 		{
-			GenPath.ResolvePathMode(ref dest, ref peMode);
+			dest = (LocalTargetInfo)GenPath.ResolvePathMode(dest.ToTargetInfo(this.pawn.Map), ref peMode);
+			if (dest.HasThing && dest.ThingDestroyed)
+			{
+				Log.Error("Pathing to destroyed thing " + dest.Thing);
+				this.PatherFailed();
+				return;
+			}
 			if (!this.PawnCanOccupy(this.pawn.Position) && !this.TryRecoverFromUnwalkablePosition(dest))
 			{
 				return;
@@ -113,7 +111,7 @@ namespace Verse.AI
 			{
 				return;
 			}
-			if (!this.pawn.Position.CanReach(dest, peMode, TraverseParms.For(TraverseMode.PassDoors, Danger.Deadly, false)))
+			if (!this.pawn.Map.reachability.CanReach(this.pawn.Position, dest, peMode, TraverseParms.For(TraverseMode.PassDoors, Danger.Deadly, false)))
 			{
 				this.PatherFailed();
 				return;
@@ -124,9 +122,9 @@ namespace Verse.AI
 			{
 				this.nextCell = this.pawn.Position;
 			}
-			if (!this.destination.HasThing && Find.PawnDestinationManager.DestinationReservedFor(this.pawn) != this.destination.Cell)
+			if (!this.destination.HasThing && this.pawn.Map.pawnDestinationManager.DestinationReservedFor(this.pawn) != this.destination.Cell)
 			{
-				Find.PawnDestinationManager.UnreserveAllFor(this.pawn);
+				this.pawn.Map.pawnDestinationManager.UnreserveAllFor(this.pawn);
 			}
 			if (this.AtDestinationPosition())
 			{
@@ -204,6 +202,15 @@ namespace Verse.AI
 			}
 		}
 
+		public void TryResumePathingAfterLoading()
+		{
+			if (this.moving)
+			{
+				this.StartPath(this.destination, this.peMode);
+				this.pawn.Map.pawnDestinationManager.ReserveDestinationFor(this.pawn, this.destination.Cell);
+			}
+		}
+
 		public void Notify_Teleported_Int()
 		{
 			this.StopDead();
@@ -217,11 +224,11 @@ namespace Verse.AI
 
 		private bool PawnCanOccupy(IntVec3 c)
 		{
-			if (!c.Walkable())
+			if (!c.Walkable(this.pawn.Map))
 			{
 				return false;
 			}
-			Building edifice = c.GetEdifice();
+			Building edifice = c.GetEdifice(this.pawn.Map);
 			if (edifice != null)
 			{
 				Building_Door building_Door = edifice as Building_Door;
@@ -235,7 +242,7 @@ namespace Verse.AI
 
 		public Building BuildingBlockingNextPathCell()
 		{
-			Building edifice = this.nextCell.GetEdifice();
+			Building edifice = this.nextCell.GetEdifice(this.pawn.Map);
 			if (edifice != null && edifice.BlocksPawn(this.pawn))
 			{
 				return edifice;
@@ -250,7 +257,7 @@ namespace Verse.AI
 
 		private bool IsNextCellWalkable()
 		{
-			return this.nextCell.Walkable() && !this.WillCollideWithPawnAt(this.nextCell);
+			return this.nextCell.Walkable(this.pawn.Map) && !this.WillCollideWithPawnAt(this.nextCell);
 		}
 
 		private bool WillCollideWithPawnAt(IntVec3 c)
@@ -260,7 +267,7 @@ namespace Verse.AI
 
 		public Building_Door NextCellDoorToManuallyOpen()
 		{
-			Building_Door building_Door = Find.ThingGrid.ThingAt<Building_Door>(this.nextCell);
+			Building_Door building_Door = this.pawn.Map.thingGrid.ThingAt<Building_Door>(this.nextCell);
 			if (building_Door != null && building_Door.SlowsPawns && !building_Door.Open && building_Door.PawnCanOpen(this.pawn))
 			{
 				return building_Door;
@@ -281,7 +288,7 @@ namespace Verse.AI
 			return Find.TickManager.TicksGame - this.lastMovedTick <= ticks;
 		}
 
-		private bool TryRecoverFromUnwalkablePosition(TargetInfo originalDest)
+		private bool TryRecoverFromUnwalkablePosition(LocalTargetInfo originalDest)
 		{
 			bool flag = false;
 			for (int i = 0; i < GenRadial.RadialPattern.Length; i++)
@@ -322,11 +329,10 @@ namespace Verse.AI
 		private void PatherArrived()
 		{
 			this.StopDead();
-			if (this.pawn.jobs.curJob == null)
+			if (this.pawn.jobs.curJob != null)
 			{
-				return;
+				this.pawn.jobs.curDriver.Notify_PatherArrived();
 			}
-			this.pawn.jobs.curDriver.Notify_PatherArrived();
 		}
 
 		private void PatherFailed()
@@ -377,9 +383,9 @@ namespace Verse.AI
 			this.pawn.filth.Notify_EnteredNewCell();
 			if (this.pawn.BodySize > 0.9f)
 			{
-				Find.SnowGrid.AddDepth(this.pawn.Position, -0.001f);
+				this.pawn.Map.snowGrid.AddDepth(this.pawn.Position, -0.001f);
 			}
-			Building_Door building_Door3 = Find.ThingGrid.ThingAt<Building_Door>(this.lastCell);
+			Building_Door building_Door3 = this.pawn.Map.thingGrid.ThingAt<Building_Door>(this.lastCell);
 			if (building_Door3 != null && !building_Door3.BlockedOpenMomentary && !this.pawn.HostileTo(building_Door3))
 			{
 				building_Door3.FriendlyTouched();
@@ -426,7 +432,7 @@ namespace Verse.AI
 				return;
 			}
 			this.nextCell = this.curPath.ConsumeNextNode();
-			if (!this.nextCell.Walkable())
+			if (!this.nextCell.Walkable(this.pawn.Map))
 			{
 				Log.Error(string.Concat(new object[]
 				{
@@ -436,7 +442,7 @@ namespace Verse.AI
 					" which is unwalkable."
 				}));
 			}
-			Building_Door building_Door = Find.ThingGrid.ThingAt<Building_Door>(this.nextCell);
+			Building_Door building_Door = this.pawn.Map.thingGrid.ThingAt<Building_Door>(this.nextCell);
 			if (building_Door != null)
 			{
 				building_Door.Notify_PawnApproaching(this.pawn);
@@ -457,8 +463,8 @@ namespace Verse.AI
 			{
 				num = this.pawn.TicksPerMoveDiagonal;
 			}
-			num += PathGrid.CalculatedCostAt(c, false, this.pawn.Position);
-			Building edifice = c.GetEdifice();
+			num += this.pawn.Map.pathGrid.CalculatedCostAt(c, false, this.pawn.Position);
+			Building edifice = c.GetEdifice(this.pawn.Map);
 			if (edifice != null)
 			{
 				num += (int)edifice.PathWalkCostFor(this.pawn);
@@ -543,7 +549,7 @@ namespace Verse.AI
 		private PawnPath GenerateNewPath()
 		{
 			this.lastPathedTargetPosition = this.destination.Cell;
-			return PathFinder.FindPath(this.pawn.Position, this.destination, this.pawn, this.peMode);
+			return this.pawn.Map.pathFinder.FindPath(this.pawn.Position, this.destination, this.pawn, this.peMode);
 		}
 
 		private bool AtDestinationPosition()
@@ -610,7 +616,7 @@ namespace Verse.AI
 			while (num2 < 20 && num2 < this.curPath.NodesLeftCount)
 			{
 				IntVec3 c = this.curPath.Peek(num2);
-				if (!c.Walkable())
+				if (!c.Walkable(this.pawn.Map))
 				{
 					return true;
 				}
@@ -618,7 +624,7 @@ namespace Verse.AI
 				{
 					return true;
 				}
-				Building_Door building_Door = c.GetEdifice() as Building_Door;
+				Building_Door building_Door = c.GetEdifice(this.pawn.Map) as Building_Door;
 				if (building_Door != null)
 				{
 					if (!building_Door.CanPhysicallyPass(this.pawn) && !this.pawn.HostileTo(building_Door))

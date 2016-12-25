@@ -9,10 +9,11 @@ namespace Verse
 {
 	public class RecipeDef : Def
 	{
-		public Type workerClass;
+		public Type workerClass = typeof(RecipeWorker);
 
 		public Type workerCounterClass = typeof(RecipeWorkerCounter);
 
+		[MustTranslate]
 		public string jobString = "Doing an unknown recipe.";
 
 		public WorkTypeDef requiredGiverWorkType;
@@ -33,7 +34,9 @@ namespace Verse
 
 		private Type ingredientValueGetterClass = typeof(IngredientValueGetter_Volume);
 
-		public List<ThingCount> products = new List<ThingCount>();
+		public List<SpecialThingFilterDef> forceHiddenSpecialFilters;
+
+		public List<ThingCountClass> products = new List<ThingCountClass>();
 
 		public List<SpecialProductType> specialProducts;
 
@@ -65,6 +68,7 @@ namespace Verse
 
 		public bool isViolation;
 
+		[MustTranslate]
 		public string successfullyRemovedHediffMessage;
 
 		public float surgeonSurgerySuccessChanceExponent = 1f;
@@ -74,6 +78,10 @@ namespace Verse
 		public float surgerySuccessChanceFactor = 1f;
 
 		public float deathOnFailedSurgeryChance;
+
+		public bool targetsBodyPart = true;
+
+		public bool anesthesize = true;
 
 		public ResearchProjectDef researchPrerequisite;
 
@@ -200,13 +208,13 @@ namespace Verse
 		}
 
 		[DebuggerHidden]
-		public IEnumerable<ThingDef> PotentiallyMissingIngredients(Pawn billDoer)
+		public IEnumerable<ThingDef> PotentiallyMissingIngredients(Pawn billDoer, Map map)
 		{
 			for (int i = 0; i < this.ingredients.Count; i++)
 			{
 				IngredientCount ing = this.ingredients[i];
 				bool foundIng = false;
-				List<Thing> thingList = Find.ListerThings.ThingsInGroup(ThingRequestGroup.HaulableEver);
+				List<Thing> thingList = map.listerThings.ThingsInGroup(ThingRequestGroup.HaulableEver);
 				for (int j = 0; j < thingList.Count; j++)
 				{
 					Thing t = thingList[j];
@@ -243,6 +251,19 @@ namespace Verse
 				}
 			}
 			return false;
+		}
+
+		[DebuggerHidden]
+		public override IEnumerable<string> ConfigErrors()
+		{
+			foreach (string e in base.ConfigErrors())
+			{
+				yield return e;
+			}
+			if (this.workerClass == null)
+			{
+				yield return "workerClass is null.";
+			}
 		}
 
 		public override void ResolveReferences()

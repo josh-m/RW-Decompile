@@ -8,6 +8,8 @@ namespace RimWorld
 {
 	public class JobDriver_CleanFilth : JobDriver
 	{
+		private const TargetIndex FilthInd = TargetIndex.A;
+
 		private float cleaningWorkDone;
 
 		private float totalCleaningWorkDone;
@@ -25,13 +27,17 @@ namespace RimWorld
 		[DebuggerHidden]
 		protected override IEnumerable<Toil> MakeNewToils()
 		{
-			this.FailOnDespawnedNullOrForbidden(TargetIndex.A);
-			this.FailOn(() => !Find.AreaHome[this.<>f__this.TargetThingA.Position]);
-			yield return Toils_Reserve.Reserve(TargetIndex.A, 1);
-			yield return Toils_Goto.GotoThing(TargetIndex.A, PathEndMode.Touch);
+			yield return Toils_Reserve.ReserveQueue(TargetIndex.A, 1);
+			Toil initExtractTargetFromQueue = Toils_JobTransforms.ClearDespawnedNullOrForbiddenQueuedTargets(TargetIndex.A);
+			yield return initExtractTargetFromQueue;
+			yield return Toils_JobTransforms.ExtractNextTargetFromQueue(TargetIndex.A);
+			Toil checkNextQueuedTarget = Toils_JobTransforms.ClearDespawnedNullOrForbiddenQueuedTargets(TargetIndex.A);
+			yield return Toils_Goto.GotoThing(TargetIndex.A, PathEndMode.Touch).JumpIfDespawnedOrNullOrForbidden(TargetIndex.A, checkNextQueuedTarget).JumpIfOutsideHomeArea(TargetIndex.A, checkNextQueuedTarget);
 			Toil clean = new Toil();
 			clean.initAction = delegate
 			{
+				this.<>f__this.cleaningWorkDone = 0f;
+				this.<>f__this.totalCleaningWorkDone = 0f;
 				this.<>f__this.totalCleaningWorkRequired = this.<>f__this.Filth.def.filth.cleaningWorkToReduceThickness * (float)this.<>f__this.Filth.thickness;
 			};
 			clean.tickAction = delegate
@@ -45,17 +51,21 @@ namespace RimWorld
 					this.<>f__this.cleaningWorkDone = 0f;
 					if (filth.Destroyed)
 					{
-						this.<clean>__0.actor.records.Increment(RecordDefOf.MessesCleaned);
+						this.<clean>__2.actor.records.Increment(RecordDefOf.MessesCleaned);
 						this.<>f__this.ReadyForNextToil();
 						return;
 					}
 				}
 			};
 			clean.defaultCompleteMode = ToilCompleteMode.Never;
-			clean.WithEffect("Clean", TargetIndex.A);
+			clean.WithEffect(EffecterDefOf.Clean, TargetIndex.A);
 			clean.WithProgressBar(TargetIndex.A, () => this.<>f__this.totalCleaningWorkDone / this.<>f__this.totalCleaningWorkRequired, true, -0.5f);
 			clean.PlaySustainerOrSound(() => SoundDefOf.Interact_CleanFilth);
+			clean.JumpIfDespawnedOrNullOrForbidden(TargetIndex.A, checkNextQueuedTarget);
+			clean.JumpIfOutsideHomeArea(TargetIndex.A, checkNextQueuedTarget);
 			yield return clean;
+			yield return checkNextQueuedTarget;
+			yield return Toils_Jump.JumpIfHaveTargetInQueue(TargetIndex.A, initExtractTargetFromQueue);
 		}
 
 		public override void ExposeData()

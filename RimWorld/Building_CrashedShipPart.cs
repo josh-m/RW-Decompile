@@ -114,13 +114,13 @@ namespace RimWorld
 			if (this.lord == null)
 			{
 				IntVec3 invalid;
-				if (!CellFinder.TryFindRandomCellNear(base.Position, 5, (IntVec3 c) => c.Standable() && c.CanReach(this, PathEndMode.Touch, TraverseParms.For(TraverseMode.PassDoors, Danger.Deadly, false)), out invalid))
+				if (!CellFinder.TryFindRandomCellNear(base.Position, base.Map, 5, (IntVec3 c) => c.Standable(base.Map) && base.Map.reachability.CanReach(c, this, PathEndMode.Touch, TraverseParms.For(TraverseMode.PassDoors, Danger.Deadly, false)), out invalid))
 				{
 					Log.Error("Found no place for mechanoids to defend " + this);
 					invalid = IntVec3.Invalid;
 				}
 				LordJob_MechanoidsDefendShip lordJob = new LordJob_MechanoidsDefendShip(this, base.Faction, 21f, invalid);
-				this.lord = LordMaker.MakeNewLord(Faction.OfMechanoids, lordJob, null);
+				this.lord = LordMaker.MakeNewLord(Faction.OfMechanoids, lordJob, base.Map, null);
 			}
 			PawnKindDef kindDef;
 			while ((from def in DefDatabase<PawnKindDef>.AllDefs
@@ -133,7 +133,7 @@ namespace RimWorld
 				select cell).TryRandomElement(out center))
 				{
 					Pawn pawn = PawnGenerator.GeneratePawn(kindDef, Faction.OfMechanoids);
-					if (GenPlace.TryPlaceThing(pawn, center, ThingPlaceMode.Near, null))
+					if (GenPlace.TryPlaceThing(pawn, center, base.Map, ThingPlaceMode.Near, null))
 					{
 						this.lord.AddPawn(pawn);
 						this.pointsLeft -= pawn.kindDef.combatPower;
@@ -141,17 +141,20 @@ namespace RimWorld
 					}
 					Find.WorldPawns.PassToWorld(pawn, PawnDiscardDecideMode.Discard);
 				}
-				IL_11E:
+				IL_130:
 				this.pointsLeft = 0f;
-				SoundDefOf.PsychicPulseGlobal.PlayOneShotOnCamera();
+				if (base.Map == Find.VisibleMap)
+				{
+					SoundDefOf.PsychicPulseGlobal.PlayOneShotOnCamera();
+				}
 				return;
 			}
-			goto IL_11E;
+			goto IL_130;
 		}
 
 		private bool CanSpawnMechanoidAt(IntVec3 c)
 		{
-			return c.Walkable();
+			return c.Walkable(base.Map);
 		}
 
 		private void TrySwitchMechanoidsToAssaultMode()
@@ -190,7 +193,7 @@ namespace RimWorld
 			}
 			CellRect occupiedRect = this.OccupiedRect();
 			Building_CrashedShipPart.reachableCells.Clear();
-			FloodFiller.FloodFill(base.Position, (IntVec3 x) => x.DistanceToSquared(this.Position) <= this.snowRadius * this.snowRadius && (occupiedRect.Contains(x) || !x.Filled()), delegate(IntVec3 x)
+			base.Map.floodFiller.FloodFill(base.Position, (IntVec3 x) => x.DistanceToSquared(this.Position) <= this.snowRadius * this.snowRadius && (occupiedRect.Contains(x) || !x.Filled(this.Map)), delegate(IntVec3 x)
 			{
 				Building_CrashedShipPart.reachableCells.Add(x);
 			});
@@ -198,7 +201,7 @@ namespace RimWorld
 			for (int i = 0; i < num; i++)
 			{
 				IntVec3 intVec = base.Position + GenRadial.RadialPattern[i];
-				if (intVec.InBounds())
+				if (intVec.InBounds(base.Map))
 				{
 					if (Building_CrashedShipPart.reachableCells.Contains(intVec))
 					{
@@ -209,11 +212,11 @@ namespace RimWorld
 						{
 							num2 = 0.1f;
 						}
-						if (Find.SnowGrid.GetDepth(intVec) <= num2)
+						if (base.Map.snowGrid.GetDepth(intVec) <= num2)
 						{
 							float lengthHorizontal = (intVec - base.Position).LengthHorizontal;
 							float num3 = 1f - lengthHorizontal / this.snowRadius;
-							Find.SnowGrid.AddDepth(intVec, num3 * 0.12f * num2);
+							base.Map.snowGrid.AddDepth(intVec, num3 * 0.12f * num2);
 						}
 					}
 				}
@@ -234,9 +237,9 @@ namespace RimWorld
 			Vector3 v = rotation * point;
 			IntVec3 b = IntVec3.FromVector3(v);
 			IntVec3 c = base.Position + b;
-			if (c.InBounds())
+			if (c.InBounds(base.Map))
 			{
-				Plant plant = c.GetPlant();
+				Plant plant = c.GetPlant(base.Map);
 				if (plant != null)
 				{
 					if (Rand.Value < 0.2f)
@@ -245,7 +248,7 @@ namespace RimWorld
 					}
 					else
 					{
-						plant.MakeLeafless();
+						plant.MakeLeafless(false);
 					}
 				}
 			}

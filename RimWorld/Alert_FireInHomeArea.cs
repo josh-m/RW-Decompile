@@ -10,45 +10,37 @@ namespace RimWorld
 		{
 			get
 			{
-				List<Thing> list = Find.ListerThings.ThingsOfDef(ThingDefOf.Fire);
-				for (int i = 0; i < list.Count; i++)
+				List<Map> maps = Find.Maps;
+				for (int i = 0; i < maps.Count; i++)
 				{
-					if (Find.AreaHome[list[i].Position])
+					List<Thing> list = maps[i].listerThings.ThingsOfDef(ThingDefOf.Fire);
+					for (int j = 0; j < list.Count; j++)
 					{
-						return (Fire)list[i];
+						Thing thing = list[j];
+						if (maps[i].areaManager.Home[thing.Position] && !thing.Position.Fogged(thing.Map))
+						{
+							return (Fire)thing;
+						}
 					}
 				}
 				return null;
 			}
 		}
 
-		public override string FullLabel
+		public Alert_FireInHomeArea()
 		{
-			get
-			{
-				return "FireInHomeArea".Translate();
-			}
+			this.defaultLabel = "FireInHomeArea".Translate();
+			this.defaultExplanation = "FireInHomeAreaDesc".Translate();
 		}
 
-		public override string FullExplanation
+		public override AlertReport GetReport()
 		{
-			get
+			Fire fireInHomeArea = this.FireInHomeArea;
+			if (fireInHomeArea != null)
 			{
-				return "FireInHomeAreaDesc".Translate();
+				return AlertReport.CulpritIs(fireInHomeArea);
 			}
-		}
-
-		public override AlertReport Report
-		{
-			get
-			{
-				Fire fireInHomeArea = this.FireInHomeArea;
-				if (fireInHomeArea != null)
-				{
-					return AlertReport.CulpritIs(fireInHomeArea);
-				}
-				return false;
-			}
+			return false;
 		}
 	}
 }

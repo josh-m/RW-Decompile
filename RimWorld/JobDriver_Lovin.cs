@@ -67,7 +67,7 @@ namespace RimWorld
 					{
 						Job newJob = new Job(JobDefOf.Lovin, this.<>f__this.pawn, this.<>f__this.Bed);
 						this.<>f__this.Partner.jobs.StartJob(newJob, JobCondition.InterruptForced, null, false, true, null);
-						this.<>f__this.ticksLeft = (int)(2500f * Mathf.Clamp(Rand.GaussianAsymmetric(0.5f, 0.12f, 0.47f), 0.1f, 2f));
+						this.<>f__this.ticksLeft = (int)(2500f * Mathf.Clamp(Rand.Range(0.1f, 1.1f), 0.1f, 2f));
 					}
 					else
 					{
@@ -77,7 +77,6 @@ namespace RimWorld
 				defaultCompleteMode = ToilCompleteMode.Instant
 			};
 			Toil doLovin = Toils_LayDown.LayDown(this.BedInd, true, false, false, false);
-			doLovin.FailOn(() => this.<>f__this.Partner.CurrentBed() != this.<>f__this.pawn.CurrentBed());
 			doLovin.FailOn(() => this.<>f__this.Partner.CurJob == null || this.<>f__this.Partner.CurJob.def != JobDefOf.Lovin);
 			doLovin.AddPreTickAction(delegate
 			{
@@ -88,14 +87,13 @@ namespace RimWorld
 				}
 				else if (this.<>f__this.pawn.IsHashIntervalTick(100))
 				{
-					MoteMaker.ThrowMetaIcon(this.<>f__this.pawn.Position, ThingDefOf.Mote_Heart);
+					MoteMaker.ThrowMetaIcon(this.<>f__this.pawn.Position, this.<>f__this.pawn.Map, ThingDefOf.Mote_Heart);
 				}
 			});
 			doLovin.AddFinishAction(delegate
 			{
-				Thought_Memory thought_Memory = (Thought_Memory)ThoughtMaker.MakeThought(ThoughtDefOf.GotSomeLovin);
-				thought_Memory.moodPowerFactor = Mathf.Max(this.<>f__this.pawn.relations.AttractionTo(this.<>f__this.Partner), 0.1f);
-				this.<>f__this.pawn.needs.mood.thoughts.memories.TryGainMemoryThought(thought_Memory, this.<>f__this.Partner);
+				Thought_Memory newThought = (Thought_Memory)ThoughtMaker.MakeThought(ThoughtDefOf.GotSomeLovin);
+				this.<>f__this.pawn.needs.mood.thoughts.memories.TryGainMemoryThought(newThought, this.<>f__this.Partner);
 				this.<>f__this.pawn.mindState.canLovinTick = Find.TickManager.TicksGame + this.<>f__this.GenerateRandomMinTicksToNextLovin(this.<>f__this.pawn);
 			});
 			doLovin.socialMode = RandomSocialMode.Off;
@@ -104,6 +102,10 @@ namespace RimWorld
 
 		private int GenerateRandomMinTicksToNextLovin(Pawn pawn)
 		{
+			if (DebugSettings.alwaysDoLovin)
+			{
+				return 100;
+			}
 			float num = JobDriver_Lovin.LovinIntervalHoursFromAgeCurve.Evaluate(pawn.ageTracker.AgeBiologicalYearsFloat);
 			num = Rand.Gaussian(num, 0.3f);
 			if (num < 0.5f)

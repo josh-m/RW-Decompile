@@ -8,9 +8,9 @@ namespace RimWorld
 	{
 		public float chance = 0.5f;
 
-		public override ThinkNode DeepCopy()
+		public override ThinkNode DeepCopy(bool resolve = true)
 		{
-			ThinkNode_ConditionalRandom thinkNode_ConditionalRandom = (ThinkNode_ConditionalRandom)base.DeepCopy();
+			ThinkNode_ConditionalRandom thinkNode_ConditionalRandom = (ThinkNode_ConditionalRandom)base.DeepCopy(resolve);
 			thinkNode_ConditionalRandom.chance = this.chance;
 			return thinkNode_ConditionalRandom;
 		}

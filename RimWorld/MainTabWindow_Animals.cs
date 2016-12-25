@@ -15,19 +15,19 @@ namespace RimWorld
 
 		private const float AreaAllowedWidth = 350f;
 
-		private const float PaddingBeforeIcons = 5f;
-
-		private const float PaddingBeforeExtraIcons = 5f;
-
 		private const float SpaceBetweenIcons = 2f;
 
 		private const float IconSize = 24f;
 
-		private const float SpaceBetweenColumnCategories = 7f;
+		private const float SpaceBetweenColumnCategories = 6f;
+
+		private static readonly Texture2D FollowDraftedIcon = Resources.Load<Texture2D>("Textures/UI/Icons/Animal/FollowDrafted");
+
+		private static readonly Texture2D FollowFieldworkIcon = Resources.Load<Texture2D>("Textures/UI/Icons/Animal/FollowFieldwork");
 
 		private static readonly Texture2D PregnantIcon = Resources.Load<Texture2D>("Textures/UI/Icons/Pregnant");
 
-		private static readonly Texture2D SlaughterIcon = Resources.Load<Texture2D>("Textures/UI/Icons/Slaughter");
+		private static readonly Texture2D SlaughterIcon = Resources.Load<Texture2D>("Textures/UI/Icons/Animal/Slaughter");
 
 		public override Vector2 RequestedTabSize
 		{
@@ -39,7 +39,7 @@ namespace RimWorld
 
 		protected override void BuildPawnList()
 		{
-			this.pawns = (from p in Find.MapPawns.PawnsInFaction(Faction.OfPlayer)
+			this.pawns = (from p in Find.VisibleMap.mapPawns.PawnsInFaction(Faction.OfPlayer)
 			where p.RaceProps.Animal
 			orderby p.RaceProps.petness descending, p.RaceProps.baseBodySize, p.def.label
 			select p).ToList<Pawn>();
@@ -50,54 +50,74 @@ namespace RimWorld
 			base.DoWindowContents(fillRect);
 			Rect position = new Rect(0f, 0f, fillRect.width, 65f);
 			GUI.BeginGroup(position);
-			float num = 165f;
 			Text.Font = GameFont.Tiny;
 			Text.Anchor = TextAnchor.LowerCenter;
-			num += 5f;
-			num += 52f;
-			num += 7f;
-			Rect rect = new Rect(num, position.height - 24f, 24f, 24f);
-			GUI.DrawTexture(rect, MainTabWindow_Animals.SlaughterIcon);
-			TooltipHandler.TipRegion(rect, "DesignatorSlaughter".Translate());
-			num += 33f;
+			float num = 165f;
+			num += 6f;
+			num += 50f;
+			num += 6f;
 			List<TrainableDef> trainableDefsInListOrder = TrainableUtility.TrainableDefsInListOrder;
 			for (int i = 0; i < trainableDefsInListOrder.Count; i++)
 			{
-				Rect rect2 = new Rect(num, position.height - 24f, 24f, 24f);
-				GUI.DrawTexture(rect2, trainableDefsInListOrder[i].Icon);
-				TooltipHandler.TipRegion(rect2, trainableDefsInListOrder[i].LabelCap);
-				num += 26f;
+				Rect rect = new Rect(num, position.height - 24f, 24f, 24f);
+				GUI.DrawTexture(rect, trainableDefsInListOrder[i].Icon);
+				TooltipHandler.TipRegion(rect, trainableDefsInListOrder[i].LabelCap);
+				num += 24f;
+				if (i < trainableDefsInListOrder.Count - 1)
+				{
+					num += 2f;
+				}
 			}
-			Rect rect3 = new Rect(num, 0f, 170f, position.height + 3f);
-			Widgets.Label(rect3, "Master".Translate());
+			num += 6f;
+			Rect rect2 = new Rect(num, position.height - 24f, 24f, 24f);
+			GUI.DrawTexture(rect2, MainTabWindow_Animals.FollowDraftedIcon);
+			TooltipHandler.TipRegion(rect2, "FollowDraftedTip".Translate());
+			num += 24f;
+			num += 2f;
+			Rect rect3 = new Rect(num, position.height - 24f, 24f, 24f);
+			GUI.DrawTexture(rect3, MainTabWindow_Animals.FollowFieldworkIcon);
+			TooltipHandler.TipRegion(rect3, "FollowFieldworkTip".Translate());
+			num += 24f;
+			num += 6f;
+			Rect rect4 = new Rect(num, 0f, 170f, position.height + 3f);
+			Widgets.Label(rect4, "Master".Translate());
 			num += 170f;
-			Rect rect4 = new Rect(num, 0f, 350f, Mathf.Round(position.height / 2f));
+			num += 6f;
+			Rect rect5 = new Rect(num, position.height - 24f, 24f, 24f);
+			GUI.DrawTexture(rect5, MainTabWindow_Animals.SlaughterIcon);
+			TooltipHandler.TipRegion(rect5, "DesignatorSlaughter".Translate());
+			num += 24f;
+			num += 6f;
+			Rect rect6 = new Rect(num, 0f, 350f, Mathf.Round(position.height / 2f));
 			Text.Font = GameFont.Small;
-			if (Widgets.ButtonText(rect4, "ManageAreas".Translate(), true, false, true))
+			if (Widgets.ButtonText(rect6, "ManageAreas".Translate(), true, false, true))
 			{
-				Find.WindowStack.Add(new Dialog_ManageAreas());
+				Find.WindowStack.Add(new Dialog_ManageAreas(Find.VisibleMap));
 			}
 			Text.Font = GameFont.Tiny;
 			Text.Anchor = TextAnchor.LowerCenter;
-			Rect rect5 = new Rect(num, 0f, 350f, position.height + 3f);
-			Widgets.Label(rect5, "AllowedArea".Translate());
+			Rect rect7 = new Rect(num, 0f, 350f, position.height + 3f);
+			Widgets.Label(rect7, "AllowedArea".Translate());
 			num += 350f;
 			GUI.EndGroup();
 			Text.Font = GameFont.Small;
 			Text.Anchor = TextAnchor.UpperLeft;
 			GUI.color = Color.white;
-			Rect rect6 = new Rect(0f, position.height, fillRect.width, fillRect.height - position.height);
-			base.DrawRows(rect6);
+			Rect rect8 = new Rect(0f, position.height, fillRect.width, fillRect.height - position.height);
+			base.DrawRows(rect8);
 		}
 
 		protected override void DrawPawnRow(Rect rect, Pawn p)
 		{
 			GUI.BeginGroup(rect);
 			float num = 165f;
-			num += 5f;
+			num += 6f;
 			this.DoIcons(rect, p, ref num);
-			this.DoSlaughterCheckbox(rect, p, ref num);
+			num += 6f;
 			this.DoTrainingCheckboxes(rect, p, ref num);
+			num += 6f;
+			this.DoFollowCheckboxes(rect, p, ref num);
+			num += 6f;
 			if (p.training.IsCompleted(TrainableDefOf.Obedience))
 			{
 				Rect rect2 = new Rect(num, 0f, 170f, rect.height);
@@ -110,10 +130,16 @@ namespace RimWorld
 				}
 			}
 			num += 170f;
+			num += 6f;
+			if (p.MapHeld != null)
+			{
+				this.DoSlaughterCheckbox(rect, p, ref num);
+			}
+			num += 6f;
 			Rect rect4 = new Rect(num, 0f, 350f, rect.height);
 			AreaAllowedGUI.DoAllowedAreaSelectors(rect4, p, AllowedAreaMode.Animal);
 			num += 350f;
-			num += 5f;
+			num += 6f;
 			this.DoExtraIcons(rect, p, ref num);
 			GUI.EndGroup();
 		}
@@ -122,7 +148,7 @@ namespace RimWorld
 		{
 			float y = (rect.height - 24f) / 2f;
 			Vector2 topLeft = new Vector2(curX, y);
-			Designation designation = Find.DesignationManager.DesignationOn(p, DesignationDefOf.Slaughter);
+			Designation designation = p.MapHeld.designationManager.DesignationOn(p, DesignationDefOf.Slaughter);
 			bool flag = designation != null;
 			bool flag2 = flag;
 			Widgets.Checkbox(topLeft, ref flag, 24f, false);
@@ -131,15 +157,15 @@ namespace RimWorld
 			{
 				if (flag)
 				{
-					Find.DesignationManager.AddDesignation(new Designation(p, DesignationDefOf.Slaughter));
+					p.MapHeld.designationManager.AddDesignation(new Designation(p, DesignationDefOf.Slaughter));
+					SlaughterDesignatorUtility.CheckWarnAboutBondedAnimal(p);
 				}
 				else
 				{
-					Find.DesignationManager.RemoveDesignation(designation);
+					p.MapHeld.designationManager.RemoveDesignation(designation);
 				}
 			}
-			curX += 26f;
-			curX += 7f;
+			curX += 24f;
 		}
 
 		private void DoTrainingCheckboxes(Rect rect, Pawn p, ref float curX)
@@ -149,17 +175,36 @@ namespace RimWorld
 			for (int i = 0; i < trainableDefsInListOrder.Count; i++)
 			{
 				TrainableDef td = trainableDefsInListOrder[i];
-				Vector2 vector = new Vector2(curX, y);
-				curX += 26f;
+				float x = curX;
+				curX += 24f;
+				if (i < trainableDefsInListOrder.Count - 1)
+				{
+					curX += 2f;
+				}
 				bool flag;
 				AcceptanceReport canTrain = p.training.CanAssignToTrain(td, out flag);
 				if (flag && canTrain.Accepted)
 				{
-					Rect rect2 = new Rect(vector.x, vector.y, 24f, 24f);
+					Rect rect2 = new Rect(x, y, 24f, 24f);
 					TrainingCardUtility.DoTrainableCheckbox(rect2, p, td, canTrain, false, true);
 				}
 			}
-			curX += 7f;
+		}
+
+		private void DoFollowCheckboxes(Rect rect, Pawn p, ref float curX)
+		{
+			float y = (rect.height - 24f) / 2f;
+			if (p.training.IsCompleted(TrainableDefOf.Obedience))
+			{
+				Widgets.Checkbox(curX, y, ref p.playerSettings.followDrafted, 24f, false);
+			}
+			curX += 24f;
+			curX += 2f;
+			if (p.training.IsCompleted(TrainableDefOf.Obedience))
+			{
+				Widgets.Checkbox(curX, y, ref p.playerSettings.followFieldwork, 24f, false);
+			}
+			curX += 24f;
 		}
 
 		private void DoIcons(Rect rect, Pawn p, ref float curX)
@@ -168,12 +213,12 @@ namespace RimWorld
 			Rect rect2 = new Rect(curX, y, 24f, 24f);
 			GUI.DrawTexture(rect2, p.gender.GetIcon());
 			TooltipHandler.TipRegion(rect2, p.gender.GetLabel().CapitalizeFirst());
-			curX += 26f;
+			curX += 24f;
+			curX += 2f;
 			Rect rect3 = new Rect(curX, y, 24f, 24f);
 			GUI.DrawTexture(rect3, p.ageTracker.CurLifeStageRace.GetIcon(p));
 			TooltipHandler.TipRegion(rect3, p.ageTracker.CurLifeStage.LabelCap);
-			curX += 26f;
-			curX += 7f;
+			curX += 24f;
 		}
 
 		private void DoExtraIcons(Rect rect, Pawn p, ref float curX)
@@ -194,7 +239,6 @@ namespace RimWorld
 				}), rect2.GetHashCode()));
 				curX += 26f;
 			}
-			curX += 7f;
 		}
 	}
 }

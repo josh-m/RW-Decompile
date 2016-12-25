@@ -83,7 +83,7 @@ namespace RimWorld
 				{
 					for (int j = 0; j < this.entDef.buildingPrerequisites.Count; j++)
 					{
-						if (!Find.ListerBuildings.ColonistsHaveBuilding(this.entDef.buildingPrerequisites[j]))
+						if (!base.Map.listerBuildings.ColonistsHaveBuilding(this.entDef.buildingPrerequisites[j]))
 						{
 							return false;
 						}
@@ -158,9 +158,9 @@ namespace RimWorld
 		public override void DrawMouseAttachments()
 		{
 			base.DrawMouseAttachments();
-			if (!ArchitectCategoryTab.InfoRect.Contains(GenUI.AbsMousePosition()))
+			if (!ArchitectCategoryTab.InfoRect.Contains(UI.MousePositionOnUIInverted))
 			{
-				DesignationDragger dragger = DesignatorManager.Dragger;
+				DesignationDragger dragger = Find.DesignatorManager.Dragger;
 				int num;
 				if (dragger.Dragging)
 				{
@@ -172,17 +172,17 @@ namespace RimWorld
 				}
 				float num2 = 0f;
 				Vector2 vector = Event.current.mousePosition + Designator_Build.DragPriceDrawOffset;
-				List<ThingCount> list = this.entDef.CostListAdjusted(this.stuffDef, true);
+				List<ThingCountClass> list = this.entDef.CostListAdjusted(this.stuffDef, true);
 				for (int i = 0; i < list.Count; i++)
 				{
-					ThingCount thingCount = list[i];
+					ThingCountClass thingCountClass = list[i];
 					float y = vector.y + num2;
 					Rect position = new Rect(vector.x, y, 27f, 27f);
-					GUI.DrawTexture(position, thingCount.thingDef.uiIcon);
+					GUI.DrawTexture(position, thingCountClass.thingDef.uiIcon);
 					Rect rect = new Rect(vector.x + 29f, y, 999f, 29f);
-					int num3 = num * thingCount.count;
+					int num3 = num * thingCountClass.count;
 					string text = num3.ToString();
-					if (Find.ResourceCounter.GetCount(thingCount.thingDef) < num3)
+					if (base.Map.resourceCounter.GetCount(thingCountClass.thingDef) < num3)
 					{
 						GUI.color = Color.red;
 						text = text + " (" + "NotEnoughStoredLower".Translate() + ")";
@@ -211,19 +211,19 @@ namespace RimWorld
 			else
 			{
 				List<FloatMenuOption> list = new List<FloatMenuOption>();
-				foreach (ThingDef current in Find.ResourceCounter.AllCountedAmounts.Keys)
+				foreach (ThingDef current in base.Map.resourceCounter.AllCountedAmounts.Keys)
 				{
-					if (current.IsStuff && current.stuffProps.CanMake(thingDef) && (DebugSettings.godMode || Find.ListerThings.ThingsOfDef(current).Count > 0))
+					if (current.IsStuff && current.stuffProps.CanMake(thingDef) && (DebugSettings.godMode || base.Map.listerThings.ThingsOfDef(current).Count > 0))
 					{
 						ThingDef localStuffDef = current;
 						string labelCap = localStuffDef.LabelCap;
 						list.Add(new FloatMenuOption(labelCap, delegate
 						{
 							this.ProcessInput(ev);
-							DesignatorManager.Select(this);
+							Find.DesignatorManager.Select(this);
 							this.stuffDef = localStuffDef;
 							this.writeStuff = true;
-						}, MenuOptionPriority.Medium, null, null, 0f, null)
+						}, MenuOptionPriority.Default, null, null, 0f, null, null)
 						{
 							tutorTag = "SelectStuff-" + thingDef.defName + "-" + localStuffDef.defName
 						});
@@ -238,14 +238,14 @@ namespace RimWorld
 					FloatMenu floatMenu = new FloatMenu(list);
 					floatMenu.vanishIfMouseDistant = true;
 					Find.WindowStack.Add(floatMenu);
-					DesignatorManager.Select(this);
+					Find.DesignatorManager.Select(this);
 				}
 			}
 		}
 
 		public override AcceptanceReport CanDesignateCell(IntVec3 c)
 		{
-			return GenConstruct.CanPlaceBlueprintAt(this.entDef, c, this.placingRot, DebugSettings.godMode, null);
+			return GenConstruct.CanPlaceBlueprintAt(this.entDef, c, this.placingRot, base.Map, DebugSettings.godMode, null);
 		}
 
 		public override void DesignateSingleCell(IntVec3 c)
@@ -254,25 +254,25 @@ namespace RimWorld
 			{
 				return;
 			}
-			if (DebugSettings.godMode || this.entDef.GetStatValueAbstract(StatDefOf.WorkToMake, this.stuffDef) == 0f)
+			if (DebugSettings.godMode || this.entDef.GetStatValueAbstract(StatDefOf.WorkToBuild, this.stuffDef) == 0f)
 			{
 				if (this.entDef is TerrainDef)
 				{
-					Find.TerrainGrid.SetTerrain(c, (TerrainDef)this.entDef);
+					base.Map.terrainGrid.SetTerrain(c, (TerrainDef)this.entDef);
 				}
 				else
 				{
 					Thing thing = ThingMaker.MakeThing((ThingDef)this.entDef, this.stuffDef);
 					thing.SetFactionDirect(Faction.OfPlayer);
-					GenSpawn.Spawn(thing, c, this.placingRot);
+					GenSpawn.Spawn(thing, c, base.Map, this.placingRot);
 				}
 			}
 			else
 			{
-				GenSpawn.WipeExistingThings(c, this.placingRot, this.entDef.blueprintDef, true);
-				GenConstruct.PlaceBlueprintForBuild(this.entDef, c, this.placingRot, Faction.OfPlayer, this.stuffDef);
+				GenSpawn.WipeExistingThings(c, this.placingRot, this.entDef.blueprintDef, base.Map, DestroyMode.Deconstruct);
+				GenConstruct.PlaceBlueprintForBuild(this.entDef, c, base.Map, this.placingRot, Faction.OfPlayer, this.stuffDef);
 			}
-			MoteMaker.ThrowMetaPuffs(GenAdj.OccupiedRect(c, this.placingRot, this.entDef.Size));
+			MoteMaker.ThrowMetaPuffs(GenAdj.OccupiedRect(c, this.placingRot, this.entDef.Size), base.Map);
 			ThingDef thingDef = this.entDef as ThingDef;
 			if (thingDef != null && thingDef.IsOrbitalTradeBeacon)
 			{
@@ -282,19 +282,26 @@ namespace RimWorld
 			{
 				TutorSystem.Notify_Event(new EventPack(base.TutorTagDesignate, c));
 			}
+			if (this.entDef.PlaceWorkers != null)
+			{
+				for (int i = 0; i < this.entDef.PlaceWorkers.Count; i++)
+				{
+					this.entDef.PlaceWorkers[i].PostPlace(base.Map, this.entDef, c, this.placingRot);
+				}
+			}
 		}
 
 		public override void SelectedUpdate()
 		{
 			base.SelectedUpdate();
-			IntVec3 intVec = Gen.MouseCell();
+			IntVec3 intVec = UI.MouseCell();
 			ThingDef thingDef = this.entDef as ThingDef;
 			if (thingDef != null && (thingDef.EverTransmitsPower || thingDef.ConnectToPower))
 			{
 				OverlayDrawHandler.DrawPowerGridOverlayThisFrame();
 				if (thingDef.ConnectToPower)
 				{
-					CompPower compPower = PowerConnectionMaker.BestTransmitterForConnector(intVec, null);
+					CompPower compPower = PowerConnectionMaker.BestTransmitterForConnector(intVec, Find.VisibleMap, null);
 					if (compPower != null)
 					{
 						PowerNetGraphics.RenderAnticipatedWirePieceConnecting(intVec, compPower.parent);
@@ -310,34 +317,34 @@ namespace RimWorld
 				this.stuffDef = null;
 			}
 			Text.Font = GameFont.Tiny;
-			List<ThingCount> list = this.entDef.CostListAdjusted(this.stuffDef, false);
+			List<ThingCountClass> list = this.entDef.CostListAdjusted(this.stuffDef, false);
 			for (int i = 0; i < list.Count; i++)
 			{
-				ThingCount thingCount = list[i];
+				ThingCountClass thingCountClass = list[i];
 				Texture2D image;
-				if (thingCount.thingDef == null)
+				if (thingCountClass.thingDef == null)
 				{
 					image = BaseContent.BadTex;
 				}
 				else
 				{
-					image = thingCount.thingDef.uiIcon;
+					image = thingCountClass.thingDef.uiIcon;
 				}
 				GUI.DrawTexture(new Rect(0f, curY, 20f, 20f), image);
-				if (thingCount.thingDef != null && thingCount.thingDef.resourceReadoutPriority != ResourceCountPriority.Uncounted && Find.ResourceCounter.GetCount(thingCount.thingDef) < thingCount.count)
+				if (thingCountClass.thingDef != null && thingCountClass.thingDef.resourceReadoutPriority != ResourceCountPriority.Uncounted && base.Map.resourceCounter.GetCount(thingCountClass.thingDef) < thingCountClass.count)
 				{
 					GUI.color = Color.red;
 				}
-				Widgets.Label(new Rect(26f, curY + 2f, 50f, 100f), thingCount.count.ToString());
+				Widgets.Label(new Rect(26f, curY + 2f, 50f, 100f), thingCountClass.count.ToString());
 				GUI.color = Color.white;
 				string text;
-				if (thingCount.thingDef == null)
+				if (thingCountClass.thingDef == null)
 				{
 					text = "(" + "UnchosenStuff".Translate() + ")";
 				}
 				else
 				{
-					text = thingCount.thingDef.LabelCap;
+					text = thingCountClass.thingDef.LabelCap;
 				}
 				float width2 = width - 60f;
 				float num = Text.CalcHeight(text, width2) - 2f;
