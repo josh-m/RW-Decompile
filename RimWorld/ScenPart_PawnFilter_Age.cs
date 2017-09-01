@@ -25,7 +25,7 @@ namespace RimWorld
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Values.LookValue<IntRange>(ref this.allowedAgeRange, "allowedAgeRange", default(IntRange), false);
+			Scribe_Values.Look<IntRange>(ref this.allowedAgeRange, "allowedAgeRange", default(IntRange), false);
 		}
 
 		public override string Summary(Scenario scen)

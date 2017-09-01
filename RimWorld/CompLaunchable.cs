@@ -239,7 +239,7 @@ namespace RimWorld
 					{
 						Find.WindowStack.Add(Dialog_MessageBox.CreateConfirmation("ConfirmSendNotCompletelyLoadedPods".Translate(new object[]
 						{
-							this.<>f__this.FirstThingLeftToLoadInGroup.LabelCap
+							this.<>f__this.FirstThingLeftToLoadInGroup.LabelCapNoCount
 						}), new Action(this.<>f__this.StartChoosingDestination), false, null));
 					}
 					else
@@ -286,7 +286,7 @@ namespace RimWorld
 
 		private void StartChoosingDestination()
 		{
-			Find.MainTabsRoot.SetCurrentTab(MainTabDefOf.World, true);
+			CameraJumper.TryJump(CameraJumper.GetWorldTarget(this.parent));
 			Find.WorldSelector.ClearSelection();
 			int tile = this.parent.Map.Tile;
 			Find.WorldTargeter.BeginTargeting(new Func<GlobalTargetInfo, bool>(this.ChoseWorldTarget), true, CompLaunchable.TargeterMouseAttachment, true, delegate
@@ -337,7 +337,7 @@ namespace RimWorld
 				Map myMap = this.parent.Map;
 				Map map = mapParent.Map;
 				Current.Game.VisibleMap = map;
-				Targeter arg_139_0 = Find.Targeter;
+				Targeter arg_13B_0 = Find.Targeter;
 				Action actionWhenFinished = delegate
 				{
 					if (Find.Maps.Contains(myMap))
@@ -345,7 +345,7 @@ namespace RimWorld
 						Current.Game.VisibleMap = myMap;
 					}
 				};
-				arg_139_0.BeginTargeting(TargetingParameters.ForDropPodsDestination(), delegate(LocalTargetInfo x)
+				arg_13B_0.BeginTargeting(TargetingParameters.ForDropPodsDestination(), delegate(LocalTargetInfo x)
 				{
 					if (!this.LoadingInProgressOrReadyToLaunch)
 					{
@@ -355,13 +355,14 @@ namespace RimWorld
 				}, null, actionWhenFinished, CompLaunchable.TargeterMouseAttachment);
 				return true;
 			}
-			if (target.WorldObject is FactionBase && target.WorldObject.Faction != Faction.OfPlayer)
+			bool flag;
+			if (mapParent != null)
 			{
-				Find.WorldTargeter.closeWorldTabWhenFinished = false;
+				Settlement settlement = mapParent as Settlement;
 				List<FloatMenuOption> list = new List<FloatMenuOption>();
-				if (!target.WorldObject.Faction.HostileTo(Faction.OfPlayer))
+				if (settlement != null && settlement.Visitable)
 				{
-					list.Add(new FloatMenuOption("VisitFactionBase".Translate(new object[]
+					list.Add(new FloatMenuOption("VisitSettlement".Translate(new object[]
 					{
 						target.WorldObject.Label
 					}), delegate
@@ -371,29 +372,45 @@ namespace RimWorld
 							return;
 						}
 						this.TryLaunch(target, PawnsArriveMode.Undecided, false);
-						JumpToTargetUtility.CloseWorldTab();
+						CameraJumper.TryHideWorld();
 					}, MenuOptionPriority.Default, null, null, 0f, null, null));
 				}
-				list.Add(new FloatMenuOption("DropAtEdge".Translate(), delegate
+				if (mapParent.TransportPodsCanLandAndGenerateMap)
 				{
-					if (!this.LoadingInProgressOrReadyToLaunch)
+					list.Add(new FloatMenuOption("DropAtEdge".Translate(), delegate
 					{
-						return;
-					}
-					this.TryLaunch(target, PawnsArriveMode.EdgeDrop, true);
-					JumpToTargetUtility.CloseWorldTab();
-				}, MenuOptionPriority.Default, null, null, 0f, null, null));
-				list.Add(new FloatMenuOption("DropInCenter".Translate(), delegate
+						if (!this.LoadingInProgressOrReadyToLaunch)
+						{
+							return;
+						}
+						this.TryLaunch(target, PawnsArriveMode.EdgeDrop, true);
+						CameraJumper.TryHideWorld();
+					}, MenuOptionPriority.Default, null, null, 0f, null, null));
+					list.Add(new FloatMenuOption("DropInCenter".Translate(), delegate
+					{
+						if (!this.LoadingInProgressOrReadyToLaunch)
+						{
+							return;
+						}
+						this.TryLaunch(target, PawnsArriveMode.CenterDrop, true);
+						CameraJumper.TryHideWorld();
+					}, MenuOptionPriority.Default, null, null, 0f, null, null));
+				}
+				if (list.Any<FloatMenuOption>())
 				{
-					if (!this.LoadingInProgressOrReadyToLaunch)
-					{
-						return;
-					}
-					this.TryLaunch(target, PawnsArriveMode.CenterDrop, true);
-					JumpToTargetUtility.CloseWorldTab();
-				}, MenuOptionPriority.Default, null, null, 0f, null, null));
-				Find.WindowStack.Add(new FloatMenu(list));
-				return true;
+					Find.WorldTargeter.closeWorldTabWhenFinished = false;
+					Find.WindowStack.Add(new FloatMenu(list));
+					return true;
+				}
+				flag = true;
+			}
+			else
+			{
+				flag = true;
+			}
+			if (!flag)
+			{
+				return false;
 			}
 			if (Find.World.Impassable(target.Tile))
 			{
@@ -444,10 +461,10 @@ namespace RimWorld
 				dropPodLeaving.destinationCell = target.Cell;
 				dropPodLeaving.arriveMode = arriveMode;
 				dropPodLeaving.attackOnArrival = attackOnArrival;
-				ThingContainer innerContainer = compTransporter.GetInnerContainer();
+				ThingOwner directlyHeldThings = compTransporter.GetDirectlyHeldThings();
 				dropPodLeaving.Contents = new ActiveDropPodInfo();
-				dropPodLeaving.Contents.innerContainer.TryAddMany(innerContainer);
-				innerContainer.Clear();
+				dropPodLeaving.Contents.innerContainer.TryAddRange(directlyHeldThings, true);
+				directlyHeldThings.Clear();
 				compTransporter.CleanUpLoadingVars(map);
 				compTransporter.parent.Destroy(DestroyMode.Vanish);
 				GenSpawn.Spawn(dropPodLeaving, compTransporter.parent.Position, map);

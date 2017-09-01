@@ -12,7 +12,7 @@ using Verse.Sound;
 
 namespace RimWorld
 {
-	internal class Building_CrashedShipPart : Building
+	public class Building_CrashedShipPart : Building
 	{
 		private const float MechanoidsDefendRadius = 21f;
 
@@ -30,9 +30,11 @@ namespace RimWorld
 
 		private float snowRadius;
 
+		private int ticksToPlantHarm;
+
 		private ModuleBase snowNoise;
 
-		private int ticksToPlantHarm;
+		public static readonly string MemoDamaged = "ShipPartDamaged";
 
 		private static HashSet<IntVec3> reachableCells = new HashSet<IntVec3>();
 
@@ -55,17 +57,22 @@ namespace RimWorld
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Values.LookValue<float>(ref this.pointsLeft, "mechanoidPointsLeft", 0f, false);
-			Scribe_Values.LookValue<int>(ref this.age, "age", 0, false);
-			Scribe_Values.LookValue<float>(ref this.snowRadius, "snowRadius", 0f, false);
-			Scribe_References.LookReference<Lord>(ref this.lord, "defenseLord", false);
+			Scribe_References.Look<Lord>(ref this.lord, "defenseLord", false);
+			Scribe_Values.Look<float>(ref this.pointsLeft, "mechanoidPointsLeft", 0f, false);
+			Scribe_Values.Look<int>(ref this.age, "age", 0, false);
+			Scribe_Values.Look<float>(ref this.snowRadius, "snowRadius", 0f, false);
+			Scribe_Values.Look<int>(ref this.ticksToPlantHarm, "ticksToPlantHarm", 0, false);
 		}
 
 		public override string GetInspectString()
 		{
 			StringBuilder stringBuilder = new StringBuilder();
-			stringBuilder.AppendLine(base.GetInspectString());
-			stringBuilder.AppendLine("AwokeDaysAgo".Translate(new object[]
+			stringBuilder.Append(base.GetInspectString());
+			if (stringBuilder.Length != 0)
+			{
+				stringBuilder.AppendLine();
+			}
+			stringBuilder.Append("AwokeDaysAgo".Translate(new object[]
 			{
 				this.age.TicksToDays().ToString("F1")
 			}));
@@ -96,6 +103,10 @@ namespace RimWorld
 			}
 			if (dinfo.Def.harmsHealth)
 			{
+				if (this.lord != null)
+				{
+					this.lord.ReceiveMemo(Building_CrashedShipPart.MemoDamaged);
+				}
 				float num = (float)(this.HitPoints - dinfo.Amount);
 				if ((num < (float)base.MaxHitPoints * 0.98f && dinfo.Instigator != null && dinfo.Instigator.Faction != null) || num < (float)base.MaxHitPoints * 0.9f)
 				{
@@ -103,6 +114,14 @@ namespace RimWorld
 				}
 			}
 			absorbed = false;
+		}
+
+		public void Notify_AdjacentBlueprintReplacedWithSolidThing(Pawn by)
+		{
+			if (by.Faction != Faction.OfMechanoids)
+			{
+				this.TrySpawnMechanoids();
+			}
 		}
 
 		private void TrySpawnMechanoids()
@@ -143,10 +162,7 @@ namespace RimWorld
 				}
 				IL_130:
 				this.pointsLeft = 0f;
-				if (base.Map == Find.VisibleMap)
-				{
-					SoundDefOf.PsychicPulseGlobal.PlayOneShotOnCamera();
-				}
+				SoundDefOf.PsychicPulseGlobal.PlayOneShotOnCamera(base.Map);
 				return;
 			}
 			goto IL_130;
@@ -155,14 +171,6 @@ namespace RimWorld
 		private bool CanSpawnMechanoidAt(IntVec3 c)
 		{
 			return c.Walkable(base.Map);
-		}
-
-		private void TrySwitchMechanoidsToAssaultMode()
-		{
-			if (this.lord.CurLordToil is LordToil_DefendPoint)
-			{
-				this.lord.ReceiveMemo("AssaultColony");
-			}
 		}
 
 		private void ExpandSnow()
@@ -193,10 +201,10 @@ namespace RimWorld
 			}
 			CellRect occupiedRect = this.OccupiedRect();
 			Building_CrashedShipPart.reachableCells.Clear();
-			base.Map.floodFiller.FloodFill(base.Position, (IntVec3 x) => x.DistanceToSquared(this.Position) <= this.snowRadius * this.snowRadius && (occupiedRect.Contains(x) || !x.Filled(this.Map)), delegate(IntVec3 x)
+			base.Map.floodFiller.FloodFill(base.Position, (IntVec3 x) => (float)x.DistanceToSquared(this.Position) <= this.snowRadius * this.snowRadius && (occupiedRect.Contains(x) || !x.Filled(this.Map)), delegate(IntVec3 x)
 			{
 				Building_CrashedShipPart.reachableCells.Add(x);
-			});
+			}, false);
 			int num = GenRadial.NumCellsInRadius(this.snowRadius);
 			for (int i = 0; i < num; i++)
 			{
@@ -244,7 +252,7 @@ namespace RimWorld
 				{
 					if (Rand.Value < 0.2f)
 					{
-						plant.Destroy(DestroyMode.Kill);
+						plant.Kill(null);
 					}
 					else
 					{

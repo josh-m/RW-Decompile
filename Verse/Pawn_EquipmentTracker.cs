@@ -6,32 +6,44 @@ using System.Linq;
 
 namespace Verse
 {
-	public class Pawn_EquipmentTracker : IExposable
+	public class Pawn_EquipmentTracker : IExposable, IThingHolder
 	{
 		private Pawn pawn;
 
-		private ThingWithComps primaryInt;
-
-		private List<ThingWithComps> cachedAllEquipment = new List<ThingWithComps>();
-
-		private bool cachedAllEquipmentDirty = true;
-
-		private static List<ThingWithComps> tmpEquipment = new List<ThingWithComps>();
+		private ThingOwner<ThingWithComps> equipment;
 
 		public ThingWithComps Primary
 		{
 			get
 			{
-				return this.primaryInt;
+				for (int i = 0; i < this.equipment.Count; i++)
+				{
+					if (this.equipment[i].def.equipmentType == EquipmentType.Primary)
+					{
+						return this.equipment[i];
+					}
+				}
+				return null;
 			}
 			private set
 			{
-				if (this.primaryInt == value)
+				if (this.Primary == value)
 				{
 					return;
 				}
-				this.primaryInt = value;
-				this.cachedAllEquipmentDirty = true;
+				if (value != null && value.def.equipmentType != EquipmentType.Primary)
+				{
+					Log.Error("Tried to set non-primary equipment as primary.");
+					return;
+				}
+				if (this.Primary != null)
+				{
+					this.equipment.Remove(this.Primary);
+				}
+				if (value != null)
+				{
+					this.equipment.TryAdd(value, true);
+				}
 				if (this.pawn.drafter != null)
 				{
 					this.pawn.drafter.Notify_PrimaryWeaponChanged();
@@ -43,24 +55,15 @@ namespace Verse
 		{
 			get
 			{
-				return this.primaryInt.GetComp<CompEquippable>();
+				return (this.Primary == null) ? null : this.Primary.GetComp<CompEquippable>();
 			}
 		}
 
-		public List<ThingWithComps> AllEquipment
+		public List<ThingWithComps> AllEquipmentListForReading
 		{
 			get
 			{
-				if (this.cachedAllEquipmentDirty)
-				{
-					this.cachedAllEquipment.Clear();
-					if (this.primaryInt != null)
-					{
-						this.cachedAllEquipment.Add(this.primaryInt);
-					}
-					this.cachedAllEquipmentDirty = false;
-				}
-				return this.cachedAllEquipment;
+				return this.equipment.InnerListForReading;
 			}
 		}
 
@@ -68,34 +71,45 @@ namespace Verse
 		{
 			get
 			{
-				for (int i = 0; i < this.AllEquipment.Count; i++)
+				List<ThingWithComps> list = this.AllEquipmentListForReading;
+				for (int i = 0; i < list.Count; i++)
 				{
-					ThingWithComps eq = this.AllEquipment[i];
-					foreach (Verb verb in eq.GetComp<CompEquippable>().AllVerbs)
+					ThingWithComps eq = list[i];
+					List<Verb> verbs = eq.GetComp<CompEquippable>().AllVerbs;
+					for (int j = 0; j < verbs.Count; j++)
 					{
-						yield return verb;
+						yield return verbs[j];
 					}
 				}
+			}
+		}
+
+		public IThingHolder ParentHolder
+		{
+			get
+			{
+				return this.pawn;
 			}
 		}
 
 		public Pawn_EquipmentTracker(Pawn newPawn)
 		{
 			this.pawn = newPawn;
+			this.equipment = new ThingOwner<ThingWithComps>(this);
 		}
 
 		public void ExposeData()
 		{
-			Scribe_Deep.LookDeep<ThingWithComps>(ref this.primaryInt, "primary", new object[0]);
-			if (Scribe.mode != LoadSaveMode.Saving)
+			Scribe_Deep.Look<ThingOwner<ThingWithComps>>(ref this.equipment, "equipment", new object[]
 			{
-				this.cachedAllEquipmentDirty = true;
-			}
+				this
+			});
 			if (Scribe.mode == LoadSaveMode.LoadingVars)
 			{
-				for (int i = 0; i < this.AllEquipment.Count; i++)
+				List<ThingWithComps> allEquipmentListForReading = this.AllEquipmentListForReading;
+				for (int i = 0; i < allEquipmentListForReading.Count; i++)
 				{
-					ThingWithComps thingWithComps = this.AllEquipment[i];
+					ThingWithComps thingWithComps = allEquipmentListForReading[i];
 					foreach (Verb current in thingWithComps.GetComp<CompEquippable>().AllVerbs)
 					{
 						current.caster = this.pawn;
@@ -107,26 +121,30 @@ namespace Verse
 
 		public void EquipmentTrackerTick()
 		{
-			for (int i = 0; i < this.AllEquipment.Count; i++)
+			List<ThingWithComps> allEquipmentListForReading = this.AllEquipmentListForReading;
+			for (int i = 0; i < allEquipmentListForReading.Count; i++)
 			{
-				ThingWithComps thingWithComps = this.AllEquipment[i];
+				ThingWithComps thingWithComps = allEquipmentListForReading[i];
 				thingWithComps.GetComp<CompEquippable>().verbTracker.VerbsTick();
 			}
 		}
 
 		public bool HasAnything()
 		{
-			return this.AllEquipment.Any<ThingWithComps>();
+			return this.equipment.Any;
 		}
 
 		public void MakeRoomFor(ThingWithComps eq)
 		{
 			if (eq.def.equipmentType == EquipmentType.Primary && this.Primary != null)
 			{
-				ThingWithComps t;
-				if (this.TryDropEquipment(this.Primary, out t, this.pawn.Position, true))
+				ThingWithComps thingWithComps;
+				if (this.TryDropEquipment(this.Primary, out thingWithComps, this.pawn.Position, true))
 				{
-					t.SetForbidden(false, true);
+					if (thingWithComps != null)
+					{
+						thingWithComps.SetForbidden(false, true);
+					}
 				}
 				else
 				{
@@ -137,31 +155,11 @@ namespace Verse
 
 		public void Remove(ThingWithComps eq)
 		{
-			if (!this.AllEquipment.Contains(eq))
-			{
-				Log.Warning("Tried to remove equipment " + eq + " but it's not here.");
-				return;
-			}
-			if (this.Primary == eq)
-			{
-				this.Primary = null;
-			}
-			else
-			{
-				Log.Error("Tried to remove equipment " + eq + " but it's not Primary. Where is it?");
-			}
-			eq.GetComp<CompEquippable>().Notify_EquipmentLost();
-			this.pawn.meleeVerbs.Notify_EquipmentLost();
+			this.equipment.Remove(eq);
 		}
 
 		public bool TryDropEquipment(ThingWithComps eq, out ThingWithComps resultingEq, IntVec3 pos, bool forbid = true)
 		{
-			if (!this.AllEquipment.Contains(eq))
-			{
-				Log.Warning(this.pawn.LabelCap + " tried to drop equipment they didn't have: " + eq);
-				resultingEq = null;
-				return false;
-			}
 			if (!pos.IsValid)
 			{
 				Log.Error(string.Concat(new object[]
@@ -174,45 +172,34 @@ namespace Verse
 				resultingEq = null;
 				return false;
 			}
-			this.Remove(eq);
-			Thing thing = null;
-			bool result = GenThing.TryDropAndSetForbidden(eq, pos, this.pawn.MapHeld, ThingPlaceMode.Near, out thing, forbid);
-			resultingEq = (thing as ThingWithComps);
-			return result;
+			if (this.equipment.TryDrop(eq, pos, this.pawn.MapHeld, ThingPlaceMode.Near, out resultingEq, null))
+			{
+				if (resultingEq != null)
+				{
+					resultingEq.SetForbidden(forbid, false);
+				}
+				return true;
+			}
+			return false;
 		}
 
 		public void DropAllEquipment(IntVec3 pos, bool forbid = true)
 		{
-			if (this.Primary != null)
+			for (int i = this.equipment.Count - 1; i >= 0; i--)
 			{
 				ThingWithComps thingWithComps;
-				this.TryDropEquipment(this.Primary, out thingWithComps, pos, forbid);
+				this.TryDropEquipment(this.equipment[i], out thingWithComps, pos, forbid);
 			}
 		}
 
-		public bool TryTransferEquipmentToContainer(ThingWithComps eq, ThingContainer container, out ThingWithComps resultingEq)
+		public bool TryTransferEquipmentToContainer(ThingWithComps eq, ThingOwner container)
 		{
-			if (!this.AllEquipment.Contains(eq))
-			{
-				Log.Warning(this.pawn.LabelCap + " tried to transfer equipment he didn't have: " + eq);
-				resultingEq = null;
-				return false;
-			}
-			if (container.TryAdd(eq, true))
-			{
-				resultingEq = null;
-			}
-			else
-			{
-				resultingEq = eq;
-			}
-			this.Remove(eq);
-			return resultingEq == null;
+			return this.equipment.TryTransferToContainer(eq, container, true);
 		}
 
 		public void DestroyEquipment(ThingWithComps eq)
 		{
-			if (!this.AllEquipment.Contains(eq))
+			if (!this.equipment.Contains(eq))
 			{
 				Log.Warning("Tried to destroy equipment " + eq + " but it's not here.");
 				return;
@@ -223,17 +210,20 @@ namespace Verse
 
 		public void DestroyAllEquipment(DestroyMode mode = DestroyMode.Vanish)
 		{
-			Pawn_EquipmentTracker.tmpEquipment.Clear();
-			Pawn_EquipmentTracker.tmpEquipment.AddRange(this.AllEquipment);
-			for (int i = 0; i < Pawn_EquipmentTracker.tmpEquipment.Count; i++)
-			{
-				this.DestroyEquipment(Pawn_EquipmentTracker.tmpEquipment[i]);
-			}
+			this.equipment.ClearAndDestroyContents(mode);
+		}
+
+		public bool Contains(Thing eq)
+		{
+			return this.equipment.Contains(eq);
 		}
 
 		internal void Notify_PrimaryDestroyed()
 		{
-			this.Remove(this.Primary);
+			if (this.Primary != null)
+			{
+				this.Remove(this.Primary);
+			}
 			if (this.pawn.Spawned)
 			{
 				this.pawn.stances.CancelBusyStanceSoft();
@@ -242,21 +232,6 @@ namespace Verse
 
 		public void AddEquipment(ThingWithComps newEq)
 		{
-			SlotGroupUtility.Notify_TakingThing(newEq);
-			if ((from eq in this.AllEquipment
-			where eq.def == newEq.def
-			select eq).Any<ThingWithComps>())
-			{
-				Log.Error(string.Concat(new object[]
-				{
-					"Pawn ",
-					this.pawn.LabelCap,
-					" got equipment ",
-					newEq,
-					" while already having it."
-				}));
-				return;
-			}
 			if (newEq.def.equipmentType == EquipmentType.Primary && this.Primary != null)
 			{
 				Log.Error(string.Concat(new object[]
@@ -270,19 +245,7 @@ namespace Verse
 				}));
 				return;
 			}
-			if (newEq.def.equipmentType == EquipmentType.Primary)
-			{
-				this.Primary = newEq;
-			}
-			else
-			{
-				Log.Error("Tried to equip " + newEq + " but it's not Primary. Secondary weapons are not supported.");
-			}
-			foreach (Verb current in newEq.GetComp<CompEquippable>().AllVerbs)
-			{
-				current.caster = this.pawn;
-				current.Notify_PickedUp();
-			}
+			this.equipment.TryAdd(newEq, true);
 		}
 
 		[DebuggerHidden]
@@ -294,9 +257,10 @@ namespace Verse
 			}
 			else
 			{
-				for (int i = 0; i < this.AllEquipment.Count; i++)
+				List<ThingWithComps> list = this.AllEquipmentListForReading;
+				for (int i = 0; i < list.Count; i++)
 				{
-					ThingWithComps eq = this.AllEquipment[i];
+					ThingWithComps eq = list[i];
 					foreach (Command command in eq.GetComp<CompEquippable>().GetVerbsCommands())
 					{
 						switch (i)
@@ -323,7 +287,7 @@ namespace Verse
 			{
 				return false;
 			}
-			if (this.pawn.story != null && this.pawn.story.DisabledWorkTags.Contains(WorkTags.Violent))
+			if (this.pawn.story != null && this.pawn.story.WorkTagIsDisabled(WorkTags.Violent))
 			{
 				return false;
 			}
@@ -400,6 +364,30 @@ namespace Verse
 				}
 			};
 			return command_Target;
+		}
+
+		public void Notify_EquipmentAdded(ThingWithComps eq)
+		{
+			foreach (Verb current in eq.GetComp<CompEquippable>().AllVerbs)
+			{
+				current.caster = this.pawn;
+				current.Notify_PickedUp();
+			}
+		}
+
+		public void Notify_EquipmentRemoved(ThingWithComps eq)
+		{
+			eq.GetComp<CompEquippable>().Notify_EquipmentLost();
+		}
+
+		public ThingOwner GetDirectlyHeldThings()
+		{
+			return this.equipment;
+		}
+
+		public void GetChildHolders(List<IThingHolder> outChildren)
+		{
+			ThingOwnerUtility.AppendThingHoldersFromThings(outChildren, this.GetDirectlyHeldThings());
 		}
 	}
 }

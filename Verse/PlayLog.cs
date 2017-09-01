@@ -33,7 +33,7 @@ namespace Verse
 
 		public void ExposeData()
 		{
-			Scribe_Collections.LookList<PlayLogEntry>(ref this.entries, "entries", LookMode.Deep, new object[0]);
+			Scribe_Collections.Look<PlayLogEntry>(ref this.entries, "entries", LookMode.Deep, new object[0]);
 		}
 
 		public void Notify_PawnDiscarded(Pawn p)

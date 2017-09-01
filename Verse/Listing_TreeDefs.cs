@@ -18,7 +18,7 @@ namespace Verse
 			}
 		}
 
-		public Listing_TreeDefs(Rect rect, float labelColumnWidth) : base(rect)
+		public Listing_TreeDefs(float labelColumnWidth)
 		{
 			this.labelWidthInt = labelColumnWidth;
 		}

@@ -14,7 +14,7 @@ namespace RimWorld
 			}
 			if (p.Faction == Faction.OfPlayer)
 			{
-				p.needs.mood.thoughts.memories.TryGainMemoryThought(ThoughtDefOf.WasImprisoned, null);
+				p.needs.mood.thoughts.memories.TryGainMemory(ThoughtDefOf.WasImprisoned, null);
 				p.guest.SetGuestStatus(null, false);
 				return;
 			}
@@ -24,7 +24,7 @@ namespace RimWorld
 			{
 				Job job = new Job(JobDefOf.Goto, c);
 				job.exitMapOnArrival = true;
-				p.jobs.StartJob(job, JobCondition.None, null, false, true, null);
+				p.jobs.StartJob(job, JobCondition.None, null, false, true, null, null);
 			}
 		}
 	}

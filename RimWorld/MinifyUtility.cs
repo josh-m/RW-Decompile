@@ -13,6 +13,15 @@ namespace RimWorld
 				Log.Warning("Tried to minify " + thing + " which is not minifiable.");
 				return null;
 			}
+			if (thing.Spawned)
+			{
+				thing.DeSpawn();
+			}
+			if (thing.holdingOwner != null)
+			{
+				Log.Warning("Can't minify thing which is in a ThingOwner because we don't know how to handle it. Remove it from the container first. holder=" + thing.ParentHolder);
+				return null;
+			}
 			Blueprint_Install blueprint_Install = InstallBlueprintUtility.ExistingBlueprintFor(thing);
 			MinifiedThing minifiedThing = (MinifiedThing)ThingMaker.MakeThing(thing.def.minifiedDef, null);
 			minifiedThing.InnerThing = thing;
@@ -31,10 +40,6 @@ namespace RimWorld
 					". Clamped stack count to 1."
 				}));
 				minifiedThing.InnerThing.stackCount = 1;
-			}
-			if (thing.Spawned)
-			{
-				thing.DeSpawn();
 			}
 			return minifiedThing;
 		}

@@ -13,17 +13,9 @@ namespace RimWorld
 			if (req.StuffDef != null)
 			{
 				StatDef statDef = null;
-				DamageArmorCategory damageArmorCategory = this.CategoryOfDamage(def);
-				if (damageArmorCategory != DamageArmorCategory.Blunt)
+				if (this.CategoryOfDamage(def) != null)
 				{
-					if (damageArmorCategory == DamageArmorCategory.Sharp)
-					{
-						statDef = StatDefOf.SharpDamageMultiplier;
-					}
-				}
-				else
-				{
-					statDef = StatDefOf.BluntDamageMultiplier;
+					statDef = this.CategoryOfDamage(def).multStat;
 				}
 				if (statDef != null)
 				{
@@ -42,17 +34,9 @@ namespace RimWorld
 			if (req.StuffDef != null)
 			{
 				StatDef statDef = null;
-				DamageArmorCategory damageArmorCategory = this.CategoryOfDamage(def);
-				if (damageArmorCategory != DamageArmorCategory.Blunt)
+				if (this.CategoryOfDamage(def) != null)
 				{
-					if (damageArmorCategory == DamageArmorCategory.Sharp)
-					{
-						statDef = StatDefOf.SharpDamageMultiplier;
-					}
-				}
-				else
-				{
-					statDef = StatDefOf.BluntDamageMultiplier;
+					statDef = this.CategoryOfDamage(def).multStat;
 				}
 				if (statDef != null)
 				{
@@ -62,6 +46,6 @@ namespace RimWorld
 			return stringBuilder.ToString();
 		}
 
-		protected abstract DamageArmorCategory CategoryOfDamage(ThingDef def);
+		protected abstract DamageArmorCategoryDef CategoryOfDamage(ThingDef def);
 	}
 }

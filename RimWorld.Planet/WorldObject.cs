@@ -2,13 +2,14 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Text;
 using UnityEngine;
 using Verse;
 
 namespace RimWorld.Planet
 {
 	[StaticConstructorOnStartup]
-	public class WorldObject : ILoadReferenceable, IExposable, ISelectable
+	public class WorldObject : IExposable, ILoadReferenceable, ISelectable
 	{
 		private const float BaseDrawSize = 0.7f;
 
@@ -22,7 +23,17 @@ namespace RimWorld.Planet
 
 		public int creationGameTicks = -1;
 
+		private List<WorldObjectComp> comps = new List<WorldObjectComp>();
+
 		private static MaterialPropertyBlock propertyBlock = new MaterialPropertyBlock();
+
+		public List<WorldObjectComp> AllComps
+		{
+			get
+			{
+				return this.comps;
+			}
+		}
 
 		public int Tile
 		{
@@ -34,20 +45,10 @@ namespace RimWorld.Planet
 			{
 				if (this.tileInt != value)
 				{
-					int tile = this.tileInt;
 					this.tileInt = value;
-					if (this.Spawned)
+					if (this.Spawned && !this.def.useDynamicDrawer)
 					{
-						if (!this.def.useDynamicDrawer)
-						{
-							Find.World.renderer.Notify_StaticWorldObjectPosChanged();
-						}
-						if (this.def.AffectsPathing)
-						{
-							WorldPathGrid worldPathGrid = Find.WorldPathGrid;
-							worldPathGrid.RecalculatePerceivedPathCostAt(tile);
-							worldPathGrid.RecalculatePerceivedPathCostAt(this.tileInt);
-						}
+						Find.World.renderer.Notify_StaticWorldObjectPosChanged();
 					}
 					this.PositionChanged();
 				}
@@ -158,13 +159,55 @@ namespace RimWorld.Planet
 			}
 		}
 
+		public virtual bool AppendFactionToInspectString
+		{
+			get
+			{
+				return true;
+			}
+		}
+
+		public IThingHolder ParentHolder
+		{
+			get
+			{
+				return (!this.Spawned) ? null : Find.World;
+			}
+		}
+
+		public virtual IEnumerable<StatDrawEntry> SpecialDisplayStats
+		{
+			get
+			{
+			}
+		}
+
 		public virtual void ExposeData()
 		{
-			Scribe_Defs.LookDef<WorldObjectDef>(ref this.def, "def");
-			Scribe_Values.LookValue<int>(ref this.ID, "ID", -1, false);
-			Scribe_Values.LookValue<int>(ref this.tileInt, "tile", -1, false);
-			Scribe_References.LookReference<Faction>(ref this.factionInt, "faction", false);
-			Scribe_Values.LookValue<int>(ref this.creationGameTicks, "creationGameTicks", 0, false);
+			Scribe_Defs.Look<WorldObjectDef>(ref this.def, "def");
+			if (Scribe.mode == LoadSaveMode.LoadingVars)
+			{
+				this.InitializeComps();
+			}
+			Scribe_Values.Look<int>(ref this.ID, "ID", -1, false);
+			Scribe_Values.Look<int>(ref this.tileInt, "tile", -1, false);
+			Scribe_References.Look<Faction>(ref this.factionInt, "faction", false);
+			Scribe_Values.Look<int>(ref this.creationGameTicks, "creationGameTicks", 0, false);
+			for (int i = 0; i < this.comps.Count; i++)
+			{
+				this.comps[i].PostExposeData();
+			}
+		}
+
+		private void InitializeComps()
+		{
+			for (int i = 0; i < this.def.comps.Count; i++)
+			{
+				WorldObjectComp worldObjectComp = (WorldObjectComp)Activator.CreateInstance(this.def.comps[i].compClass);
+				worldObjectComp.parent = this;
+				this.comps.Add(worldObjectComp);
+				worldObjectComp.Initialize(this.def.comps[i]);
+			}
 		}
 
 		public virtual void SetFaction(Faction newFaction)
@@ -186,15 +229,37 @@ namespace RimWorld.Planet
 
 		public virtual string GetInspectString()
 		{
-			if (this.Faction != null)
+			StringBuilder stringBuilder = new StringBuilder();
+			if (this.Faction != null && this.AppendFactionToInspectString)
 			{
-				return "Faction".Translate() + ": " + this.Faction.Name;
+				stringBuilder.Append("Faction".Translate() + ": " + this.Faction.Name);
 			}
-			return string.Empty;
+			for (int i = 0; i < this.comps.Count; i++)
+			{
+				string text = this.comps[i].CompInspectStringExtra();
+				if (!text.NullOrEmpty())
+				{
+					if (Prefs.DevMode && char.IsWhiteSpace(text[text.Length - 1]))
+					{
+						Log.ErrorOnce(this.comps[i].GetType() + " CompInspectStringExtra ended with whitespace: " + text, 25612);
+						text = text.TrimEndNewlines();
+					}
+					if (stringBuilder.Length != 0)
+					{
+						stringBuilder.AppendLine();
+					}
+					stringBuilder.Append(text);
+				}
+			}
+			return stringBuilder.ToString();
 		}
 
 		public virtual void Tick()
 		{
+			for (int i = 0; i < this.comps.Count; i++)
+			{
+				this.comps[i].CompTick();
+			}
 		}
 
 		public virtual void ExtraSelectionOverlaysOnGUI()
@@ -207,6 +272,7 @@ namespace RimWorld.Planet
 
 		public virtual void PostMake()
 		{
+			this.InitializeComps();
 		}
 
 		public virtual void PostAdd()
@@ -223,10 +289,6 @@ namespace RimWorld.Planet
 			{
 				Find.World.renderer.Notify_StaticWorldObjectPosChanged();
 			}
-			if (this.def.AffectsPathing)
-			{
-				Find.WorldPathGrid.RecalculatePerceivedPathCostAt(this.Tile);
-			}
 			if (this.def.useDynamicDrawer)
 			{
 				Find.WorldDynamicDrawManager.RegisterDrawable(this);
@@ -239,21 +301,21 @@ namespace RimWorld.Planet
 			{
 				Find.World.renderer.Notify_StaticWorldObjectPosChanged();
 			}
-			if (this.def.AffectsPathing)
-			{
-				Find.WorldPathGrid.RecalculatePerceivedPathCostAt(this.Tile);
-			}
 			if (this.def.useDynamicDrawer)
 			{
 				Find.WorldDynamicDrawManager.DeRegisterDrawable(this);
 			}
 			Find.WorldSelector.Deselect(this);
+			for (int i = 0; i < this.comps.Count; i++)
+			{
+				this.comps[i].PostPostRemove();
+			}
 		}
 
 		public virtual void Print(LayerSubMesh subMesh)
 		{
 			float averageTileSize = Find.WorldGrid.averageTileSize;
-			WorldRendererUtility.PrintQuadTangentialToPlanet(this.DrawPos, 0.7f * averageTileSize, 0.008f, subMesh, false, true, true);
+			WorldRendererUtility.PrintQuadTangentialToPlanet(this.DrawPos, 0.7f * averageTileSize, 0.015f, subMesh, false, true, true);
 		}
 
 		public virtual void Draw()
@@ -264,24 +326,63 @@ namespace RimWorld.Planet
 			{
 				Color color = this.Material.color;
 				float num = 1f - transitionPct;
-				WorldObject.propertyBlock.SetColor(WorldRendererUtility.ColorPropertyID, new Color(color.r, color.g, color.b, color.a * num));
+				WorldObject.propertyBlock.SetColor(ShaderPropertyIDs.Color, new Color(color.r, color.g, color.b, color.a * num));
 				MaterialPropertyBlock materialPropertyBlock = WorldObject.propertyBlock;
-				WorldRendererUtility.DrawQuadTangentialToPlanet(this.DrawPos, 0.7f * averageTileSize, 0.008f, this.Material, false, false, materialPropertyBlock);
+				WorldRendererUtility.DrawQuadTangentialToPlanet(this.DrawPos, 0.7f * averageTileSize, 0.015f, this.Material, false, false, materialPropertyBlock);
 			}
 			else
 			{
-				WorldRendererUtility.DrawQuadTangentialToPlanet(this.DrawPos, 0.7f * averageTileSize, 0.008f, this.Material, false, false, null);
+				WorldRendererUtility.DrawQuadTangentialToPlanet(this.DrawPos, 0.7f * averageTileSize, 0.015f, this.Material, false, false, null);
 			}
+		}
+
+		public T GetComponent<T>() where T : WorldObjectComp
+		{
+			for (int i = 0; i < this.comps.Count; i++)
+			{
+				T t = this.comps[i] as T;
+				if (t != null)
+				{
+					return t;
+				}
+			}
+			return (T)((object)null);
+		}
+
+		public WorldObjectComp GetComponent(Type type)
+		{
+			for (int i = 0; i < this.comps.Count; i++)
+			{
+				if (type.IsAssignableFrom(this.comps[i].GetType()))
+				{
+					return this.comps[i];
+				}
+			}
+			return null;
 		}
 
 		[DebuggerHidden]
 		public virtual IEnumerable<Gizmo> GetGizmos()
 		{
+			for (int i = 0; i < this.comps.Count; i++)
+			{
+				foreach (Gizmo gizmo in this.comps[i].GetGizmos())
+				{
+					yield return gizmo;
+				}
+			}
 		}
 
 		[DebuggerHidden]
 		public virtual IEnumerable<FloatMenuOption> GetFloatMenuOptions(Caravan caravan)
 		{
+			for (int i = 0; i < this.comps.Count; i++)
+			{
+				foreach (FloatMenuOption f in this.comps[i].GetFloatMenuOptions(caravan))
+				{
+					yield return f;
+				}
+			}
 		}
 
 		public virtual IEnumerable<InspectTabBase> GetInspectTabs()
@@ -297,7 +398,7 @@ namespace RimWorld.Planet
 		{
 			return string.Concat(new object[]
 			{
-				base.GetType(),
+				base.GetType().Name,
 				" ",
 				this.LabelCap,
 				" (tile=",
@@ -314,6 +415,26 @@ namespace RimWorld.Planet
 		public string GetUniqueLoadID()
 		{
 			return "WorldObject_" + this.ID;
+		}
+
+		public virtual string GetDescription()
+		{
+			StringBuilder stringBuilder = new StringBuilder();
+			stringBuilder.Append(this.def.description);
+			for (int i = 0; i < this.comps.Count; i++)
+			{
+				string descriptionPart = this.comps[i].GetDescriptionPart();
+				if (!descriptionPart.NullOrEmpty())
+				{
+					if (stringBuilder.Length > 0)
+					{
+						stringBuilder.AppendLine();
+						stringBuilder.AppendLine();
+					}
+					stringBuilder.Append(descriptionPart);
+				}
+			}
+			return stringBuilder.ToString();
 		}
 	}
 }

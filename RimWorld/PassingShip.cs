@@ -3,7 +3,7 @@ using Verse;
 
 namespace RimWorld
 {
-	public class PassingShip : ICommunicable, ILoadReferenceable, IExposable
+	public class PassingShip : ICommunicable, IExposable, ILoadReferenceable
 	{
 		public PassingShipManager passingShipManager;
 
@@ -33,15 +33,15 @@ namespace RimWorld
 		{
 			get
 			{
-				return this.passingShipManager.map;
+				return (this.passingShipManager == null) ? null : this.passingShipManager.map;
 			}
 		}
 
 		public virtual void ExposeData()
 		{
-			Scribe_Values.LookValue<string>(ref this.name, "name", null, false);
-			Scribe_Values.LookValue<int>(ref this.loadID, "loadID", 0, false);
-			Scribe_Values.LookValue<int>(ref this.ticksUntilDeparture, "ticksUntilDeparture", 0, false);
+			Scribe_Values.Look<string>(ref this.name, "name", null, false);
+			Scribe_Values.Look<int>(ref this.loadID, "loadID", 0, false);
+			Scribe_Values.Look<int>(ref this.ticksUntilDeparture, "ticksUntilDeparture", 0, false);
 		}
 
 		public virtual void PassingShipTick()

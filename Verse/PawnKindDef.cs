@@ -35,6 +35,8 @@ namespace Verse
 
 		public float combatPower = -1f;
 
+		public bool canArriveManhunter = true;
+
 		public float baseRecruitDifficulty = 0.5f;
 
 		public bool aiAvoidCover;

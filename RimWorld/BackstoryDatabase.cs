@@ -16,7 +16,7 @@ namespace RimWorld
 
 		public static void ReloadAllBackstories()
 		{
-			foreach (Backstory current in XmlLoader.LoadXmlDataInResourcesFolder<Backstory>("Backstories/Shuffled"))
+			foreach (Backstory current in DirectXmlLoader.LoadXmlDataInResourcesFolder<Backstory>("Backstories/Shuffled"))
 			{
 				current.PostLoad();
 				current.ResolveReferences();

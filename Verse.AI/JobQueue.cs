@@ -5,7 +5,7 @@ namespace Verse.AI
 {
 	public class JobQueue : IExposable
 	{
-		private List<Job> jobs = new List<Job>();
+		private List<QueuedJob> jobs = new List<QueuedJob>();
 
 		public int Count
 		{
@@ -15,7 +15,7 @@ namespace Verse.AI
 			}
 		}
 
-		public Job this[int index]
+		public QueuedJob this[int index]
 		{
 			get
 			{
@@ -23,33 +23,48 @@ namespace Verse.AI
 			}
 		}
 
+		public bool AnyPlayerForced
+		{
+			get
+			{
+				for (int i = 0; i < this.jobs.Count; i++)
+				{
+					if (this.jobs[i].job.playerForced)
+					{
+						return true;
+					}
+				}
+				return false;
+			}
+		}
+
 		public void ExposeData()
 		{
-			Scribe_Collections.LookList<Job>(ref this.jobs, "jobs", LookMode.Deep, new object[0]);
+			Scribe_Collections.Look<QueuedJob>(ref this.jobs, "jobs", LookMode.Deep, new object[0]);
 		}
 
-		public void EnqueueFirst(Job j)
+		public void EnqueueFirst(Job j, JobTag? tag = null)
 		{
-			this.jobs.Insert(0, j);
+			this.jobs.Insert(0, new QueuedJob(j, tag));
 		}
 
-		public void EnqueueLast(Job j)
+		public void EnqueueLast(Job j, JobTag? tag = null)
 		{
-			this.jobs.Add(j);
+			this.jobs.Add(new QueuedJob(j, tag));
 		}
 
-		public Job Dequeue()
+		public QueuedJob Dequeue()
 		{
-			if (this.jobs.NullOrEmpty<Job>())
+			if (this.jobs.NullOrEmpty<QueuedJob>())
 			{
 				return null;
 			}
-			Job result = this.jobs[0];
+			QueuedJob result = this.jobs[0];
 			this.jobs.RemoveAt(0);
 			return result;
 		}
 
-		public Job Peek()
+		public QueuedJob Peek()
 		{
 			return this.jobs[0];
 		}

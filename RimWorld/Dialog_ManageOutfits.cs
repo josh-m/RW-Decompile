@@ -52,7 +52,7 @@ namespace RimWorld
 			if (Dialog_ManageOutfits.apparelGlobalFilter == null)
 			{
 				Dialog_ManageOutfits.apparelGlobalFilter = new ThingFilter();
-				Dialog_ManageOutfits.apparelGlobalFilter.SetAllow(ThingCategoryDefOf.Apparel, true);
+				Dialog_ManageOutfits.apparelGlobalFilter.SetAllow(ThingCategoryDefOf.Apparel, true, null, null);
 			}
 			this.SelectedOutfit = selectedOutfit;
 		}
@@ -129,7 +129,7 @@ namespace RimWorld
 			Dialog_ManageOutfits.DoNameInputRect(rect5, ref this.SelectedOutfit.label);
 			Rect rect6 = new Rect(0f, 40f, 300f, rect4.height - 45f - 10f);
 			IEnumerable<SpecialThingFilterDef> forceHiddenFilters = this.HiddenSpecialThingFilters();
-			ThingFilterUI.DoThingFilterConfigWindow(rect6, ref this.scrollPosition, this.SelectedOutfit.filter, Dialog_ManageOutfits.apparelGlobalFilter, 16, null, forceHiddenFilters);
+			ThingFilterUI.DoThingFilterConfigWindow(rect6, ref this.scrollPosition, this.SelectedOutfit.filter, Dialog_ManageOutfits.apparelGlobalFilter, 16, null, forceHiddenFilters, null);
 			GUI.EndGroup();
 		}
 

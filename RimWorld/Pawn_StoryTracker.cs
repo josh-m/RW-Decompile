@@ -125,30 +125,19 @@ namespace RimWorld
 			get
 			{
 				WorkTags workTags = WorkTags.None;
-				foreach (Backstory current in this.AllBackstories)
+				if (this.childhood != null)
 				{
-					workTags |= current.workDisables;
+					workTags |= this.childhood.workDisables;
 				}
-				foreach (Trait current2 in this.traits.allTraits)
+				if (this.adulthood != null)
 				{
-					workTags |= current2.def.disabledWorkTags;
+					workTags |= this.adulthood.workDisables;
+				}
+				for (int i = 0; i < this.traits.allTraits.Count; i++)
+				{
+					workTags |= this.traits.allTraits[i].def.disabledWorkTags;
 				}
 				return workTags;
-			}
-		}
-
-		public IEnumerable<WorkTags> DisabledWorkTags
-		{
-			get
-			{
-				WorkTags disabledTags = this.CombinedDisabledWorkTags;
-				foreach (WorkTags workTag in disabledTags.GetAllSelectedItems<WorkTags>())
-				{
-					if (workTag != WorkTags.None)
-					{
-						yield return workTag;
-					}
-				}
 			}
 		}
 
@@ -161,26 +150,26 @@ namespace RimWorld
 		public void ExposeData()
 		{
 			string text = (this.childhood == null) ? null : this.childhood.identifier;
-			Scribe_Values.LookValue<string>(ref text, "childhood", null, false);
+			Scribe_Values.Look<string>(ref text, "childhood", null, false);
 			if (Scribe.mode == LoadSaveMode.LoadingVars && !text.NullOrEmpty() && !BackstoryDatabase.TryGetWithIdentifier(text, out this.childhood))
 			{
 				Log.Error("Couldn't load child backstory with identifier " + text + ". Giving random.");
 				this.childhood = BackstoryDatabase.RandomBackstory(BackstorySlot.Childhood);
 			}
 			string text2 = (this.adulthood == null) ? null : this.adulthood.identifier;
-			Scribe_Values.LookValue<string>(ref text2, "adulthood", null, false);
+			Scribe_Values.Look<string>(ref text2, "adulthood", null, false);
 			if (Scribe.mode == LoadSaveMode.LoadingVars && !text2.NullOrEmpty() && !BackstoryDatabase.TryGetWithIdentifier(text2, out this.adulthood))
 			{
 				Log.Error("Couldn't load adult backstory with identifier " + text2 + ". Giving random.");
 				this.adulthood = BackstoryDatabase.RandomBackstory(BackstorySlot.Adulthood);
 			}
-			Scribe_Values.LookValue<BodyType>(ref this.bodyType, "bodyType", BodyType.Undefined, false);
-			Scribe_Values.LookValue<CrownType>(ref this.crownType, "crownType", CrownType.Undefined, false);
-			Scribe_Values.LookValue<string>(ref this.headGraphicPath, "headGraphicPath", null, false);
-			Scribe_Defs.LookDef<HairDef>(ref this.hairDef, "hairDef");
-			Scribe_Values.LookValue<Color>(ref this.hairColor, "hairColor", default(Color), false);
-			Scribe_Values.LookValue<float>(ref this.melanin, "melanin", 0f, false);
-			Scribe_Deep.LookDeep<TraitSet>(ref this.traits, "traits", new object[]
+			Scribe_Values.Look<BodyType>(ref this.bodyType, "bodyType", BodyType.Undefined, false);
+			Scribe_Values.Look<CrownType>(ref this.crownType, "crownType", CrownType.Undefined, false);
+			Scribe_Values.Look<string>(ref this.headGraphicPath, "headGraphicPath", null, false);
+			Scribe_Defs.Look<HairDef>(ref this.hairDef, "hairDef");
+			Scribe_Values.Look<Color>(ref this.hairColor, "hairColor", default(Color), false);
+			Scribe_Values.Look<float>(ref this.melanin, "melanin", 0f, false);
+			Scribe_Deep.Look<TraitSet>(ref this.traits, "traits", new object[]
 			{
 				this.pawn
 			});

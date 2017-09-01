@@ -91,6 +91,22 @@ namespace Verse.AI.Group
 			{
 				if (this.triggers[i].ActivateOn(lord, signal))
 				{
+					if (this.triggers[i].filters != null)
+					{
+						bool flag = true;
+						for (int j = 0; j < this.triggers[i].filters.Count; j++)
+						{
+							if (!this.triggers[i].filters[j].AllowActivation(lord, signal))
+							{
+								flag = false;
+								break;
+							}
+						}
+						if (!flag)
+						{
+							goto IL_100;
+						}
+					}
 					if (DebugViewSettings.logLordToilTransitions)
 					{
 						Log.Message(string.Concat(new object[]
@@ -108,6 +124,7 @@ namespace Verse.AI.Group
 					this.Execute(lord);
 					return true;
 				}
+				IL_100:;
 			}
 			return false;
 		}

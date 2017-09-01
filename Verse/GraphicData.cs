@@ -25,6 +25,8 @@ namespace Verse
 
 		public bool allowFlip = true;
 
+		public float flipExtraRotation;
+
 		public ShadowData shadowData;
 
 		public DamageGraphicData damageData;

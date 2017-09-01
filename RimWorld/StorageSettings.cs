@@ -64,8 +64,8 @@ namespace RimWorld
 
 		public void ExposeData()
 		{
-			Scribe_Values.LookValue<StoragePriority>(ref this.priorityInt, "priority", StoragePriority.Unstored, false);
-			Scribe_Deep.LookDeep<ThingFilter>(ref this.filter, "filter", new object[0]);
+			Scribe_Values.Look<StoragePriority>(ref this.priorityInt, "priority", StoragePriority.Unstored, false);
+			Scribe_Deep.Look<ThingFilter>(ref this.filter, "filter", new object[0]);
 		}
 
 		public void SetFromPreset(StorageSettingsPreset preset)

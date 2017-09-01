@@ -52,16 +52,18 @@ namespace RimWorld
 			{
 				initiator.relations.RemoveDirectRelation(PawnRelationDefOf.Lover, recipient);
 				initiator.relations.AddDirectRelation(PawnRelationDefOf.Fiance, recipient);
-				initiator.needs.mood.thoughts.memories.RemoveMemoryThoughtsOfDefWhereOtherPawnIs(ThoughtDefOf.RejectedMyProposal, recipient);
-				recipient.needs.mood.thoughts.memories.RemoveMemoryThoughtsOfDefWhereOtherPawnIs(ThoughtDefOf.RejectedMyProposal, initiator);
-				initiator.needs.mood.thoughts.memories.RemoveMemoryThoughtsOfDefWhereOtherPawnIs(ThoughtDefOf.IRejectedTheirProposal, recipient);
-				recipient.needs.mood.thoughts.memories.RemoveMemoryThoughtsOfDefWhereOtherPawnIs(ThoughtDefOf.IRejectedTheirProposal, initiator);
+				initiator.needs.mood.thoughts.memories.RemoveMemoriesOfDefWhereOtherPawnIs(ThoughtDefOf.RejectedMyProposal, recipient);
+				recipient.needs.mood.thoughts.memories.RemoveMemoriesOfDefWhereOtherPawnIs(ThoughtDefOf.RejectedMyProposal, initiator);
+				initiator.needs.mood.thoughts.memories.RemoveMemoriesOfDefWhereOtherPawnIs(ThoughtDefOf.RejectedMyProposalMood, recipient);
+				recipient.needs.mood.thoughts.memories.RemoveMemoriesOfDefWhereOtherPawnIs(ThoughtDefOf.RejectedMyProposalMood, initiator);
+				initiator.needs.mood.thoughts.memories.RemoveMemoriesOfDefWhereOtherPawnIs(ThoughtDefOf.IRejectedTheirProposal, recipient);
+				recipient.needs.mood.thoughts.memories.RemoveMemoriesOfDefWhereOtherPawnIs(ThoughtDefOf.IRejectedTheirProposal, initiator);
 				extraSentencePacks.Add(RulePackDefOf.Sentence_MarriageProposalAccepted);
 			}
 			else
 			{
-				initiator.needs.mood.thoughts.memories.TryGainMemoryThought(ThoughtDefOf.RejectedMyProposal, recipient);
-				recipient.needs.mood.thoughts.memories.TryGainMemoryThought(ThoughtDefOf.IRejectedTheirProposal, initiator);
+				initiator.needs.mood.thoughts.memories.TryGainMemory(ThoughtDefOf.RejectedMyProposal, recipient);
+				recipient.needs.mood.thoughts.memories.TryGainMemory(ThoughtDefOf.IRejectedTheirProposal, initiator);
 				extraSentencePacks.Add(RulePackDefOf.Sentence_MarriageProposalRejected);
 				if (Rand.Value < 0.4f)
 				{
@@ -88,11 +90,11 @@ namespace RimWorld
 		{
 			StringBuilder stringBuilder = new StringBuilder();
 			string label;
-			LetterType type;
+			LetterDef textLetterDef;
 			if (accepted)
 			{
 				label = "LetterLabelAcceptedProposal".Translate();
-				type = LetterType.Good;
+				textLetterDef = LetterDefOf.Good;
 				stringBuilder.AppendLine("LetterAcceptedProposal".Translate(new object[]
 				{
 					initiator,
@@ -102,7 +104,7 @@ namespace RimWorld
 			else
 			{
 				label = "LetterLabelRejectedProposal".Translate();
-				type = LetterType.BadNonUrgent;
+				textLetterDef = LetterDefOf.BadNonUrgent;
 				stringBuilder.AppendLine("LetterRejectedProposal".Translate(new object[]
 				{
 					initiator,
@@ -118,7 +120,7 @@ namespace RimWorld
 					}));
 				}
 			}
-			Find.LetterStack.ReceiveLetter(label, stringBuilder.ToString().TrimEndNewlines(), type, initiator, null);
+			Find.LetterStack.ReceiveLetter(label, stringBuilder.ToString().TrimEndNewlines(), textLetterDef, initiator, null);
 		}
 	}
 }

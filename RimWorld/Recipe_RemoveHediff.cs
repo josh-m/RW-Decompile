@@ -17,7 +17,10 @@ namespace RimWorld
 				{
 					if (allHediffs[i].def == recipe.removesHediff)
 					{
-						yield return allHediffs[i].Part;
+						if (allHediffs[i].Visible)
+						{
+							yield return allHediffs[i].Part;
+						}
 					}
 				}
 			}
@@ -55,8 +58,11 @@ namespace RimWorld
 					Messages.Message(text, pawn, MessageSound.Benefit);
 				}
 			}
-			Hediff hediff = pawn.health.hediffSet.hediffs.Find((Hediff x) => x.def == this.recipe.removesHediff && x.Part == part);
-			pawn.health.RemoveHediff(hediff);
+			Hediff hediff = pawn.health.hediffSet.hediffs.Find((Hediff x) => x.def == this.recipe.removesHediff && x.Part == part && x.Visible);
+			if (hediff != null)
+			{
+				pawn.health.RemoveHediff(hediff);
+			}
 		}
 	}
 }

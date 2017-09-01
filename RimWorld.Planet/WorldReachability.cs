@@ -72,7 +72,7 @@ namespace RimWorld.Planet
 				this.fields[tile] = this.impassableFieldID;
 				return;
 			}
-			WorldFloodFiller.FloodFill(tile, (int x) => !world.Impassable(x), delegate(int x)
+			Find.WorldFloodFiller.FloodFill(tile, (int x) => !world.Impassable(x), delegate(int x)
 			{
 				this.fields[x] = this.nextFieldID;
 			}, 2147483647);

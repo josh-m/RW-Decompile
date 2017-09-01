@@ -11,5 +11,7 @@ namespace Verse
 		}
 
 		bool GetCellBool(int index);
+
+		Color GetCellExtraColor(int index);
 	}
 }

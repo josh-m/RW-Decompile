@@ -10,11 +10,11 @@ namespace RimWorld
 	[StaticConstructorOnStartup]
 	public class Building_FermentingBarrel : Building
 	{
-		private const int MaxCapacity = 25;
+		public const int MaxCapacity = 25;
 
 		private const int BaseFermentationDuration = 600000;
 
-		private const float MinIdealTemperature = 7f;
+		public const float MinIdealTemperature = 7f;
 
 		private int wortCount;
 
@@ -28,7 +28,7 @@ namespace RimWorld
 
 		private static readonly Color BarFermentedColor = new Color(0.9f, 0.85f, 0.2f);
 
-		private static readonly Material BarUnfilledMat = SolidColorMaterials.SimpleSolidColorMaterial(new Color(0.3f, 0.3f, 0.3f));
+		private static readonly Material BarUnfilledMat = SolidColorMaterials.SimpleSolidColorMaterial(new Color(0.3f, 0.3f, 0.3f), false);
 
 		public float Progress
 		{
@@ -53,22 +53,9 @@ namespace RimWorld
 			{
 				if (this.barFilledCachedMat == null)
 				{
-					this.barFilledCachedMat = SolidColorMaterials.SimpleSolidColorMaterial(Color.Lerp(Building_FermentingBarrel.BarZeroProgressColor, Building_FermentingBarrel.BarFermentedColor, this.Progress));
+					this.barFilledCachedMat = SolidColorMaterials.SimpleSolidColorMaterial(Color.Lerp(Building_FermentingBarrel.BarZeroProgressColor, Building_FermentingBarrel.BarFermentedColor, this.Progress), false);
 				}
 				return this.barFilledCachedMat;
-			}
-		}
-
-		private float Temperature
-		{
-			get
-			{
-				if (base.MapHeld == null)
-				{
-					Log.ErrorOnce("Tried to get a fermenting barrel temperature but MapHeld is null.", 847163513);
-					return 7f;
-				}
-				return base.PositionHeld.GetTemperature(base.MapHeld);
 			}
 		}
 
@@ -105,14 +92,14 @@ namespace RimWorld
 			get
 			{
 				CompProperties_TemperatureRuinable compProperties = this.def.GetCompProperties<CompProperties_TemperatureRuinable>();
-				float temperature = this.Temperature;
-				if (temperature < compProperties.minSafeTemperature)
+				float ambientTemperature = base.AmbientTemperature;
+				if (ambientTemperature < compProperties.minSafeTemperature)
 				{
 					return 0.1f;
 				}
-				if (temperature < 7f)
+				if (ambientTemperature < 7f)
 				{
-					return GenMath.LerpDouble(compProperties.minSafeTemperature, 7f, 0.1f, 1f, temperature);
+					return GenMath.LerpDouble(compProperties.minSafeTemperature, 7f, 0.1f, 1f, ambientTemperature);
 				}
 				return 1f;
 			}
@@ -137,8 +124,8 @@ namespace RimWorld
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Values.LookValue<int>(ref this.wortCount, "wortCount", 0, false);
-			Scribe_Values.LookValue<float>(ref this.progressInt, "progress", 0f, false);
+			Scribe_Values.Look<int>(ref this.wortCount, "wortCount", 0, false);
+			Scribe_Values.Look<float>(ref this.progressInt, "progress", 0f, false);
 		}
 
 		public override void TickRare()
@@ -152,6 +139,7 @@ namespace RimWorld
 
 		public void AddWort(int count)
 		{
+			base.GetComp<CompTemperatureRuinable>().Reset();
 			if (this.Fermented)
 			{
 				Log.Warning("Tried to add wort to a barrel full of beer. Colonists should take the beer first.");
@@ -164,7 +152,6 @@ namespace RimWorld
 			}
 			this.Progress = GenMath.WeightedAverage(0f, (float)num, this.Progress, (float)this.wortCount);
 			this.wortCount += num;
-			base.GetComp<CompTemperatureRuinable>().Reset();
 		}
 
 		protected override void ReceiveCompSignal(string signal)
@@ -183,11 +170,6 @@ namespace RimWorld
 
 		public void AddWort(Thing wort)
 		{
-			CompTemperatureRuinable comp = base.GetComp<CompTemperatureRuinable>();
-			if (comp.Ruined)
-			{
-				comp.Reset();
-			}
 			this.AddWort(wort.stackCount);
 			wort.Destroy(DestroyMode.Vanish);
 		}
@@ -196,6 +178,10 @@ namespace RimWorld
 		{
 			StringBuilder stringBuilder = new StringBuilder();
 			stringBuilder.Append(base.GetInspectString());
+			if (stringBuilder.Length != 0)
+			{
+				stringBuilder.AppendLine();
+			}
 			CompTemperatureRuinable comp = base.GetComp<CompTemperatureRuinable>();
 			if (!this.Empty && !comp.Ruined)
 			{
@@ -227,7 +213,7 @@ namespace RimWorld
 					stringBuilder.AppendLine("FermentationProgress".Translate(new object[]
 					{
 						this.Progress.ToStringPercent(),
-						this.EstimatedTicksLeft.ToStringTicksToPeriod(true)
+						this.EstimatedTicksLeft.ToStringTicksToPeriod(true, false, true)
 					}));
 					if (this.CurrentTempProgressSpeedFactor != 1f)
 					{
@@ -238,10 +224,7 @@ namespace RimWorld
 					}
 				}
 			}
-			if (base.MapHeld != null)
-			{
-				stringBuilder.AppendLine("Temperature".Translate() + ": " + this.Temperature.ToStringTemperature("F0"));
-			}
+			stringBuilder.AppendLine("Temperature".Translate() + ": " + base.AmbientTemperature.ToStringTemperature("F0"));
 			stringBuilder.AppendLine(string.Concat(new string[]
 			{
 				"IdealFermentingTemperature".Translate(),
@@ -250,7 +233,7 @@ namespace RimWorld
 				" ~ ",
 				comp.Props.maxSafeTemperature.ToStringTemperature("F0")
 			}));
-			return stringBuilder.ToString();
+			return stringBuilder.ToString().TrimEndNewlines();
 		}
 
 		public Thing TakeOutBeer()
@@ -272,7 +255,7 @@ namespace RimWorld
 			if (!this.Empty)
 			{
 				Vector3 drawPos = this.DrawPos;
-				drawPos.y += 0.05f;
+				drawPos.y += 0.046875f;
 				drawPos.z += 0.25f;
 				GenDraw.DrawFillableBar(new GenDraw.FillableBarRequest
 				{

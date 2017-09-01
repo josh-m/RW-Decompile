@@ -11,7 +11,7 @@ namespace RimWorld
 			return thingDef != null && thingDef.category == ThingCategory.Building && thingDef.building.isTrap;
 		}
 
-		protected override DamageArmorCategory CategoryOfDamage(ThingDef def)
+		protected override DamageArmorCategoryDef CategoryOfDamage(ThingDef def)
 		{
 			return def.building.trapDamageCategory;
 		}

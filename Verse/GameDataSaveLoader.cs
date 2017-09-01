@@ -36,7 +36,7 @@ namespace Verse
 				SafeSaver.Save(absFilePath, "savedscenario", delegate
 				{
 					ScribeMetaHeaderUtility.WriteMetaHeader();
-					Scribe_Deep.LookDeep<Scenario>(ref scen, "scenario", new object[0]);
+					Scribe_Deep.Look<Scenario>(ref scen, "scenario", new object[0]);
 				});
 			}
 			catch (Exception ex)
@@ -50,11 +50,18 @@ namespace Verse
 			scen = null;
 			try
 			{
-				Scribe.InitLoading(absPath);
-				ScribeMetaHeaderUtility.LoadGameDataHeader(ScribeMetaHeaderUtility.ScribeHeaderMode.Scenario, true);
-				Scribe_Deep.LookDeep<Scenario>(ref scen, "scenario", new object[0]);
-				CrossRefResolver.ResolveAllCrossReferences();
-				PostLoadInitter.DoAllPostLoadInits();
+				Scribe.loader.InitLoading(absPath);
+				try
+				{
+					ScribeMetaHeaderUtility.LoadGameDataHeader(ScribeMetaHeaderUtility.ScribeHeaderMode.Scenario, true);
+					Scribe_Deep.Look<Scenario>(ref scen, "scenario", new object[0]);
+					Scribe.loader.FinalizeLoading();
+				}
+				catch
+				{
+					Scribe.ForceStop();
+					throw;
+				}
 				scen.fileName = Path.GetFileNameWithoutExtension(new FileInfo(absPath).Name);
 				scen.Category = category;
 			}
@@ -76,13 +83,13 @@ namespace Verse
 				{
 					ScribeMetaHeaderUtility.WriteMetaHeader();
 					Game game = Current.Game;
-					Scribe_Deep.LookDeep<Game>(ref game, "game", new object[0]);
+					Scribe_Deep.Look<Game>(ref game, "game", new object[0]);
 				});
 				GameDataSaveLoader.lastSaveTick = Find.TickManager.TicksGame;
 			}
-			catch (Exception ex)
+			catch (Exception arg)
 			{
-				Log.Error("Exception while saving map: " + ex.ToString());
+				Log.Error("Exception while saving game: " + arg);
 			}
 		}
 	}

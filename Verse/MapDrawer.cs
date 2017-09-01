@@ -22,6 +22,23 @@ namespace Verse
 			}
 		}
 
+		private CellRect VisibleSections
+		{
+			get
+			{
+				CellRect currentViewRect = Find.CameraDriver.CurrentViewRect;
+				CellRect sunShadowsViewRect = this.GetSunShadowsViewRect(currentViewRect);
+				sunShadowsViewRect.ClipInsideMap(this.map);
+				IntVec2 intVec = this.SectionCoordsAt(sunShadowsViewRect.BottomLeft);
+				IntVec2 intVec2 = this.SectionCoordsAt(sunShadowsViewRect.TopRight);
+				if (intVec2.x < intVec.x || intVec2.z < intVec.z)
+				{
+					return CellRect.Empty;
+				}
+				return CellRect.FromLimits(intVec.x, intVec.z, intVec2.x, intVec2.z);
+			}
+		}
+
 		public MapDrawer(Map map)
 		{
 			this.map = map;
@@ -72,17 +89,9 @@ namespace Verse
 
 		public void MapMeshDrawerUpdate_First()
 		{
-			CellRect currentViewRect = Find.CameraDriver.CurrentViewRect;
-			currentViewRect.ClipInsideMap(this.map);
-			IntVec2 intVec = this.SectionCoordsAt(currentViewRect.BottomLeft);
-			IntVec2 intVec2 = this.SectionCoordsAt(currentViewRect.TopRight);
-			if (intVec2.x < intVec.x || intVec2.z < intVec.z)
-			{
-				return;
-			}
-			CellRect cellRect = CellRect.FromLimits(intVec.x, intVec.z, intVec2.x, intVec2.z);
+			CellRect visibleSections = this.VisibleSections;
 			bool flag = false;
-			CellRect.CellRectIterator iterator = cellRect.GetIterator();
+			CellRect.CellRectIterator iterator = visibleSections.GetIterator();
 			while (!iterator.Done())
 			{
 				IntVec3 current = iterator.Current;
@@ -126,25 +135,18 @@ namespace Verse
 			return true;
 		}
 
-		public void DrawMapMesh()
+		public void DrawMapMesh(SectionLayerPhaseDef phase)
 		{
 			CellRect currentViewRect = Find.CameraDriver.CurrentViewRect;
 			currentViewRect.minX -= 17;
 			currentViewRect.minZ -= 17;
-			CellRect sunShadowsViewRect = this.GetSunShadowsViewRect(currentViewRect);
-			Section[,] array = this.sections;
-			int length = array.GetLength(0);
-			int length2 = array.GetLength(1);
-			for (int i = 0; i < length; i++)
+			CellRect.CellRectIterator iterator = this.VisibleSections.GetIterator();
+			while (!iterator.Done())
 			{
-				for (int j = 0; j < length2; j++)
-				{
-					Section section = array[i, j];
-					if (sunShadowsViewRect.Contains(section.botLeft))
-					{
-						section.DrawSection(!currentViewRect.Contains(section.botLeft));
-					}
-				}
+				IntVec3 current = iterator.Current;
+				Section section = this.sections[current.x, current.z];
+				section.DrawSection(phase, !currentViewRect.Contains(section.botLeft));
+				iterator.MoveNext();
 			}
 		}
 

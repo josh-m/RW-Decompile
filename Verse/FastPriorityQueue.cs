@@ -36,7 +36,7 @@ namespace Verse
 				int num2 = (num - 1) / 2;
 				if (this.CompareElements(num, num2) >= 0)
 				{
-					return;
+					break;
 				}
 				this.SwapElements(num, num2);
 				num = num2;
@@ -47,18 +47,20 @@ namespace Verse
 		{
 			T result = this.innerList[0];
 			int num = 0;
-			this.innerList[0] = this.innerList[this.innerList.Count - 1];
-			this.innerList.RemoveAt(this.innerList.Count - 1);
+			int count = this.innerList.Count;
+			this.innerList[0] = this.innerList[count - 1];
+			this.innerList.RemoveAt(count - 1);
+			count = this.innerList.Count;
 			while (true)
 			{
 				int num2 = num;
 				int num3 = 2 * num + 1;
-				int num4 = 2 * num + 2;
-				if (this.innerList.Count > num3 && this.CompareElements(num, num3) > 0)
+				int num4 = num3 + 1;
+				if (num3 < count && this.CompareElements(num, num3) > 0)
 				{
 					num = num3;
 				}
-				if (this.innerList.Count > num4 && this.CompareElements(num, num4) > 0)
+				if (num4 < count && this.CompareElements(num, num4) > 0)
 				{
 					num = num4;
 				}

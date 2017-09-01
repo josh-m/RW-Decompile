@@ -31,8 +31,8 @@ namespace RimWorld
 
 		public void ExposeData()
 		{
-			Scribe_Values.LookValue<int>(ref this.seed, "seed", 0, false);
-			Scribe_References.LookReference<Tale>(ref this.tale, "tale", false);
+			Scribe_Values.Look<int>(ref this.seed, "seed", 0, false);
+			Scribe_References.Look<Tale>(ref this.tale, "tale", false);
 		}
 
 		public void ReferenceDestroyed()

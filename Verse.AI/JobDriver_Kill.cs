@@ -12,7 +12,7 @@ namespace Verse.AI
 		protected override IEnumerable<Toil> MakeNewToils()
 		{
 			this.EndOnDespawnedOrNull(TargetIndex.A, JobCondition.Succeeded);
-			yield return Toils_Reserve.Reserve(TargetIndex.A, 1);
+			yield return Toils_Reserve.Reserve(TargetIndex.A, 1, -1, null);
 			yield return Toils_Combat.TrySetJobToUseAttackVerb();
 			Toil gotoCastPos = Toils_Combat.GotoCastPosition(TargetIndex.A, false);
 			yield return gotoCastPos;

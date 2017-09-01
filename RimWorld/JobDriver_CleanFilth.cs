@@ -27,7 +27,7 @@ namespace RimWorld
 		[DebuggerHidden]
 		protected override IEnumerable<Toil> MakeNewToils()
 		{
-			yield return Toils_Reserve.ReserveQueue(TargetIndex.A, 1);
+			yield return Toils_Reserve.ReserveQueue(TargetIndex.A, 1, -1, null);
 			Toil initExtractTargetFromQueue = Toils_JobTransforms.ClearDespawnedNullOrForbiddenQueuedTargets(TargetIndex.A);
 			yield return initExtractTargetFromQueue;
 			yield return Toils_JobTransforms.ExtractNextTargetFromQueue(TargetIndex.A);
@@ -71,9 +71,9 @@ namespace RimWorld
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Values.LookValue<float>(ref this.cleaningWorkDone, "cleaningWorkDone", 0f, false);
-			Scribe_Values.LookValue<float>(ref this.totalCleaningWorkDone, "totalCleaningWorkDone", 0f, false);
-			Scribe_Values.LookValue<float>(ref this.totalCleaningWorkRequired, "totalCleaningWorkRequired", 0f, false);
+			Scribe_Values.Look<float>(ref this.cleaningWorkDone, "cleaningWorkDone", 0f, false);
+			Scribe_Values.Look<float>(ref this.totalCleaningWorkDone, "totalCleaningWorkDone", 0f, false);
+			Scribe_Values.Look<float>(ref this.totalCleaningWorkRequired, "totalCleaningWorkRequired", 0f, false);
 		}
 	}
 }

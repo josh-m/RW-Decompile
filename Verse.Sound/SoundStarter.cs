@@ -1,12 +1,17 @@
+using RimWorld.Planet;
 using System;
 
 namespace Verse.Sound
 {
 	public static class SoundStarter
 	{
-		public static void PlayOneShotOnCamera(this SoundDef soundDef)
+		public static void PlayOneShotOnCamera(this SoundDef soundDef, Map onlyThisMap = null)
 		{
 			if (!UnityData.IsInMainThread)
+			{
+				return;
+			}
+			if (onlyThisMap != null && (Find.VisibleMap != onlyThisMap || WorldRendererUtility.WorldRenderedNow))
 			{
 				return;
 			}

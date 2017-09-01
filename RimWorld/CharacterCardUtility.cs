@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -78,7 +79,7 @@ namespace RimWorld
 				Rect rect6 = new Rect(rect2.xMax + 6f, 0f, 100f, rect2.height);
 				if (Widgets.ButtonText(rect6, "Randomize".Translate(), true, false, true))
 				{
-					SoundDefOf.TickTiny.PlayOneShotOnCamera();
+					SoundDefOf.TickTiny.PlayOneShotOnCamera(null);
 					randomizeCallback();
 				}
 				UIHighlighter.HighlightOpportunity(rect6, "RandomizePawn");
@@ -141,13 +142,14 @@ namespace RimWorld
 			num += 30f;
 			Text.Font = GameFont.Small;
 			StringBuilder stringBuilder = new StringBuilder();
-			List<WorkTags> list = pawn.story.DisabledWorkTags.ToList<WorkTags>();
-			if (list.Count == 0)
+			WorkTags combinedDisabledWorkTags = pawn.story.CombinedDisabledWorkTags;
+			if (combinedDisabledWorkTags == WorkTags.None)
 			{
 				stringBuilder.Append("(" + "NoneLower".Translate() + "), ");
 			}
 			else
 			{
+				List<WorkTags> list = CharacterCardUtility.WorkTagsFrom(combinedDisabledWorkTags).ToList<WorkTags>();
 				bool flag2 = true;
 				foreach (WorkTags current in list)
 				{
@@ -210,6 +212,18 @@ namespace RimWorld
 			if (text.Length <= maxLength && CharacterCardUtility.validNameRegex.IsMatch(text))
 			{
 				name = text;
+			}
+		}
+
+		[DebuggerHidden]
+		private static IEnumerable<WorkTags> WorkTagsFrom(WorkTags tags)
+		{
+			foreach (WorkTags workTag in tags.GetAllSelectedItems<WorkTags>())
+			{
+				if (workTag != WorkTags.None)
+				{
+					yield return workTag;
+				}
 			}
 		}
 	}

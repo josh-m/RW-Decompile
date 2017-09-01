@@ -39,7 +39,7 @@ namespace RimWorld
 			{
 				if (StealAIDebugDrawer.debugDrawGrid[current2])
 				{
-					CellRenderer.RenderCell(current2);
+					CellRenderer.RenderCell(current2, 0.5f);
 				}
 			}
 			StealAIDebugDrawer.tmpToSteal.Clear();
@@ -97,7 +97,7 @@ namespace RimWorld
 			for (int i = 0; i < pawnsCount; i++)
 			{
 				IntVec3 intVec = center + GenRadial.RadialPattern[i];
-				if (!intVec.InBounds(map) || intVec.Impassable(map) || !GenSight.LineOfSight(center, intVec, map, false))
+				if (!intVec.InBounds(map) || intVec.Impassable(map) || !GenSight.LineOfSight(center, intVec, map, false, null, 0, 0))
 				{
 					intVec = center;
 				}

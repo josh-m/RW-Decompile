@@ -27,7 +27,7 @@ namespace RimWorld
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Defs.LookDef<IncidentDef>(ref this.incident, "incident");
+			Scribe_Defs.Look<IncidentDef>(ref this.incident, "incident");
 		}
 
 		public override void DoEditInterface(Listing_ScenEdit listing)

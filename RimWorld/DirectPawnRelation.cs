@@ -24,9 +24,9 @@ namespace RimWorld
 
 		public void ExposeData()
 		{
-			Scribe_Defs.LookDef<PawnRelationDef>(ref this.def, "def");
-			Scribe_References.LookReference<Pawn>(ref this.otherPawn, "otherPawn", true);
-			Scribe_Values.LookValue<int>(ref this.startTicks, "startTicks", 0, false);
+			Scribe_Defs.Look<PawnRelationDef>(ref this.def, "def");
+			Scribe_References.Look<Pawn>(ref this.otherPawn, "otherPawn", true);
+			Scribe_Values.Look<int>(ref this.startTicks, "startTicks", 0, false);
 		}
 	}
 }

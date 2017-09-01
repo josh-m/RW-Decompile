@@ -37,10 +37,10 @@ namespace RimWorld
 			{
 				this.FailOnDespawnedNullOrForbidden(TargetIndex.B);
 			}
-			yield return Toils_Reserve.Reserve(TargetIndex.A, 1);
+			yield return Toils_Reserve.Reserve(TargetIndex.A, 1, -1, null);
 			if (this.Chair != null)
 			{
-				yield return Toils_Reserve.Reserve(TargetIndex.B, 1);
+				yield return Toils_Reserve.Reserve(TargetIndex.B, 1, -1, null);
 				yield return Toils_Goto.GotoThing(TargetIndex.B, PathEndMode.OnCell);
 			}
 			else

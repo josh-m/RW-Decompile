@@ -18,6 +18,8 @@ namespace RimWorld
 
 		public static void DoTimespeedControls(float leftX, float width, ref float curBaseY)
 		{
+			leftX += Mathf.Max(0f, width - 150f);
+			width = Mathf.Min(width, 150f);
 			float y = TimeControls.TimeButSize.y;
 			Rect timerRect = new Rect(leftX + 16f, curBaseY - y, width, y);
 			TimeControls.DoTimeControlsGUI(timerRect);

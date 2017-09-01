@@ -1,6 +1,5 @@
 using System;
 using UnityEngine;
-using Verse;
 
 namespace RimWorld
 {
@@ -10,12 +9,11 @@ namespace RimWorld
 		{
 			return new PawnGroupMakerParms
 			{
-				map = (parms.target as Map),
+				tile = parms.target.Tile,
 				points = parms.points,
 				faction = parms.faction,
 				traderKind = parms.traderKind,
 				generateFightersOnly = parms.generateFightersOnly,
-				generateMeleeOnly = parms.generateMeleeOnly,
 				raidStrategy = parms.raidStrategy,
 				forceOneIncap = parms.raidForceOneIncap
 			};

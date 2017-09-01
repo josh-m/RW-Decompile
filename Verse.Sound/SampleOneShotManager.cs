@@ -20,7 +20,7 @@ namespace Verse.Sound
 
 		private float CameraDistanceSquaredOf(SoundInfo info)
 		{
-			return (Find.CameraDriver.MapPosition - info.Maker.Cell).LengthHorizontalSquared;
+			return (float)(Find.CameraDriver.MapPosition - info.Maker.Cell).LengthHorizontalSquared;
 		}
 
 		private float ImportanceOf(SampleOneShot sample)

@@ -24,7 +24,7 @@ namespace RimWorld
 
 		public void ExposeData()
 		{
-			Scribe_Collections.LookList<Outfit>(ref this.outfits, "outfits", LookMode.Deep, new object[0]);
+			Scribe_Collections.Look<Outfit>(ref this.outfits, "outfits", LookMode.Deep, new object[0]);
 		}
 
 		public Outfit DefaultOutfit()
@@ -65,7 +65,7 @@ namespace RimWorld
 			}
 			int uniqueId = arg_40_0;
 			Outfit outfit = new Outfit(uniqueId, "Outfit".Translate() + " " + uniqueId.ToString());
-			outfit.filter.SetAllow(ThingCategoryDefOf.Apparel, true);
+			outfit.filter.SetAllow(ThingCategoryDefOf.Apparel, true, null, null);
 			this.outfits.Add(outfit);
 			return outfit;
 		}
@@ -73,9 +73,9 @@ namespace RimWorld
 		private void GenerateStartingOutfits()
 		{
 			Outfit outfit = this.MakeNewOutfit();
-			outfit.label = "Anything";
+			outfit.label = "OutfitAnything".Translate();
 			Outfit outfit2 = this.MakeNewOutfit();
-			outfit2.label = "Worker";
+			outfit2.label = "OutfitWorker".Translate();
 			outfit2.filter.SetDisallowAll(null, null);
 			outfit2.filter.SetAllow(SpecialThingFilterDefOf.AllowNonDeadmansApparel, true);
 			foreach (ThingDef current in DefDatabase<ThingDef>.AllDefs)
@@ -86,7 +86,7 @@ namespace RimWorld
 				}
 			}
 			Outfit outfit3 = this.MakeNewOutfit();
-			outfit3.label = "Soldier";
+			outfit3.label = "OutfitSoldier".Translate();
 			outfit3.filter.SetDisallowAll(null, null);
 			outfit3.filter.SetAllow(SpecialThingFilterDefOf.AllowNonDeadmansApparel, true);
 			foreach (ThingDef current2 in DefDatabase<ThingDef>.AllDefs)
@@ -97,7 +97,7 @@ namespace RimWorld
 				}
 			}
 			Outfit outfit4 = this.MakeNewOutfit();
-			outfit4.label = "Nudist";
+			outfit4.label = "OutfitNudist".Translate();
 			outfit4.filter.SetDisallowAll(null, null);
 			outfit4.filter.SetAllow(SpecialThingFilterDefOf.AllowNonDeadmansApparel, true);
 			foreach (ThingDef current3 in DefDatabase<ThingDef>.AllDefs)

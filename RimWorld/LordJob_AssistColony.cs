@@ -29,40 +29,50 @@ namespace RimWorld
 			stateGraph.AddToil(lordToil_HuntEnemies);
 			StateGraph stateGraph2 = new LordJob_Travel(IntVec3.Invalid).CreateGraph();
 			LordToil startingToil2 = stateGraph.AttachSubgraph(stateGraph2).StartingToil;
-			LordToil_ExitMapBest lordToil_ExitMapBest = new LordToil_ExitMapBest(LocomotionUrgency.Jog, true);
-			stateGraph.AddToil(lordToil_ExitMapBest);
-			Transition transition = new Transition(startingToil, lordToil_ExitMapBest);
+			LordToil_ExitMap lordToil_ExitMap = new LordToil_ExitMap(LocomotionUrgency.Jog, true);
+			stateGraph.AddToil(lordToil_ExitMap);
+			Transition transition = new Transition(startingToil, startingToil2);
 			transition.AddSource(lordToil_HuntEnemies);
-			transition.AddSources(stateGraph2.lordToils);
-			transition.AddPreAction(new TransitionAction_Message("MessageVisitorsTrappedLeaving".Translate(new object[]
+			transition.AddPreAction(new TransitionAction_Message("MessageVisitorsDangerousTemperature".Translate(new object[]
 			{
 				this.faction.def.pawnsPlural.CapitalizeFirst(),
 				this.faction.Name
 			})));
-			transition.AddTrigger(new Trigger_PawnCannotReachMapEdge());
+			transition.AddPreAction(new TransitionAction_EnsureHaveExitDestination());
+			transition.AddTrigger(new Trigger_PawnExperiencingDangerousTemperatures());
 			stateGraph.AddTransition(transition);
-			Transition transition2 = new Transition(lordToil_ExitMapBest, startingToil2);
-			transition2.AddTrigger(new Trigger_PawnCanReachMapEdge());
-			transition2.AddPreAction(new TransitionAction_EnsureHaveExitDestination());
-			stateGraph.AddTransition(transition2);
-			Transition transition3 = new Transition(startingToil, lordToil_HuntEnemies);
-			transition3.AddTrigger(new Trigger_Memo("TravelArrived"));
-			stateGraph.AddTransition(transition3);
-			Transition transition4 = new Transition(lordToil_HuntEnemies, startingToil2);
-			transition4.AddPreAction(new TransitionAction_Message("MessageFriendlyFightersLeaving".Translate(new object[]
+			Transition transition2 = new Transition(startingToil, lordToil_ExitMap);
+			transition2.AddSource(lordToil_HuntEnemies);
+			transition2.AddSources(stateGraph2.lordToils);
+			transition2.AddPreAction(new TransitionAction_Message("MessageVisitorsTrappedLeaving".Translate(new object[]
 			{
 				this.faction.def.pawnsPlural.CapitalizeFirst(),
 				this.faction.Name
 			})));
-			transition4.AddTrigger(new Trigger_TicksPassed(25000));
+			transition2.AddTrigger(new Trigger_PawnCannotReachMapEdge());
+			stateGraph.AddTransition(transition2);
+			Transition transition3 = new Transition(lordToil_ExitMap, startingToil2);
+			transition3.AddTrigger(new Trigger_PawnCanReachMapEdge());
+			transition3.AddPreAction(new TransitionAction_EnsureHaveExitDestination());
+			stateGraph.AddTransition(transition3);
+			Transition transition4 = new Transition(startingToil, lordToil_HuntEnemies);
+			transition4.AddTrigger(new Trigger_Memo("TravelArrived"));
 			stateGraph.AddTransition(transition4);
+			Transition transition5 = new Transition(lordToil_HuntEnemies, startingToil2);
+			transition5.AddPreAction(new TransitionAction_Message("MessageFriendlyFightersLeaving".Translate(new object[]
+			{
+				this.faction.def.pawnsPlural.CapitalizeFirst(),
+				this.faction.Name
+			})));
+			transition5.AddTrigger(new Trigger_TicksPassed(25000));
+			stateGraph.AddTransition(transition5);
 			return stateGraph;
 		}
 
 		public override void ExposeData()
 		{
-			Scribe_References.LookReference<Faction>(ref this.faction, "faction", false);
-			Scribe_Values.LookValue<IntVec3>(ref this.fallbackLocation, "fallbackLocation", default(IntVec3), false);
+			Scribe_References.Look<Faction>(ref this.faction, "faction", false);
+			Scribe_Values.Look<IntVec3>(ref this.fallbackLocation, "fallbackLocation", default(IntVec3), false);
 		}
 	}
 }

@@ -212,7 +212,7 @@ namespace Verse
 		{
 			if (this.CurActivateSound != null)
 			{
-				this.CurActivateSound.PlayOneShotOnCamera();
+				this.CurActivateSound.PlayOneShotOnCamera(null);
 			}
 		}
 

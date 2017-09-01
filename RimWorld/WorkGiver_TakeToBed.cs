@@ -7,7 +7,7 @@ namespace RimWorld
 	{
 		protected Building_Bed FindBed(Pawn pawn, Pawn patient)
 		{
-			return RestUtility.FindBedFor(patient, pawn, patient.HostFaction == pawn.Faction, false, true);
+			return RestUtility.FindBedFor(patient, pawn, patient.HostFaction == pawn.Faction, false, false);
 		}
 	}
 }

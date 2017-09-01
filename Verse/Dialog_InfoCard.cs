@@ -1,4 +1,5 @@
 using RimWorld;
+using RimWorld.Planet;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -15,11 +16,13 @@ namespace Verse
 			Records
 		}
 
-		private Def def;
-
 		private Thing thing;
 
 		private ThingDef stuff;
+
+		private Def def;
+
+		private WorldObject worldObject;
 
 		private Dialog_InfoCard.InfoCardTab tab;
 
@@ -30,6 +33,10 @@ namespace Verse
 				if (this.thing != null)
 				{
 					return this.thing.def;
+				}
+				if (this.worldObject != null)
+				{
+					return this.worldObject.def;
 				}
 				return this.def;
 			}
@@ -76,6 +83,12 @@ namespace Verse
 		{
 			this.def = thingDef;
 			this.stuff = stuff;
+			this.Setup();
+		}
+
+		public Dialog_InfoCard(WorldObject worldObject)
+		{
+			this.worldObject = worldObject;
 			this.Setup();
 		}
 
@@ -154,6 +167,10 @@ namespace Verse
 					}
 					StatsReportUtility.DrawStatsReport(cardRect, innerThing);
 				}
+				else if (this.worldObject != null)
+				{
+					StatsReportUtility.DrawStatsReport(cardRect, this.worldObject);
+				}
 				else
 				{
 					StatsReportUtility.DrawStatsReport(cardRect, this.def, this.stuff);
@@ -180,17 +197,16 @@ namespace Verse
 			{
 				return this.thing.LabelCapNoCount;
 			}
+			if (this.worldObject != null)
+			{
+				return this.worldObject.LabelCap;
+			}
 			ThingDef thingDef = this.Def as ThingDef;
 			if (thingDef != null)
 			{
 				return GenLabel.ThingLabel(thingDef, this.stuff, 1).CapitalizeFirst();
 			}
 			return this.Def.LabelCap;
-		}
-
-		private string GetBasicDescription()
-		{
-			return this.Def.description;
 		}
 	}
 }

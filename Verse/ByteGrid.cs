@@ -83,8 +83,8 @@ namespace Verse
 
 		public void ExposeData()
 		{
-			Scribe_Values.LookValue<int>(ref this.mapSizeX, "mapSizeX", 0, false);
-			Scribe_Values.LookValue<int>(ref this.mapSizeZ, "mapSizeZ", 0, false);
+			Scribe_Values.Look<int>(ref this.mapSizeX, "mapSizeX", 0, false);
+			Scribe_Values.Look<int>(ref this.mapSizeZ, "mapSizeZ", 0, false);
 			ArrayExposeUtility.ExposeByteArray(ref this.grid, "grid");
 		}
 
@@ -110,7 +110,7 @@ namespace Verse
 				byte b = this.grid[i];
 				if (b > 0)
 				{
-					IntVec3 c = CellIndicesUtility.IndexToCell(i, this.mapSizeX, this.mapSizeZ);
+					IntVec3 c = CellIndicesUtility.IndexToCell(i, this.mapSizeX);
 					CellRenderer.RenderCell(c, (float)b / 255f * 0.5f);
 				}
 			}

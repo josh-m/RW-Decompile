@@ -3,16 +3,16 @@ using System.Collections.Generic;
 
 namespace Verse
 {
-	public static class LoadedObjectDirectory
+	public class LoadedObjectDirectory
 	{
-		private static Dictionary<string, ILoadReferenceable> allObjectsByLoadID = new Dictionary<string, ILoadReferenceable>();
+		private Dictionary<string, ILoadReferenceable> allObjectsByLoadID = new Dictionary<string, ILoadReferenceable>();
 
-		public static void Clear()
+		public void Clear()
 		{
-			LoadedObjectDirectory.allObjectsByLoadID.Clear();
+			this.allObjectsByLoadID.Clear();
 		}
 
-		public static void RegisterLoaded(ILoadReferenceable reffable)
+		public void RegisterLoaded(ILoadReferenceable reffable)
 		{
 			if (Prefs.DevMode)
 			{
@@ -33,7 +33,7 @@ namespace Verse
 				{
 				}
 				ILoadReferenceable loadReferenceable;
-				if (LoadedObjectDirectory.allObjectsByLoadID.TryGetValue(reffable.GetUniqueLoadID(), out loadReferenceable))
+				if (this.allObjectsByLoadID.TryGetValue(reffable.GetUniqueLoadID(), out loadReferenceable))
 				{
 					Log.Error(string.Concat(new object[]
 					{
@@ -54,7 +54,7 @@ namespace Verse
 			}
 			try
 			{
-				LoadedObjectDirectory.allObjectsByLoadID.Add(reffable.GetUniqueLoadID(), reffable);
+				this.allObjectsByLoadID.Add(reffable.GetUniqueLoadID(), reffable);
 			}
 			catch (Exception ex)
 			{
@@ -88,14 +88,14 @@ namespace Verse
 			}
 		}
 
-		public static T ObjectWithLoadID<T>(string loadID)
+		public T ObjectWithLoadID<T>(string loadID)
 		{
 			if (loadID.NullOrEmpty() || loadID == "null")
 			{
 				return default(T);
 			}
 			ILoadReferenceable loadReferenceable;
-			if (LoadedObjectDirectory.allObjectsByLoadID.TryGetValue(loadID, out loadReferenceable))
+			if (this.allObjectsByLoadID.TryGetValue(loadID, out loadReferenceable))
 			{
 				if (loadReferenceable == null)
 				{
@@ -115,9 +115,9 @@ namespace Verse
 						" of type ",
 						typeof(T),
 						". What we loaded was ",
-						loadReferenceable.ToString(),
+						loadReferenceable.ToStringSafe<ILoadReferenceable>(),
 						". Exception:\n",
-						ex.ToString()
+						ex
 					}));
 					T result = default(T);
 					return result;
@@ -129,7 +129,10 @@ namespace Verse
 				loadID,
 				" of type ",
 				typeof(T),
-				". Was it compressed away, destroyed, had no ID number, or not saved/loaded right?"
+				". Was it compressed away, destroyed, had no ID number, or not saved/loaded right? curParent=",
+				Scribe.loader.curParent.ToStringSafe<IExposable>(),
+				" curPathRelToParent=",
+				Scribe.loader.curPathRelToParent
 			}));
 			return default(T);
 		}

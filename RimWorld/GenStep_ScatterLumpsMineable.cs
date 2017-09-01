@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Verse;
 
 namespace RimWorld
@@ -6,6 +7,11 @@ namespace RimWorld
 	public class GenStep_ScatterLumpsMineable : GenStep_Scatterer
 	{
 		public ThingDef forcedDefToScatter;
+
+		public int forcedLumpSize;
+
+		[Unsaved]
+		protected List<IntVec3> recentLumpCells = new List<IntVec3>();
 
 		public override void Generate(Map map)
 		{
@@ -54,10 +60,12 @@ namespace RimWorld
 		protected override void ScatterAt(IntVec3 c, Map map, int stackCount = 1)
 		{
 			ThingDef thingDef = this.ChooseThingDef();
-			int randomInRange = thingDef.building.mineableScatterLumpSizeRange.RandomInRange;
-			foreach (IntVec3 current in GridShapeMaker.IrregularLump(c, map, randomInRange))
+			int numCells = (this.forcedLumpSize <= 0) ? thingDef.building.mineableScatterLumpSizeRange.RandomInRange : this.forcedLumpSize;
+			this.recentLumpCells.Clear();
+			foreach (IntVec3 current in GridShapeMaker.IrregularLump(c, map, numCells))
 			{
 				GenSpawn.Spawn(thingDef, current, map);
+				this.recentLumpCells.Add(current);
 			}
 		}
 	}

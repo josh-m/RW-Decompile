@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using UnityEngine;
 using Verse;
 
@@ -35,7 +34,7 @@ namespace RimWorld.Planet
 		{
 			if (this.allPathCostsRecalculatedDayOfYear != WorldPathGrid.DayOfYearAt0Long)
 			{
-				this.RecalculateAllPerceivedPathCosts();
+				this.RecalculateAllPerceivedPathCosts(-1f);
 			}
 		}
 
@@ -54,26 +53,26 @@ namespace RimWorld.Planet
 			return this.pathGrid[tile];
 		}
 
-		public void RecalculatePerceivedPathCostAt(int tile)
+		public void RecalculatePerceivedPathCostAt(int tile, float yearPercent = -1f)
 		{
 			if (!Find.WorldGrid.InBounds(tile))
 			{
 				return;
 			}
 			bool flag = this.PassableFast(tile);
-			this.pathGrid[tile] = WorldPathGrid.CalculatedCostAt(tile, true, -1f);
+			this.pathGrid[tile] = WorldPathGrid.CalculatedCostAt(tile, true, yearPercent);
 			if (flag != this.PassableFast(tile))
 			{
 				Find.WorldReachability.ClearCache();
 			}
 		}
 
-		public void RecalculateAllPerceivedPathCosts()
+		public void RecalculateAllPerceivedPathCosts(float yearPercent = -1f)
 		{
 			this.allPathCostsRecalculatedDayOfYear = WorldPathGrid.DayOfYearAt0Long;
 			for (int i = 0; i < this.pathGrid.Length; i++)
 			{
-				this.RecalculatePerceivedPathCostAt(i);
+				this.RecalculatePerceivedPathCostAt(i, yearPercent);
 			}
 		}
 
@@ -89,29 +88,17 @@ namespace RimWorld.Planet
 			{
 				yearPercent = (float)WorldPathGrid.DayOfYearAt0Long / 60f;
 			}
-			num += Mathf.RoundToInt(tile2.biome.pathCost.Evaluate(yearPercent));
+			float num2 = yearPercent;
+			if (Find.WorldGrid.LongLatOf(tile).y < 0f)
+			{
+				num2 = (num2 + 0.5f) % 1f;
+			}
+			num += Mathf.RoundToInt(tile2.biome.pathCost.Evaluate(num2));
 			if (tile2.hilliness == Hilliness.Impassable)
 			{
 				return 1000000;
 			}
-			num += WorldPathGrid.CostFromTileHilliness(tile2.hilliness);
-			List<WorldObject> allWorldObjects = Find.WorldObjects.AllWorldObjects;
-			int i = 0;
-			int count = allWorldObjects.Count;
-			while (i < count)
-			{
-				WorldObject worldObject = allWorldObjects[i];
-				if (worldObject.Tile == tile)
-				{
-					if (worldObject.def.impassable)
-					{
-						return 1000000;
-					}
-					num += worldObject.def.pathCost;
-				}
-				i++;
-			}
-			return num;
+			return num + WorldPathGrid.CostFromTileHilliness(tile2.hilliness);
 		}
 
 		private static int CostFromTileHilliness(Hilliness hilliness)

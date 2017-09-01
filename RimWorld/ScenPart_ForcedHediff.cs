@@ -12,8 +12,6 @@ namespace RimWorld
 
 		private FloatRange severityRange;
 
-		private bool hideOffMap;
-
 		private float MaxSeverity
 		{
 			get
@@ -54,9 +52,8 @@ namespace RimWorld
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Defs.LookDef<HediffDef>(ref this.hediff, "hediff");
-			Scribe_Values.LookValue<FloatRange>(ref this.severityRange, "severityRange", default(FloatRange), false);
-			Scribe_Values.LookValue<bool>(ref this.hideOffMap, "hideOffMap", false, false);
+			Scribe_Defs.Look<HediffDef>(ref this.hediff, "hediff");
+			Scribe_Values.Look<FloatRange>(ref this.severityRange, "severityRange", default(FloatRange), false);
 		}
 
 		public override string Summary(Scenario scen)
@@ -75,7 +72,6 @@ namespace RimWorld
 			this.hediff = this.PossibleHediffs().RandomElement<HediffDef>();
 			this.severityRange.max = Rand.Range(this.MaxSeverity * 0.2f, this.MaxSeverity * 0.95f);
 			this.severityRange.min = this.severityRange.max * Rand.Range(0f, 0.95f);
-			this.hideOffMap = false;
 		}
 
 		public override bool TryMerge(ScenPart other)
@@ -95,7 +91,6 @@ namespace RimWorld
 			{
 				Hediff hediff = HediffMaker.MakeHediff(this.hediff, p, null);
 				hediff.Severity = this.severityRange.RandomInRange;
-				hediff.hiddenOffMap = this.hideOffMap;
 				p.health.AddHediff(hediff, null, null);
 			}
 		}

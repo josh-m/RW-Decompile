@@ -34,8 +34,9 @@ namespace RimWorld
 
 		public override void DoWindowContents(Rect inRect)
 		{
-			Listing_Standard listing_Standard = new Listing_Standard(inRect);
-			listing_Standard.Label("TypeFirstNickOrLastName".Translate());
+			Listing_Standard listing_Standard = new Listing_Standard();
+			listing_Standard.Begin(inRect);
+			listing_Standard.Label("TypeFirstNickOrLastName".Translate(), -1f);
 			string text = listing_Standard.TextEntry(this.searchName, 1);
 			if (text.Length < 20)
 			{

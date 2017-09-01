@@ -44,7 +44,7 @@ namespace Verse
 			{
 				return;
 			}
-			Room room = exploder.GetRoom();
+			Room room = exploder.GetRoom(RegionType.Set_Passable);
 			for (int i = 0; i < GenExplosion.PawnNotifyCellCount; i++)
 			{
 				IntVec3 c = exploder.Position + GenRadial.RadialPattern[i];
@@ -56,8 +56,8 @@ namespace Verse
 						Pawn pawn = thingList[j] as Pawn;
 						if (pawn != null && pawn.RaceProps.intelligence >= Intelligence.Humanlike && (onlyFaction == null || pawn.Faction == onlyFaction))
 						{
-							Room room2 = pawn.GetRoom();
-							if (room2 == null || room2.CellCount == 1 || (room2 == room && GenSight.LineOfSight(exploder.Position, pawn.Position, exploder.Map, true)))
+							Room room2 = pawn.GetRoom(RegionType.Set_Passable);
+							if (room2 == null || room2.CellCount == 1 || (room2 == room && GenSight.LineOfSight(exploder.Position, pawn.Position, exploder.Map, true, null, 0, 0)))
 							{
 								pawn.mindState.Notify_DangerousExploderAboutToExplode(exploder);
 							}

@@ -6,6 +6,8 @@ namespace Verse
 	{
 		public int ticksLeft;
 
+		public Verb verb;
+
 		public LocalTargetInfo focusTarg;
 
 		public bool neverAimWeapon;
@@ -25,13 +27,14 @@ namespace Verse
 			this.SetPieSizeFactor();
 		}
 
-		public Stance_Busy(int ticks, LocalTargetInfo focusTarg)
+		public Stance_Busy(int ticks, LocalTargetInfo focusTarg, Verb verb)
 		{
 			this.ticksLeft = ticks;
 			this.focusTarg = focusTarg;
+			this.verb = verb;
 		}
 
-		public Stance_Busy(int ticks) : this(ticks, null)
+		public Stance_Busy(int ticks) : this(ticks, null, null)
 		{
 		}
 
@@ -54,9 +57,10 @@ namespace Verse
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Values.LookValue<int>(ref this.ticksLeft, "ticksLeft", 0, false);
-			Scribe_TargetInfo.LookTargetInfo(ref this.focusTarg, "focusTarg");
-			Scribe_Values.LookValue<bool>(ref this.neverAimWeapon, "neverAimWeapon", false, false);
+			Scribe_Values.Look<int>(ref this.ticksLeft, "ticksLeft", 0, false);
+			Scribe_TargetInfo.Look(ref this.focusTarg, "focusTarg");
+			Scribe_Values.Look<bool>(ref this.neverAimWeapon, "neverAimWeapon", false, false);
+			Scribe_References.Look<Verb>(ref this.verb, "verb", false);
 			if (Scribe.mode == LoadSaveMode.LoadingVars)
 			{
 				this.SetPieSizeFactor();
@@ -74,7 +78,10 @@ namespace Verse
 
 		protected virtual void Expire()
 		{
-			this.stanceTracker.SetStance(new Stance_Mobile());
+			if (this.stanceTracker.curStance == this)
+			{
+				this.stanceTracker.SetStance(new Stance_Mobile());
+			}
 		}
 	}
 }

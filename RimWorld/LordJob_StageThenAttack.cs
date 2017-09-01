@@ -34,15 +34,15 @@ namespace RimWorld
 				this.faction.def.pawnsPlural.CapitalizeFirst(),
 				this.faction.Name
 			}), MessageSound.SeriousAlert));
-			transition.AddPreAction(new TransitionAction_WakeAll());
+			transition.AddPostAction(new TransitionAction_WakeAll());
 			stateGraph.AddTransition(transition);
 			return stateGraph;
 		}
 
 		public override void ExposeData()
 		{
-			Scribe_References.LookReference<Faction>(ref this.faction, "faction", false);
-			Scribe_Values.LookValue<IntVec3>(ref this.stageLoc, "stageLoc", default(IntVec3), false);
+			Scribe_References.Look<Faction>(ref this.faction, "faction", false);
+			Scribe_Values.Look<IntVec3>(ref this.stageLoc, "stageLoc", default(IntVec3), false);
 		}
 	}
 }

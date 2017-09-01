@@ -6,7 +6,7 @@ namespace Verse.AI
 	{
 		public const byte MaxValue = 255;
 
-		public const ushort PathCostFactor = 8;
+		public const int PathCostFactor = 8;
 
 		public const int CostForTurretLOS = 12;
 

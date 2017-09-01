@@ -5,9 +5,9 @@ namespace Verse
 {
 	internal static class MeshMakerPlanes
 	{
-		private const float BackLiftAmount = 0.00250000018f;
+		private const float BackLiftAmount = 0.00234375f;
 
-		private const float TwistAmount = 0.00125000009f;
+		private const float TwistAmount = 0.001171875f;
 
 		public static Mesh NewPlaneMesh(float size)
 		{
@@ -40,16 +40,16 @@ namespace Verse
 			array[3] = new Vector3(0.5f * size.x, 0f, -0.5f * size.y);
 			if (backLift)
 			{
-				array[1].y = 0.00250000018f;
-				array[2].y = 0.00250000018f;
-				array[3].y = 0.001f;
+				array[1].y = 0.00234375f;
+				array[2].y = 0.00234375f;
+				array[3].y = 0.000937500037f;
 			}
 			if (twist)
 			{
-				array[0].y = 0.00125000009f;
-				array[1].y = 0.000625000044f;
+				array[0].y = 0.001171875f;
+				array[1].y = 0.0005859375f;
 				array[2].y = 0f;
-				array[3].y = 0.000625000044f;
+				array[3].y = 0.0005859375f;
 			}
 			if (!flipped)
 			{

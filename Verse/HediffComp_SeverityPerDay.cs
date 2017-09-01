@@ -15,14 +15,14 @@ namespace Verse
 			}
 		}
 
-		public override void CompPostTick()
+		public override void CompPostTick(ref float severityAdjustment)
 		{
-			base.CompPostTick();
+			base.CompPostTick(ref severityAdjustment);
 			if (base.Pawn.IsHashIntervalTick(200))
 			{
 				float num = this.SeverityChangePerDay();
 				num *= 0.00333333341f;
-				this.parent.Severity += num;
+				severityAdjustment += num;
 			}
 		}
 

@@ -6,6 +6,8 @@ namespace RimWorld
 {
 	public class Page_SelectStorytellerInGame : Page
 	{
+		private Listing_Standard selectedStorytellerInfoListing = new Listing_Standard();
+
 		public override string PageTitle
 		{
 			get
@@ -26,7 +28,7 @@ namespace RimWorld
 			Rect mainRect = base.GetMainRect(rect, 0f, false);
 			Storyteller storyteller = Current.Game.storyteller;
 			StorytellerDef def = Current.Game.storyteller.def;
-			StorytellerUI.DrawStorytellerSelectionInterface(mainRect, ref storyteller.def, ref storyteller.difficulty);
+			StorytellerUI.DrawStorytellerSelectionInterface(mainRect, ref storyteller.def, ref storyteller.difficulty, this.selectedStorytellerInfoListing);
 			if (storyteller.def != def)
 			{
 				storyteller.Notify_DefChanged();

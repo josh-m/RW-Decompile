@@ -29,7 +29,7 @@ namespace Verse
 				for (int i = 0; i < 9; i++)
 				{
 					IntVec3 loc = c + GenRadial.RadialPattern[i];
-					Room room = loc.GetRoom(this.map);
+					Room room = loc.GetRoom(this.map, RegionType.Set_Passable);
 					if (room != null && !room.TouchesMapEdge)
 					{
 						flag = true;
@@ -73,22 +73,37 @@ namespace Verse
 			{
 				return;
 			}
-			this.innerCells.Clear();
-			foreach (IntVec3 current in room.Cells)
+			foreach (IntVec3 current in room.BorderCells)
 			{
-				if (!this.innerCells.Contains(current))
+				Thing roofHolderOrImpassable = current.GetRoofHolderOrImpassable(this.map);
+				if (roofHolderOrImpassable != null)
 				{
-					this.innerCells.Add(current);
+					if (roofHolderOrImpassable.Faction != null && roofHolderOrImpassable.Faction != Faction.OfPlayer)
+					{
+						return;
+					}
+					if (roofHolderOrImpassable.def.building != null && !roofHolderOrImpassable.def.building.allowAutoroof)
+					{
+						return;
+					}
+				}
+			}
+			this.innerCells.Clear();
+			foreach (IntVec3 current2 in room.Cells)
+			{
+				if (!this.innerCells.Contains(current2))
+				{
+					this.innerCells.Add(current2);
 				}
 				for (int i = 0; i < 8; i++)
 				{
-					IntVec3 c = current + GenAdj.AdjacentCells[i];
+					IntVec3 c = current2 + GenAdj.AdjacentCells[i];
 					if (c.InBounds(this.map))
 					{
-						Building edifice = c.GetEdifice(this.map);
-						if (edifice != null && edifice.def.regionBarrier && (edifice.def.size.x > 1 || edifice.def.size.z > 1))
+						Thing roofHolderOrImpassable2 = c.GetRoofHolderOrImpassable(this.map);
+						if (roofHolderOrImpassable2 != null && (roofHolderOrImpassable2.def.size.x > 1 || roofHolderOrImpassable2.def.size.z > 1))
 						{
-							CellRect cellRect = edifice.OccupiedRect();
+							CellRect cellRect = roofHolderOrImpassable2.OccupiedRect();
 							cellRect.ClipInsideMap(this.map);
 							for (int j = cellRect.minZ; j <= cellRect.maxZ; j++)
 							{
@@ -106,26 +121,26 @@ namespace Verse
 				}
 			}
 			this.cellsToRoof.Clear();
-			foreach (IntVec3 current2 in this.innerCells)
+			foreach (IntVec3 current3 in this.innerCells)
 			{
 				for (int l = 0; l < 9; l++)
 				{
-					IntVec3 intVec = current2 + GenAdj.AdjacentCellsAndInside[l];
-					if (intVec.InBounds(this.map) && (l == 8 || intVec.GetRegionBarrier(this.map) != null) && !this.cellsToRoof.Contains(intVec))
+					IntVec3 intVec = current3 + GenAdj.AdjacentCellsAndInside[l];
+					if (intVec.InBounds(this.map) && (l == 8 || intVec.GetRoofHolderOrImpassable(this.map) != null) && !this.cellsToRoof.Contains(intVec))
 					{
 						this.cellsToRoof.Add(intVec);
 					}
 				}
 			}
 			this.justRoofedCells.Clear();
-			foreach (IntVec3 current3 in this.cellsToRoof)
+			foreach (IntVec3 current4 in this.cellsToRoof)
 			{
-				if (this.map.roofGrid.RoofAt(current3) == null && !this.justRoofedCells.Contains(current3))
+				if (this.map.roofGrid.RoofAt(current4) == null && !this.justRoofedCells.Contains(current4))
 				{
-					if (!this.map.areaManager.NoRoof[current3] && RoofCollapseUtility.WithinRangeOfRoofHolder(current3, this.map))
+					if (!this.map.areaManager.NoRoof[current4] && RoofCollapseUtility.WithinRangeOfRoofHolder(current4, this.map))
 					{
-						this.map.areaManager.BuildRoof[current3] = true;
-						this.justRoofedCells.Add(current3);
+						this.map.areaManager.BuildRoof[current4] = true;
+						this.justRoofedCells.Add(current4);
 					}
 				}
 			}

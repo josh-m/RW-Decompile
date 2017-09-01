@@ -125,6 +125,25 @@ namespace Verse
 			yield return val;
 		}
 
+		public static string ToStringSafe<T>(this T obj)
+		{
+			if (obj == null)
+			{
+				return "null";
+			}
+			string result;
+			try
+			{
+				result = obj.ToString();
+			}
+			catch (Exception arg)
+			{
+				Log.Warning("Exception in ToString(): " + arg);
+				result = "error";
+			}
+			return result;
+		}
+
 		public static int HashCombine<T>(int seed, T obj)
 		{
 			int num = (obj != null) ? obj.GetHashCode() : 0;
@@ -158,17 +177,28 @@ namespace Verse
 
 		public static bool IsHashIntervalTick(this Thing t, int interval)
 		{
-			return (Find.TickManager.TicksGame + t.thingIDNumber.HashOffset()) % interval == 0;
+			return t.HashOffsetTicks() % interval == 0;
 		}
 
-		public static int HashOffsetTicks(this Thing t, int interval)
+		public static int HashOffsetTicks(this Thing t)
 		{
 			return Find.TickManager.TicksGame + t.thingIDNumber.HashOffset();
 		}
 
 		public static bool IsHashIntervalTick(this WorldObject o, int interval)
 		{
-			return (Find.TickManager.TicksGame + o.ID.HashOffset()) % interval == 0;
+			return o.HashOffsetTicks() % interval == 0;
+		}
+
+		public static int HashOffsetTicks(this WorldObject o)
+		{
+			return Find.TickManager.TicksGame + o.ID.HashOffset();
+		}
+
+		public static bool IsNestedHashIntervalTick(this Thing t, int outerInterval, int approxInnerInterval)
+		{
+			int num = Mathf.Max(Mathf.RoundToInt((float)approxInnerInterval / (float)outerInterval), 1);
+			return t.HashOffsetTicks() / outerInterval % num == 0;
 		}
 	}
 }

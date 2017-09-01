@@ -91,7 +91,7 @@ namespace RimWorld
 				for (int j = 0; j < Designator_AreaNoRoof.justRemovedCells.Count; j++)
 				{
 					IntVec3 intVec = Designator_AreaNoRoof.justRemovedCells[j];
-					Room room = intVec.GetRoom(base.Map);
+					Room room = intVec.GetRoom(base.Map, RegionType.Set_Passable);
 					if (room == null)
 					{
 						base.Map.autoBuildRoofAreaSetter.TryGenerateAreaOnImpassable(intVec);

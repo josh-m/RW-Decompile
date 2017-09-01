@@ -21,8 +21,8 @@ namespace RimWorld
 
 		public void ExposeData()
 		{
-			Scribe_References.LookReference<Pawn>(ref this.predator, "predator", false);
-			Scribe_Values.LookValue<int>(ref this.lastAttackTicks, "lastAttackTicks", 0, false);
+			Scribe_References.Look<Pawn>(ref this.predator, "predator", false);
+			Scribe_Values.Look<int>(ref this.lastAttackTicks, "lastAttackTicks", 0, false);
 		}
 	}
 }

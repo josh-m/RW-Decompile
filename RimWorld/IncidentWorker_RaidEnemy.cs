@@ -43,11 +43,19 @@ namespace RimWorld
 				where this.FactionCanBeGroupSource(f, map, true) && maxPoints >= f.def.MinPointsToGenerateNormalPawnGroup()
 				select f).TryRandomElementByWeight((Faction f) => f.def.raidCommonality, out parms.faction))
 				{
-					Log.Error("IncidentWorker_RaidEnemy could not fire even though we thought we could: no faction could generate with " + maxPoints + " points.");
 					return false;
 				}
 			}
 			return true;
+		}
+
+		protected override void ResolveRaidPoints(IncidentParms parms)
+		{
+			if (parms.points <= 0f)
+			{
+				Log.Error("RaidEnemy is resolving raid points. They should always be set before initiating the incident.");
+				parms.points = (float)Rand.Range(50, 300);
+			}
 		}
 
 		protected override void ResolveRaidStrategy(IncidentParms parms)
@@ -109,9 +117,9 @@ namespace RimWorld
 			return text;
 		}
 
-		protected override LetterType GetLetterType()
+		protected override LetterDef GetLetterDef()
 		{
-			return LetterType.BadUrgent;
+			return LetterDefOf.BadUrgent;
 		}
 
 		protected override string GetRelatedPawnsInfoLetterText(IncidentParms parms)

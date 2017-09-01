@@ -11,7 +11,7 @@ namespace RimWorld
 	{
 		private const float WarmupTicks = 80f;
 
-		private const float TicksBetweenRepairs = 16f;
+		private const float TicksBetweenRepairs = 20f;
 
 		protected float ticksToNextRepair;
 
@@ -19,7 +19,7 @@ namespace RimWorld
 		protected override IEnumerable<Toil> MakeNewToils()
 		{
 			this.FailOnDespawnedNullOrForbidden(TargetIndex.A);
-			yield return Toils_Reserve.Reserve(TargetIndex.A, 1);
+			yield return Toils_Reserve.Reserve(TargetIndex.A, 1, -1, null);
 			yield return Toils_Goto.GotoThing(TargetIndex.A, PathEndMode.Touch);
 			Toil repair = new Toil();
 			repair.initAction = delegate
@@ -34,9 +34,10 @@ namespace RimWorld
 				this.<>f__this.ticksToNextRepair -= statValue;
 				if (this.<>f__this.ticksToNextRepair <= 0f)
 				{
-					this.<>f__this.ticksToNextRepair += 16f;
+					this.<>f__this.ticksToNextRepair += 20f;
 					this.<>f__this.TargetThingA.HitPoints++;
 					this.<>f__this.TargetThingA.HitPoints = Mathf.Min(this.<>f__this.TargetThingA.HitPoints, this.<>f__this.TargetThingA.MaxHitPoints);
+					this.<>f__this.Map.listerBuildingsRepairable.Notify_BuildingRepaired((Building)this.<>f__this.TargetThingA);
 					if (this.<>f__this.TargetThingA.HitPoints == this.<>f__this.TargetThingA.MaxHitPoints)
 					{
 						actor.records.Increment(RecordDefOf.ThingsRepaired);
@@ -44,6 +45,7 @@ namespace RimWorld
 					}
 				}
 			};
+			repair.FailOnCannotTouch(TargetIndex.A, PathEndMode.Touch);
 			repair.WithEffect(base.TargetThingA.def.repairEffect, TargetIndex.A);
 			repair.defaultCompleteMode = ToilCompleteMode.Never;
 			yield return repair;

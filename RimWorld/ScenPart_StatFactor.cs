@@ -17,8 +17,8 @@ namespace RimWorld
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Defs.LookDef<StatDef>(ref this.stat, "stat");
-			Scribe_Values.LookValue<float>(ref this.factor, "factor", 0f, false);
+			Scribe_Defs.Look<StatDef>(ref this.stat, "stat");
+			Scribe_Values.Look<float>(ref this.factor, "factor", 0f, false);
 		}
 
 		public override void DoEditInterface(Listing_ScenEdit listing)
@@ -87,13 +87,13 @@ namespace RimWorld
 		{
 			yield return StatDefOf.ComfyTemperatureMax;
 			yield return StatDefOf.ComfyTemperatureMin;
-			yield return StatDefOf.ConstructFailChance;
+			yield return StatDefOf.ConstructSuccessChance;
 			yield return StatDefOf.ConstructionSpeed;
 			yield return StatDefOf.DeteriorationRate;
 			yield return StatDefOf.Flammability;
 			yield return StatDefOf.GlobalLearningFactor;
-			yield return StatDefOf.HarvestFailChance;
-			yield return StatDefOf.HealingSpeed;
+			yield return StatDefOf.PlantHarvestYield;
+			yield return StatDefOf.MedicalTendSpeed;
 			yield return StatDefOf.ImmunityGainSpeed;
 			yield return StatDefOf.MarketValue;
 			yield return StatDefOf.MaxHitPoints;
@@ -103,7 +103,7 @@ namespace RimWorld
 			yield return StatDefOf.PsychicSensitivity;
 			yield return StatDefOf.ResearchSpeed;
 			yield return StatDefOf.ShootingAccuracy;
-			yield return StatDefOf.SurgerySuccessChance;
+			yield return StatDefOf.MedicalSurgerySuccessChance;
 			yield return StatDefOf.RecruitPrisonerChance;
 			yield return StatDefOf.TameAnimalChance;
 			yield return StatDefOf.TrainAnimalChance;

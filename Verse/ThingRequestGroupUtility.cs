@@ -62,11 +62,13 @@ namespace Verse
 				return false;
 			case ThingRequestGroup.Art:
 				return false;
-			case ThingRequestGroup.ContainerEnclosure:
+			case ThingRequestGroup.ThisOrAnyCompIsThingHolder:
 				return false;
 			case ThingRequestGroup.ActiveDropPod:
 				return false;
 			case ThingRequestGroup.Transporter:
+				return false;
+			case ThingRequestGroup.LongRangeMineralScanner:
 				return false;
 			default:
 				throw new ArgumentException("group");

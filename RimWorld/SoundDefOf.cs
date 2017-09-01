@@ -12,6 +12,8 @@ namespace RimWorld
 
 		public static SoundDef TickTiny;
 
+		public static SoundDef Crunch;
+
 		public static SoundDef AmountIncrement;
 
 		public static SoundDef AmountDecrement;
@@ -218,11 +220,11 @@ namespace RimWorld
 
 		public static SoundDef DropPodLeaving;
 
-		public static SoundDef PersonalShieldAbsorbDamage;
+		public static SoundDef EnergyShieldAbsorbDamage;
 
-		public static SoundDef PersonalShieldReset;
+		public static SoundDef EnergyShieldReset;
 
-		public static SoundDef PersonalShieldBroken;
+		public static SoundDef EnergyShieldBroken;
 
 		public static SoundDef Pawn_Melee_Punch_HitPawn;
 
@@ -231,6 +233,8 @@ namespace RimWorld
 		public static SoundDef Pawn_Melee_Punch_Miss;
 
 		public static SoundDef ArtilleryShellLoaded;
+
+		public static SoundDef TechMedicineUsed;
 
 		public static SoundDef GameStartSting;
 

@@ -31,7 +31,7 @@ namespace RimWorld
 		{
 		}
 
-		public abstract IEnumerable<Thing> GenerateThings(Map forMap);
+		public abstract IEnumerable<Thing> GenerateThings(int forTile);
 
 		public abstract bool HandlesThingDef(ThingDef thingDef);
 
@@ -54,7 +54,7 @@ namespace RimWorld
 			}
 			if (this.countRange.max <= 0 && this.totalPriceRange.max > 0f)
 			{
-				return Mathf.Max(1, Mathf.RoundToInt(this.totalPriceRange.RandomInRange / def.BaseMarketValue));
+				return Mathf.RoundToInt(this.totalPriceRange.RandomInRange / def.BaseMarketValue);
 			}
 			int num = 0;
 			int randomInRange;

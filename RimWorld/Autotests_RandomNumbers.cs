@@ -163,16 +163,16 @@ namespace RimWorld
 			Rand.Seed = seed1;
 			int @int = Rand.Int;
 			int int2 = Rand.Int;
-			Rand.PushSeed();
+			Rand.PushState();
 			Rand.Seed = seed2;
 			int int3 = Rand.Int;
-			Rand.PopSeed();
+			Rand.PopState();
 			Rand.Seed = seed1;
 			int int4 = Rand.Int;
-			Rand.PushSeed();
+			Rand.PushState();
 			Rand.Seed = seed2;
 			int int5 = Rand.Int;
-			Rand.PopSeed();
+			Rand.PopState();
 			int int6 = Rand.Int;
 			if (@int != int4 || int2 != int6 || int3 != int5)
 			{

@@ -7,7 +7,7 @@ namespace Verse.AI
 	{
 		protected override bool TryFindGoodExitDest(Pawn pawn, bool canDig, out IntVec3 spot)
 		{
-			TraverseMode mode = canDig ? TraverseMode.PassAnything : TraverseMode.ByPawn;
+			TraverseMode mode = (!canDig) ? TraverseMode.ByPawn : TraverseMode.PassAllDestroyableThings;
 			return RCellFinder.TryFindBestExitSpot(pawn, out spot, mode);
 		}
 	}

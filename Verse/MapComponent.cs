@@ -2,7 +2,7 @@ using System;
 
 namespace Verse
 {
-	public class MapComponent : IExposable
+	public abstract class MapComponent : IExposable
 	{
 		public Map map;
 
@@ -24,6 +24,18 @@ namespace Verse
 		}
 
 		public virtual void ExposeData()
+		{
+		}
+
+		public virtual void FinalizeInit()
+		{
+		}
+
+		public virtual void MapGenerated()
+		{
+		}
+
+		public virtual void MapRemoved()
 		{
 		}
 	}

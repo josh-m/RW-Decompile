@@ -11,7 +11,7 @@ namespace RimWorld
 
 		public static string GenerateTextFromTale(TextGenerationPurpose purpose, Tale tale, int seed, List<Rule> extraRules)
 		{
-			Rand.PushSeed();
+			Rand.PushState();
 			Rand.Seed = seed;
 			string rootKeyword = null;
 			List<Rule> list = new List<Rule>();
@@ -40,7 +40,7 @@ namespace RimWorld
 				}
 			}
 			string result = GrammarResolver.Resolve(rootKeyword, list, (tale == null) ? "null_tale" : tale.def.defName);
-			Rand.PopSeed();
+			Rand.PopState();
 			return result;
 		}
 	}

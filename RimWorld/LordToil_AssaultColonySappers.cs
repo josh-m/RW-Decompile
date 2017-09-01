@@ -37,11 +37,14 @@ namespace RimWorld
 		{
 			base.Init();
 			LessonAutoActivator.TeachOpportunity(ConceptDefOf.Drafting, OpportunityType.Critical);
-			this.Data.sapperDest = GenAI.RandomRaidDest(base.Map);
 		}
 
 		public override void UpdateAllDuties()
 		{
+			if (!this.Data.sapperDest.IsValid && this.lord.ownedPawns.Any<Pawn>())
+			{
+				this.Data.sapperDest = GenAI.RandomRaidDest(this.lord.ownedPawns[0].Position, base.Map);
+			}
 			List<Pawn> list = null;
 			if (this.Data.sapperDest.IsValid)
 			{
@@ -49,16 +52,20 @@ namespace RimWorld
 				for (int i = 0; i < this.lord.ownedPawns.Count; i++)
 				{
 					Pawn pawn = this.lord.ownedPawns[i];
-					if (this.IsValidSapper(pawn))
+					if (pawn.equipment.Primary != null && pawn.equipment.Primary.def.Verbs[0].ai_IsBuildingDestroyer)
 					{
 						list.Add(pawn);
 					}
+				}
+				if (list.Count == 0 && this.lord.ownedPawns.Count >= 2)
+				{
+					list.Add(this.lord.ownedPawns[0]);
 				}
 			}
 			for (int j = 0; j < this.lord.ownedPawns.Count; j++)
 			{
 				Pawn pawn2 = this.lord.ownedPawns[j];
-				if (this.IsValidSapper(pawn2))
+				if (list != null && list.Contains(pawn2))
 				{
 					pawn2.mindState.duty = new PawnDuty(DutyDefOf.Sapper, this.Data.sapperDest, -1f);
 				}
@@ -80,11 +87,6 @@ namespace RimWorld
 					pawn2.mindState.duty = new PawnDuty(DutyDefOf.AssaultColony);
 				}
 			}
-		}
-
-		private bool IsValidSapper(Pawn p)
-		{
-			return this.Data.sapperDest.IsValid && p.equipment.Primary != null && p.equipment.Primary.def.Verbs[0].ai_IsBuildingDestroyer;
 		}
 
 		public override void Notify_ReachedDutyLocation(Pawn pawn)

@@ -74,6 +74,7 @@ namespace Verse
 			this.absorbInputAroundWindow = true;
 			this.closeOnEscapeKey = false;
 			this.creationRealTime = RealTime.LastRealTime;
+			this.onlyOneOfTypeAllowed = false;
 		}
 
 		public static Dialog_MessageBox CreateConfirmation(string text, Action confirmedAct, bool destructive = false, string title = null)
@@ -94,7 +95,7 @@ namespace Verse
 			Rect outRect = new Rect(inRect.x, num, inRect.width, inRect.height - 35f - 5f - num);
 			float width = outRect.width - 16f;
 			Rect viewRect = new Rect(0f, 0f, width, Text.CalcHeight(this.text, width));
-			Widgets.BeginScrollView(outRect, ref this.scrollPosition, viewRect);
+			Widgets.BeginScrollView(outRect, ref this.scrollPosition, viewRect, true);
 			Widgets.Label(new Rect(0f, 0f, viewRect.width, viewRect.height), this.text);
 			Widgets.EndScrollView();
 			if (this.buttonADestructive)

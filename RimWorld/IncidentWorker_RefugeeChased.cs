@@ -17,12 +17,12 @@ namespace RimWorld
 		{
 			Map map = (Map)parms.target;
 			IntVec3 spawnSpot;
-			if (!CellFinder.TryFindRandomEdgeCellWith((IntVec3 c) => map.reachability.CanReachColony(c), map, out spawnSpot))
+			if (!CellFinder.TryFindRandomEdgeCellWith((IntVec3 c) => map.reachability.CanReachColony(c), map, CellFinder.EdgeRoadChance_Neutral, out spawnSpot))
 			{
 				return false;
 			}
 			Faction faction = Find.FactionManager.FirstFactionOfDef(FactionDefOf.Spacer);
-			PawnGenerationRequest request = new PawnGenerationRequest(PawnKindDefOf.SpaceRefugee, faction, PawnGenerationContext.NonPlayer, null, false, false, false, false, true, false, 20f, false, true, true, null, null, null, null, null, null);
+			PawnGenerationRequest request = new PawnGenerationRequest(PawnKindDefOf.SpaceRefugee, faction, PawnGenerationContext.NonPlayer, -1, false, false, false, false, true, false, 20f, false, true, true, false, false, null, null, null, null, null, null);
 			Pawn refugee = PawnGenerator.GeneratePawn(request);
 			refugee.relations.everSeenByPlayer = true;
 			Faction enemyFac;
@@ -48,7 +48,7 @@ namespace RimWorld
 			{
 				GenSpawn.Spawn(refugee, spawnSpot, map);
 				refugee.SetFaction(Faction.OfPlayer, null);
-				Find.CameraDriver.JumpTo(spawnSpot);
+				CameraJumper.TryJump(refugee);
 				IncidentParms incidentParms = StorytellerUtility.DefaultParmsNow(Find.Storyteller.def, IncidentCategory.ThreatBig, map);
 				incidentParms.forced = true;
 				incidentParms.faction = enemyFac;
@@ -76,7 +76,11 @@ namespace RimWorld
 			};
 			diaOption3.link = diaNode2;
 			diaNode.options.Add(diaOption3);
-			Find.WindowStack.Add(new Dialog_NodeTree(diaNode, true, true));
+			string title = "RefugeeChasedTitle".Translate(new object[]
+			{
+				map.info.parent.Label
+			});
+			Find.WindowStack.Add(new Dialog_NodeTree(diaNode, true, true, title));
 			return true;
 		}
 	}

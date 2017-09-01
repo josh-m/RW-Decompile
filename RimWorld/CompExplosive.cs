@@ -13,9 +13,9 @@ namespace RimWorld
 
 		private Thing instigator;
 
-		protected Sustainer wickSoundSustainer;
+		public bool detonated;
 
-		private bool detonated;
+		protected Sustainer wickSoundSustainer;
 
 		public CompProperties_Explosive Props
 		{
@@ -41,10 +41,10 @@ namespace RimWorld
 				{
 					return true;
 				}
-				Rand.PushSeed();
+				Rand.PushState();
 				Rand.Seed = this.parent.thingIDNumber.GetHashCode();
 				bool result = Rand.Value < this.Props.chanceNeverExplodeFromDamage;
-				Rand.PopSeed();
+				Rand.PopState();
 				return result;
 			}
 		}
@@ -52,9 +52,10 @@ namespace RimWorld
 		public override void PostExposeData()
 		{
 			base.PostExposeData();
-			Scribe_References.LookReference<Thing>(ref this.instigator, "instigator", false);
-			Scribe_Values.LookValue<bool>(ref this.wickStarted, "wickStarted", false, false);
-			Scribe_Values.LookValue<int>(ref this.wickTicksLeft, "wickTicksLeft", 0, false);
+			Scribe_References.Look<Thing>(ref this.instigator, "instigator", false);
+			Scribe_Values.Look<bool>(ref this.wickStarted, "wickStarted", false, false);
+			Scribe_Values.Look<int>(ref this.wickTicksLeft, "wickTicksLeft", 0, false);
+			Scribe_Values.Look<bool>(ref this.detonated, "detonated", false, false);
 		}
 
 		public override void CompTick()
@@ -105,10 +106,9 @@ namespace RimWorld
 						absorbed = true;
 					}
 				}
-				else if (this.Props.startWickOnDamageTaken != null && dinfo.Def == this.Props.startWickOnDamageTaken)
+				else if (!this.wickStarted && this.Props.startWickOnDamageTaken != null && dinfo.Def == this.Props.startWickOnDamageTaken)
 				{
 					this.StartWick(dinfo.Instigator);
-					absorbed = true;
 				}
 			}
 		}
@@ -158,9 +158,13 @@ namespace RimWorld
 				return;
 			}
 			this.detonated = true;
+			if (!this.parent.SpawnedOrAnyParentSpawned)
+			{
+				return;
+			}
 			if (!this.parent.Destroyed)
 			{
-				this.parent.Destroy(DestroyMode.Kill);
+				this.parent.Kill(null);
 			}
 			if (map == null)
 			{

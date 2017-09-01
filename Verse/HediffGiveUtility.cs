@@ -33,7 +33,7 @@ namespace Verse
 					{
 						break;
 					}
-					BodyPartRecord partRecord = source.RandomElementByWeight((BodyPartRecord x) => x.absoluteFleshCoverage);
+					BodyPartRecord partRecord = source.RandomElementByWeight((BodyPartRecord x) => x.coverageAbs);
 					Hediff hediff2 = HediffMaker.MakeHediff(hediff, pawn, partRecord);
 					pawn.health.AddHediff(hediff2, null, null);
 					if (outAddedHediffs != null)

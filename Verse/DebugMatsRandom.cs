@@ -17,7 +17,7 @@ namespace Verse
 			DebugMatsRandom.mats = new Material[100];
 			for (int i = 0; i < 100; i++)
 			{
-				DebugMatsRandom.mats[i] = SolidColorMaterials.SimpleSolidColorMaterial(new Color(Rand.Value, Rand.Value, Rand.Value, 0.25f));
+				DebugMatsRandom.mats[i] = SolidColorMaterials.SimpleSolidColorMaterial(new Color(Rand.Value, Rand.Value, Rand.Value, 0.25f), false);
 			}
 		}
 

@@ -13,17 +13,17 @@ namespace RimWorld
 
 		public static bool HasJobOnTransporter(Pawn pawn, CompTransporter transporter)
 		{
-			return !transporter.parent.IsForbidden(pawn) && transporter.AnythingLeftToLoad && pawn.health.capacities.CapableOf(PawnCapacityDefOf.Manipulation) && pawn.CanReserveAndReach(transporter.parent, PathEndMode.Touch, pawn.NormalMaxDanger(), 1) && LoadTransportersJobUtility.FindThingToLoad(pawn, transporter) != null;
+			return !transporter.parent.IsForbidden(pawn) && transporter.AnythingLeftToLoad && pawn.health.capacities.CapableOf(PawnCapacityDefOf.Manipulation) && pawn.CanReserveAndReach(transporter.parent, PathEndMode.Touch, pawn.NormalMaxDanger(), 1, -1, null, false) && LoadTransportersJobUtility.FindThingToLoad(pawn, transporter) != null;
 		}
 
 		public static Job JobOnTransporter(Pawn p, CompTransporter transporter)
 		{
 			Thing thing = LoadTransportersJobUtility.FindThingToLoad(p, transporter);
-			return new Job(JobDefOf.HaulToContainer, thing, transporter.parent)
-			{
-				count = Mathf.Min(TransferableUtility.TransferableMatching<TransferableOneWay>(thing, transporter.leftToLoad).countToTransfer, thing.stackCount),
-				ignoreForbidden = true
-			};
+			Job job = new Job(JobDefOf.HaulToContainer, thing, transporter.parent);
+			int countToTransfer = TransferableUtility.TransferableMatchingDesperate(thing, transporter.leftToLoad).CountToTransfer;
+			job.count = Mathf.Min(countToTransfer, thing.stackCount);
+			job.ignoreForbidden = true;
+			return job;
 		}
 
 		private static Thing FindThingToLoad(Pawn p, CompTransporter transporter)
@@ -35,7 +35,7 @@ namespace RimWorld
 				for (int i = 0; i < leftToLoad.Count; i++)
 				{
 					TransferableOneWay transferableOneWay = leftToLoad[i];
-					if (transferableOneWay.countToTransfer > 0)
+					if (transferableOneWay.CountToTransfer > 0)
 					{
 						for (int j = 0; j < transferableOneWay.things.Count; j++)
 						{
@@ -48,14 +48,14 @@ namespace RimWorld
 			{
 				return null;
 			}
-			Predicate<Thing> validator = (Thing x) => LoadTransportersJobUtility.neededThings.Contains(x) && p.CanReserve(x, 1);
-			Thing thing = GenClosest.ClosestThingReachable(p.Position, p.Map, ThingRequest.ForGroup(ThingRequestGroup.HaulableEver), PathEndMode.Touch, TraverseParms.For(p, Danger.Deadly, TraverseMode.ByPawn, false), 9999f, validator, null, -1, false);
+			Predicate<Thing> validator = (Thing x) => LoadTransportersJobUtility.neededThings.Contains(x) && p.CanReserve(x, 1, -1, null, false);
+			Thing thing = GenClosest.ClosestThingReachable(p.Position, p.Map, ThingRequest.ForGroup(ThingRequestGroup.HaulableEver), PathEndMode.Touch, TraverseParms.For(p, Danger.Deadly, TraverseMode.ByPawn, false), 9999f, validator, null, 0, -1, false, RegionType.Set_Passable, false);
 			if (thing == null)
 			{
 				foreach (Thing current in LoadTransportersJobUtility.neededThings)
 				{
 					Pawn pawn = current as Pawn;
-					if (pawn != null && (!pawn.IsColonist || pawn.Downed) && p.CanReserveAndReach(pawn, PathEndMode.Touch, Danger.Deadly, 1))
+					if (pawn != null && (!pawn.IsColonist || pawn.Downed) && p.CanReserveAndReach(pawn, PathEndMode.Touch, Danger.Deadly, 1, -1, null, false))
 					{
 						return pawn;
 					}

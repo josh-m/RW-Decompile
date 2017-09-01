@@ -1,54 +1,72 @@
 using System;
 using UnityEngine;
 using Verse;
-using Verse.Sound;
 
 namespace RimWorld
 {
 	public class Mineable : Building
 	{
-		private int nonMiningDamageTaken;
+		private const float YieldChanceOnNonMiningKill = 0.2f;
 
-		public override void PreApplyDamage(DamageInfo damage, out bool absorbed)
+		private float yieldPct;
+
+		public override void ExposeData()
 		{
-			base.PreApplyDamage(damage, out absorbed);
+			base.ExposeData();
+			Scribe_Values.Look<float>(ref this.yieldPct, "yieldPct", 0f, false);
+		}
+
+		public override void PreApplyDamage(DamageInfo dinfo, out bool absorbed)
+		{
+			base.PreApplyDamage(dinfo, out absorbed);
 			if (absorbed)
 			{
 				return;
 			}
-			if (damage.Def.harmsHealth && damage.Def != DamageDefOf.Mining)
+			if (this.def.building.mineableThing != null && this.def.building.mineableYieldWasteable && dinfo.Def == DamageDefOf.Mining && dinfo.Instigator != null && dinfo.Instigator is Pawn)
 			{
-				int num = Math.Min(damage.Amount, this.HitPoints);
-				this.nonMiningDamageTaken += num;
+				int num = Mathf.Min(dinfo.Amount, this.HitPoints);
+				float num2 = (float)num / (float)base.MaxHitPoints;
+				this.yieldPct += num2 * dinfo.Instigator.GetStatValue(StatDefOf.MiningYield, true);
 			}
 			absorbed = false;
+		}
+
+		public void DestroyMined(Pawn pawn)
+		{
+			Map map = base.Map;
+			base.Destroy(DestroyMode.KillFinalize);
+			this.TrySpawnYield(map, this.yieldPct, true);
 		}
 
 		public override void Destroy(DestroyMode mode)
 		{
 			Map map = base.Map;
 			base.Destroy(mode);
-			if (mode == DestroyMode.Kill)
+			if (mode == DestroyMode.KillFinalize)
 			{
-				if (this.def.building.soundMined != null)
-				{
-					this.def.building.soundMined.PlayOneShot(new TargetInfo(base.Position, map, false));
-				}
-				if (this.def.building.mineableThing != null && Rand.Value < this.def.building.mineableDropChance)
-				{
-					Thing thing = ThingMaker.MakeThing(this.def.building.mineableThing, null);
-					if (thing.def.stackLimit == 1)
-					{
-						thing.stackCount = 1;
-					}
-					else
-					{
-						float num = this.def.building.mineableNonMinedEfficiency + (1f - this.def.building.mineableNonMinedEfficiency) * (1f - (float)this.nonMiningDamageTaken / (float)base.MaxHitPoints);
-						thing.stackCount = Mathf.CeilToInt((float)this.def.building.mineableYield * num);
-					}
-					GenSpawn.Spawn(thing, base.Position, map);
-				}
+				this.TrySpawnYield(map, 0.2f, false);
 			}
+		}
+
+		private void TrySpawnYield(Map map, float yieldChance, bool moteOnWaste)
+		{
+			if (this.def.building.mineableThing == null)
+			{
+				return;
+			}
+			if (Rand.Value > this.def.building.mineableDropChance)
+			{
+				return;
+			}
+			int num = this.def.building.mineableYield;
+			if (this.def.building.mineableYieldWasteable)
+			{
+				num = Mathf.Max(1, GenMath.RoundRandom((float)num * this.yieldPct));
+			}
+			Thing thing = ThingMaker.MakeThing(this.def.building.mineableThing, null);
+			thing.stackCount = num;
+			GenSpawn.Spawn(thing, base.Position, map);
 		}
 	}
 }

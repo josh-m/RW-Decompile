@@ -28,6 +28,8 @@ namespace Verse.AI
 
 		public int defaultDuration;
 
+		public bool handlingFacing;
+
 		public void Cleanup()
 		{
 			if (this.finishActions != null)

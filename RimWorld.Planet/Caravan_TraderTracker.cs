@@ -81,11 +81,11 @@ namespace RimWorld.Planet
 
 		public void ExposeData()
 		{
-			if (Scribe.mode == LoadSaveMode.Saving)
+			Scribe_Collections.Look<Pawn>(ref this.soldPrisoners, "soldPrisoners", LookMode.Reference, new object[0]);
+			if (Scribe.mode == LoadSaveMode.PostLoadInit)
 			{
-				this.soldPrisoners.RemoveAll((Pawn x) => x.Destroyed);
+				this.soldPrisoners.RemoveAll((Pawn x) => x == null);
 			}
-			Scribe_Collections.LookList<Pawn>(ref this.soldPrisoners, "soldPrisoners", LookMode.Reference, new object[0]);
 		}
 
 		[DebuggerHidden]
@@ -106,21 +106,25 @@ namespace RimWorld.Planet
 			}
 		}
 
-		public void AddToStock(Thing thing, Pawn playerNegotiator)
+		public void GiveSoldThingToTrader(Thing toGive, int countToGive, Pawn playerNegotiator)
 		{
-			if (this.Goods.Contains(thing))
+			if (this.Goods.Contains(toGive))
 			{
-				Log.Error("Tried to add " + thing + " to stock (pawn's trader tracker), but it's already here.");
+				Log.Error("Tried to add " + toGive + " to stock (pawn's trader tracker), but it's already here.");
 				return;
 			}
 			Caravan caravan = playerNegotiator.GetCaravan();
+			Thing thing = toGive.SplitOff(countToGive);
+			thing.PreTraded(TradeAction.PlayerSells, playerNegotiator, this.caravan);
 			Pawn pawn = thing as Pawn;
 			if (pawn != null)
 			{
 				CaravanInventoryUtility.MoveAllInventoryToSomeoneElse(pawn, caravan.PawnsListForReading, null);
-				caravan.RemovePawn(pawn);
 				this.caravan.AddPawn(pawn, false);
-				Find.WorldPawns.RemovePawn(pawn);
+				if (pawn.IsWorldPawn() && !this.caravan.Spawned)
+				{
+					Find.WorldPawns.RemovePawn(pawn);
+				}
 				if (pawn.RaceProps.Humanlike)
 				{
 					this.soldPrisoners.Add(pawn);
@@ -128,49 +132,48 @@ namespace RimWorld.Planet
 			}
 			else
 			{
-				Pawn ownerOf = CaravanInventoryUtility.GetOwnerOf(caravan, thing);
 				Pawn pawn2 = CaravanInventoryUtility.FindPawnToMoveInventoryTo(thing, this.caravan.PawnsListForReading, null, null);
 				if (pawn2 == null)
 				{
 					Log.Error("Could not find pawn to move sold thing to (sold by player). thing=" + thing);
-				}
-				else if (ownerOf != null)
-				{
-					ownerOf.inventory.innerContainer.TransferToContainer(thing, pawn2.inventory.innerContainer, thing.stackCount);
+					thing.Destroy(DestroyMode.Vanish);
 				}
 				else if (!pawn2.inventory.innerContainer.TryAdd(thing, true))
 				{
 					Log.Error("Could not add item to inventory.");
+					thing.Destroy(DestroyMode.Vanish);
 				}
 			}
 		}
 
-		public void GiveSoldThingToPlayer(Thing toGive, Thing originalThingFromStock, Pawn playerNegotiator)
+		public void GiveSoldThingToPlayer(Thing toGive, int countToGive, Pawn playerNegotiator)
 		{
 			Caravan caravan = playerNegotiator.GetCaravan();
-			Pawn pawn = toGive as Pawn;
+			Thing thing = toGive.SplitOff(countToGive);
+			thing.PreTraded(TradeAction.PlayerBuys, playerNegotiator, this.caravan);
+			Pawn pawn = thing as Pawn;
 			if (pawn != null)
 			{
 				CaravanInventoryUtility.MoveAllInventoryToSomeoneElse(pawn, this.caravan.PawnsListForReading, null);
-				this.caravan.RemovePawn(pawn);
 				caravan.AddPawn(pawn, true);
-				Find.WorldPawns.PassToWorld(pawn, PawnDiscardDecideMode.Decide);
+				if (!pawn.IsWorldPawn() && caravan.Spawned)
+				{
+					Find.WorldPawns.PassToWorld(pawn, PawnDiscardDecideMode.Decide);
+				}
+				this.soldPrisoners.Remove(pawn);
 			}
 			else
 			{
-				Pawn ownerOf = CaravanInventoryUtility.GetOwnerOf(this.caravan, toGive);
-				Pawn pawn2 = CaravanInventoryUtility.FindPawnToMoveInventoryTo(toGive, caravan.PawnsListForReading, null, null);
+				Pawn pawn2 = CaravanInventoryUtility.FindPawnToMoveInventoryTo(thing, caravan.PawnsListForReading, null, null);
 				if (pawn2 == null)
 				{
-					Log.Error("Could not find pawn to move bought thing to (bought by player). thing=" + toGive);
+					Log.Error("Could not find pawn to move bought thing to (bought by player). thing=" + thing);
+					thing.Destroy(DestroyMode.Vanish);
 				}
-				else if (ownerOf != null)
-				{
-					ownerOf.inventory.innerContainer.TransferToContainer(toGive, pawn2.inventory.innerContainer, toGive.stackCount);
-				}
-				else if (!pawn2.inventory.innerContainer.TryAdd(toGive, true))
+				else if (!pawn2.inventory.innerContainer.TryAdd(thing, true))
 				{
 					Log.Error("Could not add item to inventory.");
+					thing.Destroy(DestroyMode.Vanish);
 				}
 			}
 		}

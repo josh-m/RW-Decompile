@@ -126,8 +126,8 @@ namespace Verse
 
 		public override void ExposeData()
 		{
-			Scribe_Values.LookValue<string>(ref this.nameInt, "name", null, false);
-			Scribe_Values.LookValue<bool>(ref this.numerical, "numerical", false, false);
+			Scribe_Values.Look<string>(ref this.nameInt, "name", null, false);
+			Scribe_Values.Look<bool>(ref this.numerical, "numerical", false, false);
 		}
 
 		public override bool ConfusinglySimilarTo(Name other)

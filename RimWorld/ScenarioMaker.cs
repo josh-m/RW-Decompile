@@ -20,7 +20,7 @@ namespace RimWorld
 
 		public static Scenario GenerateNewRandomScenario(string seed)
 		{
-			Rand.PushSeed();
+			Rand.PushState();
 			Rand.Seed = seed.GetHashCode();
 			int @int = Rand.Int;
 			int[] array = new int[10];
@@ -51,7 +51,7 @@ namespace RimWorld
 			Rand.Seed = array[5];
 			ScenarioMaker.AddCategoryScenParts(ScenarioMaker.scen, ScenPartCategory.WorldThing, Rand.RangeInclusive(-3, 6));
 			Rand.Seed = array[6];
-			ScenarioMaker.AddCategoryScenParts(ScenarioMaker.scen, ScenPartCategory.MapCondition, Rand.RangeInclusive(-1, 2));
+			ScenarioMaker.AddCategoryScenParts(ScenarioMaker.scen, ScenPartCategory.GameCondition, Rand.RangeInclusive(-1, 2));
 			Rand.Seed = int2;
 			foreach (ScenPart current in ScenarioMaker.scen.AllParts)
 			{
@@ -97,7 +97,7 @@ namespace RimWorld
 			{
 				Log.Error(current2);
 			}
-			Rand.PopSeed();
+			Rand.PopState();
 			Scenario result = ScenarioMaker.scen;
 			ScenarioMaker.scen = null;
 			return result;

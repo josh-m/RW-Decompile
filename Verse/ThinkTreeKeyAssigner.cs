@@ -15,21 +15,21 @@ namespace Verse
 
 		public static void AssignKeys(ThinkNode rootNode, int startHash)
 		{
-			Rand.PushSeed();
+			Rand.PushState();
 			Rand.Seed = startHash;
 			foreach (ThinkNode current in rootNode.ThisAndChildrenRecursive)
 			{
 				current.SetUniqueSaveKey(ThinkTreeKeyAssigner.NextUnusedKey());
 			}
-			Rand.PopSeed();
+			Rand.PopState();
 		}
 
 		public static void AssignSingleKey(ThinkNode node, int startHash)
 		{
-			Rand.PushSeed();
+			Rand.PushState();
 			Rand.Seed = startHash;
 			node.SetUniqueSaveKey(ThinkTreeKeyAssigner.NextUnusedKey());
-			Rand.PopSeed();
+			Rand.PopState();
 		}
 
 		private static int NextUnusedKey()

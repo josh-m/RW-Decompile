@@ -81,9 +81,9 @@ namespace RimWorld
 
 		public void ExposeData()
 		{
-			Scribe_Values.LookValue<float>(ref this.everDamage, "everDamage", 0f, false);
-			Scribe_Values.LookValue<float>(ref this.recentDamage, "recentDamage", 0f, false);
-			Scribe_Values.LookValue<int>(ref this.lastSeriousDamageTick, "lastSeriousDamageTick", 0, false);
+			Scribe_Values.Look<float>(ref this.everDamage, "everDamage", 0f, false);
+			Scribe_Values.Look<float>(ref this.recentDamage, "recentDamage", 0f, false);
+			Scribe_Values.Look<int>(ref this.lastSeriousDamageTick, "lastSeriousDamageTick", 0, false);
 		}
 	}
 }

@@ -15,8 +15,8 @@ namespace RimWorld
 
 		public void ExposeData()
 		{
-			Scribe_Values.LookValue<bool>(ref this.gameEnding, "gameEnding", false, false);
-			Scribe_Values.LookValue<int>(ref this.ticksToGameOver, "ticksToGameOver", -1, false);
+			Scribe_Values.Look<bool>(ref this.gameEnding, "gameEnding", false, false);
+			Scribe_Values.Look<int>(ref this.ticksToGameOver, "ticksToGameOver", -1, false);
 		}
 
 		public void CheckGameOver()

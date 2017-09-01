@@ -12,50 +12,50 @@ namespace RimWorld
 			return !t.Destroyed && t.FlammableNow && t.def.category == ThingCategory.Pawn;
 		}
 
-		public static bool FireCanExistIn(IntVec3 c, Map map)
+		public static float ChanceToStartFireIn(IntVec3 c, Map map)
 		{
-			Building edifice = c.GetEdifice(map);
-			if (edifice != null && edifice.def.passability == Traversability.Impassable && edifice.OccupiedRect().ContractedBy(1).Contains(c))
-			{
-				return false;
-			}
 			List<Thing> thingList = c.GetThingList(map);
+			float num = (!c.TerrainFlammableNow(map)) ? 0f : c.GetTerrain(map).GetStatValueAbstract(StatDefOf.Flammability, null);
 			for (int i = 0; i < thingList.Count; i++)
 			{
-				if (thingList[i].def.category == ThingCategory.Filth && !thingList[i].def.filth.allowsFire)
+				if (thingList[i] is Fire)
 				{
-					return false;
+					return 0f;
+				}
+				if (thingList[i].FlammableNow)
+				{
+					num = 1f;
 				}
 			}
-			return true;
+			if (num > 0f)
+			{
+				Building edifice = c.GetEdifice(map);
+				if (edifice != null && edifice.def.passability == Traversability.Impassable && edifice.OccupiedRect().ContractedBy(1).Contains(c))
+				{
+					return 0f;
+				}
+				List<Thing> thingList2 = c.GetThingList(map);
+				for (int j = 0; j < thingList2.Count; j++)
+				{
+					if (thingList2[j].def.category == ThingCategory.Filth && !thingList2[j].def.filth.allowsFire)
+					{
+						return 0f;
+					}
+				}
+			}
+			return num;
 		}
 
 		public static void TryStartFireIn(IntVec3 c, Map map, float fireSize)
 		{
-			bool flag = false;
-			List<Thing> list = map.thingGrid.ThingsListAt(c);
-			for (int i = 0; i < list.Count; i++)
-			{
-				if (list[i].def == ThingDefOf.Fire)
-				{
-					return;
-				}
-				if (list[i].FlammableNow)
-				{
-					flag = true;
-				}
-			}
-			if (!flag)
-			{
-				return;
-			}
-			if (!FireUtility.FireCanExistIn(c, map))
+			float num = FireUtility.ChanceToStartFireIn(c, map);
+			if (num <= 0f)
 			{
 				return;
 			}
 			Fire fire = (Fire)ThingMaker.MakeThing(ThingDefOf.Fire, null);
 			fire.fireSize = fireSize;
-			GenSpawn.Spawn(fire, c, map, Rot4.North);
+			GenSpawn.Spawn(fire, c, map, Rot4.North, false);
 		}
 
 		public static void TryAttachFire(this Thing t, float fireSize)
@@ -71,7 +71,7 @@ namespace RimWorld
 			Fire fire = ThingMaker.MakeThing(ThingDefOf.Fire, null) as Fire;
 			fire.fireSize = fireSize;
 			fire.AttachTo(t);
-			GenSpawn.Spawn(fire, t.Position, t.Map, Rot4.North);
+			GenSpawn.Spawn(fire, t.Position, t.Map, Rot4.North, false);
 			Pawn pawn = t as Pawn;
 			if (pawn != null)
 			{
@@ -133,6 +133,29 @@ namespace RimWorld
 		{
 			Building edifice = c.GetEdifice(map);
 			return edifice != null && edifice is Building_Trap;
+		}
+
+		public static bool Flammable(this TerrainDef terrain)
+		{
+			return terrain.GetStatValueAbstract(StatDefOf.Flammability, null) > 0.01f;
+		}
+
+		public static bool TerrainFlammableNow(this IntVec3 c, Map map)
+		{
+			TerrainDef terrain = c.GetTerrain(map);
+			if (!terrain.Flammable())
+			{
+				return false;
+			}
+			List<Thing> thingList = c.GetThingList(map);
+			for (int i = 0; i < thingList.Count; i++)
+			{
+				if (thingList[i].FireBulwark)
+				{
+					return false;
+				}
+			}
+			return true;
 		}
 	}
 }

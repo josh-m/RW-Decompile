@@ -23,9 +23,9 @@ namespace Verse.AI.Group
 			LordToil_DefendPoint lordToil_DefendPoint = new LordToil_DefendPoint(false);
 			stateGraph.AddToil(lordToil_DefendPoint);
 			Transition transition = new Transition(lordToil_Travel, lordToil_DefendPoint);
-			transition.AddTrigger(new Trigger_PawnHarmed());
+			transition.AddTrigger(new Trigger_PawnHarmed(1f, false));
 			transition.AddPreAction(new TransitionAction_SetDefendLocalGroup());
-			transition.AddPreAction(new TransitionAction_EndAllJobs());
+			transition.AddPostAction(new TransitionAction_EndAllJobs());
 			stateGraph.AddTransition(transition);
 			Transition transition2 = new Transition(lordToil_DefendPoint, lordToil_Travel);
 			transition2.AddTrigger(new Trigger_TicksPassedWithoutHarm(1200));
@@ -36,7 +36,7 @@ namespace Verse.AI.Group
 
 		public override void ExposeData()
 		{
-			Scribe_Values.LookValue<IntVec3>(ref this.travelDest, "travelDest", default(IntVec3), false);
+			Scribe_Values.Look<IntVec3>(ref this.travelDest, "travelDest", default(IntVec3), false);
 		}
 	}
 }

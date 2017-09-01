@@ -28,6 +28,18 @@ namespace RimWorld
 			});
 		}
 
+		public static int CountUsed(List<ThingAmount> list, Thing thing)
+		{
+			for (int i = 0; i < list.Count; i++)
+			{
+				if (list[i].thing == thing)
+				{
+					return list[i].count;
+				}
+			}
+			return 0;
+		}
+
 		public static void AddToList(List<ThingAmount> list, Thing thing, int countToAdd)
 		{
 			for (int i = 0; i < list.Count; i++)

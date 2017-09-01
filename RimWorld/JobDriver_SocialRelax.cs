@@ -55,11 +55,11 @@ namespace RimWorld
 			{
 				this.EndOnDespawnedOrNull(TargetIndex.B, JobCondition.Incompletable);
 			}
-			yield return Toils_Reserve.Reserve(TargetIndex.B, 1);
+			yield return Toils_Reserve.Reserve(TargetIndex.B, 1, -1, null);
 			if (this.HasDrink)
 			{
 				this.FailOnDestroyedNullOrForbidden(TargetIndex.C);
-				yield return Toils_Reserve.Reserve(TargetIndex.C, 1);
+				yield return Toils_Reserve.Reserve(TargetIndex.C, 1, -1, null);
 				yield return Toils_Goto.GotoThing(TargetIndex.C, PathEndMode.OnCell).FailOnSomeonePhysicallyInteracting(TargetIndex.C);
 				yield return Toils_Haul.StartCarryThing(TargetIndex.C, false, false);
 			}
@@ -86,10 +86,10 @@ namespace RimWorld
 			}
 		}
 
-		public override bool ModifyCarriedThingDrawPos(ref Vector3 drawPos)
+		public override bool ModifyCarriedThingDrawPos(ref Vector3 drawPos, ref bool behind, ref bool flip)
 		{
 			IntVec3 closestGatherSpotParentCell = this.ClosestGatherSpotParentCell;
-			return JobDriver_Ingest.ModifyCarriedThingDrawPosWorker(ref drawPos, closestGatherSpotParentCell, this.pawn);
+			return JobDriver_Ingest.ModifyCarriedThingDrawPosWorker(ref drawPos, ref behind, ref flip, closestGatherSpotParentCell, this.pawn);
 		}
 	}
 }

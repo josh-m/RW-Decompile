@@ -12,7 +12,7 @@ namespace RimWorld
 			{
 				return;
 			}
-			pawn.needs.mood.thoughts.memories.TryGainMemoryThought((Thought_Memory)ThoughtMaker.MakeThought(ThoughtDefOf.ArtifactMoodBoost), null);
+			pawn.needs.mood.thoughts.memories.TryGainMemory((Thought_Memory)ThoughtMaker.MakeThought(ThoughtDefOf.ArtifactMoodBoost), null);
 		}
 	}
 }

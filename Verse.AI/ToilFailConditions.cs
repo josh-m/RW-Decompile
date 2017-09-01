@@ -273,6 +273,19 @@ namespace Verse.AI
 			return f;
 		}
 
+		public static T FailOnCannotTouch<T>(this T f, TargetIndex ind, PathEndMode peMode) where T : IJobEndable
+		{
+			f.AddEndCondition(delegate
+			{
+				if (!f.GetActor().CanReachImmediate(f.GetActor().jobs.curJob.GetTarget(ind), peMode))
+				{
+					return JobCondition.Incompletable;
+				}
+				return JobCondition.Ongoing;
+			});
+			return f;
+		}
+
 		public static Toil FailOnDespawnedOrForbiddenPlacedThings(this Toil toil)
 		{
 			toil.AddFailCondition(delegate

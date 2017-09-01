@@ -6,20 +6,75 @@ namespace Verse
 {
 	public static class MatLoader
 	{
-		private static Dictionary<Material, Material> dict = new Dictionary<Material, Material>();
+		private struct Request
+		{
+			public string path;
 
-		public static Material LoadMat(string matPath)
+			public int renderQueue;
+
+			public override int GetHashCode()
+			{
+				int seed = 0;
+				seed = Gen.HashCombine<string>(seed, this.path);
+				return Gen.HashCombine<int>(seed, this.renderQueue);
+			}
+
+			public override bool Equals(object obj)
+			{
+				return obj is MatLoader.Request && this.Equals((MatLoader.Request)obj);
+			}
+
+			public bool Equals(MatLoader.Request other)
+			{
+				return other.path == this.path && other.renderQueue == this.renderQueue;
+			}
+
+			public override string ToString()
+			{
+				return string.Concat(new object[]
+				{
+					"MatLoader.Request(",
+					this.path,
+					", ",
+					this.renderQueue,
+					")"
+				});
+			}
+
+			public static bool operator ==(MatLoader.Request lhs, MatLoader.Request rhs)
+			{
+				return lhs.Equals(rhs);
+			}
+
+			public static bool operator !=(MatLoader.Request lhs, MatLoader.Request rhs)
+			{
+				return !(lhs == rhs);
+			}
+		}
+
+		private static Dictionary<MatLoader.Request, Material> dict = new Dictionary<MatLoader.Request, Material>();
+
+		public static Material LoadMat(string matPath, int renderQueue = -1)
 		{
 			Material material = (Material)Resources.Load("Materials/" + matPath, typeof(Material));
 			if (material == null)
 			{
 				Log.Warning("Could not load material " + matPath);
 			}
+			MatLoader.Request key = new MatLoader.Request
+			{
+				path = matPath,
+				renderQueue = renderQueue
+			};
 			Material material2;
-			if (!MatLoader.dict.TryGetValue(material, out material2))
+			if (!MatLoader.dict.TryGetValue(key, out material2))
 			{
 				material2 = new Material(material);
-				MatLoader.dict.Add(material, material2);
+				if (renderQueue != -1)
+				{
+					material2.renderQueue = renderQueue;
+				}
+				MatLoader.dict.Add(key, material2);
 			}
 			return material2;
 		}

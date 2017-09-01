@@ -36,6 +36,10 @@ namespace RimWorld
 
 		private const float ExtraSpaceAfterSectionTitle = 5f;
 
+		private const float DaysUntilRotColumnWidth = 75f;
+
+		public const float TopAreaWidth = 515f;
+
 		private List<TransferableOneWayWidget.Section> sections = new List<TransferableOneWayWidget.Section>();
 
 		private string sourceLabel;
@@ -46,7 +50,7 @@ namespace RimWorld
 
 		private bool drawMass;
 
-		private bool ignorePawnInventoryMass;
+		private IgnorePawnsInventoryMode ignorePawnInventoryMass = IgnorePawnsInventoryMode.DontIgnore;
 
 		private bool includePawnsMassInMassUsage;
 
@@ -57,6 +61,8 @@ namespace RimWorld
 		private bool ignoreCorpseGearAndInventoryMass;
 
 		private bool drawMarketValue;
+
+		private int drawDaysUntilRotForTile;
 
 		private bool transferablesCached;
 
@@ -72,7 +78,7 @@ namespace RimWorld
 
 		protected readonly Vector2 OtherBottomButtonSize = new Vector2(160f, 40f);
 
-		private static readonly Color ItemMassColor = new Color(0.75f, 0.75f, 0.75f);
+		public static readonly Color ItemMassColor = new Color(0.7f, 0.7f, 0.7f);
 
 		public float TotalNumbersColumnsWidths
 		{
@@ -86,6 +92,10 @@ namespace RimWorld
 				if (this.drawMarketValue)
 				{
 					num += 100f;
+				}
+				if (this.drawDaysUntilRotForTile >= 0)
+				{
+					num += 75f;
 				}
 				return num;
 			}
@@ -110,7 +120,7 @@ namespace RimWorld
 			}
 		}
 
-		public TransferableOneWayWidget(IEnumerable<TransferableOneWay> transferables, string sourceLabel, string destinationLabel, string sourceCountDesc, bool drawMass = false, bool ignorePawnInventoryMass = false, bool includePawnsMassInMassUsage = false, Func<float> availableMassGetter = null, float extraHeaderSpace = 0f, bool ignoreCorpseGearAndInventoryMass = false, bool drawMarketValue = false)
+		public TransferableOneWayWidget(IEnumerable<TransferableOneWay> transferables, string sourceLabel, string destinationLabel, string sourceCountDesc, bool drawMass = false, IgnorePawnsInventoryMode ignorePawnInventoryMass = IgnorePawnsInventoryMode.DontIgnore, bool includePawnsMassInMassUsage = false, Func<float> availableMassGetter = null, float extraHeaderSpace = 0f, bool ignoreCorpseGearAndInventoryMass = false, bool drawMarketValue = false, int drawDaysUntilRotForTile = -1)
 		{
 			if (transferables != null)
 			{
@@ -126,6 +136,7 @@ namespace RimWorld
 			this.extraHeaderSpace = extraHeaderSpace;
 			this.ignoreCorpseGearAndInventoryMass = ignoreCorpseGearAndInventoryMass;
 			this.drawMarketValue = drawMarketValue;
+			this.drawDaysUntilRotForTile = drawDaysUntilRotForTile;
 			this.sorter1 = TransferableSorterDefOf.Category;
 			this.sorter2 = TransferableSorterDefOf.MarketValue;
 		}
@@ -172,7 +183,7 @@ namespace RimWorld
 				this.sorter2 = x;
 				this.CacheTransferables();
 			});
-			float num = inRect.width - this.TotalNumbersColumnsWidths;
+			float num = inRect.width - 515f;
 			Rect position = new Rect(inRect.x + num, inRect.y, inRect.width - num, 55f);
 			GUI.BeginGroup(position);
 			Text.Font = GameFont.Medium;
@@ -207,7 +218,7 @@ namespace RimWorld
 				float num2 = 6f;
 				float availableMass = (this.availableMassGetter == null) ? 3.40282347E+38f : this.availableMassGetter();
 				Rect viewRect = new Rect(0f, 0f, mainRect.width - 16f, num);
-				Widgets.BeginScrollView(mainRect, ref this.scrollPosition, viewRect);
+				Widgets.BeginScrollView(mainRect, ref this.scrollPosition, viewRect, true);
 				float num3 = this.scrollPosition.y - 30f;
 				float num4 = this.scrollPosition.y + mainRect.height;
 				for (int j = 0; j < this.sections.Count; j++)
@@ -283,22 +294,63 @@ namespace RimWorld
 				this.DrawMass(rect4, trad, availableMass);
 				num -= 100f;
 			}
-			Rect rect5 = new Rect(num - 75f, 0f, 75f, rect.height);
-			if (Mouse.IsOver(rect5))
+			if (this.drawDaysUntilRotForTile >= 0)
 			{
-				Widgets.DrawHighlight(rect5);
+				Rect rect5 = new Rect(num - 75f, 0f, 75f, rect.height);
+				Text.Anchor = TextAnchor.MiddleLeft;
+				this.DrawDaysUntilRot(rect5, trad);
+				num -= 75f;
+			}
+			Rect rect6 = new Rect(num - 75f, 0f, 75f, rect.height);
+			if (Mouse.IsOver(rect6))
+			{
+				Widgets.DrawHighlight(rect6);
 			}
 			Text.Anchor = TextAnchor.MiddleLeft;
-			Rect rect6 = rect5;
-			rect6.xMin += 5f;
-			rect6.xMax -= 5f;
-			Widgets.Label(rect6, maxCount.ToStringCached());
-			TooltipHandler.TipRegion(rect5, this.sourceCountDesc);
+			Rect rect7 = rect6;
+			rect7.xMin += 5f;
+			rect7.xMax -= 5f;
+			Widgets.Label(rect7, maxCount.ToStringCached());
+			TooltipHandler.TipRegion(rect6, this.sourceCountDesc);
 			num -= 75f;
 			Rect idRect = new Rect(0f, 0f, num, rect.height);
 			TransferableUIUtility.DrawTransferableInfo(trad, idRect, Color.white);
 			GenUI.ResetLabelAlign();
 			GUI.EndGroup();
+		}
+
+		private void DrawDaysUntilRot(Rect rect, TransferableOneWay trad)
+		{
+			if (!trad.HasAnyThing)
+			{
+				return;
+			}
+			if (!trad.ThingDef.IsNutritionGivingIngestible)
+			{
+				return;
+			}
+			int num = 2147483647;
+			for (int i = 0; i < trad.things.Count; i++)
+			{
+				CompRottable compRottable = trad.things[i].TryGetComp<CompRottable>();
+				if (compRottable != null)
+				{
+					num = Mathf.Min(num, compRottable.ApproxTicksUntilRotWhenAtTempOfTile(this.drawDaysUntilRotForTile));
+				}
+			}
+			if (num >= 36000000)
+			{
+				return;
+			}
+			if (Mouse.IsOver(rect))
+			{
+				Widgets.DrawHighlight(rect);
+			}
+			float num2 = (float)num / 60000f;
+			GUI.color = Color.yellow;
+			Widgets.Label(rect, num2.ToString("0.#"));
+			GUI.color = Color.white;
+			TooltipHandler.TipRegion(rect, "DaysUntilRotTip".Translate());
 		}
 
 		private void DrawMarketValue(Rect rect, TransferableOneWay trad)
@@ -339,7 +391,7 @@ namespace RimWorld
 					float gearMass = 0f;
 					float invMass = 0f;
 					gearMass = MassUtility.GearMass(pawn);
-					if (!this.ignorePawnInventoryMass)
+					if (!InventoryCalculatorsUtility.ShouldIgnoreInventoryOf(pawn, this.ignorePawnInventoryMass))
 					{
 						invMass = MassUtility.InventoryMass(pawn);
 					}
@@ -363,7 +415,7 @@ namespace RimWorld
 			{
 				float cap = MassUtility.Capacity(pawn);
 				float gearMass = MassUtility.GearMass(pawn);
-				float invMass = (!this.ignorePawnInventoryMass) ? MassUtility.InventoryMass(pawn) : 0f;
+				float invMass = (!InventoryCalculatorsUtility.ShouldIgnoreInventoryOf(pawn, this.ignorePawnInventoryMass)) ? MassUtility.InventoryMass(pawn) : 0f;
 				float num = cap - gearMass - invMass;
 				if (num > 0f)
 				{
@@ -421,7 +473,7 @@ namespace RimWorld
 			Pawn pawn = thing as Pawn;
 			if (pawn != null)
 			{
-				if (this.ignorePawnInventoryMass)
+				if (InventoryCalculatorsUtility.ShouldIgnoreInventoryOf(pawn, this.ignorePawnInventoryMass))
 				{
 					num -= MassUtility.InventoryMass(pawn);
 				}

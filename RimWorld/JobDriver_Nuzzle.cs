@@ -18,20 +18,12 @@ namespace RimWorld
 			yield return Toils_Goto.GotoThing(TargetIndex.A, PathEndMode.Touch);
 			yield return Toils_Interpersonal.WaitToBeAbleToInteract(this.pawn);
 			yield return Toils_Goto.GotoThing(TargetIndex.A, PathEndMode.Touch);
+			yield return Toils_General.WaitWith(TargetIndex.A, 100, false, true);
 			yield return new Toil
 			{
 				initAction = delegate
 				{
-					PawnUtility.ForceWait((Pawn)this.<>f__this.CurJob.GetTarget(TargetIndex.A).Thing, 100, null);
-				},
-				defaultCompleteMode = ToilCompleteMode.Delay,
-				defaultDuration = 100
-			};
-			yield return new Toil
-			{
-				initAction = delegate
-				{
-					Pawn actor = this.<finalize>__1.actor;
+					Pawn actor = this.<finalize>__0.actor;
 					Pawn recipient = (Pawn)actor.CurJob.targetA.Thing;
 					actor.interactions.TryInteractWith(recipient, InteractionDefOf.Nuzzle);
 				},

@@ -41,28 +41,29 @@ namespace RimWorld
 
 		public override void DoWindowContents(Rect inRect)
 		{
-			Listing_Standard listing_Standard = new Listing_Standard(inRect.AtZero());
+			Listing_Standard listing_Standard = new Listing_Standard();
 			listing_Standard.ColumnWidth = 200f;
-			listing_Standard.Label("MapSize".Translate());
+			listing_Standard.Begin(inRect.AtZero());
+			listing_Standard.Label("MapSize".Translate(), -1f);
 			int[] mapSizes = Dialog_AdvancedGameConfig.MapSizes;
 			for (int i = 0; i < mapSizes.Length; i++)
 			{
 				int num = mapSizes[i];
 				if (num == 200)
 				{
-					listing_Standard.Label("MapSizeSmall".Translate());
+					listing_Standard.Label("MapSizeSmall".Translate(), -1f);
 				}
 				else if (num == 250)
 				{
-					listing_Standard.Label("MapSizeMedium".Translate());
+					listing_Standard.Label("MapSizeMedium".Translate(), -1f);
 				}
 				else if (num == 300)
 				{
-					listing_Standard.Label("MapSizeLarge".Translate());
+					listing_Standard.Label("MapSizeLarge".Translate(), -1f);
 				}
 				else if (num == 350)
 				{
-					listing_Standard.Label("MapSizeExtreme".Translate());
+					listing_Standard.Label("MapSizeExtreme".Translate(), -1f);
 				}
 				string label = "MapSizeDesc".Translate(new object[]
 				{
@@ -76,21 +77,21 @@ namespace RimWorld
 			}
 			listing_Standard.NewColumn();
 			GenUI.SetLabelAlign(TextAnchor.MiddleCenter);
-			listing_Standard.Label("MapStartSeason".Translate());
+			listing_Standard.Label("MapStartSeason".Translate(), -1f);
 			string label2;
-			if (Find.GameInitData.startingMonth == Month.Undefined)
+			if (Find.GameInitData.startingSeason == Season.Undefined)
 			{
 				label2 = "MapStartSeasonDefault".Translate();
 			}
 			else
 			{
-				label2 = Find.GameInitData.startingMonth.GetSeason().LabelCap();
+				label2 = Find.GameInitData.startingSeason.LabelCap();
 			}
 			Rect rect = listing_Standard.GetRect(32f);
 			GridLayout gridLayout = new GridLayout(rect, 5, 1, 0f, 4f);
 			if (Widgets.ButtonText(gridLayout.GetCellRectByIndex(0, 1, 1), "-", true, false, true))
 			{
-				Season season = Find.GameInitData.startingMonth.GetSeason();
+				Season season = Find.GameInitData.startingSeason;
 				if (season == Season.Undefined)
 				{
 					season = Season.Winter;
@@ -99,12 +100,12 @@ namespace RimWorld
 				{
 					season -= 1;
 				}
-				Find.GameInitData.startingMonth = season.GetFirstMonth();
+				Find.GameInitData.startingSeason = season;
 			}
 			Widgets.Label(gridLayout.GetCellRectByIndex(1, 3, 1), label2);
 			if (Widgets.ButtonText(gridLayout.GetCellRectByIndex(4, 1, 1), "+", true, false, true))
 			{
-				Season season2 = Find.GameInitData.startingMonth.GetSeason();
+				Season season2 = Find.GameInitData.startingSeason;
 				if (season2 == Season.Winter)
 				{
 					season2 = Season.Undefined;
@@ -113,16 +114,20 @@ namespace RimWorld
 				{
 					season2 += 1;
 				}
-				Find.GameInitData.startingMonth = season2.GetFirstMonth();
+				Find.GameInitData.startingSeason = season2;
 			}
 			GenUI.ResetLabelAlign();
-			if (this.selTile >= 0 && Find.GameInitData.startingMonth != Month.Undefined && GenTemperature.AverageTemperatureAtTileForMonth(this.selTile, Find.GameInitData.startingMonth) < 3f)
+			if (this.selTile >= 0 && Find.GameInitData.startingSeason != Season.Undefined)
 			{
-				listing_Standard.Label("MapTemperatureDangerWarning".Translate());
+				float y = Find.WorldGrid.LongLatOf(this.selTile).y;
+				if (GenTemperature.AverageTemperatureAtTileForTwelfth(this.selTile, Find.GameInitData.startingSeason.GetFirstTwelfth(y)) < 3f)
+				{
+					listing_Standard.Label("MapTemperatureDangerWarning".Translate(), -1f);
+				}
 			}
 			if (Find.GameInitData.mapSize > 250)
 			{
-				listing_Standard.Label("MapSizePerformanceWarning".Translate());
+				listing_Standard.Label("MapSizePerformanceWarning".Translate(), -1f);
 			}
 			listing_Standard.End();
 		}

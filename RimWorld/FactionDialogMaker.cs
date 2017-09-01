@@ -21,6 +21,10 @@ namespace RimWorld
 
 		private const float MilitaryAidRelsChange = -25f;
 
+		private const int TradeRequestCost_Wary = 1100;
+
+		private const int TradeRequestCost_Warm = 700;
+
 		private static DiaNode root;
 
 		private static Pawn negotiator;
@@ -49,13 +53,13 @@ namespace RimWorld
 				});
 				text2 = text2.AdjustedFor(negotiator);
 				FactionDialogMaker.root = new DiaNode(text2);
-				if (!FactionBaseUtility.IsPlayerAttackingAnyFactionBaseOf(faction))
+				if (!SettlementUtility.IsPlayerAttackingAnySettlementOf(faction))
 				{
 					FactionDialogMaker.root.options.Add(FactionDialogMaker.OfferGiftOption(negotiator.Map));
 				}
 				if (!faction.HostileTo(Faction.OfPlayer) && negotiator.Spawned && negotiator.Map.IsPlayerHome)
 				{
-					FactionDialogMaker.root.options.Add(FactionDialogMaker.RequestTraderOption(map, 600));
+					FactionDialogMaker.root.options.Add(FactionDialogMaker.RequestTraderOption(map, 1100));
 				}
 			}
 			else
@@ -65,13 +69,13 @@ namespace RimWorld
 					text,
 					negotiator.LabelShort
 				}));
-				if (!FactionBaseUtility.IsPlayerAttackingAnyFactionBaseOf(faction))
+				if (!SettlementUtility.IsPlayerAttackingAnySettlementOf(faction))
 				{
 					FactionDialogMaker.root.options.Add(FactionDialogMaker.OfferGiftOption(negotiator.Map));
 				}
 				if (!faction.HostileTo(Faction.OfPlayer) && negotiator.Spawned && negotiator.Map.IsPlayerHome)
 				{
-					FactionDialogMaker.root.options.Add(FactionDialogMaker.RequestTraderOption(map, 300));
+					FactionDialogMaker.root.options.Add(FactionDialogMaker.RequestTraderOption(map, 700));
 					FactionDialogMaker.root.options.Add(FactionDialogMaker.RequestMilitaryAidOption(map));
 				}
 			}
@@ -157,7 +161,7 @@ namespace RimWorld
 			{
 				silverCost.ToString()
 			});
-			if (FactionDialogMaker.AmountSendableSilver(map) < 300)
+			if (FactionDialogMaker.AmountSendableSilver(map) < silverCost)
 			{
 				DiaOption diaOption = new DiaOption(text);
 				diaOption.Disable("NeedSilverLaunchable".Translate(new object[]
@@ -178,7 +182,7 @@ namespace RimWorld
 				DiaOption diaOption3 = new DiaOption(text);
 				diaOption3.Disable("WaitTime".Translate(new object[]
 				{
-					num.ToStringTicksToPeriod(true)
+					num.ToStringTicksToPeriod(true, false, true)
 				}));
 				return diaOption3;
 			}

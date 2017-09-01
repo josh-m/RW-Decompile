@@ -10,6 +10,8 @@ namespace Verse
 	{
 		private const int Timeout = 30000;
 
+		private Pawn pawn;
+
 		private IntVec3 prioritizedCell = IntVec3.Invalid;
 
 		private WorkTypeDef prioritizedWorkType;
@@ -48,11 +50,20 @@ namespace Verse
 			}
 		}
 
+		public PriorityWork()
+		{
+		}
+
+		public PriorityWork(Pawn pawn)
+		{
+			this.pawn = pawn;
+		}
+
 		public void ExposeData()
 		{
-			Scribe_Values.LookValue<IntVec3>(ref this.prioritizedCell, "prioritizedCell", default(IntVec3), false);
-			Scribe_Defs.LookDef<WorkTypeDef>(ref this.prioritizedWorkType, "prioritizedWorkType");
-			Scribe_Values.LookValue<int>(ref this.prioritizeTick, "prioritizeTick", 0, false);
+			Scribe_Values.Look<IntVec3>(ref this.prioritizedCell, "prioritizedCell", default(IntVec3), false);
+			Scribe_Defs.Look<WorkTypeDef>(ref this.prioritizedWorkType, "prioritizedWorkType");
+			Scribe_Values.Look<int>(ref this.prioritizeTick, "prioritizeTick", 0, false);
 		}
 
 		public void Set(IntVec3 prioritizedCell, WorkTypeDef prioritizedWorkType)
@@ -69,18 +80,25 @@ namespace Verse
 			this.prioritizeTick = 0;
 		}
 
-		public void DrawExtraSelectionOverlays(Pawn pawn)
+		public void ClearPrioritizedWorkAndJobQueue()
+		{
+			this.Clear();
+			this.pawn.jobs.jobQueue.Clear();
+			this.pawn.ClearReservations(false);
+		}
+
+		public void DrawExtraSelectionOverlays()
 		{
 			if (this.IsPrioritized)
 			{
-				GenDraw.DrawLineBetween(pawn.DrawPos, this.Cell.ToVector3Shifted());
+				GenDraw.DrawLineBetween(this.pawn.DrawPos, this.Cell.ToVector3Shifted());
 			}
 		}
 
 		[DebuggerHidden]
-		public IEnumerable<Gizmo> GetGizmos(Pawn pawn)
+		public IEnumerable<Gizmo> GetGizmos()
 		{
-			if ((this.IsPrioritized || (pawn.CurJob != null && pawn.CurJob.playerForced)) && !pawn.Drafted)
+			if ((this.IsPrioritized || (this.pawn.CurJob != null && this.pawn.CurJob.playerForced) || this.pawn.jobs.jobQueue.AnyPlayerForced) && !this.pawn.Drafted)
 			{
 				yield return new Command_Action
 				{
@@ -90,8 +108,11 @@ namespace Verse
 					activateSound = SoundDefOf.TickLow,
 					action = delegate
 					{
-						this.<>f__this.Clear();
-						this.pawn.jobs.EndCurrentJob(JobCondition.InterruptForced, true);
+						this.<>f__this.ClearPrioritizedWorkAndJobQueue();
+						if (this.<>f__this.pawn.CurJob.playerForced)
+						{
+							this.<>f__this.pawn.jobs.EndCurrentJob(JobCondition.InterruptForced, true);
+						}
 					},
 					hotKey = KeyBindingDefOf.DesignatorCancel,
 					groupKey = 6165612

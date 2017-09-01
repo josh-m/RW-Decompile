@@ -19,7 +19,7 @@ namespace RimWorld
 					{
 						if (!sourceDef.race.IsFlesh)
 						{
-							CrossRefLoader.RegisterObjectWantsCrossRef(sourceDef.race, "meatDef", "Steel");
+							DirectXmlCrossRefLoader.RegisterObjectWantsCrossRef(sourceDef.race, "meatDef", "Steel");
 						}
 						else
 						{
@@ -53,27 +53,25 @@ namespace RimWorld
 								sourceDef.label
 							});
 							d.useHitPoints = true;
-							d.SetStatBaseValue(StatDefOf.MaxHitPoints, 50f);
-							d.SetStatBaseValue(StatDefOf.DeteriorationRate, 10f);
+							d.SetStatBaseValue(StatDefOf.MaxHitPoints, 60f);
+							d.SetStatBaseValue(StatDefOf.DeteriorationRate, 6f);
 							d.SetStatBaseValue(StatDefOf.Mass, 0.03f);
+							d.SetStatBaseValue(StatDefOf.Flammability, 0.5f);
 							d.BaseMarketValue = ThingDefGenerator_Meat.GetMeatMarketValue(sourceDef);
 							if (d.thingCategories == null)
 							{
 								d.thingCategories = new List<ThingCategoryDef>();
 							}
-							CrossRefLoader.RegisterListWantsCrossRef<ThingCategoryDef>(d.thingCategories, "MeatRaw");
+							DirectXmlCrossRefLoader.RegisterListWantsCrossRef<ThingCategoryDef>(d.thingCategories, "MeatRaw");
 							d.ingestible = new IngestibleProperties();
 							d.ingestible.foodType = FoodTypeFlags.Meat;
 							d.ingestible.preferability = FoodPreferability.RawBad;
-							CrossRefLoader.RegisterObjectWantsCrossRef(d.ingestible, "tasteThought", ThoughtDefOf.AteRawFood.defName);
+							DirectXmlCrossRefLoader.RegisterObjectWantsCrossRef(d.ingestible, "tasteThought", ThoughtDefOf.AteRawFood.defName);
 							d.ingestible.nutrition = 0.05f;
 							d.ingestible.ingestEffect = EffecterDefOf.EatMeat;
 							d.ingestible.ingestSound = SoundDef.Named("RawMeat_Eat");
-							if (sourceDef.race.fleshType == FleshType.Insectoid)
-							{
-								d.ingestible.specialThoughtDirect = ThoughtDefOf.AteInsectMeatDirect;
-								d.ingestible.specialThoughtAsIngredient = ThoughtDefOf.AteInsectMeatAsIngredient;
-							}
+							d.ingestible.specialThoughtDirect = sourceDef.race.FleshType.ateDirect;
+							d.ingestible.specialThoughtAsIngredient = sourceDef.race.FleshType.ateAsIngredient;
 							if (sourceDef.race.Humanlike)
 							{
 								d.graphicData.texPath = "Things/Item/Resource/MeatFoodRaw/MeatHuman";
@@ -115,9 +113,9 @@ namespace RimWorld
 		{
 			if (sourceDef.race.Humanlike)
 			{
-				return 1.75f;
+				return 0.8f;
 			}
-			return 2.7f;
+			return 2f;
 		}
 	}
 }

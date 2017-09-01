@@ -5,8 +5,12 @@ using Verse.AI;
 
 namespace RimWorld
 {
-	internal class WorkGiver_CookFillHopper : WorkGiver_Scanner
+	public class WorkGiver_CookFillHopper : WorkGiver_Scanner
 	{
+		private static string TheOnlyAvailableFoodIsInStorageOfHigherPriorityTrans;
+
+		private static string NoFoodToFillHopperTrans;
+
 		public override ThingRequest PotentialWorkThingRequest
 		{
 			get
@@ -23,14 +27,26 @@ namespace RimWorld
 			}
 		}
 
-		public override Job JobOnThing(Pawn pawn, Thing thing)
+		public WorkGiver_CookFillHopper()
+		{
+			if (WorkGiver_CookFillHopper.TheOnlyAvailableFoodIsInStorageOfHigherPriorityTrans == null)
+			{
+				WorkGiver_CookFillHopper.TheOnlyAvailableFoodIsInStorageOfHigherPriorityTrans = "TheOnlyAvailableFoodIsInStorageOfHigherPriority".Translate();
+			}
+			if (WorkGiver_CookFillHopper.NoFoodToFillHopperTrans == null)
+			{
+				WorkGiver_CookFillHopper.NoFoodToFillHopperTrans = "NoFoodToFillHopper".Translate();
+			}
+		}
+
+		public override Job JobOnThing(Pawn pawn, Thing thing, bool forced = false)
 		{
 			ISlotGroupParent slotGroupParent = thing as ISlotGroupParent;
 			if (slotGroupParent == null)
 			{
 				return null;
 			}
-			if (!pawn.CanReserve(thing.Position, 1))
+			if (!pawn.CanReserve(thing.Position, 1, -1, null, false))
 			{
 				return null;
 			}
@@ -55,7 +71,7 @@ namespace RimWorld
 		public static Job HopperFillFoodJob(Pawn pawn, ISlotGroupParent hopperSgp)
 		{
 			Building building = hopperSgp as Building;
-			if (!pawn.CanReserveAndReach(building.Position, PathEndMode.Touch, pawn.NormalMaxDanger(), 1))
+			if (!pawn.CanReserveAndReach(building.Position, PathEndMode.Touch, pawn.NormalMaxDanger(), 1, -1, null, false))
 			{
 				return null;
 			}
@@ -85,6 +101,7 @@ namespace RimWorld
 			{
 				list = pawn.Map.listerThings.ThingsOfDef(thingDef);
 			}
+			bool flag = false;
 			for (int i = 0; i < list.Count; i++)
 			{
 				Thing thing = list[i];
@@ -92,12 +109,17 @@ namespace RimWorld
 				{
 					if (thing.def.ingestible.preferability == FoodPreferability.RawBad || thing.def.ingestible.preferability == FoodPreferability.RawTasty)
 					{
-						if (HaulAIUtility.PawnCanAutomaticallyHaul(pawn, thing))
+						if (HaulAIUtility.PawnCanAutomaticallyHaul(pawn, thing, false))
 						{
 							if (pawn.Map.slotGroupManager.SlotGroupAt(building.Position).Settings.AllowedToAccept(thing))
 							{
 								StoragePriority storagePriority = HaulAIUtility.StoragePriorityAtFor(thing.Position, thing);
-								if (storagePriority < hopperSgp.GetSlotGroup().Settings.Priority)
+								if (storagePriority >= hopperSgp.GetSlotGroup().Settings.Priority)
+								{
+									flag = true;
+									JobFailReason.Is(WorkGiver_CookFillHopper.TheOnlyAvailableFoodIsInStorageOfHigherPriorityTrans);
+								}
+								else
 								{
 									Job job = HaulAIUtility.HaulMaxNumToCellJob(pawn, thing, building.Position, true);
 									if (job != null)
@@ -109,6 +131,10 @@ namespace RimWorld
 						}
 					}
 				}
+			}
+			if (!flag)
+			{
+				JobFailReason.Is(WorkGiver_CookFillHopper.NoFoodToFillHopperTrans);
 			}
 			return null;
 		}

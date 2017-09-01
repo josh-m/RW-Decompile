@@ -19,6 +19,9 @@ namespace Verse
 		[DefaultValue(null), Description("A human-readable description given when the Def is inspected by players.")]
 		public string description;
 
+		[DefaultValue(null), Description("Mod-specific data. Not used by core game code.")]
+		public List<DefModExtension> modExtensions;
+
 		[Unsaved]
 		public ushort shortHash;
 
@@ -84,6 +87,27 @@ namespace Verse
 		public override int GetHashCode()
 		{
 			return this.defName.GetHashCode();
+		}
+
+		public T GetModExtension<T>() where T : DefModExtension
+		{
+			if (this.modExtensions == null)
+			{
+				return (T)((object)null);
+			}
+			for (int i = 0; i < this.modExtensions.Count; i++)
+			{
+				if (this.modExtensions[i] is T)
+				{
+					return this.modExtensions[i] as T;
+				}
+			}
+			return (T)((object)null);
+		}
+
+		public bool HasModExtension<T>() where T : DefModExtension
+		{
+			return this.GetModExtension<T>() != null;
 		}
 	}
 }

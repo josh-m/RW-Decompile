@@ -7,9 +7,16 @@ namespace RimWorld
 {
 	public class Apparel : ThingWithComps
 	{
-		public Pawn wearer;
-
 		private bool wornByCorpseInt;
+
+		public Pawn Wearer
+		{
+			get
+			{
+				Pawn_ApparelTracker pawn_ApparelTracker = base.ParentHolder as Pawn_ApparelTracker;
+				return (pawn_ApparelTracker == null) ? null : pawn_ApparelTracker.pawn;
+			}
+		}
 
 		public bool WornByCorpse
 		{
@@ -19,9 +26,9 @@ namespace RimWorld
 			}
 		}
 
-		public void Notify_Stripped(Pawn pawn)
+		public void Notify_PawnKilled()
 		{
-			if (pawn.Dead && this.def.apparel.careIfWornByCorpse)
+			if (this.def.apparel.careIfWornByCorpse)
 			{
 				this.wornByCorpseInt = true;
 			}
@@ -30,7 +37,7 @@ namespace RimWorld
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Values.LookValue<bool>(ref this.wornByCorpseInt, "wornByCorpse", false, false);
+			Scribe_Values.Look<bool>(ref this.wornByCorpseInt, "wornByCorpse", false, false);
 		}
 
 		public virtual void DrawWornExtras()
@@ -42,7 +49,7 @@ namespace RimWorld
 			return false;
 		}
 
-		public virtual bool AllowVerbCast(IntVec3 root, TargetInfo targ)
+		public virtual bool AllowVerbCast(IntVec3 root, Map map, LocalTargetInfo targ)
 		{
 			return true;
 		}
@@ -52,20 +59,15 @@ namespace RimWorld
 		{
 		}
 
-		public override void Destroy(DestroyMode mode = DestroyMode.Vanish)
-		{
-			base.Destroy(mode);
-			if (base.Destroyed && this.wearer != null)
-			{
-				this.wearer.apparel.Notify_WornApparelDestroyed(this);
-			}
-		}
-
 		public override string GetInspectString()
 		{
 			string text = base.GetInspectString();
 			if (this.WornByCorpse)
 			{
+				if (text.Length > 0)
+				{
+					text += "\n";
+				}
 				text += "WasWornByCorpse".Translate();
 			}
 			return text;

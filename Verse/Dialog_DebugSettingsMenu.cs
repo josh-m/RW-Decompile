@@ -28,7 +28,7 @@ namespace Verse
 				this.Close(true);
 			}
 			Text.Font = GameFont.Small;
-			this.listing.Label("Gameplay");
+			this.listing.Label("Gameplay", -1f);
 			FieldInfo[] fields = typeof(DebugSettings).GetFields();
 			for (int i = 0; i < fields.Length; i++)
 			{
@@ -37,7 +37,7 @@ namespace Verse
 			}
 			this.listing.Gap(36f);
 			Text.Font = GameFont.Small;
-			this.listing.Label("View");
+			this.listing.Label("View", -1f);
 			FieldInfo[] fields2 = typeof(DebugViewSettings).GetFields();
 			for (int j = 0; j < fields2.Length; j++)
 			{

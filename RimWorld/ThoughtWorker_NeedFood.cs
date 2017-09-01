@@ -21,7 +21,7 @@ namespace RimWorld
 				return ThoughtState.ActiveAtStage(1);
 			case HungerCategory.Starving:
 			{
-				Hediff firstHediffOfDef = p.health.hediffSet.GetFirstHediffOfDef(HediffDefOf.Malnutrition);
+				Hediff firstHediffOfDef = p.health.hediffSet.GetFirstHediffOfDef(HediffDefOf.Malnutrition, false);
 				int num = (firstHediffOfDef != null) ? firstHediffOfDef.CurStageIndex : 0;
 				return ThoughtState.ActiveAtStage(2 + num);
 			}

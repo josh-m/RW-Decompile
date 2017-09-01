@@ -20,9 +20,9 @@ namespace RimWorld
 
 		public const float XpPerTickFloorWork = 0.22f;
 
-		public const float XpPerTickRoofWork = 0.11f;
-
 		public const float XpPerTickGrowing = 0.11f;
+
+		public const float XpPerTickAnimalGather = 0.142999992f;
 
 		public const float XpPerBurstFiredPractice = 6f;
 

@@ -35,9 +35,9 @@ namespace RimWorld
 
 		private static Vector2 BarSize;
 
-		private static readonly Material WindTurbineBarFilledMat = SolidColorMaterials.SimpleSolidColorMaterial(new Color(0.5f, 0.475f, 0.1f));
+		private static readonly Material WindTurbineBarFilledMat = SolidColorMaterials.SimpleSolidColorMaterial(new Color(0.5f, 0.475f, 0.1f), false);
 
-		private static readonly Material WindTurbineBarUnfilledMat = SolidColorMaterials.SimpleSolidColorMaterial(new Color(0.15f, 0.15f, 0.15f));
+		private static readonly Material WindTurbineBarUnfilledMat = SolidColorMaterials.SimpleSolidColorMaterial(new Color(0.15f, 0.15f, 0.15f), false);
 
 		private static readonly Material WindTurbineBladesMat = MaterialPool.MatFrom("Things/Building/Power/WindTurbine/WindTurbineBlades");
 
@@ -57,9 +57,9 @@ namespace RimWorld
 			}
 		}
 
-		public override void PostSpawnSetup()
+		public override void PostSpawnSetup(bool respawningAfterLoad)
 		{
-			base.PostSpawnSetup();
+			base.PostSpawnSetup(respawningAfterLoad);
 			CompPowerPlantWind.BarSize = new Vector2((float)this.parent.def.size.z - 0.95f, 0.14f);
 			this.RecalculateBlockages();
 			this.spinPosition = Rand.Range(0f, 15f);
@@ -68,8 +68,8 @@ namespace RimWorld
 		public override void PostExposeData()
 		{
 			base.PostExposeData();
-			Scribe_Values.LookValue<int>(ref this.ticksSinceWeatherUpdate, "updateCounter", 0, false);
-			Scribe_Values.LookValue<float>(ref this.cachedPowerOutput, "cachedPowerOutput", 0f, false);
+			Scribe_Values.Look<int>(ref this.ticksSinceWeatherUpdate, "updateCounter", 0, false);
+			Scribe_Values.Look<float>(ref this.cachedPowerOutput, "cachedPowerOutput", 0f, false);
 		}
 
 		public override void CompTick()
@@ -125,7 +125,7 @@ namespace RimWorld
 			GenDraw.DrawFillableBar(r);
 			Vector3 vector = this.parent.TrueCenter();
 			vector += this.parent.Rotation.FacingCell.ToVector3() * 0.7f;
-			vector.y += 0.05f;
+			vector.y += 0.046875f;
 			float num = 4f * Mathf.Sin(this.spinPosition);
 			if (num < 0f)
 			{
@@ -137,7 +137,7 @@ namespace RimWorld
 			Matrix4x4 matrix = default(Matrix4x4);
 			matrix.SetTRS(vector, this.parent.Rotation.AsQuat, s);
 			Graphics.DrawMesh((!flag) ? MeshPool.plane10Flip : MeshPool.plane10, matrix, CompPowerPlantWind.WindTurbineBladesMat, 0);
-			vector.y -= 0.1f;
+			vector.y -= 0.09375f;
 			matrix.SetTRS(vector, this.parent.Rotation.AsQuat, s);
 			Graphics.DrawMesh((!flag) ? MeshPool.plane10 : MeshPool.plane10Flip, matrix, CompPowerPlantWind.WindTurbineBladesMat, 0);
 		}

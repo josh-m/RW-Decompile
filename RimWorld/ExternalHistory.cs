@@ -43,15 +43,15 @@ namespace RimWorld
 
 		public void ExposeData()
 		{
-			Scribe_Values.LookValue<string>(ref this.gameVersion, "gameVersion", null, false);
-			Scribe_Values.LookValue<string>(ref this.gameplayID, "gameplayID", null, false);
-			Scribe_Values.LookValue<string>(ref this.userName, "userName", null, false);
-			Scribe_Values.LookValue<string>(ref this.storytellerName, "storytellerName", null, false);
-			Scribe_Values.LookValue<string>(ref this.realWorldDate, "realWorldDate", null, false);
-			Scribe_Values.LookValue<string>(ref this.firstUploadDate, "firstUploadDate", null, false);
-			Scribe_Values.LookValue<int>(ref this.firstUploadTime, "firstUploadTime", 0, false);
-			Scribe_Values.LookValue<bool>(ref this.devMode, "devMode", false, false);
-			Scribe_Deep.LookDeep<History>(ref this.history, "history", new object[0]);
+			Scribe_Values.Look<string>(ref this.gameVersion, "gameVersion", null, false);
+			Scribe_Values.Look<string>(ref this.gameplayID, "gameplayID", null, false);
+			Scribe_Values.Look<string>(ref this.userName, "userName", null, false);
+			Scribe_Values.Look<string>(ref this.storytellerName, "storytellerName", null, false);
+			Scribe_Values.Look<string>(ref this.realWorldDate, "realWorldDate", null, false);
+			Scribe_Values.Look<string>(ref this.firstUploadDate, "firstUploadDate", null, false);
+			Scribe_Values.Look<int>(ref this.firstUploadTime, "firstUploadTime", 0, false);
+			Scribe_Values.Look<bool>(ref this.devMode, "devMode", false, false);
+			Scribe_Deep.Look<History>(ref this.history, "history", new object[0]);
 		}
 	}
 }

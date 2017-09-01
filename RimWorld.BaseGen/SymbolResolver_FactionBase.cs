@@ -1,150 +1,79 @@
 using System;
-using System.Collections.Generic;
 using Verse;
-using Verse.AI;
 using Verse.AI.Group;
 
 namespace RimWorld.BaseGen
 {
 	public class SymbolResolver_FactionBase : SymbolResolver
 	{
-		public const int MinDistBetweenSandbagsAndFactionBase = 4;
+		private static readonly FloatRange NeolithicPawnsPoints = new FloatRange(880f, 1250f);
 
-		private const int MaxRoomCells = 100;
-
-		private const int MinTotalRoomsNonWallCellsCount = 62;
-
-		private const float ChanceToSkipSandbag = 0.25f;
-
-		private static readonly IntRange CampfiresCount = new IntRange(1, 1);
-
-		private static readonly IntRange FirefoamPoppersCount = new IntRange(1, 3);
-
-		private static readonly IntRange RoomDivisionsCount = new IntRange(6, 8);
-
-		private static readonly IntRange FinalRoomsCount = new IntRange(3, 5);
-
-		private static readonly FloatRange NeolithicPawnsPoints = new FloatRange(825f, 1320f);
-
-		private static readonly FloatRange NonNeolithicPawnsPoints = new FloatRange(1320f, 1980f);
+		private static readonly FloatRange NonNeolithicPawnsPoints = new FloatRange(1150f, 1600f);
 
 		public override void Resolve(ResolveParams rp)
 		{
 			Map map = BaseGen.globalSettings.map;
-			Faction faction = rp.faction ?? Find.FactionManager.RandomEnemyFaction(false, false);
-			CellRect cellRect = rp.rect;
-			bool flag = FactionBaseSymbolResolverUtility.ShouldUseSandbags(faction);
-			if (flag)
+			Faction faction = rp.faction ?? Find.FactionManager.RandomEnemyFaction(false, false, true);
+			int num = 0;
+			int? edgeDefenseWidth = rp.edgeDefenseWidth;
+			if (edgeDefenseWidth.HasValue)
 			{
-				cellRect = cellRect.ContractedBy(4);
+				num = rp.edgeDefenseWidth.Value;
 			}
-			List<RoomOutline> roomOutlines = RoomOutlinesGenerator.GenerateRoomOutlines(cellRect, map, SymbolResolver_FactionBase.RoomDivisionsCount.RandomInRange, SymbolResolver_FactionBase.FinalRoomsCount.RandomInRange, 100, 62);
-			this.AddRoomCentersToRootsToUnfog(roomOutlines);
-			CellRect rect = rp.rect;
+			else if (rp.rect.Width >= 20 && rp.rect.Height >= 20 && (faction.def.techLevel >= TechLevel.Industrial || Rand.Bool))
+			{
+				num = ((!Rand.Bool) ? 4 : 2);
+			}
+			float num2 = (float)rp.rect.Area / 144f * 0.17f;
+			BaseGen.globalSettings.minEmptyNodes = ((num2 >= 1f) ? GenMath.RoundRandom(num2) : 0);
 			Lord singlePawnLord = rp.singlePawnLord ?? LordMaker.MakeNewLord(faction, new LordJob_DefendBase(faction, rp.rect.CenterCell), map, null);
+			TraverseParms traverseParms = TraverseParms.For(TraverseMode.PassDoors, Danger.Deadly, false);
 			ResolveParams resolveParams = rp;
-			resolveParams.rect = rect;
+			resolveParams.rect = rp.rect;
 			resolveParams.faction = faction;
 			resolveParams.singlePawnLord = singlePawnLord;
 			resolveParams.pawnGroupKindDef = (rp.pawnGroupKindDef ?? PawnGroupKindDefOf.FactionBase);
-			resolveParams.singlePawnSpawnCellExtraPredicate = (rp.singlePawnSpawnCellExtraPredicate ?? ((IntVec3 x) => this.CanReachAnyRoom(x, roomOutlines)));
+			resolveParams.singlePawnSpawnCellExtraPredicate = (rp.singlePawnSpawnCellExtraPredicate ?? ((IntVec3 x) => map.reachability.CanReachMapEdge(x, traverseParms)));
 			if (resolveParams.pawnGroupMakerParams == null)
 			{
-				float points = (!faction.def.techLevel.IsNeolithicOrWorse()) ? SymbolResolver_FactionBase.NonNeolithicPawnsPoints.RandomInRange : SymbolResolver_FactionBase.NeolithicPawnsPoints.RandomInRange;
+				float num3 = (!faction.def.techLevel.IsNeolithicOrWorse()) ? SymbolResolver_FactionBase.NonNeolithicPawnsPoints.RandomInRange : SymbolResolver_FactionBase.NeolithicPawnsPoints.RandomInRange;
+				float? factionBasePawnGroupPointsFactor = rp.factionBasePawnGroupPointsFactor;
+				if (factionBasePawnGroupPointsFactor.HasValue)
+				{
+					num3 *= rp.factionBasePawnGroupPointsFactor.Value;
+				}
 				resolveParams.pawnGroupMakerParams = new PawnGroupMakerParms();
-				resolveParams.pawnGroupMakerParams.map = map;
+				resolveParams.pawnGroupMakerParams.tile = map.Tile;
 				resolveParams.pawnGroupMakerParams.faction = faction;
-				resolveParams.pawnGroupMakerParams.points = points;
+				resolveParams.pawnGroupMakerParams.points = num3;
+				resolveParams.pawnGroupMakerParams.inhabitants = true;
 			}
 			BaseGen.symbolStack.Push("pawnGroup", resolveParams);
-			if (!faction.def.techLevel.IsNeolithicOrWorse() && cellRect.Area != 0)
+			if (faction.def.techLevel >= TechLevel.Industrial)
 			{
-				int randomInRange = SymbolResolver_FactionBase.FirefoamPoppersCount.RandomInRange;
-				for (int i = 0; i < randomInRange; i++)
+				int num4 = (!Rand.Chance(0.75f)) ? 0 : GenMath.RoundRandom((float)rp.rect.Area / 400f);
+				for (int i = 0; i < num4; i++)
 				{
 					ResolveParams resolveParams2 = rp;
-					resolveParams2.rect = cellRect;
 					resolveParams2.faction = faction;
 					BaseGen.symbolStack.Push("firefoamPopper", resolveParams2);
 				}
 			}
-			if (map.mapTemperature.OutdoorTemp < 0f && cellRect.Area != 0)
+			if (num > 0)
 			{
-				int randomInRange2 = SymbolResolver_FactionBase.CampfiresCount.RandomInRange;
-				for (int j = 0; j < randomInRange2; j++)
-				{
-					ResolveParams resolveParams3 = rp;
-					resolveParams3.rect = cellRect;
-					resolveParams3.faction = faction;
-					BaseGen.symbolStack.Push("outdoorsCampfire", resolveParams3);
-				}
+				ResolveParams resolveParams3 = rp;
+				resolveParams3.faction = faction;
+				resolveParams3.edgeDefenseWidth = new int?(num);
+				BaseGen.symbolStack.Push("edgeDefense", resolveParams3);
 			}
-			RoomOutline roomOutline = roomOutlines.MinBy((RoomOutline x) => x.CellsCountIgnoringWalls);
-			for (int k = 0; k < roomOutlines.Count; k++)
-			{
-				RoomOutline roomOutline2 = roomOutlines[k];
-				if (roomOutline2 == roomOutline)
-				{
-					ResolveParams resolveParams4 = rp;
-					resolveParams4.rect = roomOutline2.rect.ContractedBy(1);
-					resolveParams4.faction = faction;
-					BaseGen.symbolStack.Push("storage", resolveParams4);
-				}
-				else
-				{
-					ResolveParams resolveParams5 = rp;
-					resolveParams5.rect = roomOutline2.rect.ContractedBy(1);
-					resolveParams5.faction = faction;
-					BaseGen.symbolStack.Push("barracks", resolveParams5);
-				}
-				ResolveParams resolveParams6 = rp;
-				resolveParams6.rect = roomOutline2.rect;
-				resolveParams6.faction = faction;
-				BaseGen.symbolStack.Push("doors", resolveParams6);
-			}
-			for (int l = 0; l < roomOutlines.Count; l++)
-			{
-				RoomOutline roomOutline3 = roomOutlines[l];
-				ResolveParams resolveParams7 = rp;
-				resolveParams7.rect = roomOutline3.rect;
-				resolveParams7.faction = faction;
-				BaseGen.symbolStack.Push("emptyRoom", resolveParams7);
-			}
-			if (flag)
-			{
-				ResolveParams resolveParams8 = rp;
-				resolveParams8.rect = rp.rect;
-				resolveParams8.faction = faction;
-				float? chanceToSkipSandbag = rp.chanceToSkipSandbag;
-				resolveParams8.chanceToSkipSandbag = new float?((!chanceToSkipSandbag.HasValue) ? 0.25f : chanceToSkipSandbag.Value);
-				BaseGen.symbolStack.Push("edgeSandbags", resolveParams8);
-			}
-		}
-
-		private bool CanReachAnyRoom(IntVec3 root, List<RoomOutline> allRooms)
-		{
-			Map map = BaseGen.globalSettings.map;
-			for (int i = 0; i < allRooms.Count; i++)
-			{
-				if (map.reachability.CanReach(root, allRooms[i].rect.RandomCell, PathEndMode.Touch, TraverseParms.For(TraverseMode.PassDoors, Danger.Deadly, false)))
-				{
-					return true;
-				}
-			}
-			return false;
-		}
-
-		private void AddRoomCentersToRootsToUnfog(List<RoomOutline> allRooms)
-		{
-			if (Current.ProgramState != ProgramState.MapInitializing)
-			{
-				return;
-			}
-			List<IntVec3> rootsToUnfog = MapGenerator.rootsToUnfog;
-			for (int i = 0; i < allRooms.Count; i++)
-			{
-				rootsToUnfog.Add(allRooms[i].rect.CenterCell);
-			}
+			ResolveParams resolveParams4 = rp;
+			resolveParams4.rect = rp.rect.ContractedBy(num);
+			resolveParams4.faction = faction;
+			BaseGen.symbolStack.Push("ensureCanReachMapEdge", resolveParams4);
+			ResolveParams resolveParams5 = rp;
+			resolveParams5.rect = rp.rect.ContractedBy(num);
+			resolveParams5.faction = faction;
+			BaseGen.symbolStack.Push("basePart_outdoors", resolveParams5);
 		}
 	}
 }

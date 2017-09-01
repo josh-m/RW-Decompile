@@ -49,7 +49,7 @@ namespace Verse
 		[MustTranslate]
 		public string beginLetterLabel;
 
-		public LetterType beginLetterType = LetterType.BadUrgent;
+		public LetterDef beginLetterDef;
 
 		public Color nameColor = Color.green;
 
@@ -95,6 +95,15 @@ namespace Verse
 					}
 				}
 				return false;
+			}
+		}
+
+		public override void ResolveReferences()
+		{
+			base.ResolveReferences();
+			if (this.beginLetterDef == null)
+			{
+				this.beginLetterDef = LetterDefOf.BadUrgent;
 			}
 		}
 

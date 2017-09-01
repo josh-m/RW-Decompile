@@ -20,17 +20,24 @@ namespace RimWorld
 			return base.FactionCanBeGroupSource(f, map, desperate) && !f.def.hidden && !f.HostileTo(Faction.OfPlayer);
 		}
 
-		protected virtual bool TryResolveParms(IncidentParms parms)
+		protected bool TryResolveParms(IncidentParms parms)
+		{
+			if (!this.TryResolveParmsGeneral(parms))
+			{
+				return false;
+			}
+			this.ResolveParmsPoints(parms);
+			return true;
+		}
+
+		protected virtual bool TryResolveParmsGeneral(IncidentParms parms)
 		{
 			Map map = (Map)parms.target;
-			if (!parms.spawnCenter.IsValid && !RCellFinder.TryFindRandomPawnEntryCell(out parms.spawnCenter, map))
-			{
-				return false;
-			}
-			if (parms.faction == null && !base.CandidateFactions(map, false).TryRandomElement(out parms.faction) && !base.CandidateFactions(map, true).TryRandomElement(out parms.faction))
-			{
-				return false;
-			}
+			return (parms.spawnCenter.IsValid || RCellFinder.TryFindRandomPawnEntryCell(out parms.spawnCenter, map, CellFinder.EdgeRoadChance_Neutral, null)) && (parms.faction != null || base.CandidateFactions(map, false).TryRandomElement(out parms.faction) || base.CandidateFactions(map, true).TryRandomElement(out parms.faction));
+		}
+
+		protected virtual void ResolveParmsPoints(IncidentParms parms)
+		{
 			if (parms.points < 0f)
 			{
 				float value = Rand.Value;
@@ -48,7 +55,6 @@ namespace RimWorld
 				}
 			}
 			IncidentParmsUtility.AdjustPointsForGroupArrivalParams(parms);
-			return true;
 		}
 
 		protected List<Pawn> SpawnPawns(IncidentParms parms)
@@ -58,7 +64,7 @@ namespace RimWorld
 			List<Pawn> list = PawnGroupMakerUtility.GeneratePawns(this.PawnGroupKindDef, defaultPawnGroupMakerParms, false).ToList<Pawn>();
 			foreach (Pawn current in list)
 			{
-				IntVec3 loc = CellFinder.RandomClosewalkCellNear(parms.spawnCenter, map, 5);
+				IntVec3 loc = CellFinder.RandomClosewalkCellNear(parms.spawnCenter, map, 5, null);
 				GenSpawn.Spawn(current, loc, map);
 			}
 			return list;

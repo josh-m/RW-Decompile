@@ -15,6 +15,8 @@ namespace Verse
 
 		public Texture2D maskTex;
 
+		public int renderQueue;
+
 		public string BaseTexPath
 		{
 			set
@@ -30,6 +32,7 @@ namespace Verse
 			this.color = Color.white;
 			this.colorTwo = Color.white;
 			this.maskTex = null;
+			this.renderQueue = 0;
 		}
 
 		public MaterialRequest(Texture2D tex, Shader shader)
@@ -39,6 +42,7 @@ namespace Verse
 			this.color = Color.white;
 			this.colorTwo = Color.white;
 			this.maskTex = null;
+			this.renderQueue = 0;
 		}
 
 		public MaterialRequest(Texture2D tex, Shader shader, Color color)
@@ -48,6 +52,7 @@ namespace Verse
 			this.color = color;
 			this.colorTwo = Color.white;
 			this.maskTex = null;
+			this.renderQueue = 0;
 		}
 
 		public override int GetHashCode()
@@ -57,7 +62,8 @@ namespace Verse
 			seed = Gen.HashCombineStruct<Color>(seed, this.color);
 			seed = Gen.HashCombineStruct<Color>(seed, this.colorTwo);
 			seed = Gen.HashCombine<Texture2D>(seed, this.mainTex);
-			return Gen.HashCombine<Texture2D>(seed, this.maskTex);
+			seed = Gen.HashCombine<Texture2D>(seed, this.maskTex);
+			return Gen.HashCombineInt(seed, this.renderQueue);
 		}
 
 		public override bool Equals(object obj)
@@ -67,7 +73,7 @@ namespace Verse
 
 		public bool Equals(MaterialRequest other)
 		{
-			return other.shader == this.shader && other.mainTex == this.mainTex && other.color == this.color && other.colorTwo == this.colorTwo && other.maskTex == this.maskTex;
+			return other.shader == this.shader && other.mainTex == this.mainTex && other.color == this.color && other.colorTwo == this.colorTwo && other.maskTex == this.maskTex && other.renderQueue == this.renderQueue;
 		}
 
 		public override string ToString()
@@ -84,6 +90,8 @@ namespace Verse
 				this.colorTwo.ToString(),
 				", ",
 				this.maskTex.ToString(),
+				", ",
+				this.renderQueue.ToString(),
 				")"
 			});
 		}

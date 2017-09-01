@@ -22,7 +22,7 @@ namespace RimWorld
 
 		private static void PlaySoundOf(TimeSpeed speed)
 		{
-			SoundDef.Named(TimeControls.SpeedSounds[(int)speed]).PlayOneShotOnCamera();
+			SoundDef.Named(TimeControls.SpeedSounds[(int)speed]).PlayOneShotOnCamera(null);
 		}
 
 		public static void DoTimeControlsGUI(Rect timerRect)
@@ -104,7 +104,7 @@ namespace RimWorld
 					if (KeyBindingDefOf.TickOnce.KeyDownEvent && tickManager.CurTimeSpeed == TimeSpeed.Paused)
 					{
 						tickManager.DoSingleTick();
-						SoundDef.Named(TimeControls.SpeedSounds[0]).PlayOneShotOnCamera();
+						SoundDef.Named(TimeControls.SpeedSounds[0]).PlayOneShotOnCamera(null);
 					}
 				}
 			}

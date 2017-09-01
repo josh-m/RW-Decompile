@@ -14,7 +14,7 @@ namespace RimWorld
 			}
 		}
 
-		public override Job JobOnThing(Pawn pawn, Thing t)
+		public override Job JobOnThing(Pawn pawn, Thing t, bool forced = false)
 		{
 			if (t.Faction != pawn.Faction)
 			{
@@ -25,11 +25,11 @@ namespace RimWorld
 			{
 				return null;
 			}
-			if (!GenConstruct.CanConstruct(frame, pawn))
+			if (!GenConstruct.CanConstruct(frame, pawn, forced))
 			{
 				return null;
 			}
-			return base.ResourceDeliverJobFor(pawn, frame);
+			return base.ResourceDeliverJobFor(pawn, frame, true);
 		}
 	}
 }

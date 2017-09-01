@@ -4,13 +4,13 @@ using Verse;
 
 namespace RimWorld
 {
-	public class ActiveDropPodInfo : IExposable, IThingContainerOwner
+	public class ActiveDropPodInfo : IExposable, IThingHolder
 	{
 		public const int DefaultOpenDelay = 110;
 
-		public IActiveDropPod parent;
+		public IThingHolder parent;
 
-		public ThingContainer innerContainer;
+		public ThingOwner innerContainer;
 
 		public int openDelay = 110;
 
@@ -43,22 +43,22 @@ namespace RimWorld
 			}
 		}
 
-		public bool Spawned
+		public IThingHolder ParentHolder
 		{
 			get
 			{
-				return this.parent != null && ((Thing)this.parent).Spawned;
+				return this.parent;
 			}
 		}
 
 		public ActiveDropPodInfo()
 		{
-			this.innerContainer = new ThingContainer(this);
+			this.innerContainer = new ThingOwner<Thing>(this);
 		}
 
-		public ActiveDropPodInfo(IActiveDropPod parent)
+		public ActiveDropPodInfo(IThingHolder parent)
 		{
-			this.innerContainer = new ThingContainer(this);
+			this.innerContainer = new ThingOwner<Thing>(this);
 			this.parent = parent;
 		}
 
@@ -80,17 +80,17 @@ namespace RimWorld
 				}
 				this.tmpThings.Clear();
 			}
-			Scribe_Values.LookValue<bool>(ref this.savePawnsWithReferenceMode, "savePawnsWithReferenceMode", false, false);
+			Scribe_Values.Look<bool>(ref this.savePawnsWithReferenceMode, "savePawnsWithReferenceMode", false, false);
 			if (this.savePawnsWithReferenceMode)
 			{
-				Scribe_Collections.LookList<Pawn>(ref this.tmpSavedPawns, "tmpSavedPawns", LookMode.Reference, new object[0]);
+				Scribe_Collections.Look<Pawn>(ref this.tmpSavedPawns, "tmpSavedPawns", LookMode.Reference, new object[0]);
 			}
-			Scribe_Deep.LookDeep<ThingContainer>(ref this.innerContainer, "innerContainer", new object[]
+			Scribe_Deep.Look<ThingOwner>(ref this.innerContainer, "innerContainer", new object[]
 			{
 				this
 			});
-			Scribe_Values.LookValue<int>(ref this.openDelay, "openDelay", 110, false);
-			Scribe_Values.LookValue<bool>(ref this.leaveSlag, "leaveSlag", false, false);
+			Scribe_Values.Look<int>(ref this.openDelay, "openDelay", 110, false);
+			Scribe_Values.Look<bool>(ref this.leaveSlag, "leaveSlag", false, false);
 			if (this.savePawnsWithReferenceMode && (Scribe.mode == LoadSaveMode.PostLoadInit || Scribe.mode == LoadSaveMode.Saving))
 			{
 				for (int j = 0; j < this.tmpSavedPawns.Count; j++)
@@ -101,27 +101,14 @@ namespace RimWorld
 			}
 		}
 
-		public ThingContainer GetInnerContainer()
+		public ThingOwner GetDirectlyHeldThings()
 		{
 			return this.innerContainer;
 		}
 
-		public IntVec3 GetPosition()
+		public void GetChildHolders(List<IThingHolder> outChildren)
 		{
-			if (this.parent == null)
-			{
-				return IntVec3.Invalid;
-			}
-			return ((Thing)this.parent).PositionHeld;
-		}
-
-		public Map GetMap()
-		{
-			if (this.parent == null)
-			{
-				return null;
-			}
-			return ((Thing)this.parent).MapHeld;
+			ThingOwnerUtility.AppendThingHoldersFromThings(outChildren, this.GetDirectlyHeldThings());
 		}
 	}
 }

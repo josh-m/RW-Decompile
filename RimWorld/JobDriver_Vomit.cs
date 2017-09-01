@@ -10,10 +10,27 @@ namespace RimWorld
 	{
 		private int ticksLeft;
 
+		private PawnPosture lastPosture;
+
+		public override PawnPosture Posture
+		{
+			get
+			{
+				return this.lastPosture;
+			}
+		}
+
+		public override void Notify_LastPosture(PawnPosture posture, LayingDownState layingDown)
+		{
+			this.lastPosture = posture;
+			this.layingDown = layingDown;
+		}
+
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Values.LookValue<int>(ref this.ticksLeft, "ticksLeft", 0, false);
+			Scribe_Values.Look<int>(ref this.ticksLeft, "ticksLeft", 0, false);
+			Scribe_Values.Look<PawnPosture>(ref this.lastPosture, "lastPosture", PawnPosture.Standing, false);
 		}
 
 		[DebuggerHidden]

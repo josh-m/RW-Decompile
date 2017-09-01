@@ -55,7 +55,6 @@ namespace RimWorld
 						ic2.SetBaseCount((float)c.count);
 						ic2.filter.SetAllow(c.thingDef, true);
 						r.ingredients.Add(ic2);
-						r.fixedIngredientFilter.SetAllow(c.thingDef, true);
 					}
 				}
 				r.defaultIngredientFilter = rm.defaultIngredientFilter;
@@ -91,7 +90,7 @@ namespace RimWorld
 				});
 				r.workerClass = typeof(Recipe_AdministerIngestible);
 				r.targetsBodyPart = false;
-				r.anesthesize = false;
+				r.anesthetize = false;
 				r.workAmount = (float)def.ingestible.baseIngestTicks;
 				IngredientCount ic = new IngredientCount();
 				ic.SetBaseCount(1f);

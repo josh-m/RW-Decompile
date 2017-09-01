@@ -46,14 +46,17 @@ namespace RimWorld
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Values.LookValue<bool>(ref this.armedInt, "armed", false, false);
-			Scribe_Values.LookValue<bool>(ref this.autoRearm, "autoRearm", false, false);
+			Scribe_Values.Look<bool>(ref this.armedInt, "armed", false, false);
+			Scribe_Values.Look<bool>(ref this.autoRearm, "autoRearm", false, false);
 		}
 
 		protected override void SpringSub(Pawn p)
 		{
 			this.armedInt = false;
-			this.DamagePawn(p);
+			if (p != null)
+			{
+				this.DamagePawn(p);
+			}
 			if (this.autoRearm)
 			{
 				base.Map.designationManager.AddDesignation(new Designation(this, DesignationDefOf.RearmTrap));
@@ -79,7 +82,7 @@ namespace RimWorld
 				}
 				int num2 = Mathf.Max(1, Mathf.RoundToInt(Rand.Value * (float)num));
 				num -= num2;
-				DamageInfo dinfo = new DamageInfo(DamageDefOf.Stab, num2, -1f, this, null, null);
+				DamageInfo dinfo = new DamageInfo(DamageDefOf.Stab, num2, -1f, this, null, null, DamageInfo.SourceCategory.ThingOrUnknown);
 				dinfo.SetBodyRegion(height, BodyPartDepth.Outside);
 				p.TakeDamage(dinfo);
 			}

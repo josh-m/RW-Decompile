@@ -20,7 +20,7 @@ namespace Verse
 
 		public List<Color32> colors = new List<Color32>();
 
-		public List<Vector2> uvs = new List<Vector2>();
+		public List<Vector3> uvs = new List<Vector3>();
 
 		public LayerSubMesh(Mesh mesh, Material material)
 		{

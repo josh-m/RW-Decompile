@@ -10,8 +10,8 @@ namespace Verse.AI.Group
 
 		public override void ExposeData()
 		{
-			Scribe_Values.LookValue<LocomotionUrgency>(ref this.locomotion, "locomotion", LocomotionUrgency.None, false);
-			Scribe_Values.LookValue<bool>(ref this.canDig, "canDig", false, false);
+			Scribe_Values.Look<LocomotionUrgency>(ref this.locomotion, "locomotion", LocomotionUrgency.None, false);
+			Scribe_Values.Look<bool>(ref this.canDig, "canDig", false, false);
 		}
 	}
 }

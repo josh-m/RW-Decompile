@@ -13,7 +13,7 @@ namespace RimWorld
 		[DebuggerHidden]
 		protected override IEnumerable<Toil> MakeNewToils()
 		{
-			yield return Toils_Reserve.Reserve(TargetIndex.A, 1);
+			yield return Toils_Reserve.Reserve(TargetIndex.A, 1, -1, null);
 			yield return Toils_Goto.GotoCell(TargetIndex.A, PathEndMode.OnCell);
 			yield return new Toil
 			{
@@ -35,7 +35,7 @@ namespace RimWorld
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Values.LookValue<Rot4>(ref this.faceDir, "faceDir", default(Rot4), false);
+			Scribe_Values.Look<Rot4>(ref this.faceDir, "faceDir", default(Rot4), false);
 		}
 	}
 }

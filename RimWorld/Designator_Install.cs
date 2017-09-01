@@ -144,5 +144,11 @@ namespace RimWorld
 			Graphic baseGraphic = this.ThingToInstall.Graphic.ExtractInnerGraphicFor(this.ThingToInstall);
 			GhostDrawer.DrawGhostThing(UI.MouseCell(), this.placingRot, (ThingDef)this.PlacingDef, baseGraphic, ghostCol, AltitudeLayer.Blueprint);
 		}
+
+		public override void SelectedUpdate()
+		{
+			base.SelectedUpdate();
+			BuildDesignatorUtility.TryDrawPowerGridAndAnticipatedConnection(this.PlacingDef);
+		}
 	}
 }

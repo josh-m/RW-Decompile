@@ -7,9 +7,9 @@ namespace Verse
 	{
 		private Vector3 attacheeLastPosition = new Vector3(-1000f, -1000f, -1000f);
 
-		public override void SpawnSetup(Map map)
+		public override void SpawnSetup(Map map, bool respawningAfterLoad)
 		{
-			base.SpawnSetup(map);
+			base.SpawnSetup(map, respawningAfterLoad);
 			if (this.link1.Linked)
 			{
 				this.attacheeLastPosition = this.link1.LastDrawPos;

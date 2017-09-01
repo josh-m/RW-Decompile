@@ -19,7 +19,7 @@ namespace Verse
 
 		public void ExposeData()
 		{
-			Scribe_Values.LookValue<string>(ref this.compressedString, "compressedThingMap", null, false);
+			Scribe_Values.Look<string>(ref this.compressedString, "compressedThingMap", null, false);
 		}
 
 		public void BuildCompressedString()

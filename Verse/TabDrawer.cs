@@ -80,7 +80,7 @@ namespace Verse
 			GUI.EndGroup();
 			if (tabRecord != null && tabRecord != tabRecord2)
 			{
-				SoundDefOf.RowTabSelect.PlayOneShotOnCamera();
+				SoundDefOf.RowTabSelect.PlayOneShotOnCamera(null);
 				if (tabRecord.clickedAction != null)
 				{
 					tabRecord.clickedAction();

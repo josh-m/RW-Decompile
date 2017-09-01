@@ -43,8 +43,8 @@ namespace RimWorld
 
 		public void ExposeData()
 		{
-			Scribe_References.LookReference<Outfit>(ref this.curOutfit, "curOutfit", false);
-			Scribe_Deep.LookDeep<OutfitForcedHandler>(ref this.forcedHandler, "overrideHandler", new object[0]);
+			Scribe_References.Look<Outfit>(ref this.curOutfit, "curOutfit", false);
+			Scribe_Deep.Look<OutfitForcedHandler>(ref this.forcedHandler, "overrideHandler", new object[0]);
 		}
 	}
 }

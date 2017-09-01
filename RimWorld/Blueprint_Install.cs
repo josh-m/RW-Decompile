@@ -56,8 +56,8 @@ namespace RimWorld
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_References.LookReference<MinifiedThing>(ref this.miniToInstall, "miniToInstall", false);
-			Scribe_References.LookReference<Building>(ref this.buildingToReinstall, "buildingToReinstall", false);
+			Scribe_References.Look<MinifiedThing>(ref this.miniToInstall, "miniToInstall", false);
+			Scribe_References.Look<Building>(ref this.buildingToReinstall, "buildingToReinstall", false);
 		}
 
 		public override ThingDef UIStuff()

@@ -15,15 +15,45 @@ namespace Verse
 
 		public int clearSpaceSize;
 
-		public TerrainAffordance neededTerrainAffordance;
-
 		public int clusterSize = 1;
+
+		public float terrainValidationRadius;
+
+		[NoTranslate]
+		private List<string> terrainValidationDisallowed;
 
 		[Unsaved]
 		private IntVec3 clusterCenter;
 
 		[Unsaved]
 		private int leftInCluster;
+
+		private List<Rot4> possibleRotationsInt;
+
+		private static List<Rot4> tmpRotations = new List<Rot4>();
+
+		private List<Rot4> PossibleRotations
+		{
+			get
+			{
+				if (this.possibleRotationsInt == null)
+				{
+					this.possibleRotationsInt = new List<Rot4>();
+					if (this.thingDef.rotatable)
+					{
+						this.possibleRotationsInt.Add(Rot4.North);
+						this.possibleRotationsInt.Add(Rot4.East);
+						this.possibleRotationsInt.Add(Rot4.South);
+						this.possibleRotationsInt.Add(Rot4.West);
+					}
+					else
+					{
+						this.possibleRotationsInt.Add(Rot4.North);
+					}
+				}
+				return this.possibleRotationsInt;
+			}
+		}
 
 		public override void Generate(Map map)
 		{
@@ -74,7 +104,11 @@ namespace Verse
 					this.leftInCluster = this.clusterSize;
 				}
 				this.leftInCluster--;
-				result = CellFinder.RandomClosewalkCellNear(this.clusterCenter, map, 4);
+				result = CellFinder.RandomClosewalkCellNear(this.clusterCenter, map, 4, delegate(IntVec3 x)
+				{
+					Rot4 rot;
+					return this.TryGetRandomValidRotation(x, map, out rot);
+				});
 				return result.IsValid;
 			}
 			return base.TryFindScatterCell(map, out result);
@@ -82,43 +116,17 @@ namespace Verse
 
 		protected override void ScatterAt(IntVec3 loc, Map map, int stackCount = 1)
 		{
-			Rot4 rot = (!this.thingDef.rotatable) ? Rot4.North : Rot4.Random;
-			CellRect cellRect = GenAdj.OccupiedRect(loc, rot, this.thingDef.size);
-			if (!cellRect.InBounds(map))
+			Rot4 rot;
+			if (!this.TryGetRandomValidRotation(loc, map, out rot))
 			{
-				Log.Warning(string.Concat(new object[]
-				{
-					"Failed to scatter ",
-					this.thingDef.defName,
-					" at ",
-					loc,
-					" due to being out of bounds."
-				}));
+				Log.Warning("Could not find any valid rotation for " + this.thingDef);
 				return;
-			}
-			CellRect.CellRectIterator iterator = cellRect.GetIterator();
-			while (!iterator.Done())
-			{
-				IntVec3 current = iterator.Current;
-				if (this.neededTerrainAffordance != TerrainAffordance.Undefined && !current.SupportsStructureType(map, this.neededTerrainAffordance))
-				{
-					Log.Warning(string.Concat(new object[]
-					{
-						"Failed to scatter ",
-						this.thingDef.defName,
-						" at ",
-						loc,
-						" due to missing terrain affordance."
-					}));
-					return;
-				}
-				iterator.MoveNext();
 			}
 			if (this.clearSpaceSize > 0)
 			{
-				foreach (IntVec3 current2 in GridShapeMaker.IrregularLump(loc, map, this.clearSpaceSize))
+				foreach (IntVec3 current in GridShapeMaker.IrregularLump(loc, map, this.clearSpaceSize))
 				{
-					Thing edifice = current2.GetEdifice(map);
+					Building edifice = current.GetEdifice(map);
 					if (edifice != null)
 					{
 						edifice.Destroy(DestroyMode.Vanish);
@@ -143,8 +151,64 @@ namespace Verse
 			}
 			else
 			{
-				GenSpawn.Spawn(thing, loc, map, rot);
+				GenSpawn.Spawn(thing, loc, map, rot, false);
 			}
+		}
+
+		protected override bool CanScatterAt(IntVec3 loc, Map map)
+		{
+			if (!base.CanScatterAt(loc, map))
+			{
+				return false;
+			}
+			Rot4 rot;
+			if (!this.TryGetRandomValidRotation(loc, map, out rot))
+			{
+				return false;
+			}
+			if (this.terrainValidationRadius > 0f)
+			{
+				foreach (IntVec3 current in GenRadial.RadialCellsAround(loc, this.terrainValidationRadius, true))
+				{
+					if (current.InBounds(map))
+					{
+						TerrainDef terrain = current.GetTerrain(map);
+						for (int i = 0; i < this.terrainValidationDisallowed.Count; i++)
+						{
+							if (terrain.HasTag(this.terrainValidationDisallowed[i]))
+							{
+								return false;
+							}
+						}
+					}
+				}
+				return true;
+			}
+			return true;
+		}
+
+		private bool TryGetRandomValidRotation(IntVec3 loc, Map map, out Rot4 rot)
+		{
+			List<Rot4> possibleRotations = this.PossibleRotations;
+			for (int i = 0; i < possibleRotations.Count; i++)
+			{
+				if (this.IsRotationValid(loc, possibleRotations[i], map))
+				{
+					GenStep_ScatterThings.tmpRotations.Add(possibleRotations[i]);
+				}
+			}
+			if (GenStep_ScatterThings.tmpRotations.TryRandomElement(out rot))
+			{
+				GenStep_ScatterThings.tmpRotations.Clear();
+				return true;
+			}
+			rot = Rot4.Invalid;
+			return false;
+		}
+
+		private bool IsRotationValid(IntVec3 loc, Rot4 rot, Map map)
+		{
+			return GenAdj.OccupiedRect(loc, rot, this.thingDef.size).InBounds(map) && !GenSpawn.WouldWipeAnythingWith(loc, rot, this.thingDef, map, (Thing x) => x.def == this.thingDef || (x.def.category != ThingCategory.Plant && x.def.category != ThingCategory.Filth));
 		}
 
 		public static List<int> CountDividedIntoStacks(int count, IntRange stackSizeRange)

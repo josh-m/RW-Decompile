@@ -179,7 +179,7 @@ namespace Verse
 			{
 				return BuildingsDamageSectionLayerUtility.overlays;
 			}
-			Rand.PushSeed();
+			Rand.PushState();
 			Rand.Seed = Gen.HashCombineInt(b.thingIDNumber, 1958376471);
 			int damageOverlaysCount = BuildingsDamageSectionLayerUtility.GetDamageOverlaysCount(b, b.HitPoints);
 			for (int i = 0; i < damageOverlaysCount; i++)
@@ -192,7 +192,7 @@ namespace Verse
 				BuildingsDamageSectionLayerUtility.overlaysWorkingList.Remove(item);
 				BuildingsDamageSectionLayerUtility.overlays.Add(item);
 			}
-			Rand.PopSeed();
+			Rand.PopState();
 			return BuildingsDamageSectionLayerUtility.overlays;
 		}
 

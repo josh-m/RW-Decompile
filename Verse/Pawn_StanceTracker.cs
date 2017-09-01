@@ -53,12 +53,12 @@ namespace Verse
 
 		public void ExposeData()
 		{
-			Scribe_Values.LookValue<int>(ref this.staggerUntilTick, "staggerUntilTick", 0, false);
-			Scribe_Deep.LookDeep<StunHandler>(ref this.stunner, "stunner", new object[]
+			Scribe_Values.Look<int>(ref this.staggerUntilTick, "staggerUntilTick", 0, false);
+			Scribe_Deep.Look<StunHandler>(ref this.stunner, "stunner", new object[]
 			{
 				this.pawn
 			});
-			Scribe_Deep.LookDeep<Stance>(ref this.curStance, "curStance", new object[0]);
+			Scribe_Deep.Look<Stance>(ref this.curStance, "curStance", new object[0]);
 			if (Scribe.mode == LoadSaveMode.LoadingVars && this.curStance != null)
 			{
 				this.curStance.stanceTracker = this;

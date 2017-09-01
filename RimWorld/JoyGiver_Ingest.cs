@@ -31,7 +31,7 @@ namespace RimWorld
 		protected virtual Thing BestIngestItem(Pawn pawn, Predicate<Thing> extraValidator)
 		{
 			Predicate<Thing> predicate = (Thing t) => this.CanIngestForJoy(pawn, t) && (extraValidator == null || extraValidator(t));
-			ThingContainer innerContainer = pawn.inventory.innerContainer;
+			ThingOwner<Thing> innerContainer = pawn.inventory.innerContainer;
 			for (int i = 0; i < innerContainer.Count; i++)
 			{
 				if (this.SearchSetWouldInclude(innerContainer[i]) && predicate(innerContainer[i]))
@@ -56,7 +56,7 @@ namespace RimWorld
 			}
 			if (t.Spawned)
 			{
-				if (!pawn.CanReserve(t, 1))
+				if (!pawn.CanReserve(t, 1, -1, null, false))
 				{
 					return false;
 				}

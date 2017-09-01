@@ -20,5 +20,9 @@ namespace RimWorld
 		public static WorldObjectDef AttackedCaravan;
 
 		public static WorldObjectDef TravelingTransportPods;
+
+		public static WorldObjectDef RoutePlannerWaypoint;
+
+		public static WorldObjectDef Site;
 	}
 }

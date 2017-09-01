@@ -1,4 +1,3 @@
-using RimWorld.Planet;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,11 +10,11 @@ namespace RimWorld
 	{
 		private Faction randomFaction;
 
-		protected override List<Pawn> GeneratePawns(Caravan caravan, float points, Map map)
+		protected override List<Pawn> GeneratePawns(IIncidentTarget target, float points, int tile)
 		{
-			this.randomFaction = Find.FactionManager.RandomEnemyFaction(false, false);
+			this.randomFaction = Find.FactionManager.RandomEnemyFaction(false, false, true);
 			PawnGroupMakerParms pawnGroupMakerParms = new PawnGroupMakerParms();
-			pawnGroupMakerParms.map = map;
+			pawnGroupMakerParms.tile = tile;
 			pawnGroupMakerParms.generateFightersOnly = true;
 			pawnGroupMakerParms.faction = this.randomFaction;
 			pawnGroupMakerParms.points = points;

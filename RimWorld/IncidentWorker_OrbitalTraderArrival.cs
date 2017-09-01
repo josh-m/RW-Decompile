@@ -16,7 +16,7 @@ namespace RimWorld
 			TraderKindDef def;
 			if ((from x in DefDatabase<TraderKindDef>.AllDefs
 			where x.orbital
-			select x).TryRandomElement(out def))
+			select x).TryRandomElementByWeight((TraderKindDef traderDef) => traderDef.commonality, out def))
 			{
 				TradeShip tradeShip = new TradeShip(def);
 				if (map.listerBuildings.allBuildingsColonist.Any((Building b) => b.def.IsCommsConsole && b.GetComp<CompPowerTrader>().PowerOn))
@@ -25,7 +25,7 @@ namespace RimWorld
 					{
 						tradeShip.name,
 						tradeShip.def.label
-					}), LetterType.Good, null);
+					}), LetterDefOf.Good, null);
 				}
 				map.passingShipManager.AddShip(tradeShip);
 				tradeShip.GenerateThings();

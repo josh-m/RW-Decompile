@@ -1,9 +1,26 @@
 using System;
+using System.Collections.Generic;
 
 namespace RimWorld.Planet
 {
 	public class Tile
 	{
+		public struct RoadLink
+		{
+			public int neighbor;
+
+			public RoadDef road;
+		}
+
+		public struct RiverLink
+		{
+			public int neighbor;
+
+			public RiverDef river;
+		}
+
+		public const int Invalid = -1;
+
 		public BiomeDef biome;
 
 		public float elevation = 100f;
@@ -14,11 +31,31 @@ namespace RimWorld.Planet
 
 		public float rainfall;
 
+		public List<Tile.RoadLink> roads;
+
+		public List<Tile.RiverLink> rivers;
+
 		public bool WaterCovered
 		{
 			get
 			{
 				return this.elevation <= 0f;
+			}
+		}
+
+		public List<Tile.RoadLink> VisibleRoads
+		{
+			get
+			{
+				return (!this.biome.allowRoads) ? null : this.roads;
+			}
+		}
+
+		public List<Tile.RiverLink> VisibleRivers
+		{
+			get
+			{
+				return (!this.biome.allowRivers) ? null : this.rivers;
 			}
 		}
 
@@ -36,7 +73,11 @@ namespace RimWorld.Planet
 				this.temperature,
 				"°C rain=",
 				this.rainfall,
-				"mm)"
+				"mm roads=",
+				(this.roads != null) ? this.roads.Count : 0,
+				" rivers=",
+				(this.rivers != null) ? this.rivers.Count : 0,
+				")"
 			});
 		}
 	}

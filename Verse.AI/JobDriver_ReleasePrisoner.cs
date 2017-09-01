@@ -24,10 +24,10 @@ namespace Verse.AI
 		{
 			this.FailOnDestroyedOrNull(TargetIndex.A);
 			this.FailOnBurningImmobile(TargetIndex.B);
-			this.FailOn(() => ((Pawn)((Thing)this.<>f__this.GetActor().CurJob.GetTarget(TargetIndex.A))).guest.interactionMode != PrisonerInteractionMode.Release);
+			this.FailOn(() => ((Pawn)((Thing)this.<>f__this.GetActor().CurJob.GetTarget(TargetIndex.A))).guest.interactionMode != PrisonerInteractionModeDefOf.Release);
 			this.FailOnDowned(TargetIndex.A);
 			this.FailOnAggroMentalState(TargetIndex.A);
-			Toil reserveTargetA = Toils_Reserve.Reserve(TargetIndex.A, 1);
+			Toil reserveTargetA = Toils_Reserve.Reserve(TargetIndex.A, 1, -1, null);
 			yield return reserveTargetA;
 			yield return Toils_Goto.GotoThing(TargetIndex.A, PathEndMode.ClosestTouch).FailOn(() => !this.<>f__this.Prisoner.IsPrisonerOfColony || !this.<>f__this.Prisoner.guest.PrisonerIsSecure).FailOnSomeonePhysicallyInteracting(TargetIndex.A);
 			yield return Toils_Haul.StartCarryThing(TargetIndex.A, false, false);

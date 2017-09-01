@@ -166,21 +166,6 @@ namespace Verse
 			}
 		}
 
-		public bool AnyWindowWantsRenderedWorld
-		{
-			get
-			{
-				for (int i = 0; i < this.windows.Count; i++)
-				{
-					if (this.windows[i].wantsRenderedWorld)
-					{
-						return true;
-					}
-				}
-				return false;
-			}
-		}
-
 		public void WindowsUpdate()
 		{
 			this.AdjustWindowsIfResolutionChanged();
@@ -251,6 +236,12 @@ namespace Verse
 				Event.current.Use();
 			}
 			this.CloseWindowsBecauseClicked(window);
+			this.updateInternalWindowsOrderLater = true;
+		}
+
+		public void Notify_ManuallySetFocus(Window window)
+		{
+			this.focusedWindow = window;
 			this.updateInternalWindowsOrderLater = true;
 		}
 
@@ -417,7 +408,7 @@ namespace Verse
 			}
 			if (doCloseSound && window.soundClose != null)
 			{
-				window.soundClose.PlayOneShotOnCamera();
+				window.soundClose.PlayOneShotOnCamera(null);
 			}
 			window.PreClose();
 			this.windows.Remove(window);

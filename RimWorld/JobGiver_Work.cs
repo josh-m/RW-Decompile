@@ -5,7 +5,7 @@ using Verse.AI;
 
 namespace RimWorld
 {
-	public class JobGiver_Work : ThinkNode_JobGiver
+	public class JobGiver_Work : ThinkNode
 	{
 		public bool emergency;
 
@@ -42,7 +42,7 @@ namespace RimWorld
 			throw new NotImplementedException();
 		}
 
-		protected override Job TryGiveJob(Pawn pawn)
+		public override ThinkResult TryIssueJobPackage(Pawn pawn, JobIssueParams jobParams)
 		{
 			if (this.emergency && pawn.mindState.priorityWork.IsPrioritized)
 			{
@@ -54,7 +54,7 @@ namespace RimWorld
 					if (job != null)
 					{
 						job.playerForced = true;
-						return job;
+						return new ThinkResult(job, this, new JobTag?(workGiversByPriority[i].tagToGive));
 					}
 				}
 				pawn.mindState.priorityWork.Clear();
@@ -77,14 +77,14 @@ namespace RimWorld
 						Job job2 = workGiver.NonScanJob(pawn);
 						if (job2 != null)
 						{
-							return job2;
+							return new ThinkResult(job2, this, new JobTag?(list[j].def.tagToGive));
 						}
 						WorkGiver_Scanner scanner = workGiver as WorkGiver_Scanner;
 						if (scanner != null)
 						{
 							if (workGiver.def.scanThings)
 							{
-								Predicate<Thing> predicate = (Thing t) => !t.IsForbidden(pawn) && scanner.HasJobOnThing(pawn, t);
+								Predicate<Thing> predicate = (Thing t) => !t.IsForbidden(pawn) && scanner.HasJobOnThing(pawn, t, false);
 								IEnumerable<Thing> enumerable = scanner.PotentialWorkThingsGlobal(pawn);
 								Thing thing;
 								if (scanner.Prioritized)
@@ -100,7 +100,8 @@ namespace RimWorld
 								else
 								{
 									Predicate<Thing> validator = predicate;
-									thing = GenClosest.ClosestThingReachable(pawn.Position, pawn.Map, scanner.PotentialWorkThingRequest, scanner.PathEndMode, TraverseParms.For(pawn, Danger.Deadly, TraverseMode.ByPawn, false), 9999f, validator, enumerable, scanner.LocalRegionsToScanFirst, enumerable != null);
+									bool forceGlobalSearch = enumerable != null;
+									thing = GenClosest.ClosestThingReachable(pawn.Position, pawn.Map, scanner.PotentialWorkThingRequest, scanner.PathEndMode, TraverseParms.For(pawn, Danger.Deadly, TraverseMode.ByPawn, false), 9999f, validator, enumerable, 0, scanner.LocalRegionsToScanFirst, forceGlobalSearch, RegionType.Set_Passable, false);
 								}
 								if (thing != null)
 								{
@@ -117,20 +118,20 @@ namespace RimWorld
 								foreach (IntVec3 current in scanner.PotentialWorkCellsGlobal(pawn))
 								{
 									bool flag = false;
-									float lengthHorizontalSquared = (current - position).LengthHorizontalSquared;
+									float num4 = (float)(current - position).LengthHorizontalSquared;
 									if (prioritized)
 									{
 										if (!current.IsForbidden(pawn) && scanner.HasJobOnCell(pawn, current))
 										{
 											float priority = scanner.GetPriority(pawn, current);
-											if (priority > num3 || (priority == num3 && lengthHorizontalSquared < num2))
+											if (priority > num3 || (priority == num3 && num4 < num2))
 											{
 												flag = true;
 												num3 = priority;
 											}
 										}
 									}
-									else if (lengthHorizontalSquared < num2 && !current.IsForbidden(pawn) && scanner.HasJobOnCell(pawn, current))
+									else if (num4 < num2 && !current.IsForbidden(pawn) && scanner.HasJobOnCell(pawn, current))
 									{
 										flag = true;
 									}
@@ -138,7 +139,7 @@ namespace RimWorld
 									{
 										targetInfo = new TargetInfo(current, pawn.Map, false);
 										workGiver_Scanner = scanner;
-										num2 = lengthHorizontalSquared;
+										num2 = num4;
 									}
 								}
 							}
@@ -164,7 +165,7 @@ namespace RimWorld
 						Job job3;
 						if (targetInfo.HasThing)
 						{
-							job3 = workGiver_Scanner.JobOnThing(pawn, targetInfo.Thing);
+							job3 = workGiver_Scanner.JobOnThing(pawn, targetInfo.Thing, false);
 						}
 						else
 						{
@@ -172,7 +173,7 @@ namespace RimWorld
 						}
 						if (job3 != null)
 						{
-							return job3;
+							return new ThinkResult(job3, this, new JobTag?(list[j].def.tagToGive));
 						}
 						Log.ErrorOnce(string.Concat(new object[]
 						{
@@ -187,12 +188,12 @@ namespace RimWorld
 					num = workGiver.def.priorityInType;
 				}
 			}
-			return null;
+			return ThinkResult.NoJob;
 		}
 
 		private bool PawnCanUseWorkGiver(Pawn pawn, WorkGiver giver)
 		{
-			return (giver.def.canBeDoneByNonColonists || pawn.IsColonist) && giver.MissingRequiredCapacity(pawn) == null && !giver.ShouldSkip(pawn);
+			return !giver.ShouldSkip(pawn) && (giver.def.canBeDoneByNonColonists || pawn.IsColonist) && (pawn.story == null || !pawn.story.WorkTagIsDisabled(giver.def.workTags)) && giver.MissingRequiredCapacity(pawn) == null;
 		}
 
 		private Job GiverTryGiveJobPrioritized(Pawn pawn, WorkGiver giver, IntVec3 cell)
@@ -214,7 +215,7 @@ namespace RimWorld
 				{
 					if (giver.def.scanThings)
 					{
-						Predicate<Thing> predicate = (Thing t) => !t.IsForbidden(pawn) && scanner.HasJobOnThing(pawn, t);
+						Predicate<Thing> predicate = (Thing t) => !t.IsForbidden(pawn) && scanner.HasJobOnThing(pawn, t, false);
 						List<Thing> thingList = cell.GetThingList(pawn.Map);
 						for (int i = 0; i < thingList.Count; i++)
 						{
@@ -222,7 +223,7 @@ namespace RimWorld
 							if (scanner.PotentialWorkThingRequest.Accepts(thing) && predicate(thing))
 							{
 								pawn.mindState.lastGivenWorkType = giver.def.workType;
-								Job result = scanner.JobOnThing(pawn, thing);
+								Job result = scanner.JobOnThing(pawn, thing, false);
 								return result;
 							}
 						}

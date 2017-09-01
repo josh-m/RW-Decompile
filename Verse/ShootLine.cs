@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace Verse
 {
@@ -38,6 +39,11 @@ namespace Verse
 				this.dest += b;
 			}
 			this.dest = this.dest.RandomAdjacentCell8Way();
+		}
+
+		public IEnumerable<IntVec3> Points()
+		{
+			return GenSight.PointsOnLineOfSight(this.source, this.dest);
 		}
 
 		public override string ToString()

@@ -27,11 +27,11 @@ namespace Verse
 			}
 		}
 
-		public float LengthHorizontalSquared
+		public int LengthHorizontalSquared
 		{
 			get
 			{
-				return (float)(this.x * this.x + this.z * this.z);
+				return this.x * this.x + this.z * this.z;
 			}
 		}
 
@@ -206,7 +206,35 @@ namespace Verse
 
 		public bool AdjacentToCardinal(IntVec3 other)
 		{
-			return (other.z == this.z && (other.x == this.x + 1 || other.x == this.x - 1)) || (other.x == this.x && (other.z == this.z + 1 || other.z == this.z - 1));
+			return this.IsValid && ((other.z == this.z && (other.x == this.x + 1 || other.x == this.x - 1)) || (other.x == this.x && (other.z == this.z + 1 || other.z == this.z - 1)));
+		}
+
+		public bool AdjacentToDiagonal(IntVec3 other)
+		{
+			return this.IsValid && Mathf.Abs(this.x - other.x) == 1 && Mathf.Abs(this.z - other.z) == 1;
+		}
+
+		public bool AdjacentToCardinal(Room room)
+		{
+			if (!this.IsValid)
+			{
+				return false;
+			}
+			Map map = room.Map;
+			if (this.InBounds(map) && this.GetRoom(map, RegionType.Set_All) == room)
+			{
+				return true;
+			}
+			IntVec3[] cardinalDirections = GenAdj.CardinalDirections;
+			for (int i = 0; i < cardinalDirections.Length; i++)
+			{
+				IntVec3 intVec = this + cardinalDirections[i];
+				if (intVec.InBounds(map) && intVec.GetRoom(map, RegionType.Set_All) == room)
+				{
+					return true;
+				}
+			}
+			return false;
 		}
 
 		public override bool Equals(object obj)

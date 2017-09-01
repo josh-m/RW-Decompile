@@ -214,7 +214,7 @@ namespace RimWorld
 			GUI.color = Color.white;
 			Rect outRect = new Rect(0f, 0f, rect.width, rect.height);
 			Rect viewRect = new Rect(0f, 0f, rect.width - 16f, SocialCardUtility.listScrollViewHeight);
-			Widgets.BeginScrollView(outRect, ref SocialCardUtility.listScrollPosition, viewRect);
+			Widgets.BeginScrollView(outRect, ref SocialCardUtility.listScrollPosition, viewRect, true);
 			float num = 0f;
 			float y = SocialCardUtility.listScrollPosition.y;
 			float num2 = SocialCardUtility.listScrollPosition.y + outRect.height;
@@ -266,9 +266,9 @@ namespace RimWorld
 							otherPawn.LabelShort
 						}).CapitalizeFirst(), MessageSound.RejectInput);
 					}
-					else if (otherPawn.MapHeld != null || otherPawn.IsCaravanMember())
+					else if (otherPawn.SpawnedOrAnyParentSpawned || otherPawn.IsCaravanMember())
 					{
-						JumpToTargetUtility.TryJumpAndSelect(otherPawn);
+						CameraJumper.TryJumpAndSelect(otherPawn);
 					}
 					else
 					{
@@ -284,7 +284,7 @@ namespace RimWorld
 					if (page_ConfigureStartingPawns != null)
 					{
 						page_ConfigureStartingPawns.SelectPawn(otherPawn);
-						SoundDefOf.RowTabSelect.PlayOneShotOnCamera();
+						SoundDefOf.RowTabSelect.PlayOneShotOnCamera(null);
 					}
 				}
 			}
@@ -410,9 +410,13 @@ namespace RimWorld
 
 		public static string GetPawnSituationLabel(Pawn pawn, Pawn fromPOV)
 		{
-			if (pawn.Dead || pawn.Destroyed)
+			if (pawn.Dead)
 			{
 				return "Dead".Translate();
+			}
+			if (pawn.Destroyed)
+			{
+				return "Missing".Translate();
 			}
 			if (PawnUtility.IsKidnappedPawn(pawn))
 			{
@@ -528,7 +532,7 @@ namespace RimWorld
 				}
 			}
 			Rect viewRect = new Rect(0f, 0f, rect.width - 16f, num);
-			Widgets.BeginScrollView(rect, ref SocialCardUtility.logScrollPosition, viewRect);
+			Widgets.BeginScrollView(rect, ref SocialCardUtility.logScrollPosition, viewRect, true);
 			float num3 = 0f;
 			for (int j = 0; j < SocialCardUtility.logStrings.Count; j++)
 			{

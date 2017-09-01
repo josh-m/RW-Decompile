@@ -31,7 +31,7 @@ namespace RimWorld
 
 		public virtual void ExposeData()
 		{
-			Scribe_Defs.LookDef<ScenPartDef>(ref this.def, "def");
+			Scribe_Defs.Look<ScenPartDef>(ref this.def, "def");
 		}
 
 		public ScenPart CopyForEditing()
@@ -97,7 +97,7 @@ namespace RimWorld
 		{
 		}
 
-		public virtual void PostWorldLoad()
+		public virtual void PostWorldGenerate()
 		{
 		}
 

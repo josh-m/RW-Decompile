@@ -62,11 +62,7 @@ namespace RimWorld
 		public override AcceptanceReport CanDesignateThing(Thing t)
 		{
 			Building building = t as Building;
-			if (building != null && building.Faction != Faction.OfPlayer && building.ClaimableBy(Faction.OfPlayer))
-			{
-				return true;
-			}
-			return false;
+			return building != null && building.Faction != Faction.OfPlayer && building.ClaimableBy(Faction.OfPlayer);
 		}
 
 		public override void DesignateThing(Thing t)

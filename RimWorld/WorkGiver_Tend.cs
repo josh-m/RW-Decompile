@@ -22,14 +22,18 @@ namespace RimWorld
 			}
 		}
 
-		public override bool HasJobOnThing(Pawn pawn, Thing t)
+		public override bool HasJobOnThing(Pawn pawn, Thing t, bool forced = false)
 		{
 			Pawn pawn2 = t as Pawn;
-			return pawn2 != null && pawn2 != pawn && WorkGiver_Tend.GoodLayingStatusForTend(pawn2) && HealthAIUtility.ShouldBeTendedNow(pawn2) && pawn.CanReserve(pawn2, 1) && pawn.CanReach(t, PathEndMode.InteractionCell, Danger.Deadly, false, TraverseMode.ByPawn);
+			return pawn2 != null && (!this.def.tendToHumanlikesOnly || pawn2.RaceProps.Humanlike) && (!this.def.tendToAnimalsOnly || pawn2.RaceProps.Animal) && WorkGiver_Tend.GoodLayingStatusForTend(pawn2, pawn) && HealthAIUtility.ShouldBeTendedNow(pawn2) && pawn.CanReserve(pawn2, 1, -1, null, forced);
 		}
 
-		public static bool GoodLayingStatusForTend(Pawn patient)
+		public static bool GoodLayingStatusForTend(Pawn patient, Pawn doctor)
 		{
+			if (patient == doctor)
+			{
+				return patient.GetPosture() == PawnPosture.Standing;
+			}
 			if (patient.RaceProps.Humanlike)
 			{
 				return patient.InBed();
@@ -37,7 +41,7 @@ namespace RimWorld
 			return patient.GetPosture() != PawnPosture.Standing;
 		}
 
-		public override Job JobOnThing(Pawn pawn, Thing t)
+		public override Job JobOnThing(Pawn pawn, Thing t, bool forced = false)
 		{
 			Pawn pawn2 = t as Pawn;
 			Thing thing = null;

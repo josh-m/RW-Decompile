@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using UnityEngine;
 using Verse;
@@ -20,6 +19,8 @@ namespace RimWorld.Planet
 		private const float PawnLabelColumnWidth = 100f;
 
 		private const float NonPawnLabelColumnWidth = 300f;
+
+		public const float ItemMassColumnWidth = 60f;
 
 		private const float SpaceAroundIcon = 4f;
 
@@ -47,6 +48,8 @@ namespace RimWorld.Planet
 
 		private static List<Thought> thoughtGroupsPresent = new List<Thought>();
 
+		private static List<Thought> thoughtGroup = new List<Thought>();
+
 		public static void DoRows(Vector2 size, List<Thing> things, Caravan caravan, ref Vector2 scrollPosition, ref float scrollViewHeight, bool alwaysShowItemsSection, ref Pawn specificNeedsTabForPawn, bool doNeeds = true)
 		{
 			if (specificNeedsTabForPawn != null && (!things.Contains(specificNeedsTabForPawn) || specificNeedsTabForPawn.Dead))
@@ -57,7 +60,7 @@ namespace RimWorld.Planet
 			Rect rect = new Rect(0f, 0f, size.x, size.y).ContractedBy(10f);
 			Rect viewRect = new Rect(0f, 0f, rect.width - 16f, scrollViewHeight);
 			bool listingUsesAbandonSpecificCountButtons = CaravanPeopleAndItemsTabUtility.AnyItemOrEmpty(things);
-			Widgets.BeginScrollView(rect, ref scrollPosition, viewRect);
+			Widgets.BeginScrollView(rect, ref scrollPosition, viewRect, true);
 			float num = 0f;
 			bool flag = false;
 			for (int i = 0; i < things.Count; i++)
@@ -133,15 +136,17 @@ namespace RimWorld.Planet
 				{
 					num += (float)CaravanPeopleAndItemsTabUtility.MaxNeedsCount(things) * 100f;
 				}
+				num += 24f;
 			}
 			float num2 = 0f;
 			if (CaravanPeopleAndItemsTabUtility.AnyItemOrEmpty(things))
 			{
 				num2 = 300f;
 				num2 += 24f;
+				num2 += 60f;
 			}
 			Vector2 result;
-			result.x = 127f + Mathf.Max(num, num2) + 16f;
+			result.x = 103f + Mathf.Max(num, num2) + 16f;
 			result.y = Mathf.Min(550f, paneTopY - 30f);
 			return result;
 		}
@@ -181,12 +186,12 @@ namespace RimWorld.Planet
 				if (p == specificTabForPawn)
 				{
 					specificTabForPawn = null;
-					SoundDefOf.TabClose.PlayOneShotOnCamera();
+					SoundDefOf.TabClose.PlayOneShotOnCamera(null);
 				}
 				else
 				{
 					specificTabForPawn = p;
-					SoundDefOf.TabOpen.PlayOneShotOnCamera();
+					SoundDefOf.TabOpen.PlayOneShotOnCamera(null);
 				}
 			}
 			TooltipHandler.TipRegion(rect, "OpenSpecificTabButtonTip".Translate());
@@ -240,17 +245,24 @@ namespace RimWorld.Planet
 			if (pawn != null && !pawn.Dead)
 			{
 				CaravanPeopleAndItemsTabUtility.DoOpenSpecificTabButton(rect2, pawn, ref specificNeedsTabForPawn);
+				rect2.width -= 24f;
 			}
-			rect2.width -= 24f;
+			if (pawn == null)
+			{
+				Rect rect3 = rect2;
+				rect3.xMin = rect3.xMax - 60f;
+				CaravanPeopleAndItemsTabUtility.TryDrawMass(thing, rect3);
+				rect2.width -= 60f;
+			}
 			if (Mouse.IsOver(rect2))
 			{
 				Widgets.DrawHighlight(rect2);
 			}
-			Rect rect3 = new Rect(4f, (rect.height - 27f) / 2f, 27f, 27f);
-			Widgets.ThingIcon(rect3, thing, 1f);
+			Rect rect4 = new Rect(4f, (rect.height - 27f) / 2f, 27f, 27f);
+			Widgets.ThingIcon(rect4, thing, 1f);
 			if (pawn != null)
 			{
-				Rect bgRect = new Rect(rect3.xMax + 4f, 16f, 100f, 18f);
+				Rect bgRect = new Rect(rect4.xMax + 4f, 16f, 100f, 18f);
 				GenMapUI.DrawPawnLabel(pawn, bgRect, 1f, 100f, null, GameFont.Small, false, false);
 				if (doNeeds)
 				{
@@ -261,16 +273,16 @@ namespace RimWorld.Planet
 						Need need = CaravanPeopleAndItemsTabUtility.tmpNeeds[i];
 						int maxThresholdMarkers = 0;
 						bool doTooltip = true;
-						Rect rect4 = new Rect(xMax, 0f, 100f, 50f);
+						Rect rect5 = new Rect(xMax, 0f, 100f, 50f);
 						Need_Mood mood = need as Need_Mood;
 						if (mood != null)
 						{
 							maxThresholdMarkers = 1;
 							doTooltip = false;
-							TooltipHandler.TipRegion(rect4, new TipSignal(() => CaravanPeopleAndItemsTabUtility.CustomMoodNeedTooltip(mood), rect4.GetHashCode()));
+							TooltipHandler.TipRegion(rect5, new TipSignal(() => CaravanPeopleAndItemsTabUtility.CustomMoodNeedTooltip(mood), rect5.GetHashCode()));
 						}
-						need.DrawOnGUI(rect4, maxThresholdMarkers, 10f, false, doTooltip);
-						xMax = rect4.xMax;
+						need.DrawOnGUI(rect5, maxThresholdMarkers, 10f, false, doTooltip);
+						xMax = rect5.xMax;
 					}
 				}
 				if (pawn.Downed)
@@ -282,14 +294,26 @@ namespace RimWorld.Planet
 			}
 			else
 			{
-				Rect rect5 = new Rect(rect3.xMax + 4f, 0f, 300f, 30f);
+				Rect rect6 = new Rect(rect4.xMax + 4f, 0f, 300f, 30f);
 				Text.Anchor = TextAnchor.MiddleLeft;
 				Text.WordWrap = false;
-				Widgets.Label(rect5, thing.LabelCap);
+				Widgets.Label(rect6, thing.LabelCap);
 				Text.Anchor = TextAnchor.UpperLeft;
 				Text.WordWrap = true;
 			}
 			GUI.EndGroup();
+		}
+
+		public static void TryDrawMass(Thing thing, Rect rect)
+		{
+			float mass = thing.GetInnerIfMinified().GetStatValue(StatDefOf.Mass, true) * (float)thing.stackCount;
+			GUI.color = TransferableOneWayWidget.ItemMassColor;
+			Text.Anchor = TextAnchor.MiddleLeft;
+			Text.WordWrap = false;
+			Widgets.Label(rect, mass.ToStringMass());
+			Text.WordWrap = true;
+			Text.Anchor = TextAnchor.UpperLeft;
+			GUI.color = Color.white;
 		}
 
 		private static void GetNeedsToDisplay(Pawn p, List<Need> outNeeds)
@@ -315,9 +339,9 @@ namespace RimWorld.Planet
 			bool flag = false;
 			for (int i = 0; i < CaravanPeopleAndItemsTabUtility.thoughtGroupsPresent.Count; i++)
 			{
-				Thought thought = CaravanPeopleAndItemsTabUtility.thoughtGroupsPresent[i];
-				List<Thought> list = mood.thoughts.ThoughtsInGroup(thought).ToList<Thought>();
-				Thought leadingThoughtInGroup = PawnNeedsUIUtility.GetLeadingThoughtInGroup(list);
+				Thought group = CaravanPeopleAndItemsTabUtility.thoughtGroupsPresent[i];
+				mood.thoughts.GetMoodThoughts(group, CaravanPeopleAndItemsTabUtility.thoughtGroup);
+				Thought leadingThoughtInGroup = PawnNeedsUIUtility.GetLeadingThoughtInGroup(CaravanPeopleAndItemsTabUtility.thoughtGroup);
 				if (leadingThoughtInGroup.VisibleInNeedsTab)
 				{
 					if (!flag)
@@ -326,13 +350,13 @@ namespace RimWorld.Planet
 						stringBuilder.AppendLine();
 					}
 					stringBuilder.Append(leadingThoughtInGroup.LabelCap);
-					if (list.Count > 1)
+					if (CaravanPeopleAndItemsTabUtility.thoughtGroup.Count > 1)
 					{
 						stringBuilder.Append(" x");
-						stringBuilder.Append(list.Count);
+						stringBuilder.Append(CaravanPeopleAndItemsTabUtility.thoughtGroup.Count);
 					}
 					stringBuilder.Append(": ");
-					stringBuilder.AppendLine(mood.thoughts.MoodOffsetOfThoughtGroup(thought).ToString("##0"));
+					stringBuilder.AppendLine(mood.thoughts.MoodOffsetOfGroup(group).ToString("##0"));
 				}
 			}
 			return stringBuilder.ToString();

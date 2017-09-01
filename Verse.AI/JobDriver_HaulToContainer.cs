@@ -11,6 +11,16 @@ namespace Verse.AI
 
 		private const TargetIndex DestIndex = TargetIndex.B;
 
+		private const TargetIndex PrimaryDestIndex = TargetIndex.C;
+
+		private Thing Container
+		{
+			get
+			{
+				return (Thing)base.CurJob.GetTarget(TargetIndex.B);
+			}
+		}
+
 		public override string GetReport()
 		{
 			Thing thing;
@@ -34,10 +44,11 @@ namespace Verse.AI
 		{
 			this.FailOnDestroyedOrNull(TargetIndex.A);
 			this.FailOnDestroyedNullOrForbidden(TargetIndex.B);
-			yield return Toils_Reserve.Reserve(TargetIndex.A, 1);
-			yield return Toils_Reserve.ReserveQueue(TargetIndex.A, 1);
-			yield return Toils_Reserve.Reserve(TargetIndex.B, 1);
-			yield return Toils_Reserve.ReserveQueue(TargetIndex.B, 1);
+			this.FailOn(() => TransporterUtility.WasLoadingCanceled(this.<>f__this.Container));
+			yield return Toils_Reserve.Reserve(TargetIndex.A, 1, -1, null);
+			yield return Toils_Reserve.ReserveQueue(TargetIndex.A, 1, -1, null);
+			yield return Toils_Reserve.Reserve(TargetIndex.B, 1, -1, null);
+			yield return Toils_Reserve.ReserveQueue(TargetIndex.B, 1, -1, null);
 			Toil getToHaulTarget = Toils_Goto.GotoThing(TargetIndex.A, PathEndMode.ClosestTouch).FailOnSomeonePhysicallyInteracting(TargetIndex.A);
 			yield return getToHaulTarget;
 			yield return Toils_Construct.UninstallIfMinifiable(TargetIndex.A).FailOnSomeonePhysicallyInteracting(TargetIndex.A);
@@ -46,9 +57,9 @@ namespace Verse.AI
 			Toil carryToContainer = Toils_Haul.CarryHauledThingToContainer();
 			yield return carryToContainer;
 			yield return Toils_Goto.MoveOffTargetBlueprint(TargetIndex.B);
-			yield return Toils_Construct.MakeSolidThingFromBlueprintIfNecessary(TargetIndex.B);
-			yield return Toils_Haul.DepositHauledThingInContainer(TargetIndex.B);
-			yield return Toils_Haul.JumpToCarryToNextContainerIfPossible(carryToContainer);
+			yield return Toils_Construct.MakeSolidThingFromBlueprintIfNecessary(TargetIndex.B, TargetIndex.C);
+			yield return Toils_Haul.DepositHauledThingInContainer(TargetIndex.B, TargetIndex.C);
+			yield return Toils_Haul.JumpToCarryToNextContainerIfPossible(carryToContainer, TargetIndex.C);
 		}
 	}
 }

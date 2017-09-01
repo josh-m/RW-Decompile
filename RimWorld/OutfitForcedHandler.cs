@@ -51,7 +51,7 @@ namespace RimWorld
 
 		public void ExposeData()
 		{
-			Scribe_Collections.LookList<Apparel>(ref this.forcedAps, "forcedAps", LookMode.Reference, new object[0]);
+			Scribe_Collections.Look<Apparel>(ref this.forcedAps, "forcedAps", LookMode.Reference, new object[0]);
 		}
 
 		public bool IsForced(Apparel ap)

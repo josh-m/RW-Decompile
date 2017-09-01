@@ -13,7 +13,7 @@ namespace Verse
 			{
 				if (this.parent != null)
 				{
-					return this.parent.DrawPos + Vector3.up * 0.05f * 0.9f;
+					return this.parent.DrawPos + Vector3.up * 0.046875f * 0.9f;
 				}
 				return base.DrawPos;
 			}
@@ -27,7 +27,7 @@ namespace Verse
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_References.LookReference<Thing>(ref this.parent, "parent", false);
+			Scribe_References.Look<Thing>(ref this.parent, "parent", false);
 			if (Scribe.mode == LoadSaveMode.PostLoadInit && this.parent != null)
 			{
 				this.AttachTo(this.parent);

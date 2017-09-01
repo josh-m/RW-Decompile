@@ -7,6 +7,20 @@ namespace RimWorld
 {
 	public static class ThoughtUtility
 	{
+		public static List<ThoughtDef> situationalSocialThoughtDefs;
+
+		public static List<ThoughtDef> situationalNonSocialThoughtDefs;
+
+		public static void Reset()
+		{
+			ThoughtUtility.situationalSocialThoughtDefs = (from x in DefDatabase<ThoughtDef>.AllDefs
+			where x.IsSituational && x.IsSocial
+			select x).ToList<ThoughtDef>();
+			ThoughtUtility.situationalNonSocialThoughtDefs = (from x in DefDatabase<ThoughtDef>.AllDefs
+			where x.IsSituational && !x.IsSocial
+			select x).ToList<ThoughtDef>();
+		}
+
 		public static void GiveThoughtsForPawnExecuted(Pawn victim, PawnExecutionKind kind)
 		{
 			if (!victim.RaceProps.Humanlike)
@@ -46,7 +60,7 @@ namespace RimWorld
 			where x.IsColonist || x.IsPrisonerOfColony
 			select x)
 			{
-				current.needs.mood.thoughts.memories.TryGainMemoryThought(ThoughtMaker.MakeThought(def, forcedStage), null);
+				current.needs.mood.thoughts.memories.TryGainMemory(ThoughtMaker.MakeThought(def, forcedStage), null);
 			}
 		}
 
@@ -71,11 +85,11 @@ namespace RimWorld
 			{
 				if (current == victim)
 				{
-					current.needs.mood.thoughts.memories.TryGainMemoryThought(ThoughtDefOf.MyOrganHarvested, null);
+					current.needs.mood.thoughts.memories.TryGainMemory(ThoughtDefOf.MyOrganHarvested, null);
 				}
 				else if (thoughtDef != null)
 				{
-					current.needs.mood.thoughts.memories.TryGainMemoryThought(thoughtDef, null);
+					current.needs.mood.thoughts.memories.TryGainMemory(thoughtDef, null);
 				}
 			}
 		}
@@ -100,10 +114,10 @@ namespace RimWorld
 			{
 				return false;
 			}
-			Rand.PushSeed();
+			Rand.PushState();
 			Rand.Seed = pawn.thingIDNumber * 31 + (int)(def.index * 139);
 			bool result = Rand.Value < num;
-			Rand.PopSeed();
+			Rand.PopState();
 			return result;
 		}
 
@@ -120,6 +134,80 @@ namespace RimWorld
 				}
 			}
 			return false;
+		}
+
+		public static void RemovePositiveBedroomThoughts(Pawn pawn)
+		{
+			if (pawn.needs.mood == null)
+			{
+				return;
+			}
+			pawn.needs.mood.thoughts.memories.RemoveMemoriesOfDefIf(ThoughtDefOf.SleptInBedroom, (Thought_Memory thought) => thought.MoodOffset() > 0f);
+			pawn.needs.mood.thoughts.memories.RemoveMemoriesOfDefIf(ThoughtDefOf.SleptInBarracks, (Thought_Memory thought) => thought.MoodOffset() > 0f);
+		}
+
+		public static bool CanGetThought(Pawn pawn, ThoughtDef def)
+		{
+			ProfilerThreadCheck.BeginSample("CanGetThought()");
+			try
+			{
+				if (!def.validWhileDespawned && !pawn.Spawned && !def.IsMemory)
+				{
+					bool result = false;
+					return result;
+				}
+				if (def.nullifyingTraits != null)
+				{
+					for (int i = 0; i < def.nullifyingTraits.Count; i++)
+					{
+						if (pawn.story.traits.HasTrait(def.nullifyingTraits[i]))
+						{
+							bool result = false;
+							return result;
+						}
+					}
+				}
+				if (!def.requiredTraits.NullOrEmpty<TraitDef>())
+				{
+					bool flag = false;
+					for (int j = 0; j < def.requiredTraits.Count; j++)
+					{
+						if (pawn.story.traits.HasTrait(def.requiredTraits[j]))
+						{
+							if (!def.RequiresSpecificTraitsDegree || def.requiredTraitsDegree == pawn.story.traits.DegreeOfTrait(def.requiredTraits[j]))
+							{
+								flag = true;
+								break;
+							}
+						}
+					}
+					if (!flag)
+					{
+						bool result = false;
+						return result;
+					}
+				}
+				if (def.nullifiedIfNotColonist && !pawn.IsColonist)
+				{
+					bool result = false;
+					return result;
+				}
+				if (ThoughtUtility.IsSituationalThoughtNullifiedByHediffs(def, pawn))
+				{
+					bool result = false;
+					return result;
+				}
+				if (ThoughtUtility.IsThoughtNullifiedByOwnTales(def, pawn))
+				{
+					bool result = false;
+					return result;
+				}
+			}
+			finally
+			{
+				ProfilerThreadCheck.EndSample();
+			}
+			return true;
 		}
 	}
 }

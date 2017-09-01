@@ -17,13 +17,13 @@ namespace RimWorld
 			return pawn.Map.listerHaulables.ThingsPotentiallyNeedingHauling().Count == 0;
 		}
 
-		public override Job JobOnThing(Pawn pawn, Thing t)
+		public override Job JobOnThing(Pawn pawn, Thing t, bool forced = false)
 		{
 			if (t is Corpse)
 			{
 				return null;
 			}
-			if (!HaulAIUtility.PawnCanAutomaticallyHaulFast(pawn, t))
+			if (!HaulAIUtility.PawnCanAutomaticallyHaulFast(pawn, t, forced))
 			{
 				return null;
 			}

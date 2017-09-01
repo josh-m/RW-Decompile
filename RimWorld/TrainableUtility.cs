@@ -68,7 +68,7 @@ namespace RimWorld
 			{
 				string text = RelationsUtility.LabelWithBondInfo(current, p);
 				int level = current.skills.GetSkill(SkillDefOf.Animals).Level;
-				int num = Mathf.RoundToInt(p.GetStatValue(StatDefOf.MinimumHandlingSkill, true));
+				int num = TrainableUtility.MinimumHandlingSkill(p);
 				Action action;
 				if (level >= num)
 				{
@@ -91,6 +91,11 @@ namespace RimWorld
 				list.Add(new FloatMenuOption(text, action, MenuOptionPriority.Default, null, null, 0f, null, null));
 			}
 			Find.WindowStack.Add(new FloatMenu(list));
+		}
+
+		public static int MinimumHandlingSkill(Pawn p)
+		{
+			return Mathf.RoundToInt(p.GetStatValue(StatDefOf.MinimumHandlingSkill, true));
 		}
 	}
 }

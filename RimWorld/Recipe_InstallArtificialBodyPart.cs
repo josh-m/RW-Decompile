@@ -53,6 +53,14 @@ namespace RimWorld
 				});
 				MedicalRecipesUtility.RestorePartAndSpawnAllPreviousParts(pawn, part, billDoer.Position, billDoer.Map);
 			}
+			else if (pawn.Map != null)
+			{
+				MedicalRecipesUtility.RestorePartAndSpawnAllPreviousParts(pawn, part, pawn.Position, pawn.Map);
+			}
+			else
+			{
+				pawn.health.RestorePart(part, null, true);
+			}
 			pawn.health.AddHediff(this.recipe.addsHediff, part, null);
 		}
 	}

@@ -6,9 +6,9 @@ namespace RimWorld
 {
 	public static class ImpactSoundUtility
 	{
-		public static void PlayImpactSound(Thing hitThing, ImpactSoundType ist, Map map)
+		public static void PlayImpactSound(Thing hitThing, ImpactSoundTypeDef ist, Map map)
 		{
-			if (ist == ImpactSoundType.None)
+			if (ist == null)
 			{
 				return;
 			}

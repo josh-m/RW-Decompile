@@ -22,7 +22,7 @@ namespace RimWorld
 
 		public static readonly IntRange ExpiryInterval_ShooterSucceeded = new IntRange(450, 550);
 
-		private static readonly IntRange ExpiryInterval_Melee = new IntRange(300, 400);
+		private static readonly IntRange ExpiryInterval_Melee = new IntRange(360, 480);
 
 		protected abstract bool TryFindShootingPosition(Pawn pawn, out IntVec3 dest);
 
@@ -72,7 +72,7 @@ namespace RimWorld
 			bool flag = CoverUtility.CalculateOverallBlockChance(pawn.Position, enemyTarget.Position, pawn.Map) > 0.01f;
 			bool flag2 = pawn.Position.Standable(pawn.Map);
 			bool flag3 = verb.CanHitTarget(enemyTarget);
-			bool flag4 = (pawn.Position - enemyTarget.Position).LengthHorizontalSquared < 25f;
+			bool flag4 = (pawn.Position - enemyTarget.Position).LengthHorizontalSquared < 25;
 			if ((flag && flag2 && flag3) || (flag4 && flag3))
 			{
 				return new Job(JobDefOf.WaitCombat, JobGiver_AIFightEnemy.ExpiryInterval_ShooterSucceeded.RandomInRange, true);
@@ -107,7 +107,7 @@ namespace RimWorld
 		protected virtual void UpdateEnemyTarget(Pawn pawn)
 		{
 			Thing thing = pawn.mindState.enemyTarget;
-			if (thing != null && (thing.Destroyed || Find.TickManager.TicksGame - pawn.mindState.lastEngageTargetTick > 400 || !pawn.CanReach(thing, PathEndMode.Touch, Danger.Deadly, false, TraverseMode.ByPawn) || (pawn.Position - thing.Position).LengthHorizontalSquared > this.targetKeepRadius * this.targetKeepRadius || ((IAttackTarget)thing).ThreatDisabled()))
+			if (thing != null && (thing.Destroyed || Find.TickManager.TicksGame - pawn.mindState.lastEngageTargetTick > 400 || !pawn.CanReach(thing, PathEndMode.Touch, Danger.Deadly, false, TraverseMode.ByPawn) || (float)(pawn.Position - thing.Position).LengthHorizontalSquared > this.targetKeepRadius * this.targetKeepRadius || ((IAttackTarget)thing).ThreatDisabled()))
 			{
 				thing = null;
 			}
@@ -156,7 +156,7 @@ namespace RimWorld
 
 		protected virtual Thing FindAttackTarget(Pawn pawn)
 		{
-			TargetScanFlags targetScanFlags = TargetScanFlags.NeedLOSToPawns | TargetScanFlags.NeedReachable | TargetScanFlags.NeedThreat;
+			TargetScanFlags targetScanFlags = TargetScanFlags.NeedLOSToPawns | TargetScanFlags.NeedReachableIfCantHitFromMyPos | TargetScanFlags.NeedThreat;
 			if (this.needLOSToAcquireNonPawnTargets)
 			{
 				targetScanFlags |= TargetScanFlags.NeedLOSToNonPawns;
@@ -165,7 +165,7 @@ namespace RimWorld
 			{
 				targetScanFlags |= TargetScanFlags.NeedNonBurning;
 			}
-			return AttackTargetFinder.BestAttackTarget(pawn, targetScanFlags, (Thing x) => this.ExtraTargetValidator(pawn, x), 0f, this.targetAcquireRadius, this.GetFlagPosition(pawn), this.GetFlagRadius(pawn), false);
+			return (Thing)AttackTargetFinder.BestAttackTarget(pawn, targetScanFlags, (Thing x) => this.ExtraTargetValidator(pawn, x), 0f, this.targetAcquireRadius, this.GetFlagPosition(pawn), this.GetFlagRadius(pawn), false);
 		}
 
 		private bool PrimaryVerbIsIncendiary(Pawn pawn)

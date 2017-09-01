@@ -66,10 +66,10 @@ namespace RimWorld.Planet
 			{
 				if (CaravanTweenerUtility.DrawPosCollides(caravan))
 				{
-					Rand.PushSeed();
+					Rand.PushState();
 					Rand.Seed = caravan.ID;
 					float f = Rand.Range(0f, 360f);
-					Rand.PopSeed();
+					Rand.PopState();
 					Vector2 point = new Vector2(Mathf.Cos(f), Mathf.Sin(f)) * d;
 					return WorldRendererUtility.ProjectOnQuadTangentialToPlanet(CaravanTweenerUtility.PatherTweenedPosRoot(caravan), point);
 				}

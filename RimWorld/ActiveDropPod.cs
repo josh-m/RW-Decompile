@@ -1,10 +1,11 @@
 using System;
+using System.Collections.Generic;
 using Verse;
 using Verse.Sound;
 
 namespace RimWorld
 {
-	public class ActiveDropPod : Thing, IActiveDropPod, IThingContainerOwner
+	public class ActiveDropPod : Thing, IActiveDropPod, IThingHolder
 	{
 		public int age;
 
@@ -33,26 +34,25 @@ namespace RimWorld
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Values.LookValue<int>(ref this.age, "age", 0, false);
-			Scribe_Deep.LookDeep<ActiveDropPodInfo>(ref this.contents, "contents", new object[]
+			Scribe_Values.Look<int>(ref this.age, "age", 0, false);
+			Scribe_Deep.Look<ActiveDropPodInfo>(ref this.contents, "contents", new object[]
 			{
 				this
 			});
 		}
 
-		public ThingContainer GetInnerContainer()
+		public ThingOwner GetDirectlyHeldThings()
 		{
-			return this.contents.innerContainer;
+			return null;
 		}
 
-		public IntVec3 GetPosition()
+		public void GetChildHolders(List<IThingHolder> outChildren)
 		{
-			return base.PositionHeld;
-		}
-
-		public Map GetMap()
-		{
-			return base.MapHeld;
+			ThingOwnerUtility.AppendThingHoldersFromThings(outChildren, this.GetDirectlyHeldThings());
+			if (this.contents != null)
+			{
+				outChildren.Add(this.contents);
+			}
 		}
 
 		public override void Tick()
@@ -69,7 +69,7 @@ namespace RimWorld
 			this.contents.innerContainer.ClearAndDestroyContents(DestroyMode.Vanish);
 			Map map = base.Map;
 			base.Destroy(mode);
-			if (mode == DestroyMode.Kill)
+			if (mode == DestroyMode.KillFinalize)
 			{
 				for (int i = 0; i < 1; i++)
 				{
@@ -81,7 +81,7 @@ namespace RimWorld
 
 		private void PodOpen()
 		{
-			for (int i = 0; i < this.contents.innerContainer.Count; i++)
+			for (int i = this.contents.innerContainer.Count - 1; i >= 0; i--)
 			{
 				Thing thing = this.contents.innerContainer[i];
 				Thing thing2;
@@ -108,7 +108,7 @@ namespace RimWorld
 					}
 				}
 			}
-			this.contents.innerContainer.Clear();
+			this.contents.innerContainer.ClearAndDestroyContents(DestroyMode.Vanish);
 			if (this.contents.leaveSlag)
 			{
 				for (int j = 0; j < 1; j++)
@@ -121,9 +121,9 @@ namespace RimWorld
 			this.Destroy(DestroyMode.Vanish);
 		}
 
-		virtual bool get_Spawned()
+		virtual IThingHolder get_ParentHolder()
 		{
-			return base.Spawned;
+			return base.ParentHolder;
 		}
 	}
 }

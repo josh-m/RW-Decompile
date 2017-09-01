@@ -138,6 +138,10 @@ namespace Verse
 			{
 				if (this.displayRootCategoryInt == null)
 				{
+					this.RecalculateDisplayRootCategory();
+				}
+				if (this.displayRootCategoryInt == null)
+				{
 					return ThingCategoryNodeDatabase.RootNode;
 				}
 				return this.displayRootCategoryInt;
@@ -162,12 +166,12 @@ namespace Verse
 			this.settingsChangedCallback = settingsChangedCallback;
 		}
 
-		public void ExposeData()
+		public virtual void ExposeData()
 		{
-			Scribe_Collections.LookList<SpecialThingFilterDef>(ref this.disallowedSpecialFilters, "disallowedSpecialFilters", LookMode.Def, new object[0]);
-			Scribe_Collections.LookHashSet<ThingDef>(ref this.allowedDefs, "allowedDefs", LookMode.Undefined);
-			Scribe_Values.LookValue<FloatRange>(ref this.allowedHitPointsPercents, "allowedHitPointsPercents", default(FloatRange), false);
-			Scribe_Values.LookValue<QualityRange>(ref this.allowedQualities, "allowedQualityLevels", default(QualityRange), false);
+			Scribe_Collections.Look<SpecialThingFilterDef>(ref this.disallowedSpecialFilters, "disallowedSpecialFilters", LookMode.Def, new object[0]);
+			Scribe_Collections.Look<ThingDef>(ref this.allowedDefs, "allowedDefs", LookMode.Undefined);
+			Scribe_Values.Look<FloatRange>(ref this.allowedHitPointsPercents, "allowedHitPointsPercents", default(FloatRange), false);
+			Scribe_Values.Look<QualityRange>(ref this.allowedQualities, "allowedQualityLevels", default(QualityRange), false);
 		}
 
 		public void ResolveReferences()
@@ -201,7 +205,7 @@ namespace Verse
 					ThingCategoryDef named = DefDatabase<ThingCategoryDef>.GetNamed(this.categories[k], true);
 					if (named != null)
 					{
-						this.SetAllow(named, true);
+						this.SetAllow(named, true, null, null);
 					}
 				}
 			}
@@ -226,7 +230,7 @@ namespace Verse
 					ThingCategoryDef named2 = DefDatabase<ThingCategoryDef>.GetNamed(this.exceptedCategories[m], true);
 					if (named2 != null)
 					{
-						this.SetAllow(named2, false);
+						this.SetAllow(named2, false, null, null);
 					}
 				}
 			}
@@ -325,7 +329,7 @@ namespace Verse
 			return false;
 		}
 
-		public void CopyAllowancesFrom(ThingFilter other)
+		public virtual void CopyAllowancesFrom(ThingFilter other)
 		{
 			this.allowedDefs.Clear();
 			foreach (ThingDef current in ThingFilter.AllStorableThingDefs)
@@ -398,7 +402,7 @@ namespace Verse
 			}
 		}
 
-		public void SetAllow(ThingCategoryDef categoryDef, bool allow)
+		public void SetAllow(ThingCategoryDef categoryDef, bool allow, IEnumerable<ThingDef> exceptedDefs = null, IEnumerable<SpecialThingFilterDef> exceptedFilters = null)
 		{
 			if (!ThingCategoryNodeDatabase.initialized)
 			{
@@ -406,11 +410,17 @@ namespace Verse
 			}
 			foreach (ThingDef current in categoryDef.DescendantThingDefs)
 			{
-				this.SetAllow(current, allow);
+				if (exceptedDefs == null || !exceptedDefs.Contains(current))
+				{
+					this.SetAllow(current, allow);
+				}
 			}
 			foreach (SpecialThingFilterDef current2 in categoryDef.DescendantSpecialThingFilterDefs)
 			{
-				this.SetAllow(current2, allow);
+				if (exceptedFilters == null || !exceptedFilters.Contains(current2))
+				{
+					this.SetAllow(current2, allow);
+				}
 			}
 			if (this.settingsChangedCallback != null)
 			{
@@ -454,19 +464,19 @@ namespace Verse
 		{
 			if (preset == StorageSettingsPreset.DefaultStockpile)
 			{
-				this.SetAllow(ThingCategoryDefOf.Foods, true);
-				this.SetAllow(ThingCategoryDefOf.Manufactured, true);
-				this.SetAllow(ThingCategoryDefOf.ResourcesRaw, true);
-				this.SetAllow(ThingCategoryDefOf.Items, true);
-				this.SetAllow(ThingCategoryDefOf.Art, true);
-				this.SetAllow(ThingCategoryDefOf.Weapons, true);
-				this.SetAllow(ThingCategoryDefOf.Apparel, true);
-				this.SetAllow(ThingCategoryDefOf.BodyParts, true);
+				this.SetAllow(ThingCategoryDefOf.Foods, true, null, null);
+				this.SetAllow(ThingCategoryDefOf.Manufactured, true, null, null);
+				this.SetAllow(ThingCategoryDefOf.ResourcesRaw, true, null, null);
+				this.SetAllow(ThingCategoryDefOf.Items, true, null, null);
+				this.SetAllow(ThingCategoryDefOf.Art, true, null, null);
+				this.SetAllow(ThingCategoryDefOf.Weapons, true, null, null);
+				this.SetAllow(ThingCategoryDefOf.Apparel, true, null, null);
+				this.SetAllow(ThingCategoryDefOf.BodyParts, true, null, null);
 			}
 			if (preset == StorageSettingsPreset.DumpingStockpile)
 			{
-				this.SetAllow(ThingCategoryDefOf.Corpses, true);
-				this.SetAllow(ThingCategoryDefOf.Chunks, true);
+				this.SetAllow(ThingCategoryDefOf.Corpses, true, null, null);
+				this.SetAllow(ThingCategoryDefOf.Chunks, true, null, null);
 			}
 			if (this.settingsChangedCallback != null)
 			{
@@ -518,7 +528,7 @@ namespace Verse
 			}
 		}
 
-		public bool Allows(Thing t)
+		public virtual bool Allows(Thing t)
 		{
 			if (!this.Allows(t.def))
 			{
@@ -527,7 +537,7 @@ namespace Verse
 			if (t.def.useHitPoints)
 			{
 				float num = (float)t.HitPoints / (float)t.MaxHitPoints;
-				num = Mathf.Round(num * 100f) / 100f;
+				num = GenMath.RoundedHundredth(num);
 				if (!this.allowedHitPointsPercents.IncludesEpsilon(Mathf.Clamp01(num)))
 				{
 					return false;

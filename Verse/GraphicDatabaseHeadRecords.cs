@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace Verse
 {
-	public class GraphicDatabaseHeadRecords
+	public static class GraphicDatabaseHeadRecords
 	{
 		private class HeadGraphicRecord
 		{
@@ -56,7 +56,9 @@ namespace Verse
 
 		private static List<GraphicDatabaseHeadRecords.HeadGraphicRecord> heads = new List<GraphicDatabaseHeadRecords.HeadGraphicRecord>();
 
-		private static GraphicDatabaseHeadRecords.HeadGraphicRecord skull = null;
+		private static GraphicDatabaseHeadRecords.HeadGraphicRecord skull;
+
+		private static GraphicDatabaseHeadRecords.HeadGraphicRecord stump;
 
 		private static readonly string[] HeadsFolderPaths = new string[]
 		{
@@ -66,18 +68,22 @@ namespace Verse
 
 		private static readonly string SkullPath = "Things/Pawn/Humanlike/Heads/None_Average_Skull";
 
+		private static readonly string StumpPath = "Things/Pawn/Humanlike/Heads/None_Average_Stump";
+
 		public static void Reset()
 		{
 			GraphicDatabaseHeadRecords.heads.Clear();
 			GraphicDatabaseHeadRecords.skull = null;
+			GraphicDatabaseHeadRecords.stump = null;
 		}
 
 		private static void BuildDatabaseIfNecessary()
 		{
-			if (GraphicDatabaseHeadRecords.heads.Count > 0 && GraphicDatabaseHeadRecords.skull != null)
+			if (GraphicDatabaseHeadRecords.heads.Count > 0 && GraphicDatabaseHeadRecords.skull != null && GraphicDatabaseHeadRecords.stump != null)
 			{
 				return;
 			}
+			GraphicDatabaseHeadRecords.heads.Clear();
 			string[] headsFolderPaths = GraphicDatabaseHeadRecords.HeadsFolderPaths;
 			for (int i = 0; i < headsFolderPaths.Length; i++)
 			{
@@ -88,6 +94,7 @@ namespace Verse
 				}
 			}
 			GraphicDatabaseHeadRecords.skull = new GraphicDatabaseHeadRecords.HeadGraphicRecord(GraphicDatabaseHeadRecords.SkullPath);
+			GraphicDatabaseHeadRecords.stump = new GraphicDatabaseHeadRecords.HeadGraphicRecord(GraphicDatabaseHeadRecords.StumpPath);
 		}
 
 		public static Graphic_Multi GetHeadNamed(string graphicPath, Color skinColor)
@@ -109,6 +116,12 @@ namespace Verse
 		{
 			GraphicDatabaseHeadRecords.BuildDatabaseIfNecessary();
 			return GraphicDatabaseHeadRecords.skull.GetGraphic(Color.white);
+		}
+
+		public static Graphic_Multi GetStump(Color skinColor)
+		{
+			GraphicDatabaseHeadRecords.BuildDatabaseIfNecessary();
+			return GraphicDatabaseHeadRecords.stump.GetGraphic(skinColor);
 		}
 
 		public static Graphic_Multi GetHeadRandom(Gender gender, Color skinColor, CrownType crownType)

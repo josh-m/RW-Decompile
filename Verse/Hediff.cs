@@ -1,4 +1,5 @@
 using RimWorld;
+using RimWorld.Planet;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -26,8 +27,6 @@ namespace Verse
 		private bool recordedTale;
 
 		protected bool causesNoPain;
-
-		public bool hiddenOffMap;
 
 		[Unsaved]
 		public Pawn pawn;
@@ -140,6 +139,14 @@ namespace Verse
 			}
 		}
 
+		public bool Bleeding
+		{
+			get
+			{
+				return this.BleedRate > 1E-05f;
+			}
+		}
+
 		public virtual float PainOffset
 		{
 			get
@@ -169,6 +176,26 @@ namespace Verse
 			get
 			{
 				return 0f;
+			}
+		}
+
+		public virtual float TendPriority
+		{
+			get
+			{
+				float num = 0f;
+				HediffStage curStage = this.CurStage;
+				if (curStage != null && curStage.lifeThreatening)
+				{
+					num = Mathf.Max(num, 1f);
+				}
+				num = Mathf.Max(num, this.BleedRate * 1.5f);
+				HediffComp_TendDuration hediffComp_TendDuration = this.TryGetComp<HediffComp_TendDuration>();
+				if (hediffComp_TendDuration != null && hediffComp_TendDuration.TProps.severityPerDayTended < 0f)
+				{
+					num = Mathf.Max(num, 0.025f);
+				}
+				return num;
 			}
 		}
 
@@ -267,16 +294,15 @@ namespace Verse
 
 		public virtual void ExposeData()
 		{
-			Scribe_Defs.LookDef<HediffDef>(ref this.def, "def");
-			Scribe_Values.LookValue<int>(ref this.ageTicks, "ageTicks", 0, false);
-			Scribe_Defs.LookDef<ThingDef>(ref this.source, "source");
-			Scribe_Defs.LookDef<BodyPartGroupDef>(ref this.sourceBodyPartGroup, "sourceBodyPartGroup");
-			Scribe_Defs.LookDef<HediffDef>(ref this.sourceHediffDef, "sourceHediffDef");
-			Scribe_Values.LookValue<int>(ref this.partIndex, "partIndex", -1, false);
-			Scribe_Values.LookValue<float>(ref this.severityInt, "severity", 0f, false);
-			Scribe_Values.LookValue<bool>(ref this.recordedTale, "recordedTale", false, false);
-			Scribe_Values.LookValue<bool>(ref this.causesNoPain, "causesNoPain", false, false);
-			Scribe_Values.LookValue<bool>(ref this.hiddenOffMap, "hiddenOffMap", false, false);
+			Scribe_Defs.Look<HediffDef>(ref this.def, "def");
+			Scribe_Values.Look<int>(ref this.ageTicks, "ageTicks", 0, false);
+			Scribe_Defs.Look<ThingDef>(ref this.source, "source");
+			Scribe_Defs.Look<BodyPartGroupDef>(ref this.sourceBodyPartGroup, "sourceBodyPartGroup");
+			Scribe_Defs.Look<HediffDef>(ref this.sourceHediffDef, "sourceHediffDef");
+			Scribe_Values.Look<int>(ref this.partIndex, "partIndex", -1, false);
+			Scribe_Values.Look<float>(ref this.severityInt, "severity", 0f, false);
+			Scribe_Values.Look<bool>(ref this.recordedTale, "recordedTale", false, false);
+			Scribe_Values.Look<bool>(ref this.causesNoPain, "causesNoPain", false, false);
 			if (Scribe.mode == LoadSaveMode.PostLoadInit && this.partIndex >= 0)
 			{
 				this.cachedPart = this.pawn.RaceProps.body.GetPartAtIndex(this.partIndex);
@@ -293,50 +319,57 @@ namespace Verse
 					this.def.hediffGivers[i].OnIntervalPassed(this.pawn, this);
 				}
 			}
-			if (this.CurStage != null)
+			HediffStage curStage = this.CurStage;
+			if (curStage != null)
 			{
-				if (this.CurStage.hediffGivers != null && this.pawn.IsHashIntervalTick(60))
+				if (curStage.hediffGivers != null && this.pawn.IsHashIntervalTick(60))
 				{
-					for (int j = 0; j < this.CurStage.hediffGivers.Count; j++)
+					for (int j = 0; j < curStage.hediffGivers.Count; j++)
 					{
-						this.CurStage.hediffGivers[j].OnIntervalPassed(this.pawn, this);
+						curStage.hediffGivers[j].OnIntervalPassed(this.pawn, this);
 					}
 				}
-				if (this.CurStage.mentalStateGivers != null && !this.pawn.InMentalState && this.pawn.IsHashIntervalTick(60))
+				if (curStage.mentalStateGivers != null && this.pawn.IsHashIntervalTick(60) && !this.pawn.InMentalState)
 				{
-					for (int k = 0; k < this.CurStage.mentalStateGivers.Count; k++)
+					for (int k = 0; k < curStage.mentalStateGivers.Count; k++)
 					{
-						MentalStateGiver mentalStateGiver = this.CurStage.mentalStateGivers[k];
+						MentalStateGiver mentalStateGiver = curStage.mentalStateGivers[k];
 						if (Rand.MTBEventOccurs(mentalStateGiver.mtbDays, 60000f, 60f))
 						{
 							this.pawn.mindState.mentalStateHandler.TryStartMentalState(mentalStateGiver.mentalState, null, false, false, null);
 						}
 					}
 				}
-				if (this.CurStage.vomitMtbDays > 0f && this.pawn.IsHashIntervalTick(600) && Rand.MTBEventOccurs(this.CurStage.vomitMtbDays, 60000f, 600f) && this.pawn.Spawned && this.pawn.Awake())
+				if (curStage.vomitMtbDays > 0f && this.pawn.IsHashIntervalTick(600) && Rand.MTBEventOccurs(curStage.vomitMtbDays, 60000f, 600f) && this.pawn.Spawned && this.pawn.Awake())
 				{
-					this.pawn.jobs.StartJob(new Job(JobDefOf.Vomit), JobCondition.InterruptForced, null, true, true, null);
+					this.pawn.jobs.StartJob(new Job(JobDefOf.Vomit), JobCondition.InterruptForced, null, true, true, null, null);
 				}
 				Thought_Memory th;
-				if (this.CurStage.forgetMemoryThoughtMtbDays > 0f && this.pawn.needs.mood != null && this.pawn.IsHashIntervalTick(400) && Rand.MTBEventOccurs(this.CurStage.forgetMemoryThoughtMtbDays, 60000f, 400f) && this.pawn.needs.mood.thoughts.memories.Memories.TryRandomElement(out th))
+				if (curStage.forgetMemoryThoughtMtbDays > 0f && this.pawn.needs.mood != null && this.pawn.IsHashIntervalTick(400) && Rand.MTBEventOccurs(curStage.forgetMemoryThoughtMtbDays, 60000f, 400f) && this.pawn.needs.mood.thoughts.memories.Memories.TryRandomElement(out th))
 				{
-					this.pawn.needs.mood.thoughts.memories.RemoveMemoryThought(th);
+					this.pawn.needs.mood.thoughts.memories.RemoveMemory(th);
 				}
-				if (!this.recordedTale && this.CurStage.tale != null)
+				if (!this.recordedTale && curStage.tale != null)
 				{
-					TaleRecorder.RecordTale(this.CurStage.tale, new object[]
+					TaleRecorder.RecordTale(curStage.tale, new object[]
 					{
 						this.pawn
 					});
 					this.recordedTale = true;
 				}
-				if (this.CurStage.destroyPart && this.Part != null && this.Part != this.pawn.RaceProps.body.corePart)
+				if (curStage.destroyPart && this.Part != null && this.Part != this.pawn.RaceProps.body.corePart)
 				{
 					this.pawn.health.AddHediff(HediffDefOf.MissingBodyPart, this.Part, null);
 				}
-				if (this.CurStage.deathMtbDays > 0f && this.pawn.IsHashIntervalTick(200) && Rand.MTBEventOccurs(this.CurStage.deathMtbDays, 60000f, 200f))
+				if (curStage.deathMtbDays > 0f && this.pawn.IsHashIntervalTick(200) && Rand.MTBEventOccurs(curStage.deathMtbDays, 60000f, 200f))
 				{
-					this.pawn.health.Kill(null, this);
+					bool flag = PawnUtility.ShouldSendNotificationAbout(this.pawn);
+					Caravan caravan = this.pawn.GetCaravan();
+					this.pawn.Kill(null);
+					if (flag)
+					{
+						this.pawn.health.NotifyPlayerOfKilled(null, this, caravan);
+					}
 					return;
 				}
 			}
@@ -404,7 +437,12 @@ namespace Verse
 
 		public virtual string DebugString()
 		{
-			return "  severity: " + this.Severity.ToString("F3") + ((this.Severity < this.def.maxSeverity) ? string.Empty : " (reached max)");
+			string text = "severity: " + this.Severity.ToString("F3") + ((this.Severity < this.def.maxSeverity) ? string.Empty : " (reached max)");
+			if (this.TendableNow)
+			{
+				text = text + "\ntend priority: " + this.TendPriority;
+			}
+			return text.Indented();
 		}
 
 		public override string ToString()

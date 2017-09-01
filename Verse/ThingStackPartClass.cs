@@ -58,8 +58,8 @@ namespace Verse
 
 		public void ExposeData()
 		{
-			Scribe_References.LookReference<Thing>(ref this.thing, "thing", false);
-			Scribe_Values.LookValue<int>(ref this.countInt, "count", 1, false);
+			Scribe_References.Look<Thing>(ref this.thing, "thing", false);
+			Scribe_Values.Look<int>(ref this.countInt, "count", 1, false);
 		}
 	}
 }

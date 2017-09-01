@@ -7,12 +7,12 @@ namespace RimWorld
 {
 	public class IncidentWorker_VisitorGroup : IncidentWorker_NeutralGroup
 	{
-		private const float TraderChance = 0.8f;
+		private const float TraderChance = 0.75f;
 
 		public override bool TryExecute(IncidentParms parms)
 		{
 			Map map = (Map)parms.target;
-			if (!this.TryResolveParms(parms))
+			if (!base.TryResolveParms(parms))
 			{
 				return false;
 			}
@@ -26,7 +26,7 @@ namespace RimWorld
 			LordJob_VisitColony lordJob = new LordJob_VisitColony(parms.faction, chillSpot);
 			LordMaker.MakeNewLord(parms.faction, lordJob, map, list);
 			bool flag = false;
-			if (Rand.Value < 0.8f)
+			if (Rand.Value < 0.75f)
 			{
 				flag = this.TryConvertOnePawnToSmallTrader(list, parms.faction, map);
 			}
@@ -64,7 +64,7 @@ namespace RimWorld
 				});
 			}
 			PawnRelationUtility.Notify_PawnsSeenByPlayer(list, ref label, ref text3, "LetterRelatedPawnsNeutralGroup".Translate(), true);
-			Find.LetterStack.ReceiveLetter(label, text3, LetterType.Good, list[0], null);
+			Find.LetterStack.ReceiveLetter(label, text3, LetterDefOf.Good, list[0], null);
 			return true;
 		}
 
@@ -78,10 +78,14 @@ namespace RimWorld
 			Lord lord = pawn.GetLord();
 			pawn.mindState.wantsToTradeWithColony = true;
 			PawnComponentsUtility.AddAndRemoveDynamicComponents(pawn, true);
-			TraderKindDef traderKindDef = faction.def.visitorTraderKinds.RandomElement<TraderKindDef>();
+			TraderKindDef traderKindDef = faction.def.visitorTraderKinds.RandomElementByWeight((TraderKindDef traderDef) => traderDef.commonality);
 			pawn.trader.traderKind = traderKindDef;
 			pawn.inventory.DestroyAll(DestroyMode.Vanish);
-			foreach (Thing current in TraderStockGenerator.GenerateTraderThings(traderKindDef, map))
+			ItemCollectionGeneratorParams parms = default(ItemCollectionGeneratorParams);
+			parms.traderDef = traderKindDef;
+			parms.forTile = map.Tile;
+			parms.forFaction = faction;
+			foreach (Thing current in ItemCollectionGeneratorDefOf.TraderStock.Worker.Generate(parms))
 			{
 				Pawn pawn2 = current as Pawn;
 				if (pawn2 != null)
@@ -90,7 +94,7 @@ namespace RimWorld
 					{
 						pawn2.SetFaction(pawn.Faction, null);
 					}
-					IntVec3 loc = CellFinder.RandomClosewalkCellNear(pawn.Position, map, 5);
+					IntVec3 loc = CellFinder.RandomClosewalkCellNear(pawn.Position, map, 5, null);
 					GenSpawn.Spawn(pawn2, loc, map);
 					lord.AddPawn(pawn2);
 				}

@@ -123,6 +123,14 @@ namespace Verse
 			}
 		}
 
+		private bool AnythingPreventsCameraMotion
+		{
+			get
+			{
+				return Find.WindowStack.WindowsPreventCameraMotion || WorldRendererUtility.WorldRenderedNow;
+			}
+		}
+
 		public IntVec3 MapPosition
 		{
 			get
@@ -180,6 +188,22 @@ namespace Verse
 			this.MyCamera.farClipPlane = 71.5f;
 		}
 
+		public void OnPreRender()
+		{
+			if (LongEventHandler.ShouldWaitForEvent)
+			{
+				return;
+			}
+			if (Find.VisibleMap == null)
+			{
+				return;
+			}
+			if (!WorldRendererUtility.WorldRenderedNow)
+			{
+				Find.VisibleMap.GenerateWaterMap();
+			}
+		}
+
 		public void OnPreCull()
 		{
 			if (LongEventHandler.ShouldWaitForEvent)
@@ -198,6 +222,7 @@ namespace Verse
 
 		public void OnGUI()
 		{
+			GUI.depth = 100;
 			if (LongEventHandler.ShouldWaitForEvent)
 			{
 				return;
@@ -211,7 +236,7 @@ namespace Verse
 			{
 				this.mouseCoveredByUI = true;
 			}
-			if (!Find.WindowStack.WindowsPreventCameraMotion)
+			if (!this.AnythingPreventsCameraMotion)
 			{
 				if (Event.current.type == EventType.MouseDrag && Event.current.button == 2)
 				{
@@ -287,7 +312,7 @@ namespace Verse
 				this.velocity = new Vector3(lhs.x, 0f, lhs.y) * d;
 				PlayerKnowledgeDatabase.KnowledgeDemonstrated(ConceptDefOf.CameraDolly, KnowledgeAmount.FrameInteraction);
 			}
-			if (!Find.WindowStack.WindowsPreventCameraMotion)
+			if (!this.AnythingPreventsCameraMotion)
 			{
 				float d2 = Time.deltaTime * CameraDriver.HitchReduceFactor;
 				this.rootPos += this.velocity * d2 * this.config.moveSpeedScale;
@@ -351,8 +376,8 @@ namespace Verse
 				Rect rect2 = new Rect((float)(UI.screenWidth - 250), 0f, 255f, 255f);
 				Rect rect3 = new Rect(0f, (float)(UI.screenHeight - 250), 225f, 255f);
 				Rect rect4 = new Rect((float)(UI.screenWidth - 250), (float)(UI.screenHeight - 250), 255f, 255f);
-				MainTabWindow_Inspect mainTabWindow_Inspect = (MainTabWindow_Inspect)MainTabDefOf.Inspect.Window;
-				if (Find.MainTabsRoot.OpenTab == MainTabDefOf.Inspect && mainTabWindow_Inspect.RecentHeight > rect3.height)
+				MainTabWindow_Inspect mainTabWindow_Inspect = (MainTabWindow_Inspect)MainButtonDefOf.Inspect.TabWindow;
+				if (Find.MainTabsRoot.OpenTab == MainButtonDefOf.Inspect && mainTabWindow_Inspect.RecentHeight > rect3.height)
 				{
 					rect3.yMin = (float)UI.screenHeight - mainTabWindow_Inspect.RecentHeight;
 				}
@@ -399,11 +424,19 @@ namespace Verse
 
 		public void Expose()
 		{
-			Scribe.EnterNode("cameraMap");
-			Scribe_Values.LookValue<Vector3>(ref this.rootPos, "camRootPos", default(Vector3), false);
-			Scribe_Values.LookValue<float>(ref this.desiredSize, "desiredSize", 0f, false);
-			this.rootSize = this.desiredSize;
-			Scribe.ExitNode();
+			if (Scribe.EnterNode("cameraMap"))
+			{
+				try
+				{
+					Scribe_Values.Look<Vector3>(ref this.rootPos, "camRootPos", default(Vector3), false);
+					Scribe_Values.Look<float>(ref this.desiredSize, "desiredSize", 0f, false);
+					this.rootSize = this.desiredSize;
+				}
+				finally
+				{
+					Scribe.ExitNode();
+				}
+			}
 		}
 
 		public void ResetSize()
@@ -412,14 +445,14 @@ namespace Verse
 			this.rootSize = this.desiredSize;
 		}
 
-		public void JumpTo(Vector3 newLookAt)
+		public void JumpToVisibleMapLoc(IntVec3 cell)
 		{
-			this.rootPos = new Vector3(newLookAt.x, this.rootPos.y, newLookAt.z);
+			this.JumpToVisibleMapLoc(cell.ToVector3Shifted());
 		}
 
-		public void JumpTo(IntVec3 IntLoc)
+		public void JumpToVisibleMapLoc(Vector3 loc)
 		{
-			this.JumpTo(IntLoc.ToVector3Shifted());
+			this.rootPos = new Vector3(loc.x, this.rootPos.y, loc.z);
 		}
 
 		public void SetRootPosAndSize(Vector3 rootPos, float rootSize)

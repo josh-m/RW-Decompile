@@ -53,6 +53,10 @@ namespace RimWorld
 					}
 				}
 			}
+			if (!base.CanPlaceAncientBuildingInRange(rect, map))
+			{
+				return;
+			}
 			ResolveParams resolveParams = default(ResolveParams);
 			resolveParams.rect = rect;
 			resolveParams.disableSinglePawn = new bool?(true);
@@ -63,7 +67,7 @@ namespace RimWorld
 			BaseGen.Generate();
 			RectTrigger rectTrigger = (RectTrigger)ThingMaker.MakeThing(ThingDefOf.RectTrigger, null);
 			rectTrigger.Rect = rect.ExpandedBy(1).ClipInsideMap(map);
-			rectTrigger.letter = new Letter("LetterLabelAncientShrineWarning".Translate(), "AncientShrineWarning".Translate(), LetterType.BadNonUrgent, new TargetInfo(rect.CenterCell, map, false));
+			rectTrigger.letter = LetterMaker.MakeLetter("LetterLabelAncientShrineWarning".Translate(), "AncientShrineWarning".Translate(), LetterDefOf.BadNonUrgent, new TargetInfo(rect.CenterCell, map, false));
 			rectTrigger.destroyIfUnfogged = true;
 			GenSpawn.Spawn(rectTrigger, rect.CenterCell, map);
 		}

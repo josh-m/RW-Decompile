@@ -5,8 +5,6 @@ namespace RimWorld
 	[DefOf]
 	public static class BiomeDefOf
 	{
-		public static BiomeDef Ocean;
-
 		public static BiomeDef IceSheet;
 
 		public static BiomeDef Tundra;
@@ -20,5 +18,11 @@ namespace RimWorld
 		public static BiomeDef Desert;
 
 		public static BiomeDef AridShrubland;
+
+		public static BiomeDef SeaIce;
+
+		public static BiomeDef Ocean;
+
+		public static BiomeDef Lake;
 	}
 }

@@ -8,7 +8,7 @@ namespace Verse.AI.Group
 
 		public override void ExposeData()
 		{
-			Scribe_Values.LookValue<IntVec3>(ref this.dest, "dest", default(IntVec3), false);
+			Scribe_Values.Look<IntVec3>(ref this.dest, "dest", default(IntVec3), false);
 		}
 	}
 }

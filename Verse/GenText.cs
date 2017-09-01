@@ -248,15 +248,27 @@ namespace Verse
 			}
 		}
 
+		public static string GetInvalidFilenameCharacters()
+		{
+			return new string(Path.GetInvalidFileNameChars()) + "/\\{}<>:*|!@#$%^&*?";
+		}
+
 		public static bool IsValidFilename(string str)
 		{
 			if (str.Length > 30)
 			{
 				return false;
 			}
-			string str2 = new string(Path.GetInvalidFileNameChars()) + "/\\{}<>:*|!@#$%^&*?";
-			Regex regex = new Regex("[" + Regex.Escape(str2) + "]");
+			Regex regex = new Regex("[" + Regex.Escape(GenText.GetInvalidFilenameCharacters()) + "]");
 			return !regex.IsMatch(str);
+		}
+
+		public static string SanitizeFilename(string str)
+		{
+			return string.Join("_", str.Split(GenText.GetInvalidFilenameCharacters().ToArray<char>(), StringSplitOptions.RemoveEmptyEntries)).TrimEnd(new char[]
+			{
+				'.'
+			});
 		}
 
 		public static bool NullOrEmpty(this string str)
@@ -457,8 +469,7 @@ namespace Verse
 			IList<string> list = items as IList<string>;
 			if (list != null)
 			{
-				num = list.Count;
-				for (int i = 0; i < num; i++)
+				for (int i = 0; i < list.Count; i++)
 				{
 					string text3 = list[i];
 					if (!text3.NullOrEmpty())
@@ -472,6 +483,7 @@ namespace Verse
 							stringBuilder.Append(text + ", ");
 						}
 						text = text3;
+						num++;
 					}
 				}
 			}
@@ -504,7 +516,7 @@ namespace Verse
 			}
 			if (!useAnd)
 			{
-				stringBuilder.Append(", " + text);
+				stringBuilder.Append(text);
 				return stringBuilder.ToString();
 			}
 			if (num == 2)
@@ -576,6 +588,11 @@ namespace Verse
 				cache.Add(str, text);
 			}
 			return text;
+		}
+
+		public static bool ContainsEmptyLines(string str)
+		{
+			return str.NullOrEmpty() || (str[0] == '\n' || str[0] == '\r') || (str[str.Length - 1] == '\n' || str[str.Length - 1] == '\r') || (str.Contains("\n\n") || str.Contains("\r\n\r\n") || str.Contains("\r\r"));
 		}
 
 		public static string ToStringByStyle(this float f, ToStringStyle style, ToStringNumberSense numberSense = ToStringNumberSense.Absolute)
@@ -695,13 +712,31 @@ namespace Verse
 		{
 			if (mass == 0f)
 			{
-				return "0 kg";
+				return "0 g";
 			}
-			if (Mathf.Abs(mass) < 0.01f)
+			float num = Mathf.Abs(mass);
+			if (num >= 100f)
 			{
-				return (mass * 1000f).ToString("0.##") + " g";
+				return mass.ToString("F0") + " kg";
 			}
-			return mass.ToString("0.##") + " kg";
+			if (num >= 10f)
+			{
+				return mass.ToString("0.#") + " kg";
+			}
+			if (num >= 0.1f)
+			{
+				return mass.ToString("0.##") + " kg";
+			}
+			float num2 = mass * 1000f;
+			if (num >= 0.01f)
+			{
+				return num2.ToString("F0") + " g";
+			}
+			if (num >= 0.001f)
+			{
+				return num2.ToString("0.#") + " g";
+			}
+			return num2.ToString("0.##") + " g";
 		}
 
 		public static string ToStringMassOffset(this float mass)
@@ -914,7 +949,7 @@ namespace Verse
 				case KeyCode.RightControl:
 					return "RCtrl";
 				case KeyCode.LeftControl:
-					return "LCrl";
+					return "LCtrl";
 				case KeyCode.RightAlt:
 					return "RAlt";
 				case KeyCode.LeftAlt:

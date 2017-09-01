@@ -20,23 +20,23 @@ namespace RimWorld
 			{
 				intVec2
 			}, GenTemperature.ColorSpotHot);
-			Room room = intVec2.GetRoom(base.Map);
-			Room room2 = intVec.GetRoom(base.Map);
-			if (room != null && room2 != null)
+			RoomGroup roomGroup = intVec2.GetRoomGroup(base.Map);
+			RoomGroup roomGroup2 = intVec.GetRoomGroup(base.Map);
+			if (roomGroup != null && roomGroup2 != null)
 			{
-				if (room == room2 && !room.UsesOutdoorTemperature)
+				if (roomGroup == roomGroup2 && !roomGroup.UsesOutdoorTemperature)
 				{
-					GenDraw.DrawFieldEdges(room.Cells.ToList<IntVec3>(), new Color(1f, 0.7f, 0f, 0.5f));
+					GenDraw.DrawFieldEdges(roomGroup.Cells.ToList<IntVec3>(), new Color(1f, 0.7f, 0f, 0.5f));
 				}
 				else
 				{
-					if (!room.UsesOutdoorTemperature)
+					if (!roomGroup.UsesOutdoorTemperature)
 					{
-						GenDraw.DrawFieldEdges(room.Cells.ToList<IntVec3>(), GenTemperature.ColorRoomHot);
+						GenDraw.DrawFieldEdges(roomGroup.Cells.ToList<IntVec3>(), GenTemperature.ColorRoomHot);
 					}
-					if (!room2.UsesOutdoorTemperature)
+					if (!roomGroup2.UsesOutdoorTemperature)
 					{
-						GenDraw.DrawFieldEdges(room2.Cells.ToList<IntVec3>(), GenTemperature.ColorRoomCold);
+						GenDraw.DrawFieldEdges(roomGroup2.Cells.ToList<IntVec3>(), GenTemperature.ColorRoomCold);
 					}
 				}
 			}

@@ -25,9 +25,9 @@ namespace RimWorld
 
 		public override void ExposeData()
 		{
-			Scribe_Values.LookValue<string>(ref this.name, "name", null, false);
-			Scribe_Values.LookValue<int>(ref this.pawnID, "pawnID", -1, false);
-			Scribe_Values.LookValue<Gender>(ref this.gender, "gender", Gender.Male, false);
+			Scribe_Values.Look<string>(ref this.name, "name", null, false);
+			Scribe_Values.Look<int>(ref this.pawnID, "pawnID", -1, false);
+			Scribe_Values.Look<Gender>(ref this.gender, "gender", Gender.Male, false);
 		}
 
 		[DebuggerHidden]

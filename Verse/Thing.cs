@@ -9,7 +9,7 @@ using Verse.AI;
 
 namespace Verse
 {
-	public class Thing : Entity, ILoadReferenceable, IExposable, ISelectable
+	public class Thing : Entity, IExposable, ILoadReferenceable, ISelectable
 	{
 		private const sbyte UnspawnedState = -1;
 
@@ -37,7 +37,7 @@ namespace Verse
 
 		private int hitPointsInt = -1;
 
-		public ThingContainer holdingContainer;
+		public ThingOwner holdingOwner;
 
 		public static bool allowDestroyNonDestroyable;
 
@@ -77,14 +77,14 @@ namespace Verse
 				{
 					return false;
 				}
-				if (this.Spawned)
+				if (this.Spawned && !this.FireBulwark)
 				{
 					List<Thing> thingList = this.Position.GetThingList(this.Map);
 					if (thingList != null)
 					{
 						for (int i = 0; i < thingList.Count; i++)
 						{
-							if (thingList[i].def.Fillage == FillCategory.Full && thingList[i] != this)
+							if (thingList[i].FireBulwark)
 							{
 								return false;
 							}
@@ -92,6 +92,14 @@ namespace Verse
 					}
 				}
 				return true;
+			}
+		}
+
+		public virtual bool FireBulwark
+		{
+			get
+			{
+				return this.def.Fillage == FillCategory.Full;
 			}
 		}
 
@@ -119,6 +127,14 @@ namespace Verse
 			}
 		}
 
+		public bool SpawnedOrAnyParentSpawned
+		{
+			get
+			{
+				return this.Spawned || (this.ParentHolder != null && ThingOwnerUtility.SpawnedOrAnyParentSpawned(this.ParentHolder));
+			}
+		}
+
 		public Map Map
 		{
 			get
@@ -135,11 +151,15 @@ namespace Verse
 		{
 			get
 			{
-				if (this.holdingContainer == null)
+				if (this.Spawned)
 				{
 					return this.Map;
 				}
-				return this.holdingContainer.owner.GetMap();
+				if (this.ParentHolder == null)
+				{
+					return null;
+				}
+				return ThingOwnerUtility.GetRootMap(this.ParentHolder);
 			}
 		}
 
@@ -157,16 +177,24 @@ namespace Verse
 				}
 				if (this.Spawned)
 				{
-					ThingUtility.UpdateRegionListers(this.positionInt, value, this.Map, this);
-				}
-				if (this.Spawned)
-				{
+					if (this.def.AffectsRegions)
+					{
+						Log.Warning("Changed position of a spawned thing which affects regions. This is not supported.");
+					}
+					this.DirtyMapMesh(this.Map);
+					RegionListersUpdater.DeregisterInRegions(this, this.Map);
 					this.Map.thingGrid.Deregister(this, false);
 				}
 				this.positionInt = value;
 				if (this.Spawned)
 				{
 					this.Map.thingGrid.Register(this);
+					RegionListersUpdater.RegisterInRegions(this, this.Map);
+					this.DirtyMapMesh(this.Map);
+					if (this.def.AffectsReachability)
+					{
+						this.Map.reachability.ClearCache();
+					}
 				}
 			}
 		}
@@ -175,23 +203,16 @@ namespace Verse
 		{
 			get
 			{
-				if (this.holdingContainer == null)
+				if (this.Spawned)
 				{
 					return this.Position;
 				}
-				if (this.holdingContainer.owner == null)
+				IntVec3 rootPosition = ThingOwnerUtility.GetRootPosition(this.ParentHolder);
+				if (rootPosition.IsValid)
 				{
-					Log.Error(string.Concat(new object[]
-					{
-						"Holder of ",
-						this,
-						" is ",
-						this.holdingContainer,
-						" and it has a null owner."
-					}));
-					return this.Position;
+					return rootPosition;
 				}
-				return this.holdingContainer.owner.GetPosition();
+				return this.Position;
 			}
 		}
 
@@ -207,7 +228,25 @@ namespace Verse
 				{
 					return;
 				}
+				if (this.Spawned && (this.def.size.x != 1 || this.def.size.z != 1))
+				{
+					if (this.def.AffectsRegions)
+					{
+						Log.Warning("Changed rotation of a spawned non-single-cell thing which affects regions. This is not supported.");
+					}
+					RegionListersUpdater.DeregisterInRegions(this, this.Map);
+					this.Map.thingGrid.Deregister(this, false);
+				}
 				this.rotationInt = value;
+				if (this.Spawned && (this.def.size.x != 1 || this.def.size.z != 1))
+				{
+					this.Map.thingGrid.Register(this);
+					RegionListersUpdater.RegisterInRegions(this, this.Map);
+					if (this.def.AffectsReachability)
+					{
+						this.Map.reachability.ClearCache();
+					}
+				}
 			}
 		}
 
@@ -216,6 +255,24 @@ namespace Verse
 			get
 			{
 				return this.def.smeltable && (!this.def.MadeFromStuff || this.Stuff.stuffProps.smeltable);
+			}
+		}
+
+		public IThingHolder ParentHolder
+		{
+			get
+			{
+				IThingHolder arg_1E_0;
+				if (this.holdingOwner != null)
+				{
+					IThingHolder owner = this.holdingOwner.Owner;
+					arg_1E_0 = owner;
+				}
+				else
+				{
+					arg_1E_0 = null;
+				}
+				return arg_1E_0;
 			}
 		}
 
@@ -303,7 +360,7 @@ namespace Verse
 		{
 			get
 			{
-				return this.def.IsIngestible;
+				return !this.IsBurning() && this.def.IsIngestible;
 			}
 		}
 
@@ -322,7 +379,7 @@ namespace Verse
 			}
 		}
 
-		public virtual Graphic Graphic
+		public Graphic DefaultGraphic
 		{
 			get
 			{
@@ -339,11 +396,68 @@ namespace Verse
 			}
 		}
 
+		public virtual Graphic Graphic
+		{
+			get
+			{
+				return this.DefaultGraphic;
+			}
+		}
+
+		public virtual DrawTargetDef DrawLayer
+		{
+			get
+			{
+				return DrawTargetDefOf.Main;
+			}
+		}
+
 		public virtual IntVec3 InteractionCell
 		{
 			get
 			{
 				return Thing.InteractionCellWhenAt(this.def, this.Position, this.Rotation, this.Map);
+			}
+		}
+
+		public float AmbientTemperature
+		{
+			get
+			{
+				if (this.Spawned)
+				{
+					return GenTemperature.GetTemperatureForCell(this.Position, this.Map);
+				}
+				float result;
+				if (this.ParentHolder != null && ThingOwnerUtility.TryGetFixedTemperature(this.ParentHolder, out result))
+				{
+					return result;
+				}
+				if (this.SpawnedOrAnyParentSpawned)
+				{
+					return GenTemperature.GetTemperatureForCell(this.PositionHeld, this.MapHeld);
+				}
+				if (this.Tile >= 0)
+				{
+					return GenTemperature.GetTemperatureAtTile(this.Tile);
+				}
+				return 21f;
+			}
+		}
+
+		public int Tile
+		{
+			get
+			{
+				if (this.Spawned)
+				{
+					return this.Map.Tile;
+				}
+				if (this.ParentHolder == null)
+				{
+					return -1;
+				}
+				return ThingOwnerUtility.GetRootTile(this.ParentHolder);
 			}
 		}
 
@@ -422,7 +536,7 @@ namespace Verse
 			ThingIDMaker.GiveIDTo(this);
 			if (this.def.useHitPoints)
 			{
-				this.HitPoints = this.MaxHitPoints;
+				this.HitPoints = Mathf.RoundToInt((float)this.MaxHitPoints * Mathf.Clamp01(this.def.startingHpRange.RandomInRange));
 			}
 		}
 
@@ -431,7 +545,7 @@ namespace Verse
 			return "Thing_" + this.ThingID;
 		}
 
-		public override void SpawnSetup(Map map)
+		public override void SpawnSetup(Map map, bool respawningAfterLoad)
 		{
 			if (this.Destroyed)
 			{
@@ -480,75 +594,69 @@ namespace Verse
 				}));
 				this.stackCount = this.def.stackLimit;
 			}
-			this.holdingContainer = null;
 			this.mapIndexOrState = (sbyte)num;
-			this.Map.listerThings.Add(this);
+			RegionListersUpdater.RegisterInRegions(this, map);
+			if (!map.spawnedThings.TryAdd(this, false))
+			{
+				Log.Error("Couldn't add thing " + this + " to spawned things.");
+			}
+			map.listerThings.Add(this);
+			map.thingGrid.Register(this);
 			if (Find.TickManager != null)
 			{
 				Find.TickManager.RegisterAllTickabilityFor(this);
 			}
-			if (this.def.drawerType != DrawerType.RealtimeOnly)
-			{
-				CellRect.CellRectIterator iterator = this.OccupiedRect().GetIterator();
-				while (!iterator.Done())
-				{
-					this.Map.mapDrawer.MapMeshDirty(iterator.Current, MapMeshFlag.Things);
-					iterator.MoveNext();
-				}
-			}
+			this.DirtyMapMesh(map);
 			if (this.def.drawerType != DrawerType.MapMeshOnly)
 			{
-				this.Map.dynamicDrawManager.RegisterDrawable(this);
+				map.dynamicDrawManager.RegisterDrawable(this);
 			}
-			if (this.def.hasTooltip)
-			{
-				this.Map.tooltipGiverList.RegisterTooltipGiver(this);
-			}
+			map.tooltipGiverList.Notify_ThingSpawned(this);
 			if (this.def.graphicData != null && this.def.graphicData.Linked)
 			{
-				this.Map.linkGrid.Notify_LinkerCreatedOrDestroyed(this);
-				this.Map.mapDrawer.MapMeshDirty(this.Position, MapMeshFlag.Things, true, false);
+				map.linkGrid.Notify_LinkerCreatedOrDestroyed(this);
+				map.mapDrawer.MapMeshDirty(this.Position, MapMeshFlag.Things, true, false);
 			}
 			if (!this.def.CanOverlapZones)
 			{
-				this.Map.zoneManager.Notify_NoZoneOverlapThingSpawned(this);
+				map.zoneManager.Notify_NoZoneOverlapThingSpawned(this);
 			}
-			if (this.def.regionBarrier)
+			if (this.def.AffectsRegions)
 			{
-				this.Map.regionDirtyer.Notify_BarrierSpawned(this);
+				map.regionDirtyer.Notify_ThingAffectingRegionsSpawned(this);
 			}
 			if (this.def.pathCost != 0 || this.def.passability == Traversability.Impassable)
 			{
-				this.Map.pathGrid.RecalculatePerceivedPathCostUnderThing(this);
+				map.pathGrid.RecalculatePerceivedPathCostUnderThing(this);
 			}
-			if (this.def.passability == Traversability.Impassable)
+			if (this.def.AffectsReachability)
 			{
-				this.Map.reachability.ClearCache();
+				map.reachability.ClearCache();
 			}
-			this.Map.coverGrid.Register(this);
+			map.coverGrid.Register(this);
 			if (this.def.category == ThingCategory.Item)
 			{
-				this.Map.listerHaulables.Notify_Spawned(this);
+				map.listerHaulables.Notify_Spawned(this);
 			}
-			this.Map.attackTargetsCache.Notify_ThingSpawned(this);
-			Region validRegionAt_NoRebuild = this.Map.regionGrid.GetValidRegionAt_NoRebuild(this.Position);
+			map.attackTargetsCache.Notify_ThingSpawned(this);
+			Region validRegionAt_NoRebuild = map.regionGrid.GetValidRegionAt_NoRebuild(this.Position);
 			Room room = (validRegionAt_NoRebuild != null) ? validRegionAt_NoRebuild.Room : null;
 			if (room != null)
 			{
 				room.Notify_ContainedThingSpawnedOrDespawned(this);
 			}
-			if (this.def.category == ThingCategory.Item)
-			{
-				Building_Door building_Door = this.Position.GetEdifice(this.Map) as Building_Door;
-				if (building_Door != null)
-				{
-					building_Door.Notify_ItemSpawnedOrDespawnedOnTop(this);
-				}
-			}
 			StealAIDebugDrawer.Notify_ThingChanged(this);
-			if (this is IThingContainerOwner && Find.ColonistBar != null)
+			if (this is IThingHolder && Find.ColonistBar != null)
 			{
 				Find.ColonistBar.MarkColonistsDirty();
+			}
+			if (this.def.category == ThingCategory.Item)
+			{
+				SlotGroup slotGroup = this.Position.GetSlotGroup(map);
+				if (slotGroup != null && slotGroup.parent != null)
+				{
+					slotGroup.parent.Notify_ReceivedThing(this);
+				}
 			}
 		}
 
@@ -565,42 +673,19 @@ namespace Verse
 				return;
 			}
 			Map map = this.Map;
+			RegionListersUpdater.DeregisterInRegions(this, map);
+			map.spawnedThings.Remove(this);
 			map.listerThings.Remove(this);
-			if (this.def.passability != Traversability.Impassable)
-			{
-				Region validRegionAt = map.regionGrid.GetValidRegionAt(this.Position);
-				if (validRegionAt != null)
-				{
-					validRegionAt.ListerThings.Remove(this);
-				}
-				if (this.def.size == IntVec2.One && !this.Position.Walkable(map))
-				{
-					this.DeregisterInAdjacentRegions();
-				}
-			}
 			map.thingGrid.Deregister(this, false);
 			map.coverGrid.DeRegister(this);
-			if (this.def.hasTooltip)
-			{
-				map.tooltipGiverList.DeregisterTooltipGiver(this);
-			}
+			map.tooltipGiverList.Notify_ThingDespawned(this);
 			if (this.def.graphicData != null && this.def.graphicData.Linked)
 			{
 				map.linkGrid.Notify_LinkerCreatedOrDestroyed(this);
 				map.mapDrawer.MapMeshDirty(this.Position, MapMeshFlag.Things, true, false);
 			}
 			Find.Selector.Deselect(this);
-			if (this.def.drawerType != DrawerType.RealtimeOnly)
-			{
-				CellRect cellRect = this.OccupiedRect();
-				for (int i = cellRect.minZ; i <= cellRect.maxZ; i++)
-				{
-					for (int j = cellRect.minX; j <= cellRect.maxX; j++)
-					{
-						map.mapDrawer.MapMeshDirty(new IntVec3(j, 0, i), MapMeshFlag.Things);
-					}
-				}
-			}
+			this.DirtyMapMesh(map);
 			if (this.def.drawerType != DrawerType.MapMeshOnly)
 			{
 				map.dynamicDrawManager.DeRegisterDrawable(this);
@@ -611,15 +696,15 @@ namespace Verse
 			{
 				room.Notify_ContainedThingSpawnedOrDespawned(this);
 			}
-			if (this.def.regionBarrier)
+			if (this.def.AffectsRegions)
 			{
-				map.regionDirtyer.Notify_BarrierDespawned(this);
+				map.regionDirtyer.Notify_ThingAffectingRegionsDespawned(this);
 			}
 			if (this.def.pathCost != 0 || this.def.passability == Traversability.Impassable)
 			{
 				map.pathGrid.RecalculatePerceivedPathCostUnderThing(this);
 			}
-			if (this.def.passability == Traversability.Impassable)
+			if (this.def.AffectsReachability)
 			{
 				map.reachability.ClearCache();
 			}
@@ -630,19 +715,24 @@ namespace Verse
 				map.listerHaulables.Notify_DeSpawned(this);
 			}
 			map.attackTargetsCache.Notify_ThingDespawned(this);
-			if (this.def.category == ThingCategory.Item)
-			{
-				Building_Door building_Door = this.Position.GetEdifice(map) as Building_Door;
-				if (building_Door != null)
-				{
-					building_Door.Notify_ItemSpawnedOrDespawnedOnTop(this);
-				}
-			}
 			StealAIDebugDrawer.Notify_ThingChanged(this);
-			if (this is IThingContainerOwner && Find.ColonistBar != null)
+			if (this is IThingHolder && Find.ColonistBar != null)
 			{
 				Find.ColonistBar.MarkColonistsDirty();
 			}
+			if (this.def.category == ThingCategory.Item)
+			{
+				SlotGroup slotGroup = this.Position.GetSlotGroup(map);
+				if (slotGroup != null && slotGroup.parent != null)
+				{
+					slotGroup.parent.Notify_LostThing(this);
+				}
+			}
+		}
+
+		public virtual void Kill(DamageInfo? dinfo = null)
+		{
+			this.Destroy(DestroyMode.KillFinalize);
 		}
 
 		public virtual void Destroy(DestroyMode mode = DestroyMode.Vanish)
@@ -668,29 +758,20 @@ namespace Verse
 			{
 				this.Discard();
 			}
-			if (spawned)
+			CompExplosive compExplosive = this.TryGetComp<CompExplosive>();
+			bool flag = compExplosive != null && compExplosive.detonated;
+			if (spawned && !flag)
 			{
 				GenLeaving.DoLeavingsFor(this, map, mode);
 			}
-			if (this.holdingContainer != null)
+			if (this.holdingOwner != null)
 			{
-				this.holdingContainer.Notify_ContainedItemDestroyed(this);
+				this.holdingOwner.Notify_ContainedItemDestroyed(this);
 			}
-			this.ClearMapReferencesToMeForDestroy(map);
-		}
-
-		public void ClearMapReferencesToMeForDestroy(Map map)
-		{
-			if (map != null && this.def.category != ThingCategory.Mote)
+			this.RemoveAllReservationsAndDesignationsOnThis();
+			if (!(this is Pawn))
 			{
-				map.reservationManager.ReleaseAllForTarget(this);
-				map.physicalInteractionReservationManager.ReleaseAllForTarget(this);
-				IAttackTarget attackTarget = this as IAttackTarget;
-				if (attackTarget != null)
-				{
-					map.attackTargetReservationManager.ReleaseAllForTarget(attackTarget);
-				}
-				map.designationManager.RemoveAllDesignationsOn(this, false);
+				this.stackCount = 0;
 			}
 		}
 
@@ -698,28 +779,21 @@ namespace Verse
 		{
 		}
 
-		private void DeregisterInAdjacentRegions()
+		public virtual void PostGeneratedForTrader(TraderKindDef trader, int forTile, Faction forFaction)
 		{
-			for (int i = 0; i < 8; i++)
+			if (this.def.colorGeneratorInTraderStock != null)
 			{
-				IntVec3 c = this.positionInt + GenAdj.AdjacentCells[i];
-				if (c.InBounds(this.Map))
-				{
-					Region validRegionAt = this.Map.regionGrid.GetValidRegionAt(c);
-					if (validRegionAt != null && validRegionAt.ListerThings.Contains(this))
-					{
-						validRegionAt.ListerThings.Remove(this);
-					}
-				}
+				this.SetColor(this.def.colorGeneratorInTraderStock.NewRandomizedColor(), true);
 			}
 		}
 
-		public void Notify_MyMapRemoved()
+		public virtual void Notify_MyMapRemoved()
 		{
-			if (this.Spawned)
+			if (!ThingOwnerUtility.AnyParentIs<Pawn>(this))
 			{
-				this.mapIndexOrState = -1;
+				this.mapIndexOrState = -3;
 			}
+			this.RemoveAllReservationsAndDesignationsOnThis();
 		}
 
 		public void DecrementMapIndex()
@@ -738,37 +812,64 @@ namespace Verse
 			this.mapIndexOrState -= 1;
 		}
 
+		private void RemoveAllReservationsAndDesignationsOnThis()
+		{
+			if (this.def.category == ThingCategory.Mote)
+			{
+				return;
+			}
+			List<Map> maps = Find.Maps;
+			for (int i = 0; i < maps.Count; i++)
+			{
+				maps[i].reservationManager.ReleaseAllForTarget(this);
+				maps[i].physicalInteractionReservationManager.ReleaseAllForTarget(this);
+				IAttackTarget attackTarget = this as IAttackTarget;
+				if (attackTarget != null)
+				{
+					maps[i].attackTargetReservationManager.ReleaseAllForTarget(attackTarget);
+				}
+				maps[i].designationManager.RemoveAllDesignationsOn(this, false);
+			}
+		}
+
 		public virtual void ExposeData()
 		{
-			Scribe_Defs.LookDef<ThingDef>(ref this.def, "def");
+			Scribe_Defs.Look<ThingDef>(ref this.def, "def");
 			if (this.def.HasThingIDNumber)
 			{
 				string thingID = this.ThingID;
-				Scribe_Values.LookValue<string>(ref thingID, "id", null, false);
+				Scribe_Values.Look<string>(ref thingID, "id", null, false);
 				this.ThingID = thingID;
 			}
-			Scribe_Values.LookValue<sbyte>(ref this.mapIndexOrState, "map", -1, false);
+			Scribe_Values.Look<sbyte>(ref this.mapIndexOrState, "map", -1, false);
 			if (Scribe.mode == LoadSaveMode.LoadingVars && (int)this.mapIndexOrState >= 0)
 			{
 				this.mapIndexOrState = -1;
 			}
-			Scribe_Values.LookValue<IntVec3>(ref this.positionInt, "pos", IntVec3.Invalid, false);
-			Scribe_Values.LookValue<Rot4>(ref this.rotationInt, "rot", Rot4.North, false);
+			Scribe_Values.Look<IntVec3>(ref this.positionInt, "pos", IntVec3.Invalid, false);
+			Scribe_Values.Look<Rot4>(ref this.rotationInt, "rot", Rot4.North, false);
 			if (this.def.useHitPoints)
 			{
-				Scribe_Values.LookValue<int>(ref this.hitPointsInt, "health", -1, false);
+				Scribe_Values.Look<int>(ref this.hitPointsInt, "health", -1, false);
 			}
 			bool flag = this.def.tradeability != Tradeability.Never && this.def.category == ThingCategory.Item;
 			if (this.def.stackLimit > 1 || flag)
 			{
-				Scribe_Values.LookValue<int>(ref this.stackCount, "stackCount", 0, true);
+				Scribe_Values.Look<int>(ref this.stackCount, "stackCount", 0, true);
 			}
-			Scribe_Defs.LookDef<ThingDef>(ref this.stuffInt, "stuff");
+			Scribe_Defs.Look<ThingDef>(ref this.stuffInt, "stuff");
 			string facID = (this.factionInt == null) ? "null" : this.factionInt.GetUniqueLoadID();
-			Scribe_Values.LookValue<string>(ref facID, "faction", "null", false);
-			if (Scribe.mode == LoadSaveMode.LoadingVars)
+			Scribe_Values.Look<string>(ref facID, "faction", "null", false);
+			if (Scribe.mode == LoadSaveMode.LoadingVars || Scribe.mode == LoadSaveMode.ResolvingCrossRefs || Scribe.mode == LoadSaveMode.PostLoadInit)
 			{
-				this.factionInt = Find.FactionManager.AllFactions.FirstOrDefault((Faction fa) => fa.GetUniqueLoadID() == facID);
+				if (facID == "null")
+				{
+					this.factionInt = null;
+				}
+				else if (Find.World != null && Find.FactionManager != null)
+				{
+					this.factionInt = Find.FactionManager.AllFactions.FirstOrDefault((Faction fa) => fa.GetUniqueLoadID() == facID);
+				}
 			}
 		}
 
@@ -778,17 +879,30 @@ namespace Verse
 
 		public virtual void Draw()
 		{
-			this.DrawAt(this.DrawPos);
+			this.DrawAt(this.DrawPos, false);
 		}
 
-		public virtual void DrawAt(Vector3 drawLoc)
+		public virtual void DrawAt(Vector3 drawLoc, bool flip = false)
 		{
-			this.Graphic.Draw(drawLoc, this.Rotation, this);
+			this.Graphic.Draw(drawLoc, (!flip) ? this.Rotation : this.Rotation.Opposite, this);
 		}
 
 		public virtual void Print(SectionLayer layer)
 		{
 			this.Graphic.Print(layer, this);
+		}
+
+		public void DirtyMapMesh(Map map)
+		{
+			if (this.def.drawerType != DrawerType.RealtimeOnly)
+			{
+				CellRect.CellRectIterator iterator = this.OccupiedRect().GetIterator();
+				while (!iterator.Done())
+				{
+					map.mapDrawer.MapMeshDirty(iterator.Current, MapMeshFlag.Things);
+					iterator.MoveNext();
+				}
+			}
 		}
 
 		public virtual void DrawGUIOverlay()
@@ -882,10 +996,12 @@ namespace Verse
 			{
 				return;
 			}
+			bool spawnedOrAnyParentSpawned = this.SpawnedOrAnyParentSpawned;
+			Map mapHeld = this.MapHeld;
 			float num = dinfo.Def.Worker.Apply(dinfo, this);
-			if (dinfo.Def.harmsHealth && this.MapHeld != null)
+			if (dinfo.Def.harmsHealth && spawnedOrAnyParentSpawned)
 			{
-				this.MapHeld.damageWatcher.Notify_DamageTaken(this, num);
+				mapHeld.damageWatcher.Notify_DamageTaken(this, num);
 			}
 			if (dinfo.Def.externalViolence)
 			{
@@ -913,7 +1029,7 @@ namespace Verse
 
 		public virtual bool CanStackWith(Thing other)
 		{
-			return this.def == other.def && this.Stuff == other.Stuff;
+			return !this.Destroyed && !other.Destroyed && this.def == other.def && this.Stuff == other.Stuff;
 		}
 
 		public virtual bool TryAbsorbStack(Thing other, bool respectStackLimit)
@@ -922,7 +1038,7 @@ namespace Verse
 			{
 				return false;
 			}
-			int num = ThingUtility.TryAsborbStackNumToTake(this, other, respectStackLimit);
+			int num = ThingUtility.TryAbsorbStackNumToTake(this, other, respectStackLimit);
 			if (this.def.useHitPoints)
 			{
 				this.HitPoints = Mathf.CeilToInt((float)(this.HitPoints * this.stackCount + other.HitPoints * num) / (float)(this.stackCount + num));
@@ -961,6 +1077,10 @@ namespace Verse
 				if (this.Spawned)
 				{
 					this.DeSpawn();
+				}
+				if (this.holdingOwner != null)
+				{
+					this.holdingOwner.Remove(this);
 				}
 				return this;
 			}
@@ -1150,7 +1270,7 @@ namespace Verse
 				List<ThoughtDef> list = FoodUtility.ThoughtsFromIngesting(ingester, this);
 				for (int j = 0; j < list.Count; j++)
 				{
-					ingester.needs.mood.thoughts.memories.TryGainMemoryThought(list[j], null);
+					ingester.needs.mood.thoughts.memories.TryGainMemory(list[j], null);
 				}
 			}
 			if (ingester.IsColonist && FoodUtility.IsHumanlikeMeatOrHumanlikeCorpse(this))

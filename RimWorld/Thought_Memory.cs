@@ -13,6 +13,12 @@ namespace RimWorld
 
 		private int forcedStage;
 
+		private string cachedLabelCap;
+
+		private Pawn cachedLabelCapForOtherPawn;
+
+		private int cachedLabelCapForStageIndex = -1;
+
 		public override bool VisibleInNeedsTab
 		{
 			get
@@ -41,11 +47,20 @@ namespace RimWorld
 		{
 			get
 			{
-				if (this.otherPawn != null)
+				if (this.cachedLabelCap == null || this.cachedLabelCapForOtherPawn != this.otherPawn || this.cachedLabelCapForStageIndex != this.CurStageIndex)
 				{
-					return string.Format(base.CurStage.label, this.otherPawn.LabelShort).CapitalizeFirst();
+					if (this.otherPawn != null)
+					{
+						this.cachedLabelCap = string.Format(base.CurStage.label, this.otherPawn.LabelShort).CapitalizeFirst();
+					}
+					else
+					{
+						this.cachedLabelCap = base.LabelCap;
+					}
+					this.cachedLabelCapForOtherPawn = this.otherPawn;
+					this.cachedLabelCapForStageIndex = this.CurStageIndex;
 				}
-				return base.LabelCap;
+				return this.cachedLabelCap;
 			}
 		}
 
@@ -57,10 +72,10 @@ namespace RimWorld
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_References.LookReference<Pawn>(ref this.otherPawn, "otherPawn", true);
-			Scribe_Values.LookValue<float>(ref this.moodPowerFactor, "moodPowerFactor", 1f, false);
-			Scribe_Values.LookValue<int>(ref this.age, "age", 0, false);
-			Scribe_Values.LookValue<int>(ref this.forcedStage, "stageIndex", 0, false);
+			Scribe_References.Look<Pawn>(ref this.otherPawn, "otherPawn", true);
+			Scribe_Values.Look<float>(ref this.moodPowerFactor, "moodPowerFactor", 1f, false);
+			Scribe_Values.Look<int>(ref this.age, "age", 0, false);
+			Scribe_Values.Look<int>(ref this.forcedStage, "stageIndex", 0, false);
 		}
 
 		public virtual void ThoughtInterval()
@@ -73,12 +88,12 @@ namespace RimWorld
 			this.age = 0;
 		}
 
-		public override bool TryMergeWithExistingThought(out bool showBubble)
+		public virtual bool TryMergeWithExistingMemory(out bool showBubble)
 		{
 			ThoughtHandler thoughts = this.pawn.needs.mood.thoughts;
-			if (thoughts.memories.NumMemoryThoughtsInGroup(this) >= this.def.stackLimit)
+			if (thoughts.memories.NumMemoriesInGroup(this) >= this.def.stackLimit)
 			{
-				Thought_Memory thought_Memory = thoughts.memories.OldestMemoryThoughtInGroup(this);
+				Thought_Memory thought_Memory = thoughts.memories.OldestMemoryInGroup(this);
 				if (thought_Memory != null)
 				{
 					showBubble = (thought_Memory.age > thought_Memory.def.DurationTicks / 2);

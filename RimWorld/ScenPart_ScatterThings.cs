@@ -12,6 +12,10 @@ namespace RimWorld
 
 		public override void GenerateIntoMap(Map map)
 		{
+			if (Find.GameInitData == null)
+			{
+				return;
+			}
 			new GenStep_ScatterThings
 			{
 				nearPlayerStart = this.NearPlayerStart,

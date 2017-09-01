@@ -56,9 +56,16 @@ namespace Verse
 					this.SetSunShadowVector(GenCelestial.CurShadowVector(this.map));
 					color2 = Color.Lerp(Color.white, color2, GenCelestial.CurShadowStrength(this.map));
 				}
+				Shader.SetGlobalFloat("_LightsourceShineSizeReduction", 20f * (1f / curSky.lightsourceShineSize));
+				Shader.SetGlobalFloat("_LightsourceShineIntensity", curSky.lightsourceShineIntensity);
 				MatBases.SunShadow.color = color2;
 				this.UpdateOverlays(curSky);
 			}
+		}
+
+		public void ForceSetCurSkyGlow(float curSkyGlow)
+		{
+			this.curSkyGlowInt = curSkyGlow;
 		}
 
 		private void UpdateOverlays(SkyTarget curSky)
@@ -74,15 +81,15 @@ namespace Verse
 			{
 				this.AddTempOverlay(new Pair<SkyOverlay, float>(overlays2[j], 1f - this.map.weatherManager.TransitionLerpFactor));
 			}
-			for (int k = 0; k < this.map.mapConditionManager.ActiveConditions.Count; k++)
+			for (int k = 0; k < this.map.gameConditionManager.ActiveConditions.Count; k++)
 			{
-				MapCondition mapCondition = this.map.mapConditionManager.ActiveConditions[k];
-				List<SkyOverlay> list = mapCondition.SkyOverlays();
+				GameCondition gameCondition = this.map.gameConditionManager.ActiveConditions[k];
+				List<SkyOverlay> list = gameCondition.SkyOverlays();
 				if (list != null)
 				{
 					for (int l = 0; l < list.Count; l++)
 					{
-						this.AddTempOverlay(new Pair<SkyOverlay, float>(list[l], mapCondition.SkyTargetLerpFactor()));
+						this.AddTempOverlay(new Pair<SkyOverlay, float>(list[l], gameCondition.SkyTargetLerpFactor()));
 					}
 				}
 			}
@@ -109,7 +116,7 @@ namespace Verse
 
 		private void SetSunShadowVector(Vector2 vec)
 		{
-			MatBases.SunShadow.SetVector("_CastVect", new Vector4(vec.x, 0f, vec.y, 0f));
+			Shader.SetGlobalVector(ShaderPropertyIDs.MapSunLightDirection, new Vector4(vec.x, 0f, vec.y, GenCelestial.CurShadowStrength(this.map)));
 		}
 
 		private SkyTarget CurrentSkyTarget()
@@ -117,11 +124,11 @@ namespace Verse
 			SkyTarget b = this.map.weatherManager.curWeather.Worker.CurSkyTarget(this.map);
 			SkyTarget a = this.map.weatherManager.lastWeather.Worker.CurSkyTarget(this.map);
 			SkyTarget skyTarget = SkyTarget.Lerp(a, b, this.map.weatherManager.TransitionLerpFactor);
-			float num = this.map.mapConditionManager.AggregateSkyTargetLerpFactor();
+			float num = this.map.gameConditionManager.AggregateSkyTargetLerpFactor();
 			if (num > 0.0001f)
 			{
-				SkyTarget value = this.map.mapConditionManager.AggregateSkyTarget().Value;
-				skyTarget = SkyTarget.Lerp(skyTarget, value, num);
+				SkyTarget value = this.map.gameConditionManager.AggregateSkyTarget().Value;
+				skyTarget = SkyTarget.LerpDarken(skyTarget, value, num);
 			}
 			WeatherEvent overridingWeatherEvent = this.map.weatherManager.eventHandler.OverridingWeatherEvent;
 			if (overridingWeatherEvent != null)

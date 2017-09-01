@@ -36,7 +36,7 @@ namespace Verse
 			{
 				get
 				{
-					return Time.time - this.startingTime;
+					return RealTime.LastRealTime - this.startingTime;
 				}
 			}
 
@@ -72,8 +72,8 @@ namespace Verse
 			{
 				this.text = text;
 				this.lookTarget = GlobalTargetInfo.Invalid;
-				this.startingFrame = Time.frameCount;
-				this.startingTime = Time.time;
+				this.startingFrame = RealTime.frameCount;
+				this.startingTime = RealTime.LastRealTime;
 				this.ID = Messages.LiveMessage.uniqueID++;
 			}
 
@@ -119,7 +119,7 @@ namespace Verse
 					Widgets.Label(rect2, this.text);
 					if (Current.ProgramState == ProgramState.Playing && this.lookTarget.IsValid && Widgets.ButtonInvisible(rect, false))
 					{
-						JumpToTargetUtility.TryJumpAndSelect(this.lookTarget);
+						CameraJumper.TryJumpAndSelect(this.lookTarget);
 						PlayerKnowledgeDatabase.KnowledgeDemonstrated(ConceptDefOf.ClickingMessages, KnowledgeAmount.Total);
 					}
 					Text.Anchor = TextAnchor.UpperLeft;
@@ -250,7 +250,7 @@ namespace Verse
 			}
 			for (int i = 0; i < Messages.liveMessages.Count; i++)
 			{
-				if (Messages.liveMessages[i].text == text && Messages.liveMessages[i].lookTarget == lookTarget && Messages.liveMessages[i].startingFrame == Time.frameCount)
+				if (Messages.liveMessages[i].text == text && Messages.liveMessages[i].lookTarget == lookTarget && Messages.liveMessages[i].startingFrame == RealTime.frameCount)
 				{
 					return false;
 				}
@@ -286,7 +286,7 @@ namespace Verse
 					soundDef = SoundDefOf.MessageSeriousAlert;
 					break;
 				}
-				soundDef.PlayOneShotOnCamera();
+				soundDef.PlayOneShotOnCamera(null);
 			}
 		}
 	}

@@ -21,5 +21,7 @@ namespace RimWorld
 		public static WorkTypeDef Hunting;
 
 		public static WorkTypeDef Handling;
+
+		public static WorkTypeDef Hauling;
 	}
 }

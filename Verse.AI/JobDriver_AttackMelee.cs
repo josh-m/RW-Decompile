@@ -12,7 +12,7 @@ namespace Verse.AI
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Values.LookValue<int>(ref this.numMeleeAttacksMade, "numMeleeAttacksMade", 0, false);
+			Scribe_Values.Look<int>(ref this.numMeleeAttacksMade, "numMeleeAttacksMade", 0, false);
 		}
 
 		[DebuggerHidden]

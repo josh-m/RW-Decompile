@@ -35,7 +35,7 @@ namespace RimWorld
 			{
 				this.kidnappedPawns.RemoveAll((Pawn x) => x.Destroyed);
 			}
-			Scribe_Collections.LookList<Pawn>(ref this.kidnappedPawns, "kidnappedPawns", LookMode.Reference, new object[0]);
+			Scribe_Collections.Look<Pawn>(ref this.kidnappedPawns, "kidnappedPawns", LookMode.Reference, new object[0]);
 		}
 
 		public void KidnapPawn(Pawn pawn, Pawn kidnapper)

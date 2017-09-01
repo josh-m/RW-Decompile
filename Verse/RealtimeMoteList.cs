@@ -29,10 +29,5 @@ namespace Verse
 				this.allMotes[i].RealtimeUpdate();
 			}
 		}
-
-		public void RemoveAllFromMap(Map map)
-		{
-			this.allMotes.RemoveAll((Mote x) => x.Map == map);
-		}
 	}
 }

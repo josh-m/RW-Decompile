@@ -50,6 +50,18 @@ namespace RimWorld
 			{
 				bs.AddForcedTrait(TraitDefOf.TooSmart, 0);
 			}
+			if (bs.Title == "Bloody wanderer")
+			{
+				bs.AddForcedTrait(TraitDefOf.Bloodlust, 0);
+			}
+			if (bs.Title == "New age duelist")
+			{
+				bs.AddForcedTrait(TraitDefOf.Industriousness, -1);
+			}
+			if (bs.Title == "Pirate doctor")
+			{
+				bs.AddForcedTrait(TraitDefOf.NaturalMood, 1);
+			}
 		}
 	}
 }

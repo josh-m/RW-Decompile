@@ -11,5 +11,7 @@ namespace RimWorld
 		public static RecipeDef RemoveMechanoidBodyPart;
 
 		public static RecipeDef CookMealSimple;
+
+		public static RecipeDef InstallPegLeg;
 	}
 }

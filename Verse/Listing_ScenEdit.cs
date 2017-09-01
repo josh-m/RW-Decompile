@@ -9,7 +9,7 @@ namespace Verse
 	{
 		private Scenario scen;
 
-		public Listing_ScenEdit(Rect rect, Scenario scen) : base(rect)
+		public Listing_ScenEdit(Scenario scen)
 		{
 			this.scen = scen;
 		}
@@ -23,17 +23,17 @@ namespace Verse
 			if (part.def.PlayerAddRemovable && widgetRow.ButtonIcon(TexButton.DeleteX, null))
 			{
 				this.scen.RemovePart(part);
-				SoundDefOf.Click.PlayOneShotOnCamera();
+				SoundDefOf.Click.PlayOneShotOnCamera(null);
 			}
 			if (this.scen.CanReorder(part, ReorderDirection.Up) && widgetRow.ButtonIcon(TexButton.ReorderUp, null))
 			{
 				this.scen.Reorder(part, ReorderDirection.Up);
-				SoundDefOf.TickHigh.PlayOneShotOnCamera();
+				SoundDefOf.TickHigh.PlayOneShotOnCamera(null);
 			}
 			if (this.scen.CanReorder(part, ReorderDirection.Down) && widgetRow.ButtonIcon(TexButton.ReorderDown, null))
 			{
 				this.scen.Reorder(part, ReorderDirection.Down);
-				SoundDefOf.TickLow.PlayOneShotOnCamera();
+				SoundDefOf.TickLow.PlayOneShotOnCamera(null);
 			}
 			Text.Anchor = TextAnchor.UpperRight;
 			Rect rect2 = rect.LeftPart(0.5f).Rounded();

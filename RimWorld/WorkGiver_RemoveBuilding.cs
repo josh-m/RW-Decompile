@@ -29,15 +29,15 @@ namespace RimWorld
 		[DebuggerHidden]
 		public override IEnumerable<Thing> PotentialWorkThingsGlobal(Pawn pawn)
 		{
-			foreach (Designation des in pawn.Map.designationManager.DesignationsOfDef(this.Designation))
+			foreach (Designation des in pawn.Map.designationManager.SpawnedDesignationsOfDef(this.Designation))
 			{
 				yield return des.target.Thing;
 			}
 		}
 
-		public override bool HasJobOnThing(Pawn pawn, Thing t)
+		public override bool HasJobOnThing(Pawn pawn, Thing t, bool forced = false)
 		{
-			if (t.def.CanHaveFaction)
+			if (t.def.Claimable)
 			{
 				if (t.Faction != pawn.Faction)
 				{
@@ -48,10 +48,10 @@ namespace RimWorld
 			{
 				return false;
 			}
-			return pawn.CanReserve(t, 1) && pawn.Map.designationManager.DesignationOn(t, this.Designation) != null;
+			return pawn.CanReserve(t, 1, -1, null, forced) && pawn.Map.designationManager.DesignationOn(t, this.Designation) != null;
 		}
 
-		public override Job JobOnThing(Pawn pawn, Thing t)
+		public override Job JobOnThing(Pawn pawn, Thing t, bool forced = false)
 		{
 			return new Job(this.RemoveBuildingJob, t);
 		}

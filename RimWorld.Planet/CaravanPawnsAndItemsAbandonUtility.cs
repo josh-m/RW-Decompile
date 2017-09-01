@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using UnityEngine;
 using Verse;
 
 namespace RimWorld.Planet
@@ -10,10 +8,6 @@ namespace RimWorld.Planet
 	public static class CaravanPawnsAndItemsAbandonUtility
 	{
 		private const float DeathChanceForPawnAbandonedToDie = 0.8f;
-
-		private static List<IndividualThoughtToAdd> tmpIndividualThoughtsToAdd = new List<IndividualThoughtToAdd>();
-
-		private static List<ThoughtDef> tmpAllColonistsThoughts = new List<ThoughtDef>();
 
 		private static List<Hediff> tmpHediffs = new List<Hediff>();
 
@@ -30,7 +24,7 @@ namespace RimWorld.Planet
 				Dialog_MessageBox window = Dialog_MessageBox.CreateConfirmation(CaravanPawnsAndItemsAbandonUtility.GetAbandonPawnDialogText(p, caravan), delegate
 				{
 					bool flag = CaravanPawnsAndItemsAbandonUtility.WouldBeLeftToDie(p, caravan);
-					PawnDiedOrDownedThoughtsUtility.TryGiveThoughts(p, null, null, (!flag) ? PawnDiedOrDownedThoughtsKind.Abandoned : PawnDiedOrDownedThoughtsKind.AbandonedToDie);
+					PawnDiedOrDownedThoughtsUtility.TryGiveThoughts(p, null, (!flag) ? PawnDiedOrDownedThoughtsKind.Abandoned : PawnDiedOrDownedThoughtsKind.AbandonedToDie);
 					CaravanInventoryUtility.MoveAllInventoryToSomeoneElse(p, caravan.PawnsListForReading, null);
 					caravan.RemovePawn(p);
 					if (flag)
@@ -173,7 +167,7 @@ namespace RimWorld.Planet
 					abandonedPawn.LabelShort
 				}).CapitalizeFirst());
 			}
-			List<ThingWithComps> list = (abandonedPawn.equipment == null) ? null : abandonedPawn.equipment.AllEquipment;
+			List<ThingWithComps> list = (abandonedPawn.equipment == null) ? null : abandonedPawn.equipment.AllEquipmentListForReading;
 			List<Apparel> list2 = (abandonedPawn.apparel == null) ? null : abandonedPawn.apparel.WornApparel;
 			if (!list.NullOrEmpty<ThingWithComps>() || !list2.NullOrEmpty<Apparel>())
 			{
@@ -201,44 +195,10 @@ namespace RimWorld.Planet
 					}
 				}
 			}
-			PawnDiedOrDownedThoughtsUtility.GetThoughts(abandonedPawn, null, null, (!flag) ? PawnDiedOrDownedThoughtsKind.Abandoned : PawnDiedOrDownedThoughtsKind.AbandonedToDie, CaravanPawnsAndItemsAbandonUtility.tmpIndividualThoughtsToAdd, CaravanPawnsAndItemsAbandonUtility.tmpAllColonistsThoughts);
-			if (CaravanPawnsAndItemsAbandonUtility.tmpAllColonistsThoughts.Any<ThoughtDef>())
+			PawnDiedOrDownedThoughtsUtility.BuildMoodThoughtsListString(abandonedPawn, null, (!flag) ? PawnDiedOrDownedThoughtsKind.Abandoned : PawnDiedOrDownedThoughtsKind.AbandonedToDie, stringBuilder, "\n\n" + "ConfirmAbandonPawnDialog_IndividualThoughts".Translate(new object[]
 			{
-				stringBuilder.AppendLine();
-				stringBuilder.AppendLine();
-				stringBuilder.Append("ConfirmAbandonPawnDialog_AllColonistsThoughts".Translate());
-				stringBuilder.AppendLine();
-				for (int k = 0; k < CaravanPawnsAndItemsAbandonUtility.tmpAllColonistsThoughts.Count; k++)
-				{
-					ThoughtDef thoughtDef = CaravanPawnsAndItemsAbandonUtility.tmpAllColonistsThoughts[k];
-					stringBuilder.AppendLine();
-					stringBuilder.Append("  - " + thoughtDef.stages[0].label.CapitalizeFirst() + " " + Mathf.RoundToInt(thoughtDef.stages[0].baseMoodEffect).ToStringWithSign());
-				}
-			}
-			if (CaravanPawnsAndItemsAbandonUtility.tmpIndividualThoughtsToAdd.Any((IndividualThoughtToAdd x) => x.thought.MoodOffset() != 0f))
-			{
-				stringBuilder.AppendLine();
-				stringBuilder.AppendLine();
-				stringBuilder.Append("ConfirmAbandonPawnDialog_IndividualThoughts".Translate(new object[]
-				{
-					abandonedPawn.LabelShort
-				}));
-				foreach (IGrouping<Pawn, IndividualThoughtToAdd> current in from x in CaravanPawnsAndItemsAbandonUtility.tmpIndividualThoughtsToAdd
-				where x.thought.MoodOffset() != 0f
-				group x by x.addTo)
-				{
-					stringBuilder.AppendLine();
-					stringBuilder.AppendLine();
-					string value = current.Key.KindLabel.CapitalizeFirst() + " " + current.Key.LabelShort;
-					stringBuilder.Append(value);
-					stringBuilder.Append(":");
-					foreach (IndividualThoughtToAdd current2 in current)
-					{
-						stringBuilder.AppendLine();
-						stringBuilder.Append("    " + current2.LabelCap);
-					}
-				}
-			}
+				abandonedPawn.LabelShort
+			}), "\n\n" + "ConfirmAbandonPawnDialog_AllColonistsThoughts".Translate());
 			return stringBuilder.ToString();
 		}
 
@@ -252,7 +212,7 @@ namespace RimWorld.Planet
 			{
 				return true;
 			}
-			float f = GenTemperature.AverageTemperatureAtTileForMonth(caravan.Tile, GenLocalDate.Month(caravan.Tile));
+			float f = GenTemperature.AverageTemperatureAtTileForTwelfth(caravan.Tile, GenLocalDate.Twelfth(caravan.Tile));
 			if (!p.ComfortableTemperatureRange().Includes(f))
 			{
 				return true;

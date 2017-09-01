@@ -180,7 +180,7 @@ namespace RimWorld
 			{
 				float height = (float)this.SelectedPolicy.Count * 35f;
 				Rect viewRect = new Rect(0f, 0f, rect3.width - 16f, height);
-				Widgets.BeginScrollView(rect3, ref this.scrollPosition, viewRect);
+				Widgets.BeginScrollView(rect3, ref this.scrollPosition, viewRect, true);
 				DrugPolicy selectedPolicy = this.SelectedPolicy;
 				for (int i = 0; i < selectedPolicy.Count; i++)
 				{

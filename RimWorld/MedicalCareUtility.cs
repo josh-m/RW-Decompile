@@ -38,7 +38,7 @@ namespace RimWorld
 				if (Widgets.ButtonInvisible(rect2, false))
 				{
 					medCare = mc;
-					SoundDefOf.TickHigh.PlayOneShotOnCamera();
+					SoundDefOf.TickHigh.PlayOneShotOnCamera(null);
 				}
 				if (medCare == mc)
 				{

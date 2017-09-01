@@ -31,7 +31,7 @@ namespace RimWorld
 			return Find.ResearchManager.currentProj == null;
 		}
 
-		public override bool HasJobOnThing(Pawn pawn, Thing t)
+		public override bool HasJobOnThing(Pawn pawn, Thing t, bool forced = false)
 		{
 			ResearchProjectDef currentProj = Find.ResearchManager.currentProj;
 			if (currentProj == null)
@@ -39,10 +39,10 @@ namespace RimWorld
 				return false;
 			}
 			Building_ResearchBench building_ResearchBench = t as Building_ResearchBench;
-			return building_ResearchBench != null && currentProj.CanBeResearchedAt(building_ResearchBench, false) && pawn.CanReserve(t, 1);
+			return building_ResearchBench != null && currentProj.CanBeResearchedAt(building_ResearchBench, false) && pawn.CanReserve(t, 1, -1, null, forced);
 		}
 
-		public override Job JobOnThing(Pawn pawn, Thing t)
+		public override Job JobOnThing(Pawn pawn, Thing t, bool forced = false)
 		{
 			return new Job(JobDefOf.Research, t);
 		}

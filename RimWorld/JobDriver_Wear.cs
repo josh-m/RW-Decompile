@@ -12,7 +12,7 @@ namespace RimWorld
 		[DebuggerHidden]
 		protected override IEnumerable<Toil> MakeNewToils()
 		{
-			yield return Toils_Reserve.Reserve(TargetIndex.A, 1);
+			yield return Toils_Reserve.Reserve(TargetIndex.A, 1, -1, null);
 			Toil gotoApparel = new Toil();
 			gotoApparel.initAction = delegate
 			{

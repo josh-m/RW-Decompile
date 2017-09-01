@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using UnityEngine;
 using Verse;
 using Verse.AI;
 using Verse.AI.Group;
@@ -10,7 +11,7 @@ namespace RimWorld
 {
 	public static class PrisonBreakUtility
 	{
-		private const float BaseInitiatePrisonBreakMtbDays = 60f;
+		private const float BaseInitiatePrisonBreakMtbDays = 45f;
 
 		private const float DistanceToJoinPrisonBreak = 20f;
 
@@ -36,12 +37,13 @@ namespace RimWorld
 			{
 				return -1f;
 			}
-			Room room = pawn.GetRoom();
+			Room room = pawn.GetRoom(RegionType.Set_Passable);
 			if (room == null || !room.isPrisonCell)
 			{
 				return -1f;
 			}
-			return 60f;
+			float num = 45f;
+			return num / Mathf.Min(pawn.health.capacities.GetLevel(PawnCapacityDefOf.Moving), 1f);
 		}
 
 		public static bool CanParticipateInPrisonBreak(Pawn pawn)
@@ -62,7 +64,7 @@ namespace RimWorld
 			{
 				if (current.InBounds(initiator.Map))
 				{
-					Room room = current.GetRoom(initiator.Map);
+					Room room = current.GetRoom(initiator.Map, RegionType.Set_Passable);
 					if (room != null && room.isPrisonCell)
 					{
 						PrisonBreakUtility.participatingRooms.Add(room);
@@ -90,7 +92,7 @@ namespace RimWorld
 
 		private static void RemoveRandomRooms(HashSet<Room> participatingRooms, Pawn initiator)
 		{
-			Room room = initiator.GetRoom();
+			Room room = initiator.GetRoom(RegionType.Set_Passable);
 			PrisonBreakUtility.tmpToRemove.Clear();
 			foreach (Room current in participatingRooms)
 			{
@@ -141,7 +143,7 @@ namespace RimWorld
 			for (int i = 0; i < PrisonBreakUtility.escapingPrisonersGroup.Count; i++)
 			{
 				Pawn pawn = PrisonBreakUtility.escapingPrisonersGroup[i];
-				if (pawn.CurJob != null && pawn.jobs.curDriver.layingDown)
+				if (pawn.CurJob != null && pawn.jobs.curDriver.layingDown != LayingDownState.NotLaying)
 				{
 					pawn.jobs.EndCurrentJob(JobCondition.InterruptForced, true);
 				}
@@ -156,7 +158,7 @@ namespace RimWorld
 
 		private static void AddPrisonersFrom(Room room, List<Pawn> outEscapingPrisoners)
 		{
-			foreach (Thing current in room.AllContainedThings)
+			foreach (Thing current in room.ContainedAndAdjacentThings)
 			{
 				Pawn pawn = current as Pawn;
 				if (pawn != null && PrisonBreakUtility.CanParticipateInPrisonBreak(pawn))
@@ -180,14 +182,14 @@ namespace RimWorld
 				for (int i = 0; i < pawnPath.NodesLeftCount; i++)
 				{
 					IntVec3 intVec = pawnPath.Peek(pawnPath.NodesLeftCount - i - 1);
-					Room room = intVec.GetRoom(map);
+					Room room = intVec.GetRoom(map, RegionType.Set_Passable);
 					if (room != null)
 					{
 						if (!room.isPrisonCell)
 						{
 							if (room.TouchesMapEdge || room.IsHuge || room.Cells.Count((IntVec3 x) => x.Standable(map)) >= 5)
 							{
-								groupUpLoc = CellFinder.RandomClosewalkCellNear(intVec, map, 3);
+								groupUpLoc = CellFinder.RandomClosewalkCellNear(intVec, map, 3, null);
 							}
 						}
 					}
@@ -208,7 +210,7 @@ namespace RimWorld
 			{
 				return false;
 			}
-			if (!anyCell.WithinRegions(anyCell2, a.Map, 18, TraverseParms.For(TraverseMode.PassDoors, Danger.Deadly, false)))
+			if (!anyCell.WithinRegions(anyCell2, a.Map, 18, TraverseParms.For(TraverseMode.PassDoors, Danger.Deadly, false), RegionType.Set_Passable))
 			{
 				return false;
 			}
@@ -237,7 +239,7 @@ namespace RimWorld
 			Find.LetterStack.ReceiveLetter("LetterLabelPrisonBreak".Translate(), "LetterPrisonBreak".Translate(new object[]
 			{
 				stringBuilder.ToString().TrimEndNewlines()
-			}), LetterType.BadUrgent, PrisonBreakUtility.allEscapingPrisoners[0], null);
+			}), LetterDefOf.BadUrgent, PrisonBreakUtility.allEscapingPrisoners[0], null);
 		}
 	}
 }

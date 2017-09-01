@@ -1,16 +1,33 @@
 using RimWorld;
 using System;
-using UnityEngine;
 
 namespace Verse
 {
 	public class HediffComp_Infecter : HediffComp
 	{
-		private float infectionChanceFactor = 1f;
+		private const int UninitializedValue = -1;
+
+		private const int WillNotInfectValue = -2;
+
+		private const int FailedToMakeInfectionValue = -3;
+
+		private const int AlreadyMadeInfectionValue = -4;
 
 		private int ticksUntilInfect = -1;
 
-		private bool alreadyCausedInfection;
+		private float infectionChanceFactorFromTendRoom = 1f;
+
+		private static readonly SimpleCurve InfectionChanceFactorFromTendQualityCurve = new SimpleCurve
+		{
+			{
+				new CurvePoint(0f, 0.85f),
+				true
+			},
+			{
+				new CurvePoint(1f, 0.05f),
+				true
+			}
+		};
 
 		public HediffCompProperties_Infecter Props
 		{
@@ -22,27 +39,45 @@ namespace Verse
 
 		public override void CompPostPostAdd(DamageInfo? dinfo)
 		{
+			if (this.parent.IsOld())
+			{
+				this.ticksUntilInfect = -2;
+				return;
+			}
+			if (this.parent.Part.def.IsSolid(this.parent.Part, base.Pawn.health.hediffSet.hediffs))
+			{
+				this.ticksUntilInfect = -2;
+				return;
+			}
+			if (base.Pawn.health.hediffSet.PartOrAnyAncestorHasDirectlyAddedParts(this.parent.Part))
+			{
+				this.ticksUntilInfect = -2;
+				return;
+			}
 			float num = this.Props.infectionChance;
 			if (base.Pawn.RaceProps.Animal)
 			{
-				num *= 0.15f;
+				num *= 0.2f;
 			}
-			if (!this.alreadyCausedInfection && !this.parent.Part.def.IsSolid(this.parent.Part, base.Pawn.health.hediffSet.hediffs) && !base.Pawn.health.hediffSet.PartOrAnyAncestorHasDirectlyAddedParts(this.parent.Part) && !this.parent.IsOld() && Rand.Value <= num)
+			if (Rand.Value <= num)
 			{
 				this.ticksUntilInfect = HealthTunings.InfectionDelayRange.RandomInRange;
+			}
+			else
+			{
+				this.ticksUntilInfect = -2;
 			}
 		}
 
 		public override void CompExposeData()
 		{
-			Scribe_Values.LookValue<float>(ref this.infectionChanceFactor, "infectionChanceFactor", 0f, false);
-			Scribe_Values.LookValue<int>(ref this.ticksUntilInfect, "ticksUntilInfect", -1, false);
-			Scribe_Values.LookValue<bool>(ref this.alreadyCausedInfection, "alreadyCausedInfection", false, false);
+			Scribe_Values.Look<float>(ref this.infectionChanceFactorFromTendRoom, "infectionChanceFactor", 0f, false);
+			Scribe_Values.Look<int>(ref this.ticksUntilInfect, "ticksUntilInfect", -2, false);
 		}
 
-		public override void CompPostTick()
+		public override void CompPostTick(ref float severityAdjustment)
 		{
-			if (!this.alreadyCausedInfection && this.ticksUntilInfect > 0)
+			if (this.ticksUntilInfect > 0)
 			{
 				this.ticksUntilInfect--;
 				if (this.ticksUntilInfect == 0)
@@ -54,59 +89,74 @@ namespace Verse
 
 		public override void CompTended(float quality, int batchPosition = 0)
 		{
-			HediffComp_Infecter hediffComp_Infecter = this.parent.TryGetComp<HediffComp_Infecter>();
-			if (hediffComp_Infecter != null && base.Pawn.Spawned)
+			if (base.Pawn.Spawned)
 			{
-				Room room = base.Pawn.GetRoom();
+				Room room = base.Pawn.GetRoom(RegionType.Set_Passable);
 				if (room != null)
 				{
-					hediffComp_Infecter.infectionChanceFactor = room.GetStat(RoomStatDefOf.InfectionChanceFactor);
+					this.infectionChanceFactorFromTendRoom = room.GetStat(RoomStatDefOf.InfectionChanceFactor);
 				}
 			}
 		}
 
 		private void CheckMakeInfection()
 		{
-			this.ticksUntilInfect = -1;
+			if (base.Pawn.health.immunity.DiseaseContractChanceFactor(HediffDefOf.WoundInfection, this.parent.Part) <= 0.001f)
+			{
+				this.ticksUntilInfect = -3;
+				return;
+			}
+			float num = 1f;
 			HediffComp_TendDuration hediffComp_TendDuration = this.parent.TryGetComp<HediffComp_TendDuration>();
 			if (hediffComp_TendDuration != null && hediffComp_TendDuration.IsTended)
 			{
-				if (Rand.Value < this.infectionChanceFactor)
-				{
-					return;
-				}
-				float num = Mathf.Clamp(hediffComp_TendDuration.tendQuality + 0.3f, 0f, 0.97f);
-				if (Rand.Value < num)
-				{
-					return;
-				}
+				num *= this.infectionChanceFactorFromTendRoom;
+				num *= HediffComp_Infecter.InfectionChanceFactorFromTendQualityCurve.Evaluate(hediffComp_TendDuration.tendQuality);
 			}
-			if (base.Pawn.health.immunity.DiseaseContractChanceFactor(HediffDefOf.WoundInfection, this.parent.Part) <= 0.001f)
+			if (base.Pawn.Faction == Faction.OfPlayer)
 			{
-				return;
+				num *= Find.Storyteller.difficulty.playerPawnInfectionChanceFactor;
 			}
-			this.alreadyCausedInfection = true;
-			base.Pawn.health.AddHediff(HediffDefOf.WoundInfection, this.parent.Part, null);
+			if (Rand.Value < num)
+			{
+				this.ticksUntilInfect = -4;
+				base.Pawn.health.AddHediff(HediffDefOf.WoundInfection, this.parent.Part, null);
+			}
+			else
+			{
+				this.ticksUntilInfect = -3;
+			}
 		}
 
 		public override string CompDebugString()
 		{
-			if (this.alreadyCausedInfection)
+			if (this.ticksUntilInfect > 0)
 			{
-				return "already caused infection";
+				return string.Concat(new object[]
+				{
+					"infection may appear in: ",
+					this.ticksUntilInfect,
+					" ticks\ninfectChnceFactorFromTendRoom: ",
+					this.infectionChanceFactorFromTendRoom.ToStringPercent()
+				});
 			}
-			if (this.ticksUntilInfect <= 0)
+			if (this.ticksUntilInfect == -4)
 			{
-				return "no infection will appear";
+				return "already created infection";
 			}
-			return string.Concat(new object[]
+			if (this.ticksUntilInfect == -3)
 			{
-				"infection may appear after: ",
-				this.ticksUntilInfect,
-				" ticks (infection chance factor: ",
-				this.infectionChanceFactor.ToString(),
-				")"
-			});
+				return "failed to make infection";
+			}
+			if (this.ticksUntilInfect == -2)
+			{
+				return "will not make infection";
+			}
+			if (this.ticksUntilInfect == -1)
+			{
+				return "uninitialized data!";
+			}
+			return "unexpected ticksUntilInfect = " + this.ticksUntilInfect;
 		}
 	}
 }

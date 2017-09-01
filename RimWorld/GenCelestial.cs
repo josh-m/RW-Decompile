@@ -15,6 +15,20 @@ namespace RimWorld
 
 		private const float ShadowDayNightThreshold = 0.6f;
 
+		private static int TicksAbsForSunPosInWorldSpace
+		{
+			get
+			{
+				if (Current.ProgramState != ProgramState.Entry)
+				{
+					return GenTicks.TicksAbs;
+				}
+				int startingTile = Find.GameInitData.startingTile;
+				float longitude = (startingTile < 0) ? 0f : Find.WorldGrid.LongLatOf(startingTile).x;
+				return Mathf.RoundToInt(2500f * (12f - GenDate.TimeZoneFloatAt(longitude)));
+			}
+		}
+
 		public static float CurCelestialSunGlow(Map map)
 		{
 			return GenCelestial.CelestialSunGlowPercent(Find.WorldGrid.LongLatOf(map.Tile).y, GenLocalDate.DayOfYear(map), GenLocalDate.DayPercent(map));
@@ -28,7 +42,7 @@ namespace RimWorld
 		public static Vector2 CurShadowVector(Map map)
 		{
 			float num = GenLocalDate.DayPercent(map);
-			bool flag = GenCelestial.CurCelestialSunGlow(map) > 0.6f;
+			bool flag = GenCelestial.IsDaytime(GenCelestial.CurCelestialSunGlow(map));
 			float t;
 			float num2;
 			float num3;
@@ -58,16 +72,21 @@ namespace RimWorld
 
 		public static Vector3 CurSunPositionInWorldSpace()
 		{
-			return GenCelestial.SunPosition((float)GenDate.DayOfYear((long)GenTicks.TicksAbs, 0f), GenDate.DayPercent((long)GenTicks.TicksAbs, 0f), new Vector3(0f, 0f, -1f));
+			int ticksAbsForSunPosInWorldSpace = GenCelestial.TicksAbsForSunPosInWorldSpace;
+			return GenCelestial.SunPositionUnmodified((float)GenDate.DayOfYear((long)ticksAbsForSunPosInWorldSpace, 0f), GenDate.DayPercent((long)ticksAbsForSunPosInWorldSpace, 0f), new Vector3(0f, 0f, -1f));
+		}
+
+		public static bool IsDaytime(float glow)
+		{
+			return glow > 0.6f;
 		}
 
 		private static Vector3 SunPosition(float latitude, int dayOfYear, float dayPercent)
 		{
-			latitude = Mathf.Abs(latitude);
 			Vector3 target = GenCelestial.SurfaceNormal(latitude);
-			Vector3 current = GenCelestial.SunPosition((float)dayOfYear, dayPercent, new Vector3(1f, 0f, 0f));
+			Vector3 current = GenCelestial.SunPositionUnmodified((float)dayOfYear, dayPercent, new Vector3(1f, 0f, 0f));
 			current = Vector3.RotateTowards(current, target, 0.331612557f, 9999999f);
-			float num = Mathf.InverseLerp(60f, 0f, latitude);
+			float num = Mathf.InverseLerp(60f, 0f, Mathf.Abs(latitude));
 			if (num > 0f)
 			{
 				current = Vector3.RotateTowards(current, target, 6.28318548f * (17f * num / 360f), 9999999f);
@@ -75,7 +94,7 @@ namespace RimWorld
 			return current.normalized;
 		}
 
-		private static Vector3 SunPosition(float dayOfYear, float dayPercent, Vector3 initialSunPos)
+		private static Vector3 SunPositionUnmodified(float dayOfYear, float dayPercent, Vector3 initialSunPos)
 		{
 			Vector3 point = initialSunPos * 100f;
 			float num = dayOfYear / 60f;
@@ -89,7 +108,6 @@ namespace RimWorld
 
 		private static float CelestialSunGlowPercent(float latitude, int dayOfYear, float dayPercent)
 		{
-			latitude = Mathf.Abs(latitude);
 			Vector3 vector = GenCelestial.SurfaceNormal(latitude);
 			Vector3 rhs = GenCelestial.SunPosition(latitude, dayOfYear, dayPercent);
 			float value = Vector3.Dot(vector.normalized, rhs);
@@ -106,7 +124,7 @@ namespace RimWorld
 
 		public static void LogSunGlowForYear()
 		{
-			for (int i = 0; i <= 90; i += 10)
+			for (int i = -90; i <= 90; i += 10)
 			{
 				StringBuilder stringBuilder = new StringBuilder();
 				stringBuilder.AppendLine("Sun visibility percents for latitude " + i + ", for each hour of each day of the year");

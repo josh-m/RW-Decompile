@@ -15,7 +15,7 @@ namespace RimWorld
 
 		public override string CompInspectStringExtra()
 		{
-			Room room = this.parent.GetRoom();
+			Room room = this.parent.GetRoom(RegionType.Set_All);
 			string str;
 			if (room == null || room.Role == RoomRoleDefOf.None)
 			{

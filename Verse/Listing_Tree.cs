@@ -25,8 +25,9 @@ namespace Verse
 			}
 		}
 
-		public Listing_Tree(Rect rect) : base(rect)
+		public override void Begin(Rect rect)
 		{
+			base.Begin(rect);
 			Text.Anchor = TextAnchor.MiddleLeft;
 			Text.WordWrap = false;
 		}

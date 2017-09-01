@@ -40,8 +40,8 @@ namespace Verse
 
 		public void ExposeData()
 		{
-			Scribe_Defs.LookDef<HediffDef>(ref this.hediffDef, "hediffDef");
-			Scribe_Values.LookValue<float>(ref this.immunity, "immunity", 0f, false);
+			Scribe_Defs.Look<HediffDef>(ref this.hediffDef, "hediffDef");
+			Scribe_Values.Look<float>(ref this.immunity, "immunity", 0f, false);
 		}
 	}
 }

@@ -14,6 +14,14 @@ namespace RimWorld
 
 		private const int UnloadDuration = 10;
 
+		private int countToDrop = -1;
+
+		public override void ExposeData()
+		{
+			base.ExposeData();
+			Scribe_Values.Look<int>(ref this.countToDrop, "countToDrop", -1, false);
+		}
+
 		[DebuggerHidden]
 		protected override IEnumerable<Toil> MakeNewToils()
 		{
@@ -22,28 +30,30 @@ namespace RimWorld
 			{
 				initAction = delegate
 				{
-					if (!this.<>f__this.pawn.inventory.UnloadEverything || this.<>f__this.pawn.inventory.innerContainer.Count == 0)
+					if (!this.<>f__this.pawn.inventory.UnloadEverything)
 					{
 						this.<>f__this.EndJobWith(JobCondition.Succeeded);
 					}
 					else
 					{
-						Thing thing = this.<>f__this.pawn.inventory.innerContainer.RandomElement<Thing>();
+						ThingStackPart firstUnloadableThing = this.<>f__this.pawn.inventory.FirstUnloadableThing;
 						IntVec3 c;
-						if (!StoreUtility.TryFindStoreCellNearColonyDesperate(thing, this.<>f__this.pawn, out c))
+						if (!StoreUtility.TryFindStoreCellNearColonyDesperate(firstUnloadableThing.Thing, this.<>f__this.pawn, out c))
 						{
-							this.<>f__this.pawn.inventory.innerContainer.TryDrop(thing, ThingPlaceMode.Near, out thing, null);
+							Thing thing;
+							this.<>f__this.pawn.inventory.innerContainer.TryDrop(firstUnloadableThing.Thing, ThingPlaceMode.Near, firstUnloadableThing.Count, out thing, null);
 							this.<>f__this.EndJobWith(JobCondition.Succeeded);
 						}
 						else
 						{
-							this.<>f__this.CurJob.SetTarget(TargetIndex.A, thing);
+							this.<>f__this.CurJob.SetTarget(TargetIndex.A, firstUnloadableThing.Thing);
 							this.<>f__this.CurJob.SetTarget(TargetIndex.B, c);
+							this.<>f__this.countToDrop = firstUnloadableThing.Count;
 						}
 					}
 				}
 			};
-			yield return Toils_Reserve.Reserve(TargetIndex.B, 1);
+			yield return Toils_Reserve.Reserve(TargetIndex.B, 1, -1, null);
 			yield return Toils_Goto.GotoCell(TargetIndex.B, PathEndMode.Touch);
 			yield return new Toil
 			{
@@ -57,20 +67,16 @@ namespace RimWorld
 					}
 					if (!this.<>f__this.pawn.health.capacities.CapableOf(PawnCapacityDefOf.Manipulation) || !thing.def.EverStoreable)
 					{
-						this.<>f__this.pawn.inventory.innerContainer.TryDrop(thing, ThingPlaceMode.Near, out thing, null);
+						this.<>f__this.pawn.inventory.innerContainer.TryDrop(thing, ThingPlaceMode.Near, this.<>f__this.countToDrop, out thing, null);
 						this.<>f__this.EndJobWith(JobCondition.Succeeded);
 					}
 					else
 					{
-						this.<>f__this.pawn.inventory.innerContainer.TransferToContainer(thing, this.<>f__this.pawn.carryTracker.innerContainer, thing.stackCount, out thing);
-						this.<>f__this.CurJob.count = thing.stackCount;
+						this.<>f__this.pawn.inventory.innerContainer.TryTransferToContainer(thing, this.<>f__this.pawn.carryTracker.innerContainer, this.<>f__this.countToDrop, out thing, true);
+						this.<>f__this.CurJob.count = this.<>f__this.countToDrop;
 						this.<>f__this.CurJob.SetTarget(TargetIndex.A, thing);
 					}
 					thing.SetForbidden(false, false);
-					if (this.<>f__this.pawn.inventory.innerContainer.Count == 0)
-					{
-						this.<>f__this.pawn.inventory.UnloadEverything = false;
-					}
 				}
 			};
 			Toil carryToCell = Toils_Haul.CarryHauledThingToCell(TargetIndex.B);

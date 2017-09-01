@@ -26,16 +26,7 @@ namespace RimWorld.BaseGen
 				Rot4 rot = (!@bool) ? Rot4.North : Rot4.West;
 				if (!GenSpawn.WouldWipeAnythingWith(current, rot, thingDef, map, (Thing x) => x.def.category == ThingCategory.Building))
 				{
-					bool flag = false;
-					foreach (IntVec3 current2 in GenAdj.CellsOccupiedBy(current, rot, thingDef.Size))
-					{
-						if (BaseGenUtility.AnyDoorAdjacentTo(current2, map))
-						{
-							flag = true;
-							break;
-						}
-					}
-					if (!flag)
+					if (!BaseGenUtility.AnyDoorCardinalAdjacentTo(GenAdj.OccupiedRect(current, rot, thingDef.Size), map))
 					{
 						ThingDef stuff = null;
 						if (thingDef.MadeFromStuff)
@@ -44,7 +35,7 @@ namespace RimWorld.BaseGen
 						}
 						Thing thing = ThingMaker.MakeThing(thingDef, stuff);
 						thing.SetFaction(rp.faction, null);
-						GenSpawn.Spawn(thing, current, map, rot);
+						GenSpawn.Spawn(thing, current, map, rot, false);
 					}
 				}
 			}

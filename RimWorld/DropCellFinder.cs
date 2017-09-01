@@ -168,7 +168,7 @@ namespace RimWorld
 						bool flag = false;
 						foreach (Thing current in enumerable)
 						{
-							if ((intVec - current.Position).LengthHorizontalSquared < num2 * num2)
+							if ((float)(intVec - current.Position).LengthHorizontalSquared < num2 * num2)
 							{
 								flag = true;
 								break;
@@ -224,7 +224,7 @@ namespace RimWorld
 						root = DropCellFinder.RandomDropSpot(map);
 					}
 				}
-				spot = CellFinder.RandomClosewalkCellNear(root, map, 10);
+				spot = CellFinder.RandomClosewalkCellNear(root, map, 10, null);
 				if (DropCellFinder.CanPhysicallyDropInto(spot, map, true))
 				{
 					break;

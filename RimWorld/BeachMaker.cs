@@ -55,7 +55,7 @@ namespace RimWorld
 			BeachMaker.beachNoise = null;
 		}
 
-		public static TerrainDef BeachTerrainAt(IntVec3 loc)
+		public static TerrainDef BeachTerrainAt(IntVec3 loc, BiomeDef biome)
 		{
 			if (BeachMaker.beachNoise == null)
 			{
@@ -64,15 +64,15 @@ namespace RimWorld
 			float value = BeachMaker.beachNoise.GetValue(loc);
 			if (value < 0.1f)
 			{
-				return TerrainDefOf.WaterDeep;
+				return TerrainDefOf.WaterOceanDeep;
 			}
 			if (value < 0.45f)
 			{
-				return TerrainDefOf.WaterShallow;
+				return TerrainDefOf.WaterOceanShallow;
 			}
 			if (value < 1f)
 			{
-				return TerrainDefOf.Sand;
+				return (biome != BiomeDefOf.SeaIce) ? TerrainDefOf.Sand : TerrainDefOf.Ice;
 			}
 			return null;
 		}

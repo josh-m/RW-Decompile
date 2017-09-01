@@ -78,12 +78,14 @@ namespace Verse
 				return typeof(Building_Grave).IsAssignableFrom(def.thingClass);
 			case ThingRequestGroup.Art:
 				return def.HasComp(typeof(CompArt));
-			case ThingRequestGroup.ContainerEnclosure:
-				return typeof(IThingContainerOwner).IsAssignableFrom(def.thingClass) && !def.IsCorpse;
+			case ThingRequestGroup.ThisOrAnyCompIsThingHolder:
+				return def.ThisOrAnyCompIsThingHolder();
 			case ThingRequestGroup.ActiveDropPod:
 				return typeof(IActiveDropPod).IsAssignableFrom(def.thingClass);
 			case ThingRequestGroup.Transporter:
 				return def.HasComp(typeof(CompTransporter));
+			case ThingRequestGroup.LongRangeMineralScanner:
+				return def.HasComp(typeof(CompLongRangeMineralScanner));
 			default:
 				throw new ArgumentException("group");
 			}

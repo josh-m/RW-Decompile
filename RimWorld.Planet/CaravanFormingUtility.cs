@@ -13,10 +13,10 @@ namespace RimWorld.Planet
 
 		private static List<Pawn> tmpSendablePawns = new List<Pawn>();
 
-		public static void FormAndCreateCaravan(IEnumerable<Pawn> pawns, Faction faction, int startingTile)
+		public static void FormAndCreateCaravan(IEnumerable<Pawn> pawns, Faction faction, int exitFromTile, int directionTile)
 		{
-			Caravan o = CaravanExitMapUtility.ExitMapAndCreateCaravan(pawns, faction, startingTile);
-			Find.LetterStack.ReceiveLetter("LetterLabelFormedCaravan".Translate(), "LetterFormedCaravan".Translate(), LetterType.Good, o, null);
+			Caravan o = CaravanExitMapUtility.ExitMapAndCreateCaravan(pawns, faction, exitFromTile, directionTile);
+			Find.LetterStack.ReceiveLetter("LetterLabelFormedCaravan".Translate(), "LetterFormedCaravan".Translate(), LetterDefOf.Good, o, null);
 		}
 
 		public static void StartFormingCaravan(List<Pawn> pawns, Faction faction, List<TransferableOneWay> transferables, IntVec3 meetingPoint, IntVec3 exitSpot, int startingTile)
@@ -37,11 +37,19 @@ namespace RimWorld.Planet
 			}
 			List<TransferableOneWay> list = transferables.ToList<TransferableOneWay>();
 			list.RemoveAll((TransferableOneWay x) => x.CountToTransfer <= 0 || !x.HasAnyThing || x.AnyThing is Pawn);
-			LordJob_FormAndSendCaravan lordJob = new LordJob_FormAndSendCaravan(list, meetingPoint, exitSpot, startingTile);
-			LordMaker.MakeNewLord(Faction.OfPlayer, lordJob, pawns[0].Map, pawns);
 			for (int i = 0; i < pawns.Count; i++)
 			{
-				Pawn pawn = pawns[i];
+				Lord lord = pawns[i].GetLord();
+				if (lord != null)
+				{
+					lord.Notify_PawnLost(pawns[i], PawnLostCondition.ForcedToJoinOtherLord);
+				}
+			}
+			LordJob_FormAndSendCaravan lordJob = new LordJob_FormAndSendCaravan(list, meetingPoint, exitSpot, startingTile);
+			LordMaker.MakeNewLord(Faction.OfPlayer, lordJob, pawns[0].MapHeld, pawns);
+			for (int j = 0; j < pawns.Count; j++)
+			{
+				Pawn pawn = pawns[j];
 				if (pawn.Spawned)
 				{
 					pawn.jobs.EndCurrentJob(JobCondition.InterruptForced, true);
@@ -51,10 +59,20 @@ namespace RimWorld.Planet
 
 		public static void StopFormingCaravan(Lord lord)
 		{
+			CaravanFormingUtility.SetToUnloadEverything(lord);
 			lord.lordManager.RemoveLord(lord);
+		}
+
+		public static void Notify_FormAndSendCaravanLordFailed(Lord lord)
+		{
+			CaravanFormingUtility.SetToUnloadEverything(lord);
+		}
+
+		private static void SetToUnloadEverything(Lord lord)
+		{
 			for (int i = 0; i < lord.ownedPawns.Count; i++)
 			{
-				lord.ownedPawns[i].jobs.EndCurrentJob(JobCondition.InterruptForced, true);
+				lord.ownedPawns[i].inventory.UnloadEverything = true;
 			}
 		}
 

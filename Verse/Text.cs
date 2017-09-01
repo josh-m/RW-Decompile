@@ -20,7 +20,11 @@ namespace Verse
 
 		public static readonly GUIStyle[] textAreaStyles;
 
+		public static readonly GUIStyle[] textAreaReadOnlyStyles;
+
 		private static readonly float[] lineHeights;
+
+		private static GUIContent tmpTextGUIContent;
 
 		public static GameFont Font
 		{
@@ -134,6 +138,24 @@ namespace Verse
 			}
 		}
 
+		public static GUIStyle CurTextAreaReadOnlyStyle
+		{
+			get
+			{
+				switch (Text.fontInt)
+				{
+				case GameFont.Tiny:
+					return Text.textAreaReadOnlyStyles[0];
+				case GameFont.Small:
+					return Text.textAreaReadOnlyStyles[1];
+				case GameFont.Medium:
+					return Text.textAreaReadOnlyStyles[2];
+				default:
+					throw new NotImplementedException();
+				}
+			}
+		}
+
 		static Text()
 		{
 			Text.fontInt = GameFont.Small;
@@ -142,7 +164,9 @@ namespace Verse
 			Text.fontStyles = new GUIStyle[3];
 			Text.textFieldStyles = new GUIStyle[3];
 			Text.textAreaStyles = new GUIStyle[3];
+			Text.textAreaReadOnlyStyles = new GUIStyle[3];
 			Text.lineHeights = new float[3];
+			Text.tmpTextGUIContent = new GUIContent();
 			Font font = (Font)Resources.Load("Fonts/Calibri_tiny");
 			Font font2 = (Font)Resources.Load("Fonts/Arial_small");
 			Font font3 = (Font)Resources.Load("Fonts/Arial_medium");
@@ -167,6 +191,17 @@ namespace Verse
 				Text.textAreaStyles[j].alignment = TextAnchor.UpperLeft;
 				Text.textAreaStyles[j].wordWrap = true;
 			}
+			for (int k = 0; k < Text.textAreaReadOnlyStyles.Length; k++)
+			{
+				Text.textAreaReadOnlyStyles[k] = new GUIStyle(Text.textAreaStyles[k]);
+				GUIStyle gUIStyle = Text.textAreaReadOnlyStyles[k];
+				gUIStyle.normal.background = null;
+				gUIStyle.active.background = null;
+				gUIStyle.onHover.background = null;
+				gUIStyle.hover.background = null;
+				gUIStyle.onFocused.background = null;
+				gUIStyle.focused.background = null;
+			}
 			GUI.skin.settings.doubleClickSelectsWord = true;
 			int num = 0;
 			using (IEnumerator enumerator = Enum.GetValues(typeof(GameFont)).GetEnumerator())
@@ -185,12 +220,14 @@ namespace Verse
 
 		public static float CalcHeight(string text, float width)
 		{
-			return Text.CurFontStyle.CalcHeight(new GUIContent(text), width);
+			Text.tmpTextGUIContent.text = text;
+			return Text.CurFontStyle.CalcHeight(Text.tmpTextGUIContent, width);
 		}
 
 		public static Vector2 CalcSize(string text)
 		{
-			return Text.CurFontStyle.CalcSize(new GUIContent(text));
+			Text.tmpTextGUIContent.text = text;
+			return Text.CurFontStyle.CalcSize(Text.tmpTextGUIContent);
 		}
 
 		internal static void StartOfOnGUI()

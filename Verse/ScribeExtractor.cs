@@ -73,6 +73,11 @@ namespace Verse
 
 		public static T SaveableFromNode<T>(XmlNode subNode, object[] ctorArgs)
 		{
+			if (Scribe.mode != LoadSaveMode.LoadingVars)
+			{
+				Log.Error("Called SaveableFromNode(), but mode is " + Scribe.mode);
+				return default(T);
+			}
 			if (subNode == null)
 			{
 				return default(T);
@@ -120,22 +125,34 @@ namespace Verse
 					bool flag = typeof(T).IsValueType || typeof(Name).IsAssignableFrom(typeof(T));
 					if (!flag)
 					{
-						CrossRefResolver.RegisterForCrossRefResolve(exposable);
+						Scribe.loader.crossRefs.RegisterForCrossRefResolve(exposable);
 					}
-					XmlNode curParent = Scribe.curParent;
-					Scribe.curParent = subNode;
-					exposable.ExposeData();
-					Scribe.curParent = curParent;
+					XmlNode curXmlParent = Scribe.loader.curXmlParent;
+					IExposable curParent = Scribe.loader.curParent;
+					string curPathRelToParent = Scribe.loader.curPathRelToParent;
+					Scribe.loader.curXmlParent = subNode;
+					Scribe.loader.curParent = exposable;
+					Scribe.loader.curPathRelToParent = null;
+					try
+					{
+						exposable.ExposeData();
+					}
+					finally
+					{
+						Scribe.loader.curXmlParent = curXmlParent;
+						Scribe.loader.curParent = curParent;
+						Scribe.loader.curPathRelToParent = curPathRelToParent;
+					}
 					if (!flag)
 					{
-						PostLoadInitter.RegisterForPostLoadInit(exposable);
+						Scribe.loader.initer.RegisterForPostLoadInit(exposable);
 					}
 					result = (T)((object)exposable);
 				}
 				catch (Exception ex)
 				{
 					result = default(T);
-					throw new InvalidOperationException(string.Concat(new object[]
+					Log.Error(string.Concat(new object[]
 					{
 						"SaveableFromNode exception: ",
 						ex,
@@ -147,142 +164,231 @@ namespace Verse
 			return result;
 		}
 
-		public static LocalTargetInfo LocalTargetInfoFromNode(XmlNode subNode, LocalTargetInfo defaultValue)
+		public static LocalTargetInfo LocalTargetInfoFromNode(XmlNode node, string label, LocalTargetInfo defaultValue)
 		{
-			if (subNode == null)
+			LoadIDsWantedBank loadIDs = Scribe.loader.crossRefs.loadIDs;
+			if (node != null && Scribe.EnterNode(label))
 			{
-				LoadIDsWantedBank.RegisterLoadIDReadFromXml(null, typeof(Thing));
-				return defaultValue;
-			}
-			if (subNode.InnerText[0] == '(')
-			{
-				LoadIDsWantedBank.RegisterLoadIDReadFromXml(null, typeof(Thing));
-				return new LocalTargetInfo(IntVec3.FromString(subNode.InnerText));
-			}
-			LoadIDsWantedBank.RegisterLoadIDReadFromXml(subNode.InnerText, typeof(Thing));
-			return LocalTargetInfo.Invalid;
-		}
-
-		public static TargetInfo TargetInfoFromNode(XmlNode subNode, TargetInfo defaultValue)
-		{
-			if (subNode == null)
-			{
-				LoadIDsWantedBank.RegisterLoadIDReadFromXml(null, typeof(Thing));
-				LoadIDsWantedBank.RegisterLoadIDReadFromXml(null, typeof(Map));
-				return defaultValue;
-			}
-			if (subNode.InnerText[0] == '(')
-			{
-				string str;
-				string targetLoadID;
-				ScribeExtractor.ExtractCellAndMapPairFromTargetInfo(subNode.InnerText, out str, out targetLoadID);
-				LoadIDsWantedBank.RegisterLoadIDReadFromXml(null, typeof(Thing));
-				LoadIDsWantedBank.RegisterLoadIDReadFromXml(targetLoadID, typeof(Map));
-				return new TargetInfo(IntVec3.FromString(str), null, true);
-			}
-			LoadIDsWantedBank.RegisterLoadIDReadFromXml(subNode.InnerText, typeof(Thing));
-			LoadIDsWantedBank.RegisterLoadIDReadFromXml(null, typeof(Map));
-			return TargetInfo.Invalid;
-		}
-
-		public static GlobalTargetInfo GlobalTargetInfoFromNode(XmlNode subNode, GlobalTargetInfo defaultValue)
-		{
-			if (subNode == null)
-			{
-				LoadIDsWantedBank.RegisterLoadIDReadFromXml(null, typeof(Thing));
-				LoadIDsWantedBank.RegisterLoadIDReadFromXml(null, typeof(Map));
-				LoadIDsWantedBank.RegisterLoadIDReadFromXml(null, typeof(WorldObject));
-				return defaultValue;
-			}
-			if (subNode.InnerText[0] == '(')
-			{
-				string str;
-				string targetLoadID;
-				ScribeExtractor.ExtractCellAndMapPairFromTargetInfo(subNode.InnerText, out str, out targetLoadID);
-				LoadIDsWantedBank.RegisterLoadIDReadFromXml(null, typeof(Thing));
-				LoadIDsWantedBank.RegisterLoadIDReadFromXml(targetLoadID, typeof(Map));
-				LoadIDsWantedBank.RegisterLoadIDReadFromXml(null, typeof(WorldObject));
-				return new GlobalTargetInfo(IntVec3.FromString(str), null, true);
-			}
-			int tile;
-			if (int.TryParse(subNode.InnerText, out tile))
-			{
-				LoadIDsWantedBank.RegisterLoadIDReadFromXml(null, typeof(Thing));
-				LoadIDsWantedBank.RegisterLoadIDReadFromXml(null, typeof(Map));
-				LoadIDsWantedBank.RegisterLoadIDReadFromXml(null, typeof(WorldObject));
-				return new GlobalTargetInfo(tile);
-			}
-			if (!subNode.InnerText.NullOrEmpty() && subNode.InnerText[0] == '@')
-			{
-				LoadIDsWantedBank.RegisterLoadIDReadFromXml(null, typeof(Thing));
-				LoadIDsWantedBank.RegisterLoadIDReadFromXml(null, typeof(Map));
-				LoadIDsWantedBank.RegisterLoadIDReadFromXml(subNode.InnerText.Substring(1), typeof(WorldObject));
-				return GlobalTargetInfo.Invalid;
-			}
-			LoadIDsWantedBank.RegisterLoadIDReadFromXml(subNode.InnerText, typeof(Thing));
-			LoadIDsWantedBank.RegisterLoadIDReadFromXml(null, typeof(Map));
-			LoadIDsWantedBank.RegisterLoadIDReadFromXml(null, typeof(WorldObject));
-			return GlobalTargetInfo.Invalid;
-		}
-
-		public static LocalTargetInfo ResolveLocalTargetInfo(LocalTargetInfo loaded)
-		{
-			Thing thing = CrossRefResolver.NextResolvedRef<Thing>();
-			IntVec3 cell = loaded.Cell;
-			if (thing != null)
-			{
-				return new LocalTargetInfo(thing);
-			}
-			return new LocalTargetInfo(cell);
-		}
-
-		public static TargetInfo ResolveTargetInfo(TargetInfo loaded)
-		{
-			Thing thing = CrossRefResolver.NextResolvedRef<Thing>();
-			Map map = CrossRefResolver.NextResolvedRef<Map>();
-			IntVec3 cell = loaded.Cell;
-			if (thing != null)
-			{
-				return new TargetInfo(thing);
-			}
-			if (cell.IsValid && map != null)
-			{
-				return new TargetInfo(cell, map, false);
-			}
-			return TargetInfo.Invalid;
-		}
-
-		public static GlobalTargetInfo ResolveGlobalTargetInfo(GlobalTargetInfo loaded)
-		{
-			Thing thing = CrossRefResolver.NextResolvedRef<Thing>();
-			Map map = CrossRefResolver.NextResolvedRef<Map>();
-			WorldObject worldObject = CrossRefResolver.NextResolvedRef<WorldObject>();
-			IntVec3 cell = loaded.Cell;
-			int tile = loaded.Tile;
-			if (thing != null)
-			{
-				return new GlobalTargetInfo(thing);
-			}
-			if (worldObject != null)
-			{
-				return new GlobalTargetInfo(worldObject);
-			}
-			if (cell.IsValid)
-			{
-				if (map != null)
+				try
 				{
-					return new GlobalTargetInfo(cell, map, false);
+					string innerText = node.InnerText;
+					LocalTargetInfo result;
+					if (innerText.Length != 0 && innerText[0] == '(')
+					{
+						loadIDs.RegisterLoadIDReadFromXml(null, typeof(Thing), "thing");
+						result = new LocalTargetInfo(IntVec3.FromString(innerText));
+						return result;
+					}
+					loadIDs.RegisterLoadIDReadFromXml(innerText, typeof(Thing), "thing");
+					result = LocalTargetInfo.Invalid;
+					return result;
 				}
-				return GlobalTargetInfo.Invalid;
-			}
-			else
-			{
-				if (tile >= 0)
+				finally
 				{
-					return new GlobalTargetInfo(tile);
+					Scribe.ExitNode();
 				}
-				return GlobalTargetInfo.Invalid;
 			}
+			loadIDs.RegisterLoadIDReadFromXml(null, typeof(Thing), label + "/thing");
+			return defaultValue;
+		}
+
+		public static TargetInfo TargetInfoFromNode(XmlNode node, string label, TargetInfo defaultValue)
+		{
+			LoadIDsWantedBank loadIDs = Scribe.loader.crossRefs.loadIDs;
+			if (node != null && Scribe.EnterNode(label))
+			{
+				try
+				{
+					string innerText = node.InnerText;
+					TargetInfo result;
+					if (innerText.Length != 0 && innerText[0] == '(')
+					{
+						string str;
+						string targetLoadID;
+						ScribeExtractor.ExtractCellAndMapPairFromTargetInfo(innerText, out str, out targetLoadID);
+						loadIDs.RegisterLoadIDReadFromXml(null, typeof(Thing), "thing");
+						loadIDs.RegisterLoadIDReadFromXml(targetLoadID, typeof(Map), "map");
+						result = new TargetInfo(IntVec3.FromString(str), null, true);
+						return result;
+					}
+					loadIDs.RegisterLoadIDReadFromXml(innerText, typeof(Thing), "thing");
+					loadIDs.RegisterLoadIDReadFromXml(null, typeof(Map), "map");
+					result = TargetInfo.Invalid;
+					return result;
+				}
+				finally
+				{
+					Scribe.ExitNode();
+				}
+			}
+			loadIDs.RegisterLoadIDReadFromXml(null, typeof(Thing), label + "/thing");
+			loadIDs.RegisterLoadIDReadFromXml(null, typeof(Map), label + "/map");
+			return defaultValue;
+		}
+
+		public static GlobalTargetInfo GlobalTargetInfoFromNode(XmlNode node, string label, GlobalTargetInfo defaultValue)
+		{
+			LoadIDsWantedBank loadIDs = Scribe.loader.crossRefs.loadIDs;
+			if (node != null && Scribe.EnterNode(label))
+			{
+				try
+				{
+					string innerText = node.InnerText;
+					GlobalTargetInfo result;
+					if (innerText.Length != 0 && innerText[0] == '(')
+					{
+						string str;
+						string targetLoadID;
+						ScribeExtractor.ExtractCellAndMapPairFromTargetInfo(innerText, out str, out targetLoadID);
+						loadIDs.RegisterLoadIDReadFromXml(null, typeof(Thing), "thing");
+						loadIDs.RegisterLoadIDReadFromXml(targetLoadID, typeof(Map), "map");
+						loadIDs.RegisterLoadIDReadFromXml(null, typeof(WorldObject), "worldObject");
+						result = new GlobalTargetInfo(IntVec3.FromString(str), null, true);
+						return result;
+					}
+					int tile;
+					if (int.TryParse(innerText, out tile))
+					{
+						loadIDs.RegisterLoadIDReadFromXml(null, typeof(Thing), "thing");
+						loadIDs.RegisterLoadIDReadFromXml(null, typeof(Map), "map");
+						loadIDs.RegisterLoadIDReadFromXml(null, typeof(WorldObject), "worldObject");
+						result = new GlobalTargetInfo(tile);
+						return result;
+					}
+					if (innerText.Length != 0 && innerText[0] == '@')
+					{
+						loadIDs.RegisterLoadIDReadFromXml(null, typeof(Thing), "thing");
+						loadIDs.RegisterLoadIDReadFromXml(null, typeof(Map), "map");
+						loadIDs.RegisterLoadIDReadFromXml(innerText.Substring(1), typeof(WorldObject), "worldObject");
+						result = GlobalTargetInfo.Invalid;
+						return result;
+					}
+					loadIDs.RegisterLoadIDReadFromXml(innerText, typeof(Thing), "thing");
+					loadIDs.RegisterLoadIDReadFromXml(null, typeof(Map), "map");
+					loadIDs.RegisterLoadIDReadFromXml(null, typeof(WorldObject), "worldObject");
+					result = GlobalTargetInfo.Invalid;
+					return result;
+				}
+				finally
+				{
+					Scribe.ExitNode();
+				}
+			}
+			loadIDs.RegisterLoadIDReadFromXml(null, typeof(Thing), label + "/thing");
+			loadIDs.RegisterLoadIDReadFromXml(null, typeof(Map), label + "/map");
+			loadIDs.RegisterLoadIDReadFromXml(null, typeof(WorldObject), label + "/worldObject");
+			return defaultValue;
+		}
+
+		public static LocalTargetInfo ResolveLocalTargetInfo(LocalTargetInfo loaded, string label)
+		{
+			if (Scribe.EnterNode(label))
+			{
+				try
+				{
+					Thing thing = Scribe.loader.crossRefs.TakeResolvedRef<Thing>("thing");
+					IntVec3 cell = loaded.Cell;
+					LocalTargetInfo result;
+					if (thing != null)
+					{
+						result = new LocalTargetInfo(thing);
+						return result;
+					}
+					result = new LocalTargetInfo(cell);
+					return result;
+				}
+				finally
+				{
+					Scribe.ExitNode();
+				}
+				return loaded;
+			}
+			return loaded;
+		}
+
+		public static TargetInfo ResolveTargetInfo(TargetInfo loaded, string label)
+		{
+			if (Scribe.EnterNode(label))
+			{
+				try
+				{
+					Thing thing = Scribe.loader.crossRefs.TakeResolvedRef<Thing>("thing");
+					Map map = Scribe.loader.crossRefs.TakeResolvedRef<Map>("map");
+					IntVec3 cell = loaded.Cell;
+					TargetInfo result;
+					if (thing != null)
+					{
+						result = new TargetInfo(thing);
+						return result;
+					}
+					if (cell.IsValid && map != null)
+					{
+						result = new TargetInfo(cell, map, false);
+						return result;
+					}
+					result = TargetInfo.Invalid;
+					return result;
+				}
+				finally
+				{
+					Scribe.ExitNode();
+				}
+				return loaded;
+			}
+			return loaded;
+		}
+
+		public static GlobalTargetInfo ResolveGlobalTargetInfo(GlobalTargetInfo loaded, string label)
+		{
+			if (Scribe.EnterNode(label))
+			{
+				try
+				{
+					Thing thing = Scribe.loader.crossRefs.TakeResolvedRef<Thing>("thing");
+					Map map = Scribe.loader.crossRefs.TakeResolvedRef<Map>("map");
+					WorldObject worldObject = Scribe.loader.crossRefs.TakeResolvedRef<WorldObject>("worldObject");
+					IntVec3 cell = loaded.Cell;
+					int tile = loaded.Tile;
+					if (thing != null)
+					{
+						GlobalTargetInfo result = new GlobalTargetInfo(thing);
+						return result;
+					}
+					if (worldObject != null)
+					{
+						GlobalTargetInfo result = new GlobalTargetInfo(worldObject);
+						return result;
+					}
+					if (cell.IsValid)
+					{
+						GlobalTargetInfo result;
+						if (map != null)
+						{
+							result = new GlobalTargetInfo(cell, map, false);
+							return result;
+						}
+						result = GlobalTargetInfo.Invalid;
+						return result;
+					}
+					else
+					{
+						GlobalTargetInfo result;
+						if (tile >= 0)
+						{
+							result = new GlobalTargetInfo(tile);
+							return result;
+						}
+						result = GlobalTargetInfo.Invalid;
+						return result;
+					}
+				}
+				finally
+				{
+					Scribe.ExitNode();
+				}
+				return loaded;
+			}
+			return loaded;
 		}
 
 		private static void ExtractCellAndMapPairFromTargetInfo(string str, out string cell, out string map)

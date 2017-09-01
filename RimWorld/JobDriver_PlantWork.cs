@@ -29,7 +29,7 @@ namespace RimWorld
 		{
 			this.Init();
 			yield return Toils_JobTransforms.MoveCurrentTargetIntoQueue(TargetIndex.A);
-			yield return Toils_Reserve.ReserveQueue(TargetIndex.A, 1);
+			yield return Toils_Reserve.ReserveQueue(TargetIndex.A, 1, -1, null);
 			Toil initExtractTargetFromQueue = Toils_JobTransforms.ClearDespawnedNullOrForbiddenQueuedTargets(TargetIndex.A);
 			yield return initExtractTargetFromQueue;
 			yield return Toils_JobTransforms.ExtractNextTargetFromQueue(TargetIndex.A);
@@ -51,10 +51,10 @@ namespace RimWorld
 				{
 					if (plant.def.plant.harvestedThingDef != null)
 					{
-						if (actor.RaceProps.Humanlike && plant.def.plant.harvestFailable && Rand.Value < actor.GetStatValue(StatDefOf.HarvestFailChance, true))
+						if (actor.RaceProps.Humanlike && plant.def.plant.harvestFailable && Rand.Value > actor.GetStatValue(StatDefOf.PlantHarvestYield, true))
 						{
 							Vector3 loc = (this.<>f__this.pawn.DrawPos + plant.DrawPos) / 2f;
-							MoteMaker.ThrowText(loc, this.<>f__this.Map, "HarvestFailed".Translate(), 3.65f);
+							MoteMaker.ThrowText(loc, this.<>f__this.Map, "TextMote_HarvestFailed".Translate(), 3.65f);
 						}
 						else
 						{
@@ -80,6 +80,7 @@ namespace RimWorld
 				}
 			};
 			cut.FailOnDespawnedNullOrForbidden(TargetIndex.A);
+			cut.FailOnCannotTouch(TargetIndex.A, PathEndMode.Touch);
 			cut.defaultCompleteMode = ToilCompleteMode.Never;
 			cut.WithEffect(EffecterDefOf.Harvest, TargetIndex.A);
 			cut.WithProgressBar(TargetIndex.A, () => this.<>f__this.workDone / this.<>f__this.Plant.def.plant.harvestWork, true, -0.5f);
@@ -92,7 +93,7 @@ namespace RimWorld
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Values.LookValue<float>(ref this.workDone, "workDone", 0f, false);
+			Scribe_Values.Look<float>(ref this.workDone, "workDone", 0f, false);
 		}
 
 		protected virtual void Init()

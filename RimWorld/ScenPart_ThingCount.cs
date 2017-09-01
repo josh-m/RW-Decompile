@@ -19,9 +19,9 @@ namespace RimWorld
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Defs.LookDef<ThingDef>(ref this.thingDef, "thingDef");
-			Scribe_Defs.LookDef<ThingDef>(ref this.stuff, "stuff");
-			Scribe_Values.LookValue<int>(ref this.count, "count", 1, false);
+			Scribe_Defs.Look<ThingDef>(ref this.thingDef, "thingDef");
+			Scribe_Defs.Look<ThingDef>(ref this.stuff, "stuff");
+			Scribe_Values.Look<int>(ref this.count, "count", 1, false);
 		}
 
 		public override void Randomize()

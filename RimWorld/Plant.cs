@@ -88,7 +88,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return this.def.plant.IsTree || (this.growthInt >= this.def.plant.harvestMinGrowth && !this.LeaflessNow && (!base.Spawned || base.Position.GetSnowDepth(base.Map) <= this.def.hideAtSnowDepth));
+				return base.IngestibleNow && (this.def.plant.IsTree || (this.growthInt >= this.def.plant.harvestMinGrowth && !this.LeaflessNow && (!base.Spawned || base.Position.GetSnowDepth(base.Map) <= this.def.hideAtSnowDepth)));
 			}
 		}
 
@@ -175,7 +175,12 @@ namespace RimWorld
 				{
 					return 0;
 				}
-				return (int)((1f - this.growthInt) / this.GrowthPerTick);
+				float growthPerTick = this.GrowthPerTick;
+				if (growthPerTick == 0f)
+				{
+					return 2147483647;
+				}
+				return (int)((1f - this.growthInt) / growthPerTick);
 			}
 		}
 
@@ -218,7 +223,7 @@ namespace RimWorld
 			}
 		}
 
-		public PlantLifeStage LifeStage
+		public virtual PlantLifeStage LifeStage
 		{
 			get
 			{
@@ -242,9 +247,13 @@ namespace RimWorld
 				{
 					return Plant.GraphicSowing;
 				}
-				if (this.def.plant.leaflessGraphic != null && this.LeaflessNow)
+				if (this.def.plant.leaflessGraphic != null && this.LeaflessNow && !this.HarvestableNow)
 				{
 					return this.def.plant.leaflessGraphic;
+				}
+				if (this.def.plant.immatureGraphic != null && !this.HarvestableNow)
+				{
+					return this.def.plant.immatureGraphic;
 				}
 				return base.Graphic;
 			}
@@ -284,14 +293,9 @@ namespace RimWorld
 			}
 		}
 
-		public override void Destroy(DestroyMode mode = DestroyMode.Vanish)
+		public override void SpawnSetup(Map map, bool respawningAfterLoad)
 		{
-			base.Destroy(mode);
-		}
-
-		public override void SpawnSetup(Map map)
-		{
-			base.SpawnSetup(map);
+			base.SpawnSetup(map, respawningAfterLoad);
 			if (Current.ProgramState == ProgramState.Playing)
 			{
 				this.CheckTemperatureMakeLeafless();
@@ -301,10 +305,10 @@ namespace RimWorld
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Values.LookValue<float>(ref this.growthInt, "growth", 0f, false);
-			Scribe_Values.LookValue<int>(ref this.ageInt, "age", 0, false);
-			Scribe_Values.LookValue<int>(ref this.unlitTicks, "unlitTicks", 0, false);
-			Scribe_Values.LookValue<bool>(ref this.sown, "sown", false, false);
+			Scribe_Values.Look<float>(ref this.growthInt, "growth", 0f, false);
+			Scribe_Values.Look<int>(ref this.ageInt, "age", 0, false);
+			Scribe_Values.Look<int>(ref this.unlitTicks, "unlitTicks", 0, false);
+			Scribe_Values.Look<bool>(ref this.sown, "sown", false, false);
 		}
 
 		public override void PostMapInit()
@@ -323,7 +327,7 @@ namespace RimWorld
 			{
 				num *= Mathf.Lerp(0.5f, 1f, this.growthInt);
 			}
-			if (this.def.plant.harvestDestroys)
+			if (this.def.plant.HarvestDestroys)
 			{
 				numTaken = 1;
 			}
@@ -345,20 +349,20 @@ namespace RimWorld
 
 		public virtual void PlantCollected()
 		{
-			if (this.def.plant.harvestDestroys)
+			if (this.def.plant.HarvestDestroys)
 			{
 				this.Destroy(DestroyMode.Vanish);
 			}
 			else
 			{
-				this.growthInt = 0.08f;
+				this.growthInt = this.def.plant.harvestAfterGrowth;
 				base.Map.mapDrawer.MapMeshDirty(base.Position, MapMeshFlag.Things);
 			}
 		}
 
 		protected virtual void CheckTemperatureMakeLeafless()
 		{
-			if (base.Position.GetTemperature(base.Map) < this.LeaflessTemperatureThresh)
+			if (base.AmbientTemperature < this.LeaflessTemperatureThresh)
 			{
 				this.MakeLeafless(true);
 			}
@@ -378,7 +382,7 @@ namespace RimWorld
 						this.Label
 					}).CapitalizeFirst(), new TargetInfo(base.Position, map, false), MessageSound.Negative);
 				}
-				base.TakeDamage(new DamageInfo(DamageDefOf.Rotting, 99999, -1f, null, null, null));
+				base.TakeDamage(new DamageInfo(DamageDefOf.Rotting, 99999, -1f, null, null, null, DamageInfo.SourceCategory.ThingOrUnknown));
 			}
 			if (flag)
 			{
@@ -422,7 +426,7 @@ namespace RimWorld
 						Map map = base.Map;
 						bool isCrop = this.IsCrop;
 						int amount = Mathf.CeilToInt(10f);
-						base.TakeDamage(new DamageInfo(DamageDefOf.Rotting, amount, -1f, null, null, null));
+						base.TakeDamage(new DamageInfo(DamageDefOf.Rotting, amount, -1f, null, null, null, DamageInfo.SourceCategory.ThingOrUnknown));
 						if (base.Destroyed)
 						{
 							if (isCrop && this.def.plant.Harvestable && MessagesRepeatAvoider.MessageShowAllowed("MessagePlantDiedOfRot-" + this.def.defName, 240f))
@@ -489,7 +493,7 @@ namespace RimWorld
 		public override void Print(SectionLayer layer)
 		{
 			Vector3 a = this.TrueCenter();
-			Rand.PushSeed();
+			Rand.PushState();
 			Rand.Seed = base.Position.GetHashCode();
 			float num;
 			if (this.def.plant.maxMeshCount == 1)
@@ -596,10 +600,10 @@ namespace RimWorld
 				}
 				Vector3 center = vector;
 				center.z -= zero.y / 2f * num12;
-				center.y -= 0.05f;
-				Printer_Shadow.PrintShadow(layer, center, this.def.graphicData.shadowData);
+				center.y -= 0.046875f;
+				Printer_Shadow.PrintShadow(layer, center, this.def.graphicData.shadowData, Rot4.North);
 			}
-			Rand.PopSeed();
+			Rand.PopState();
 		}
 
 		public override string GetInspectString()
@@ -648,7 +652,7 @@ namespace RimWorld
 					stringBuilder.AppendLine("Mature".Translate());
 				}
 			}
-			return stringBuilder.ToString();
+			return stringBuilder.ToString().TrimEndNewlines();
 		}
 
 		public virtual void CropBlighted()

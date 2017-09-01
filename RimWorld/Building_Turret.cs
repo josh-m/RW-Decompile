@@ -4,13 +4,33 @@ using Verse.AI;
 
 namespace RimWorld
 {
-	public abstract class Building_Turret : Building, IAttackTarget, ILoadReferenceable
+	public abstract class Building_Turret : Building, IAttackTargetSearcher, IAttackTarget, ILoadReferenceable
 	{
 		private const float SightRadiusTurret = 13.4f;
 
 		protected StunHandler stunner;
 
 		protected LocalTargetInfo forcedTarget = LocalTargetInfo.Invalid;
+
+		private LocalTargetInfo lastAttackedTarget;
+
+		private int lastAttackTargetTick;
+
+		Thing IAttackTarget.Thing
+		{
+			get
+			{
+				return this;
+			}
+		}
+
+		Thing IAttackTargetSearcher.Thing
+		{
+			get
+			{
+				return this;
+			}
+		}
 
 		public abstract LocalTargetInfo CurrentTarget
 		{
@@ -20,6 +40,38 @@ namespace RimWorld
 		public abstract Verb AttackVerb
 		{
 			get;
+		}
+
+		public LocalTargetInfo TargetCurrentlyAimingAt
+		{
+			get
+			{
+				return this.CurrentTarget;
+			}
+		}
+
+		public Verb CurrentEffectiveVerb
+		{
+			get
+			{
+				return this.AttackVerb;
+			}
+		}
+
+		public LocalTargetInfo LastAttackedTarget
+		{
+			get
+			{
+				return this.lastAttackedTarget;
+			}
+		}
+
+		public int LastAttackTargetTick
+		{
+			get
+			{
+				return this.lastAttackTargetTick;
+			}
 		}
 
 		public Building_Turret()
@@ -36,10 +88,13 @@ namespace RimWorld
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Deep.LookDeep<StunHandler>(ref this.stunner, "stunner", new object[]
+			Scribe_TargetInfo.Look(ref this.forcedTarget, "forcedTarget");
+			Scribe_TargetInfo.Look(ref this.lastAttackedTarget, "lastAttackedTarget");
+			Scribe_Deep.Look<StunHandler>(ref this.stunner, "stunner", new object[]
 			{
 				this
 			});
+			Scribe_Values.Look<int>(ref this.lastAttackTargetTick, "lastAttackTargetTick", 0, false);
 		}
 
 		public override void PreApplyDamage(DamageInfo dinfo, out bool absorbed)
@@ -58,15 +113,18 @@ namespace RimWorld
 		public bool ThreatDisabled()
 		{
 			CompPowerTrader comp = base.GetComp<CompPowerTrader>();
-			if (comp == null || !comp.PowerOn)
+			if (comp != null && !comp.PowerOn)
 			{
-				CompMannable comp2 = base.GetComp<CompMannable>();
-				if (comp2 == null || !comp2.MannedNow)
-				{
-					return true;
-				}
+				return true;
 			}
-			return false;
+			CompMannable comp2 = base.GetComp<CompMannable>();
+			return comp2 != null && !comp2.MannedNow;
+		}
+
+		protected void OnAttackedTarget(LocalTargetInfo target)
+		{
+			this.lastAttackTargetTick = Find.TickManager.TicksGame;
+			this.lastAttackedTarget = target;
 		}
 	}
 }

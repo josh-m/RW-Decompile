@@ -10,8 +10,6 @@ namespace RimWorld
 
 		protected float ruinedPercent;
 
-		protected bool ruined;
-
 		public CompProperties_TemperatureRuinable Props
 		{
 			get
@@ -28,25 +26,9 @@ namespace RimWorld
 			}
 		}
 
-		private float Temperature
-		{
-			get
-			{
-				return this.parent.PositionHeld.GetTemperature(this.parent.MapHeld);
-			}
-		}
-
-		private bool OnMap
-		{
-			get
-			{
-				return this.parent.MapHeld != null;
-			}
-		}
-
 		public override void PostExposeData()
 		{
-			Scribe_Values.LookValue<float>(ref this.ruinedPercent, "ruinedPercent", 0f, false);
+			Scribe_Values.Look<float>(ref this.ruinedPercent, "ruinedPercent", 0f, false);
 		}
 
 		public void Reset()
@@ -66,16 +48,16 @@ namespace RimWorld
 
 		private void DoTicks(int ticks)
 		{
-			if (!this.Ruined && this.OnMap)
+			if (!this.Ruined)
 			{
-				float temperature = this.Temperature;
-				if (temperature > this.Props.maxSafeTemperature)
+				float ambientTemperature = this.parent.AmbientTemperature;
+				if (ambientTemperature > this.Props.maxSafeTemperature)
 				{
-					this.ruinedPercent += (temperature - this.Props.maxSafeTemperature) * this.Props.progressPerDegreePerTick * (float)ticks;
+					this.ruinedPercent += (ambientTemperature - this.Props.maxSafeTemperature) * this.Props.progressPerDegreePerTick * (float)ticks;
 				}
-				else if (temperature < this.Props.minSafeTemperature)
+				else if (ambientTemperature < this.Props.minSafeTemperature)
 				{
-					this.ruinedPercent -= (temperature - this.Props.minSafeTemperature) * this.Props.progressPerDegreePerTick * (float)ticks;
+					this.ruinedPercent -= (ambientTemperature - this.Props.minSafeTemperature) * this.Props.progressPerDegreePerTick * (float)ticks;
 				}
 				if (this.ruinedPercent >= 1f)
 				{
@@ -99,14 +81,13 @@ namespace RimWorld
 		public override bool AllowStackWith(Thing other)
 		{
 			CompTemperatureRuinable comp = ((ThingWithComps)other).GetComp<CompTemperatureRuinable>();
-			return this.ruined == comp.ruined;
+			return this.Ruined == comp.Ruined;
 		}
 
 		public override void PostSplitOff(Thing piece)
 		{
 			CompTemperatureRuinable comp = ((ThingWithComps)piece).GetComp<CompTemperatureRuinable>();
 			comp.ruinedPercent = this.ruinedPercent;
-			comp.ruined = this.ruined;
 		}
 
 		public override string CompInspectStringExtra()
@@ -115,17 +96,17 @@ namespace RimWorld
 			{
 				return "RuinedByTemperature".Translate();
 			}
-			if (this.ruinedPercent > 0f && this.OnMap)
+			if (this.ruinedPercent > 0f)
 			{
-				float temperature = this.Temperature;
+				float ambientTemperature = this.parent.AmbientTemperature;
 				string str;
-				if (temperature > this.Props.maxSafeTemperature)
+				if (ambientTemperature > this.Props.maxSafeTemperature)
 				{
 					str = "Overheating".Translate();
 				}
 				else
 				{
-					if (temperature >= this.Props.minSafeTemperature)
+					if (ambientTemperature >= this.Props.minSafeTemperature)
 					{
 						return null;
 					}

@@ -7,7 +7,7 @@ using Verse.Grammar;
 
 namespace RimWorld
 {
-	public class Tale : ILoadReferenceable, IExposable
+	public class Tale : IExposable, ILoadReferenceable
 	{
 		public TaleDef def;
 
@@ -117,11 +117,11 @@ namespace RimWorld
 
 		public virtual void ExposeData()
 		{
-			Scribe_Defs.LookDef<TaleDef>(ref this.def, "def");
-			Scribe_Values.LookValue<int>(ref this.id, "id", 0, false);
-			Scribe_Values.LookValue<int>(ref this.uses, "uses", 0, false);
-			Scribe_Values.LookValue<int>(ref this.date, "date", 0, false);
-			Scribe_Deep.LookDeep<TaleData_Surroundings>(ref this.surroundings, "surroundings", new object[0]);
+			Scribe_Defs.Look<TaleDef>(ref this.def, "def");
+			Scribe_Values.Look<int>(ref this.id, "id", 0, false);
+			Scribe_Values.Look<int>(ref this.uses, "uses", 0, false);
+			Scribe_Values.Look<int>(ref this.date, "date", 0, false);
+			Scribe_Deep.Look<TaleData_Surroundings>(ref this.surroundings, "surroundings", new object[0]);
 		}
 
 		public void Notify_NewlyUsed()
@@ -149,12 +149,12 @@ namespace RimWorld
 					yield return this.def.rulePack.Rules[i];
 				}
 			}
-			float longitude = 0f;
+			Vector2 location = Vector2.zero;
 			if (this.surroundings != null && this.surroundings.tile >= 0)
 			{
-				longitude = Find.WorldGrid.LongLatOf(this.surroundings.tile).x;
+				location = Find.WorldGrid.LongLatOf(this.surroundings.tile);
 			}
-			yield return new Rule_String("date", GenDate.DateFullStringAt((long)this.date, longitude));
+			yield return new Rule_String("date", GenDate.DateFullStringAt((long)this.date, location));
 			if (this.surroundings != null)
 			{
 				foreach (Rule r in this.surroundings.GetRules())

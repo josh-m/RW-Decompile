@@ -21,19 +21,19 @@ namespace Verse
 
 		public override void DrawWorker(Vector3 loc, Rot4 rot, ThingDef thingDef, Thing thing)
 		{
-			if (this.shadowMesh != null && thingDef != null && this.shadowInfo != null && (Find.VisibleMap == null || !Find.VisibleMap.roofGrid.Roofed(loc.ToIntVec3())))
+			if (this.shadowMesh != null && thingDef != null && this.shadowInfo != null && (Find.VisibleMap == null || !loc.ToIntVec3().InBounds(Find.VisibleMap) || !Find.VisibleMap.roofGrid.Roofed(loc.ToIntVec3())))
 			{
 				Vector3 position = loc + this.shadowInfo.offset;
 				position.y = Altitudes.AltitudeFor(AltitudeLayer.Shadows);
-				Graphics.DrawMesh(this.shadowMesh, position, Quaternion.identity, MatBases.SunShadowFade, 0);
+				Graphics.DrawMesh(this.shadowMesh, position, rot.AsQuat, MatBases.SunShadowFade, 0);
 			}
 		}
 
 		public override void Print(SectionLayer layer, Thing thing)
 		{
-			Vector3 center = thing.TrueCenter() + this.shadowInfo.offset;
+			Vector3 center = thing.TrueCenter() + this.shadowInfo.offset.RotatedBy(thing.Rotation);
 			center.y = Altitudes.AltitudeFor(AltitudeLayer.Shadows);
-			Printer_Shadow.PrintShadow(layer, center, this.shadowInfo);
+			Printer_Shadow.PrintShadow(layer, center, this.shadowInfo, thing.Rotation);
 		}
 
 		public override string ToString()

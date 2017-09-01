@@ -29,7 +29,7 @@ namespace RimWorld
 		private static IntVec3 TryFindSnowmanBuildCell(Pawn pawn)
 		{
 			Region rootReg;
-			if (!CellFinder.TryFindClosestRegionWith(pawn.GetRegion(), TraverseParms.For(pawn, Danger.Deadly, TraverseMode.ByPawn, false), (Region r) => r.Room.PsychologicallyOutdoors, 100, out rootReg))
+			if (!CellFinder.TryFindClosestRegionWith(pawn.GetRegion(RegionType.Set_Passable), TraverseParms.For(pawn, Danger.Deadly, TraverseMode.ByPawn, false), (Region r) => r.Room.PsychologicallyOutdoors, 100, out rootReg, RegionType.Set_Passable))
 			{
 				return IntVec3.Invalid;
 			}
@@ -46,7 +46,7 @@ namespace RimWorld
 					}
 				}
 				return false;
-			}, 30);
+			}, 30, RegionType.Set_Passable);
 			return result;
 		}
 
@@ -75,7 +75,7 @@ namespace RimWorld
 				{
 					return false;
 				}
-				if (pawn.Map.reservationManager.IsReserved(c2, pawn.Faction))
+				if (pawn.Map.reservationManager.IsReservedByAnyoneWhoseReservationsRespects(c2, pawn))
 				{
 					return false;
 				}

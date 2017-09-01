@@ -1,53 +1,55 @@
+using RimWorld;
 using System;
-using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace Verse
 {
-	public class Graphic_Appearances : Graphic_Collection
+	public class Graphic_Appearances : Graphic
 	{
+		protected Graphic[] subGraphics;
+
 		public override Material MatSingle
 		{
 			get
 			{
-				return this.subGraphics[0].MatSingle;
+				return this.subGraphics[(int)StuffAppearanceDefOf.Smooth.index].MatSingle;
 			}
 		}
 
 		public override void Init(GraphicRequest req)
 		{
-			base.Init(req);
-			Graphic[] array = new Graphic[this.subGraphics.Length];
+			this.data = req.graphicData;
+			this.path = req.path;
+			this.color = req.color;
+			this.drawSize = req.drawSize;
+			List<StuffAppearanceDef> allDefsListForReading = DefDatabase<StuffAppearanceDef>.AllDefsListForReading;
+			this.subGraphics = new Graphic[allDefsListForReading.Count];
 			for (int i = 0; i < this.subGraphics.Length; i++)
 			{
-				array[i] = this.subGraphics[i];
-			}
-			this.subGraphics = new Graphic[Enum.GetNames(typeof(StuffAppearance)).Length];
-			using (IEnumerator enumerator = Enum.GetValues(typeof(StuffAppearance)).GetEnumerator())
-			{
-				while (enumerator.MoveNext())
+				StuffAppearanceDef stuffAppearance = allDefsListForReading[i];
+				string text = req.path;
+				if (!stuffAppearance.pathPrefix.NullOrEmpty())
 				{
-					StuffAppearance stuffAppearance = (StuffAppearance)((byte)enumerator.Current);
-					Graphic graphic = BaseContent.BadGraphic;
-					for (int j = 0; j < array.Length; j++)
+					text = stuffAppearance.pathPrefix + "/" + text.Split(new char[]
 					{
-						Graphic graphic2 = array[j];
-						string[] array2 = graphic2.MatSingle.name.Split(new char[]
-						{
-							'_'
-						});
-						string a = array2[array2.Length - 1];
-						if (a == stuffAppearance.ToString())
-						{
-							graphic = graphic2;
-							break;
-						}
-						if (graphic == null && a == StuffAppearance.Smooth.ToString())
-						{
-							graphic = graphic2;
-						}
-					}
-					this.subGraphics[(int)stuffAppearance] = graphic;
+						'/'
+					}).Last<string>();
+				}
+				Texture2D texture2D = (from x in ContentFinder<Texture2D>.GetAllInFolder(text)
+				where x.name.EndsWith(stuffAppearance.defName)
+				select x).FirstOrDefault<Texture2D>();
+				if (texture2D != null)
+				{
+					this.subGraphics[i] = GraphicDatabase.Get<Graphic_Single>(text + "/" + texture2D.name, req.shader, this.drawSize, this.color);
+				}
+			}
+			for (int j = 0; j < this.subGraphics.Length; j++)
+			{
+				if (this.subGraphics[j] == null)
+				{
+					this.subGraphics[j] = this.subGraphics[(int)StuffAppearanceDefOf.Smooth.index];
 				}
 			}
 		}
@@ -63,23 +65,23 @@ namespace Verse
 
 		public override Material MatSingleFor(Thing thing)
 		{
-			StuffAppearance stuffAppearance = StuffAppearance.Smooth;
-			if (thing != null && thing.Stuff != null)
+			StuffAppearanceDef stuffAppearanceDef = StuffAppearanceDefOf.Smooth;
+			if (thing != null && thing.Stuff != null && thing.Stuff.stuffProps.appearance != null)
 			{
-				stuffAppearance = thing.Stuff.stuffProps.appearance;
+				stuffAppearanceDef = thing.Stuff.stuffProps.appearance;
 			}
-			Graphic graphic = this.subGraphics[(int)stuffAppearance];
+			Graphic graphic = this.subGraphics[(int)stuffAppearanceDef.index];
 			return graphic.MatSingleFor(thing);
 		}
 
 		public override void DrawWorker(Vector3 loc, Rot4 rot, ThingDef thingDef, Thing thing)
 		{
-			StuffAppearance stuffAppearance = StuffAppearance.Smooth;
+			StuffAppearanceDef stuffAppearanceDef = StuffAppearanceDefOf.Smooth;
 			if (thing != null && thing.Stuff != null)
 			{
-				stuffAppearance = thing.Stuff.stuffProps.appearance;
+				stuffAppearanceDef = thing.Stuff.stuffProps.appearance;
 			}
-			Graphic graphic = this.subGraphics[(int)stuffAppearance];
+			Graphic graphic = this.subGraphics[(int)stuffAppearanceDef.index];
 			graphic.DrawWorker(loc, rot, thingDef, thing);
 		}
 

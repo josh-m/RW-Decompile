@@ -12,7 +12,7 @@ namespace RimWorld
 
 		private List<Tale> tales = new List<Tale>();
 
-		public IEnumerable<Tale> AllTales
+		public List<Tale> AllTalesListForReading
 		{
 			get
 			{
@@ -22,7 +22,7 @@ namespace RimWorld
 
 		public void ExposeData()
 		{
-			Scribe_Collections.LookList<Tale>(ref this.tales, "tales", LookMode.Deep, new object[0]);
+			Scribe_Collections.Look<Tale>(ref this.tales, "tales", LookMode.Deep, new object[0]);
 		}
 
 		public void TaleManagerTick()

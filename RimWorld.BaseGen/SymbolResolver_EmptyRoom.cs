@@ -8,7 +8,7 @@ namespace RimWorld.BaseGen
 		public override void Resolve(ResolveParams rp)
 		{
 			ThingDef thingDef = rp.wallStuff ?? BaseGenUtility.RandomCheapWallStuff(rp.faction, false);
-			TerrainDef floorDef = rp.floorDef ?? BaseGenUtility.CorrespondingTerrainDef(thingDef);
+			TerrainDef floorDef = rp.floorDef ?? BaseGenUtility.CorrespondingTerrainDef(thingDef, true);
 			if (!rp.noRoof.HasValue || !rp.noRoof.Value)
 			{
 				BaseGen.symbolStack.Push("roof", rp);
@@ -20,6 +20,10 @@ namespace RimWorld.BaseGen
 			resolveParams2.floorDef = floorDef;
 			BaseGen.symbolStack.Push("floor", resolveParams2);
 			BaseGen.symbolStack.Push("clear", rp);
+			if (rp.addRoomCenterToRootsToUnfog.HasValue && rp.addRoomCenterToRootsToUnfog.Value && Current.ProgramState == ProgramState.MapInitializing)
+			{
+				MapGenerator.rootsToUnfog.Add(rp.rect.CenterCell);
+			}
 		}
 	}
 }

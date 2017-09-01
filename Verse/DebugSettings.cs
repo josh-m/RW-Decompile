@@ -30,6 +30,8 @@ namespace Verse
 
 		public static bool alwaysDoLovin;
 
+		public static bool detectRegionListersBugs;
+
 		public static bool fastResearch;
 
 		public static bool fastLearning;

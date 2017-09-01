@@ -15,7 +15,7 @@ namespace RimWorld
 
 		public static void LoadAllBios()
 		{
-			foreach (PawnBio current in XmlLoader.LoadXmlDataInResourcesFolder<PawnBio>("Backstories/Solid"))
+			foreach (PawnBio current in DirectXmlLoader.LoadXmlDataInResourcesFolder<PawnBio>("Backstories/Solid"))
 			{
 				current.name.ResolveMissingPieces(null);
 				if (current.childhood == null || current.adulthood == null)

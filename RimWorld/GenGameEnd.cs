@@ -27,7 +27,7 @@ namespace RimWorld
 			};
 			diaOption2.resolveTree = true;
 			diaNode.options.Add(diaOption2);
-			Dialog_NodeTree dialog_NodeTree = new Dialog_NodeTree(diaNode, true, false);
+			Dialog_NodeTree dialog_NodeTree = new Dialog_NodeTree(diaNode, true, false, null);
 			dialog_NodeTree.screenFillColor = screenFillColor;
 			dialog_NodeTree.silenceAmbientSound = !allowKeepPlaying;
 			dialog_NodeTree.closeOnEscapeKey = allowKeepPlaying;

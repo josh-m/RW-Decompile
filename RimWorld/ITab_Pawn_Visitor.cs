@@ -1,5 +1,5 @@
 using System;
-using System.Collections;
+using System.Linq;
 using UnityEngine;
 using Verse;
 
@@ -24,7 +24,8 @@ namespace RimWorld
 			Rect rect2 = rect.ContractedBy(10f);
 			rect2.yMin += 24f;
 			bool isPrisonerOfColony = base.SelPawn.IsPrisonerOfColony;
-			Listing_Standard listing_Standard = new Listing_Standard(rect2);
+			Listing_Standard listing_Standard = new Listing_Standard();
+			listing_Standard.Begin(rect2);
 			Rect rect3 = listing_Standard.GetRect(Text.LineHeight);
 			rect3.width *= 0.75f;
 			bool getsFood = base.SelPawn.guest.GetsFood;
@@ -37,38 +38,52 @@ namespace RimWorld
 			listing_Standard.Gap(4f);
 			if (isPrisonerOfColony)
 			{
-				listing_Standard.Label("RecruitmentDifficulty".Translate() + ": " + base.SelPawn.RecruitDifficulty(Faction.OfPlayer, false).ToStringPercent());
+				listing_Standard.Label("RecruitmentDifficulty".Translate() + ": " + base.SelPawn.RecruitDifficulty(Faction.OfPlayer, false).ToStringPercent(), -1f);
 				if (base.SelPawn.guilt.IsGuilty)
 				{
 					listing_Standard.Label("ConsideredGuilty".Translate(new object[]
 					{
-						base.SelPawn.guilt.TicksUntilInnocent.ToStringTicksToPeriod(true)
-					}));
+						base.SelPawn.guilt.TicksUntilInnocent.ToStringTicksToPeriod(true, false, true)
+					}), -1f);
 				}
 				if (Prefs.DevMode)
 				{
-					listing_Standard.Label("Dev: Prison break MTB days: " + (int)PrisonBreakUtility.InitiatePrisonBreakMtbDays(base.SelPawn));
+					listing_Standard.Label("Dev: Prison break MTB days: " + (int)PrisonBreakUtility.InitiatePrisonBreakMtbDays(base.SelPawn), -1f);
 				}
 				Rect rect5 = listing_Standard.GetRect(200f).Rounded();
 				Widgets.DrawMenuSection(rect5, true);
 				Rect position = rect5.ContractedBy(10f);
 				GUI.BeginGroup(position);
 				Rect rect6 = new Rect(0f, 0f, position.width, 30f);
-				using (IEnumerator enumerator = Enum.GetValues(typeof(PrisonerInteractionMode)).GetEnumerator())
+				foreach (PrisonerInteractionModeDef current in from pim in DefDatabase<PrisonerInteractionModeDef>.AllDefs
+				orderby pim.listOrder
+				select pim)
 				{
-					while (enumerator.MoveNext())
+					if (Widgets.RadioButtonLabeled(rect6, current.GetLabel(), base.SelPawn.guest.interactionMode == current))
 					{
-						PrisonerInteractionMode prisonerInteractionMode = (PrisonerInteractionMode)((byte)enumerator.Current);
-						if (Widgets.RadioButtonLabeled(rect6, prisonerInteractionMode.GetLabel(), base.SelPawn.guest.interactionMode == prisonerInteractionMode))
+						base.SelPawn.guest.interactionMode = current;
+						if (current == PrisonerInteractionModeDefOf.Execution && base.SelPawn.MapHeld != null && !this.ColonyHasAnyWardenCapableOfViolence(base.SelPawn.MapHeld))
 						{
-							base.SelPawn.guest.interactionMode = prisonerInteractionMode;
+							Messages.Message("MessageCantDoExecutionBecauseNoWardenCapableOfViolence".Translate(), base.SelPawn, MessageSound.SeriousAlert);
 						}
-						rect6.y += 28f;
 					}
+					rect6.y += 28f;
 				}
 				GUI.EndGroup();
 			}
 			listing_Standard.End();
+		}
+
+		private bool ColonyHasAnyWardenCapableOfViolence(Map map)
+		{
+			foreach (Pawn current in map.mapPawns.FreeColonistsSpawned)
+			{
+				if (current.workSettings.WorkIsActive(WorkTypeDefOf.Warden) && (current.story == null || !current.story.WorkTagIsDisabled(WorkTags.Violent)))
+				{
+					return true;
+				}
+			}
+			return false;
 		}
 	}
 }

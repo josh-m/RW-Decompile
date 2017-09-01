@@ -82,8 +82,9 @@ namespace RimWorld
 
 		private void DoConfigControls(Rect rect)
 		{
-			Listing_Standard listing_Standard = new Listing_Standard(rect);
+			Listing_Standard listing_Standard = new Listing_Standard();
 			listing_Standard.ColumnWidth = 200f;
+			listing_Standard.Begin(rect);
 			if (listing_Standard.ButtonText("Load".Translate(), null))
 			{
 				Find.WindowStack.Add(new Dialog_ScenarioList_Load(delegate(Scenario loadedScen)
@@ -98,13 +99,13 @@ namespace RimWorld
 			}
 			if (listing_Standard.ButtonText("RandomizeSeed".Translate(), null))
 			{
-				SoundDefOf.TickTiny.PlayOneShotOnCamera();
+				SoundDefOf.TickTiny.PlayOneShotOnCamera(null);
 				this.RandomizeSeedAndScenario();
 				this.seedIsValid = true;
 			}
 			if (this.seedIsValid)
 			{
-				listing_Standard.Label("Seed".Translate().CapitalizeFirst());
+				listing_Standard.Label("Seed".Translate().CapitalizeFirst(), -1f);
 				string a = listing_Standard.TextEntry(this.seed, 1);
 				if (a != this.seed)
 				{
@@ -133,13 +134,13 @@ namespace RimWorld
 					}
 					else
 					{
-						SoundDefOf.TickHigh.PlayOneShotOnCamera();
+						SoundDefOf.TickHigh.PlayOneShotOnCamera(null);
 						Find.WindowStack.Add(Dialog_MessageBox.CreateConfirmation("ConfirmSteamWorkshopUpload".Translate(), delegate
 						{
-							SoundDefOf.TickHigh.PlayOneShotOnCamera();
+							SoundDefOf.TickHigh.PlayOneShotOnCamera(null);
 							Find.WindowStack.Add(Dialog_MessageBox.CreateConfirmation("ConfirmContentAuthor".Translate(), delegate
 							{
-								SoundDefOf.TickHigh.PlayOneShotOnCamera();
+								SoundDefOf.TickHigh.PlayOneShotOnCamera(null);
 								Workshop.Upload(this.curScen);
 							}, true, null));
 						}, true, null));
@@ -165,7 +166,7 @@ namespace RimWorld
 						Messages.Message("TooMany".Translate(new object[]
 						{
 							current.def.maxUses
-						}) + ": " + current.Label, MessageSound.RejectInput);
+						}) + ": " + current.def.label, MessageSound.RejectInput);
 						bool result = false;
 						return result;
 					}
@@ -175,9 +176,9 @@ namespace RimWorld
 						{
 							"Incompatible".Translate(),
 							": ",
-							current.Label,
+							current.def.label,
 							", ",
-							current2.Label
+							current2.def.label
 						}), MessageSound.RejectInput);
 						bool result = false;
 						return result;

@@ -86,8 +86,8 @@ namespace RimWorld
 
 		public void ExposeData()
 		{
-			Scribe_Deep.LookDeep<Verb_BeatFire>(ref this.beatFireVerb, "beatFireVerb", new object[0]);
-			Scribe_Deep.LookDeep<Verb_Ignite>(ref this.igniteVerb, "igniteVerb", new object[0]);
+			Scribe_Deep.Look<Verb_BeatFire>(ref this.beatFireVerb, "beatFireVerb", new object[0]);
+			Scribe_Deep.Look<Verb_Ignite>(ref this.igniteVerb, "igniteVerb", new object[0]);
 			if (Scribe.mode == LoadSaveMode.LoadingVars)
 			{
 				this.UpdateVerbsLinksAndProps();

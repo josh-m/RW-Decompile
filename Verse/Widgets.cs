@@ -1,4 +1,5 @@
 using RimWorld;
+using RimWorld.Planet;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -348,12 +349,12 @@ namespace Verse
 			}
 			else
 			{
-				height = Text.CurFontStyle.CalcHeight(new GUIContent(label), rect.width);
+				height = Text.CalcHeight(label, rect.width);
 			}
 			rect.height = height;
 			if (renderLabel)
 			{
-				GUI.Label(rect, label, Text.CurFontStyle);
+				Widgets.Label(rect, label);
 			}
 		}
 
@@ -365,6 +366,14 @@ namespace Verse
 		public static void Label(Rect rect, string label)
 		{
 			GUI.Label(rect, label, Text.CurFontStyle);
+		}
+
+		public static void LabelScrollable(Rect rect, string label, ref Vector2 scrollbarPosition)
+		{
+			Rect rect2 = new Rect(0f, 0f, rect.width - 16f, Mathf.Max(Text.CalcHeight(label, rect.width) + 10f, rect.height));
+			Widgets.BeginScrollView(rect, ref scrollbarPosition, rect2, true);
+			Widgets.Label(rect2, label);
+			Widgets.EndScrollView();
 		}
 
 		public static void Checkbox(Vector2 topLeft, ref bool checkOn, float size = 24f, bool disabled = false)
@@ -386,11 +395,11 @@ namespace Verse
 				checkOn = !checkOn;
 				if (checkOn)
 				{
-					SoundDefOf.CheckboxTurnedOn.PlayOneShotOnCamera();
+					SoundDefOf.CheckboxTurnedOn.PlayOneShotOnCamera(null);
 				}
 				else
 				{
-					SoundDefOf.CheckboxTurnedOff.PlayOneShotOnCamera();
+					SoundDefOf.CheckboxTurnedOff.PlayOneShotOnCamera(null);
 				}
 			}
 			if (disabled)
@@ -409,11 +418,11 @@ namespace Verse
 				checkOn = !checkOn;
 				if (checkOn)
 				{
-					SoundDefOf.CheckboxTurnedOn.PlayOneShotOnCamera();
+					SoundDefOf.CheckboxTurnedOn.PlayOneShotOnCamera(null);
 				}
 				else
 				{
-					SoundDefOf.CheckboxTurnedOff.PlayOneShotOnCamera();
+					SoundDefOf.CheckboxTurnedOff.PlayOneShotOnCamera(null);
 				}
 			}
 			Widgets.CheckboxDraw(rect.x + rect.width - 24f, rect.y, checkOn, disabled, 24f);
@@ -432,7 +441,7 @@ namespace Verse
 			butRect.width -= 24f;
 			if (!selected && Widgets.ButtonInvisible(butRect, false))
 			{
-				SoundDefOf.TickTiny.PlayOneShotOnCamera();
+				SoundDefOf.TickTiny.PlayOneShotOnCamera(null);
 				selected = true;
 			}
 			Color color = GUI.color;
@@ -445,11 +454,11 @@ namespace Verse
 				checkOn = !checkOn;
 				if (checkOn)
 				{
-					SoundDefOf.CheckboxTurnedOn.PlayOneShotOnCamera();
+					SoundDefOf.CheckboxTurnedOn.PlayOneShotOnCamera(null);
 				}
 				else
 				{
-					SoundDefOf.CheckboxTurnedOff.PlayOneShotOnCamera();
+					SoundDefOf.CheckboxTurnedOff.PlayOneShotOnCamera(null);
 				}
 			}
 			return selected && !flag;
@@ -500,11 +509,11 @@ namespace Verse
 			{
 				if (state == MultiCheckboxState.Off || state == MultiCheckboxState.Partial)
 				{
-					SoundDefOf.CheckboxTurnedOn.PlayOneShotOnCamera();
+					SoundDefOf.CheckboxTurnedOn.PlayOneShotOnCamera(null);
 				}
 				else
 				{
-					SoundDefOf.CheckboxTurnedOff.PlayOneShotOnCamera();
+					SoundDefOf.CheckboxTurnedOff.PlayOneShotOnCamera(null);
 				}
 				return true;
 			}
@@ -524,7 +533,7 @@ namespace Verse
 			bool flag = Widgets.ButtonInvisible(rect, false);
 			if (flag && !chosen)
 			{
-				SoundDefOf.RadioButtonClicked.PlayOneShotOnCamera();
+				SoundDefOf.RadioButtonClicked.PlayOneShotOnCamera(null);
 			}
 			return flag;
 		}
@@ -538,7 +547,7 @@ namespace Verse
 			bool flag = Widgets.ButtonInvisible(rect, false);
 			if (flag && !chosen)
 			{
-				SoundDefOf.RadioButtonClicked.PlayOneShotOnCamera();
+				SoundDefOf.RadioButtonClicked.PlayOneShotOnCamera(null);
 			}
 			Widgets.RadioButtonDraw(rect.x + rect.width - 24f, rect.y + rect.height / 2f - 12f, chosen);
 			return flag;
@@ -744,13 +753,22 @@ namespace Verse
 			return text;
 		}
 
-		public static string TextArea(Rect rect, string text)
+		public static string TextArea(Rect rect, string text, bool readOnly = false)
 		{
 			if (text == null)
 			{
 				text = string.Empty;
 			}
-			return GUI.TextArea(rect, text, Text.CurTextAreaStyle);
+			return GUI.TextArea(rect, text, (!readOnly) ? Text.CurTextAreaStyle : Text.CurTextAreaReadOnlyStyle);
+		}
+
+		public static string TextAreaScrollable(Rect rect, string text, ref Vector2 scrollbarPosition, bool readOnly = false)
+		{
+			Rect rect2 = new Rect(0f, 0f, rect.width - 16f, Mathf.Max(Text.CalcHeight(text, rect.width) + 10f, rect.height));
+			Widgets.BeginScrollView(rect, ref scrollbarPosition, rect2, true);
+			string result = Widgets.TextArea(rect2, text, readOnly);
+			Widgets.EndScrollView();
+			return result;
 		}
 
 		public static string TextEntryLabeled(Rect rect, string label, string text)
@@ -765,7 +783,7 @@ namespace Verse
 			{
 				return Widgets.TextField(rect3, text);
 			}
-			return Widgets.TextArea(rect3, text);
+			return Widgets.TextArea(rect3, text, false);
 		}
 
 		public static void TextFieldNumeric<T>(Rect rect, ref T val, ref string buffer, float min = 0f, float max = 1E+09f) where T : struct
@@ -1104,7 +1122,7 @@ namespace Verse
 			{
 				Widgets.draggingId = 0;
 				Widgets.curDragEnd = Widgets.RangeEnd.None;
-				SoundDefOf.DragSlider.PlayOneShotOnCamera();
+				SoundDefOf.DragSlider.PlayOneShotOnCamera(null);
 			}
 			bool flag = false;
 			if (Mouse.IsOver(rect) || Widgets.draggingId == id)
@@ -1129,7 +1147,7 @@ namespace Verse
 					}
 					flag = true;
 					Event.current.Use();
-					SoundDefOf.DragSlider.PlayOneShotOnCamera();
+					SoundDefOf.DragSlider.PlayOneShotOnCamera(null);
 				}
 				if (flag || (Widgets.curDragEnd != Widgets.RangeEnd.None && Event.current.type == EventType.MouseDrag))
 				{
@@ -1194,7 +1212,7 @@ namespace Verse
 			{
 				Widgets.draggingId = 0;
 				Widgets.curDragEnd = Widgets.RangeEnd.None;
-				SoundDefOf.DragSlider.PlayOneShotOnCamera();
+				SoundDefOf.DragSlider.PlayOneShotOnCamera(null);
 			}
 			bool flag = false;
 			if (Mouse.IsOver(rect) || Widgets.draggingId == id)
@@ -1219,7 +1237,7 @@ namespace Verse
 					}
 					flag = true;
 					Event.current.Use();
-					SoundDefOf.DragSlider.PlayOneShotOnCamera();
+					SoundDefOf.DragSlider.PlayOneShotOnCamera(null);
 				}
 				if (flag || (Widgets.curDragEnd != Widgets.RangeEnd.None && Event.current.type == EventType.MouseDrag))
 				{
@@ -1267,7 +1285,7 @@ namespace Verse
 		{
 			if (Time.realtimeSinceStartup > Widgets.lastDragSliderSoundTime + 0.075f)
 			{
-				SoundDefOf.DragSlider.PlayOneShotOnCamera();
+				SoundDefOf.DragSlider.PlayOneShotOnCamera(null);
 				Widgets.lastDragSliderSoundTime = Time.realtimeSinceStartup;
 			}
 		}
@@ -1313,7 +1331,7 @@ namespace Verse
 			{
 				Widgets.draggingId = 0;
 				Widgets.curDragEnd = Widgets.RangeEnd.None;
-				SoundDefOf.DragSlider.PlayOneShotOnCamera();
+				SoundDefOf.DragSlider.PlayOneShotOnCamera(null);
 			}
 			bool flag = false;
 			if (Mouse.IsOver(rect) || id == Widgets.draggingId)
@@ -1338,7 +1356,7 @@ namespace Verse
 					}
 					flag = true;
 					Event.current.Use();
-					SoundDefOf.DragSlider.PlayOneShotOnCamera();
+					SoundDefOf.DragSlider.PlayOneShotOnCamera(null);
 				}
 				if (flag || (Widgets.curDragEnd != Widgets.RangeEnd.None && Event.current.type == EventType.MouseDrag))
 				{
@@ -1354,7 +1372,7 @@ namespace Verse
 							{
 								range.max = range.min;
 							}
-							SoundDefOf.DragSlider.PlayOneShotOnCamera();
+							SoundDefOf.DragSlider.PlayOneShotOnCamera(null);
 						}
 					}
 					else if (Widgets.curDragEnd == Widgets.RangeEnd.Max && range.max != (QualityCategory)num6)
@@ -1364,7 +1382,7 @@ namespace Verse
 						{
 							range.min = range.max;
 						}
-						SoundDefOf.DragSlider.PlayOneShotOnCamera();
+						SoundDefOf.DragSlider.PlayOneShotOnCamera(null);
 					}
 					Event.current.Use();
 				}
@@ -1610,8 +1628,8 @@ namespace Verse
 			if (Event.current.type == EventType.ScrollWheel && Mouse.IsOver(outRect))
 			{
 				scrollPosition.x += Event.current.delta.y * ScrollWheelSpeed;
-				float num = 1f;
-				float num2 = viewRect.width - outRect.width - 1f;
+				float num = 0f;
+				float num2 = viewRect.width - outRect.width + 16f;
 				if (scrollPosition.x < num)
 				{
 					scrollPosition.x = num;
@@ -1624,10 +1642,18 @@ namespace Verse
 			}
 		}
 
-		public static void BeginScrollView(Rect outRect, ref Vector2 scrollPosition, Rect viewRect)
+		public static void BeginScrollView(Rect outRect, ref Vector2 scrollPosition, Rect viewRect, bool showScrollbars = true)
 		{
 			Vector2 vector = scrollPosition;
-			Vector2 vector2 = GUI.BeginScrollView(outRect, scrollPosition, viewRect);
+			Vector2 vector2;
+			if (showScrollbars)
+			{
+				vector2 = GUI.BeginScrollView(outRect, scrollPosition, viewRect);
+			}
+			else
+			{
+				vector2 = GUI.BeginScrollView(outRect, scrollPosition, viewRect, GUIStyle.none, GUIStyle.none);
+			}
 			Vector2 vector3;
 			if (Event.current.type == EventType.MouseDown)
 			{
@@ -1666,6 +1692,11 @@ namespace Verse
 		public static void DrawHighlight(Rect rect)
 		{
 			GUI.DrawTexture(rect, TexUI.HighlightTex);
+		}
+
+		public static void DrawTitleBG(Rect rect)
+		{
+			GUI.DrawTexture(rect, TexUI.TitleBGTex);
 		}
 
 		public static bool InfoCardButton(float x, float y, Thing thing)
@@ -1711,11 +1742,21 @@ namespace Verse
 			return false;
 		}
 
+		public static bool InfoCardButton(float x, float y, WorldObject worldObject)
+		{
+			if (Widgets.InfoCardButtonWorker(x, y))
+			{
+				Find.WindowStack.Add(new Dialog_InfoCard(worldObject));
+				return true;
+			}
+			return false;
+		}
+
 		private static bool InfoCardButtonWorker(float x, float y)
 		{
 			Rect rect = new Rect(x, y, 24f, 24f);
 			TooltipHandler.TipRegion(rect, "DefInfoTip".Translate());
-			bool result = Widgets.ButtonImage(rect, TexButton.Info);
+			bool result = Widgets.ButtonImage(rect, TexButton.Info, GUI.color);
 			UIHighlighter.HighlightOpportunity(rect, "InfoCard");
 			return result;
 		}

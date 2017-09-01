@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Verse
@@ -24,11 +25,15 @@ namespace Verse
 
 		public static readonly Shader MoteGlow = ShaderDatabase.LoadShader("Map/MoteGlow");
 
+		public static readonly Shader MoteWater = ShaderDatabase.LoadShader("Map/MoteWater");
+
 		public static readonly Shader TerrainHard = ShaderDatabase.LoadShader("Map/TerrainHard");
 
 		public static readonly Shader TerrainFade = ShaderDatabase.LoadShader("Map/TerrainFade");
 
 		public static readonly Shader TerrainFadeRough = ShaderDatabase.LoadShader("Map/TerrainFadeRough");
+
+		public static readonly Shader TerrainWater = ShaderDatabase.LoadShader("Map/TerrainWater");
 
 		public static readonly Shader WorldTerrain = ShaderDatabase.LoadShader("World/WorldTerrain");
 
@@ -45,6 +50,10 @@ namespace Verse
 		public static readonly Shader MetaOverlay = ShaderDatabase.LoadShader("Map/MetaOverlay");
 
 		public static readonly Shader SolidColor = ShaderDatabase.LoadShader("Map/SolidColor");
+
+		public static readonly Shader VertexColor = ShaderDatabase.LoadShader("Map/VertexColor");
+
+		private static Dictionary<string, Shader> lookup;
 
 		public static Shader DefaultShader
 		{
@@ -78,15 +87,25 @@ namespace Verse
 				return ShaderDatabase.Mote;
 			case ShaderType.MoteGlow:
 				return ShaderDatabase.MoteGlow;
+			case ShaderType.MoteWater:
+				return ShaderDatabase.MoteWater;
 			default:
 				Log.ErrorOnce("Unknown ShaderType " + sType, 2766893);
 				return ShaderDatabase.DefaultShader;
 			}
 		}
 
-		private static Shader LoadShader(string shaderPath)
+		public static Shader LoadShader(string shaderPath)
 		{
-			Shader shader = (Shader)Resources.Load("Materials/" + shaderPath, typeof(Shader));
+			if (ShaderDatabase.lookup == null)
+			{
+				ShaderDatabase.lookup = new Dictionary<string, Shader>();
+			}
+			if (!ShaderDatabase.lookup.ContainsKey(shaderPath))
+			{
+				ShaderDatabase.lookup[shaderPath] = (Shader)Resources.Load("Materials/" + shaderPath, typeof(Shader));
+			}
+			Shader shader = ShaderDatabase.lookup[shaderPath];
 			if (shader == null)
 			{
 				Log.Warning("Could not load shader " + shaderPath);

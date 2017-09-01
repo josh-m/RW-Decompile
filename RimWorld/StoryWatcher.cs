@@ -8,8 +8,6 @@ namespace RimWorld
 	{
 		public StatsRecord statsRecord = new StatsRecord();
 
-		public StoryState storyState = new StoryState();
-
 		public StoryWatcher_RampUp watcherRampUp = new StoryWatcher_RampUp();
 
 		public void StoryWatcherTick()
@@ -19,9 +17,8 @@ namespace RimWorld
 
 		public void ExposeData()
 		{
-			Scribe_Deep.LookDeep<StatsRecord>(ref this.statsRecord, "statsRecord", new object[0]);
-			Scribe_Deep.LookDeep<StoryState>(ref this.storyState, "storyState", new object[0]);
-			Scribe_Deep.LookDeep<StoryWatcher_RampUp>(ref this.watcherRampUp, "watcherRampUp", new object[0]);
+			Scribe_Deep.Look<StatsRecord>(ref this.statsRecord, "statsRecord", new object[0]);
+			Scribe_Deep.Look<StoryWatcher_RampUp>(ref this.watcherRampUp, "watcherRampUp", new object[0]);
 		}
 
 		public string DebugString()

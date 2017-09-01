@@ -6,7 +6,7 @@ using Verse.Sound;
 
 namespace RimWorld
 {
-	public abstract class Bill : ILoadReferenceable, IExposable
+	public abstract class Bill : IExposable, ILoadReferenceable
 	{
 		public const int MaxIngredientSearchRadius = 999;
 
@@ -83,6 +83,14 @@ namespace RimWorld
 			}
 		}
 
+		protected virtual float StatusLineMinHeight
+		{
+			get
+			{
+				return 0f;
+			}
+		}
+
 		public bool DeletedOrDereferenced
 		{
 			get
@@ -110,11 +118,11 @@ namespace RimWorld
 
 		public virtual void ExposeData()
 		{
-			Scribe_Values.LookValue<int>(ref this.loadID, "loadID", 0, false);
-			Scribe_Defs.LookDef<RecipeDef>(ref this.recipe, "recipe");
-			Scribe_Values.LookValue<bool>(ref this.suspended, "suspended", false, false);
-			Scribe_Values.LookValue<float>(ref this.ingredientSearchRadius, "ingredientSearchRadius", 999f, false);
-			Scribe_Values.LookValue<IntRange>(ref this.allowedSkillRange, "allowedSkillRange", default(IntRange), false);
+			Scribe_Values.Look<int>(ref this.loadID, "loadID", 0, false);
+			Scribe_Defs.Look<RecipeDef>(ref this.recipe, "recipe");
+			Scribe_Values.Look<bool>(ref this.suspended, "suspended", false, false);
+			Scribe_Values.Look<float>(ref this.ingredientSearchRadius, "ingredientSearchRadius", 999f, false);
+			Scribe_Values.Look<IntRange>(ref this.allowedSkillRange, "allowedSkillRange", default(IntRange), false);
 			if (Scribe.mode == LoadSaveMode.Saving && this.recipe.fixedIngredientFilter != null)
 			{
 				foreach (ThingDef current in DefDatabase<ThingDef>.AllDefs)
@@ -125,7 +133,7 @@ namespace RimWorld
 					}
 				}
 			}
-			Scribe_Deep.LookDeep<ThingFilter>(ref this.ingredientFilter, "ingredientFilter", new object[0]);
+			Scribe_Deep.Look<ThingFilter>(ref this.ingredientFilter, "ingredientFilter", new object[0]);
 		}
 
 		public virtual bool PawnAllowedToStartAnew(Pawn p)
@@ -151,7 +159,7 @@ namespace RimWorld
 
 		public abstract bool ShouldDoNow();
 
-		public virtual void Notify_DoBillStarted()
+		public virtual void Notify_DoBillStarted(Pawn billDoer)
 		{
 		}
 
@@ -159,13 +167,19 @@ namespace RimWorld
 		{
 		}
 
+		public virtual void DoStatusLineInterface(Rect rect)
+		{
+		}
+
 		public Rect DoInterface(float x, float y, float width, int index)
 		{
 			Rect rect = new Rect(x, y, width, 53f);
+			float num = 0f;
 			if (!this.StatusString.NullOrEmpty())
 			{
-				rect.height += 17f;
+				num = Mathf.Max(17f, this.StatusLineMinHeight);
 			}
+			rect.height += num;
 			Color white = Color.white;
 			if (!this.ShouldDoNow())
 			{
@@ -182,7 +196,7 @@ namespace RimWorld
 			if (this.billStack.IndexOf(this) > 0 && Widgets.ButtonImage(butRect, TexButton.ReorderUp, white))
 			{
 				this.billStack.Reorder(this, -1);
-				SoundDefOf.TickHigh.PlayOneShotOnCamera();
+				SoundDefOf.TickHigh.PlayOneShotOnCamera(null);
 			}
 			if (this.billStack.IndexOf(this) < this.billStack.Count - 1)
 			{
@@ -190,7 +204,7 @@ namespace RimWorld
 				if (Widgets.ButtonImage(butRect2, TexButton.ReorderDown, white))
 				{
 					this.billStack.Reorder(this, 1);
-					SoundDefOf.TickLow.PlayOneShotOnCamera();
+					SoundDefOf.TickLow.PlayOneShotOnCamera(null);
 				}
 			}
 			Rect rect2 = new Rect(28f, 0f, rect.width - 48f - 20f, 48f);
@@ -210,8 +224,9 @@ namespace RimWorld
 			if (!this.StatusString.NullOrEmpty())
 			{
 				Text.Font = GameFont.Tiny;
-				Rect rect4 = new Rect(24f, rect.height - 17f, rect.width - 24f, 17f);
+				Rect rect4 = new Rect(24f, rect.height - num, rect.width - 24f, num);
 				Widgets.Label(rect4, this.StatusString);
+				this.DoStatusLineInterface(rect4);
 			}
 			GUI.EndGroup();
 			if (this.suspended)
@@ -229,6 +244,32 @@ namespace RimWorld
 			return rect;
 		}
 
+		public bool IsFixedOrAllowedIngredient(Thing thing)
+		{
+			for (int i = 0; i < this.recipe.ingredients.Count; i++)
+			{
+				IngredientCount ingredientCount = this.recipe.ingredients[i];
+				if (ingredientCount.IsFixedIngredient && ingredientCount.filter.Allows(thing))
+				{
+					return true;
+				}
+			}
+			return this.recipe.fixedIngredientFilter.Allows(thing) && this.ingredientFilter.Allows(thing);
+		}
+
+		public bool IsFixedOrAllowedIngredient(ThingDef def)
+		{
+			for (int i = 0; i < this.recipe.ingredients.Count; i++)
+			{
+				IngredientCount ingredientCount = this.recipe.ingredients[i];
+				if (ingredientCount.IsFixedIngredient && ingredientCount.filter.Allows(def))
+				{
+					return true;
+				}
+			}
+			return this.recipe.fixedIngredientFilter.Allows(def) && this.ingredientFilter.Allows(def);
+		}
+
 		public static void CreateNoPawnsWithSkillDialog(RecipeDef recipe)
 		{
 			string text = "RecipeRequiresSkills".Translate(new object[]
@@ -240,9 +281,9 @@ namespace RimWorld
 			Find.WindowStack.Add(new Dialog_MessageBox(text, null, null, null, null, null, false));
 		}
 
-		public virtual BillStoreMode GetStoreMode()
+		public virtual BillStoreModeDef GetStoreMode()
 		{
-			return BillStoreMode.BestStockpile;
+			return BillStoreModeDefOf.BestStockpile;
 		}
 
 		public string GetUniqueLoadID()

@@ -20,6 +20,11 @@ namespace Verse
 				this.closedArrayPos = closedArrayPos;
 			}
 
+			public void Clear()
+			{
+				this.open.Clear();
+			}
+
 			private void QueueNewOpenRegion(Region region)
 			{
 				if (region.closedIndex[this.closedArrayPos] == this.closedIndex)
@@ -34,8 +39,12 @@ namespace Verse
 			{
 			}
 
-			public void BreadthFirstTraverseWork(Region root, RegionEntryPredicate entryCondition, RegionProcessor regionProcessor, int maxRegions)
+			public void BreadthFirstTraverseWork(Region root, RegionEntryPredicate entryCondition, RegionProcessor regionProcessor, int maxRegions, RegionType traversableRegionTypes)
 			{
+				if ((root.type & traversableRegionTypes) == RegionType.None)
+				{
+					return;
+				}
 				ProfilerThreadCheck.BeginSample("BreadthFirstTraversal");
 				this.closedIndex += 1u;
 				this.open.Clear();
@@ -70,7 +79,7 @@ namespace Verse
 						for (int j = 0; j < 2; j++)
 						{
 							Region region2 = regionLink.regions[j];
-							if (region2 != null && region2.closedIndex[this.closedArrayPos] != this.closedIndex && (entryCondition == null || entryCondition(region, region2)))
+							if (region2 != null && region2.closedIndex[this.closedArrayPos] != this.closedIndex && (region2.type & traversableRegionTypes) != RegionType.None && (entryCondition == null || entryCondition(region, region2)))
 							{
 								this.QueueNewOpenRegion(region2);
 							}
@@ -108,49 +117,53 @@ namespace Verse
 				floodingRoom = existingRoom;
 			}
 			root.Room = floodingRoom;
-			RegionEntryPredicate entryCondition = (Region from, Region r) => r.portal == null && r.Room != floodingRoom;
+			if (!root.type.AllowsMultipleRegionsPerRoom())
+			{
+				return floodingRoom;
+			}
+			RegionEntryPredicate entryCondition = (Region from, Region r) => r.type == root.type && r.Room != floodingRoom;
 			RegionProcessor regionProcessor = delegate(Region r)
 			{
 				r.Room = floodingRoom;
 				return false;
 			};
-			RegionTraverser.BreadthFirstTraverse(root, entryCondition, regionProcessor, 999999);
+			RegionTraverser.BreadthFirstTraverse(root, entryCondition, regionProcessor, 999999, RegionType.Set_All);
 			return floodingRoom;
 		}
 
 		public static void FloodAndSetNewRegionIndex(Region root, int newRegionGroupIndex)
 		{
 			root.newRegionGroupIndex = newRegionGroupIndex;
-			if (root.portal != null)
+			if (!root.type.AllowsMultipleRegionsPerRoom())
 			{
 				return;
 			}
-			RegionEntryPredicate entryCondition = (Region from, Region r) => r.portal == null && r.newRegionGroupIndex < 0;
+			RegionEntryPredicate entryCondition = (Region from, Region r) => r.type == root.type && r.newRegionGroupIndex < 0;
 			RegionProcessor regionProcessor = delegate(Region r)
 			{
 				r.newRegionGroupIndex = newRegionGroupIndex;
 				return false;
 			};
-			RegionTraverser.BreadthFirstTraverse(root, entryCondition, regionProcessor, 999999);
+			RegionTraverser.BreadthFirstTraverse(root, entryCondition, regionProcessor, 999999, RegionType.Set_All);
 		}
 
-		public static bool WithinRegions(this IntVec3 A, IntVec3 B, Map map, int regionLookCount, TraverseParms traverseParams)
+		public static bool WithinRegions(this IntVec3 A, IntVec3 B, Map map, int regionLookCount, TraverseParms traverseParams, RegionType traversableRegionTypes = RegionType.Set_Passable)
 		{
-			if (traverseParams.mode == TraverseMode.PassAnything)
+			if (traverseParams.mode == TraverseMode.PassAllDestroyableThings)
 			{
-				throw new ArgumentException("traverseParams");
+				throw new ArgumentException("traverseParams (PassAllDestroyableThings not supported)");
 			}
-			Region validRegionAt = map.regionGrid.GetValidRegionAt(A);
-			if (validRegionAt == null)
+			Region region = A.GetRegion(map, traversableRegionTypes);
+			if (region == null)
 			{
 				return false;
 			}
-			Region regB = map.regionGrid.GetValidRegionAt(B);
+			Region regB = B.GetRegion(map, traversableRegionTypes);
 			if (regB == null)
 			{
 				return false;
 			}
-			if (validRegionAt == regB)
+			if (region == regB)
 			{
 				return true;
 			}
@@ -165,30 +178,30 @@ namespace Verse
 				}
 				return false;
 			};
-			RegionTraverser.BreadthFirstTraverse(validRegionAt, entryCondition, regionProcessor, regionLookCount);
+			RegionTraverser.BreadthFirstTraverse(region, entryCondition, regionProcessor, regionLookCount, traversableRegionTypes);
 			return found;
 		}
 
-		public static void MarkRegionsBFS(Region root, RegionEntryPredicate entryCondition, int maxRegions, int inRadiusMark)
+		public static void MarkRegionsBFS(Region root, RegionEntryPredicate entryCondition, int maxRegions, int inRadiusMark, RegionType traversableRegionTypes = RegionType.Set_Passable)
 		{
 			RegionTraverser.BreadthFirstTraverse(root, entryCondition, delegate(Region r)
 			{
 				r.mark = inRadiusMark;
 				return false;
-			}, maxRegions);
+			}, maxRegions, traversableRegionTypes);
 		}
 
-		public static void BreadthFirstTraverse(IntVec3 start, Map map, RegionEntryPredicate entryCondition, RegionProcessor regionProcessor, int maxRegions = 999999)
+		public static void BreadthFirstTraverse(IntVec3 start, Map map, RegionEntryPredicate entryCondition, RegionProcessor regionProcessor, int maxRegions = 999999, RegionType traversableRegionTypes = RegionType.Set_Passable)
 		{
-			Region region = start.GetRegion(map);
+			Region region = start.GetRegion(map, traversableRegionTypes);
 			if (region == null)
 			{
 				return;
 			}
-			RegionTraverser.BreadthFirstTraverse(region, entryCondition, regionProcessor, maxRegions);
+			RegionTraverser.BreadthFirstTraverse(region, entryCondition, regionProcessor, maxRegions, traversableRegionTypes);
 		}
 
-		public static void BreadthFirstTraverse(Region root, RegionEntryPredicate entryCondition, RegionProcessor regionProcessor, int maxRegions = 999999)
+		public static void BreadthFirstTraverse(Region root, RegionEntryPredicate entryCondition, RegionProcessor regionProcessor, int maxRegions = 999999, RegionType traversableRegionTypes = RegionType.Set_Passable)
 		{
 			if (RegionTraverser.freeWorkers.Count == 0)
 			{
@@ -203,7 +216,7 @@ namespace Verse
 			RegionTraverser.BFSWorker bFSWorker = RegionTraverser.freeWorkers.Dequeue();
 			try
 			{
-				bFSWorker.BreadthFirstTraverseWork(root, entryCondition, regionProcessor, maxRegions);
+				bFSWorker.BreadthFirstTraverseWork(root, entryCondition, regionProcessor, maxRegions, traversableRegionTypes);
 			}
 			catch (Exception ex)
 			{
@@ -211,6 +224,7 @@ namespace Verse
 			}
 			finally
 			{
+				bFSWorker.Clear();
 				RegionTraverser.freeWorkers.Enqueue(bFSWorker);
 			}
 		}

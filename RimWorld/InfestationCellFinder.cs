@@ -85,7 +85,7 @@ namespace RimWorld
 			{
 				return 0f;
 			}
-			Region region = cell.GetRegion(map);
+			Region region = cell.GetRegion(map, RegionType.Set_Passable);
 			if (region == null)
 			{
 				return 0f;
@@ -163,7 +163,7 @@ namespace RimWorld
 							if (scoreAt2 > 0f)
 							{
 								float a = GenMath.LerpDouble(7.5f, num, 0f, 1f, scoreAt2);
-								CellRenderer.RenderCell(intVec, SolidColorMaterials.SimpleSolidColorMaterial(new Color(0f, 0f, 1f, a)));
+								CellRenderer.RenderCell(intVec, SolidColorMaterials.SimpleSolidColorMaterial(new Color(0f, 0f, 1f, a), false));
 							}
 						}
 					}
@@ -337,14 +337,14 @@ namespace RimWorld
 				for (int j = 0; j < map.Size.x; j++)
 				{
 					IntVec3 intVec = new IntVec3(j, 0, i);
-					Region region = intVec.GetRegion(map);
+					Region region = intVec.GetRegion(map, RegionType.Set_Passable);
 					if (region != null && InfestationCellFinder.NoRoofAroundAndWalkable(intVec, map))
 					{
 						InfestationCellFinder.tempUnroofedRegions.Add(region);
 					}
 				}
 			}
-			Dijkstra<Region>.Run(InfestationCellFinder.tempUnroofedRegions, (Region x) => x.Neighbors, (Region a, Region b) => Mathf.Sqrt(a.extentsClose.CenterCell.DistanceToSquared(b.extentsClose.CenterCell)), ref InfestationCellFinder.regionsDistanceToUnroofed);
+			Dijkstra<Region>.Run(InfestationCellFinder.tempUnroofedRegions, (Region x) => x.Neighbors, (Region a, Region b) => Mathf.Sqrt((float)a.extentsClose.CenterCell.DistanceToSquared(b.extentsClose.CenterCell)), ref InfestationCellFinder.regionsDistanceToUnroofed);
 			InfestationCellFinder.tempUnroofedRegions.Clear();
 		}
 
@@ -369,12 +369,12 @@ namespace RimWorld
 						map.floodFiller.FloodFill(intVec, (IntVec3 c) => !c.Impassable(map), delegate(IntVec3 c)
 						{
 							area++;
-						});
+						}, false);
 						area = Mathf.Min(area, 255);
 						map.floodFiller.FloodFill(intVec, (IntVec3 c) => !c.Impassable(map), delegate(IntVec3 c)
 						{
 							InfestationCellFinder.closedAreaSize[c] = (byte)area;
-						});
+						}, false);
 					}
 				}
 			}

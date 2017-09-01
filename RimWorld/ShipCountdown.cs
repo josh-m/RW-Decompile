@@ -31,7 +31,7 @@ namespace RimWorld
 
 		public static void InitiateCountdown(Building launchingShipRoot, int journeyDestinationTile)
 		{
-			SoundDef.Named("ShipTakeoff").PlayOneShotOnCamera();
+			SoundDef.Named("ShipTakeoff").PlayOneShotOnCamera(null);
 			ShipCountdown.shipRoot = launchingShipRoot;
 			ShipCountdown.journeyDestinationTile = journeyDestinationTile;
 			ShipCountdown.timeLeft = 7.2f;

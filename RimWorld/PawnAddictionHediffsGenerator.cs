@@ -13,7 +13,9 @@ namespace RimWorld
 
 		private static readonly FloatRange GeneratedAddictionSeverityRange = new FloatRange(0.6f, 1f);
 
-		public static void GenerateAddictionsFor(Pawn pawn)
+		private static readonly FloatRange GeneratedToleranceSeverityRange = new FloatRange(0.1f, 0.9f);
+
+		public static void GenerateAddictionsAndTolerancesFor(Pawn pawn)
 		{
 			if (!pawn.RaceProps.IsFlesh || !pawn.RaceProps.Humanlike)
 			{
@@ -44,6 +46,19 @@ namespace RimWorld
 						Hediff hediff = HediffMaker.MakeHediff(chemicalDef.addictionHediff, pawn, null);
 						hediff.Severity = PawnAddictionHediffsGenerator.GeneratedAddictionSeverityRange.RandomInRange;
 						pawn.health.AddHediff(hediff, null, null);
+						if (chemicalDef.toleranceHediff != null && Rand.Value < chemicalDef.onGeneratedAddictedToleranceChance)
+						{
+							Hediff hediff2 = HediffMaker.MakeHediff(chemicalDef.toleranceHediff, pawn, null);
+							hediff2.Severity = PawnAddictionHediffsGenerator.GeneratedToleranceSeverityRange.RandomInRange;
+							pawn.health.AddHediff(hediff2, null, null);
+						}
+						if (chemicalDef.onGeneratedAddictedEvents != null)
+						{
+							foreach (HediffGiver_Event current in chemicalDef.onGeneratedAddictedEvents)
+							{
+								current.EventOccurred(pawn);
+							}
+						}
 						PawnAddictionHediffsGenerator.DoIngestionOutcomeDoers(pawn, chemicalDef);
 						i++;
 						continue;

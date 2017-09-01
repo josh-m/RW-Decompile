@@ -20,7 +20,7 @@ namespace Verse
 			{
 				StringBuilder stringBuilder = new StringBuilder();
 				stringBuilder.Append(base.TipStringExtra);
-				stringBuilder.AppendLine("Efficiency".Translate() + ": " + (this.def.addedPartProps.partEfficiency * 100f).ToString() + "%");
+				stringBuilder.AppendLine("Efficiency".Translate() + ": " + this.def.addedPartProps.partEfficiency.ToStringPercent());
 				return stringBuilder.ToString();
 			}
 		}

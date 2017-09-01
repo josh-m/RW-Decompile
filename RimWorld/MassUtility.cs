@@ -57,7 +57,7 @@ namespace RimWorld
 			}
 			if (p.equipment != null)
 			{
-				foreach (ThingWithComps current in p.equipment.AllEquipment)
+				foreach (ThingWithComps current in p.equipment.AllEquipmentListForReading)
 				{
 					num += current.GetStatValue(StatDefOf.Mass, true);
 				}

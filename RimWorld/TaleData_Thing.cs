@@ -21,11 +21,11 @@ namespace RimWorld
 
 		public override void ExposeData()
 		{
-			Scribe_Values.LookValue<int>(ref this.thingID, "thingID", 0, false);
-			Scribe_Defs.LookDef<ThingDef>(ref this.thingDef, "thingDef");
-			Scribe_Defs.LookDef<ThingDef>(ref this.stuff, "stuff");
-			Scribe_Values.LookValue<string>(ref this.title, "title", null, false);
-			Scribe_Values.LookValue<QualityCategory>(ref this.quality, "quality", QualityCategory.Awful, false);
+			Scribe_Values.Look<int>(ref this.thingID, "thingID", 0, false);
+			Scribe_Defs.Look<ThingDef>(ref this.thingDef, "thingDef");
+			Scribe_Defs.Look<ThingDef>(ref this.stuff, "stuff");
+			Scribe_Values.Look<string>(ref this.title, "title", null, false);
+			Scribe_Values.Look<QualityCategory>(ref this.quality, "quality", QualityCategory.Awful, false);
 		}
 
 		[DebuggerHidden]

@@ -29,26 +29,19 @@ namespace RimWorld
 			this.FailOnDowned(TargetIndex.A);
 			this.FailOnNotCasualInterruptible(TargetIndex.A);
 			yield return Toils_Goto.GotoThing(TargetIndex.A, PathEndMode.Touch);
-			yield return new Toil
+			Toil prepare = Toils_General.WaitWith(TargetIndex.A, 500, false, false);
+			prepare.tickAction = delegate
 			{
-				initAction = delegate
+				if (this.<>f__this.pawn.IsHashIntervalTick(100))
 				{
-					PawnUtility.ForceWait(this.<>f__this.Female, 500, null);
-				},
-				tickAction = delegate
+					MoteMaker.ThrowMetaIcon(this.<>f__this.pawn.Position, this.<>f__this.pawn.Map, ThingDefOf.Mote_Heart);
+				}
+				if (this.<>f__this.Female.IsHashIntervalTick(100))
 				{
-					if (this.<>f__this.pawn.IsHashIntervalTick(100))
-					{
-						MoteMaker.ThrowMetaIcon(this.<>f__this.pawn.Position, this.<>f__this.pawn.Map, ThingDefOf.Mote_Heart);
-					}
-					if (this.<>f__this.Female.IsHashIntervalTick(100))
-					{
-						MoteMaker.ThrowMetaIcon(this.<>f__this.Female.Position, this.<>f__this.pawn.Map, ThingDefOf.Mote_Heart);
-					}
-				},
-				defaultCompleteMode = ToilCompleteMode.Delay,
-				defaultDuration = 500
+					MoteMaker.ThrowMetaIcon(this.<>f__this.Female.Position, this.<>f__this.pawn.Map, ThingDefOf.Mote_Heart);
+				}
 			};
+			yield return prepare;
 			yield return new Toil
 			{
 				initAction = delegate

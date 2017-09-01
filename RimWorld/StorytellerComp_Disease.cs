@@ -13,15 +13,18 @@ namespace RimWorld
 		{
 			if (DebugSettings.enableRandomDiseases)
 			{
-				BiomeDef biome = Find.WorldGrid[target.Tile].biome;
-				float mtb = biome.diseaseMtbDays;
-				mtb *= Find.Storyteller.difficulty.diseaseIntervalFactor;
-				IncidentDef inc;
-				if (Rand.MTBEventOccurs(mtb, 60000f, 1000f) && (from d in DefDatabase<IncidentDef>.AllDefs
-				where d.TargetAllowed(this.target) && d.category == IncidentCategory.Disease
-				select d).TryRandomElementByWeight((IncidentDef d) => this.<biome>__0.CommonalityOfDisease(d), out inc))
+				if (target.Tile != -1)
 				{
-					yield return new FiringIncident(inc, this, this.GenerateParms(inc.category, target));
+					BiomeDef biome = Find.WorldGrid[target.Tile].biome;
+					float mtb = biome.diseaseMtbDays;
+					mtb *= Find.Storyteller.difficulty.diseaseIntervalFactor;
+					IncidentDef inc;
+					if (Rand.MTBEventOccurs(mtb, 60000f, 1000f) && (from d in DefDatabase<IncidentDef>.AllDefs
+					where d.TargetAllowed(this.target) && d.category == IncidentCategory.Disease
+					select d).TryRandomElementByWeight((IncidentDef d) => this.<biome>__0.CommonalityOfDisease(d), out inc))
+					{
+						yield return new FiringIncident(inc, this, this.GenerateParms(inc.category, target));
+					}
 				}
 			}
 		}

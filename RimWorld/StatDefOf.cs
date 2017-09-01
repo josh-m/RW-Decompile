@@ -51,17 +51,13 @@ namespace RimWorld
 
 		public static StatDef WorkSpeedGlobal;
 
-		public static StatDef MeleeHitChance;
-
 		public static StatDef MiningSpeed;
+
+		public static StatDef MiningYield;
 
 		public static StatDef ResearchSpeed;
 
 		public static StatDef ConstructionSpeed;
-
-		public static StatDef HealingQuality;
-
-		public static StatDef HealingSpeed;
 
 		public static StatDef GiftImpact;
 
@@ -73,17 +69,29 @@ namespace RimWorld
 
 		public static StatDef FoodPoisonChance;
 
-		public static StatDef HarvestFailChance;
-
 		public static StatDef CarryingCapacity;
 
-		public static StatDef ConstructFailChance;
+		public static StatDef MechanoidOperationSuccessChance;
 
-		public static StatDef FixBrokenDownBuildingFailChance;
+		public static StatDef PlantHarvestYield;
+
+		public static StatDef FixBrokenDownBuildingSuccessChance;
+
+		public static StatDef ConstructSuccessChance;
+
+		public static StatDef MedicalTendSpeed;
+
+		public static StatDef MedicalTendQuality;
+
+		public static StatDef MedicalSurgerySuccessChance;
 
 		public static StatDef SocialImpact;
 
 		public static StatDef RecruitPrisonerChance;
+
+		public static StatDef AnimalGatherSpeed;
+
+		public static StatDef AnimalGatherYield;
 
 		public static StatDef TameAnimalChance;
 
@@ -92,6 +100,10 @@ namespace RimWorld
 		public static StatDef ShootingAccuracy;
 
 		public static StatDef AimingDelayFactor;
+
+		public static StatDef MeleeHitChance;
+
+		public static StatDef MeleeDodgeChance;
 
 		public static StatDef MeleeWeapon_DamageAmount;
 
@@ -123,15 +135,15 @@ namespace RimWorld
 
 		public static StatDef Insulation_Heat;
 
-		public static StatDef PersonalShieldRechargeRate;
+		public static StatDef EnergyShieldRechargeRate;
 
-		public static StatDef PersonalShieldEnergyMax;
+		public static StatDef EnergyShieldEnergyMax;
+
+		public static StatDef SmokepopBeltRadius;
 
 		public static StatDef MedicalPotency;
 
 		public static StatDef ImmunityGainSpeed;
-
-		public static StatDef SurgerySuccessChance;
 
 		public static StatDef DoorOpenSpeed;
 

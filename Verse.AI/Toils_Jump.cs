@@ -67,7 +67,7 @@ namespace Verse.AI
 				Job curJob = actor.jobs.curJob;
 				Pawn pawn = curJob.GetTarget(ind).Thing as Pawn;
 				int executionRange = pawn.RaceProps.executionRange;
-				if (pawn != null && pawn.Downed && (actor.Position - pawn.Position).LengthHorizontalSquared > (float)(executionRange * executionRange))
+				if (pawn != null && pawn.Downed && (actor.Position - pawn.Position).LengthHorizontalSquared > executionRange * executionRange)
 				{
 					actor.jobs.curDriver.JumpToToil(jumpToil);
 				}
@@ -84,6 +84,22 @@ namespace Verse.AI
 				Job curJob = actor.jobs.curJob;
 				List<LocalTargetInfo> targetQueue = curJob.GetTargetQueue(ind);
 				if (!targetQueue.NullOrEmpty<LocalTargetInfo>())
+				{
+					actor.jobs.curDriver.JumpToToil(jumpToil);
+				}
+			};
+			return toil;
+		}
+
+		public static Toil JumpIfCannotTouch(TargetIndex ind, PathEndMode peMode, Toil jumpToil)
+		{
+			Toil toil = new Toil();
+			toil.initAction = delegate
+			{
+				Pawn actor = toil.actor;
+				Job curJob = actor.jobs.curJob;
+				LocalTargetInfo target = curJob.GetTarget(ind);
+				if (!actor.CanReachImmediate(target, peMode))
 				{
 					actor.jobs.curDriver.JumpToToil(jumpToil);
 				}

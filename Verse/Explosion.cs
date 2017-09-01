@@ -71,6 +71,7 @@ namespace Verse
 			}
 			this.damType.Worker.ExplosionStart(this, this.cellsToAffect);
 			this.PlayExplosionSound(explosionSound);
+			MoteMaker.MakeWaterSplash(this.position.ToVector3Shifted(), this.Map, this.radius * 6f, 20f);
 			this.cellsToAffect.Sort((IntVec3 a, IntVec3 b) => this.GetCellAffectTick(b).CompareTo(this.GetCellAffectTick(a)));
 		}
 
@@ -84,7 +85,20 @@ namespace Verse
 				{
 					break;
 				}
-				this.AffectCell(this.cellsToAffect[i]);
+				try
+				{
+					this.AffectCell(this.cellsToAffect[i]);
+				}
+				catch (Exception ex)
+				{
+					Log.Error(string.Concat(new object[]
+					{
+						"Explosion could not affect cell ",
+						this.cellsToAffect[i],
+						": ",
+						ex
+					}));
+				}
 				this.cellsToAffect.RemoveAt(i);
 			}
 			if (!this.cellsToAffect.Any<IntVec3>())
@@ -113,24 +127,28 @@ namespace Verse
 
 		public void ExposeData()
 		{
-			Scribe_Values.LookValue<IntVec3>(ref this.position, "position", default(IntVec3), false);
-			Scribe_Values.LookValue<float>(ref this.radius, "radius", 0f, false);
-			Scribe_Defs.LookDef<DamageDef>(ref this.damType, "damType");
-			Scribe_Values.LookValue<int>(ref this.damAmount, "damAmount", 0, false);
-			Scribe_References.LookReference<Thing>(ref this.instigator, "instigator", false);
-			Scribe_Defs.LookDef<ThingDef>(ref this.weaponGear, "weaponGear");
-			Scribe_Values.LookValue<bool>(ref this.applyDamageToExplosionCellsNeighbors, "applyDamageToExplosionCellsNeighbors", false, false);
-			Scribe_Defs.LookDef<ThingDef>(ref this.preExplosionSpawnThingDef, "preExplosionSpawnThingDef");
-			Scribe_Values.LookValue<float>(ref this.preExplosionSpawnChance, "preExplosionSpawnChance", 0f, false);
-			Scribe_Values.LookValue<int>(ref this.preExplosionSpawnThingCount, "preExplosionSpawnThingCount", 1, false);
-			Scribe_Defs.LookDef<ThingDef>(ref this.postExplosionSpawnThingDef, "postExplosionSpawnThingDef");
-			Scribe_Values.LookValue<float>(ref this.postExplosionSpawnChance, "postExplosionSpawnChance", 0f, false);
-			Scribe_Values.LookValue<int>(ref this.postExplosionSpawnThingCount, "postExplosionSpawnThingCount", 1, false);
-			Scribe_Values.LookValue<bool>(ref this.finished, "finished", false, false);
-			Scribe_Values.LookValue<int>(ref this.startTick, "startTick", 0, false);
-			Scribe_Collections.LookList<IntVec3>(ref this.cellsToAffect, "cellsToAffect", LookMode.Value, new object[0]);
-			Scribe_Collections.LookList<Thing>(ref this.damagedThings, "damagedThings", LookMode.Reference, new object[0]);
-			Scribe_Collections.LookHashSet<IntVec3>(ref this.addedCellsAffectedOnlyByDamage, "addedCellsAffectedOnlyByDamage", LookMode.Value);
+			Scribe_Values.Look<IntVec3>(ref this.position, "position", default(IntVec3), false);
+			Scribe_Values.Look<float>(ref this.radius, "radius", 0f, false);
+			Scribe_Defs.Look<DamageDef>(ref this.damType, "damType");
+			Scribe_Values.Look<int>(ref this.damAmount, "damAmount", 0, false);
+			Scribe_References.Look<Thing>(ref this.instigator, "instigator", false);
+			Scribe_Defs.Look<ThingDef>(ref this.weaponGear, "weaponGear");
+			Scribe_Values.Look<bool>(ref this.applyDamageToExplosionCellsNeighbors, "applyDamageToExplosionCellsNeighbors", false, false);
+			Scribe_Defs.Look<ThingDef>(ref this.preExplosionSpawnThingDef, "preExplosionSpawnThingDef");
+			Scribe_Values.Look<float>(ref this.preExplosionSpawnChance, "preExplosionSpawnChance", 0f, false);
+			Scribe_Values.Look<int>(ref this.preExplosionSpawnThingCount, "preExplosionSpawnThingCount", 1, false);
+			Scribe_Defs.Look<ThingDef>(ref this.postExplosionSpawnThingDef, "postExplosionSpawnThingDef");
+			Scribe_Values.Look<float>(ref this.postExplosionSpawnChance, "postExplosionSpawnChance", 0f, false);
+			Scribe_Values.Look<int>(ref this.postExplosionSpawnThingCount, "postExplosionSpawnThingCount", 1, false);
+			Scribe_Values.Look<bool>(ref this.finished, "finished", false, false);
+			Scribe_Values.Look<int>(ref this.startTick, "startTick", 0, false);
+			Scribe_Collections.Look<IntVec3>(ref this.cellsToAffect, "cellsToAffect", LookMode.Value, new object[0]);
+			Scribe_Collections.Look<Thing>(ref this.damagedThings, "damagedThings", LookMode.Reference, new object[0]);
+			Scribe_Collections.Look<IntVec3>(ref this.addedCellsAffectedOnlyByDamage, "addedCellsAffectedOnlyByDamage", LookMode.Value);
+			if (Scribe.mode == LoadSaveMode.PostLoadInit)
+			{
+				this.damagedThings.RemoveAll((Thing x) => x == null);
+			}
 		}
 
 		private int GetCellAffectTick(IntVec3 cell)

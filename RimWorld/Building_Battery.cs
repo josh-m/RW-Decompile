@@ -20,14 +20,14 @@ namespace RimWorld
 
 		private static readonly Vector2 BarSize = new Vector2(1.3f, 0.4f);
 
-		private static readonly Material BatteryBarFilledMat = SolidColorMaterials.SimpleSolidColorMaterial(new Color(0.9f, 0.85f, 0.2f));
+		private static readonly Material BatteryBarFilledMat = SolidColorMaterials.SimpleSolidColorMaterial(new Color(0.9f, 0.85f, 0.2f), false);
 
-		private static readonly Material BatteryBarUnfilledMat = SolidColorMaterials.SimpleSolidColorMaterial(new Color(0.3f, 0.3f, 0.3f));
+		private static readonly Material BatteryBarUnfilledMat = SolidColorMaterials.SimpleSolidColorMaterial(new Color(0.3f, 0.3f, 0.3f), false);
 
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Values.LookValue<int>(ref this.ticksToExplode, "ticksToExplode", 0, false);
+			Scribe_Values.Look<int>(ref this.ticksToExplode, "ticksToExplode", 0, false);
 		}
 
 		public override void Draw()

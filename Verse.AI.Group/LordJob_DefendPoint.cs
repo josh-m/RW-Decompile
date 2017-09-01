@@ -24,7 +24,7 @@ namespace Verse.AI.Group
 
 		public override void ExposeData()
 		{
-			Scribe_Values.LookValue<IntVec3>(ref this.point, "point", default(IntVec3), false);
+			Scribe_Values.Look<IntVec3>(ref this.point, "point", default(IntVec3), false);
 		}
 	}
 }

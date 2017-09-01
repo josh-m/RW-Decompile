@@ -10,17 +10,14 @@ namespace RimWorld
 		protected override bool CanFireNowSub(IIncidentTarget target)
 		{
 			Map map = (Map)target;
-			return !map.mapConditionManager.ConditionIsActive(MapConditionDefOf.PsychicDrone) && !map.mapConditionManager.ConditionIsActive(MapConditionDefOf.PsychicSoothe) && map.listerThings.ThingsOfDef(ThingDefOf.CrashedPsychicEmanatorShipPart).Count <= 0 && map.mapPawns.FreeColonistsCount != 0;
+			return !map.gameConditionManager.ConditionIsActive(GameConditionDefOf.PsychicDrone) && !map.gameConditionManager.ConditionIsActive(GameConditionDefOf.PsychicSoothe) && map.listerThings.ThingsOfDef(ThingDefOf.CrashedPsychicEmanatorShipPart).Count <= 0 && map.mapPawns.FreeColonistsCount != 0;
 		}
 
 		public override bool TryExecute(IncidentParms parms)
 		{
 			Map map = (Map)parms.target;
 			this.DoConditionAndLetter(map, Mathf.RoundToInt(this.def.durationDays.RandomInRange * 60000f), map.mapPawns.FreeColonists.RandomElement<Pawn>().gender);
-			if (map == Find.VisibleMap)
-			{
-				SoundDefOf.PsychicPulseGlobal.PlayOneShotOnCamera();
-			}
+			SoundDefOf.PsychicPulseGlobal.PlayOneShotOnCamera(map);
 			return true;
 		}
 

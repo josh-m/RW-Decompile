@@ -11,6 +11,8 @@ namespace RimWorld
 	{
 		private const float ShellSearchRadius = 40f;
 
+		private const int MaxPawnAmmoReservations = 10;
+
 		private static bool GunNeedsLoading(Building b)
 		{
 			Building_TurretGun building_TurretGun = b as Building_TurretGun;
@@ -19,15 +21,15 @@ namespace RimWorld
 
 		public static Thing FindAmmoForTurret(Pawn pawn, Thing gun)
 		{
-			Predicate<Thing> validator = (Thing t) => !t.IsForbidden(pawn) && pawn.CanReserve(t, 1);
-			return GenClosest.ClosestThingReachable(gun.Position, gun.Map, ThingRequest.ForDef(gun.def.building.turretShellDef), PathEndMode.OnCell, TraverseParms.For(pawn, Danger.Deadly, TraverseMode.ByPawn, false), 40f, validator, null, -1, false);
+			Predicate<Thing> validator = (Thing t) => !t.IsForbidden(pawn) && pawn.CanReserve(t, 10, 1, null, false);
+			return GenClosest.ClosestThingReachable(gun.Position, gun.Map, ThingRequest.ForDef(gun.def.building.turretShellDef), PathEndMode.OnCell, TraverseParms.For(pawn, Danger.Deadly, TraverseMode.ByPawn, false), 40f, validator, null, 0, -1, false, RegionType.Set_Passable, false);
 		}
 
 		[DebuggerHidden]
 		protected override IEnumerable<Toil> MakeNewToils()
 		{
 			this.FailOnDespawnedNullOrForbidden(TargetIndex.A);
-			yield return Toils_Reserve.Reserve(TargetIndex.A, 1);
+			yield return Toils_Reserve.Reserve(TargetIndex.A, 1, -1, null);
 			Toil gotoTurret = Toils_Goto.GotoThing(TargetIndex.A, PathEndMode.InteractionCell);
 			yield return new Toil
 			{
@@ -58,7 +60,7 @@ namespace RimWorld
 					actor.CurJob.count = 1;
 				}
 			};
-			yield return Toils_Reserve.Reserve(TargetIndex.B, 25);
+			yield return Toils_Reserve.Reserve(TargetIndex.B, 10, 1, null);
 			yield return Toils_Goto.GotoThing(TargetIndex.B, PathEndMode.OnCell).FailOnSomeonePhysicallyInteracting(TargetIndex.B);
 			yield return Toils_Haul.StartCarryThing(TargetIndex.B, false, false);
 			yield return Toils_Goto.GotoThing(TargetIndex.A, PathEndMode.Touch);
@@ -75,21 +77,21 @@ namespace RimWorld
 				}
 			};
 			yield return gotoTurret;
-			yield return new Toil
+			Toil man = new Toil();
+			man.tickAction = delegate
 			{
-				tickAction = delegate
+				Pawn actor = this.<man>__3.actor;
+				Building building = (Building)actor.CurJob.targetA.Thing;
+				if (JobDriver_ManTurret.GunNeedsLoading(building))
 				{
-					Pawn actor = this.<man>__3.actor;
-					Building building = (Building)actor.CurJob.targetA.Thing;
-					if (JobDriver_ManTurret.GunNeedsLoading(building))
-					{
-						this.<>f__this.JumpToToil(this.<loadIfNeeded>__1);
-						return;
-					}
-					building.GetComp<CompMannable>().ManForATick(actor);
-				},
-				defaultCompleteMode = ToilCompleteMode.Never
+					this.<>f__this.JumpToToil(this.<loadIfNeeded>__1);
+					return;
+				}
+				building.GetComp<CompMannable>().ManForATick(actor);
 			};
+			man.defaultCompleteMode = ToilCompleteMode.Never;
+			man.FailOnCannotTouch(TargetIndex.A, PathEndMode.InteractionCell);
+			yield return man;
 		}
 	}
 }

@@ -19,7 +19,7 @@ namespace RimWorld
 
 		public void ExposeData()
 		{
-			Scribe_Collections.LookList<PassingShip>(ref this.passingShips, "passingShips", LookMode.Deep, new object[0]);
+			Scribe_Collections.Look<PassingShip>(ref this.passingShips, "passingShips", LookMode.Deep, new object[0]);
 			if (Scribe.mode == LoadSaveMode.LoadingVars)
 			{
 				for (int i = 0; i < this.passingShips.Count; i++)

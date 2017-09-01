@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using Verse;
 
 namespace RimWorld.Planet
@@ -19,12 +18,12 @@ namespace RimWorld.Planet
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Values.LookValue<bool>(ref this.wonBattle, "wonBattle", false, false);
+			Scribe_Values.Look<bool>(ref this.wonBattle, "wonBattle", false, false);
 		}
 
 		public override bool ShouldRemoveMapNow(out bool alsoRemoveWorldObject)
 		{
-			if (!base.Map.mapPawns.AnyColonistTameAnimalOrPrisonerOfColony)
+			if (!base.Map.mapPawns.AnyPawnBlockingMapRemoval)
 			{
 				alsoRemoveWorldObject = true;
 				return true;
@@ -48,18 +47,14 @@ namespace RimWorld.Planet
 			{
 				return;
 			}
-			List<Pawn> allPawnsSpawned = base.Map.mapPawns.AllPawnsSpawned;
-			for (int i = 0; i < allPawnsSpawned.Count; i++)
+			if (GenHostility.AnyHostileActiveThreat(base.Map))
 			{
-				if (!PawnUtility.ThreatDisabledOrFleeing(allPawnsSpawned[i]) && allPawnsSpawned[i].HostileTo(Faction.OfPlayer))
-				{
-					return;
-				}
+				return;
 			}
 			Messages.Message("MessageAmbushVictory".Translate(new object[]
 			{
-				24
-			}), new GlobalTargetInfo(base.Tile), MessageSound.Benefit);
+				MapParent.GetForceExitAndRemoveMapCountdownTimeLeftString(60000)
+			}), this, MessageSound.Benefit);
 			this.wonBattle = true;
 			base.StartForceExitAndRemoveMapCountdown();
 		}

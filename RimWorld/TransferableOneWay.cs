@@ -4,15 +4,11 @@ using Verse;
 
 namespace RimWorld
 {
-	public class TransferableOneWay : ITransferable, IExposable
+	public class TransferableOneWay : Transferable, IExposable
 	{
 		public List<Thing> things = new List<Thing>();
 
-		public int countToTransfer;
-
-		public string editBuffer;
-
-		public Thing AnyThing
+		public override Thing AnyThing
 		{
 			get
 			{
@@ -20,15 +16,15 @@ namespace RimWorld
 			}
 		}
 
-		public ThingDef ThingDef
+		public override ThingDef ThingDef
 		{
 			get
 			{
-				return this.AnyThing.def;
+				return (!this.HasAnyThing) ? null : this.AnyThing.def;
 			}
 		}
 
-		public bool HasAnyThing
+		public override bool HasAnyThing
 		{
 			get
 			{
@@ -36,7 +32,7 @@ namespace RimWorld
 			}
 		}
 
-		public string Label
+		public override string Label
 		{
 			get
 			{
@@ -44,7 +40,7 @@ namespace RimWorld
 			}
 		}
 
-		public string TipDescription
+		public override string TipDescription
 		{
 			get
 			{
@@ -52,7 +48,7 @@ namespace RimWorld
 			}
 		}
 
-		public bool Interactive
+		public override bool Interactive
 		{
 			get
 			{
@@ -60,31 +56,7 @@ namespace RimWorld
 			}
 		}
 
-		public int CountToTransfer
-		{
-			get
-			{
-				return this.countToTransfer;
-			}
-			set
-			{
-				this.countToTransfer = value;
-			}
-		}
-
-		public string EditBuffer
-		{
-			get
-			{
-				return this.editBuffer;
-			}
-			set
-			{
-				this.editBuffer = value;
-			}
-		}
-
-		public TransferablePositiveCountDirection PositiveCountDirection
+		public override TransferablePositiveCountDirection PositiveCountDirection
 		{
 			get
 			{
@@ -105,44 +77,19 @@ namespace RimWorld
 			}
 		}
 
-		public AcceptanceReport CanSetToTransferOneMoreToSource()
+		public override int GetMinimum()
 		{
-			return this.countToTransfer > 0;
+			return 0;
 		}
 
-		public AcceptanceReport TrySetToTransferOneMoreToSource()
+		public override int GetMaximum()
 		{
-			if (!this.CanSetToTransferOneMoreToSource().Accepted)
-			{
-				return false;
-			}
-			this.countToTransfer--;
-			return true;
+			return this.MaxCount;
 		}
 
-		public void SetToTransferMaxToSource()
+		public override AcceptanceReport OverflowReport()
 		{
-			this.countToTransfer = 0;
-		}
-
-		public AcceptanceReport CanSetToTransferOneMoreToDest()
-		{
-			return this.countToTransfer < this.MaxCount;
-		}
-
-		public AcceptanceReport TrySetToTransferOneMoreToDest()
-		{
-			if (!this.CanSetToTransferOneMoreToDest().Accepted)
-			{
-				return false;
-			}
-			this.countToTransfer++;
-			return true;
-		}
-
-		public void SetToTransferMaxToDest()
-		{
-			this.countToTransfer = this.MaxCount;
+			return new AcceptanceReport("ColonyHasNoMore".Translate());
 		}
 
 		public void ExposeData()
@@ -151,8 +98,10 @@ namespace RimWorld
 			{
 				this.things.RemoveAll((Thing x) => x.Destroyed);
 			}
-			Scribe_Collections.LookList<Thing>(ref this.things, "things", LookMode.Reference, new object[0]);
-			Scribe_Values.LookValue<int>(ref this.countToTransfer, "countToTransfer", 0, false);
+			Scribe_Collections.Look<Thing>(ref this.things, "things", LookMode.Reference, new object[0]);
+			int countToTransfer = base.CountToTransfer;
+			Scribe_Values.Look<int>(ref countToTransfer, "countToTransfer", 0, false);
+			base.CountToTransfer = countToTransfer;
 			if (Scribe.mode == LoadSaveMode.PostLoadInit)
 			{
 				if (this.things.RemoveAll((Thing x) => x == null) != 0)

@@ -70,8 +70,8 @@ namespace RimWorld
 
 		public void ExposeData()
 		{
-			Scribe_Values.LookValue<bool>(ref this.wantsRandomInteract, "wantsRandomInteract", false, false);
-			Scribe_Values.LookValue<int>(ref this.lastInteractionTime, "lastInteractionTime", -9999, false);
+			Scribe_Values.Look<bool>(ref this.wantsRandomInteract, "wantsRandomInteract", false, false);
+			Scribe_Values.Look<int>(ref this.lastInteractionTime, "lastInteractionTime", -9999, false);
 		}
 
 		public void InteractionsTrackerTick()
@@ -124,7 +124,7 @@ namespace RimWorld
 
 		private bool CanInteractNowWith(Pawn recipient)
 		{
-			return recipient.Spawned && (this.pawn.Position - recipient.Position).LengthHorizontalSquared <= 36f && InteractionUtility.CanInitiateInteraction(this.pawn) && InteractionUtility.CanReceiveInteraction(recipient) && GenSight.LineOfSight(this.pawn.Position, recipient.Position, this.pawn.Map, true);
+			return recipient.Spawned && (float)(this.pawn.Position - recipient.Position).LengthHorizontalSquared <= 36f && InteractionUtility.CanInitiateInteraction(this.pawn) && InteractionUtility.CanReceiveInteraction(recipient) && GenSight.LineOfSight(this.pawn.Position, recipient.Position, this.pawn.Map, true, null, 0, 0);
 		}
 
 		public bool TryInteractWith(Pawn recipient, InteractionDef intDef)
@@ -205,7 +205,7 @@ namespace RimWorld
 			{
 				thought_MemorySocial.opinionOffset *= statValue;
 			}
-			pawn.needs.mood.thoughts.memories.TryGainMemoryThought(thought_Memory, otherPawn);
+			pawn.needs.mood.thoughts.memories.TryGainMemory(thought_Memory, otherPawn);
 		}
 
 		private bool TryInteractRandomly()
@@ -313,8 +313,8 @@ namespace RimWorld
 				return 0f;
 			}
 			float num = interaction.socialFightBaseChance;
-			num *= Mathf.InverseLerp(0.3f, 1f, this.pawn.health.capacities.GetEfficiency(PawnCapacityDefOf.Manipulation));
-			num *= Mathf.InverseLerp(0.3f, 1f, this.pawn.health.capacities.GetEfficiency(PawnCapacityDefOf.Moving));
+			num *= Mathf.InverseLerp(0.3f, 1f, this.pawn.health.capacities.GetLevel(PawnCapacityDefOf.Manipulation));
+			num *= Mathf.InverseLerp(0.3f, 1f, this.pawn.health.capacities.GetLevel(PawnCapacityDefOf.Moving));
 			List<Hediff> hediffs = this.pawn.health.hediffSet.hediffs;
 			for (int i = 0; i < hediffs.Count; i++)
 			{

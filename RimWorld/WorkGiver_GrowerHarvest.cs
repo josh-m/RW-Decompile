@@ -17,19 +17,19 @@ namespace RimWorld
 		public override bool HasJobOnCell(Pawn pawn, IntVec3 c)
 		{
 			Plant plant = c.GetPlant(pawn.Map);
-			return plant != null && !plant.IsForbidden(pawn) && plant.def.plant.Harvestable && plant.LifeStage == PlantLifeStage.Mature && pawn.CanReserve(plant, 1);
+			return plant != null && !plant.IsForbidden(pawn) && plant.def.plant.Harvestable && plant.LifeStage == PlantLifeStage.Mature && pawn.CanReserve(plant, 1, -1, null, false);
 		}
 
 		public override Job JobOnCell(Pawn pawn, IntVec3 c)
 		{
 			Job job = new Job(JobDefOf.Harvest);
 			Map map = pawn.Map;
-			Room room = c.GetRoom(map);
+			Room room = c.GetRoom(map, RegionType.Set_Passable);
 			float num = 0f;
 			for (int i = 0; i < 40; i++)
 			{
 				IntVec3 c2 = c + GenRadial.RadialPattern[i];
-				if (c.GetRoom(map) == room)
+				if (c.GetRoom(map, RegionType.Set_Passable) == room)
 				{
 					if (this.HasJobOnCell(pawn, c2))
 					{

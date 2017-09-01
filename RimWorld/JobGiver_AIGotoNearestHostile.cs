@@ -18,10 +18,10 @@ namespace RimWorld
 				if (!attackTarget.ThreatDisabled())
 				{
 					Thing thing2 = (Thing)attackTarget;
-					float num2 = thing2.Position.DistanceToSquared(pawn.Position);
-					if (num2 < num && pawn.CanReach(thing2, PathEndMode.OnCell, Danger.Deadly, false, TraverseMode.ByPawn))
+					int num2 = thing2.Position.DistanceToSquared(pawn.Position);
+					if ((float)num2 < num && pawn.CanReach(thing2, PathEndMode.OnCell, Danger.Deadly, false, TraverseMode.ByPawn))
 					{
-						num = num2;
+						num = (float)num2;
 						thing = thing2;
 					}
 				}
@@ -31,7 +31,8 @@ namespace RimWorld
 				return new Job(JobDefOf.Goto, thing)
 				{
 					checkOverrideOnExpire = true,
-					expiryInterval = 500
+					expiryInterval = 500,
+					collideWithPawns = true
 				};
 			}
 			return null;

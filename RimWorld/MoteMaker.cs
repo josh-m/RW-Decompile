@@ -422,6 +422,17 @@ namespace RimWorld
 			GenSpawn.Spawn(moteThrown, loc.ToIntVec3(), map);
 		}
 
+		public static void MakeWaterSplash(Vector3 loc, Map map, float size, float velocity)
+		{
+			if (!loc.ShouldSpawnMotesAt(map) || map.moteCounter.SaturatedLowPriority)
+			{
+				return;
+			}
+			MoteSplash moteSplash = (MoteSplash)ThingMaker.MakeThing(ThingDefOf.Mote_WaterSplash, null);
+			moteSplash.Initialize(loc, size, velocity);
+			GenSpawn.Spawn(moteSplash, loc.ToIntVec3(), map);
+		}
+
 		public static void PlaceTempRoof(IntVec3 cell, Map map)
 		{
 			if (!cell.ShouldSpawnMotesAt(map))

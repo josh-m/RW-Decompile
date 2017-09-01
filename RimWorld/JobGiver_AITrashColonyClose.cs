@@ -22,7 +22,7 @@ namespace RimWorld
 				if (randomCell.InBounds(pawn.Map))
 				{
 					Building edifice = randomCell.GetEdifice(pawn.Map);
-					if (edifice != null && TrashUtility.ShouldTrashBuilding(pawn, edifice) && GenSight.LineOfSight(pawn.Position, randomCell, pawn.Map, false))
+					if (edifice != null && TrashUtility.ShouldTrashBuilding(pawn, edifice) && GenSight.LineOfSight(pawn.Position, randomCell, pawn.Map, false, null, 0, 0))
 					{
 						if (DebugViewSettings.drawDestSearch && Find.VisibleMap == pawn.Map)
 						{
@@ -33,7 +33,7 @@ namespace RimWorld
 					if (flag)
 					{
 						Plant plant = randomCell.GetPlant(pawn.Map);
-						if (plant != null && TrashUtility.ShouldTrashPlant(pawn, plant) && GenSight.LineOfSight(pawn.Position, randomCell, pawn.Map, false))
+						if (plant != null && TrashUtility.ShouldTrashPlant(pawn, plant) && GenSight.LineOfSight(pawn.Position, randomCell, pawn.Map, false, null, 0, 0))
 						{
 							if (DebugViewSettings.drawDestSearch && Find.VisibleMap == pawn.Map)
 							{

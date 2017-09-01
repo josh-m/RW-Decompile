@@ -124,7 +124,7 @@ namespace RimWorld
 			Gender? fixedGender = new Gender?(genderToGenerate);
 			float? fixedMelanin = new float?(value3);
 			string fixedLastName = last;
-			PawnGenerationRequest request = new PawnGenerationRequest(existingChild.kindDef, faction, PawnGenerationContext.NonPlayer, null, true, false, true, true, false, false, 1f, false, allowGay, true, null, new float?(value), new float?(value2), fixedGender, fixedMelanin, fixedLastName);
+			PawnGenerationRequest request = new PawnGenerationRequest(existingChild.kindDef, faction, PawnGenerationContext.NonPlayer, -1, true, false, true, true, false, false, 1f, false, allowGay, true, false, false, null, new float?(value), new float?(value2), fixedGender, fixedMelanin, fixedLastName);
 			Pawn pawn = PawnGenerator.GeneratePawn(request);
 			if (!Find.WorldPawns.Contains(pawn))
 			{

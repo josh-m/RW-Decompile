@@ -11,6 +11,10 @@ namespace RimWorld
 
 		public bool allowBigThreats = true;
 
+		public bool allowIntroThreats = true;
+
+		public bool peacefulTemples;
+
 		public float colonistMoodOffset;
 
 		public float tradePriceFactorLoss;
@@ -20,5 +24,7 @@ namespace RimWorld
 		public float diseaseIntervalFactor = 1f;
 
 		public float enemyReproductionRateFactor = 1f;
+
+		public float playerPawnInfectionChanceFactor = 1f;
 	}
 }

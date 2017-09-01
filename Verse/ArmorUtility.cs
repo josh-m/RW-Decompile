@@ -1,20 +1,19 @@
 using RimWorld;
 using System;
 using System.Collections.Generic;
-using UnityEngine;
 
 namespace Verse
 {
 	public static class ArmorUtility
 	{
-		public static int GetAfterArmorDamage(Pawn pawn, int amountInt, BodyPartRecord part, DamageDef damageDef)
+		public static int GetPostArmorDamage(Pawn pawn, int amountInt, BodyPartRecord part, DamageDef damageDef)
 		{
 			float num = (float)amountInt;
-			if (damageDef.armorCategory == DamageArmorCategory.IgnoreArmor)
+			if (damageDef.armorCategory == null)
 			{
 				return amountInt;
 			}
-			StatDef stat = damageDef.armorCategory.DeflectionStat();
+			StatDef deflectionStat = damageDef.armorCategory.deflectionStat;
 			if (pawn.apparel != null)
 			{
 				List<Apparel> wornApparel = pawn.apparel.WornApparel;
@@ -23,7 +22,7 @@ namespace Verse
 					Apparel apparel = wornApparel[i];
 					if (apparel.def.apparel.CoversBodyPart(part))
 					{
-						ArmorUtility.ApplyArmor(ref num, apparel.GetStatValue(stat, true), apparel, damageDef);
+						ArmorUtility.ApplyArmor(ref num, apparel.GetStatValue(deflectionStat, true), apparel, damageDef);
 						if (num < 0.001f)
 						{
 							return 0;
@@ -31,11 +30,11 @@ namespace Verse
 					}
 				}
 			}
-			ArmorUtility.ApplyArmor(ref num, pawn.GetStatValue(stat, true), null, damageDef);
-			return Mathf.RoundToInt(num);
+			ArmorUtility.ApplyArmor(ref num, pawn.GetStatValue(deflectionStat, true), null, damageDef);
+			return GenMath.RoundRandom(num);
 		}
 
-		public static void ApplyArmor(ref float damAmount, float armorRating, Thing armorThing, DamageDef damageDef)
+		private static void ApplyArmor(ref float damAmount, float armorRating, Thing armorThing, DamageDef damageDef)
 		{
 			float num;
 			float num2;
@@ -73,7 +72,8 @@ namespace Verse
 			}
 			if (armorThing != null)
 			{
-				armorThing.TakeDamage(new DamageInfo(damageDef, GenMath.RoundRandom(num3), -1f, null, null, null));
+				float f = damAmount * 0.25f;
+				armorThing.TakeDamage(new DamageInfo(damageDef, GenMath.RoundRandom(f), -1f, null, null, null, DamageInfo.SourceCategory.ThingOrUnknown));
 			}
 			damAmount -= num3;
 		}

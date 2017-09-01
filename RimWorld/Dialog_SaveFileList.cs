@@ -39,7 +39,7 @@ namespace RimWorld
 		{
 			if (Current.ProgramState == ProgramState.Playing)
 			{
-				Find.MainTabsRoot.SetCurrentTab(MainTabDefOf.Menu, true);
+				Find.MainTabsRoot.SetCurrentTab(MainButtonDefOf.Menu, true);
 			}
 		}
 	}

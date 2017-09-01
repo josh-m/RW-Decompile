@@ -23,7 +23,7 @@ namespace RimWorld
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Values.LookValue<int>(ref this.forcedStage, "stageIndex", 0, false);
+			Scribe_Values.Look<int>(ref this.forcedStage, "stageIndex", 0, false);
 		}
 	}
 }

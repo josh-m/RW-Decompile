@@ -29,11 +29,9 @@ namespace RimWorld
 
 		public static ThoughtDef AteRottenFood;
 
-		public static ThoughtDef GreenThumbHappy;
+		public static ThoughtDef SleptInBedroom;
 
-		public static ThoughtDef WasImprisoned;
-
-		public static ThoughtDef NewColonyOptimism;
+		public static ThoughtDef SleptInBarracks;
 
 		public static ThoughtDef SleptOutside;
 
@@ -44,6 +42,12 @@ namespace RimWorld
 		public static ThoughtDef SleptInHeat;
 
 		public static ThoughtDef SleepDisturbed;
+
+		public static ThoughtDef GreenThumbHappy;
+
+		public static ThoughtDef WasImprisoned;
+
+		public static ThoughtDef NewColonyOptimism;
 
 		public static ThoughtDef AteWithoutTable;
 
@@ -111,6 +115,12 @@ namespace RimWorld
 
 		public static ThoughtDef Naked;
 
+		public static ThoughtDef DeadMansApparel;
+
+		public static ThoughtDef HumanLeatherApparelSad;
+
+		public static ThoughtDef HumanLeatherApparelHappy;
+
 		public static ThoughtDef Chitchat;
 
 		public static ThoughtDef PawnWithGoodOpinionDied;
@@ -138,6 +148,8 @@ namespace RimWorld
 		public static ThoughtDef DivorcedMe;
 
 		public static ThoughtDef RejectedMyProposal;
+
+		public static ThoughtDef RejectedMyProposalMood;
 
 		public static ThoughtDef IRejectedTheirProposal;
 
@@ -168,5 +180,9 @@ namespace RimWorld
 		public static ThoughtDef DefeatedHostileFactionLeader;
 
 		public static ThoughtDef DefeatedMajorEnemy;
+
+		public static ThoughtDef ForcedMeToTakeDrugs;
+
+		public static ThoughtDef ForcedMeToTakeLuciferium;
 	}
 }

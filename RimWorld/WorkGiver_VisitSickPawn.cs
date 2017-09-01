@@ -27,7 +27,7 @@ namespace RimWorld
 			return !InteractionUtility.CanInitiateInteraction(pawn);
 		}
 
-		public override Job JobOnThing(Pawn pawn, Thing t)
+		public override Job JobOnThing(Pawn pawn, Thing t, bool forced = false)
 		{
 			Pawn pawn2 = t as Pawn;
 			if (pawn2 == null)

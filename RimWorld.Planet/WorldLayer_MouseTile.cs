@@ -19,7 +19,7 @@ namespace RimWorld.Planet
 				{
 					return -1;
 				}
-				return GenWorld.MouseTile();
+				return GenWorld.MouseTile(false);
 			}
 		}
 

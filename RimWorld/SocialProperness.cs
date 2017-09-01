@@ -20,10 +20,14 @@ namespace RimWorld
 			{
 				return true;
 			}
+			if (!t.Spawned)
+			{
+				return true;
+			}
 			IntVec3 intVec = (!t.def.hasInteractionCell) ? t.Position : t.InteractionCell;
 			if (forPrisoner)
 			{
-				return intVec.GetRoom(t.Map) == p.GetRoom();
+				return intVec.GetRoom(t.Map, RegionType.Set_Passable) == p.GetRoom(RegionType.Set_Passable);
 			}
 			return !intVec.IsInPrisonCell(t.Map);
 		}

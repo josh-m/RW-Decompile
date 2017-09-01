@@ -57,8 +57,8 @@ namespace Verse.AI
 			{
 				this.FailOnForbidden(TargetIndex.A);
 			}
-			yield return Toils_Reserve.Reserve(TargetIndex.B, 1);
-			Toil reserveTargetA = Toils_Reserve.Reserve(TargetIndex.A, 1);
+			yield return Toils_Reserve.Reserve(TargetIndex.B, 1, -1, null);
+			Toil reserveTargetA = Toils_Reserve.Reserve(TargetIndex.A, 1, -1, null);
 			yield return reserveTargetA;
 			Toil toilGoto = null;
 			toilGoto = Toils_Goto.GotoThing(TargetIndex.A, PathEndMode.ClosestTouch).FailOnSomeonePhysicallyInteracting(TargetIndex.A).FailOn(delegate
@@ -77,7 +77,7 @@ namespace Verse.AI
 				return false;
 			});
 			yield return toilGoto;
-			yield return Toils_Haul.StartCarryThing(TargetIndex.A, false, false);
+			yield return Toils_Haul.StartCarryThing(TargetIndex.A, false, true);
 			if (base.CurJob.haulOpportunisticDuplicates)
 			{
 				yield return Toils_Haul.CheckForGetOpportunityDuplicate(reserveTargetA, TargetIndex.A, TargetIndex.B, false, null);

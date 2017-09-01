@@ -1,3 +1,4 @@
+using RimWorld;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -42,8 +43,7 @@ namespace Verse
 					{
 						stringBuilder.AppendLine("    -" + current2);
 					}
-					Letter let = new Letter("LetterLabelRoofCollapsed".Translate(), stringBuilder.ToString(), LetterType.BadNonUrgent, new TargetInfo(roofCollapseBuffer.CellsMarkedToCollapse[0], this.map, false));
-					Find.LetterStack.ReceiveLetter(let, null);
+					Find.LetterStack.ReceiveLetter("LetterLabelRoofCollapsed".Translate(), stringBuilder.ToString(), LetterDefOf.BadNonUrgent, new TargetInfo(roofCollapseBuffer.CellsMarkedToCollapse[0], this.map, false), null);
 				}
 				else
 				{

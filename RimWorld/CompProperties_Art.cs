@@ -13,7 +13,7 @@ namespace RimWorld
 
 		public bool mustBeFullGrave;
 
-		public bool canBeEnjoyedAsArt = true;
+		public bool canBeEnjoyedAsArt;
 
 		public CompProperties_Art()
 		{

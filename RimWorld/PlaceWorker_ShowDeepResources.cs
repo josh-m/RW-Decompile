@@ -18,7 +18,7 @@ namespace RimWorld
 					CompPowerTrader compPowerTrader = thing.TryGetComp<CompPowerTrader>();
 					if (compPowerTrader == null || compPowerTrader.PowerOn)
 					{
-						base.Map.deepResourceGrid.DeepResourceGridDraw(true);
+						base.Map.deepResourceGrid.MarkForDraw();
 					}
 				}
 			}

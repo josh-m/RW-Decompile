@@ -63,6 +63,22 @@ namespace Verse
 			}
 		}
 
+		public int Tile
+		{
+			get
+			{
+				if (this.thingInt != null && this.thingInt.Tile >= 0)
+				{
+					return this.thingInt.Tile;
+				}
+				if (this.cellInt.IsValid && this.mapInt != null)
+				{
+					return this.mapInt.Tile;
+				}
+				return -1;
+			}
+		}
+
 		public Vector3 CenterVector3
 		{
 			get

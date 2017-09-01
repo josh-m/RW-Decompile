@@ -34,8 +34,11 @@ namespace RimWorld
 				Thing item = null;
 				if (!this.cover || (this.TryFindGoodOpportunisticTaskTarget(pawn, out item, list) && !GenAI.InDangerousCombat(pawn)))
 				{
-					pawn.mindState.duty = new PawnDuty(this.DutyDef);
-					pawn.jobs.EndCurrentJob(JobCondition.InterruptForced, true);
+					if (pawn.mindState.duty == null || pawn.mindState.duty.def != this.DutyDef)
+					{
+						pawn.mindState.duty = new PawnDuty(this.DutyDef);
+						pawn.jobs.EndCurrentJob(JobCondition.InterruptForced, true);
+					}
 					if (list == null)
 					{
 						list = new List<Thing>();

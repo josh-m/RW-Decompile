@@ -82,11 +82,11 @@ namespace Verse.AI
 					curDriver.ReadyForNextToil();
 					return;
 				}
-				if (thing != actor.pather.Destination.Thing || (!actor.pather.Moving && !actor.Position.AdjacentTo8WayOrInside(thing)))
+				if (thing != actor.pather.Destination.Thing || (!actor.pather.Moving && !actor.CanReachImmediate(thing, PathEndMode.Touch)))
 				{
 					actor.pather.StartPath(thing, PathEndMode.Touch);
 				}
-				else if (actor.Position.AdjacentTo8WayOrInside(thing))
+				else if (actor.CanReachImmediate(thing, PathEndMode.Touch))
 				{
 					if (pawn != null && pawn.Downed && !curJob.killIncappedTarget)
 					{

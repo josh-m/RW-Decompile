@@ -23,6 +23,14 @@ namespace RimWorld
 			}
 		}
 
+		public override bool AllowStartNewGatherings
+		{
+			get
+			{
+				return false;
+			}
+		}
+
 		public LordJob_Joinable_MarriageCeremony()
 		{
 		}
@@ -112,12 +120,12 @@ namespace RimWorld
 
 		private bool ShouldCeremonyBeCalledOff()
 		{
-			return this.firstPawn.Destroyed || this.secondPawn.Destroyed || !this.firstPawn.relations.DirectRelationExists(PawnRelationDefOf.Fiance, this.secondPawn) || (this.spot.GetDangerFor(this.firstPawn) != Danger.None || this.spot.GetDangerFor(this.secondPawn) != Danger.None) || (!MarriageCeremonyUtility.AcceptableMapConditionsToContinueCeremony(base.Map) || !MarriageCeremonyUtility.FianceCanContinueCeremony(this.firstPawn) || !MarriageCeremonyUtility.FianceCanContinueCeremony(this.secondPawn));
+			return this.firstPawn.Destroyed || this.secondPawn.Destroyed || !this.firstPawn.relations.DirectRelationExists(PawnRelationDefOf.Fiance, this.secondPawn) || (this.spot.GetDangerFor(this.firstPawn, base.Map) != Danger.None || this.spot.GetDangerFor(this.secondPawn, base.Map) != Danger.None) || (!MarriageCeremonyUtility.AcceptableGameConditionsToContinueCeremony(base.Map) || !MarriageCeremonyUtility.FianceCanContinueCeremony(this.firstPawn) || !MarriageCeremonyUtility.FianceCanContinueCeremony(this.secondPawn));
 		}
 
 		private bool ShouldAfterPartyBeCalledOff()
 		{
-			return this.firstPawn.Destroyed || this.secondPawn.Destroyed || (this.spot.GetDangerFor(this.firstPawn) != Danger.None || this.spot.GetDangerFor(this.secondPawn) != Danger.None) || !PartyUtility.AcceptableMapConditionsToContinueParty(base.Map);
+			return this.firstPawn.Destroyed || this.secondPawn.Destroyed || (this.spot.GetDangerFor(this.firstPawn, base.Map) != Danger.None || this.spot.GetDangerFor(this.secondPawn, base.Map) != Danger.None) || !PartyUtility.AcceptableGameConditionsToContinueParty(base.Map);
 		}
 
 		public override float VoluntaryJoinPriorityFor(Pawn p)
@@ -128,7 +136,7 @@ namespace RimWorld
 				{
 					return 0f;
 				}
-				return 100f;
+				return VoluntarilyJoinableLordJobJoinPriorities.MarriageCeremonyFiance;
 			}
 			else
 			{
@@ -153,15 +161,15 @@ namespace RimWorld
 						return 0f;
 					}
 				}
-				return 20f;
+				return VoluntarilyJoinableLordJobJoinPriorities.MarriageCeremonyGuest;
 			}
 		}
 
 		public override void ExposeData()
 		{
-			Scribe_References.LookReference<Pawn>(ref this.firstPawn, "firstPawn", false);
-			Scribe_References.LookReference<Pawn>(ref this.secondPawn, "secondPawn", false);
-			Scribe_Values.LookValue<IntVec3>(ref this.spot, "spot", default(IntVec3), false);
+			Scribe_References.Look<Pawn>(ref this.firstPawn, "firstPawn", false);
+			Scribe_References.Look<Pawn>(ref this.secondPawn, "secondPawn", false);
+			Scribe_Values.Look<IntVec3>(ref this.spot, "spot", default(IntVec3), false);
 		}
 
 		public override string GetReport()
@@ -193,7 +201,7 @@ namespace RimWorld
 				{
 					if (this.firstPawn.Position.InHorDistOf(ownedPawns[i].Position, 18f) || this.secondPawn.Position.InHorDistOf(ownedPawns[i].Position, 18f))
 					{
-						ownedPawns[i].needs.mood.thoughts.memories.TryGainMemoryThought(ThoughtDefOf.AttendedWedding, null);
+						ownedPawns[i].needs.mood.thoughts.memories.TryGainMemory(ThoughtDefOf.AttendedWedding, null);
 					}
 				}
 			}

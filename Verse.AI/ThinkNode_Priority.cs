@@ -4,7 +4,7 @@ namespace Verse.AI
 {
 	public class ThinkNode_Priority : ThinkNode
 	{
-		public override ThinkResult TryIssueJobPackage(Pawn pawn)
+		public override ThinkResult TryIssueJobPackage(Pawn pawn, JobIssueParams jobParams)
 		{
 			int count = this.subNodes.Count;
 			for (int i = 0; i < count; i++)
@@ -12,7 +12,7 @@ namespace Verse.AI
 				ThinkResult result = ThinkResult.NoJob;
 				try
 				{
-					result = this.subNodes[i].TryIssueJobPackage(pawn);
+					result = this.subNodes[i].TryIssueJobPackage(pawn, jobParams);
 				}
 				catch (Exception ex)
 				{

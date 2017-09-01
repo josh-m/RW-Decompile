@@ -46,8 +46,8 @@ namespace RimWorld
 
 		public void ExposeData()
 		{
-			Scribe_Values.LookValue<int>(ref this.stunTicksLeft, "stunTicksLeft", 0, false);
-			Scribe_Values.LookValue<int>(ref this.EMPAdaptedTicksLeft, "EMPAdaptedTicksLeft", 0, false);
+			Scribe_Values.Look<int>(ref this.stunTicksLeft, "stunTicksLeft", 0, false);
+			Scribe_Values.Look<int>(ref this.EMPAdaptedTicksLeft, "EMPAdaptedTicksLeft", 0, false);
 		}
 
 		public void StunHandlerTick()

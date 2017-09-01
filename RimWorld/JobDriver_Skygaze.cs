@@ -36,7 +36,7 @@ namespace RimWorld
 
 		public override string GetReport()
 		{
-			if (base.Map.mapConditionManager.ConditionIsActive(MapConditionDefOf.Eclipse))
+			if (base.Map.gameConditionManager.ConditionIsActive(GameConditionDefOf.Eclipse))
 			{
 				return "WatchingEclipse".Translate();
 			}

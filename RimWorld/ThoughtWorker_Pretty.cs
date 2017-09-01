@@ -15,6 +15,10 @@ namespace RimWorld
 			{
 				return false;
 			}
+			if (!pawn.health.capacities.CapableOf(PawnCapacityDefOf.Sight))
+			{
+				return false;
+			}
 			int num = other.story.traits.DegreeOfTrait(TraitDefOf.Beauty);
 			if (num == 1)
 			{

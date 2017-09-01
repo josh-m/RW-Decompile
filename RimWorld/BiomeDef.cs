@@ -14,6 +14,12 @@ namespace RimWorld
 
 		public bool canBuildBase = true;
 
+		public bool canAutoChoose = true;
+
+		public bool allowRoads = true;
+
+		public bool allowRivers = true;
+
 		public float animalDensity;
 
 		public float plantDensity;
@@ -23,6 +29,8 @@ namespace RimWorld
 		public float factionBaseSelectionWeight = 1f;
 
 		public bool impassable;
+
+		public bool hasVirtualPlants = true;
 
 		public SimpleCurve pathCost;
 
@@ -41,8 +49,6 @@ namespace RimWorld
 		private List<BiomeDiseaseRecord> diseases = new List<BiomeDiseaseRecord>();
 
 		private List<ThingDef> allowedPackAnimals = new List<ThingDef>();
-
-		public bool hideTerrain;
 
 		public string texture;
 
@@ -83,9 +89,13 @@ namespace RimWorld
 					{
 						return null;
 					}
-					if (this == BiomeDefOf.Ocean)
+					if (this == BiomeDefOf.Ocean || this == BiomeDefOf.Lake)
 					{
 						this.cachedMat = new Material(WorldMaterials.WorldOcean);
+					}
+					else if (!this.allowRoads && !this.allowRivers)
+					{
+						this.cachedMat = new Material(WorldMaterials.WorldIce);
 					}
 					else
 					{

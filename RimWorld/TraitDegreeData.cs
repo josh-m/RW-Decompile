@@ -35,6 +35,8 @@ namespace RimWorld
 
 		public float socialFightChanceFactor = 1f;
 
+		public float painShockThreshold = -1f;
+
 		public float Commonality
 		{
 			get

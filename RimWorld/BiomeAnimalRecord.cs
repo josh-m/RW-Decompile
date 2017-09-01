@@ -12,7 +12,7 @@ namespace RimWorld
 
 		public void LoadDataFromXmlCustom(XmlNode xmlRoot)
 		{
-			CrossRefLoader.RegisterObjectWantsCrossRef(this, "animal", xmlRoot.Name);
+			DirectXmlCrossRefLoader.RegisterObjectWantsCrossRef(this, "animal", xmlRoot.Name);
 			this.commonality = (float)ParseHelper.FromString(xmlRoot.FirstChild.Value, typeof(float));
 		}
 	}

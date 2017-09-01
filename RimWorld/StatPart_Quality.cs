@@ -23,22 +23,20 @@ namespace RimWorld
 
 		private float factorLegendary = 1f;
 
+		private bool alsoAppliesToNegativeValues;
+
 		public override void TransformValue(StatRequest req, ref float val)
 		{
-			if (val <= 0f)
+			if (val <= 0f && !this.alsoAppliesToNegativeValues)
 			{
 				return;
 			}
-			QualityCategory qc;
-			if (req.HasThing && req.Thing.TryGetQuality(out qc))
-			{
-				val *= this.QualityMultiplier(qc);
-			}
+			val *= this.QualityMultiplier(req.QualityCategory);
 		}
 
 		public override string ExplanationPart(StatRequest req)
 		{
-			if (req.HasThing && req.Thing.GetStatValue(this.parentStat, true) <= 0f)
+			if (req.HasThing && !this.alsoAppliesToNegativeValues && req.Thing.GetStatValue(this.parentStat, true) <= 0f)
 			{
 				return null;
 			}

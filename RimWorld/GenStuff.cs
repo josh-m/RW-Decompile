@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using Verse;
 
 namespace RimWorld
@@ -56,11 +55,14 @@ namespace RimWorld
 		{
 			if (td.MadeFromStuff)
 			{
-				foreach (ThingDef sd in from def in DefDatabase<ThingDef>.AllDefs
-				where def.IsStuff && def.stuffProps.CanMake(this.td)
-				select def)
+				List<ThingDef> allDefs = DefDatabase<ThingDef>.AllDefsListForReading;
+				for (int i = 0; i < allDefs.Count; i++)
 				{
-					yield return sd;
+					ThingDef d = allDefs[i];
+					if (d.IsStuff && d.stuffProps.CanMake(td))
+					{
+						yield return d;
+					}
 				}
 			}
 		}

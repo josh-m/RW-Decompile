@@ -22,7 +22,16 @@ namespace RimWorld
 
 		public override bool HasJobOnCell(Pawn pawn, IntVec3 c)
 		{
-			return pawn.Map.areaManager.BuildRoof[c] && !c.Roofed(pawn.Map) && pawn.CanReserve(c, 1) && (pawn.CanReach(c, PathEndMode.Touch, pawn.NormalMaxDanger(), false, TraverseMode.ByPawn) || this.BuildingToTouchToBeAbleToBuildRoof(c, pawn) != null) && RoofCollapseUtility.WithinRangeOfRoofHolder(c, pawn.Map) && RoofCollapseUtility.ConnectedToRoofHolder(c, pawn.Map, true);
+			if (!pawn.Map.areaManager.BuildRoof[c])
+			{
+				return false;
+			}
+			if (c.Roofed(pawn.Map))
+			{
+				return false;
+			}
+			ReservationLayerDef ceiling = ReservationLayerDefOf.Ceiling;
+			return pawn.CanReserve(c, 1, -1, ceiling, false) && (pawn.CanReach(c, PathEndMode.Touch, pawn.NormalMaxDanger(), false, TraverseMode.ByPawn) || this.BuildingToTouchToBeAbleToBuildRoof(c, pawn) != null) && RoofCollapseUtility.WithinRangeOfRoofHolder(c, pawn.Map) && RoofCollapseUtility.ConnectedToRoofHolder(c, pawn.Map, true);
 		}
 
 		private Building BuildingToTouchToBeAbleToBuildRoof(IntVec3 c, Pawn pawn)

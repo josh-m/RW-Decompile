@@ -28,6 +28,8 @@ namespace Verse
 		[NoTranslate]
 		public List<string> tags;
 
+		public ResearchTabDef tab;
+
 		public float researchViewX = 1f;
 
 		public float researchViewY = 1f;
@@ -151,14 +153,12 @@ namespace Verse
 			}
 		}
 
-		public float CostFactor(TechLevel researcherTechLevel)
+		public override void ResolveReferences()
 		{
-			if (researcherTechLevel >= this.techLevel)
+			if (this.tab == null)
 			{
-				return 1f;
+				this.tab = ResearchTabDefOf.Main;
 			}
-			int num = (int)(this.techLevel - researcherTechLevel);
-			return 1f + (float)num;
 		}
 
 		[DebuggerHidden]
@@ -179,19 +179,32 @@ namespace Verse
 			List<ResearchProjectDef> rpDefs = DefDatabase<ResearchProjectDef>.AllDefsListForReading;
 			for (int i = 0; i < rpDefs.Count; i++)
 			{
-				if (rpDefs[i] != this && rpDefs[i].ResearchViewX == this.ResearchViewX && rpDefs[i].ResearchViewY == this.ResearchViewY)
+				if (rpDefs[i] != this && rpDefs[i].tab == this.tab && rpDefs[i].ResearchViewX == this.ResearchViewX && rpDefs[i].ResearchViewY == this.ResearchViewY)
 				{
 					yield return string.Concat(new object[]
 					{
-						"same research view coords as ",
+						"same research view coords and tab as ",
 						rpDefs[i],
 						": ",
 						this.ResearchViewX,
 						", ",
-						this.ResearchViewY
+						this.ResearchViewY,
+						"(",
+						this.tab,
+						")"
 					});
 				}
 			}
+		}
+
+		public float CostFactor(TechLevel researcherTechLevel)
+		{
+			if (researcherTechLevel >= this.techLevel)
+			{
+				return 1f;
+			}
+			int num = (int)(this.techLevel - researcherTechLevel);
+			return 1f + (float)num;
 		}
 
 		public bool HasTag(string tag)
@@ -277,10 +290,10 @@ namespace Verse
 				{
 					foreach (ResearchProjectDef current3 in DefDatabase<ResearchProjectDef>.AllDefsListForReading)
 					{
-						if (current2 != current3)
+						if (current2 != current3 && current2.tab == current3.tab)
 						{
-							bool flag2 = Mathf.Abs(current2.x - current3.x) < 0.8f;
-							bool flag3 = Mathf.Abs(current2.y - current3.y) < 0.45f;
+							bool flag2 = Mathf.Abs(current2.x - current3.x) < 0.5f;
+							bool flag3 = Mathf.Abs(current2.y - current3.y) < 0.25f;
 							if (flag2 && flag3)
 							{
 								flag = true;

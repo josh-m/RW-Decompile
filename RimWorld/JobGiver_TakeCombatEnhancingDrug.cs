@@ -25,7 +25,7 @@ namespace RimWorld
 			{
 				return null;
 			}
-			if (Find.TickManager.TicksGame - pawn.mindState.lastTakeCombatEnancingDrugTick < 20000)
+			if (Find.TickManager.TicksGame - pawn.mindState.lastTakeCombatEnhancingDrugTick < 20000)
 			{
 				return null;
 			}

@@ -1,5 +1,6 @@
 using RimWorld;
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using Verse.Sound;
 
@@ -9,21 +10,64 @@ namespace Verse
 	{
 		private const float DefSelectionLineHeight = 21f;
 
-		public Listing_Standard(Rect rect, GameFont font) : base(rect)
+		private GameFont font;
+
+		private List<Pair<Vector2, Vector2>> labelScrollbarPositions;
+
+		private List<Vector2> labelScrollbarPositionsSetThisFrame;
+
+		public Listing_Standard(GameFont font)
 		{
-			Text.Font = font;
+			this.font = font;
 		}
 
-		public Listing_Standard(Rect rect) : base(rect)
+		public Listing_Standard()
 		{
-			Text.Font = GameFont.Small;
+			this.font = GameFont.Small;
 		}
 
-		public void Label(string label)
+		public override void Begin(Rect rect)
 		{
-			float height = Text.CalcHeight(label, base.ColumnWidth);
-			Rect rect = base.GetRect(height);
-			Widgets.Label(rect, label);
+			base.Begin(rect);
+			Text.Font = this.font;
+		}
+
+		public override void End()
+		{
+			base.End();
+			if (this.labelScrollbarPositions != null)
+			{
+				for (int i = this.labelScrollbarPositions.Count - 1; i >= 0; i--)
+				{
+					if (!this.labelScrollbarPositionsSetThisFrame.Contains(this.labelScrollbarPositions[i].First))
+					{
+						this.labelScrollbarPositions.RemoveAt(i);
+					}
+				}
+				this.labelScrollbarPositionsSetThisFrame.Clear();
+			}
+		}
+
+		public void Label(string label, float maxHeight = -1f)
+		{
+			float num = Text.CalcHeight(label, base.ColumnWidth);
+			bool flag = false;
+			if (maxHeight >= 0f && num > maxHeight)
+			{
+				num = maxHeight;
+				flag = true;
+			}
+			Rect rect = base.GetRect(num);
+			if (flag)
+			{
+				Vector2 labelScrollbarPosition = this.GetLabelScrollbarPosition(this.curX, this.curY);
+				Widgets.LabelScrollable(rect, label, ref labelScrollbarPosition);
+				this.SetLabelScrollbarPosition(this.curX, this.curY, labelScrollbarPosition);
+			}
+			else
+			{
+				Widgets.Label(rect, label);
+			}
 			base.Gap(this.verticalSpacing);
 		}
 
@@ -113,7 +157,7 @@ namespace Verse
 			}
 			else
 			{
-				result = Widgets.TextArea(rect, text);
+				result = Widgets.TextArea(rect, text, false);
 			}
 			base.Gap(this.verticalSpacing);
 			return result;
@@ -162,8 +206,8 @@ namespace Verse
 			rect.width = 42f;
 			if (Widgets.ButtonText(rect, "-" + countChange, true, false, true))
 			{
-				SoundDefOf.AmountDecrement.PlayOneShotOnCamera();
-				val -= countChange;
+				SoundDefOf.AmountDecrement.PlayOneShotOnCamera(null);
+				val -= countChange * GenUI.CurrentAdjustmentMultiplier();
 				if (val < min)
 				{
 					val = min;
@@ -172,8 +216,8 @@ namespace Verse
 			rect.x += rect.width + 2f;
 			if (Widgets.ButtonText(rect, "+" + countChange, true, false, true))
 			{
-				SoundDefOf.AmountIncrement.PlayOneShotOnCamera();
-				val += countChange;
+				SoundDefOf.AmountIncrement.PlayOneShotOnCamera(null);
+				val += countChange * GenUI.CurrentAdjustmentMultiplier();
 				if (val < min)
 				{
 					val = min;
@@ -187,10 +231,47 @@ namespace Verse
 			Rect rect = base.GetRect(24f);
 			if (Widgets.ButtonText(rect, label, true, false, true))
 			{
-				SoundDefOf.TickLow.PlayOneShotOnCamera();
+				SoundDefOf.TickLow.PlayOneShotOnCamera(null);
 				val = target;
 			}
 			base.Gap(this.verticalSpacing);
+		}
+
+		private Vector2 GetLabelScrollbarPosition(float x, float y)
+		{
+			if (this.labelScrollbarPositions == null)
+			{
+				return Vector2.zero;
+			}
+			for (int i = 0; i < this.labelScrollbarPositions.Count; i++)
+			{
+				Vector2 first = this.labelScrollbarPositions[i].First;
+				if (first.x == x && first.y == y)
+				{
+					return this.labelScrollbarPositions[i].Second;
+				}
+			}
+			return Vector2.zero;
+		}
+
+		private void SetLabelScrollbarPosition(float x, float y, Vector2 scrollbarPosition)
+		{
+			if (this.labelScrollbarPositions == null)
+			{
+				this.labelScrollbarPositions = new List<Pair<Vector2, Vector2>>();
+				this.labelScrollbarPositionsSetThisFrame = new List<Vector2>();
+			}
+			this.labelScrollbarPositionsSetThisFrame.Add(new Vector2(x, y));
+			for (int i = 0; i < this.labelScrollbarPositions.Count; i++)
+			{
+				Vector2 first = this.labelScrollbarPositions[i].First;
+				if (first.x == x && first.y == y)
+				{
+					this.labelScrollbarPositions[i] = new Pair<Vector2, Vector2>(new Vector2(x, y), scrollbarPosition);
+					return;
+				}
+			}
+			this.labelScrollbarPositions.Add(new Pair<Vector2, Vector2>(new Vector2(x, y), scrollbarPosition));
 		}
 
 		public bool SelectableDef(string name, bool selected, Action deleteCallback)

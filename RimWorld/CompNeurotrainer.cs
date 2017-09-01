@@ -18,7 +18,7 @@ namespace RimWorld
 		public override void PostExposeData()
 		{
 			base.PostExposeData();
-			Scribe_Defs.LookDef<SkillDef>(ref this.skill, "skill");
+			Scribe_Defs.Look<SkillDef>(ref this.skill, "skill");
 		}
 
 		public override void Initialize(CompProperties props)

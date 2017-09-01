@@ -43,7 +43,7 @@ namespace Verse
 				}
 				if (this.drawerInt == null)
 				{
-					this.drawerInt = new CellBoolDrawer(this, this.map.Size.x, this.map.Size.z);
+					this.drawerInt = new CellBoolDrawer(this, this.map.Size.x, this.map.Size.z, 0.33f);
 				}
 				return this.drawerInt;
 			}
@@ -81,6 +81,11 @@ namespace Verse
 		public bool GetCellBool(int index)
 		{
 			return this.Grid[index] && !this.map.fogGrid.IsFogged(index);
+		}
+
+		public Color GetCellExtraColor(int index)
+		{
+			return Color.white;
 		}
 
 		public bool IsExitCell(IntVec3 c)
@@ -151,7 +156,7 @@ namespace Verse
 			for (int i = 0; i < num; i++)
 			{
 				IntVec3 intVec = cell + GenRadial.RadialPattern[i];
-				if (intVec.InBounds(this.map) && intVec.OnEdge(this.map) && intVec.CanBeSeenOverFast(this.map) && GenSight.LineOfSight(cell, intVec, this.map, false))
+				if (intVec.InBounds(this.map) && intVec.OnEdge(this.map) && intVec.CanBeSeenOverFast(this.map) && GenSight.LineOfSight(cell, intVec, this.map, false, null, 0, 0))
 				{
 					return true;
 				}

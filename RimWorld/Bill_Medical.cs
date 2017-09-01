@@ -104,6 +104,7 @@ namespace RimWorld
 
 		public override void Notify_IterationCompleted(Pawn billDoer, List<Thing> ingredients)
 		{
+			base.Notify_IterationCompleted(billDoer, ingredients);
 			if (this.CompletableEver)
 			{
 				Pawn giverPawn = this.GiverPawn;
@@ -117,18 +118,32 @@ namespace RimWorld
 			this.billStack.Delete(this);
 		}
 
-		public override void Notify_DoBillStarted()
+		public override void Notify_DoBillStarted(Pawn billDoer)
 		{
-			if (!this.GiverPawn.Dead && this.recipe.anesthesize)
+			base.Notify_DoBillStarted(billDoer);
+			if (!this.GiverPawn.Dead && this.recipe.anesthetize && HealthUtility.TryAnesthetize(this.GiverPawn))
 			{
-				HealthUtility.TryAnesthesize(this.GiverPawn);
+				List<ThingStackPartClass> placedThings = billDoer.CurJob.placedThings;
+				for (int i = 0; i < placedThings.Count; i++)
+				{
+					if (placedThings[i].thing is Medicine)
+					{
+						this.recipe.Worker.ConsumeIngredient(placedThings[i].thing.SplitOff(1), this.recipe, billDoer.MapHeld);
+						placedThings[i].Count--;
+						if (placedThings[i].thing.Destroyed || placedThings[i].Count <= 0)
+						{
+							placedThings.RemoveAt(i);
+						}
+						break;
+					}
+				}
 			}
 		}
 
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Values.LookValue<int>(ref this.partIndex, "partIndex", 0, false);
+			Scribe_Values.Look<int>(ref this.partIndex, "partIndex", 0, false);
 			if (Scribe.mode == LoadSaveMode.ResolvingCrossRefs)
 			{
 				if (this.partIndex < 0)

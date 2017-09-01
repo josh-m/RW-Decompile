@@ -18,7 +18,7 @@ namespace Verse.AI.Group
 
 		public void ExposeData()
 		{
-			Scribe_Collections.LookList<Lord>(ref this.lords, "lords", LookMode.Deep, new object[0]);
+			Scribe_Collections.Look<Lord>(ref this.lords, "lords", LookMode.Deep, new object[0]);
 			if (Scribe.mode == LoadSaveMode.LoadingVars)
 			{
 				for (int i = 0; i < this.lords.Count; i++)

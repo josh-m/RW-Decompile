@@ -17,7 +17,7 @@ namespace RimWorld
 			{
 				if (current.equipment.Primary != null && current.equipment.Primary.def.IsRangedWeapon)
 				{
-					if (current.apparel.WornApparel.Any((Apparel ap) => ap.def == ThingDefOf.Apparel_PersonalShield))
+					if (current.apparel.WornApparel.Any((Apparel ap) => ap.def == ThingDefOf.Apparel_ShieldBelt))
 					{
 						return current;
 					}

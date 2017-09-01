@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Verse;
 using Verse.AI;
 
@@ -14,7 +15,7 @@ namespace RimWorld
 			}
 		}
 
-		public override Job JobOnThing(Pawn pawn, Thing t)
+		public override Job JobOnThing(Pawn pawn, Thing t, bool forced = false)
 		{
 			if (t.Faction != pawn.Faction)
 			{
@@ -31,7 +32,7 @@ namespace RimWorld
 			{
 				if (thing.def.category == ThingCategory.Plant)
 				{
-					if (pawn.CanReserveAndReach(thing, PathEndMode.ClosestTouch, pawn.NormalMaxDanger(), 1))
+					if (pawn.CanReserveAndReach(thing, PathEndMode.ClosestTouch, pawn.NormalMaxDanger(), 1, -1, null, forced))
 					{
 						return new Job(JobDefOf.CutPlant, thing);
 					}
@@ -54,60 +55,55 @@ namespace RimWorld
 				}
 				return null;
 			}
-			if (!GenConstruct.CanConstruct(blueprint, pawn))
+			if (!GenConstruct.CanConstruct(blueprint, pawn, forced))
 			{
 				return null;
 			}
-			Job job = this.DeconstructExistingEdificeJob(pawn, blueprint);
+			Job job = this.DeconstructExistingBuildingJob(pawn, blueprint);
 			if (job != null)
 			{
 				return job;
 			}
-			Job job2 = base.ResourceDeliverJobFor(pawn, blueprint);
+			Job job2 = base.RemoveExistingFloorJob(pawn, blueprint);
 			if (job2 != null)
 			{
 				return job2;
 			}
-			Job job3 = this.NoCostFrameMakeJobFor(pawn, blueprint);
+			Job job3 = base.ResourceDeliverJobFor(pawn, blueprint, true);
 			if (job3 != null)
 			{
 				return job3;
 			}
+			Job job4 = this.NoCostFrameMakeJobFor(pawn, blueprint);
+			if (job4 != null)
+			{
+				return job4;
+			}
 			return null;
 		}
 
-		private Job DeconstructExistingEdificeJob(Pawn pawn, Blueprint blue)
+		private Job DeconstructExistingBuildingJob(Pawn pawn, Blueprint blue)
 		{
-			if (!blue.def.entityDefToBuild.IsEdifice())
-			{
-				return null;
-			}
 			Thing thing = GenConstruct.MiniToInstallOrBuildingToReinstall(blue);
 			Thing thing2 = null;
 			CellRect cellRect = blue.OccupiedRect();
 			for (int i = cellRect.minZ; i <= cellRect.maxZ; i++)
 			{
-				int j = cellRect.minX;
-				while (j <= cellRect.maxX)
+				for (int j = cellRect.minX; j <= cellRect.maxX; j++)
 				{
 					IntVec3 c = new IntVec3(j, 0, i);
-					thing2 = c.GetEdifice(pawn.Map);
-					if (thing2 == thing)
+					List<Thing> thingList = c.GetThingList(pawn.Map);
+					for (int k = 0; k < thingList.Count; k++)
 					{
-						thing2 = null;
+						if (thingList[k].def.category == ThingCategory.Building && thingList[k] != thing && GenSpawn.SpawningWipes(blue.def.entityDefToBuild, thingList[k].def))
+						{
+							thing2 = thingList[k];
+							break;
+						}
 					}
 					if (thing2 != null)
 					{
-						ThingDef thingDef = blue.def.entityDefToBuild as ThingDef;
-						if (thingDef != null && thingDef.building.canPlaceOverWall && thing2.def == ThingDefOf.Wall)
-						{
-							return null;
-						}
 						break;
-					}
-					else
-					{
-						j++;
 					}
 				}
 				if (thing2 != null)
@@ -115,7 +111,7 @@ namespace RimWorld
 					break;
 				}
 			}
-			if (thing2 == null || !pawn.CanReserve(thing2, 1))
+			if (thing2 == null || !pawn.CanReserve(thing2, 1, -1, null, false))
 			{
 				return null;
 			}

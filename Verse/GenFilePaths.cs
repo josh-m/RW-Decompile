@@ -16,6 +16,8 @@ namespace Verse
 
 		public const string DefsFolder = "Defs/";
 
+		public const string PatchesFolder = "Patches/";
+
 		public const string BackstoriesPath = "Backstories";
 
 		public const string SavedGameExtension = ".rws";
@@ -292,7 +294,7 @@ namespace Verse
 			}
 		}
 
-		private static string ConfigFolderPath
+		public static string ConfigFolderPath
 		{
 			get
 			{

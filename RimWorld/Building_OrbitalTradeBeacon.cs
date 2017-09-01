@@ -28,19 +28,22 @@ namespace RimWorld
 			{
 				yield return g;
 			}
-			yield return new Command_Action
+			if (DesignatorUtility.FindAllowedDesignator<Designator_ZoneAddStockpile_Resources>() != null)
 			{
-				action = new Action(this.MakeMatchingStockpile),
-				hotKey = KeyBindingDefOf.Misc1,
-				defaultDesc = "CommandMakeBeaconStockpileDesc".Translate(),
-				icon = ContentFinder<Texture2D>.Get("UI/Designators/ZoneCreate_Stockpile", true),
-				defaultLabel = "CommandMakeBeaconStockpileLabel".Translate()
-			};
+				yield return new Command_Action
+				{
+					action = new Action(this.MakeMatchingStockpile),
+					hotKey = KeyBindingDefOf.Misc1,
+					defaultDesc = "CommandMakeBeaconStockpileDesc".Translate(),
+					icon = ContentFinder<Texture2D>.Get("UI/Designators/ZoneCreate_Stockpile", true),
+					defaultLabel = "CommandMakeBeaconStockpileLabel".Translate()
+				};
+			}
 		}
 
 		private void MakeMatchingStockpile()
 		{
-			Designator_ZoneAddStockpile_Resources des = new Designator_ZoneAddStockpile_Resources();
+			Designator des = DesignatorUtility.FindAllowedDesignator<Designator_ZoneAddStockpile_Resources>();
 			des.DesignateMultiCell(from c in this.TradeableCells
 			where des.CanDesignateCell(c).Accepted
 			select c);
@@ -53,7 +56,7 @@ namespace RimWorld
 			{
 				return Building_OrbitalTradeBeacon.tradeableCells;
 			}
-			Region region = pos.GetRegion(map);
+			Region region = pos.GetRegion(map, RegionType.Set_Passable);
 			if (region == null)
 			{
 				return Building_OrbitalTradeBeacon.tradeableCells;
@@ -68,7 +71,7 @@ namespace RimWorld
 					}
 				}
 				return false;
-			}, 12);
+			}, 13, RegionType.Set_Passable);
 			return Building_OrbitalTradeBeacon.tradeableCells;
 		}
 

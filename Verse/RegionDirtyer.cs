@@ -40,11 +40,11 @@ namespace Verse
 				IntVec3 c2 = c + GenAdj.AdjacentCellsAndInside[i];
 				if (c2.InBounds(this.map))
 				{
-					Region regionAt_InvalidAllowed = this.map.regionGrid.GetRegionAt_InvalidAllowed(c2);
-					if (regionAt_InvalidAllowed != null && regionAt_InvalidAllowed.valid)
+					Region regionAt_NoRebuild_InvalidAllowed = this.map.regionGrid.GetRegionAt_NoRebuild_InvalidAllowed(c2);
+					if (regionAt_NoRebuild_InvalidAllowed != null && regionAt_NoRebuild_InvalidAllowed.valid)
 					{
-						this.map.temperatureCache.TryCacheRegionTempInfo(c, regionAt_InvalidAllowed);
-						this.regionsToDirty.Add(regionAt_InvalidAllowed);
+						this.map.temperatureCache.TryCacheRegionTempInfo(c, regionAt_NoRebuild_InvalidAllowed);
+						this.regionsToDirty.Add(regionAt_NoRebuild_InvalidAllowed);
 					}
 				}
 			}
@@ -59,7 +59,7 @@ namespace Verse
 			}
 		}
 
-		internal void Notify_BarrierSpawned(Thing b)
+		internal void Notify_ThingAffectingRegionsSpawned(Thing b)
 		{
 			this.regionsToDirty.Clear();
 			CellRect.CellRectIterator iterator = b.OccupiedRect().ExpandedBy(1).ClipInsideMap(b.Map).GetIterator();
@@ -81,7 +81,7 @@ namespace Verse
 			this.regionsToDirty.Clear();
 		}
 
-		internal void Notify_BarrierDespawned(Thing b)
+		internal void Notify_ThingAffectingRegionsDespawned(Thing b)
 		{
 			this.regionsToDirty.Clear();
 			Region validRegionAt_NoRebuild = this.map.regionGrid.GetValidRegionAt_NoRebuild(b.Position);
@@ -167,7 +167,7 @@ namespace Verse
 			{
 				this.dirtyCells.Add(current);
 			}
-			foreach (Region current2 in this.map.regionGrid.AllRegions)
+			foreach (Region current2 in this.map.regionGrid.AllRegions_NoRebuild_InvalidAllowed)
 			{
 				this.SetRegionDirty(current2, false);
 			}

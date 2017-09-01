@@ -60,10 +60,10 @@ namespace Verse
 			{
 				foreach (Def current in this.defs)
 				{
-					XElement content = XmlSaver.XElementFromObject(current, current.GetType());
+					XElement content = DirectXmlSaver.XElementFromObject(current, current.GetType());
 					xElement.Add(content);
 				}
-				XmlSaveFormatter.AddWhitespaceFromRoot(xElement);
+				DirectXmlSaveFormatter.AddWhitespaceFromRoot(xElement);
 				SaveOptions options = SaveOptions.DisableFormatting;
 				xDocument.Save(str, options);
 				Messages.Message("Saved in " + str, MessageSound.Benefit);

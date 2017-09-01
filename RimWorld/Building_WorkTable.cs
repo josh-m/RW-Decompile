@@ -62,15 +62,15 @@ namespace RimWorld
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Deep.LookDeep<BillStack>(ref this.billStack, "billStack", new object[]
+			Scribe_Deep.Look<BillStack>(ref this.billStack, "billStack", new object[]
 			{
 				this
 			});
 		}
 
-		public override void SpawnSetup(Map map)
+		public override void SpawnSetup(Map map, bool respawningAfterLoad)
 		{
-			base.SpawnSetup(map);
+			base.SpawnSetup(map, respawningAfterLoad);
 			this.powerComp = base.GetComp<CompPowerTrader>();
 			this.refuelableComp = base.GetComp<CompRefuelable>();
 			this.breakdownableComp = base.GetComp<CompBreakdownable>();

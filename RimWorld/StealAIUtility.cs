@@ -29,7 +29,7 @@ namespace RimWorld
 				item = null;
 				return false;
 			}
-			Predicate<Thing> validator = (Thing t) => (thief == null || thief.CanReserve(t, 1)) && (disallowed == null || !disallowed.Contains(t)) && t.def.stealable && !t.IsBurning();
+			Predicate<Thing> validator = (Thing t) => (thief == null || thief.CanReserve(t, 1, -1, null, false)) && (disallowed == null || !disallowed.Contains(t)) && t.def.stealable && !t.IsBurning();
 			item = GenClosest.ClosestThing_Regionwise_ReachablePrioritized(root, map, ThingRequest.ForGroup(ThingRequestGroup.HaulableEverOrMinifiable), PathEndMode.ClosestTouch, TraverseParms.For(TraverseMode.NoPassClosedDoors, Danger.Some, false), maxDist, validator, (Thing x) => StealAIUtility.GetValue(x), 15, 15);
 			if (item != null && StealAIUtility.GetValue(item) < 320f)
 			{
@@ -60,10 +60,10 @@ namespace RimWorld
 
 		public static float StartStealingMarketValueThreshold(Lord lord)
 		{
-			Rand.PushSeed();
+			Rand.PushState();
 			Rand.Seed = lord.loadID;
 			float randomInRange = StealAIUtility.StealThresholdValuePerCombatPowerRange.RandomInRange;
-			Rand.PopSeed();
+			Rand.PopState();
 			float num = 0f;
 			for (int i = 0; i < lord.ownedPawns.Count; i++)
 			{

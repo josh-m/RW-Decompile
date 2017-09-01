@@ -19,19 +19,19 @@ namespace RimWorld
 		[DebuggerHidden]
 		public override IEnumerable<Thing> PotentialWorkThingsGlobal(Pawn pawn)
 		{
-			foreach (Designation des in pawn.Map.designationManager.DesignationsOfDef(DesignationDefOf.RearmTrap))
+			foreach (Designation des in pawn.Map.designationManager.SpawnedDesignationsOfDef(DesignationDefOf.RearmTrap))
 			{
 				yield return des.target.Thing;
 			}
 		}
 
-		public override bool HasJobOnThing(Pawn pawn, Thing t)
+		public override bool HasJobOnThing(Pawn pawn, Thing t, bool forced = false)
 		{
 			if (pawn.Map.designationManager.DesignationOn(t, DesignationDefOf.RearmTrap) == null)
 			{
 				return false;
 			}
-			if (!pawn.CanReserve(t, 1))
+			if (!pawn.CanReserve(t, 1, -1, null, forced))
 			{
 				return false;
 			}
@@ -39,7 +39,7 @@ namespace RimWorld
 			for (int i = 0; i < thingList.Count; i++)
 			{
 				IntVec3 intVec;
-				if (thingList[i] != t && thingList[i].def.category == ThingCategory.Item && (thingList[i].IsForbidden(pawn) || !HaulAIUtility.CanHaulAside(pawn, thingList[i], out intVec)))
+				if (thingList[i] != t && thingList[i].def.category == ThingCategory.Item && (thingList[i].IsForbidden(pawn) || thingList[i].IsInValidStorage() || !HaulAIUtility.CanHaulAside(pawn, thingList[i], out intVec)))
 				{
 					return false;
 				}
@@ -47,7 +47,7 @@ namespace RimWorld
 			return true;
 		}
 
-		public override Job JobOnThing(Pawn pawn, Thing t)
+		public override Job JobOnThing(Pawn pawn, Thing t, bool forced = false)
 		{
 			List<Thing> thingList = t.Position.GetThingList(t.Map);
 			for (int i = 0; i < thingList.Count; i++)

@@ -52,7 +52,7 @@ namespace Verse
 					if (foodPoisonable != null)
 					{
 						float poisonChance = worker.GetStatValue(StatDefOf.FoodPoisonChance, true);
-						Room room = worker.GetRoom();
+						Room room = worker.GetRoom(RegionType.Set_Passable);
 						if (room != null)
 						{
 							poisonChance *= room.GetStat(RoomStatDefOf.FoodPoisonChanceFactor);

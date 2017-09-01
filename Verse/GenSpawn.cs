@@ -13,10 +13,10 @@ namespace Verse
 
 		public static Thing Spawn(Thing newThing, IntVec3 loc, Map map)
 		{
-			return GenSpawn.Spawn(newThing, loc, map, Rot4.North);
+			return GenSpawn.Spawn(newThing, loc, map, Rot4.North, false);
 		}
 
-		public static Thing Spawn(Thing newThing, IntVec3 loc, Map map, Rot4 rot)
+		public static Thing Spawn(Thing newThing, IntVec3 loc, Map map, Rot4 rot, bool respawningAfterLoad = false)
 		{
 			if (map == null)
 			{
@@ -50,22 +50,16 @@ namespace Verse
 				newThing.Rotation = rot;
 			}
 			newThing.Position = loc;
-			ThingUtility.UpdateRegionListers(IntVec3.Invalid, loc, map, newThing);
-			map.thingGrid.Register(newThing);
-			newThing.SpawnSetup(map);
-			if (newThing.Spawned)
+			if (newThing.holdingOwner != null)
 			{
-				if (newThing.stackCount == 0)
-				{
-					Log.Error("Spawned thing with 0 stackCount: " + newThing);
-					newThing.Destroy(DestroyMode.Vanish);
-					return null;
-				}
+				newThing.holdingOwner.Remove(newThing);
 			}
-			else
+			newThing.SpawnSetup(map, respawningAfterLoad);
+			if (newThing.Spawned && newThing.stackCount == 0)
 			{
-				ThingUtility.UpdateRegionListers(loc, IntVec3.Invalid, map, newThing);
-				map.thingGrid.Deregister(newThing, true);
+				Log.Error("Spawned thing with 0 stackCount: " + newThing);
+				newThing.Destroy(DestroyMode.Vanish);
+				return null;
 			}
 			return newThing;
 		}
@@ -86,7 +80,12 @@ namespace Verse
 
 		public static bool WouldWipeAnythingWith(IntVec3 thingPos, Rot4 thingRot, BuildableDef thingDef, Map map, Predicate<Thing> predicate)
 		{
-			foreach (IntVec3 current in GenAdj.CellsOccupiedBy(thingPos, thingRot, thingDef.Size))
+			return GenSpawn.WouldWipeAnythingWith(GenAdj.OccupiedRect(thingPos, thingRot, thingDef.Size), thingDef, map, predicate);
+		}
+
+		public static bool WouldWipeAnythingWith(CellRect cellRect, BuildableDef thingDef, Map map, Predicate<Thing> predicate)
+		{
+			foreach (IntVec3 current in cellRect)
 			{
 				foreach (Thing current2 in map.thingGrid.ThingsAt(current).ToList<Thing>())
 				{

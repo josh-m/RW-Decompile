@@ -7,7 +7,7 @@ namespace RimWorld
 	{
 		protected override ThoughtState CurrentStateInternal(Pawn p)
 		{
-			return p.Awake() && GenLocalDate.HourInt(p) >= 11 && GenLocalDate.HourInt(p) <= 17;
+			return p.Awake() && GenLocalDate.HourInteger(p) >= 11 && GenLocalDate.HourInteger(p) <= 17;
 		}
 	}
 }

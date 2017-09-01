@@ -13,7 +13,7 @@ namespace Verse
 		{
 		}
 
-		public Stance_Cooldown(int ticks, LocalTargetInfo focusTarg) : base(ticks, focusTarg)
+		public Stance_Cooldown(int ticks, LocalTargetInfo focusTarg, Verb verb) : base(ticks, focusTarg, verb)
 		{
 		}
 

@@ -27,8 +27,8 @@ namespace RimWorld
 
 		public void ExposeData()
 		{
-			Scribe_Defs.LookDef<IncidentDef>(ref this.def, "def");
-			Scribe_Deep.LookDeep<IncidentParms>(ref this.parms, "parms", new object[0]);
+			Scribe_Defs.Look<IncidentDef>(ref this.def, "def");
+			Scribe_Deep.Look<IncidentParms>(ref this.parms, "parms", new object[0]);
 		}
 
 		public override string ToString()
@@ -39,6 +39,10 @@ namespace RimWorld
 			if (this.parms != null)
 			{
 				text2 = text2 + " " + this.parms.ToString();
+			}
+			if (this.source != null)
+			{
+				text2 = text2 + ", source=" + this.source.GetType().Name;
 			}
 			return text2;
 		}

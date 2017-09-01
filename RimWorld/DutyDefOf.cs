@@ -24,6 +24,8 @@ namespace RimWorld
 
 		public static DutyDef LoadAndEnterTransporters;
 
+		public static DutyDef ManClosestTurret;
+
 		public static DutyDef AssaultColony;
 
 		public static DutyDef Sapper;
@@ -41,6 +43,8 @@ namespace RimWorld
 		public static DutyDef ExitMapRandom;
 
 		public static DutyDef ExitMapBest;
+
+		public static DutyDef ExitMapBestAndDefendSelf;
 
 		public static DutyDef MarryPawn;
 

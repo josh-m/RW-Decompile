@@ -27,14 +27,14 @@ namespace RimWorld
 			return pawn.Map.listerThings.ThingsInGroup(ThingRequestGroup.Corpse).Count == 0;
 		}
 
-		public override Job JobOnThing(Pawn pawn, Thing t)
+		public override Job JobOnThing(Pawn pawn, Thing t, bool forced = false)
 		{
 			Corpse corpse = t as Corpse;
 			if (corpse == null)
 			{
 				return null;
 			}
-			if (!HaulAIUtility.PawnCanAutomaticallyHaul(pawn, t))
+			if (!HaulAIUtility.PawnCanAutomaticallyHaul(pawn, t, forced))
 			{
 				return null;
 			}
@@ -52,7 +52,7 @@ namespace RimWorld
 
 		private Building_Grave FindBestGrave(Pawn p, Corpse corpse)
 		{
-			Predicate<Thing> predicate = (Thing m) => !m.IsForbidden(p) && p.CanReserve(m, 1) && ((Building_Grave)m).Accepts(corpse);
+			Predicate<Thing> predicate = (Thing m) => !m.IsForbidden(p) && p.CanReserve(m, 1, -1, null, false) && ((Building_Grave)m).Accepts(corpse);
 			if (corpse.InnerPawn.ownership != null && corpse.InnerPawn.ownership.AssignedGrave != null)
 			{
 				Building_Grave assignedGrave = corpse.InnerPawn.ownership.AssignedGrave;

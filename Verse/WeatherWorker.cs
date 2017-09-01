@@ -85,11 +85,20 @@ namespace Verse
 			{
 				t = (num - skyThreshold.celGlowThreshold) / num4;
 			}
-			return new SkyTarget
+			SkyTarget result = default(SkyTarget);
+			result.glow = num;
+			result.colors = SkyColorSet.Lerp(skyThreshold.colors, skyThreshold2.colors, t);
+			if (GenCelestial.IsDaytime(num))
 			{
-				glow = num,
-				colors = SkyColorSet.Lerp(skyThreshold.colors, skyThreshold2.colors, t)
-			};
+				result.lightsourceShineIntensity = 1f;
+				result.lightsourceShineSize = 1f;
+			}
+			else
+			{
+				result.lightsourceShineIntensity = 0.7f;
+				result.lightsourceShineSize = 0.5f;
+			}
+			return result;
 		}
 	}
 }

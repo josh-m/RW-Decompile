@@ -38,15 +38,16 @@ namespace RimWorld
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Defs.LookDef<PawnKindDef>(ref this.animalKind, "animalKind");
-			Scribe_Values.LookValue<int>(ref this.count, "count", 0, false);
-			Scribe_Values.LookValue<float>(ref this.bondToRandomPlayerPawnChance, "bondToRandomPlayerPawnChance", 0f, false);
+			Scribe_Defs.Look<PawnKindDef>(ref this.animalKind, "animalKind");
+			Scribe_Values.Look<int>(ref this.count, "count", 0, false);
+			Scribe_Values.Look<float>(ref this.bondToRandomPlayerPawnChance, "bondToRandomPlayerPawnChance", 0f, false);
 		}
 
 		public override void DoEditInterface(Listing_ScenEdit listing)
 		{
 			Rect scenPartRect = listing.GetScenPartRect(this, ScenPart.RowHeight * 2f);
-			Listing_Standard listing_Standard = new Listing_Standard(scenPartRect.TopHalf());
+			Listing_Standard listing_Standard = new Listing_Standard();
+			listing_Standard.Begin(scenPartRect.TopHalf());
 			listing_Standard.ColumnWidth = scenPartRect.width;
 			listing_Standard.TextFieldNumeric<int>(ref this.count, ref this.countBuf, 1f, 1E+09f);
 			listing_Standard.End();

@@ -2,7 +2,6 @@ using RimWorld;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using UnityEngine;
 
 namespace Verse
@@ -68,9 +67,10 @@ namespace Verse
 			if (ce != null)
 			{
 				Thing ownerThing = ce.parent;
-				for (int i = 0; i < this.AllVerbs.Count; i++)
+				List<Verb> verbs = this.AllVerbs;
+				for (int i = 0; i < verbs.Count; i++)
 				{
-					Verb verb = this.AllVerbs[i];
+					Verb verb = verbs[i];
 					if (verb.verbProps.hasStandardCommand)
 					{
 						Command_VerbTarget newOpt = new Command_VerbTarget();
@@ -84,7 +84,7 @@ namespace Verse
 						}
 						if (verb.CasterIsPawn)
 						{
-							if (verb.CasterPawn.story.DisabledWorkTags.Contains(WorkTags.Violent))
+							if (verb.CasterPawn.story.WorkTagIsDisabled(WorkTags.Violent))
 							{
 								newOpt.Disable("IsIncapableOfViolence".Translate(new object[]
 								{
@@ -107,7 +107,7 @@ namespace Verse
 
 		public void ExposeData()
 		{
-			Scribe_Collections.LookList<Verb>(ref this.verbs, "verbs", LookMode.Deep, new object[0]);
+			Scribe_Collections.Look<Verb>(ref this.verbs, "verbs", LookMode.Deep, new object[0]);
 			if (Scribe.mode == LoadSaveMode.PostLoadInit)
 			{
 				this.UpdateVerbsLinksAndProps();
@@ -119,12 +119,26 @@ namespace Verse
 			if (this.verbs == null)
 			{
 				this.verbs = new List<Verb>();
-				for (int i = 0; i < this.directOwner.VerbProperties.Count; i++)
+				List<VerbProperties> verbProperties = this.directOwner.VerbProperties;
+				for (int i = 0; i < verbProperties.Count; i++)
 				{
-					VerbProperties verbProperties = this.directOwner.VerbProperties[i];
-					Verb verb = (Verb)Activator.CreateInstance(verbProperties.verbClass);
-					verb.loadID = Find.World.uniqueIDsManager.GetNextVerbID();
-					this.verbs.Add(verb);
+					try
+					{
+						VerbProperties verbProperties2 = verbProperties[i];
+						Verb verb = (Verb)Activator.CreateInstance(verbProperties2.verbClass);
+						verb.loadID = Find.World.uniqueIDsManager.GetNextVerbID();
+						this.verbs.Add(verb);
+					}
+					catch (Exception ex)
+					{
+						Log.Error(string.Concat(new object[]
+						{
+							"Could not instantiate Verb (directOwner=",
+							this.directOwner.ToStringSafe<IVerbOwner>(),
+							"): ",
+							ex
+						}));
+					}
 				}
 				this.UpdateVerbsLinksAndProps();
 			}
@@ -137,6 +151,14 @@ namespace Verse
 				return;
 			}
 			List<VerbProperties> verbProperties = this.directOwner.VerbProperties;
+			if (this.verbs.Count != verbProperties.Count)
+			{
+				Log.Error("Verbs count is not equal to verb props count.");
+				while (this.verbs.Count > verbProperties.Count)
+				{
+					this.verbs.RemoveLast<Verb>();
+				}
+			}
 			for (int i = 0; i < this.verbs.Count; i++)
 			{
 				Verb verb = this.verbs[i];

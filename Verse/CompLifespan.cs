@@ -18,7 +18,7 @@ namespace Verse
 		public override void PostExposeData()
 		{
 			base.PostExposeData();
-			Scribe_Values.LookValue<int>(ref this.age, "age", 0, false);
+			Scribe_Values.Look<int>(ref this.age, "age", 0, false);
 		}
 
 		public override void CompTick()
@@ -46,7 +46,7 @@ namespace Verse
 			int num = this.Props.lifespanTicks - this.age;
 			if (num > 0)
 			{
-				result = "LifespanExpiry".Translate() + " " + num.ToStringTicksToPeriod(true);
+				result = "LifespanExpiry".Translate() + " " + num.ToStringTicksToPeriod(true, false, true);
 				if (!text.NullOrEmpty())
 				{
 					result = "\n" + text;

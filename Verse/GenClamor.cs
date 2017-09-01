@@ -8,7 +8,7 @@ namespace Verse
 		public static void DoClamor(Pawn source, float radius, ClamorType type)
 		{
 			IntVec3 root = source.Position;
-			Region region = source.GetRegion();
+			Region region = source.GetRegion(RegionType.Set_Passable);
 			if (region == null)
 			{
 				return;
@@ -25,7 +25,7 @@ namespace Verse
 					}
 				}
 				return false;
-			}, 15);
+			}, 15, RegionType.Set_Passable);
 		}
 	}
 }

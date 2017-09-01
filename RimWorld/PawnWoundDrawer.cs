@@ -20,19 +20,22 @@ namespace RimWorld
 
 			public Wound(Pawn pawn)
 			{
-				switch (pawn.RaceProps.fleshType)
+				if (pawn.RaceProps.FleshType == FleshTypeDefOf.Normal)
 				{
-				case FleshType.Normal:
 					this.mat = PawnWoundDrawer.WoundOverlays_Flesh.RandomElement<Material>();
-					break;
-				case FleshType.Mechanoid:
+				}
+				else if (pawn.RaceProps.FleshType == FleshTypeDefOf.Mechanoid)
+				{
 					this.mat = PawnWoundDrawer.WoundOverlays_Mech.RandomElement<Material>();
-					break;
-				case FleshType.Insectoid:
+				}
+				else if (pawn.RaceProps.FleshType == FleshTypeDefOf.Insectoid)
+				{
 					this.mat = PawnWoundDrawer.WoundOverlays_Insect.RandomElement<Material>();
-					break;
-				default:
-					throw new NotImplementedException();
+				}
+				else
+				{
+					Log.ErrorOnce(string.Format("No wound graphics data available for flesh type {0}", pawn.RaceProps.FleshType), 76591733);
+					this.mat = PawnWoundDrawer.WoundOverlays_Flesh.RandomElement<Material>();
 				}
 				this.quat = Quaternion.AngleAxis((float)Rand.Range(0, 360), Vector3.up);
 				for (int i = 0; i < 4; i++)

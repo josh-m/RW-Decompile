@@ -9,7 +9,7 @@ namespace RimWorld
 	{
 		private int ticksUntilSpawn;
 
-		private CompProperties_Spawner PropsSpawner
+		public CompProperties_Spawner PropsSpawner
 		{
 			get
 			{
@@ -17,9 +17,12 @@ namespace RimWorld
 			}
 		}
 
-		public override void PostSpawnSetup()
+		public override void PostSpawnSetup(bool respawningAfterLoad)
 		{
-			this.ResetCountdown();
+			if (!respawningAfterLoad)
+			{
+				this.ResetCountdown();
+			}
 		}
 
 		public override void CompTick()
@@ -100,7 +103,7 @@ namespace RimWorld
 						Building_Door building_Door = edifice as Building_Door;
 						if (building_Door == null || building_Door.FreePassage)
 						{
-							if (GenSight.LineOfSight(this.parent.Position, current, this.parent.Map, false))
+							if (GenSight.LineOfSight(this.parent.Position, current, this.parent.Map, false, null, 0, 0))
 							{
 								bool flag = false;
 								List<Thing> thingList = current.GetThingList(this.parent.Map);
@@ -134,7 +137,7 @@ namespace RimWorld
 
 		public override void PostExposeData()
 		{
-			Scribe_Values.LookValue<int>(ref this.ticksUntilSpawn, "ticksUntilSpawn", 0, false);
+			Scribe_Values.Look<int>(ref this.ticksUntilSpawn, "ticksUntilSpawn", 0, false);
 		}
 
 		[DebuggerHidden]

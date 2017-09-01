@@ -29,7 +29,7 @@ namespace RimWorld
 
 		private HashSet<Pawn> pawnsWithDirectRelationsWithMe = new HashSet<Pawn>();
 
-		private static List<ISocialThought> dsThoughts = new List<ISocialThought>();
+		private static List<ISocialThought> tmpSocialThoughts = new List<ISocialThought>();
 
 		public List<DirectPawnRelation> DirectRelations
 		{
@@ -198,7 +198,7 @@ namespace RimWorld
 
 		public void ExposeData()
 		{
-			Scribe_Collections.LookList<DirectPawnRelation>(ref this.directRelations, "directRelations", LookMode.Deep, new object[0]);
+			Scribe_Collections.Look<DirectPawnRelation>(ref this.directRelations, "directRelations", LookMode.Deep, new object[0]);
 			if (Scribe.mode == LoadSaveMode.PostLoadInit)
 			{
 				for (int i = 0; i < this.directRelations.Count; i++)
@@ -221,8 +221,8 @@ namespace RimWorld
 					this.directRelations[j].otherPawn.relations.pawnsWithDirectRelationsWithMe.Add(this.pawn);
 				}
 			}
-			Scribe_Values.LookValue<bool>(ref this.everSeenByPlayer, "everSeenByPlayer", true, false);
-			Scribe_Values.LookValue<bool>(ref this.canGetRescuedThought, "canGetRescuedThought", true, false);
+			Scribe_Values.Look<bool>(ref this.everSeenByPlayer, "everSeenByPlayer", true, false);
+			Scribe_Values.Look<bool>(ref this.canGetRescuedThought, "canGetRescuedThought", true, false);
 		}
 
 		public void SocialTrackerTick()
@@ -413,23 +413,17 @@ namespace RimWorld
 			}
 			if (this.pawn.RaceProps.Humanlike)
 			{
-				ThoughtHandler thoughts = this.pawn.needs.mood.thoughts;
-				this.pawn.needs.mood.thoughts.GetDistinctSocialThoughtGroups(other, Pawn_RelationsTracker.dsThoughts);
-				for (int i = 0; i < Pawn_RelationsTracker.dsThoughts.Count; i++)
-				{
-					num += thoughts.OpinionOffsetOfThoughtGroup(Pawn_RelationsTracker.dsThoughts[i], other);
-				}
-				Pawn_RelationsTracker.dsThoughts.Clear();
+				num += this.pawn.needs.mood.thoughts.TotalOpinionOffset(other);
 			}
 			if (num != 0)
 			{
 				float num2 = 1f;
 				List<Hediff> hediffs = this.pawn.health.hediffSet.hediffs;
-				for (int j = 0; j < hediffs.Count; j++)
+				for (int i = 0; i < hediffs.Count; i++)
 				{
-					if (hediffs[j].CurStage != null)
+					if (hediffs[i].CurStage != null)
 					{
-						num2 *= hediffs[j].CurStage.opinionOfOthersFactor;
+						num2 *= hediffs[i].CurStage.opinionOfOthersFactor;
 					}
 				}
 				num = Mathf.RoundToInt((float)num * num2);
@@ -476,22 +470,22 @@ namespace RimWorld
 				if (this.pawn.RaceProps.Humanlike)
 				{
 					ThoughtHandler thoughts = this.pawn.needs.mood.thoughts;
-					thoughts.GetDistinctSocialThoughtGroups(other, Pawn_RelationsTracker.dsThoughts);
-					for (int i = 0; i < Pawn_RelationsTracker.dsThoughts.Count; i++)
+					thoughts.GetDistinctSocialThoughtGroups(other, Pawn_RelationsTracker.tmpSocialThoughts);
+					for (int i = 0; i < Pawn_RelationsTracker.tmpSocialThoughts.Count; i++)
 					{
-						ISocialThought socialThought = Pawn_RelationsTracker.dsThoughts[i];
+						ISocialThought socialThought = Pawn_RelationsTracker.tmpSocialThoughts[i];
 						int num = 1;
 						Thought thought = (Thought)socialThought;
 						if (thought.def.IsMemory)
 						{
-							num = thoughts.memories.NumMemoryThoughtsInGroup((Thought_MemorySocial)socialThought);
+							num = thoughts.memories.NumMemoriesInGroup((Thought_MemorySocial)socialThought);
 						}
 						stringBuilder.Append(thought.LabelCapSocial);
 						if (num != 1)
 						{
 							stringBuilder.Append(" x" + num);
 						}
-						stringBuilder.AppendLine(": " + thoughts.OpinionOffsetOfThoughtGroup(socialThought, other).ToStringWithSign());
+						stringBuilder.AppendLine(": " + thoughts.OpinionOffsetOfGroup(socialThought, other).ToStringWithSign());
 						flag = true;
 					}
 				}
@@ -532,87 +526,78 @@ namespace RimWorld
 			{
 				return 0f;
 			}
-			Rand.PushSeed();
-			Rand.Seed = this.pawn.HashOffset();
-			bool flag = Rand.Value < 0.015f;
-			Rand.PopSeed();
-			float num = 1f;
-			float num2 = 1f;
-			float ageBiologicalYearsFloat = this.pawn.ageTracker.AgeBiologicalYearsFloat;
-			float ageBiologicalYearsFloat2 = otherPawn.ageTracker.AgeBiologicalYearsFloat;
-			if (this.pawn.gender == Gender.Male)
+			if (Rand.ValueSeeded(this.pawn.thingIDNumber ^ 3273711) >= 0.015f)
 			{
-				if (!flag)
+				if (this.pawn.RaceProps.Humanlike && this.pawn.story.traits.HasTrait(TraitDefOf.Gay))
 				{
-					if (this.pawn.RaceProps.Humanlike && this.pawn.story.traits.HasTrait(TraitDefOf.Gay))
-					{
-						if (otherPawn.gender == Gender.Female)
-						{
-							return 0f;
-						}
-					}
-					else if (otherPawn.gender == Gender.Male)
+					if (otherPawn.gender != this.pawn.gender)
 					{
 						return 0f;
 					}
 				}
-				num2 = GenMath.FlatHill(0f, 16f, 20f, ageBiologicalYearsFloat, ageBiologicalYearsFloat + 15f, 0.07f, ageBiologicalYearsFloat2);
-			}
-			else if (this.pawn.gender == Gender.Female)
-			{
-				if (!flag)
-				{
-					if (this.pawn.RaceProps.Humanlike && this.pawn.story.traits.HasTrait(TraitDefOf.Gay))
-					{
-						if (otherPawn.gender == Gender.Male)
-						{
-							return 0f;
-						}
-					}
-					else if (otherPawn.gender == Gender.Female)
-					{
-						num = 0f;
-					}
-				}
-				if (ageBiologicalYearsFloat2 < ageBiologicalYearsFloat - 10f)
+				else if (otherPawn.gender == this.pawn.gender)
 				{
 					return 0f;
 				}
+			}
+			float ageBiologicalYearsFloat = this.pawn.ageTracker.AgeBiologicalYearsFloat;
+			float ageBiologicalYearsFloat2 = otherPawn.ageTracker.AgeBiologicalYearsFloat;
+			float num = 1f;
+			if (this.pawn.gender == Gender.Male)
+			{
+				if (ageBiologicalYearsFloat2 < 16f)
+				{
+					return 0f;
+				}
+				float min = Mathf.Max(16f, ageBiologicalYearsFloat - 30f);
+				float lower = Mathf.Max(20f, ageBiologicalYearsFloat - 10f);
+				num = GenMath.FlatHill(0.15f, min, lower, ageBiologicalYearsFloat, ageBiologicalYearsFloat + 10f, 0.15f, ageBiologicalYearsFloat2);
+			}
+			else if (this.pawn.gender == Gender.Female)
+			{
+				if (ageBiologicalYearsFloat2 < 16f)
+				{
+					return 0f;
+				}
+				if (ageBiologicalYearsFloat2 < ageBiologicalYearsFloat - 10f)
+				{
+					return 0.15f;
+				}
 				if (ageBiologicalYearsFloat2 < ageBiologicalYearsFloat - 3f)
 				{
-					num2 = Mathf.InverseLerp(ageBiologicalYearsFloat - 10f, ageBiologicalYearsFloat - 3f, ageBiologicalYearsFloat2) * 0.2f;
+					num = Mathf.InverseLerp(ageBiologicalYearsFloat - 10f, ageBiologicalYearsFloat - 3f, ageBiologicalYearsFloat2) * 0.3f;
 				}
 				else
 				{
-					num2 = GenMath.FlatHill(0.2f, ageBiologicalYearsFloat - 3f, ageBiologicalYearsFloat, ageBiologicalYearsFloat + 10f, ageBiologicalYearsFloat + 30f, 0.1f, ageBiologicalYearsFloat2);
+					num = GenMath.FlatHill(0.3f, ageBiologicalYearsFloat - 3f, ageBiologicalYearsFloat, ageBiologicalYearsFloat + 10f, ageBiologicalYearsFloat + 30f, 0.15f, ageBiologicalYearsFloat2);
 				}
 			}
+			float num2 = 1f;
+			num2 *= Mathf.Lerp(0.2f, 1f, otherPawn.health.capacities.GetLevel(PawnCapacityDefOf.Talking));
+			num2 *= Mathf.Lerp(0.2f, 1f, otherPawn.health.capacities.GetLevel(PawnCapacityDefOf.Manipulation));
+			num2 *= Mathf.Lerp(0.2f, 1f, otherPawn.health.capacities.GetLevel(PawnCapacityDefOf.Moving));
 			float num3 = 1f;
-			num3 *= Mathf.Lerp(0.2f, 1f, otherPawn.health.capacities.GetEfficiency(PawnCapacityDefOf.Talking));
-			num3 *= Mathf.Lerp(0.2f, 1f, otherPawn.health.capacities.GetEfficiency(PawnCapacityDefOf.Manipulation));
-			num3 *= Mathf.Lerp(0.2f, 1f, otherPawn.health.capacities.GetEfficiency(PawnCapacityDefOf.Moving));
-			float num4 = 1f;
 			foreach (PawnRelationDef current in this.pawn.GetRelations(otherPawn))
 			{
-				num4 *= current.attractionFactor;
+				num3 *= current.attractionFactor;
 			}
-			int num5 = 0;
+			int num4 = 0;
 			if (otherPawn.RaceProps.Humanlike)
 			{
-				num5 = otherPawn.story.traits.DegreeOfTrait(TraitDefOf.Beauty);
+				num4 = otherPawn.story.traits.DegreeOfTrait(TraitDefOf.Beauty);
 			}
-			float num6 = 1f;
-			if (num5 < 0)
+			float num5 = 1f;
+			if (num4 < 0)
 			{
-				num6 = 0.3f;
+				num5 = 0.3f;
 			}
-			else if (num5 > 0)
+			else if (num4 > 0)
 			{
-				num6 = 2.3f;
+				num5 = 2.3f;
 			}
-			float num7 = Mathf.InverseLerp(15f, 18f, ageBiologicalYearsFloat);
-			float num8 = Mathf.InverseLerp(15f, 18f, ageBiologicalYearsFloat2);
-			return num * num2 * num3 * num4 * num7 * num8 * num6;
+			float num6 = Mathf.InverseLerp(15f, 18f, ageBiologicalYearsFloat);
+			float num7 = Mathf.InverseLerp(15f, 18f, ageBiologicalYearsFloat2);
+			return num * num2 * num3 * num6 * num7 * num5;
 		}
 
 		public float CompatibilityWith(Pawn otherPawn)
@@ -630,10 +615,10 @@ namespace RimWorld
 
 		public float ConstantPerPawnsPairCompatibilityOffset(int otherPawnID)
 		{
-			Rand.PushSeed();
+			Rand.PushState();
 			Rand.Seed = (this.pawn.thingIDNumber ^ otherPawnID) * 37;
 			float result = Rand.GaussianAsymmetric(0.3f, 1f, 1.4f);
-			Rand.PopSeed();
+			Rand.PopState();
 			return result;
 		}
 
@@ -690,7 +675,7 @@ namespace RimWorld
 					PawnRelationDef mostImportantRelation = current.GetMostImportantRelation(this.pawn);
 					if (mostImportantRelation != null && mostImportantRelation.soldThought != null)
 					{
-						current.needs.mood.thoughts.memories.TryGainMemoryThought(mostImportantRelation.soldThought, playerNegotiator);
+						current.needs.mood.thoughts.memories.TryGainMemory(mostImportantRelation.soldThought, playerNegotiator);
 					}
 				}
 			}
@@ -706,7 +691,7 @@ namespace RimWorld
 		{
 			if (rescuer.RaceProps.Humanlike && this.canGetRescuedThought)
 			{
-				this.pawn.needs.mood.thoughts.memories.TryGainMemoryThought(ThoughtDefOf.RescuedMe, rescuer);
+				this.pawn.needs.mood.thoughts.memories.TryGainMemory(ThoughtDefOf.RescuedMe, rescuer);
 				this.canGetRescuedThought = false;
 			}
 		}
@@ -727,8 +712,8 @@ namespace RimWorld
 			if (spouse != null && !spouse.Dead && spouse.needs.mood != null)
 			{
 				MemoryThoughtHandler memories = spouse.needs.mood.thoughts.memories;
-				memories.RemoveMemoryThoughtsOfDef(ThoughtDefOf.GotMarried);
-				memories.RemoveMemoryThoughtsOfDef(ThoughtDefOf.HoneymoonPhase);
+				memories.RemoveMemoriesOfDef(ThoughtDefOf.GotMarried);
+				memories.RemoveMemoriesOfDef(ThoughtDefOf.HoneymoonPhase);
 			}
 		}
 
@@ -798,7 +783,7 @@ namespace RimWorld
 				}
 			}
 			TargetInfo target = (mapBeforeDeath == null) ? TargetInfo.Invalid : new TargetInfo(this.pawn.Position, mapBeforeDeath, false);
-			Find.LetterStack.ReceiveLetter("LetterLabelBondedAnimalDied".Translate(), str.CapitalizeFirst(), LetterType.BadNonUrgent, target, null);
+			Find.LetterStack.ReceiveLetter("LetterLabelBondedAnimalDied".Translate(), str.CapitalizeFirst(), LetterDefOf.BadNonUrgent, target, null);
 		}
 
 		private void AffectBondedAnimalsOnMyDeath()
@@ -876,7 +861,7 @@ namespace RimWorld
 				for (int i = 0; i < this.directRelations.Count; i++)
 				{
 					float num = (float)(ticksGame - this.directRelations[i].startTicks) / 60000f;
-					if (this.directRelations[i].def == PawnRelationDefOf.Fiance && this.pawn.thingIDNumber < this.directRelations[i].otherPawn.thingIDNumber && num > 10f && Rand.MTBEventOccurs(2f, 60000f, 1017f) && this.pawn.Map == this.directRelations[i].otherPawn.Map && this.pawn.Map.IsPlayerHome && MarriageCeremonyUtility.AcceptableMapConditionsToStartCeremony(this.pawn.Map) && MarriageCeremonyUtility.FianceReadyToStartCeremony(this.pawn) && MarriageCeremonyUtility.FianceReadyToStartCeremony(this.directRelations[i].otherPawn))
+					if (this.directRelations[i].def == PawnRelationDefOf.Fiance && this.pawn.thingIDNumber < this.directRelations[i].otherPawn.thingIDNumber && num > 10f && Rand.MTBEventOccurs(2f, 60000f, 1017f) && this.pawn.Map == this.directRelations[i].otherPawn.Map && this.pawn.Map.IsPlayerHome && MarriageCeremonyUtility.AcceptableGameConditionsToStartCeremony(this.pawn.Map) && MarriageCeremonyUtility.FianceReadyToStartCeremony(this.pawn) && MarriageCeremonyUtility.FianceReadyToStartCeremony(this.directRelations[i].otherPawn))
 					{
 						this.pawn.Map.lordsStarter.TryStartMarriageCeremony(this.pawn, this.directRelations[i].otherPawn);
 					}
@@ -891,7 +876,7 @@ namespace RimWorld
 				return;
 			}
 			Pawn master = this.pawn.playerSettings.master;
-			if (this.pawn.IsHashIntervalTick(2500) && this.pawn.Position.InHorDistOf(master.Position, 12f) && GenSight.LineOfSight(this.pawn.Position, master.Position, this.pawn.Map, false))
+			if (this.pawn.IsHashIntervalTick(2500) && this.pawn.Position.InHorDistOf(master.Position, 12f) && GenSight.LineOfSight(this.pawn.Position, master.Position, this.pawn.Map, false, null, 0, 0))
 			{
 				RelationsUtility.TryDevelopBondRelation(master, this.pawn, 0.001f);
 			}

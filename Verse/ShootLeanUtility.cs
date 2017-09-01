@@ -96,11 +96,18 @@ namespace Verse
 			}
 			else
 			{
-				CellRect.CellRectIterator iterator = t.OccupiedRect().GetIterator();
-				while (!iterator.Done())
+				outCells.Add(t.Position);
+				if (t.def.size.x != 1 || t.def.size.z != 1)
 				{
-					outCells.Add(iterator.Current);
-					iterator.MoveNext();
+					CellRect.CellRectIterator iterator = t.OccupiedRect().GetIterator();
+					while (!iterator.Done())
+					{
+						if (iterator.Current != t.Position)
+						{
+							outCells.Add(iterator.Current);
+						}
+						iterator.MoveNext();
+					}
 				}
 			}
 		}

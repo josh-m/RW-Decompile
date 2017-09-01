@@ -190,7 +190,7 @@ namespace Verse
 
 		private void Init()
 		{
-			this.meta = XmlLoader.ItemFromXmlFile<ModMetaData.ModMetaDataInternal>(string.Concat(new object[]
+			this.meta = DirectXmlLoader.ItemFromXmlFile<ModMetaData.ModMetaDataInternal>(string.Concat(new object[]
 			{
 				this.RootDir.FullName,
 				Path.DirectorySeparatorChar,
@@ -225,15 +225,17 @@ namespace Verse
 			LongEventHandler.ExecuteWhenFinished(delegate
 			{
 				string url = GenFilePaths.SafeURIForUnityWWWFromPath(this.PreviewImagePath);
-				WWW wWW = new WWW(url);
-				wWW.threadPriority = UnityEngine.ThreadPriority.High;
-				while (!wWW.isDone)
+				using (WWW wWW = new WWW(url))
 				{
-					Thread.Sleep(1);
-				}
-				if (wWW.error == null)
-				{
-					this.previewImage = wWW.texture;
+					wWW.threadPriority = UnityEngine.ThreadPriority.High;
+					while (!wWW.isDone)
+					{
+						Thread.Sleep(1);
+					}
+					if (wWW.error == null)
+					{
+						this.previewImage = wWW.textureNonReadable;
+					}
 				}
 			});
 			string publishedFileIdPath = this.PublishedFileIdPath;

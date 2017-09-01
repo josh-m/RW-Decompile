@@ -11,14 +11,14 @@ namespace RimWorld
 		protected override IEnumerable<Toil> MakeNewToils()
 		{
 			this.EndOnDespawnedOrNull(TargetIndex.A, JobCondition.Incompletable);
-			yield return Toils_Reserve.Reserve(TargetIndex.A, base.CurJob.def.joyMaxParticipants);
-			yield return Toils_Reserve.Reserve(TargetIndex.B, 1);
+			yield return Toils_Reserve.Reserve(TargetIndex.A, base.CurJob.def.joyMaxParticipants, 0, null);
+			yield return Toils_Reserve.Reserve(TargetIndex.B, 1, -1, null);
 			bool hasBed = base.TargetC.HasThing && base.TargetC.Thing is Building_Bed;
 			Toil watch;
 			if (hasBed)
 			{
 				this.KeepLyingDown(TargetIndex.C);
-				yield return Toils_Reserve.Reserve(TargetIndex.C, ((Building_Bed)base.TargetC.Thing).SleepingSlotsCount);
+				yield return Toils_Reserve.Reserve(TargetIndex.C, ((Building_Bed)base.TargetC.Thing).SleepingSlotsCount, 0, null);
 				yield return Toils_Bed.ClaimBedIfNonMedical(TargetIndex.C, TargetIndex.None);
 				yield return Toils_Bed.GotoBed(TargetIndex.C);
 				watch = Toils_LayDown.LayDown(TargetIndex.C, true, false, true, true);
@@ -28,7 +28,7 @@ namespace RimWorld
 			{
 				if (base.TargetC.HasThing)
 				{
-					yield return Toils_Reserve.Reserve(TargetIndex.C, 1);
+					yield return Toils_Reserve.Reserve(TargetIndex.C, 1, -1, null);
 				}
 				yield return Toils_Goto.GotoCell(TargetIndex.B, PathEndMode.OnCell);
 				watch = new Toil();

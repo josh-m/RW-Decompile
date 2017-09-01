@@ -62,7 +62,7 @@ namespace RimWorld
 					for (int i = 0; i < framesList.Count; i++)
 					{
 						Frame frame = (Frame)framesList[i];
-						if (frame.Faction == this.lord.faction && (frame.Position - data.siegeCenter).LengthHorizontalSquared < radSquared)
+						if (frame.Faction == this.lord.faction && (float)(frame.Position - data.siegeCenter).LengthHorizontalSquared < radSquared)
 						{
 							yield return frame;
 						}

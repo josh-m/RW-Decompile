@@ -13,9 +13,8 @@ namespace RimWorld
 
 		private static readonly FloatRange FactionBasesPer100kTiles = new FloatRange(75f, 85f);
 
-		public static void GenerateFactionsIntoWorld(string seedString)
+		public static void GenerateFactionsIntoWorld()
 		{
-			Rand.Seed = GenText.StableStringHash(seedString);
 			int i = 0;
 			foreach (FactionDef current in DefDatabase<FactionDef>.AllDefs)
 			{
@@ -44,14 +43,13 @@ namespace RimWorld
 			{
 				Faction faction3 = (from x in Find.World.factionManager.AllFactionsListForReading
 				where !x.def.isPlayer && !x.def.hidden
-				select x).RandomElementByWeight((Faction x) => x.def.factionBaseSelectionWeight);
+				select x).RandomElementByWeight((Faction x) => x.def.baseSelectionWeight);
 				FactionBase factionBase = (FactionBase)WorldObjectMaker.MakeWorldObject(WorldObjectDefOf.FactionBase);
 				factionBase.SetFaction(faction3);
-				factionBase.Tile = TileFinder.RandomFactionBaseTileFor(faction3);
+				factionBase.Tile = TileFinder.RandomFactionBaseTileFor(faction3, false);
 				factionBase.Name = FactionBaseNameGenerator.GenerateFactionBaseName(factionBase);
 				Find.WorldObjects.Add(factionBase);
 			}
-			Rand.RandomizeSeedFromTime();
 		}
 
 		public static void EnsureRequiredEnemies(Faction player)
@@ -65,6 +63,7 @@ namespace RimWorld
 					select f).RandomElement<Faction>();
 					float goodwillChange = -(faction.GoodwillWith(player) + 100f) * Rand.Range(0.8f, 0.9f);
 					faction.AffectGoodwillWith(player, goodwillChange);
+					faction.SetHostileTo(player, true);
 				}
 			}
 		}
@@ -100,7 +99,7 @@ namespace RimWorld
 			{
 				FactionBase factionBase = (FactionBase)WorldObjectMaker.MakeWorldObject(WorldObjectDefOf.FactionBase);
 				factionBase.SetFaction(faction);
-				factionBase.Tile = TileFinder.RandomFactionBaseTileFor(faction);
+				factionBase.Tile = TileFinder.RandomFactionBaseTileFor(faction, false);
 				factionBase.Name = FactionBaseNameGenerator.GenerateFactionBaseName(factionBase);
 				Find.WorldObjects.Add(factionBase);
 			}

@@ -19,6 +19,8 @@ namespace Verse.AI
 				cellBefore = nodesReversed[0];
 				return null;
 			}
+			Building building = null;
+			IntVec3 intVec = IntVec3.Invalid;
 			for (int i = nodesReversed.Count - 2; i >= 1; i--)
 			{
 				Building edifice = nodesReversed[i].GetEdifice(pawn.Map);
@@ -27,9 +29,26 @@ namespace Verse.AI
 					Building_Door building_Door = edifice as Building_Door;
 					if ((building_Door != null && !building_Door.FreePassage && (pawn == null || !building_Door.PawnCanOpen(pawn))) || edifice.def.passability == Traversability.Impassable)
 					{
+						if (building != null)
+						{
+							cellBefore = intVec;
+							return building;
+						}
 						cellBefore = nodesReversed[i + 1];
 						return edifice;
 					}
+				}
+				if (edifice != null && edifice.def.passability == Traversability.PassThroughOnly && edifice.def.Fillage == FillCategory.Full)
+				{
+					if (building == null)
+					{
+						building = edifice;
+						intVec = nodesReversed[i + 1];
+					}
+				}
+				else if (edifice == null || edifice.def.passability != Traversability.PassThroughOnly)
+				{
+					building = null;
 				}
 			}
 			cellBefore = nodesReversed[0];

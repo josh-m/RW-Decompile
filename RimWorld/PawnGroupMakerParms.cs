@@ -1,11 +1,12 @@
 using System;
-using Verse;
 
 namespace RimWorld
 {
 	public class PawnGroupMakerParms
 	{
-		public Map map;
+		public int tile = -1;
+
+		public bool inhabitants;
 
 		public float points;
 
@@ -15,8 +16,6 @@ namespace RimWorld
 
 		public bool generateFightersOnly;
 
-		public bool generateMeleeOnly;
-
 		public RaidStrategyDef raidStrategy;
 
 		public bool forceOneIncap;
@@ -25,8 +24,10 @@ namespace RimWorld
 		{
 			return string.Concat(new object[]
 			{
-				"map=",
-				this.map,
+				"tile=",
+				this.tile,
+				", inhabitants=",
+				this.inhabitants,
 				", points=",
 				this.points,
 				", faction=",
@@ -35,8 +36,6 @@ namespace RimWorld
 				this.traderKind,
 				", generateFightersOnly=",
 				this.generateFightersOnly,
-				", generateMeleeOnly=",
-				this.generateMeleeOnly,
 				", raidStrategy=",
 				this.raidStrategy,
 				", forceOneIncap=",

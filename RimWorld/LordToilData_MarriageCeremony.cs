@@ -12,8 +12,8 @@ namespace RimWorld
 
 		public override void ExposeData()
 		{
-			Scribe_Values.LookValue<CellRect>(ref this.spectateRect, "spectateRect", default(CellRect), false);
-			Scribe_Values.LookValue<SpectateRectSide>(ref this.spectateRectAllowedSides, "spectateRectAllowedSides", SpectateRectSide.None, false);
+			Scribe_Values.Look<CellRect>(ref this.spectateRect, "spectateRect", default(CellRect), false);
+			Scribe_Values.Look<SpectateRectSide>(ref this.spectateRectAllowedSides, "spectateRectAllowedSides", SpectateRectSide.None, false);
 		}
 	}
 }

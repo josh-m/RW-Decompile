@@ -32,19 +32,19 @@ namespace RimWorld.Planet
 			return pawn;
 		}
 
-		public static FactionBase FactionBaseVisitedNow(Caravan caravan)
+		public static Settlement SettlementVisitedNow(Caravan caravan)
 		{
 			if (!caravan.Spawned || caravan.pather.Moving)
 			{
 				return null;
 			}
-			List<FactionBase> factionBases = Find.WorldObjects.FactionBases;
-			for (int i = 0; i < factionBases.Count; i++)
+			List<Settlement> settlements = Find.WorldObjects.Settlements;
+			for (int i = 0; i < settlements.Count; i++)
 			{
-				FactionBase factionBase = factionBases[i];
-				if (factionBase.Tile == caravan.Tile && factionBase.Faction != caravan.Faction && !factionBase.Faction.HostileTo(caravan.Faction))
+				Settlement settlement = settlements[i];
+				if (settlement.Tile == caravan.Tile && settlement.Faction != caravan.Faction && settlement.Visitable)
 				{
-					return factionBase;
+					return settlement;
 				}
 			}
 			return null;
@@ -59,22 +59,91 @@ namespace RimWorld.Planet
 			command_Action.icon = CaravanVisitUtility.TradeCommandTex;
 			command_Action.action = delegate
 			{
-				FactionBase factionBase = CaravanVisitUtility.FactionBaseVisitedNow(caravan);
-				if (factionBase != null && factionBase.CanTradeNow)
+				Settlement settlement = CaravanVisitUtility.SettlementVisitedNow(caravan);
+				if (settlement != null && settlement.CanTradeNow)
 				{
-					Find.WindowStack.Add(new Dialog_Trade(bestNegotiator, factionBase));
+					Find.WindowStack.Add(new Dialog_Trade(bestNegotiator, settlement));
 					string empty = string.Empty;
 					string empty2 = string.Empty;
-					PawnRelationUtility.Notify_PawnsSeenByPlayer(factionBase.Goods.OfType<Pawn>(), ref empty, ref empty2, "LetterRelatedPawnsTradingWithFactionBase".Translate(), false);
+					PawnRelationUtility.Notify_PawnsSeenByPlayer(settlement.Goods.OfType<Pawn>(), ref empty, ref empty2, "LetterRelatedPawnsTradingWithSettlement".Translate(), false);
 					if (!empty2.NullOrEmpty())
 					{
-						Find.LetterStack.ReceiveLetter(empty, empty2, LetterType.Good, factionBase, null);
+						Find.LetterStack.ReceiveLetter(empty, empty2, LetterDefOf.Good, settlement, null);
 					}
 				}
 			};
 			if (bestNegotiator == null)
 			{
 				command_Action.Disable("CommandTradeFailNoNegotiator".Translate());
+			}
+			return command_Action;
+		}
+
+		public static Command FulfillRequestCommand(Caravan caravan)
+		{
+			Func<Thing, bool> validator = (Thing thing) => thing.GetRotStage() == RotStage.Fresh;
+			Command_Action command_Action = new Command_Action();
+			command_Action.defaultLabel = "CommandFulfillTradeOffer".Translate();
+			command_Action.defaultDesc = "CommandFulfillTradeOfferDesc".Translate();
+			command_Action.icon = CaravanVisitUtility.TradeCommandTex;
+			command_Action.action = delegate
+			{
+				Settlement settlement2 = CaravanVisitUtility.SettlementVisitedNow(caravan);
+				CaravanRequestComp caravanRequest = (settlement2 == null) ? null : settlement2.GetComponent<CaravanRequestComp>();
+				if (caravanRequest != null)
+				{
+					if (!caravanRequest.ActiveRequest)
+					{
+						Log.Error("Attempted to fulfill an unavailable request");
+						return;
+					}
+					if (!CaravanInventoryUtility.HasThings(caravan, caravanRequest.requestThingDef, caravanRequest.requestCount, validator))
+					{
+						Messages.Message("CommandFulfillTradeOfferFailInsufficient".Translate(new object[]
+						{
+							GenLabel.ThingLabel(caravanRequest.requestThingDef, null, caravanRequest.requestCount)
+						}), MessageSound.Negative);
+						return;
+					}
+					Find.WindowStack.Add(Dialog_MessageBox.CreateConfirmation("CommandFulfillTradeOfferConfirm".Translate(new object[]
+					{
+						GenLabel.ThingLabel(caravanRequest.requestThingDef, null, caravanRequest.requestCount),
+						caravanRequest.rewards[0].Label
+					}), delegate
+					{
+						int remaining = caravanRequest.requestCount;
+						List<Thing> list = CaravanInventoryUtility.TakeThings(caravan, delegate(Thing thing)
+						{
+							if (caravanRequest.requestThingDef != thing.def)
+							{
+								return 0;
+							}
+							int num = Mathf.Min(remaining, thing.stackCount);
+							remaining -= num;
+							return num;
+						});
+						for (int i = 0; i < list.Count; i++)
+						{
+							list[i].Destroy(DestroyMode.Vanish);
+						}
+						while (caravanRequest.rewards.Count > 0)
+						{
+							Thing thing2 = caravanRequest.rewards[caravanRequest.rewards.Count - 1];
+							caravanRequest.rewards.Remove(thing2);
+							CaravanInventoryUtility.GiveThing(caravan, thing2);
+						}
+						caravanRequest.Disable();
+					}, false, null));
+				}
+			};
+			Settlement settlement = CaravanVisitUtility.SettlementVisitedNow(caravan);
+			CaravanRequestComp caravanRequestComp = (settlement == null) ? null : settlement.GetComponent<CaravanRequestComp>();
+			if (!CaravanInventoryUtility.HasThings(caravan, caravanRequestComp.requestThingDef, caravanRequestComp.requestCount, validator))
+			{
+				command_Action.Disable("CommandFulfillTradeOfferFailInsufficient".Translate(new object[]
+				{
+					GenLabel.ThingLabel(caravanRequestComp.requestThingDef, null, caravanRequestComp.requestCount)
+				}));
 			}
 			return command_Action;
 		}

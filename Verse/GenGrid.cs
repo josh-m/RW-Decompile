@@ -31,14 +31,38 @@ namespace Verse
 			return c.x == 0 || c.x == map.Size.x - 1 || c.z == 0 || c.z == map.Size.z - 1;
 		}
 
+		public static bool OnEdge(this IntVec3 c, Map map, Rot4 dir)
+		{
+			if (dir == Rot4.North)
+			{
+				return c.z == 0;
+			}
+			if (dir == Rot4.South)
+			{
+				return c.z == map.Size.z - 1;
+			}
+			if (dir == Rot4.West)
+			{
+				return c.x == 0;
+			}
+			if (dir == Rot4.East)
+			{
+				return c.x == map.Size.x - 1;
+			}
+			Log.ErrorOnce("Invalid edge direction", 55370769);
+			return false;
+		}
+
 		public static bool InBounds(this IntVec3 c, Map map)
 		{
-			return c.x >= 0 && c.z >= 0 && c.x < map.Size.x && c.z < map.Size.z;
+			IntVec3 size = map.Size;
+			return (ulong)c.x < (ulong)((long)size.x) && (ulong)c.z < (ulong)((long)size.z);
 		}
 
 		public static bool InBounds(this Vector3 v, Map map)
 		{
-			return v.x >= 0f && v.z >= 0f && v.x < (float)map.Size.x && v.z < (float)map.Size.z;
+			IntVec3 size = map.Size;
+			return v.x >= 0f && v.z >= 0f && v.x < (float)size.x && v.z < (float)size.z;
 		}
 
 		public static bool Walkable(this IntVec3 c, Map map)
@@ -107,21 +131,26 @@ namespace Verse
 			return true;
 		}
 
-		public static bool HasEatSurface(this IntVec3 c, Map map)
+		public static SurfaceType GetSurfaceType(this IntVec3 c, Map map)
 		{
 			if (!c.InBounds(map))
 			{
-				return false;
+				return SurfaceType.None;
 			}
-			List<Thing> list = map.thingGrid.ThingsListAt(c);
-			for (int i = 0; i < list.Count; i++)
+			List<Thing> thingList = c.GetThingList(map);
+			for (int i = 0; i < thingList.Count; i++)
 			{
-				if (list[i].def.surfaceType == SurfaceType.Eat)
+				if (thingList[i].def.surfaceType != SurfaceType.None)
 				{
-					return true;
+					return thingList[i].def.surfaceType;
 				}
 			}
-			return false;
+			return SurfaceType.None;
+		}
+
+		public static bool HasEatSurface(this IntVec3 c, Map map)
+		{
+			return c.GetSurfaceType(map) == SurfaceType.Eat;
 		}
 	}
 }

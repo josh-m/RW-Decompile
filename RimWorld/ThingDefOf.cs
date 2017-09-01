@@ -48,6 +48,10 @@ namespace RimWorld
 
 		public static ThingDef Wort;
 
+		public static ThingDef AIPersonaCore;
+
+		public static ThingDef Neurotrainer;
+
 		public static ThingDef MealSurvivalPack;
 
 		public static ThingDef MealNutrientPaste;
@@ -82,6 +86,8 @@ namespace RimWorld
 
 		public static ThingDef ShipChunk;
 
+		public static ThingDef ElephantTusk;
+
 		public static ThingDef FilthBlood;
 
 		public static ThingDef FilthAmnioticFluid;
@@ -100,9 +106,13 @@ namespace RimWorld
 
 		public static ThingDef RockRubble;
 
-		public static ThingDef RectTrigger;
+		public static ThingDef SlagRubble;
 
-		public static ThingDef TemporaryRegionBarrier;
+		public static ThingDef FilthCorpseBile;
+
+		public static ThingDef FilthAsh;
+
+		public static ThingDef RectTrigger;
 
 		public static ThingDef Sandstone;
 
@@ -132,8 +142,6 @@ namespace RimWorld
 
 		public static ThingDef Grave;
 
-		public static ThingDef EquipmentRack;
-
 		public static ThingDef Sandbags;
 
 		public static ThingDef CrashedPsychicEmanatorShipPart;
@@ -145,6 +153,8 @@ namespace RimWorld
 		public static ThingDef CryptosleepCasket;
 
 		public static ThingDef SolarGenerator;
+
+		public static ThingDef FueledGenerator;
 
 		public static ThingDef PowerConduit;
 
@@ -182,17 +192,35 @@ namespace RimWorld
 
 		public static ThingDef TorchLamp;
 
+		public static ThingDef StandingLamp;
+
 		public static ThingDef Campfire;
 
 		public static ThingDef FirefoamPopper;
 
 		public static ThingDef PassiveCooler;
 
+		public static ThingDef CaravanPackingSpot;
+
+		public static ThingDef Turret_MortarBomb;
+
+		public static ThingDef Turret_MortarEMP;
+
+		public static ThingDef PlantPot;
+
+		public static ThingDef TableShort;
+
+		public static ThingDef DiningChair;
+
 		public static ThingDef PlantPotato;
 
 		public static ThingDef PlantTreeOak;
 
 		public static ThingDef PlantGrass;
+
+		public static ThingDef PlantAmbrosia;
+
+		public static ThingDef BurnedTree;
 
 		public static ThingDef Human;
 
@@ -202,25 +230,19 @@ namespace RimWorld
 
 		public static ThingDef Cow;
 
-		public static ThingDef Gun_SurvivalRifle;
-
-		public static ThingDef Gun_Pistol;
-
-		public static ThingDef Gun_TurretImprovised;
-
-		public static ThingDef MeleeWeapon_Knife;
-
 		public static ThingDef Spark;
 
-		public static ThingDef Apparel_PersonalShield;
+		public static ThingDef Apparel_ShieldBelt;
+
+		public static ThingDef Apparel_SmokepopBelt;
 
 		public static ThingDef Apparel_Parka;
 
 		public static ThingDef Apparel_Tuque;
 
-		public static ThingDef Mote_ShotFlash;
-
 		public static ThingDef Mote_Text;
+
+		public static ThingDef Mote_ShotFlash;
 
 		public static ThingDef Mote_DustPuff;
 
@@ -275,5 +297,9 @@ namespace RimWorld
 		public static ThingDef Mote_LightningGlow;
 
 		public static ThingDef Mote_Stun;
+
+		public static ThingDef Mote_WaterSplash;
+
+		public static ThingDef Gas_Smoke;
 	}
 }

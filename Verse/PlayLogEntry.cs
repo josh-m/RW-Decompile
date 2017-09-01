@@ -26,7 +26,7 @@ namespace Verse
 
 		public virtual void ExposeData()
 		{
-			Scribe_Values.LookValue<int>(ref this.ticksAbs, "ticksAbs", 0, false);
+			Scribe_Values.Look<int>(ref this.ticksAbs, "ticksAbs", 0, false);
 		}
 
 		public abstract string ToGameStringFromPOV(Thing pov);
@@ -45,7 +45,7 @@ namespace Verse
 		{
 			return "OccurredTimeAgo".Translate(new object[]
 			{
-				this.Age.ToStringTicksToPeriod(true)
+				this.Age.ToStringTicksToPeriod(true, false, true)
 			}).CapitalizeFirst() + ".";
 		}
 	}

@@ -37,7 +37,7 @@ namespace RimWorld.Planet
 					return;
 				}
 			}
-			if (!CellFinder.TryFindRandomEdgeCellWith((IntVec3 x) => x.Standable(map) && !x.Fogged(map), map, out first))
+			if (!CellFinder.TryFindRandomEdgeCellWith((IntVec3 x) => x.Standable(map) && !x.Fogged(map), map, CellFinder.EdgeRoadChance_Neutral, out first))
 			{
 				Log.Error("Could not find any valid starting cell for a caravan.");
 				first = CellFinder.RandomCell(map);
@@ -46,14 +46,14 @@ namespace RimWorld.Planet
 			}
 			IntVec3 localFirst = first;
 			float tryMinDistBetweenSpots = (float)Mathf.Max(map.Size.x, map.Size.z) * 0.6f;
-			if (!CellFinder.TryFindRandomEdgeCellWith((IntVec3 x) => x.Standable(map) && !x.Fogged(map) && !x.InHorDistOf(localFirst, tryMinDistBetweenSpots), map, out second) && !CellFinder.TryFindRandomEdgeCellWith((IntVec3 x) => x.Standable(map) && !x.Fogged(map), map, out second))
+			if (!CellFinder.TryFindRandomEdgeCellWith((IntVec3 x) => x.Standable(map) && !x.Fogged(map) && !x.InHorDistOf(localFirst, tryMinDistBetweenSpots), map, CellFinder.EdgeRoadChance_Neutral, out second) && !CellFinder.TryFindRandomEdgeCellWith((IntVec3 x) => x.Standable(map) && !x.Fogged(map), map, 0.5f, out second))
 			{
 				Log.Error("Could not find any valid starting cell for a caravan.");
 				second = CellFinder.RandomCell(map);
 				return;
 			}
-			first = CellFinder.RandomClosewalkCellNear(first, map, 7);
-			second = CellFinder.RandomClosewalkCellNear(second, map, 7);
+			first = CellFinder.RandomClosewalkCellNear(first, map, 7, null);
+			second = CellFinder.RandomClosewalkCellNear(second, map, 7, null);
 		}
 
 		private static bool TryFindOppositeSpots(Map map, float maxDistPctToOppositeSpots, out IntVec3 first, out IntVec3 second)

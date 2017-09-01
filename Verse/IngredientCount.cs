@@ -9,6 +9,14 @@ namespace Verse
 
 		private float count = 1f;
 
+		public bool IsFixedIngredient
+		{
+			get
+			{
+				return this.filter.AllowedDefCount == 1;
+			}
+		}
+
 		public int CountRequiredOfFor(ThingDef thingDef, RecipeDef recipe)
 		{
 			float num = recipe.IngredientValueGetter.ValuePerUnitOf(thingDef);

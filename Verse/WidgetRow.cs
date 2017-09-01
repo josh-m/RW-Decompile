@@ -157,11 +157,11 @@ namespace Verse
 				toggleable = !toggleable;
 				if (toggleable)
 				{
-					SoundDefOf.TickHigh.PlayOneShotOnCamera();
+					SoundDefOf.TickHigh.PlayOneShotOnCamera(null);
 				}
 				else
 				{
-					SoundDefOf.TickLow.PlayOneShotOnCamera();
+					SoundDefOf.TickLow.PlayOneShotOnCamera(null);
 				}
 			}
 			if (tutorTag != null)

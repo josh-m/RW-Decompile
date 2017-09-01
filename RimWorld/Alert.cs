@@ -26,7 +26,7 @@ namespace RimWorld
 
 		protected float lastBellTime = -1000f;
 
-		private AlertArrow alertArrow;
+		private AlertBounce alertBounce;
 
 		private static readonly Texture2D AlertBGTex = SolidColorMaterials.NewSolidColorTexture(Color.white);
 
@@ -72,14 +72,14 @@ namespace RimWorld
 		{
 			if (this.Priority >= AlertPriority.High)
 			{
-				if (this.alertArrow == null)
+				if (this.alertBounce == null)
 				{
-					this.alertArrow = new AlertArrow(this);
+					this.alertBounce = new AlertBounce();
 				}
-				this.alertArrow.DoAlertStartEffect();
+				this.alertBounce.DoAlertStartEffect();
 				if (Time.timeSinceLevelLoad > 1f && Time.realtimeSinceStartup > this.lastBellTime + 0.5f)
 				{
-					SoundDefOf.TinyBell.PlayOneShotOnCamera();
+					SoundDefOf.TinyBell.PlayOneShotOnCamera(null);
 					this.lastBellTime = Time.realtimeSinceStartup;
 				}
 			}
@@ -95,9 +95,9 @@ namespace RimWorld
 			string label = this.GetLabel();
 			float height = Text.CalcHeight(label, 148f);
 			Rect rect = new Rect((float)UI.screenWidth - 154f, topY, 154f, height);
-			if (this.alertArrow != null)
+			if (this.alertBounce != null)
 			{
-				this.alertArrow.AlertArrowOnGUI(rect.x, rect.y);
+				rect.x -= this.alertBounce.CalculateHorizontalOffset();
 			}
 			GUI.color = this.BGColor;
 			GUI.DrawTexture(rect, Alert.AlertBGTex);
@@ -110,9 +110,9 @@ namespace RimWorld
 			{
 				GUI.DrawTexture(rect, Alert.AlertBGTexHighlight);
 			}
-			if (this.GetReport().culprit.IsValid && Widgets.ButtonInvisible(rect, false))
+			if (Widgets.ButtonInvisible(rect, false) && this.GetReport().culprit.IsValid)
 			{
-				JumpToTargetUtility.TryJumpAndSelect(this.GetReport().culprit);
+				CameraJumper.TryJumpAndSelect(this.GetReport().culprit);
 			}
 			Text.Anchor = TextAnchor.UpperLeft;
 			return rect;
@@ -120,34 +120,34 @@ namespace RimWorld
 
 		public void DrawInfoPane()
 		{
-			Alert.<DrawInfoPane>c__AnonStorey362 <DrawInfoPane>c__AnonStorey = new Alert.<DrawInfoPane>c__AnonStorey362();
+			Alert.<DrawInfoPane>c__AnonStorey3E9 <DrawInfoPane>c__AnonStorey3E = new Alert.<DrawInfoPane>c__AnonStorey3E9();
 			Text.Font = GameFont.Small;
 			Text.Anchor = TextAnchor.UpperLeft;
-			<DrawInfoPane>c__AnonStorey.expString = this.GetExplanation();
+			<DrawInfoPane>c__AnonStorey3E.expString = this.GetExplanation();
 			if (this.GetReport().culprit.IsValid)
 			{
-				<DrawInfoPane>c__AnonStorey.expString = <DrawInfoPane>c__AnonStorey.expString + "\n\n(" + "ClickToJumpToProblem".Translate() + ")";
+				<DrawInfoPane>c__AnonStorey3E.expString = <DrawInfoPane>c__AnonStorey3E.expString + "\n\n(" + "ClickToJumpToProblem".Translate() + ")";
 			}
-			float num = Text.CalcHeight(<DrawInfoPane>c__AnonStorey.expString, 310f);
+			float num = Text.CalcHeight(<DrawInfoPane>c__AnonStorey3E.expString, 310f);
 			num += 20f;
-			<DrawInfoPane>c__AnonStorey.infoRect = new Rect((float)UI.screenWidth - 154f - 330f - 8f, Mathf.Max(Mathf.Min(Event.current.mousePosition.y, (float)UI.screenHeight - num), 0f), 330f, num);
-			if (<DrawInfoPane>c__AnonStorey.infoRect.yMax > (float)UI.screenHeight)
+			<DrawInfoPane>c__AnonStorey3E.infoRect = new Rect((float)UI.screenWidth - 154f - 330f - 8f, Mathf.Max(Mathf.Min(Event.current.mousePosition.y, (float)UI.screenHeight - num), 0f), 330f, num);
+			if (<DrawInfoPane>c__AnonStorey3E.infoRect.yMax > (float)UI.screenHeight)
 			{
-				Alert.<DrawInfoPane>c__AnonStorey362 expr_E2_cp_0 = <DrawInfoPane>c__AnonStorey;
-				expr_E2_cp_0.infoRect.y = expr_E2_cp_0.infoRect.y - ((float)UI.screenHeight - <DrawInfoPane>c__AnonStorey.infoRect.yMax);
+				Alert.<DrawInfoPane>c__AnonStorey3E9 expr_E2_cp_0 = <DrawInfoPane>c__AnonStorey3E;
+				expr_E2_cp_0.infoRect.y = expr_E2_cp_0.infoRect.y - ((float)UI.screenHeight - <DrawInfoPane>c__AnonStorey3E.infoRect.yMax);
 			}
-			if (<DrawInfoPane>c__AnonStorey.infoRect.y < 0f)
+			if (<DrawInfoPane>c__AnonStorey3E.infoRect.y < 0f)
 			{
-				<DrawInfoPane>c__AnonStorey.infoRect.y = 0f;
+				<DrawInfoPane>c__AnonStorey3E.infoRect.y = 0f;
 			}
-			Find.WindowStack.ImmediateWindow(138956, <DrawInfoPane>c__AnonStorey.infoRect, WindowLayer.GameUI, delegate
+			Find.WindowStack.ImmediateWindow(138956, <DrawInfoPane>c__AnonStorey3E.infoRect, WindowLayer.GameUI, delegate
 			{
 				Text.Font = GameFont.Small;
-				Rect rect = <DrawInfoPane>c__AnonStorey.infoRect.AtZero();
+				Rect rect = <DrawInfoPane>c__AnonStorey3E.infoRect.AtZero();
 				Widgets.DrawWindowBackground(rect);
 				Rect position = rect.ContractedBy(10f);
 				GUI.BeginGroup(position);
-				Widgets.Label(new Rect(0f, 0f, position.width, position.height), <DrawInfoPane>c__AnonStorey.expString);
+				Widgets.Label(new Rect(0f, 0f, position.width, position.height), <DrawInfoPane>c__AnonStorey3E.expString);
 				GUI.EndGroup();
 			}, false, false, 1f);
 		}

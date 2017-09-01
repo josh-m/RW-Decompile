@@ -17,7 +17,7 @@ namespace Verse
 
 		public override void CompExposeData()
 		{
-			Scribe_Values.LookValue<bool>(ref this.discovered, "discovered", false, false);
+			Scribe_Values.Look<bool>(ref this.discovered, "discovered", false, false);
 		}
 
 		public override bool CompDisallowVisible()
@@ -25,7 +25,7 @@ namespace Verse
 			return !this.discovered;
 		}
 
-		public override void CompPostTick()
+		public override void CompPostTick(ref float severityAdjustment)
 		{
 			if (Find.TickManager.TicksGame % 103 == 0)
 			{
@@ -90,7 +90,7 @@ namespace Verse
 				}
 				if (base.Pawn.RaceProps.Humanlike)
 				{
-					Find.LetterStack.ReceiveLetter(label, text, LetterType.BadNonUrgent, base.Pawn, null);
+					Find.LetterStack.ReceiveLetter(label, text, LetterDefOf.BadNonUrgent, base.Pawn, null);
 				}
 				else
 				{

@@ -132,24 +132,17 @@ namespace RimWorld
 
 		public override void NeedInterval()
 		{
-			if (!this.def.freezeWhileSleeping || this.pawn.Awake())
+			if (!base.IsFrozen)
 			{
 				this.tolerances.NeedInterval();
 				if (!this.GainingJoy)
 				{
-					this.curLevelInt -= this.FallPerTick * 150f;
+					this.CurLevel -= this.FallPerTick * 150f;
 				}
-			}
-			if (this.pawn.Downed)
-			{
-				if (this.curLevelInt < 0.25f)
+				if (this.pawn.Downed && this.CurLevel < 0.25f)
 				{
-					this.curLevelInt = 0.25f;
+					this.CurLevel = 0.25f;
 				}
-			}
-			else if (this.curLevelInt < 0f)
-			{
-				this.curLevelInt = 0f;
 			}
 		}
 

@@ -74,7 +74,7 @@ namespace Verse
 
 		public void DrawAt(Vector3 loc)
 		{
-			this.renderer.RenderPawnAt(loc, RotDrawMode.Fresh);
+			this.renderer.RenderPawnAt(loc);
 		}
 
 		public void Notify_Spawned()

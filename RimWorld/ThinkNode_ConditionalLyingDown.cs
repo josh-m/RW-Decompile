@@ -1,5 +1,6 @@
 using System;
 using Verse;
+using Verse.AI;
 
 namespace RimWorld
 {
@@ -7,7 +8,7 @@ namespace RimWorld
 	{
 		protected override bool Satisfied(Pawn pawn)
 		{
-			return pawn.CurJob != null && pawn.jobs.curDriver.layingDown;
+			return pawn.CurJob != null && pawn.jobs.curDriver.layingDown != LayingDownState.NotLaying;
 		}
 	}
 }

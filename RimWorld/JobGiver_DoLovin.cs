@@ -12,7 +12,7 @@ namespace RimWorld
 			{
 				return null;
 			}
-			if (pawn.CurJob == null || !pawn.jobs.curDriver.layingDown || pawn.jobs.curDriver.layingDownBed == null || pawn.jobs.curDriver.layingDownBed.Medical || !pawn.health.capacities.CanBeAwake)
+			if (pawn.CurrentBed() == null || pawn.CurrentBed().Medical || !pawn.health.capacities.CanBeAwake)
 			{
 				return null;
 			}
@@ -21,13 +21,13 @@ namespace RimWorld
 			{
 				return null;
 			}
-			if (!pawn.CanReserve(partnerInMyBed, 1) || !partnerInMyBed.CanReserve(pawn, 1))
+			if (!pawn.CanReserve(partnerInMyBed, 1, -1, null, false) || !partnerInMyBed.CanReserve(pawn, 1, -1, null, false))
 			{
 				return null;
 			}
 			pawn.mindState.awokeVoluntarily = true;
 			partnerInMyBed.mindState.awokeVoluntarily = true;
-			return new Job(JobDefOf.Lovin, partnerInMyBed, pawn.jobs.curDriver.layingDownBed);
+			return new Job(JobDefOf.Lovin, partnerInMyBed, pawn.CurrentBed());
 		}
 	}
 }

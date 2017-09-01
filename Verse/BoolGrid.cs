@@ -32,7 +32,7 @@ namespace Verse
 					{
 						if (this.arr[i])
 						{
-							yield return CellIndicesUtility.IndexToCell(i, this.mapSizeX, this.mapSizeZ);
+							yield return CellIndicesUtility.IndexToCell(i, this.mapSizeX);
 							yieldedCount++;
 							if (yieldedCount >= this.trueCountInt)
 							{
@@ -108,9 +108,9 @@ namespace Verse
 
 		public void ExposeData()
 		{
-			Scribe_Values.LookValue<int>(ref this.trueCountInt, "trueCount", 0, false);
-			Scribe_Values.LookValue<int>(ref this.mapSizeX, "mapSizeX", 0, false);
-			Scribe_Values.LookValue<int>(ref this.mapSizeZ, "mapSizeZ", 0, false);
+			Scribe_Values.Look<int>(ref this.trueCountInt, "trueCount", 0, false);
+			Scribe_Values.Look<int>(ref this.mapSizeX, "mapSizeX", 0, false);
+			Scribe_Values.Look<int>(ref this.mapSizeZ, "mapSizeZ", 0, false);
 			ArrayExposeUtility.ExposeBoolArray(ref this.arr, this.mapSizeX, this.mapSizeZ, "arr");
 		}
 

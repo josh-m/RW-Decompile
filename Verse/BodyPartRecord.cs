@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
 
 namespace Verse
 {
@@ -21,13 +23,10 @@ namespace Verse
 		public BodyPartRecord parent;
 
 		[Unsaved]
-		public float fleshCoverage;
+		public float coverageAbsWithChildren;
 
 		[Unsaved]
-		public float absoluteCoverage;
-
-		[Unsaved]
-		public float absoluteFleshCoverage;
+		public float coverageAbs;
 
 		public override string ToString()
 		{
@@ -51,6 +50,41 @@ namespace Verse
 				}
 			}
 			return false;
+		}
+
+		[DebuggerHidden]
+		public IEnumerable<BodyPartRecord> GetChildParts(string tag)
+		{
+			if (this.def.tags.Contains(tag))
+			{
+				yield return this;
+			}
+			for (int i = 0; i < this.parts.Count; i++)
+			{
+				foreach (BodyPartRecord record in this.parts[i].GetChildParts(tag))
+				{
+					yield return record;
+				}
+			}
+		}
+
+		public bool HasChildParts(string tag)
+		{
+			return this.GetChildParts(tag).Any<BodyPartRecord>();
+		}
+
+		[DebuggerHidden]
+		public IEnumerable<BodyPartRecord> GetConnectedParts(string tag)
+		{
+			BodyPartRecord ancestor = this;
+			while (ancestor.parent != null && ancestor.parent.def.tags.Contains(tag))
+			{
+				ancestor = ancestor.parent;
+			}
+			foreach (BodyPartRecord child in ancestor.GetChildParts(tag))
+			{
+				yield return child;
+			}
 		}
 	}
 }

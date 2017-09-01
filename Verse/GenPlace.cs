@@ -49,7 +49,7 @@ namespace Verse
 				{
 					int stackCount = thing.stackCount;
 					IntVec3 loc;
-					if (!GenPlace.TryFindPlaceSpotNear(center, map, thing, out loc))
+					if (!GenPlace.TryFindPlaceSpotNear(center, map, thing, true, out loc))
 					{
 						break;
 					}
@@ -80,14 +80,25 @@ namespace Verse
 			throw new InvalidOperationException();
 		}
 
-		private static bool TryFindPlaceSpotNear(IntVec3 center, Map map, Thing thing, out IntVec3 bestSpot)
+		public static bool TryMoveThing(Thing thing, IntVec3 loc, Map map)
+		{
+			IntVec3 position;
+			if (!GenPlace.TryFindPlaceSpotNear(loc, map, thing, false, out position))
+			{
+				return false;
+			}
+			thing.Position = position;
+			return true;
+		}
+
+		private static bool TryFindPlaceSpotNear(IntVec3 center, Map map, Thing thing, bool allowStacking, out IntVec3 bestSpot)
 		{
 			GenPlace.PlaceSpotQuality placeSpotQuality = GenPlace.PlaceSpotQuality.Unusable;
 			bestSpot = center;
 			for (int i = 0; i < 9; i++)
 			{
 				IntVec3 intVec = center + GenRadial.RadialPattern[i];
-				GenPlace.PlaceSpotQuality placeSpotQuality2 = GenPlace.PlaceSpotQualityAt(intVec, map, thing, center);
+				GenPlace.PlaceSpotQuality placeSpotQuality2 = GenPlace.PlaceSpotQualityAt(intVec, map, thing, center, allowStacking);
 				if (placeSpotQuality2 > placeSpotQuality)
 				{
 					bestSpot = intVec;
@@ -105,7 +116,7 @@ namespace Verse
 			for (int j = 0; j < GenPlace.PlaceNearMiddleRadialCells; j++)
 			{
 				IntVec3 intVec = center + GenRadial.RadialPattern[j];
-				GenPlace.PlaceSpotQuality placeSpotQuality2 = GenPlace.PlaceSpotQualityAt(intVec, map, thing, center);
+				GenPlace.PlaceSpotQuality placeSpotQuality2 = GenPlace.PlaceSpotQualityAt(intVec, map, thing, center, allowStacking);
 				if (placeSpotQuality2 > placeSpotQuality)
 				{
 					bestSpot = intVec;
@@ -123,7 +134,7 @@ namespace Verse
 			for (int k = 0; k < GenPlace.PlaceNearMaxRadialCells; k++)
 			{
 				IntVec3 intVec = center + GenRadial.RadialPattern[k];
-				GenPlace.PlaceSpotQuality placeSpotQuality2 = GenPlace.PlaceSpotQualityAt(intVec, map, thing, center);
+				GenPlace.PlaceSpotQuality placeSpotQuality2 = GenPlace.PlaceSpotQualityAt(intVec, map, thing, center, allowStacking);
 				if (placeSpotQuality2 > placeSpotQuality)
 				{
 					bestSpot = intVec;
@@ -142,7 +153,7 @@ namespace Verse
 			return false;
 		}
 
-		private static GenPlace.PlaceSpotQuality PlaceSpotQualityAt(IntVec3 c, Map map, Thing thing, IntVec3 center)
+		private static GenPlace.PlaceSpotQuality PlaceSpotQualityAt(IntVec3 c, Map map, Thing thing, IntVec3 center, bool allowStacking)
 		{
 			if (!c.InBounds(map) || !c.Walkable(map))
 			{
@@ -156,21 +167,26 @@ namespace Verse
 				{
 					return GenPlace.PlaceSpotQuality.Unusable;
 				}
-				if (thing2.def.category == ThingCategory.Item && (thing2.def != thing.def || thing2.stackCount >= thing.def.stackLimit))
+				if (thing.def.category == ThingCategory.Item && thing2.def.category == ThingCategory.Item && (thing2.def != thing.def || thing2.stackCount >= thing.def.stackLimit))
 				{
 					return GenPlace.PlaceSpotQuality.Unusable;
 				}
 			}
-			if (c.GetRoom(map) == center.GetRoom(map))
+			if (c.GetRoom(map, RegionType.Set_Passable) == center.GetRoom(map, RegionType.Set_Passable))
 			{
-				for (int j = 0; j < list.Count; j++)
+				if (allowStacking)
 				{
-					Thing thing3 = list[j];
-					if (thing3.def.category == ThingCategory.Item && thing3.def == thing.def && thing3.stackCount < thing.def.stackLimit)
+					for (int j = 0; j < list.Count; j++)
 					{
-						return GenPlace.PlaceSpotQuality.Perfect;
+						Thing thing3 = list[j];
+						if (thing3.def.category == ThingCategory.Item && thing3.def == thing.def && thing3.stackCount < thing.def.stackLimit)
+						{
+							return GenPlace.PlaceSpotQuality.Perfect;
+						}
 					}
 				}
+				Pawn pawn = thing as Pawn;
+				bool flag = pawn != null && pawn.Downed;
 				GenPlace.PlaceSpotQuality placeSpotQuality = GenPlace.PlaceSpotQuality.Perfect;
 				for (int k = 0; k < list.Count; k++)
 				{
@@ -183,10 +199,10 @@ namespace Verse
 					{
 						return GenPlace.PlaceSpotQuality.Bad;
 					}
-					Pawn pawn = thing4 as Pawn;
-					if (pawn != null)
+					Pawn pawn2 = thing4 as Pawn;
+					if (pawn2 != null)
 					{
-						if (pawn.Downed)
+						if (pawn2.Downed || flag)
 						{
 							return GenPlace.PlaceSpotQuality.Bad;
 						}
@@ -258,11 +274,6 @@ namespace Verse
 			if (placedAction != null)
 			{
 				placedAction(thing, thing.stackCount);
-			}
-			SlotGroup slotGroup = loc.GetSlotGroup(map);
-			if (slotGroup != null && slotGroup.parent != null)
-			{
-				slotGroup.parent.Notify_ReceivedThing(resultingThing);
 			}
 			return !flag;
 		}

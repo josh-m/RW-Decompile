@@ -1,5 +1,7 @@
 using System;
+using System.Diagnostics;
 using System.Linq;
+using System.Threading;
 
 namespace Verse
 {
@@ -41,6 +43,38 @@ namespace Verse
 			}
 			value = null;
 			return false;
+		}
+
+		public static void Restart()
+		{
+			try
+			{
+				string[] commandLineArgs = Environment.GetCommandLineArgs();
+				string text = commandLineArgs[0];
+				string text2 = string.Empty;
+				for (int i = 1; i < commandLineArgs.Length; i++)
+				{
+					if (!text2.NullOrEmpty())
+					{
+						text2 += " ";
+					}
+					text2 = text2 + "\"" + commandLineArgs[i].Replace("\"", "\\\"") + "\"";
+				}
+				new Process
+				{
+					StartInfo = new ProcessStartInfo(commandLineArgs[0], text2)
+				}.Start();
+				Root.Shutdown();
+				LongEventHandler.QueueLongEvent(delegate
+				{
+					Thread.Sleep(10000);
+				}, "Restarting", true, null);
+			}
+			catch (Exception arg)
+			{
+				Log.Error("Error restarting: " + arg);
+				Find.WindowStack.Add(new Dialog_MessageBox("FailedToRestart".Translate(), null, null, null, null, null, false));
+			}
 		}
 	}
 }

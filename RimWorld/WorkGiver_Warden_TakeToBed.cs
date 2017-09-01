@@ -6,63 +6,61 @@ namespace RimWorld
 {
 	public class WorkGiver_Warden_TakeToBed : WorkGiver_Warden
 	{
-		public override Job JobOnThing(Pawn pawn, Thing t)
+		public override Job JobOnThing(Pawn pawn, Thing t, bool forced = false)
 		{
 			if (!base.ShouldTakeCareOfPrisoner(pawn, t))
 			{
 				return null;
 			}
-			Pawn pawn2 = (Pawn)t;
-			Room room = pawn2.GetRoom();
-			if (!pawn2.Downed && pawn.CanReserve(pawn2, 1))
+			Pawn prisoner = (Pawn)t;
+			Job job = this.TakeDownedToBedJob(prisoner, pawn);
+			if (job != null)
 			{
-				bool flag = pawn2.ownership.OwnedBed != null && RoomQuery.RoomAt(pawn2.ownership.OwnedBed) != RoomQuery.RoomAt(pawn2);
-				bool flag2 = false;
-				if (!flag && room != null && !room.TouchesMapEdge)
-				{
-					foreach (Building_Bed current in room.ContainedBeds)
-					{
-						if (current.ForPrisoners && (!current.owners.Any<Pawn>() || current.owners.Contains(pawn2)) && (current.AnyUnoccupiedSleepingSlot || (pawn2.InBed() && pawn2.CurrentBed() == current)) && (!current.Medical || (HealthAIUtility.ShouldSeekMedicalRest(pawn2) && HealthAIUtility.ShouldEverReceiveMedicalCare(pawn2))))
-						{
-							flag2 = true;
-							break;
-						}
-					}
-				}
-				if (flag || !flag2)
-				{
-					Building_Bed building_Bed = RestUtility.FindBedFor(pawn2, pawn, true, false, false);
-					if (building_Bed != null)
-					{
-						if (building_Bed.GetRoom() != room)
-						{
-							return new Job(JobDefOf.EscortPrisonerToBed, pawn2, building_Bed)
-							{
-								count = 1
-							};
-						}
-						Log.Error(string.Concat(new object[]
-						{
-							pawn,
-							" tried to escort prisoner ",
-							pawn2,
-							" to bed at ",
-							building_Bed.Position,
-							" which is in the prisoner's room already."
-						}));
-					}
-				}
+				return job;
 			}
-			if (pawn2.Downed && HealthAIUtility.ShouldSeekMedicalRestUrgent(pawn2) && !pawn2.InBed() && pawn.CanReserve(pawn2, 1))
+			Job job2 = this.TakeToPreferredBedJob(prisoner, pawn);
+			if (job2 != null)
 			{
-				Building_Bed building_Bed2 = RestUtility.FindBedFor(pawn2, pawn, true, true, false);
-				if (building_Bed2 != null && pawn2.CanReserve(building_Bed2, building_Bed2.SleepingSlotsCount))
+				return job2;
+			}
+			return null;
+		}
+
+		private Job TakeToPreferredBedJob(Pawn prisoner, Pawn warden)
+		{
+			if (prisoner.Downed || !warden.CanReserve(prisoner, 1, -1, null, false))
+			{
+				return null;
+			}
+			if (RestUtility.FindBedFor(prisoner, prisoner, true, true, false) != null)
+			{
+				return null;
+			}
+			Room room = prisoner.GetRoom(RegionType.Set_Passable);
+			Building_Bed building_Bed = RestUtility.FindBedFor(prisoner, warden, true, false, false);
+			if (building_Bed != null && building_Bed.GetRoom(RegionType.Set_Passable) != room)
+			{
+				return new Job(JobDefOf.EscortPrisonerToBed, prisoner, building_Bed)
 				{
-					return new Job(JobDefOf.TakeWoundedPrisonerToBed, pawn2, building_Bed2)
-					{
-						count = 1
-					};
-				}
+					count = 1
+				};
+			}
+			return null;
+		}
+
+		private Job TakeDownedToBedJob(Pawn prisoner, Pawn warden)
+		{
+			if (!prisoner.Downed || !HealthAIUtility.ShouldSeekMedicalRestUrgent(prisoner) || prisoner.InBed() || !warden.CanReserve(prisoner, 1, -1, null, false))
+			{
+				return null;
+			}
+			Building_Bed building_Bed = RestUtility.FindBedFor(prisoner, warden, true, true, false);
+			if (building_Bed != null)
+			{
+				return new Job(JobDefOf.TakeWoundedPrisonerToBed, prisoner, building_Bed)
+				{
+					count = 1
+				};
 			}
 			return null;
 		}

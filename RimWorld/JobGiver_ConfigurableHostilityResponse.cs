@@ -46,16 +46,20 @@ namespace RimWorld
 				num = Mathf.Clamp(pawn.equipment.PrimaryEq.PrimaryVerb.verbProps.range * 0.66f, 2f, 20f);
 			}
 			float maxDist = num;
-			Thing thing = AttackTargetFinder.BestAttackTarget(pawn, TargetScanFlags.NeedLOSToPawns | TargetScanFlags.NeedLOSToNonPawns | TargetScanFlags.NeedReachable | TargetScanFlags.NeedThreat, null, 0f, maxDist, default(IntVec3), 3.40282347E+38f, false);
+			Thing thing = (Thing)AttackTargetFinder.BestAttackTarget(pawn, TargetScanFlags.NeedLOSToPawns | TargetScanFlags.NeedLOSToNonPawns | TargetScanFlags.NeedReachableIfCantHitFromMyPos | TargetScanFlags.NeedThreat, null, 0f, maxDist, default(IntVec3), 3.40282347E+38f, false);
 			if (thing == null)
 			{
 				return null;
 			}
-			if (flag || thing.Position.AdjacentTo8Way(pawn.Position))
+			if (flag || pawn.CanReachImmediate(thing, PathEndMode.Touch))
 			{
 				return new Job(JobDefOf.AttackMelee, thing);
 			}
-			return new Job(JobDefOf.AttackStatic, thing);
+			return new Job(JobDefOf.AttackStatic, thing)
+			{
+				maxNumStaticAttacks = 2,
+				expiryInterval = 1800
+			};
 		}
 
 		private Job TryGetFleeJob(Pawn pawn)
@@ -64,82 +68,32 @@ namespace RimWorld
 			{
 				return null;
 			}
-			JobGiver_ConfigurableHostilityResponse.tmpThreats.Clear();
-			List<IAttackTarget> potentialTargetsFor = pawn.Map.attackTargetsCache.GetPotentialTargetsFor(pawn);
-			for (int i = 0; i < potentialTargetsFor.Count; i++)
+			IntVec3 c;
+			if (pawn.CurJob != null && pawn.CurJob.def == JobDefOf.FleeAndCower)
 			{
-				IAttackTarget attackTarget = potentialTargetsFor[i];
-				if (!attackTarget.ThreatDisabled())
-				{
-					JobGiver_ConfigurableHostilityResponse.tmpThreats.Add((Thing)attackTarget);
-				}
+				c = pawn.CurJob.targetA.Cell;
 			}
-			if (!JobGiver_ConfigurableHostilityResponse.tmpThreats.Any<Thing>())
+			else
 			{
-				Log.Warning(pawn.LabelShort + " decided to flee but there is no any threat around.");
-				return null;
-			}
-			IntVec3 fleeDest = this.GetFleeDest(pawn, JobGiver_ConfigurableHostilityResponse.tmpThreats);
-			JobGiver_ConfigurableHostilityResponse.tmpThreats.Clear();
-			return new Job(JobDefOf.FleeAndCower, fleeDest);
-		}
-
-		private IntVec3 GetFleeDest(Pawn pawn, List<Thing> threats)
-		{
-			IntVec3 bestPos = pawn.Position;
-			float bestScore = -1f;
-			TraverseParms traverseParms = TraverseParms.For(pawn, Danger.Deadly, TraverseMode.ByPawn, false);
-			RegionTraverser.BreadthFirstTraverse(pawn.GetRegion(), (Region from, Region reg) => reg.Allows(traverseParms, false), delegate(Region reg)
-			{
-				Danger danger = reg.DangerFor(pawn);
-				foreach (IntVec3 current in reg.Cells)
+				JobGiver_ConfigurableHostilityResponse.tmpThreats.Clear();
+				List<IAttackTarget> potentialTargetsFor = pawn.Map.attackTargetsCache.GetPotentialTargetsFor(pawn);
+				for (int i = 0; i < potentialTargetsFor.Count; i++)
 				{
-					if (current.Standable(pawn.Map))
+					IAttackTarget attackTarget = potentialTargetsFor[i];
+					if (!attackTarget.ThreatDisabled())
 					{
-						if (reg.portal == null)
-						{
-							Thing thing = null;
-							float num = 0f;
-							for (int i = 0; i < threats.Count; i++)
-							{
-								float num2 = current.DistanceToSquared(threats[i].Position);
-								if (thing == null || num2 < num)
-								{
-									thing = threats[i];
-									num = num2;
-								}
-							}
-							float num3 = Mathf.Sqrt(num);
-							float f = Mathf.Min(num3, 23f);
-							float num4 = Mathf.Pow(f, 1.2f);
-							num4 *= Mathf.InverseLerp(50f, 0f, (current - pawn.Position).LengthHorizontal);
-							if (current.GetRoom(pawn.Map) != thing.GetRoom())
-							{
-								num4 *= 4.2f;
-							}
-							else if (num3 < 8f)
-							{
-								num4 *= 0.05f;
-							}
-							if (pawn.Map.pawnDestinationManager.DestinationIsReserved(current, pawn))
-							{
-								num4 *= 0.5f;
-							}
-							if (danger == Danger.Deadly)
-							{
-								num4 *= 0.8f;
-							}
-							if (num4 > bestScore)
-							{
-								bestPos = current;
-								bestScore = num4;
-							}
-						}
+						JobGiver_ConfigurableHostilityResponse.tmpThreats.Add((Thing)attackTarget);
 					}
 				}
-				return false;
-			}, 20);
-			return bestPos;
+				if (!JobGiver_ConfigurableHostilityResponse.tmpThreats.Any<Thing>())
+				{
+					Log.Warning(pawn.LabelShort + " decided to flee but there is no any threat around.");
+					return null;
+				}
+				c = CellFinderLoose.GetFleeDest(pawn, JobGiver_ConfigurableHostilityResponse.tmpThreats, 23f);
+				JobGiver_ConfigurableHostilityResponse.tmpThreats.Clear();
+			}
+			return new Job(JobDefOf.FleeAndCower, c);
 		}
 	}
 }

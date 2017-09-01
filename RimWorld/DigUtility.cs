@@ -36,9 +36,9 @@ namespace RimWorld
 
 		private static Job MeleeOrWaitJob(Pawn pawn, Thing blocker, IntVec3 cellBeforeBlocker)
 		{
-			if (!pawn.CanReserve(blocker, 1))
+			if (!pawn.CanReserve(blocker, 1, -1, null, false))
 			{
-				return new Job(JobDefOf.Goto, CellFinder.RandomClosewalkCellNear(cellBeforeBlocker, pawn.Map, 10), 500, true);
+				return DigUtility.WaitNearJob(pawn, cellBeforeBlocker);
 			}
 			return new Job(JobDefOf.AttackMelee, blocker)
 			{
@@ -50,9 +50,9 @@ namespace RimWorld
 
 		private static Job MineOrWaitJob(Pawn pawn, Thing blocker, IntVec3 cellBeforeBlocker)
 		{
-			if (!pawn.CanReserve(blocker, 1))
+			if (!pawn.CanReserve(blocker, 1, -1, null, false))
 			{
-				return new Job(JobDefOf.Goto, CellFinder.RandomClosewalkCellNear(cellBeforeBlocker, pawn.Map, 10), 500, true);
+				return DigUtility.WaitNearJob(pawn, cellBeforeBlocker);
 			}
 			return new Job(JobDefOf.Mine, blocker)
 			{
@@ -60,6 +60,16 @@ namespace RimWorld
 				expiryInterval = JobGiver_AIFightEnemy.ExpiryInterval_ShooterSucceeded.RandomInRange,
 				checkOverrideOnExpire = true
 			};
+		}
+
+		private static Job WaitNearJob(Pawn pawn, IntVec3 cellBeforeBlocker)
+		{
+			IntVec3 intVec = CellFinder.RandomClosewalkCellNear(cellBeforeBlocker, pawn.Map, 10, null);
+			if (intVec == pawn.Position)
+			{
+				return new Job(JobDefOf.Wait, 20, true);
+			}
+			return new Job(JobDefOf.Goto, intVec, 500, true);
 		}
 	}
 }

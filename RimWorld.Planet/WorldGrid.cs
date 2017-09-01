@@ -74,7 +74,7 @@ namespace RimWorld.Planet
 		{
 			get
 			{
-				return this.tiles[tileID];
+				return (tileID < 0 || tileID >= this.tiles.Count) ? null : this.tiles[tileID];
 			}
 		}
 
@@ -87,7 +87,7 @@ namespace RimWorld.Planet
 
 		public bool InBounds(int tileID)
 		{
-			return tileID >= 0 && tileID < this.TilesCount;
+			return (ulong)tileID < (ulong)((long)this.TilesCount);
 		}
 
 		public Vector2 LongLatOf(int tileID)
@@ -232,6 +232,11 @@ namespace RimWorld.Planet
 			return a / (float)num2;
 		}
 
+		public float TileRadiusToAngle(float radius)
+		{
+			return radius / (628.318542f / this.averageTileSize) * 360f;
+		}
+
 		public float DistanceFromEquatorNormalized(int tile)
 		{
 			return Mathf.Abs(Find.WorldGrid.GetTileCenter(tile).y / 100f);
@@ -249,6 +254,155 @@ namespace RimWorld.Planet
 			return this.ApproxDistanceInTiles(GenMath.SphericalDistance(tileCenter.normalized, tileCenter2.normalized));
 		}
 
+		public void OverlayRoad(int fromTile, int toTile, RoadDef roadDef)
+		{
+			if (roadDef == null)
+			{
+				Log.ErrorOnce("Attempted to remove road with overlayRoad; not supported", 90292249);
+				return;
+			}
+			RoadDef roadDef2 = this.GetRoadDef(fromTile, toTile, false);
+			if (roadDef2 == roadDef)
+			{
+				return;
+			}
+			Tile tile = this[fromTile];
+			Tile tile2 = this[toTile];
+			if (roadDef2 != null)
+			{
+				if (roadDef2.priority >= roadDef.priority)
+				{
+					return;
+				}
+				tile.roads.RemoveAll((Tile.RoadLink rl) => rl.neighbor == toTile);
+				tile2.roads.RemoveAll((Tile.RoadLink rl) => rl.neighbor == fromTile);
+			}
+			if (tile.roads == null)
+			{
+				tile.roads = new List<Tile.RoadLink>();
+			}
+			if (tile2.roads == null)
+			{
+				tile2.roads = new List<Tile.RoadLink>();
+			}
+			tile.roads.Add(new Tile.RoadLink
+			{
+				neighbor = toTile,
+				road = roadDef
+			});
+			tile2.roads.Add(new Tile.RoadLink
+			{
+				neighbor = fromTile,
+				road = roadDef
+			});
+		}
+
+		public RoadDef GetRoadDef(int fromTile, int toTile, bool visibleOnly = true)
+		{
+			if (!this.IsNeighbor(fromTile, toTile))
+			{
+				Log.ErrorOnce("Tried to find road information between non-neighboring tiles", 12390444);
+				return null;
+			}
+			Tile tile = this.tiles[fromTile];
+			List<Tile.RoadLink> list = (!visibleOnly) ? tile.roads : tile.VisibleRoads;
+			if (list == null)
+			{
+				return null;
+			}
+			for (int i = 0; i < list.Count; i++)
+			{
+				if (list[i].neighbor == toTile)
+				{
+					return list[i].road;
+				}
+			}
+			return null;
+		}
+
+		public void OverlayRiver(int fromTile, int toTile, RiverDef riverDef)
+		{
+			if (riverDef == null)
+			{
+				Log.ErrorOnce("Attempted to remove river with overlayRiver; not supported", 90292250);
+				return;
+			}
+			RiverDef riverDef2 = this.GetRiverDef(fromTile, toTile, false);
+			if (riverDef2 == riverDef)
+			{
+				return;
+			}
+			Tile tile = this[fromTile];
+			Tile tile2 = this[toTile];
+			if (riverDef2 != null)
+			{
+				if (riverDef2.degradeThreshold >= riverDef.degradeThreshold)
+				{
+					return;
+				}
+				tile.rivers.RemoveAll((Tile.RiverLink rl) => rl.neighbor == toTile);
+				tile2.rivers.RemoveAll((Tile.RiverLink rl) => rl.neighbor == fromTile);
+			}
+			if (tile.rivers == null)
+			{
+				tile.rivers = new List<Tile.RiverLink>();
+			}
+			if (tile2.rivers == null)
+			{
+				tile2.rivers = new List<Tile.RiverLink>();
+			}
+			tile.rivers.Add(new Tile.RiverLink
+			{
+				neighbor = toTile,
+				river = riverDef
+			});
+			tile2.rivers.Add(new Tile.RiverLink
+			{
+				neighbor = fromTile,
+				river = riverDef
+			});
+		}
+
+		public RiverDef GetRiverDef(int fromTile, int toTile, bool visibleOnly = true)
+		{
+			if (!this.IsNeighbor(fromTile, toTile))
+			{
+				Log.ErrorOnce("Tried to find river information between non-neighboring tiles", 12390444);
+				return null;
+			}
+			Tile tile = this.tiles[fromTile];
+			List<Tile.RiverLink> list = (!visibleOnly) ? tile.rivers : tile.VisibleRivers;
+			if (list == null)
+			{
+				return null;
+			}
+			for (int i = 0; i < list.Count; i++)
+			{
+				if (list[i].neighbor == toTile)
+				{
+					return list[i].river;
+				}
+			}
+			return null;
+		}
+
+		public float GetRoadMovementMultiplierFast(int fromTile, int toTile)
+		{
+			List<Tile.RoadLink> roads = this.tiles[fromTile].roads;
+			if (roads == null)
+			{
+				return 1f;
+			}
+			for (int i = 0; i < roads.Count; i++)
+			{
+				if (roads[i].neighbor == toTile)
+				{
+					return roads[i].road.movementCostMultiplier;
+				}
+			}
+			return 1f;
+		}
+
 		public int TraversalDistanceBetween(int start, int end)
 		{
 			if (start < 0 || end < 0)
@@ -260,7 +414,7 @@ namespace RimWorld.Planet
 				return this.cachedTraversalDistance;
 			}
 			int finalDist = -1;
-			WorldFloodFiller.FloodFill(start, (int x) => true, delegate(int tile, int dist)
+			Find.WorldFloodFiller.FloodFill(start, (int x) => true, delegate(int tile, int dist)
 			{
 				if (tile == end)
 				{

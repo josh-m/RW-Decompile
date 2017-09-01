@@ -89,7 +89,10 @@ namespace RimWorld
 
 		public override void NeedInterval()
 		{
-			this.CurLevel -= this.ChemicalFallPerTick * 150f;
+			if (!base.IsFrozen)
+			{
+				this.CurLevel -= this.ChemicalFallPerTick * 150f;
+			}
 		}
 
 		private void CategoryChanged()

@@ -19,7 +19,9 @@ namespace Verse
 
 		public GraphicData graphicData;
 
-		public GraphicRequest(Type graphicClass, string path, Shader shader, Vector2 drawSize, Color color, Color colorTwo, GraphicData graphicData)
+		public int renderQueue;
+
+		public GraphicRequest(Type graphicClass, string path, Shader shader, Vector2 drawSize, Color color, Color colorTwo, GraphicData graphicData, int renderQueue)
 		{
 			this.graphicClass = graphicClass;
 			this.path = path;
@@ -28,6 +30,7 @@ namespace Verse
 			this.color = color;
 			this.colorTwo = colorTwo;
 			this.graphicData = graphicData;
+			this.renderQueue = renderQueue;
 		}
 
 		public override int GetHashCode()
@@ -43,7 +46,8 @@ namespace Verse
 			seed = Gen.HashCombineStruct<Vector2>(seed, this.drawSize);
 			seed = Gen.HashCombineStruct<Color>(seed, this.color);
 			seed = Gen.HashCombineStruct<Color>(seed, this.colorTwo);
-			return Gen.HashCombine<GraphicData>(seed, this.graphicData);
+			seed = Gen.HashCombine<GraphicData>(seed, this.graphicData);
+			return Gen.HashCombine<int>(seed, this.renderQueue);
 		}
 
 		public override bool Equals(object obj)
@@ -53,7 +57,7 @@ namespace Verse
 
 		public bool Equals(GraphicRequest other)
 		{
-			return this.graphicClass == other.graphicClass && this.path == other.path && this.shader == other.shader && this.drawSize == other.drawSize && this.color == other.color && this.colorTwo == other.colorTwo && this.graphicData == other.graphicData;
+			return this.graphicClass == other.graphicClass && this.path == other.path && this.shader == other.shader && this.drawSize == other.drawSize && this.color == other.color && this.colorTwo == other.colorTwo && this.graphicData == other.graphicData && this.renderQueue == other.renderQueue;
 		}
 
 		public static bool operator ==(GraphicRequest lhs, GraphicRequest rhs)

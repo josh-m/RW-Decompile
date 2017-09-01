@@ -104,9 +104,9 @@ namespace Verse
 
 		public override void ExposeData()
 		{
-			Scribe_Values.LookValue<string>(ref this.firstInt, "first", null, false);
-			Scribe_Values.LookValue<string>(ref this.nickInt, "nick", null, false);
-			Scribe_Values.LookValue<string>(ref this.lastInt, "last", null, false);
+			Scribe_Values.Look<string>(ref this.firstInt, "first", null, false);
+			Scribe_Values.Look<string>(ref this.nickInt, "nick", null, false);
+			Scribe_Values.Look<string>(ref this.lastInt, "last", null, false);
 		}
 
 		public void ResolveMissingPieces(string overrideLastName = null)
@@ -137,9 +137,7 @@ namespace Verse
 				}
 				else
 				{
-					Rand.PushSeed();
-					Rand.Seed = Gen.HashCombine<string>(this.First.GetHashCode(), this.Last);
-					if (Rand.Value < 0.5f)
+					if (Rand.ValueSeeded(Gen.HashCombine<string>(this.First.GetHashCode(), this.Last)) < 0.5f)
 					{
 						this.nickInt = this.First;
 					}
@@ -147,7 +145,6 @@ namespace Verse
 					{
 						this.nickInt = this.Last;
 					}
-					Rand.PopSeed();
 					this.CapitalizeNick();
 				}
 			}

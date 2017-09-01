@@ -34,18 +34,18 @@ namespace Verse
 		[DebuggerHidden]
 		public static IEnumerable<KeyBindingDef> ImpliedKeyBindingDefs()
 		{
-			foreach (MainTabDef mainTab in from td in DefDatabase<MainTabDef>.AllDefs
+			foreach (MainButtonDef mainTab in from td in DefDatabase<MainButtonDef>.AllDefs
 			orderby td.order
 			select td)
 			{
-				if (mainTab.defaultToggleKey != KeyCode.None)
+				if (mainTab.defaultHotKey != KeyCode.None)
 				{
 					KeyBindingDef keyDef = new KeyBindingDef();
 					keyDef.label = "Toggle " + mainTab.label + " tab";
 					keyDef.defName = "MainTab_" + mainTab.defName;
 					keyDef.category = KeyBindingCategoryDefOf.MainTabs;
-					keyDef.defaultKeyCodeA = mainTab.defaultToggleKey;
-					mainTab.toggleHotKey = keyDef;
+					keyDef.defaultKeyCodeA = mainTab.defaultHotKey;
+					mainTab.hotKey = keyDef;
 					yield return keyDef;
 				}
 			}

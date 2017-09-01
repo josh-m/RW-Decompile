@@ -39,7 +39,7 @@ namespace Verse
 		{
 			this.botLeft = sectCoords * 17;
 			this.map = map;
-			foreach (Type current in typeof(SectionLayer).AllLeafSubclasses())
+			foreach (Type current in typeof(SectionLayer).AllSubclassesNonAbstract())
 			{
 				this.layers.Add((SectionLayer)Activator.CreateInstance(current, new object[]
 				{
@@ -48,14 +48,17 @@ namespace Verse
 			}
 		}
 
-		public void DrawSection(bool drawSunShadowsOnly)
+		public void DrawSection(SectionLayerPhaseDef phase, bool drawSunShadowsOnly)
 		{
 			int count = this.layers.Count;
 			for (int i = 0; i < count; i++)
 			{
-				if (!drawSunShadowsOnly || this.layers[i] is SectionLayer_SunShadows)
+				if (this.layers[i].Phase == phase)
 				{
-					this.layers[i].DrawLayer();
+					if (!drawSunShadowsOnly || this.layers[i] is SectionLayer_SunShadows)
+					{
+						this.layers[i].DrawLayer();
+					}
 				}
 			}
 			if (!drawSunShadowsOnly && DebugViewSettings.drawSectionEdges)

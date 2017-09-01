@@ -142,19 +142,15 @@ namespace RimWorld
 
 		public static bool ChildWantsNameOfAnyParent(Pawn child)
 		{
-			Rand.PushSeed();
-			Rand.Seed = child.thingIDNumber * 7;
-			bool result = Rand.Value < 0.99f;
-			Rand.PopSeed();
-			return result;
+			return Rand.ValueSeeded(child.thingIDNumber ^ 88271612) < 0.99f;
 		}
 
 		private static int NumberOfChildrenFemaleWantsEver(Pawn female)
 		{
-			Rand.PushSeed();
+			Rand.PushState();
 			Rand.Seed = female.thingIDNumber * 3;
 			int result = Rand.RangeInclusive(0, 3);
-			Rand.PopSeed();
+			Rand.PopState();
 			return result;
 		}
 

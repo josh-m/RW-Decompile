@@ -1,97 +1,197 @@
 using System;
 using System.Collections.Generic;
+using System.Text;
 
 namespace Verse
 {
-	internal static class LoadIDsWantedBank
+	public class LoadIDsWantedBank
 	{
 		private struct IdRecord
 		{
-			public string id;
+			public string targetLoadID;
 
-			public Type refeeType;
+			public Type targetType;
 
-			public IdRecord(string id, Type wanter)
+			public string pathRelToParent;
+
+			public IExposable parent;
+
+			public IdRecord(string targetLoadID, Type targetType, string pathRelToParent, IExposable parent)
 			{
-				this.id = id;
-				this.refeeType = wanter;
+				this.targetLoadID = targetLoadID;
+				this.targetType = targetType;
+				this.pathRelToParent = pathRelToParent;
+				this.parent = parent;
 			}
 		}
 
-		private static Queue<LoadIDsWantedBank.IdRecord> idsRead = new Queue<LoadIDsWantedBank.IdRecord>();
-
-		private static List<List<string>> idListsRead = new List<List<string>>();
-
-		private static int readMax = 0;
-
-		public static int IDCount
+		private struct IdListRecord
 		{
-			get
+			public List<string> targetLoadIDs;
+
+			public string pathRelToParent;
+
+			public IExposable parent;
+
+			public IdListRecord(List<string> targetLoadIDs, string pathRelToParent, IExposable parent)
 			{
-				return LoadIDsWantedBank.idsRead.Count;
+				this.targetLoadIDs = targetLoadIDs;
+				this.pathRelToParent = pathRelToParent;
+				this.parent = parent;
 			}
 		}
 
-		public static void ConfirmClear()
+		private List<LoadIDsWantedBank.IdRecord> idsRead = new List<LoadIDsWantedBank.IdRecord>();
+
+		private List<LoadIDsWantedBank.IdListRecord> idListsRead = new List<LoadIDsWantedBank.IdListRecord>();
+
+		public void ConfirmClear()
 		{
-			if (LoadIDsWantedBank.idListsRead.Count > 0 || LoadIDsWantedBank.idListsRead.Count > 0)
+			if (this.idsRead.Count > 0 || this.idListsRead.Count > 0)
 			{
-				Log.Error(string.Concat(new object[]
+				StringBuilder stringBuilder = new StringBuilder();
+				stringBuilder.AppendLine("Not all loadIDs which were read were consumed.");
+				if (this.idsRead.Count > 0)
 				{
-					"Not all loadIDs which were read were consumed. ",
-					LoadIDsWantedBank.idListsRead.Count,
-					" singles and ",
-					LoadIDsWantedBank.idListsRead.Count,
-					" lists remain."
-				}));
-				LoadIDsWantedBank.idsRead.Clear();
-				LoadIDsWantedBank.idListsRead.Clear();
-			}
-		}
-
-		public static void RegisterLoadIDReadFromXml(string targetLoadID, Type refeeType)
-		{
-			LoadIDsWantedBank.idsRead.Enqueue(new LoadIDsWantedBank.IdRecord(targetLoadID, refeeType));
-			if (LoadIDsWantedBank.idsRead.Count > LoadIDsWantedBank.readMax)
-			{
-				LoadIDsWantedBank.readMax = LoadIDsWantedBank.idsRead.Count;
-			}
-		}
-
-		public static void RegisterLoadIDListReadFromXml(List<string> targetLoadIDList)
-		{
-			LoadIDsWantedBank.idListsRead.Add(targetLoadIDList);
-		}
-
-		public static string GetNext(Type wantedType)
-		{
-			LoadIDsWantedBank.IdRecord idRecord = LoadIDsWantedBank.idsRead.Dequeue();
-			if (idRecord.refeeType != wantedType)
-			{
-				Log.Error(string.Concat(new object[]
+					stringBuilder.AppendLine("Singles:");
+					for (int i = 0; i < this.idsRead.Count; i++)
+					{
+						stringBuilder.AppendLine(string.Concat(new object[]
+						{
+							"  ",
+							this.idsRead[i].targetLoadID.ToStringSafe<string>(),
+							" of type ",
+							this.idsRead[i].targetType,
+							". pathRelToParent=",
+							this.idsRead[i].pathRelToParent,
+							", parent=",
+							this.idsRead[i].parent.ToStringSafe<IExposable>()
+						}));
+					}
+				}
+				if (this.idListsRead.Count > 0)
 				{
-					"Misaligned load ID request. Requests didn't match between the LoadingVars and ResolvingCrossRefs stage. Id ",
-					(idRecord.id == null) ? "null" : idRecord.id,
-					" was entered as a ",
-					idRecord.refeeType,
-					" but is being read as a ",
-					wantedType,
-					"."
-				}));
+					stringBuilder.AppendLine("Lists:");
+					for (int j = 0; j < this.idListsRead.Count; j++)
+					{
+						stringBuilder.AppendLine(string.Concat(new object[]
+						{
+							"  List with ",
+							(this.idListsRead[j].targetLoadIDs == null) ? 0 : this.idListsRead[j].targetLoadIDs.Count,
+							" elements. pathRelToParent=",
+							this.idListsRead[j].pathRelToParent,
+							", parent=",
+							this.idListsRead[j].parent.ToStringSafe<IExposable>()
+						}));
+					}
+				}
+				Log.Warning(stringBuilder.ToString().TrimEndNewlines());
 			}
-			return idRecord.id;
+			this.Clear();
 		}
 
-		public static List<string> GetNextList()
+		public void Clear()
 		{
-			if (!LoadIDsWantedBank.idListsRead.Any<List<string>>())
+			this.idsRead.Clear();
+			this.idListsRead.Clear();
+		}
+
+		public void RegisterLoadIDReadFromXml(string targetLoadID, Type targetType, string pathRelToParent, IExposable parent)
+		{
+			for (int i = 0; i < this.idsRead.Count; i++)
 			{
-				Log.Error("LoadIDsWantedBank: Could not get next list because there is none.");
-				return new List<string>();
+				if (this.idsRead[i].parent == parent && this.idsRead[i].pathRelToParent == pathRelToParent)
+				{
+					Log.Error(string.Concat(new string[]
+					{
+						"Tried to register the same load ID twice: ",
+						targetLoadID,
+						", pathRelToParent=",
+						pathRelToParent,
+						", parent=",
+						parent.ToStringSafe<IExposable>()
+					}));
+					return;
+				}
 			}
-			List<string> result = LoadIDsWantedBank.idListsRead[0];
-			LoadIDsWantedBank.idListsRead.RemoveAt(0);
-			return result;
+			this.idsRead.Add(new LoadIDsWantedBank.IdRecord(targetLoadID, targetType, pathRelToParent, parent));
+		}
+
+		public void RegisterLoadIDReadFromXml(string targetLoadID, Type targetType, string toAppendToPathRelToParent)
+		{
+			string text = Scribe.loader.curPathRelToParent;
+			if (!toAppendToPathRelToParent.NullOrEmpty())
+			{
+				text = text + '/' + toAppendToPathRelToParent;
+			}
+			this.RegisterLoadIDReadFromXml(targetLoadID, targetType, text, Scribe.loader.curParent);
+		}
+
+		public void RegisterLoadIDListReadFromXml(List<string> targetLoadIDList, string pathRelToParent, IExposable parent)
+		{
+			for (int i = 0; i < this.idListsRead.Count; i++)
+			{
+				if (this.idListsRead[i].parent == parent && this.idListsRead[i].pathRelToParent == pathRelToParent)
+				{
+					Log.Error("Tried to register the same list of load IDs twice. pathRelToParent=" + pathRelToParent + ", parent=" + parent.ToStringSafe<IExposable>());
+					return;
+				}
+			}
+			this.idListsRead.Add(new LoadIDsWantedBank.IdListRecord(targetLoadIDList, pathRelToParent, parent));
+		}
+
+		public void RegisterLoadIDListReadFromXml(List<string> targetLoadIDList, string toAppendToPathRelToParent)
+		{
+			string text = Scribe.loader.curPathRelToParent;
+			if (!toAppendToPathRelToParent.NullOrEmpty())
+			{
+				text = text + '/' + toAppendToPathRelToParent;
+			}
+			this.RegisterLoadIDListReadFromXml(targetLoadIDList, text, Scribe.loader.curParent);
+		}
+
+		public string Take<T>(string pathRelToParent, IExposable parent)
+		{
+			for (int i = 0; i < this.idsRead.Count; i++)
+			{
+				if (this.idsRead[i].parent == parent && this.idsRead[i].pathRelToParent == pathRelToParent)
+				{
+					string targetLoadID = this.idsRead[i].targetLoadID;
+					if (typeof(T) != this.idsRead[i].targetType)
+					{
+						Log.Error(string.Concat(new object[]
+						{
+							"Trying to get load ID of object of type ",
+							typeof(T),
+							", but it was registered as ",
+							this.idsRead[i].targetType,
+							". pathRelToParent=",
+							pathRelToParent,
+							", parent=",
+							parent.ToStringSafe<IExposable>()
+						}));
+					}
+					this.idsRead.RemoveAt(i);
+					return targetLoadID;
+				}
+			}
+			Log.Error("Could not get load ID. We're asking for something which was never added during LoadingVars. pathRelToParent=" + pathRelToParent + ", parent=" + parent.ToStringSafe<IExposable>());
+			return null;
+		}
+
+		public List<string> TakeList(string pathRelToParent, IExposable parent)
+		{
+			for (int i = 0; i < this.idListsRead.Count; i++)
+			{
+				if (this.idListsRead[i].parent == parent && this.idListsRead[i].pathRelToParent == pathRelToParent)
+				{
+					List<string> targetLoadIDs = this.idListsRead[i].targetLoadIDs;
+					this.idListsRead.RemoveAt(i);
+					return targetLoadIDs;
+				}
+			}
+			Log.Error("Could not get load IDs list. We're asking for something which was never added during LoadingVars. pathRelToParent=" + pathRelToParent + ", parent=" + parent.ToStringSafe<IExposable>());
+			return new List<string>();
 		}
 	}
 }

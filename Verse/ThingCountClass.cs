@@ -26,7 +26,7 @@ namespace Verse
 				Log.Error("Misconfigured ThingCount: " + xmlRoot.OuterXml);
 				return;
 			}
-			CrossRefLoader.RegisterObjectWantsCrossRef(this, "thingDef", xmlRoot.Name);
+			DirectXmlCrossRefLoader.RegisterObjectWantsCrossRef(this, "thingDef", xmlRoot.Name);
 			this.count = (int)ParseHelper.FromString(xmlRoot.FirstChild.Value, typeof(int));
 		}
 

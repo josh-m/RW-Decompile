@@ -1,5 +1,7 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using UnityEngine;
 using Verse;
 
@@ -21,7 +23,7 @@ namespace RimWorld.Planet
 			get;
 		}
 
-		protected override bool ShouldRegenerate
+		public override bool ShouldRegenerate
 		{
 			get
 			{
@@ -29,26 +31,30 @@ namespace RimWorld.Planet
 			}
 		}
 
-		protected override void Regenerate()
+		[DebuggerHidden]
+		public override IEnumerable Regenerate()
 		{
-			base.Regenerate();
+			foreach (object result in base.Regenerate())
+			{
+				yield return result;
+			}
 			int tile = this.Tile;
 			if (tile >= 0)
 			{
 				LayerSubMesh subMesh = base.GetSubMesh(this.Material);
 				Find.WorldGrid.GetTileVertices(tile, this.verts);
-				int count = subMesh.verts.Count;
+				int startVertIndex = subMesh.verts.Count;
 				int i = 0;
-				int count2 = this.verts.Count;
-				while (i < count2)
+				int count = this.verts.Count;
+				while (i < count)
 				{
-					subMesh.verts.Add(this.verts[i] + this.verts[i].normalized * 0.005f);
-					subMesh.uvs.Add((GenGeo.RegularPolygonVertexPosition(count2, i) + Vector2.one) / 2f);
-					if (i < count2 - 2)
+					subMesh.verts.Add(this.verts[i] + this.verts[i].normalized * 0.012f);
+					subMesh.uvs.Add((GenGeo.RegularPolygonVertexPosition(count, i) + Vector2.one) / 2f);
+					if (i < count - 2)
 					{
-						subMesh.tris.Add(count + i + 2);
-						subMesh.tris.Add(count + i + 1);
-						subMesh.tris.Add(count);
+						subMesh.tris.Add(startVertIndex + i + 2);
+						subMesh.tris.Add(startVertIndex + i + 1);
+						subMesh.tris.Add(startVertIndex);
 					}
 					i++;
 				}

@@ -9,7 +9,7 @@ namespace RimWorld
 		StartingImportant,
 		PlayerPawnFilter,
 		PlayerPawnModifier,
-		MapCondition,
+		GameCondition,
 		Rule,
 		StartingItem,
 		WorldThing,

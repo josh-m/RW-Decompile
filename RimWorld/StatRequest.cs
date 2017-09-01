@@ -11,6 +11,8 @@ namespace RimWorld
 
 		private ThingDef stuffDefInt;
 
+		private QualityCategory qualityCategoryInt;
+
 		public Thing Thing
 		{
 			get
@@ -32,6 +34,14 @@ namespace RimWorld
 			get
 			{
 				return this.stuffDefInt;
+			}
+		}
+
+		public QualityCategory QualityCategory
+		{
+			get
+			{
+				return this.qualityCategoryInt;
 			}
 		}
 
@@ -58,15 +68,15 @@ namespace RimWorld
 				Log.Error("StatRequest for null thing.");
 				return StatRequest.ForEmpty();
 			}
-			return new StatRequest
-			{
-				thingInt = thing,
-				defInt = thing.def,
-				stuffDefInt = thing.Stuff
-			};
+			StatRequest result = default(StatRequest);
+			result.thingInt = thing;
+			result.defInt = thing.def;
+			result.stuffDefInt = thing.Stuff;
+			thing.TryGetQuality(out result.qualityCategoryInt);
+			return result;
 		}
 
-		public static StatRequest For(BuildableDef def, ThingDef stuffDef)
+		public static StatRequest For(BuildableDef def, ThingDef stuffDef, QualityCategory quality = QualityCategory.Normal)
 		{
 			if (def == null)
 			{
@@ -77,7 +87,8 @@ namespace RimWorld
 			{
 				thingInt = null,
 				defInt = def,
-				stuffDefInt = stuffDef
+				stuffDefInt = stuffDef,
+				qualityCategoryInt = quality
 			};
 		}
 
@@ -87,7 +98,8 @@ namespace RimWorld
 			{
 				thingInt = null,
 				defInt = null,
-				stuffDefInt = null
+				stuffDefInt = null,
+				qualityCategoryInt = QualityCategory.Normal
 			};
 		}
 

@@ -38,11 +38,11 @@ namespace Verse
 
 		public void PreDrawPosCalculation()
 		{
-			if (this.lastDrawFrame == Time.frameCount)
+			if (this.lastDrawFrame == RealTime.frameCount)
 			{
 				return;
 			}
-			if (this.lastDrawFrame < Time.frameCount - 1)
+			if (this.lastDrawFrame < RealTime.frameCount - 1)
 			{
 				this.ResetTweenedPosToRoot();
 			}
@@ -53,14 +53,14 @@ namespace Verse
 				if (tickRateMultiplier < 5f)
 				{
 					Vector3 a = this.TweenedPosRoot() - this.tweenedPos;
-					this.tweenedPos += a * 0.09f * (Time.deltaTime * 60f * tickRateMultiplier);
+					this.tweenedPos += a * 0.09f * (RealTime.deltaTime * 60f * tickRateMultiplier);
 				}
 				else
 				{
 					this.tweenedPos = this.TweenedPosRoot();
 				}
 			}
-			this.lastDrawFrame = Time.frameCount;
+			this.lastDrawFrame = RealTime.frameCount;
 		}
 
 		public void ResetTweenedPosToRoot()

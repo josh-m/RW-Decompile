@@ -24,7 +24,7 @@ namespace RimWorld
 			bool hasBed = this.pawn.CurJob.GetTarget(TargetIndex.A).HasThing;
 			if (hasBed)
 			{
-				yield return Toils_Reserve.Reserve(TargetIndex.A, this.Bed.SleepingSlotsCount);
+				yield return Toils_Reserve.Reserve(TargetIndex.A, this.Bed.SleepingSlotsCount, 0, null);
 				yield return Toils_Bed.ClaimBedIfNonMedical(TargetIndex.A, TargetIndex.None);
 				yield return Toils_Bed.GotoBed(TargetIndex.A);
 			}

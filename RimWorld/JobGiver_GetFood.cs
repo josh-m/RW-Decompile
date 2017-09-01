@@ -39,6 +39,11 @@ namespace RimWorld
 
 		protected override Job TryGiveJob(Pawn pawn)
 		{
+			Need_Food food = pawn.needs.food;
+			if (food == null || food.CurCategory < this.minCategory)
+			{
+				return null;
+			}
 			bool flag;
 			if (pawn.RaceProps.Animal)
 			{
@@ -46,14 +51,14 @@ namespace RimWorld
 			}
 			else
 			{
-				Hediff firstHediffOfDef = pawn.health.hediffSet.GetFirstHediffOfDef(HediffDefOf.Malnutrition);
+				Hediff firstHediffOfDef = pawn.health.hediffSet.GetFirstHediffOfDef(HediffDefOf.Malnutrition, false);
 				flag = (firstHediffOfDef != null && firstHediffOfDef.Severity > 0.4f);
 			}
 			bool desperate = pawn.needs.food.CurCategory == HungerCategory.Starving;
 			bool allowCorpse = flag;
 			Thing thing;
 			ThingDef def;
-			if (!FoodUtility.TryFindBestFoodSourceFor(pawn, pawn, desperate, out thing, out def, true, true, false, allowCorpse))
+			if (!FoodUtility.TryFindBestFoodSourceFor(pawn, pawn, desperate, out thing, out def, true, true, false, allowCorpse, false))
 			{
 				return null;
 			}
@@ -78,7 +83,7 @@ namespace RimWorld
 						return job;
 					}
 				}
-				thing = FoodUtility.BestFoodSourceOnMap(pawn, pawn, desperate, FoodPreferability.MealLavish, false, false, false, false, false, false);
+				thing = FoodUtility.BestFoodSourceOnMap(pawn, pawn, desperate, FoodPreferability.MealLavish, false, !pawn.IsTeetotaler(), false, false, false, false, false);
 				if (thing == null)
 				{
 					return null;

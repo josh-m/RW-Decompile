@@ -10,38 +10,43 @@ namespace RimWorld
 
 		private CompPowerTrader powerComp;
 
-		private float progressOnLump;
+		private float lumpProgress;
+
+		private float lumpYieldPct;
 
 		public float ProgressToNextLumpPercent
 		{
 			get
 			{
-				return this.progressOnLump / 14000f;
+				return this.lumpProgress / 14000f;
 			}
 		}
 
-		public override void PostSpawnSetup()
+		public override void PostSpawnSetup(bool respawningAfterLoad)
 		{
 			this.powerComp = this.parent.TryGetComp<CompPowerTrader>();
 		}
 
 		public override void PostExposeData()
 		{
-			Scribe_Values.LookValue<float>(ref this.progressOnLump, "progressOnLump", 0f, false);
+			Scribe_Values.Look<float>(ref this.lumpProgress, "lumpProgress", 0f, false);
+			Scribe_Values.Look<float>(ref this.lumpYieldPct, "lumpYieldPct", 0f, false);
 		}
 
 		public void DrillWorkDone(Pawn driller)
 		{
 			float statValue = driller.GetStatValue(StatDefOf.MiningSpeed, true);
-			this.progressOnLump += statValue;
-			if (this.progressOnLump > 14000f)
+			this.lumpProgress += statValue;
+			this.lumpYieldPct += statValue * driller.GetStatValue(StatDefOf.MiningYield, true) / 14000f;
+			if (this.lumpProgress > 14000f)
 			{
-				this.ProduceLump();
-				this.progressOnLump = 0f;
+				this.TryProduceLump(this.lumpYieldPct);
+				this.lumpProgress = 0f;
+				this.lumpYieldPct = 0f;
 			}
 		}
 
-		private void ProduceLump()
+		private void TryProduceLump(float yieldPct)
 		{
 			ThingDef thingDef;
 			int num;
@@ -55,12 +60,15 @@ namespace RimWorld
 					thingDef.stackLimit
 				});
 				this.parent.Map.deepResourceGrid.SetAt(c, thingDef, num - num2);
+				int stackCount = Mathf.Max(1, GenMath.RoundRandom((float)num2 * yieldPct));
 				Thing thing = ThingMaker.MakeThing(thingDef, null);
-				thing.stackCount = num2;
+				thing.stackCount = stackCount;
 				GenPlace.TryPlaceThing(thing, this.parent.InteractionCell, this.parent.Map, ThingPlaceMode.Near, null);
-				return;
 			}
-			Log.Error("Drill tried to ProduceLump but couldn't.");
+			else
+			{
+				Log.Error("Drill tried to ProduceLump but couldn't.");
+			}
 		}
 
 		public bool TryGetNextResource(out ThingDef resDef, out int countPresent, out IntVec3 cell)
@@ -114,7 +122,7 @@ namespace RimWorld
 					"\n",
 					"ProgressToNextLump".Translate(),
 					": ",
-					this.ProgressToNextLumpPercent.ToStringPercent()
+					this.ProgressToNextLumpPercent.ToStringPercent("F0")
 				});
 			}
 			return "ResourceBelow".Translate() + ": " + "NothingLower".Translate();

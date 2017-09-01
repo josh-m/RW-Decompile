@@ -25,20 +25,22 @@ namespace RimWorld
 				num += BeautyUtility.CellBeauty(BeautyUtility.beautyRelevantCells[i], map, BeautyUtility.tempCountedThings);
 				num2++;
 			}
-			return num / (float)num2;
+			num /= (float)num2;
+			BeautyUtility.tempCountedThings.Clear();
+			return num;
 		}
 
 		public static void FillBeautyRelevantCells(IntVec3 root, Map map)
 		{
 			BeautyUtility.beautyRelevantCells.Clear();
-			Room room = RoomQuery.RoomAt(root, map);
+			Room room = root.GetRoom(map, RegionType.Set_Passable);
 			if (room == null)
 			{
 				return;
 			}
 			BeautyUtility.visibleRooms.Clear();
 			BeautyUtility.visibleRooms.Add(room);
-			if (room.Regions.Count == 1 && room.Regions[0].portal != null)
+			if (room.Regions.Count == 1 && room.Regions[0].type == RegionType.Portal)
 			{
 				foreach (Region current in room.Regions[0].Neighbors)
 				{
@@ -53,14 +55,14 @@ namespace RimWorld
 				IntVec3 intVec = root + GenRadial.RadialPattern[i];
 				if (intVec.InBounds(map) && !intVec.Fogged(map))
 				{
-					Room item = RoomQuery.RoomAt(intVec, map);
-					if (!BeautyUtility.visibleRooms.Contains(item))
+					Room room2 = intVec.GetRoom(map, RegionType.Set_Passable);
+					if (!BeautyUtility.visibleRooms.Contains(room2))
 					{
 						bool flag = false;
 						for (int j = 0; j < 8; j++)
 						{
 							IntVec3 loc = intVec + GenAdj.AdjacentCells[j];
-							if (BeautyUtility.visibleRooms.Contains(loc.GetRoom(map)))
+							if (BeautyUtility.visibleRooms.Contains(loc.GetRoom(map, RegionType.Set_Passable)))
 							{
 								flag = true;
 								break;
@@ -68,13 +70,14 @@ namespace RimWorld
 						}
 						if (!flag)
 						{
-							goto IL_17B;
+							goto IL_17F;
 						}
 					}
 					BeautyUtility.beautyRelevantCells.Add(intVec);
 				}
-				IL_17B:;
+				IL_17F:;
 			}
+			BeautyUtility.visibleRooms.Clear();
 		}
 
 		public static float CellBeauty(IntVec3 c, Map map, List<Thing> countedThings = null)
@@ -89,26 +92,22 @@ namespace RimWorld
 				Thing thing = list[i];
 				if (countedThings == null)
 				{
-					goto IL_7C;
+					goto IL_4D;
 				}
-				bool flag2 = false;
-				for (int j = 0; j < countedThings.Count; j++)
-				{
-					if (thing == countedThings[j])
-					{
-						flag2 = true;
-						break;
-					}
-				}
-				if (!flag2)
+				if (!countedThings.Contains(thing))
 				{
 					countedThings.Add(thing);
-					goto IL_7C;
+					goto IL_4D;
 				}
-				IL_D5:
+				IL_CC:
 				i++;
 				continue;
-				IL_7C:
+				IL_4D:
+				SlotGroup slotGroup = thing.GetSlotGroup();
+				if (slotGroup != null && slotGroup.parent.IgnoreStoredThingsBeauty)
+				{
+					goto IL_CC;
+				}
 				float num3 = thing.GetStatValue(StatDefOf.Beauty, true);
 				if (thing is Filth && !map.roofGrid.Roofed(c))
 				{
@@ -118,10 +117,10 @@ namespace RimWorld
 				{
 					flag = true;
 					num2 += num3;
-					goto IL_D5;
+					goto IL_CC;
 				}
 				num += num3;
-				goto IL_D5;
+				goto IL_CC;
 			}
 			if (flag)
 			{

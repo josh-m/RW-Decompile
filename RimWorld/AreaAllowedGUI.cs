@@ -40,6 +40,7 @@ namespace RimWorld
 				}
 			}
 			Text.WordWrap = true;
+			Text.Font = GameFont.Small;
 		}
 
 		private static void DoAreaSelector(Rect rect, Pawn p, Area area)
@@ -65,9 +66,10 @@ namespace RimWorld
 				if (Input.GetMouseButton(0) && p.playerSettings.AreaRestriction != area)
 				{
 					p.playerSettings.AreaRestriction = area;
-					SoundDefOf.DesignateDragStandardChanged.PlayOneShotOnCamera();
+					SoundDefOf.DesignateDragStandardChanged.PlayOneShotOnCamera(null);
 				}
 			}
+			Text.Anchor = TextAnchor.UpperLeft;
 			TooltipHandler.TipRegion(rect, text);
 		}
 	}

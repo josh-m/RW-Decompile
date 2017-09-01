@@ -27,8 +27,8 @@ namespace Verse.AI
 
 		public static bool InSameRoom(IntVec3 locA, IntVec3 locB, Map map)
 		{
-			Room room = locA.GetRoom(map);
-			return room == null || room == locB.GetRoom(map);
+			Room room = locA.GetRoom(map, RegionType.Set_All);
+			return room == null || room == locB.GetRoom(map, RegionType.Set_All);
 		}
 	}
 }

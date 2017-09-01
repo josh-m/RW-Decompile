@@ -24,9 +24,9 @@ namespace RimWorld
 
 		private static readonly Vector2 FuelBarSize = new Vector2(1f, 0.2f);
 
-		private static readonly Material FuelBarFilledMat = SolidColorMaterials.SimpleSolidColorMaterial(new Color(0.6f, 0.56f, 0.13f));
+		private static readonly Material FuelBarFilledMat = SolidColorMaterials.SimpleSolidColorMaterial(new Color(0.6f, 0.56f, 0.13f), false);
 
-		private static readonly Material FuelBarUnfilledMat = SolidColorMaterials.SimpleSolidColorMaterial(new Color(0.3f, 0.3f, 0.3f));
+		private static readonly Material FuelBarUnfilledMat = SolidColorMaterials.SimpleSolidColorMaterial(new Color(0.3f, 0.3f, 0.3f), false);
 
 		public float TargetFuelLevel
 		{
@@ -125,8 +125,8 @@ namespace RimWorld
 		public override void PostExposeData()
 		{
 			base.PostExposeData();
-			Scribe_Values.LookValue<float>(ref this.fuel, "fuel", 0f, false);
-			Scribe_Values.LookValue<float>(ref this.configuredTargetFuelLevel, "configuredTargetFuelLevel", -1f, false);
+			Scribe_Values.Look<float>(ref this.fuel, "fuel", 0f, false);
+			Scribe_Values.Look<float>(ref this.configuredTargetFuelLevel, "configuredTargetFuelLevel", -1f, false);
 		}
 
 		public override void PostDraw()
@@ -183,7 +183,7 @@ namespace RimWorld
 			if (!this.Props.consumeFuelOnlyWhenUsed && this.HasFuel)
 			{
 				int numTicks = (int)(this.fuel / this.Props.fuelConsumptionRate * 60000f);
-				text = text + " (" + numTicks.ToStringTicksToPeriod(true) + ")";
+				text = text + " (" + numTicks.ToStringTicksToPeriod(true, false, true) + ")";
 			}
 			if (this.Props.targetFuelLevelConfigurable)
 			{
@@ -228,12 +228,17 @@ namespace RimWorld
 
 		public void Refuel(Thing fuelThing)
 		{
-			this.fuel += (float)fuelThing.stackCount;
+			this.Refuel((float)fuelThing.stackCount);
+			fuelThing.Destroy(DestroyMode.Vanish);
+		}
+
+		public void Refuel(float amount)
+		{
+			this.fuel += amount;
 			if (this.fuel > this.Props.fuelCapacity)
 			{
 				this.fuel = this.Props.fuelCapacity;
 			}
-			fuelThing.Destroy(DestroyMode.Vanish);
 			this.parent.BroadcastCompSignal("Refueled");
 		}
 

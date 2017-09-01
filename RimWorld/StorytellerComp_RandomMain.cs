@@ -19,12 +19,12 @@ namespace RimWorld
 		[DebuggerHidden]
 		public override IEnumerable<FiringIncident> MakeIntervalIncidents(IIncidentTarget target)
 		{
-			if (Rand.MTBEventOccurs(this.Props.incidentMtb, 60000f, 1000f))
+			if (Rand.MTBEventOccurs(this.Props.mtbDays, 60000f, 1000f))
 			{
 				List<IncidentCategory> triedCategories = new List<IncidentCategory>();
 				while (triedCategories.Count < this.Props.categoryWeights.Count)
 				{
-					IncidentCategory category = this.DecideCategory(triedCategories);
+					IncidentCategory category = this.DecideCategory(target, triedCategories);
 					triedCategories.Add(category);
 					IncidentParms parms = this.GenerateParms(category, target);
 					IEnumerable<IncidentDef> options = from d in DefDatabase<IncidentDef>.AllDefs
@@ -33,7 +33,7 @@ namespace RimWorld
 					if (options.Any<IncidentDef>())
 					{
 						IncidentDef incDef;
-						if (options.TryRandomElementByWeight(new Func<IncidentDef, float>(this.IncidentChanceAdjustedForPopulation), out incDef))
+						if (options.TryRandomElementByWeight(new Func<IncidentDef, float>(base.IncidentChanceFinal), out incDef))
 						{
 							yield return new FiringIncident(incDef, this, this.GenerateParms(incDef.category, target));
 							break;
@@ -44,29 +44,11 @@ namespace RimWorld
 			}
 		}
 
-		protected override float IncidentChanceAdjustedForPopulation(IncidentDef def)
-		{
-			float num = 1f;
-			if (def.populationEffect >= IncidentPopulationEffect.Increase)
-			{
-				num = Find.Storyteller.intenderPopulation.PopulationIntent;
-			}
-			else if (def.populationEffect <= IncidentPopulationEffect.Decrease)
-			{
-				num = -Find.Storyteller.intenderPopulation.PopulationIntent;
-			}
-			if (num < 0.2f)
-			{
-				num = 0.2f;
-			}
-			return def.Worker.AdjustedChance * num;
-		}
-
-		private IncidentCategory DecideCategory(List<IncidentCategory> skipCategories)
+		private IncidentCategory DecideCategory(IIncidentTarget target, List<IncidentCategory> skipCategories)
 		{
 			if (!skipCategories.Contains(IncidentCategory.ThreatBig))
 			{
-				int num = Find.TickManager.TicksGame - Find.StoryWatcher.storyState.LastThreatBigTick;
+				int num = Find.TickManager.TicksGame - target.StoryState.LastThreatBigTick;
 				if ((float)num > 60000f * this.Props.maxThreatBigIntervalDays)
 				{
 					return IncidentCategory.ThreatBig;

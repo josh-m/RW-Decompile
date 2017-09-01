@@ -45,29 +45,19 @@ namespace RimWorld
 		{
 		}
 
-		public virtual IEnumerable<Thing> PotentialWorkThingsGlobal(Pawn Pawn)
+		public virtual IEnumerable<Thing> PotentialWorkThingsGlobal(Pawn pawn)
 		{
 			return null;
 		}
 
-		public virtual bool HasJobOnThing(Pawn pawn, Thing t)
+		public virtual bool HasJobOnThing(Pawn pawn, Thing t, bool forced = false)
 		{
-			return this.JobOnThing(pawn, t) != null;
+			return this.JobOnThing(pawn, t, forced) != null;
 		}
 
-		public virtual bool HasJobOnThingForced(Pawn pawn, Thing t)
-		{
-			return this.HasJobOnThing(pawn, t);
-		}
-
-		public virtual Job JobOnThing(Pawn pawn, Thing t)
+		public virtual Job JobOnThing(Pawn pawn, Thing t, bool forced = false)
 		{
 			return null;
-		}
-
-		public virtual Job JobOnThingForced(Pawn pawn, Thing t)
-		{
-			return this.JobOnThing(pawn, t);
 		}
 
 		public virtual bool HasJobOnCell(Pawn pawn, IntVec3 c)

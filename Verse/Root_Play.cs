@@ -48,7 +48,7 @@ namespace Verse
 			try
 			{
 				ShipCountdown.ShipCountdownUpdate();
-				Current.Game.Update();
+				Current.Game.UpdatePlay();
 				this.musicManagerPlay.MusicUpdate();
 			}
 			catch (Exception e)
@@ -67,8 +67,7 @@ namespace Verse
 			Find.Scenario.PreConfigure();
 			Current.Game.storyteller = new Storyteller(StorytellerDefOf.Cassandra, DifficultyDefOf.Hard);
 			Current.Game.World = WorldGenerator.GenerateWorld(0.05f, GenText.RandomSeedString(), OverallRainfall.Normal, OverallTemperature.Normal);
-			Rand.RandomizeSeedFromTime();
-			Find.Scenario.PostWorldLoad();
+			Rand.RandomizeStateFromTime();
 			Find.GameInitData.ChooseRandomStartingTile();
 			Find.GameInitData.mapSize = 150;
 			Find.GameInitData.PrepForMapGen();

@@ -4,13 +4,15 @@ namespace Verse
 {
 	public class HealthTunings
 	{
+		public const int StandardInterval = 60;
+
 		public const float SmallPawnFragmentedDamageHealthScaleThreshold = 0.5f;
 
 		public const int SmallPawnFragmentedDamageMinimumDamageAmount = 10;
 
 		public const float MinBleedingRateToBleed = 0.1f;
 
-		public const float BleedSeverityRecoveryPerInterval = 0.02f;
+		public const float BleedSeverityRecoveryPerInterval = 0.00033333333f;
 
 		public const float BloodFilthDropChanceFactorStanding = 0.008f;
 
@@ -20,11 +22,15 @@ namespace Verse
 
 		public const int TicksAfterMissingBodyPartToStopBeingFresh = 90000;
 
+		public const float DefaultPainShockThreshold = 0.8f;
+
 		public const int InjuryHealInterval = 600;
 
 		public const float InjuryHealPerDay_Untended = 8f;
 
 		public const float InjuryHealPerDay_Tended = 22f;
+
+		public const float InjuryHealPerDay_Laying = 4f;
 
 		public const int InjurySeverityTendedPerMedicine = 20;
 
@@ -36,7 +42,7 @@ namespace Verse
 
 		public const float MinDamagePartPctForInfection = 0.2f;
 
-		public const float AnimalsInfectionChanceFactor = 0.15f;
+		public const float AnimalsInfectionChanceFactor = 0.2f;
 
 		public const float HypothermiaGrowthPerDegreeUnder = 6.45E-05f;
 
@@ -74,8 +80,14 @@ namespace Verse
 
 		public const float DeathOnDownedChance_NonColonyAnimal = 0.47f;
 
+		public const float TendPriority_LifeThreateningDisease = 1f;
+
+		public const float TendPriority_PerBleedRate = 1.5f;
+
+		public const float TendPriority_DiseaseSeverityDecreasesWhenTended = 0.025f;
+
 		public static float ChanceToAdditionallyDamageInnerSolidPart = 0.2f;
 
-		public static readonly IntRange InfectionDelayRange = new IntRange(30000, 60000);
+		public static readonly IntRange InfectionDelayRange = new IntRange(15000, 45000);
 	}
 }

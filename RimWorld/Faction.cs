@@ -9,7 +9,7 @@ using Verse.AI.Group;
 
 namespace RimWorld
 {
-	public class Faction : ICommunicable, ILoadReferenceable, IExposable
+	public class Faction : ICommunicable, IExposable, ILoadReferenceable
 	{
 		private const float InitialHostileThreshold = -40f;
 
@@ -20,6 +20,10 @@ namespace RimWorld
 		public const float GoodwillScale = 100f;
 
 		private const float GoodwillLossPerDamage = 1.3f;
+
+		private const float GoodwillLossFractionOnCrushed = 0.5f;
+
+		private const float GoodwillLossFractionOnNeutralDeath = 0.1f;
 
 		public FactionDef def;
 
@@ -56,6 +60,8 @@ namespace RimWorld
 		private List<Map> avoidGridsSmartKeysWorkingList;
 
 		private List<ByteGrid> avoidGridsSmartValuesWorkingList;
+
+		private static List<PawnKindDef> allPawnKinds = new List<PawnKindDef>();
 
 		public string Name
 		{
@@ -182,23 +188,23 @@ namespace RimWorld
 
 		public void ExposeData()
 		{
-			Scribe_References.LookReference<Pawn>(ref this.leader, "leader", false);
-			Scribe_Collections.LookDictionary<Map, ByteGrid>(ref this.avoidGridsBasic, "avoidGridsBasic", LookMode.Reference, LookMode.Deep, ref this.avoidGridsBasicKeysWorkingList, ref this.avoidGridsBasicValuesWorkingList);
-			Scribe_Collections.LookDictionary<Map, ByteGrid>(ref this.avoidGridsSmart, "avoidGridsSmart", LookMode.Reference, LookMode.Deep, ref this.avoidGridsSmartKeysWorkingList, ref this.avoidGridsSmartValuesWorkingList);
-			Scribe_Defs.LookDef<FactionDef>(ref this.def, "def");
-			Scribe_Values.LookValue<string>(ref this.name, "name", null, false);
-			Scribe_Values.LookValue<int>(ref this.loadID, "loadID", 0, false);
-			Scribe_Values.LookValue<int>(ref this.randomKey, "randomKey", 0, false);
-			Scribe_Values.LookValue<float>(ref this.colorFromSpectrum, "colorFromSpectrum", 0f, false);
-			Scribe_Collections.LookList<FactionRelation>(ref this.relations, "relations", LookMode.Deep, new object[0]);
-			Scribe_Deep.LookDeep<FactionTacticalMemory>(ref this.tacticalMemoryInt, "tacticalMemory", new object[0]);
-			Scribe_Deep.LookDeep<KidnappedPawnsTracker>(ref this.kidnapped, "kidnapped", new object[]
+			Scribe_References.Look<Pawn>(ref this.leader, "leader", false);
+			Scribe_Collections.Look<Map, ByteGrid>(ref this.avoidGridsBasic, "avoidGridsBasic", LookMode.Reference, LookMode.Deep, ref this.avoidGridsBasicKeysWorkingList, ref this.avoidGridsBasicValuesWorkingList);
+			Scribe_Collections.Look<Map, ByteGrid>(ref this.avoidGridsSmart, "avoidGridsSmart", LookMode.Reference, LookMode.Deep, ref this.avoidGridsSmartKeysWorkingList, ref this.avoidGridsSmartValuesWorkingList);
+			Scribe_Defs.Look<FactionDef>(ref this.def, "def");
+			Scribe_Values.Look<string>(ref this.name, "name", null, false);
+			Scribe_Values.Look<int>(ref this.loadID, "loadID", 0, false);
+			Scribe_Values.Look<int>(ref this.randomKey, "randomKey", 0, false);
+			Scribe_Values.Look<float>(ref this.colorFromSpectrum, "colorFromSpectrum", 0f, false);
+			Scribe_Collections.Look<FactionRelation>(ref this.relations, "relations", LookMode.Deep, new object[0]);
+			Scribe_Deep.Look<FactionTacticalMemory>(ref this.tacticalMemoryInt, "tacticalMemory", new object[0]);
+			Scribe_Deep.Look<KidnappedPawnsTracker>(ref this.kidnapped, "kidnapped", new object[]
 			{
 				this
 			});
-			Scribe_Collections.LookList<PredatorThreat>(ref this.predatorThreats, "predatorThreats", LookMode.Deep, new object[0]);
-			Scribe_Values.LookValue<bool>(ref this.defeated, "defeated", false, false);
-			Scribe_Values.LookValue<int>(ref this.lastTraderRequestTick, "lastTraderRequestTick", -9999999, false);
+			Scribe_Collections.Look<PredatorThreat>(ref this.predatorThreats, "predatorThreats", LookMode.Deep, new object[0]);
+			Scribe_Values.Look<bool>(ref this.defeated, "defeated", false, false);
+			Scribe_Values.Look<int>(ref this.lastTraderRequestTick, "lastTraderRequestTick", -9999999, false);
 		}
 
 		public void FactionTick()
@@ -315,6 +321,29 @@ namespace RimWorld
 			other.relations.Add(factionRelation2);
 		}
 
+		public PawnKindDef RandomPawnKind()
+		{
+			Faction.allPawnKinds.Clear();
+			if (this.def.pawnGroupMakers != null)
+			{
+				for (int i = 0; i < this.def.pawnGroupMakers.Count; i++)
+				{
+					List<PawnGenOption> options = this.def.pawnGroupMakers[i].options;
+					for (int j = 0; j < options.Count; j++)
+					{
+						Faction.allPawnKinds.Add(options[j].kind);
+					}
+				}
+			}
+			if (!Faction.allPawnKinds.Any<PawnKindDef>())
+			{
+				return this.def.basicMemberKind;
+			}
+			PawnKindDef result = Faction.allPawnKinds.RandomElement<PawnKindDef>();
+			Faction.allPawnKinds.Clear();
+			return result;
+		}
+
 		public FactionRelation RelationWith(Faction other, bool allowNull = false)
 		{
 			if (other == this)
@@ -331,12 +360,12 @@ namespace RimWorld
 			}
 			if (!allowNull)
 			{
-				Log.Error(string.Concat(new string[]
+				Log.Error(string.Concat(new object[]
 				{
 					"Faction ",
 					this.name,
 					" has null relation with ",
-					this.name,
+					other,
 					". Returning dummy relation."
 				}));
 				return new FactionRelation();
@@ -349,21 +378,22 @@ namespace RimWorld
 			return this.RelationWith(other, false).goodwill;
 		}
 
-		public void AffectGoodwillWith(Faction other, float goodwillChange)
+		public bool AffectGoodwillWith(Faction other, float goodwillChange)
 		{
 			if (this.def.hidden || other.def.hidden)
 			{
-				return;
+				return false;
 			}
 			if (goodwillChange > 0f && !this.def.appreciative)
 			{
-				return;
+				return false;
 			}
-			if (goodwillChange > 0f && ((this.IsPlayer && FactionBaseUtility.IsPlayerAttackingAnyFactionBaseOf(other)) || (other.IsPlayer && FactionBaseUtility.IsPlayerAttackingAnyFactionBaseOf(this))))
+			if (goodwillChange > 0f && ((this.IsPlayer && SettlementUtility.IsPlayerAttackingAnySettlementOf(other)) || (other.IsPlayer && SettlementUtility.IsPlayerAttackingAnySettlementOf(this))))
 			{
-				return;
+				return false;
 			}
-			float value = this.GoodwillWith(other) + goodwillChange;
+			float num = this.GoodwillWith(other);
+			float value = num + goodwillChange;
 			FactionRelation factionRelation = this.RelationWith(other, false);
 			factionRelation.goodwill = Mathf.Clamp(value, -100f, 100f);
 			if (!this.HostileTo(other) && this.GoodwillWith(other) < -80f)
@@ -374,7 +404,7 @@ namespace RimWorld
 					Find.LetterStack.ReceiveLetter("LetterLabelRelationsChangeBad".Translate(), "RelationsBrokenDown".Translate(new object[]
 					{
 						this.name
-					}), LetterType.BadNonUrgent, null);
+					}), LetterDefOf.BadNonUrgent, null);
 				}
 			}
 			if (this.HostileTo(other) && this.GoodwillWith(other) > 0f)
@@ -385,9 +415,10 @@ namespace RimWorld
 					Find.LetterStack.ReceiveLetter("LetterLabelRelationsChangeGood".Translate(), "RelationsWarmed".Translate(new object[]
 					{
 						this.name
-					}), LetterType.BadNonUrgent, null);
+					}), LetterDefOf.BadNonUrgent, null);
 				}
 			}
+			return this.def.appreciative && (goodwillChange > 0f || factionRelation.goodwill != num);
 		}
 
 		public void SetHostileTo(Faction other, bool hostile)
@@ -510,7 +541,48 @@ namespace RimWorld
 			{
 				member,
 				this.name
-			}), LetterType.BadNonUrgent, member, null);
+			}), LetterDefOf.BadNonUrgent, member, null);
+		}
+
+		public void Notify_MemberDied(Pawn member, DamageInfo? dinfo, bool wasWorldPawn)
+		{
+			if (this.IsPlayer)
+			{
+				return;
+			}
+			if (!wasWorldPawn && !PawnGenerator.IsBeingGenerated(member) && Current.ProgramState == ProgramState.Playing)
+			{
+				if (dinfo.HasValue && dinfo.Value.Category == DamageInfo.SourceCategory.Collapse)
+				{
+					float num = member.RaceProps.body.corePart.def.GetMaxHealth(member) * 1.3f * 0.5f * -1f;
+					bool flag = this.AffectGoodwillWith(Faction.OfPlayer, num);
+					if (flag && MessagesRepeatAvoider.MessageShowAllowed("FactionRelationAdjustmentCrushed-" + this.Name, 5f))
+					{
+						Messages.Message("MessageFactionPawnCrushed".Translate(new object[]
+						{
+							this.Name,
+							Mathf.RoundToInt(num)
+						}), member, MessageSound.SeriousAlert);
+					}
+				}
+				else if (dinfo.HasValue && (dinfo.Value.Instigator == null || dinfo.Value.Instigator.Faction == null))
+				{
+					float num2 = member.RaceProps.body.corePart.def.GetMaxHealth(member) * 1.3f * 0.1f * -1f;
+					if (this.AffectGoodwillWith(Faction.OfPlayer, num2))
+					{
+						Messages.Message("MessageFactionPawnLost".Translate(new object[]
+						{
+							this.Name,
+							member.NameStringShort,
+							Mathf.RoundToInt(num2)
+						}), member, MessageSound.SeriousAlert);
+					}
+				}
+			}
+			if (member == this.leader)
+			{
+				this.Notify_LeaderDied();
+			}
 		}
 
 		public void Notify_LeaderDied()
@@ -527,7 +599,7 @@ namespace RimWorld
 				this.name,
 				this.leader.Name.ToStringFull,
 				this.def.leaderTitle
-			}).CapitalizeFirst(), LetterType.Good, null);
+			}).CapitalizeFirst(), LetterDefOf.Good, null);
 		}
 
 		public void Notify_LeaderLost()
@@ -544,7 +616,7 @@ namespace RimWorld
 				this.name,
 				this.leader.Name.ToStringFull,
 				this.def.leaderTitle
-			}).CapitalizeFirst(), LetterType.Good, null);
+			}).CapitalizeFirst(), LetterDefOf.Good, null);
 		}
 
 		public void GenerateNewLeader()
@@ -564,11 +636,10 @@ namespace RimWorld
 						}
 					}
 				}
-				PawnKindDef kind;
-				if (list.TryRandomElement(out kind))
+				PawnKindDef kindDef;
+				if (list.TryRandomElement(out kindDef))
 				{
-					PawnGenerationRequest request = new PawnGenerationRequest(kind, this, PawnGenerationContext.NonPlayer, null, false, false, false, false, true, false, 1f, false, true, true, null, null, null, null, null, null);
-					this.leader = PawnGenerator.GeneratePawn(request);
+					this.leader = PawnGenerator.GeneratePawn(kindDef, this);
 					if (this.leader.RaceProps.IsFlesh)
 					{
 						this.leader.relations.everSeenByPlayer = true;
@@ -655,7 +726,11 @@ namespace RimWorld
 			{
 				return this.name;
 			}
-			return this.def.defName;
+			if (this.def != null)
+			{
+				return this.def.defName;
+			}
+			return "[faction of no def]";
 		}
 
 		public string DebugString()

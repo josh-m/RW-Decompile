@@ -34,6 +34,14 @@ namespace RimWorld
 
 		private List<PowerNetManager.DelayedAction> delayedActions = new List<PowerNetManager.DelayedAction>();
 
+		public List<PowerNet> AllNetsListForReading
+		{
+			get
+			{
+				return this.allNets;
+			}
+		}
+
 		public PowerNetManager(Map map)
 		{
 			this.map = map;

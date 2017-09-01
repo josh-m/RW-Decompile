@@ -168,11 +168,11 @@ namespace Verse
 		public virtual void Print(SectionLayer layer, Thing thing)
 		{
 			Vector2 size;
-			bool flipUv;
+			bool flag;
 			if (this.ShouldDrawRotated)
 			{
 				size = this.drawSize;
-				flipUv = false;
+				flag = false;
 			}
 			else
 			{
@@ -184,18 +184,22 @@ namespace Verse
 				{
 					size = this.drawSize.Rotated();
 				}
-				flipUv = (thing.Rotation == Rot4.West);
+				flag = (thing.Rotation == Rot4.West);
 				if (this.data != null && !this.data.allowFlip)
 				{
-					flipUv = false;
+					flag = false;
 				}
 			}
-			float rot = 0f;
+			float num = 0f;
 			if (this.ShouldDrawRotated)
 			{
-				rot = thing.Rotation.AsAngle;
+				num = thing.Rotation.AsAngle;
 			}
-			Printer_Plane.PrintPlane(layer, thing.TrueCenter(), size, this.MatAt(thing.Rotation, thing), rot, flipUv, null, null, 0.01f);
+			if (flag && this.data != null)
+			{
+				num += this.data.flipExtraRotation;
+			}
+			Printer_Plane.PrintPlane(layer, thing.TrueCenter(), size, this.MatAt(thing.Rotation, thing), num, flag, null, null, 0.01f);
 			if (this.ShadowGraphic != null && thing != null)
 			{
 				this.ShadowGraphic.Print(layer, thing);

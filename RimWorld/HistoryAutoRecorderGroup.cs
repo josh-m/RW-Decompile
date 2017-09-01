@@ -64,19 +64,21 @@ namespace RimWorld
 			{
 				this.cachedGraphTickCount = ticksGame;
 				this.curves.Clear();
-				foreach (HistoryAutoRecorder current in this.recorders)
+				for (int i = 0; i < this.recorders.Count; i++)
 				{
+					HistoryAutoRecorder historyAutoRecorder = this.recorders[i];
 					SimpleCurveDrawInfo simpleCurveDrawInfo = new SimpleCurveDrawInfo();
-					simpleCurveDrawInfo.color = current.def.graphColor;
-					simpleCurveDrawInfo.label = current.def.LabelCap;
+					simpleCurveDrawInfo.color = historyAutoRecorder.def.graphColor;
+					simpleCurveDrawInfo.label = historyAutoRecorder.def.LabelCap;
 					simpleCurveDrawInfo.curve = new SimpleCurve();
-					for (int i = 0; i < current.records.Count; i++)
+					for (int j = 0; j < historyAutoRecorder.records.Count; j++)
 					{
-						simpleCurveDrawInfo.curve.Add(new CurvePoint((float)i * (float)current.def.recordTicksFrequency / 60000f, current.records[i]));
+						simpleCurveDrawInfo.curve.Add(new CurvePoint((float)j * (float)historyAutoRecorder.def.recordTicksFrequency / 60000f, historyAutoRecorder.records[j]), false);
 					}
-					if (current.records.Count == 1)
+					simpleCurveDrawInfo.curve.SortPoints();
+					if (historyAutoRecorder.records.Count == 1)
 					{
-						simpleCurveDrawInfo.curve.Add(new CurvePoint(1.66666669E-05f, current.records[0]));
+						simpleCurveDrawInfo.curve.Add(new CurvePoint(1.66666669E-05f, historyAutoRecorder.records[0]), true);
 					}
 					this.curves.Add(simpleCurveDrawInfo);
 				}
@@ -95,8 +97,8 @@ namespace RimWorld
 
 		public void ExposeData()
 		{
-			Scribe_Defs.LookDef<HistoryAutoRecorderGroupDef>(ref this.def, "def");
-			Scribe_Collections.LookList<HistoryAutoRecorder>(ref this.recorders, "recorders", LookMode.Deep, new object[0]);
+			Scribe_Defs.Look<HistoryAutoRecorderGroupDef>(ref this.def, "def");
+			Scribe_Collections.Look<HistoryAutoRecorder>(ref this.recorders, "recorders", LookMode.Deep, new object[0]);
 		}
 	}
 }

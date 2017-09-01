@@ -12,7 +12,14 @@ namespace RimWorld
 			{
 				return;
 			}
-			this.parent.Map.terrainGrid.SetTerrain(c, terrain.driesTo);
+			if (this.parent.Map.Biome == BiomeDefOf.SeaIce)
+			{
+				this.parent.Map.terrainGrid.SetTerrain(c, TerrainDefOf.Ice);
+			}
+			else
+			{
+				this.parent.Map.terrainGrid.SetTerrain(c, terrain.driesTo);
+			}
 		}
 	}
 }

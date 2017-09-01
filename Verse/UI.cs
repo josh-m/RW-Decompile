@@ -27,9 +27,9 @@ namespace Verse
 			}
 		}
 
-		public static void ApplyPixelScale()
+		public static void ApplyUIScale()
 		{
-			if (Prefs.UIScale == 1f)
+			if (Prefs.UIScale == 1f || LongEventHandler.AnyEventNowOrWaiting)
 			{
 				UI.screenWidth = Screen.width;
 				UI.screenHeight = Screen.height;
@@ -42,6 +42,17 @@ namespace Verse
 				float uIScale2 = Prefs.UIScale;
 				GUI.matrix = Matrix4x4.TRS(new Vector3(0f, 0f, 0f), Quaternion.identity, new Vector3(uIScale, uIScale2, 1f));
 			}
+		}
+
+		public static void FocusControl(string controlName, Window window)
+		{
+			GUI.FocusControl(controlName);
+			Find.WindowStack.Notify_ManuallySetFocus(window);
+		}
+
+		public static void UnfocusCurrentControl()
+		{
+			GUI.FocusControl(null);
 		}
 
 		public static Vector2 GUIToScreenPoint(Vector2 guiPoint)

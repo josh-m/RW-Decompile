@@ -1,3 +1,4 @@
+using RimWorld;
 using System;
 using UnityEngine;
 
@@ -17,7 +18,7 @@ namespace Verse
 			{
 				if (this.drawerInt == null)
 				{
-					this.drawerInt = new CellBoolDrawer(this, this.map.Size.x, this.map.Size.z);
+					this.drawerInt = new CellBoolDrawer(this, this.map.Size.x, this.map.Size.z, 0.33f);
 				}
 				return this.drawerInt;
 			}
@@ -44,7 +45,7 @@ namespace Verse
 			{
 				compressedString = GridSaveUtility.CompressedStringForShortGrid((IntVec3 c) => this.roofGrid[this.map.cellIndices.CellToIndex(c)], this.map);
 			}
-			Scribe_Values.LookValue<string>(ref compressedString, "roofs", null, false);
+			Scribe_Values.Look<string>(ref compressedString, "roofs", null, false);
 			if (Scribe.mode == LoadSaveMode.LoadingVars)
 			{
 				foreach (GridSaveUtility.LoadedGridShort current in GridSaveUtility.LoadedUShortGrid(compressedString, this.map))
@@ -57,6 +58,15 @@ namespace Verse
 		public bool GetCellBool(int index)
 		{
 			return this.roofGrid[index] != 0 && !this.map.fogGrid.IsFogged(index);
+		}
+
+		public Color GetCellExtraColor(int index)
+		{
+			if (RoofDefOf.RoofRockThick != null && this.roofGrid[index] == RoofDefOf.RoofRockThick.shortHash)
+			{
+				return Color.gray;
+			}
+			return Color.white;
 		}
 
 		public bool Roofed(int x, int z)
@@ -96,10 +106,10 @@ namespace Verse
 			}
 			this.roofGrid[this.map.cellIndices.CellToIndex(c)] = num;
 			this.map.glowGrid.MarkGlowGridDirty(c);
-			Room room = c.GetRoom(this.map);
-			if (room != null)
+			Region validRegionAt_NoRebuild = this.map.regionGrid.GetValidRegionAt_NoRebuild(c);
+			if (validRegionAt_NoRebuild != null)
 			{
-				room.RoofChanged();
+				validRegionAt_NoRebuild.Room.Notify_RoofChanged();
 			}
 			if (this.drawerInt != null)
 			{

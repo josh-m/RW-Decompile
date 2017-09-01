@@ -19,7 +19,7 @@ namespace RimWorld
 
 		public List<string> sowTags = new List<string>();
 
-		public float sowWork = 200f;
+		public float sowWork = 250f;
 
 		public int sowMinSkill;
 
@@ -31,13 +31,13 @@ namespace RimWorld
 
 		public float harvestYield;
 
-		public bool harvestDestroys;
-
 		public ThingDef harvestedThingDef;
 
 		public string harvestTag;
 
 		public float harvestMinGrowth = 0.65f;
+
+		public float harvestAfterGrowth;
 
 		public bool harvestFailable = true;
 
@@ -49,7 +49,7 @@ namespace RimWorld
 
 		public float lifespanFraction = 6f;
 
-		public float growMinGlow = 0.5f;
+		public float growMinGlow = 0.51f;
 
 		public float growOptimalGlow = 1f;
 
@@ -76,6 +76,11 @@ namespace RimWorld
 		[Unsaved]
 		public Graphic leaflessGraphic;
 
+		private string immatureGraphicPath;
+
+		[Unsaved]
+		public Graphic immatureGraphic;
+
 		public bool Sowable
 		{
 			get
@@ -89,6 +94,14 @@ namespace RimWorld
 			get
 			{
 				return this.harvestYield > 0.001f;
+			}
+		}
+
+		public bool HarvestDestroys
+		{
+			get
+			{
+				return this.harvestAfterGrowth <= 0f;
 			}
 		}
 
@@ -143,6 +156,13 @@ namespace RimWorld
 				LongEventHandler.ExecuteWhenFinished(delegate
 				{
 					this.leaflessGraphic = GraphicDatabase.Get(parentDef.graphicData.graphicClass, this.leaflessGraphicPath, parentDef.graphic.Shader, parentDef.graphicData.drawSize, parentDef.graphicData.color, parentDef.graphicData.colorTwo);
+				});
+			}
+			if (!this.immatureGraphicPath.NullOrEmpty())
+			{
+				LongEventHandler.ExecuteWhenFinished(delegate
+				{
+					this.immatureGraphic = GraphicDatabase.Get(parentDef.graphicData.graphicClass, this.immatureGraphicPath, parentDef.graphic.Shader, parentDef.graphicData.drawSize, parentDef.graphicData.color, parentDef.graphicData.colorTwo);
 				});
 			}
 		}

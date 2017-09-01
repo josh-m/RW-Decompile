@@ -1,4 +1,3 @@
-using RimWorld;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -42,7 +41,6 @@ namespace Verse
 		internal static void RebuildModList()
 		{
 			string s = "Rebuilding mods list";
-			int num = ModLister.InstalledModsListHash(false);
 			ModLister.mods.Clear();
 			s += "\nAdding mods from mods folder:";
 			foreach (string current in from d in new DirectoryInfo(GenFilePaths.CoreModsFolderPath).GetDirectories()
@@ -75,24 +73,17 @@ namespace Verse
 			{
 				Log.Message(s);
 			}
-			if (ModLister.InstalledModsListHash(false) != num && !LongEventHandler.ShouldWaitForEvent)
-			{
-				Page_ModsConfig page_ModsConfig = Find.WindowStack.WindowOfType<Page_ModsConfig>();
-				if (page_ModsConfig != null)
-				{
-					page_ModsConfig.Notify_ModsListChanged();
-				}
-			}
 		}
 
 		public static int InstalledModsListHash(bool activeOnly)
 		{
 			int num = 17;
-			for (int i = 0; i < ModLister.mods.Count; i++)
+			List<ModMetaData> list = ModsConfig.ActiveModsInLoadOrder.ToList<ModMetaData>();
+			for (int i = 0; i < list.Count<ModMetaData>(); i++)
 			{
-				if (!activeOnly || ModLister.mods[i].Active)
+				if (!activeOnly || list[i].Active)
 				{
-					num = num * 31 + ModLister.mods[i].GetHashCode();
+					num = num * 31 + list[i].GetHashCode();
 					num = num * 31 + i * 2654241;
 				}
 			}

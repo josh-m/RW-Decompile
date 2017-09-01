@@ -17,18 +17,18 @@ namespace RimWorld
 			return thinkNode_JoinVoluntarilyJoinableLord;
 		}
 
-		public override ThinkResult TryIssueJobPackage(Pawn pawn)
+		public override ThinkResult TryIssueJobPackage(Pawn pawn, JobIssueParams jobParams)
 		{
-			this.LeaveCurrentVoluntarilyJoinableLord(pawn);
+			this.CheckLeaveCurrentVoluntarilyJoinableLord(pawn);
 			this.JoinVoluntarilyJoinableLord(pawn);
 			if (pawn.GetLord() != null && (pawn.mindState.duty == null || pawn.mindState.duty.def.hook == this.dutyHook))
 			{
-				return base.TryIssueJobPackage(pawn);
+				return base.TryIssueJobPackage(pawn, jobParams);
 			}
 			return ThinkResult.NoJob;
 		}
 
-		private void LeaveCurrentVoluntarilyJoinableLord(Pawn pawn)
+		private void CheckLeaveCurrentVoluntarilyJoinableLord(Pawn pawn)
 		{
 			Lord lord = pawn.GetLord();
 			if (lord == null)

@@ -4,12 +4,12 @@ namespace RimWorld
 {
 	public class TransferableComparer_Quality : TransferableComparer
 	{
-		public override int Compare(ITransferable lhs, ITransferable rhs)
+		public override int Compare(Transferable lhs, Transferable rhs)
 		{
 			return this.GetValueFor(lhs).CompareTo(this.GetValueFor(rhs));
 		}
 
-		private int GetValueFor(ITransferable t)
+		private int GetValueFor(Transferable t)
 		{
 			QualityCategory result;
 			if (!t.AnyThing.TryGetQuality(out result))

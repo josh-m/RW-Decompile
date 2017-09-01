@@ -14,7 +14,10 @@ namespace RimWorld
 			{
 				return null;
 			}
-			return new Job(JobDefOf.PrepareCaravan_GatherPawns, pawn2);
+			return new Job(JobDefOf.PrepareCaravan_GatherPawns, pawn2)
+			{
+				lord = pawn.GetLord()
+			};
 		}
 
 		private Pawn FindPawn(Pawn pawn)
@@ -39,10 +42,10 @@ namespace RimWorld
 							{
 								if (!GatherAnimalsAndSlavesForCaravanUtility.IsFollowingAnyone(pawn3))
 								{
-									float num2 = pawn.Position.DistanceToSquared(pawn3.Position);
+									float num2 = (float)pawn.Position.DistanceToSquared(pawn3.Position);
 									if (pawn2 == null || num2 < num)
 									{
-										if (pawn.CanReserveAndReach(pawn3, PathEndMode.Touch, Danger.Deadly, 1))
+										if (pawn.CanReserveAndReach(pawn3, PathEndMode.Touch, Danger.Deadly, 1, -1, null, false))
 										{
 											pawn2 = pawn3;
 											num = num2;

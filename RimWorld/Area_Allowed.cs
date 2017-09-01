@@ -101,9 +101,9 @@ namespace RimWorld
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Values.LookValue<string>(ref this.labelInt, "label", null, false);
-			Scribe_Values.LookValue<Color>(ref this.colorInt, "color", default(Color), false);
-			Scribe_Values.LookValue<AllowedAreaMode>(ref this.mode, "mode", (AllowedAreaMode)0, false);
+			Scribe_Values.Look<string>(ref this.labelInt, "label", null, false);
+			Scribe_Values.Look<Color>(ref this.colorInt, "color", default(Color), false);
+			Scribe_Values.Look<AllowedAreaMode>(ref this.mode, "mode", (AllowedAreaMode)0, false);
 		}
 
 		public override bool AssignableAsAllowed(AllowedAreaMode mode)

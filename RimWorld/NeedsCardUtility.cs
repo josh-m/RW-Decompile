@@ -104,10 +104,14 @@ namespace RimWorld
 
 		private static void DrawThoughtListing(Rect listingRect, Pawn pawn, ref Vector2 thoughtScrollPosition)
 		{
+			if (Event.current.type == EventType.Layout)
+			{
+				return;
+			}
 			Text.Font = GameFont.Small;
 			PawnNeedsUIUtility.GetThoughtGroupsInDisplayOrder(pawn.needs.mood, NeedsCardUtility.thoughtGroupsPresent);
 			float height = (float)NeedsCardUtility.thoughtGroupsPresent.Count * 24f;
-			Widgets.BeginScrollView(listingRect, ref thoughtScrollPosition, new Rect(0f, 0f, listingRect.width - 16f, height));
+			Widgets.BeginScrollView(listingRect, ref thoughtScrollPosition, new Rect(0f, 0f, listingRect.width - 16f, height), true);
 			Text.Anchor = TextAnchor.MiddleLeft;
 			float num = 0f;
 			for (int i = 0; i < NeedsCardUtility.thoughtGroupsPresent.Count; i++)
@@ -126,8 +130,7 @@ namespace RimWorld
 		{
 			try
 			{
-				NeedsCardUtility.thoughtGroup.Clear();
-				NeedsCardUtility.thoughtGroup.AddRange(pawn.needs.mood.thoughts.ThoughtsInGroup(group));
+				pawn.needs.mood.thoughts.GetMoodThoughts(group, NeedsCardUtility.thoughtGroup);
 				Thought leadingThoughtInGroup = PawnNeedsUIUtility.GetLeadingThoughtInGroup(NeedsCardUtility.thoughtGroup);
 				if (!leadingThoughtInGroup.VisibleInNeedsTab)
 				{
@@ -156,7 +159,7 @@ namespace RimWorld
 						{
 							stringBuilder.Append("ThoughtExpiresIn".Translate(new object[]
 							{
-								(group.def.DurationTicks - thought_Memory.age).ToStringTicksToPeriod(true)
+								(group.def.DurationTicks - thought_Memory.age).ToStringTicksToPeriod(true, false, true)
 							}));
 						}
 						else
@@ -164,12 +167,12 @@ namespace RimWorld
 							Thought_Memory thought_Memory2 = (Thought_Memory)NeedsCardUtility.thoughtGroup[NeedsCardUtility.thoughtGroup.Count - 1];
 							stringBuilder.Append("ThoughtStartsExpiringIn".Translate(new object[]
 							{
-								(group.def.DurationTicks - thought_Memory.age).ToStringTicksToPeriod(true)
+								(group.def.DurationTicks - thought_Memory.age).ToStringTicksToPeriod(true, false, true)
 							}));
 							stringBuilder.AppendLine();
 							stringBuilder.Append("ThoughtFinishesExpiringIn".Translate(new object[]
 							{
-								(group.def.DurationTicks - thought_Memory2.age).ToStringTicksToPeriod(true)
+								(group.def.DurationTicks - thought_Memory2.age).ToStringTicksToPeriod(true, false, true)
 							}));
 						}
 					}
@@ -213,7 +216,7 @@ namespace RimWorld
 				}
 				Widgets.Label(rect2, text);
 				Text.Anchor = TextAnchor.MiddleCenter;
-				float num = pawn.needs.mood.thoughts.MoodOffsetOfThoughtGroup(group);
+				float num = pawn.needs.mood.thoughts.MoodOffsetOfGroup(group);
 				if (num == 0f)
 				{
 					GUI.color = NeedsCardUtility.NoEffectColor;

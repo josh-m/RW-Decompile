@@ -40,7 +40,11 @@ namespace Verse
 
 		public static bool drawRegionTraversal;
 
+		public static bool drawRegionThings;
+
 		public static bool drawRooms;
+
+		public static bool drawRoomGroups;
 
 		public static bool drawPower;
 
@@ -71,6 +75,12 @@ namespace Verse
 		public static bool drawInterceptChecks;
 
 		public static bool drawDeepResources;
+
+		public static bool drawAttackTargetScores;
+
+		public static bool drawInteractionCells;
+
+		public static bool drawDoorsDebug;
 
 		public static bool writeGame;
 
@@ -130,7 +140,7 @@ namespace Verse
 
 		public static bool writeMemoryUsage;
 
-		public static bool writeMapConditions;
+		public static bool writeGameConditions;
 
 		public static bool writeAttackTargets;
 

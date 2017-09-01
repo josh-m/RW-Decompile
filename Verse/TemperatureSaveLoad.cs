@@ -27,7 +27,7 @@ namespace Verse
 				{
 					tempGrid[i] = num2;
 				}
-				foreach (Region current in this.map.regionGrid.AllRegions)
+				foreach (Region current in this.map.regionGrid.AllRegions_NoRebuild_InvalidAllowed)
 				{
 					if (current.Room != null)
 					{
@@ -40,7 +40,7 @@ namespace Verse
 				}
 				compressedString = GridSaveUtility.CompressedStringForShortGrid((IntVec3 c) => tempGrid[this.map.cellIndices.CellToIndex(c)], this.map);
 			}
-			Scribe_Values.LookValue<string>(ref compressedString, "temperatures", null, false);
+			Scribe_Values.Look<string>(ref compressedString, "temperatures", null, false);
 			if (Scribe.mode == LoadSaveMode.LoadingVars)
 			{
 				this.tempGrid = new ushort[this.map.cellIndices.NumGridCells];
@@ -56,11 +56,11 @@ namespace Verse
 			if (this.tempGrid != null)
 			{
 				CellIndices cellIndices = this.map.cellIndices;
-				foreach (Region current in this.map.regionGrid.AllRegions)
+				foreach (Region current in this.map.regionGrid.AllRegions_NoRebuild_InvalidAllowed)
 				{
 					if (current.Room != null)
 					{
-						current.Room.Temperature = this.TempShortToFloat(this.tempGrid[cellIndices.CellToIndex(current.Cells.First<IntVec3>())]);
+						current.Room.Group.Temperature = this.TempShortToFloat(this.tempGrid[cellIndices.CellToIndex(current.Cells.First<IntVec3>())]);
 					}
 				}
 				this.tempGrid = null;

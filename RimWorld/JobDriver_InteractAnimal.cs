@@ -38,7 +38,7 @@ namespace RimWorld
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Values.LookValue<float>(ref this.feedNutritionLeft, "feedNutritionLeft", 0f, false);
+			Scribe_Values.Look<float>(ref this.feedNutritionLeft, "feedNutritionLeft", 0f, false);
 		}
 
 		protected abstract Toil FinalInteractToil();
@@ -49,7 +49,7 @@ namespace RimWorld
 			this.FailOnDespawnedNullOrForbidden(TargetIndex.A);
 			this.FailOnDowned(TargetIndex.A);
 			this.FailOnNotCasualInterruptible(TargetIndex.A);
-			yield return Toils_Reserve.Reserve(TargetIndex.A, 1);
+			yield return Toils_Reserve.Reserve(TargetIndex.A, 1, -1, null);
 			yield return Toils_Goto.GotoThing(TargetIndex.A, PathEndMode.Touch);
 			yield return Toils_Interpersonal.WaitToBeAbleToInteract(this.pawn);
 			yield return JobDriver_InteractAnimal.TalkToAnimal(TargetIndex.A);
@@ -119,7 +119,7 @@ namespace RimWorld
 			{
 				Pawn actor = toil.GetActor();
 				Pawn pawn = (Pawn)((Thing)actor.CurJob.GetTarget(tameeInd));
-				PawnUtility.ForceWait(pawn, 270, actor);
+				PawnUtility.ForceWait(pawn, 270, actor, false);
 				Thing thing = FoodUtility.BestFoodInInventory(actor, pawn, FoodPreferability.NeverForNutrition, FoodPreferability.RawTasty, 0f, false);
 				if (thing == null)
 				{
@@ -129,7 +129,7 @@ namespace RimWorld
 				actor.mindState.lastInventoryRawFoodUseTick = Find.TickManager.TicksGame;
 				int num = FoodUtility.StackCountForNutrition(thing.def, this.feedNutritionLeft);
 				int stackCount = thing.stackCount;
-				Thing thing2 = actor.inventory.innerContainer.Get(thing, Mathf.Min(num, stackCount));
+				Thing thing2 = actor.inventory.innerContainer.Take(thing, Mathf.Min(num, stackCount));
 				actor.carryTracker.TryStartCarry(thing2);
 				actor.CurJob.SetTarget(TargetIndex.B, thing2);
 				float num2 = (float)thing2.stackCount * thing2.def.ingestible.nutrition;

@@ -12,7 +12,7 @@ namespace RimWorld
 		{
 			Map map = (Map)parms.target;
 			IntVec3 loc;
-			if (!CellFinder.TryFindRandomEdgeCellWith((IntVec3 c) => map.reachability.CanReachColony(c), map, out loc))
+			if (!CellFinder.TryFindRandomEdgeCellWith((IntVec3 c) => map.reachability.CanReachColony(c), map, CellFinder.EdgeRoadChance_Neutral, out loc))
 			{
 				return false;
 			}
@@ -20,7 +20,7 @@ namespace RimWorld
 			{
 				PawnKindDefOf.Villager
 			}.RandomElement<PawnKindDef>();
-			PawnGenerationRequest request = new PawnGenerationRequest(pawnKindDef, Faction.OfPlayer, PawnGenerationContext.NonPlayer, null, false, false, false, false, true, false, 20f, false, true, true, null, null, null, null, null, null);
+			PawnGenerationRequest request = new PawnGenerationRequest(pawnKindDef, Faction.OfPlayer, PawnGenerationContext.NonPlayer, -1, false, false, false, false, true, false, 20f, false, true, true, false, false, null, null, null, null, null, null);
 			Pawn pawn = PawnGenerator.GeneratePawn(request);
 			GenSpawn.Spawn(pawn, loc, map);
 			string text = "WandererJoin".Translate(new object[]
@@ -31,7 +31,7 @@ namespace RimWorld
 			text = text.AdjustedFor(pawn);
 			string label = "LetterLabelWandererJoin".Translate();
 			PawnRelationUtility.TryAppendRelationsWithColonistsInfo(ref text, ref label, pawn);
-			Find.LetterStack.ReceiveLetter(label, text, LetterType.Good, pawn, null);
+			Find.LetterStack.ReceiveLetter(label, text, LetterDefOf.Good, pawn, null);
 			return true;
 		}
 	}

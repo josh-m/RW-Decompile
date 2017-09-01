@@ -120,9 +120,9 @@ namespace RimWorld
 				this.ClearSelection();
 				Event.current.Use();
 			}
-			if (this.NumSelected > 0 && Find.MainTabsRoot.OpenTab == null)
+			if (this.NumSelected > 0 && Find.MainTabsRoot.OpenTab == null && !WorldRendererUtility.WorldRenderedNow)
 			{
-				Find.MainTabsRoot.SetCurrentTab(MainTabDefOf.Inspect, false);
+				Find.MainTabsRoot.SetCurrentTab(MainButtonDefOf.Inspect, false);
 			}
 		}
 
@@ -163,7 +163,7 @@ namespace RimWorld
 					Event.current.Use();
 				}
 			}
-			if (Event.current.type == EventType.MouseUp)
+			if (Event.current.rawType == EventType.MouseUp)
 			{
 				if (Event.current.button == 0 && this.dragBox.active)
 				{
@@ -255,9 +255,9 @@ namespace RimWorld
 				if (map != Current.Game.VisibleMap)
 				{
 					Current.Game.VisibleMap = map;
-					SoundDefOf.MapSelected.PlayOneShotOnCamera();
-					IntVec3 intLoc = (thing == null) ? ((Zone)obj).Cells[0] : thing.Position;
-					Find.CameraDriver.JumpTo(intLoc);
+					SoundDefOf.MapSelected.PlayOneShotOnCamera(null);
+					IntVec3 cell = (thing == null) ? ((Zone)obj).Cells[0] : thing.Position;
+					Find.CameraDriver.JumpToVisibleMapLoc(cell);
 				}
 				if (playSound)
 				{
@@ -277,15 +277,15 @@ namespace RimWorld
 		{
 			if (obj is Pawn && ((Pawn)obj).Faction == Faction.OfPlayer && ((Pawn)obj).RaceProps.Humanlike)
 			{
-				SoundDefOf.ColonistSelected.PlayOneShotOnCamera();
+				SoundDefOf.ColonistSelected.PlayOneShotOnCamera(null);
 			}
 			else if (obj is Thing)
 			{
-				SoundDefOf.ThingSelected.PlayOneShotOnCamera();
+				SoundDefOf.ThingSelected.PlayOneShotOnCamera(null);
 			}
 			else if (obj is Zone)
 			{
-				SoundDefOf.ZoneSelected.PlayOneShotOnCamera();
+				SoundDefOf.ZoneSelected.PlayOneShotOnCamera(null);
 			}
 			else
 			{
@@ -315,7 +315,7 @@ namespace RimWorld
 			{
 				if (!selectedSomething)
 				{
-					JumpToTargetUtility.TryJumpAndSelect(list2[j]);
+					CameraJumper.TryJumpAndSelect(list2[j]);
 					selectedSomething = true;
 				}
 				else
@@ -441,13 +441,13 @@ namespace RimWorld
 			Caravan caravan = Find.ColonistBar.CaravanMemberCaravanAt(UI.MousePositionOnUIInverted);
 			if (caravan != null)
 			{
-				JumpToTargetUtility.TryJumpAndSelect(caravan);
+				CameraJumper.TryJumpAndSelect(caravan);
 				return;
 			}
 			Thing thing = Find.ColonistBar.ColonistOrCorpseAt(UI.MousePositionOnUIInverted);
 			if (thing != null && !thing.Spawned)
 			{
-				JumpToTargetUtility.TryJump(thing);
+				CameraJumper.TryJump(thing);
 				return;
 			}
 			List<object> list = this.SelectableObjectsUnderMouse().ToList<object>();

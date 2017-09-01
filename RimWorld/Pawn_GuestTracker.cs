@@ -6,7 +6,7 @@ namespace RimWorld
 {
 	public class Pawn_GuestTracker : IExposable
 	{
-		private const int DefaultWaitInsteadOfEscapingTicks = 12500;
+		private const int DefaultWaitInsteadOfEscapingTicks = 25000;
 
 		private const int CheckInitiatePrisonBreakIntervalTicks = 2500;
 
@@ -14,7 +14,7 @@ namespace RimWorld
 
 		private bool getsFoodInt = true;
 
-		public PrisonerInteractionMode interactionMode;
+		public PrisonerInteractionModeDef interactionMode = PrisonerInteractionModeDefOf.NoInteraction;
 
 		private Faction hostFactionInt;
 
@@ -53,11 +53,11 @@ namespace RimWorld
 			}
 		}
 
-		public bool ShouldBeBroughtFood
+		public bool CanBeBroughtFood
 		{
 			get
 			{
-				return this.GetsFood && this.interactionMode != PrisonerInteractionMode.Execution && (this.interactionMode != PrisonerInteractionMode.Release || this.pawn.Downed);
+				return this.GetsFood && this.interactionMode != PrisonerInteractionModeDefOf.Execution && (this.interactionMode != PrisonerInteractionModeDefOf.Release || this.pawn.Downed);
 			}
 		}
 
@@ -144,13 +144,13 @@ namespace RimWorld
 
 		public void ExposeData()
 		{
-			Scribe_References.LookReference<Faction>(ref this.hostFactionInt, "hostFaction", false);
-			Scribe_Values.LookValue<bool>(ref this.isPrisonerInt, "prisoner", false, false);
-			Scribe_Values.LookValue<bool>(ref this.getsFoodInt, "getsFood", false, false);
-			Scribe_Values.LookValue<PrisonerInteractionMode>(ref this.interactionMode, "interactionMode", PrisonerInteractionMode.NoInteraction, false);
-			Scribe_Values.LookValue<bool>(ref this.released, "released", false, false);
-			Scribe_Values.LookValue<int>(ref this.ticksWhenAllowedToEscapeAgain, "ticksWhenAllowedToEscapeAgain", 0, false);
-			Scribe_Values.LookValue<IntVec3>(ref this.spotToWaitInsteadOfEscaping, "spotToWaitInsteadOfEscaping", default(IntVec3), false);
+			Scribe_References.Look<Faction>(ref this.hostFactionInt, "hostFaction", false);
+			Scribe_Values.Look<bool>(ref this.isPrisonerInt, "prisoner", false, false);
+			Scribe_Values.Look<bool>(ref this.getsFoodInt, "getsFood", false, false);
+			Scribe_Defs.Look<PrisonerInteractionModeDef>(ref this.interactionMode, "interactionMode");
+			Scribe_Values.Look<bool>(ref this.released, "released", false, false);
+			Scribe_Values.Look<int>(ref this.ticksWhenAllowedToEscapeAgain, "ticksWhenAllowedToEscapeAgain", 0, false);
+			Scribe_Values.Look<IntVec3>(ref this.spotToWaitInsteadOfEscaping, "spotToWaitInsteadOfEscaping", default(IntVec3), false);
 		}
 
 		public void SetGuestStatus(Faction newHost, bool prisoner = false)
@@ -178,7 +178,7 @@ namespace RimWorld
 				}));
 				return;
 			}
-			if (newHost == this.pawn.Faction && !prisoner)
+			if (newHost != null && newHost == this.pawn.Faction && !prisoner)
 			{
 				Log.Error(string.Concat(new object[]
 				{
@@ -193,7 +193,7 @@ namespace RimWorld
 			this.isPrisonerInt = prisoner;
 			this.hostFactionInt = newHost;
 			this.pawn.ClearMind(false);
-			this.pawn.ClearReservations();
+			this.pawn.ClearReservations(true);
 			if (flag)
 			{
 				this.pawn.DropAndForbidEverything(false);
@@ -228,7 +228,7 @@ namespace RimWorld
 
 		public void WaitInsteadOfEscapingForDefaultTicks()
 		{
-			this.WaitInsteadOfEscapingFor(12500);
+			this.WaitInsteadOfEscapingFor(25000);
 		}
 
 		public void WaitInsteadOfEscapingFor(int ticks)
@@ -243,10 +243,11 @@ namespace RimWorld
 
 		internal void Notify_PawnUndowned()
 		{
-			if (this.pawn.RaceProps.Humanlike && this.HostFaction == Faction.OfPlayer && (this.pawn.Faction == null || this.pawn.Faction.def.rescueesCanJoin) && !this.IsPrisoner)
+			if (this.pawn.RaceProps.Humanlike && this.HostFaction == Faction.OfPlayer && (this.pawn.Faction == null || this.pawn.Faction.def.rescueesCanJoin) && !this.IsPrisoner && this.pawn.SpawnedOrAnyParentSpawned)
 			{
+				Map mapHeld = this.pawn.MapHeld;
 				float num;
-				if (!this.pawn.SafeTemperatureRange().Includes(this.pawn.Map.mapTemperature.OutdoorTemp) || this.pawn.Map.mapConditionManager.ConditionIsActive(MapConditionDefOf.ToxicFallout))
+				if (!this.pawn.SafeTemperatureRange().Includes(mapHeld.mapTemperature.OutdoorTemp) || mapHeld.gameConditionManager.ConditionIsActive(GameConditionDefOf.ToxicFallout))
 				{
 					num = 1f;
 				}
@@ -254,11 +255,7 @@ namespace RimWorld
 				{
 					num = 0.5f;
 				}
-				Rand.PushSeed();
-				Rand.Seed = this.pawn.HashOffset();
-				float value = Rand.Value;
-				Rand.PopSeed();
-				if (value < num)
+				if (Rand.ValueSeeded(this.pawn.thingIDNumber ^ 8976612) < num)
 				{
 					this.pawn.SetFaction(Faction.OfPlayer, null);
 					Messages.Message("MessageRescueeJoined".Translate(new object[]

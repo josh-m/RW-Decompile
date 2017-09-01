@@ -24,11 +24,11 @@ namespace Verse
 
 		public static readonly Texture2D YellowTex = SolidColorMaterials.NewSolidColorTexture(Color.yellow);
 
-		public static readonly Material BlackMat = SolidColorMaterials.SimpleSolidColorMaterial(Color.black);
+		public static readonly Material BlackMat = SolidColorMaterials.SimpleSolidColorMaterial(Color.black, false);
 
-		public static readonly Material WhiteMat = SolidColorMaterials.SimpleSolidColorMaterial(Color.white);
+		public static readonly Material WhiteMat = SolidColorMaterials.SimpleSolidColorMaterial(Color.white, false);
 
-		public static readonly Material ClearMat = SolidColorMaterials.SimpleSolidColorMaterial(Color.clear);
+		public static readonly Material ClearMat = SolidColorMaterials.SimpleSolidColorMaterial(Color.clear, false);
 
 		public static bool NullOrBad(this Material mat)
 		{

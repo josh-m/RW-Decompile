@@ -7,6 +7,8 @@ namespace RimWorld.BaseGen
 	{
 		public IntVec2 minRectSize = IntVec2.One;
 
+		public float selectionWeight = 1f;
+
 		public virtual bool CanResolve(ResolveParams rp)
 		{
 			return rp.rect.Width >= this.minRectSize.x && rp.rect.Height >= this.minRectSize.z;

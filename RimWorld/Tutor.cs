@@ -13,9 +13,9 @@ namespace RimWorld
 
 		public void ExposeData()
 		{
-			Scribe_Deep.LookDeep<ActiveLessonHandler>(ref this.activeLesson, "activeLesson", new object[0]);
-			Scribe_Deep.LookDeep<LearningReadout>(ref this.learningReadout, "learningReadout", new object[0]);
-			Scribe_Deep.LookDeep<TutorialState>(ref this.tutorialState, "tutorialState", new object[0]);
+			Scribe_Deep.Look<ActiveLessonHandler>(ref this.activeLesson, "activeLesson", new object[0]);
+			Scribe_Deep.Look<LearningReadout>(ref this.learningReadout, "learningReadout", new object[0]);
+			Scribe_Deep.Look<TutorialState>(ref this.tutorialState, "tutorialState", new object[0]);
 		}
 
 		internal void TutorUpdate()

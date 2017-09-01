@@ -16,9 +16,18 @@ namespace RimWorld
 
 		private static readonly SimpleCurve AverageSkillCurve = new SimpleCurve
 		{
-			new CurvePoint(0f, 0.2f),
-			new CurvePoint(5.5f, 1f),
-			new CurvePoint(20f, 3f)
+			{
+				new CurvePoint(0f, 0.2f),
+				true
+			},
+			{
+				new CurvePoint(5.5f, 1f),
+				true
+			},
+			{
+				new CurvePoint(20f, 3f),
+				true
+			}
 		};
 
 		public static float PawnQualityPriceFactor(Pawn pawn)
@@ -34,7 +43,7 @@ namespace RimWorld
 				}
 				else
 				{
-					num *= Mathf.Lerp(0.5f, 1f, pawn.health.capacities.GetEfficiency(allDefsListForReading[i]));
+					num *= Mathf.Lerp(0.5f, 1f, pawn.health.capacities.GetLevel(allDefsListForReading[i]));
 				}
 			}
 			if (pawn.skills != null)

@@ -25,6 +25,10 @@ namespace RimWorld.BaseGen
 				{
 					return null;
 				}
+				if (thingList[i] is Building_Door)
+				{
+					return null;
+				}
 			}
 			for (int j = thingList.Count - 1; j >= 0; j--)
 			{

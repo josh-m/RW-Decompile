@@ -20,9 +20,9 @@ namespace Verse.AI.Group
 			StateGraph stateGraph = new StateGraph();
 			LordToil startingToil = stateGraph.AttachSubgraph(new LordJob_Travel(this.travelDest).CreateGraph()).StartingToil;
 			stateGraph.StartingToil = startingToil;
-			LordToil_ExitMapBest lordToil_ExitMapBest = new LordToil_ExitMapBest(LocomotionUrgency.None, false);
-			stateGraph.AddToil(lordToil_ExitMapBest);
-			stateGraph.AddTransition(new Transition(startingToil, lordToil_ExitMapBest)
+			LordToil_ExitMap lordToil_ExitMap = new LordToil_ExitMap(LocomotionUrgency.None, false);
+			stateGraph.AddToil(lordToil_ExitMap);
+			stateGraph.AddTransition(new Transition(startingToil, lordToil_ExitMap)
 			{
 				triggers = 
 				{
@@ -34,7 +34,7 @@ namespace Verse.AI.Group
 
 		public override void ExposeData()
 		{
-			Scribe_Values.LookValue<IntVec3>(ref this.travelDest, "travelDest", default(IntVec3), false);
+			Scribe_Values.Look<IntVec3>(ref this.travelDest, "travelDest", default(IntVec3), false);
 		}
 	}
 }

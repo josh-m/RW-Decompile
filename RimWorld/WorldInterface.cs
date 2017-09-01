@@ -14,6 +14,10 @@ namespace RimWorld
 
 		public WorldGlobalControls globalControls = new WorldGlobalControls();
 
+		public WorldRoutePlanner routePlanner = new WorldRoutePlanner();
+
+		public bool everReset;
+
 		public int SelectedTile
 		{
 			get
@@ -28,6 +32,7 @@ namespace RimWorld
 
 		public void Reset()
 		{
+			this.everReset = true;
 			this.inspectPane.Reset();
 			if (Current.ProgramState == ProgramState.Playing)
 			{
@@ -74,6 +79,11 @@ namespace RimWorld
 				WorldSelectionDrawer.DrawSelectionOverlays();
 				Find.WorldDebugDrawer.WorldDebugDrawerUpdate();
 			}
+			else
+			{
+				this.targeter.StopTargeting();
+			}
+			this.routePlanner.WorldRoutePlannerUpdate();
 		}
 
 		public void WorldInterfaceOnGUI()
@@ -85,6 +95,7 @@ namespace RimWorld
 				ScreenshotModeHandler screenshotMode = Find.UIRoot.screenshotMode;
 				ExpandableWorldObjectsUtility.ExpandableWorldObjectsOnGUI();
 				WorldSelectionDrawer.SelectionOverlaysOnGUI();
+				this.routePlanner.WorldRoutePlannerOnGUI();
 				if (!screenshotMode.FiltersCurrentEvent && Current.ProgramState == ProgramState.Playing)
 				{
 					Find.ColonistBar.ColonistBarOnGUI();
@@ -111,7 +122,7 @@ namespace RimWorld
 
 		private void CheckOpenOrCloseInspectPane()
 		{
-			if (this.selector.AnyObjectOrTileSelected && WorldRendererUtility.WorldRenderedNow && (Current.ProgramState != ProgramState.Playing || Find.MainTabsRoot.OpenTab == MainTabDefOf.World))
+			if (this.selector.AnyObjectOrTileSelected && WorldRendererUtility.WorldRenderedNow && (Current.ProgramState != ProgramState.Playing || Find.MainTabsRoot.OpenTab == null))
 			{
 				if (!Find.WindowStack.IsOpen<WorldInspectPane>())
 				{

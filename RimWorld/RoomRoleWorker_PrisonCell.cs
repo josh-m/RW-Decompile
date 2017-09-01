@@ -10,10 +10,10 @@ namespace RimWorld
 		{
 			int num = 0;
 			int num2 = 0;
-			List<Thing> allContainedThings = room.AllContainedThings;
-			for (int i = 0; i < allContainedThings.Count; i++)
+			List<Thing> containedAndAdjacentThings = room.ContainedAndAdjacentThings;
+			for (int i = 0; i < containedAndAdjacentThings.Count; i++)
 			{
-				Thing thing = allContainedThings[i];
+				Thing thing = containedAndAdjacentThings[i];
 				Building_Bed building_Bed = thing as Building_Bed;
 				if (building_Bed != null && building_Bed.def.building.bed_humanlike)
 				{

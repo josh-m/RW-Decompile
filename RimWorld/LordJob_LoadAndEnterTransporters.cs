@@ -9,6 +9,14 @@ namespace RimWorld
 	{
 		public int transportersGroup = -1;
 
+		public override bool AllowStartNewGatherings
+		{
+			get
+			{
+				return false;
+			}
+		}
+
 		public LordJob_LoadAndEnterTransporters()
 		{
 		}
@@ -20,7 +28,7 @@ namespace RimWorld
 
 		public override void ExposeData()
 		{
-			Scribe_Values.LookValue<int>(ref this.transportersGroup, "transportersGroup", 0, false);
+			Scribe_Values.Look<int>(ref this.transportersGroup, "transportersGroup", 0, false);
 		}
 
 		public override StateGraph CreateGraph()

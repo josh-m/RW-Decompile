@@ -32,7 +32,7 @@ namespace RimWorld
 				for (int j = WalkPathFinder.StartRadialIndex; j > WalkPathFinder.EndRadialIndex; j -= WalkPathFinder.RadialIndexStride)
 				{
 					IntVec3 intVec3 = intVec + GenRadial.RadialPattern[j];
-					if (intVec3.InBounds(pawn.Map) && intVec3.Standable(pawn.Map) && !intVec3.IsForbidden(pawn) && GenSight.LineOfSight(intVec, intVec3, pawn.Map, false) && !intVec3.Roofed(pawn.Map))
+					if (intVec3.InBounds(pawn.Map) && intVec3.Standable(pawn.Map) && !intVec3.IsForbidden(pawn) && GenSight.LineOfSight(intVec, intVec3, pawn.Map, false, null, 0, 0) && !intVec3.Roofed(pawn.Map) && !PawnUtility.KnownDangerAt(intVec3, pawn))
 					{
 						float num2 = 10000f;
 						for (int k = 0; k < list.Count; k++)

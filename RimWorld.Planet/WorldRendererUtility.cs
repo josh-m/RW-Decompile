@@ -4,46 +4,41 @@ using Verse;
 
 namespace RimWorld.Planet
 {
-	[StaticConstructorOnStartup]
 	public static class WorldRendererUtility
 	{
-		private static readonly string SunLightDirectionPropertyName = "_PlanetSunLightDirection";
-
-		private static readonly string SunLightEnabledPropertyName = "_PlanetSunLightEnabled";
-
-		private static readonly string PlanetRadiusPropertyName = "_PlanetRadius";
-
-		private static readonly string GlowRadiusPropertyName = "_GlowRadius";
-
-		private static readonly string ColorPropertyName = "_Color";
-
-		private static int SunLightDirectionPropertyID = Shader.PropertyToID(WorldRendererUtility.SunLightDirectionPropertyName);
-
-		private static int SunLightEnabledPropertyID = Shader.PropertyToID(WorldRendererUtility.SunLightEnabledPropertyName);
-
-		private static int PlanetRadiusPropertyID = Shader.PropertyToID(WorldRendererUtility.PlanetRadiusPropertyName);
-
-		private static int GlowRadiusPropertyID = Shader.PropertyToID(WorldRendererUtility.GlowRadiusPropertyName);
-
-		public static int ColorPropertyID = Shader.PropertyToID(WorldRendererUtility.ColorPropertyName);
+		public static WorldRenderMode CurrentWorldRenderMode
+		{
+			get
+			{
+				if (Find.World == null)
+				{
+					return WorldRenderMode.None;
+				}
+				if (Current.ProgramState == ProgramState.Playing && Find.VisibleMap == null)
+				{
+					return WorldRenderMode.Planet;
+				}
+				return Find.World.renderer.wantedMode;
+			}
+		}
 
 		public static bool WorldRenderedNow
 		{
 			get
 			{
-				return Find.World != null && ((Current.ProgramState == ProgramState.Playing && Find.VisibleMap == null) || Find.WindowStack.AnyWindowWantsRenderedWorld);
+				return WorldRendererUtility.CurrentWorldRenderMode != WorldRenderMode.None;
 			}
 		}
 
 		public static void UpdateWorldShadersParams()
 		{
 			Vector3 v = -GenCelestial.CurSunPositionInWorldSpace();
-			bool flag = Current.ProgramState == ProgramState.Playing && Find.PlaySettings.usePlanetDayNightSystem;
-			float value = (!flag) ? 0f : 1f;
-			Shader.SetGlobalVector(WorldRendererUtility.SunLightDirectionPropertyID, v);
-			Shader.SetGlobalFloat(WorldRendererUtility.SunLightEnabledPropertyID, value);
-			WorldMaterials.PlanetGlow.SetFloat(WorldRendererUtility.PlanetRadiusPropertyID, 100f);
-			WorldMaterials.PlanetGlow.SetFloat(WorldRendererUtility.GlowRadiusPropertyID, 8f);
+			bool usePlanetDayNightSystem = Find.PlaySettings.usePlanetDayNightSystem;
+			float value = (!usePlanetDayNightSystem) ? 0f : 1f;
+			Shader.SetGlobalVector(ShaderPropertyIDs.PlanetSunLightDirection, v);
+			Shader.SetGlobalFloat(ShaderPropertyIDs.PlanetSunLightEnabled, value);
+			WorldMaterials.PlanetGlow.SetFloat(ShaderPropertyIDs.PlanetRadius, 100f);
+			WorldMaterials.PlanetGlow.SetFloat(ShaderPropertyIDs.GlowRadius, 8f);
 		}
 
 		public static void PrintQuadTangentialToPlanet(Vector3 pos, float size, float altOffset, LayerSubMesh subMesh, bool counterClockwise = false, bool randomizeRotation = false, bool printUVs = true)

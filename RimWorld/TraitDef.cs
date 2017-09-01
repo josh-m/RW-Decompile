@@ -24,6 +24,8 @@ namespace RimWorld
 
 		private float commonalityFemale = -1f;
 
+		public bool allowOnHostileSpawn = true;
+
 		public static TraitDef Named(string defName)
 		{
 			return DefDatabase<TraitDef>.GetNamed(defName, true);

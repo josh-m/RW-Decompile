@@ -23,7 +23,7 @@ namespace RimWorld
 		public override void PostExposeData()
 		{
 			base.PostExposeData();
-			Scribe_Values.LookValue<float>(ref this.poisonPct, "poisonPct", 0f, false);
+			Scribe_Values.Look<float>(ref this.poisonPct, "poisonPct", 0f, false);
 		}
 
 		public override void PostSplitOff(Thing piece)

@@ -6,7 +6,7 @@ namespace RimWorld
 {
 	public class JobGiver_PatientGoToBed : ThinkNode
 	{
-		public override ThinkResult TryIssueJobPackage(Pawn pawn)
+		public override ThinkResult TryIssueJobPackage(Pawn pawn, JobIssueParams jobParams)
 		{
 			if (!HealthAIUtility.ShouldSeekMedicalRest(pawn))
 			{
@@ -26,7 +26,7 @@ namespace RimWorld
 				return ThinkResult.NoJob;
 			}
 			Job job = new Job(JobDefOf.LayDown, thing);
-			return new ThinkResult(job, this);
+			return new ThinkResult(job, this, null);
 		}
 	}
 }

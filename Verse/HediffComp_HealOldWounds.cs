@@ -27,7 +27,7 @@ namespace Verse
 			this.ticksToHeal = Rand.Range(15, 30) * 60000;
 		}
 
-		public override void CompPostTick()
+		public override void CompPostTick(ref float severityAdjustment)
 		{
 			this.ticksToHeal--;
 			if (this.ticksToHeal <= 0)
@@ -60,7 +60,7 @@ namespace Verse
 
 		public override void CompExposeData()
 		{
-			Scribe_Values.LookValue<int>(ref this.ticksToHeal, "ticksToHeal", 0, false);
+			Scribe_Values.Look<int>(ref this.ticksToHeal, "ticksToHeal", 0, false);
 		}
 
 		public override string CompDebugString()

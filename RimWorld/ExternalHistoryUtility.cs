@@ -46,10 +46,17 @@ namespace RimWorld
 			try
 			{
 				result = new ExternalHistory();
-				Scribe.InitLoading(path);
-				Scribe_Deep.LookDeep<ExternalHistory>(ref result, "externalHistory", new object[0]);
-				Scribe.ExitNode();
-				Scribe.mode = LoadSaveMode.Inactive;
+				Scribe.loader.InitLoading(path);
+				try
+				{
+					Scribe_Deep.Look<ExternalHistory>(ref result, "externalHistory", new object[0]);
+					Scribe.loader.FinalizeLoading();
+				}
+				catch
+				{
+					Scribe.ForceStop();
+					throw;
+				}
 			}
 			catch (Exception ex)
 			{

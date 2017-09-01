@@ -34,7 +34,7 @@ namespace RimWorld
 			{
 				return false;
 			}
-			Room room = RoomQuery.RoomAt(pawn);
+			Room room = pawn.GetRoom(RegionType.Set_Passable);
 			if (room.TouchesMapEdge)
 			{
 				return true;
@@ -48,7 +48,7 @@ namespace RimWorld
 					return true;
 				}
 				return false;
-			}, 25);
+			}, 25, RegionType.Set_Passable);
 			return found;
 		}
 	}

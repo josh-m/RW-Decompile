@@ -91,7 +91,7 @@ namespace RimWorld
 			{
 				if (current.equipment != null)
 				{
-					foreach (ThingWithComps current2 in current.equipment.AllEquipment)
+					foreach (ThingWithComps current2 in current.equipment.AllEquipmentListForReading)
 					{
 						this.wealthItems += current2.MarketValue;
 					}
@@ -105,6 +105,13 @@ namespace RimWorld
 					}
 				}
 			}
+			foreach (Frame frame in this.map.listerThings.ThingsInGroup(ThingRequestGroup.BuildingFrame))
+			{
+				foreach (Thing current3 in ((IEnumerable<Thing>)frame.resourceContainer))
+				{
+					this.wealthItems += (float)current3.stackCount * current3.MarketValue;
+				}
+			}
 			List<Thing> list2 = this.map.listerThings.ThingsInGroup(ThingRequestGroup.BuildingArtificial);
 			for (int k = 0; k < list2.Count; k++)
 			{
@@ -115,9 +122,9 @@ namespace RimWorld
 					this.totalHealth += thing2.HitPoints;
 				}
 			}
-			foreach (Pawn current3 in this.map.mapPawns.FreeColonists)
+			foreach (Pawn current4 in this.map.mapPawns.FreeColonists)
 			{
-				this.totalHealth += Mathf.RoundToInt(current3.health.summaryHealth.SummaryHealthPercent * 100f);
+				this.totalHealth += Mathf.RoundToInt(current4.health.summaryHealth.SummaryHealthPercent * 100f);
 			}
 			this.lastCountTick = (float)Find.TickManager.TicksGame;
 		}

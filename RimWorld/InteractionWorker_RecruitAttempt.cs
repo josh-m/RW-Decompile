@@ -13,25 +13,58 @@ namespace RimWorld
 
 		private static readonly SimpleCurve RecruitChanceFactorCurve_Wildness = new SimpleCurve
 		{
-			new CurvePoint(1f, 0f),
-			new CurvePoint(0.5f, 1f),
-			new CurvePoint(0f, 2f)
+			{
+				new CurvePoint(1f, 0f),
+				true
+			},
+			{
+				new CurvePoint(0.5f, 1f),
+				true
+			},
+			{
+				new CurvePoint(0f, 2f),
+				true
+			}
 		};
 
 		private static readonly SimpleCurve RecruitChanceFactorCurve_Opinion = new SimpleCurve
 		{
-			new CurvePoint(-50f, 0f),
-			new CurvePoint(50f, 1f),
-			new CurvePoint(100f, 2f)
+			{
+				new CurvePoint(-50f, 0f),
+				true
+			},
+			{
+				new CurvePoint(50f, 1f),
+				true
+			},
+			{
+				new CurvePoint(100f, 2f),
+				true
+			}
 		};
 
 		private static readonly SimpleCurve RecruitChanceFactorCurve_Mood = new SimpleCurve
 		{
-			new CurvePoint(0f, 0.25f),
-			new CurvePoint(0.1f, 0.25f),
-			new CurvePoint(0.25f, 1f),
-			new CurvePoint(0.5f, 1f),
-			new CurvePoint(1f, 1.5f)
+			{
+				new CurvePoint(0f, 0.25f),
+				true
+			},
+			{
+				new CurvePoint(0.1f, 0.25f),
+				true
+			},
+			{
+				new CurvePoint(0.25f, 1f),
+				true
+			},
+			{
+				new CurvePoint(0.5f, 1f),
+				true
+			},
+			{
+				new CurvePoint(1f, 1.5f),
+				true
+			}
 		};
 
 		public override void Interacted(Pawn initiator, Pawn recipient, List<RulePackDef> extraSentencePacks)
@@ -114,7 +147,7 @@ namespace RimWorld
 						recruiter,
 						recruitee,
 						recruitChance.ToStringPercent()
-					}), LetterType.Good, recruitee, null);
+					}), LetterDefOf.Good, recruitee, null);
 				}
 				TaleRecorder.RecordTale(TaleDefOf.Recruited, new object[]
 				{
@@ -122,7 +155,7 @@ namespace RimWorld
 					recruitee
 				});
 				recruiter.records.Increment(RecordDefOf.PrisonersRecruited);
-				recruitee.needs.mood.thoughts.memories.TryGainMemoryThought(ThoughtDefOf.RecruitedMe, recruiter);
+				recruitee.needs.mood.thoughts.memories.TryGainMemory(ThoughtDefOf.RecruitedMe, recruiter);
 			}
 			else
 			{

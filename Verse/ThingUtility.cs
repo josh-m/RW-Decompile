@@ -27,7 +27,7 @@ namespace Verse
 			}
 		}
 
-		public static int TryAsborbStackNumToTake(Thing thing, Thing other, bool respectStackLimit)
+		public static int TryAbsorbStackNumToTake(Thing thing, Thing other, bool respectStackLimit)
 		{
 			int result;
 			if (respectStackLimit)
@@ -39,36 +39,6 @@ namespace Verse
 				result = other.stackCount;
 			}
 			return result;
-		}
-
-		public static void UpdateRegionListers(IntVec3 prevPos, IntVec3 newPos, Map map, Thing thing)
-		{
-			ThingDef def = thing.def;
-			if (ListerThings.EverListable(def, ListerThingsUse.Region) && def.passability != Traversability.Impassable)
-			{
-				RegionGrid regionGrid = map.regionGrid;
-				Region region = null;
-				if (prevPos.InBounds(map))
-				{
-					region = regionGrid.GetValidRegionAt(prevPos);
-				}
-				Region region2 = null;
-				if (newPos.InBounds(map))
-				{
-					region2 = regionGrid.GetValidRegionAt(newPos);
-				}
-				if (region2 != region)
-				{
-					if (region != null)
-					{
-						region.ListerThings.Remove(thing);
-					}
-					if (region2 != null)
-					{
-						region2.ListerThings.Add(thing);
-					}
-				}
-			}
 		}
 	}
 }

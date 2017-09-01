@@ -135,12 +135,14 @@ namespace RimWorld
 			if (this.historyAutoRecorderGroup != null)
 			{
 				MainTabWindow_History.marks.Clear();
-				foreach (Tale current in Find.TaleManager.AllTales)
+				List<Tale> allTalesListForReading = Find.TaleManager.AllTalesListForReading;
+				for (int i = 0; i < allTalesListForReading.Count; i++)
 				{
-					if (current.def.type == TaleType.PermanentHistorical)
+					Tale tale = allTalesListForReading[i];
+					if (tale.def.type == TaleType.PermanentHistorical)
 					{
-						float x = (float)GenDate.TickAbsToGame(current.date) / 60000f;
-						MainTabWindow_History.marks.Add(new CurveMark(x, current.ShortSummary, current.def.historyGraphColor));
+						float x = (float)GenDate.TickAbsToGame(tale.date) / 60000f;
+						MainTabWindow_History.marks.Add(new CurveMark(x, tale.ShortSummary, tale.def.historyGraphColor));
 					}
 				}
 				this.historyAutoRecorderGroup.DrawGraph(graphRect, legendRect, this.graphSection, Find.History.curveDrawerStyle, MainTabWindow_History.marks);
@@ -167,9 +169,9 @@ namespace RimWorld
 			{
 				List<FloatMenuOption> list = new List<FloatMenuOption>();
 				List<HistoryAutoRecorderGroup> list2 = Find.History.Groups();
-				for (int i = 0; i < list2.Count; i++)
+				for (int j = 0; j < list2.Count; j++)
 				{
-					HistoryAutoRecorderGroup groupLocal = list2[i];
+					HistoryAutoRecorderGroup groupLocal = list2[j];
 					list.Add(new FloatMenuOption(groupLocal.def.LabelCap, delegate
 					{
 						this.historyAutoRecorderGroup = groupLocal;

@@ -10,7 +10,7 @@ namespace RimWorld
 
 		private Dictionary<ResearchProjectDef, float> progress = new Dictionary<ResearchProjectDef, float>();
 
-		private float GlobalProgressFactor = 0.009f;
+		private float GlobalProgressFactor = 0.007f;
 
 		public bool AnyProjectIsAvailable
 		{
@@ -22,8 +22,8 @@ namespace RimWorld
 
 		public void ExposeData()
 		{
-			Scribe_Defs.LookDef<ResearchProjectDef>(ref this.currentProj, "currentProj");
-			Scribe_Collections.LookDictionary<ResearchProjectDef, float>(ref this.progress, "progress", LookMode.Def, LookMode.Value);
+			Scribe_Defs.Look<ResearchProjectDef>(ref this.currentProj, "currentProj");
+			Scribe_Collections.Look<ResearchProjectDef, float>(ref this.progress, "progress", LookMode.Def, LookMode.Value);
 		}
 
 		public float GetProgress(ResearchProjectDef proj)
@@ -119,10 +119,10 @@ namespace RimWorld
 			diaOption.resolveTree = true;
 			diaOption.action = delegate
 			{
-				Find.MainTabsRoot.SetCurrentTab(MainTabDefOf.Research, true);
+				Find.MainTabsRoot.SetCurrentTab(MainButtonDefOf.Research, true);
 			};
 			diaNode.options.Add(diaOption);
-			Find.WindowStack.Add(new Dialog_NodeTree(diaNode, true, false));
+			Find.WindowStack.Add(new Dialog_NodeTree(diaNode, true, false, null));
 		}
 
 		public void DebugSetAllProjectsFinished()

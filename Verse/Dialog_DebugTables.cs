@@ -34,7 +34,7 @@ namespace Verse
 			Text.Font = GameFont.Tiny;
 			inRect.yMax -= 40f;
 			Rect viewRect = new Rect(0f, 0f, inRect.width - 16f, (float)this.table.GetLength(1) * 23f);
-			Widgets.BeginScrollView(inRect, ref this.scrollPosition, viewRect);
+			Widgets.BeginScrollView(inRect, ref this.scrollPosition, viewRect, true);
 			List<float> list = new List<float>();
 			for (int i = 0; i < this.table.GetLength(0); i++)
 			{

@@ -19,6 +19,14 @@ namespace Verse
 
 		private float lastTopYInt;
 
+		public List<Letter> LettersListForReading
+		{
+			get
+			{
+				return this.letters;
+			}
+		}
+
 		public float LastTopY
 		{
 			get
@@ -27,41 +35,35 @@ namespace Verse
 			}
 		}
 
-		public void ReceiveLetter(string label, string text, LetterType type, GlobalTargetInfo letterLookTarget, string debugText = null)
+		public void ReceiveLetter(string label, string text, LetterDef textLetterDef, GlobalTargetInfo lookTarget, string debugInfo = null)
 		{
-			Letter let = new Letter(label, text, type, letterLookTarget);
-			this.ReceiveLetter(let, debugText);
+			ChoiceLetter let = LetterMaker.MakeLetter(label, text, textLetterDef, lookTarget);
+			this.ReceiveLetter(let, debugInfo);
 		}
 
-		public void ReceiveLetter(string label, string text, LetterType type, string debugText = null)
+		public void ReceiveLetter(string label, string text, LetterDef textLetterDef, string debugInfo = null)
 		{
-			Letter let = new Letter(label, text, type, GlobalTargetInfo.Invalid);
-			this.ReceiveLetter(let, debugText);
+			ChoiceLetter let = LetterMaker.MakeLetter(label, text, textLetterDef);
+			this.ReceiveLetter(let, debugInfo);
 		}
 
-		public void ReceiveLetter(Letter let, string debugText = null)
+		public void ReceiveLetter(Letter let, string debugInfo = null)
 		{
-			SoundDef soundDef;
-			if (let.LetterType == LetterType.BadUrgent)
-			{
-				soundDef = SoundDefOf.LetterArriveBadUrgent;
-			}
-			else
-			{
-				soundDef = SoundDefOf.LetterArrive;
-			}
-			soundDef.PlayOneShotOnCamera();
-			if (let.LetterType == LetterType.BadUrgent && Prefs.PauseOnUrgentLetter && !Find.TickManager.Paused)
+			let.def.arriveSound.PlayOneShotOnCamera(null);
+			if (let.def == LetterDefOf.BadUrgent && Prefs.PauseOnUrgentLetter && !Find.TickManager.Paused)
 			{
 				Find.TickManager.TogglePaused();
 			}
 			this.letters.Add(let);
 			let.arrivalTime = Time.time;
+			let.debugInfo = debugInfo;
+			let.Received();
 		}
 
 		public void RemoveLetter(Letter let)
 		{
 			this.letters.Remove(let);
+			let.Removed();
 		}
 
 		public void LettersOnGUI(float baseY)
@@ -81,9 +83,23 @@ namespace Verse
 			}
 		}
 
-		public void LettersUpdate()
+		public void LetterStackTick()
 		{
-			if (this.mouseoverLetterIndex >= 0 && this.letters.Count >= this.mouseoverLetterIndex + 1)
+			int num = Find.TickManager.TicksGame + 1;
+			for (int i = 0; i < this.letters.Count; i++)
+			{
+				LetterWithTimeout letterWithTimeout = this.letters[i] as LetterWithTimeout;
+				if (letterWithTimeout != null && letterWithTimeout.TimeoutActive && letterWithTimeout.disappearAtTick == num)
+				{
+					letterWithTimeout.OpenLetter();
+					break;
+				}
+			}
+		}
+
+		public void LetterStackUpdate()
+		{
+			if (this.mouseoverLetterIndex >= 0 && this.mouseoverLetterIndex < this.letters.Count)
 			{
 				GlobalTargetInfo lookTarget = this.letters[this.mouseoverLetterIndex].lookTarget;
 				if (lookTarget.IsValid && lookTarget.IsMapTarget && lookTarget.Map == Find.VisibleMap)
@@ -92,7 +108,13 @@ namespace Verse
 				}
 			}
 			this.mouseoverLetterIndex = -1;
-			this.letters.RemoveAll((Letter l) => !l.Valid);
+			for (int i = this.letters.Count - 1; i >= 0; i--)
+			{
+				if (!this.letters[i].StillValid)
+				{
+					this.RemoveLetter(this.letters[i]);
+				}
+			}
 		}
 
 		public void Notify_LetterMouseover(Letter let)
@@ -102,7 +124,14 @@ namespace Verse
 
 		public void ExposeData()
 		{
-			Scribe_Collections.LookList<Letter>(ref this.letters, "letters", LookMode.Deep, new object[0]);
+			Scribe_Collections.Look<Letter>(ref this.letters, "letters", LookMode.Deep, new object[0]);
+			if (Scribe.mode == LoadSaveMode.PostLoadInit)
+			{
+				if (this.letters.RemoveAll((Letter x) => x == null) != 0)
+				{
+					Log.Error("Some letters were null.");
+				}
+			}
 		}
 	}
 }

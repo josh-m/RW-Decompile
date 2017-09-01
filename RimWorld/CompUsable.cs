@@ -28,7 +28,7 @@ namespace RimWorld
 		[DebuggerHidden]
 		public override IEnumerable<FloatMenuOption> CompFloatMenuOptions(Pawn myPawn)
 		{
-			if (!myPawn.CanReserve(this.parent, 1))
+			if (!myPawn.CanReserve(this.parent, 1, -1, null, false))
 			{
 				yield return new FloatMenuOption(this.FloatMenuOptionLabel + " (" + "Reserved".Translate() + ")", null, MenuOptionPriority.Default, null, null, 0f, null, null);
 			}
@@ -36,7 +36,7 @@ namespace RimWorld
 			{
 				FloatMenuOption useopt = new FloatMenuOption(this.FloatMenuOptionLabel, delegate
 				{
-					if (this.myPawn.CanReserveAndReach(this.<>f__this.parent, PathEndMode.Touch, Danger.Deadly, 1))
+					if (this.myPawn.CanReserveAndReach(this.<>f__this.parent, PathEndMode.Touch, Danger.Deadly, 1, -1, null, false))
 					{
 						foreach (CompUseEffect current in this.<>f__this.parent.GetComps<CompUseEffect>())
 						{
@@ -54,12 +54,12 @@ namespace RimWorld
 
 		public void TryStartUseJob(Pawn user)
 		{
-			if (!user.CanReserveAndReach(this.parent, PathEndMode.Touch, Danger.Deadly, 1))
+			if (!user.CanReserveAndReach(this.parent, PathEndMode.Touch, Danger.Deadly, 1, -1, null, false))
 			{
 				return;
 			}
 			Job job = new Job(this.Props.useJob, this.parent);
-			user.jobs.TryTakeOrderedJob(job);
+			user.jobs.TryTakeOrderedJob(job, JobTag.Misc);
 		}
 
 		public void UsedBy(Pawn p)

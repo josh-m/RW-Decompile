@@ -34,7 +34,7 @@ namespace RimWorld
 		public Tale_SinglePawn(Pawn pawn)
 		{
 			this.pawnData = TaleData_Pawn.GenerateFrom(pawn);
-			if (pawn.MapHeld != null)
+			if (pawn.SpawnedOrAnyParentSpawned)
 			{
 				this.surroundings = TaleData_Surroundings.GenerateFrom(pawn.PositionHeld, pawn.MapHeld);
 			}
@@ -58,7 +58,7 @@ namespace RimWorld
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Deep.LookDeep<TaleData_Pawn>(ref this.pawnData, "pawnData", new object[0]);
+			Scribe_Deep.Look<TaleData_Pawn>(ref this.pawnData, "pawnData", new object[0]);
 		}
 
 		[DebuggerHidden]

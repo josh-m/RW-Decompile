@@ -11,31 +11,37 @@ namespace Verse
 
 		public static Graphic Get<T>(string path) where T : Graphic, new()
 		{
-			GraphicRequest req = new GraphicRequest(typeof(T), path, ShaderDatabase.Cutout, Vector2.one, Color.white, Color.white, null);
+			GraphicRequest req = new GraphicRequest(typeof(T), path, ShaderDatabase.Cutout, Vector2.one, Color.white, Color.white, null, 0);
 			return GraphicDatabase.GetInner<T>(req);
 		}
 
 		public static Graphic Get<T>(string path, Shader shader) where T : Graphic, new()
 		{
-			GraphicRequest req = new GraphicRequest(typeof(T), path, shader, Vector2.one, Color.white, Color.white, null);
+			GraphicRequest req = new GraphicRequest(typeof(T), path, shader, Vector2.one, Color.white, Color.white, null, 0);
 			return GraphicDatabase.GetInner<T>(req);
 		}
 
 		public static Graphic Get<T>(string path, Shader shader, Vector2 drawSize, Color color) where T : Graphic, new()
 		{
-			GraphicRequest req = new GraphicRequest(typeof(T), path, shader, drawSize, color, Color.white, null);
+			GraphicRequest req = new GraphicRequest(typeof(T), path, shader, drawSize, color, Color.white, null, 0);
+			return GraphicDatabase.GetInner<T>(req);
+		}
+
+		public static Graphic Get<T>(string path, Shader shader, Vector2 drawSize, Color color, int renderQueue) where T : Graphic, new()
+		{
+			GraphicRequest req = new GraphicRequest(typeof(T), path, shader, drawSize, color, Color.white, null, renderQueue);
 			return GraphicDatabase.GetInner<T>(req);
 		}
 
 		public static Graphic Get<T>(string path, Shader shader, Vector2 drawSize, Color color, Color colorTwo) where T : Graphic, new()
 		{
-			GraphicRequest req = new GraphicRequest(typeof(T), path, shader, drawSize, color, colorTwo, null);
+			GraphicRequest req = new GraphicRequest(typeof(T), path, shader, drawSize, color, colorTwo, null, 0);
 			return GraphicDatabase.GetInner<T>(req);
 		}
 
 		public static Graphic Get<T>(string path, Shader shader, Vector2 drawSize, Color color, Color colorTwo, GraphicData data) where T : Graphic, new()
 		{
-			GraphicRequest req = new GraphicRequest(typeof(T), path, shader, drawSize, color, colorTwo, data);
+			GraphicRequest req = new GraphicRequest(typeof(T), path, shader, drawSize, color, colorTwo, data, 0);
 			return GraphicDatabase.GetInner<T>(req);
 		}
 
@@ -46,7 +52,7 @@ namespace Verse
 
 		public static Graphic Get(Type graphicClass, string path, Shader shader, Vector2 drawSize, Color color, Color colorTwo, GraphicData data)
 		{
-			GraphicRequest graphicRequest = new GraphicRequest(graphicClass, path, shader, drawSize, color, colorTwo, data);
+			GraphicRequest graphicRequest = new GraphicRequest(graphicClass, path, shader, drawSize, color, colorTwo, data, 0);
 			if (graphicRequest.graphicClass == typeof(Graphic_Single))
 			{
 				return GraphicDatabase.GetInner<Graphic_Single>(graphicRequest);

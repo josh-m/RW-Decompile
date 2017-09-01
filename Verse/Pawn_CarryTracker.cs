@@ -1,15 +1,16 @@
 using RimWorld;
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using Verse.Sound;
 
 namespace Verse
 {
-	public class Pawn_CarryTracker : IExposable, IThingContainerOwner
+	public class Pawn_CarryTracker : IExposable, IThingHolder
 	{
 		public Pawn pawn;
 
-		public ThingContainer innerContainer;
+		public ThingOwner<Thing> innerContainer;
 
 		public Thing CarriedThing
 		{
@@ -31,41 +32,36 @@ namespace Verse
 			}
 		}
 
-		public bool Spawned
+		public IThingHolder ParentHolder
 		{
 			get
 			{
-				return this.pawn.Spawned;
+				return this.pawn;
 			}
 		}
 
 		public Pawn_CarryTracker(Pawn pawn)
 		{
 			this.pawn = pawn;
-			this.innerContainer = new ThingContainer(this, true, LookMode.Deep);
+			this.innerContainer = new ThingOwner<Thing>(this, true, LookMode.Deep);
 		}
 
 		public void ExposeData()
 		{
-			Scribe_Deep.LookDeep<ThingContainer>(ref this.innerContainer, "innerContainer", new object[]
+			Scribe_Deep.Look<ThingOwner<Thing>>(ref this.innerContainer, "innerContainer", new object[]
 			{
 				this
 			});
 		}
 
-		public ThingContainer GetInnerContainer()
+		public ThingOwner GetDirectlyHeldThings()
 		{
 			return this.innerContainer;
 		}
 
-		public IntVec3 GetPosition()
+		public void GetChildHolders(List<IThingHolder> outChildren)
 		{
-			return this.pawn.PositionHeld;
-		}
-
-		public Map GetMap()
-		{
-			return this.pawn.MapHeld;
+			ThingOwnerUtility.AppendThingHoldersFromThings(outChildren, this.GetDirectlyHeldThings());
 		}
 
 		public int AvailableStackSpace(ThingDef td)
@@ -85,18 +81,6 @@ namespace Verse
 			return Mathf.Min(td.stackLimit, b);
 		}
 
-		public void NotifyBuildingsItemLost(Thing item)
-		{
-			if (item.StoringBuilding() != null)
-			{
-				Building_Storage building_Storage = item.StoringBuilding() as Building_Storage;
-				if (building_Storage != null)
-				{
-					building_Storage.Notify_LostThing(item);
-				}
-			}
-		}
-
 		public bool TryStartCarry(Thing item)
 		{
 			if (this.pawn.Dead || this.pawn.Downed)
@@ -104,7 +88,6 @@ namespace Verse
 				Log.Error("Dead/downed pawn " + this.pawn + " tried to start carry item.");
 				return false;
 			}
-			this.NotifyBuildingsItemLost(item);
 			if (this.innerContainer.TryAdd(item, true))
 			{
 				item.def.soundPickup.PlayOneShot(new TargetInfo(item.Position, this.pawn.Map, false));
@@ -120,8 +103,7 @@ namespace Verse
 				Log.Error("Dead/downed pawn " + this.pawn + " tried to start carry item.");
 				return 0;
 			}
-			this.NotifyBuildingsItemLost(item);
-			int num = this.innerContainer.TryAdd(item, count);
+			int num = this.innerContainer.TryAdd(item, count, true);
 			if (num > 0)
 			{
 				item.def.soundPickup.PlayOneShot(new TargetInfo(item.Position, this.pawn.Map, false));
@@ -133,7 +115,7 @@ namespace Verse
 		{
 			if (this.innerContainer.TryDrop(this.CarriedThing, dropLoc, this.pawn.MapHeld, mode, out resultingThing, placedAction))
 			{
-				if (this.pawn.Faction.HostileTo(Faction.OfPlayer))
+				if (resultingThing != null && this.pawn.Faction.HostileTo(Faction.OfPlayer))
 				{
 					resultingThing.SetForbidden(true, false);
 				}
@@ -146,7 +128,7 @@ namespace Verse
 		{
 			if (this.innerContainer.TryDrop(this.CarriedThing, dropLoc, this.pawn.MapHeld, mode, count, out resultingThing, placedAction))
 			{
-				if (this.pawn.Faction.HostileTo(Faction.OfPlayer))
+				if (resultingThing != null && this.pawn.Faction.HostileTo(Faction.OfPlayer))
 				{
 					resultingThing.SetForbidden(true, false);
 				}
@@ -162,7 +144,7 @@ namespace Verse
 
 		public void CarryHandsTick()
 		{
-			this.innerContainer.ThingContainerTick();
+			this.innerContainer.ThingOwnerTick(true);
 		}
 	}
 }

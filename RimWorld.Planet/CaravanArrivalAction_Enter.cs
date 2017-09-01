@@ -26,14 +26,6 @@ namespace RimWorld.Planet
 			}
 		}
 
-		public override bool ArriveOnTouch
-		{
-			get
-			{
-				return true;
-			}
-		}
-
 		public CaravanArrivalAction_Enter()
 		{
 		}
@@ -51,19 +43,16 @@ namespace RimWorld.Planet
 				return;
 			}
 			Pawn t = caravan.PawnsListForReading[0];
-			CaravanDropInventoryMode dropInventoryMode = CaravanDropInventoryMode.DoNotDrop;
-			if (this.mapParent.Faction == Faction.OfPlayer)
-			{
-				dropInventoryMode = CaravanDropInventoryMode.UnloadIndividually;
-			}
-			CaravanEnterMapUtility.Enter(caravan, map, CaravanEnterMode.Edge, dropInventoryMode, false, null);
+			CaravanDropInventoryMode dropInventoryMode = (!map.IsPlayerHome) ? CaravanDropInventoryMode.DoNotDrop : CaravanDropInventoryMode.UnloadIndividually;
+			bool draftColonists = this.mapParent.Faction != null && this.mapParent.Faction.HostileTo(Faction.OfPlayer);
+			CaravanEnterMapUtility.Enter(caravan, map, CaravanEnterMode.Edge, dropInventoryMode, draftColonists, null);
 			if (this.mapParent.def == WorldObjectDefOf.Ambush)
 			{
 				Find.TickManager.CurTimeSpeed = TimeSpeed.Paused;
 				Find.LetterStack.ReceiveLetter("LetterLabelCaravanEnteredAmbushMap".Translate(), "LetterCaravanEnteredAmbushMap".Translate(new object[]
 				{
 					caravan.Label
-				}).CapitalizeFirst(), LetterType.Good, t, null);
+				}).CapitalizeFirst(), LetterDefOf.Good, t, null);
 			}
 			else if (caravan.IsPlayerControlled || this.mapParent.Faction == Faction.OfPlayer)
 			{
@@ -78,7 +67,7 @@ namespace RimWorld.Planet
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_References.LookReference<MapParent>(ref this.mapParent, "mapParent", false);
+			Scribe_References.Look<MapParent>(ref this.mapParent, "mapParent", false);
 		}
 	}
 }

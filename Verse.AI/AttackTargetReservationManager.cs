@@ -14,8 +14,8 @@ namespace Verse.AI
 
 			public void ExposeData()
 			{
-				Scribe_References.LookReference<IAttackTarget>(ref this.target, "target", false);
-				Scribe_References.LookReference<Pawn>(ref this.claimant, "claimant", false);
+				Scribe_References.Look<IAttackTarget>(ref this.target, "target", false);
+				Scribe_References.Look<Pawn>(ref this.claimant, "claimant", false);
 			}
 		}
 
@@ -101,12 +101,18 @@ namespace Verse.AI
 
 		public void ReleaseAllClaimedBy(Pawn claimant)
 		{
-			this.reservations.RemoveAll((AttackTargetReservationManager.AttackTargetReservation x) => x.claimant == claimant);
+			for (int i = this.reservations.Count - 1; i >= 0; i--)
+			{
+				if (this.reservations[i].claimant == claimant)
+				{
+					this.reservations.RemoveAt(i);
+				}
+			}
 		}
 
 		public void ExposeData()
 		{
-			Scribe_Collections.LookList<AttackTargetReservationManager.AttackTargetReservation>(ref this.reservations, "reservations", LookMode.Deep, new object[0]);
+			Scribe_Collections.Look<AttackTargetReservationManager.AttackTargetReservation>(ref this.reservations, "reservations", LookMode.Deep, new object[0]);
 			if (Scribe.mode == LoadSaveMode.PostLoadInit)
 			{
 				this.reservations.RemoveAll((AttackTargetReservationManager.AttackTargetReservation x) => x.target == null);
@@ -130,8 +136,8 @@ namespace Verse.AI
 		private int GetMaxPreferredReservationsCount(IAttackTarget target)
 		{
 			int num = 0;
-			Thing t = (Thing)target;
-			CellRect cellRect = t.OccupiedRect();
+			Thing thing = target.Thing;
+			CellRect cellRect = thing.OccupiedRect();
 			foreach (IntVec3 current in cellRect.ExpandedBy(1))
 			{
 				if (!cellRect.Contains(current))

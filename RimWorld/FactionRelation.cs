@@ -13,9 +13,9 @@ namespace RimWorld
 
 		public void ExposeData()
 		{
-			Scribe_References.LookReference<Faction>(ref this.other, "other", false);
-			Scribe_Values.LookValue<float>(ref this.goodwill, "goodwill", 0f, false);
-			Scribe_Values.LookValue<bool>(ref this.hostile, "hostile", false, false);
+			Scribe_References.Look<Faction>(ref this.other, "other", false);
+			Scribe_Values.Look<float>(ref this.goodwill, "goodwill", 0f, false);
+			Scribe_Values.Look<bool>(ref this.hostile, "hostile", false, false);
 		}
 
 		public override string ToString()

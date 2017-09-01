@@ -23,7 +23,7 @@ namespace RimWorld
 		[DebuggerHidden]
 		protected override IEnumerable<Toil> MakeNewToils()
 		{
-			yield return Toils_Reserve.Reserve(TargetIndex.A, 1);
+			yield return Toils_Reserve.Reserve(TargetIndex.A, 1, -1, null);
 			yield return Toils_Goto.GotoCell(TargetIndex.A, PathEndMode.Touch);
 			Toil clearToil = new Toil();
 			clearToil.tickAction = delegate
@@ -43,6 +43,7 @@ namespace RimWorld
 			clearToil.WithEffect(EffecterDefOf.ClearSnow, TargetIndex.A);
 			clearToil.PlaySustainerOrSound(() => SoundDefOf.Interact_ClearSnow);
 			clearToil.WithProgressBar(TargetIndex.A, () => this.<>f__this.workDone / this.<>f__this.TotalNeededWork, true, -0.5f);
+			clearToil.FailOnCannotTouch(TargetIndex.A, PathEndMode.Touch);
 			yield return clearToil;
 		}
 	}

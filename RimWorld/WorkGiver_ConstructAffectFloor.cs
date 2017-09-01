@@ -26,7 +26,7 @@ namespace RimWorld
 		{
 			if (pawn.Faction == Faction.OfPlayer)
 			{
-				foreach (Designation des in pawn.Map.designationManager.DesignationsOfDef(this.DesDef))
+				foreach (Designation des in pawn.Map.designationManager.SpawnedDesignationsOfDef(this.DesDef))
 				{
 					yield return des.target.Cell;
 				}
@@ -35,7 +35,15 @@ namespace RimWorld
 
 		public override bool HasJobOnCell(Pawn pawn, IntVec3 c)
 		{
-			return pawn.Faction == Faction.OfPlayer && pawn.Map.designationManager.DesignationAt(c, this.DesDef) != null && pawn.CanReserveAndReach(c, PathEndMode.Touch, pawn.NormalMaxDanger(), 1);
+			if (pawn.Map.designationManager.DesignationAt(c, this.DesDef) != null)
+			{
+				ReservationLayerDef floor = ReservationLayerDefOf.Floor;
+				if (pawn.CanReserveAndReach(c, PathEndMode.Touch, pawn.NormalMaxDanger(), 1, -1, floor, false))
+				{
+					return true;
+				}
+			}
+			return false;
 		}
 	}
 }

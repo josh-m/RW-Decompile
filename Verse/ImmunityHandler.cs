@@ -10,6 +10,8 @@ namespace Verse
 
 		private List<ImmunityRecord> immunityList = new List<ImmunityRecord>();
 
+		private static List<HediffDef> tmpNeededImmunitiesNow = new List<HediffDef>();
+
 		public ImmunityHandler(Pawn pawn)
 		{
 			this.pawn = pawn;
@@ -17,7 +19,7 @@ namespace Verse
 
 		public void ExposeData()
 		{
-			Scribe_Collections.LookList<ImmunityRecord>(ref this.immunityList, "imList", LookMode.Deep, new object[0]);
+			Scribe_Collections.Look<ImmunityRecord>(ref this.immunityList, "imList", LookMode.Deep, new object[0]);
 		}
 
 		public float DiseaseContractChanceFactor(HediffDef diseaseDef, BodyPartRecord part = null)
@@ -59,53 +61,85 @@ namespace Verse
 
 		internal void ImmunityHandlerTick()
 		{
-			List<Hediff> hediffs = this.pawn.health.hediffSet.hediffs;
-			for (int i = 0; i < hediffs.Count; i++)
+			List<HediffDef> list = this.NeededImmunitiesNow();
+			for (int i = 0; i < list.Count; i++)
 			{
-				if (hediffs[i].TryGetComp<HediffComp_Immunizable>() != null)
-				{
-					if (!this.ImmunityRecordExists(hediffs[i].def))
-					{
-						if (hediffs[i].def.PossibleToDevelopImmunity())
-						{
-							ImmunityRecord immunityRecord = new ImmunityRecord();
-							immunityRecord.hediffDef = hediffs[i].def;
-							this.immunityList.Add(immunityRecord);
-						}
-					}
-				}
+				this.TryAddImmunityRecord(list[i]);
 			}
 			for (int j = 0; j < this.immunityList.Count; j++)
 			{
-				ImmunityRecord immunityRecord2 = this.immunityList[j];
-				bool flag = false;
-				Hediff hediff = null;
-				for (int k = 0; k < hediffs.Count; k++)
+				ImmunityRecord immunityRecord = this.immunityList[j];
+				Hediff firstHediffOfDef = this.pawn.health.hediffSet.GetFirstHediffOfDef(immunityRecord.hediffDef, false);
+				immunityRecord.ImmunityTick(this.pawn, firstHediffOfDef != null, firstHediffOfDef);
+				if (firstHediffOfDef == null && this.AnyHediffMakesFullyImmuneTo(immunityRecord.hediffDef))
 				{
-					if (hediffs[k].def == immunityRecord2.hediffDef)
+					immunityRecord.immunity = Mathf.Clamp(0.650000036f, immunityRecord.immunity, 1f);
+				}
+			}
+			for (int k = this.immunityList.Count - 1; k >= 0; k--)
+			{
+				if (this.immunityList[k].immunity <= 0f && !list.Contains(this.immunityList[k].hediffDef))
+				{
+					this.immunityList.RemoveAt(k);
+				}
+			}
+		}
+
+		private List<HediffDef> NeededImmunitiesNow()
+		{
+			ImmunityHandler.tmpNeededImmunitiesNow.Clear();
+			List<Hediff> hediffs = this.pawn.health.hediffSet.hediffs;
+			for (int i = 0; i < hediffs.Count; i++)
+			{
+				if (hediffs[i].def.PossibleToDevelopImmunityNaturally())
+				{
+					ImmunityHandler.tmpNeededImmunitiesNow.Add(hediffs[i].def);
+				}
+				HediffStage curStage = hediffs[i].CurStage;
+				if (curStage != null && curStage.makeImmuneTo != null)
+				{
+					for (int j = 0; j < curStage.makeImmuneTo.Count; j++)
 					{
-						hediff = hediffs[k];
+						ImmunityHandler.tmpNeededImmunitiesNow.Add(curStage.makeImmuneTo[j]);
 					}
-					HediffStage curStage = hediffs[k].CurStage;
-					if (curStage != null && curStage.makeImmuneTo != null)
+				}
+			}
+			return ImmunityHandler.tmpNeededImmunitiesNow;
+		}
+
+		private bool AnyHediffMakesFullyImmuneTo(HediffDef def)
+		{
+			List<Hediff> hediffs = this.pawn.health.hediffSet.hediffs;
+			for (int i = 0; i < hediffs.Count; i++)
+			{
+				HediffStage curStage = hediffs[i].CurStage;
+				if (curStage != null && curStage.makeImmuneTo != null)
+				{
+					for (int j = 0; j < curStage.makeImmuneTo.Count; j++)
 					{
-						for (int l = 0; l < curStage.makeImmuneTo.Count; l++)
+						if (curStage.makeImmuneTo[j] == def)
 						{
-							if (curStage.makeImmuneTo[l] == immunityRecord2.hediffDef)
-							{
-								flag = true;
-								break;
-							}
+							return true;
 						}
 					}
 				}
-				immunityRecord2.ImmunityTick(this.pawn, hediff != null, hediff);
-				if (flag)
-				{
-					immunityRecord2.immunity = Mathf.Clamp(0.61f, immunityRecord2.immunity, 1f);
-				}
 			}
-			this.immunityList.RemoveAll((ImmunityRecord x) => x.immunity <= 0f);
+			return false;
+		}
+
+		private void TryAddImmunityRecord(HediffDef def)
+		{
+			if (def.CompProps<HediffCompProperties_Immunizable>() == null)
+			{
+				return;
+			}
+			if (this.ImmunityRecordExists(def))
+			{
+				return;
+			}
+			ImmunityRecord immunityRecord = new ImmunityRecord();
+			immunityRecord.hediffDef = def;
+			this.immunityList.Add(immunityRecord);
 		}
 
 		public ImmunityRecord GetImmunityRecord(HediffDef def)

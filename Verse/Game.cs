@@ -16,6 +16,8 @@ namespace Verse
 
 		private GameInfo info = new GameInfo();
 
+		public List<GameComponent> components = new List<GameComponent>();
+
 		private GameRules rules = new GameRules();
 
 		private Scenario scenarioInt;
@@ -51,6 +53,8 @@ namespace Verse
 		public Tutor tutor = new Tutor();
 
 		public Autosaver autosaver = new Autosaver();
+
+		public DateNotifier dateNotifier = new DateNotifier();
 
 		public Scenario Scenario
 		{
@@ -171,6 +175,11 @@ namespace Verse
 			}
 		}
 
+		public Game()
+		{
+			this.FillComponents();
+		}
+
 		public void AddMap(Map map)
 		{
 			if (map == null)
@@ -208,7 +217,7 @@ namespace Verse
 		{
 			for (int i = 0; i < this.maps.Count; i++)
 			{
-				if (this.maps[i].info.tile == tile)
+				if (this.maps[i].Tile == tile)
 				{
 					return this.maps[i];
 				}
@@ -223,31 +232,50 @@ namespace Verse
 				Log.Error("You must use special LoadData method to load Game.");
 				return;
 			}
-			Scribe_Values.LookValue<sbyte>(ref this.visibleMapIndex, "visibleMapIndex", -1, false);
+			Scribe_Values.Look<sbyte>(ref this.visibleMapIndex, "visibleMapIndex", -1, false);
 			this.ExposeSmallComponents();
-			Scribe_Deep.LookDeep<World>(ref this.worldInt, "world", new object[0]);
-			Scribe_Collections.LookList<Map>(ref this.maps, "maps", LookMode.Deep, new object[0]);
+			Scribe_Deep.Look<World>(ref this.worldInt, "world", new object[0]);
+			Scribe_Collections.Look<Map>(ref this.maps, "maps", LookMode.Deep, new object[0]);
 			Find.CameraDriver.Expose();
 		}
 
 		private void ExposeSmallComponents()
 		{
-			Scribe_Deep.LookDeep<GameInfo>(ref this.info, "info", new object[0]);
-			Scribe_Deep.LookDeep<GameRules>(ref this.rules, "rules", new object[0]);
-			Scribe_Deep.LookDeep<Scenario>(ref this.scenarioInt, "scenario", new object[0]);
-			Scribe_Deep.LookDeep<TickManager>(ref this.tickManager, "tickManager", new object[0]);
-			Scribe_Deep.LookDeep<PlaySettings>(ref this.playSettings, "playSettings", new object[0]);
-			Scribe_Deep.LookDeep<StoryWatcher>(ref this.storyWatcher, "storyWatcher", new object[0]);
-			Scribe_Deep.LookDeep<GameEnder>(ref this.gameEnder, "gameEnder", new object[0]);
-			Scribe_Deep.LookDeep<LetterStack>(ref this.letterStack, "letterStack", new object[0]);
-			Scribe_Deep.LookDeep<ResearchManager>(ref this.researchManager, "researchManager", new object[0]);
-			Scribe_Deep.LookDeep<Storyteller>(ref this.storyteller, "storyteller", new object[0]);
-			Scribe_Deep.LookDeep<History>(ref this.history, "history", new object[0]);
-			Scribe_Deep.LookDeep<TaleManager>(ref this.taleManager, "taleManager", new object[0]);
-			Scribe_Deep.LookDeep<PlayLog>(ref this.playLog, "playLog", new object[0]);
-			Scribe_Deep.LookDeep<OutfitDatabase>(ref this.outfitDatabase, "outfitDatabase", new object[0]);
-			Scribe_Deep.LookDeep<DrugPolicyDatabase>(ref this.drugPolicyDatabase, "drugPolicyDatabase", new object[0]);
-			Scribe_Deep.LookDeep<Tutor>(ref this.tutor, "tutor", new object[0]);
+			Scribe_Deep.Look<GameInfo>(ref this.info, "info", new object[0]);
+			Scribe_Deep.Look<GameRules>(ref this.rules, "rules", new object[0]);
+			Scribe_Deep.Look<Scenario>(ref this.scenarioInt, "scenario", new object[0]);
+			Scribe_Deep.Look<TickManager>(ref this.tickManager, "tickManager", new object[0]);
+			Scribe_Deep.Look<PlaySettings>(ref this.playSettings, "playSettings", new object[0]);
+			Scribe_Deep.Look<StoryWatcher>(ref this.storyWatcher, "storyWatcher", new object[0]);
+			Scribe_Deep.Look<GameEnder>(ref this.gameEnder, "gameEnder", new object[0]);
+			Scribe_Deep.Look<LetterStack>(ref this.letterStack, "letterStack", new object[0]);
+			Scribe_Deep.Look<ResearchManager>(ref this.researchManager, "researchManager", new object[0]);
+			Scribe_Deep.Look<Storyteller>(ref this.storyteller, "storyteller", new object[0]);
+			Scribe_Deep.Look<History>(ref this.history, "history", new object[0]);
+			Scribe_Deep.Look<TaleManager>(ref this.taleManager, "taleManager", new object[0]);
+			Scribe_Deep.Look<PlayLog>(ref this.playLog, "playLog", new object[0]);
+			Scribe_Deep.Look<OutfitDatabase>(ref this.outfitDatabase, "outfitDatabase", new object[0]);
+			Scribe_Deep.Look<DrugPolicyDatabase>(ref this.drugPolicyDatabase, "drugPolicyDatabase", new object[0]);
+			Scribe_Deep.Look<Tutor>(ref this.tutor, "tutor", new object[0]);
+			Scribe_Deep.Look<DateNotifier>(ref this.dateNotifier, "dateNotifier", new object[0]);
+			Scribe_Collections.Look<GameComponent>(ref this.components, "components", LookMode.Deep, new object[0]);
+			this.FillComponents();
+		}
+
+		private void FillComponents()
+		{
+			this.components.RemoveAll((GameComponent component) => component == null);
+			foreach (Type current in typeof(GameComponent).AllSubclassesNonAbstract())
+			{
+				if (this.GetComponent(current) == null)
+				{
+					GameComponent item = (GameComponent)Activator.CreateInstance(current, new object[]
+					{
+						this
+					});
+					this.components.Add(item);
+				}
+			}
 		}
 
 		public void InitNewGame()
@@ -267,68 +295,66 @@ namespace Verse
 			}
 			MemoryUtility.UnloadUnusedUnityAssets();
 			DeepProfiler.Start("InitNewGame");
-			Current.ProgramState = ProgramState.MapInitializing;
-			IntVec3 intVec = new IntVec3(this.initData.mapSize, 1, this.initData.mapSize);
-			FactionBase factionBase = null;
-			List<FactionBase> factionBases = Find.WorldObjects.FactionBases;
-			for (int i = 0; i < factionBases.Count; i++)
+			try
 			{
-				if (factionBases[i].Faction == Faction.OfPlayer)
+				Current.ProgramState = ProgramState.MapInitializing;
+				IntVec3 intVec = new IntVec3(this.initData.mapSize, 1, this.initData.mapSize);
+				FactionBase factionBase = null;
+				List<FactionBase> factionBases = Find.WorldObjects.FactionBases;
+				for (int i = 0; i < factionBases.Count; i++)
 				{
-					factionBase = factionBases[i];
-					break;
-				}
-			}
-			if (factionBase == null)
-			{
-				Log.Error("Could not generate starting map because there is no any player faction base.");
-			}
-			Map visibleMap = MapGenerator.GenerateMap(intVec, this.initData.startingTile, factionBase, delegate(Map generatedMap)
-			{
-				if (this.initData.startingMonth == Month.Undefined)
-				{
-					this.initData.startingMonth = generatedMap.mapTemperature.EarliestMonthInTemperatureRange(16f, 9999f);
-					if (this.initData.startingMonth == Month.Undefined)
+					if (factionBases[i].Faction == Faction.OfPlayer)
 					{
-						this.initData.startingMonth = Month.Jun;
+						factionBase = factionBases[i];
+						break;
 					}
 				}
+				if (factionBase == null)
+				{
+					Log.Error("Could not generate starting map because there is no any player faction base.");
+				}
 				this.tickManager.gameStartAbsTick = GenTicks.ConfiguredTicksAbsAtGameStart;
-			}, null);
-			this.worldInt.info.initialMapSize = intVec;
-			if (this.initData.permadeath)
-			{
-				this.info.permadeathMode = true;
-				this.info.permadeathModeUniqueName = PermadeathModeUtility.GeneratePermadeathSaveName();
-			}
-			PawnUtility.GiveAllStartingPlayerPawnsThought(ThoughtDefOf.NewColonyOptimism);
-			this.FinalizeInit();
-			Current.Game.VisibleMap = visibleMap;
-			Find.CameraDriver.JumpTo(MapGenerator.PlayerStartSpot);
-			Find.CameraDriver.ResetSize();
-			if (Prefs.PauseOnLoad && this.initData.startedFromEntry)
-			{
-				LongEventHandler.ExecuteWhenFinished(delegate
+				Map visibleMap = MapGenerator.GenerateMap(intVec, factionBase, factionBase.MapGeneratorDef, factionBase.ExtraGenStepDefs, null);
+				this.worldInt.info.initialMapSize = intVec;
+				if (this.initData.permadeath)
 				{
-					this.tickManager.DoSingleTick();
-					this.tickManager.CurTimeSpeed = TimeSpeed.Paused;
-				});
-			}
-			Find.Scenario.PostGameStart();
-			if (Faction.OfPlayer.def.startingResearchTags != null)
-			{
-				foreach (string current in Faction.OfPlayer.def.startingResearchTags)
+					this.info.permadeathMode = true;
+					this.info.permadeathModeUniqueName = PermadeathModeUtility.GeneratePermadeathSaveName();
+				}
+				PawnUtility.GiveAllStartingPlayerPawnsThought(ThoughtDefOf.NewColonyOptimism);
+				this.FinalizeInit();
+				Current.Game.VisibleMap = visibleMap;
+				Find.CameraDriver.JumpToVisibleMapLoc(MapGenerator.PlayerStartSpot);
+				Find.CameraDriver.ResetSize();
+				if (Prefs.PauseOnLoad && this.initData.startedFromEntry)
 				{
-					foreach (ResearchProjectDef current2 in DefDatabase<ResearchProjectDef>.AllDefs)
+					LongEventHandler.ExecuteWhenFinished(delegate
 					{
-						if (current2.HasTag(current))
+						this.tickManager.DoSingleTick();
+						this.tickManager.CurTimeSpeed = TimeSpeed.Paused;
+					});
+				}
+				Find.Scenario.PostGameStart();
+				if (Faction.OfPlayer.def.startingResearchTags != null)
+				{
+					foreach (string current in Faction.OfPlayer.def.startingResearchTags)
+					{
+						foreach (ResearchProjectDef current2 in DefDatabase<ResearchProjectDef>.AllDefs)
 						{
-							this.researchManager.InstantFinish(current2, false);
+							if (current2.HasTag(current))
+							{
+								this.researchManager.InstantFinish(current2, false);
+							}
 						}
 					}
 				}
+				GameComponentUtility.StartedNewGame();
+				this.initData = null;
 			}
-			this.initData = null;
+			finally
+			{
+				DeepProfiler.End();
+			}
 		}
 
 		public void LoadGame()
@@ -341,17 +367,24 @@ namespace Verse
 			MemoryUtility.UnloadUnusedUnityAssets();
 			Current.ProgramState = ProgramState.MapInitializing;
 			this.ExposeSmallComponents();
+			BackCompatibility.AfterLoadingSmallGameClassComponents(this);
 			LongEventHandler.SetCurrentEventText("LoadingWorld".Translate());
 			if (Scribe.EnterNode("world"))
 			{
-				this.World = new World();
-				this.World.ExposeData();
-				Scribe.ExitNode();
+				try
+				{
+					this.World = new World();
+					this.World.ExposeData();
+				}
+				finally
+				{
+					Scribe.ExitNode();
+				}
 				this.World.FinalizeInit();
 				LongEventHandler.SetCurrentEventText("LoadingMap".Translate());
-				Scribe_Collections.LookList<Map>(ref this.maps, "maps", LookMode.Deep, new object[0]);
+				Scribe_Collections.Look<Map>(ref this.maps, "maps", LookMode.Deep, new object[0]);
 				int num = -1;
-				Scribe_Values.LookValue<int>(ref num, "visibleMapIndex", -1, false);
+				Scribe_Values.Look<int>(ref num, "visibleMapIndex", -1, false);
 				if (num < 0 && this.maps.Any<Map>())
 				{
 					Log.Error("Visible map is null after loading but there are maps available. Setting visible map to [0].");
@@ -373,12 +406,8 @@ namespace Verse
 				this.VisibleMap = ((num < 0) ? null : this.maps[num]);
 				LongEventHandler.SetCurrentEventText("InitializingGame".Translate());
 				Find.CameraDriver.Expose();
-				Scribe.FinalizeLoading();
-				DeepProfiler.Start("ResolveAllCrossReferences");
-				CrossRefResolver.ResolveAllCrossReferences();
-				DeepProfiler.End();
-				DeepProfiler.Start("DoAllPostLoadInits");
-				PostLoadInitter.DoAllPostLoadInits();
+				DeepProfiler.Start("FinalizeLoading");
+				Scribe.loader.FinalizeLoading();
 				DeepProfiler.End();
 				LongEventHandler.SetCurrentEventText("SpawningAllThings".Translate());
 				for (int i = 0; i < this.maps.Count; i++)
@@ -394,21 +423,53 @@ namespace Verse
 						Find.TickManager.CurTimeSpeed = TimeSpeed.Paused;
 					});
 				}
+				GameComponentUtility.LoadedGame();
 				return;
 			}
 			Log.Error("Could not find world XML node.");
 		}
 
-		public void Update()
+		public void UpdateEntry()
+		{
+			GameComponentUtility.GameComponentUpdate();
+		}
+
+		public void UpdatePlay()
 		{
 			this.tickManager.TickManagerUpdate();
-			this.letterStack.LettersUpdate();
+			this.letterStack.LetterStackUpdate();
 			this.World.WorldUpdate();
 			for (int i = 0; i < this.maps.Count; i++)
 			{
 				this.maps[i].MapUpdate();
 			}
 			this.Info.GameInfoUpdate();
+			GameComponentUtility.GameComponentUpdate();
+		}
+
+		public T GetComponent<T>() where T : GameComponent
+		{
+			for (int i = 0; i < this.components.Count; i++)
+			{
+				T t = this.components[i] as T;
+				if (t != null)
+				{
+					return t;
+				}
+			}
+			return (T)((object)null);
+		}
+
+		public GameComponent GetComponent(Type type)
+		{
+			for (int i = 0; i < this.components.Count; i++)
+			{
+				if (type.IsAssignableFrom(this.components[i].GetType()))
+				{
+					return this.components[i];
+				}
+			}
+			return null;
 		}
 
 		public void FinalizeInit()
@@ -416,6 +477,7 @@ namespace Verse
 			LogSimple.FlushToFileAndOpen();
 			this.researchManager.ReapplyAllMods();
 			MessagesRepeatAvoider.Reset();
+			GameComponentUtility.FinalizeInit();
 			Current.ProgramState = ProgramState.Playing;
 		}
 
@@ -431,98 +493,8 @@ namespace Verse
 				Log.Error("Tried to remove map " + map + " but it's not here.");
 				return;
 			}
-			bool flag = map.ParentFaction != null && map.ParentFaction.HostileTo(Faction.OfPlayer);
-			List<Pawn> list = map.mapPawns.AllPawns.ToList<Pawn>();
-			for (int i = 0; i < list.Count; i++)
-			{
-				try
-				{
-					Pawn pawn = list[i];
-					if (pawn.Spawned)
-					{
-						pawn.DeSpawn();
-					}
-					if (pawn.IsColonist && flag)
-					{
-						map.ParentFaction.kidnapped.KidnapPawn(pawn, null);
-					}
-					else
-					{
-						Find.WorldPawns.PassToWorld(pawn, PawnDiscardDecideMode.Decide);
-					}
-				}
-				catch (Exception ex)
-				{
-					Log.Error(string.Concat(new object[]
-					{
-						"Could not despawn and pass to world ",
-						list[i],
-						": ",
-						ex
-					}));
-				}
-			}
-			List<Faction> allFactionsListForReading = Find.FactionManager.AllFactionsListForReading;
-			for (int j = 0; j < allFactionsListForReading.Count; j++)
-			{
-				allFactionsListForReading[j].Notify_MapRemoved(map);
-			}
-			this.tickManager.RemoveAllFromMap(map);
 			Map visibleMap = this.VisibleMap;
-			int num = this.maps.IndexOf(map);
-			for (int k = num; k < this.maps.Count; k++)
-			{
-				if (k == num)
-				{
-					RealTime.moteList.RemoveAllFromMap(this.maps[k]);
-				}
-				else
-				{
-					List<Mote> allMotes = RealTime.moteList.allMotes;
-					for (int l = 0; l < allMotes.Count; l++)
-					{
-						if (allMotes[l].Map == this.maps[k])
-						{
-							allMotes[l].DecrementMapIndex();
-						}
-					}
-				}
-				List<Thing> allThings = this.maps[k].listerThings.AllThings;
-				for (int m = 0; m < allThings.Count; m++)
-				{
-					if (k == num)
-					{
-						allThings[m].Notify_MyMapRemoved();
-					}
-					else
-					{
-						allThings[m].DecrementMapIndex();
-					}
-				}
-				List<Room> allRooms = this.maps[k].regionGrid.allRooms;
-				for (int n = 0; n < allRooms.Count; n++)
-				{
-					if (k == num)
-					{
-						allRooms[n].Notify_MyMapRemoved();
-					}
-					else
-					{
-						allRooms[n].DecrementMapIndex();
-					}
-				}
-				foreach (Region current in this.maps[k].regionGrid.AllRegions)
-				{
-					if (k == num)
-					{
-						current.Notify_MyMapRemoved();
-					}
-					else
-					{
-						current.DecrementMapIndex();
-					}
-				}
-			}
+			MapDeiniter.Deinit(map);
 			this.maps.Remove(map);
 			if (visibleMap != null)
 			{
@@ -546,6 +518,11 @@ namespace Verse
 			if (Current.ProgramState == ProgramState.Playing)
 			{
 				Find.ColonistBar.MarkColonistsDirty();
+			}
+			MapComponentUtility.MapRemoved(map);
+			if (map.info.parent != null)
+			{
+				map.info.parent.Notify_MyMapRemoved(map);
 			}
 		}
 

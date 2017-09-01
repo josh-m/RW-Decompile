@@ -15,8 +15,8 @@ namespace RimWorld
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Defs.LookDef<TraitDef>(ref this.trait, "trait");
-			Scribe_Values.LookValue<int>(ref this.degree, "degree", 0, false);
+			Scribe_Defs.Look<TraitDef>(ref this.trait, "trait");
+			Scribe_Values.Look<int>(ref this.degree, "degree", 0, false);
 		}
 
 		public override void DoEditInterface(Listing_ScenEdit listing)
@@ -65,7 +65,7 @@ namespace RimWorld
 		public override bool CanCoexistWith(ScenPart other)
 		{
 			ScenPart_ForcedTrait scenPart_ForcedTrait = other as ScenPart_ForcedTrait;
-			return scenPart_ForcedTrait == null || this.trait != scenPart_ForcedTrait.trait;
+			return scenPart_ForcedTrait == null || this.trait != scenPart_ForcedTrait.trait || !this.context.OverlapsWith(scenPart_ForcedTrait.context);
 		}
 
 		protected override void ModifyPawn(Pawn pawn)

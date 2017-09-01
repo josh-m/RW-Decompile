@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Verse;
+using Verse.AI.Group;
 using Verse.Sound;
 
 namespace RimWorld
@@ -29,7 +30,7 @@ namespace RimWorld
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Collections.LookList<Pawn>(ref this.touchingPawns, "testees", LookMode.Reference, new object[0]);
+			Scribe_Collections.Look<Pawn>(ref this.touchingPawns, "testees", LookMode.Reference, new object[0]);
 		}
 
 		public override void Tick()
@@ -84,21 +85,33 @@ namespace RimWorld
 				this.Spring(p);
 				if (p.Faction == Faction.OfPlayer || p.HostFaction == Faction.OfPlayer)
 				{
-					Letter let = new Letter("LetterFriendlyTrapSprungLabel".Translate(new object[]
+					Find.LetterStack.ReceiveLetter("LetterFriendlyTrapSprungLabel".Translate(new object[]
 					{
 						p.NameStringShort
 					}), "LetterFriendlyTrapSprung".Translate(new object[]
 					{
 						p.NameStringShort
-					}), LetterType.BadNonUrgent, new TargetInfo(base.Position, base.Map, false));
-					Find.LetterStack.ReceiveLetter(let, null);
+					}), LetterDefOf.BadNonUrgent, new TargetInfo(base.Position, base.Map, false), null);
 				}
 			}
 		}
 
 		public bool KnowsOfTrap(Pawn p)
 		{
-			return (p.Faction != null && !p.Faction.HostileTo(base.Faction)) || (p.Faction == null && p.RaceProps.Animal && !p.InAggroMentalState) || (p.guest != null && p.guest.released);
+			if (p.Faction != null && !p.Faction.HostileTo(base.Faction))
+			{
+				return true;
+			}
+			if (p.Faction == null && p.RaceProps.Animal && !p.InAggroMentalState)
+			{
+				return true;
+			}
+			if (p.guest != null && p.guest.released)
+			{
+				return true;
+			}
+			Lord lord = p.GetLord();
+			return p.guest != null && lord != null && lord.LordJob is LordJob_FormAndSendCaravan;
 		}
 
 		public override ushort PathFindCostFor(Pawn p)
@@ -127,10 +140,18 @@ namespace RimWorld
 			return 0;
 		}
 
+		public override bool IsDangerousFor(Pawn p)
+		{
+			return this.Armed && this.KnowsOfTrap(p);
+		}
+
 		public override string GetInspectString()
 		{
 			string text = base.GetInspectString();
-			text += "\n";
+			if (!text.NullOrEmpty())
+			{
+				text += "\n";
+			}
 			if (this.Armed)
 			{
 				text += "TrapArmed".Translate();
@@ -142,10 +163,10 @@ namespace RimWorld
 			return text;
 		}
 
-		private void Spring(Pawn p)
+		public void Spring(Pawn p)
 		{
 			SoundDef.Named("DeadfallSpring").PlayOneShot(new TargetInfo(base.Position, base.Map, false));
-			if (p.Faction != null)
+			if (p != null && p.Faction != null)
 			{
 				p.Faction.TacticalMemory.TrapRevealed(base.Position, base.Map);
 			}

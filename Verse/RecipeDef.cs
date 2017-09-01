@@ -71,17 +71,13 @@ namespace Verse
 		[MustTranslate]
 		public string successfullyRemovedHediffMessage;
 
-		public float surgeonSurgerySuccessChanceExponent = 1f;
-
-		public float roomSurgerySuccessChanceFactorExponent = 1f;
-
 		public float surgerySuccessChanceFactor = 1f;
 
 		public float deathOnFailedSurgeryChance;
 
 		public bool targetsBodyPart = true;
 
-		public bool anesthesize = true;
+		public bool anesthetize = true;
 
 		public ResearchProjectDef researchPrerequisite;
 
@@ -95,6 +91,9 @@ namespace Verse
 
 		[Unsaved]
 		private IngredientValueGetter ingredientValueGetterInt;
+
+		[Unsaved]
+		private List<ThingDef> premultipliedSmallIngredients;
 
 		public RecipeWorker Worker
 		{
@@ -218,7 +217,7 @@ namespace Verse
 				for (int j = 0; j < thingList.Count; j++)
 				{
 					Thing t = thingList[j];
-					if ((billDoer == null || !t.IsForbidden(billDoer)) && this.fixedIngredientFilter.Allows(t) && ing.filter.Allows(t))
+					if ((billDoer == null || !t.IsForbidden(billDoer)) && !t.Position.Fogged(map) && (ing.IsFixedIngredient || this.fixedIngredientFilter.Allows(t)) && ing.filter.Allows(t))
 					{
 						foundIng = true;
 						break;
@@ -226,12 +225,19 @@ namespace Verse
 				}
 				if (!foundIng)
 				{
-					ThingDef def = (from x in ing.filter.AllowedThingDefs
-					orderby x.BaseMarketValue
-					select x).FirstOrDefault((ThingDef x) => this.<>f__this.fixedIngredientFilter.Allows(x));
-					if (def != null)
+					if (ing.IsFixedIngredient)
 					{
-						yield return def;
+						yield return ing.filter.AllowedThingDefs.First<ThingDef>();
+					}
+					else
+					{
+						ThingDef def = (from x in ing.filter.AllowedThingDefs
+						orderby x.BaseMarketValue
+						select x).FirstOrDefault((ThingDef x) => this.<>f__this.fixedIngredientFilter.Allows(x));
+						if (def != null)
+						{
+							yield return def;
+						}
 					}
 				}
 			}
@@ -239,13 +245,9 @@ namespace Verse
 
 		public bool IsIngredient(ThingDef th)
 		{
-			if (!this.fixedIngredientFilter.Allows(th))
-			{
-				return false;
-			}
 			for (int i = 0; i < this.ingredients.Count; i++)
 			{
-				if (this.ingredients[i].filter.Allows(th))
+				if (this.ingredients[i].filter.Allows(th) && (this.ingredients[i].IsFixedIngredient || this.fixedIngredientFilter.Allows(th)))
 				{
 					return true;
 				}
@@ -291,6 +293,34 @@ namespace Verse
 		public bool PawnSatisfiesSkillRequirements(Pawn pawn)
 		{
 			return this.skillRequirements == null || !this.skillRequirements.Any((SkillRequirement req) => !req.PawnSatisfies(pawn));
+		}
+
+		public List<ThingDef> GetPremultipliedSmallIngredients()
+		{
+			if (this.premultipliedSmallIngredients != null)
+			{
+				return this.premultipliedSmallIngredients;
+			}
+			this.premultipliedSmallIngredients = (from td in this.ingredients.SelectMany((IngredientCount ingredient) => ingredient.filter.AllowedThingDefs)
+			where td.smallVolume
+			select td).Distinct<ThingDef>().ToList<ThingDef>();
+			bool flag = true;
+			while (flag)
+			{
+				flag = false;
+				for (int i = 0; i < this.ingredients.Count; i++)
+				{
+					bool flag2 = this.ingredients[i].filter.AllowedThingDefs.Any((ThingDef td) => !this.premultipliedSmallIngredients.Contains(td));
+					if (flag2)
+					{
+						foreach (ThingDef current in this.ingredients[i].filter.AllowedThingDefs)
+						{
+							flag |= this.premultipliedSmallIngredients.Remove(current);
+						}
+					}
+				}
+			}
+			return this.premultipliedSmallIngredients;
 		}
 	}
 }

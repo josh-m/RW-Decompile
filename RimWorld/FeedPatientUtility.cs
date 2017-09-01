@@ -40,7 +40,7 @@ namespace RimWorld
 				{
 					return false;
 				}
-				if (p.guest != null && !p.guest.ShouldBeBroughtFood)
+				if (p.guest != null && !p.guest.CanBeBroughtFood)
 				{
 					return false;
 				}

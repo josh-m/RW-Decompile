@@ -30,13 +30,13 @@ namespace RimWorld
 			}
 		}
 
-		public override Job JobOnThing(Pawn pawn, Thing t)
+		public override Job JobOnThing(Pawn pawn, Thing t, bool forced = false)
 		{
 			if (t.def.category != ThingCategory.Plant)
 			{
 				return null;
 			}
-			if (!pawn.CanReserve(t, 1))
+			if (!pawn.CanReserve(t, 1, -1, null, false))
 			{
 				return null;
 			}

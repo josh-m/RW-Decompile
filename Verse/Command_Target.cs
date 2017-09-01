@@ -14,7 +14,7 @@ namespace Verse
 		public override void ProcessInput(Event ev)
 		{
 			base.ProcessInput(ev);
-			SoundDefOf.TickTiny.PlayOneShotOnCamera();
+			SoundDefOf.TickTiny.PlayOneShotOnCamera(null);
 			Find.Targeter.BeginTargeting(this.targetingParams, delegate(LocalTargetInfo target)
 			{
 				this.action(target.Thing);

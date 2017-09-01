@@ -40,7 +40,7 @@ namespace RimWorld
 
 		private List<CompPowerBattery> givingBats = new List<CompPowerBattery>();
 
-		private List<CompPowerBattery> batteryCompsShuffled = new List<CompPowerBattery>();
+		private static List<CompPowerBattery> batteriesShuffled = new List<CompPowerBattery>();
 
 		public PowerNet(IEnumerable<CompPower> newTransmitters)
 		{
@@ -164,7 +164,7 @@ namespace RimWorld
 		{
 			float num = this.CurrentEnergyGainRate();
 			float num2 = this.CurrentStoredEnergy();
-			if (num2 + num >= -1E-07f && !this.powerNetManager.map.mapConditionManager.ConditionIsActive(MapConditionDefOf.SolarFlare))
+			if (num2 + num >= -1E-07f && !this.powerNetManager.map.gameConditionManager.ConditionIsActive(GameConditionDefOf.SolarFlare))
 			{
 				float num3;
 				if (this.batteryComps.Count > 0 && num2 >= 0.1f)
@@ -186,7 +186,7 @@ namespace RimWorld
 					PowerNet.partsWantingPowerOn.Clear();
 					for (int i = 0; i < this.powerComps.Count; i++)
 					{
-						if (!this.powerComps[i].PowerOn && this.powerComps[i].DesirePowerOn && !this.powerComps[i].parent.IsBrokenDown())
+						if (!this.powerComps[i].PowerOn && FlickUtility.WantsToBeOn(this.powerComps[i].parent) && !this.powerComps[i].parent.IsBrokenDown())
 						{
 							PowerNet.partsWantingPowerOn.Add(this.powerComps[i]);
 						}
@@ -232,61 +232,103 @@ namespace RimWorld
 		{
 			if (extra > 0f)
 			{
-				float val = extra / (float)this.batteryComps.Count;
-				this.batteryCompsShuffled.Clear();
-				for (int i = 0; i < this.batteryComps.Count; i++)
-				{
-					this.batteryCompsShuffled.Add(this.batteryComps[i]);
-				}
-				this.batteryCompsShuffled.Shuffle<CompPowerBattery>();
-				for (int j = 0; j < this.batteryCompsShuffled.Count; j++)
-				{
-					CompPowerBattery compPowerBattery = this.batteryCompsShuffled[j];
-					float num = Math.Min(val, compPowerBattery.AmountCanAccept);
-					compPowerBattery.AddEnergy(num);
-					extra -= num;
-					if (extra < 0.01f)
-					{
-						return;
-					}
-				}
+				this.DistributeEnergyAmongBatteries(extra);
 			}
 			else
 			{
-				float num2 = -extra;
+				float num = -extra;
 				this.givingBats.Clear();
-				for (int k = 0; k < this.batteryComps.Count; k++)
+				for (int i = 0; i < this.batteryComps.Count; i++)
 				{
-					if (this.batteryComps[k].StoredEnergy > 1E-07f)
+					if (this.batteryComps[i].StoredEnergy > 1E-07f)
 					{
-						this.givingBats.Add(this.batteryComps[k]);
+						this.givingBats.Add(this.batteryComps[i]);
 					}
 				}
-				float a = num2 / (float)this.givingBats.Count;
-				int num3 = 0;
-				while (num2 > 1E-07f)
+				float a = num / (float)this.givingBats.Count;
+				int num2 = 0;
+				while (num > 1E-07f)
 				{
-					for (int l = 0; l < this.givingBats.Count; l++)
+					for (int j = 0; j < this.givingBats.Count; j++)
 					{
-						float num4 = Mathf.Min(a, this.givingBats[l].StoredEnergy);
-						this.givingBats[l].DrawPower(num4);
-						num2 -= num4;
-						if (num2 < 1E-07f)
+						float num3 = Mathf.Min(a, this.givingBats[j].StoredEnergy);
+						this.givingBats[j].DrawPower(num3);
+						num -= num3;
+						if (num < 1E-07f)
 						{
 							return;
 						}
 					}
-					num3++;
-					if (num3 > 10)
+					num2++;
+					if (num2 > 10)
 					{
 						break;
 					}
 				}
-				if (num2 > 1E-07f)
+				if (num > 1E-07f)
 				{
 					Log.Warning("Drew energy from a PowerNet that didn't have it.");
 				}
 			}
+		}
+
+		private void DistributeEnergyAmongBatteries(float energy)
+		{
+			if (energy <= 0f || !this.batteryComps.Any<CompPowerBattery>())
+			{
+				return;
+			}
+			PowerNet.batteriesShuffled.Clear();
+			PowerNet.batteriesShuffled.AddRange(this.batteryComps);
+			PowerNet.batteriesShuffled.Shuffle<CompPowerBattery>();
+			int num = 0;
+			while (true)
+			{
+				num++;
+				if (num > 10000)
+				{
+					break;
+				}
+				float num2 = 3.40282347E+38f;
+				for (int i = 0; i < PowerNet.batteriesShuffled.Count; i++)
+				{
+					num2 = Mathf.Min(num2, PowerNet.batteriesShuffled[i].AmountCanAccept);
+				}
+				if (energy < num2 * (float)PowerNet.batteriesShuffled.Count)
+				{
+					goto IL_12F;
+				}
+				for (int j = PowerNet.batteriesShuffled.Count - 1; j >= 0; j--)
+				{
+					float amountCanAccept = PowerNet.batteriesShuffled[j].AmountCanAccept;
+					bool flag = amountCanAccept <= 0f || amountCanAccept == num2;
+					if (num2 > 0f)
+					{
+						PowerNet.batteriesShuffled[j].AddEnergy(num2);
+						energy -= num2;
+					}
+					if (flag)
+					{
+						PowerNet.batteriesShuffled.RemoveAt(j);
+					}
+				}
+				if (energy < 0.0005f || !PowerNet.batteriesShuffled.Any<CompPowerBattery>())
+				{
+					goto IL_196;
+				}
+			}
+			Log.Error("Too many iterations.");
+			goto IL_1A0;
+			IL_12F:
+			float amount = energy / (float)PowerNet.batteriesShuffled.Count;
+			for (int k = 0; k < PowerNet.batteriesShuffled.Count; k++)
+			{
+				PowerNet.batteriesShuffled[k].AddEnergy(amount);
+			}
+			energy = 0f;
+			IL_196:
+			IL_1A0:
+			PowerNet.batteriesShuffled.Clear();
 		}
 
 		public string DebugString()

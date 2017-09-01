@@ -3,8 +3,11 @@ using UnityEngine;
 
 namespace Verse
 {
+	[StaticConstructorOnStartup]
 	public class Graphic_Mote : Graphic_Single
 	{
+		private static MaterialPropertyBlock propertyBlock = new MaterialPropertyBlock();
+
 		public override void DrawWorker(Vector3 loc, Rot4 rot, ThingDef thingDef, Thing thing)
 		{
 			Mote mote = (Mote)thing;
@@ -15,17 +18,21 @@ namespace Verse
 			}
 			Color color = base.Color * mote.instanceColor;
 			color.a *= num;
-			Material material = this.MatSingle;
-			if (color != material.color)
-			{
-				material = MaterialPool.MatFrom((Texture2D)material.mainTexture, material.shader, color);
-			}
 			Vector3 exactScale = mote.exactScale;
 			exactScale.x *= this.data.drawSize.x;
 			exactScale.z *= this.data.drawSize.y;
 			Matrix4x4 matrix = default(Matrix4x4);
 			matrix.SetTRS(mote.DrawPos, Quaternion.AngleAxis(mote.exactRotation, Vector3.up), exactScale);
-			Graphics.DrawMesh(MeshPool.plane10, matrix, material, 0);
+			Material matSingle = this.MatSingle;
+			if (color.IndistinguishableFrom(matSingle.color))
+			{
+				Graphics.DrawMesh(MeshPool.plane10, matrix, matSingle, 0);
+			}
+			else
+			{
+				Graphic_Mote.propertyBlock.SetColor(ShaderPropertyIDs.Color, color);
+				Graphics.DrawMesh(MeshPool.plane10, matrix, matSingle, 0, null, 0, Graphic_Mote.propertyBlock);
+			}
 		}
 
 		public static float CalculateMoteAlpha(Mote mote)

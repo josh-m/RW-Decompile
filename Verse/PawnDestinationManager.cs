@@ -110,18 +110,6 @@ namespace Verse
 			this.reservedDestinations[p.Faction].Remove(p);
 		}
 
-		public void RemovePawnFromSystem(Pawn p)
-		{
-			if (p.Faction == null)
-			{
-				return;
-			}
-			if (this.reservedDestinations[p.Faction].ContainsKey(p))
-			{
-				this.reservedDestinations[p.Faction].Remove(p);
-			}
-		}
-
 		public void DebugDrawDestinations()
 		{
 			foreach (KeyValuePair<Pawn, IntVec3> current in this.reservedDestinations[Faction.OfPlayer])

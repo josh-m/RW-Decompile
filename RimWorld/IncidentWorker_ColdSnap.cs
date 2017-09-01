@@ -3,7 +3,7 @@ using Verse;
 
 namespace RimWorld
 {
-	public class IncidentWorker_ColdSnap : IncidentWorker_MakeMapCondition
+	public class IncidentWorker_ColdSnap : IncidentWorker_MakeGameCondition
 	{
 		protected override bool CanFireNowSub(IIncidentTarget target)
 		{
@@ -12,7 +12,7 @@ namespace RimWorld
 				return false;
 			}
 			Map map = (Map)target;
-			return map.mapTemperature.SeasonalTemp >= 0f && map.mapTemperature.SeasonalTemp <= 10f;
+			return map.mapTemperature.SeasonalTemp > 0f && map.mapTemperature.SeasonalTemp < 15f;
 		}
 	}
 }

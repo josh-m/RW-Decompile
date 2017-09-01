@@ -20,16 +20,13 @@ namespace RimWorld
 		protected override IEnumerable<Toil> MakeNewToils()
 		{
 			this.FailOnAggroMentalState(TargetIndex.A);
-			yield return Toils_Reserve.Reserve(TargetIndex.A, 1);
-			yield return Toils_Interpersonal.GotoPrisoner(this.pawn, this.Victim, PrisonerInteractionMode.Execution).FailOn(() => !this.<>f__this.Victim.IsPrisonerOfColony || !this.<>f__this.Victim.guest.PrisonerIsSecure);
+			yield return Toils_Reserve.Reserve(TargetIndex.A, 1, -1, null);
+			yield return Toils_Interpersonal.GotoPrisoner(this.pawn, this.Victim, PrisonerInteractionModeDefOf.Execution).FailOn(() => !this.<>f__this.Victim.IsPrisonerOfColony || !this.<>f__this.Victim.guest.PrisonerIsSecure);
 			yield return new Toil
 			{
 				initAction = delegate
 				{
-					Pawn actor = this.<execute>__0.actor;
-					DamageInfo dinfo = new DamageInfo(DamageDefOf.ExecutionCut, 99999, -1f, actor, null, null);
-					dinfo.SetForcedHitPart(this.<>f__this.Victim.health.hediffSet.GetBrain());
-					this.<>f__this.Victim.TakeDamage(dinfo);
+					ExecutionUtility.DoExecutionByCut(this.<execute>__0.actor, this.<>f__this.Victim);
 					ThoughtUtility.GiveThoughtsForPawnExecuted(this.<>f__this.Victim, PawnExecutionKind.GenericBrutal);
 					TaleRecorder.RecordTale(TaleDefOf.ExecutedPrisoner, new object[]
 					{

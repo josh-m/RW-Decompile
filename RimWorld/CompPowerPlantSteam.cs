@@ -9,9 +9,9 @@ namespace RimWorld
 
 		private Building_SteamGeyser geyser;
 
-		public override void PostSpawnSetup()
+		public override void PostSpawnSetup(bool respawningAfterLoad)
 		{
-			base.PostSpawnSetup();
+			base.PostSpawnSetup(respawningAfterLoad);
 			this.steamSprayer = new IntermittentSteamSprayer(this.parent);
 		}
 

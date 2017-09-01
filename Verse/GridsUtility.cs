@@ -12,47 +12,24 @@ namespace Verse
 			return GenTemperature.GetTemperatureForCell(loc, map);
 		}
 
-		public static Region GetRegion(this IntVec3 loc, Map map)
+		public static Region GetRegion(this IntVec3 loc, Map map, RegionType allowedRegionTypes = RegionType.Set_Passable)
 		{
-			return map.regionGrid.GetValidRegionAt(loc);
+			return RegionAndRoomQuery.RegionAt(loc, map, allowedRegionTypes);
 		}
 
-		public static Region GetRegion(this Thing thing)
+		public static Room GetRoom(this IntVec3 loc, Map map, RegionType allowedRegionTypes = RegionType.Set_Passable)
 		{
-			if (!thing.Spawned)
-			{
-				return null;
-			}
-			return thing.Position.GetRegion(thing.Map);
+			return RegionAndRoomQuery.RoomAt(loc, map, allowedRegionTypes);
 		}
 
-		public static Room GetRoom(this IntVec3 loc, Map map)
+		public static RoomGroup GetRoomGroup(this IntVec3 loc, Map map)
 		{
-			return RoomQuery.RoomAt(loc, map);
+			return RegionAndRoomQuery.RoomGroupAt(loc, map);
 		}
 
-		public static Room GetRoom(this Thing t)
+		public static Room GetRoomOrAdjacent(this IntVec3 loc, Map map, RegionType allowedRegionTypes = RegionType.Set_Passable)
 		{
-			return RoomQuery.RoomAt(t);
-		}
-
-		public static Room GetRoomOrAdjacent(this IntVec3 loc, Map map)
-		{
-			Room room = RoomQuery.RoomAt(loc, map);
-			if (room != null)
-			{
-				return room;
-			}
-			for (int i = 0; i < 8; i++)
-			{
-				IntVec3 c = loc + GenAdj.AdjacentCells[i];
-				room = RoomQuery.RoomAt(c, map);
-				if (room != null)
-				{
-					return room;
-				}
-			}
-			return room;
+			return RegionAndRoomQuery.RoomAtOrAdjacent(loc, map, allowedRegionTypes);
 		}
 
 		public static List<Thing> GetThingList(this IntVec3 c, Map map)
@@ -96,11 +73,6 @@ namespace Verse
 			return map.zoneManager.ZoneAt(c);
 		}
 
-		public static Thing GetRegionBarrier(this IntVec3 c, Map map)
-		{
-			return c.GetThingList(map).Find((Thing x) => x.def.regionBarrier);
-		}
-
 		public static Plant GetPlant(this IntVec3 c, Map map)
 		{
 			List<Thing> list = map.thingGrid.ThingsListAt(c);
@@ -109,6 +81,19 @@ namespace Verse
 				if (list[i].def.category == ThingCategory.Plant)
 				{
 					return (Plant)list[i];
+				}
+			}
+			return null;
+		}
+
+		public static Thing GetRoofHolderOrImpassable(this IntVec3 c, Map map)
+		{
+			List<Thing> thingList = c.GetThingList(map);
+			for (int i = 0; i < thingList.Count; i++)
+			{
+				if (thingList[i].def.holdsRoof || thingList[i].def.passability == Traversability.Impassable)
+				{
+					return thingList[i];
 				}
 			}
 			return null;
@@ -169,7 +154,26 @@ namespace Verse
 
 		public static Pawn GetFirstPawn(this IntVec3 c, Map map)
 		{
-			return (Pawn)c.GetThingList(map).Find((Thing x) => x is Pawn);
+			List<Thing> thingList = c.GetThingList(map);
+			for (int i = 0; i < thingList.Count; i++)
+			{
+				Pawn pawn = thingList[i] as Pawn;
+				if (pawn != null)
+				{
+					return pawn;
+				}
+			}
+			return null;
+		}
+
+		public static IPlantToGrowSettable GetPlantToGrowSettable(this IntVec3 c, Map map)
+		{
+			IPlantToGrowSettable plantToGrowSettable = c.GetEdifice(map) as IPlantToGrowSettable;
+			if (plantToGrowSettable == null)
+			{
+				plantToGrowSettable = (c.GetZone(map) as IPlantToGrowSettable);
+			}
+			return plantToGrowSettable;
 		}
 
 		public static Building GetTransmitter(this IntVec3 c, Map map)
@@ -209,21 +213,25 @@ namespace Verse
 			return map.coverGrid[c];
 		}
 
+		public static Thing GetGas(this IntVec3 c, Map map)
+		{
+			List<Thing> list = map.thingGrid.ThingsListAt(c);
+			for (int i = 0; i < list.Count; i++)
+			{
+				if (list[i].def.category == ThingCategory.Gas)
+				{
+					return list[i];
+				}
+			}
+			return null;
+		}
+
 		public static bool IsInPrisonCell(this IntVec3 c, Map map)
 		{
-			Room room = RoomQuery.RoomAt(c, map);
-			if (room != null)
+			Room roomOrAdjacent = c.GetRoomOrAdjacent(map, RegionType.Set_Passable);
+			if (roomOrAdjacent != null)
 			{
-				return room.isPrisonCell;
-			}
-			for (int i = 0; i < 8; i++)
-			{
-				IntVec3 c2 = c + GenAdj.AdjacentCells[i];
-				Room room2 = RoomQuery.RoomAt(c2, map);
-				if (room2 != null)
-				{
-					return room2.isPrisonCell;
-				}
+				return roomOrAdjacent.isPrisonCell;
 			}
 			Log.Error("Checking prison cell status of " + c + " which is not in or adjacent to a room.");
 			return false;
@@ -231,25 +239,21 @@ namespace Verse
 
 		public static bool UsesOutdoorTemperature(this IntVec3 c, Map map)
 		{
-			Room room = c.GetRoom(map);
+			Room room = c.GetRoom(map, RegionType.Set_All);
 			if (room != null)
 			{
 				return room.UsesOutdoorTemperature;
-			}
-			if (!c.Impassable(map))
-			{
-				return true;
 			}
 			Building edifice = c.GetEdifice(map);
 			if (edifice != null)
 			{
 				IntVec3[] array = GenAdj.CellsAdjacent8Way(edifice).ToArray<IntVec3>();
-				for (int i = 0; i < array.Count<IntVec3>(); i++)
+				for (int i = 0; i < array.Length; i++)
 				{
-					if (array[i].InBounds(map) && !array[i].Impassable(map))
+					if (array[i].InBounds(map))
 					{
-						room = array[i].GetRoom(map);
-						if (room == null || room.UsesOutdoorTemperature)
+						room = array[i].GetRoom(map, RegionType.Set_All);
+						if (room != null && room.UsesOutdoorTemperature)
 						{
 							return true;
 						}

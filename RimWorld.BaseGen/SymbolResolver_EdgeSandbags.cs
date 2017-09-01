@@ -5,27 +5,61 @@ namespace RimWorld.BaseGen
 {
 	public class SymbolResolver_EdgeSandbags : SymbolResolver
 	{
+		private static readonly IntRange LineLengthRange = new IntRange(2, 5);
+
+		private static readonly IntRange GapLengthRange = new IntRange(1, 5);
+
 		public override void Resolve(ResolveParams rp)
 		{
 			Map map = BaseGen.globalSettings.map;
-			float? chanceToSkipSandbag = rp.chanceToSkipSandbag;
-			float chance = (!chanceToSkipSandbag.HasValue) ? 0f : chanceToSkipSandbag.Value;
+			int num = 0;
+			int num2 = 0;
+			int num3 = -1;
+			if (rp.rect.EdgeCellsCount < (SymbolResolver_EdgeSandbags.LineLengthRange.max + SymbolResolver_EdgeSandbags.GapLengthRange.max) * 2)
+			{
+				num = rp.rect.EdgeCellsCount;
+			}
+			else if (Rand.Bool)
+			{
+				num = SymbolResolver_EdgeSandbags.LineLengthRange.RandomInRange;
+			}
+			else
+			{
+				num2 = SymbolResolver_EdgeSandbags.GapLengthRange.RandomInRange;
+			}
 			foreach (IntVec3 current in rp.rect.EdgeCells)
 			{
-				Rand.PushSeed();
-				Rand.Seed = Gen.HashCombineInt(current.x / 2, current.z / 2);
-				bool flag = Rand.Chance(chance);
-				Rand.PopSeed();
-				if (!flag)
+				num3++;
+				if (num2 > 0)
 				{
-					if (current.Standable(map) && !current.Roofed(map) && !current.Fogged(map))
+					num2--;
+					if (num2 == 0)
 					{
-						if (!GenSpawn.WouldWipeAnythingWith(current, Rot4.North, ThingDefOf.Sandbags, map, (Thing x) => x.def.category == ThingCategory.Building || x.def.category == ThingCategory.Item))
+						if (num3 == rp.rect.EdgeCellsCount - 2)
 						{
-							Thing thing = ThingMaker.MakeThing(ThingDefOf.Sandbags, null);
-							thing.SetFaction(rp.faction, null);
-							GenSpawn.Spawn(thing, current, map);
+							num2 = 1;
 						}
+						else
+						{
+							num = SymbolResolver_EdgeSandbags.LineLengthRange.RandomInRange;
+						}
+					}
+				}
+				else if (current.Standable(map) && !current.Roofed(map))
+				{
+					if (!GenSpawn.WouldWipeAnythingWith(current, Rot4.North, ThingDefOf.Sandbags, map, (Thing x) => x.def.category == ThingCategory.Building || x.def.category == ThingCategory.Item))
+					{
+						if (num > 0)
+						{
+							num--;
+							if (num == 0)
+							{
+								num2 = SymbolResolver_EdgeSandbags.GapLengthRange.RandomInRange;
+							}
+						}
+						Thing thing = ThingMaker.MakeThing(ThingDefOf.Sandbags, null);
+						thing.SetFaction(rp.faction, null);
+						GenSpawn.Spawn(thing, current, map);
 					}
 				}
 			}

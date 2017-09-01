@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Text;
 
 namespace Verse
 {
@@ -23,6 +24,16 @@ namespace Verse
 		public void Notify_LinkHasNoRegions(RegionLink link)
 		{
 			this.links.Remove(link.UniqueHashCode());
+		}
+
+		public void DebugLog()
+		{
+			StringBuilder stringBuilder = new StringBuilder();
+			foreach (KeyValuePair<ulong, RegionLink> current in this.links)
+			{
+				stringBuilder.AppendLine(current.ToString());
+			}
+			Log.Message(stringBuilder.ToString());
 		}
 	}
 }

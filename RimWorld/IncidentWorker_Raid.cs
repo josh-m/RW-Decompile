@@ -18,18 +18,11 @@ namespace RimWorld
 
 		protected abstract string GetLetterText(IncidentParms parms, List<Pawn> pawns);
 
-		protected abstract LetterType GetLetterType();
+		protected abstract LetterDef GetLetterDef();
 
 		protected abstract string GetRelatedPawnsInfoLetterText(IncidentParms parms);
 
-		protected virtual void ResolveRaidPoints(IncidentParms parms)
-		{
-			if (parms.points > 0f)
-			{
-				return;
-			}
-			parms.points = (float)Rand.Range(50, 300);
-		}
+		protected abstract void ResolveRaidPoints(IncidentParms parms);
 
 		protected virtual void ResolveRaidArriveMode(IncidentParms parms)
 		{
@@ -60,18 +53,19 @@ namespace RimWorld
 			}
 		}
 
-		protected virtual void ResolveRaidSpawnCenter(IncidentParms parms)
+		protected virtual bool ResolveRaidSpawnCenter(IncidentParms parms)
 		{
 			Map map = (Map)parms.target;
 			if (parms.spawnCenter.IsValid)
 			{
-				return;
+				return true;
 			}
 			if (parms.raidArrivalMode == PawnsArriveMode.CenterDrop || parms.raidArrivalMode == PawnsArriveMode.EdgeDrop)
 			{
 				if (parms.raidArrivalMode == PawnsArriveMode.CenterDrop)
 				{
 					parms.raidPodOpenDelay = 520;
+					parms.spawnRotation = Rot4.Random;
 					if (Rand.Value < 0.4f && map.listerBuildings.ColonistsHaveBuildingWithPowerOn(ThingDefOf.OrbitalTradeBeacon))
 					{
 						parms.spawnCenter = DropCellFinder.TradeDropSpot(map);
@@ -85,12 +79,18 @@ namespace RimWorld
 				{
 					parms.raidPodOpenDelay = 140;
 					parms.spawnCenter = DropCellFinder.FindRaidDropCenterDistant(map);
+					parms.spawnRotation = Rot4.Random;
 				}
 			}
 			else
 			{
-				RCellFinder.TryFindRandomPawnEntryCell(out parms.spawnCenter, map);
+				if (!RCellFinder.TryFindRandomPawnEntryCell(out parms.spawnCenter, map, CellFinder.EdgeRoadChance_Hostile, null))
+				{
+					return false;
+				}
+				parms.spawnRotation = Rot4.FromAngleFlat((map.Center - parms.spawnCenter).AngleFlat);
 			}
+			return true;
 		}
 
 		public override bool TryExecute(IncidentParms parms)
@@ -103,7 +103,10 @@ namespace RimWorld
 			}
 			this.ResolveRaidStrategy(parms);
 			this.ResolveRaidArriveMode(parms);
-			this.ResolveRaidSpawnCenter(parms);
+			if (!this.ResolveRaidSpawnCenter(parms))
+			{
+				return false;
+			}
 			IncidentParmsUtility.AdjustPointsForGroupArrivalParams(parms);
 			PawnGroupMakerParms defaultPawnGroupMakerParms = IncidentParmsUtility.GetDefaultPawnGroupMakerParms(parms);
 			List<Pawn> list = PawnGroupMakerUtility.GeneratePawns(PawnGroupKindDefOf.Normal, defaultPawnGroupMakerParms, true).ToList<Pawn>();
@@ -122,8 +125,8 @@ namespace RimWorld
 			{
 				foreach (Pawn current in list)
 				{
-					IntVec3 loc = CellFinder.RandomClosewalkCellNear(parms.spawnCenter, map, 8);
-					GenSpawn.Spawn(current, loc, map);
+					IntVec3 loc = CellFinder.RandomClosewalkCellNear(parms.spawnCenter, map, 8, null);
+					GenSpawn.Spawn(current, loc, map, parms.spawnRotation, false);
 					target = current;
 				}
 			}
@@ -137,22 +140,22 @@ namespace RimWorld
 			string letterLabel = this.GetLetterLabel(parms);
 			string letterText = this.GetLetterText(parms, list);
 			PawnRelationUtility.Notify_PawnsSeenByPlayer(list, ref letterLabel, ref letterText, this.GetRelatedPawnsInfoLetterText(parms), true);
-			Find.LetterStack.ReceiveLetter(letterLabel, letterText, this.GetLetterType(), target, stringBuilder.ToString());
-			if (this.GetLetterType() == LetterType.BadUrgent)
+			Find.LetterStack.ReceiveLetter(letterLabel, letterText, this.GetLetterDef(), target, stringBuilder.ToString());
+			if (this.GetLetterDef() == LetterDefOf.BadUrgent)
 			{
 				TaleRecorder.RecordTale(TaleDefOf.RaidArrived, new object[0]);
 			}
 			Lord lord = LordMaker.MakeNewLord(parms.faction, parms.raidStrategy.Worker.MakeLordJob(parms, map), map, list);
 			AvoidGridMaker.RegenerateAvoidGridsFor(parms.faction, map);
 			LessonAutoActivator.TeachOpportunity(ConceptDefOf.EquippingWeapons, OpportunityType.Critical);
-			if (!PlayerKnowledgeDatabase.IsComplete(ConceptDefOf.PersonalShields))
+			if (!PlayerKnowledgeDatabase.IsComplete(ConceptDefOf.ShieldBelts))
 			{
 				for (int i = 0; i < list.Count; i++)
 				{
 					Pawn pawn = list[i];
-					if (pawn.apparel.WornApparel.Any((Apparel ap) => ap is PersonalShield))
+					if (pawn.apparel.WornApparel.Any((Apparel ap) => ap is ShieldBelt))
 					{
-						LessonAutoActivator.TeachOpportunity(ConceptDefOf.PersonalShields, OpportunityType.Critical);
+						LessonAutoActivator.TeachOpportunity(ConceptDefOf.ShieldBelts, OpportunityType.Critical);
 						break;
 					}
 				}

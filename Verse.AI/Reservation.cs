@@ -9,7 +9,11 @@ namespace Verse.AI
 
 		private LocalTargetInfo target;
 
+		private ReservationLayerDef layer;
+
 		private int maxPawns;
+
+		private int stackCount = -1;
 
 		public Pawn Claimant
 		{
@@ -27,11 +31,27 @@ namespace Verse.AI
 			}
 		}
 
+		public ReservationLayerDef Layer
+		{
+			get
+			{
+				return this.layer;
+			}
+		}
+
 		public int MaxPawns
 		{
 			get
 			{
 				return this.maxPawns;
+			}
+		}
+
+		public int StackCount
+		{
+			get
+			{
+				return this.stackCount;
 			}
 		}
 
@@ -47,18 +67,22 @@ namespace Verse.AI
 		{
 		}
 
-		public Reservation(Pawn claimant, int maxPawns, LocalTargetInfo target)
+		public Reservation(Pawn claimant, int maxPawns, int stackCount, LocalTargetInfo target, ReservationLayerDef layer)
 		{
 			this.claimant = claimant;
 			this.maxPawns = maxPawns;
+			this.stackCount = stackCount;
 			this.target = target;
+			this.layer = layer;
 		}
 
 		public void ExposeData()
 		{
-			Scribe_References.LookReference<Pawn>(ref this.claimant, "claimant", false);
-			Scribe_TargetInfo.LookTargetInfo(ref this.target, "target");
-			Scribe_Values.LookValue<int>(ref this.maxPawns, "maxPawns", 0, false);
+			Scribe_References.Look<Pawn>(ref this.claimant, "claimant", false);
+			Scribe_TargetInfo.Look(ref this.target, "target");
+			Scribe_Values.Look<int>(ref this.maxPawns, "maxPawns", 0, false);
+			Scribe_Values.Look<int>(ref this.stackCount, "stackCount", 0, false);
+			Scribe_Defs.Look<ReservationLayerDef>(ref this.layer, "layer");
 		}
 
 		public override string ToString()
@@ -69,7 +93,11 @@ namespace Verse.AI
 				", ",
 				this.target.ToString(),
 				", ",
-				this.maxPawns
+				this.layer.ToString(),
+				", ",
+				this.maxPawns,
+				", ",
+				this.stackCount
 			});
 		}
 	}

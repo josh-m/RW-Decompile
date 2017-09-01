@@ -19,7 +19,7 @@ namespace RimWorld
 			return delegate
 			{
 				float num = this.Grave.GetStatValue(StatDefOf.EntertainmentStrengthFactor, true);
-				Room room = this.pawn.GetRoom();
+				Room room = this.pawn.GetRoom(RegionType.Set_Passable);
 				if (room != null)
 				{
 					num *= room.GetStat(RoomStatDefOf.GraveVisitingJoyGainFactor);

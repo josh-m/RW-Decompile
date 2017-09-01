@@ -15,15 +15,15 @@ namespace RimWorld
 		public override void DoEditInterface(Listing_ScenEdit listing)
 		{
 			Rect scenPartRect = listing.GetScenPartRect(this, ScenPart.RowHeight * 5f);
-			this.text = Widgets.TextArea(scenPartRect, this.text);
+			this.text = Widgets.TextArea(scenPartRect, this.text, false);
 		}
 
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Values.LookValue<string>(ref this.text, "text", null, false);
-			Scribe_Values.LookValue<string>(ref this.textKey, "textKey", null, false);
-			Scribe_Defs.LookDef<SoundDef>(ref this.closeSound, "closeSound");
+			Scribe_Values.Look<string>(ref this.text, "text", null, false);
+			Scribe_Values.Look<string>(ref this.textKey, "textKey", null, false);
+			Scribe_Defs.Look<SoundDef>(ref this.closeSound, "closeSound");
 		}
 
 		public override void PostGameStart()
@@ -37,7 +37,7 @@ namespace RimWorld
 				diaOption.resolveTree = true;
 				diaOption.clickSound = null;
 				diaNode.options.Add(diaOption);
-				Dialog_NodeTree dialog_NodeTree = new Dialog_NodeTree(diaNode, false, false);
+				Dialog_NodeTree dialog_NodeTree = new Dialog_NodeTree(diaNode, false, false, null);
 				dialog_NodeTree.soundClose = ((this.closeSound == null) ? SoundDefOf.GameStartSting : this.closeSound);
 				dialog_NodeTree.closeAction = delegate
 				{

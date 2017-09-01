@@ -50,6 +50,10 @@ namespace Verse
 
 		public static void DrawCurves(Rect rect, List<SimpleCurveDrawInfo> curves, SimpleCurveDrawerStyle style = null, List<CurveMark> marks = null, Rect legendRect = default(Rect))
 		{
+			if (Event.current.type != EventType.Repaint)
+			{
+				return;
+			}
 			if (style == null)
 			{
 				style = new SimpleCurveDrawerStyle();
@@ -167,14 +171,13 @@ namespace Verse
 					Vector2 curvePoint = default(Vector2);
 					int num = curve.curve.AllPoints.Count((CurvePoint x) => x.x >= viewRect.xMin && x.x <= viewRect.xMax);
 					int num2 = SimpleCurveDrawer.RemovePointsOptimizationFreq(num);
-					int num3 = 0;
-					foreach (CurvePoint current in curve.curve.AllPoints)
+					for (int i = 0; i < curve.curve.PointsCount; i++)
 					{
-						num3++;
-						if (!pointsRemoveOptimization || num3 % num2 != 0 || num3 == num - 1)
+						CurvePoint curvePoint2 = curve.curve[i];
+						if (!pointsRemoveOptimization || i % num2 != 0 || i == num - 1)
 						{
-							curvePoint.x = current.x;
-							curvePoint.y = current.y;
+							curvePoint.x = curvePoint2.x;
+							curvePoint.y = curvePoint2.y;
 							Vector2 vector = SimpleCurveDrawer.CurveToScreenCoordsInsideScreenRect(rect, viewRect, curvePoint);
 							if (flag)
 							{
@@ -195,13 +198,13 @@ namespace Verse
 				else
 				{
 					GUI.color = curve.color;
-					float num4 = viewRect.x;
-					float num5 = rect.width / 1f;
-					float num6 = viewRect.width / num5;
-					while (num4 < viewRect.xMax)
+					float num3 = viewRect.x;
+					float num4 = rect.width / 1f;
+					float num5 = viewRect.width / num4;
+					while (num3 < viewRect.xMax)
 					{
-						num4 += num6;
-						Vector2 vector2 = SimpleCurveDrawer.CurveToScreenCoordsInsideScreenRect(rect, viewRect, new Vector2(num4, curve.curve.Evaluate(num4)));
+						num3 += num5;
+						Vector2 vector2 = SimpleCurveDrawer.CurveToScreenCoordsInsideScreenRect(rect, viewRect, new Vector2(num3, curve.curve.Evaluate(num3)));
 						GUI.DrawTexture(new Rect(vector2.x, vector2.y, 1f, 1f), BaseContent.WhiteTex);
 					}
 				}
@@ -209,19 +212,20 @@ namespace Verse
 			}
 			if (drawPoints)
 			{
-				foreach (CurvePoint current2 in curve.curve.AllPoints)
+				for (int j = 0; j < curve.curve.PointsCount; j++)
 				{
-					Vector2 screenPoint = SimpleCurveDrawer.CurveToScreenCoordsInsideScreenRect(rect, viewRect, current2.loc);
+					CurvePoint curvePoint3 = curve.curve[j];
+					Vector2 screenPoint = SimpleCurveDrawer.CurveToScreenCoordsInsideScreenRect(rect, viewRect, curvePoint3.Loc);
 					SimpleCurveDrawer.DrawPoint(screenPoint);
 				}
 			}
-			foreach (float num7 in curve.curve.View.DebugInputValues)
+			foreach (float num6 in curve.curve.View.DebugInputValues)
 			{
 				GUI.color = new Color(0f, 1f, 0f, 0.25f);
-				SimpleCurveDrawer.DrawInfiniteVerticalLine(rect, viewRect, num7);
-				float y = curve.curve.Evaluate(num7);
-				Vector2 curvePoint2 = new Vector2(num7, y);
-				Vector2 screenPoint2 = SimpleCurveDrawer.CurveToScreenCoordsInsideScreenRect(rect, viewRect, curvePoint2);
+				SimpleCurveDrawer.DrawInfiniteVerticalLine(rect, viewRect, num6);
+				float y = curve.curve.Evaluate(num6);
+				Vector2 curvePoint4 = new Vector2(num6, y);
+				Vector2 screenPoint2 = SimpleCurveDrawer.CurveToScreenCoordsInsideScreenRect(rect, viewRect, curvePoint4);
 				GUI.color = Color.green;
 				SimpleCurveDrawer.DrawPoint(screenPoint2);
 				GUI.color = Color.white;
@@ -299,7 +303,7 @@ namespace Verse
 				num += 20f;
 				if (current.label != null)
 				{
-					Widgets.Label(new Rect(num, num2, 140f, 20f), new GUIContent(current.label));
+					Widgets.Label(new Rect(num, num2, 140f, 20f), current.label);
 				}
 				num4++;
 				if (num4 == num3)
@@ -367,7 +371,7 @@ namespace Verse
 					Text.Anchor = TextAnchor.LowerRight;
 				}
 			}
-			Widgets.Label(rect, new GUIContent(string.Concat(new string[]
+			Widgets.Label(rect, string.Concat(new string[]
 			{
 				labelX,
 				": ",
@@ -376,7 +380,7 @@ namespace Verse
 				labelY,
 				": ",
 				vector.y.ToString("0.##")
-			})));
+			}));
 			Text.Anchor = TextAnchor.UpperLeft;
 			GUI.EndGroup();
 		}
@@ -390,12 +394,12 @@ namespace Verse
 			for (int i = 0; i < marks.Count; i++)
 			{
 				CurveMark curveMark = marks[i];
-				if (curveMark.x >= x && curveMark.x <= num)
+				if (curveMark.X >= x && curveMark.X <= num)
 				{
-					GUI.color = curveMark.color;
-					Vector2 screenPoint = new Vector2(rect.x + (curveMark.x - x) / (num - x) * rect.width, (i % 2 != 0) ? num3 : num2);
+					GUI.color = curveMark.Color;
+					Vector2 screenPoint = new Vector2(rect.x + (curveMark.X - x) / (num - x) * rect.width, (i % 2 != 0) ? num3 : num2);
 					SimpleCurveDrawer.DrawPoint(screenPoint);
-					TooltipHandler.TipRegion(new Rect(screenPoint.x - 5f, screenPoint.y - 5f, 10f, 10f), new TipSignal(curveMark.message));
+					TooltipHandler.TipRegion(new Rect(screenPoint.x - 5f, screenPoint.y - 5f, 10f, 10f), new TipSignal(curveMark.Message));
 				}
 				i++;
 			}

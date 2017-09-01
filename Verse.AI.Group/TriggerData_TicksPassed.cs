@@ -8,7 +8,7 @@ namespace Verse.AI.Group
 
 		public override void ExposeData()
 		{
-			Scribe_Values.LookValue<int>(ref this.ticksPassed, "ticksPassed", 0, false);
+			Scribe_Values.Look<int>(ref this.ticksPassed, "ticksPassed", 0, false);
 		}
 	}
 }

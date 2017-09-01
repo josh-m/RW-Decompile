@@ -10,7 +10,7 @@ namespace Verse
 	{
 		public Intelligence intelligence;
 
-		public FleshType fleshType;
+		private FleshTypeDef fleshType;
 
 		private ThingDef bloodDef;
 
@@ -66,13 +66,13 @@ namespace Verse
 
 		public SimpleCurve litterSizeCurve;
 
-		public float mateMtbHours = 0.1f;
+		public float mateMtbHours = 12f;
 
 		public List<string> untrainableTags;
 
 		public List<string> trainableTags;
 
-		public TrainableIntelligence trainableIntelligence = TrainableIntelligence.Intermediate;
+		private TrainableIntelligenceDef trainableIntelligence;
 
 		private RulePackDef nameGenerator;
 
@@ -171,13 +171,13 @@ namespace Verse
 				switch (this.ResolvedDietCategory)
 				{
 				case DietCategory.NeverEats:
-					return 0.5f;
+					return 0.3f;
 				case DietCategory.Herbivorous:
-					return 0.65f;
+					return 0.45f;
 				case DietCategory.Dendrovorous:
-					return 0.65f;
+					return 0.45f;
 				case DietCategory.Ovivorous:
-					return 0.5f;
+					return 0.4f;
 				case DietCategory.Omnivorous:
 					return 0.3f;
 				case DietCategory.Carnivorous:
@@ -231,11 +231,23 @@ namespace Verse
 			}
 		}
 
+		public FleshTypeDef FleshType
+		{
+			get
+			{
+				if (this.fleshType != null)
+				{
+					return this.fleshType;
+				}
+				return FleshTypeDefOf.Normal;
+			}
+		}
+
 		public bool IsMechanoid
 		{
 			get
 			{
-				return this.fleshType == FleshType.Mechanoid;
+				return this.FleshType == FleshTypeDefOf.Mechanoid;
 			}
 		}
 
@@ -243,7 +255,7 @@ namespace Verse
 		{
 			get
 			{
-				return this.fleshType != FleshType.Mechanoid;
+				return this.FleshType != FleshTypeDefOf.Mechanoid;
 			}
 		}
 
@@ -260,6 +272,18 @@ namespace Verse
 					return ThingDefOf.FilthBlood;
 				}
 				return null;
+			}
+		}
+
+		public TrainableIntelligenceDef TrainableIntelligence
+		{
+			get
+			{
+				if (this.trainableIntelligence == null)
+				{
+					return TrainableIntelligenceDefOf.Intermediate;
+				}
+				return this.trainableIntelligence;
 			}
 		}
 
@@ -400,7 +424,7 @@ namespace Verse
 			}
 			if (this.intelligence < Intelligence.Humanlike)
 			{
-				yield return new StatDrawEntry(StatCategoryDefOf.Basics, "TrainableIntelligence".Translate(), this.trainableIntelligence.GetLabel().CapitalizeFirst(), 0);
+				yield return new StatDrawEntry(StatCategoryDefOf.Basics, "TrainableIntelligence".Translate(), this.TrainableIntelligence.GetLabel().CapitalizeFirst(), 0);
 			}
 			yield return new StatDrawEntry(StatCategoryDefOf.Basics, "StatsReport_LifeExpectancy".Translate(), this.lifeExpectancy.ToStringByStyle(ToStringStyle.Integer, ToStringNumberSense.Absolute), 0);
 			if (this.intelligence < Intelligence.Humanlike)

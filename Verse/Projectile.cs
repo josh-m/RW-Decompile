@@ -165,16 +165,16 @@ namespace Verse
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Values.LookValue<Vector3>(ref this.origin, "origin", default(Vector3), false);
-			Scribe_Values.LookValue<Vector3>(ref this.destination, "destination", default(Vector3), false);
-			Scribe_Values.LookValue<int>(ref this.ticksToImpact, "ticksToImpact", 0, false);
-			Scribe_References.LookReference<Thing>(ref this.assignedTarget, "assignedTarget", false);
-			Scribe_References.LookReference<Thing>(ref this.launcher, "launcher", false);
-			Scribe_Defs.LookDef<ThingDef>(ref this.equipmentDef, "equipmentDef");
-			Scribe_Values.LookValue<bool>(ref this.interceptWallsInt, "interceptWalls", true, false);
-			Scribe_Values.LookValue<bool>(ref this.freeInterceptInt, "interceptRandomTargets", true, false);
-			Scribe_Values.LookValue<bool>(ref this.landed, "landed", false, false);
-			Scribe_References.LookReference<Thing>(ref this.neverInterceptTargetInt, "neverInterceptTarget", false);
+			Scribe_Values.Look<Vector3>(ref this.origin, "origin", default(Vector3), false);
+			Scribe_Values.Look<Vector3>(ref this.destination, "destination", default(Vector3), false);
+			Scribe_Values.Look<int>(ref this.ticksToImpact, "ticksToImpact", 0, false);
+			Scribe_References.Look<Thing>(ref this.assignedTarget, "assignedTarget", false);
+			Scribe_References.Look<Thing>(ref this.launcher, "launcher", false);
+			Scribe_Defs.Look<ThingDef>(ref this.equipmentDef, "equipmentDef");
+			Scribe_Values.Look<bool>(ref this.interceptWallsInt, "interceptWalls", true, false);
+			Scribe_Values.Look<bool>(ref this.freeInterceptInt, "interceptRandomTargets", true, false);
+			Scribe_Values.Look<bool>(ref this.landed, "landed", false, false);
+			Scribe_References.Look<Thing>(ref this.neverInterceptTargetInt, "neverInterceptTarget", false);
 		}
 
 		public void Launch(Thing launcher, LocalTargetInfo targ, Thing equipment = null)
@@ -276,7 +276,7 @@ namespace Verse
 				}
 				return flag;
 			}
-			if (this.origin.ToIntVec3().DistanceToSquared(intVec2) > 16f)
+			if ((float)this.origin.ToIntVec3().DistanceToSquared(intVec2) > 16f)
 			{
 				Vector3 vector = lastExactPos;
 				Vector3 v = newExactPos - lastExactPos;
@@ -412,51 +412,48 @@ namespace Verse
 					}
 				}
 			}
-			if (this.assignedTarget != null)
-			{
-				Pawn pawn = this.assignedTarget as Pawn;
-				if (pawn != null && pawn.GetPosture() != PawnPosture.Standing && (this.origin - this.destination).MagnitudeHorizontalSquared() >= 20.25f && Rand.Value > 0.2f)
-				{
-					this.Impact(null);
-					return;
-				}
-				this.Impact(this.assignedTarget);
-				return;
-			}
-			else
+			if (this.assignedTarget == null)
 			{
 				Projectile.cellThingsFiltered.Clear();
 				List<Thing> thingList = base.Position.GetThingList(base.Map);
 				for (int i = 0; i < thingList.Count; i++)
 				{
-					Pawn pawn2 = thingList[i] as Pawn;
-					if (pawn2 != null)
-					{
-						Projectile.cellThingsFiltered.Add(pawn2);
-					}
-				}
-				if (Projectile.cellThingsFiltered.Count > 0)
-				{
-					this.Impact(Projectile.cellThingsFiltered.RandomElement<Thing>());
-					return;
-				}
-				Projectile.cellThingsFiltered.Clear();
-				for (int j = 0; j < thingList.Count; j++)
-				{
-					Thing thing = thingList[j];
-					if (thing.def.fillPercent > 0f || thing.def.passability != Traversability.Standable)
+					Thing thing = thingList[i];
+					if (thing.def.category == ThingCategory.Building || thing.def.category == ThingCategory.Pawn || thing.def.category == ThingCategory.Item || thing.def.category == ThingCategory.Plant)
 					{
 						Projectile.cellThingsFiltered.Add(thing);
 					}
 				}
-				if (Projectile.cellThingsFiltered.Count > 0)
+				Projectile.cellThingsFiltered.Shuffle<Thing>();
+				for (int j = 0; j < Projectile.cellThingsFiltered.Count; j++)
 				{
-					this.Impact(Projectile.cellThingsFiltered.RandomElement<Thing>());
-					return;
+					Thing t = Projectile.cellThingsFiltered[j];
+					if (Rand.Value < Projectile.ImpactSomethingHitThingChance(t))
+					{
+						this.Impact(Projectile.cellThingsFiltered.RandomElement<Thing>());
+						return;
+					}
 				}
 				this.Impact(null);
 				return;
 			}
+			Pawn pawn = this.assignedTarget as Pawn;
+			if (pawn != null && pawn.GetPosture() != PawnPosture.Standing && (this.origin - this.destination).MagnitudeHorizontalSquared() >= 20.25f && Rand.Value > 0.2f)
+			{
+				this.Impact(null);
+				return;
+			}
+			this.Impact(this.assignedTarget);
+		}
+
+		private static float ImpactSomethingHitThingChance(Thing t)
+		{
+			Pawn pawn = t as Pawn;
+			if (pawn != null)
+			{
+				return pawn.BodySize * 0.5f;
+			}
+			return t.def.fillPercent * 1.5f;
 		}
 
 		protected virtual void Impact(Thing hitThing)

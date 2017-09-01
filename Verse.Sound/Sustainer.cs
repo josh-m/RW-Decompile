@@ -63,7 +63,7 @@ namespace Verse.Sound
 					}
 					return 0f;
 				}
-				return (Find.CameraDriver.MapPosition - this.worldRootObject.transform.position.ToIntVec3()).LengthHorizontalSquared;
+				return (float)(Find.CameraDriver.MapPosition - this.worldRootObject.transform.position.ToIntVec3()).LengthHorizontalSquared;
 			}
 		}
 

@@ -64,13 +64,13 @@ namespace RimWorld
 
 		public override void ExposeData()
 		{
-			Scribe_Defs.LookDef<ConceptDef>(ref this.def, "def");
+			Scribe_Defs.Look<ConceptDef>(ref this.def, "def");
 		}
 
 		public override void OnActivated()
 		{
 			base.OnActivated();
-			SoundDefOf.TutorMessageAppear.PlayOneShotOnCamera();
+			SoundDefOf.TutorMessageAppear.PlayOneShotOnCamera(null);
 		}
 
 		public override void LessonOnGUI()
@@ -119,7 +119,7 @@ namespace RimWorld
 				}
 				if (Widgets.ButtonImage(butRect, tex, new Color(0.95f, 0.95f, 0.95f), new Color(0.8352941f, 0.6666667f, 0.274509817f)))
 				{
-					SoundDefOf.Click.PlayOneShotOnCamera();
+					SoundDefOf.Click.PlayOneShotOnCamera(null);
 					this.CloseButtonClicked();
 				}
 				if (Time.timeSinceLevelLoad > this.expiryTime)

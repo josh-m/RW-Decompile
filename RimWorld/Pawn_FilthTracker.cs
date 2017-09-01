@@ -46,7 +46,7 @@ namespace RimWorld
 
 		public void ExposeData()
 		{
-			Scribe_Collections.LookList<Filth>(ref this.carriedFilth, "carriedFilth", LookMode.Deep, new object[0]);
+			Scribe_Collections.Look<Filth>(ref this.carriedFilth, "carriedFilth", LookMode.Deep, new object[0]);
 		}
 
 		public void Notify_EnteredNewCell()

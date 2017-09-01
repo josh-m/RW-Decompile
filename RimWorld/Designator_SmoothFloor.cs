@@ -53,7 +53,7 @@ namespace RimWorld
 				return "TooCloseToMapEdge".Translate();
 			}
 			Building edifice = c.GetEdifice(base.Map);
-			if (edifice != null && edifice.def.Fillage == FillCategory.Full && edifice.def.passability == Traversability.Impassable)
+			if (edifice != null && !SmoothFloorDesignatorUtility.CanSmoothFloorUnder(edifice))
 			{
 				return false;
 			}

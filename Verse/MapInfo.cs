@@ -8,9 +8,15 @@ namespace Verse
 	{
 		private IntVec3 sizeInt = default(IntVec3);
 
-		public int tile = -1;
-
 		public MapParent parent;
+
+		public int Tile
+		{
+			get
+			{
+				return this.parent.Tile;
+			}
+		}
 
 		public int NumCells
 		{
@@ -47,9 +53,8 @@ namespace Verse
 
 		public void ExposeData()
 		{
-			Scribe_Values.LookValue<IntVec3>(ref this.sizeInt, "size", default(IntVec3), false);
-			Scribe_Values.LookValue<int>(ref this.tile, "tile", 0, false);
-			Scribe_References.LookReference<MapParent>(ref this.parent, "parent", false);
+			Scribe_Values.Look<IntVec3>(ref this.sizeInt, "size", default(IntVec3), false);
+			Scribe_References.Look<MapParent>(ref this.parent, "parent", false);
 		}
 	}
 }

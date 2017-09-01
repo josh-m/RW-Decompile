@@ -125,9 +125,9 @@ namespace RimWorld.Planet
 				{
 					return this.tileInt;
 				}
-				if (this.thingInt != null && this.thingInt.MapHeld != null)
+				if (this.thingInt != null && this.thingInt.Tile >= 0)
 				{
-					return this.thingInt.MapHeld.Tile;
+					return this.thingInt.Tile;
 				}
 				if (this.cellInt.IsValid && this.mapInt != null)
 				{

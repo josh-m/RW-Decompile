@@ -42,7 +42,7 @@ namespace RimWorld
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Values.LookValue<bool>(ref this.firstHit, "firstHit", false, false);
+			Scribe_Values.Look<bool>(ref this.firstHit, "firstHit", false, false);
 		}
 
 		public override string GetReport()
@@ -65,17 +65,21 @@ namespace RimWorld
 			prepareToEatCorpse.initAction = delegate
 			{
 				Pawn actor = this.<prepareToEatCorpse>__0.actor;
-				Pawn prey = this.<>f__this.Prey;
-				if (prey == null)
-				{
-					actor.jobs.EndCurrentJob(JobCondition.Incompletable, true);
-					return;
-				}
-				Corpse corpse = prey.Corpse;
+				Corpse corpse = this.<>f__this.Corpse;
 				if (corpse == null)
 				{
-					actor.jobs.EndCurrentJob(JobCondition.Incompletable, true);
-					return;
+					Pawn prey = this.<>f__this.Prey;
+					if (prey == null)
+					{
+						actor.jobs.EndCurrentJob(JobCondition.Incompletable, true);
+						return;
+					}
+					corpse = prey.Corpse;
+					if (corpse == null)
+					{
+						actor.jobs.EndCurrentJob(JobCondition.Incompletable, true);
+						return;
+					}
 				}
 				if (actor.Faction == Faction.OfPlayer)
 				{
@@ -115,12 +119,12 @@ namespace RimWorld
 				}
 				this.<>f__this.firstHit = false;
 			};
-			yield return Toils_Combat.FollowAndMeleeAttack(TargetIndex.A, onHitAction).JumpIfDespawnedOrNull(TargetIndex.A, prepareToEatCorpse).FailOn(() => Find.TickManager.TicksGame > this.<>f__this.startTick + 5000 && (this.<>f__this.CurJob.GetTarget(TargetIndex.A).Cell - this.<>f__this.pawn.Position).LengthHorizontalSquared > 4f);
+			yield return Toils_Combat.FollowAndMeleeAttack(TargetIndex.A, onHitAction).JumpIfDespawnedOrNull(TargetIndex.A, prepareToEatCorpse).JumpIf(() => this.<>f__this.Corpse != null, prepareToEatCorpse).FailOn(() => Find.TickManager.TicksGame > this.<>f__this.startTick + 5000 && (float)(this.<>f__this.CurJob.GetTarget(TargetIndex.A).Cell - this.<>f__this.pawn.Position).LengthHorizontalSquared > 4f);
 			yield return prepareToEatCorpse;
 			Toil gotoCorpse = Toils_Goto.GotoThing(TargetIndex.A, PathEndMode.Touch);
 			yield return gotoCorpse;
 			float durationMultiplier = 1f / this.pawn.GetStatValue(StatDefOf.EatingSpeed, true);
-			yield return Toils_Ingest.ChewIngestible(this.pawn, durationMultiplier, TargetIndex.A, TargetIndex.None).FailOnDespawnedOrNull(TargetIndex.A);
+			yield return Toils_Ingest.ChewIngestible(this.pawn, durationMultiplier, TargetIndex.A, TargetIndex.None).FailOnDespawnedOrNull(TargetIndex.A).FailOnCannotTouch(TargetIndex.A, PathEndMode.Touch);
 			yield return Toils_Ingest.FinalizeIngest(this.pawn, TargetIndex.A);
 			yield return Toils_Jump.JumpIf(gotoCorpse, () => this.<>f__this.pawn.needs.food.CurLevelPercentage < 0.9f);
 		}

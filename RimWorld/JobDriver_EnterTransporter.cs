@@ -27,15 +27,16 @@ namespace RimWorld
 		protected override IEnumerable<Toil> MakeNewToils()
 		{
 			this.FailOnDespawnedOrNull(this.TransporterInd);
-			yield return Toils_Reserve.Reserve(this.TransporterInd, 1);
+			this.FailOn(() => !this.<>f__this.Transporter.LoadingInProgressOrReadyToLaunch);
+			yield return Toils_Reserve.Reserve(this.TransporterInd, 1, -1, null);
 			yield return Toils_Goto.GotoThing(this.TransporterInd, PathEndMode.Touch);
 			yield return new Toil
 			{
 				initAction = delegate
 				{
 					CompTransporter transporter = this.<>f__this.Transporter;
-					transporter.GetInnerContainer().TryAdd(this.<>f__this.pawn, true);
-					transporter.Notify_PawnEnteredTransporterOnHisOwn(this.<>f__this.pawn);
+					this.<>f__this.pawn.DeSpawn();
+					transporter.GetDirectlyHeldThings().TryAdd(this.<>f__this.pawn, true);
 				}
 			};
 		}

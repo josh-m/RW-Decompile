@@ -5,12 +5,12 @@ namespace Verse.AI
 {
 	public static class Toils_Reserve
 	{
-		public static Toil Reserve(TargetIndex ind, int maxPawns = 1)
+		public static Toil Reserve(TargetIndex ind, int maxPawns = 1, int stackCount = -1, ReservationLayerDef layer = null)
 		{
 			Toil toil = new Toil();
 			toil.initAction = delegate
 			{
-				if (!toil.actor.Reserve(toil.actor.jobs.curJob.GetTarget(ind), maxPawns))
+				if (!toil.actor.Reserve(toil.actor.jobs.curJob.GetTarget(ind), maxPawns, stackCount, layer))
 				{
 					toil.actor.jobs.EndCurrentJob(JobCondition.Incompletable, true);
 				}
@@ -20,7 +20,7 @@ namespace Verse.AI
 			return toil;
 		}
 
-		public static Toil ReserveQueue(TargetIndex ind, int maxPawns = 1)
+		public static Toil ReserveQueue(TargetIndex ind, int maxPawns = 1, int stackCount = -1, ReservationLayerDef layer = null)
 		{
 			Toil toil = new Toil();
 			toil.initAction = delegate
@@ -30,7 +30,7 @@ namespace Verse.AI
 				{
 					for (int i = 0; i < targetQueue.Count; i++)
 					{
-						if (!toil.actor.Reserve(targetQueue[i], maxPawns))
+						if (!toil.actor.Reserve(targetQueue[i], maxPawns, stackCount, layer))
 						{
 							toil.actor.jobs.EndCurrentJob(JobCondition.Incompletable, true);
 						}

@@ -34,7 +34,7 @@ namespace Verse
 
 		public IntVec3 IndexToCell(int ind)
 		{
-			return CellIndicesUtility.IndexToCell(ind, this.mapSizeX, this.mapSizeZ);
+			return CellIndicesUtility.IndexToCell(ind, this.mapSizeX);
 		}
 	}
 }

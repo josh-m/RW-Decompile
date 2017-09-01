@@ -26,10 +26,10 @@ namespace RimWorld
 
 		public void ExposeData()
 		{
-			Scribe_Collections.LookList<Thought_Memory>(ref this.memories, "memories", LookMode.Deep, new object[0]);
+			Scribe_Collections.Look<Thought_Memory>(ref this.memories, "memories", LookMode.Deep, new object[0]);
 			if (Scribe.mode == LoadSaveMode.PostLoadInit)
 			{
-				for (int i = this.memories.Count - 1; i > 0; i--)
+				for (int i = this.memories.Count - 1; i >= 0; i--)
 				{
 					if (this.memories[i].def == null)
 					{
@@ -49,38 +49,38 @@ namespace RimWorld
 			{
 				this.memories[i].ThoughtInterval();
 			}
-			this.RemoveExpiredMemoryThoughts();
+			this.RemoveExpiredMemories();
 		}
 
-		private void RemoveExpiredMemoryThoughts()
+		private void RemoveExpiredMemories()
 		{
 			for (int i = this.memories.Count - 1; i >= 0; i--)
 			{
 				Thought_Memory thought_Memory = this.memories[i];
 				if (thought_Memory.ShouldDiscard)
 				{
-					this.RemoveMemoryThought(thought_Memory);
+					this.RemoveMemory(thought_Memory);
 					if (thought_Memory.def.nextThought != null)
 					{
-						this.TryGainMemoryThought(thought_Memory.def.nextThought, null);
+						this.TryGainMemory(thought_Memory.def.nextThought, null);
 					}
 				}
 			}
 		}
 
-		public void TryGainMemoryThought(ThoughtDef def, Pawn otherPawn = null)
+		public void TryGainMemory(ThoughtDef def, Pawn otherPawn = null)
 		{
 			if (!def.IsMemory)
 			{
 				Log.Error(def + " is not a memory thought.");
 				return;
 			}
-			this.TryGainMemoryThought((Thought_Memory)ThoughtMaker.MakeThought(def), otherPawn);
+			this.TryGainMemory((Thought_Memory)ThoughtMaker.MakeThought(def), otherPawn);
 		}
 
-		public void TryGainMemoryThought(Thought_Memory newThought, Pawn otherPawn = null)
+		public void TryGainMemory(Thought_Memory newThought, Pawn otherPawn = null)
 		{
-			if (!this.pawn.needs.mood.thoughts.CanGetThought(newThought.def))
+			if (!ThoughtUtility.CanGetThought(this.pawn, newThought.def))
 			{
 				return;
 			}
@@ -92,27 +92,27 @@ namespace RimWorld
 			newThought.pawn = this.pawn;
 			newThought.otherPawn = otherPawn;
 			bool flag;
-			if (!newThought.TryMergeWithExistingThought(out flag))
+			if (!newThought.TryMergeWithExistingMemory(out flag))
 			{
 				this.memories.Add(newThought);
 			}
 			if (newThought.def.stackLimitPerPawn >= 0)
 			{
-				while (this.NumMemoryThoughtsInGroup(newThought) > newThought.def.stackLimitPerPawn)
+				while (this.NumMemoriesInGroup(newThought) > newThought.def.stackLimitPerPawn)
 				{
-					this.RemoveMemoryThought(this.OldestMemoryThoughtInGroup(newThought));
+					this.RemoveMemory(this.OldestMemoryInGroup(newThought));
 				}
 			}
 			if (newThought.def.stackLimit >= 0)
 			{
-				while (this.NumMemoryThoughtsOfDef(newThought.def) > newThought.def.stackLimit)
+				while (this.NumMemoriesOfDef(newThought.def) > newThought.def.stackLimit)
 				{
-					this.RemoveMemoryThought(this.OldestMemoryThoughtOfDef(newThought.def));
+					this.RemoveMemory(this.OldestMemoryOfDef(newThought.def));
 				}
 			}
 			if (newThought.def.thoughtToMake != null)
 			{
-				this.TryGainMemoryThought(newThought.def.thoughtToMake, newThought.otherPawn);
+				this.TryGainMemory(newThought.def.thoughtToMake, newThought.otherPawn);
 			}
 			if (flag && newThought.def.showBubble && this.pawn.Spawned)
 			{
@@ -120,7 +120,7 @@ namespace RimWorld
 			}
 		}
 
-		public Thought_Memory OldestMemoryThoughtInGroup(Thought_Memory group)
+		public Thought_Memory OldestMemoryInGroup(Thought_Memory group)
 		{
 			Thought_Memory result = null;
 			int num = -9999;
@@ -139,7 +139,7 @@ namespace RimWorld
 			return result;
 		}
 
-		public Thought_Memory OldestMemoryThoughtOfDef(ThoughtDef def)
+		public Thought_Memory OldestMemoryOfDef(ThoughtDef def)
 		{
 			Thought_Memory result = null;
 			int num = -9999;
@@ -158,7 +158,7 @@ namespace RimWorld
 			return result;
 		}
 
-		public void RemoveMemoryThought(Thought_Memory th)
+		public void RemoveMemory(Thought_Memory th)
 		{
 			if (!this.memories.Remove(th))
 			{
@@ -171,7 +171,7 @@ namespace RimWorld
 			}
 		}
 
-		public int NumMemoryThoughtsInGroup(Thought_Memory group)
+		public int NumMemoriesInGroup(Thought_Memory group)
 		{
 			int num = 0;
 			for (int i = 0; i < this.memories.Count; i++)
@@ -184,7 +184,7 @@ namespace RimWorld
 			return num;
 		}
 
-		public int NumMemoryThoughtsOfDef(ThoughtDef def)
+		public int NumMemoriesOfDef(ThoughtDef def)
 		{
 			int num = 0;
 			for (int i = 0; i < this.memories.Count; i++)
@@ -197,7 +197,7 @@ namespace RimWorld
 			return num;
 		}
 
-		public void RemoveMemoryThoughtsOfDefWhereOtherPawnIs(ThoughtDef def, Pawn otherPawn)
+		public void RemoveMemoriesOfDefWhereOtherPawnIs(ThoughtDef def, Pawn otherPawn)
 		{
 			while (true)
 			{
@@ -206,11 +206,11 @@ namespace RimWorld
 				{
 					break;
 				}
-				this.RemoveMemoryThought(thought_Memory);
+				this.RemoveMemory(thought_Memory);
 			}
 		}
 
-		public void RemoveMemoryThoughtsOfDef(ThoughtDef def)
+		public void RemoveMemoriesOfDef(ThoughtDef def)
 		{
 			if (!def.IsMemory)
 			{
@@ -224,11 +224,29 @@ namespace RimWorld
 				{
 					break;
 				}
-				this.RemoveMemoryThought(thought_Memory);
+				this.RemoveMemory(thought_Memory);
 			}
 		}
 
-		public bool AnyMemoryThoughtConcerns(Pawn pawn)
+		public void RemoveMemoriesOfDefIf(ThoughtDef def, Func<Thought_Memory, bool> predicate)
+		{
+			if (!def.IsMemory)
+			{
+				Log.Warning(def + " is not a memory thought.");
+				return;
+			}
+			while (true)
+			{
+				Thought_Memory thought_Memory = this.memories.Find((Thought_Memory x) => x.def == def && predicate(x));
+				if (thought_Memory == null)
+				{
+					break;
+				}
+				this.RemoveMemory(thought_Memory);
+			}
+		}
+
+		public bool AnyMemoryConcerns(Pawn pawn)
 		{
 			for (int i = 0; i < this.memories.Count; i++)
 			{

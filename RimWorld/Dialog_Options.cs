@@ -46,16 +46,17 @@ namespace RimWorld
 		{
 			Rect rect = inRect.AtZero();
 			rect.yMax -= 45f;
-			Listing_Standard listing_Standard = new Listing_Standard(rect);
+			Listing_Standard listing_Standard = new Listing_Standard();
 			listing_Standard.ColumnWidth = (rect.width - 34f) / 3f;
+			listing_Standard.Begin(rect);
 			Text.Font = GameFont.Medium;
-			listing_Standard.Label("Audiovisuals".Translate());
+			listing_Standard.Label("Audiovisuals".Translate(), -1f);
 			Text.Font = GameFont.Small;
 			listing_Standard.Gap(12f);
 			listing_Standard.Gap(12f);
-			listing_Standard.Label("GameVolume".Translate());
+			listing_Standard.Label("GameVolume".Translate(), -1f);
 			Prefs.VolumeGame = listing_Standard.Slider(Prefs.VolumeGame, 0f, 1f);
-			listing_Standard.Label("MusicVolume".Translate());
+			listing_Standard.Label("MusicVolume".Translate(), -1f);
 			Prefs.VolumeMusic = listing_Standard.Slider(Prefs.VolumeMusic, 0f, 1f);
 			if (listing_Standard.ButtonTextLabeled("Resolution".Translate(), Dialog_Options.ResToString(Screen.width, Screen.height)))
 			{
@@ -71,14 +72,14 @@ namespace RimWorld
 			{
 				ResolutionUtility.SafeSetFullscreen(fullScreen);
 			}
-			listing_Standard.Label("UIScale".Translate());
+			listing_Standard.Label("UIScale".Translate(), -1f);
 			float[] uIScales = Dialog_Options.UIScales;
 			for (int i = 0; i < uIScales.Length; i++)
 			{
 				float num = uIScales[i];
 				if (listing_Standard.RadioButton(num.ToString() + "x", Prefs.UIScale == num, 8f))
 				{
-					if (!ResolutionUtility.UIScaleSafeWithResolution(num, Screen.currentResolution))
+					if (!ResolutionUtility.UIScaleSafeWithResolution(num, Screen.width, Screen.height))
 					{
 						Messages.Message("MessageScreenResTooSmallForUIScale".Translate(), MessageSound.RejectInput);
 					}
@@ -88,9 +89,17 @@ namespace RimWorld
 					}
 				}
 			}
+			listing_Standard.Gap(12f);
+			bool hatsOnlyOnMap = Prefs.HatsOnlyOnMap;
+			listing_Standard.CheckboxLabeled("HatsShownOnlyOnMap".Translate(), ref hatsOnlyOnMap, null);
+			if (hatsOnlyOnMap != Prefs.HatsOnlyOnMap)
+			{
+				PortraitsCache.Clear();
+			}
+			Prefs.HatsOnlyOnMap = hatsOnlyOnMap;
 			listing_Standard.NewColumn();
 			Text.Font = GameFont.Medium;
-			listing_Standard.Label("Gameplay".Translate());
+			listing_Standard.Label("Gameplay".Translate(), -1f);
 			Text.Font = GameFont.Small;
 			listing_Standard.Gap(12f);
 			listing_Standard.Gap(12f);
@@ -152,7 +161,7 @@ namespace RimWorld
 			listing_Standard.Label("MaxNumberOfPlayerHomes".Translate(new object[]
 			{
 				maxNumberOfPlayerHomes
-			}));
+			}), -1f);
 			int num2 = Mathf.RoundToInt(listing_Standard.Slider((float)maxNumberOfPlayerHomes, 1f, 5f));
 			Prefs.MaxNumberOfPlayerHomes = num2;
 			if (maxNumberOfPlayerHomes != num2 && num2 > 1)
@@ -221,7 +230,7 @@ namespace RimWorld
 				listing_Standard.Label("MaxPermadeathAutosaveIntervalInfo".Translate(new object[]
 				{
 					1f
-				}));
+				}), -1f);
 				GUI.color = Color.white;
 			}
 			if (Current.ProgramState == ProgramState.Playing && listing_Standard.ButtonText("ChangeStoryteller".Translate(), "OptionsButton-ChooseStoryteller") && TutorSystem.AllowAction("ChooseStoryteller"))
@@ -259,11 +268,16 @@ namespace RimWorld
 			}
 			listing_Standard.NewColumn();
 			Text.Font = GameFont.Medium;
-			listing_Standard.Label(string.Empty);
+			listing_Standard.Label(string.Empty, -1f);
 			Text.Font = GameFont.Small;
 			listing_Standard.Gap(12f);
 			listing_Standard.Gap(12f);
-			listing_Standard.Label("NamesYouWantToSee".Translate());
+			if (listing_Standard.ButtonText("ModSettings".Translate(), null))
+			{
+				Find.WindowStack.Add(new Dialog_ModSettings());
+			}
+			listing_Standard.Label(string.Empty, -1f);
+			listing_Standard.Label("NamesYouWantToSee".Translate(), -1f);
 			Prefs.PreferredNames.RemoveAll((string n) => n.NullOrEmpty());
 			for (int j = 0; j < Prefs.PreferredNames.Count; j++)
 			{
@@ -296,7 +310,7 @@ namespace RimWorld
 				if (Widgets.ButtonImage(butRect, TexButton.DeleteX))
 				{
 					Prefs.PreferredNames.RemoveAt(j);
-					SoundDefOf.TickLow.PlayOneShotOnCamera();
+					SoundDefOf.TickLow.PlayOneShotOnCamera(null);
 				}
 			}
 			if (Prefs.PreferredNames.Count < 6 && listing_Standard.ButtonText("AddName".Translate() + "...", null))

@@ -14,6 +14,7 @@ namespace Verse
 		Mote,
 		Ethereal,
 		Attachment,
-		Skyfaller
+		Skyfaller,
+		Gas
 	}
 }

@@ -31,7 +31,7 @@ namespace RimWorld
 
 		public static void ReloadAndRebind()
 		{
-			PlayerKnowledgeDatabase.data = XmlLoader.ItemFromXmlFile<PlayerKnowledgeDatabase.ConceptKnowledge>(GenFilePaths.ConceptKnowledgeFilePath, true);
+			PlayerKnowledgeDatabase.data = DirectXmlLoader.ItemFromXmlFile<PlayerKnowledgeDatabase.ConceptKnowledge>(GenFilePaths.ConceptKnowledgeFilePath, true);
 			foreach (ConceptDef current in DefDatabase<ConceptDef>.AllDefs)
 			{
 				if (!PlayerKnowledgeDatabase.data.knowledge.ContainsKey(current))
@@ -57,7 +57,7 @@ namespace RimWorld
 			try
 			{
 				XDocument xDocument = new XDocument();
-				XElement content = XmlSaver.XElementFromObject(PlayerKnowledgeDatabase.data, typeof(PlayerKnowledgeDatabase.ConceptKnowledge));
+				XElement content = DirectXmlSaver.XElementFromObject(PlayerKnowledgeDatabase.data, typeof(PlayerKnowledgeDatabase.ConceptKnowledge));
 				xDocument.Add(content);
 				xDocument.Save(GenFilePaths.ConceptKnowledgeFilePath);
 			}

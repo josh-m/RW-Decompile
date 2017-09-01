@@ -42,7 +42,7 @@ namespace RimWorld
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Defs.LookDef<ResearchProjectDef>(ref this.project, "project");
+			Scribe_Defs.Look<ResearchProjectDef>(ref this.project, "project");
 		}
 
 		public override string Summary(Scenario scen)

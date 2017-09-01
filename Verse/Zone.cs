@@ -47,7 +47,7 @@ namespace Verse
 			{
 				if (this.materialInt == null)
 				{
-					this.materialInt = SolidColorMaterials.SimpleSolidColorMaterial(this.color);
+					this.materialInt = SolidColorMaterials.SimpleSolidColorMaterial(this.color, false);
 					this.materialInt.renderQueue = 3600;
 				}
 				return this.materialInt;
@@ -139,10 +139,10 @@ namespace Verse
 
 		public virtual void ExposeData()
 		{
-			Scribe_Values.LookValue<string>(ref this.label, "label", null, false);
-			Scribe_Values.LookValue<Color>(ref this.color, "color", default(Color), false);
-			Scribe_Values.LookValue<bool>(ref this.hidden, "hidden", false, false);
-			Scribe_Collections.LookList<IntVec3>(ref this.cells, "cells", LookMode.Undefined, new object[0]);
+			Scribe_Values.Look<string>(ref this.label, "label", null, false);
+			Scribe_Values.Look<Color>(ref this.color, "color", default(Color), false);
+			Scribe_Values.Look<bool>(ref this.hidden, "hidden", false, false);
+			Scribe_Collections.Look<IntVec3>(ref this.cells, "cells", LookMode.Undefined, new object[0]);
 		}
 
 		public virtual void AddCell(IntVec3 c)
@@ -200,6 +200,7 @@ namespace Verse
 
 		public virtual void Delete()
 		{
+			SoundDefOf.DesignateZoneDelete.PlayOneShotOnCamera(this.Map);
 			if (this.cells.Count == 0)
 			{
 				this.Deregister();
@@ -212,7 +213,6 @@ namespace Verse
 				}
 			}
 			Find.Selector.Deselect(this);
-			SoundDefOf.DesignateZoneDelete.PlayOneShotOnCamera();
 		}
 
 		public virtual void Deregister()
@@ -315,7 +315,7 @@ namespace Verse
 				Zone.foundGrid.Set(c, true);
 				numFound++;
 			};
-			this.Map.floodFiller.FloodFill(this.cells[0], passCheck, processor);
+			this.Map.floodFiller.FloodFill(this.cells[0], passCheck, processor, false);
 			if (numFound < this.cells.Count)
 			{
 				foreach (IntVec3 current in this.Map.AllCells)

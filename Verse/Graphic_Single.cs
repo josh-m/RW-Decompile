@@ -61,6 +61,7 @@ namespace Verse
 			req2.shader = req.shader;
 			req2.color = this.color;
 			req2.colorTwo = this.colorTwo;
+			req2.renderQueue = req.renderQueue;
 			if (req.shader.SupportsMaskTex())
 			{
 				req2.maskTex = ContentFinder<Texture2D>.Get(req.path + Graphic_Single.MaskSuffix, false);

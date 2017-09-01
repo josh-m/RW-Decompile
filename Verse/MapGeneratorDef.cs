@@ -12,7 +12,7 @@ namespace Verse
 		[Unsaved]
 		private List<GenStepDef> genSteps;
 
-		public List<GenStepDef> GenStepsInOrder
+		public List<GenStepDef> GenSteps
 		{
 			get
 			{
@@ -21,17 +21,16 @@ namespace Verse
 					this.genSteps = new List<GenStepDef>();
 					if (this.parent != null)
 					{
-						this.genSteps.AddRange(this.parent.GenStepsInOrder);
+						this.genSteps.AddRange(this.parent.GenSteps);
 					}
 					List<GenStepDef> allDefsListForReading = DefDatabase<GenStepDef>.AllDefsListForReading;
 					for (int i = 0; i < allDefsListForReading.Count; i++)
 					{
-						if (allDefsListForReading[i].mapGenerator == this)
+						if (allDefsListForReading[i].linkWithMapGenerator == this)
 						{
 							this.genSteps.Add(allDefsListForReading[i]);
 						}
 					}
-					this.genSteps.SortBy((GenStepDef x) => x.order, (GenStepDef x) => x.index);
 				}
 				return this.genSteps;
 			}

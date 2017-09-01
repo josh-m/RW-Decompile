@@ -38,5 +38,11 @@ namespace RimWorld
 			}
 			return null;
 		}
+
+		public static bool WasLoadingCanceled(Thing transporter)
+		{
+			CompTransporter compTransporter = transporter.TryGetComp<CompTransporter>();
+			return compTransporter != null && !compTransporter.LoadingInProgressOrReadyToLaunch;
+		}
 	}
 }

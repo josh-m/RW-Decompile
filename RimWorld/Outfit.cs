@@ -4,7 +4,7 @@ using Verse;
 
 namespace RimWorld
 {
-	public class Outfit : ILoadReferenceable, IExposable
+	public class Outfit : IExposable, ILoadReferenceable
 	{
 		public int uniqueId;
 
@@ -26,9 +26,9 @@ namespace RimWorld
 
 		public void ExposeData()
 		{
-			Scribe_Values.LookValue<int>(ref this.uniqueId, "uniqueId", 0, false);
-			Scribe_Values.LookValue<string>(ref this.label, "label", null, false);
-			Scribe_Deep.LookDeep<ThingFilter>(ref this.filter, "filter", new object[0]);
+			Scribe_Values.Look<int>(ref this.uniqueId, "uniqueId", 0, false);
+			Scribe_Values.Look<string>(ref this.label, "label", null, false);
+			Scribe_Deep.Look<ThingFilter>(ref this.filter, "filter", new object[0]);
 		}
 
 		public string GetUniqueLoadID()

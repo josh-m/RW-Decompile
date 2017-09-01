@@ -8,19 +8,30 @@ namespace RimWorld
 	{
 		public PawnGroupKindDef def;
 
+		public static List<Pawn> pawnsBeingGeneratedNow;
+
 		public abstract float MinPointsToGenerateAnything(PawnGroupMaker groupMaker);
 
-		public abstract IEnumerable<Pawn> GeneratePawns(PawnGroupMakerParms parms, PawnGroupMaker groupMaker, bool errorOnZeroResults = true);
-
-		protected virtual void PostGenerate(Pawn pawn)
+		public List<Pawn> GeneratePawns(PawnGroupMakerParms parms, PawnGroupMaker groupMaker, bool errorOnZeroResults = true)
 		{
-			PawnGroupMakerUtility.AddToPawnsBeingGeneratedNow(pawn);
+			if (PawnGroupKindWorker.pawnsBeingGeneratedNow != null)
+			{
+				Log.Error("pawnsBeingGeneratedNow is not null. Nested calls are not allowed.");
+			}
+			List<Pawn> list = new List<Pawn>();
+			PawnGroupKindWorker.pawnsBeingGeneratedNow = list;
+			try
+			{
+				this.GeneratePawns(parms, groupMaker, list, errorOnZeroResults);
+			}
+			finally
+			{
+				PawnGroupKindWorker.pawnsBeingGeneratedNow = null;
+			}
+			return list;
 		}
 
-		protected virtual void FinishedGeneratingPawns()
-		{
-			PawnGroupMakerUtility.ClearPawnsBeingGeneratedNow();
-		}
+		protected abstract void GeneratePawns(PawnGroupMakerParms parms, PawnGroupMaker groupMaker, List<Pawn> outPawns, bool errorOnZeroResults = true);
 
 		public virtual bool CanGenerateFrom(PawnGroupMakerParms parms, PawnGroupMaker groupMaker)
 		{

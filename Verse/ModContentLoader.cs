@@ -180,10 +180,13 @@ namespace Verse
 			if (File.Exists(filePath))
 			{
 				byte[] data = File.ReadAllBytes(filePath);
-				texture2D = new Texture2D(2, 2);
+				texture2D = new Texture2D(2, 2, TextureFormat.Alpha8, true);
 				texture2D.LoadImage(data);
 				texture2D.Compress(true);
 				texture2D.name = Path.GetFileNameWithoutExtension(filePath);
+				texture2D.filterMode = FilterMode.Bilinear;
+				texture2D.anisoLevel = 2;
+				texture2D.Apply(true, true);
 			}
 			return texture2D;
 		}

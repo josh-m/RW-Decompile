@@ -18,7 +18,7 @@ namespace Verse.AI
 
 		public override bool ForceHostileTo(Faction f)
 		{
-			return f.def.humanlikeFaction;
+			return true;
 		}
 
 		public override RandomSocialMode SocialModeMax()

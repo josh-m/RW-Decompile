@@ -1,34 +1,23 @@
 using System;
 using System.Collections.Generic;
-using UnityEngine;
 using Verse;
 
 namespace RimWorld
 {
-	public abstract class Recipe_Surgery : RecipeWorker
+	public class Recipe_Surgery : RecipeWorker
 	{
 		private const float CatastrophicFailChance = 0.5f;
 
-		private const float RidiculousFailChance = 0.1f;
+		private const float RidiculousFailChanceFromCatastrophic = 0.1f;
 
 		protected bool CheckSurgeryFail(Pawn surgeon, Pawn patient, List<Thing> ingredients, BodyPartRecord part)
 		{
 			float num = 1f;
-			float num2 = surgeon.GetStatValue(StatDefOf.SurgerySuccessChance, true);
-			if (num2 < 1f)
+			num *= surgeon.GetStatValue((!patient.RaceProps.IsMechanoid) ? StatDefOf.MedicalSurgerySuccessChance : StatDefOf.MechanoidOperationSuccessChance, true);
+			Room room = surgeon.GetRoom(RegionType.Set_Passable);
+			if (room != null && !patient.RaceProps.IsMechanoid)
 			{
-				num2 = Mathf.Pow(num2, this.recipe.surgeonSurgerySuccessChanceExponent);
-			}
-			num *= num2;
-			Room room = surgeon.GetRoom();
-			if (room != null)
-			{
-				float num3 = room.GetStat(RoomStatDefOf.SurgerySuccessChanceFactor);
-				if (num3 < 1f)
-				{
-					num3 = Mathf.Pow(num3, this.recipe.roomSurgerySuccessChanceFactorExponent);
-				}
-				num *= num3;
+				num *= room.GetStat(RoomStatDefOf.SurgerySuccessChanceFactor);
 			}
 			num *= this.GetAverageMedicalPotency(ingredients);
 			num *= this.recipe.surgerySuccessChanceFactor;
@@ -36,12 +25,12 @@ namespace RimWorld
 			{
 				if (Rand.Value < this.recipe.deathOnFailedSurgeryChance)
 				{
-					int num4 = 0;
+					int num2 = 0;
 					while (!patient.Dead)
 					{
 						HealthUtility.GiveInjuriesOperationFailureRidiculous(patient);
-						num4++;
-						if (num4 > 300)
+						num2++;
+						if (num2 > 300)
 						{
 							Log.Error("Could not kill patient.");
 							break;
@@ -93,7 +82,7 @@ namespace RimWorld
 			{
 				return;
 			}
-			patient.needs.mood.thoughts.memories.TryGainMemoryThought(ThoughtDefOf.BotchedMySurgery, surgeon);
+			patient.needs.mood.thoughts.memories.TryGainMemory(ThoughtDefOf.BotchedMySurgery, surgeon);
 		}
 
 		private float GetAverageMedicalPotency(List<Thing> ingredients)

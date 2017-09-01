@@ -11,7 +11,7 @@ namespace Verse.AI
 
 		private static string ForbiddenOutsideAllowedAreaLowerTrans;
 
-		private static string PrisonerRoomLowerTrans;
+		private static string ReservedForPrisonersTrans;
 
 		private static string BurningLowerTrans;
 
@@ -23,12 +23,12 @@ namespace Verse.AI
 		{
 			HaulAIUtility.ForbiddenLowerTrans = "ForbiddenLower".Translate();
 			HaulAIUtility.ForbiddenOutsideAllowedAreaLowerTrans = "ForbiddenOutsideAllowedAreaLower".Translate();
-			HaulAIUtility.PrisonerRoomLowerTrans = "PrisonerRoomLower".Translate();
+			HaulAIUtility.ReservedForPrisonersTrans = "ReservedForPrisoners".Translate();
 			HaulAIUtility.BurningLowerTrans = "BurningLower".Translate();
 			HaulAIUtility.NoEmptyPlaceLowerTrans = "NoEmptyPlaceLower".Translate();
 		}
 
-		public static bool PawnCanAutomaticallyHaul(Pawn p, Thing t)
+		public static bool PawnCanAutomaticallyHaul(Pawn p, Thing t, bool forced)
 		{
 			if (!t.def.EverHaulable)
 			{
@@ -46,33 +46,15 @@ namespace Verse.AI
 				}
 				return false;
 			}
-			UnfinishedThing unfinishedThing = t as UnfinishedThing;
-			if (unfinishedThing != null && unfinishedThing.BoundBill != null)
-			{
-				return false;
-			}
-			if (!t.def.alwaysHaulable && t.Map.designationManager.DesignationOn(t, DesignationDefOf.Haul) == null && !t.IsInValidStorage())
-			{
-				return false;
-			}
-			if (!p.CanReserveAndReach(t, PathEndMode.ClosestTouch, p.NormalMaxDanger(), 1))
-			{
-				return false;
-			}
-			if (t.def.IsNutritionGivingIngestible && t.def.ingestible.HumanEdible && !t.IsSociallyProper(p))
-			{
-				JobFailReason.Is(HaulAIUtility.PrisonerRoomLowerTrans);
-				return false;
-			}
-			if (t.IsBurning())
-			{
-				JobFailReason.Is(HaulAIUtility.BurningLowerTrans);
-				return false;
-			}
-			return true;
+			return (t.def.alwaysHaulable || t.Map.designationManager.DesignationOn(t, DesignationDefOf.Haul) != null || t.IsInValidStorage()) && HaulAIUtility.PawnCanAutomaticallyHaulBasicChecks(p, t, forced);
 		}
 
-		public static bool PawnCanAutomaticallyHaulFast(Pawn p, Thing t)
+		public static bool PawnCanAutomaticallyHaulFast(Pawn p, Thing t, bool forced)
+		{
+			return HaulAIUtility.PawnCanAutomaticallyHaulBasicChecks(p, t, forced);
+		}
+
+		private static bool PawnCanAutomaticallyHaulBasicChecks(Pawn p, Thing t, bool forced)
 		{
 			UnfinishedThing unfinishedThing = t as UnfinishedThing;
 			if (unfinishedThing != null && unfinishedThing.BoundBill != null)
@@ -83,13 +65,13 @@ namespace Verse.AI
 			{
 				return false;
 			}
-			if (!p.Map.reservationManager.CanReserve(p, t, 1))
+			if (!p.CanReserve(t, 1, -1, null, forced))
 			{
 				return false;
 			}
 			if (t.def.IsNutritionGivingIngestible && t.def.ingestible.HumanEdible && !t.IsSociallyProper(p, false, true))
 			{
-				JobFailReason.Is(HaulAIUtility.PrisonerRoomLowerTrans);
+				JobFailReason.Is(HaulAIUtility.ReservedForPrisonersTrans);
 				return false;
 			}
 			if (t.IsBurning())
@@ -181,7 +163,7 @@ namespace Verse.AI
 		public static bool CanHaulAside(Pawn p, Thing t, out IntVec3 storeCell)
 		{
 			storeCell = IntVec3.Invalid;
-			return t.def.EverHaulable && !t.IsBurning() && p.CanReserveAndReach(t, PathEndMode.ClosestTouch, p.NormalMaxDanger(), 1) && HaulAIUtility.TryFindSpotToPlaceHaulableCloseTo(t, p, t.PositionHeld, out storeCell);
+			return t.def.EverHaulable && !t.IsBurning() && p.CanReserveAndReach(t, PathEndMode.ClosestTouch, p.NormalMaxDanger(), 1, -1, null, false) && HaulAIUtility.TryFindSpotToPlaceHaulableCloseTo(t, p, t.PositionHeld, out storeCell);
 		}
 
 		public static Job HaulAsideJobFor(Pawn p, Thing t)
@@ -202,7 +184,7 @@ namespace Verse.AI
 
 		private static bool TryFindSpotToPlaceHaulableCloseTo(Thing haulable, Pawn worker, IntVec3 center, out IntVec3 spot)
 		{
-			Region region = center.GetRegion(worker.Map);
+			Region region = center.GetRegion(worker.Map, RegionType.Set_Passable);
 			if (region == null)
 			{
 				spot = center;
@@ -225,7 +207,7 @@ namespace Verse.AI
 					}
 				}
 				return false;
-			}, 100);
+			}, 100, RegionType.Set_Passable);
 			if (foundCell.IsValid)
 			{
 				spot = foundCell;
@@ -237,7 +219,7 @@ namespace Verse.AI
 
 		private static bool HaulablePlaceValidator(Thing haulable, Pawn worker, IntVec3 c)
 		{
-			if (!worker.CanReserveAndReach(c, PathEndMode.OnCell, worker.NormalMaxDanger(), 1))
+			if (!worker.CanReserveAndReach(c, PathEndMode.OnCell, worker.NormalMaxDanger(), 1, -1, null, false))
 			{
 				return false;
 			}
@@ -250,6 +232,10 @@ namespace Verse.AI
 				return false;
 			}
 			if (c == haulable.Position && haulable.Spawned)
+			{
+				return false;
+			}
+			if (c.ContainsStaticFire(worker.Map))
 			{
 				return false;
 			}

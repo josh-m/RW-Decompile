@@ -23,9 +23,9 @@ namespace RimWorld
 
 		public void ExposeData()
 		{
-			Scribe_Values.LookValue<IntVec3>(ref this.cell, "cell", default(IntVec3), false);
-			Scribe_Values.LookValue<int>(ref this.ticksGame, "ticksGame", 0, false);
-			Scribe_Defs.LookDef<ThingDef>(ref this.def, "def");
+			Scribe_Values.Look<IntVec3>(ref this.cell, "cell", default(IntVec3), false);
+			Scribe_Values.Look<int>(ref this.ticksGame, "ticksGame", 0, false);
+			Scribe_Defs.Look<ThingDef>(ref this.def, "def");
 		}
 
 		public override string ToString()

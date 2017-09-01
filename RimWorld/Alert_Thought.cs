@@ -29,15 +29,22 @@ namespace RimWorld
 				}
 				else
 				{
-					p.needs.mood.thoughts.GetMainThoughts(Alert_Thought.tmpThoughts);
-					for (int i = 0; i < Alert_Thought.tmpThoughts.Count; i++)
+					p.needs.mood.thoughts.GetAllMoodThoughts(Alert_Thought.tmpThoughts);
+					try
 					{
-						if (Alert_Thought.tmpThoughts[i].def == this.Thought)
+						ThoughtDef requiredDef = this.Thought;
+						for (int i = 0; i < Alert_Thought.tmpThoughts.Count; i++)
 						{
-							yield return p;
+							if (Alert_Thought.tmpThoughts[i].def == requiredDef)
+							{
+								yield return p;
+							}
 						}
 					}
-					Alert_Thought.tmpThoughts.Clear();
+					finally
+					{
+						base.<>__Finally0();
+					}
 				}
 			}
 		}

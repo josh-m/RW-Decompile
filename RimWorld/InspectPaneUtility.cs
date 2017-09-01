@@ -226,13 +226,13 @@ namespace RimWorld
 			if (InspectPaneUtility.IsOpen(tab, pane) || (tab == null && pane.OpenTabType == null))
 			{
 				pane.OpenTabType = null;
-				SoundDefOf.TabClose.PlayOneShotOnCamera();
+				SoundDefOf.TabClose.PlayOneShotOnCamera(null);
 			}
 			else
 			{
 				tab.OnOpen();
 				pane.OpenTabType = tab.GetType();
-				SoundDefOf.TabOpen.PlayOneShotOnCamera();
+				SoundDefOf.TabOpen.PlayOneShotOnCamera(null);
 			}
 		}
 

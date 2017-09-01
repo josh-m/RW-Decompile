@@ -17,8 +17,28 @@ namespace RimWorld.Planet
 
 		public static Caravan ExitMapAndCreateCaravan(IEnumerable<Pawn> pawns, Faction faction, int exitFromTile, Direction8Way dir)
 		{
-			int startingTile = CaravanExitMapUtility.FindRandomStartingTileBasedOnExitDir(exitFromTile, dir);
-			return CaravanExitMapUtility.ExitMapAndCreateCaravan(pawns, faction, startingTile);
+			int directionTile = CaravanExitMapUtility.FindRandomStartingTileBasedOnExitDir(exitFromTile, dir);
+			return CaravanExitMapUtility.ExitMapAndCreateCaravan(pawns, faction, exitFromTile, directionTile);
+		}
+
+		public static Caravan ExitMapAndCreateCaravan(IEnumerable<Pawn> pawns, Faction faction, int exitFromTile, int directionTile)
+		{
+			if (Find.World.Impassable(directionTile))
+			{
+				directionTile = exitFromTile;
+			}
+			if (Find.World.Impassable(exitFromTile))
+			{
+				exitFromTile = directionTile;
+			}
+			Caravan caravan = CaravanExitMapUtility.ExitMapAndCreateCaravan(pawns, faction, exitFromTile);
+			if (caravan.Tile != directionTile)
+			{
+				caravan.pather.StartPath(directionTile, null, true);
+				caravan.pather.nextTileCostLeft /= 2f;
+				caravan.tweener.ResetToPosition();
+			}
+			return caravan;
 		}
 
 		public static Caravan ExitMapAndCreateCaravan(IEnumerable<Pawn> pawns, Faction faction, int startingTile)
@@ -30,18 +50,31 @@ namespace RimWorld.Planet
 			}
 			CaravanExitMapUtility.tmpPawns.Clear();
 			CaravanExitMapUtility.tmpPawns.AddRange(pawns);
-			Caravan caravan = CaravanMaker.MakeCaravan(CaravanExitMapUtility.tmpPawns, faction, startingTile, false);
+			Map map = null;
 			for (int i = 0; i < CaravanExitMapUtility.tmpPawns.Count; i++)
 			{
-				CaravanExitMapUtility.tmpPawns[i].ExitMap(false);
+				map = CaravanExitMapUtility.tmpPawns[i].MapHeld;
+				if (map != null)
+				{
+					break;
+				}
+			}
+			Caravan caravan = CaravanMaker.MakeCaravan(CaravanExitMapUtility.tmpPawns, faction, startingTile, false);
+			for (int j = 0; j < CaravanExitMapUtility.tmpPawns.Count; j++)
+			{
+				CaravanExitMapUtility.tmpPawns[j].ExitMap(false);
 			}
 			List<Pawn> pawnsListForReading = caravan.PawnsListForReading;
-			for (int j = 0; j < pawnsListForReading.Count; j++)
+			for (int k = 0; k < pawnsListForReading.Count; k++)
 			{
-				if (!pawnsListForReading[j].IsWorldPawn())
+				if (!pawnsListForReading[k].IsWorldPawn())
 				{
-					Find.WorldPawns.PassToWorld(pawnsListForReading[j], PawnDiscardDecideMode.Decide);
+					Find.WorldPawns.PassToWorld(pawnsListForReading[k], PawnDiscardDecideMode.Decide);
 				}
+			}
+			if (map != null)
+			{
+				map.info.parent.Notify_CaravanFormed(caravan);
 			}
 			return caravan;
 		}
@@ -51,13 +84,14 @@ namespace RimWorld.Planet
 			Caravan caravan = CaravanExitMapUtility.FindCaravanToJoinFor(pawn);
 			if (caravan != null)
 			{
+				pawn.DeSpawn();
 				caravan.AddPawn(pawn, true);
 				pawn.ExitMap(false);
 			}
 			else if (pawn.IsColonist)
 			{
 				List<int> list = CaravanExitMapUtility.AvailableExitTilesAt(pawn.Map);
-				Caravan caravan2 = CaravanExitMapUtility.ExitMapAndCreateCaravan(Gen.YieldSingle<Pawn>(pawn), pawn.Faction, (!list.Any<int>()) ? pawn.Map.Tile : list.RandomElement<int>());
+				Caravan caravan2 = CaravanExitMapUtility.ExitMapAndCreateCaravan(Gen.YieldSingle<Pawn>(pawn), pawn.Faction, pawn.Map.Tile, (!list.Any<int>()) ? pawn.Map.Tile : list.RandomElement<int>());
 				caravan2.autoJoinable = true;
 				if (pawn.Faction == Faction.OfPlayer)
 				{
@@ -92,7 +126,7 @@ namespace RimWorld.Planet
 				{
 					Rot4 rotFromTo = grid.GetRotFromTo(currentTileID, num);
 					IntVec3 intVec;
-					if (CellFinder.TryFindRandomEdgeCellWith((IntVec3 x) => x.Walkable(map) && !x.Fogged(map), map, rotFromTo, out intVec))
+					if (CellFinder.TryFindRandomEdgeCellWith((IntVec3 x) => x.Walkable(map) && !x.Fogged(map), map, rotFromTo, CellFinder.EdgeRoadChance_Ignore, out intVec))
 					{
 						CaravanExitMapUtility.retTiles.Add(num);
 					}
@@ -100,6 +134,38 @@ namespace RimWorld.Planet
 			}
 			CaravanExitMapUtility.retTiles.SortBy((int x) => grid.GetHeadingFromTo(currentTileID, x));
 			return CaravanExitMapUtility.retTiles;
+		}
+
+		public static int RandomBestExitTileFrom(Map map)
+		{
+			Tile tile = map.TileInfo;
+			List<int> options = CaravanExitMapUtility.AvailableExitTilesAt(map);
+			if (!options.Any<int>())
+			{
+				return -1;
+			}
+			if (tile.roads == null)
+			{
+				return options.RandomElement<int>();
+			}
+			int bestRoadIndex = -1;
+			for (int i = 0; i < tile.roads.Count; i++)
+			{
+				if (options.Contains(tile.roads[i].neighbor))
+				{
+					if (bestRoadIndex == -1 || tile.roads[i].road.priority > tile.roads[bestRoadIndex].road.priority)
+					{
+						bestRoadIndex = i;
+					}
+				}
+			}
+			if (bestRoadIndex == -1)
+			{
+				return options.RandomElement<int>();
+			}
+			return (from rl in tile.roads
+			where options.Contains(rl.neighbor) && rl.road == tile.roads[bestRoadIndex].road
+			select rl).RandomElement<Tile.RoadLink>().neighbor;
 		}
 
 		private static int FindRandomStartingTileBasedOnExitDir(int tileID, Direction8Way exitDir)
@@ -132,19 +198,7 @@ namespace RimWorld.Planet
 
 		private static bool IsGoodCaravanStartingTile(int tile)
 		{
-			if (Find.World.Impassable(tile))
-			{
-				return false;
-			}
-			List<WorldObject> allWorldObjects = Find.WorldObjects.AllWorldObjects;
-			for (int i = 0; i < allWorldObjects.Count; i++)
-			{
-				if (allWorldObjects[i].Tile == tile && !(allWorldObjects[i] is Caravan))
-				{
-					return false;
-				}
-			}
-			return true;
+			return !Find.World.Impassable(tile);
 		}
 
 		public static Caravan FindCaravanToJoinFor(Pawn pawn)
@@ -199,7 +253,7 @@ namespace RimWorld.Planet
 			while (i < maps.Count)
 			{
 				Map map = maps[i];
-				if (!map.IsPlayerHome && Find.WorldGrid.IsNeighborOrSame(c.Tile, map.info.tile) && map.mapPawns.FreeColonistsCount == 0)
+				if (!map.IsPlayerHome && Find.WorldGrid.IsNeighborOrSame(c.Tile, map.Tile) && map.mapPawns.FreeColonistsCount == 0)
 				{
 					if (map.mapPawns.AllPawns.Any((Pawn x) => x.Faction == Faction.OfPlayer || x.HostFaction == Faction.OfPlayer))
 					{
@@ -207,7 +261,7 @@ namespace RimWorld.Planet
 						for (int j = 0; j < caravans.Count; j++)
 						{
 							Caravan caravan = caravans[j];
-							if (c != caravan && caravan.autoJoinable && caravan.Faction == c.Faction && Find.WorldGrid.IsNeighborOrSame(caravan.Tile, map.info.tile))
+							if (c != caravan && caravan.autoJoinable && caravan.Faction == c.Faction && Find.WorldGrid.IsNeighborOrSame(caravan.Tile, map.Tile))
 							{
 								flag = true;
 								break;
@@ -219,10 +273,10 @@ namespace RimWorld.Planet
 						}
 					}
 				}
-				IL_14F:
+				IL_145:
 				i++;
 				continue;
-				goto IL_14F;
+				goto IL_145;
 			}
 			return false;
 		}

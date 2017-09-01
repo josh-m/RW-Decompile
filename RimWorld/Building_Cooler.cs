@@ -36,7 +36,7 @@ namespace RimWorld
 					flag = !Mathf.Approximately(num4, 0f);
 					if (flag)
 					{
-						intVec.GetRoom(base.Map).Temperature += num4;
+						intVec.GetRoomGroup(base.Map).Temperature += num4;
 						GenTemperature.PushHeat(intVec2, base.Map, -num3 * 1.25f);
 					}
 				}

@@ -7,9 +7,12 @@ namespace RimWorld
 	{
 		public static bool TryDropAndSetForbidden(Thing th, IntVec3 pos, Map map, ThingPlaceMode mode, out Thing resultingThing, bool forbidden)
 		{
-			if (GenDrop.TryDropSpawn(th, pos, map, ThingPlaceMode.Near, out resultingThing, null) && resultingThing != null)
+			if (GenDrop.TryDropSpawn(th, pos, map, ThingPlaceMode.Near, out resultingThing, null))
 			{
-				resultingThing.SetForbidden(forbidden, false);
+				if (resultingThing != null)
+				{
+					resultingThing.SetForbidden(forbidden, false);
+				}
 				return true;
 			}
 			resultingThing = null;

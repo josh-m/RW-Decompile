@@ -8,17 +8,17 @@ namespace Verse
 	{
 		private class MaterialAtlas
 		{
-			private const float TexPadding = 0.0029296875f;
+			private const float TexPadding = 0.03125f;
 
 			protected Material[] subMats = new Material[16];
 
 			public MaterialAtlas(Material newRootMat)
 			{
-				Vector2 mainTextureScale = new Vector2(0.244140625f, 0.244140625f);
+				Vector2 mainTextureScale = new Vector2(0.1875f, 0.1875f);
 				for (int i = 0; i < 16; i++)
 				{
-					float x = (float)(i % 4) * 0.25f + 0.0029296875f;
-					float y = (float)(i / 4) * 0.25f + 0.0029296875f;
+					float x = (float)(i % 4) * 0.25f + 0.03125f;
+					float y = (float)(i / 4) * 0.25f + 0.03125f;
 					Vector2 mainTextureOffset = new Vector2(x, y);
 					Material material = new Material(newRootMat);
 					material.name = newRootMat.name + "_ASM" + i;

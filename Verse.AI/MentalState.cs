@@ -33,9 +33,9 @@ namespace Verse.AI
 
 		public virtual void ExposeData()
 		{
-			Scribe_Defs.LookDef<MentalStateDef>(ref this.def, "def");
-			Scribe_Values.LookValue<int>(ref this.age, "age", 0, false);
-			Scribe_Values.LookValue<bool>(ref this.causedByMood, "causedByMood", false, false);
+			Scribe_Defs.Look<MentalStateDef>(ref this.def, "def");
+			Scribe_Values.Look<int>(ref this.age, "age", 0, false);
+			Scribe_Values.Look<bool>(ref this.causedByMood, "causedByMood", false, false);
 		}
 
 		public virtual void PostStart(string reason)
@@ -100,7 +100,7 @@ namespace Verse.AI
 			this.pawn.mindState.mentalStateHandler.ClearMentalStateDirect();
 			if (this.causedByMood && this.def.moodRecoveryThought != null && this.pawn.needs.mood != null)
 			{
-				this.pawn.needs.mood.thoughts.memories.TryGainMemoryThought(this.def.moodRecoveryThought, null);
+				this.pawn.needs.mood.thoughts.memories.TryGainMemory(this.def.moodRecoveryThought, null);
 			}
 			this.PostEnd();
 		}

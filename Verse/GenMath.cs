@@ -9,6 +9,17 @@ namespace Verse
 {
 	public static class GenMath
 	{
+		public struct BezierCubicControls
+		{
+			public Vector3 w0;
+
+			public Vector3 w1;
+
+			public Vector3 w2;
+
+			public Vector3 w3;
+		}
+
 		public const float BigEpsilon = 1E-07f;
 
 		public const float Sqrt2 = 1.41421354f;
@@ -132,6 +143,11 @@ namespace Verse
 			return maxY;
 		}
 
+		public static int OctileDistance(int dx, int dz, int cardinal, int diagonal)
+		{
+			return cardinal * (dx + dz) + (diagonal - 2 * cardinal) * Mathf.Min(dx, dz);
+		}
+
 		public static float UnboundedValueToFactor(float val)
 		{
 			if (val > 0f)
@@ -209,7 +225,7 @@ namespace Verse
 			int num7 = 0;
 			while ((float)num7 < 1E+07f)
 			{
-				num += intVec.LengthHorizontalSquared;
+				num += (float)intVec.LengthHorizontalSquared;
 				num7++;
 			}
 			stringBuilder.AppendLine("Verse.IntVec3.LengthHorizontalSquared: " + stopwatch6.ElapsedTicks);
@@ -259,6 +275,10 @@ namespace Verse
 
 		public static float SphericalDistance(Vector3 normalizedA, Vector3 normalizedB)
 		{
+			if (normalizedA == normalizedB)
+			{
+				return 0f;
+			}
 			return Mathf.Acos(Vector3.Dot(normalizedA, normalizedB));
 		}
 
@@ -287,6 +307,45 @@ namespace Verse
 		public static int PositiveMod(int x, int m)
 		{
 			return (x % m + m) % m;
+		}
+
+		public static Vector3 BezierCubicEvaluate(float t, GenMath.BezierCubicControls bcc)
+		{
+			return GenMath.BezierCubicEvaluate(t, bcc.w0, bcc.w1, bcc.w2, bcc.w3);
+		}
+
+		public static Vector3 BezierCubicEvaluate(float t, Vector3 w0, Vector3 w1, Vector3 w2, Vector3 w3)
+		{
+			float d = t * t;
+			float num = 1f - t;
+			float d2 = num * num;
+			return w0 * d2 * num + 3f * w1 * d2 * t + 3f * w2 * num * d + w3 * d * t;
+		}
+
+		public static float CirclesOverlapArea(float x1, float y1, float r1, float x2, float y2, float r2)
+		{
+			float num = (x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1);
+			float num2 = Mathf.Sqrt(num);
+			float num3 = r1 * r1;
+			float num4 = r2 * r2;
+			float num5 = Mathf.Abs(r1 - r2);
+			if (num2 >= r1 + r2)
+			{
+				return 0f;
+			}
+			if (num2 <= num5 && r1 >= r2)
+			{
+				return 3.14159274f * num4;
+			}
+			if (num2 <= num5 && r2 >= r1)
+			{
+				return 3.14159274f * num3;
+			}
+			float num6 = Mathf.Acos((num3 - num4 + num) / (2f * r1 * num2)) * 2f;
+			float num7 = Mathf.Acos((num4 - num3 + num) / (2f * r2 * num2)) * 2f;
+			float num8 = (num7 * num4 - num4 * Mathf.Sin(num7)) * 0.5f;
+			float num9 = (num6 * num3 - num3 * Mathf.Sin(num6)) * 0.5f;
+			return num8 + num9;
 		}
 	}
 }

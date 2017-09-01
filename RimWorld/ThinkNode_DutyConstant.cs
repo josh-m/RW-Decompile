@@ -9,7 +9,7 @@ namespace RimWorld
 	{
 		private DefMap<DutyDef, int> dutyDefToSubNode;
 
-		public override ThinkResult TryIssueJobPackage(Pawn pawn)
+		public override ThinkResult TryIssueJobPackage(Pawn pawn, JobIssueParams jobParams)
 		{
 			if (pawn.GetLord() == null)
 			{
@@ -31,7 +31,7 @@ namespace RimWorld
 			{
 				return ThinkResult.NoJob;
 			}
-			return this.subNodes[num].TryIssueJobPackage(pawn);
+			return this.subNodes[num].TryIssueJobPackage(pawn, jobParams);
 		}
 
 		protected override void ResolveSubnodes()

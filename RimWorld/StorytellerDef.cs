@@ -36,9 +36,9 @@ namespace RimWorld
 
 		public float desiredPopulationCritical = 13f;
 
-		public int desiredPopulationGainIntervalMinDays = 3;
+		public SimpleCurve populationIntentFromPopCurve;
 
-		public int desiredPopulationGainIntervalMaxDays = 10;
+		public SimpleCurve populationIntentFromTimeCurve;
 
 		[Unsaved]
 		public Texture2D portraitLargeTex;

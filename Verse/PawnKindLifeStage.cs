@@ -22,7 +22,7 @@ namespace Verse
 
 		public GraphicData dessicatedBodyGraphicData;
 
-		public BodyPartToDrop dropBodyPart;
+		public BodyPartToDrop butcherBodyPart;
 
 		public void ResolveReferences()
 		{

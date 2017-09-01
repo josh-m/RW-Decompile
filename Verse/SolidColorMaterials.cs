@@ -8,18 +8,28 @@ namespace Verse
 	{
 		private static Dictionary<Color, Material> simpleColorMats = new Dictionary<Color, Material>();
 
+		private static Dictionary<Color, Material> simpleColorAndVertexColorMats = new Dictionary<Color, Material>();
+
 		public static int SimpleColorMatCount
 		{
 			get
 			{
-				return SolidColorMaterials.simpleColorMats.Count;
+				return SolidColorMaterials.simpleColorMats.Count + SolidColorMaterials.simpleColorAndVertexColorMats.Count;
 			}
 		}
 
-		public static Material SimpleSolidColorMaterial(Color col)
+		public static Material SimpleSolidColorMaterial(Color col, bool careAboutVertexColors = false)
 		{
 			Material material;
-			if (!SolidColorMaterials.simpleColorMats.TryGetValue(col, out material))
+			if (careAboutVertexColors)
+			{
+				if (!SolidColorMaterials.simpleColorAndVertexColorMats.TryGetValue(col, out material))
+				{
+					material = SolidColorMaterials.NewSolidColorMaterial(col, ShaderDatabase.VertexColor);
+					SolidColorMaterials.simpleColorAndVertexColorMats.Add(col, material);
+				}
+			}
+			else if (!SolidColorMaterials.simpleColorMats.TryGetValue(col, out material))
 			{
 				material = SolidColorMaterials.NewSolidColorMaterial(col, ShaderDatabase.SolidColor);
 				SolidColorMaterials.simpleColorMats.Add(col, material);

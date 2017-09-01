@@ -8,7 +8,7 @@ namespace RimWorld
 	{
 		public MapInterface mapUI = new MapInterface();
 
-		public MainTabsRoot mainTabsRoot = new MainTabsRoot();
+		public MainButtonsRoot mainButtonsRoot = new MainButtonsRoot();
 
 		public AlertsReadout alerts = new AlertsReadout();
 
@@ -26,7 +26,7 @@ namespace RimWorld
 			this.mapUI.MapInterfaceOnGUI_BeforeMainTabs();
 			if (!this.screenshotMode.FiltersCurrentEvent)
 			{
-				this.mainTabsRoot.MainTabsOnGUI();
+				this.mainButtonsRoot.MainButtonsOnGUI();
 				this.alerts.AlertsReadoutOnGUI();
 			}
 			this.mapUI.MapInterfaceOnGUI_AfterMainTabs();
@@ -37,8 +37,12 @@ namespace RimWorld
 			this.windows.WindowStackOnGUI();
 			ReorderableWidget.ReorderableWidgetOnGUI();
 			this.mapUI.HandleMapClicks();
+			if (Find.DesignatorManager.SelectedDesignator != null)
+			{
+				Find.DesignatorManager.SelectedDesignator.SelectedProcessInput(Event.current);
+			}
 			DebugTools.DebugToolsOnGUI();
-			this.mainTabsRoot.HandleLowPriorityShortcuts();
+			this.mainButtonsRoot.HandleLowPriorityShortcuts();
 			Find.World.UI.HandleLowPriorityInput();
 			this.mapUI.HandleLowPriorityInput();
 			this.OpenMainMenuShortcut();
@@ -66,7 +70,7 @@ namespace RimWorld
 			if (Event.current.type == EventType.KeyDown && Event.current.keyCode == KeyCode.Escape)
 			{
 				Event.current.Use();
-				this.mainTabsRoot.SetCurrentTab(MainTabDefOf.Menu, true);
+				Find.MainTabsRoot.SetCurrentTab(MainButtonDefOf.Menu, true);
 			}
 		}
 	}

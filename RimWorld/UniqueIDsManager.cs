@@ -112,18 +112,18 @@ namespace RimWorld
 
 		public void ExposeData()
 		{
-			Scribe_Values.LookValue<int>(ref this.nextThingID, "nextThingID", 0, false);
-			Scribe_Values.LookValue<int>(ref this.nextBillID, "nextBillID", 0, false);
-			Scribe_Values.LookValue<int>(ref this.nextFactionID, "nextFactionID", 0, false);
-			Scribe_Values.LookValue<int>(ref this.nextVerbID, "nextVerbID", 0, false);
-			Scribe_Values.LookValue<int>(ref this.nextLordID, "nextLordID", 0, false);
-			Scribe_Values.LookValue<int>(ref this.nextTaleID, "nextTaleID", 0, false);
-			Scribe_Values.LookValue<int>(ref this.nextPassingShipID, "nextPassingShipID", 0, false);
-			Scribe_Values.LookValue<int>(ref this.nextWorldObjectID, "nextWorldObjectID", 0, false);
-			Scribe_Values.LookValue<int>(ref this.nextMapID, "nextMapID", 0, false);
-			Scribe_Values.LookValue<int>(ref this.nextAreaID, "nextAreaID", 0, false);
-			Scribe_Values.LookValue<int>(ref this.nextTransporterGroupID, "nextTransporterGroupID", 0, false);
-			Scribe_Values.LookValue<int>(ref this.nextAncientCryptosleepCasketGroupID, "nextAncientCryptosleepCasketGroupID", 0, false);
+			Scribe_Values.Look<int>(ref this.nextThingID, "nextThingID", 0, false);
+			Scribe_Values.Look<int>(ref this.nextBillID, "nextBillID", 0, false);
+			Scribe_Values.Look<int>(ref this.nextFactionID, "nextFactionID", 0, false);
+			Scribe_Values.Look<int>(ref this.nextVerbID, "nextVerbID", 0, false);
+			Scribe_Values.Look<int>(ref this.nextLordID, "nextLordID", 0, false);
+			Scribe_Values.Look<int>(ref this.nextTaleID, "nextTaleID", 0, false);
+			Scribe_Values.Look<int>(ref this.nextPassingShipID, "nextPassingShipID", 0, false);
+			Scribe_Values.Look<int>(ref this.nextWorldObjectID, "nextWorldObjectID", 0, false);
+			Scribe_Values.Look<int>(ref this.nextMapID, "nextMapID", 0, false);
+			Scribe_Values.Look<int>(ref this.nextAreaID, "nextAreaID", 0, false);
+			Scribe_Values.Look<int>(ref this.nextTransporterGroupID, "nextTransporterGroupID", 0, false);
+			Scribe_Values.Look<int>(ref this.nextAncientCryptosleepCasketGroupID, "nextAncientCryptosleepCasketGroupID", 0, false);
 		}
 	}
 }

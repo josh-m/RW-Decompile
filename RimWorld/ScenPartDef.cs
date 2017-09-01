@@ -19,7 +19,7 @@ namespace RimWorld
 
 		public Type pageClass;
 
-		public MapConditionDef mapCondition;
+		public GameConditionDef gameCondition;
 
 		public FloatRange durationRandomRange = new FloatRange(30f, 100f);
 

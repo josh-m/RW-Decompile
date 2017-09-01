@@ -1,4 +1,5 @@
 using System;
+using System.Text;
 using UnityEngine;
 
 namespace Verse
@@ -44,6 +45,8 @@ namespace Verse
 
 		private static readonly Texture2D StackTraceBorderTex = SolidColorMaterials.NewSolidColorTexture(new Color(0.3f, 0.3f, 0.3f, 1f));
 
+		private static readonly string MessageDetailsControlName = "MessageDetailsTextArea";
+
 		public override Vector2 InitialSize
 		{
 			get
@@ -57,6 +60,26 @@ namespace Verse
 			get
 			{
 				return true;
+			}
+		}
+
+		private static LogMessage SelectedMessage
+		{
+			get
+			{
+				return EditWindow_Log.selectedMessage;
+			}
+			set
+			{
+				if (EditWindow_Log.selectedMessage == value)
+				{
+					return;
+				}
+				EditWindow_Log.selectedMessage = value;
+				if (UnityData.IsInMainThread && GUI.GetNameOfFocusedControl() == EditWindow_Log.MessageDetailsControlName)
+				{
+					UI.UnfocusCurrentControl();
+				}
 			}
 		}
 
@@ -75,7 +98,7 @@ namespace Verse
 
 		public static void ClearSelectedMessage()
 		{
-			EditWindow_Log.selectedMessage = null;
+			EditWindow_Log.SelectedMessage = null;
 			EditWindow_Log.detailsScrollPosition = Vector2.zero;
 		}
 
@@ -123,6 +146,10 @@ namespace Verse
 			{
 				EditWindow_Log.canAutoOpen = true;
 			}
+			if (widgetRow.ButtonText("Copy to clipboard", "Copy all messages to the clipboard.", true, false))
+			{
+				this.CopyAllMessagesToClipboard();
+			}
 			Text.Font = GameFont.Small;
 			Rect rect = new Rect(inRect);
 			rect.yMin += 26f;
@@ -145,16 +172,16 @@ namespace Verse
 
 		public static void Notify_MessageDequeued(LogMessage oldMessage)
 		{
-			if (EditWindow_Log.selectedMessage == oldMessage)
+			if (EditWindow_Log.SelectedMessage == oldMessage)
 			{
-				EditWindow_Log.selectedMessage = null;
+				EditWindow_Log.SelectedMessage = null;
 			}
 		}
 
 		private void DoMessagesListing(Rect listingRect)
 		{
 			Rect viewRect = new Rect(0f, 0f, listingRect.width - 16f, this.listingViewHeight + 100f);
-			Widgets.BeginScrollView(listingRect, ref EditWindow_Log.messagesScrollPosition, viewRect);
+			Widgets.BeginScrollView(listingRect, ref EditWindow_Log.messagesScrollPosition, viewRect, true);
 			float width = viewRect.width - 28f;
 			Text.Font = GameFont.Tiny;
 			float num = 0f;
@@ -181,7 +208,7 @@ namespace Verse
 				if (Widgets.ButtonInvisible(rect2, false))
 				{
 					EditWindow_Log.ClearSelectedMessage();
-					EditWindow_Log.selectedMessage = current;
+					EditWindow_Log.SelectedMessage = current;
 				}
 				GUI.color = current.Color;
 				Widgets.Label(rect2, current.text);
@@ -220,18 +247,33 @@ namespace Verse
 			{
 				EditWindow_Log.detailsPaneHeight = outRect.height + Mathf.Round(3.5f) - Event.current.mousePosition.y;
 			}
-			if (Event.current.type == EventType.MouseUp)
+			if (Event.current.rawType == EventType.MouseUp)
 			{
 				this.borderDragging = false;
 			}
 			GUI.DrawTexture(rect2, EditWindow_Log.StackTraceAreaTex);
-			Rect rect3 = new Rect(0f, 0f, rect2.width - 16f, 0f);
 			string text = EditWindow_Log.selectedMessage.text + "\n" + EditWindow_Log.selectedMessage.StackTrace;
-			float height = Text.CalcHeight(text, rect3.width);
-			rect3.height = height;
-			Widgets.BeginScrollView(rect2, ref EditWindow_Log.detailsScrollPosition, rect3);
-			Widgets.Label(rect3, text);
-			Widgets.EndScrollView();
+			GUI.SetNextControlName(EditWindow_Log.MessageDetailsControlName);
+			Widgets.TextAreaScrollable(rect2, text, ref EditWindow_Log.detailsScrollPosition, true);
+		}
+
+		private void CopyAllMessagesToClipboard()
+		{
+			StringBuilder stringBuilder = new StringBuilder();
+			foreach (LogMessage current in Log.Messages)
+			{
+				if (stringBuilder.Length != 0)
+				{
+					stringBuilder.AppendLine();
+				}
+				stringBuilder.AppendLine(current.text);
+				stringBuilder.Append(current.StackTrace);
+				if (stringBuilder[stringBuilder.Length - 1] != '\n')
+				{
+					stringBuilder.AppendLine();
+				}
+			}
+			GUIUtility.systemCopyBuffer = stringBuilder.ToString();
 		}
 	}
 }

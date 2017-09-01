@@ -84,40 +84,36 @@ namespace Verse
 			this.thingsToDeregister.Clear();
 			if (DebugSettings.fastEcology)
 			{
-				List<Map> maps = Find.Maps;
-				for (int k = 0; k < maps.Count; k++)
+				Find.World.tileTemperatures.ClearCaches();
+				for (int k = 0; k < this.thingLists.Count; k++)
 				{
-					maps[k].mapTemperature.UpdateCachedData();
-				}
-				for (int l = 0; l < this.thingLists.Count; l++)
-				{
-					List<Thing> list = this.thingLists[l];
-					for (int m = 0; m < list.Count; m++)
+					List<Thing> list = this.thingLists[k];
+					for (int l = 0; l < list.Count; l++)
 					{
-						if (list[m].def.category == ThingCategory.Plant)
+						if (list[l].def.category == ThingCategory.Plant)
 						{
-							list[m].TickLong();
+							list[l].TickLong();
 						}
 					}
 				}
 			}
 			List<Thing> list2 = this.thingLists[Find.TickManager.TicksGame % this.TickInterval];
-			for (int n = 0; n < list2.Count; n++)
+			for (int m = 0; m < list2.Count; m++)
 			{
-				if (!list2[n].Destroyed)
+				if (!list2[m].Destroyed)
 				{
 					try
 					{
 						switch (this.tickType)
 						{
 						case TickerType.Normal:
-							list2[n].Tick();
+							list2[m].Tick();
 							break;
 						case TickerType.Rare:
-							list2[n].TickRare();
+							list2[m].TickRare();
 							break;
 						case TickerType.Long:
-							list2[n].TickLong();
+							list2[m].TickLong();
 							break;
 						}
 					}
@@ -125,7 +121,7 @@ namespace Verse
 					{
 						if (Prefs.DevMode)
 						{
-							Log.Error("Exception ticking " + list2[n].ToString() + ": " + ex.ToString());
+							Log.Error("Exception ticking " + list2[m].ToString() + ": " + ex.ToString());
 						}
 					}
 				}

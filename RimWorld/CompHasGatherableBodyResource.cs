@@ -55,7 +55,7 @@ namespace RimWorld
 		public override void PostExposeData()
 		{
 			base.PostExposeData();
-			Scribe_Values.LookValue<float>(ref this.fullness, this.SaveKey, 0f, false);
+			Scribe_Values.Look<float>(ref this.fullness, this.SaveKey, 0f, false);
 		}
 
 		public override void CompTick()
@@ -81,6 +81,12 @@ namespace RimWorld
 			if (!this.Active)
 			{
 				Log.Error(doer + " gathered body resources while not Active: " + this.parent);
+			}
+			if (Rand.Value > doer.GetStatValue(StatDefOf.AnimalGatherYield, true))
+			{
+				Vector3 loc = (doer.DrawPos + this.parent.DrawPos) / 2f;
+				MoteMaker.ThrowText(loc, this.parent.Map, "TextMote_ProductWasted".Translate(), 3.65f);
+				return;
 			}
 			int i = GenMath.RoundRandom((float)this.ResourceAmount * this.fullness);
 			while (i > 0)

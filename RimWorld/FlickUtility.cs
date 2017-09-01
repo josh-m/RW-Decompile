@@ -32,5 +32,16 @@ namespace RimWorld
 			}
 			TutorUtility.DoModalDialogIfNotKnown(ConceptDefOf.SwitchFlickingDesignation);
 		}
+
+		public static bool WantsToBeOn(Thing t)
+		{
+			CompFlickable compFlickable = t.TryGetComp<CompFlickable>();
+			if (compFlickable != null && !compFlickable.SwitchIsOn)
+			{
+				return false;
+			}
+			CompSchedule compSchedule = t.TryGetComp<CompSchedule>();
+			return compSchedule == null || compSchedule.Allowed;
+		}
 	}
 }

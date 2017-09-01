@@ -22,7 +22,7 @@ namespace RimWorld
 					return;
 				}
 				int amount = Rand.RangeInclusive(1, 5);
-				pawn.TakeDamage(new DamageInfo(DamageDefOf.Flame, amount, -1f, user, brain, this.parent.def));
+				pawn.TakeDamage(new DamageInfo(DamageDefOf.Flame, amount, -1f, user, brain, this.parent.def, DamageInfo.SourceCategory.ThingOrUnknown));
 			}
 		}
 	}

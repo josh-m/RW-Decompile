@@ -138,12 +138,12 @@ namespace Verse
 			{
 				this.boundBillInt = null;
 			}
-			Scribe_References.LookReference<Pawn>(ref this.creatorInt, "creator", false);
-			Scribe_Values.LookValue<string>(ref this.creatorName, "creatorName", null, false);
-			Scribe_References.LookReference<Bill_ProductionWithUft>(ref this.boundBillInt, "bill", false);
-			Scribe_Defs.LookDef<RecipeDef>(ref this.recipeInt, "recipe");
-			Scribe_Values.LookValue<float>(ref this.workLeft, "workLeft", 0f, false);
-			Scribe_Collections.LookList<Thing>(ref this.ingredients, "ingredients", LookMode.Deep, new object[0]);
+			Scribe_References.Look<Pawn>(ref this.creatorInt, "creator", false);
+			Scribe_Values.Look<string>(ref this.creatorName, "creatorName", null, false);
+			Scribe_References.Look<Bill_ProductionWithUft>(ref this.boundBillInt, "bill", false);
+			Scribe_Defs.Look<RecipeDef>(ref this.recipeInt, "recipe");
+			Scribe_Values.Look<float>(ref this.workLeft, "workLeft", 0f, false);
+			Scribe_Collections.Look<Thing>(ref this.ingredients, "ingredients", LookMode.Deep, new object[0]);
 		}
 
 		public override void Destroy(DestroyMode mode = DestroyMode.Vanish)

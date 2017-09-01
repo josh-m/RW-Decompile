@@ -50,13 +50,13 @@ namespace Verse
 				return;
 			}
 			this.rect.xMin = (from pt in curve.AllPoints
-			select pt.loc.x).Min();
+			select pt.Loc.x).Min();
 			this.rect.xMax = (from pt in curve.AllPoints
-			select pt.loc.x).Max();
+			select pt.Loc.x).Max();
 			this.rect.yMin = (from pt in curve.AllPoints
-			select pt.loc.y).Min();
+			select pt.Loc.y).Min();
 			this.rect.yMax = (from pt in curve.AllPoints
-			select pt.loc.y).Max();
+			select pt.Loc.y).Max();
 			if (Mathf.Approximately(this.rect.width, 0f))
 			{
 				this.rect.width = this.rect.xMin * 2f;

@@ -42,10 +42,10 @@ namespace RimWorld
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Values.LookValue<float>(ref this.intervalDays, "intervalDays", 0f, false);
-			Scribe_Values.LookValue<bool>(ref this.repeat, "repeat", false, false);
-			Scribe_Values.LookValue<float>(ref this.occurTick, "occurTick", 0f, false);
-			Scribe_Values.LookValue<bool>(ref this.isFinished, "isFinished", false, false);
+			Scribe_Values.Look<float>(ref this.intervalDays, "intervalDays", 0f, false);
+			Scribe_Values.Look<bool>(ref this.repeat, "repeat", false, false);
+			Scribe_Values.Look<float>(ref this.occurTick, "occurTick", 0f, false);
+			Scribe_Values.Look<bool>(ref this.isFinished, "isFinished", false, false);
 		}
 
 		public override void DoEditInterface(Listing_ScenEdit listing)

@@ -9,8 +9,6 @@ namespace Verse
 	[StaticConstructorOnStartup]
 	public static class GenUI
 	{
-		public const float SPad = 8f;
-
 		public const float Pad = 10f;
 
 		public const float GapTiny = 4f;
@@ -30,6 +28,10 @@ namespace Verse
 		public const float HorizontalSliderHeight = 16f;
 
 		public const float SmallIconSize = 24f;
+
+		public const int RootGUIDepth = 50;
+
+		public const int CameraGUIDepth = 100;
 
 		private const float MouseIconSize = 32f;
 
@@ -175,6 +177,12 @@ namespace Verse
 			}
 		}
 
+		public static void DrawMouseAttachment(Texture2D icon)
+		{
+			Vector2 mousePosition = Event.current.mousePosition;
+			GUI.DrawTexture(new Rect(mousePosition.x + 8f, mousePosition.y + 8f, 32f, 32f), icon);
+		}
+
 		public static void RenderMouseoverBracket()
 		{
 			Vector3 position = UI.MouseCell().ToVector3ShiftedWithAltitude(AltitudeLayer.MetaOverlays);
@@ -206,17 +214,14 @@ namespace Verse
 		public static IEnumerable<LocalTargetInfo> TargetsAt(Vector3 clickPos, TargetingParameters clickParams, bool thingsOnly = false)
 		{
 			List<Thing> clickableList = GenUI.ThingsUnderMouse(clickPos, 0.8f, clickParams);
-			if (clickableList.Count > 0)
+			for (int i = 0; i < clickableList.Count; i++)
 			{
-				for (int i = 0; i < clickableList.Count; i++)
-				{
-					yield return clickableList[i];
-				}
+				yield return clickableList[i];
 			}
 			if (!thingsOnly)
 			{
-				LocalTargetInfo cellTarg = UI.MouseCell();
-				if (clickParams.CanTarget(cellTarg.ToTargetInfo(Find.VisibleMap)))
+				IntVec3 cellTarg = UI.MouseCell();
+				if (cellTarg.InBounds(Find.VisibleMap) && clickParams.CanTarget(new TargetInfo(cellTarg, Find.VisibleMap, false)))
 				{
 					yield return cellTarg;
 				}
@@ -302,6 +307,23 @@ namespace Verse
 				return 0;
 			}
 			return -1;
+		}
+
+		public static int CurrentAdjustmentMultiplier()
+		{
+			if (KeyBindingDefOf.ModifierIncrement10x.IsDownEvent && KeyBindingDefOf.ModifierIncrement100x.IsDownEvent)
+			{
+				return 1000;
+			}
+			if (KeyBindingDefOf.ModifierIncrement100x.IsDownEvent)
+			{
+				return 100;
+			}
+			if (KeyBindingDefOf.ModifierIncrement10x.IsDownEvent)
+			{
+				return 10;
+			}
+			return 1;
 		}
 
 		public static Rect GetInnerRect(this Rect rect)

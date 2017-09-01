@@ -11,11 +11,11 @@ namespace RimWorld
 		[DebuggerHidden]
 		protected override IEnumerable<Toil> MakeNewToils()
 		{
-			yield return Toils_Reserve.Reserve(TargetIndex.A, 1);
+			this.FailOnDespawnedOrNull(TargetIndex.A);
+			yield return Toils_Reserve.Reserve(TargetIndex.A, 1, -1, null);
 			yield return Toils_Goto.GotoThing(TargetIndex.A, PathEndMode.InteractionCell);
-			Toil prepare = new Toil();
-			prepare.defaultCompleteMode = ToilCompleteMode.Delay;
-			prepare.defaultDuration = 500;
+			Toil prepare = Toils_General.Wait(500);
+			prepare.FailOnCannotTouch(TargetIndex.A, PathEndMode.InteractionCell);
 			prepare.WithProgressBarToilDelay(TargetIndex.A, false, -0.5f);
 			yield return prepare;
 			yield return new Toil
@@ -26,6 +26,7 @@ namespace RimWorld
 					Building_CryptosleepCasket pod = (Building_CryptosleepCasket)actor.CurJob.targetA.Thing;
 					Action action = delegate
 					{
+						actor.DeSpawn();
 						pod.TryAcceptThing(actor, true);
 					};
 					if (!pod.def.building.isPlayerEjectable)

@@ -36,7 +36,8 @@ namespace RimWorld
 			trader = TraderCaravanUtility.FindTrader(this.lord);
 			if (trader != null)
 			{
-				trader.mindState.duty = new PawnDuty(DutyDefOf.ExitMapBest);
+				trader.mindState.duty = new PawnDuty(DutyDefOf.ExitMapBestAndDefendSelf);
+				trader.mindState.duty.radius = 18f;
 				trader.mindState.duty.locomotion = LocomotionUrgency.Jog;
 			}
 		}
@@ -68,23 +69,25 @@ namespace RimWorld
 			{
 				if (trader != null)
 				{
-					p.mindState.duty = new PawnDuty(DutyDefOf.Escort, trader, 8f);
+					p.mindState.duty = new PawnDuty(DutyDefOf.Escort, trader, 14f);
 				}
-				else if (!this.TryToDefendClosestCarrier(p, 8f))
+				else if (!this.TryToDefendClosestCarrier(p, 14f))
 				{
-					p.mindState.duty = new PawnDuty(DutyDefOf.ExitMapBest);
+					p.mindState.duty = new PawnDuty(DutyDefOf.ExitMapBestAndDefendSelf);
+					p.mindState.duty.radius = 10f;
 					p.mindState.duty.locomotion = LocomotionUrgency.Jog;
 				}
 			}
-			else if (!this.TryToDefendClosestCarrier(p, 18f))
+			else if (!this.TryToDefendClosestCarrier(p, 26f))
 			{
 				if (trader != null)
 				{
-					p.mindState.duty = new PawnDuty(DutyDefOf.Escort, trader, 18f);
+					p.mindState.duty = new PawnDuty(DutyDefOf.Escort, trader, 26f);
 				}
 				else
 				{
-					p.mindState.duty = new PawnDuty(DutyDefOf.ExitMapBest);
+					p.mindState.duty = new PawnDuty(DutyDefOf.ExitMapBestAndDefendSelf);
+					p.mindState.duty.radius = 18f;
 					p.mindState.duty.locomotion = LocomotionUrgency.Jog;
 				}
 			}
@@ -97,12 +100,12 @@ namespace RimWorld
 			{
 				Pawn innerPawn = ((Corpse)x).InnerPawn;
 				return innerPawn.Faction == p.Faction && innerPawn.GetTraderCaravanRole() == TraderCaravanRole.Carrier;
-			}, null, 15, false);
+			}, null, 0, 15, false, RegionType.Set_Passable, false);
 			Thing thing2 = GenClosest.ClosestThingReachable(p.Position, p.Map, ThingRequest.ForGroup(ThingRequestGroup.Pawn), PathEndMode.ClosestTouch, TraverseParms.For(p, Danger.Deadly, TraverseMode.ByPawn, false), 20f, delegate(Thing x)
 			{
 				Pawn pawn = (Pawn)x;
 				return pawn.Downed && pawn.Faction == p.Faction && pawn.GetTraderCaravanRole() == TraderCaravanRole.Carrier;
-			}, null, 15, false);
+			}, null, 0, 15, false, RegionType.Set_Passable, false);
 			Thing thing3 = null;
 			if (closestCarrier != null)
 			{
@@ -140,7 +143,7 @@ namespace RimWorld
 				Pawn pawn2 = this.lord.ownedPawns[i];
 				if (pawn2.GetTraderCaravanRole() == TraderCaravanRole.Carrier)
 				{
-					float num2 = pawn2.Position.DistanceToSquared(closestTo.Position);
+					float num2 = (float)pawn2.Position.DistanceToSquared(closestTo.Position);
 					if (pawn == null || num2 < num)
 					{
 						pawn = pawn2;

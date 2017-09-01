@@ -28,9 +28,9 @@ namespace Verse
 			}
 		}
 
-		public override void SpawnSetup(Map map)
+		public override void SpawnSetup(Map map, bool respawningAfterLoad)
 		{
-			base.SpawnSetup(map);
+			base.SpawnSetup(map, respawningAfterLoad);
 			this.rect.ClipInsideMap(base.Map);
 		}
 
@@ -67,8 +67,9 @@ namespace Verse
 		{
 			if (this.letter != null)
 			{
-				this.letter.text = string.Format(this.letter.text, p.NameStringShort).AdjustedFor(p);
-				Find.LetterStack.ReceiveLetter(this.letter, null);
+				ChoiceLetter choiceLetter = (ChoiceLetter)this.letter;
+				choiceLetter.text = string.Format(choiceLetter.text, p.NameStringShort).AdjustedFor(p);
+				Find.LetterStack.ReceiveLetter(choiceLetter, null);
 			}
 			if (!base.Destroyed)
 			{
@@ -79,8 +80,8 @@ namespace Verse
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Values.LookValue<CellRect>(ref this.rect, "rect", default(CellRect), false);
-			Scribe_Deep.LookDeep<Letter>(ref this.letter, "letter", new object[0]);
+			Scribe_Values.Look<CellRect>(ref this.rect, "rect", default(CellRect), false);
+			Scribe_Deep.Look<Letter>(ref this.letter, "letter", new object[0]);
 		}
 	}
 }

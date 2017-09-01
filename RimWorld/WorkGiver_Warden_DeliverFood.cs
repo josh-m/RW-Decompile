@@ -7,14 +7,18 @@ namespace RimWorld
 {
 	public class WorkGiver_Warden_DeliverFood : WorkGiver_Warden
 	{
-		public override Job JobOnThing(Pawn pawn, Thing t)
+		public override Job JobOnThing(Pawn pawn, Thing t, bool forced = false)
 		{
 			if (!base.ShouldTakeCareOfPrisoner(pawn, t))
 			{
 				return null;
 			}
 			Pawn pawn2 = (Pawn)t;
-			if (!pawn2.guest.ShouldBeBroughtFood)
+			if (!pawn2.guest.CanBeBroughtFood)
+			{
+				return null;
+			}
+			if (!pawn2.Position.IsInPrisonCell(pawn2.Map))
 			{
 				return null;
 			}
@@ -28,11 +32,11 @@ namespace RimWorld
 			}
 			Thing thing;
 			ThingDef def;
-			if (!FoodUtility.TryFindBestFoodSourceFor(pawn, pawn2, pawn2.needs.food.CurCategory == HungerCategory.Starving, out thing, out def, false, true, false, false))
+			if (!FoodUtility.TryFindBestFoodSourceFor(pawn, pawn2, pawn2.needs.food.CurCategory == HungerCategory.Starving, out thing, out def, false, true, false, false, false))
 			{
 				return null;
 			}
-			if (thing.GetRoom() == pawn2.GetRoom())
+			if (thing.GetRoom(RegionType.Set_Passable) == pawn2.GetRoom(RegionType.Set_Passable))
 			{
 				return null;
 			}
@@ -55,7 +59,7 @@ namespace RimWorld
 			}
 			float num = 0f;
 			float num2 = 0f;
-			Room room = RoomQuery.RoomAt(prisoner);
+			Room room = prisoner.GetRoom(RegionType.Set_Passable);
 			if (room == null)
 			{
 				return false;
@@ -67,14 +71,10 @@ namespace RimWorld
 				for (int j = 0; j < list.Count; j++)
 				{
 					Thing thing = list[j];
-					if (thing.def.ingestible.preferability > FoodPreferability.NeverForNutrition)
+					if (!thing.def.IsIngestible || thing.def.ingestible.preferability > FoodPreferability.DesperateOnly)
 					{
 						num2 += WorkGiver_Warden_DeliverFood.NutritionAvailableForFrom(prisoner, thing);
 					}
-				}
-				if (region.ListerThings.ThingsOfDef(ThingDefOf.NutrientPasteDispenser).Any<Thing>() && prisoner.health.capacities.CapableOf(PawnCapacityDefOf.Manipulation))
-				{
-					return true;
 				}
 				List<Thing> list2 = region.ListerThings.ThingsInGroup(ThingRequestGroup.Pawn);
 				for (int k = 0; k < list2.Count; k++)

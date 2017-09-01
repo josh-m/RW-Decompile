@@ -16,17 +16,16 @@ namespace Verse
 
 		public override void CompExposeData()
 		{
-			Scribe_Values.LookValue<int>(ref this.ticksSinceHeal, "ticksSinceHeal", 0, false);
+			Scribe_Values.Look<int>(ref this.ticksSinceHeal, "ticksSinceHeal", 0, false);
 		}
 
-		public override void CompPostTick()
+		public override void CompPostTick(ref float severityAdjustment)
 		{
 			this.ticksSinceHeal++;
 			if (this.ticksSinceHeal > this.Props.healIntervalTicksStanding)
 			{
-				this.parent.Severity -= 1f;
+				severityAdjustment -= 1f;
 				this.ticksSinceHeal = 0;
-				base.Pawn.health.Notify_HediffChanged(this.parent);
 			}
 		}
 	}

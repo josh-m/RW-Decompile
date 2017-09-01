@@ -99,7 +99,7 @@ namespace RimWorld
 			{
 				return;
 			}
-			Rand.PushSeed();
+			Rand.PushState();
 			foreach (IntVec3 current in Find.CameraDriver.CurrentViewRect.ClipInsideMap(this.map))
 			{
 				PowerNet powerNet = this.netGrid[this.map.cellIndices.CellToIndex(current)];
@@ -109,7 +109,7 @@ namespace RimWorld
 					CellRenderer.RenderCell(current, Rand.Value);
 				}
 			}
-			Rand.PopSeed();
+			Rand.PopState();
 		}
 	}
 }

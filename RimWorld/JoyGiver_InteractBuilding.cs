@@ -64,7 +64,7 @@ namespace RimWorld
 
 		protected virtual bool CanInteractWith(Pawn pawn, Thing t, bool inBed)
 		{
-			if (!pawn.CanReserve(t, this.def.jobDef.joyMaxParticipants))
+			if (!pawn.CanReserve(t, this.def.jobDef.joyMaxParticipants, -1, null, false))
 			{
 				return false;
 			}
@@ -84,8 +84,8 @@ namespace RimWorld
 
 		protected virtual Job TryGivePlayJobWhileInBed(Pawn pawn, Thing bestGame)
 		{
-			Building_Bed layingDownBed = pawn.jobs.curDriver.layingDownBed;
-			return new Job(this.def.jobDef, bestGame, pawn.Position, layingDownBed);
+			Building_Bed t = pawn.CurrentBed();
+			return new Job(this.def.jobDef, bestGame, pawn.Position, t);
 		}
 	}
 }

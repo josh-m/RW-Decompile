@@ -21,9 +21,9 @@ namespace RimWorld
 			Predicate<Thing> validator = delegate(Thing t)
 			{
 				Pawn pawn2 = ((AttachableThing)t).parent as Pawn;
-				return pawn2 == null && pawn.CanReserve(t, 1) && !pawn.story.WorkTagIsDisabled(WorkTags.Firefighting);
+				return pawn2 == null && pawn.CanReserve(t, 1, -1, null, false) && !pawn.story.WorkTagIsDisabled(WorkTags.Firefighting);
 			};
-			Thing thing = GenClosest.ClosestThingReachable(pawn.GetLord().CurLordToil.FlagLoc, pawn.Map, ThingRequest.ForDef(ThingDefOf.Fire), PathEndMode.Touch, TraverseParms.For(pawn, Danger.Deadly, TraverseMode.ByPawn, false), this.maxDistFromPoint, validator, null, -1, false);
+			Thing thing = GenClosest.ClosestThingReachable(pawn.GetLord().CurLordToil.FlagLoc, pawn.Map, ThingRequest.ForDef(ThingDefOf.Fire), PathEndMode.Touch, TraverseParms.For(pawn, Danger.Deadly, TraverseMode.ByPawn, false), this.maxDistFromPoint, validator, null, 0, -1, false, RegionType.Set_Passable, false);
 			if (thing != null)
 			{
 				return new Job(JobDefOf.BeatFire, thing);

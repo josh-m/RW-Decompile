@@ -43,7 +43,7 @@ namespace RimWorld
 			{
 				Job job = new Job(JobDefOf.UseVerbOnThing);
 				job.verbToUse = verb;
-				verb.CasterPawn.jobs.StartJob(job, JobCondition.None, null, false, true, null);
+				verb.CasterPawn.jobs.StartJob(job, JobCondition.None, null, false, true, null, null);
 			}
 			this.action = null;
 			this.caster = null;
@@ -77,38 +77,32 @@ namespace RimWorld
 		public void ProcessInputEvents()
 		{
 			this.ConfirmStillValid();
-			if (Event.current.type == EventType.MouseDown)
+			if (this.IsTargeting)
 			{
-				if (Event.current.button == 0 && this.IsTargeting)
+				if (Event.current.type == EventType.MouseDown && Event.current.button == 0)
 				{
 					if (this.targetingVerb != null)
 					{
-						this.CastVerb();
+						this.OrderVerbForceTarget();
 					}
 					if (this.action != null)
 					{
-						IEnumerable<LocalTargetInfo> source = GenUI.TargetsAtMouse(this.targetParams, false);
-						if (source.Any<LocalTargetInfo>())
+						LocalTargetInfo obj = this.CurrentTargetUnderMouse(false);
+						if (obj.IsValid)
 						{
-							this.action(source.First<LocalTargetInfo>());
+							this.action(obj);
 						}
 					}
-					SoundDefOf.TickHigh.PlayOneShotOnCamera();
+					SoundDefOf.TickHigh.PlayOneShotOnCamera(null);
 					this.StopTargeting();
 					Event.current.Use();
 				}
-				if (Event.current.button == 1 && this.IsTargeting)
+				if ((Event.current.type == EventType.MouseDown && Event.current.button == 1) || (Event.current.type == EventType.KeyDown && Event.current.keyCode == KeyCode.Escape))
 				{
-					SoundDefOf.CancelMode.PlayOneShotOnCamera();
+					SoundDefOf.CancelMode.PlayOneShotOnCamera(null);
 					this.StopTargeting();
 					Event.current.Use();
 				}
-			}
-			if (Event.current.type == EventType.KeyDown && Event.current.keyCode == KeyCode.Escape && this.IsTargeting)
-			{
-				SoundDefOf.CancelMode.PlayOneShotOnCamera();
-				this.StopTargeting();
-				Event.current.Use();
 			}
 		}
 
@@ -116,30 +110,28 @@ namespace RimWorld
 		{
 			if (this.targetingVerb != null)
 			{
-				Vector3 vector = Event.current.mousePosition;
-				Texture2D image;
-				if (this.targetingVerb.verbProps.MeleeRange || this.targetingVerb.CanHitTarget(UI.MouseCell()) || !Find.Targeter.targetingVerbAdditionalPawns.NullOrEmpty<Pawn>())
+				Texture2D icon;
+				if (this.CurrentTargetUnderMouse(true).IsValid)
 				{
 					if (this.targetingVerb.UIIcon != BaseContent.BadTex)
 					{
-						image = this.targetingVerb.UIIcon;
+						icon = this.targetingVerb.UIIcon;
 					}
 					else
 					{
-						image = TexCommand.Attack;
+						icon = TexCommand.Attack;
 					}
 				}
 				else
 				{
-					image = TexCommand.CannotShoot;
+					icon = TexCommand.CannotShoot;
 				}
-				GUI.DrawTexture(new Rect(vector.x + 8f, vector.y + 8f, 32f, 32f), image);
+				GenUI.DrawMouseAttachment(icon);
 			}
 			if (this.action != null)
 			{
-				Texture2D image2 = this.mouseAttachment ?? TexCommand.Attack;
-				Vector3 vector2 = Event.current.mousePosition;
-				GUI.DrawTexture(new Rect(vector2.x + 8f, vector2.y + 8f, 32f, 32f), image2);
+				Texture2D icon2 = this.mouseAttachment ?? TexCommand.Attack;
+				GenUI.DrawMouseAttachment(icon2);
 			}
 		}
 
@@ -158,34 +150,23 @@ namespace RimWorld
 						GenDraw.DrawRadiusRing(this.targetingVerb.caster.Position, this.targetingVerb.verbProps.range);
 					}
 				}
-				LocalTargetInfo targ = LocalTargetInfo.Invalid;
-				foreach (LocalTargetInfo current in GenUI.TargetsAtMouse(this.targetingVerb.verbProps.targetParams, false))
+				LocalTargetInfo targ = this.CurrentTargetUnderMouse(true);
+				if (targ.IsValid)
 				{
-					if (this.targetingVerb.CanHitTarget(current) || this.targetingVerb.verbProps.MeleeRange)
+					GenDraw.DrawTargetHighlight(targ);
+					ShootLine shootLine;
+					if (this.targetingVerb.HighlightFieldRadiusAroundTarget() > 0.2f && this.targetingVerb.TryFindShootLineFromTo(this.targetingVerb.caster.Position, targ, out shootLine))
 					{
-						GenDraw.DrawTargetHighlight(current);
-						targ = current;
+						GenExplosion.RenderPredictedAreaOfEffect(shootLine.Dest, this.targetingVerb.HighlightFieldRadiusAroundTarget());
 					}
-				}
-				if (this.targetingVerb.CanTargetCell)
-				{
-					targ = UI.MouseCell();
-					if (!targ.Cell.InBounds(Find.VisibleMap))
-					{
-						targ = LocalTargetInfo.Invalid;
-					}
-				}
-				ShootLine shootLine;
-				if (targ.IsValid && this.targetingVerb.HighlightFieldRadiusAroundTarget() > 0.2f && this.targetingVerb.TryFindShootLineFromTo(this.targetingVerb.caster.Position, targ, out shootLine))
-				{
-					GenExplosion.RenderPredictedAreaOfEffect(shootLine.Dest, this.targetingVerb.HighlightFieldRadiusAroundTarget());
 				}
 			}
 			if (this.action != null)
 			{
-				foreach (LocalTargetInfo current2 in GenUI.TargetsAtMouse(this.targetParams, false))
+				LocalTargetInfo targ2 = this.CurrentTargetUnderMouse(false);
+				if (targ2.IsValid)
 				{
-					GenDraw.DrawTargetHighlight(current2);
+					GenDraw.DrawTargetHighlight(targ2);
 				}
 			}
 		}
@@ -240,82 +221,110 @@ namespace RimWorld
 			}
 		}
 
-		private void CastVerb()
+		private void OrderVerbForceTarget()
 		{
 			if (this.targetingVerb.CasterIsPawn)
 			{
-				this.CastPawnVerb(this.targetingVerb);
+				this.OrderPawnForceTarget(this.targetingVerb);
 				for (int i = 0; i < this.targetingVerbAdditionalPawns.Count; i++)
 				{
-					Verb verb = (from x in this.targetingVerbAdditionalPawns[i].equipment.AllEquipmentVerbs
-					where x.verbProps == this.targetingVerb.verbProps
-					select x).FirstOrDefault<Verb>();
+					Verb verb = this.GetTargetingVerb(this.targetingVerbAdditionalPawns[i]);
 					if (verb != null)
 					{
-						this.CastPawnVerb(verb);
+						this.OrderPawnForceTarget(verb);
 					}
 				}
 			}
 			else
 			{
-				Building_Turret building_Turret = (Building_Turret)this.targetingVerb.caster;
-				if (building_Turret.Map == Find.VisibleMap)
+				int numSelected = Find.Selector.NumSelected;
+				List<object> selectedObjects = Find.Selector.SelectedObjects;
+				for (int j = 0; j < numSelected; j++)
 				{
-					LocalTargetInfo targ = LocalTargetInfo.Invalid;
-					if (this.targetingVerb.CanTargetCell)
+					Building_Turret building_Turret = selectedObjects[j] as Building_Turret;
+					if (building_Turret != null && building_Turret.Map == Find.VisibleMap)
 					{
-						targ = UI.MouseCell();
-						if (!targ.Cell.InBounds(Find.VisibleMap))
-						{
-							targ = LocalTargetInfo.Invalid;
-						}
+						LocalTargetInfo targ = this.CurrentTargetUnderMouse(true);
+						building_Turret.OrderAttack(targ);
 					}
-					using (IEnumerator<LocalTargetInfo> enumerator = GenUI.TargetsAtMouse(this.targetingVerb.verbProps.targetParams, false).GetEnumerator())
-					{
-						if (enumerator.MoveNext())
-						{
-							LocalTargetInfo current = enumerator.Current;
-							targ = current;
-						}
-					}
-					building_Turret.OrderAttack(targ);
 				}
 			}
 		}
 
-		private void CastPawnVerb(Verb verb)
+		private void OrderPawnForceTarget(Verb verb)
 		{
-			foreach (LocalTargetInfo current in GenUI.TargetsAtMouse(verb.verbProps.targetParams, false))
+			LocalTargetInfo targetA = this.CurrentTargetUnderMouse(true);
+			if (!targetA.IsValid)
 			{
-				LocalTargetInfo targetA = current;
-				if (verb.verbProps.MeleeRange)
+				return;
+			}
+			if (verb.verbProps.MeleeRange)
+			{
+				Job job = new Job(JobDefOf.AttackMelee, targetA);
+				job.playerForced = true;
+				Pawn pawn = targetA.Thing as Pawn;
+				if (pawn != null)
 				{
-					Job job = new Job(JobDefOf.AttackMelee, targetA);
-					job.playerForced = true;
-					Pawn pawn = targetA.Thing as Pawn;
-					if (pawn != null)
-					{
-						job.killIncappedTarget = pawn.Downed;
-					}
-					verb.CasterPawn.jobs.TryTakeOrderedJob(job);
+					job.killIncappedTarget = pawn.Downed;
 				}
-				else
+				verb.CasterPawn.jobs.TryTakeOrderedJob(job, JobTag.Misc);
+			}
+			else
+			{
+				JobDef def = (!verb.verbProps.ai_IsWeapon) ? JobDefOf.UseVerbOnThing : JobDefOf.AttackStatic;
+				Job job2 = new Job(def);
+				job2.verbToUse = verb;
+				job2.targetA = targetA;
+				verb.CasterPawn.jobs.TryTakeOrderedJob(job2, JobTag.Misc);
+			}
+		}
+
+		private LocalTargetInfo CurrentTargetUnderMouse(bool mustBeHittableNowIfNotMelee)
+		{
+			if (!this.IsTargeting)
+			{
+				return LocalTargetInfo.Invalid;
+			}
+			TargetingParameters clickParams = (this.targetingVerb == null) ? this.targetParams : this.targetingVerb.verbProps.targetParams;
+			LocalTargetInfo localTargetInfo = LocalTargetInfo.Invalid;
+			using (IEnumerator<LocalTargetInfo> enumerator = GenUI.TargetsAtMouse(clickParams, false).GetEnumerator())
+			{
+				if (enumerator.MoveNext())
 				{
-					JobDef def;
-					if (verb.verbProps.ai_IsWeapon)
-					{
-						def = JobDefOf.AttackStatic;
-					}
-					else
-					{
-						def = JobDefOf.UseVerbOnThing;
-					}
-					Job job2 = new Job(def);
-					job2.verbToUse = verb;
-					job2.targetA = targetA;
-					verb.CasterPawn.jobs.TryTakeOrderedJob(job2);
+					LocalTargetInfo current = enumerator.Current;
+					localTargetInfo = current;
 				}
 			}
+			if (localTargetInfo.IsValid && mustBeHittableNowIfNotMelee && !(localTargetInfo.Thing is Pawn) && this.targetingVerb != null && !this.targetingVerb.verbProps.MeleeRange)
+			{
+				if (this.targetingVerbAdditionalPawns != null && this.targetingVerbAdditionalPawns.Any<Pawn>())
+				{
+					bool flag = false;
+					for (int i = 0; i < this.targetingVerbAdditionalPawns.Count; i++)
+					{
+						Verb verb = this.GetTargetingVerb(this.targetingVerbAdditionalPawns[i]);
+						if (verb != null && verb.CanHitTarget(localTargetInfo))
+						{
+							flag = true;
+							break;
+						}
+					}
+					if (!flag)
+					{
+						localTargetInfo = LocalTargetInfo.Invalid;
+					}
+				}
+				else if (!this.targetingVerb.CanHitTarget(localTargetInfo))
+				{
+					localTargetInfo = LocalTargetInfo.Invalid;
+				}
+			}
+			return localTargetInfo;
+		}
+
+		private Verb GetTargetingVerb(Pawn pawn)
+		{
+			return pawn.equipment.AllEquipmentVerbs.FirstOrDefault((Verb x) => x.verbProps == this.targetingVerb.verbProps);
 		}
 	}
 }

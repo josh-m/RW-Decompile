@@ -178,9 +178,9 @@ namespace Verse
 
 		public void ExposeData()
 		{
-			Scribe_Values.LookValue<int>(ref this.ticksBelowExtreme, "ticksBelowExtreme", 0, false);
-			Scribe_Values.LookValue<int>(ref this.ticksBelowMajor, "ticksBelowMajor", 0, false);
-			Scribe_Values.LookValue<int>(ref this.ticksBelowMinor, "ticksBelowMinor", 0, false);
+			Scribe_Values.Look<int>(ref this.ticksBelowExtreme, "ticksBelowExtreme", 0, false);
+			Scribe_Values.Look<int>(ref this.ticksBelowMajor, "ticksBelowMajor", 0, false);
+			Scribe_Values.Look<int>(ref this.ticksBelowMinor, "ticksBelowMinor", 0, false);
 		}
 
 		public void MentalStateStarterTick()
@@ -266,15 +266,15 @@ namespace Verse
 			{
 				return false;
 			}
-			Thought thought = this.RandomMentalBreakReason();
+			Thought thought = this.RandomFinalStraw();
 			string reason = (thought == null) ? null : thought.LabelCap;
 			this.pawn.mindState.mentalStateHandler.TryStartMentalState(mentalBreakDef.mentalState, reason, false, true, null);
 			return true;
 		}
 
-		private Thought RandomMentalBreakReason()
+		private Thought RandomFinalStraw()
 		{
-			this.pawn.needs.mood.thoughts.GetMainThoughts(MentalBreaker.tmpThoughts);
+			this.pawn.needs.mood.thoughts.GetAllMoodThoughts(MentalBreaker.tmpThoughts);
 			float num = 0f;
 			for (int i = 0; i < MentalBreaker.tmpThoughts.Count; i++)
 			{

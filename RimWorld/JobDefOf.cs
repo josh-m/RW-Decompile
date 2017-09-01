@@ -10,6 +10,8 @@ namespace RimWorld
 
 		public static JobDef Wait;
 
+		public static JobDef WaitMaintainPosture;
+
 		public static JobDef WaitDowned;
 
 		public static JobDef GotoWander;
@@ -81,6 +83,8 @@ namespace RimWorld
 		public static JobDef BuryCorpse;
 
 		public static JobDef TradeWithPawn;
+
+		public static JobDef Flee;
 
 		public static JobDef FleeAndCower;
 

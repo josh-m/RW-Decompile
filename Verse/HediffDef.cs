@@ -102,7 +102,7 @@ namespace Verse
 			return (T)((object)null);
 		}
 
-		public bool PossibleToDevelopImmunity()
+		public bool PossibleToDevelopImmunityNaturally()
 		{
 			HediffCompProperties_Immunizable hediffCompProperties_Immunizable = this.CompProps<HediffCompProperties_Immunizable>();
 			return hediffCompProperties_Immunizable != null && (hediffCompProperties_Immunizable.immunityPerDayNotSick > 0f || hediffCompProperties_Immunizable.immunityPerDaySick > 0f);

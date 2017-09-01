@@ -57,7 +57,7 @@ namespace RimWorld
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Values.LookValue<float>(ref this.opinionOffset, "opinionOffset", 0f, false);
+			Scribe_Values.Look<float>(ref this.opinionOffset, "opinionOffset", 0f, false);
 		}
 
 		public override void Init()
@@ -66,7 +66,7 @@ namespace RimWorld
 			this.opinionOffset = base.CurStage.baseOpinionOffset;
 		}
 
-		public override bool TryMergeWithExistingThought(out bool showBubble)
+		public override bool TryMergeWithExistingMemory(out bool showBubble)
 		{
 			showBubble = false;
 			return false;

@@ -4,15 +4,15 @@ namespace Verse
 {
 	public struct CachedTempInfo
 	{
-		public int roomID;
+		public int roomGroupID;
 
 		public int numCells;
 
 		public float temperature;
 
-		public CachedTempInfo(int roomID, int numCells, float temperature)
+		public CachedTempInfo(int roomGroupID, int numCells, float temperature)
 		{
-			this.roomID = roomID;
+			this.roomGroupID = roomGroupID;
 			this.numCells = numCells;
 			this.temperature = temperature;
 		}
@@ -26,7 +26,7 @@ namespace Verse
 
 		public void Reset()
 		{
-			this.roomID = -1;
+			this.roomGroupID = -1;
 			this.numCells = 0;
 			this.temperature = 0f;
 		}

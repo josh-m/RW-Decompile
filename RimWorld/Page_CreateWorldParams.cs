@@ -29,10 +29,10 @@ namespace RimWorld
 
 		private static readonly float[] PlanetCoveragesDev = new float[]
 		{
-			0.05f,
 			0.3f,
 			0.5f,
-			1f
+			1f,
+			0.05f
 		};
 
 		public override string PageTitle
@@ -80,7 +80,7 @@ namespace RimWorld
 			Rect rect3 = new Rect(200f, num, 200f, 30f);
 			if (Widgets.ButtonText(rect3, "RandomizeSeed".Translate(), true, false, true))
 			{
-				SoundDefOf.TickTiny.PlayOneShotOnCamera();
+				SoundDefOf.TickTiny.PlayOneShotOnCamera(null);
 				this.seedString = GenText.RandomSeedString();
 			}
 			num += 40f;
@@ -138,7 +138,6 @@ namespace RimWorld
 				Current.Game.World = WorldGenerator.GenerateWorld(this.planetCoverage, this.seedString, this.rainfall, this.temperature);
 				LongEventHandler.ExecuteWhenFinished(delegate
 				{
-					Find.Scenario.PostWorldLoad();
 					if (this.next != null)
 					{
 						Find.WindowStack.Add(this.next);

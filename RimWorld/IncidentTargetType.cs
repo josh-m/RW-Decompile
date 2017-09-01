@@ -6,8 +6,11 @@ namespace RimWorld
 	public enum IncidentTargetType : byte
 	{
 		None = 0,
-		BaseMap = 1,
-		TempMap = 2,
-		Caravan = 4
+		MapPlayerHome = 1,
+		MapTempIncident = 2,
+		MapMisc = 4,
+		Caravan = 8,
+		World = 16,
+		All = 31
 	}
 }

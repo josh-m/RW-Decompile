@@ -87,7 +87,7 @@ namespace RimWorld
 						{
 							visited[x] = true;
 							toRemove.Add(x);
-						});
+						}, false);
 						if (toRemove.Count < 20)
 						{
 							for (int j = 0; j < toRemove.Count; j++)

@@ -5,11 +5,11 @@ namespace RimWorld
 {
 	public class JobDriver_Milk : JobDriver_GatherAnimalBodyResources
 	{
-		protected override int Duration
+		protected override float WorkTotal
 		{
 			get
 			{
-				return 500;
+				return 400f;
 			}
 		}
 

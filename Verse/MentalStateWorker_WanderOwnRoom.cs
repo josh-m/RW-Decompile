@@ -1,3 +1,4 @@
+using RimWorld;
 using System;
 
 namespace Verse
@@ -6,7 +7,12 @@ namespace Verse
 	{
 		public override bool StateCanOccur(Pawn pawn)
 		{
-			return base.StateCanOccur(pawn) && pawn.ownership.OwnedBed != null;
+			if (!base.StateCanOccur(pawn))
+			{
+				return false;
+			}
+			Building_Bed ownedBed = pawn.ownership.OwnedBed;
+			return ownedBed != null && ownedBed.GetRoom(RegionType.Set_Passable) != null && !ownedBed.GetRoom(RegionType.Set_Passable).PsychologicallyOutdoors;
 		}
 	}
 }

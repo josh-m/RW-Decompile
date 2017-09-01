@@ -11,7 +11,7 @@ namespace RimWorld
 	{
 		public static bool GrowthSeasonNow(IntVec3 c, Map map)
 		{
-			Room roomOrAdjacent = c.GetRoomOrAdjacent(map);
+			Room roomOrAdjacent = c.GetRoomOrAdjacent(map, RegionType.Set_All);
 			if (roomOrAdjacent == null)
 			{
 				return false;
@@ -85,25 +85,25 @@ namespace RimWorld
 			foreach (IntVec3 current2 in Find.VisibleMap.AllCells)
 			{
 				Plant plant = current2.GetPlant(Find.VisibleMap);
-				if (plant != null)
+				if (plant != null && dictionary.ContainsKey(plant.def))
 				{
 					Dictionary<ThingDef, float> dictionary2;
-					Dictionary<ThingDef, float> expr_89 = dictionary2 = dictionary;
+					Dictionary<ThingDef, float> expr_9B = dictionary2 = dictionary;
 					ThingDef key;
-					ThingDef expr_93 = key = plant.def;
+					ThingDef expr_A5 = key = plant.def;
 					float num2 = dictionary2[key];
-					expr_89[expr_93] = num2 + 1f;
+					expr_9B[expr_A5] = num2 + 1f;
 					num += 1f;
 				}
 			}
 			foreach (ThingDef current3 in Find.VisibleMap.Biome.AllWildPlants)
 			{
 				Dictionary<ThingDef, float> dictionary3;
-				Dictionary<ThingDef, float> expr_F9 = dictionary3 = dictionary;
+				Dictionary<ThingDef, float> expr_10B = dictionary3 = dictionary;
 				ThingDef key;
-				ThingDef expr_FE = key = current3;
+				ThingDef expr_110 = key = current3;
 				float num2 = dictionary3[key];
-				expr_F9[expr_FE] = num2 / num;
+				expr_10B[expr_110] = num2 / num;
 			}
 			Dictionary<ThingDef, float> dictionary4 = GenPlant.CalculateDesiredPlantProportions(Find.VisibleMap.Biome);
 			StringBuilder stringBuilder = new StringBuilder();
@@ -179,7 +179,7 @@ namespace RimWorld
 				if (c2.InBounds(map))
 				{
 					Plant plant = c2.GetPlant(map);
-					if (plant != null && plant.def.plant.blockAdjacentSow)
+					if (plant != null && (plant.def.plant.blockAdjacentSow || (plantDef.plant.blockAdjacentSow && plant.sown)))
 					{
 						return plant;
 					}

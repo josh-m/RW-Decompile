@@ -15,10 +15,10 @@ namespace RimWorld
 
 		public void ExposeData()
 		{
-			Scribe_Values.LookValue<int>(ref this.numRaidsEnemy, "numRaidsEnemy", 0, false);
-			Scribe_Values.LookValue<int>(ref this.numThreatBigs, "numThreatsQueued", 0, false);
-			Scribe_Values.LookValue<int>(ref this.colonistsKilled, "colonistsKilled", 0, false);
-			Scribe_Values.LookValue<int>(ref this.colonistsLaunched, "colonistsLaunched", 0, false);
+			Scribe_Values.Look<int>(ref this.numRaidsEnemy, "numRaidsEnemy", 0, false);
+			Scribe_Values.Look<int>(ref this.numThreatBigs, "numThreatsQueued", 0, false);
+			Scribe_Values.Look<int>(ref this.colonistsKilled, "colonistsKilled", 0, false);
+			Scribe_Values.Look<int>(ref this.colonistsLaunched, "colonistsLaunched", 0, false);
 		}
 	}
 }

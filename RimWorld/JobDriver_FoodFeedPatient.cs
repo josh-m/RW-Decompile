@@ -44,7 +44,7 @@ namespace RimWorld
 		{
 			this.FailOnDespawnedNullOrForbidden(TargetIndex.B);
 			this.FailOn(() => !FoodUtility.ShouldBeFedBySomeone(this.<>f__this.Deliveree));
-			yield return Toils_Reserve.Reserve(TargetIndex.B, 1);
+			yield return Toils_Reserve.Reserve(TargetIndex.B, 1, -1, null);
 			if (this.pawn.inventory != null && this.pawn.inventory.Contains(base.TargetThingA))
 			{
 				yield return Toils_Misc.TakeItemFromInventoryToCarrier(this.pawn, TargetIndex.A);
@@ -56,12 +56,12 @@ namespace RimWorld
 			}
 			else
 			{
-				yield return Toils_Reserve.Reserve(TargetIndex.A, 1);
+				yield return Toils_Reserve.Reserve(TargetIndex.A, 1, -1, null);
 				yield return Toils_Goto.GotoThing(TargetIndex.A, PathEndMode.ClosestTouch).FailOnForbidden(TargetIndex.A);
 				yield return Toils_Ingest.PickupIngestible(TargetIndex.A, this.Deliveree);
 			}
 			yield return Toils_Goto.GotoThing(TargetIndex.B, PathEndMode.Touch);
-			yield return Toils_Ingest.ChewIngestible(this.Deliveree, 1.5f, TargetIndex.A, TargetIndex.None);
+			yield return Toils_Ingest.ChewIngestible(this.Deliveree, 1.5f, TargetIndex.A, TargetIndex.None).FailOnCannotTouch(TargetIndex.B, PathEndMode.Touch);
 			yield return Toils_Ingest.FinalizeIngest(this.Deliveree, TargetIndex.A);
 		}
 	}

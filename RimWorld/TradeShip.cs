@@ -6,11 +6,11 @@ using Verse;
 
 namespace RimWorld
 {
-	public class TradeShip : PassingShip, ITrader
+	public class TradeShip : PassingShip, ITrader, IThingHolder
 	{
 		public TraderKindDef def;
 
-		private List<Thing> things = new List<Thing>();
+		private ThingOwner things;
 
 		private List<Pawn> soldPrisoners = new List<Pawn>();
 
@@ -34,19 +34,19 @@ namespace RimWorld
 			}
 		}
 
+		public IThingHolder ParentHolder
+		{
+			get
+			{
+				return base.Map;
+			}
+		}
+
 		public TraderKindDef TraderKind
 		{
 			get
 			{
 				return this.def;
-			}
-		}
-
-		public IEnumerable<Thing> Goods
-		{
-			get
-			{
-				return this.things.Concat(this.soldPrisoners.Cast<Thing>());
 			}
 		}
 
@@ -82,6 +82,29 @@ namespace RimWorld
 			}
 		}
 
+		public Faction Faction
+		{
+			get
+			{
+				return null;
+			}
+		}
+
+		public IEnumerable<Thing> Goods
+		{
+			get
+			{
+				for (int i = 0; i < this.things.Count; i++)
+				{
+					Pawn p = this.things[i] as Pawn;
+					if (p == null || !this.soldPrisoners.Contains(p))
+					{
+						yield return this.things[i];
+					}
+				}
+			}
+		}
+
 		public TradeShip()
 		{
 		}
@@ -89,6 +112,7 @@ namespace RimWorld
 		public TradeShip(TraderKindDef def)
 		{
 			this.def = def;
+			this.things = new ThingOwner<Thing>(this);
 			TradeShip.tmpExtantNames.Clear();
 			List<Map> maps = Find.Maps;
 			for (int i = 0; i < maps.Count; i++)
@@ -116,7 +140,10 @@ namespace RimWorld
 
 		public void GenerateThings()
 		{
-			this.things = TraderStockGenerator.GenerateTraderThings(this.def, base.Map).ToList<Thing>();
+			ItemCollectionGeneratorParams parms = default(ItemCollectionGeneratorParams);
+			parms.traderDef = this.def;
+			parms.forTile = base.Map.Tile;
+			this.things.TryAddRange(ItemCollectionGeneratorDefOf.TraderStock.Worker.Generate(parms), true);
 		}
 
 		public override void PassingShipTick()
@@ -130,16 +157,8 @@ namespace RimWorld
 					pawn.Tick();
 					if (pawn.Dead)
 					{
-						this.things.RemoveAt(i);
+						this.things.Remove(pawn);
 					}
-				}
-			}
-			for (int j = this.soldPrisoners.Count - 1; j >= 0; j--)
-			{
-				this.soldPrisoners[j].Tick();
-				if (this.soldPrisoners[j].Dead)
-				{
-					this.soldPrisoners.RemoveAt(j);
 				}
 			}
 		}
@@ -147,10 +166,17 @@ namespace RimWorld
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Defs.LookDef<TraderKindDef>(ref this.def, "def");
-			Scribe_Collections.LookList<Thing>(ref this.things, "things", LookMode.Deep, new object[0]);
-			Scribe_Collections.LookList<Pawn>(ref this.soldPrisoners, "soldPrisoners", LookMode.Deep, new object[0]);
-			Scribe_Values.LookValue<int>(ref this.randomPriceFactorSeed, "randomPriceFactorSeed", 0, false);
+			Scribe_Defs.Look<TraderKindDef>(ref this.def, "def");
+			Scribe_Deep.Look<ThingOwner>(ref this.things, "things", new object[]
+			{
+				this
+			});
+			Scribe_Collections.Look<Pawn>(ref this.soldPrisoners, "soldPrisoners", LookMode.Reference, new object[0]);
+			Scribe_Values.Look<int>(ref this.randomPriceFactorSeed, "randomPriceFactorSeed", 0, false);
+			if (Scribe.mode == LoadSaveMode.PostLoadInit)
+			{
+				this.soldPrisoners.RemoveAll((Pawn x) => x == null);
+			}
 		}
 
 		public override void TryOpenComms(Pawn negotiator)
@@ -166,7 +192,7 @@ namespace RimWorld
 			PawnRelationUtility.Notify_PawnsSeenByPlayer(this.Goods.OfType<Pawn>(), ref empty, ref empty2, "LetterRelatedPawnsTradeShip".Translate(), false);
 			if (!empty2.NullOrEmpty())
 			{
-				Find.LetterStack.ReceiveLetter(empty, empty2, LetterType.Good, null);
+				Find.LetterStack.ReceiveLetter(empty, empty2, LetterDefOf.Good, null);
 			}
 			TutorUtility.DoModalDialogIfNotKnown(ConceptDefOf.TradeGoodsMustBeNearBeacon);
 		}
@@ -174,11 +200,7 @@ namespace RimWorld
 		public override void Depart()
 		{
 			base.Depart();
-			foreach (Thing current in this.Goods)
-			{
-				current.DestroyOrPassToWorld(DestroyMode.Vanish);
-			}
-			this.things.Clear();
+			this.things.ClearAndDestroyContentsOrPassToWorld(DestroyMode.Vanish);
 			this.soldPrisoners.Clear();
 		}
 
@@ -197,57 +219,39 @@ namespace RimWorld
 			return 0;
 		}
 
-		public void AddToStock(Thing thing, Pawn playerNegotiator)
+		public void GiveSoldThingToTrader(Thing toGive, int countToGive, Pawn playerNegotiator)
 		{
-			Thing thing2 = TradeUtility.ThingFromStockMatching(this, thing);
+			Thing thing = toGive.SplitOff(countToGive);
+			thing.PreTraded(TradeAction.PlayerSells, playerNegotiator, this);
+			Thing thing2 = TradeUtility.ThingFromStockToMergeWith(this, thing);
 			if (thing2 != null)
 			{
-				thing2.stackCount += thing.stackCount;
-				thing.Destroy(DestroyMode.Vanish);
+				if (!thing2.TryAbsorbStack(thing, false))
+				{
+					thing.Destroy(DestroyMode.Vanish);
+				}
 			}
 			else
 			{
-				if (thing.Spawned)
-				{
-					thing.DeSpawn();
-				}
 				Pawn pawn = thing as Pawn;
 				if (pawn != null && pawn.RaceProps.Humanlike)
 				{
 					this.soldPrisoners.Add(pawn);
 				}
-				else
-				{
-					this.things.Add(thing);
-				}
+				this.things.TryAdd(thing, false);
 			}
 		}
 
-		public void GiveSoldThingToPlayer(Thing toGive, Thing originalThingFromStock, Pawn playerNegotiator)
+		public void GiveSoldThingToPlayer(Thing toGive, int countToGive, Pawn playerNegotiator)
 		{
-			if (toGive == originalThingFromStock)
-			{
-				if (!this.things.Contains(originalThingFromStock))
-				{
-					Log.Error(string.Concat(new object[]
-					{
-						"Tried to remove ",
-						originalThingFromStock,
-						" from trader ",
-						this.name,
-						" who didn't have it."
-					}));
-					return;
-				}
-				this.things.Remove(originalThingFromStock);
-			}
-			Pawn pawn = toGive as Pawn;
-			if (pawn != null && this.soldPrisoners.Contains(pawn))
+			Thing thing = toGive.SplitOff(countToGive);
+			thing.PreTraded(TradeAction.PlayerBuys, playerNegotiator, this);
+			Pawn pawn = thing as Pawn;
+			if (pawn != null)
 			{
 				this.soldPrisoners.Remove(pawn);
-				TradeUtility.MakePrisonerOfColony(pawn);
 			}
-			TradeUtility.SpawnDropPod(DropCellFinder.TradeDropSpot(base.Map), base.Map, toGive);
+			TradeUtility.SpawnDropPod(DropCellFinder.TradeDropSpot(base.Map), base.Map, thing);
 		}
 
 		private Thing HeldThingMatching(ThingDef thingDef, ThingDef stuffDef)
@@ -275,6 +279,16 @@ namespace RimWorld
 		public override string ToString()
 		{
 			return this.FullTitle;
+		}
+
+		public ThingOwner GetDirectlyHeldThings()
+		{
+			return this.things;
+		}
+
+		public void GetChildHolders(List<IThingHolder> outChildren)
+		{
+			ThingOwnerUtility.AppendThingHoldersFromThings(outChildren, this.GetDirectlyHeldThings());
 		}
 	}
 }

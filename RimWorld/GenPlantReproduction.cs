@@ -75,24 +75,27 @@ namespace RimWorld
 				foundCell = IntVec3.Invalid;
 				return false;
 			}
-			BiomeDef curBiome = map.Biome;
-			float num5 = curBiome.AllWildPlants.Sum((ThingDef pd) => curBiome.CommonalityOfPlant(pd));
-			float num6 = curBiome.CommonalityOfPlant(plantDef) / num5;
-			float num7 = curBiome.CommonalityOfPlant(plantDef) * plantDef.plant.wildCommonalityMaxFraction / num5;
-			float num8 = num4 * num7;
-			if ((float)num2 > num8)
+			if (mode != SeedTargFindMode.MapGenCluster)
 			{
-				foundCell = IntVec3.Invalid;
-				return false;
+				BiomeDef curBiome = map.Biome;
+				float num5 = curBiome.AllWildPlants.Sum((ThingDef pd) => curBiome.CommonalityOfPlant(pd));
+				float num6 = curBiome.CommonalityOfPlant(plantDef) / num5;
+				float num7 = curBiome.CommonalityOfPlant(plantDef) * plantDef.plant.wildCommonalityMaxFraction / num5;
+				float num8 = num4 * num7;
+				if ((float)num2 > num8)
+				{
+					foundCell = IntVec3.Invalid;
+					return false;
+				}
+				float num9 = num4 * num6;
+				bool flag3 = (float)num2 < num9 * 0.5f;
+				if (flag && !flag3)
+				{
+					foundCell = IntVec3.Invalid;
+					return false;
+				}
 			}
-			float num9 = num4 * num6;
-			bool flag3 = (float)num2 < num9 * 0.5f;
-			if (flag && !flag3)
-			{
-				foundCell = IntVec3.Invalid;
-				return false;
-			}
-			Predicate<IntVec3> validator = (IntVec3 c) => plantDef.CanEverPlantAt(c, map) && GenPlant.SnowAllowsPlanting(c, map) && source.InHorDistOf(c, radius) && GenSight.LineOfSight(source, c, map, true);
+			Predicate<IntVec3> validator = (IntVec3 c) => plantDef.CanEverPlantAt(c, map) && GenPlant.SnowAllowsPlanting(c, map) && source.InHorDistOf(c, radius) && GenSight.LineOfSight(source, c, map, true, null, 0, 0);
 			return CellFinder.TryFindRandomCellNear(source, map, Mathf.CeilToInt(radius), validator, out foundCell);
 		}
 	}

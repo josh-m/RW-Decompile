@@ -40,25 +40,29 @@ namespace RimWorld
 			{
 				return;
 			}
-			Room room = RoomQuery.RoomAt(this.pawn);
+			RoomGroup roomGroup = this.pawn.GetRoomGroup();
+			Map map = this.pawn.Map;
 			int num = 0;
 			while ((float)num < 100f)
 			{
-				IntVec3 c = this.pawn.Position + GenRadial.RadialPattern[num];
-				if (c.InBounds(this.pawn.Map))
+				IntVec3 intVec = this.pawn.Position + GenRadial.RadialPattern[num];
+				if (intVec.InBounds(map))
 				{
-					if (RoomQuery.RoomAt(c, this.pawn.Map) == room)
+					if (intVec.GetRoomGroup(map) == roomGroup)
 					{
-						List<Thing> thingList = c.GetThingList(this.pawn.Map);
-						for (int i = 0; i < thingList.Count; i++)
+						if (GenSight.LineOfSight(intVec, this.pawn.Position, map, true, null, 0, 0))
 						{
-							IThoughtGiver thoughtGiver = thingList[i] as IThoughtGiver;
-							if (thoughtGiver != null)
+							List<Thing> thingList = intVec.GetThingList(map);
+							for (int i = 0; i < thingList.Count; i++)
 							{
-								Thought_Memory thought_Memory = thoughtGiver.GiveObservedThought();
-								if (thought_Memory != null)
+								IThoughtGiver thoughtGiver = thingList[i] as IThoughtGiver;
+								if (thoughtGiver != null)
 								{
-									this.pawn.needs.mood.thoughts.memories.TryGainMemoryThought(thought_Memory, null);
+									Thought_Memory thought_Memory = thoughtGiver.GiveObservedThought();
+									if (thought_Memory != null)
+									{
+										this.pawn.needs.mood.thoughts.memories.TryGainMemory(thought_Memory, null);
+									}
 								}
 							}
 						}

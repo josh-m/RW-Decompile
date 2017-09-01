@@ -30,7 +30,7 @@ namespace RimWorld
 
 		private static List<IIncidentTarget> tmpAllIncidentTargets = new List<IIncidentTarget>();
 
-		private List<IIncidentTarget> AllIncidentTargets
+		public List<IIncidentTarget> AllIncidentTargets
 		{
 			get
 			{
@@ -48,6 +48,7 @@ namespace RimWorld
 						Storyteller.tmpAllIncidentTargets.Add(caravans[j]);
 					}
 				}
+				Storyteller.tmpAllIncidentTargets.Add(Find.World);
 				return Storyteller.tmpAllIncidentTargets;
 			}
 		}
@@ -77,10 +78,10 @@ namespace RimWorld
 
 		public void ExposeData()
 		{
-			Scribe_Defs.LookDef<StorytellerDef>(ref this.def, "def");
-			Scribe_Defs.LookDef<DifficultyDef>(ref this.difficulty, "difficulty");
-			Scribe_Deep.LookDeep<IncidentQueue>(ref this.incidentQueue, "incidentQueue", new object[0]);
-			Scribe_Deep.LookDeep<StoryIntender_Population>(ref this.intenderPopulation, "intenderPopulation", new object[]
+			Scribe_Defs.Look<StorytellerDef>(ref this.def, "def");
+			Scribe_Defs.Look<DifficultyDef>(ref this.difficulty, "difficulty");
+			Scribe_Deep.Look<IncidentQueue>(ref this.incidentQueue, "incidentQueue", new object[0]);
+			Scribe_Deep.Look<StoryIntender_Population>(ref this.intenderPopulation, "intenderPopulation", new object[]
 			{
 				this
 			});
@@ -115,26 +116,30 @@ namespace RimWorld
 		{
 			if ((fi.parms.forced || fi.def.Worker.CanFireNow(fi.parms.target)) && fi.def.Worker.TryExecute(fi.parms))
 			{
-				Find.StoryWatcher.storyState.Notify_IncidentFired(fi);
+				fi.parms.target.StoryState.Notify_IncidentFired(fi);
 			}
 		}
 
 		[DebuggerHidden]
 		public IEnumerable<FiringIncident> MakeIncidentsForInterval()
 		{
+			List<IIncidentTarget> targets = this.AllIncidentTargets;
 			for (int i = 0; i < this.storytellerComps.Count; i++)
 			{
 				StorytellerComp c = this.storytellerComps[i];
 				if (GenDate.DaysPassedFloat > c.props.minDaysPassed)
 				{
-					List<IIncidentTarget> targets = this.AllIncidentTargets;
 					for (int j = 0; j < targets.Count; j++)
 					{
-						foreach (FiringIncident fi in this.storytellerComps[i].MakeIntervalIncidents(targets[j]))
+						IIncidentTarget targ = targets[j];
+						if ((byte)(c.props.allowedTargetTypes & targ.Type) != 0)
 						{
-							if (Find.Storyteller.difficulty.allowBigThreats || fi.def.category != IncidentCategory.ThreatBig)
+							foreach (FiringIncident fi in c.MakeIntervalIncidents(targ))
 							{
-								yield return fi;
+								if (Find.Storyteller.difficulty.allowBigThreats || fi.def.category != IncidentCategory.ThreatBig)
+								{
+									yield return fi;
+								}
 							}
 						}
 					}
@@ -151,22 +156,39 @@ namespace RimWorld
 		{
 			StringBuilder stringBuilder = new StringBuilder();
 			stringBuilder.AppendLine("Storyteller : " + this.def.label);
+			stringBuilder.AppendLine();
 			stringBuilder.AppendLine(this.intenderPopulation.DebugReadout);
-			if (Find.VisibleMap != null)
-			{
-				stringBuilder.AppendLine("VisibleMap: Wealth: " + Find.VisibleMap.wealthWatcher.WealthTotal);
-				stringBuilder.AppendLine("VisibleMap: DaysSinceSeriousDamage: " + Find.VisibleMap.damageWatcher.DaysSinceSeriousDamage);
-			}
-			stringBuilder.AppendLine("numRaidsEnemy: " + Find.StoryWatcher.statsRecord.numRaidsEnemy);
-			stringBuilder.AppendLine("LastThreatBigQueueTick: " + Find.StoryWatcher.storyState.LastThreatBigTick.ToStringTicksToPeriod(true));
-			stringBuilder.AppendLine("TotalThreatFactor: " + Find.StoryWatcher.watcherRampUp.TotalThreatPointsFactor.ToString("F5"));
-			stringBuilder.AppendLine("   ShortFactor: " + Find.StoryWatcher.watcherRampUp.ShortTermFactor.ToString("F5"));
-			stringBuilder.AppendLine("   LongFactor: " + Find.StoryWatcher.watcherRampUp.LongTermFactor.ToString("F5"));
+			stringBuilder.AppendLine("Global stats:");
+			stringBuilder.AppendLine("   numRaidsEnemy: " + Find.StoryWatcher.statsRecord.numRaidsEnemy);
+			stringBuilder.AppendLine("   TotalThreatFactor: " + Find.StoryWatcher.watcherRampUp.TotalThreatPointsFactor.ToString("F5"));
+			stringBuilder.AppendLine("      ShortFactor: " + Find.StoryWatcher.watcherRampUp.ShortTermFactor.ToString("F5"));
+			stringBuilder.AppendLine("      LongFactor: " + Find.StoryWatcher.watcherRampUp.LongTermFactor.ToString("F5"));
+			stringBuilder.AppendLine("   Current default ThreatBig parms points:");
 			for (int i = 0; i < this.storytellerComps.Count; i++)
 			{
 				IncidentParms incidentParms = this.storytellerComps[i].GenerateParms(IncidentCategory.ThreatBig, Find.VisibleMap);
-				stringBuilder.AppendLine("Current default threat params (" + this.storytellerComps[i].GetType() + "):");
-				stringBuilder.AppendLine("    ThreatBig points: " + incidentParms.points);
+				stringBuilder.AppendLine(string.Concat(new object[]
+				{
+					"      ",
+					this.storytellerComps[i].GetType(),
+					": ",
+					incidentParms.points
+				}));
+			}
+			if (Find.VisibleMap != null)
+			{
+				stringBuilder.AppendLine();
+				stringBuilder.AppendLine("VisibleMap stats:");
+				stringBuilder.AppendLine("   Wealth: " + Find.VisibleMap.wealthWatcher.WealthTotal);
+				stringBuilder.AppendLine("   DaysSinceSeriousDamage: " + Find.VisibleMap.damageWatcher.DaysSinceSeriousDamage.ToString("F1"));
+				stringBuilder.AppendLine("   LastThreatBigQueueTick: " + Find.VisibleMap.storyState.LastThreatBigTick.ToStringTicksToPeriod(true, false, true));
+				stringBuilder.AppendLine("   FireDanger: " + Find.VisibleMap.fireWatcher.FireDanger.ToString("F2"));
+			}
+			stringBuilder.AppendLine();
+			stringBuilder.AppendLine("Incident targets:");
+			for (int j = 0; j < this.AllIncidentTargets.Count; j++)
+			{
+				stringBuilder.AppendLine("   " + this.AllIncidentTargets[j].ToString());
 			}
 			return stringBuilder.ToString();
 		}

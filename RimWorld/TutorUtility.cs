@@ -121,7 +121,7 @@ namespace RimWorld
 			CellRect.CellRectIterator iterator = cellRect.GetIterator();
 			while (!iterator.Done())
 			{
-				CellRenderer.RenderCell(iterator.Current);
+				CellRenderer.RenderCell(iterator.Current, 0.5f);
 				iterator.MoveNext();
 			}
 		}

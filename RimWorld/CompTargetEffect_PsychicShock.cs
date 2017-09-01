@@ -13,7 +13,9 @@ namespace RimWorld
 				return;
 			}
 			Hediff hediff = HediffMaker.MakeHediff(HediffDefOf.PsychicShock, pawn, null);
-			pawn.health.AddHediff(hediff, null, null);
+			BodyPartRecord part = null;
+			pawn.RaceProps.body.GetPartsWithTag("ConsciousnessSource").TryRandomElement(out part);
+			pawn.health.AddHediff(hediff, part, null);
 		}
 	}
 }

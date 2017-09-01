@@ -16,6 +16,15 @@ namespace Verse
 
 		private static List<int> tmpRange = new List<int>();
 
+		public static int Seed
+		{
+			set
+			{
+				Rand.random.seed = (uint)value;
+				Rand.iterations = 0u;
+			}
+		}
+
 		public static float Value
 		{
 			get
@@ -29,15 +38,6 @@ namespace Verse
 			get
 			{
 				return Rand.Value < 0.5f;
-			}
-		}
-
-		public static int Seed
-		{
-			set
-			{
-				Rand.random.seed = (uint)value;
-				Rand.iterations = 0u;
 			}
 		}
 
@@ -58,18 +58,40 @@ namespace Verse
 			}
 		}
 
-		public static void EnsureSeedStackEmpty()
+		public static Vector3 PointOnDisc
 		{
-			if (Rand.stateStack.Any<ulong>())
+			get
 			{
-				Log.Warning("There were more calls to PushSeed() than PopSeed(). Fixing.");
-				Rand.stateStack.Clear();
+				Vector3 result;
+				do
+				{
+					result = new Vector3(Rand.Value - 0.5f, 0f, Rand.Value - 0.5f) * 2f;
+				}
+				while (result.sqrMagnitude > 1f);
+				return result;
 			}
 		}
 
-		public static bool Chance(float chance)
+		private static ulong StateCompressed
 		{
-			return chance >= 1f || Rand.Value < chance;
+			get
+			{
+				return (ulong)Rand.random.seed | (ulong)Rand.iterations << 32;
+			}
+			set
+			{
+				Rand.random.seed = (uint)(value & (ulong)-1);
+				Rand.iterations = (uint)(value >> 32 & (ulong)-1);
+			}
+		}
+
+		public static void EnsureStateStackEmpty()
+		{
+			if (Rand.stateStack.Any<ulong>())
+			{
+				Log.Warning("Random state stack is not empty. There were more calls to PushState than PopState. Fixing.");
+				Rand.stateStack.Clear();
+			}
 		}
 
 		public static float Gaussian(float centerX = 0f, float widthFactor = 1f)
@@ -92,7 +114,7 @@ namespace Verse
 			return num * upperWidthFactor + centerX;
 		}
 
-		public static void RandomizeSeedFromTime()
+		public static void RandomizeStateFromTime()
 		{
 			Rand.Seed = DateTime.Now.GetHashCode();
 		}
@@ -124,16 +146,128 @@ namespace Verse
 			return Rand.Value * (max - min) + min;
 		}
 
-		public static void PushSeed()
+		public static bool Chance(float chance)
 		{
-			Rand.stateStack.Push((ulong)Rand.random.seed | (ulong)Rand.iterations << 32);
+			return chance >= 1f || Rand.Value < chance;
 		}
 
-		public static void PopSeed()
+		public static bool ChanceSeeded(float chance, int specialSeed)
 		{
-			ulong num = Rand.stateStack.Pop();
-			Rand.random.seed = (uint)(num & (ulong)-1);
-			Rand.iterations = (uint)(num >> 32 & (ulong)-1);
+			ulong stateCompressed = Rand.StateCompressed;
+			Rand.Seed = specialSeed;
+			bool result = Rand.Chance(chance);
+			Rand.StateCompressed = stateCompressed;
+			return result;
+		}
+
+		public static float ValueSeeded(int specialSeed)
+		{
+			ulong stateCompressed = Rand.StateCompressed;
+			Rand.Seed = specialSeed;
+			float value = Rand.Value;
+			Rand.StateCompressed = stateCompressed;
+			return value;
+		}
+
+		public static T Element<T>(T a, T b)
+		{
+			return (!Rand.Bool) ? b : a;
+		}
+
+		public static T Element<T>(T a, T b, T c)
+		{
+			float value = Rand.Value;
+			if (value < 0.33333f)
+			{
+				return a;
+			}
+			if (value < 0.66666f)
+			{
+				return b;
+			}
+			return c;
+		}
+
+		public static T Element<T>(T a, T b, T c, T d)
+		{
+			float value = Rand.Value;
+			if (value < 0.25f)
+			{
+				return a;
+			}
+			if (value < 0.5f)
+			{
+				return b;
+			}
+			if (value < 0.75f)
+			{
+				return c;
+			}
+			return d;
+		}
+
+		public static T Element<T>(T a, T b, T c, T d, T e)
+		{
+			float value = Rand.Value;
+			if (value < 0.2f)
+			{
+				return a;
+			}
+			if (value < 0.4f)
+			{
+				return b;
+			}
+			if (value < 0.6f)
+			{
+				return c;
+			}
+			if (value < 0.8f)
+			{
+				return d;
+			}
+			return e;
+		}
+
+		public static T Element<T>(T a, T b, T c, T d, T e, T f)
+		{
+			float value = Rand.Value;
+			if (value < 0.16666f)
+			{
+				return a;
+			}
+			if (value < 0.33333f)
+			{
+				return b;
+			}
+			if (value < 0.5f)
+			{
+				return c;
+			}
+			if (value < 0.66666f)
+			{
+				return d;
+			}
+			if (value < 0.83333f)
+			{
+				return e;
+			}
+			return f;
+		}
+
+		public static void PushState()
+		{
+			Rand.stateStack.Push(Rand.StateCompressed);
+		}
+
+		public static void PushState(int replacementSeed)
+		{
+			Rand.PushState();
+			Rand.Seed = replacementSeed;
+		}
+
+		public static void PopState()
+		{
+			Rand.StateCompressed = Rand.stateStack.Pop();
 		}
 
 		public static float ByCurve(SimpleCurve curve, int sampleCount = 100)
@@ -227,11 +361,18 @@ namespace Verse
 		internal static void LogRandTests()
 		{
 			StringBuilder stringBuilder = new StringBuilder();
+			int @int = Rand.Int;
+			stringBuilder.AppendLine("Repeating single ValueSeeded with seed " + @int + ". This should give the same result:");
+			for (int i = 0; i < 4; i++)
+			{
+				stringBuilder.AppendLine("   " + Rand.ValueSeeded(@int));
+			}
+			stringBuilder.AppendLine();
 			stringBuilder.AppendLine("Long-term tests");
-			for (int i = 0; i < 3; i++)
+			for (int j = 0; j < 3; j++)
 			{
 				int num = 0;
-				for (int j = 0; j < 5000000; j++)
+				for (int k = 0; k < 5000000; k++)
 				{
 					if (Rand.MTBEventOccurs(250f, 60000f, 60f))
 					{
@@ -256,11 +397,12 @@ namespace Verse
 				});
 				stringBuilder.AppendLine(value);
 			}
+			stringBuilder.AppendLine();
 			stringBuilder.AppendLine("Short-term tests");
-			for (int k = 0; k < 5; k++)
+			for (int l = 0; l < 5; l++)
 			{
 				int num2 = 0;
-				for (int l = 0; l < 10000; l++)
+				for (int m = 0; m < 10000; m++)
 				{
 					if (Rand.MTBEventOccurs(1f, 24000f, 12000f))
 					{
@@ -283,10 +425,10 @@ namespace Verse
 				});
 				stringBuilder.AppendLine(value2);
 			}
-			for (int m = 0; m < 5; m++)
+			for (int n = 0; n < 5; n++)
 			{
 				int num3 = 0;
-				for (int n = 0; n < 10000; n++)
+				for (int num4 = 0; num4 < 10000; num4++)
 				{
 					if (Rand.MTBEventOccurs(2f, 24000f, 6000f))
 					{
@@ -351,6 +493,22 @@ namespace Verse
 			}
 			value = 0;
 			return false;
+		}
+
+		public static Vector3 PointOnSphereCap(Vector3 center, float angle)
+		{
+			if (angle <= 0f)
+			{
+				return center;
+			}
+			if (angle >= 180f)
+			{
+				return Rand.PointOnSphere;
+			}
+			float num = Rand.Range(Mathf.Cos(angle * 0.0174532924f), 1f);
+			float f = Rand.Range(0f, 6.28318548f);
+			Vector3 point = new Vector3(Mathf.Sqrt(1f - num * num) * Mathf.Cos(f), Mathf.Sqrt(1f - num * num) * Mathf.Sin(f), num);
+			return Quaternion.FromToRotation(Vector3.forward, center) * point;
 		}
 	}
 }

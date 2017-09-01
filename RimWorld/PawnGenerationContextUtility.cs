@@ -30,5 +30,10 @@ namespace RimWorld
 			Array values = Enum.GetValues(typeof(PawnGenerationContext));
 			return (PawnGenerationContext)((int)values.GetValue(Rand.Range(0, values.Length)));
 		}
+
+		public static bool OverlapsWith(this PawnGenerationContext a, PawnGenerationContext b)
+		{
+			return a == PawnGenerationContext.All || b == PawnGenerationContext.All || a == b;
+		}
 	}
 }

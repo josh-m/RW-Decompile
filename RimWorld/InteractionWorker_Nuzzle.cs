@@ -15,7 +15,7 @@ namespace RimWorld
 		private void AddNuzzledThought(Pawn initiator, Pawn recipient)
 		{
 			Thought_Memory newThought = (Thought_Memory)ThoughtMaker.MakeThought(ThoughtDefOf.Nuzzled);
-			recipient.needs.mood.thoughts.memories.TryGainMemoryThought(newThought, null);
+			recipient.needs.mood.thoughts.memories.TryGainMemory(newThought, null);
 		}
 
 		private void TryGiveName(Pawn initiator, Pawn recipient)

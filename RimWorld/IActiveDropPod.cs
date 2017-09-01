@@ -3,7 +3,7 @@ using Verse;
 
 namespace RimWorld
 {
-	public interface IActiveDropPod : IThingContainerOwner
+	public interface IActiveDropPod : IThingHolder
 	{
 		ActiveDropPodInfo Contents
 		{

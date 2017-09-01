@@ -73,7 +73,7 @@ namespace RimWorld
 			{
 				thing = this.connectParent.parent;
 			}
-			Scribe_References.LookReference<Thing>(ref thing, "parentThing", false);
+			Scribe_References.Look<Thing>(ref thing, "parentThing", false);
 			if (thing != null)
 			{
 				this.connectParent = ((ThingWithComps)thing).GetComp<CompPower>();
@@ -84,9 +84,9 @@ namespace RimWorld
 			}
 		}
 
-		public override void PostSpawnSetup()
+		public override void PostSpawnSetup(bool respawningAfterLoad)
 		{
-			base.PostSpawnSetup();
+			base.PostSpawnSetup(respawningAfterLoad);
 			if (this.Props.transmitsPower || this.parent.def.ConnectToPower)
 			{
 				this.parent.Map.mapDrawer.MapMeshDirty(this.parent.Position, MapMeshFlag.PowerGrid, true, false);
@@ -129,7 +129,10 @@ namespace RimWorld
 		public virtual void LostConnectParent()
 		{
 			this.connectParent = null;
-			this.parent.Map.powerNetManager.Notify_ConnectorWantsConnect(this);
+			if (this.parent.Spawned)
+			{
+				this.parent.Map.powerNetManager.Notify_ConnectorWantsConnect(this);
+			}
 		}
 
 		public override void PostPrintOnto(SectionLayer layer)
@@ -170,7 +173,7 @@ namespace RimWorld
 				{
 					action = delegate
 					{
-						SoundDefOf.TickTiny.PlayOneShotOnCamera();
+						SoundDefOf.TickTiny.PlayOneShotOnCamera(null);
 						this.<>f__this.TryManualReconnect();
 					},
 					hotKey = KeyBindingDefOf.Misc1,

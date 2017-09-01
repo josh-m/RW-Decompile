@@ -23,9 +23,9 @@ namespace RimWorld
 			StateGraph stateGraph = new StateGraph();
 			LordToil_DefendTraderCaravan lordToil_DefendTraderCaravan = new LordToil_DefendTraderCaravan(this.defendSpot);
 			stateGraph.StartingToil = lordToil_DefendTraderCaravan;
-			LordToil_ExitMapBest lordToil_ExitMapBest = new LordToil_ExitMapBest(LocomotionUrgency.None, false);
-			stateGraph.AddToil(lordToil_ExitMapBest);
-			Transition transition = new Transition(lordToil_DefendTraderCaravan, lordToil_ExitMapBest);
+			LordToil_ExitMap lordToil_ExitMap = new LordToil_ExitMap(LocomotionUrgency.None, false);
+			stateGraph.AddToil(lordToil_ExitMap);
+			Transition transition = new Transition(lordToil_DefendTraderCaravan, lordToil_ExitMap);
 			transition.AddTrigger(new Trigger_BecameColonyAlly());
 			transition.AddTrigger(new Trigger_TraderAndAllTraderCaravanGuardsLost());
 			stateGraph.AddTransition(transition);
@@ -34,7 +34,7 @@ namespace RimWorld
 
 		public override void ExposeData()
 		{
-			Scribe_Values.LookValue<IntVec3>(ref this.defendSpot, "defendSpot", default(IntVec3), false);
+			Scribe_Values.Look<IntVec3>(ref this.defendSpot, "defendSpot", default(IntVec3), false);
 		}
 	}
 }

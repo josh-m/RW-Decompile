@@ -69,16 +69,16 @@ namespace Verse
 			}
 			float num3 = Mathf.Max(rect.width, rect.height) * 0.7f;
 			SectionLayer_BuildingsDamage.scratches.Clear();
-			Rand.PushSeed();
+			Rand.PushState();
 			Rand.Seed = b.thingIDNumber * 3697;
 			for (int j = 0; j < num; j++)
 			{
 				this.AddScratch(b, rect.width, rect.height, ref num3);
 			}
-			Rand.PopSeed();
+			Rand.PopState();
 			float damageTexturesAltitude = this.GetDamageTexturesAltitude(b);
 			IList<Material> scratchMats = BuildingsDamageSectionLayerUtility.GetScratchMats(b);
-			Rand.PushSeed();
+			Rand.PushState();
 			Rand.Seed = b.thingIDNumber * 7;
 			for (int k = 0; k < SectionLayer_BuildingsDamage.scratches.Count; k++)
 			{
@@ -93,7 +93,7 @@ namespace Verse
 				Vector3 center = new Vector3(rect.xMin + x, damageTexturesAltitude, rect.yMin + y);
 				Printer_Plane.PrintPlane(this, center, new Vector2(num4, num4), scratchMats.RandomElement<Material>(), rot, false, null, null, 0f);
 			}
-			Rand.PopSeed();
+			Rand.PopState();
 		}
 
 		private void AddScratch(Building b, float rectWidth, float rectHeight, ref float minDist)
@@ -139,7 +139,7 @@ namespace Verse
 
 		private void PrintCornersAndEdges(Building b)
 		{
-			Rand.PushSeed();
+			Rand.PushState();
 			Rand.Seed = b.thingIDNumber * 3;
 			if (BuildingsDamageSectionLayerUtility.UsesLinkableCornersAndEdges(b))
 			{
@@ -149,7 +149,7 @@ namespace Verse
 			{
 				this.DrawFullThingCorners(b);
 			}
-			Rand.PopSeed();
+			Rand.PopState();
 		}
 
 		private void DrawLinkableCornersAndEdges(Building b)
@@ -260,7 +260,7 @@ namespace Verse
 
 		private float GetDamageTexturesAltitude(Building b)
 		{
-			return b.def.Altitude + 0.05f;
+			return b.def.Altitude + 0.046875f;
 		}
 	}
 }

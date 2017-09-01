@@ -1,4 +1,3 @@
-using RimWorld.Planet;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -48,7 +47,7 @@ namespace RimWorld
 
 		public void ExposeData()
 		{
-			Scribe_Collections.LookList<Faction>(ref this.allFactions, "allFactions", LookMode.Deep, new object[0]);
+			Scribe_Collections.Look<Faction>(ref this.allFactions, "allFactions", LookMode.Deep, new object[0]);
 		}
 
 		public void Add(Faction faction)
@@ -87,19 +86,6 @@ namespace RimWorld
 			return null;
 		}
 
-		public Faction FactionAtTile(int tileID)
-		{
-			List<FactionBase> factionBases = Find.WorldObjects.FactionBases;
-			for (int i = 0; i < factionBases.Count; i++)
-			{
-				if (factionBases[i].Tile == tileID)
-				{
-					return factionBases[i].Faction;
-				}
-			}
-			return null;
-		}
-
 		public bool TryGetRandomNonColonyHumanlikeFaction(out Faction faction, bool tryMedievalOrBetter, bool allowDefeated = false)
 		{
 			IEnumerable<Faction> source = from x in this.AllFactions
@@ -115,11 +101,28 @@ namespace RimWorld
 			}, out faction);
 		}
 
-		public Faction RandomEnemyFaction(bool allowHidden = false, bool allowDefeated = false)
+		public Faction RandomEnemyFaction(bool allowHidden = false, bool allowDefeated = false, bool allowNonHumanlike = true)
 		{
-			return (from x in this.AllFactions
-			where (allowHidden || !x.def.hidden) && (allowDefeated || !x.defeated) && x.HostileTo(Faction.OfPlayer)
-			select x).RandomElement<Faction>();
+			Faction result;
+			if ((from x in this.AllFactions
+			where (allowHidden || !x.def.hidden) && (allowDefeated || !x.defeated) && (allowNonHumanlike || x.def.humanlikeFaction) && x.HostileTo(Faction.OfPlayer)
+			select x).TryRandomElement(out result))
+			{
+				return result;
+			}
+			return null;
+		}
+
+		public Faction RandomAlliedFaction(bool allowHidden = false, bool allowDefeated = false, bool allowNonHumanlike = true)
+		{
+			Faction result;
+			if ((from x in this.AllFactions
+			where !x.IsPlayer && (allowHidden || !x.def.hidden) && (allowDefeated || !x.defeated) && (allowNonHumanlike || x.def.humanlikeFaction) && !x.HostileTo(Faction.OfPlayer)
+			select x).TryRandomElement(out result))
+			{
+				return result;
+			}
+			return null;
 		}
 
 		public void LogKidnappedPawns()

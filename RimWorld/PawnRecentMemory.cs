@@ -34,8 +34,8 @@ namespace RimWorld
 
 		public void ExposeData()
 		{
-			Scribe_Values.LookValue<int>(ref this.lastLightTick, "lastLightTick", 999999, false);
-			Scribe_Values.LookValue<int>(ref this.lastOutdoorTick, "lastOutdoorTick", 999999, false);
+			Scribe_Values.Look<int>(ref this.lastLightTick, "lastLightTick", 999999, false);
+			Scribe_Values.Look<int>(ref this.lastOutdoorTick, "lastOutdoorTick", 999999, false);
 		}
 
 		public void RecentMemoryInterval()
@@ -56,14 +56,14 @@ namespace RimWorld
 
 		private bool Outdoors()
 		{
-			Room room = this.pawn.GetRoom();
+			Room room = this.pawn.GetRoom(RegionType.Set_Passable);
 			return room != null && room.PsychologicallyOutdoors;
 		}
 
-		public void Notify_Spawned()
+		public void Notify_Spawned(bool respawningAfterLoad)
 		{
 			this.lastLightTick = Find.TickManager.TicksGame;
-			if (this.Outdoors())
+			if (!respawningAfterLoad && this.Outdoors())
 			{
 				this.lastOutdoorTick = Find.TickManager.TicksGame;
 			}

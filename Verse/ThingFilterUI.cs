@@ -19,7 +19,7 @@ namespace Verse
 
 		private static float viewHeight;
 
-		public static void DoThingFilterConfigWindow(Rect rect, ref Vector2 scrollPosition, ThingFilter filter, ThingFilter parentFilter = null, int openMask = 1, IEnumerable<ThingDef> forceHiddenDefs = null, IEnumerable<SpecialThingFilterDef> forceHiddenFilters = null)
+		public static void DoThingFilterConfigWindow(Rect rect, ref Vector2 scrollPosition, ThingFilter filter, ThingFilter parentFilter = null, int openMask = 1, IEnumerable<ThingDef> forceHiddenDefs = null, IEnumerable<SpecialThingFilterDef> forceHiddenFilters = null, List<ThingDef> suppressSmallVolumeTags = null)
 		{
 			Widgets.DrawMenuSection(rect, true);
 			Text.Font = GameFont.Tiny;
@@ -29,7 +29,7 @@ namespace Verse
 			{
 				filter.SetDisallowAll(forceHiddenDefs, forceHiddenFilters);
 			}
-			Rect rect3 = new Rect(rect2.xMax + 1f, rect2.y, num / 2f, 24f);
+			Rect rect3 = new Rect(rect2.xMax + 1f, rect2.y, rect.xMax - 1f - (rect2.xMax + 1f), 24f);
 			if (Widgets.ButtonText(rect3, "AllowAll".Translate(), true, false, true))
 			{
 				filter.SetAllowAll(parentFilter);
@@ -37,20 +37,17 @@ namespace Verse
 			Text.Font = GameFont.Small;
 			rect.yMin = rect2.yMax;
 			Rect viewRect = new Rect(0f, 0f, rect.width - 16f, ThingFilterUI.viewHeight);
-			Widgets.BeginScrollView(rect, ref scrollPosition, viewRect);
+			Widgets.BeginScrollView(rect, ref scrollPosition, viewRect, true);
 			float num2 = 2f;
 			ThingFilterUI.DrawHitPointsFilterConfig(ref num2, viewRect.width, filter);
 			ThingFilterUI.DrawQualityFilterConfig(ref num2, viewRect.width, filter);
 			float num3 = num2;
 			Rect rect4 = new Rect(0f, num2, viewRect.width, 9999f);
-			Listing_TreeThingFilter listing_TreeThingFilter = new Listing_TreeThingFilter(rect4, filter, parentFilter, forceHiddenDefs, forceHiddenFilters);
+			Listing_TreeThingFilter listing_TreeThingFilter = new Listing_TreeThingFilter(filter, parentFilter, forceHiddenDefs, forceHiddenFilters, suppressSmallVolumeTags);
+			listing_TreeThingFilter.Begin(rect4);
 			TreeNode_ThingCategory node = ThingCategoryNodeDatabase.RootNode;
 			if (parentFilter != null)
 			{
-				if (parentFilter.DisplayRootCategory == null)
-				{
-					parentFilter.RecalculateDisplayRootCategory();
-				}
 				node = parentFilter.DisplayRootCategory;
 			}
 			listing_TreeThingFilter.DoCategoryChildren(node, 0, openMask, true);

@@ -27,16 +27,16 @@ namespace RimWorld
 
 		public void ExposeData()
 		{
-			Scribe_Values.LookValue<bool>(ref this.showLearningHelper, "showLearningHelper", false, false);
-			Scribe_Values.LookValue<bool>(ref this.showZones, "showZones", false, false);
-			Scribe_Values.LookValue<bool>(ref this.showEnvironment, "showEnvironment", false, false);
-			Scribe_Values.LookValue<bool>(ref this.showColonistBar, "showColonistBar", false, false);
-			Scribe_Values.LookValue<bool>(ref this.showRoofOverlay, "showRoofOverlay", false, false);
-			Scribe_Values.LookValue<bool>(ref this.autoHomeArea, "autoHomeArea", false, false);
-			Scribe_Values.LookValue<bool>(ref this.lockNorthUp, "lockNorthUp", false, false);
-			Scribe_Values.LookValue<bool>(ref this.usePlanetDayNightSystem, "usePlanetDayNightSystem", false, false);
-			Scribe_Values.LookValue<bool>(ref this.expandingIcons, "expandingIcons", false, false);
-			Scribe_Values.LookValue<bool>(ref this.useWorkPriorities, "useWorkPriorities", false, false);
+			Scribe_Values.Look<bool>(ref this.showLearningHelper, "showLearningHelper", false, false);
+			Scribe_Values.Look<bool>(ref this.showZones, "showZones", false, false);
+			Scribe_Values.Look<bool>(ref this.showEnvironment, "showEnvironment", false, false);
+			Scribe_Values.Look<bool>(ref this.showColonistBar, "showColonistBar", false, false);
+			Scribe_Values.Look<bool>(ref this.showRoofOverlay, "showRoofOverlay", false, false);
+			Scribe_Values.Look<bool>(ref this.autoHomeArea, "autoHomeArea", false, false);
+			Scribe_Values.Look<bool>(ref this.lockNorthUp, "lockNorthUp", false, false);
+			Scribe_Values.Look<bool>(ref this.usePlanetDayNightSystem, "usePlanetDayNightSystem", false, false);
+			Scribe_Values.Look<bool>(ref this.expandingIcons, "expandingIcons", false, false);
+			Scribe_Values.Look<bool>(ref this.useWorkPriorities, "useWorkPriorities", false, false);
 		}
 
 		public void DoPlaySettingsGlobalControls(WidgetRow row, bool worldView)
@@ -54,10 +54,7 @@ namespace RimWorld
 				{
 					Find.WorldCameraDriver.RotateSoNorthIsUp(true);
 				}
-				if (Current.ProgramState == ProgramState.Playing)
-				{
-					row.ToggleableIcon(ref this.usePlanetDayNightSystem, TexButton.UsePlanetDayNightSystem, "UsePlanetDayNightSystemToggleButton".Translate(), SoundDefOf.MouseoverToggle, null);
-				}
+				row.ToggleableIcon(ref this.usePlanetDayNightSystem, TexButton.UsePlanetDayNightSystem, "UsePlanetDayNightSystemToggleButton".Translate(), SoundDefOf.MouseoverToggle, null);
 				row.ToggleableIcon(ref this.expandingIcons, TexButton.ExpandingIcons, "ExpandingIconsToggleButton".Translate(), SoundDefOf.MouseoverToggle, null);
 			}
 			else

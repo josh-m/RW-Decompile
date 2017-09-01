@@ -9,9 +9,6 @@ namespace Verse
 		public BodyPartRecord corePart;
 
 		[Unsaved]
-		private Dictionary<PawnCapacityDef, List<string>> capacityGroups = new Dictionary<PawnCapacityDef, List<string>>();
-
-		[Unsaved]
 		private List<BodyPartRecord> cachedAllParts = new List<BodyPartRecord>();
 
 		[Unsaved]
@@ -33,44 +30,30 @@ namespace Verse
 			}
 		}
 
-		public List<string> GetActivityGroups(PawnCapacityDef actDef)
-		{
-			List<string> list;
-			if (!this.capacityGroups.TryGetValue(actDef, out list))
-			{
-				list = new List<string>();
-				for (int i = 0; i < this.AllParts.Count; i++)
-				{
-					for (int j = 0; j < this.AllParts[i].def.Activities.Count; j++)
-					{
-						Pair<PawnCapacityDef, string> pair = this.AllParts[i].def.Activities[j];
-						if (pair.First == actDef && !list.Contains(pair.Second))
-						{
-							list.Add(pair.Second);
-						}
-					}
-				}
-				this.capacityGroups.Add(actDef, list);
-			}
-			return list;
-		}
-
 		[DebuggerHidden]
-		public IEnumerable<BodyPartRecord> GetParts(PawnCapacityDef activity, string activityGroup)
+		public IEnumerable<BodyPartRecord> GetPartsWithTag(string tag)
 		{
 			for (int i = 0; i < this.AllParts.Count; i++)
 			{
-				List<Pair<PawnCapacityDef, string>> apa = this.AllParts[i].def.Activities;
-				for (int j = 0; j < apa.Count; j++)
+				BodyPartRecord part = this.AllParts[i];
+				if (part.def.tags.Contains(tag))
 				{
-					Pair<PawnCapacityDef, string> ac = apa[j];
-					if (ac.First == activity && ac.Second == activityGroup)
-					{
-						yield return this.AllParts[i];
-						break;
-					}
+					yield return part;
 				}
 			}
+		}
+
+		public bool HasPartWithTag(string tag)
+		{
+			for (int i = 0; i < this.AllParts.Count; i++)
+			{
+				BodyPartRecord bodyPartRecord = this.AllParts[i];
+				if (bodyPartRecord.def.tags.Contains(tag))
+				{
+					return true;
+				}
+			}
+			return false;
 		}
 
 		public BodyPartRecord GetPartAtIndex(int index)
@@ -101,6 +84,13 @@ namespace Verse
 			{
 				yield return "no parts vulnerable to frostbite";
 			}
+			foreach (BodyPartRecord part in this.AllParts)
+			{
+				if (part.def.isConceptual && part.coverageAbs != 0f)
+				{
+					yield return string.Format("part {0} is tagged conceptual, but has nonzero coverage", part);
+				}
+			}
 		}
 
 		public override void ResolveReferences()
@@ -126,31 +116,32 @@ namespace Verse
 			{
 				node.parts[i].parent = node;
 			}
-			node.absoluteCoverage = 1f;
 			if (node.parent != null)
 			{
-				node.absoluteCoverage = node.parent.absoluteCoverage * node.coverage;
+				node.coverageAbsWithChildren = node.parent.coverageAbsWithChildren * node.coverage;
 			}
-			node.fleshCoverage = 1f;
+			else
+			{
+				node.coverageAbsWithChildren = 1f;
+			}
+			float num = 1f;
 			for (int j = 0; j < node.parts.Count; j++)
 			{
-				node.fleshCoverage -= node.parts[j].coverage;
+				num -= node.parts[j].coverage;
 			}
-			if (node.fleshCoverage < 0f)
+			if (num <= 0f)
 			{
+				num = 0f;
 				Log.Warning(string.Concat(new string[]
 				{
-					"BodyPartRecord coverage value is negative (",
-					node.fleshCoverage.ToString("F5"),
-					") for node ",
-					node.def.defName,
-					" in BodyDef ",
+					"BodyDef ",
 					this.defName,
-					"."
+					" has BodyPartRecord of ",
+					node.def.defName,
+					" whose children have more or equal total coverage than 1. This means parent can't be hit independently at all."
 				}));
-				node.fleshCoverage = 0f;
 			}
-			node.absoluteFleshCoverage = node.absoluteCoverage * node.fleshCoverage;
+			node.coverageAbs = node.coverageAbsWithChildren * num;
 			if (node.height == BodyPartHeight.Undefined)
 			{
 				node.height = BodyPartHeight.Middle;

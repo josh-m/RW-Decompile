@@ -32,7 +32,7 @@ namespace Verse
 		static ModsConfig()
 		{
 			bool flag = false;
-			ModsConfig.data = XmlLoader.ItemFromXmlFile<ModsConfig.ModsConfigData>(GenFilePaths.ModsConfigFilePath, true);
+			ModsConfig.data = DirectXmlLoader.ItemFromXmlFile<ModsConfig.ModsConfigData>(GenFilePaths.ModsConfigFilePath, true);
 			if (ModsConfig.data.buildNumber < VersionControl.CurrentBuild)
 			{
 				Log.Message(string.Concat(new object[]
@@ -116,7 +116,7 @@ namespace Verse
 
 		public static void Save()
 		{
-			XmlSaver.SaveDataObject(ModsConfig.data, GenFilePaths.ModsConfigFilePath);
+			DirectXmlSaver.SaveDataObject(ModsConfig.data, GenFilePaths.ModsConfigFilePath);
 		}
 	}
 }

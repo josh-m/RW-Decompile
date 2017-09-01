@@ -32,7 +32,7 @@ namespace RimWorld
 		[DebuggerHidden]
 		protected override IEnumerable<Toil> MakeNewToils()
 		{
-			yield return Toils_Reserve.Reserve(TargetIndex.A, 1);
+			yield return Toils_Reserve.Reserve(TargetIndex.A, 1, -1, null);
 			yield return Toils_Goto.GotoThing(TargetIndex.A, PathEndMode.ClosestTouch);
 			yield return Toils_Haul.StartCarryThing(TargetIndex.A, false, false);
 			Toil findNearestCarrier = this.FindNearestCarrierToil();
@@ -70,7 +70,7 @@ namespace RimWorld
 			{
 				if (list[i].RaceProps.packAnimal && this.CanCarryAtLeastOne(list[i]))
 				{
-					float num2 = list[i].Position.DistanceToSquared(this.pawn.Position);
+					float num2 = (float)list[i].Position.DistanceToSquared(this.pawn.Position);
 					if (pawn == null || num2 < num)
 					{
 						pawn = list[i];
@@ -98,8 +98,8 @@ namespace RimWorld
 					}
 					else
 					{
-						int stackCount = Mathf.Min(MassUtility.CountToPickUpUntilOverEncumbered(this.Animal, this.Item), this.Item.stackCount);
-						this.pawn.carryTracker.innerContainer.TransferToContainer(this.Item, this.Animal.inventory.innerContainer, stackCount);
+						int count = Mathf.Min(MassUtility.CountToPickUpUntilOverEncumbered(this.Animal, this.Item), this.Item.stackCount);
+						this.pawn.carryTracker.innerContainer.TryTransferToContainer(this.Item, this.Animal.inventory.innerContainer, count, true);
 					}
 				}
 			};

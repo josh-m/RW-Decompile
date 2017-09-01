@@ -13,14 +13,14 @@ namespace Verse.AI
 			return thinkNode_FilterPriority;
 		}
 
-		public override ThinkResult TryIssueJobPackage(Pawn pawn)
+		public override ThinkResult TryIssueJobPackage(Pawn pawn, JobIssueParams jobParams)
 		{
 			int count = this.subNodes.Count;
 			for (int i = 0; i < count; i++)
 			{
 				if (this.subNodes[i].GetPriority(pawn) > this.minPriority)
 				{
-					ThinkResult result = this.subNodes[i].TryIssueJobPackage(pawn);
+					ThinkResult result = this.subNodes[i].TryIssueJobPackage(pawn, jobParams);
 					if (result.IsValid)
 					{
 						return result;

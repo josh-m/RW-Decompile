@@ -12,7 +12,7 @@ namespace Verse
 			base.Tick();
 			if (this.CurStageIndex >= 3 && this.pawn.IsHashIntervalTick(300) && this.HangoverSusceptible(this.pawn))
 			{
-				Hediff hediff = this.pawn.health.hediffSet.GetFirstHediffOfDef(HediffDefOf.Hangover);
+				Hediff hediff = this.pawn.health.hediffSet.GetFirstHediffOfDef(HediffDefOf.Hangover, false);
 				if (hediff != null)
 				{
 					hediff.Severity = 1f;

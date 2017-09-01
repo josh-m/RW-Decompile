@@ -10,7 +10,9 @@ namespace Verse.AI
 		NeedLOSToNonPawns = 2,
 		NeedLOSToAll = 3,
 		NeedReachable = 4,
-		NeedNonBurning = 8,
-		NeedThreat = 16
+		NeedReachableIfCantHitFromMyPos = 8,
+		NeedNonBurning = 16,
+		NeedThreat = 32,
+		LOSBlockableByGas = 64
 	}
 }

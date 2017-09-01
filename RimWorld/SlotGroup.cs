@@ -29,9 +29,10 @@ namespace RimWorld
 		{
 			get
 			{
-				for (int i = 0; i < this.CellsList.Count; i++)
+				List<IntVec3> cellsList = this.CellsList;
+				for (int i = 0; i < cellsList.Count; i++)
 				{
-					List<Thing> thingList = this.Map.thingGrid.ThingsListAt(this.CellsList[i]);
+					List<Thing> thingList = this.Map.thingGrid.ThingsListAt(cellsList[i]);
 					for (int j = 0; j < thingList.Count; j++)
 					{
 						if (thingList[j].def.EverStoreable)

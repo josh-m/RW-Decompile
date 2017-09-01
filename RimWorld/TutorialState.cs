@@ -22,11 +22,11 @@ namespace RimWorld
 			{
 				this.startingItems.RemoveAll((Thing it) => it == null || it.Destroyed || (it.Map == null && it.MapHeld == null));
 			}
-			Scribe_Collections.LookList<Thing>(ref this.startingItems, "startingItems", LookMode.Reference, new object[0]);
-			Scribe_Values.LookValue<CellRect>(ref this.roomRect, "roomRect", default(CellRect), false);
-			Scribe_Values.LookValue<CellRect>(ref this.sandbagsRect, "sandbagsRect", default(CellRect), false);
-			Scribe_Values.LookValue<int>(ref this.endTick, "endTick", -1, false);
-			Scribe_Values.LookValue<bool>(ref this.introDone, "introDone", false, false);
+			Scribe_Collections.Look<Thing>(ref this.startingItems, "startingItems", LookMode.Reference, new object[0]);
+			Scribe_Values.Look<CellRect>(ref this.roomRect, "roomRect", default(CellRect), false);
+			Scribe_Values.Look<CellRect>(ref this.sandbagsRect, "sandbagsRect", default(CellRect), false);
+			Scribe_Values.Look<int>(ref this.endTick, "endTick", -1, false);
+			Scribe_Values.Look<bool>(ref this.introDone, "introDone", false, false);
 			if (this.startingItems != null)
 			{
 				this.startingItems.RemoveAll((Thing it) => it == null);

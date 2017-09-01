@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using UnityEngine;
 using Verse;
@@ -9,32 +8,46 @@ namespace RimWorld
 {
 	public class IncidentWorker_ShortCircuit : IncidentWorker
 	{
-		private IEnumerable<Building_Battery> FullBatteries(Map map)
+		private static List<Building_Battery> tmpBatteries = new List<Building_Battery>();
+
+		private static List<CompPower> tmpConduits = new List<CompPower>();
+
+		private List<Building_Battery> BatteryCandidates(Map map)
 		{
-			return from Building_Battery bat in map.listerBuildings.AllBuildingsColonistOfDef(ThingDefOf.Battery)
-			where bat.GetComp<CompPowerBattery>().StoredEnergy > 50f
-			select bat;
+			IncidentWorker_ShortCircuit.tmpBatteries.Clear();
+			List<Building> allBuildingsColonist = map.listerBuildings.allBuildingsColonist;
+			for (int i = 0; i < allBuildingsColonist.Count; i++)
+			{
+				Building_Battery building_Battery = allBuildingsColonist[i] as Building_Battery;
+				if (building_Battery != null && building_Battery.GetComp<CompPowerBattery>().StoredEnergy >= 50f)
+				{
+					if (this.GetRandomConduit(building_Battery) != null)
+					{
+						IncidentWorker_ShortCircuit.tmpBatteries.Add(building_Battery);
+					}
+				}
+			}
+			return IncidentWorker_ShortCircuit.tmpBatteries;
 		}
 
 		protected override bool CanFireNowSub(IIncidentTarget target)
 		{
 			Map map = (Map)target;
-			return this.FullBatteries(map).Any<Building_Battery>();
+			return this.BatteryCandidates(map).Any<Building_Battery>();
 		}
 
 		public override bool TryExecute(IncidentParms parms)
 		{
 			Map map = (Map)parms.target;
-			List<Building_Battery> source = this.FullBatteries(map).ToList<Building_Battery>();
-			if (source.Count<Building_Battery>() == 0)
+			List<Building_Battery> list = this.BatteryCandidates(map);
+			if (!list.Any<Building_Battery>())
 			{
 				return false;
 			}
-			PowerNet powerNet = source.RandomElement<Building_Battery>().PowerComp.PowerNet;
-			List<CompPower> list = (from trans in powerNet.transmitters
-			where trans.parent.def == ThingDefOf.PowerConduit
-			select trans).ToList<CompPower>();
-			if (list.Count == 0)
+			Building_Battery building_Battery = list.RandomElement<Building_Battery>();
+			PowerNet powerNet = building_Battery.PowerComp.PowerNet;
+			CompPower randomConduit = this.GetRandomConduit(building_Battery);
+			if (randomConduit == null)
 			{
 				return false;
 			}
@@ -49,7 +62,7 @@ namespace RimWorld
 			{
 				num2 = 14.9f;
 			}
-			Thing parent = list.RandomElement<CompPower>().parent;
+			ThingWithComps parent = randomConduit.parent;
 			GenExplosion.DoExplosion(parent.Position, map, num2, DamageDefOf.Flame, null, null, null, null, null, 0f, 1, false, null, 0f, 1);
 			if (num2 > 3.5f)
 			{
@@ -57,7 +70,7 @@ namespace RimWorld
 			}
 			if (!parent.Destroyed)
 			{
-				parent.TakeDamage(new DamageInfo(DamageDefOf.Bomb, 200, -1f, null, null, null));
+				parent.TakeDamage(new DamageInfo(DamageDefOf.Bomb, 200, -1f, null, null, null, DamageInfo.SourceCategory.ThingOrUnknown));
 			}
 			string text = "something";
 			if (parent.def == ThingDefOf.PowerConduit)
@@ -82,8 +95,28 @@ namespace RimWorld
 				stringBuilder.AppendLine();
 				stringBuilder.Append("ShortCircuitWasHuge".Translate());
 			}
-			Find.LetterStack.ReceiveLetter("LetterLabelShortCircuit".Translate(), stringBuilder.ToString(), LetterType.BadNonUrgent, new TargetInfo(parent.Position, map, false), null);
+			Find.LetterStack.ReceiveLetter("LetterLabelShortCircuit".Translate(), stringBuilder.ToString(), LetterDefOf.BadNonUrgent, new TargetInfo(parent.Position, map, false), null);
 			return true;
+		}
+
+		private CompPower GetRandomConduit(Building_Battery battery)
+		{
+			IncidentWorker_ShortCircuit.tmpConduits.Clear();
+			List<CompPower> transmitters = battery.PowerComp.PowerNet.transmitters;
+			for (int i = 0; i < transmitters.Count; i++)
+			{
+				if (transmitters[i].parent.def == ThingDefOf.PowerConduit)
+				{
+					IncidentWorker_ShortCircuit.tmpConduits.Add(transmitters[i]);
+				}
+			}
+			if (!IncidentWorker_ShortCircuit.tmpConduits.Any<CompPower>())
+			{
+				return null;
+			}
+			CompPower result = IncidentWorker_ShortCircuit.tmpConduits.RandomElement<CompPower>();
+			IncidentWorker_ShortCircuit.tmpConduits.Clear();
+			return result;
 		}
 	}
 }

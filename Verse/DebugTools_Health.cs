@@ -53,16 +53,16 @@ namespace Verse
 			List<DebugMenuOption> list = new List<DebugMenuOption>();
 			list.Add(new DebugMenuOption("(no body part)", DebugMenuOptionMode.Action, delegate
 			{
-				p.TakeDamage(new DamageInfo(def, 5, -1f, null, null, null));
+				p.TakeDamage(new DamageInfo(def, 5, -1f, null, null, null, DamageInfo.SourceCategory.ThingOrUnknown));
 			}));
 			foreach (BodyPartRecord current in p.RaceProps.body.AllParts)
 			{
 				BodyPartRecord localPart = current;
 				list.Add(new DebugMenuOption(localPart.def.LabelCap, DebugMenuOptionMode.Action, delegate
 				{
-					Thing arg_2B_0 = p;
+					Thing arg_2C_0 = p;
 					BodyPartRecord localPart = localPart;
-					arg_2B_0.TakeDamage(new DamageInfo(def, 5, -1f, null, localPart, null));
+					arg_2C_0.TakeDamage(new DamageInfo(def, 5, -1f, null, localPart, null, DamageInfo.SourceCategory.ThingOrUnknown));
 				}));
 			}
 			return list;

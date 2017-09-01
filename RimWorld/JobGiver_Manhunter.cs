@@ -18,19 +18,23 @@ namespace RimWorld
 
 		protected override Job TryGiveJob(Pawn pawn)
 		{
-			Thing thing = this.FindPawnTarget(pawn);
-			if (thing != null && pawn.CanReach(thing, PathEndMode.Touch, Danger.Deadly, false, TraverseMode.ByPawn))
+			if (pawn.TryGetAttackVerb(false) == null)
 			{
-				return this.MeleeAttackJob(pawn, thing);
+				return null;
 			}
-			Thing thing2 = this.FindTurretTarget(pawn);
-			if (thing2 != null)
+			Pawn pawn2 = this.FindPawnTarget(pawn);
+			if (pawn2 != null && pawn.CanReach(pawn2, PathEndMode.Touch, Danger.Deadly, false, TraverseMode.ByPawn))
 			{
-				return this.MeleeAttackJob(pawn, thing2);
+				return this.MeleeAttackJob(pawn, pawn2);
 			}
-			if (thing != null)
+			Building building = this.FindTurretTarget(pawn);
+			if (building != null)
 			{
-				using (PawnPath pawnPath = pawn.Map.pathFinder.FindPath(pawn.Position, thing.Position, TraverseParms.For(pawn, Danger.Deadly, TraverseMode.PassDoors, false), PathEndMode.OnCell))
+				return this.MeleeAttackJob(pawn, building);
+			}
+			if (pawn2 != null)
+			{
+				using (PawnPath pawnPath = pawn.Map.pathFinder.FindPath(pawn.Position, pawn2.Position, TraverseParms.For(pawn, Danger.Deadly, TraverseMode.PassDoors, false), PathEndMode.OnCell))
 				{
 					Job result;
 					if (!pawnPath.Found)
@@ -41,13 +45,17 @@ namespace RimWorld
 					IntVec3 loc;
 					if (!pawnPath.TryFindLastCellBeforeBlockingDoor(pawn, out loc))
 					{
-						Log.Error(pawn + " did TryFindLastCellBeforeDoor but found none when it should have been one. Target: " + thing.LabelCap);
+						Log.Error(pawn + " did TryFindLastCellBeforeDoor but found none when it should have been one. Target: " + pawn2.LabelCap);
 						result = null;
 						return result;
 					}
-					IntVec3 randomCell = CellFinder.RandomRegionNear(loc.GetRegion(pawn.Map), 9, TraverseParms.For(pawn, Danger.Deadly, TraverseMode.ByPawn, false), null, null).RandomCell;
-					Job job = new Job(JobDefOf.Goto, randomCell);
-					result = job;
+					IntVec3 randomCell = CellFinder.RandomRegionNear(loc.GetRegion(pawn.Map, RegionType.Set_Passable), 9, TraverseParms.For(pawn, Danger.Deadly, TraverseMode.ByPawn, false), null, null, RegionType.Set_Passable).RandomCell;
+					if (randomCell == pawn.Position)
+					{
+						result = new Job(JobDefOf.Wait, 30, false);
+						return result;
+					}
+					result = new Job(JobDefOf.Goto, randomCell);
 					return result;
 				}
 			}
@@ -64,14 +72,14 @@ namespace RimWorld
 			};
 		}
 
-		private Thing FindPawnTarget(Pawn pawn)
+		private Pawn FindPawnTarget(Pawn pawn)
 		{
-			return AttackTargetFinder.BestAttackTarget(pawn, TargetScanFlags.NeedThreat, (Thing x) => x is Pawn && x.def.race.intelligence >= Intelligence.ToolUser, 0f, 9999f, default(IntVec3), 3.40282347E+38f, true);
+			return (Pawn)AttackTargetFinder.BestAttackTarget(pawn, TargetScanFlags.NeedThreat, (Thing x) => x is Pawn && x.def.race.intelligence >= Intelligence.ToolUser, 0f, 9999f, default(IntVec3), 3.40282347E+38f, true);
 		}
 
-		private Thing FindTurretTarget(Pawn pawn)
+		private Building FindTurretTarget(Pawn pawn)
 		{
-			return AttackTargetFinder.BestAttackTarget(pawn, TargetScanFlags.NeedLOSToPawns | TargetScanFlags.NeedLOSToNonPawns | TargetScanFlags.NeedReachable | TargetScanFlags.NeedThreat, (Thing t) => t is Building, 0f, 70f, default(IntVec3), 3.40282347E+38f, false);
+			return (Building)AttackTargetFinder.BestAttackTarget(pawn, TargetScanFlags.NeedLOSToPawns | TargetScanFlags.NeedLOSToNonPawns | TargetScanFlags.NeedReachable | TargetScanFlags.NeedThreat, (Thing t) => t is Building, 0f, 70f, default(IntVec3), 3.40282347E+38f, false);
 		}
 	}
 }

@@ -9,7 +9,7 @@ namespace RimWorld
 	{
 		private const float MedicinePerColonistThreshold = 2f;
 
-		private const int CheckNextMonthsCount = 3;
+		private const int CheckNextTwelfthsCount = 3;
 
 		private const float CanShowAlertOnlyIfTempBelow = 5f;
 
@@ -133,12 +133,12 @@ namespace RimWorld
 
 		private float LowestTemperatureComing(Map map)
 		{
-			Month month = GenLocalDate.Month(map);
-			float a = this.GetTemperature(month, map);
+			Twelfth twelfth = GenLocalDate.Twelfth(map);
+			float a = this.GetTemperature(twelfth, map);
 			for (int i = 0; i < 3; i++)
 			{
-				month = month.NextMonth();
-				a = Mathf.Min(a, this.GetTemperature(month, map));
+				twelfth = twelfth.NextTwelfth();
+				a = Mathf.Min(a, this.GetTemperature(twelfth, map));
 			}
 			return Mathf.Min(a, map.mapTemperature.OutdoorTemp);
 		}
@@ -205,9 +205,9 @@ namespace RimWorld
 			return null;
 		}
 
-		private float GetTemperature(Month month, Map map)
+		private float GetTemperature(Twelfth twelfth, Map map)
 		{
-			return GenTemperature.AverageTemperatureAtTileForMonth(map.Tile, month);
+			return GenTemperature.AverageTemperatureAtTileForTwelfth(map.Tile, twelfth);
 		}
 	}
 }

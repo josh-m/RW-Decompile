@@ -42,7 +42,7 @@ namespace RimWorld
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Values.LookValue<int>(ref this.jobStartTick, "jobStartTick", 0, false);
+			Scribe_Values.Look<int>(ref this.jobStartTick, "jobStartTick", 0, false);
 		}
 
 		public override string GetReport()
@@ -65,7 +65,7 @@ namespace RimWorld
 				}
 				return false;
 			});
-			yield return Toils_Reserve.Reserve(TargetIndex.A, 1);
+			yield return Toils_Reserve.Reserve(TargetIndex.A, 1, -1, null);
 			yield return new Toil
 			{
 				initAction = delegate
@@ -107,7 +107,7 @@ namespace RimWorld
 					this.Victim
 				});
 				Corpse corpse = this.Victim.Corpse;
-				if (corpse == null || !this.pawn.CanReserveAndReach(corpse, PathEndMode.ClosestTouch, Danger.Deadly, 1))
+				if (corpse == null || !this.pawn.CanReserveAndReach(corpse, PathEndMode.ClosestTouch, Danger.Deadly, 1, -1, null, false))
 				{
 					this.pawn.jobs.EndCurrentJob(JobCondition.Incompletable, true);
 					return;
@@ -116,8 +116,8 @@ namespace RimWorld
 				IntVec3 c;
 				if (StoreUtility.TryFindBestBetterStoreCellFor(corpse, this.pawn, this.Map, StoragePriority.Unstored, this.pawn.Faction, out c, true))
 				{
-					this.pawn.Reserve(corpse, 1);
-					this.pawn.Reserve(c, 1);
+					this.pawn.Reserve(corpse, 1, -1, null);
+					this.pawn.Reserve(c, 1, -1, null);
 					this.pawn.CurJob.SetTarget(TargetIndex.B, c);
 					this.pawn.CurJob.SetTarget(TargetIndex.A, corpse);
 					this.pawn.CurJob.count = 1;

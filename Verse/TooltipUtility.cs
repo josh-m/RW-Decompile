@@ -24,7 +24,6 @@ namespace Verse
 				}
 				if (verb != null)
 				{
-					stringBuilder.AppendLine();
 					stringBuilder.Append("ShotBy".Translate(new object[]
 					{
 						Find.Selector.SingleSelectedThing.LabelShort

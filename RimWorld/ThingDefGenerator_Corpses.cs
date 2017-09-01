@@ -12,9 +12,9 @@ namespace RimWorld
 
 		private const float DaysToDessicate = 5f;
 
-		private const float RotDamagePerDay = 2.5f;
+		private const float RotDamagePerDay = 2f;
 
-		private const float DessicatedDamagePerDay = 0.75f;
+		private const float DessicatedDamagePerDay = 0.7f;
 
 		[DebuggerHidden]
 		public static IEnumerable<ThingDef> ImpliedCorpseDefs()
@@ -70,23 +70,28 @@ namespace RimWorld
 					ing.foodType = FoodTypeFlags.Corpse;
 					ing.sourceDef = raceDef;
 					ing.preferability = FoodPreferability.DesperateOnly;
-					CrossRefLoader.RegisterObjectWantsCrossRef(ing, "tasteThought", ThoughtDefOf.AteCorpse.defName);
+					DirectXmlCrossRefLoader.RegisterObjectWantsCrossRef(ing, "tasteThought", ThoughtDefOf.AteCorpse.defName);
 					ing.nutrition = 1f;
 					ing.maxNumToIngestAtOnce = 1;
 					ing.ingestEffect = EffecterDefOf.EatMeat;
 					ing.ingestSound = SoundDefOf.RawMeat_Eat;
-					if (raceDef.race.fleshType == FleshType.Insectoid)
-					{
-						ing.specialThoughtDirect = ThoughtDefOf.AteInsectMeatDirect;
-					}
+					ing.specialThoughtDirect = raceDef.race.FleshType.ateDirect;
 					if (raceDef.race.IsFlesh)
 					{
 						CompProperties_Rottable rottable = new CompProperties_Rottable();
 						rottable.daysToRotStart = 2.5f;
 						rottable.daysToDessicated = 5f;
-						rottable.rotDamagePerDay = 2.5f;
-						rottable.dessicatedDamagePerDay = 0.75f;
+						rottable.rotDamagePerDay = 2f;
+						rottable.dessicatedDamagePerDay = 0.7f;
 						d.comps.Add(rottable);
+						CompProperties_SpawnerFilth corpseBileSpawner = new CompProperties_SpawnerFilth();
+						corpseBileSpawner.filthDef = ThingDefOf.FilthCorpseBile;
+						corpseBileSpawner.spawnCountOnSpawn = 0;
+						corpseBileSpawner.spawnMtbHours = 0f;
+						corpseBileSpawner.spawnRadius = 0.1f;
+						corpseBileSpawner.spawnEveryDays = 1f;
+						corpseBileSpawner.requiredRotStage = new RotStage?(RotStage.Rotting);
+						d.comps.Add(corpseBileSpawner);
 					}
 					if (d.thingCategories == null)
 					{
@@ -94,19 +99,11 @@ namespace RimWorld
 					}
 					if (raceDef.race.Humanlike)
 					{
-						CrossRefLoader.RegisterListWantsCrossRef<ThingCategoryDef>(d.thingCategories, ThingCategoryDefOf.CorpsesHumanlike.defName);
-					}
-					else if (!raceDef.race.IsFlesh)
-					{
-						CrossRefLoader.RegisterListWantsCrossRef<ThingCategoryDef>(d.thingCategories, ThingCategoryDefOf.CorpsesMechanoid.defName);
-					}
-					else if (raceDef.race.fleshType == FleshType.Insectoid)
-					{
-						CrossRefLoader.RegisterListWantsCrossRef<ThingCategoryDef>(d.thingCategories, ThingCategoryDefOf.CorpsesInsect.defName);
+						DirectXmlCrossRefLoader.RegisterListWantsCrossRef<ThingCategoryDef>(d.thingCategories, ThingCategoryDefOf.CorpsesHumanlike.defName);
 					}
 					else
 					{
-						CrossRefLoader.RegisterListWantsCrossRef<ThingCategoryDef>(d.thingCategories, ThingCategoryDefOf.CorpsesAnimal.defName);
+						DirectXmlCrossRefLoader.RegisterListWantsCrossRef<ThingCategoryDef>(d.thingCategories, raceDef.race.FleshType.corpseCategory.defName);
 					}
 					raceDef.race.corpseDef = d;
 					yield return d;

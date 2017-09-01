@@ -18,7 +18,7 @@ namespace Verse
 
 		public void ExposeData()
 		{
-			Scribe_Collections.LookList<Designation>(ref this.allDesignations, "allDesignations", LookMode.Deep, new object[0]);
+			Scribe_Collections.Look<Designation>(ref this.allDesignations, "allDesignations", LookMode.Deep, new object[0]);
 			if (Scribe.mode == LoadSaveMode.LoadingVars)
 			{
 				for (int i = 0; i < this.allDesignations.Count; i++)
@@ -55,7 +55,10 @@ namespace Verse
 		{
 			for (int i = 0; i < this.allDesignations.Count; i++)
 			{
-				this.allDesignations[i].DesignationDraw();
+				if (!this.allDesignations[i].target.HasThing || this.allDesignations[i].target.Thing.Map == this.map)
+				{
+					this.allDesignations[i].DesignationDraw();
+				}
 			}
 		}
 
@@ -78,7 +81,11 @@ namespace Verse
 			this.allDesignations.Add(newDes);
 			newDes.designationManager = this;
 			newDes.Notify_Added();
-			MoteMaker.ThrowMetaPuffs(newDes.target.ToTargetInfo(this.map));
+			Map map = (!newDes.target.HasThing) ? this.map : newDes.target.Thing.Map;
+			if (map != null)
+			{
+				MoteMaker.ThrowMetaPuffs(newDes.target.ToTargetInfo(map));
+			}
 		}
 
 		public Designation DesignationOn(Thing t)
@@ -122,7 +129,7 @@ namespace Verse
 			for (int i = 0; i < this.allDesignations.Count; i++)
 			{
 				Designation designation = this.allDesignations[i];
-				if (designation.target.Cell == c && designation.def == def)
+				if (designation.def == def && (!designation.target.HasThing || designation.target.Thing.Map == this.map) && designation.target.Cell == c)
 				{
 					return designation;
 				}
@@ -149,22 +156,24 @@ namespace Verse
 			int count = this.allDesignations.Count;
 			for (int i = 0; i < count; i++)
 			{
-				if (this.allDesignations[i].target.Cell == c)
+				Designation des = this.allDesignations[i];
+				if ((!des.target.HasThing || des.target.Thing.Map == this.map) && des.target.Cell == c)
 				{
-					yield return this.allDesignations[i];
+					yield return des;
 				}
 			}
 		}
 
 		[DebuggerHidden]
-		public IEnumerable<Designation> DesignationsOfDef(DesignationDef def)
+		public IEnumerable<Designation> SpawnedDesignationsOfDef(DesignationDef def)
 		{
 			int count = this.allDesignations.Count;
 			for (int i = 0; i < count; i++)
 			{
-				if (this.allDesignations[i].def == def)
+				Designation des = this.allDesignations[i];
+				if (des.def == def && (!des.target.HasThing || des.target.Thing.Map == this.map))
 				{
-					yield return this.allDesignations[i];
+					yield return des;
 				}
 			}
 		}
@@ -188,7 +197,7 @@ namespace Verse
 					}
 				}
 			}
-			this.allDesignations.RemoveAll((Designation d) => d.target.Thing == t);
+			this.allDesignations.RemoveAll((Designation d) => (!standardCanceling || d.def.designateCancelable) && d.target.Thing == t);
 		}
 
 		public void Notify_BuildingDespawned(Thing b)

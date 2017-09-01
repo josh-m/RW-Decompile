@@ -23,6 +23,29 @@ namespace RimWorld
 						yield return p;
 					}
 				}
+				List<Pawn> makingPawns = PawnGroupKindWorker.pawnsBeingGeneratedNow;
+				if (makingPawns != null)
+				{
+					for (int i = 0; i < makingPawns.Count; i++)
+					{
+						if (makingPawns[i].Dead)
+						{
+							yield return makingPawns[i];
+						}
+					}
+				}
+				List<Thing> makingThings = ItemCollectionGenerator.thingsBeingGeneratedNow;
+				if (makingThings != null)
+				{
+					for (int j = 0; j < makingThings.Count; j++)
+					{
+						Pawn p2 = makingThings[j] as Pawn;
+						if (p2 != null && p2.Dead)
+						{
+							yield return p2;
+						}
+					}
+				}
 			}
 		}
 
@@ -30,30 +53,48 @@ namespace RimWorld
 		{
 			get
 			{
-				List<Pawn> makingPawns = PawnGroupMakerUtility.PawnsBeingGeneratedNow;
-				for (int i = 0; i < makingPawns.Count; i++)
+				List<Pawn> makingPawns = PawnGroupKindWorker.pawnsBeingGeneratedNow;
+				if (makingPawns != null)
 				{
-					yield return makingPawns[i];
+					for (int i = 0; i < makingPawns.Count; i++)
+					{
+						if (!makingPawns[i].Dead)
+						{
+							yield return makingPawns[i];
+						}
+					}
+				}
+				List<Thing> makingThings = ItemCollectionGenerator.thingsBeingGeneratedNow;
+				if (makingThings != null)
+				{
+					for (int j = 0; j < makingThings.Count; j++)
+					{
+						Pawn p = makingThings[j] as Pawn;
+						if (p != null && !p.Dead)
+						{
+							yield return p;
+						}
+					}
 				}
 				if (Find.World != null)
 				{
-					foreach (Pawn p in Find.WorldPawns.AllPawnsAlive)
-					{
-						yield return p;
-					}
-					foreach (Pawn p2 in PawnsFinder.AllMaps)
+					foreach (Pawn p2 in Find.WorldPawns.AllPawnsAlive)
 					{
 						yield return p2;
+					}
+					foreach (Pawn p3 in PawnsFinder.AllMaps)
+					{
+						yield return p3;
 					}
 				}
 				if (Current.ProgramState != ProgramState.Playing && Find.GameInitData != null && Find.GameInitData != null)
 				{
 					List<Pawn> startingPawns = Find.GameInitData.startingPawns;
-					for (int j = 0; j < startingPawns.Count; j++)
+					for (int k = 0; k < startingPawns.Count; k++)
 					{
-						if (startingPawns[j] != null)
+						if (startingPawns[k] != null)
 						{
-							yield return startingPawns[j];
+							yield return startingPawns[k];
 						}
 					}
 				}

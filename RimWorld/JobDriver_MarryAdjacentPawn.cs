@@ -34,7 +34,7 @@ namespace RimWorld
 		protected override IEnumerable<Toil> MakeNewToils()
 		{
 			this.FailOnDespawnedOrNull(TargetIndex.A);
-			this.FailOn(() => this.<>f__this.OtherFiance.Drafted || !this.<>f__this.pawn.Position.IsAdjacentTo8WayOrInside(this.<>f__this.OtherFiance.Position, this.<>f__this.OtherFiance.Rotation, this.<>f__this.OtherFiance.def.size));
+			this.FailOn(() => this.<>f__this.OtherFiance.Drafted || !this.<>f__this.pawn.Position.AdjacentTo8WayOrInside(this.<>f__this.OtherFiance));
 			Toil marry = new Toil();
 			marry.initAction = delegate
 			{
@@ -68,7 +68,7 @@ namespace RimWorld
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Values.LookValue<int>(ref this.ticksLeftToMarry, "ticksLeftToMarry", 0, false);
+			Scribe_Values.Look<int>(ref this.ticksLeftToMarry, "ticksLeftToMarry", 0, false);
 		}
 	}
 }

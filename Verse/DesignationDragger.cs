@@ -84,17 +84,18 @@ namespace Verse
 		{
 			if (this.dragging)
 			{
-				for (int i = 0; i < this.DragCells.Count; i++)
+				List<IntVec3> list = this.DragCells;
+				for (int i = 0; i < list.Count; i++)
 				{
-					Graphics.DrawMesh(MeshPool.plane10, this.DragCells[i].ToVector3Shifted() + 10f * Vector3.up, Quaternion.identity, DesignationDragger.DragHighlightCellMat, 0);
+					Graphics.DrawMesh(MeshPool.plane10, list[i].ToVector3Shifted() + 10f * Vector3.up, Quaternion.identity, DesignationDragger.DragHighlightCellMat, 0);
 				}
-				if (this.DragCells.Count != this.lastFrameDragCellsDrawn)
+				if (list.Count != this.lastFrameDragCellsDrawn)
 				{
 					this.lastDragRealTime = Time.realtimeSinceStartup;
-					this.lastFrameDragCellsDrawn = this.DragCells.Count;
+					this.lastFrameDragCellsDrawn = list.Count;
 					if (this.SelDes.soundDragChanged != null)
 					{
-						this.SelDes.soundDragChanged.PlayOneShotOnCamera();
+						this.SelDes.soundDragChanged.PlayOneShotOnCamera(null);
 					}
 				}
 				if (this.sustainer == null || this.sustainer.Ended)

@@ -25,7 +25,7 @@ namespace RimWorld
 
 		public virtual void DoEffect(Pawn usedBy)
 		{
-			if (this.Props.doCameraShake && usedBy.Spawned && usedBy.MapHeld == Find.VisibleMap)
+			if (this.Props.doCameraShake && usedBy.Spawned && usedBy.Map == Find.VisibleMap)
 			{
 				Find.CameraDriver.shaker.DoShake(1f);
 			}

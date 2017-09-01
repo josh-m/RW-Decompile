@@ -40,6 +40,8 @@ namespace RimWorld
 
 		public static DamageDef Extinguish;
 
+		public static DamageDef Smoke;
+
 		public static DamageDef Deterioration;
 
 		public static DamageDef Mining;

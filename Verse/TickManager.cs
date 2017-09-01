@@ -121,7 +121,7 @@ namespace Verse
 		{
 			get
 			{
-				return this.curTimeSpeed == TimeSpeed.Paused || Find.WindowStack.WindowsForcePause;
+				return this.curTimeSpeed == TimeSpeed.Paused || Find.WindowStack.WindowsForcePause || LongEventHandler.ForcePause;
 			}
 		}
 
@@ -129,7 +129,7 @@ namespace Verse
 		{
 			get
 			{
-				return Find.MainTabsRoot.OpenTab == MainTabDefOf.Menu;
+				return Find.MainTabsRoot.OpenTab == MainButtonDefOf.Menu;
 			}
 		}
 
@@ -203,9 +203,9 @@ namespace Verse
 
 		public void ExposeData()
 		{
-			Scribe_Values.LookValue<int>(ref this.ticksGameInt, "ticksGame", 0, false);
-			Scribe_Values.LookValue<int>(ref this.gameStartAbsTick, "gameStartAbsTick", 0, false);
-			Scribe_Values.LookValue<int>(ref this.startingYearInt, "startingYear", 0, false);
+			Scribe_Values.Look<int>(ref this.ticksGameInt, "ticksGame", 0, false);
+			Scribe_Values.Look<int>(ref this.gameStartAbsTick, "gameStartAbsTick", 0, false);
+			Scribe_Values.Look<int>(ref this.startingYearInt, "startingYear", 0, false);
 		}
 
 		public void RegisterAllTickabilityFor(Thing t)
@@ -277,12 +277,13 @@ namespace Verse
 			{
 				this.ticksGameInt += 250;
 			}
+			Shader.SetGlobalFloat(ShaderPropertyIDs.GameSeconds, this.TicksGame.TicksToSeconds());
 			this.tickListNormal.Tick();
 			this.tickListRare.Tick();
 			this.tickListLong.Tick();
 			try
 			{
-				DateUtility.DatesTick();
+				Find.DateNotifier.DateNotifierTick();
 			}
 			catch (Exception ex)
 			{
@@ -336,6 +337,14 @@ namespace Verse
 			{
 				Log.Error(ex7.ToString());
 			}
+			try
+			{
+				Find.World.WorldPostTick();
+			}
+			catch (Exception ex8)
+			{
+				Log.Error(ex8.ToString());
+			}
 			for (int j = 0; j < maps.Count; j++)
 			{
 				maps[j].MapPostTick();
@@ -344,17 +353,26 @@ namespace Verse
 			{
 				Find.History.HistoryTick();
 			}
-			catch (Exception ex8)
+			catch (Exception ex9)
 			{
-				Log.Error(ex8.ToString());
+				Log.Error(ex9.ToString());
+			}
+			GameComponentUtility.GameComponentTick();
+			try
+			{
+				Find.LetterStack.LetterStackTick();
+			}
+			catch (Exception ex10)
+			{
+				Log.Error(ex10.ToString());
 			}
 			try
 			{
 				Find.Autosaver.AutosaverTick();
 			}
-			catch (Exception ex9)
+			catch (Exception ex11)
 			{
-				Log.Error(ex9.ToString());
+				Log.Error(ex11.ToString());
 			}
 			Debug.developerConsoleVisible = false;
 		}

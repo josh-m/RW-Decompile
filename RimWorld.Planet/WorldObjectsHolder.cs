@@ -15,6 +15,18 @@ namespace RimWorld.Planet
 
 		private List<TravelingTransportPods> travelingTransportPods = new List<TravelingTransportPods>();
 
+		private List<Settlement> settlements = new List<Settlement>();
+
+		private List<DestroyedFactionBase> destroyedFactionBases = new List<DestroyedFactionBase>();
+
+		private List<RoutePlannerWaypoint> routePlannerWaypoints = new List<RoutePlannerWaypoint>();
+
+		private List<MapParent> mapParents = new List<MapParent>();
+
+		private List<Site> sites = new List<Site>();
+
+		private static List<WorldObject> tmpUnsavedWorldObjects = new List<WorldObject>();
+
 		private static List<WorldObject> tmpWorldObjects = new List<WorldObject>();
 
 		public List<WorldObject> AllWorldObjects
@@ -49,6 +61,46 @@ namespace RimWorld.Planet
 			}
 		}
 
+		public List<Settlement> Settlements
+		{
+			get
+			{
+				return this.settlements;
+			}
+		}
+
+		public List<DestroyedFactionBase> DestroyedFactionBases
+		{
+			get
+			{
+				return this.destroyedFactionBases;
+			}
+		}
+
+		public List<RoutePlannerWaypoint> RoutePlannerWaypoints
+		{
+			get
+			{
+				return this.routePlannerWaypoints;
+			}
+		}
+
+		public List<MapParent> MapParents
+		{
+			get
+			{
+				return this.mapParents;
+			}
+		}
+
+		public List<Site> Sites
+		{
+			get
+			{
+				return this.sites;
+			}
+		}
+
 		public int WorldObjectsCount
 		{
 			get
@@ -62,6 +114,14 @@ namespace RimWorld.Planet
 			get
 			{
 				return this.caravans.Count;
+			}
+		}
+
+		public int RoutePlannerWaypointsCount
+		{
+			get
+			{
+				return this.routePlannerWaypoints.Count;
 			}
 		}
 
@@ -83,12 +143,29 @@ namespace RimWorld.Planet
 
 		public void ExposeData()
 		{
-			Scribe_Collections.LookList<WorldObject>(ref this.worldObjects, "worldObjects", LookMode.Deep, new object[0]);
+			if (Scribe.mode == LoadSaveMode.Saving)
+			{
+				WorldObjectsHolder.tmpUnsavedWorldObjects.Clear();
+				for (int i = this.worldObjects.Count - 1; i >= 0; i--)
+				{
+					if (!this.worldObjects[i].def.saved)
+					{
+						WorldObjectsHolder.tmpUnsavedWorldObjects.Add(this.worldObjects[i]);
+						this.worldObjects.RemoveAt(i);
+					}
+				}
+			}
+			Scribe_Collections.Look<WorldObject>(ref this.worldObjects, "worldObjects", LookMode.Deep, new object[0]);
+			if (Scribe.mode == LoadSaveMode.Saving)
+			{
+				this.worldObjects.AddRange(WorldObjectsHolder.tmpUnsavedWorldObjects);
+				WorldObjectsHolder.tmpUnsavedWorldObjects.Clear();
+			}
 			if (Scribe.mode == LoadSaveMode.PostLoadInit)
 			{
-				for (int i = 0; i < this.worldObjects.Count; i++)
+				for (int j = 0; j < this.worldObjects.Count; j++)
 				{
-					this.worldObjects[i].SpawnSetup();
+					this.worldObjects[j].SpawnSetup();
 				}
 				this.Recache();
 			}
@@ -136,39 +213,73 @@ namespace RimWorld.Planet
 
 		private void AddToCache(WorldObject o)
 		{
-			Caravan caravan = o as Caravan;
-			if (caravan != null)
+			if (o is Caravan)
 			{
-				this.caravans.Add(caravan);
+				this.caravans.Add((Caravan)o);
 			}
-			FactionBase factionBase = o as FactionBase;
-			if (factionBase != null)
+			if (o is FactionBase)
 			{
-				this.factionBases.Add(factionBase);
+				this.factionBases.Add((FactionBase)o);
 			}
-			TravelingTransportPods travelingTransportPods = o as TravelingTransportPods;
-			if (travelingTransportPods != null)
+			if (o is TravelingTransportPods)
 			{
-				this.travelingTransportPods.Add(travelingTransportPods);
+				this.travelingTransportPods.Add((TravelingTransportPods)o);
+			}
+			if (o is Settlement)
+			{
+				this.settlements.Add((Settlement)o);
+			}
+			if (o is DestroyedFactionBase)
+			{
+				this.destroyedFactionBases.Add((DestroyedFactionBase)o);
+			}
+			if (o is RoutePlannerWaypoint)
+			{
+				this.routePlannerWaypoints.Add((RoutePlannerWaypoint)o);
+			}
+			if (o is MapParent)
+			{
+				this.mapParents.Add((MapParent)o);
+			}
+			if (o is Site)
+			{
+				this.sites.Add((Site)o);
 			}
 		}
 
 		private void RemoveFromCache(WorldObject o)
 		{
-			Caravan caravan = o as Caravan;
-			if (caravan != null)
+			if (o is Caravan)
 			{
-				this.caravans.Remove(caravan);
+				this.caravans.Remove((Caravan)o);
 			}
-			FactionBase factionBase = o as FactionBase;
-			if (factionBase != null)
+			if (o is FactionBase)
 			{
-				this.factionBases.Remove(factionBase);
+				this.factionBases.Remove((FactionBase)o);
 			}
-			TravelingTransportPods travelingTransportPods = o as TravelingTransportPods;
-			if (travelingTransportPods != null)
+			if (o is TravelingTransportPods)
 			{
-				this.travelingTransportPods.Remove(travelingTransportPods);
+				this.travelingTransportPods.Remove((TravelingTransportPods)o);
+			}
+			if (o is Settlement)
+			{
+				this.settlements.Remove((Settlement)o);
+			}
+			if (o is DestroyedFactionBase)
+			{
+				this.destroyedFactionBases.Remove((DestroyedFactionBase)o);
+			}
+			if (o is RoutePlannerWaypoint)
+			{
+				this.routePlannerWaypoints.Remove((RoutePlannerWaypoint)o);
+			}
+			if (o is MapParent)
+			{
+				this.mapParents.Remove((MapParent)o);
+			}
+			if (o is Site)
+			{
+				this.sites.Remove((Site)o);
 			}
 		}
 
@@ -177,6 +288,11 @@ namespace RimWorld.Planet
 			this.caravans.Clear();
 			this.factionBases.Clear();
 			this.travelingTransportPods.Clear();
+			this.settlements.Clear();
+			this.destroyedFactionBases.Clear();
+			this.routePlannerWaypoints.Clear();
+			this.mapParents.Clear();
+			this.sites.Clear();
 			for (int i = 0; i < this.worldObjects.Count; i++)
 			{
 				this.AddToCache(this.worldObjects[i]);
@@ -185,6 +301,18 @@ namespace RimWorld.Planet
 
 		public bool Contains(WorldObject o)
 		{
+			if (o == null)
+			{
+				return false;
+			}
+			if (o is Caravan)
+			{
+				return this.caravans.Contains((Caravan)o);
+			}
+			if (o is Settlement)
+			{
+				return this.settlements.Contains((Settlement)o);
+			}
 			return this.worldObjects.Contains(o);
 		}
 
@@ -215,16 +343,138 @@ namespace RimWorld.Planet
 			return false;
 		}
 
+		public T WorldObjectAt<T>(int tile) where T : class
+		{
+			for (int i = 0; i < this.worldObjects.Count; i++)
+			{
+				if (this.worldObjects[i].Tile == tile && this.worldObjects[i] is T)
+				{
+					return this.worldObjects[i] as T;
+				}
+			}
+			return (T)((object)null);
+		}
+
 		public bool AnyFactionBaseAt(int tile)
+		{
+			return this.FactionBaseAt(tile) != null;
+		}
+
+		public FactionBase FactionBaseAt(int tile)
 		{
 			for (int i = 0; i < this.factionBases.Count; i++)
 			{
 				if (this.factionBases[i].Tile == tile)
 				{
+					return this.factionBases[i];
+				}
+			}
+			return null;
+		}
+
+		public bool AnySettlementAt(int tile)
+		{
+			return this.SettlementAt(tile) != null;
+		}
+
+		public Settlement SettlementAt(int tile)
+		{
+			for (int i = 0; i < this.settlements.Count; i++)
+			{
+				if (this.settlements[i].Tile == tile)
+				{
+					return this.settlements[i];
+				}
+			}
+			return null;
+		}
+
+		public bool AnyDestroyedFactionBaseAt(int tile)
+		{
+			return this.DestroyedFactionBaseAt(tile) != null;
+		}
+
+		public DestroyedFactionBase DestroyedFactionBaseAt(int tile)
+		{
+			for (int i = 0; i < this.destroyedFactionBases.Count; i++)
+			{
+				if (this.destroyedFactionBases[i].Tile == tile)
+				{
+					return this.destroyedFactionBases[i];
+				}
+			}
+			return null;
+		}
+
+		public bool AnyMapParentAt(int tile)
+		{
+			return this.MapParentAt(tile) != null;
+		}
+
+		public MapParent MapParentAt(int tile)
+		{
+			for (int i = 0; i < this.mapParents.Count; i++)
+			{
+				if (this.mapParents[i].Tile == tile)
+				{
+					return this.mapParents[i];
+				}
+			}
+			return null;
+		}
+
+		public bool AnyWorldObjectOfDefAt(WorldObjectDef def, int tile)
+		{
+			return this.WorldObjectOfDefAt(def, tile) != null;
+		}
+
+		public WorldObject WorldObjectOfDefAt(WorldObjectDef def, int tile)
+		{
+			for (int i = 0; i < this.worldObjects.Count; i++)
+			{
+				if (this.worldObjects[i].def == def && this.worldObjects[i].Tile == tile)
+				{
+					return this.worldObjects[i];
+				}
+			}
+			return null;
+		}
+
+		public Caravan PlayerControlledCaravanAt(int tile)
+		{
+			for (int i = 0; i < this.caravans.Count; i++)
+			{
+				if (this.caravans[i].Tile == tile && this.caravans[i].IsPlayerControlled)
+				{
+					return this.caravans[i];
+				}
+			}
+			return null;
+		}
+
+		public bool AnySettlementAtOrAdjacent(int tile)
+		{
+			WorldGrid worldGrid = Find.WorldGrid;
+			for (int i = 0; i < this.settlements.Count; i++)
+			{
+				if (worldGrid.IsNeighborOrSame(this.settlements[i].Tile, tile))
+				{
 					return true;
 				}
 			}
 			return false;
+		}
+
+		public RoutePlannerWaypoint RoutePlannerWaypointAt(int tile)
+		{
+			for (int i = 0; i < this.routePlannerWaypoints.Count; i++)
+			{
+				if (this.routePlannerWaypoints[i].Tile == tile)
+				{
+					return this.routePlannerWaypoints[i];
+				}
+			}
+			return null;
 		}
 	}
 }

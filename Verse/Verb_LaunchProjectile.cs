@@ -23,35 +23,35 @@ namespace Verse
 			projectile.FreeIntercept = (this.canFreeInterceptNow && !projectile.def.projectile.flyOverhead);
 			if (this.verbProps.forcedMissRadius > 0.5f)
 			{
-				float lengthHorizontalSquared = (this.currentTarget.Cell - this.caster.Position).LengthHorizontalSquared;
-				float num;
-				if (lengthHorizontalSquared < 9f)
+				float num = (float)(this.currentTarget.Cell - this.caster.Position).LengthHorizontalSquared;
+				float num2;
+				if (num < 9f)
 				{
-					num = 0f;
+					num2 = 0f;
 				}
-				else if (lengthHorizontalSquared < 25f)
+				else if (num < 25f)
 				{
-					num = this.verbProps.forcedMissRadius * 0.5f;
+					num2 = this.verbProps.forcedMissRadius * 0.5f;
 				}
-				else if (lengthHorizontalSquared < 49f)
+				else if (num < 49f)
 				{
-					num = this.verbProps.forcedMissRadius * 0.8f;
+					num2 = this.verbProps.forcedMissRadius * 0.8f;
 				}
 				else
 				{
-					num = this.verbProps.forcedMissRadius * 1f;
+					num2 = this.verbProps.forcedMissRadius * 1f;
 				}
-				if (num > 0.5f)
+				if (num2 > 0.5f)
 				{
 					int max = GenRadial.NumCellsInRadius(this.verbProps.forcedMissRadius);
-					int num2 = Rand.Range(0, max);
-					if (num2 > 0)
+					int num3 = Rand.Range(0, max);
+					if (num3 > 0)
 					{
 						if (DebugViewSettings.drawShooting)
 						{
 							MoteMaker.ThrowText(this.caster.DrawPos, this.caster.Map, "ToForRad", -1f);
 						}
-						IntVec3 c = this.currentTarget.Cell + GenRadial.RadialPattern[num2];
+						IntVec3 c = this.currentTarget.Cell + GenRadial.RadialPattern[num3];
 						if (this.currentTarget.HasThing)
 						{
 							projectile.ThingToNeverIntercept = this.currentTarget.Thing;

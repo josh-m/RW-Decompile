@@ -60,7 +60,7 @@ namespace RimWorld
 			if (Widgets.ButtonImage(rect, icon))
 			{
 				pawn.playerSettings.hostilityResponse = HostilityResponseModeUtility.GetNextResponse(pawn);
-				SoundDefOf.TickHigh.PlayOneShotOnCamera();
+				SoundDefOf.TickHigh.PlayOneShotOnCamera(null);
 				PlayerKnowledgeDatabase.KnowledgeDemonstrated(ConceptDefOf.HostilityResponse, KnowledgeAmount.SpecificInteraction);
 			}
 			UIHighlighter.HighlightOpportunity(rect, "HostilityResponse");

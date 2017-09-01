@@ -9,16 +9,16 @@ namespace RimWorld
 		protected override bool CanFireNowSub(IIncidentTarget target)
 		{
 			Map map = (Map)target;
-			return !map.mapConditionManager.ConditionIsActive(MapConditionDefOf.Flashstorm);
+			return !map.gameConditionManager.ConditionIsActive(GameConditionDefOf.Flashstorm);
 		}
 
 		public override bool TryExecute(IncidentParms parms)
 		{
 			Map map = (Map)parms.target;
 			int duration = Mathf.RoundToInt(this.def.durationDays.RandomInRange * 60000f);
-			MapCondition_Flashstorm mapCondition_Flashstorm = (MapCondition_Flashstorm)MapConditionMaker.MakeCondition(MapConditionDefOf.Flashstorm, duration, 0);
-			map.mapConditionManager.RegisterCondition(mapCondition_Flashstorm);
-			Find.LetterStack.ReceiveLetter(this.def.letterLabel, this.def.letterText, this.def.letterType, new TargetInfo(mapCondition_Flashstorm.centerLocation.ToIntVec3, map, false), null);
+			GameCondition_Flashstorm gameCondition_Flashstorm = (GameCondition_Flashstorm)GameConditionMaker.MakeCondition(GameConditionDefOf.Flashstorm, duration, 0);
+			map.gameConditionManager.RegisterCondition(gameCondition_Flashstorm);
+			base.SendStandardLetter(new TargetInfo(gameCondition_Flashstorm.centerLocation.ToIntVec3, map, false), new string[0]);
 			if (map.weatherManager.curWeather.rainRate > 0.1f)
 			{
 				map.weatherDecider.StartNextWeather();

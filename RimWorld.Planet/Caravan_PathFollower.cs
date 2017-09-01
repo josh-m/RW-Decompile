@@ -57,12 +57,12 @@ namespace RimWorld.Planet
 
 		public void ExposeData()
 		{
-			Scribe_Values.LookValue<bool>(ref this.moving, "moving", true, false);
-			Scribe_Values.LookValue<int>(ref this.nextTile, "nextTile", 0, false);
-			Scribe_Values.LookValue<float>(ref this.nextTileCostLeft, "nextTileCostLeft", 0f, false);
-			Scribe_Values.LookValue<float>(ref this.nextTileCostTotal, "nextTileCostTotal", 0f, false);
-			Scribe_Values.LookValue<int>(ref this.destTile, "destTile", 0, false);
-			Scribe_Deep.LookDeep<CaravanArrivalAction>(ref this.arrivalAction, "arrivalAction", new object[0]);
+			Scribe_Values.Look<bool>(ref this.moving, "moving", true, false);
+			Scribe_Values.Look<int>(ref this.nextTile, "nextTile", 0, false);
+			Scribe_Values.Look<float>(ref this.nextTileCostLeft, "nextTileCostLeft", 0f, false);
+			Scribe_Values.Look<float>(ref this.nextTileCostTotal, "nextTileCostTotal", 0f, false);
+			Scribe_Values.Look<int>(ref this.destTile, "destTile", 0, false);
+			Scribe_Deep.Look<CaravanArrivalAction>(ref this.arrivalAction, "arrivalAction", new object[0]);
 			if (Scribe.mode == LoadSaveMode.PostLoadInit && Current.ProgramState != ProgramState.Entry && this.moving)
 			{
 				this.StartPath(this.destTile, this.arrivalAction, true);
@@ -104,7 +104,11 @@ namespace RimWorld.Planet
 			this.moving = true;
 			if (repathImmediately)
 			{
-				this.TrySetNewPath();
+				bool flag = this.TrySetNewPath();
+				if (flag && this.nextTileCostLeft <= 0f && this.moving)
+				{
+					this.TryEnterNextPathTile();
+				}
 			}
 		}
 
@@ -196,7 +200,7 @@ namespace RimWorld.Planet
 		{
 			CaravanArrivalAction caravanArrivalAction = this.arrivalAction;
 			this.StopDead();
-			if (caravanArrivalAction != null)
+			if (caravanArrivalAction != null && !caravanArrivalAction.ShouldFail)
 			{
 				caravanArrivalAction.Arrived(this.caravan);
 			}
@@ -269,21 +273,46 @@ namespace RimWorld.Planet
 					" which is unwalkable."
 				}));
 			}
-			int num = this.CostToMoveIntoTile(this.nextTile);
+			int num = this.CostToMove(this.caravan.Tile, this.nextTile);
 			this.nextTileCostTotal = (float)num;
 			this.nextTileCostLeft = (float)num;
 		}
 
-		private int CostToMoveIntoTile(int tile)
+		private int CostToMove(int start, int end)
 		{
-			return Caravan_PathFollower.CostToMoveIntoTile(this.caravan, tile, -1f);
+			return Caravan_PathFollower.CostToMove(this.caravan, start, end, -1f);
 		}
 
-		public static int CostToMoveIntoTile(Caravan caravan, int tile, float yearPercent = -1f)
+		public static int CostToMove(Caravan caravan, int start, int end, float yearPercent = -1f)
 		{
-			int num = caravan.TicksPerMove;
-			num += WorldPathGrid.CalculatedCostAt(tile, false, yearPercent);
+			return Caravan_PathFollower.CostToMove(caravan.TicksPerMove, start, end, yearPercent);
+		}
+
+		public static int CostToMove(int caravanTicksPerMove, int start, int end, float yearPercent = -1f)
+		{
+			int num = caravanTicksPerMove + WorldPathGrid.CalculatedCostAt(end, false, yearPercent);
+			num = Mathf.RoundToInt((float)num * Find.WorldGrid.GetRoadMovementMultiplierFast(start, end));
 			return Mathf.Clamp(num, 1, 120000);
+		}
+
+		public static int CostToDisplay(Caravan caravan, int start, int end, float yearPercent = -1f)
+		{
+			if (start != end && end != -1)
+			{
+				return Caravan_PathFollower.CostToMove(caravan.TicksPerMove, start, end, yearPercent);
+			}
+			int num = caravan.TicksPerMove;
+			num += WorldPathGrid.CalculatedCostAt(start, false, yearPercent);
+			Tile tile = Find.WorldGrid[start];
+			float num2 = 1f;
+			if (tile.roads != null)
+			{
+				for (int i = 0; i < tile.roads.Count; i++)
+				{
+					num2 = Mathf.Min(num2, tile.roads[i].road.movementCostMultiplier);
+				}
+			}
+			return Mathf.RoundToInt((float)num * num2);
 		}
 
 		private float CostToPayThisTick()
@@ -320,7 +349,7 @@ namespace RimWorld.Planet
 		{
 			int num = (!this.moving || this.nextTile < 0 || !this.IsNextTilePassable()) ? this.caravan.Tile : this.nextTile;
 			this.lastPathedTargetTile = this.destTile;
-			WorldPath worldPath = Find.WorldPathFinder.FindPath(num, this.destTile, this.caravan);
+			WorldPath worldPath = Find.WorldPathFinder.FindPath(num, this.destTile, this.caravan, null);
 			if (worldPath.Found && num != this.caravan.Tile)
 			{
 				worldPath.AddNode(num);
@@ -330,7 +359,7 @@ namespace RimWorld.Planet
 
 		private bool AtDestinationPosition()
 		{
-			return this.caravan.Tile == this.destTile || (this.arrivalAction != null && this.arrivalAction.ArriveOnTouch && Find.WorldGrid.IsNeighbor(this.caravan.Tile, this.destTile));
+			return this.caravan.Tile == this.destTile;
 		}
 
 		private bool NeedNewPath()

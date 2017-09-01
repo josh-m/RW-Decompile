@@ -32,7 +32,7 @@ namespace Verse
 
 		public void GameInfoUpdate()
 		{
-			if (Time.realtimeSinceStartup < this.lastInputRealTime + 90f && Find.MainTabsRoot.OpenTab != MainTabDefOf.Menu && Current.ProgramState == ProgramState.Playing && !Find.WindowStack.IsOpen<Dialog_Options>())
+			if (Time.realtimeSinceStartup < this.lastInputRealTime + 90f && Find.MainTabsRoot.OpenTab != MainButtonDefOf.Menu && Current.ProgramState == ProgramState.Playing && !Find.WindowStack.IsOpen<Dialog_Options>())
 			{
 				this.realPlayTimeInteracting += RealTime.realDeltaTime;
 			}
@@ -40,9 +40,9 @@ namespace Verse
 
 		public void ExposeData()
 		{
-			Scribe_Values.LookValue<float>(ref this.realPlayTimeInteracting, "realPlayTimeInteracting", 0f, false);
-			Scribe_Values.LookValue<bool>(ref this.permadeathMode, "permadeathMode", false, false);
-			Scribe_Values.LookValue<string>(ref this.permadeathModeUniqueName, "permadeathModeUniqueName", null, false);
+			Scribe_Values.Look<float>(ref this.realPlayTimeInteracting, "realPlayTimeInteracting", 0f, false);
+			Scribe_Values.Look<bool>(ref this.permadeathMode, "permadeathMode", false, false);
+			Scribe_Values.Look<string>(ref this.permadeathModeUniqueName, "permadeathModeUniqueName", null, false);
 		}
 	}
 }

@@ -42,7 +42,7 @@ namespace RimWorld
 				defaultDesc = "CommandCopyZoneSettingsDesc".Translate(),
 				action = delegate
 				{
-					SoundDefOf.TickHigh.PlayOneShotOnCamera();
+					SoundDefOf.TickHigh.PlayOneShotOnCamera(null);
 					StorageSettingsClipboard.Copy(this.s);
 				},
 				hotKey = KeyBindingDefOf.Misc4
@@ -53,7 +53,7 @@ namespace RimWorld
 			paste.defaultDesc = "CommandPasteZoneSettingsDesc".Translate();
 			paste.action = delegate
 			{
-				SoundDefOf.TickHigh.PlayOneShotOnCamera();
+				SoundDefOf.TickHigh.PlayOneShotOnCamera(null);
 				StorageSettingsClipboard.PasteInto(this.s);
 			};
 			paste.hotKey = KeyBindingDefOf.Misc5;

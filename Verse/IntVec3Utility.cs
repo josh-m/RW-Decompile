@@ -10,7 +10,12 @@ namespace Verse
 			return new IntVec3(vect);
 		}
 
-		public static float DistanceToSquared(this IntVec3 a, IntVec3 b)
+		public static float DistanceTo(this IntVec3 a, IntVec3 b)
+		{
+			return (a - b).LengthHorizontal;
+		}
+
+		public static int DistanceToSquared(this IntVec3 a, IntVec3 b)
 		{
 			return (a - b).LengthHorizontalSquared;
 		}
@@ -35,6 +40,11 @@ namespace Verse
 		public static int ManhattanDistanceFlat(IntVec3 a, IntVec3 b)
 		{
 			return Math.Abs(a.x - b.x) + Math.Abs(a.z - b.z);
+		}
+
+		public static IntVec3 RandomHorizontalOffset(float maxDist)
+		{
+			return Vector3Utility.RandomHorizontalOffset(maxDist).ToIntVec3();
 		}
 	}
 }

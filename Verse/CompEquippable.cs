@@ -70,7 +70,7 @@ namespace Verse
 		public override void PostExposeData()
 		{
 			base.PostExposeData();
-			Scribe_Deep.LookDeep<VerbTracker>(ref this.verbTracker, "verbTracker", new object[]
+			Scribe_Deep.Look<VerbTracker>(ref this.verbTracker, "verbTracker", new object[]
 			{
 				this
 			});

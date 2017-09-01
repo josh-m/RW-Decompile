@@ -14,9 +14,9 @@ namespace RimWorld
 
 		private int spraySustainerStartTick = -999;
 
-		public override void SpawnSetup(Map map)
+		public override void SpawnSetup(Map map, bool respawningAfterLoad)
 		{
-			base.SpawnSetup(map);
+			base.SpawnSetup(map, respawningAfterLoad);
 			this.steamSprayer = new IntermittentSteamSprayer(this);
 			this.steamSprayer.startSprayCallback = new Action(this.StartSpray);
 			this.steamSprayer.endSprayCallback = new Action(this.EndSpray);

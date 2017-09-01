@@ -35,7 +35,7 @@ namespace RimWorld
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Defs.LookDef<ThingDef>(ref this.building, "building");
+			Scribe_Defs.Look<ThingDef>(ref this.building, "building");
 		}
 
 		public override void Randomize()

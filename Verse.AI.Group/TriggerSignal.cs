@@ -10,13 +10,21 @@ namespace Verse.AI.Group
 
 		public string memo;
 
-		public Pawn pawn;
+		public Thing thing;
 
 		public DamageInfo dinfo;
 
 		public PawnLostCondition condition;
 
 		public Faction faction;
+
+		public Pawn Pawn
+		{
+			get
+			{
+				return this.thing as Pawn;
+			}
+		}
 
 		public static TriggerSignal ForTick
 		{
@@ -30,7 +38,7 @@ namespace Verse.AI.Group
 		{
 			this.type = type;
 			this.memo = null;
-			this.pawn = null;
+			this.thing = null;
 			this.dinfo = default(DamageInfo);
 			this.condition = PawnLostCondition.Undefined;
 			this.faction = null;
@@ -53,9 +61,9 @@ namespace Verse.AI.Group
 			{
 				stringBuilder.Append(", memo=" + this.memo);
 			}
-			if (this.pawn != null)
+			if (this.Pawn != null)
 			{
-				stringBuilder.Append(", pawn=" + this.pawn);
+				stringBuilder.Append(", pawn=" + this.Pawn);
 			}
 			if (this.dinfo.Def != null)
 			{

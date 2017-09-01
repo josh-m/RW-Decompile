@@ -59,7 +59,7 @@ namespace RimWorld
 			}
 		}
 
-		public override void PostSpawnSetup()
+		public override void PostSpawnSetup(bool respawningAfterLoad)
 		{
 			this.powerComp = this.parent.TryGetComp<CompPowerTrader>();
 		}
@@ -86,7 +86,7 @@ namespace RimWorld
 
 		public override void PostExposeData()
 		{
-			Scribe_Values.LookValue<int>(ref this.progressTicks, "progressTicks", 0, false);
+			Scribe_Values.Look<int>(ref this.progressTicks, "progressTicks", 0, false);
 		}
 
 		public override void PostDrawExtraSelectionOverlays()
@@ -103,7 +103,7 @@ namespace RimWorld
 			{
 				"TimePassed".Translate().CapitalizeFirst(),
 				": ",
-				this.progressTicks.ToStringTicksToPeriod(true),
+				this.progressTicks.ToStringTicksToPeriod(true, false, true),
 				"\n",
 				"CurrentRadius".Translate().CapitalizeFirst(),
 				": ",
@@ -118,7 +118,7 @@ namespace RimWorld
 					"\n",
 					"RadiusExpandsIn".Translate().CapitalizeFirst(),
 					": ",
-					this.TicksUntilRadiusInteger.ToStringTicksToPeriod(true)
+					this.TicksUntilRadiusInteger.ToStringTicksToPeriod(true, false, true)
 				});
 			}
 			return text;

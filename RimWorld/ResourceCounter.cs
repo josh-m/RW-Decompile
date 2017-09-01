@@ -11,6 +11,8 @@ namespace RimWorld
 
 		private Dictionary<ThingDef, int> countedAmounts = new Dictionary<ThingDef, int>();
 
+		private static List<ThingDef> resources = new List<ThingDef>();
+
 		public int Silver
 		{
 			get
@@ -57,15 +59,21 @@ namespace RimWorld
 			this.ResetResourceCounts();
 		}
 
+		public static void ResetDefs()
+		{
+			ResourceCounter.resources.Clear();
+			ResourceCounter.resources.AddRange(from def in DefDatabase<ThingDef>.AllDefs
+			where def.CountAsResource
+			orderby def.resourceReadoutPriority descending
+			select def);
+		}
+
 		public void ResetResourceCounts()
 		{
 			this.countedAmounts.Clear();
-			foreach (ThingDef current in from def in DefDatabase<ThingDef>.AllDefs
-			where def.CountAsResource
-			orderby def.resourceReadoutPriority descending
-			select def)
+			for (int i = 0; i < ResourceCounter.resources.Count; i++)
 			{
-				this.countedAmounts.Add(current, 0);
+				this.countedAmounts.Add(ResourceCounter.resources[i], 0);
 			}
 		}
 

@@ -73,8 +73,8 @@ namespace RimWorld
 			};
 			if (base.CurJob.haulDroppedApparel)
 			{
-				yield return Toils_Reserve.Reserve(TargetIndex.B, 1);
-				yield return Toils_Reserve.Reserve(TargetIndex.A, 1);
+				yield return Toils_Reserve.Reserve(TargetIndex.B, 1, -1, null);
+				yield return Toils_Reserve.Reserve(TargetIndex.A, 1, -1, null);
 				yield return Toils_Haul.StartCarryThing(TargetIndex.A, false, false).FailOn(() => !this.<>f__this.pawn.health.capacities.CapableOf(PawnCapacityDefOf.Manipulation));
 				Toil carryToCell = Toils_Haul.CarryHauledThingToCell(TargetIndex.B);
 				yield return carryToCell;

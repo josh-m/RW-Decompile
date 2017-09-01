@@ -21,7 +21,7 @@ namespace Verse
 		public virtual float Apply(DamageInfo dinfo, Thing victim)
 		{
 			float result = 0f;
-			if (victim.MapHeld != null)
+			if (victim.SpawnedOrAnyParentSpawned)
 			{
 				ImpactSoundUtility.PlayImpactSound(victim, dinfo.Def.impactSoundType, victim.MapHeld);
 			}
@@ -32,7 +32,7 @@ namespace Verse
 				if (victim.HitPoints <= 0)
 				{
 					victim.HitPoints = 0;
-					victim.Destroy(DestroyMode.Kill);
+					victim.Kill(null);
 				}
 			}
 			return result;
@@ -137,7 +137,7 @@ namespace Verse
 				angle = (t.Position - explosion.position).AngleFlat;
 			}
 			ThingDef weaponGear = explosion.weaponGear;
-			DamageInfo dinfo = new DamageInfo(this.def, explosion.damAmount, angle, explosion.instigator, null, weaponGear);
+			DamageInfo dinfo = new DamageInfo(this.def, explosion.damAmount, angle, explosion.instigator, null, weaponGear, DamageInfo.SourceCategory.ThingOrUnknown);
 			if (this.def.explosionAffectOutsidePartsOnly)
 			{
 				dinfo.SetBodyRegion(BodyPartHeight.Undefined, BodyPartDepth.Outside);
@@ -145,7 +145,7 @@ namespace Verse
 			if (t.def.category == ThingCategory.Building)
 			{
 				int amount = Mathf.RoundToInt((float)dinfo.Amount * this.def.explosionBuildingDamageFactor);
-				dinfo = new DamageInfo(this.def, amount, dinfo.Angle, explosion.instigator, null, null);
+				dinfo = new DamageInfo(this.def, amount, dinfo.Angle, explosion.instigator, null, null, DamageInfo.SourceCategory.ThingOrUnknown);
 			}
 			t.TakeDamage(dinfo);
 		}
@@ -165,7 +165,7 @@ namespace Verse
 				IntVec3 intVec = center + GenRadial.RadialPattern[i];
 				if (intVec.InBounds(map))
 				{
-					if (GenSight.LineOfSight(center, intVec, map, true))
+					if (GenSight.LineOfSight(center, intVec, map, true, null, 0, 0))
 					{
 						DamageWorker.openCells.Add(intVec);
 					}

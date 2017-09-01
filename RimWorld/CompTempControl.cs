@@ -25,9 +25,9 @@ namespace RimWorld
 			}
 		}
 
-		public override void PostSpawnSetup()
+		public override void PostSpawnSetup(bool respawningAfterLoad)
 		{
-			base.PostSpawnSetup();
+			base.PostSpawnSetup(respawningAfterLoad);
 			if (this.targetTemperature < -2000f)
 			{
 				this.targetTemperature = this.Props.defaultTargetTemperature;
@@ -37,7 +37,7 @@ namespace RimWorld
 		public override void PostExposeData()
 		{
 			base.PostExposeData();
-			Scribe_Values.LookValue<float>(ref this.targetTemperature, "targetTemperature", 0f, false);
+			Scribe_Values.Look<float>(ref this.targetTemperature, "targetTemperature", 0f, false);
 		}
 
 		private float RoundedToCurrentTempModeOffset(float celsiusTemp)
@@ -83,7 +83,7 @@ namespace RimWorld
 				action = delegate
 				{
 					this.<>f__this.targetTemperature = 21f;
-					SoundDefOf.TickTiny.PlayOneShotOnCamera();
+					SoundDefOf.TickTiny.PlayOneShotOnCamera(null);
 					this.<>f__this.ThrowCurrentTemperatureText();
 				},
 				defaultLabel = "CommandResetTemp".Translate(),
@@ -121,11 +121,11 @@ namespace RimWorld
 		{
 			if (offset > 0f)
 			{
-				SoundDefOf.AmountIncrement.PlayOneShotOnCamera();
+				SoundDefOf.AmountIncrement.PlayOneShotOnCamera(null);
 			}
 			else
 			{
-				SoundDefOf.AmountDecrement.PlayOneShotOnCamera();
+				SoundDefOf.AmountDecrement.PlayOneShotOnCamera(null);
 			}
 			this.targetTemperature += offset;
 			this.targetTemperature = Mathf.Clamp(this.targetTemperature, -270f, 2000f);

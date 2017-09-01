@@ -63,7 +63,7 @@ namespace Verse
 		{
 			if (pov == this.initiator)
 			{
-				JumpToTargetUtility.TryJumpAndSelect(this.recipient);
+				CameraJumper.TryJumpAndSelect(this.recipient);
 			}
 			else
 			{
@@ -71,7 +71,7 @@ namespace Verse
 				{
 					throw new NotImplementedException();
 				}
-				JumpToTargetUtility.TryJumpAndSelect(this.initiator);
+				CameraJumper.TryJumpAndSelect(this.initiator);
 			}
 		}
 
@@ -82,7 +82,7 @@ namespace Verse
 				Log.ErrorOnce("PlayLogEntry_Interaction has a null pawn reference.", 34422);
 				return "[" + this.intDef.label + " error: null pawn reference]";
 			}
-			Rand.PushSeed();
+			Rand.PushState();
 			Rand.Seed = this.ticksAbs * 61261;
 			List<Rule> list = new List<Rule>();
 			string text;
@@ -123,7 +123,7 @@ namespace Verse
 					text = text + " " + GrammarResolver.Resolve(this.extraSentencePacks[i].Rules[0].keyword, list, "extraSentencePack");
 				}
 			}
-			Rand.PopSeed();
+			Rand.PopState();
 			return text;
 		}
 
@@ -144,10 +144,10 @@ namespace Verse
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Defs.LookDef<InteractionDef>(ref this.intDef, "intDef");
-			Scribe_References.LookReference<Pawn>(ref this.initiator, "initiator", true);
-			Scribe_References.LookReference<Pawn>(ref this.recipient, "recipient", true);
-			Scribe_Collections.LookList<RulePackDef>(ref this.extraSentencePacks, "extras", LookMode.Undefined, new object[0]);
+			Scribe_Defs.Look<InteractionDef>(ref this.intDef, "intDef");
+			Scribe_References.Look<Pawn>(ref this.initiator, "initiator", true);
+			Scribe_References.Look<Pawn>(ref this.recipient, "recipient", true);
+			Scribe_Collections.Look<RulePackDef>(ref this.extraSentencePacks, "extras", LookMode.Undefined, new object[0]);
 		}
 
 		public override string ToString()

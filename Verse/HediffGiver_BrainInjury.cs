@@ -29,7 +29,7 @@ namespace Verse
 				{
 					if ((pawn.Faction == Faction.OfPlayer || pawn.IsPrisonerOfColony) && !this.letter.NullOrEmpty())
 					{
-						Find.LetterStack.ReceiveLetter(this.letterLabel, this.letter.AdjustedFor(pawn), LetterType.BadNonUrgent, pawn, null);
+						Find.LetterStack.ReceiveLetter(this.letterLabel, this.letter.AdjustedFor(pawn), LetterDefOf.BadNonUrgent, pawn, null);
 					}
 					return true;
 				}

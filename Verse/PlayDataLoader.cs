@@ -1,4 +1,5 @@
 using RimWorld;
+using RimWorld.BaseGen;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -56,8 +57,7 @@ namespace Verse
 					Log.Warning("Caught exception while recovering from errors and trying to clear all play data. Ignoring it.\nThe exception was: " + arg);
 				}
 				ModsConfig.Reset();
-				CrossRefLoader.Clear();
-				PostLoadInitter.Clear();
+				DirectXmlCrossRefLoader.Clear();
 				PlayDataLoader.LoadAllPlayData(true);
 				return;
 			}
@@ -110,7 +110,7 @@ namespace Verse
 			DeepProfiler.Start("Resolve cross-references between non-implied Defs.");
 			try
 			{
-				CrossRefLoader.ResolveAllWantedCrossReferences(FailMode.Silent);
+				DirectXmlCrossRefLoader.ResolveAllWantedCrossReferences(FailMode.Silent);
 			}
 			finally
 			{
@@ -137,7 +137,7 @@ namespace Verse
 			DeepProfiler.Start("Resolve cross-references between Defs made by the implied defs.");
 			try
 			{
-				CrossRefLoader.ResolveAllWantedCrossReferences(FailMode.LogErrors);
+				DirectXmlCrossRefLoader.ResolveAllWantedCrossReferences(FailMode.LogErrors);
 			}
 			finally
 			{
@@ -160,6 +160,7 @@ namespace Verse
 				CostListCalculator.Reset();
 				PawnApparelGenerator.Reset();
 				RestUtility.Reset();
+				ThoughtUtility.Reset();
 				PawnWeaponGenerator.Reset();
 				ThinkTreeKeyAssigner.Reset();
 				ThingCategoryNodeDatabase.FinalizeInit();
@@ -167,12 +168,17 @@ namespace Verse
 				HaulAIUtility.Reset();
 				WorkGiver_FillFermentingBarrel.Reset();
 				WorkGiver_InteractAnimal.Reset();
+				WorkGiver_Warden_DoExecution.Reset();
 				MedicalCareUtility.Reset();
 				InspectPaneUtility.Reset();
 				GraphicDatabaseHeadRecords.Reset();
 				DateReadout.Reset();
 				ResearchProjectDef.GenerateNonOverlappingCoordinates();
 				WorkGiver_FixBrokenDownBuilding.CacheTranslations();
+				ItemCollectionGeneratorUtility.Reset();
+				BaseGen.Reset();
+				HealthUtility.Reset();
+				ResourceCounter.ResetDefs();
 			}
 			finally
 			{
@@ -283,6 +289,7 @@ namespace Verse
 			ThingCategoryNodeDatabase.Clear();
 			BackstoryDatabase.Clear();
 			SolidBioDatabase.Clear();
+			Current.Game = null;
 			PlayDataLoader.loadedInt = false;
 		}
 	}

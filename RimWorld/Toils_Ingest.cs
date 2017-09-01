@@ -30,8 +30,9 @@ namespace RimWorld
 					return;
 				}
 				actor.carryTracker.TryStartCarry(thing);
-				actor.jobs.curJob.targetA = actor.carryTracker.CarriedThing;
+				actor.CurJob.SetTarget(ind, actor.carryTracker.CarriedThing);
 			};
+			toil.FailOnCannotTouch(ind, PathEndMode.Touch);
 			toil.defaultCompleteMode = ToilCompleteMode.Delay;
 			toil.defaultDuration = Building_NutrientPasteDispenser.CollectDuration;
 			return toil;
@@ -69,60 +70,65 @@ namespace RimWorld
 			toil.initAction = delegate
 			{
 				Pawn actor = toil.actor;
+				IntVec3 intVec = IntVec3.Invalid;
 				Thing thing = null;
 				Thing thing2 = actor.CurJob.GetTarget(ingestibleInd).Thing;
+				Predicate<Thing> baseChairValidator = delegate(Thing t)
+				{
+					if (t.def.building == null || !t.def.building.isSittable)
+					{
+						return false;
+					}
+					if (t.IsForbidden(pawn))
+					{
+						return false;
+					}
+					if (!actor.CanReserve(t, 1, -1, null, false))
+					{
+						return false;
+					}
+					if (!t.IsSociallyProper(actor))
+					{
+						return false;
+					}
+					if (t.IsBurning())
+					{
+						return false;
+					}
+					if (t.HostileTo(pawn))
+					{
+						return false;
+					}
+					bool result = false;
+					for (int i = 0; i < 4; i++)
+					{
+						IntVec3 c = t.Position + GenAdj.CardinalDirections[i];
+						Building edifice = c.GetEdifice(t.Map);
+						if (edifice != null && edifice.def.surfaceType == SurfaceType.Eat)
+						{
+							result = true;
+							break;
+						}
+					}
+					return result;
+				};
 				if (thing2.def.ingestible.chairSearchRadius > 0f)
 				{
-					Predicate<Thing> validator = delegate(Thing t)
-					{
-						if (t.def.building == null || !t.def.building.isSittable)
-						{
-							return false;
-						}
-						if (t.IsForbidden(pawn))
-						{
-							return false;
-						}
-						if (!actor.CanReserve(t, 1))
-						{
-							return false;
-						}
-						if (!t.IsSociallyProper(actor))
-						{
-							return false;
-						}
-						if (t.IsBurning())
-						{
-							return false;
-						}
-						if (t.HostileTo(pawn))
-						{
-							return false;
-						}
-						bool result = false;
-						for (int i = 0; i < 4; i++)
-						{
-							IntVec3 c = t.Position + GenAdj.CardinalDirections[i];
-							Building edifice = c.GetEdifice(t.Map);
-							if (edifice != null && edifice.def.surfaceType == SurfaceType.Eat)
-							{
-								result = true;
-								break;
-							}
-						}
-						return result;
-					};
-					thing = GenClosest.ClosestThingReachable(actor.Position, actor.Map, ThingRequest.ForGroup(ThingRequestGroup.BuildingArtificial), PathEndMode.OnCell, TraverseParms.For(actor, Danger.Deadly, TraverseMode.ByPawn, false), thing2.def.ingestible.chairSearchRadius, validator, null, -1, false);
+					thing = GenClosest.ClosestThingReachable(actor.Position, actor.Map, ThingRequest.ForGroup(ThingRequestGroup.BuildingArtificial), PathEndMode.OnCell, TraverseParms.For(actor, Danger.Deadly, TraverseMode.ByPawn, false), thing2.def.ingestible.chairSearchRadius, (Thing t) => baseChairValidator(t) && t.Position.GetDangerFor(pawn, t.Map) == Danger.None, null, 0, -1, false, RegionType.Set_Passable, false);
 				}
-				IntVec3 intVec;
+				if (thing == null)
+				{
+					intVec = RCellFinder.SpotToChewStandingNear(actor, actor.CurJob.GetTarget(ingestibleInd).Thing);
+					Danger chewSpotDanger = intVec.GetDangerFor(pawn, actor.Map);
+					if (chewSpotDanger != Danger.None)
+					{
+						thing = GenClosest.ClosestThingReachable(actor.Position, actor.Map, ThingRequest.ForGroup(ThingRequestGroup.BuildingArtificial), PathEndMode.OnCell, TraverseParms.For(actor, Danger.Deadly, TraverseMode.ByPawn, false), thing2.def.ingestible.chairSearchRadius, (Thing t) => baseChairValidator(t) && t.Position.GetDangerFor(pawn, t.Map) <= chewSpotDanger, null, 0, -1, false, RegionType.Set_Passable, false);
+					}
+				}
 				if (thing != null)
 				{
 					intVec = thing.Position;
-					actor.Reserve(thing, 1);
-				}
-				else
-				{
-					intVec = RCellFinder.SpotToChewStandingNear(actor, actor.CurJob.targetA.Thing);
+					actor.Reserve(thing, 1, -1, null);
 				}
 				actor.Map.pawnDestinationManager.ReserveDestinationFor(actor, intVec);
 				actor.pather.StartPath(intVec, PathEndMode.OnCell);
@@ -331,15 +337,15 @@ namespace RimWorld
 				{
 					if (!(ingester.Position + ingester.Rotation.FacingCell).HasEatSurface(actor.Map) && ingester.GetPosture() == PawnPosture.Standing)
 					{
-						ingester.needs.mood.thoughts.memories.TryGainMemoryThought(ThoughtDefOf.AteWithoutTable, null);
+						ingester.needs.mood.thoughts.memories.TryGainMemory(ThoughtDefOf.AteWithoutTable, null);
 					}
-					Room room = ingester.GetRoom();
+					Room room = ingester.GetRoom(RegionType.Set_Passable);
 					if (room != null)
 					{
 						int scoreStageIndex = RoomStatDefOf.Impressiveness.GetScoreStageIndex(room.GetStat(RoomStatDefOf.Impressiveness));
 						if (ThoughtDefOf.AteInImpressiveDiningRoom.stages[scoreStageIndex] != null)
 						{
-							ingester.needs.mood.thoughts.memories.TryGainMemoryThought(ThoughtMaker.MakeThought(ThoughtDefOf.AteInImpressiveDiningRoom, scoreStageIndex), null);
+							ingester.needs.mood.thoughts.memories.TryGainMemory(ThoughtMaker.MakeThought(ThoughtDefOf.AteInImpressiveDiningRoom, scoreStageIndex), null);
 						}
 					}
 				}

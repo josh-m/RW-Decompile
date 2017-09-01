@@ -8,7 +8,7 @@ namespace RimWorld
 	{
 		protected override Job TryGiveJob(Pawn pawn)
 		{
-			if (pawn.CurJob != null && pawn.jobs.curDriver.layingDown)
+			if (pawn.CurJob != null && pawn.jobs.curDriver.layingDown != LayingDownState.NotLaying)
 			{
 				return pawn.CurJob;
 			}

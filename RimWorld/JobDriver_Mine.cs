@@ -12,11 +12,13 @@ namespace RimWorld
 
 		private const int BaseDamagePerPickHit = 80;
 
+		private const float MinMiningSpeedForNPCs = 0.5f;
+
 		private int ticksToPickHit = -1000;
 
 		private Effecter effecter;
 
-		private Thing Mineable
+		private Thing MineTarget
 		{
 			get
 			{
@@ -29,13 +31,13 @@ namespace RimWorld
 		{
 			this.FailOnDespawnedNullOrForbidden(TargetIndex.A);
 			this.FailOnCellMissingDesignation(TargetIndex.A, DesignationDefOf.Mine);
-			yield return Toils_Reserve.Reserve(TargetIndex.A, 1);
+			yield return Toils_Reserve.Reserve(TargetIndex.A, 1, -1, null);
 			yield return Toils_Goto.GotoThing(TargetIndex.A, PathEndMode.Touch);
 			Toil mine = new Toil();
 			mine.tickAction = delegate
 			{
 				Pawn actor = this.<mine>__0.actor;
-				Thing mineable = this.<>f__this.Mineable;
+				Thing mineTarget = this.<>f__this.MineTarget;
 				if (this.<>f__this.ticksToPickHit < -100)
 				{
 					this.<>f__this.ResetTicksToPickHit();
@@ -47,19 +49,27 @@ namespace RimWorld
 				this.<>f__this.ticksToPickHit--;
 				if (this.<>f__this.ticksToPickHit <= 0)
 				{
+					IntVec3 position = mineTarget.Position;
 					if (this.<>f__this.effecter == null)
 					{
 						this.<>f__this.effecter = EffecterDefOf.Mine.Spawn();
 					}
-					this.<>f__this.effecter.Trigger(actor, mineable);
-					int amount = 80;
-					Pawn actor2 = this.<mine>__0.actor;
-					DamageInfo dinfo = new DamageInfo(DamageDefOf.Mining, amount, -1f, actor2, null, null);
-					IntVec3 position = mineable.Position;
-					mineable.TakeDamage(dinfo);
-					if (mineable.Destroyed)
+					this.<>f__this.effecter.Trigger(actor, mineTarget);
+					int num = 80;
+					Mineable mineable = mineTarget as Mineable;
+					if (mineable == null || mineTarget.HitPoints > num)
 					{
-						actor.Map.mineStrikeManager.CheckStruckOre(position, mineable.def, actor);
+						Pawn actor2 = this.<mine>__0.actor;
+						DamageInfo dinfo = new DamageInfo(DamageDefOf.Mining, num, -1f, actor2, null, null, DamageInfo.SourceCategory.ThingOrUnknown);
+						mineTarget.TakeDamage(dinfo);
+					}
+					else
+					{
+						mineable.DestroyMined(actor);
+					}
+					if (mineTarget.Destroyed)
+					{
+						actor.Map.mineStrikeManager.CheckStruckOre(position, mineTarget.def, actor);
 						actor.records.Increment(RecordDefOf.CellsMined);
 						if (this.<>f__this.pawn.Faction != Faction.OfPlayer)
 						{
@@ -76,20 +86,25 @@ namespace RimWorld
 				}
 			};
 			mine.defaultCompleteMode = ToilCompleteMode.Never;
-			mine.WithProgressBar(TargetIndex.A, () => 1f - (float)this.<>f__this.Mineable.HitPoints / (float)this.<>f__this.Mineable.MaxHitPoints, false, -0.5f);
+			mine.WithProgressBar(TargetIndex.A, () => 1f - (float)this.<>f__this.MineTarget.HitPoints / (float)this.<>f__this.MineTarget.MaxHitPoints, false, -0.5f);
+			mine.FailOnCannotTouch(TargetIndex.A, PathEndMode.Touch);
 			yield return mine;
 		}
 
 		private void ResetTicksToPickHit()
 		{
-			float statValue = this.pawn.GetStatValue(StatDefOf.MiningSpeed, true);
-			this.ticksToPickHit = (int)Math.Round((double)(120f / statValue));
+			float num = this.pawn.GetStatValue(StatDefOf.MiningSpeed, true);
+			if (num < 0.5f && this.pawn.Faction != Faction.OfPlayer)
+			{
+				num = 0.5f;
+			}
+			this.ticksToPickHit = (int)Math.Round((double)(120f / num));
 		}
 
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Values.LookValue<int>(ref this.ticksToPickHit, "ticksToPickHit", 0, false);
+			Scribe_Values.Look<int>(ref this.ticksToPickHit, "ticksToPickHit", 0, false);
 		}
 	}
 }

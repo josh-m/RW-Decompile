@@ -77,7 +77,7 @@ namespace RimWorld.Planet
 			Rect rect = new Rect(0f, 0f, this.size.x, this.size.y).ContractedBy(10f);
 			Rect rect2 = new Rect(0f, 0f, rect.width - 16f, this.scrollViewHeight);
 			float num = 0f;
-			Widgets.BeginScrollView(rect, ref this.scrollPosition, rect2);
+			Widgets.BeginScrollView(rect, ref this.scrollPosition, rect2, true);
 			this.DoColumnHeaders(ref num);
 			this.DoRows(ref num, rect2, rect);
 			if (Event.current.type == EventType.Layout)
@@ -122,7 +122,7 @@ namespace RimWorld.Planet
 					if (Widgets.CloseButtonFor(rect.AtZero()))
 					{
 						this.specificHealthTabForPawn = null;
-						SoundDefOf.TabClose.PlayOneShotOnCamera();
+						SoundDefOf.TabClose.PlayOneShotOnCamera(null);
 					}
 				}, true, false, 1f);
 			}
@@ -246,7 +246,7 @@ namespace RimWorld.Planet
 						{
 							if (!p.RaceProps.IsMechanoid || list[i].showOnMechanoids)
 							{
-								if (PawnCapacityUtility.BodyCanEverDoActivity(p.RaceProps.body, list[i]))
+								if (PawnCapacityUtility.BodyCanEverDoCapacity(p.RaceProps.body, list[i]))
 								{
 									this.DoCapacity(rect5, p, list[i]);
 								}

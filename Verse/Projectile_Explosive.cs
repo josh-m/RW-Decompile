@@ -9,7 +9,7 @@ namespace Verse
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Values.LookValue<int>(ref this.ticksToDetonation, "ticksToDetonation", 0, false);
+			Scribe_Values.Look<int>(ref this.ticksToDetonation, "ticksToDetonation", 0, false);
 		}
 
 		public override void Tick()

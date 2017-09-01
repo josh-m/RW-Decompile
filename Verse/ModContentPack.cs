@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Xml;
 using UnityEngine;
 
 namespace Verse
@@ -21,6 +22,8 @@ namespace Verse
 		private ModContentHolder<string> strings;
 
 		public ModAssemblyHandler assemblies;
+
+		private List<PatchOperation> patches;
 
 		private List<DefPackage> defPackages = new List<DefPackage>();
 
@@ -82,6 +85,18 @@ namespace Verse
 			}
 		}
 
+		public IEnumerable<PatchOperation> Patches
+		{
+			get
+			{
+				if (this.patches == null)
+				{
+					this.LoadPatches();
+				}
+				return this.patches;
+			}
+		}
+
 		public ModContentPack(DirectoryInfo directory, int loadOrder, string name)
 		{
 			this.rootDirInt = directory;
@@ -117,7 +132,7 @@ namespace Verse
 			return null;
 		}
 
-		public void ReloadAllContent()
+		public void ReloadContent()
 		{
 			LongEventHandler.ExecuteWhenFinished(delegate
 			{
@@ -126,13 +141,19 @@ namespace Verse
 				this.strings.ReloadAll();
 			});
 			this.assemblies.ReloadAll();
-			this.LoadDefs();
 		}
 
-		private void LoadDefs()
+		public void LoadDefs(IEnumerable<PatchOperation> patches)
 		{
 			DeepProfiler.Start("Loading all defs");
-			List<LoadableXmlAsset> list = XmlLoader.XmlAssetsInModFolder(this, "Defs/").ToList<LoadableXmlAsset>();
+			List<LoadableXmlAsset> list = DirectXmlLoader.XmlAssetsInModFolder(this, "Defs/").ToList<LoadableXmlAsset>();
+			foreach (LoadableXmlAsset current in list)
+			{
+				foreach (PatchOperation current2 in patches)
+				{
+					current2.Apply(current.xmlDoc);
+				}
+			}
 			for (int i = 0; i < list.Count; i++)
 			{
 				XmlInheritance.TryRegisterAllFrom(list[i], this);
@@ -142,9 +163,9 @@ namespace Verse
 			{
 				string relFolder = GenFilePaths.FolderPathRelativeToDefsFolder(list[j].fullFolderPath, this);
 				DefPackage defPackage = new DefPackage(list[j].name, relFolder);
-				foreach (Def current in XmlLoader.AllDefsFromAsset(list[j]))
+				foreach (Def current3 in DirectXmlLoader.AllDefsFromAsset(list[j]))
 				{
-					defPackage.defs.Add(current);
+					defPackage.defs.Add(current3);
 				}
 				this.defPackages.Add(defPackage);
 			}
@@ -167,6 +188,45 @@ namespace Verse
 		public void AddDefPackage(DefPackage defPackage)
 		{
 			this.defPackages.Add(defPackage);
+		}
+
+		private void LoadPatches()
+		{
+			DeepProfiler.Start("Loading all patches");
+			this.patches = new List<PatchOperation>();
+			List<LoadableXmlAsset> list = DirectXmlLoader.XmlAssetsInModFolder(this, "Patches/").ToList<LoadableXmlAsset>();
+			for (int i = 0; i < list.Count; i++)
+			{
+				XmlElement documentElement = list[i].xmlDoc.DocumentElement;
+				if (documentElement.Name != "Patch")
+				{
+					Log.Error(string.Format("Unexpected document element in patch XML; got {0}, expected 'Patch'", documentElement.Name));
+				}
+				else
+				{
+					for (int j = 0; j < documentElement.ChildNodes.Count; j++)
+					{
+						XmlNode xmlNode = documentElement.ChildNodes[j];
+						if (xmlNode.NodeType == XmlNodeType.Element)
+						{
+							if (xmlNode.Name != "Operation")
+							{
+								Log.Error(string.Format("Unexpected element in patch XML; got {0}, expected 'Operation'", documentElement.ChildNodes[j].Name));
+							}
+							else
+							{
+								this.patches.Add(DirectXmlToObject.ObjectFromXml<PatchOperation>(xmlNode, false));
+							}
+						}
+					}
+				}
+			}
+			DeepProfiler.End();
+		}
+
+		public void ClearPatchesCache()
+		{
+			this.patches = null;
 		}
 
 		public override string ToString()

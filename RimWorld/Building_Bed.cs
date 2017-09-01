@@ -237,11 +237,11 @@ namespace RimWorld
 			}
 		}
 
-		public override void SpawnSetup(Map map)
+		public override void SpawnSetup(Map map, bool respawningAfterLoad)
 		{
-			base.SpawnSetup(map);
-			Room room = RoomQuery.RoomAt(this);
-			if (room != null && room.isPrisonCell)
+			base.SpawnSetup(map, respawningAfterLoad);
+			Region validRegionAt_NoRebuild = map.regionGrid.GetValidRegionAt_NoRebuild(base.Position);
+			if (validRegionAt_NoRebuild != null && validRegionAt_NoRebuild.Room.isPrisonCell)
 			{
 				this.ForPrisoners = true;
 			}
@@ -261,33 +261,35 @@ namespace RimWorld
 			this.ForPrisoners = false;
 			this.Medical = false;
 			this.alreadySetDefaultMed = false;
-			Room room = this.GetRoom();
+			Room room = this.GetRoom(RegionType.Set_Passable);
 			base.DeSpawn();
 			if (room != null)
 			{
-				room.RoomChanged();
+				room.Notify_RoomShapeOrContainedBedsChanged();
 			}
 		}
 
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Values.LookValue<bool>(ref this.forPrisonersInt, "forPrisoners", false, false);
-			Scribe_Values.LookValue<bool>(ref this.medicalInt, "medical", false, false);
-			Scribe_Values.LookValue<bool>(ref this.alreadySetDefaultMed, "alreadySetDefaultMed", false, false);
+			Scribe_Values.Look<bool>(ref this.forPrisonersInt, "forPrisoners", false, false);
+			Scribe_Values.Look<bool>(ref this.medicalInt, "medical", false, false);
+			Scribe_Values.Look<bool>(ref this.alreadySetDefaultMed, "alreadySetDefaultMed", false, false);
 		}
 
 		public override void DrawExtraSelectionOverlays()
 		{
 			base.DrawExtraSelectionOverlays();
-			if (this.ForPrisoners)
+			Room room = this.GetRoom(RegionType.Set_Passable);
+			if (room != null && Building_Bed.RoomCanBePrisonCell(room))
 			{
-				Room room = this.GetRoom();
-				if (room != null)
-				{
-					room.DrawFieldEdges();
-				}
+				room.DrawFieldEdges();
 			}
+		}
+
+		public static bool RoomCanBePrisonCell(Room r)
+		{
+			return !r.TouchesMapEdge && !r.IsHuge && r.RegionType == RegionType.Normal;
 		}
 
 		[DebuggerHidden]
@@ -308,7 +310,7 @@ namespace RimWorld
 				{
 					this.<>f__this.ToggleForPrisonersByInterface();
 				};
-				if (this.GetRoom().TouchesMapEdge && !this.ForPrisoners)
+				if (!Building_Bed.RoomCanBePrisonCell(this.GetRoom(RegionType.Set_Passable)) && !this.ForPrisoners)
 				{
 					pris.Disable("CommandBedSetForPrisonersFailOutdoors".Translate());
 				}
@@ -354,38 +356,40 @@ namespace RimWorld
 			Building_Bed.lastPrisonerSetChangeFrame = Time.frameCount;
 			bool newForPrisoners = !this.ForPrisoners;
 			SoundDef soundDef = (!newForPrisoners) ? SoundDefOf.CheckboxTurnedOff : SoundDefOf.CheckboxTurnedOn;
-			soundDef.PlayOneShotOnCamera();
+			soundDef.PlayOneShotOnCamera(null);
 			List<Building_Bed> bedsToAffect = new List<Building_Bed>();
 			foreach (Building_Bed current in (from so in Find.Selector.SelectedObjects
 			where so is Building_Bed
 			select so).Cast<Building_Bed>())
 			{
-				Room room = RoomQuery.RoomAt(current);
-				if (room == null || room.TouchesMapEdge || room.IsHuge)
+				if (current.ForPrisoners != newForPrisoners)
 				{
-					if (!bedsToAffect.Contains(current))
+					Room room = current.GetRoom(RegionType.Set_Passable);
+					if (room == null || !Building_Bed.RoomCanBePrisonCell(room))
 					{
-						bedsToAffect.Add(current);
-					}
-				}
-				else
-				{
-					foreach (Building_Bed current2 in room.ContainedBeds)
-					{
-						if (!bedsToAffect.Contains(current2))
+						if (!bedsToAffect.Contains(current))
 						{
-							bedsToAffect.Add(current2);
+							bedsToAffect.Add(current);
+						}
+					}
+					else
+					{
+						foreach (Building_Bed current2 in room.ContainedBeds)
+						{
+							if (!bedsToAffect.Contains(current2))
+							{
+								bedsToAffect.Add(current2);
+							}
 						}
 					}
 				}
 			}
-			bedsToAffect.RemoveAll((Building_Bed b) => b.ForPrisoners == newForPrisoners);
 			Action action = delegate
 			{
 				List<Room> list = new List<Room>();
 				foreach (Building_Bed current4 in bedsToAffect)
 				{
-					Room room2 = current4.GetRoom();
+					Room room2 = current4.GetRoom(RegionType.Set_Passable);
 					current4.ForPrisoners = (newForPrisoners && !room2.TouchesMapEdge);
 					for (int j = 0; j < this.SleepingSlotsCount; j++)
 					{
@@ -402,7 +406,7 @@ namespace RimWorld
 				}
 				foreach (Room current5 in list)
 				{
-					current5.RoomChanged();
+					current5.Notify_RoomShapeOrContainedBedsChanged();
 				}
 			};
 			if ((from b in bedsToAffect
@@ -447,6 +451,7 @@ namespace RimWorld
 			stringBuilder.Append(base.GetInspectString());
 			if (this.def.building.bed_humanlike)
 			{
+				stringBuilder.AppendLine();
 				if (this.ForPrisoners)
 				{
 					stringBuilder.AppendLine("ForPrisonerUse".Translate());
@@ -458,6 +463,8 @@ namespace RimWorld
 				if (this.Medical)
 				{
 					stringBuilder.AppendLine("MedicalBed".Translate());
+					stringBuilder.AppendLine("RoomSurgerySuccessChanceFactor".Translate() + ": " + this.GetRoom(RegionType.Set_Passable).GetStat(RoomStatDefOf.SurgerySuccessChanceFactor).ToStringPercent());
+					stringBuilder.AppendLine("RoomInfectionChanceFactor".Translate() + ": " + this.GetRoom(RegionType.Set_Passable).GetStat(RoomStatDefOf.InfectionChanceFactor).ToStringPercent());
 				}
 				else if (this.PlayerCanSeeOwners)
 				{
@@ -486,7 +493,7 @@ namespace RimWorld
 					}
 				}
 			}
-			return stringBuilder.ToString();
+			return stringBuilder.ToString().TrimEndNewlines();
 		}
 
 		[DebuggerHidden]
@@ -498,27 +505,26 @@ namespace RimWorld
 				{
 					yield return new FloatMenuOption("UseMedicalBed".Translate() + " (" + "NotInjured".Translate() + ")", null, MenuOptionPriority.Default, null, null, 0f, null, null);
 				}
-				else if (!this.AnyUnoccupiedSleepingSlot)
-				{
-					yield return new FloatMenuOption("UseMedicalBed".Translate() + " (" + "SomeoneElseSleeping".Translate() + ")", null, MenuOptionPriority.Default, null, null, 0f, null, null);
-				}
-				else if (!myPawn.CanReserve(this, this.SleepingSlotsCount))
-				{
-					yield return new FloatMenuOption("UseMedicalBed".Translate() + " (" + "Reserved".Translate() + ")", null, MenuOptionPriority.Default, null, null, 0f, null, null);
-				}
 				else
 				{
 					Action sleep = delegate
 					{
-						if (!this.<>f__this.ForPrisoners && this.<>f__this.Medical && this.<>f__this.AnyUnoccupiedSleepingSlot && this.myPawn.CanReserveAndReach(this.<>f__this, PathEndMode.ClosestTouch, Danger.Deadly, this.<>f__this.SleepingSlotsCount))
+						if (!this.<>f__this.ForPrisoners && this.<>f__this.Medical && this.myPawn.CanReserveAndReach(this.<>f__this, PathEndMode.ClosestTouch, Danger.Deadly, this.<>f__this.SleepingSlotsCount, -1, null, true))
 						{
 							Job job = new Job(JobDefOf.LayDown, this.<>f__this);
 							job.restUntilHealed = true;
-							this.myPawn.jobs.TryTakeOrderedJob(job);
+							this.myPawn.jobs.TryTakeOrderedJob(job, JobTag.Misc);
 							this.myPawn.mindState.ResetLastDisturbanceTick();
 						}
 					};
-					yield return new FloatMenuOption("UseMedicalBed".Translate(), sleep, MenuOptionPriority.Default, null, null, 0f, null, null);
+					if (this.AnyUnoccupiedSleepingSlot)
+					{
+						yield return FloatMenuUtility.DecoratePrioritizedTask(new FloatMenuOption("UseMedicalBed".Translate(), sleep, MenuOptionPriority.Default, null, null, 0f, null, null), myPawn, this, "ReservedBy");
+					}
+					else
+					{
+						yield return FloatMenuUtility.DecoratePrioritizedTask(new FloatMenuOption("UseMedicalBed".Translate(), sleep, MenuOptionPriority.Default, null, null, 0f, null, null), myPawn, this, "SomeoneElseSleeping");
+					}
 				}
 			}
 		}
@@ -573,7 +579,7 @@ namespace RimWorld
 				{
 					if (pawn.CurJob != null)
 					{
-						if (pawn.jobs.curDriver.layingDown && pawn.jobs.curDriver.layingDownBed == this)
+						if (pawn.jobs.curDriver.layingDown == LayingDownState.LayingInBed)
 						{
 							return pawn;
 						}
@@ -653,7 +659,7 @@ namespace RimWorld
 
 		private void NotifyRoomBedTypeChanged()
 		{
-			Room room = this.GetRoom();
+			Room room = this.GetRoom(RegionType.Set_Passable);
 			if (room != null)
 			{
 				room.Notify_BedTypeChanged();

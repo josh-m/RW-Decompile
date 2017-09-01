@@ -37,13 +37,10 @@ namespace Verse
 
 		public void Remove(Building b)
 		{
-			if (b.Faction == Faction.OfPlayer)
+			this.allBuildingsColonist.Remove(b);
+			if (b is IAttackTarget)
 			{
-				this.allBuildingsColonist.Remove(b);
-				if (b is IAttackTarget)
-				{
-					this.allBuildingsColonistCombatTargets.Remove(b);
-				}
+				this.allBuildingsColonistCombatTargets.Remove(b);
 			}
 			CompProperties_Power compProperties = b.def.GetCompProperties<CompProperties_Power>();
 			if (compProperties != null && compProperties.startElectricalFires)

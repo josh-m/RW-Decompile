@@ -12,7 +12,7 @@ namespace RimWorld
 		{
 			return map.mapPawns.FreeColonistsAndPrisoners.Where(delegate(Pawn p)
 			{
-				if (p.holdingContainer != null && p.holdingContainer.owner is Building_CryptosleepCasket)
+				if (p.ParentHolder is Building_CryptosleepCasket)
 				{
 					return false;
 				}
@@ -22,12 +22,12 @@ namespace RimWorld
 					{
 						if (IncidentWorker_Disease.CanAddHediffToAnyPartOfDef(p, this.def.diseaseIncident, this.def.diseasePartsToAffect[i]))
 						{
-							goto IL_86;
+							goto IL_76;
 						}
 					}
 					return false;
 				}
-				IL_86:
+				IL_76:
 				return p.health.immunity.DiseaseContractChanceFactor(this.def.diseaseIncident, null) > 0f;
 			});
 		}

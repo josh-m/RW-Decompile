@@ -8,7 +8,7 @@ namespace RimWorld
 	{
 		protected override Job TryGiveJob(Pawn pawn)
 		{
-			if (!pawn.inventory.UnloadEverything || pawn.inventory.innerContainer.Count == 0)
+			if (!pawn.inventory.UnloadEverything)
 			{
 				return null;
 			}

@@ -46,7 +46,26 @@ namespace RimWorld
 			float num4 = (!initiator.story.traits.HasTrait(TraitDefOf.Gay)) ? ((initiator.gender != Gender.Female) ? 1f : 0.15f) : 1f;
 			float num5 = Mathf.InverseLerp(0.25f, 1f, num);
 			float num6 = Mathf.InverseLerp(5f, 100f, (float)num2);
-			float num7 = (initiator.gender != recipient.gender != (initiator.story.traits.HasTrait(TraitDefOf.Gay) != recipient.story.traits.HasTrait(TraitDefOf.Gay))) ? 1f : 0.15f;
+			float num7;
+			if (initiator.gender == recipient.gender)
+			{
+				if (initiator.story.traits.HasTrait(TraitDefOf.Gay) && recipient.story.traits.HasTrait(TraitDefOf.Gay))
+				{
+					num7 = 1f;
+				}
+				else
+				{
+					num7 = 0.15f;
+				}
+			}
+			else if (!initiator.story.traits.HasTrait(TraitDefOf.Gay) && !recipient.story.traits.HasTrait(TraitDefOf.Gay))
+			{
+				num7 = 1f;
+			}
+			else
+			{
+				num7 = 0.15f;
+			}
 			return 1.15f * num4 * num5 * num6 * num3 * num7;
 		}
 
@@ -104,12 +123,12 @@ namespace RimWorld
 					initiator,
 					recipient
 				});
-				initiator.needs.mood.thoughts.memories.RemoveMemoryThoughtsOfDefWhereOtherPawnIs(ThoughtDefOf.BrokeUpWithMe, recipient);
-				recipient.needs.mood.thoughts.memories.RemoveMemoryThoughtsOfDefWhereOtherPawnIs(ThoughtDefOf.BrokeUpWithMe, initiator);
-				initiator.needs.mood.thoughts.memories.RemoveMemoryThoughtsOfDefWhereOtherPawnIs(ThoughtDefOf.FailedRomanceAttemptOnMe, recipient);
-				initiator.needs.mood.thoughts.memories.RemoveMemoryThoughtsOfDefWhereOtherPawnIs(ThoughtDefOf.FailedRomanceAttemptOnMeLowOpinionMood, recipient);
-				recipient.needs.mood.thoughts.memories.RemoveMemoryThoughtsOfDefWhereOtherPawnIs(ThoughtDefOf.FailedRomanceAttemptOnMe, initiator);
-				recipient.needs.mood.thoughts.memories.RemoveMemoryThoughtsOfDefWhereOtherPawnIs(ThoughtDefOf.FailedRomanceAttemptOnMeLowOpinionMood, initiator);
+				initiator.needs.mood.thoughts.memories.RemoveMemoriesOfDefWhereOtherPawnIs(ThoughtDefOf.BrokeUpWithMe, recipient);
+				recipient.needs.mood.thoughts.memories.RemoveMemoriesOfDefWhereOtherPawnIs(ThoughtDefOf.BrokeUpWithMe, initiator);
+				initiator.needs.mood.thoughts.memories.RemoveMemoriesOfDefWhereOtherPawnIs(ThoughtDefOf.FailedRomanceAttemptOnMe, recipient);
+				initiator.needs.mood.thoughts.memories.RemoveMemoriesOfDefWhereOtherPawnIs(ThoughtDefOf.FailedRomanceAttemptOnMeLowOpinionMood, recipient);
+				recipient.needs.mood.thoughts.memories.RemoveMemoriesOfDefWhereOtherPawnIs(ThoughtDefOf.FailedRomanceAttemptOnMe, initiator);
+				recipient.needs.mood.thoughts.memories.RemoveMemoriesOfDefWhereOtherPawnIs(ThoughtDefOf.FailedRomanceAttemptOnMeLowOpinionMood, initiator);
 				if (initiator.IsColonist || recipient.IsColonist)
 				{
 					this.SendNewLoversLetter(initiator, recipient, list, list2);
@@ -119,11 +138,11 @@ namespace RimWorld
 			}
 			else
 			{
-				initiator.needs.mood.thoughts.memories.TryGainMemoryThought(ThoughtDefOf.RebuffedMyRomanceAttempt, recipient);
-				recipient.needs.mood.thoughts.memories.TryGainMemoryThought(ThoughtDefOf.FailedRomanceAttemptOnMe, initiator);
+				initiator.needs.mood.thoughts.memories.TryGainMemory(ThoughtDefOf.RebuffedMyRomanceAttempt, recipient);
+				recipient.needs.mood.thoughts.memories.TryGainMemory(ThoughtDefOf.FailedRomanceAttemptOnMe, initiator);
 				if (recipient.relations.OpinionOf(initiator) <= 0)
 				{
-					recipient.needs.mood.thoughts.memories.TryGainMemoryThought(ThoughtDefOf.FailedRomanceAttemptOnMeLowOpinionMood, initiator);
+					recipient.needs.mood.thoughts.memories.TryGainMemory(ThoughtDefOf.FailedRomanceAttemptOnMeLowOpinionMood, initiator);
 				}
 				extraSentencePacks.Add(RulePackDefOf.Sentence_RomanceAttemptRejected);
 			}
@@ -161,19 +180,19 @@ namespace RimWorld
 			{
 				return;
 			}
-			pawn.needs.mood.thoughts.memories.TryGainMemoryThought(ThoughtDefOf.CheatedOnMe, cheater);
+			pawn.needs.mood.thoughts.memories.TryGainMemory(ThoughtDefOf.CheatedOnMe, cheater);
 		}
 
 		private void SendNewLoversLetter(Pawn initiator, Pawn recipient, List<Pawn> initiatorOldLoversAndFiances, List<Pawn> recipientOldLoversAndFiances)
 		{
 			bool flag = false;
 			string label;
-			LetterType type;
+			LetterDef textLetterDef;
 			Pawn t;
 			if ((initiator.GetSpouse() != null && !initiator.GetSpouse().Dead) || (recipient.GetSpouse() != null && !recipient.GetSpouse().Dead))
 			{
 				label = "LetterLabelAffair".Translate();
-				type = LetterType.BadNonUrgent;
+				textLetterDef = LetterDefOf.BadNonUrgent;
 				if (initiator.GetSpouse() != null && !initiator.GetSpouse().Dead)
 				{
 					t = initiator;
@@ -187,7 +206,7 @@ namespace RimWorld
 			else
 			{
 				label = "LetterLabelNewLovers".Translate();
-				type = LetterType.Good;
+				textLetterDef = LetterDefOf.Good;
 				t = initiator;
 			}
 			StringBuilder stringBuilder = new StringBuilder();
@@ -248,7 +267,7 @@ namespace RimWorld
 					}));
 				}
 			}
-			Find.LetterStack.ReceiveLetter(label, stringBuilder.ToString().TrimEndNewlines(), type, t, null);
+			Find.LetterStack.ReceiveLetter(label, stringBuilder.ToString().TrimEndNewlines(), textLetterDef, t, null);
 		}
 	}
 }

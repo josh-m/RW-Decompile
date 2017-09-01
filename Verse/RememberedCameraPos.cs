@@ -17,8 +17,8 @@ namespace Verse
 
 		public void ExposeData()
 		{
-			Scribe_Values.LookValue<Vector3>(ref this.rootPos, "rootPos", default(Vector3), false);
-			Scribe_Values.LookValue<float>(ref this.rootSize, "rootSize", 0f, false);
+			Scribe_Values.Look<Vector3>(ref this.rootPos, "rootPos", default(Vector3), false);
+			Scribe_Values.Look<float>(ref this.rootSize, "rootSize", 0f, false);
 		}
 	}
 }

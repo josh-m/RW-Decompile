@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEngine;
 using Verse;
 using Verse.AI.Group;
 
@@ -9,16 +8,23 @@ namespace RimWorld
 {
 	public class RaidStrategyWorker_ImmediateAttackSappers : RaidStrategyWorker
 	{
+		private static readonly SimpleCurve StrengthChanceFactorCurve = new SimpleCurve
+		{
+			{
+				new CurvePoint(10f, 1f),
+				true
+			},
+			{
+				new CurvePoint(50f, 5f),
+				true
+			}
+		};
+
 		public override float SelectionChance(Map map)
 		{
 			float num = base.SelectionChance(map);
 			float strengthRating = map.strengthWatcher.StrengthRating;
-			if (strengthRating > 10f)
-			{
-				float num2 = 1f + Mathf.Clamp01(Mathf.InverseLerp(10f, 30f, strengthRating));
-				num *= num2;
-			}
-			return num;
+			return num * RaidStrategyWorker_ImmediateAttackSappers.StrengthChanceFactorCurve.Evaluate(strengthRating);
 		}
 
 		public override bool CanUseWith(IncidentParms parms)

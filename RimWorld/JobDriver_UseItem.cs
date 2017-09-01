@@ -11,13 +11,12 @@ namespace RimWorld
 		[DebuggerHidden]
 		protected override IEnumerable<Toil> MakeNewToils()
 		{
-			yield return Toils_Reserve.Reserve(TargetIndex.A, 1);
+			yield return Toils_Reserve.Reserve(TargetIndex.A, 1, -1, null);
 			yield return Toils_Goto.GotoThing(TargetIndex.A, PathEndMode.Touch);
-			Toil prepare = new Toil();
-			prepare.defaultCompleteMode = ToilCompleteMode.Delay;
-			prepare.defaultDuration = 100;
+			Toil prepare = Toils_General.Wait(100);
 			prepare.WithProgressBarToilDelay(TargetIndex.A, false, -0.5f);
 			prepare.FailOnDespawnedNullOrForbidden(TargetIndex.A);
+			prepare.FailOnCannotTouch(TargetIndex.A, PathEndMode.Touch);
 			yield return prepare;
 			yield return new Toil
 			{

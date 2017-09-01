@@ -9,8 +9,6 @@ namespace Verse
 
 		private const byte ShadowBrightness = 195;
 
-		private static Building[] edificeGrid;
-
 		private static readonly Color32 Shadowed = new Color32(195, 195, 195, 255);
 
 		private static readonly Color32 Lit = new Color32(255, 255, 255, 255);
@@ -30,7 +28,7 @@ namespace Verse
 
 		public override void Regenerate()
 		{
-			SectionLayer_EdgeShadows.edificeGrid = base.Map.edificeGrid.InnerArray;
+			Building[] innerArray = base.Map.edificeGrid.InnerArray;
 			float y = Altitudes.AltitudeFor(AltitudeLayer.Shadows);
 			CellRect cellRect = new CellRect(this.section.botLeft.x, this.section.botLeft.z, 17, 17);
 			cellRect.ClipInsideMap(base.Map);
@@ -47,7 +45,7 @@ namespace Verse
 			{
 				for (int j = cellRect.minZ; j <= cellRect.maxZ; j++)
 				{
-					Thing thing = SectionLayer_EdgeShadows.edificeGrid[cellIndices.CellToIndex(i, j)];
+					Thing thing = innerArray[cellIndices.CellToIndex(i, j)];
 					if (thing != null && thing.def.castEdgeShadows)
 					{
 						sm.verts.Add(new Vector3((float)i, y, (float)j));
@@ -87,7 +85,7 @@ namespace Verse
 							IntVec3 c = a + cardinalDirectionsAround[k];
 							if (c.InBounds(base.Map))
 							{
-								thing = SectionLayer_EdgeShadows.edificeGrid[cellIndices.CellToIndex(c)];
+								thing = innerArray[cellIndices.CellToIndex(c)];
 								if (thing != null && thing.def.castEdgeShadows)
 								{
 									array2[k] = true;
@@ -104,7 +102,7 @@ namespace Verse
 								IntVec3 c = a + diagonalDirectionsAround[l];
 								if (c.InBounds(base.Map))
 								{
-									thing = SectionLayer_EdgeShadows.edificeGrid[cellIndices.CellToIndex(c)];
+									thing = innerArray[cellIndices.CellToIndex(c)];
 									if (thing != null && thing.def.castEdgeShadows)
 									{
 										array[l] = true;

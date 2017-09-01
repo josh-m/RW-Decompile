@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using UnityEngine;
 using Verse;
 
 namespace RimWorld
@@ -11,7 +10,7 @@ namespace RimWorld
 	{
 		public Storyteller teller;
 
-		private int lastPopGainTime = 100000;
+		private int lastPopGainTime = -600000;
 
 		private StorytellerDef Def
 		{
@@ -72,7 +71,7 @@ namespace RimWorld
 
 		public void ExposeData()
 		{
-			Scribe_Values.LookValue<int>(ref this.lastPopGainTime, "lastPopGainTime", 0, false);
+			Scribe_Values.Look<int>(ref this.lastPopGainTime, "lastPopGainTime", 0, false);
 		}
 
 		public void Notify_PopulationGained()
@@ -85,30 +84,11 @@ namespace RimWorld
 
 		private static float CalculatePopulationIntent(StorytellerDef def, float curPop, int ticksSinceGain)
 		{
-			if (curPop <= def.desiredPopulationMin)
-			{
-				return GenMath.LerpDouble(1f, def.desiredPopulationMin, 4f, 1f, curPop);
-			}
-			float num;
-			if (curPop >= def.desiredPopulationCritical)
-			{
-				num = -1f;
-			}
-			else if (curPop <= def.desiredPopulationMax)
-			{
-				num = 1f - Mathf.InverseLerp(def.desiredPopulationMin, def.desiredPopulationMax, curPop);
-			}
-			else
-			{
-				num = -1f * Mathf.InverseLerp(def.desiredPopulationMax, def.desiredPopulationCritical, curPop);
-			}
+			float num = def.populationIntentFromPopCurve.Evaluate(curPop);
 			if (num > 0f)
 			{
-				float value = (float)ticksSinceGain / 60000f;
-				float num2 = Mathf.InverseLerp((float)def.desiredPopulationGainIntervalMinDays, (float)def.desiredPopulationGainIntervalMaxDays, value);
-				num2 = Mathf.Clamp01(num2);
-				num2 = Mathf.Max(num2, 0.15f);
-				num *= num2;
+				float x = (float)ticksSinceGain / 60000f;
+				num *= def.populationIntentFromTimeCurve.Evaluate(x);
 			}
 			return num;
 		}
@@ -121,11 +101,11 @@ namespace RimWorld
 				list.Add((float)i);
 			}
 			List<float> list2 = new List<float>();
-			for (int j = 0; j < 40; j += 3)
+			for (int j = 0; j < 40; j += 2)
 			{
 				list2.Add((float)j);
 			}
-			DebugTables.MakeTablesDialog<float, float>(list2, (float ds) => "day " + ds.ToString("F0"), list, (float rv) => rv.ToString("F2"), (float ds, float p) => StoryIntender_Population.CalculatePopulationIntent(this.Def, p, (int)(ds * 60000f)).ToString("F2"), "pop");
+			DebugTables.MakeTablesDialog<float, float>(list2, (float ds) => "d-" + ds.ToString("F0"), list, (float rv) => rv.ToString("F2"), (float ds, float p) => StoryIntender_Population.CalculatePopulationIntent(this.Def, p, (int)(ds * 60000f)).ToString("F2"), "pop");
 		}
 	}
 }

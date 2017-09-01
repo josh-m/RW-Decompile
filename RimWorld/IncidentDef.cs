@@ -1,4 +1,3 @@
-using RimWorld.Planet;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -10,17 +9,19 @@ namespace RimWorld
 	{
 		public Type workerClass;
 
+		public IncidentCategory category;
+
 		public IncidentTargetType targetType;
 
 		public float baseChance;
 
-		public IncidentCategory category = IncidentCategory.Misc;
-
-		public IncidentPopulationEffect populationEffect = IncidentPopulationEffect.None;
+		public IncidentPopulationEffect populationEffect;
 
 		public int earliestDay;
 
-		public int minRefireDays;
+		public int minPopulation;
+
+		public float minRefireDays;
 
 		public int minDifficulty;
 
@@ -34,19 +35,19 @@ namespace RimWorld
 
 		public List<string> refireCheckTags;
 
+		public SimpleCurve chanceFactorByPopulationCurve;
+
 		[MustTranslate]
 		public string letterText;
 
 		[MustTranslate]
 		public string letterLabel;
 
-		public LetterType letterType;
+		public LetterDef letterDef;
 
-		public MapConditionDef mapCondition;
+		public GameConditionDef gameCondition;
 
 		public FloatRange durationDays;
-
-		public List<PawnKindDef> pawnKinds;
 
 		public HediffDef diseaseIncident;
 
@@ -148,9 +149,21 @@ namespace RimWorld
 			{
 				yield return c;
 			}
+			if (this.category == IncidentCategory.Undefined)
+			{
+				yield return "category is undefined.";
+			}
 			if (this.targetType == IncidentTargetType.None)
 			{
 				yield return "no target type";
+			}
+			if (this.TargetTypeAllowed(IncidentTargetType.World) && this.targetType != IncidentTargetType.World)
+			{
+				yield return "allows world target type along with other targets. World targeting incidents should only target the world.";
+			}
+			if (this.TargetTypeAllowed(IncidentTargetType.World) && this.allowedBiomes != null)
+			{
+				yield return "world-targeting incident has a biome restriction list";
 			}
 		}
 
@@ -161,19 +174,7 @@ namespace RimWorld
 
 		public bool TargetAllowed(IIncidentTarget target)
 		{
-			Map map = target as Map;
-			if (map != null)
-			{
-				if (this.TargetTypeAllowed(IncidentTargetType.BaseMap) && map.IsPlayerHome)
-				{
-					return true;
-				}
-				if (this.TargetTypeAllowed(IncidentTargetType.TempMap) && !map.IsPlayerHome)
-				{
-					return true;
-				}
-			}
-			return this.TargetTypeAllowed(IncidentTargetType.Caravan) && target is Caravan;
+			return this.TargetTypeAllowed(target.Type);
 		}
 	}
 }

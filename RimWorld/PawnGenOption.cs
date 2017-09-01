@@ -34,7 +34,7 @@ namespace RimWorld
 
 		public void LoadDataFromXmlCustom(XmlNode xmlRoot)
 		{
-			CrossRefLoader.RegisterObjectWantsCrossRef(this, "kind", xmlRoot.Name);
+			DirectXmlCrossRefLoader.RegisterObjectWantsCrossRef(this, "kind", xmlRoot.Name);
 			this.selectionWeight = (int)ParseHelper.FromString(xmlRoot.FirstChild.Value, typeof(int));
 		}
 	}

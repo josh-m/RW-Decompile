@@ -22,6 +22,14 @@ namespace RimWorld
 			}
 		}
 
+		public bool IgnoreStoredThingsBeauty
+		{
+			get
+			{
+				return this.def.building.ignoreStoredThingsBeauty;
+			}
+		}
+
 		public SlotGroup GetSlotGroup()
 		{
 			return this.slotGroup;
@@ -82,9 +90,9 @@ namespace RimWorld
 			}
 		}
 
-		public override void SpawnSetup(Map map)
+		public override void SpawnSetup(Map map, bool respawningAfterLoad)
 		{
-			base.SpawnSetup(map);
+			base.SpawnSetup(map, respawningAfterLoad);
 			this.cachedOccupiedCells = this.AllSlotCells().ToList<IntVec3>();
 			this.slotGroup = new SlotGroup(this);
 		}
@@ -92,7 +100,7 @@ namespace RimWorld
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Deep.LookDeep<StorageSettings>(ref this.settings, "settings", new object[]
+			Scribe_Deep.Look<StorageSettings>(ref this.settings, "settings", new object[]
 			{
 				this
 			});

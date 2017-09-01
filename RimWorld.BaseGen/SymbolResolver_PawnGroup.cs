@@ -26,8 +26,8 @@ namespace RimWorld.BaseGen
 			if (pawnGroupMakerParms == null)
 			{
 				pawnGroupMakerParms = new PawnGroupMakerParms();
-				pawnGroupMakerParms.map = map;
-				pawnGroupMakerParms.faction = Find.FactionManager.RandomEnemyFaction(false, false);
+				pawnGroupMakerParms.tile = map.Tile;
+				pawnGroupMakerParms.faction = Find.FactionManager.RandomEnemyFaction(false, false, true);
 				pawnGroupMakerParms.points = 250f;
 			}
 			PawnGroupKindDef groupKind = rp.pawnGroupKindDef ?? PawnGroupKindDefOf.Normal;

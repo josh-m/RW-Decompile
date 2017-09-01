@@ -4,7 +4,7 @@ namespace Verse.AI
 {
 	public abstract class ThinkNode_ChancePerHour : ThinkNode_Priority
 	{
-		public override ThinkResult TryIssueJobPackage(Pawn pawn)
+		public override ThinkResult TryIssueJobPackage(Pawn pawn, JobIssueParams jobParams)
 		{
 			if (Find.TickManager.TicksGame < this.GetLastTryTick(pawn) + 2500)
 			{
@@ -16,14 +16,14 @@ namespace Verse.AI
 			{
 				return ThinkResult.NoJob;
 			}
-			Rand.PushSeed();
+			Rand.PushState();
 			int salt = Gen.HashCombineInt(base.UniqueSaveKey, 26504059);
 			Rand.Seed = pawn.RandSeedForHour(salt);
 			bool flag = Rand.MTBEventOccurs(num, 2500f, 2500f);
-			Rand.PopSeed();
+			Rand.PopState();
 			if (flag)
 			{
-				return base.TryIssueJobPackage(pawn);
+				return base.TryIssueJobPackage(pawn, jobParams);
 			}
 			return ThinkResult.NoJob;
 		}

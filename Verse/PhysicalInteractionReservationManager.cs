@@ -13,8 +13,8 @@ namespace Verse
 
 			public void ExposeData()
 			{
-				Scribe_TargetInfo.LookTargetInfo(ref this.target, "target");
-				Scribe_References.LookReference<Pawn>(ref this.claimant, "claimant", false);
+				Scribe_TargetInfo.Look(ref this.target, "target");
+				Scribe_References.Look<Pawn>(ref this.claimant, "claimant", false);
 			}
 		}
 
@@ -90,12 +90,18 @@ namespace Verse
 
 		public void ReleaseAllClaimedBy(Pawn claimant)
 		{
-			this.reservations.RemoveAll((PhysicalInteractionReservationManager.PhysicalInteractionReservation x) => x.claimant == claimant);
+			for (int i = this.reservations.Count - 1; i >= 0; i--)
+			{
+				if (this.reservations[i].claimant == claimant)
+				{
+					this.reservations.RemoveAt(i);
+				}
+			}
 		}
 
 		public void ExposeData()
 		{
-			Scribe_Collections.LookList<PhysicalInteractionReservationManager.PhysicalInteractionReservation>(ref this.reservations, "reservations", LookMode.Deep, new object[0]);
+			Scribe_Collections.Look<PhysicalInteractionReservationManager.PhysicalInteractionReservation>(ref this.reservations, "reservations", LookMode.Deep, new object[0]);
 		}
 	}
 }

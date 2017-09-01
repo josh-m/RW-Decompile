@@ -34,14 +34,14 @@ namespace RimWorld
 
 		public override void ExposeData()
 		{
-			Scribe_Values.LookValue<int>(ref this.tile, "tile", 0, false);
-			Scribe_Values.LookValue<float>(ref this.temperature, "temperature", 0f, false);
-			Scribe_Values.LookValue<float>(ref this.snowDepth, "snowDepth", 0f, false);
-			Scribe_Defs.LookDef<WeatherDef>(ref this.weather, "weather");
-			Scribe_Defs.LookDef<RoomRoleDef>(ref this.roomRole, "roomRole");
-			Scribe_Values.LookValue<float>(ref this.roomImpressiveness, "roomImpressiveness", 0f, false);
-			Scribe_Values.LookValue<float>(ref this.roomBeauty, "roomBeauty", 0f, false);
-			Scribe_Values.LookValue<float>(ref this.roomCleanliness, "roomCleanliness", 0f, false);
+			Scribe_Values.Look<int>(ref this.tile, "tile", 0, false);
+			Scribe_Values.Look<float>(ref this.temperature, "temperature", 0f, false);
+			Scribe_Values.Look<float>(ref this.snowDepth, "snowDepth", 0f, false);
+			Scribe_Defs.Look<WeatherDef>(ref this.weather, "weather");
+			Scribe_Defs.Look<RoomRoleDef>(ref this.roomRole, "roomRole");
+			Scribe_Values.Look<float>(ref this.roomImpressiveness, "roomImpressiveness", 0f, false);
+			Scribe_Values.Look<float>(ref this.roomBeauty, "roomBeauty", 0f, false);
+			Scribe_Values.Look<float>(ref this.roomCleanliness, "roomCleanliness", 0f, false);
 		}
 
 		[DebuggerHidden]
@@ -69,7 +69,7 @@ namespace RimWorld
 		{
 			TaleData_Surroundings taleData_Surroundings = new TaleData_Surroundings();
 			taleData_Surroundings.tile = map.Tile;
-			Room roomOrAdjacent = c.GetRoomOrAdjacent(map);
+			Room roomOrAdjacent = c.GetRoomOrAdjacent(map, RegionType.Set_All);
 			if (roomOrAdjacent != null)
 			{
 				if (roomOrAdjacent.PsychologicallyOutdoors)

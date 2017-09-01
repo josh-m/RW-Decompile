@@ -16,7 +16,7 @@ namespace Verse.AI
 			return thinkNode_PrioritySorter;
 		}
 
-		public override ThinkResult TryIssueJobPackage(Pawn pawn)
+		public override ThinkResult TryIssueJobPackage(Pawn pawn, JobIssueParams jobParams)
 		{
 			ThinkNode_PrioritySorter.workingNodes.Clear();
 			int count = this.subNodes.Count;
@@ -61,7 +61,7 @@ namespace Verse.AI
 				ThinkResult result = ThinkResult.NoJob;
 				try
 				{
-					result = ThinkNode_PrioritySorter.workingNodes[num2].TryIssueJobPackage(pawn);
+					result = ThinkNode_PrioritySorter.workingNodes[num2].TryIssueJobPackage(pawn, jobParams);
 				}
 				catch (Exception ex2)
 				{

@@ -26,7 +26,7 @@ namespace RimWorld
 
 		public void ExposeData()
 		{
-			Scribe_Deep.LookDeep<Lesson>(ref this.activeLesson, "activeLesson", new object[0]);
+			Scribe_Deep.Look<Lesson>(ref this.activeLesson, "activeLesson", new object[0]);
 		}
 
 		public void Activate(InstructionDef id)

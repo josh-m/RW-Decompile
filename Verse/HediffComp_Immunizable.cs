@@ -35,7 +35,7 @@ namespace Verse
 		{
 			get
 			{
-				if (base.Def.PossibleToDevelopImmunity())
+				if (base.Def.PossibleToDevelopImmunityNaturally() && !this.FullyImmune)
 				{
 					return "Immunity".Translate() + ": " + (Mathf.Floor(this.Immunity * 100f) / 100f).ToStringPercent();
 				}
@@ -80,7 +80,7 @@ namespace Verse
 		public override void CompExposeData()
 		{
 			base.CompExposeData();
-			Scribe_Values.LookValue<float>(ref this.severityPerDayNotImmuneRandomFactor, "severityPerDayNotImmuneRandomFactor", 1f, false);
+			Scribe_Values.Look<float>(ref this.severityPerDayNotImmuneRandomFactor, "severityPerDayNotImmuneRandomFactor", 1f, false);
 		}
 
 		protected override float SeverityChangePerDay()

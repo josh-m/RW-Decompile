@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using UnityEngine;
 using Verse;
 using Verse.Sound;
 
@@ -8,6 +9,8 @@ namespace RimWorld
 {
 	public class CompFlickable : ThingComp
 	{
+		private const string OffGraphicSuffix = "_Off";
+
 		public const string FlickedOnSignal = "FlickedOn";
 
 		public const string FlickedOffSignal = "FlickedOff";
@@ -15,6 +18,30 @@ namespace RimWorld
 		private bool switchOnInt = true;
 
 		private bool wantSwitchOn = true;
+
+		private Graphic offGraphic;
+
+		private Texture2D cachedCommandTex;
+
+		private CompProperties_Flickable Props
+		{
+			get
+			{
+				return (CompProperties_Flickable)this.props;
+			}
+		}
+
+		private Texture2D CommandTex
+		{
+			get
+			{
+				if (this.cachedCommandTex == null)
+				{
+					this.cachedCommandTex = ContentFinder<Texture2D>.Get(this.Props.commandTexture, true);
+				}
+				return this.cachedCommandTex;
+			}
+		}
 
 		public bool SwitchIsOn
 		{
@@ -37,14 +64,34 @@ namespace RimWorld
 				{
 					this.parent.BroadcastCompSignal("FlickedOff");
 				}
+				if (this.parent.Spawned)
+				{
+					this.parent.Map.mapDrawer.MapMeshDirty(this.parent.Position, MapMeshFlag.Things | MapMeshFlag.Buildings);
+				}
+			}
+		}
+
+		public Graphic CurrentGraphic
+		{
+			get
+			{
+				if (this.SwitchIsOn)
+				{
+					return this.parent.DefaultGraphic;
+				}
+				if (this.offGraphic == null)
+				{
+					this.offGraphic = GraphicDatabase.Get(this.parent.def.graphicData.graphicClass, this.parent.def.graphicData.texPath + "_Off", ShaderDatabase.ShaderFromType(this.parent.def.graphicData.shaderType), this.parent.def.graphicData.drawSize, this.parent.DrawColor, this.parent.DrawColorTwo);
+				}
+				return this.offGraphic;
 			}
 		}
 
 		public override void PostExposeData()
 		{
 			base.PostExposeData();
-			Scribe_Values.LookValue<bool>(ref this.switchOnInt, "switchOn", true, false);
-			Scribe_Values.LookValue<bool>(ref this.wantSwitchOn, "wantSwitchOn", true, false);
+			Scribe_Values.Look<bool>(ref this.switchOnInt, "switchOn", true, false);
+			Scribe_Values.Look<bool>(ref this.wantSwitchOn, "wantSwitchOn", true, false);
 		}
 
 		public bool WantsFlick()
@@ -76,9 +123,9 @@ namespace RimWorld
 				yield return new Command_Toggle
 				{
 					hotKey = KeyBindingDefOf.CommandTogglePower,
-					icon = TexCommand.DesirePower,
-					defaultLabel = "CommandDesignateTogglePowerLabel".Translate(),
-					defaultDesc = "CommandDesignateTogglePowerDesc".Translate(),
+					icon = this.CommandTex,
+					defaultLabel = this.Props.commandLabelKey.Translate(),
+					defaultDesc = this.Props.commandDescKey.Translate(),
 					isActive = (() => this.<>f__this.wantSwitchOn),
 					toggleAction = delegate
 					{

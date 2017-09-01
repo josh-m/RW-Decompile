@@ -11,9 +11,15 @@ namespace RimWorld
 	{
 		public const float WorkBoxSize = 25f;
 
-		private const int MidAptCutoff = 14;
+		private const int AwfulBGMax = 4;
+
+		private const int BadBGMax = 14;
+
+		private const int MaxLevelForCrunch = 2;
 
 		private const float PassionOpacity = 0.4f;
+
+		public static readonly Texture2D WorkBoxBGTex_Awful = ContentFinder<Texture2D>.Get("UI/Widgets/WorkBoxBG_Awful", true);
 
 		public static readonly Texture2D WorkBoxBGTex_Bad = ContentFinder<Texture2D>.Get("UI/Widgets/WorkBoxBG_Bad", true);
 
@@ -32,13 +38,13 @@ namespace RimWorld
 			switch (prio)
 			{
 			case 1:
-				return Color.green;
+				return new Color(0f, 1f, 0f);
 			case 2:
-				return new Color(1f, 0.9f, 0.6f);
+				return new Color(1f, 0.9f, 0.5f);
 			case 3:
 				return new Color(0.8f, 0.7f, 0.5f);
 			case 4:
-				return new Color(0.6f, 0.6f, 0.6f);
+				return new Color(0.74f, 0.74f, 0.74f);
 			default:
 				return Color.grey;
 			}
@@ -60,23 +66,18 @@ namespace RimWorld
 			if (Find.PlaySettings.useWorkPriorities)
 			{
 				int priority = p.workSettings.GetPriority(wType);
-				string label;
 				if (priority > 0)
 				{
-					label = priority.ToString();
+					Text.Anchor = TextAnchor.MiddleCenter;
+					GUI.color = WidgetsWork.ColorOfPriority(priority);
+					Rect rect2 = rect.ContractedBy(-3f);
+					Widgets.Label(rect2, priority.ToStringCached());
+					GUI.color = Color.white;
+					Text.Anchor = TextAnchor.UpperLeft;
 				}
-				else
-				{
-					label = string.Empty;
-				}
-				Text.Anchor = TextAnchor.MiddleCenter;
-				GUI.color = WidgetsWork.ColorOfPriority(priority);
-				Rect rect2 = rect.ContractedBy(-3f);
-				Widgets.Label(rect2, label);
-				GUI.color = Color.white;
-				Text.Anchor = TextAnchor.UpperLeft;
 				if (Event.current.type == EventType.MouseDown && Mouse.IsOver(rect))
 				{
+					bool flag = p.workSettings.WorkIsActive(wType);
 					if (Event.current.button == 0)
 					{
 						int num = p.workSettings.GetPriority(wType) - 1;
@@ -85,7 +86,7 @@ namespace RimWorld
 							num = 4;
 						}
 						p.workSettings.SetPriority(wType, num);
-						SoundDefOf.AmountIncrement.PlayOneShotOnCamera();
+						SoundDefOf.AmountIncrement.PlayOneShotOnCamera(null);
 					}
 					if (Event.current.button == 1)
 					{
@@ -95,7 +96,11 @@ namespace RimWorld
 							num2 = 0;
 						}
 						p.workSettings.SetPriority(wType, num2);
-						SoundDefOf.AmountDecrement.PlayOneShotOnCamera();
+						SoundDefOf.AmountDecrement.PlayOneShotOnCamera(null);
+					}
+					if (!flag && p.workSettings.WorkIsActive(wType) && p.skills.AverageOfRelevantSkillsFor(wType) <= 2f)
+					{
+						SoundDefOf.Crunch.PlayOneShotOnCamera(null);
 					}
 					Event.current.Use();
 					PlayerKnowledgeDatabase.KnowledgeDemonstrated(ConceptDefOf.WorkTab, KnowledgeAmount.SpecificInteraction);
@@ -114,12 +119,16 @@ namespace RimWorld
 					if (p.workSettings.GetPriority(wType) > 0)
 					{
 						p.workSettings.SetPriority(wType, 0);
-						SoundDefOf.CheckboxTurnedOff.PlayOneShotOnCamera();
+						SoundDefOf.CheckboxTurnedOff.PlayOneShotOnCamera(null);
 					}
 					else
 					{
 						p.workSettings.SetPriority(wType, 3);
-						SoundDefOf.CheckboxTurnedOn.PlayOneShotOnCamera();
+						SoundDefOf.CheckboxTurnedOn.PlayOneShotOnCamera(null);
+						if (p.skills.AverageOfRelevantSkillsFor(wType) <= 2f)
+						{
+							SoundDefOf.Crunch.PlayOneShotOnCamera(null);
+						}
 					}
 					PlayerKnowledgeDatabase.KnowledgeDemonstrated(ConceptDefOf.WorkTab, KnowledgeAmount.SpecificInteraction);
 				}
@@ -179,11 +188,17 @@ namespace RimWorld
 			Texture2D image;
 			Texture2D image2;
 			float a;
-			if (num <= 14f)
+			if (num < 4f)
+			{
+				image = WidgetsWork.WorkBoxBGTex_Awful;
+				image2 = WidgetsWork.WorkBoxBGTex_Bad;
+				a = num / 4f;
+			}
+			else if (num <= 14f)
 			{
 				image = WidgetsWork.WorkBoxBGTex_Bad;
 				image2 = WidgetsWork.WorkBoxBGTex_Mid;
-				a = num / 14f;
+				a = (num - 4f) / 10f;
 			}
 			else
 			{

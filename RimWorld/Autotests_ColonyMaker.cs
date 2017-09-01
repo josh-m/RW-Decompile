@@ -85,7 +85,7 @@ namespace RimWorld
 					GenSpawn.Spawn(PawnGenerator.GeneratePawn(current, null), cellRect.Cells.ElementAt(0), Autotests_ColonyMaker.Map);
 					IntVec3 intVec = cellRect.Cells.ElementAt(1);
 					Pawn p = (Pawn)GenSpawn.Spawn(PawnGenerator.GeneratePawn(current, null), intVec, Autotests_ColonyMaker.Map);
-					HealthUtility.GiveInjuriesToKill(p);
+					HealthUtility.DamageUntilDead(p);
 					Corpse thing = (Corpse)intVec.GetThingList(Find.VisibleMap).First((Thing t) => t is Corpse);
 					CompRottable compRottable = thing.TryGetComp<CompRottable>();
 					if (compRottable != null)
@@ -274,7 +274,7 @@ namespace RimWorld
 					DamageDef def = (from d in DefDatabase<DamageDef>.AllDefs
 					where d.externalViolence
 					select d).RandomElement<DamageDef>();
-					col.TakeDamage(new DamageInfo(def, 10, -1f, null, null, null));
+					col.TakeDamage(new DamageInfo(def, 10, -1f, null, null, null, DamageInfo.SourceCategory.ThingOrUnknown));
 				});
 			}
 			if (flags.Contains(ColonyMakerFlag.ColonistsDiseased))

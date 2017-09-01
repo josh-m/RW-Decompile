@@ -22,6 +22,14 @@ namespace RimWorld
 			}
 		}
 
+		public bool IgnoreStoredThingsBeauty
+		{
+			get
+			{
+				return false;
+			}
+		}
+
 		protected override Color NextZoneColor
 		{
 			get
@@ -44,7 +52,7 @@ namespace RimWorld
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Deep.LookDeep<StorageSettings>(ref this.settings, "settings", new object[]
+			Scribe_Deep.Look<StorageSettings>(ref this.settings, "settings", new object[]
 			{
 				this
 			});

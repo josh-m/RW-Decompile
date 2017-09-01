@@ -101,19 +101,22 @@ namespace RimWorld
 				reason = null;
 				return false;
 			}
-			Room room = t.GetRoom();
-			int num = GenRadial.NumCellsInRadius(6.9f);
-			for (int i = 0; i < num; i++)
+			Room room = t.GetRoom(RegionType.Set_Passable);
+			if (room != null)
 			{
-				IntVec3 intVec = t.Position + GenRadial.RadialPattern[i];
-				if (intVec.InBounds(t.Map) && intVec.GetRoom(t.Map) == room)
+				int num = GenRadial.NumCellsInRadius(6.9f);
+				for (int i = 0; i < num; i++)
 				{
-					List<Thing> thingList = intVec.GetThingList(t.Map);
-					for (int j = 0; j < thingList.Count; j++)
+					IntVec3 intVec = t.Position + GenRadial.RadialPattern[i];
+					if (intVec.InBounds(t.Map) && intVec.GetRoom(t.Map, RegionType.Set_Passable) == room)
 					{
-						if (thingList[j].PreventPlayerSellingThingsNearby(out reason))
+						List<Thing> thingList = intVec.GetThingList(t.Map);
+						for (int j = 0; j < thingList.Count; j++)
 						{
-							return false;
+							if (thingList[j].PreventPlayerSellingThingsNearby(out reason))
+							{
+								return false;
+							}
 						}
 					}
 				}
@@ -151,7 +154,7 @@ namespace RimWorld
 					num += current.CurTotalSilverCost;
 				}
 			}
-			this.SilverTradeable.countToDrop = -Mathf.RoundToInt(num);
+			this.SilverTradeable.ForceTo(-Mathf.RoundToInt(num));
 		}
 
 		public bool TryExecute(out bool actuallyTraded)
@@ -185,9 +188,9 @@ namespace RimWorld
 
 		private void LimitCurrencyCountToTraderFunds()
 		{
-			if (this.SilverTradeable.countToDrop > this.SilverTradeable.CountHeldBy(Transactor.Trader))
+			if (this.SilverTradeable.CountToTransfer > this.SilverTradeable.CountHeldBy(Transactor.Trader))
 			{
-				this.SilverTradeable.countToDrop = this.SilverTradeable.CountHeldBy(Transactor.Trader);
+				this.SilverTradeable.ForceTo(this.SilverTradeable.CountHeldBy(Transactor.Trader));
 			}
 		}
 	}

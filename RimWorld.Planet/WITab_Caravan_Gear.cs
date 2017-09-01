@@ -101,7 +101,7 @@ namespace RimWorld.Planet
 			Rect rect = new Rect(0f, 0f, this.leftPaneWidth, this.size.y).ContractedBy(10f);
 			Rect rect2 = new Rect(0f, 0f, rect.width - 16f, this.leftPaneScrollViewHeight);
 			float num = 0f;
-			Widgets.BeginScrollView(rect, ref this.leftPaneScrollPosition, rect2);
+			Widgets.BeginScrollView(rect, ref this.leftPaneScrollPosition, rect2, true);
 			this.DoPawnRows(ref num, rect2, rect);
 			if (Event.current.type == EventType.Layout)
 			{
@@ -121,11 +121,11 @@ namespace RimWorld.Planet
 				if (this.droppedDraggedItem)
 				{
 					this.MoveDraggedItemToInventory();
-					SoundDefOf.TickTiny.PlayOneShotOnCamera();
+					SoundDefOf.TickTiny.PlayOneShotOnCamera(null);
 				}
 			}
 			float num = 0f;
-			Widgets.BeginScrollView(rect, ref this.rightPaneScrollPosition, rect2);
+			Widgets.BeginScrollView(rect, ref this.rightPaneScrollPosition, rect2, true);
 			this.DoInventoryRows(ref num, rect2, rect);
 			if (Event.current.type == EventType.Layout)
 			{
@@ -213,7 +213,7 @@ namespace RimWorld.Planet
 			if (flag && this.droppedDraggedItem)
 			{
 				this.TryEquipDraggedItem(p);
-				SoundDefOf.TickTiny.PlayOneShotOnCamera();
+				SoundDefOf.TickTiny.PlayOneShotOnCamera(null);
 			}
 			Rect rect3 = new Rect(4f, (rect.height - 27f) / 2f, 27f, 27f);
 			Widgets.ThingIcon(rect3, p, 1f);
@@ -222,10 +222,10 @@ namespace RimWorld.Planet
 			float xMax = bgRect.xMax;
 			if (p.equipment != null)
 			{
-				List<ThingWithComps> allEquipment = p.equipment.AllEquipment;
-				for (int i = 0; i < allEquipment.Count; i++)
+				List<ThingWithComps> allEquipmentListForReading = p.equipment.AllEquipmentListForReading;
+				for (int i = 0; i < allEquipmentListForReading.Count; i++)
 				{
-					this.DoEquippedGear(allEquipment[i], p, ref xMax);
+					this.DoEquippedGear(allEquipmentListForReading[i], p, ref xMax);
 				}
 			}
 			if (p.apparel != null)
@@ -326,7 +326,7 @@ namespace RimWorld.Planet
 				this.droppedDraggedItem = false;
 				this.draggedItemPosOffset = new Vector2(16f, 16f);
 				Event.current.Use();
-				SoundDefOf.Click.PlayOneShotOnCamera();
+				SoundDefOf.Click.PlayOneShotOnCamera(null);
 			}
 			GUI.EndGroup();
 		}
@@ -357,7 +357,7 @@ namespace RimWorld.Planet
 				this.droppedDraggedItem = false;
 				this.draggedItemPosOffset = Event.current.mousePosition - rect.position;
 				Event.current.Use();
-				SoundDefOf.Click.PlayOneShotOnCamera();
+				SoundDefOf.Click.PlayOneShotOnCamera(null);
 			}
 		}
 
@@ -403,59 +403,21 @@ namespace RimWorld.Planet
 
 		private Pawn CurrentWearerOf(Thing t)
 		{
-			List<Pawn> pawns = this.Pawns;
-			ThingWithComps thingWithComps = t as ThingWithComps;
-			Apparel apparel = t as Apparel;
-			for (int i = 0; i < pawns.Count; i++)
+			IThingHolder parentHolder = t.ParentHolder;
+			if (parentHolder is Pawn_EquipmentTracker || parentHolder is Pawn_ApparelTracker)
 			{
-				Pawn pawn = pawns[i];
-				if (thingWithComps != null && pawn.equipment != null && pawn.equipment.AllEquipment.Contains(thingWithComps))
-				{
-					return pawn;
-				}
-				if (apparel != null && pawn.apparel != null && pawn.apparel.WornApparel.Contains(apparel))
-				{
-					return pawn;
-				}
+				return (Pawn)parentHolder.ParentHolder;
 			}
 			return null;
-		}
-
-		private bool TryRemoveFromCurrentWearer(Thing t)
-		{
-			Pawn pawn = this.CurrentWearerOf(t);
-			if (pawn == null)
-			{
-				return false;
-			}
-			Apparel apparel = t as Apparel;
-			ThingWithComps thingWithComps = t as ThingWithComps;
-			if (apparel != null && pawn.apparel != null && pawn.apparel.WornApparel.Contains(apparel))
-			{
-				pawn.apparel.Remove(apparel);
-				return true;
-			}
-			if (thingWithComps != null && pawn.equipment != null && pawn.equipment.AllEquipment.Contains(thingWithComps))
-			{
-				pawn.equipment.Remove(thingWithComps);
-				return true;
-			}
-			return false;
 		}
 
 		private void MoveDraggedItemToInventory()
 		{
 			this.droppedDraggedItem = false;
-			if (!this.TryRemoveFromCurrentWearer(this.draggedItem))
-			{
-				Log.Warning("Could not remove dragged item from its source.");
-				this.draggedItem = null;
-				return;
-			}
 			Pawn pawn = CaravanInventoryUtility.FindPawnToMoveInventoryTo(this.draggedItem, this.Pawns, null, null);
 			if (pawn != null)
 			{
-				pawn.inventory.innerContainer.TryAdd(this.draggedItem, true);
+				this.draggedItem.holdingOwner.TryTransferToContainer(this.draggedItem, pawn.inventory.innerContainer, 1, true);
 			}
 			else
 			{
@@ -485,17 +447,6 @@ namespace RimWorld.Planet
 					return;
 				}
 			}
-			if (!this.TryRemoveFromCurrentWearer(this.draggedItem))
-			{
-				Pawn ownerOf = CaravanInventoryUtility.GetOwnerOf(base.SelCaravan, this.draggedItem);
-				if (ownerOf == null)
-				{
-					Log.Warning("Could not remove dragged item from its source.");
-					this.draggedItem = null;
-					return;
-				}
-				ownerOf.inventory.innerContainer.Remove(this.draggedItem);
-			}
 			Apparel apparel = this.draggedItem as Apparel;
 			ThingWithComps thingWithComps = this.draggedItem as ThingWithComps;
 			if (apparel != null && p.apparel != null)
@@ -506,6 +457,7 @@ namespace RimWorld.Planet
 				{
 					if (!ApparelUtility.CanWearTogether(apparel.def, WITab_Caravan_Gear.tmpExistingApparel[i].def))
 					{
+						p.apparel.Remove(WITab_Caravan_Gear.tmpExistingApparel[i]);
 						Pawn pawn = CaravanInventoryUtility.FindPawnToMoveInventoryTo(WITab_Caravan_Gear.tmpExistingApparel[i], this.Pawns, null, null);
 						if (pawn != null)
 						{
@@ -514,10 +466,11 @@ namespace RimWorld.Planet
 						else
 						{
 							Log.Warning("Could not find any pawn to move " + WITab_Caravan_Gear.tmpExistingApparel[i] + " to.");
+							WITab_Caravan_Gear.tmpExistingApparel[i].Destroy(DestroyMode.Vanish);
 						}
 					}
 				}
-				p.apparel.Wear(apparel, false);
+				p.apparel.Wear((Apparel)apparel.SplitOff(1), false);
 				if (p.outfits != null)
 				{
 					p.outfits.forcedHandler.SetForced(apparel, true);
@@ -526,7 +479,7 @@ namespace RimWorld.Planet
 			else if (thingWithComps != null && p.equipment != null)
 			{
 				WITab_Caravan_Gear.tmpExistingEquipment.Clear();
-				WITab_Caravan_Gear.tmpExistingEquipment.AddRange(p.equipment.AllEquipment);
+				WITab_Caravan_Gear.tmpExistingEquipment.AddRange(p.equipment.AllEquipmentListForReading);
 				for (int j = 0; j < WITab_Caravan_Gear.tmpExistingEquipment.Count; j++)
 				{
 					p.equipment.Remove(WITab_Caravan_Gear.tmpExistingEquipment[j]);
@@ -538,9 +491,10 @@ namespace RimWorld.Planet
 					else
 					{
 						Log.Warning("Could not find any pawn to move " + WITab_Caravan_Gear.tmpExistingEquipment[j] + " to.");
+						WITab_Caravan_Gear.tmpExistingEquipment[j].Destroy(DestroyMode.Vanish);
 					}
 				}
-				p.equipment.AddEquipment(thingWithComps);
+				p.equipment.AddEquipment((ThingWithComps)thingWithComps.SplitOff(1));
 			}
 			else
 			{

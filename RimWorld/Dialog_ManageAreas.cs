@@ -33,8 +33,9 @@ namespace RimWorld
 
 		public override void DoWindowContents(Rect inRect)
 		{
-			Listing_Standard listing_Standard = new Listing_Standard(inRect);
+			Listing_Standard listing_Standard = new Listing_Standard();
 			listing_Standard.ColumnWidth = inRect.width;
+			listing_Standard.Begin(inRect);
 			List<Area> allAreas = this.map.areaManager.AllAreas;
 			for (int i = 0; i < allAreas.Count; i++)
 			{

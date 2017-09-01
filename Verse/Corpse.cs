@@ -1,4 +1,5 @@
 using RimWorld;
+using RimWorld.Planet;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -8,11 +9,11 @@ using UnityEngine;
 
 namespace Verse
 {
-	public class Corpse : ThingWithComps, IBillGiver, IThoughtGiver, IStrippable, IThingContainerOwner
+	public class Corpse : ThingWithComps, IBillGiver, IThoughtGiver, IStrippable, IThingHolder
 	{
-		private const int VanishAfterTicks = 3000000;
+		private const int VanishAfterTicksSinceDessicated = 6000000;
 
-		private ThingContainer innerContainer;
+		private ThingOwner<Pawn> innerContainer;
 
 		private int timeOfDeath = -1000;
 
@@ -28,7 +29,7 @@ namespace Verse
 			{
 				if (this.innerContainer.Count > 0)
 				{
-					return (Pawn)this.innerContainer[0];
+					return this.innerContainer[0];
 				}
 				return null;
 			}
@@ -75,7 +76,7 @@ namespace Verse
 					Log.Error("IngestibleNow on Corpse while Bugged.");
 					return false;
 				}
-				return this.InnerPawn.RaceProps.IsFlesh && this.GetRotStage() != RotStage.Dessicated;
+				return base.IngestibleNow && this.InnerPawn.RaceProps.IsFlesh && this.GetRotStage() == RotStage.Fresh;
 			}
 		}
 
@@ -103,7 +104,7 @@ namespace Verse
 		{
 			get
 			{
-				return this.InnerPawn.RaceProps.Animal && this.vanishAfterTimestamp > 0 && this.Age >= this.vanishAfterTimestamp && this.holdingContainer == null && this.GetRoom().TouchesMapEdge && !base.Map.roofGrid.Roofed(base.Position);
+				return this.InnerPawn.RaceProps.Animal && this.vanishAfterTimestamp > 0 && this.Age >= this.vanishAfterTimestamp && base.Spawned && this.GetRoom(RegionType.Set_Passable) != null && this.GetRoom(RegionType.Set_Passable).TouchesMapEdge && !base.Map.roofGrid.Roofed(base.Position);
 			}
 		}
 
@@ -115,11 +116,14 @@ namespace Verse
 				{
 					yield return s;
 				}
-				yield return new StatDrawEntry(StatCategoryDefOf.Basics, "Nutrition".Translate(), FoodUtility.GetBodyPartNutrition(this.InnerPawn, this.InnerPawn.RaceProps.body.corePart).ToString("0.##"), 0);
-				StatDef meatAmount = StatDefOf.MeatAmount;
-				yield return new StatDrawEntry(meatAmount.category, meatAmount, this.InnerPawn.GetStatValue(meatAmount, true), StatRequest.For(this.InnerPawn), ToStringNumberSense.Undefined);
-				StatDef leatherAmount = StatDefOf.LeatherAmount;
-				yield return new StatDrawEntry(leatherAmount.category, leatherAmount, this.InnerPawn.GetStatValue(leatherAmount, true), StatRequest.For(this.InnerPawn), ToStringNumberSense.Undefined);
+				if (this.GetRotStage() == RotStage.Fresh)
+				{
+					yield return new StatDrawEntry(StatCategoryDefOf.Basics, "Nutrition".Translate(), FoodUtility.GetBodyPartNutrition(this.InnerPawn, this.InnerPawn.RaceProps.body.corePart).ToString("0.##"), 0);
+					StatDef meatAmount = StatDefOf.MeatAmount;
+					yield return new StatDrawEntry(meatAmount.category, meatAmount, this.InnerPawn.GetStatValue(meatAmount, true), StatRequest.For(this.InnerPawn), ToStringNumberSense.Undefined);
+					StatDef leatherAmount = StatDefOf.LeatherAmount;
+					yield return new StatDrawEntry(leatherAmount.category, leatherAmount, this.InnerPawn.GetStatValue(leatherAmount, true), StatRequest.For(this.InnerPawn), ToStringNumberSense.Undefined);
+				}
 			}
 		}
 
@@ -150,7 +154,7 @@ namespace Verse
 		public Corpse()
 		{
 			this.operationsBillStack = new BillStack(this);
-			this.innerContainer = new ThingContainer(this, true, LookMode.Reference);
+			this.innerContainer = new ThingOwner<Pawn>(this, true, LookMode.Reference);
 		}
 
 		public bool CurrentlyUsable()
@@ -163,29 +167,24 @@ namespace Verse
 			return this.InnerPawn.AnythingToStrip();
 		}
 
-		public ThingContainer GetInnerContainer()
+		public ThingOwner GetDirectlyHeldThings()
 		{
 			return this.innerContainer;
 		}
 
-		public IntVec3 GetPosition()
+		public void GetChildHolders(List<IThingHolder> outChildren)
 		{
-			return base.PositionHeld;
+			ThingOwnerUtility.AppendThingHoldersFromThings(outChildren, this.GetDirectlyHeldThings());
 		}
 
-		public Map GetMap()
-		{
-			return base.MapHeld;
-		}
-
-		public override void SpawnSetup(Map map)
+		public override void SpawnSetup(Map map, bool respawningAfterLoad)
 		{
 			if (this.Bugged)
 			{
 				Log.Error(this + " spawned in bugged state.");
 				return;
 			}
-			base.SpawnSetup(map);
+			base.SpawnSetup(map, respawningAfterLoad);
 			if (this.timeOfDeath < 0)
 			{
 				this.timeOfDeath = Find.TickManager.TicksGame;
@@ -210,23 +209,31 @@ namespace Verse
 			{
 				pawn = this.InnerPawn;
 				this.NotifyColonistBar();
-				if (pawn.ownership != null)
-				{
-					pawn.ownership.UnclaimAll();
-				}
-				if (pawn.equipment != null)
-				{
-					pawn.equipment.DestroyAllEquipment(DestroyMode.Vanish);
-				}
-				pawn.inventory.DestroyAll(DestroyMode.Vanish);
-				if (pawn.apparel != null)
-				{
-					pawn.apparel.DestroyAll(DestroyMode.Vanish);
-				}
 				this.innerContainer.Clear();
 			}
 			base.Destroy(mode);
 			if (pawn != null)
+			{
+				Corpse.PostCorpseDestroy(pawn);
+			}
+		}
+
+		public static void PostCorpseDestroy(Pawn pawn)
+		{
+			if (pawn.ownership != null)
+			{
+				pawn.ownership.UnclaimAll();
+			}
+			if (pawn.equipment != null)
+			{
+				pawn.equipment.DestroyAllEquipment(DestroyMode.Vanish);
+			}
+			pawn.inventory.DestroyAll(DestroyMode.Vanish);
+			if (pawn.apparel != null)
+			{
+				pawn.apparel.DestroyAll(DestroyMode.Vanish);
+			}
+			if (pawn.IsWorldPawn())
 			{
 				Find.WorldPawns.DiscardIfUnimportant(pawn);
 			}
@@ -235,6 +242,10 @@ namespace Verse
 		public override void TickRare()
 		{
 			base.TickRare();
+			if (base.Destroyed)
+			{
+				return;
+			}
 			if (this.Bugged)
 			{
 				Log.Error(this + " has null innerPawn. Destroying.");
@@ -244,7 +255,7 @@ namespace Verse
 			this.InnerPawn.TickRare();
 			if (this.vanishAfterTimestamp < 0 || this.GetRotStage() != RotStage.Dessicated)
 			{
-				this.vanishAfterTimestamp = this.Age + 3000000;
+				this.vanishAfterTimestamp = this.Age + 6000000;
 			}
 			if (this.ShouldVanish)
 			{
@@ -307,12 +318,12 @@ namespace Verse
 			}
 			if (this.InnerPawn.RaceProps.Humanlike)
 			{
-				butcher.needs.mood.thoughts.memories.TryGainMemoryThought(ThoughtDefOf.ButcheredHumanlikeCorpse, null);
+				butcher.needs.mood.thoughts.memories.TryGainMemory(ThoughtDefOf.ButcheredHumanlikeCorpse, null);
 				foreach (Pawn p in butcher.Map.mapPawns.SpawnedPawnsInFaction(butcher.Faction))
 				{
 					if (p != butcher && p.needs != null && p.needs.mood != null && p.needs.mood.thoughts != null)
 					{
-						p.needs.mood.thoughts.memories.TryGainMemoryThought(ThoughtDefOf.KnowButcheredHumanlikeCorpse, null);
+						p.needs.mood.thoughts.memories.TryGainMemory(ThoughtDefOf.KnowButcheredHumanlikeCorpse, null);
 					}
 				}
 				TaleRecorder.RecordTale(TaleDefOf.ButcheredHumanlikeCorpse, new object[]
@@ -325,14 +336,14 @@ namespace Verse
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Values.LookValue<int>(ref this.timeOfDeath, "timeOfDeath", 0, false);
-			Scribe_Values.LookValue<int>(ref this.vanishAfterTimestamp, "vanishAfterTimestamp", 0, false);
-			Scribe_Values.LookValue<bool>(ref this.everBuriedInSarcophagus, "everBuriedInSarcophagus", false, false);
-			Scribe_Deep.LookDeep<BillStack>(ref this.operationsBillStack, "operationsBillStack", new object[]
+			Scribe_Values.Look<int>(ref this.timeOfDeath, "timeOfDeath", 0, false);
+			Scribe_Values.Look<int>(ref this.vanishAfterTimestamp, "vanishAfterTimestamp", 0, false);
+			Scribe_Values.Look<bool>(ref this.everBuriedInSarcophagus, "everBuriedInSarcophagus", false, false);
+			Scribe_Deep.Look<BillStack>(ref this.operationsBillStack, "operationsBillStack", new object[]
 			{
 				this
 			});
-			Scribe_Deep.LookDeep<ThingContainer>(ref this.innerContainer, "innerContainer", new object[]
+			Scribe_Deep.Look<ThingOwner<Pawn>>(ref this.innerContainer, "innerContainer", new object[]
 			{
 				this
 			});
@@ -340,28 +351,17 @@ namespace Verse
 
 		public void Strip()
 		{
-			if (this.InnerPawn.equipment != null)
-			{
-				this.InnerPawn.equipment.DropAllEquipment(base.PositionHeld, false);
-			}
-			if (this.InnerPawn.apparel != null)
-			{
-				this.InnerPawn.apparel.DropAll(base.PositionHeld, false);
-			}
-			if (this.InnerPawn.inventory != null)
-			{
-				this.InnerPawn.inventory.DropAllNearPawn(base.PositionHeld, false, false);
-			}
+			this.InnerPawn.Strip();
 		}
 
-		public override void DrawAt(Vector3 drawLoc)
+		public override void DrawAt(Vector3 drawLoc, bool flip = false)
 		{
 			Building building = this.StoringBuilding();
 			if (building != null && building.def == ThingDefOf.Grave)
 			{
 				return;
 			}
-			this.InnerPawn.Drawer.renderer.RenderPawnAt(drawLoc, this.CurRotDrawMode);
+			this.InnerPawn.Drawer.renderer.RenderPawnAt(drawLoc);
 		}
 
 		public Thought_Memory GiveObservedThought()
@@ -392,11 +392,11 @@ namespace Verse
 			StringBuilder stringBuilder = new StringBuilder();
 			if (this.InnerPawn.Faction != null)
 			{
-				stringBuilder.AppendLine("Faction".Translate() + ": " + this.InnerPawn.Faction);
+				stringBuilder.AppendLine("Faction".Translate() + ": " + this.InnerPawn.Faction.Name);
 			}
 			stringBuilder.AppendLine("DeadTime".Translate(new object[]
 			{
-				this.Age.ToStringTicksToPeriod(false)
+				this.Age.ToStringTicksToPeriod(false, false, true)
 			}));
 			float num = 1f - this.InnerPawn.health.hediffSet.GetCoverageOfNotMissingNaturalParts(this.InnerPawn.RaceProps.body.corePart);
 			if (num != 0f)
@@ -404,7 +404,7 @@ namespace Verse
 				stringBuilder.AppendLine("CorpsePercentMissing".Translate() + ": " + num.ToStringPercent());
 			}
 			stringBuilder.AppendLine(base.GetInspectString());
-			return stringBuilder.ToString();
+			return stringBuilder.ToString().TrimEndNewlines();
 		}
 
 		public void RotStageChanged()
@@ -433,9 +433,9 @@ namespace Verse
 			}
 		}
 
-		virtual bool get_Spawned()
+		virtual IThingHolder get_ParentHolder()
 		{
-			return base.Spawned;
+			return base.ParentHolder;
 		}
 
 		virtual Map get_Map()

@@ -3,13 +3,37 @@ using UnityEngine;
 
 namespace Verse
 {
-	public class CurveMark
+	public struct CurveMark
 	{
-		public float x;
+		private float x;
 
-		public string message;
+		private string message;
 
-		public Color color;
+		private Color color;
+
+		public float X
+		{
+			get
+			{
+				return this.x;
+			}
+		}
+
+		public string Message
+		{
+			get
+			{
+				return this.message;
+			}
+		}
+
+		public Color Color
+		{
+			get
+			{
+				return this.color;
+			}
+		}
 
 		public CurveMark(float x, string message, Color color)
 		{

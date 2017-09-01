@@ -46,10 +46,6 @@ namespace RimWorld
 
 		public static HediffDef Pregnant;
 
-		public static HediffDef Euthanasia;
-
-		public static HediffDef ShutDown;
-
 		public static HediffDef Flu;
 
 		public static HediffDef Plague;

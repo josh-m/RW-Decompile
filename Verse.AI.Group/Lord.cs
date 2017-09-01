@@ -8,7 +8,7 @@ using UnityEngine;
 namespace Verse.AI.Group
 {
 	[StaticConstructorOnStartup]
-	public class Lord : ILoadReferenceable, IExposable
+	public class Lord : IExposable, ILoadReferenceable
 	{
 		private const int AttackTargetCacheInterval = 60;
 
@@ -101,17 +101,17 @@ namespace Verse.AI.Group
 
 		public void ExposeData()
 		{
-			Scribe_Values.LookValue<int>(ref this.loadID, "loadID", 0, false);
-			Scribe_References.LookReference<Faction>(ref this.faction, "faction", false);
-			Scribe_Collections.LookList<Thing>(ref this.extraForbiddenThings, "extraForbiddenThings", LookMode.Reference, new object[0]);
-			Scribe_Collections.LookList<Pawn>(ref this.ownedPawns, "ownedPawns", LookMode.Reference, new object[0]);
-			Scribe_Deep.LookDeep<LordJob>(ref this.curJob, "lordJob", new object[0]);
-			Scribe_Values.LookValue<bool>(ref this.initialized, "initialized", true, false);
-			Scribe_Values.LookValue<int>(ref this.ticksInToil, "ticksInToil", 0, false);
-			Scribe_Values.LookValue<int>(ref this.numPawnsEverGained, "numPawnsEverGained", 0, false);
-			Scribe_Values.LookValue<int>(ref this.numPawnsLostViolently, "numPawnsLostViolently", 0, false);
-			Scribe_Values.LookValue<int>(ref this.initialColonyHealthTotal, "initialColonyHealthTotal", 0, false);
-			Scribe_Values.LookValue<int>(ref this.lastPawnHarmTick, "lastPawnHarmTick", -99999, false);
+			Scribe_Values.Look<int>(ref this.loadID, "loadID", 0, false);
+			Scribe_References.Look<Faction>(ref this.faction, "faction", false);
+			Scribe_Collections.Look<Thing>(ref this.extraForbiddenThings, "extraForbiddenThings", LookMode.Reference, new object[0]);
+			Scribe_Collections.Look<Pawn>(ref this.ownedPawns, "ownedPawns", LookMode.Reference, new object[0]);
+			Scribe_Deep.Look<LordJob>(ref this.curJob, "lordJob", new object[0]);
+			Scribe_Values.Look<bool>(ref this.initialized, "initialized", true, false);
+			Scribe_Values.Look<int>(ref this.ticksInToil, "ticksInToil", 0, false);
+			Scribe_Values.Look<int>(ref this.numPawnsEverGained, "numPawnsEverGained", 0, false);
+			Scribe_Values.Look<int>(ref this.numPawnsLostViolently, "numPawnsLostViolently", 0, false);
+			Scribe_Values.Look<int>(ref this.initialColonyHealthTotal, "initialColonyHealthTotal", 0, false);
+			Scribe_Values.Look<int>(ref this.lastPawnHarmTick, "lastPawnHarmTick", -99999, false);
 			if (Scribe.mode == LoadSaveMode.PostLoadInit)
 			{
 				this.extraForbiddenThings.RemoveAll((Thing x) => x == null);
@@ -146,9 +146,9 @@ namespace Verse.AI.Group
 				}
 				this.tmpCurLordToilIdx = this.graph.lordToils.IndexOf(this.curLordToil);
 			}
-			Scribe_Collections.LookDictionary<int, LordToilData>(ref this.tmpLordToilData, "lordToilData", LookMode.Value, LookMode.Deep);
-			Scribe_Collections.LookDictionary<int, TriggerData>(ref this.tmpTriggerData, "triggerData", LookMode.Value, LookMode.Deep);
-			Scribe_Values.LookValue<int>(ref this.tmpCurLordToilIdx, "curLordToilIdx", -1, false);
+			Scribe_Collections.Look<int, LordToilData>(ref this.tmpLordToilData, "lordToilData", LookMode.Value, LookMode.Deep);
+			Scribe_Collections.Look<int, TriggerData>(ref this.tmpTriggerData, "triggerData", LookMode.Value, LookMode.Deep);
+			Scribe_Values.Look<int>(ref this.tmpCurLordToilIdx, "curLordToilIdx", -1, false);
 			if (Scribe.mode == LoadSaveMode.PostLoadInit)
 			{
 				if (this.curJob.LostImportantReferenceDuringLoading)
@@ -228,10 +228,10 @@ namespace Verse.AI.Group
 			this.curJob = lordJob;
 			this.curLordToil = null;
 			lordJob.lord = this;
-			Rand.PushSeed();
+			Rand.PushState();
 			Rand.Seed = this.loadID * 193;
 			this.graph = lordJob.CreateGraph();
-			Rand.PopSeed();
+			Rand.PopState();
 			this.graph.ErrorCheck();
 			if (this.faction.def.autoFlee)
 			{
@@ -274,6 +274,10 @@ namespace Verse.AI.Group
 					this.ownedPawns[i].mindState.duty = null;
 				}
 				this.Map.attackTargetsCache.UpdateTarget(this.ownedPawns[i]);
+				if (this.ownedPawns[i].Spawned && this.ownedPawns[i].CurJob != null)
+				{
+					this.ownedPawns[i].jobs.EndCurrentJob(JobCondition.InterruptForced, true);
+				}
 			}
 		}
 
@@ -409,7 +413,7 @@ namespace Verse.AI.Group
 					this.CheckTransitionOnSignal(new TriggerSignal
 					{
 						type = TriggerSignalType.PawnLost,
-						pawn = pawn,
+						thing = pawn,
 						condition = cond
 					});
 				}
@@ -424,12 +428,22 @@ namespace Verse.AI.Group
 			}));
 		}
 
-		public void Notify_PawnTookDamage(Pawn victim, DamageInfo dinfo)
+		public void Notify_BuildingDamaged(Building building, DamageInfo dinfo)
+		{
+			this.CheckTransitionOnSignal(new TriggerSignal
+			{
+				type = TriggerSignalType.BuildingDamaged,
+				thing = building,
+				dinfo = dinfo
+			});
+		}
+
+		public void Notify_PawnDamaged(Pawn victim, DamageInfo dinfo)
 		{
 			this.CheckTransitionOnSignal(new TriggerSignal
 			{
 				type = TriggerSignalType.PawnDamaged,
-				pawn = victim,
+				thing = victim,
 				dinfo = dinfo
 			});
 		}
@@ -439,7 +453,7 @@ namespace Verse.AI.Group
 			this.CheckTransitionOnSignal(new TriggerSignal
 			{
 				type = TriggerSignalType.PawnArrestAttempted,
-				pawn = victim
+				thing = victim
 			});
 		}
 
@@ -548,7 +562,7 @@ namespace Verse.AI.Group
 			stringBuilder.AppendLine("Faction data:");
 			stringBuilder.AppendLine(this.faction.DebugString());
 			stringBuilder.AppendLine("Raw save data:");
-			stringBuilder.AppendLine(Scribe.DebugOutputFor(this));
+			stringBuilder.AppendLine(Scribe.saver.DebugOutputFor(this));
 			return stringBuilder.ToString();
 		}
 

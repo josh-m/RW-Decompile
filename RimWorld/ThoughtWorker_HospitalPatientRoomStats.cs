@@ -12,7 +12,7 @@ namespace RimWorld
 			{
 				return ThoughtState.Inactive;
 			}
-			Room room = p.GetRoom();
+			Room room = p.GetRoom(RegionType.Set_Passable);
 			if (room == null || room.Role != RoomRoleDefOf.Hospital)
 			{
 				return ThoughtState.Inactive;

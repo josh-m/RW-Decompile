@@ -27,7 +27,7 @@ namespace Verse
 
 		public void ExposeData()
 		{
-			Scribe_Collections.LookList<Zone>(ref this.allZones, "allZones", LookMode.Deep, new object[0]);
+			Scribe_Collections.Look<Zone>(ref this.allZones, "allZones", LookMode.Deep, new object[0]);
 			if (Scribe.mode == LoadSaveMode.LoadingVars)
 			{
 				this.UpdateZoneManagerLinks();

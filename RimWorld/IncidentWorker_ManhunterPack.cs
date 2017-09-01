@@ -16,28 +16,29 @@ namespace RimWorld
 		{
 			Map map = (Map)parms.target;
 			PawnKindDef pawnKindDef;
-			if (!ManhunterPackIncidentUtility.TryFindRandomAnimalKind(this.def.pawnKinds, map, out pawnKindDef))
+			if (!ManhunterPackIncidentUtility.TryFindManhunterAnimalKind(parms.points, map.Tile, out pawnKindDef))
 			{
 				return false;
 			}
-			IntVec3 root;
-			if (!RCellFinder.TryFindRandomPawnEntryCell(out root, map))
+			IntVec3 intVec;
+			if (!RCellFinder.TryFindRandomPawnEntryCell(out intVec, map, CellFinder.EdgeRoadChance_Animal, null))
 			{
 				return false;
 			}
-			List<Pawn> list = ManhunterPackIncidentUtility.GenerateAnimals(pawnKindDef, map, parms.points * 1.4f);
+			List<Pawn> list = ManhunterPackIncidentUtility.GenerateAnimals(pawnKindDef, map.Tile, parms.points * 1.4f);
+			Rot4 rot = Rot4.FromAngleFlat((map.Center - intVec).AngleFlat);
 			for (int i = 0; i < list.Count; i++)
 			{
 				Pawn pawn = list[i];
-				IntVec3 loc = CellFinder.RandomClosewalkCellNear(root, map, 10);
-				GenSpawn.Spawn(pawn, loc, map);
+				IntVec3 loc = CellFinder.RandomClosewalkCellNear(intVec, map, 10, null);
+				GenSpawn.Spawn(pawn, loc, map, rot, false);
 				pawn.mindState.mentalStateHandler.TryStartMentalState(MentalStateDefOf.ManhunterPermanent, null, false, false, null);
 				pawn.mindState.exitMapAfterTick = Find.TickManager.TicksGame + Rand.Range(60000, 135000);
 			}
-			Find.LetterStack.ReceiveLetter(new Letter("LetterLabelManhunterPackArrived".Translate(), "ManhunterPackArrived".Translate(new object[]
+			Find.LetterStack.ReceiveLetter("LetterLabelManhunterPackArrived".Translate(), "ManhunterPackArrived".Translate(new object[]
 			{
 				pawnKindDef.label
-			}), LetterType.BadUrgent, list[0]), null);
+			}), LetterDefOf.BadUrgent, list[0], null);
 			Find.TickManager.slower.SignalForceNormalSpeedShort();
 			LessonAutoActivator.TeachOpportunity(ConceptDefOf.ForbiddingDoors, OpportunityType.Critical);
 			LessonAutoActivator.TeachOpportunity(ConceptDefOf.AllowedAreas, OpportunityType.Important);

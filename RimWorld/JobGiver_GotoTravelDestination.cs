@@ -48,7 +48,7 @@ namespace RimWorld
 			IntVec3 c = cell;
 			if (!this.exactCell)
 			{
-				c = CellFinder.RandomClosewalkCellNear(cell, pawn.Map, 6);
+				c = CellFinder.RandomClosewalkCellNear(cell, pawn.Map, 6, null);
 			}
 			return new Job(JobDefOf.Goto, c)
 			{

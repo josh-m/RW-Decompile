@@ -7,7 +7,7 @@ namespace RimWorld
 {
 	public class StatWorker_MarketValue : StatWorker
 	{
-		public const float ValuePerWork = 0.004f;
+		public const float ValuePerWork = 0.003f;
 
 		private const float DefaultGuessStuffCost = 2f;
 
@@ -15,7 +15,7 @@ namespace RimWorld
 		{
 			if (req.HasThing && req.Thing is Pawn)
 			{
-				return base.GetValueUnfinalized(StatRequest.For(req.Def, req.StuffDef), applyPostProcess) * PriceUtility.PawnQualityPriceFactor((Pawn)req.Thing);
+				return base.GetValueUnfinalized(StatRequest.For(req.Def, req.StuffDef, QualityCategory.Normal), applyPostProcess) * PriceUtility.PawnQualityPriceFactor((Pawn)req.Thing);
 			}
 			if (req.Def.statBases.StatListContains(StatDefOf.MarketValue))
 			{
@@ -41,7 +41,7 @@ namespace RimWorld
 				}
 			}
 			float num2 = Mathf.Max(req.Def.GetStatValueAbstract(StatDefOf.WorkToMake, req.StuffDef), req.Def.GetStatValueAbstract(StatDefOf.WorkToBuild, req.StuffDef));
-			return num + num2 * 0.004f;
+			return num + num2 * 0.003f;
 		}
 
 		public override string GetExplanation(StatRequest req, ToStringNumberSense numberSense)

@@ -15,7 +15,7 @@ namespace RimWorld
 		[DebuggerHidden]
 		protected override IEnumerable<Toil> MakeNewToils()
 		{
-			yield return Toils_Reserve.Reserve(TargetIndex.A, 1);
+			yield return Toils_Reserve.Reserve(TargetIndex.A, 1, -1, null);
 			yield return Toils_Goto.GotoCell(TargetIndex.A, PathEndMode.Touch);
 			Toil doWork = new Toil();
 			doWork.initAction = delegate
@@ -37,13 +37,14 @@ namespace RimWorld
 			};
 			doWork.defaultCompleteMode = ToilCompleteMode.Never;
 			doWork.FailOn(() => !JoyUtility.EnjoyableOutsideNow(this.<>f__this.pawn, null));
+			doWork.FailOnCannotTouch(TargetIndex.A, PathEndMode.Touch);
 			yield return doWork;
 		}
 
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Values.LookValue<float>(ref this.workLeft, "workLeft", 0f, false);
+			Scribe_Values.Look<float>(ref this.workLeft, "workLeft", 0f, false);
 		}
 	}
 }

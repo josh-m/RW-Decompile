@@ -9,11 +9,7 @@ namespace Verse.AI
 			this.wanderRadius = 7f;
 			this.ticksBetweenWandersRange = new IntRange(125, 200);
 			this.locomotionUrgency = LocomotionUrgency.Amble;
-			this.wanderDestValidator = delegate(Pawn pawn, IntVec3 loc)
-			{
-				Room room = pawn.GetRoom();
-				return room == null || room.IsDoor || WanderUtility.InSameRoom(pawn.Position, loc, pawn.Map);
-			};
+			this.wanderDestValidator = ((Pawn pawn, IntVec3 loc) => WanderRoomUtility.IsValidWanderDest(pawn, loc, this.GetWanderRoot(pawn)));
 		}
 
 		protected override IntVec3 GetWanderRoot(Pawn pawn)

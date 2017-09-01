@@ -9,8 +9,16 @@ namespace RimWorld
 		public override float GetScore(Room room)
 		{
 			float stat = room.GetStat(RoomStatDefOf.Cleanliness);
-			float value = 1f / GenMath.UnboundedValueToFactor(stat * 0.12f);
-			return Mathf.Clamp(value, 0.6f, 1.5f);
+			float value;
+			if (stat >= 0f)
+			{
+				value = GenMath.LerpDouble(0f, 1f, 0.5f, 0.2f, stat);
+			}
+			else
+			{
+				value = GenMath.LerpDouble(-5f, 0f, 1f, 0.5f, stat);
+			}
+			return Mathf.Clamp(value, 0.2f, 1f);
 		}
 	}
 }

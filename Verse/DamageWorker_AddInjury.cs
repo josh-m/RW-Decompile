@@ -57,6 +57,7 @@ namespace Verse
 			}
 			DamageWorker_AddInjury.LocalInjuryResult localInjuryResult = DamageWorker_AddInjury.LocalInjuryResult.MakeNew();
 			Map mapHeld = pawn.MapHeld;
+			bool spawnedOrAnyParentSpawned = pawn.SpawnedOrAnyParentSpawned;
 			if (dinfo.Def.spreadOut)
 			{
 				if (pawn.apparel != null)
@@ -73,16 +74,26 @@ namespace Verse
 				}
 				if (pawn.inventory != null)
 				{
-					ThingContainer innerContainer = pawn.inventory.innerContainer;
+					ThingOwner<Thing> innerContainer = pawn.inventory.innerContainer;
 					for (int j = innerContainer.Count - 1; j >= 0; j--)
 					{
 						this.CheckApplySpreadDamage(dinfo, innerContainer[j]);
 					}
 				}
 			}
-			if (!this.FragmentDamageForDamageType(dinfo, pawn, ref localInjuryResult))
+			if (this.ShouldFragmentDamageForDamageType(dinfo))
 			{
-				this.ApplyDamagePartial(dinfo, pawn, ref localInjuryResult);
+				int num = Rand.RangeInclusive(3, 4);
+				for (int k = 0; k < num; k++)
+				{
+					DamageInfo dinfo2 = dinfo;
+					dinfo2.SetAmount(dinfo.Amount / num);
+					this.ApplyDamageToPart(dinfo2, pawn, ref localInjuryResult);
+				}
+			}
+			else
+			{
+				this.ApplyDamageToPart(dinfo, pawn, ref localInjuryResult);
 				this.CheckDuplicateSmallPawnDamageToPartParent(dinfo, pawn, ref localInjuryResult);
 			}
 			if (localInjuryResult.wounded)
@@ -111,7 +122,7 @@ namespace Verse
 				}
 				pawn.health.deflectionEffecter.Trigger(pawn, pawn);
 			}
-			else if (mapHeld != null)
+			else if (spawnedOrAnyParentSpawned)
 			{
 				ImpactSoundUtility.PlayImpactSound(pawn, dinfo.Def.impactSoundType, mapHeld);
 			}
@@ -120,6 +131,10 @@ namespace Verse
 
 		private void CheckApplySpreadDamage(DamageInfo dinfo, Thing t)
 		{
+			if (dinfo.Def == DamageDefOf.Flame && !t.FlammableNow)
+			{
+				return;
+			}
 			if (UnityEngine.Random.value < 0.5f)
 			{
 				dinfo.SetAmount(Mathf.CeilToInt((float)dinfo.Amount * Rand.Range(0.35f, 0.7f)));
@@ -127,28 +142,9 @@ namespace Verse
 			}
 		}
 
-		private bool FragmentDamageForDamageType(DamageInfo dinfo, Pawn pawn, ref DamageWorker_AddInjury.LocalInjuryResult result)
+		private bool ShouldFragmentDamageForDamageType(DamageInfo dinfo)
 		{
-			if (!dinfo.AllowDamagePropagation)
-			{
-				return false;
-			}
-			if (dinfo.Amount < 9)
-			{
-				return false;
-			}
-			if (!dinfo.Def.spreadOut)
-			{
-				return false;
-			}
-			int num = Rand.RangeInclusive(3, 4);
-			for (int i = 0; i < num; i++)
-			{
-				DamageInfo dinfo2 = dinfo;
-				dinfo2.SetAmount(dinfo.Amount / num);
-				this.ApplyDamagePartial(dinfo2, pawn, ref result);
-			}
-			return true;
+			return dinfo.AllowDamagePropagation && dinfo.Amount >= 9 && dinfo.Def.spreadOut;
 		}
 
 		private void CheckDuplicateSmallPawnDamageToPartParent(DamageInfo dinfo, Pawn pawn, ref DamageWorker_AddInjury.LocalInjuryResult result)
@@ -161,11 +157,11 @@ namespace Verse
 			{
 				DamageInfo dinfo2 = dinfo;
 				dinfo2.SetForcedHitPart(result.lastHitPart.parent);
-				this.ApplyDamagePartial(dinfo2, pawn, ref result);
+				this.ApplyDamageToPart(dinfo2, pawn, ref result);
 			}
 		}
 
-		private void ApplyDamagePartial(DamageInfo dinfo, Pawn pawn, ref DamageWorker_AddInjury.LocalInjuryResult result)
+		private void ApplyDamageToPart(DamageInfo dinfo, Pawn pawn, ref DamageWorker_AddInjury.LocalInjuryResult result)
 		{
 			BodyPartRecord exactPartFromDamageInfo = DamageWorker_AddInjury.GetExactPartFromDamageInfo(dinfo, pawn);
 			if (exactPartFromDamageInfo == null)
@@ -176,9 +172,9 @@ namespace Verse
 			bool flag = !dinfo.InstantOldInjury;
 			if (flag)
 			{
-				num = ArmorUtility.GetAfterArmorDamage(pawn, dinfo.Amount, exactPartFromDamageInfo, dinfo.Def);
+				num = ArmorUtility.GetPostArmorDamage(pawn, dinfo.Amount, exactPartFromDamageInfo, dinfo.Def);
 			}
-			if ((double)num < 0.001)
+			if (num <= 0)
 			{
 				result.deflected = true;
 				return;
@@ -275,7 +271,7 @@ namespace Verse
 				where x.parent == injury.Part && x.def.IsSolid(x, pawn.health.hediffSet.hediffs) && x.depth == BodyPartDepth.Inside
 				select x;
 				BodyPartRecord part;
-				if (source.TryRandomElementByWeight((BodyPartRecord x) => x.absoluteFleshCoverage, out part))
+				if (source.TryRandomElementByWeight((BodyPartRecord x) => x.coverageAbs, out part))
 				{
 					HediffDef hediffDefFromDamage = HealthUtility.GetHediffDefFromDamage(dinfo.Def, pawn, part);
 					Hediff_Injury hediff_Injury = (Hediff_Injury)HediffMaker.MakeHediff(hediffDefFromDamage, pawn, null);
@@ -285,7 +281,7 @@ namespace Verse
 					hediff_Injury.Severity = (float)(dinfo.Amount / 2);
 					if (involveArmor)
 					{
-						hediff_Injury.Severity = (float)ArmorUtility.GetAfterArmorDamage(pawn, dinfo.Amount / 2, part, dinfo.Def);
+						hediff_Injury.Severity = (float)ArmorUtility.GetPostArmorDamage(pawn, dinfo.Amount / 2, part, dinfo.Def);
 					}
 					if (hediff_Injury.Severity <= 0f)
 					{
@@ -318,7 +314,7 @@ namespace Verse
 						hediff_Injury.Severity = (float)dinfo.Amount;
 						if (involveArmor)
 						{
-							hediff_Injury.Severity = (float)ArmorUtility.GetAfterArmorDamage(pawn, dinfo.Amount, parent, dinfo.Def);
+							hediff_Injury.Severity = (float)ArmorUtility.GetPostArmorDamage(pawn, dinfo.Amount, parent, dinfo.Def);
 						}
 						if (hediff_Injury.Severity <= 0f)
 						{
@@ -372,7 +368,7 @@ namespace Verse
 			{
 				return;
 			}
-			if (pawn.MapHeld == null)
+			if (!pawn.SpawnedOrAnyParentSpawned)
 			{
 				return;
 			}

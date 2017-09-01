@@ -13,7 +13,7 @@ namespace RimWorld
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Values.LookValue<PlayerPawnsArriveMethod>(ref this.method, "method", PlayerPawnsArriveMethod.Standing, false);
+			Scribe_Values.Look<PlayerPawnsArriveMethod>(ref this.method, "method", PlayerPawnsArriveMethod.Standing, false);
 		}
 
 		public override void DoEditInterface(Listing_ScenEdit listing)
@@ -54,6 +54,10 @@ namespace RimWorld
 
 		public override void GenerateIntoMap(Map map)
 		{
+			if (Find.GameInitData == null)
+			{
+				return;
+			}
 			List<List<Thing>> list = new List<List<Thing>>();
 			foreach (Pawn current in Find.GameInitData.startingPawns)
 			{
@@ -87,6 +91,10 @@ namespace RimWorld
 
 		public override void PostMapGenerate(Map map)
 		{
+			if (Find.GameInitData == null)
+			{
+				return;
+			}
 			if (this.method == PlayerPawnsArriveMethod.DropPods)
 			{
 				PawnUtility.GiveAllStartingPlayerPawnsThought(ThoughtDefOf.CrashedTogether);

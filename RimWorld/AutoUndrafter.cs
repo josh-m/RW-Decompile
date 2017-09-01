@@ -19,7 +19,7 @@ namespace RimWorld
 
 		public void ExposeData()
 		{
-			Scribe_Values.LookValue<int>(ref this.lastNonWaitingTick, "lastNonWaitingTick", 0, false);
+			Scribe_Values.Look<int>(ref this.lastNonWaitingTick, "lastNonWaitingTick", 0, false);
 		}
 
 		public void AutoUndraftTick()
@@ -39,6 +39,7 @@ namespace RimWorld
 					if (this.ShouldAutoUndraft())
 					{
 						this.pawn.drafter.Drafted = false;
+						this.lastNonWaitingTick = Find.TickManager.TicksGame;
 					}
 				}
 			}

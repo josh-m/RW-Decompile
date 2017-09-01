@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 using UnityEngine;
 using Verse;
 
@@ -26,24 +28,42 @@ namespace RimWorld
 			return 0.02f * num * num2;
 		}
 
+		public Thought RandomBreakupReason(Pawn initiator, Pawn recipient)
+		{
+			List<Thought_Memory> list = (from m in initiator.needs.mood.thoughts.memories.Memories
+			where m != null && m.otherPawn == recipient && m.CurStage != null && m.CurStage.baseOpinionOffset < 0f
+			select m).ToList<Thought_Memory>();
+			if (list.Count == 0)
+			{
+				return null;
+			}
+			float worstMemoryOpinionOffset = list.Max((Thought_Memory m) => -m.CurStage.baseOpinionOffset);
+			Thought_Memory result = null;
+			(from m in list
+			where -m.CurStage.baseOpinionOffset >= worstMemoryOpinionOffset / 2f
+			select m).TryRandomElementByWeight((Thought_Memory m) => -m.CurStage.baseOpinionOffset, out result);
+			return result;
+		}
+
 		public override void Interacted(Pawn initiator, Pawn recipient, List<RulePackDef> extraSentencePacks)
 		{
+			Thought thought = this.RandomBreakupReason(initiator, recipient);
 			if (initiator.relations.DirectRelationExists(PawnRelationDefOf.Spouse, recipient))
 			{
 				initiator.relations.RemoveDirectRelation(PawnRelationDefOf.Spouse, recipient);
 				initiator.relations.AddDirectRelation(PawnRelationDefOf.ExSpouse, recipient);
-				recipient.needs.mood.thoughts.memories.TryGainMemoryThought(ThoughtDefOf.DivorcedMe, initiator);
-				initiator.needs.mood.thoughts.memories.RemoveMemoryThoughtsOfDef(ThoughtDefOf.GotMarried);
-				recipient.needs.mood.thoughts.memories.RemoveMemoryThoughtsOfDef(ThoughtDefOf.GotMarried);
-				initiator.needs.mood.thoughts.memories.RemoveMemoryThoughtsOfDefWhereOtherPawnIs(ThoughtDefOf.HoneymoonPhase, recipient);
-				recipient.needs.mood.thoughts.memories.RemoveMemoryThoughtsOfDefWhereOtherPawnIs(ThoughtDefOf.HoneymoonPhase, initiator);
+				recipient.needs.mood.thoughts.memories.TryGainMemory(ThoughtDefOf.DivorcedMe, initiator);
+				initiator.needs.mood.thoughts.memories.RemoveMemoriesOfDef(ThoughtDefOf.GotMarried);
+				recipient.needs.mood.thoughts.memories.RemoveMemoriesOfDef(ThoughtDefOf.GotMarried);
+				initiator.needs.mood.thoughts.memories.RemoveMemoriesOfDefWhereOtherPawnIs(ThoughtDefOf.HoneymoonPhase, recipient);
+				recipient.needs.mood.thoughts.memories.RemoveMemoriesOfDefWhereOtherPawnIs(ThoughtDefOf.HoneymoonPhase, initiator);
 			}
 			else
 			{
 				initiator.relations.TryRemoveDirectRelation(PawnRelationDefOf.Lover, recipient);
 				initiator.relations.TryRemoveDirectRelation(PawnRelationDefOf.Fiance, recipient);
 				initiator.relations.AddDirectRelation(PawnRelationDefOf.ExLover, recipient);
-				recipient.needs.mood.thoughts.memories.TryGainMemoryThought(ThoughtDefOf.BrokeUpWithMe, initiator);
+				recipient.needs.mood.thoughts.memories.TryGainMemory(ThoughtDefOf.BrokeUpWithMe, initiator);
 			}
 			if (initiator.ownership.OwnedBed != null && initiator.ownership.OwnedBed == recipient.ownership.OwnedBed)
 			{
@@ -55,13 +75,23 @@ namespace RimWorld
 				initiator,
 				recipient
 			});
+			StringBuilder stringBuilder = new StringBuilder();
+			stringBuilder.AppendLine("LetterNoLongerLovers".Translate(new object[]
+			{
+				initiator.LabelShort,
+				recipient.LabelShort
+			}));
+			if (thought != null)
+			{
+				stringBuilder.AppendLine();
+				stringBuilder.AppendLine("FinalStraw".Translate(new object[]
+				{
+					thought.CurStage.label
+				}));
+			}
 			if (PawnUtility.ShouldSendNotificationAbout(initiator) || PawnUtility.ShouldSendNotificationAbout(recipient))
 			{
-				Find.LetterStack.ReceiveLetter("LetterLabelBreakup".Translate(), "LetterNoLongerLovers".Translate(new object[]
-				{
-					initiator.LabelShort,
-					recipient.LabelShort
-				}), LetterType.BadNonUrgent, initiator, null);
+				Find.LetterStack.ReceiveLetter("LetterLabelBreakup".Translate(), stringBuilder.ToString(), LetterDefOf.BadNonUrgent, initiator, null);
 			}
 		}
 	}

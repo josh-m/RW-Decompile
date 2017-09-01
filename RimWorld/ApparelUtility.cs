@@ -7,6 +7,36 @@ namespace RimWorld
 {
 	public static class ApparelUtility
 	{
+		public struct LayerGroupPair
+		{
+			private readonly ApparelLayer layer;
+
+			private readonly BodyPartGroupDef group;
+
+			public LayerGroupPair(ApparelLayer layer, BodyPartGroupDef group)
+			{
+				this.layer = layer;
+				this.group = group;
+			}
+
+			public override bool Equals(object rhs)
+			{
+				if (!(rhs is ApparelUtility.LayerGroupPair))
+				{
+					return false;
+				}
+				ApparelUtility.LayerGroupPair layerGroupPair = (ApparelUtility.LayerGroupPair)rhs;
+				return layerGroupPair.layer == this.layer && layerGroupPair.group == this.group;
+			}
+
+			public override int GetHashCode()
+			{
+				int num = 17;
+				num = num * 23 + this.layer.GetHashCode();
+				return num * 23 + this.group.GetHashCode();
+			}
+		}
+
 		public static bool CanWearTogether(ThingDef A, ThingDef B)
 		{
 			bool flag = false;
@@ -49,6 +79,17 @@ namespace RimWorld
 				}
 			}
 			return true;
+		}
+
+		public static void GenerateLayerGroupPairs(ThingDef td, Action<ApparelUtility.LayerGroupPair> callback)
+		{
+			for (int i = 0; i < td.apparel.layers.Count; i++)
+			{
+				for (int j = 0; j < td.apparel.bodyPartGroups.Count; j++)
+				{
+					callback(new ApparelUtility.LayerGroupPair(td.apparel.layers[i], td.apparel.bodyPartGroups[j]));
+				}
+			}
 		}
 
 		public static bool HasPartsToWear(Pawn p, ThingDef apparel)

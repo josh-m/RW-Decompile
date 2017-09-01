@@ -42,17 +42,18 @@ namespace Verse.AI
 				return;
 			}
 			this.DeregisterTarget(t);
-			Thing thing = (Thing)t;
+			Thing thing = t.Thing;
 			if (thing.Spawned && thing.Map == this.map)
 			{
 				this.RegisterTarget(t);
 			}
 		}
 
-		public List<IAttackTarget> GetPotentialTargetsFor(Thing th)
+		public List<IAttackTarget> GetPotentialTargetsFor(IAttackTargetSearcher th)
 		{
+			Thing thing = th.Thing;
 			AttackTargetsCache.targets.Clear();
-			Faction faction = th.Faction;
+			Faction faction = thing.Faction;
 			if (faction != null)
 			{
 				if (UnityData.isDebugBuild)
@@ -61,7 +62,7 @@ namespace Verse.AI
 				}
 				foreach (IAttackTarget current in this.TargetsHostileToFaction(faction))
 				{
-					if (th.HostileTo((Thing)current))
+					if (thing.HostileTo(current.Thing))
 					{
 						AttackTargetsCache.targets.Add(current);
 					}
@@ -69,7 +70,7 @@ namespace Verse.AI
 			}
 			foreach (Pawn current2 in this.pawnsInAggroMentalState)
 			{
-				if (th.HostileTo(current2))
+				if (thing.HostileTo(current2))
 				{
 					AttackTargetsCache.targets.Add(current2);
 				}
@@ -81,7 +82,7 @@ namespace Verse.AI
 				List<Pawn> list = this.map.mapPawns.SpawnedPawnsInFaction(hostFaction);
 				for (int i = 0; i < list.Count; i++)
 				{
-					if (th.HostileTo(list[i]))
+					if (thing.HostileTo(list[i]))
 					{
 						AttackTargetsCache.targets.Add(list[i]);
 					}
@@ -127,7 +128,7 @@ namespace Verse.AI
 			AttackTargetsCache.tmpTargets.Clear();
 			foreach (IAttackTarget current in this.allTargets)
 			{
-				Thing thing = (Thing)current;
+				Thing thing = current.Thing;
 				if (thing.Faction == f1 || thing.Faction == f2)
 				{
 					AttackTargetsCache.tmpTargets.Add(current);
@@ -147,13 +148,13 @@ namespace Verse.AI
 				Log.Warning(string.Concat(new object[]
 				{
 					"Tried to register the same target twice ",
-					(Thing)target,
+					target,
 					" in ",
 					base.GetType()
 				}));
 				return;
 			}
-			Thing thing = (Thing)target;
+			Thing thing = target.Thing;
 			if (!thing.Spawned)
 			{
 				Log.Warning(string.Concat(new object[]
@@ -197,7 +198,7 @@ namespace Verse.AI
 				Log.Warning(string.Concat(new object[]
 				{
 					"Tried to deregister ",
-					(Thing)target,
+					target,
 					" but it's not in ",
 					base.GetType()
 				}));
@@ -221,7 +222,7 @@ namespace Verse.AI
 			AttackTargetsCache.tmpToUpdate.Clear();
 			foreach (IAttackTarget current in targets)
 			{
-				if (!((Thing)current).HostileTo(f))
+				if (!current.Thing.HostileTo(f))
 				{
 					AttackTargetsCache.tmpToUpdate.Add(current);
 					Log.Error(string.Concat(new string[]

@@ -16,6 +16,14 @@ namespace RimWorld.BaseGen
 			}
 		}
 
+		public int Count
+		{
+			get
+			{
+				return this.stack.Count;
+			}
+		}
+
 		public void Push(string symbol, ResolveParams resolveParams)
 		{
 			this.stack.Push(new Pair<string, ResolveParams>(symbol, resolveParams));

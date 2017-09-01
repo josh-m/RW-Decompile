@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using UnityEngine;
 using Verse;
 
@@ -173,19 +172,15 @@ namespace RimWorld
 
 		public void ExposeData()
 		{
-			Scribe_Defs.LookDef<SkillDef>(ref this.def, "def");
-			Scribe_Values.LookValue<int>(ref this.levelInt, "level", 0, false);
-			Scribe_Values.LookValue<float>(ref this.xpSinceLastLevel, "xpSinceLastLevel", 0f, false);
-			Scribe_Values.LookValue<Passion>(ref this.passion, "passion", Passion.None, false);
-			Scribe_Values.LookValue<float>(ref this.xpSinceMidnight, "xpSinceMidnight", 0f, false);
+			Scribe_Defs.Look<SkillDef>(ref this.def, "def");
+			Scribe_Values.Look<int>(ref this.levelInt, "level", 0, false);
+			Scribe_Values.Look<float>(ref this.xpSinceLastLevel, "xpSinceLastLevel", 0f, false);
+			Scribe_Values.Look<Passion>(ref this.passion, "passion", Passion.None, false);
+			Scribe_Values.Look<float>(ref this.xpSinceMidnight, "xpSinceMidnight", 0f, false);
 		}
 
 		public void Interval()
 		{
-			if (Find.TickManager.TicksAbs % 60000 <= 200)
-			{
-				this.xpSinceMidnight = 0f;
-			}
 			switch (this.levelInt)
 			{
 			case 10:
@@ -332,28 +327,7 @@ namespace RimWorld
 
 		private bool CalculateTotallyDisabled()
 		{
-			if (this.pawn.story.WorkTagIsDisabled(this.def.disablingWorkTags))
-			{
-				return true;
-			}
-			List<WorkTypeDef> allDefsListForReading = DefDatabase<WorkTypeDef>.AllDefsListForReading;
-			bool result = false;
-			for (int i = 0; i < allDefsListForReading.Count; i++)
-			{
-				WorkTypeDef workTypeDef = allDefsListForReading[i];
-				for (int j = 0; j < workTypeDef.relevantSkills.Count; j++)
-				{
-					if (workTypeDef.relevantSkills[j] == this.def)
-					{
-						if (!this.pawn.story.WorkTypeIsDisabled(workTypeDef))
-						{
-							return false;
-						}
-						result = true;
-					}
-				}
-			}
-			return result;
+			return this.def.IsDisabled(this.pawn.story.CombinedDisabledWorkTags, this.pawn.story.DisabledWorkTypes);
 		}
 
 		public override string ToString()

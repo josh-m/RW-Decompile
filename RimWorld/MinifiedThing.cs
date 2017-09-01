@@ -7,13 +7,13 @@ using Verse.Sound;
 
 namespace RimWorld
 {
-	public class MinifiedThing : ThingWithComps, IThingContainerOwner
+	public class MinifiedThing : ThingWithComps, IThingHolder
 	{
 		private const float MaxMinifiedGraphicSize = 1.1f;
 
 		private const float CrateToGraphicScale = 1.16f;
 
-		private ThingContainer innerContainer;
+		private ThingOwner innerContainer;
 
 		private Graphic cachedGraphic;
 
@@ -71,22 +71,17 @@ namespace RimWorld
 
 		public MinifiedThing()
 		{
-			this.innerContainer = new ThingContainer(this, true, LookMode.Deep);
+			this.innerContainer = new ThingOwner<Thing>(this, true, LookMode.Deep);
 		}
 
-		public Map GetMap()
-		{
-			return base.MapHeld;
-		}
-
-		public ThingContainer GetInnerContainer()
+		public ThingOwner GetDirectlyHeldThings()
 		{
 			return this.innerContainer;
 		}
 
-		public IntVec3 GetPosition()
+		public void GetChildHolders(List<IThingHolder> outChildren)
 		{
-			return base.PositionHeld;
+			ThingOwnerUtility.AppendThingHoldersFromThings(outChildren, this.GetDirectlyHeldThings());
 		}
 
 		public override Thing SplitOff(int count)
@@ -116,7 +111,7 @@ namespace RimWorld
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Deep.LookDeep<ThingContainer>(ref this.innerContainer, "innerContainer", new object[]
+			Scribe_Deep.Look<ThingOwner>(ref this.innerContainer, "innerContainer", new object[]
 			{
 				this
 			});
@@ -132,7 +127,7 @@ namespace RimWorld
 			}
 		}
 
-		public override void DrawAt(Vector3 drawLoc)
+		public override void DrawAt(Vector3 drawLoc, bool flip = false)
 		{
 			if (this.crateFrontGraphic == null)
 			{
@@ -198,9 +193,9 @@ namespace RimWorld
 			return drawSize * num;
 		}
 
-		virtual bool get_Spawned()
+		virtual IThingHolder get_ParentHolder()
 		{
-			return base.Spawned;
+			return base.ParentHolder;
 		}
 	}
 }

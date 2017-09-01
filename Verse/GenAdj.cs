@@ -294,6 +294,26 @@ namespace Verse
 			}
 		}
 
+		public static void GetAdjacentCorners(LocalTargetInfo target, out IntVec3 BL, out IntVec3 TL, out IntVec3 TR, out IntVec3 BR)
+		{
+			if (target.HasThing)
+			{
+				GenAdj.GetAdjacentCorners(target.Thing.OccupiedRect(), out BL, out TL, out TR, out BR);
+			}
+			else
+			{
+				GenAdj.GetAdjacentCorners(CellRect.SingleCell(target.Cell), out BL, out TL, out TR, out BR);
+			}
+		}
+
+		private static void GetAdjacentCorners(CellRect rect, out IntVec3 BL, out IntVec3 TL, out IntVec3 TR, out IntVec3 BR)
+		{
+			BL = new IntVec3(rect.minX - 1, 0, rect.minZ - 1);
+			TL = new IntVec3(rect.minX - 1, 0, rect.maxZ + 1);
+			TR = new IntVec3(rect.maxX + 1, 0, rect.maxZ + 1);
+			BR = new IntVec3(rect.maxX + 1, 0, rect.minZ - 1);
+		}
+
 		public static IntVec3 RandomAdjacentCell8Way(this IntVec3 root)
 		{
 			return root + GenAdj.AdjacentCells[Rand.RangeInclusive(0, 7)];
@@ -343,18 +363,18 @@ namespace Verse
 			return randomCell;
 		}
 
-		public static bool TryFindRandomWalkableAdjacentCell8Way(Thing t, out IntVec3 result)
+		public static bool TryFindRandomAdjacentCell8WayWithRoomGroup(Thing t, out IntVec3 result)
 		{
-			return GenAdj.TryFindRandomWalkableAdjacentCell8Way(t.Position, t.Rotation, t.def.size, t.Map, out result);
+			return GenAdj.TryFindRandomAdjacentCell8WayWithRoomGroup(t.Position, t.Rotation, t.def.size, t.Map, out result);
 		}
 
-		public static bool TryFindRandomWalkableAdjacentCell8Way(IntVec3 center, Rot4 rot, IntVec2 size, Map map, out IntVec3 result)
+		public static bool TryFindRandomAdjacentCell8WayWithRoomGroup(IntVec3 center, Rot4 rot, IntVec2 size, Map map, out IntVec3 result)
 		{
 			GenAdj.AdjustForRotation(ref center, ref size, rot);
 			GenAdj.validCells.Clear();
 			foreach (IntVec3 current in GenAdj.CellsAdjacent8Way(center, rot, size))
 			{
-				if (current.InBounds(map) && current.Walkable(map))
+				if (current.InBounds(map) && current.GetRoomGroup(map) != null)
 				{
 					GenAdj.validCells.Add(current);
 				}
@@ -452,10 +472,10 @@ namespace Verse
 
 		public static bool AdjacentTo8WayOrInside(this IntVec3 root, Thing t)
 		{
-			return root.IsAdjacentTo8WayOrInside(t.Position, t.Rotation, t.def.size);
+			return root.AdjacentTo8WayOrInside(t.Position, t.Rotation, t.def.size);
 		}
 
-		public static bool IsAdjacentTo8WayOrInside(this IntVec3 root, IntVec3 center, Rot4 rot, IntVec2 size)
+		public static bool AdjacentTo8WayOrInside(this IntVec3 root, IntVec3 center, Rot4 rot, IntVec2 size)
 		{
 			GenAdj.AdjustForRotation(ref center, ref size, rot);
 			int num = center.x - (size.x - 1) / 2 - 1;

@@ -49,17 +49,17 @@ namespace RimWorld
 			}
 		}
 
-		private static bool CaresAboutForbidden(Pawn pawn, bool cellTarget)
+		public static bool CaresAboutForbidden(Pawn pawn, bool cellTarget)
 		{
-			return !pawn.InMentalState && pawn.HostFaction == null && (!cellTarget || !ThinkNode_ConditionalShouldFollowMaster.ShouldFollowMaster(pawn));
+			return pawn.HostFaction == null && !pawn.InMentalState && (!cellTarget || !ThinkNode_ConditionalShouldFollowMaster.ShouldFollowMaster(pawn));
 		}
 
 		public static bool InAllowedArea(this IntVec3 c, Pawn forPawn)
 		{
 			if (forPawn.playerSettings != null)
 			{
-				Area areaRestrictionInPawnCurrentMap = forPawn.playerSettings.AreaRestrictionInPawnCurrentMap;
-				if (areaRestrictionInPawnCurrentMap != null && areaRestrictionInPawnCurrentMap.TrueCount > 0 && !areaRestrictionInPawnCurrentMap[c])
+				Area effectiveAreaRestrictionInPawnCurrentMap = forPawn.playerSettings.EffectiveAreaRestrictionInPawnCurrentMap;
+				if (effectiveAreaRestrictionInPawnCurrentMap != null && effectiveAreaRestrictionInPawnCurrentMap.TrueCount > 0 && !effectiveAreaRestrictionInPawnCurrentMap[c])
 				{
 					return false;
 				}
@@ -92,7 +92,7 @@ namespace RimWorld
 
 		public static bool IsForbidden(this IntVec3 c, Pawn pawn)
 		{
-			return ForbidUtility.CaresAboutForbidden(pawn, true) && !c.InAllowedArea(pawn);
+			return ForbidUtility.CaresAboutForbidden(pawn, true) && (!c.InAllowedArea(pawn) || (pawn.mindState.maxDistToSquadFlag > 0f && !c.InHorDistOf(pawn.DutyLocation(), pawn.mindState.maxDistToSquadFlag)));
 		}
 
 		public static bool IsForbiddenEntirely(this Region r, Pawn pawn)
@@ -103,8 +103,8 @@ namespace RimWorld
 			}
 			if (pawn.playerSettings != null)
 			{
-				Area areaRestriction = pawn.playerSettings.AreaRestriction;
-				if (areaRestriction != null && areaRestriction.TrueCount > 0 && areaRestriction.Map == r.Map && r.OverlapWith(areaRestriction) == AreaOverlap.None)
+				Area effectiveAreaRestriction = pawn.playerSettings.EffectiveAreaRestriction;
+				if (effectiveAreaRestriction != null && effectiveAreaRestriction.TrueCount > 0 && effectiveAreaRestriction.Map == r.Map && r.OverlapWith(effectiveAreaRestriction) == AreaOverlap.None)
 				{
 					return true;
 				}

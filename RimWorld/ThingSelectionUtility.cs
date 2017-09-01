@@ -44,23 +44,7 @@ namespace RimWorld
 
 		public static bool SelectableByHotkey(Thing t)
 		{
-			if (!t.def.selectable)
-			{
-				return false;
-			}
-			Pawn pawn = t as Pawn;
-			if (pawn != null)
-			{
-				if (pawn.Dead)
-				{
-					return false;
-				}
-				if (pawn.InContainerEnclosed)
-				{
-					return false;
-				}
-			}
-			return true;
+			return t.def.selectable && t.Spawned;
 		}
 
 		[DebuggerHidden]
@@ -147,11 +131,11 @@ namespace RimWorld
 			}
 			if (num == -1)
 			{
-				JumpToTargetUtility.TryJumpAndSelect(ThingSelectionUtility.tmpColonists[0]);
+				CameraJumper.TryJumpAndSelect(ThingSelectionUtility.tmpColonists[0]);
 			}
 			else
 			{
-				JumpToTargetUtility.TryJumpAndSelect(ThingSelectionUtility.tmpColonists[(num + 1) % ThingSelectionUtility.tmpColonists.Count]);
+				CameraJumper.TryJumpAndSelect(ThingSelectionUtility.tmpColonists[(num + 1) % ThingSelectionUtility.tmpColonists.Count]);
 			}
 			ThingSelectionUtility.tmpColonists.Clear();
 		}
@@ -176,11 +160,11 @@ namespace RimWorld
 			}
 			if (num == -1)
 			{
-				JumpToTargetUtility.TryJumpAndSelect(ThingSelectionUtility.tmpColonists[ThingSelectionUtility.tmpColonists.Count - 1]);
+				CameraJumper.TryJumpAndSelect(ThingSelectionUtility.tmpColonists[ThingSelectionUtility.tmpColonists.Count - 1]);
 			}
 			else
 			{
-				JumpToTargetUtility.TryJumpAndSelect(ThingSelectionUtility.tmpColonists[GenMath.PositiveMod(num - 1, ThingSelectionUtility.tmpColonists.Count)]);
+				CameraJumper.TryJumpAndSelect(ThingSelectionUtility.tmpColonists[GenMath.PositiveMod(num - 1, ThingSelectionUtility.tmpColonists.Count)]);
 			}
 			ThingSelectionUtility.tmpColonists.Clear();
 		}

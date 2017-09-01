@@ -113,11 +113,11 @@ namespace Verse
 			}
 		}
 
-		public Season BirthSeason
+		public Quadrum BirthQuadrum
 		{
 			get
 			{
-				return GenDate.Season(this.birthAbsTicksInt, 0f);
+				return GenDate.Quadrum(this.birthAbsTicksInt, 0f);
 			}
 		}
 
@@ -158,7 +158,7 @@ namespace Verse
 				string text = "FullDate".Translate(new object[]
 				{
 					Find.ActiveLanguageWorker.OrdinalNumber(this.BirthDayOfSeasonZeroBased + 1),
-					this.BirthSeason.Label(),
+					this.BirthQuadrum.Label(),
 					this.BirthYear
 				});
 				string text2 = string.Concat(new string[]
@@ -241,8 +241,8 @@ namespace Verse
 
 		public void ExposeData()
 		{
-			Scribe_Values.LookValue<long>(ref this.ageBiologicalTicksInt, "ageBiologicalTicks", 0L, false);
-			Scribe_Values.LookValue<long>(ref this.birthAbsTicksInt, "birthAbsTicks", 0L, false);
+			Scribe_Values.Look<long>(ref this.ageBiologicalTicksInt, "ageBiologicalTicks", 0L, false);
+			Scribe_Values.Look<long>(ref this.birthAbsTicksInt, "birthAbsTicks", 0L, false);
 			if (Scribe.mode == LoadSaveMode.PostLoadInit)
 			{
 				this.cachedLifeStageIndex = -1;
@@ -325,7 +325,7 @@ namespace Verse
 					this.AgeBiologicalYears,
 					stringBuilder
 				}).AdjustedFor(this.pawn);
-				Find.LetterStack.ReceiveLetter(new Letter("LetterLabelBirthday".Translate(), text, LetterType.BadNonUrgent, this.pawn), null);
+				Find.LetterStack.ReceiveLetter("LetterLabelBirthday".Translate(), text, LetterDefOf.BadNonUrgent, this.pawn, null);
 			}
 		}
 
@@ -352,7 +352,7 @@ namespace Verse
 			}
 			int number = nameSingle.Number;
 			string text = this.pawn.KindLabel + " " + number;
-			if (!NameUseChecker.NameSingleIsUsedOnAnyMap(text))
+			if (!NameUseChecker.NameSingleIsUsed(text))
 			{
 				this.pawn.Name = new NameSingle(text, true);
 				return;

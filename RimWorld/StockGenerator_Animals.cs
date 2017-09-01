@@ -21,15 +21,30 @@ namespace RimWorld
 
 		private static readonly SimpleCurve SelectionChanceFromWildnessCurve = new SimpleCurve
 		{
-			new CurvePoint(0f, 100f),
-			new CurvePoint(0.25f, 60f),
-			new CurvePoint(0.5f, 30f),
-			new CurvePoint(0.75f, 12f),
-			new CurvePoint(1f, 2f)
+			{
+				new CurvePoint(0f, 100f),
+				true
+			},
+			{
+				new CurvePoint(0.25f, 60f),
+				true
+			},
+			{
+				new CurvePoint(0.5f, 30f),
+				true
+			},
+			{
+				new CurvePoint(0.75f, 12f),
+				true
+			},
+			{
+				new CurvePoint(1f, 2f),
+				true
+			}
 		};
 
 		[DebuggerHidden]
-		public override IEnumerable<Thing> GenerateThings(Map forMap)
+		public override IEnumerable<Thing> GenerateThings(int forTile)
 		{
 			int numKinds = this.kindCountRange.RandomInRange;
 			int count = this.countRange.RandomInRange;
@@ -38,7 +53,7 @@ namespace RimWorld
 			{
 				PawnKindDef kind;
 				if (!(from k in DefDatabase<PawnKindDef>.AllDefs
-				where !this.<kinds>__2.Contains(k) && this.<>f__this.PawnKindAllowed(k, this.forMap)
+				where !this.<kinds>__2.Contains(k) && this.<>f__this.PawnKindAllowed(k, this.forTile)
 				select k).TryRandomElementByWeight((PawnKindDef k) => this.<>f__this.SelectionChance(k), out kind))
 				{
 					break;
@@ -52,7 +67,7 @@ namespace RimWorld
 				{
 					break;
 				}
-				PawnGenerationRequest request = new PawnGenerationRequest(kind2, null, PawnGenerationContext.NonPlayer, forMap, false, false, false, false, true, false, 1f, false, true, true, null, null, null, null, null, null);
+				PawnGenerationRequest request = new PawnGenerationRequest(kind2, null, PawnGenerationContext.NonPlayer, forTile, false, false, false, false, true, false, 1f, false, true, true, false, false, null, null, null, null, null, null);
 				yield return PawnGenerator.GeneratePawn(request);
 			}
 		}
@@ -67,7 +82,7 @@ namespace RimWorld
 			return thingDef.category == ThingCategory.Pawn && thingDef.race.Animal;
 		}
 
-		private bool PawnKindAllowed(PawnKindDef kind, Map map)
+		private bool PawnKindAllowed(PawnKindDef kind, int forTile)
 		{
 			if (!kind.RaceProps.Animal || kind.RaceProps.wildness < this.minWildness || kind.RaceProps.wildness > this.maxWildness || kind.RaceProps.wildness > 1f)
 			{
@@ -75,8 +90,12 @@ namespace RimWorld
 			}
 			if (this.checkTemperature)
 			{
-				Map map2 = map ?? Find.AnyPlayerHomeMap;
-				if (map2 != null && !map2.mapTemperature.SeasonAndOutdoorTemperatureAcceptableFor(kind.race))
+				int num = forTile;
+				if (num == -1 && Find.AnyPlayerHomeMap != null)
+				{
+					num = Find.AnyPlayerHomeMap.Tile;
+				}
+				if (num != -1 && !Find.World.tileTemperatures.SeasonAndOutdoorTemperatureAcceptableFor(num, kind.race))
 				{
 					return false;
 				}

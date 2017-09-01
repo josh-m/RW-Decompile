@@ -39,7 +39,7 @@ namespace RimWorld
 
 		private Apparel FindGarmentCoveringPart(Pawn pawn, BodyPartGroupDef bodyPartGroupDef)
 		{
-			Room room = pawn.GetRoom();
+			Room room = pawn.GetRoom(RegionType.Set_Passable);
 			if (room.isPrisonCell)
 			{
 				foreach (IntVec3 current in room.Cells)
@@ -48,7 +48,7 @@ namespace RimWorld
 					for (int i = 0; i < thingList.Count; i++)
 					{
 						Apparel apparel = thingList[i] as Apparel;
-						if (apparel != null && apparel.def.apparel.bodyPartGroups.Contains(bodyPartGroupDef) && pawn.CanReserve(apparel, 1) && ApparelUtility.HasPartsToWear(pawn, apparel.def))
+						if (apparel != null && apparel.def.apparel.bodyPartGroups.Contains(bodyPartGroupDef) && pawn.CanReserve(apparel, 1, -1, null, false) && ApparelUtility.HasPartsToWear(pawn, apparel.def))
 						{
 							return apparel;
 						}

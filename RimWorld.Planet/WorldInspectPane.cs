@@ -155,12 +155,19 @@ namespace RimWorld.Planet
 				stringBuilder.Append(vector.y.ToStringLatitude());
 				stringBuilder.Append(" ");
 				stringBuilder.Append(vector.x.ToStringLongitude());
+				Tile tile = Find.WorldGrid[this.SelectedTile];
+				if (tile.VisibleRoads != null)
+				{
+					stringBuilder.Append("\n" + (from rl in tile.VisibleRoads
+					select rl.road).MaxBy((RoadDef road) => road.priority).LabelCap);
+				}
 				return stringBuilder.ToString();
 			}
 		}
 
 		public WorldInspectPane()
 		{
+			this.layer = WindowLayer.GameUI;
 			this.soundAppear = null;
 			this.soundClose = null;
 			this.closeOnClickedOutside = false;
@@ -178,10 +185,14 @@ namespace RimWorld.Planet
 		public void DrawInspectGizmos()
 		{
 			WorldInspectPane.tmpObjectsList.Clear();
+			WorldRoutePlanner worldRoutePlanner = Find.WorldRoutePlanner;
 			List<WorldObject> selected = this.Selected;
 			for (int i = 0; i < selected.Count; i++)
 			{
-				WorldInspectPane.tmpObjectsList.Add(selected[i]);
+				if (!worldRoutePlanner.Active || selected[i] is RoutePlannerWaypoint)
+				{
+					WorldInspectPane.tmpObjectsList.Add(selected[i]);
+				}
 			}
 			InspectGizmoGrid.DrawInspectGizmoGridFor(WorldInspectPane.tmpObjectsList);
 			WorldInspectPane.tmpObjectsList.Clear();
@@ -239,7 +250,7 @@ namespace RimWorld.Planet
 				float x = rect.width - 48f;
 				if (singleSelectedObject != null)
 				{
-					Widgets.InfoCardButton(x, 0f, singleSelectedObject.def);
+					Widgets.InfoCardButton(x, 0f, singleSelectedObject);
 				}
 				else
 				{

@@ -24,7 +24,7 @@ namespace RimWorld
 
 		public void ExposeData()
 		{
-			Scribe_Collections.LookList<DrugPolicy>(ref this.policies, "policies", LookMode.Deep, new object[0]);
+			Scribe_Collections.Look<DrugPolicy>(ref this.policies, "policies", LookMode.Deep, new object[0]);
 		}
 
 		public DrugPolicy DefaultDrugPolicy()

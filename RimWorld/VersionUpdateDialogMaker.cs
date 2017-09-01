@@ -25,6 +25,15 @@ namespace RimWorld
 				text2
 			});
 			text3 += "\n\n";
+			if (BackCompatibility.IsSaveCompatibleWith(LastPlayedVersion.Version.ToString()))
+			{
+				text3 += "GameUpdatedToNewVersionSavesCompatible".Translate();
+			}
+			else
+			{
+				text3 += "GameUpdatedToNewVersionSavesIncompatible".Translate();
+			}
+			text3 += "\n\n";
 			text3 += "GameUpdatedToNewVersionSteam".Translate();
 			Find.WindowStack.Add(new Dialog_MessageBox(text3, null, null, null, null, null, false));
 			VersionUpdateDialogMaker.dialogDone = true;

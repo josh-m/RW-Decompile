@@ -17,7 +17,9 @@ namespace Verse
 
 		private List<SpecialThingFilterDef> tempForceHiddenSpecialFilters;
 
-		public Listing_TreeThingFilter(Rect rect, ThingFilter filter, ThingFilter parentFilter, IEnumerable<ThingDef> forceHiddenDefs, IEnumerable<SpecialThingFilterDef> forceHiddenFilters) : base(rect)
+		private List<ThingDef> suppressSmallVolumeTags;
+
+		public Listing_TreeThingFilter(ThingFilter filter, ThingFilter parentFilter, IEnumerable<ThingDef> forceHiddenDefs, IEnumerable<SpecialThingFilterDef> forceHiddenFilters, List<ThingDef> suppressSmallVolumeTags)
 		{
 			this.filter = filter;
 			this.parentFilter = parentFilter;
@@ -29,6 +31,7 @@ namespace Verse
 			{
 				this.tempForceHiddenSpecialFilters = forceHiddenFilters.ToList<SpecialThingFilterDef>();
 			}
+			this.suppressSmallVolumeTags = suppressSmallVolumeTags;
 		}
 
 		public void DoCategoryChildren(TreeNode_ThingCategory node, int indentLevel, int openMask, bool isRoot = false)
@@ -94,7 +97,7 @@ namespace Verse
 			if (Widgets.CheckboxMulti(new Vector2(this.LabelWidth, this.curY), multiCheckboxState, this.lineHeight))
 			{
 				bool allow = multiCheckboxState == MultiCheckboxState.Off;
-				this.filter.SetAllow(node.catDef, allow);
+				this.filter.SetAllow(node.catDef, allow, this.forceHiddenDefs, this.hiddenSpecialFilters);
 			}
 			base.EndLine();
 			if (node.IsOpen(openMask))
@@ -105,11 +108,14 @@ namespace Verse
 
 		private void DoThingDef(ThingDef tDef, int nestLevel)
 		{
-			bool flag = tDef.IsStuff && tDef.smallVolume;
+			bool flag = (this.suppressSmallVolumeTags == null || !this.suppressSmallVolumeTags.Contains(tDef)) && tDef.IsStuff && tDef.smallVolume;
 			string text = tDef.description;
 			if (flag)
 			{
-				text = text + "\n\n" + "ThisIsSmallVolume".Translate();
+				text = text + "\n\n" + "ThisIsSmallVolume".Translate(new object[]
+				{
+					10.ToStringCached()
+				});
 			}
 			base.LabelLeft(tDef.LabelCap, text, nestLevel);
 			if (flag)
@@ -117,7 +123,7 @@ namespace Verse
 				Rect rect = new Rect(this.LabelWidth - 30f, this.curY, 30f, 30f);
 				Text.Font = GameFont.Tiny;
 				GUI.color = Color.gray;
-				Widgets.Label(rect, "x20");
+				Widgets.Label(rect, "x" + 10.ToStringCached());
 				Text.Font = GameFont.Small;
 				GUI.color = Color.white;
 			}

@@ -48,7 +48,7 @@ namespace RimWorld.Planet
 			command_Action.action = delegate
 			{
 				CaravanMergeUtility.TryMergeSelectedCaravans();
-				SoundDefOf.TickHigh.PlayOneShotOnCamera();
+				SoundDefOf.TickHigh.PlayOneShotOnCamera(null);
 			};
 			return command_Action;
 		}
@@ -106,12 +106,7 @@ namespace RimWorld.Planet
 				Caravan caravan2 = caravans[i];
 				if (caravan2 != caravan)
 				{
-					List<Pawn> pawnsListForReading = caravan2.PawnsListForReading;
-					for (int j = 0; j < pawnsListForReading.Count; j++)
-					{
-						caravan.AddPawn(pawnsListForReading[j], true);
-					}
-					caravan2.RemoveAllPawns();
+					caravan2.pawns.TryTransferAllToContainer(caravan.pawns, true);
 					Find.WorldObjects.Remove(caravan2);
 				}
 			}

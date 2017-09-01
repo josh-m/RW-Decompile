@@ -33,7 +33,7 @@ namespace RimWorld
 
 		public override void PostExposeData()
 		{
-			Scribe_Values.LookValue<int>(ref this.ticksSinceMaintain, "ticksSinceMaintain", 0, false);
+			Scribe_Values.Look<int>(ref this.ticksSinceMaintain, "ticksSinceMaintain", 0, false);
 		}
 
 		public override void CompTickRare()
@@ -46,7 +46,7 @@ namespace RimWorld
 			this.ticksSinceMaintain += 250;
 			if (this.CurStage == MaintainableStage.Damaging)
 			{
-				this.parent.TakeDamage(new DamageInfo(DamageDefOf.Deterioration, this.Props.damagePerTickRare, -1f, null, null, null));
+				this.parent.TakeDamage(new DamageInfo(DamageDefOf.Deterioration, this.Props.damagePerTickRare, -1f, null, null, null, DamageInfo.SourceCategory.ThingOrUnknown));
 			}
 		}
 

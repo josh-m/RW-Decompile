@@ -18,7 +18,7 @@ namespace RimWorld
 		{
 			get
 			{
-				float num = this.thoughts.TotalMood();
+				float num = this.thoughts.TotalMoodOffset();
 				if (this.pawn.IsColonist || this.pawn.IsPrisonerOfColony)
 				{
 					num += Find.Storyteller.difficulty.colonistMoodOffset;
@@ -70,11 +70,11 @@ namespace RimWorld
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Deep.LookDeep<ThoughtHandler>(ref this.thoughts, "thoughts", new object[]
+			Scribe_Deep.Look<ThoughtHandler>(ref this.thoughts, "thoughts", new object[]
 			{
 				this.pawn
 			});
-			Scribe_Deep.LookDeep<PawnRecentMemory>(ref this.recentMemory, "recentMemory", new object[]
+			Scribe_Deep.Look<PawnRecentMemory>(ref this.recentMemory, "recentMemory", new object[]
 			{
 				this.pawn
 			});

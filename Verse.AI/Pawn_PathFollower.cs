@@ -22,6 +22,8 @@ namespace Verse.AI
 
 		private const int CheckForMovingCollidingPawnsIfCloserToTargetThanX = 30;
 
+		private const int AttackBlockingHostilePawnAfterTicks = 180;
+
 		protected Pawn pawn;
 
 		private bool moving;
@@ -47,6 +49,8 @@ namespace Verse.AI
 		public IntVec3 lastPathedTargetPosition;
 
 		private int foundPathWhichCollidesWithPawns = -999999;
+
+		private int foundPathWithDanger = -999999;
 
 		private int failedToFindCloseUnoccupiedCellTicks = -999999;
 
@@ -81,25 +85,25 @@ namespace Verse.AI
 
 		public void ExposeData()
 		{
-			Scribe_Values.LookValue<bool>(ref this.moving, "moving", true, false);
-			Scribe_Values.LookValue<IntVec3>(ref this.nextCell, "nextCell", default(IntVec3), false);
-			Scribe_Values.LookValue<float>(ref this.nextCellCostLeft, "nextCellCostLeft", 0f, false);
-			Scribe_Values.LookValue<float>(ref this.nextCellCostTotal, "nextCellCostInitial", 0f, false);
-			Scribe_Values.LookValue<PathEndMode>(ref this.peMode, "peMode", PathEndMode.None, false);
-			Scribe_Values.LookValue<int>(ref this.cellsUntilClamor, "cellsUntilClamor", 0, false);
-			Scribe_Values.LookValue<int>(ref this.lastMovedTick, "lastMovedTick", -999999, false);
+			Scribe_Values.Look<bool>(ref this.moving, "moving", true, false);
+			Scribe_Values.Look<IntVec3>(ref this.nextCell, "nextCell", default(IntVec3), false);
+			Scribe_Values.Look<float>(ref this.nextCellCostLeft, "nextCellCostLeft", 0f, false);
+			Scribe_Values.Look<float>(ref this.nextCellCostTotal, "nextCellCostInitial", 0f, false);
+			Scribe_Values.Look<PathEndMode>(ref this.peMode, "peMode", PathEndMode.None, false);
+			Scribe_Values.Look<int>(ref this.cellsUntilClamor, "cellsUntilClamor", 0, false);
+			Scribe_Values.Look<int>(ref this.lastMovedTick, "lastMovedTick", -999999, false);
 			if (this.moving)
 			{
-				Scribe_TargetInfo.LookTargetInfo(ref this.destination, "destination");
+				Scribe_TargetInfo.Look(ref this.destination, "destination");
 			}
 		}
 
 		public void StartPath(LocalTargetInfo dest, PathEndMode peMode)
 		{
-			dest = (LocalTargetInfo)GenPath.ResolvePathMode(dest.ToTargetInfo(this.pawn.Map), ref peMode);
+			dest = (LocalTargetInfo)GenPath.ResolvePathMode(this.pawn, dest.ToTargetInfo(this.pawn.Map), ref peMode);
 			if (dest.HasThing && dest.ThingDestroyed)
 			{
-				Log.Error("Pathing to destroyed thing " + dest.Thing);
+				Log.Error(this.pawn + " pathing to destroyed thing " + dest.Thing);
 				this.PatherFailed();
 				return;
 			}
@@ -134,6 +138,7 @@ namespace Verse.AI
 			if (this.pawn.Downed)
 			{
 				Log.Error(this.pawn.LabelCap + " tried to path while incapacitated. This should never happen.");
+				this.PatherFailed();
 				return;
 			}
 			if (this.curPath != null)
@@ -169,9 +174,10 @@ namespace Verse.AI
 					if (CellFinder.TryFindBestPawnStandCell(this.pawn, out position))
 					{
 						this.pawn.Position = position;
-						if (this.moving)
+						this.ResetToCurrentPosition();
+						if (this.moving && this.TrySetNewPath())
 						{
-							this.TrySetNewPath();
+							this.TryEnterNextPathCell();
 						}
 					}
 					else
@@ -181,24 +187,37 @@ namespace Verse.AI
 				}
 				return;
 			}
-			if (this.moving && this.WillCollideWithPawnOnNextPathCell())
+			if (!this.moving || !this.WillCollideWithPawnOnNextPathCell())
 			{
-				this.nextCellCostLeft = this.nextCellCostTotal;
-				if (((this.curPath != null && this.curPath.NodesLeftCount < 30) || PawnUtility.AnyPawnBlockingPathAt(this.nextCell, this.pawn, false, true)) && !this.BestPathHadPawnsInTheWayRecently() && this.TrySetNewPath())
+				this.lastMovedTick = Find.TickManager.TicksGame;
+				if (this.nextCellCostLeft > 0f)
 				{
-					this.ResetToCurrentPosition();
+					this.nextCellCostLeft -= this.CostToPayThisTick();
+				}
+				else if (this.moving)
+				{
 					this.TryEnterNextPathCell();
 				}
 				return;
 			}
-			this.lastMovedTick = Find.TickManager.TicksGame;
-			if (this.nextCellCostLeft > 0f)
+			this.nextCellCostLeft = this.nextCellCostTotal;
+			if (((this.curPath != null && this.curPath.NodesLeftCount < 30) || PawnUtility.AnyPawnBlockingPathAt(this.nextCell, this.pawn, false, true)) && !this.BestPathHadPawnsInTheWayRecently() && this.TrySetNewPath())
 			{
-				this.nextCellCostLeft -= this.CostToPayThisTick();
-			}
-			else if (this.moving)
-			{
+				this.ResetToCurrentPosition();
 				this.TryEnterNextPathCell();
+				return;
+			}
+			if (Find.TickManager.TicksGame - this.lastMovedTick >= 180)
+			{
+				Pawn pawn = PawnUtility.PawnBlockingPathAt(this.nextCell, this.pawn, false, false);
+				if (pawn != null && this.pawn.HostileTo(pawn) && this.pawn.TryGetAttackVerb(false) != null)
+				{
+					Job job = new Job(JobDefOf.AttackMelee, pawn);
+					job.maxNumMeleeAttacks = 1;
+					job.expiryInterval = 300;
+					this.pawn.jobs.StartJob(job, JobCondition.Incompletable, null, false, true, null, null);
+					return;
+				}
 			}
 		}
 
@@ -352,8 +371,8 @@ namespace Verse.AI
 					if ((this.pawn.CurJob != null && this.pawn.CurJob.canBash) || this.pawn.HostileTo(building))
 					{
 						Job job = new Job(JobDefOf.AttackMelee, building);
-						job.expiryInterval = 1100;
-						this.pawn.jobs.StartJob(job, JobCondition.Incompletable, null, false, true, null);
+						job.expiryInterval = 300;
+						this.pawn.jobs.StartJob(job, JobCondition.Incompletable, null, false, true, null, null);
 						return;
 					}
 					this.PatherFailed();
@@ -363,7 +382,7 @@ namespace Verse.AI
 			Building_Door building_Door2 = this.NextCellDoorToManuallyOpen();
 			if (building_Door2 != null)
 			{
-				Stance_Cooldown stance_Cooldown = new Stance_Cooldown(building_Door2.TicksToOpenNow, building_Door2);
+				Stance_Cooldown stance_Cooldown = new Stance_Cooldown(building_Door2.TicksToOpenNow, building_Door2, null);
 				stance_Cooldown.neverAimWeapon = true;
 				this.pawn.stances.SetStance(stance_Cooldown);
 				building_Door2.StartManualOpenBy(this.pawn);
@@ -417,7 +436,7 @@ namespace Verse.AI
 
 		private void SetupMoveIntoNextCell()
 		{
-			if (this.curPath.NodesLeftCount < 2)
+			if (this.curPath.NodesLeftCount <= 1)
 			{
 				Log.Error(string.Concat(new object[]
 				{
@@ -529,19 +548,23 @@ namespace Verse.AI
 				this.curPath.ReleaseToPool();
 			}
 			this.curPath = pawnPath;
-			if (PawnUtility.ShouldCollideWithPawns(this.pawn))
+			int num = 0;
+			while (num < 20 && num < this.curPath.NodesLeftCount)
 			{
-				int num = 0;
-				while (num < 20 && num < this.curPath.NodesLeftCount)
+				IntVec3 c = this.curPath.Peek(num);
+				if (PawnUtility.ShouldCollideWithPawns(this.pawn) && PawnUtility.AnyPawnBlockingPathAt(c, this.pawn, false, false))
 				{
-					IntVec3 c = this.curPath.Peek(num);
-					if (PawnUtility.AnyPawnBlockingPathAt(c, this.pawn, false, false))
-					{
-						this.foundPathWhichCollidesWithPawns = Find.TickManager.TicksGame;
-						break;
-					}
-					num++;
+					this.foundPathWhichCollidesWithPawns = Find.TickManager.TicksGame;
 				}
+				if (PawnUtility.KnownDangerAt(c, this.pawn))
+				{
+					this.foundPathWithDanger = Find.TickManager.TicksGame;
+				}
+				if (this.foundPathWhichCollidesWithPawns == Find.TickManager.TicksGame && this.foundPathWithDanger == Find.TickManager.TicksGame)
+				{
+					break;
+				}
+				num++;
 			}
 			return true;
 		}
@@ -554,25 +577,7 @@ namespace Verse.AI
 
 		private bool AtDestinationPosition()
 		{
-			if (this.pawn.Position == this.destination.Cell)
-			{
-				return true;
-			}
-			if (this.peMode == PathEndMode.Touch)
-			{
-				if (!this.destination.HasThing)
-				{
-					if (this.pawn.Position.AdjacentTo8WayOrInside(this.destination.Cell))
-					{
-						return true;
-					}
-				}
-				else if (this.pawn.Position.AdjacentTo8WayOrInside(this.destination.Thing))
-				{
-					return true;
-				}
-			}
-			return false;
+			return this.pawn.CanReachImmediate(this.destination, this.peMode);
 		}
 
 		private bool NeedNewPath()
@@ -581,50 +586,59 @@ namespace Verse.AI
 			{
 				return true;
 			}
+			if (this.destination.HasThing && this.destination.Thing.Map != this.pawn.Map)
+			{
+				return true;
+			}
 			if (this.lastPathedTargetPosition != this.destination.Cell)
 			{
-				float lengthHorizontalSquared = (this.pawn.Position - this.destination.Cell).LengthHorizontalSquared;
-				float num;
-				if (lengthHorizontalSquared > 900f)
+				float num = (float)(this.pawn.Position - this.destination.Cell).LengthHorizontalSquared;
+				float num2;
+				if (num > 900f)
 				{
-					num = 10f;
+					num2 = 10f;
 				}
-				else if (lengthHorizontalSquared > 289f)
+				else if (num > 289f)
 				{
-					num = 5f;
+					num2 = 5f;
 				}
-				else if (lengthHorizontalSquared > 100f)
+				else if (num > 100f)
 				{
-					num = 3f;
+					num2 = 3f;
 				}
-				else if (lengthHorizontalSquared > 49f)
+				else if (num > 49f)
 				{
-					num = 2f;
+					num2 = 2f;
 				}
 				else
 				{
-					num = 0.5f;
+					num2 = 0.5f;
 				}
-				if ((this.lastPathedTargetPosition - this.destination.Cell).LengthHorizontalSquared > num * num)
+				if ((float)(this.lastPathedTargetPosition - this.destination.Cell).LengthHorizontalSquared > num2 * num2)
 				{
 					return true;
 				}
 			}
 			bool flag = PawnUtility.ShouldCollideWithPawns(this.pawn);
 			bool flag2 = this.curPath.NodesLeftCount < 30;
-			int num2 = 0;
-			while (num2 < 20 && num2 < this.curPath.NodesLeftCount)
+			IntVec3 other = IntVec3.Invalid;
+			int num3 = 0;
+			while (num3 < 20 && num3 < this.curPath.NodesLeftCount)
 			{
-				IntVec3 c = this.curPath.Peek(num2);
-				if (!c.Walkable(this.pawn.Map))
+				IntVec3 intVec = this.curPath.Peek(num3);
+				if (!intVec.Walkable(this.pawn.Map))
 				{
 					return true;
 				}
-				if (flag && !this.BestPathHadPawnsInTheWayRecently() && (PawnUtility.AnyPawnBlockingPathAt(c, this.pawn, false, true) || (flag2 && PawnUtility.AnyPawnBlockingPathAt(c, this.pawn, false, false))))
+				if (flag && !this.BestPathHadPawnsInTheWayRecently() && (PawnUtility.AnyPawnBlockingPathAt(intVec, this.pawn, false, true) || (flag2 && PawnUtility.AnyPawnBlockingPathAt(intVec, this.pawn, false, false))))
 				{
 					return true;
 				}
-				Building_Door building_Door = c.GetEdifice(this.pawn.Map) as Building_Door;
+				if (!this.BestPathHadDangerRecently() && PawnUtility.KnownDangerAt(intVec, this.pawn))
+				{
+					return true;
+				}
+				Building_Door building_Door = intVec.GetEdifice(this.pawn.Map) as Building_Door;
 				if (building_Door != null)
 				{
 					if (!building_Door.CanPhysicallyPass(this.pawn) && !this.pawn.HostileTo(building_Door))
@@ -636,7 +650,12 @@ namespace Verse.AI
 						return true;
 					}
 				}
-				num2++;
+				if (num3 != 0 && intVec.AdjacentToDiagonal(other) && (PathFinder.BlocksDiagonalMovement(intVec.x, other.z, this.pawn.Map) || PathFinder.BlocksDiagonalMovement(other.x, intVec.z, this.pawn.Map)))
+				{
+					return true;
+				}
+				other = intVec;
+				num3++;
 			}
 			return false;
 		}
@@ -644,6 +663,11 @@ namespace Verse.AI
 		private bool BestPathHadPawnsInTheWayRecently()
 		{
 			return this.foundPathWhichCollidesWithPawns + 240 > Find.TickManager.TicksGame;
+		}
+
+		private bool BestPathHadDangerRecently()
+		{
+			return this.foundPathWithDanger + 240 > Find.TickManager.TicksGame;
 		}
 
 		private bool FailedToFindCloseUnoccupiedCellRecently()

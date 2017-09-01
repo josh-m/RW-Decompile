@@ -9,9 +9,20 @@ namespace RimWorld
 {
 	public class IncidentWorker_ResourcePodCrash : IncidentWorker
 	{
-		private const int MaxStacks = 8;
+		private const int MaxStacks = 7;
 
 		private const float MaxMarketValue = 40f;
+
+		private const float MinMoney = 150f;
+
+		private const float MaxMoney = 600f;
+
+		private static IEnumerable<ThingDef> PossiblePodContentsDefs()
+		{
+			return from d in DefDatabase<ThingDef>.AllDefs
+			where d.category == ThingCategory.Item && d.tradeability == Tradeability.Stockable && d.equipmentType == EquipmentType.None && d.BaseMarketValue >= 1f && d.BaseMarketValue < 40f && !d.HasComp(typeof(CompHatcher))
+			select d;
+		}
 
 		private static ThingDef RandomPodContentsDef()
 		{
@@ -19,9 +30,7 @@ namespace RimWorld
 			Func<ThingDef, bool> isMeat = (ThingDef d) => d.category == ThingCategory.Item && d.thingCategories != null && d.thingCategories.Contains(ThingCategoryDefOf.MeatRaw);
 			int numLeathers = DefDatabase<ThingDef>.AllDefs.Where(isLeather).Count<ThingDef>();
 			int numMeats = DefDatabase<ThingDef>.AllDefs.Where(isMeat).Count<ThingDef>();
-			return (from d in DefDatabase<ThingDef>.AllDefs
-			where d.category == ThingCategory.Item && d.tradeability == Tradeability.Stockable && d.equipmentType == EquipmentType.None && d.BaseMarketValue >= 1f && d.BaseMarketValue < 40f && !d.HasComp(typeof(CompHatcher))
-			select d).RandomElementByWeight(delegate(ThingDef d)
+			return IncidentWorker_ResourcePodCrash.PossiblePodContentsDefs().RandomElementByWeight(delegate(ThingDef d)
 			{
 				float num = 100f;
 				if (isLeather(d))
@@ -41,7 +50,7 @@ namespace RimWorld
 			Map map = (Map)parms.target;
 			ThingDef thingDef = IncidentWorker_ResourcePodCrash.RandomPodContentsDef();
 			List<Thing> list = new List<Thing>();
-			float num = (float)Rand.Range(150, 900);
+			float num = Rand.Range(150f, 600f);
 			do
 			{
 				Thing thing = ThingMaker.MakeThing(thingDef, null);
@@ -62,11 +71,22 @@ namespace RimWorld
 				list.Add(thing);
 				num -= (float)num2 * thingDef.BaseMarketValue;
 			}
-			while (list.Count < 8 && num > thingDef.BaseMarketValue);
+			while (list.Count < 7 && num > thingDef.BaseMarketValue);
 			IntVec3 intVec = DropCellFinder.RandomDropSpot(map);
 			DropPodUtility.DropThingsNear(intVec, map, list, 110, false, true, true);
-			Find.LetterStack.ReceiveLetter("LetterLabelCargoPodCrash".Translate(), "CargoPodCrash".Translate(), LetterType.Good, new TargetInfo(intVec, map, false), null);
+			Find.LetterStack.ReceiveLetter("LetterLabelCargoPodCrash".Translate(), "CargoPodCrash".Translate(), LetterDefOf.Good, new TargetInfo(intVec, map, false), null);
 			return true;
+		}
+
+		public static void DebugLogPossiblePodContentsDefs()
+		{
+			StringBuilder stringBuilder = new StringBuilder();
+			stringBuilder.AppendLine("ThingDefs that can go in the resource pod crash incident.");
+			foreach (ThingDef current in IncidentWorker_ResourcePodCrash.PossiblePodContentsDefs())
+			{
+				stringBuilder.AppendLine(current.defName);
+			}
+			Log.Message(stringBuilder.ToString());
 		}
 
 		public static void DebugLogPodContentsChoices()

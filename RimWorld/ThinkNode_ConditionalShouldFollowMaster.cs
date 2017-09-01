@@ -1,5 +1,6 @@
 using System;
 using Verse;
+using Verse.AI;
 
 namespace RimWorld
 {
@@ -22,19 +23,7 @@ namespace RimWorld
 				return false;
 			}
 			Pawn carriedBy = master.CarriedBy;
-			if (!master.Spawned && carriedBy == null)
-			{
-				return false;
-			}
-			if (carriedBy != null && carriedBy.HostileTo(master))
-			{
-				return true;
-			}
-			if (master.Drafted)
-			{
-				return pawn.playerSettings.followDrafted;
-			}
-			return master.CurJob != null && (master.CurJob.def == JobDefOf.Hunt || master.CurJob.def == JobDefOf.Tame) && pawn.playerSettings.followFieldwork;
+			return (master.Spawned || carriedBy != null) && ((carriedBy != null && carriedBy.HostileTo(master)) || (pawn.playerSettings.followDrafted && master.Drafted) || (pawn.playerSettings.followFieldwork && master.mindState.lastJobTag == JobTag.Fieldwork));
 		}
 	}
 }

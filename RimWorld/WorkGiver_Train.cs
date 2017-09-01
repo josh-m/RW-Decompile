@@ -20,7 +20,7 @@ namespace RimWorld
 			}
 		}
 
-		public override Job JobOnThing(Pawn pawn, Thing t)
+		public override Job JobOnThing(Pawn pawn, Thing t, bool forced = false)
 		{
 			Pawn pawn2 = t as Pawn;
 			if (pawn2 == null || !pawn2.RaceProps.Animal)

@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using UnityEngine;
+using Verse.Profile;
 using Verse.Sound;
 using Verse.Steam;
 
@@ -97,7 +98,7 @@ namespace Verse
 				}
 				else if (!LongEventHandler.ShouldWaitForEvent)
 				{
-					Rand.EnsureSeedStackEmpty();
+					Rand.EnsureStateStackEmpty();
 					SteamManager.Update();
 					PortraitsCache.PortraitsCacheUpdate();
 					this.uiRoot.UIRootUpdate();
@@ -107,6 +108,7 @@ namespace Verse
 						Prefs.Apply();
 					}
 					this.soundRoot.Update();
+					MemoryTracker.Update();
 				}
 			}
 			catch (Exception e)
@@ -118,11 +120,12 @@ namespace Verse
 
 		public void OnGUI()
 		{
-			UI.ApplyPixelScale();
 			try
 			{
 				if (!this.destroyed)
 				{
+					GUI.depth = 50;
+					UI.ApplyUIScale();
 					LongEventHandler.LongEventsOnGUI();
 					if (LongEventHandler.ShouldWaitForEvent)
 					{

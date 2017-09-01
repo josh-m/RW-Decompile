@@ -13,7 +13,7 @@ namespace RimWorld
 
 		private static bool CanTakeOrder(Pawn pawn)
 		{
-			return pawn.IsColonistPlayerControlled && pawn.jobs.CanTakeOrderedJob();
+			return pawn.IsColonistPlayerControlled;
 		}
 
 		public static void TryMakeFloatMenu(Pawn pawn)
@@ -65,21 +65,32 @@ namespace RimWorld
 			FloatMenuMakerMap.making = true;
 			try
 			{
-				if (pawn.Drafted)
+				if (intVec.Fogged(pawn.Map))
 				{
-					FloatMenuMakerMap.AddDraftedOrders(clickPos, pawn, list);
+					FloatMenuOption floatMenuOption = FloatMenuMakerMap.GotoLocationOption(intVec, pawn);
+					if (floatMenuOption != null && !floatMenuOption.Disabled)
+					{
+						list.Add(floatMenuOption);
+					}
 				}
-				if (pawn.RaceProps.Humanlike)
+				else
 				{
-					FloatMenuMakerMap.AddHumanlikeOrders(clickPos, pawn, list);
-				}
-				if (!pawn.Drafted)
-				{
-					FloatMenuMakerMap.AddUndraftedOrders(clickPos, pawn, list);
-				}
-				foreach (FloatMenuOption current in pawn.GetExtraFloatMenuOptionsFor(intVec))
-				{
-					list.Add(current);
+					if (pawn.Drafted)
+					{
+						FloatMenuMakerMap.AddDraftedOrders(clickPos, pawn, list);
+					}
+					if (pawn.RaceProps.Humanlike)
+					{
+						FloatMenuMakerMap.AddHumanlikeOrders(clickPos, pawn, list);
+					}
+					if (!pawn.Drafted)
+					{
+						FloatMenuMakerMap.AddUndraftedOrders(clickPos, pawn, list);
+					}
+					foreach (FloatMenuOption current in pawn.GetExtraFloatMenuOptionsFor(intVec))
+					{
+						list.Add(current);
+					}
 				}
 			}
 			finally
@@ -87,12 +98,37 @@ namespace RimWorld
 				DangerUtility.DoneDirectOrdering();
 				FloatMenuMakerMap.making = false;
 			}
+			FloatMenuMakerMap.DisableIfNotInterruptibleNow(list, pawn);
 			return list;
+		}
+
+		private static void DisableIfNotInterruptibleNow(List<FloatMenuOption> opts, Pawn pawn)
+		{
+			if (!pawn.jobs.IsCurrentJobPlayerInterruptible())
+			{
+				string str;
+				if (pawn.CurJob != null && pawn.CurJob.def == JobDefOf.Vomit)
+				{
+					str = "VomitingLower".Translate();
+				}
+				else
+				{
+					str = "NotInterruptibleLower".Translate();
+				}
+				for (int i = 0; i < opts.Count; i++)
+				{
+					if (!opts[i].Disabled)
+					{
+						opts[i].action = null;
+						opts[i].Label = opts[i].Label + " (" + str + ")";
+					}
+				}
+			}
 		}
 
 		private static void AddDraftedOrders(Vector3 clickPos, Pawn pawn, List<FloatMenuOption> opts)
 		{
-			IntVec3 b = IntVec3.FromVector3(clickPos);
+			IntVec3 clickCell = IntVec3.FromVector3(clickPos);
 			foreach (LocalTargetInfo current in GenUI.TargetsAt(clickPos, TargetingParameters.ForAttackHostile(), true))
 			{
 				LocalTargetInfo attackTarg = current;
@@ -102,7 +138,7 @@ namespace RimWorld
 					Action rangedAct = FloatMenuUtility.GetRangedAttackAction(pawn, attackTarg, out str);
 					string text = "FireAt".Translate(new object[]
 					{
-						attackTarg.Thing.LabelCap
+						attackTarg.Thing.Label
 					});
 					FloatMenuOption floatMenuOption = new FloatMenuOption(MenuOptionPriority.High);
 					if (rangedAct == null)
@@ -129,14 +165,14 @@ namespace RimWorld
 				{
 					text2 = "MeleeAttackToDeath".Translate(new object[]
 					{
-						attackTarg.Thing.LabelCap
+						attackTarg.Thing.Label
 					});
 				}
 				else
 				{
 					text2 = "MeleeAttack".Translate(new object[]
 					{
-						attackTarg.Thing.LabelCap
+						attackTarg.Thing.Label
 					});
 				}
 				MenuOptionPriority priority = (!attackTarg.HasThing || !pawn.HostileTo(attackTarg.Thing)) ? MenuOptionPriority.VeryLow : MenuOptionPriority.AttackEnemy;
@@ -168,10 +204,6 @@ namespace RimWorld
 						{
 							opts.Add(new FloatMenuOption("CannotArrest".Translate() + " (" + "NoPath".Translate() + ")", null, MenuOptionPriority.Default, null, null, 0f, null, null));
 						}
-						else if (!pawn.CanReserve(dest.Thing, 1))
-						{
-							opts.Add(new FloatMenuOption("CannotArrest".Translate() + ": " + "Reserved".Translate(), null, MenuOptionPriority.Default, null, null, 0f, null, null));
-						}
 						else
 						{
 							Pawn pTarg = (Pawn)dest.Thing;
@@ -180,60 +212,31 @@ namespace RimWorld
 								Building_Bed building_Bed = RestUtility.FindBedFor(pTarg, pawn, true, false, false);
 								if (building_Bed == null)
 								{
+									building_Bed = RestUtility.FindBedFor(pTarg, pawn, true, false, true);
+								}
+								if (building_Bed == null)
+								{
 									Messages.Message("CannotArrest".Translate() + ": " + "NoPrisonerBed".Translate(), pTarg, MessageSound.RejectInput);
 									return;
 								}
 								Job job = new Job(JobDefOf.Arrest, pTarg, building_Bed);
 								job.count = 1;
-								pawn.jobs.TryTakeOrderedJob(job);
+								pawn.jobs.TryTakeOrderedJob(job, JobTag.Misc);
 								TutorUtility.DoModalDialogIfNotKnown(ConceptDefOf.ArrestingCreatesEnemies);
 							};
 							Thing thing = dest.Thing;
-							opts.Add(new FloatMenuOption("TryToArrest".Translate(new object[]
+							opts.Add(FloatMenuUtility.DecoratePrioritizedTask(new FloatMenuOption("TryToArrest".Translate(new object[]
 							{
 								dest.Thing.LabelCap
-							}), action, MenuOptionPriority.High, null, thing, 0f, null, null));
+							}), action, MenuOptionPriority.High, null, thing, 0f, null, null), pawn, pTarg, "ReservedBy"));
 						}
 					}
 				}
 			}
-			int num = GenRadial.NumCellsInRadius(2.9f);
-			IntVec3 curLoc;
-			for (int i = 0; i < num; i++)
+			FloatMenuOption floatMenuOption3 = FloatMenuMakerMap.GotoLocationOption(clickCell, pawn);
+			if (floatMenuOption3 != null)
 			{
-				curLoc = GenRadial.RadialPattern[i] + b;
-				if (curLoc.Standable(pawn.Map))
-				{
-					if (curLoc != pawn.Position)
-					{
-						if (!pawn.CanReach(curLoc, PathEndMode.OnCell, Danger.Deadly, false, TraverseMode.ByPawn))
-						{
-							FloatMenuOption item = new FloatMenuOption("CannotGoNoPath".Translate(), null, MenuOptionPriority.Default, null, null, 0f, null, null);
-							opts.Add(item);
-						}
-						else
-						{
-							Action action2 = delegate
-							{
-								IntVec3 intVec = RCellFinder.BestOrderedGotoDestNear(curLoc, pawn);
-								Job job = new Job(JobDefOf.Goto, intVec);
-								if (pawn.Map.exitMapGrid.IsExitCell(UI.MouseCell()))
-								{
-									job.exitMapOnArrival = true;
-								}
-								if (pawn.jobs.TryTakeOrderedJob(job))
-								{
-									MoteMaker.MakeStaticMote(intVec, pawn.Map, ThingDefOf.Mote_FeedbackGoto, 1f);
-								}
-							};
-							opts.Add(new FloatMenuOption("GoHere".Translate(), action2, MenuOptionPriority.GoHere, null, null, 0f, null, null)
-							{
-								autoTakeable = true
-							});
-						}
-					}
-					break;
-				}
+				opts.Add(floatMenuOption3);
 			}
 		}
 
@@ -257,6 +260,10 @@ namespace RimWorld
 					{
 						text = string.Format(t.def.ingestible.ingestCommandString, t.LabelShort);
 					}
+					if (!t.IsSociallyProper(pawn))
+					{
+						text = text + " (" + "ReservedForPrisoners".Translate() + ")";
+					}
 					FloatMenuOption item5;
 					if (t.def.IsPleasureDrug && pawn.IsTeetotaler())
 					{
@@ -266,23 +273,16 @@ namespace RimWorld
 					{
 						item5 = new FloatMenuOption(text + " (" + "NoPath".Translate() + ")", null, MenuOptionPriority.Default, null, null, 0f, null, null);
 					}
-					else if (!pawn.CanReserve(t, 1))
-					{
-						item5 = new FloatMenuOption(text + " (" + "ReservedBy".Translate(new object[]
-						{
-							pawn.Map.reservationManager.FirstReserverOf(t, pawn.Faction, true).LabelShort
-						}) + ")", null, MenuOptionPriority.Default, null, null, 0f, null, null);
-					}
 					else
 					{
 						MenuOptionPriority priority = (!(t is Corpse)) ? MenuOptionPriority.Default : MenuOptionPriority.Low;
-						item5 = new FloatMenuOption(text, delegate
+						item5 = FloatMenuUtility.DecoratePrioritizedTask(new FloatMenuOption(text, delegate
 						{
 							t.SetForbidden(false, true);
 							Job job = new Job(JobDefOf.Ingest, t);
 							job.count = FoodUtility.WillIngestStackCountOf(pawn, t.def);
-							pawn.jobs.TryTakeOrderedJob(job);
-						}, priority, null, null, 0f, null, null);
+							pawn.jobs.TryTakeOrderedJob(job, JobTag.Misc);
+						}, priority, null, null, 0f, null, null), pawn, t, "ReservedBy");
 					}
 					opts.Add(item5);
 				}
@@ -292,17 +292,21 @@ namespace RimWorld
 				foreach (LocalTargetInfo current2 in GenUI.TargetsAt(clickPos, TargetingParameters.ForRescue(pawn), true))
 				{
 					Pawn victim = (Pawn)current2.Thing;
-					if (!victim.InBed() && pawn.CanReserveAndReach(victim, PathEndMode.OnCell, Danger.Deadly, 1))
+					if (!victim.InBed() && pawn.CanReserveAndReach(victim, PathEndMode.OnCell, Danger.Deadly, 1, -1, null, true))
 					{
-						if ((victim.Faction == Faction.OfPlayer && victim.MentalStateDef == null) || (victim.Faction != Faction.OfPlayer && victim.MentalStateDef == null && !victim.IsPrisonerOfColony && (victim.Faction == null || !victim.Faction.HostileTo(Faction.OfPlayer))))
+						if (!victim.IsPrisonerOfColony && !victim.InMentalState && (victim.Faction == Faction.OfPlayer || victim.Faction == null || !victim.Faction.HostileTo(Faction.OfPlayer)))
 						{
 							Pawn victim2 = victim;
-							opts.Add(new FloatMenuOption("Rescue".Translate(new object[]
+							opts.Add(FloatMenuUtility.DecoratePrioritizedTask(new FloatMenuOption("Rescue".Translate(new object[]
 							{
 								victim.LabelCap
 							}), delegate
 							{
 								Building_Bed building_Bed = RestUtility.FindBedFor(victim, pawn, false, false, false);
+								if (building_Bed == null)
+								{
+									building_Bed = RestUtility.FindBedFor(victim, pawn, false, false, true);
+								}
 								if (building_Bed == null)
 								{
 									string str2;
@@ -319,14 +323,14 @@ namespace RimWorld
 								}
 								Job job = new Job(JobDefOf.Rescue, victim, building_Bed);
 								job.count = 1;
-								pawn.jobs.TryTakeOrderedJob(job);
+								pawn.jobs.TryTakeOrderedJob(job, JobTag.Misc);
 								PlayerKnowledgeDatabase.KnowledgeDemonstrated(ConceptDefOf.Rescuing, KnowledgeAmount.Total);
-							}, MenuOptionPriority.RescueOrCapture, null, victim2, 0f, null, null));
+							}, MenuOptionPriority.RescueOrCapture, null, victim2, 0f, null, null), pawn, victim, "ReservedBy"));
 						}
-						if (victim.RaceProps.Humanlike && (victim.MentalStateDef != null || victim.Faction != Faction.OfPlayer || (victim.Downed && victim.guilt.IsGuilty)))
+						if (victim.RaceProps.Humanlike && (victim.InMentalState || victim.Faction != Faction.OfPlayer || (victim.Downed && (victim.guilt.IsGuilty || victim.IsPrisonerOfColony))))
 						{
 							Pawn victim2 = victim;
-							opts.Add(new FloatMenuOption("Capture".Translate(new object[]
+							opts.Add(FloatMenuUtility.DecoratePrioritizedTask(new FloatMenuOption("Capture".Translate(new object[]
 							{
 								victim.LabelCap
 							}), delegate
@@ -334,14 +338,18 @@ namespace RimWorld
 								Building_Bed building_Bed = RestUtility.FindBedFor(victim, pawn, true, false, false);
 								if (building_Bed == null)
 								{
+									building_Bed = RestUtility.FindBedFor(victim, pawn, true, false, true);
+								}
+								if (building_Bed == null)
+								{
 									Messages.Message("CannotCapture".Translate() + ": " + "NoPrisonerBed".Translate(), victim, MessageSound.RejectInput);
 									return;
 								}
 								Job job = new Job(JobDefOf.Capture, victim, building_Bed);
 								job.count = 1;
-								pawn.jobs.TryTakeOrderedJob(job);
+								pawn.jobs.TryTakeOrderedJob(job, JobTag.Misc);
 								PlayerKnowledgeDatabase.KnowledgeDemonstrated(ConceptDefOf.Capturing, KnowledgeAmount.Total);
-							}, MenuOptionPriority.RescueOrCapture, null, victim2, 0f, null, null));
+							}, MenuOptionPriority.RescueOrCapture, null, victim2, 0f, null, null), pawn, victim, "ReservedBy"));
 						}
 					}
 				}
@@ -349,7 +357,7 @@ namespace RimWorld
 				{
 					LocalTargetInfo localTargetInfo = current3;
 					Pawn victim = (Pawn)localTargetInfo.Thing;
-					if (victim.Downed && pawn.CanReserveAndReach(victim, PathEndMode.OnCell, Danger.Deadly, 1) && Building_CryptosleepCasket.FindCryptosleepCasketFor(victim, pawn) != null)
+					if (victim.Downed && pawn.CanReserveAndReach(victim, PathEndMode.OnCell, Danger.Deadly, 1, -1, null, true) && Building_CryptosleepCasket.FindCryptosleepCasketFor(victim, pawn, true) != null)
 					{
 						string label = "CarryToCryptosleepCasket".Translate(new object[]
 						{
@@ -358,7 +366,11 @@ namespace RimWorld
 						JobDef jDef = JobDefOf.CarryToCryptosleepCasket;
 						Action action = delegate
 						{
-							Building_CryptosleepCasket building_CryptosleepCasket = Building_CryptosleepCasket.FindCryptosleepCasketFor(victim, pawn);
+							Building_CryptosleepCasket building_CryptosleepCasket = Building_CryptosleepCasket.FindCryptosleepCasketFor(victim, pawn, false);
+							if (building_CryptosleepCasket == null)
+							{
+								building_CryptosleepCasket = Building_CryptosleepCasket.FindCryptosleepCasketFor(victim, pawn, true);
+							}
 							if (building_CryptosleepCasket == null)
 							{
 								Messages.Message("CannotCarryToCryptosleepCasket".Translate() + ": " + "NoCryptosleepCasket".Translate(), victim, MessageSound.RejectInput);
@@ -366,10 +378,10 @@ namespace RimWorld
 							}
 							Job job = new Job(jDef, victim, building_CryptosleepCasket);
 							job.count = 1;
-							pawn.jobs.TryTakeOrderedJob(job);
+							pawn.jobs.TryTakeOrderedJob(job, JobTag.Misc);
 						};
 						Pawn victim2 = victim;
-						opts.Add(new FloatMenuOption(label, action, MenuOptionPriority.Default, null, victim2, 0f, null, null));
+						opts.Add(FloatMenuUtility.DecoratePrioritizedTask(new FloatMenuOption(label, action, MenuOptionPriority.Default, null, victim2, 0f, null, null), pawn, victim, "ReservedBy"));
 					}
 				}
 			}
@@ -384,26 +396,16 @@ namespace RimWorld
 						stripTarg.Thing.LabelCap
 					}) + " (" + "NoPath".Translate() + ")", null, MenuOptionPriority.Default, null, null, 0f, null, null);
 				}
-				else if (!pawn.CanReserveAndReach(stripTarg, PathEndMode.ClosestTouch, Danger.Deadly, 1))
-				{
-					item2 = new FloatMenuOption("CannotStrip".Translate(new object[]
-					{
-						stripTarg.Thing.LabelCap
-					}) + " (" + "ReservedBy".Translate(new object[]
-					{
-						pawn.Map.reservationManager.FirstReserverOf(stripTarg, pawn.Faction, true).LabelShort
-					}) + ")", null, MenuOptionPriority.Default, null, null, 0f, null, null);
-				}
 				else
 				{
-					item2 = new FloatMenuOption("Strip".Translate(new object[]
+					item2 = FloatMenuUtility.DecoratePrioritizedTask(new FloatMenuOption("Strip".Translate(new object[]
 					{
 						stripTarg.Thing.LabelCap
 					}), delegate
 					{
 						stripTarg.Thing.SetForbidden(false, false);
-						pawn.jobs.TryTakeOrderedJob(new Job(JobDefOf.Strip, stripTarg));
-					}, MenuOptionPriority.Default, null, null, 0f, null, null);
+						pawn.jobs.TryTakeOrderedJob(new Job(JobDefOf.Strip, stripTarg), JobTag.Misc);
+					}, MenuOptionPriority.Default, null, null, 0f, null, null), pawn, stripTarg, "ReservedBy");
 				}
 				opts.Add(item2);
 			}
@@ -440,16 +442,6 @@ namespace RimWorld
 							labelShort
 						}) + " (" + "NoPath".Translate() + ")", null, MenuOptionPriority.Default, null, null, 0f, null, null);
 					}
-					else if (!pawn.CanReserve(equipment, 1))
-					{
-						item3 = new FloatMenuOption("CannotEquip".Translate(new object[]
-						{
-							labelShort
-						}) + " (" + "ReservedBy".Translate(new object[]
-						{
-							pawn.Map.reservationManager.FirstReserverOf(equipment, pawn.Faction, true).LabelShort
-						}) + ")", null, MenuOptionPriority.Default, null, null, 0f, null, null);
-					}
 					else if (!pawn.health.capacities.CapableOf(PawnCapacityDefOf.Manipulation))
 					{
 						item3 = new FloatMenuOption("CannotEquip".Translate(new object[]
@@ -467,13 +459,13 @@ namespace RimWorld
 						{
 							text2 = text2 + " " + "EquipWarningBrawler".Translate();
 						}
-						item3 = new FloatMenuOption(text2, delegate
+						item3 = FloatMenuUtility.DecoratePrioritizedTask(new FloatMenuOption(text2, delegate
 						{
 							equipment.SetForbidden(false, true);
-							pawn.jobs.TryTakeOrderedJob(new Job(JobDefOf.Equip, equipment));
+							pawn.jobs.TryTakeOrderedJob(new Job(JobDefOf.Equip, equipment), JobTag.Misc);
 							MoteMaker.MakeStaticMote(equipment.DrawPos, equipment.Map, ThingDefOf.Mote_FeedbackEquip, 1f);
 							PlayerKnowledgeDatabase.KnowledgeDemonstrated(ConceptDefOf.EquippingWeapons, KnowledgeAmount.Total);
-						}, MenuOptionPriority.High, null, null, 0f, null, null);
+						}, MenuOptionPriority.High, null, null, 0f, null, null), pawn, equipment, "ReservedBy");
 					}
 					opts.Add(item3);
 				}
@@ -491,17 +483,6 @@ namespace RimWorld
 							apparel.Label
 						}) + " (" + "NoPath".Translate() + ")", null, MenuOptionPriority.Default, null, null, 0f, null, null);
 					}
-					else if (!pawn.CanReserve(apparel, 1))
-					{
-						Pawn pawn2 = pawn.Map.reservationManager.FirstReserverOf(apparel, pawn.Faction, true);
-						item4 = new FloatMenuOption("CannotWear".Translate(new object[]
-						{
-							apparel.Label
-						}) + " (" + "ReservedBy".Translate(new object[]
-						{
-							pawn2.LabelShort
-						}) + ")", null, MenuOptionPriority.Default, null, null, 0f, null, null);
-					}
 					else if (!ApparelUtility.HasPartsToWear(pawn, apparel.def))
 					{
 						item4 = new FloatMenuOption("CannotWear".Translate(new object[]
@@ -511,15 +492,15 @@ namespace RimWorld
 					}
 					else
 					{
-						item4 = new FloatMenuOption("ForceWear".Translate(new object[]
+						item4 = FloatMenuUtility.DecoratePrioritizedTask(new FloatMenuOption("ForceWear".Translate(new object[]
 						{
 							apparel.LabelShort
 						}), delegate
 						{
 							apparel.SetForbidden(false, true);
 							Job job = new Job(JobDefOf.Wear, apparel);
-							pawn.jobs.TryTakeOrderedJob(job);
-						}, MenuOptionPriority.High, null, null, 0f, null, null);
+							pawn.jobs.TryTakeOrderedJob(job, JobTag.Misc);
+						}, MenuOptionPriority.High, null, null, 0f, null, null), pawn, apparel, "ReservedBy");
 					}
 					opts.Add(item4);
 				}
@@ -536,17 +517,6 @@ namespace RimWorld
 							item.Label
 						}) + " (" + "NoPath".Translate() + ")", null, MenuOptionPriority.Default, null, null, 0f, null, null));
 					}
-					else if (!pawn.CanReserve(item, 1))
-					{
-						Pawn pawn3 = pawn.Map.reservationManager.FirstReserverOf(item, pawn.Faction, true);
-						opts.Add(new FloatMenuOption("CannotPickUp".Translate(new object[]
-						{
-							item.Label
-						}) + " (" + "ReservedBy".Translate(new object[]
-						{
-							pawn3.LabelShort
-						}) + ")", null, MenuOptionPriority.Default, null, null, 0f, null, null));
-					}
 					else if (MassUtility.WillBeOverEncumberedAfterPickingUp(pawn, item, 1))
 					{
 						opts.Add(new FloatMenuOption("CannotPickUp".Translate(new object[]
@@ -556,7 +526,7 @@ namespace RimWorld
 					}
 					else if (item.stackCount == 1)
 					{
-						opts.Add(new FloatMenuOption("PickUp".Translate(new object[]
+						opts.Add(FloatMenuUtility.DecoratePrioritizedTask(new FloatMenuOption("PickUp".Translate(new object[]
 						{
 							item.Label
 						}), delegate
@@ -564,8 +534,8 @@ namespace RimWorld
 							item.SetForbidden(false, false);
 							Job job = new Job(JobDefOf.TakeInventory, item);
 							job.count = 1;
-							pawn.jobs.TryTakeOrderedJob(job);
-						}, MenuOptionPriority.High, null, null, 0f, null, null));
+							pawn.jobs.TryTakeOrderedJob(job, JobTag.Misc);
+						}, MenuOptionPriority.High, null, null, 0f, null, null), pawn, item, "ReservedBy"));
 					}
 					else
 					{
@@ -578,7 +548,7 @@ namespace RimWorld
 						}
 						else
 						{
-							opts.Add(new FloatMenuOption("PickUpAll".Translate(new object[]
+							opts.Add(FloatMenuUtility.DecoratePrioritizedTask(new FloatMenuOption("PickUpAll".Translate(new object[]
 							{
 								item.Label
 							}), delegate
@@ -586,10 +556,10 @@ namespace RimWorld
 								item.SetForbidden(false, false);
 								Job job = new Job(JobDefOf.TakeInventory, item);
 								job.count = item.stackCount;
-								pawn.jobs.TryTakeOrderedJob(job);
-							}, MenuOptionPriority.High, null, null, 0f, null, null));
+								pawn.jobs.TryTakeOrderedJob(job, JobTag.Misc);
+							}, MenuOptionPriority.High, null, null, 0f, null, null), pawn, item, "ReservedBy"));
 						}
-						opts.Add(new FloatMenuOption("PickUpSome".Translate(new object[]
+						opts.Add(FloatMenuUtility.DecoratePrioritizedTask(new FloatMenuOption("PickUpSome".Translate(new object[]
 						{
 							item.Label
 						}), delegate
@@ -603,10 +573,10 @@ namespace RimWorld
 								item.SetForbidden(false, false);
 								Job job = new Job(JobDefOf.TakeInventory, item);
 								job.count = count;
-								pawn.jobs.TryTakeOrderedJob(job);
+								pawn.jobs.TryTakeOrderedJob(job, JobTag.Misc);
 							}, -2147483648);
 							Find.WindowStack.Add(window);
-						}, MenuOptionPriority.High, null, null, 0f, null, null));
+						}, MenuOptionPriority.High, null, null, 0f, null, null), pawn, item, "ReservedBy"));
 					}
 				}
 			}
@@ -625,17 +595,6 @@ namespace RimWorld
 								item.Label
 							}) + " (" + "NoPath".Translate() + ")", null, MenuOptionPriority.Default, null, null, 0f, null, null));
 						}
-						else if (!pawn.CanReserve(item, 1))
-						{
-							Pawn pawn4 = pawn.Map.reservationManager.FirstReserverOf(item, pawn.Faction, true);
-							opts.Add(new FloatMenuOption("CannotGiveToPackAnimal".Translate(new object[]
-							{
-								item.Label
-							}) + " (" + "ReservedBy".Translate(new object[]
-							{
-								pawn4.LabelShort
-							}) + ")", null, MenuOptionPriority.Default, null, null, 0f, null, null));
-						}
 						else if (MassUtility.WillBeOverEncumberedAfterPickingUp(bestPackAnimal, item, 1))
 						{
 							opts.Add(new FloatMenuOption("CannotGiveToPackAnimal".Translate(new object[]
@@ -645,7 +604,7 @@ namespace RimWorld
 						}
 						else if (item.stackCount == 1)
 						{
-							opts.Add(new FloatMenuOption("GiveToPackAnimal".Translate(new object[]
+							opts.Add(FloatMenuUtility.DecoratePrioritizedTask(new FloatMenuOption("GiveToPackAnimal".Translate(new object[]
 							{
 								item.Label
 							}), delegate
@@ -653,8 +612,8 @@ namespace RimWorld
 								item.SetForbidden(false, false);
 								Job job = new Job(JobDefOf.GiveToPackAnimal, item);
 								job.count = 1;
-								pawn.jobs.TryTakeOrderedJob(job);
-							}, MenuOptionPriority.High, null, null, 0f, null, null));
+								pawn.jobs.TryTakeOrderedJob(job, JobTag.Misc);
+							}, MenuOptionPriority.High, null, null, 0f, null, null), pawn, item, "ReservedBy"));
 						}
 						else
 						{
@@ -667,7 +626,7 @@ namespace RimWorld
 							}
 							else
 							{
-								opts.Add(new FloatMenuOption("GiveToPackAnimalAll".Translate(new object[]
+								opts.Add(FloatMenuUtility.DecoratePrioritizedTask(new FloatMenuOption("GiveToPackAnimalAll".Translate(new object[]
 								{
 									item.Label
 								}), delegate
@@ -675,10 +634,10 @@ namespace RimWorld
 									item.SetForbidden(false, false);
 									Job job = new Job(JobDefOf.GiveToPackAnimal, item);
 									job.count = item.stackCount;
-									pawn.jobs.TryTakeOrderedJob(job);
-								}, MenuOptionPriority.High, null, null, 0f, null, null));
+									pawn.jobs.TryTakeOrderedJob(job, JobTag.Misc);
+								}, MenuOptionPriority.High, null, null, 0f, null, null), pawn, item, "ReservedBy"));
 							}
-							opts.Add(new FloatMenuOption("GiveToPackAnimalSome".Translate(new object[]
+							opts.Add(FloatMenuUtility.DecoratePrioritizedTask(new FloatMenuOption("GiveToPackAnimalSome".Translate(new object[]
 							{
 								item.Label
 							}), delegate
@@ -692,15 +651,15 @@ namespace RimWorld
 									item.SetForbidden(false, false);
 									Job job = new Job(JobDefOf.GiveToPackAnimal, item);
 									job.count = count;
-									pawn.jobs.TryTakeOrderedJob(job);
+									pawn.jobs.TryTakeOrderedJob(job, JobTag.Misc);
 								}, -2147483648);
 								Find.WindowStack.Add(window);
-							}, MenuOptionPriority.High, null, null, 0f, null, null));
+							}, MenuOptionPriority.High, null, null, 0f, null, null), pawn, item, "ReservedBy"));
 						}
 					}
 				}
 			}
-			if (!pawn.Map.IsPlayerHome)
+			if (!pawn.Map.IsPlayerHome && pawn.Map.exitMapGrid.MapUsesExitGrid)
 			{
 				foreach (LocalTargetInfo current5 in GenUI.TargetsAt(clickPos, TargetingParameters.ForRescue(pawn), true))
 				{
@@ -714,17 +673,6 @@ namespace RimWorld
 								p.Label
 							}) + " (" + "NoPath".Translate() + ")", null, MenuOptionPriority.Default, null, null, 0f, null, null));
 						}
-						else if (!pawn.CanReserve(p, 1))
-						{
-							Pawn pawn5 = pawn.Map.reservationManager.FirstReserverOf(p, pawn.Faction, true);
-							opts.Add(new FloatMenuOption("CannotCarryToExit".Translate(new object[]
-							{
-								p.Label
-							}) + " (" + "ReservedBy".Translate(new object[]
-							{
-								pawn5.LabelShort
-							}) + ")", null, MenuOptionPriority.Default, null, null, 0f, null, null));
-						}
 						else
 						{
 							IntVec3 exitSpot;
@@ -737,15 +685,15 @@ namespace RimWorld
 							}
 							else
 							{
-								opts.Add(new FloatMenuOption("CarryToExit".Translate(new object[]
+								opts.Add(FloatMenuUtility.DecoratePrioritizedTask(new FloatMenuOption("CarryToExit".Translate(new object[]
 								{
 									p.Label
 								}), delegate
 								{
 									Job job = new Job(JobDefOf.CarryDownedPawnToExit, p, exitSpot);
 									job.count = 1;
-									pawn.jobs.TryTakeOrderedJob(job);
-								}, MenuOptionPriority.High, null, null, 0f, null, null));
+									pawn.jobs.TryTakeOrderedJob(job, JobTag.Misc);
+								}, MenuOptionPriority.High, null, null, 0f, null, null), pawn, current5, "ReservedBy"));
 							}
 						}
 					}
@@ -755,7 +703,7 @@ namespace RimWorld
 			{
 				Action action2 = delegate
 				{
-					pawn.jobs.TryTakeOrderedJob(new Job(JobDefOf.DropEquipment, pawn.equipment.Primary));
+					pawn.jobs.TryTakeOrderedJob(new Job(JobDefOf.DropEquipment, pawn.equipment.Primary), JobTag.Misc);
 				};
 				opts.Add(new FloatMenuOption("Drop".Translate(new object[]
 				{
@@ -769,10 +717,6 @@ namespace RimWorld
 				{
 					opts.Add(new FloatMenuOption("CannotTrade".Translate() + " (" + "NoPath".Translate() + ")", null, MenuOptionPriority.Default, null, null, 0f, null, null));
 				}
-				else if (!pawn.CanReserve(dest.Thing, 1))
-				{
-					opts.Add(new FloatMenuOption("CannotTrade".Translate() + " (" + "Reserved".Translate() + ")", null, MenuOptionPriority.Default, null, null, 0f, null, null));
-				}
 				else
 				{
 					Pawn pTarg = (Pawn)dest.Thing;
@@ -780,7 +724,7 @@ namespace RimWorld
 					{
 						Job job = new Job(JobDefOf.TradeWithPawn, pTarg);
 						job.playerForced = true;
-						pawn.jobs.TryTakeOrderedJob(job);
+						pawn.jobs.TryTakeOrderedJob(job, JobTag.Misc);
 						PlayerKnowledgeDatabase.KnowledgeDemonstrated(ConceptDefOf.InteractingWithTraders, KnowledgeAmount.Total);
 					};
 					string str = string.Empty;
@@ -789,10 +733,10 @@ namespace RimWorld
 						str = " (" + pTarg.Faction.Name + ")";
 					}
 					Thing thing = dest.Thing;
-					opts.Add(new FloatMenuOption("TradeWith".Translate(new object[]
+					opts.Add(FloatMenuUtility.DecoratePrioritizedTask(new FloatMenuOption("TradeWith".Translate(new object[]
 					{
 						pTarg.LabelShort + ", " + pTarg.TraderKind.label
-					}) + str, action3, MenuOptionPriority.InitiateSocial, null, thing, 0f, null, null));
+					}) + str, action3, MenuOptionPriority.InitiateSocial, null, thing, 0f, null, null), pawn, pTarg, "ReservedBy"));
 				}
 			}
 			foreach (Thing current7 in pawn.Map.thingGrid.ThingsAt(c))
@@ -828,59 +772,57 @@ namespace RimWorld
 			{
 				foreach (Thing current2 in pawn.Map.thingGrid.ThingsAt(clickCell))
 				{
-					Pawn pawn2 = pawn.Map.reservationManager.FirstReserverOf(current2, pawn.Faction, true);
-					if (pawn2 != null && pawn2 != pawn)
+					foreach (WorkTypeDef current3 in DefDatabase<WorkTypeDef>.AllDefsListForReading)
 					{
-						opts.Add(new FloatMenuOption("IsReservedBy".Translate(new object[]
+						for (int i = 0; i < current3.workGiversByPriority.Count; i++)
 						{
-							current2.LabelShort.CapitalizeFirst(),
-							pawn2.LabelShort
-						}), null, MenuOptionPriority.Default, null, null, 0f, null, null));
-					}
-					else
-					{
-						foreach (WorkTypeDef current3 in DefDatabase<WorkTypeDef>.AllDefsListForReading)
-						{
-							for (int i = 0; i < current3.workGiversByPriority.Count; i++)
+							WorkGiver_Scanner workGiver_Scanner = current3.workGiversByPriority[i].Worker as WorkGiver_Scanner;
+							if (workGiver_Scanner != null && workGiver_Scanner.def.directOrderable && !workGiver_Scanner.ShouldSkip(pawn))
 							{
-								WorkGiver_Scanner workGiver_Scanner = current3.workGiversByPriority[i].Worker as WorkGiver_Scanner;
-								if (workGiver_Scanner != null && workGiver_Scanner.def.directOrderable && !workGiver_Scanner.ShouldSkip(pawn))
+								JobFailReason.Clear();
+								if (workGiver_Scanner.PotentialWorkThingRequest.Accepts(current2) || (workGiver_Scanner.PotentialWorkThingsGlobal(pawn) != null && workGiver_Scanner.PotentialWorkThingsGlobal(pawn).Contains(current2)))
 								{
-									JobFailReason.Clear();
-									if (workGiver_Scanner.PotentialWorkThingRequest.Accepts(current2) || (workGiver_Scanner.PotentialWorkThingsGlobal(pawn) != null && workGiver_Scanner.PotentialWorkThingsGlobal(pawn).Contains(current2)))
+									string label = null;
+									Action action = null;
+									PawnCapacityDef pawnCapacityDef = workGiver_Scanner.MissingRequiredCapacity(pawn);
+									if (pawnCapacityDef != null)
+									{
+										label = "CannotMissingHealthActivities".Translate(new object[]
+										{
+											pawnCapacityDef.label
+										});
+									}
+									else
 									{
 										Job job;
-										if (!workGiver_Scanner.HasJobOnThingForced(pawn, current2))
+										if (!workGiver_Scanner.HasJobOnThing(pawn, current2, true))
 										{
 											job = null;
 										}
 										else
 										{
-											job = workGiver_Scanner.JobOnThingForced(pawn, current2);
+											job = workGiver_Scanner.JobOnThing(pawn, current2, true);
 										}
 										if (job == null)
 										{
-											if (JobFailReason.HaveReason)
+											if (!JobFailReason.HaveReason)
 											{
-												string label3 = "CannotGenericWork".Translate(new object[]
-												{
-													workGiver_Scanner.def.verb,
-													current2.LabelShort
-												}) + " (" + JobFailReason.Reason + ")";
-												opts.Add(new FloatMenuOption(label3, null, MenuOptionPriority.Default, null, null, 0f, null, null));
+												goto IL_5EF;
 											}
+											label = "CannotGenericWork".Translate(new object[]
+											{
+												workGiver_Scanner.def.verb,
+												current2.LabelShort
+											}) + " (" + JobFailReason.Reason + ")";
 										}
 										else
 										{
 											WorkTypeDef workType = workGiver_Scanner.def.workType;
-											Action action = null;
-											PawnCapacityDef pawnCapacityDef = workGiver_Scanner.MissingRequiredCapacity(pawn);
-											string label;
-											if (pawnCapacityDef != null)
+											if (pawn.story != null && pawn.story.WorkTagIsDisabled(workGiver_Scanner.def.workTags))
 											{
-												label = "CannotMissingHealthActivities".Translate(new object[]
+												label = "CannotPrioritizeWorkGiverDisabled".Translate(new object[]
 												{
-													pawnCapacityDef.label
+													workGiver_Scanner.def.label
 												});
 											}
 											else if (pawn.jobs.curJob != null && pawn.jobs.curJob.JobIsSameAs(job))
@@ -939,7 +881,7 @@ namespace RimWorld
 											}
 											else if (!pawn.CanReach(current2, workGiver_Scanner.PathEndMode, Danger.Deadly, false, TraverseMode.ByPawn))
 											{
-												label = current2.Label + ": " + "NoPath".Translate();
+												label = (current2.Label + ": " + "NoPath".Translate()).CapitalizeFirst();
 											}
 											else
 											{
@@ -955,37 +897,39 @@ namespace RimWorld
 													pawn.jobs.TryTakeOrderedJobPrioritizedWork(localJob, localScanner, clickCell);
 												};
 											}
-											if (!opts.Any((FloatMenuOption op) => op.Label == label.TrimEnd(new char[0])))
-											{
-												opts.Add(new FloatMenuOption(label, action, MenuOptionPriority.Default, null, null, 0f, null, null));
-											}
 										}
+									}
+									if (!opts.Any((FloatMenuOption op) => op.Label == label.TrimEnd(new char[0])))
+									{
+										opts.Add(FloatMenuUtility.DecoratePrioritizedTask(new FloatMenuOption(label, action, MenuOptionPriority.Default, null, null, 0f, null, null), pawn, current2, "ReservedBy"));
 									}
 								}
 							}
+							IL_5EF:;
 						}
 					}
 				}
-				Pawn pawn3 = pawn.Map.reservationManager.FirstReserverOf(clickCell, pawn.Faction, true);
-				if (pawn3 != null && pawn3 != pawn)
+				foreach (WorkTypeDef current4 in DefDatabase<WorkTypeDef>.AllDefsListForReading)
 				{
-					opts.Add(new FloatMenuOption("IsReservedBy".Translate(new object[]
+					for (int j = 0; j < current4.workGiversByPriority.Count; j++)
 					{
-						"AreaLower".Translate(),
-						pawn3.LabelShort
-					}).CapitalizeFirst(), null, MenuOptionPriority.Default, null, null, 0f, null, null));
-				}
-				else
-				{
-					foreach (WorkTypeDef current4 in DefDatabase<WorkTypeDef>.AllDefsListForReading)
-					{
-						for (int j = 0; j < current4.workGiversByPriority.Count; j++)
+						WorkGiver_Scanner workGiver_Scanner2 = current4.workGiversByPriority[j].Worker as WorkGiver_Scanner;
+						if (workGiver_Scanner2 != null && workGiver_Scanner2.def.directOrderable && !workGiver_Scanner2.ShouldSkip(pawn))
 						{
-							WorkGiver_Scanner workGiver_Scanner2 = current4.workGiversByPriority[j].Worker as WorkGiver_Scanner;
-							if (workGiver_Scanner2 != null && workGiver_Scanner2.def.directOrderable && !workGiver_Scanner2.ShouldSkip(pawn))
+							JobFailReason.Clear();
+							if (workGiver_Scanner2.PotentialWorkCellsGlobal(pawn).Contains(clickCell))
 							{
-								JobFailReason.Clear();
-								if (workGiver_Scanner2.PotentialWorkCellsGlobal(pawn).Contains(clickCell))
+								Action action2 = null;
+								string label = null;
+								PawnCapacityDef pawnCapacityDef2 = workGiver_Scanner2.MissingRequiredCapacity(pawn);
+								if (pawnCapacityDef2 != null)
+								{
+									label = "CannotMissingHealthActivities".Translate(new object[]
+									{
+										pawnCapacityDef2.label
+									});
+								}
+								else
 								{
 									Job job2;
 									if (!workGiver_Scanner2.HasJobOnCell(pawn, clickCell))
@@ -998,30 +942,20 @@ namespace RimWorld
 									}
 									if (job2 == null)
 									{
-										if (JobFailReason.HaveReason)
+										if (!JobFailReason.HaveReason)
 										{
-											string label2 = "CannotGenericWork".Translate(new object[]
-											{
-												workGiver_Scanner2.def.verb,
-												"AreaLower".Translate()
-											}) + " (" + JobFailReason.Reason + ")";
-											opts.Add(new FloatMenuOption(label2, null, MenuOptionPriority.Default, null, null, 0f, null, null));
+											goto IL_A08;
 										}
+										label = "CannotGenericWork".Translate(new object[]
+										{
+											workGiver_Scanner2.def.verb,
+											"AreaLower".Translate()
+										}) + " (" + JobFailReason.Reason + ")";
 									}
 									else
 									{
 										WorkTypeDef workType2 = workGiver_Scanner2.def.workType;
-										Action action2 = null;
-										PawnCapacityDef pawnCapacityDef2 = workGiver_Scanner2.MissingRequiredCapacity(pawn);
-										string label;
-										if (pawnCapacityDef2 != null)
-										{
-											label = "CannotMissingHealthActivities".Translate(new object[]
-											{
-												pawnCapacityDef2.label
-											});
-										}
-										else if (pawn.jobs.curJob != null && pawn.jobs.curJob.JobIsSameAs(job2))
+										if (pawn.jobs.curJob != null && pawn.jobs.curJob.JobIsSameAs(job2))
 										{
 											label = "CannotGenericAlreadyAm".Translate(new object[]
 											{
@@ -1072,17 +1006,62 @@ namespace RimWorld
 												pawn.jobs.TryTakeOrderedJobPrioritizedWork(localJob, localScanner, clickCell);
 											};
 										}
-										if (!opts.Any((FloatMenuOption op) => op.Label == label.TrimEnd(new char[0])))
-										{
-											opts.Add(new FloatMenuOption(label, action2, MenuOptionPriority.Default, null, null, 0f, null, null));
-										}
 									}
+								}
+								if (!opts.Any((FloatMenuOption op) => op.Label == label.TrimEnd(new char[0])))
+								{
+									opts.Add(FloatMenuUtility.DecoratePrioritizedTask(new FloatMenuOption(label, action2, MenuOptionPriority.Default, null, null, 0f, null, null), pawn, clickCell, "ReservedBy"));
 								}
 							}
 						}
+						IL_A08:;
 					}
 				}
 			}
+		}
+
+		private static FloatMenuOption GotoLocationOption(IntVec3 clickCell, Pawn pawn)
+		{
+			int num = GenRadial.NumCellsInRadius(2.9f);
+			int i = 0;
+			IntVec3 curLoc;
+			while (i < num)
+			{
+				curLoc = GenRadial.RadialPattern[i] + clickCell;
+				if (curLoc.Standable(pawn.Map))
+				{
+					if (!(curLoc != pawn.Position))
+					{
+						return null;
+					}
+					if (!pawn.CanReach(curLoc, PathEndMode.OnCell, Danger.Deadly, false, TraverseMode.ByPawn))
+					{
+						return new FloatMenuOption("CannotGoNoPath".Translate(), null, MenuOptionPriority.Default, null, null, 0f, null, null);
+					}
+					Action action = delegate
+					{
+						IntVec3 intVec = RCellFinder.BestOrderedGotoDestNear(curLoc, pawn);
+						Job job = new Job(JobDefOf.Goto, intVec);
+						if (pawn.Map.exitMapGrid.IsExitCell(UI.MouseCell()))
+						{
+							job.exitMapOnArrival = true;
+						}
+						if (pawn.jobs.TryTakeOrderedJob(job, JobTag.Misc))
+						{
+							MoteMaker.MakeStaticMote(intVec, pawn.Map, ThingDefOf.Mote_FeedbackGoto, 1f);
+						}
+					};
+					return new FloatMenuOption("GoHere".Translate(), action, MenuOptionPriority.GoHere, null, null, 0f, null, null)
+					{
+						autoTakeable = true
+					};
+				}
+				else
+				{
+					i++;
+				}
+			}
+			return null;
 		}
 	}
 }

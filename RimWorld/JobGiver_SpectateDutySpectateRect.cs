@@ -20,7 +20,7 @@ namespace RimWorld
 			}
 			IntVec3 centerCell = duty.spectateRect.CenterCell;
 			Building edifice = c.GetEdifice(pawn.Map);
-			if (edifice != null && edifice.def.category == ThingCategory.Building && edifice.def.building.isSittable && pawn.CanReserve(edifice, 1))
+			if (edifice != null && edifice.def.category == ThingCategory.Building && edifice.def.building.isSittable && pawn.CanReserve(edifice, 1, -1, null, false))
 			{
 				return new Job(JobDefOf.SpectateCeremony, edifice, centerCell);
 			}

@@ -13,6 +13,8 @@ namespace RimWorld
 	{
 		private const int MaxOldInjuryAge = 100;
 
+		private static List<Thing> emptyIngredientsList = new List<Thing>();
+
 		public static IEnumerable<HediffGiver_Birthday> RandomHediffsToGainOnBirthday(Pawn pawn, int age)
 		{
 			return AgeInjuryUtility.RandomHediffsToGainOnBirthday(pawn.def, age);
@@ -55,21 +57,34 @@ namespace RimWorld
 			}
 			for (int j = 0; j < num; j++)
 			{
-				DamageDef dam = AgeInjuryUtility.RandomOldInjuryDamageType();
-				int num2 = Rand.RangeInclusive(2, 6);
 				IEnumerable<BodyPartRecord> source = from x in pawn.health.hediffSet.GetNotMissingParts(BodyPartHeight.Undefined, BodyPartDepth.Undefined)
 				where x.depth == BodyPartDepth.Outside && !Mathf.Approximately(x.def.oldInjuryBaseChance, 0f) && !pawn.health.hediffSet.PartOrAnyAncestorHasDirectlyAddedParts(x)
 				select x;
 				if (source.Any<BodyPartRecord>())
 				{
-					BodyPartRecord bodyPartRecord = source.RandomElementByWeight((BodyPartRecord x) => x.absoluteFleshCoverage);
+					BodyPartRecord bodyPartRecord = source.RandomElementByWeight((BodyPartRecord x) => x.coverageAbs);
+					DamageDef dam = AgeInjuryUtility.RandomOldInjuryDamageType(bodyPartRecord.def.frostbiteVulnerability > 0f && pawn.RaceProps.ToolUser);
 					HediffDef hediffDefFromDamage = HealthUtility.GetHediffDefFromDamage(dam, pawn, bodyPartRecord);
 					if (bodyPartRecord.def.oldInjuryBaseChance > 0f && hediffDefFromDamage.CompPropsFor(typeof(HediffComp_GetsOld)) != null)
 					{
-						Hediff_Injury hediff_Injury = (Hediff_Injury)HediffMaker.MakeHediff(hediffDefFromDamage, pawn, null);
-						hediff_Injury.Severity = (float)num2;
-						hediff_Injury.TryGetComp<HediffComp_GetsOld>().IsOld = true;
-						pawn.health.AddHediff(hediff_Injury, bodyPartRecord, null);
+						if (Rand.Chance(bodyPartRecord.def.amputateIfGeneratedInjuredChance))
+						{
+							Hediff_MissingPart hediff_MissingPart = (Hediff_MissingPart)HediffMaker.MakeHediff(HediffDefOf.MissingBodyPart, pawn, null);
+							hediff_MissingPart.lastInjury = hediffDefFromDamage;
+							hediff_MissingPart.TryGetComp<HediffComp_GetsOld>().IsOld = true;
+							pawn.health.AddHediff(hediff_MissingPart, bodyPartRecord, null);
+							if (pawn.RaceProps.Humanlike && (bodyPartRecord.def == BodyPartDefOf.LeftLeg || bodyPartRecord.def == BodyPartDefOf.RightLeg) && Rand.Chance(0.5f))
+							{
+								RecipeDefOf.InstallPegLeg.Worker.ApplyOnPawn(pawn, bodyPartRecord, null, AgeInjuryUtility.emptyIngredientsList);
+							}
+						}
+						else
+						{
+							Hediff_Injury hediff_Injury = (Hediff_Injury)HediffMaker.MakeHediff(hediffDefFromDamage, pawn, null);
+							hediff_Injury.Severity = (float)Rand.RangeInclusive(2, 6);
+							hediff_Injury.TryGetComp<HediffComp_GetsOld>().IsOld = true;
+							pawn.health.AddHediff(hediff_Injury, bodyPartRecord, null);
+						}
 					}
 				}
 			}
@@ -90,9 +105,9 @@ namespace RimWorld
 			}
 		}
 
-		private static DamageDef RandomOldInjuryDamageType()
+		private static DamageDef RandomOldInjuryDamageType(bool allowFrostbite)
 		{
-			switch (Rand.RangeInclusive(0, 3))
+			switch (Rand.RangeInclusive(0, 3 + ((!allowFrostbite) ? 0 : 1)))
 			{
 			case 0:
 				return DamageDefOf.Bullet;
@@ -102,6 +117,8 @@ namespace RimWorld
 				return DamageDefOf.Bite;
 			case 3:
 				return DamageDefOf.Stab;
+			case 4:
+				return DamageDefOf.Frostbite;
 			default:
 				throw new Exception();
 			}

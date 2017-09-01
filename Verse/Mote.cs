@@ -63,9 +63,9 @@ namespace Verse
 			}
 		}
 
-		public override void SpawnSetup(Map map)
+		public override void SpawnSetup(Map map, bool respawningAfterLoad)
 		{
-			base.SpawnSetup(map);
+			base.SpawnSetup(map, respawningAfterLoad);
 			this.spawnTick = Find.TickManager.TicksGame;
 			this.spawnRealTime = Time.realtimeSinceStartup;
 			RealTime.moteList.MoteSpawned(this);
@@ -129,6 +129,12 @@ namespace Verse
 		public void Attach(TargetInfo a)
 		{
 			this.link1 = new MoteAttachLink(a);
+		}
+
+		public override void Notify_MyMapRemoved()
+		{
+			base.Notify_MyMapRemoved();
+			RealTime.moteList.MoteDespawned(this);
 		}
 	}
 }

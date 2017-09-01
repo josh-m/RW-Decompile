@@ -21,19 +21,19 @@ namespace RimWorld
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Values.LookValue<float>(ref this.sowWorkDone, "sowWorkDone", 0f, false);
+			Scribe_Values.Look<float>(ref this.sowWorkDone, "sowWorkDone", 0f, false);
 		}
 
 		[DebuggerHidden]
 		protected override IEnumerable<Toil> MakeNewToils()
 		{
-			yield return Toils_Reserve.Reserve(TargetIndex.A, 1);
-			yield return Toils_Goto.GotoCell(TargetIndex.A, PathEndMode.Touch).FailOn(() => GenPlant.AdjacentSowBlocker(this.<>f__this.CurJob.plantDefToSow, this.<>f__this.TargetA.Cell, this.<>f__this.Map) != null);
+			yield return Toils_Reserve.Reserve(TargetIndex.A, 1, -1, null);
+			yield return Toils_Goto.GotoCell(TargetIndex.A, PathEndMode.Touch).FailOn(() => GenPlant.AdjacentSowBlocker(this.<>f__this.CurJob.plantDefToSow, this.<>f__this.TargetA.Cell, this.<>f__this.Map) != null).FailOn(() => !this.<>f__this.CurJob.plantDefToSow.CanEverPlantAt(this.<>f__this.TargetLocA, this.<>f__this.Map));
 			Toil sowToil = new Toil();
 			sowToil.initAction = delegate
 			{
 				this.<>f__this.TargetThingA = GenSpawn.Spawn(this.<>f__this.CurJob.plantDefToSow, this.<>f__this.TargetLocA, this.<>f__this.Map);
-				this.<>f__this.pawn.Reserve(this.<>f__this.TargetThingA, 1);
+				this.<>f__this.pawn.Reserve(this.<>f__this.TargetThingA, 1, -1, null);
 				Plant plant = (Plant)this.<>f__this.TargetThingA;
 				plant.Growth = 0f;
 				plant.sown = true;
@@ -64,6 +64,7 @@ namespace RimWorld
 			};
 			sowToil.defaultCompleteMode = ToilCompleteMode.Never;
 			sowToil.FailOnDespawnedNullOrForbidden(TargetIndex.A);
+			sowToil.FailOnCannotTouch(TargetIndex.A, PathEndMode.Touch);
 			sowToil.WithEffect(EffecterDefOf.Sow, TargetIndex.A);
 			sowToil.WithProgressBar(TargetIndex.A, () => this.<>f__this.sowWorkDone / this.<>f__this.Plant.def.plant.sowWork, true, -0.5f);
 			sowToil.PlaySustainerOrSound(() => SoundDefOf.Interact_Sow);
@@ -85,7 +86,7 @@ namespace RimWorld
 				{
 					initAction = delegate
 					{
-						this.<>f__this.pawn.needs.mood.thoughts.memories.TryGainMemoryThought(ThoughtDefOf.GreenThumbHappy, null);
+						this.<>f__this.pawn.needs.mood.thoughts.memories.TryGainMemory(ThoughtDefOf.GreenThumbHappy, null);
 					}
 				};
 			}

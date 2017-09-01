@@ -5,7 +5,7 @@ using Verse;
 
 namespace RimWorld.Planet
 {
-	public class TravelingTransportPods : WorldObject
+	public class TravelingTransportPods : WorldObject, IThingHolder
 	{
 		private const float TravelSpeed = 0.00025f;
 
@@ -26,6 +26,8 @@ namespace RimWorld.Planet
 		private float traveledPct;
 
 		private static List<Pawn> tmpPawns = new List<Pawn>();
+
+		private static List<Thing> tmpContainedThings = new List<Thing>();
 
 		private Vector3 Start
 		{
@@ -76,7 +78,7 @@ namespace RimWorld.Planet
 			{
 				for (int i = 0; i < this.pods.Count; i++)
 				{
-					ThingContainer innerContainer = this.pods[i].innerContainer;
+					ThingOwner innerContainer = this.pods[i].innerContainer;
 					for (int j = 0; j < innerContainer.Count; j++)
 					{
 						Pawn pawn = innerContainer[j] as Pawn;
@@ -96,7 +98,7 @@ namespace RimWorld.Planet
 			{
 				for (int i = 0; i < this.pods.Count; i++)
 				{
-					ThingContainer innerContainer = this.pods[i].innerContainer;
+					ThingOwner innerContainer = this.pods[i].innerContainer;
 					for (int j = 0; j < innerContainer.Count; j++)
 					{
 						Pawn pawn = innerContainer[j] as Pawn;
@@ -116,7 +118,7 @@ namespace RimWorld.Planet
 			{
 				for (int i = 0; i < this.pods.Count; i++)
 				{
-					ThingContainer things = this.pods[i].innerContainer;
+					ThingOwner things = this.pods[i].innerContainer;
 					for (int j = 0; j < things.Count; j++)
 					{
 						Pawn p = things[j] as Pawn;
@@ -132,14 +134,21 @@ namespace RimWorld.Planet
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Collections.LookList<ActiveDropPodInfo>(ref this.pods, "pods", LookMode.Deep, new object[0]);
-			Scribe_Values.LookValue<int>(ref this.destinationTile, "destinationTile", 0, false);
-			Scribe_Values.LookValue<IntVec3>(ref this.destinationCell, "destinationCell", default(IntVec3), false);
-			Scribe_Values.LookValue<PawnsArriveMode>(ref this.arriveMode, "arriveMode", PawnsArriveMode.Undecided, false);
-			Scribe_Values.LookValue<bool>(ref this.attackOnArrival, "attackOnArrival", false, false);
-			Scribe_Values.LookValue<bool>(ref this.arrived, "arrived", false, false);
-			Scribe_Values.LookValue<int>(ref this.initialTile, "initialTile", 0, false);
-			Scribe_Values.LookValue<float>(ref this.traveledPct, "traveledPct", 0f, false);
+			Scribe_Collections.Look<ActiveDropPodInfo>(ref this.pods, "pods", LookMode.Deep, new object[0]);
+			Scribe_Values.Look<int>(ref this.destinationTile, "destinationTile", 0, false);
+			Scribe_Values.Look<IntVec3>(ref this.destinationCell, "destinationCell", default(IntVec3), false);
+			Scribe_Values.Look<PawnsArriveMode>(ref this.arriveMode, "arriveMode", PawnsArriveMode.Undecided, false);
+			Scribe_Values.Look<bool>(ref this.attackOnArrival, "attackOnArrival", false, false);
+			Scribe_Values.Look<bool>(ref this.arrived, "arrived", false, false);
+			Scribe_Values.Look<int>(ref this.initialTile, "initialTile", 0, false);
+			Scribe_Values.Look<float>(ref this.traveledPct, "traveledPct", 0f, false);
+			if (Scribe.mode == LoadSaveMode.PostLoadInit)
+			{
+				for (int i = 0; i < this.pods.Count; i++)
+				{
+					this.pods[i].parent = this;
+				}
+			}
 		}
 
 		public override void PostAdd()
@@ -161,9 +170,9 @@ namespace RimWorld.Planet
 
 		public void AddPod(ActiveDropPodInfo contents, bool justLeftTheMap)
 		{
-			contents.parent = null;
+			contents.parent = this;
 			this.pods.Add(contents);
-			ThingContainer innerContainer = contents.innerContainer;
+			ThingOwner innerContainer = contents.innerContainer;
 			for (int i = 0; i < innerContainer.Count; i++)
 			{
 				Pawn pawn = innerContainer[i] as Pawn;
@@ -212,33 +221,41 @@ namespace RimWorld.Planet
 			}
 			else if (!this.PodsHaveAnyPotentialCaravanOwner)
 			{
-				for (int i = 0; i < this.pods.Count; i++)
+				Caravan caravan = Find.WorldObjects.PlayerControlledCaravanAt(this.destinationTile);
+				if (caravan != null)
 				{
-					this.pods[i].innerContainer.ClearAndDestroyContentsOrPassToWorld(DestroyMode.Vanish);
+					this.GivePodContentsToCaravan(caravan);
 				}
-				this.RemoveAllPods();
-				Find.WorldObjects.Remove(this);
-				Messages.Message("MessageTransportPodsArrivedAndLost".Translate(), new GlobalTargetInfo(this.destinationTile), MessageSound.Negative);
+				else
+				{
+					for (int i = 0; i < this.pods.Count; i++)
+					{
+						this.pods[i].innerContainer.ClearAndDestroyContentsOrPassToWorld(DestroyMode.Vanish);
+					}
+					this.RemoveAllPods();
+					Find.WorldObjects.Remove(this);
+					Messages.Message("MessageTransportPodsArrivedAndLost".Translate(), new GlobalTargetInfo(this.destinationTile), MessageSound.Negative);
+				}
 			}
 			else
 			{
-				FactionBase factionBase = Find.WorldObjects.FactionBases.Find((FactionBase x) => x.Tile == this.destinationTile);
-				if (factionBase != null && factionBase.Faction != Faction.OfPlayer && this.attackOnArrival)
+				MapParent mapParent = Find.WorldObjects.MapParentAt(this.destinationTile);
+				if (mapParent != null && mapParent.TransportPodsCanLandAndGenerateMap && this.attackOnArrival)
 				{
 					LongEventHandler.QueueLongEvent(delegate
 					{
-						Map map2 = AttackCaravanArrivalActionUtility.GenerateFactionBaseMap(factionBase);
+						Map orGenerateMap = GetOrGenerateMapUtility.GetOrGenerateMap(mapParent.Tile, null);
 						string extraMessagePart = null;
-						if (!factionBase.Faction.HostileTo(Faction.OfPlayer))
+						if (mapParent.Faction != null && !mapParent.Faction.HostileTo(Faction.OfPlayer))
 						{
-							factionBase.Faction.SetHostileTo(Faction.OfPlayer, true);
+							mapParent.Faction.SetHostileTo(Faction.OfPlayer, true);
 							extraMessagePart = "MessageTransportPodsArrived_BecameHostile".Translate(new object[]
 							{
-								factionBase.Faction.Name
+								mapParent.Faction.Name
 							}).CapitalizeFirst();
 						}
 						Find.TickManager.CurTimeSpeed = TimeSpeed.Paused;
-						this.SpawnDropPodsInMap(map2, extraMessagePart);
+						this.SpawnDropPodsInMap(orGenerateMap, extraMessagePart);
 					}, "GeneratingMapForNewEncounter", false, null);
 				}
 				else
@@ -275,6 +292,7 @@ namespace RimWorld.Planet
 			{
 				IntVec3 c;
 				DropCellFinder.TryFindDropSpotNear(intVec, map, out c, false, true);
+				this.pods[i].parent = null;
 				DropPodUtility.MakeDropPodAt(c, map, this.pods[i]);
 			}
 			this.RemoveAllPods();
@@ -292,13 +310,14 @@ namespace RimWorld.Planet
 			TravelingTransportPods.tmpPawns.Clear();
 			for (int i = 0; i < this.pods.Count; i++)
 			{
-				ThingContainer innerContainer = this.pods[i].innerContainer;
-				for (int j = 0; j < innerContainer.Count; j++)
+				ThingOwner innerContainer = this.pods[i].innerContainer;
+				for (int j = innerContainer.Count - 1; j >= 0; j--)
 				{
 					Pawn pawn = innerContainer[j] as Pawn;
 					if (pawn != null)
 					{
 						TravelingTransportPods.tmpPawns.Add(pawn);
+						innerContainer.Remove(pawn);
 					}
 				}
 			}
@@ -310,26 +329,70 @@ namespace RimWorld.Planet
 			Caravan o = CaravanMaker.MakeCaravan(TravelingTransportPods.tmpPawns, base.Faction, startingTile, true);
 			for (int k = 0; k < this.pods.Count; k++)
 			{
-				ThingContainer innerContainer2 = this.pods[k].innerContainer;
-				for (int l = 0; l < innerContainer2.Count; l++)
+				TravelingTransportPods.tmpContainedThings.Clear();
+				TravelingTransportPods.tmpContainedThings.AddRange(this.pods[k].innerContainer);
+				for (int l = 0; l < TravelingTransportPods.tmpContainedThings.Count; l++)
 				{
-					if (!(innerContainer2[l] is Pawn))
+					this.pods[k].innerContainer.Remove(TravelingTransportPods.tmpContainedThings[l]);
+					Pawn pawn2 = CaravanInventoryUtility.FindPawnToMoveInventoryTo(TravelingTransportPods.tmpContainedThings[l], TravelingTransportPods.tmpPawns, null, null);
+					bool flag = false;
+					if (pawn2 != null)
 					{
-						Pawn pawn2 = CaravanInventoryUtility.FindPawnToMoveInventoryTo(innerContainer2[l], TravelingTransportPods.tmpPawns, null, null);
-						pawn2.inventory.innerContainer.TryAdd(innerContainer2[l], true);
+						flag = pawn2.inventory.innerContainer.TryAdd(TravelingTransportPods.tmpContainedThings[l], true);
+					}
+					if (!flag)
+					{
+						TravelingTransportPods.tmpContainedThings[l].Destroy(DestroyMode.Vanish);
 					}
 				}
 			}
 			this.RemoveAllPods();
 			Find.WorldObjects.Remove(this);
+			TravelingTransportPods.tmpPawns.Clear();
+			TravelingTransportPods.tmpContainedThings.Clear();
 			Messages.Message("MessageTransportPodsArrived".Translate(), o, MessageSound.Benefit);
+		}
+
+		private void GivePodContentsToCaravan(Caravan caravan)
+		{
+			for (int i = 0; i < this.pods.Count; i++)
+			{
+				TravelingTransportPods.tmpContainedThings.Clear();
+				TravelingTransportPods.tmpContainedThings.AddRange(this.pods[i].innerContainer);
+				for (int j = 0; j < TravelingTransportPods.tmpContainedThings.Count; j++)
+				{
+					this.pods[i].innerContainer.Remove(TravelingTransportPods.tmpContainedThings[j]);
+					Pawn pawn = TravelingTransportPods.tmpContainedThings[j] as Pawn;
+					if (pawn != null)
+					{
+						caravan.AddPawn(pawn, true);
+					}
+					else
+					{
+						Pawn pawn2 = CaravanInventoryUtility.FindPawnToMoveInventoryTo(TravelingTransportPods.tmpContainedThings[j], caravan.PawnsListForReading, null, null);
+						bool flag = false;
+						if (pawn2 != null)
+						{
+							flag = pawn2.inventory.innerContainer.TryAdd(TravelingTransportPods.tmpContainedThings[j], true);
+						}
+						if (!flag)
+						{
+							TravelingTransportPods.tmpContainedThings[j].Destroy(DestroyMode.Vanish);
+						}
+					}
+				}
+			}
+			this.RemoveAllPods();
+			Find.WorldObjects.Remove(this);
+			TravelingTransportPods.tmpContainedThings.Clear();
+			Messages.Message("MessageTransportPodsArrivedAndAddedToCaravan".Translate(), caravan, MessageSound.Benefit);
 		}
 
 		private void RemoveAllPawnsFromWorldPawns()
 		{
 			for (int i = 0; i < this.pods.Count; i++)
 			{
-				ThingContainer innerContainer = this.pods[i].innerContainer;
+				ThingOwner innerContainer = this.pods[i].innerContainer;
 				for (int j = 0; j < innerContainer.Count; j++)
 				{
 					Pawn pawn = innerContainer[j] as Pawn;
@@ -346,8 +409,28 @@ namespace RimWorld.Planet
 			for (int i = 0; i < this.pods.Count; i++)
 			{
 				this.pods[i].savePawnsWithReferenceMode = false;
+				this.pods[i].parent = null;
 			}
 			this.pods.Clear();
+		}
+
+		public ThingOwner GetDirectlyHeldThings()
+		{
+			return null;
+		}
+
+		public void GetChildHolders(List<IThingHolder> outChildren)
+		{
+			ThingOwnerUtility.AppendThingHoldersFromThings(outChildren, this.GetDirectlyHeldThings());
+			for (int i = 0; i < this.pods.Count; i++)
+			{
+				outChildren.Add(this.pods[i]);
+			}
+		}
+
+		virtual IThingHolder get_ParentHolder()
+		{
+			return base.ParentHolder;
 		}
 	}
 }

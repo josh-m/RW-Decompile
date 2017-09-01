@@ -35,8 +35,8 @@ namespace RimWorld
 				{
 					Job curJob = pawn.CurJob;
 					Thing thing = (Thing)curJob.GetTarget(itemInd);
-					int stackCount = Mathf.Min(thing.stackCount, curJob.count);
-					pawn.inventory.innerContainer.TransferToContainer(thing, pawn.carryTracker.innerContainer, stackCount);
+					int count = Mathf.Min(thing.stackCount, curJob.count);
+					pawn.inventory.innerContainer.TryTransferToContainer(thing, pawn.carryTracker.innerContainer, count, true);
 					curJob.SetTarget(itemInd, pawn.carryTracker.CarriedThing);
 				}
 			};

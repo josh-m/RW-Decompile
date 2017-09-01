@@ -7,10 +7,22 @@ namespace RimWorld
 	{
 		private static readonly SimpleCurve CleanlinessFactorCurve = new SimpleCurve
 		{
-			new CurvePoint(-5f, 0.75f),
-			new CurvePoint(-2.5f, 0.85f),
-			new CurvePoint(0f, 1f),
-			new CurvePoint(1f, 1.15f)
+			{
+				new CurvePoint(-5f, 0.75f),
+				true
+			},
+			{
+				new CurvePoint(-2.5f, 0.85f),
+				true
+			},
+			{
+				new CurvePoint(0f, 1f),
+				true
+			},
+			{
+				new CurvePoint(1f, 1.15f),
+				true
+			}
 		};
 
 		public override float GetScore(Room room)

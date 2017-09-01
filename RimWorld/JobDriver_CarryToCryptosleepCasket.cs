@@ -34,14 +34,13 @@ namespace RimWorld
 			this.FailOnDestroyedOrNull(TargetIndex.A);
 			this.FailOnDestroyedOrNull(TargetIndex.B);
 			this.FailOnAggroMentalState(TargetIndex.A);
-			yield return Toils_Reserve.Reserve(TargetIndex.A, 1);
-			yield return Toils_Reserve.Reserve(TargetIndex.B, 1);
-			yield return Toils_Goto.GotoThing(TargetIndex.A, PathEndMode.OnCell).FailOnDestroyedNullOrForbidden(TargetIndex.A).FailOnDespawnedNullOrForbidden(TargetIndex.B).FailOn(() => this.<>f__this.DropPod.GetInnerContainer().Count > 0).FailOn(() => !this.<>f__this.Takee.Downed).FailOn(() => !this.<>f__this.pawn.CanReach(this.<>f__this.Takee, PathEndMode.OnCell, Danger.Deadly, false, TraverseMode.ByPawn)).FailOnSomeonePhysicallyInteracting(TargetIndex.A);
+			yield return Toils_Reserve.Reserve(TargetIndex.A, 1, -1, null);
+			yield return Toils_Reserve.Reserve(TargetIndex.B, 1, -1, null);
+			yield return Toils_Goto.GotoThing(TargetIndex.A, PathEndMode.OnCell).FailOnDestroyedNullOrForbidden(TargetIndex.A).FailOnDespawnedNullOrForbidden(TargetIndex.B).FailOn(() => this.<>f__this.DropPod.GetDirectlyHeldThings().Count > 0).FailOn(() => !this.<>f__this.Takee.Downed).FailOn(() => !this.<>f__this.pawn.CanReach(this.<>f__this.Takee, PathEndMode.OnCell, Danger.Deadly, false, TraverseMode.ByPawn)).FailOnSomeonePhysicallyInteracting(TargetIndex.A);
 			yield return Toils_Haul.StartCarryThing(TargetIndex.A, false, false);
 			yield return Toils_Goto.GotoThing(TargetIndex.B, PathEndMode.InteractionCell);
-			Toil prepare = new Toil();
-			prepare.defaultCompleteMode = ToilCompleteMode.Delay;
-			prepare.defaultDuration = 500;
+			Toil prepare = Toils_General.Wait(500);
+			prepare.FailOnCannotTouch(TargetIndex.B, PathEndMode.InteractionCell);
 			prepare.WithProgressBarToilDelay(TargetIndex.B, false, -0.5f);
 			yield return prepare;
 			yield return new Toil

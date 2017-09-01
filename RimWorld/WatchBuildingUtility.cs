@@ -43,17 +43,17 @@ namespace RimWorld
 					{
 						bool flag = false;
 						Building building = null;
-						if (WatchBuildingUtility.EverPossibleToWatchFrom(intVec2, toWatch.Position, toWatch.Map, false))
+						if (WatchBuildingUtility.EverPossibleToWatchFrom(intVec2, toWatch.Position, toWatch.Map, false) && !intVec2.IsForbidden(pawn) && pawn.CanReserve(intVec2, 1, -1, null, false) && !pawn.Map.pawnDestinationManager.DestinationIsReserved(intVec2, pawn))
 						{
 							if (desireSit)
 							{
 								building = intVec2.GetEdifice(pawn.Map);
-								if (building != null && building.def.building.isSittable && pawn.CanReserve(building, 1))
+								if (building != null && building.def.building.isSittable && pawn.CanReserve(building, 1, -1, null, false))
 								{
 									flag = true;
 								}
 							}
-							else if (!intVec2.IsForbidden(pawn) && pawn.CanReserve(intVec2, 1) && !pawn.Map.pawnDestinationManager.DestinationIsReserved(intVec2, pawn))
+							else
 							{
 								flag = true;
 							}
@@ -62,12 +62,12 @@ namespace RimWorld
 						{
 							if (desireSit)
 							{
-								Rot4 arg_157_0 = building.Rotation;
+								Rot4 arg_15D_0 = building.Rotation;
 								Rot4 rot = new Rot4(list[i]);
-								if (arg_157_0 != rot.Opposite)
+								if (arg_15D_0 != rot.Opposite)
 								{
 									intVec = intVec2;
-									goto IL_178;
+									goto IL_17E;
 								}
 							}
 							result = intVec2;
@@ -75,7 +75,7 @@ namespace RimWorld
 							return true;
 						}
 					}
-					IL_178:;
+					IL_17E:;
 				}
 			}
 			if (intVec.IsValid)
@@ -130,6 +130,10 @@ namespace RimWorld
 		private static CellRect GetWatchCellRect(ThingDef def, IntVec3 center, Rot4 rot, int watchRot)
 		{
 			Rot4 a = new Rot4(watchRot);
+			if (def.building == null)
+			{
+				def = (def.entityDefToBuild as ThingDef);
+			}
 			CellRect result;
 			if (a.IsHorizontal)
 			{
@@ -174,7 +178,7 @@ namespace RimWorld
 
 		private static bool EverPossibleToWatchFrom(IntVec3 watchCell, IntVec3 buildingCenter, Map map, bool bedAllowed)
 		{
-			return (watchCell.Standable(map) || (bedAllowed && watchCell.GetEdifice(map) is Building_Bed)) && GenSight.LineOfSight(buildingCenter, watchCell, map, true);
+			return (watchCell.Standable(map) || (bedAllowed && watchCell.GetEdifice(map) is Building_Bed)) && GenSight.LineOfSight(buildingCenter, watchCell, map, true, null, 0, 0);
 		}
 
 		private static List<int> CalculateAllowedDirections(ThingDef toWatchDef, Rot4 toWatchRot)

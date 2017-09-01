@@ -28,7 +28,7 @@ namespace Verse
 			this.ticksToDisappear = this.Props.disappearsAfterTicks.RandomInRange;
 		}
 
-		public override void CompPostTick()
+		public override void CompPostTick(ref float severityAdjustment)
 		{
 			this.ticksToDisappear--;
 		}
@@ -45,7 +45,7 @@ namespace Verse
 
 		public override void CompExposeData()
 		{
-			Scribe_Values.LookValue<int>(ref this.ticksToDisappear, "ticksToDisappear", 0, false);
+			Scribe_Values.Look<int>(ref this.ticksToDisappear, "ticksToDisappear", 0, false);
 		}
 
 		public override string CompDebugString()

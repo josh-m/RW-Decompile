@@ -68,9 +68,9 @@ namespace RimWorld
 
 		public void ExposeData()
 		{
-			Scribe_Defs.LookDef<TraitDef>(ref this.def, "def");
-			Scribe_Values.LookValue<int>(ref this.degree, "degree", 0, false);
-			Scribe_Values.LookValue<bool>(ref this.scenForced, "scenForced", false, false);
+			Scribe_Defs.Look<TraitDef>(ref this.def, "def");
+			Scribe_Values.Look<int>(ref this.degree, "degree", 0, false);
+			Scribe_Values.Look<bool>(ref this.scenForced, "scenForced", false, false);
 			if (Scribe.mode == LoadSaveMode.ResolvingCrossRefs && this.def == null)
 			{
 				this.def = DefDatabase<TraitDef>.GetRandom();
@@ -92,13 +92,20 @@ namespace RimWorld
 					}
 				}
 			}
+			return num;
+		}
+
+		public float MultiplierOfStat(StatDef stat)
+		{
+			float num = 1f;
+			TraitDegreeData currentData = this.CurrentData;
 			if (currentData.statFactors != null)
 			{
-				for (int j = 0; j < currentData.statFactors.Count; j++)
+				for (int i = 0; i < currentData.statFactors.Count; i++)
 				{
-					if (currentData.statFactors[j].stat == stat)
+					if (currentData.statFactors[i].stat == stat)
 					{
-						num *= currentData.statFactors[j].value;
+						num *= currentData.statFactors[i].value;
 					}
 				}
 			}

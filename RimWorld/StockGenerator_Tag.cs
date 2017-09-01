@@ -13,7 +13,7 @@ namespace RimWorld
 		private IntRange thingDefCountRange = IntRange.one;
 
 		[DebuggerHidden]
-		public override IEnumerable<Thing> GenerateThings(Map forMap)
+		public override IEnumerable<Thing> GenerateThings(int forTile)
 		{
 			List<ThingDef> generatedDefs = new List<ThingDef>();
 			int numThingDefsToUse = this.thingDefCountRange.RandomInRange;

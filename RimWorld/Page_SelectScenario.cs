@@ -72,20 +72,21 @@ namespace RimWorld
 		{
 			rect.xMax += 2f;
 			Rect rect2 = new Rect(0f, 0f, rect.width - 16f - 2f, this.totalScenarioListHeight + 250f);
-			Widgets.BeginScrollView(rect, ref this.scenariosScrollPosition, rect2);
+			Widgets.BeginScrollView(rect, ref this.scenariosScrollPosition, rect2, true);
 			Rect rect3 = rect2.AtZero();
 			rect3.height = 999999f;
-			Listing_Standard listing_Standard = new Listing_Standard(rect3);
+			Listing_Standard listing_Standard = new Listing_Standard();
 			listing_Standard.ColumnWidth = rect2.width;
+			listing_Standard.Begin(rect3);
 			Text.Font = GameFont.Small;
 			this.ListScenariosOnListing(listing_Standard, ScenarioLister.ScenariosInCategory(ScenarioCategory.FromDef));
 			listing_Standard.Gap(12f);
 			Text.Font = GameFont.Small;
-			listing_Standard.Label("ScenariosCustom".Translate());
+			listing_Standard.Label("ScenariosCustom".Translate(), -1f);
 			this.ListScenariosOnListing(listing_Standard, ScenarioLister.ScenariosInCategory(ScenarioCategory.CustomLocal));
 			listing_Standard.Gap(12f);
 			Text.Font = GameFont.Small;
-			listing_Standard.Label("ScenariosSteamWorkshop".Translate());
+			listing_Standard.Label("ScenariosSteamWorkshop".Translate(), -1f);
 			if (listing_Standard.ButtonText("OpenSteamWorkshop".Translate(), null))
 			{
 				SteamUtility.OpenSteamWorkshopPage();
@@ -113,7 +114,7 @@ namespace RimWorld
 			if (!flag)
 			{
 				GUI.color = new Color(1f, 1f, 1f, 0.5f);
-				listing.Label("(" + "NoneLower".Translate() + ")");
+				listing.Label("(" + "NoneLower".Translate() + ")", -1f);
 				GUI.color = Color.white;
 			}
 		}
@@ -181,7 +182,7 @@ namespace RimWorld
 				if (!flag && Widgets.ButtonInvisible(rect, false))
 				{
 					this.curScen = scen;
-					SoundDefOf.Click.PlayOneShotOnCamera();
+					SoundDefOf.Click.PlayOneShotOnCamera(null);
 				}
 			}
 		}

@@ -1,6 +1,8 @@
+using RimWorld;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Verse.AI;
 
 namespace Verse
 {
@@ -8,25 +10,19 @@ namespace Verse
 	{
 		private List<Thing> givers = new List<Thing>();
 
-		public void RegisterTooltipGiver(Thing t)
+		public void Notify_ThingSpawned(Thing t)
 		{
-			if (!t.def.hasTooltip)
+			if (t.def.hasTooltip || this.ShouldShowShotReport(t))
 			{
-				Log.Warning("Tried to register non tooltip giver " + t + " to give tooltips.");
-				return;
+				this.givers.Add(t);
 			}
-			this.givers.Add(t);
 		}
 
-		public void DeregisterTooltipGiver(Thing t)
+		public void Notify_ThingDespawned(Thing t)
 		{
-			if (this.givers.Contains(t))
+			if (t.def.hasTooltip || this.ShouldShowShotReport(t))
 			{
 				this.givers.Remove(t);
-			}
-			else
-			{
-				Log.Warning("Tried to remove non-registered tooltip giver " + t);
 			}
 		}
 
@@ -55,13 +51,25 @@ namespace Verse
 					rect.y = vector2.y - vector.y / 2f;
 					if (rect.Contains(Event.current.mousePosition))
 					{
-						TipSignal tooltip = thing.GetTooltip();
-						tooltip.text += TooltipUtility.ShotCalculationTipString(thing);
-						TooltipHandler.TipRegion(rect, tooltip);
+						string text = (!this.ShouldShowShotReport(thing)) ? null : TooltipUtility.ShotCalculationTipString(thing);
+						if (thing.def.hasTooltip || !text.NullOrEmpty())
+						{
+							TipSignal tooltip = thing.GetTooltip();
+							if (!text.NullOrEmpty())
+							{
+								tooltip.text = tooltip.text + "\n\n" + text;
+							}
+							TooltipHandler.TipRegion(rect, tooltip);
+						}
 					}
 					num++;
 				}
 			}
+		}
+
+		private bool ShouldShowShotReport(Thing t)
+		{
+			return t.def.hasTooltip || t is Hive || t is IAttackTarget;
 		}
 	}
 }

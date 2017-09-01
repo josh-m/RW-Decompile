@@ -42,12 +42,11 @@ namespace Verse
 			}
 			for (int i = list.Count - 1; i >= 0; i--)
 			{
-				for (int j = 0; j < i - 1; j++)
+				for (int j = 0; j < i; j++)
 				{
 					if (list[i] == list[j])
 					{
 						list.RemoveAt(i);
-						i--;
 						break;
 					}
 				}

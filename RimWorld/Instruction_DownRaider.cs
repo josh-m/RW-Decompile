@@ -13,7 +13,7 @@ namespace RimWorld
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Collections.LookList<IntVec3>(ref this.coverCells, "coverCells", LookMode.Undefined, new object[0]);
+			Scribe_Collections.Look<IntVec3>(ref this.coverCells, "coverCells", LookMode.Undefined, new object[0]);
 		}
 
 		public override void OnActivated()
@@ -76,7 +76,7 @@ namespace RimWorld
 				{
 					if (current.HostileTo(Faction.OfPlayer))
 					{
-						HealthUtility.GiveInjuriesToForceDowned(current);
+						HealthUtility.DamageUntilDowned(current);
 					}
 				}
 			}

@@ -264,7 +264,7 @@ namespace RimWorld
 				{
 					Thing thing = ThingMaker.MakeThing((ThingDef)this.entDef, this.stuffDef);
 					thing.SetFactionDirect(Faction.OfPlayer);
-					GenSpawn.Spawn(thing, c, base.Map, this.placingRot);
+					GenSpawn.Spawn(thing, c, base.Map, this.placingRot, false);
 				}
 			}
 			else
@@ -294,20 +294,7 @@ namespace RimWorld
 		public override void SelectedUpdate()
 		{
 			base.SelectedUpdate();
-			IntVec3 intVec = UI.MouseCell();
-			ThingDef thingDef = this.entDef as ThingDef;
-			if (thingDef != null && (thingDef.EverTransmitsPower || thingDef.ConnectToPower))
-			{
-				OverlayDrawHandler.DrawPowerGridOverlayThisFrame();
-				if (thingDef.ConnectToPower)
-				{
-					CompPower compPower = PowerConnectionMaker.BestTransmitterForConnector(intVec, Find.VisibleMap, null);
-					if (compPower != null)
-					{
-						PowerNetGraphics.RenderAnticipatedWirePieceConnecting(intVec, compPower.parent);
-					}
-				}
-			}
+			BuildDesignatorUtility.TryDrawPowerGridAndAnticipatedConnection(this.entDef);
 		}
 
 		public override void DrawPanelReadout(ref float curY, float width)
@@ -321,6 +308,7 @@ namespace RimWorld
 			for (int i = 0; i < list.Count; i++)
 			{
 				ThingCountClass thingCountClass = list[i];
+				Color color = GUI.color;
 				Texture2D image;
 				if (thingCountClass.thingDef == null)
 				{
@@ -329,8 +317,10 @@ namespace RimWorld
 				else
 				{
 					image = thingCountClass.thingDef.uiIcon;
+					GUI.color = thingCountClass.thingDef.graphicData.color;
 				}
 				GUI.DrawTexture(new Rect(0f, curY, 20f, 20f), image);
+				GUI.color = color;
 				if (thingCountClass.thingDef != null && thingCountClass.thingDef.resourceReadoutPriority != ResourceCountPriority.Uncounted && base.Map.resourceCounter.GetCount(thingCountClass.thingDef) < thingCountClass.count)
 				{
 					GUI.color = Color.red;

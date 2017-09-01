@@ -11,7 +11,11 @@ namespace RimWorld
 		{
 			StringBuilder stringBuilder = new StringBuilder();
 			stringBuilder.Append(base.GetInspectString());
-			stringBuilder.AppendLine(this.UsableNowStatus());
+			if (stringBuilder.Length != 0)
+			{
+				stringBuilder.AppendLine();
+			}
+			stringBuilder.Append(this.UsableNowStatus());
 			return stringBuilder.ToString();
 		}
 

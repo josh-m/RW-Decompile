@@ -20,16 +20,13 @@ namespace RimWorld
 		[DebuggerHidden]
 		public override IEnumerable<FiringIncident> MakeIntervalIncidents(IIncidentTarget target)
 		{
-			if (target == Find.Maps.Find((Map x) => x.IsPlayerHome))
+			if (this.IntervalsPassed == 840)
 			{
-				if (this.IntervalsPassed == 840)
+				IncidentDef inc = IncidentDefOf.JourneyOffer;
+				if (inc.TargetAllowed(target))
 				{
-					IncidentDef inc = IncidentDefOf.JourneyOffer;
-					if (inc.TargetAllowed(target))
-					{
-						FiringIncident fi = new FiringIncident(inc, this, this.GenerateParms(inc.category, target));
-						yield return fi;
-					}
+					FiringIncident fi = new FiringIncident(inc, this, this.GenerateParms(inc.category, target));
+					yield return fi;
 				}
 			}
 		}

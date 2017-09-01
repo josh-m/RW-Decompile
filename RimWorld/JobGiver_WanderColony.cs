@@ -50,10 +50,10 @@ namespace RimWorld
 					if (!building.Position.IsForbidden(pawn) && pawn.Map.areaManager.Home[building.Position])
 					{
 						int num2 = 15 + num * 2;
-						if ((pawn.Position - building.Position).LengthHorizontalSquared <= (float)(num2 * num2))
+						if ((pawn.Position - building.Position).LengthHorizontalSquared <= num2 * num2)
 						{
-							IntVec3 intVec = GenAdj.CellsAdjacent8Way(building).ToList<IntVec3>().RandomElement<IntVec3>();
-							if (intVec.Standable(building.Map) && (num >= 12 || !intVec.IsForbidden(pawn)) && pawn.CanReach(intVec, PathEndMode.OnCell, Danger.None, false, TraverseMode.ByPawn) && !intVec.IsInPrisonCell(pawn.Map))
+							IntVec3 intVec = GenAdjFast.AdjacentCells8Way(building).RandomElement<IntVec3>();
+							if (intVec.Standable(building.Map) && !intVec.IsForbidden(pawn) && pawn.CanReach(intVec, PathEndMode.OnCell, Danger.None, false, TraverseMode.ByPawn) && !intVec.IsInPrisonCell(pawn.Map))
 							{
 								return intVec;
 							}
@@ -64,7 +64,7 @@ namespace RimWorld
 			}
 			Pawn pawn2;
 			if ((from c in pawn.Map.mapPawns.FreeColonistsSpawned
-			where !c.Position.IsForbidden(pawn)
+			where !c.Position.IsForbidden(pawn) && pawn.CanReach(c.Position, PathEndMode.Touch, Danger.None, false, TraverseMode.ByPawn)
 			select c).TryRandomElement(out pawn2))
 			{
 				return pawn2.Position;

@@ -54,7 +54,7 @@ namespace RimWorld
 			Find.LetterStack.ReceiveLetter("LetterLabelNewParty".Translate(), "LetterNewParty".Translate(new object[]
 			{
 				pawn.LabelShort
-			}), LetterType.Good, new TargetInfo(intVec, this.map, false), null);
+			}), LetterDefOf.Good, new TargetInfo(intVec, this.map, false), null);
 			this.lastLordStartTick = Find.TickManager.TicksGame;
 			this.startPartyASAP = false;
 			return true;
@@ -67,8 +67,8 @@ namespace RimWorld
 
 		public void ExposeData()
 		{
-			Scribe_Values.LookValue<int>(ref this.lastLordStartTick, "lastLordStartTick", 0, false);
-			Scribe_Values.LookValue<bool>(ref this.startPartyASAP, "startPartyASAP", false, false);
+			Scribe_Values.Look<int>(ref this.lastLordStartTick, "lastLordStartTick", 0, false);
+			Scribe_Values.Look<bool>(ref this.startPartyASAP, "startPartyASAP", false, false);
 		}
 
 		private void Tick_TryStartParty()
@@ -83,7 +83,7 @@ namespace RimWorld
 				{
 					this.startPartyASAP = true;
 				}
-				if (this.startPartyASAP && Find.TickManager.TicksGame - this.lastLordStartTick >= 600000 && PartyUtility.AcceptableMapConditionsToStartParty(this.map))
+				if (this.startPartyASAP && Find.TickManager.TicksGame - this.lastLordStartTick >= 600000 && PartyUtility.AcceptableGameConditionsToStartParty(this.map))
 				{
 					this.TryStartParty();
 				}

@@ -36,6 +36,8 @@ namespace RimWorld
 
 		private int activeModsWhenOpenedHash = -1;
 
+		private Dictionary<string, string> truncatedModNamesCache = new Dictionary<string, string>();
+
 		public Page_ModsConfig()
 		{
 			this.doCloseButton = true;
@@ -90,14 +92,15 @@ namespace RimWorld
 			Widgets.DrawMenuSection(rect4, true);
 			float height = (float)(ModLister.AllInstalledMods.Count<ModMetaData>() * 34 + 300);
 			Rect rect5 = new Rect(0f, 0f, rect4.width - 16f, height);
-			Widgets.BeginScrollView(rect4, ref this.modListScrollPosition, rect5);
+			Widgets.BeginScrollView(rect4, ref this.modListScrollPosition, rect5, true);
 			Rect rect6 = rect5.ContractedBy(4f);
-			Listing_Standard listing_Standard = new Listing_Standard(rect6);
+			Listing_Standard listing_Standard = new Listing_Standard();
 			listing_Standard.ColumnWidth = rect6.width;
+			listing_Standard.Begin(rect6);
 			int reorderableGroup = ReorderableWidget.NewGroup(delegate(int from, int to)
 			{
 				ModsConfig.Reorder(from, to);
-				SoundDefOf.TickHigh.PlayOneShotOnCamera();
+				SoundDefOf.TickHigh.PlayOneShotOnCamera(null);
 			});
 			int num2 = 0;
 			foreach (ModMetaData current in this.ModsInListOrder())
@@ -119,7 +122,7 @@ namespace RimWorld
 				Text.Font = GameFont.Medium;
 				Rect rect7 = new Rect(0f, 0f, position.width, 40f);
 				Text.Anchor = TextAnchor.UpperCenter;
-				Widgets.Label(rect7, this.selectedMod.Name);
+				Widgets.Label(rect7, this.selectedMod.Name.Truncate(rect7.width, null));
 				Text.Anchor = TextAnchor.UpperLeft;
 				if (!this.selectedMod.IsCoreMod)
 				{
@@ -193,7 +196,7 @@ namespace RimWorld
 				Rect outRect = new Rect(0f, num5, position.width, position.height - num5 - 40f);
 				float width = outRect.width - 16f;
 				Rect rect11 = new Rect(0f, 0f, width, Text.CalcHeight(this.selectedMod.Description, width));
-				Widgets.BeginScrollView(outRect, ref this.modDescriptionScrollPosition, rect11);
+				Widgets.BeginScrollView(outRect, ref this.modDescriptionScrollPosition, rect11, true);
 				Widgets.Label(rect11, this.selectedMod.Description);
 				Widgets.EndScrollView();
 				if (Prefs.DevMode && SteamManager.Initialized && this.selectedMod.CanToUploadToWorkshop())
@@ -212,10 +215,10 @@ namespace RimWorld
 						{
 							Find.WindowStack.Add(Dialog_MessageBox.CreateConfirmation("ConfirmSteamWorkshopUpload".Translate(), delegate
 							{
-								SoundDefOf.TickHigh.PlayOneShotOnCamera();
+								SoundDefOf.TickHigh.PlayOneShotOnCamera(null);
 								Dialog_MessageBox dialog_MessageBox = Dialog_MessageBox.CreateConfirmation("ConfirmContentAuthor".Translate(), delegate
 								{
-									SoundDefOf.TickHigh.PlayOneShotOnCamera();
+									SoundDefOf.TickHigh.PlayOneShotOnCamera(null);
 									Workshop.Upload(this.selectedMod);
 								}, true, null);
 								dialog_MessageBox.buttonAText = "Yes".Translate();
@@ -267,14 +270,18 @@ namespace RimWorld
 				{
 					TooltipHandler.TipRegion(rect2, new TipSignal(text, mod.GetHashCode() * 3311));
 				}
-				if (Widgets.CheckboxLabeledSelectable(rect2, mod.Name, ref flag, ref active))
-				{
-					this.selectedMod = mod;
-				}
+				float num = rect2.width - 24f;
 				if (mod.Active)
 				{
 					Rect position = new Rect(rect2.xMax - 48f + 2f, rect2.y, 24f, 24f);
 					GUI.DrawTexture(position, TexButton.DragHash);
+					num -= 24f;
+				}
+				Text.Font = GameFont.Small;
+				string label = mod.Name.Truncate(num, this.truncatedModNamesCache);
+				if (Widgets.CheckboxLabeledSelectable(rect2, label, ref flag, ref active))
+				{
+					this.selectedMod = mod;
 				}
 				if (mod.Active && !active && mod.Name == ModContentPack.CoreModIdentifier)
 				{
@@ -282,11 +289,13 @@ namespace RimWorld
 					Find.WindowStack.Add(Dialog_MessageBox.CreateConfirmation("ConfirmDisableCoreMod".Translate(), delegate
 					{
 						coreMod.Active = false;
+						this.truncatedModNamesCache.Clear();
 					}, false, null));
 				}
 				else
 				{
 					mod.Active = active;
+					this.truncatedModNamesCache.Clear();
 				}
 			}
 			else
@@ -324,19 +333,12 @@ namespace RimWorld
 			ModsConfig.Save();
 			if (this.activeModsWhenOpenedHash != ModLister.InstalledModsListHash(true))
 			{
-				bool assemblyWasLoaded = LoadedModManager.RunningMods.Any((ModContentPack m) => m.LoadedAnyAssembly);
-				LongEventHandler.QueueLongEvent(delegate
+				WindowStack arg_4E_0 = Find.WindowStack;
+				Action buttonAAction = delegate
 				{
-					PlayDataLoader.ClearAllPlayData();
-					PlayDataLoader.LoadAllPlayData(false);
-					if (assemblyWasLoaded)
-					{
-						LongEventHandler.ExecuteWhenFinished(delegate
-						{
-							Find.WindowStack.Add(new Dialog_MessageBox("ModWithAssemblyWasUnloaded".Translate(), null, null, null, null, null, false));
-						});
-					}
-				}, "LoadingLongEvent", true, null);
+					GenCommandLine.Restart();
+				};
+				arg_4E_0.Add(new Dialog_MessageBox("ModsChanged".Translate(), null, buttonAAction, null, null, null, false));
 			}
 		}
 	}

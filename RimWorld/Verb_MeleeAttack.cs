@@ -11,8 +11,6 @@ namespace RimWorld
 	{
 		private const int TargetCooldown = 50;
 
-		private const float DefaultHitChance = 0.6f;
-
 		protected override bool TryCastShot()
 		{
 			Pawn casterPawn = base.CasterPawn;
@@ -38,17 +36,26 @@ namespace RimWorld
 			}
 			bool result;
 			SoundDef soundDef;
-			if (Rand.Value < this.GetHitChance(thing))
+			if (Rand.Value < this.GetNonMissChance(thing))
 			{
-				result = true;
-				this.ApplyMeleeDamageToTarget(this.currentTarget);
-				if (thing.def.category == ThingCategory.Building)
+				if (Rand.Value > this.GetDodgeChance(thing))
 				{
-					soundDef = this.SoundHitBuilding();
+					result = true;
+					this.ApplyMeleeDamageToTarget(this.currentTarget);
+					if (thing.def.category == ThingCategory.Building)
+					{
+						soundDef = this.SoundHitBuilding();
+					}
+					else
+					{
+						soundDef = this.SoundHitPawn();
+					}
 				}
 				else
 				{
-					soundDef = this.SoundHitPawn();
+					result = false;
+					soundDef = this.SoundMiss();
+					MoteMaker.ThrowText(thing.DrawPos, thing.Map, "TextMote_Dodge".Translate(), 1.9f);
 				}
 			}
 			else
@@ -110,7 +117,7 @@ namespace RimWorld
 			}
 			Vector3 direction = (target.Thing.Position - base.CasterPawn.Position).ToVector3();
 			Thing caster = this.caster;
-			DamageInfo mainDinfo = new DamageInfo(damDef, GenMath.RoundRandom(damAmount), -1f, caster, null, source);
+			DamageInfo mainDinfo = new DamageInfo(damDef, GenMath.RoundRandom(damAmount), -1f, caster, null, source, DamageInfo.SourceCategory.ThingOrUnknown);
 			mainDinfo.SetBodyRegion(BodyPartHeight.Undefined, BodyPartDepth.Outside);
 			mainDinfo.SetWeaponBodyPartGroup(bodyPartGroupDef);
 			mainDinfo.SetWeaponHediff(hediffDef);
@@ -124,7 +131,7 @@ namespace RimWorld
 					ExtraMeleeDamage extraDamage = extraDamages[i];
 					int amount = GenMath.RoundRandom((float)extraDamage.amount * base.GetDamageFactorFor(base.CasterPawn));
 					caster = this.caster;
-					DamageInfo extraDinfo = new DamageInfo(extraDamage.def, amount, -1f, caster, null, source);
+					DamageInfo extraDinfo = new DamageInfo(extraDamage.def, amount, -1f, caster, null, source, DamageInfo.SourceCategory.ThingOrUnknown);
 					extraDinfo.SetBodyRegion(BodyPartHeight.Undefined, BodyPartDepth.Outside);
 					extraDinfo.SetWeaponBodyPartGroup(bodyPartGroupDef);
 					extraDinfo.SetWeaponHediff(hediffDef);
@@ -134,7 +141,7 @@ namespace RimWorld
 			}
 		}
 
-		private float GetHitChance(LocalTargetInfo target)
+		private float GetNonMissChance(LocalTargetInfo target)
 		{
 			if (this.surpriseAttack)
 			{
@@ -144,11 +151,30 @@ namespace RimWorld
 			{
 				return 1f;
 			}
-			if (base.CasterPawn.skills != null)
+			return base.CasterPawn.GetStatValue(StatDefOf.MeleeHitChance, true);
+		}
+
+		private float GetDodgeChance(LocalTargetInfo target)
+		{
+			if (this.surpriseAttack)
 			{
-				return base.CasterPawn.GetStatValue(StatDefOf.MeleeHitChance, true);
+				return 0f;
 			}
-			return 0.6f;
+			if (this.IsTargetImmobile(target))
+			{
+				return 0f;
+			}
+			Pawn pawn = target.Thing as Pawn;
+			if (pawn == null)
+			{
+				return 0f;
+			}
+			Stance_Busy stance_Busy = pawn.stances.curStance as Stance_Busy;
+			if (stance_Busy != null && stance_Busy.verb != null && !stance_Busy.verb.verbProps.MeleeRange)
+			{
+				return 0f;
+			}
+			return pawn.GetStatValue(StatDefOf.MeleeDodgeChance, true);
 		}
 
 		private bool IsTargetImmobile(LocalTargetInfo target)
@@ -174,7 +200,7 @@ namespace RimWorld
 		{
 			if (this.ownerEquipment != null && this.ownerEquipment.Stuff != null)
 			{
-				if (this.verbProps.meleeDamageDef.armorCategory == DamageArmorCategory.Sharp)
+				if (this.verbProps.meleeDamageDef.armorCategory == DamageArmorCategoryDefOf.Sharp)
 				{
 					if (!this.ownerEquipment.Stuff.stuffProps.soundMeleeHitSharp.NullOrUndefined())
 					{
@@ -197,7 +223,7 @@ namespace RimWorld
 		{
 			if (this.ownerEquipment != null && this.ownerEquipment.Stuff != null)
 			{
-				if (this.verbProps.meleeDamageDef.armorCategory == DamageArmorCategory.Sharp)
+				if (this.verbProps.meleeDamageDef.armorCategory == DamageArmorCategoryDefOf.Sharp)
 				{
 					if (!this.ownerEquipment.Stuff.stuffProps.soundMeleeHitSharp.NullOrUndefined())
 					{

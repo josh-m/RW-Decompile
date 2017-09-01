@@ -113,5 +113,10 @@ namespace Verse.Sound
 			SustainerManager.playingPerDef.Clear();
 			ProfilerThreadCheck.EndSample();
 		}
+
+		public void RemoveAllFromMap(Map map)
+		{
+			this.allSustainers.RemoveAll((Sustainer sustainer) => sustainer.info.Maker.Map == map);
+		}
 	}
 }

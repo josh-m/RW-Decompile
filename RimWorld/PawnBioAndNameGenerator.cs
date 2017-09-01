@@ -19,10 +19,6 @@ namespace RimWorld
 
 		private const float ShuffledNicknameChance = 0.15f;
 
-		private static List<PawnBio> tempBios = new List<PawnBio>();
-
-		private static List<NameTriple> tempNames = new List<NameTriple>();
-
 		public static void GiveAppropriateBioAndNameTo(Pawn pawn, string requiredLastName)
 		{
 			if ((Rand.Value < 0.25f || pawn.kindDef.factionLeader) && PawnBioAndNameGenerator.TryGiveSolidBioTo(pawn, requiredLastName))
@@ -90,72 +86,41 @@ namespace RimWorld
 
 		private static PawnBio TryGetRandomUnusedSolidBioFor(string backstoryCategory, PawnKindDef kind, Gender gender, string requiredLastName)
 		{
-			NameTriple nameTriple = null;
+			NameTriple prefName = null;
 			if (Rand.Value < 0.5f)
 			{
-				nameTriple = Prefs.RandomPreferredName();
-				if (nameTriple != null && (nameTriple.UsedThisGame || (requiredLastName != null && nameTriple.Last != requiredLastName)))
+				prefName = Prefs.RandomPreferredName();
+				if (prefName != null && (prefName.UsedThisGame || (requiredLastName != null && prefName.Last != requiredLastName)))
 				{
-					nameTriple = null;
+					prefName = null;
 				}
 			}
+			SolidBioDatabase.allBios.Shuffle<PawnBio>();
+			PawnBio pawnBio;
 			while (true)
 			{
-				int i = 0;
-				while (i < SolidBioDatabase.allBios.Count)
+				pawnBio = SolidBioDatabase.allBios.FirstOrDefault(delegate(PawnBio bio)
 				{
-					PawnBio pawnBio = SolidBioDatabase.allBios[i];
-					if (pawnBio.gender == GenderPossibility.Either)
+					if (bio.gender != GenderPossibility.Either)
 					{
-						goto IL_8F;
-					}
-					if (gender != Gender.Male || pawnBio.gender == GenderPossibility.Male)
-					{
-						if (gender != Gender.Female || pawnBio.gender == GenderPossibility.Female)
+						if (gender == Gender.Male && bio.gender != GenderPossibility.Male)
 						{
-							goto IL_8F;
+							return false;
+						}
+						if (gender == Gender.Female && bio.gender != GenderPossibility.Female)
+						{
+							return false;
 						}
 					}
-					IL_14E:
-					i++;
-					continue;
-					IL_8F:
-					if (!requiredLastName.NullOrEmpty() && pawnBio.name.Last != requiredLastName)
-					{
-						goto IL_14E;
-					}
-					if (pawnBio.name.UsedThisGame)
-					{
-						goto IL_14E;
-					}
-					if (nameTriple != null && !pawnBio.name.Equals(nameTriple))
-					{
-						goto IL_14E;
-					}
-					if (kind.factionLeader && !pawnBio.pirateKing)
-					{
-						goto IL_14E;
-					}
-					for (int j = 0; j < pawnBio.adulthood.spawnCategories.Count; j++)
-					{
-						if (pawnBio.adulthood.spawnCategories[j] == backstoryCategory)
-						{
-							PawnBioAndNameGenerator.tempBios.Add(pawnBio);
-							break;
-						}
-					}
-					goto IL_14E;
-				}
-				if (PawnBioAndNameGenerator.tempBios.Count != 0 || nameTriple == null)
+					return (requiredLastName.NullOrEmpty() || !(bio.name.Last != requiredLastName)) && (prefName == null || bio.name.Equals(prefName)) && (!kind.factionLeader || bio.pirateKing) && bio.adulthood.spawnCategories.Contains(backstoryCategory) && !bio.name.UsedThisGame;
+				});
+				if (pawnBio != null || prefName == null)
 				{
 					break;
 				}
-				nameTriple = null;
+				prefName = null;
 			}
-			PawnBio result;
-			PawnBioAndNameGenerator.tempBios.TryRandomElement(out result);
-			PawnBioAndNameGenerator.tempBios.Clear();
-			return result;
+			return pawnBio;
 		}
 
 		public static NameTriple TryGetRandomUnusedSolidName(Gender gender, string requiredLastName = null)
@@ -190,21 +155,10 @@ namespace RimWorld
 			{
 				return nameTriple;
 			}
-			for (int i = 0; i < list2.Count; i++)
-			{
-				NameTriple nameTriple2 = list2[i];
-				if (requiredLastName == null || !(nameTriple2.Last != requiredLastName))
-				{
-					if (!nameTriple2.UsedThisGame)
-					{
-						PawnBioAndNameGenerator.tempNames.Add(nameTriple2);
-					}
-				}
-			}
-			NameTriple result;
-			PawnBioAndNameGenerator.tempNames.TryRandomElement(out result);
-			PawnBioAndNameGenerator.tempNames.Clear();
-			return result;
+			list2.Shuffle<NameTriple>();
+			return (from name in list2
+			where (requiredLastName == null || !(name.Last != requiredLastName)) && !name.UsedThisGame
+			select name).FirstOrDefault<NameTriple>();
 		}
 
 		public static Name GeneratePawnName(Pawn pawn, NameStyle style = NameStyle.Full, string forcedLastName = null)
@@ -256,7 +210,7 @@ namespace RimWorld
 					while (true)
 					{
 						text = pawn.KindLabel + " " + num.ToString();
-						if (!NameUseChecker.NameSingleIsUsedOnAnyMap(text))
+						if (!NameUseChecker.NameSingleIsUsed(text))
 						{
 							break;
 						}

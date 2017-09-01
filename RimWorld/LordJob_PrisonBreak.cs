@@ -13,6 +13,14 @@ namespace RimWorld
 
 		private int sapperThingID = -1;
 
+		public override bool NeverInRestraints
+		{
+			get
+			{
+				return true;
+			}
+		}
+
 		public LordJob_PrisonBreak()
 		{
 		}
@@ -34,20 +42,20 @@ namespace RimWorld
 			LordToil_PrisonerEscape lordToil_PrisonerEscape = new LordToil_PrisonerEscape(this.exitPoint, this.sapperThingID);
 			lordToil_PrisonerEscape.avoidGridMode = AvoidGridMode.Smart;
 			stateGraph.AddToil(lordToil_PrisonerEscape);
-			LordToil_ExitMapBest lordToil_ExitMapBest = new LordToil_ExitMapBest(LocomotionUrgency.Jog, false);
-			lordToil_ExitMapBest.avoidGridMode = AvoidGridMode.Smart;
-			stateGraph.AddToil(lordToil_ExitMapBest);
-			LordToil_ExitMapBest lordToil_ExitMapBest2 = new LordToil_ExitMapBest(LocomotionUrgency.Jog, true);
-			stateGraph.AddToil(lordToil_ExitMapBest2);
-			Transition transition = new Transition(lordToil_Travel, lordToil_ExitMapBest2);
+			LordToil_ExitMap lordToil_ExitMap = new LordToil_ExitMap(LocomotionUrgency.Jog, false);
+			lordToil_ExitMap.avoidGridMode = AvoidGridMode.Smart;
+			stateGraph.AddToil(lordToil_ExitMap);
+			LordToil_ExitMap lordToil_ExitMap2 = new LordToil_ExitMap(LocomotionUrgency.Jog, true);
+			stateGraph.AddToil(lordToil_ExitMap2);
+			Transition transition = new Transition(lordToil_Travel, lordToil_ExitMap2);
 			transition.AddSources(new LordToil[]
 			{
 				lordToil_PrisonerEscape,
-				lordToil_ExitMapBest
+				lordToil_ExitMap
 			});
 			transition.AddTrigger(new Trigger_PawnCannotReachMapEdge());
 			stateGraph.AddTransition(transition);
-			Transition transition2 = new Transition(lordToil_ExitMapBest2, lordToil_ExitMapBest);
+			Transition transition2 = new Transition(lordToil_ExitMap2, lordToil_ExitMap);
 			transition2.AddTrigger(new Trigger_PawnCanReachMapEdge());
 			transition2.AddPostAction(new TransitionAction_EndAllJobs());
 			stateGraph.AddTransition(transition2);
@@ -60,9 +68,9 @@ namespace RimWorld
 			Transition transition5 = new Transition(lordToil_PrisonerEscape, lordToil_PrisonerEscape);
 			transition5.canMoveToSameState = true;
 			transition5.AddTrigger(new Trigger_PawnLost());
-			transition5.AddTrigger(new Trigger_PawnHarmed());
+			transition5.AddTrigger(new Trigger_PawnHarmed(1f, false));
 			stateGraph.AddTransition(transition5);
-			Transition transition6 = new Transition(lordToil_PrisonerEscape, lordToil_ExitMapBest);
+			Transition transition6 = new Transition(lordToil_PrisonerEscape, lordToil_ExitMap);
 			transition6.AddTrigger(new Trigger_Memo("TravelArrived"));
 			stateGraph.AddTransition(transition6);
 			return stateGraph;
@@ -71,9 +79,9 @@ namespace RimWorld
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Values.LookValue<IntVec3>(ref this.groupUpLoc, "groupUpLoc", default(IntVec3), false);
-			Scribe_Values.LookValue<IntVec3>(ref this.exitPoint, "exitPoint", default(IntVec3), false);
-			Scribe_Values.LookValue<int>(ref this.sapperThingID, "sapperThingID", -1, false);
+			Scribe_Values.Look<IntVec3>(ref this.groupUpLoc, "groupUpLoc", default(IntVec3), false);
+			Scribe_Values.Look<IntVec3>(ref this.exitPoint, "exitPoint", default(IntVec3), false);
+			Scribe_Values.Look<int>(ref this.sapperThingID, "sapperThingID", -1, false);
 		}
 
 		public override void Notify_PawnAdded(Pawn p)

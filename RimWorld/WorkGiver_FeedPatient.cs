@@ -22,10 +22,18 @@ namespace RimWorld
 			}
 		}
 
-		public override bool HasJobOnThing(Pawn pawn, Thing t)
+		public override bool HasJobOnThing(Pawn pawn, Thing t, bool forced = false)
 		{
 			Pawn pawn2 = t as Pawn;
 			if (pawn2 == null || pawn2 == pawn)
+			{
+				return false;
+			}
+			if (this.def.feedHumanlikesOnly && !pawn2.RaceProps.Humanlike)
+			{
+				return false;
+			}
+			if (this.def.feedAnimalsOnly && !pawn2.RaceProps.Animal)
 			{
 				return false;
 			}
@@ -37,13 +45,13 @@ namespace RimWorld
 			{
 				return false;
 			}
-			if (!pawn.CanReserveAndReach(t, PathEndMode.ClosestTouch, Danger.Deadly, 1))
+			if (!pawn.CanReserveAndReach(t, PathEndMode.ClosestTouch, Danger.Deadly, 1, -1, null, forced))
 			{
 				return false;
 			}
 			Thing thing;
 			ThingDef thingDef;
-			if (!FoodUtility.TryFindBestFoodSourceFor(pawn, pawn2, pawn2.needs.food.CurCategory == HungerCategory.Starving, out thing, out thingDef, false, true, false, true))
+			if (!FoodUtility.TryFindBestFoodSourceFor(pawn, pawn2, pawn2.needs.food.CurCategory == HungerCategory.Starving, out thing, out thingDef, false, true, false, true, false))
 			{
 				JobFailReason.Is("NoFood".Translate());
 				return false;
@@ -51,12 +59,12 @@ namespace RimWorld
 			return true;
 		}
 
-		public override Job JobOnThing(Pawn pawn, Thing t)
+		public override Job JobOnThing(Pawn pawn, Thing t, bool forced = false)
 		{
 			Pawn pawn2 = (Pawn)t;
 			Thing t2;
 			ThingDef def;
-			if (FoodUtility.TryFindBestFoodSourceFor(pawn, pawn2, pawn2.needs.food.CurCategory == HungerCategory.Starving, out t2, out def, false, true, false, true))
+			if (FoodUtility.TryFindBestFoodSourceFor(pawn, pawn2, pawn2.needs.food.CurCategory == HungerCategory.Starving, out t2, out def, false, true, false, true, false))
 			{
 				return new Job(JobDefOf.FeedPatient)
 				{

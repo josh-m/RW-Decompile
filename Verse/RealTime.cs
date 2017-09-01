@@ -5,9 +5,13 @@ namespace Verse
 {
 	public static class RealTime
 	{
-		public static float realDeltaTime = 0f;
+		public static float deltaTime;
+
+		public static float realDeltaTime;
 
 		public static RealtimeMoteList moteList = new RealtimeMoteList();
+
+		public static int frameCount;
 
 		private static float lastRealTime = 0f;
 
@@ -21,6 +25,8 @@ namespace Verse
 
 		public static void Update()
 		{
+			RealTime.frameCount = Time.frameCount;
+			RealTime.deltaTime = Time.deltaTime;
 			float realtimeSinceStartup = Time.realtimeSinceStartup;
 			RealTime.realDeltaTime = realtimeSinceStartup - RealTime.lastRealTime;
 			RealTime.lastRealTime = realtimeSinceStartup;

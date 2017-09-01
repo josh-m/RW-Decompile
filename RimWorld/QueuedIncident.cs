@@ -37,8 +37,8 @@ namespace RimWorld
 
 		public void ExposeData()
 		{
-			Scribe_Deep.LookDeep<FiringIncident>(ref this.firingInc, "firingInc", new object[0]);
-			Scribe_Values.LookValue<int>(ref this.fireTick, "fireTick", 0, false);
+			Scribe_Deep.Look<FiringIncident>(ref this.firingInc, "firingInc", new object[0]);
+			Scribe_Values.Look<int>(ref this.fireTick, "fireTick", 0, false);
 		}
 
 		public override string ToString()

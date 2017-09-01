@@ -67,7 +67,10 @@ namespace Verse
 				StringBuilder stringBuilder = new StringBuilder();
 				if (!this.IsTended)
 				{
-					stringBuilder.AppendLine("NeedsTendingNow".Translate());
+					if (!base.Pawn.Dead && this.parent.TendableNow)
+					{
+						stringBuilder.AppendLine("NeedsTendingNow".Translate());
+					}
 				}
 				else
 				{
@@ -96,13 +99,25 @@ namespace Verse
 							")"
 						}));
 					}
-					if (this.TProps.tendDuration > 0)
+					if (!base.Pawn.Dead && this.TProps.tendDuration > 0)
 					{
 						int numTicks = this.tendTick + this.TProps.tendDuration - Find.TickManager.TicksGame;
-						stringBuilder.AppendLine("NextTreatmentIn".Translate(new object[]
+						string text2 = numTicks.ToStringTicksToPeriod(true, false, true);
+						if ("NextTendIn".CanTranslate())
 						{
-							numTicks.ToStringTicksToPeriod(true)
-						}));
+							text2 = "NextTendIn".Translate(new object[]
+							{
+								text2
+							});
+						}
+						else
+						{
+							text2 = "NextTreatmentIn".Translate(new object[]
+							{
+								text2
+							});
+						}
+						stringBuilder.AppendLine(text2);
 					}
 				}
 				return stringBuilder.ToString().TrimEndNewlines();
@@ -149,9 +164,9 @@ namespace Verse
 
 		public override void CompExposeData()
 		{
-			Scribe_Values.LookValue<int>(ref this.tendTick, "tendTick", -999999, false);
-			Scribe_Values.LookValue<float>(ref this.tendQuality, "tendQuality", 0f, false);
-			Scribe_Values.LookValue<int>(ref this.tendedCount, "tendedCount", 0, false);
+			Scribe_Values.Look<int>(ref this.tendTick, "tendTick", -999999, false);
+			Scribe_Values.Look<float>(ref this.tendQuality, "tendQuality", 0f, false);
+			Scribe_Values.Look<int>(ref this.tendedCount, "tendedCount", 0, false);
 		}
 
 		protected override float SeverityChangePerDay()
@@ -172,7 +187,10 @@ namespace Verse
 			{
 				string text = string.Concat(new string[]
 				{
-					this.parent.LabelCap,
+					"TextMote_Tended".Translate(new object[]
+					{
+						this.parent.Label
+					}).CapitalizeFirst(),
 					"\n",
 					"Quality".Translate(),
 					" ",
@@ -194,6 +212,7 @@ namespace Verse
 					int num = Find.TickManager.TicksGame - this.tendTick;
 					stringBuilder.AppendLine("ticks since tend: " + num);
 					stringBuilder.AppendLine("tend duration passed: " + ((float)num / (float)this.TProps.tendDuration).ToStringPercent());
+					stringBuilder.AppendLine("severity change per day: " + (this.TProps.severityPerDayTended * this.tendQuality).ToString());
 				}
 			}
 			else

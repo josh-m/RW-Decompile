@@ -10,23 +10,27 @@ namespace RimWorld
 
 		public const int HoursPerDay = 24;
 
-		public const int DaysPerMonth = 5;
+		public const int DaysPerTwelfth = 5;
 
-		public const int MonthsPerYear = 12;
+		public const int TwelfthsPerYear = 12;
 
 		public const int GameStartHourOfDay = 6;
 
 		public const float SecondsPerTickAsFractionOfDay = 1.44f;
 
-		public const int TicksPerMonth = 300000;
+		public const int TicksPerTwelfth = 300000;
 
 		public const int TicksPerSeason = 900000;
+
+		public const int TicksPerQuadrum = 900000;
 
 		public const int TicksPerYear = 3600000;
 
 		public const int DaysPerYear = 60;
 
 		public const int DaysPerSeason = 15;
+
+		public const int DaysPerQuadrum = 15;
 
 		public const int TicksPerHour = 2500;
 
@@ -66,15 +70,15 @@ namespace RimWorld
 			}
 		}
 
-		public static int MonthsPassed
+		public static int TwelfthsPassed
 		{
 			get
 			{
-				return GenDate.MonthsPassedAt(GenDate.TicksGame);
+				return GenDate.TwelfthsPassedAt(GenDate.TicksGame);
 			}
 		}
 
-		public static float MonthsPassedFloat
+		public static float TwelfthsPassedFloat
 		{
 			get
 			{
@@ -113,7 +117,7 @@ namespace RimWorld
 			return gameticks / 60000;
 		}
 
-		public static int MonthsPassedAt(int gameticks)
+		public static int TwelfthsPassedAt(int gameticks)
 		{
 			return gameticks / 300000;
 		}
@@ -134,7 +138,7 @@ namespace RimWorld
 			return (int)(num % 60000L / 2500L);
 		}
 
-		public static int DayOfMonth(long absTicks, float longitude)
+		public static int DayOfTwelfth(long absTicks, float longitude)
 		{
 			long num = absTicks + GenDate.LocalTicksOffsetFromLongitude(longitude);
 			int num2 = (int)(num / 60000L % 5L);
@@ -156,7 +160,7 @@ namespace RimWorld
 			return num2;
 		}
 
-		public static Month Month(long absTicks, float longitude)
+		public static Twelfth Twelfth(long absTicks, float longitude)
 		{
 			long num = absTicks + GenDate.LocalTicksOffsetFromLongitude(longitude);
 			int num2 = (int)(num / 300000L % 12L);
@@ -164,13 +168,24 @@ namespace RimWorld
 			{
 				num2 += 12;
 			}
-			return (Month)num2;
+			return (Twelfth)num2;
 		}
 
-		public static Season Season(long absTicks, float longitude)
+		public static Season Season(long absTicks, Vector2 longLat)
 		{
-			Month month = GenDate.Month(absTicks, longitude);
-			return month.GetSeason();
+			return GenDate.Season(absTicks, longLat.y, longLat.x);
+		}
+
+		public static Season Season(long absTicks, float latitude, float longitude)
+		{
+			Twelfth twelfth = GenDate.Twelfth(absTicks, longitude);
+			return twelfth.GetSeason(latitude);
+		}
+
+		public static Quadrum Quadrum(long absTicks, float longitude)
+		{
+			Twelfth twelfth = GenDate.Twelfth(absTicks, longitude);
+			return twelfth.GetQuadrum();
 		}
 
 		public static int Year(long absTicks, float longitude)
@@ -187,7 +202,13 @@ namespace RimWorld
 		public static int DayOfSeason(long absTicks, float longitude)
 		{
 			int num = GenDate.DayOfYear(absTicks, longitude);
-			return (num + 5) % 15;
+			return (num - (int)(SeasonUtility.FirstSeason.GetFirstTwelfth(0f) * RimWorld.Twelfth.Sixth)) % 15;
+		}
+
+		public static int DayOfQuadrum(long absTicks, float longitude)
+		{
+			int num = GenDate.DayOfYear(absTicks, longitude);
+			return (num - (int)(QuadrumUtility.FirstQuadrum.GetFirstTwelfth() * RimWorld.Twelfth.Sixth)) % 15;
 		}
 
 		public static float DayPercent(long absTicks, float longitude)
@@ -201,54 +222,81 @@ namespace RimWorld
 			return (float)num2 / 60000f;
 		}
 
-		public static int HourInt(long absTicks, float longitude)
+		public static int HourInteger(long absTicks, float longitude)
 		{
 			long num = absTicks + GenDate.LocalTicksOffsetFromLongitude(longitude);
 			int num2 = (int)(num % 60000L);
 			return num2 / 2500;
 		}
 
-		public static string DateFullStringAt(long absTicks, float longitude)
+		public static float HourFloat(long absTicks, float longitude)
 		{
-			int num = GenDate.DayOfSeason(absTicks, longitude) + 1;
+			return GenDate.DayPercent(absTicks, longitude) * 24f;
+		}
+
+		public static string DateFullStringAt(long absTicks, Vector2 location)
+		{
+			int num = GenDate.DayOfSeason(absTicks, location.x) + 1;
 			string text = Find.ActiveLanguageWorker.OrdinalNumber(num);
 			return "FullDate".Translate(new object[]
 			{
 				text,
-				GenDate.Season(absTicks, longitude).Label(),
-				GenDate.Year(absTicks, longitude),
+				GenDate.Quadrum(absTicks, location.x).Label(),
+				GenDate.Year(absTicks, location.x),
 				num
 			});
 		}
 
-		public static string DateReadoutStringAt(long absTicks, float longitude)
+		public static string DateReadoutStringAt(long absTicks, Vector2 location)
 		{
-			int num = GenDate.DayOfSeason(absTicks, longitude) + 1;
+			int num = GenDate.DayOfSeason(absTicks, location.x) + 1;
 			string text = Find.ActiveLanguageWorker.OrdinalNumber(num);
 			return "DateReadout".Translate(new object[]
 			{
 				text,
-				GenDate.Season(absTicks, longitude).Label(),
-				GenDate.Year(absTicks, longitude),
+				GenDate.Quadrum(absTicks, location.x).Label(),
+				GenDate.Year(absTicks, location.x),
 				num
 			});
 		}
 
-		public static string SeasonDateStringAt(long absTicks, float longitude)
+		public static string SeasonDateStringAt(long absTicks, Vector2 longLat)
 		{
-			int num = GenDate.DayOfSeason(absTicks, longitude) + 1;
+			int num = GenDate.DayOfSeason(absTicks, longLat.x) + 1;
 			string text = Find.ActiveLanguageWorker.OrdinalNumber(num);
 			return "SeasonFullDate".Translate(new object[]
 			{
 				text,
-				GenDate.Season(absTicks, longitude).Label(),
+				GenDate.Season(absTicks, longLat).Label(),
 				num
 			});
 		}
 
-		public static string SeasonDateStringAt(Month month)
+		public static string SeasonDateStringAt(Twelfth twelfth, Vector2 longLat)
 		{
-			return GenDate.SeasonDateStringAt((long)((int)month * 300000 + 1), 0f);
+			return GenDate.SeasonDateStringAt((long)((int)twelfth * 300000 + 1), longLat);
+		}
+
+		public static string QuadrumDateStringAt(long absTicks, float longitude)
+		{
+			int num = GenDate.DayOfQuadrum(absTicks, longitude) + 1;
+			string text = Find.ActiveLanguageWorker.OrdinalNumber(num);
+			return "SeasonFullDate".Translate(new object[]
+			{
+				text,
+				GenDate.Quadrum(absTicks, longitude).Label(),
+				num
+			});
+		}
+
+		public static string QuadrumDateStringAt(Quadrum quadrum)
+		{
+			return GenDate.QuadrumDateStringAt((long)((int)quadrum * 900000 + 1), 0f);
+		}
+
+		public static string QuadrumDateStringAt(Twelfth twelfth)
+		{
+			return GenDate.QuadrumDateStringAt((long)((int)twelfth * 300000 + 1), 0f);
 		}
 
 		public static float TicksToDays(this int numTicks)
@@ -256,12 +304,12 @@ namespace RimWorld
 			return (float)numTicks / 60000f;
 		}
 
-		public static string ToStringTicksToDays(this int numTicks)
+		public static string ToStringTicksToDays(this int numTicks, string format = "F1")
 		{
-			return numTicks.TicksToDays().ToString("F1") + " " + "DaysLower".Translate();
+			return numTicks.TicksToDays().ToString(format) + " " + "DaysLower".Translate();
 		}
 
-		public static string ToStringTicksToPeriod(this int numTicks, bool allowHours = true)
+		public static string ToStringTicksToPeriod(this int numTicks, bool allowHours = true, bool hoursMax1DecimalPlace = false, bool allowQuadrums = true)
 		{
 			if (numTicks < 0)
 			{
@@ -272,6 +320,11 @@ namespace RimWorld
 			int num3;
 			float num4;
 			numTicks.TicksToPeriod(out num, out num2, out num3, out num4);
+			if (!allowQuadrums)
+			{
+				num3 += 15 * num2;
+				num2 = 0;
+			}
 			if (num > 0)
 			{
 				string text;
@@ -291,11 +344,11 @@ namespace RimWorld
 					text += ", ";
 					if (num2 == 1)
 					{
-						text += "Period1Season".Translate();
+						text += "Period1Quadrum".Translate();
 					}
 					else
 					{
-						text += "PeriodSeasons".Translate(new object[]
+						text += "PeriodQuadrums".Translate(new object[]
 						{
 							num2
 						});
@@ -308,11 +361,11 @@ namespace RimWorld
 				string text2;
 				if (num2 == 1)
 				{
-					text2 = "Period1Season".Translate();
+					text2 = "Period1Quadrum".Translate();
 				}
 				else
 				{
-					text2 = "PeriodSeasons".Translate(new object[]
+					text2 = "PeriodQuadrums".Translate(new object[]
 					{
 						num2
 					});
@@ -370,14 +423,43 @@ namespace RimWorld
 			{
 				return "LessThanADay".Translate();
 			}
-			if (Math.Round((double)num4, 2) == 1.0)
+			if (hoursMax1DecimalPlace)
 			{
-				return "Period1Hour".Translate();
+				if (num4 > 1f)
+				{
+					int num6 = Mathf.RoundToInt(num4);
+					if (num6 == 1)
+					{
+						return "Period1Hour".Translate();
+					}
+					return "PeriodHours".Translate(new object[]
+					{
+						num6
+					});
+				}
+				else
+				{
+					if (Math.Round((double)num4, 1) == 1.0)
+					{
+						return "Period1Hour".Translate();
+					}
+					return "PeriodHours".Translate(new object[]
+					{
+						num4.ToString("0.#")
+					});
+				}
 			}
-			return "PeriodHours".Translate(new object[]
+			else
 			{
-				num4.ToStringDecimalIfSmall()
-			});
+				if (Math.Round((double)num4, 2) == 1.0)
+				{
+					return "Period1Hour".Translate();
+				}
+				return "PeriodHours".Translate(new object[]
+				{
+					num4.ToStringDecimalIfSmall()
+				});
+			}
 		}
 
 		public static string ToStringTicksToPeriodVagueMax(this int numTicks)
@@ -386,20 +468,20 @@ namespace RimWorld
 			{
 				return "OverADecade".Translate();
 			}
-			return numTicks.ToStringTicksToPeriod(false);
+			return numTicks.ToStringTicksToPeriod(false, false, true);
 		}
 
-		public static void TicksToPeriod(this int numTicks, out int years, out int seasons, out int days, out float hoursFloat)
+		public static void TicksToPeriod(this int numTicks, out int years, out int quadrums, out int days, out float hoursFloat)
 		{
-			((long)numTicks).TicksToPeriod(out years, out seasons, out days, out hoursFloat);
+			((long)numTicks).TicksToPeriod(out years, out quadrums, out days, out hoursFloat);
 		}
 
-		public static void TicksToPeriod(this long numTicks, out int years, out int seasons, out int days, out float hoursFloat)
+		public static void TicksToPeriod(this long numTicks, out int years, out int quadrums, out int days, out float hoursFloat)
 		{
 			years = (int)(numTicks / 3600000L);
 			long num = numTicks - (long)years * 3600000L;
-			seasons = (int)(num / 900000L);
-			num -= (long)seasons * 900000L;
+			quadrums = (int)(num / 900000L);
+			num -= (long)quadrums * 900000L;
 			days = (int)(num / 60000L);
 			num -= (long)days * 60000L;
 			hoursFloat = (float)num / 2500f;
@@ -433,9 +515,9 @@ namespace RimWorld
 			{
 				if (num3 == 1)
 				{
-					return "Period1Season".Translate();
+					return "Period1Quadrum".Translate();
 				}
-				return "PeriodSeasons".Translate(new object[]
+				return "PeriodQuadrums".Translate(new object[]
 				{
 					num3
 				});
@@ -467,7 +549,12 @@ namespace RimWorld
 
 		public static int TimeZoneAt(float longitude)
 		{
-			return Mathf.RoundToInt(longitude / 15f);
+			return Mathf.RoundToInt(GenDate.TimeZoneFloatAt(longitude));
+		}
+
+		public static float TimeZoneFloatAt(float longitude)
+		{
+			return longitude / 15f;
 		}
 	}
 }

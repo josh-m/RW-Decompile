@@ -2,11 +2,12 @@ using RimWorld;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Verse.AI;
 using Verse.Sound;
 
 namespace Verse
 {
-	public abstract class Verb : ILoadReferenceable, IExposable
+	public abstract class Verb : IExposable, ILoadReferenceable
 	{
 		public VerbProperties verbProps;
 
@@ -32,9 +33,9 @@ namespace Verse
 
 		public Action castCompleteCallback;
 
-		private static List<IntVec3> tempDestList = new List<IntVec3>();
-
 		private static List<IntVec3> tempLeanShootSources = new List<IntVec3>();
+
+		private static List<IntVec3> tempDestList = new List<IntVec3>();
 
 		public Pawn CasterPawn
 		{
@@ -49,14 +50,6 @@ namespace Verse
 			get
 			{
 				return this.caster is Pawn;
-			}
-		}
-
-		public bool CanTargetCell
-		{
-			get
-			{
-				return this.caster is Building_TurretGun;
 			}
 		}
 
@@ -94,7 +87,7 @@ namespace Verse
 			{
 				if (this.ownerHediffComp != null)
 				{
-					return PawnCapacityUtility.CalculatePartEfficiency(this.ownerHediffComp.Pawn.health.hediffSet, this.ownerHediffComp.parent.Part, true);
+					return PawnCapacityUtility.CalculatePartEfficiency(this.ownerHediffComp.Pawn.health.hediffSet, this.ownerHediffComp.parent.Part, true, null);
 				}
 				if (this.verbProps.linkedBodyPartsGroup != null)
 				{
@@ -106,7 +99,7 @@ namespace Verse
 
 		public bool IsStillUsableBy(Pawn pawn)
 		{
-			if (this.ownerEquipment != null && !pawn.equipment.AllEquipment.Contains(this.ownerEquipment))
+			if (this.ownerEquipment != null && !pawn.equipment.AllEquipmentListForReading.Contains(this.ownerEquipment))
 			{
 				return false;
 			}
@@ -132,11 +125,11 @@ namespace Verse
 
 		public virtual void ExposeData()
 		{
-			Scribe_Values.LookValue<int>(ref this.loadID, "loadID", 0, false);
-			Scribe_Values.LookValue<VerbState>(ref this.state, "state", VerbState.Idle, false);
-			Scribe_TargetInfo.LookTargetInfo(ref this.currentTarget, "currentTarget");
-			Scribe_Values.LookValue<int>(ref this.burstShotsLeft, "burstShotsLeft", 0, false);
-			Scribe_Values.LookValue<int>(ref this.ticksToNextBurstShot, "ticksToNextBurstShot", 0, false);
+			Scribe_Values.Look<int>(ref this.loadID, "loadID", 0, false);
+			Scribe_Values.Look<VerbState>(ref this.state, "state", VerbState.Idle, false);
+			Scribe_TargetInfo.Look(ref this.currentTarget, "currentTarget");
+			Scribe_Values.Look<int>(ref this.burstShotsLeft, "burstShotsLeft", 0, false);
+			Scribe_Values.Look<int>(ref this.ticksToNextBurstShot, "ticksToNextBurstShot", 0, false);
 		}
 
 		public string GetUniqueLoadID()
@@ -149,6 +142,10 @@ namespace Verse
 			if (this.caster == null)
 			{
 				Log.Error("Verb " + this.GetUniqueLoadID() + " needs caster to work (possibly lost during saving/loading).");
+				return false;
+			}
+			if (!this.caster.Spawned)
+			{
 				return false;
 			}
 			if (this.state == VerbState.Bursting || !this.CanHitTarget(castTarg))
@@ -192,16 +189,24 @@ namespace Verse
 		{
 			if (this.state == VerbState.Bursting)
 			{
-				this.ticksToNextBurstShot--;
-				if (this.ticksToNextBurstShot <= 0)
+				if (!this.caster.Spawned)
 				{
-					this.TryCastNextBurstShot();
+					this.Reset();
+				}
+				else
+				{
+					this.ticksToNextBurstShot--;
+					if (this.ticksToNextBurstShot <= 0)
+					{
+						this.TryCastNextBurstShot();
+					}
 				}
 			}
 		}
 
 		protected void TryCastNextBurstShot()
 		{
+			LocalTargetInfo target = this.currentTarget;
 			if (this.TryCastShot())
 			{
 				if (this.verbProps.muzzleFlashScale > 0.01f)
@@ -214,15 +219,22 @@ namespace Verse
 				}
 				if (this.verbProps.soundCastTail != null)
 				{
-					this.verbProps.soundCastTail.PlayOneShotOnCamera();
+					this.verbProps.soundCastTail.PlayOneShotOnCamera(this.caster.Map);
 				}
 				if (this.CasterIsPawn)
 				{
-					if (this.CasterPawn.thinker == null)
+					if (this.CasterPawn.thinker != null)
+					{
+						this.CasterPawn.mindState.Notify_EngagedTarget();
+					}
+					if (this.CasterPawn.mindState != null)
+					{
+						this.CasterPawn.mindState.Notify_AttackedTarget(target);
+					}
+					if (!this.CasterPawn.Spawned)
 					{
 						return;
 					}
-					this.CasterPawn.mindState.Notify_EngagedTarget();
 				}
 				this.burstShotsLeft--;
 			}
@@ -235,7 +247,7 @@ namespace Verse
 				this.ticksToNextBurstShot = this.verbProps.ticksBetweenBurstShots;
 				if (this.CasterIsPawn)
 				{
-					this.CasterPawn.stances.SetStance(new Stance_Cooldown(this.verbProps.ticksBetweenBurstShots + 1, this.currentTarget));
+					this.CasterPawn.stances.SetStance(new Stance_Cooldown(this.verbProps.ticksBetweenBurstShots + 1, this.currentTarget, this));
 				}
 			}
 			else
@@ -243,7 +255,7 @@ namespace Verse
 				this.state = VerbState.Idle;
 				if (this.CasterIsPawn)
 				{
-					this.CasterPawn.stances.SetStance(new Stance_Cooldown(this.verbProps.AdjustedCooldownTicks(this.ownerEquipment), this.currentTarget));
+					this.CasterPawn.stances.SetStance(new Stance_Cooldown(this.verbProps.AdjustedCooldownTicks(this.ownerEquipment), this.currentTarget, this));
 				}
 				if (this.castCompleteCallback != null)
 				{
@@ -255,6 +267,11 @@ namespace Verse
 		protected abstract bool TryCastShot();
 
 		public void Notify_PickedUp()
+		{
+			this.Reset();
+		}
+
+		public virtual void Reset()
 		{
 			this.state = VerbState.Idle;
 			this.currentTarget = null;
@@ -301,7 +318,7 @@ namespace Verse
 				List<Apparel> wornApparel = this.CasterPawn.apparel.WornApparel;
 				for (int i = 0; i < wornApparel.Count; i++)
 				{
-					if (!wornApparel[i].AllowVerbCast(root, targ.ToTargetInfo(this.caster.Map)))
+					if (!wornApparel[i].AllowVerbCast(root, this.caster.Map, targ))
 					{
 						return false;
 					}
@@ -313,69 +330,67 @@ namespace Verse
 
 		public bool TryFindShootLineFromTo(IntVec3 root, LocalTargetInfo targ, out ShootLine resultingLine)
 		{
+			if (targ.HasThing && targ.Thing.Map != this.caster.Map)
+			{
+				resultingLine = default(ShootLine);
+				return false;
+			}
 			if (this.verbProps.MeleeRange)
 			{
-				if (root.AdjacentTo8WayOrInside(targ))
-				{
-					resultingLine = new ShootLine(root, targ.Cell);
-					return true;
-				}
+				resultingLine = new ShootLine(root, targ.Cell);
+				return ReachabilityImmediate.CanReachImmediate(root, targ, this.caster.Map, PathEndMode.Touch, null);
+			}
+			CellRect cellRect = (!targ.HasThing) ? CellRect.SingleCell(targ.Cell) : targ.Thing.OccupiedRect();
+			float num = cellRect.ClosestDistSquaredTo(root);
+			if (num > this.verbProps.range * this.verbProps.range || num < this.verbProps.minRange * this.verbProps.minRange)
+			{
 				resultingLine = new ShootLine(root, targ.Cell);
 				return false;
+			}
+			if (!this.verbProps.NeedsLineOfSight)
+			{
+				resultingLine = new ShootLine(root, targ.Cell);
+				return true;
+			}
+			if (this.CasterIsPawn)
+			{
+				IntVec3 dest;
+				if (this.CanHitFromCellIgnoringRange(root, targ, out dest))
+				{
+					resultingLine = new ShootLine(root, dest);
+					return true;
+				}
+				ShootLeanUtility.LeanShootingSourcesFromTo(root, cellRect.ClosestCellTo(root), this.caster.Map, Verb.tempLeanShootSources);
+				for (int i = 0; i < Verb.tempLeanShootSources.Count; i++)
+				{
+					IntVec3 intVec = Verb.tempLeanShootSources[i];
+					if (this.CanHitFromCellIgnoringRange(intVec, targ, out dest))
+					{
+						resultingLine = new ShootLine(intVec, dest);
+						return true;
+					}
+				}
 			}
 			else
 			{
-				float lengthHorizontalSquared = (root - targ.Cell).LengthHorizontalSquared;
-				if (lengthHorizontalSquared > this.verbProps.range * this.verbProps.range || lengthHorizontalSquared < this.verbProps.minRange * this.verbProps.minRange)
+				CellRect.CellRectIterator iterator = this.caster.OccupiedRect().GetIterator();
+				while (!iterator.Done())
 				{
-					resultingLine = new ShootLine(root, targ.Cell);
-					return false;
-				}
-				if (!this.verbProps.NeedsLineOfSight)
-				{
-					resultingLine = new ShootLine(root, targ.Cell);
-					return true;
-				}
-				if (this.CasterIsPawn)
-				{
+					IntVec3 current = iterator.Current;
 					IntVec3 dest;
-					if (this.CanHitFromCell(root, targ, out dest))
+					if (this.CanHitFromCellIgnoringRange(current, targ, out dest))
 					{
-						resultingLine = new ShootLine(root, dest);
+						resultingLine = new ShootLine(current, dest);
 						return true;
 					}
-					ShootLeanUtility.LeanShootingSourcesFromTo(root, targ.Cell, this.caster.Map, Verb.tempLeanShootSources);
-					for (int i = 0; i < Verb.tempLeanShootSources.Count; i++)
-					{
-						IntVec3 intVec = Verb.tempLeanShootSources[i];
-						if (this.CanHitFromCell(intVec, targ, out dest))
-						{
-							resultingLine = new ShootLine(intVec, dest);
-							return true;
-						}
-					}
+					iterator.MoveNext();
 				}
-				else
-				{
-					CellRect.CellRectIterator iterator = this.caster.OccupiedRect().GetIterator();
-					while (!iterator.Done())
-					{
-						IntVec3 current = iterator.Current;
-						IntVec3 dest;
-						if (this.CanHitFromCell(current, targ, out dest))
-						{
-							resultingLine = new ShootLine(current, dest);
-							return true;
-						}
-						iterator.MoveNext();
-					}
-				}
-				resultingLine = new ShootLine(root, targ.Cell);
-				return false;
 			}
+			resultingLine = new ShootLine(root, targ.Cell);
+			return false;
 		}
 
-		private bool CanHitFromCell(IntVec3 sourceCell, LocalTargetInfo targ, out IntVec3 goodDest)
+		private bool CanHitFromCellIgnoringRange(IntVec3 sourceCell, LocalTargetInfo targ, out IntVec3 goodDest)
 		{
 			if (targ.Thing != null)
 			{
@@ -387,14 +402,14 @@ namespace Verse
 				ShootLeanUtility.CalcShootableCellsOf(Verb.tempDestList, targ.Thing);
 				for (int i = 0; i < Verb.tempDestList.Count; i++)
 				{
-					if (this.CanHitCellFromCellIgnoringRange(sourceCell, Verb.tempDestList[i]))
+					if (this.CanHitCellFromCellIgnoringRange(sourceCell, Verb.tempDestList[i], targ.Thing.def.Fillage == FillCategory.Full))
 					{
 						goodDest = Verb.tempDestList[i];
 						return true;
 					}
 				}
 			}
-			else if (this.CanHitCellFromCellIgnoringRange(sourceCell, targ.Cell))
+			else if (this.CanHitCellFromCellIgnoringRange(sourceCell, targ.Cell, false))
 			{
 				goodDest = targ.Cell;
 				return true;
@@ -403,9 +418,27 @@ namespace Verse
 			return false;
 		}
 
-		private bool CanHitCellFromCellIgnoringRange(IntVec3 sourceSq, IntVec3 targetLoc)
+		private bool CanHitCellFromCellIgnoringRange(IntVec3 sourceSq, IntVec3 targetLoc, bool includeCorners = false)
 		{
-			return (!this.verbProps.mustCastOnOpenGround || (targetLoc.Standable(this.caster.Map) && !this.caster.Map.thingGrid.CellContains(targetLoc, ThingCategory.Pawn))) && (!this.verbProps.requireLineOfSight || GenSight.LineOfSight(sourceSq, targetLoc, this.caster.Map, true));
+			if (this.verbProps.mustCastOnOpenGround && (!targetLoc.Standable(this.caster.Map) || this.caster.Map.thingGrid.CellContains(targetLoc, ThingCategory.Pawn)))
+			{
+				return false;
+			}
+			if (this.verbProps.requireLineOfSight)
+			{
+				if (!includeCorners)
+				{
+					if (!GenSight.LineOfSight(sourceSq, targetLoc, this.caster.Map, true, null, 0, 0))
+					{
+						return false;
+					}
+				}
+				else if (!GenSight.LineOfSightToEdges(sourceSq, targetLoc, this.caster.Map, true, null))
+				{
+					return false;
+				}
+			}
+			return true;
 		}
 
 		public override string ToString()

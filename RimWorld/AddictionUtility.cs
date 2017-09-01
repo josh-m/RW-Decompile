@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Verse;
+using Verse.AI;
 
 namespace RimWorld
 {
@@ -107,10 +108,13 @@ namespace RimWorld
 						CompDrug compDrug = list[i].TryGetComp<CompDrug>();
 						if (compDrug.Props.chemical == chemical)
 						{
-							return true;
-						}
-						if (list[i].Position.Roofed(list[i].Map) || !list[i].Position.InHorDistOf(pawn.Position, 45f))
-						{
+							if (list[i].Position.Roofed(list[i].Map) || list[i].Position.InHorDistOf(pawn.Position, 45f))
+							{
+								if (pawn.CanReach(list[i], PathEndMode.ClosestTouch, Danger.Deadly, false, TraverseMode.ByPawn))
+								{
+									return true;
+								}
+							}
 						}
 					}
 				}

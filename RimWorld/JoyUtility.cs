@@ -20,12 +20,12 @@ namespace RimWorld
 				}
 				return false;
 			}
-			MapConditionDef mapConditionDef;
-			if (!map.mapConditionManager.AllowEnjoyableOutsideNow(out mapConditionDef))
+			GameConditionDef gameConditionDef;
+			if (!map.gameConditionManager.AllowEnjoyableOutsideNow(out gameConditionDef))
 			{
 				if (outFailReason != null)
 				{
-					outFailReason.Append(mapConditionDef.label);
+					outFailReason.Append(gameConditionDef.label);
 				}
 				return false;
 			}
@@ -34,11 +34,16 @@ namespace RimWorld
 
 		public static bool EnjoyableOutsideNow(Pawn pawn, StringBuilder outFailReason = null)
 		{
-			if (!JoyUtility.EnjoyableOutsideNow(pawn.Map, outFailReason))
+			Map mapHeld = pawn.MapHeld;
+			if (mapHeld == null)
+			{
+				return true;
+			}
+			if (!JoyUtility.EnjoyableOutsideNow(mapHeld, outFailReason))
 			{
 				return false;
 			}
-			if (!pawn.ComfortableTemperatureRange().Includes(pawn.Map.mapTemperature.OutdoorTemp))
+			if (!pawn.ComfortableTemperatureRange().Includes(mapHeld.mapTemperature.OutdoorTemp))
 			{
 				if (outFailReason != null)
 				{
@@ -81,13 +86,13 @@ namespace RimWorld
 
 		public static void TryGainRecRoomThought(Pawn pawn)
 		{
-			Room room = pawn.GetRoom();
+			Room room = pawn.GetRoom(RegionType.Set_Passable);
 			if (room != null)
 			{
 				int scoreStageIndex = RoomStatDefOf.Impressiveness.GetScoreStageIndex(room.GetStat(RoomStatDefOf.Impressiveness));
 				if (ThoughtDefOf.AteInImpressiveDiningRoom.stages[scoreStageIndex] != null)
 				{
-					pawn.needs.mood.thoughts.memories.TryGainMemoryThought(ThoughtMaker.MakeThought(ThoughtDefOf.JoyActivityInImpressiveRecRoom, scoreStageIndex), null);
+					pawn.needs.mood.thoughts.memories.TryGainMemory(ThoughtMaker.MakeThought(ThoughtDefOf.JoyActivityInImpressiveRecRoom, scoreStageIndex), null);
 				}
 			}
 		}

@@ -10,8 +10,8 @@ namespace Verse.AI.Group
 
 		public override void ExposeData()
 		{
-			Scribe_Values.LookValue<IntVec3>(ref this.defendPoint, "defendPoint", default(IntVec3), false);
-			Scribe_Values.LookValue<float>(ref this.defendRadius, "defendRadius", 28f, false);
+			Scribe_Values.Look<IntVec3>(ref this.defendPoint, "defendPoint", default(IntVec3), false);
+			Scribe_Values.Look<float>(ref this.defendRadius, "defendRadius", 28f, false);
 		}
 	}
 }

@@ -9,9 +9,16 @@ namespace RimWorld
 	{
 		private Dictionary<Faction, List<Thing>> repairables = new Dictionary<Faction, List<Thing>>();
 
+		private Dictionary<Faction, HashSet<Thing>> repairablesSet = new Dictionary<Faction, HashSet<Thing>>();
+
 		public List<Thing> RepairableBuildings(Faction fac)
 		{
 			return this.ListFor(fac);
+		}
+
+		public bool Contains(Faction fac, Building b)
+		{
+			return this.HashSetFor(fac).Contains(b);
 		}
 
 		public void Notify_BuildingSpawned(Building b)
@@ -29,11 +36,8 @@ namespace RimWorld
 			{
 				return;
 			}
-			List<Thing> list = this.ListFor(b.Faction);
-			if (list.Contains(b))
-			{
-				list.Remove(b);
-			}
+			this.ListFor(b.Faction).Remove(b);
+			this.HashSetFor(b.Faction).Remove(b);
 		}
 
 		public void Notify_BuildingTookDamage(Building b)
@@ -45,10 +49,13 @@ namespace RimWorld
 			this.UpdateBuilding(b);
 		}
 
-		internal void Notify_BuildingFactionChanged(Building b)
+		public void Notify_BuildingRepaired(Building b)
 		{
-			this.Notify_BuildingDeSpawned(b);
-			this.Notify_BuildingSpawned(b);
+			if (b.Faction == null)
+			{
+				return;
+			}
+			this.UpdateBuilding(b);
 		}
 
 		private void UpdateBuilding(Building b)
@@ -58,16 +65,19 @@ namespace RimWorld
 				return;
 			}
 			List<Thing> list = this.ListFor(b.Faction);
+			HashSet<Thing> hashSet = this.HashSetFor(b.Faction);
 			if (b.HitPoints < b.MaxHitPoints)
 			{
 				if (!list.Contains(b))
 				{
 					list.Add(b);
 				}
+				hashSet.Add(b);
 			}
-			else if (list.Contains(b))
+			else
 			{
 				list.Remove(b);
+				hashSet.Remove(b);
 			}
 		}
 
@@ -80,6 +90,17 @@ namespace RimWorld
 				this.repairables.Add(fac, list);
 			}
 			return list;
+		}
+
+		private HashSet<Thing> HashSetFor(Faction fac)
+		{
+			HashSet<Thing> hashSet;
+			if (!this.repairablesSet.TryGetValue(fac, out hashSet))
+			{
+				hashSet = new HashSet<Thing>();
+				this.repairablesSet.Add(fac, hashSet);
+			}
+			return hashSet;
 		}
 
 		internal string DebugString()

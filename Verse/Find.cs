@@ -122,11 +122,19 @@ namespace Verse
 			}
 		}
 
+		public static MainButtonsRoot MainButtonsRoot
+		{
+			get
+			{
+				return ((UIRoot_Play)Find.UIRoot).mainButtonsRoot;
+			}
+		}
+
 		public static MainTabsRoot MainTabsRoot
 		{
 			get
 			{
-				return ((UIRoot_Play)Find.UIRoot).mainTabsRoot;
+				return Find.MainButtonsRoot.tabs;
 			}
 		}
 
@@ -374,6 +382,14 @@ namespace Verse
 			}
 		}
 
+		public static DateNotifier DateNotifier
+		{
+			get
+			{
+				return Current.Game.dateNotifier;
+			}
+		}
+
 		public static FactionManager FactionManager
 		{
 			get
@@ -462,6 +478,14 @@ namespace Verse
 			}
 		}
 
+		public static WorldFloodFiller WorldFloodFiller
+		{
+			get
+			{
+				return Find.World.floodFiller;
+			}
+		}
+
 		public static WorldInterface WorldInterface
 		{
 			get
@@ -483,6 +507,14 @@ namespace Verse
 			get
 			{
 				return Find.WorldInterface.targeter;
+			}
+		}
+
+		public static WorldRoutePlanner WorldRoutePlanner
+		{
+			get
+			{
+				return Find.WorldInterface.routePlanner;
 			}
 		}
 	}

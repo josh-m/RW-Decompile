@@ -13,14 +13,12 @@ namespace RimWorld
 		protected override IEnumerable<Toil> MakeNewToils()
 		{
 			this.FailOnDestroyedNullOrForbidden(TargetIndex.A);
-			yield return Toils_Reserve.Reserve(TargetIndex.A, 1);
+			yield return Toils_Reserve.Reserve(TargetIndex.A, 1, -1, null);
 			yield return Toils_Goto.GotoThing(TargetIndex.A, PathEndMode.Touch);
-			yield return new Toil
-			{
-				tickAction = this.GetWaitTickAction(),
-				defaultCompleteMode = ToilCompleteMode.Delay,
-				defaultDuration = base.CurJob.def.joyDuration
-			};
+			Toil wait = Toils_General.Wait(base.CurJob.def.joyDuration);
+			wait.FailOnCannotTouch(TargetIndex.A, PathEndMode.Touch);
+			wait.tickAction = this.GetWaitTickAction();
+			yield return wait;
 		}
 
 		protected abstract Action GetWaitTickAction();

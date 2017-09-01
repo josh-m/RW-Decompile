@@ -38,6 +38,8 @@ namespace Verse
 
 		public Rot4 defaultPlacingRot = Rot4.North;
 
+		public float resourcesFractionWhenDeconstructed = 0.75f;
+
 		[Unsaved]
 		public ThingDef blueprintDef;
 

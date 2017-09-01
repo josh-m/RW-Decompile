@@ -6,35 +6,24 @@ namespace Verse
 	{
 		public static void CheckVersionAndLoad(string path, ScribeMetaHeaderUtility.ScribeHeaderMode mode, Action loadAct)
 		{
-			bool flag = false;
+			Scribe.loader.InitLoadingMetaHeaderOnly(path);
 			try
 			{
-				try
-				{
-					Scribe.InitLoadingMetaHeaderOnly(path);
-				}
-				catch (Exception ex)
-				{
-					Log.Warning(string.Concat(new object[]
-					{
-						"Exception loading ",
-						path,
-						": ",
-						ex
-					}));
-				}
 				ScribeMetaHeaderUtility.LoadGameDataHeader(mode, false);
-				flag = ScribeMetaHeaderUtility.TryCreateDialogsForVersionMismatchWarnings(loadAct);
-				CrossRefResolver.ResolveAllCrossReferences();
-				PostLoadInitter.DoAllPostLoadInits();
+				Scribe.loader.FinalizeLoading();
 			}
-			catch
+			catch (Exception ex)
 			{
-				CrossRefResolver.Clear();
-				PostLoadInitter.Clear();
-				throw;
+				Log.Warning(string.Concat(new object[]
+				{
+					"Exception loading ",
+					path,
+					": ",
+					ex
+				}));
+				Scribe.ForceStop();
 			}
-			if (!flag)
+			if (!ScribeMetaHeaderUtility.TryCreateDialogsForVersionMismatchWarnings(loadAct))
 			{
 				loadAct();
 			}

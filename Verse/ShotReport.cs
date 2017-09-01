@@ -26,6 +26,8 @@ namespace Verse
 
 		private float coversOverallBlockChance;
 
+		private ThingDef coveringGas;
+
 		private float factorFromShooterAndDist;
 
 		private float factorFromEquipment;
@@ -68,6 +70,18 @@ namespace Verse
 			}
 		}
 
+		private float FactorFromCoveringGas
+		{
+			get
+			{
+				if (this.coveringGas != null)
+				{
+					return 1f - this.coveringGas.gas.accuracyPenalty;
+				}
+				return 1f;
+			}
+		}
+
 		public float ChanceToNotHitCover
 		{
 			get
@@ -80,7 +94,7 @@ namespace Verse
 		{
 			get
 			{
-				return this.factorFromShooterAndDist * this.factorFromEquipment * this.factorFromWeather * this.factorFromTargetSize * this.FactorFromExecution;
+				return this.factorFromShooterAndDist * this.factorFromEquipment * this.factorFromWeather * this.factorFromTargetSize * this.FactorFromCoveringGas * this.FactorFromExecution;
 			}
 		}
 
@@ -117,6 +131,19 @@ namespace Verse
 			result.factorFromEquipment = verb.verbProps.GetHitChanceFactor(verb.ownerEquipment, result.distance);
 			result.covers = CoverUtility.CalculateCoverGiverSet(cell, caster.Position, caster.Map);
 			result.coversOverallBlockChance = CoverUtility.CalculateOverallBlockChance(cell, caster.Position, caster.Map);
+			result.coveringGas = null;
+			ShootLine shootLine;
+			if (verb.TryFindShootLineFromTo(verb.caster.Position, target, out shootLine))
+			{
+				foreach (IntVec3 current in shootLine.Points())
+				{
+					Thing gas = current.GetGas(caster.Map);
+					if (gas != null && (result.coveringGas == null || result.coveringGas.gas.accuracyPenalty < gas.def.gas.accuracyPenalty))
+					{
+						result.coveringGas = gas.def;
+					}
+				}
+			}
 			if (!caster.Position.Roofed(caster.Map) && !target.Cell.Roofed(caster.Map))
 			{
 				result.factorFromWeather = caster.Map.weatherManager.CurWeatherAccuracyMultiplier;
@@ -166,6 +193,10 @@ namespace Verse
 				if (this.factorFromWeather < 0.99f)
 				{
 					stringBuilder.AppendLine("   " + "Weather".Translate() + "         " + this.factorFromWeather.ToStringPercent());
+				}
+				if (this.FactorFromCoveringGas < 0.99f)
+				{
+					stringBuilder.AppendLine("   " + this.coveringGas.label.CapitalizeFirst() + "         " + this.FactorFromCoveringGas.ToStringPercent());
 				}
 				if (this.FactorFromPosture < 0.9999f)
 				{

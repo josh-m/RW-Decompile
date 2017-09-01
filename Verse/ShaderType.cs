@@ -14,6 +14,7 @@ namespace Verse
 		TransparentPostLight,
 		MetaOverlay,
 		Mote,
-		MoteGlow
+		MoteGlow,
+		MoteWater
 	}
 }

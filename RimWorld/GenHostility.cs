@@ -85,13 +85,12 @@ namespace RimWorld
 			return null;
 		}
 
-		public static bool AnyHostileThreat(Map map)
+		public static bool AnyHostileActiveThreat(Map map)
 		{
-			List<Pawn> allPawnsSpawned = map.mapPawns.AllPawnsSpawned;
-			for (int i = 0; i < allPawnsSpawned.Count; i++)
+			HashSet<IAttackTarget> targetsHostileToColony = map.attackTargetsCache.TargetsHostileToColony;
+			foreach (IAttackTarget current in targetsHostileToColony)
 			{
-				Pawn pawn = allPawnsSpawned[i];
-				if (!PawnUtility.ThreatDisabledOrFleeing(pawn) && pawn.HostileTo(Faction.OfPlayer))
+				if (GenHostility.IsActiveThreat(current))
 				{
 					return true;
 				}
@@ -99,9 +98,35 @@ namespace RimWorld
 			return false;
 		}
 
-		public static void Notify_PawnLostForTutor(Pawn pawn)
+		public static bool IsActiveThreat(IAttackTarget target)
 		{
-			if (pawn.MapHeld != null && !pawn.MapHeld.IsPlayerHome && pawn.MapHeld.mapPawns.FreeColonistsSpawnedCount != 0 && !GenHostility.AnyHostileThreat(pawn.MapHeld))
+			if (!(target.Thing is IAttackTargetSearcher))
+			{
+				return false;
+			}
+			if (target.ThreatDisabled())
+			{
+				return false;
+			}
+			Pawn pawn = target.Thing as Pawn;
+			if (pawn != null && (pawn.MentalStateDef == MentalStateDefOf.PanicFlee || pawn.IsPrisoner))
+			{
+				return false;
+			}
+			if (target.Thing.Spawned)
+			{
+				TraverseParms traverseParms = (pawn == null) ? TraverseParms.For(TraverseMode.PassDoors, Danger.Deadly, false) : TraverseParms.For(pawn, Danger.Deadly, TraverseMode.ByPawn, false);
+				if (!target.Thing.Map.reachability.CanReachUnfogged(target.Thing.Position, traverseParms))
+				{
+					return false;
+				}
+			}
+			return true;
+		}
+
+		public static void Notify_PawnLostForTutor(Pawn pawn, Map map)
+		{
+			if (!map.IsPlayerHome && map.mapPawns.FreeColonistsSpawnedCount != 0 && !GenHostility.AnyHostileActiveThreat(map))
 			{
 				LessonAutoActivator.TeachOpportunity(ConceptDefOf.ReformCaravan, OpportunityType.Important);
 			}

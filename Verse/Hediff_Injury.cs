@@ -100,7 +100,7 @@ namespace Verse
 		{
 			get
 			{
-				if (this.IsOld())
+				if (this.IsOld() || !this.Visible)
 				{
 					return 0f;
 				}

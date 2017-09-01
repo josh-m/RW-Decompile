@@ -46,7 +46,7 @@ namespace RimWorld
 			return true;
 		}
 
-		public override bool HasJobOnThing(Pawn pawn, Thing t)
+		public override bool HasJobOnThing(Pawn pawn, Thing t, bool forced = false)
 		{
 			if (t.Faction != pawn.Faction)
 			{
@@ -61,7 +61,7 @@ namespace RimWorld
 			{
 				return false;
 			}
-			if (!pawn.CanReserve(building, 1))
+			if (!pawn.CanReserve(building, 1, -1, null, forced))
 			{
 				return false;
 			}
@@ -69,7 +69,7 @@ namespace RimWorld
 			return compDeepDrill.CanDrillNow() && !building.IsBurning();
 		}
 
-		public override Job JobOnThing(Pawn pawn, Thing t)
+		public override Job JobOnThing(Pawn pawn, Thing t, bool forced = false)
 		{
 			return new Job(JobDefOf.OperateDeepDrill, t, 1500, true);
 		}

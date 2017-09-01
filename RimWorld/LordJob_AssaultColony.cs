@@ -53,11 +53,11 @@ namespace RimWorld
 				lordToil2 = new LordToil_DefendPoint(false);
 				stateGraph.AddToil(lordToil2);
 				Transition transition = new Transition(lordToil, lordToil2);
-				transition.AddTrigger(new Trigger_PawnHarmed());
+				transition.AddTrigger(new Trigger_PawnHarmed(1f, false).WithFilter(new TriggerFilter_NoSapperSapping()));
 				transition.AddPreAction(new TransitionAction_SetDefendLocalGroup());
 				stateGraph.AddTransition(transition);
 				Transition transition2 = new Transition(lordToil2, lordToil);
-				transition2.AddTrigger(new Trigger_TicksPassedWithoutHarm(500));
+				transition2.AddTrigger(new Trigger_TicksPassedWithoutHarm(900));
 				stateGraph.AddTransition(transition2);
 			}
 			LordToil lordToil3 = new LordToil_AssaultColony();
@@ -66,9 +66,9 @@ namespace RimWorld
 				lordToil3.avoidGridMode = AvoidGridMode.Smart;
 			}
 			stateGraph.AddToil(lordToil3);
-			LordToil_ExitMapBest lordToil_ExitMapBest = new LordToil_ExitMapBest(LocomotionUrgency.Jog, false);
-			lordToil_ExitMapBest.avoidGridMode = AvoidGridMode.Smart;
-			stateGraph.AddToil(lordToil_ExitMapBest);
+			LordToil_ExitMap lordToil_ExitMap = new LordToil_ExitMap(LocomotionUrgency.Jog, false);
+			lordToil_ExitMap.avoidGridMode = AvoidGridMode.Smart;
+			stateGraph.AddToil(lordToil_ExitMap);
 			if (this.sappers)
 			{
 				Transition transition3 = new Transition(lordToil, lordToil3);
@@ -80,7 +80,7 @@ namespace RimWorld
 			{
 				if (this.canTimeoutOrFlee)
 				{
-					Transition transition4 = new Transition(lordToil3, lordToil_ExitMapBest);
+					Transition transition4 = new Transition(lordToil3, lordToil_ExitMap);
 					if (lordToil != null)
 					{
 						transition4.AddSource(lordToil);
@@ -92,7 +92,7 @@ namespace RimWorld
 						this.assaulterFaction.Name
 					})));
 					stateGraph.AddTransition(transition4);
-					Transition transition5 = new Transition(lordToil3, lordToil_ExitMapBest);
+					Transition transition5 = new Transition(lordToil3, lordToil_ExitMap);
 					if (lordToil != null)
 					{
 						transition5.AddSource(lordToil);
@@ -140,7 +140,7 @@ namespace RimWorld
 					stateGraph.AddTransition(transition7);
 				}
 			}
-			Transition transition8 = new Transition(lordToil3, lordToil_ExitMapBest);
+			Transition transition8 = new Transition(lordToil3, lordToil_ExitMap);
 			if (lordToil != null)
 			{
 				transition8.AddSource(lordToil);
@@ -157,12 +157,12 @@ namespace RimWorld
 
 		public override void ExposeData()
 		{
-			Scribe_References.LookReference<Faction>(ref this.assaulterFaction, "assaulterFaction", false);
-			Scribe_Values.LookValue<bool>(ref this.canKidnap, "canKidnap", true, false);
-			Scribe_Values.LookValue<bool>(ref this.canTimeoutOrFlee, "canTimeoutOrFlee", true, false);
-			Scribe_Values.LookValue<bool>(ref this.sappers, "sappers", false, false);
-			Scribe_Values.LookValue<bool>(ref this.useAvoidGridSmart, "useAvoidGridSmart", false, false);
-			Scribe_Values.LookValue<bool>(ref this.canSteal, "canSteal", true, false);
+			Scribe_References.Look<Faction>(ref this.assaulterFaction, "assaulterFaction", false);
+			Scribe_Values.Look<bool>(ref this.canKidnap, "canKidnap", true, false);
+			Scribe_Values.Look<bool>(ref this.canTimeoutOrFlee, "canTimeoutOrFlee", true, false);
+			Scribe_Values.Look<bool>(ref this.sappers, "sappers", false, false);
+			Scribe_Values.Look<bool>(ref this.useAvoidGridSmart, "useAvoidGridSmart", false, false);
+			Scribe_Values.Look<bool>(ref this.canSteal, "canSteal", true, false);
 		}
 	}
 }

@@ -1,4 +1,7 @@
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using UnityEngine;
 using Verse;
 
 namespace RimWorld
@@ -28,6 +31,14 @@ namespace RimWorld
 			}
 		}
 
+		public float StoredEnergyPct
+		{
+			get
+			{
+				return this.storedEnergy / this.Props.storedEnergyMax;
+			}
+		}
+
 		public new CompProperties_Battery Props
 		{
 			get
@@ -39,7 +50,7 @@ namespace RimWorld
 		public override void PostExposeData()
 		{
 			base.PostExposeData();
-			Scribe_Values.LookValue<float>(ref this.storedEnergy, "storedPower", 0f, false);
+			Scribe_Values.Look<float>(ref this.storedEnergy, "storedPower", 0f, false);
 			CompProperties_Battery props = this.Props;
 			if (this.storedEnergy > props.storedEnergyMax)
 			{
@@ -70,6 +81,12 @@ namespace RimWorld
 				Log.Error("Drawing power we don't have from " + this.parent);
 				this.storedEnergy = 0f;
 			}
+		}
+
+		public void SetStoredEnergyPct(float pct)
+		{
+			pct = Mathf.Clamp01(pct);
+			this.storedEnergy = this.Props.storedEnergyMax * pct;
 		}
 
 		public override void ReceiveCompSignal(string signal)
@@ -103,6 +120,34 @@ namespace RimWorld
 				"%"
 			});
 			return text + "\n" + base.CompInspectStringExtra();
+		}
+
+		[DebuggerHidden]
+		public override IEnumerable<Gizmo> CompGetGizmosExtra()
+		{
+			foreach (Gizmo c in base.CompGetGizmosExtra())
+			{
+				yield return c;
+			}
+			if (Prefs.DevMode)
+			{
+				yield return new Command_Action
+				{
+					defaultLabel = "DEBUG: Fill",
+					action = delegate
+					{
+						this.<>f__this.SetStoredEnergyPct(1f);
+					}
+				};
+				yield return new Command_Action
+				{
+					defaultLabel = "DEBUG: Empty",
+					action = delegate
+					{
+						this.<>f__this.SetStoredEnergyPct(0f);
+					}
+				};
+			}
 		}
 	}
 }

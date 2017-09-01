@@ -69,7 +69,7 @@ namespace RimWorld
 
 		public void ExposeData()
 		{
-			Scribe_Deep.LookDeep<DefMap<WorkTypeDef, int>>(ref this.priorities, "priorities", new object[0]);
+			Scribe_Deep.Look<DefMap<WorkTypeDef, int>>(ref this.priorities, "priorities", new object[0]);
 		}
 
 		public void EnableAndInitialize()

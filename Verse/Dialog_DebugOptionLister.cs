@@ -1,4 +1,4 @@
-using RimWorld;
+using RimWorld.Planet;
 using System;
 using System.Linq;
 using UnityEngine;
@@ -27,7 +27,7 @@ namespace Verse
 
 		protected void DebugToolMap(string label, Action toolAction)
 		{
-			if (Find.MainTabsRoot.OpenTab == MainTabDefOf.World)
+			if (WorldRendererUtility.WorldRenderedNow)
 			{
 				return;
 			}
@@ -65,7 +65,7 @@ namespace Verse
 
 		protected void DebugToolWorld(string label, Action toolAction)
 		{
-			if (Find.MainTabsRoot.OpenTab != MainTabDefOf.World)
+			if (!WorldRendererUtility.WorldRenderedNow)
 			{
 				return;
 			}

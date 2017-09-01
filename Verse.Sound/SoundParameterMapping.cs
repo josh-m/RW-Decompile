@@ -19,8 +19,8 @@ namespace Verse.Sound
 		public SoundParameterMapping()
 		{
 			this.curve = new SimpleCurve();
-			this.curve.Add(new CurvePoint(0f, 0f));
-			this.curve.Add(new CurvePoint(1f, 1f));
+			this.curve.Add(new CurvePoint(0f, 0f), true);
+			this.curve.Add(new CurvePoint(1f, 1f), true);
 		}
 
 		public void DoEditWidgets(WidgetRow widgetRow)

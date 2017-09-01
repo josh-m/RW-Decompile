@@ -9,11 +9,11 @@ using Verse.Sound;
 namespace RimWorld
 {
 	[StaticConstructorOnStartup]
-	public class CompTransporter : ThingComp, IThingContainerOwner
+	public class CompTransporter : ThingComp, IThingHolder
 	{
 		public int groupID = -1;
 
-		private ThingContainer innerContainer;
+		private ThingOwner innerContainer;
 
 		public List<TransferableOneWay> leftToLoad;
 
@@ -44,14 +44,6 @@ namespace RimWorld
 			get
 			{
 				return this.parent.MapHeld;
-			}
-		}
-
-		public bool Spawned
-		{
-			get
-			{
-				return this.parent.Spawned;
 			}
 		}
 
@@ -99,7 +91,7 @@ namespace RimWorld
 				{
 					return null;
 				}
-				TransferableOneWay transferableOneWay = this.leftToLoad.Find((TransferableOneWay x) => x.countToTransfer != 0 && x.HasAnyThing);
+				TransferableOneWay transferableOneWay = this.leftToLoad.Find((TransferableOneWay x) => x.CountToTransfer != 0 && x.HasAnyThing);
 				if (transferableOneWay != null)
 				{
 					return transferableOneWay.AnyThing;
@@ -127,33 +119,28 @@ namespace RimWorld
 
 		public CompTransporter()
 		{
-			this.innerContainer = new ThingContainer(this);
+			this.innerContainer = new ThingOwner<Thing>(this);
 		}
 
 		public override void PostExposeData()
 		{
 			base.PostExposeData();
-			Scribe_Values.LookValue<int>(ref this.groupID, "groupID", 0, false);
-			Scribe_Deep.LookDeep<ThingContainer>(ref this.innerContainer, "innerContainer", new object[]
+			Scribe_Values.Look<int>(ref this.groupID, "groupID", 0, false);
+			Scribe_Deep.Look<ThingOwner>(ref this.innerContainer, "innerContainer", new object[]
 			{
 				this
 			});
-			Scribe_Collections.LookList<TransferableOneWay>(ref this.leftToLoad, "leftToLoad", LookMode.Deep, new object[0]);
+			Scribe_Collections.Look<TransferableOneWay>(ref this.leftToLoad, "leftToLoad", LookMode.Deep, new object[0]);
 		}
 
-		public ThingContainer GetInnerContainer()
+		public ThingOwner GetDirectlyHeldThings()
 		{
 			return this.innerContainer;
 		}
 
-		public IntVec3 GetPosition()
+		public void GetChildHolders(List<IThingHolder> outChildren)
 		{
-			return this.parent.PositionHeld;
-		}
-
-		public Map GetMap()
-		{
-			return this.parent.MapHeld;
+			ThingOwnerUtility.AppendThingHoldersFromThings(outChildren, this.GetDirectlyHeldThings());
 		}
 
 		public List<CompTransporter> TransportersInGroup(Map map)
@@ -182,7 +169,7 @@ namespace RimWorld
 					icon = CompTransporter.CancelLoadCommandTex,
 					action = delegate
 					{
-						SoundDefOf.DesignateCancel.PlayOneShotOnCamera();
+						SoundDefOf.DesignateCancel.PlayOneShotOnCamera(null);
 						this.<>f__this.CancelLoad();
 					}
 				};
@@ -263,6 +250,7 @@ namespace RimWorld
 			{
 				Messages.Message("MessageTransportersLoadCanceled_TransporterDestroyed".Translate(), MessageSound.Negative);
 			}
+			this.innerContainer.TryDropAll(this.parent.Position, map, ThingPlaceMode.Near);
 		}
 
 		public void AddToTheToLoadList(TransferableOneWay t, int count)
@@ -283,17 +271,17 @@ namespace RimWorld
 			TransferableOneWay transferableOneWay = new TransferableOneWay();
 			this.leftToLoad.Add(transferableOneWay);
 			transferableOneWay.things.AddRange(t.things);
-			transferableOneWay.countToTransfer = count;
+			transferableOneWay.AdjustTo(count);
 		}
 
-		public void Notify_DepositedThingInContainer(Thing t)
+		public void Notify_ThingAdded(Thing t)
 		{
-			this.SubtractFromToLoadList(t);
+			this.SubtractFromToLoadList(t, t.stackCount);
 		}
 
-		public void Notify_PawnEnteredTransporterOnHisOwn(Pawn p)
+		public void Notify_ThingAddedAndMergedWith(Thing t, int mergedCount)
 		{
-			this.SubtractFromToLoadList(p);
+			this.SubtractFromToLoadList(t, mergedCount);
 		}
 
 		public bool CancelLoad()
@@ -340,19 +328,19 @@ namespace RimWorld
 			}
 		}
 
-		private void SubtractFromToLoadList(Thing t)
+		private void SubtractFromToLoadList(Thing t, int count)
 		{
 			if (this.leftToLoad == null)
 			{
 				return;
 			}
-			TransferableOneWay transferableOneWay = TransferableUtility.TransferableMatching<TransferableOneWay>(t, this.leftToLoad);
+			TransferableOneWay transferableOneWay = TransferableUtility.TransferableMatchingDesperate(t, this.leftToLoad);
 			if (transferableOneWay == null)
 			{
 				return;
 			}
-			transferableOneWay.countToTransfer -= t.stackCount;
-			if (transferableOneWay.countToTransfer <= 0)
+			transferableOneWay.AdjustBy(-count);
+			if (transferableOneWay.CountToTransfer <= 0)
 			{
 				this.leftToLoad.Remove(transferableOneWay);
 			}
@@ -366,7 +354,7 @@ namespace RimWorld
 		{
 			List<CompTransporter> list = this.TransportersInGroup(this.Map);
 			int num = list.IndexOf(this);
-			JumpToTargetUtility.TryJumpAndSelect(list[GenMath.PositiveMod(num - 1, list.Count)].parent);
+			CameraJumper.TryJumpAndSelect(list[GenMath.PositiveMod(num - 1, list.Count)].parent);
 		}
 
 		private void SelectAllInGroup()
@@ -384,7 +372,12 @@ namespace RimWorld
 		{
 			List<CompTransporter> list = this.TransportersInGroup(this.Map);
 			int num = list.IndexOf(this);
-			JumpToTargetUtility.TryJumpAndSelect(list[(num + 1) % list.Count].parent);
+			CameraJumper.TryJumpAndSelect(list[(num + 1) % list.Count].parent);
+		}
+
+		virtual IThingHolder get_ParentHolder()
+		{
+			return base.ParentHolder;
 		}
 	}
 }

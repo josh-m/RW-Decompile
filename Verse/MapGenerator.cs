@@ -1,13 +1,13 @@
 using RimWorld.Planet;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Verse
 {
 	public static class MapGenerator
 	{
-		[Unsaved]
-		private static Dictionary<string, MapGenFloatGrid> genGrids;
+		private static Dictionary<string, object> data = new Dictionary<string, object>();
 
 		private static IntVec3 playerStartSpotInt = IntVec3.Invalid;
 
@@ -17,7 +17,7 @@ namespace Verse
 		{
 			get
 			{
-				return MapGenerator.genGrids["Elevation"];
+				return MapGenerator.GetVar<MapGenFloatGrid>("Elevation");
 			}
 		}
 
@@ -38,12 +38,13 @@ namespace Verse
 			}
 		}
 
-		public static Map GenerateMap(IntVec3 mapSize, int tile, MapParent parent = null, Action<Map> extraInitBeforeContentGen = null, MapGeneratorDef mapGenerator = null)
+		public static Map GenerateMap(IntVec3 mapSize, MapParent parent, MapGeneratorDef mapGenerator, IEnumerable<GenStepDef> extraGenStepDefs = null, Action<Map> extraInitBeforeContentGen = null)
 		{
 			ProgramState programState = Current.ProgramState;
 			Current.ProgramState = ProgramState.MapInitializing;
 			MapGenerator.playerStartSpotInt = IntVec3.Invalid;
 			MapGenerator.rootsToUnfog.Clear();
+			MapGenerator.data.Clear();
 			Map result;
 			try
 			{
@@ -57,7 +58,6 @@ namespace Verse
 				Map map = new Map();
 				map.uniqueID = Find.UniqueIDsManager.GetNextMapID();
 				map.info.Size = mapSize;
-				map.info.tile = tile;
 				map.info.parent = parent;
 				map.ConstructComponents();
 				DeepProfiler.End();
@@ -66,19 +66,30 @@ namespace Verse
 				{
 					extraInitBeforeContentGen(map);
 				}
-				DeepProfiler.Start("Generate contents into map");
-				MapGeneratorDef arg_F5_0 = mapGenerator;
 				if (mapGenerator == null)
 				{
-					arg_F5_0 = DefDatabase<MapGeneratorDef>.AllDefsListForReading.RandomElementByWeight((MapGeneratorDef x) => x.selectionWeight);
+					mapGenerator = DefDatabase<MapGeneratorDef>.AllDefsListForReading.RandomElementByWeight((MapGeneratorDef x) => x.selectionWeight);
 				}
-				MapGenerator.GenerateContentsIntoMap(arg_F5_0, map);
+				IEnumerable<GenStepDef> enumerable = mapGenerator.GenSteps;
+				if (extraGenStepDefs != null)
+				{
+					enumerable = enumerable.Concat(extraGenStepDefs);
+				}
+				map.areaManager.AddStartingAreas();
+				DeepProfiler.Start("Generate contents into map");
+				MapGenerator.GenerateContentsIntoMap(enumerable, map);
 				DeepProfiler.End();
 				Find.Scenario.PostMapGenerate(map);
-				map.areaManager.AddStartingAreas();
 				DeepProfiler.Start("Finalize map init");
 				map.FinalizeInit();
 				DeepProfiler.End();
+				DeepProfiler.Start("MapComponent.MapGenerated()");
+				MapComponentUtility.MapGenerated(map);
+				DeepProfiler.End();
+				if (parent != null)
+				{
+					parent.PostMapGenerate();
+				}
 				result = map;
 			}
 			finally
@@ -89,12 +100,14 @@ namespace Verse
 			return result;
 		}
 
-		public static void GenerateContentsIntoMap(MapGeneratorDef def, Map map)
+		public static void GenerateContentsIntoMap(IEnumerable<GenStepDef> genStepDefs, Map map)
 		{
 			Rand.Seed = Gen.HashCombineInt(Find.World.info.Seed, map.Tile);
-			MapGenerator.genGrids = new Dictionary<string, MapGenFloatGrid>();
+			MapGenerator.data.Clear();
 			RockNoises.Init(map);
-			foreach (GenStepDef current in def.GenStepsInOrder)
+			foreach (GenStepDef current in from x in genStepDefs
+			orderby x.order, x.index
+			select x)
 			{
 				DeepProfiler.Start("Genstep - " + current.ToString());
 				try
@@ -110,27 +123,47 @@ namespace Verse
 					DeepProfiler.End();
 				}
 			}
-			DeepProfiler.Start("GenerateInitialFogGrid");
-			map.fogGrid.SetAllFogged();
-			FloodFillerFog.FloodUnfog(MapGenerator.PlayerStartSpot, map);
-			for (int i = 0; i < MapGenerator.rootsToUnfog.Count; i++)
-			{
-				FloodFillerFog.FloodUnfog(MapGenerator.rootsToUnfog[i], map);
-			}
-			DeepProfiler.End();
-			Rand.RandomizeSeedFromTime();
+			Rand.RandomizeStateFromTime();
 			RockNoises.Reset();
-			MapGenerator.genGrids = null;
+			MapGenerator.data.Clear();
+		}
+
+		public static T GetVar<T>(string name)
+		{
+			object obj;
+			if (MapGenerator.data.TryGetValue(name, out obj))
+			{
+				return (T)((object)obj);
+			}
+			return default(T);
+		}
+
+		public static bool TryGetVar<T>(string name, out T var)
+		{
+			object obj;
+			if (MapGenerator.data.TryGetValue(name, out obj))
+			{
+				var = (T)((object)obj);
+				return true;
+			}
+			var = default(T);
+			return false;
+		}
+
+		public static void SetVar<T>(string name, T var)
+		{
+			MapGenerator.data[name] = var;
 		}
 
 		public static MapGenFloatGrid FloatGridNamed(string name, Map map)
 		{
-			if (MapGenerator.genGrids.ContainsKey(name))
+			MapGenFloatGrid var = MapGenerator.GetVar<MapGenFloatGrid>(name);
+			if (var != null)
 			{
-				return MapGenerator.genGrids[name];
+				return var;
 			}
-			MapGenFloatGrid mapGenFloatGrid = new MapGenFloatGrid(name, map);
-			MapGenerator.genGrids.Add(name, mapGenFloatGrid);
+			MapGenFloatGrid mapGenFloatGrid = new MapGenFloatGrid(map);
+			MapGenerator.SetVar<MapGenFloatGrid>(name, mapGenFloatGrid);
 			return mapGenFloatGrid;
 		}
 	}

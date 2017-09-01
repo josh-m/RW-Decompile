@@ -4,14 +4,16 @@ namespace RimWorld
 {
 	public enum IncidentCategory : byte
 	{
+		Undefined,
+		Misc,
 		ThreatSmall,
 		ThreatBig,
-		Misc,
 		AllyArrival,
 		OrbitalVisitor,
 		ShipChunkDrop,
 		JourneyOffer,
 		Disease,
-		CaravanTarget
+		CaravanTarget,
+		AllyAssistance
 	}
 }

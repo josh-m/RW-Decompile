@@ -33,27 +33,38 @@ namespace RimWorld.Planet
 			Rect rect3 = rect;
 			rect3.yMin += 35f;
 			Text.Font = GameFont.Small;
-			Listing_Standard listing_Standard = new Listing_Standard(rect3);
+			Listing_Standard listing_Standard = new Listing_Standard();
 			listing_Standard.verticalSpacing = 0f;
+			listing_Standard.Begin(rect3);
 			Tile selTile = base.SelTile;
 			int selTileID = base.SelTileID;
-			listing_Standard.Label(selTile.biome.description);
+			float y = Find.WorldGrid.LongLatOf(selTileID).y;
+			listing_Standard.Label(selTile.biome.description, -1f);
 			listing_Standard.Gap(8f);
 			listing_Standard.GapLine(12f);
 			if (!selTile.biome.implemented)
 			{
-				listing_Standard.Label(selTile.biome.LabelCap + " " + "BiomeNotImplemented".Translate());
+				listing_Standard.Label(selTile.biome.LabelCap + " " + "BiomeNotImplemented".Translate(), -1f);
 			}
 			listing_Standard.LabelDouble("Terrain".Translate(), selTile.hilliness.GetLabelCap());
+			if (selTile.VisibleRoads != null)
+			{
+				listing_Standard.LabelDouble("Road".Translate(), GenText.ToCommaList((from roadlink in selTile.VisibleRoads
+				select roadlink.road.label).Distinct<string>(), true).CapitalizeFirst());
+			}
+			if (selTile.VisibleRivers != null)
+			{
+				listing_Standard.LabelDouble("River".Translate(), selTile.VisibleRivers.MaxBy((Tile.RiverLink riverlink) => riverlink.river.degradeThreshold).river.LabelCap);
+			}
 			if (!Find.World.Impassable(selTileID))
 			{
-				int num = (int)(1f / (ThingDefOf.Human.GetStatValueAbstract(StatDefOf.MoveSpeed, null) / 60f) * 190f);
+				int num = 2500;
 				int numTicks = Mathf.Min(num + WorldPathGrid.CalculatedCostAt(selTileID, false, -1f), 120000);
-				listing_Standard.LabelDouble("MovementTimeNow".Translate(), numTicks.ToStringTicksToPeriod(true));
-				int numTicks2 = Mathf.Min(num + WorldPathGrid.CalculatedCostAt(selTileID, false, 0.5f), 120000);
-				listing_Standard.LabelDouble("MovementTimeSummer".Translate(), numTicks2.ToStringTicksToPeriod(true));
-				int numTicks3 = Mathf.Min(num + WorldPathGrid.CalculatedCostAt(selTileID, false, 0f), 120000);
-				listing_Standard.LabelDouble("MovementTimeWinter".Translate(), numTicks3.ToStringTicksToPeriod(true));
+				listing_Standard.LabelDouble("MovementTimeNow".Translate(), numTicks.ToStringTicksToPeriod(true, false, true));
+				int numTicks2 = Mathf.Min(num + WorldPathGrid.CalculatedCostAt(selTileID, false, Season.Summer.GetMiddleYearPct(y)), 120000);
+				listing_Standard.LabelDouble("MovementTimeSummer".Translate(), numTicks2.ToStringTicksToPeriod(true, false, true));
+				int numTicks3 = Mathf.Min(num + WorldPathGrid.CalculatedCostAt(selTileID, false, Season.Winter.GetMiddleYearPct(y)), 120000);
+				listing_Standard.LabelDouble("MovementTimeWinter".Translate(), numTicks3.ToStringTicksToPeriod(true, false, true));
 			}
 			if (selTile.biome.canBuildBase)
 			{
@@ -63,12 +74,13 @@ namespace RimWorld.Planet
 			listing_Standard.LabelDouble("Elevation".Translate(), selTile.elevation.ToString("F0") + "m");
 			listing_Standard.GapLine(12f);
 			listing_Standard.LabelDouble("AvgTemp".Translate(), selTile.temperature.ToStringTemperature("F1"));
-			float celsiusTemp = GenTemperature.AverageTemperatureAtTileForMonth(selTileID, Month.Jan);
+			float celsiusTemp = GenTemperature.AverageTemperatureAtTileForTwelfth(selTileID, Season.Winter.GetMiddleTwelfth(y));
 			listing_Standard.LabelDouble("AvgWinterTemp".Translate(), celsiusTemp.ToStringTemperature("F1"));
-			float celsiusTemp2 = GenTemperature.AverageTemperatureAtTileForMonth(selTileID, Month.Jul);
+			float celsiusTemp2 = GenTemperature.AverageTemperatureAtTileForTwelfth(selTileID, Season.Summer.GetMiddleTwelfth(y));
 			listing_Standard.LabelDouble("AvgSummerTemp".Translate(), celsiusTemp2.ToStringTemperature("F1"));
-			listing_Standard.LabelDouble("OutdoorGrowingPeriod".Translate(), Zone_Growing.GrowingMonthsDescription(selTileID));
+			listing_Standard.LabelDouble("OutdoorGrowingPeriod".Translate(), Zone_Growing.GrowingQuadrumsDescription(selTileID));
 			listing_Standard.LabelDouble("Rainfall".Translate(), selTile.rainfall.ToString("F0") + "mm");
+			listing_Standard.LabelDouble("AnimalsCanGrazeNow".Translate(), (!VirtualPlantsUtility.EnvironmentAllowsEatingVirtualPlantsNowAt(selTileID)) ? "No".Translate() : "Yes".Translate());
 			listing_Standard.GapLine(12f);
 			listing_Standard.LabelDouble("TimeZone".Translate(), GenDate.TimeZoneAt(Find.WorldGrid.LongLatOf(selTileID).x).ToStringWithSign());
 			Rot4 rot = Find.World.CoastDirectionAt(selTileID);

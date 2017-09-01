@@ -24,6 +24,8 @@ namespace RimWorld.Planet
 
 		private static List<Pawn> tmpPawnsToTick = new List<Pawn>();
 
+		private static List<Pawn> tmpPawnsToRemove = new List<Pawn>();
+
 		public IEnumerable<Pawn> AllPawnsAliveOrDead
 		{
 			get
@@ -51,44 +53,37 @@ namespace RimWorld.Planet
 		public void WorldPawnsTick()
 		{
 			WorldPawns.tmpPawnsToTick.Clear();
-			foreach (Pawn current in this.pawnsAlive)
-			{
-				if (!current.Dead && !current.Destroyed)
-				{
-					WorldPawns.tmpPawnsToTick.Add(current);
-				}
-			}
+			WorldPawns.tmpPawnsToTick.AddRange(this.pawnsAlive);
 			for (int i = 0; i < WorldPawns.tmpPawnsToTick.Count; i++)
 			{
 				WorldPawns.tmpPawnsToTick[i].Tick();
-				if (!WorldPawns.tmpPawnsToTick[i].Dead && !WorldPawns.tmpPawnsToTick[i].Destroyed && WorldPawns.tmpPawnsToTick[i].IsHashIntervalTick(7500) && !WorldPawns.tmpPawnsToTick[i].IsCaravanMember() && !PawnUtility.IsTravelingInTransportPodWorldObject(WorldPawns.tmpPawnsToTick[i]))
+				if (this.ShouldAutoTendTo(WorldPawns.tmpPawnsToTick[i]))
 				{
 					TendUtility.DoTend(null, WorldPawns.tmpPawnsToTick[i], null);
 				}
 			}
 			WorldPawns.tmpPawnsToTick.Clear();
-			foreach (Pawn current2 in this.pawnsAlive)
+			WorldPawns.tmpPawnsToRemove.Clear();
+			foreach (Pawn current in this.pawnsDead)
 			{
-				if (current2.Dead || current2.Destroyed)
+				if (current.Discarded)
 				{
-					if (current2.Discarded)
-					{
-						Log.Error("World pawn " + current2 + " has been discarded while still being a world pawn. This should never happen, because discard destroy mode means that the pawn is no longer managed by anything. Pawn should have been removed from the world first.");
-					}
-					else
-					{
-						this.pawnsDead.Add(current2);
-					}
+					Log.Error("World pawn " + current + " has been discarded while still being a world pawn. This should never happen, because discard destroy mode means that the pawn is no longer managed by anything. Pawn should have been removed from the world first.");
+					WorldPawns.tmpPawnsToRemove.Add(current);
 				}
 			}
-			this.pawnsAlive.RemoveWhere((Pawn x) => x.Dead || x.Destroyed);
+			for (int j = 0; j < WorldPawns.tmpPawnsToRemove.Count; j++)
+			{
+				this.pawnsDead.Remove(WorldPawns.tmpPawnsToRemove[j]);
+			}
+			WorldPawns.tmpPawnsToRemove.Clear();
 		}
 
 		public void ExposeData()
 		{
-			Scribe_Collections.LookHashSet<Pawn>(ref this.pawnsForcefullyKeptAsWorldPawns, true, "pawnsForcefullyKeptAsWorldPawns", LookMode.Reference);
-			Scribe_Collections.LookHashSet<Pawn>(ref this.pawnsAlive, "pawnsAlive", LookMode.Deep);
-			Scribe_Collections.LookHashSet<Pawn>(ref this.pawnsDead, true, "pawnsDead", LookMode.Deep);
+			Scribe_Collections.Look<Pawn>(ref this.pawnsForcefullyKeptAsWorldPawns, true, "pawnsForcefullyKeptAsWorldPawns", LookMode.Reference);
+			Scribe_Collections.Look<Pawn>(ref this.pawnsAlive, "pawnsAlive", LookMode.Deep);
+			Scribe_Collections.Look<Pawn>(ref this.pawnsDead, true, "pawnsDead", LookMode.Deep);
 		}
 
 		public bool Contains(Pawn p)
@@ -179,9 +174,9 @@ namespace RimWorld.Planet
 			{
 				return WorldPawnSituation.InTravelingTransportPod;
 			}
-			if (PawnUtility.IsNonPlayerFactionBasePrisoner(p))
+			if (PawnUtility.ForSaleBySettlement(p))
 			{
-				return WorldPawnSituation.NonPlayerFactionBasePrisoner;
+				return WorldPawnSituation.ForSaleBySettlement;
 			}
 			return WorldPawnSituation.Free;
 		}
@@ -213,8 +208,17 @@ namespace RimWorld.Planet
 			return num;
 		}
 
+		private bool ShouldAutoTendTo(Pawn pawn)
+		{
+			return !pawn.Dead && !pawn.Destroyed && pawn.IsHashIntervalTick(7500) && !pawn.IsCaravanMember() && !PawnUtility.IsTravelingInTransportPodWorldObject(pawn);
+		}
+
 		public void DiscardIfUnimportant(Pawn pawn)
 		{
+			if (pawn.Discarded)
+			{
+				return;
+			}
 			if (!this.Contains(pawn))
 			{
 				Log.Warning(pawn + " is not a world pawn.");
@@ -230,6 +234,15 @@ namespace RimWorld.Planet
 		public bool IsBeingDiscarded(Pawn p)
 		{
 			return this.pawnsBeingDiscarded.Contains(p);
+		}
+
+		public void Notify_PawnDestroyed(Pawn p)
+		{
+			if (this.pawnsAlive.Contains(p))
+			{
+				this.pawnsAlive.Remove(p);
+				this.pawnsDead.Add(p);
+			}
 		}
 
 		public void LogWorldPawns()
@@ -249,9 +262,10 @@ namespace RimWorld.Planet
 					orderby (x.Faction != null) ? x.Faction.loadID : -1
 					select x)
 					{
+						string text = (current.Name == null) ? current.LabelCap : current.Name.ToStringFull;
 						stringBuilder.AppendLine(string.Concat(new object[]
 						{
-							current.Name.ToStringFull,
+							text,
 							", ",
 							current.KindLabel,
 							", ",
@@ -276,11 +290,7 @@ namespace RimWorld.Planet
 				{
 					return true;
 				}
-				Rand.PushSeed();
-				Rand.Seed = pawn.thingIDNumber * 153;
-				bool flag = Rand.Chance(0.05f);
-				Rand.PopSeed();
-				if (flag)
+				if (Rand.ChanceSeeded(0.05f, pawn.thingIDNumber ^ 47342224))
 				{
 					return true;
 				}
@@ -289,7 +299,7 @@ namespace RimWorld.Planet
 			{
 				return true;
 			}
-			if (pawn.Corpse != null)
+			if (!pawn.Corpse.DestroyedOrNull())
 			{
 				return true;
 			}
@@ -303,11 +313,11 @@ namespace RimWorld.Planet
 			}
 			if (!pawn.Dead && !pawn.Destroyed && pawn.RaceProps.Humanlike)
 			{
-				Rand.PushSeed();
+				Rand.PushState();
 				Rand.Seed = pawn.thingIDNumber * 681;
-				bool flag2 = Rand.Chance(0.1f);
-				Rand.PopSeed();
-				if (flag2)
+				bool flag = Rand.Chance(0.1f);
+				Rand.PopState();
+				if (flag)
 				{
 					return true;
 				}
@@ -328,7 +338,7 @@ namespace RimWorld.Planet
 			{
 				return true;
 			}
-			if (PawnUtility.IsNonPlayerFactionBasePrisoner(pawn))
+			if (PawnUtility.ForSaleBySettlement(pawn))
 			{
 				return true;
 			}
@@ -345,12 +355,12 @@ namespace RimWorld.Planet
 			}
 			foreach (Pawn current in PawnsFinder.AllMapsAndWorld_Alive)
 			{
-				if (current.needs.mood != null && current.needs.mood.thoughts.memories.AnyMemoryThoughtConcerns(pawn))
+				if (current.needs.mood != null && current.needs.mood.thoughts.memories.AnyMemoryConcerns(pawn))
 				{
 					return true;
 				}
 			}
-			if (pawn.RaceProps.IsFlesh)
+			if (!pawn.RaceProps.Animal && pawn.RaceProps.IsFlesh)
 			{
 				if (pawn.relations.RelatedPawns.Any((Pawn x) => x.relations.everSeenByPlayer))
 				{

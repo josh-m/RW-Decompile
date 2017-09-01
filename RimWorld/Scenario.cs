@@ -78,12 +78,12 @@ namespace RimWorld
 
 		public void ExposeData()
 		{
-			Scribe_Values.LookValue<string>(ref this.name, "name", null, false);
-			Scribe_Values.LookValue<string>(ref this.summary, "summary", null, false);
-			Scribe_Values.LookValue<string>(ref this.description, "description", null, false);
-			Scribe_Values.LookValue<PublishedFileId_t>(ref this.publishedFileIdInt, "publishedFileId", PublishedFileId_t.Invalid, false);
-			Scribe_Deep.LookDeep<ScenPart_PlayerFaction>(ref this.playerFaction, "playerFaction", new object[0]);
-			Scribe_Collections.LookList<ScenPart>(ref this.parts, "parts", LookMode.Deep, new object[0]);
+			Scribe_Values.Look<string>(ref this.name, "name", null, false);
+			Scribe_Values.Look<string>(ref this.summary, "summary", null, false);
+			Scribe_Values.Look<string>(ref this.description, "description", null, false);
+			Scribe_Values.Look<PublishedFileId_t>(ref this.publishedFileIdInt, "publishedFileId", PublishedFileId_t.Invalid, false);
+			Scribe_Deep.Look<ScenPart_PlayerFaction>(ref this.playerFaction, "playerFaction", new object[0]);
+			Scribe_Collections.Look<ScenPart>(ref this.parts, "parts", LookMode.Deep, new object[0]);
 		}
 
 		[DebuggerHidden]
@@ -112,25 +112,35 @@ namespace RimWorld
 
 		public string GetFullInformationText()
 		{
-			StringBuilder stringBuilder = new StringBuilder();
-			stringBuilder.AppendLine(this.description);
-			stringBuilder.AppendLine();
-			foreach (ScenPart current in this.AllParts)
+			string result;
+			try
 			{
-				current.summarized = false;
-			}
-			foreach (ScenPart current2 in from p in this.AllParts
-			orderby p.def.summaryPriority descending, p.def.defName
-			where p.visible
-			select p)
-			{
-				string text = current2.Summary(this);
-				if (!text.NullOrEmpty())
+				StringBuilder stringBuilder = new StringBuilder();
+				stringBuilder.AppendLine(this.description);
+				stringBuilder.AppendLine();
+				foreach (ScenPart current in this.AllParts)
 				{
-					stringBuilder.AppendLine(text);
+					current.summarized = false;
 				}
+				foreach (ScenPart current2 in from p in this.AllParts
+				orderby p.def.summaryPriority descending, p.def.defName
+				where p.visible
+				select p)
+				{
+					string text = current2.Summary(this);
+					if (!text.NullOrEmpty())
+					{
+						stringBuilder.AppendLine(text);
+					}
+				}
+				result = stringBuilder.ToString().TrimEndNewlines();
 			}
-			return stringBuilder.ToString().TrimEndNewlines();
+			catch (Exception ex)
+			{
+				Log.ErrorOnce("Exception in Scenario.GetFullInformationText():\n" + ex.ToString(), 10395878);
+				result = "Cannot read data.";
+			}
+			return result;
 		}
 
 		public string GetSummary()
@@ -213,11 +223,11 @@ namespace RimWorld
 			}
 		}
 
-		public void PostWorldLoad()
+		public void PostWorldGenerate()
 		{
 			foreach (ScenPart current in this.AllParts)
 			{
-				current.PostWorldLoad();
+				current.PostWorldGenerate();
 			}
 		}
 
@@ -231,10 +241,6 @@ namespace RimWorld
 
 		public void GenerateIntoMap(Map map)
 		{
-			if (Find.GameInitData == null)
-			{
-				return;
-			}
 			foreach (ScenPart current in this.AllParts)
 			{
 				current.GenerateIntoMap(map);
@@ -243,10 +249,6 @@ namespace RimWorld
 
 		public void PostMapGenerate(Map map)
 		{
-			if (Find.GameInitData == null)
-			{
-				return;
-			}
 			foreach (ScenPart current in this.AllParts)
 			{
 				current.PostMapGenerate(map);

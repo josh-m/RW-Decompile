@@ -8,7 +8,7 @@ namespace RimWorld.BaseGen
 		public override void Resolve(ResolveParams rp)
 		{
 			TerrainGrid terrainGrid = BaseGen.globalSettings.map.terrainGrid;
-			TerrainDef newTerr = rp.floorDef ?? BaseGenUtility.RandomBasicFloorDef();
+			TerrainDef newTerr = rp.floorDef ?? BaseGenUtility.RandomBasicFloorDef(rp.faction, false);
 			CellRect.CellRectIterator iterator = rp.rect.GetIterator();
 			while (!iterator.Done())
 			{

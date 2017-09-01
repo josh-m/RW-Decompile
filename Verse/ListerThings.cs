@@ -62,8 +62,7 @@ namespace Verse
 
 		public bool Contains(Thing t)
 		{
-			List<Thing> list = this.listsByGroup[2];
-			return list != null && list.Contains(t);
+			return this.AllThings.Contains(t);
 		}
 
 		public void Add(Thing t)
@@ -76,12 +75,13 @@ namespace Verse
 			if (!this.listsByDef.TryGetValue(t.def, out list))
 			{
 				list = new List<Thing>();
-				this.listsByDef[t.def] = list;
+				this.listsByDef.Add(t.def, list);
 			}
 			list.Add(t);
-			for (int i = 0; i < ThingListGroupHelper.AllGroups.Length; i++)
+			ThingRequestGroup[] allGroups = ThingListGroupHelper.AllGroups;
+			for (int i = 0; i < allGroups.Length; i++)
 			{
-				ThingRequestGroup thingRequestGroup = ThingListGroupHelper.AllGroups[i];
+				ThingRequestGroup thingRequestGroup = allGroups[i];
 				if (this.use != ListerThingsUse.Region || thingRequestGroup.StoreInRegion())
 				{
 					if (thingRequestGroup.Includes(t.def))
@@ -105,9 +105,10 @@ namespace Verse
 				return;
 			}
 			this.listsByDef[t.def].Remove(t);
-			for (int i = 0; i < ThingListGroupHelper.AllGroups.Length; i++)
+			ThingRequestGroup[] allGroups = ThingListGroupHelper.AllGroups;
+			for (int i = 0; i < allGroups.Length; i++)
 			{
-				ThingRequestGroup group = ThingListGroupHelper.AllGroups[i];
+				ThingRequestGroup group = allGroups[i];
 				if (this.use != ListerThingsUse.Region || group.StoreInRegion())
 				{
 					if (group.Includes(t.def))
@@ -120,7 +121,7 @@ namespace Verse
 
 		public static bool EverListable(ThingDef def, ListerThingsUse use)
 		{
-			return (def.category != ThingCategory.Mote || (def.drawGUIOverlay && use != ListerThingsUse.Region)) && (def.category != ThingCategory.Projectile || use != ListerThingsUse.Region);
+			return (def.category != ThingCategory.Mote || (def.drawGUIOverlay && use != ListerThingsUse.Region)) && (def.category != ThingCategory.Projectile || use != ListerThingsUse.Region) && def.category != ThingCategory.Gas;
 		}
 	}
 }

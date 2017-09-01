@@ -24,7 +24,7 @@ namespace RimWorld
 		protected override Job TryGiveJob(Pawn pawn)
 		{
 			IntVec3 intVec = (IntVec3)pawn.mindState.duty.focus;
-			if (intVec.IsValid && intVec.DistanceToSquared(pawn.Position) < 100f && intVec.GetRoom(pawn.Map) == pawn.GetRoom() && intVec.WithinRegions(pawn.Position, pawn.Map, 9, TraverseMode.NoPassClosedDoors))
+			if (intVec.IsValid && (float)intVec.DistanceToSquared(pawn.Position) < 100f && intVec.GetRoom(pawn.Map, RegionType.Set_Passable) == pawn.GetRoom(RegionType.Set_Passable) && intVec.WithinRegions(pawn.Position, pawn.Map, 9, TraverseMode.NoPassClosedDoors, RegionType.Set_Passable))
 			{
 				pawn.GetLord().Notify_ReachedDutyLocation(pawn);
 				return null;
@@ -33,14 +33,18 @@ namespace RimWorld
 			{
 				IAttackTarget attackTarget;
 				if (!(from x in pawn.Map.attackTargetsCache.GetPotentialTargetsFor(pawn)
-				where !x.ThreatDisabled() && ((Thing)x).Faction == Faction.OfPlayer
+				where !x.ThreatDisabled() && x.Thing.Faction == Faction.OfPlayer && pawn.CanReach(x.Thing, PathEndMode.OnCell, Danger.Deadly, false, TraverseMode.PassAllDestroyableThings)
 				select x).TryRandomElement(out attackTarget))
 				{
 					return null;
 				}
-				intVec = ((Thing)attackTarget).Position;
+				intVec = attackTarget.Thing.Position;
 			}
-			using (PawnPath pawnPath = pawn.Map.pathFinder.FindPath(pawn.Position, intVec, TraverseParms.For(pawn, Danger.Deadly, TraverseMode.PassAnything, false), PathEndMode.OnCell))
+			if (!pawn.CanReach(intVec, PathEndMode.OnCell, Danger.Deadly, false, TraverseMode.PassAllDestroyableThings))
+			{
+				return null;
+			}
+			using (PawnPath pawnPath = pawn.Map.pathFinder.FindPath(pawn.Position, intVec, TraverseParms.For(pawn, Danger.Deadly, TraverseMode.PassAllDestroyableThings, false), PathEndMode.OnCell))
 			{
 				IntVec3 cellBeforeBlocker;
 				Thing thing = pawnPath.FirstBlockingBuilding(out cellBeforeBlocker, pawn);

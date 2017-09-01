@@ -142,9 +142,9 @@ namespace RimWorld
 		public override void PostExposeData()
 		{
 			base.PostExposeData();
-			Scribe_Values.LookValue<string>(ref this.authorNameInt, "authorName", null, false);
-			Scribe_Values.LookValue<string>(ref this.titleInt, "title", null, false);
-			Scribe_Deep.LookDeep<TaleReference>(ref this.taleRef, "taleRef", new object[0]);
+			Scribe_Values.Look<string>(ref this.authorNameInt, "authorName", null, false);
+			Scribe_Values.Look<string>(ref this.titleInt, "title", null, false);
+			Scribe_Deep.Look<TaleReference>(ref this.taleRef, "taleRef", new object[0]);
 		}
 
 		public override string CompInspectStringExtra()

@@ -23,7 +23,7 @@ namespace Verse
 
 		public EffecterDef constructEffect;
 
-		public StuffAppearance appearance;
+		public StuffAppearanceDef appearance = StuffAppearanceDefOf.Smooth;
 
 		public bool allowColorGenerators;
 

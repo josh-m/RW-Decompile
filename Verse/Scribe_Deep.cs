@@ -4,12 +4,12 @@ namespace Verse
 {
 	public class Scribe_Deep
 	{
-		public static void LookDeep<T>(ref T target, string label, params object[] ctorArgs)
+		public static void Look<T>(ref T target, string label, params object[] ctorArgs)
 		{
-			Scribe_Deep.LookDeep<T>(ref target, false, label, ctorArgs);
+			Scribe_Deep.Look<T>(ref target, false, label, ctorArgs);
 		}
 
-		public static void LookDeep<T>(ref T target, bool saveDestroyedThings, string label, params object[] ctorArgs)
+		public static void Look<T>(ref T target, bool saveDestroyedThings, string label, params object[] ctorArgs)
 		{
 			if (Scribe.mode == LoadSaveMode.Saving)
 			{
@@ -51,25 +51,38 @@ namespace Verse
 				}
 				if (target == null)
 				{
-					Scribe.EnterNode(label);
-					Scribe.WriteAttribute("IsNull", "True");
-					Scribe.ExitNode();
-				}
-				else
-				{
-					Scribe.EnterNode(label);
-					if (target.GetType() != typeof(T))
+					if (Scribe.EnterNode(label))
 					{
-						Scribe.WriteAttribute("Class", GenTypes.GetTypeNameWithoutIgnoredNamespaces(target.GetType()));
+						try
+						{
+							Scribe.saver.WriteAttribute("IsNull", "True");
+						}
+						finally
+						{
+							Scribe.ExitNode();
+						}
 					}
-					exposable.ExposeData();
-					Scribe.ExitNode();
 				}
-				DebugLoadIDsSavingErrorsChecker.RegisterDeepSaved(target, label);
+				else if (Scribe.EnterNode(label))
+				{
+					try
+					{
+						if (target.GetType() != typeof(T) || typeof(T).IsGenericTypeDefinition)
+						{
+							Scribe.saver.WriteAttribute("Class", GenTypes.GetTypeNameWithoutIgnoredNamespaces(target.GetType()));
+						}
+						exposable.ExposeData();
+					}
+					finally
+					{
+						Scribe.ExitNode();
+					}
+				}
+				Scribe.saver.loadIDsErrorsChecker.RegisterDeepSaved(target, label);
 			}
 			else if (Scribe.mode == LoadSaveMode.LoadingVars)
 			{
-				target = ScribeExtractor.SaveableFromNode<T>(Scribe.curParent[label], ctorArgs);
+				target = ScribeExtractor.SaveableFromNode<T>(Scribe.loader.curXmlParent[label], ctorArgs);
 			}
 		}
 	}

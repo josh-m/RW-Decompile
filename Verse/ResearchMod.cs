@@ -2,16 +2,8 @@ using System;
 
 namespace Verse
 {
-	public class ResearchMod
+	public abstract class ResearchMod
 	{
-		private Action specialAction;
-
-		public void Apply()
-		{
-			if (this.specialAction != null)
-			{
-				this.specialAction();
-			}
-		}
+		public abstract void Apply();
 	}
 }

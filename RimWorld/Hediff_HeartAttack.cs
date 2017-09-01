@@ -22,7 +22,7 @@ namespace RimWorld
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Values.LookValue<float>(ref this.intervalFactor, "intervalFactor", 0f, false);
+			Scribe_Values.Look<float>(ref this.intervalFactor, "intervalFactor", 0f, false);
 		}
 
 		public override void Tick()

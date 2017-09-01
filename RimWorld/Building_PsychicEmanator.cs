@@ -8,7 +8,7 @@ using Verse.Sound;
 
 namespace RimWorld
 {
-	internal class Building_PsychicEmanator : Building_CrashedShipPart
+	public class Building_PsychicEmanator : Building_CrashedShipPart
 	{
 		private const int DroneLevelIncreaseInterval = 150000;
 
@@ -30,29 +30,26 @@ namespace RimWorld
 			}
 		}
 
-		public override void SpawnSetup(Map map)
+		public override void SpawnSetup(Map map, bool respawningAfterLoad)
 		{
-			base.SpawnSetup(map);
+			base.SpawnSetup(map, respawningAfterLoad);
 			this.ticksToInsanityPulse = Building_PsychicEmanator.InsanityPulseInterval.RandomInRange;
 			this.ticksToIncreaseDroneLevel = 150000;
-			if (map == Find.VisibleMap)
-			{
-				SoundDefOf.PsychicPulseGlobal.PlayOneShotOnCamera();
-			}
+			SoundDefOf.PsychicPulseGlobal.PlayOneShotOnCamera(map);
 		}
 
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Values.LookValue<int>(ref this.ticksToInsanityPulse, "ticksToInsanityPulse", 0, false);
-			Scribe_Values.LookValue<int>(ref this.ticksToIncreaseDroneLevel, "ticksToIncreaseDroneLevel", 0, false);
-			Scribe_Values.LookValue<PsychicDroneLevel>(ref this.droneLevel, "droneLevel", PsychicDroneLevel.None, false);
+			Scribe_Values.Look<int>(ref this.ticksToInsanityPulse, "ticksToInsanityPulse", 0, false);
+			Scribe_Values.Look<int>(ref this.ticksToIncreaseDroneLevel, "ticksToIncreaseDroneLevel", 0, false);
+			Scribe_Values.Look<PsychicDroneLevel>(ref this.droneLevel, "droneLevel", PsychicDroneLevel.None, false);
 		}
 
 		public override string GetInspectString()
 		{
 			StringBuilder stringBuilder = new StringBuilder();
-			stringBuilder.AppendLine(base.GetInspectString());
+			stringBuilder.Append(base.GetInspectString());
 			string text = "Error";
 			switch (this.droneLevel)
 			{
@@ -69,7 +66,11 @@ namespace RimWorld
 				text = "PsychicDroneLevelExtreme".Translate();
 				break;
 			}
-			stringBuilder.AppendLine("PsychicDroneLevel".Translate(new object[]
+			if (stringBuilder.Length != 0)
+			{
+				stringBuilder.AppendLine();
+			}
+			stringBuilder.Append("PsychicDroneLevel".Translate(new object[]
 			{
 				text
 			}));
@@ -101,11 +102,8 @@ namespace RimWorld
 			}
 			this.droneLevel += 1;
 			string text = "LetterPsychicDroneLevelIncreased".Translate();
-			Find.LetterStack.ReceiveLetter("LetterLabelPsychicDroneLevelIncreased".Translate(), text, LetterType.BadNonUrgent, null);
-			if (base.Map == Find.VisibleMap)
-			{
-				SoundDefOf.PsychicPulseGlobal.PlayOneShotOnCamera();
-			}
+			Find.LetterStack.ReceiveLetter("LetterLabelPsychicDroneLevelIncreased".Translate(), text, LetterDefOf.BadNonUrgent, null);
+			SoundDefOf.PsychicPulseGlobal.PlayOneShotOnCamera(base.Map);
 		}
 
 		private void DoAnimalInsanityPulse()
@@ -118,10 +116,10 @@ namespace RimWorld
 				current.mindState.mentalStateHandler.TryStartMentalState(MentalStateDefOf.Manhunter, null, false, false, null);
 			}
 			Messages.Message("MessageAnimalInsanityPulse".Translate(), this, MessageSound.Negative);
+			SoundDefOf.PsychicPulseGlobal.PlayOneShotOnCamera(base.Map);
 			if (base.Map == Find.VisibleMap)
 			{
 				Find.CameraDriver.shaker.DoShake(4f);
-				SoundDefOf.PsychicPulseGlobal.PlayOneShotOnCamera();
 			}
 		}
 	}

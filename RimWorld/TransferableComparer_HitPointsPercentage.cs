@@ -5,12 +5,12 @@ namespace RimWorld
 {
 	public class TransferableComparer_HitPointsPercentage : TransferableComparer
 	{
-		public override int Compare(ITransferable lhs, ITransferable rhs)
+		public override int Compare(Transferable lhs, Transferable rhs)
 		{
 			return this.GetValueFor(lhs).CompareTo(this.GetValueFor(rhs));
 		}
 
-		private float GetValueFor(ITransferable t)
+		private float GetValueFor(Transferable t)
 		{
 			Thing anyThing = t.AnyThing;
 			Pawn pawn = anyThing as Pawn;

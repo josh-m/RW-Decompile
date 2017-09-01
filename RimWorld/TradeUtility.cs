@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using Verse;
 using Verse.AI.Group;
 
@@ -56,14 +57,14 @@ namespace RimWorld
 			}
 			foreach (Pawn p2 in map.mapPawns.SpawnedPawnsInFaction(Faction.OfPlayer))
 			{
-				if (p2.RaceProps.Animal && p2.HostFaction == null && !p2.InMentalState && !p2.Downed)
+				if (p2.RaceProps.Animal && p2.HostFaction == null && !p2.InMentalState && !p2.Downed && map.mapTemperature.SeasonAndOutdoorTemperatureAcceptableFor(p2.def))
 				{
 					yield return p2;
 				}
 			}
 		}
 
-		public static Thing ThingFromStockMatching(ITrader trader, Thing thing)
+		public static Thing ThingFromStockToMergeWith(ITrader trader, Thing thing)
 		{
 			if (thing is Pawn)
 			{
@@ -110,23 +111,37 @@ namespace RimWorld
 					break;
 				}
 				int num = Math.Min(debt, thing.stackCount);
-				Thing thing2 = thing.SplitOff(num);
 				if (trader != null)
 				{
-					trader.AddToStock(thing2, TradeSession.playerNegotiator);
+					trader.GiveSoldThingToTrader(thing, num, TradeSession.playerNegotiator);
+				}
+				else
+				{
+					thing.SplitOff(num).Destroy(DestroyMode.Vanish);
 				}
 				debt -= num;
 			}
 		}
 
-		public static void MakePrisonerOfColony(Pawn pawn)
+		public static void LaunchSilver(Map map, int fee)
 		{
-			if (pawn.Faction != null)
-			{
-				pawn.SetFaction(null, null);
-			}
-			pawn.guest.SetGuestStatus(Faction.OfPlayer, true);
-			pawn.health.AddHediff(HediffMaker.MakeHediff(HediffDefOf.Anesthetic, pawn, null), null, null);
+			TradeUtility.LaunchThingsOfType(ThingDefOf.Silver, fee, map, null);
+		}
+
+		public static Map PlayerHomeMapWithMostLaunchableSilver()
+		{
+			return (from x in Find.Maps
+			where x.IsPlayerHome
+			select x).MaxBy((Map x) => (from t in TradeUtility.AllLaunchableThings(x)
+			where t.def == ThingDefOf.Silver
+			select t).Sum((Thing t) => t.stackCount));
+		}
+
+		public static bool ColonyHasEnoughSilver(Map map, int fee)
+		{
+			return (from t in TradeUtility.AllLaunchableThings(map)
+			where t.def == ThingDefOf.Silver
+			select t).Sum((Thing t) => t.stackCount) >= fee;
 		}
 
 		public static void CheckInteractWithTradersTeachOpportunity(Pawn pawn)

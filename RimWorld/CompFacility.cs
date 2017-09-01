@@ -83,7 +83,7 @@ namespace RimWorld
 			this.RelinkAll();
 		}
 
-		public override void PostSpawnSetup()
+		public override void PostSpawnSetup(bool respawningAfterLoad)
 		{
 			this.LinkToNearbyBuildings();
 		}

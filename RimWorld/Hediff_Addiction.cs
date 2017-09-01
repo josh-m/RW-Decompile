@@ -18,7 +18,15 @@ namespace RimWorld
 				{
 					return null;
 				}
-				return (Need_Chemical)this.pawn.needs.AllNeeds.Find((Need x) => x.def == this.def.causesNeed);
+				List<Need> allNeeds = this.pawn.needs.AllNeeds;
+				for (int i = 0; i < allNeeds.Count; i++)
+				{
+					if (allNeeds[i].def == this.def.causesNeed)
+					{
+						return (Need_Chemical)allNeeds[i];
+					}
+				}
+				return null;
 			}
 		}
 
@@ -54,7 +62,8 @@ namespace RimWorld
 		{
 			get
 			{
-				if (this.Need == null || this.Need.CurCategory != DrugDesireCategory.Withdrawal)
+				Need_Chemical need = this.Need;
+				if (need == null || need.CurCategory != DrugDesireCategory.Withdrawal)
 				{
 					return 0;
 				}

@@ -11,23 +11,20 @@ namespace Verse
 
 		protected CompBreakdownable breakdownableComp;
 
-		protected CompFlickable flickableComp;
-
 		protected override bool ShouldPushHeatNow
 		{
 			get
 			{
-				return (this.powerComp == null || this.powerComp.PowerOn) && (this.flickableComp == null || this.flickableComp.SwitchIsOn) && (this.refuelableComp == null || this.refuelableComp.HasFuel) && (this.breakdownableComp == null || !this.breakdownableComp.BrokenDown);
+				return FlickUtility.WantsToBeOn(this.parent) && (this.powerComp == null || this.powerComp.PowerOn) && (this.refuelableComp == null || this.refuelableComp.HasFuel) && (this.breakdownableComp == null || !this.breakdownableComp.BrokenDown);
 			}
 		}
 
-		public override void PostSpawnSetup()
+		public override void PostSpawnSetup(bool respawningAfterLoad)
 		{
-			base.PostSpawnSetup();
+			base.PostSpawnSetup(respawningAfterLoad);
 			this.powerComp = this.parent.GetComp<CompPowerTrader>();
 			this.refuelableComp = this.parent.GetComp<CompRefuelable>();
 			this.breakdownableComp = this.parent.GetComp<CompBreakdownable>();
-			this.flickableComp = this.parent.GetComp<CompFlickable>();
 		}
 	}
 }

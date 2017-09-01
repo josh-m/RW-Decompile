@@ -29,7 +29,7 @@ namespace RimWorld
 
 		public static bool ShouldEverReceiveMedicalCare(Pawn pawn)
 		{
-			return (pawn.playerSettings == null || pawn.playerSettings.medCare != MedicalCareCategory.NoCare) && (pawn.guest == null || pawn.guest.interactionMode != PrisonerInteractionMode.Execution) && pawn.Map.designationManager.DesignationOn(pawn, DesignationDefOf.Slaughter) == null;
+			return (pawn.playerSettings == null || pawn.playerSettings.medCare != MedicalCareCategory.NoCare) && (pawn.guest == null || pawn.guest.interactionMode != PrisonerInteractionModeDefOf.Execution) && pawn.Map.designationManager.DesignationOn(pawn, DesignationDefOf.Slaughter) == null;
 		}
 
 		public static bool ShouldHaveSurgeryDoneNow(Pawn pawn)
@@ -50,7 +50,7 @@ namespace RimWorld
 						{
 							if (hediffs[i].IsTended())
 							{
-								if (hediffs[i].def.PossibleToDevelopImmunity())
+								if (hediffs[i].def.PossibleToDevelopImmunityNaturally())
 								{
 									return true;
 								}
@@ -68,7 +68,7 @@ namespace RimWorld
 			{
 				return null;
 			}
-			Predicate<Thing> predicate = (Thing m) => !m.IsForbidden(healer) && patient.playerSettings.medCare.AllowsMedicine(m.def) && healer.CanReserve(m, 1);
+			Predicate<Thing> predicate = (Thing m) => !m.IsForbidden(healer) && patient.playerSettings.medCare.AllowsMedicine(m.def) && healer.CanReserve(m, 1, -1, null, false);
 			Func<Thing, float> priorityGetter = (Thing t) => t.def.GetStatValueAbstract(StatDefOf.MedicalPotency, null);
 			Predicate<Thing> validator = predicate;
 			return GenClosest.ClosestThing_Global_Reachable(patient.Position, patient.Map, patient.Map.listerThings.ThingsInGroup(ThingRequestGroup.Medicine), PathEndMode.ClosestTouch, TraverseParms.For(healer, Danger.Deadly, TraverseMode.ByPawn, false), 9999f, validator, priorityGetter);

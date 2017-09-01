@@ -39,7 +39,7 @@ namespace RimWorld
 
 		public void ExposeData()
 		{
-			Scribe_Collections.LookList<TimeAssignmentDef>(ref this.times, "times", LookMode.Undefined, new object[0]);
+			Scribe_Collections.Look<TimeAssignmentDef>(ref this.times, "times", LookMode.Undefined, new object[0]);
 		}
 
 		public TimeAssignmentDef GetAssignment(int hour)

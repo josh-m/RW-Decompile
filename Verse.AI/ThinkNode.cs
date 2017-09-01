@@ -13,7 +13,7 @@ namespace Verse.AI
 
 		public bool leaveJoinableLordIfIssuesJob;
 
-		private float priority = -1f;
+		protected float priority = -1f;
 
 		[Unsaved]
 		private int uniqueSaveKeyInt = -2;
@@ -65,7 +65,7 @@ namespace Verse.AI
 			return this.priority;
 		}
 
-		public abstract ThinkResult TryIssueJobPackage(Pawn pawn);
+		public abstract ThinkResult TryIssueJobPackage(Pawn pawn, JobIssueParams jobParams);
 
 		protected virtual void ResolveSubnodes()
 		{

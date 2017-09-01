@@ -6,7 +6,7 @@ namespace RimWorld
 {
 	public abstract class MainTabWindow : Window
 	{
-		public MainTabDef def;
+		public MainButtonDef def;
 
 		public virtual Vector2 RequestedTabSize
 		{
@@ -38,14 +38,6 @@ namespace RimWorld
 					requestedTabSize.x = (float)UI.screenWidth;
 				}
 				return requestedTabSize;
-			}
-		}
-
-		public virtual float TabButtonBarPercent
-		{
-			get
-			{
-				return 0f;
 			}
 		}
 

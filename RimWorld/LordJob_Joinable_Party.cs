@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using Verse;
 using Verse.AI.Group;
 
@@ -10,6 +9,14 @@ namespace RimWorld
 		private IntVec3 spot;
 
 		private Trigger_TicksPassed timeoutTrigger;
+
+		public override bool AllowStartNewGatherings
+		{
+			get
+			{
+				return false;
+			}
+		}
 
 		public LordJob_Joinable_Party()
 		{
@@ -36,29 +43,13 @@ namespace RimWorld
 			Transition transition2 = new Transition(lordToil_Party, lordToil_End);
 			transition2.AddTrigger(this.timeoutTrigger);
 			transition2.AddPreAction(new TransitionAction_Message("MessagePartyFinished".Translate(), MessageSound.Negative, new TargetInfo(this.spot, base.Map, false)));
-			transition2.AddPreAction(new TransitionAction_Custom(delegate
-			{
-				this.Finished();
-			}));
 			stateGraph.AddTransition(transition2);
 			return stateGraph;
 		}
 
 		private bool ShouldBeCalledOff()
 		{
-			return !PartyUtility.AcceptableMapConditionsToContinueParty(base.Map) || (!this.spot.Roofed(base.Map) && !JoyUtility.EnjoyableOutsideNow(base.Map, null));
-		}
-
-		private void Finished()
-		{
-			List<Pawn> ownedPawns = this.lord.ownedPawns;
-			for (int i = 0; i < ownedPawns.Count; i++)
-			{
-				if (PartyUtility.InPartyArea(ownedPawns[i].Position, this.spot, base.Map))
-				{
-					ownedPawns[i].needs.mood.thoughts.memories.TryGainMemoryThought(ThoughtDefOf.AttendedParty, null);
-				}
-			}
+			return !PartyUtility.AcceptableGameConditionsToContinueParty(base.Map) || (!this.spot.Roofed(base.Map) && !JoyUtility.EnjoyableOutsideNow(base.Map, null));
 		}
 
 		public override float VoluntaryJoinPriorityFor(Pawn p)
@@ -75,12 +66,12 @@ namespace RimWorld
 			{
 				return 0f;
 			}
-			return 20f;
+			return VoluntarilyJoinableLordJobJoinPriorities.PartyGuest;
 		}
 
 		public override void ExposeData()
 		{
-			Scribe_Values.LookValue<IntVec3>(ref this.spot, "spot", default(IntVec3), false);
+			Scribe_Values.Look<IntVec3>(ref this.spot, "spot", default(IntVec3), false);
 		}
 
 		public override string GetReport()

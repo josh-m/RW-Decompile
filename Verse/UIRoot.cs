@@ -44,6 +44,10 @@ namespace Verse
 			this.shortcutKeys.ShortcutKeysOnGUI();
 			NoiseDebugUI.NoiseDebugOnGUI();
 			Debug.developerConsoleVisible = false;
+			if (Current.Game != null)
+			{
+				GameComponentUtility.GameComponentOnGUI();
+			}
 		}
 
 		public virtual void UIRootUpdate()

@@ -11,6 +11,7 @@ namespace Verse.AI.Group
 		ChangedFaction,
 		ExitedMap,
 		LeftVoluntarily,
-		Drafted
+		Drafted,
+		ForcedToJoinOtherLord
 	}
 }

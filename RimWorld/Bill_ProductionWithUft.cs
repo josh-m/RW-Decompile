@@ -14,12 +14,12 @@ namespace RimWorld
 			{
 				if (this.BoundWorker == null)
 				{
-					return null;
+					return (string.Empty + base.StatusString).Trim();
 				}
-				return "BoundWorkerIs".Translate(new object[]
+				return ("BoundWorkerIs".Translate(new object[]
 				{
 					this.BoundWorker.NameStringShort
-				});
+				}) + base.StatusString).Trim();
 			}
 		}
 
@@ -100,7 +100,7 @@ namespace RimWorld
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_References.LookReference<UnfinishedThing>(ref this.boundUftInt, "boundUft", false);
+			Scribe_References.Look<UnfinishedThing>(ref this.boundUftInt, "boundUft", false);
 		}
 
 		public override void Notify_IterationCompleted(Pawn billDoer, List<Thing> ingredients)

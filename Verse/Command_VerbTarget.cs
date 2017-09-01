@@ -24,7 +24,7 @@ namespace Verse
 		public override void ProcessInput(Event ev)
 		{
 			base.ProcessInput(ev);
-			SoundDefOf.TickTiny.PlayOneShotOnCamera();
+			SoundDefOf.TickTiny.PlayOneShotOnCamera(null);
 			Targeter targeter = Find.Targeter;
 			if (this.verb.CasterIsPawn && targeter.targetingVerb != null && targeter.targetingVerb.verbProps == this.verb.verbProps)
 			{

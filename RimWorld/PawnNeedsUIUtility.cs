@@ -28,9 +28,15 @@ namespace RimWorld
 
 		public static void GetThoughtGroupsInDisplayOrder(Need_Mood mood, List<Thought> outThoughtGroupsPresent)
 		{
-			outThoughtGroupsPresent.Clear();
-			outThoughtGroupsPresent.AddRange(mood.thoughts.DistinctThoughtGroups());
-			outThoughtGroupsPresent.SortByDescending((Thought th) => mood.thoughts.MoodOffsetOfThoughtGroup(th));
+			mood.thoughts.GetDistinctMoodThoughtGroups(outThoughtGroupsPresent);
+			for (int i = outThoughtGroupsPresent.Count - 1; i >= 0; i--)
+			{
+				if (!outThoughtGroupsPresent[i].VisibleInNeedsTab)
+				{
+					outThoughtGroupsPresent.RemoveAt(i);
+				}
+			}
+			outThoughtGroupsPresent.SortByDescending((Thought t) => mood.thoughts.MoodOffsetOfGroup(t), (Thought t) => t.GetHashCode());
 		}
 	}
 }

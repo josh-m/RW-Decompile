@@ -46,9 +46,9 @@ namespace RimWorld
 			}
 		}
 
-		public override void SpawnSetup(Map map)
+		public override void SpawnSetup(Map map, bool respawningAfterLoad)
 		{
-			base.SpawnSetup(map);
+			base.SpawnSetup(map, respawningAfterLoad);
 			this.powerComp = base.GetComp<CompPowerTrader>();
 		}
 
@@ -72,8 +72,7 @@ namespace RimWorld
 			{
 				return null;
 			}
-			int foodCostPerDispense = this.def.building.foodCostPerDispense;
-			int num = 0;
+			float num = this.def.building.nutritionCostPerDispense - 0.0001f;
 			List<ThingDef> list = new List<ThingDef>();
 			while (true)
 			{
@@ -82,11 +81,11 @@ namespace RimWorld
 				{
 					break;
 				}
-				int num2 = Mathf.Min(thing.stackCount, foodCostPerDispense);
-				num += num2;
+				int num2 = Mathf.Min(thing.stackCount, Mathf.CeilToInt(num / thing.def.ingestible.nutrition));
+				num -= (float)num2 * thing.def.ingestible.nutrition;
 				list.Add(thing.def);
 				thing.SplitOff(num2);
-				if (num >= foodCostPerDispense)
+				if (num <= 0f)
 				{
 					goto Block_3;
 				}
@@ -133,7 +132,7 @@ namespace RimWorld
 
 		public virtual bool HasEnoughFeedstockInHoppers()
 		{
-			int num = 0;
+			float num = 0f;
 			for (int i = 0; i < this.AdjCellsCardinalInBounds.Count; i++)
 			{
 				IntVec3 c = this.AdjCellsCardinalInBounds[i];
@@ -154,9 +153,9 @@ namespace RimWorld
 				}
 				if (thing != null && thing2 != null)
 				{
-					num += thing.stackCount;
+					num += (float)thing.stackCount * thing.def.ingestible.nutrition;
 				}
-				if (num >= this.def.building.foodCostPerDispense)
+				if (num >= this.def.building.nutritionCostPerDispense)
 				{
 					return true;
 				}

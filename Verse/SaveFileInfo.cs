@@ -51,13 +51,20 @@ namespace Verse
 				}
 				if (VersionControl.MajorFromVersionString(this.gameVersion) != VersionControl.CurrentMajor || VersionControl.MinorFromVersionString(this.gameVersion) != VersionControl.CurrentMinor)
 				{
+					if (BackCompatibility.IsSaveCompatibleWith(this.gameVersion))
+					{
+						return Color.yellow;
+					}
 					return Color.red;
 				}
-				if (VersionControl.BuildFromVersionString(this.gameVersion) != VersionControl.CurrentBuild)
+				else
 				{
-					return Color.yellow;
+					if (VersionControl.BuildFromVersionString(this.gameVersion) != VersionControl.CurrentBuild)
+					{
+						return Color.yellow;
+					}
+					return SaveFileInfo.UnimportantTextColor;
 				}
-				return SaveFileInfo.UnimportantTextColor;
 			}
 		}
 

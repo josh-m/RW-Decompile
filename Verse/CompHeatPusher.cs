@@ -28,8 +28,8 @@ namespace Verse
 			if (this.parent.IsHashIntervalTick(60) && this.ShouldPushHeatNow)
 			{
 				CompProperties_HeatPusher props = this.Props;
-				float temperature = this.parent.Position.GetTemperature(this.parent.Map);
-				if (temperature < props.heatPushMaxTemperature && temperature > props.heatPushMinTemperature)
+				float ambientTemperature = this.parent.AmbientTemperature;
+				if (ambientTemperature < props.heatPushMaxTemperature && ambientTemperature > props.heatPushMinTemperature)
 				{
 					GenTemperature.PushHeat(this.parent.Position, this.parent.Map, props.heatPerSecond);
 				}

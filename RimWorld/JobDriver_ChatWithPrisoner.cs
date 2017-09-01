@@ -23,7 +23,7 @@ namespace RimWorld
 			this.FailOnMentalState(TargetIndex.A);
 			this.FailOnNotAwake(TargetIndex.A);
 			this.FailOn(() => !this.<>f__this.Talkee.IsPrisonerOfColony || !this.<>f__this.Talkee.guest.PrisonerIsSecure);
-			yield return Toils_Reserve.Reserve(TargetIndex.A, 1);
+			yield return Toils_Reserve.Reserve(TargetIndex.A, 1, -1, null);
 			yield return Toils_Interpersonal.GotoPrisoner(this.pawn, this.Talkee, this.Talkee.guest.interactionMode);
 			yield return Toils_Interpersonal.WaitToBeAbleToInteract(this.pawn);
 			yield return Toils_Interpersonal.ConvinceRecruitee(this.pawn, this.Talkee);

@@ -28,7 +28,7 @@ namespace RimWorld
 		protected override IEnumerable<Toil> MakeNewToils()
 		{
 			this.FailOnDespawnedOrNull(TargetIndex.A);
-			yield return Toils_Reserve.Reserve(TargetIndex.A, 1);
+			yield return Toils_Reserve.Reserve(TargetIndex.A, 1, -1, null);
 			yield return Toils_Goto.GotoThing(TargetIndex.A, PathEndMode.Touch);
 			yield return Toils_General.Wait(10);
 			yield return new Toil
@@ -36,35 +36,37 @@ namespace RimWorld
 				initAction = delegate
 				{
 					Pawn otherPawn = this.<>f__this.OtherPawn;
-					if (!otherPawn.inventory.UnloadEverything || otherPawn.inventory.innerContainer.Count == 0)
+					if (!otherPawn.inventory.UnloadEverything)
 					{
 						this.<>f__this.EndJobWith(JobCondition.Succeeded);
 					}
 					else
 					{
-						Thing thing = otherPawn.inventory.innerContainer.RandomElement<Thing>();
+						ThingStackPart firstUnloadableThing = otherPawn.inventory.FirstUnloadableThing;
 						IntVec3 c;
-						if (!thing.def.EverStoreable || !this.<>f__this.pawn.health.capacities.CapableOf(PawnCapacityDefOf.Manipulation) || !StoreUtility.TryFindStoreCellNearColonyDesperate(thing, this.<>f__this.pawn, out c))
+						if (!firstUnloadableThing.Thing.def.EverStoreable || !this.<>f__this.pawn.health.capacities.CapableOf(PawnCapacityDefOf.Manipulation) || !StoreUtility.TryFindStoreCellNearColonyDesperate(firstUnloadableThing.Thing, this.<>f__this.pawn, out c))
 						{
-							otherPawn.inventory.innerContainer.TryDrop(thing, ThingPlaceMode.Near, out thing, null);
+							Thing thing;
+							otherPawn.inventory.innerContainer.TryDrop(firstUnloadableThing.Thing, ThingPlaceMode.Near, firstUnloadableThing.Count, out thing, null);
 							this.<>f__this.EndJobWith(JobCondition.Succeeded);
+							if (thing != null)
+							{
+								thing.SetForbidden(false, false);
+							}
 						}
 						else
 						{
-							otherPawn.inventory.innerContainer.TransferToContainer(thing, this.<>f__this.pawn.carryTracker.innerContainer, thing.stackCount, out thing);
-							this.<>f__this.CurJob.count = thing.stackCount;
-							this.<>f__this.CurJob.SetTarget(TargetIndex.B, thing);
+							Thing thing2;
+							otherPawn.inventory.innerContainer.TryTransferToContainer(firstUnloadableThing.Thing, this.<>f__this.pawn.carryTracker.innerContainer, firstUnloadableThing.Count, out thing2, true);
+							this.<>f__this.CurJob.count = thing2.stackCount;
+							this.<>f__this.CurJob.SetTarget(TargetIndex.B, thing2);
 							this.<>f__this.CurJob.SetTarget(TargetIndex.C, c);
-						}
-						thing.SetForbidden(false, false);
-						if (otherPawn.inventory.innerContainer.Count == 0)
-						{
-							otherPawn.inventory.UnloadEverything = false;
+							firstUnloadableThing.Thing.SetForbidden(false, false);
 						}
 					}
 				}
 			};
-			yield return Toils_Reserve.Reserve(TargetIndex.C, 1);
+			yield return Toils_Reserve.Reserve(TargetIndex.C, 1, -1, null);
 			Toil carryToCell = Toils_Haul.CarryHauledThingToCell(TargetIndex.C);
 			yield return carryToCell;
 			yield return Toils_Haul.PlaceHauledThingInCell(TargetIndex.C, carryToCell, true);

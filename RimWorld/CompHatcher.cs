@@ -43,10 +43,10 @@ namespace RimWorld
 		public override void PostExposeData()
 		{
 			base.PostExposeData();
-			Scribe_Values.LookValue<float>(ref this.gestateProgress, "gestateProgress", 0f, false);
-			Scribe_References.LookReference<Pawn>(ref this.hatcheeParent, "hatcheeParent", false);
-			Scribe_References.LookReference<Pawn>(ref this.otherParent, "otherParent", false);
-			Scribe_References.LookReference<Faction>(ref this.hatcheeFaction, "hatcheeFaction", false);
+			Scribe_Values.Look<float>(ref this.gestateProgress, "gestateProgress", 0f, false);
+			Scribe_References.Look<Pawn>(ref this.hatcheeParent, "hatcheeParent", false);
+			Scribe_References.Look<Pawn>(ref this.otherParent, "otherParent", false);
+			Scribe_References.Look<Faction>(ref this.hatcheeFaction, "hatcheeFaction", false);
 		}
 
 		public override void CompTick()
@@ -64,7 +64,7 @@ namespace RimWorld
 
 		public void Hatch()
 		{
-			PawnGenerationRequest request = new PawnGenerationRequest(this.Props.hatcherPawn, this.hatcheeFaction, PawnGenerationContext.NonPlayer, null, false, true, false, false, true, false, 1f, false, true, true, null, null, null, null, null, null);
+			PawnGenerationRequest request = new PawnGenerationRequest(this.Props.hatcherPawn, this.hatcheeFaction, PawnGenerationContext.NonPlayer, -1, false, true, false, false, true, false, 1f, false, true, true, false, false, null, null, null, null, null, null);
 			for (int i = 0; i < this.parent.stackCount; i++)
 			{
 				Pawn pawn = PawnGenerator.GeneratePawn(request);
@@ -120,14 +120,21 @@ namespace RimWorld
 
 		public override void PrePreTraded(TradeAction action, Pawn playerNegotiator, ITrader trader)
 		{
+			base.PrePreTraded(action, playerNegotiator, trader);
 			if (action == TradeAction.PlayerBuys)
 			{
 				this.hatcheeFaction = Faction.OfPlayer;
 			}
 			else if (action == TradeAction.PlayerSells)
 			{
-				this.hatcheeFaction = null;
+				this.hatcheeFaction = trader.Faction;
 			}
+		}
+
+		public override void PostPostGeneratedForTrader(TraderKindDef trader, int forTile, Faction forFaction)
+		{
+			base.PostPostGeneratedForTrader(trader, forTile, forFaction);
+			this.hatcheeFaction = forFaction;
 		}
 
 		public override string CompInspectStringExtra()

@@ -1,22 +1,25 @@
 using System;
-using System.Xml;
 using UnityEngine;
 
 namespace Verse
 {
-	public class CurvePoint
+	public struct CurvePoint
 	{
-		public Vector2 loc;
+		private Vector2 loc;
+
+		public Vector2 Loc
+		{
+			get
+			{
+				return this.loc;
+			}
+		}
 
 		public float x
 		{
 			get
 			{
 				return this.loc.x;
-			}
-			set
-			{
-				this.loc.x = value;
 			}
 		}
 
@@ -26,15 +29,6 @@ namespace Verse
 			{
 				return this.loc.y;
 			}
-			set
-			{
-				this.loc.y = value;
-			}
-		}
-
-		public CurvePoint()
-		{
-			this.loc = new Vector2(0f, 0f);
 		}
 
 		public CurvePoint(float x, float y)
@@ -47,25 +41,9 @@ namespace Verse
 			this.loc = loc;
 		}
 
-		public void LoadDataFromXmlCustom(XmlNode xmlRoot)
+		public static CurvePoint FromString(string str)
 		{
-			XmlNode firstChild = xmlRoot.FirstChild;
-			if (firstChild.Name == "loc")
-			{
-				if (firstChild.ChildNodes.Count == 2)
-				{
-					this.loc.x = Convert.ToSingle(firstChild["x"].FirstChild.Value);
-					this.loc.y = Convert.ToSingle(firstChild["y"].FirstChild.Value);
-				}
-				else
-				{
-					this.loc = (Vector2)ParseHelper.FromString(firstChild.FirstChild.Value, typeof(Vector2));
-				}
-			}
-			else
-			{
-				this.loc = (Vector2)ParseHelper.FromString(firstChild.Value, typeof(Vector2));
-			}
+			return new CurvePoint((Vector2)ParseHelper.FromString(str, typeof(Vector2)));
 		}
 
 		public override string ToString()

@@ -61,7 +61,7 @@ namespace Verse
 		{
 		}
 
-		public virtual void CompPostTick()
+		public virtual void CompPostTick(ref float severityAdjustment)
 		{
 		}
 

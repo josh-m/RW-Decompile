@@ -23,7 +23,7 @@ namespace RimWorld
 			{
 				return false;
 			}
-			Hediff firstHediffOfDef = other.health.hediffSet.GetFirstHediffOfDef(HediffDefOf.AlcoholHigh);
+			Hediff firstHediffOfDef = other.health.hediffSet.GetFirstHediffOfDef(HediffDefOf.AlcoholHigh, false);
 			if (firstHediffOfDef == null || !firstHediffOfDef.Visible)
 			{
 				return false;

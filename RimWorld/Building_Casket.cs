@@ -4,9 +4,9 @@ using Verse;
 
 namespace RimWorld
 {
-	public class Building_Casket : Building, IOpenable, IThingContainerOwner
+	public class Building_Casket : Building, IOpenable, IThingHolder
 	{
-		protected ThingContainer innerContainer;
+		protected ThingOwner innerContainer;
 
 		protected bool contentsKnown;
 
@@ -36,22 +36,29 @@ namespace RimWorld
 
 		public Building_Casket()
 		{
-			this.innerContainer = new ThingContainer(this, false, LookMode.Deep);
+			this.innerContainer = new ThingOwner<Thing>(this, false, LookMode.Deep);
 		}
 
-		public ThingContainer GetInnerContainer()
+		public ThingOwner GetDirectlyHeldThings()
 		{
 			return this.innerContainer;
 		}
 
-		public IntVec3 GetPosition()
+		public void GetChildHolders(List<IThingHolder> outChildren)
 		{
-			return base.PositionHeld;
+			ThingOwnerUtility.AppendThingHoldersFromThings(outChildren, this.GetDirectlyHeldThings());
 		}
 
-		public Map GetMap()
+		public override void TickRare()
 		{
-			return base.MapHeld;
+			base.TickRare();
+			this.innerContainer.ThingOwnerTickRare(true);
+		}
+
+		public override void Tick()
+		{
+			base.Tick();
+			this.innerContainer.ThingOwnerTick(true);
 		}
 
 		public virtual void Open()
@@ -66,16 +73,16 @@ namespace RimWorld
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Deep.LookDeep<ThingContainer>(ref this.innerContainer, "innerContainer", new object[]
+			Scribe_Deep.Look<ThingOwner>(ref this.innerContainer, "innerContainer", new object[]
 			{
 				this
 			});
-			Scribe_Values.LookValue<bool>(ref this.contentsKnown, "contentsKnown", false, false);
+			Scribe_Values.Look<bool>(ref this.contentsKnown, "contentsKnown", false, false);
 		}
 
-		public override void SpawnSetup(Map map)
+		public override void SpawnSetup(Map map, bool respawningAfterLoad)
 		{
-			base.SpawnSetup(map);
+			base.SpawnSetup(map, respawningAfterLoad);
 			if (base.Faction != null && base.Faction.IsPlayer)
 			{
 				this.contentsKnown = true;
@@ -84,23 +91,23 @@ namespace RimWorld
 
 		public override bool ClaimableBy(Faction fac)
 		{
-			if (this.innerContainer.Count == 0)
+			if (this.innerContainer.Any)
 			{
-				return true;
-			}
-			for (int i = 0; i < this.innerContainer.Count; i++)
-			{
-				if (this.innerContainer[i].Faction == fac)
+				for (int i = 0; i < this.innerContainer.Count; i++)
 				{
-					return true;
+					if (this.innerContainer[i].Faction == fac)
+					{
+						return true;
+					}
 				}
+				return false;
 			}
-			return false;
+			return base.ClaimableBy(fac);
 		}
 
 		public virtual bool Accepts(Thing thing)
 		{
-			return this.innerContainer.CanAcceptAnyOf(thing);
+			return this.innerContainer.CanAcceptAnyOf(thing, true);
 		}
 
 		public virtual bool TryAcceptThing(Thing thing, bool allowSpecialEffects = true)
@@ -110,9 +117,9 @@ namespace RimWorld
 				return false;
 			}
 			bool flag;
-			if (thing.holdingContainer != null)
+			if (thing.holdingOwner != null)
 			{
-				thing.holdingContainer.TransferToContainer(thing, this.innerContainer, thing.stackCount);
+				thing.holdingOwner.TryTransferToContainer(thing, this.innerContainer, thing.stackCount, true);
 				flag = true;
 			}
 			else
@@ -132,12 +139,12 @@ namespace RimWorld
 
 		public override void Destroy(DestroyMode mode = DestroyMode.Vanish)
 		{
-			if (this.innerContainer.Count > 0 && (mode == DestroyMode.Deconstruct || mode == DestroyMode.Kill))
+			if (this.innerContainer.Count > 0 && (mode == DestroyMode.Deconstruct || mode == DestroyMode.KillFinalize))
 			{
 				if (mode != DestroyMode.Deconstruct)
 				{
 					List<Pawn> list = new List<Pawn>();
-					foreach (Thing current in this.innerContainer)
+					foreach (Thing current in ((IEnumerable<Thing>)this.innerContainer))
 					{
 						Pawn pawn = current as Pawn;
 						if (pawn != null)
@@ -147,7 +154,7 @@ namespace RimWorld
 					}
 					foreach (Pawn current2 in list)
 					{
-						HealthUtility.GiveInjuriesToForceDowned(current2);
+						HealthUtility.DamageUntilDowned(current2);
 					}
 				}
 				this.EjectContents();
@@ -164,7 +171,7 @@ namespace RimWorld
 
 		public override string GetInspectString()
 		{
-			string inspectString = base.GetInspectString();
+			string text = base.GetInspectString();
 			string str;
 			if (!this.contentsKnown)
 			{
@@ -174,12 +181,16 @@ namespace RimWorld
 			{
 				str = this.innerContainer.ContentsString;
 			}
-			return inspectString + "CasketContains".Translate() + ": " + str;
+			if (!text.NullOrEmpty())
+			{
+				text += "\n";
+			}
+			return text + "CasketContains".Translate() + ": " + str;
 		}
 
-		virtual bool get_Spawned()
+		virtual IThingHolder get_ParentHolder()
 		{
-			return base.Spawned;
+			return base.ParentHolder;
 		}
 	}
 }

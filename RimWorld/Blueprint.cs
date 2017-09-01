@@ -8,6 +8,8 @@ namespace RimWorld
 {
 	public abstract class Blueprint : ThingWithComps, IConstructible
 	{
+		private static List<Thing> tmpAdjacentThings = new List<Thing>();
+
 		public override string Label
 		{
 			get
@@ -74,59 +76,25 @@ namespace RimWorld
 				}
 			}
 			createdThing = this.MakeSolidThing();
-			CellRect rect = this.OccupiedRect();
-			bool regionBarrier = createdThing.def.regionBarrier;
-			if (regionBarrier)
-			{
-				this.SpawnTemporaryRegionBarriers(rect);
-			}
 			Map map = base.Map;
-			try
+			GenAdjFast.AdjacentThings8Way(this, Blueprint.tmpAdjacentThings);
+			GenSpawn.WipeExistingThings(base.Position, base.Rotation, createdThing.def, map, DestroyMode.Deconstruct);
+			if (!base.Destroyed)
 			{
-				GenSpawn.WipeExistingThings(base.Position, base.Rotation, createdThing.def, map, DestroyMode.Deconstruct);
-				if (!base.Destroyed)
-				{
-					this.Destroy(DestroyMode.Vanish);
-				}
-				createdThing.SetFactionDirect(workerPawn.Faction);
-				GenSpawn.Spawn(createdThing, base.Position, map, base.Rotation);
+				this.Destroy(DestroyMode.Vanish);
 			}
-			finally
+			createdThing.SetFactionDirect(workerPawn.Faction);
+			GenSpawn.Spawn(createdThing, base.Position, map, base.Rotation, false);
+			for (int i = 0; i < Blueprint.tmpAdjacentThings.Count; i++)
 			{
-				if (regionBarrier)
+				Building_CrashedShipPart building_CrashedShipPart = Blueprint.tmpAdjacentThings[i] as Building_CrashedShipPart;
+				if (building_CrashedShipPart != null)
 				{
-					this.DestroyTemporaryRegionBarriers(rect, map);
+					building_CrashedShipPart.Notify_AdjacentBlueprintReplacedWithSolidThing(workerPawn);
 				}
 			}
+			Blueprint.tmpAdjacentThings.Clear();
 			return true;
-		}
-
-		private void SpawnTemporaryRegionBarriers(CellRect rect)
-		{
-			CellRect.CellRectIterator iterator = rect.GetIterator();
-			while (!iterator.Done())
-			{
-				GenSpawn.Spawn(ThingDefOf.TemporaryRegionBarrier, iterator.Current, base.Map);
-				iterator.MoveNext();
-			}
-		}
-
-		private void DestroyTemporaryRegionBarriers(CellRect rect, Map map)
-		{
-			CellRect.CellRectIterator iterator = rect.GetIterator();
-			while (!iterator.Done())
-			{
-				Thing thing = iterator.Current.GetThingList(map).Find((Thing x) => x.def.temporaryRegionBarrier);
-				if (thing == null)
-				{
-					Log.Warning("Could not destroy temporary region barrier at " + iterator.Current + " because it's not here.");
-				}
-				else
-				{
-					thing.Destroy(DestroyMode.Vanish);
-				}
-				iterator.MoveNext();
-			}
 		}
 
 		protected abstract Thing MakeSolidThing();

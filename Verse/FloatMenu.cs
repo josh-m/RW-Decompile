@@ -236,7 +236,7 @@ namespace Verse
 			this.closeOnClickedOutside = true;
 			this.doWindowBackground = false;
 			this.drawShadow = false;
-			SoundDefOf.FloatMenuOpen.PlayOneShotOnCamera();
+			SoundDefOf.FloatMenuOpen.PlayOneShotOnCamera(null);
 		}
 
 		public FloatMenu(List<FloatMenuOption> options, string title, bool needSelection = false) : this(options)
@@ -301,7 +301,7 @@ namespace Verse
 			if (usingScrollbar)
 			{
 				rect.width -= 10f;
-				Widgets.BeginScrollView(rect, ref this.scrollPosition, new Rect(0f, 0f, this.TotalWidth - 16f, this.TotalViewHeight));
+				Widgets.BeginScrollView(rect, ref this.scrollPosition, new Rect(0f, 0f, this.TotalWidth - 16f, this.TotalViewHeight), true);
 			}
 			foreach (FloatMenuOption current in from op in this.options
 			orderby op.Priority descending
@@ -336,7 +336,7 @@ namespace Verse
 
 		public void Cancel()
 		{
-			SoundDefOf.FloatMenuCancel.PlayOneShotOnCamera();
+			SoundDefOf.FloatMenuCancel.PlayOneShotOnCamera(null);
 			Find.WindowStack.TryRemove(this, true);
 		}
 

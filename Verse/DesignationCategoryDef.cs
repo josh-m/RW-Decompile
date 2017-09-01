@@ -11,6 +11,8 @@ namespace Verse
 
 		public int order;
 
+		public bool showPowerGrid;
+
 		[Unsaved]
 		private List<Designator> resolvedDesignators = new List<Designator>();
 
@@ -24,14 +26,23 @@ namespace Verse
 		{
 			get
 			{
+				GameRules rules = Current.Game.Rules;
 				for (int i = 0; i < this.resolvedDesignators.Count; i++)
 				{
 					Designator des = this.resolvedDesignators[i];
-					if (Current.Game.Rules.DesignatorAllowed(des))
+					if (rules.DesignatorAllowed(des))
 					{
 						yield return des;
 					}
 				}
+			}
+		}
+
+		public List<Designator> AllResolvedDesignators
+		{
+			get
+			{
+				return this.resolvedDesignators;
 			}
 		}
 

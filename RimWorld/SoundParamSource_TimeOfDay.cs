@@ -20,7 +20,7 @@ namespace RimWorld
 			{
 				return 0f;
 			}
-			return GenLocalDate.DayPercent(Find.VisibleMap) * 24f;
+			return GenLocalDate.HourFloat(Find.VisibleMap);
 		}
 	}
 }

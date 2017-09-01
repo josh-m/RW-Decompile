@@ -51,8 +51,8 @@ namespace Verse.AI
 
 		public void ExposeData()
 		{
-			Scribe_Deep.LookDeep<MentalState>(ref this.curStateInt, "curState", new object[0]);
-			Scribe_Values.LookValue<bool>(ref this.neverFleeIndividual, "neverFleeIndividual", false, false);
+			Scribe_Deep.Look<MentalState>(ref this.curStateInt, "curState", new object[0]);
+			Scribe_Values.Look<bool>(ref this.neverFleeIndividual, "neverFleeIndividual", false, false);
 			if (Scribe.mode == LoadSaveMode.PostLoadInit)
 			{
 				if (this.curStateInt != null)
@@ -87,7 +87,7 @@ namespace Verse.AI
 
 		public bool TryStartMentalState(MentalStateDef stateDef, string reason = null, bool forceWake = false, bool causedByMood = false, Pawn otherPawn = null)
 		{
-			if (this.pawn.holdingContainer != null || this.CurStateDef == stateDef || this.pawn.Downed || (!forceWake && !this.pawn.Awake()))
+			if ((!this.pawn.Spawned && !this.pawn.IsCaravanMember()) || this.CurStateDef == stateDef || this.pawn.Downed || (!forceWake && !this.pawn.Awake()))
 			{
 				return false;
 			}
@@ -108,12 +108,12 @@ namespace Verse.AI
 				string text = string.Format(stateDef.beginLetter, this.pawn.Label).AdjustedFor(this.pawn).CapitalizeFirst();
 				if (reason != null)
 				{
-					text = text + "\n\n" + "MentalBreakReason".Translate(new object[]
+					text = text + "\n\n" + "FinalStraw".Translate(new object[]
 					{
 						reason
 					});
 				}
-				Find.LetterStack.ReceiveLetter(label, text, stateDef.beginLetterType, this.pawn, null);
+				Find.LetterStack.ReceiveLetter(label, text, stateDef.beginLetterDef, this.pawn, null);
 			}
 			if (stateDef.IsExtreme && this.pawn.IsPlayerControlledCaravanMember())
 			{

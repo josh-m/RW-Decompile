@@ -16,13 +16,13 @@ namespace Verse
 		{
 			get
 			{
-				if (Find.GameInitData == null || Current.ProgramState == ProgramState.Playing)
-				{
-					return Find.TickManager.TicksAbs;
-				}
-				if (Current.Game != null && Find.GameInitData != null)
+				if (Current.ProgramState != ProgramState.Playing && Find.GameInitData != null && Find.GameInitData.gameToLoad.NullOrEmpty())
 				{
 					return GenTicks.ConfiguredTicksAbsAtGameStart;
+				}
+				if (Current.Game != null && Find.TickManager != null)
+				{
+					return Find.TickManager.TicksAbs;
 				}
 				return 0;
 			}
@@ -33,26 +33,30 @@ namespace Verse
 			get
 			{
 				GameInitData gameInitData = Find.GameInitData;
-				float longitude;
+				Vector2 vector;
 				if (gameInitData.startingTile >= 0)
 				{
-					longitude = Find.WorldGrid.LongLatOf(gameInitData.startingTile).x;
+					vector = Find.WorldGrid.LongLatOf(gameInitData.startingTile);
 				}
 				else
 				{
-					longitude = 0f;
+					vector = Vector2.zero;
 				}
-				Month month;
-				if (gameInitData.startingMonth != Month.Undefined)
+				Twelfth twelfth;
+				if (gameInitData.startingSeason != Season.Undefined)
 				{
-					month = gameInitData.startingMonth;
+					twelfth = gameInitData.startingSeason.GetFirstTwelfth(vector.y);
+				}
+				else if (gameInitData.startingTile >= 0)
+				{
+					twelfth = TwelfthUtility.FindStartingWarmTwelfth(gameInitData.startingTile);
 				}
 				else
 				{
-					month = Month.Jan;
+					twelfth = Season.Summer.GetFirstTwelfth(0f);
 				}
-				int num = (24 - GenDate.TimeZoneAt(longitude)) % 24;
-				return 300000 * (int)month + 2500 * (6 + num);
+				int num = (24 - GenDate.TimeZoneAt(vector.x)) % 24;
+				return 300000 * (int)twelfth + 2500 * (6 + num);
 			}
 		}
 
@@ -66,7 +70,7 @@ namespace Verse
 			return Mathf.RoundToInt(60f * numSeconds);
 		}
 
-		public static string TickstoSecondsString(this int numTicks)
+		public static string TicksToSecondsString(this int numTicks)
 		{
 			return numTicks.TicksToSeconds().ToString("F1") + " " + "SecondsLower".Translate();
 		}

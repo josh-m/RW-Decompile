@@ -15,7 +15,7 @@ namespace RimWorld
 		{
 			Map map = (Map)parms.target;
 			IntVec3 intVec;
-			if (!RCellFinder.TryFindRandomPawnEntryCell(out intVec, map))
+			if (!RCellFinder.TryFindRandomPawnEntryCell(out intVec, map, CellFinder.EdgeRoadChance_Animal, null))
 			{
 				return false;
 			}
@@ -29,9 +29,9 @@ namespace RimWorld
 			int num = Mathf.Clamp(GenMath.RoundRandom(2.5f / pawnKindDef.RaceProps.baseBodySize), 2, 10);
 			for (int i = 0; i < num; i++)
 			{
-				IntVec3 loc = CellFinder.RandomClosewalkCellNear(intVec, map, 12);
+				IntVec3 loc = CellFinder.RandomClosewalkCellNear(intVec, map, 12, null);
 				Pawn pawn = PawnGenerator.GeneratePawn(pawnKindDef, null);
-				GenSpawn.Spawn(pawn, loc, map, Rot4.Random);
+				GenSpawn.Spawn(pawn, loc, map, Rot4.Random, false);
 				pawn.SetFaction(Faction.OfPlayer, null);
 			}
 			Find.LetterStack.ReceiveLetter("LetterLabelFarmAnimalsWanderIn".Translate(new object[]
@@ -40,7 +40,7 @@ namespace RimWorld
 			}).CapitalizeFirst(), "LetterFarmAnimalsWanderIn".Translate(new object[]
 			{
 				pawnKindDef.label
-			}), LetterType.Good, new TargetInfo(intVec, map, false), null);
+			}), LetterDefOf.Good, new TargetInfo(intVec, map, false), null);
 			return true;
 		}
 	}

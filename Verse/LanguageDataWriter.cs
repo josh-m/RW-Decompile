@@ -18,7 +18,7 @@ namespace Verse
 			FileInfo fileInfo = new FileInfo(GenFilePaths.BackstoryOutputFilePath);
 			if (fileInfo.Exists)
 			{
-				Messages.Message("Cannot write: File already exists at " + GenFilePaths.BackstoryOutputFilePath, MessageSound.RejectInput);
+				Find.WindowStack.Add(new Dialog_MessageBox("Cannot write: File already exists at " + GenFilePaths.BackstoryOutputFilePath, null, null, null, null, null, false));
 				return;
 			}
 			XmlWriterSettings xmlWriterSettings = new XmlWriterSettings();

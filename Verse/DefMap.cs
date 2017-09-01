@@ -62,7 +62,7 @@ namespace Verse
 
 		public void ExposeData()
 		{
-			Scribe_Collections.LookList<V>(ref this.values, "vals", LookMode.Undefined, new object[0]);
+			Scribe_Collections.Look<V>(ref this.values, "vals", LookMode.Undefined, new object[0]);
 		}
 
 		public void SetAll(V val)

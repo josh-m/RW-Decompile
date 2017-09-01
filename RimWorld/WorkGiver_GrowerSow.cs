@@ -73,7 +73,7 @@ namespace RimWorld
 			Plant plant = c.GetPlant(pawn.Map);
 			if (plant != null && plant.def.plant.blockAdjacentSow)
 			{
-				if (!pawn.CanReserve(plant, 1) || plant.IsForbidden(pawn))
+				if (!pawn.CanReserve(plant, 1, -1, null, false) || plant.IsForbidden(pawn))
 				{
 					return null;
 				}
@@ -85,10 +85,10 @@ namespace RimWorld
 				if (thing2 != null)
 				{
 					Plant plant2 = thing2 as Plant;
-					if (plant2 != null && pawn.CanReserve(plant2, 1) && !plant2.IsForbidden(pawn))
+					if (plant2 != null && pawn.CanReserve(plant2, 1, -1, null, false) && !plant2.IsForbidden(pawn))
 					{
-						Zone_Growing zone_Growing = pawn.Map.zoneManager.ZoneAt(plant2.Position) as Zone_Growing;
-						if (zone_Growing == null || zone_Growing.GetPlantDefToGrow() != plant2.def)
+						IPlantToGrowSettable plantToGrowSettable = plant2.Position.GetPlantToGrowSettable(plant2.Map);
+						if (plantToGrowSettable == null || plantToGrowSettable.GetPlantDefToGrow() != plant2.def)
 						{
 							return new Job(JobDefOf.CutPlant, plant2);
 						}
@@ -105,7 +105,7 @@ namespace RimWorld
 					Thing thing3 = thingList[j];
 					if (thing3.def.BlockPlanting)
 					{
-						if (!pawn.CanReserve(thing3, 1))
+						if (!pawn.CanReserve(thing3, 1, -1, null, false))
 						{
 							return null;
 						}
@@ -131,7 +131,7 @@ namespace RimWorld
 						j++;
 					}
 				}
-				if (!WorkGiver_Grower.wantedPlantDef.CanEverPlantAt(c, pawn.Map) || !GenPlant.GrowthSeasonNow(c, pawn.Map) || !pawn.CanReserve(c, 1))
+				if (!WorkGiver_Grower.wantedPlantDef.CanEverPlantAt(c, pawn.Map) || !GenPlant.GrowthSeasonNow(c, pawn.Map) || !pawn.CanReserve(c, 1, -1, null, false))
 				{
 					return null;
 				}

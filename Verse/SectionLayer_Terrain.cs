@@ -24,6 +24,11 @@ namespace Verse
 			this.relevantChangeTypes = MapMeshFlag.Terrain;
 		}
 
+		public virtual Material GetMaterialFor(TerrainDef terrain)
+		{
+			return terrain.DrawMatSingle;
+		}
+
 		public override void Regenerate()
 		{
 			base.ClearSubMeshes(MeshParts.All);
@@ -36,22 +41,25 @@ namespace Verse
 			{
 				hashSet.Clear();
 				TerrainDef terrainDef = terrainGrid.TerrainAt(current);
-				LayerSubMesh subMesh = base.GetSubMesh(terrainDef.DrawMatSingle);
-				int count = subMesh.verts.Count;
-				subMesh.verts.Add(new Vector3((float)current.x, 0f, (float)current.z));
-				subMesh.verts.Add(new Vector3((float)current.x, 0f, (float)(current.z + 1)));
-				subMesh.verts.Add(new Vector3((float)(current.x + 1), 0f, (float)(current.z + 1)));
-				subMesh.verts.Add(new Vector3((float)(current.x + 1), 0f, (float)current.z));
-				subMesh.colors.Add(SectionLayer_Terrain.ColorWhite);
-				subMesh.colors.Add(SectionLayer_Terrain.ColorWhite);
-				subMesh.colors.Add(SectionLayer_Terrain.ColorWhite);
-				subMesh.colors.Add(SectionLayer_Terrain.ColorWhite);
-				subMesh.tris.Add(count);
-				subMesh.tris.Add(count + 1);
-				subMesh.tris.Add(count + 2);
-				subMesh.tris.Add(count);
-				subMesh.tris.Add(count + 2);
-				subMesh.tris.Add(count + 3);
+				LayerSubMesh subMesh = base.GetSubMesh(this.GetMaterialFor(terrainDef));
+				if (subMesh != null)
+				{
+					int count = subMesh.verts.Count;
+					subMesh.verts.Add(new Vector3((float)current.x, 0f, (float)current.z));
+					subMesh.verts.Add(new Vector3((float)current.x, 0f, (float)(current.z + 1)));
+					subMesh.verts.Add(new Vector3((float)(current.x + 1), 0f, (float)(current.z + 1)));
+					subMesh.verts.Add(new Vector3((float)(current.x + 1), 0f, (float)current.z));
+					subMesh.colors.Add(SectionLayer_Terrain.ColorWhite);
+					subMesh.colors.Add(SectionLayer_Terrain.ColorWhite);
+					subMesh.colors.Add(SectionLayer_Terrain.ColorWhite);
+					subMesh.colors.Add(SectionLayer_Terrain.ColorWhite);
+					subMesh.tris.Add(count);
+					subMesh.tris.Add(count + 1);
+					subMesh.tris.Add(count + 2);
+					subMesh.tris.Add(count);
+					subMesh.tris.Add(count + 2);
+					subMesh.tris.Add(count + 3);
+				}
 				for (int i = 0; i < 8; i++)
 				{
 					IntVec3 c = current + GenAdj.AdjacentCellsAroundBottom[i];
@@ -79,59 +87,57 @@ namespace Verse
 				}
 				foreach (TerrainDef current2 in hashSet)
 				{
-					LayerSubMesh subMesh2 = base.GetSubMesh(current2.DrawMatSingle);
-					count = subMesh2.verts.Count;
-					subMesh2.verts.Add(new Vector3((float)current.x + 0.5f, 0f, (float)current.z));
-					subMesh2.verts.Add(new Vector3((float)current.x, 0f, (float)current.z));
-					subMesh2.verts.Add(new Vector3((float)current.x, 0f, (float)current.z + 0.5f));
-					subMesh2.verts.Add(new Vector3((float)current.x, 0f, (float)(current.z + 1)));
-					subMesh2.verts.Add(new Vector3((float)current.x + 0.5f, 0f, (float)(current.z + 1)));
-					subMesh2.verts.Add(new Vector3((float)(current.x + 1), 0f, (float)(current.z + 1)));
-					subMesh2.verts.Add(new Vector3((float)(current.x + 1), 0f, (float)current.z + 0.5f));
-					subMesh2.verts.Add(new Vector3((float)(current.x + 1), 0f, (float)current.z));
-					subMesh2.verts.Add(new Vector3((float)current.x + 0.5f, 0f, (float)current.z + 0.5f));
-					for (int j = 0; j < 8; j++)
+					LayerSubMesh subMesh2 = base.GetSubMesh(this.GetMaterialFor(current2));
+					if (subMesh2 != null)
 					{
-						array2[j] = false;
-					}
-					for (int k = 0; k < 8; k++)
-					{
-						if (k % 2 == 0)
+						int count = subMesh2.verts.Count;
+						subMesh2.verts.Add(new Vector3((float)current.x + 0.5f, 0f, (float)current.z));
+						subMesh2.verts.Add(new Vector3((float)current.x, 0f, (float)current.z));
+						subMesh2.verts.Add(new Vector3((float)current.x, 0f, (float)current.z + 0.5f));
+						subMesh2.verts.Add(new Vector3((float)current.x, 0f, (float)(current.z + 1)));
+						subMesh2.verts.Add(new Vector3((float)current.x + 0.5f, 0f, (float)(current.z + 1)));
+						subMesh2.verts.Add(new Vector3((float)(current.x + 1), 0f, (float)(current.z + 1)));
+						subMesh2.verts.Add(new Vector3((float)(current.x + 1), 0f, (float)current.z + 0.5f));
+						subMesh2.verts.Add(new Vector3((float)(current.x + 1), 0f, (float)current.z));
+						subMesh2.verts.Add(new Vector3((float)current.x + 0.5f, 0f, (float)current.z + 0.5f));
+						for (int j = 0; j < 8; j++)
 						{
-							if (array[k] == current2)
+							array2[j] = false;
+						}
+						for (int k = 0; k < 8; k++)
+						{
+							if (k % 2 == 0)
 							{
-								int num = k - 1;
-								if (num < 0)
+								if (array[k] == current2)
 								{
-									num += 8;
+									array2[(k - 1 + 8) % 8] = true;
+									array2[k] = true;
+									array2[(k + 1) % 8] = true;
 								}
-								array2[num] = true;
+							}
+							else if (array[k] == current2)
+							{
 								array2[k] = true;
-								array2[(k + 1) % 8] = true;
 							}
 						}
-						else if (array[k] == current2)
+						for (int l = 0; l < 8; l++)
 						{
-							array2[k] = true;
+							if (array2[l])
+							{
+								subMesh2.colors.Add(SectionLayer_Terrain.ColorWhite);
+							}
+							else
+							{
+								subMesh2.colors.Add(SectionLayer_Terrain.ColorClear);
+							}
 						}
-					}
-					for (int l = 0; l < 8; l++)
-					{
-						if (array2[l])
+						subMesh2.colors.Add(SectionLayer_Terrain.ColorClear);
+						for (int m = 0; m < 8; m++)
 						{
-							subMesh2.colors.Add(SectionLayer_Terrain.ColorWhite);
+							subMesh2.tris.Add(count + m);
+							subMesh2.tris.Add(count + (m + 1) % 8);
+							subMesh2.tris.Add(count + 8);
 						}
-						else
-						{
-							subMesh2.colors.Add(SectionLayer_Terrain.ColorClear);
-						}
-					}
-					subMesh2.colors.Add(SectionLayer_Terrain.ColorClear);
-					for (int m = 0; m < 8; m++)
-					{
-						subMesh2.tris.Add(count + m);
-						subMesh2.tris.Add(count + (m + 1) % 8);
-						subMesh2.tris.Add(count + 8);
 					}
 				}
 			}

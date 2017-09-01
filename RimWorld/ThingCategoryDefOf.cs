@@ -8,11 +8,17 @@ namespace RimWorld
 	{
 		public static ThingCategoryDef Foods;
 
+		public static ThingCategoryDef FoodMeals;
+
 		public static ThingCategoryDef Manufactured;
 
 		public static ThingCategoryDef Root;
 
 		public static ThingCategoryDef Apparel;
+
+		public static ThingCategoryDef PlantFoodRaw;
+
+		public static ThingCategoryDef PlantMatter;
 
 		public static ThingCategoryDef ResourcesRaw;
 
@@ -21,6 +27,10 @@ namespace RimWorld
 		public static ThingCategoryDef Art;
 
 		public static ThingCategoryDef Weapons;
+
+		public static ThingCategoryDef Medicine;
+
+		public static ThingCategoryDef Drugs;
 
 		public static ThingCategoryDef BodyParts;
 

@@ -12,8 +12,8 @@ namespace RimWorld
 		{
 			this.EndOnDespawnedOrNull(TargetIndex.A, JobCondition.Incompletable);
 			this.EndOnDespawnedOrNull(TargetIndex.B, JobCondition.Incompletable);
-			yield return Toils_Reserve.Reserve(TargetIndex.A, base.CurJob.def.joyMaxParticipants);
-			yield return Toils_Reserve.Reserve(TargetIndex.B, 1);
+			yield return Toils_Reserve.Reserve(TargetIndex.A, base.CurJob.def.joyMaxParticipants, 0, null);
+			yield return Toils_Reserve.Reserve(TargetIndex.B, 1, -1, null);
 			yield return Toils_Goto.GotoThing(TargetIndex.B, PathEndMode.OnCell);
 			Toil play = new Toil();
 			play.tickAction = delegate

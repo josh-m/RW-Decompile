@@ -20,7 +20,7 @@ namespace Verse
 			}
 		}
 
-		public MapGenFloatGrid(string name, Map map)
+		public MapGenFloatGrid(Map map)
 		{
 			this.map = map;
 			this.grid = new float[map.cellIndices.NumGridCells];

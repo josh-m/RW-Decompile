@@ -7,9 +7,9 @@ namespace RimWorld
 	{
 		private CompPowerTrader powerComp;
 
-		public override void PostSpawnSetup()
+		public override void PostSpawnSetup(bool respawningAfterLoad)
 		{
-			base.PostSpawnSetup();
+			base.PostSpawnSetup(respawningAfterLoad);
 			this.powerComp = this.parent.GetComp<CompPowerTrader>();
 		}
 
@@ -17,7 +17,7 @@ namespace RimWorld
 		{
 			if (this.powerComp.PowerOn)
 			{
-				this.parent.Map.deepResourceGrid.DeepResourceGridDraw(true);
+				this.parent.Map.deepResourceGrid.MarkForDraw();
 			}
 		}
 	}

@@ -29,7 +29,7 @@ namespace RimWorld.BaseGen
 			return CellFinder.TryFindRandomCellInsideWith(rect, delegate(IntVec3 c)
 			{
 				bool arg_7D_0;
-				if (c.Standable(map) && !c.Roofed(map) && !BaseGenUtility.AnyDoorAdjacentTo(c, map) && c.GetFirstItem(map) == null)
+				if (c.Standable(map) && !c.Roofed(map) && !BaseGenUtility.AnyDoorCardinalAdjacentTo(c, map) && c.GetFirstItem(map) == null)
 				{
 					arg_7D_0 = !GenSpawn.WouldWipeAnythingWith(c, Rot4.North, ThingDefOf.Campfire, map, (Thing x) => x.def.category == ThingCategory.Building);
 				}

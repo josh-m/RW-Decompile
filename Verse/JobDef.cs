@@ -14,7 +14,7 @@ namespace Verse
 
 		public bool playerInterruptible = true;
 
-		public bool canCheckOverrideOnDamage = true;
+		public CheckJobOverrideOnDamageMode checkOverrideOnDamage = CheckJobOverrideOnDamageMode.Always;
 
 		public bool alwaysShowWeapon;
 

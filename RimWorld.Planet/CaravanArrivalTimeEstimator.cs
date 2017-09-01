@@ -24,30 +24,63 @@ namespace RimWorld.Planet
 			{
 				return CaravanArrivalTimeEstimator.cachedResult;
 			}
+			int to;
+			int result;
 			if (!caravan.Spawned || !caravan.pather.Moving || caravan.pather.curPath == null)
+			{
+				to = -1;
+				result = 0;
+			}
+			else
+			{
+				to = caravan.pather.Destination;
+				result = CaravanArrivalTimeEstimator.EstimatedTicksToArrive(caravan.Tile, to, caravan.pather.curPath, caravan.pather.nextTileCostLeft, caravan.TicksPerMove, Find.TickManager.TicksAbs);
+			}
+			if (allowCaching)
 			{
 				CaravanArrivalTimeEstimator.cacheTicks = Find.TickManager.TicksGame;
 				CaravanArrivalTimeEstimator.cachedForCaravan = caravan;
-				CaravanArrivalTimeEstimator.cachedForDest = -1;
-				CaravanArrivalTimeEstimator.cachedResult = 0;
-				return 0;
+				CaravanArrivalTimeEstimator.cachedForDest = to;
+				CaravanArrivalTimeEstimator.cachedResult = result;
 			}
+			return result;
+		}
+
+		public static int EstimatedTicksToArrive(int from, int to, Caravan caravan)
+		{
+			int result;
+			using (WorldPath worldPath = Find.WorldPathFinder.FindPath(from, to, caravan, null))
+			{
+				if (worldPath == WorldPath.NotFound)
+				{
+					result = 0;
+				}
+				else
+				{
+					result = CaravanArrivalTimeEstimator.EstimatedTicksToArrive(from, to, worldPath, 0f, CaravanTicksPerMoveUtility.GetTicksPerMove(caravan), Find.TickManager.TicksAbs);
+				}
+			}
+			return result;
+		}
+
+		public static int EstimatedTicksToArrive(int from, int to, WorldPath path, float nextTileCostLeft, int caravanTicksPerMove, int curTicksAbs)
+		{
 			int num = 0;
-			int num2 = caravan.Tile;
+			int num2 = from;
 			int num3 = 0;
 			int num4 = Mathf.CeilToInt(20000f) - 1;
 			int num5 = 60000 - num4;
 			int num6 = 0;
 			int num7 = 0;
 			int num8;
-			if (caravan.Resting)
+			if (CaravanRestUtility.WouldBeRestingAt(from, (long)curTicksAbs))
 			{
-				num += caravan.LeftRestTicks;
+				num += CaravanRestUtility.LeftRestTicksAt(from, (long)curTicksAbs);
 				num8 = num5;
 			}
 			else
 			{
-				num8 = caravan.LeftNonRestTicks;
+				num8 = CaravanRestUtility.LeftNonRestTicksAt(from, (long)curTicksAbs);
 			}
 			while (true)
 			{
@@ -58,23 +91,24 @@ namespace RimWorld.Planet
 				}
 				if (num6 <= 0)
 				{
-					if (num2 == caravan.pather.Destination)
+					if (num2 == to)
 					{
-						goto Block_10;
+						return num;
 					}
 					bool flag = num3 == 0;
-					num2 = caravan.pather.curPath.Peek(num3);
+					int start = num2;
+					num2 = path.Peek(num3);
 					num3++;
 					float num9;
 					if (flag)
 					{
-						num9 = caravan.pather.nextTileCostLeft;
+						num9 = nextTileCostLeft;
 					}
 					else
 					{
-						int num10 = Find.TickManager.TicksAbs + num;
+						int num10 = curTicksAbs + num;
 						float yearPercent = (float)GenDate.DayOfYear((long)num10, 0f) / 60f;
-						num9 = (float)Caravan_PathFollower.CostToMoveIntoTile(caravan, num2, yearPercent);
+						num9 = (float)Caravan_PathFollower.CostToMove(caravanTicksPerMove, start, num2, yearPercent);
 					}
 					num6 = Mathf.CeilToInt(num9 / 1f);
 				}
@@ -93,16 +127,6 @@ namespace RimWorld.Planet
 				}
 			}
 			Log.ErrorOnce("Could not calculate estimated ticks to arrive. Too many iterations.", 1837451324);
-			CaravanArrivalTimeEstimator.cacheTicks = Find.TickManager.TicksGame;
-			CaravanArrivalTimeEstimator.cachedForCaravan = caravan;
-			CaravanArrivalTimeEstimator.cachedForDest = caravan.pather.Destination;
-			CaravanArrivalTimeEstimator.cachedResult = num;
-			return num;
-			Block_10:
-			CaravanArrivalTimeEstimator.cacheTicks = Find.TickManager.TicksGame;
-			CaravanArrivalTimeEstimator.cachedForCaravan = caravan;
-			CaravanArrivalTimeEstimator.cachedForDest = caravan.pather.Destination;
-			CaravanArrivalTimeEstimator.cachedResult = num;
 			return num;
 		}
 	}

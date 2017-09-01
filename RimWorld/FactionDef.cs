@@ -13,7 +13,7 @@ namespace RimWorld
 
 		public RulePackDef factionNameMaker;
 
-		public RulePackDef factionBaseNameMaker;
+		public RulePackDef baseNameMaker;
 
 		public string fixedName;
 
@@ -48,13 +48,15 @@ namespace RimWorld
 
 		public string leaderTitle = "leader";
 
+		public float maxPawnOptionCostFactor = 1f;
+
 		public int requiredCountAtGameStart;
 
 		public int maxCountAtGameStart = 9999;
 
 		public bool canMakeRandomly;
 
-		public float factionBaseSelectionWeight;
+		public float baseSelectionWeight;
 
 		public RulePackDef pawnNameMaker;
 
@@ -70,7 +72,7 @@ namespace RimWorld
 
 		public List<TraderKindDef> visitorTraderKinds = new List<TraderKindDef>();
 
-		public List<TraderKindDef> factionBaseTraderKinds = new List<TraderKindDef>();
+		public List<TraderKindDef> baseTraderKinds = new List<TraderKindDef>();
 
 		public FloatRange startingGoodwill = FloatRange.Zero;
 

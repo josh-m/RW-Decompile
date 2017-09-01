@@ -12,7 +12,7 @@ namespace Verse
 		[DebuggerHidden]
 		public static IEnumerable<StatDrawEntry> SpecialDisplayStats(HediffStage stage, Hediff instance)
 		{
-			if (instance != null && instance.BleedRate > 0.001f)
+			if (instance != null && instance.Bleeding)
 			{
 				yield return new StatDrawEntry(StatCategoryDefOf.Basics, "BleedingRate".Translate(), instance.BleedRate.ToStringPercent() + "/" + "LetterDay".Translate(), 0);
 			}
@@ -49,6 +49,10 @@ namespace Verse
 			if (painFactorToDisplay != 1f)
 			{
 				yield return new StatDrawEntry(StatCategoryDefOf.Basics, "Pain".Translate(), "x" + painFactorToDisplay.ToStringPercent(), 0);
+			}
+			if (stage != null && stage.partEfficiencyOffset != 0f)
+			{
+				yield return new StatDrawEntry(StatCategoryDefOf.Basics, "PartEfficiency".Translate(), stage.partEfficiencyOffset.ToStringByStyle(ToStringStyle.PercentZero, ToStringNumberSense.Offset), 0);
 			}
 			List<PawnCapacityModifier> capModsToDisplay = null;
 			if (instance != null)

@@ -23,8 +23,8 @@ namespace RimWorld
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Values.LookValue<float>(ref this.radius, "radius", 0f, false);
-			Scribe_Defs.LookDef<DamageDef>(ref this.damage, "damage");
+			Scribe_Values.Look<float>(ref this.radius, "radius", 0f, false);
+			Scribe_Defs.Look<DamageDef>(ref this.damage, "damage");
 		}
 
 		public override string Summary(Scenario scen)

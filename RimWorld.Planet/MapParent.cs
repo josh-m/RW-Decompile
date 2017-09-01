@@ -10,11 +10,13 @@ using Verse.Sound;
 namespace RimWorld.Planet
 {
 	[StaticConstructorOnStartup]
-	public class MapParent : WorldObject
+	public class MapParent : WorldObject, IThingHolder
 	{
 		public const int DefaultForceExitAndRemoveMapCountdownHours = 24;
 
 		private int ticksLeftToForceExitAndRemoveMap = -1;
+
+		private bool anyCaravanEverFormed;
 
 		private static readonly Texture2D ShowMapCommand = ContentFinder<Texture2D>.Get("UI/Commands/ShowMap", true);
 
@@ -46,6 +48,29 @@ namespace RimWorld.Planet
 			}
 		}
 
+		public virtual MapGeneratorDef MapGeneratorDef
+		{
+			get
+			{
+				return null;
+			}
+		}
+
+		public virtual IEnumerable<GenStepDef> ExtraGenStepDefs
+		{
+			get
+			{
+			}
+		}
+
+		public virtual bool TransportPodsCanLandAndGenerateMap
+		{
+			get
+			{
+				return false;
+			}
+		}
+
 		public bool ForceExitAndRemoveMapCountdownActive
 		{
 			get
@@ -54,7 +79,7 @@ namespace RimWorld.Planet
 			}
 		}
 
-		public string ForceExitAndRemoveMapCountdownHoursLeftString
+		public string ForceExitAndRemoveMapCountdownTimeLeftString
 		{
 			get
 			{
@@ -62,19 +87,35 @@ namespace RimWorld.Planet
 				{
 					return string.Empty;
 				}
-				float num = (float)this.ticksLeftToForceExitAndRemoveMap / 2500f;
-				if (num < 1f)
-				{
-					return num.ToString("0.#");
-				}
-				return Mathf.RoundToInt(num).ToString();
+				return MapParent.GetForceExitAndRemoveMapCountdownTimeLeftString(this.ticksLeftToForceExitAndRemoveMap);
 			}
 		}
 
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Values.LookValue<int>(ref this.ticksLeftToForceExitAndRemoveMap, "ticksLeftToForceExitAndRemoveMap", -1, false);
+			Scribe_Values.Look<int>(ref this.ticksLeftToForceExitAndRemoveMap, "ticksLeftToForceExitAndRemoveMap", -1, false);
+			Scribe_Values.Look<bool>(ref this.anyCaravanEverFormed, "anyCaravanEverFormed", false, false);
+		}
+
+		public virtual void PostMapGenerate()
+		{
+		}
+
+		public virtual void Notify_MyMapRemoved(Map map)
+		{
+		}
+
+		public virtual void Notify_CaravanFormed(Caravan caravan)
+		{
+			if (!this.anyCaravanEverFormed)
+			{
+				this.anyCaravanEverFormed = true;
+				if (this.def.isTempIncidentMapOwner && this.HasMap)
+				{
+					this.Map.StoryState.CopyTo(caravan.StoryState);
+				}
+			}
 		}
 
 		public virtual bool ShouldRemoveMapNow(out bool alsoRemoveWorldObject)
@@ -127,9 +168,9 @@ namespace RimWorld.Planet
 					action = delegate
 					{
 						Current.Game.VisibleMap = this.<>f__this.Map;
-						if (!JumpToTargetUtility.CloseWorldTab())
+						if (!CameraJumper.TryHideWorld())
 						{
-							SoundDefOf.TabClose.PlayOneShotOnCamera();
+							SoundDefOf.TabClose.PlayOneShotOnCamera(null);
 						}
 					}
 				};
@@ -144,7 +185,7 @@ namespace RimWorld.Planet
 						tutorTag = "FormCaravan",
 						action = delegate
 						{
-							Find.WindowStack.Add(new Dialog_FormCaravan(this.<>f__this.Map, false));
+							Find.WindowStack.Add(new Dialog_FormCaravan(this.<>f__this.Map, false, null, true));
 						}
 					};
 				}
@@ -158,9 +199,9 @@ namespace RimWorld.Planet
 					reformCaravan.tutorTag = "ReformCaravan";
 					reformCaravan.action = delegate
 					{
-						Find.WindowStack.Add(new Dialog_FormCaravan(this.<>f__this.Map, true));
+						Find.WindowStack.Add(new Dialog_FormCaravan(this.<>f__this.Map, true, null, true));
 					};
-					if (GenHostility.AnyHostileThreat(this.Map))
+					if (GenHostility.AnyHostileActiveThreat(this.Map))
 					{
 						reformCaravan.Disable("CommandReformCaravanFailHostilePawns".Translate());
 					}
@@ -210,10 +251,19 @@ namespace RimWorld.Planet
 				}
 				text = text + "ForceExitAndRemoveMapCountdown".Translate(new object[]
 				{
-					this.ForceExitAndRemoveMapCountdownHoursLeftString
+					this.ForceExitAndRemoveMapCountdownTimeLeftString
 				}) + ".";
 			}
 			return text;
+		}
+
+		public static string GetForceExitAndRemoveMapCountdownTimeLeftString(int ticksLeft)
+		{
+			if (ticksLeft < 0)
+			{
+				return string.Empty;
+			}
+			return ticksLeft.ToStringTicksToPeriod(true, true, true);
 		}
 
 		private void TickForceExitAndRemoveMapCountdown()
@@ -225,33 +275,50 @@ namespace RimWorld.Planet
 					this.ticksLeftToForceExitAndRemoveMap--;
 					if (this.ticksLeftToForceExitAndRemoveMap == 0)
 					{
-						MapParent.tmpPawns.Clear();
-						MapParent.tmpPawns.AddRange(from x in this.Map.mapPawns.AllPawns
-						where x.Faction == Faction.OfPlayer || x.HostFaction == Faction.OfPlayer
-						select x);
-						if (MapParent.tmpPawns.Any<Pawn>())
+						if (Dialog_FormCaravan.AllSendablePawns(this.Map, true).Any((Pawn x) => x.IsColonist))
 						{
-							if (MapParent.tmpPawns.Any((Pawn x) => CaravanUtility.IsOwner(x, Faction.OfPlayer)))
+							Messages.Message("MessageYouHaveToReformCaravanNow".Translate(), new GlobalTargetInfo(base.Tile), MessageSound.Standard);
+							Current.Game.VisibleMap = this.Map;
+							Dialog_FormCaravan window = new Dialog_FormCaravan(this.Map, true, delegate
 							{
-								Caravan o = CaravanExitMapUtility.ExitMapAndCreateCaravan(MapParent.tmpPawns, Faction.OfPlayer, base.Tile);
-								Messages.Message("MessageAutomaticallyReformedCaravan".Translate(), o, MessageSound.Benefit);
-							}
-							else
-							{
-								StringBuilder stringBuilder = new StringBuilder();
-								for (int i = 0; i < MapParent.tmpPawns.Count; i++)
+								if (this.HasMap)
 								{
-									stringBuilder.AppendLine("    " + MapParent.tmpPawns[i].LabelCap);
+									this.ShowWorldViewIfVisibleMapAboutToBeRemoved(this.Map);
+									Find.WorldObjects.Remove(this);
 								}
-								Find.LetterStack.ReceiveLetter("LetterLabelPawnsLostDueToMapCountdown".Translate(), "LetterPawnsLostDueToMapCountdown".Translate(new object[]
-								{
-									stringBuilder.ToString().TrimEndNewlines()
-								}), LetterType.BadNonUrgent, new GlobalTargetInfo(base.Tile), null);
-							}
-							MapParent.tmpPawns.Clear();
+							}, false);
+							Find.WindowStack.Add(window);
 						}
-						this.OpenWorldTabIfVisibleMapAboutToBeRemoved(this.Map);
-						Find.WorldObjects.Remove(this);
+						else
+						{
+							MapParent.tmpPawns.Clear();
+							MapParent.tmpPawns.AddRange(from x in this.Map.mapPawns.AllPawns
+							where x.Faction == Faction.OfPlayer || x.HostFaction == Faction.OfPlayer
+							select x);
+							if (MapParent.tmpPawns.Any<Pawn>())
+							{
+								if (MapParent.tmpPawns.Any((Pawn x) => CaravanUtility.IsOwner(x, Faction.OfPlayer)))
+								{
+									Caravan o = CaravanExitMapUtility.ExitMapAndCreateCaravan(MapParent.tmpPawns, Faction.OfPlayer, base.Tile);
+									Messages.Message("MessageAutomaticallyReformedCaravan".Translate(), o, MessageSound.Benefit);
+								}
+								else
+								{
+									StringBuilder stringBuilder = new StringBuilder();
+									for (int i = 0; i < MapParent.tmpPawns.Count; i++)
+									{
+										stringBuilder.AppendLine("    " + MapParent.tmpPawns[i].LabelCap);
+									}
+									Find.LetterStack.ReceiveLetter("LetterLabelPawnsLostDueToMapCountdown".Translate(), "LetterPawnsLostDueToMapCountdown".Translate(new object[]
+									{
+										stringBuilder.ToString().TrimEndNewlines()
+									}), LetterDefOf.BadNonUrgent, new GlobalTargetInfo(base.Tile), null);
+								}
+								MapParent.tmpPawns.Clear();
+							}
+							this.ShowWorldViewIfVisibleMapAboutToBeRemoved(this.Map);
+							Find.WorldObjects.Remove(this);
+						}
 					}
 				}
 				else
@@ -267,7 +334,7 @@ namespace RimWorld.Planet
 			if (this.HasMap && this.ShouldRemoveMapNow(out flag))
 			{
 				Map map = this.Map;
-				this.OpenWorldTabIfVisibleMapAboutToBeRemoved(map);
+				this.ShowWorldViewIfVisibleMapAboutToBeRemoved(map);
 				Current.Game.DeinitAndRemoveMap(map);
 				if (flag)
 				{
@@ -276,12 +343,31 @@ namespace RimWorld.Planet
 			}
 		}
 
-		private void OpenWorldTabIfVisibleMapAboutToBeRemoved(Map map)
+		private void ShowWorldViewIfVisibleMapAboutToBeRemoved(Map map)
 		{
 			if (map == Find.VisibleMap)
 			{
-				Find.MainTabsRoot.SetCurrentTab(MainTabDefOf.World, true);
+				Find.World.renderer.wantedMode = WorldRenderMode.Planet;
 			}
+		}
+
+		public ThingOwner GetDirectlyHeldThings()
+		{
+			return null;
+		}
+
+		public virtual void GetChildHolders(List<IThingHolder> outChildren)
+		{
+			ThingOwnerUtility.AppendThingHoldersFromThings(outChildren, this.GetDirectlyHeldThings());
+			if (this.HasMap)
+			{
+				outChildren.Add(this.Map);
+			}
+		}
+
+		virtual IThingHolder get_ParentHolder()
+		{
+			return base.ParentHolder;
 		}
 	}
 }

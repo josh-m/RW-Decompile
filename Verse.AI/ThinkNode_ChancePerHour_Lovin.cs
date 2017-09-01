@@ -7,7 +7,7 @@ namespace Verse.AI
 	{
 		protected override float MtbHours(Pawn pawn)
 		{
-			if (pawn.CurJob == null || !pawn.jobs.curDriver.layingDown || pawn.jobs.curDriver.layingDownBed == null)
+			if (pawn.CurrentBed() == null)
 			{
 				return -1f;
 			}

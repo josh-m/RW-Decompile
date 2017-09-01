@@ -56,9 +56,10 @@ namespace RimWorld
 			this.rainRate = this.map.weatherManager.RainRate;
 			this.deteriorationRate = Mathf.Lerp(1f, 5f, this.rainRate);
 			int num = Mathf.RoundToInt((float)this.map.Area * 0.0006f);
+			int area = this.map.Area;
 			for (int i = 0; i < num; i++)
 			{
-				if (this.cycleIndex >= this.map.Area)
+				if (this.cycleIndex >= area)
 				{
 					this.cycleIndex = 0;
 				}
@@ -70,9 +71,10 @@ namespace RimWorld
 
 		private void DoCellSteadyEffects(IntVec3 c)
 		{
-			Room room = c.GetRoom(this.map);
+			Room room = c.GetRoom(this.map, RegionType.Set_All);
 			bool flag = this.map.roofGrid.Roofed(c);
-			if (room == null || room.UsesOutdoorTemperature)
+			bool flag2 = room != null && room.UsesOutdoorTemperature;
+			if (room == null || flag2)
 			{
 				if (this.outdoorMeltAmount > 0f)
 				{
@@ -83,63 +85,66 @@ namespace RimWorld
 					this.AddFallenSnowAt(c, 0.046f * this.map.weatherManager.SnowRate);
 				}
 			}
-			if (room != null && room.UsesOutdoorTemperature && !flag)
+			if (room != null)
 			{
-				List<Thing> thingList = c.GetThingList(this.map);
-				for (int i = 0; i < thingList.Count; i++)
+				if (flag2)
 				{
-					Thing thing = thingList[i];
-					if (!(thing is Plant))
+					if (!flag)
 					{
-						Filth filth = thing as Filth;
-						if (filth != null)
+						List<Thing> thingList = c.GetThingList(this.map);
+						for (int i = 0; i < thingList.Count; i++)
 						{
-							if (thing.def.filth.rainWashes && Rand.Value < this.rainRate)
+							Thing thing = thingList[i];
+							Filth filth = thing as Filth;
+							if (filth != null)
 							{
-								((Filth)thing).ThinFilth();
-							}
-						}
-						else
-						{
-							Corpse corpse = thing as Corpse;
-							if (corpse != null && corpse.InnerPawn.apparel != null)
-							{
-								List<Apparel> wornApparel = corpse.InnerPawn.apparel.WornApparel;
-								for (int j = 0; j < wornApparel.Count; j++)
+								if (thing.def.filth.rainWashes && Rand.Value < this.rainRate)
 								{
-									this.TryDoDeteriorate(wornApparel[j], c, false);
+									((Filth)thing).ThinFilth();
 								}
 							}
-							this.TryDoDeteriorate(thing, c, true);
+							else
+							{
+								Corpse corpse = thing as Corpse;
+								if (corpse != null && corpse.InnerPawn.apparel != null)
+								{
+									List<Apparel> wornApparel = corpse.InnerPawn.apparel.WornApparel;
+									for (int j = 0; j < wornApparel.Count; j++)
+									{
+										this.TryDoDeteriorate(wornApparel[j], c, false);
+									}
+								}
+								this.TryDoDeteriorate(thing, c, true);
+							}
 						}
 					}
 				}
-			}
-			if (room != null && !room.UsesOutdoorTemperature)
-			{
-				float temperature = room.Temperature;
-				if (temperature > 0f)
+				else
 				{
-					float num = this.MeltAmountAt(temperature);
-					if (num > 0f)
+					float temperature = room.Temperature;
+					if (temperature > 0f)
 					{
-						this.map.snowGrid.AddDepth(c, -num);
-					}
-					if (temperature > SteadyAtmosphereEffects.AutoIgnitionTemperatureRange.min)
-					{
-						float value = Rand.Value;
-						if (value < SteadyAtmosphereEffects.AutoIgnitionTemperatureRange.InverseLerpThroughRange(temperature) * 0.7f)
+						float num = this.MeltAmountAt(temperature);
+						if (num > 0f)
 						{
-							FireUtility.TryStartFireIn(c, this.map, 0.1f);
+							this.map.snowGrid.AddDepth(c, -num);
 						}
-						if (value < 0.33f)
+						if (room.RegionType.Passable() && temperature > SteadyAtmosphereEffects.AutoIgnitionTemperatureRange.min)
 						{
-							MoteMaker.ThrowHeatGlow(c, this.map, 2.3f);
+							float value = Rand.Value;
+							if (value < SteadyAtmosphereEffects.AutoIgnitionTemperatureRange.InverseLerpThroughRange(temperature) * 0.7f && Rand.Chance(FireUtility.ChanceToStartFireIn(c, this.map)))
+							{
+								FireUtility.TryStartFireIn(c, this.map, 0.1f);
+							}
+							if (value < 0.33f)
+							{
+								MoteMaker.ThrowHeatGlow(c, this.map, 2.3f);
+							}
 						}
 					}
 				}
 			}
-			List<MapCondition> activeConditions = this.map.mapConditionManager.ActiveConditions;
+			List<GameCondition> activeConditions = this.map.gameConditionManager.ActiveConditions;
 			for (int k = 0; k < activeConditions.Count; k++)
 			{
 				activeConditions[k].DoCellSteadyEffects(c);
@@ -189,7 +194,7 @@ namespace RimWorld
 
 		public static float FinalDeteriorationRate(Thing t)
 		{
-			if (!t.def.useHitPoints || t.def.category != ThingCategory.Item)
+			if (!t.def.CanEverDeteriorate)
 			{
 				return 0f;
 			}
@@ -206,7 +211,7 @@ namespace RimWorld
 			float num2 = this.deteriorationRate * num / 36f;
 			if (Rand.Value < num2 && (!checkEdifice || !SteadyAtmosphereEffects.ProtectedByEdifice(c, t.Map)))
 			{
-				t.TakeDamage(new DamageInfo(DamageDefOf.Deterioration, 1, -1f, null, null, null));
+				t.TakeDamage(new DamageInfo(DamageDefOf.Deterioration, 1, -1f, null, null, null, DamageInfo.SourceCategory.ThingOrUnknown));
 			}
 		}
 
@@ -228,7 +233,7 @@ namespace RimWorld
 					Find.LetterStack.ReceiveLetter("LetterLabelShortCircuit".Translate(), "ShortCircuitRain".Translate(new object[]
 					{
 						building.Label
-					}), LetterType.BadUrgent, new TargetInfo(building.Position, building.Map, false), null);
+					}), LetterDefOf.BadUrgent, new TargetInfo(building.Position, building.Map, false), null);
 				}
 			}
 		}

@@ -10,6 +10,8 @@ namespace RimWorld
 
 		public List<SkillRecord> skills = new List<SkillRecord>();
 
+		private int lastXpSinceMidnightResetTimestamp = -1;
+
 		public Pawn_SkillTracker(Pawn newPawn)
 		{
 			this.pawn = newPawn;
@@ -21,10 +23,11 @@ namespace RimWorld
 
 		public void ExposeData()
 		{
-			Scribe_Collections.LookList<SkillRecord>(ref this.skills, "skills", LookMode.Deep, new object[]
+			Scribe_Collections.Look<SkillRecord>(ref this.skills, "skills", LookMode.Deep, new object[]
 			{
 				this.pawn
 			});
+			Scribe_Values.Look<int>(ref this.lastXpSinceMidnightResetTimestamp, "lastXpSinceMidnightResetTimestamp", 0, false);
 		}
 
 		public SkillRecord GetSkill(SkillDef skillDef)
@@ -48,11 +51,19 @@ namespace RimWorld
 
 		public void SkillsTick()
 		{
-			if ((Find.TickManager.TicksGame + this.pawn.thingIDNumber) % 200 == 0)
+			if (this.pawn.IsHashIntervalTick(200))
 			{
-				for (int i = 0; i < this.skills.Count; i++)
+				if (GenLocalDate.HourInteger(this.pawn) == 0 && (this.lastXpSinceMidnightResetTimestamp < 0 || Find.TickManager.TicksGame - this.lastXpSinceMidnightResetTimestamp >= 30000))
 				{
-					this.skills[i].Interval();
+					for (int i = 0; i < this.skills.Count; i++)
+					{
+						this.skills[i].xpSinceMidnight = 0f;
+					}
+					this.lastXpSinceMidnightResetTimestamp = Find.TickManager.TicksGame;
+				}
+				for (int j = 0; j < this.skills.Count; j++)
+				{
+					this.skills[j].Interval();
 				}
 			}
 		}

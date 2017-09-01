@@ -8,7 +8,15 @@ namespace RimWorld
 		public override string GetInspectString()
 		{
 			string inspectString = base.GetInspectString();
-			return inspectString + StatDefOf.Beauty.LabelCap + ": " + StatDefOf.Beauty.ValueToString(this.GetStatValue(StatDefOf.Beauty, true), ToStringNumberSense.Absolute);
+			string text = inspectString;
+			return string.Concat(new string[]
+			{
+				text,
+				"\n",
+				StatDefOf.Beauty.LabelCap,
+				": ",
+				StatDefOf.Beauty.ValueToString(this.GetStatValue(StatDefOf.Beauty, true), ToStringNumberSense.Absolute)
+			});
 		}
 	}
 }

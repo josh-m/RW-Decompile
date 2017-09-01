@@ -46,11 +46,11 @@ namespace RimWorld
 					return false;
 				}
 				IntVec3 intVec3 = spectateRect.ClosestCellTo(x);
-				if (intVec3.DistanceToSquared(x) > 210.25f)
+				if ((float)intVec3.DistanceToSquared(x) > 210.25f)
 				{
 					return false;
 				}
-				if (!GenSight.LineOfSight(intVec3, x, map, true))
+				if (!GenSight.LineOfSight(intVec3, x, map, true, null, 0, 0))
 				{
 					return false;
 				}
@@ -60,12 +60,12 @@ namespace RimWorld
 				}
 				if (p != null)
 				{
-					if (!p.CanReserveAndReach(x, PathEndMode.OnCell, Danger.Some, 1))
+					if (!p.CanReserveAndReach(x, PathEndMode.OnCell, Danger.Some, 1, -1, null, false))
 					{
 						return false;
 					}
 					Building edifice = x.GetEdifice(map);
-					if (edifice != null && edifice.def.category == ThingCategory.Building && edifice.def.building.isSittable && !p.CanReserve(edifice, 1))
+					if (edifice != null && edifice.def.category == ThingCategory.Building && edifice.def.building.isSittable && !p.CanReserve(edifice, 1, -1, null, false))
 					{
 						return false;
 					}
@@ -73,7 +73,7 @@ namespace RimWorld
 					{
 						return false;
 					}
-					if (x.GetDangerFor(p) != Danger.None)
+					if (x.GetDangerFor(p, map) != Danger.None)
 					{
 						return false;
 					}
@@ -213,7 +213,7 @@ namespace RimWorld
 				}
 				list.Add(intVec);
 				float a = Mathf.Lerp(1f, 0.08f, (float)i / (float)num);
-				Material mat = SolidColorMaterials.SimpleSolidColorMaterial(new Color(0f, 0.8f, 0f, a));
+				Material mat = SolidColorMaterials.SimpleSolidColorMaterial(new Color(0f, 0.8f, 0f, a), false);
 				map.debugDrawer.FlashCell(intVec, mat, (i + 1).ToString());
 			}
 			SpectateRectSide spectateRectSide = SpectatorCellFinder.FindSingleBestSide(spectateRect, map, allowedSides, margin);

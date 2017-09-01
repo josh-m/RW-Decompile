@@ -182,7 +182,7 @@ namespace Verse
 		{
 			if (this.soundSucceeded != null)
 			{
-				this.soundSucceeded.PlayOneShotOnCamera();
+				this.soundSucceeded.PlayOneShotOnCamera(null);
 			}
 		}
 
@@ -190,7 +190,7 @@ namespace Verse
 		{
 			if (this.soundFailed != null)
 			{
-				this.soundFailed.PlayOneShotOnCamera();
+				this.soundFailed.PlayOneShotOnCamera(null);
 			}
 			if (Find.DesignatorManager.Dragger.FailureReason != null)
 			{
@@ -230,6 +230,10 @@ namespace Verse
 		}
 
 		public virtual void SelectedUpdate()
+		{
+		}
+
+		public virtual void SelectedProcessInput(Event ev)
 		{
 		}
 

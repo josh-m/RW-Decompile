@@ -46,7 +46,7 @@ namespace RimWorld
 		{
 			if (this.closeWorldTabWhenFinished)
 			{
-				JumpToTargetUtility.CloseWorldTab();
+				CameraJumper.TryHideWorld();
 			}
 			this.action = null;
 			this.canTargetTiles = false;
@@ -65,21 +65,21 @@ namespace RimWorld
 					GlobalTargetInfo arg = this.CurrentTargetUnderMouse();
 					if (this.action(arg))
 					{
-						SoundDefOf.TickHigh.PlayOneShotOnCamera();
+						SoundDefOf.TickHigh.PlayOneShotOnCamera(null);
 						this.StopTargeting();
 					}
 					Event.current.Use();
 				}
 				if (Event.current.button == 1 && this.IsTargeting)
 				{
-					SoundDefOf.CancelMode.PlayOneShotOnCamera();
+					SoundDefOf.CancelMode.PlayOneShotOnCamera(null);
 					this.StopTargeting();
 					Event.current.Use();
 				}
 			}
 			if (Event.current.type == EventType.KeyDown && Event.current.keyCode == KeyCode.Escape && this.IsTargeting)
 			{
-				SoundDefOf.CancelMode.PlayOneShotOnCamera();
+				SoundDefOf.CancelMode.PlayOneShotOnCamera(null);
 				this.StopTargeting();
 				Event.current.Use();
 			}
@@ -122,7 +122,7 @@ namespace RimWorld
 				}
 				if (globalTargetInfo.IsValid)
 				{
-					WorldRendererUtility.DrawQuadTangentialToPlanet(pos, 0.8f * Find.WorldGrid.averageTileSize, 0.01f, GenDraw.CurTargetingMat, false, false, null);
+					WorldRendererUtility.DrawQuadTangentialToPlanet(pos, 0.8f * Find.WorldGrid.averageTileSize, 0.018f, WorldMaterials.CurTargetingMat, false, false, null);
 				}
 				if (this.onUpdate != null)
 				{
@@ -159,7 +159,7 @@ namespace RimWorld
 			{
 				return GlobalTargetInfo.Invalid;
 			}
-			int num = GenWorld.MouseTile();
+			int num = GenWorld.MouseTile(false);
 			if (num >= 0)
 			{
 				return new GlobalTargetInfo(num);

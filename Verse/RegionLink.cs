@@ -90,6 +90,11 @@ namespace Verse
 			}
 		}
 
+		public Region GetOtherRegion(Region reg)
+		{
+			return (reg != this.RegionA) ? this.RegionA : this.RegionB;
+		}
+
 		public ulong UniqueHashCode()
 		{
 			return this.span.UniqueHashCode();

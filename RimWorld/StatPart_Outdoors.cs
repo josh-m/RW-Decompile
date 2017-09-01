@@ -18,7 +18,7 @@ namespace RimWorld
 		{
 			if (req.HasThing)
 			{
-				Room room = req.Thing.GetRoom();
+				Room room = req.Thing.GetRoom(RegionType.Set_All);
 				if (room != null)
 				{
 					string str;
@@ -40,7 +40,7 @@ namespace RimWorld
 		{
 			if (req.HasThing)
 			{
-				Room room = req.Thing.GetRoom();
+				Room room = req.Thing.GetRoom(RegionType.Set_All);
 				if (room != null)
 				{
 					if (room.PsychologicallyOutdoors)

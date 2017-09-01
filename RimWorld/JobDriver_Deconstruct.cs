@@ -34,7 +34,10 @@ namespace RimWorld
 
 		protected override void TickAction()
 		{
-			this.pawn.skills.Learn(SkillDefOf.Construction, 0.275f, false);
+			if (base.Target.def.CostListAdjusted(base.Target.Stuff, true).Count > 0)
+			{
+				this.pawn.skills.Learn(SkillDefOf.Construction, 0.275f, false);
+			}
 		}
 	}
 }

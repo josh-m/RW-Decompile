@@ -28,19 +28,22 @@ namespace RimWorld
 			}
 		}
 
+		public JobDriver_BuryCorpse()
+		{
+			this.rotateToFace = TargetIndex.B;
+		}
+
 		[DebuggerHidden]
 		protected override IEnumerable<Toil> MakeNewToils()
 		{
 			this.FailOnDestroyedNullOrForbidden(TargetIndex.A);
 			this.FailOnDestroyedNullOrForbidden(TargetIndex.B);
-			yield return Toils_Reserve.Reserve(TargetIndex.A, 1);
-			yield return Toils_Reserve.Reserve(TargetIndex.B, 1);
+			yield return Toils_Reserve.Reserve(TargetIndex.A, 1, -1, null);
+			yield return Toils_Reserve.Reserve(TargetIndex.B, 1, -1, null);
 			yield return Toils_Goto.GotoThing(TargetIndex.A, PathEndMode.ClosestTouch).FailOnSomeonePhysicallyInteracting(TargetIndex.A);
 			yield return Toils_Haul.StartCarryThing(TargetIndex.A, false, false);
 			yield return Toils_Haul.CarryHauledThingToContainer();
-			Toil prepare = new Toil();
-			prepare.defaultCompleteMode = ToilCompleteMode.Delay;
-			prepare.defaultDuration = 250;
+			Toil prepare = Toils_General.Wait(250);
 			prepare.WithProgressBarToilDelay(TargetIndex.B, false, -0.5f);
 			yield return prepare;
 			yield return new Toil

@@ -298,11 +298,24 @@ namespace Verse
 			}
 		}
 
+		public static bool HatsOnlyOnMap
+		{
+			get
+			{
+				return Prefs.data.hatsOnlyOnMap;
+			}
+			set
+			{
+				Prefs.data.hatsOnlyOnMap = value;
+				Prefs.Apply();
+			}
+		}
+
 		public static void Init()
 		{
 			bool flag = !new FileInfo(GenFilePaths.PrefsFilePath).Exists;
 			Prefs.data = new PrefsData();
-			Prefs.data = XmlLoader.ItemFromXmlFile<PrefsData>(GenFilePaths.PrefsFilePath, true);
+			Prefs.data = DirectXmlLoader.ItemFromXmlFile<PrefsData>(GenFilePaths.PrefsFilePath, true);
 			if (flag)
 			{
 				Prefs.data.langFolderName = LanguageDatabase.SystemLanguageFolderName();
@@ -314,7 +327,7 @@ namespace Verse
 			try
 			{
 				XDocument xDocument = new XDocument();
-				XElement content = XmlSaver.XElementFromObject(Prefs.data, typeof(PrefsData));
+				XElement content = DirectXmlSaver.XElementFromObject(Prefs.data, typeof(PrefsData));
 				xDocument.Add(content);
 				xDocument.Save(GenFilePaths.PrefsFilePath);
 			}

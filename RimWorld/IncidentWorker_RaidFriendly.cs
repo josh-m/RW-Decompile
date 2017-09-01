@@ -59,6 +59,11 @@ namespace RimWorld
 			parms.raidStrategy = RaidStrategyDefOf.ImmediateAttack;
 		}
 
+		protected override void ResolveRaidPoints(IncidentParms parms)
+		{
+			parms.points = (float)Rand.Range(400, 800);
+		}
+
 		protected override string GetLetterLabel(IncidentParms parms)
 		{
 			return parms.raidStrategy.letterLabelFriendly;
@@ -106,9 +111,9 @@ namespace RimWorld
 			return text;
 		}
 
-		protected override LetterType GetLetterType()
+		protected override LetterDef GetLetterDef()
 		{
-			return LetterType.BadNonUrgent;
+			return LetterDefOf.BadNonUrgent;
 		}
 
 		protected override string GetRelatedPawnsInfoLetterText(IncidentParms parms)

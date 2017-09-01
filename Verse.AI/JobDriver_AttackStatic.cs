@@ -9,10 +9,13 @@ namespace Verse.AI
 	{
 		private bool startedIncapacitated;
 
+		private int numAttacksMade;
+
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Values.LookValue<bool>(ref this.startedIncapacitated, "startedIncapacitated", false, false);
+			Scribe_Values.Look<bool>(ref this.startedIncapacitated, "startedIncapacitated", false, false);
+			Scribe_Values.Look<int>(ref this.numAttacksMade, "numAttacksMade", 0, false);
 		}
 
 		[DebuggerHidden]
@@ -41,7 +44,15 @@ namespace Verse.AI
 							return;
 						}
 					}
-					this.<>f__this.pawn.equipment.TryStartAttack(this.<>f__this.TargetA);
+					if (this.<>f__this.numAttacksMade >= this.<>f__this.pawn.CurJob.maxNumStaticAttacks && !this.<>f__this.pawn.stances.FullBodyBusy)
+					{
+						this.<>f__this.EndJobWith(JobCondition.Succeeded);
+						return;
+					}
+					if (this.<>f__this.pawn.equipment.TryStartAttack(this.<>f__this.TargetA))
+					{
+						this.<>f__this.numAttacksMade++;
+					}
 				},
 				defaultCompleteMode = ToilCompleteMode.Never
 			};

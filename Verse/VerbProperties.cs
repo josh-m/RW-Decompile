@@ -24,7 +24,7 @@ namespace Verse
 
 		public VerbCategory category = VerbCategory.Nonnative;
 
-		public Type verbClass;
+		public Type verbClass = typeof(Verb);
 
 		public string label;
 
@@ -58,6 +58,8 @@ namespace Verse
 
 		public SurpriseAttackProps surpriseAttack;
 
+		public float commonality = 1f;
+
 		public float warmupTime;
 
 		public float defaultCooldownTime;
@@ -79,6 +81,8 @@ namespace Verse
 		public bool ai_IsIncendiary;
 
 		public bool ai_IsBuildingDestroyer;
+
+		public float ai_AvoidFriendlyFireRadius;
 
 		public ThingDef projectileDef;
 
@@ -133,10 +137,18 @@ namespace Verse
 			}
 		}
 
+		public float BaseSelectionWeight
+		{
+			get
+			{
+				return this.AdjustedSelectionWeight(null, null, null);
+			}
+		}
+
 		public int AdjustedMeleeDamageAmount(Verb ownerVerb, Pawn attacker, Thing equipment)
 		{
 			float num;
-			if (ownerVerb.ownerEquipment != null)
+			if (ownerVerb != null && ownerVerb.ownerEquipment != null)
 			{
 				num = ownerVerb.ownerEquipment.GetStatValue(StatDefOf.MeleeWeapon_DamageAmount, true);
 			}
@@ -149,6 +161,11 @@ namespace Verse
 				num *= ownerVerb.GetDamageFactorFor(attacker);
 			}
 			return Mathf.Max(1, Mathf.RoundToInt(num));
+		}
+
+		public float AdjustedSelectionWeight(Verb ownerVerb, Pawn attacker, Thing equipment)
+		{
+			return (float)this.AdjustedMeleeDamageAmount(ownerVerb, attacker, equipment) * this.commonality;
 		}
 
 		public int AdjustedCooldownTicks(Thing equipment)

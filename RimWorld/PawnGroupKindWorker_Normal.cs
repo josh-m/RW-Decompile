@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using Verse;
 
@@ -18,8 +17,7 @@ namespace RimWorld
 			return base.CanGenerateFrom(parms, groupMaker) && PawnGroupMakerUtility.ChoosePawnGenOptionsByPoints(parms.points, groupMaker.options, parms).Any<PawnGenOption>();
 		}
 
-		[DebuggerHidden]
-		public override IEnumerable<Pawn> GeneratePawns(PawnGroupMakerParms parms, PawnGroupMaker groupMaker, bool errorOnZeroResults = true)
+		protected override void GeneratePawns(PawnGroupMakerParms parms, PawnGroupMaker groupMaker, List<Pawn> outPawns, bool errorOnZeroResults = true)
 		{
 			if (!this.CanGenerateFrom(parms, groupMaker))
 			{
@@ -34,27 +32,24 @@ namespace RimWorld
 						". Defaulting to a single random cheap group."
 					}));
 				}
+				return;
 			}
-			else
+			bool flag = parms.raidStrategy == null || parms.raidStrategy.pawnsCanBringFood;
+			bool flag2 = false;
+			foreach (PawnGenOption current in PawnGroupMakerUtility.ChoosePawnGenOptionsByPoints(parms.points, groupMaker.options, parms))
 			{
-				bool allowFood = parms.raidStrategy == null || parms.raidStrategy.pawnsCanBringFood;
-				bool forceIncapDone = false;
-				foreach (PawnGenOption g in PawnGroupMakerUtility.ChoosePawnGenOptionsByPoints(parms.points, groupMaker.options, parms))
+				int tile = parms.tile;
+				bool allowFood = flag;
+				bool inhabitants = parms.inhabitants;
+				PawnGenerationRequest request = new PawnGenerationRequest(current.kind, parms.faction, PawnGenerationContext.NonPlayer, tile, false, false, false, false, true, true, 1f, false, true, allowFood, inhabitants, false, null, null, null, null, null, null);
+				Pawn pawn = PawnGenerator.GeneratePawn(request);
+				if (parms.forceOneIncap && !flag2)
 				{
-					Map map = parms.map;
-					bool allowFood2 = allowFood;
-					PawnGenerationRequest request = new PawnGenerationRequest(g.kind, parms.faction, PawnGenerationContext.NonPlayer, map, false, false, false, false, true, true, 1f, false, true, allowFood2, null, null, null, null, null, null);
-					Pawn p = PawnGenerator.GeneratePawn(request);
-					if (parms.forceOneIncap && !forceIncapDone)
-					{
-						p.health.forceIncap = true;
-						p.mindState.canFleeIndividual = false;
-						forceIncapDone = true;
-					}
-					this.PostGenerate(p);
-					yield return p;
+					pawn.health.forceIncap = true;
+					pawn.mindState.canFleeIndividual = false;
+					flag2 = true;
 				}
-				this.FinishedGeneratingPawns();
+				outPawns.Add(pawn);
 			}
 		}
 	}

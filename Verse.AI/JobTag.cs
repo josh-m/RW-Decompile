@@ -4,8 +4,21 @@ namespace Verse.AI
 {
 	public enum JobTag : byte
 	{
-		NoTag,
+		Misc,
+		MiscWork,
+		Fieldwork,
 		Idle,
-		AllCaravanItemsGathered
+		InMentalState,
+		SatisfyingNeeds,
+		DraftedOrder,
+		UnspecifiedLordDuty,
+		WaitingForOthersToFinishGatheringItems,
+		TuckedIntoBed,
+		RestingForMedicalReasons,
+		ChangingApparel,
+		Escaping,
+		JoiningCaravan,
+		TrainedAnimalBehavior,
+		UnloadingOwnInventory
 	}
 }

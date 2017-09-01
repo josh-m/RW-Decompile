@@ -14,13 +14,13 @@ namespace Verse.AI
 			return thinkNode_ConditionalMentalStates;
 		}
 
-		public override ThinkResult TryIssueJobPackage(Pawn pawn)
+		public override ThinkResult TryIssueJobPackage(Pawn pawn, JobIssueParams jobParams)
 		{
 			if (!this.states.Contains(pawn.MentalStateDef))
 			{
 				return ThinkResult.NoJob;
 			}
-			return base.TryIssueJobPackage(pawn);
+			return base.TryIssueJobPackage(pawn, jobParams);
 		}
 	}
 }

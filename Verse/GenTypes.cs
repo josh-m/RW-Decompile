@@ -142,6 +142,10 @@ namespace Verse
 
 		public static string GetTypeNameWithoutIgnoredNamespaces(Type type)
 		{
+			if (type.IsGenericType)
+			{
+				return type.ToString();
+			}
 			for (int i = 0; i < GenTypes.IgnoredNamespaceNames.Count; i++)
 			{
 				if (type.Namespace == GenTypes.IgnoredNamespaceNames[i])

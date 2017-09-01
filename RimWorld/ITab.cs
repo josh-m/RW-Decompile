@@ -34,7 +34,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return (MainTabWindow_Inspect)MainTabDefOf.Inspect.Window;
+				return (MainTabWindow_Inspect)MainButtonDefOf.Inspect.TabWindow;
 			}
 		}
 
@@ -42,7 +42,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return Find.MainTabsRoot.OpenTab == MainTabDefOf.Inspect && ((MainTabWindow_Inspect)Find.MainTabsRoot.OpenTab.Window).CurTabs.Contains(this);
+				return Find.MainTabsRoot.OpenTab == MainButtonDefOf.Inspect && ((MainTabWindow_Inspect)Find.MainTabsRoot.OpenTab.TabWindow).CurTabs.Contains(this);
 			}
 		}
 

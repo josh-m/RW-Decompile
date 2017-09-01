@@ -21,9 +21,9 @@ namespace RimWorld
 				return;
 			}
 			FacilitiesUtility.working = true;
+			ProfilerThreadCheck.BeginSample("NotifyFacilitiesAboutChangedLOSBlockers()");
 			try
 			{
-				ProfilerThreadCheck.BeginSample("NotifyFacilitiesAboutChangedLOSBlockers()");
 				FacilitiesUtility.visited.Clear();
 				for (int i = 0; i < affectedRegions.Count; i++)
 				{
@@ -47,13 +47,13 @@ namespace RimWorld
 								}
 							}
 							return false;
-						}, FacilitiesUtility.RegionsToSearch);
+						}, FacilitiesUtility.RegionsToSearch, RegionType.Set_Passable);
 					}
 				}
-				ProfilerThreadCheck.EndSample();
 			}
 			finally
 			{
+				ProfilerThreadCheck.EndSample();
 				FacilitiesUtility.working = false;
 				FacilitiesUtility.visited.Clear();
 			}

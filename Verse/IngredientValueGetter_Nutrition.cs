@@ -13,7 +13,7 @@ namespace Verse
 			return t.ingestible.nutrition;
 		}
 
-		public override string BillRequirementsDescription(IngredientCount ing)
+		public override string BillRequirementsDescription(RecipeDef r, IngredientCount ing)
 		{
 			return "BillRequiresNutrition".Translate(new object[]
 			{

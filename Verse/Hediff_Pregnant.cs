@@ -45,7 +45,7 @@ namespace Verse
 				List<Hediff_MissingPart> missingPartsCommonAncestors = this.pawn.health.hediffSet.GetMissingPartsCommonAncestors();
 				for (int j = 0; j < missingPartsCommonAncestors.Count; j++)
 				{
-					if (missingPartsCommonAncestors[j].IsFresh)
+					if (missingPartsCommonAncestors[j].IsFreshNonSolidExtremity)
 					{
 						num += missingPartsCommonAncestors[j].Part.def.GetMaxHealth(this.pawn);
 					}
@@ -111,7 +111,7 @@ namespace Verse
 			{
 				num = 1;
 			}
-			PawnGenerationRequest request = new PawnGenerationRequest(mother.kindDef, mother.Faction, PawnGenerationContext.NonPlayer, null, false, true, false, false, true, false, 1f, false, true, true, null, null, null, null, null, null);
+			PawnGenerationRequest request = new PawnGenerationRequest(mother.kindDef, mother.Faction, PawnGenerationContext.NonPlayer, -1, false, true, false, false, true, false, 1f, false, true, true, false, false, null, null, null, null, null, null);
 			Pawn pawn = null;
 			for (int i = 0; i < num; i++)
 			{
@@ -153,7 +153,7 @@ namespace Verse
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_References.LookReference<Pawn>(ref this.father, "father", false);
+			Scribe_References.Look<Pawn>(ref this.father, "father", false);
 		}
 
 		public override string DebugString()
@@ -161,7 +161,7 @@ namespace Verse
 			StringBuilder stringBuilder = new StringBuilder();
 			stringBuilder.Append(base.DebugString());
 			stringBuilder.AppendLine("Gestation progress: " + this.GestationProgress.ToStringPercent());
-			stringBuilder.AppendLine("Time left: " + ((int)((1f - this.GestationProgress) * this.pawn.RaceProps.gestationPeriodDays * 60000f)).ToStringTicksToPeriod(true));
+			stringBuilder.AppendLine("Time left: " + ((int)((1f - this.GestationProgress) * this.pawn.RaceProps.gestationPeriodDays * 60000f)).ToStringTicksToPeriod(true, false, true));
 			return stringBuilder.ToString();
 		}
 	}

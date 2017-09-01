@@ -178,10 +178,18 @@ namespace RimWorld
 
 		public static QualityCategory RandomTraderItemQuality()
 		{
-			float centerX = 3f;
-			float num = Rand.Gaussian(centerX, 2f);
+			if (Rand.Value < 0.25f)
+			{
+				return QualityCategory.Normal;
+			}
+			float num = Rand.Gaussian(3.5f, 1.13f);
 			num = Mathf.Clamp(num, 0f, (float)QualityUtility.AllQualityCategories.Count - 0.5f);
 			return (QualityCategory)((int)num);
+		}
+
+		public static QualityCategory RandomBaseGenItemQuality()
+		{
+			return QualityUtility.RandomTraderItemQuality();
 		}
 
 		public static QualityCategory RandomGeneratedGearQuality(PawnKindDef pawnKind)
@@ -190,8 +198,12 @@ namespace RimWorld
 			{
 				return QualityCategory.Normal;
 			}
-			float centerX = (float)pawnKind.itemQuality;
-			float num = Rand.GaussianAsymmetric(centerX, 1.5f, 1.07f);
+			if (Rand.Value < 0.25f)
+			{
+				return pawnKind.itemQuality;
+			}
+			float centerX = (float)pawnKind.itemQuality + 0.5f;
+			float num = Rand.GaussianAsymmetric(centerX, 1.25f, 1.07f);
 			num = Mathf.Clamp(num, 0f, (float)QualityUtility.AllQualityCategories.Count - 0.5f);
 			return (QualityCategory)((int)num);
 		}

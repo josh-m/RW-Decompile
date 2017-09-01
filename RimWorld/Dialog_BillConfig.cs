@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -21,7 +20,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return new Vector2(700f, 600f);
+				return new Vector2(760f, 600f);
 			}
 		}
 
@@ -41,11 +40,11 @@ namespace RimWorld
 		{
 			if (offset > 0)
 			{
-				SoundDefOf.AmountIncrement.PlayOneShotOnCamera();
+				SoundDefOf.AmountIncrement.PlayOneShotOnCamera(null);
 			}
 			else
 			{
-				SoundDefOf.AmountDecrement.PlayOneShotOnCamera();
+				SoundDefOf.AmountDecrement.PlayOneShotOnCamera(null);
 			}
 			this.bill.repeatCount += offset;
 			if (this.bill.repeatCount < 1)
@@ -64,9 +63,12 @@ namespace RimWorld
 			Text.Font = GameFont.Medium;
 			Rect rect = new Rect(0f, 0f, 400f, 50f);
 			Widgets.Label(rect, this.bill.LabelCap);
+			Rect rect2 = new Rect(0f, 80f, 200f, inRect.height - 80f);
+			Rect rect3 = new Rect(rect2.xMax + 17f, 50f, 180f, inRect.height - 50f - this.CloseButSize.y);
+			Rect rect4 = new Rect(rect3.xMax + 17f, 50f, inRect.width - (rect3.xMax + 17f), inRect.height - 50f - this.CloseButSize.y);
 			Text.Font = GameFont.Small;
-			Rect rect2 = new Rect(0f, 50f, 180f, inRect.height - 50f);
-			Listing_Standard listing_Standard = new Listing_Standard(rect2);
+			Listing_Standard listing_Standard = new Listing_Standard();
+			listing_Standard.Begin(rect3);
 			if (this.bill.suspended)
 			{
 				if (listing_Standard.ButtonText("Suspended".Translate(), null))
@@ -86,32 +88,30 @@ namespace RimWorld
 			if (listing_Standard.ButtonText(label, null))
 			{
 				List<FloatMenuOption> list = new List<FloatMenuOption>();
-				using (IEnumerator enumerator = Enum.GetValues(typeof(BillStoreMode)).GetEnumerator())
+				foreach (BillStoreModeDef current in from bsm in DefDatabase<BillStoreModeDef>.AllDefs
+				orderby bsm.listOrder
+				select bsm)
 				{
-					while (enumerator.MoveNext())
+					BillStoreModeDef smLocal = current;
+					list.Add(new FloatMenuOption(("BillStoreMode_" + current).Translate(), delegate
 					{
-						BillStoreMode billStoreMode = (BillStoreMode)((byte)enumerator.Current);
-						BillStoreMode smLocal = billStoreMode;
-						list.Add(new FloatMenuOption(("BillStoreMode_" + billStoreMode).Translate(), delegate
-						{
-							this.bill.storeMode = smLocal;
-						}, MenuOptionPriority.Default, null, null, 0f, null, null));
-					}
+						this.bill.storeMode = smLocal;
+					}, MenuOptionPriority.Default, null, null, 0f, null, null));
 				}
 				Find.WindowStack.Add(new FloatMenu(list));
 			}
 			listing_Standard.Gap(12f);
-			if (this.bill.repeatMode == BillRepeatMode.RepeatCount)
+			if (this.bill.repeatMode == BillRepeatModeDefOf.RepeatCount)
 			{
 				listing_Standard.Label("RepeatCount".Translate(new object[]
 				{
 					this.bill.RepeatInfoText
-				}));
+				}), -1f);
 				listing_Standard.IntSetter(ref this.bill.repeatCount, 1, "1", 42f);
 				listing_Standard.IntAdjuster(ref this.bill.repeatCount, 1, 0);
 				listing_Standard.IntAdjuster(ref this.bill.repeatCount, 25, 0);
 			}
-			else if (this.bill.repeatMode == BillRepeatMode.TargetCount)
+			else if (this.bill.repeatMode == BillRepeatModeDefOf.TargetCount)
 			{
 				string text = "CurrentlyHave".Translate() + ": ";
 				text += this.bill.recipe.WorkerCounter.CountProducts(this.bill);
@@ -130,14 +130,16 @@ namespace RimWorld
 						text2
 					});
 				}
-				listing_Standard.Label(text);
+				listing_Standard.Label(text, -1f);
+				int targetCount = this.bill.targetCount;
 				listing_Standard.IntSetter(ref this.bill.targetCount, 1, "1", 42f);
 				listing_Standard.IntAdjuster(ref this.bill.targetCount, 1, 1);
 				listing_Standard.IntAdjuster(ref this.bill.targetCount, 25, 1);
 				listing_Standard.IntAdjuster(ref this.bill.targetCount, 250, 1);
+				this.bill.unpauseWhenYouHave = Mathf.Max(0, this.bill.unpauseWhenYouHave + (this.bill.targetCount - targetCount));
 			}
 			listing_Standard.Gap(12f);
-			listing_Standard.Label("IngredientSearchRadius".Translate() + ": " + this.bill.ingredientSearchRadius.ToString("F0"));
+			listing_Standard.Label("IngredientSearchRadius".Translate() + ": " + this.bill.ingredientSearchRadius.ToString("F0"), -1f);
 			this.bill.ingredientSearchRadius = listing_Standard.Slider(this.bill.ingredientSearchRadius, 3f, 100f);
 			if (this.bill.ingredientSearchRadius >= 100f)
 			{
@@ -148,25 +150,21 @@ namespace RimWorld
 				listing_Standard.Label("AllowedSkillRange".Translate(new object[]
 				{
 					this.bill.recipe.workSkill.label.ToLower()
-				}));
+				}), -1f);
 				listing_Standard.IntRange(ref this.bill.allowedSkillRange, 0, 20);
 			}
-			listing_Standard.End();
-			List<ThingDef> list2 = new List<ThingDef>();
-			for (int i = 0; i < this.bill.recipe.ingredients.Count; i++)
+			if (this.bill.repeatMode == BillRepeatModeDefOf.TargetCount)
 			{
-				IngredientCount ingredientCount = this.bill.recipe.ingredients[i];
-				if (!ingredientCount.filter.AllowedThingDefs.Skip(1).Any<ThingDef>())
+				listing_Standard.Gap(12f);
+				listing_Standard.CheckboxLabeled("PauseWhenSatisfied".Translate(), ref this.bill.pauseWhenSatisfied, null);
+				if (this.bill.pauseWhenSatisfied)
 				{
-					list2.Add(ingredientCount.filter.AllowedThingDefs.First<ThingDef>());
+					listing_Standard.Label("UnpauseWhenYouHave".Translate() + ": " + this.bill.unpauseWhenYouHave.ToString("F0"), -1f);
+					this.bill.unpauseWhenYouHave = Mathf.RoundToInt(listing_Standard.Slider((float)this.bill.unpauseWhenYouHave, 0f, (float)(this.bill.targetCount - 1)));
 				}
 			}
-			Rect rect3 = new Rect(rect2.xMax + 6f, 50f, 280f, -1f);
-			rect3.yMax = inRect.height - this.CloseButSize.y - 6f;
-			ThingFilterUI.DoThingFilterConfigWindow(rect3, ref this.scrollPosition, this.bill.ingredientFilter, this.bill.recipe.fixedIngredientFilter, 4, list2, this.bill.recipe.forceHiddenSpecialFilters);
-			Rect rect4 = new Rect(rect3.xMax + 6f, rect3.y + 30f, 0f, 0f);
-			rect4.xMax = inRect.xMax;
-			rect4.yMax = inRect.height - this.CloseButSize.y - 6f;
+			listing_Standard.End();
+			ThingFilterUI.DoThingFilterConfigWindow(rect4, ref this.scrollPosition, this.bill.ingredientFilter, this.bill.recipe.fixedIngredientFilter, 4, null, this.bill.recipe.forceHiddenSpecialFilters, this.bill.recipe.GetPremultipliedSmallIngredients());
 			StringBuilder stringBuilder = new StringBuilder();
 			if (this.bill.recipe.description != null)
 			{
@@ -175,12 +173,12 @@ namespace RimWorld
 			}
 			stringBuilder.AppendLine("WorkAmount".Translate() + ": " + this.bill.recipe.WorkAmountTotal(null).ToStringWorkAmount());
 			stringBuilder.AppendLine();
-			for (int j = 0; j < this.bill.recipe.ingredients.Count; j++)
+			for (int i = 0; i < this.bill.recipe.ingredients.Count; i++)
 			{
-				IngredientCount ingredientCount2 = this.bill.recipe.ingredients[j];
-				if (!ingredientCount2.filter.Summary.NullOrEmpty())
+				IngredientCount ingredientCount = this.bill.recipe.ingredients[i];
+				if (!ingredientCount.filter.Summary.NullOrEmpty())
 				{
-					stringBuilder.AppendLine(this.bill.recipe.IngredientValueGetter.BillRequirementsDescription(ingredientCount2));
+					stringBuilder.AppendLine(this.bill.recipe.IngredientValueGetter.BillRequirementsDescription(this.bill.recipe, ingredientCount));
 				}
 			}
 			stringBuilder.AppendLine();
@@ -190,19 +188,22 @@ namespace RimWorld
 				stringBuilder.AppendLine(text4);
 				stringBuilder.AppendLine();
 			}
-			stringBuilder.AppendLine("MinimumSkills".Translate());
-			stringBuilder.AppendLine(this.bill.recipe.MinSkillString);
+			if (!this.bill.recipe.skillRequirements.NullOrEmpty<SkillRequirement>())
+			{
+				stringBuilder.AppendLine("MinimumSkills".Translate());
+				stringBuilder.AppendLine(this.bill.recipe.MinSkillString);
+			}
 			Text.Font = GameFont.Small;
 			string text5 = stringBuilder.ToString();
-			if (Text.CalcHeight(text5, rect4.width) > rect4.height)
+			if (Text.CalcHeight(text5, rect2.width) > rect2.height)
 			{
 				Text.Font = GameFont.Tiny;
 			}
-			Widgets.Label(rect4, text5);
+			Widgets.Label(rect2, text5);
 			Text.Font = GameFont.Small;
 			if (this.bill.recipe.products.Count == 1)
 			{
-				Widgets.InfoCardButton(rect4.x, rect3.y, this.bill.recipe.products[0].thingDef);
+				Widgets.InfoCardButton(rect2.x, rect4.y, this.bill.recipe.products[0].thingDef);
 			}
 		}
 	}

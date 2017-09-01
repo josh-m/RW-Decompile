@@ -69,60 +69,30 @@ namespace Verse
 			{
 				return;
 			}
+			bool flag = false;
 			for (int i = 0; i < 8; i++)
 			{
 				IntVec3 c2 = c + GenAdj.AdjacentCells[i];
-				if (!this.IsFogged(c2))
+				if (c2.InBounds(this.map) && !this.IsFogged(c2))
 				{
-					this.Unfog(c);
-					bool flag = false;
-					FloodUnfogResult floodUnfogResult = default(FloodUnfogResult);
-					for (int j = 0; j < 4; j++)
-					{
-						IntVec3 intVec = c + GenAdj.CardinalDirections[j];
-						if (intVec.InBounds(this.map))
-						{
-							if (intVec.Fogged(this.map))
-							{
-								Thing edifice = intVec.GetEdifice(this.map);
-								if (edifice == null || !edifice.def.MakeFog)
-								{
-									flag = true;
-									floodUnfogResult = FloodFillerFog.FloodUnfog(intVec, this.map);
-								}
-								else
-								{
-									this.Unfog(intVec);
-								}
-							}
-						}
-					}
-					for (int k = 0; k < 8; k++)
-					{
-						IntVec3 c3 = c + GenAdj.AdjacentCells[k];
-						if (c3.InBounds(this.map))
-						{
-							Thing edifice2 = c3.GetEdifice(this.map);
-							if (edifice2 != null && edifice2.def.MakeFog)
-							{
-								this.Unfog(c3);
-							}
-						}
-					}
-					if (flag)
-					{
-						if (floodUnfogResult.mechanoidFound)
-						{
-							Find.LetterStack.ReceiveLetter("LetterLabelAreaRevealed".Translate(), "AreaRevealedWithMechanoids".Translate(), LetterType.BadUrgent, new TargetInfo(c, this.map, false), null);
-						}
-						else
-						{
-							Find.LetterStack.ReceiveLetter("LetterLabelAreaRevealed".Translate(), "AreaRevealed".Translate(), LetterType.Good, new TargetInfo(c, this.map, false), null);
-						}
-					}
-					return;
+					flag = true;
+					break;
 				}
 			}
+			if (!flag)
+			{
+				return;
+			}
+			this.FloodUnfogAdjacent(c);
+		}
+
+		public void Notify_PawnEnteringDoor(Building_Door door, Pawn pawn)
+		{
+			if (pawn.Faction != Faction.OfPlayer && pawn.HostFaction != Faction.OfPlayer)
+			{
+				return;
+			}
+			this.FloodUnfogAdjacent(door.Position);
 		}
 
 		internal void SetAllFogged()
@@ -139,6 +109,56 @@ namespace Verse
 			if (Current.ProgramState == ProgramState.Playing)
 			{
 				this.map.roofGrid.Drawer.SetDirty();
+			}
+		}
+
+		private void FloodUnfogAdjacent(IntVec3 c)
+		{
+			this.Unfog(c);
+			bool flag = false;
+			FloodUnfogResult floodUnfogResult = default(FloodUnfogResult);
+			for (int i = 0; i < 4; i++)
+			{
+				IntVec3 intVec = c + GenAdj.CardinalDirections[i];
+				if (intVec.InBounds(this.map))
+				{
+					if (intVec.Fogged(this.map))
+					{
+						Building edifice = intVec.GetEdifice(this.map);
+						if (edifice == null || !edifice.def.MakeFog)
+						{
+							flag = true;
+							floodUnfogResult = FloodFillerFog.FloodUnfog(intVec, this.map);
+						}
+						else
+						{
+							this.Unfog(intVec);
+						}
+					}
+				}
+			}
+			for (int j = 0; j < 8; j++)
+			{
+				IntVec3 c2 = c + GenAdj.AdjacentCells[j];
+				if (c2.InBounds(this.map))
+				{
+					Building edifice2 = c2.GetEdifice(this.map);
+					if (edifice2 != null && edifice2.def.MakeFog)
+					{
+						this.Unfog(c2);
+					}
+				}
+			}
+			if (flag)
+			{
+				if (floodUnfogResult.mechanoidFound)
+				{
+					Find.LetterStack.ReceiveLetter("LetterLabelAreaRevealed".Translate(), "AreaRevealedWithMechanoids".Translate(), LetterDefOf.BadUrgent, new TargetInfo(c, this.map, false), null);
+				}
+				else
+				{
+					Find.LetterStack.ReceiveLetter("LetterLabelAreaRevealed".Translate(), "AreaRevealed".Translate(), LetterDefOf.Good, new TargetInfo(c, this.map, false), null);
+				}
 			}
 		}
 	}

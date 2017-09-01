@@ -9,9 +9,11 @@ namespace Verse.AI
 {
 	public class Pawn_MindState : IExposable
 	{
-		private const int UpdateAnyCloseHostilesRecentlyEveryTicks = 120;
+		private const int UpdateAnyCloseHostilesRecentlyEveryTicks = 100;
 
-		private const int AnyCloseHostilesRecentlyRegionsToScan = 18;
+		private const int AnyCloseHostilesRecentlyRegionsToScan_ToActivate = 18;
+
+		private const int AnyCloseHostilesRecentlyRegionsToScan_ToDeactivate = 24;
 
 		private const float HarmForgetDistance = 3f;
 
@@ -23,7 +25,7 @@ namespace Verse.AI
 
 		public MentalBreaker mentalBreaker;
 
-		public PriorityWork priorityWork = new PriorityWork();
+		public PriorityWork priorityWork;
 
 		private bool activeInt = true;
 
@@ -63,6 +65,10 @@ namespace Verse.AI
 
 		public int lastEngageTargetTick;
 
+		public int lastAttackTargetTick;
+
+		public LocalTargetInfo lastAttackedTarget;
+
 		public Thing enemyTarget;
 
 		public PawnDuty duty;
@@ -73,15 +79,21 @@ namespace Verse.AI
 
 		public int lastInventoryRawFoodUseTick;
 
-		public bool nextMoveOrderIsWait = true;
+		public bool nextMoveOrderIsWait;
 
-		public int lastTakeCombatEnancingDrugTick = -99999;
+		public int lastTakeCombatEnhancingDrugTick = -99999;
 
 		public int lastHarmTick = -99999;
 
 		public bool anyCloseHostilesRecently;
 
+		public int applyBedThoughtsTick;
+
+		public bool applyBedThoughtsOnLeave;
+
 		public bool awokeVoluntarily;
+
+		public float maxDistToSquadFlag = -1f;
 
 		private int lastJobGiverKey = -1;
 
@@ -116,7 +128,7 @@ namespace Verse.AI
 		{
 			get
 			{
-				return this.meleeThreat != null && this.meleeThreat.Spawned && !this.meleeThreat.Downed && this.pawn.Spawned && Find.TickManager.TicksGame <= this.lastMeleeThreatHarmTick + 400 && (this.pawn.Position - this.meleeThreat.Position).LengthHorizontalSquared <= 9f && GenSight.LineOfSight(this.pawn.Position, this.meleeThreat.Position, this.pawn.Map, false);
+				return this.meleeThreat != null && this.meleeThreat.Spawned && !this.meleeThreat.Downed && this.pawn.Spawned && Find.TickManager.TicksGame <= this.lastMeleeThreatHarmTick + 400 && (float)(this.pawn.Position - this.meleeThreat.Position).LengthHorizontalSquared <= 9f && GenSight.LineOfSight(this.pawn.Position, this.meleeThreat.Position, this.pawn.Map, false, null, 0, 0);
 			}
 		}
 
@@ -129,6 +141,7 @@ namespace Verse.AI
 			this.pawn = pawn;
 			this.mentalStateHandler = new MentalStateHandler(pawn);
 			this.mentalBreaker = new MentalBreaker(pawn);
+			this.priorityWork = new PriorityWork(pawn);
 		}
 
 		public void Reset()
@@ -136,7 +149,7 @@ namespace Verse.AI
 			this.mentalStateHandler.Reset();
 			this.mentalBreaker.Reset();
 			this.activeInt = true;
-			this.lastJobTag = JobTag.NoTag;
+			this.lastJobTag = JobTag.Misc;
 			this.lastIngestTick = -99999;
 			this.nextApparelOptimizeTick = -99999;
 			this.lastJobGiver = null;
@@ -154,6 +167,8 @@ namespace Verse.AI
 			this.meleeThreat = null;
 			this.lastMeleeThreatHarmTick = 0;
 			this.lastEngageTargetTick = 0;
+			this.lastAttackTargetTick = 0;
+			this.lastAttackedTarget = LocalTargetInfo.Invalid;
 			this.enemyTarget = null;
 			this.duty = null;
 			this.thinkData.Clear();
@@ -161,7 +176,7 @@ namespace Verse.AI
 			this.lastInventoryRawFoodUseTick = 0;
 			this.priorityWork.Clear();
 			this.nextMoveOrderIsWait = true;
-			this.lastTakeCombatEnancingDrugTick = -99999;
+			this.lastTakeCombatEnhancingDrugTick = -99999;
 			this.lastHarmTick = -99999;
 			this.anyCloseHostilesRecently = false;
 		}
@@ -170,59 +185,54 @@ namespace Verse.AI
 		{
 			if (Scribe.mode == LoadSaveMode.Saving)
 			{
-				if (this.enemyTarget != null && this.enemyTarget.Destroyed)
-				{
-					this.enemyTarget = null;
-				}
-				if (this.knownExploder != null && this.knownExploder.Destroyed)
-				{
-					this.knownExploder = null;
-				}
-			}
-			Scribe_Values.LookValue<bool>(ref this.activeInt, "active", true, false);
-			Scribe_Values.LookValue<JobTag>(ref this.lastJobTag, "lastJobTag", JobTag.NoTag, false);
-			if (Scribe.mode == LoadSaveMode.Saving)
-			{
 				this.lastJobGiverKey = ((this.lastJobGiver == null) ? -1 : this.lastJobGiver.UniqueSaveKey);
 			}
-			Scribe_Values.LookValue<int>(ref this.lastJobGiverKey, "lastJobGiverKey", -1, false);
+			Scribe_Values.Look<int>(ref this.lastJobGiverKey, "lastJobGiverKey", -1, false);
 			if (Scribe.mode == LoadSaveMode.PostLoadInit && this.lastJobGiverKey != -1 && !this.lastJobGiverThinkTree.TryGetThinkNodeWithSaveKey(this.lastJobGiverKey, out this.lastJobGiver))
 			{
 				Log.Warning("Could not find think node with key " + this.lastJobGiverKey);
 			}
-			Scribe_Defs.LookDef<ThinkTreeDef>(ref this.lastJobGiverThinkTree, "lastJobGiverThinkTree");
-			Scribe_Values.LookValue<int>(ref this.lastIngestTick, "lastIngestTick", -99999, false);
-			Scribe_Values.LookValue<int>(ref this.nextApparelOptimizeTick, "nextApparelOptimizeTick", -99999, false);
-			Scribe_Values.LookValue<int>(ref this.lastEngageTargetTick, "lastEngageTargetTick", 0, false);
-			Scribe_Values.LookValue<bool>(ref this.canFleeIndividual, "canFleeIndividual", false, false);
-			Scribe_Values.LookValue<int>(ref this.exitMapAfterTick, "exitMapAfterTick", -99999, false);
-			Scribe_Values.LookValue<IntVec3>(ref this.forcedGotoPosition, "forcedGotoPosition", IntVec3.Invalid, false);
-			Scribe_Values.LookValue<int>(ref this.lastMeleeThreatHarmTick, "lastMeleeThreatHarmTick", 0, false);
-			Scribe_Values.LookValue<int>(ref this.lastAssignedInteractTime, "lastAssignedInteractTime", -99999, false);
-			Scribe_Values.LookValue<int>(ref this.lastInventoryRawFoodUseTick, "lastInventoryRawFoodUseTick", 0, false);
-			Scribe_Values.LookValue<int>(ref this.lastDisturbanceTick, "lastDisturbanceTick", -99999, false);
-			Scribe_Values.LookValue<bool>(ref this.wantsToTradeWithColony, "wantsToTradeWithColony", false, false);
-			Scribe_Values.LookValue<int>(ref this.canLovinTick, "canLovinTick", -99999, false);
-			Scribe_Values.LookValue<int>(ref this.canSleepTick, "canSleepTick", -99999, false);
-			Scribe_Values.LookValue<bool>(ref this.nextMoveOrderIsWait, "nextMoveOrderIsWait", true, false);
-			Scribe_Values.LookValue<int>(ref this.lastTakeCombatEnancingDrugTick, "lastTakeCombatEnancingDrugTick", -99999, false);
-			Scribe_Values.LookValue<int>(ref this.lastHarmTick, "lastHarmTick", -99999, false);
-			Scribe_Values.LookValue<bool>(ref this.anyCloseHostilesRecently, "anyCloseHostilesRecently", false, false);
-			Scribe_Collections.LookDictionary<int, int>(ref this.thinkData, "thinkData", LookMode.Undefined, LookMode.Undefined);
-			Scribe_References.LookReference<Pawn>(ref this.meleeThreat, "meleeThreat", false);
-			Scribe_References.LookReference<Thing>(ref this.enemyTarget, "enemyTarget", false);
-			Scribe_References.LookReference<Thing>(ref this.knownExploder, "knownExploder", false);
-			Scribe_References.LookReference<Thing>(ref this.lastMannedThing, "lastMannedThing", false);
-			Scribe_Deep.LookDeep<PawnDuty>(ref this.duty, "duty", new object[0]);
-			Scribe_Deep.LookDeep<MentalStateHandler>(ref this.mentalStateHandler, "mentalStateHandler", new object[]
+			Scribe_References.Look<Pawn>(ref this.meleeThreat, "meleeThreat", false);
+			Scribe_References.Look<Thing>(ref this.enemyTarget, "enemyTarget", false);
+			Scribe_References.Look<Thing>(ref this.knownExploder, "knownExploder", false);
+			Scribe_References.Look<Thing>(ref this.lastMannedThing, "lastMannedThing", false);
+			Scribe_Defs.Look<ThinkTreeDef>(ref this.lastJobGiverThinkTree, "lastJobGiverThinkTree");
+			Scribe_TargetInfo.Look(ref this.lastAttackedTarget, "lastAttackedTarget");
+			Scribe_Collections.Look<int, int>(ref this.thinkData, "thinkData", LookMode.Value, LookMode.Value);
+			Scribe_Values.Look<bool>(ref this.activeInt, "active", true, false);
+			Scribe_Values.Look<JobTag>(ref this.lastJobTag, "lastJobTag", JobTag.Misc, false);
+			Scribe_Values.Look<int>(ref this.lastIngestTick, "lastIngestTick", -99999, false);
+			Scribe_Values.Look<int>(ref this.nextApparelOptimizeTick, "nextApparelOptimizeTick", -99999, false);
+			Scribe_Values.Look<int>(ref this.lastEngageTargetTick, "lastEngageTargetTick", 0, false);
+			Scribe_Values.Look<int>(ref this.lastAttackTargetTick, "lastAttackTargetTick", 0, false);
+			Scribe_Values.Look<bool>(ref this.canFleeIndividual, "canFleeIndividual", false, false);
+			Scribe_Values.Look<int>(ref this.exitMapAfterTick, "exitMapAfterTick", -99999, false);
+			Scribe_Values.Look<IntVec3>(ref this.forcedGotoPosition, "forcedGotoPosition", IntVec3.Invalid, false);
+			Scribe_Values.Look<int>(ref this.lastMeleeThreatHarmTick, "lastMeleeThreatHarmTick", 0, false);
+			Scribe_Values.Look<int>(ref this.lastAssignedInteractTime, "lastAssignedInteractTime", -99999, false);
+			Scribe_Values.Look<int>(ref this.lastInventoryRawFoodUseTick, "lastInventoryRawFoodUseTick", 0, false);
+			Scribe_Values.Look<int>(ref this.lastDisturbanceTick, "lastDisturbanceTick", -99999, false);
+			Scribe_Values.Look<bool>(ref this.wantsToTradeWithColony, "wantsToTradeWithColony", false, false);
+			Scribe_Values.Look<int>(ref this.canLovinTick, "canLovinTick", -99999, false);
+			Scribe_Values.Look<int>(ref this.canSleepTick, "canSleepTick", -99999, false);
+			Scribe_Values.Look<bool>(ref this.nextMoveOrderIsWait, "nextMoveOrderIsWait", true, false);
+			Scribe_Values.Look<int>(ref this.lastTakeCombatEnhancingDrugTick, "lastTakeCombatEnhancingDrugTick", -99999, false);
+			Scribe_Values.Look<int>(ref this.lastHarmTick, "lastHarmTick", -99999, false);
+			Scribe_Values.Look<bool>(ref this.anyCloseHostilesRecently, "anyCloseHostilesRecently", false, false);
+			Scribe_Deep.Look<PawnDuty>(ref this.duty, "duty", new object[0]);
+			Scribe_Deep.Look<MentalStateHandler>(ref this.mentalStateHandler, "mentalStateHandler", new object[]
 			{
 				this.pawn
 			});
-			Scribe_Deep.LookDeep<MentalBreaker>(ref this.mentalBreaker, "mentalBreaker", new object[]
+			Scribe_Deep.Look<MentalBreaker>(ref this.mentalBreaker, "mentalBreaker", new object[]
 			{
 				this.pawn
 			});
-			Scribe_Deep.LookDeep<PriorityWork>(ref this.priorityWork, "priorityWork", new object[0]);
+			Scribe_Deep.Look<PriorityWork>(ref this.priorityWork, "priorityWork", new object[]
+			{
+				this.pawn
+			});
+			Scribe_Values.Look<int>(ref this.applyBedThoughtsTick, "applyBedThoughtsTick", 0, false);
 		}
 
 		public void MindStateTick()
@@ -237,11 +247,16 @@ namespace Verse.AI
 			}
 			this.mentalStateHandler.MentalStateHandlerTick();
 			this.mentalBreaker.MentalStateStarterTick();
-			if (this.pawn.IsHashIntervalTick(120))
+			if (this.pawn.CurJob == null || this.pawn.jobs.curDriver.layingDown == LayingDownState.NotLaying)
+			{
+				this.applyBedThoughtsTick = 0;
+			}
+			if (this.pawn.IsHashIntervalTick(100))
 			{
 				if (this.pawn.Spawned)
 				{
-					this.anyCloseHostilesRecently = PawnUtility.EnemiesAreNearby(this.pawn, 18, true);
+					int regionsToScan = (!this.anyCloseHostilesRecently) ? 18 : 24;
+					this.anyCloseHostilesRecently = PawnUtility.EnemiesAreNearby(this.pawn, regionsToScan, true);
 				}
 				else
 				{
@@ -258,7 +273,7 @@ namespace Verse.AI
 		[DebuggerHidden]
 		public IEnumerable<Gizmo> GetGizmos()
 		{
-			foreach (Gizmo g in this.priorityWork.GetGizmos(this.pawn))
+			foreach (Gizmo g in this.priorityWork.GetGizmos())
 			{
 				yield return g;
 			}
@@ -304,6 +319,10 @@ namespace Verse.AI
 				{
 					this.StartManhunterBecauseOfPawnAction("AnimalManhunterFromDamage");
 				}
+				else if (dinfo.Instigator != null && Pawn_MindState.CanStartFleeingBecauseOfPawnAction(this.pawn))
+				{
+					this.StartFleeingBecauseOfPawnAction(dinfo.Instigator);
+				}
 				if (this.pawn.GetPosture() != PawnPosture.Standing)
 				{
 					this.lastDisturbanceTick = Find.TickManager.TicksGame;
@@ -314,6 +333,12 @@ namespace Verse.AI
 		internal void Notify_EngagedTarget()
 		{
 			this.lastEngageTargetTick = Find.TickManager.TicksGame;
+		}
+
+		internal void Notify_AttackedTarget(LocalTargetInfo target)
+		{
+			this.lastAttackTargetTick = Find.TickManager.TicksGame;
+			this.lastAttackedTarget = target;
 		}
 
 		internal bool CheckStartMentalStateBecauseRecruitAttempted(Pawn tamer)
@@ -339,6 +364,20 @@ namespace Verse.AI
 			}
 		}
 
+		[DebuggerHidden]
+		private IEnumerable<Pawn> GetPackmates(Pawn pawn, float radius)
+		{
+			Room pawnRoom = pawn.GetRoom(RegionType.Set_Passable);
+			List<Pawn> raceMates = pawn.Map.mapPawns.AllPawnsSpawned;
+			for (int i = 0; i < raceMates.Count; i++)
+			{
+				if (pawn != raceMates[i] && raceMates[i].def == pawn.def && raceMates[i].Faction == pawn.Faction && raceMates[i].Position.InHorDistOf(pawn.Position, radius) && raceMates[i].GetRoom(RegionType.Set_Passable) == pawnRoom)
+				{
+					yield return raceMates[i];
+				}
+			}
+		}
+
 		private void StartManhunterBecauseOfPawnAction(string letterTextKey)
 		{
 			if (!this.mentalStateHandler.TryStartMentalState(MentalStateDefOf.Manhunter, null, false, false, null))
@@ -349,22 +388,20 @@ namespace Verse.AI
 			{
 				this.pawn.Label
 			});
-			GlobalTargetInfo letterLookTarget = this.pawn;
+			GlobalTargetInfo lookTarget = this.pawn;
 			if (Rand.Value < 0.5f)
 			{
 				int num = 1;
-				Room room = this.pawn.GetRoom();
-				List<Pawn> allPawnsSpawned = this.pawn.Map.mapPawns.AllPawnsSpawned;
-				for (int i = 0; i < allPawnsSpawned.Count; i++)
+				foreach (Pawn current in this.GetPackmates(this.pawn, 24f))
 				{
-					if (this.pawn != allPawnsSpawned[i] && allPawnsSpawned[i].RaceProps == this.pawn.RaceProps && allPawnsSpawned[i].Faction == this.pawn.Faction && allPawnsSpawned[i].Position.InHorDistOf(this.pawn.Position, 24f) && allPawnsSpawned[i].GetRoom() == room && allPawnsSpawned[i].mindState.mentalStateHandler.TryStartMentalState(MentalStateDefOf.Manhunter, null, false, false, null))
+					if (current.mindState.mentalStateHandler.TryStartMentalState(MentalStateDefOf.Manhunter, null, false, false, null))
 					{
 						num++;
 					}
 				}
 				if (num > 1)
 				{
-					letterLookTarget = new TargetInfo(this.pawn.Position, this.pawn.Map, false);
+					lookTarget = new TargetInfo(this.pawn.Position, this.pawn.Map, false);
 					text += "\n\n";
 					text += ((!"AnimalManhunterOthers".CanTranslate()) ? "AnimalManhunterFromDamageOthers".Translate(new object[]
 					{
@@ -382,7 +419,39 @@ namespace Verse.AI
 			{
 				this.pawn.Label
 			}).CapitalizeFirst();
-			Find.LetterStack.ReceiveLetter(label, text, LetterType.BadNonUrgent, letterLookTarget, null);
+			Find.LetterStack.ReceiveLetter(label, text, LetterDefOf.BadNonUrgent, lookTarget, null);
+		}
+
+		private static bool CanStartFleeingBecauseOfPawnAction(Pawn p)
+		{
+			return p.RaceProps.Animal && !p.InMentalState && !p.IsFighting() && !p.Downed && !p.Dead && !ThinkNode_ConditionalShouldFollowMaster.ShouldFollowMaster(p);
+		}
+
+		private void StartFleeingBecauseOfPawnAction(Thing instigator)
+		{
+			List<Thing> threats = new List<Thing>
+			{
+				instigator
+			};
+			IntVec3 fleeDest = CellFinderLoose.GetFleeDest(this.pawn, threats, this.pawn.Position.DistanceTo(instigator.Position) + 14f);
+			if (fleeDest.IsValid)
+			{
+				this.pawn.jobs.StartJob(new Job(JobDefOf.Flee, fleeDest, instigator), JobCondition.InterruptOptional, null, false, true, null, null);
+			}
+			if (this.pawn.RaceProps.herdAnimal && Rand.Chance(0.1f))
+			{
+				foreach (Pawn current in this.GetPackmates(this.pawn, 24f))
+				{
+					if (Pawn_MindState.CanStartFleeingBecauseOfPawnAction(current))
+					{
+						IntVec3 fleeDest2 = CellFinderLoose.GetFleeDest(this.pawn, threats, this.pawn.Position.DistanceTo(instigator.Position) + 14f);
+						if (fleeDest2.IsValid)
+						{
+							current.jobs.StartJob(new Job(JobDefOf.Flee, fleeDest2, instigator), JobCondition.InterruptOptional, null, false, true, null, null);
+						}
+					}
+				}
+			}
 		}
 	}
 }

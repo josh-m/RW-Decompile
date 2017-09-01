@@ -10,7 +10,7 @@ namespace RimWorld.Planet
 
 		public static string GenerateFactionBaseName(FactionBase factionBase)
 		{
-			if (factionBase.Faction == null || factionBase.Faction.def.factionBaseNameMaker == null)
+			if (factionBase.Faction == null || factionBase.Faction.def.baseNameMaker == null)
 			{
 				return factionBase.def.label;
 			}
@@ -24,7 +24,7 @@ namespace RimWorld.Planet
 					FactionBaseNameGenerator.usedNames.Add(factionBase2.Name);
 				}
 			}
-			return NameGenerator.GenerateName(factionBase.Faction.def.factionBaseNameMaker, FactionBaseNameGenerator.usedNames, true);
+			return NameGenerator.GenerateName(factionBase.Faction.def.baseNameMaker, FactionBaseNameGenerator.usedNames, true);
 		}
 	}
 }

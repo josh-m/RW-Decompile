@@ -88,7 +88,7 @@ namespace Verse
 			if (this.info == null)
 			{
 				string filePath = Path.Combine(folderPath.ToString(), "LanguageInfo.xml");
-				this.info = XmlLoader.ItemFromXmlFile<LanguageInfo>(filePath, false);
+				this.info = DirectXmlLoader.ItemFromXmlFile<LanguageInfo>(filePath, false);
 				if (this.info.friendlyNameNative.NullOrEmpty())
 				{
 					FileInfo fileInfo = new FileInfo(Path.Combine(folderPath.ToString(), "FriendlyName.txt"));
@@ -259,7 +259,7 @@ namespace Verse
 			Dictionary<string, string> dictionary = new Dictionary<string, string>();
 			try
 			{
-				foreach (KeyValuePair<string, string> current in XmlLoaderSimple.ValuesFromXmlFile(file))
+				foreach (KeyValuePair<string, string> current in DirectXmlLoaderSimple.ValuesFromXmlFile(file))
 				{
 					if (this.keyedReplacements.ContainsKey(current.Key) || dictionary.ContainsKey(current.Key))
 					{

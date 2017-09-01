@@ -46,7 +46,7 @@ namespace Verse
 			{
 				for (int i = 0; i < WindManager.plantMaterials.Count; i++)
 				{
-					WindManager.plantMaterials[i].SetFloat("_SwayHead", this.plantSwayHead);
+					WindManager.plantMaterials[i].SetFloat(ShaderPropertyIDs.SwayHead, this.plantSwayHead);
 				}
 			}
 		}

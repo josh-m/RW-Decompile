@@ -1,4 +1,3 @@
-using RimWorld.Planet;
 using System;
 using System.Collections.Generic;
 using Verse;
@@ -33,14 +32,6 @@ namespace RimWorld
 			}
 		}
 
-		private bool ShouldTickNeeds
-		{
-			get
-			{
-				return this.pawn.Spawned || (this.pawn.holdingContainer != null && this.pawn.holdingContainer.owner is Pawn_CarryTracker) || this.pawn.IsCaravanMember();
-			}
-		}
-
 		public Pawn_NeedsTracker()
 		{
 		}
@@ -53,7 +44,7 @@ namespace RimWorld
 
 		public void ExposeData()
 		{
-			Scribe_Collections.LookList<Need>(ref this.needs, "needs", LookMode.Deep, new object[]
+			Scribe_Collections.Look<Need>(ref this.needs, "needs", LookMode.Deep, new object[]
 			{
 				this.pawn
 			});
@@ -73,7 +64,7 @@ namespace RimWorld
 
 		public void NeedsTrackerTick()
 		{
-			if (this.pawn.IsHashIntervalTick(150) && this.ShouldTickNeeds)
+			if (this.pawn.IsHashIntervalTick(150))
 			{
 				for (int i = 0; i < this.needs.Count; i++)
 				{

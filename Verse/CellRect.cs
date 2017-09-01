@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using UnityEngine;
 
 namespace Verse
@@ -113,6 +114,14 @@ namespace Verse
 		public int minZ;
 
 		public int maxZ;
+
+		public static CellRect Empty
+		{
+			get
+			{
+				return new CellRect(0, 0, 0, 0);
+			}
+		}
 
 		public int Area
 		{
@@ -251,6 +260,22 @@ namespace Verse
 			}
 		}
 
+		public int EdgeCellsCount
+		{
+			get
+			{
+				if (this.Area == 0)
+				{
+					return 0;
+				}
+				if (this.Area == 1)
+				{
+					return 1;
+				}
+				return this.Width * 2 + (this.Height - 2) * 2;
+			}
+		}
+
 		public CellRect(int minX, int minZ, int width, int height)
 		{
 			this.minX = minX;
@@ -309,7 +334,7 @@ namespace Verse
 
 		public bool InBounds(Map map)
 		{
-			return this.minX >= 0 && this.minZ >= 0 && this.maxX <= map.Size.x - 1 && this.maxZ <= map.Size.z - 1;
+			return this.minX >= 0 && this.minZ >= 0 && this.maxX < map.Size.x && this.maxZ < map.Size.z;
 		}
 
 		public bool FullyContainedWithin(CellRect within)
@@ -317,6 +342,16 @@ namespace Verse
 			CellRect rhs = this;
 			rhs.ClipInsideRect(within);
 			return this == rhs;
+		}
+
+		public bool IsOnEdge(IntVec3 c)
+		{
+			return (c.x == this.minX && c.z >= this.minZ && c.z <= this.maxZ) || (c.x == this.maxX && c.z >= this.minZ && c.z <= this.maxZ) || (c.z == this.minZ && c.x >= this.minX && c.x <= this.maxX) || (c.z == this.maxZ && c.x >= this.minX && c.x <= this.maxX);
+		}
+
+		public bool IsCorner(IntVec3 c)
+		{
+			return (c.x == this.minX && c.z == this.minZ) || (c.x == this.maxX && c.z == this.minZ) || (c.x == this.minX && c.z == this.maxZ) || (c.x == this.maxX && c.z == this.maxZ);
 		}
 
 		public CellRect ClipInsideMap(Map map)
@@ -376,11 +411,11 @@ namespace Verse
 			{
 				if (c.z < this.minZ)
 				{
-					return (c - new IntVec3(this.minX, 0, this.minZ)).LengthHorizontalSquared;
+					return (float)(c - new IntVec3(this.minX, 0, this.minZ)).LengthHorizontalSquared;
 				}
 				if (c.z > this.maxZ)
 				{
-					return (c - new IntVec3(this.minX, 0, this.maxZ)).LengthHorizontalSquared;
+					return (float)(c - new IntVec3(this.minX, 0, this.maxZ)).LengthHorizontalSquared;
 				}
 				return (float)((this.minX - c.x) * (this.minX - c.x));
 			}
@@ -388,11 +423,11 @@ namespace Verse
 			{
 				if (c.z < this.minZ)
 				{
-					return (c - new IntVec3(this.maxX, 0, this.minZ)).LengthHorizontalSquared;
+					return (float)(c - new IntVec3(this.maxX, 0, this.minZ)).LengthHorizontalSquared;
 				}
 				if (c.z > this.maxZ)
 				{
-					return (c - new IntVec3(this.maxX, 0, this.maxZ)).LengthHorizontalSquared;
+					return (float)(c - new IntVec3(this.maxX, 0, this.maxZ)).LengthHorizontalSquared;
 				}
 				return (float)((c.x - this.maxX) * (c.x - this.maxX));
 			}
@@ -477,6 +512,34 @@ namespace Verse
 					yield return new IntVec3(this.maxX, 0, z2);
 				}
 			}
+		}
+
+		public bool TryFindRandomInnerRectTouchingEdge(IntVec2 size, out CellRect rect, Predicate<CellRect> predicate = null)
+		{
+			if (this.Width < size.x || this.Height < size.z)
+			{
+				rect = CellRect.Empty;
+				return false;
+			}
+			CellRect cellRect = this;
+			cellRect.maxX -= size.x - 1;
+			cellRect.maxZ -= size.z - 1;
+			IntVec3 intVec;
+			if (cellRect.EdgeCells.Where(delegate(IntVec3 x)
+			{
+				if (predicate == null)
+				{
+					return true;
+				}
+				CellRect obj = new CellRect(x.x, x.z, size.x, size.z);
+				return predicate(obj);
+			}).TryRandomElement(out intVec))
+			{
+				rect = new CellRect(intVec.x, intVec.z, size.x, size.z);
+				return true;
+			}
+			rect = CellRect.Empty;
+			return false;
 		}
 
 		public CellRect ExpandedBy(int dist)

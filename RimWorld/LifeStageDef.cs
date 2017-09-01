@@ -36,6 +36,8 @@ namespace RimWorld
 
 		public float marketValueFactor = 1f;
 
+		public float foodMaxFactor = 1f;
+
 		public string Adjective
 		{
 			get

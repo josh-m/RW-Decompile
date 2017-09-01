@@ -248,6 +248,7 @@ namespace RimWorld.Planet
 
 		private static void CalculateTileNeighbors()
 		{
+			List<int> list = new List<int>();
 			int i = 0;
 			int count = PlanetShapeGenerator.tileIDToVerts_offsets.Count;
 			while (i < count)
@@ -259,6 +260,7 @@ namespace RimWorld.Planet
 				while (j < count2)
 				{
 					PackedListOfLists.GetList<int>(PlanetShapeGenerator.vertToTileIDs_offsets, PlanetShapeGenerator.vertToTileIDs_values, PlanetShapeGenerator.tmpVerts[j], PlanetShapeGenerator.tmpTileIDs);
+					PackedListOfLists.GetList<int>(PlanetShapeGenerator.vertToTileIDs_offsets, PlanetShapeGenerator.vertToTileIDs_values, PlanetShapeGenerator.tmpVerts[(j + 1) % PlanetShapeGenerator.tmpVerts.Count], list);
 					int k = 0;
 					int count3 = PlanetShapeGenerator.tmpTileIDs.Count;
 					while (k < count3)
@@ -268,7 +270,7 @@ namespace RimWorld.Planet
 						{
 							if (num != -1)
 							{
-								if (!PlanetShapeGenerator.tmpNeighborsToAdd.Contains(num))
+								if (list.Contains(num))
 								{
 									PlanetShapeGenerator.tmpNeighborsToAdd.Add(num);
 								}

@@ -12,8 +12,8 @@ namespace RimWorld
 			{
 				return null;
 			}
-			Region validRegionAt = pawn.Map.regionGrid.GetValidRegionAt(pawn.Position);
-			if (validRegionAt == null)
+			Region region = pawn.GetRegion(RegionType.Set_Passable);
+			if (region == null)
 			{
 				return null;
 			}
@@ -33,7 +33,7 @@ namespace RimWorld
 				}
 				return false;
 			};
-			RegionTraverser.BreadthFirstTraverse(validRegionAt, entryCondition, regionProcessor, 9999);
+			RegionTraverser.BreadthFirstTraverse(region, entryCondition, regionProcessor, 9999, RegionType.Set_Passable);
 			if (reg == null)
 			{
 				return null;

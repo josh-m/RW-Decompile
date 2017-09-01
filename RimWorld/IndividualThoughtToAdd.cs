@@ -44,7 +44,7 @@ namespace RimWorld
 		{
 			if (this.addTo.needs != null && this.addTo.needs.mood != null)
 			{
-				this.addTo.needs.mood.thoughts.memories.TryGainMemoryThought(this.thought, this.otherPawn);
+				this.addTo.needs.mood.thoughts.memories.TryGainMemory(this.thought, this.otherPawn);
 			}
 		}
 	}

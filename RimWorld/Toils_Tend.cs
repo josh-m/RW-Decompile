@@ -15,10 +15,17 @@ namespace RimWorld
 				Pawn actor = toil.actor;
 				Job curJob = actor.jobs.curJob;
 				Thing thing = curJob.GetTarget(ind).Thing;
-				int medicineCountToFullyHeal = Medicine.GetMedicineCountToFullyHeal(injured);
-				curJob.count = medicineCountToFullyHeal;
-				int count = Mathf.Min(thing.stackCount, medicineCountToFullyHeal);
-				actor.carryTracker.TryStartCarry(thing, count);
+				int num = Medicine.GetMedicineCountToFullyHeal(injured);
+				if (actor.carryTracker.CarriedThing != null)
+				{
+					num -= actor.carryTracker.CarriedThing.stackCount;
+				}
+				int num2 = Mathf.Min(thing.stackCount, num);
+				if (num2 > 0)
+				{
+					actor.carryTracker.TryStartCarry(thing, num2);
+				}
+				curJob.count = num - num2;
 				if (thing.Spawned)
 				{
 					toil.actor.Map.reservationManager.Release(thing, actor);

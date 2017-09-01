@@ -17,13 +17,19 @@ namespace RimWorld
 			{
 				return null;
 			}
+			Predicate<IntVec3> cellValidator = (IntVec3 x) => !PawnUtility.KnownDangerAt(x, pawn);
+			Predicate<Region> validator = delegate(Region x)
+			{
+				IntVec3 intVec;
+				return x.Room.PsychologicallyOutdoors && !x.IsForbiddenEntirely(pawn) && x.TryFindRandomCellInRegionUnforbidden(pawn, cellValidator, out intVec);
+			};
 			Region reg;
-			if (!CellFinder.TryFindClosestRegionWith(pawn.GetRegion(), TraverseParms.For(pawn, Danger.Deadly, TraverseMode.ByPawn, false), (Region r) => r.Room.PsychologicallyOutdoors && !r.IsForbiddenEntirely(pawn), 100, out reg))
+			if (!CellFinder.TryFindClosestRegionWith(pawn.GetRegion(RegionType.Set_Passable), TraverseParms.For(pawn, Danger.Deadly, TraverseMode.ByPawn, false), validator, 100, out reg, RegionType.Set_Passable))
 			{
 				return null;
 			}
 			IntVec3 root;
-			if (!reg.TryFindRandomCellInRegionUnforbidden(pawn, null, out root))
+			if (!reg.TryFindRandomCellInRegionUnforbidden(pawn, cellValidator, out root))
 			{
 				return null;
 			}

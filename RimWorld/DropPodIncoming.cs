@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using Verse;
@@ -6,7 +7,7 @@ using Verse.Sound;
 
 namespace RimWorld
 {
-	public class DropPodIncoming : Thing, IActiveDropPod, IThingContainerOwner
+	public class DropPodIncoming : Thing, IActiveDropPod, IThingHolder
 	{
 		protected const int MinTicksToImpact = 120;
 
@@ -50,19 +51,18 @@ namespace RimWorld
 			}
 		}
 
-		public ThingContainer GetInnerContainer()
+		public ThingOwner GetDirectlyHeldThings()
 		{
-			return this.contents.innerContainer;
+			return null;
 		}
 
-		public IntVec3 GetPosition()
+		public void GetChildHolders(List<IThingHolder> outChildren)
 		{
-			return base.PositionHeld;
-		}
-
-		public Map GetMap()
-		{
-			return base.MapHeld;
+			ThingOwnerUtility.AppendThingHoldersFromThings(outChildren, this.GetDirectlyHeldThings());
+			if (this.contents != null)
+			{
+				outChildren.Add(this.contents);
+			}
 		}
 
 		public override void PostMake()
@@ -74,8 +74,8 @@ namespace RimWorld
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Values.LookValue<int>(ref this.ticksToImpact, "ticksToImpact", 0, false);
-			Scribe_Deep.LookDeep<ActiveDropPodInfo>(ref this.contents, "contents", new object[]
+			Scribe_Values.Look<int>(ref this.ticksToImpact, "ticksToImpact", 0, false);
+			Scribe_Deep.Look<ActiveDropPodInfo>(ref this.contents, "contents", new object[]
 			{
 				this
 			});
@@ -124,9 +124,9 @@ namespace RimWorld
 			}), base.Map);
 		}
 
-		public override void DrawAt(Vector3 drawLoc)
+		public override void DrawAt(Vector3 drawLoc, bool flip = false)
 		{
-			base.DrawAt(drawLoc);
+			base.DrawAt(drawLoc, false);
 			DropPodAnimationUtility.DrawDropSpotShadow(this, this.ticksToImpact);
 		}
 
@@ -140,7 +140,7 @@ namespace RimWorld
 			MoteMaker.ThrowLightningGlow(base.Position.ToVector3Shifted(), base.Map, 2f);
 			ActiveDropPod activeDropPod = (ActiveDropPod)ThingMaker.MakeThing(ThingDefOf.ActiveDropPod, null);
 			activeDropPod.Contents = this.contents;
-			GenSpawn.Spawn(activeDropPod, base.Position, base.Map, base.Rotation);
+			GenSpawn.Spawn(activeDropPod, base.Position, base.Map, base.Rotation, false);
 			RoofDef roof = base.Position.GetRoof(base.Map);
 			if (roof != null)
 			{
@@ -159,9 +159,9 @@ namespace RimWorld
 			this.Destroy(DestroyMode.Vanish);
 		}
 
-		virtual bool get_Spawned()
+		virtual IThingHolder get_ParentHolder()
 		{
-			return base.Spawned;
+			return base.ParentHolder;
 		}
 	}
 }

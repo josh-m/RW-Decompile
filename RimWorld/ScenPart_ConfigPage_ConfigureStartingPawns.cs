@@ -22,7 +22,7 @@ namespace RimWorld
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Values.LookValue<int>(ref this.pawnCount, "pawnCount", 0, false);
+			Scribe_Values.Look<int>(ref this.pawnCount, "pawnCount", 0, false);
 		}
 
 		public override string Summary(Scenario scen)
@@ -38,7 +38,7 @@ namespace RimWorld
 			this.pawnCount = Rand.RangeInclusive(1, 6);
 		}
 
-		public override void PostWorldLoad()
+		public override void PostWorldGenerate()
 		{
 			int num = 0;
 			while (true)

@@ -18,7 +18,7 @@ namespace Verse
 
 		public List<float> debugInputValues;
 
-		private CurvePoint draggingPoint;
+		private int draggingPointIndex = -1;
 
 		private int draggingButton = -1;
 
@@ -163,8 +163,16 @@ namespace Verse
 				}
 				if (Event.current.type == EventType.MouseDown && (Event.current.button == 0 || Event.current.button == 2))
 				{
-					this.draggingPoint = this.PointsNearMouse(screenRect).FirstOrDefault<CurvePoint>();
-					if (this.draggingPoint == null)
+					List<int> list = this.PointsNearMouse(screenRect).ToList<int>();
+					if (list.Any<int>())
+					{
+						this.draggingPointIndex = list[0];
+					}
+					else
+					{
+						this.draggingPointIndex = -1;
+					}
+					if (this.draggingPointIndex < 0)
 					{
 						this.draggingButton = Event.current.button;
 					}
@@ -173,30 +181,30 @@ namespace Verse
 				if (Event.current.type == EventType.MouseDown && Event.current.button == 1)
 				{
 					Vector2 mouseCurveCoords = SimpleCurveDrawer.ScreenToCurveCoords(screenRect, this.curve.View.rect, Event.current.mousePosition);
-					List<FloatMenuOption> list = new List<FloatMenuOption>();
-					list.Add(new FloatMenuOption("Add point at " + mouseCurveCoords.ToString(), delegate
+					List<FloatMenuOption> list2 = new List<FloatMenuOption>();
+					list2.Add(new FloatMenuOption("Add point at " + mouseCurveCoords.ToString(), delegate
 					{
-						this.curve.Add(new CurvePoint(mouseCurveCoords));
+						this.curve.Add(new CurvePoint(mouseCurveCoords), true);
 					}, MenuOptionPriority.Default, null, null, 0f, null, null));
-					foreach (CurvePoint current in this.PointsNearMouse(screenRect))
+					foreach (int current in this.PointsNearMouse(screenRect))
 					{
-						CurvePoint localPoint = current;
-						list.Add(new FloatMenuOption("Remove point at " + localPoint.ToString(), delegate
+						CurvePoint point = this.curve[current];
+						list2.Add(new FloatMenuOption("Remove point at " + point.ToString(), delegate
 						{
-							this.curve.RemovePointNear(localPoint);
+							this.curve.RemovePointNear(point);
 						}, MenuOptionPriority.Default, null, null, 0f, null, null));
 					}
-					Find.WindowStack.Add(new FloatMenu(list));
+					Find.WindowStack.Add(new FloatMenu(list2));
 					Event.current.Use();
 				}
 			}
-			if (this.draggingPoint != null)
+			if (this.draggingPointIndex >= 0)
 			{
-				this.draggingPoint.loc = SimpleCurveDrawer.ScreenToCurveCoords(screenRect, this.curve.View.rect, Event.current.mousePosition);
+				this.curve[this.draggingPointIndex] = new CurvePoint(SimpleCurveDrawer.ScreenToCurveCoords(screenRect, this.curve.View.rect, Event.current.mousePosition));
 				this.curve.SortPoints();
 				if (Event.current.type == EventType.MouseUp && Event.current.button == 0)
 				{
-					this.draggingPoint = null;
+					this.draggingPointIndex = -1;
 					Event.current.Use();
 				}
 			}
@@ -205,10 +213,10 @@ namespace Verse
 				if (Event.current.type == EventType.MouseDrag)
 				{
 					Vector2 delta = Event.current.delta;
-					SimpleCurveView expr_62E_cp_0 = this.curve.View;
-					expr_62E_cp_0.rect.x = expr_62E_cp_0.rect.x - delta.x * this.curve.View.rect.width * 0.002f;
-					SimpleCurveView expr_66D_cp_0 = this.curve.View;
-					expr_66D_cp_0.rect.y = expr_66D_cp_0.rect.y + delta.y * this.curve.View.rect.height * 0.002f;
+					SimpleCurveView expr_668_cp_0 = this.curve.View;
+					expr_668_cp_0.rect.x = expr_668_cp_0.rect.x - delta.x * this.curve.View.rect.width * 0.002f;
+					SimpleCurveView expr_6A7_cp_0 = this.curve.View;
+					expr_6A7_cp_0.rect.y = expr_6A7_cp_0.rect.y + delta.y * this.curve.View.rect.height * 0.002f;
 					Event.current.Use();
 				}
 				if (Event.current.type == EventType.MouseUp && Event.current.button == this.draggingButton)
@@ -219,18 +227,24 @@ namespace Verse
 		}
 
 		[DebuggerHidden]
-		private IEnumerable<CurvePoint> PointsNearMouse(Rect screenRect)
+		private IEnumerable<int> PointsNearMouse(Rect screenRect)
 		{
 			GUI.BeginGroup(screenRect);
-			foreach (CurvePoint point in this.curve)
+			try
 			{
-				Vector2 screenPoint = SimpleCurveDrawer.CurveToScreenCoordsInsideScreenRect(screenRect, this.curve.View.rect, point.loc);
-				if ((screenPoint - Event.current.mousePosition).sqrMagnitude < 49f)
+				for (int i = 0; i < this.curve.PointsCount; i++)
 				{
-					yield return point;
+					Vector2 screenPoint = SimpleCurveDrawer.CurveToScreenCoordsInsideScreenRect(screenRect, this.curve.View.rect, this.curve[i].Loc);
+					if ((screenPoint - Event.current.mousePosition).sqrMagnitude < 49f)
+					{
+						yield return i;
+					}
 				}
 			}
-			GUI.EndGroup();
+			finally
+			{
+				base.<>__Finally0();
+			}
 		}
 	}
 }

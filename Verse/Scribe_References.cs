@@ -5,13 +5,13 @@ namespace Verse
 {
 	public static class Scribe_References
 	{
-		public static void LookReference<T>(ref T refee, string label, bool saveDestroyedThings = false) where T : ILoadReferenceable
+		public static void Look<T>(ref T refee, string label, bool saveDestroyedThings = false) where T : ILoadReferenceable
 		{
 			if (Scribe.mode == LoadSaveMode.Saving)
 			{
 				if (refee == null)
 				{
-					Scribe.WriteElement(label, "null");
+					Scribe.saver.WriteElement(label, "null");
 					return;
 				}
 				Thing thing = refee as Thing;
@@ -24,23 +24,35 @@ namespace Verse
 					if (!thing.def.HasThingIDNumber)
 					{
 						Log.Error("Trying to cross-reference save Thing which lacks ID number: " + refee);
-						Scribe.WriteElement(label, "null");
+						Scribe.saver.WriteElement(label, "null");
 						return;
 					}
 					if (thing.IsSaveCompressible())
 					{
 						Log.Error("Trying to save a reference to a thing that will be compressed away: " + refee);
-						Scribe.WriteElement(label, "null");
+						Scribe.saver.WriteElement(label, "null");
 						return;
 					}
 				}
 				string uniqueLoadID = refee.GetUniqueLoadID();
-				Scribe.WriteElement(label, uniqueLoadID);
-				DebugLoadIDsSavingErrorsChecker.RegisterReferenced(refee, label);
+				Scribe.saver.WriteElement(label, uniqueLoadID);
+				Scribe.saver.loadIDsErrorsChecker.RegisterReferenced(refee, label);
 			}
 			else if (Scribe.mode == LoadSaveMode.LoadingVars)
 			{
-				XmlNode xmlNode = Scribe.curParent[label];
+				if (Scribe.loader.curParent != null && Scribe.loader.curParent.GetType().IsValueType)
+				{
+					Log.Warning(string.Concat(new object[]
+					{
+						"Trying to load reference of an object of type ",
+						typeof(T),
+						" with label ",
+						label,
+						", but our current node is a value type. The reference won't be loaded properly. curParent=",
+						Scribe.loader.curParent
+					}));
+				}
+				XmlNode xmlNode = Scribe.loader.curXmlParent[label];
 				string targetLoadID;
 				if (xmlNode != null)
 				{
@@ -50,11 +62,11 @@ namespace Verse
 				{
 					targetLoadID = null;
 				}
-				LoadIDsWantedBank.RegisterLoadIDReadFromXml(targetLoadID, typeof(T));
+				Scribe.loader.crossRefs.loadIDs.RegisterLoadIDReadFromXml(targetLoadID, typeof(T), label);
 			}
 			else if (Scribe.mode == LoadSaveMode.ResolvingCrossRefs)
 			{
-				refee = CrossRefResolver.NextResolvedRef<T>();
+				refee = Scribe.loader.crossRefs.TakeResolvedRef<T>(label);
 			}
 		}
 
@@ -66,7 +78,7 @@ namespace Verse
 			}
 			if (!saveDestroyedThings)
 			{
-				Scribe.WriteElement(label, "null");
+				Scribe.saver.WriteElement(label, "null");
 				return true;
 			}
 			if (th.Discarded)
@@ -78,7 +90,7 @@ namespace Verse
 					" with saveDestroyedThings=true. This means that it's not deep-saved anywhere and is no longer managed by anything in the code, so saving its reference will always fail. , label=",
 					label
 				}));
-				Scribe.WriteElement(label, "null");
+				Scribe.saver.WriteElement(label, "null");
 				return true;
 			}
 			return false;

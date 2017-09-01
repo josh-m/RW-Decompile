@@ -9,7 +9,7 @@ namespace RimWorld
 	{
 		private static List<Thing> tmpThings = new List<Thing>();
 
-		public static void Transfer(List<Thing> things, int count, Action<Thing, Thing> transferred)
+		public static void Transfer(List<Thing> things, int count, Action<Thing, IThingHolder> transferred)
 		{
 			if (count <= 0)
 			{
@@ -22,16 +22,20 @@ namespace RimWorld
 			{
 				Thing thing = TransferableUtility.tmpThings[i];
 				int num2 = Mathf.Min(num, thing.stackCount);
-				Thing thing2 = thing.SplitOff(num2);
-				num -= num2;
-				if (thing2 == thing)
+				if (num2 > 0)
 				{
-					things.Remove(thing);
-				}
-				transferred(thing2, thing);
-				if (num <= 0)
-				{
-					break;
+					IThingHolder parentHolder = thing.ParentHolder;
+					Thing thing2 = thing.SplitOff(num2);
+					num -= num2;
+					if (thing2 == thing)
+					{
+						things.Remove(thing);
+					}
+					transferred(thing2, parentHolder);
+					if (num <= 0)
+					{
+						break;
+					}
 				}
 			}
 			TransferableUtility.tmpThings.Clear();
@@ -54,15 +58,18 @@ namespace RimWorld
 			{
 				Thing thing = TransferableUtility.tmpThings[i];
 				int num2 = Mathf.Min(num, thing.stackCount);
-				num -= num2;
-				if (removeIfTakingEntireThing && num2 >= thing.stackCount)
+				if (num2 > 0)
 				{
-					things.Remove(thing);
-				}
-				transfer(thing, num2);
-				if (num <= 0)
-				{
-					break;
+					num -= num2;
+					if (removeIfTakingEntireThing && num2 >= thing.stackCount)
+					{
+						things.Remove(thing);
+					}
+					transfer(thing, num2);
+					if (num <= 0)
+					{
+						break;
+					}
 				}
 			}
 			TransferableUtility.tmpThings.Clear();
@@ -79,6 +86,22 @@ namespace RimWorld
 				return true;
 			}
 			if (a.def.tradeNeverStack || b.def.tradeNeverStack)
+			{
+				return false;
+			}
+			float num = -1f;
+			CompRottable compRottable = a.TryGetComp<CompRottable>();
+			if (compRottable != null)
+			{
+				num = compRottable.RotProgressPct;
+			}
+			float num2 = -1f;
+			CompRottable compRottable2 = b.TryGetComp<CompRottable>();
+			if (compRottable2 != null)
+			{
+				num2 = compRottable2.RotProgressPct;
+			}
+			if (Mathf.Abs(num - num2) > 0.1f)
 			{
 				return false;
 			}
@@ -135,21 +158,66 @@ namespace RimWorld
 			}
 		}
 
-		public static T TransferableMatching<T>(Thing thing, List<T> transferables) where T : ITransferable
+		public static T TransferableMatching<T>(Thing thing, List<T> transferables) where T : Transferable
 		{
 			if (thing == null || transferables == null)
 			{
-				return default(T);
+				return (T)((object)null);
 			}
 			for (int i = 0; i < transferables.Count; i++)
 			{
 				T result = transferables[i];
-				if (TransferableUtility.TransferAsOne(thing, result.AnyThing))
+				if (result.HasAnyThing)
 				{
-					return result;
+					if (TransferableUtility.TransferAsOne(thing, result.AnyThing))
+					{
+						return result;
+					}
 				}
 			}
-			return default(T);
+			return (T)((object)null);
+		}
+
+		public static TransferableOneWay TransferableMatchingDesperate(Thing thing, List<TransferableOneWay> transferables)
+		{
+			if (thing == null || transferables == null)
+			{
+				return null;
+			}
+			for (int i = 0; i < transferables.Count; i++)
+			{
+				TransferableOneWay transferableOneWay = transferables[i];
+				if (transferableOneWay.HasAnyThing)
+				{
+					if (transferableOneWay.things.Contains(thing))
+					{
+						return transferableOneWay;
+					}
+				}
+			}
+			for (int j = 0; j < transferables.Count; j++)
+			{
+				TransferableOneWay transferableOneWay2 = transferables[j];
+				if (transferableOneWay2.HasAnyThing)
+				{
+					if (TransferableUtility.TransferAsOne(thing, transferableOneWay2.AnyThing))
+					{
+						return transferableOneWay2;
+					}
+				}
+			}
+			for (int k = 0; k < transferables.Count; k++)
+			{
+				TransferableOneWay transferableOneWay3 = transferables[k];
+				if (transferableOneWay3.HasAnyThing)
+				{
+					if (transferableOneWay3.ThingDef == thing.def)
+					{
+						return transferableOneWay3;
+					}
+				}
+			}
+			return null;
 		}
 
 		public static List<Pawn> GetPawnsFromTransferables(List<TransferableOneWay> transferables)
@@ -157,11 +225,11 @@ namespace RimWorld
 			List<Pawn> list = new List<Pawn>();
 			for (int i = 0; i < transferables.Count; i++)
 			{
-				if (transferables[i].countToTransfer > 0)
+				if (transferables[i].CountToTransfer > 0)
 				{
 					if (transferables[i].AnyThing is Pawn)
 					{
-						for (int j = 0; j < transferables[i].countToTransfer; j++)
+						for (int j = 0; j < transferables[i].CountToTransfer; j++)
 						{
 							Pawn item = (Pawn)transferables[i].things[j];
 							list.Add(item);

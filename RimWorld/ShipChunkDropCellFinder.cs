@@ -27,7 +27,7 @@ namespace RimWorld
 					for (int i = 0; i < thingList.Count; i++)
 					{
 						Thing thing = thingList[i];
-						if (thing.def.category != ThingCategory.Plant && GenSpawn.SpawningWipes(chunkDef, thing.def))
+						if (thing.def.category != ThingCategory.Plant && thing.def.category != ThingCategory.Filth && GenSpawn.SpawningWipes(chunkDef, thing.def))
 						{
 							bool result = false;
 							return result;

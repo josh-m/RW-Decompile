@@ -27,7 +27,7 @@ namespace RimWorld
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Deep.LookDeep<TaleData_Thing>(ref this.thingData, "thingData", new object[0]);
+			Scribe_Deep.Look<TaleData_Thing>(ref this.thingData, "thingData", new object[0]);
 		}
 
 		[DebuggerHidden]

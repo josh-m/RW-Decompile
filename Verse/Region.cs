@@ -11,6 +11,8 @@ namespace Verse
 	{
 		public const int GridSize = 12;
 
+		public RegionType type = RegionType.Normal;
+
 		public int id = -1;
 
 		public sbyte mapIndex = -1;
@@ -69,7 +71,7 @@ namespace Verse
 					for (int x = this.extentsClose.minX; x <= this.extentsClose.maxX; x++)
 					{
 						IntVec3 c = new IntVec3(x, 0, z);
-						if (regions.GetRegionAt_InvalidAllowed(c) == this)
+						if (regions.GetRegionAt_NoRebuild_InvalidAllowed(c) == this)
 						{
 							yield return c;
 						}
@@ -108,7 +110,7 @@ namespace Verse
 			}
 		}
 
-		public IEnumerable<Region> NonPortalNeighbors
+		public IEnumerable<Region> NeighborsOfSameType
 		{
 			get
 			{
@@ -117,7 +119,7 @@ namespace Verse
 					RegionLink link = this.links[li];
 					for (int ri = 0; ri < 2; ri++)
 					{
-						if (link.regions[ri] != null && link.regions[ri] != this && link.regions[ri].portal == null && link.regions[ri].valid)
+						if (link.regions[ri] != null && link.regions[ri] != this && link.regions[ri].type == this.type && link.regions[ri].valid)
 						{
 							yield return link.regions[ri];
 						}
@@ -154,10 +156,13 @@ namespace Verse
 		{
 			get
 			{
+				Map map = this.Map;
+				CellIndices cellIndices = map.cellIndices;
+				Region[] directGrid = map.regionGrid.DirectGrid;
 				for (int i = 0; i < 1000; i++)
 				{
 					IntVec3 randomCell = this.extentsClose.RandomCell;
-					if (randomCell.GetRegion(this.Map) == this)
+					if (directGrid[cellIndices.CellToIndex(randomCell)] == this)
 					{
 						return randomCell;
 					}
@@ -170,12 +175,16 @@ namespace Verse
 		{
 			get
 			{
+				Map map = this.Map;
+				CellIndices cellIndices = map.cellIndices;
+				Region[] directGrid = map.regionGrid.DirectGrid;
 				CellRect.CellRectIterator iterator = this.extentsClose.GetIterator();
 				while (!iterator.Done())
 				{
-					if (iterator.Current.GetRegion(this.Map) == this)
+					IntVec3 current = iterator.Current;
+					if (directGrid[cellIndices.CellToIndex(current)] == this)
 					{
-						return iterator.Current;
+						return current;
 					}
 					iterator.MoveNext();
 				}
@@ -255,12 +264,20 @@ namespace Verse
 
 		public bool Allows(TraverseParms tp, bool isDestination)
 		{
+			if (tp.mode != TraverseMode.PassAllDestroyableThings && !this.type.Passable())
+			{
+				return false;
+			}
 			if (tp.maxDanger < Danger.Deadly && tp.pawn != null)
 			{
 				Danger danger = this.DangerFor(tp.pawn);
-				if ((isDestination || danger == Danger.Deadly) && danger > tp.maxDanger)
+				if (isDestination || danger == Danger.Deadly)
 				{
-					return false;
+					Region region = tp.pawn.GetRegion(RegionType.Set_All);
+					if ((region == null || danger > region.DangerFor(tp.pawn)) && danger > tp.maxDanger)
+					{
+						return false;
+					}
 				}
 			}
 			switch (tp.mode)
@@ -286,6 +303,8 @@ namespace Verse
 				return true;
 			case TraverseMode.NoPassClosedDoors:
 				return this.portal == null || this.portal.FreePassage;
+			case TraverseMode.PassAllDestroyableThings:
+				return true;
 			default:
 				throw new NotImplementedException();
 			}
@@ -427,17 +446,17 @@ namespace Verse
 			if (DebugViewSettings.drawRegions)
 			{
 				Color color;
-				if (this.DebugIsNew)
+				if (!this.valid)
+				{
+					color = Color.red;
+				}
+				else if (this.DebugIsNew)
 				{
 					color = Color.yellow;
 				}
-				else if (this.valid)
-				{
-					color = Color.green;
-				}
 				else
 				{
-					color = Color.red;
+					color = Color.green;
 				}
 				GenDraw.DrawFieldEdges(this.Cells.ToList<IntVec3>(), color);
 				foreach (Region current in this.Neighbors)
@@ -456,6 +475,13 @@ namespace Verse
 							CellRenderer.RenderCell(current3, DebugSolidColorMats.MaterialOf(Color.magenta));
 						}
 					}
+				}
+			}
+			if (DebugViewSettings.drawRegionThings)
+			{
+				foreach (Thing current4 in this.listerThings.AllThings)
+				{
+					CellRenderer.RenderSpot(current4.TrueCenter(), (float)(current4.thingIDNumber % 256) / 256f);
 				}
 			}
 		}

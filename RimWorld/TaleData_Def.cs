@@ -21,8 +21,8 @@ namespace RimWorld
 				this.tmpDefName = this.def.defName;
 				this.tmpDefType = this.def.GetType();
 			}
-			Scribe_Values.LookValue<string>(ref this.tmpDefName, "defName", null, false);
-			Scribe_Values.LookValue<Type>(ref this.tmpDefType, "defType", null, false);
+			Scribe_Values.Look<string>(ref this.tmpDefName, "defName", null, false);
+			Scribe_Values.Look<Type>(ref this.tmpDefType, "defType", null, false);
 			if (Scribe.mode == LoadSaveMode.LoadingVars)
 			{
 				this.def = GenDefDatabase.GetDef(this.tmpDefType, this.tmpDefName, true);

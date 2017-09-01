@@ -33,8 +33,9 @@ namespace RimWorld
 		[DebuggerHidden]
 		protected override IEnumerable<Toil> MakeNewToils()
 		{
-			this.FailOn(() => this.<>f__this.Map.designationManager.DesignationAt(this.<>f__this.TargetLocA, this.<>f__this.DesDef) == null);
-			yield return Toils_Reserve.Reserve(TargetIndex.A, 1);
+			this.FailOn(() => !this.<>f__this.CurJob.ignoreDesignations && this.<>f__this.Map.designationManager.DesignationAt(this.<>f__this.TargetLocA, this.<>f__this.DesDef) == null);
+			ReservationLayerDef floor = ReservationLayerDefOf.Floor;
+			yield return Toils_Reserve.Reserve(TargetIndex.A, 1, -1, floor);
 			yield return Toils_Goto.GotoCell(TargetIndex.A, PathEndMode.Touch);
 			Toil doWork = new Toil();
 			doWork.initAction = delegate
@@ -65,6 +66,7 @@ namespace RimWorld
 					return;
 				}
 			};
+			doWork.FailOnCannotTouch(TargetIndex.A, PathEndMode.Touch);
 			doWork.WithProgressBar(TargetIndex.A, () => 1f - this.<>f__this.workLeft / (float)this.<>f__this.BaseWorkAmount, false, -0.5f);
 			doWork.defaultCompleteMode = ToilCompleteMode.Never;
 			yield return doWork;
@@ -75,7 +77,7 @@ namespace RimWorld
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Values.LookValue<float>(ref this.workLeft, "workLeft", 0f, false);
+			Scribe_Values.Look<float>(ref this.workLeft, "workLeft", 0f, false);
 		}
 	}
 }

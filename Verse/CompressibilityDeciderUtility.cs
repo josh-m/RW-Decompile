@@ -7,7 +7,7 @@ namespace Verse
 	{
 		public static bool IsSaveCompressible(this Thing t)
 		{
-			if (Scribe.writingForDebug)
+			if (Scribe.saver.savingForDebug)
 			{
 				return false;
 			}
@@ -19,7 +19,7 @@ namespace Verse
 			{
 				return false;
 			}
-			if (t.holdingContainer != null)
+			if (!t.Spawned)
 			{
 				return false;
 			}

@@ -23,7 +23,7 @@ namespace Verse
 			private set;
 		}
 
-		public Map Map
+		public int Tile
 		{
 			get;
 			private set;
@@ -89,6 +89,18 @@ namespace Verse
 			private set;
 		}
 
+		public bool Inhabitant
+		{
+			get;
+			private set;
+		}
+
+		public bool CertainlyBeenInCryptosleep
+		{
+			get;
+			private set;
+		}
+
 		public Predicate<Pawn> Validator
 		{
 			get;
@@ -125,16 +137,22 @@ namespace Verse
 			private set;
 		}
 
-		public PawnGenerationRequest(PawnKindDef kind, Faction faction = null, PawnGenerationContext context = PawnGenerationContext.NonPlayer, Map map = null, bool forceGenerateNewPawn = false, bool newborn = false, bool allowDead = false, bool allowDowned = false, bool canGeneratePawnRelations = true, bool mustBeCapableOfViolence = false, float colonistRelationChanceFactor = 1f, bool forceAddFreeWarmLayerIfNeeded = false, bool allowGay = true, bool allowFood = true, Predicate<Pawn> validator = null, float? fixedBiologicalAge = null, float? fixedChronologicalAge = null, Gender? fixedGender = null, float? fixedMelanin = null, string fixedLastName = null)
+		public PawnGenerationRequest(PawnKindDef kind, Faction faction = null, PawnGenerationContext context = PawnGenerationContext.NonPlayer, int tile = -1, bool forceGenerateNewPawn = false, bool newborn = false, bool allowDead = false, bool allowDowned = false, bool canGeneratePawnRelations = true, bool mustBeCapableOfViolence = false, float colonistRelationChanceFactor = 1f, bool forceAddFreeWarmLayerIfNeeded = false, bool allowGay = true, bool allowFood = true, bool inhabitant = false, bool certainlyBeenInCryptosleep = false, Predicate<Pawn> validator = null, float? fixedBiologicalAge = null, float? fixedChronologicalAge = null, Gender? fixedGender = null, float? fixedMelanin = null, string fixedLastName = null)
 		{
 			if (context == PawnGenerationContext.All)
 			{
 				Log.Error("Should not generate pawns with context 'All'");
+				context = PawnGenerationContext.NonPlayer;
+			}
+			if (inhabitant && (tile == -1 || Current.Game.FindMap(tile) == null))
+			{
+				Log.Error("Trying to generate an inhabitant but map is null.");
+				inhabitant = false;
 			}
 			this.KindDef = kind;
 			this.Context = context;
 			this.Faction = faction;
-			this.Map = (map ?? Find.AnyPlayerHomeMap);
+			this.Tile = tile;
 			this.ForceGenerateNewPawn = forceGenerateNewPawn;
 			this.Newborn = newborn;
 			this.AllowDead = allowDead;
@@ -145,6 +163,8 @@ namespace Verse
 			this.ForceAddFreeWarmLayerIfNeeded = forceAddFreeWarmLayerIfNeeded;
 			this.AllowGay = allowGay;
 			this.AllowFood = allowFood;
+			this.Inhabitant = inhabitant;
+			this.CertainlyBeenInCryptosleep = certainlyBeenInCryptosleep;
 			this.Validator = validator;
 			this.FixedBiologicalAge = fixedBiologicalAge;
 			this.FixedChronologicalAge = fixedChronologicalAge;
@@ -198,8 +218,8 @@ namespace Verse
 				this.Context,
 				", faction=",
 				this.Faction,
-				", map=",
-				this.Map,
+				", tile=",
+				this.Tile,
 				", forceGenerateNewPawn=",
 				this.ForceGenerateNewPawn,
 				", newborn=",
@@ -220,6 +240,10 @@ namespace Verse
 				this.AllowGay,
 				", allowFood=",
 				this.AllowFood,
+				", inhabitant=",
+				this.Inhabitant,
+				", certainlyBeenInCryptosleep=",
+				this.CertainlyBeenInCryptosleep,
 				", validator=",
 				this.Validator,
 				", fixedBiologicalAge=",

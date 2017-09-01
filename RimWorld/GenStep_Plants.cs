@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
 using Verse;
 
 namespace RimWorld
@@ -26,7 +27,7 @@ namespace RimWorld
 				GenStep_Plants.numExtant.Add(list[i], 0);
 			}
 			GenStep_Plants.desiredProportions = GenPlant.CalculateDesiredPlantProportions(map.Biome);
-			float num = map.Biome.plantDensity * map.mapConditionManager.AggregatePlantDensityFactor();
+			float num = map.Biome.plantDensity * map.gameConditionManager.AggregatePlantDensityFactor();
 			foreach (IntVec3 c in map.AllCells.InRandomOrder(null))
 			{
 				if (c.GetEdifice(map) == null && c.GetCover(map) == null)
@@ -57,7 +58,7 @@ namespace RimWorld
 								plant.Growth = Rand.Range(0.07f, 1f);
 								if (plant.def.plant.LimitedLifespan)
 								{
-									plant.Age = Rand.Range(0, plant.def.plant.LifespanTicks - 50);
+									plant.Age = Rand.Range(0, Mathf.Max(plant.def.plant.LifespanTicks - 50, 0));
 								}
 								GenSpawn.Spawn(plant, c2, map);
 								GenStep_Plants.RecordAdded(thingDef);

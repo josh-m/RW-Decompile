@@ -197,14 +197,14 @@ namespace Verse
 				{
 					if (colonistOrdering)
 					{
-						SoundDefOf.ColonistOrdered.PlayOneShotOnCamera();
+						SoundDefOf.ColonistOrdered.PlayOneShotOnCamera(null);
 					}
 					this.action();
 				}
 			}
 			else
 			{
-				SoundDefOf.ClickReject.PlayOneShotOnCamera();
+				SoundDefOf.ClickReject.PlayOneShotOnCamera(null);
 			}
 		}
 

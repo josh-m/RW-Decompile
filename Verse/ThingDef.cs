@@ -4,12 +4,15 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using UnityEngine;
+using Verse.AI;
 
 namespace Verse
 {
 	public class ThingDef : BuildableDef
 	{
-		private const float SmallVolumePerUnit = 0.05f;
+		public const int SmallUnitPerVolume = 10;
+
+		public const float SmallVolumePerUnit = 0.1f;
 
 		public Type thingClass;
 
@@ -53,8 +56,6 @@ namespace Verse
 
 		public bool leaveResourcesWhenKilled;
 
-		public float resourcesFractionWhenDeconstructed = 0.75f;
-
 		public ThingDef slagDef;
 
 		public bool isFrame;
@@ -71,13 +72,17 @@ namespace Verse
 
 		public bool scatterableOnMapGen = true;
 
-		public bool temporaryRegionBarrier;
-
 		public float deepCommonality;
 
 		public int deepCountPerCell = 150;
 
 		public float generateCommonality = 1f;
+
+		public float generateAllowChance = 1f;
+
+		private bool canOverlapZones = true;
+
+		public FloatRange startingHpRange = FloatRange.One;
 
 		public GraphicData graphicData;
 
@@ -163,7 +168,7 @@ namespace Verse
 		public bool blockWind;
 
 		[Unsaved]
-		public bool regionBarrier;
+		public bool affectsRegions;
 
 		public Tradeability tradeability = Tradeability.Stockable;
 
@@ -210,6 +215,8 @@ namespace Verse
 
 		public FilthProperties filth;
 
+		public GasProperties gas;
+
 		public BuildingProperties building;
 
 		public RaceProperties race;
@@ -248,7 +255,7 @@ namespace Verse
 		{
 			get
 			{
-				return this.smallVolume ? 0.05f : 1f;
+				return this.smallVolume ? 0.1f : 1f;
 			}
 		}
 
@@ -301,6 +308,22 @@ namespace Verse
 			set
 			{
 				this.SetStatBaseValue(StatDefOf.MarketValue, value);
+			}
+		}
+
+		public float BaseMass
+		{
+			get
+			{
+				return this.GetStatValueAbstract(StatDefOf.Mass, null);
+			}
+		}
+
+		public bool PlayerAcquirable
+		{
+			get
+			{
+				return !this.destroyOnDrop;
 			}
 		}
 
@@ -414,7 +437,7 @@ namespace Verse
 		{
 			get
 			{
-				return this.Fillage == FillCategory.Full && !this.IsDoor;
+				return this.Fillage == FillCategory.Full;
 			}
 		}
 
@@ -426,15 +449,19 @@ namespace Verse
 				{
 					return false;
 				}
-				if (this.passability == Traversability.Impassable)
+				if (this.passability == Traversability.Impassable && this.category != ThingCategory.Plant)
 				{
-					return this.category == ThingCategory.Plant;
+					return false;
 				}
 				if (this.surfaceType >= SurfaceType.Item)
 				{
 					return false;
 				}
 				if (typeof(ISlotGroupParent).IsAssignableFrom(this.thingClass))
+				{
+					return false;
+				}
+				if (!this.canOverlapZones)
 				{
 					return false;
 				}
@@ -497,6 +524,14 @@ namespace Verse
 			}
 		}
 
+		public bool Claimable
+		{
+			get
+			{
+				return this.building != null && this.building.claimable;
+			}
+		}
+
 		public ThingCategoryDef FirstThingCategory
 		{
 			get
@@ -513,7 +548,31 @@ namespace Verse
 		{
 			get
 			{
-				return Mathf.Clamp(this.GetStatValueAbstract(StatDefOf.MedicalPotency, null), 0.5f, 1f);
+				return Mathf.Clamp(this.GetStatValueAbstract(StatDefOf.MedicalPotency, null) * 0.7f, 0.5f, 1f);
+			}
+		}
+
+		public bool CanEverDeteriorate
+		{
+			get
+			{
+				return this.useHitPoints && (this.category == ThingCategory.Item || this == ThingDefOf.BurnedTree);
+			}
+		}
+
+		public bool AffectsRegions
+		{
+			get
+			{
+				return this.passability == Traversability.Impassable || this.IsDoor;
+			}
+		}
+
+		public bool AffectsReachability
+		{
+			get
+			{
+				return this.AffectsRegions || (this.passability == Traversability.Impassable || this.IsDoor) || TouchPathEndModeUtility.MakesOccupiedCellsAlwaysReachableDiagonally(this);
 			}
 		}
 
@@ -650,6 +709,14 @@ namespace Verse
 			get
 			{
 				return this.IsDrug && this.ingestible.joy > 0f;
+			}
+		}
+
+		public bool IsTable
+		{
+			get
+			{
+				return this.surfaceType == SurfaceType.Eat && this.HasComp(typeof(CompGatherSpot));
 			}
 		}
 
@@ -792,10 +859,6 @@ namespace Verse
 						}));
 					}
 				}
-			}
-			if (this.passability == Traversability.Impassable || this.thingClass == typeof(Building_Door) || this.temporaryRegionBarrier)
-			{
-				this.regionBarrier = true;
 			}
 			if (this.building != null)
 			{
@@ -995,9 +1058,9 @@ namespace Verse
 			{
 				yield return "has a recipeMaker but no costList or costStuffCount.";
 			}
-			if (this.GetStatValueAbstract(StatDefOf.DeteriorationRate, null) > 1E-05f && this.category != ThingCategory.Item)
+			if (this.GetStatValueAbstract(StatDefOf.DeteriorationRate, null) > 1E-05f && !this.CanEverDeteriorate)
 			{
-				yield return "has >0 DeteriorationRate but category != Item";
+				yield return "has >0 DeteriorationRate but can't deteriorate.";
 			}
 			if (this.drawerType == DrawerType.MapMeshOnly)
 			{
@@ -1090,6 +1153,22 @@ namespace Verse
 			return DefDatabase<ThingDef>.GetNamed(defName, true);
 		}
 
+		public bool IsWithinCategory(ThingCategoryDef category)
+		{
+			if (this.thingCategories == null)
+			{
+				return false;
+			}
+			for (int i = 0; i < this.thingCategories.Count; i++)
+			{
+				if (this.thingCategories[i] == category || this.thingCategories[i].Parents.Contains(category))
+				{
+					return true;
+				}
+			}
+			return false;
+		}
+
 		[DebuggerHidden]
 		public override IEnumerable<StatDrawEntry> SpecialDisplayStats()
 		{
@@ -1171,7 +1250,7 @@ namespace Verse
 					{
 						if (diff.addedPartProps != null)
 						{
-							yield return new StatDrawEntry(StatCategoryDefOf.Basics, "BodyPartEfficiency".Translate(), (diff.addedPartProps.partEfficiency * 100f).ToString("F0") + "%", 0);
+							yield return new StatDrawEntry(StatCategoryDefOf.Basics, "BodyPartEfficiency".Translate(), diff.addedPartProps.partEfficiency.ToStringByStyle(ToStringStyle.PercentZero, ToStringNumberSense.Absolute), 0);
 						}
 						foreach (StatDrawEntry s4 in diff.SpecialDisplayStats())
 						{

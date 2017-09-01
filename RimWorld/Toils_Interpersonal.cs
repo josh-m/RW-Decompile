@@ -7,14 +7,14 @@ namespace RimWorld
 {
 	public static class Toils_Interpersonal
 	{
-		public static Toil GotoPrisoner(Pawn pawn, Pawn talkee, PrisonerInteractionMode mode)
+		public static Toil GotoPrisoner(Pawn pawn, Pawn talkee, PrisonerInteractionModeDef mode)
 		{
 			Toil toil = new Toil();
 			toil.initAction = delegate
 			{
 				pawn.pather.StartPath(talkee, PathEndMode.Touch);
 			};
-			toil.AddFailCondition(() => talkee.Destroyed || (mode != PrisonerInteractionMode.Execution && !talkee.Awake()) || !talkee.IsPrisonerOfColony || (talkee.guest == null || talkee.guest.interactionMode != mode));
+			toil.AddFailCondition(() => talkee.Destroyed || (mode != PrisonerInteractionModeDefOf.Execution && !talkee.Awake()) || !talkee.IsPrisonerOfColony || (talkee.guest == null || talkee.guest.interactionMode != mode));
 			toil.socialMode = RandomSocialMode.Off;
 			toil.defaultCompleteMode = ToilCompleteMode.PatherArrival;
 			return toil;

@@ -68,6 +68,10 @@ namespace RimWorld
 
 		public static KeyBindingDef CommandColonistDraft;
 
+		public static KeyBindingDef ModifierIncrement10x;
+
+		public static KeyBindingDef ModifierIncrement100x;
+
 		public static KeyBindingDef DesignatorCancel;
 
 		public static KeyBindingDef DesignatorDeconstruct;

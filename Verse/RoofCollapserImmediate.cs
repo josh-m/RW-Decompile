@@ -73,11 +73,11 @@ namespace Verse
 						if (pawn != null)
 						{
 							BodyPartRecord brain = pawn.health.hediffSet.GetBrain();
-							dinfo = new DamageInfo(DamageDefOf.Crush, 99999, -1f, null, brain, null);
+							dinfo = new DamageInfo(DamageDefOf.Crush, 99999, -1f, null, brain, null, DamageInfo.SourceCategory.Collapse);
 						}
 						else
 						{
-							dinfo = new DamageInfo(DamageDefOf.Crush, 99999, -1f, null, null, null);
+							dinfo = new DamageInfo(DamageDefOf.Crush, 99999, -1f, null, null, null, DamageInfo.SourceCategory.Collapse);
 							dinfo.SetBodyRegion(BodyPartHeight.Top, BodyPartDepth.Outside);
 						}
 						thing.TakeDamage(dinfo);
@@ -102,7 +102,7 @@ namespace Verse
 						{
 							num *= thing2.def.building.roofCollapseDamageMultiplier;
 						}
-						DamageInfo dinfo2 = new DamageInfo(DamageDefOf.Crush, GenMath.RoundRandom(num), -1f, null, null, null);
+						DamageInfo dinfo2 = new DamageInfo(DamageDefOf.Crush, GenMath.RoundRandom(num), -1f, null, null, null, DamageInfo.SourceCategory.Collapse);
 						dinfo2.SetBodyRegion(BodyPartHeight.Top, BodyPartDepth.Outside);
 						thing2.TakeDamage(dinfo2);
 					}

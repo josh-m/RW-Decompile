@@ -30,7 +30,7 @@ namespace RimWorld
 
 		protected virtual bool CanInteractWithAnimal(Pawn pawn, Pawn animal)
 		{
-			if (!pawn.CanReserve(animal, 1))
+			if (!pawn.CanReserve(animal, 1, -1, null, false))
 			{
 				return false;
 			}
@@ -52,7 +52,7 @@ namespace RimWorld
 
 		protected bool HasFoodToInteractAnimal(Pawn pawn, Pawn tamee)
 		{
-			ThingContainer innerContainer = pawn.inventory.innerContainer;
+			ThingOwner<Thing> innerContainer = pawn.inventory.innerContainer;
 			int num = 0;
 			float num2 = JobDriver_InteractAnimal.RequiredNutritionPerFeed(tamee);
 			float num3 = 0f;
@@ -82,7 +82,7 @@ namespace RimWorld
 		protected Job TakeFoodForAnimalInteractJob(Pawn pawn, Pawn tamee)
 		{
 			float num = JobDriver_InteractAnimal.RequiredNutritionPerFeed(tamee) * 2f * 4f;
-			Thing thing = FoodUtility.BestFoodSourceOnMap(pawn, tamee, false, FoodPreferability.RawTasty, false, false, false, false, false, false);
+			Thing thing = FoodUtility.BestFoodSourceOnMap(pawn, tamee, false, FoodPreferability.RawTasty, false, false, false, false, false, false, false);
 			if (thing == null)
 			{
 				return null;

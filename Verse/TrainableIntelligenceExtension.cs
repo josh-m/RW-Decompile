@@ -4,9 +4,9 @@ namespace Verse
 {
 	public static class TrainableIntelligenceExtension
 	{
-		public static string GetLabel(this TrainableIntelligence ti)
+		public static string GetLabel(this TrainableIntelligenceDef ti)
 		{
-			return ("TrainableIntelligence_" + ti.ToString()).Translate();
+			return ("TrainableIntelligence_" + ti.defName).Translate();
 		}
 	}
 }

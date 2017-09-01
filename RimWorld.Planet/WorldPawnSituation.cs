@@ -11,6 +11,6 @@ namespace RimWorld.Planet
 		Kidnapped,
 		CaravanMember,
 		InTravelingTransportPod,
-		NonPlayerFactionBasePrisoner
+		ForSaleBySettlement
 	}
 }

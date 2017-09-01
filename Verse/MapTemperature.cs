@@ -1,37 +1,21 @@
 using RimWorld;
-using RimWorld.Planet;
 using System;
 using System.Collections.Generic;
 using System.Text;
-using Verse.Noise;
 
 namespace Verse
 {
 	public class MapTemperature
 	{
-		private const int CachedTempUpdateInterval = 60;
-
 		private Map map;
 
-		private float cachedOutdoorTemp = -3.40282347E+38f;
-
-		private float cachedSeasonalTemp = -3.40282347E+38f;
-
-		private float[] cachedMonthlyTempAverages;
-
-		private Perlin dailyVariationPerlinCached;
-
-		private HashSet<int> fastProcessedRoomIDs = new HashSet<int>();
+		private HashSet<RoomGroup> fastProcessedRoomGroups = new HashSet<RoomGroup>();
 
 		public float OutdoorTemp
 		{
 			get
 			{
-				if (this.cachedOutdoorTemp == -3.40282347E+38f)
-				{
-					this.UpdateCachedData();
-				}
-				return this.cachedOutdoorTemp;
+				return Find.World.tileTemperatures.GetOutdoorTemp(this.map.Tile);
 			}
 		}
 
@@ -39,24 +23,7 @@ namespace Verse
 		{
 			get
 			{
-				if (this.cachedSeasonalTemp == -3.40282347E+38f)
-				{
-					this.UpdateCachedData();
-				}
-				return this.cachedSeasonalTemp;
-			}
-		}
-
-		private Perlin DailyVariationPerlin
-		{
-			get
-			{
-				if (this.dailyVariationPerlinCached == null)
-				{
-					int seed = Gen.HashCombineInt(this.map.Tile, 199372327);
-					this.dailyVariationPerlinCached = new Perlin(4.9999998736893758E-06, 2.0, 0.5, 3, seed, QualityMode.Medium);
-				}
-				return this.dailyVariationPerlinCached;
+				return Find.World.tileTemperatures.GetSeasonalTemp(this.map.Tile);
 			}
 		}
 
@@ -67,103 +34,36 @@ namespace Verse
 
 		public void MapTemperatureTick()
 		{
-			if (Find.TickManager.TicksGame % 60 == 4)
-			{
-				this.UpdateCachedData();
-			}
 			if (Find.TickManager.TicksGame % 120 == 7)
 			{
-				this.fastProcessedRoomIDs.Clear();
-				foreach (Region current in this.map.regionGrid.AllRegions)
+				this.fastProcessedRoomGroups.Clear();
+				List<Room> allRooms = this.map.regionGrid.allRooms;
+				for (int i = 0; i < allRooms.Count; i++)
 				{
-					if (current.Room != null && !this.fastProcessedRoomIDs.Contains(current.Room.ID))
+					RoomGroup group = allRooms[i].Group;
+					if (!this.fastProcessedRoomGroups.Contains(group))
 					{
-						current.Room.TempTracker.EqualizeTemperature();
-						this.fastProcessedRoomIDs.Add(current.Room.ID);
+						group.TempTracker.EqualizeTemperature();
+						this.fastProcessedRoomGroups.Add(group);
 					}
 				}
+				this.fastProcessedRoomGroups.Clear();
 			}
-		}
-
-		public void UpdateCachedData()
-		{
-			this.cachedOutdoorTemp = this.OutdoorTemperatureAt(Find.TickManager.TicksAbs);
-			this.cachedOutdoorTemp += this.map.mapConditionManager.AggregateTemperatureOffset();
-			this.cachedSeasonalTemp = this.CalculateOutdoorTemperatureAtTile(Find.TickManager.TicksAbs, this.map.Tile, false);
 		}
 
 		public bool SeasonAcceptableFor(ThingDef animalRace)
 		{
-			return this.SeasonalTemp > animalRace.GetStatValueAbstract(StatDefOf.ComfyTemperatureMin, null) && this.SeasonalTemp < animalRace.GetStatValueAbstract(StatDefOf.ComfyTemperatureMax, null);
+			return Find.World.tileTemperatures.SeasonAcceptableFor(this.map.Tile, animalRace);
 		}
 
 		public bool OutdoorTemperatureAcceptableFor(ThingDef animalRace)
 		{
-			return this.OutdoorTemp > animalRace.GetStatValueAbstract(StatDefOf.ComfyTemperatureMin, null) && this.OutdoorTemp < animalRace.GetStatValueAbstract(StatDefOf.ComfyTemperatureMax, null);
+			return Find.World.tileTemperatures.OutdoorTemperatureAcceptableFor(this.map.Tile, animalRace);
 		}
 
 		public bool SeasonAndOutdoorTemperatureAcceptableFor(ThingDef animalRace)
 		{
-			return this.SeasonAcceptableFor(animalRace) && this.OutdoorTemperatureAcceptableFor(animalRace);
-		}
-
-		private float OutdoorTemperatureAt(int absTick)
-		{
-			return this.CalculateOutdoorTemperatureAtTile(absTick, this.map.Tile, true);
-		}
-
-		private float CalculateOutdoorTemperatureAtTile(int absTick, int tile, bool includeDailyVariations)
-		{
-			if (absTick == 0)
-			{
-				absTick = 1;
-			}
-			Tile tile2 = Find.WorldGrid[tile];
-			float num = tile2.temperature + GenTemperature.OffsetFromSeasonCycle(absTick, tile);
-			if (includeDailyVariations)
-			{
-				num += this.OffsetFromDailyRandomVariation(absTick) + GenTemperature.OffsetFromSunCycle(absTick, tile);
-			}
-			return num;
-		}
-
-		private float OffsetFromDailyRandomVariation(int absTick)
-		{
-			return (float)this.DailyVariationPerlin.GetValue((double)absTick, 0.0, 0.0) * 7f;
-		}
-
-		private void RebuildMonthlyTemperatureAverages()
-		{
-			if (this.cachedMonthlyTempAverages == null)
-			{
-				this.cachedMonthlyTempAverages = new float[12];
-			}
-			for (int i = 0; i < 12; i++)
-			{
-				this.cachedMonthlyTempAverages[i] = GenTemperature.AverageTemperatureAtTileForMonth(this.map.Tile, (Month)i);
-			}
-		}
-
-		private float AverageTemperatureForMonth(Month month)
-		{
-			if (this.cachedMonthlyTempAverages == null)
-			{
-				this.RebuildMonthlyTemperatureAverages();
-			}
-			return this.cachedMonthlyTempAverages[(int)month];
-		}
-
-		public Month EarliestMonthInTemperatureRange(float minTemp, float maxTemp)
-		{
-			for (int i = 0; i < 12; i++)
-			{
-				float num = this.AverageTemperatureForMonth((Month)i);
-				if (num >= minTemp && num <= maxTemp)
-				{
-					return (Month)i;
-				}
-			}
-			return Month.Undefined;
+			return Find.World.tileTemperatures.SeasonAndOutdoorTemperatureAcceptableFor(this.map.Tile, animalRace);
 		}
 
 		public bool LocalSeasonsAreMeaningful()
@@ -172,7 +72,7 @@ namespace Verse
 			bool flag2 = false;
 			for (int i = 0; i < 12; i++)
 			{
-				float num = this.AverageTemperatureForMonth((Month)i);
+				float num = Find.World.tileTemperatures.AverageTemperatureForTwelfth(this.map.Tile, (Twelfth)i);
 				if (num > 0f)
 				{
 					flag2 = true;
@@ -188,23 +88,35 @@ namespace Verse
 		public void DebugLogTemps()
 		{
 			StringBuilder stringBuilder = new StringBuilder();
+			float num = (Find.VisibleMap == null) ? 0f : Find.WorldGrid.LongLatOf(Find.VisibleMap.Tile).y;
+			stringBuilder.AppendLine("Latitude " + num);
 			stringBuilder.AppendLine("-----Temperature for each hour this day------");
 			stringBuilder.AppendLine("Hour    Temp    SunEffect");
-			int num = Find.TickManager.TicksAbs - Find.TickManager.TicksAbs % 60000;
+			int num2 = Find.TickManager.TicksAbs - Find.TickManager.TicksAbs % 60000;
 			for (int i = 0; i < 24; i++)
 			{
-				int absTick = num + i * 2500;
+				int absTick = num2 + i * 2500;
 				stringBuilder.Append(i.ToString().PadRight(5));
-				stringBuilder.Append(this.OutdoorTemperatureAt(absTick).ToString("F2").PadRight(8));
+				stringBuilder.Append(Find.World.tileTemperatures.OutdoorTemperatureAt(this.map.Tile, absTick).ToString("F2").PadRight(8));
 				stringBuilder.Append(GenTemperature.OffsetFromSunCycle(absTick, this.map.Tile).ToString("F2"));
 				stringBuilder.AppendLine();
 			}
 			stringBuilder.AppendLine();
-			stringBuilder.AppendLine("-----Temperature for each month this year------");
+			stringBuilder.AppendLine("-----Temperature for each twelfth this year------");
 			for (int j = 0; j < 12; j++)
 			{
-				float num2 = this.AverageTemperatureForMonth((Month)j);
-				stringBuilder.AppendLine(((Month)j).ToString() + " " + num2.ToString("F2"));
+				Twelfth twelfth = (Twelfth)j;
+				float num3 = Find.World.tileTemperatures.AverageTemperatureForTwelfth(this.map.Tile, twelfth);
+				stringBuilder.AppendLine(string.Concat(new object[]
+				{
+					twelfth.GetQuadrum(),
+					"/",
+					twelfth.GetSeason(num),
+					" - ",
+					twelfth.ToString(),
+					" ",
+					num3.ToString("F2")
+				}));
 			}
 			stringBuilder.AppendLine();
 			stringBuilder.AppendLine("-----Temperature for each day this year------");
@@ -212,16 +124,16 @@ namespace Verse
 			stringBuilder.AppendLine("Seasonal shift: " + GenTemperature.SeasonalShiftAmplitudeAt(this.map.Tile));
 			stringBuilder.AppendLine("Equatorial distance: " + Find.WorldGrid.DistanceFromEquatorNormalized(this.map.Tile));
 			stringBuilder.AppendLine();
-			stringBuilder.AppendLine("Day  Lo   Hi   AvgDailyTemp RandomDailyVariation");
-			for (int k = 0; k < 180; k++)
+			stringBuilder.AppendLine("Day  Lo   Hi   OffsetFromSeason RandomDailyVariation");
+			for (int k = 0; k < 60; k++)
 			{
 				int absTick2 = (int)((float)(k * 60000) + 15000f);
 				int absTick3 = (int)((float)(k * 60000) + 45000f);
 				stringBuilder.Append(k.ToString().PadRight(8));
-				stringBuilder.Append(this.OutdoorTemperatureAt(absTick2).ToString("F2").PadRight(11));
-				stringBuilder.Append(this.OutdoorTemperatureAt(absTick3).ToString("F2").PadRight(11));
+				stringBuilder.Append(Find.World.tileTemperatures.OutdoorTemperatureAt(this.map.Tile, absTick2).ToString("F2").PadRight(11));
+				stringBuilder.Append(Find.World.tileTemperatures.OutdoorTemperatureAt(this.map.Tile, absTick3).ToString("F2").PadRight(11));
 				stringBuilder.Append(GenTemperature.OffsetFromSeasonCycle(absTick3, this.map.Tile).ToString("F2").PadRight(11));
-				stringBuilder.Append(this.OffsetFromDailyRandomVariation(absTick3).ToString("F2"));
+				stringBuilder.Append(Find.World.tileTemperatures.OffsetFromDailyRandomVariation(this.map.Tile, absTick3).ToString("F2"));
 				stringBuilder.AppendLine();
 			}
 			Log.Message(stringBuilder.ToString());

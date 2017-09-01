@@ -35,16 +35,24 @@ namespace Verse
 
 		public static void WriteMetaHeader()
 		{
-			Scribe.EnterNode("meta");
-			string currentVersionStringWithRev = VersionControl.CurrentVersionStringWithRev;
-			Scribe_Values.LookValue<string>(ref currentVersionStringWithRev, "gameVersion", null, false);
-			List<string> list = (from mod in LoadedModManager.RunningMods
-			select mod.Identifier).ToList<string>();
-			Scribe_Collections.LookList<string>(ref list, "modIds", LookMode.Undefined, new object[0]);
-			List<string> list2 = (from mod in LoadedModManager.RunningMods
-			select mod.Name).ToList<string>();
-			Scribe_Collections.LookList<string>(ref list2, "modNames", LookMode.Undefined, new object[0]);
-			Scribe.ExitNode();
+			if (Scribe.EnterNode("meta"))
+			{
+				try
+				{
+					string currentVersionStringWithRev = VersionControl.CurrentVersionStringWithRev;
+					Scribe_Values.Look<string>(ref currentVersionStringWithRev, "gameVersion", null, false);
+					List<string> list = (from mod in LoadedModManager.RunningMods
+					select mod.Identifier).ToList<string>();
+					Scribe_Collections.Look<string>(ref list, "modIds", LookMode.Undefined, new object[0]);
+					List<string> list2 = (from mod in LoadedModManager.RunningMods
+					select mod.Name).ToList<string>();
+					Scribe_Collections.Look<string>(ref list2, "modNames", LookMode.Undefined, new object[0]);
+				}
+				finally
+				{
+					Scribe.ExitNode();
+				}
+			}
 		}
 
 		public static void LoadGameDataHeader(ScribeMetaHeaderUtility.ScribeHeaderMode mode, bool logVersionConflictWarning)
@@ -55,16 +63,24 @@ namespace Verse
 			ScribeMetaHeaderUtility.lastMode = mode;
 			if (Scribe.mode != LoadSaveMode.Inactive && Scribe.EnterNode("meta"))
 			{
-				Scribe_Values.LookValue<string>(ref ScribeMetaHeaderUtility.loadedGameVersion, "gameVersion", null, false);
-				Scribe_Collections.LookList<string>(ref ScribeMetaHeaderUtility.loadedModIdsList, "modIds", LookMode.Undefined, new object[0]);
-				Scribe_Collections.LookList<string>(ref ScribeMetaHeaderUtility.loadedModNamesList, "modNames", LookMode.Undefined, new object[0]);
-				Scribe.ExitNode();
+				try
+				{
+					Scribe_Values.Look<string>(ref ScribeMetaHeaderUtility.loadedGameVersion, "gameVersion", null, false);
+					Scribe_Collections.Look<string>(ref ScribeMetaHeaderUtility.loadedModIdsList, "modIds", LookMode.Undefined, new object[0]);
+					Scribe_Collections.Look<string>(ref ScribeMetaHeaderUtility.loadedModNamesList, "modNames", LookMode.Undefined, new object[0]);
+				}
+				finally
+				{
+					Scribe.ExitNode();
+				}
 			}
 			if (logVersionConflictWarning && (mode == ScribeMetaHeaderUtility.ScribeHeaderMode.Map || !UnityData.isEditor) && !ScribeMetaHeaderUtility.VersionsMatch())
 			{
-				Log.Warning(string.Concat(new string[]
+				Log.Warning(string.Concat(new object[]
 				{
-					"Loaded file is from version ",
+					"Loaded file (",
+					mode,
+					") is from version ",
 					ScribeMetaHeaderUtility.loadedGameVersion,
 					", we are running version ",
 					VersionControl.CurrentVersionStringWithRev,
@@ -82,7 +98,7 @@ namespace Verse
 		{
 			string text = null;
 			string text2 = null;
-			if (!ScribeMetaHeaderUtility.VersionsMatch())
+			if (!BackCompatibility.IsSaveCompatibleWith(ScribeMetaHeaderUtility.loadedGameVersion) && !ScribeMetaHeaderUtility.VersionsMatch())
 			{
 				text2 = "VersionMismatch".Translate();
 				string text3 = (!ScribeMetaHeaderUtility.loadedGameVersion.NullOrEmpty()) ? ScribeMetaHeaderUtility.loadedGameVersion : ("(" + "UnknownLower".Translate() + ")");

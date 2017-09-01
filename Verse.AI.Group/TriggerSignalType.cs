@@ -10,6 +10,7 @@ namespace Verse.AI.Group
 		PawnDamaged,
 		PawnArrestAttempted,
 		PawnLost,
+		BuildingDamaged,
 		FactionRelationsChanged
 	}
 }

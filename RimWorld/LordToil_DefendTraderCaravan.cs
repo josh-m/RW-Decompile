@@ -15,6 +15,14 @@ namespace RimWorld
 			}
 		}
 
+		public override float? CustomWakeThreshold
+		{
+			get
+			{
+				return new float?(0.5f);
+			}
+		}
+
 		public LordToil_DefendTraderCaravan() : base(true)
 		{
 		}

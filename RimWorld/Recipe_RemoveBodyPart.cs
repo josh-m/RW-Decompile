@@ -53,7 +53,7 @@ namespace RimWorld
 				MedicalRecipesUtility.SpawnNaturalPartIfClean(pawn, part, billDoer.Position, billDoer.Map);
 				MedicalRecipesUtility.SpawnThingsFromHediffs(pawn, part, billDoer.Position, billDoer.Map);
 			}
-			pawn.TakeDamage(new DamageInfo(DamageDefOf.SurgicalCut, 99999, -1f, null, part, null));
+			pawn.TakeDamage(new DamageInfo(DamageDefOf.SurgicalCut, 99999, -1f, null, part, null, DamageInfo.SourceCategory.ThingOrUnknown));
 			if (flag)
 			{
 				if (pawn.Dead)
@@ -86,7 +86,7 @@ namespace RimWorld
 			{
 				throw new InvalidOperationException();
 			}
-			if (part.depth == BodyPartDepth.Inside)
+			if (part.depth == BodyPartDepth.Inside || part.def.useDestroyedOutLabel)
 			{
 				return "RemoveOrgan".Translate();
 			}

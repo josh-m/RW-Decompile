@@ -9,7 +9,7 @@ namespace RimWorld
 
 		public static SkillDef Growing;
 
-		public static SkillDef Research;
+		public static SkillDef Intellectual;
 
 		public static SkillDef Mining;
 

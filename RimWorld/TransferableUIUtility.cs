@@ -27,7 +27,7 @@ namespace RimWorld
 
 		private static readonly Texture2D TradeArrow = ContentFinder<Texture2D>.Get("UI/Widgets/TradeArrow", true);
 
-		public static void DoCountAdjustInterface(Rect rect, ITransferable trad, int index, int min, int max, bool flash = false, List<TransferableCountToTransferStoppingPoint> extraStoppingPoints = null)
+		public static void DoCountAdjustInterface(Rect rect, Transferable trad, int index, int min, int max, bool flash = false, List<TransferableCountToTransferStoppingPoint> extraStoppingPoints = null)
 		{
 			TransferableUIUtility.stoppingPoints.Clear();
 			if (extraStoppingPoints != null)
@@ -57,7 +57,7 @@ namespace RimWorld
 			TransferableUIUtility.DoCountAdjustInterfaceInternal(rect, trad, index, min, max, flash);
 		}
 
-		private static void DoCountAdjustInterfaceInternal(Rect rect, ITransferable trad, int index, int min, int max, bool flash)
+		private static void DoCountAdjustInterfaceInternal(Rect rect, Transferable trad, int index, int min, int max, bool flash)
 		{
 			rect = rect.Rounded();
 			Rect rect2 = new Rect(rect.center.x - 45f, rect.center.y - 12.5f, 90f, 25f).Rounded();
@@ -82,13 +82,11 @@ namespace RimWorld
 				{
 					if (flag3)
 					{
-						trad.SetToTransferMaxToDest();
-						TransferableUIUtility.ClearEditBuffer(trad);
+						trad.AdjustTo(trad.GetMaximum());
 					}
 					else
 					{
-						trad.SetToTransferMaxToSource();
-						TransferableUIUtility.ClearEditBuffer(trad);
+						trad.AdjustTo(trad.GetMinimum());
 					}
 				}
 			}
@@ -100,7 +98,7 @@ namespace RimWorld
 				int countToTransfer = trad.CountToTransfer;
 				string editBuffer = trad.EditBuffer;
 				Widgets.TextFieldNumeric<int>(rect3, ref countToTransfer, ref editBuffer, (float)min, (float)max);
-				trad.CountToTransfer = countToTransfer;
+				trad.AdjustTo(countToTransfer);
 				trad.EditBuffer = editBuffer;
 			}
 			Text.Anchor = TextAnchor.UpperLeft;
@@ -108,106 +106,114 @@ namespace RimWorld
 			if (trad.Interactive && !flag)
 			{
 				TransferablePositiveCountDirection positiveCountDirection = trad.PositiveCountDirection;
-				if (trad.CanSetToTransferOneMoreToSource().Accepted)
+				int num = (positiveCountDirection != TransferablePositiveCountDirection.Source) ? -1 : 1;
+				int num2 = GenUI.CurrentAdjustmentMultiplier();
+				bool flag4 = trad.GetRange() == 1;
+				if (trad.CanAdjustBy(num * num2).Accepted)
 				{
 					Rect rect4 = new Rect(rect2.x - 30f, rect.y, 30f, rect.height);
+					if (flag4)
+					{
+						rect4.x -= rect4.width;
+						rect4.width += rect4.width;
+					}
 					if (Widgets.ButtonText(rect4, "<", true, false, true))
 					{
-						AcceptanceReport acceptanceReport = trad.TrySetToTransferOneMoreToSource();
-						if (!acceptanceReport.Accepted)
-						{
-							Messages.Message(acceptanceReport.Reason, MessageSound.RejectInput);
-						}
-						else
-						{
-							SoundDefOf.TickHigh.PlayOneShotOnCamera();
-						}
-						TransferableUIUtility.ClearEditBuffer(trad);
+						trad.AdjustBy(num * num2);
+						SoundDefOf.TickHigh.PlayOneShotOnCamera(null);
 					}
-					string label = "<<";
-					int? num = null;
-					int num2 = 0;
-					for (int i = 0; i < TransferableUIUtility.stoppingPoints.Count; i++)
+					if (!flag4)
 					{
-						TransferableCountToTransferStoppingPoint transferableCountToTransferStoppingPoint = TransferableUIUtility.stoppingPoints[i];
-						if (positiveCountDirection == TransferablePositiveCountDirection.Source)
+						string label = "<<";
+						int? num3 = null;
+						int num4 = 0;
+						for (int i = 0; i < TransferableUIUtility.stoppingPoints.Count; i++)
 						{
-							if (trad.CountToTransfer < transferableCountToTransferStoppingPoint.threshold && (transferableCountToTransferStoppingPoint.threshold < num2 || !num.HasValue))
+							TransferableCountToTransferStoppingPoint transferableCountToTransferStoppingPoint = TransferableUIUtility.stoppingPoints[i];
+							if (positiveCountDirection == TransferablePositiveCountDirection.Source)
+							{
+								if (trad.CountToTransfer < transferableCountToTransferStoppingPoint.threshold && (transferableCountToTransferStoppingPoint.threshold < num4 || !num3.HasValue))
+								{
+									label = transferableCountToTransferStoppingPoint.leftLabel;
+									num3 = new int?(transferableCountToTransferStoppingPoint.threshold);
+								}
+							}
+							else if (trad.CountToTransfer > transferableCountToTransferStoppingPoint.threshold && (transferableCountToTransferStoppingPoint.threshold > num4 || !num3.HasValue))
 							{
 								label = transferableCountToTransferStoppingPoint.leftLabel;
-								num = new int?(transferableCountToTransferStoppingPoint.threshold);
+								num3 = new int?(transferableCountToTransferStoppingPoint.threshold);
 							}
 						}
-						else if (trad.CountToTransfer > transferableCountToTransferStoppingPoint.threshold && (transferableCountToTransferStoppingPoint.threshold > num2 || !num.HasValue))
+						rect4.x -= rect4.width;
+						if (Widgets.ButtonText(rect4, label, true, false, true))
 						{
-							label = transferableCountToTransferStoppingPoint.leftLabel;
-							num = new int?(transferableCountToTransferStoppingPoint.threshold);
+							if (num3.HasValue)
+							{
+								trad.AdjustTo(num3.Value);
+							}
+							else if (num == 1)
+							{
+								trad.AdjustTo(trad.GetMaximum());
+							}
+							else
+							{
+								trad.AdjustTo(trad.GetMinimum());
+							}
+							SoundDefOf.TickHigh.PlayOneShotOnCamera(null);
 						}
-					}
-					rect4.x -= rect4.width;
-					if (Widgets.ButtonText(rect4, label, true, false, true))
-					{
-						if (num.HasValue)
-						{
-							trad.CountToTransfer = num.Value;
-						}
-						else
-						{
-							trad.SetToTransferMaxToSource();
-						}
-						SoundDefOf.TickHigh.PlayOneShotOnCamera();
-						TransferableUIUtility.ClearEditBuffer(trad);
 					}
 				}
-				if (trad.CanSetToTransferOneMoreToDest().Accepted)
+				if (trad.CanAdjustBy(-num * num2).Accepted)
 				{
 					Rect rect5 = new Rect(rect2.xMax, rect.y, 30f, rect.height);
+					if (flag4)
+					{
+						rect5.width += rect5.width;
+					}
 					if (Widgets.ButtonText(rect5, ">", true, false, true))
 					{
-						AcceptanceReport acceptanceReport2 = trad.TrySetToTransferOneMoreToDest();
-						if (!acceptanceReport2.Accepted)
-						{
-							Messages.Message(acceptanceReport2.Reason, MessageSound.RejectInput);
-						}
-						else
-						{
-							SoundDefOf.TickLow.PlayOneShotOnCamera();
-						}
-						TransferableUIUtility.ClearEditBuffer(trad);
+						trad.AdjustBy(-num * num2);
+						SoundDefOf.TickLow.PlayOneShotOnCamera(null);
 					}
-					string label2 = ">>";
-					int? num3 = null;
-					int num4 = 0;
-					for (int j = 0; j < TransferableUIUtility.stoppingPoints.Count; j++)
+					if (!flag4)
 					{
-						TransferableCountToTransferStoppingPoint transferableCountToTransferStoppingPoint2 = TransferableUIUtility.stoppingPoints[j];
-						if (positiveCountDirection == TransferablePositiveCountDirection.Destination)
+						string label2 = ">>";
+						int? num5 = null;
+						int num6 = 0;
+						for (int j = 0; j < TransferableUIUtility.stoppingPoints.Count; j++)
 						{
-							if (trad.CountToTransfer < transferableCountToTransferStoppingPoint2.threshold && (transferableCountToTransferStoppingPoint2.threshold < num4 || !num3.HasValue))
+							TransferableCountToTransferStoppingPoint transferableCountToTransferStoppingPoint2 = TransferableUIUtility.stoppingPoints[j];
+							if (positiveCountDirection == TransferablePositiveCountDirection.Destination)
+							{
+								if (trad.CountToTransfer < transferableCountToTransferStoppingPoint2.threshold && (transferableCountToTransferStoppingPoint2.threshold < num6 || !num5.HasValue))
+								{
+									label2 = transferableCountToTransferStoppingPoint2.rightLabel;
+									num5 = new int?(transferableCountToTransferStoppingPoint2.threshold);
+								}
+							}
+							else if (trad.CountToTransfer > transferableCountToTransferStoppingPoint2.threshold && (transferableCountToTransferStoppingPoint2.threshold > num6 || !num5.HasValue))
 							{
 								label2 = transferableCountToTransferStoppingPoint2.rightLabel;
-								num3 = new int?(transferableCountToTransferStoppingPoint2.threshold);
+								num5 = new int?(transferableCountToTransferStoppingPoint2.threshold);
 							}
 						}
-						else if (trad.CountToTransfer > transferableCountToTransferStoppingPoint2.threshold && (transferableCountToTransferStoppingPoint2.threshold > num4 || !num3.HasValue))
+						rect5.x += rect5.width;
+						if (Widgets.ButtonText(rect5, label2, true, false, true))
 						{
-							label2 = transferableCountToTransferStoppingPoint2.rightLabel;
-							num3 = new int?(transferableCountToTransferStoppingPoint2.threshold);
+							if (num5.HasValue)
+							{
+								trad.AdjustTo(num5.Value);
+							}
+							else if (num == 1)
+							{
+								trad.AdjustTo(trad.GetMinimum());
+							}
+							else
+							{
+								trad.AdjustTo(trad.GetMaximum());
+							}
+							SoundDefOf.TickLow.PlayOneShotOnCamera(null);
 						}
-					}
-					rect5.x += rect5.width;
-					if (Widgets.ButtonText(rect5, label2, true, false, true))
-					{
-						if (num3.HasValue)
-						{
-							trad.CountToTransfer = num3.Value;
-						}
-						else
-						{
-							trad.SetToTransferMaxToDest();
-						}
-						SoundDefOf.TickLow.PlayOneShotOnCamera();
-						TransferableUIUtility.ClearEditBuffer(trad);
 					}
 				}
 			}
@@ -259,7 +265,7 @@ namespace RimWorld
 			GUI.color = Color.white;
 		}
 
-		public static void DrawTransferableInfo(ITransferable trad, Rect idRect, Color labelColor)
+		public static void DrawTransferableInfo(Transferable trad, Rect idRect, Color labelColor)
 		{
 			if (!trad.HasAnyThing)
 			{
@@ -279,7 +285,7 @@ namespace RimWorld
 			Widgets.Label(rect2, trad.Label);
 			GUI.color = Color.white;
 			Text.WordWrap = true;
-			ITransferable localTrad = trad;
+			Transferable localTrad = trad;
 			TooltipHandler.TipRegion(idRect, new TipSignal(delegate
 			{
 				if (!localTrad.HasAnyThing)
@@ -290,57 +296,50 @@ namespace RimWorld
 			}, localTrad.GetHashCode()));
 		}
 
-		public static void ClearEditBuffer(ITransferable trad)
-		{
-			trad.EditBuffer = trad.CountToTransfer.ToStringCached();
-		}
-
-		public static float DefaultListOrderPriority(ITransferable transferable)
+		public static float DefaultListOrderPriority(Transferable transferable)
 		{
 			if (!transferable.HasAnyThing)
 			{
 				return 0f;
 			}
-			ThingDef thingDef = transferable.ThingDef;
-			Tradeable tradeable = transferable as Tradeable;
-			int num;
-			if (tradeable != null && tradeable.IsCurrency)
+			return TransferableUIUtility.DefaultListOrderPriority(transferable.ThingDef);
+		}
+
+		public static float DefaultListOrderPriority(ThingDef def)
+		{
+			if (def == ThingDefOf.Silver)
 			{
-				num = 100;
+				return 100f;
 			}
-			else if (thingDef == ThingDefOf.Gold)
+			if (def == ThingDefOf.Gold)
 			{
-				num = 99;
+				return 99f;
 			}
-			else if (thingDef.Minifiable)
+			if (def.Minifiable)
 			{
-				num = 90;
+				return 90f;
 			}
-			else if (thingDef.IsApparel)
+			if (def.IsApparel)
 			{
-				num = 80;
+				return 80f;
 			}
-			else if (thingDef.IsRangedWeapon)
+			if (def.IsRangedWeapon)
 			{
-				num = 70;
+				return 70f;
 			}
-			else if (thingDef.IsMeleeWeapon)
+			if (def.IsMeleeWeapon)
 			{
-				num = 60;
+				return 60f;
 			}
-			else if (thingDef.isBodyPartOrImplant)
+			if (def.isBodyPartOrImplant)
 			{
-				num = 50;
+				return 50f;
 			}
-			else if (thingDef.CountAsResource)
+			if (def.CountAsResource)
 			{
-				num = -10;
+				return -10f;
 			}
-			else
-			{
-				num = 20;
-			}
-			return (float)num;
+			return 20f;
 		}
 
 		public static void DoTransferableSorters(TransferableSorterDef sorter1, TransferableSorterDef sorter2, Action<TransferableSorterDef> sorter1Setter, Action<TransferableSorterDef> sorter2Setter)

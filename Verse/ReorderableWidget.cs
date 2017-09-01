@@ -164,7 +164,12 @@ namespace Verse
 				if (reorderableInstance.groupID == groupID)
 				{
 					int num3 = (i > ReorderableWidget.draggingReorderable) ? num2 : i;
-					if (reorderableInstance.absRect.TopHalf().Contains(Event.current.mousePosition))
+					Rect rect = reorderableInstance.absRect.TopHalf();
+					if (rect.yMin > 0f)
+					{
+						rect.yMin = 0f;
+					}
+					if (rect.Contains(Event.current.mousePosition))
 					{
 						num = num3;
 						break;
@@ -172,8 +177,8 @@ namespace Verse
 					if (num2 >= 0)
 					{
 						float num4 = Mathf.Min(reorderableInstance.absRect.x, ReorderableWidget.reorderables[num2].absRect.x);
-						Rect rect = new Rect(num4, ReorderableWidget.reorderables[num2].absRect.center.y, Mathf.Max(reorderableInstance.absRect.xMax, ReorderableWidget.reorderables[num2].absRect.xMax) - num4, reorderableInstance.absRect.center.y - ReorderableWidget.reorderables[num2].absRect.center.y);
-						if (rect.Contains(Event.current.mousePosition))
+						Rect rect2 = new Rect(num4, ReorderableWidget.reorderables[num2].absRect.center.y, Mathf.Max(reorderableInstance.absRect.xMax, ReorderableWidget.reorderables[num2].absRect.xMax) - num4, reorderableInstance.absRect.center.y - ReorderableWidget.reorderables[num2].absRect.center.y);
+						if (rect2.Contains(Event.current.mousePosition))
 						{
 							num = num3;
 							break;
@@ -182,9 +187,17 @@ namespace Verse
 					num2 = i;
 				}
 			}
-			if (num < 0 && num2 >= 0 && ReorderableWidget.reorderables[num2].absRect.BottomHalf().Contains(Event.current.mousePosition))
+			if (num < 0 && num2 >= 0)
 			{
-				num = num2;
+				Rect rect3 = ReorderableWidget.reorderables[num2].absRect.BottomHalf();
+				if (rect3.yMax < (float)UI.screenHeight)
+				{
+					rect3.yMax = (float)UI.screenHeight;
+				}
+				if (rect3.Contains(Event.current.mousePosition))
+				{
+					num = num2;
+				}
 			}
 			return num;
 		}

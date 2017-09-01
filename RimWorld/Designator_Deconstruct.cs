@@ -65,7 +65,7 @@ namespace RimWorld
 
 		public override void DesignateThing(Thing t)
 		{
-			if (t.def.CanHaveFaction && t.Faction != Faction.OfPlayer)
+			if (t.def.Claimable && t.Faction != Faction.OfPlayer)
 			{
 				t.SetFaction(Faction.OfPlayer, null);
 			}
@@ -97,16 +97,9 @@ namespace RimWorld
 				{
 					return false;
 				}
-				if (building.Faction != Faction.OfPlayer && !building.def.building.alwaysDeconstructible)
+				if (building.Faction != Faction.OfPlayer && !building.ClaimableBy(Faction.OfPlayer) && !building.def.building.alwaysDeconstructible)
 				{
-					if (building.Faction != null)
-					{
-						return false;
-					}
-					if (!building.ClaimableBy(Faction.OfPlayer))
-					{
-						return false;
-					}
+					return false;
 				}
 			}
 			if (base.Map.designationManager.DesignationOn(t, DesignationDefOf.Deconstruct) != null)

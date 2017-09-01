@@ -16,7 +16,7 @@ namespace Verse
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Collections.LookList<Explosion>(ref this.explosions, "explosions", LookMode.Deep, new object[0]);
+			Scribe_Collections.Look<Explosion>(ref this.explosions, "explosions", LookMode.Deep, new object[0]);
 			if (Scribe.mode == LoadSaveMode.LoadingVars)
 			{
 				for (int i = 0; i < this.explosions.Count; i++)
@@ -33,7 +33,15 @@ namespace Verse
 			this.tmpToTick.AddRange(this.explosions);
 			for (int i = 0; i < this.tmpToTick.Count; i++)
 			{
-				this.tmpToTick[i].Tick();
+				try
+				{
+					this.tmpToTick[i].Tick();
+				}
+				catch (Exception arg)
+				{
+					Log.Error("Error in ExplosionManager: " + arg);
+					this.explosions.Remove(this.tmpToTick[i]);
+				}
 			}
 			this.explosions.RemoveAll((Explosion x) => x.finished);
 		}

@@ -60,7 +60,7 @@ namespace RimWorld
 			{
 				return null;
 			}
-			ThingContainer innerContainer = pawn.inventory.innerContainer;
+			ThingOwner<Thing> innerContainer = pawn.inventory.innerContainer;
 			for (int i = 0; i < innerContainer.Count; i++)
 			{
 				if (this.DrugValidator(pawn, addictionHediff, innerContainer[i]))
@@ -69,7 +69,7 @@ namespace RimWorld
 				}
 			}
 			Predicate<Thing> validator = (Thing x) => this.DrugValidator(pawn, addictionHediff, x);
-			return GenClosest.ClosestThingReachable(pawn.Position, pawn.Map, ThingRequest.ForGroup(ThingRequestGroup.Drug), PathEndMode.Touch, TraverseParms.For(pawn, Danger.Deadly, TraverseMode.ByPawn, false), 9999f, validator, null, -1, false);
+			return GenClosest.ClosestThingReachable(pawn.Position, pawn.Map, ThingRequest.ForGroup(ThingRequestGroup.Drug), PathEndMode.ClosestTouch, TraverseParms.For(pawn, Danger.Deadly, TraverseMode.ByPawn, false), 9999f, validator, null, 0, -1, false, RegionType.Set_Passable, false);
 		}
 
 		private bool DrugValidator(Pawn pawn, Hediff_Addiction addiction, Thing drug)
@@ -84,7 +84,7 @@ namespace RimWorld
 				{
 					return false;
 				}
-				if (!pawn.CanReserve(drug, 1))
+				if (!pawn.CanReserve(drug, 1, -1, null, false))
 				{
 					return false;
 				}

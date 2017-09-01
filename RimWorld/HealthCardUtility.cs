@@ -135,7 +135,7 @@ namespace RimWorld
 			{
 				rect2.width -= 16f;
 			}
-			Widgets.BeginScrollView(outRect, ref HealthCardUtility.scrollPosition, viewRect);
+			Widgets.BeginScrollView(outRect, ref HealthCardUtility.scrollPosition, viewRect, true);
 			GUI.color = Color.white;
 			float num = 0f;
 			HealthCardUtility.highlight = true;
@@ -175,7 +175,7 @@ namespace RimWorld
 				{
 					text = text + " (" + "TimeToDeath".Translate(new object[]
 					{
-						num2.ToStringTicksToPeriod(true)
+						num2.ToStringTicksToPeriod(true, false, true)
 					}) + ")";
 				}
 				else
@@ -206,7 +206,7 @@ namespace RimWorld
 			{
 				return 9999999f;
 			}
-			return (float)((int)rec.height * 10000) + rec.absoluteCoverage;
+			return (float)((int)rec.height * 10000) + rec.coverageAbsWithChildren;
 		}
 
 		[DebuggerHidden]
@@ -220,7 +220,7 @@ namespace RimWorld
 					yield return mpca[i];
 				}
 				IEnumerable<Hediff> visibleDiffs = from d in pawn.health.hediffSet.hediffs
-				where !(d is Hediff_MissingPart) && d.Visible && (this.showBloodLoss || d.def != HediffDefOf.BloodLoss) && (!d.hiddenOffMap || Current.ProgramState == ProgramState.Playing)
+				where !(d is Hediff_MissingPart) && d.Visible && (this.showBloodLoss || d.def != HediffDefOf.BloodLoss)
 				select d;
 				foreach (Hediff diff in visibleDiffs)
 				{
@@ -413,6 +413,10 @@ namespace RimWorld
 			{
 				Rect rect2 = new Rect(0f, curY, 140f, 28f);
 				MedicalCareUtility.MedicalCareSetter(rect2, ref pawn.playerSettings.medCare);
+				if (Widgets.ButtonText(new Rect(leftRect.width - 70f, curY, 70f, 28f), "MedGroupDefaults".Translate(), true, false, true))
+				{
+					Find.WindowStack.Add(new Dialog_MedicalDefaults());
+				}
 				curY += 32f;
 			}
 			Text.Font = GameFont.Small;
@@ -447,18 +451,49 @@ namespace RimWorld
 				orderby act.listOrder
 				select act)
 				{
-					if (PawnCapacityUtility.BodyCanEverDoActivity(pawn.RaceProps.body, current))
+					if (PawnCapacityUtility.BodyCanEverDoCapacity(pawn.RaceProps.body, current))
 					{
+						PawnCapacityDef activityLocal = current;
 						Pair<string, Color> efficiencyLabel = HealthCardUtility.GetEfficiencyLabel(pawn, current);
-						string pawnCapacityTip = HealthCardUtility.GetPawnCapacityTip(pawn, current);
-						curY = HealthCardUtility.DrawLeftRow(leftRect, curY, current.GetLabelFor(pawn.RaceProps.IsFlesh, pawn.RaceProps.Humanlike).CapitalizeFirst(), efficiencyLabel.First, efficiencyLabel.Second, pawnCapacityTip);
+						Func<string> textGetter = () => (!pawn.Dead) ? HealthCardUtility.GetPawnCapacityTip(pawn, activityLocal) : string.Empty;
+						curY = HealthCardUtility.DrawLeftRow(leftRect, curY, current.GetLabelFor(pawn.RaceProps.IsFlesh, pawn.RaceProps.Humanlike).CapitalizeFirst(), efficiencyLabel.First, efficiencyLabel.Second, new TipSignal(textGetter, pawn.thingIDNumber ^ (int)current.index));
 					}
 				}
+			}
+			GUI.color = Color.white;
+			if (pawn.IsColonist)
+			{
+				bool selfTend = pawn.playerSettings.selfTend;
+				Rect rect3 = new Rect(0f, leftRect.height - 24f, leftRect.width, 24f);
+				Widgets.CheckboxLabeled(rect3, "SelfTend".Translate(), ref pawn.playerSettings.selfTend, false);
+				if (pawn.playerSettings.selfTend && !selfTend)
+				{
+					if (pawn.story.WorkTypeIsDisabled(WorkTypeDefOf.Doctor))
+					{
+						pawn.playerSettings.selfTend = false;
+						Messages.Message("MessageCannotSelfTendEver".Translate(new object[]
+						{
+							pawn.LabelShort
+						}), MessageSound.RejectInput);
+					}
+					else if (pawn.workSettings.GetPriority(WorkTypeDefOf.Doctor) == 0)
+					{
+						Messages.Message("MessageSelfTendUnsatisfied".Translate(new object[]
+						{
+							pawn.LabelShort
+						}), MessageSound.Standard);
+					}
+				}
+				TooltipHandler.TipRegion(rect3, "SelfTendTip".Translate(new object[]
+				{
+					Faction.OfPlayer.def.pawnsPlural,
+					0.7f.ToStringPercent()
+				}).CapitalizeFirst());
 			}
 			return curY;
 		}
 
-		private static float DrawLeftRow(Rect leftRect, float curY, string leftLabel, string rightLabel, Color rightLabelColor, string tipLabel)
+		private static float DrawLeftRow(Rect leftRect, float curY, string leftLabel, string rightLabel, Color rightLabelColor, TipSignal tipSignal)
 		{
 			Rect rect = new Rect(0f, curY, leftRect.width, 20f);
 			if (Mouse.IsOver(rect))
@@ -467,10 +502,10 @@ namespace RimWorld
 				GUI.DrawTexture(rect, TexUI.HighlightTex);
 			}
 			GUI.color = Color.white;
-			Widgets.Label(new Rect(0f, curY, leftRect.width * 0.65f, 30f), new GUIContent(leftLabel));
+			Widgets.Label(new Rect(0f, curY, leftRect.width * 0.65f, 30f), leftLabel);
 			GUI.color = rightLabelColor;
-			Widgets.Label(new Rect(leftRect.width * 0.65f, curY, leftRect.width * 0.35f, 30f), new GUIContent(rightLabel));
-			TooltipHandler.TipRegion(new Rect(0f, curY, leftRect.width, 20f), new TipSignal(tipLabel));
+			Widgets.Label(new Rect(leftRect.width * 0.65f, curY, leftRect.width * 0.35f, 30f), rightLabel);
+			TooltipHandler.TipRegion(new Rect(0f, curY, leftRect.width, 20f), tipSignal);
 			curY += 20f;
 			return curY;
 		}
@@ -479,14 +514,15 @@ namespace RimWorld
 		{
 			float num = rect.width * 0.375f;
 			float width = rect.width - num - 20f;
+			BodyPartRecord part = diffs.First<Hediff>().Part;
 			float a;
-			if (diffs.First<Hediff>().Part == null)
+			if (part == null)
 			{
 				a = Text.CalcHeight("WholeBody".Translate(), num);
 			}
 			else
 			{
-				a = Text.CalcHeight(diffs.First<Hediff>().Part.def.LabelCap, num);
+				a = Text.CalcHeight(part.def.LabelCap, num);
 			}
 			float b = 0f;
 			float num2 = curY;
@@ -505,15 +541,15 @@ namespace RimWorld
 			b = num3;
 			Rect rect2 = new Rect(0f, curY, rect.width, Mathf.Max(a, b));
 			HealthCardUtility.DoRightRowHighlight(rect2);
-			if (diffs.First<Hediff>().Part != null)
+			if (part != null)
 			{
-				GUI.color = HealthUtility.GetPartConditionLabel(pawn, diffs.First<Hediff>().Part).Second;
-				Widgets.Label(new Rect(0f, curY, num, 100f), new GUIContent(diffs.First<Hediff>().Part.def.LabelCap));
+				GUI.color = HealthUtility.GetPartConditionLabel(pawn, part).Second;
+				Widgets.Label(new Rect(0f, curY, num, 100f), part.def.LabelCap);
 			}
 			else
 			{
 				GUI.color = HealthUtility.DarkRedColor;
-				Widgets.Label(new Rect(0f, curY, num, 100f), new GUIContent("WholeBody".Translate()));
+				Widgets.Label(new Rect(0f, curY, num, 100f), "WholeBody".Translate());
 			}
 			GUI.color = Color.white;
 			foreach (IGrouping<int, Hediff> current2 in from x in diffs
@@ -531,7 +567,7 @@ namespace RimWorld
 						hediff = current3;
 					}
 					textureAndColor = current3.StateIcon;
-					if (current3.BleedRate > 1E-05f)
+					if (current3.Bleeding)
 					{
 						texture2D = HealthCardUtility.BleedingIcon;
 					}
@@ -566,7 +602,7 @@ namespace RimWorld
 			}
 			GUI.color = Color.white;
 			curY = num2 + Mathf.Max(a, b);
-			TooltipHandler.TipRegion(rect2, new TipSignal(() => HealthCardUtility.GetTooltip(diffs, pawn), (int)curY + 7857));
+			TooltipHandler.TipRegion(rect2, new TipSignal(() => HealthCardUtility.GetTooltip(diffs, pawn, part), (int)curY + 7857));
 		}
 
 		public static string GetPainTip(Pawn pawn)
@@ -576,23 +612,63 @@ namespace RimWorld
 
 		public static string GetPawnCapacityTip(Pawn pawn, PawnCapacityDef capacity)
 		{
-			return "Efficiency".Translate() + ": " + (pawn.health.capacities.GetEfficiency(capacity) * 100f).ToString("F0") + "%";
+			List<PawnCapacityUtility.CapacityImpactor> list = new List<PawnCapacityUtility.CapacityImpactor>();
+			float num = PawnCapacityUtility.CalculateCapacityLevel(pawn.health.hediffSet, capacity, list);
+			StringBuilder stringBuilder = new StringBuilder();
+			stringBuilder.AppendLine(capacity.LabelCap + ": " + (num * 100f).ToString("F0") + "%");
+			if (list.Count > 0)
+			{
+				stringBuilder.AppendLine();
+				stringBuilder.AppendLine("AffectedBy".Translate());
+				for (int i = 0; i < list.Count; i++)
+				{
+					if (list[i] is PawnCapacityUtility.CapacityImpactorHediff)
+					{
+						stringBuilder.AppendLine(string.Format("  {0}", list[i].Readable(pawn)));
+					}
+				}
+				for (int j = 0; j < list.Count; j++)
+				{
+					if (list[j] is PawnCapacityUtility.CapacityImpactorBodyPartHealth)
+					{
+						stringBuilder.AppendLine(string.Format("  {0}", list[j].Readable(pawn)));
+					}
+				}
+				for (int k = 0; k < list.Count; k++)
+				{
+					if (list[k] is PawnCapacityUtility.CapacityImpactorCapacity)
+					{
+						stringBuilder.AppendLine(string.Format("  {0}", list[k].Readable(pawn)));
+					}
+				}
+				for (int l = 0; l < list.Count; l++)
+				{
+					if (list[l] is PawnCapacityUtility.CapacityImpactorPain)
+					{
+						stringBuilder.AppendLine(string.Format("  {0}", list[l].Readable(pawn)));
+					}
+				}
+			}
+			return stringBuilder.ToString();
 		}
 
-		private static string GetTooltip(IEnumerable<Hediff> diffs, Pawn pawn)
+		private static string GetTooltip(IEnumerable<Hediff> diffs, Pawn pawn, BodyPartRecord part)
 		{
 			StringBuilder stringBuilder = new StringBuilder();
-			Hediff hediff = diffs.First<Hediff>();
-			if (hediff.Part != null)
+			if (part != null)
 			{
-				stringBuilder.Append(hediff.Part.def.LabelCap + ": ");
-				stringBuilder.Append(" " + pawn.health.hediffSet.GetPartHealth(hediff.Part).ToString() + " / " + hediff.Part.def.GetMaxHealth(pawn).ToString());
+				stringBuilder.Append(part.def.LabelCap + ": ");
+				stringBuilder.AppendLine(" " + pawn.health.hediffSet.GetPartHealth(part).ToString() + " / " + part.def.GetMaxHealth(pawn).ToString());
+				float num = PawnCapacityUtility.CalculatePartEfficiency(pawn.health.hediffSet, part, false, null);
+				if (num != 1f)
+				{
+					stringBuilder.AppendLine("Efficiency".Translate() + ": " + num.ToStringPercent());
+				}
 			}
 			else
 			{
-				stringBuilder.Append("WholeBody".Translate());
+				stringBuilder.AppendLine("WholeBody".Translate());
 			}
-			stringBuilder.AppendLine();
 			stringBuilder.AppendLine("------------------");
 			foreach (IGrouping<int, Hediff> current in from x in diffs
 			group x by x.UIGroupKey)
@@ -650,10 +726,10 @@ namespace RimWorld
 				{
 					StringBuilder stringBuilder = new StringBuilder();
 					foreach (BodyPartRecord current in from x in pawn.RaceProps.body.AllParts
-					orderby x.absoluteCoverage descending
+					orderby x.coverageAbsWithChildren descending
 					select x)
 					{
-						stringBuilder.AppendLine(current.def.LabelCap + " " + current.absoluteCoverage.ToStringPercent());
+						stringBuilder.AppendLine(current.def.LabelCap + " " + current.coverageAbsWithChildren.ToStringPercent());
 					}
 					Find.WindowStack.Add(new Dialog_MessageBox(stringBuilder.ToString(), null, null, null, null, null, false));
 				}, MenuOptionPriority.Default, null, null, 0f, null, null));
@@ -662,11 +738,11 @@ namespace RimWorld
 					StringBuilder stringBuilder = new StringBuilder();
 					float num = 0f;
 					foreach (BodyPartRecord current in from x in pawn.RaceProps.body.AllParts
-					orderby x.absoluteFleshCoverage descending
+					orderby x.coverageAbs descending
 					select x)
 					{
-						stringBuilder.AppendLine(current.def.LabelCap + " " + current.absoluteFleshCoverage.ToStringPercent());
-						num += current.absoluteFleshCoverage;
+						stringBuilder.AppendLine(current.def.LabelCap + " " + current.coverageAbs.ToStringPercent());
+						num += current.coverageAbs;
 					}
 					stringBuilder.AppendLine();
 					stringBuilder.AppendLine("Total " + num.ToStringPercent());
@@ -677,7 +753,7 @@ namespace RimWorld
 					StringBuilder stringBuilder = new StringBuilder();
 					foreach (BodyPartRecord current in pawn.RaceProps.body.AllParts)
 					{
-						stringBuilder.AppendLine(current.def.LabelCap + " " + PawnCapacityUtility.CalculatePartEfficiency(pawn.health.hediffSet, current, false).ToStringPercent());
+						stringBuilder.AppendLine(current.def.LabelCap + " " + PawnCapacityUtility.CalculatePartEfficiency(pawn.health.hediffSet, current, false, null).ToStringPercent());
 					}
 					Find.WindowStack.Add(new Dialog_MessageBox(stringBuilder.ToString(), null, null, null, null, null, false));
 				}, MenuOptionPriority.Default, null, null, 0f, null, null));
@@ -863,30 +939,30 @@ namespace RimWorld
 
 		public static Pair<string, Color> GetEfficiencyLabel(Pawn pawn, PawnCapacityDef activity)
 		{
-			float efficiency = pawn.health.capacities.GetEfficiency(activity);
+			float level = pawn.health.capacities.GetLevel(activity);
 			string first = string.Empty;
 			Color second = Color.white;
-			if (efficiency < 0.1f)
+			if (level <= 0f)
 			{
 				first = "None".Translate();
 				second = HealthUtility.DarkRedColor;
 			}
-			else if (efficiency < 0.4f)
+			else if (level < 0.4f)
 			{
 				first = "VeryPoor".Translate();
 				second = HealthCardUtility.VeryPoorColor;
 			}
-			else if (efficiency < 0.7f)
+			else if (level < 0.7f)
 			{
 				first = "Poor".Translate();
 				second = HealthCardUtility.PoorColor;
 			}
-			else if (efficiency < 1f && !Mathf.Approximately(efficiency, 1f))
+			else if (level < 1f && !Mathf.Approximately(level, 1f))
 			{
 				first = "Weakened".Translate();
 				second = HealthCardUtility.WeakenedColor;
 			}
-			else if (Mathf.Approximately(efficiency, 1f))
+			else if (Mathf.Approximately(level, 1f))
 			{
 				first = "GoodCondition".Translate();
 				second = HealthUtility.GoodConditionColor;

@@ -13,7 +13,7 @@ namespace RimWorld
 
 		private bool draftedInt;
 
-		private bool allowFiringInt = true;
+		private bool fireAtWillInt = true;
 
 		private AutoUndrafter autoUndrafter;
 
@@ -29,14 +29,14 @@ namespace RimWorld
 				{
 					return;
 				}
-				this.pawn.mindState.priorityWork.Clear();
-				this.allowFiringInt = true;
+				this.pawn.mindState.priorityWork.ClearPrioritizedWorkAndJobQueue();
+				this.fireAtWillInt = true;
 				this.draftedInt = value;
 				if (!value && this.pawn.Spawned)
 				{
 					this.pawn.Map.pawnDestinationManager.UnreserveAllFor(this.pawn);
 				}
-				if (this.pawn.jobs.curJob != null && this.pawn.jobs.CanTakeOrderedJob())
+				if (this.pawn.jobs.curJob != null && this.pawn.jobs.IsCurrentJobPlayerInterruptible())
 				{
 					this.pawn.jobs.EndCurrentJob(JobCondition.InterruptForced, true);
 				}
@@ -59,16 +59,16 @@ namespace RimWorld
 			}
 		}
 
-		public bool AllowFiring
+		public bool FireAtWill
 		{
 			get
 			{
-				return this.allowFiringInt;
+				return this.fireAtWillInt;
 			}
 			set
 			{
-				this.allowFiringInt = value;
-				if (!this.allowFiringInt && this.pawn.stances.curStance is Stance_Warmup)
+				this.fireAtWillInt = value;
+				if (!this.fireAtWillInt && this.pawn.stances.curStance is Stance_Warmup)
 				{
 					this.pawn.stances.CancelBusyStanceSoft();
 				}
@@ -83,9 +83,9 @@ namespace RimWorld
 
 		public void ExposeData()
 		{
-			Scribe_Values.LookValue<bool>(ref this.draftedInt, "drafted", false, false);
-			Scribe_Values.LookValue<bool>(ref this.allowFiringInt, "allowFiring", true, false);
-			Scribe_Deep.LookDeep<AutoUndrafter>(ref this.autoUndrafter, "autoUndrafter", new object[]
+			Scribe_Values.Look<bool>(ref this.draftedInt, "drafted", false, false);
+			Scribe_Values.Look<bool>(ref this.fireAtWillInt, "fireAtWill", true, false);
+			Scribe_Deep.Look<AutoUndrafter>(ref this.autoUndrafter, "autoUndrafter", new object[]
 			{
 				this.pawn
 			});
@@ -136,22 +136,22 @@ namespace RimWorld
 				yield return new Command_Toggle
 				{
 					hotKey = KeyBindingDefOf.Misc6,
-					isActive = (() => this.<>f__this.AllowFiring),
+					isActive = (() => this.<>f__this.FireAtWill),
 					toggleAction = delegate
 					{
-						this.<>f__this.AllowFiring = !this.<>f__this.AllowFiring;
+						this.<>f__this.FireAtWill = !this.<>f__this.FireAtWill;
 					},
-					icon = TexCommand.AllowFiring,
-					defaultLabel = "CommandAllowFiringLabel".Translate(),
-					defaultDesc = "CommandAllowFiringDesc".Translate(),
-					tutorTag = "AllowFiringToggle"
+					icon = TexCommand.FireAtWill,
+					defaultLabel = "CommandFireAtWillLabel".Translate(),
+					defaultDesc = "CommandFireAtWillDesc".Translate(),
+					tutorTag = "FireAtWillToggle"
 				};
 			}
 		}
 
 		internal void Notify_PrimaryWeaponChanged()
 		{
-			this.allowFiringInt = true;
+			this.fireAtWillInt = true;
 		}
 	}
 }

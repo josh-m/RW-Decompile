@@ -1,20 +1,33 @@
 using RimWorld;
 using System;
-using System.Collections.Generic;
 
 namespace Verse
 {
 	public class PawnCapacitiesHandler
 	{
+		private enum CacheStatus
+		{
+			Uncached,
+			Caching,
+			Cached
+		}
+
+		private class CacheElement
+		{
+			public PawnCapacitiesHandler.CacheStatus status;
+
+			public float value;
+		}
+
 		private Pawn pawn;
 
-		private DefMap<PawnCapacityDef, float> cachedCapacitiesEfficiency;
+		private DefMap<PawnCapacityDef, PawnCapacitiesHandler.CacheElement> cachedCapacityLevels;
 
 		public bool CanBeAwake
 		{
 			get
 			{
-				return this.GetEfficiency(PawnCapacityDefOf.Consciousness) >= 0.3f;
+				return this.GetLevel(PawnCapacityDefOf.Consciousness) >= 0.3f;
 			}
 		}
 
@@ -25,38 +38,48 @@ namespace Verse
 
 		public void Clear()
 		{
-			this.cachedCapacitiesEfficiency = null;
+			this.cachedCapacityLevels = null;
 		}
 
-		public float GetEfficiency(PawnCapacityDef capacity)
+		public float GetLevel(PawnCapacityDef capacity)
 		{
 			if (this.pawn.health.Dead)
 			{
 				return 0f;
 			}
-			if (this.cachedCapacitiesEfficiency == null)
+			if (this.cachedCapacityLevels == null)
 			{
-				this.Notify_CapacityEfficienciesDirty();
+				this.Notify_CapacityLevelsDirty();
 			}
-			return this.cachedCapacitiesEfficiency[capacity];
+			PawnCapacitiesHandler.CacheElement cacheElement = this.cachedCapacityLevels[capacity];
+			if (cacheElement.status == PawnCapacitiesHandler.CacheStatus.Caching)
+			{
+				Log.Error(string.Format("Detected infinite stat recursion when evaluating {0}", capacity));
+				return 0f;
+			}
+			if (cacheElement.status == PawnCapacitiesHandler.CacheStatus.Uncached)
+			{
+				cacheElement.status = PawnCapacitiesHandler.CacheStatus.Caching;
+				cacheElement.value = PawnCapacityUtility.CalculateCapacityLevel(this.pawn.health.hediffSet, capacity, null);
+				cacheElement.status = PawnCapacitiesHandler.CacheStatus.Cached;
+			}
+			return cacheElement.value;
 		}
 
 		public bool CapableOf(PawnCapacityDef capacity)
 		{
-			return this.GetEfficiency(capacity) > capacity.minForCapable;
+			return this.GetLevel(capacity) > capacity.minForCapable;
 		}
 
-		public void Notify_CapacityEfficienciesDirty()
+		public void Notify_CapacityLevelsDirty()
 		{
-			if (this.cachedCapacitiesEfficiency == null)
+			if (this.cachedCapacityLevels == null)
 			{
-				this.cachedCapacitiesEfficiency = new DefMap<PawnCapacityDef, float>();
+				this.cachedCapacityLevels = new DefMap<PawnCapacityDef, PawnCapacitiesHandler.CacheElement>();
 			}
-			this.cachedCapacitiesEfficiency.SetAll(0f);
-			List<PawnCapacityDef> pawnCapacityDefsListInProcessingOrder = PawnCapacityUtility.PawnCapacityDefsListInProcessingOrder;
-			for (int i = 0; i < pawnCapacityDefsListInProcessingOrder.Count; i++)
+			for (int i = 0; i < this.cachedCapacityLevels.Count; i++)
 			{
-				this.cachedCapacitiesEfficiency[pawnCapacityDefsListInProcessingOrder[i]] = PawnCapacityUtility.CalculateEfficiency(this.pawn.health.hediffSet, pawnCapacityDefsListInProcessingOrder[i]);
+				this.cachedCapacityLevels[i].status = PawnCapacitiesHandler.CacheStatus.Uncached;
 			}
 		}
 	}

@@ -4,7 +4,7 @@ namespace Verse
 {
 	public static class Scribe_Values
 	{
-		public static void LookValue<T>(ref T value, string label, T defaultValue = null, bool forceSave = false)
+		public static void Look<T>(ref T value, string label, T defaultValue = null, bool forceSave = false)
 		{
 			if (Scribe.mode == LoadSaveMode.Saving)
 			{
@@ -25,12 +25,12 @@ namespace Verse
 				}
 				if (forceSave || (value == null && defaultValue != null) || (value != null && !value.Equals(defaultValue)))
 				{
-					Scribe.WriteElement(label, value.ToString());
+					Scribe.saver.WriteElement(label, value.ToString());
 				}
 			}
 			else if (Scribe.mode == LoadSaveMode.LoadingVars)
 			{
-				value = ScribeExtractor.ValueFromNode<T>(Scribe.curParent[label], defaultValue);
+				value = ScribeExtractor.ValueFromNode<T>(Scribe.loader.curXmlParent[label], defaultValue);
 			}
 		}
 	}

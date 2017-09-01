@@ -1,3 +1,4 @@
+using RimWorld.Planet;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -35,31 +36,59 @@ namespace RimWorld
 			}
 		}
 
-		private float DayPercentPassedNotSleeping
+		private float DayPercentNotSleeping
 		{
 			get
 			{
+				if (this.pawn.IsCaravanMember())
+				{
+					return Mathf.InverseLerp(6f, 22f, GenLocalDate.HourFloat(this.pawn));
+				}
 				if (this.pawn.timetable == null)
 				{
 					return GenLocalDate.DayPercent(this.pawn);
 				}
+				float hoursPerDayNotSleeping = this.HoursPerDayNotSleeping;
+				if (hoursPerDayNotSleeping == 0f)
+				{
+					return 1f;
+				}
 				float num = 0f;
-				int b = GenLocalDate.HourOfDay(this.pawn);
-				float num2 = 0.0416666679f;
-				for (int i = 0; i < Mathf.Min(this.pawn.timetable.times.Count, b); i++)
+				int num2 = GenLocalDate.HourOfDay(this.pawn);
+				for (int i = 0; i < num2; i++)
 				{
 					if (this.pawn.timetable.times[i] != TimeAssignmentDefOf.Sleep)
 					{
-						num += num2;
+						num += 1f;
 					}
 				}
 				TimeAssignmentDef currentAssignment = this.pawn.timetable.CurrentAssignment;
 				if (currentAssignment != TimeAssignmentDefOf.Sleep)
 				{
 					float num3 = (float)(Find.TickManager.TicksAbs % 2500) / 2500f;
-					num += num3 * num2;
+					num += num3;
 				}
-				return num;
+				return num / hoursPerDayNotSleeping;
+			}
+		}
+
+		private float HoursPerDayNotSleeping
+		{
+			get
+			{
+				if (this.pawn.IsCaravanMember())
+				{
+					return 16f;
+				}
+				int num = 0;
+				for (int i = 0; i < 24; i++)
+				{
+					if (this.pawn.timetable.times[i] != TimeAssignmentDefOf.Sleep)
+					{
+						num++;
+					}
+				}
+				return (float)num;
 			}
 		}
 
@@ -74,8 +103,8 @@ namespace RimWorld
 
 		public void ExposeData()
 		{
-			Scribe_References.LookReference<DrugPolicy>(ref this.curPolicy, "curAssignedDrugs", false);
-			Scribe_Collections.LookList<DrugTakeRecord>(ref this.drugTakeRecords, "drugTakeRecords", LookMode.Deep, new object[0]);
+			Scribe_References.Look<DrugPolicy>(ref this.curPolicy, "curAssignedDrugs", false);
+			Scribe_Collections.Look<DrugTakeRecord>(ref this.drugTakeRecords, "drugTakeRecords", LookMode.Deep, new object[0]);
 		}
 
 		public bool HasEverTaken(ThingDef drug)
@@ -163,7 +192,7 @@ namespace RimWorld
 			{
 				return false;
 			}
-			Hediff firstHediffOfDef = this.pawn.health.hediffSet.GetFirstHediffOfDef(HediffDefOf.DrugOverdose);
+			Hediff firstHediffOfDef = this.pawn.health.hediffSet.GetFirstHediffOfDef(HediffDefOf.DrugOverdose, false);
 			if (firstHediffOfDef != null && firstHediffOfDef.Severity > 0.5f && this.CanCauseOverdose(ingestible))
 			{
 				int num = this.LastTicksWhenTakenDrugWhichCanCauseOverdose();
@@ -183,21 +212,21 @@ namespace RimWorld
 				int num2 = Mathf.RoundToInt(1f / drugPolicyEntry.daysFrequency);
 				float num3 = 1f / (float)(num2 + 1);
 				int num4 = 0;
-				float dayPercentPassedNotSleeping = this.DayPercentPassedNotSleeping;
+				float dayPercentNotSleeping = this.DayPercentNotSleeping;
 				for (int i = 0; i < num2; i++)
 				{
-					if (dayPercentPassedNotSleeping > (float)(i + 1) * num3 - num3 * 0.5f)
+					if (dayPercentNotSleeping > (float)(i + 1) * num3 - num3 * 0.5f)
 					{
 						num4++;
 					}
 				}
-				return drugTakeRecord.TimesTakenThisDay < num4 && (drugTakeRecord.TimesTakenThisDay == 0 || (float)(Find.TickManager.TicksGame - drugTakeRecord.lastTakenTicks) / 60000f >= 0.6f * num3);
+				return drugTakeRecord.TimesTakenThisDay < num4 && (drugTakeRecord.TimesTakenThisDay == 0 || (float)(Find.TickManager.TicksGame - drugTakeRecord.lastTakenTicks) / (this.HoursPerDayNotSleeping * 2500f) >= 0.6f * num3);
 			}
-			float dayPercentPassedNotSleeping2 = this.DayPercentPassedNotSleeping;
-			Rand.PushSeed();
+			float dayPercentNotSleeping2 = this.DayPercentNotSleeping;
+			Rand.PushState();
 			Rand.Seed = Gen.HashCombineInt(GenDate.DaysPassed, this.pawn.thingIDNumber);
-			bool result = dayPercentPassedNotSleeping2 >= Rand.Range(0.1f, 0.35f);
-			Rand.PopSeed();
+			bool result = dayPercentNotSleeping2 >= Rand.Range(0.1f, 0.35f);
+			Rand.PopState();
 			return result;
 		}
 

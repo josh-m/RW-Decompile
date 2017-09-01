@@ -45,7 +45,7 @@ namespace RimWorld
 								yield return p.inventory.innerContainer[k];
 							}
 						}
-						else if (role == TraderCaravanRole.Chattel)
+						else if (role == TraderCaravanRole.Chattel && !this.soldPrisoners.Contains(p))
 						{
 							yield return p;
 						}
@@ -85,12 +85,12 @@ namespace RimWorld
 
 		public void ExposeData()
 		{
-			if (Scribe.mode == LoadSaveMode.Saving)
+			Scribe_Defs.Look<TraderKindDef>(ref this.traderKind, "traderKind");
+			Scribe_Collections.Look<Pawn>(ref this.soldPrisoners, "soldPrisoners", LookMode.Reference, new object[0]);
+			if (Scribe.mode == LoadSaveMode.PostLoadInit)
 			{
-				this.soldPrisoners.RemoveAll((Pawn x) => x.Destroyed);
+				this.soldPrisoners.RemoveAll((Pawn x) => x == null);
 			}
-			Scribe_Defs.LookDef<TraderKindDef>(ref this.traderKind, "traderKind");
-			Scribe_Collections.LookList<Pawn>(ref this.soldPrisoners, "soldPrisoners", LookMode.Reference, new object[0]);
 		}
 
 		[DebuggerHidden]
@@ -115,25 +115,30 @@ namespace RimWorld
 			}
 		}
 
-		public void AddToStock(Thing thing, Pawn playerNegotiator)
+		public void GiveSoldThingToTrader(Thing toGive, int countToGive, Pawn playerNegotiator)
 		{
-			if (this.Goods.Contains(thing))
+			if (this.Goods.Contains(toGive))
 			{
-				Log.Error("Tried to add " + thing + " to stock (pawn's trader tracker), but it's already here.");
+				Log.Error("Tried to add " + toGive + " to stock (pawn's trader tracker), but it's already here.");
 				return;
 			}
-			Pawn pawn = thing as Pawn;
+			Pawn pawn = toGive as Pawn;
 			if (pawn != null)
 			{
+				pawn.PreTraded(TradeAction.PlayerSells, playerNegotiator, this.pawn);
 				this.AddPawnToStock(pawn);
 			}
 			else
 			{
-				Thing thing2 = TradeUtility.ThingFromStockMatching(this.pawn, thing);
+				Thing thing = toGive.SplitOff(countToGive);
+				thing.PreTraded(TradeAction.PlayerSells, playerNegotiator, this.pawn);
+				Thing thing2 = TradeUtility.ThingFromStockToMergeWith(this.pawn, thing);
 				if (thing2 != null)
 				{
-					thing2.stackCount += thing.stackCount;
-					thing.Destroy(DestroyMode.Vanish);
+					if (!thing2.TryAbsorbStack(thing, false))
+					{
+						thing.Destroy(DestroyMode.Vanish);
+					}
 				}
 				else
 				{
@@ -142,69 +147,47 @@ namespace RimWorld
 			}
 		}
 
-		public void GiveSoldThingToPlayer(Thing toGive, Thing originalThingFromStock, Pawn playerNegotiator)
+		public void GiveSoldThingToPlayer(Thing toGive, int countToGive, Pawn playerNegotiator)
 		{
 			Pawn pawn = toGive as Pawn;
 			if (pawn != null)
 			{
+				pawn.PreTraded(TradeAction.PlayerBuys, playerNegotiator, this.pawn);
+				Lord lord = pawn.GetLord();
+				if (lord != null)
+				{
+					lord.Notify_PawnLost(pawn, PawnLostCondition.Undefined);
+				}
 				if (this.soldPrisoners.Contains(pawn))
 				{
 					this.soldPrisoners.Remove(pawn);
-					TradeUtility.MakePrisonerOfColony(pawn);
-				}
-				return;
-			}
-			Pawn pawn2 = null;
-			Lord lord = this.pawn.GetLord();
-			if (lord != null)
-			{
-				for (int i = 0; i < lord.ownedPawns.Count; i++)
-				{
-					Pawn pawn3 = lord.ownedPawns[i];
-					if (pawn3.GetTraderCaravanRole() == TraderCaravanRole.Carrier && pawn3.inventory.Contains(originalThingFromStock))
-					{
-						pawn2 = pawn3;
-						break;
-					}
-				}
-			}
-			if (pawn2 == null && this.pawn.inventory.Contains(originalThingFromStock))
-			{
-				pawn2 = this.pawn;
-			}
-			if (pawn2 == null)
-			{
-				Log.Error(string.Concat(new object[]
-				{
-					"Tried to give ",
-					originalThingFromStock,
-					" to the player from trader ",
-					this.pawn.LabelShort,
-					" (pawn's trader tracker), but no carrier has this thing and it's not in trader's inventory."
-				}));
-				return;
-			}
-			if (toGive == originalThingFromStock)
-			{
-				pawn2.inventory.innerContainer.Remove(originalThingFromStock);
-			}
-			if (GenPlace.TryPlaceThing(toGive, pawn2.Position, this.pawn.Map, ThingPlaceMode.Near, null))
-			{
-				if (lord != null)
-				{
-					lord.extraForbiddenThings.Add(toGive);
 				}
 			}
 			else
 			{
-				Log.Error(string.Concat(new object[]
+				IntVec3 positionHeld = toGive.PositionHeld;
+				Map mapHeld = toGive.MapHeld;
+				Thing thing = toGive.SplitOff(countToGive);
+				thing.PreTraded(TradeAction.PlayerBuys, playerNegotiator, this.pawn);
+				if (GenPlace.TryPlaceThing(thing, positionHeld, mapHeld, ThingPlaceMode.Near, null))
 				{
-					"Could not place bought thing ",
-					toGive,
-					" at ",
-					pawn2.Position
-				}));
-				toGive.Destroy(DestroyMode.Vanish);
+					Lord lord2 = this.pawn.GetLord();
+					if (lord2 != null)
+					{
+						lord2.extraForbiddenThings.Add(thing);
+					}
+				}
+				else
+				{
+					Log.Error(string.Concat(new object[]
+					{
+						"Could not place bought thing ",
+						thing,
+						" at ",
+						positionHeld
+					}));
+					thing.Destroy(DestroyMode.Vanish);
+				}
 			}
 		}
 

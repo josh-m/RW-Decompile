@@ -9,7 +9,7 @@ namespace RimWorld.Planet
 	{
 		public override bool ShouldRemoveMapNow(out bool alsoRemoveWorldObject)
 		{
-			if (!base.Map.mapPawns.AnyColonistTameAnimalOrPrisonerOfColony)
+			if (!base.Map.mapPawns.AnyPawnBlockingMapRemoval)
 			{
 				alsoRemoveWorldObject = true;
 				return true;
@@ -27,7 +27,7 @@ namespace RimWorld.Planet
 			}
 			if (base.HasMap && Find.WorldSelector.SingleSelectedObject == this)
 			{
-				yield return SettleInExistingMapUtility.SettleCommand(base.Map);
+				yield return SettleInExistingMapUtility.SettleCommand(base.Map, false);
 			}
 		}
 	}

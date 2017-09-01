@@ -31,7 +31,7 @@ namespace RimWorld
 
 		public static void LogTalesInDatabase()
 		{
-			TaleTester.LogTales(from t in Find.TaleManager.AllTales
+			TaleTester.LogTales(from t in Find.TaleManager.AllTalesListForReading
 			where t.def.usableForArt
 			select t);
 		}

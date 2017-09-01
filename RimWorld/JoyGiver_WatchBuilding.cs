@@ -14,8 +14,8 @@ namespace RimWorld
 			}
 			if (inBed)
 			{
-				Building_Bed layingDownBed = pawn.jobs.curDriver.layingDownBed;
-				return WatchBuildingUtility.CanWatchFromBed(pawn, layingDownBed, t);
+				Building_Bed bed = pawn.CurrentBed();
+				return WatchBuildingUtility.CanWatchFromBed(pawn, bed, t);
 			}
 			return true;
 		}

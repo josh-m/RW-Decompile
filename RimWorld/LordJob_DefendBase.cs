@@ -39,11 +39,19 @@ namespace RimWorld
 			stateGraph.AddTransition(transition2);
 			Transition transition3 = new Transition(lordToil_DefendBase, lordToil_AssaultColony);
 			transition3.AddTrigger(new Trigger_FractionPawnsLost(0.2f));
-			transition3.AddTrigger(new Trigger_ChanceOnSignal(TriggerSignalType.PawnLost, 0.5f));
+			transition3.AddTrigger(new Trigger_PawnHarmed(0.4f, false));
 			transition3.AddTrigger(new Trigger_ChanceOnTickInteval(2500, 0.03f));
 			transition3.AddTrigger(new Trigger_TicksPassed(251999));
 			transition3.AddTrigger(new Trigger_UrgentlyHungry());
-			transition3.AddPreAction(new TransitionAction_WakeAll());
+			transition3.AddTrigger(new Trigger_ChanceOnPlayerHarmNPCBuilding(0.4f));
+			transition3.AddPostAction(new TransitionAction_WakeAll());
+			string message = "MessageDefendersAttacking".Translate(new object[]
+			{
+				this.faction.def.pawnsPlural,
+				this.faction.Name,
+				Faction.OfPlayer.def.pawnsPlural
+			}).CapitalizeFirst();
+			transition3.AddPreAction(new TransitionAction_Message(message, MessageSound.SeriousAlert));
 			stateGraph.AddTransition(transition3);
 			return stateGraph;
 		}
@@ -51,8 +59,8 @@ namespace RimWorld
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_References.LookReference<Faction>(ref this.faction, "faction", false);
-			Scribe_Values.LookValue<IntVec3>(ref this.baseCenter, "baseCenter", default(IntVec3), false);
+			Scribe_References.Look<Faction>(ref this.faction, "faction", false);
+			Scribe_Values.Look<IntVec3>(ref this.baseCenter, "baseCenter", default(IntVec3), false);
 		}
 	}
 }

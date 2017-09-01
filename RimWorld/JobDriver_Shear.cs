@@ -5,11 +5,11 @@ namespace RimWorld
 {
 	public class JobDriver_Shear : JobDriver_GatherAnimalBodyResources
 	{
-		protected override int Duration
+		protected override float WorkTotal
 		{
 			get
 			{
-				return 2000;
+				return 1700f;
 			}
 		}
 

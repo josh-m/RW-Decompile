@@ -12,7 +12,7 @@ namespace RimWorld
 
 		private Mesh boltMesh;
 
-		private static readonly Material LightningMat = MatLoader.LoadMat("Weather/LightningBolt");
+		private static readonly Material LightningMat = MatLoader.LoadMat("Weather/LightningBolt", -1);
 
 		public WeatherEvent_LightningStrike(Map map) : base(map)
 		{

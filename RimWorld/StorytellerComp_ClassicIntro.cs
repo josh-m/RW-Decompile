@@ -36,33 +36,44 @@ namespace RimWorld
 						};
 					}
 				}
-				IncidentDef incDef;
-				if (this.IntervalsPassed == 204 && (from def in DefDatabase<IncidentDef>.AllDefs
-				where def.TargetAllowed(this.target) && def.category == IncidentCategory.ThreatSmall
-				select def).TryRandomElementByWeight(new Func<IncidentDef, float>(this.IncidentChanceAdjustedForPopulation), out incDef))
+				if (this.IntervalsPassed == 204)
 				{
-					yield return new FiringIncident(incDef, this, null)
+					int arg_12B_1 = (!Find.Storyteller.difficulty.allowIntroThreats) ? 1 : 2;
+					IncidentDef incDef;
+					if ((from def in DefDatabase<IncidentDef>.AllDefs
+					where def.TargetAllowed(this.target) && def.category == this.<threatCategory>__2
+					select def).TryRandomElementByWeight(new Func<IncidentDef, float>(base.IncidentChanceFinal), out incDef))
 					{
-						parms = StorytellerUtility.DefaultParmsNow(Find.Storyteller.def, incDef.category, target)
-					};
-				}
-				if (this.IntervalsPassed == 264)
-				{
-					IncidentDef inc2 = IncidentDefOf.WandererJoin;
-					if (inc2.TargetAllowed(target))
-					{
-						FiringIncident qi = new FiringIncident(inc2, this, this.GenerateParms(inc2.category, target));
-						yield return qi;
+						yield return new FiringIncident(incDef, this, null)
+						{
+							parms = StorytellerUtility.DefaultParmsNow(Find.Storyteller.def, incDef.category, target)
+						};
 					}
+				}
+				IncidentDef incDef2;
+				if (this.IntervalsPassed == 264 && (from def in DefDatabase<IncidentDef>.AllDefs
+				where def.TargetAllowed(this.target) && def.category == IncidentCategory.Misc
+				select def).TryRandomElementByWeight(new Func<IncidentDef, float>(base.IncidentChanceFinal), out incDef2))
+				{
+					yield return new FiringIncident(incDef2, this, null)
+					{
+						parms = StorytellerUtility.DefaultParmsNow(Find.Storyteller.def, incDef2.category, target)
+					};
 				}
 				if (this.IntervalsPassed == 324)
 				{
-					IncidentDef inc3 = IncidentDefOf.RaidEnemy;
-					if (inc3.TargetAllowed(target))
+					IncidentDef inc2 = IncidentDefOf.RaidEnemy;
+					if (!Find.Storyteller.difficulty.allowIntroThreats)
 					{
-						yield return new FiringIncident(inc3, this, null)
+						inc2 = (from def in DefDatabase<IncidentDef>.AllDefs
+						where def.TargetAllowed(this.target) && def.category == IncidentCategory.Misc
+						select def).RandomElementByWeightWithFallback(new Func<IncidentDef, float>(base.IncidentChanceFinal), null);
+					}
+					if (inc2 != null && inc2.TargetAllowed(target))
+					{
+						yield return new FiringIncident(inc2, this, null)
 						{
-							parms = this.GenerateParms(inc3.category, target)
+							parms = this.GenerateParms(inc2.category, target)
 						};
 					}
 				}

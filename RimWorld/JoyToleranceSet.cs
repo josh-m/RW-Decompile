@@ -24,7 +24,7 @@ namespace RimWorld
 
 		public void ExposeData()
 		{
-			Scribe_Deep.LookDeep<DefMap<JoyKindDef, float>>(ref this.tolerances, "tolerances", new object[0]);
+			Scribe_Deep.Look<DefMap<JoyKindDef, float>>(ref this.tolerances, "tolerances", new object[0]);
 		}
 
 		public void Notify_JoyGained(float amount, JoyKindDef joyKind)

@@ -94,13 +94,13 @@ namespace Verse.AI
 
 		private static void PrintAvoidGridAroundTrapLoc(TrapMemory mem, ByteGrid avoidGrid)
 		{
-			Room room = mem.Cell.GetRoom(mem.map);
+			Room room = mem.Cell.GetRoom(mem.map, RegionType.Set_Passable);
 			for (int i = 0; i < AvoidGridMaker.TrapRadialCells; i++)
 			{
 				IntVec3 intVec = mem.Cell + GenRadial.RadialPattern[i];
-				if (intVec.InBounds(mem.map) && intVec.Walkable(mem.map) && intVec.GetRoom(mem.map) == room)
+				if (intVec.InBounds(mem.map) && intVec.Walkable(mem.map) && intVec.GetRoom(mem.map, RegionType.Set_Passable) == room)
 				{
-					float num = Mathf.Max(1f, intVec.DistanceToSquared(mem.Cell));
+					float num = (float)Mathf.Max(1, intVec.DistanceToSquared(mem.Cell));
 					int num2 = Mathf.Max(1, Mathf.RoundToInt(32f * mem.PowerPercent / num));
 					AvoidGridMaker.IncrementAvoidGrid(avoidGrid, intVec, num2);
 				}
@@ -113,7 +113,7 @@ namespace Verse.AI
 			for (int i = 0; i < num; i++)
 			{
 				IntVec3 intVec = tur.Position + GenRadial.RadialPattern[i];
-				if (intVec.InBounds(tur.Map) && intVec.Walkable(tur.Map) && GenSight.LineOfSight(intVec, tur.Position, tur.Map, true))
+				if (intVec.InBounds(tur.Map) && intVec.Walkable(tur.Map) && GenSight.LineOfSight(intVec, tur.Position, tur.Map, true, null, 0, 0))
 				{
 					AvoidGridMaker.IncrementAvoidGrid(avoidGrid, intVec, 12);
 				}

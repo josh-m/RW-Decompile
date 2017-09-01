@@ -17,7 +17,7 @@ namespace RimWorld
 				Log.Error("Misconfigured MTBByBiome: " + xmlRoot.OuterXml);
 				return;
 			}
-			CrossRefLoader.RegisterObjectWantsCrossRef(this, "biome", xmlRoot.Name);
+			DirectXmlCrossRefLoader.RegisterObjectWantsCrossRef(this, "biome", xmlRoot.Name);
 			this.mtbDays = (float)ParseHelper.FromString(xmlRoot.FirstChild.Value, typeof(float));
 		}
 	}

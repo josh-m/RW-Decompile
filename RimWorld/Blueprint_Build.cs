@@ -38,7 +38,7 @@ namespace RimWorld
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Defs.LookDef<ThingDef>(ref this.stuffToUse, "stuffToUse");
+			Scribe_Defs.Look<ThingDef>(ref this.stuffToUse, "stuffToUse");
 		}
 
 		public override ThingDef UIStuff()
@@ -73,13 +73,23 @@ namespace RimWorld
 		public override string GetInspectString()
 		{
 			StringBuilder stringBuilder = new StringBuilder();
-			stringBuilder.AppendLine(base.GetInspectString());
+			stringBuilder.Append(base.GetInspectString());
+			if (stringBuilder.Length > 0)
+			{
+				stringBuilder.AppendLine();
+			}
 			stringBuilder.AppendLine("ContainedResources".Translate() + ":");
+			bool flag = true;
 			foreach (ThingCountClass current in this.MaterialsNeeded())
 			{
-				stringBuilder.AppendLine(current.thingDef.LabelCap + ": 0 / " + current.count);
+				if (!flag)
+				{
+					stringBuilder.AppendLine();
+				}
+				stringBuilder.Append(current.thingDef.LabelCap + ": 0 / " + current.count);
+				flag = false;
 			}
-			return stringBuilder.ToString();
+			return stringBuilder.ToString().Trim();
 		}
 	}
 }

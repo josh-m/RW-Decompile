@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace Verse
 {
@@ -33,36 +34,53 @@ namespace Verse
 			outDistances.Clear();
 			Dijkstra<T>.distances.Clear();
 			Dijkstra<T>.queue.Clear();
-			foreach (T current in startingNodes)
+			IList<T> list = startingNodes as IList<T>;
+			if (list != null)
 			{
-				if (!Dijkstra<T>.distances.ContainsKey(current))
+				for (int i = 0; i < list.Count; i++)
 				{
-					Dijkstra<T>.distances.Add(current, 0f);
-					Dijkstra<T>.queue.Push(new KeyValuePair<T, float>(current, 0f));
+					T key = list[i];
+					if (!Dijkstra<T>.distances.ContainsKey(key))
+					{
+						Dijkstra<T>.distances.Add(key, 0f);
+						Dijkstra<T>.queue.Push(new KeyValuePair<T, float>(key, 0f));
+					}
+				}
+			}
+			else
+			{
+				foreach (T current in startingNodes)
+				{
+					if (!Dijkstra<T>.distances.ContainsKey(current))
+					{
+						Dijkstra<T>.distances.Add(current, 0f);
+						Dijkstra<T>.queue.Push(new KeyValuePair<T, float>(current, 0f));
+					}
 				}
 			}
 			while (Dijkstra<T>.queue.Count != 0)
 			{
-				KeyValuePair<T, float> keyValuePair = Dijkstra<T>.queue.Pop();
-				float num = Dijkstra<T>.distances[keyValuePair.Key];
-				if (keyValuePair.Value == num)
+				KeyValuePair<T, float> node = Dijkstra<T>.queue.Pop();
+				float num = Dijkstra<T>.distances[node.Key];
+				if (node.Value == num)
 				{
-					foreach (T current2 in neighborsGetter(keyValuePair.Key))
+					IEnumerable<T> enumerable = neighborsGetter(node.Key);
+					if (enumerable != null)
 					{
-						float num2 = num + distanceGetter(keyValuePair.Key, current2);
-						float num3;
-						if (Dijkstra<T>.distances.TryGetValue(current2, out num3))
+						IList<T> list2 = enumerable as IList<T>;
+						if (list2 != null)
 						{
-							if (num2 < num3)
+							for (int j = 0; j < list2.Count; j++)
 							{
-								Dijkstra<T>.distances[current2] = num2;
-								Dijkstra<T>.queue.Push(new KeyValuePair<T, float>(current2, num2));
+								Dijkstra<T>.HandleNeighbor(list2[j], num, node, distanceGetter);
 							}
 						}
 						else
 						{
-							Dijkstra<T>.distances.Add(current2, num2);
-							Dijkstra<T>.queue.Push(new KeyValuePair<T, float>(current2, num2));
+							foreach (T current2 in enumerable)
+							{
+								Dijkstra<T>.HandleNeighbor(current2, num, node, distanceGetter);
+							}
 						}
 					}
 				}
@@ -83,6 +101,25 @@ namespace Verse
 				outDistances.Add(Dijkstra<T>.tmpResult[i].Key, Dijkstra<T>.tmpResult[i].Value);
 			}
 			Dijkstra<T>.tmpResult.Clear();
+		}
+
+		private static void HandleNeighbor(T n, float nodeDist, KeyValuePair<T, float> node, Func<T, T, float> distanceGetter)
+		{
+			float num = nodeDist + Mathf.Max(distanceGetter(node.Key, n), 0f);
+			float num2;
+			if (Dijkstra<T>.distances.TryGetValue(n, out num2))
+			{
+				if (num < num2)
+				{
+					Dijkstra<T>.distances[n] = num;
+					Dijkstra<T>.queue.Push(new KeyValuePair<T, float>(n, num));
+				}
+			}
+			else
+			{
+				Dijkstra<T>.distances.Add(n, num);
+				Dijkstra<T>.queue.Push(new KeyValuePair<T, float>(n, num));
+			}
 		}
 	}
 }

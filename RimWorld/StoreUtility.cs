@@ -107,7 +107,7 @@ namespace RimWorld
 				Thing thing2 = list[i];
 				if (thing2.def.EverStoreable)
 				{
-					if (thing2.def != thing.def)
+					if (!thing2.CanStackWith(thing))
 					{
 						return false;
 					}
@@ -136,7 +136,7 @@ namespace RimWorld
 				foundCell = IntVec3.Invalid;
 				return false;
 			}
-			IntVec3 a = (t.MapHeld == null) ? carrier.PositionHeld : t.PositionHeld;
+			IntVec3 a = (!t.SpawnedOrAnyParentSpawned) ? carrier.PositionHeld : t.PositionHeld;
 			StoragePriority storagePriority = currentPriority;
 			float num = 2.14748365E+09f;
 			IntVec3 intVec = default(IntVec3);
@@ -166,14 +166,14 @@ namespace RimWorld
 					for (int j = 0; j < count2; j++)
 					{
 						IntVec3 intVec2 = cellsList[j];
-						float lengthHorizontalSquared = (a - intVec2).LengthHorizontalSquared;
-						if (lengthHorizontalSquared <= num)
+						float num3 = (float)(a - intVec2).LengthHorizontalSquared;
+						if (num3 <= num)
 						{
 							if (StoreUtility.IsGoodStoreCell(intVec2, map, t, carrier, faction))
 							{
 								flag = true;
 								intVec = intVec2;
-								num = lengthHorizontalSquared;
+								num = num3;
 								storagePriority = priority;
 								if (j >= num2)
 								{
@@ -205,7 +205,7 @@ namespace RimWorld
 			}
 			if (carrier != null)
 			{
-				if (!carrier.CanReserve(c, 1))
+				if (!carrier.CanReserve(c, 1, -1, null, false))
 				{
 					return false;
 				}
@@ -214,7 +214,7 @@ namespace RimWorld
 			{
 				return false;
 			}
-			return !c.ContainsStaticFire(map) && (carrier == null || carrier.Map.reachability.CanReach((t.MapHeld == null) ? carrier.PositionHeld : t.PositionHeld, c, PathEndMode.ClosestTouch, TraverseParms.For(carrier, Danger.Deadly, TraverseMode.ByPawn, false)));
+			return !c.ContainsStaticFire(map) && (carrier == null || carrier.Map.reachability.CanReach((!t.SpawnedOrAnyParentSpawned) ? carrier.PositionHeld : t.PositionHeld, c, PathEndMode.ClosestTouch, TraverseParms.For(carrier, Danger.Deadly, TraverseMode.ByPawn, false)));
 		}
 
 		public static bool TryFindStoreCellNearColonyDesperate(Thing item, Pawn carrier, out IntVec3 storeCell)

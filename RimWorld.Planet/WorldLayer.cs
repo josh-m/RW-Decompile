@@ -1,5 +1,7 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using UnityEngine;
 using Verse;
 
@@ -16,7 +18,7 @@ namespace RimWorld.Planet
 
 		private static MaterialPropertyBlock propertyBlock = new MaterialPropertyBlock();
 
-		protected virtual bool ShouldRegenerate
+		public virtual bool ShouldRegenerate
 		{
 			get
 			{
@@ -45,6 +47,14 @@ namespace RimWorld.Planet
 			get
 			{
 				return 1f;
+			}
+		}
+
+		public bool Dirty
+		{
+			get
+			{
+				return this.dirty;
 			}
 		}
 
@@ -90,15 +100,14 @@ namespace RimWorld.Planet
 		public void RegenerateNow()
 		{
 			this.dirty = false;
-			this.Regenerate();
+			this.Regenerate().ExecuteEnumerable();
 		}
 
 		public void Render()
 		{
 			if (this.ShouldRegenerate)
 			{
-				this.dirty = false;
-				this.Regenerate();
+				this.RegenerateNow();
 			}
 			int layer = this.Layer;
 			Quaternion rotation = this.Rotation;
@@ -110,7 +119,7 @@ namespace RimWorld.Planet
 					if (alpha != 1f)
 					{
 						Color color = this.subMeshes[i].material.color;
-						WorldLayer.propertyBlock.SetColor(WorldRendererUtility.ColorPropertyID, new Color(color.r, color.g, color.b, color.a * alpha));
+						WorldLayer.propertyBlock.SetColor(ShaderPropertyIDs.Color, new Color(color.r, color.g, color.b, color.a * alpha));
 						Graphics.DrawMesh(this.subMeshes[i].mesh, Vector3.zero, rotation, this.subMeshes[i].material, layer, null, 0, WorldLayer.propertyBlock);
 					}
 					else
@@ -121,7 +130,8 @@ namespace RimWorld.Planet
 			}
 		}
 
-		protected virtual void Regenerate()
+		[DebuggerHidden]
+		public virtual IEnumerable Regenerate()
 		{
 			this.dirty = false;
 			this.ClearSubMeshes(MeshParts.All);

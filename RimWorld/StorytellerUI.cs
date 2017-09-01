@@ -12,7 +12,7 @@ namespace RimWorld
 
 		private static readonly Texture2D StorytellerHighlightTex = ContentFinder<Texture2D>.Get("UI/HeroArt/Storytellers/Highlight", true);
 
-		internal static void DrawStorytellerSelectionInterface(Rect rect, ref StorytellerDef chosenStoryteller, ref DifficultyDef difficulty)
+		internal static void DrawStorytellerSelectionInterface(Rect rect, ref StorytellerDef chosenStoryteller, ref DifficultyDef difficulty, Listing_Standard selectedStorytellerInfoListing)
 		{
 			GUI.BeginGroup(rect);
 			if (chosenStoryteller != null && chosenStoryteller.listVisible)
@@ -23,7 +23,7 @@ namespace RimWorld
 			}
 			Rect outRect = new Rect(0f, 0f, Storyteller.PortraitSizeTiny.x + 16f, rect.height);
 			Rect viewRect = new Rect(0f, 0f, Storyteller.PortraitSizeTiny.x, (float)DefDatabase<StorytellerDef>.AllDefs.Count<StorytellerDef>() * (Storyteller.PortraitSizeTiny.y + 10f));
-			Widgets.BeginScrollView(outRect, ref StorytellerUI.scrollPosition, viewRect);
+			Widgets.BeginScrollView(outRect, ref StorytellerUI.scrollPosition, viewRect, true);
 			Rect rect2 = new Rect(0f, 0f, Storyteller.PortraitSizeTiny.x, Storyteller.PortraitSizeTiny.y);
 			foreach (StorytellerDef current in from tel in DefDatabase<StorytellerDef>.AllDefs
 			orderby tel.listOrder
@@ -49,18 +49,19 @@ namespace RimWorld
 			Widgets.Label(rect3, "HowStorytellersWork".Translate());
 			if (chosenStoryteller != null && chosenStoryteller.listVisible)
 			{
-				Rect rect4 = new Rect(outRect.xMax + 8f, outRect.yMin + 200f, 290f, rect.height - 300f);
+				Rect rect4 = new Rect(outRect.xMax + 8f, outRect.yMin + 200f, 290f, 0f);
+				rect4.height = rect.height - rect4.y;
 				Text.Font = GameFont.Medium;
 				Rect rect5 = new Rect(rect4.x + 15f, rect4.y - 40f, 9999f, 40f);
 				Widgets.Label(rect5, chosenStoryteller.label);
 				Text.Anchor = TextAnchor.UpperLeft;
 				Text.Font = GameFont.Small;
-				Listing_Standard listing_Standard = new Listing_Standard(rect4);
-				listing_Standard.Label(chosenStoryteller.description);
-				listing_Standard.Gap(6f);
+				selectedStorytellerInfoListing.Begin(rect4);
+				selectedStorytellerInfoListing.Label(chosenStoryteller.description, 120f);
+				selectedStorytellerInfoListing.Gap(6f);
 				foreach (DifficultyDef current2 in DefDatabase<DifficultyDef>.AllDefs)
 				{
-					Rect rect6 = listing_Standard.GetRect(30f);
+					Rect rect6 = selectedStorytellerInfoListing.GetRect(30f);
 					if (Mouse.IsOver(rect6))
 					{
 						Widgets.DrawHighlight(rect6);
@@ -71,12 +72,12 @@ namespace RimWorld
 						difficulty = current2;
 					}
 				}
-				listing_Standard.Gap(30f);
+				selectedStorytellerInfoListing.Gap(30f);
 				if (Current.ProgramState == ProgramState.Entry)
 				{
-					listing_Standard.CheckboxLabeled("PermadeathMode".Translate(), ref Find.GameInitData.permadeath, "PermadeathModeInfo".Translate());
+					selectedStorytellerInfoListing.CheckboxLabeled("PermadeathMode".Translate(), ref Find.GameInitData.permadeath, "PermadeathModeInfo".Translate());
 				}
-				listing_Standard.End();
+				selectedStorytellerInfoListing.End();
 			}
 			GUI.EndGroup();
 		}

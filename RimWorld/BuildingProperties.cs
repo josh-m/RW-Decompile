@@ -46,6 +46,8 @@ namespace RimWorld
 
 		public bool canPlaceOverWall;
 
+		public bool allowAutoroof = true;
+
 		public bool preventDeterioration;
 
 		public bool isMealSource;
@@ -76,7 +78,7 @@ namespace RimWorld
 
 		public float bed_maxBodySize = 9999f;
 
-		public int foodCostPerDispense;
+		public float nutritionCostPerDispense;
 
 		public SoundDef soundDispense;
 
@@ -109,8 +111,6 @@ namespace RimWorld
 
 		public ThingDef defaultPlantToGrow;
 
-		public SoundDef soundMined;
-
 		public ThingDef mineableThing;
 
 		public int mineableYield = 1;
@@ -118,6 +118,8 @@ namespace RimWorld
 		public float mineableNonMinedEfficiency = 0.7f;
 
 		public float mineableDropChance = 1f;
+
+		public bool mineableYieldWasteable = true;
 
 		public float mineableScatterCommonality;
 
@@ -127,9 +129,11 @@ namespace RimWorld
 
 		public StorageSettings defaultStorageSettings;
 
+		public bool ignoreStoredThingsBeauty;
+
 		public bool isTrap;
 
-		public DamageArmorCategory trapDamageCategory;
+		public DamageArmorCategoryDef trapDamageCategory;
 
 		public GraphicData trapUnarmedGraphicData;
 
@@ -167,6 +171,26 @@ namespace RimWorld
 			get
 			{
 				return this.alwaysDeconstructible || (!this.isNaturalRock && this.deconstructible);
+			}
+		}
+
+		public bool IsMortar
+		{
+			get
+			{
+				if (!this.IsTurret)
+				{
+					return false;
+				}
+				List<VerbProperties> verbs = this.turretGunDef.Verbs;
+				for (int i = 0; i < verbs.Count; i++)
+				{
+					if (verbs[i].projectileDef != null && verbs[i].projectileDef.projectile.flyOverhead)
+					{
+						return true;
+					}
+				}
+				return false;
 			}
 		}
 

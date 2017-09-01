@@ -12,7 +12,7 @@ namespace RimWorld
 			Blueprint_Build blueprint_Build = (Blueprint_Build)ThingMaker.MakeThing(sourceDef.blueprintDef, null);
 			blueprint_Build.SetFactionDirect(faction);
 			blueprint_Build.stuffToUse = stuff;
-			GenSpawn.Spawn(blueprint_Build, center, map, rotation);
+			GenSpawn.Spawn(blueprint_Build, center, map, rotation, false);
 			return blueprint_Build;
 		}
 
@@ -21,7 +21,7 @@ namespace RimWorld
 			Blueprint_Install blueprint_Install = (Blueprint_Install)ThingMaker.MakeThing(itemToInstall.InnerThing.def.installBlueprintDef, null);
 			blueprint_Install.SetThingToInstallFromMinified(itemToInstall);
 			blueprint_Install.SetFactionDirect(faction);
-			GenSpawn.Spawn(blueprint_Install, center, map, rotation);
+			GenSpawn.Spawn(blueprint_Install, center, map, rotation, false);
 			return blueprint_Install;
 		}
 
@@ -30,7 +30,7 @@ namespace RimWorld
 			Blueprint_Install blueprint_Install = (Blueprint_Install)ThingMaker.MakeThing(buildingToReinstall.def.installBlueprintDef, null);
 			blueprint_Install.SetBuildingToReinstall(buildingToReinstall);
 			blueprint_Install.SetFactionDirect(faction);
-			GenSpawn.Spawn(blueprint_Install, center, map, rotation);
+			GenSpawn.Spawn(blueprint_Install, center, map, rotation, false);
 			return blueprint_Install;
 		}
 
@@ -78,7 +78,7 @@ namespace RimWorld
 			return null;
 		}
 
-		public static bool CanConstruct(Thing t, Pawn p)
+		public static bool CanConstruct(Thing t, Pawn p, bool forced = false)
 		{
 			Blueprint blueprint = t as Blueprint;
 			if (blueprint != null)
@@ -89,7 +89,7 @@ namespace RimWorld
 					return false;
 				}
 			}
-			return p.CanReserveAndReach(t, PathEndMode.Touch, p.NormalMaxDanger(), 1) && !t.IsBurning();
+			return p.CanReserveAndReach(t, PathEndMode.Touch, (!forced) ? p.NormalMaxDanger() : Danger.Deadly, 1, -1, null, forced) && !t.IsBurning();
 		}
 
 		public static int AmountNeededByOf(IConstructible c, ThingDef resDef)
@@ -232,7 +232,7 @@ namespace RimWorld
 				}
 				if (map.designationManager.DesignationAt(center, DesignationDefOf.SmoothFloor) != null)
 				{
-					return new AcceptanceReport("BeingSmoothed".Translate());
+					return new AcceptanceReport("SpaceBeingSmoothed".Translate());
 				}
 			}
 			if (!GenConstruct.CanBuildOnTerrain(entDef, center, map, rot, thingToIgnore))
@@ -337,7 +337,7 @@ namespace RimWorld
 		{
 			if (t.def.category == ThingCategory.Plant)
 			{
-				return t.def.plant.harvestWork > 200f;
+				return t.def.plant.harvestWork >= 200f;
 			}
 			if (blue.def.entityDefToBuild is TerrainDef || blue.def.entityDefToBuild.passability == Traversability.Standable)
 			{
@@ -360,6 +360,20 @@ namespace RimWorld
 				}
 			}
 			return (t.def.IsEdifice() && thingDef.IsEdifice()) || (t.def.category == ThingCategory.Pawn || (t.def.category == ThingCategory.Item && blue.def.entityDefToBuild.passability == Traversability.Impassable)) || (t.def.Fillage >= FillCategory.Partial && thingDef != null && thingDef.Fillage >= FillCategory.Partial);
+		}
+
+		public static bool TerrainCanSupport(CellRect rect, Map map, ThingDef thing)
+		{
+			CellRect.CellRectIterator iterator = rect.GetIterator();
+			while (!iterator.Done())
+			{
+				if (!iterator.Current.SupportsStructureType(map, thing.terrainAffordanceNeeded))
+				{
+					return false;
+				}
+				iterator.MoveNext();
+			}
+			return true;
 		}
 	}
 }

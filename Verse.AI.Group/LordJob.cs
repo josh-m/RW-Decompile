@@ -14,6 +14,22 @@ namespace Verse.AI.Group
 			}
 		}
 
+		public virtual bool AllowStartNewGatherings
+		{
+			get
+			{
+				return true;
+			}
+		}
+
+		public virtual bool NeverInRestraints
+		{
+			get
+			{
+				return false;
+			}
+		}
+
 		protected Map Map
 		{
 			get

@@ -128,10 +128,10 @@ namespace RimWorld
 						{
 							if (disallowedNets == null || !disallowedNets.Contains(powerComp.transNet))
 							{
-								float lengthHorizontalSquared = (transmitter.Position - connectorPos).LengthHorizontalSquared;
-								if (lengthHorizontalSquared < num)
+								float num2 = (float)(transmitter.Position - connectorPos).LengthHorizontalSquared;
+								if (num2 < num)
 								{
-									num = lengthHorizontalSquared;
+									num = num2;
 									result = powerComp;
 								}
 							}

@@ -77,7 +77,7 @@ namespace RimWorld.Planet
 					list.Add(GenWorldUI.clickedDynamicallyDrawnObjects[l]);
 				}
 			}
-			int num = GenWorld.TileAt(mousePos);
+			int num = GenWorld.TileAt(mousePos, false);
 			List<WorldObject> allWorldObjects2 = Find.WorldObjects.AllWorldObjects;
 			for (int m = 0; m < allWorldObjects2.Count; m++)
 			{

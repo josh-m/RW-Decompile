@@ -150,8 +150,8 @@ namespace RimWorld
 							bool flag = false;
 							for (int i = 0; i < SiegeBlueprintPlacer.placedSandbagLocs.Count; i++)
 							{
-								float lengthHorizontalSquared = (SiegeBlueprintPlacer.placedSandbagLocs[i] - randomCell).LengthHorizontalSquared;
-								if (lengthHorizontalSquared < 36f)
+								float num2 = (float)(SiegeBlueprintPlacer.placedSandbagLocs[i] - randomCell).LengthHorizontalSquared;
+								if (num2 < 36f)
 								{
 									flag = true;
 								}

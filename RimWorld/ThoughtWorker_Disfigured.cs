@@ -19,6 +19,10 @@ namespace RimWorld
 			{
 				return false;
 			}
+			if (!pawn.health.capacities.CapableOf(PawnCapacityDefOf.Sight))
+			{
+				return false;
+			}
 			return true;
 		}
 	}

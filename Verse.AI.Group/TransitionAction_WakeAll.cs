@@ -1,3 +1,4 @@
+using RimWorld;
 using System;
 using System.Collections.Generic;
 
@@ -10,10 +11,7 @@ namespace Verse.AI.Group
 			List<Pawn> ownedPawns = trans.target.lord.ownedPawns;
 			for (int i = 0; i < ownedPawns.Count; i++)
 			{
-				if (ownedPawns[i].CurJob != null && ownedPawns[i].jobs.curDriver.layingDown)
-				{
-					ownedPawns[i].jobs.EndCurrentJob(JobCondition.InterruptForced, true);
-				}
+				RestUtility.WakeUp(ownedPawns[i]);
 			}
 		}
 	}

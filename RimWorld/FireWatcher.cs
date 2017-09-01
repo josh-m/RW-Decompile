@@ -6,25 +6,19 @@ namespace RimWorld
 {
 	public class FireWatcher
 	{
-		private const float DangerPerFire = 0.015f;
-
-		private const float FireSizeFactor = 0.01f;
-
 		private const int UpdateObservationsInterval = 426;
+
+		private const float BaseDangerPerFire = 0.5f;
 
 		private Map map;
 
-		private float fireAmount = -1f;
+		private float fireDanger = -1f;
 
-		public float FireAmount
+		public float FireDanger
 		{
 			get
 			{
-				if (this.fireAmount < 0f)
-				{
-					this.UpdateObservations();
-				}
-				return this.fireAmount;
+				return this.fireDanger;
 			}
 		}
 
@@ -32,11 +26,11 @@ namespace RimWorld
 		{
 			get
 			{
-				if (this.fireAmount < 0f)
+				if (this.fireDanger < 0f)
 				{
 					this.UpdateObservations();
 				}
-				return this.fireAmount > 2.3f;
+				return this.fireDanger > 90f;
 			}
 		}
 
@@ -55,12 +49,12 @@ namespace RimWorld
 
 		private void UpdateObservations()
 		{
-			this.fireAmount = 0f;
+			this.fireDanger = 0f;
 			List<Thing> list = this.map.listerThings.ThingsOfDef(ThingDefOf.Fire);
 			for (int i = 0; i < list.Count; i++)
 			{
 				Fire fire = list[i] as Fire;
-				this.fireAmount += 0.015f + 0.01f * fire.fireSize;
+				this.fireDanger += 0.5f + fire.fireSize;
 			}
 		}
 	}

@@ -62,7 +62,7 @@ namespace RimWorld.Planet
 				for (int i = 0; i < DebugTile.tmpVerts.Count; i++)
 				{
 					Vector3 a = DebugTile.tmpVerts[i];
-					DebugTile.tmpVerts[i] = a + a.normalized * 0.005f;
+					DebugTile.tmpVerts[i] = a + a.normalized * 0.012f;
 				}
 				this.mesh = new Mesh();
 				this.mesh.name = "DebugTile";

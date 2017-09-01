@@ -7,8 +7,14 @@ namespace Verse
 	{
 		private static readonly SimpleCurve EffectFactorSeverityCurve = new SimpleCurve
 		{
-			new CurvePoint(0f, 1f),
-			new CurvePoint(1f, 0.25f)
+			{
+				new CurvePoint(0f, 1f),
+				true
+			},
+			{
+				new CurvePoint(1f, 0.25f),
+				true
+			}
 		};
 
 		public HediffCompProperties_DrugEffectFactor Props
@@ -33,8 +39,9 @@ namespace Verse
 			{
 				return "DrugEffectMultiplier".Translate(new object[]
 				{
-					this.Props.chemical
-				}) + ": " + this.CurrentFactor.ToStringPercent();
+					this.Props.chemical.label,
+					this.CurrentFactor.ToStringPercent()
+				}).CapitalizeFirst();
 			}
 		}
 

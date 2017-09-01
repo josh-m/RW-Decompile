@@ -43,15 +43,16 @@ namespace Verse
 		{
 			if (Event.current.type == EventType.KeyDown && (Event.current.keyCode == KeyCode.Return || Event.current.keyCode == KeyCode.KeypadEnter || Event.current.keyCode == KeyCode.Escape))
 			{
-				GUI.FocusControl(string.Empty);
+				UI.UnfocusCurrentControl();
 			}
 			Rect rect = new Rect(0f, 0f, inRect.width, 16f);
 			this.labelColumnWidth = Widgets.HorizontalSlider(rect, this.labelColumnWidth, 0f, inRect.width, false, null, null, null, -1f);
 			Rect outRect = inRect.AtZero();
 			outRect.yMin += 16f;
 			Rect rect2 = new Rect(0f, 0f, outRect.width - 16f, this.viewHeight);
-			Widgets.BeginScrollView(outRect, ref this.scrollPosition, rect2);
-			Listing_TreeDefs listing_TreeDefs = new Listing_TreeDefs(rect2, this.labelColumnWidth);
+			Widgets.BeginScrollView(outRect, ref this.scrollPosition, rect2, true);
+			Listing_TreeDefs listing_TreeDefs = new Listing_TreeDefs(this.labelColumnWidth);
+			listing_TreeDefs.Begin(rect2);
 			TreeNode_Editor node = EditTreeNodeDatabase.RootOf(this.def);
 			listing_TreeDefs.ContentLines(node, 0);
 			listing_TreeDefs.End();

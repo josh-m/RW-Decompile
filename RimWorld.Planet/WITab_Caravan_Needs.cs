@@ -81,7 +81,7 @@ namespace RimWorld.Planet
 					if (Widgets.CloseButtonFor(rect.AtZero()))
 					{
 						this.specificNeedsTabForPawn = null;
-						SoundDefOf.TabClose.PlayOneShotOnCamera();
+						SoundDefOf.TabClose.PlayOneShotOnCamera(null);
 					}
 				}, true, false, 1f);
 			}

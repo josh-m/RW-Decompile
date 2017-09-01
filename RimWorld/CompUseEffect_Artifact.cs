@@ -17,10 +17,7 @@ namespace RimWorld
 		public override void DoEffect(Pawn usedBy)
 		{
 			base.DoEffect(usedBy);
-			if (usedBy.MapHeld == Find.VisibleMap || this.parent.MapHeld == Find.VisibleMap)
-			{
-				SoundDefOf.PsychicPulseGlobal.PlayOneShotOnCamera();
-			}
+			SoundDefOf.PsychicPulseGlobal.PlayOneShotOnCamera(usedBy.MapHeld);
 			usedBy.records.Increment(RecordDefOf.ArtifactsActivated);
 			this.parent.Destroy(DestroyMode.Vanish);
 		}

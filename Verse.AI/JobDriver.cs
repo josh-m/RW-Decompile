@@ -29,9 +29,7 @@ namespace Verse.AI
 
 		public TargetIndex rotateToFace = TargetIndex.A;
 
-		public bool layingDown;
-
-		public Building_Bed layingDownBed;
+		public LayingDownState layingDown;
 
 		public bool asleep;
 
@@ -87,7 +85,7 @@ namespace Verse.AI
 		{
 			get
 			{
-				return (!this.layingDown) ? PawnPosture.Standing : PawnPosture.LayingAny;
+				return (this.layingDown == LayingDownState.NotLaying) ? PawnPosture.Standing : PawnPosture.LayingAny;
 			}
 		}
 
@@ -96,6 +94,14 @@ namespace Verse.AI
 			get
 			{
 				return this.curToilIndex;
+			}
+		}
+
+		public bool HandlingFacing
+		{
+			get
+			{
+				return this.CurToil != null && this.CurToil.handlingFacing;
 			}
 		}
 
@@ -210,17 +216,16 @@ namespace Verse.AI
 
 		public virtual void ExposeData()
 		{
-			Scribe_Values.LookValue<bool>(ref this.ended, "ended", false, false);
-			Scribe_Values.LookValue<int>(ref this.curToilIndex, "curToilIndex", 0, true);
-			Scribe_Values.LookValue<int>(ref this.ticksLeftThisToil, "ticksLeftThisToil", 0, false);
-			Scribe_Values.LookValue<bool>(ref this.wantBeginNextToil, "wantBeginNextToil", false, false);
-			Scribe_Values.LookValue<ToilCompleteMode>(ref this.curToilCompleteMode, "curToilCompleteMode", ToilCompleteMode.Undefined, false);
-			Scribe_Values.LookValue<int>(ref this.startTick, "startTick", 0, false);
-			Scribe_Values.LookValue<TargetIndex>(ref this.rotateToFace, "rotateToFace", TargetIndex.A, false);
-			Scribe_Values.LookValue<bool>(ref this.layingDown, "layingDown", false, false);
-			Scribe_References.LookReference<Building_Bed>(ref this.layingDownBed, "layingDownBed", false);
-			Scribe_Values.LookValue<bool>(ref this.asleep, "asleep", false, false);
-			Scribe_Values.LookValue<float>(ref this.uninstallWorkLeft, "uninstallWorkLeft", 0f, false);
+			Scribe_Values.Look<bool>(ref this.ended, "ended", false, false);
+			Scribe_Values.Look<int>(ref this.curToilIndex, "curToilIndex", 0, true);
+			Scribe_Values.Look<int>(ref this.ticksLeftThisToil, "ticksLeftThisToil", 0, false);
+			Scribe_Values.Look<bool>(ref this.wantBeginNextToil, "wantBeginNextToil", false, false);
+			Scribe_Values.Look<ToilCompleteMode>(ref this.curToilCompleteMode, "curToilCompleteMode", ToilCompleteMode.Undefined, false);
+			Scribe_Values.Look<int>(ref this.startTick, "startTick", 0, false);
+			Scribe_Values.Look<TargetIndex>(ref this.rotateToFace, "rotateToFace", TargetIndex.A, false);
+			Scribe_Values.Look<LayingDownState>(ref this.layingDown, "layingDown", LayingDownState.NotLaying, false);
+			Scribe_Values.Look<bool>(ref this.asleep, "asleep", false, false);
+			Scribe_Values.Look<float>(ref this.uninstallWorkLeft, "uninstallWorkLeft", 0f, false);
 			if (Scribe.mode == LoadSaveMode.PostLoadInit)
 			{
 				this.SetupToils();
@@ -274,16 +279,15 @@ namespace Verse.AI
 			}
 			catch (Exception ex)
 			{
-				Log.Error(string.Concat(new object[]
+				this.pawn.jobs.StartErrorRecoverJob(string.Concat(new object[]
 				{
 					"Exception in SetupToils (pawn=",
 					this.pawn,
 					", job=",
 					this.CurJob,
 					"): ",
-					ex.ToString()
+					ex
 				}));
-				this.EndJobWith(JobCondition.Errored);
 			}
 		}
 
@@ -359,7 +363,7 @@ namespace Verse.AI
 			}
 			catch (Exception ex)
 			{
-				Log.Error(string.Concat(new object[]
+				this.pawn.jobs.StartErrorRecoverJob(string.Concat(new object[]
 				{
 					"Exception in Tick (pawn=",
 					this.pawn,
@@ -368,9 +372,8 @@ namespace Verse.AI
 					", CurToil=",
 					this.curToilIndex,
 					"): ",
-					ex.ToString()
+					ex
 				}));
-				this.EndJobWith(JobCondition.Errored);
 			}
 		}
 
@@ -416,37 +419,44 @@ namespace Verse.AI
 			this.curToilCompleteMode = this.CurToil.defaultCompleteMode;
 			if (!this.CheckCurrentToilEndOrFail())
 			{
+				int num = this.CurToilIndex;
 				if (this.CurToil.preInitActions != null)
 				{
 					for (int i = 0; i < this.CurToil.preInitActions.Count; i++)
 					{
 						this.CurToil.preInitActions[i]();
-					}
-				}
-				if (this.CurToil.initAction != null)
-				{
-					try
-					{
-						this.CurToil.initAction();
-					}
-					catch (Exception ex)
-					{
-						Log.Error(string.Concat(new object[]
+						if (this.CurToilIndex != num)
 						{
-							"JobDriver threw exception in initAction. Pawn=",
-							this.pawn,
-							", Job=",
-							this.CurJob,
-							", Exception: ",
-							ex.ToString()
-						}));
-						this.EndJobWith(JobCondition.Errored);
-						return;
+							break;
+						}
 					}
 				}
-				if (!this.ended && this.curToilCompleteMode == ToilCompleteMode.Instant)
+				if (this.CurToilIndex == num)
 				{
-					this.ReadyForNextToil();
+					if (this.CurToil.initAction != null)
+					{
+						try
+						{
+							this.CurToil.initAction();
+						}
+						catch (Exception ex)
+						{
+							this.pawn.jobs.StartErrorRecoverJob(string.Concat(new object[]
+							{
+								"JobDriver threw exception in initAction. Pawn=",
+								this.pawn,
+								", Job=",
+								this.CurJob,
+								", Exception: ",
+								ex
+							}));
+							return;
+						}
+					}
+					if (this.CurToilIndex == num && !this.ended && this.curToilCompleteMode == ToilCompleteMode.Instant)
+					{
+						this.ReadyForNextToil();
+					}
 				}
 			}
 		}
@@ -493,14 +503,9 @@ namespace Verse.AI
 			return false;
 		}
 
-		public void SetNextToil(Toil to)
+		private void SetNextToil(Toil to)
 		{
 			this.curToilIndex = this.toils.IndexOf(to) - 1;
-		}
-
-		public void SetCompleteMode(ToilCompleteMode compMode)
-		{
-			this.curToilCompleteMode = compMode;
 		}
 
 		public void JumpToToil(Toil to)
@@ -509,9 +514,13 @@ namespace Verse.AI
 			this.ReadyForNextToil();
 		}
 
-		public void Notify_Starting()
+		public virtual void Notify_Starting()
 		{
 			this.startTick = Find.TickManager.TicksGame;
+		}
+
+		public virtual void Notify_LastPosture(PawnPosture posture, LayingDownState layingDown)
+		{
 		}
 
 		public virtual void Notify_PatherArrived()
@@ -558,7 +567,7 @@ namespace Verse.AI
 			this.globalFinishActions.Add(newAct);
 		}
 
-		public virtual bool ModifyCarriedThingDrawPos(ref Vector3 drawPos)
+		public virtual bool ModifyCarriedThingDrawPos(ref Vector3 drawPos, ref bool behind, ref bool flip)
 		{
 			return false;
 		}

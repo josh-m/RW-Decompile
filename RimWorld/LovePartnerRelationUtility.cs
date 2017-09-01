@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using Verse;
+using Verse.AI;
 
 namespace RimWorld
 {
@@ -91,16 +92,16 @@ namespace RimWorld
 
 		public static Pawn GetPartnerInMyBed(Pawn pawn)
 		{
-			if (pawn.CurJob == null || !pawn.jobs.curDriver.layingDown)
+			if (pawn.CurJob == null || pawn.jobs.curDriver.layingDown == LayingDownState.NotLaying)
 			{
 				return null;
 			}
-			Building_Bed layingDownBed = pawn.jobs.curDriver.layingDownBed;
-			if (layingDownBed == null)
+			Building_Bed building_Bed = pawn.CurrentBed();
+			if (building_Bed == null)
 			{
 				return null;
 			}
-			if (layingDownBed.SleepingSlotsCount <= 1)
+			if (building_Bed.SleepingSlotsCount <= 1)
 			{
 				return null;
 			}
@@ -108,7 +109,7 @@ namespace RimWorld
 			{
 				return null;
 			}
-			foreach (Pawn current in layingDownBed.CurOccupants)
+			foreach (Pawn current in building_Bed.CurOccupants)
 			{
 				if (current != pawn)
 				{
@@ -199,10 +200,10 @@ namespace RimWorld
 		{
 			float num = 1f;
 			num /= 1f - pawn.health.hediffSet.PainTotal;
-			float efficiency = pawn.health.capacities.GetEfficiency(PawnCapacityDefOf.Consciousness);
-			if (efficiency < 0.5f)
+			float level = pawn.health.capacities.GetLevel(PawnCapacityDefOf.Consciousness);
+			if (level < 0.5f)
 			{
-				num /= efficiency * 2f;
+				num /= level * 2f;
 			}
 			return num / GenMath.FlatHill(0f, 14f, 16f, 25f, 80f, 0.2f, pawn.ageTracker.AgeBiologicalYearsFloat);
 		}

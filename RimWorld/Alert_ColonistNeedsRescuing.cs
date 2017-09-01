@@ -24,7 +24,7 @@ namespace RimWorld
 
 		public static bool NeedsRescue(Pawn p)
 		{
-			return p.Downed && !p.InBed() && p.holdingContainer == null && (p.jobs.jobQueue == null || p.jobs.jobQueue.Count <= 0 || !p.jobs.jobQueue.Peek().CanBeginNow(p));
+			return p.Downed && !p.InBed() && !(p.ParentHolder is Pawn_CarryTracker) && (p.jobs.jobQueue == null || p.jobs.jobQueue.Count <= 0 || !p.jobs.jobQueue.Peek().job.CanBeginNow(p));
 		}
 
 		public override string GetLabel()

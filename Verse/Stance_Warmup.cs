@@ -5,17 +5,14 @@ namespace Verse
 {
 	public class Stance_Warmup : Stance_Busy
 	{
-		public Verb verb;
-
 		private bool targetStartedDowned;
 
 		public Stance_Warmup()
 		{
 		}
 
-		public Stance_Warmup(int ticks, LocalTargetInfo focusTarg, Verb verb) : base(ticks, focusTarg)
+		public Stance_Warmup(int ticks, LocalTargetInfo focusTarg, Verb verb) : base(ticks, focusTarg, verb)
 		{
-			this.verb = verb;
 			if (focusTarg.HasThing && focusTarg.Thing is Pawn)
 			{
 				Pawn pawn = (Pawn)focusTarg.Thing;
@@ -25,10 +22,10 @@ namespace Verse
 					for (int i = 0; i < pawn.apparel.WornApparelCount; i++)
 					{
 						Apparel apparel = pawn.apparel.WornApparel[i];
-						PersonalShield personalShield = apparel as PersonalShield;
-						if (personalShield != null)
+						ShieldBelt shieldBelt = apparel as ShieldBelt;
+						if (shieldBelt != null)
 						{
-							personalShield.KeepDisplaying();
+							shieldBelt.KeepDisplaying();
 						}
 					}
 				}
@@ -38,8 +35,7 @@ namespace Verse
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_References.LookReference<Verb>(ref this.verb, "verb", false);
-			Scribe_Values.LookValue<bool>(ref this.targetStartedDowned, "targetStartDowned", false, false);
+			Scribe_Values.Look<bool>(ref this.targetStartedDowned, "targetStartDowned", false, false);
 		}
 
 		public override void StanceDraw()
@@ -57,7 +53,7 @@ namespace Verse
 				this.stanceTracker.SetStance(new Stance_Mobile());
 				return;
 			}
-			if (this.focusTarg.HasThing && (!this.focusTarg.Thing.Spawned || !this.verb.CanHitTargetFrom(base.Pawn.Position, this.focusTarg) || base.Pawn.Position.DistanceToSquared(this.focusTarg.Thing.Position) > this.verb.verbProps.range * this.verb.verbProps.range))
+			if (this.focusTarg.HasThing && (!this.focusTarg.Thing.Spawned || !this.verb.CanHitTargetFrom(base.Pawn.Position, this.focusTarg)))
 			{
 				this.stanceTracker.SetStance(new Stance_Mobile());
 				return;
@@ -71,8 +67,8 @@ namespace Verse
 
 		protected override void Expire()
 		{
-			base.Expire();
 			this.verb.WarmupComplete();
+			base.Expire();
 		}
 	}
 }

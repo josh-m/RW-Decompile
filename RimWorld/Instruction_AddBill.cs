@@ -18,7 +18,7 @@ namespace RimWorld
 				if (bill_Production != null)
 				{
 					num2++;
-					if (bill_Production.repeatMode == BillRepeatMode.RepeatCount)
+					if (bill_Production.repeatMode == BillRepeatModeDefOf.RepeatCount)
 					{
 						num2 += bill_Production.repeatCount;
 					}

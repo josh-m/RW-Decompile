@@ -69,7 +69,7 @@ namespace Verse
 			{
 				if (this.nearPlayerStart)
 				{
-					result = CellFinder.RandomClosewalkCellNear(MapGenerator.PlayerStartSpot, map, 20);
+					result = CellFinder.RandomClosewalkCellNear(MapGenerator.PlayerStartSpot, map, 20, (IntVec3 x) => this.CanScatterAt(x, map));
 					return true;
 				}
 				if (CellFinderLoose.TryFindRandomNotEdgeCellWith(5, (IntVec3 x) => this.CanScatterAt(x, map), map, out result))
@@ -100,7 +100,7 @@ namespace Verse
 			{
 				return false;
 			}
-			if ((map.Center - loc).LengthHorizontalSquared < (float)(this.minDistToPlayerStart * this.minDistToPlayerStart))
+			if ((map.Center - loc).LengthHorizontalSquared < this.minDistToPlayerStart * this.minDistToPlayerStart)
 			{
 				return false;
 			}
@@ -125,7 +125,7 @@ namespace Verse
 		{
 			for (int i = 0; i < this.usedSpots.Count; i++)
 			{
-				if ((this.usedSpots[i] - c).LengthHorizontalSquared <= dist * dist)
+				if ((float)(this.usedSpots[i] - c).LengthHorizontalSquared <= dist * dist)
 				{
 					return true;
 				}
@@ -152,9 +152,9 @@ namespace Verse
 			return Mathf.RoundToInt((float)(mapSize * mapSize) / (float)num);
 		}
 
-		public void DebugForceScatterAt(IntVec3 loc)
+		public void ForceScatterAt(IntVec3 loc, Map map)
 		{
-			this.ScatterAt(loc, Find.VisibleMap, 1);
+			this.ScatterAt(loc, map, 1);
 		}
 	}
 }

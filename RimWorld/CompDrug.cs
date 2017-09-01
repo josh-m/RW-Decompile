@@ -37,7 +37,7 @@ namespace RimWorld
 						{
 							ingester.LabelShort,
 							this.Props.chemical.label
-						}).AdjustedFor(ingester).CapitalizeFirst(), LetterType.BadNonUrgent, ingester, null);
+						}).AdjustedFor(ingester).CapitalizeFirst(), LetterDefOf.BadNonUrgent, ingester, null);
 					}
 					AddictionUtility.CheckDrugAddictionTeachOpportunity(ingester);
 				}
@@ -51,7 +51,7 @@ namespace RimWorld
 						need.CurLevel += needLevelOffset;
 					}
 				}
-				Hediff firstHediffOfDef = ingester.health.hediffSet.GetFirstHediffOfDef(HediffDefOf.DrugOverdose);
+				Hediff firstHediffOfDef = ingester.health.hediffSet.GetFirstHediffOfDef(HediffDefOf.DrugOverdose, false);
 				float num2 = (firstHediffOfDef == null) ? 0f : firstHediffOfDef.Severity;
 				if (num2 < 0.9f && Rand.Value < this.Props.largeOverdoseChance)
 				{
@@ -77,7 +77,7 @@ namespace RimWorld
 			}
 			if (this.Props.isCombatEnhancingDrug && !ingester.Dead)
 			{
-				ingester.mindState.lastTakeCombatEnancingDrugTick = Find.TickManager.TicksGame;
+				ingester.mindState.lastTakeCombatEnhancingDrugTick = Find.TickManager.TicksGame;
 			}
 			if (ingester.drugs != null)
 			{

@@ -40,18 +40,14 @@ namespace Verse
 			return false;
 		}
 
-		public static bool NameSingleIsUsedOnAnyMap(string candidate)
+		public static bool NameSingleIsUsed(string candidate)
 		{
-			List<Map> maps = Find.Maps;
-			for (int i = 0; i < maps.Count; i++)
+			foreach (Pawn current in PawnsFinder.AllMapsAndWorld_AliveOrDead)
 			{
-				foreach (Pawn current in maps[i].mapPawns.AllPawns)
+				NameSingle nameSingle = current.Name as NameSingle;
+				if (nameSingle != null && nameSingle.Name == candidate)
 				{
-					NameSingle nameSingle = current.Name as NameSingle;
-					if (nameSingle != null && nameSingle.Name == candidate)
-					{
-						return true;
-					}
+					return true;
 				}
 			}
 			return false;

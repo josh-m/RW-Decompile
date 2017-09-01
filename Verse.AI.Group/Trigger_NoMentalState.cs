@@ -15,8 +15,9 @@ namespace Verse.AI.Group
 						return false;
 					}
 				}
+				return true;
 			}
-			return true;
+			return false;
 		}
 	}
 }

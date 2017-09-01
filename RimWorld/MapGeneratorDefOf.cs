@@ -6,8 +6,8 @@ namespace RimWorld
 	[DefOf]
 	public static class MapGeneratorDefOf
 	{
-		public static MapGeneratorDef MainMapGenerator;
+		public static MapGeneratorDef MainMap;
 
-		public static MapGeneratorDef FactionBaseMapGenerator;
+		public static MapGeneratorDef FactionBase;
 	}
 }

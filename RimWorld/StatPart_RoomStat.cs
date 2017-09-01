@@ -13,7 +13,7 @@ namespace RimWorld
 		{
 			if (req.HasThing)
 			{
-				Room room = req.Thing.GetRoom();
+				Room room = req.Thing.GetRoom(RegionType.Set_Passable);
 				if (room != null)
 				{
 					val *= room.GetStat(this.roomStat);
@@ -25,7 +25,7 @@ namespace RimWorld
 		{
 			if (req.HasThing)
 			{
-				Room room = req.Thing.GetRoom();
+				Room room = req.Thing.GetRoom(RegionType.Set_Passable);
 				if (room != null)
 				{
 					string labelCap;

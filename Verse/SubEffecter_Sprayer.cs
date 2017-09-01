@@ -21,11 +21,11 @@ namespace Verse
 			{
 				Vector3 vector2 = (!A.HasThing) ? A.Cell.ToVector3Shifted() : A.Thing.DrawPos;
 				Vector3 vector3 = (!B.HasThing) ? B.Cell.ToVector3Shifted() : B.Thing.DrawPos;
-				if (A.HasThing && A.Thing.holdingContainer != null)
+				if (A.HasThing && !A.Thing.Spawned)
 				{
 					vector = vector3;
 				}
-				else if (B.HasThing && B.Thing.holdingContainer != null)
+				else if (B.HasThing && !B.Thing.Spawned)
 				{
 					vector = vector2;
 				}

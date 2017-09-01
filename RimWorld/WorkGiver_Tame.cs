@@ -13,13 +13,13 @@ namespace RimWorld
 		[DebuggerHidden]
 		public override IEnumerable<Thing> PotentialWorkThingsGlobal(Pawn pawn)
 		{
-			foreach (Designation des in pawn.Map.designationManager.DesignationsOfDef(DesignationDefOf.Tame))
+			foreach (Designation des in pawn.Map.designationManager.SpawnedDesignationsOfDef(DesignationDefOf.Tame))
 			{
 				yield return des.target.Thing;
 			}
 		}
 
-		public override Job JobOnThing(Pawn pawn, Thing t)
+		public override Job JobOnThing(Pawn pawn, Thing t, bool forced = false)
 		{
 			Pawn pawn2 = t as Pawn;
 			if (pawn2 == null || pawn2.RaceProps.Humanlike)
@@ -41,7 +41,12 @@ namespace RimWorld
 			}
 			if (pawn2.RaceProps.EatsFood && !base.HasFoodToInteractAnimal(pawn, pawn2))
 			{
-				return base.TakeFoodForAnimalInteractJob(pawn, pawn2);
+				Job job = base.TakeFoodForAnimalInteractJob(pawn, pawn2);
+				if (job == null)
+				{
+					JobFailReason.Is(WorkGiver_InteractAnimal.NoUsableFoodTrans);
+				}
+				return job;
 			}
 			return new Job(JobDefOf.Tame, t);
 		}

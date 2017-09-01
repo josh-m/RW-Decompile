@@ -50,14 +50,13 @@ namespace RimWorld
 					{
 						if (joyGiverDef.pctPawnsEverDo < 1f)
 						{
-							Rand.PushSeed();
-							Rand.Seed = (pawn.thingIDNumber ^ 63216713);
+							Rand.PushState(pawn.thingIDNumber ^ 63216713);
 							if (Rand.Value >= joyGiverDef.pctPawnsEverDo)
 							{
-								Rand.PopSeed();
-								goto IL_100;
+								Rand.PopState();
+								goto IL_FB;
 							}
-							Rand.PopSeed();
+							Rand.PopState();
 						}
 						float num = joyGiverDef.Worker.GetChance(pawn);
 						float num2 = 1f - tolerances[joyGiverDef.joyKind];
@@ -65,7 +64,7 @@ namespace RimWorld
 						this.joyGiverChances[joyGiverDef] = num;
 					}
 				}
-				IL_100:;
+				IL_FB:;
 			}
 			for (int j = 0; j < this.joyGiverChances.Count; j++)
 			{

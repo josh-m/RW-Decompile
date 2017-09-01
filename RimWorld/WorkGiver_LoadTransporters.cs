@@ -22,13 +22,13 @@ namespace RimWorld
 			}
 		}
 
-		public override bool HasJobOnThing(Pawn pawn, Thing t)
+		public override bool HasJobOnThing(Pawn pawn, Thing t, bool forced = false)
 		{
 			CompTransporter transporter = t.TryGetComp<CompTransporter>();
 			return LoadTransportersJobUtility.HasJobOnTransporter(pawn, transporter);
 		}
 
-		public override Job JobOnThing(Pawn pawn, Thing t)
+		public override Job JobOnThing(Pawn pawn, Thing t, bool forced = false)
 		{
 			CompTransporter transporter = t.TryGetComp<CompTransporter>();
 			return LoadTransportersJobUtility.JobOnTransporter(pawn, transporter);

@@ -24,7 +24,7 @@ namespace RimWorld
 		public override void PostExposeData()
 		{
 			base.PostExposeData();
-			Scribe_Values.LookValue<bool>(ref this.brokenDownInt, "brokenDown", false, false);
+			Scribe_Values.Look<bool>(ref this.brokenDownInt, "brokenDown", false, false);
 		}
 
 		public override void PostDraw()
@@ -35,9 +35,9 @@ namespace RimWorld
 			}
 		}
 
-		public override void PostSpawnSetup()
+		public override void PostSpawnSetup(bool respawningAfterLoad)
 		{
-			base.PostSpawnSetup();
+			base.PostSpawnSetup(respawningAfterLoad);
 			this.powerComp = this.parent.GetComp<CompPowerTrader>();
 			this.parent.Map.GetComponent<BreakdownManager>().Register(this);
 		}
@@ -84,7 +84,7 @@ namespace RimWorld
 				}), "LetterBuildingBrokenDown".Translate(new object[]
 				{
 					this.parent.LabelShort
-				}), LetterType.BadNonUrgent, this.parent, null);
+				}), LetterDefOf.BadNonUrgent, this.parent, null);
 			}
 		}
 

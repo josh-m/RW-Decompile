@@ -41,7 +41,8 @@ namespace Verse
 
 		public override void DoWindowContents(Rect inRect)
 		{
-			Listing_Standard listing_Standard = new Listing_Standard(inRect.AtZero());
+			Listing_Standard listing_Standard = new Listing_Standard();
+			listing_Standard.Begin(inRect.AtZero());
 			listing_Standard.ColumnWidth = 240f;
 			foreach (DefPackage current in this.mod.GetDefPackagesInFolder(this.relFolder))
 			{

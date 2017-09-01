@@ -38,12 +38,12 @@ namespace RimWorld
 
 		public override void PostExposeData()
 		{
-			Scribe_Values.LookValue<bool>(ref this.active, "active", false, false);
+			Scribe_Values.Look<bool>(ref this.active, "active", false, false);
 		}
 
-		public override void PostSpawnSetup()
+		public override void PostSpawnSetup(bool respawningAfterLoad)
 		{
-			base.PostSpawnSetup();
+			base.PostSpawnSetup(respawningAfterLoad);
 			if (this.Active)
 			{
 				this.parent.Map.gatherSpotLister.RegisterActivated(this);

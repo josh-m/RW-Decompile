@@ -36,8 +36,8 @@ namespace RimWorld
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Defs.LookDef<NeedDef>(ref this.need, "need");
-			Scribe_Values.LookValue<FloatRange>(ref this.levelRange, "levelRange", default(FloatRange), false);
+			Scribe_Defs.Look<NeedDef>(ref this.need, "need");
+			Scribe_Values.Look<FloatRange>(ref this.levelRange, "levelRange", default(FloatRange), false);
 		}
 
 		public override string Summary(Scenario scen)

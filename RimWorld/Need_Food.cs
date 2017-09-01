@@ -9,9 +9,9 @@ namespace RimWorld
 	{
 		private const float BaseFoodFallPerTick = 2.66666666E-05f;
 
-		private const float MalnutritionSeverityPerDay = 0.2f;
+		private const float MalnutritionSeverityPerDay = 0.17f;
 
-		private const float MalnutritionSeverityPerInterval = 0.00133333332f;
+		private const float MalnutritionSeverityPerInterval = 0.00113333331f;
 
 		private int lastNonStarvingTick = -99999;
 
@@ -95,7 +95,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return this.pawn.BodySize;
+				return this.pawn.BodySize * this.pawn.ageTracker.CurLifeStage.foodMaxFactor;
 			}
 		}
 
@@ -140,7 +140,7 @@ namespace RimWorld
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Values.LookValue<int>(ref this.lastNonStarvingTick, "lastNonStarvingTick", -99999, false);
+			Scribe_Values.Look<int>(ref this.lastNonStarvingTick, "lastNonStarvingTick", -99999, false);
 		}
 
 		private float FoodFallPerTickAssumingCategory(HungerCategory cat)
@@ -162,18 +162,24 @@ namespace RimWorld
 
 		public override void NeedInterval()
 		{
-			this.CurLevel -= this.FoodFallPerTick * 150f;
+			if (!base.IsFrozen)
+			{
+				this.CurLevel -= this.FoodFallPerTick * 150f;
+			}
 			if (!this.Starving)
 			{
 				this.lastNonStarvingTick = Find.TickManager.TicksGame;
 			}
-			if (this.Starving)
+			if (!base.IsFrozen)
 			{
-				HealthUtility.AdjustSeverity(this.pawn, HediffDefOf.Malnutrition, 0.00133333332f);
-			}
-			else
-			{
-				HealthUtility.AdjustSeverity(this.pawn, HediffDefOf.Malnutrition, -0.00133333332f);
+				if (this.Starving)
+				{
+					HealthUtility.AdjustSeverity(this.pawn, HediffDefOf.Malnutrition, 0.00113333331f);
+				}
+				else
+				{
+					HealthUtility.AdjustSeverity(this.pawn, HediffDefOf.Malnutrition, -0.00113333331f);
+				}
 			}
 		}
 

@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace Verse
 {
-	public abstract class Area : ICellBoolGiver, ILoadReferenceable, IExposable
+	public abstract class Area : ICellBoolGiver, IExposable, ILoadReferenceable
 	{
 		public AreaManager areaManager;
 
@@ -90,7 +90,7 @@ namespace Verse
 			{
 				if (this.drawer == null)
 				{
-					this.drawer = new CellBoolDrawer(this, this.Map.Size.x, this.Map.Size.z);
+					this.drawer = new CellBoolDrawer(this, this.Map.Size.x, this.Map.Size.z, 0.33f);
 				}
 				return this.drawer;
 			}
@@ -125,13 +125,18 @@ namespace Verse
 
 		public virtual void ExposeData()
 		{
-			Scribe_Values.LookValue<int>(ref this.ID, "ID", -1, false);
-			Scribe_Deep.LookDeep<BoolGrid>(ref this.innerGrid, "innerGrid", new object[0]);
+			Scribe_Values.Look<int>(ref this.ID, "ID", -1, false);
+			Scribe_Deep.Look<BoolGrid>(ref this.innerGrid, "innerGrid", new object[0]);
 		}
 
 		public bool GetCellBool(int index)
 		{
 			return this.innerGrid[index];
+		}
+
+		public Color GetCellExtraColor(int index)
+		{
+			return Color.white;
 		}
 
 		public virtual bool AssignableAsAllowed(AllowedAreaMode mode)
@@ -158,7 +163,7 @@ namespace Verse
 		private void MarkDirty(IntVec3 c)
 		{
 			this.Drawer.SetDirty();
-			Region region = c.GetRegion(this.Map);
+			Region region = c.GetRegion(this.Map, RegionType.Set_All);
 			if (region != null)
 			{
 				region.Notify_AreaChanged(this);

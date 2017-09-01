@@ -5,6 +5,7 @@ namespace Verse
 	public enum ClamorType
 	{
 		Movement,
-		Harm
+		Harm,
+		Construction
 	}
 }

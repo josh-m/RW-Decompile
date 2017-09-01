@@ -14,13 +14,13 @@ namespace RimWorld
 		{
 			get
 			{
-				return (!base.Spawned || !base.Map.mapConditionManager.ConditionIsActive(MapConditionDefOf.SolarFlare)) && this.powerComp.PowerOn;
+				return (!base.Spawned || !base.Map.gameConditionManager.ConditionIsActive(GameConditionDefOf.SolarFlare)) && this.powerComp.PowerOn;
 			}
 		}
 
-		public override void SpawnSetup(Map map)
+		public override void SpawnSetup(Map map, bool respawningAfterLoad)
 		{
-			base.SpawnSetup(map);
+			base.SpawnSetup(map, respawningAfterLoad);
 			this.powerComp = base.GetComp<CompPowerTrader>();
 			LessonAutoActivator.TeachOpportunity(ConceptDefOf.BuildOrbitalTradeBeacon, OpportunityType.GoodToKnow);
 			LessonAutoActivator.TeachOpportunity(ConceptDefOf.OpeningComms, OpportunityType.GoodToKnow);
@@ -30,47 +30,39 @@ namespace RimWorld
 		{
 			Job job = new Job(JobDefOf.UseCommsConsole, this);
 			job.commTarget = commTarget;
-			myPawn.jobs.TryTakeOrderedJob(job);
+			myPawn.jobs.TryTakeOrderedJob(job, JobTag.Misc);
 			PlayerKnowledgeDatabase.KnowledgeDemonstrated(ConceptDefOf.OpeningComms, KnowledgeAmount.Total);
 		}
 
 		public override IEnumerable<FloatMenuOption> GetFloatMenuOptions(Pawn myPawn)
 		{
-			if (!myPawn.CanReserve(this, 1))
+			if (!myPawn.CanReach(this, PathEndMode.InteractionCell, Danger.Some, false, TraverseMode.ByPawn))
 			{
-				FloatMenuOption item = new FloatMenuOption("CannotUseReserved".Translate(), null, MenuOptionPriority.Default, null, null, 0f, null, null);
+				FloatMenuOption item = new FloatMenuOption("CannotUseNoPath".Translate(), null, MenuOptionPriority.Default, null, null, 0f, null, null);
 				return new List<FloatMenuOption>
 				{
 					item
 				};
 			}
-			if (!myPawn.CanReach(this, PathEndMode.InteractionCell, Danger.Some, false, TraverseMode.ByPawn))
+			if (base.Spawned && base.Map.gameConditionManager.ConditionIsActive(GameConditionDefOf.SolarFlare))
 			{
-				FloatMenuOption item2 = new FloatMenuOption("CannotUseNoPath".Translate(), null, MenuOptionPriority.Default, null, null, 0f, null, null);
+				FloatMenuOption item2 = new FloatMenuOption("CannotUseSolarFlare".Translate(), null, MenuOptionPriority.Default, null, null, 0f, null, null);
 				return new List<FloatMenuOption>
 				{
 					item2
 				};
 			}
-			if (base.Spawned && base.Map.mapConditionManager.ConditionIsActive(MapConditionDefOf.SolarFlare))
+			if (!this.powerComp.PowerOn)
 			{
-				FloatMenuOption item3 = new FloatMenuOption("CannotUseSolarFlare".Translate(), null, MenuOptionPriority.Default, null, null, 0f, null, null);
+				FloatMenuOption item3 = new FloatMenuOption("CannotUseNoPower".Translate(), null, MenuOptionPriority.Default, null, null, 0f, null, null);
 				return new List<FloatMenuOption>
 				{
 					item3
 				};
 			}
-			if (!this.powerComp.PowerOn)
-			{
-				FloatMenuOption item4 = new FloatMenuOption("CannotUseNoPower".Translate(), null, MenuOptionPriority.Default, null, null, 0f, null, null);
-				return new List<FloatMenuOption>
-				{
-					item4
-				};
-			}
 			if (!myPawn.health.capacities.CapableOf(PawnCapacityDefOf.Talking))
 			{
-				FloatMenuOption item5 = new FloatMenuOption("CannotUseReason".Translate(new object[]
+				FloatMenuOption item4 = new FloatMenuOption("CannotUseReason".Translate(new object[]
 				{
 					"IncapableOfCapacity".Translate(new object[]
 					{
@@ -79,16 +71,16 @@ namespace RimWorld
 				}), null, MenuOptionPriority.Default, null, null, 0f, null, null);
 				return new List<FloatMenuOption>
 				{
-					item5
+					item4
 				};
 			}
 			if (!this.CanUseCommsNow)
 			{
 				Log.Error(myPawn + " could not use comm console for unknown reason.");
-				FloatMenuOption item6 = new FloatMenuOption("Cannot use now", null, MenuOptionPriority.Default, null, null, 0f, null, null);
+				FloatMenuOption item5 = new FloatMenuOption("Cannot use now", null, MenuOptionPriority.Default, null, null, 0f, null, null);
 				return new List<FloatMenuOption>
 				{
-					item6
+					item5
 				};
 			}
 			List<FloatMenuOption> list = new List<FloatMenuOption>();
@@ -109,10 +101,19 @@ namespace RimWorld
 					}
 					if (!Building_CommsConsole.LeaderIsAvailableToTalk(faction))
 					{
-						list.Add(new FloatMenuOption(text + " (" + "LeaderUnavailable".Translate(new object[]
+						string str;
+						if (faction.leader != null)
 						{
-							faction.leader.LabelShort
-						}) + ")", null, MenuOptionPriority.Default, null, null, 0f, null, null));
+							str = "LeaderUnavailable".Translate(new object[]
+							{
+								faction.leader.LabelShort
+							});
+						}
+						else
+						{
+							str = "LeaderUnavailableNoLeader".Translate();
+						}
+						list.Add(new FloatMenuOption(text + " (" + str + ")", null, MenuOptionPriority.Default, null, null, 0f, null, null));
 						continue;
 					}
 				}
@@ -126,10 +127,10 @@ namespace RimWorld
 					}
 					Job job = new Job(JobDefOf.UseCommsConsole, this);
 					job.commTarget = localCommTarget;
-					myPawn.jobs.TryTakeOrderedJob(job);
+					myPawn.jobs.TryTakeOrderedJob(job, JobTag.Misc);
 					PlayerKnowledgeDatabase.KnowledgeDemonstrated(ConceptDefOf.OpeningComms, KnowledgeAmount.Total);
 				};
-				list.Add(new FloatMenuOption(text, action, MenuOptionPriority.InitiateSocial, null, null, 0f, null, null));
+				list.Add(FloatMenuUtility.DecoratePrioritizedTask(new FloatMenuOption(text, action, MenuOptionPriority.InitiateSocial, null, null, 0f, null, null), myPawn, this, "ReservedBy"));
 			}
 			return list;
 		}

@@ -33,7 +33,6 @@ namespace RimWorld
 			if (thingDef != null && thingDef.rotatable)
 			{
 				Rect winRect = new Rect(leftX, bottomY - 90f, 200f, 90f);
-				this.HandleRotationShortcuts();
 				Find.WindowStack.ImmediateWindow(73095, winRect, WindowLayer.GameUI, delegate
 				{
 					RotationDirection rotationDirection = RotationDirection.None;
@@ -42,7 +41,7 @@ namespace RimWorld
 					Rect rect = new Rect(winRect.width / 2f - 64f - 5f, 15f, 64f, 64f);
 					if (Widgets.ButtonImage(rect, TexUI.RotLeftTex))
 					{
-						SoundDefOf.AmountDecrement.PlayOneShotOnCamera();
+						SoundDefOf.AmountDecrement.PlayOneShotOnCamera(null);
 						rotationDirection = RotationDirection.Counterclockwise;
 						Event.current.Use();
 					}
@@ -50,7 +49,7 @@ namespace RimWorld
 					Rect rect2 = new Rect(winRect.width / 2f + 5f, 15f, 64f, 64f);
 					if (Widgets.ButtonImage(rect2, TexUI.RotRightTex))
 					{
-						SoundDefOf.AmountIncrement.PlayOneShotOnCamera();
+						SoundDefOf.AmountIncrement.PlayOneShotOnCamera(null);
 						rotationDirection = RotationDirection.Clockwise;
 						Event.current.Use();
 					}
@@ -62,6 +61,16 @@ namespace RimWorld
 					Text.Anchor = TextAnchor.UpperLeft;
 					Text.Font = GameFont.Small;
 				}, true, false, 1f);
+			}
+		}
+
+		public override void SelectedProcessInput(Event ev)
+		{
+			base.SelectedProcessInput(ev);
+			ThingDef thingDef = this.PlacingDef as ThingDef;
+			if (thingDef != null && thingDef.rotatable)
+			{
+				this.HandleRotationShortcuts();
 			}
 		}
 
@@ -124,12 +133,12 @@ namespace RimWorld
 			}
 			if (rotationDirection == RotationDirection.Clockwise)
 			{
-				SoundDefOf.AmountIncrement.PlayOneShotOnCamera();
+				SoundDefOf.AmountIncrement.PlayOneShotOnCamera(null);
 				this.placingRot.Rotate(RotationDirection.Clockwise);
 			}
 			if (rotationDirection == RotationDirection.Counterclockwise)
 			{
-				SoundDefOf.AmountDecrement.PlayOneShotOnCamera();
+				SoundDefOf.AmountDecrement.PlayOneShotOnCamera(null);
 				this.placingRot.Rotate(RotationDirection.Counterclockwise);
 			}
 		}

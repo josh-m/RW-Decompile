@@ -15,7 +15,7 @@ namespace RimWorld
 		protected override IEnumerable<Toil> MakeNewToils()
 		{
 			this.EndOnDespawnedOrNull(TargetIndex.A, JobCondition.Incompletable);
-			yield return Toils_Reserve.Reserve(TargetIndex.A, base.CurJob.def.joyMaxParticipants);
+			yield return Toils_Reserve.Reserve(TargetIndex.A, base.CurJob.def.joyMaxParticipants, 0, null);
 			Toil chooseCell = new Toil();
 			chooseCell.initAction = delegate
 			{
@@ -28,7 +28,7 @@ namespace RimWorld
 					{
 						break;
 					}
-					if (this.<>f__this.pawn.CanReserve((IntVec3)this.<>f__this.CurJob.targetB, 1))
+					if (this.<>f__this.pawn.CanReserve((IntVec3)this.<>f__this.CurJob.targetB, 1, -1, null, false))
 					{
 						return;
 					}
@@ -37,7 +37,7 @@ namespace RimWorld
 				this.<>f__this.EndJobWith(JobCondition.Errored);
 			};
 			yield return chooseCell;
-			yield return Toils_Reserve.Reserve(TargetIndex.B, 1);
+			yield return Toils_Reserve.Reserve(TargetIndex.B, 1, -1, null);
 			yield return Toils_Goto.GotoCell(TargetIndex.B, PathEndMode.OnCell);
 			Toil play = new Toil();
 			play.initAction = delegate

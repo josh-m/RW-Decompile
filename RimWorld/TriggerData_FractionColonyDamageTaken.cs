@@ -10,7 +10,7 @@ namespace RimWorld
 
 		public override void ExposeData()
 		{
-			Scribe_Values.LookValue<float>(ref this.startColonyDamage, "startColonyDamage", 0f, false);
+			Scribe_Values.Look<float>(ref this.startColonyDamage, "startColonyDamage", 0f, false);
 		}
 	}
 }

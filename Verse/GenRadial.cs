@@ -96,13 +96,13 @@ namespace Verse
 			}
 			list.Sort(delegate(IntVec3 A, IntVec3 B)
 			{
-				float lengthHorizontalSquared = A.LengthHorizontalSquared;
-				float lengthHorizontalSquared2 = B.LengthHorizontalSquared;
-				if (lengthHorizontalSquared < lengthHorizontalSquared2)
+				float num = (float)A.LengthHorizontalSquared;
+				float num2 = (float)B.LengthHorizontalSquared;
+				if (num < num2)
 				{
 					return -1;
 				}
-				if (lengthHorizontalSquared == lengthHorizontalSquared2)
+				if (num == num2)
 				{
 					return 0;
 				}

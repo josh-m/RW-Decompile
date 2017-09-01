@@ -45,7 +45,7 @@ namespace Verse.AI
 				}
 				GenSpawn.Spawn(unfinishedThing, curJob.GetTarget(TargetIndex.A).Cell, actor.Map);
 				curJob.SetTarget(TargetIndex.B, unfinishedThing);
-				actor.Reserve(unfinishedThing, 1);
+				actor.Reserve(unfinishedThing, 1, -1, null);
 			};
 			return toil;
 		}
@@ -73,7 +73,7 @@ namespace Verse.AI
 				}
 				jobDriver_DoBill.billStartTick = Find.TickManager.TicksGame;
 				jobDriver_DoBill.ticksSpentDoingRecipeWork = 0;
-				curJob.bill.Notify_DoBillStarted();
+				curJob.bill.Notify_DoBillStarted(actor);
 			};
 			toil.tickAction = delegate
 			{
@@ -164,7 +164,7 @@ namespace Verse.AI
 					actor.jobs.EndCurrentJob(JobCondition.Succeeded, true);
 					return;
 				}
-				if (curJob.bill.GetStoreMode() == BillStoreMode.DropOnFloor)
+				if (curJob.bill.GetStoreMode() == BillStoreModeDefOf.DropOnFloor)
 				{
 					for (int i = 0; i < list.Count; i++)
 					{
@@ -287,32 +287,25 @@ namespace Verse.AI
 		private static Thing CalculateDominantIngredient(Job job, List<Thing> ingredients)
 		{
 			UnfinishedThing uft = job.GetTarget(TargetIndex.B).Thing as UnfinishedThing;
-			if (uft != null)
+			if (uft != null && uft.def.MadeFromStuff)
 			{
-				if (uft.def.MadeFromStuff)
-				{
-					return uft.ingredients.First((Thing ing) => ing.def == uft.Stuff);
-				}
+				return uft.ingredients.First((Thing ing) => ing.def == uft.Stuff);
+			}
+			if (ingredients.NullOrEmpty<Thing>())
+			{
 				return null;
 			}
-			else
+			if (job.RecipeDef.productHasIngredientStuff)
 			{
-				if (ingredients.NullOrEmpty<Thing>())
-				{
-					return null;
-				}
-				if (job.RecipeDef.productHasIngredientStuff)
-				{
-					return ingredients[0];
-				}
-				if (job.RecipeDef.products.Any((ThingCountClass x) => x.thingDef.MadeFromStuff))
-				{
-					return (from x in ingredients
-					where x.def.IsStuff
-					select x).RandomElementByWeight((Thing x) => (float)x.stackCount);
-				}
-				return ingredients.RandomElementByWeight((Thing x) => (float)x.stackCount);
+				return ingredients[0];
 			}
+			if (job.RecipeDef.products.Any((ThingCountClass x) => x.thingDef.MadeFromStuff))
+			{
+				return (from x in ingredients
+				where x.def.IsStuff
+				select x).RandomElementByWeight((Thing x) => (float)x.stackCount);
+			}
+			return ingredients.RandomElementByWeight((Thing x) => (float)x.stackCount);
 		}
 
 		private static void ConsumeIngredients(List<Thing> ingredients, RecipeDef recipe, Map map)

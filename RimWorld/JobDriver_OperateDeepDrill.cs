@@ -18,7 +18,7 @@ namespace RimWorld
 				CompDeepDrill compDeepDrill = this.<>f__this.CurJob.targetA.Thing.TryGetComp<CompDeepDrill>();
 				return !compDeepDrill.CanDrillNow();
 			});
-			yield return Toils_Reserve.Reserve(TargetIndex.A, 1);
+			yield return Toils_Reserve.Reserve(TargetIndex.A, 1, -1, null);
 			yield return Toils_Goto.GotoThing(TargetIndex.A, PathEndMode.InteractionCell);
 			Toil work = new Toil();
 			work.tickAction = delegate
@@ -31,6 +31,7 @@ namespace RimWorld
 			};
 			work.defaultCompleteMode = ToilCompleteMode.Never;
 			work.WithEffect(EffecterDefOf.Drill, TargetIndex.A);
+			work.FailOnCannotTouch(TargetIndex.A, PathEndMode.InteractionCell);
 			yield return work;
 		}
 	}

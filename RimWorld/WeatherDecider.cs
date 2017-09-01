@@ -7,6 +7,8 @@ namespace RimWorld
 {
 	public class WeatherDecider : IExposable
 	{
+		private const int FirstWeatherDuration = 10000;
+
 		private Map map;
 
 		private int curWeatherDuration = 10000;
@@ -20,8 +22,8 @@ namespace RimWorld
 
 		public void ExposeData()
 		{
-			Scribe_Values.LookValue<int>(ref this.curWeatherDuration, "curWeatherDuration", 0, true);
-			Scribe_Values.LookValue<int>(ref this.ticksWhenRainAllowedAgain, "ticksWhenRainAllowedAgain", 0, false);
+			Scribe_Values.Look<int>(ref this.curWeatherDuration, "curWeatherDuration", 0, true);
+			Scribe_Values.Look<int>(ref this.ticksWhenRainAllowedAgain, "ticksWhenRainAllowedAgain", 0, false);
 		}
 
 		public void WeatherDeciderTick()
@@ -51,7 +53,13 @@ namespace RimWorld
 			{
 				return WeatherDefOf.Clear;
 			}
-			return DefDatabase<WeatherDef>.AllDefs.RandomElementByWeight((WeatherDef w) => this.CurrentWeatherCommonality(w));
+			WeatherDef result;
+			if (!DefDatabase<WeatherDef>.AllDefs.TryRandomElementByWeight((WeatherDef w) => this.CurrentWeatherCommonality(w), out result))
+			{
+				Log.Warning("All weather commonalities were zero. Defaulting to " + WeatherDefOf.Clear.defName + ".");
+				return WeatherDefOf.Clear;
+			}
+			return result;
 		}
 
 		public void DisableRainFor(int ticks)
@@ -79,7 +87,7 @@ namespace RimWorld
 			}
 			if (weather.rainRate > 0.1f)
 			{
-				if (this.map.mapConditionManager.ActiveConditions.Any((MapCondition x) => x.def.preventRain))
+				if (this.map.gameConditionManager.ActiveConditions.Any((GameCondition x) => x.def.preventRain))
 				{
 					return 0f;
 				}
@@ -93,7 +101,7 @@ namespace RimWorld
 					float num = weatherCommonalityRecord.commonality;
 					if (this.map.fireWatcher.LargeFireDangerPresent && weather.rainRate > 0.1f)
 					{
-						num *= 15f;
+						num *= 20f;
 					}
 					if (weatherCommonalityRecord.weather.commonalityRainfallFactor != null)
 					{

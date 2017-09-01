@@ -23,18 +23,17 @@ namespace Verse
 				{
 					return false;
 				}
+				if (!FlickUtility.WantsToBeOn(this.parent))
+				{
+					return false;
+				}
 				CompPowerTrader compPowerTrader = this.parent.TryGetComp<CompPowerTrader>();
 				if (compPowerTrader != null && !compPowerTrader.PowerOn)
 				{
 					return false;
 				}
 				CompRefuelable compRefuelable = this.parent.TryGetComp<CompRefuelable>();
-				if (compRefuelable != null && !compRefuelable.HasFuel)
-				{
-					return false;
-				}
-				CompFlickable compFlickable = this.parent.TryGetComp<CompFlickable>();
-				return compFlickable == null || compFlickable.SwitchIsOn;
+				return compRefuelable == null || compRefuelable.HasFuel;
 			}
 		}
 
@@ -58,7 +57,7 @@ namespace Verse
 			}
 		}
 
-		public override void PostSpawnSetup()
+		public override void PostSpawnSetup(bool respawningAfterLoad)
 		{
 			if (this.ShouldBeLitNow)
 			{
@@ -73,7 +72,7 @@ namespace Verse
 
 		public override void ReceiveCompSignal(string signal)
 		{
-			if (signal == "PowerTurnedOn" || signal == "PowerTurnedOff" || signal == "FlickedOn" || signal == "FlickedOff" || signal == "Refueled" || signal == "RanOutOfFuel")
+			if (signal == "PowerTurnedOn" || signal == "PowerTurnedOff" || signal == "FlickedOn" || signal == "FlickedOff" || signal == "Refueled" || signal == "RanOutOfFuel" || signal == "ScheduledOn" || signal == "ScheduledOff")
 			{
 				this.UpdateLit(this.parent.Map);
 			}
@@ -81,7 +80,7 @@ namespace Verse
 
 		public override void PostExposeData()
 		{
-			Scribe_Values.LookValue<bool>(ref this.glowOnInt, "glowOn", false, false);
+			Scribe_Values.Look<bool>(ref this.glowOnInt, "glowOn", false, false);
 		}
 
 		public override void PostDeSpawn(Map map)

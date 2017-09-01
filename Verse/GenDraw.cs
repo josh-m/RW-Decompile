@@ -55,9 +55,9 @@ namespace Verse
 
 		private static readonly Material LineMatMetaOverlay = MaterialPool.MatFrom(GenDraw.LineTexPath, ShaderDatabase.MetaOverlay);
 
-		private static readonly Material WorldLineMatWhite = MaterialPool.MatFrom(GenDraw.LineTexPath, ShaderDatabase.WorldOverlayTransparent, Color.white);
+		private static readonly Material WorldLineMatWhite = MaterialPool.MatFrom(GenDraw.LineTexPath, ShaderDatabase.WorldOverlayTransparent, Color.white, WorldMaterials.WorldLineRenderQueue);
 
-		private static readonly Material OneSidedWorldLineMatWhite = MaterialPool.MatFrom(GenDraw.OneSidedLineTexPath, ShaderDatabase.WorldOverlayTransparent, Color.white);
+		private static readonly Material OneSidedWorldLineMatWhite = MaterialPool.MatFrom(GenDraw.OneSidedLineTexPath, ShaderDatabase.WorldOverlayTransparent, Color.white, WorldMaterials.WorldLineRenderQueue);
 
 		public static readonly Material InteractionCellMaterial = MaterialPool.MatFrom("UI/Overlays/InteractionCell", ShaderDatabase.Transparent);
 
@@ -77,7 +77,7 @@ namespace Verse
 
 		private static bool[] rotNeeded = new bool[4];
 
-		private static readonly Material AimPieMaterial = SolidColorMaterials.SimpleSolidColorMaterial(new Color(1f, 1f, 1f, 0.3f));
+		private static readonly Material AimPieMaterial = SolidColorMaterials.SimpleSolidColorMaterial(new Color(1f, 1f, 1f, 0.3f), false);
 
 		private static readonly Material ArrowMatWhite = MaterialPool.MatFrom("UI/Overlays/Arrow", ShaderDatabase.CutoutFlying, Color.white);
 
@@ -85,12 +85,19 @@ namespace Verse
 		{
 			get
 			{
+				GenDraw.TargetSquareMatSingle.color = GenDraw.CurTargetingColor;
+				return GenDraw.TargetSquareMatSingle;
+			}
+		}
+
+		public static Color CurTargetingColor
+		{
+			get
+			{
 				float num = (float)Math.Sin((double)(Time.time * 8f));
 				num *= 0.2f;
 				num += 0.8f;
-				Color color = new Color(1f, num, num);
-				GenDraw.TargetSquareMatSingle.color = color;
-				return GenDraw.TargetSquareMatSingle;
+				return new Color(1f, num, num);
 			}
 		}
 
@@ -213,7 +220,7 @@ namespace Verse
 				GenDraw.cachedEdgeTilesForRadius = radius;
 				GenDraw.cachedEdgeTilesForWorldSeed = Find.World.info.Seed;
 				GenDraw.cachedEdgeTiles.Clear();
-				WorldFloodFiller.FloodFill(center, (int tile) => true, delegate(int tile, int dist)
+				Find.WorldFloodFiller.FloodFill(center, (int tile) => true, delegate(int tile, int dist)
 				{
 					if (dist > radius + 1)
 					{

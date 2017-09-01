@@ -24,10 +24,11 @@ namespace RimWorld.Planet
 		{
 			float num = 0f;
 			this.DrawMassUsage(ref num);
-			GUI.BeginGroup(new Rect(0f, num, this.size.x, this.size.y - num));
+			Rect position = new Rect(0f, num, this.size.x, this.size.y - num);
+			GUI.BeginGroup(position);
 			this.UpdateItemsList();
 			Pawn pawn = null;
-			CaravanPeopleAndItemsTabUtility.DoRows(this.size, this.items, base.SelCaravan, ref this.scrollPosition, ref this.scrollViewHeight, true, ref pawn, true);
+			CaravanPeopleAndItemsTabUtility.DoRows(position.size, this.items, base.SelCaravan, ref this.scrollPosition, ref this.scrollViewHeight, true, ref pawn, true);
 			this.items.Clear();
 			GUI.EndGroup();
 		}

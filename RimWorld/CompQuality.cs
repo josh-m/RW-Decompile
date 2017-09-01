@@ -28,7 +28,12 @@ namespace RimWorld
 		public override void PostExposeData()
 		{
 			base.PostExposeData();
-			Scribe_Values.LookValue<QualityCategory>(ref this.qualityInt, "quality", QualityCategory.Awful, false);
+			Scribe_Values.Look<QualityCategory>(ref this.qualityInt, "quality", QualityCategory.Awful, false);
+		}
+
+		public override void PostPostGeneratedForTrader(TraderKindDef trader, int forTile, Faction forFaction)
+		{
+			this.SetQuality(QualityUtility.RandomTraderItemQuality(), ArtGenerationContext.Outsider);
 		}
 
 		public override bool AllowStackWith(Thing other)

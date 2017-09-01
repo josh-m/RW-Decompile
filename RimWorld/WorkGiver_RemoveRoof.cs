@@ -31,7 +31,16 @@ namespace RimWorld
 
 		public override bool HasJobOnCell(Pawn pawn, IntVec3 c)
 		{
-			return pawn.Map.areaManager.NoRoof[c] && c.Roofed(pawn.Map) && pawn.CanReserveAndReach(c, PathEndMode.ClosestTouch, pawn.NormalMaxDanger(), 1);
+			if (!pawn.Map.areaManager.NoRoof[c])
+			{
+				return false;
+			}
+			if (!c.Roofed(pawn.Map))
+			{
+				return false;
+			}
+			ReservationLayerDef ceiling = ReservationLayerDefOf.Ceiling;
+			return pawn.CanReserveAndReach(c, PathEndMode.ClosestTouch, pawn.NormalMaxDanger(), 1, -1, ceiling, false);
 		}
 
 		public override Job JobOnCell(Pawn pawn, IntVec3 c)

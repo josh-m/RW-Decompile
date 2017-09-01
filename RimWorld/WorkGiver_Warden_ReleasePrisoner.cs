@@ -6,14 +6,14 @@ namespace RimWorld
 {
 	public class WorkGiver_Warden_ReleasePrisoner : WorkGiver_Warden
 	{
-		public override Job JobOnThing(Pawn pawn, Thing t)
+		public override Job JobOnThing(Pawn pawn, Thing t, bool forced = false)
 		{
 			if (!base.ShouldTakeCareOfPrisoner(pawn, t))
 			{
 				return null;
 			}
 			Pawn pawn2 = (Pawn)t;
-			if (pawn2.guest.interactionMode != PrisonerInteractionMode.Release || pawn2.Downed || !pawn2.Awake())
+			if (pawn2.guest.interactionMode != PrisonerInteractionModeDefOf.Release || pawn2.Downed || !pawn2.Awake())
 			{
 				return null;
 			}

@@ -1,3 +1,4 @@
+using RimWorld.Planet;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -48,6 +49,21 @@ namespace RimWorld
 		public MainTabWindow_Architect()
 		{
 			this.CacheDesPanels();
+		}
+
+		public override void PostOpen()
+		{
+			base.PostOpen();
+			Find.World.renderer.wantedMode = WorldRenderMode.None;
+		}
+
+		public override void WindowUpdate()
+		{
+			base.WindowUpdate();
+			if (this.selectedDesPanel != null && this.selectedDesPanel.def.showPowerGrid)
+			{
+				OverlayDrawHandler.DrawPowerGridOverlayThisFrame();
+			}
 		}
 
 		public override void ExtraOnGUI()
@@ -112,7 +128,7 @@ namespace RimWorld
 			{
 				this.selectedDesPanel = Pan;
 			}
-			SoundDefOf.ArchitectCategorySelect.PlayOneShotOnCamera();
+			SoundDefOf.ArchitectCategorySelect.PlayOneShotOnCamera(null);
 		}
 	}
 }

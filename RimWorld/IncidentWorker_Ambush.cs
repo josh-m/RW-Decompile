@@ -1,7 +1,6 @@
 using RimWorld.Planet;
 using System;
 using System.Collections.Generic;
-using UnityEngine;
 using Verse;
 using Verse.AI.Group;
 
@@ -9,27 +8,7 @@ namespace RimWorld
 {
 	public abstract class IncidentWorker_Ambush : IncidentWorker
 	{
-		private const float CaravanPawnsScorePerColonistUndowned = 1f;
-
-		private const float CaravanPawnsScorePerColonistDowned = 0.35f;
-
-		private const float CaravanPawnsScorePerPrisoner = 0.35f;
-
-		public const float CaravanPawnsScorePerAnimalBodySize = 0.2f;
-
-		private const int MapCellsPerCaravanPawnsCountScore = 900;
-
-		private const int MinMapSize = 75;
-
-		private const int MaxMapSize = 110;
-
-		private const float MinEnemyPoints = 45f;
-
-		private static List<Pawn> tmpCaravanPawns = new List<Pawn>();
-
-		private static readonly FloatRange EnemyPointsPerCaravanPawnsScoreRange = new FloatRange(35f, 90f);
-
-		protected abstract List<Pawn> GeneratePawns(Caravan caravan, float points, Map map);
+		protected abstract List<Pawn> GeneratePawns(IIncidentTarget target, float points, int tile);
 
 		protected virtual void PostProcessGeneratedPawnsAfterSpawning(List<Pawn> generatedPawns)
 		{
@@ -43,71 +22,60 @@ namespace RimWorld
 
 		protected override bool CanFireNowSub(IIncidentTarget target)
 		{
-			return CaravanRandomEncounterUtility.CanMeetRandomCaravanAt(target.Tile);
+			return target is Map || CaravanIncidentUtility.CanFireIncidentWhichWantsToGenerateMapAt(target.Tile);
 		}
 
 		public override bool TryExecute(IncidentParms parms)
 		{
+			if (parms.target is Map)
+			{
+				return this.DoExecute(parms);
+			}
 			LongEventHandler.QueueLongEvent(delegate
 			{
-				this.DoExecute((Caravan)parms.target);
+				this.DoExecute(parms);
 			}, "GeneratingMapForNewEncounter", false, null);
 			return true;
 		}
 
-		private void DoExecute(Caravan caravan)
+		private bool DoExecute(IncidentParms parms)
 		{
-			float num = this.CaravanPawnsCountScore(caravan);
-			int num2 = Mathf.RoundToInt(num * 900f);
-			int num3 = Mathf.Clamp(Mathf.RoundToInt(Mathf.Sqrt((float)num2)), 75, 110);
-			float points = Mathf.Max(num * IncidentWorker_Ambush.EnemyPointsPerCaravanPawnsScoreRange.RandomInRange, 45f);
-			IncidentWorker_Ambush.tmpCaravanPawns.Clear();
-			IncidentWorker_Ambush.tmpCaravanPawns.AddRange(caravan.PawnsListForReading);
-			Map map = CaravanTargetIncidentUtility.GenerateOrGetMapForIncident(num3, num3, caravan, CaravanEnterMode.None, WorldObjectDefOf.Ambush, null, false);
-			List<Pawn> list = this.GeneratePawns(caravan, points, map);
-			IntVec3 playerStartingSpot;
-			IntVec3 root;
-			MultipleCaravansCellFinder.FindStartingCellsFor2Groups(map, out playerStartingSpot, out root);
-			CaravanEnterMapUtility.Enter(caravan, map, (Pawn x) => CellFinder.RandomSpawnCellForPawnNear(playerStartingSpot, map), CaravanDropInventoryMode.DoNotDrop, true);
-			for (int i = 0; i < list.Count; i++)
+			Map map = parms.target as Map;
+			IntVec3 invalid = IntVec3.Invalid;
+			if (map != null && !CellFinder.TryFindRandomEdgeCellWith((IntVec3 x) => x.Standable(map) && map.reachability.CanReachColony(x), map, CellFinder.EdgeRoadChance_Hostile, out invalid))
 			{
-				IntVec3 loc = CellFinder.RandomSpawnCellForPawnNear(root, map);
-				GenSpawn.Spawn(list[i], loc, map, Rot4.Random);
+				return false;
 			}
-			IncidentWorker_Ambush.tmpCaravanPawns.Clear();
+			List<Pawn> list = this.GeneratePawns(parms.target, parms.points, parms.target.Tile);
+			bool flag = false;
+			if (map == null)
+			{
+				map = CaravanIncidentUtility.SetupCaravanAttackMap((Caravan)parms.target, list);
+				flag = true;
+			}
+			else
+			{
+				for (int i = 0; i < list.Count; i++)
+				{
+					IntVec3 loc = CellFinder.RandomSpawnCellForPawnNear(invalid, map, 4);
+					GenSpawn.Spawn(list[i], loc, map, Rot4.Random, false);
+				}
+			}
 			this.PostProcessGeneratedPawnsAfterSpawning(list);
 			Faction faction;
 			LordJob lordJob = this.CreateLordJob(list, out faction);
-			if (lordJob != null)
+			if (lordJob != null && list.Any<Pawn>())
 			{
 				LordMaker.MakeNewLord(faction, lordJob, map, list);
 			}
 			this.SendAmbushLetter(list[0], faction);
-			Find.TickManager.CurTimeSpeed = TimeSpeed.Paused;
+			if (flag)
+			{
+				Find.TickManager.CurTimeSpeed = TimeSpeed.Paused;
+			}
+			return true;
 		}
 
 		protected abstract void SendAmbushLetter(Pawn anyPawn, Faction enemyFaction);
-
-		private float CaravanPawnsCountScore(Caravan caravan)
-		{
-			float num = 0f;
-			List<Pawn> pawnsListForReading = caravan.PawnsListForReading;
-			for (int i = 0; i < pawnsListForReading.Count; i++)
-			{
-				if (pawnsListForReading[i].IsColonist)
-				{
-					num += (pawnsListForReading[i].Downed ? 0.35f : 1f);
-				}
-				else if (pawnsListForReading[i].RaceProps.Humanlike)
-				{
-					num += 0.35f;
-				}
-				else
-				{
-					num += 0.2f * pawnsListForReading[i].BodySize;
-				}
-			}
-			return num;
-		}
 	}
 }

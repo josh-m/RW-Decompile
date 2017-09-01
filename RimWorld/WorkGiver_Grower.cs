@@ -78,11 +78,7 @@ namespace RimWorld
 
 		public static ThingDef CalculateWantedPlantDef(IntVec3 c, Map map)
 		{
-			IPlantToGrowSettable plantToGrowSettable = c.GetEdifice(map) as IPlantToGrowSettable;
-			if (plantToGrowSettable == null)
-			{
-				plantToGrowSettable = (map.zoneManager.ZoneAt(c) as IPlantToGrowSettable);
-			}
+			IPlantToGrowSettable plantToGrowSettable = c.GetPlantToGrowSettable(map);
 			if (plantToGrowSettable == null)
 			{
 				return null;

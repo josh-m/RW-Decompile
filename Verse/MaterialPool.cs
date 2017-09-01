@@ -40,16 +40,40 @@ namespace Verse
 			return MaterialPool.MatFrom(req);
 		}
 
+		public static Material MatFrom(Texture2D srcTex, Shader shader, Color color, int renderQueue)
+		{
+			return MaterialPool.MatFrom(new MaterialRequest(srcTex, shader, color)
+			{
+				renderQueue = renderQueue
+			});
+		}
+
 		public static Material MatFrom(string texPath, Shader shader)
 		{
 			MaterialRequest req = new MaterialRequest(ContentFinder<Texture2D>.Get(texPath, true), shader);
 			return MaterialPool.MatFrom(req);
 		}
 
+		public static Material MatFrom(string texPath, Shader shader, int renderQueue)
+		{
+			return MaterialPool.MatFrom(new MaterialRequest(ContentFinder<Texture2D>.Get(texPath, true), shader)
+			{
+				renderQueue = renderQueue
+			});
+		}
+
 		public static Material MatFrom(string texPath, Shader shader, Color color)
 		{
 			MaterialRequest req = new MaterialRequest(ContentFinder<Texture2D>.Get(texPath, true), shader, color);
 			return MaterialPool.MatFrom(req);
+		}
+
+		public static Material MatFrom(string texPath, Shader shader, Color color, int renderQueue)
+		{
+			return MaterialPool.MatFrom(new MaterialRequest(ContentFinder<Texture2D>.Get(texPath, true), shader, color)
+			{
+				renderQueue = renderQueue
+			});
 		}
 
 		public static Material MatFrom(MaterialRequest req)
@@ -83,10 +107,18 @@ namespace Verse
 				material.color = req.color;
 				if (req.maskTex != null)
 				{
-					material.SetTexture(ShaderIDs.MaskTexId, req.maskTex);
-					material.SetColor(ShaderIDs.ColorTwoId, req.colorTwo);
+					material.SetTexture(ShaderPropertyIDs.MaskTex, req.maskTex);
+					material.SetColor(ShaderPropertyIDs.ColorTwo, req.colorTwo);
+				}
+				if (req.renderQueue != 0)
+				{
+					material.renderQueue = req.renderQueue;
 				}
 				MaterialPool.matDictionary.Add(req, material);
+				if (!MaterialPool.matDictionary.ContainsKey(req))
+				{
+					Log.Error("MaterialRequest is not present in the dictionary even though we've just added it there. The equality operators are most likely defined incorrectly.");
+				}
 				if (req.shader == ShaderDatabase.CutoutPlant)
 				{
 					WindManager.Notify_PlantMaterialCreated(material);

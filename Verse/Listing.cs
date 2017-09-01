@@ -19,6 +19,8 @@ namespace Verse
 
 		private float columnWidthInt;
 
+		private bool hasCustomColumnWidth;
+
 		public float CurHeight
 		{
 			get
@@ -35,27 +37,9 @@ namespace Verse
 			}
 			set
 			{
-				if (value > this.listingRect.width)
-				{
-					Log.Error(string.Concat(new object[]
-					{
-						"Listing set ColumnWith to ",
-						value,
-						" which is more than the whole listing rect width of ",
-						this.listingRect.width,
-						". Clamping."
-					}));
-					value = this.listingRect.width;
-				}
 				this.columnWidthInt = value;
+				this.hasCustomColumnWidth = true;
 			}
-		}
-
-		public Listing(Rect rect)
-		{
-			this.listingRect = rect;
-			this.columnWidthInt = this.listingRect.width;
-			GUI.BeginGroup(rect);
 		}
 
 		public void NewColumn()
@@ -93,6 +77,33 @@ namespace Verse
 			Widgets.DrawLineHorizontal(this.curX, y, this.ColumnWidth);
 			GUI.color = color;
 			this.curY += gapHeight;
+		}
+
+		public virtual void Begin(Rect rect)
+		{
+			this.listingRect = rect;
+			if (this.hasCustomColumnWidth)
+			{
+				if (this.columnWidthInt > this.listingRect.width)
+				{
+					Log.Error(string.Concat(new object[]
+					{
+						"Listing set ColumnWith to ",
+						this.columnWidthInt,
+						" which is more than the whole listing rect width of ",
+						this.listingRect.width,
+						". Clamping."
+					}));
+					this.columnWidthInt = this.listingRect.width;
+				}
+			}
+			else
+			{
+				this.columnWidthInt = this.listingRect.width;
+			}
+			this.curX = 0f;
+			this.curY = 0f;
+			GUI.BeginGroup(rect);
 		}
 
 		public virtual void End()

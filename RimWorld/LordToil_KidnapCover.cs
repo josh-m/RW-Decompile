@@ -17,6 +17,11 @@ namespace RimWorld
 
 		protected override bool TryFindGoodOpportunisticTaskTarget(Pawn pawn, out Thing target, List<Thing> alreadyTakenTargets)
 		{
+			if (pawn.mindState.duty != null && pawn.mindState.duty.def == this.DutyDef && pawn.carryTracker.CarriedThing is Pawn)
+			{
+				target = pawn.carryTracker.CarriedThing;
+				return true;
+			}
 			Pawn pawn2;
 			bool result = KidnapAIUtility.TryFindGoodKidnapVictim(pawn, 8f, out pawn2, alreadyTakenTargets);
 			target = pawn2;

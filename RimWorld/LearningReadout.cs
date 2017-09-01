@@ -58,8 +58,8 @@ namespace RimWorld
 
 		public void ExposeData()
 		{
-			Scribe_Collections.LookList<ConceptDef>(ref this.activeConcepts, "activeConcepts", LookMode.Undefined, new object[0]);
-			Scribe_Defs.LookDef<ConceptDef>(ref this.selectedConcept, "selectedConcept");
+			Scribe_Collections.Look<ConceptDef>(ref this.activeConcepts, "activeConcepts", LookMode.Undefined, new object[0]);
+			Scribe_Defs.Look<ConceptDef>(ref this.selectedConcept, "selectedConcept");
 			if (Scribe.mode == LoadSaveMode.PostLoadInit)
 			{
 				this.activeConcepts.RemoveAll((ConceptDef c) => PlayerKnowledgeDatabase.IsComplete(c));
@@ -73,7 +73,7 @@ namespace RimWorld
 				return false;
 			}
 			this.activeConcepts.Add(conc);
-			SoundDefOf.LessonActivated.PlayOneShotOnCamera();
+			SoundDefOf.LessonActivated.PlayOneShotOnCamera(null);
 			this.lastConceptActivateRealTime = RealTime.LastRealTime;
 			return true;
 		}
@@ -91,8 +91,8 @@ namespace RimWorld
 		{
 			if (this.activeConcepts.Contains(conc) || this.selectedConcept == conc)
 			{
-				SoundDefOf.LessonDeactivated.PlayOneShotOnCamera();
-				SoundDefOf.CommsWindow_Close.PlayOneShotOnCamera();
+				SoundDefOf.LessonDeactivated.PlayOneShotOnCamera(null);
+				SoundDefOf.CommsWindow_Close.PlayOneShotOnCamera(null);
 			}
 			if (this.activeConcepts.Contains(conc))
 			{
@@ -163,11 +163,11 @@ namespace RimWorld
 					this.showAllMode = !this.showAllMode;
 					if (this.showAllMode)
 					{
-						SoundDefOf.TickHigh.PlayOneShotOnCamera();
+						SoundDefOf.TickHigh.PlayOneShotOnCamera(null);
 					}
 					else
 					{
-						SoundDefOf.TickLow.PlayOneShotOnCamera();
+						SoundDefOf.TickLow.PlayOneShotOnCamera(null);
 					}
 				}
 				if (this.showAllMode)
@@ -188,21 +188,21 @@ namespace RimWorld
 					if (Widgets.ButtonImage(butRect2, TexButton.CloseXSmall))
 					{
 						this.searchString = string.Empty;
-						SoundDefOf.TickTiny.PlayOneShotOnCamera();
+						SoundDefOf.TickTiny.PlayOneShotOnCamera(null);
 					}
 					num2 = rect3.yMax + 4f;
 				}
-				IEnumerable<ConceptDef> arg_2E0_0;
+				IEnumerable<ConceptDef> arg_2E3_0;
 				if (!this.showAllMode)
 				{
 					IEnumerable<ConceptDef> enumerable = this.activeConcepts;
-					arg_2E0_0 = enumerable;
+					arg_2E3_0 = enumerable;
 				}
 				else
 				{
-					arg_2E0_0 = DefDatabase<ConceptDef>.AllDefs;
+					arg_2E3_0 = DefDatabase<ConceptDef>.AllDefs;
 				}
-				IEnumerable<ConceptDef> enumerable2 = arg_2E0_0;
+				IEnumerable<ConceptDef> enumerable2 = arg_2E3_0;
 				if (enumerable2.Any<ConceptDef>())
 				{
 					GUI.color = new Color(1f, 1f, 1f, 0.5f);
@@ -308,7 +308,7 @@ namespace RimWorld
 				{
 					this.selectedConcept = conc;
 				}
-				SoundDefOf.PageChange.PlayOneShotOnCamera();
+				SoundDefOf.PageChange.PlayOneShotOnCamera(null);
 			}
 			return rect;
 		}
@@ -361,7 +361,7 @@ namespace RimWorld
 					if (Widgets.CloseButtonFor(outRect))
 					{
 						this.selectedConcept = null;
-						SoundDefOf.PageChange.PlayOneShotOnCamera();
+						SoundDefOf.PageChange.PlayOneShotOnCamera(null);
 					}
 					Rect rect5 = new Rect(rect.center.x - 70f, rect.yMax - 30f, 140f, 30f);
 					if (!complete)
@@ -369,7 +369,7 @@ namespace RimWorld
 						if (Widgets.ButtonText(rect5, "MarkLearned".Translate(), true, false, true))
 						{
 							this.selectedConcept = null;
-							SoundDefOf.PageChange.PlayOneShotOnCamera();
+							SoundDefOf.PageChange.PlayOneShotOnCamera(null);
 							PlayerKnowledgeDatabase.SetKnowledge(conc, 1f);
 						}
 					}

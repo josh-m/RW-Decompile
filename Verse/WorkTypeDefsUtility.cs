@@ -25,10 +25,6 @@ namespace Verse
 			case (WorkTags)1:
 			case (WorkTags)3:
 				IL_1C:
-				if (tags == WorkTags.ManualSkilled)
-				{
-					return "WorkTagManualSkilled".Translate();
-				}
 				if (tags == WorkTags.Violent)
 				{
 					return "WorkTagViolent".Translate();
@@ -41,9 +37,9 @@ namespace Verse
 				{
 					return "WorkTagSocial".Translate();
 				}
-				if (tags == WorkTags.Scary)
+				if (tags == WorkTags.Intellectual)
 				{
-					return "WorkTagScary".Translate();
+					return "WorkTagIntellectual".Translate();
 				}
 				if (tags == WorkTags.Animals)
 				{
@@ -83,10 +79,10 @@ namespace Verse
 					return "Worktag";
 				}
 				return "WorkTagMining".Translate();
-			case WorkTags.Intellectual:
-				return "WorkTagIntellectual".Translate();
 			case WorkTags.ManualDumb:
 				return "WorkTagManualDumb".Translate();
+			case WorkTags.ManualSkilled:
+				return "WorkTagManualSkilled".Translate();
 			}
 			goto IL_1C;
 		}

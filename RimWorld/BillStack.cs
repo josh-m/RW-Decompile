@@ -130,7 +130,7 @@ namespace RimWorld
 
 		public void ExposeData()
 		{
-			Scribe_Collections.LookList<Bill>(ref this.bills, "bills", LookMode.Deep, new object[0]);
+			Scribe_Collections.Look<Bill>(ref this.bills, "bills", LookMode.Deep, new object[0]);
 			if (Scribe.mode == LoadSaveMode.ResolvingCrossRefs)
 			{
 				for (int i = 0; i < this.bills.Count; i++)
@@ -158,7 +158,7 @@ namespace RimWorld
 			GUI.color = Color.white;
 			Rect outRect = new Rect(0f, 35f, rect.width, rect.height - 35f);
 			Rect viewRect = new Rect(0f, 0f, outRect.width - 16f, viewHeight);
-			Widgets.BeginScrollView(outRect, ref scrollPosition, viewRect);
+			Widgets.BeginScrollView(outRect, ref scrollPosition, viewRect, true);
 			float num = 0f;
 			for (int i = 0; i < this.Count; i++)
 			{

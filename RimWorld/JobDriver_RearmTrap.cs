@@ -14,7 +14,7 @@ namespace RimWorld
 		protected override IEnumerable<Toil> MakeNewToils()
 		{
 			this.FailOnThingMissingDesignation(TargetIndex.A, DesignationDefOf.RearmTrap);
-			yield return Toils_Reserve.Reserve(TargetIndex.A, 1);
+			yield return Toils_Reserve.Reserve(TargetIndex.A, 1, -1, null);
 			Toil gotoThing = new Toil();
 			gotoThing.initAction = delegate
 			{

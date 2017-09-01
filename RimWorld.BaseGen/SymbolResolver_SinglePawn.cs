@@ -10,13 +10,18 @@ namespace RimWorld.BaseGen
 		public override bool CanResolve(ResolveParams rp)
 		{
 			IntVec3 intVec;
-			return base.CanResolve(rp) && this.TryFindSpawnCell(rp, out intVec);
+			return base.CanResolve(rp) && ((rp.singlePawnToSpawn != null && rp.singlePawnToSpawn.Spawned) || SymbolResolver_SinglePawn.TryFindSpawnCell(rp, out intVec));
 		}
 
 		public override void Resolve(ResolveParams rp)
 		{
+			if (rp.singlePawnToSpawn != null && rp.singlePawnToSpawn.Spawned)
+			{
+				return;
+			}
+			Map map = BaseGen.globalSettings.map;
 			IntVec3 loc;
-			if (!this.TryFindSpawnCell(rp, out loc))
+			if (!SymbolResolver_SinglePawn.TryFindSpawnCell(rp, out loc))
 			{
 				if (rp.singlePawnToSpawn != null)
 				{
@@ -27,33 +32,43 @@ namespace RimWorld.BaseGen
 			Pawn pawn;
 			if (rp.singlePawnToSpawn == null)
 			{
-				PawnKindDef arg_73_0;
-				if ((arg_73_0 = rp.singlePawnKindDef) == null)
+				PawnGenerationRequest value;
+				if (rp.singlePawnGenerationRequest.HasValue)
 				{
-					arg_73_0 = (from x in DefDatabase<PawnKindDef>.AllDefsListForReading
-					where x.defaultFactionType == null || !x.defaultFactionType.isPlayer
-					select x).RandomElement<PawnKindDef>();
+					value = rp.singlePawnGenerationRequest.Value;
 				}
-				PawnKindDef pawnKindDef = arg_73_0;
-				Faction faction = rp.faction;
-				if (faction == null && pawnKindDef.RaceProps.Humanlike)
+				else
 				{
-					if (pawnKindDef.defaultFactionType != null)
+					PawnKindDef arg_BE_0;
+					if ((arg_BE_0 = rp.singlePawnKindDef) == null)
 					{
-						faction = FactionUtility.DefaultFactionFrom(pawnKindDef.defaultFactionType);
-						if (faction == null)
+						arg_BE_0 = (from x in DefDatabase<PawnKindDef>.AllDefsListForReading
+						where x.defaultFactionType == null || !x.defaultFactionType.isPlayer
+						select x).RandomElement<PawnKindDef>();
+					}
+					PawnKindDef pawnKindDef = arg_BE_0;
+					Faction faction = rp.faction;
+					if (faction == null && pawnKindDef.RaceProps.Humanlike)
+					{
+						if (pawnKindDef.defaultFactionType != null)
+						{
+							faction = FactionUtility.DefaultFactionFrom(pawnKindDef.defaultFactionType);
+							if (faction == null)
+							{
+								return;
+							}
+						}
+						else if (!(from x in Find.FactionManager.AllFactions
+						where !x.IsPlayer
+						select x).TryRandomElement(out faction))
 						{
 							return;
 						}
 					}
-					else if (!(from x in Find.FactionManager.AllFactions
-					where !x.IsPlayer
-					select x).TryRandomElement(out faction))
-					{
-						return;
-					}
+					int tile = map.Tile;
+					value = new PawnGenerationRequest(pawnKindDef, faction, PawnGenerationContext.NonPlayer, tile, false, false, false, false, true, false, 1f, false, true, true, false, false, null, null, null, null, null, null);
 				}
-				pawn = PawnGenerator.GeneratePawn(pawnKindDef, faction);
+				pawn = PawnGenerator.GeneratePawn(value);
 			}
 			else
 			{
@@ -63,14 +78,14 @@ namespace RimWorld.BaseGen
 			{
 				pawn.mindState.Active = false;
 			}
-			GenSpawn.Spawn(pawn, loc, BaseGen.globalSettings.map);
+			GenSpawn.Spawn(pawn, loc, map);
 			if (rp.singlePawnLord != null)
 			{
 				rp.singlePawnLord.AddPawn(pawn);
 			}
 		}
 
-		private bool TryFindSpawnCell(ResolveParams rp, out IntVec3 cell)
+		public static bool TryFindSpawnCell(ResolveParams rp, out IntVec3 cell)
 		{
 			Map map = BaseGen.globalSettings.map;
 			return CellFinder.TryFindRandomCellInsideWith(rp.rect, (IntVec3 x) => x.Standable(map) && (rp.singlePawnSpawnCellExtraPredicate == null || rp.singlePawnSpawnCellExtraPredicate(x)), out cell);

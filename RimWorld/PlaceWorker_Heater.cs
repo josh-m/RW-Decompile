@@ -8,10 +8,10 @@ namespace RimWorld
 	{
 		public override void DrawGhost(ThingDef def, IntVec3 center, Rot4 rot)
 		{
-			Room room = center.GetRoom(base.Map);
-			if (room != null && !room.UsesOutdoorTemperature)
+			RoomGroup roomGroup = center.GetRoomGroup(base.Map);
+			if (roomGroup != null && !roomGroup.UsesOutdoorTemperature)
 			{
-				GenDraw.DrawFieldEdges(room.Cells.ToList<IntVec3>(), GenTemperature.ColorRoomHot);
+				GenDraw.DrawFieldEdges(roomGroup.Cells.ToList<IntVec3>(), GenTemperature.ColorRoomHot);
 			}
 		}
 	}

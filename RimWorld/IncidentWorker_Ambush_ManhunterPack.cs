@@ -1,4 +1,3 @@
-using RimWorld.Planet;
 using System;
 using System.Collections.Generic;
 using Verse;
@@ -10,18 +9,18 @@ namespace RimWorld
 		public override bool TryExecute(IncidentParms parms)
 		{
 			PawnKindDef pawnKindDef;
-			return ManhunterPackIncidentUtility.TryFindRandomAnimalKind(IncidentDefOf.ManhunterPack.pawnKinds, null, out pawnKindDef) && base.TryExecute(parms);
+			return ManhunterPackIncidentUtility.TryFindManhunterAnimalKind(parms.points, -1, out pawnKindDef) && base.TryExecute(parms);
 		}
 
-		protected override List<Pawn> GeneratePawns(Caravan caravan, float points, Map map)
+		protected override List<Pawn> GeneratePawns(IIncidentTarget target, float points, int tile)
 		{
 			PawnKindDef animalKind;
-			if (!ManhunterPackIncidentUtility.TryFindRandomAnimalKind(IncidentDefOf.ManhunterPack.pawnKinds, map, out animalKind) && !ManhunterPackIncidentUtility.TryFindRandomAnimalKind(IncidentDefOf.ManhunterPack.pawnKinds, null, out animalKind))
+			if (!ManhunterPackIncidentUtility.TryFindManhunterAnimalKind(points, tile, out animalKind) && !ManhunterPackIncidentUtility.TryFindManhunterAnimalKind(points, -1, out animalKind))
 			{
 				Log.Error("Could not find any valid animal kind for " + this.def + " incident.");
 				return new List<Pawn>();
 			}
-			return ManhunterPackIncidentUtility.GenerateAnimals(animalKind, map, points);
+			return ManhunterPackIncidentUtility.GenerateAnimals(animalKind, tile, points);
 		}
 
 		protected override void PostProcessGeneratedPawnsAfterSpawning(List<Pawn> generatedPawns)

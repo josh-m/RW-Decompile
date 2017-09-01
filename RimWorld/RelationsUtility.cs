@@ -7,8 +7,6 @@ namespace RimWorld
 {
 	public static class RelationsUtility
 	{
-		private static List<Thought> tmpThoughts = new List<Thought>();
-
 		public static bool PawnsKnowEachOther(Pawn p1, Pawn p2)
 		{
 			return (p1.Faction != null && p1.Faction == p2.Faction) || (p1.RaceProps.IsFlesh && p1.relations.DirectRelations.Find((DirectPawnRelation x) => x.otherPawn == p2) != null) || (p2.RaceProps.IsFlesh && p2.relations.DirectRelations.Find((DirectPawnRelation x) => x.otherPawn == p1) != null) || RelationsUtility.HasAnySocialMemoryWith(p1, p2) || RelationsUtility.HasAnySocialMemoryWith(p2, p1);
@@ -36,7 +34,7 @@ namespace RimWorld
 			{
 				return false;
 			}
-			if (animal.RaceProps.trainableIntelligence < TrainableIntelligence.Intermediate)
+			if (animal.RaceProps.TrainableIntelligence.intelligenceOrder < TrainableIntelligenceDefOf.Intermediate.intelligenceOrder)
 			{
 				return false;
 			}
@@ -143,16 +141,15 @@ namespace RimWorld
 			{
 				return false;
 			}
-			p.needs.mood.thoughts.GetMainThoughts(RelationsUtility.tmpThoughts);
-			for (int i = 0; i < RelationsUtility.tmpThoughts.Count; i++)
+			List<Thought_Memory> memories = p.needs.mood.thoughts.memories.Memories;
+			for (int i = 0; i < memories.Count; i++)
 			{
-				Thought_MemorySocial thought_MemorySocial = RelationsUtility.tmpThoughts[i] as Thought_MemorySocial;
-				if (thought_MemorySocial != null && thought_MemorySocial.otherPawn == otherPawn)
+				Thought_MemorySocial thought_MemorySocial = memories[i] as Thought_MemorySocial;
+				if (thought_MemorySocial != null && thought_MemorySocial.OtherPawn() == otherPawn)
 				{
 					return true;
 				}
 			}
-			RelationsUtility.tmpThoughts.Clear();
 			return false;
 		}
 	}

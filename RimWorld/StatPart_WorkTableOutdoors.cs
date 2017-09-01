@@ -39,7 +39,7 @@ namespace RimWorld
 			{
 				return false;
 			}
-			Room room = c.GetRoom(map);
+			Room room = c.GetRoom(map, RegionType.Set_All);
 			return room != null && room.PsychologicallyOutdoors;
 		}
 	}

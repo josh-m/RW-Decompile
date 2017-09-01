@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using Verse;
 
 namespace RimWorld.Planet
@@ -20,10 +21,14 @@ namespace RimWorld.Planet
 			Current.CreatingWorld.info.overallRainfall = overallRainfall;
 			Current.CreatingWorld.info.overallTemperature = overallTemperature;
 			Current.CreatingWorld.info.name = NameGenerator.GenerateName(RulePackDefOf.NamerWorld, null, false);
-			WorldGenerator_Grid.GenerateGridIntoWorld(seedString);
-			Current.CreatingWorld.ConstructComponents();
-			FactionGenerator.GenerateFactionsIntoWorld(seedString);
+			foreach (WorldGenStepDef current in from gs in DefDatabase<WorldGenStepDef>.AllDefs
+			orderby gs.order
+			select gs)
+			{
+				current.worldGenStep.GenerateFresh(seedString);
+			}
 			Current.CreatingWorld.FinalizeInit();
+			Find.Scenario.PostWorldGenerate();
 			World creatingWorld = Current.CreatingWorld;
 			Current.CreatingWorld = null;
 			return creatingWorld;

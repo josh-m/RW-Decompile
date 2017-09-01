@@ -42,8 +42,8 @@ namespace Verse
 
 		public void ExposeData()
 		{
-			Scribe_Defs.LookDef<DesignationDef>(ref this.def, "def");
-			Scribe_TargetInfo.LookTargetInfo(ref this.target, "target");
+			Scribe_Defs.Look<DesignationDef>(ref this.def, "def");
+			Scribe_TargetInfo.Look(ref this.target, "target");
 			if (Scribe.mode == LoadSaveMode.ResolvingCrossRefs && this.def == DesignationDefOf.Haul && !this.target.HasThing)
 			{
 				Log.Error("Haul designation has no target! Deleting.");

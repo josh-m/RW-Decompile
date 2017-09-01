@@ -7,14 +7,14 @@ namespace RimWorld
 	{
 		protected override void DoConditionAndLetter(Map map, int duration, Gender gender)
 		{
-			MapCondition_PsychicEmanation mapCondition_PsychicEmanation = (MapCondition_PsychicEmanation)MapConditionMaker.MakeCondition(MapConditionDefOf.PsychicDrone, duration, 0);
-			mapCondition_PsychicEmanation.gender = gender;
-			map.mapConditionManager.RegisterCondition(mapCondition_PsychicEmanation);
+			GameCondition_PsychicEmanation gameCondition_PsychicEmanation = (GameCondition_PsychicEmanation)GameConditionMaker.MakeCondition(GameConditionDefOf.PsychicDrone, duration, 0);
+			gameCondition_PsychicEmanation.gender = gender;
+			map.gameConditionManager.RegisterCondition(gameCondition_PsychicEmanation);
 			string text = "LetterIncidentPsychicDrone".Translate(new object[]
 			{
 				gender.ToString().Translate().ToLower()
 			});
-			Find.LetterStack.ReceiveLetter("LetterLabelPsychicDrone".Translate(), text, LetterType.BadNonUrgent, null);
+			Find.LetterStack.ReceiveLetter("LetterLabelPsychicDrone".Translate(), text, LetterDefOf.BadNonUrgent, null);
 		}
 	}
 }

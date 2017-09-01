@@ -12,13 +12,16 @@ namespace RimWorld
 
 		protected PawnGenerationContext context;
 
+		private bool hideOffMap;
+
 		private string chanceBuf;
 
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Values.LookValue<float>(ref this.chance, "chance", 0f, false);
-			Scribe_Values.LookValue<PawnGenerationContext>(ref this.context, "context", PawnGenerationContext.All, false);
+			Scribe_Values.Look<float>(ref this.chance, "chance", 0f, false);
+			Scribe_Values.Look<PawnGenerationContext>(ref this.context, "context", PawnGenerationContext.All, false);
+			Scribe_Values.Look<bool>(ref this.hideOffMap, "hideOffMap", false, false);
 		}
 
 		protected void DoPawnModifierEditInterface(Rect rect)
@@ -59,13 +62,36 @@ namespace RimWorld
 		{
 			this.chance = GenMath.RoundedHundredth(Rand.Range(0.05f, 1f));
 			this.context = PawnGenerationContextUtility.GetRandom();
+			this.hideOffMap = false;
 		}
 
 		public override void Notify_PawnGenerated(Pawn pawn, PawnGenerationContext context)
 		{
+			if (this.hideOffMap && PawnGenerationContext.PlayerStarter.Includes(context))
+			{
+				return;
+			}
 			if (pawn.RaceProps.Humanlike && this.context.Includes(context))
 			{
 				this.ModifyPawn(pawn);
+			}
+		}
+
+		public override void PostMapGenerate(Map map)
+		{
+			if (Find.GameInitData == null)
+			{
+				return;
+			}
+			if (this.hideOffMap && (this.context == PawnGenerationContext.PlayerStarter || this.context == PawnGenerationContext.All))
+			{
+				foreach (Pawn current in Find.GameInitData.startingPawns)
+				{
+					if (current.RaceProps.Humanlike)
+					{
+						this.ModifyPawn(current);
+					}
+				}
 			}
 		}
 

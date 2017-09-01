@@ -130,12 +130,12 @@ namespace Verse
 		{
 		}
 
-		public override void SpawnSetup(Map map)
+		public override void SpawnSetup(Map map, bool respawningAfterLoad)
 		{
-			base.SpawnSetup(map);
+			base.SpawnSetup(map, respawningAfterLoad);
 			for (int i = 0; i < this.comps.Count; i++)
 			{
-				this.comps[i].PostSpawnSetup();
+				this.comps[i].PostSpawnSetup(respawningAfterLoad);
 			}
 		}
 
@@ -259,7 +259,7 @@ namespace Verse
 			{
 				return false;
 			}
-			int count = ThingUtility.TryAsborbStackNumToTake(this, other, respectStackLimit);
+			int count = ThingUtility.TryAbsorbStackNumToTake(this, other, respectStackLimit);
 			for (int i = 0; i < this.comps.Count; i++)
 			{
 				this.comps[i].PreAbsorbStack(other, count);
@@ -300,7 +300,15 @@ namespace Verse
 		{
 			StringBuilder stringBuilder = new StringBuilder();
 			stringBuilder.Append(base.GetInspectString());
-			stringBuilder.Append(this.InspectStringPartsFromComps());
+			string text = this.InspectStringPartsFromComps();
+			if (!text.NullOrEmpty())
+			{
+				if (stringBuilder.Length > 0)
+				{
+					stringBuilder.AppendLine();
+				}
+				stringBuilder.Append(text);
+			}
 			return stringBuilder.ToString();
 		}
 
@@ -317,7 +325,11 @@ namespace Verse
 						Log.ErrorOnce(this.comps[i].GetType() + " CompInspectStringExtra ended with whitespace: " + text, 25612);
 						text = text.TrimEndNewlines();
 					}
-					stringBuilder.AppendLine(text);
+					if (stringBuilder.Length != 0)
+					{
+						stringBuilder.AppendLine();
+					}
+					stringBuilder.Append(text);
 				}
 			}
 			return stringBuilder.ToString();
@@ -332,9 +344,12 @@ namespace Verse
 				string descriptionPart = this.comps[i].GetDescriptionPart();
 				if (!descriptionPart.NullOrEmpty())
 				{
-					stringBuilder.AppendLine();
-					stringBuilder.AppendLine();
-					stringBuilder.AppendLine(descriptionPart);
+					if (stringBuilder.Length > 0)
+					{
+						stringBuilder.AppendLine();
+						stringBuilder.AppendLine();
+					}
+					stringBuilder.Append(descriptionPart);
 				}
 			}
 			return stringBuilder.ToString();
@@ -361,6 +376,16 @@ namespace Verse
 			for (int i = 0; i < this.comps.Count; i++)
 			{
 				this.comps[i].PrePreTraded(action, playerNegotiator, trader);
+			}
+			base.PreTraded(action, playerNegotiator, trader);
+		}
+
+		public override void PostGeneratedForTrader(TraderKindDef trader, int forTile, Faction forFaction)
+		{
+			base.PostGeneratedForTrader(trader, forTile, forFaction);
+			for (int i = 0; i < this.comps.Count; i++)
+			{
+				this.comps[i].PostPostGeneratedForTrader(trader, forTile, forFaction);
 			}
 		}
 

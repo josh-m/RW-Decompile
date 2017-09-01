@@ -2,7 +2,7 @@ using System;
 
 namespace Verse
 {
-	public struct ThingStackPart
+	public struct ThingStackPart : IEquatable<ThingStackPart>
 	{
 		private Thing thing;
 
@@ -57,6 +57,31 @@ namespace Verse
 		public ThingStackPart WithCount(int newCount)
 		{
 			return new ThingStackPart(this.thing, newCount);
+		}
+
+		public override bool Equals(object obj)
+		{
+			return obj is ThingStackPart && this.Equals((ThingStackPart)obj);
+		}
+
+		public bool Equals(ThingStackPart other)
+		{
+			return this == other;
+		}
+
+		public override int GetHashCode()
+		{
+			return Gen.HashCombine<Thing>(this.count, this.thing);
+		}
+
+		public static bool operator ==(ThingStackPart a, ThingStackPart b)
+		{
+			return a.thing == b.thing && a.count == b.count;
+		}
+
+		public static bool operator !=(ThingStackPart a, ThingStackPart b)
+		{
+			return !(a == b);
 		}
 	}
 }

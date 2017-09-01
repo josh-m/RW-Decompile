@@ -56,9 +56,9 @@ namespace RimWorld
 		public override void PostExposeData()
 		{
 			base.PostExposeData();
-			Scribe_Values.LookValue<float>(ref this.eggProgress, "eggProgress", 0f, false);
-			Scribe_Values.LookValue<int>(ref this.fertilizationCount, "fertilizationCount", 0, false);
-			Scribe_References.LookReference<Pawn>(ref this.fertilizedBy, "fertilizedBy", false);
+			Scribe_Values.Look<float>(ref this.eggProgress, "eggProgress", 0f, false);
+			Scribe_Values.Look<int>(ref this.fertilizationCount, "fertilizationCount", 0, false);
+			Scribe_References.Look<Pawn>(ref this.fertilizedBy, "fertilizedBy", false);
 		}
 
 		public override void CompTick()

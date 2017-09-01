@@ -8,15 +8,15 @@ namespace RimWorld
 		public override void Generate(Map map)
 		{
 			int num = 0;
-			for (int i = (int)(GenLocalDate.Month(map) - Month.Mar); i <= (int)GenLocalDate.Month(map); i++)
+			for (int i = (int)(GenLocalDate.Twelfth(map) - Twelfth.Third); i <= (int)GenLocalDate.Twelfth(map); i++)
 			{
 				int num2 = i;
 				if (num2 < 0)
 				{
 					num2 += 12;
 				}
-				Month month = (Month)num2;
-				float num3 = GenTemperature.AverageTemperatureAtTileForMonth(map.Tile, month);
+				Twelfth twelfth = (Twelfth)num2;
+				float num3 = GenTemperature.AverageTemperatureAtTileForTwelfth(map.Tile, twelfth);
 				if (num3 < 0f)
 				{
 					num++;

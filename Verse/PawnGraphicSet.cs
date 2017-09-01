@@ -25,6 +25,10 @@ namespace Verse
 
 		public Graphic skullGraphic;
 
+		public Graphic headStumpGraphic;
+
+		public Graphic desiccatedHeadStumpGraphic;
+
 		public Graphic hairGraphic;
 
 		public List<ApparelGraphicRecord> apparelGraphics = new List<ApparelGraphicRecord>();
@@ -96,22 +100,40 @@ namespace Verse
 			return this.cachedMatsBodyBase;
 		}
 
-		public Material HeadMatAt(Rot4 facing, RotDrawMode bodyCondition = RotDrawMode.Fresh)
+		public Material HeadMatAt(Rot4 facing, RotDrawMode bodyCondition = RotDrawMode.Fresh, bool stump = false)
 		{
-			Material baseMat = null;
+			Material material = null;
 			if (bodyCondition == RotDrawMode.Fresh)
 			{
-				baseMat = this.headGraphic.MatAt(facing, null);
+				if (stump)
+				{
+					material = this.headStumpGraphic.MatAt(facing, null);
+				}
+				else
+				{
+					material = this.headGraphic.MatAt(facing, null);
+				}
 			}
 			else if (bodyCondition == RotDrawMode.Rotting)
 			{
-				baseMat = this.desiccatedHeadGraphic.MatAt(facing, null);
+				if (stump)
+				{
+					material = this.desiccatedHeadStumpGraphic.MatAt(facing, null);
+				}
+				else
+				{
+					material = this.desiccatedHeadGraphic.MatAt(facing, null);
+				}
 			}
-			else if (bodyCondition == RotDrawMode.Dessicated)
+			else if (bodyCondition == RotDrawMode.Dessicated && !stump)
 			{
-				baseMat = this.skullGraphic.MatAt(facing, null);
+				material = this.skullGraphic.MatAt(facing, null);
 			}
-			return this.flasher.GetDamagedMat(baseMat);
+			if (material != null)
+			{
+				material = this.flasher.GetDamagedMat(material);
+			}
+			return material;
 		}
 
 		public Material HairMatAt(Rot4 facing)
@@ -136,6 +158,8 @@ namespace Verse
 				this.headGraphic = GraphicDatabaseHeadRecords.GetHeadNamed(this.pawn.story.HeadGraphicPath, this.pawn.story.SkinColor);
 				this.desiccatedHeadGraphic = GraphicDatabaseHeadRecords.GetHeadNamed(this.pawn.story.HeadGraphicPath, PawnGraphicSet.RottingColor);
 				this.skullGraphic = GraphicDatabaseHeadRecords.GetSkull();
+				this.headStumpGraphic = GraphicDatabaseHeadRecords.GetStump(this.pawn.story.SkinColor);
+				this.desiccatedHeadStumpGraphic = GraphicDatabaseHeadRecords.GetStump(PawnGraphicSet.RottingColor);
 				this.hairGraphic = GraphicDatabase.Get<Graphic_Multi>(this.pawn.story.hairDef.texPath, ShaderDatabase.Cutout, Vector2.one, this.pawn.story.hairColor);
 				this.ResolveApparelGraphics();
 			}

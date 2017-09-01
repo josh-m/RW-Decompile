@@ -28,7 +28,7 @@ namespace RimWorld
 
 		public void ExposeData()
 		{
-			Scribe_Values.LookValue<int>(ref this.lastGuiltyTick, "lastGuiltyTick", -99999, false);
+			Scribe_Values.Look<int>(ref this.lastGuiltyTick, "lastGuiltyTick", -99999, false);
 		}
 
 		public void Notify_Guilty()

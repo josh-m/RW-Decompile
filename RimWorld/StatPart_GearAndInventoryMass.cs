@@ -16,10 +16,10 @@ namespace RimWorld
 
 		public override string ExplanationPart(StatRequest req)
 		{
-			float num;
-			if (this.TryGetValue(req, out num))
+			float mass;
+			if (this.TryGetValue(req, out mass))
 			{
-				return "StatsReport_GearAndInventoryMass".Translate() + ": " + num.ToString("+0.##;-0.##;0") + "kg";
+				return "StatsReport_GearAndInventoryMass".Translate() + ": " + mass.ToStringMassOffset();
 			}
 			return null;
 		}

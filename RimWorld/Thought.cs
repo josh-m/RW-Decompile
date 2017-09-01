@@ -95,7 +95,7 @@ namespace RimWorld
 
 		public virtual void ExposeData()
 		{
-			Scribe_Defs.LookDef<ThoughtDef>(ref this.def, "def");
+			Scribe_Defs.Look<ThoughtDef>(ref this.def, "def");
 		}
 
 		public virtual float MoodOffset()
@@ -117,12 +117,6 @@ namespace RimWorld
 				num *= this.pawn.GetStatValue(this.def.effectMultiplyingStat, true);
 			}
 			return num;
-		}
-
-		public virtual bool TryMergeWithExistingThought(out bool showBubble)
-		{
-			showBubble = false;
-			return false;
 		}
 
 		public virtual bool GroupsWith(Thought other)

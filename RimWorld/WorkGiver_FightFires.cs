@@ -28,7 +28,7 @@ namespace RimWorld
 			}
 		}
 
-		public override bool HasJobOnThing(Pawn pawn, Thing t)
+		public override bool HasJobOnThing(Pawn pawn, Thing t, bool forced = false)
 		{
 			Fire fire = t as Fire;
 			if (fire == null)
@@ -59,6 +59,7 @@ namespace RimWorld
 				}
 				if (!pawn.Map.areaManager.Home[fire.Position])
 				{
+					JobFailReason.Is(WorkGiver_FixBrokenDownBuilding.NotInHomeAreaTrans);
 					return false;
 				}
 				if (!pawn.CanReach(fire.Position, PathEndMode.Touch, Danger.Deadly, false, TraverseMode.ByPawn))
@@ -66,10 +67,10 @@ namespace RimWorld
 					return false;
 				}
 			}
-			return ((pawn.Position - fire.Position).LengthHorizontalSquared <= 225f || pawn.CanReserve(fire, 1)) && !WorkGiver_FightFires.FireIsBeingHandled(fire, pawn);
+			return ((pawn.Position - fire.Position).LengthHorizontalSquared <= 225 || pawn.CanReserve(fire, 1, -1, null, forced)) && !WorkGiver_FightFires.FireIsBeingHandled(fire, pawn);
 		}
 
-		public override Job JobOnThing(Pawn pawn, Thing t)
+		public override Job JobOnThing(Pawn pawn, Thing t, bool forced = false)
 		{
 			return new Job(JobDefOf.BeatFire, t);
 		}
@@ -80,7 +81,7 @@ namespace RimWorld
 			{
 				return false;
 			}
-			Pawn pawn = f.Map.reservationManager.FirstReserverOf(f, potentialHandler.Faction, true);
+			Pawn pawn = f.Map.reservationManager.FirstReserverWhoseReservationsRespects(f, potentialHandler);
 			return pawn != null && pawn.Position.InHorDistOf(f.Position, 5f);
 		}
 	}

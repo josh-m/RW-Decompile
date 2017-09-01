@@ -13,7 +13,11 @@ namespace Verse
 		{
 			get
 			{
-				if (!this.IsFresh)
+				if (!this.IsFreshNonSolidExtremity)
+				{
+					return 0f;
+				}
+				if (base.Part.def.tags.NullOrEmpty<string>() && base.Part.parts.NullOrEmpty<BodyPartRecord>() && !base.Bleeding)
 				{
 					return 0f;
 				}
@@ -29,6 +33,14 @@ namespace Verse
 			}
 		}
 
+		public override bool TendableNow
+		{
+			get
+			{
+				return this.IsFreshNonSolidExtremity;
+			}
+		}
+
 		public override string LabelBase
 		{
 			get
@@ -40,7 +52,7 @@ namespace Verse
 				if (this.lastInjury == null || base.Part.depth == BodyPartDepth.Inside)
 				{
 					bool solid = base.Part.def.IsSolid(base.Part, this.pawn.health.hediffSet.hediffs);
-					return HealthUtility.GetGeneralDestroyedPartLabel(base.Part, this.IsFresh, solid);
+					return HealthUtility.GetGeneralDestroyedPartLabel(base.Part, this.IsFreshNonSolidExtremity, solid);
 				}
 				if (base.Part.def.useDestroyedOutLabel && !this.lastInjury.injuryProps.destroyedOutLabel.NullOrEmpty())
 				{
@@ -56,7 +68,7 @@ namespace Verse
 			{
 				StringBuilder stringBuilder = new StringBuilder();
 				stringBuilder.Append(base.LabelInBrackets);
-				if (this.IsFresh)
+				if (this.IsFreshNonSolidExtremity)
 				{
 					if (stringBuilder.Length != 0)
 					{
@@ -72,15 +84,7 @@ namespace Verse
 		{
 			get
 			{
-				if (this.pawn.Dead)
-				{
-					return 0f;
-				}
-				if (!this.IsFresh)
-				{
-					return 0f;
-				}
-				if (this.ParentIsMissing)
+				if (this.pawn.Dead || !this.IsFreshNonSolidExtremity || this.ParentIsMissing)
 				{
 					return 0f;
 				}
@@ -92,19 +96,7 @@ namespace Verse
 		{
 			get
 			{
-				if (this.pawn.Dead)
-				{
-					return 0f;
-				}
-				if (this.causesNoPain)
-				{
-					return 0f;
-				}
-				if (!this.IsFresh)
-				{
-					return 0f;
-				}
-				if (this.ParentIsMissing)
+				if (this.pawn.Dead || this.causesNoPain || !this.IsFreshNonSolidExtremity || this.ParentIsMissing)
 				{
 					return 0f;
 				}
@@ -132,7 +124,7 @@ namespace Verse
 		{
 			get
 			{
-				return Current.ProgramState != ProgramState.Entry && this.isFreshInt && base.Part.depth != BodyPartDepth.Inside && !this.TicksAfterMissingBodyPartNoLongerFreshPassed && !base.Part.def.IsSolid(base.Part, this.pawn.health.hediffSet.hediffs) && !this.ParentIsMissing;
+				return this.isFreshInt && !this.TicksAfterNoLongerFreshPassed;
 			}
 			set
 			{
@@ -140,7 +132,15 @@ namespace Verse
 			}
 		}
 
-		private bool TicksAfterMissingBodyPartNoLongerFreshPassed
+		public bool IsFreshNonSolidExtremity
+		{
+			get
+			{
+				return Current.ProgramState != ProgramState.Entry && this.IsFresh && base.Part.depth != BodyPartDepth.Inside && !base.Part.def.IsSolid(base.Part, this.pawn.health.hediffSet.hediffs) && !this.ParentIsMissing;
+			}
+		}
+
+		private bool TicksAfterNoLongerFreshPassed
 		{
 			get
 			{
@@ -150,13 +150,20 @@ namespace Verse
 
 		public override void Tick()
 		{
-			bool ticksAfterMissingBodyPartNoLongerFreshPassed = this.TicksAfterMissingBodyPartNoLongerFreshPassed;
+			bool ticksAfterNoLongerFreshPassed = this.TicksAfterNoLongerFreshPassed;
 			base.Tick();
-			bool ticksAfterMissingBodyPartNoLongerFreshPassed2 = this.TicksAfterMissingBodyPartNoLongerFreshPassed;
-			if (ticksAfterMissingBodyPartNoLongerFreshPassed != ticksAfterMissingBodyPartNoLongerFreshPassed2)
+			bool ticksAfterNoLongerFreshPassed2 = this.TicksAfterNoLongerFreshPassed;
+			if (ticksAfterNoLongerFreshPassed != ticksAfterNoLongerFreshPassed2)
 			{
 				this.pawn.health.Notify_HediffChanged(this);
 			}
+		}
+
+		public override void Tended(float quality, int batchPosition = 0)
+		{
+			base.Tended(quality, batchPosition);
+			this.IsFresh = false;
+			this.pawn.health.Notify_HediffChanged(this);
 		}
 
 		public override void PostAdd(DamageInfo? dinfo)
@@ -175,8 +182,8 @@ namespace Verse
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Defs.LookDef<HediffDef>(ref this.lastInjury, "lastInjury");
-			Scribe_Values.LookValue<bool>(ref this.isFreshInt, "isFresh", false, false);
+			Scribe_Defs.Look<HediffDef>(ref this.lastInjury, "lastInjury");
+			Scribe_Values.Look<bool>(ref this.isFreshInt, "isFresh", false, false);
 		}
 	}
 }

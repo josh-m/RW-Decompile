@@ -27,11 +27,6 @@ namespace Verse
 			}
 		}
 
-		public void ResetSelectedDesignator()
-		{
-			this.selectedDesignator = null;
-		}
-
 		public void Select(Designator des)
 		{
 			this.Deselect();
@@ -44,6 +39,7 @@ namespace Verse
 			if (this.selectedDesignator != null)
 			{
 				this.selectedDesignator = null;
+				this.dragger.EndDrag();
 			}
 		}
 
@@ -92,7 +88,7 @@ namespace Verse
 			}
 			if ((Event.current.type == EventType.MouseDown && Event.current.button == 1) || (Event.current.type == EventType.KeyDown && Event.current.keyCode == KeyCode.Escape))
 			{
-				SoundDefOf.CancelMode.PlayOneShotOnCamera();
+				SoundDefOf.CancelMode.PlayOneShotOnCamera(null);
 				this.Deselect();
 				this.dragger.EndDrag();
 				Event.current.Use();

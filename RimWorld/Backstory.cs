@@ -59,6 +59,21 @@ namespace RimWorld
 			}
 		}
 
+		public IEnumerable<WorkGiverDef> DisabledWorkGivers
+		{
+			get
+			{
+				List<WorkGiverDef> list = DefDatabase<WorkGiverDef>.AllDefsListForReading;
+				for (int i = 0; i < list.Count; i++)
+				{
+					if (!this.AllowsWorkGiver(list[i]))
+					{
+						yield return list[i];
+					}
+				}
+			}
+		}
+
 		public string Title
 		{
 			get
@@ -123,16 +138,33 @@ namespace RimWorld
 					stringBuilder.AppendLine(skillDef.skillLabel + ":   " + this.skillGainsResolved[skillDef].ToString("+##;-##"));
 				}
 			}
+			stringBuilder.AppendLine();
 			foreach (WorkTypeDef current in this.DisabledWorkTypes)
 			{
 				stringBuilder.AppendLine(current.gerundLabel + " " + "DisabledLower".Translate());
 			}
-			return stringBuilder.ToString();
+			foreach (WorkGiverDef current2 in this.DisabledWorkGivers)
+			{
+				stringBuilder.AppendLine(string.Concat(new string[]
+				{
+					current2.workType.gerundLabel,
+					" -> ",
+					current2.label,
+					" ",
+					"DisabledLower".Translate()
+				}));
+			}
+			return stringBuilder.ToString().TrimEndNewlines();
 		}
 
-		private bool AllowsWorkType(WorkTypeDef workDef)
+		private bool AllowsWorkType(WorkTypeDef workType)
 		{
-			return (this.workDisables & workDef.workTags) == WorkTags.None;
+			return (this.workDisables & workType.workTags) == WorkTags.None;
+		}
+
+		private bool AllowsWorkGiver(WorkGiverDef workGiver)
+		{
+			return (this.workDisables & workGiver.workTags) == WorkTags.None;
 		}
 
 		internal void AddForcedTrait(TraitDef traitDef, int degree = 0)
@@ -227,7 +259,7 @@ namespace RimWorld
 			{
 				foreach (KeyValuePair<SkillDef, int> kvp in this.skillGainsResolved)
 				{
-					if ((kvp.Key.disablingWorkTags & this.workDisables) != WorkTags.None)
+					if (kvp.Key.IsDisabled(this.workDisables, this.DisabledWorkTypes))
 					{
 						yield return "modifies skill " + kvp.Key + " but also disables this skill";
 					}

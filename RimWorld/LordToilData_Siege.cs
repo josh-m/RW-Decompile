@@ -19,15 +19,15 @@ namespace RimWorld
 
 		public override void ExposeData()
 		{
-			Scribe_Values.LookValue<IntVec3>(ref this.siegeCenter, "siegeCenter", default(IntVec3), false);
-			Scribe_Values.LookValue<float>(ref this.baseRadius, "baseRadius", 16f, false);
-			Scribe_Values.LookValue<float>(ref this.blueprintPoints, "blueprintPoints", 0f, false);
-			Scribe_Values.LookValue<float>(ref this.desiredBuilderFraction, "desiredBuilderFraction", 0.5f, false);
+			Scribe_Values.Look<IntVec3>(ref this.siegeCenter, "siegeCenter", default(IntVec3), false);
+			Scribe_Values.Look<float>(ref this.baseRadius, "baseRadius", 16f, false);
+			Scribe_Values.Look<float>(ref this.blueprintPoints, "blueprintPoints", 0f, false);
+			Scribe_Values.Look<float>(ref this.desiredBuilderFraction, "desiredBuilderFraction", 0.5f, false);
 			if (Scribe.mode == LoadSaveMode.Saving)
 			{
 				this.blueprints.RemoveAll((Blueprint blue) => blue.Destroyed);
 			}
-			Scribe_Collections.LookList<Blueprint>(ref this.blueprints, "blueprints", LookMode.Reference, new object[0]);
+			Scribe_Collections.Look<Blueprint>(ref this.blueprints, "blueprints", LookMode.Reference, new object[0]);
 		}
 	}
 }

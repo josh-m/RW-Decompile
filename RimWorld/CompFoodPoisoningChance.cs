@@ -15,6 +15,10 @@ namespace RimWorld
 
 		public override void PostIngested(Pawn ingester)
 		{
+			if (this.Props.humanlikeOnly && !ingester.RaceProps.Humanlike)
+			{
+				return;
+			}
 			if (Rand.Value < this.Props.chance)
 			{
 				FoodUtility.AddFoodPoisoningHediff(ingester, this.parent);

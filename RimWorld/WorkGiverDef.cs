@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using Verse;
+using Verse.AI;
 
 namespace RimWorld
 {
@@ -10,6 +11,8 @@ namespace RimWorld
 		public Type giverClass;
 
 		public WorkTypeDef workType;
+
+		public WorkTags workTags;
 
 		public int priorityInType;
 
@@ -33,6 +36,8 @@ namespace RimWorld
 
 		public bool canBeDoneByNonColonists;
 
+		public JobTag tagToGive = JobTag.MiscWork;
+
 		public List<ThingDef> fixedBillGiverDefs;
 
 		public bool billGiversAllHumanlikes;
@@ -46,6 +51,14 @@ namespace RimWorld
 		public bool billGiversAllAnimals;
 
 		public bool billGiversAllAnimalsCorpses;
+
+		public bool tendToHumanlikesOnly;
+
+		public bool tendToAnimalsOnly;
+
+		public bool feedHumanlikesOnly;
+
+		public bool feedAnimalsOnly;
 
 		[Unsaved]
 		private WorkGiver workerInt;

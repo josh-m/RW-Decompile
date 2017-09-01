@@ -18,14 +18,6 @@ namespace RimWorld.Planet
 			}
 		}
 
-		public virtual bool ArriveOnTouch
-		{
-			get
-			{
-				return false;
-			}
-		}
-
 		public abstract void Arrived(Caravan caravan);
 
 		public virtual void ExposeData()

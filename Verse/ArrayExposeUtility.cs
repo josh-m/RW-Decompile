@@ -15,7 +15,7 @@ namespace Verse
 				text = Convert.ToBase64String(arr);
 				text = ArrayExposeUtility.AddLineBreaksToLongString(text);
 			}
-			Scribe_Values.LookValue<string>(ref text, label, null, false);
+			Scribe_Values.Look<string>(ref text, label, null, false);
 			if (Scribe.mode == LoadSaveMode.LoadingVars)
 			{
 				text = ArrayExposeUtility.RemoveLineBreaks(text);
@@ -72,7 +72,7 @@ namespace Verse
 
 		public static string AddLineBreaksToLongString(string str)
 		{
-			StringBuilder stringBuilder = new StringBuilder();
+			StringBuilder stringBuilder = new StringBuilder(str.Length + (str.Length / 100 + 3) * 2 + 1);
 			stringBuilder.AppendLine();
 			for (int i = 0; i < str.Length; i++)
 			{

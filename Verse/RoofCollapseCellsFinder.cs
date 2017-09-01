@@ -15,12 +15,17 @@ namespace Verse
 			{
 				return;
 			}
-			RoofCollapseCellsFinder.CheckCollapseFlyingRoofs(t.OccupiedRect(), map);
+			RoofCollapseCellsFinder.ProcessRoofHolderDespawned(t.OccupiedRect(), t.Position, map, false);
+		}
+
+		public static void ProcessRoofHolderDespawned(CellRect rect, IntVec3 position, Map map, bool removalMode = false)
+		{
+			RoofCollapseCellsFinder.CheckCollapseFlyingRoofs(rect, map);
 			RoofGrid roofGrid = map.roofGrid;
 			RoofCollapseCellsFinder.roofsCollapsingBecauseTooFar.Clear();
 			for (int i = 0; i < RoofCollapseUtility.RoofSupportRadialCellsCount; i++)
 			{
-				IntVec3 intVec = t.Position + GenRadial.RadialPattern[i];
+				IntVec3 intVec = position + GenRadial.RadialPattern[i];
 				if (intVec.InBounds(map))
 				{
 					if (roofGrid.Roofed(intVec.x, intVec.z))
@@ -29,15 +34,30 @@ namespace Verse
 						{
 							if (!RoofCollapseUtility.WithinRangeOfRoofHolder(intVec, map))
 							{
-								map.roofCollapseBuffer.MarkToCollapse(intVec);
+								if (removalMode)
+								{
+									map.roofGrid.SetRoof(intVec, null);
+								}
+								else
+								{
+									map.roofCollapseBuffer.MarkToCollapse(intVec);
+								}
 								RoofCollapseCellsFinder.roofsCollapsingBecauseTooFar.Add(intVec);
 							}
 						}
 					}
 				}
 			}
-			RoofCollapseCellsFinder.CheckCollapseFlyingRoofs(RoofCollapseCellsFinder.roofsCollapsingBecauseTooFar, map, false);
+			RoofCollapseCellsFinder.CheckCollapseFlyingRoofs(RoofCollapseCellsFinder.roofsCollapsingBecauseTooFar, map, removalMode);
 			RoofCollapseCellsFinder.roofsCollapsingBecauseTooFar.Clear();
+		}
+
+		public static void RemoveBulkCollapsingRoofs(List<IntVec3> nearCells, Map map)
+		{
+			for (int i = 0; i < nearCells.Count; i++)
+			{
+				RoofCollapseCellsFinder.ProcessRoofHolderDespawned(new CellRect(nearCells[i].x, nearCells[i].z, 1, 1), nearCells[i], map, true);
+			}
 		}
 
 		public static void CheckCollapseFlyingRoofs(List<IntVec3> nearCells, Map map, bool removalMode = false)
@@ -86,7 +106,7 @@ namespace Verse
 									map.floodFiller.FloodFill(intVec, (IntVec3 x) => x.Roofed(map), delegate(IntVec3 x)
 									{
 										roofCollapseBuffer.MarkToCollapse(x);
-									});
+									}, false);
 									if (removalMode)
 									{
 										for (int j = 0; j < roofCollapseBuffer.CellsMarkedToCollapse.Count; j++)
@@ -129,7 +149,7 @@ namespace Verse
 						}
 					}
 				}
-			});
+			}, false);
 			return connected;
 		}
 	}

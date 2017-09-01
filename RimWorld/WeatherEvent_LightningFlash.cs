@@ -35,10 +35,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return new SkyTarget(WeatherEvent_LightningFlash.LightningFlashColors)
-				{
-					glow = 1f
-				};
+				return new SkyTarget(1f, WeatherEvent_LightningFlash.LightningFlashColors, 1f, 1f);
 			}
 		}
 
@@ -78,7 +75,7 @@ namespace RimWorld
 
 		public override void FireEvent()
 		{
-			SoundDefOf.Thunder_OffMap.PlayOneShotOnCamera();
+			SoundDefOf.Thunder_OffMap.PlayOneShotOnCamera(this.map);
 		}
 
 		public override void WeatherEventTick()

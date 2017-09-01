@@ -4,12 +4,13 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using UnityEngine;
 using Verse.AI;
 using Verse.AI.Group;
 
 namespace Verse
 {
-	public sealed class Map : IIncidentTarget, ILoadReferenceable, IExposable
+	public sealed class Map : IIncidentTarget, IExposable, ILoadReferenceable, IThingHolder
 	{
 		public MapFileCompressor compressor;
 
@@ -20,6 +21,8 @@ namespace Verse
 		public MapInfo info = new MapInfo();
 
 		public List<MapComponent> components = new List<MapComponent>();
+
+		public ThingOwner spawnedThings;
 
 		public CellIndices cellIndices;
 
@@ -51,7 +54,7 @@ namespace Verse
 
 		public DebugCellDrawer debugDrawer;
 
-		public MapConditionManager mapConditionManager;
+		public GameConditionManager gameConditionManager;
 
 		public WeatherManager weatherManager;
 
@@ -167,6 +170,10 @@ namespace Verse
 
 		public MineStrikeManager mineStrikeManager;
 
+		public StoryState storyState;
+
+		public RoadInfo roadInfo;
+
 		public int Index
 		{
 			get
@@ -195,11 +202,7 @@ namespace Verse
 		{
 			get
 			{
-				if (this.info.parent != null)
-				{
-					return this.info.parent.Faction;
-				}
-				return null;
+				return this.info.parent.Faction;
 			}
 		}
 
@@ -211,11 +214,19 @@ namespace Verse
 			}
 		}
 
+		public IThingHolder ParentHolder
+		{
+			get
+			{
+				return this.info.parent;
+			}
+		}
+
 		public IEnumerable<IntVec3> AllCells
 		{
 			get
 			{
-				for (int z = 0; z < this.Size.x; z++)
+				for (int z = 0; z < this.Size.z; z++)
 				{
 					for (int y = 0; y < this.Size.y; y++)
 					{
@@ -232,7 +243,15 @@ namespace Verse
 		{
 			get
 			{
-				return this.info.parent != null && this.info.parent is FactionBase && this.info.parent.Faction == Faction.OfPlayer;
+				return this.info.parent is FactionBase && this.info.parent.Faction == Faction.OfPlayer;
+			}
+		}
+
+		public bool IsTempIncidentMap
+		{
+			get
+			{
+				return this.info.parent.def.isTempIncidentMapOwner;
 			}
 		}
 
@@ -240,7 +259,7 @@ namespace Verse
 		{
 			get
 			{
-				return this.info.tile;
+				return this.info.Tile;
 			}
 		}
 
@@ -260,6 +279,38 @@ namespace Verse
 			}
 		}
 
+		public StoryState StoryState
+		{
+			get
+			{
+				return this.storyState;
+			}
+		}
+
+		public GameConditionManager GameConditionManager
+		{
+			get
+			{
+				return this.gameConditionManager;
+			}
+		}
+
+		public IncidentTargetType Type
+		{
+			get
+			{
+				if (this.IsPlayerHome)
+				{
+					return IncidentTargetType.MapPlayerHome;
+				}
+				if (this.IsTempIncidentMap)
+				{
+					return IncidentTargetType.MapTempIncident;
+				}
+				return IncidentTargetType.MapMisc;
+			}
+		}
+
 		[DebuggerHidden]
 		public IEnumerator<IntVec3> GetEnumerator()
 		{
@@ -271,6 +322,7 @@ namespace Verse
 
 		public void ConstructComponents()
 		{
+			this.spawnedThings = new ThingOwner<Thing>(this);
 			this.cellIndices = new CellIndices(this);
 			this.listerThings = new ListerThings(ListerThingsUse.Global);
 			this.listerBuildings = new ListerBuildings();
@@ -286,7 +338,7 @@ namespace Verse
 			this.debugDrawer = new DebugCellDrawer();
 			this.passingShipManager = new PassingShipManager(this);
 			this.slotGroupManager = new SlotGroupManager(this);
-			this.mapConditionManager = new MapConditionManager(this);
+			this.gameConditionManager = new GameConditionManager(this);
 			this.weatherManager = new WeatherManager(this);
 			this.zoneManager = new ZoneManager(this);
 			this.resourceCounter = new ResourceCounter(this);
@@ -344,20 +396,15 @@ namespace Verse
 			this.cellsInRandomOrder = new MapCellsInRandomOrder(this);
 			this.rememberedCameraPos = new RememberedCameraPos(this);
 			this.mineStrikeManager = new MineStrikeManager();
-			foreach (Type current in typeof(MapComponent).AllLeafSubclasses())
-			{
-				MapComponent item = (MapComponent)Activator.CreateInstance(current, new object[]
-				{
-					this
-				});
-				this.components.Add(item);
-			}
+			this.storyState = new StoryState(this);
+			this.components.Clear();
+			this.FillComponents();
 		}
 
 		public void ExposeData()
 		{
-			Scribe_Values.LookValue<int>(ref this.uniqueID, "uniqueID", -1, false);
-			Scribe_Deep.LookDeep<MapInfo>(ref this.info, "mapInfo", new object[0]);
+			Scribe_Values.Look<int>(ref this.uniqueID, "uniqueID", -1, false);
+			Scribe_Deep.Look<MapInfo>(ref this.info, "mapInfo", new object[0]);
 			if (Scribe.mode == LoadSaveMode.Saving)
 			{
 				this.compressor = new MapFileCompressor(this);
@@ -367,52 +414,82 @@ namespace Verse
 				HashSet<string> hashSet = new HashSet<string>();
 				if (Scribe.EnterNode("things"))
 				{
-					foreach (Thing current in this.listerThings.AllThings)
+					try
 					{
-						try
+						foreach (Thing current in this.listerThings.AllThings)
 						{
-							if (current.def.isSaveable && !current.IsSaveCompressible())
+							try
 							{
-								if (hashSet.Contains(current.ThingID))
+								if (current.def.isSaveable && !current.IsSaveCompressible())
 								{
-									Log.Error("Saving Thing with already-used ID " + current.ThingID);
+									if (hashSet.Contains(current.ThingID))
+									{
+										Log.Error("Saving Thing with already-used ID " + current.ThingID);
+									}
+									else
+									{
+										hashSet.Add(current.ThingID);
+									}
+									Thing thing = current;
+									Scribe_Deep.Look<Thing>(ref thing, "thing", new object[0]);
 								}
-								else
+							}
+							catch (Exception ex)
+							{
+								Log.Error(string.Concat(new object[]
 								{
-									hashSet.Add(current.ThingID);
-								}
-								Thing thing = current;
-								Scribe_Deep.LookDeep<Thing>(ref thing, "thing", new object[0]);
+									"Exception saving ",
+									current,
+									": ",
+									ex
+								}));
 							}
 						}
-						catch (Exception ex)
-						{
-							Log.Error(string.Concat(new object[]
-							{
-								"Exception saving ",
-								current,
-								": ",
-								ex
-							}));
-						}
 					}
-					Scribe.ExitNode();
+					finally
+					{
+						Scribe.ExitNode();
+					}
+				}
+				else
+				{
+					Log.Error("Could not enter the things node while saving.");
 				}
 				this.compressor = null;
 			}
-			else if (Scribe.mode == LoadSaveMode.LoadingVars)
+			else
 			{
-				this.ConstructComponents();
-				this.regionAndRoomUpdater.Enabled = false;
+				if (Scribe.mode == LoadSaveMode.LoadingVars)
+				{
+					this.ConstructComponents();
+					this.regionAndRoomUpdater.Enabled = false;
+					this.compressor = new MapFileCompressor(this);
+				}
 				this.ExposeComponents();
 				DeepProfiler.Start("Load compressed things");
-				this.compressor = new MapFileCompressor(this);
 				this.compressor.ExposeData();
 				DeepProfiler.End();
 				DeepProfiler.Start("Load non-compressed things");
-				Scribe_Collections.LookList<Thing>(ref this.loadedFullThings, "things", LookMode.Deep, new object[0]);
+				Scribe_Collections.Look<Thing>(ref this.loadedFullThings, "things", LookMode.Deep, new object[0]);
 				DeepProfiler.End();
 			}
+		}
+
+		private void FillComponents()
+		{
+			this.components.RemoveAll((MapComponent component) => component == null);
+			foreach (Type current in typeof(MapComponent).AllSubclassesNonAbstract())
+			{
+				if (this.GetComponent(current) == null)
+				{
+					MapComponent item = (MapComponent)Activator.CreateInstance(current, new object[]
+					{
+						this
+					});
+					this.components.Add(item);
+				}
+			}
+			this.roadInfo = this.GetComponent<RoadInfo>();
 		}
 
 		public void FinalizeLoading()
@@ -432,7 +509,7 @@ namespace Verse
 			{
 				try
 				{
-					GenSpawn.Spawn(current2, current2.Position, this, current2.Rotation);
+					GenSpawn.Spawn(current2, current2.Position, this, current2.Rotation, true);
 				}
 				catch (Exception ex)
 				{
@@ -451,7 +528,6 @@ namespace Verse
 
 		public void FinalizeInit()
 		{
-			this.mapTemperature.UpdateCachedData();
 			this.pathGrid.RecalculateAllPerceivedPathCosts();
 			this.regionAndRoomUpdater.Enabled = true;
 			this.regionAndRoomUpdater.RebuildAllRegionsAndRooms();
@@ -481,89 +557,99 @@ namespace Verse
 			});
 			this.resourceCounter.UpdateResourceCounts();
 			this.wealthWatcher.ForceRecount(true);
+			MapComponentUtility.FinalizeInit(this);
 		}
 
 		private void ExposeComponents()
 		{
-			Scribe_Deep.LookDeep<WeatherManager>(ref this.weatherManager, "weatherManager", new object[]
+			Scribe_Deep.Look<WeatherManager>(ref this.weatherManager, "weatherManager", new object[]
 			{
 				this
 			});
-			Scribe_Deep.LookDeep<ReservationManager>(ref this.reservationManager, "reservationManager", new object[]
+			Scribe_Deep.Look<ReservationManager>(ref this.reservationManager, "reservationManager", new object[]
 			{
 				this
 			});
-			Scribe_Deep.LookDeep<PhysicalInteractionReservationManager>(ref this.physicalInteractionReservationManager, "physicalInteractionReservationManager", new object[0]);
-			Scribe_Deep.LookDeep<DesignationManager>(ref this.designationManager, "designationManager", new object[]
+			Scribe_Deep.Look<PhysicalInteractionReservationManager>(ref this.physicalInteractionReservationManager, "physicalInteractionReservationManager", new object[0]);
+			Scribe_Deep.Look<DesignationManager>(ref this.designationManager, "designationManager", new object[]
 			{
 				this
 			});
-			Scribe_Deep.LookDeep<LordManager>(ref this.lordManager, "lordManager", new object[]
+			Scribe_Deep.Look<LordManager>(ref this.lordManager, "lordManager", new object[]
 			{
 				this
 			});
-			Scribe_Deep.LookDeep<PassingShipManager>(ref this.passingShipManager, "visitorManager", new object[]
+			Scribe_Deep.Look<PassingShipManager>(ref this.passingShipManager, "visitorManager", new object[]
 			{
 				this
 			});
-			Scribe_Deep.LookDeep<MapConditionManager>(ref this.mapConditionManager, "mapConditionManager", new object[]
+			Scribe_Deep.Look<GameConditionManager>(ref this.gameConditionManager, "gameConditionManager", new object[]
 			{
 				this
 			});
-			Scribe_Deep.LookDeep<FogGrid>(ref this.fogGrid, "fogGrid", new object[]
+			Scribe_Deep.Look<FogGrid>(ref this.fogGrid, "fogGrid", new object[]
 			{
 				this
 			});
-			Scribe_Deep.LookDeep<RoofGrid>(ref this.roofGrid, "roofGrid", new object[]
+			Scribe_Deep.Look<RoofGrid>(ref this.roofGrid, "roofGrid", new object[]
 			{
 				this
 			});
-			Scribe_Deep.LookDeep<TerrainGrid>(ref this.terrainGrid, "terrainGrid", new object[]
+			Scribe_Deep.Look<TerrainGrid>(ref this.terrainGrid, "terrainGrid", new object[]
 			{
 				this
 			});
-			Scribe_Deep.LookDeep<ZoneManager>(ref this.zoneManager, "zoneManager", new object[]
+			Scribe_Deep.Look<ZoneManager>(ref this.zoneManager, "zoneManager", new object[]
 			{
 				this
 			});
-			Scribe_Deep.LookDeep<TemperatureCache>(ref this.temperatureCache, "temperatureCache", new object[]
+			Scribe_Deep.Look<TemperatureCache>(ref this.temperatureCache, "temperatureCache", new object[]
 			{
 				this
 			});
-			Scribe_Deep.LookDeep<SnowGrid>(ref this.snowGrid, "snowGrid", new object[]
+			Scribe_Deep.Look<SnowGrid>(ref this.snowGrid, "snowGrid", new object[]
 			{
 				this
 			});
-			Scribe_Deep.LookDeep<AreaManager>(ref this.areaManager, "areaManager", new object[]
+			Scribe_Deep.Look<AreaManager>(ref this.areaManager, "areaManager", new object[]
 			{
 				this
 			});
-			Scribe_Deep.LookDeep<VoluntarilyJoinableLordsStarter>(ref this.lordsStarter, "lordsStarter", new object[]
+			Scribe_Deep.Look<VoluntarilyJoinableLordsStarter>(ref this.lordsStarter, "lordsStarter", new object[]
 			{
 				this
 			});
-			Scribe_Deep.LookDeep<AttackTargetReservationManager>(ref this.attackTargetReservationManager, "attackTargetReservationManager", new object[]
+			Scribe_Deep.Look<AttackTargetReservationManager>(ref this.attackTargetReservationManager, "attackTargetReservationManager", new object[]
 			{
 				this
 			});
-			Scribe_Deep.LookDeep<DeepResourceGrid>(ref this.deepResourceGrid, "deepResourceGrid", new object[]
+			Scribe_Deep.Look<DeepResourceGrid>(ref this.deepResourceGrid, "deepResourceGrid", new object[]
 			{
 				this
 			});
-			Scribe_Deep.LookDeep<WeatherDecider>(ref this.weatherDecider, "weatherDecider", new object[]
+			Scribe_Deep.Look<WeatherDecider>(ref this.weatherDecider, "weatherDecider", new object[]
 			{
 				this
 			});
-			Scribe_Deep.LookDeep<DamageWatcher>(ref this.damageWatcher, "damageWatcher", new object[0]);
-			Scribe_Deep.LookDeep<RememberedCameraPos>(ref this.rememberedCameraPos, "rememberedCameraPos", new object[]
+			Scribe_Deep.Look<DamageWatcher>(ref this.damageWatcher, "damageWatcher", new object[0]);
+			Scribe_Deep.Look<RememberedCameraPos>(ref this.rememberedCameraPos, "rememberedCameraPos", new object[]
 			{
 				this
 			});
-			Scribe_Deep.LookDeep<MineStrikeManager>(ref this.mineStrikeManager, "mineStrikeManager", new object[0]);
-			Scribe_Collections.LookList<MapComponent>(ref this.components, "components", LookMode.Deep, new object[]
+			Scribe_Deep.Look<MineStrikeManager>(ref this.mineStrikeManager, "mineStrikeManager", new object[0]);
+			Scribe_Deep.Look<StoryState>(ref this.storyState, "storyState", new object[]
 			{
 				this
 			});
+			Scribe_Collections.Look<MapComponent>(ref this.components, "components", LookMode.Deep, new object[]
+			{
+				this
+			});
+			this.FillComponents();
+			if (Scribe.mode == LoadSaveMode.PostLoadInit)
+			{
+				BackCompatibility.MapPostLoadInit(this);
+			}
 		}
 
 		public void MapPreTick()
@@ -650,7 +736,7 @@ namespace Verse
 			}
 			try
 			{
-				this.mapConditionManager.MapConditionManagerTick();
+				this.gameConditionManager.GameConditionManagerTick();
 			}
 			catch (Exception ex8)
 			{
@@ -696,17 +782,7 @@ namespace Verse
 			{
 				Log.Error(ex13.ToString());
 			}
-			for (int i = 0; i < this.components.Count; i++)
-			{
-				try
-				{
-					this.components[i].MapComponentTick();
-				}
-				catch (Exception ex14)
-				{
-					Log.Error(ex14.ToString());
-				}
-			}
+			MapComponentUtility.MapComponentTick(this);
 		}
 
 		public void MapUpdate()
@@ -715,7 +791,7 @@ namespace Verse
 			this.skyManager.SkyManagerUpdate();
 			this.powerNetManager.UpdatePowerNetsAndConnections_First();
 			this.regionGrid.UpdateClean();
-			this.regionAndRoomUpdater.RebuildDirtyRegionsAndRooms();
+			this.regionAndRoomUpdater.TryRebuildDirtyRegionsAndRooms();
 			this.glowGrid.GlowGridUpdate_First();
 			this.lordManager.LordManagerUpdate();
 			if (!worldRenderedNow && Find.VisibleMap == this)
@@ -723,9 +799,10 @@ namespace Verse
 				Find.FactionManager.FactionsDebugDrawOnMap();
 				this.mapDrawer.MapMeshDrawerUpdate_First();
 				this.powerNetGrid.DrawDebugPowerNetGrid();
-				this.mapDrawer.DrawMapMesh();
-				this.dynamicDrawManager.DrawDynamicThings();
-				this.mapConditionManager.MapConditionManagerDraw();
+				DoorsDebugDrawer.DrawDebug();
+				this.mapDrawer.DrawMapMesh(SectionLayerPhaseDefOf.Main);
+				this.dynamicDrawManager.DrawDynamicThings(DrawTargetDefOf.Main);
+				this.gameConditionManager.GameConditionManagerDraw();
 				MapEdgeClipDrawer.DrawClippers(this);
 				this.designationManager.DrawDesignations();
 				this.overlayDrawer.DrawAllOverlays();
@@ -739,10 +816,28 @@ namespace Verse
 				Log.Error(ex.ToString());
 			}
 			this.weatherManager.WeatherManagerUpdate();
-			this.deepResourceGrid.DeepResourceGridDraw(false);
-			for (int i = 0; i < this.components.Count; i++)
+			MapComponentUtility.MapComponentUpdate(this);
+		}
+
+		public void GenerateWaterMap()
+		{
+			GL.PushMatrix();
+			GL.LoadIdentity();
+			GL.LoadProjectionMatrix(Matrix4x4.identity);
+			GL.modelview = Matrix4x4.identity;
+			try
 			{
-				this.components[i].MapComponentUpdate();
+				RenderTexture waterLight = GlobalRenderTexture.WaterLight;
+				Graphics.SetRenderTarget(waterLight);
+				GL.Clear(false, true, Color.black);
+				this.mapDrawer.DrawMapMesh(SectionLayerPhaseDefOf.WaterGeneration);
+				this.dynamicDrawManager.DrawDynamicThings(DrawTargetDefOf.WaterHeight);
+				Shader.SetGlobalTexture("_WaterOutputTex", waterLight);
+			}
+			finally
+			{
+				Graphics.SetRenderTarget(null);
+				GL.PopMatrix();
 			}
 		}
 
@@ -750,12 +845,25 @@ namespace Verse
 		{
 			for (int i = 0; i < this.components.Count; i++)
 			{
-				if (this.components[i] is T)
+				T t = this.components[i] as T;
+				if (t != null)
 				{
-					return (T)((object)this.components[i]);
+					return t;
 				}
 			}
 			return (T)((object)null);
+		}
+
+		public MapComponent GetComponent(Type type)
+		{
+			for (int i = 0; i < this.components.Count; i++)
+			{
+				if (type.IsAssignableFrom(this.components[i].GetType()))
+				{
+					return this.components[i];
+				}
+			}
+			return null;
 		}
 
 		public string GetUniqueLoadID()
@@ -765,23 +873,44 @@ namespace Verse
 
 		public override string ToString()
 		{
-			string text = string.Concat(new object[]
-			{
-				"Map ",
-				this.Index,
-				" (ID ",
-				this.uniqueID,
-				")"
-			});
+			string str = "(Map-" + this.uniqueID;
 			if (this.IsPlayerHome)
 			{
-				text += " (player home)";
+				str += "-PlayerHome";
 			}
-			if (this == Find.VisibleMap)
+			return str + ")";
+		}
+
+		public ThingOwner GetDirectlyHeldThings()
+		{
+			return this.spawnedThings;
+		}
+
+		public void GetChildHolders(List<IThingHolder> outChildren)
+		{
+			ThingOwnerUtility.AppendThingHoldersFromThings(outChildren, this.GetDirectlyHeldThings());
+			this.GetNonThingChildHolders(outChildren);
+		}
+
+		public void GetNonThingChildHolders(List<IThingHolder> outChildren)
+		{
+			List<PassingShip> passingShips = this.passingShipManager.passingShips;
+			for (int i = 0; i < passingShips.Count; i++)
 			{
-				text += " (current)";
+				IThingHolder thingHolder = passingShips[i] as IThingHolder;
+				if (thingHolder != null)
+				{
+					outChildren.Add(thingHolder);
+				}
 			}
-			return text;
+			for (int j = 0; j < this.components.Count; j++)
+			{
+				IThingHolder thingHolder2 = this.components[j] as IThingHolder;
+				if (thingHolder2 != null)
+				{
+					outChildren.Add(thingHolder2);
+				}
+			}
 		}
 	}
 }

@@ -98,7 +98,7 @@ namespace Verse.Sound
 				{
 					if (MouseoverSounds.lastUsedCallInd != i && !MouseoverSounds.frameCalls[i].Matches(MouseoverSounds.lastUsedCall) && MouseoverSounds.forceSilenceUntilFrame < Time.frameCount)
 					{
-						MouseoverSounds.frameCalls[i].sound.PlayOneShotOnCamera();
+						MouseoverSounds.frameCalls[i].sound.PlayOneShotOnCamera(null);
 					}
 					MouseoverSounds.lastUsedCallInd = i;
 					MouseoverSounds.lastUsedCall = MouseoverSounds.frameCalls[i];

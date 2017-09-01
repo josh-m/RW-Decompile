@@ -113,8 +113,9 @@ namespace Verse
 		{
 			try
 			{
-				Scribe.InitWriting(fullPath, documentElementName);
+				Scribe.saver.InitSaving(fullPath, documentElementName);
 				saveAction();
+				Scribe.saver.FinalizeSaving();
 			}
 			catch (Exception ex)
 			{
@@ -125,11 +126,10 @@ namespace Verse
 					"\": ",
 					ex
 				}));
-				Scribe.FinalizeWriting();
+				Scribe.saver.ForceStop();
 				SafeSaver.RemoveFileIfExists(fullPath, false);
 				throw;
 			}
-			Scribe.FinalizeWriting();
 		}
 
 		private static void RemoveFileIfExists(string path, bool rethrow)

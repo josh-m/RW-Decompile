@@ -19,8 +19,7 @@ namespace Verse
 		public static void ErrorWhileGeneratingMap(Exception e)
 		{
 			DelayedErrorWindowRequest.Add("ErrorWhileGeneratingMap".Translate(), "ErrorWhileGeneratingMapTitle".Translate());
-			CrossRefResolver.Clear();
-			PostLoadInitter.Clear();
+			Scribe.ForceStop();
 			GenScene.GoToMainMenu();
 		}
 
@@ -38,8 +37,7 @@ namespace Verse
 				});
 			}
 			DelayedErrorWindowRequest.Add(text, "ErrorWhileLoadingMapTitle".Translate());
-			CrossRefResolver.Clear();
-			PostLoadInitter.Clear();
+			Scribe.ForceStop();
 			GenScene.GoToMainMenu();
 		}
 	}

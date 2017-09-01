@@ -35,7 +35,7 @@ namespace RimWorld
 
 		public void ExposeData()
 		{
-			Scribe_Collections.LookList<Trait>(ref this.allTraits, "allTraits", LookMode.Deep, new object[0]);
+			Scribe_Collections.Look<Trait>(ref this.allTraits, "allTraits", LookMode.Deep, new object[0]);
 		}
 
 		public void GainTrait(Trait trait)

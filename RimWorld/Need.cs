@@ -1,3 +1,4 @@
+using RimWorld.Planet;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -86,6 +87,22 @@ namespace RimWorld
 			}
 		}
 
+		protected bool IsFrozen
+		{
+			get
+			{
+				return ThingOwnerUtility.ContentsFrozen(this.pawn.ParentHolder) || (this.def.freezeWhileSleeping && !this.pawn.Awake()) || !this.IsPawnInteractableOrVisible;
+			}
+		}
+
+		private bool IsPawnInteractableOrVisible
+		{
+			get
+			{
+				return this.pawn.SpawnedOrAnyParentSpawned || this.pawn.IsCaravanMember() || PawnUtility.IsTravelingInTransportPodWorldObject(this.pawn);
+			}
+		}
+
 		public Need()
 		{
 		}
@@ -98,8 +115,8 @@ namespace RimWorld
 
 		public virtual void ExposeData()
 		{
-			Scribe_Defs.LookDef<NeedDef>(ref this.def, "def");
-			Scribe_Values.LookValue<float>(ref this.curLevelInt, "curLevel", 0f, false);
+			Scribe_Defs.Look<NeedDef>(ref this.def, "def");
+			Scribe_Values.Look<float>(ref this.curLevelInt, "curLevel", 0f, false);
 		}
 
 		public abstract void NeedInterval();

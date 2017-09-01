@@ -11,6 +11,8 @@ namespace RimWorld
 
 		private DifficultyDef difficulty;
 
+		private Listing_Standard selectedStorytellerInfoListing = new Listing_Standard();
+
 		public override string PageTitle
 		{
 			get
@@ -32,7 +34,7 @@ namespace RimWorld
 		{
 			base.DrawPageTitle(rect);
 			Rect mainRect = base.GetMainRect(rect, 0f, false);
-			StorytellerUI.DrawStorytellerSelectionInterface(mainRect, ref this.storyteller, ref this.difficulty);
+			StorytellerUI.DrawStorytellerSelectionInterface(mainRect, ref this.storyteller, ref this.difficulty, this.selectedStorytellerInfoListing);
 			base.DoBottomButtons(rect, null, null, null, true);
 		}
 

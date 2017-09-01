@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using UnityEngine;
 using Verse;
 
 namespace RimWorld
@@ -15,6 +14,8 @@ namespace RimWorld
 		public int baseIngestTicks = 500;
 
 		public float chairSearchRadius = 25f;
+
+		public bool useEatingSpeedStat = true;
 
 		public ThoughtDef tasteThought;
 
@@ -32,7 +33,7 @@ namespace RimWorld
 
 		public string ingestReportString;
 
-		public Vector3 ingestHoldOffsetStanding = new Vector3(-1000f, -1000f, -1000f);
+		public HoldOffsetSet ingestHoldOffsetStanding;
 
 		public bool ingestHoldUsesTable = true;
 
@@ -99,9 +100,9 @@ namespace RimWorld
 					FoodPreferability.NeverForNutrition
 				});
 			}
-			if (!parentDef.IsCorpse && this.preferability > FoodPreferability.NeverForNutrition && !parentDef.socialPropernessMatters && parentDef.EverHaulable)
+			if (!parentDef.IsCorpse && this.preferability > FoodPreferability.DesperateOnly && !parentDef.socialPropernessMatters && parentDef.EverHaulable)
 			{
-				yield return "ingestible preferability > NeverForNutrition but socialPropernessMatters=false. This will cause bugs wherein wardens will look in prison cells for food to give to prisoners and so will repeatedly pick up and drop food inside the cell.";
+				yield return "ingestible preferability > DesperateOnly but socialPropernessMatters=false. This will cause bugs wherein wardens will look in prison cells for food to give to prisoners and so will repeatedly pick up and drop food inside the cell.";
 			}
 			if (this.joy > 0f && this.joyKind == null)
 			{

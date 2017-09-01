@@ -7,7 +7,7 @@ namespace RimWorld
 {
 	public static class InteractionUtility
 	{
-		private static List<Thought> tmpThoughts = new List<Thought>();
+		private static List<ISocialThought> tmpSocialThoughts = new List<ISocialThought>();
 
 		public static bool CanInitiateInteraction(Pawn pawn)
 		{
@@ -72,17 +72,15 @@ namespace RimWorld
 				thought = null;
 				return false;
 			}
-			pawn.needs.mood.thoughts.GetMainThoughts(InteractionUtility.tmpThoughts);
-			bool result = InteractionUtility.tmpThoughts.Where(delegate(Thought x)
+			pawn.needs.mood.thoughts.GetSocialThoughts(otherPawn, InteractionUtility.tmpSocialThoughts);
+			ISocialThought socialThought;
+			bool result = InteractionUtility.tmpSocialThoughts.Where(delegate(ISocialThought x)
 			{
-				if (x.def == ThoughtDefOf.HadAngeringFight || x.def == ThoughtDefOf.HadCatharticFight)
-				{
-					return false;
-				}
-				ISocialThought socialThought = x as ISocialThought;
-				return socialThought != null && socialThought.OtherPawn() == otherPawn && socialThought.OpinionOffset() < 0f;
-			}).TryRandomElementByWeight((Thought x) => -((ISocialThought)x).OpinionOffset(), out thought);
-			InteractionUtility.tmpThoughts.Clear();
+				ThoughtDef def = ((Thought)x).def;
+				return def != ThoughtDefOf.HadAngeringFight && def != ThoughtDefOf.HadCatharticFight && x.OpinionOffset() < 0f;
+			}).TryRandomElementByWeight((ISocialThought x) => -x.OpinionOffset(), out socialThought);
+			InteractionUtility.tmpSocialThoughts.Clear();
+			thought = (Thought)socialThought;
 			return result;
 		}
 	}

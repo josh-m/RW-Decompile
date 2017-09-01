@@ -14,7 +14,7 @@ namespace Verse
 			}
 			else
 			{
-				HealthUtility.AdjustSeverity(pawn, this.hediff, -0.02f);
+				HealthUtility.AdjustSeverity(pawn, this.hediff, -0.00033333333f);
 			}
 		}
 	}

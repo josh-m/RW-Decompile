@@ -33,16 +33,14 @@ namespace RimWorld
 						}
 					}
 				}
+				return GenText.ToTitleCaseSmart(GrammarResolver.Resolve(rootPack.Rules[0].keyword, rootPack.Rules, null));
 			}
-			else
+			for (int k = 0; k < 150; k++)
 			{
-				for (int k = 0; k < 150; k++)
+				text = GenText.ToTitleCaseSmart(GrammarResolver.Resolve(rootPack.Rules[0].keyword, rootPack.Rules, null));
+				if (validator == null || validator(text))
 				{
-					text = GenText.ToTitleCaseSmart(GrammarResolver.Resolve(rootPack.Rules[0].keyword, rootPack.Rules, null));
-					if (validator == null || validator(text))
-					{
-						return text;
-					}
+					return text;
 				}
 			}
 			Log.Error("Could not get new name.");

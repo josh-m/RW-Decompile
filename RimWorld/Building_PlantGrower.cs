@@ -52,9 +52,9 @@ namespace RimWorld
 			this.plantDefToGrow = this.def.building.defaultPlantToGrow;
 		}
 
-		public override void SpawnSetup(Map map)
+		public override void SpawnSetup(Map map, bool respawningAfterLoad)
 		{
-			base.SpawnSetup(map);
+			base.SpawnSetup(map, respawningAfterLoad);
 			this.compPower = base.GetComp<CompPowerTrader>();
 			PlayerKnowledgeDatabase.KnowledgeDemonstrated(ConceptDefOf.GrowingFood, KnowledgeAmount.Total);
 		}
@@ -62,7 +62,7 @@ namespace RimWorld
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Defs.LookDef<ThingDef>(ref this.plantDefToGrow, "plantDefToGrow");
+			Scribe_Defs.Look<ThingDef>(ref this.plantDefToGrow, "plantDefToGrow");
 		}
 
 		public override void TickRare()
@@ -71,7 +71,7 @@ namespace RimWorld
 			{
 				foreach (Plant current in this.PlantsOnMe)
 				{
-					DamageInfo dinfo = new DamageInfo(DamageDefOf.Rotting, 4, -1f, null, null, null);
+					DamageInfo dinfo = new DamageInfo(DamageDefOf.Rotting, 4, -1f, null, null, null, DamageInfo.SourceCategory.ThingOrUnknown);
 					current.TakeDamage(dinfo);
 				}
 			}
@@ -97,7 +97,7 @@ namespace RimWorld
 				}
 				else
 				{
-					text = text + "\n" + "CannotGrowTooCold".Translate();
+					text = text + "\n" + "CannotGrowBadSeasonTemperature".Translate();
 				}
 			}
 			return text;

@@ -13,6 +13,10 @@ namespace RimWorld
 
 		public float spawnRadius = 3f;
 
+		public float spawnEveryDays = -1f;
+
+		public RotStage? requiredRotStage;
+
 		public CompProperties_SpawnerFilth()
 		{
 			this.compClass = typeof(CompSpawnerFilth);

@@ -27,29 +27,17 @@ namespace Verse
 					float num = 1f;
 					for (int i = 0; i < hediffs.Count; i++)
 					{
-						if (!(hediffs[i] is Hediff_MissingPart) && hediffs[i].Visible)
+						if (!(hediffs[i] is Hediff_MissingPart))
 						{
-							float num2 = hediffs[i].SummaryHealthPercentImpact;
-							if (num2 > 0.95f)
-							{
-								num2 = 0.95f;
-							}
+							float num2 = Mathf.Min(hediffs[i].SummaryHealthPercentImpact, 0.95f);
 							num *= 1f - num2;
 						}
 					}
 					List<Hediff_MissingPart> missingPartsCommonAncestors = this.pawn.health.hediffSet.GetMissingPartsCommonAncestors();
 					for (int j = 0; j < missingPartsCommonAncestors.Count; j++)
 					{
-						Hediff_MissingPart hediff_MissingPart = missingPartsCommonAncestors[j];
-						if (!hediff_MissingPart.Part.def.Activities.NullOrEmpty<Pair<PawnCapacityDef, string>>() || !hediff_MissingPart.Part.parts.NullOrEmpty<BodyPartRecord>())
-						{
-							float num3 = hediff_MissingPart.SummaryHealthPercentImpact;
-							if (num3 > 0.95f)
-							{
-								num3 = 0.95f;
-							}
-							num *= 1f - num3;
-						}
+						float num3 = Mathf.Min(missingPartsCommonAncestors[j].SummaryHealthPercentImpact, 0.95f);
+						num *= 1f - num3;
 					}
 					this.cachedSummaryHealthPercent = Mathf.Clamp(num, 0.05f, 1f);
 					ProfilerThreadCheck.EndSample();

@@ -32,7 +32,7 @@ namespace RimWorld
 					}
 				}
 				num *= num2 / num3;
-				num *= this.map.mapConditionManager.AggregateAnimalDensityFactor();
+				num *= this.map.gameConditionManager.AggregateAnimalDensityFactor();
 				return num;
 			}
 		}
@@ -46,8 +46,8 @@ namespace RimWorld
 				{
 					return 0f;
 				}
-				int num = (int)(10000f / desiredAnimalDensity);
-				return (float)(this.map.Area / num);
+				float num = 10000f / desiredAnimalDensity;
+				return (float)this.map.Area / num;
 			}
 		}
 
@@ -84,17 +84,17 @@ namespace RimWorld
 		public void WildSpawnerTick()
 		{
 			IntVec3 loc;
-			if (Find.TickManager.TicksGame % 1210 == 0 && !this.AnimalEcosystemFull && Rand.Value < 0.0268888883f * this.DesiredAnimalDensity && RCellFinder.TryFindRandomPawnEntryCell(out loc, this.map))
+			if (Find.TickManager.TicksGame % 1210 == 0 && !this.AnimalEcosystemFull && Rand.Value < 0.0268888883f * this.DesiredAnimalDensity && RCellFinder.TryFindRandomPawnEntryCell(out loc, this.map, CellFinder.EdgeRoadChance_Animal, null))
 			{
 				this.SpawnRandomWildAnimalAt(loc);
 			}
-			float num = this.map.mapConditionManager.AggregatePlantDensityFactor();
+			float num = this.map.gameConditionManager.AggregatePlantDensityFactor();
 			if (num > 0.0001f)
 			{
 				int num2 = this.map.Size.x * 2 + this.map.Size.z * 2;
-				int num3 = 650 / (num2 / 100);
-				num3 = GenMath.RoundRandom((float)num3 / num);
-				if (Find.TickManager.TicksGame % num3 == 0)
+				float num3 = 650f / ((float)num2 / 100f);
+				int num4 = GenMath.RoundRandom(num3 / num);
+				if (Find.TickManager.TicksGame % num4 == 0)
 				{
 					this.TrySpawnPlantFromMapEdge();
 				}
@@ -129,7 +129,7 @@ namespace RimWorld
 			int radius = Mathf.CeilToInt(Mathf.Sqrt((float)pawnKindDef.wildSpawn_GroupSizeRange.max));
 			for (int i = 0; i < randomInRange; i++)
 			{
-				IntVec3 loc2 = CellFinder.RandomClosewalkCellNear(loc, this.map, radius);
+				IntVec3 loc2 = CellFinder.RandomClosewalkCellNear(loc, this.map, radius, null);
 				Pawn newThing = PawnGenerator.GeneratePawn(pawnKindDef, null);
 				GenSpawn.Spawn(newThing, loc2, this.map);
 			}
@@ -139,12 +139,12 @@ namespace RimWorld
 		{
 			return string.Concat(new object[]
 			{
-				"CurrentTotalAnimalWeight: ",
+				"DesiredTotalAnimalWeight: ",
+				this.DesiredTotalAnimalWeight,
+				"\nCurrentTotalAnimalWeight: ",
 				this.CurrentTotalAnimalWeight,
 				"\nDesiredAnimalDensity: ",
-				this.DesiredAnimalDensity,
-				"\nDesiredTotalAnimalWeight: ",
-				this.DesiredTotalAnimalWeight
+				this.DesiredAnimalDensity
 			});
 		}
 	}

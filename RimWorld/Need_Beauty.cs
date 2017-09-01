@@ -85,7 +85,7 @@ namespace RimWorld
 
 		public float CurrentInstantBeauty()
 		{
-			if (this.pawn.MapHeld == null)
+			if (!this.pawn.SpawnedOrAnyParentSpawned)
 			{
 				return 0.5f;
 			}

@@ -4,7 +4,7 @@ namespace Verse
 {
 	public static class Scribe_Defs
 	{
-		public static void LookDef<T>(ref T value, string label) where T : Def, new()
+		public static void Look<T>(ref T value, string label) where T : Def, new()
 		{
 			if (Scribe.mode == LoadSaveMode.Saving)
 			{
@@ -17,11 +17,11 @@ namespace Verse
 				{
 					text = value.defName;
 				}
-				Scribe_Values.LookValue<string>(ref text, label, "null", false);
+				Scribe_Values.Look<string>(ref text, label, "null", false);
 			}
 			else if (Scribe.mode == LoadSaveMode.LoadingVars)
 			{
-				value = ScribeExtractor.DefFromNode<T>(Scribe.curParent[label]);
+				value = ScribeExtractor.DefFromNode<T>(Scribe.loader.curXmlParent[label]);
 			}
 		}
 	}

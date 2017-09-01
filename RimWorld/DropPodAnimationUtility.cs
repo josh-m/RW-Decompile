@@ -39,7 +39,7 @@ namespace RimWorld
 			{
 				white.a = Mathf.InverseLerp(200f, 150f, (float)ticksToImpact);
 			}
-			DropPodAnimationUtility.shadowPropertyBlock.SetColor(ShaderIDs.ColorId, white);
+			DropPodAnimationUtility.shadowPropertyBlock.SetColor(ShaderPropertyIDs.Color, white);
 			Matrix4x4 matrix = default(Matrix4x4);
 			matrix.SetTRS(pos, dropPod.Rotation.AsQuat, s);
 			Graphics.DrawMesh(MeshPool.plane10Back, matrix, DropPodAnimationUtility.ShadowMat, 0, null, 0, DropPodAnimationUtility.shadowPropertyBlock);

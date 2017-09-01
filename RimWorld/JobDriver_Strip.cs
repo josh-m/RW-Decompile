@@ -15,7 +15,7 @@ namespace RimWorld
 		{
 			this.FailOnAggroMentalState(TargetIndex.A);
 			this.FailOn(() => !StrippableUtility.CanBeStrippedByColony(this.<>f__this.TargetThingA));
-			yield return Toils_Reserve.Reserve(TargetIndex.A, 1);
+			yield return Toils_Reserve.Reserve(TargetIndex.A, 1, -1, null);
 			Toil gotoThing = new Toil();
 			gotoThing.initAction = delegate
 			{

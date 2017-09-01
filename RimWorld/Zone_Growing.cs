@@ -40,8 +40,8 @@ namespace RimWorld
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Defs.LookDef<ThingDef>(ref this.plantDefToGrow, "plantDefToGrow");
-			Scribe_Values.LookValue<bool>(ref this.allowSow, "allowSow", true, false);
+			Scribe_Defs.Look<ThingDef>(ref this.plantDefToGrow, "plantDefToGrow");
+			Scribe_Values.Look<bool>(ref this.allowSow, "allowSow", true, false);
 		}
 
 		public override string GetInspectString()
@@ -52,24 +52,32 @@ namespace RimWorld
 				IntVec3 c = base.Cells.First<IntVec3>();
 				if (c.UsesOutdoorTemperature(base.Map))
 				{
-					text = text + "OutdoorGrowingPeriod".Translate() + ": " + Zone_Growing.GrowingMonthsDescription(base.Map.Tile);
+					string text2 = text;
+					text = string.Concat(new string[]
+					{
+						text2,
+						"OutdoorGrowingPeriod".Translate(),
+						": ",
+						Zone_Growing.GrowingQuadrumsDescription(base.Map.Tile),
+						"\n"
+					});
 				}
 				if (GenPlant.GrowthSeasonNow(c, base.Map))
 				{
-					text = text + "\n" + "GrowSeasonHereNow".Translate();
+					text += "GrowSeasonHereNow".Translate();
 				}
 				else
 				{
-					text = text + "\n" + "CannotGrowBadSeasonTemperature".Translate();
+					text += "CannotGrowBadSeasonTemperature".Translate();
 				}
 			}
 			return text;
 		}
 
-		public static string GrowingMonthsDescription(int tile)
+		public static string GrowingQuadrumsDescription(int tile)
 		{
-			List<Month> list = GenTemperature.MonthsInTemperatureRange(tile, 10f, 42f);
-			if (list.NullOrEmpty<Month>())
+			List<Twelfth> list = GenTemperature.TwelfthsInAverageTemperatureRange(tile, 10f, 42f);
+			if (list.NullOrEmpty<Twelfth>())
 			{
 				return "NoGrowingPeriod".Translate();
 			}
@@ -80,7 +88,7 @@ namespace RimWorld
 			return "PeriodDays".Translate(new object[]
 			{
 				list.Count * 5
-			}) + " (" + SeasonUtility.SeasonsRangeLabel(list) + ")";
+			}) + " (" + QuadrumUtility.QuadrumsRangeLabel(list) + ")";
 		}
 
 		[DebuggerHidden]

@@ -22,7 +22,7 @@ namespace Verse.AI
 		{
 		}
 
-		public override ThinkResult TryIssueJobPackage(Pawn pawn)
+		public override ThinkResult TryIssueJobPackage(Pawn pawn, JobIssueParams jobParams)
 		{
 			if (this.matchedTrees == null)
 			{
@@ -40,7 +40,7 @@ namespace Verse.AI
 			}
 			for (int i = 0; i < this.matchedTrees.Count; i++)
 			{
-				ThinkResult result = this.matchedTrees[i].thinkRoot.TryIssueJobPackage(pawn);
+				ThinkResult result = this.matchedTrees[i].thinkRoot.TryIssueJobPackage(pawn, jobParams);
 				if (result.IsValid)
 				{
 					return result;

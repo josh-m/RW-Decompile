@@ -82,24 +82,33 @@ namespace Verse
 			if (this.underGrid[num] != null)
 			{
 				this.topGrid[num] = this.underGrid[num];
+				this.underGrid[num] = null;
 			}
-			this.underGrid[num] = null;
 			this.DoTerrainChangedEffects(c);
+		}
+
+		public bool CanRemoveTopLayerAt(IntVec3 c)
+		{
+			int num = this.map.cellIndices.CellToIndex(c);
+			return this.topGrid[num].Removable && this.underGrid[num] != null;
 		}
 
 		private void DoTerrainChangedEffects(IntVec3 c)
 		{
 			this.map.mapDrawer.MapMeshDirty(c, MapMeshFlag.Terrain, true, false);
-			Plant plant = c.GetPlant(this.map);
-			if (plant != null && this.map.fertilityGrid.FertilityAt(c) < plant.def.plant.fertilityMin)
+			List<Thing> thingList = c.GetThingList(this.map);
+			for (int i = thingList.Count - 1; i >= 0; i--)
 			{
-				plant.Destroy(DestroyMode.Vanish);
+				if (thingList[i].def.category == ThingCategory.Plant && this.map.fertilityGrid.FertilityAt(c) < thingList[i].def.plant.fertilityMin)
+				{
+					thingList[i].Destroy(DestroyMode.Vanish);
+				}
 			}
 			this.map.pathGrid.RecalculatePerceivedPathCostAt(c);
-			Room room = RoomQuery.RoomAt(c, this.map);
-			if (room != null)
+			Region regionAt_NoRebuild_InvalidAllowed = this.map.regionGrid.GetRegionAt_NoRebuild_InvalidAllowed(c);
+			if (regionAt_NoRebuild_InvalidAllowed != null && regionAt_NoRebuild_InvalidAllowed.Room != null)
 			{
-				room.Notify_TerrainChanged();
+				regionAt_NoRebuild_InvalidAllowed.Room.Notify_TerrainChanged();
 			}
 		}
 
@@ -120,7 +129,7 @@ namespace Verse
 					return (terrainDef2 == null) ? 0 : terrainDef2.shortHash;
 				}, this.map);
 			}
-			Scribe_Values.LookValue<string>(ref compressedString, label, null, false);
+			Scribe_Values.Look<string>(ref compressedString, label, null, false);
 			if (Scribe.mode == LoadSaveMode.LoadingVars)
 			{
 				Dictionary<ushort, TerrainDef> dictionary = new Dictionary<ushort, TerrainDef>();

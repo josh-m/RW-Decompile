@@ -18,7 +18,7 @@ namespace Verse
 
 		public Faction playerFaction;
 
-		public Month startingMonth = Month.Undefined;
+		public Season startingSeason;
 
 		public bool permadeath;
 

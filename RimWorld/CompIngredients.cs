@@ -14,7 +14,7 @@ namespace RimWorld
 		public override void PostExposeData()
 		{
 			base.PostExposeData();
-			Scribe_Collections.LookList<ThingDef>(ref this.ingredients, "ingredients", LookMode.Def, new object[0]);
+			Scribe_Collections.Look<ThingDef>(ref this.ingredients, "ingredients", LookMode.Def, new object[0]);
 		}
 
 		public void RegisterIngredient(ThingDef def)

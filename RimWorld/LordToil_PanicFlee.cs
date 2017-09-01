@@ -21,7 +21,10 @@ namespace RimWorld
 			for (int i = 0; i < this.lord.ownedPawns.Count; i++)
 			{
 				Pawn pawn = this.lord.ownedPawns[i];
-				pawn.mindState.mentalStateHandler.TryStartMentalState(MentalStateDefOf.PanicFlee, null, false, false, null);
+				if (!this.HasFleeingDuty(pawn) || pawn.mindState.duty.def == DutyDefOf.ExitMapRandom)
+				{
+					pawn.mindState.mentalStateHandler.TryStartMentalState(MentalStateDefOf.PanicFlee, null, false, false, null);
+				}
 			}
 		}
 
@@ -30,8 +33,16 @@ namespace RimWorld
 			for (int i = 0; i < this.lord.ownedPawns.Count; i++)
 			{
 				Pawn pawn = this.lord.ownedPawns[i];
-				pawn.mindState.duty = new PawnDuty(DutyDefOf.ExitMapRandom);
+				if (!this.HasFleeingDuty(pawn))
+				{
+					pawn.mindState.duty = new PawnDuty(DutyDefOf.ExitMapRandom);
+				}
 			}
+		}
+
+		private bool HasFleeingDuty(Pawn pawn)
+		{
+			return pawn.mindState.duty != null && (pawn.mindState.duty.def == DutyDefOf.ExitMapRandom || pawn.mindState.duty.def == DutyDefOf.Steal || pawn.mindState.duty.def == DutyDefOf.Kidnap);
 		}
 	}
 }

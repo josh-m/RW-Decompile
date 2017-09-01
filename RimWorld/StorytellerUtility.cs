@@ -1,7 +1,9 @@
 using RimWorld.Planet;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using UnityEngine;
 using Verse;
 
 namespace RimWorld
@@ -10,9 +12,9 @@ namespace RimWorld
 	{
 		private const float WealthBase = 2000f;
 
-		private const float PointsPer1000Wealth = 11f;
+		private const float PointsPer1000Wealth = 10f;
 
-		private const float PointsPerColonist = 40f;
+		private const float PointsPerColonist = 42f;
 
 		private const float MinMaxSquadCost = 50f;
 
@@ -21,6 +23,8 @@ namespace RimWorld
 		private const float HalveLimitLo = 1000f;
 
 		private const float HalveLimitHi = 2000f;
+
+		private static Dictionary<IIncidentTarget, StoryState> tmpOldStoryStates = new Dictionary<IIncidentTarget, StoryState>();
 
 		public static IncidentParms DefaultParmsNow(StorytellerDef tellerDef, IncidentCategory incCat, IIncidentTarget target)
 		{
@@ -39,18 +43,18 @@ namespace RimWorld
 				{
 					num = 0f;
 				}
-				float num2 = num / 1000f * 11f;
+				float num2 = num / 1000f * 10f;
 				float num3 = 0f;
 				if (map != null)
 				{
-					num3 = (float)map.mapPawns.FreeColonistsCount * 40f;
+					num3 = (float)map.mapPawns.FreeColonistsCount * 42f;
 				}
 				else
 				{
 					Caravan caravan = target as Caravan;
 					if (caravan != null)
 					{
-						num3 = (float)caravan.PawnsListForReading.Count((Pawn x) => x.IsColonist && x.HostFaction == null) * 40f;
+						num3 = (float)caravan.PawnsListForReading.Count((Pawn x) => x.IsColonist && x.HostFaction == null) * 42f;
 					}
 				}
 				incidentParms.points = num2 + num3;
@@ -92,66 +96,134 @@ namespace RimWorld
 					incidentParms.points = 1000f + (incidentParms.points - 1000f) * 0.5f;
 				}
 			}
+			else if (incCat == IncidentCategory.CaravanTarget)
+			{
+				Caravan caravan2 = incidentParms.target as Caravan;
+				IEnumerable<Pawn> playerPawns;
+				if (caravan2 != null)
+				{
+					playerPawns = caravan2.PawnsListForReading;
+				}
+				else
+				{
+					Faction playerFaction = Faction.OfPlayer;
+					playerPawns = from x in ((Map)incidentParms.target).mapPawns.AllPawnsSpawned
+					where x.Faction == playerFaction || x.HostFaction == playerFaction
+					select x;
+				}
+				incidentParms.points = CaravanIncidentUtility.CalculateIncidentPoints(playerPawns);
+			}
 			return incidentParms;
 		}
 
-		public static void DebugLogTestFutureIncidents()
+		public static float AllyIncidentMTBMultiplier()
+		{
+			List<Faction> allFactionsListForReading = Find.FactionManager.AllFactionsListForReading;
+			int num = 0;
+			int num2 = 0;
+			for (int i = 0; i < allFactionsListForReading.Count; i++)
+			{
+				if (!allFactionsListForReading[i].def.hidden && !allFactionsListForReading[i].IsPlayer)
+				{
+					if (allFactionsListForReading[i].def.CanEverBeNonHostile)
+					{
+						num2++;
+					}
+					if (!allFactionsListForReading[i].HostileTo(Faction.OfPlayer))
+					{
+						num++;
+					}
+				}
+			}
+			if (num == 0)
+			{
+				return -1f;
+			}
+			float num3 = (float)num / Mathf.Max((float)num2, 1f);
+			return 1f / num3;
+		}
+
+		public static void DebugLogTestFutureIncidents(bool visibleMapOnly)
 		{
 			int ticksGame = Find.TickManager.TicksGame;
-			StoryState storyState = Find.StoryWatcher.storyState;
 			IncidentQueue incidentQueue = Find.Storyteller.incidentQueue;
-			Find.StoryWatcher.storyState = new StoryState();
+			List<IIncidentTarget> allIncidentTargets = Find.Storyteller.AllIncidentTargets;
+			StorytellerUtility.tmpOldStoryStates.Clear();
+			for (int i = 0; i < allIncidentTargets.Count; i++)
+			{
+				IIncidentTarget incidentTarget = allIncidentTargets[i];
+				StorytellerUtility.tmpOldStoryStates.Add(incidentTarget, incidentTarget.StoryState);
+				new StoryState(incidentTarget).CopyTo(incidentTarget.StoryState);
+			}
 			Find.Storyteller.incidentQueue = new IncidentQueue();
 			StringBuilder stringBuilder = new StringBuilder();
-			stringBuilder.AppendLine("Test future incidents:");
+			stringBuilder.AppendLine("Test future incidents for " + Find.Storyteller.def + ":");
 			int[] array = new int[Find.Storyteller.storytellerComps.Count];
-			for (int i = 0; i < 6000; i++)
+			int num = 0;
+			for (int j = 0; j < 6000; j++)
 			{
 				foreach (FiringIncident current in Find.Storyteller.MakeIncidentsForInterval())
 				{
-					int num = Find.Storyteller.storytellerComps.IndexOf(current.source);
-					array[num]++;
-					stringBuilder.AppendLine(string.Concat(new object[]
+					if (!visibleMapOnly || current.parms.target == Find.VisibleMap)
 					{
-						"M",
-						num,
-						"  ",
-						Find.TickManager.TicksGame.TicksToDays().ToString("F1"),
-						"d    ",
-						current
-					}));
-					Find.StoryWatcher.storyState.Notify_IncidentFired(current);
+						string text = "  ";
+						if (current.def.category == IncidentCategory.ThreatBig)
+						{
+							num++;
+							text = "T";
+						}
+						int num2 = Find.Storyteller.storytellerComps.IndexOf(current.source);
+						array[num2]++;
+						stringBuilder.AppendLine(string.Concat(new object[]
+						{
+							"M",
+							num2,
+							" ",
+							text,
+							" ",
+							Find.TickManager.TicksGame.TicksToDays().ToString("F1"),
+							"d      ",
+							current
+						}));
+						current.parms.target.StoryState.Notify_IncidentFired(current);
+					}
 				}
 				Find.TickManager.DebugSetTicksGame(Find.TickManager.TicksGame + 1000);
 			}
 			stringBuilder.AppendLine();
 			stringBuilder.AppendLine("Incident totals:");
-			for (int j = 0; j < array.Length; j++)
+			for (int k = 0; k < array.Length; k++)
 			{
-				float f = (float)array[j] / (float)array.Sum();
-				float num2 = (float)array[j] / 100f;
-				float num3 = 1f / num2;
+				float f = (float)array[k] / (float)array.Sum();
+				float num3 = (float)array[k] / 100f;
+				float num4 = 1f / num3;
 				stringBuilder.AppendLine(string.Concat(new object[]
 				{
 					"   M",
-					j,
+					k,
 					": ",
-					array[j],
+					array[k],
 					"  (",
 					f.ToStringPercent("F2"),
 					" of total, avg ",
-					num2.ToString("F2"),
+					num3.ToString("F2"),
 					" per day, avg interval ",
-					num3,
+					num4,
 					")"
 				}));
 			}
+			stringBuilder.AppendLine("Total threats: " + num);
+			stringBuilder.AppendLine("Total threats avg per day: " + ((float)num / 100f).ToString("F2"));
 			stringBuilder.AppendLine("Overall: " + array.Sum());
 			stringBuilder.AppendLine("Overall avg per day: " + ((float)array.Sum() / 100f).ToString("F2"));
 			Log.Message(stringBuilder.ToString());
 			Find.TickManager.DebugSetTicksGame(ticksGame);
-			Find.StoryWatcher.storyState = storyState;
 			Find.Storyteller.incidentQueue = incidentQueue;
+			for (int l = 0; l < allIncidentTargets.Count; l++)
+			{
+				StorytellerUtility.tmpOldStoryStates[allIncidentTargets[l]].CopyTo(allIncidentTargets[l].StoryState);
+			}
+			StorytellerUtility.tmpOldStoryStates.Clear();
 		}
 	}
 }

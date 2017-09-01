@@ -42,7 +42,7 @@ namespace RimWorld
 
 		public override void PostExposeData()
 		{
-			Scribe_Values.LookValue<bool>(ref this.forbiddenInt, "forbidden", false, false);
+			Scribe_Values.Look<bool>(ref this.forbiddenInt, "forbidden", false, false);
 		}
 
 		public override void PostDraw()
@@ -79,38 +79,41 @@ namespace RimWorld
 		[DebuggerHidden]
 		public override IEnumerable<Gizmo> CompGetGizmosExtra()
 		{
-			Command_Toggle com = new Command_Toggle();
-			com.hotKey = KeyBindingDefOf.CommandItemForbid;
-			com.icon = TexCommand.Forbidden;
-			com.isActive = (() => !this.<>f__this.forbiddenInt);
-			com.defaultLabel = "CommandForbid".Translate();
-			if (this.forbiddenInt)
+			if (!(this.parent is Building) || this.parent.Faction == Faction.OfPlayer)
 			{
-				com.defaultDesc = "CommandForbiddenDesc".Translate();
-			}
-			else
-			{
-				com.defaultDesc = "CommandNotForbiddenDesc".Translate();
-			}
-			if (this.parent.def.IsDoor)
-			{
-				com.tutorTag = "ToggleForbidden-Door";
-				com.toggleAction = delegate
+				Command_Toggle com = new Command_Toggle();
+				com.hotKey = KeyBindingDefOf.CommandItemForbid;
+				com.icon = TexCommand.Forbidden;
+				com.isActive = (() => !this.<>f__this.forbiddenInt);
+				com.defaultLabel = "CommandForbid".Translate();
+				if (this.forbiddenInt)
 				{
-					this.<>f__this.Forbidden = !this.<>f__this.Forbidden;
-					PlayerKnowledgeDatabase.KnowledgeDemonstrated(ConceptDefOf.ForbiddingDoors, KnowledgeAmount.SpecificInteraction);
-				};
-			}
-			else
-			{
-				com.tutorTag = "ToggleForbidden";
-				com.toggleAction = delegate
+					com.defaultDesc = "CommandForbiddenDesc".Translate();
+				}
+				else
 				{
-					this.<>f__this.Forbidden = !this.<>f__this.Forbidden;
-					PlayerKnowledgeDatabase.KnowledgeDemonstrated(ConceptDefOf.Forbidding, KnowledgeAmount.SpecificInteraction);
-				};
+					com.defaultDesc = "CommandNotForbiddenDesc".Translate();
+				}
+				if (this.parent.def.IsDoor)
+				{
+					com.tutorTag = "ToggleForbidden-Door";
+					com.toggleAction = delegate
+					{
+						this.<>f__this.Forbidden = !this.<>f__this.Forbidden;
+						PlayerKnowledgeDatabase.KnowledgeDemonstrated(ConceptDefOf.ForbiddingDoors, KnowledgeAmount.SpecificInteraction);
+					};
+				}
+				else
+				{
+					com.tutorTag = "ToggleForbidden";
+					com.toggleAction = delegate
+					{
+						this.<>f__this.Forbidden = !this.<>f__this.Forbidden;
+						PlayerKnowledgeDatabase.KnowledgeDemonstrated(ConceptDefOf.Forbidding, KnowledgeAmount.SpecificInteraction);
+					};
+				}
+				yield return com;
 			}
-			yield return com;
 		}
 	}
 }

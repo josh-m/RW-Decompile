@@ -1,11 +1,20 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 using Verse;
 
 namespace RimWorld
 {
 	public static class GenLabel
 	{
+		private class LabelElement
+		{
+			public Thing thingTemplate;
+
+			public int count;
+		}
+
 		private struct LabelRequest : IEquatable<GenLabel.LabelRequest>
 		{
 			public Thing thing;
@@ -72,7 +81,9 @@ namespace RimWorld
 
 		private const int LabelDictionaryMaxCount = 2000;
 
-		private static Dictionary<int, string> labelDictionary = new Dictionary<int, string>();
+		private static Dictionary<GenLabel.LabelRequest, string> labelDictionary = new Dictionary<GenLabel.LabelRequest, string>();
+
+		private static List<GenLabel.LabelElement> tmpThingsLabelElements = new List<GenLabel.LabelElement>();
 
 		public static void ClearCache()
 		{
@@ -81,20 +92,19 @@ namespace RimWorld
 
 		public static string ThingLabel(BuildableDef entDef, ThingDef stuffDef, int stackCount = 1)
 		{
-			GenLabel.LabelRequest labelRequest = default(GenLabel.LabelRequest);
-			labelRequest.entDef = entDef;
-			labelRequest.stuffDef = stuffDef;
-			labelRequest.stackCount = stackCount;
-			int hashCode = labelRequest.GetHashCode();
+			GenLabel.LabelRequest key = default(GenLabel.LabelRequest);
+			key.entDef = entDef;
+			key.stuffDef = stuffDef;
+			key.stackCount = stackCount;
 			string text;
-			if (!GenLabel.labelDictionary.TryGetValue(hashCode, out text))
+			if (!GenLabel.labelDictionary.TryGetValue(key, out text))
 			{
 				if (GenLabel.labelDictionary.Count > 2000)
 				{
 					GenLabel.labelDictionary.Clear();
 				}
 				text = GenLabel.NewThingLabel(entDef, stuffDef, stackCount);
-				GenLabel.labelDictionary.Add(hashCode, text);
+				GenLabel.labelDictionary.Add(key, text);
 			}
 			return text;
 		}
@@ -123,32 +133,31 @@ namespace RimWorld
 
 		public static string ThingLabel(Thing t)
 		{
-			GenLabel.LabelRequest labelRequest = default(GenLabel.LabelRequest);
-			labelRequest.thing = t;
-			labelRequest.entDef = t.def;
-			labelRequest.stuffDef = t.Stuff;
-			labelRequest.stackCount = t.stackCount;
-			t.TryGetQuality(out labelRequest.quality);
+			GenLabel.LabelRequest key = default(GenLabel.LabelRequest);
+			key.thing = t;
+			key.entDef = t.def;
+			key.stuffDef = t.Stuff;
+			key.stackCount = t.stackCount;
+			t.TryGetQuality(out key.quality);
 			if (t.def.useHitPoints)
 			{
-				labelRequest.health = t.HitPoints;
-				labelRequest.maxHealth = t.MaxHitPoints;
+				key.health = t.HitPoints;
+				key.maxHealth = t.MaxHitPoints;
 			}
 			Apparel apparel = t as Apparel;
 			if (apparel != null)
 			{
-				labelRequest.wornByCorpse = apparel.WornByCorpse;
+				key.wornByCorpse = apparel.WornByCorpse;
 			}
-			int hashCode = labelRequest.GetHashCode();
 			string text;
-			if (!GenLabel.labelDictionary.TryGetValue(hashCode, out text))
+			if (!GenLabel.labelDictionary.TryGetValue(key, out text))
 			{
 				if (GenLabel.labelDictionary.Count > 2000)
 				{
 					GenLabel.labelDictionary.Clear();
 				}
 				text = GenLabel.NewThingLabel(t);
-				GenLabel.labelDictionary.Add(hashCode, text);
+				GenLabel.labelDictionary.Add(key, text);
 			}
 			return text;
 		}
@@ -185,6 +194,67 @@ namespace RimWorld
 				text += ")";
 			}
 			return text;
+		}
+
+		public static string ThingsLabel(List<Thing> things)
+		{
+			GenLabel.tmpThingsLabelElements.Clear();
+			foreach (Thing thing in things)
+			{
+				GenLabel.LabelElement labelElement = (from elem in GenLabel.tmpThingsLabelElements
+				where thing.def.stackLimit > 1 && elem.thingTemplate.def == thing.def && elem.thingTemplate.Stuff == thing.Stuff
+				select elem).FirstOrDefault<GenLabel.LabelElement>();
+				if (labelElement != null)
+				{
+					labelElement.count += thing.stackCount;
+				}
+				else
+				{
+					GenLabel.tmpThingsLabelElements.Add(new GenLabel.LabelElement
+					{
+						thingTemplate = thing,
+						count = thing.stackCount
+					});
+				}
+			}
+			GenLabel.tmpThingsLabelElements.Sort(delegate(GenLabel.LabelElement lhs, GenLabel.LabelElement rhs)
+			{
+				int num = TransferableComparer_Category.Compare(lhs.thingTemplate.def, rhs.thingTemplate.def);
+				if (num != 0)
+				{
+					return num;
+				}
+				return lhs.thingTemplate.MarketValue.CompareTo(rhs.thingTemplate.MarketValue);
+			});
+			StringBuilder stringBuilder = new StringBuilder();
+			foreach (GenLabel.LabelElement current in GenLabel.tmpThingsLabelElements)
+			{
+				string str = string.Empty;
+				if (current.thingTemplate.ParentHolder is Pawn_ApparelTracker)
+				{
+					str = " (" + "WornBy".Translate(new object[]
+					{
+						(current.thingTemplate.ParentHolder.ParentHolder as Pawn).LabelShort
+					}) + ")";
+				}
+				else if (current.thingTemplate.ParentHolder is Pawn_EquipmentTracker)
+				{
+					str = " (" + "EquippedBy".Translate(new object[]
+					{
+						(current.thingTemplate.ParentHolder.ParentHolder as Pawn).LabelShort
+					}) + ")";
+				}
+				if (current.count == 1)
+				{
+					stringBuilder.AppendLine("  " + current.thingTemplate.LabelCap + str);
+				}
+				else
+				{
+					stringBuilder.AppendLine("  " + GenLabel.ThingLabel(current.thingTemplate.def, current.thingTemplate.Stuff, current.count).CapitalizeFirst() + str);
+				}
+			}
+			GenLabel.tmpThingsLabelElements.Clear();
+			return stringBuilder.ToString();
 		}
 
 		public static string BestKindLabel(Pawn pawn, bool mustNoteGender = false, bool mustNoteLifeStage = false, bool plural = false)

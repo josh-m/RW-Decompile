@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Verse;
 using Verse.AI;
 
@@ -7,6 +8,24 @@ namespace RimWorld
 	public class JobGiver_PickUpOpportunisticWeapon : ThinkNode_JobGiver
 	{
 		private bool preferBuildingDestroyers;
+
+		private float MinMeleeWeaponDamageThreshold
+		{
+			get
+			{
+				List<VerbProperties> verbs = ThingDefOf.Human.Verbs;
+				float num = 0f;
+				for (int i = 0; i < verbs.Count; i++)
+				{
+					if (verbs[i].linkedBodyPartsGroup == BodyPartGroupDefOf.LeftHand || verbs[i].linkedBodyPartsGroup == BodyPartGroupDefOf.RightHand)
+					{
+						num = (float)verbs[i].meleeDamageBaseAmount;
+						break;
+					}
+				}
+				return num + 3f;
+			}
+		}
 
 		public override ThinkNode DeepCopy(bool resolve = true)
 		{
@@ -33,11 +52,11 @@ namespace RimWorld
 			{
 				return null;
 			}
-			if (pawn.GetRegion() == null)
+			if (pawn.GetRegion(RegionType.Set_Passable) == null)
 			{
 				return null;
 			}
-			Thing thing = GenClosest.ClosestThingReachable(pawn.Position, pawn.Map, ThingRequest.ForGroup(ThingRequestGroup.Weapon), PathEndMode.OnCell, TraverseParms.For(pawn, Danger.Deadly, TraverseMode.ByPawn, false), 8f, (Thing x) => pawn.CanReserve(x, 1) && this.ShouldEquip(x, pawn), null, 15, false);
+			Thing thing = GenClosest.ClosestThingReachable(pawn.Position, pawn.Map, ThingRequest.ForGroup(ThingRequestGroup.Weapon), PathEndMode.OnCell, TraverseParms.For(pawn, Danger.Deadly, TraverseMode.ByPawn, false), 8f, (Thing x) => pawn.CanReserve(x, 1, -1, null, false) && this.ShouldEquip(x, pawn), null, 0, 15, false, RegionType.Set_Passable, false);
 			if (thing != null)
 			{
 				return new Job(JobDefOf.Equip, thing);
@@ -74,6 +93,10 @@ namespace RimWorld
 		private int GetWeaponScore(Thing wep)
 		{
 			if (wep == null)
+			{
+				return 0;
+			}
+			if (wep.def.IsMeleeWeapon && wep.GetStatValue(StatDefOf.MeleeWeapon_DamageAmount, true) < this.MinMeleeWeaponDamageThreshold)
 			{
 				return 0;
 			}

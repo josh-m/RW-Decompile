@@ -14,7 +14,7 @@ namespace RimWorld
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Values.LookValue<CellRect>(ref this.stockpileRect, "stockpileRect", default(CellRect), false);
+			Scribe_Values.Look<CellRect>(ref this.stockpileRect, "stockpileRect", default(CellRect), false);
 			if (Scribe.mode == LoadSaveMode.PostLoadInit)
 			{
 				this.RecacheCells();

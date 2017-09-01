@@ -13,12 +13,26 @@ namespace Verse.AI
 			return thinkNode_Tagger;
 		}
 
-		public override ThinkResult TryIssueJobPackage(Pawn pawn)
+		public override float GetPriority(Pawn pawn)
 		{
-			ThinkResult result = base.TryIssueJobPackage(pawn);
-			if (result.IsValid)
+			if (this.priority >= 0f)
 			{
-				pawn.mindState.lastJobTag = this.tagToGive;
+				return this.priority;
+			}
+			if (this.subNodes.Any<ThinkNode>())
+			{
+				return this.subNodes[0].GetPriority(pawn);
+			}
+			Log.ErrorOnce("ThinkNode_PrioritySorter has child node which didn't give a priority: " + this, this.GetHashCode());
+			return 0f;
+		}
+
+		public override ThinkResult TryIssueJobPackage(Pawn pawn, JobIssueParams jobParams)
+		{
+			ThinkResult result = base.TryIssueJobPackage(pawn, jobParams);
+			if (result.IsValid && !result.Tag.HasValue)
+			{
+				result = new ThinkResult(result.Job, result.SourceNode, new JobTag?(this.tagToGive));
 			}
 			return result;
 		}

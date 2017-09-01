@@ -15,7 +15,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return new Rect(0f, (float)(UI.screenHeight - 35) - ((MainTabWindow_Architect)MainTabDefOf.Architect.Window).WinHeight - 230f, 200f, 230f);
+				return new Rect(0f, (float)(UI.screenHeight - 35) - ((MainTabWindow_Architect)MainButtonDefOf.Architect.TabWindow).WinHeight - 230f, 200f, 230f);
 			}
 		}
 
@@ -33,7 +33,7 @@ namespace RimWorld
 		{
 			if (Find.DesignatorManager.SelectedDesignator != null)
 			{
-				Find.DesignatorManager.SelectedDesignator.DoExtraGuiControls(0f, (float)(UI.screenHeight - 35) - ((MainTabWindow_Architect)MainTabDefOf.Architect.Window).WinHeight - 230f);
+				Find.DesignatorManager.SelectedDesignator.DoExtraGuiControls(0f, (float)(UI.screenHeight - 35) - ((MainTabWindow_Architect)MainButtonDefOf.Architect.TabWindow).WinHeight - 230f);
 			}
 			float startX = 210f;
 			Gizmo selectedDesignator;

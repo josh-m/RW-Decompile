@@ -28,8 +28,9 @@ namespace Verse.AI
 
 		protected override Job TryGiveJob(Pawn pawn)
 		{
+			bool nextMoveOrderIsWait = pawn.mindState.nextMoveOrderIsWait;
 			pawn.mindState.nextMoveOrderIsWait = !pawn.mindState.nextMoveOrderIsWait;
-			if (pawn.mindState.nextMoveOrderIsWait)
+			if (nextMoveOrderIsWait)
 			{
 				return new Job(JobDefOf.WaitWander)
 				{
@@ -39,6 +40,7 @@ namespace Verse.AI
 			IntVec3 exactWanderDest = this.GetExactWanderDest(pawn);
 			if (!exactWanderDest.IsValid)
 			{
+				pawn.mindState.nextMoveOrderIsWait = false;
 				return null;
 			}
 			pawn.Map.pawnDestinationManager.ReserveDestinationFor(pawn, exactWanderDest);

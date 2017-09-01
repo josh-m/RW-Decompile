@@ -15,7 +15,7 @@ namespace RimWorld
 				current.PostLoad();
 				DefDatabase<ThingDef>.Add(current);
 			}
-			CrossRefLoader.ResolveAllWantedCrossReferences(FailMode.Silent);
+			DirectXmlCrossRefLoader.ResolveAllWantedCrossReferences(FailMode.Silent);
 			foreach (TerrainDef current2 in TerrainDefGenerator_Stone.ImpliedTerrainDefs())
 			{
 				current2.PostLoad();
@@ -25,6 +25,11 @@ namespace RimWorld
 			{
 				current3.PostLoad();
 				DefDatabase<RecipeDef>.Add(current3);
+			}
+			foreach (PawnColumnDef current4 in PawnColumnDefgenerator.ImpliedPawnColumnDefs())
+			{
+				current4.PostLoad();
+				DefDatabase<PawnColumnDef>.Add(current4);
 			}
 		}
 

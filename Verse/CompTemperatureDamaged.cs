@@ -20,9 +20,9 @@ namespace Verse
 
 		public override void CompTickRare()
 		{
-			if (!this.Props.safeTemperatureRange.Includes(this.parent.Position.GetTemperature(this.parent.Map)))
+			if (!this.Props.safeTemperatureRange.Includes(this.parent.AmbientTemperature))
 			{
-				this.parent.TakeDamage(new DamageInfo(DamageDefOf.Deterioration, this.Props.damagePerTickRare, -1f, null, null, null));
+				this.parent.TakeDamage(new DamageInfo(DamageDefOf.Deterioration, this.Props.damagePerTickRare, -1f, null, null, null, DamageInfo.SourceCategory.ThingOrUnknown));
 			}
 		}
 	}

@@ -8,7 +8,11 @@ namespace Verse
 	{
 		private const float InteractivityDelay = 0.5f;
 
+		private const float TitleHeight = 36f;
+
 		private Vector2 scrollPosition;
+
+		protected string title;
 
 		protected DiaNode curNode;
 
@@ -36,8 +40,9 @@ namespace Verse
 			}
 		}
 
-		public Dialog_NodeTree(DiaNode nodeRoot, bool delayInteractivity = false, bool radioMode = false)
+		public Dialog_NodeTree(DiaNode nodeRoot, bool delayInteractivity = false, bool radioMode = false, string title = null)
 		{
+			this.title = title;
 			this.GotoNode(nodeRoot);
 			this.forcePause = true;
 			this.absorbInputAroundWindow = true;
@@ -83,7 +88,18 @@ namespace Verse
 
 		public override void DoWindowContents(Rect inRect)
 		{
-			this.DrawNode(inRect.AtZero());
+			Rect rect = inRect.AtZero();
+			if (this.title != null)
+			{
+				Rect rect2 = rect;
+				rect2.height = 36f;
+				rect.yMin += 53f;
+				Widgets.DrawTitleBG(rect2);
+				rect2.xMin += 9f;
+				rect2.yMin += 5f;
+				Widgets.Label(rect2, this.title);
+			}
+			this.DrawNode(rect);
 		}
 
 		protected void DrawNode(Rect rect)
@@ -94,15 +110,12 @@ namespace Verse
 			}
 			GUI.BeginGroup(rect);
 			Text.Font = GameFont.Small;
-			if (Event.current.type == EventType.Repaint)
-			{
-				Rect outRect = new Rect(0f, 0f, rect.width, rect.height - this.optTotalHeight);
-				float width = rect.width - 16f;
-				Rect rect2 = new Rect(0f, 0f, width, Text.CalcHeight(this.curNode.text, width));
-				Widgets.BeginScrollView(outRect, ref this.scrollPosition, rect2);
-				Widgets.Label(rect2, this.curNode.text);
-				Widgets.EndScrollView();
-			}
+			Rect outRect = new Rect(0f, 0f, rect.width, rect.height - this.optTotalHeight);
+			float width = rect.width - 16f;
+			Rect rect2 = new Rect(0f, 0f, width, Text.CalcHeight(this.curNode.text, width));
+			Widgets.BeginScrollView(outRect, ref this.scrollPosition, rect2, true);
+			Widgets.Label(rect2, this.curNode.text);
+			Widgets.EndScrollView();
 			float num = rect.height - this.optTotalHeight;
 			float num2 = 0f;
 			for (int i = 0; i < this.curNode.options.Count; i++)

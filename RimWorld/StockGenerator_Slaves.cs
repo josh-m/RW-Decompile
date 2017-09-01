@@ -9,9 +9,9 @@ namespace RimWorld
 	public class StockGenerator_Slaves : StockGenerator
 	{
 		[DebuggerHidden]
-		public override IEnumerable<Thing> GenerateThings(Map forMap)
+		public override IEnumerable<Thing> GenerateThings(int forTile)
 		{
-			if (Rand.Value < Find.Storyteller.intenderPopulation.PopulationIntent)
+			if (Rand.Value <= Find.Storyteller.intenderPopulation.PopulationIntent)
 			{
 				int count = this.countRange.RandomInRange;
 				for (int i = 0; i < count; i++)
@@ -23,7 +23,7 @@ namespace RimWorld
 					{
 						break;
 					}
-					PawnGenerationRequest request = new PawnGenerationRequest(PawnKindDefOf.Slave, slaveFaction, PawnGenerationContext.NonPlayer, forMap, false, false, false, false, true, false, 1f, !this.trader.orbital, true, true, null, null, null, null, null, null);
+					PawnGenerationRequest request = new PawnGenerationRequest(PawnKindDefOf.Slave, slaveFaction, PawnGenerationContext.NonPlayer, forTile, false, false, false, false, true, false, 1f, !this.trader.orbital, true, true, false, false, null, null, null, null, null, null);
 					yield return PawnGenerator.GeneratePawn(request);
 				}
 			}

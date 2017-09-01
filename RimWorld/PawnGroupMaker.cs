@@ -30,16 +30,7 @@ namespace RimWorld
 
 		public IEnumerable<Pawn> GeneratePawns(PawnGroupMakerParms parms, bool errorOnZeroResults = true)
 		{
-			IEnumerable<Pawn> result;
-			try
-			{
-				result = this.kindDef.Worker.GeneratePawns(parms, this, errorOnZeroResults);
-			}
-			finally
-			{
-				PawnGroupMakerUtility.ClearPawnsBeingGeneratedNow();
-			}
-			return result;
+			return this.kindDef.Worker.GeneratePawns(parms, this, errorOnZeroResults);
 		}
 
 		public bool CanGenerateFrom(PawnGroupMakerParms parms)

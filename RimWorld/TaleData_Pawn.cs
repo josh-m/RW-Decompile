@@ -23,13 +23,13 @@ namespace RimWorld
 
 		public override void ExposeData()
 		{
-			Scribe_References.LookReference<Pawn>(ref this.pawn, "pawn", true);
-			Scribe_Defs.LookDef<PawnKindDef>(ref this.kind, "kind");
-			Scribe_References.LookReference<Faction>(ref this.faction, "faction", false);
-			Scribe_Values.LookValue<Gender>(ref this.gender, "gender", Gender.None, false);
-			Scribe_Deep.LookDeep<Name>(ref this.name, "name", new object[0]);
-			Scribe_Defs.LookDef<ThingDef>(ref this.primaryEquipment, "peq");
-			Scribe_Defs.LookDef<ThingDef>(ref this.notableApparel, "app");
+			Scribe_References.Look<Pawn>(ref this.pawn, "pawn", true);
+			Scribe_Defs.Look<PawnKindDef>(ref this.kind, "kind");
+			Scribe_References.Look<Faction>(ref this.faction, "faction", false);
+			Scribe_Values.Look<Gender>(ref this.gender, "gender", Gender.None, false);
+			Scribe_Deep.Look<Name>(ref this.name, "name", new object[0]);
+			Scribe_Defs.Look<ThingDef>(ref this.primaryEquipment, "peq");
+			Scribe_Defs.Look<ThingDef>(ref this.notableApparel, "app");
 		}
 
 		public override IEnumerable<Rule> GetRules(string prefix)

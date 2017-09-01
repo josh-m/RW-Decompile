@@ -39,15 +39,15 @@ namespace Verse
 		public override void CompExposeData()
 		{
 			base.CompExposeData();
-			Scribe_Deep.LookDeep<VerbTracker>(ref this.verbTracker, "verbTracker", new object[]
+			Scribe_Deep.Look<VerbTracker>(ref this.verbTracker, "verbTracker", new object[]
 			{
 				this
 			});
 		}
 
-		public override void CompPostTick()
+		public override void CompPostTick(ref float severityAdjustment)
 		{
-			base.CompPostTick();
+			base.CompPostTick(ref severityAdjustment);
 			this.verbTracker.VerbsTick();
 		}
 	}

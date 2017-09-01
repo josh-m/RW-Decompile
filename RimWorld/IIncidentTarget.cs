@@ -9,5 +9,20 @@ namespace RimWorld
 		{
 			get;
 		}
+
+		StoryState StoryState
+		{
+			get;
+		}
+
+		GameConditionManager GameConditionManager
+		{
+			get;
+		}
+
+		IncidentTargetType Type
+		{
+			get;
+		}
 	}
 }

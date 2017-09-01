@@ -1,6 +1,7 @@
 using RimWorld.Planet;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using UnityEngine;
 using Verse;
 
@@ -12,9 +13,13 @@ namespace RimWorld
 
 		public bool canHaveFaction = true;
 
-		public bool impassable;
+		public bool saved = true;
 
-		public int pathCost;
+		public List<WorldObjectCompProperties> comps = new List<WorldObjectCompProperties>();
+
+		public bool allowCaravanIncidentsWhichGenerateMap;
+
+		public bool isTempIncidentMapOwner;
 
 		public bool selectable = true;
 
@@ -45,14 +50,6 @@ namespace RimWorld
 
 		public bool blockExitGridUntilBattleIsWon;
 
-		public bool AffectsPathing
-		{
-			get
-			{
-				return this.impassable || this.pathCost != 0;
-			}
-		}
-
 		public Material Material
 		{
 			get
@@ -63,7 +60,7 @@ namespace RimWorld
 				}
 				if (this.material == null)
 				{
-					this.material = MaterialPool.MatFrom(this.texture, ShaderDatabase.WorldOverlayTransparentLit);
+					this.material = MaterialPool.MatFrom(this.texture, ShaderDatabase.WorldOverlayTransparentLit, WorldMaterials.WorldObjectRenderQueue);
 				}
 				return this.material;
 			}
@@ -110,6 +107,31 @@ namespace RimWorld
 							ex
 						}));
 					}
+				}
+			}
+		}
+
+		public override void ResolveReferences()
+		{
+			base.ResolveReferences();
+			for (int i = 0; i < this.comps.Count; i++)
+			{
+				this.comps[i].ResolveReferences(this);
+			}
+		}
+
+		[DebuggerHidden]
+		public override IEnumerable<string> ConfigErrors()
+		{
+			foreach (string e in base.ConfigErrors())
+			{
+				yield return e;
+			}
+			for (int i = 0; i < this.comps.Count; i++)
+			{
+				foreach (string e2 in this.comps[i].ConfigErrors(this))
+				{
+					yield return e2;
 				}
 			}
 		}

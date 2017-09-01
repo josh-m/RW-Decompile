@@ -66,9 +66,9 @@ namespace RimWorld
 
 		public void ExposeData()
 		{
-			Scribe_Values.LookValue<IntVec3>(ref this.loc, "loc", default(IntVec3), false);
-			Scribe_References.LookReference<Map>(ref this.map, "map", false);
-			Scribe_Values.LookValue<int>(ref this.tick, "tick", 0, false);
+			Scribe_Values.Look<IntVec3>(ref this.loc, "loc", default(IntVec3), false);
+			Scribe_References.Look<Map>(ref this.map, "map", false);
+			Scribe_Values.Look<int>(ref this.tick, "tick", 0, false);
 		}
 	}
 }

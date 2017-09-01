@@ -16,7 +16,7 @@ namespace RimWorld
 				Pawn pawn = req.Thing as Pawn;
 				if (pawn != null && pawn.ageTracker != null)
 				{
-					val *= this.AgeMultiplier(pawn.ageTracker.AgeBiologicalYears);
+					val *= this.AgeMultiplier(pawn);
 				}
 			}
 		}
@@ -31,15 +31,15 @@ namespace RimWorld
 					return "StatsReport_AgeMultiplier".Translate(new object[]
 					{
 						pawn.ageTracker.AgeBiologicalYears
-					}) + ": x" + this.AgeMultiplier(pawn.ageTracker.AgeBiologicalYears).ToStringPercent();
+					}) + ": x" + this.AgeMultiplier(pawn).ToStringPercent();
 				}
 			}
 			return null;
 		}
 
-		private float AgeMultiplier(int age)
+		private float AgeMultiplier(Pawn pawn)
 		{
-			return this.curve.Evaluate((float)age);
+			return this.curve.Evaluate((float)pawn.ageTracker.AgeBiologicalYears / pawn.RaceProps.lifeExpectancy);
 		}
 
 		[DebuggerHidden]

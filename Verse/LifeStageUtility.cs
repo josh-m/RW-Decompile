@@ -15,7 +15,7 @@ namespace Verse
 			{
 				return;
 			}
-			if (pawn.MapHeld == null)
+			if (!pawn.SpawnedOrAnyParentSpawned)
 			{
 				return;
 			}

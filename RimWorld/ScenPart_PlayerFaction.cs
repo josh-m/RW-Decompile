@@ -15,7 +15,7 @@ namespace RimWorld
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Defs.LookDef<FactionDef>(ref this.factionDef, "factionDef");
+			Scribe_Defs.Look<FactionDef>(ref this.factionDef, "factionDef");
 		}
 
 		public override void DoEditInterface(Listing_ScenEdit listing)
@@ -53,20 +53,20 @@ namespace RimWorld
 			select fd).RandomElement<FactionDef>();
 		}
 
-		public override void PostWorldLoad()
+		public override void PostWorldGenerate()
 		{
 			Find.GameInitData.playerFaction = FactionGenerator.NewGeneratedFaction(this.factionDef);
+			Find.FactionManager.Add(Find.GameInitData.playerFaction);
+			FactionGenerator.EnsureRequiredEnemies(Find.GameInitData.playerFaction);
 		}
 
 		public override void PreMapGenerate()
 		{
-			Find.FactionManager.Add(Find.GameInitData.playerFaction);
 			FactionBase factionBase = (FactionBase)WorldObjectMaker.MakeWorldObject(WorldObjectDefOf.FactionBase);
 			factionBase.SetFaction(Find.GameInitData.playerFaction);
 			factionBase.Tile = Find.GameInitData.startingTile;
 			factionBase.Name = FactionBaseNameGenerator.GenerateFactionBaseName(factionBase);
 			Find.WorldObjects.Add(factionBase);
-			FactionGenerator.EnsureRequiredEnemies(Find.GameInitData.playerFaction);
 		}
 
 		public override void PostGameStart()

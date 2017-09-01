@@ -65,7 +65,7 @@ namespace RimWorld
 			Find.LetterStack.ReceiveLetter("LetterLabelAnimalSelfTame".Translate(new object[]
 			{
 				GenLabel.BestKindLabel(pawn, false, false, false)
-			}).CapitalizeFirst(), text2, LetterType.Good, pawn, null);
+			}).CapitalizeFirst(), text2, LetterDefOf.Good, pawn, null);
 			return true;
 		}
 	}

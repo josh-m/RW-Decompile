@@ -78,7 +78,7 @@ namespace RimWorld
 			Rect viewRect = new Rect(0f, 0f, inRect.width - 16f, height);
 			Rect outRect = new Rect(inRect.AtZero());
 			outRect.height -= this.bottomAreaHeight;
-			Widgets.BeginScrollView(outRect, ref this.scrollPosition, viewRect);
+			Widgets.BeginScrollView(outRect, ref this.scrollPosition, viewRect, true);
 			float num2 = 0f;
 			int num3 = 0;
 			foreach (SaveFileInfo current in this.files)
@@ -153,7 +153,7 @@ namespace RimWorld
 			}
 			if (!this.focusedNameArea)
 			{
-				GUI.FocusControl("MapNameField");
+				UI.FocusControl("MapNameField", this);
 				this.focusedNameArea = true;
 			}
 			Rect rect3 = new Rect(420f, y, rect.width - 400f - 20f, 35f);

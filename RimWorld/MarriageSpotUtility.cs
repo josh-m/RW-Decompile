@@ -46,7 +46,7 @@ namespace RimWorld
 					return false;
 				}
 			}
-			if (cell.GetDangerFor(firstFiance) != Danger.None)
+			if (cell.GetDangerFor(firstFiance, firstFiance.Map) != Danger.None)
 			{
 				if (outFailReason != null)
 				{
@@ -57,7 +57,7 @@ namespace RimWorld
 				}
 				return false;
 			}
-			if (cell.GetDangerFor(secondFiance) != Danger.None)
+			if (cell.GetDangerFor(secondFiance, secondFiance.Map) != Danger.None)
 			{
 				if (outFailReason != null)
 				{
@@ -90,7 +90,7 @@ namespace RimWorld
 				}
 				return false;
 			}
-			if (!firstFiance.CanReserve(cell, 1) || !secondFiance.CanReserve(cell, 1))
+			if (!firstFiance.CanReserve(cell, 1, -1, null, false) || !secondFiance.CanReserve(cell, 1, -1, null, false))
 			{
 				if (outFailReason != null)
 				{
@@ -122,7 +122,7 @@ namespace RimWorld
 			}
 			if (!firstFiance.IsPrisoner && !secondFiance.IsPrisoner)
 			{
-				Room room = cell.GetRoom(firstFiance.Map);
+				Room room = cell.GetRoom(firstFiance.Map, RegionType.Set_Passable);
 				if (room != null && room.isPrisonCell)
 				{
 					if (outFailReason != null)

@@ -7,15 +7,7 @@ namespace Verse
 	{
 		private Map map;
 
-		public Thing[] innerArray;
-
-		public Thing[] InnerArray
-		{
-			get
-			{
-				return this.innerArray;
-			}
-		}
+		private Thing[] innerArray;
 
 		public Thing this[int index]
 		{

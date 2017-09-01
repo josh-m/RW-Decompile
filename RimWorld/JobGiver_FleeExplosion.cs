@@ -28,7 +28,7 @@ namespace RimWorld
 				return null;
 			}
 			Thing knownExploder = pawn.mindState.knownExploder;
-			if ((pawn.Position - knownExploder.Position).LengthHorizontalSquared > 81f)
+			if ((float)(pawn.Position - knownExploder.Position).LengthHorizontalSquared > 81f)
 			{
 				return null;
 			}

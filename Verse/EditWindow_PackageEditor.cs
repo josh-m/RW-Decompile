@@ -92,20 +92,21 @@ namespace Verse
 			Rect rect3 = new Rect(0f, num, selectorInner.width, selectorInner.height - num);
 			Rect rect4 = new Rect(0f, 0f, rect3.width - 16f, this.viewHeight);
 			Widgets.DrawMenuSection(rect3, true);
-			Widgets.BeginScrollView(rect3, ref this.scrollPosition, rect4);
+			Widgets.BeginScrollView(rect3, ref this.scrollPosition, rect4, true);
 			Rect rect5 = rect4.ContractedBy(4f);
 			rect5.height = 9999f;
-			Listing_Standard listing_Standard = new Listing_Standard(rect5);
+			Listing_Standard listing_Standard = new Listing_Standard();
+			listing_Standard.Begin(rect5);
 			Text.Font = GameFont.Tiny;
 			if (this.curPackage == null)
 			{
-				listing_Standard.Label("(no package open)");
+				listing_Standard.Label("(no package open)", -1f);
 			}
 			else
 			{
 				if (this.curPackage.defs.Count == 0)
 				{
-					listing_Standard.Label("(package is empty)");
+					listing_Standard.Label("(package is empty)", -1f);
 				}
 				else
 				{

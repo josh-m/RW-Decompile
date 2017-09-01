@@ -6,7 +6,7 @@ namespace Verse
 	{
 		public abstract float ValuePerUnitOf(ThingDef t);
 
-		public abstract string BillRequirementsDescription(IngredientCount ing);
+		public abstract string BillRequirementsDescription(RecipeDef r, IngredientCount ing);
 
 		public virtual string ExtraDescriptionLine(RecipeDef r)
 		{

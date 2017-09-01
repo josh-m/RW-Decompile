@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using UnityEngine;
 using Verse;
 using Verse.Profile;
 
@@ -29,10 +30,18 @@ namespace RimWorld
 			}
 		}
 
+		private int AutosaveIntervalTicks
+		{
+			get
+			{
+				return Mathf.RoundToInt(this.AutosaveIntervalDays * 60000f);
+			}
+		}
+
 		public void AutosaverTick()
 		{
 			this.ticksSinceSave++;
-			if (this.ticksSinceSave / 60000 > 0 && (float)(this.ticksSinceSave / 60000) % this.AutosaveIntervalDays == 0f)
+			if (this.ticksSinceSave >= this.AutosaveIntervalTicks)
 			{
 				LongEventHandler.QueueLongEvent(new Action(this.DoAutosave), "Autosaving", false, null);
 				this.ticksSinceSave = 0;

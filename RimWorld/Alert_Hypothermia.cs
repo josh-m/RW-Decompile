@@ -14,9 +14,9 @@ namespace RimWorld
 			{
 				foreach (Pawn p in PawnsFinder.AllMaps_FreeColonistsSpawned)
 				{
-					if (!p.SafeTemperatureRange().Includes(GenTemperature.GetTemperatureForCell(p.Position, p.Map)))
+					if (!p.SafeTemperatureRange().Includes(p.AmbientTemperature))
 					{
-						Hediff hypo = p.health.hediffSet.GetFirstHediffOfDef(HediffDefOf.Hypothermia);
+						Hediff hypo = p.health.hediffSet.GetFirstHediffOfDef(HediffDefOf.Hypothermia, false);
 						if (hypo != null && hypo.CurStageIndex >= 3)
 						{
 							yield return p;

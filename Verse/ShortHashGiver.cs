@@ -30,12 +30,12 @@ namespace Verse
 				list.SortBy((Def d) => d.defName);
 				for (int i = 0; i < list.Count; i++)
 				{
-					ShortHashGiver.GiveShortHash(list[i]);
+					ShortHashGiver.GiveShortHash(list[i], current);
 				}
 			}
 		}
 
-		private static void GiveShortHash(Def def)
+		private static void GiveShortHash(Def def, Type defType)
 		{
 			if (def.shortHash != 0)
 			{
@@ -43,10 +43,10 @@ namespace Verse
 				return;
 			}
 			HashSet<ushort> hashSet;
-			if (!ShortHashGiver.takenHashesPerDeftype.TryGetValue(def.GetType(), out hashSet))
+			if (!ShortHashGiver.takenHashesPerDeftype.TryGetValue(defType, out hashSet))
 			{
 				hashSet = new HashSet<ushort>();
-				ShortHashGiver.takenHashesPerDeftype.Add(def.GetType(), hashSet);
+				ShortHashGiver.takenHashesPerDeftype.Add(defType, hashSet);
 			}
 			ushort num = (ushort)(GenText.StableStringHash(def.defName) % 65535);
 			int num2 = 0;

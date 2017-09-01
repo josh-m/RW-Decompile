@@ -11,6 +11,14 @@ namespace Verse
 
 		public CompProperties props;
 
+		public IThingHolder ParentHolder
+		{
+			get
+			{
+				return this.parent.ParentHolder;
+			}
+		}
+
 		public virtual void Initialize(CompProperties props)
 		{
 			this.props = props;
@@ -24,7 +32,7 @@ namespace Verse
 		{
 		}
 
-		public virtual void PostSpawnSetup()
+		public virtual void PostSpawnSetup(bool respawningAfterLoad)
 		{
 		}
 
@@ -112,6 +120,10 @@ namespace Verse
 		}
 
 		public virtual void PostIngested(Pawn ingester)
+		{
+		}
+
+		public virtual void PostPostGeneratedForTrader(TraderKindDef trader, int forTile, Faction forFaction)
 		{
 		}
 

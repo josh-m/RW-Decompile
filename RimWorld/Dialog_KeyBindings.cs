@@ -49,15 +49,12 @@ namespace RimWorld
 			KeyBindingCategoryDef keyBindingCategoryDef = null;
 			foreach (KeyBindingDef current in DefDatabase<KeyBindingDef>.AllDefs)
 			{
-				if (!current.devModeOnly || Prefs.DevMode)
+				if (keyBindingCategoryDef != current.category)
 				{
-					if (keyBindingCategoryDef != current.category)
-					{
-						keyBindingCategoryDef = current.category;
-						this.contentHeight += 44f;
-					}
-					this.contentHeight += 34f;
+					keyBindingCategoryDef = current.category;
+					this.contentHeight += 44f;
 				}
+				this.contentHeight += 34f;
 			}
 		}
 
@@ -78,7 +75,7 @@ namespace RimWorld
 			Text.Font = GameFont.Small;
 			Rect outRect = new Rect(0f, rect.height, position.width, position.height - rect.height);
 			Rect rect2 = new Rect(0f, 0f, outRect.width - 16f, this.contentHeight);
-			Widgets.BeginScrollView(outRect, ref this.scrollPosition, rect2);
+			Widgets.BeginScrollView(outRect, ref this.scrollPosition, rect2, true);
 			float num3 = 0f;
 			KeyBindingCategoryDef keyBindingCategoryDef = null;
 			Dialog_KeyBindings.keyBindingsWorkingList.Clear();
@@ -87,17 +84,14 @@ namespace RimWorld
 			for (int i = 0; i < Dialog_KeyBindings.keyBindingsWorkingList.Count; i++)
 			{
 				KeyBindingDef keyBindingDef = Dialog_KeyBindings.keyBindingsWorkingList[i];
-				if (!keyBindingDef.devModeOnly || Prefs.DevMode)
+				if (keyBindingCategoryDef != keyBindingDef.category)
 				{
-					if (keyBindingCategoryDef != keyBindingDef.category)
-					{
-						bool skipDrawing = num3 - this.scrollPosition.y + 40f < 0f || num3 - this.scrollPosition.y > outRect.height;
-						keyBindingCategoryDef = keyBindingDef.category;
-						this.DrawCategoryEntry(keyBindingCategoryDef, rect2.width, ref num3, skipDrawing);
-					}
-					bool skipDrawing2 = num3 - this.scrollPosition.y + 34f < 0f || num3 - this.scrollPosition.y > outRect.height;
-					this.DrawKeyEntry(keyBindingDef, rect2, ref num3, skipDrawing2);
+					bool skipDrawing = num3 - this.scrollPosition.y + 40f < 0f || num3 - this.scrollPosition.y > outRect.height;
+					keyBindingCategoryDef = keyBindingDef.category;
+					this.DrawCategoryEntry(keyBindingCategoryDef, rect2.width, ref num3, skipDrawing);
 				}
+				bool skipDrawing2 = num3 - this.scrollPosition.y + 34f < 0f || num3 - this.scrollPosition.y > outRect.height;
+				this.DrawKeyEntry(keyBindingDef, rect2, ref num3, skipDrawing2);
 			}
 			Widgets.EndScrollView();
 			GUI.EndGroup();
@@ -113,7 +107,7 @@ namespace RimWorld
 			{
 				this.keyPrefsData.ResetToDefaults();
 				this.keyPrefsData.ErrorCheck();
-				SoundDefOf.TickLow.PlayOneShotOnCamera();
+				SoundDefOf.TickLow.PlayOneShotOnCamera(null);
 				Event.current.Use();
 			}
 			if (Widgets.ButtonText(rect4, "CancelButton".Translate(), true, false, true))

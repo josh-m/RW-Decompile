@@ -1,5 +1,7 @@
+using RimWorld;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Verse
 {
@@ -8,6 +10,8 @@ namespace Verse
 		private Map map;
 
 		private HashSet<Thing> drawThings = new HashSet<Thing>();
+
+		private HashSet<Thing> drawThingsWater = new HashSet<Thing>();
 
 		private bool drawingNow;
 
@@ -24,7 +28,14 @@ namespace Verse
 				{
 					Log.Warning("Cannot register drawable " + t + " while drawing is in progress. Things shouldn't be spawned in Draw methods.");
 				}
-				this.drawThings.Add(t);
+				if (t.DrawLayer == DrawTargetDefOf.WaterHeight)
+				{
+					this.drawThingsWater.Add(t);
+				}
+				else
+				{
+					this.drawThings.Add(t);
+				}
 			}
 		}
 
@@ -37,16 +48,18 @@ namespace Verse
 					Log.Warning("Cannot deregister drawable " + t + " while drawing is in progress. Things shouldn't be despawned in Draw methods.");
 				}
 				this.drawThings.Remove(t);
+				this.drawThingsWater.Remove(t);
 			}
 		}
 
-		public void DrawDynamicThings()
+		public void DrawDynamicThings(DrawTargetDef drawTarget)
 		{
 			if (!DebugViewSettings.drawThingsDynamic)
 			{
 				return;
 			}
 			this.drawingNow = true;
+			HashSet<Thing> hashSet = (drawTarget != DrawTargetDefOf.WaterHeight) ? this.drawThings : this.drawThingsWater;
 			try
 			{
 				bool[] fogGrid = this.map.fogGrid.fogGrid;
@@ -54,7 +67,7 @@ namespace Verse
 				cellRect.ClipInsideMap(this.map);
 				cellRect = cellRect.ExpandedBy(1);
 				CellIndices cellIndices = this.map.cellIndices;
-				foreach (Thing current in this.drawThings)
+				foreach (Thing current in hashSet)
 				{
 					IntVec3 position = current.Position;
 					if (cellRect.Contains(position) || current.def.drawOffscreen)
@@ -91,7 +104,7 @@ namespace Verse
 
 		public void LogDynamicDrawThings()
 		{
-			Log.Message(DebugLogsUtility.ThingListToUniqueCountString(this.drawThings));
+			Log.Message(DebugLogsUtility.ThingListToUniqueCountString(this.drawThings.Concat(this.drawThingsWater)));
 		}
 	}
 }

@@ -111,7 +111,7 @@ namespace RimWorld
 				List<Thing> list = ingester.Map.listerThings.ThingsOfDef(JoyGiver_SocialRelax.nurseableDrugs[j]);
 				if (list.Count > 0)
 				{
-					Predicate<Thing> validator = (Thing t) => ingester.CanReserve(t, 1) && !t.IsForbidden(ingester);
+					Predicate<Thing> validator = (Thing t) => ingester.CanReserve(t, 1, -1, null, false) && !t.IsForbidden(ingester);
 					ingestible = GenClosest.ClosestThing_Global_Reachable(center, ingester.Map, list, PathEndMode.OnCell, TraverseParms.For(ingester, Danger.Deadly, TraverseMode.ByPawn, false), 40f, validator, null);
 					if (ingestible != null)
 					{
@@ -129,7 +129,7 @@ namespace RimWorld
 			{
 				IntVec3 c = table.RandomAdjacentCellCardinal();
 				Building edifice = c.GetEdifice(table.Map);
-				if (edifice != null && edifice.def.building.isSittable && sitter.CanReserve(edifice, 1))
+				if (edifice != null && edifice.def.building.isSittable && sitter.CanReserve(edifice, 1, -1, null, false))
 				{
 					chair = edifice;
 					return true;
@@ -145,7 +145,7 @@ namespace RimWorld
 			{
 				IntVec3 c = center + JoyGiver_SocialRelax.RadialPatternMiddleOutward[i];
 				Building edifice = c.GetEdifice(sitter.Map);
-				if (edifice != null && edifice.def.building.isSittable && sitter.CanReserve(edifice, 1) && !edifice.IsForbidden(sitter) && GenSight.LineOfSight(center, edifice.Position, sitter.Map, true))
+				if (edifice != null && edifice.def.building.isSittable && sitter.CanReserve(edifice, 1, -1, null, false) && !edifice.IsForbidden(sitter) && GenSight.LineOfSight(center, edifice.Position, sitter.Map, true, null, 0, 0))
 				{
 					chair = edifice;
 					return true;
@@ -160,7 +160,7 @@ namespace RimWorld
 			for (int i = 0; i < 30; i++)
 			{
 				IntVec3 intVec = center + GenRadial.RadialPattern[Rand.Range(1, JoyGiver_SocialRelax.NumRadiusCells)];
-				if (sitter.CanReserveAndReach(intVec, PathEndMode.OnCell, Danger.None, 1) && intVec.GetEdifice(sitter.Map) == null && GenSight.LineOfSight(center, intVec, sitter.Map, true))
+				if (sitter.CanReserveAndReach(intVec, PathEndMode.OnCell, Danger.None, 1, -1, null, false) && intVec.GetEdifice(sitter.Map) == null && GenSight.LineOfSight(center, intVec, sitter.Map, true, null, 0, 0))
 				{
 					result = intVec;
 					return true;

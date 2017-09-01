@@ -2,6 +2,7 @@ using RimWorld.Planet;
 using System;
 using System.Collections.Generic;
 using Verse;
+using Verse.AI;
 
 namespace RimWorld
 {
@@ -35,10 +36,7 @@ namespace RimWorld
 			{
 				ScreenshotModeHandler screenshotMode = Find.UIRoot.screenshotMode;
 				this.thingOverlays.ThingOverlaysOnGUI();
-				for (int i = 0; i < Find.VisibleMap.components.Count; i++)
-				{
-					Find.VisibleMap.components[i].MapComponentOnGUI();
-				}
+				MapComponentUtility.MapComponentOnGUI(Find.VisibleMap);
 				if (!screenshotMode.FiltersCurrentEvent)
 				{
 					this.colonistBar.ColonistBarOnGUI();
@@ -51,11 +49,19 @@ namespace RimWorld
 				{
 					FoodUtility.DebugFoodSearchFromMouse_OnGUI();
 				}
+				if (DebugViewSettings.drawAttackTargetScores)
+				{
+					AttackTargetFinder.DebugDrawAttackTargetScores_OnGUI();
+				}
 				if (!screenshotMode.FiltersCurrentEvent)
 				{
 					this.globalControls.GlobalControlsOnGUI();
 					this.resourceReadout.ResourceReadoutOnGUI();
 				}
+			}
+			else
+			{
+				this.targeter.StopTargeting();
 			}
 		}
 
@@ -117,6 +123,7 @@ namespace RimWorld
 				this.designatorManager.DesignatorManagerUpdate();
 				Find.VisibleMap.roofGrid.RoofGridUpdate();
 				Find.VisibleMap.exitMapGrid.ExitMapGridUpdate();
+				Find.VisibleMap.deepResourceGrid.DeepResourceGridUpdate();
 				if (DebugViewSettings.drawPawnDebug)
 				{
 					Find.VisibleMap.pawnDestinationManager.DebugDrawDestinations();
@@ -130,6 +137,11 @@ namespace RimWorld
 				{
 					FoodUtility.DebugDrawPredatorFoodSource();
 				}
+				if (DebugViewSettings.drawAttackTargetScores)
+				{
+					AttackTargetFinder.DebugDrawAttackTargetScores_Update();
+				}
+				MiscDebugDrawer.DebugDrawInteractionCells();
 				Find.VisibleMap.debugDrawer.DebugDrawerUpdate();
 				Find.VisibleMap.regionGrid.DebugDraw();
 				InfestationCellFinder.DebugDraw();
@@ -139,19 +151,18 @@ namespace RimWorld
 
 		public void Notify_SwitchedMap()
 		{
-			this.designatorManager.ResetSelectedDesignator();
+			this.designatorManager.Deselect();
 			this.reverseDesignatorDatabase.Reinit();
 			this.selector.ClearSelection();
+			this.selector.dragBox.active = false;
 			this.targeter.StopTargeting();
-			MainTabDef openTab = Find.MainTabsRoot.OpenTab;
-			bool everOpened = ((MainTabWindow_World)MainTabDefOf.World.Window).everOpened;
-			List<MainTabDef> allDefsListForReading = DefDatabase<MainTabDef>.AllDefsListForReading;
+			MainButtonDef openTab = Find.MainTabsRoot.OpenTab;
+			List<MainButtonDef> allDefsListForReading = DefDatabase<MainButtonDef>.AllDefsListForReading;
 			for (int i = 0; i < allDefsListForReading.Count; i++)
 			{
 				allDefsListForReading[i].Notify_SwitchedMap();
 			}
-			((MainTabWindow_World)MainTabDefOf.World.Window).everOpened = everOpened;
-			if (openTab != null && openTab != MainTabDefOf.Inspect)
+			if (openTab != null && openTab != MainButtonDefOf.Inspect)
 			{
 				Find.MainTabsRoot.SetCurrentTab(openTab, false);
 			}

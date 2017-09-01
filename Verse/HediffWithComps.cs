@@ -124,9 +124,14 @@ namespace Verse
 			base.PostTick();
 			if (this.comps != null)
 			{
+				float num = 0f;
 				for (int i = 0; i < this.comps.Count; i++)
 				{
-					this.comps[i].CompPostTick();
+					this.comps[i].CompPostTick(ref num);
+				}
+				if (num != 0f)
+				{
+					this.Severity += num;
 				}
 			}
 		}

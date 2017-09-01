@@ -14,7 +14,7 @@ namespace RimWorld
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Values.LookValue<int>(ref this.groupID, "groupID", 0, false);
+			Scribe_Values.Look<int>(ref this.groupID, "groupID", 0, false);
 		}
 
 		public override void PreApplyDamage(DamageInfo dinfo, out bool absorbed)
@@ -27,7 +27,7 @@ namespace RimWorld
 			if (!this.contentsKnown && this.innerContainer.Count > 0 && dinfo.Def.harmsHealth && dinfo.Instigator != null && dinfo.Instigator.Faction != null)
 			{
 				bool flag = false;
-				foreach (Thing current in this.innerContainer)
+				foreach (Thing current in ((IEnumerable<Thing>)this.innerContainer))
 				{
 					Pawn pawn = current as Pawn;
 					if (pawn != null)

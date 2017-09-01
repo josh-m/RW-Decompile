@@ -135,16 +135,10 @@ namespace RimWorld
 			}
 		}
 
-		public override void TickRare()
-		{
-			base.TickRare();
-			this.innerContainer.ThingContainerTickRare();
-		}
-
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Deep.LookDeep<StorageSettings>(ref this.storageSettings, "storageSettings", new object[]
+			Scribe_Deep.Look<StorageSettings>(ref this.storageSettings, "storageSettings", new object[]
 			{
 				this
 			});
@@ -167,7 +161,7 @@ namespace RimWorld
 				comp.JustCreatedBy(worker);
 				comp.InitializeArt(this.Corpse.InnerPawn);
 			}
-			base.Map.mapDrawer.MapMeshDirty(base.Position, MapMeshFlag.Buildings);
+			base.Map.mapDrawer.MapMeshDirty(base.Position, MapMeshFlag.Things | MapMeshFlag.Buildings);
 		}
 
 		public override bool Accepts(Thing thing)

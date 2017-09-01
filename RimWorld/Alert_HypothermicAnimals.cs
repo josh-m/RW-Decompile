@@ -13,7 +13,7 @@ namespace RimWorld
 			get
 			{
 				return from p in PawnsFinder.AllMaps_Spawned
-				where p.RaceProps.Animal && p.Faction == null && p.health.hediffSet.GetFirstHediffOfDef(HediffDefOf.Hypothermia) != null
+				where p.RaceProps.Animal && p.Faction == null && p.health.hediffSet.GetFirstHediffOfDef(HediffDefOf.Hypothermia, false) != null
 				select p;
 			}
 		}

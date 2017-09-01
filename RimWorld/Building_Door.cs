@@ -27,13 +27,13 @@ namespace RimWorld
 
 		private bool holdOpenInt;
 
-		private bool freePassageUntilClosed;
-
 		private int lastFriendlyTouchTick = -9999;
 
 		protected int ticksUntilClose;
 
 		protected int visualTicksOpen;
+
+		private bool freePassageWhenClearedReachabilityCache;
 
 		public bool Open
 		{
@@ -55,7 +55,50 @@ namespace RimWorld
 		{
 			get
 			{
-				return this.openInt && (this.holdOpenInt || this.freePassageUntilClosed || this.BlockedOpenLongTerm);
+				return this.openInt && (this.holdOpenInt || !this.WillCloseSoon);
+			}
+		}
+
+		public bool WillCloseSoon
+		{
+			get
+			{
+				if (!base.Spawned)
+				{
+					return true;
+				}
+				if (!this.openInt)
+				{
+					return true;
+				}
+				if (this.holdOpenInt)
+				{
+					return false;
+				}
+				if (this.ticksUntilClose > 0 && this.ticksUntilClose <= 60 && this.CanCloseAutomatically)
+				{
+					return true;
+				}
+				for (int i = 0; i < 5; i++)
+				{
+					IntVec3 c = base.Position + GenAdj.CardinalDirectionsAndInside[i];
+					if (c.InBounds(base.Map))
+					{
+						List<Thing> thingList = c.GetThingList(base.Map);
+						for (int j = 0; j < thingList.Count; j++)
+						{
+							Pawn pawn = thingList[j] as Pawn;
+							if (pawn != null && !pawn.HostileTo(this))
+							{
+								if (pawn.Position == base.Position || (pawn.pather.MovingNow && pawn.pather.nextCell == base.Position))
+								{
+									return true;
+								}
+							}
+						}
+					}
+				}
+				return false;
 			}
 		}
 
@@ -68,23 +111,6 @@ namespace RimWorld
 				{
 					Thing thing = thingList[i];
 					if (thing.def.category == ThingCategory.Item || thing.def.category == ThingCategory.Pawn)
-					{
-						return true;
-					}
-				}
-				return false;
-			}
-		}
-
-		public bool BlockedOpenLongTerm
-		{
-			get
-			{
-				List<Thing> thingList = base.Position.GetThingList(base.Map);
-				for (int i = 0; i < thingList.Count; i++)
-				{
-					Thing thing = thingList[i];
-					if (thing.def.category == ThingCategory.Item)
 					{
 						return true;
 					}
@@ -122,11 +148,35 @@ namespace RimWorld
 			}
 		}
 
+		private bool CanCloseAutomatically
+		{
+			get
+			{
+				return this.DoorPowerOn && this.FriendlyTouchedRecently;
+			}
+		}
+
+		private bool FriendlyTouchedRecently
+		{
+			get
+			{
+				return Find.TickManager.TicksGame < this.lastFriendlyTouchTick + 200;
+			}
+		}
+
 		private int VisualTicksToOpen
 		{
 			get
 			{
 				return this.TicksToOpenNow;
+			}
+		}
+
+		public override bool FireBulwark
+		{
+			get
+			{
+				return !this.Open && base.FireBulwark;
 			}
 		}
 
@@ -136,28 +186,52 @@ namespace RimWorld
 			this.powerComp = base.GetComp<CompPowerTrader>();
 		}
 
-		public override void SpawnSetup(Map map)
+		public override void SpawnSetup(Map map, bool respawningAfterLoad)
 		{
-			base.SpawnSetup(map);
+			base.SpawnSetup(map, respawningAfterLoad);
 			this.powerComp = base.GetComp<CompPowerTrader>();
+			this.ClearReachabilityCache(map);
+			if (this.BlockedOpenMomentary)
+			{
+				this.DoorOpen(60);
+			}
+		}
+
+		public override void DeSpawn()
+		{
+			Map map = base.Map;
+			base.DeSpawn();
+			this.ClearReachabilityCache(map);
 		}
 
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Values.LookValue<bool>(ref this.openInt, "open", false, false);
-			Scribe_Values.LookValue<bool>(ref this.holdOpenInt, "holdOpen", false, false);
-			Scribe_Values.LookValue<bool>(ref this.freePassageUntilClosed, "freePassageUntilClosed", false, false);
-			Scribe_Values.LookValue<int>(ref this.lastFriendlyTouchTick, "lastFriendlyTouchTick", 0, false);
+			Scribe_Values.Look<bool>(ref this.openInt, "open", false, false);
+			Scribe_Values.Look<bool>(ref this.holdOpenInt, "holdOpen", false, false);
+			Scribe_Values.Look<int>(ref this.lastFriendlyTouchTick, "lastFriendlyTouchTick", 0, false);
 			if (Scribe.mode == LoadSaveMode.LoadingVars && this.openInt)
 			{
 				this.visualTicksOpen = this.VisualTicksToOpen;
 			}
 		}
 
+		public override void SetFaction(Faction newFaction, Pawn recruiter = null)
+		{
+			base.SetFaction(newFaction, recruiter);
+			if (base.Spawned)
+			{
+				this.ClearReachabilityCache(base.Map);
+			}
+		}
+
 		public override void Tick()
 		{
 			base.Tick();
+			if (this.FreePassage != this.freePassageWhenClearedReachabilityCache)
+			{
+				this.ClearReachabilityCache(base.Map);
+			}
 			if (!this.openInt)
 			{
 				if (this.visualTicksOpen > 0)
@@ -184,7 +258,7 @@ namespace RimWorld
 					else
 					{
 						this.ticksUntilClose--;
-						if (this.DoorPowerOn && this.ticksUntilClose <= 0 && Find.TickManager.TicksGame < this.lastFriendlyTouchTick + 200)
+						if (this.ticksUntilClose <= 0 && this.CanCloseAutomatically)
 						{
 							this.DoorTryClose();
 						}
@@ -204,9 +278,13 @@ namespace RimWorld
 
 		public void Notify_PawnApproaching(Pawn p)
 		{
-			if (this.PawnCanOpen(p) && !this.SlowsPawns)
+			if (this.PawnCanOpen(p))
 			{
-				this.DoorOpen(300);
+				base.Map.fogGrid.Notify_PawnEnteringDoor(this, p);
+				if (!this.SlowsPawns)
+				{
+					this.DoorOpen(300);
+				}
 			}
 		}
 
@@ -232,14 +310,6 @@ namespace RimWorld
 			if (!this.openInt)
 			{
 				this.openInt = true;
-				if (this.holdOpenInt)
-				{
-					this.freePassageUntilClosed = true;
-					if (base.Spawned)
-					{
-						base.Map.reachability.ClearCache();
-					}
-				}
 				if (this.DoorPowerOn)
 				{
 					this.def.building.soundDoorOpenPowered.PlayOneShot(new TargetInfo(base.Position, base.Map, false));
@@ -258,14 +328,6 @@ namespace RimWorld
 				return;
 			}
 			this.openInt = false;
-			if (this.freePassageUntilClosed)
-			{
-				this.freePassageUntilClosed = false;
-				if (base.Spawned)
-				{
-					base.Map.reachability.ClearCache();
-				}
-			}
 			if (this.DoorPowerOn)
 			{
 				this.def.building.soundDoorClosePowered.PlayOneShot(new TargetInfo(base.Position, base.Map, false));
@@ -365,11 +427,6 @@ namespace RimWorld
 			return Rot4.East;
 		}
 
-		public void Notify_ItemSpawnedOrDespawnedOnTop(Thing t)
-		{
-			base.Map.reachability.ClearCache();
-		}
-
 		[DebuggerHidden]
 		public override IEnumerable<Gizmo> GetGizmos()
 		{
@@ -389,14 +446,15 @@ namespace RimWorld
 					toggleAction = delegate
 					{
 						this.<>f__this.holdOpenInt = !this.<>f__this.holdOpenInt;
-						this.<>f__this.Map.reachability.ClearCache();
-						if (this.<>f__this.Open && this.<>f__this.holdOpenInt)
-						{
-							this.<>f__this.freePassageUntilClosed = true;
-						}
 					}
 				};
 			}
+		}
+
+		private void ClearReachabilityCache(Map map)
+		{
+			map.reachability.ClearCache();
+			this.freePassageWhenClearedReachabilityCache = this.FreePassage;
 		}
 	}
 }

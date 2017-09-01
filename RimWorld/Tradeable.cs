@@ -5,21 +5,19 @@ using Verse;
 
 namespace RimWorld
 {
-	public class Tradeable : ITransferable
+	public class Tradeable : Transferable
 	{
 		private const float MinimumBuyPrice = 0.5f;
 
 		private const float MinimumSellPrice = 0.01f;
 
-		private const float PriceFactorBuy_Global = 1.25f;
+		public const float PriceFactorBuy_Global = 1.5f;
 
-		private const float PriceFactorSell_Global = 0.75f;
+		public const float PriceFactorSell_Global = 0.5f;
 
 		public List<Thing> thingsColony = new List<Thing>();
 
 		public List<Thing> thingsTrader = new List<Thing>();
-
-		public int countToDrop;
 
 		public string editBuffer;
 
@@ -61,7 +59,7 @@ namespace RimWorld
 			}
 		}
 
-		public virtual string Label
+		public override string Label
 		{
 			get
 			{
@@ -77,7 +75,7 @@ namespace RimWorld
 			}
 		}
 
-		public bool Interactive
+		public override bool Interactive
 		{
 			get
 			{
@@ -93,7 +91,7 @@ namespace RimWorld
 			}
 		}
 
-		public bool HasAnyThing
+		public override bool HasAnyThing
 		{
 			get
 			{
@@ -101,7 +99,7 @@ namespace RimWorld
 			}
 		}
 
-		public Thing AnyThing
+		public override Thing AnyThing
 		{
 			get
 			{
@@ -118,7 +116,7 @@ namespace RimWorld
 			}
 		}
 
-		public virtual ThingDef ThingDef
+		public override ThingDef ThingDef
 		{
 			get
 			{
@@ -138,7 +136,7 @@ namespace RimWorld
 			}
 		}
 
-		public virtual string TipDescription
+		public override string TipDescription
 		{
 			get
 			{
@@ -150,11 +148,11 @@ namespace RimWorld
 		{
 			get
 			{
-				if (this.countToDrop == 0)
+				if (base.CountToTransfer == 0)
 				{
 					return TradeAction.None;
 				}
-				if (this.countToDrop > 0)
+				if (base.CountToTransfer > 0)
 				{
 					return TradeAction.PlayerBuys;
 				}
@@ -170,31 +168,7 @@ namespace RimWorld
 			}
 		}
 
-		public int CountToTransfer
-		{
-			get
-			{
-				return this.countToDrop;
-			}
-			set
-			{
-				this.countToDrop = value;
-			}
-		}
-
-		public string EditBuffer
-		{
-			get
-			{
-				return this.editBuffer;
-			}
-			set
-			{
-				this.editBuffer = value;
-			}
-		}
-
-		public TransferablePositiveCountDirection PositiveCountDirection
+		public override TransferablePositiveCountDirection PositiveCountDirection
 		{
 			get
 			{
@@ -210,7 +184,7 @@ namespace RimWorld
 				{
 					return 0f;
 				}
-				return (float)this.countToDrop * this.GetPriceFor(this.ActionToDo);
+				return (float)base.CountToTransfer * this.GetPriceFor(this.ActionToDo);
 			}
 		}
 
@@ -272,7 +246,7 @@ namespace RimWorld
 			this.priceFactorSell_TraderPriceType = this.PriceTypeFor(TradeAction.PlayerSells).PriceMultiplier();
 			this.priceGain_PlayerNegotiator = TradeSession.playerNegotiator.GetStatValue(StatDefOf.TradePriceImprovement, true);
 			this.priceGain_FactionBase = TradeSession.trader.TradePriceImprovementOffsetForPlayer;
-			this.pricePlayerBuy = this.BaseMarketValue * 1.25f * this.priceFactorBuy_TraderPriceType * (1f + Find.Storyteller.difficulty.tradePriceFactorLoss);
+			this.pricePlayerBuy = this.BaseMarketValue * 1.5f * this.priceFactorBuy_TraderPriceType * (1f + Find.Storyteller.difficulty.tradePriceFactorLoss);
 			this.pricePlayerBuy *= 1f - this.priceGain_PlayerNegotiator - this.priceGain_FactionBase;
 			this.pricePlayerBuy = Mathf.Max(this.pricePlayerBuy, 0.5f);
 			if (this.pricePlayerBuy > 99.5f)
@@ -280,7 +254,7 @@ namespace RimWorld
 				this.pricePlayerBuy = Mathf.Round(this.pricePlayerBuy);
 			}
 			this.priceFactorSell_ItemSellPriceFactor = this.AnyThing.GetStatValue(StatDefOf.SellPriceFactor, true);
-			this.pricePlayerSell = this.BaseMarketValue * 0.75f * this.priceFactorSell_TraderPriceType * this.priceFactorSell_ItemSellPriceFactor * (1f - Find.Storyteller.difficulty.tradePriceFactorLoss);
+			this.pricePlayerSell = this.BaseMarketValue * 0.5f * this.priceFactorSell_TraderPriceType * this.priceFactorSell_ItemSellPriceFactor * (1f - Find.Storyteller.difficulty.tradePriceFactorLoss);
 			this.pricePlayerSell *= 1f + this.priceGain_PlayerNegotiator + this.priceGain_FactionBase;
 			this.pricePlayerSell = Mathf.Max(this.pricePlayerSell, 0.01f);
 			if (this.pricePlayerSell > 99.5f)
@@ -318,7 +292,7 @@ namespace RimWorld
 				{
 					text2,
 					"\n  x ",
-					1.25f.ToString("F2"),
+					1.5f.ToString("F2"),
 					" (",
 					"Buying".Translate(),
 					")"
@@ -379,7 +353,7 @@ namespace RimWorld
 				{
 					text2,
 					"\n  x ",
-					0.75f.ToString("F2"),
+					0.5f.ToString("F2"),
 					" (",
 					"Selling".Translate(),
 					")"
@@ -466,80 +440,24 @@ namespace RimWorld
 			return this.pricePlayerSell;
 		}
 
-		public AcceptanceReport CanSetToTransferOneMoreToSource()
+		public override int GetMinimum()
 		{
-			if (this.Bugged)
-			{
-				return false;
-			}
-			if (this.CountPostDealFor(Transactor.Trader) <= 0)
-			{
-				return new AcceptanceReport("TraderHasNoMore".Translate());
-			}
-			return true;
+			return -this.CountHeldBy(Transactor.Colony);
 		}
 
-		public AcceptanceReport TrySetToTransferOneMoreToSource()
+		public override int GetMaximum()
 		{
-			if (this.Bugged)
-			{
-				return false;
-			}
-			if (this.IsCurrency)
-			{
-				Log.Error("Should not increment currency tradeable " + this);
-				return false;
-			}
-			AcceptanceReport result = this.CanSetToTransferOneMoreToSource();
-			if (!result.Accepted)
-			{
-				return result;
-			}
-			this.countToDrop++;
-			return true;
+			return this.CountHeldBy(Transactor.Trader);
 		}
 
-		public void SetToTransferMaxToSource()
+		public override AcceptanceReport UnderflowReport()
 		{
-			this.countToDrop = this.CountHeldBy(Transactor.Trader);
+			return new AcceptanceReport("ColonyHasNoMore".Translate());
 		}
 
-		public AcceptanceReport CanSetToTransferOneMoreToDest()
+		public override AcceptanceReport OverflowReport()
 		{
-			if (this.Bugged)
-			{
-				return false;
-			}
-			if (this.CountPostDealFor(Transactor.Colony) <= 0)
-			{
-				return new AcceptanceReport("ColonyHasNoMore".Translate());
-			}
-			return true;
-		}
-
-		public AcceptanceReport TrySetToTransferOneMoreToDest()
-		{
-			if (this.Bugged)
-			{
-				return false;
-			}
-			if (this.IsCurrency)
-			{
-				Log.Error("Should not decrement currency tradeable " + this);
-				return false;
-			}
-			AcceptanceReport result = this.CanSetToTransferOneMoreToDest();
-			if (!result.Accepted)
-			{
-				return result;
-			}
-			this.countToDrop--;
-			return true;
-		}
-
-		public void SetToTransferMaxToDest()
-		{
-			this.countToDrop = -this.CountHeldBy(Transactor.Colony);
+			return new AcceptanceReport("TraderHasNoMore".Translate());
 		}
 
 		private List<Thing> TransactorThings(Transactor trans)
@@ -566,33 +484,31 @@ namespace RimWorld
 		{
 			if (trans == Transactor.Colony)
 			{
-				return this.CountHeldBy(trans) + this.countToDrop;
+				return this.CountHeldBy(trans) + base.CountToTransfer;
 			}
-			return this.CountHeldBy(trans) - this.countToDrop;
+			return this.CountHeldBy(trans) - base.CountToTransfer;
 		}
 
 		public virtual void ResolveTrade()
 		{
 			if (this.ActionToDo == TradeAction.PlayerSells)
 			{
-				TransferableUtility.Transfer(this.thingsColony, -this.countToDrop, delegate(Thing splitPiece, Thing originalThing)
+				TransferableUtility.TransferNoSplit(this.thingsColony, -base.CountToTransfer, delegate(Thing thing, int countToTransfer)
 				{
-					splitPiece.PreTraded(TradeAction.PlayerSells, TradeSession.playerNegotiator, TradeSession.trader);
-					TradeSession.trader.AddToStock(splitPiece, TradeSession.playerNegotiator);
-				});
+					TradeSession.trader.GiveSoldThingToTrader(thing, countToTransfer, TradeSession.playerNegotiator);
+				}, true, true);
 			}
 			else if (this.ActionToDo == TradeAction.PlayerBuys)
 			{
-				TransferableUtility.Transfer(this.thingsTrader, this.countToDrop, delegate(Thing splitPiece, Thing originalThing)
+				TransferableUtility.TransferNoSplit(this.thingsTrader, base.CountToTransfer, delegate(Thing thing, int countToTransfer)
 				{
-					splitPiece.PreTraded(TradeAction.PlayerBuys, TradeSession.playerNegotiator, TradeSession.trader);
-					TradeSession.trader.GiveSoldThingToPlayer(splitPiece, originalThing, TradeSession.playerNegotiator);
-					this.CheckTeachOpportunity(splitPiece);
-				});
+					this.CheckTeachOpportunity(thing, countToTransfer);
+					TradeSession.trader.GiveSoldThingToPlayer(thing, countToTransfer, TradeSession.playerNegotiator);
+				}, true, true);
 			}
 		}
 
-		private void CheckTeachOpportunity(Thing boughtThing)
+		private void CheckTeachOpportunity(Thing boughtThing, int boughtCount)
 		{
 			Building building = boughtThing as Building;
 			if (building == null)
@@ -617,7 +533,7 @@ namespace RimWorld
 				"(",
 				this.ThingDef,
 				", countToDrop=",
-				this.countToDrop,
+				base.CountToTransfer,
 				")"
 			});
 		}

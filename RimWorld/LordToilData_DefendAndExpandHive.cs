@@ -15,7 +15,7 @@ namespace RimWorld
 			{
 				this.assignedHives.RemoveAll((KeyValuePair<Pawn, Hive> x) => x.Key.Destroyed);
 			}
-			Scribe_Collections.LookDictionary<Pawn, Hive>(ref this.assignedHives, "assignedHives", LookMode.Reference, LookMode.Reference);
+			Scribe_Collections.Look<Pawn, Hive>(ref this.assignedHives, "assignedHives", LookMode.Reference, LookMode.Reference);
 			if (Scribe.mode == LoadSaveMode.PostLoadInit)
 			{
 				this.assignedHives.RemoveAll((KeyValuePair<Pawn, Hive> x) => x.Value == null);

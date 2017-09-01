@@ -72,7 +72,7 @@ namespace Verse
 			}
 		}
 
-		public static Texture GetIcon(this Gender gender)
+		public static Texture2D GetIcon(this Gender gender)
 		{
 			switch (gender)
 			{

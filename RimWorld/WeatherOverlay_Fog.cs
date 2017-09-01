@@ -7,7 +7,7 @@ namespace RimWorld
 	[StaticConstructorOnStartup]
 	public class WeatherOverlay_Fog : SkyOverlay
 	{
-		private static readonly Material FogOverlayWorld = MatLoader.LoadMat("Weather/FogOverlayWorld");
+		private static readonly Material FogOverlayWorld = MatLoader.LoadMat("Weather/FogOverlayWorld", -1);
 
 		public WeatherOverlay_Fog()
 		{

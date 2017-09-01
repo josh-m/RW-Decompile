@@ -91,9 +91,11 @@ namespace RimWorld
 
 		public static ConceptDef DrugAddiction;
 
-		public static ConceptDef PersonalShields;
+		public static ConceptDef ShieldBelts;
 
 		public static ConceptDef DrugBurning;
+
+		public static ConceptDef DoorOpenSpeed;
 
 		public static ConceptDef ArrestingCreatesEnemies;
 

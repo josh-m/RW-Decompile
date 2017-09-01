@@ -27,7 +27,7 @@ namespace Verse
 				Log.Error("Misconfigured SkillGain: " + xmlRoot.OuterXml);
 				return;
 			}
-			CrossRefLoader.RegisterObjectWantsCrossRef(this, "skill", xmlRoot.Name);
+			DirectXmlCrossRefLoader.RegisterObjectWantsCrossRef(this, "skill", xmlRoot.Name);
 			this.xp = (int)ParseHelper.FromString(xmlRoot.FirstChild.Value, typeof(int));
 		}
 	}

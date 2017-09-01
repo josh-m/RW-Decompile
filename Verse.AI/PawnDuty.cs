@@ -49,17 +49,17 @@ namespace Verse.AI
 
 		public void ExposeData()
 		{
-			Scribe_Defs.LookDef<DutyDef>(ref this.def, "def");
-			Scribe_TargetInfo.LookTargetInfo(ref this.focus, "focus", LocalTargetInfo.Invalid);
-			Scribe_TargetInfo.LookTargetInfo(ref this.focusSecond, "focusSecond", LocalTargetInfo.Invalid);
-			Scribe_Values.LookValue<float>(ref this.radius, "radius", -1f, false);
-			Scribe_Values.LookValue<LocomotionUrgency>(ref this.locomotion, "locomotion", LocomotionUrgency.None, false);
-			Scribe_Values.LookValue<Danger>(ref this.maxDanger, "maxDanger", Danger.Unspecified, false);
-			Scribe_Values.LookValue<CellRect>(ref this.spectateRect, "spectateRect", default(CellRect), false);
-			Scribe_Values.LookValue<SpectateRectSide>(ref this.spectateRectAllowedSides, "spectateRectAllowedSides", SpectateRectSide.All, false);
-			Scribe_Values.LookValue<bool>(ref this.canDig, "canDig", false, false);
-			Scribe_Values.LookValue<PawnsToGather>(ref this.pawnsToGather, "pawnsToGather", PawnsToGather.None, false);
-			Scribe_Values.LookValue<int>(ref this.transportersGroup, "transportersGroup", -1, false);
+			Scribe_Defs.Look<DutyDef>(ref this.def, "def");
+			Scribe_TargetInfo.Look(ref this.focus, "focus", LocalTargetInfo.Invalid);
+			Scribe_TargetInfo.Look(ref this.focusSecond, "focusSecond", LocalTargetInfo.Invalid);
+			Scribe_Values.Look<float>(ref this.radius, "radius", -1f, false);
+			Scribe_Values.Look<LocomotionUrgency>(ref this.locomotion, "locomotion", LocomotionUrgency.None, false);
+			Scribe_Values.Look<Danger>(ref this.maxDanger, "maxDanger", Danger.Unspecified, false);
+			Scribe_Values.Look<CellRect>(ref this.spectateRect, "spectateRect", default(CellRect), false);
+			Scribe_Values.Look<SpectateRectSide>(ref this.spectateRectAllowedSides, "spectateRectAllowedSides", SpectateRectSide.All, false);
+			Scribe_Values.Look<bool>(ref this.canDig, "canDig", false, false);
+			Scribe_Values.Look<PawnsToGather>(ref this.pawnsToGather, "pawnsToGather", PawnsToGather.None, false);
+			Scribe_Values.Look<int>(ref this.transportersGroup, "transportersGroup", -1, false);
 		}
 
 		public override string ToString()

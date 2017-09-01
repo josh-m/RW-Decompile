@@ -6,7 +6,7 @@ namespace RimWorld
 {
 	public class WorkGiver_Warden_Feed : WorkGiver_Warden
 	{
-		public override Job JobOnThing(Pawn pawn, Thing t)
+		public override Job JobOnThing(Pawn pawn, Thing t, bool forced = false)
 		{
 			if (!base.ShouldTakeCareOfPrisoner(pawn, t))
 			{
@@ -23,7 +23,7 @@ namespace RimWorld
 			}
 			Thing t2;
 			ThingDef def;
-			if (!FoodUtility.TryFindBestFoodSourceFor(pawn, pawn2, pawn2.needs.food.CurCategory == HungerCategory.Starving, out t2, out def, false, true, false, false))
+			if (!FoodUtility.TryFindBestFoodSourceFor(pawn, pawn2, pawn2.needs.food.CurCategory == HungerCategory.Starving, out t2, out def, false, true, false, false, false))
 			{
 				JobFailReason.Is("NoFood".Translate());
 				return null;

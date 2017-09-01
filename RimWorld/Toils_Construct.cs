@@ -6,7 +6,7 @@ namespace RimWorld
 {
 	public static class Toils_Construct
 	{
-		public static Toil MakeSolidThingFromBlueprintIfNecessary(TargetIndex blueTarget)
+		public static Toil MakeSolidThingFromBlueprintIfNecessary(TargetIndex blueTarget, TargetIndex targetToUpdate = TargetIndex.None)
 		{
 			Toil toil = new Toil();
 			toil.initAction = delegate
@@ -16,17 +16,22 @@ namespace RimWorld
 				Blueprint blueprint = curJob.GetTarget(blueTarget).Thing as Blueprint;
 				if (blueprint != null)
 				{
+					bool flag = targetToUpdate != TargetIndex.None && curJob.GetTarget(targetToUpdate).Thing == blueprint;
 					Thing thing;
-					bool flag;
-					if (blueprint.TryReplaceWithSolidThing(actor, out thing, out flag))
+					bool flag2;
+					if (blueprint.TryReplaceWithSolidThing(actor, out thing, out flag2))
 					{
 						curJob.SetTarget(blueTarget, thing);
+						if (flag)
+						{
+							curJob.SetTarget(targetToUpdate, thing);
+						}
 						if (thing is Frame)
 						{
-							actor.Reserve(thing, 1);
+							actor.Reserve(thing, 1, -1, null);
 						}
 					}
-					if (flag)
+					if (flag2)
 					{
 						return;
 					}

@@ -11,8 +11,7 @@ namespace Verse.AI
 			{
 				if (jumpCondition())
 				{
-					toil.actor.jobs.curDriver.SetNextToil(jumpToil);
-					toil.actor.jobs.curDriver.ReadyForNextToil();
+					toil.actor.jobs.curDriver.JumpToToil(jumpToil);
 					return;
 				}
 			});

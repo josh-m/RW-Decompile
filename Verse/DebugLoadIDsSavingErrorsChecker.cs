@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Verse
 {
-	public static class DebugLoadIDsSavingErrorsChecker
+	public class DebugLoadIDsSavingErrorsChecker
 	{
 		private struct ReferencedObject : IEquatable<DebugLoadIDsSavingErrorsChecker.ReferencedObject>
 		{
@@ -45,31 +45,31 @@ namespace Verse
 			}
 		}
 
-		private static HashSet<string> deepSaved = new HashSet<string>();
+		private HashSet<string> deepSaved = new HashSet<string>();
 
-		private static HashSet<DebugLoadIDsSavingErrorsChecker.ReferencedObject> referenced = new HashSet<DebugLoadIDsSavingErrorsChecker.ReferencedObject>();
+		private HashSet<DebugLoadIDsSavingErrorsChecker.ReferencedObject> referenced = new HashSet<DebugLoadIDsSavingErrorsChecker.ReferencedObject>();
 
-		public static void Clear()
+		public void Clear()
 		{
 			if (!Prefs.DevMode)
 			{
 				return;
 			}
-			DebugLoadIDsSavingErrorsChecker.deepSaved.Clear();
-			DebugLoadIDsSavingErrorsChecker.referenced.Clear();
+			this.deepSaved.Clear();
+			this.referenced.Clear();
 		}
 
-		public static void CheckForErrorsAndClear()
+		public void CheckForErrorsAndClear()
 		{
 			if (!Prefs.DevMode)
 			{
 				return;
 			}
-			if (!Scribe.writingForDebug)
+			if (!Scribe.saver.savingForDebug)
 			{
-				foreach (DebugLoadIDsSavingErrorsChecker.ReferencedObject current in DebugLoadIDsSavingErrorsChecker.referenced)
+				foreach (DebugLoadIDsSavingErrorsChecker.ReferencedObject current in this.referenced)
 				{
-					if (!DebugLoadIDsSavingErrorsChecker.deepSaved.Contains(current.loadID))
+					if (!this.deepSaved.Contains(current.loadID))
 					{
 						Log.Warning(string.Concat(new string[]
 						{
@@ -82,13 +82,24 @@ namespace Verse
 					}
 				}
 			}
-			DebugLoadIDsSavingErrorsChecker.Clear();
+			this.Clear();
 		}
 
-		public static void RegisterDeepSaved(object obj, string label)
+		public void RegisterDeepSaved(object obj, string label)
 		{
 			if (!Prefs.DevMode)
 			{
+				return;
+			}
+			if (Scribe.mode != LoadSaveMode.Saving)
+			{
+				Log.Error(string.Concat(new object[]
+				{
+					"Registered ",
+					obj,
+					", but current mode is ",
+					Scribe.mode
+				}));
 				return;
 			}
 			if (obj == null)
@@ -96,7 +107,7 @@ namespace Verse
 				return;
 			}
 			ILoadReferenceable loadReferenceable = obj as ILoadReferenceable;
-			if (loadReferenceable != null && !DebugLoadIDsSavingErrorsChecker.deepSaved.Add(loadReferenceable.GetUniqueLoadID()))
+			if (loadReferenceable != null && !this.deepSaved.Add(loadReferenceable.GetUniqueLoadID()))
 			{
 				Log.Warning(string.Concat(new string[]
 				{
@@ -109,17 +120,28 @@ namespace Verse
 			}
 		}
 
-		public static void RegisterReferenced(ILoadReferenceable obj, string label)
+		public void RegisterReferenced(ILoadReferenceable obj, string label)
 		{
 			if (!Prefs.DevMode)
 			{
+				return;
+			}
+			if (Scribe.mode != LoadSaveMode.Saving)
+			{
+				Log.Error(string.Concat(new object[]
+				{
+					"Registered ",
+					obj,
+					", but current mode is ",
+					Scribe.mode
+				}));
 				return;
 			}
 			if (obj == null)
 			{
 				return;
 			}
-			DebugLoadIDsSavingErrorsChecker.referenced.Add(new DebugLoadIDsSavingErrorsChecker.ReferencedObject(obj.GetUniqueLoadID(), label));
+			this.referenced.Add(new DebugLoadIDsSavingErrorsChecker.ReferencedObject(obj.GetUniqueLoadID(), label));
 		}
 	}
 }

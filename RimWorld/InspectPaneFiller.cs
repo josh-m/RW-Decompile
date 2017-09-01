@@ -113,7 +113,7 @@ namespace RimWorld
 			{
 				GUI.color = Color.white;
 				fillPct = pawn.health.summaryHealth.SummaryHealthPercent;
-				label = HealthUtility.GetGeneralConditionLabel(pawn);
+				label = HealthUtility.GetGeneralConditionLabel(pawn, true);
 			}
 			row.FillableBar(93f, 16f, fillPct, label, InspectPaneFiller.HealthTex, InspectPaneFiller.BarBGTex);
 			GUI.color = Color.white;
@@ -200,6 +200,10 @@ namespace RimWorld
 					Log.Error(text);
 					InspectPaneFiller.debug_inspectStringExceptionErrored = true;
 				}
+			}
+			if (!text.NullOrEmpty() && GenText.ContainsEmptyLines(text))
+			{
+				Log.ErrorOnce("Inspect string for " + sel + " contains empty lines.", 837163521);
 			}
 			InspectPaneFiller.DrawInspectString(text, ref y);
 			if (Prefs.DevMode)

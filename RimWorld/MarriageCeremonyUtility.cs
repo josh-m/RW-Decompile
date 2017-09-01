@@ -7,23 +7,19 @@ namespace RimWorld
 {
 	public static class MarriageCeremonyUtility
 	{
-		public static bool AcceptableMapConditionsToStartCeremony(Map map)
+		public static bool AcceptableGameConditionsToStartCeremony(Map map)
 		{
-			if (!MarriageCeremonyUtility.AcceptableMapConditionsToContinueCeremony(map))
+			if (!MarriageCeremonyUtility.AcceptableGameConditionsToContinueCeremony(map))
 			{
 				return false;
 			}
-			if (GenLocalDate.HourInt(map) < 5 || GenLocalDate.HourInt(map) > 16)
+			if (GenLocalDate.HourInteger(map) < 5 || GenLocalDate.HourInteger(map) > 16)
 			{
 				return false;
 			}
-			List<Lord> lords = map.lordManager.lords;
-			for (int i = 0; i < lords.Count; i++)
+			if (GatheringsUtility.AnyLordJobPreventsNewGatherings(map))
 			{
-				if (lords[i].LordJob is LordJob_Joinable_Party || lords[i].LordJob is LordJob_Joinable_MarriageCeremony)
-				{
-					return false;
-				}
+				return false;
 			}
 			if (map.dangerWatcher.DangerRating != StoryDanger.None)
 			{
@@ -40,7 +36,7 @@ namespace RimWorld
 			return (float)num / (float)map.mapPawns.FreeColonistsSpawnedCount < 0.5f;
 		}
 
-		public static bool AcceptableMapConditionsToContinueCeremony(Map map)
+		public static bool AcceptableGameConditionsToContinueCeremony(Map map)
 		{
 			return map.dangerWatcher.DangerRating != StoryDanger.High;
 		}
@@ -60,7 +56,7 @@ namespace RimWorld
 			{
 				return false;
 			}
-			Hediff firstHediffOfDef = pawn.health.hediffSet.GetFirstHediffOfDef(HediffDefOf.BloodLoss);
+			Hediff firstHediffOfDef = pawn.health.hediffSet.GetFirstHediffOfDef(HediffDefOf.BloodLoss, false);
 			return (firstHediffOfDef == null || firstHediffOfDef.Severity <= 0.2f) && (pawn.Spawned && !pawn.Downed) && !pawn.InAggroMentalState;
 		}
 
@@ -78,8 +74,8 @@ namespace RimWorld
 			firstPawn.relations.AddDirectRelation(PawnRelationDefOf.Spouse, secondPawn);
 			MarriageCeremonyUtility.AddNewlyMarriedThoughts(firstPawn, secondPawn);
 			MarriageCeremonyUtility.AddNewlyMarriedThoughts(secondPawn, firstPawn);
-			firstPawn.needs.mood.thoughts.memories.RemoveMemoryThoughtsOfDefWhereOtherPawnIs(ThoughtDefOf.DivorcedMe, secondPawn);
-			secondPawn.needs.mood.thoughts.memories.RemoveMemoryThoughtsOfDefWhereOtherPawnIs(ThoughtDefOf.DivorcedMe, firstPawn);
+			firstPawn.needs.mood.thoughts.memories.RemoveMemoriesOfDefWhereOtherPawnIs(ThoughtDefOf.DivorcedMe, secondPawn);
+			secondPawn.needs.mood.thoughts.memories.RemoveMemoriesOfDefWhereOtherPawnIs(ThoughtDefOf.DivorcedMe, firstPawn);
 			LovePartnerRelationUtility.TryToShareBed(firstPawn, secondPawn);
 			TaleRecorder.RecordTale(TaleDefOf.Marriage, new object[]
 			{
@@ -90,8 +86,8 @@ namespace RimWorld
 
 		private static void AddNewlyMarriedThoughts(Pawn pawn, Pawn otherPawn)
 		{
-			pawn.needs.mood.thoughts.memories.TryGainMemoryThought(ThoughtDefOf.GotMarried, otherPawn);
-			pawn.needs.mood.thoughts.memories.TryGainMemoryThought(ThoughtDefOf.HoneymoonPhase, otherPawn);
+			pawn.needs.mood.thoughts.memories.TryGainMemory(ThoughtDefOf.GotMarried, otherPawn);
+			pawn.needs.mood.thoughts.memories.TryGainMemory(ThoughtDefOf.HoneymoonPhase, otherPawn);
 		}
 
 		private static bool IsCurrentlyMarryingSomeone(Pawn p)

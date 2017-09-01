@@ -23,7 +23,8 @@ namespace RimWorld
 					this.<>f__this.pawn.GainComfortFromCellIfPossible();
 				},
 				socialMode = RandomSocialMode.SuperActive,
-				defaultCompleteMode = ToilCompleteMode.Never
+				defaultCompleteMode = ToilCompleteMode.Never,
+				handlingFacing = true
 			};
 		}
 
@@ -38,7 +39,7 @@ namespace RimWorld
 					Thing thing = intVec.GetThingList(base.Map).Find((Thing x) => x is Pawn);
 					if (thing != null && thing != this.pawn)
 					{
-						if (GenSight.LineOfSight(position, intVec, base.Map, false))
+						if (GenSight.LineOfSight(position, intVec, base.Map, false, null, 0, 0))
 						{
 							return (Pawn)thing;
 						}

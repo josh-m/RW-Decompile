@@ -11,7 +11,7 @@ namespace Verse
 
 		public CachedTempInfo[] tempCache;
 
-		private HashSet<int> processedRoomIDs = new HashSet<int>();
+		private HashSet<int> processedRoomGroupIDs = new HashSet<int>();
 
 		private List<CachedTempInfo> relevantTempInfoList = new List<CachedTempInfo>();
 
@@ -51,20 +51,21 @@ namespace Verse
 			Room room = reg.Room;
 			if (room != null)
 			{
-				this.SetCachedCellInfo(c, new CachedTempInfo(room.ID, room.CellCount, room.Temperature));
+				RoomGroup group = room.Group;
+				this.SetCachedCellInfo(c, new CachedTempInfo(group.ID, group.CellCount, group.Temperature));
 			}
 		}
 
-		public bool TryGetAverageCachedRoomTemp(Room r, out float result)
+		public bool TryGetAverageCachedRoomGroupTemp(RoomGroup r, out float result)
 		{
 			CellIndices cellIndices = this.map.cellIndices;
 			foreach (IntVec3 current in r.Cells)
 			{
 				CachedTempInfo item = this.map.temperatureCache.tempCache[cellIndices.CellToIndex(current)];
-				if (item.numCells > 0 && !this.processedRoomIDs.Contains(item.roomID))
+				if (item.numCells > 0 && !this.processedRoomGroupIDs.Contains(item.roomGroupID))
 				{
 					this.relevantTempInfoList.Add(item);
-					this.processedRoomIDs.Add(item.roomID);
+					this.processedRoomGroupIDs.Add(item.roomGroupID);
 				}
 			}
 			int num = 0;
@@ -76,7 +77,7 @@ namespace Verse
 			}
 			result = num2 / (float)num;
 			bool result2 = !this.relevantTempInfoList.NullOrEmpty<CachedTempInfo>();
-			this.processedRoomIDs.Clear();
+			this.processedRoomGroupIDs.Clear();
 			this.relevantTempInfoList.Clear();
 			return result2;
 		}

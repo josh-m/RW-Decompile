@@ -40,10 +40,10 @@ namespace RimWorld
 
 		public void ExposeData()
 		{
-			Scribe_Defs.LookDef<ThingDef>(ref this.drug, "drug");
-			Scribe_Values.LookValue<int>(ref this.lastTakenTicks, "lastTakenTicks", 0, false);
-			Scribe_Values.LookValue<int>(ref this.timesTakenThisDayInt, "timesTakenThisDay", 0, false);
-			Scribe_Values.LookValue<int>(ref this.thisDay, "thisDay", 0, false);
+			Scribe_Defs.Look<ThingDef>(ref this.drug, "drug");
+			Scribe_Values.Look<int>(ref this.lastTakenTicks, "lastTakenTicks", 0, false);
+			Scribe_Values.Look<int>(ref this.timesTakenThisDayInt, "timesTakenThisDay", 0, false);
+			Scribe_Values.Look<int>(ref this.thisDay, "thisDay", 0, false);
 		}
 	}
 }

@@ -55,8 +55,8 @@ namespace Verse
 			{
 				return;
 			}
-			Scribe_Values.LookValue<Color>(ref this.color, "color", default(Color), false);
-			Scribe_Values.LookValue<bool>(ref this.active, "colorActive", false, false);
+			Scribe_Values.Look<Color>(ref this.color, "color", default(Color), false);
+			Scribe_Values.Look<bool>(ref this.active, "colorActive", false, false);
 		}
 
 		public override void PostSplitOff(Thing piece)

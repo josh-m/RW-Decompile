@@ -36,9 +36,9 @@ namespace Verse
 		public override void CompExposeData()
 		{
 			base.CompExposeData();
-			Scribe_Values.LookValue<HediffGrowthMode>(ref this.growthMode, "growthMode", HediffGrowthMode.Growing, false);
-			Scribe_Values.LookValue<float>(ref this.severityPerDayGrowingRandomFactor, "severityPerDayGrowingRandomFactor", 1f, false);
-			Scribe_Values.LookValue<float>(ref this.severityPerDayRemissionRandomFactor, "severityPerDayRemissionRandomFactor", 1f, false);
+			Scribe_Values.Look<HediffGrowthMode>(ref this.growthMode, "growthMode", HediffGrowthMode.Growing, false);
+			Scribe_Values.Look<float>(ref this.severityPerDayGrowingRandomFactor, "severityPerDayGrowingRandomFactor", 1f, false);
+			Scribe_Values.Look<float>(ref this.severityPerDayRemissionRandomFactor, "severityPerDayRemissionRandomFactor", 1f, false);
 		}
 
 		public override void CompPostPostAdd(DamageInfo? dinfo)
@@ -49,9 +49,9 @@ namespace Verse
 			this.severityPerDayRemissionRandomFactor = this.Props.severityPerDayRemissionRandomFactor.RandomInRange;
 		}
 
-		public override void CompPostTick()
+		public override void CompPostTick(ref float severityAdjustment)
 		{
-			base.CompPostTick();
+			base.CompPostTick(ref severityAdjustment);
 			if (base.Pawn.IsHashIntervalTick(5000) && Rand.MTBEventOccurs(100f, 60000f, 5000f))
 			{
 				this.ChangeGrowthMode();

@@ -10,7 +10,7 @@ namespace RimWorld
 
 		public override void ExposeData()
 		{
-			Scribe_Values.LookValue<IntVec3>(ref this.stagingPoint, "stagingPoint", default(IntVec3), false);
+			Scribe_Values.Look<IntVec3>(ref this.stagingPoint, "stagingPoint", default(IntVec3), false);
 		}
 	}
 }

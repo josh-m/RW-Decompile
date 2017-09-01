@@ -12,12 +12,12 @@ namespace RimWorld
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Values.LookValue<int>(ref this.spawnTick, "spawnTick", 0, false);
+			Scribe_Values.Look<int>(ref this.spawnTick, "spawnTick", 0, false);
 		}
 
-		public override void SpawnSetup(Map map)
+		public override void SpawnSetup(Map map, bool respawningAfterLoad)
 		{
-			base.SpawnSetup(map);
+			base.SpawnSetup(map, respawningAfterLoad);
 			this.spawnTick = Find.TickManager.TicksGame;
 		}
 

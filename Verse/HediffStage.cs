@@ -14,6 +14,8 @@ namespace Verse
 
 		public bool lifeThreatening;
 
+		public TaleDef tale;
+
 		public float vomitMtbDays = -1f;
 
 		public float deathMtbDays = -1f;
@@ -21,8 +23,6 @@ namespace Verse
 		public float painFactor = 1f;
 
 		public float painOffset;
-
-		public float partEfficiencyFactor = 1f;
 
 		public float forgetMemoryThoughtMtbDays = -1f;
 
@@ -36,13 +36,7 @@ namespace Verse
 
 		public float socialFightChanceFactor = 1f;
 
-		public float setMinPartEfficiency = -1f;
-
-		public bool destroyPart;
-
 		public List<HediffDef> makeImmuneTo;
-
-		public TaleDef tale;
 
 		public List<PawnCapacityModifier> capMods = new List<PawnCapacityModifier>();
 
@@ -51,6 +45,12 @@ namespace Verse
 		public List<MentalStateGiver> mentalStateGivers;
 
 		public List<StatModifier> statOffsets;
+
+		public float partEfficiencyOffset;
+
+		public bool partIgnoreMissingHP;
+
+		public bool destroyPart;
 
 		public bool AffectsMemory
 		{

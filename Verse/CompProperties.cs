@@ -7,7 +7,7 @@ namespace Verse
 {
 	public class CompProperties
 	{
-		public Type compClass;
+		public Type compClass = typeof(ThingComp);
 
 		public CompProperties()
 		{

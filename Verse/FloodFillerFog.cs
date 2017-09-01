@@ -53,7 +53,7 @@ namespace Verse
 					map.debugDrawer.FlashCell(c, (float)numUnfogged / 200f, numUnfogged.ToStringCached());
 				}
 			};
-			map.floodFiller.FloodFill(root, predicate, processor);
+			map.floodFiller.FloodFill(root, predicate, processor, false);
 			expanding = true;
 			for (int i = 0; i < newlyUnfoggedCells.Count; i++)
 			{

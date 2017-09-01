@@ -1,5 +1,7 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using UnityEngine;
 using Verse;
 
@@ -9,29 +11,33 @@ namespace RimWorld.Planet
 	{
 		protected abstract bool ShouldSkip(WorldObject worldObject);
 
-		protected override void Regenerate()
+		[DebuggerHidden]
+		public override IEnumerable Regenerate()
 		{
-			base.Regenerate();
-			List<WorldObject> allWorldObjects = Find.WorldObjects.AllWorldObjects;
-			for (int i = 0; i < allWorldObjects.Count; i++)
+			foreach (object result in base.Regenerate())
 			{
-				WorldObject worldObject = allWorldObjects[i];
-				if (!worldObject.def.useDynamicDrawer)
+				yield return result;
+			}
+			List<WorldObject> allObjects = Find.WorldObjects.AllWorldObjects;
+			for (int i = 0; i < allObjects.Count; i++)
+			{
+				WorldObject o = allObjects[i];
+				if (!o.def.useDynamicDrawer)
 				{
-					if (!this.ShouldSkip(worldObject))
+					if (!this.ShouldSkip(o))
 					{
-						Material material = worldObject.Material;
-						if (material == null)
+						Material mat = o.Material;
+						if (mat == null)
 						{
-							Log.ErrorOnce("World object " + worldObject + " returned null material.", Gen.HashCombineInt(1948576891, worldObject.ID));
+							Log.ErrorOnce("World object " + o + " returned null material.", Gen.HashCombineInt(1948576891, o.ID));
 						}
 						else
 						{
-							LayerSubMesh subMesh = base.GetSubMesh(material);
-							Rand.PushSeed();
-							Rand.Seed = worldObject.ID;
-							worldObject.Print(subMesh);
-							Rand.PopSeed();
+							LayerSubMesh subMesh = base.GetSubMesh(mat);
+							Rand.PushState();
+							Rand.Seed = o.ID;
+							o.Print(subMesh);
+							Rand.PopState();
 						}
 					}
 				}

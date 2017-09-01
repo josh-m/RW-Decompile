@@ -12,7 +12,7 @@ namespace RimWorld
 
 		public void ExposeData()
 		{
-			Scribe_Collections.LookList<TrapMemory>(ref this.traps, "traps", LookMode.Deep, new object[0]);
+			Scribe_Collections.Look<TrapMemory>(ref this.traps, "traps", LookMode.Deep, new object[0]);
 		}
 
 		public void Notify_MapRemoved(Map map)

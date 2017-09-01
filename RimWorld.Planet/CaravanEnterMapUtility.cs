@@ -6,6 +6,8 @@ namespace RimWorld.Planet
 {
 	public static class CaravanEnterMapUtility
 	{
+		private static List<Pawn> tmpPawns = new List<Pawn>();
+
 		public static void Enter(Caravan caravan, Map map, CaravanEnterMode enterMode, CaravanDropInventoryMode dropInventoryMode = CaravanDropInventoryMode.DoNotDrop, bool draftColonists = false, Predicate<IntVec3> extraCellValidator = null)
 		{
 			if (enterMode == CaravanEnterMode.None)
@@ -22,40 +24,41 @@ namespace RimWorld.Planet
 				enterMode = CaravanEnterMode.Edge;
 			}
 			IntVec3 enterCell = CaravanEnterMapUtility.GetEnterCell(caravan, map, enterMode, extraCellValidator);
-			Func<Pawn, IntVec3> spawnCellGetter = (Pawn p) => CellFinder.RandomSpawnCellForPawnNear(enterCell, map);
+			Func<Pawn, IntVec3> spawnCellGetter = (Pawn p) => CellFinder.RandomSpawnCellForPawnNear(enterCell, map, 4);
 			CaravanEnterMapUtility.Enter(caravan, map, spawnCellGetter, dropInventoryMode, draftColonists);
 		}
 
 		public static void Enter(Caravan caravan, Map map, Func<Pawn, IntVec3> spawnCellGetter, CaravanDropInventoryMode dropInventoryMode = CaravanDropInventoryMode.DoNotDrop, bool draftColonists = false)
 		{
-			List<Pawn> pawnsListForReading = caravan.PawnsListForReading;
-			for (int i = 0; i < pawnsListForReading.Count; i++)
+			CaravanEnterMapUtility.tmpPawns.Clear();
+			CaravanEnterMapUtility.tmpPawns.AddRange(caravan.PawnsListForReading);
+			for (int i = 0; i < CaravanEnterMapUtility.tmpPawns.Count; i++)
 			{
-				IntVec3 loc = spawnCellGetter(pawnsListForReading[i]);
-				GenSpawn.Spawn(pawnsListForReading[i], loc, map, Rot4.Random);
+				IntVec3 loc = spawnCellGetter(CaravanEnterMapUtility.tmpPawns[i]);
+				GenSpawn.Spawn(CaravanEnterMapUtility.tmpPawns[i], loc, map, Rot4.Random, false);
 			}
 			if (dropInventoryMode == CaravanDropInventoryMode.DropInstantly)
 			{
-				CaravanEnterMapUtility.DropAllInventory(pawnsListForReading);
+				CaravanEnterMapUtility.DropAllInventory(CaravanEnterMapUtility.tmpPawns);
 			}
 			else if (dropInventoryMode == CaravanDropInventoryMode.UnloadIndividually)
 			{
-				for (int j = 0; j < pawnsListForReading.Count; j++)
+				for (int j = 0; j < CaravanEnterMapUtility.tmpPawns.Count; j++)
 				{
-					pawnsListForReading[j].inventory.UnloadEverything = true;
+					CaravanEnterMapUtility.tmpPawns[j].inventory.UnloadEverything = true;
 				}
 			}
 			if (draftColonists)
 			{
-				CaravanEnterMapUtility.DraftColonists(pawnsListForReading);
+				CaravanEnterMapUtility.DraftColonists(CaravanEnterMapUtility.tmpPawns);
 			}
 			if (map.IsPlayerHome)
 			{
-				for (int k = 0; k < pawnsListForReading.Count; k++)
+				for (int k = 0; k < CaravanEnterMapUtility.tmpPawns.Count; k++)
 				{
-					if (pawnsListForReading[k].IsPrisoner)
+					if (CaravanEnterMapUtility.tmpPawns[k].IsPrisoner)
 					{
-						pawnsListForReading[k].guest.WaitInsteadOfEscapingForDefaultTicks();
+						CaravanEnterMapUtility.tmpPawns[k].guest.WaitInsteadOfEscapingForDefaultTicks();
 					}
 				}
 			}
@@ -64,6 +67,7 @@ namespace RimWorld.Planet
 			{
 				Find.WorldObjects.Remove(caravan);
 			}
+			CaravanEnterMapUtility.tmpPawns.Clear();
 		}
 
 		private static IntVec3 GetEnterCell(Caravan caravan, Map map, CaravanEnterMode enterMode, Predicate<IntVec3> extraCellValidator)
@@ -83,13 +87,13 @@ namespace RimWorld.Planet
 		{
 			Predicate<IntVec3> baseValidator = (IntVec3 x) => x.Standable(map) && !x.Fogged(map);
 			IntVec3 root;
-			if (extraCellValidator != null && CellFinder.TryFindRandomEdgeCellWith((IntVec3 x) => baseValidator(x) && extraCellValidator(x), map, out root))
+			if (extraCellValidator != null && CellFinder.TryFindRandomEdgeCellWith((IntVec3 x) => baseValidator(x) && extraCellValidator(x), map, CellFinder.EdgeRoadChance_Neutral, out root))
 			{
-				return CellFinder.RandomClosewalkCellNear(root, map, 5);
+				return CellFinder.RandomClosewalkCellNear(root, map, 5, null);
 			}
-			if (CellFinder.TryFindRandomEdgeCellWith(baseValidator, map, out root))
+			if (CellFinder.TryFindRandomEdgeCellWith(baseValidator, map, CellFinder.EdgeRoadChance_Neutral, out root))
 			{
-				return CellFinder.RandomClosewalkCellNear(root, map, 5);
+				return CellFinder.RandomClosewalkCellNear(root, map, 5, null);
 			}
 			Log.Warning("Could not find any valid edge cell.");
 			return CellFinder.RandomCell(map);
@@ -98,7 +102,7 @@ namespace RimWorld.Planet
 		private static IntVec3 FindCenterCell(Map map, Predicate<IntVec3> extraCellValidator)
 		{
 			TraverseParms traverseParms = TraverseParms.For(TraverseMode.NoPassClosedDoors, Danger.Deadly, false);
-			Predicate<IntVec3> baseValidator = (IntVec3 x) => x.Standable(map) && map.reachability.CanReachMapEdge(x, traverseParms);
+			Predicate<IntVec3> baseValidator = (IntVec3 x) => x.Standable(map) && !x.Fogged(map) && map.reachability.CanReachMapEdge(x, traverseParms);
 			IntVec3 result;
 			if (extraCellValidator != null && RCellFinder.TryFindRandomCellNearTheCenterOfTheMapWith((IntVec3 x) => baseValidator(x) && extraCellValidator(x), map, out result))
 			{

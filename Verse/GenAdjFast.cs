@@ -84,5 +84,27 @@ namespace Verse
 			GenAdjFast.working = false;
 			return GenAdjFast.resultList;
 		}
+
+		public static void AdjacentThings8Way(Thing thing, List<Thing> outThings)
+		{
+			outThings.Clear();
+			if (!thing.Spawned)
+			{
+				return;
+			}
+			Map map = thing.Map;
+			List<IntVec3> list = GenAdjFast.AdjacentCells8Way(thing);
+			for (int i = 0; i < list.Count; i++)
+			{
+				List<Thing> thingList = list[i].GetThingList(map);
+				for (int j = 0; j < thingList.Count; j++)
+				{
+					if (!outThings.Contains(thingList[j]))
+					{
+						outThings.Add(thingList[j]);
+					}
+				}
+			}
+		}
 	}
 }

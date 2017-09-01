@@ -27,7 +27,7 @@ namespace RimWorld
 
 		public void ExposeData()
 		{
-			Scribe_Defs.LookDef<HistoryAutoRecorderDef>(ref this.def, "def");
+			Scribe_Defs.Look<HistoryAutoRecorderDef>(ref this.def, "def");
 			byte[] array = null;
 			if (Scribe.mode == LoadSaveMode.Saving)
 			{

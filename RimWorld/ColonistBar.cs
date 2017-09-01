@@ -128,7 +128,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return UI.screenWidth >= 1000 && UI.screenHeight >= 760;
+				return UI.screenWidth >= 800 && UI.screenHeight >= 500;
 			}
 		}
 
@@ -330,7 +330,7 @@ namespace RimWorld
 					if (pawn != null)
 					{
 						Thing first;
-						if (pawn.Dead && pawn.Corpse != null && pawn.Corpse.MapHeld != null)
+						if (pawn.Dead && pawn.Corpse != null && pawn.Corpse.SpawnedOrAnyParentSpawned)
 						{
 							first = pawn.Corpse;
 						}
@@ -443,7 +443,7 @@ namespace RimWorld
 			}
 			Pawn pawn = entry.pawn;
 			Thing result;
-			if (pawn != null && pawn.Dead && pawn.Corpse != null && pawn.Corpse.MapHeld != null)
+			if (pawn != null && pawn.Dead && pawn.Corpse != null && pawn.Corpse.SpawnedOrAnyParentSpawned)
 			{
 				result = pawn.Corpse;
 			}

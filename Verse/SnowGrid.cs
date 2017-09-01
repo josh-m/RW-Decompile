@@ -42,7 +42,7 @@ namespace Verse
 			{
 				compressedString = GridSaveUtility.CompressedStringForShortGrid((IntVec3 c) => SnowGrid.SnowFloatToShort(this.GetDepth(c)), this.map);
 			}
-			Scribe_Values.LookValue<string>(ref compressedString, "depthGrid", null, false);
+			Scribe_Values.Look<string>(ref compressedString, "depthGrid", null, false);
 			if (Scribe.mode == LoadSaveMode.LoadingVars)
 			{
 				this.totalDepth = 0.0;

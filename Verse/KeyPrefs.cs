@@ -32,7 +32,7 @@ namespace Verse
 		public static void Init()
 		{
 			bool flag = !new FileInfo(GenFilePaths.KeyPrefsFilePath).Exists;
-			Dictionary<string, KeyBindingData> dictionary = XmlLoader.ItemFromXmlFile<Dictionary<string, KeyBindingData>>(GenFilePaths.KeyPrefsFilePath, true);
+			Dictionary<string, KeyBindingData> dictionary = DirectXmlLoader.ItemFromXmlFile<Dictionary<string, KeyBindingData>>(GenFilePaths.KeyPrefsFilePath, true);
 			KeyPrefs.data = new KeyPrefsData();
 			KeyPrefs.unresolvedBindings = new Dictionary<string, KeyBindingData>();
 			foreach (KeyValuePair<string, KeyBindingData> current in dictionary)
@@ -79,7 +79,7 @@ namespace Verse
 					}
 				}
 				XDocument xDocument = new XDocument();
-				XElement content = XmlSaver.XElementFromObject(dictionary, typeof(KeyPrefsData));
+				XElement content = DirectXmlSaver.XElementFromObject(dictionary, typeof(KeyPrefsData));
 				xDocument.Add(content);
 				xDocument.Save(GenFilePaths.KeyPrefsFilePath);
 			}

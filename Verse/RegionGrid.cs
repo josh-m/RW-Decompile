@@ -19,19 +19,66 @@ namespace Verse
 
 		public HashSet<Region> drawnRegions = new HashSet<Region>();
 
-		public IEnumerable<Region> AllRegions
+		public Region[] DirectGrid
+		{
+			get
+			{
+				if (!this.map.regionAndRoomUpdater.Enabled && this.map.regionAndRoomUpdater.AnythingToRebuild)
+				{
+					Log.Warning("Trying to get the region grid but RegionAndRoomUpdater is disabled. The result may be incorrect.");
+				}
+				this.map.regionAndRoomUpdater.TryRebuildDirtyRegionsAndRooms();
+				return this.regionGrid;
+			}
+		}
+
+		public IEnumerable<Region> AllRegions_NoRebuild_InvalidAllowed
 		{
 			get
 			{
 				RegionGrid.allRegionsYielded.Clear();
-				int count = this.map.cellIndices.NumGridCells;
-				for (int i = 0; i < count; i++)
+				try
 				{
-					if (this.regionGrid[i] != null && !RegionGrid.allRegionsYielded.Contains(this.regionGrid[i]))
+					int count = this.map.cellIndices.NumGridCells;
+					for (int i = 0; i < count; i++)
 					{
-						yield return this.regionGrid[i];
-						RegionGrid.allRegionsYielded.Add(this.regionGrid[i]);
+						if (this.regionGrid[i] != null && !RegionGrid.allRegionsYielded.Contains(this.regionGrid[i]))
+						{
+							yield return this.regionGrid[i];
+						}
 					}
+				}
+				finally
+				{
+					base.<>__Finally0();
+				}
+			}
+		}
+
+		public IEnumerable<Region> AllRegions
+		{
+			get
+			{
+				if (!this.map.regionAndRoomUpdater.Enabled && this.map.regionAndRoomUpdater.AnythingToRebuild)
+				{
+					Log.Warning("Trying to get all valid regions but RegionAndRoomUpdater is disabled. The result may be incorrect.");
+				}
+				this.map.regionAndRoomUpdater.TryRebuildDirtyRegionsAndRooms();
+				RegionGrid.allRegionsYielded.Clear();
+				try
+				{
+					int count = this.map.cellIndices.NumGridCells;
+					for (int i = 0; i < count; i++)
+					{
+						if (this.regionGrid[i] != null && this.regionGrid[i].valid && !RegionGrid.allRegionsYielded.Contains(this.regionGrid[i]))
+						{
+							yield return this.regionGrid[i];
+						}
+					}
+				}
+				finally
+				{
+					base.<>__Finally0();
 				}
 			}
 		}
@@ -49,7 +96,11 @@ namespace Verse
 				Log.Error("Tried to get valid region out of bounds at " + c);
 				return null;
 			}
-			this.map.regionAndRoomUpdater.RebuildDirtyRegionsAndRooms();
+			if (!this.map.regionAndRoomUpdater.Enabled && this.map.regionAndRoomUpdater.AnythingToRebuild)
+			{
+				Log.Warning("Trying to get valid region at " + c + " but RegionAndRoomUpdater is disabled. The result may be incorrect.");
+			}
+			this.map.regionAndRoomUpdater.TryRebuildDirtyRegionsAndRooms();
 			Region region = this.regionGrid[this.map.cellIndices.CellToIndex(c)];
 			if (region != null && region.valid)
 			{
@@ -73,7 +124,7 @@ namespace Verse
 			return null;
 		}
 
-		public Region GetRegionAt_InvalidAllowed(IntVec3 c)
+		public Region GetRegionAt_NoRebuild_InvalidAllowed(IntVec3 c)
 		{
 			return this.regionGrid[this.map.cellIndices.CellToIndex(c)];
 		}
@@ -121,23 +172,31 @@ namespace Verse
 				}
 				this.drawnRegions.Clear();
 			}
-			IntVec3 c = UI.MouseCell();
-			if (c.InBounds(this.map))
+			IntVec3 intVec = UI.MouseCell();
+			if (intVec.InBounds(this.map))
 			{
 				if (DebugViewSettings.drawRooms)
 				{
-					Room room = RoomQuery.RoomAt(c, this.map);
+					Room room = intVec.GetRoom(this.map, RegionType.Set_All);
 					if (room != null)
 					{
 						room.DebugDraw();
 					}
 				}
-				if (DebugViewSettings.drawRegions || DebugViewSettings.drawRegionLinks)
+				if (DebugViewSettings.drawRoomGroups)
 				{
-					Region regionAt_InvalidAllowed = this.GetRegionAt_InvalidAllowed(c);
-					if (regionAt_InvalidAllowed != null)
+					RoomGroup roomGroup = intVec.GetRoomGroup(this.map);
+					if (roomGroup != null)
 					{
-						regionAt_InvalidAllowed.DebugDrawMouseover();
+						roomGroup.DebugDraw();
+					}
+				}
+				if (DebugViewSettings.drawRegions || DebugViewSettings.drawRegionLinks || DebugViewSettings.drawRegionThings)
+				{
+					Region regionAt_NoRebuild_InvalidAllowed = this.GetRegionAt_NoRebuild_InvalidAllowed(intVec);
+					if (regionAt_NoRebuild_InvalidAllowed != null)
+					{
+						regionAt_NoRebuild_InvalidAllowed.DebugDrawMouseover();
 					}
 				}
 			}

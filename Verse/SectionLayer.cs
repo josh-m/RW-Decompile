@@ -1,3 +1,4 @@
+using RimWorld;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -28,6 +29,14 @@ namespace Verse
 			}
 		}
 
+		public virtual SectionLayerPhaseDef Phase
+		{
+			get
+			{
+				return SectionLayerPhaseDefOf.Main;
+			}
+		}
+
 		public SectionLayer(Section section)
 		{
 			this.section = section;
@@ -35,6 +44,10 @@ namespace Verse
 
 		public LayerSubMesh GetSubMesh(Material material)
 		{
+			if (material == null)
+			{
+				return null;
+			}
 			for (int i = 0; i < this.subMeshes.Count; i++)
 			{
 				if (this.subMeshes[i].material == material)

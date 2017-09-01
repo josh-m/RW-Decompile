@@ -9,6 +9,22 @@ namespace RimWorld
 	{
 		private float rotProgressInt;
 
+		private CompProperties_Rottable PropsRot
+		{
+			get
+			{
+				return (CompProperties_Rottable)this.props;
+			}
+		}
+
+		public float RotProgressPct
+		{
+			get
+			{
+				return this.RotProgress / (float)this.PropsRot.TicksToRotStart;
+			}
+		}
+
 		public float RotProgress
 		{
 			get
@@ -23,14 +39,6 @@ namespace RimWorld
 				{
 					this.StageChanged();
 				}
-			}
-		}
-
-		private CompProperties_Rottable PropsRot
-		{
-			get
-			{
-				return (CompProperties_Rottable)this.props;
 			}
 		}
 
@@ -54,38 +62,28 @@ namespace RimWorld
 		{
 			get
 			{
-				float num = GenTemperature.GetTemperatureForCell(this.parent.PositionHeld, this.parent.MapHeld);
+				float num = this.parent.AmbientTemperature;
 				num = (float)Mathf.RoundToInt(num);
-				float num2 = GenTemperature.RotRateAtTemperature(num);
-				if (num2 <= 0f)
-				{
-					return 2147483647;
-				}
-				float num3 = (float)this.PropsRot.TicksToRotStart - this.RotProgress;
-				if (num3 <= 0f)
-				{
-					return 0;
-				}
-				return Mathf.RoundToInt(num3 / num2);
+				return this.TicksUntilRotAtTemp(num);
 			}
 		}
 
 		public override void PostExposeData()
 		{
 			base.PostExposeData();
-			Scribe_Values.LookValue<float>(ref this.rotProgressInt, "rotProg", 0f, false);
+			Scribe_Values.Look<float>(ref this.rotProgressInt, "rotProg", 0f, false);
 		}
 
 		public override void CompTickRare()
 		{
 			float rotProgress = this.RotProgress;
 			float num = 1f;
-			float temperatureForCell = GenTemperature.GetTemperatureForCell(this.parent.PositionHeld, this.parent.MapHeld);
-			num *= GenTemperature.RotRateAtTemperature(temperatureForCell);
+			float ambientTemperature = this.parent.AmbientTemperature;
+			num *= GenTemperature.RotRateAtTemperature(ambientTemperature);
 			this.RotProgress += Mathf.Round(num * 250f);
 			if (this.Stage == RotStage.Rotting && this.PropsRot.rotDestroys)
 			{
-				if (this.parent.Map.slotGroupManager.SlotGroupAt(this.parent.Position) != null)
+				if (this.parent.Spawned && this.parent.Map.slotGroupManager.SlotGroupAt(this.parent.Position) != null)
 				{
 					Messages.Message("MessageRottedAwayInStorage".Translate(new object[]
 					{
@@ -97,24 +95,24 @@ namespace RimWorld
 				return;
 			}
 			bool flag = Mathf.FloorToInt(rotProgress / 60000f) != Mathf.FloorToInt(this.RotProgress / 60000f);
-			if (flag)
+			if (flag && this.ShouldTakeRotDamage())
 			{
 				if (this.Stage == RotStage.Rotting && this.PropsRot.rotDamagePerDay > 0f)
 				{
-					this.parent.TakeDamage(new DamageInfo(DamageDefOf.Rotting, GenMath.RoundRandom(this.PropsRot.rotDamagePerDay), -1f, null, null, null));
+					this.parent.TakeDamage(new DamageInfo(DamageDefOf.Rotting, GenMath.RoundRandom(this.PropsRot.rotDamagePerDay), -1f, null, null, null, DamageInfo.SourceCategory.ThingOrUnknown));
 				}
-				else if (this.Stage == RotStage.Dessicated && this.PropsRot.dessicatedDamagePerDay > 0f && this.ShouldTakeDessicateDamage())
+				else if (this.Stage == RotStage.Dessicated && this.PropsRot.dessicatedDamagePerDay > 0f)
 				{
-					this.parent.TakeDamage(new DamageInfo(DamageDefOf.Rotting, GenMath.RoundRandom(this.PropsRot.dessicatedDamagePerDay), -1f, null, null, null));
+					this.parent.TakeDamage(new DamageInfo(DamageDefOf.Rotting, GenMath.RoundRandom(this.PropsRot.dessicatedDamagePerDay), -1f, null, null, null, DamageInfo.SourceCategory.ThingOrUnknown));
 				}
 			}
 		}
 
-		private bool ShouldTakeDessicateDamage()
+		private bool ShouldTakeRotDamage()
 		{
-			if (this.parent.holdingContainer != null)
+			if (this.parent.ParentHolder != null)
 			{
-				Thing thing = this.parent.holdingContainer.owner as Thing;
+				Thing thing = this.parent.ParentHolder as Thing;
 				if (thing != null && thing.def.category == ThingCategory.Building && thing.def.building.preventDeterioration)
 				{
 					return false;
@@ -161,7 +159,7 @@ namespace RimWorld
 			float num = (float)this.PropsRot.TicksToRotStart - this.RotProgress;
 			if (num > 0f)
 			{
-				float num2 = GenTemperature.GetTemperatureForCell(this.parent.PositionHeld, this.parent.MapHeld);
+				float num2 = this.parent.AmbientTemperature;
 				num2 = (float)Mathf.RoundToInt(num2);
 				float num3 = GenTemperature.RotRateAtTemperature(num2);
 				int ticksUntilRotAtCurrentTemp = this.TicksUntilRotAtCurrentTemp;
@@ -186,6 +184,27 @@ namespace RimWorld
 				}
 			}
 			return stringBuilder.ToString();
+		}
+
+		public int ApproxTicksUntilRotWhenAtTempOfTile(int tile)
+		{
+			float temperatureFromSeasonAtTile = GenTemperature.GetTemperatureFromSeasonAtTile(Find.TickManager.TicksAbs, tile);
+			return this.TicksUntilRotAtTemp(temperatureFromSeasonAtTile);
+		}
+
+		public int TicksUntilRotAtTemp(float temp)
+		{
+			float num = GenTemperature.RotRateAtTemperature(temp);
+			if (num <= 0f)
+			{
+				return 2147483647;
+			}
+			float num2 = (float)this.PropsRot.TicksToRotStart - this.RotProgress;
+			if (num2 <= 0f)
+			{
+				return 0;
+			}
+			return Mathf.RoundToInt(num2 / num);
 		}
 
 		private void StageChanged()

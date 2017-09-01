@@ -103,7 +103,7 @@ namespace RimWorld
 
 		public void ExposeData()
 		{
-			Scribe_Deep.LookDeep<DefMap<RecordDef, float>>(ref this.records, "records", new object[0]);
+			Scribe_Deep.Look<DefMap<RecordDef, float>>(ref this.records, "records", new object[0]);
 		}
 	}
 }

@@ -6,23 +6,25 @@ namespace RimWorld
 {
 	internal static class TrashUtility
 	{
-		private const float ChanceHateInertBuilding = 0.02f;
+		private const float ChanceHateInertBuilding = 0.008f;
 
 		private static readonly IntRange TrashJobCheckOverrideInterval = new IntRange(450, 500);
 
 		public static bool ShouldTrashPlant(Pawn pawn, Plant p)
 		{
-			if (!p.sown || !p.FlammableNow || !TrashUtility.CanTrash(pawn, p))
+			if (!p.sown || p.def.plant.IsTree || !p.FlammableNow || !TrashUtility.CanTrash(pawn, p))
 			{
 				return false;
 			}
-			for (int i = 0; i < 8; i++)
+			CellRect.CellRectIterator iterator = CellRect.CenteredOn(p.Position, 2).ClipInsideMap(p.Map).GetIterator();
+			while (!iterator.Done())
 			{
-				IntVec3 c = p.Position + GenAdj.AdjacentCells[i];
-				if (c.InBounds(p.Map) && c.ContainsStaticFire(p.Map))
+				IntVec3 current = iterator.Current;
+				if (current.InBounds(p.Map) && current.ContainsStaticFire(p.Map))
 				{
 					return false;
 				}
+				iterator.MoveNext();
 			}
 			return p.Position.Roofed(p.Map) || p.Map.weatherManager.RainRate <= 0.25f;
 		}
@@ -35,15 +37,12 @@ namespace RimWorld
 			}
 			if (b.def.building.isInert || b.def.building.isTrap)
 			{
-				Rand.PushSeed();
 				int num = GenLocalDate.HourOfDay(pawn) / 3;
-				Rand.Seed = (b.GetHashCode() * 612361 ^ pawn.GetHashCode() * 391 ^ num * 734273247);
-				if (Rand.Value > 0.02f)
+				int specialSeed = b.GetHashCode() * 612361 ^ pawn.GetHashCode() * 391 ^ num * 734273247;
+				if (!Rand.ChanceSeeded(0.008f, specialSeed))
 				{
-					Rand.PopSeed();
 					return false;
 				}
-				Rand.PopSeed();
 			}
 			return (!b.def.building.isTrap || !((Building_Trap)b).Armed) && TrashUtility.CanTrash(pawn, b) && pawn.HostileTo(b);
 		}
@@ -62,7 +61,7 @@ namespace RimWorld
 				TrashUtility.FinalizeTrashJob(job);
 				return job;
 			}
-			if (Rand.Value < 0.7f)
+			if (pawn.equipment != null && Rand.Value < 0.7f)
 			{
 				foreach (Verb current in pawn.equipment.AllEquipmentVerbs)
 				{

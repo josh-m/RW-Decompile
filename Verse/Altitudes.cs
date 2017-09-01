@@ -5,11 +5,11 @@ namespace Verse
 {
 	public static class Altitudes
 	{
-		private const int NumAltitudeLayers = 29;
+		private const int NumAltitudeLayers = 31;
 
-		private const float LayerSpacing = 0.5f;
+		private const float LayerSpacing = 0.46875f;
 
-		public const float AltInc = 0.05f;
+		public const float AltInc = 0.046875f;
 
 		private static readonly float[] Alts;
 
@@ -17,15 +17,11 @@ namespace Verse
 
 		static Altitudes()
 		{
-			Altitudes.Alts = new float[29];
-			Altitudes.AltIncVect = new Vector3(0f, 0.05f, 0f);
-			if (Enum.GetValues(typeof(AltitudeLayer)).Length != 29)
+			Altitudes.Alts = new float[31];
+			Altitudes.AltIncVect = new Vector3(0f, 0.046875f, 0f);
+			for (int i = 0; i < 31; i++)
 			{
-				Log.Message("Altitudes.NumAltitudeLayers should be " + Enum.GetValues(typeof(AltitudeLayer)).Length);
-			}
-			for (int i = 0; i < 29; i++)
-			{
-				Altitudes.Alts[i] = (float)i * 0.5f;
+				Altitudes.Alts[i] = (float)i * 0.46875f;
 			}
 		}
 

@@ -1,5 +1,7 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using UnityEngine;
 using Verse;
 
@@ -11,11 +13,15 @@ namespace RimWorld.Planet
 
 		private List<List<int>> triangleIndexToTileID = new List<List<int>>();
 
-		private List<Vector2> elevationValues = new List<Vector2>();
+		private List<Vector3> elevationValues = new List<Vector3>();
 
-		protected override void Regenerate()
+		[DebuggerHidden]
+		public override IEnumerable Regenerate()
 		{
-			base.Regenerate();
+			foreach (object result in base.Regenerate())
+			{
+				yield return result;
+			}
 			World world = Find.World;
 			WorldGrid grid = world.grid;
 			int tilesCount = grid.TilesCount;
@@ -23,37 +29,44 @@ namespace RimWorld.Planet
 			List<int> tileIDToVerts_offsets = grid.tileIDToVerts_offsets;
 			List<Vector3> verts = grid.verts;
 			this.triangleIndexToTileID.Clear();
-			this.CalculateInterpolatedVerticesParams();
-			int num = 0;
+			foreach (object result2 in this.CalculateInterpolatedVerticesParams())
+			{
+				yield return result2;
+			}
+			int colorsAndUVsIndex = 0;
 			for (int i = 0; i < tilesCount; i++)
 			{
-				BiomeDef biome = tiles[i].biome;
-				int j;
-				LayerSubMesh subMesh = base.GetSubMesh(biome.DrawMaterial, out j);
-				while (j >= this.triangleIndexToTileID.Count)
+				Tile tile = tiles[i];
+				BiomeDef biome = tile.biome;
+				int subMeshIndex;
+				LayerSubMesh subMesh = base.GetSubMesh(biome.DrawMaterial, out subMeshIndex);
+				while (subMeshIndex >= this.triangleIndexToTileID.Count)
 				{
 					this.triangleIndexToTileID.Add(new List<int>());
 				}
-				int count = subMesh.verts.Count;
-				int num2 = 0;
-				int num3 = (i + 1 >= tileIDToVerts_offsets.Count) ? verts.Count : tileIDToVerts_offsets[i + 1];
-				for (int k = tileIDToVerts_offsets[i]; k < num3; k++)
+				int startVertIndex = subMesh.verts.Count;
+				int vertIndex = 0;
+				int oneAfterLastVert = (i + 1 >= tileIDToVerts_offsets.Count) ? verts.Count : tileIDToVerts_offsets[i + 1];
+				for (int j = tileIDToVerts_offsets[i]; j < oneAfterLastVert; j++)
 				{
-					subMesh.verts.Add(verts[k]);
-					subMesh.uvs.Add(this.elevationValues[num]);
-					num++;
-					if (k < num3 - 2)
+					subMesh.verts.Add(verts[j]);
+					subMesh.uvs.Add(this.elevationValues[colorsAndUVsIndex]);
+					colorsAndUVsIndex++;
+					if (j < oneAfterLastVert - 2)
 					{
-						subMesh.tris.Add(count + num2 + 2);
-						subMesh.tris.Add(count + num2 + 1);
-						subMesh.tris.Add(count);
-						this.triangleIndexToTileID[j].Add(i);
+						subMesh.tris.Add(startVertIndex + vertIndex + 2);
+						subMesh.tris.Add(startVertIndex + vertIndex + 1);
+						subMesh.tris.Add(startVertIndex);
+						this.triangleIndexToTileID[subMeshIndex].Add(i);
 					}
-					num2++;
+					vertIndex++;
 				}
 			}
 			base.FinalizeMesh(MeshParts.All, true);
-			this.RegenerateMeshColliders();
+			foreach (object result3 in this.RegenerateMeshColliders())
+			{
+				yield return result3;
+			}
 			this.elevationValues.Clear();
 			this.elevationValues.TrimExcess();
 		}
@@ -73,25 +86,28 @@ namespace RimWorld.Planet
 			return -1;
 		}
 
-		private void RegenerateMeshColliders()
+		[DebuggerHidden]
+		private IEnumerable RegenerateMeshColliders()
 		{
 			this.meshCollidersInOrder.Clear();
 			GameObject gameObject = WorldTerrainColliderManager.GameObject;
 			MeshCollider[] components = gameObject.GetComponents<MeshCollider>();
-			for (int i = 0; i < components.Length; i++)
+			for (int j = 0; j < components.Length; j++)
 			{
-				MeshCollider obj = components[i];
-				UnityEngine.Object.Destroy(obj);
+				MeshCollider component = components[j];
+				UnityEngine.Object.Destroy(component);
 			}
-			for (int j = 0; j < this.subMeshes.Count; j++)
+			for (int i = 0; i < this.subMeshes.Count; i++)
 			{
-				MeshCollider meshCollider = gameObject.AddComponent<MeshCollider>();
-				meshCollider.sharedMesh = this.subMeshes[j].mesh;
-				this.meshCollidersInOrder.Add(meshCollider);
+				MeshCollider comp = gameObject.AddComponent<MeshCollider>();
+				comp.sharedMesh = this.subMeshes[i].mesh;
+				this.meshCollidersInOrder.Add(comp);
+				yield return null;
 			}
 		}
 
-		private void CalculateInterpolatedVerticesParams()
+		[DebuggerHidden]
+		private IEnumerable CalculateInterpolatedVerticesParams()
 		{
 			this.elevationValues.Clear();
 			World world = Find.World;
@@ -106,45 +122,49 @@ namespace RimWorld.Planet
 			{
 				Tile tile = tiles[i];
 				float elevation = tile.elevation;
-				int num = (i + 1 >= tileIDToNeighbors_offsets.Count) ? tileIDToNeighbors_values.Count : tileIDToNeighbors_offsets[i + 1];
-				int num2 = (i + 1 >= tilesCount) ? verts.Count : tileIDToVerts_offsets[i + 1];
-				for (int j = tileIDToVerts_offsets[i]; j < num2; j++)
+				int oneAfterLastNeighbor = (i + 1 >= tileIDToNeighbors_offsets.Count) ? tileIDToNeighbors_values.Count : tileIDToNeighbors_offsets[i + 1];
+				int oneAfterLastVert = (i + 1 >= tilesCount) ? verts.Count : tileIDToVerts_offsets[i + 1];
+				for (int j = tileIDToVerts_offsets[i]; j < oneAfterLastVert; j++)
 				{
-					Vector2 item = default(Vector2);
-					item.x = elevation;
-					bool flag = false;
-					for (int k = tileIDToNeighbors_offsets[i]; k < num; k++)
+					Vector3 elevationVal = default(Vector3);
+					elevationVal.x = elevation;
+					bool isCoast = false;
+					for (int k = tileIDToNeighbors_offsets[i]; k < oneAfterLastNeighbor; k++)
 					{
-						int num3 = (tileIDToNeighbors_values[k] + 1 >= tileIDToVerts_offsets.Count) ? verts.Count : tileIDToVerts_offsets[tileIDToNeighbors_values[k] + 1];
-						for (int l = tileIDToVerts_offsets[tileIDToNeighbors_values[k]]; l < num3; l++)
+						int oneAfterLastNeighVert = (tileIDToNeighbors_values[k] + 1 >= tileIDToVerts_offsets.Count) ? verts.Count : tileIDToVerts_offsets[tileIDToNeighbors_values[k] + 1];
+						for (int l = tileIDToVerts_offsets[tileIDToNeighbors_values[k]]; l < oneAfterLastNeighVert; l++)
 						{
 							if (verts[l] == verts[j])
 							{
-								Tile tile2 = tiles[tileIDToNeighbors_values[k]];
-								if (!flag)
+								Tile neigh = tiles[tileIDToNeighbors_values[k]];
+								if (!isCoast)
 								{
-									if ((tile2.elevation >= 0f && elevation <= 0f) || (tile2.elevation <= 0f && elevation >= 0f))
+									if ((neigh.elevation >= 0f && elevation <= 0f) || (neigh.elevation <= 0f && elevation >= 0f))
 									{
-										flag = true;
+										isCoast = true;
 									}
-									else if (tile2.elevation > item.x)
+									else if (neigh.elevation > elevationVal.x)
 									{
-										item.x = tile2.elevation;
+										elevationVal.x = neigh.elevation;
 									}
 								}
 								break;
 							}
 						}
 					}
-					if (flag)
+					if (isCoast)
 					{
-						item.x = 0f;
+						elevationVal.x = 0f;
 					}
-					if (tile.biome.DrawMaterial.shader != ShaderDatabase.WorldOcean && item.x < 0f)
+					if (tile.biome.DrawMaterial.shader != ShaderDatabase.WorldOcean && elevationVal.x < 0f)
 					{
-						item.x = 0f;
+						elevationVal.x = 0f;
 					}
-					this.elevationValues.Add(item);
+					this.elevationValues.Add(elevationVal);
+				}
+				if (i % 1000 == 0)
+				{
+					yield return null;
 				}
 			}
 		}

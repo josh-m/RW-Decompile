@@ -31,8 +31,9 @@ namespace Verse
 		MinifiedThing,
 		Grave,
 		Art,
-		ContainerEnclosure,
+		ThisOrAnyCompIsThingHolder,
 		ActiveDropPod,
-		Transporter
+		Transporter,
+		LongRangeMineralScanner
 	}
 }

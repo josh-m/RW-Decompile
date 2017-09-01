@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using Verse.AI;
+using Verse.AI.Group;
 using Verse.Sound;
 
 namespace Verse
@@ -38,9 +39,13 @@ namespace Verse
 			}
 		}
 
-		public override void SpawnSetup(Map map)
+		public override void SpawnSetup(Map map, bool respawningAfterLoad)
 		{
-			base.SpawnSetup(map);
+			if (this.def.IsEdifice())
+			{
+				map.edificeGrid.Register(this);
+			}
+			base.SpawnSetup(map, respawningAfterLoad);
 			base.Map.listerBuildings.Add(this);
 			if (this.def.coversFloor)
 			{
@@ -60,10 +65,6 @@ namespace Verse
 					}
 				}
 			}
-			if (this.def.IsEdifice())
-			{
-				base.Map.edificeGrid.Register(this);
-			}
 			if (base.Faction == Faction.OfPlayer && this.def.building != null && this.def.building.spawnedConceptLearnOpportunity != null)
 			{
 				LessonAutoActivator.TeachOpportunity(this.def.building.spawnedConceptLearnOpportunity, OpportunityType.GoodToKnow);
@@ -82,16 +83,17 @@ namespace Verse
 			{
 				base.Map.exitMapGrid.Notify_LOSBlockerSpawned();
 			}
+			SmoothFloorDesignatorUtility.Notify_BuildingSpawned(this);
 		}
 
 		public override void DeSpawn()
 		{
-			if (this.def.IsEdifice())
-			{
-				base.Map.edificeGrid.DeRegister(this);
-			}
 			Map map = base.Map;
 			base.DeSpawn();
+			if (this.def.IsEdifice())
+			{
+				map.edificeGrid.DeRegister(this);
+			}
 			if (this.def.MakeFog)
 			{
 				map.fogGrid.Notify_FogBlockerRemoved(base.Position);
@@ -177,11 +179,33 @@ namespace Verse
 
 		public override void SetFaction(Faction newFaction, Pawn recruiter = null)
 		{
+			if (base.Spawned)
+			{
+				base.Map.listerBuildingsRepairable.Notify_BuildingDeSpawned(this);
+				base.Map.listerBuildings.Remove(this);
+			}
 			base.SetFaction(newFaction, recruiter);
 			if (base.Spawned)
 			{
-				base.Map.listerBuildingsRepairable.Notify_BuildingFactionChanged(this);
+				base.Map.listerBuildingsRepairable.Notify_BuildingSpawned(this);
+				base.Map.listerBuildings.Add(this);
 			}
+		}
+
+		public override void PreApplyDamage(DamageInfo dinfo, out bool absorbed)
+		{
+			if (base.Faction != null && base.Spawned && base.Faction != Faction.OfPlayer)
+			{
+				for (int i = 0; i < base.Map.lordManager.lords.Count; i++)
+				{
+					Lord lord = base.Map.lordManager.lords[i];
+					if (lord.faction == base.Faction)
+					{
+						lord.Notify_BuildingDamaged(this, dinfo);
+					}
+				}
+			}
+			base.PreApplyDamage(dinfo, out absorbed);
 		}
 
 		public override void PostApplyDamage(DamageInfo dinfo, float totalDamageDealt)
@@ -223,16 +247,20 @@ namespace Verse
 
 		public virtual bool ClaimableBy(Faction by)
 		{
-			if (this.def.building.isNaturalRock || !this.def.building.claimable)
+			if (this.def.building.isNaturalRock || !this.def.Claimable)
 			{
 				return false;
 			}
 			if (base.Faction != null)
 			{
+				if (base.Faction == by)
+				{
+					return false;
+				}
 				List<Pawn> list = base.Map.mapPawns.SpawnedPawnsInFaction(base.Faction);
 				for (int i = 0; i < list.Count; i++)
 				{
-					if (list[i].RaceProps.Humanlike && !PawnUtility.ThreatDisabledOrFleeing(list[i]))
+					if (list[i].RaceProps.Humanlike && GenHostility.IsActiveThreat(list[i]))
 					{
 						return false;
 					}
@@ -249,6 +277,11 @@ namespace Verse
 		public virtual ushort PathWalkCostFor(Pawn p)
 		{
 			return 0;
+		}
+
+		public virtual bool IsDangerousFor(Pawn p)
+		{
+			return false;
 		}
 	}
 }

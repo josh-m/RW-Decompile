@@ -22,7 +22,7 @@ namespace Verse.AI
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Defs.LookDef<ChemicalDef>(ref this.chemical, "chemical");
+			Scribe_Defs.Look<ChemicalDef>(ref this.chemical, "chemical");
 		}
 
 		public override void PostStart(string reason)
@@ -42,12 +42,12 @@ namespace Verse.AI
 				}).CapitalizeFirst();
 				if (reason != null)
 				{
-					text = text + "\n\n" + "MentalBreakReason".Translate(new object[]
+					text = text + "\n\n" + "FinalStraw".Translate(new object[]
 					{
 						reason
 					});
 				}
-				Find.LetterStack.ReceiveLetter(label, text, LetterType.BadNonUrgent, this.pawn, null);
+				Find.LetterStack.ReceiveLetter(label, text, LetterDefOf.BadNonUrgent, this.pawn, null);
 			}
 		}
 

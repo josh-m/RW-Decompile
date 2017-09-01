@@ -9,11 +9,11 @@ namespace Verse
 
 		protected Vector2 scrollPosition;
 
-		protected Listing_Standard listing;
-
 		protected string filter = string.Empty;
 
 		protected float totalOptionsHeight;
+
+		protected Listing_Standard listing;
 
 		protected static readonly Vector2 ButSize = new Vector2(230f, 27f);
 
@@ -60,9 +60,10 @@ namespace Verse
 				num = outRect.height;
 			}
 			Rect rect = new Rect(0f, 0f, outRect.width - 16f, num);
-			Widgets.BeginScrollView(outRect, ref this.scrollPosition, rect);
-			this.listing = new Listing_Standard(rect);
+			Widgets.BeginScrollView(outRect, ref this.scrollPosition, rect, true);
+			this.listing = new Listing_Standard();
 			this.listing.ColumnWidth = (rect.width - 51f) / 4f;
+			this.listing.Begin(rect);
 			this.DoListingItems();
 			this.listing.End();
 			Widgets.EndScrollView();
@@ -71,7 +72,7 @@ namespace Verse
 		public override void PostClose()
 		{
 			base.PostClose();
-			GUI.FocusControl(null);
+			UI.UnfocusCurrentControl();
 		}
 
 		protected abstract void DoListingItems();

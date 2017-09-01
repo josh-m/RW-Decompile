@@ -38,33 +38,33 @@ namespace RimWorld
 			return pawn.Map.listerFilthInHomeArea.FilthInHomeArea;
 		}
 
-		public override bool HasJobOnThing(Pawn pawn, Thing t)
+		public override bool HasJobOnThing(Pawn pawn, Thing t, bool forced = false)
 		{
 			if (pawn.Faction != Faction.OfPlayer)
 			{
 				return false;
 			}
 			Filth filth = t as Filth;
-			return filth != null && filth.Map.areaManager.Home[filth.Position] && pawn.CanReserveAndReach(t, PathEndMode.ClosestTouch, pawn.NormalMaxDanger(), 1) && filth.TicksSinceThickened >= this.MinTicksSinceThickened;
+			return filth != null && filth.Map.areaManager.Home[filth.Position] && pawn.CanReserveAndReach(t, PathEndMode.ClosestTouch, pawn.NormalMaxDanger(), 1, -1, null, forced) && filth.TicksSinceThickened >= this.MinTicksSinceThickened;
 		}
 
-		public override Job JobOnThing(Pawn pawn, Thing t)
+		public override Job JobOnThing(Pawn pawn, Thing t, bool forced = false)
 		{
 			Job job = new Job(JobDefOf.Clean);
 			job.AddQueuedTarget(TargetIndex.A, t);
 			int num = 15;
 			Map map = t.Map;
-			Room room = t.Position.GetRoom(map);
+			Room room = t.GetRoom(RegionType.Set_Passable);
 			for (int i = 0; i < 100; i++)
 			{
 				IntVec3 intVec = t.Position + GenRadial.RadialPattern[i];
-				if (intVec.InBounds(map) && intVec.GetRoom(map) == room)
+				if (intVec.InBounds(map) && intVec.GetRoom(map, RegionType.Set_Passable) == room)
 				{
 					List<Thing> thingList = intVec.GetThingList(map);
 					for (int j = 0; j < thingList.Count; j++)
 					{
 						Thing thing = thingList[j];
-						if (this.HasJobOnThing(pawn, thing) && thing != t)
+						if (this.HasJobOnThing(pawn, thing, forced) && thing != t)
 						{
 							job.AddQueuedTarget(TargetIndex.A, thing);
 						}

@@ -16,9 +16,9 @@ namespace RimWorld
 			}
 		}
 
-		public override void PostSpawnSetup()
+		public override void PostSpawnSetup(bool respawningAfterLoad)
 		{
-			base.PostSpawnSetup();
+			base.PostSpawnSetup(respawningAfterLoad);
 			this.refuelableComp = this.parent.GetComp<CompRefuelable>();
 			this.breakdownableComp = this.parent.GetComp<CompBreakdownable>();
 			if (base.Props.basePowerConsumption < 0f && !this.parent.IsBrokenDown())
@@ -30,6 +30,11 @@ namespace RimWorld
 		public override void CompTick()
 		{
 			base.CompTick();
+			this.UpdateDesiredPowerOutput();
+		}
+
+		public void UpdateDesiredPowerOutput()
+		{
 			if ((this.breakdownableComp != null && this.breakdownableComp.BrokenDown) || (this.refuelableComp != null && !this.refuelableComp.HasFuel) || (this.flickableComp != null && !this.flickableComp.SwitchIsOn) || !base.PowerOn)
 			{
 				base.PowerOutput = 0f;

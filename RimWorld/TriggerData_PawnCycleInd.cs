@@ -10,7 +10,7 @@ namespace RimWorld
 
 		public override void ExposeData()
 		{
-			Scribe_Values.LookValue<int>(ref this.pawnCycleInd, "pawnCycleInd", 0, false);
+			Scribe_Values.Look<int>(ref this.pawnCycleInd, "pawnCycleInd", 0, false);
 		}
 	}
 }

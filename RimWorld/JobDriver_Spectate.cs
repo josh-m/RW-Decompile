@@ -20,7 +20,7 @@ namespace RimWorld
 			{
 				this.EndOnDespawnedOrNull(TargetIndex.A, JobCondition.Incompletable);
 			}
-			yield return Toils_Reserve.Reserve(TargetIndex.A, 1);
+			yield return Toils_Reserve.Reserve(TargetIndex.A, 1, -1, null);
 			yield return Toils_Goto.GotoCell(TargetIndex.A, PathEndMode.OnCell);
 			yield return new Toil
 			{
@@ -33,7 +33,8 @@ namespace RimWorld
 						this.<>f__this.pawn.jobs.CheckForJobOverride();
 					}
 				},
-				defaultCompleteMode = ToilCompleteMode.Never
+				defaultCompleteMode = ToilCompleteMode.Never,
+				handlingFacing = true
 			};
 		}
 	}

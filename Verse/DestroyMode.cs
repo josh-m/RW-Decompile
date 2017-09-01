@@ -5,7 +5,7 @@ namespace Verse
 	public enum DestroyMode : byte
 	{
 		Vanish,
-		Kill,
+		KillFinalize,
 		Deconstruct,
 		FailConstruction,
 		Cancel

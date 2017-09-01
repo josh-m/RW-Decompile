@@ -5,6 +5,12 @@ namespace Verse
 {
 	public struct DamageInfo
 	{
+		public enum SourceCategory
+		{
+			ThingOrUnknown,
+			Collapse
+		}
+
 		private DamageDef defInt;
 
 		private int amountInt;
@@ -12,6 +18,8 @@ namespace Verse
 		private float angleInt;
 
 		private Thing instigatorInt;
+
+		private DamageInfo.SourceCategory categoryInt;
 
 		private BodyPartRecord forceHitPartInt;
 
@@ -54,6 +62,14 @@ namespace Verse
 			get
 			{
 				return this.instigatorInt;
+			}
+		}
+
+		public DamageInfo.SourceCategory Category
+		{
+			get
+			{
+				return this.categoryInt;
 			}
 		}
 
@@ -129,7 +145,7 @@ namespace Verse
 			}
 		}
 
-		public DamageInfo(DamageDef def, int amount, float angle = -1f, Thing instigator = null, BodyPartRecord forceHitPart = null, ThingDef weaponGear = null)
+		public DamageInfo(DamageDef def, int amount, float angle = -1f, Thing instigator = null, BodyPartRecord forceHitPart = null, ThingDef weaponGear = null, DamageInfo.SourceCategory category = DamageInfo.SourceCategory.ThingOrUnknown)
 		{
 			this.defInt = def;
 			this.amountInt = amount;
@@ -142,6 +158,7 @@ namespace Verse
 				this.angleInt = angle;
 			}
 			this.instigatorInt = instigator;
+			this.categoryInt = category;
 			this.forceHitPartInt = forceHitPart;
 			this.heightInt = BodyPartHeight.Undefined;
 			this.depthInt = BodyPartDepth.Undefined;
@@ -158,6 +175,7 @@ namespace Verse
 			this.amountInt = cloneSource.amountInt;
 			this.angleInt = cloneSource.angleInt;
 			this.instigatorInt = cloneSource.instigatorInt;
+			this.categoryInt = cloneSource.categoryInt;
 			this.forceHitPartInt = cloneSource.forceHitPartInt;
 			this.heightInt = cloneSource.heightInt;
 			this.depthInt = cloneSource.depthInt;
@@ -225,7 +243,7 @@ namespace Verse
 				", amount= ",
 				this.amountInt,
 				", instigator=",
-				this.instigatorInt,
+				(this.instigatorInt == null) ? this.categoryInt.ToString() : this.instigatorInt.ToString(),
 				", angle=",
 				this.angleInt.ToString("F1"),
 				")"

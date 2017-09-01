@@ -4,7 +4,7 @@ using Verse;
 
 namespace RimWorld
 {
-	public class DrugPolicy : ILoadReferenceable, IExposable
+	public class DrugPolicy : IExposable, ILoadReferenceable
 	{
 		public int uniqueId;
 
@@ -81,14 +81,14 @@ namespace RimWorld
 
 		public void ExposeData()
 		{
-			Scribe_Values.LookValue<int>(ref this.uniqueId, "uniqueId", 0, false);
-			Scribe_Values.LookValue<string>(ref this.label, "label", null, false);
-			Scribe_Collections.LookList<DrugPolicyEntry>(ref this.entriesInt, "drugs", LookMode.Deep, new object[0]);
+			Scribe_Values.Look<int>(ref this.uniqueId, "uniqueId", 0, false);
+			Scribe_Values.Look<string>(ref this.label, "label", null, false);
+			Scribe_Collections.Look<DrugPolicyEntry>(ref this.entriesInt, "drugs", LookMode.Deep, new object[0]);
 		}
 
 		public string GetUniqueLoadID()
 		{
-			return "AssignedDrugsSet_" + this.label + this.uniqueId.ToString();
+			return "DrugPolicy_" + this.label + this.uniqueId.ToString();
 		}
 	}
 }

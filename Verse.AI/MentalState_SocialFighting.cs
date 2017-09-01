@@ -68,14 +68,14 @@ namespace Verse.AI
 				{
 					def = ThoughtDefOf.HadCatharticFight;
 				}
-				this.pawn.needs.mood.thoughts.memories.TryGainMemoryThought(def, this.otherPawn);
+				this.pawn.needs.mood.thoughts.memories.TryGainMemory(def, this.otherPawn);
 			}
 		}
 
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_References.LookReference<Pawn>(ref this.otherPawn, "otherPawn", false);
+			Scribe_References.Look<Pawn>(ref this.otherPawn, "otherPawn", false);
 		}
 
 		public override RandomSocialMode SocialModeMax()

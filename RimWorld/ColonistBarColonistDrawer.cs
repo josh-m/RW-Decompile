@@ -22,10 +22,6 @@ namespace RimWorld
 
 		private Dictionary<string, string> pawnLabelsCache = new Dictionary<string, string>();
 
-		private Pawn clickedColonist;
-
-		private float clickedAt;
-
 		private static readonly Texture2D MoodBGTex = SolidColorMaterials.NewSolidColorTexture(new Color(0.4f, 0.47f, 0.53f, 0.44f));
 
 		private static readonly Texture2D DeadColonistTex = ContentFinder<Texture2D>.Get("UI/Misc/DeadColonist", true);
@@ -164,89 +160,60 @@ namespace RimWorld
 
 		public void HandleClicks(Rect rect, Pawn colonist)
 		{
-			if (Mouse.IsOver(rect))
+			if (Event.current.type == EventType.MouseDown && Event.current.button == 0 && Event.current.clickCount == 2 && Mouse.IsOver(rect))
 			{
-				if (Event.current.type == EventType.MouseDown)
-				{
-					if (Event.current.button == 0)
-					{
-						if (this.clickedColonist == colonist && Time.time - this.clickedAt < 0.5f)
-						{
-							Event.current.Use();
-							JumpToTargetUtility.TryJump(colonist);
-							this.clickedColonist = null;
-						}
-						else
-						{
-							this.clickedColonist = colonist;
-							this.clickedAt = Time.time;
-						}
-					}
-					else if (Event.current.button == 1)
-					{
-						Event.current.Use();
-					}
-				}
-				else if (Event.current.type == EventType.MouseUp && Event.current.button == 1)
-				{
-					JumpToTargetUtility.TryJumpAndSelect(JumpToTargetUtility.GetWorldTarget(colonist));
-				}
+				Event.current.Use();
+				CameraJumper.TryJump(colonist);
+			}
+			if (Event.current.button == 1 && Widgets.ButtonInvisible(rect, false))
+			{
+				CameraJumper.TryJumpAndSelect(CameraJumper.GetWorldTarget(colonist));
 			}
 		}
 
 		public void HandleGroupFrameClicks(int group)
 		{
 			Rect rect = this.GroupFrameRect(group);
-			if (Mouse.IsOver(rect))
+			if (Event.current.type == EventType.MouseUp && Event.current.button == 0 && Mouse.IsOver(rect) && !this.ColonistBar.AnyColonistOrCorpseAt(UI.MousePositionOnUIInverted))
 			{
 				bool worldRenderedNow = WorldRendererUtility.WorldRenderedNow;
-				if (Event.current.type == EventType.MouseDown && Event.current.button == 1)
+				if ((!worldRenderedNow && !Find.Selector.dragBox.IsValidAndActive) || (worldRenderedNow && !Find.WorldSelector.dragBox.IsValidAndActive))
 				{
-					Event.current.Use();
+					Find.Selector.dragBox.active = false;
+					Find.WorldSelector.dragBox.active = false;
+					ColonistBar.Entry entry = this.ColonistBar.Entries.Find((ColonistBar.Entry x) => x.group == group);
+					Map map = entry.map;
+					if (map == null)
+					{
+						if (WorldRendererUtility.WorldRenderedNow)
+						{
+							CameraJumper.TrySelect(entry.pawn);
+						}
+						else
+						{
+							CameraJumper.TryJumpAndSelect(entry.pawn);
+						}
+					}
+					else
+					{
+						if (!CameraJumper.TryHideWorld() && Current.Game.VisibleMap != map)
+						{
+							SoundDefOf.MapSelected.PlayOneShotOnCamera(null);
+						}
+						Current.Game.VisibleMap = map;
+					}
 				}
-				else if (Event.current.type == EventType.MouseUp)
+			}
+			if (Event.current.button == 1 && Widgets.ButtonInvisible(rect, false))
+			{
+				ColonistBar.Entry entry2 = this.ColonistBar.Entries.Find((ColonistBar.Entry x) => x.group == group);
+				if (entry2.map != null)
 				{
-					if (Event.current.button == 0)
-					{
-						if (!this.ColonistBar.AnyColonistOrCorpseAt(UI.MousePositionOnUIInverted) && ((!worldRenderedNow && !Find.Selector.dragBox.IsValidAndActive) || (worldRenderedNow && !Find.WorldSelector.dragBox.IsValidAndActive)))
-						{
-							Find.Selector.dragBox.active = false;
-							Find.WorldSelector.dragBox.active = false;
-							ColonistBar.Entry entry = this.ColonistBar.Entries.Find((ColonistBar.Entry x) => x.group == group);
-							Map map = entry.map;
-							if (map == null)
-							{
-								if (Find.MainTabsRoot.OpenTab == MainTabDefOf.World)
-								{
-									JumpToTargetUtility.TrySelect(entry.pawn);
-								}
-								else
-								{
-									JumpToTargetUtility.TryJumpAndSelect(entry.pawn);
-								}
-							}
-							else
-							{
-								if (!JumpToTargetUtility.CloseWorldTab() && Current.Game.VisibleMap != map)
-								{
-									SoundDefOf.MapSelected.PlayOneShotOnCamera();
-								}
-								Current.Game.VisibleMap = map;
-							}
-						}
-					}
-					else if (Event.current.button == 1)
-					{
-						ColonistBar.Entry entry2 = this.ColonistBar.Entries.Find((ColonistBar.Entry x) => x.group == group);
-						if (entry2.map != null)
-						{
-							JumpToTargetUtility.TryJumpAndSelect(JumpToTargetUtility.GetGlobalTargetInfoForMap(entry2.map));
-						}
-						else if (entry2.pawn != null)
-						{
-							JumpToTargetUtility.TryJumpAndSelect(entry2.pawn);
-						}
-					}
+					CameraJumper.TryJumpAndSelect(CameraJumper.GetWorldTargetOfMap(entry2.map));
+				}
+				else if (entry2.pawn != null)
+				{
+					CameraJumper.TryJumpAndSelect(entry2.pawn);
 				}
 			}
 		}

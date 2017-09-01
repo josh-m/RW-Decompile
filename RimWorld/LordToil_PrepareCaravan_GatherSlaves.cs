@@ -9,7 +9,15 @@ namespace RimWorld
 	{
 		private IntVec3 meetingPoint;
 
-		public override bool AllowSatisfyLongNeeds
+		public override float? CustomWakeThreshold
+		{
+			get
+			{
+				return new float?(0.5f);
+			}
+		}
+
+		public override bool AllowRestingInBed
 		{
 			get
 			{

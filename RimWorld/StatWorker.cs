@@ -31,7 +31,7 @@ namespace RimWorld
 
 		public float GetValueAbstract(BuildableDef def, ThingDef stuffDef = null)
 		{
-			return this.GetValue(StatRequest.For(def, stuffDef), true);
+			return this.GetValue(StatRequest.For(def, stuffDef, QualityCategory.Normal), true);
 		}
 
 		public virtual float GetValueUnfinalized(StatRequest req, bool applyPostProcess = true)
@@ -67,6 +67,13 @@ namespace RimWorld
 				{
 					num += StatWorker.StatOffsetFromGear(pawn.equipment.Primary, this.stat);
 				}
+				if (pawn.story != null)
+				{
+					for (int l = 0; l < pawn.story.traits.allTraits.Count; l++)
+					{
+						num *= pawn.story.traits.allTraits[l].MultiplierOfStat(this.stat);
+					}
+				}
 				num *= pawn.ageTracker.CurLifeStage.statFactors.GetStatFactorFromList(this.stat);
 			}
 			if (req.StuffDef != null && (num > 0f || this.stat.applyFactorsIfNegative))
@@ -83,26 +90,33 @@ namespace RimWorld
 				}
 				if (this.stat.statFactors != null)
 				{
-					for (int l = 0; l < this.stat.statFactors.Count; l++)
+					for (int m = 0; m < this.stat.statFactors.Count; m++)
 					{
-						num *= req.Thing.GetStatValue(this.stat.statFactors[l], true);
+						num *= req.Thing.GetStatValue(this.stat.statFactors[m], true);
 					}
 				}
 				if (pawn != null)
 				{
-					if (this.stat.skillNeedFactors != null && pawn.skills != null)
+					if (pawn.skills != null)
 					{
-						for (int m = 0; m < this.stat.skillNeedFactors.Count; m++)
+						if (this.stat.skillNeedFactors != null)
 						{
-							num *= this.stat.skillNeedFactors[m].FactorFor(pawn);
+							for (int n = 0; n < this.stat.skillNeedFactors.Count; n++)
+							{
+								num *= this.stat.skillNeedFactors[n].FactorFor(pawn);
+							}
 						}
+					}
+					else if (this.stat.noSkillFactor != 1f)
+					{
+						num *= this.stat.noSkillFactor;
 					}
 					if (this.stat.capacityFactors != null)
 					{
-						for (int n = 0; n < this.stat.capacityFactors.Count; n++)
+						for (int num2 = 0; num2 < this.stat.capacityFactors.Count; num2++)
 						{
-							PawnCapacityFactor pawnCapacityFactor = this.stat.capacityFactors[n];
-							float factor = pawnCapacityFactor.GetFactor(pawn.health.capacities.GetEfficiency(pawnCapacityFactor.capacity));
+							PawnCapacityFactor pawnCapacityFactor = this.stat.capacityFactors[num2];
+							float factor = pawnCapacityFactor.GetFactor(pawn.health.capacities.GetLevel(pawnCapacityFactor.capacity));
 							num = Mathf.Lerp(num, num * factor, pawnCapacityFactor.weight);
 						}
 					}
@@ -246,24 +260,33 @@ namespace RimWorld
 			}
 			if (pawn != null)
 			{
-				if (this.stat.skillNeedFactors != null && !pawn.RaceProps.Animal && pawn.skills != null)
+				if (pawn.skills != null)
+				{
+					if (this.stat.skillNeedFactors != null)
+					{
+						stringBuilder.AppendLine();
+						stringBuilder.AppendLine("StatsReport_Skills".Translate());
+						for (int n = 0; n < this.stat.skillNeedFactors.Count; n++)
+						{
+							SkillNeed skillNeed = this.stat.skillNeedFactors[n];
+							int level = pawn.skills.GetSkill(skillNeed.skill).Level;
+							stringBuilder.AppendLine(string.Concat(new object[]
+							{
+								"    ",
+								skillNeed.skill.LabelCap,
+								" (",
+								level,
+								"): x",
+								skillNeed.FactorFor(pawn).ToStringPercent()
+							}));
+						}
+					}
+				}
+				else if (this.stat.noSkillFactor != 1f)
 				{
 					stringBuilder.AppendLine();
 					stringBuilder.AppendLine("StatsReport_Skills".Translate());
-					for (int n = 0; n < this.stat.skillNeedFactors.Count; n++)
-					{
-						SkillNeed skillNeed = this.stat.skillNeedFactors[n];
-						int level = pawn.skills.GetSkill(skillNeed.skill).Level;
-						stringBuilder.AppendLine(string.Concat(new object[]
-						{
-							"    ",
-							skillNeed.skill.LabelCap,
-							" (",
-							level,
-							"): x",
-							skillNeed.FactorFor(pawn).ToStringPercent()
-						}));
-					}
+					stringBuilder.AppendLine("    " + "default".Translate().CapitalizeFirst() + " : x" + this.stat.noSkillFactor.ToStringPercent());
 				}
 				if (this.stat.capacityFactors != null)
 				{
@@ -276,7 +299,7 @@ namespace RimWorld
 						select hfa)
 						{
 							string text = current.capacity.GetLabelFor(pawn).CapitalizeFirst();
-							float factor = current.GetFactor(pawn.health.capacities.GetEfficiency(current.capacity));
+							float factor = current.GetFactor(pawn.health.capacities.GetLevel(current.capacity));
 							string text2 = factor.ToStringPercent();
 							string text3 = "HealthFactorPercentImpact".Translate(new object[]
 							{
@@ -482,7 +505,7 @@ namespace RimWorld
 			}
 			if (pawn.equipment != null)
 			{
-				foreach (ThingWithComps t2 in pawn.equipment.AllEquipment)
+				foreach (ThingWithComps t2 in pawn.equipment.AllEquipmentListForReading)
 				{
 					if (StatWorker.GearAffectsStat(t2.def, stat))
 					{

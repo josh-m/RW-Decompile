@@ -10,6 +10,10 @@ namespace RimWorld
 
 		public float minDaysPassed;
 
+		public IncidentTargetType allowedTargetTypes = IncidentTargetType.All;
+
+		public float minIncChancePopulationIntentFactor = 0.05f;
+
 		public StorytellerCompProperties()
 		{
 		}

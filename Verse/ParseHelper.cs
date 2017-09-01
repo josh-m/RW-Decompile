@@ -15,6 +15,7 @@ namespace Verse
 			object result;
 			try
 			{
+				itemType = (Nullable.GetUnderlyingType(itemType) ?? itemType);
 				if (itemType == typeof(string))
 				{
 					str = str.Replace("\\n", "\n");
@@ -173,9 +174,13 @@ namespace Verse
 					{
 						result = Rot4.FromString(str);
 					}
+					else if (itemType == typeof(CellRect))
+					{
+						result = CellRect.FromString(str);
+					}
 					else
 					{
-						if (itemType != typeof(CellRect))
+						if (itemType != typeof(CurvePoint))
 						{
 							if (itemType == typeof(NameTriple))
 							{
@@ -242,7 +247,7 @@ namespace Verse
 								"'."
 							}));
 						}
-						result = CellRect.FromString(str);
+						result = CurvePoint.FromString(str);
 					}
 				}
 			}
@@ -263,7 +268,7 @@ namespace Verse
 
 		public static bool HandlesType(Type type)
 		{
-			return type.IsPrimitive || type.IsEnum || type == typeof(string) || type == typeof(IntVec3) || type == typeof(IntVec2) || type == typeof(Type) || type == typeof(Action) || type == typeof(Vector3) || type == typeof(Vector2) || type == typeof(Rect) || type == typeof(Color) || type == typeof(PublishedFileId_t) || type == typeof(Rot4) || type == typeof(CellRect) || type == typeof(NameTriple) || type == typeof(FloatRange) || type == typeof(IntRange) || type == typeof(QualityRange) || type == typeof(ColorInt);
+			return type.IsPrimitive || type.IsEnum || type == typeof(string) || type == typeof(IntVec3) || type == typeof(IntVec2) || type == typeof(Type) || type == typeof(Action) || type == typeof(Vector3) || type == typeof(Vector2) || type == typeof(Rect) || type == typeof(Color) || type == typeof(PublishedFileId_t) || type == typeof(Rot4) || type == typeof(CellRect) || type == typeof(CurvePoint) || type == typeof(NameTriple) || type == typeof(FloatRange) || type == typeof(IntRange) || type == typeof(QualityRange) || type == typeof(ColorInt);
 		}
 
 		private static Vector3 FromStringVector3(string Str)

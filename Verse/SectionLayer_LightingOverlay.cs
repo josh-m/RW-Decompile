@@ -90,7 +90,7 @@ namespace Verse
 						{
 							Thing thing = innerArray[cellIndices.CellToIndex(c)];
 							RoofDef roofDef = roofGrid.RoofAt(c.x, c.z);
-							if (roofDef != null && (roofDef.isThickRoof || thing == null || !thing.def.holdsRoof))
+							if (roofDef != null && (roofDef.isThickRoof || thing == null || !thing.def.holdsRoof || thing.def.altitudeLayer == AltitudeLayer.DoorMoveable))
 							{
 								flag = true;
 							}

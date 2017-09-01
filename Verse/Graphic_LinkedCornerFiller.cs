@@ -5,7 +5,7 @@ namespace Verse
 {
 	public class Graphic_LinkedCornerFiller : Graphic_Linked
 	{
-		private const float ShiftUp = 0.07f;
+		private const float ShiftUp = 0.09f;
 
 		private const float CoverSize = 0.45f;
 
@@ -71,7 +71,7 @@ namespace Verse
 							{
 								if (i != 3 || (this.ShouldLinkWith(position + IntVec3.East, thing) && this.ShouldLinkWith(position + IntVec3.South, thing)))
 								{
-									Vector3 center = thing.DrawPos + GenAdj.DiagonalDirectionsAround[i].ToVector3().normalized * Graphic_LinkedCornerFiller.CoverOffsetDist + Altitudes.AltIncVect + new Vector3(0f, 0f, 0.07f);
+									Vector3 center = thing.DrawPos + GenAdj.DiagonalDirectionsAround[i].ToVector3().normalized * Graphic_LinkedCornerFiller.CoverOffsetDist + Altitudes.AltIncVect + new Vector3(0f, 0f, 0.09f);
 									Vector2[] cornerFillUVs = Graphic_LinkedCornerFiller.CornerFillUVs;
 									Printer_Plane.PrintPlane(layer, center, new Vector2(0.45f, 0.45f), base.LinkedDrawMatFrom(thing, thing.Position), 0f, false, cornerFillUVs, null, 0.01f);
 								}

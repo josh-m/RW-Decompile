@@ -52,7 +52,7 @@ namespace RimWorld
 		{
 			if (pawn.RaceProps.ToolUser)
 			{
-				if (pawn.CanReserveAndReach(this.parent, PathEndMode.InteractionCell, Danger.Deadly, 1))
+				if (pawn.CanReserveAndReach(this.parent, PathEndMode.InteractionCell, Danger.Deadly, 1, -1, null, false))
 				{
 					if (this.Props.manWorkType == WorkTags.None || pawn.story == null || !pawn.story.WorkTagIsDisabled(this.Props.manWorkType))
 					{
@@ -62,7 +62,7 @@ namespace RimWorld
 						}), delegate
 						{
 							Job job = new Job(JobDefOf.ManTurret, this.<>f__this.parent);
-							this.pawn.jobs.TryTakeOrderedJob(job);
+							this.pawn.jobs.TryTakeOrderedJob(job, JobTag.Misc);
 						}, MenuOptionPriority.Default, null, null, 0f, null, null);
 						yield return opt;
 					}

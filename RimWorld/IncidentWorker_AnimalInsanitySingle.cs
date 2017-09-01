@@ -30,7 +30,7 @@ namespace RimWorld
 			{
 				pawn.Label
 			});
-			Find.LetterStack.ReceiveLetter("LetterLabelAnimalInsanitySingle".Translate(), text, LetterType.BadUrgent, pawn, null);
+			Find.LetterStack.ReceiveLetter("LetterLabelAnimalInsanitySingle".Translate(), text, LetterDefOf.BadUrgent, pawn, null);
 			return true;
 		}
 	}

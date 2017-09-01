@@ -39,13 +39,9 @@ namespace RimWorld
 			{
 				float num = this.commonalityMultiplier;
 				num *= this.thing.generateCommonality;
-				if (this.thing.IsApparel)
+				if (this.stuff != null)
 				{
-					num *= this.thing.apparel.commonality;
-					if (this.stuff != null)
-					{
-						num *= this.stuff.stuffProps.commonality;
-					}
+					num *= this.stuff.stuffProps.commonality;
 				}
 				if (PawnWeaponGenerator.IsDerpWeapon(this.thing, this.stuff))
 				{
@@ -55,7 +51,7 @@ namespace RimWorld
 			}
 		}
 
-		public ThingStuffPair(ThingDef thing, ThingDef stuff, float commonalityMultiplier)
+		public ThingStuffPair(ThingDef thing, ThingDef stuff, float commonalityMultiplier = 1f)
 		{
 			this.thing = thing;
 			this.stuff = stuff;
@@ -83,10 +79,11 @@ namespace RimWorld
 						where st.IsStuff && st.stuffProps.CanMake(thingDef)
 						select st;
 						int num = enumerable.Count<ThingDef>();
-						float num2 = 1f / (float)num;
+						float num2 = enumerable.Average((ThingDef st) => st.stuffProps.commonality);
+						float num3 = 1f / (float)num / num2;
 						foreach (ThingDef current in enumerable)
 						{
-							list.Add(new ThingStuffPair(thingDef, current, num2));
+							list.Add(new ThingStuffPair(thingDef, current, num3));
 						}
 					}
 				}
@@ -98,6 +95,10 @@ namespace RimWorld
 
 		public override string ToString()
 		{
+			if (this.thing == null)
+			{
+				return "(null)";
+			}
 			string text;
 			if (this.stuff == null)
 			{
@@ -105,17 +106,15 @@ namespace RimWorld
 			}
 			else
 			{
-				text = this.stuff.LabelAsStuff + " " + this.thing.label;
+				text = this.thing.label + " " + this.stuff.LabelAsStuff;
 			}
 			return string.Concat(new string[]
 			{
-				"(",
 				text,
 				" $",
 				this.Price.ToString("F0"),
 				" c=",
-				this.Commonality.ToString("F4"),
-				")"
+				this.Commonality.ToString("F4")
 			});
 		}
 	}

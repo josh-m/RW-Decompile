@@ -32,71 +32,148 @@ namespace Verse
 			}
 		}
 
-		public const int MaxStartMentalStateThreshold = 40;
+		public const int MaxStartMentalBreakThreshold = 40;
 
 		private static List<PawnGenerator.PawnGenerationStatus> pawnsBeingGenerated = new List<PawnGenerator.PawnGenerationStatus>();
 
 		private static SimpleCurve DefaultAgeGenerationCurve = new SimpleCurve
 		{
-			new CurvePoint(0.05f, 0f),
-			new CurvePoint(0.1f, 100f),
-			new CurvePoint(0.675f, 100f),
-			new CurvePoint(0.75f, 30f),
-			new CurvePoint(0.875f, 18f),
-			new CurvePoint(1f, 10f),
-			new CurvePoint(1.125f, 3f),
-			new CurvePoint(1.25f, 0f)
+			{
+				new CurvePoint(0.05f, 0f),
+				true
+			},
+			{
+				new CurvePoint(0.1f, 100f),
+				true
+			},
+			{
+				new CurvePoint(0.675f, 100f),
+				true
+			},
+			{
+				new CurvePoint(0.75f, 30f),
+				true
+			},
+			{
+				new CurvePoint(0.875f, 18f),
+				true
+			},
+			{
+				new CurvePoint(1f, 10f),
+				true
+			},
+			{
+				new CurvePoint(1.125f, 3f),
+				true
+			},
+			{
+				new CurvePoint(1.25f, 0f),
+				true
+			}
 		};
 
 		private static readonly SimpleCurve AgeSkillMaxFactorCurve = new SimpleCurve
 		{
-			new CurvePoint(0f, 0f),
-			new CurvePoint(10f, 0.7f),
-			new CurvePoint(35f, 1f),
-			new CurvePoint(60f, 1.6f)
+			{
+				new CurvePoint(0f, 0f),
+				true
+			},
+			{
+				new CurvePoint(10f, 0.7f),
+				true
+			},
+			{
+				new CurvePoint(35f, 1f),
+				true
+			},
+			{
+				new CurvePoint(60f, 1.6f),
+				true
+			}
 		};
 
 		private static readonly SimpleCurve LevelFinalAdjustmentCurve = new SimpleCurve
 		{
-			new CurvePoint(0f, 0f),
-			new CurvePoint(10f, 10f),
-			new CurvePoint(20f, 16f),
-			new CurvePoint(27f, 20f)
+			{
+				new CurvePoint(0f, 0f),
+				true
+			},
+			{
+				new CurvePoint(10f, 10f),
+				true
+			},
+			{
+				new CurvePoint(20f, 16f),
+				true
+			},
+			{
+				new CurvePoint(27f, 20f),
+				true
+			}
 		};
 
 		private static readonly SimpleCurve LevelRandomCurve = new SimpleCurve
 		{
-			new CurvePoint(0f, 0f),
-			new CurvePoint(0.5f, 150f),
-			new CurvePoint(4f, 150f),
-			new CurvePoint(5f, 25f),
-			new CurvePoint(10f, 5f),
-			new CurvePoint(15f, 0f)
+			{
+				new CurvePoint(0f, 0f),
+				true
+			},
+			{
+				new CurvePoint(0.5f, 150f),
+				true
+			},
+			{
+				new CurvePoint(4f, 150f),
+				true
+			},
+			{
+				new CurvePoint(5f, 25f),
+				true
+			},
+			{
+				new CurvePoint(10f, 5f),
+				true
+			},
+			{
+				new CurvePoint(15f, 0f),
+				true
+			}
 		};
 
 		public static Pawn GeneratePawn(PawnKindDef kindDef, Faction faction = null)
 		{
-			return PawnGenerator.GeneratePawn(new PawnGenerationRequest(kindDef, faction, PawnGenerationContext.NonPlayer, null, false, false, false, false, true, false, 1f, false, true, true, null, null, null, null, null, null));
+			return PawnGenerator.GeneratePawn(new PawnGenerationRequest(kindDef, faction, PawnGenerationContext.NonPlayer, -1, false, false, false, false, true, false, 1f, false, true, true, false, false, null, null, null, null, null, null));
 		}
 
 		public static Pawn GeneratePawn(PawnGenerationRequest request)
 		{
 			request.EnsureNonNullFaction();
 			Pawn pawn = null;
-			if (!request.Newborn && !request.ForceGenerateNewPawn && Rand.Value < PawnGenerator.ChanceToRedressAnyWorldPawn())
+			if (!request.Newborn && !request.ForceGenerateNewPawn)
 			{
-				IEnumerable<Pawn> enumerable = Find.WorldPawns.GetPawnsBySituation(WorldPawnSituation.Free);
-				if (request.KindDef.factionLeader)
+				if (request.Inhabitant && request.Tile != -1)
 				{
-					enumerable = enumerable.Concat(Find.WorldPawns.GetPawnsBySituation(WorldPawnSituation.FactionLeader));
+					Settlement settlement = Find.WorldObjects.WorldObjectAt<Settlement>(request.Tile);
+					if (settlement != null && settlement.previouslyGeneratedInhabitants.Any<Pawn>())
+					{
+						IEnumerable<Pawn> validCandidatesToRedress = PawnGenerator.GetValidCandidatesToRedress(request);
+						if ((from x in validCandidatesToRedress
+						where settlement.previouslyGeneratedInhabitants.Contains(x)
+						select x).TryRandomElementByWeight((Pawn x) => PawnGenerator.WorldPawnSelectionWeight(x), out pawn))
+						{
+							PawnGenerator.RedressPawn(pawn, request);
+							Find.WorldPawns.RemovePawn(pawn);
+						}
+					}
 				}
-				enumerable = from x in enumerable
-				where PawnGenerator.IsValidCandidateToRedress(x, request)
-				select x;
-				if (enumerable.TryRandomElementByWeight((Pawn x) => PawnGenerator.WorldPawnSelectionWeight(x), out pawn))
+				if (pawn == null && Rand.Value < PawnGenerator.ChanceToRedressAnyWorldPawn())
 				{
-					PawnGenerator.RedressPawn(pawn, request);
-					Find.WorldPawns.RemovePawn(pawn);
+					IEnumerable<Pawn> validCandidatesToRedress2 = PawnGenerator.GetValidCandidatesToRedress(request);
+					if (validCandidatesToRedress2.TryRandomElementByWeight((Pawn x) => PawnGenerator.WorldPawnSelectionWeight(x), out pawn))
+					{
+						PawnGenerator.RedressPawn(pawn, request);
+						Find.WorldPawns.RemovePawn(pawn);
+					}
 				}
 			}
 			if (pawn == null)
@@ -109,6 +186,14 @@ namespace Verse
 				if (!request.Newborn)
 				{
 					PawnGenerator.GenerateGearFor(pawn, request);
+				}
+				if (request.Inhabitant && request.Tile != -1)
+				{
+					Settlement settlement2 = Find.WorldObjects.WorldObjectAt<Settlement>(request.Tile);
+					if (settlement2 != null)
+					{
+						settlement2.previouslyGeneratedInhabitants.Add(pawn);
+					}
 				}
 			}
 			if (Find.Scenario != null)
@@ -217,7 +302,7 @@ namespace Verse
 					ignoreScenarioRequirements = true;
 				}
 				PawnGenerationRequest pawnGenerationRequest = request;
-				pawn = PawnGenerator.DoGenerateNewNakedPawn(ref pawnGenerationRequest, out text, ignoreScenarioRequirements);
+				pawn = PawnGenerator.TryGenerateNewNakedPawn(ref pawnGenerationRequest, out text, ignoreScenarioRequirements);
 				if (pawn != null)
 				{
 					request = pawnGenerationRequest;
@@ -240,7 +325,7 @@ namespace Verse
 			return pawn;
 		}
 
-		private static Pawn DoGenerateNewNakedPawn(ref PawnGenerationRequest request, out string error, bool ignoreScenarioRequirements)
+		private static Pawn TryGenerateNewNakedPawn(ref PawnGenerationRequest request, out string error, bool ignoreScenarioRequirements)
 		{
 			error = null;
 			Pawn pawn = (Pawn)ThingMaker.MakeThing(request.KindDef.race, null);
@@ -283,7 +368,7 @@ namespace Verse
 					pawn.story.hairColor = PawnHairColors.RandomHairColor(pawn.story.SkinColor, pawn.ageTracker.AgeBiologicalYears);
 					PawnBioAndNameGenerator.GiveAppropriateBioAndNameTo(pawn, request.FixedLastName);
 					pawn.story.hairDef = PawnHairChooser.RandomHairDefFor(pawn, request.Faction.def);
-					PawnGenerator.GenerateTraits(pawn, request.AllowGay);
+					PawnGenerator.GenerateTraits(pawn, request);
 					PawnGenerator.GenerateBodyType(pawn);
 					PawnGenerator.GenerateSkills(pawn);
 				}
@@ -308,7 +393,7 @@ namespace Verse
 					error = "Generated downed pawn.";
 					result = null;
 				}
-				else if (request.MustBeCapableOfViolence && pawn.story != null && pawn.story.WorkTagIsDisabled(WorkTags.Violent))
+				else if (request.MustBeCapableOfViolence && ((pawn.story != null && pawn.story.WorkTagIsDisabled(WorkTags.Violent)) || !pawn.health.capacities.CapableOf(PawnCapacityDefOf.Manipulation)))
 				{
 					PawnGenerator.DiscardGeneratedPawn(pawn);
 					error = "Generated pawn incapable of violence.";
@@ -372,10 +457,22 @@ namespace Verse
 			}
 		}
 
+		private static IEnumerable<Pawn> GetValidCandidatesToRedress(PawnGenerationRequest request)
+		{
+			IEnumerable<Pawn> enumerable = Find.WorldPawns.GetPawnsBySituation(WorldPawnSituation.Free);
+			if (request.KindDef.factionLeader)
+			{
+				enumerable = enumerable.Concat(Find.WorldPawns.GetPawnsBySituation(WorldPawnSituation.FactionLeader));
+			}
+			return from x in enumerable
+			where PawnGenerator.IsValidCandidateToRedress(x, request)
+			select x;
+		}
+
 		private static float ChanceToRedressAnyWorldPawn()
 		{
 			int pawnsBySituationCount = Find.WorldPawns.GetPawnsBySituationCount(WorldPawnSituation.Free);
-			return Mathf.Min(0.02f + 0.01f * ((float)pawnsBySituationCount / 25f), 0.8f);
+			return Mathf.Min(0.02f + 0.01f * ((float)pawnsBySituationCount / 10f), 0.8f);
 		}
 
 		private static float WorldPawnSelectionWeight(Pawn p)
@@ -409,7 +506,7 @@ namespace Verse
 			{
 				AgeInjuryUtility.GenerateRandomOldAgeInjuries(pawn, !request.AllowDead);
 				PawnTechHediffsGenerator.GeneratePartsAndImplantsFor(pawn);
-				PawnAddictionHediffsGenerator.GenerateAddictionsFor(pawn);
+				PawnAddictionHediffsGenerator.GenerateAddictionsAndTolerancesFor(pawn);
 				if (request.AllowDead && pawn.Dead)
 				{
 					break;
@@ -522,7 +619,7 @@ namespace Verse
 			else
 			{
 				int num3;
-				if (Rand.Value < pawn.kindDef.backstoryCryptosleepCommonality)
+				if (request.CertainlyBeenInCryptosleep || Rand.Value < pawn.kindDef.backstoryCryptosleepCommonality)
 				{
 					float value = Rand.Value;
 					if (value < 0.7f)
@@ -563,7 +660,7 @@ namespace Verse
 			return traitDef.degreeDatas.RandomElementByWeight((TraitDegreeData dd) => dd.Commonality).degree;
 		}
 
-		private static void GenerateTraits(Pawn pawn, bool allowGay)
+		private static void GenerateTraits(Pawn pawn, PawnGenerationRequest request)
 		{
 			if (pawn.story == null)
 			{
@@ -602,7 +699,7 @@ namespace Verse
 				}
 			}
 			int num = Rand.RangeInclusive(2, 3);
-			if (allowGay && (LovePartnerRelationUtility.HasAnyLovePartnerOfTheSameGender(pawn) || LovePartnerRelationUtility.HasAnyExLovePartnerOfTheSameGender(pawn)))
+			if (request.AllowGay && (LovePartnerRelationUtility.HasAnyLovePartnerOfTheSameGender(pawn) || LovePartnerRelationUtility.HasAnyExLovePartnerOfTheSameGender(pawn)))
 			{
 				Trait trait = new Trait(TraitDefOf.Gay, PawnGenerator.RandomTraitDegree(TraitDefOf.Gay), false);
 				pawn.story.traits.GainTrait(trait);
@@ -614,7 +711,7 @@ namespace Verse
 				{
 					if (newTraitDef == TraitDefOf.Gay)
 					{
-						if (!allowGay)
+						if (!request.AllowGay)
 						{
 							continue;
 						}
@@ -623,18 +720,28 @@ namespace Verse
 							continue;
 						}
 					}
-					if (!pawn.story.traits.allTraits.Any((Trait tr) => newTraitDef.ConflictsWith(tr)) && (newTraitDef.conflictingTraits == null || !newTraitDef.conflictingTraits.Any((TraitDef tr) => pawn.story.traits.HasTrait(tr))))
+					if (request.Faction == null || Faction.OfPlayerSilentFail == null || !request.Faction.HostileTo(Faction.OfPlayer) || newTraitDef.allowOnHostileSpawn)
 					{
-						if (newTraitDef.requiredWorkTypes == null || !pawn.story.OneOfWorkTypesIsDisabled(newTraitDef.requiredWorkTypes))
+						if (!pawn.story.traits.allTraits.Any((Trait tr) => newTraitDef.ConflictsWith(tr)) && (newTraitDef.conflictingTraits == null || !newTraitDef.conflictingTraits.Any((TraitDef tr) => pawn.story.traits.HasTrait(tr))))
 						{
-							if (!pawn.story.WorkTagIsDisabled(newTraitDef.requiredWorkTags))
+							if (newTraitDef.requiredWorkTypes == null || !pawn.story.OneOfWorkTypesIsDisabled(newTraitDef.requiredWorkTypes))
 							{
-								int degree = PawnGenerator.RandomTraitDegree(newTraitDef);
-								if (!pawn.story.childhood.DisallowsTrait(newTraitDef, degree) && (pawn.story.adulthood == null || !pawn.story.adulthood.DisallowsTrait(newTraitDef, degree)))
+								if (!pawn.story.WorkTagIsDisabled(newTraitDef.requiredWorkTags))
 								{
-									Trait trait2 = new Trait(newTraitDef, degree, false);
-									if (pawn.mindState == null || pawn.mindState.mentalBreaker == null || pawn.mindState.mentalBreaker.BreakThresholdExtreme + trait2.OffsetOfStat(StatDefOf.MentalBreakThreshold) <= 40f)
+									int degree = PawnGenerator.RandomTraitDegree(newTraitDef);
+									if (!pawn.story.childhood.DisallowsTrait(newTraitDef, degree) && (pawn.story.adulthood == null || !pawn.story.adulthood.DisallowsTrait(newTraitDef, degree)))
 									{
+										Trait trait2 = new Trait(newTraitDef, degree, false);
+										if (pawn.mindState != null && pawn.mindState.mentalBreaker != null)
+										{
+											float num2 = pawn.mindState.mentalBreaker.BreakThresholdExtreme;
+											num2 += trait2.OffsetOfStat(StatDefOf.MentalBreakThreshold);
+											num2 *= trait2.MultiplierOfStat(StatDefOf.MentalBreakThreshold);
+											if (num2 > 40f)
+											{
+												continue;
+											}
+										}
 										pawn.story.traits.GainTrait(trait2);
 									}
 								}

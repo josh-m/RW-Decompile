@@ -6,6 +6,8 @@ namespace Verse
 	{
 		public int listOrder;
 
+		public Type workerClass = typeof(PawnCapacityWorker);
+
 		[MustTranslate]
 		public string labelMechanoids = string.Empty;
 
@@ -26,7 +28,24 @@ namespace Verse
 
 		public float minValue;
 
+		public bool zeroIfCannotBeAwake;
+
 		public bool showOnCaravanHealthTab;
+
+		[Unsaved]
+		private PawnCapacityWorker workerInt;
+
+		public PawnCapacityWorker Worker
+		{
+			get
+			{
+				if (this.workerInt == null)
+				{
+					this.workerInt = (PawnCapacityWorker)Activator.CreateInstance(this.workerClass);
+				}
+				return this.workerInt;
+			}
+		}
 
 		public string GetLabelFor(Pawn pawn)
 		{

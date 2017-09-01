@@ -9,10 +9,10 @@ namespace RimWorld
 		public override float GetScore(Room room)
 		{
 			float num = 0f;
-			List<Thing> allContainedThings = room.AllContainedThings;
-			for (int i = 0; i < allContainedThings.Count; i++)
+			List<Thing> containedAndAdjacentThings = room.ContainedAndAdjacentThings;
+			for (int i = 0; i < containedAndAdjacentThings.Count; i++)
 			{
-				Thing thing = allContainedThings[i];
+				Thing thing = containedAndAdjacentThings[i];
 				if (thing.def.category == ThingCategory.Building || thing.def.category == ThingCategory.Item || thing.def.category == ThingCategory.Filth || thing.def.category == ThingCategory.Plant)
 				{
 					num += (float)thing.stackCount * thing.GetStatValue(StatDefOf.Cleanliness, true);

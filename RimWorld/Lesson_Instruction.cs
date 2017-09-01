@@ -47,7 +47,7 @@ namespace RimWorld
 
 		public override void ExposeData()
 		{
-			Scribe_Defs.LookDef<InstructionDef>(ref this.def, "def");
+			Scribe_Defs.Look<InstructionDef>(ref this.def, "def");
 			base.ExposeData();
 		}
 
@@ -169,7 +169,7 @@ namespace RimWorld
 
 		public override void PostDeactivated()
 		{
-			SoundDefOf.CommsWindow_Close.PlayOneShotOnCamera();
+			SoundDefOf.CommsWindow_Close.PlayOneShotOnCamera(null);
 			TutorSystem.Notify_Event("InstructionDeactivated-" + this.def.defName);
 			if (this.def.endTutorial)
 			{

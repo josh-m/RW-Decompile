@@ -5,29 +5,32 @@ namespace RimWorld
 {
 	public class TransferableComparer_Category : TransferableComparer
 	{
-		public override int Compare(ITransferable lhs, ITransferable rhs)
+		public override int Compare(Transferable lhs, Transferable rhs)
 		{
-			ThingDef thingDef = lhs.ThingDef;
-			ThingDef thingDef2 = rhs.ThingDef;
-			if (thingDef.category != thingDef2.category)
+			return TransferableComparer_Category.Compare(lhs.ThingDef, rhs.ThingDef);
+		}
+
+		public static int Compare(ThingDef lhsTh, ThingDef rhsTh)
+		{
+			if (lhsTh.category != rhsTh.category)
 			{
-				return thingDef.category.CompareTo(thingDef2.category);
+				return lhsTh.category.CompareTo(rhsTh.category);
 			}
-			float num = TransferableUIUtility.DefaultListOrderPriority(lhs);
-			float num2 = TransferableUIUtility.DefaultListOrderPriority(rhs);
+			float num = TransferableUIUtility.DefaultListOrderPriority(lhsTh);
+			float num2 = TransferableUIUtility.DefaultListOrderPriority(rhsTh);
 			if (num != num2)
 			{
 				return num.CompareTo(num2);
 			}
 			int num3 = 0;
-			if (!lhs.AnyThing.def.thingCategories.NullOrEmpty<ThingCategoryDef>())
+			if (!lhsTh.thingCategories.NullOrEmpty<ThingCategoryDef>())
 			{
-				num3 = (int)lhs.AnyThing.def.thingCategories[0].index;
+				num3 = (int)lhsTh.thingCategories[0].index;
 			}
 			int value = 0;
-			if (!rhs.AnyThing.def.thingCategories.NullOrEmpty<ThingCategoryDef>())
+			if (!rhsTh.thingCategories.NullOrEmpty<ThingCategoryDef>())
 			{
-				value = (int)rhs.AnyThing.def.thingCategories[0].index;
+				value = (int)rhsTh.thingCategories[0].index;
 			}
 			return num3.CompareTo(value);
 		}

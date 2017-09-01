@@ -21,6 +21,12 @@ namespace RimWorld
 			get;
 		}
 
+		public override void PostExposeData()
+		{
+			base.PostExposeData();
+			Scribe_References.Look<Thing>(ref this.target, "target", false);
+		}
+
 		public override bool SelectedUseOption(Pawn p)
 		{
 			if (this.PlayerChoosesTarget)
@@ -54,6 +60,7 @@ namespace RimWorld
 					current2.DoEffectOn(usedBy, current);
 				}
 			}
+			this.target = null;
 		}
 
 		protected abstract TargetingParameters GetTargetingParameters();

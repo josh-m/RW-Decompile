@@ -9,7 +9,7 @@ namespace RimWorld
 	{
 		public static Command BuildCopyCommand(BuildableDef buildable, ThingDef stuff)
 		{
-			Designator_Build des = BuildCopyCommandUtility.FindDesignator(buildable);
+			Designator_Build des = BuildCopyCommandUtility.FindAllowedDesignator(buildable);
 			if (des == null)
 			{
 				return null;
@@ -21,7 +21,7 @@ namespace RimWorld
 			Command_Action command_Action = new Command_Action();
 			command_Action.action = delegate
 			{
-				SoundDefOf.SelectDesignator.PlayOneShotOnCamera();
+				SoundDefOf.SelectDesignator.PlayOneShotOnCamera(null);
 				des.SetStuffDef(stuff);
 				Find.DesignatorManager.Select(des);
 			};
@@ -43,17 +43,22 @@ namespace RimWorld
 			return command_Action;
 		}
 
-		private static Designator_Build FindDesignator(BuildableDef buildable)
+		private static Designator_Build FindAllowedDesignator(BuildableDef buildable)
 		{
 			List<DesignationCategoryDef> allDefsListForReading = DefDatabase<DesignationCategoryDef>.AllDefsListForReading;
+			GameRules rules = Current.Game.Rules;
 			for (int i = 0; i < allDefsListForReading.Count; i++)
 			{
-				foreach (Designator current in allDefsListForReading[i].ResolvedAllowedDesignators)
+				List<Designator> allResolvedDesignators = allDefsListForReading[i].AllResolvedDesignators;
+				for (int j = 0; j < allResolvedDesignators.Count; j++)
 				{
-					Designator_Build designator_Build = current as Designator_Build;
-					if (designator_Build != null && designator_Build.PlacingDef == buildable)
+					if (rules.DesignatorAllowed(allResolvedDesignators[j]))
 					{
-						return designator_Build;
+						Designator_Build designator_Build = allResolvedDesignators[j] as Designator_Build;
+						if (designator_Build != null && designator_Build.PlacingDef == buildable)
+						{
+							return designator_Build;
+						}
 					}
 				}
 			}

@@ -35,20 +35,19 @@ namespace RimWorld
 
 		public override void NeedInterval()
 		{
-			if (this.def.freezeWhileSleeping && !this.pawn.Awake())
+			if (!base.IsFrozen)
 			{
-				return;
-			}
-			float curInstantLevel = this.CurInstantLevel;
-			if (curInstantLevel > this.CurLevel)
-			{
-				this.CurLevel += this.def.seekerRisePerHour * 0.06f;
-				this.CurLevel = Mathf.Min(this.CurLevel, curInstantLevel);
-			}
-			if (curInstantLevel < this.CurLevel)
-			{
-				this.CurLevel -= this.def.seekerFallPerHour * 0.06f;
-				this.CurLevel = Mathf.Max(this.CurLevel, curInstantLevel);
+				float curInstantLevel = this.CurInstantLevel;
+				if (curInstantLevel > this.CurLevel)
+				{
+					this.CurLevel += this.def.seekerRisePerHour * 0.06f;
+					this.CurLevel = Mathf.Min(this.CurLevel, curInstantLevel);
+				}
+				if (curInstantLevel < this.CurLevel)
+				{
+					this.CurLevel -= this.def.seekerFallPerHour * 0.06f;
+					this.CurLevel = Mathf.Max(this.CurLevel, curInstantLevel);
+				}
 			}
 		}
 	}

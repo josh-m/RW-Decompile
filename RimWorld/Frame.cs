@@ -11,13 +11,13 @@ using Verse.Sound;
 namespace RimWorld
 {
 	[StaticConstructorOnStartup]
-	public class Frame : Building, IConstructible, IThingContainerOwner
+	public class Frame : Building, IConstructible, IThingHolder
 	{
 		protected const float UnderfieldOverdrawFactor = 1.15f;
 
 		protected const float CenterOverdrawFactor = 0.5f;
 
-		public ThingContainer resourceContainer;
+		public ThingOwner resourceContainer;
 
 		public float workDone;
 
@@ -136,29 +136,24 @@ namespace RimWorld
 
 		public Frame()
 		{
-			this.resourceContainer = new ThingContainer(this, false, LookMode.Deep);
+			this.resourceContainer = new ThingOwner<Thing>(this, false, LookMode.Deep);
 		}
 
-		public ThingContainer GetInnerContainer()
+		public ThingOwner GetDirectlyHeldThings()
 		{
 			return this.resourceContainer;
 		}
 
-		public IntVec3 GetPosition()
+		public void GetChildHolders(List<IThingHolder> outChildren)
 		{
-			return base.PositionHeld;
-		}
-
-		public Map GetMap()
-		{
-			return base.MapHeld;
+			ThingOwnerUtility.AppendThingHoldersFromThings(outChildren, this.GetDirectlyHeldThings());
 		}
 
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Values.LookValue<float>(ref this.workDone, "workDone", 0f, false);
-			Scribe_Deep.LookDeep<ThingContainer>(ref this.resourceContainer, "resourceContainer", new object[]
+			Scribe_Values.Look<float>(ref this.workDone, "workDone", 0f, false);
+			Scribe_Deep.Look<ThingOwner>(ref this.resourceContainer, "resourceContainer", new object[]
 			{
 				this
 			});
@@ -196,9 +191,10 @@ namespace RimWorld
 				SoundDefOf.BuildingComplete.PlayOneShot(new TargetInfo(base.Position, map, false));
 			}
 			ThingDef thingDef = this.def.entityDefToBuild as ThingDef;
+			Thing thing = null;
 			if (thingDef != null)
 			{
-				Thing thing = ThingMaker.MakeThing(thingDef, base.Stuff);
+				thing = ThingMaker.MakeThing(thingDef, base.Stuff);
 				thing.SetFactionDirect(base.Faction);
 				CompQuality compQuality = thing.TryGetComp<CompQuality>();
 				if (compQuality != null)
@@ -216,11 +212,28 @@ namespace RimWorld
 					compArt.JustCreatedBy(worker);
 				}
 				thing.HitPoints = Mathf.CeilToInt((float)this.HitPoints / (float)base.MaxHitPoints * (float)thing.MaxHitPoints);
-				GenSpawn.Spawn(thing, base.Position, map, base.Rotation);
+				GenSpawn.Spawn(thing, base.Position, map, base.Rotation, false);
 			}
 			else
 			{
 				map.terrainGrid.SetTerrain(base.Position, (TerrainDef)this.def.entityDefToBuild);
+			}
+			if (thingDef != null && (thingDef.passability == Traversability.Impassable || thingDef.Fillage == FillCategory.Full) && (thing == null || !(thing is Building_Door)))
+			{
+				foreach (IntVec3 current in GenAdj.CellsOccupiedBy(base.Position, base.Rotation, this.def.Size))
+				{
+					foreach (Thing current2 in map.thingGrid.ThingsAt(current).ToList<Thing>())
+					{
+						if (current2 is Plant)
+						{
+							current2.Destroy(DestroyMode.KillFinalize);
+						}
+						else if (current2.def.category == ThingCategory.Item || current2 is Pawn)
+						{
+							GenPlace.TryMoveThing(current2, current2.Position, current2.Map);
+						}
+					}
+				}
 			}
 			worker.records.Increment(RecordDefOf.ThingsConstructed);
 		}
@@ -235,7 +248,7 @@ namespace RimWorld
 				blueprint_Build = (Blueprint_Build)ThingMaker.MakeThing(this.def.entityDefToBuild.blueprintDef, null);
 				blueprint_Build.stuffToUse = base.Stuff;
 				blueprint_Build.SetFactionDirect(base.Faction);
-				GenSpawn.Spawn(blueprint_Build, base.Position, map, base.Rotation);
+				GenSpawn.Spawn(blueprint_Build, base.Position, map, base.Rotation, false);
 			}
 			Lord lord = worker.GetLord();
 			if (lord != null)
@@ -356,9 +369,9 @@ namespace RimWorld
 			return stringBuilder.ToString();
 		}
 
-		virtual bool get_Spawned()
+		virtual IThingHolder get_ParentHolder()
 		{
-			return base.Spawned;
+			return base.ParentHolder;
 		}
 	}
 }

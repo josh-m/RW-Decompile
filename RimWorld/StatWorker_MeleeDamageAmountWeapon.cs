@@ -11,7 +11,7 @@ namespace RimWorld
 			return thingDef != null && thingDef.IsMeleeWeapon;
 		}
 
-		protected override DamageArmorCategory CategoryOfDamage(ThingDef def)
+		protected override DamageArmorCategoryDef CategoryOfDamage(ThingDef def)
 		{
 			return def.Verbs[0].meleeDamageDef.armorCategory;
 		}

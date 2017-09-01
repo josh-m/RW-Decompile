@@ -1,5 +1,5 @@
-using RimWorld.Planet;
 using System;
+using UnityEngine;
 using Verse;
 
 namespace RimWorld
@@ -10,7 +10,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return Find.TickManager.TicksAbs;
+				return GenTicks.TicksAbs;
 			}
 		}
 
@@ -24,14 +24,14 @@ namespace RimWorld
 			return GenLocalDate.HourOfDay(map.Tile);
 		}
 
-		public static int DayOfMonth(Map map)
+		public static int DayOfTwelfth(Map map)
 		{
-			return GenLocalDate.DayOfMonth(map.Tile);
+			return GenLocalDate.DayOfTwelfth(map.Tile);
 		}
 
-		public static Month Month(Map map)
+		public static Twelfth Twelfth(Map map)
 		{
-			return GenLocalDate.Month(map.Tile);
+			return GenLocalDate.Twelfth(map.Tile);
 		}
 
 		public static Season Season(Map map)
@@ -53,14 +53,24 @@ namespace RimWorld
 			return GenLocalDate.DayOfSeason(map.Tile);
 		}
 
+		public static int DayOfQuadrum(Map map)
+		{
+			return GenLocalDate.DayOfQuadrum(map.Tile);
+		}
+
 		public static float DayPercent(Map map)
 		{
 			return GenLocalDate.DayPercent(map.Tile);
 		}
 
-		public static int HourInt(Map map)
+		public static int HourInteger(Map map)
 		{
-			return GenLocalDate.HourInt(map.Tile);
+			return GenLocalDate.HourInteger(map.Tile);
+		}
+
+		public static float HourFloat(Map map)
+		{
+			return GenLocalDate.HourFloat(map.Tile);
 		}
 
 		public static int DayOfYear(Thing thing)
@@ -77,19 +87,19 @@ namespace RimWorld
 			return GenDate.HourOfDay((long)GenLocalDate.TicksAbs, GenLocalDate.LongitudeForDate(thing));
 		}
 
-		public static int DayOfMonth(Thing thing)
+		public static int DayOfTwelfth(Thing thing)
 		{
-			return GenDate.DayOfMonth((long)GenLocalDate.TicksAbs, GenLocalDate.LongitudeForDate(thing));
+			return GenDate.DayOfTwelfth((long)GenLocalDate.TicksAbs, GenLocalDate.LongitudeForDate(thing));
 		}
 
-		public static Month Month(Thing thing)
+		public static Twelfth Twelfth(Thing thing)
 		{
-			return GenDate.Month((long)GenLocalDate.TicksAbs, GenLocalDate.LongitudeForDate(thing));
+			return GenDate.Twelfth((long)GenLocalDate.TicksAbs, GenLocalDate.LongitudeForDate(thing));
 		}
 
 		public static Season Season(Thing thing)
 		{
-			return GenDate.Season((long)GenLocalDate.TicksAbs, GenLocalDate.LongitudeForDate(thing));
+			return GenDate.Season((long)GenLocalDate.TicksAbs, GenLocalDate.LocationForDate(thing));
 		}
 
 		public static int Year(Thing thing)
@@ -106,14 +116,24 @@ namespace RimWorld
 			return GenDate.DayOfSeason((long)GenLocalDate.TicksAbs, GenLocalDate.LongitudeForDate(thing));
 		}
 
+		public static int DayOfQuadrum(Thing thing)
+		{
+			return GenDate.DayOfQuadrum((long)GenLocalDate.TicksAbs, GenLocalDate.LongitudeForDate(thing));
+		}
+
 		public static float DayPercent(Thing thing)
 		{
 			return GenDate.DayPercent((long)GenLocalDate.TicksAbs, GenLocalDate.LongitudeForDate(thing));
 		}
 
-		public static int HourInt(Thing thing)
+		public static int HourInteger(Thing thing)
 		{
-			return GenDate.HourInt((long)GenLocalDate.TicksAbs, GenLocalDate.LongitudeForDate(thing));
+			return GenDate.HourInteger((long)GenLocalDate.TicksAbs, GenLocalDate.LongitudeForDate(thing));
+		}
+
+		public static float HourFloat(Thing thing)
+		{
+			return GenDate.HourFloat((long)GenLocalDate.TicksAbs, GenLocalDate.LongitudeForDate(thing));
 		}
 
 		public static int DayOfYear(int tile)
@@ -130,19 +150,19 @@ namespace RimWorld
 			return GenDate.HourOfDay((long)GenLocalDate.TicksAbs, Find.WorldGrid.LongLatOf(tile).x);
 		}
 
-		public static int DayOfMonth(int tile)
+		public static int DayOfTwelfth(int tile)
 		{
-			return GenDate.DayOfMonth((long)GenLocalDate.TicksAbs, Find.WorldGrid.LongLatOf(tile).x);
+			return GenDate.DayOfTwelfth((long)GenLocalDate.TicksAbs, Find.WorldGrid.LongLatOf(tile).x);
 		}
 
-		public static Month Month(int tile)
+		public static Twelfth Twelfth(int tile)
 		{
-			return GenDate.Month((long)GenLocalDate.TicksAbs, Find.WorldGrid.LongLatOf(tile).x);
+			return GenDate.Twelfth((long)GenLocalDate.TicksAbs, Find.WorldGrid.LongLatOf(tile).x);
 		}
 
 		public static Season Season(int tile)
 		{
-			return GenDate.Season((long)GenLocalDate.TicksAbs, Find.WorldGrid.LongLatOf(tile).x);
+			return GenDate.Season((long)GenLocalDate.TicksAbs, Find.WorldGrid.LongLatOf(tile));
 		}
 
 		public static int Year(int tile)
@@ -159,29 +179,39 @@ namespace RimWorld
 			return GenDate.DayOfSeason((long)GenLocalDate.TicksAbs, Find.WorldGrid.LongLatOf(tile).x);
 		}
 
+		public static int DayOfQuadrum(int tile)
+		{
+			return GenDate.DayOfQuadrum((long)GenLocalDate.TicksAbs, Find.WorldGrid.LongLatOf(tile).x);
+		}
+
 		public static float DayPercent(int tile)
 		{
 			return GenDate.DayPercent((long)GenLocalDate.TicksAbs, Find.WorldGrid.LongLatOf(tile).x);
 		}
 
-		public static int HourInt(int tile)
+		public static int HourInteger(int tile)
 		{
-			return GenDate.HourInt((long)GenLocalDate.TicksAbs, Find.WorldGrid.LongLatOf(tile).x);
+			return GenDate.HourInteger((long)GenLocalDate.TicksAbs, Find.WorldGrid.LongLatOf(tile).x);
+		}
+
+		public static float HourFloat(int tile)
+		{
+			return GenDate.HourFloat((long)GenLocalDate.TicksAbs, Find.WorldGrid.LongLatOf(tile).x);
 		}
 
 		private static float LongitudeForDate(Thing thing)
 		{
-			Map mapHeld = thing.MapHeld;
-			if (mapHeld != null)
+			return GenLocalDate.LocationForDate(thing).x;
+		}
+
+		private static Vector2 LocationForDate(Thing thing)
+		{
+			int tile = thing.Tile;
+			if (tile >= 0)
 			{
-				return Find.WorldGrid.LongLatOf(mapHeld.Tile).x;
+				return Find.WorldGrid.LongLatOf(tile);
 			}
-			Pawn pawn = thing as Pawn;
-			if (pawn != null && pawn.IsCaravanMember())
-			{
-				return Find.WorldGrid.LongLatOf(pawn.GetCaravan().Tile).x;
-			}
-			return 0f;
+			return Vector2.zero;
 		}
 	}
 }

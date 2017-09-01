@@ -9,27 +9,27 @@ namespace Verse
 	{
 		private const float CarriedThingDrawAngle = 16f;
 
-		private const float SubInterval = 0.005f;
+		private const float SubInterval = 0.0046875f;
 
 		private const float YOffset_PrimaryEquipmentUnder = 0f;
 
-		private const float YOffset_Body = 0.005f;
+		private const float YOffset_Body = 0.0046875f;
 
-		private const float YOffsetInterval_Clothes = 0.005f;
+		private const float YOffsetInterval_Clothes = 0.0046875f;
 
-		private const float YOffset_Wounds = 0.02f;
+		private const float YOffset_Wounds = 0.01875f;
 
-		private const float YOffset_Shell = 0.0249999985f;
+		private const float YOffset_Shell = 0.0234375f;
 
-		private const float YOffset_Head = 0.03f;
+		private const float YOffset_Head = 0.0281250011f;
 
-		private const float YOffset_OnHead = 0.035f;
+		private const float YOffset_OnHead = 0.0328125022f;
 
-		private const float YOffset_CarriedThing = 0.04f;
+		private const float YOffset_CarriedThing = 0.0375f;
 
-		private const float YOffset_PrimaryEquipmentOver = 0.04f;
+		private const float YOffset_PrimaryEquipmentOver = 0.0375f;
 
-		private const float YOffset_Status = 0.0449999981f;
+		private const float YOffset_Status = 0.0421875f;
 
 		private const float UpHeadOffset = 0.34f;
 
@@ -57,6 +57,18 @@ namespace Verse
 			0.09f
 		};
 
+		private RotDrawMode CurRotDrawMode
+		{
+			get
+			{
+				if (this.pawn.Dead && this.pawn.Corpse != null)
+				{
+					return this.pawn.Corpse.CurRotDrawMode;
+				}
+				return RotDrawMode.Fresh;
+			}
+		}
+
 		public PawnRenderer(Pawn pawn)
 		{
 			this.pawn = pawn;
@@ -67,7 +79,12 @@ namespace Verse
 			this.effecters = new PawnStatusEffecters(pawn);
 		}
 
-		public void RenderPawnAt(Vector3 drawLoc, RotDrawMode bodyDrawType = RotDrawMode.Fresh)
+		public void RenderPawnAt(Vector3 drawLoc)
+		{
+			this.RenderPawnAt(drawLoc, this.CurRotDrawMode, !this.pawn.health.hediffSet.HasHead);
+		}
+
+		public void RenderPawnAt(Vector3 drawLoc, RotDrawMode bodyDrawType, bool headStump)
 		{
 			if (!this.graphics.AllResolved)
 			{
@@ -75,15 +92,16 @@ namespace Verse
 			}
 			if (this.pawn.GetPosture() == PawnPosture.Standing)
 			{
-				this.RenderPawnInternal(drawLoc, Quaternion.identity, true, bodyDrawType);
+				this.RenderPawnInternal(drawLoc, Quaternion.identity, true, bodyDrawType, headStump);
 				if (this.pawn.carryTracker != null)
 				{
 					Thing carriedThing = this.pawn.carryTracker.CarriedThing;
 					if (carriedThing != null)
 					{
 						Vector3 vector = drawLoc;
-						vector.y += 0.04f;
-						if (this.pawn.CurJob == null || !this.pawn.jobs.curDriver.ModifyCarriedThingDrawPos(ref vector))
+						bool flag = false;
+						bool flip = false;
+						if (this.pawn.CurJob == null || !this.pawn.jobs.curDriver.ModifyCarriedThingDrawPos(ref vector, ref flag, ref flip))
 						{
 							if (carriedThing is Pawn || carriedThing is Corpse)
 							{
@@ -94,7 +112,15 @@ namespace Verse
 								vector += new Vector3(0.18f, 0f, 0.05f);
 							}
 						}
-						carriedThing.DrawAt(vector);
+						if (flag)
+						{
+							vector.y -= 0.0375f;
+						}
+						else
+						{
+							vector.y += 0.0375f;
+						}
+						carriedThing.DrawAt(vector, flip);
 					}
 				}
 				if (this.pawn.def.race.specialShadowData != null)
@@ -123,14 +149,14 @@ namespace Verse
 					Rot4 rotation = building_Bed.Rotation;
 					rotation.AsInt += 2;
 					quat = rotation.AsQuat;
-					AltitudeLayer altLayer = (AltitudeLayer)Mathf.Max((int)building_Bed.def.altitudeLayer, 14);
+					AltitudeLayer altLayer = (AltitudeLayer)Mathf.Max((int)building_Bed.def.altitudeLayer, 15);
 					Vector3 vector2 = this.pawn.Position.ToVector3ShiftedWithAltitude(altLayer);
 					Vector3 vector3 = vector2;
-					vector3.y += 0.03f;
+					vector3.y += 0.0281250011f;
 					float d = -this.BaseHeadOffsetAt(Rot4.South).z;
 					Vector3 a = rotation.FacingCell.ToVector3();
 					rootLoc = vector2 + a * d;
-					rootLoc.y += 0.005f;
+					rootLoc.y += 0.0046875f;
 				}
 				else
 				{
@@ -138,7 +164,7 @@ namespace Verse
 					rootLoc = drawLoc;
 					if (!this.pawn.Dead && this.pawn.CarriedBy == null)
 					{
-						rootLoc.y = Altitudes.AltitudeFor(AltitudeLayer.LayingPawn) + 0.005f;
+						rootLoc.y = Altitudes.AltitudeFor(AltitudeLayer.LayingPawn) + 0.0046875f;
 					}
 					if (this.pawn.Downed || this.pawn.Dead)
 					{
@@ -166,7 +192,7 @@ namespace Verse
 						quat = rot2.AsQuat;
 					}
 				}
-				this.RenderPawnInternal(rootLoc, quat, renderBody, rot, rot, bodyDrawType, false);
+				this.RenderPawnInternal(rootLoc, quat, renderBody, rot, rot, bodyDrawType, false, headStump);
 			}
 			if (this.pawn.Spawned && !this.pawn.Dead)
 			{
@@ -190,20 +216,15 @@ namespace Verse
 			{
 				quat = Quaternion.identity;
 			}
-			RotDrawMode bodyDrawType = RotDrawMode.Fresh;
-			if (this.pawn.Dead && this.pawn.Corpse != null)
-			{
-				bodyDrawType = this.pawn.Corpse.CurRotDrawMode;
-			}
-			this.RenderPawnInternal(zero, quat, true, Rot4.South, Rot4.South, bodyDrawType, true);
+			this.RenderPawnInternal(zero, quat, true, Rot4.South, Rot4.South, this.CurRotDrawMode, true, !this.pawn.health.hediffSet.HasHead);
 		}
 
-		private void RenderPawnInternal(Vector3 rootLoc, Quaternion quat, bool renderBody, RotDrawMode draw = RotDrawMode.Fresh)
+		private void RenderPawnInternal(Vector3 rootLoc, Quaternion quat, bool renderBody, RotDrawMode draw, bool headStump)
 		{
-			this.RenderPawnInternal(rootLoc, quat, renderBody, this.pawn.Rotation, this.pawn.Rotation, draw, false);
+			this.RenderPawnInternal(rootLoc, quat, renderBody, this.pawn.Rotation, this.pawn.Rotation, draw, false, headStump);
 		}
 
-		private void RenderPawnInternal(Vector3 rootLoc, Quaternion quat, bool renderBody, Rot4 bodyFacing, Rot4 headFacing, RotDrawMode bodyDrawType = RotDrawMode.Fresh, bool portrait = false)
+		private void RenderPawnInternal(Vector3 rootLoc, Quaternion quat, bool renderBody, Rot4 bodyFacing, Rot4 headFacing, RotDrawMode bodyDrawType, bool portrait, bool headStump)
 		{
 			if (!this.graphics.AllResolved)
 			{
@@ -213,7 +234,7 @@ namespace Verse
 			if (renderBody)
 			{
 				Vector3 loc = rootLoc;
-				loc.y += 0.005f;
+				loc.y += 0.0046875f;
 				if (bodyDrawType == RotDrawMode.Dessicated && !this.pawn.RaceProps.Humanlike && this.graphics.dessicatedGraphic != null && !portrait)
 				{
 					this.graphics.dessicatedGraphic.Draw(loc, bodyFacing, this.pawn);
@@ -233,12 +254,12 @@ namespace Verse
 					{
 						Material damagedMat = this.graphics.flasher.GetDamagedMat(list[i]);
 						GenDraw.DrawMeshNowOrLater(mesh, loc, quat, damagedMat, portrait);
-						loc.y += 0.005f;
+						loc.y += 0.0046875f;
 					}
 					if (bodyDrawType == RotDrawMode.Fresh)
 					{
 						Vector3 drawLoc = rootLoc;
-						drawLoc.y += 0.02f;
+						drawLoc.y += 0.01875f;
 						this.woundOverlays.RenderOverBody(drawLoc, mesh, quat, portrait);
 					}
 				}
@@ -247,40 +268,46 @@ namespace Verse
 			Vector3 a = rootLoc;
 			if (bodyFacing != Rot4.North)
 			{
-				a.y += 0.03f;
-				vector.y += 0.0249999985f;
+				a.y += 0.0281250011f;
+				vector.y += 0.0234375f;
 			}
 			else
 			{
-				a.y += 0.0249999985f;
-				vector.y += 0.03f;
+				a.y += 0.0234375f;
+				vector.y += 0.0281250011f;
 			}
 			if (this.graphics.headGraphic != null)
 			{
 				Vector3 b = quat * this.BaseHeadOffsetAt(headFacing);
-				Mesh mesh2 = MeshPool.humanlikeHeadSet.MeshAt(headFacing);
-				Material mat = this.graphics.HeadMatAt(headFacing, bodyDrawType);
-				GenDraw.DrawMeshNowOrLater(mesh2, a + b, quat, mat, portrait);
-				Vector3 loc2 = rootLoc + b;
-				loc2.y += 0.035f;
-				bool flag = false;
-				Mesh mesh3 = this.graphics.HairMeshSet.MeshAt(headFacing);
-				List<ApparelGraphicRecord> apparelGraphics = this.graphics.apparelGraphics;
-				for (int j = 0; j < apparelGraphics.Count; j++)
+				Material material = this.graphics.HeadMatAt(headFacing, bodyDrawType, headStump);
+				if (material != null)
 				{
-					if (apparelGraphics[j].sourceApparel.def.apparel.LastLayer == ApparelLayer.Overhead)
+					Mesh mesh2 = MeshPool.humanlikeHeadSet.MeshAt(headFacing);
+					GenDraw.DrawMeshNowOrLater(mesh2, a + b, quat, material, portrait);
+				}
+				Vector3 loc2 = rootLoc + b;
+				loc2.y += 0.0328125022f;
+				bool flag = false;
+				if (!portrait || !Prefs.HatsOnlyOnMap)
+				{
+					Mesh mesh3 = this.graphics.HairMeshSet.MeshAt(headFacing);
+					List<ApparelGraphicRecord> apparelGraphics = this.graphics.apparelGraphics;
+					for (int j = 0; j < apparelGraphics.Count; j++)
 					{
-						flag = true;
-						Material material = apparelGraphics[j].graphic.MatAt(bodyFacing, null);
-						material = this.graphics.flasher.GetDamagedMat(material);
-						GenDraw.DrawMeshNowOrLater(mesh3, loc2, quat, material, portrait);
+						if (apparelGraphics[j].sourceApparel.def.apparel.LastLayer == ApparelLayer.Overhead)
+						{
+							flag = true;
+							Material material2 = apparelGraphics[j].graphic.MatAt(bodyFacing, null);
+							material2 = this.graphics.flasher.GetDamagedMat(material2);
+							GenDraw.DrawMeshNowOrLater(mesh3, loc2, quat, material2, portrait);
+						}
 					}
 				}
-				if (!flag && bodyDrawType != RotDrawMode.Dessicated)
+				if (!flag && bodyDrawType != RotDrawMode.Dessicated && !headStump)
 				{
 					Mesh mesh4 = this.graphics.HairMeshSet.MeshAt(headFacing);
-					Material mat2 = this.graphics.HairMatAt(headFacing);
-					GenDraw.DrawMeshNowOrLater(mesh4, loc2, quat, mat2, portrait);
+					Material mat = this.graphics.HairMatAt(headFacing);
+					GenDraw.DrawMeshNowOrLater(mesh4, loc2, quat, mat, portrait);
 				}
 			}
 			if (renderBody)
@@ -290,9 +317,9 @@ namespace Verse
 					ApparelGraphicRecord apparelGraphicRecord = this.graphics.apparelGraphics[k];
 					if (apparelGraphicRecord.sourceApparel.def.apparel.LastLayer == ApparelLayer.Shell)
 					{
-						Material material2 = apparelGraphicRecord.graphic.MatAt(bodyFacing, null);
-						material2 = this.graphics.flasher.GetDamagedMat(material2);
-						GenDraw.DrawMeshNowOrLater(mesh, vector, quat, material2, portrait);
+						Material material3 = apparelGraphicRecord.graphic.MatAt(bodyFacing, null);
+						material3 = this.graphics.flasher.GetDamagedMat(material3);
+						GenDraw.DrawMeshNowOrLater(mesh, vector, quat, material3, portrait);
 					}
 				}
 			}
@@ -312,7 +339,7 @@ namespace Verse
 					}
 				}
 				Vector3 bodyLoc = rootLoc;
-				bodyLoc.y += 0.0449999981f;
+				bodyLoc.y += 0.0421875f;
 				this.statusOverlays.RenderStatusOverlays(bodyLoc, quat, MeshPool.humanlikeHeadSet.MeshAt(headFacing));
 			}
 		}
@@ -349,7 +376,7 @@ namespace Verse
 					num = (a - this.pawn.DrawPos).AngleFlat();
 				}
 				Vector3 drawLoc = rootLoc + new Vector3(0f, 0f, 0.4f).RotatedBy(num);
-				drawLoc.y += 0.04f;
+				drawLoc.y += 0.0375f;
 				this.DrawEquipmentAiming(this.pawn.equipment.Primary, drawLoc, num);
 			}
 			else if (this.CarryWeaponOpenly())
@@ -357,7 +384,7 @@ namespace Verse
 				if (this.pawn.Rotation == Rot4.South)
 				{
 					Vector3 drawLoc2 = rootLoc + new Vector3(0f, 0f, -0.22f);
-					drawLoc2.y += 0.04f;
+					drawLoc2.y += 0.0375f;
 					this.DrawEquipmentAiming(this.pawn.equipment.Primary, drawLoc2, 143f);
 				}
 				else if (this.pawn.Rotation == Rot4.North)
@@ -369,13 +396,13 @@ namespace Verse
 				else if (this.pawn.Rotation == Rot4.East)
 				{
 					Vector3 drawLoc4 = rootLoc + new Vector3(0.2f, 0f, -0.22f);
-					drawLoc4.y += 0.04f;
+					drawLoc4.y += 0.0375f;
 					this.DrawEquipmentAiming(this.pawn.equipment.Primary, drawLoc4, 143f);
 				}
 				else if (this.pawn.Rotation == Rot4.West)
 				{
 					Vector3 drawLoc5 = rootLoc + new Vector3(-0.2f, 0f, -0.22f);
-					drawLoc5.y += 0.04f;
+					drawLoc5.y += 0.0375f;
 					this.DrawEquipmentAiming(this.pawn.equipment.Primary, drawLoc5, 217f);
 				}
 			}

@@ -11,9 +11,11 @@ namespace RimWorld
 			List<DirectPawnRelation> directRelations = p.relations.DirectRelations;
 			for (int i = 0; i < directRelations.Count; i++)
 			{
-				if (directRelations[i].def == PawnRelationDefOf.Bond && !directRelations[i].otherPawn.Dead && directRelations[i].otherPawn.Spawned && directRelations[i].otherPawn.Faction == Faction.OfPlayer && directRelations[i].otherPawn.training.IsCompleted(TrainableDefOf.Obedience) && this.AnimalMasterCheck(p, directRelations[i].otherPawn))
+				DirectPawnRelation directPawnRelation = directRelations[i];
+				Pawn otherPawn = directPawnRelation.otherPawn;
+				if (directPawnRelation.def == PawnRelationDefOf.Bond && !otherPawn.Dead && otherPawn.Spawned && otherPawn.Faction == Faction.OfPlayer && otherPawn.training.IsCompleted(TrainableDefOf.Obedience) && p.skills.GetSkill(SkillDefOf.Animals).Level >= TrainableUtility.MinimumHandlingSkill(otherPawn) && this.AnimalMasterCheck(p, otherPawn))
 				{
-					return ThoughtState.ActiveWithReason(directRelations[i].otherPawn.LabelShort);
+					return ThoughtState.ActiveWithReason(otherPawn.LabelShort);
 				}
 			}
 			return false;

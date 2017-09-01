@@ -14,7 +14,7 @@ namespace RimWorld
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Values.LookValue<CellRect>(ref this.growingZoneRect, "growingZoneRect", default(CellRect), false);
+			Scribe_Values.Look<CellRect>(ref this.growingZoneRect, "growingZoneRect", default(CellRect), false);
 		}
 
 		public override void OnActivated()

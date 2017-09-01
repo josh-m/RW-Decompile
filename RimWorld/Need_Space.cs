@@ -18,11 +18,26 @@ namespace RimWorld
 
 		private static readonly SimpleCurve RoomCellCountSpaceCurve = new SimpleCurve
 		{
-			new CurvePoint(3f, 0f),
-			new CurvePoint(9f, 0.25f),
-			new CurvePoint(16f, 0.5f),
-			new CurvePoint(42f, 0.71f),
-			new CurvePoint(100f, 1f)
+			{
+				new CurvePoint(3f, 0f),
+				true
+			},
+			{
+				new CurvePoint(9f, 0.25f),
+				true
+			},
+			{
+				new CurvePoint(16f, 0.5f),
+				true
+			},
+			{
+				new CurvePoint(42f, 0.71f),
+				true
+			},
+			{
+				new CurvePoint(100f, 1f),
+				true
+			}
 		};
 
 		public override float CurInstantLevel
@@ -71,14 +86,14 @@ namespace RimWorld
 			for (int i = 0; i < 5; i++)
 			{
 				IntVec3 loc = position + GenRadial.RadialPattern[i];
-				Room room = loc.GetRoom(this.pawn.Map);
+				Room room = loc.GetRoom(this.pawn.Map, RegionType.Set_Passable);
 				if (room != null)
 				{
 					if (i == 0 && room.PsychologicallyOutdoors)
 					{
 						return 1f;
 					}
-					if (i == 0 || !room.IsDoor)
+					if (i == 0 || room.RegionType != RegionType.Portal)
 					{
 						if (!Need_Space.tempScanRooms.Contains(room))
 						{
@@ -90,8 +105,8 @@ namespace RimWorld
 			float num = 0f;
 			for (int j = 0; j < Need_Space.SampleNumCells; j++)
 			{
-				IntVec3 c = position + GenRadial.RadialPattern[j];
-				if (Need_Space.tempScanRooms.Contains(RoomQuery.RoomAt(c, this.pawn.Map)))
+				IntVec3 loc2 = position + GenRadial.RadialPattern[j];
+				if (Need_Space.tempScanRooms.Contains(loc2.GetRoom(this.pawn.Map, RegionType.Set_Passable)))
 				{
 					num += 1f;
 				}

@@ -7,7 +7,7 @@ namespace RimWorld
 		OnSkin,
 		Middle,
 		Shell,
-		Accessory,
+		Belt,
 		Overhead
 	}
 }

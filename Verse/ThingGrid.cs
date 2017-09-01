@@ -19,7 +19,7 @@ namespace Verse
 			this.thingGrid = new List<Thing>[cellIndices.NumGridCells];
 			for (int i = 0; i < cellIndices.NumGridCells; i++)
 			{
-				this.thingGrid[i] = new List<Thing>(16);
+				this.thingGrid[i] = new List<Thing>(4);
 			}
 		}
 

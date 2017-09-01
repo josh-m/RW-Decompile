@@ -53,14 +53,6 @@ namespace RimWorld
 			}
 		}
 
-		public bool DesirePowerOn
-		{
-			get
-			{
-				return this.flickableComp == null || this.flickableComp.SwitchIsOn;
-			}
-		}
-
 		public bool PowerOn
 		{
 			get
@@ -76,7 +68,7 @@ namespace RimWorld
 				this.powerOnInt = value;
 				if (this.powerOnInt)
 				{
-					if (!this.DesirePowerOn)
+					if (!FlickUtility.WantsToBeOn(this.parent))
 					{
 						Log.Warning("Tried to power on " + this.parent + " which did not desire it.");
 						return;
@@ -111,7 +103,10 @@ namespace RimWorld
 					{
 						soundDef2 = SoundDefOf.PowerOffSmall;
 					}
-					soundDef2.PlayOneShot(new TargetInfo(this.parent.Position, this.parent.Map, false));
+					if (this.parent.Spawned)
+					{
+						soundDef2.PlayOneShot(new TargetInfo(this.parent.Position, this.parent.Map, false));
+					}
 					this.EndSustainerPoweredIfActive();
 				}
 			}
@@ -131,7 +126,7 @@ namespace RimWorld
 
 		public override void ReceiveCompSignal(string signal)
 		{
-			if (signal == "FlickedOff" || signal == "Breakdown")
+			if (signal == "FlickedOff" || signal == "ScheduledOff" || signal == "Breakdown")
 			{
 				this.PowerOn = false;
 			}
@@ -141,9 +136,9 @@ namespace RimWorld
 			}
 		}
 
-		public override void PostSpawnSetup()
+		public override void PostSpawnSetup(bool respawningAfterLoad)
 		{
-			base.PostSpawnSetup();
+			base.PostSpawnSetup(respawningAfterLoad);
 			this.flickableComp = this.parent.GetComp<CompFlickable>();
 		}
 
@@ -157,7 +152,7 @@ namespace RimWorld
 		public override void PostExposeData()
 		{
 			base.PostExposeData();
-			Scribe_Values.LookValue<bool>(ref this.powerOnInt, "powerOn", true, false);
+			Scribe_Values.Look<bool>(ref this.powerOnInt, "powerOn", true, false);
 		}
 
 		public override void PostDraw()
@@ -165,13 +160,16 @@ namespace RimWorld
 			base.PostDraw();
 			if (!this.parent.IsBrokenDown())
 			{
-				if (!this.DesirePowerOn)
+				if (this.flickableComp != null && !this.flickableComp.SwitchIsOn)
 				{
 					this.parent.Map.overlayDrawer.DrawOverlay(this.parent, OverlayTypes.PowerOff);
 				}
-				else if (!this.PowerOn)
+				else if (FlickUtility.WantsToBeOn(this.parent))
 				{
-					this.parent.Map.overlayDrawer.DrawOverlay(this.parent, OverlayTypes.NeedsPower);
+					if (!this.PowerOn)
+					{
+						this.parent.Map.overlayDrawer.DrawOverlay(this.parent, OverlayTypes.NeedsPower);
+					}
 				}
 			}
 		}

@@ -51,8 +51,6 @@ namespace Verse
 
 		public bool silenceAmbientSound;
 
-		public bool wantsRenderedWorld;
-
 		protected readonly Vector2 CloseButSize = new Vector2(120f, 40f);
 
 		public int ID;
@@ -133,7 +131,7 @@ namespace Verse
 		{
 			if (this.soundAppear != null)
 			{
-				this.soundAppear.PlayOneShotOnCamera();
+				this.soundAppear.PlayOneShotOnCamera(null);
 			}
 			if (this.soundAmbient != null)
 			{
@@ -163,6 +161,7 @@ namespace Verse
 					this.windowRect = this.resizeLaterRect;
 				}
 			}
+			this.windowRect = this.windowRect.Rounded();
 			Rect winRect = this.windowRect.AtZero();
 			this.windowRect = GUI.Window(this.ID, this.windowRect, delegate(int x)
 			{
@@ -264,7 +263,8 @@ namespace Verse
 
 		protected virtual void SetInitialSizeAndPosition()
 		{
-			this.windowRect = new Rect(((float)UI.screenWidth - this.InitialSize.x) / 2f, ((float)UI.screenHeight - this.InitialSize.y) / 2f, this.InitialSize.x, this.InitialSize.y).Rounded();
+			this.windowRect = new Rect(((float)UI.screenWidth - this.InitialSize.x) / 2f, ((float)UI.screenHeight - this.InitialSize.y) / 2f, this.InitialSize.x, this.InitialSize.y);
+			this.windowRect = this.windowRect.Rounded();
 		}
 
 		public virtual void Notify_ResolutionChanged()

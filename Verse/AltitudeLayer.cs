@@ -16,6 +16,7 @@ namespace Verse
 		Shadows,
 		DoorMoveable,
 		Building,
+		BuildingOnTop,
 		Item,
 		ItemImportant,
 		LayingPawn,
@@ -26,12 +27,14 @@ namespace Verse
 		Blueprint,
 		MoteOverhead,
 		FlyingItem,
+		Gas,
 		Weather,
 		LightingOverlay,
 		VisEffects,
 		FogOfWar,
 		WorldClipper,
 		WorldDataOverlay,
-		MetaOverlays
+		MetaOverlays,
+		_Count
 	}
 }

@@ -57,6 +57,7 @@ namespace Verse
 				Event.current.Use();
 				this.Close(true);
 			}
+			Text.Font = GameFont.Tiny;
 			WidgetRow widgetRow = new WidgetRow(0f, 0f, UIDirection.RightThenUp, 99999f, 4f);
 			widgetRow.ToggleableIcon(ref this.fullMode, TexButton.InspectModeToggle, "Toggle deep inspection mode for things on the map.", null, null);
 			widgetRow.ToggleableIcon(ref DebugViewSettings.writeCellContents, TexButton.InspectModeToggle, "Toggle shallow inspection for things on the map.", null, null);
@@ -75,8 +76,9 @@ namespace Verse
 				this.columnWidth = Mathf.Clamp(this.columnWidth, 200f, 1600f);
 			}
 			inRect.yMin += 30f;
-			Listing_Standard listing_Standard = new Listing_Standard(inRect, GameFont.Tiny);
+			Listing_Standard listing_Standard = new Listing_Standard(GameFont.Tiny);
 			listing_Standard.ColumnWidth = Mathf.Min(this.columnWidth, inRect.width);
+			listing_Standard.Begin(inRect);
 			string[] array = this.debugStringBuilder.ToString().Split(new char[]
 			{
 				'\n'
@@ -85,7 +87,7 @@ namespace Verse
 			for (int i = 0; i < array2.Length; i++)
 			{
 				string label = array2[i];
-				listing_Standard.Label(label);
+				listing_Standard.Label(label, -1f);
 				listing_Standard.Gap(-10f);
 			}
 			listing_Standard.End();
@@ -109,10 +111,10 @@ namespace Verse
 				stringBuilder.AppendLine("World view");
 				return stringBuilder.ToString();
 			}
-			if (DebugViewSettings.writeMapConditions)
+			if (DebugViewSettings.writeGameConditions)
 			{
 				stringBuilder.AppendLine("---");
-				stringBuilder.AppendLine(Find.VisibleMap.mapConditionManager.DebugString());
+				stringBuilder.AppendLine(Find.VisibleMap.gameConditionManager.DebugString());
 			}
 			if (DebugViewSettings.writePlayingSounds)
 			{
@@ -181,7 +183,7 @@ namespace Verse
 							}
 							else
 							{
-								stringBuilder.AppendLine(Scribe.DebugOutputFor(current4));
+								stringBuilder.AppendLine(Scribe.saver.DebugOutputFor(current4));
 								stringBuilder.AppendLine();
 							}
 						}
@@ -196,7 +198,7 @@ namespace Verse
 						if (apparel != null)
 						{
 							stringBuilder.AppendLine(apparel.LabelCap);
-							stringBuilder.AppendLine("   raw: " + JobGiver_OptimizeApparel.ApparelScoreRaw(apparel).ToString("F2"));
+							stringBuilder.AppendLine("   raw: " + JobGiver_OptimizeApparel.ApparelScoreRaw(null, apparel).ToString("F2"));
 							Pawn pawn = Find.Selector.SingleSelectedThing as Pawn;
 							if (pawn != null)
 							{
@@ -281,7 +283,7 @@ namespace Verse
 							Apparel apparel2 = current8 as Apparel;
 							if (apparel2 != null)
 							{
-								stringBuilder.AppendLine(apparel2.Label + ": " + JobGiver_OptimizeApparel.ApparelScoreRaw(apparel2).ToString("F2"));
+								stringBuilder.AppendLine(apparel2.Label + ": " + JobGiver_OptimizeApparel.ApparelScoreRaw(null, apparel2).ToString("F2"));
 							}
 						}
 					}
@@ -356,13 +358,13 @@ namespace Verse
 					if (DebugViewSettings.drawRegions)
 					{
 						stringBuilder.AppendLine("---");
-						Region regionAt_InvalidAllowed = Find.VisibleMap.regionGrid.GetRegionAt_InvalidAllowed(intVec);
-						stringBuilder.AppendLine("Region:\n" + ((regionAt_InvalidAllowed == null) ? "null" : regionAt_InvalidAllowed.DebugString));
+						Region regionAt_NoRebuild_InvalidAllowed = Find.VisibleMap.regionGrid.GetRegionAt_NoRebuild_InvalidAllowed(intVec);
+						stringBuilder.AppendLine("Region:\n" + ((regionAt_NoRebuild_InvalidAllowed == null) ? "null" : regionAt_NoRebuild_InvalidAllowed.DebugString));
 					}
 					if (DebugViewSettings.drawRooms)
 					{
 						stringBuilder.AppendLine("---");
-						Room room = RoomQuery.RoomAt(intVec, Find.VisibleMap);
+						Room room = intVec.GetRoom(Find.VisibleMap, RegionType.Set_All);
 						if (room != null)
 						{
 							stringBuilder.AppendLine(room.DebugString());
@@ -370,6 +372,19 @@ namespace Verse
 						else
 						{
 							stringBuilder.AppendLine("(no room)");
+						}
+					}
+					if (DebugViewSettings.drawRoomGroups)
+					{
+						stringBuilder.AppendLine("---");
+						RoomGroup roomGroup = intVec.GetRoomGroup(Find.VisibleMap);
+						if (roomGroup != null)
+						{
+							stringBuilder.AppendLine(roomGroup.DebugString());
+						}
+						else
+						{
+							stringBuilder.AppendLine("(no room group)");
 						}
 					}
 					if (DebugViewSettings.drawGlow)

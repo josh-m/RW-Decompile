@@ -12,19 +12,19 @@ namespace RimWorld
 		{
 			if (this.compPowerTrader.PowerOn)
 			{
-				float temperature = base.Position.GetTemperature(base.Map);
+				float ambientTemperature = base.AmbientTemperature;
 				float num;
-				if (temperature < 20f)
+				if (ambientTemperature < 20f)
 				{
 					num = 1f;
 				}
-				else if (temperature > 120f)
+				else if (ambientTemperature > 120f)
 				{
 					num = 0f;
 				}
 				else
 				{
-					num = Mathf.InverseLerp(120f, 20f, temperature);
+					num = Mathf.InverseLerp(120f, 20f, ambientTemperature);
 				}
 				float energyLimit = this.compTempControl.Props.energyPerSecond * num * 4.16666651f;
 				float num2 = GenTemperature.ControlTemperatureTempChange(base.Position, base.Map, energyLimit, this.compTempControl.targetTemperature);
@@ -32,7 +32,7 @@ namespace RimWorld
 				CompProperties_Power props = this.compPowerTrader.Props;
 				if (flag)
 				{
-					this.GetRoom().Temperature += num2;
+					this.GetRoomGroup().Temperature += num2;
 					this.compPowerTrader.PowerOutput = -props.basePowerConsumption;
 				}
 				else

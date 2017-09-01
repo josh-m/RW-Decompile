@@ -13,6 +13,8 @@ namespace RimWorld
 
 		public float hideAtValue = -2.14748365E+09f;
 
+		public bool showNonAbstract = true;
+
 		public bool showIfUndefined = true;
 
 		public bool showOnPawns = true;
@@ -44,6 +46,8 @@ namespace RimWorld
 		public List<StatDef> statFactors;
 
 		public bool applyFactorsIfNegative = true;
+
+		public float noSkillFactor = 1f;
 
 		public List<SkillNeed> skillNeedFactors;
 

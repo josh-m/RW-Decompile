@@ -43,9 +43,9 @@ namespace RimWorld
 			Find.WindowStack.Add(new Dialog_ResolutionConfirm(uIScale));
 		}
 
-		public static bool UIScaleSafeWithResolution(float scale, Resolution res)
+		public static bool UIScaleSafeWithResolution(float scale, int w, int h)
 		{
-			return (float)res.width / scale >= 1024f && (float)res.height / scale >= 768f;
+			return (float)w / scale >= 1024f && (float)h / scale >= 768f;
 		}
 	}
 }

@@ -1,26 +1,113 @@
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 using Verse;
 
 namespace RimWorld
 {
 	public static class SeasonUtility
 	{
-		public static Month GetFirstMonth(this Season season)
+		public static Season FirstSeason
+		{
+			get
+			{
+				return Season.Spring;
+			}
+		}
+
+		public static Twelfth GetFirstTwelfth(this Season season, float latitude)
+		{
+			if (latitude >= 0f)
+			{
+				switch (season)
+				{
+				case Season.Spring:
+					return Twelfth.First;
+				case Season.Summer:
+					return Twelfth.Fourth;
+				case Season.Fall:
+					return Twelfth.Seventh;
+				case Season.Winter:
+					return Twelfth.Tenth;
+				}
+			}
+			else
+			{
+				switch (season)
+				{
+				case Season.Spring:
+					return Twelfth.Seventh;
+				case Season.Summer:
+					return Twelfth.Tenth;
+				case Season.Fall:
+					return Twelfth.First;
+				case Season.Winter:
+					return Twelfth.Fourth;
+				}
+			}
+			return Twelfth.Undefined;
+		}
+
+		public static Twelfth GetMiddleTwelfth(this Season season, float latitude)
+		{
+			if (latitude >= 0f)
+			{
+				switch (season)
+				{
+				case Season.Spring:
+					return Twelfth.Second;
+				case Season.Summer:
+					return Twelfth.Fifth;
+				case Season.Fall:
+					return Twelfth.Eighth;
+				case Season.Winter:
+					return Twelfth.Eleventh;
+				}
+			}
+			else
+			{
+				switch (season)
+				{
+				case Season.Spring:
+					return Twelfth.Eighth;
+				case Season.Summer:
+					return Twelfth.Eleventh;
+				case Season.Fall:
+					return Twelfth.Second;
+				case Season.Winter:
+					return Twelfth.Fifth;
+				}
+			}
+			return Twelfth.Undefined;
+		}
+
+		public static Season GetPreviousSeason(this Season season)
 		{
 			switch (season)
 			{
+			case Season.Undefined:
+				return Season.Undefined;
 			case Season.Spring:
-				return Month.Mar;
+				return Season.Winter;
 			case Season.Summer:
-				return Month.Jun;
+				return Season.Spring;
 			case Season.Fall:
-				return Month.Sept;
+				return Season.Summer;
 			case Season.Winter:
-				return Month.Dec;
+				return Season.Fall;
 			default:
-				return Month.Undefined;
+				return Season.Undefined;
 			}
+		}
+
+		public static float GetMiddleYearPct(this Season season, float latitude)
+		{
+			if (season == Season.Undefined)
+			{
+				return 0.5f;
+			}
+			Twelfth middleTwelfth = season.GetMiddleTwelfth(latitude);
+			return ((float)middleTwelfth + 0.5f) / 12f;
 		}
 
 		public static string Label(this Season season)
@@ -45,106 +132,56 @@ namespace RimWorld
 			return season.Label().CapitalizeFirst();
 		}
 
-		public static string SeasonsRangeLabel(List<Month> months)
+		public static string SeasonsRangeLabel(List<Twelfth> twelfths, Vector2 longLat)
 		{
-			if (months.Count == 0)
+			if (twelfths.Count == 0)
 			{
 				return string.Empty;
 			}
-			if (months.Count == 12)
+			if (twelfths.Count == 12)
 			{
 				return "WholeYear".Translate();
 			}
 			string text = string.Empty;
 			for (int i = 0; i < 12; i++)
 			{
-				Month month = (Month)i;
-				if (months.Contains(month))
+				Twelfth twelfth = (Twelfth)i;
+				if (twelfths.Contains(twelfth))
 				{
 					if (!text.NullOrEmpty())
 					{
 						text += ", ";
 					}
-					text += SeasonUtility.SeasonsContinuousRangeLabel(months, month);
+					text += SeasonUtility.SeasonsContinuousRangeLabel(twelfths, twelfth, longLat);
 				}
 			}
 			return text;
 		}
 
-		private static string SeasonsContinuousRangeLabel(List<Month> months, Month rootMonth)
+		private static string SeasonsContinuousRangeLabel(List<Twelfth> twelfths, Twelfth rootTwelfth, Vector2 longLat)
 		{
-			Month leftMostMonth = SeasonUtility.GetLeftMostMonth(months, rootMonth);
-			Month rightMostMonth = SeasonUtility.GetRightMostMonth(months, rootMonth);
-			for (Month month = leftMostMonth; month != rightMostMonth; month = SeasonUtility.MonthAfter(month))
+			Twelfth leftMostTwelfth = TwelfthUtility.GetLeftMostTwelfth(twelfths, rootTwelfth);
+			Twelfth rightMostTwelfth = TwelfthUtility.GetRightMostTwelfth(twelfths, rootTwelfth);
+			for (Twelfth twelfth = leftMostTwelfth; twelfth != rightMostTwelfth; twelfth = TwelfthUtility.TwelfthAfter(twelfth))
 			{
-				if (!months.Contains(month))
+				if (!twelfths.Contains(twelfth))
 				{
 					Log.Error(string.Concat(new object[]
 					{
-						"Months doesn't contain ",
-						month,
+						"Twelfths doesn't contain ",
+						twelfth,
 						" (",
-						leftMostMonth,
+						leftMostTwelfth,
 						"..",
-						rightMostMonth,
+						rightMostTwelfth,
 						")"
 					}));
 					break;
 				}
-				months.Remove(month);
+				twelfths.Remove(twelfth);
 			}
-			months.Remove(rightMostMonth);
-			return GenDate.SeasonDateStringAt(leftMostMonth) + " - " + GenDate.SeasonDateStringAt(rightMostMonth);
-		}
-
-		private static Month GetLeftMostMonth(List<Month> months, Month rootMonth)
-		{
-			if (months.Count >= 12)
-			{
-				return Month.Undefined;
-			}
-			Month result;
-			do
-			{
-				result = rootMonth;
-				rootMonth = SeasonUtility.MonthBefore(rootMonth);
-			}
-			while (months.Contains(rootMonth));
-			return result;
-		}
-
-		private static Month GetRightMostMonth(List<Month> months, Month rootMonth)
-		{
-			if (months.Count >= 12)
-			{
-				return Month.Undefined;
-			}
-			Month m;
-			do
-			{
-				m = rootMonth;
-				rootMonth = SeasonUtility.MonthAfter(rootMonth);
-			}
-			while (months.Contains(rootMonth));
-			return SeasonUtility.MonthAfter(m);
-		}
-
-		private static Month MonthBefore(Month m)
-		{
-			if (m == Month.Jan)
-			{
-				return Month.Dec;
-			}
-			return (Month)(m - Month.Feb);
-		}
-
-		private static Month MonthAfter(Month m)
-		{
-			if (m == Month.Dec)
-			{
-				return Month.Jan;
-			}
-			return m + 1;
+			twelfths.Remove(rightMostTwelfth);
+			return GenDate.SeasonDateStringAt(leftMostTwelfth, longLat) + " - " + GenDate.SeasonDateStringAt(rightMostTwelfth, longLat);
 		}
 	}
 }

@@ -13,6 +13,19 @@ namespace Verse
 		[Unsaved]
 		private SimpleCurveView view;
 
+		private static Comparison<CurvePoint> CurvePointsComparer = delegate(CurvePoint a, CurvePoint b)
+		{
+			if (a.x < b.x)
+			{
+				return -1;
+			}
+			if (b.x < a.x)
+			{
+				return 1;
+			}
+			return 0;
+		};
+
 		public int PointsCount
 		{
 			get
@@ -56,6 +69,10 @@ namespace Verse
 			{
 				return this.points[i];
 			}
+			set
+			{
+				this.points[i] = value;
+			}
 		}
 
 		IEnumerator IEnumerable.GetEnumerator()
@@ -82,40 +99,31 @@ namespace Verse
 			this.SortPoints();
 		}
 
-		public void Add(float x, float y)
+		public void Add(float x, float y, bool sort = true)
 		{
 			CurvePoint newPoint = new CurvePoint(x, y);
-			this.Add(newPoint);
+			this.Add(newPoint, sort);
 		}
 
-		public void Add(CurvePoint newPoint)
+		public void Add(CurvePoint newPoint, bool sort = true)
 		{
 			this.points.Add(newPoint);
-			this.SortPoints();
+			if (sort)
+			{
+				this.SortPoints();
+			}
 		}
 
 		public void SortPoints()
 		{
-			Comparison<CurvePoint> comparison = delegate(CurvePoint a, CurvePoint b)
-			{
-				if (a.x < b.x)
-				{
-					return -1;
-				}
-				if (b.x < a.x)
-				{
-					return 1;
-				}
-				return 0;
-			};
-			this.points.Sort(comparison);
+			this.points.Sort(SimpleCurve.CurvePointsComparer);
 		}
 
 		public void RemovePointNear(CurvePoint point)
 		{
 			for (int i = 0; i < this.points.Count; i++)
 			{
-				if ((this.points[i].loc - point.loc).sqrMagnitude < 0.001f)
+				if ((this.points[i].Loc - point.Loc).sqrMagnitude < 0.001f)
 				{
 					this.points.RemoveAt(i);
 					return;

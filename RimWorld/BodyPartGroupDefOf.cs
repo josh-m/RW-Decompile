@@ -10,6 +10,10 @@ namespace RimWorld
 
 		public static BodyPartGroupDef Legs;
 
+		public static BodyPartGroupDef LeftHand;
+
+		public static BodyPartGroupDef RightHand;
+
 		public static BodyPartGroupDef FullHead;
 
 		public static BodyPartGroupDef UpperHead;

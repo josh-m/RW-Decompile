@@ -94,9 +94,33 @@ namespace RimWorld
 				num *= 0.45f;
 				num2 *= 0.85f;
 				break;
-			default:
+			case 10:
 				num *= 0.5f;
 				num2 *= 0.9f;
+				break;
+			case 11:
+				num *= 0.55f;
+				num2 *= 0.91f;
+				break;
+			case 12:
+				num *= 0.6f;
+				num2 *= 0.92f;
+				break;
+			case 13:
+				num *= 0.65f;
+				num2 *= 0.93f;
+				break;
+			case 14:
+				num *= 0.7f;
+				num2 *= 0.94f;
+				break;
+			case 15:
+				num *= 0.75f;
+				num2 *= 0.95f;
+				break;
+			default:
+				num *= 0.8f;
+				num2 *= 0.95f;
 				break;
 			}
 			this.shortTermFactor = 1f + num;
@@ -120,8 +144,8 @@ namespace RimWorld
 
 		public void ExposeData()
 		{
-			Scribe_Values.LookValue<float>(ref this.shortTermFactor, "shortTermFactor", 0f, false);
-			Scribe_Values.LookValue<float>(ref this.longTermFactor, "longTermFactor", 0f, false);
+			Scribe_Values.Look<float>(ref this.shortTermFactor, "shortTermFactor", 0f, false);
+			Scribe_Values.Look<float>(ref this.longTermFactor, "longTermFactor", 0f, false);
 		}
 	}
 }

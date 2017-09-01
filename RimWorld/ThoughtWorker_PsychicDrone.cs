@@ -14,7 +14,7 @@ namespace RimWorld
 			{
 				psychicDroneLevel = building_PsychicEmanator.droneLevel;
 			}
-			MapCondition_PsychicEmanation activeCondition = p.Map.mapConditionManager.GetActiveCondition<MapCondition_PsychicEmanation>();
+			GameCondition_PsychicEmanation activeCondition = p.Map.gameConditionManager.GetActiveCondition<GameCondition_PsychicEmanation>();
 			if (activeCondition != null && activeCondition.gender == p.gender && activeCondition.def.droneLevel > psychicDroneLevel)
 			{
 				psychicDroneLevel = activeCondition.def.droneLevel;

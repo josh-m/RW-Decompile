@@ -41,8 +41,8 @@ namespace RimWorld
 
 		public void ExposeData()
 		{
-			Scribe_Values.LookValue<int>(ref this.growthSeasonUntilTick, "growthSeasonUntilTick", 0, true);
-			Scribe_Values.LookValue<int>(ref this.noGrowUntilTick, "noGrowUntilTick", 0, true);
+			Scribe_Values.Look<int>(ref this.growthSeasonUntilTick, "growthSeasonUntilTick", 0, true);
+			Scribe_Values.Look<int>(ref this.noGrowUntilTick, "noGrowUntilTick", 0, true);
 		}
 	}
 }

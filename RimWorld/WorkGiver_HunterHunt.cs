@@ -19,7 +19,7 @@ namespace RimWorld
 		[DebuggerHidden]
 		public override IEnumerable<Thing> PotentialWorkThingsGlobal(Pawn pawn)
 		{
-			foreach (Designation des in pawn.Map.designationManager.DesignationsOfDef(DesignationDefOf.Hunt))
+			foreach (Designation des in pawn.Map.designationManager.SpawnedDesignationsOfDef(DesignationDefOf.Hunt))
 			{
 				yield return des.target.Thing;
 			}
@@ -30,13 +30,13 @@ namespace RimWorld
 			return !WorkGiver_HunterHunt.HasHuntingWeapon(pawn) || WorkGiver_HunterHunt.HasShieldAndRangedWeapon(pawn);
 		}
 
-		public override bool HasJobOnThing(Pawn pawn, Thing t)
+		public override bool HasJobOnThing(Pawn pawn, Thing t, bool forced = false)
 		{
 			Pawn pawn2 = t as Pawn;
-			return pawn2 != null && pawn2.RaceProps.Animal && pawn.CanReserve(t, 1) && pawn.Map.designationManager.DesignationOn(t, DesignationDefOf.Hunt) != null;
+			return pawn2 != null && pawn2.RaceProps.Animal && pawn.CanReserve(t, 1, -1, null, forced) && pawn.Map.designationManager.DesignationOn(t, DesignationDefOf.Hunt) != null;
 		}
 
-		public override Job JobOnThing(Pawn pawn, Thing t)
+		public override Job JobOnThing(Pawn pawn, Thing t, bool forced = false)
 		{
 			return new Job(JobDefOf.Hunt, t);
 		}
@@ -53,7 +53,7 @@ namespace RimWorld
 				List<Apparel> wornApparel = p.apparel.WornApparel;
 				for (int i = 0; i < wornApparel.Count; i++)
 				{
-					if (wornApparel[i] is PersonalShield)
+					if (wornApparel[i] is ShieldBelt)
 					{
 						return true;
 					}

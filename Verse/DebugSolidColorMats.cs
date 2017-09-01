@@ -15,7 +15,7 @@ namespace Verse
 			{
 				return material;
 			}
-			material = SolidColorMaterials.SimpleSolidColorMaterial(col);
+			material = SolidColorMaterials.SimpleSolidColorMaterial(col, false);
 			DebugSolidColorMats.colorMatDict.Add(col, material);
 			return material;
 		}

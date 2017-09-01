@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Verse.Sound;
 
 namespace Verse
 {
@@ -16,20 +17,18 @@ namespace Verse
 
 		public bool makesBlood = true;
 
-		public bool battleWound;
-
-		public float incapChanceMultiplier = 1f;
-
 		public bool canInterruptJobs = true;
 
 		[MustTranslate]
 		public string deathMessage = "{0} has been killed.";
 
-		public ImpactSoundType impactSoundType;
+		public ImpactSoundTypeDef impactSoundType;
 
-		public DamageArmorCategory armorCategory;
+		public DamageArmorCategoryDef armorCategory;
 
 		public bool spreadOut;
+
+		public bool execution;
 
 		public bool isExplosive;
 

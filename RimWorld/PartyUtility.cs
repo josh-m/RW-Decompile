@@ -1,10 +1,8 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using Verse;
 using Verse.AI;
-using Verse.AI.Group;
 
 namespace RimWorld
 {
@@ -14,23 +12,19 @@ namespace RimWorld
 
 		private const int MaxRoomCellsCountToUseWholeRoom = 324;
 
-		public static bool AcceptableMapConditionsToStartParty(Map map)
+		public static bool AcceptableGameConditionsToStartParty(Map map)
 		{
-			if (!PartyUtility.AcceptableMapConditionsToContinueParty(map))
+			if (!PartyUtility.AcceptableGameConditionsToContinueParty(map))
 			{
 				return false;
 			}
-			if (GenLocalDate.HourInt(map) < 4 || GenLocalDate.HourInt(map) > 21)
+			if (GenLocalDate.HourInteger(map) < 4 || GenLocalDate.HourInteger(map) > 21)
 			{
 				return false;
 			}
-			List<Lord> lords = map.lordManager.lords;
-			for (int i = 0; i < lords.Count; i++)
+			if (GatheringsUtility.AnyLordJobPreventsNewGatherings(map))
 			{
-				if (lords[i].LordJob is LordJob_Joinable_Party || lords[i].LordJob is LordJob_Joinable_MarriageCeremony)
-				{
-					return false;
-				}
+				return false;
 			}
 			if (map.dangerWatcher.DangerRating != StoryDanger.None)
 			{
@@ -71,7 +65,7 @@ namespace RimWorld
 			return num3 >= num2;
 		}
 
-		public static bool AcceptableMapConditionsToContinueParty(Map map)
+		public static bool AcceptableGameConditionsToContinueParty(Map map)
 		{
 			return map.dangerWatcher.DangerRating != StoryDanger.High;
 		}
@@ -96,7 +90,7 @@ namespace RimWorld
 
 		public static bool InPartyArea(IntVec3 cell, IntVec3 partySpot, Map map)
 		{
-			if (PartyUtility.UseWholeRoomAsPartyArea(partySpot, map) && cell.GetRoom(map) == partySpot.GetRoom(map))
+			if (PartyUtility.UseWholeRoomAsPartyArea(partySpot, map) && cell.GetRoom(map, RegionType.Set_Passable) == partySpot.GetRoom(map, RegionType.Set_Passable))
 			{
 				return true;
 			}
@@ -116,10 +110,10 @@ namespace RimWorld
 		public static bool TryFindRandomCellInPartyArea(Pawn pawn, out IntVec3 result)
 		{
 			IntVec3 cell = pawn.mindState.duty.focus.Cell;
-			Predicate<IntVec3> validator = (IntVec3 x) => x.Standable(pawn.Map) && !x.IsForbidden(pawn) && pawn.CanReserveAndReach(x, PathEndMode.OnCell, Danger.None, 1);
+			Predicate<IntVec3> validator = (IntVec3 x) => x.Standable(pawn.Map) && !x.IsForbidden(pawn) && pawn.CanReserveAndReach(x, PathEndMode.OnCell, Danger.None, 1, -1, null, false);
 			if (PartyUtility.UseWholeRoomAsPartyArea(cell, pawn.Map))
 			{
-				Room room = cell.GetRoom(pawn.Map);
+				Room room = cell.GetRoom(pawn.Map, RegionType.Set_Passable);
 				return (from x in room.Cells
 				where validator(x)
 				select x).TryRandomElement(out result);
@@ -129,7 +123,7 @@ namespace RimWorld
 
 		public static bool UseWholeRoomAsPartyArea(IntVec3 partySpot, Map map)
 		{
-			Room room = partySpot.GetRoom(map);
+			Room room = partySpot.GetRoom(map, RegionType.Set_Passable);
 			return room != null && !room.IsHuge && !room.PsychologicallyOutdoors && room.CellCount <= 324;
 		}
 	}

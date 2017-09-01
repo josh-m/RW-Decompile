@@ -12,26 +12,67 @@ namespace RimWorld
 	{
 		private const string MeleeWeaponTag = "Melee";
 
-		[Unsaved]
-		private static List<Pawn> pawnsBeingGeneratedNow = new List<Pawn>();
+		private const float CostWeightDenominator = 100f;
 
-		public static List<Pawn> PawnsBeingGeneratedNow
+		private static readonly SimpleCurve MaxPawnCostPerRaidPointsCurve = new SimpleCurve
 		{
-			get
 			{
-				return PawnGroupMakerUtility.pawnsBeingGeneratedNow;
+				new CurvePoint(0f, 25f),
+				true
+			},
+			{
+				new CurvePoint(100f, 40f),
+				true
+			},
+			{
+				new CurvePoint(300f, 50f),
+				true
+			},
+			{
+				new CurvePoint(700f, 100f),
+				true
+			},
+			{
+				new CurvePoint(1000f, 150f),
+				true
+			},
+			{
+				new CurvePoint(1500f, 200f),
+				true
+			},
+			{
+				new CurvePoint(2000f, 400f),
+				true
+			},
+			{
+				new CurvePoint(3000f, 800f),
+				true
+			},
+			{
+				new CurvePoint(100000f, 50000f),
+				true
 			}
-		}
+		};
 
-		public static void AddToPawnsBeingGeneratedNow(Pawn p)
+		private static readonly SimpleCurve DesireToSuppressCountPerRaidPointsCurve = new SimpleCurve
 		{
-			PawnGroupMakerUtility.pawnsBeingGeneratedNow.Add(p);
-		}
-
-		public static void ClearPawnsBeingGeneratedNow()
-		{
-			PawnGroupMakerUtility.pawnsBeingGeneratedNow.Clear();
-		}
+			{
+				new CurvePoint(600f, 0f),
+				true
+			},
+			{
+				new CurvePoint(1000f, 0.5f),
+				true
+			},
+			{
+				new CurvePoint(2000f, 1f),
+				true
+			},
+			{
+				new CurvePoint(4000f, 2f),
+				true
+			}
+		};
 
 		[DebuggerHidden]
 		public static IEnumerable<Pawn> GeneratePawns(PawnGroupKindDef groupKind, PawnGroupMakerParms parms, bool warnOnZeroResults = true)
@@ -81,9 +122,10 @@ namespace RimWorld
 
 		public static IEnumerable<PawnGenOption> ChoosePawnGenOptionsByPoints(float points, List<PawnGenOption> options, PawnGroupMakerParms parms)
 		{
-			float num = points;
+			float num = PawnGroupMakerUtility.MaxAllowedPawnGenOptionCost(parms.faction, points, parms.raidStrategy);
 			List<PawnGenOption> list = new List<PawnGenOption>();
 			List<PawnGenOption> list2 = new List<PawnGenOption>();
+			float num2 = points;
 			bool flag = false;
 			while (true)
 			{
@@ -91,62 +133,65 @@ namespace RimWorld
 				for (int i = 0; i < options.Count; i++)
 				{
 					PawnGenOption pawnGenOption = options[i];
-					if (pawnGenOption.Cost <= num)
+					if (pawnGenOption.Cost <= num2)
 					{
-						if (pawnGenOption.Cost <= PawnGroupMakerUtility.MaxAllowedPawnGenOptionCost(parms.faction, points, parms.raidStrategy))
+						if (pawnGenOption.Cost <= num)
 						{
 							if (!parms.generateFightersOnly || pawnGenOption.kind.isFighter)
 							{
-								if (parms.generateMeleeOnly)
-								{
-									if (pawnGenOption.kind.weaponTags.Any((string tag) => tag != "Melee"))
-									{
-										goto IL_F8;
-									}
-								}
 								if (parms.raidStrategy == null || parms.raidStrategy.Worker.CanUsePawnGenOption(pawnGenOption, list2))
 								{
-									list.Add(pawnGenOption);
+									if (!flag || !pawnGenOption.kind.factionLeader)
+									{
+										list.Add(pawnGenOption);
+									}
 								}
 							}
 						}
 					}
-					IL_F8:;
-				}
-				if (flag)
-				{
-					list.RemoveAll((PawnGenOption group) => group.kind.factionLeader);
 				}
 				if (list.Count == 0)
 				{
 					break;
 				}
-				float desireToSuppressCount = Mathf.InverseLerp(800f, 1600f, points);
-				desireToSuppressCount = Mathf.Clamp(desireToSuppressCount, 0f, 0.5f);
+				float desireToSuppressCount = PawnGroupMakerUtility.DesireToSuppressCountPerRaidPointsCurve.Evaluate(points);
 				Func<PawnGenOption, float> weightSelector = delegate(PawnGenOption gr)
 				{
-					float num2 = (float)gr.selectionWeight;
+					float num3 = (float)gr.selectionWeight;
 					if (desireToSuppressCount > 0f)
 					{
-						float b = num2 * gr.Cost;
-						num2 = Mathf.Lerp(num2, b, desireToSuppressCount);
+						float b = num3 * (gr.Cost / 100f);
+						num3 = Mathf.Lerp(num3, b, desireToSuppressCount);
 					}
-					return num2;
+					return num3;
 				};
 				PawnGenOption pawnGenOption2 = list.RandomElementByWeight(weightSelector);
+				list2.Add(pawnGenOption2);
+				num2 -= pawnGenOption2.Cost;
 				if (pawnGenOption2.kind.factionLeader)
 				{
 					flag = true;
 				}
-				list2.Add(pawnGenOption2);
-				num -= pawnGenOption2.Cost;
+			}
+			if (list2.Count == 1 && num2 > points / 2f)
+			{
+				Log.Warning(string.Concat(new object[]
+				{
+					"Used only ",
+					points - num2,
+					" / ",
+					points,
+					" points generating for ",
+					parms.faction
+				}));
 			}
 			return list2;
 		}
 
 		private static float MaxAllowedPawnGenOptionCost(Faction faction, float totalPoints, RaidStrategyDef raidStrategy)
 		{
-			float num = Mathf.Max(totalPoints * 0.5f, 50f);
+			float num = PawnGroupMakerUtility.MaxPawnCostPerRaidPointsCurve.Evaluate(totalPoints);
+			num *= faction.def.maxPawnOptionCostFactor;
 			if (raidStrategy != null)
 			{
 				num = Mathf.Min(num, totalPoints / raidStrategy.minPawns);
@@ -168,13 +213,12 @@ namespace RimWorld
 					StringBuilder sb = new StringBuilder();
 					sb.AppendLine(string.Concat(new object[]
 					{
-						"======== FACTION: ",
+						"FACTION: ",
 						fac.Name,
 						" (",
 						fac.def.defName,
 						") min=",
-						fac.def.MinPointsToGenerateNormalPawnGroup(),
-						" ======="
+						fac.def.MinPointsToGenerateNormalPawnGroup()
 					}));
 					Action<float> action = delegate(float points)
 					{
@@ -183,11 +227,21 @@ namespace RimWorld
 							return;
 						}
 						PawnGroupMakerParms pawnGroupMakerParms = new PawnGroupMakerParms();
-						pawnGroupMakerParms.map = Find.VisibleMap;
+						pawnGroupMakerParms.tile = Find.VisibleMap.Tile;
 						pawnGroupMakerParms.points = points;
-						sb.AppendLine("Group with " + pawnGroupMakerParms.points + " points");
+						pawnGroupMakerParms.faction = fac;
+						sb.AppendLine(string.Concat(new object[]
+						{
+							"Group with ",
+							pawnGroupMakerParms.points,
+							" points (max option cost: ",
+							PawnGroupMakerUtility.MaxAllowedPawnGenOptionCost(fac, points, RaidStrategyDefOf.ImmediateAttack),
+							")"
+						}));
 						float num = 0f;
-						foreach (Pawn current in PawnGroupMakerUtility.GeneratePawns(PawnGroupKindDefOf.Normal, pawnGroupMakerParms, false))
+						foreach (Pawn current in from pa in PawnGroupMakerUtility.GeneratePawns(PawnGroupKindDefOf.Normal, pawnGroupMakerParms, false)
+						orderby pa.kindDef.combatPower
+						select pa)
 						{
 							string text;
 							if (current.equipment.Primary != null)
@@ -196,33 +250,37 @@ namespace RimWorld
 							}
 							else
 							{
-								text = "NoEquipment";
+								text = "no-equipment";
+							}
+							Apparel apparel = current.apparel.FirstApparelOnBodyPartGroup(BodyPartGroupDefOf.Torso);
+							string text2;
+							if (apparel != null)
+							{
+								text2 = apparel.LabelCap;
+							}
+							else
+							{
+								text2 = "shirtless";
 							}
 							sb.AppendLine(string.Concat(new string[]
 							{
 								"  ",
-								current.kindDef.combatPower.ToString("F0").PadRight(5),
-								"- ",
+								current.kindDef.combatPower.ToString("F0").PadRight(6),
 								current.kindDef.defName,
 								", ",
-								text
+								text,
+								", ",
+								text2
 							}));
 							num += current.kindDef.combatPower;
 						}
 						sb.AppendLine("         totalCost " + num);
 						sb.AppendLine();
 					};
-					action(35f);
-					action(70f);
-					action(135f);
-					action(200f);
-					action(300f);
-					action(500f);
-					action(800f);
-					action(1200f);
-					action(2000f);
-					action(3000f);
-					action(4000f);
+					foreach (float obj in Dialog_DebugActionsMenu.PointsOptions())
+					{
+						action(obj);
+					}
 					Log.Message(sb.ToString());
 				}
 			}

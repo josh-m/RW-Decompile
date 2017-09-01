@@ -37,7 +37,7 @@ namespace RimWorld
 					map.floodFiller.FloodFill(fuelingPortSource.Position, (IntVec3 x) => FuelingPortUtility.AnyFuelingPortGiverAt(x, map), delegate(IntVec3 x)
 					{
 						Command_LoadToTransporter.tmpFuelingPortGivers.Add(FuelingPortUtility.FuelingPortGiverAt(x, map));
-					});
+					}, false);
 					for (int i = 0; i < this.transporters.Count; i++)
 					{
 						Building fuelingPortSource2 = this.transporters[i].Launchable.FuelingPortSource;

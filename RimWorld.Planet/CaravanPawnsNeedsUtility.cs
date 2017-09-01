@@ -9,8 +9,6 @@ namespace RimWorld.Planet
 	{
 		private const float AutoRefillMiscNeedsIfBelowLevel = 0.3f;
 
-		private static readonly FloatRange VirtualGrassNutritionRandomFactor = new FloatRange(0.7f, 1f);
-
 		private static List<Thing> tmpInvFood = new List<Thing>();
 
 		public static void TrySatisfyPawnsNeeds(Caravan caravan)
@@ -37,7 +35,7 @@ namespace RimWorld.Planet
 			for (int j = 0; j < pawnsListForReading.Count; j++)
 			{
 				Pawn pawn = pawnsListForReading[j];
-				if (!pawn.RaceProps.Eats(FoodTypeFlags.Plant))
+				if (pawn.RaceProps.EatsFood && !VirtualPlantsUtility.CanEatVirtualPlantsNow(pawn))
 				{
 					bool flag = false;
 					for (int k = 0; k < CaravanPawnsNeedsUtility.tmpInvFood.Count; k++)
@@ -54,7 +52,7 @@ namespace RimWorld.Planet
 						string text = null;
 						for (int l = 0; l < pawnsListForReading.Count; l++)
 						{
-							Hediff firstHediffOfDef = pawnsListForReading[l].health.hediffSet.GetFirstHediffOfDef(HediffDefOf.Malnutrition);
+							Hediff firstHediffOfDef = pawnsListForReading[l].health.hediffSet.GetFirstHediffOfDef(HediffDefOf.Malnutrition, false);
 							if (firstHediffOfDef != null && (text == null || firstHediffOfDef.CurStageIndex > num))
 							{
 								num = firstHediffOfDef.CurStageIndex;
@@ -115,9 +113,9 @@ namespace RimWorld.Planet
 			}
 			Thing thing;
 			Pawn pawn2;
-			if (pawn.RaceProps.Eats(FoodTypeFlags.Plant))
+			if (VirtualPlantsUtility.CanEatVirtualPlantsNow(pawn))
 			{
-				food.CurLevel += ThingDefOf.PlantGrass.ingestible.nutrition * CaravanPawnsNeedsUtility.VirtualGrassNutritionRandomFactor.RandomInRange;
+				VirtualPlantsUtility.EatVirtualPlants(pawn);
 			}
 			else if (CaravanInventoryUtility.TryGetBestFood(caravan, pawn, out thing, out pawn2))
 			{
@@ -148,22 +146,27 @@ namespace RimWorld.Planet
 			{
 				return;
 			}
-			Thing thing;
-			Pawn pawn2;
-			if (CaravanInventoryUtility.TryGetBestDrug(caravan, pawn, chemical, out thing, out pawn2))
+			Thing drug;
+			Pawn drugOwner;
+			if (CaravanInventoryUtility.TryGetBestDrug(caravan, pawn, chemical, out drug, out drugOwner))
 			{
-				float num = thing.Ingested(pawn, 0f);
-				Need_Food food = pawn.needs.food;
-				if (food != null)
-				{
-					food.CurLevel += num;
-				}
-				if (thing.Destroyed && pawn2 != null)
-				{
-					pawn2.inventory.innerContainer.Remove(thing);
-					caravan.RecacheImmobilizedNow();
-					caravan.RecacheDaysWorthOfFood();
-				}
+				CaravanPawnsNeedsUtility.IngestDrug(pawn, drug, drugOwner, caravan);
+			}
+		}
+
+		public static void IngestDrug(Pawn pawn, Thing drug, Pawn drugOwner, Caravan caravan)
+		{
+			float num = drug.Ingested(pawn, 0f);
+			Need_Food food = pawn.needs.food;
+			if (food != null)
+			{
+				food.CurLevel += num;
+			}
+			if (drug.Destroyed && drugOwner != null)
+			{
+				drugOwner.inventory.innerContainer.Remove(drug);
+				caravan.RecacheImmobilizedNow();
+				caravan.RecacheDaysWorthOfFood();
 			}
 		}
 
@@ -177,11 +180,29 @@ namespace RimWorld.Planet
 			return CaravanPawnsNeedsUtility.CanEverEatForNutrition(food, pawn) && (pawn.needs.food.CurCategory >= HungerCategory.Starving || food.ingestible.preferability > FoodPreferability.DesperateOnly);
 		}
 
+		public static bool CanNowEatForNutrition(Thing food, Pawn pawn)
+		{
+			return food.IngestibleNow && CaravanPawnsNeedsUtility.CanNowEatForNutrition(food.def, pawn);
+		}
+
+		public static float GetFoodScore(Thing food, Pawn pawn)
+		{
+			float num = CaravanPawnsNeedsUtility.GetFoodScore(food.def, pawn);
+			if (pawn.RaceProps.Humanlike)
+			{
+				CompRottable compRottable = food.TryGetComp<CompRottable>();
+				int a = (compRottable == null) ? 2147483647 : compRottable.TicksUntilRotAtCurrentTemp;
+				float a2 = 1f - (float)Mathf.Min(a, 3600000) / 3600000f;
+				num += Mathf.Min(a2, 0.999f);
+			}
+			return num;
+		}
+
 		public static float GetFoodScore(ThingDef food, Pawn pawn)
 		{
 			if (pawn.RaceProps.Humanlike)
 			{
-				return (float)food.ingestible.preferability + Mathf.Min(food.ingestible.nutrition / 100f, 0.999f);
+				return (float)food.ingestible.preferability;
 			}
 			float num = 0f;
 			if (food == ThingDefOf.Kibble || food == ThingDefOf.Hay)

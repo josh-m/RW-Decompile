@@ -26,6 +26,10 @@ namespace Verse
 			{
 				Find.World.WorldUpdate();
 			}
+			if (Current.Game != null)
+			{
+				Current.Game.UpdateEntry();
+			}
 		}
 	}
 }

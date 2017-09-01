@@ -49,9 +49,9 @@ namespace Verse
 
 		public override void CompExposeData()
 		{
-			Scribe_Values.LookValue<bool>(ref this.isOldInt, "isOld", false, false);
-			Scribe_Values.LookValue<float>(ref this.oldDamageThreshold, "oldDamageThreshold", 9999f, false);
-			Scribe_Values.LookValue<float>(ref this.painFactor, "painFactor", 1f, false);
+			Scribe_Values.Look<bool>(ref this.isOldInt, "isOld", false, false);
+			Scribe_Values.Look<float>(ref this.oldDamageThreshold, "oldDamageThreshold", 9999f, false);
+			Scribe_Values.Look<float>(ref this.painFactor, "painFactor", 1f, false);
 		}
 
 		public override void CompPostInjuryHeal(float amount)
@@ -72,6 +72,7 @@ namespace Verse
 				{
 					this.parent.Severity = this.oldDamageThreshold;
 					this.IsOld = true;
+					base.Pawn.health.Notify_HediffChanged(this.parent);
 				}
 				else
 				{

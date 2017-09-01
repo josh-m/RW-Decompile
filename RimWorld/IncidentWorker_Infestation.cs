@@ -39,23 +39,30 @@ namespace RimWorld
 			}
 			Hive hive = (Hive)GenSpawn.Spawn(ThingMaker.MakeThing(ThingDefOf.Hive, null), loc, map);
 			hive.SetFaction(Faction.OfInsects, null);
-			IncidentWorker_Infestation.MakeHiveSpawnInitialEssentials(hive);
+			IncidentWorker_Infestation.SpawnInsectJellyInstantly(hive);
 			for (int i = 0; i < hiveCount - 1; i++)
 			{
 				Hive hive2;
 				if (hive.GetComp<CompSpawnerHives>().TrySpawnChildHive(false, out hive2))
 				{
-					IncidentWorker_Infestation.MakeHiveSpawnInitialEssentials(hive2);
+					IncidentWorker_Infestation.SpawnInsectJellyInstantly(hive2);
 					hive = hive2;
 				}
 			}
 			return hive;
 		}
 
-		private static void MakeHiveSpawnInitialEssentials(Hive hive)
+		private static void SpawnInsectJellyInstantly(Hive hive)
 		{
-			hive.StartInitialPawnSpawnCountdown();
-			hive.TryGetComp<CompSpawner>().TryDoSpawn();
+			CompSpawner compSpawner = (CompSpawner)hive.AllComps.Find(delegate(ThingComp x)
+			{
+				CompSpawner compSpawner2 = x as CompSpawner;
+				return compSpawner2 != null && compSpawner2.PropsSpawner.thingToSpawn == ThingDefOf.InsectJelly;
+			});
+			if (compSpawner != null)
+			{
+				compSpawner.TryDoSpawn();
+			}
 		}
 	}
 }

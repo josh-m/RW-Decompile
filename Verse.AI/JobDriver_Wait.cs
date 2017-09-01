@@ -25,29 +25,33 @@ namespace Verse.AI
 		[DebuggerHidden]
 		protected override IEnumerable<Toil> MakeNewToils()
 		{
-			yield return new Toil
+			Toil wait = new Toil();
+			wait.initAction = delegate
 			{
-				initAction = delegate
-				{
-					this.<>f__this.Map.pawnDestinationManager.ReserveDestinationFor(this.<>f__this.pawn, this.<>f__this.pawn.Position);
-					this.<>f__this.pawn.pather.StopDead();
-					this.<>f__this.CheckForAutoAttack();
-				},
-				tickAction = delegate
-				{
-					if (this.<>f__this.CurJob.expiryInterval == -1 && this.<>f__this.CurJob.def == JobDefOf.WaitCombat && !this.<>f__this.pawn.Drafted)
-					{
-						Log.Error(this.<>f__this.pawn + " in eternal WaitCombat without being drafted.");
-						this.<>f__this.ReadyForNextToil();
-						return;
-					}
-					if ((Find.TickManager.TicksGame + this.<>f__this.pawn.thingIDNumber) % 4 == 0)
-					{
-						this.<>f__this.CheckForAutoAttack();
-					}
-				},
-				defaultCompleteMode = ToilCompleteMode.Never
+				this.<>f__this.Map.pawnDestinationManager.ReserveDestinationFor(this.<>f__this.pawn, this.<>f__this.pawn.Position);
+				this.<>f__this.pawn.pather.StopDead();
+				this.<>f__this.CheckForAutoAttack();
 			};
+			wait.tickAction = delegate
+			{
+				if (this.<>f__this.CurJob.expiryInterval == -1 && this.<>f__this.CurJob.def == JobDefOf.WaitCombat && !this.<>f__this.pawn.Drafted)
+				{
+					Log.Error(this.<>f__this.pawn + " in eternal WaitCombat without being drafted.");
+					this.<>f__this.ReadyForNextToil();
+					return;
+				}
+				if ((Find.TickManager.TicksGame + this.<>f__this.pawn.thingIDNumber) % 4 == 0)
+				{
+					this.<>f__this.CheckForAutoAttack();
+				}
+			};
+			this.DecorateWaitToil(wait);
+			wait.defaultCompleteMode = ToilCompleteMode.Never;
+			yield return wait;
+		}
+
+		public virtual void DecorateWaitToil(Toil wait)
+		{
 		}
 
 		public override void Notify_StanceChanged()
@@ -106,7 +110,7 @@ namespace Verse.AI
 					this.pawn.natives.TryBeatFire(fire);
 					return;
 				}
-				if (flag && this.pawn.Faction != null && this.pawn.jobs.curJob.def == JobDefOf.WaitCombat && (this.pawn.drafter == null || this.pawn.drafter.AllowFiring))
+				if (flag && this.pawn.Faction != null && this.pawn.jobs.curJob.def == JobDefOf.WaitCombat && (this.pawn.drafter == null || this.pawn.drafter.FireAtWill))
 				{
 					bool allowManualCastWeapons = !this.pawn.IsColonist;
 					Verb verb = this.pawn.TryGetAttackVerb(allowManualCastWeapons);
@@ -117,7 +121,7 @@ namespace Verse.AI
 						{
 							targetScanFlags |= TargetScanFlags.NeedNonBurning;
 						}
-						Thing thing = AttackTargetFinder.BestShootTargetFromCurrentPosition(this.pawn, null, verb.verbProps.range, verb.verbProps.minRange, targetScanFlags);
+						Thing thing = (Thing)AttackTargetFinder.BestShootTargetFromCurrentPosition(this.pawn, null, verb.verbProps.range, verb.verbProps.minRange, targetScanFlags);
 						if (thing != null)
 						{
 							this.pawn.equipment.TryStartAttack(thing);

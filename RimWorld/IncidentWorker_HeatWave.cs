@@ -3,7 +3,7 @@ using Verse;
 
 namespace RimWorld
 {
-	public class IncidentWorker_HeatWave : IncidentWorker_MakeMapCondition
+	public class IncidentWorker_HeatWave : IncidentWorker_MakeGameCondition
 	{
 		protected override bool CanFireNowSub(IIncidentTarget target)
 		{

@@ -38,5 +38,10 @@ namespace RimWorld
 			}
 			return null;
 		}
+
+		public static float GenerateGuardPoints()
+		{
+			return (float)Rand.Range(550, 1000);
+		}
 	}
 }

@@ -49,7 +49,7 @@ namespace RimWorld
 			{
 				return false;
 			}
-			if (!base.Map.terrainGrid.TerrainAt(c).layerable)
+			if (!base.Map.terrainGrid.CanRemoveTopLayerAt(c))
 			{
 				return "TerrainMustBeRemovable".Translate();
 			}

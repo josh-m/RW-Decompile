@@ -8,10 +8,22 @@ namespace RimWorld
 	{
 		private Pawn pawn;
 
+		private Building_Bed intOwnedBed;
+
 		public Building_Bed OwnedBed
 		{
-			get;
-			private set;
+			get
+			{
+				return this.intOwnedBed;
+			}
+			private set
+			{
+				if (this.intOwnedBed != value)
+				{
+					this.intOwnedBed = value;
+					ThoughtUtility.RemovePositiveBedroomThoughts(this.pawn);
+				}
+			}
 		}
 
 		public Building_Grave AssignedGrave
@@ -28,7 +40,7 @@ namespace RimWorld
 				{
 					return null;
 				}
-				Room room = RoomQuery.RoomAt(this.OwnedBed);
+				Room room = this.OwnedBed.GetRoom(RegionType.Set_Passable);
 				if (room == null)
 				{
 					return null;
@@ -48,11 +60,9 @@ namespace RimWorld
 
 		public void ExposeData()
 		{
-			Building_Bed ownedBed = this.OwnedBed;
 			Building_Grave assignedGrave = this.AssignedGrave;
-			Scribe_References.LookReference<Building_Bed>(ref ownedBed, "ownedBed", false);
-			Scribe_References.LookReference<Building_Grave>(ref assignedGrave, "assignedGrave", false);
-			this.OwnedBed = ownedBed;
+			Scribe_References.Look<Building_Bed>(ref this.intOwnedBed, "ownedBed", false);
+			Scribe_References.Look<Building_Grave>(ref assignedGrave, "assignedGrave", false);
 			this.AssignedGrave = assignedGrave;
 			if (Scribe.mode == LoadSaveMode.PostLoadInit)
 			{

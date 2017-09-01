@@ -326,10 +326,10 @@ namespace Verse
 					}
 					else
 					{
-						XmlNode xmlNode2 = target[xmlNode.Name];
-						if (xmlNode2 != null)
+						XmlElement xmlElement = target[xmlNode.Name];
+						if (xmlElement != null)
 						{
-							XmlInheritance.RecursiveNodeCopyOverwriteElements(xmlNode, xmlNode2);
+							XmlInheritance.RecursiveNodeCopyOverwriteElements(xmlNode, xmlElement);
 						}
 						else
 						{
@@ -343,6 +343,7 @@ namespace Verse
 
 		private static void CheckForDuplicateNodes(XmlNode originalNode)
 		{
+			XmlInheritance.tempUsedNodeNames.Clear();
 			foreach (XmlNode xmlNode in originalNode.ChildNodes)
 			{
 				if (!(xmlNode.Name == "li"))

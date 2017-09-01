@@ -1,11 +1,10 @@
 using System;
-using Verse;
 
 namespace RimWorld
 {
 	public abstract class ScenPart_Rule : ScenPart
 	{
-		public override void PostMapGenerate(Map map)
+		public override void PostGameStart()
 		{
 			this.ApplyRule();
 		}

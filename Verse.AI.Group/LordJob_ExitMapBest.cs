@@ -21,7 +21,7 @@ namespace Verse.AI.Group
 		public override StateGraph CreateGraph()
 		{
 			StateGraph stateGraph = new StateGraph();
-			stateGraph.AddToil(new LordToil_ExitMapBest(this.locomotion, this.canDig)
+			stateGraph.AddToil(new LordToil_ExitMap(this.locomotion, this.canDig)
 			{
 				avoidGridMode = AvoidGridMode.Smart
 			});
@@ -30,8 +30,8 @@ namespace Verse.AI.Group
 
 		public override void ExposeData()
 		{
-			Scribe_Values.LookValue<LocomotionUrgency>(ref this.locomotion, "locomotion", LocomotionUrgency.Jog, false);
-			Scribe_Values.LookValue<bool>(ref this.canDig, "canDig", false, false);
+			Scribe_Values.Look<LocomotionUrgency>(ref this.locomotion, "locomotion", LocomotionUrgency.Jog, false);
+			Scribe_Values.Look<bool>(ref this.canDig, "canDig", false, false);
 		}
 	}
 }

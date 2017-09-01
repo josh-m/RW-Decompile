@@ -30,5 +30,7 @@ namespace RimWorld
 		public static IncidentDef SolarFlare;
 
 		public static IncidentDef ManhunterPack;
+
+		public static IncidentDef CaravanRequest;
 	}
 }

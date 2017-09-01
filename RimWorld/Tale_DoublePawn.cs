@@ -45,7 +45,7 @@ namespace RimWorld
 			{
 				this.secondPawnData = TaleData_Pawn.GenerateFrom(secondPawn);
 			}
-			if (firstPawn.MapHeld != null)
+			if (firstPawn.SpawnedOrAnyParentSpawned)
 			{
 				this.surroundings = TaleData_Surroundings.GenerateFrom(firstPawn.PositionHeld, firstPawn.MapHeld);
 			}
@@ -73,8 +73,8 @@ namespace RimWorld
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Deep.LookDeep<TaleData_Pawn>(ref this.firstPawnData, "firstPawnData", new object[0]);
-			Scribe_Deep.LookDeep<TaleData_Pawn>(ref this.secondPawnData, "secondPawnData", new object[0]);
+			Scribe_Deep.Look<TaleData_Pawn>(ref this.firstPawnData, "firstPawnData", new object[0]);
+			Scribe_Deep.Look<TaleData_Pawn>(ref this.secondPawnData, "secondPawnData", new object[0]);
 		}
 
 		[DebuggerHidden]

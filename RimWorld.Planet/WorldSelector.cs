@@ -110,7 +110,7 @@ namespace RimWorld.Planet
 						Caravan caravan = (Caravan)this.selected[0];
 						if (caravan.IsPlayerControlled && !FloatMenuMakerWorld.TryMakeFloatMenu(caravan))
 						{
-							this.AutoOrderToTile(caravan, GenWorld.MouseTile());
+							this.AutoOrderToTile(caravan, GenWorld.MouseTile(false));
 						}
 					}
 					else
@@ -120,14 +120,14 @@ namespace RimWorld.Planet
 							Caravan caravan2 = this.selected[i] as Caravan;
 							if (caravan2 != null && caravan2.IsPlayerControlled)
 							{
-								this.AutoOrderToTile(caravan2, GenWorld.MouseTile());
+								this.AutoOrderToTile(caravan2, GenWorld.MouseTile(false));
 							}
 						}
 					}
 					Event.current.Use();
 				}
 			}
-			if (Event.current.type == EventType.MouseUp)
+			if (Event.current.rawType == EventType.MouseUp)
 			{
 				if (Event.current.button == 0 && this.dragBox.active)
 				{
@@ -195,7 +195,7 @@ namespace RimWorld.Planet
 
 		private void PlaySelectionSoundFor(WorldObject obj)
 		{
-			SoundDefOf.ThingSelected.PlayOneShotOnCamera();
+			SoundDefOf.ThingSelected.PlayOneShotOnCamera(null);
 		}
 
 		private void SelectInsideDragBox()
@@ -221,7 +221,7 @@ namespace RimWorld.Planet
 				{
 					if (!flag)
 					{
-						JumpToTargetUtility.TryJumpAndSelect(list2[j]);
+						CameraJumper.TryJumpAndSelect(list2[j]);
 						flag = true;
 					}
 					else
@@ -254,13 +254,13 @@ namespace RimWorld.Planet
 			}
 		}
 
-		private IEnumerable<WorldObject> SelectableObjectsUnderMouse()
+		public IEnumerable<WorldObject> SelectableObjectsUnderMouse()
 		{
 			bool flag;
 			return this.SelectableObjectsUnderMouse(out flag, out flag);
 		}
 
-		private IEnumerable<WorldObject> SelectableObjectsUnderMouse(out bool clickedDirectlyOnCaravan, out bool usedColonistBar)
+		public IEnumerable<WorldObject> SelectableObjectsUnderMouse(out bool clickedDirectlyOnCaravan, out bool usedColonistBar)
 		{
 			Vector2 mousePositionOnUIInverted = UI.MousePositionOnUIInverted;
 			if (Current.ProgramState == ProgramState.Playing)
@@ -313,11 +313,11 @@ namespace RimWorld.Planet
 				{
 					if (thing.Spawned)
 					{
-						JumpToTargetUtility.TryJumpAndSelect(thing);
+						CameraJumper.TryJumpAndSelect(thing);
 					}
 					else
 					{
-						JumpToTargetUtility.TryJump(thing);
+						CameraJumper.TryJump(thing);
 					}
 					return;
 				}
@@ -336,7 +336,7 @@ namespace RimWorld.Planet
 					this.ClearSelection();
 					if (canSelectTile)
 					{
-						this.selectedTile = GenWorld.MouseTile();
+						this.selectedTile = GenWorld.MouseTile(false);
 					}
 				}
 			}
@@ -349,7 +349,7 @@ namespace RimWorld.Planet
 				{
 					if (!this.ShiftIsHeld)
 					{
-						int tile = (!canSelectTile) ? -1 : GenWorld.MouseTile();
+						int tile = (!canSelectTile) ? -1 : GenWorld.MouseTile(false);
 						this.SelectFirstOrNextFrom(list, tile);
 					}
 					else
@@ -433,7 +433,7 @@ namespace RimWorld.Planet
 			{
 				c.pather.StartPath(num, null, true);
 				c.gotoMote.OrderedToTile(num);
-				SoundDefOf.ColonistOrdered.PlayOneShotOnCamera();
+				SoundDefOf.ColonistOrdered.PlayOneShotOnCamera(null);
 			}
 		}
 

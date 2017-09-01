@@ -8,7 +8,9 @@ namespace RimWorld
 {
 	public static class ThingDefGenerator_Leather
 	{
-		private const float HumanlikeLeatherCommonalityFactor = 0.01f;
+		private const float HumanlikeLeatherCommonalityFactor = 0.02f;
+
+		private const float BaseLeatherCommonality = 1.2f;
 
 		private static bool GeneratesLeather(ThingDef sourceDef)
 		{
@@ -52,17 +54,18 @@ namespace RimWorld
 							sourceDef.label
 						});
 						d.useHitPoints = true;
-						d.SetStatBaseValue(StatDefOf.MaxHitPoints, 100f);
-						d.SetStatBaseValue(StatDefOf.MarketValue, sourceDef.race.leatherMarketValueFactor * 3.1f);
+						d.SetStatBaseValue(StatDefOf.MaxHitPoints, 60f);
+						d.SetStatBaseValue(StatDefOf.MarketValue, sourceDef.race.leatherMarketValueFactor * 2.1f);
 						d.SetStatBaseValue(StatDefOf.Mass, 0.03f);
+						d.SetStatBaseValue(StatDefOf.Flammability, 1f);
 						if (d.thingCategories == null)
 						{
 							d.thingCategories = new List<ThingCategoryDef>();
 						}
-						CrossRefLoader.RegisterListWantsCrossRef<ThingCategoryDef>(d.thingCategories, "Leathers");
+						DirectXmlCrossRefLoader.RegisterListWantsCrossRef<ThingCategoryDef>(d.thingCategories, "Leathers");
 						d.graphicData.texPath = "Things/Item/Resource/Cloth";
 						d.stuffProps = new StuffProperties();
-						CrossRefLoader.RegisterListWantsCrossRef<StuffCategoryDef>(d.stuffProps.categories, "Leathery");
+						DirectXmlCrossRefLoader.RegisterListWantsCrossRef<StuffCategoryDef>(d.stuffProps.categories, "Leathery");
 						StatUtility.SetStatValueInList(ref d.stuffProps.statFactors, StatDefOf.MarketValue, 1.3f);
 						StatUtility.SetStatValueInList(ref d.stuffProps.statFactors, StatDefOf.ArmorRating_Blunt, 1.5f);
 						StatUtility.SetStatValueInList(ref d.stuffProps.statFactors, StatDefOf.ArmorRating_Sharp, 1.5f);
@@ -83,7 +86,7 @@ namespace RimWorld
 						d.stuffProps.color = sourceDef.race.leatherColor;
 						d.graphicData.color = sourceDef.race.leatherColor;
 						d.graphicData.colorTwo = sourceDef.race.leatherColor;
-						d.stuffProps.commonality = eachLeatherCommonality * sourceDef.race.leatherCommonalityFactor;
+						d.stuffProps.commonality = 1.2f * eachLeatherCommonality * sourceDef.race.leatherCommonalityFactor;
 						StatUtility.SetStatValueInList(ref d.stuffProps.statFactors, StatDefOf.Insulation_Cold, sourceDef.race.leatherInsulation);
 						StatUtility.SetStatValueInList(ref d.stuffProps.statFactors, StatDefOf.Insulation_Heat, sourceDef.race.leatherInsulation);
 						List<StatModifier> sfos = sourceDef.race.leatherStatFactors;

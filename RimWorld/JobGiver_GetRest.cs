@@ -9,6 +9,13 @@ namespace RimWorld
 	{
 		private RestCategory minCategory;
 
+		public override ThinkNode DeepCopy(bool resolve = true)
+		{
+			JobGiver_GetRest jobGiver_GetRest = (JobGiver_GetRest)base.DeepCopy(resolve);
+			jobGiver_GetRest.minCategory = this.minCategory;
+			return jobGiver_GetRest;
+		}
+
 		public override float GetPriority(Pawn pawn)
 		{
 			Need_Rest rest = pawn.needs.rest;
@@ -75,7 +82,7 @@ namespace RimWorld
 					{
 						throw new NotImplementedException();
 					}
-					if (curLevel < 0.75f)
+					if (curLevel < RestUtility.FallAsleepMaxLevel(pawn))
 					{
 						return 8f;
 					}
@@ -86,17 +93,45 @@ namespace RimWorld
 
 		protected override Job TryGiveJob(Pawn pawn)
 		{
+			Need_Rest rest = pawn.needs.rest;
+			if (rest == null || rest.CurCategory < this.minCategory)
+			{
+				return null;
+			}
 			if (RestUtility.DisturbancePreventsLyingDown(pawn))
 			{
 				return null;
 			}
-			Building_Bed building_Bed = RestUtility.FindBedFor(pawn);
+			Lord lord = pawn.GetLord();
+			Building_Bed building_Bed;
+			if (lord != null && lord.CurLordToil != null && !lord.CurLordToil.AllowRestingInBed)
+			{
+				building_Bed = null;
+			}
+			else
+			{
+				building_Bed = RestUtility.FindBedFor(pawn);
+			}
 			if (building_Bed != null)
 			{
 				return new Job(JobDefOf.LayDown, building_Bed);
 			}
-			IntVec3 c = CellFinder.RandomClosewalkCellNearNotForbidden(pawn.Position, pawn.Map, 4, pawn);
-			return new Job(JobDefOf.LayDown, c);
+			return new Job(JobDefOf.LayDown, this.FindGroundSleepSpotFor(pawn));
+		}
+
+		private IntVec3 FindGroundSleepSpotFor(Pawn pawn)
+		{
+			Map map = pawn.Map;
+			for (int i = 0; i < 2; i++)
+			{
+				int radius = (i != 0) ? 12 : 4;
+				IntVec3 result;
+				if (CellFinder.TryRandomClosewalkCellNear(pawn.Position, map, radius, out result, (IntVec3 x) => !x.IsForbidden(pawn) && !x.GetTerrain(map).avoidWander))
+				{
+					return result;
+				}
+			}
+			return CellFinder.RandomClosewalkCellNearNotForbidden(pawn.Position, map, 4, pawn);
 		}
 	}
 }

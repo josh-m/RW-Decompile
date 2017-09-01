@@ -18,6 +18,10 @@ namespace Verse
 			{
 				return;
 			}
+			if (this.pawn.jobs.HandlingFacing)
+			{
+				return;
+			}
 			if (this.pawn.pather.Moving)
 			{
 				if (this.pawn.pather.curPath == null || this.pawn.pather.curPath.NodesLeftCount < 1)
@@ -88,19 +92,29 @@ namespace Verse
 							this.FaceAdjacentCell(c);
 							return;
 						}
-					}
-					else if (this.pawn.Position.AdjacentTo8Way(target.Cell))
-					{
-						if (DebugViewSettings.drawPawnRotatorTarget)
-						{
-							this.pawn.Map.debugDrawer.FlashCell(this.pawn.Position, 0.2f, "jbloc");
-							GenDraw.DrawLineBetween(this.pawn.Position.ToVector3Shifted(), target.Cell.ToVector3Shifted());
-						}
-						this.FaceAdjacentCell(target.Cell);
+						this.Face(target.Thing.DrawPos);
 						return;
 					}
+					else
+					{
+						if (this.pawn.Position.AdjacentTo8Way(target.Cell))
+						{
+							if (DebugViewSettings.drawPawnRotatorTarget)
+							{
+								this.pawn.Map.debugDrawer.FlashCell(this.pawn.Position, 0.2f, "jbloc");
+								GenDraw.DrawLineBetween(this.pawn.Position.ToVector3Shifted(), target.Cell.ToVector3Shifted());
+							}
+							this.FaceAdjacentCell(target.Cell);
+							return;
+						}
+						if (target.Cell.IsValid && target.Cell != this.pawn.Position)
+						{
+							this.Face(target.Cell.ToVector3());
+							return;
+						}
+					}
 				}
-				if (this.pawn.RaceProps.Humanlike)
+				if (this.pawn.Drafted)
 				{
 					this.pawn.Rotation = Rot4.South;
 				}

@@ -40,7 +40,7 @@ namespace RimWorld
 			outRect.yMax -= 40f;
 			outRect.width -= 16f;
 			Rect viewRect = new Rect(0f, 0f, outRect.width - 16f, (float)this.assignable.AssigningCandidates.Count<Pawn>() * 35f + 100f);
-			Widgets.BeginScrollView(outRect, ref this.scrollPosition, viewRect);
+			Widgets.BeginScrollView(outRect, ref this.scrollPosition, viewRect, true);
 			float num = 0f;
 			bool flag = false;
 			foreach (Pawn current in this.assignable.AssignedPawns)
@@ -53,7 +53,7 @@ namespace RimWorld
 				if (Widgets.ButtonText(rect, "BuildingUnassign".Translate(), true, false, true))
 				{
 					this.assignable.TryUnassignPawn(current);
-					SoundDefOf.Click.PlayOneShotOnCamera();
+					SoundDefOf.Click.PlayOneShotOnCamera(null);
 					return;
 				}
 				num += 35f;
@@ -79,7 +79,7 @@ namespace RimWorld
 						}
 						else
 						{
-							SoundDefOf.Click.PlayOneShotOnCamera();
+							SoundDefOf.Click.PlayOneShotOnCamera(null);
 						}
 						return;
 					}

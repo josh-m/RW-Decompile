@@ -7,25 +7,25 @@ namespace RimWorld
 	{
 		public Verb verb;
 
-		private int cachedDamage;
+		private float cachedSelectionWeight;
 
 		public float SelectionWeight
 		{
 			get
 			{
-				return (float)this.cachedDamage;
+				return this.cachedSelectionWeight;
 			}
 		}
 
 		public VerbEntry(Verb verb, Pawn pawn, Thing equipment = null)
 		{
 			this.verb = verb;
-			this.cachedDamage = verb.verbProps.AdjustedMeleeDamageAmount(verb, pawn, equipment);
+			this.cachedSelectionWeight = verb.verbProps.AdjustedSelectionWeight(verb, pawn, equipment);
 		}
 
 		public override string ToString()
 		{
-			return this.verb.ToString() + " - " + this.cachedDamage;
+			return this.verb.ToString() + " - " + this.cachedSelectionWeight;
 		}
 	}
 }

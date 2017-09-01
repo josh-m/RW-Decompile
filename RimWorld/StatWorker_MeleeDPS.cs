@@ -34,12 +34,12 @@ namespace RimWorld
 
 		public override string GetStatDrawEntryLabel(StatDef stat, float value, ToStringNumberSense numberSense, StatRequest optionalReq)
 		{
-			return string.Format("{0} ( {1} / {2} / {3} )", new object[]
+			return string.Format("{0} ( {1} x {2} / {3} )", new object[]
 			{
 				value.ToStringByStyle(stat.toStringStyle, numberSense),
 				this.GetMeleeDamage(optionalReq, true).ToString("0.##"),
-				this.GetMeleeCooldown(optionalReq, true).ToString("0.##"),
-				StatDefOf.MeleeHitChance.ValueToString(this.GetMeleeHitChance(optionalReq, true), ToStringNumberSense.Absolute)
+				StatDefOf.MeleeHitChance.ValueToString(this.GetMeleeHitChance(optionalReq, true), ToStringNumberSense.Absolute),
+				this.GetMeleeCooldown(optionalReq, true).ToString("0.##")
 			});
 		}
 

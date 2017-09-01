@@ -85,10 +85,10 @@ namespace RimWorld
 
 		public void ExposeData()
 		{
-			Scribe_Defs.LookDef<WeatherDef>(ref this.curWeather, "curWeather");
-			Scribe_Defs.LookDef<WeatherDef>(ref this.lastWeather, "lastWeather");
-			Scribe_Values.LookValue<int>(ref this.curWeatherAge, "curWeatherAge", 0, true);
-			Scribe_Deep.LookDeep<TemperatureMemory>(ref this.growthSeasonMemory, "growthSeasonMemory", new object[]
+			Scribe_Defs.Look<WeatherDef>(ref this.curWeather, "curWeather");
+			Scribe_Defs.Look<WeatherDef>(ref this.lastWeather, "lastWeather");
+			Scribe_Values.Look<int>(ref this.curWeatherAge, "curWeatherAge", 0, true);
+			Scribe_Deep.Look<TemperatureMemory>(ref this.growthSeasonMemory, "growthSeasonMemory", new object[]
 			{
 				this.map
 			});
@@ -152,6 +152,15 @@ namespace RimWorld
 		public void WeatherManagerUpdate()
 		{
 			this.SetAmbienceSustainersVolume();
+		}
+
+		public void EndAllSustainers()
+		{
+			for (int i = 0; i < this.ambienceSustainers.Count; i++)
+			{
+				this.ambienceSustainers[i].End();
+			}
+			this.ambienceSustainers.Clear();
 		}
 
 		private void SetAmbienceSustainersVolume()

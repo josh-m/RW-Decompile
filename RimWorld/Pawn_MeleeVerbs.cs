@@ -35,6 +35,7 @@ namespace RimWorld
 			List<VerbEntry> updatedAvailableVerbsList = this.GetUpdatedAvailableVerbsList();
 			if (updatedAvailableVerbsList.Count == 0)
 			{
+				Log.ErrorOnce(string.Format("{0} has no available melee attack", this.pawn), 1664289);
 				this.SetCurMeleeVerb(null);
 			}
 			else
@@ -117,24 +118,6 @@ namespace RimWorld
 			return Pawn_MeleeVerbs.meleeVerbs;
 		}
 
-		public void Notify_EquipmentLost()
-		{
-			this.ReconfirmCurMeleeVerb();
-		}
-
-		public void Notify_HediffAddedOrRemoved()
-		{
-			this.ReconfirmCurMeleeVerb();
-		}
-
-		private void ReconfirmCurMeleeVerb()
-		{
-			if (this.curMeleeVerb != null && !this.curMeleeVerb.IsStillUsableBy(this.pawn))
-			{
-				this.ChooseMeleeVerb();
-			}
-		}
-
 		public void Notify_PawnKilled()
 		{
 			this.SetCurMeleeVerb(null);
@@ -155,8 +138,12 @@ namespace RimWorld
 
 		public void ExposeData()
 		{
-			Scribe_References.LookReference<Verb>(ref this.curMeleeVerb, "curMeleeVerb", false);
-			Scribe_Values.LookValue<int>(ref this.curMeleeVerbUpdateTick, "curMeleeVerbUpdateTick", 0, false);
+			if (Scribe.mode == LoadSaveMode.Saving && this.curMeleeVerb != null && !this.curMeleeVerb.IsStillUsableBy(this.pawn))
+			{
+				this.curMeleeVerb = null;
+			}
+			Scribe_References.Look<Verb>(ref this.curMeleeVerb, "curMeleeVerb", false);
+			Scribe_Values.Look<int>(ref this.curMeleeVerbUpdateTick, "curMeleeVerbUpdateTick", 0, false);
 		}
 	}
 }

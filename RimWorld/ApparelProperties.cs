@@ -15,8 +15,6 @@ namespace RimWorld
 
 		public string wornGraphicPath = string.Empty;
 
-		public float commonality = 100f;
-
 		public List<string> tags = new List<string>();
 
 		public List<string> defaultOutfitTags;
@@ -48,7 +46,7 @@ namespace RimWorld
 					{
 						if (this.CoversBodyPart(allParts[i]))
 						{
-							this.cachedHumanBodyCoverage += allParts[i].absoluteFleshCoverage;
+							this.cachedHumanBodyCoverage += allParts[i].coverageAbs;
 						}
 					}
 				}

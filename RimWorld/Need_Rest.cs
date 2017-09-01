@@ -15,11 +15,11 @@ namespace RimWorld
 
 		public const float ThreshTired = 0.28f;
 
-		private const float ThreshVeryTired = 0.14f;
+		public const float ThreshVeryTired = 0.14f;
 
-		public const float FallAsleepMaxLevel = 0.75f;
+		public const float DefaultFallAsleepMaxLevel = 0.75f;
 
-		public const float NaturalWakeThreshold = 1f;
+		public const float DefaultNaturalWakeThreshold = 1f;
 
 		public const float CanWakeThreshold = 0.2f;
 
@@ -127,7 +127,7 @@ namespace RimWorld
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Values.LookValue<int>(ref this.ticksAtZero, "ticksAtZero", 0, false);
+			Scribe_Values.Look<int>(ref this.ticksAtZero, "ticksAtZero", 0, false);
 		}
 
 		public override void SetInitialLevel()
@@ -137,13 +137,16 @@ namespace RimWorld
 
 		public override void NeedInterval()
 		{
-			if (this.Resting)
+			if (!base.IsFrozen)
 			{
-				this.CurLevel += 0.005714286f * this.lastRestEffectiveness;
-			}
-			else
-			{
-				this.CurLevel -= this.RestFallPerTick * 150f;
+				if (this.Resting)
+				{
+					this.CurLevel += 0.005714286f * this.lastRestEffectiveness;
+				}
+				else
+				{
+					this.CurLevel -= this.RestFallPerTick * 150f;
+				}
 			}
 			if (this.CurLevel < 0.0001f)
 			{
@@ -174,7 +177,7 @@ namespace RimWorld
 				}
 				if (Rand.MTBEventOccurs(mtb, 60000f, 150f))
 				{
-					this.pawn.jobs.StartJob(new Job(JobDefOf.LayDown, this.pawn.Position), JobCondition.InterruptForced, null, false, true, null);
+					this.pawn.jobs.StartJob(new Job(JobDefOf.LayDown, this.pawn.Position), JobCondition.InterruptForced, null, false, true, null, null);
 					if (PawnUtility.ShouldSendNotificationAbout(this.pawn))
 					{
 						Messages.Message("MessageInvoluntarySleep".Translate(new object[]

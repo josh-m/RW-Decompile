@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using Verse;
 using Verse.AI;
+using Verse.AI.Group;
 
 namespace RimWorld
 {
@@ -27,7 +28,9 @@ namespace RimWorld
 
 		public HostilityResponseMode hostilityResponse = HostilityResponseMode.Flee;
 
-		public Area AreaRestrictionInPawnCurrentMap
+		public bool selfTend;
+
+		public Area EffectiveAreaRestrictionInPawnCurrentMap
 		{
 			get
 			{
@@ -35,11 +38,11 @@ namespace RimWorld
 				{
 					return null;
 				}
-				return this.AreaRestriction;
+				return this.EffectiveAreaRestriction;
 			}
 		}
 
-		public Area AreaRestriction
+		public Area EffectiveAreaRestriction
 		{
 			get
 			{
@@ -47,6 +50,14 @@ namespace RimWorld
 				{
 					return null;
 				}
+				return this.areaAllowedInt;
+			}
+		}
+
+		public Area AreaRestriction
+		{
+			get
+			{
 				return this.areaAllowedInt;
 			}
 			set
@@ -59,7 +70,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return this.pawn.Faction == Faction.OfPlayer && this.pawn.HostFaction == null;
+				return this.pawn.GetLord() == null && this.pawn.Faction == Faction.OfPlayer && this.pawn.HostFaction == null;
 			}
 		}
 
@@ -87,14 +98,15 @@ namespace RimWorld
 
 		public void ExposeData()
 		{
-			Scribe_Values.LookValue<int>(ref this.joinTick, "joinTick", 0, false);
-			Scribe_Values.LookValue<bool>(ref this.animalsReleased, "animalsReleased", false, false);
-			Scribe_Values.LookValue<MedicalCareCategory>(ref this.medCare, "medCare", MedicalCareCategory.NoCare, false);
-			Scribe_References.LookReference<Area>(ref this.areaAllowedInt, "areaAllowed", false);
-			Scribe_References.LookReference<Pawn>(ref this.master, "master", false);
-			Scribe_Values.LookValue<bool>(ref this.followDrafted, "followDrafted", false, false);
-			Scribe_Values.LookValue<bool>(ref this.followFieldwork, "followFieldwork", false, false);
-			Scribe_Values.LookValue<HostilityResponseMode>(ref this.hostilityResponse, "hostilityResponse", HostilityResponseMode.Flee, false);
+			Scribe_Values.Look<int>(ref this.joinTick, "joinTick", 0, false);
+			Scribe_Values.Look<bool>(ref this.animalsReleased, "animalsReleased", false, false);
+			Scribe_Values.Look<MedicalCareCategory>(ref this.medCare, "medCare", MedicalCareCategory.NoCare, false);
+			Scribe_References.Look<Area>(ref this.areaAllowedInt, "areaAllowed", false);
+			Scribe_References.Look<Pawn>(ref this.master, "master", false);
+			Scribe_Values.Look<bool>(ref this.followDrafted, "followDrafted", false, false);
+			Scribe_Values.Look<bool>(ref this.followFieldwork, "followFieldwork", false, false);
+			Scribe_Values.Look<HostilityResponseMode>(ref this.hostilityResponse, "hostilityResponse", HostilityResponseMode.Flee, false);
+			Scribe_Values.Look<bool>(ref this.selfTend, "selfTend", false, false);
 		}
 
 		[DebuggerHidden]
@@ -133,16 +145,50 @@ namespace RimWorld
 
 		public void Notify_FactionChanged()
 		{
-			this.medCare = MedicalCareCategory.HerbalOrWorse;
-			if (this.pawn.IsColonist && !this.pawn.IsPrisoner && !this.pawn.RaceProps.Animal)
-			{
-				this.medCare = MedicalCareCategory.Best;
-			}
+			this.ResetMedicalCare();
 		}
 
 		public void Notify_MadePrisoner()
 		{
-			this.medCare = MedicalCareCategory.HerbalOrWorse;
+			this.ResetMedicalCare();
+		}
+
+		public void ResetMedicalCare()
+		{
+			if (Scribe.mode == LoadSaveMode.LoadingVars)
+			{
+				return;
+			}
+			if (this.pawn.Faction == Faction.OfPlayer)
+			{
+				if (!this.pawn.RaceProps.Animal)
+				{
+					if (!this.pawn.IsPrisoner)
+					{
+						this.medCare = Find.World.settings.defaultCareForColonyHumanlike;
+					}
+					else
+					{
+						this.medCare = Find.World.settings.defaultCareForColonyPrisoner;
+					}
+				}
+				else
+				{
+					this.medCare = Find.World.settings.defaultCareForColonyAnimal;
+				}
+			}
+			else if (this.pawn.Faction == null && this.pawn.RaceProps.Animal)
+			{
+				this.medCare = Find.World.settings.defaultCareForNeutralAnimal;
+			}
+			else if (this.pawn.Faction == null || !this.pawn.Faction.HostileTo(Faction.OfPlayer))
+			{
+				this.medCare = Find.World.settings.defaultCareForNeutralFaction;
+			}
+			else
+			{
+				this.medCare = Find.World.settings.defaultCareForHostileFaction;
+			}
 		}
 
 		public void Notify_AreaRemoved(Area area)

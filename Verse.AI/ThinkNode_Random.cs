@@ -7,7 +7,7 @@ namespace Verse.AI
 	{
 		private static List<ThinkNode> tempList = new List<ThinkNode>();
 
-		public override ThinkResult TryIssueJobPackage(Pawn pawn)
+		public override ThinkResult TryIssueJobPackage(Pawn pawn, JobIssueParams jobParams)
 		{
 			ThinkNode_Random.tempList.Clear();
 			for (int i = 0; i < this.subNodes.Count; i++)
@@ -17,7 +17,7 @@ namespace Verse.AI
 			ThinkNode_Random.tempList.Shuffle<ThinkNode>();
 			for (int j = 0; j < ThinkNode_Random.tempList.Count; j++)
 			{
-				ThinkResult result = ThinkNode_Random.tempList[j].TryIssueJobPackage(pawn);
+				ThinkResult result = ThinkNode_Random.tempList[j].TryIssueJobPackage(pawn, jobParams);
 				if (result.IsValid)
 				{
 					return result;

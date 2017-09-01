@@ -39,6 +39,22 @@ namespace Verse.AI.Group
 			}
 		}
 
+		public virtual float? CustomWakeThreshold
+		{
+			get
+			{
+				return null;
+			}
+		}
+
+		public virtual bool AllowRestingInBed
+		{
+			get
+			{
+				return true;
+			}
+		}
+
 		public virtual bool ShouldFail
 		{
 			get

@@ -5,7 +5,7 @@ namespace RimWorld
 {
 	public class StorytellerCompProperties_RandomMain : StorytellerCompProperties
 	{
-		public float incidentMtb;
+		public float mtbDays;
 
 		public List<IncidentCategoryEntry> categoryWeights = new List<IncidentCategoryEntry>();
 

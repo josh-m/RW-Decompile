@@ -23,18 +23,42 @@ namespace RimWorld
 
 		private static readonly SimpleCurve InsulationColdScoreFactorCurve_NeedWarm = new SimpleCurve
 		{
-			new CurvePoint(-30f, 8f),
-			new CurvePoint(0f, 1f)
+			{
+				new CurvePoint(-30f, 8f),
+				true
+			},
+			{
+				new CurvePoint(0f, 1f),
+				true
+			}
 		};
 
 		private static readonly SimpleCurve HitPointsPercentScoreFactorCurve = new SimpleCurve
 		{
-			new CurvePoint(0f, 0f),
-			new CurvePoint(0.2f, 0.15f),
-			new CurvePoint(0.25f, 0.3f),
-			new CurvePoint(0.5f, 0.4f),
-			new CurvePoint(0.55f, 0.85f),
-			new CurvePoint(1f, 1f)
+			{
+				new CurvePoint(0f, 0f),
+				true
+			},
+			{
+				new CurvePoint(0.2f, 0.15f),
+				true
+			},
+			{
+				new CurvePoint(0.25f, 0.3f),
+				true
+			},
+			{
+				new CurvePoint(0.5f, 0.4f),
+				true
+			},
+			{
+				new CurvePoint(0.55f, 0.85f),
+				true
+			},
+			{
+				new CurvePoint(1f, 1f),
+				true
+			}
 		};
 
 		private void SetNextOptimizeTick(Pawn pawn)
@@ -92,7 +116,7 @@ namespace RimWorld
 				this.SetNextOptimizeTick(pawn);
 				return null;
 			}
-			JobGiver_OptimizeApparel.neededWarmth = PawnApparelGenerator.CalculateNeededWarmth(pawn, pawn.Map, GenLocalDate.Month(pawn));
+			JobGiver_OptimizeApparel.neededWarmth = PawnApparelGenerator.CalculateNeededWarmth(pawn, pawn.Map.Tile, GenLocalDate.Twelfth(pawn));
 			for (int j = 0; j < list.Count; j++)
 			{
 				Apparel apparel = (Apparel)list[j];
@@ -111,7 +135,7 @@ namespace RimWorld
 							{
 								if (ApparelUtility.HasPartsToWear(pawn, apparel.def))
 								{
-									if (pawn.CanReserveAndReach(apparel, PathEndMode.OnCell, pawn.NormalMaxDanger(), 1))
+									if (pawn.CanReserveAndReach(apparel, PathEndMode.OnCell, pawn.NormalMaxDanger(), 1, -1, null, false))
 									{
 										thing = apparel;
 										num = num2;
@@ -138,11 +162,11 @@ namespace RimWorld
 
 		public static float ApparelScoreGain(Pawn pawn, Apparel ap)
 		{
-			if (ap.def == ThingDefOf.Apparel_PersonalShield && pawn.equipment.Primary != null && !pawn.equipment.Primary.def.Verbs[0].MeleeRange)
+			if (ap.def == ThingDefOf.Apparel_ShieldBelt && pawn.equipment.Primary != null && !pawn.equipment.Primary.def.Verbs[0].MeleeRange)
 			{
 				return -1000f;
 			}
-			float num = JobGiver_OptimizeApparel.ApparelScoreRaw(ap);
+			float num = JobGiver_OptimizeApparel.ApparelScoreRaw(pawn, ap);
 			List<Apparel> wornApparel = pawn.apparel.WornApparel;
 			bool flag = false;
 			for (int i = 0; i < wornApparel.Count; i++)
@@ -153,7 +177,7 @@ namespace RimWorld
 					{
 						return -1000f;
 					}
-					num -= JobGiver_OptimizeApparel.ApparelScoreRaw(wornApparel[i]);
+					num -= JobGiver_OptimizeApparel.ApparelScoreRaw(pawn, wornApparel[i]);
 					flag = true;
 				}
 			}
@@ -164,7 +188,7 @@ namespace RimWorld
 			return num;
 		}
 
-		public static float ApparelScoreRaw(Apparel ap)
+		public static float ApparelScoreRaw(Pawn pawn, Apparel ap)
 		{
 			float num = 0.1f;
 			float num2 = ap.GetStatValue(StatDefOf.ArmorRating_Sharp, true) + ap.GetStatValue(StatDefOf.ArmorRating_Blunt, true);
@@ -182,12 +206,27 @@ namespace RimWorld
 				num3 *= JobGiver_OptimizeApparel.InsulationColdScoreFactorCurve_NeedWarm.Evaluate(statValue);
 			}
 			num *= num3;
-			if (ap.WornByCorpse)
+			if (ap.WornByCorpse && (pawn == null || ThoughtUtility.CanGetThought(pawn, ThoughtDefOf.DeadMansApparel)))
 			{
 				num -= 0.5f;
 				if (num > 0f)
 				{
 					num *= 0.1f;
+				}
+			}
+			if (ap.Stuff == ThingDefOf.Human.race.leatherDef)
+			{
+				if (pawn == null || ThoughtUtility.CanGetThought(pawn, ThoughtDefOf.HumanLeatherApparelSad))
+				{
+					num -= 0.5f;
+					if (num > 0f)
+					{
+						num *= 0.1f;
+					}
+				}
+				if (pawn != null && ThoughtUtility.CanGetThought(pawn, ThoughtDefOf.HumanLeatherApparelHappy))
+				{
+					num += 0.12f;
 				}
 			}
 			return num;

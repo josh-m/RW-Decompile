@@ -9,21 +9,17 @@ namespace Verse
 	{
 		public override void OnIntervalPassed(Pawn pawn, Hediff cause)
 		{
-			float num;
-			if (!GenTemperature.TryGetTemperatureAtCellOrCaravanTile(pawn, out num))
-			{
-				return;
-			}
+			float ambientTemperature = pawn.AmbientTemperature;
 			FloatRange floatRange = pawn.ComfortableTemperatureRange();
 			FloatRange floatRange2 = pawn.SafeTemperatureRange();
 			HediffSet hediffSet = pawn.health.hediffSet;
-			Hediff firstHediffOfDef = hediffSet.GetFirstHediffOfDef(this.hediff);
-			if (num < floatRange2.min)
+			Hediff firstHediffOfDef = hediffSet.GetFirstHediffOfDef(this.hediff, false);
+			if (ambientTemperature < floatRange2.min)
 			{
-				float num2 = Mathf.Abs(num - floatRange2.min);
-				float num3 = num2 * 6.45E-05f;
-				num3 = Mathf.Max(num3, 0.00075f);
-				HealthUtility.AdjustSeverity(pawn, this.hediff, num3);
+				float num = Mathf.Abs(ambientTemperature - floatRange2.min);
+				float num2 = num * 6.45E-05f;
+				num2 = Mathf.Max(num2, 0.00075f);
+				HealthUtility.AdjustSeverity(pawn, this.hediff, num2);
 				if (pawn.Dead)
 				{
 					return;
@@ -31,16 +27,16 @@ namespace Verse
 			}
 			if (firstHediffOfDef != null)
 			{
-				if (num > floatRange.min)
+				if (ambientTemperature > floatRange.min)
 				{
-					float num4 = firstHediffOfDef.Severity * 0.027f;
-					num4 = Mathf.Clamp(num4, 0.0015f, 0.015f);
-					firstHediffOfDef.Severity -= num4;
+					float num3 = firstHediffOfDef.Severity * 0.027f;
+					num3 = Mathf.Clamp(num3, 0.0015f, 0.015f);
+					firstHediffOfDef.Severity -= num3;
 				}
-				else if (num < 0f && firstHediffOfDef.Severity > 0.37f)
+				else if (ambientTemperature < 0f && firstHediffOfDef.Severity > 0.37f)
 				{
-					float num5 = 0.025f * firstHediffOfDef.Severity;
-					if (Rand.Value < num5)
+					float num4 = 0.025f * firstHediffOfDef.Severity;
+					if (Rand.Value < num4)
 					{
 						BodyPartRecord bodyPartRecord;
 						if ((from x in pawn.RaceProps.body.AllPartsVulnerableToFrostbite
@@ -49,7 +45,7 @@ namespace Verse
 						{
 							int amount = Mathf.CeilToInt((float)bodyPartRecord.def.hitPoints * 0.5f);
 							BodyPartRecord forceHitPart = bodyPartRecord;
-							DamageInfo dinfo = new DamageInfo(DamageDefOf.Frostbite, amount, -1f, null, forceHitPart, null);
+							DamageInfo dinfo = new DamageInfo(DamageDefOf.Frostbite, amount, -1f, null, forceHitPart, null, DamageInfo.SourceCategory.ThingOrUnknown);
 							pawn.TakeDamage(dinfo);
 						}
 					}

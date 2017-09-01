@@ -30,11 +30,26 @@ namespace Verse
 
 		public const float Vent_TempEqualizeRate = 14f;
 
+		public const float InventoryTemperature = 14f;
+
+		public const float DropPodTemperature = 14f;
+
+		public const float TradeShipTemperature = 14f;
+
 		public static readonly SimpleCurve SeasonalTempVariationCurve = new SimpleCurve
 		{
-			new CurvePoint(0f, 3f),
-			new CurvePoint(0.1f, 4f),
-			new CurvePoint(1f, 28f)
+			{
+				new CurvePoint(0f, 3f),
+				true
+			},
+			{
+				new CurvePoint(0.1f, 4f),
+				true
+			},
+			{
+				new CurvePoint(1f, 28f),
+				true
+			}
 		};
 	}
 }

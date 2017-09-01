@@ -41,8 +41,8 @@ namespace RimWorld
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Values.LookValue<float>(ref this.workLeft, "workLeft", 0f, false);
-			Scribe_Values.LookValue<float>(ref this.totalNeededWork, "totalNeededWork", 0f, false);
+			Scribe_Values.Look<float>(ref this.workLeft, "workLeft", 0f, false);
+			Scribe_Values.Look<float>(ref this.totalNeededWork, "totalNeededWork", 0f, false);
 		}
 
 		[DebuggerHidden]
@@ -50,9 +50,9 @@ namespace RimWorld
 		{
 			this.FailOnThingMissingDesignation(TargetIndex.A, this.Designation);
 			this.FailOnForbidden(TargetIndex.A);
-			yield return Toils_Reserve.Reserve(TargetIndex.A, 1);
+			yield return Toils_Reserve.Reserve(TargetIndex.A, 1, -1, null);
 			yield return Toils_Goto.GotoThing(TargetIndex.A, PathEndMode.Touch);
-			Toil doWork = new Toil().FailOnDestroyedNullOrForbidden(TargetIndex.A);
+			Toil doWork = new Toil().FailOnDestroyedNullOrForbidden(TargetIndex.A).FailOnCannotTouch(TargetIndex.A, PathEndMode.Touch);
 			doWork.initAction = delegate
 			{
 				this.<>f__this.totalNeededWork = (float)this.<>f__this.TotalNeededWork;

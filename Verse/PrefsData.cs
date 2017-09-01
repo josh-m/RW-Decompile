@@ -12,6 +12,8 @@ namespace Verse
 
 		public float uiScale = 1f;
 
+		public bool hatsOnlyOnMap;
+
 		public bool adaptiveTrainingEnabled = true;
 
 		public List<string> preferredNames = new List<string>();

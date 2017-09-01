@@ -20,7 +20,7 @@ namespace RimWorld
 			float width = rect.width - 16f;
 			float height = 30f + Text.CalcHeight(fullInformationText, width) + 100f;
 			Rect viewRect = new Rect(0f, 0f, width, height);
-			Widgets.BeginScrollView(rect, ref infoScrollPosition, viewRect);
+			Widgets.BeginScrollView(rect, ref infoScrollPosition, viewRect, true);
 			Text.Font = GameFont.Medium;
 			Rect rect2 = new Rect(0f, 0f, viewRect.width, 30f);
 			Widgets.Label(rect2, scen.name);
@@ -39,15 +39,16 @@ namespace RimWorld
 				return;
 			}
 			Rect viewRect = new Rect(0f, 0f, rect.width - 16f, ScenarioUI.editViewHeight);
-			Widgets.BeginScrollView(rect, ref infoScrollPosition, viewRect);
+			Widgets.BeginScrollView(rect, ref infoScrollPosition, viewRect, true);
 			Rect rect2 = new Rect(0f, 0f, viewRect.width, 99999f);
-			Listing_ScenEdit listing_ScenEdit = new Listing_ScenEdit(rect2, scen);
+			Listing_ScenEdit listing_ScenEdit = new Listing_ScenEdit(scen);
 			listing_ScenEdit.ColumnWidth = rect2.width;
-			listing_ScenEdit.Label("Title".Translate());
+			listing_ScenEdit.Begin(rect2);
+			listing_ScenEdit.Label("Title".Translate(), -1f);
 			scen.name = listing_ScenEdit.TextEntry(scen.name, 1).TrimmedToLength(55);
-			listing_ScenEdit.Label("Summary".Translate());
+			listing_ScenEdit.Label("Summary".Translate(), -1f);
 			scen.summary = listing_ScenEdit.TextEntry(scen.summary, 2).TrimmedToLength(300);
-			listing_ScenEdit.Label("Description".Translate());
+			listing_ScenEdit.Label("Description".Translate(), -1f);
 			scen.description = listing_ScenEdit.TextEntry(scen.description, 4).TrimmedToLength(1000);
 			listing_ScenEdit.Gap(12f);
 			foreach (ScenPart current in scen.AllParts)

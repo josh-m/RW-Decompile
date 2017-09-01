@@ -11,6 +11,11 @@ namespace RimWorld
 			get;
 		}
 
+		bool IgnoreStoredThingsBeauty
+		{
+			get;
+		}
+
 		IEnumerable<IntVec3> AllSlotCells();
 
 		List<IntVec3> AllSlotCellsList();

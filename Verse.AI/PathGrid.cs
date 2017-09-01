@@ -7,7 +7,7 @@ namespace Verse.AI
 {
 	public sealed class PathGrid
 	{
-		private const int ImpassableCost = 10000;
+		public const int ImpassableCost = 10000;
 
 		private Map map;
 
@@ -37,6 +37,11 @@ namespace Verse.AI
 		public bool WalkableFast(int x, int z)
 		{
 			return this.pathGrid[this.map.cellIndices.CellToIndex(x, z)] < 10000;
+		}
+
+		public bool WalkableFast(int index)
+		{
+			return this.pathGrid[index] < 10000;
 		}
 
 		public int PerceivedPathCostAt(IntVec3 loc)
@@ -74,6 +79,7 @@ namespace Verse.AI
 			this.pathGrid[this.map.cellIndices.CellToIndex(c)] = this.CalculatedCostAt(c, true, IntVec3.Invalid);
 			if (this.WalkableFast(c) != flag)
 			{
+				this.map.reachability.ClearCache();
 				this.map.regionDirtyer.Notify_WalkabilityChanged(c);
 			}
 		}
@@ -111,6 +117,14 @@ namespace Verse.AI
 				if (!PathGrid.IsPathCostIgnoreRepeater(thing.def) || !prevCell.IsValid || !this.ContainsPathCostIgnoreRepeater(prevCell))
 				{
 					num += thing.def.pathCost;
+				}
+				if (prevCell.IsValid && thing is Building_Door)
+				{
+					Building edifice = prevCell.GetEdifice(this.map);
+					if (edifice != null && edifice is Building_Door)
+					{
+						num += 45;
+					}
 				}
 			}
 			if (perceivedStatic)

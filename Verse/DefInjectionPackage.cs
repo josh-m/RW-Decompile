@@ -71,6 +71,12 @@ namespace Verse
 
 		private void TryAddInjection(FileInfo file, string key, string translation)
 		{
+			string[] array = key.Split(new char[]
+			{
+				'.'
+			});
+			array[0] = BackCompatibility.BackCompatibleDefName(this.defType, array[0]);
+			key = string.Join(".", array);
 			if (this.HasError(file, key))
 			{
 				return;
@@ -222,7 +228,14 @@ namespace Verse
 					FieldInfo fieldNamed = this.GetFieldNamed(obj.GetType(), text);
 					if (fieldNamed == null)
 					{
-						throw new InvalidOperationException("Field " + text + " does not exist.");
+						throw new InvalidOperationException(string.Concat(new object[]
+						{
+							"Field ",
+							text,
+							" does not exist in type ",
+							obj.GetType(),
+							"."
+						}));
 					}
 					if (fieldNamed.HasAttribute<NoTranslateAttribute>())
 					{

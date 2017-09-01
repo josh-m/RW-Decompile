@@ -18,15 +18,7 @@ namespace RimWorld.Planet
 
 		public static Caravan GetCaravan(this Pawn pawn)
 		{
-			List<Caravan> caravans = Find.WorldObjects.Caravans;
-			for (int i = 0; i < caravans.Count; i++)
-			{
-				if (caravans[i].ContainsPawn(pawn))
-				{
-					return caravans[i];
-				}
-			}
-			return null;
+			return pawn.ParentHolder as Caravan;
 		}
 
 		public static bool IsCaravanMember(this Pawn pawn)

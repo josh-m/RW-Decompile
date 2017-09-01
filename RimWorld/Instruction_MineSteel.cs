@@ -28,7 +28,7 @@ namespace RimWorld
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Collections.LookList<IntVec3>(ref this.mineCells, "mineCells", LookMode.Undefined, new object[0]);
+			Scribe_Collections.Look<IntVec3>(ref this.mineCells, "mineCells", LookMode.Undefined, new object[0]);
 		}
 
 		public override void OnActivated()
@@ -38,7 +38,7 @@ namespace RimWorld
 			new GenStep_ScatterLumpsMineable
 			{
 				forcedDefToScatter = ThingDefOf.MineableSteel
-			}.DebugForceScatterAt(cellRect.CenterCell);
+			}.ForceScatterAt(cellRect.CenterCell, base.Map);
 			this.mineCells = new List<IntVec3>();
 			foreach (IntVec3 current in cellRect)
 			{

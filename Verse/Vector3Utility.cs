@@ -30,5 +30,22 @@ namespace Verse
 		{
 			return Quaternion.AngleAxis(angle, Vector3.up) * v3;
 		}
+
+		public static Vector3 RotatedBy(this Vector3 orig, Rot4 rot)
+		{
+			switch (rot.AsInt)
+			{
+			case 0:
+				return orig;
+			case 1:
+				return new Vector3(orig.z, orig.y, -orig.x);
+			case 2:
+				return new Vector3(-orig.x, orig.y, -orig.z);
+			case 3:
+				return new Vector3(-orig.z, orig.y, orig.x);
+			default:
+				return orig;
+			}
+		}
 	}
 }

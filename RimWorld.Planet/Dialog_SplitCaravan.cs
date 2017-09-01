@@ -42,7 +42,7 @@ namespace RimWorld.Planet
 
 		private bool sourceDaysWorthOfFoodDirty = true;
 
-		private float cachedSourceDaysWorthOfFood;
+		private Pair<float, float> cachedSourceDaysWorthOfFood;
 
 		private bool destMassUsageDirty = true;
 
@@ -54,7 +54,7 @@ namespace RimWorld.Planet
 
 		private bool destDaysWorthOfFoodDirty = true;
 
-		private float cachedDestDaysWorthOfFood;
+		private Pair<float, float> cachedDestDaysWorthOfFood;
 
 		private readonly Vector2 BottomButtonSize = new Vector2(160f, 40f);
 
@@ -76,6 +76,14 @@ namespace RimWorld.Planet
 			}
 		}
 
+		private bool EnvironmentAllowsEatingVirtualPlantsNow
+		{
+			get
+			{
+				return VirtualPlantsUtility.EnvironmentAllowsEatingVirtualPlantsNowAt(this.caravan.Tile);
+			}
+		}
+
 		private float SourceMassUsage
 		{
 			get
@@ -83,7 +91,7 @@ namespace RimWorld.Planet
 				if (this.sourceMassUsageDirty)
 				{
 					this.sourceMassUsageDirty = false;
-					this.cachedSourceMassUsage = CollectionsMassCalculator.MassUsageLeftAfterTransfer(this.transferables, true, false, false);
+					this.cachedSourceMassUsage = CollectionsMassCalculator.MassUsageLeftAfterTransfer(this.transferables, IgnorePawnsInventoryMode.Ignore, false, false);
 				}
 				return this.cachedSourceMassUsage;
 			}
@@ -102,14 +110,15 @@ namespace RimWorld.Planet
 			}
 		}
 
-		private float SourceDaysWorthOfFood
+		private Pair<float, float> SourceDaysWorthOfFood
 		{
 			get
 			{
 				if (this.sourceDaysWorthOfFoodDirty)
 				{
 					this.sourceDaysWorthOfFoodDirty = false;
-					this.cachedSourceDaysWorthOfFood = DaysWorthOfFoodCalculator.ApproxDaysWorthOfFoodLeftAfterTransfer(this.transferables);
+					float first = DaysWorthOfFoodCalculator.ApproxDaysWorthOfFoodLeftAfterTransfer(this.transferables, this.EnvironmentAllowsEatingVirtualPlantsNow, IgnorePawnsInventoryMode.Ignore);
+					this.cachedSourceDaysWorthOfFood = new Pair<float, float>(first, DaysUntilRotCalculator.ApproxDaysUntilRotLeftAfterTransfer(this.transferables, this.caravan.Tile, IgnorePawnsInventoryMode.Ignore));
 				}
 				return this.cachedSourceDaysWorthOfFood;
 			}
@@ -122,7 +131,7 @@ namespace RimWorld.Planet
 				if (this.destMassUsageDirty)
 				{
 					this.destMassUsageDirty = false;
-					this.cachedDestMassUsage = CollectionsMassCalculator.MassUsageTransferables(this.transferables, true, false, false);
+					this.cachedDestMassUsage = CollectionsMassCalculator.MassUsageTransferables(this.transferables, IgnorePawnsInventoryMode.Ignore, false, false);
 				}
 				return this.cachedDestMassUsage;
 			}
@@ -141,14 +150,15 @@ namespace RimWorld.Planet
 			}
 		}
 
-		private float DestDaysWorthOfFood
+		private Pair<float, float> DestDaysWorthOfFood
 		{
 			get
 			{
 				if (this.destDaysWorthOfFoodDirty)
 				{
 					this.destDaysWorthOfFoodDirty = false;
-					this.cachedDestDaysWorthOfFood = DaysWorthOfFoodCalculator.ApproxDaysWorthOfFood(this.transferables);
+					float first = DaysWorthOfFoodCalculator.ApproxDaysWorthOfFood(this.transferables, this.EnvironmentAllowsEatingVirtualPlantsNow, IgnorePawnsInventoryMode.Ignore);
+					this.cachedDestDaysWorthOfFood = new Pair<float, float>(first, DaysUntilRotCalculator.ApproxDaysUntilRot(this.transferables, this.caravan.Tile, IgnorePawnsInventoryMode.Ignore));
 				}
 				return this.cachedDestDaysWorthOfFood;
 			}
@@ -193,7 +203,7 @@ namespace RimWorld.Planet
 			Rect rect2 = inRect.AtZero();
 			Rect rect3 = rect2;
 			rect3.y += 32f;
-			rect3.xMin += rect2.width - this.pawnsTransfer.TotalNumbersColumnsWidths;
+			rect3.xMin += rect2.width - 515f;
 			this.DrawMassAndFoodInfo(rect3);
 			this.DoBottomButtons(rect2);
 			Rect inRect2 = rect2;
@@ -237,9 +247,9 @@ namespace RimWorld.Planet
 		private void DrawMassAndFoodInfo(Rect rect)
 		{
 			TransferableUIUtility.DrawMassInfo(rect, this.SourceMassUsage, this.SourceMassCapacity, "SplitCaravanMassUsageTooltip".Translate(), this.lastSourceMassFlashTime, false);
-			CaravanUIUtility.DrawDaysWorthOfFoodInfo(new Rect(rect.x, rect.y + 22f, rect.width, rect.height), this.SourceDaysWorthOfFood, false);
+			CaravanUIUtility.DrawDaysWorthOfFoodInfo(new Rect(rect.x, rect.y + 19f, rect.width, rect.height), this.SourceDaysWorthOfFood.First, this.SourceDaysWorthOfFood.Second, this.EnvironmentAllowsEatingVirtualPlantsNow, false, 3.40282347E+38f);
 			TransferableUIUtility.DrawMassInfo(rect, this.DestMassUsage, this.DestMassCapacity, "SplitCaravanMassUsageTooltip".Translate(), this.lastDestMassFlashTime, true);
-			CaravanUIUtility.DrawDaysWorthOfFoodInfo(new Rect(rect.x, rect.y + 22f, rect.width, rect.height), this.DestDaysWorthOfFood, true);
+			CaravanUIUtility.DrawDaysWorthOfFoodInfo(new Rect(rect.x, rect.y + 19f, rect.width, rect.height), this.DestDaysWorthOfFood.First, this.DestDaysWorthOfFood.Second, this.EnvironmentAllowsEatingVirtualPlantsNow, true, 3.40282347E+38f);
 		}
 
 		private void DoBottomButtons(Rect rect)
@@ -247,13 +257,13 @@ namespace RimWorld.Planet
 			Rect rect2 = new Rect(rect.width / 2f - this.BottomButtonSize.x / 2f, rect.height - 55f, this.BottomButtonSize.x, this.BottomButtonSize.y);
 			if (Widgets.ButtonText(rect2, "AcceptButton".Translate(), true, false, true) && this.TrySplitCaravan())
 			{
-				SoundDefOf.TickHigh.PlayOneShotOnCamera();
+				SoundDefOf.TickHigh.PlayOneShotOnCamera(null);
 				this.Close(false);
 			}
 			Rect rect3 = new Rect(rect2.x - 10f - this.BottomButtonSize.x, rect2.y, this.BottomButtonSize.x, this.BottomButtonSize.y);
 			if (Widgets.ButtonText(rect3, "ResetButton".Translate(), true, false, true))
 			{
-				SoundDefOf.TickLow.PlayOneShotOnCamera();
+				SoundDefOf.TickLow.PlayOneShotOnCamera(null);
 				this.CalculateAndRecacheTransferables();
 			}
 			Rect rect4 = new Rect(rect2.xMax + 10f, rect2.y, this.BottomButtonSize.x, this.BottomButtonSize.y);
@@ -268,7 +278,7 @@ namespace RimWorld.Planet
 			this.transferables = new List<TransferableOneWay>();
 			this.AddPawnsToTransferables();
 			this.AddItemsToTransferables();
-			CaravanUIUtility.CreateCaravanTransferableWidgets(this.transferables, out this.pawnsTransfer, out this.itemsTransfer, "CaravanSplitSourceLabel".Translate(), "CaravanSplitDestLabel".Translate(), "SplitCaravanThingCountTip".Translate(), true, () => this.DestMassCapacity - this.DestMassUsage, false);
+			CaravanUIUtility.CreateCaravanTransferableWidgets(this.transferables, out this.pawnsTransfer, out this.itemsTransfer, "CaravanSplitSourceLabel".Translate(), "CaravanSplitDestLabel".Translate(), "SplitCaravanThingCountTip".Translate(), IgnorePawnsInventoryMode.Ignore, () => this.DestMassCapacity - this.DestMassUsage, false, this.caravan.Tile);
 			this.CountToTransferChanged();
 		}
 
@@ -296,7 +306,7 @@ namespace RimWorld.Planet
 			this.transferables.RemoveAll((TransferableOneWay x) => x.AnyThing is Pawn);
 			for (int k = 0; k < this.transferables.Count; k++)
 			{
-				TransferableUtility.TransferNoSplit(this.transferables[k].things, this.transferables[k].countToTransfer, delegate(Thing thing, int numToTake)
+				TransferableUtility.TransferNoSplit(this.transferables[k].things, this.transferables[k].CountToTransfer, delegate(Thing thing, int numToTake)
 				{
 					Pawn ownerOf = CaravanInventoryUtility.GetOwnerOf(this.caravan, thing);
 					if (ownerOf == null)

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Verse;
 
 namespace RimWorld
@@ -19,8 +20,8 @@ namespace RimWorld
 
 		public void ExposeData()
 		{
-			Scribe_Deep.LookDeep<DefMap<TrainableDef, bool>>(ref this.wantedTrainables, "wantedTrainables", new object[0]);
-			Scribe_Deep.LookDeep<DefMap<TrainableDef, int>>(ref this.steps, "steps", new object[0]);
+			Scribe_Deep.Look<DefMap<TrainableDef, bool>>(ref this.wantedTrainables, "wantedTrainables", new object[0]);
+			Scribe_Deep.Look<DefMap<TrainableDef, int>>(ref this.steps, "steps", new object[0]);
 		}
 
 		public bool GetWanted(TrainableDef td)
@@ -93,7 +94,7 @@ namespace RimWorld
 					this.pawn.LabelCapNoCount
 				}));
 			}
-			if (this.pawn.RaceProps.trainableIntelligence < td.requiredTrainableIntelligence)
+			if (this.pawn.RaceProps.TrainableIntelligence.intelligenceOrder < td.requiredTrainableIntelligence.intelligenceOrder)
 			{
 				visible = true;
 				return new AcceptanceReport("CannotTrainNotSmartEnough".Translate(new object[]
@@ -127,6 +128,31 @@ namespace RimWorld
 			if (this.IsCompleted(td) && td == TrainableDefOf.Obedience)
 			{
 				this.pawn.playerSettings.master = trainer;
+			}
+		}
+
+		public void SetWantedRecursive(TrainableDef td, bool checkOn)
+		{
+			this.SetWanted(td, checkOn);
+			if (checkOn)
+			{
+				if (td.prerequisites != null)
+				{
+					for (int i = 0; i < td.prerequisites.Count; i++)
+					{
+						this.SetWantedRecursive(td.prerequisites[i], true);
+					}
+				}
+			}
+			else
+			{
+				IEnumerable<TrainableDef> enumerable = from t in DefDatabase<TrainableDef>.AllDefsListForReading
+				where t.prerequisites != null && t.prerequisites.Contains(td)
+				select t;
+				foreach (TrainableDef current in enumerable)
+				{
+					this.SetWantedRecursive(current, false);
+				}
 			}
 		}
 	}

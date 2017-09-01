@@ -7,19 +7,15 @@ namespace RimWorld
 	[StaticConstructorOnStartup]
 	public class Building_PowerSwitch : Building
 	{
-		private bool switchOnOld = true;
+		private bool wantsOnOld = true;
 
 		private CompFlickable flickableComp;
-
-		public static readonly Graphic GraphicOn = GraphicDatabase.Get<Graphic_Single>("Things/Building/Power/PowerSwitch_On");
-
-		public static readonly Graphic GraphicOff = GraphicDatabase.Get<Graphic_Single>("Things/Building/Power/PowerSwitch_Off");
 
 		public override bool TransmitsPowerNow
 		{
 			get
 			{
-				return this.flickableComp.SwitchIsOn;
+				return FlickUtility.WantsToBeOn(this);
 			}
 		}
 
@@ -27,17 +23,13 @@ namespace RimWorld
 		{
 			get
 			{
-				if (this.flickableComp.SwitchIsOn)
-				{
-					return Building_PowerSwitch.GraphicOn;
-				}
-				return Building_PowerSwitch.GraphicOff;
+				return this.flickableComp.CurrentGraphic;
 			}
 		}
 
-		public override void SpawnSetup(Map map)
+		public override void SpawnSetup(Map map, bool respawningAfterLoad)
 		{
-			base.SpawnSetup(map);
+			base.SpawnSetup(map, respawningAfterLoad);
 			this.flickableComp = base.GetComp<CompFlickable>();
 		}
 
@@ -50,14 +42,14 @@ namespace RimWorld
 				{
 					this.flickableComp = base.GetComp<CompFlickable>();
 				}
-				this.switchOnOld = !this.flickableComp.SwitchIsOn;
+				this.wantsOnOld = !FlickUtility.WantsToBeOn(this);
 				this.UpdatePowerGrid();
 			}
 		}
 
 		protected override void ReceiveCompSignal(string signal)
 		{
-			if (signal == "FlickedOff" || signal == "FlickedOn")
+			if (signal == "FlickedOff" || signal == "FlickedOn" || signal == "ScheduledOn" || signal == "ScheduledOff")
 			{
 				this.UpdatePowerGrid();
 			}
@@ -67,9 +59,12 @@ namespace RimWorld
 		{
 			StringBuilder stringBuilder = new StringBuilder();
 			stringBuilder.Append(base.GetInspectString());
-			stringBuilder.AppendLine();
+			if (stringBuilder.Length != 0)
+			{
+				stringBuilder.AppendLine();
+			}
 			stringBuilder.Append("PowerSwitch_Power".Translate() + ": ");
-			if (this.flickableComp.SwitchIsOn)
+			if (FlickUtility.WantsToBeOn(this))
 			{
 				stringBuilder.Append("On".Translate().ToLower());
 			}
@@ -82,13 +77,13 @@ namespace RimWorld
 
 		private void UpdatePowerGrid()
 		{
-			if (this.flickableComp.SwitchIsOn != this.switchOnOld)
+			if (FlickUtility.WantsToBeOn(this) != this.wantsOnOld)
 			{
 				if (base.Spawned)
 				{
 					base.Map.powerNetManager.Notfiy_TransmitterTransmitsPowerNowChanged(base.PowerComp);
 				}
-				this.switchOnOld = this.flickableComp.SwitchIsOn;
+				this.wantsOnOld = FlickUtility.WantsToBeOn(this);
 			}
 		}
 	}

@@ -59,7 +59,7 @@ namespace RimWorld
 					return delegate
 					{
 						Job job = new Job(JobDefOf.AttackStatic, target);
-						pawn.jobs.TryTakeOrderedJob(job);
+						pawn.jobs.TryTakeOrderedJob(job, JobTag.Misc);
 					};
 				}
 				failStr = "IsIncapableOfViolenceLower".Translate(new object[]
@@ -107,7 +107,7 @@ namespace RimWorld
 						{
 							job.killIncappedTarget = pawn2.Downed;
 						}
-						pawn.jobs.TryTakeOrderedJob(job);
+						pawn.jobs.TryTakeOrderedJob(job, JobTag.Misc);
 					};
 				}
 				failStr = "Incapable".Translate();
@@ -122,6 +122,30 @@ namespace RimWorld
 				return FloatMenuUtility.GetRangedAttackAction(pawn, target, out failStr);
 			}
 			return FloatMenuUtility.GetMeleeAttackAction(pawn, target, out failStr);
+		}
+
+		public static FloatMenuOption DecoratePrioritizedTask(FloatMenuOption option, Pawn pawn, LocalTargetInfo target, string reservedText = "ReservedBy")
+		{
+			if (option.action == null)
+			{
+				return option;
+			}
+			if (pawn != null && !pawn.CanReserve(target, 1, -1, null, false) && pawn.CanReserve(target, 1, -1, null, true))
+			{
+				Pawn pawn2 = pawn.Map.reservationManager.FirstReserverWhoseReservationsRespects(target, pawn);
+				if (pawn2 == null)
+				{
+					pawn2 = pawn.Map.physicalInteractionReservationManager.FirstReserverOf(target);
+				}
+				if (pawn2 != null)
+				{
+					option.Label = option.Label + " (" + reservedText.Translate(new object[]
+					{
+						pawn2.LabelShort
+					}) + ")";
+				}
+			}
+			return option;
 		}
 	}
 }

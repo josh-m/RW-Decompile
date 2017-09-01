@@ -28,9 +28,12 @@ namespace RimWorld
 			}
 		}
 
-		public override void PostSpawnSetup()
+		public override void PostSpawnSetup(bool respawningAfterLoad)
 		{
-			this.CalculateNextHiveSpawnTick();
+			if (!respawningAfterLoad)
+			{
+				this.CalculateNextHiveSpawnTick();
+			}
 		}
 
 		public override void CompTickRare()
@@ -56,14 +59,14 @@ namespace RimWorld
 			string text = null;
 			if (this.CanSpawnChildHive)
 			{
-				text = text + "HiveReproducesIn".Translate() + ": " + (this.nextHiveSpawnTick - Find.TickManager.TicksGame).ToStringTicksToPeriod(true);
+				text = text + "HiveReproducesIn".Translate() + ": " + (this.nextHiveSpawnTick - Find.TickManager.TicksGame).ToStringTicksToPeriod(true, false, true);
 			}
 			return text;
 		}
 
 		public void CalculateNextHiveSpawnTick()
 		{
-			Room room = this.parent.GetRoom();
+			Room room = this.parent.GetRoom(RegionType.Set_Passable);
 			int num = 0;
 			int num2 = GenRadial.NumCellsInRadius(9f);
 			for (int i = 0; i < num2; i++)
@@ -71,7 +74,7 @@ namespace RimWorld
 				IntVec3 intVec = this.parent.Position + GenRadial.RadialPattern[i];
 				if (intVec.InBounds(this.parent.Map))
 				{
-					if (intVec.GetRoom(this.parent.Map) == room)
+					if (intVec.GetRoom(this.parent.Map, RegionType.Set_Passable) == room)
 					{
 						if (intVec.GetThingList(this.parent.Map).Any((Thing t) => t is Hive))
 						{
@@ -125,7 +128,7 @@ namespace RimWorld
 
 		private bool CanSpawnHiveAt(IntVec3 c, float minDist, bool ignoreRoofedRequirement)
 		{
-			if ((!ignoreRoofedRequirement && !c.Roofed(this.parent.Map)) || !c.Standable(this.parent.Map) || (minDist != 0f && c.DistanceToSquared(this.parent.Position) < minDist * minDist))
+			if ((!ignoreRoofedRequirement && !c.Roofed(this.parent.Map)) || !c.Standable(this.parent.Map) || (minDist != 0f && (float)c.DistanceToSquared(this.parent.Position) < minDist * minDist))
 			{
 				return false;
 			}
@@ -176,7 +179,7 @@ namespace RimWorld
 
 		public override void PostExposeData()
 		{
-			Scribe_Values.LookValue<int>(ref this.nextHiveSpawnTick, "nextHiveSpawnTick", 0, false);
+			Scribe_Values.Look<int>(ref this.nextHiveSpawnTick, "nextHiveSpawnTick", 0, false);
 		}
 	}
 }

@@ -47,5 +47,7 @@ namespace RimWorld
 		public static BodyPartDef Torso;
 
 		public static BodyPartDef InsectHead;
+
+		public static BodyPartDef Stomach;
 	}
 }

@@ -26,7 +26,7 @@ namespace Verse
 		public override void Print(SectionLayer layer, Thing thing)
 		{
 			Vector3 a = thing.TrueCenter();
-			Rand.PushSeed();
+			Rand.PushState();
 			Rand.Seed = thing.Position.GetHashCode();
 			Filth filth = thing as Filth;
 			int num;
@@ -47,7 +47,7 @@ namespace Verse
 				bool flipUv = Rand.Value < 0.5f;
 				Printer_Plane.PrintPlane(layer, center, size, matSingle, rot, flipUv, null, null, 0.01f);
 			}
-			Rand.PopSeed();
+			Rand.PopState();
 		}
 
 		public override string ToString()

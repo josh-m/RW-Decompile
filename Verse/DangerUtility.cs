@@ -39,16 +39,21 @@ namespace Verse
 			{
 				return Danger.Some;
 			}
-			if (p.health.hediffSet.HasTemperatureInjury(TemperatureInjuryStage.Minor) && GenTemperature.FactionOwnsRoomInTemperatureRange(p.Faction, p.SafeTemperatureRange(), p.MapHeld))
+			if (p.health.hediffSet.HasTemperatureInjury(TemperatureInjuryStage.Minor) && GenTemperature.FactionOwnsPassableRoomInTemperatureRange(p.Faction, p.SafeTemperatureRange(), p.MapHeld))
 			{
 				return Danger.None;
 			}
 			return Danger.Some;
 		}
 
-		public static Danger GetDangerFor(this IntVec3 c, Pawn p)
+		public static Danger GetDangerFor(this IntVec3 c, Pawn p, Map map)
 		{
-			Region region = c.GetRegion(p.Map);
+			Map mapHeld = p.MapHeld;
+			if (mapHeld == null || mapHeld != map)
+			{
+				return Danger.None;
+			}
+			Region region = c.GetRegion(mapHeld, RegionType.Set_All);
 			if (region == null)
 			{
 				return Danger.None;

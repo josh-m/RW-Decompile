@@ -89,10 +89,15 @@ namespace RimWorld
 			thingDef.defName = def.defName + ThingDefGenerator_Buildings.BlueprintDefNameSuffix;
 			thingDef.label = def.label + "BlueprintLabelExtra".Translate();
 			thingDef.size = def.size;
+			thingDef.drawPlaceWorkersWhileSelected = def.drawPlaceWorkersWhileSelected;
+			if (def.placeWorkers != null)
+			{
+				thingDef.placeWorkers = new List<Type>(def.placeWorkers);
+			}
 			if (isInstallBlueprint)
 			{
-				ThingDef expr_4A = thingDef;
-				expr_4A.defName += ThingDefGenerator_Buildings.InstallBlueprintDefNameSuffix;
+				ThingDef expr_72 = thingDef;
+				expr_72.defName += ThingDefGenerator_Buildings.InstallBlueprintDefNameSuffix;
 			}
 			if (isInstallBlueprint && normalBlueprint != null)
 			{
@@ -165,12 +170,22 @@ namespace RimWorld
 			thingDef.size = def.size;
 			thingDef.SetStatBaseValue(StatDefOf.MaxHitPoints, (float)def.BaseMaxHitPoints * 0.25f);
 			thingDef.SetStatBaseValue(StatDefOf.Beauty, -8f);
-			thingDef.fillPercent = def.fillPercent;
+			thingDef.fillPercent = 0.2f;
+			thingDef.pathCost = 10;
 			thingDef.description = def.description;
 			thingDef.passability = def.passability;
+			if (thingDef.passability > Traversability.PassThroughOnly)
+			{
+				thingDef.passability = Traversability.PassThroughOnly;
+			}
 			thingDef.selectable = def.selectable;
 			thingDef.constructEffect = def.constructEffect;
 			thingDef.building.isEdifice = def.building.isEdifice;
+			thingDef.drawPlaceWorkersWhileSelected = def.drawPlaceWorkersWhileSelected;
+			if (def.placeWorkers != null)
+			{
+				thingDef.placeWorkers = new List<Type>(def.placeWorkers);
+			}
 			if (def.designationCategory != null)
 			{
 				thingDef.stuffCategories = def.stuffCategories;

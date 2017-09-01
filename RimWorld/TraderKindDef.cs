@@ -9,6 +9,8 @@ namespace RimWorld
 	{
 		public List<StockGenerator> stockGenerators = new List<StockGenerator>();
 
+		public float commonality = 1f;
+
 		public bool orbital;
 
 		public override void ResolveReferences()
