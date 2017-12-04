@@ -8,7 +8,7 @@ namespace RimWorld
 	{
 		public PawnKindDef kind;
 
-		public int selectionWeight;
+		public float selectionWeight;
 
 		public float Cost
 		{
@@ -35,7 +35,7 @@ namespace RimWorld
 		public void LoadDataFromXmlCustom(XmlNode xmlRoot)
 		{
 			DirectXmlCrossRefLoader.RegisterObjectWantsCrossRef(this, "kind", xmlRoot.Name);
-			this.selectionWeight = (int)ParseHelper.FromString(xmlRoot.FirstChild.Value, typeof(int));
+			this.selectionWeight = (float)ParseHelper.FromString(xmlRoot.FirstChild.Value, typeof(float));
 		}
 	}
 }

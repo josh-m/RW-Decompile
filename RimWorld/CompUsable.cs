@@ -9,7 +9,7 @@ namespace RimWorld
 {
 	public class CompUsable : ThingComp
 	{
-		protected CompProperties_Usable Props
+		public CompProperties_Usable Props
 		{
 			get
 			{
@@ -36,16 +36,16 @@ namespace RimWorld
 			{
 				FloatMenuOption useopt = new FloatMenuOption(this.FloatMenuOptionLabel, delegate
 				{
-					if (this.myPawn.CanReserveAndReach(this.<>f__this.parent, PathEndMode.Touch, Danger.Deadly, 1, -1, null, false))
+					if (myPawn.CanReserveAndReach(this.$this.parent, PathEndMode.Touch, Danger.Deadly, 1, -1, null, false))
 					{
-						foreach (CompUseEffect current in this.<>f__this.parent.GetComps<CompUseEffect>())
+						foreach (CompUseEffect current in this.$this.parent.GetComps<CompUseEffect>())
 						{
-							if (current.SelectedUseOption(this.myPawn))
+							if (current.SelectedUseOption(myPawn))
 							{
 								return;
 							}
 						}
-						this.<>f__this.TryStartUseJob(this.myPawn);
+						this.$this.TryStartUseJob(myPawn);
 					}
 				}, MenuOptionPriority.Default, null, null, 0f, null, null);
 				yield return useopt;

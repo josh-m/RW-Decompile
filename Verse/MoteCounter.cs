@@ -4,9 +4,9 @@ namespace Verse
 {
 	public class MoteCounter
 	{
-		private const int SaturatedCount = 250;
-
 		private int moteCount;
+
+		private const int SaturatedCount = 250;
 
 		public int MoteCount
 		{

@@ -38,7 +38,9 @@ namespace Verse
 
 		private static IntVec3 mapSingleEdgeCellsSize;
 
-		private static List<KeyValuePair<IntVec3, float>> tmpDistances = new List<KeyValuePair<IntVec3, float>>();
+		private static Dictionary<IntVec3, float> tmpDistances = new Dictionary<IntVec3, float>();
+
+		private static Dictionary<IntVec3, IntVec3> tmpParents = new Dictionary<IntVec3, IntVec3>();
 
 		private static List<IntVec3> tmpCells = new List<IntVec3>();
 
@@ -290,7 +292,7 @@ namespace Verse
 				}
 				if (DebugViewSettings.drawDestSearch)
 				{
-					map.debugDrawer.FlashCell(intVec, 0f, "inv");
+					map.debugDrawer.FlashCell(intVec, 0f, "inv", 50);
 				}
 				num5++;
 				if (num5 > 20)
@@ -300,7 +302,7 @@ namespace Verse
 			}
 			if (DebugViewSettings.drawDestSearch)
 			{
-				map.debugDrawer.FlashCell(intVec, 0.5f, "found");
+				map.debugDrawer.FlashCell(intVec, 0.5f, "found", 50);
 			}
 			result = intVec;
 			return true;
@@ -326,14 +328,14 @@ namespace Verse
 					{
 						if (DebugViewSettings.drawDestSearch)
 						{
-							map.debugDrawer.FlashCell(intVec, 0.6f, "found2");
+							map.debugDrawer.FlashCell(intVec, 0.6f, "found2", 50);
 						}
 						result = intVec;
 						return true;
 					}
 					if (DebugViewSettings.drawDestSearch)
 					{
-						map.debugDrawer.FlashCell(intVec, 0.25f, "inv2");
+						map.debugDrawer.FlashCell(intVec, 0.25f, "inv2", 50);
 					}
 				}
 			}
@@ -348,7 +350,7 @@ namespace Verse
 
 		public static bool TryFindRandomEdgeCellWith(Predicate<IntVec3> validator, Map map, float roadChance, out IntVec3 result)
 		{
-			if (Rand.Value < roadChance)
+			if (Rand.Chance(roadChance))
 			{
 				bool flag = (from c in map.roadInfo.roadEdgeTiles
 				where validator(c)
@@ -461,7 +463,18 @@ namespace Verse
 			return false;
 		}
 
-		public static bool TryFindBestPawnStandCell(Pawn forPawn, out IntVec3 cell)
+		public static bool TryFindRandomEdgeCellNearWith(IntVec3 near, float radius, Map map, Predicate<IntVec3> validator, out IntVec3 spot)
+		{
+			CellRect cellRect = CellRect.CenteredOn(near, Mathf.CeilToInt(radius));
+			Predicate<IntVec3> predicate = (IntVec3 x) => x.InHorDistOf(near, radius) && x.OnEdge(map) && validator(x);
+			if (CellRect.WholeMap(map).EdgeCellsCount < cellRect.Area)
+			{
+				return CellFinder.TryFindRandomEdgeCellWith(predicate, map, CellFinder.EdgeRoadChance_Ignore, out spot);
+			}
+			return CellFinder.TryFindRandomCellInsideWith(cellRect, predicate, out spot);
+		}
+
+		public static bool TryFindBestPawnStandCell(Pawn forPawn, out IntVec3 cell, bool cellByCell = false)
 		{
 			cell = IntVec3.Invalid;
 			int num = -1;
@@ -469,36 +482,44 @@ namespace Verse
 			while (true)
 			{
 				CellFinder.tmpDistances.Clear();
-				Dijkstra<IntVec3>.Run(forPawn.Position, (IntVec3 x) => CellFinder.GetAdjacentCells(x, radius, forPawn), delegate(IntVec3 from, IntVec3 to)
+				CellFinder.tmpParents.Clear();
+				Dijkstra<IntVec3>.Run(forPawn.Position, (IntVec3 x) => CellFinder.GetAdjacentCardinalCellsForBestStandCell(x, radius, forPawn), delegate(IntVec3 from, IntVec3 to)
 				{
-					float num3 = 1f;
+					float num4 = 1f;
 					if (from.x != to.x && from.z != to.z)
 					{
-						num3 = 1.41421354f;
+						num4 = 1.41421354f;
 					}
 					if (!to.Standable(forPawn.Map))
 					{
-						num3 += 3f;
+						num4 += 3f;
 					}
 					if (PawnUtility.AnyPawnBlockingPathAt(to, forPawn, false, false))
 					{
 						bool flag = to.GetThingList(forPawn.Map).Find((Thing x) => x is Pawn && x.HostileTo(forPawn)) != null;
 						if (flag)
 						{
-							num3 += 40f;
+							num4 += 40f;
 						}
 						else
 						{
-							num3 += 15f;
+							num4 += 15f;
 						}
 					}
-					Building_Door building_Door2 = to.GetEdifice(forPawn.Map) as Building_Door;
-					if (building_Door2 != null && !building_Door2.FreePassage)
+					Building_Door building_Door = to.GetEdifice(forPawn.Map) as Building_Door;
+					if (building_Door != null && !building_Door.FreePassage)
 					{
-						num3 += 6f;
+						if (building_Door.PawnCanOpen(forPawn))
+						{
+							num4 += 6f;
+						}
+						else
+						{
+							num4 += 50f;
+						}
 					}
-					return num3;
-				}, ref CellFinder.tmpDistances);
+					return num4;
+				}, CellFinder.tmpDistances, CellFinder.tmpParents);
 				if (CellFinder.tmpDistances.Count == num)
 				{
 					break;
@@ -506,25 +527,19 @@ namespace Verse
 				float num2 = 0f;
 				foreach (KeyValuePair<IntVec3, float> current in CellFinder.tmpDistances)
 				{
-					if (!cell.IsValid || current.Value < num2)
+					if ((!cell.IsValid || current.Value < num2) && current.Key.Walkable(forPawn.Map) && !PawnUtility.AnyPawnBlockingPathAt(current.Key, forPawn, false, false))
 					{
-						if (current.Key.Walkable(forPawn.Map))
+						Building_Door door = current.Key.GetDoor(forPawn.Map);
+						if (door == null || door.FreePassage)
 						{
-							if (!PawnUtility.AnyPawnBlockingPathAt(current.Key, forPawn, false, false))
-							{
-								Building_Door building_Door = current.Key.GetEdifice(forPawn.Map) as Building_Door;
-								if (building_Door == null || building_Door.FreePassage)
-								{
-									cell = current.Key;
-									num2 = current.Value;
-								}
-							}
+							cell = current.Key;
+							num2 = current.Value;
 						}
 					}
 				}
 				if (cell.IsValid)
 				{
-					return true;
+					goto Block_3;
 				}
 				if (radius > (float)forPawn.Map.Size.x && radius > (float)forPawn.Map.Size.z)
 				{
@@ -534,6 +549,32 @@ namespace Verse
 				num = CellFinder.tmpDistances.Count;
 			}
 			return false;
+			Block_3:
+			if (!cellByCell)
+			{
+				return true;
+			}
+			IntVec3 intVec = cell;
+			int num3 = 0;
+			while (intVec.IsValid && intVec != forPawn.Position)
+			{
+				num3++;
+				if (num3 >= 10000)
+				{
+					Log.Error("Too many iterations.");
+					break;
+				}
+				if (intVec.Walkable(forPawn.Map))
+				{
+					Building_Door door2 = intVec.GetDoor(forPawn.Map);
+					if (door2 == null || door2.FreePassage)
+					{
+						cell = intVec;
+					}
+				}
+				intVec = CellFinder.tmpParents[intVec];
+			}
+			return true;
 		}
 
 		public static bool TryFindRandomCellInsideWith(CellRect cellRect, Predicate<IntVec3> predicate, out IntVec3 result)
@@ -613,13 +654,13 @@ namespace Verse
 		}
 
 		[DebuggerHidden]
-		private static IEnumerable<IntVec3> GetAdjacentCells(IntVec3 x, float radius, Pawn pawn)
+		private static IEnumerable<IntVec3> GetAdjacentCardinalCellsForBestStandCell(IntVec3 x, float radius, Pawn pawn)
 		{
 			if ((float)(x - pawn.Position).LengthManhattan <= radius)
 			{
-				for (int i = 0; i < 8; i++)
+				for (int i = 0; i < 4; i++)
 				{
-					IntVec3 c = x + GenAdj.AdjacentCells[i];
+					IntVec3 c = x + GenAdj.CardinalDirections[i];
 					if (c.InBounds(pawn.Map) && c.Walkable(pawn.Map))
 					{
 						Building_Door door = c.GetEdifice(pawn.Map) as Building_Door;

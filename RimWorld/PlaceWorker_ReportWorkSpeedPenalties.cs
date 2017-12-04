@@ -22,7 +22,7 @@ namespace RimWorld
 				}).CapitalizeFirst() + ": ";
 				if (flag)
 				{
-					text += "Outdoors".Translate().ToLower();
+					text += "Outdoors".Translate().CapitalizeFirst();
 				}
 				if (flag2)
 				{
@@ -30,10 +30,10 @@ namespace RimWorld
 					{
 						text += ", ";
 					}
-					text += "BadTemperature".Translate().ToLower();
+					text += "BadTemperature".Translate().CapitalizeFirst();
 				}
 				text += ".";
-				Messages.Message(text, MessageSound.Negative);
+				Messages.Message(text, MessageTypeDefOf.CautionInput);
 			}
 		}
 	}

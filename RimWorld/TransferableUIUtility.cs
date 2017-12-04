@@ -9,6 +9,8 @@ namespace RimWorld
 	[StaticConstructorOnStartup]
 	public static class TransferableUIUtility
 	{
+		private static List<TransferableCountToTransferStoppingPoint> stoppingPoints = new List<TransferableCountToTransferStoppingPoint>();
+
 		private const float AmountAreaWidth = 90f;
 
 		private const float AmountAreaHeight = 25f;
@@ -18,8 +20,6 @@ namespace RimWorld
 		public const float ResourceIconSize = 27f;
 
 		public const float SortersHeight = 27f;
-
-		private static List<TransferableCountToTransferStoppingPoint> stoppingPoints = new List<TransferableCountToTransferStoppingPoint>();
 
 		public static readonly Color ZeroCountColor = new Color(0.5f, 0.5f, 0.5f);
 
@@ -292,7 +292,13 @@ namespace RimWorld
 				{
 					return string.Empty;
 				}
-				return localTrad.Label + ": " + localTrad.TipDescription;
+				string text = localTrad.Label;
+				string tipDescription = localTrad.TipDescription;
+				if (!tipDescription.NullOrEmpty())
+				{
+					text = text + ": " + tipDescription;
+				}
+				return text;
 			}, localTrad.GetHashCode()));
 		}
 

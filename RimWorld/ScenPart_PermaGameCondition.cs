@@ -9,9 +9,9 @@ namespace RimWorld
 {
 	public class ScenPart_PermaGameCondition : ScenPart
 	{
-		public const string PermaGameConditionTag = "PermaGameCondition";
-
 		private GameConditionDef gameCondition;
+
+		public const string PermaGameConditionTag = "PermaGameCondition";
 
 		public override string Label
 		{

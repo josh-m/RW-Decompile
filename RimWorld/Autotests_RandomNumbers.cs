@@ -87,11 +87,8 @@ namespace RimWorld
 				if (dictionary.ContainsKey(num4))
 				{
 					Dictionary<int, int> dictionary2;
-					Dictionary<int, int> expr_92 = dictionary2 = dictionary;
-					int num5;
-					int expr_97 = num5 = num4;
-					num5 = dictionary2[num5];
-					expr_92[expr_97] = num5 + 1;
+					int key;
+					(dictionary2 = dictionary)[key = num4] = dictionary2[key] + 1;
 				}
 				else
 				{

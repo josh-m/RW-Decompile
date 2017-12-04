@@ -14,17 +14,27 @@ namespace RimWorld
 		{
 			get
 			{
-				return (Building_Bed)base.CurJob.GetTarget(TargetIndex.A).Thing;
+				return (Building_Bed)this.job.GetTarget(TargetIndex.A).Thing;
 			}
+		}
+
+		public override bool TryMakePreToilReservations()
+		{
+			bool hasThing = this.job.GetTarget(TargetIndex.A).HasThing;
+			return !hasThing || this.pawn.Reserve(this.Bed, this.job, this.Bed.SleepingSlotsCount, 0, null);
+		}
+
+		public override bool CanBeginNowWhileLyingDown()
+		{
+			return JobInBedUtility.InBedOrRestSpotNow(this.pawn, this.job.GetTarget(TargetIndex.A));
 		}
 
 		[DebuggerHidden]
 		protected override IEnumerable<Toil> MakeNewToils()
 		{
-			bool hasBed = this.pawn.CurJob.GetTarget(TargetIndex.A).HasThing;
+			bool hasBed = this.job.GetTarget(TargetIndex.A).HasThing;
 			if (hasBed)
 			{
-				yield return Toils_Reserve.Reserve(TargetIndex.A, this.Bed.SleepingSlotsCount, 0, null);
 				yield return Toils_Bed.ClaimBedIfNonMedical(TargetIndex.A, TargetIndex.None);
 				yield return Toils_Bed.GotoBed(TargetIndex.A);
 			}

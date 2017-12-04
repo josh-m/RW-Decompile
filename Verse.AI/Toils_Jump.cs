@@ -42,6 +42,19 @@ namespace Verse.AI
 			return toil;
 		}
 
+		public static Toil JumpIfTargetInvalid(TargetIndex ind, Toil jumpToil)
+		{
+			Toil toil = new Toil();
+			toil.initAction = delegate
+			{
+				if (!toil.actor.jobs.curJob.GetTarget(ind).IsValid)
+				{
+					toil.actor.jobs.curDriver.JumpToToil(jumpToil);
+				}
+			};
+			return toil;
+		}
+
 		public static Toil JumpIfTargetNotHittable(TargetIndex ind, Toil jumpToil)
 		{
 			Toil toil = new Toil();
@@ -50,7 +63,7 @@ namespace Verse.AI
 				Pawn actor = toil.actor;
 				Job curJob = actor.jobs.curJob;
 				LocalTargetInfo target = curJob.GetTarget(ind);
-				if (!curJob.verbToUse.CanHitTarget(target))
+				if (curJob.verbToUse == null || !curJob.verbToUse.IsStillUsableBy(actor) || !curJob.verbToUse.CanHitTarget(target))
 				{
 					actor.jobs.curDriver.JumpToToil(jumpToil);
 				}

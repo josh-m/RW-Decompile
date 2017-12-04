@@ -7,7 +7,62 @@ namespace RimWorld
 {
 	public static class CostListCalculator
 	{
-		private static Dictionary<int, List<ThingCountClass>> cachedCosts = new Dictionary<int, List<ThingCountClass>>(FastIntComparer.Instance);
+		private struct CostListPair : IEquatable<CostListCalculator.CostListPair>
+		{
+			public BuildableDef buildable;
+
+			public ThingDef stuff;
+
+			public CostListPair(BuildableDef buildable, ThingDef stuff)
+			{
+				this.buildable = buildable;
+				this.stuff = stuff;
+			}
+
+			public override int GetHashCode()
+			{
+				int seed = 0;
+				seed = Gen.HashCombine<BuildableDef>(seed, this.buildable);
+				return Gen.HashCombine<ThingDef>(seed, this.stuff);
+			}
+
+			public override bool Equals(object obj)
+			{
+				return obj is CostListCalculator.CostListPair && this.Equals((CostListCalculator.CostListPair)obj);
+			}
+
+			public bool Equals(CostListCalculator.CostListPair other)
+			{
+				return this == other;
+			}
+
+			public static bool operator ==(CostListCalculator.CostListPair lhs, CostListCalculator.CostListPair rhs)
+			{
+				return lhs.buildable == rhs.buildable && lhs.stuff == rhs.stuff;
+			}
+
+			public static bool operator !=(CostListCalculator.CostListPair lhs, CostListCalculator.CostListPair rhs)
+			{
+				return !(lhs == rhs);
+			}
+		}
+
+		private class FastCostListPairComparer : IEqualityComparer<CostListCalculator.CostListPair>
+		{
+			public static readonly CostListCalculator.FastCostListPairComparer Instance = new CostListCalculator.FastCostListPairComparer();
+
+			public bool Equals(CostListCalculator.CostListPair x, CostListCalculator.CostListPair y)
+			{
+				return x == y;
+			}
+
+			public int GetHashCode(CostListCalculator.CostListPair obj)
+			{
+				return obj.GetHashCode();
+			}
+		}
+
+		private static Dictionary<CostListCalculator.CostListPair, List<ThingCountClass>> cachedCosts = new Dictionary<CostListCalculator.CostListPair, List<ThingCountClass>>(CostListCalculator.FastCostListPairComparer.Instance);
 
 		public static void Reset()
 		{
@@ -21,7 +76,7 @@ namespace RimWorld
 
 		public static List<ThingCountClass> CostListAdjusted(this BuildableDef entDef, ThingDef stuff, bool errorOnNullStuff = true)
 		{
-			int key = CostListCalculator.RequestHash(entDef, stuff);
+			CostListCalculator.CostListPair key = new CostListCalculator.CostListPair(entDef, stuff);
 			List<ThingCountClass> list;
 			if (!CostListCalculator.cachedCosts.TryGetValue(key, out list))
 			{
@@ -82,16 +137,6 @@ namespace RimWorld
 				CostListCalculator.cachedCosts.Add(key, list);
 			}
 			return list;
-		}
-
-		private static int RequestHash(BuildableDef entDef, ThingDef stuff)
-		{
-			int num = (int)entDef.shortHash;
-			if (stuff != null)
-			{
-				num += (int)stuff.shortHash << 16;
-			}
-			return num;
 		}
 	}
 }

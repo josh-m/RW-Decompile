@@ -8,6 +8,20 @@ namespace RimWorld.Planet
 {
 	public class WorldGenStep_Terrain : WorldGenStep
 	{
+		private ModuleBase noiseElevation;
+
+		private ModuleBase noiseTemperatureOffset;
+
+		private ModuleBase noiseRainfall;
+
+		private ModuleBase noiseSwampiness;
+
+		private ModuleBase noiseMountainLines;
+
+		private ModuleBase noiseHillsPatchesMicro;
+
+		private ModuleBase noiseHillsPatchesMacro;
+
 		private const float ElevationFrequencyMicro = 0.035f;
 
 		private const float ElevationFrequencyMacro = 0.012f;
@@ -24,9 +38,39 @@ namespace RimWorld.Planet
 
 		private const float HillsPatchesFrequencyMacro = 0.032f;
 
+		private const float SwampinessFrequencyMacro = 0.025f;
+
+		private const float SwampinessFrequencyMicro = 0.09f;
+
+		private static readonly FloatRange SwampinessMaxElevation = new FloatRange(650f, 750f);
+
+		private static readonly FloatRange SwampinessMinRainfall = new FloatRange(725f, 900f);
+
+		private static readonly FloatRange ElevationRange = new FloatRange(-500f, 5000f);
+
 		private const float TemperatureOffsetFrequency = 0.018f;
 
 		private const float TemperatureOffsetFactor = 4f;
+
+		private static readonly SimpleCurve AvgTempByLatitudeCurve = new SimpleCurve
+		{
+			{
+				new CurvePoint(0f, 30f),
+				true
+			},
+			{
+				new CurvePoint(0.1f, 29f),
+				true
+			},
+			{
+				new CurvePoint(0.5f, 7f),
+				true
+			},
+			{
+				new CurvePoint(1f, -37f),
+				true
+			}
+		};
 
 		private const float ElevationTempReductionStartAlt = 250f;
 
@@ -50,40 +94,6 @@ namespace RimWorld.Planet
 
 		private const float FertilityTempMaximum = 50f;
 
-		private ModuleBase noiseElevation;
-
-		private ModuleBase noiseTemperatureOffset;
-
-		private ModuleBase noiseRainfall;
-
-		private ModuleBase noiseMountainLines;
-
-		private ModuleBase noiseHillsPatchesMicro;
-
-		private ModuleBase noiseHillsPatchesMacro;
-
-		private static readonly FloatRange ElevationRange = new FloatRange(-500f, 5000f);
-
-		private static readonly SimpleCurve AvgTempByLatitudeCurve = new SimpleCurve
-		{
-			{
-				new CurvePoint(0f, 30f),
-				true
-			},
-			{
-				new CurvePoint(0.1f, 29f),
-				true
-			},
-			{
-				new CurvePoint(0.5f, 7f),
-				true
-			},
-			{
-				new CurvePoint(1f, -37f),
-				true
-			}
-		};
-
 		private static float FreqMultiplier
 		{
 			get
@@ -101,9 +111,8 @@ namespace RimWorld.Planet
 
 		public override void GenerateFromScribe(string seed)
 		{
-			Rand.Seed = GenText.StableStringHash(seed);
-			this.GenerateGridIntoWorld();
-			Rand.RandomizeStateFromTime();
+			Find.World.pathGrid = new WorldPathGrid();
+			NoiseDebugUI.ClearPlanetNoises();
 		}
 
 		private void GenerateGridIntoWorld()
@@ -115,6 +124,7 @@ namespace RimWorld.Planet
 			this.SetupTemperatureOffsetNoise();
 			this.SetupRainfallNoise();
 			this.SetupHillinessNoise();
+			this.SetupSwampinessNoise();
 			List<Tile> tiles = Find.WorldGrid.tiles;
 			tiles.Clear();
 			int tilesCount = Find.WorldGrid.TilesCount;
@@ -258,6 +268,21 @@ namespace RimWorld.Planet
 			this.noiseHillsPatchesMicro = new Perlin((double)(0.19f * freqMultiplier), 2.0, 0.5, 6, Rand.Range(0, 2147483647), QualityMode.High);
 		}
 
+		private void SetupSwampinessNoise()
+		{
+			float freqMultiplier = WorldGenStep_Terrain.FreqMultiplier;
+			ModuleBase moduleBase = new Perlin((double)(0.09f * freqMultiplier), 2.0, 0.40000000596046448, 6, Rand.Range(0, 2147483647), QualityMode.High);
+			ModuleBase moduleBase2 = new RidgedMultifractal((double)(0.025f * freqMultiplier), 2.0, 6, Rand.Range(0, 2147483647), QualityMode.High);
+			moduleBase = new ScaleBias(0.5, 0.5, moduleBase);
+			moduleBase2 = new ScaleBias(0.5, 0.5, moduleBase2);
+			this.noiseSwampiness = new Multiply(moduleBase, moduleBase2);
+			InverseLerp rhs = new InverseLerp(this.noiseElevation, WorldGenStep_Terrain.SwampinessMaxElevation.max, WorldGenStep_Terrain.SwampinessMaxElevation.min);
+			this.noiseSwampiness = new Multiply(this.noiseSwampiness, rhs);
+			InverseLerp rhs2 = new InverseLerp(this.noiseRainfall, WorldGenStep_Terrain.SwampinessMinRainfall.min, WorldGenStep_Terrain.SwampinessMinRainfall.max);
+			this.noiseSwampiness = new Multiply(this.noiseSwampiness, rhs2);
+			NoiseDebugUI.StorePlanetNoise(this.noiseSwampiness, "noiseSwampiness");
+		}
+
 		private Tile GenerateTileFor(int tileID)
 		{
 			Tile tile = new Tile();
@@ -322,6 +347,10 @@ namespace RimWorld.Planet
 			{
 				float value2 = this.noiseRainfall.GetValue(tileCenter);
 				Log.ErrorOnce(value2 + " rain bad at " + tileID, 694822);
+			}
+			if (tile.hilliness == Hilliness.Flat || tile.hilliness == Hilliness.SmallHills)
+			{
+				tile.swampiness = this.noiseSwampiness.GetValue(tileCenter);
 			}
 			tile.biome = this.BiomeFrom(tile);
 			return tile;

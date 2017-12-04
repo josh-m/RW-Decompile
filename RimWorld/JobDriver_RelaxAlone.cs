@@ -10,25 +10,30 @@ namespace RimWorld
 	{
 		private Rot4 faceDir;
 
+		public override bool TryMakePreToilReservations()
+		{
+			return this.pawn.Reserve(this.job.targetA, this.job, 1, -1, null);
+		}
+
 		[DebuggerHidden]
 		protected override IEnumerable<Toil> MakeNewToils()
 		{
-			yield return Toils_Reserve.Reserve(TargetIndex.A, 1, -1, null);
 			yield return Toils_Goto.GotoCell(TargetIndex.A, PathEndMode.OnCell);
 			yield return new Toil
 			{
 				initAction = delegate
 				{
-					this.<>f__this.faceDir = ((!this.<>f__this.CurJob.def.faceDir.IsValid) ? Rot4.Random : this.<>f__this.CurJob.def.faceDir);
+					this.$this.faceDir = ((!this.$this.job.def.faceDir.IsValid) ? Rot4.Random : this.$this.job.def.faceDir);
 				},
 				tickAction = delegate
 				{
-					this.<>f__this.pawn.Drawer.rotator.FaceCell(this.<>f__this.pawn.Position + this.<>f__this.faceDir.FacingCell);
-					this.<>f__this.pawn.GainComfortFromCellIfPossible();
-					JoyUtility.JoyTickCheckEnd(this.<>f__this.pawn, JoyTickFullJoyAction.EndJob, 1f);
+					this.$this.pawn.rotationTracker.FaceCell(this.$this.pawn.Position + this.$this.faceDir.FacingCell);
+					this.$this.pawn.GainComfortFromCellIfPossible();
+					JoyUtility.JoyTickCheckEnd(this.$this.pawn, JoyTickFullJoyAction.EndJob, 1f);
 				},
+				handlingFacing = true,
 				defaultCompleteMode = ToilCompleteMode.Delay,
-				defaultDuration = base.CurJob.def.joyDuration
+				defaultDuration = this.job.def.joyDuration
 			};
 		}
 

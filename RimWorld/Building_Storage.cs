@@ -6,11 +6,11 @@ using Verse;
 
 namespace RimWorld
 {
-	public class Building_Storage : Building, IStoreSettingsParent, ISlotGroupParent
+	public class Building_Storage : Building, ISlotGroupParent, IStoreSettingsParent
 	{
-		public SlotGroup slotGroup;
-
 		public StorageSettings settings;
+
+		public SlotGroup slotGroup;
 
 		private List<IntVec3> cachedOccupiedCells;
 
@@ -126,11 +126,6 @@ namespace RimWorld
 			{
 				yield return g2;
 			}
-		}
-
-		virtual Map get_Map()
-		{
-			return base.Map;
 		}
 	}
 }

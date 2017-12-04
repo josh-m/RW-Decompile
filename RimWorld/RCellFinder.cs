@@ -16,7 +16,7 @@ namespace RimWorld
 		public static IntVec3 BestOrderedGotoDestNear(IntVec3 root, Pawn searcher)
 		{
 			Map map = searcher.Map;
-			Predicate<IntVec3> predicate = (IntVec3 c) => !map.pawnDestinationManager.DestinationIsReserved(c, searcher) && c.Standable(map) && searcher.CanReach(c, PathEndMode.OnCell, Danger.Deadly, false, TraverseMode.ByPawn);
+			Predicate<IntVec3> predicate = (IntVec3 c) => map.pawnDestinationReservationManager.CanReserve(c, searcher) && c.Standable(map) && searcher.CanReach(c, PathEndMode.OnCell, Danger.Deadly, false, TraverseMode.ByPawn);
 			if (predicate(root))
 			{
 				return root;
@@ -53,8 +53,12 @@ namespace RimWorld
 			{
 				return RCellFinder.TryFindRandomPawnEntryCell(out spot, pawn.Map, 0f, delegate(IntVec3 x)
 				{
+					Pawn pawn2 = pawn;
+					LocalTargetInfo dest = x;
+					PathEndMode peMode = PathEndMode.OnCell;
+					Danger maxDanger = Danger.Deadly;
 					TraverseMode mode2 = mode;
-					return pawn.CanReach(x, PathEndMode.OnCell, Danger.Deadly, false, mode2);
+					return pawn2.CanReach(dest, peMode, maxDanger, false, mode2);
 				});
 			}
 			int num = 0;
@@ -103,7 +107,7 @@ namespace RimWorld
 
 		public static bool TryFindRandomExitSpot(Pawn pawn, out IntVec3 spot, TraverseMode mode = TraverseMode.ByPawn)
 		{
-			Danger maxDanger = Danger.Some;
+			Danger danger = Danger.Some;
 			int num = 0;
 			IntVec3 intVec;
 			while (true)
@@ -115,7 +119,7 @@ namespace RimWorld
 				}
 				if (num > 15)
 				{
-					maxDanger = Danger.Deadly;
+					danger = Danger.Deadly;
 				}
 				intVec = CellFinder.RandomCell(pawn.Map);
 				int num2 = Rand.RangeInclusive(0, 3);
@@ -137,17 +141,33 @@ namespace RimWorld
 				}
 				if (intVec.Standable(pawn.Map))
 				{
-					if (pawn.CanReach(intVec, PathEndMode.OnCell, maxDanger, false, mode))
+					LocalTargetInfo dest = intVec;
+					PathEndMode peMode = PathEndMode.OnCell;
+					Danger maxDanger = danger;
+					if (pawn.CanReach(dest, peMode, maxDanger, false, mode))
 					{
-						goto IL_D5;
+						goto IL_E5;
 					}
 				}
 			}
 			spot = pawn.Position;
 			return false;
-			IL_D5:
+			IL_E5:
 			spot = intVec;
 			return true;
+		}
+
+		public static bool TryFindExitSpotNear(Pawn pawn, IntVec3 near, float radius, out IntVec3 spot, TraverseMode mode = TraverseMode.ByPawn)
+		{
+			return (mode == TraverseMode.PassAllDestroyableThings && CellFinder.TryFindRandomEdgeCellNearWith(near, radius, pawn.Map, (IntVec3 x) => pawn.CanReach(x, PathEndMode.OnCell, Danger.Deadly, false, TraverseMode.ByPawn), out spot)) || CellFinder.TryFindRandomEdgeCellNearWith(near, radius, pawn.Map, delegate(IntVec3 x)
+			{
+				Pawn pawn2 = pawn;
+				LocalTargetInfo dest = x;
+				PathEndMode peMode = PathEndMode.OnCell;
+				Danger maxDanger = Danger.Deadly;
+				TraverseMode mode2 = mode;
+				return pawn2.CanReach(dest, peMode, maxDanger, false, mode2);
+			}, out spot);
 		}
 
 		public static IntVec3 RandomWanderDestFor(Pawn pawn, IntVec3 root, float radius, Func<Pawn, IntVec3, bool> validator, Danger maxDanger)
@@ -163,54 +183,53 @@ namespace RimWorld
 					" and will break."
 				}));
 			}
-			if (root.GetRegion(pawn.Map, RegionType.Set_Passable) == null)
-			{
-				return root;
-			}
-			int maxRegions = Mathf.Max((int)radius / 3, 13);
-			CellFinder.AllRegionsNear(RCellFinder.regions, root.GetRegion(pawn.Map, RegionType.Set_Passable), maxRegions, TraverseParms.For(pawn, Danger.Deadly, TraverseMode.ByPawn, false), (Region reg) => reg.extentsClose.ClosestDistSquaredTo(root) <= radius * radius, null, RegionType.Set_Passable);
 			bool flag = UnityData.isDebugBuild && DebugViewSettings.drawDestSearch;
-			if (flag)
+			if (root.GetRegion(pawn.Map, RegionType.Set_Passable) != null)
 			{
-				pawn.Map.debugDrawer.FlashCell(root, 0.6f, "root");
-			}
-			if (RCellFinder.regions.Count > 0)
-			{
-				for (int i = 0; i < 20; i++)
+				int maxRegions = Mathf.Max((int)radius / 3, 13);
+				CellFinder.AllRegionsNear(RCellFinder.regions, root.GetRegion(pawn.Map, RegionType.Set_Passable), maxRegions, TraverseParms.For(pawn, Danger.Deadly, TraverseMode.ByPawn, false), (Region reg) => reg.extentsClose.ClosestDistSquaredTo(root) <= radius * radius, null, RegionType.Set_Passable);
+				if (flag)
 				{
-					IntVec3 randomCell = RCellFinder.regions.RandomElementByWeightWithFallback((Region reg) => (float)reg.CellCount, null).RandomCell;
-					if ((float)randomCell.DistanceToSquared(root) > radius * radius)
+					pawn.Map.debugDrawer.FlashCell(root, 0.6f, "root", 50);
+				}
+				if (RCellFinder.regions.Count > 0)
+				{
+					for (int i = 0; i < 35; i++)
 					{
-						if (flag)
-						{
-							pawn.Map.debugDrawer.FlashCell(randomCell, 0.32f, "distance");
-						}
-					}
-					else
-					{
-						if (RCellFinder.CanWanderToCell(randomCell, pawn, root, validator, i, maxDanger))
+						IntVec3 randomCell = RCellFinder.regions.RandomElementByWeight((Region reg) => (float)reg.CellCount).RandomCell;
+						if ((float)randomCell.DistanceToSquared(root) > radius * radius)
 						{
 							if (flag)
 							{
-								pawn.Map.debugDrawer.FlashCell(randomCell, 0.9f, "go!");
+								pawn.Map.debugDrawer.FlashCell(randomCell, 0.32f, "distance", 50);
 							}
-							return randomCell;
 						}
-						if (flag)
+						else
 						{
-							pawn.Map.debugDrawer.FlashCell(randomCell, 0.6f, "validation");
+							if (RCellFinder.CanWanderToCell(randomCell, pawn, root, validator, i, maxDanger))
+							{
+								if (flag)
+								{
+									pawn.Map.debugDrawer.FlashCell(randomCell, 0.9f, "go!", 50);
+								}
+								return randomCell;
+							}
+							if (flag)
+							{
+								pawn.Map.debugDrawer.FlashCell(randomCell, 0.6f, "validation", 50);
+							}
 						}
 					}
 				}
 			}
 			IntVec3 position;
-			if (!CellFinder.TryFindRandomCellNear(root, pawn.Map, 20, (IntVec3 c) => c.InBounds(pawn.Map) && pawn.CanReach(c, PathEndMode.OnCell, Danger.None, false, TraverseMode.ByPawn) && !c.IsForbidden(pawn), out position) && !CellFinder.TryFindRandomCellNear(root, pawn.Map, 30, (IntVec3 c) => c.InBounds(pawn.Map) && pawn.CanReach(c, PathEndMode.OnCell, Danger.Deadly, false, TraverseMode.ByPawn), out position) && !CellFinder.TryFindRandomCellNear(pawn.Position, pawn.Map, 5, (IntVec3 c) => c.InBounds(pawn.Map) && pawn.CanReach(c, PathEndMode.OnCell, Danger.Deadly, false, TraverseMode.ByPawn), out position))
+			if (!CellFinder.TryFindRandomCellNear(root, pawn.Map, Mathf.FloorToInt(radius), (IntVec3 c) => c.InBounds(pawn.Map) && pawn.CanReach(c, PathEndMode.OnCell, Danger.None, false, TraverseMode.ByPawn) && !c.IsForbidden(pawn), out position) && !CellFinder.TryFindRandomCellNear(root, pawn.Map, Mathf.FloorToInt(radius), (IntVec3 c) => c.InBounds(pawn.Map) && pawn.CanReach(c, PathEndMode.OnCell, Danger.Deadly, false, TraverseMode.ByPawn), out position) && !CellFinder.TryFindRandomCellNear(root, pawn.Map, 20, (IntVec3 c) => c.InBounds(pawn.Map) && pawn.CanReach(c, PathEndMode.OnCell, Danger.None, false, TraverseMode.ByPawn) && !c.IsForbidden(pawn), out position) && !CellFinder.TryFindRandomCellNear(root, pawn.Map, 30, (IntVec3 c) => c.InBounds(pawn.Map) && pawn.CanReach(c, PathEndMode.OnCell, Danger.Deadly, false, TraverseMode.ByPawn), out position) && !CellFinder.TryFindRandomCellNear(pawn.Position, pawn.Map, 5, (IntVec3 c) => c.InBounds(pawn.Map) && pawn.CanReach(c, PathEndMode.OnCell, Danger.Deadly, false, TraverseMode.ByPawn), out position))
 			{
 				position = pawn.Position;
 			}
 			if (flag)
 			{
-				pawn.Map.debugDrawer.FlashCell(position, 0.4f, "fallback");
+				pawn.Map.debugDrawer.FlashCell(position, 0.4f, "fallback", 50);
 			}
 			return position;
 		}
@@ -222,7 +241,7 @@ namespace RimWorld
 			{
 				if (flag)
 				{
-					pawn.Map.debugDrawer.FlashCell(c, 0f, "walk");
+					pawn.Map.debugDrawer.FlashCell(c, 0f, "walk", 50);
 				}
 				return false;
 			}
@@ -230,7 +249,7 @@ namespace RimWorld
 			{
 				if (flag)
 				{
-					pawn.Map.debugDrawer.FlashCell(c, 0.25f, "forbid");
+					pawn.Map.debugDrawer.FlashCell(c, 0.25f, "forbid", 50);
 				}
 				return false;
 			}
@@ -238,7 +257,7 @@ namespace RimWorld
 			{
 				if (flag)
 				{
-					pawn.Map.debugDrawer.FlashCell(c, 0.25f, "stand");
+					pawn.Map.debugDrawer.FlashCell(c, 0.25f, "stand", 50);
 				}
 				return false;
 			}
@@ -246,7 +265,7 @@ namespace RimWorld
 			{
 				if (flag)
 				{
-					pawn.Map.debugDrawer.FlashCell(c, 0.6f, "reach");
+					pawn.Map.debugDrawer.FlashCell(c, 0.6f, "reach", 50);
 				}
 				return false;
 			}
@@ -254,7 +273,7 @@ namespace RimWorld
 			{
 				if (flag)
 				{
-					pawn.Map.debugDrawer.FlashCell(c, 0.1f, "trap");
+					pawn.Map.debugDrawer.FlashCell(c, 0.1f, "trap", 50);
 				}
 				return false;
 			}
@@ -264,7 +283,7 @@ namespace RimWorld
 				{
 					if (flag)
 					{
-						pawn.Map.debugDrawer.FlashCell(c, 0.39f, "terr");
+						pawn.Map.debugDrawer.FlashCell(c, 0.39f, "terr", 50);
 					}
 					return false;
 				}
@@ -272,7 +291,7 @@ namespace RimWorld
 				{
 					if (flag)
 					{
-						pawn.Map.debugDrawer.FlashCell(c, 0.4f, "pcost");
+						pawn.Map.debugDrawer.FlashCell(c, 0.4f, "pcost", 50);
 					}
 					return false;
 				}
@@ -280,7 +299,7 @@ namespace RimWorld
 				{
 					if (flag)
 					{
-						pawn.Map.debugDrawer.FlashCell(c, 0.4f, "danger");
+						pawn.Map.debugDrawer.FlashCell(c, 0.4f, "danger", 50);
 					}
 					return false;
 				}
@@ -289,15 +308,15 @@ namespace RimWorld
 			{
 				if (flag)
 				{
-					pawn.Map.debugDrawer.FlashCell(c, 0.4f, "deadly");
+					pawn.Map.debugDrawer.FlashCell(c, 0.4f, "deadly", 50);
 				}
 				return false;
 			}
-			if (pawn.Map.pawnDestinationManager.DestinationIsReserved(c, pawn))
+			if (!pawn.Map.pawnDestinationReservationManager.CanReserve(c, pawn))
 			{
 				if (flag)
 				{
-					pawn.Map.debugDrawer.FlashCell(c, 0.75f, "resvd");
+					pawn.Map.debugDrawer.FlashCell(c, 0.75f, "resvd", 50);
 				}
 				return false;
 			}
@@ -305,7 +324,7 @@ namespace RimWorld
 			{
 				if (flag)
 				{
-					pawn.Map.debugDrawer.FlashCell(c, 0.15f, "valid");
+					pawn.Map.debugDrawer.FlashCell(c, 0.15f, "valid", 50);
 				}
 				return false;
 			}
@@ -313,7 +332,7 @@ namespace RimWorld
 			{
 				if (flag)
 				{
-					pawn.Map.debugDrawer.FlashCell(c, 0.32f, "door");
+					pawn.Map.debugDrawer.FlashCell(c, 0.32f, "door", 50);
 				}
 				return false;
 			}
@@ -321,7 +340,7 @@ namespace RimWorld
 			{
 				if (flag)
 				{
-					pawn.Map.debugDrawer.FlashCell(c, 0.9f, "fire");
+					pawn.Map.debugDrawer.FlashCell(c, 0.9f, "fire", 50);
 				}
 				return false;
 			}
@@ -779,14 +798,14 @@ namespace RimWorld
 						}
 						if (!flag)
 						{
-							goto IL_19F;
+							goto IL_1A2;
 						}
 					}
 				}
 			}
 			result = pos;
 			return false;
-			IL_19F:
+			IL_1A2:
 			result = randomCell;
 			return true;
 		}
@@ -794,10 +813,10 @@ namespace RimWorld
 		public static bool TryFindRandomCellNearTheCenterOfTheMapWith(Predicate<IntVec3> validator, Map map, out IntVec3 result)
 		{
 			int startingSearchRadius = Mathf.Clamp(Mathf.Max(map.Size.x, map.Size.z) / 20, 3, 25);
-			return RCellFinder.TryFindRandomCellNearWith(map.Center, validator, map, out result, startingSearchRadius);
+			return RCellFinder.TryFindRandomCellNearWith(map.Center, validator, map, out result, startingSearchRadius, 2147483647);
 		}
 
-		public static bool TryFindRandomCellNearWith(IntVec3 near, Predicate<IntVec3> validator, Map map, out IntVec3 result, int startingSearchRadius = 5)
+		public static bool TryFindRandomCellNearWith(IntVec3 near, Predicate<IntVec3> validator, Map map, out IntVec3 result, int startingSearchRadius = 5, int maxSearchRadius = 2147483647)
 		{
 			int num = startingSearchRadius;
 			CellRect cellRect = CellRect.CenteredOn(near, num);
@@ -809,11 +828,11 @@ namespace RimWorld
 				num2++;
 				if (num2 > 30)
 				{
-					if (num > map.Size.x * 2 && num > map.Size.z * 2)
+					if (num >= maxSearchRadius || (num > map.Size.x * 2 && num > map.Size.z * 2))
 					{
 						break;
 					}
-					num = (int)((float)num * 1.5f);
+					num = Mathf.Min((int)((float)num * 1.5f), maxSearchRadius);
 					cellRect = CellRect.CenteredOn(near, num);
 					cellRect.ClipInsideMap(map);
 					num2 = 0;
@@ -821,12 +840,12 @@ namespace RimWorld
 				randomCell = cellRect.RandomCell;
 				if (validator(randomCell))
 				{
-					goto IL_8B;
+					goto IL_9B;
 				}
 			}
 			result = near;
 			return false;
-			IL_8B:
+			IL_9B:
 			result = randomCell;
 			return true;
 		}
@@ -864,7 +883,7 @@ namespace RimWorld
 					}
 				}
 				IntVec3 intVec2;
-				return (ignoreDanger || c.GetDangerFor(pawn, pawn.Map) == Danger.None) && !c.ContainsStaticFire(pawn.Map) && !c.ContainsTrap(pawn.Map) && !pawn.Map.pawnDestinationManager.DestinationIsReserved(c, pawn) && Toils_Ingest.TryFindAdjacentIngestionPlaceSpot(c, ingestible.def, pawn, out intVec2);
+				return (ignoreDanger || c.GetDangerFor(pawn, pawn.Map) == Danger.None) && !c.ContainsStaticFire(pawn.Map) && !c.ContainsTrap(pawn.Map) && pawn.Map.pawnDestinationReservationManager.CanReserve(c, pawn) && Toils_Ingest.TryFindAdjacentIngestionPlaceSpot(c, ingestible.def, pawn, out intVec2);
 			};
 			int maxRegions = 1;
 			Region region = pawn.GetRegion(RegionType.Set_Passable);
@@ -915,13 +934,13 @@ namespace RimWorld
 				{
 					if (DebugViewSettings.drawDestSearch)
 					{
-						pawn.Map.debugDrawer.FlashCell(intVec, 0.5f, "go!");
+						pawn.Map.debugDrawer.FlashCell(intVec, 0.5f, "go!", 50);
 					}
 					return intVec;
 				}
 				if (DebugViewSettings.drawDestSearch)
 				{
-					pawn.Map.debugDrawer.FlashCell(intVec, 0f, i.ToString());
+					pawn.Map.debugDrawer.FlashCell(intVec, 0f, i.ToString(), 50);
 				}
 			}
 			return region.RandomCell;
@@ -1008,7 +1027,7 @@ namespace RimWorld
 				}
 				Room room = cell.GetRoom(map, RegionType.Set_Passable);
 				bool flag = room != null && room.isPrisonCell;
-				return organizer.IsPrisoner == flag;
+				return organizer.IsPrisoner == flag && PartyUtility.EnoughPotentialGuestsToStartParty(map, new IntVec3?(cell));
 			};
 			if ((from x in map.listerBuildings.AllBuildingsColonistOfDef(ThingDefOf.PartySpot)
 			where baseValidator(x.Position)
@@ -1108,7 +1127,7 @@ namespace RimWorld
 								{
 									if (!randomCell.Roofed(map))
 									{
-										goto IL_1A7;
+										goto IL_1AA;
 									}
 								}
 							}
@@ -1118,7 +1137,7 @@ namespace RimWorld
 			}
 			result = IntVec3.Invalid;
 			return false;
-			IL_1A7:
+			IL_1AA:
 			result = randomCell;
 			return true;
 		}

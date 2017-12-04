@@ -13,11 +13,6 @@ namespace RimWorld.Planet
 			this.GenerateLakes();
 		}
 
-		public override void GenerateFromScribe(string seed)
-		{
-			this.GenerateLakes();
-		}
-
 		private void GenerateLakes()
 		{
 			WorldGrid grid = Find.WorldGrid;
@@ -33,7 +28,7 @@ namespace RimWorld.Planet
 						{
 							oceanChunk.Add(tid);
 							touched[tid] = true;
-						}, 2147483647);
+						}, 2147483647, null);
 						if (oceanChunk.Count <= 15)
 						{
 							for (int j = 0; j < oceanChunk.Count; j++)

@@ -6,6 +6,8 @@ namespace RimWorld
 	[DefOf]
 	public static class PawnKindDefOf
 	{
+		public static PawnKindDef Colonist;
+
 		public static PawnKindDef Slave;
 
 		public static PawnKindDef Villager;
@@ -15,6 +17,8 @@ namespace RimWorld
 		public static PawnKindDef SpaceRefugee;
 
 		public static PawnKindDef SpaceSoldier;
+
+		public static PawnKindDef WildMan;
 
 		public static PawnKindDef Thrumbo;
 

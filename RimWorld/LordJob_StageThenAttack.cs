@@ -33,7 +33,7 @@ namespace RimWorld
 			{
 				this.faction.def.pawnsPlural.CapitalizeFirst(),
 				this.faction.Name
-			}), MessageSound.SeriousAlert));
+			}), MessageTypeDefOf.ThreatBig));
 			transition.AddPostAction(new TransitionAction_WakeAll());
 			stateGraph.AddTransition(transition);
 			return stateGraph;

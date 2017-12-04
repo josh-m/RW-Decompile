@@ -18,6 +18,11 @@ namespace RimWorld
 			}
 		}
 
+		public override bool TryMakePreToilReservations()
+		{
+			return true;
+		}
+
 		[DebuggerHidden]
 		protected override IEnumerable<Toil> MakeNewToils()
 		{
@@ -25,12 +30,25 @@ namespace RimWorld
 			this.gaze = new Toil();
 			this.gaze.tickAction = delegate
 			{
-				JoyUtility.JoyTickCheckEnd(this.<>f__this.pawn, JoyTickFullJoyAction.EndJob, 1f);
+				float num = 1f;
+				List<GameCondition> activeConditions = this.$this.pawn.Map.gameConditionManager.ActiveConditions;
+				for (int i = 0; i < activeConditions.Count; i++)
+				{
+					num *= activeConditions[i].SkyGazeJoyGainFactor;
+				}
+				activeConditions = Find.World.gameConditionManager.ActiveConditions;
+				for (int j = 0; j < activeConditions.Count; j++)
+				{
+					num *= activeConditions[j].SkyGazeJoyGainFactor;
+				}
+				Pawn pawn = this.$this.pawn;
+				float extraJoyGainFactor = num;
+				JoyUtility.JoyTickCheckEnd(pawn, JoyTickFullJoyAction.EndJob, extraJoyGainFactor);
 			};
 			this.gaze.defaultCompleteMode = ToilCompleteMode.Delay;
-			this.gaze.defaultDuration = base.CurJob.def.joyDuration;
-			this.gaze.FailOn(() => this.<>f__this.pawn.Position.Roofed(this.<>f__this.pawn.Map));
-			this.gaze.FailOn(() => !JoyUtility.EnjoyableOutsideNow(this.<>f__this.pawn, null));
+			this.gaze.defaultDuration = this.job.def.joyDuration;
+			this.gaze.FailOn(() => this.$this.pawn.Position.Roofed(this.$this.pawn.Map));
+			this.gaze.FailOn(() => !JoyUtility.EnjoyableOutsideNow(this.$this.pawn, null));
 			yield return this.gaze;
 		}
 
@@ -39,6 +57,10 @@ namespace RimWorld
 			if (base.Map.gameConditionManager.ConditionIsActive(GameConditionDefOf.Eclipse))
 			{
 				return "WatchingEclipse".Translate();
+			}
+			if (base.Map.gameConditionManager.ConditionIsActive(GameConditionDefOf.Aurora))
+			{
+				return "WatchingAurora".Translate();
 			}
 			float num = GenCelestial.CurCelestialSunGlow(base.Map);
 			if (num < 0.1f)

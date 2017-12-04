@@ -11,9 +11,9 @@ namespace RimWorld
 		AllyArrival,
 		OrbitalVisitor,
 		ShipChunkDrop,
-		JourneyOffer,
 		Disease,
-		CaravanTarget,
-		AllyAssistance
+		AllyAssistance,
+		JourneyOffer,
+		RaidBeacon
 	}
 }

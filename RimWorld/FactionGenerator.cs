@@ -46,7 +46,7 @@ namespace RimWorld
 				select x).RandomElementByWeight((Faction x) => x.def.baseSelectionWeight);
 				FactionBase factionBase = (FactionBase)WorldObjectMaker.MakeWorldObject(WorldObjectDefOf.FactionBase);
 				factionBase.SetFaction(faction3);
-				factionBase.Tile = TileFinder.RandomFactionBaseTileFor(faction3, false);
+				factionBase.Tile = TileFinder.RandomFactionBaseTileFor(faction3, false, null);
 				factionBase.Name = FactionBaseNameGenerator.GenerateFactionBaseName(factionBase);
 				Find.WorldObjects.Add(factionBase);
 			}
@@ -77,7 +77,7 @@ namespace RimWorld
 		{
 			Faction faction = new Faction();
 			faction.def = facDef;
-			faction.loadID = Find.World.uniqueIDsManager.GetNextFactionID();
+			faction.loadID = Find.UniqueIDsManager.GetNextFactionID();
 			faction.colorFromSpectrum = FactionGenerator.NewRandomColorFromSpectrum(faction);
 			if (!facDef.isPlayer)
 			{
@@ -88,9 +88,10 @@ namespace RimWorld
 				else
 				{
 					faction.Name = NameGenerator.GenerateName(facDef.factionNameMaker, from fac in Find.FactionManager.AllFactionsVisible
-					select fac.Name, false);
+					select fac.Name, false, null);
 				}
 			}
+			faction.centralMelanin = Rand.Value;
 			foreach (Faction current in Find.FactionManager.AllFactionsListForReading)
 			{
 				faction.TryMakeInitialRelationsWith(current);
@@ -99,7 +100,7 @@ namespace RimWorld
 			{
 				FactionBase factionBase = (FactionBase)WorldObjectMaker.MakeWorldObject(WorldObjectDefOf.FactionBase);
 				factionBase.SetFaction(faction);
-				factionBase.Tile = TileFinder.RandomFactionBaseTileFor(faction, false);
+				factionBase.Tile = TileFinder.RandomFactionBaseTileFor(faction, false, null);
 				factionBase.Name = FactionBaseNameGenerator.GenerateFactionBaseName(factionBase);
 				Find.WorldObjects.Add(factionBase);
 			}

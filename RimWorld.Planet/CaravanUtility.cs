@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Verse;
 
 namespace RimWorld.Planet
@@ -13,7 +14,7 @@ namespace RimWorld.Planet
 				Log.Warning("Called IsOwner with null faction.");
 				return false;
 			}
-			return pawn.RaceProps.Humanlike && pawn.Faction == caravanFaction && pawn.HostFaction == null;
+			return !pawn.NonHumanlikeOrWildMan() && pawn.Faction == caravanFaction && pawn.HostFaction == null;
 		}
 
 		public static Caravan GetCaravan(this Pawn pawn)
@@ -55,6 +56,13 @@ namespace RimWorld.Planet
 				}
 			}
 			return false;
+		}
+
+		public static Pawn RandomOwner(this Caravan caravan)
+		{
+			return (from p in caravan.PawnsListForReading
+			where caravan.IsOwner(p)
+			select p).RandomElement<Pawn>();
 		}
 	}
 }

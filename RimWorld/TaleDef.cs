@@ -34,6 +34,8 @@ namespace RimWorld
 		[NoTranslate]
 		public string defSymbol = "def";
 
+		public Type defType = typeof(ThingDef);
+
 		public float baseInterest;
 
 		public Color historyGraphColor = Color.white;

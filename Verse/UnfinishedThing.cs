@@ -9,8 +9,6 @@ namespace Verse
 {
 	public class UnfinishedThing : ThingWithComps
 	{
-		private const float CancelIngredientRecoveryFraction = 0.75f;
-
 		private Pawn creatorInt;
 
 		private string creatorName = "ErrorCreatorName";
@@ -22,6 +20,8 @@ namespace Verse
 		private Bill_ProductionWithUft boundBillInt;
 
 		public float workLeft = -10000f;
+
+		private const float CancelIngredientRecoveryFraction = 0.75f;
 
 		public Pawn Creator
 		{
@@ -180,7 +180,7 @@ namespace Verse
 				hotKey = KeyBindingDefOf.DesignatorCancel,
 				action = delegate
 				{
-					this.<>f__this.Destroy(DestroyMode.Cancel);
+					this.$this.Destroy(DestroyMode.Cancel);
 				}
 			};
 		}

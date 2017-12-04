@@ -50,7 +50,7 @@ namespace Verse.AI.Group
 			LordToilData_Travel data = this.Data;
 			for (int i = 0; i < this.lord.ownedPawns.Count; i++)
 			{
-				PawnDuty pawnDuty = new PawnDuty(DutyDefOf.Travel, data.dest, -1f);
+				PawnDuty pawnDuty = new PawnDuty(DutyDefOf.TravelOrLeave, data.dest, -1f);
 				pawnDuty.maxDanger = this.maxDanger;
 				this.lord.ownedPawns[i].mindState.duty = pawnDuty;
 			}

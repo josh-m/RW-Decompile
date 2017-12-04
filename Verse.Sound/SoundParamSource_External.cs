@@ -31,9 +31,5 @@ namespace Verse.Sound
 			}
 			return this.defaultValue;
 		}
-
-		public void SetTo(float value)
-		{
-		}
 	}
 }

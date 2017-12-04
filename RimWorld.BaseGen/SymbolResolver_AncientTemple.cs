@@ -6,6 +6,7 @@ namespace RimWorld.BaseGen
 	{
 		public override void Resolve(ResolveParams rp)
 		{
+			BaseGen.symbolStack.Push("ensureCanHoldRoof", rp);
 			ResolveParams resolveParams = rp;
 			resolveParams.rect = rp.rect.ContractedBy(1);
 			BaseGen.symbolStack.Push("interior_ancientTemple", resolveParams);

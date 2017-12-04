@@ -67,12 +67,11 @@ namespace RimWorld
 				where t is Pawn
 				select t).Cast<Pawn>().ToList<Pawn>();
 				IEnumerable<Pawn> enumerable = from p in source
-				where p.RaceProps.Humanlike && p.GetLord() == null && p.Faction.def == FactionDefOf.SpacerHostile
+				where p.RaceProps.Humanlike && p.GetLord() == null && p.Faction == Faction.OfSpacerHostile
 				select p;
 				if (enumerable.Any<Pawn>())
 				{
-					Faction faction = Find.FactionManager.FirstFactionOfDef(FactionDefOf.SpacerHostile);
-					LordMaker.MakeNewLord(faction, new LordJob_AssaultColony(faction, false, false, false, false, false), base.Map, enumerable);
+					LordMaker.MakeNewLord(Faction.OfSpacerHostile, new LordJob_AssaultColony(Faction.OfSpacerHostile, false, false, false, false, false), base.Map, enumerable);
 				}
 			}
 		}

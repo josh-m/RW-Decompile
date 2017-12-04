@@ -9,10 +9,15 @@ namespace RimWorld
 
 		public override bool CheckPreAbsorbDamage(DamageInfo dinfo)
 		{
-			if (!dinfo.Def.isExplosive && dinfo.Def.harmsHealth && dinfo.Def.externalViolence && dinfo.WeaponGear != null && dinfo.WeaponGear.IsRangedWeapon)
+			if (!dinfo.Def.isExplosive && dinfo.Def.harmsHealth && dinfo.Def.externalViolence && dinfo.Weapon != null && dinfo.Weapon.IsRangedWeapon)
 			{
+				IntVec3 position = base.Wearer.Position;
+				Map map = base.Wearer.Map;
+				float statValue = this.GetStatValue(StatDefOf.SmokepopBeltRadius, true);
+				DamageDef smoke = DamageDefOf.Smoke;
+				Thing instigator = null;
 				ThingDef gas_Smoke = ThingDefOf.Gas_Smoke;
-				GenExplosion.DoExplosion(base.Wearer.Position, base.Wearer.Map, this.GetStatValue(StatDefOf.SmokepopBeltRadius, true), DamageDefOf.Smoke, null, null, null, null, gas_Smoke, 1f, 1, false, null, 0f, 1);
+				GenExplosion.DoExplosion(position, map, statValue, smoke, instigator, -1, null, null, null, gas_Smoke, 1f, 1, false, null, 0f, 1, 0f, false);
 				this.Destroy(DestroyMode.Vanish);
 			}
 			return false;

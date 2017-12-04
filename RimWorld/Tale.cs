@@ -58,17 +58,24 @@ namespace RimWorld
 				float num = this.def.baseInterest;
 				num /= (float)(1 + this.uses * 3);
 				float a = 0f;
-				switch (this.def.type)
+				TaleType type = this.def.type;
+				if (type != TaleType.Volatile)
 				{
-				case TaleType.Volatile:
+					if (type != TaleType.PermanentHistorical)
+					{
+						if (type == TaleType.Expirable)
+						{
+							a = this.def.expireDays;
+						}
+					}
+					else
+					{
+						a = 50f;
+					}
+				}
+				else
+				{
 					a = 50f;
-					break;
-				case TaleType.Expirable:
-					a = this.def.expireDays;
-					break;
-				case TaleType.PermanentHistorical:
-					a = 50f;
-					break;
 				}
 				float value = (float)(this.AgeTicks / 60000);
 				num *= Mathf.InverseLerp(a, 0f, value);
@@ -109,10 +116,6 @@ namespace RimWorld
 		public virtual bool Concerns(Thing th)
 		{
 			return false;
-		}
-
-		public virtual void PostRemove()
-		{
 		}
 
 		public virtual void ExposeData()

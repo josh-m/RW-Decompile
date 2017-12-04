@@ -7,8 +7,6 @@ namespace RimWorld.Planet
 {
 	public static class PlanetShapeGenerator
 	{
-		private const int MaxTileVertices = 6;
-
 		private static int subdivisionsCount;
 
 		private static float radius;
@@ -52,6 +50,8 @@ namespace RimWorld.Planet
 		private static List<int> tileIDToVerts_offsets = new List<int>();
 
 		private static List<int> tileIDToVerts_values = new List<int>();
+
+		private const int MaxTileVertices = 6;
 
 		public static void Generate(int subdivisionsCount, out List<Vector3> outVerts, out List<int> outTileIDToVerts_offsets, out List<int> outTileIDToNeighbors_offsets, out List<int> outTileIDToNeighbors_values, float radius, Vector3 viewCenter, float viewAngle)
 		{
@@ -196,9 +196,9 @@ namespace RimWorld.Planet
 					{
 						int item = count + PlanetShapeGenerator.adjacentTris[num4];
 						PlanetShapeGenerator.generatedTileVerts.Add(item);
-						int nextAdjancetTriangle = PlanetShapeGenerator.GetNextAdjancetTriangle(num4, currentTriangleVertex, PlanetShapeGenerator.adjacentTris);
-						int nextOrderedVertex3 = PlanetShapeGenerator.tris[PlanetShapeGenerator.adjacentTris[nextAdjancetTriangle]].GetNextOrderedVertex(l);
-						num4 = nextAdjancetTriangle;
+						int nextAdjacentTriangle = PlanetShapeGenerator.GetNextAdjacentTriangle(num4, currentTriangleVertex, PlanetShapeGenerator.adjacentTris);
+						int nextOrderedVertex3 = PlanetShapeGenerator.tris[PlanetShapeGenerator.adjacentTris[nextAdjacentTriangle]].GetNextOrderedVertex(l);
+						num4 = nextAdjacentTriangle;
 						currentTriangleVertex = nextOrderedVertex3;
 					}
 					PlanetShapeGenerator.FinalizeGeneratedTile(PlanetShapeGenerator.generatedTileVerts);
@@ -243,7 +243,7 @@ namespace RimWorld.Planet
 				a += PlanetShapeGenerator.verts[generatedTileVerts[i]];
 				i++;
 			}
-			return !MeshUtility.Visible(a / (float)generatedTileVerts.Count, PlanetShapeGenerator.radius, PlanetShapeGenerator.viewCenter, PlanetShapeGenerator.viewAngle);
+			return !MeshUtility.VisibleForWorldgen(a / (float)generatedTileVerts.Count, PlanetShapeGenerator.radius, PlanetShapeGenerator.viewCenter, PlanetShapeGenerator.viewAngle);
 		}
 
 		private static void CalculateTileNeighbors()
@@ -285,7 +285,7 @@ namespace RimWorld.Planet
 			}
 		}
 
-		private static int GetNextAdjancetTriangle(int currentAdjTriangleIndex, int currentTriangleVertex, List<int> adjacentTris)
+		private static int GetNextAdjacentTriangle(int currentAdjTriangleIndex, int currentTriangleVertex, List<int> adjacentTris)
 		{
 			int i = 0;
 			int count = adjacentTris.Count;

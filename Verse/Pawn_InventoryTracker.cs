@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace Verse
 {
-	public class Pawn_InventoryTracker : IExposable, IThingHolder
+	public class Pawn_InventoryTracker : IThingHolder, IExposable
 	{
 		public Pawn pawn;
 

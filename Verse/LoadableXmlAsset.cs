@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Xml;
 
 namespace Verse
@@ -10,6 +11,14 @@ namespace Verse
 		public string fullFolderPath;
 
 		public XmlDocument xmlDoc;
+
+		public string FullFilePath
+		{
+			get
+			{
+				return this.fullFolderPath + Path.DirectorySeparatorChar + this.name;
+			}
+		}
 
 		public LoadableXmlAsset(string name, string fullFolderPath, string contents)
 		{

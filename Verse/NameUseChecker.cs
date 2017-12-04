@@ -10,7 +10,7 @@ namespace Verse
 		{
 			get
 			{
-				foreach (Pawn p in PawnsFinder.AllMapsAndWorld_AliveOrDead)
+				foreach (Pawn p in PawnsFinder.AllMapsWorldAndTemporary_AliveOrDead)
 				{
 					if (p.Name != null)
 					{
@@ -42,7 +42,7 @@ namespace Verse
 
 		public static bool NameSingleIsUsed(string candidate)
 		{
-			foreach (Pawn current in PawnsFinder.AllMapsAndWorld_AliveOrDead)
+			foreach (Pawn current in PawnsFinder.AllMapsWorldAndTemporary_AliveOrDead)
 			{
 				NameSingle nameSingle = current.Name as NameSingle;
 				if (nameSingle != null && nameSingle.Name == candidate)

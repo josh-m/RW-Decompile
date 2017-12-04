@@ -34,11 +34,14 @@ namespace RimWorld
 				{
 					data.pawnCycleInd = 0;
 				}
-				Pawn pawn = lord.ownedPawns[data.pawnCycleInd];
-				Pawn pawn2;
-				if (pawn.Spawned && !pawn.Downed && pawn.MentalStateDef == null && KidnapAIUtility.TryFindGoodKidnapVictim(pawn, 8f, out pawn2, null) && !GenAI.InDangerousCombat(pawn))
+				if (lord.ownedPawns.Any<Pawn>())
 				{
-					return true;
+					Pawn pawn = lord.ownedPawns[data.pawnCycleInd];
+					Pawn pawn2;
+					if (pawn.Spawned && !pawn.Downed && pawn.MentalStateDef == null && KidnapAIUtility.TryFindGoodKidnapVictim(pawn, 8f, out pawn2, null) && !GenAI.InDangerousCombat(pawn))
+					{
+						return true;
+					}
 				}
 			}
 			return false;

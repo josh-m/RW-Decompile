@@ -41,15 +41,16 @@ namespace RimWorld
 			{
 				return;
 			}
+			Lesson current = Find.ActiveLesson.Current;
 			if (Find.ActiveLesson.Current != null)
 			{
 				Find.ActiveLesson.Current.Notify_Event(ep);
 			}
-			foreach (InstructionDef current in DefDatabase<InstructionDef>.AllDefs)
+			foreach (InstructionDef current2 in DefDatabase<InstructionDef>.AllDefs)
 			{
-				if (current.eventTagInitiate == ep.Tag && (TutorSystem.TutorialMode || !current.tutorialModeOnly))
+				if (current2.eventTagInitiate == ep.Tag && (current2.eventTagInitiateSource == null || (current != null && current2.eventTagInitiateSource == current.Instruction)) && (TutorSystem.TutorialMode || !current2.tutorialModeOnly))
 				{
-					Find.ActiveLesson.Activate(current);
+					Find.ActiveLesson.Activate(current2);
 					break;
 				}
 			}
@@ -75,7 +76,7 @@ namespace RimWorld
 				if (!acceptanceReport.Accepted)
 				{
 					string text = acceptanceReport.Reason.NullOrEmpty() ? Find.ActiveLesson.Current.DefaultRejectInputMessage : acceptanceReport.Reason;
-					Messages.Message(text, MessageSound.RejectInput);
+					Messages.Message(text, MessageTypeDefOf.RejectInput);
 					return false;
 				}
 			}

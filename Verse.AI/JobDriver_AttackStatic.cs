@@ -18,6 +18,11 @@ namespace Verse.AI
 			Scribe_Values.Look<int>(ref this.numAttacksMade, "numAttacksMade", 0, false);
 		}
 
+		public override bool TryMakePreToilReservations()
+		{
+			return true;
+		}
+
 		[DebuggerHidden]
 		protected override IEnumerable<Toil> MakeNewToils()
 		{
@@ -26,32 +31,45 @@ namespace Verse.AI
 			{
 				initAction = delegate
 				{
-					Pawn pawn = this.<>f__this.TargetThingA as Pawn;
+					Pawn pawn = this.$this.TargetThingA as Pawn;
 					if (pawn != null)
 					{
-						this.<>f__this.startedIncapacitated = pawn.Downed;
+						this.$this.startedIncapacitated = pawn.Downed;
 					}
-					this.<>f__this.pawn.pather.StopDead();
+					this.$this.pawn.pather.StopDead();
 				},
 				tickAction = delegate
 				{
-					if (this.<>f__this.TargetA.HasThing)
+					if (!this.$this.TargetA.IsValid)
 					{
-						Pawn pawn = this.<>f__this.TargetA.Thing as Pawn;
-						if (this.<>f__this.TargetA.Thing.Destroyed || (pawn != null && !this.<>f__this.startedIncapacitated && pawn.Downed))
+						this.$this.EndJobWith(JobCondition.Succeeded);
+						return;
+					}
+					if (this.$this.TargetA.HasThing)
+					{
+						Pawn pawn = this.$this.TargetA.Thing as Pawn;
+						if (this.$this.TargetA.Thing.Destroyed || (pawn != null && !this.$this.startedIncapacitated && pawn.Downed))
 						{
-							this.<>f__this.EndJobWith(JobCondition.Succeeded);
+							this.$this.EndJobWith(JobCondition.Succeeded);
 							return;
 						}
 					}
-					if (this.<>f__this.numAttacksMade >= this.<>f__this.pawn.CurJob.maxNumStaticAttacks && !this.<>f__this.pawn.stances.FullBodyBusy)
+					if (this.$this.numAttacksMade >= this.$this.job.maxNumStaticAttacks && !this.$this.pawn.stances.FullBodyBusy)
 					{
-						this.<>f__this.EndJobWith(JobCondition.Succeeded);
+						this.$this.EndJobWith(JobCondition.Succeeded);
 						return;
 					}
-					if (this.<>f__this.pawn.equipment.TryStartAttack(this.<>f__this.TargetA))
+					if (this.$this.pawn.TryStartAttack(this.$this.TargetA))
 					{
-						this.<>f__this.numAttacksMade++;
+						this.$this.numAttacksMade++;
+					}
+					else if (this.$this.job.endIfCantShootTargetFromCurPos && !this.$this.pawn.stances.FullBodyBusy)
+					{
+						Verb verb = this.$this.pawn.TryGetAttackVerb(!this.$this.pawn.IsColonist);
+						if (verb == null || !verb.CanHitTargetFrom(this.$this.pawn.Position, this.$this.TargetA))
+						{
+							this.$this.EndJobWith(JobCondition.Incompletable);
+						}
 					}
 				},
 				defaultCompleteMode = ToilCompleteMode.Never

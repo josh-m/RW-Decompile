@@ -29,7 +29,7 @@ namespace Verse
 
 		public static void ApplyUIScale()
 		{
-			if (Prefs.UIScale == 1f || LongEventHandler.AnyEventNowOrWaiting)
+			if (Prefs.UIScale == 1f || !LongEventHandler.CanApplyUIScaleNow)
 			{
 				UI.screenWidth = Screen.width;
 				UI.screenHeight = Screen.height;

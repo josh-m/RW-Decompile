@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
+using System.Linq;
 using UnityEngine;
 using Verse;
 
@@ -58,7 +58,9 @@ namespace RimWorld
 
 		public override void Randomize()
 		{
-			this.stat = this.RandomizableStats().RandomElement<StatDef>();
+			this.stat = (from d in DefDatabase<StatDef>.AllDefs
+			where d.scenarioRandomizable
+			select d).RandomElement<StatDef>();
 			this.factor = GenMath.RoundedHundredth(Rand.Range(0.1f, 3f));
 		}
 
@@ -80,38 +82,6 @@ namespace RimWorld
 				return this.factor;
 			}
 			return 1f;
-		}
-
-		[DebuggerHidden]
-		private IEnumerable<StatDef> RandomizableStats()
-		{
-			yield return StatDefOf.ComfyTemperatureMax;
-			yield return StatDefOf.ComfyTemperatureMin;
-			yield return StatDefOf.ConstructSuccessChance;
-			yield return StatDefOf.ConstructionSpeed;
-			yield return StatDefOf.DeteriorationRate;
-			yield return StatDefOf.Flammability;
-			yield return StatDefOf.GlobalLearningFactor;
-			yield return StatDefOf.PlantHarvestYield;
-			yield return StatDefOf.MedicalTendSpeed;
-			yield return StatDefOf.ImmunityGainSpeed;
-			yield return StatDefOf.MarketValue;
-			yield return StatDefOf.MaxHitPoints;
-			yield return StatDefOf.MentalBreakThreshold;
-			yield return StatDefOf.MiningSpeed;
-			yield return StatDefOf.MoveSpeed;
-			yield return StatDefOf.PsychicSensitivity;
-			yield return StatDefOf.ResearchSpeed;
-			yield return StatDefOf.ShootingAccuracy;
-			yield return StatDefOf.MedicalSurgerySuccessChance;
-			yield return StatDefOf.RecruitPrisonerChance;
-			yield return StatDefOf.TameAnimalChance;
-			yield return StatDefOf.TrainAnimalChance;
-			yield return StatDefOf.MeleeWeapon_DamageAmount;
-			yield return StatDefOf.RangedWeapon_Cooldown;
-			yield return StatDefOf.WorkSpeedGlobal;
-			yield return StatDefOf.WorkToMake;
-			yield return StatDefOf.WorkToBuild;
 		}
 	}
 }

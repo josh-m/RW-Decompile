@@ -48,10 +48,13 @@ namespace RimWorld
 				Map map = maps[i];
 				if (map.IsPlayerHome)
 				{
-					int freeColonistsSpawnedCount = map.mapPawns.FreeColonistsSpawnedCount;
-					if (map.resourceCounter.TotalHumanEdibleNutrition < 4f * (float)freeColonistsSpawnedCount)
+					if (map.mapPawns.AnyColonistSpawned)
 					{
-						return map;
+						int freeColonistsSpawnedCount = map.mapPawns.FreeColonistsSpawnedCount;
+						if (map.resourceCounter.TotalHumanEdibleNutrition < 4f * (float)freeColonistsSpawnedCount)
+						{
+							return map;
+						}
 					}
 				}
 			}

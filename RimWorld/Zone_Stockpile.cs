@@ -6,7 +6,7 @@ using Verse;
 
 namespace RimWorld
 {
-	public class Zone_Stockpile : Zone, IStoreSettingsParent, ISlotGroupParent
+	public class Zone_Stockpile : Zone, ISlotGroupParent, IStoreSettingsParent
 	{
 		public StorageSettings settings;
 
@@ -146,11 +146,6 @@ namespace RimWorld
 
 		public void Notify_LostThing(Thing newItem)
 		{
-		}
-
-		virtual Map get_Map()
-		{
-			return base.Map;
 		}
 	}
 }

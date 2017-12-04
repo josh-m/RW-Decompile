@@ -24,6 +24,8 @@ namespace RimWorld
 
 		public static HediffDef Bite;
 
+		public static HediffDef Scratch;
+
 		public static HediffDef MissingBodyPart;
 
 		public static HediffDef BloodLoss;
@@ -38,6 +40,10 @@ namespace RimWorld
 
 		public static HediffDef PsychicShock;
 
+		public static HediffDef ResurrectionSickness;
+
+		public static HediffDef ResurrectionPsychosis;
+
 		public static HediffDef Anesthetic;
 
 		public static HediffDef CryptosleepSickness;
@@ -45,6 +51,8 @@ namespace RimWorld
 		public static HediffDef FoodPoisoning;
 
 		public static HediffDef Pregnant;
+
+		public static HediffDef CatatonicBreakdown;
 
 		public static HediffDef Flu;
 
@@ -64,7 +72,13 @@ namespace RimWorld
 
 		public static HediffDef Cataract;
 
+		public static HediffDef Blindness;
+
 		public static HediffDef Frail;
+
+		public static HediffDef Carcinoma;
+
+		public static HediffDef Asthma;
 
 		public static HediffDef PegLeg;
 

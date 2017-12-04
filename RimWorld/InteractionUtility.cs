@@ -7,6 +7,8 @@ namespace RimWorld
 {
 	public static class InteractionUtility
 	{
+		public const float MaxInteractRange = 6f;
+
 		private static List<ISocialThought> tmpSocialThoughts = new List<ISocialThought>();
 
 		public static bool CanInitiateInteraction(Pawn pawn)
@@ -21,12 +23,22 @@ namespace RimWorld
 
 		public static bool CanInitiateRandomInteraction(Pawn p)
 		{
-			return InteractionUtility.CanInitiateInteraction(p) && p.RaceProps.Humanlike && !p.Downed && !p.InAggroMentalState;
+			return InteractionUtility.CanInitiateInteraction(p) && p.RaceProps.Humanlike && !p.Downed && !p.InAggroMentalState && p.Faction != null;
 		}
 
 		public static bool CanReceiveRandomInteraction(Pawn p)
 		{
 			return InteractionUtility.CanReceiveInteraction(p) && p.RaceProps.Humanlike && !p.Downed && !p.InAggroMentalState;
+		}
+
+		public static bool IsGoodPositionForInteraction(Pawn p, Pawn recipient)
+		{
+			return InteractionUtility.IsGoodPositionForInteraction(p.Position, recipient.Position, p.Map);
+		}
+
+		public static bool IsGoodPositionForInteraction(IntVec3 cell, IntVec3 recipientCell, Map map)
+		{
+			return cell.InHorDistOf(recipientCell, 6f) && GenSight.LineOfSight(cell, recipientCell, map, true, null, 0, 0);
 		}
 
 		public static bool HasAnyVerbForSocialFight(Pawn p)
@@ -56,7 +68,7 @@ namespace RimWorld
 			List<Verb> allVerbs = p.verbTracker.AllVerbs;
 			return (from x in allVerbs
 			where x is Verb_MeleeAttack && x.IsStillUsableBy(p)
-			select x).TryRandomElementByWeight((Verb x) => (float)x.verbProps.AdjustedMeleeDamageAmount(x, p, null), out verb);
+			select x).TryRandomElementByWeight((Verb x) => x.verbProps.AdjustedMeleeDamageAmount(x, p, null), out verb);
 		}
 
 		public static bool HasAnySocialFightProvokingThought(Pawn pawn, Pawn otherPawn)

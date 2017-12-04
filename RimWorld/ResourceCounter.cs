@@ -143,11 +143,8 @@ namespace RimWorld
 					if (current.def.CountAsResource && this.ShouldCount(current))
 					{
 						Dictionary<ThingDef, int> dictionary;
-						Dictionary<ThingDef, int> expr_62 = dictionary = this.countedAmounts;
 						ThingDef def;
-						ThingDef expr_6B = def = current.def;
-						int num = dictionary[def];
-						expr_62[expr_6B] = num + current.stackCount;
+						(dictionary = this.countedAmounts)[def = current.def] = dictionary[def] + current.stackCount;
 					}
 				}
 			}

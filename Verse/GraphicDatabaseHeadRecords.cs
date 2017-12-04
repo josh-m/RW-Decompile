@@ -28,8 +28,8 @@ namespace Verse
 				});
 				try
 				{
-					this.crownType = (CrownType)((byte)ParseHelper.FromString(array[array.Length - 2], typeof(CrownType)));
-					this.gender = (Gender)((byte)ParseHelper.FromString(array[array.Length - 3], typeof(Gender)));
+					this.crownType = (CrownType)ParseHelper.FromString(array[array.Length - 2], typeof(CrownType));
+					this.gender = (Gender)ParseHelper.FromString(array[array.Length - 3], typeof(Gender));
 				}
 				catch (Exception ex)
 				{

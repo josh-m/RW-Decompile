@@ -62,7 +62,7 @@ namespace RimWorld
 					{
 						flag = true;
 					}
-					if (!maps[i].attackTargetsCache.TargetsHostileToColony.Any((IAttackTarget x) => !x.ThreatDisabled()))
+					if (!maps[i].attackTargetsCache.TargetsHostileToColony.Any(new Func<IAttackTarget, bool>(GenHostility.IsActiveThreatToPlayer)))
 					{
 						flag2 = true;
 					}

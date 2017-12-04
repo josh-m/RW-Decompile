@@ -7,8 +7,6 @@ namespace Verse
 {
 	public static class PawnNameColorUtility
 	{
-		private const int ColorShiftCount = 10;
-
 		private static readonly List<Color> ColorsNeutral;
 
 		private static readonly List<Color> ColorsHostile;
@@ -23,6 +21,10 @@ namespace Verse
 
 		private static readonly Color ColorColony;
 
+		private static readonly Color ColorWildMan;
+
+		private const int ColorShiftCount = 10;
+
 		private static readonly List<Color> ColorShifts;
 
 		static PawnNameColorUtility()
@@ -34,6 +36,7 @@ namespace Verse
 			PawnNameColorUtility.ColorBaseHostile = new Color(0.9f, 0.2f, 0.2f);
 			PawnNameColorUtility.ColorBasePrisoner = new Color(1f, 0.85f, 0.5f);
 			PawnNameColorUtility.ColorColony = new Color(0.9f, 0.9f, 0.9f);
+			PawnNameColorUtility.ColorWildMan = new Color(1f, 0.8f, 1f);
 			PawnNameColorUtility.ColorShifts = new List<Color>
 			{
 				new Color(1f, 1f, 1f),
@@ -78,6 +81,10 @@ namespace Verse
 			if (pawn.IsPrisoner)
 			{
 				return PawnNameColorUtility.ColorsPrisoner[index];
+			}
+			if (pawn.IsWildMan())
+			{
+				return PawnNameColorUtility.ColorWildMan;
 			}
 			if (pawn.Faction == null)
 			{

@@ -8,8 +8,6 @@ namespace Verse
 {
 	public class PriorityWork : IExposable
 	{
-		private const int Timeout = 30000;
-
 		private Pawn pawn;
 
 		private IntVec3 prioritizedCell = IntVec3.Invalid;
@@ -17,6 +15,8 @@ namespace Verse
 		private WorkTypeDef prioritizedWorkType;
 
 		private int prioritizeTick = Find.TickManager.TicksGame;
+
+		private const int Timeout = 30000;
 
 		public bool IsPrioritized
 		{
@@ -83,16 +83,7 @@ namespace Verse
 		public void ClearPrioritizedWorkAndJobQueue()
 		{
 			this.Clear();
-			this.pawn.jobs.jobQueue.Clear();
-			this.pawn.ClearReservations(false);
-		}
-
-		public void DrawExtraSelectionOverlays()
-		{
-			if (this.IsPrioritized)
-			{
-				GenDraw.DrawLineBetween(this.pawn.DrawPos, this.Cell.ToVector3Shifted());
-			}
+			this.pawn.jobs.ClearQueuedJobs();
 		}
 
 		[DebuggerHidden]
@@ -108,10 +99,10 @@ namespace Verse
 					activateSound = SoundDefOf.TickLow,
 					action = delegate
 					{
-						this.<>f__this.ClearPrioritizedWorkAndJobQueue();
-						if (this.<>f__this.pawn.CurJob.playerForced)
+						this.$this.ClearPrioritizedWorkAndJobQueue();
+						if (this.$this.pawn.CurJob.playerForced)
 						{
-							this.<>f__this.pawn.jobs.EndCurrentJob(JobCondition.InterruptForced, true);
+							this.$this.pawn.jobs.EndCurrentJob(JobCondition.InterruptForced, true);
 						}
 					},
 					hotKey = KeyBindingDefOf.DesignatorCancel,

@@ -16,8 +16,8 @@ namespace RimWorld
 		{
 			Thought_Memory thought_Memory = (Thought_Memory)Activator.CreateInstance(def.ThoughtClass);
 			thought_Memory.def = def;
-			thought_Memory.Init();
 			thought_Memory.SetForcedStage(forcedStage);
+			thought_Memory.Init();
 			return thought_Memory;
 		}
 	}

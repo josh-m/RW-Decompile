@@ -138,20 +138,13 @@ namespace Verse
 			{
 				return;
 			}
-			bool flag = false;
 			bool somethingSucceeded = false;
 			foreach (IntVec3 current in cells)
 			{
-				AcceptanceReport acceptanceReport = this.CanDesignateCell(current);
-				if (acceptanceReport.Accepted)
+				if (this.CanDesignateCell(current).Accepted)
 				{
 					this.DesignateSingleCell(current);
 					somethingSucceeded = true;
-				}
-				else if (!flag)
-				{
-					Messages.Message(acceptanceReport.Reason, MessageSound.RejectInput);
-					flag = true;
 				}
 			}
 			this.Finalize(somethingSucceeded);
@@ -194,7 +187,7 @@ namespace Verse
 			}
 			if (Find.DesignatorManager.Dragger.FailureReason != null)
 			{
-				Messages.Message(Find.DesignatorManager.Dragger.FailureReason, MessageSound.RejectInput);
+				Messages.Message(Find.DesignatorManager.Dragger.FailureReason, MessageTypeDefOf.RejectInput);
 			}
 		}
 
@@ -208,8 +201,9 @@ namespace Verse
 			return this.Desc;
 		}
 
-		public virtual Texture2D IconReverseDesignating(Thing t)
+		public virtual Texture2D IconReverseDesignating(Thing t, out float angle)
 		{
+			angle = this.iconAngle;
 			return this.icon;
 		}
 
@@ -217,7 +211,7 @@ namespace Verse
 		{
 			if (this.useMouseIcon)
 			{
-				GenUI.DrawMouseAttachment(this.icon, string.Empty);
+				GenUI.DrawMouseAttachment(this.icon, string.Empty, this.iconAngle);
 			}
 		}
 

@@ -30,9 +30,25 @@ namespace Verse
 
 		public ThingDef preExplosionSpawnThingDef;
 
+		public float preExplosionSpawnChance = 1f;
+
+		public int preExplosionSpawnThingCount = 1;
+
 		public ThingDef postExplosionSpawnThingDef;
 
-		public float explosionSpawnChance = 1f;
+		public float postExplosionSpawnChance = 1f;
+
+		public int postExplosionSpawnThingCount = 1;
+
+		public bool applyDamageToExplosionCellsNeighbors;
+
+		public float explosionChanceToStartFire;
+
+		public bool explosionDealMoreDamageAtCenter;
+
+		public EffecterDef explosionEffect;
+
+		public bool ai_IsIncendiary;
 
 		[DebuggerHidden]
 		public IEnumerable<string> ConfigErrors(ThingDef parent)

@@ -51,7 +51,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return InspectPaneUtility.PaneSize;
+				return InspectPaneUtility.PaneSizeFor(this);
 			}
 		}
 
@@ -91,7 +91,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return (float)UI.screenHeight - InspectPaneUtility.PaneSize.y - 35f;
+				return (float)UI.screenHeight - 165f - 35f;
 			}
 		}
 

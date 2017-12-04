@@ -41,9 +41,26 @@ namespace Verse
 		{
 			Map map = base.Map;
 			this.Destroy(DestroyMode.Vanish);
+			if (this.def.projectile.explosionEffect != null)
+			{
+				Effecter effecter = this.def.projectile.explosionEffect.Spawn();
+				effecter.Trigger(new TargetInfo(base.Position, map, false), new TargetInfo(base.Position, map, false));
+				effecter.Cleanup();
+			}
+			IntVec3 position = base.Position;
+			Map map2 = map;
+			float explosionRadius = this.def.projectile.explosionRadius;
+			DamageDef damageDef = this.def.projectile.damageDef;
+			Thing launcher = this.launcher;
+			int damageAmountBase = this.def.projectile.damageAmountBase;
+			SoundDef soundExplode = this.def.projectile.soundExplode;
+			ThingDef equipmentDef = this.equipmentDef;
+			ThingDef def = this.def;
+			ThingDef postExplosionSpawnThingDef = this.def.projectile.postExplosionSpawnThingDef;
+			float postExplosionSpawnChance = this.def.projectile.postExplosionSpawnChance;
+			int postExplosionSpawnThingCount = this.def.projectile.postExplosionSpawnThingCount;
 			ThingDef preExplosionSpawnThingDef = this.def.projectile.preExplosionSpawnThingDef;
-			float explosionSpawnChance = this.def.projectile.explosionSpawnChance;
-			GenExplosion.DoExplosion(base.Position, map, this.def.projectile.explosionRadius, this.def.projectile.damageDef, this.launcher, this.def.projectile.soundExplode, this.def, this.equipmentDef, this.def.projectile.postExplosionSpawnThingDef, this.def.projectile.explosionSpawnChance, 1, false, preExplosionSpawnThingDef, explosionSpawnChance, 1);
+			GenExplosion.DoExplosion(position, map2, explosionRadius, damageDef, launcher, damageAmountBase, soundExplode, equipmentDef, def, postExplosionSpawnThingDef, postExplosionSpawnChance, postExplosionSpawnThingCount, this.def.projectile.applyDamageToExplosionCellsNeighbors, preExplosionSpawnThingDef, this.def.projectile.preExplosionSpawnChance, this.def.projectile.preExplosionSpawnThingCount, this.def.projectile.explosionChanceToStartFire, this.def.projectile.explosionDealMoreDamageAtCenter);
 		}
 	}
 }

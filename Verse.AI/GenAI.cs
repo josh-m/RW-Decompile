@@ -22,9 +22,9 @@ namespace Verse.AI
 			return !item.IsForbidden(p) && p.CanReserveAndReach(item, PathEndMode.ClosestTouch, p.NormalMaxDanger(), 1, -1, null, false);
 		}
 
-		public static bool CanBeArrested(this Pawn pawn)
+		public static bool CanBeArrestedBy(this Pawn pawn, Pawn arrester)
 		{
-			return pawn.RaceProps.Humanlike && !pawn.InAggroMentalState && !pawn.HostileTo(Faction.OfPlayer) && (!pawn.IsPrisonerOfColony || !pawn.Position.IsInPrisonCell(pawn.Map));
+			return !pawn.NonHumanlikeOrWildMan() && (!pawn.InAggroMentalState || !pawn.HostileTo(arrester)) && !pawn.HostileTo(Faction.OfPlayer) && (!pawn.IsPrisonerOfColony || !pawn.Position.IsInPrisonCell(pawn.Map));
 		}
 
 		public static bool InDangerousCombat(Pawn pawn)
@@ -99,15 +99,19 @@ namespace Verse.AI
 			{
 				return false;
 			}
+			bool flag = p.Position.Fogged(p.Map);
 			List<IAttackTarget> potentialTargetsFor = p.Map.attackTargetsCache.GetPotentialTargetsFor(p);
 			for (int i = 0; i < potentialTargetsFor.Count; i++)
 			{
 				IAttackTarget attackTarget = potentialTargetsFor[i];
 				if (!attackTarget.ThreatDisabled())
 				{
-					if (p.Position.InHorDistOf(((Thing)attackTarget).Position, radius))
+					if (flag || !attackTarget.Thing.Position.Fogged(attackTarget.Thing.Map))
 					{
-						return true;
+						if (p.Position.InHorDistOf(((Thing)attackTarget).Position, radius))
+						{
+							return true;
+						}
 					}
 				}
 			}

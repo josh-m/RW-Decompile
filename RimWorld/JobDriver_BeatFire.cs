@@ -12,8 +12,13 @@ namespace RimWorld
 		{
 			get
 			{
-				return (Fire)base.CurJob.targetA.Thing;
+				return (Fire)this.job.targetA.Thing;
 			}
+		}
+
+		public override bool TryMakePreToilReservations()
+		{
+			return true;
 		}
 
 		[DebuggerHidden]
@@ -24,21 +29,21 @@ namespace RimWorld
 			Toil approach = new Toil();
 			approach.initAction = delegate
 			{
-				if (this.<>f__this.Map.reservationManager.CanReserve(this.<>f__this.pawn, this.<>f__this.TargetFire, 1, -1, null, false))
+				if (this.$this.Map.reservationManager.CanReserve(this.$this.pawn, this.$this.TargetFire, 1, -1, null, false))
 				{
-					this.<>f__this.pawn.Reserve(this.<>f__this.TargetFire, 1, -1, null);
+					this.$this.pawn.Reserve(this.$this.TargetFire, this.$this.job, 1, -1, null);
 				}
-				this.<>f__this.pawn.pather.StartPath(this.<>f__this.TargetFire, PathEndMode.Touch);
+				this.$this.pawn.pather.StartPath(this.$this.TargetFire, PathEndMode.Touch);
 			};
 			approach.tickAction = delegate
 			{
-				if (this.<>f__this.pawn.pather.Moving && this.<>f__this.pawn.pather.nextCell != this.<>f__this.TargetFire.Position)
+				if (this.$this.pawn.pather.Moving && this.$this.pawn.pather.nextCell != this.$this.TargetFire.Position)
 				{
-					this.<>f__this.StartBeatingFireIfAnyAt(this.<>f__this.pawn.pather.nextCell, this.<beat>__0);
+					this.$this.StartBeatingFireIfAnyAt(this.$this.pawn.pather.nextCell, beat);
 				}
-				if (this.<>f__this.pawn.Position != this.<>f__this.TargetFire.Position)
+				if (this.$this.pawn.Position != this.$this.TargetFire.Position)
 				{
-					this.<>f__this.StartBeatingFireIfAnyAt(this.<>f__this.pawn.Position, this.<beat>__0);
+					this.$this.StartBeatingFireIfAnyAt(this.$this.pawn.Position, beat);
 				}
 			};
 			approach.FailOnDespawnedOrNull(TargetIndex.A);
@@ -47,21 +52,21 @@ namespace RimWorld
 			yield return approach;
 			beat.tickAction = delegate
 			{
-				if (!this.<>f__this.pawn.CanReachImmediate(this.<>f__this.TargetFire, PathEndMode.Touch))
+				if (!this.$this.pawn.CanReachImmediate(this.$this.TargetFire, PathEndMode.Touch))
 				{
-					this.<>f__this.JumpToToil(this.<approach>__1);
+					this.$this.JumpToToil(approach);
 				}
 				else
 				{
-					if (this.<>f__this.pawn.Position != this.<>f__this.TargetFire.Position && this.<>f__this.StartBeatingFireIfAnyAt(this.<>f__this.pawn.Position, this.<beat>__0))
+					if (this.$this.pawn.Position != this.$this.TargetFire.Position && this.$this.StartBeatingFireIfAnyAt(this.$this.pawn.Position, beat))
 					{
 						return;
 					}
-					this.<>f__this.pawn.natives.TryBeatFire(this.<>f__this.TargetFire);
-					if (this.<>f__this.TargetFire.Destroyed)
+					this.$this.pawn.natives.TryBeatFire(this.$this.TargetFire);
+					if (this.$this.TargetFire.Destroyed)
 					{
-						this.<>f__this.pawn.records.Increment(RecordDefOf.FiresExtinguished);
-						this.<>f__this.pawn.jobs.EndCurrentJob(JobCondition.Succeeded, true);
+						this.$this.pawn.records.Increment(RecordDefOf.FiresExtinguished);
+						this.$this.pawn.jobs.EndCurrentJob(JobCondition.Succeeded, true);
 						return;
 					}
 				}
@@ -79,7 +84,7 @@ namespace RimWorld
 				Fire fire = thingList[i] as Fire;
 				if (fire != null && fire.parent == null)
 				{
-					this.pawn.CurJob.targetA = fire;
+					this.job.targetA = fire;
 					this.pawn.pather.StopDead();
 					base.JumpToToil(nextToil);
 					return true;

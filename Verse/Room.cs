@@ -8,10 +8,6 @@ namespace Verse
 {
 	public sealed class Room
 	{
-		private const int RegionCountHuge = 60;
-
-		private const int MaxRegionsToAssignRoomRole = 36;
-
 		public sbyte mapIndex = -1;
 
 		private RoomGroup groupInt;
@@ -39,6 +35,10 @@ namespace Verse
 		public int newOrReusedRoomGroupIndex = -1;
 
 		private static int nextRoomID;
+
+		private const int RegionCountHuge = 60;
+
+		private const int MaxRegionsToAssignRoomRole = 36;
 
 		private static readonly Color PrisonFieldColor = new Color(1f, 0.7f, 0.2f);
 
@@ -193,7 +193,15 @@ namespace Verse
 		{
 			get
 			{
-				return this.TouchesMapEdge || this.OpenRoofCount > 300 || (this.Group.AnyRoomTouchesMapEdge && (float)this.OpenRoofCount / (float)this.CellCount >= 0.5f);
+				return this.OpenRoofCount > 300 || (this.Group.AnyRoomTouchesMapEdge && (float)this.OpenRoofCount / (float)this.CellCount >= 0.5f);
+			}
+		}
+
+		public bool OutdoorsForWork
+		{
+			get
+			{
+				return this.OpenRoofCount > 100 || (float)this.OpenRoofCount > (float)this.CellCount * 0.25f;
 			}
 		}
 
@@ -263,15 +271,15 @@ namespace Verse
 						{
 							Pawn firstOwner = null;
 							Pawn secondOwner = null;
-							foreach (Building_Bed bed in this.ContainedBeds)
+							foreach (Building_Bed current in this.ContainedBeds)
 							{
-								if (bed.def.building.bed_humanlike)
+								if (current.def.building.bed_humanlike)
 								{
-									for (int i = 0; i < bed.owners.Count; i++)
+									for (int i = 0; i < current.owners.Count; i++)
 									{
 										if (firstOwner == null)
 										{
-											firstOwner = bed.owners[i];
+											firstOwner = current.owners[i];
 										}
 										else
 										{
@@ -279,7 +287,7 @@ namespace Verse
 											{
 												return;
 											}
-											secondOwner = bed.owners[i];
+											secondOwner = current.owners[i];
 										}
 									}
 								}
@@ -456,14 +464,11 @@ namespace Verse
 
 		public void Notify_RoomShapeOrContainedBedsChanged()
 		{
-			ProfilerThreadCheck.BeginSample("RoomChanged");
 			this.cachedCellCount = -1;
 			this.cachedOpenRoofCount = -1;
 			if (Current.ProgramState == ProgramState.Playing && !this.Fogged)
 			{
-				ProfilerThreadCheck.BeginSample("RoofGenerationRequest");
 				this.Map.autoBuildRoofAreaSetter.TryGenerateAreaFor(this);
-				ProfilerThreadCheck.EndSample();
 			}
 			this.isPrisonCell = false;
 			if (Building_Bed.RoomCanBePrisonCell(this))
@@ -489,7 +494,6 @@ namespace Verse
 			this.lastChangeTick = Find.TickManager.TicksGame;
 			this.statsAndRoleDirty = true;
 			FacilitiesUtility.NotifyFacilitiesAboutChangedLOSBlockers(this.regions);
-			ProfilerThreadCheck.EndSample();
 		}
 
 		public void DecrementMapIndex()
@@ -505,7 +509,7 @@ namespace Verse
 				}));
 				return;
 			}
-			this.mapIndex -= 1;
+			this.mapIndex = (sbyte)((int)this.mapIndex - 1);
 		}
 
 		public float GetStat(RoomStatDef roomStat)

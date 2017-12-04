@@ -21,7 +21,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return base.CurJob.GetTarget(TargetIndex.A).Thing;
+				return this.job.GetTarget(TargetIndex.A).Thing;
 			}
 		}
 
@@ -29,7 +29,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return (Pawn)base.CurJob.GetTarget(TargetIndex.B).Thing;
+				return (Pawn)this.job.GetTarget(TargetIndex.B).Thing;
 			}
 		}
 
@@ -37,7 +37,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return ((LordJob_FormAndSendCaravan)base.CurJob.lord.LordJob).transferables;
+				return ((LordJob_FormAndSendCaravan)this.job.lord.LordJob).transferables;
 			}
 		}
 
@@ -54,21 +54,26 @@ namespace RimWorld
 			}
 		}
 
+		public override bool TryMakePreToilReservations()
+		{
+			return this.pawn.Reserve(this.ToHaul, this.job, 1, -1, null);
+		}
+
 		[DebuggerHidden]
 		protected override IEnumerable<Toil> MakeNewToils()
 		{
-			this.FailOn(() => !this.<>f__this.Map.lordManager.lords.Contains(this.<>f__this.CurJob.lord));
-			Toil reserve = Toils_Reserve.Reserve(TargetIndex.A, 1, -1, null);
+			this.FailOn(() => !this.$this.Map.lordManager.lords.Contains(this.$this.job.lord));
+			Toil reserve = Toils_Reserve.Reserve(TargetIndex.A, 1, -1, null).FailOnDespawnedOrNull(TargetIndex.A);
 			yield return reserve;
 			yield return Toils_Goto.GotoThing(TargetIndex.A, PathEndMode.Touch);
 			yield return this.DetermineNumToHaul();
-			yield return Toils_Haul.StartCarryThing(TargetIndex.A, false, true);
+			yield return Toils_Haul.StartCarryThing(TargetIndex.A, false, true, false);
 			yield return this.AddCarriedThingToTransferables();
-			yield return Toils_Haul.CheckForGetOpportunityDuplicate(reserve, TargetIndex.A, TargetIndex.None, true, (Thing x) => this.<>f__this.Transferable.things.Contains(x));
+			yield return Toils_Haul.CheckForGetOpportunityDuplicate(reserve, TargetIndex.A, TargetIndex.None, true, (Thing x) => this.$this.Transferable.things.Contains(x));
 			Toil findCarrier = this.FindCarrier();
 			yield return findCarrier;
-			yield return Toils_Goto.GotoThing(TargetIndex.B, PathEndMode.Touch).JumpIf(() => !JobDriver_PrepareCaravan_GatherItems.IsUsableCarrier(this.<>f__this.Carrier, this.<>f__this.pawn, true), findCarrier);
-			yield return Toils_General.Wait(25).JumpIf(() => !JobDriver_PrepareCaravan_GatherItems.IsUsableCarrier(this.<>f__this.Carrier, this.<>f__this.pawn, true), findCarrier).WithProgressBarToilDelay(TargetIndex.B, false, -0.5f);
+			yield return Toils_Goto.GotoThing(TargetIndex.B, PathEndMode.Touch).JumpIf(() => !JobDriver_PrepareCaravan_GatherItems.IsUsableCarrier(this.$this.Carrier, this.$this.pawn, true), findCarrier);
+			yield return Toils_General.Wait(25).JumpIf(() => !JobDriver_PrepareCaravan_GatherItems.IsUsableCarrier(this.$this.Carrier, this.$this.pawn, true), findCarrier).WithProgressBarToilDelay(TargetIndex.B, false, -0.5f);
 			yield return this.PlaceTargetInCarrierInventory();
 		}
 
@@ -78,7 +83,7 @@ namespace RimWorld
 			{
 				initAction = delegate
 				{
-					int num = GatherItemsForCaravanUtility.CountLeftToTransfer(this.pawn, this.Transferable, base.CurJob.lord);
+					int num = GatherItemsForCaravanUtility.CountLeftToTransfer(this.pawn, this.Transferable, this.job.lord);
 					if (this.pawn.carryTracker.CarriedThing != null)
 					{
 						num -= this.pawn.carryTracker.CarriedThing.stackCount;
@@ -89,7 +94,7 @@ namespace RimWorld
 					}
 					else
 					{
-						base.CurJob.count = num;
+						this.job.count = num;
 					}
 				},
 				defaultCompleteMode = ToilCompleteMode.Instant,
@@ -123,7 +128,7 @@ namespace RimWorld
 					Pawn pawn = this.FindBestCarrier(true);
 					if (pawn == null)
 					{
-						bool flag = this.pawn.GetLord() == base.CurJob.lord;
+						bool flag = this.pawn.GetLord() == this.job.lord;
 						if (flag && !MassUtility.IsOverEncumbered(this.pawn))
 						{
 							pawn = this.pawn;
@@ -139,7 +144,7 @@ namespace RimWorld
 								}
 								else
 								{
-									IEnumerable<Pawn> source = from x in base.CurJob.lord.ownedPawns
+									IEnumerable<Pawn> source = from x in this.job.lord.ownedPawns
 									where JobDriver_PrepareCaravan_GatherItems.IsUsableCarrier(x, this.pawn, true)
 									select x;
 									if (!source.Any<Pawn>())
@@ -152,7 +157,7 @@ namespace RimWorld
 							}
 						}
 					}
-					base.CurJob.SetTarget(TargetIndex.B, pawn);
+					this.job.SetTarget(TargetIndex.B, pawn);
 				}
 			};
 		}
@@ -186,7 +191,7 @@ namespace RimWorld
 
 		private Pawn FindBestCarrier(bool onlyAnimals)
 		{
-			Lord lord = base.CurJob.lord;
+			Lord lord = this.job.lord;
 			Pawn pawn = null;
 			float num = 0f;
 			if (lord != null)

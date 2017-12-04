@@ -8,18 +8,6 @@ namespace RimWorld
 {
 	public class Screen_Credits : Window
 	{
-		private const int ColumnWidth = 800;
-
-		private const float InitialAutoScrollDelay = 1f;
-
-		private const float InitialAutoScrollDelayWonGame = 6f;
-
-		private const float AutoScrollDelayAfterManualScroll = 3f;
-
-		private const float SongStartDelay = 5f;
-
-		private const GameFont Font = GameFont.Medium;
-
 		private List<CreditsEntry> creds;
 
 		public bool wonGame;
@@ -31,6 +19,18 @@ namespace RimWorld
 		private bool playedMusic;
 
 		public float creationRealtime = -1f;
+
+		private const int ColumnWidth = 800;
+
+		private const float InitialAutoScrollDelay = 1f;
+
+		private const float InitialAutoScrollDelayWonGame = 6f;
+
+		private const float AutoScrollDelayAfterManualScroll = 3f;
+
+		private const float SongStartDelay = 5f;
+
+		private const GameFont Font = GameFont.Medium;
 
 		public override Vector2 InitialSize
 		{

@@ -84,14 +84,9 @@ namespace RimWorld
 			}
 		}
 
-		public bool CurrentlyUsable()
+		public bool CurrentlyUsableForBills()
 		{
 			return this.UsableNow;
-		}
-
-		virtual Map get_Map()
-		{
-			return base.Map;
 		}
 	}
 }

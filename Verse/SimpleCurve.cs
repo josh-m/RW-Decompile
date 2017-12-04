@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace Verse
 {
-	public class SimpleCurve : IEnumerable, IEnumerable<CurvePoint>
+	public class SimpleCurve : IEnumerable<CurvePoint>, IEnumerable
 	{
 		private List<CurvePoint> points = new List<CurvePoint>();
 

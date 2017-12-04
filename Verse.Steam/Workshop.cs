@@ -11,8 +11,6 @@ namespace Verse.Steam
 {
 	public static class Workshop
 	{
-		public const uint InstallInfoFolderNameMaxLength = 257u;
-
 		private static WorkshopItemHook uploadingHook;
 
 		private static UGCUpdateHandle_t curUpdateHandle;
@@ -35,6 +33,8 @@ namespace Verse.Steam
 
 		private static int detailsQueryCount = -1;
 
+		public const uint InstallInfoFolderNameMaxLength = 257u;
+
 		public static WorkshopInteractStage CurStage
 		{
 			get
@@ -54,7 +54,7 @@ namespace Verse.Steam
 		{
 			if (Workshop.curStage != WorkshopInteractStage.None)
 			{
-				Messages.Message("UploadAlreadyInProgress".Translate(), MessageSound.RejectInput);
+				Messages.Message("UploadAlreadyInProgress".Translate(), MessageTypeDefOf.RejectInput);
 				return;
 			}
 			Workshop.uploadingHook = item.GetWorkshopItemHook();
@@ -208,7 +208,7 @@ namespace Verse.Steam
 				Messages.Message("WorkshopUploadSucceeded".Translate(new object[]
 				{
 					Workshop.uploadingHook.Name
-				}), MessageSound.Benefit);
+				}), MessageTypeDefOf.TaskCompletion);
 				if (Prefs.LogVerbose)
 				{
 					Log.Message("Workshop: Item submit result: " + result.m_eResult);

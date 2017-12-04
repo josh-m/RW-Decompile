@@ -7,11 +7,11 @@ namespace Verse
 {
 	public class AreaManager : IExposable
 	{
-		private const int MaxAllowedAreasPerMode = 5;
-
 		public Map map;
 
 		private List<Area> areas = new List<Area>();
+
+		private const int MaxAllowedAreasPerMode = 5;
 
 		public List<Area> AllAreas
 		{
@@ -94,13 +94,7 @@ namespace Verse
 				return;
 			}
 			this.areas.Remove(area);
-			foreach (Pawn current in PawnsFinder.AllMapsAndWorld_Alive)
-			{
-				if (current.playerSettings != null)
-				{
-					current.playerSettings.Notify_AreaRemoved(area);
-				}
-			}
+			this.NotifyEveryoneAreaRemoved(area);
 			if (Designator_AreaAllowed.SelectedArea == area)
 			{
 				Designator_AreaAllowed.ClearSelectedArea();
@@ -142,6 +136,25 @@ namespace Verse
 			for (int i = 0; i < this.areas.Count; i++)
 			{
 				this.areas[i].areaManager = this;
+			}
+		}
+
+		private void NotifyEveryoneAreaRemoved(Area area)
+		{
+			foreach (Pawn current in PawnsFinder.AllMapsWorldAndTemporary_Alive)
+			{
+				if (current.playerSettings != null)
+				{
+					current.playerSettings.Notify_AreaRemoved(area);
+				}
+			}
+		}
+
+		public void Notify_MapRemoved()
+		{
+			for (int i = 0; i < this.areas.Count; i++)
+			{
+				this.NotifyEveryoneAreaRemoved(this.areas[i]);
 			}
 		}
 

@@ -12,6 +12,7 @@ namespace Verse
 		CutoutSkin,
 		Transparent,
 		TransparentPostLight,
+		TransparentPlant,
 		MetaOverlay,
 		Mote,
 		MoteGlow,

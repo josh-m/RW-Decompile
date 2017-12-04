@@ -66,7 +66,7 @@ namespace RimWorld
 				smooth.texturePath = "Terrain/Surfaces/SmoothStone";
 				smooth.edgeType = TerrainDef.TerrainEdgeType.FadeRough;
 				smooth.pathCost = 0;
-				StatUtility.SetStatValueInList(ref smooth.statBases, StatDefOf.Beauty, 3f);
+				StatUtility.SetStatValueInList(ref smooth.statBases, StatDefOf.Beauty, 2f);
 				smooth.scatterType = "Rocky";
 				smooth.affordances = new List<TerrainAffordance>();
 				smooth.affordances.Add(TerrainAffordance.Light);

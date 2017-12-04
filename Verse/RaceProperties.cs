@@ -62,6 +62,8 @@ namespace Verse
 
 		public bool canBePredatorPrey = true;
 
+		public bool herdMigrationAllowed = true;
+
 		public float gestationPeriodDays = 10f;
 
 		public SimpleCurve litterSizeCurve;
@@ -223,9 +225,16 @@ namespace Verse
 		{
 			get
 			{
-				if (this.deathActionWorkerInt == null && this.deathActionWorkerClass != null)
+				if (this.deathActionWorkerInt == null)
 				{
-					this.deathActionWorkerInt = (DeathActionWorker)Activator.CreateInstance(this.deathActionWorkerClass);
+					if (this.deathActionWorkerClass != null)
+					{
+						this.deathActionWorkerInt = (DeathActionWorker)Activator.CreateInstance(this.deathActionWorkerClass);
+					}
+					else
+					{
+						this.deathActionWorkerInt = new DeathActionWorker_Simple();
+					}
 				}
 				return this.deathActionWorkerInt;
 			}
@@ -284,6 +293,14 @@ namespace Verse
 					return TrainableIntelligenceDefOf.Intermediate;
 				}
 				return this.trainableIntelligence;
+			}
+		}
+
+		public bool CanDoHerdMigration
+		{
+			get
+			{
+				return this.Animal && this.herdAnimal && this.herdMigrationAllowed;
 			}
 		}
 
@@ -413,23 +430,23 @@ namespace Verse
 		[DebuggerHidden]
 		internal IEnumerable<StatDrawEntry> SpecialDisplayStats(ThingDef parentDef)
 		{
-			yield return new StatDrawEntry(StatCategoryDefOf.Basics, "Race".Translate(), parentDef.LabelCap, 2000);
-			yield return new StatDrawEntry(StatCategoryDefOf.Basics, "Diet".Translate(), this.foodType.ToHumanString().CapitalizeFirst(), 0);
+			yield return new StatDrawEntry(StatCategoryDefOf.Basics, "Race".Translate(), parentDef.LabelCap, 2000, string.Empty);
+			yield return new StatDrawEntry(StatCategoryDefOf.Basics, "Diet".Translate(), this.foodType.ToHumanString().CapitalizeFirst(), 0, string.Empty);
 			if (this.wildness >= 0f)
 			{
-				yield return new StatDrawEntry(StatCategoryDefOf.Basics, "Wildness".Translate(), this.wildness.ToStringPercent(), 0)
+				yield return new StatDrawEntry(StatCategoryDefOf.Basics, "Wildness".Translate(), this.wildness.ToStringPercent(), 0, string.Empty)
 				{
 					overrideReportText = "WildnessExplanation".Translate()
 				};
 			}
 			if (this.intelligence < Intelligence.Humanlike)
 			{
-				yield return new StatDrawEntry(StatCategoryDefOf.Basics, "TrainableIntelligence".Translate(), this.TrainableIntelligence.GetLabel().CapitalizeFirst(), 0);
+				yield return new StatDrawEntry(StatCategoryDefOf.Basics, "TrainableIntelligence".Translate(), this.TrainableIntelligence.LabelCap, 0, string.Empty);
 			}
-			yield return new StatDrawEntry(StatCategoryDefOf.Basics, "StatsReport_LifeExpectancy".Translate(), this.lifeExpectancy.ToStringByStyle(ToStringStyle.Integer, ToStringNumberSense.Absolute), 0);
+			yield return new StatDrawEntry(StatCategoryDefOf.Basics, "StatsReport_LifeExpectancy".Translate(), this.lifeExpectancy.ToStringByStyle(ToStringStyle.Integer, ToStringNumberSense.Absolute), 0, string.Empty);
 			if (this.intelligence < Intelligence.Humanlike)
 			{
-				yield return new StatDrawEntry(StatCategoryDefOf.Basics, "AnimalFilthRate".Translate(), (PawnUtility.AnimalFilthChancePerCell(parentDef, parentDef.race.baseBodySize) * 1000f).ToString("F2"), 0)
+				yield return new StatDrawEntry(StatCategoryDefOf.Basics, "AnimalFilthRate".Translate(), (PawnUtility.AnimalFilthChancePerCell(parentDef, parentDef.race.baseBodySize) * 1000f).ToString("F2"), 0, string.Empty)
 				{
 					overrideReportText = "AnimalFilthRateExplanation".Translate(new object[]
 					{
@@ -439,7 +456,7 @@ namespace Verse
 			}
 			if (this.packAnimal)
 			{
-				yield return new StatDrawEntry(StatCategoryDefOf.Basics, "PackAnimal".Translate(), "Yes".Translate(), 0)
+				yield return new StatDrawEntry(StatCategoryDefOf.Basics, "PackAnimal".Translate(), "Yes".Translate(), 0, string.Empty)
 				{
 					overrideReportText = "PackAnimalExplanation".Translate()
 				};

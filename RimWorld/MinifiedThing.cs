@@ -74,6 +74,15 @@ namespace RimWorld
 			this.innerContainer = new ThingOwner<Thing>(this, true, LookMode.Deep);
 		}
 
+		public override void Tick()
+		{
+			base.Tick();
+			if (this.InnerThing is Building_Battery)
+			{
+				this.innerContainer.ThingOwnerTick(true);
+			}
+		}
+
 		public ThingOwner GetDirectlyHeldThings()
 		{
 			return this.innerContainer;
@@ -117,6 +126,11 @@ namespace RimWorld
 			});
 		}
 
+		public override string GetDescription()
+		{
+			return this.InnerThing.GetDescription();
+		}
+
 		public override void DrawExtraSelectionOverlays()
 		{
 			base.DrawExtraSelectionOverlays();
@@ -133,14 +147,14 @@ namespace RimWorld
 			{
 				this.crateFrontGraphic = GraphicDatabase.Get<Graphic_Single>("Things/Item/Minified/CrateFront", ShaderDatabase.Cutout, this.GetMinifiedDrawSize(this.InnerThing.def.size.ToVector2(), 1.1f) * 1.16f, Color.white);
 			}
-			this.crateFrontGraphic.DrawFromDef(drawLoc + Altitudes.AltIncVect * 0.1f, Rot4.North, null);
+			this.crateFrontGraphic.DrawFromDef(drawLoc + Altitudes.AltIncVect * 0.1f, Rot4.North, null, 0f);
 			if (this.Graphic is Graphic_Single)
 			{
-				this.Graphic.Draw(drawLoc, Rot4.North, this);
+				this.Graphic.Draw(drawLoc, Rot4.North, this, 0f);
 			}
 			else
 			{
-				this.Graphic.Draw(drawLoc, Rot4.South, this);
+				this.Graphic.Draw(drawLoc, Rot4.South, this, 0f);
 			}
 		}
 
@@ -149,12 +163,12 @@ namespace RimWorld
 			bool spawned = base.Spawned;
 			Map map = base.Map;
 			base.Destroy(mode);
-			InstallBlueprintUtility.CancelBlueprintsFor(this);
-			if (mode == DestroyMode.Deconstruct)
+			if (this.InnerThing != null)
 			{
-				SoundDef.Named("BuildingDeconstructed").PlayOneShot(new TargetInfo(base.Position, base.Map, false));
-				if (spawned)
+				InstallBlueprintUtility.CancelBlueprintsFor(this);
+				if (mode == DestroyMode.Deconstruct && spawned)
 				{
+					SoundDef.Named("BuildingDeconstructed").PlayOneShot(new TargetInfo(base.Position, map, false));
 					GenLeaving.DoLeavingsFor(this.InnerThing, map, mode, this.OccupiedRect());
 				}
 			}
@@ -178,9 +192,14 @@ namespace RimWorld
 
 		public override string GetInspectString()
 		{
-			string str = "NotInstalled".Translate();
-			str += "\n";
-			return str + this.InnerThing.GetInspectString();
+			string text = "NotInstalled".Translate();
+			string inspectString = this.InnerThing.GetInspectString();
+			if (!inspectString.NullOrEmpty())
+			{
+				text += "\n";
+				text += inspectString;
+			}
+			return text;
 		}
 
 		private Vector2 GetMinifiedDrawSize(Vector2 drawSize, float maxSideLength)
@@ -191,11 +210,6 @@ namespace RimWorld
 				return drawSize;
 			}
 			return drawSize * num;
-		}
-
-		virtual IThingHolder get_ParentHolder()
-		{
-			return base.ParentHolder;
 		}
 	}
 }

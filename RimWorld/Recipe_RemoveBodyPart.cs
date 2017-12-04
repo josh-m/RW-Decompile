@@ -23,7 +23,7 @@ namespace RimWorld
 				{
 					yield return part;
 				}
-				if (part != pawn.RaceProps.body.corePart && !part.def.dontSuggestAmputation && pawn.health.hediffSet.hediffs.Any((Hediff d) => !(d is Hediff_Injury) && d.def.isBad && d.Visible && d.Part == this.<part>__2))
+				if (part != pawn.RaceProps.body.corePart && !part.def.dontSuggestAmputation && pawn.health.hediffSet.hediffs.Any((Hediff d) => !(d is Hediff_Injury) && d.def.isBad && d.Visible && d.Part == part))
 				{
 					yield return part;
 				}
@@ -35,13 +35,13 @@ namespace RimWorld
 			return pawn.Faction != billDoerFaction && HealthUtility.PartRemovalIntent(pawn, part) == BodyPartRemovalIntent.Harvest;
 		}
 
-		public override void ApplyOnPawn(Pawn pawn, BodyPartRecord part, Pawn billDoer, List<Thing> ingredients)
+		public override void ApplyOnPawn(Pawn pawn, BodyPartRecord part, Pawn billDoer, List<Thing> ingredients, Bill bill)
 		{
 			bool flag = MedicalRecipesUtility.IsClean(pawn, part);
 			bool flag2 = this.IsViolationOnPawn(pawn, part, Faction.OfPlayer);
 			if (billDoer != null)
 			{
-				if (base.CheckSurgeryFail(billDoer, pawn, ingredients, part))
+				if (base.CheckSurgeryFail(billDoer, pawn, ingredients, part, bill))
 				{
 					return;
 				}
@@ -53,7 +53,9 @@ namespace RimWorld
 				MedicalRecipesUtility.SpawnNaturalPartIfClean(pawn, part, billDoer.Position, billDoer.Map);
 				MedicalRecipesUtility.SpawnThingsFromHediffs(pawn, part, billDoer.Position, billDoer.Map);
 			}
-			pawn.TakeDamage(new DamageInfo(DamageDefOf.SurgicalCut, 99999, -1f, null, part, null, DamageInfo.SourceCategory.ThingOrUnknown));
+			DamageDef surgicalCut = DamageDefOf.SurgicalCut;
+			int amount = 99999;
+			pawn.TakeDamage(new DamageInfo(surgicalCut, amount, -1f, null, part, null, DamageInfo.SourceCategory.ThingOrUnknown));
 			if (flag)
 			{
 				if (pawn.Dead)
@@ -78,19 +80,22 @@ namespace RimWorld
 				return RecipeDefOf.RemoveBodyPart.LabelCap;
 			}
 			BodyPartRemovalIntent bodyPartRemovalIntent = HealthUtility.PartRemovalIntent(pawn, part);
-			if (bodyPartRemovalIntent == BodyPartRemovalIntent.Harvest)
-			{
-				return "Harvest".Translate();
-			}
 			if (bodyPartRemovalIntent != BodyPartRemovalIntent.Amputate)
 			{
-				throw new InvalidOperationException();
+				if (bodyPartRemovalIntent != BodyPartRemovalIntent.Harvest)
+				{
+					throw new InvalidOperationException();
+				}
+				return "Harvest".Translate();
 			}
-			if (part.depth == BodyPartDepth.Inside || part.def.useDestroyedOutLabel)
+			else
 			{
-				return "RemoveOrgan".Translate();
+				if (part.depth == BodyPartDepth.Inside || part.def.useDestroyedOutLabel)
+				{
+					return "RemoveOrgan".Translate();
+				}
+				return "Amputate".Translate();
 			}
-			return "Amputate".Translate();
 		}
 	}
 }

@@ -14,7 +14,7 @@ namespace RimWorld
 			{
 				gender.ToString().Translate().ToLower()
 			});
-			Find.LetterStack.ReceiveLetter("LetterLabelPsychicDrone".Translate(), text, LetterDefOf.BadNonUrgent, null);
+			Find.LetterStack.ReceiveLetter("LetterLabelPsychicDrone".Translate(), text, LetterDefOf.NegativeEvent, null);
 		}
 	}
 }

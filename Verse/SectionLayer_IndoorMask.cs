@@ -119,7 +119,7 @@ namespace Verse
 			}
 			if (subMesh.verts.Count > 0)
 			{
-				subMesh.FinalizeMesh(MeshParts.Verts | MeshParts.Tris, false);
+				subMesh.FinalizeMesh(MeshParts.Verts | MeshParts.Tris);
 			}
 		}
 	}

@@ -47,7 +47,7 @@ namespace Verse
 			}
 		}
 
-		public static void DirectoryCopy(string sourceDirName, string destDirName, bool copySubDirs)
+		public static void DirectoryCopy(string sourceDirName, string destDirName, bool copySubDirs, bool useLinuxLineEndings = false)
 		{
 			DirectoryInfo directoryInfo = new DirectoryInfo(sourceDirName);
 			DirectoryInfo[] directories = directoryInfo.GetDirectories();
@@ -64,8 +64,18 @@ namespace Verse
 			for (int i = 0; i < array.Length; i++)
 			{
 				FileInfo fileInfo = array[i];
-				string destFileName = Path.Combine(destDirName, fileInfo.Name);
-				fileInfo.CopyTo(destFileName, false);
+				string text = Path.Combine(destDirName, fileInfo.Name);
+				if (useLinuxLineEndings && (fileInfo.Extension == ".sh" || fileInfo.Extension == ".txt"))
+				{
+					if (!File.Exists(text))
+					{
+						File.WriteAllText(text, File.ReadAllText(fileInfo.FullName).Replace("\r\n", "\n").Replace("\r", "\n"));
+					}
+				}
+				else
+				{
+					fileInfo.CopyTo(text, false);
+				}
 			}
 			if (copySubDirs)
 			{
@@ -74,7 +84,7 @@ namespace Verse
 				{
 					DirectoryInfo directoryInfo2 = array2[j];
 					string destDirName2 = Path.Combine(destDirName, directoryInfo2.Name);
-					GenFile.DirectoryCopy(directoryInfo2.FullName, destDirName2, copySubDirs);
+					GenFile.DirectoryCopy(directoryInfo2.FullName, destDirName2, copySubDirs, useLinuxLineEndings);
 				}
 			}
 		}

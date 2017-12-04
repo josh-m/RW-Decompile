@@ -16,10 +16,10 @@ namespace RimWorld
 			{
 				return ThoughtState.ActiveAtStage(0);
 			}
-			int scoreStageIndex = RoomStatDefOf.Impressiveness.GetScoreStageIndex(ownedRoom.GetStat(RoomStatDefOf.Impressiveness));
-			if (this.def.stages[scoreStageIndex] != null)
+			int num = RoomStatDefOf.Impressiveness.GetScoreStageIndex(ownedRoom.GetStat(RoomStatDefOf.Impressiveness)) + 1;
+			if (this.def.stages[num] != null)
 			{
-				return ThoughtState.ActiveAtStage(scoreStageIndex);
+				return ThoughtState.ActiveAtStage(num);
 			}
 			return ThoughtState.Inactive;
 		}

@@ -31,18 +31,18 @@ namespace RimWorld
 		private static void GiveShuffledBioTo(Pawn pawn, FactionDef factionType, string requiredLastName)
 		{
 			pawn.Name = PawnBioAndNameGenerator.GeneratePawnName(pawn, NameStyle.Full, requiredLastName);
-			PawnBioAndNameGenerator.SetBackstoryInSlot(pawn, BackstorySlot.Childhood, ref pawn.story.childhood, factionType);
+			PawnBioAndNameGenerator.FillBackstorySlotShuffled(pawn, BackstorySlot.Childhood, ref pawn.story.childhood, factionType);
 			if (pawn.ageTracker.AgeBiologicalYearsFloat >= 20f)
 			{
-				PawnBioAndNameGenerator.SetBackstoryInSlot(pawn, BackstorySlot.Adulthood, ref pawn.story.adulthood, factionType);
+				PawnBioAndNameGenerator.FillBackstorySlotShuffled(pawn, BackstorySlot.Adulthood, ref pawn.story.adulthood, factionType);
 			}
 		}
 
-		private static void SetBackstoryInSlot(Pawn pawn, BackstorySlot slot, ref Backstory backstory, FactionDef factionType)
+		private static void FillBackstorySlotShuffled(Pawn pawn, BackstorySlot slot, ref Backstory backstory, FactionDef factionType)
 		{
 			if (!(from kvp in BackstoryDatabase.allBackstories
 			where kvp.Value.shuffleable && kvp.Value.spawnCategories.Contains(factionType.backstoryCategory) && kvp.Value.slot == slot && (slot != BackstorySlot.Adulthood || !kvp.Value.requiredWorkTags.OverlapsWithOnAnyWorkType(pawn.story.childhood.workDisables))
-			select kvp.Value).TryRandomElement(out backstory))
+			select kvp.Value).TryRandomElementByWeight(new Func<Backstory, float>(PawnBioAndNameGenerator.BackstorySelectionWeight), out backstory))
 			{
 				Log.Error(string.Concat(new object[]
 				{
@@ -95,11 +95,11 @@ namespace RimWorld
 					prefName = null;
 				}
 			}
-			SolidBioDatabase.allBios.Shuffle<PawnBio>();
-			PawnBio pawnBio;
+			PawnBio result;
 			while (true)
 			{
-				pawnBio = SolidBioDatabase.allBios.FirstOrDefault(delegate(PawnBio bio)
+				result = null;
+				if (SolidBioDatabase.allBios.Where(delegate(PawnBio bio)
 				{
 					if (bio.gender != GenderPossibility.Either)
 					{
@@ -113,14 +113,13 @@ namespace RimWorld
 						}
 					}
 					return (requiredLastName.NullOrEmpty() || !(bio.name.Last != requiredLastName)) && (prefName == null || bio.name.Equals(prefName)) && (!kind.factionLeader || bio.pirateKing) && bio.adulthood.spawnCategories.Contains(backstoryCategory) && !bio.name.UsedThisGame;
-				});
-				if (pawnBio != null || prefName == null)
+				}).TryRandomElementByWeight(new Func<PawnBio, float>(PawnBioAndNameGenerator.BioSelectionWeight), out result) || prefName == null)
 				{
 					break;
 				}
 				prefName = null;
 			}
-			return pawnBio;
+			return result;
 		}
 
 		public static NameTriple TryGetRandomUnusedSolidName(Gender gender, string requiredLastName = null)
@@ -168,7 +167,7 @@ namespace RimWorld
 				RulePackDef nameGenerator = pawn.RaceProps.GetNameGenerator(pawn.gender);
 				if (nameGenerator != null)
 				{
-					string name = NameGenerator.GenerateName(nameGenerator, (string x) => !new NameSingle(x, false).UsedThisGame, false);
+					string name = NameGenerator.GenerateName(nameGenerator, (string x) => !new NameSingle(x, false).UsedThisGame, false, null);
 					return new NameSingle(name, false);
 				}
 				if (pawn.Faction != null && pawn.Faction.def.pawnNameMaker != null)
@@ -178,7 +177,7 @@ namespace RimWorld
 						NameTriple nameTriple4 = NameTriple.FromString(x);
 						nameTriple4.ResolveMissingPieces(forcedLastName);
 						return !nameTriple4.UsedThisGame;
-					}, false);
+					}, false, null);
 					NameTriple nameTriple = NameTriple.FromString(rawName);
 					nameTriple.CapitalizeNick();
 					nameTriple.ResolveMissingPieces(forcedLastName);
@@ -270,6 +269,37 @@ namespace RimWorld
 				return nameTriple != null && nameTriple.Nick == nick;
 			}));
 			return new NameTriple(name, nick, text);
+		}
+
+		private static float BackstorySelectionWeight(Backstory bs)
+		{
+			return PawnBioAndNameGenerator.WorkDisablesSelectionWeight(bs.workDisables);
+		}
+
+		private static float BioSelectionWeight(PawnBio bio)
+		{
+			return PawnBioAndNameGenerator.WorkDisablesSelectionWeight(bio.adulthood.workDisables & bio.childhood.workDisables);
+		}
+
+		private static float WorkDisablesSelectionWeight(WorkTags wt)
+		{
+			if ((wt & WorkTags.ManualDumb) != WorkTags.None)
+			{
+				return 0.45f;
+			}
+			if ((wt & WorkTags.Cleaning) != WorkTags.None)
+			{
+				return 0.75f;
+			}
+			if ((wt & WorkTags.Mining) != WorkTags.None)
+			{
+				return 3f;
+			}
+			if ((wt & WorkTags.Animals) != WorkTags.None)
+			{
+				return 3f;
+			}
+			return 1f;
 		}
 	}
 }

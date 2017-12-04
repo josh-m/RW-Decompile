@@ -8,10 +8,6 @@ namespace Verse
 {
 	public class SkyManager
 	{
-		public const float NightMaxCelGlow = 0.1f;
-
-		public const float DuskMaxCelGlow = 0.6f;
-
 		private Map map;
 
 		private float curSkyGlowInt;
@@ -19,6 +15,10 @@ namespace Verse
 		private List<Pair<SkyOverlay, float>> tempOverlays = new List<Pair<SkyOverlay, float>>();
 
 		private static readonly Color FogOfWarBaseColor = new Color32(77, 69, 66, 255);
+
+		public const float NightMaxCelGlow = 0.1f;
+
+		public const float DuskMaxCelGlow = 0.6f;
 
 		public float CurSkyGlow
 		{
@@ -46,16 +46,20 @@ namespace Verse
 				color *= SkyManager.FogOfWarBaseColor;
 				MatBases.FogOfWar.color = color;
 				Color color2 = curSky.colors.shadow;
-				WeatherEvent overridingWeatherEvent = this.map.weatherManager.eventHandler.OverridingWeatherEvent;
-				if (overridingWeatherEvent != null && overridingWeatherEvent.OverrideShadowVector.HasValue)
+				Vector3? overridenShadowVector = this.GetOverridenShadowVector();
+				if (overridenShadowVector.HasValue)
 				{
-					this.SetSunShadowVector(overridingWeatherEvent.OverrideShadowVector.Value);
+					this.SetSunShadowVector(overridenShadowVector.Value);
 				}
 				else
 				{
-					this.SetSunShadowVector(GenCelestial.CurShadowVector(this.map));
+					this.SetSunShadowVector(GenCelestial.GetLightSourceInfo(this.map, GenCelestial.LightType.Shadow).vector);
 					color2 = Color.Lerp(Color.white, color2, GenCelestial.CurShadowStrength(this.map));
 				}
+				GenCelestial.LightInfo lightSourceInfo = GenCelestial.GetLightSourceInfo(this.map, GenCelestial.LightType.LightingSun);
+				GenCelestial.LightInfo lightSourceInfo2 = GenCelestial.GetLightSourceInfo(this.map, GenCelestial.LightType.LightingMoon);
+				Shader.SetGlobalVector(ShaderPropertyIDs.WaterCastVectSun, new Vector4(lightSourceInfo.vector.x, 0f, lightSourceInfo.vector.y, lightSourceInfo.intensity));
+				Shader.SetGlobalVector(ShaderPropertyIDs.WaterCastVectMoon, new Vector4(lightSourceInfo2.vector.x, 0f, lightSourceInfo2.vector.y, lightSourceInfo2.intensity));
 				Shader.SetGlobalFloat("_LightsourceShineSizeReduction", 20f * (1f / curSky.lightsourceShineSize));
 				Shader.SetGlobalFloat("_LightsourceShineIntensity", curSky.lightsourceShineIntensity);
 				MatBases.SunShadow.color = color2;
@@ -130,12 +134,54 @@ namespace Verse
 				SkyTarget value = this.map.gameConditionManager.AggregateSkyTarget().Value;
 				skyTarget = SkyTarget.LerpDarken(skyTarget, value, num);
 			}
-			WeatherEvent overridingWeatherEvent = this.map.weatherManager.eventHandler.OverridingWeatherEvent;
-			if (overridingWeatherEvent != null)
+			List<WeatherEvent> liveEventsListForReading = this.map.weatherManager.eventHandler.LiveEventsListForReading;
+			for (int i = 0; i < liveEventsListForReading.Count; i++)
 			{
-				skyTarget = SkyTarget.Lerp(skyTarget, overridingWeatherEvent.SkyTarget, overridingWeatherEvent.SkyTargetLerpFactor);
+				if (liveEventsListForReading[i].CurrentlyAffectsSky)
+				{
+					skyTarget = SkyTarget.Lerp(skyTarget, liveEventsListForReading[i].SkyTarget, liveEventsListForReading[i].SkyTargetLerpFactor);
+				}
+			}
+			List<Thing> list = this.map.listerThings.ThingsInGroup(ThingRequestGroup.AffectsSky);
+			for (int j = 0; j < list.Count; j++)
+			{
+				CompAffectsSky compAffectsSky = list[j].TryGetComp<CompAffectsSky>();
+				if (compAffectsSky.LerpFactor > 0f)
+				{
+					if (compAffectsSky.Props.lerpDarken)
+					{
+						skyTarget = SkyTarget.LerpDarken(skyTarget, compAffectsSky.SkyTarget, compAffectsSky.LerpFactor);
+					}
+					else
+					{
+						skyTarget = SkyTarget.Lerp(skyTarget, compAffectsSky.SkyTarget, compAffectsSky.LerpFactor);
+					}
+				}
 			}
 			return skyTarget;
+		}
+
+		private Vector3? GetOverridenShadowVector()
+		{
+			List<WeatherEvent> liveEventsListForReading = this.map.weatherManager.eventHandler.LiveEventsListForReading;
+			for (int i = 0; i < liveEventsListForReading.Count; i++)
+			{
+				Vector2? overrideShadowVector = liveEventsListForReading[i].OverrideShadowVector;
+				if (overrideShadowVector.HasValue)
+				{
+					return (!overrideShadowVector.HasValue) ? null : new Vector3?(overrideShadowVector.GetValueOrDefault());
+				}
+			}
+			List<Thing> list = this.map.listerThings.ThingsInGroup(ThingRequestGroup.AffectsSky);
+			for (int j = 0; j < list.Count; j++)
+			{
+				Vector2? overrideShadowVector2 = list[j].TryGetComp<CompAffectsSky>().OverrideShadowVector;
+				if (overrideShadowVector2.HasValue)
+				{
+					return (!overrideShadowVector2.HasValue) ? null : new Vector3?(overrideShadowVector2.GetValueOrDefault());
+				}
+			}
+			return null;
 		}
 
 		public string DebugString()

@@ -93,28 +93,21 @@ namespace Verse
 				try
 				{
 					XmlAttribute xmlAttribute2 = subNode.Attributes["Class"];
-					Type type;
-					if (xmlAttribute2 != null)
+					string text = (xmlAttribute2 == null) ? typeof(T).FullName : xmlAttribute2.Value;
+					Type type = BackCompatibility.GetBackCompatibleType(typeof(T), text, subNode);
+					if (type == null)
 					{
-						type = GenTypes.GetTypeInAnyAssembly(xmlAttribute2.Value);
-						if (type == null)
+						Log.Error(string.Concat(new object[]
 						{
-							Log.Error(string.Concat(new object[]
-							{
-								"Could not find class ",
-								xmlAttribute2.Value,
-								" while resolving node ",
-								subNode.Name,
-								". Trying to use ",
-								typeof(T),
-								" instead. Full node: ",
-								subNode.OuterXml
-							}));
-							type = typeof(T);
-						}
-					}
-					else
-					{
+							"Could not find class ",
+							text,
+							" while resolving node ",
+							subNode.Name,
+							". Trying to use ",
+							typeof(T),
+							" instead. Full node: ",
+							subNode.OuterXml
+						}));
 						type = typeof(T);
 					}
 					if (type.IsAbstract)

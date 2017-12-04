@@ -27,7 +27,7 @@ namespace RimWorld
 		[DebuggerHidden]
 		public override IEnumerable<FloatMenuOption> GetFloatMenuOptions(Pawn myPawn)
 		{
-			foreach (FloatMenuOption o in base.GetFloatMenuOptions(myPawn))
+			foreach (FloatMenuOption o in base.GetFloatMenuOptions(selPawn))
 			{
 				yield return o;
 			}
@@ -44,8 +44,8 @@ namespace RimWorld
 					string jobStr = "EnterCryptosleepCasket".Translate();
 					Action jobAction = delegate
 					{
-						Job job = new Job(this.<jobDef>__3, this.<>f__this);
-						this.myPawn.jobs.TryTakeOrderedJob(job, JobTag.Misc);
+						Job job = new Job(jobDef, this.$this);
+						myPawn.jobs.TryTakeOrderedJob(job, JobTag.Misc);
 					};
 					yield return FloatMenuUtility.DecoratePrioritizedTask(new FloatMenuOption(jobStr, jobAction, MenuOptionPriority.Default, null, null, 0f, null, null), myPawn, this, "ReservedBy");
 				}
@@ -85,7 +85,10 @@ namespace RimWorld
 				{
 					PawnComponentsUtility.AddComponentsForSpawn(pawn);
 					pawn.filth.GainFilth(filthSlime);
-					pawn.health.AddHediff(HediffDefOf.CryptosleepSickness, null, null);
+					if (pawn.RaceProps.IsFlesh)
+					{
+						pawn.health.AddHediff(HediffDefOf.CryptosleepSickness, null, null);
+					}
 				}
 			}
 			if (!base.Destroyed)
@@ -102,21 +105,22 @@ namespace RimWorld
 			select def;
 			foreach (ThingDef current in enumerable)
 			{
-				Predicate<Thing> validator = delegate(Thing x)
+				Building_CryptosleepCasket building_CryptosleepCasket = (Building_CryptosleepCasket)GenClosest.ClosestThingReachable(p.Position, p.Map, ThingRequest.ForDef(current), PathEndMode.InteractionCell, TraverseParms.For(traveler, Danger.Deadly, TraverseMode.ByPawn, false), 9999f, delegate(Thing x)
 				{
-					bool arg_2F_0;
+					bool arg_33_0;
 					if (!((Building_CryptosleepCasket)x).HasAnyContents)
 					{
+						Pawn traveler2 = traveler;
+						LocalTargetInfo target = x;
 						bool ignoreOtherReservations2 = ignoreOtherReservations;
-						arg_2F_0 = traveler.CanReserve(x, 1, -1, null, ignoreOtherReservations2);
+						arg_33_0 = traveler2.CanReserve(target, 1, -1, null, ignoreOtherReservations2);
 					}
 					else
 					{
-						arg_2F_0 = false;
+						arg_33_0 = false;
 					}
-					return arg_2F_0;
-				};
-				Building_CryptosleepCasket building_CryptosleepCasket = (Building_CryptosleepCasket)GenClosest.ClosestThingReachable(p.Position, p.Map, ThingRequest.ForDef(current), PathEndMode.InteractionCell, TraverseParms.For(traveler, Danger.Deadly, TraverseMode.ByPawn, false), 9999f, validator, null, 0, -1, false, RegionType.Set_Passable, false);
+					return arg_33_0;
+				}, null, 0, -1, false, RegionType.Set_Passable, false);
 				if (building_CryptosleepCasket != null)
 				{
 					return building_CryptosleepCasket;

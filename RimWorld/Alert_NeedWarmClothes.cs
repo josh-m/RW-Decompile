@@ -7,17 +7,17 @@ namespace RimWorld
 {
 	public class Alert_NeedWarmClothes : Alert
 	{
-		private const float MedicinePerColonistThreshold = 2f;
-
-		private const int CheckNextTwelfthsCount = 3;
-
-		private const float CanShowAlertOnlyIfTempBelow = 5f;
-
 		private static List<Thing> jackets = new List<Thing>();
 
 		private static List<Thing> shirts = new List<Thing>();
 
 		private static List<Thing> pants = new List<Thing>();
+
+		private const float MedicinePerColonistThreshold = 2f;
+
+		private const int CheckNextTwelfthsCount = 3;
+
+		private const float CanShowAlertOnlyIfTempBelow = 5f;
 
 		public Alert_NeedWarmClothes()
 		{

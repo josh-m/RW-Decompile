@@ -24,14 +24,14 @@ namespace RimWorld.Planet
 			float planetViewAngle = Find.WorldGrid.viewAngle;
 			if (planetViewAngle < 180f)
 			{
-				List<Vector3> tmpVerts;
-				List<int> tmpIndices;
-				SphereGenerator.Generate(4, 99.85f, -planetViewCenter, 180f - Mathf.Min(planetViewAngle, 180f) + 10f, out tmpVerts, out tmpIndices);
+				List<Vector3> collection;
+				List<int> collection2;
+				SphereGenerator.Generate(4, 99.85f, -planetViewCenter, 180f - Mathf.Min(planetViewAngle, 180f) + 10f, out collection, out collection2);
 				LayerSubMesh subMesh = base.GetSubMesh(WorldMaterials.UngeneratedPlanetParts);
-				subMesh.verts.AddRange(tmpVerts);
-				subMesh.tris.AddRange(tmpIndices);
+				subMesh.verts.AddRange(collection);
+				subMesh.tris.AddRange(collection2);
 			}
-			base.FinalizeMesh(MeshParts.All, true);
+			base.FinalizeMesh(MeshParts.All);
 		}
 	}
 }

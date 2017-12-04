@@ -97,7 +97,7 @@ namespace RimWorld
 		public IEnumerable<Thing> ColonyThingsWillingToBuy(Pawn playerNegotiator)
 		{
 			IEnumerable<Thing> items = from x in this.pawn.Map.listerThings.AllThings
-			where TradeUtility.EverTradeable(x.def) && x.def.category == ThingCategory.Item && !x.Position.Fogged(x.Map) && (this.<>f__this.pawn.Map.areaManager.Home[x.Position] || x.IsInAnyStorage()) && TradeUtility.TradeableNow(x) && this.<>f__this.ReachableForTrade(x)
+			where TradeUtility.EverTradeable(x.def) && x.def.category == ThingCategory.Item && !x.Position.Fogged(x.Map) && (this.$this.pawn.Map.areaManager.Home[x.Position] || x.IsInAnyStorage()) && TradeUtility.TradeableNow(x) && this.$this.ReachableForTrade(x)
 			select x;
 			foreach (Thing t in items)
 			{
@@ -107,7 +107,7 @@ namespace RimWorld
 			if (hasLord)
 			{
 				foreach (Pawn p in from x in TradeUtility.AllSellableColonyPawns(this.pawn.Map)
-				where !x.Downed && this.<>f__this.ReachableForTrade(x)
+				where !x.Downed && this.$this.ReachableForTrade(x)
 				select x)
 				{
 					yield return p;

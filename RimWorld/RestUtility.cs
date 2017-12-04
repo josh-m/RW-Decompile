@@ -41,7 +41,11 @@ namespace RimWorld
 			{
 				return false;
 			}
-			if (!traveler.CanReserveAndReach(building_Bed, PathEndMode.OnCell, Danger.Some, building_Bed.SleepingSlotsCount, -1, null, ignoreOtherReservations))
+			LocalTargetInfo target = building_Bed;
+			PathEndMode peMode = PathEndMode.OnCell;
+			Danger maxDanger = Danger.Some;
+			int sleepingSlotsCount = building_Bed.SleepingSlotsCount;
+			if (!traveler.CanReserveAndReach(target, peMode, maxDanger, sleepingSlotsCount, -1, null, ignoreOtherReservations))
 			{
 				return false;
 			}
@@ -145,39 +149,60 @@ namespace RimWorld
 			{
 				if (sleeper.InBed() && sleeper.CurrentBed().Medical)
 				{
-					bool ignoreOtherReservations2 = ignoreOtherReservations;
-					if (RestUtility.IsValidBedFor(sleeper.CurrentBed(), sleeper, traveler, sleeperWillBePrisoner, checkSocialProperness, false, ignoreOtherReservations2))
+					Building_Bed bedThing = sleeper.CurrentBed();
+					Pawn pawn = sleeper;
+					Pawn pawn2 = traveler;
+					bool flag = sleeperWillBePrisoner;
+					bool checkSocialProperness2 = checkSocialProperness;
+					bool flag2 = ignoreOtherReservations;
+					if (RestUtility.IsValidBedFor(bedThing, pawn, pawn2, flag, checkSocialProperness2, false, flag2))
 					{
 						return sleeper.CurrentBed();
 					}
 				}
 				for (int i = 0; i < RestUtility.bedDefsBestToWorst_Medical.Count; i++)
 				{
-					Predicate<Thing> validator = delegate(Thing b)
+					ThingDef thingDef = RestUtility.bedDefsBestToWorst_Medical[i];
+					if (RestUtility.CanUseBedEver(sleeper, thingDef))
 					{
-						bool arg_3A_0;
-						if (((Building_Bed)b).Medical)
+						for (int j = 0; j < 2; j++)
 						{
-							bool ignoreOtherReservations3 = ignoreOtherReservations;
-							arg_3A_0 = RestUtility.IsValidBedFor(b, sleeper, traveler, sleeperWillBePrisoner, checkSocialProperness, false, ignoreOtherReservations3);
+							Danger maxDanger = (j != 0) ? Danger.Deadly : Danger.None;
+							Building_Bed building_Bed = (Building_Bed)GenClosest.ClosestThingReachable(sleeper.Position, sleeper.Map, ThingRequest.ForDef(thingDef), PathEndMode.OnCell, TraverseParms.For(traveler, Danger.Deadly, TraverseMode.ByPawn, false), 9999f, delegate(Thing b)
+							{
+								bool arg_92_0;
+								if (((Building_Bed)b).Medical && b.Position.GetDangerFor(sleeper, sleeper.Map) <= maxDanger)
+								{
+									Pawn sleeper2 = sleeper;
+									Pawn traveler2 = traveler;
+									bool sleeperWillBePrisoner2 = sleeperWillBePrisoner;
+									bool checkSocialProperness3 = checkSocialProperness;
+									bool ignoreOtherReservations2 = ignoreOtherReservations;
+									arg_92_0 = RestUtility.IsValidBedFor(b, sleeper2, traveler2, sleeperWillBePrisoner2, checkSocialProperness3, false, ignoreOtherReservations2);
+								}
+								else
+								{
+									arg_92_0 = false;
+								}
+								return arg_92_0;
+							}, null, 0, -1, false, RegionType.Set_Passable, false);
+							if (building_Bed != null)
+							{
+								return building_Bed;
+							}
 						}
-						else
-						{
-							arg_3A_0 = false;
-						}
-						return arg_3A_0;
-					};
-					Building_Bed building_Bed = (Building_Bed)GenClosest.ClosestThingReachable(sleeper.Position, sleeper.Map, ThingRequest.ForDef(RestUtility.bedDefsBestToWorst_Medical[i]), PathEndMode.OnCell, TraverseParms.For(traveler, Danger.Deadly, TraverseMode.ByPawn, false), 9999f, validator, null, 0, -1, false, RegionType.Set_Passable, false);
-					if (building_Bed != null)
-					{
-						return building_Bed;
 					}
 				}
 			}
 			if (sleeper.ownership != null && sleeper.ownership.OwnedBed != null)
 			{
-				bool ignoreOtherReservations2 = ignoreOtherReservations;
-				if (RestUtility.IsValidBedFor(sleeper.ownership.OwnedBed, sleeper, traveler, sleeperWillBePrisoner, checkSocialProperness, false, ignoreOtherReservations2))
+				Building_Bed bedThing = sleeper.ownership.OwnedBed;
+				Pawn pawn2 = sleeper;
+				Pawn pawn = traveler;
+				bool flag2 = sleeperWillBePrisoner;
+				bool checkSocialProperness2 = checkSocialProperness;
+				bool flag = ignoreOtherReservations;
+				if (RestUtility.IsValidBedFor(bedThing, pawn2, pawn, flag2, checkSocialProperness2, false, flag))
 				{
 					return sleeper.ownership.OwnedBed;
 				}
@@ -188,36 +213,48 @@ namespace RimWorld
 				Building_Bed ownedBed = directPawnRelation.otherPawn.ownership.OwnedBed;
 				if (ownedBed != null)
 				{
-					bool ignoreOtherReservations2 = ignoreOtherReservations;
-					if (RestUtility.IsValidBedFor(ownedBed, sleeper, traveler, sleeperWillBePrisoner, checkSocialProperness, false, ignoreOtherReservations2))
+					Building_Bed bedThing = ownedBed;
+					Pawn pawn = sleeper;
+					Pawn pawn2 = traveler;
+					bool flag = sleeperWillBePrisoner;
+					bool checkSocialProperness2 = checkSocialProperness;
+					bool flag2 = ignoreOtherReservations;
+					if (RestUtility.IsValidBedFor(bedThing, pawn, pawn2, flag, checkSocialProperness2, false, flag2))
 					{
 						return ownedBed;
 					}
 				}
 			}
-			for (int j = 0; j < RestUtility.bedDefsBestToWorst_RestEffectiveness.Count; j++)
+			for (int k = 0; k < 2; k++)
 			{
-				ThingDef thingDef = RestUtility.bedDefsBestToWorst_RestEffectiveness[j];
-				if (RestUtility.CanUseBedEver(sleeper, thingDef))
+				Danger maxDanger = (k != 0) ? Danger.Deadly : Danger.None;
+				for (int l = 0; l < RestUtility.bedDefsBestToWorst_RestEffectiveness.Count; l++)
 				{
-					Predicate<Thing> validator = delegate(Thing b)
+					ThingDef thingDef2 = RestUtility.bedDefsBestToWorst_RestEffectiveness[l];
+					if (RestUtility.CanUseBedEver(sleeper, thingDef2))
 					{
-						bool arg_3A_0;
-						if (!((Building_Bed)b).Medical)
+						Building_Bed building_Bed2 = (Building_Bed)GenClosest.ClosestThingReachable(sleeper.Position, sleeper.Map, ThingRequest.ForDef(thingDef2), PathEndMode.OnCell, TraverseParms.For(traveler, Danger.Deadly, TraverseMode.ByPawn, false), 9999f, delegate(Thing b)
 						{
-							bool ignoreOtherReservations3 = ignoreOtherReservations;
-							arg_3A_0 = RestUtility.IsValidBedFor(b, sleeper, traveler, sleeperWillBePrisoner, checkSocialProperness, false, ignoreOtherReservations3);
-						}
-						else
+							bool arg_92_0;
+							if (!((Building_Bed)b).Medical && b.Position.GetDangerFor(sleeper, sleeper.Map) <= maxDanger)
+							{
+								Pawn sleeper2 = sleeper;
+								Pawn traveler2 = traveler;
+								bool sleeperWillBePrisoner2 = sleeperWillBePrisoner;
+								bool checkSocialProperness3 = checkSocialProperness;
+								bool ignoreOtherReservations2 = ignoreOtherReservations;
+								arg_92_0 = RestUtility.IsValidBedFor(b, sleeper2, traveler2, sleeperWillBePrisoner2, checkSocialProperness3, false, ignoreOtherReservations2);
+							}
+							else
+							{
+								arg_92_0 = false;
+							}
+							return arg_92_0;
+						}, null, 0, -1, false, RegionType.Set_Passable, false);
+						if (building_Bed2 != null)
 						{
-							arg_3A_0 = false;
+							return building_Bed2;
 						}
-						return arg_3A_0;
-					};
-					Building_Bed building_Bed2 = (Building_Bed)GenClosest.ClosestThingReachable(sleeper.Position, sleeper.Map, ThingRequest.ForDef(thingDef), PathEndMode.OnCell, TraverseParms.For(traveler, Danger.Deadly, TraverseMode.ByPawn, false), 9999f, validator, null, 0, -1, false, RegionType.Set_Passable, false);
-					if (building_Bed2 != null)
-					{
-						return building_Bed2;
 					}
 				}
 			}
@@ -226,20 +263,23 @@ namespace RimWorld
 
 		public static Building_Bed FindPatientBedFor(Pawn pawn)
 		{
-			Predicate<Thing> predicate = delegate(Thing t)
+			Predicate<Thing> medBedValidator = delegate(Thing t)
 			{
 				Building_Bed building_Bed2 = t as Building_Bed;
 				return building_Bed2 != null && (building_Bed2.Medical || !building_Bed2.def.building.bed_humanlike) && RestUtility.IsValidBedFor(building_Bed2, pawn, pawn, pawn.IsPrisoner, false, true, false);
 			};
-			if (pawn.InBed() && predicate(pawn.CurrentBed()))
+			if (pawn.InBed() && medBedValidator(pawn.CurrentBed()))
 			{
 				return pawn.CurrentBed();
 			}
-			Predicate<Thing> validator = predicate;
-			Building_Bed building_Bed = (Building_Bed)GenClosest.ClosestThingReachable(pawn.Position, pawn.Map, ThingRequest.ForGroup(ThingRequestGroup.BuildingArtificial), PathEndMode.OnCell, TraverseParms.For(pawn, Danger.Deadly, TraverseMode.ByPawn, false), 9999f, validator, null, 0, -1, false, RegionType.Set_Passable, false);
-			if (building_Bed != null)
+			for (int i = 0; i < 2; i++)
 			{
-				return building_Bed;
+				Danger maxDanger = (i != 0) ? Danger.Deadly : Danger.None;
+				Building_Bed building_Bed = (Building_Bed)GenClosest.ClosestThingReachable(pawn.Position, pawn.Map, ThingRequest.ForGroup(ThingRequestGroup.BuildingArtificial), PathEndMode.OnCell, TraverseParms.For(pawn, Danger.Deadly, TraverseMode.ByPawn, false), 9999f, (Thing b) => b.Position.GetDangerFor(pawn, pawn.Map) <= maxDanger && medBedValidator(b), null, 0, -1, false, RegionType.Set_Passable, false);
+				if (building_Bed != null)
+				{
+					return building_Bed;
+				}
 			}
 			return RestUtility.FindBedFor(pawn);
 		}

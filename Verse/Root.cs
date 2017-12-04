@@ -40,6 +40,10 @@ namespace Verse
 				}
 				this.uiRoot.Init();
 				Messages.Notify_LoadedLevelChanged();
+				if (Current.SubcameraDriver != null)
+				{
+					Current.SubcameraDriver.Init();
+				}
 			};
 			if (!PlayDataLoader.Loaded)
 			{

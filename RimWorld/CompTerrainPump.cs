@@ -134,7 +134,7 @@ namespace RimWorld
 					defaultLabel = "DEBUG: Progress 1 day",
 					action = delegate
 					{
-						this.<>f__this.progressTicks += 60000;
+						this.$this.progressTicks += 60000;
 					}
 				};
 			}

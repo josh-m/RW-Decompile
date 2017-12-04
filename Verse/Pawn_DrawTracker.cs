@@ -6,8 +6,6 @@ namespace Verse
 {
 	public class Pawn_DrawTracker
 	{
-		private const float MeleeJitterDistance = 0.5f;
-
 		private Pawn pawn;
 
 		public PawnTweener tweener;
@@ -15,8 +13,6 @@ namespace Verse
 		private JitterHandler jitterer;
 
 		public PawnLeaner leaner;
-
-		public PawnRotator rotator;
 
 		public PawnRenderer renderer;
 
@@ -26,13 +22,13 @@ namespace Verse
 
 		private PawnBreathMoteMaker breathMoteMaker;
 
+		private const float MeleeJitterDistance = 0.5f;
+
 		public Vector3 DrawPos
 		{
 			get
 			{
-				ProfilerThreadCheck.BeginSample("tweener.PreDrawPosCalculation()");
 				this.tweener.PreDrawPosCalculation();
-				ProfilerThreadCheck.EndSample();
 				Vector3 vector = this.tweener.TweenedPos;
 				vector += this.jitterer.CurrentOffset;
 				vector += this.leaner.LeanOffset;
@@ -47,7 +43,6 @@ namespace Verse
 			this.tweener = new PawnTweener(pawn);
 			this.jitterer = new JitterHandler();
 			this.leaner = new PawnLeaner(pawn);
-			this.rotator = new PawnRotator(pawn);
 			this.renderer = new PawnRenderer(pawn);
 			this.ui = new PawnUIOverlay(pawn);
 			this.footprintMaker = new PawnFootprintMaker(pawn);
@@ -68,7 +63,6 @@ namespace Verse
 			this.footprintMaker.FootprintMakerTick();
 			this.breathMoteMaker.BreathMoteMakerTick();
 			this.leaner.LeanerTick();
-			this.rotator.PawnRotatorTick();
 			this.renderer.RendererTick();
 		}
 

@@ -30,7 +30,7 @@ namespace RimWorld
 			return true;
 		}
 
-		public override bool TryExecute(IncidentParms parms)
+		protected override bool TryExecuteWorker(IncidentParms parms)
 		{
 			GameConditionManager gameConditionManager = parms.target.GameConditionManager;
 			int duration = Mathf.RoundToInt(this.def.durationDays.RandomInRange * 60000f);

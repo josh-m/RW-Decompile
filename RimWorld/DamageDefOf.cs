@@ -22,6 +22,8 @@ namespace RimWorld
 
 		public static DamageDef Scratch;
 
+		public static DamageDef TornadoScratch;
+
 		public static DamageDef Bite;
 
 		public static DamageDef Flame;

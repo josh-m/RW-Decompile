@@ -11,11 +11,12 @@ namespace RimWorld
 
 		public override void DrawGhost(ThingDef def, IntVec3 center, Rot4 rot)
 		{
+			Map visibleMap = Find.VisibleMap;
 			if (def.building == null || !def.building.hasFuelingPort)
 			{
 				return;
 			}
-			if (!FuelingPortUtility.GetFuelingPortCell(center, rot).Standable(Find.VisibleMap))
+			if (!FuelingPortUtility.GetFuelingPortCell(center, rot).Standable(visibleMap))
 			{
 				return;
 			}

@@ -6,20 +6,11 @@ namespace RimWorld
 {
 	public class ItemCollectionGenerator_AncientPodContents : ItemCollectionGenerator
 	{
-		protected override ItemCollectionGeneratorParams RandomTestParams
-		{
-			get
-			{
-				ItemCollectionGeneratorParams randomTestParams = base.RandomTestParams;
-				randomTestParams.podContentsType = Gen.RandomEnumValue<PodContentsType>(true);
-				return randomTestParams;
-			}
-		}
-
 		protected override void Generate(ItemCollectionGeneratorParams parms, List<Thing> outThings)
 		{
-			PodContentsType podContentsType = parms.podContentsType;
-			switch (podContentsType)
+			PodContentsType? podContentsType = parms.podContentsType;
+			PodContentsType podContentsType2 = (!podContentsType.HasValue) ? Gen.RandomEnumValue<PodContentsType>(true) : podContentsType.Value;
+			switch (podContentsType2)
 			{
 			case PodContentsType.Empty:
 				break;
@@ -40,15 +31,14 @@ namespace RimWorld
 				outThings.Add(this.GenerateSlave());
 				break;
 			default:
-				Log.Error("Pod contents type not handled: " + podContentsType);
+				Log.Error("Pod contents type not handled: " + podContentsType2);
 				break;
 			}
 		}
 
 		private Pawn GenerateFriendlySpacer()
 		{
-			Faction faction = Find.FactionManager.FirstFactionOfDef(FactionDefOf.Spacer);
-			PawnGenerationRequest request = new PawnGenerationRequest(PawnKindDefOf.SpaceSoldier, faction, PawnGenerationContext.NonPlayer, -1, false, false, false, false, true, false, 1f, false, true, true, false, true, null, null, null, null, null, null);
+			PawnGenerationRequest request = new PawnGenerationRequest(PawnKindDefOf.SpaceSoldier, Faction.OfSpacer, PawnGenerationContext.NonPlayer, -1, false, false, false, false, true, false, 1f, false, true, true, false, true, false, false, null, null, null, null, null, null, null);
 			Pawn pawn = PawnGenerator.GeneratePawn(request);
 			this.GiveRandomLootInventoryForTombPawn(pawn);
 			return pawn;
@@ -56,8 +46,7 @@ namespace RimWorld
 
 		private Pawn GenerateIncappedSpacer()
 		{
-			Faction faction = Find.FactionManager.FirstFactionOfDef(FactionDefOf.Spacer);
-			PawnGenerationRequest request = new PawnGenerationRequest(PawnKindDefOf.SpaceSoldier, faction, PawnGenerationContext.NonPlayer, -1, false, false, false, false, true, false, 1f, false, true, true, false, true, null, null, null, null, null, null);
+			PawnGenerationRequest request = new PawnGenerationRequest(PawnKindDefOf.SpaceSoldier, Faction.OfSpacer, PawnGenerationContext.NonPlayer, -1, false, false, false, false, true, false, 1f, false, true, true, false, true, false, false, null, null, null, null, null, null, null);
 			Pawn pawn = PawnGenerator.GeneratePawn(request);
 			HealthUtility.DamageUntilDowned(pawn);
 			this.GiveRandomLootInventoryForTombPawn(pawn);
@@ -66,8 +55,7 @@ namespace RimWorld
 
 		private Pawn GenerateSlave()
 		{
-			Faction faction = Find.FactionManager.FirstFactionOfDef(FactionDefOf.Spacer);
-			PawnGenerationRequest request = new PawnGenerationRequest(PawnKindDefOf.Slave, faction, PawnGenerationContext.NonPlayer, -1, false, false, false, false, true, false, 1f, false, true, true, false, true, null, null, null, null, null, null);
+			PawnGenerationRequest request = new PawnGenerationRequest(PawnKindDefOf.Slave, Faction.OfSpacer, PawnGenerationContext.NonPlayer, -1, false, false, false, false, true, false, 1f, false, true, true, false, true, false, false, null, null, null, null, null, null, null);
 			Pawn pawn = PawnGenerator.GeneratePawn(request);
 			HealthUtility.DamageUntilDowned(pawn);
 			this.GiveRandomLootInventoryForTombPawn(pawn);
@@ -80,8 +68,7 @@ namespace RimWorld
 
 		private Pawn GenerateAngrySpacer()
 		{
-			Faction faction = Find.FactionManager.FirstFactionOfDef(FactionDefOf.SpacerHostile);
-			PawnGenerationRequest request = new PawnGenerationRequest(PawnKindDefOf.SpaceSoldier, faction, PawnGenerationContext.NonPlayer, -1, false, false, false, false, true, false, 1f, false, true, true, false, true, null, null, null, null, null, null);
+			PawnGenerationRequest request = new PawnGenerationRequest(PawnKindDefOf.SpaceSoldier, Faction.OfSpacerHostile, PawnGenerationContext.NonPlayer, -1, false, false, false, false, true, false, 1f, false, true, true, false, true, false, false, null, null, null, null, null, null, null);
 			Pawn pawn = PawnGenerator.GeneratePawn(request);
 			this.GiveRandomLootInventoryForTombPawn(pawn);
 			return pawn;
@@ -89,15 +76,16 @@ namespace RimWorld
 
 		private Pawn GenerateHalfEatenSpacer()
 		{
-			Faction faction = Find.FactionManager.FirstFactionOfDef(FactionDefOf.Spacer);
-			PawnGenerationRequest request = new PawnGenerationRequest(PawnKindDefOf.SpaceSoldier, faction, PawnGenerationContext.NonPlayer, -1, false, false, false, false, true, false, 1f, false, true, true, false, true, null, null, null, null, null, null);
+			PawnGenerationRequest request = new PawnGenerationRequest(PawnKindDefOf.SpaceSoldier, Faction.OfSpacer, PawnGenerationContext.NonPlayer, -1, false, false, false, false, true, false, 1f, false, true, true, false, true, false, false, null, null, null, null, null, null, null);
 			Pawn pawn = PawnGenerator.GeneratePawn(request);
 			int num = Rand.Range(6, 10);
 			for (int i = 0; i < num; i++)
 			{
-				Thing arg_90_0 = pawn;
+				Thing arg_94_0 = pawn;
+				DamageDef bite = DamageDefOf.Bite;
+				int amount = Rand.Range(3, 8);
 				Pawn instigator = pawn;
-				arg_90_0.TakeDamage(new DamageInfo(DamageDefOf.Bite, Rand.Range(3, 8), -1f, instigator, null, null, DamageInfo.SourceCategory.ThingOrUnknown));
+				arg_94_0.TakeDamage(new DamageInfo(bite, amount, -1f, instigator, null, null, DamageInfo.SourceCategory.ThingOrUnknown));
 			}
 			this.GiveRandomLootInventoryForTombPawn(pawn);
 			return pawn;

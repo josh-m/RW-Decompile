@@ -20,7 +20,7 @@ namespace RimWorld
 			{
 				SingleContainedThing = t,
 				leaveSlag = false
-			});
+			}, false);
 		}
 
 		[DebuggerHidden]
@@ -99,12 +99,12 @@ namespace RimWorld
 							if (current3.def == resDef)
 							{
 								thing = current3;
-								goto IL_C6;
+								goto IL_CC;
 							}
 						}
 					}
 				}
-				IL_C6:
+				IL_CC:
 				if (thing == null)
 				{
 					Log.Error("Could not find any " + resDef + " to transfer to trader.");

@@ -38,10 +38,10 @@ namespace Verse
 			object[] array = textObjects;
 			for (int j = 0; j < array.Length; j++)
 			{
-				TextAsset text = (TextAsset)array[j];
-				LoadableXmlAsset asset = new LoadableXmlAsset(text.name, string.Empty, text.text);
-				XmlInheritance.TryRegisterAllFrom(asset, null);
-				assets.Add(asset);
+				TextAsset textAsset = (TextAsset)array[j];
+				LoadableXmlAsset loadableXmlAsset = new LoadableXmlAsset(textAsset.name, string.Empty, textAsset.text);
+				XmlInheritance.TryRegisterAllFrom(loadableXmlAsset, null);
+				assets.Add(loadableXmlAsset);
 			}
 			XmlInheritance.Resolve();
 			for (int i = 0; i < assets.Count; i++)
@@ -63,7 +63,7 @@ namespace Verse
 			FileInfo fileInfo = new FileInfo(filePath);
 			if (!fileInfo.Exists)
 			{
-				return (default(T) == null) ? Activator.CreateInstance<T>() : default(T);
+				return Activator.CreateInstance<T>();
 			}
 			T result;
 			try
@@ -80,7 +80,7 @@ namespace Verse
 			catch (Exception ex)
 			{
 				Log.Error("Exception loading file at " + filePath + ". Loading defaults instead. Exception was: " + ex.ToString());
-				result = ((default(T) == null) ? Activator.CreateInstance<T>() : default(T));
+				result = Activator.CreateInstance<T>();
 			}
 			return result;
 		}
@@ -137,13 +137,12 @@ namespace Verse
 									}
 									catch (Exception ex)
 									{
-										Exception e = ex;
 										Log.Error(string.Concat(new object[]
 										{
 											"Exception loading def from file ",
 											asset.name,
 											": ",
-											e
+											ex
 										}));
 									}
 									if (def != null)
@@ -195,13 +194,12 @@ namespace Verse
 						}
 						catch (Exception ex)
 						{
-							Exception e = ex;
 							Log.Error(string.Concat(new object[]
 							{
 								"Exception loading data from file ",
 								asset.name,
 								": ",
-								e
+								ex
 							}));
 							continue;
 						}

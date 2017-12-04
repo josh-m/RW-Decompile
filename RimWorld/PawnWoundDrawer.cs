@@ -20,22 +20,11 @@ namespace RimWorld
 
 			public Wound(Pawn pawn)
 			{
-				if (pawn.RaceProps.FleshType == FleshTypeDefOf.Normal)
-				{
-					this.mat = PawnWoundDrawer.WoundOverlays_Flesh.RandomElement<Material>();
-				}
-				else if (pawn.RaceProps.FleshType == FleshTypeDefOf.Mechanoid)
-				{
-					this.mat = PawnWoundDrawer.WoundOverlays_Mech.RandomElement<Material>();
-				}
-				else if (pawn.RaceProps.FleshType == FleshTypeDefOf.Insectoid)
-				{
-					this.mat = PawnWoundDrawer.WoundOverlays_Insect.RandomElement<Material>();
-				}
-				else
+				this.mat = pawn.RaceProps.FleshType.ChooseWoundOverlay();
+				if (this.mat == null)
 				{
 					Log.ErrorOnce(string.Format("No wound graphics data available for flesh type {0}", pawn.RaceProps.FleshType), 76591733);
-					this.mat = PawnWoundDrawer.WoundOverlays_Flesh.RandomElement<Material>();
+					this.mat = FleshTypeDefOf.Normal.ChooseWoundOverlay();
 				}
 				this.quat = Quaternion.AngleAxis((float)Rand.Range(0, 360), Vector3.up);
 				for (int i = 0; i < 4; i++)
@@ -59,40 +48,9 @@ namespace RimWorld
 
 		private int MaxDisplayWounds = 3;
 
-		private static readonly List<Material> WoundOverlays_Flesh = new List<Material>
-		{
-			MaterialPool.MatFrom("Things/Pawn/Wounds/WoundFleshA"),
-			MaterialPool.MatFrom("Things/Pawn/Wounds/WoundFleshB"),
-			MaterialPool.MatFrom("Things/Pawn/Wounds/WoundFleshC")
-		};
-
-		private static readonly List<Material> WoundOverlays_Mech = new List<Material>
-		{
-			MaterialPool.MatFrom("Things/Pawn/Wounds/WoundMechA"),
-			MaterialPool.MatFrom("Things/Pawn/Wounds/WoundMechB"),
-			MaterialPool.MatFrom("Things/Pawn/Wounds/WoundMechC")
-		};
-
-		private static readonly Color InsectWoundColor;
-
-		private static readonly List<Material> WoundOverlays_Insect;
-
 		public PawnWoundDrawer(Pawn pawn)
 		{
 			this.pawn = pawn;
-		}
-
-		static PawnWoundDrawer()
-		{
-			// Note: this type is marked as 'beforefieldinit'.
-			ColorInt colorInt = new ColorInt(60, 50, 40);
-			PawnWoundDrawer.InsectWoundColor = colorInt.ToColor;
-			PawnWoundDrawer.WoundOverlays_Insect = new List<Material>
-			{
-				MaterialPool.MatFrom("Things/Pawn/Wounds/WoundA", ShaderDatabase.Cutout, PawnWoundDrawer.InsectWoundColor),
-				MaterialPool.MatFrom("Things/Pawn/Wounds/WoundB", ShaderDatabase.Cutout, PawnWoundDrawer.InsectWoundColor),
-				MaterialPool.MatFrom("Things/Pawn/Wounds/WoundC", ShaderDatabase.Cutout, PawnWoundDrawer.InsectWoundColor)
-			};
 		}
 
 		public void RenderOverBody(Vector3 drawLoc, Mesh bodyMesh, Quaternion quat, bool forPortrait)

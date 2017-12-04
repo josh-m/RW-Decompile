@@ -21,7 +21,7 @@ namespace RimWorld
 			{
 				ThingDef chosenThingDef;
 				if (!(from d in DefDatabase<ThingDef>.AllDefs
-				where this.<>f__this.HandlesThingDef(d) && !this.<generatedDefs>__0.Contains(d)
+				where this.$this.HandlesThingDef(d) && d.tradeability == Tradeability.Stockable && !generatedDefs.Contains(d)
 				select d).TryRandomElement(out chosenThingDef))
 				{
 					break;
@@ -36,7 +36,7 @@ namespace RimWorld
 
 		public override bool HandlesThingDef(ThingDef thingDef)
 		{
-			return thingDef.tradeTags != null && thingDef.tradeability == Tradeability.Stockable && thingDef.techLevel <= this.maxTechLevelBuy && thingDef.tradeTags.Contains(this.tradeTag);
+			return thingDef.tradeTags != null && thingDef.tradeability != Tradeability.Never && thingDef.techLevel <= this.maxTechLevelBuy && thingDef.tradeTags.Contains(this.tradeTag);
 		}
 	}
 }

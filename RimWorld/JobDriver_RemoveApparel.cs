@@ -18,14 +18,20 @@ namespace RimWorld
 			}
 		}
 
+		public override bool TryMakePreToilReservations()
+		{
+			return true;
+		}
+
 		[DebuggerHidden]
 		protected override IEnumerable<Toil> MakeNewToils()
 		{
+			this.FailOnDestroyedOrNull(TargetIndex.A);
 			yield return new Toil
 			{
 				initAction = delegate
 				{
-					this.<>f__this.pawn.pather.StopDead();
+					this.$this.pawn.pather.StopDead();
 				},
 				defaultCompleteMode = ToilCompleteMode.Delay,
 				defaultDuration = 60
@@ -34,48 +40,48 @@ namespace RimWorld
 			{
 				initAction = delegate
 				{
-					if (this.<>f__this.pawn.apparel.WornApparel.Contains(this.<>f__this.TargetApparel))
+					if (this.$this.pawn.apparel.WornApparel.Contains(this.$this.TargetApparel))
 					{
 						Apparel apparel;
-						if (this.<>f__this.pawn.apparel.TryDrop(this.<>f__this.TargetApparel, out apparel))
+						if (this.$this.pawn.apparel.TryDrop(this.$this.TargetApparel, out apparel))
 						{
-							this.<>f__this.CurJob.targetA = apparel;
-							if (this.<>f__this.CurJob.haulDroppedApparel)
+							this.$this.job.targetA = apparel;
+							if (this.$this.job.haulDroppedApparel)
 							{
 								apparel.SetForbidden(false, false);
 								StoragePriority currentPriority = HaulAIUtility.StoragePriorityAtFor(apparel.Position, apparel);
 								IntVec3 c;
-								if (StoreUtility.TryFindBestBetterStoreCellFor(apparel, this.<>f__this.pawn, this.<>f__this.Map, currentPriority, this.<>f__this.pawn.Faction, out c, true))
+								if (StoreUtility.TryFindBestBetterStoreCellFor(apparel, this.$this.pawn, this.$this.Map, currentPriority, this.$this.pawn.Faction, out c, true))
 								{
-									this.<>f__this.CurJob.count = apparel.stackCount;
-									this.<>f__this.CurJob.targetB = c;
+									this.$this.job.count = apparel.stackCount;
+									this.$this.job.targetB = c;
 								}
 								else
 								{
-									this.<>f__this.EndJobWith(JobCondition.Incompletable);
+									this.$this.EndJobWith(JobCondition.Incompletable);
 								}
 							}
 							else
 							{
-								this.<>f__this.EndJobWith(JobCondition.Succeeded);
+								this.$this.EndJobWith(JobCondition.Succeeded);
 							}
 						}
 						else
 						{
-							this.<>f__this.EndJobWith(JobCondition.Incompletable);
+							this.$this.EndJobWith(JobCondition.Incompletable);
 						}
 					}
 					else
 					{
-						this.<>f__this.EndJobWith(JobCondition.Incompletable);
+						this.$this.EndJobWith(JobCondition.Incompletable);
 					}
 				}
 			};
-			if (base.CurJob.haulDroppedApparel)
+			if (this.job.haulDroppedApparel)
 			{
 				yield return Toils_Reserve.Reserve(TargetIndex.B, 1, -1, null);
 				yield return Toils_Reserve.Reserve(TargetIndex.A, 1, -1, null);
-				yield return Toils_Haul.StartCarryThing(TargetIndex.A, false, false).FailOn(() => !this.<>f__this.pawn.health.capacities.CapableOf(PawnCapacityDefOf.Manipulation));
+				yield return Toils_Haul.StartCarryThing(TargetIndex.A, false, false, false).FailOn(() => !this.$this.pawn.health.capacities.CapableOf(PawnCapacityDefOf.Manipulation));
 				Toil carryToCell = Toils_Haul.CarryHauledThingToCell(TargetIndex.B);
 				yield return carryToCell;
 				yield return Toils_Haul.PlaceHauledThingInCell(TargetIndex.B, carryToCell, true);

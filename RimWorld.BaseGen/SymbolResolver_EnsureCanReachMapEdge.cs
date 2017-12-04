@@ -55,7 +55,7 @@ namespace RimWorld.BaseGen
 									found = true;
 									foundDest = x;
 								}
-							}, true);
+							}, 2147483647, true, null);
 							if (found)
 							{
 								this.ReconstructPathAndDestroyWalls(foundDest, room, rp);
@@ -96,24 +96,24 @@ namespace RimWorld.BaseGen
 			}
 			if (intVec.IsValid)
 			{
-				ThingDef arg_12F_0;
-				if ((arg_12F_0 = thingDef) == null)
+				ThingDef arg_132_0;
+				if ((arg_132_0 = thingDef) == null)
 				{
-					arg_12F_0 = (rp.wallStuff ?? BaseGenUtility.RandomCheapWallStuff(rp.faction, false));
+					arg_132_0 = (rp.wallStuff ?? BaseGenUtility.RandomCheapWallStuff(rp.faction, false));
 				}
-				ThingDef stuff = arg_12F_0;
+				ThingDef stuff = arg_132_0;
 				Thing thing = ThingMaker.MakeThing(ThingDefOf.Door, stuff);
 				thing.SetFaction(rp.faction, null);
 				GenSpawn.Spawn(thing, intVec, map);
 			}
 			if (intVec2.IsValid && intVec2 != intVec && !intVec2.AdjacentToCardinal(intVec))
 			{
-				ThingDef arg_1A1_0;
-				if ((arg_1A1_0 = thingDef2) == null)
+				ThingDef arg_1A5_0;
+				if ((arg_1A5_0 = thingDef2) == null)
 				{
-					arg_1A1_0 = (rp.wallStuff ?? BaseGenUtility.RandomCheapWallStuff(rp.faction, false));
+					arg_1A5_0 = (rp.wallStuff ?? BaseGenUtility.RandomCheapWallStuff(rp.faction, false));
 				}
-				ThingDef stuff2 = arg_1A1_0;
+				ThingDef stuff2 = arg_1A5_0;
 				Thing thing2 = ThingMaker.MakeThing(ThingDefOf.Door, stuff2);
 				thing2.SetFaction(rp.faction, null);
 				GenSpawn.Spawn(thing2, intVec2, map);

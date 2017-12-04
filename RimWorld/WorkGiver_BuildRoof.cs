@@ -15,6 +15,14 @@ namespace RimWorld
 			}
 		}
 
+		public override bool AllowUnreachable
+		{
+			get
+			{
+				return true;
+			}
+		}
+
 		public override IEnumerable<IntVec3> PotentialWorkCellsGlobal(Pawn pawn)
 		{
 			return pawn.Map.areaManager.BuildRoof.ActiveCells;
@@ -30,8 +38,13 @@ namespace RimWorld
 			{
 				return false;
 			}
+			if (c.IsForbidden(pawn))
+			{
+				return false;
+			}
+			LocalTargetInfo target = c;
 			ReservationLayerDef ceiling = ReservationLayerDefOf.Ceiling;
-			return pawn.CanReserve(c, 1, -1, ceiling, false) && (pawn.CanReach(c, PathEndMode.Touch, pawn.NormalMaxDanger(), false, TraverseMode.ByPawn) || this.BuildingToTouchToBeAbleToBuildRoof(c, pawn) != null) && RoofCollapseUtility.WithinRangeOfRoofHolder(c, pawn.Map) && RoofCollapseUtility.ConnectedToRoofHolder(c, pawn.Map, true);
+			return pawn.CanReserve(target, 1, -1, ceiling, false) && (pawn.CanReach(c, PathEndMode.Touch, pawn.NormalMaxDanger(), false, TraverseMode.ByPawn) || this.BuildingToTouchToBeAbleToBuildRoof(c, pawn) != null) && RoofCollapseUtility.WithinRangeOfRoofHolder(c, pawn.Map) && RoofCollapseUtility.ConnectedToRoofHolder(c, pawn.Map, true);
 		}
 
 		private Building BuildingToTouchToBeAbleToBuildRoof(IntVec3 c, Pawn pawn)

@@ -51,7 +51,7 @@ namespace RimWorld
 
 		public static bool CaresAboutForbidden(Pawn pawn, bool cellTarget)
 		{
-			return pawn.HostFaction == null && !pawn.InMentalState && (!cellTarget || !ThinkNode_ConditionalShouldFollowMaster.ShouldFollowMaster(pawn));
+			return (pawn.HostFaction == null || (pawn.HostFaction == Faction.OfPlayer && pawn.Spawned && !pawn.Map.IsPlayerHome && (pawn.GetRoom(RegionType.Set_Passable) == null || !pawn.GetRoom(RegionType.Set_Passable).isPrisonCell) && (!pawn.IsPrisoner || pawn.guest.PrisonerIsSecure))) && !pawn.InMentalState && (!cellTarget || !ThinkNode_ConditionalShouldFollowMaster.ShouldFollowMaster(pawn));
 		}
 
 		public static bool InAllowedArea(this IntVec3 c, Pawn forPawn)
@@ -77,7 +77,7 @@ namespace RimWorld
 			{
 				return true;
 			}
-			if (t.IsForbidden(pawn.Faction))
+			if (t.IsForbidden(pawn.Faction) || t.IsForbidden(pawn.HostFaction))
 			{
 				return true;
 			}

@@ -7,6 +7,12 @@ namespace RimWorld
 {
 	public class WeatherEvent_LightningFlash : WeatherEvent
 	{
+		private int duration;
+
+		private Vector2 shadowVector;
+
+		private int age;
+
 		private const int FlashFadeInTicks = 3;
 
 		private const int MinFlashDuration = 15;
@@ -14,12 +20,6 @@ namespace RimWorld
 		private const int MaxFlashDuration = 60;
 
 		private const float FlashShadowDistance = 5f;
-
-		private int duration;
-
-		private Vector2 shadowVector;
-
-		private int age;
 
 		private static readonly SkyColorSet LightningFlashColors = new SkyColorSet(new Color(0.9f, 0.95f, 1f), new Color(0.784313738f, 0.8235294f, 0.847058833f), new Color(0.9f, 0.95f, 1f), 1.15f);
 

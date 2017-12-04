@@ -9,21 +9,21 @@ namespace RimWorld
 	{
 		private bool preferBuildingDestroyers;
 
-		private float MinMeleeWeaponDamageThreshold
+		private float MinMeleeWeaponDPSThreshold
 		{
 			get
 			{
-				List<VerbProperties> verbs = ThingDefOf.Human.Verbs;
+				List<Tool> tools = ThingDefOf.Human.tools;
 				float num = 0f;
-				for (int i = 0; i < verbs.Count; i++)
+				for (int i = 0; i < tools.Count; i++)
 				{
-					if (verbs[i].linkedBodyPartsGroup == BodyPartGroupDefOf.LeftHand || verbs[i].linkedBodyPartsGroup == BodyPartGroupDefOf.RightHand)
+					if (tools[i].linkedBodyPartsGroup == BodyPartGroupDefOf.LeftHand || tools[i].linkedBodyPartsGroup == BodyPartGroupDefOf.RightHand)
 					{
-						num = (float)verbs[i].meleeDamageBaseAmount;
+						num = tools[i].power / tools[i].cooldownTime;
 						break;
 					}
 				}
-				return num + 3f;
+				return num + 2f;
 			}
 		}
 
@@ -96,7 +96,7 @@ namespace RimWorld
 			{
 				return 0;
 			}
-			if (wep.def.IsMeleeWeapon && wep.GetStatValue(StatDefOf.MeleeWeapon_DamageAmount, true) < this.MinMeleeWeaponDamageThreshold)
+			if (wep.def.IsMeleeWeapon && wep.GetStatValue(StatDefOf.MeleeWeapon_AverageDPS, true) < this.MinMeleeWeaponDPSThreshold)
 			{
 				return 0;
 			}

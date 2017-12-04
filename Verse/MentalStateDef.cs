@@ -21,6 +21,8 @@ namespace Verse
 
 		public bool colonistsOnly;
 
+		public List<PawnCapacityDef> requiredCapacities = new List<PawnCapacityDef>();
+
 		public bool blockNormalThoughts;
 
 		public EffecterDef stateEffecter;
@@ -31,6 +33,8 @@ namespace Verse
 
 		public DrugCategory drugCategory = DrugCategory.Any;
 
+		public bool ignoreDrugPolicy;
+
 		public float recoveryMtbDays = 1f;
 
 		public int minTicksBeforeRecovery = 500;
@@ -38,8 +42,6 @@ namespace Verse
 		public int maxTicksBeforeRecovery = 99999999;
 
 		public bool recoverFromSleep;
-
-		public bool recoverFromDowned;
 
 		public ThoughtDef moodRecoveryThought;
 
@@ -103,7 +105,7 @@ namespace Verse
 			base.ResolveReferences();
 			if (this.beginLetterDef == null)
 			{
-				this.beginLetterDef = LetterDefOf.BadUrgent;
+				this.beginLetterDef = LetterDefOf.NegativeEvent;
 			}
 		}
 

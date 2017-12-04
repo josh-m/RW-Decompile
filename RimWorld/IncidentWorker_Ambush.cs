@@ -8,15 +8,14 @@ namespace RimWorld
 {
 	public abstract class IncidentWorker_Ambush : IncidentWorker
 	{
-		protected abstract List<Pawn> GeneratePawns(IIncidentTarget target, float points, int tile);
+		protected abstract List<Pawn> GeneratePawns(IncidentParms parms);
 
 		protected virtual void PostProcessGeneratedPawnsAfterSpawning(List<Pawn> generatedPawns)
 		{
 		}
 
-		protected virtual LordJob CreateLordJob(List<Pawn> generatedPawns, out Faction faction)
+		protected virtual LordJob CreateLordJob(List<Pawn> generatedPawns, IncidentParms parms)
 		{
-			faction = null;
 			return null;
 		}
 
@@ -25,7 +24,7 @@ namespace RimWorld
 			return target is Map || CaravanIncidentUtility.CanFireIncidentWhichWantsToGenerateMapAt(target.Tile);
 		}
 
-		public override bool TryExecute(IncidentParms parms)
+		protected override bool TryExecuteWorker(IncidentParms parms)
 		{
 			if (parms.target is Map)
 			{
@@ -46,7 +45,11 @@ namespace RimWorld
 			{
 				return false;
 			}
-			List<Pawn> list = this.GeneratePawns(parms.target, parms.points, parms.target.Tile);
+			List<Pawn> list = this.GeneratePawns(parms);
+			if (!list.Any<Pawn>())
+			{
+				return false;
+			}
 			bool flag = false;
 			if (map == null)
 			{
@@ -62,13 +65,12 @@ namespace RimWorld
 				}
 			}
 			this.PostProcessGeneratedPawnsAfterSpawning(list);
-			Faction faction;
-			LordJob lordJob = this.CreateLordJob(list, out faction);
-			if (lordJob != null && list.Any<Pawn>())
+			LordJob lordJob = this.CreateLordJob(list, parms);
+			if (lordJob != null)
 			{
-				LordMaker.MakeNewLord(faction, lordJob, map, list);
+				LordMaker.MakeNewLord(parms.faction, lordJob, map, list);
 			}
-			this.SendAmbushLetter(list[0], faction);
+			this.SendAmbushLetter(list[0], parms);
 			if (flag)
 			{
 				Find.TickManager.CurTimeSpeed = TimeSpeed.Paused;
@@ -76,6 +78,6 @@ namespace RimWorld
 			return true;
 		}
 
-		protected abstract void SendAmbushLetter(Pawn anyPawn, Faction enemyFaction);
+		protected abstract void SendAmbushLetter(Pawn anyPawn, IncidentParms parms);
 	}
 }

@@ -271,7 +271,7 @@ namespace Verse
 
 		public static bool ContentsFrozen(IThingHolder holder)
 		{
-			return holder is Building_CryptosleepCasket;
+			return holder is Building_CryptosleepCasket || holder is ImportantPawnComp;
 		}
 
 		public static bool TryGetFixedTemperature(IThingHolder holder, out float temperature)

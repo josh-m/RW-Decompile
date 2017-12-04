@@ -5,11 +5,11 @@ namespace RimWorld
 {
 	public class PredatorThreat : IExposable
 	{
-		private const int ExpireAfterTicks = 600;
-
 		public Pawn predator;
 
 		public int lastAttackTicks;
+
+		private const int ExpireAfterTicks = 600;
 
 		public bool Expired
 		{

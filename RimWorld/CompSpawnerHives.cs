@@ -8,9 +8,11 @@ namespace RimWorld
 {
 	public class CompSpawnerHives : ThingComp
 	{
-		public const int MaxHivesPerMap = 30;
-
 		private int nextHiveSpawnTick = -1;
+
+		public bool canSpawnHives = true;
+
+		public const int MaxHivesPerMap = 30;
 
 		private CompProperties_SpawnerHives Props
 		{
@@ -24,7 +26,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return HivesUtility.TotalSpawnedHivesCount(this.parent.Map) < 30;
+				return this.canSpawnHives && HivesUtility.TotalSpawnedHivesCount(this.parent.Map) < 30;
 			}
 		}
 
@@ -45,7 +47,7 @@ namespace RimWorld
 				if (this.TrySpawnChildHive(false, out hive2))
 				{
 					hive2.nextPawnSpawnTick = Find.TickManager.TicksGame + Rand.Range(150, 350);
-					Messages.Message("MessageHiveReproduced".Translate(), hive2, MessageSound.Negative);
+					Messages.Message("MessageHiveReproduced".Translate(), hive2, MessageTypeDefOf.NegativeEvent);
 				}
 				else
 				{
@@ -56,12 +58,15 @@ namespace RimWorld
 
 		public override string CompInspectStringExtra()
 		{
-			string text = null;
+			if (!this.canSpawnHives)
+			{
+				return "DormantHiveNotReproducing".Translate();
+			}
 			if (this.CanSpawnChildHive)
 			{
-				text = text + "HiveReproducesIn".Translate() + ": " + (this.nextHiveSpawnTick - Find.TickManager.TicksGame).ToStringTicksToPeriod(true, false, true);
+				return "HiveReproducesIn".Translate() + ": " + (this.nextHiveSpawnTick - Find.TickManager.TicksGame).ToStringTicksToPeriod(true, false, true);
 			}
-			return text;
+			return null;
 		}
 
 		public void CalculateNextHiveSpawnTick()
@@ -171,7 +176,7 @@ namespace RimWorld
 					action = delegate
 					{
 						Hive hive;
-						this.<>f__this.TrySpawnChildHive(false, out hive);
+						this.$this.TrySpawnChildHive(false, out hive);
 					}
 				};
 			}
@@ -180,6 +185,7 @@ namespace RimWorld
 		public override void PostExposeData()
 		{
 			Scribe_Values.Look<int>(ref this.nextHiveSpawnTick, "nextHiveSpawnTick", 0, false);
+			Scribe_Values.Look<bool>(ref this.canSpawnHives, "canSpawnHives", true, false);
 		}
 	}
 }

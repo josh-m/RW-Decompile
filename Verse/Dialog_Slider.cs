@@ -5,10 +5,6 @@ namespace Verse
 {
 	public class Dialog_Slider : Window
 	{
-		private const float BotAreaHeight = 30f;
-
-		private const float TopPadding = 15f;
-
 		public Func<int, string> textGetter;
 
 		public int from;
@@ -18,6 +14,10 @@ namespace Verse
 		private Action<int> confirmAction;
 
 		private int curValue;
+
+		private const float BotAreaHeight = 30f;
+
+		private const float TopPadding = 15f;
 
 		public override Vector2 InitialSize
 		{

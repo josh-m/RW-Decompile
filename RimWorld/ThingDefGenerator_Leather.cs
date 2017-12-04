@@ -20,9 +20,7 @@ namespace RimWorld
 		[DebuggerHidden]
 		public static IEnumerable<ThingDef> ImpliedLeatherDefs()
 		{
-			int numLeathers = (from def in DefDatabase<ThingDef>.AllDefs
-			where ThingDefGenerator_Leather.GeneratesLeather(def)
-			select def).Count<ThingDef>();
+			int numLeathers = DefDatabase<ThingDef>.AllDefs.Where(new Func<ThingDef, bool>(ThingDefGenerator_Leather.GeneratesLeather)).Count<ThingDef>();
 			float eachLeatherCommonality = 1f / (float)numLeathers;
 			foreach (ThingDef sourceDef in DefDatabase<ThingDef>.AllDefs.ToList<ThingDef>())
 			{
@@ -92,9 +90,9 @@ namespace RimWorld
 						List<StatModifier> sfos = sourceDef.race.leatherStatFactors;
 						if (sfos != null)
 						{
-							foreach (StatModifier fo in sfos)
+							foreach (StatModifier current in sfos)
 							{
-								StatUtility.SetStatValueInList(ref d.stuffProps.statFactors, fo.stat, fo.value);
+								StatUtility.SetStatValueInList(ref d.stuffProps.statFactors, current.stat, current.value);
 							}
 						}
 						sourceDef.race.leatherDef = d;

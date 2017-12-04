@@ -7,6 +7,8 @@ namespace Verse.AI
 {
 	public static class Toils_Recipe
 	{
+		private const int LongCraftingProjectThreshold = 20000;
+
 		public static Toil MakeUnfinishedThingIfNeeded()
 		{
 			Toil toil = new Toil();
@@ -45,7 +47,7 @@ namespace Verse.AI
 				}
 				GenSpawn.Spawn(unfinishedThing, curJob.GetTarget(TargetIndex.A).Cell, actor.Map);
 				curJob.SetTarget(TargetIndex.B, unfinishedThing);
-				actor.Reserve(unfinishedThing, 1, -1, null);
+				actor.Reserve(unfinishedThing, curJob, 1, -1, null);
 			};
 			return toil;
 		}
@@ -159,6 +161,15 @@ namespace Verse.AI
 				Toils_Recipe.ConsumeIngredients(ingredients, curJob.RecipeDef, actor.Map);
 				curJob.bill.Notify_IterationCompleted(actor, ingredients);
 				RecordsUtility.Notify_BillDone(actor, list);
+				UnfinishedThing unfinishedThing = curJob.GetTarget(TargetIndex.B).Thing as UnfinishedThing;
+				if (curJob.bill.recipe.WorkAmountTotal((unfinishedThing == null) ? null : unfinishedThing.Stuff) >= 20000f && list.Count > 0)
+				{
+					TaleRecorder.RecordTale(TaleDefOf.CompletedLongCraftingProject, new object[]
+					{
+						actor,
+						list[0].def
+					});
+				}
 				if (list.Count == 0)
 				{
 					actor.jobs.EndCurrentJob(JobCondition.Succeeded, true);

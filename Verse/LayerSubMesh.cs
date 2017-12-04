@@ -49,8 +49,12 @@ namespace Verse
 			this.finalized = false;
 		}
 
-		public void FinalizeMesh(MeshParts parts, bool optimize = false)
+		public void FinalizeMesh(MeshParts parts)
 		{
+			if (this.finalized)
+			{
+				Log.Warning("Finalizing mesh which is already finalized. Did you forget to call Clear()?");
+			}
 			if ((byte)(parts & MeshParts.Verts) != 0 || (byte)(parts & MeshParts.Tris) != 0)
 			{
 				this.mesh.Clear();
@@ -84,10 +88,6 @@ namespace Verse
 			if ((byte)(parts & MeshParts.UVs) != 0 && this.uvs.Count > 0)
 			{
 				this.mesh.SetUVs(0, this.uvs);
-			}
-			if (optimize)
-			{
-				this.mesh.Optimize();
 			}
 			this.finalized = true;
 		}

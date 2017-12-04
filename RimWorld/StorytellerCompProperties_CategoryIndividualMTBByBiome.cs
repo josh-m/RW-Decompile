@@ -6,6 +6,8 @@ namespace RimWorld
 	{
 		public IncidentCategory category;
 
+		public bool applyCaravanStealthFactor;
+
 		public StorytellerCompProperties_CategoryIndividualMTBByBiome()
 		{
 			this.compClass = typeof(StorytellerComp_CategoryIndividualMTBByBiome);

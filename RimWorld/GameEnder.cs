@@ -7,11 +7,11 @@ namespace RimWorld
 {
 	public sealed class GameEnder : IExposable
 	{
-		private const int GameEndCountdownDuration = 400;
-
 		public bool gameEnding;
 
 		private int ticksToGameOver = -1;
+
+		private const int GameEndCountdownDuration = 400;
 
 		public void ExposeData()
 		{
@@ -19,13 +19,9 @@ namespace RimWorld
 			Scribe_Values.Look<int>(ref this.ticksToGameOver, "ticksToGameOver", -1, false);
 		}
 
-		public void CheckGameOver()
+		public void CheckOrUpdateGameOver()
 		{
 			if (Find.TickManager.TicksGame < 300)
-			{
-				return;
-			}
-			if (this.gameEnding)
 			{
 				return;
 			}
@@ -34,6 +30,7 @@ namespace RimWorld
 			{
 				if (maps[i].mapPawns.FreeColonistsSpawnedOrInPlayerEjectablePodsCount >= 1)
 				{
+					this.gameEnding = false;
 					return;
 				}
 			}
@@ -42,6 +39,7 @@ namespace RimWorld
 			{
 				if (this.IsPlayerControlledWithFreeColonist(caravans[j]))
 				{
+					this.gameEnding = false;
 					return;
 				}
 			}
@@ -50,8 +48,13 @@ namespace RimWorld
 			{
 				if (travelingTransportPods[k].PodsHaveAnyFreeColonist)
 				{
+					this.gameEnding = false;
 					return;
 				}
+			}
+			if (this.gameEnding)
+			{
+				return;
 			}
 			this.gameEnding = true;
 			this.ticksToGameOver = 400;

@@ -38,31 +38,31 @@ namespace RimWorld.Planet
 			{
 				Tile tile = tiles[i];
 				BiomeDef biome = tile.biome;
-				int subMeshIndex;
-				LayerSubMesh subMesh = base.GetSubMesh(biome.DrawMaterial, out subMeshIndex);
-				while (subMeshIndex >= this.triangleIndexToTileID.Count)
+				int j;
+				LayerSubMesh subMesh = base.GetSubMesh(biome.DrawMaterial, out j);
+				while (j >= this.triangleIndexToTileID.Count)
 				{
 					this.triangleIndexToTileID.Add(new List<int>());
 				}
-				int startVertIndex = subMesh.verts.Count;
-				int vertIndex = 0;
-				int oneAfterLastVert = (i + 1 >= tileIDToVerts_offsets.Count) ? verts.Count : tileIDToVerts_offsets[i + 1];
-				for (int j = tileIDToVerts_offsets[i]; j < oneAfterLastVert; j++)
+				int count = subMesh.verts.Count;
+				int num = 0;
+				int num2 = (i + 1 >= tileIDToVerts_offsets.Count) ? verts.Count : tileIDToVerts_offsets[i + 1];
+				for (int k = tileIDToVerts_offsets[i]; k < num2; k++)
 				{
-					subMesh.verts.Add(verts[j]);
+					subMesh.verts.Add(verts[k]);
 					subMesh.uvs.Add(this.elevationValues[colorsAndUVsIndex]);
 					colorsAndUVsIndex++;
-					if (j < oneAfterLastVert - 2)
+					if (k < num2 - 2)
 					{
-						subMesh.tris.Add(startVertIndex + vertIndex + 2);
-						subMesh.tris.Add(startVertIndex + vertIndex + 1);
-						subMesh.tris.Add(startVertIndex);
-						this.triangleIndexToTileID[subMeshIndex].Add(i);
+						subMesh.tris.Add(count + num + 2);
+						subMesh.tris.Add(count + num + 1);
+						subMesh.tris.Add(count);
+						this.triangleIndexToTileID[j].Add(i);
 					}
-					vertIndex++;
+					num++;
 				}
 			}
-			base.FinalizeMesh(MeshParts.All, true);
+			base.FinalizeMesh(MeshParts.All);
 			foreach (object result3 in this.RegenerateMeshColliders())
 			{
 				yield return result3;
@@ -94,8 +94,8 @@ namespace RimWorld.Planet
 			MeshCollider[] components = gameObject.GetComponents<MeshCollider>();
 			for (int j = 0; j < components.Length; j++)
 			{
-				MeshCollider component = components[j];
-				UnityEngine.Object.Destroy(component);
+				MeshCollider obj = components[j];
+				UnityEngine.Object.Destroy(obj);
 			}
 			for (int i = 0; i < this.subMeshes.Count; i++)
 			{
@@ -126,41 +126,41 @@ namespace RimWorld.Planet
 				int oneAfterLastVert = (i + 1 >= tilesCount) ? verts.Count : tileIDToVerts_offsets[i + 1];
 				for (int j = tileIDToVerts_offsets[i]; j < oneAfterLastVert; j++)
 				{
-					Vector3 elevationVal = default(Vector3);
-					elevationVal.x = elevation;
-					bool isCoast = false;
+					Vector3 item = default(Vector3);
+					item.x = elevation;
+					bool flag = false;
 					for (int k = tileIDToNeighbors_offsets[i]; k < oneAfterLastNeighbor; k++)
 					{
-						int oneAfterLastNeighVert = (tileIDToNeighbors_values[k] + 1 >= tileIDToVerts_offsets.Count) ? verts.Count : tileIDToVerts_offsets[tileIDToNeighbors_values[k] + 1];
-						for (int l = tileIDToVerts_offsets[tileIDToNeighbors_values[k]]; l < oneAfterLastNeighVert; l++)
+						int num = (tileIDToNeighbors_values[k] + 1 >= tileIDToVerts_offsets.Count) ? verts.Count : tileIDToVerts_offsets[tileIDToNeighbors_values[k] + 1];
+						for (int l = tileIDToVerts_offsets[tileIDToNeighbors_values[k]]; l < num; l++)
 						{
 							if (verts[l] == verts[j])
 							{
-								Tile neigh = tiles[tileIDToNeighbors_values[k]];
-								if (!isCoast)
+								Tile tile2 = tiles[tileIDToNeighbors_values[k]];
+								if (!flag)
 								{
-									if ((neigh.elevation >= 0f && elevation <= 0f) || (neigh.elevation <= 0f && elevation >= 0f))
+									if ((tile2.elevation >= 0f && elevation <= 0f) || (tile2.elevation <= 0f && elevation >= 0f))
 									{
-										isCoast = true;
+										flag = true;
 									}
-									else if (neigh.elevation > elevationVal.x)
+									else if (tile2.elevation > item.x)
 									{
-										elevationVal.x = neigh.elevation;
+										item.x = tile2.elevation;
 									}
 								}
 								break;
 							}
 						}
 					}
-					if (isCoast)
+					if (flag)
 					{
-						elevationVal.x = 0f;
+						item.x = 0f;
 					}
-					if (tile.biome.DrawMaterial.shader != ShaderDatabase.WorldOcean && elevationVal.x < 0f)
+					if (tile.biome.DrawMaterial.shader != ShaderDatabase.WorldOcean && item.x < 0f)
 					{
-						elevationVal.x = 0f;
+						item.x = 0f;
 					}
-					this.elevationValues.Add(elevationVal);
+					this.elevationValues.Add(item);
 				}
 				if (i % 1000 == 0)
 				{

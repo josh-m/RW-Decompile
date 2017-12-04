@@ -6,11 +6,15 @@ namespace RimWorld
 	[DefOf]
 	public static class LetterDefOf
 	{
-		public static LetterDef Good;
+		public static LetterDef ThreatBig;
 
-		public static LetterDef BadNonUrgent;
+		public static LetterDef ThreatSmall;
 
-		public static LetterDef BadUrgent;
+		public static LetterDef NegativeEvent;
+
+		public static LetterDef NeutralEvent;
+
+		public static LetterDef PositiveEvent;
 
 		public static LetterDef ItemStashFeeDemand;
 	}

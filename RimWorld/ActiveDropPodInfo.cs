@@ -4,10 +4,8 @@ using Verse;
 
 namespace RimWorld
 {
-	public class ActiveDropPodInfo : IExposable, IThingHolder
+	public class ActiveDropPodInfo : IThingHolder, IExposable
 	{
-		public const int DefaultOpenDelay = 110;
-
 		public IThingHolder parent;
 
 		public ThingOwner innerContainer;
@@ -17,6 +15,8 @@ namespace RimWorld
 		public bool leaveSlag;
 
 		public bool savePawnsWithReferenceMode;
+
+		public const int DefaultOpenDelay = 110;
 
 		private List<Thing> tmpThings = new List<Thing>();
 

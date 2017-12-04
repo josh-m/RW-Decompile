@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using Verse;
 
@@ -13,15 +12,11 @@ namespace RimWorld
 		static PawnNameDatabaseShuffled()
 		{
 			PawnNameDatabaseShuffled.banks = new Dictionary<PawnNameCategory, NameBank>();
-			using (IEnumerator enumerator = Enum.GetValues(typeof(PawnNameCategory)).GetEnumerator())
+			foreach (PawnNameCategory pawnNameCategory in Enum.GetValues(typeof(PawnNameCategory)))
 			{
-				while (enumerator.MoveNext())
+				if (pawnNameCategory != PawnNameCategory.NoName)
 				{
-					PawnNameCategory pawnNameCategory = (PawnNameCategory)((byte)enumerator.Current);
-					if (pawnNameCategory != PawnNameCategory.NoName)
-					{
-						PawnNameDatabaseShuffled.banks.Add(pawnNameCategory, new NameBank(pawnNameCategory));
-					}
+					PawnNameDatabaseShuffled.banks.Add(pawnNameCategory, new NameBank(pawnNameCategory));
 				}
 			}
 			NameBank nameBank = PawnNameDatabaseShuffled.BankOf(PawnNameCategory.HumanStandard);

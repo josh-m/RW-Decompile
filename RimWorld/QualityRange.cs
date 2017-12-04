@@ -28,13 +28,23 @@ namespace RimWorld
 			return p >= this.min && p <= this.max;
 		}
 
+		public static bool operator ==(QualityRange a, QualityRange b)
+		{
+			return a.min == b.min && a.max == b.max;
+		}
+
+		public static bool operator !=(QualityRange a, QualityRange b)
+		{
+			return !(a == b);
+		}
+
 		public static QualityRange FromString(string s)
 		{
 			string[] array = s.Split(new char[]
 			{
 				'~'
 			});
-			QualityRange result = new QualityRange((QualityCategory)((byte)ParseHelper.FromString(array[0], typeof(QualityCategory))), (QualityCategory)((byte)ParseHelper.FromString(array[1], typeof(QualityCategory))));
+			QualityRange result = new QualityRange((QualityCategory)ParseHelper.FromString(array[0], typeof(QualityCategory)), (QualityCategory)ParseHelper.FromString(array[1], typeof(QualityCategory)));
 			return result;
 		}
 
@@ -61,16 +71,6 @@ namespace RimWorld
 		public bool Equals(QualityRange other)
 		{
 			return other.min == this.min && other.max == this.max;
-		}
-
-		public static bool operator ==(QualityRange a, QualityRange b)
-		{
-			return a.min == b.min && a.max == b.max;
-		}
-
-		public static bool operator !=(QualityRange a, QualityRange b)
-		{
-			return !(a == b);
 		}
 	}
 }

@@ -4,10 +4,8 @@ using Verse.AI;
 
 namespace RimWorld
 {
-	public abstract class Building_Turret : Building, IAttackTargetSearcher, IAttackTarget, ILoadReferenceable
+	public abstract class Building_Turret : Building, IAttackTarget, IAttackTargetSearcher, ILoadReferenceable
 	{
-		private const float SightRadiusTurret = 13.4f;
-
 		protected StunHandler stunner;
 
 		protected LocalTargetInfo forcedTarget = LocalTargetInfo.Invalid;
@@ -15,6 +13,8 @@ namespace RimWorld
 		private LocalTargetInfo lastAttackedTarget;
 
 		private int lastAttackTargetTick;
+
+		private const float SightRadiusTurret = 13.4f;
 
 		Thing IAttackTarget.Thing
 		{

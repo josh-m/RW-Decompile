@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Verse;
 using Verse.AI;
 
@@ -27,6 +28,11 @@ namespace RimWorld
 			return pawn.Map.listerThings.ThingsInGroup(ThingRequestGroup.Corpse).Count == 0;
 		}
 
+		public override Danger MaxPathDanger(Pawn pawn)
+		{
+			return Danger.Deadly;
+		}
+
 		public override Job JobOnThing(Pawn pawn, Thing t, bool forced = false)
 		{
 			Corpse corpse = t as Corpse;
@@ -52,7 +58,7 @@ namespace RimWorld
 
 		private Building_Grave FindBestGrave(Pawn p, Corpse corpse)
 		{
-			Predicate<Thing> predicate = (Thing m) => !m.IsForbidden(p) && p.CanReserve(m, 1, -1, null, false) && ((Building_Grave)m).Accepts(corpse);
+			Predicate<Thing> predicate = (Thing m) => !m.IsForbidden(p) && p.CanReserveNew(m) && ((Building_Grave)m).Accepts(corpse);
 			if (corpse.InnerPawn.ownership != null && corpse.InnerPawn.ownership.AssignedGrave != null)
 			{
 				Building_Grave assignedGrave = corpse.InnerPawn.ownership.AssignedGrave;
@@ -62,8 +68,13 @@ namespace RimWorld
 				}
 			}
 			Func<Thing, float> priorityGetter = (Thing t) => (float)((IStoreSettingsParent)t).GetStoreSettings().Priority;
+			IntVec3 position = corpse.Position;
+			Map map = corpse.Map;
+			List<Thing> searchSet = corpse.Map.listerThings.ThingsInGroup(ThingRequestGroup.Grave);
+			PathEndMode peMode = PathEndMode.ClosestTouch;
+			TraverseParms traverseParams = TraverseParms.For(p, Danger.Deadly, TraverseMode.ByPawn, false);
 			Predicate<Thing> validator = predicate;
-			return (Building_Grave)GenClosest.ClosestThing_Global_Reachable(corpse.Position, corpse.Map, corpse.Map.listerThings.ThingsInGroup(ThingRequestGroup.Grave), PathEndMode.ClosestTouch, TraverseParms.For(p, Danger.Deadly, TraverseMode.ByPawn, false), 9999f, validator, priorityGetter);
+			return (Building_Grave)GenClosest.ClosestThing_Global_Reachable(position, map, searchSet, peMode, traverseParams, 9999f, validator, priorityGetter);
 		}
 	}
 }

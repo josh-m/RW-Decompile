@@ -73,6 +73,10 @@ namespace Verse
 		{
 		}
 
+		public virtual void CompPostPostRemoved()
+		{
+		}
+
 		public virtual void CompPostMerged(Hediff other)
 		{
 		}

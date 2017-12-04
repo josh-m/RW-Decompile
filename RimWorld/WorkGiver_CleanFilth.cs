@@ -13,7 +13,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return PathEndMode.OnCell;
+				return PathEndMode.Touch;
 			}
 		}
 
@@ -45,7 +45,16 @@ namespace RimWorld
 				return false;
 			}
 			Filth filth = t as Filth;
-			return filth != null && filth.Map.areaManager.Home[filth.Position] && pawn.CanReserveAndReach(t, PathEndMode.ClosestTouch, pawn.NormalMaxDanger(), 1, -1, null, forced) && filth.TicksSinceThickened >= this.MinTicksSinceThickened;
+			if (filth == null)
+			{
+				return false;
+			}
+			if (!filth.Map.areaManager.Home[filth.Position])
+			{
+				return false;
+			}
+			LocalTargetInfo target = t;
+			return pawn.CanReserve(target, 1, -1, null, forced) && filth.TicksSinceThickened >= this.MinTicksSinceThickened;
 		}
 
 		public override Job JobOnThing(Pawn pawn, Thing t, bool forced = false)

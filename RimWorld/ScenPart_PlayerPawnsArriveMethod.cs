@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Verse;
@@ -22,17 +21,13 @@ namespace RimWorld
 			if (Widgets.ButtonText(scenPartRect, this.method.ToStringHuman(), true, false, true))
 			{
 				List<FloatMenuOption> list = new List<FloatMenuOption>();
-				using (IEnumerator enumerator = Enum.GetValues(typeof(PlayerPawnsArriveMethod)).GetEnumerator())
+				foreach (PlayerPawnsArriveMethod localM2 in Enum.GetValues(typeof(PlayerPawnsArriveMethod)))
 				{
-					while (enumerator.MoveNext())
+					PlayerPawnsArriveMethod localM = localM2;
+					list.Add(new FloatMenuOption(localM.ToStringHuman(), delegate
 					{
-						PlayerPawnsArriveMethod localM2 = (PlayerPawnsArriveMethod)((int)enumerator.Current);
-						PlayerPawnsArriveMethod localM = localM2;
-						list.Add(new FloatMenuOption(localM.ToStringHuman(), delegate
-						{
-							this.method = localM;
-						}, MenuOptionPriority.Default, null, null, 0f, null, null));
-					}
+						this.method = localM;
+					}, MenuOptionPriority.Default, null, null, 0f, null, null));
 				}
 				Find.WindowStack.Add(new FloatMenu(list));
 			}
@@ -85,8 +80,10 @@ namespace RimWorld
 					num = 0;
 				}
 			}
+			IntVec3 playerStartSpot = MapGenerator.PlayerStartSpot;
+			List<List<Thing>> thingsGroups = list;
 			bool instaDrop = Find.GameInitData.QuickStarted || this.method != PlayerPawnsArriveMethod.DropPods;
-			DropPodUtility.DropThingGroupsNear(MapGenerator.PlayerStartSpot, map, list, 110, instaDrop, true, true);
+			DropPodUtility.DropThingGroupsNear(playerStartSpot, map, thingsGroups, 110, instaDrop, true, true, false);
 		}
 
 		public override void PostMapGenerate(Map map)

@@ -7,6 +7,12 @@ namespace RimWorld
 {
 	public class Lesson_Note : Lesson
 	{
+		public ConceptDef def;
+
+		public bool doFadeIn = true;
+
+		private float expiryTime = 3.40282347E+38f;
+
 		private const float RectWidth = 500f;
 
 		private const float TextWidth = 432f;
@@ -20,12 +26,6 @@ namespace RimWorld
 		private const float ExpiryDuration = 2.1f;
 
 		private const float ExpiryFadeTime = 1.1f;
-
-		public ConceptDef def;
-
-		public bool doFadeIn = true;
-
-		private float expiryTime = 3.40282347E+38f;
 
 		public bool Expiring
 		{
@@ -89,9 +89,11 @@ namespace RimWorld
 					alpha = num / 1.1f;
 				}
 			}
-			WindowStack arg_9D_0 = Find.WindowStack;
-			float alpha2 = alpha;
-			arg_9D_0.ImmediateWindow(134706, mainRect, WindowLayer.Super, delegate
+			WindowStack arg_AF_0 = Find.WindowStack;
+			int iD = 134706;
+			Rect mainRect2 = mainRect;
+			WindowLayer layer = WindowLayer.Super;
+			Action doWindowFunc = delegate
 			{
 				Rect rect = mainRect.AtZero();
 				Text.Font = GameFont.Small;
@@ -127,7 +129,10 @@ namespace RimWorld
 					this.CloseButtonClicked();
 				}
 				GUI.color = Color.white;
-			}, false, false, alpha2);
+			};
+			bool doBackground = false;
+			float alpha2 = alpha;
+			arg_AF_0.ImmediateWindow(iD, mainRect2, layer, doWindowFunc, doBackground, false, alpha2);
 		}
 
 		private void CloseButtonClicked()

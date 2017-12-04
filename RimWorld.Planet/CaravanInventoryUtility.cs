@@ -296,24 +296,46 @@ namespace RimWorld.Planet
 
 		public static void GiveThing(Caravan caravan, Thing thing)
 		{
+			if (CaravanInventoryUtility.AllInventoryItems(caravan).Contains(thing))
+			{
+				Log.Error(string.Concat(new object[]
+				{
+					"Tried to give the same item twice (",
+					thing,
+					") to a caravan (",
+					caravan,
+					")."
+				}));
+				return;
+			}
 			Pawn pawn = CaravanInventoryUtility.FindPawnToMoveInventoryTo(thing, caravan.PawnsListForReading, null, null);
 			if (pawn == null)
 			{
 				Log.Error(string.Format("Failed to give item {0} to caravan {1}; item was lost", thing, caravan));
+				thing.Destroy(DestroyMode.Vanish);
 				return;
 			}
 			if (!pawn.inventory.innerContainer.TryAdd(thing, true))
 			{
 				Log.Error(string.Format("Failed to give item {0} to caravan {1}; item was lost", thing, caravan));
+				thing.Destroy(DestroyMode.Vanish);
 				return;
 			}
 		}
 
 		public static bool HasThings(Caravan caravan, ThingDef thingDef, int count, Func<Thing, bool> validator = null)
 		{
-			return (from thing in CaravanInventoryUtility.AllInventoryItems(caravan)
-			where thing.def == thingDef && (validator == null || validator(thing))
-			select thing).Sum((Thing thing) => thing.stackCount) >= count;
+			int num = 0;
+			List<Thing> list = CaravanInventoryUtility.AllInventoryItems(caravan);
+			for (int i = 0; i < list.Count; i++)
+			{
+				Thing thing = list[i];
+				if (thing.def == thingDef && (validator == null || validator(thing)))
+				{
+					num += thing.stackCount;
+				}
+			}
+			return num >= count;
 		}
 	}
 }

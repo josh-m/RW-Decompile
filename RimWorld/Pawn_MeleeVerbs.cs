@@ -6,8 +6,6 @@ namespace RimWorld
 {
 	public class Pawn_MeleeVerbs : IExposable
 	{
-		private const int BestMeleeVerbUpdateInterval = 60;
-
 		private Pawn pawn;
 
 		private Verb curMeleeVerb;
@@ -15,6 +13,8 @@ namespace RimWorld
 		private int curMeleeVerbUpdateTick;
 
 		private static List<VerbEntry> meleeVerbs = new List<VerbEntry>();
+
+		private const int BestMeleeVerbUpdateInterval = 60;
 
 		public Pawn_MeleeVerbs(Pawn pawn)
 		{
@@ -91,26 +91,57 @@ namespace RimWorld
 		public List<VerbEntry> GetUpdatedAvailableVerbsList()
 		{
 			Pawn_MeleeVerbs.meleeVerbs.Clear();
-			if (this.pawn.equipment != null && this.pawn.equipment.Primary != null)
-			{
-				Verb verb = this.pawn.equipment.PrimaryEq.AllVerbs.Find((Verb x) => x is Verb_MeleeAttack);
-				if (verb != null)
-				{
-					Pawn_MeleeVerbs.meleeVerbs.Add(new VerbEntry(verb, this.pawn, this.pawn.equipment.Primary));
-					return Pawn_MeleeVerbs.meleeVerbs;
-				}
-			}
 			List<Verb> allVerbs = this.pawn.verbTracker.AllVerbs;
 			for (int i = 0; i < allVerbs.Count; i++)
 			{
-				if (allVerbs[i] is Verb_MeleeAttack && allVerbs[i].IsStillUsableBy(this.pawn))
+				if (allVerbs[i].IsStillUsableBy(this.pawn))
 				{
 					Pawn_MeleeVerbs.meleeVerbs.Add(new VerbEntry(allVerbs[i], this.pawn, null));
 				}
 			}
+			if (this.pawn.equipment != null)
+			{
+				List<ThingWithComps> allEquipmentListForReading = this.pawn.equipment.AllEquipmentListForReading;
+				for (int j = 0; j < allEquipmentListForReading.Count; j++)
+				{
+					ThingWithComps thingWithComps = allEquipmentListForReading[j];
+					CompEquippable comp = thingWithComps.GetComp<CompEquippable>();
+					if (comp != null)
+					{
+						List<Verb> allVerbs2 = comp.AllVerbs;
+						if (allVerbs2 != null)
+						{
+							for (int k = 0; k < allVerbs2.Count; k++)
+							{
+								Pawn_MeleeVerbs.meleeVerbs.Add(new VerbEntry(allVerbs2[k], this.pawn, thingWithComps));
+							}
+						}
+					}
+				}
+			}
+			if (this.pawn.apparel != null)
+			{
+				List<Apparel> wornApparel = this.pawn.apparel.WornApparel;
+				for (int l = 0; l < wornApparel.Count; l++)
+				{
+					Apparel apparel = wornApparel[l];
+					CompEquippable comp2 = apparel.GetComp<CompEquippable>();
+					if (comp2 != null)
+					{
+						List<Verb> allVerbs3 = comp2.AllVerbs;
+						if (allVerbs3 != null)
+						{
+							for (int m = 0; m < allVerbs3.Count; m++)
+							{
+								Pawn_MeleeVerbs.meleeVerbs.Add(new VerbEntry(allVerbs3[m], this.pawn, apparel));
+							}
+						}
+					}
+				}
+			}
 			foreach (Verb current in this.pawn.health.hediffSet.GetHediffsVerbs())
 			{
-				if (current is Verb_MeleeAttack && current.IsStillUsableBy(this.pawn))
+				if (current.IsStillUsableBy(this.pawn))
 				{
 					Pawn_MeleeVerbs.meleeVerbs.Add(new VerbEntry(current, this.pawn, null));
 				}

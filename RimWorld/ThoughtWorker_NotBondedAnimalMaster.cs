@@ -7,7 +7,7 @@ namespace RimWorld
 	{
 		protected override bool AnimalMasterCheck(Pawn p, Pawn animal)
 		{
-			return animal.playerSettings.master != p;
+			return animal.playerSettings.RespectedMaster != p;
 		}
 	}
 }

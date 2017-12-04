@@ -17,23 +17,7 @@ namespace RimWorld
 
 		protected override Job TryGiveJob(Pawn pawn)
 		{
-			Predicate<Thing> validator = delegate(Thing t)
-			{
-				if (!t.def.hasInteractionCell)
-				{
-					return false;
-				}
-				bool flag = false;
-				for (int i = 0; i < t.def.comps.Count; i++)
-				{
-					if (t.def.comps[i].compClass == typeof(CompMannable))
-					{
-						flag = true;
-						break;
-					}
-				}
-				return flag && pawn.CanReserve(t, 1, -1, null, false) && JobDriver_ManTurret.FindAmmoForTurret(pawn, t) != null;
-			};
+			Predicate<Thing> validator = (Thing t) => t.def.hasInteractionCell && t.def.HasComp(typeof(CompMannable)) && pawn.CanReserve(t, 1, -1, null, false) && JobDriver_ManTurret.FindAmmoForTurret(pawn, (Building_TurretGun)t) != null;
 			Thing thing = GenClosest.ClosestThingReachable(this.GetRoot(pawn), pawn.Map, ThingRequest.ForGroup(ThingRequestGroup.BuildingArtificial), PathEndMode.InteractionCell, TraverseParms.For(pawn, Danger.Deadly, TraverseMode.ByPawn, false), this.maxDistFromPoint, validator, null, 0, -1, false, RegionType.Set_Passable, false);
 			if (thing != null)
 			{

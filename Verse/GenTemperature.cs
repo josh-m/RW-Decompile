@@ -39,9 +39,28 @@ namespace Verse
 			return new FloatRange(p.GetStatValue(StatDefOf.ComfyTemperatureMin, true), p.GetStatValue(StatDefOf.ComfyTemperatureMax, true));
 		}
 
+		public static FloatRange ComfortableTemperatureRange(ThingDef raceDef, List<ThingStuffPair> apparel = null)
+		{
+			FloatRange result = new FloatRange(raceDef.GetStatValueAbstract(StatDefOf.ComfyTemperatureMin, null), raceDef.GetStatValueAbstract(StatDefOf.ComfyTemperatureMax, null));
+			if (apparel != null)
+			{
+				result.min += apparel.Sum((ThingStuffPair x) => x.InsulationCold);
+				result.max += apparel.Sum((ThingStuffPair x) => x.InsulationHeat);
+			}
+			return result;
+		}
+
 		public static FloatRange SafeTemperatureRange(this Pawn p)
 		{
 			FloatRange result = p.ComfortableTemperatureRange();
+			result.min -= 10f;
+			result.max += 10f;
+			return result;
+		}
+
+		public static FloatRange SafeTemperatureRange(ThingDef raceDef, List<ThingStuffPair> apparel = null)
+		{
+			FloatRange result = GenTemperature.ComfortableTemperatureRange(raceDef, apparel);
 			result.min -= 10f;
 			result.max += 10f;
 			return result;
@@ -434,47 +453,65 @@ namespace Verse
 
 		public static float CelsiusTo(float temp, TemperatureDisplayMode oldMode)
 		{
-			switch (oldMode)
+			if (oldMode == TemperatureDisplayMode.Celsius)
 			{
-			case TemperatureDisplayMode.Celsius:
 				return temp;
-			case TemperatureDisplayMode.Fahrenheit:
+			}
+			if (oldMode == TemperatureDisplayMode.Fahrenheit)
+			{
 				return temp * 1.8f + 32f;
-			case TemperatureDisplayMode.Kelvin:
-				return temp + 273.15f;
-			default:
+			}
+			if (oldMode != TemperatureDisplayMode.Kelvin)
+			{
 				throw new InvalidOperationException();
 			}
+			return temp + 273.15f;
 		}
 
 		public static float CelsiusToOffset(float temp, TemperatureDisplayMode oldMode)
 		{
-			switch (oldMode)
+			if (oldMode == TemperatureDisplayMode.Celsius)
 			{
-			case TemperatureDisplayMode.Celsius:
 				return temp;
-			case TemperatureDisplayMode.Fahrenheit:
+			}
+			if (oldMode == TemperatureDisplayMode.Fahrenheit)
+			{
 				return temp * 1.8f;
-			case TemperatureDisplayMode.Kelvin:
-				return temp;
-			default:
+			}
+			if (oldMode != TemperatureDisplayMode.Kelvin)
+			{
 				throw new InvalidOperationException();
 			}
+			return temp;
 		}
 
 		public static float ConvertTemperatureOffset(float temp, TemperatureDisplayMode oldMode, TemperatureDisplayMode newMode)
 		{
-			switch (oldMode)
+			if (oldMode != TemperatureDisplayMode.Celsius)
 			{
-			case TemperatureDisplayMode.Fahrenheit:
-				temp /= 1.8f;
-				break;
+				if (oldMode != TemperatureDisplayMode.Fahrenheit)
+				{
+					if (oldMode != TemperatureDisplayMode.Kelvin)
+					{
+					}
+				}
+				else
+				{
+					temp /= 1.8f;
+				}
 			}
-			switch (newMode)
+			if (newMode != TemperatureDisplayMode.Celsius)
 			{
-			case TemperatureDisplayMode.Fahrenheit:
-				temp *= 1.8f;
-				break;
+				if (newMode != TemperatureDisplayMode.Fahrenheit)
+				{
+					if (newMode != TemperatureDisplayMode.Kelvin)
+					{
+					}
+				}
+				else
+				{
+					temp *= 1.8f;
+				}
 			}
 			return temp;
 		}

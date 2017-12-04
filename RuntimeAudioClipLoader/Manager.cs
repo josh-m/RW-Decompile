@@ -132,7 +132,7 @@ namespace RuntimeAudioClipLoader
 					Manager.SetAudioClipLoadState(audioInstance, AudioDataLoadState.Loading);
 					if (loadInBackground)
 					{
-						Queue<Manager.AudioInstance> obj = Manager.deferredLoadQueue;
+						object obj = Manager.deferredLoadQueue;
 						lock (obj)
 						{
 							Manager.deferredLoadQueue.Enqueue(audioInstance);
@@ -181,7 +181,7 @@ namespace RuntimeAudioClipLoader
 			while (flag || num > 0L)
 			{
 				num -= 1L;
-				Queue<Manager.AudioInstance> obj = Manager.deferredLoadQueue;
+				object obj = Manager.deferredLoadQueue;
 				lock (obj)
 				{
 					flag = (Manager.deferredLoadQueue.Count > 0);
@@ -204,7 +204,7 @@ namespace RuntimeAudioClipLoader
 						audioInstance.streamToDisposeOnceDone.Dispose();
 						audioInstance.streamToDisposeOnceDone = null;
 					}
-					Queue<Manager.AudioInstance> obj2 = Manager.deferredSetDataQueue;
+					object obj2 = Manager.deferredSetDataQueue;
 					lock (obj2)
 					{
 						Manager.deferredSetDataQueue.Enqueue(audioInstance);
@@ -213,7 +213,7 @@ namespace RuntimeAudioClipLoader
 				catch (Exception exception)
 				{
 					Debug.LogException(exception);
-					Queue<Manager.AudioInstance> obj3 = Manager.deferredSetFail;
+					object obj3 = Manager.deferredSetFail;
 					lock (obj3)
 					{
 						Manager.deferredSetFail.Enqueue(audioInstance);
@@ -228,7 +228,7 @@ namespace RuntimeAudioClipLoader
 			bool flag = true;
 			while (flag)
 			{
-				Queue<Manager.AudioInstance> obj = Manager.deferredSetDataQueue;
+				object obj = Manager.deferredSetDataQueue;
 				lock (obj)
 				{
 					flag = (Manager.deferredSetDataQueue.Count > 0);
@@ -243,7 +243,7 @@ namespace RuntimeAudioClipLoader
 				audioInstance.audioClip = null;
 				audioInstance.dataToSet = null;
 			}
-			Queue<Manager.AudioInstance> obj2 = Manager.deferredSetFail;
+			object obj2 = Manager.deferredSetFail;
 			lock (obj2)
 			{
 				while (Manager.deferredSetFail.Count > 0)
@@ -311,7 +311,7 @@ namespace RuntimeAudioClipLoader
 			AudioFormat result = AudioFormat.unknown;
 			try
 			{
-				result = (AudioFormat)((int)Enum.Parse(typeof(AudioFormat), Manager.GetExtension(filePath), true));
+				result = (AudioFormat)Enum.Parse(typeof(AudioFormat), Manager.GetExtension(filePath), true);
 			}
 			catch
 			{

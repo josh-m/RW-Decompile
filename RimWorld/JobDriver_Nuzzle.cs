@@ -10,6 +10,11 @@ namespace RimWorld
 	{
 		private const int NuzzleDuration = 100;
 
+		public override bool TryMakePreToilReservations()
+		{
+			return true;
+		}
+
 		[DebuggerHidden]
 		protected override IEnumerable<Toil> MakeNewToils()
 		{
@@ -17,18 +22,15 @@ namespace RimWorld
 			this.FailOnNotCasualInterruptible(TargetIndex.A);
 			yield return Toils_Goto.GotoThing(TargetIndex.A, PathEndMode.Touch);
 			yield return Toils_Interpersonal.WaitToBeAbleToInteract(this.pawn);
-			yield return Toils_Goto.GotoThing(TargetIndex.A, PathEndMode.Touch);
-			yield return Toils_General.WaitWith(TargetIndex.A, 100, false, true);
-			yield return new Toil
+			Toil gotoTarget = Toils_Goto.GotoThing(TargetIndex.A, PathEndMode.Touch);
+			gotoTarget.socialMode = RandomSocialMode.Off;
+			Toil wait = Toils_General.WaitWith(TargetIndex.A, 100, false, true);
+			wait.socialMode = RandomSocialMode.Off;
+			yield return Toils_General.Do(delegate
 			{
-				initAction = delegate
-				{
-					Pawn actor = this.<finalize>__0.actor;
-					Pawn recipient = (Pawn)actor.CurJob.targetA.Thing;
-					actor.interactions.TryInteractWith(recipient, InteractionDefOf.Nuzzle);
-				},
-				defaultCompleteMode = ToilCompleteMode.Instant
-			};
+				Pawn recipient = (Pawn)this.$this.pawn.CurJob.targetA.Thing;
+				this.$this.pawn.interactions.TryInteractWith(recipient, InteractionDefOf.Nuzzle);
+			});
 		}
 	}
 }

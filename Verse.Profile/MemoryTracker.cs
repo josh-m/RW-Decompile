@@ -42,9 +42,9 @@ namespace Verse.Profile
 		{
 		}
 
-		private const int updatesPerCull = 10;
-
 		private static Dictionary<Type, HashSet<WeakReference>> tracked = new Dictionary<Type, HashSet<WeakReference>>();
+
+		private static List<WeakReference> foundCollections = new List<WeakReference>();
 
 		private static bool trackedLocked = false;
 
@@ -52,9 +52,31 @@ namespace Verse.Profile
 
 		private static List<RuntimeTypeHandle> trackedTypeQueue = new List<RuntimeTypeHandle>();
 
+		private const int updatesPerCull = 10;
+
 		private static int updatesSinceLastCull = 0;
 
 		private static int cullTargetIndex = 0;
+
+		public static bool AnythingTracked
+		{
+			get
+			{
+				return MemoryTracker.tracked.Count > 0;
+			}
+		}
+
+		public static IEnumerable<WeakReference> FoundCollections
+		{
+			get
+			{
+				if (MemoryTracker.foundCollections.Count == 0)
+				{
+					MemoryTracker.LogObjectHoldPathsFor(null, null);
+				}
+				return MemoryTracker.foundCollections;
+			}
+		}
 
 		public static void RegisterObject(object obj)
 		{
@@ -168,7 +190,7 @@ namespace Verse.Profile
 					KeyValuePair<Type, HashSet<WeakReference>> elementLocal = current2;
 					list.Add(new FloatMenuOption(string.Format("{0} ({1})", current2.Key, current2.Value.Count), delegate
 					{
-						MemoryTracker.LogObjectHoldPathsFor(elementLocal.Key, elementLocal.Value);
+						MemoryTracker.LogObjectHoldPathsFor(elementLocal.Value, (WeakReference _) => 1);
 					}, MenuOptionPriority.Default, null, null, 0f, null, null));
 					if (list.Count == 30)
 					{
@@ -183,7 +205,7 @@ namespace Verse.Profile
 			}
 		}
 
-		public static void LogObjectHoldPathsFor(Type type, HashSet<WeakReference> elements)
+		public static void LogObjectHoldPathsFor(IEnumerable<WeakReference> elements, Func<WeakReference, int> weight)
 		{
 			GC.Collect();
 			MemoryTracker.LockTracking();
@@ -191,6 +213,7 @@ namespace Verse.Profile
 			{
 				Dictionary<object, MemoryTracker.ReferenceData> dictionary = new Dictionary<object, MemoryTracker.ReferenceData>();
 				HashSet<object> hashSet = new HashSet<object>();
+				MemoryTracker.foundCollections.Clear();
 				Queue<object> queue = new Queue<object>();
 				foreach (object current in from weakref in MemoryTracker.tracked.SelectMany((KeyValuePair<Type, HashSet<WeakReference>> kvp) => kvp.Value)
 				where weakref.IsAlive
@@ -204,7 +227,7 @@ namespace Verse.Profile
 				}
 				foreach (Type current2 in GenTypes.AllTypes.Union(MemoryTracker.tracked.Keys))
 				{
-					if (!current2.FullName.Contains("MemoryTracker"))
+					if (!current2.FullName.Contains("MemoryTracker") && !current2.FullName.Contains("CollectionsTracker"))
 					{
 						if (!current2.ContainsGenericParameters)
 						{
@@ -227,53 +250,50 @@ namespace Verse.Profile
 					num++;
 					MemoryTracker.AccumulateReferences(queue.Dequeue(), dictionary, hashSet, queue);
 				}
-				int num2 = 0;
-				MemoryTracker.CalculateReferencePaths(dictionary, from kvp in dictionary
-				where !kvp.Value.path.NullOrEmpty()
-				select kvp.Key, num2);
-				num2 += 1000;
-				MemoryTracker.CalculateReferencePaths(dictionary, from kvp in dictionary
-				where kvp.Value.path.NullOrEmpty() && kvp.Value.referredBy.Count == 0
-				select kvp.Key, num2);
-				foreach (object current3 in from kvp in dictionary
-				where kvp.Value.path.NullOrEmpty()
-				select kvp.Key)
+				if (elements != null && weight != null)
 				{
+					int num2 = 0;
+					MemoryTracker.CalculateReferencePaths(dictionary, from kvp in dictionary
+					where !kvp.Value.path.NullOrEmpty()
+					select kvp.Key, num2);
 					num2 += 1000;
-					MemoryTracker.CalculateReferencePaths(dictionary, new object[]
+					MemoryTracker.CalculateReferencePaths(dictionary, from kvp in dictionary
+					where kvp.Value.path.NullOrEmpty() && kvp.Value.referredBy.Count == 0
+					select kvp.Key, num2);
+					foreach (object current3 in from kvp in dictionary
+					where kvp.Value.path.NullOrEmpty()
+					select kvp.Key)
 					{
-						current3
-					}, num2);
-				}
-				Dictionary<string, int> dictionary2 = new Dictionary<string, int>();
-				foreach (WeakReference current4 in elements)
-				{
-					if (current4.IsAlive)
-					{
-						string path = dictionary[current4.Target].path;
-						if (dictionary2.ContainsKey(path))
+						num2 += 1000;
+						MemoryTracker.CalculateReferencePaths(dictionary, new object[]
 						{
+							current3
+						}, num2);
+					}
+					Dictionary<string, int> dictionary2 = new Dictionary<string, int>();
+					foreach (WeakReference current4 in elements)
+					{
+						if (current4.IsAlive)
+						{
+							string path = dictionary[current4.Target].path;
+							if (!dictionary2.ContainsKey(path))
+							{
+								dictionary2[path] = 0;
+							}
 							Dictionary<string, int> dictionary3;
-							Dictionary<string, int> expr_34D = dictionary3 = dictionary2;
 							string key;
-							string expr_352 = key = path;
-							int num3 = dictionary3[key];
-							expr_34D[expr_352] = num3 + 1;
-						}
-						else
-						{
-							dictionary2[path] = 1;
+							(dictionary3 = dictionary2)[key = path] = dictionary3[key] + weight(current4);
 						}
 					}
+					StringBuilder stringBuilder = new StringBuilder();
+					foreach (KeyValuePair<string, int> current5 in from kvp in dictionary2
+					orderby -kvp.Value
+					select kvp)
+					{
+						stringBuilder.AppendLine(string.Format("{0}: {1}", current5.Value, current5.Key));
+					}
+					Log.Message(stringBuilder.ToString());
 				}
-				StringBuilder stringBuilder = new StringBuilder();
-				foreach (KeyValuePair<string, int> current5 in from kvp in dictionary2
-				orderby -kvp.Value
-				select kvp)
-				{
-					stringBuilder.AppendLine(string.Format("{0}: {1}", current5.Value, current5.Key));
-				}
-				Log.Message(stringBuilder.ToString());
 			}
 			finally
 			{
@@ -365,6 +385,7 @@ namespace Verse.Profile
 			}
 			if (current != null && current is ICollection)
 			{
+				MemoryTracker.foundCollections.Add(new WeakReference(current));
 				foreach (object entry in (current as IEnumerable))
 				{
 					if (entry != null && !entry.GetType().IsPrimitive)

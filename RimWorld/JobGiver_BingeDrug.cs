@@ -60,6 +60,7 @@ namespace RimWorld
 		protected override Thing BestIngestTarget(Pawn pawn)
 		{
 			ChemicalDef chemical = this.GetChemical(pawn);
+			DrugCategory drugCategory = this.GetDrugCategory(pawn);
 			if (chemical == null)
 			{
 				Log.ErrorOnce("Tried to binge on null chemical.", 1393746152);
@@ -77,15 +78,25 @@ namespace RimWorld
 					return false;
 				}
 				CompDrug compDrug = t.TryGetComp<CompDrug>();
-				return compDrug.Props.chemical == chemical && (overdose == null || !compDrug.Props.CanCauseOverdose || overdose.Severity + compDrug.Props.overdoseSeverityOffset.max < 0.786f) && (pawn.Position.InHorDistOf(t.Position, 60f) || t.Position.Roofed(t.Map) || pawn.Map.areaManager.Home[t.Position] || t.GetSlotGroup() != null);
+				return compDrug.Props.chemical == chemical && (overdose == null || !compDrug.Props.CanCauseOverdose || overdose.Severity + compDrug.Props.overdoseSeverityOffset.max < 0.786f) && (pawn.Position.InHorDistOf(t.Position, 60f) || t.Position.Roofed(t.Map) || pawn.Map.areaManager.Home[t.Position] || t.GetSlotGroup() != null) && t.def.ingestible.drugCategory.IncludedIn(drugCategory);
 			};
+			IntVec3 position = pawn.Position;
+			Map map = pawn.Map;
+			ThingRequest thingReq = ThingRequest.ForGroup(ThingRequestGroup.Drug);
+			PathEndMode peMode = PathEndMode.OnCell;
+			TraverseParms traverseParams = TraverseParms.For(pawn, Danger.Deadly, TraverseMode.ByPawn, false);
 			Predicate<Thing> validator = predicate;
-			return GenClosest.ClosestThingReachable(pawn.Position, pawn.Map, ThingRequest.ForGroup(ThingRequestGroup.Drug), PathEndMode.OnCell, TraverseParms.For(pawn, Danger.Deadly, TraverseMode.ByPawn, false), 9999f, validator, null, 0, -1, false, RegionType.Set_Passable, false);
+			return GenClosest.ClosestThingReachable(position, map, thingReq, peMode, traverseParams, 9999f, validator, null, 0, -1, false, RegionType.Set_Passable, false);
 		}
 
 		private ChemicalDef GetChemical(Pawn pawn)
 		{
 			return ((MentalState_BingingDrug)pawn.MentalState).chemical;
+		}
+
+		private DrugCategory GetDrugCategory(Pawn pawn)
+		{
+			return ((MentalState_BingingDrug)pawn.MentalState).drugCategory;
 		}
 	}
 }

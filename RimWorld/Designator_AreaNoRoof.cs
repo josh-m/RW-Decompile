@@ -1,18 +1,13 @@
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 using Verse;
 
 namespace RimWorld
 {
-	public abstract class Designator_AreaNoRoof : Designator
+	public class Designator_AreaNoRoof : Designator
 	{
-		private DesignateMode mode;
-
-		private static List<IntVec3> justRemovedCells = new List<IntVec3>();
-
 		private static List<IntVec3> justAddedCells = new List<IntVec3>();
-
-		private static List<Room> requestedRooms = new List<Room>();
 
 		public override int DraggableDimensions
 		{
@@ -30,11 +25,15 @@ namespace RimWorld
 			}
 		}
 
-		public Designator_AreaNoRoof(DesignateMode mode)
+		public Designator_AreaNoRoof()
 		{
-			this.mode = mode;
-			this.soundDragSustain = SoundDefOf.DesignateDragStandard;
-			this.soundDragChanged = SoundDefOf.DesignateDragStandardChanged;
+			this.defaultLabel = "DesignatorAreaNoRoofExpand".Translate();
+			this.defaultDesc = "DesignatorAreaNoRoofExpandDesc".Translate();
+			this.icon = ContentFinder<Texture2D>.Get("UI/Designators/NoRoofArea", true);
+			this.hotKey = KeyBindingDefOf.Misc5;
+			this.soundDragSustain = SoundDefOf.DesignateDragAreaAdd;
+			this.soundDragChanged = SoundDefOf.DesignateDragAreaAddChanged;
+			this.soundSucceeded = SoundDefOf.DesignateAreaAdd;
 			this.useMouseIcon = true;
 		}
 
@@ -54,57 +53,23 @@ namespace RimWorld
 				return "MessageNothingCanRemoveThickRoofs".Translate();
 			}
 			bool flag = base.Map.areaManager.NoRoof[c];
-			if (this.mode == DesignateMode.Add)
-			{
-				return !flag;
-			}
-			return flag;
+			return !flag;
 		}
 
 		public override void DesignateSingleCell(IntVec3 c)
 		{
-			if (this.mode == DesignateMode.Add)
-			{
-				base.Map.areaManager.NoRoof[c] = true;
-				Designator_AreaNoRoof.justAddedCells.Add(c);
-			}
-			else if (this.mode == DesignateMode.Remove)
-			{
-				base.Map.areaManager.NoRoof[c] = false;
-				Designator_AreaNoRoof.justRemovedCells.Add(c);
-			}
+			base.Map.areaManager.NoRoof[c] = true;
+			Designator_AreaNoRoof.justAddedCells.Add(c);
 		}
 
 		protected override void FinalizeDesignationSucceeded()
 		{
 			base.FinalizeDesignationSucceeded();
-			if (this.mode == DesignateMode.Add)
+			for (int i = 0; i < Designator_AreaNoRoof.justAddedCells.Count; i++)
 			{
-				for (int i = 0; i < Designator_AreaNoRoof.justAddedCells.Count; i++)
-				{
-					base.Map.areaManager.BuildRoof[Designator_AreaNoRoof.justAddedCells[i]] = false;
-				}
-				Designator_AreaNoRoof.justAddedCells.Clear();
+				base.Map.areaManager.BuildRoof[Designator_AreaNoRoof.justAddedCells[i]] = false;
 			}
-			else if (this.mode == DesignateMode.Remove)
-			{
-				for (int j = 0; j < Designator_AreaNoRoof.justRemovedCells.Count; j++)
-				{
-					IntVec3 intVec = Designator_AreaNoRoof.justRemovedCells[j];
-					Room room = intVec.GetRoom(base.Map, RegionType.Set_Passable);
-					if (room == null)
-					{
-						base.Map.autoBuildRoofAreaSetter.TryGenerateAreaOnImpassable(intVec);
-					}
-					else if (!Designator_AreaNoRoof.requestedRooms.Contains(room))
-					{
-						base.Map.autoBuildRoofAreaSetter.TryGenerateAreaFor(room);
-						Designator_AreaNoRoof.requestedRooms.Add(room);
-					}
-				}
-				Designator_AreaNoRoof.justRemovedCells.Clear();
-				Designator_AreaNoRoof.requestedRooms.Clear();
-			}
+			Designator_AreaNoRoof.justAddedCells.Clear();
 		}
 
 		public override void SelectedUpdate()

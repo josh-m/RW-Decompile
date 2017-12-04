@@ -8,6 +8,12 @@ namespace RimWorld.Planet
 {
 	public class WITab_Caravan_Social : WITab
 	{
+		private Vector2 scrollPosition;
+
+		private float scrollViewHeight;
+
+		private Pawn specificSocialTabForPawn;
+
 		private const float RowHeight = 50f;
 
 		private const float PawnLabelHeight = 18f;
@@ -15,12 +21,6 @@ namespace RimWorld.Planet
 		private const float PawnLabelColumnWidth = 100f;
 
 		private const float SpaceAroundIcon = 4f;
-
-		private Vector2 scrollPosition;
-
-		private float scrollViewHeight;
-
-		private Pawn specificSocialTabForPawn;
 
 		private List<Pawn> Pawns
 		{
@@ -106,6 +106,10 @@ namespace RimWorld.Planet
 		private void DoRows(ref float curY, Rect scrollViewRect, Rect scrollOutRect)
 		{
 			List<Pawn> pawns = this.Pawns;
+			Pawn pawn = BestCaravanPawnUtility.FindBestNegotiator(base.SelCaravan);
+			GUI.color = new Color(0.8f, 0.8f, 0.8f, 1f);
+			Widgets.Label(new Rect(0f, curY, scrollViewRect.width, 24f), string.Format("{0}: {1}", "Negotiator".Translate(), (pawn == null) ? "NoneCapable".Translate() : pawn.NameStringShort));
+			curY += 24f;
 			if (this.specificSocialTabForPawn != null && !pawns.Contains(this.specificSocialTabForPawn))
 			{
 				this.specificSocialTabForPawn = null;
@@ -113,34 +117,34 @@ namespace RimWorld.Planet
 			bool flag = false;
 			for (int i = 0; i < pawns.Count; i++)
 			{
-				Pawn pawn = pawns[i];
-				if (pawn.RaceProps.IsFlesh)
+				Pawn pawn2 = pawns[i];
+				if (pawn2.RaceProps.IsFlesh)
 				{
-					if (pawn.IsColonist)
+					if (pawn2.IsColonist)
 					{
 						if (!flag)
 						{
 							Widgets.ListSeparator(ref curY, scrollViewRect.width, "CaravanColonists".Translate());
 							flag = true;
 						}
-						this.DoRow(ref curY, scrollViewRect, scrollOutRect, pawn);
+						this.DoRow(ref curY, scrollViewRect, scrollOutRect, pawn2);
 					}
 				}
 			}
 			bool flag2 = false;
 			for (int j = 0; j < pawns.Count; j++)
 			{
-				Pawn pawn2 = pawns[j];
-				if (pawn2.RaceProps.IsFlesh)
+				Pawn pawn3 = pawns[j];
+				if (pawn3.RaceProps.IsFlesh)
 				{
-					if (!pawn2.IsColonist)
+					if (!pawn3.IsColonist)
 					{
 						if (!flag2)
 						{
 							Widgets.ListSeparator(ref curY, scrollViewRect.width, "CaravanPrisonersAndAnimals".Translate());
 							flag2 = true;
 						}
-						this.DoRow(ref curY, scrollViewRect, scrollOutRect, pawn2);
+						this.DoRow(ref curY, scrollViewRect, scrollOutRect, pawn3);
 					}
 				}
 			}

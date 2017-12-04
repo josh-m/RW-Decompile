@@ -36,6 +36,10 @@ namespace RimWorld
 			{
 				return false;
 			}
+			if (!map.mapPawns.AnyColonistSpawned && !map.listerBuildings.allBuildingsColonist.Any<Building>())
+			{
+				return false;
+			}
 			return !map.listerBuildings.allBuildingsColonist.Any((Building b) => (b.def.building != null && (b.def.building.IsTurret || b.def.building.isTrap)) || b.def == ThingDefOf.Sandbags);
 		}
 	}

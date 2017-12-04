@@ -8,11 +8,11 @@ namespace RimWorld
 {
 	public static class GenWorld
 	{
-		public const float MaxRayLength = 1500f;
-
 		private static int cachedTile = -1;
 
 		private static int cachedFrame = -1;
+
+		public const float MaxRayLength = 1500f;
 
 		private static List<WorldObject> tmpWorldObjectsUnderMouse = new List<WorldObject>();
 

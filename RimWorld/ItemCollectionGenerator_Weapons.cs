@@ -13,21 +13,24 @@ namespace RimWorld
 		{
 			ItemCollectionGenerator_Weapons.weapons.Clear();
 			ItemCollectionGenerator_Weapons.weapons.AddRange(from x in ItemCollectionGeneratorUtility.allGeneratableItems
-			where x.IsWeapon && !x.IsIngestible && x != ThingDefOf.WoodLog && x != ThingDefOf.ElephantTusk
+			where x.IsWeapon && !x.IsIngestible && x != ThingDefOf.WoodLog && x != ThingDefOf.ElephantTusk && (x.itemGeneratorTags == null || !x.itemGeneratorTags.Contains(ItemCollectionGeneratorUtility.SpecialRewardTag))
 			select x);
 		}
 
 		protected override IEnumerable<ThingDef> AllowedDefs(ItemCollectionGeneratorParams parms)
 		{
-			TechLevel techLevel = parms.techLevel;
-			if (techLevel >= TechLevel.Spacer)
+			ItemCollectionGenerator_Weapons.<AllowedDefs>c__AnonStorey0 <AllowedDefs>c__AnonStorey = new ItemCollectionGenerator_Weapons.<AllowedDefs>c__AnonStorey0();
+			ItemCollectionGenerator_Weapons.<AllowedDefs>c__AnonStorey0 arg_28_0 = <AllowedDefs>c__AnonStorey;
+			TechLevel? techLevel = parms.techLevel;
+			arg_28_0.techLevel = ((!techLevel.HasValue) ? TechLevel.Spacer : techLevel.Value);
+			if (<AllowedDefs>c__AnonStorey.techLevel >= TechLevel.Spacer)
 			{
 				return from x in ItemCollectionGenerator_Weapons.weapons
-				where x.techLevel >= TechLevel.Industrial && x.techLevel <= techLevel
+				where x.techLevel >= TechLevel.Industrial && x.techLevel <= <AllowedDefs>c__AnonStorey.techLevel
 				select x;
 			}
 			return from x in ItemCollectionGenerator_Weapons.weapons
-			where x.techLevel <= techLevel
+			where x.techLevel <= <AllowedDefs>c__AnonStorey.techLevel
 			select x;
 		}
 	}

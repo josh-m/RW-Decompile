@@ -24,7 +24,7 @@ namespace RimWorld.Planet
 					FactionBaseNameGenerator.usedNames.Add(factionBase2.Name);
 				}
 			}
-			return NameGenerator.GenerateName(factionBase.Faction.def.baseNameMaker, FactionBaseNameGenerator.usedNames, true);
+			return NameGenerator.GenerateName(factionBase.Faction.def.baseNameMaker, FactionBaseNameGenerator.usedNames, true, null);
 		}
 	}
 }

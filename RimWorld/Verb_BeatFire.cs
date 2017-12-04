@@ -20,9 +20,11 @@ namespace RimWorld
 			{
 				return false;
 			}
-			Thing arg_47_0 = fire;
+			Thing arg_4D_0 = fire;
+			DamageDef extinguish = DamageDefOf.Extinguish;
+			int amount = 32;
 			Thing caster = this.caster;
-			arg_47_0.TakeDamage(new DamageInfo(DamageDefOf.Extinguish, 32, -1f, caster, null, null, DamageInfo.SourceCategory.ThingOrUnknown));
+			arg_4D_0.TakeDamage(new DamageInfo(extinguish, amount, -1f, caster, null, null, DamageInfo.SourceCategory.ThingOrUnknown));
 			casterPawn.Drawer.Notify_MeleeAttackOn(fire);
 			return true;
 		}

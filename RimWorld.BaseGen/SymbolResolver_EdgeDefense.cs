@@ -14,7 +14,7 @@ namespace RimWorld.BaseGen
 		public override void Resolve(ResolveParams rp)
 		{
 			Map map = BaseGen.globalSettings.map;
-			Faction faction = rp.faction ?? Find.FactionManager.RandomEnemyFaction(false, false, true);
+			Faction faction = rp.faction ?? Find.FactionManager.RandomEnemyFaction(false, false, true, TechLevel.Undefined);
 			int? edgeDefenseGuardsCount = rp.edgeDefenseGuardsCount;
 			int num = (!edgeDefenseGuardsCount.HasValue) ? 0 : edgeDefenseGuardsCount.Value;
 			int width;
@@ -91,7 +91,7 @@ namespace RimWorld.BaseGen
 				Lord singlePawnLord = rp.singlePawnLord ?? LordMaker.MakeNewLord(faction, new LordJob_DefendBase(faction, rp.rect.CenterCell), map, null);
 				for (int i = 0; i < num; i++)
 				{
-					PawnGenerationRequest value = new PawnGenerationRequest(faction.RandomPawnKind(), faction, PawnGenerationContext.NonPlayer, -1, false, false, false, false, true, true, 1f, false, true, true, false, false, null, null, null, null, null, null);
+					PawnGenerationRequest value = new PawnGenerationRequest(faction.RandomPawnKind(), faction, PawnGenerationContext.NonPlayer, -1, false, false, false, false, true, true, 1f, false, true, true, false, false, false, false, null, null, null, null, null, null, null);
 					ResolveParams rp2 = rp;
 					rp2.faction = faction;
 					rp2.singlePawnLord = singlePawnLord;

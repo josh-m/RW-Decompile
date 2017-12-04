@@ -57,7 +57,7 @@ namespace RimWorld
 			}
 		}
 
-		public void DrawGraph(Rect graphRect, Rect legendRect, Vector2 section, SimpleCurveDrawerStyle curveDrawerStyle, List<CurveMark> marks)
+		public void DrawGraph(Rect graphRect, Rect legendRect, FloatRange section, List<CurveMark> marks)
 		{
 			int ticksGame = Find.TickManager.TicksGame;
 			if (ticksGame != this.cachedGraphTickCount)
@@ -70,6 +70,7 @@ namespace RimWorld
 					SimpleCurveDrawInfo simpleCurveDrawInfo = new SimpleCurveDrawInfo();
 					simpleCurveDrawInfo.color = historyAutoRecorder.def.graphColor;
 					simpleCurveDrawInfo.label = historyAutoRecorder.def.LabelCap;
+					simpleCurveDrawInfo.labelY = historyAutoRecorder.def.GraphLabelY;
 					simpleCurveDrawInfo.curve = new SimpleCurve();
 					for (int j = 0; j < historyAutoRecorder.records.Count; j++)
 					{
@@ -83,14 +84,15 @@ namespace RimWorld
 					this.curves.Add(simpleCurveDrawInfo);
 				}
 			}
-			if (Mathf.Approximately(section.x, section.y))
+			if (Mathf.Approximately(section.min, section.max))
 			{
-				section.y += 1.66666669E-05f;
+				section.max += 1.66666669E-05f;
 			}
+			SimpleCurveDrawerStyle curveDrawerStyle = Find.History.curveDrawerStyle;
 			curveDrawerStyle.FixedSection = section;
-			curveDrawerStyle.LabelY = this.def.graphLabelY;
 			curveDrawerStyle.UseFixedScale = this.def.useFixedScale;
 			curveDrawerStyle.FixedScale = this.def.fixedScale;
+			curveDrawerStyle.YIntegersOnly = this.def.integersOnly;
 			SimpleCurveDrawer.DrawCurves(graphRect, this.curves, curveDrawerStyle, marks, legendRect);
 			Text.Anchor = TextAnchor.UpperLeft;
 		}

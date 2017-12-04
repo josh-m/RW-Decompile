@@ -8,14 +8,6 @@ namespace Verse
 {
 	public abstract class Letter : IExposable
 	{
-		public const float DrawWidth = 38f;
-
-		public const float DrawHeight = 30f;
-
-		private const float FallTime = 1f;
-
-		private const float FallDistance = 200f;
-
 		public LetterDef def;
 
 		public string label;
@@ -25,6 +17,14 @@ namespace Verse
 		public float arrivalTime;
 
 		public string debugInfo;
+
+		public const float DrawWidth = 38f;
+
+		public const float DrawHeight = 30f;
+
+		private const float FallTime = 1f;
+
+		private const float FallDistance = 200f;
 
 		public virtual bool StillValid
 		{

@@ -42,18 +42,24 @@ namespace RimWorld
 				{
 					site.Label
 				});
-				yield return new FloatMenuOption(label, delegate
+				string label2 = label;
+				Action action = delegate
 				{
-					this.caravan.pather.StartPath(this.site.Tile, new CaravanArrivalAction_VisitSite(this.site), true);
-				}, MenuOptionPriority.Default, null, null, 0f, null, site);
+					caravan.pather.StartPath(site.Tile, new CaravanArrivalAction_VisitSite(site), true);
+				};
+				Site site2 = site;
+				yield return new FloatMenuOption(label2, action, MenuOptionPriority.Default, null, null, 0f, null, site2);
 				if (Prefs.DevMode)
 				{
-					yield return new FloatMenuOption(label + " (Dev: instantly)", delegate
+					label2 = label + " (Dev: instantly)";
+					action = delegate
 					{
-						this.caravan.Tile = this.site.Tile;
-						this.caravan.pather.StopDead();
-						new CaravanArrivalAction_VisitSite(this.site).Arrived(this.caravan);
-					}, MenuOptionPriority.Default, null, null, 0f, null, site);
+						caravan.Tile = site.Tile;
+						caravan.pather.StopDead();
+						new CaravanArrivalAction_VisitSite(site).Arrived(caravan);
+					};
+					site2 = site;
+					yield return new FloatMenuOption(label2, action, MenuOptionPriority.Default, null, null, 0f, null, site2);
 				}
 			}
 		}
@@ -78,8 +84,10 @@ namespace RimWorld
 			Pawn t = caravan.PawnsListForReading[0];
 			bool flag = site.Faction == null || site.Faction.HostileTo(Faction.OfPlayer);
 			Map orGenerateMap = GetOrGenerateMapUtility.GetOrGenerateMap(site.Tile, SiteCoreWorker.MapSize, null);
+			Map map = orGenerateMap;
+			CaravanEnterMode enterMode = CaravanEnterMode.Edge;
 			bool draftColonists = flag;
-			CaravanEnterMapUtility.Enter(caravan, orGenerateMap, CaravanEnterMode.Edge, CaravanDropInventoryMode.DoNotDrop, draftColonists, null);
+			CaravanEnterMapUtility.Enter(caravan, map, enterMode, CaravanDropInventoryMode.DoNotDrop, draftColonists, null);
 			if (flag)
 			{
 				Find.TickManager.CurTimeSpeed = TimeSpeed.Paused;
@@ -87,7 +95,7 @@ namespace RimWorld
 			Messages.Message("MessageCaravanArrivedAtDestination".Translate(new object[]
 			{
 				caravan.Label
-			}).CapitalizeFirst(), t, MessageSound.Benefit);
+			}).CapitalizeFirst(), t, MessageTypeDefOf.TaskCompletion);
 		}
 	}
 }

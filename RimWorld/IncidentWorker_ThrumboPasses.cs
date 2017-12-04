@@ -12,7 +12,7 @@ namespace RimWorld
 			return !map.gameConditionManager.ConditionIsActive(GameConditionDefOf.ToxicFallout);
 		}
 
-		public override bool TryExecute(IncidentParms parms)
+		protected override bool TryExecuteWorker(IncidentParms parms)
 		{
 			Map map = (Map)parms.target;
 			IntVec3 intVec;
@@ -49,7 +49,7 @@ namespace RimWorld
 			}).CapitalizeFirst(), "LetterThrumboPasses".Translate(new object[]
 			{
 				thrumbo.label
-			}), LetterDefOf.Good, pawn, null);
+			}), LetterDefOf.PositiveEvent, pawn, null);
 			return true;
 		}
 	}

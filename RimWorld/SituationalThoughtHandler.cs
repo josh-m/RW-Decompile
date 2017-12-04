@@ -8,8 +8,6 @@ namespace RimWorld
 	{
 		private class CachedSocialThoughts
 		{
-			private const int ExpireAfterTicks = 300;
-
 			public List<Thought_SituationalSocial> thoughts = new List<Thought_SituationalSocial>();
 
 			public List<Thought_SituationalSocial> activeThoughts = new List<Thought_SituationalSocial>();
@@ -17,6 +15,8 @@ namespace RimWorld
 			public int lastRecalculationTick = -99999;
 
 			public int lastQueryTick = -99999;
+
+			private const int ExpireAfterTicks = 300;
 
 			public bool Expired
 			{
@@ -35,8 +35,6 @@ namespace RimWorld
 			}
 		}
 
-		private const int RecalculateStateEveryTicks = 100;
-
 		public Pawn pawn;
 
 		private List<Thought_Situational> cachedThoughts = new List<Thought_Situational>();
@@ -46,6 +44,8 @@ namespace RimWorld
 		private Dictionary<Pawn, SituationalThoughtHandler.CachedSocialThoughts> cachedSocialThoughts = new Dictionary<Pawn, SituationalThoughtHandler.CachedSocialThoughts>();
 
 		private Dictionary<Pawn, SituationalThoughtHandler.CachedSocialThoughts> cachedSocialThoughtsAffectingMood = new Dictionary<Pawn, SituationalThoughtHandler.CachedSocialThoughts>();
+
+		private const int RecalculateStateEveryTicks = 100;
 
 		private HashSet<ThoughtDef> tmpCachedThoughts = new HashSet<ThoughtDef>();
 
@@ -106,7 +106,6 @@ namespace RimWorld
 				return;
 			}
 			this.lastMoodThoughtsRecalculationTick = ticksGame;
-			ProfilerThreadCheck.BeginSample("recalculating situational thoughts");
 			try
 			{
 				this.tmpCachedThoughts.Clear();
@@ -134,7 +133,6 @@ namespace RimWorld
 			}
 			finally
 			{
-				ProfilerThreadCheck.EndSample();
 			}
 		}
 
@@ -224,13 +222,11 @@ namespace RimWorld
 			}
 			finally
 			{
-				ProfilerThreadCheck.EndSample();
 			}
 		}
 
 		private void CheckRecalculateSocialThoughts(Pawn otherPawn)
 		{
-			ProfilerThreadCheck.BeginSample("recalculating situational social thoughts");
 			try
 			{
 				SituationalThoughtHandler.CachedSocialThoughts cachedSocialThoughts;
@@ -277,7 +273,6 @@ namespace RimWorld
 			}
 			finally
 			{
-				ProfilerThreadCheck.EndSample();
 			}
 		}
 

@@ -15,7 +15,7 @@ namespace Verse
 			int num = 0;
 			foreach (object current in Enum.GetValues(typeof(ThingRequestGroup)))
 			{
-				ThingListGroupHelper.AllGroups[num] = (ThingRequestGroup)((byte)current);
+				ThingListGroupHelper.AllGroups[num] = (ThingRequestGroup)current;
 				num++;
 			}
 		}
@@ -34,8 +34,6 @@ namespace Verse
 				return def.EverHaulable;
 			case ThingRequestGroup.HaulableAlways:
 				return def.alwaysHaulable;
-			case ThingRequestGroup.Plant:
-				return def.category == ThingCategory.Plant;
 			case ThingRequestGroup.FoodSource:
 				return def.IsNutritionGivingIngestible || def.thingClass == typeof(Building_NutrientPasteDispenser);
 			case ThingRequestGroup.FoodSourceNotPlantOrTree:
@@ -45,7 +43,7 @@ namespace Verse
 			case ThingRequestGroup.Blueprint:
 				return def.IsBlueprint;
 			case ThingRequestGroup.BuildingArtificial:
-				return (def.category == ThingCategory.Building || def.IsFrame) && (def.building == null || (!def.building.isNaturalRock && !def.building.isResourceRock));
+				return def.IsBuildingArtificial;
 			case ThingRequestGroup.BuildingFrame:
 				return def.IsFrame;
 			case ThingRequestGroup.Pawn:
@@ -66,6 +64,14 @@ namespace Verse
 				return def.EverHaulable || def.Minifiable;
 			case ThingRequestGroup.Drug:
 				return def.IsDrug;
+			case ThingRequestGroup.Shell:
+				return def.IsShell;
+			case ThingRequestGroup.HarvestablePlant:
+				return def.category == ThingCategory.Plant && def.plant.Harvestable;
+			case ThingRequestGroup.Fire:
+				return typeof(Fire).IsAssignableFrom(def.thingClass);
+			case ThingRequestGroup.Plant:
+				return def.category == ThingCategory.Plant;
 			case ThingRequestGroup.Construction:
 				return def.IsBlueprint || def.IsFrame;
 			case ThingRequestGroup.HasGUIOverlay:
@@ -78,7 +84,7 @@ namespace Verse
 				return typeof(Building_Grave).IsAssignableFrom(def.thingClass);
 			case ThingRequestGroup.Art:
 				return def.HasComp(typeof(CompArt));
-			case ThingRequestGroup.ThisOrAnyCompIsThingHolder:
+			case ThingRequestGroup.ThingHolder:
 				return def.ThisOrAnyCompIsThingHolder();
 			case ThingRequestGroup.ActiveDropPod:
 				return typeof(IActiveDropPod).IsAssignableFrom(def.thingClass);
@@ -86,6 +92,14 @@ namespace Verse
 				return def.HasComp(typeof(CompTransporter));
 			case ThingRequestGroup.LongRangeMineralScanner:
 				return def.HasComp(typeof(CompLongRangeMineralScanner));
+			case ThingRequestGroup.AffectsSky:
+				return def.HasComp(typeof(CompAffectsSky));
+			case ThingRequestGroup.PsychicDroneEmanator:
+				return def.HasComp(typeof(CompPsychicDrone));
+			case ThingRequestGroup.WindSource:
+				return def.HasComp(typeof(CompWindSource));
+			case ThingRequestGroup.AlwaysFlee:
+				return def.alwaysFlee;
 			default:
 				throw new ArgumentException("group");
 			}

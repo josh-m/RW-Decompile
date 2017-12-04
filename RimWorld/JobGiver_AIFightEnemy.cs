@@ -8,10 +8,6 @@ namespace RimWorld
 {
 	public abstract class JobGiver_AIFightEnemy : ThinkNode_JobGiver
 	{
-		private const int MinTargetDistanceToMove = 5;
-
-		private const int TicksSinceEngageToLoseTarget = 400;
-
 		private float targetAcquireRadius = 56f;
 
 		private float targetKeepRadius = 65f;
@@ -23,6 +19,10 @@ namespace RimWorld
 		public static readonly IntRange ExpiryInterval_ShooterSucceeded = new IntRange(450, 550);
 
 		private static readonly IntRange ExpiryInterval_Melee = new IntRange(360, 480);
+
+		private const int MinTargetDistanceToMove = 5;
+
+		private const int TicksSinceEngageToLoseTarget = 400;
 
 		protected abstract bool TryFindShootingPosition(Pawn pawn, out IntVec3 dest);
 
@@ -86,7 +86,6 @@ namespace RimWorld
 			{
 				return new Job(JobDefOf.WaitCombat, JobGiver_AIFightEnemy.ExpiryInterval_ShooterSucceeded.RandomInRange, true);
 			}
-			pawn.Map.pawnDestinationManager.ReserveDestinationFor(pawn, intVec);
 			return new Job(JobDefOf.Goto, intVec)
 			{
 				expiryInterval = JobGiver_AIFightEnemy.ExpiryInterval_ShooterSucceeded.RandomInRange,
@@ -172,12 +171,12 @@ namespace RimWorld
 		{
 			if (pawn.equipment != null && pawn.equipment.Primary != null)
 			{
-				List<VerbProperties> verbs = pawn.equipment.Primary.def.Verbs;
-				for (int i = 0; i < verbs.Count; i++)
+				List<Verb> allVerbs = pawn.equipment.Primary.GetComp<CompEquippable>().AllVerbs;
+				for (int i = 0; i < allVerbs.Count; i++)
 				{
-					if (verbs[i].isPrimary)
+					if (allVerbs[i].verbProps.isPrimary)
 					{
-						return verbs[i].ai_IsIncendiary;
+						return allVerbs[i].IsIncendiary();
 					}
 				}
 			}

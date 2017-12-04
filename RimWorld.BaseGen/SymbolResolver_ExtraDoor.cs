@@ -8,8 +8,8 @@ namespace RimWorld.BaseGen
 	{
 		public override void Resolve(ResolveParams rp)
 		{
-			ThingDef stuff = rp.wallStuff ?? BaseGenUtility.RandomCheapWallStuff(rp.faction, false);
-			IntVec3 loc = IntVec3.Invalid;
+			Map map = BaseGen.globalSettings.map;
+			IntVec3 intVec = IntVec3.Invalid;
 			int num = -1;
 			for (int i = 0; i < 4; i++)
 			{
@@ -17,13 +17,13 @@ namespace RimWorld.BaseGen
 				{
 					for (int j = 0; j < 2; j++)
 					{
-						IntVec3 intVec;
-						if (this.TryFindRandomDoorSpawnCell(rp.rect, new Rot4(i), out intVec))
+						IntVec3 intVec2;
+						if (this.TryFindRandomDoorSpawnCell(rp.rect, new Rot4(i), out intVec2))
 						{
-							int distanceToExistingDoors = this.GetDistanceToExistingDoors(intVec, rp.rect);
-							if (!loc.IsValid || distanceToExistingDoors > num)
+							int distanceToExistingDoors = this.GetDistanceToExistingDoors(intVec2, rp.rect);
+							if (!intVec.IsValid || distanceToExistingDoors > num)
 							{
-								loc = intVec;
+								intVec = intVec2;
 								num = distanceToExistingDoors;
 								if (num == 2147483647)
 								{
@@ -34,11 +34,17 @@ namespace RimWorld.BaseGen
 					}
 				}
 			}
-			if (loc.IsValid)
+			if (intVec.IsValid)
 			{
+				ThingDef arg_E2_0;
+				if ((arg_E2_0 = rp.wallStuff) == null)
+				{
+					arg_E2_0 = (BaseGenUtility.WallStuffAt(intVec, map) ?? BaseGenUtility.RandomCheapWallStuff(rp.faction, false));
+				}
+				ThingDef stuff = arg_E2_0;
 				Thing thing = ThingMaker.MakeThing(ThingDefOf.Door, stuff);
 				thing.SetFaction(rp.faction, null);
-				GenSpawn.Spawn(thing, loc, BaseGen.globalSettings.map);
+				GenSpawn.Spawn(thing, intVec, BaseGen.globalSettings.map);
 			}
 		}
 

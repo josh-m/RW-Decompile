@@ -55,7 +55,7 @@ namespace RimWorld
 		public override AcceptanceReport CanDesignateThing(Thing t)
 		{
 			Pawn pawn = t as Pawn;
-			if (pawn != null && pawn.def.race.Animal && pawn.Faction == null && base.Map.designationManager.DesignationOn(pawn, DesignationDefOf.Hunt) == null)
+			if (pawn != null && pawn.AnimalOrWildMan() && pawn.Faction == null && base.Map.designationManager.DesignationOn(pawn, DesignationDefOf.Hunt) == null)
 			{
 				return true;
 			}
@@ -75,12 +75,13 @@ namespace RimWorld
 			foreach (PawnKindDef kind in (from p in this.justDesignated
 			select p.kindDef).Distinct<PawnKindDef>())
 			{
-				if (kind.RaceProps.manhunterOnDamageChance > 0.2f)
+				float num = (kind != PawnKindDefOf.WildMan) ? kind.RaceProps.manhunterOnDamageChance : 0.5f;
+				if (num > 0.2f)
 				{
 					Messages.Message("MessageAnimalsGoPsychoHunted".Translate(new object[]
 					{
-						kind.label
-					}), this.justDesignated.First((Pawn x) => x.kindDef == kind), MessageSound.Standard);
+						kind.GetLabelPlural(-1)
+					}), this.justDesignated.First((Pawn x) => x.kindDef == kind), MessageTypeDefOf.CautionInput);
 				}
 			}
 			this.justDesignated.Clear();

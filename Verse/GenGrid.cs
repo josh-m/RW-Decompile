@@ -23,12 +23,14 @@ namespace Verse
 
 		public static bool CloseToEdge(this IntVec3 c, Map map, int edgeDist)
 		{
-			return c.x < edgeDist || c.z < edgeDist || c.x >= map.Size.x - edgeDist || c.z >= map.Size.z - edgeDist;
+			IntVec3 size = map.Size;
+			return c.x < edgeDist || c.z < edgeDist || c.x >= size.x - edgeDist || c.z >= size.z - edgeDist;
 		}
 
 		public static bool OnEdge(this IntVec3 c, Map map)
 		{
-			return c.x == 0 || c.x == map.Size.x - 1 || c.z == 0 || c.z == map.Size.z - 1;
+			IntVec3 size = map.Size;
+			return c.x == 0 || c.x == size.x - 1 || c.z == 0 || c.z == size.z - 1;
 		}
 
 		public static bool OnEdge(this IntVec3 c, Map map, Rot4 dir)

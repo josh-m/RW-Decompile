@@ -9,7 +9,7 @@ namespace RimWorld
 
 		public bool transportPodsCanLandAndGenerateMap = true;
 
-		public float forceExitAndRemoveMapCountdownDurationDays = 2.5f;
+		public float forceExitAndRemoveMapCountdownDurationDays = 3f;
 
 		[Unsaved]
 		private SiteCoreWorker workerInt;

@@ -44,7 +44,8 @@ namespace RimWorld
 			{
 				return false;
 			}
-			if (!pawn.CanReserve(t, 1, -1, null, forced))
+			LocalTargetInfo target = t;
+			if (!pawn.CanReserve(target, 1, -1, null, forced))
 			{
 				return false;
 			}

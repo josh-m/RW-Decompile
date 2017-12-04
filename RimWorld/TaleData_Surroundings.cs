@@ -74,7 +74,7 @@ namespace RimWorld
 			{
 				if (roomOrAdjacent.PsychologicallyOutdoors)
 				{
-					taleData_Surroundings.weather = map.weatherManager.curWeather;
+					taleData_Surroundings.weather = map.weatherManager.CurPerceivedWeather;
 				}
 				taleData_Surroundings.roomRole = roomOrAdjacent.Role;
 				taleData_Surroundings.roomImpressiveness = roomOrAdjacent.GetStat(RoomStatDefOf.Impressiveness);

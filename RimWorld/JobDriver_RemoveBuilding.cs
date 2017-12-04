@@ -16,7 +16,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return base.CurJob.targetA.Thing;
+				return this.job.targetA.Thing;
 			}
 		}
 
@@ -45,37 +45,41 @@ namespace RimWorld
 			Scribe_Values.Look<float>(ref this.totalNeededWork, "totalNeededWork", 0f, false);
 		}
 
+		public override bool TryMakePreToilReservations()
+		{
+			return this.pawn.Reserve(this.Target, this.job, 1, -1, null);
+		}
+
 		[DebuggerHidden]
 		protected override IEnumerable<Toil> MakeNewToils()
 		{
 			this.FailOnThingMissingDesignation(TargetIndex.A, this.Designation);
 			this.FailOnForbidden(TargetIndex.A);
-			yield return Toils_Reserve.Reserve(TargetIndex.A, 1, -1, null);
 			yield return Toils_Goto.GotoThing(TargetIndex.A, PathEndMode.Touch);
 			Toil doWork = new Toil().FailOnDestroyedNullOrForbidden(TargetIndex.A).FailOnCannotTouch(TargetIndex.A, PathEndMode.Touch);
 			doWork.initAction = delegate
 			{
-				this.<>f__this.totalNeededWork = (float)this.<>f__this.TotalNeededWork;
-				this.<>f__this.workLeft = this.<>f__this.totalNeededWork;
+				this.$this.totalNeededWork = (float)this.$this.TotalNeededWork;
+				this.$this.workLeft = this.$this.totalNeededWork;
 			};
 			doWork.tickAction = delegate
 			{
-				this.<>f__this.workLeft -= this.<>f__this.pawn.GetStatValue(StatDefOf.ConstructionSpeed, true);
-				this.<>f__this.TickAction();
-				if (this.<>f__this.workLeft <= 0f)
+				this.$this.workLeft -= this.$this.pawn.GetStatValue(StatDefOf.ConstructionSpeed, true);
+				this.$this.TickAction();
+				if (this.$this.workLeft <= 0f)
 				{
-					this.<doWork>__0.actor.jobs.curDriver.ReadyForNextToil();
+					doWork.actor.jobs.curDriver.ReadyForNextToil();
 				}
 			};
 			doWork.defaultCompleteMode = ToilCompleteMode.Never;
-			doWork.WithProgressBar(TargetIndex.A, () => 1f - this.<>f__this.workLeft / this.<>f__this.totalNeededWork, false, -0.5f);
+			doWork.WithProgressBar(TargetIndex.A, () => 1f - this.$this.workLeft / this.$this.totalNeededWork, false, -0.5f);
 			yield return doWork;
 			yield return new Toil
 			{
 				initAction = delegate
 				{
-					this.<>f__this.FinishedRemoving();
-					this.<>f__this.Map.designationManager.RemoveAllDesignationsOn(this.<>f__this.Target, false);
+					this.$this.FinishedRemoving();
+					this.$this.Map.designationManager.RemoveAllDesignationsOn(this.$this.Target, false);
 				},
 				defaultCompleteMode = ToilCompleteMode.Instant
 			};

@@ -178,7 +178,7 @@ namespace Verse
 			}
 			else if (this.tab == Dialog_InfoCard.InfoCardTab.Character)
 			{
-				CharacterCardUtility.DrawCharacterCard(cardRect, (Pawn)this.thing);
+				CharacterCardUtility.DrawCharacterCard(cardRect, (Pawn)this.thing, null, default(Rect));
 			}
 			else if (this.tab == Dialog_InfoCard.InfoCardTab.Health)
 			{

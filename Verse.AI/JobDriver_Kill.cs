@@ -8,11 +8,15 @@ namespace Verse.AI
 	{
 		private const TargetIndex VictimInd = TargetIndex.A;
 
+		public override bool TryMakePreToilReservations()
+		{
+			return this.pawn.Reserve(this.job.GetTarget(TargetIndex.A), this.job, 1, -1, null);
+		}
+
 		[DebuggerHidden]
 		protected override IEnumerable<Toil> MakeNewToils()
 		{
 			this.EndOnDespawnedOrNull(TargetIndex.A, JobCondition.Succeeded);
-			yield return Toils_Reserve.Reserve(TargetIndex.A, 1, -1, null);
 			yield return Toils_Combat.TrySetJobToUseAttackVerb();
 			Toil gotoCastPos = Toils_Combat.GotoCastPosition(TargetIndex.A, false);
 			yield return gotoCastPos;

@@ -57,6 +57,11 @@ namespace Verse
 			this.uniqueId = cloneSource.uniqueId;
 		}
 
+		public static implicit operator TipSignal(string str)
+		{
+			return new TipSignal(str);
+		}
+
 		public override string ToString()
 		{
 			return string.Concat(new object[]
@@ -67,11 +72,6 @@ namespace Verse
 				this.uniqueId,
 				")"
 			});
-		}
-
-		public static implicit operator TipSignal(string str)
-		{
-			return new TipSignal(str);
 		}
 	}
 }

@@ -7,11 +7,11 @@ namespace RimWorld
 {
 	public static class RecordsCardUtility
 	{
-		private const float RecordsLeftPadding = 8f;
-
 		private static Vector2 scrollPosition;
 
 		private static float listHeight;
+
+		private const float RecordsLeftPadding = 8f;
 
 		public static void DrawRecordsCard(Rect rect, Pawn pawn)
 		{

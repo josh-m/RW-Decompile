@@ -149,7 +149,6 @@ namespace RimWorld
 
 		public int OpinionOffsetOfGroup(ISocialThought group, Pawn otherPawn)
 		{
-			ProfilerThreadCheck.BeginSample("OpinionOffsetOfGroup()");
 			this.GetSocialThoughts(otherPawn, group, ThoughtHandler.tmpSocialThoughts);
 			for (int i = ThoughtHandler.tmpSocialThoughts.Count - 1; i >= 0; i--)
 			{
@@ -175,7 +174,6 @@ namespace RimWorld
 				num2 *= ((Thought)ThoughtHandler.tmpSocialThoughts[j]).def.stackedEffectMultiplier;
 			}
 			ThoughtHandler.tmpSocialThoughts.Clear();
-			ProfilerThreadCheck.EndSample();
 			if (num == 0f)
 			{
 				return 0;

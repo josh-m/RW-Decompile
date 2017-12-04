@@ -13,12 +13,12 @@ namespace RimWorld
 			IntVec3 c;
 			if (this.ShouldStartEscaping(pawn) && RCellFinder.TryFindBestExitSpot(pawn, out c, TraverseMode.ByPawn))
 			{
-				if (!pawn.guest.released)
+				if (!pawn.guest.Released)
 				{
 					Messages.Message("MessagePrisonerIsEscaping".Translate(new object[]
 					{
 						pawn.NameStringShort
-					}), pawn, MessageSound.SeriousAlert);
+					}), pawn, MessageTypeDefOf.ThreatSmall);
 				}
 				return new Job(JobDefOf.Goto, c)
 				{

@@ -37,7 +37,7 @@ namespace RimWorld
 						{
 							ingester.LabelShort,
 							this.Props.chemical.label
-						}).AdjustedFor(ingester).CapitalizeFirst(), LetterDefOf.BadNonUrgent, ingester, null);
+						}).AdjustedFor(ingester).CapitalizeFirst(), LetterDefOf.NegativeEvent, ingester, null);
 					}
 					AddictionUtility.CheckDrugAddictionTeachOpportunity(ingester);
 				}
@@ -63,7 +63,7 @@ namespace RimWorld
 						{
 							ingester.LabelIndefinite(),
 							this.parent.LabelNoCount
-						}).CapitalizeFirst(), MessageSound.Negative);
+						}).CapitalizeFirst(), MessageTypeDefOf.NegativeHealthEvent);
 					}
 				}
 				else

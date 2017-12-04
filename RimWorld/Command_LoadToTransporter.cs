@@ -37,13 +37,13 @@ namespace RimWorld
 					map.floodFiller.FloodFill(fuelingPortSource.Position, (IntVec3 x) => FuelingPortUtility.AnyFuelingPortGiverAt(x, map), delegate(IntVec3 x)
 					{
 						Command_LoadToTransporter.tmpFuelingPortGivers.Add(FuelingPortUtility.FuelingPortGiverAt(x, map));
-					}, false);
+					}, 2147483647, false, null);
 					for (int i = 0; i < this.transporters.Count; i++)
 					{
 						Building fuelingPortSource2 = this.transporters[i].Launchable.FuelingPortSource;
 						if (fuelingPortSource2 != null && !Command_LoadToTransporter.tmpFuelingPortGivers.Contains(fuelingPortSource2))
 						{
-							Messages.Message("MessageTransportersNotAdjacent".Translate(), fuelingPortSource2, MessageSound.RejectInput);
+							Messages.Message("MessageTransportersNotAdjacent".Translate(), fuelingPortSource2, MessageTypeDefOf.RejectInput);
 							return;
 						}
 					}
@@ -55,7 +55,7 @@ namespace RimWorld
 				{
 					if (!this.transComp.Map.reachability.CanReach(this.transComp.parent.Position, this.transporters[j].parent, PathEndMode.Touch, TraverseParms.For(TraverseMode.PassDoors, Danger.Deadly, false)))
 					{
-						Messages.Message("MessageTransporterUnreachable".Translate(), this.transporters[j].parent, MessageSound.RejectInput);
+						Messages.Message("MessageTransporterUnreachable".Translate(), this.transporters[j].parent, MessageTypeDefOf.RejectInput);
 						return;
 					}
 				}

@@ -10,5 +10,7 @@ namespace Verse
 		public string label = string.Empty;
 
 		public Color color = Color.green;
+
+		public string labelY = "y";
 	}
 }

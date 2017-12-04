@@ -6,22 +6,6 @@ namespace RimWorld
 {
 	public class SkillRecord : IExposable
 	{
-		public const int IntervalTicks = 200;
-
-		public const int MinLevel = 0;
-
-		public const int MaxLevel = 20;
-
-		public const int MaxFullRateXpPerDay = 4000;
-
-		public const float SaturatedLearningFactor = 0.2f;
-
-		public const float LearnFactorPassionNone = 0.333f;
-
-		public const float LearnFactorPassionMinor = 1f;
-
-		public const float LearnFactorPassionMajor = 1.5f;
-
 		private Pawn pawn;
 
 		public SkillDef def;
@@ -35,6 +19,40 @@ namespace RimWorld
 		public float xpSinceMidnight;
 
 		private BoolUnknown cachedTotallyDisabled = BoolUnknown.Unknown;
+
+		public const int IntervalTicks = 200;
+
+		public const int MinLevel = 0;
+
+		public const int MaxLevel = 20;
+
+		public const int MaxFullRateXpPerDay = 4000;
+
+		public const int MasterSkillThreshold = 14;
+
+		public const float SaturatedLearningFactor = 0.2f;
+
+		public const float LearnFactorPassionNone = 0.35f;
+
+		public const float LearnFactorPassionMinor = 1f;
+
+		public const float LearnFactorPassionMajor = 1.5f;
+
+		private static readonly SimpleCurve XpForLevelUpCurve = new SimpleCurve
+		{
+			{
+				new CurvePoint(0f, 1000f),
+				true
+			},
+			{
+				new CurvePoint(9f, 10000f),
+				true
+			},
+			{
+				new CurvePoint(19f, 30000f),
+				true
+			}
+		};
 
 		public int Level
 		{
@@ -56,7 +74,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return this.XpRequiredToLevelUpFrom(this.levelInt);
+				return SkillRecord.XpRequiredToLevelUpFrom(this.levelInt);
 			}
 		}
 
@@ -75,7 +93,7 @@ namespace RimWorld
 				float num = 0f;
 				for (int i = 0; i < this.levelInt; i++)
 				{
-					num += this.XpRequiredToLevelUpFrom(i);
+					num += SkillRecord.XpRequiredToLevelUpFrom(i);
 				}
 				return num;
 			}
@@ -193,35 +211,35 @@ namespace RimWorld
 				this.Learn(-0.4f, false);
 				break;
 			case 13:
-				this.Learn(-0.65f, false);
+				this.Learn(-0.6f, false);
 				break;
 			case 14:
 				this.Learn(-1f, false);
 				break;
 			case 15:
-				this.Learn(-1.5f, false);
+				this.Learn(-1.8f, false);
 				break;
 			case 16:
-				this.Learn(-2f, false);
+				this.Learn(-2.8f, false);
 				break;
 			case 17:
-				this.Learn(-3f, false);
-				break;
-			case 18:
 				this.Learn(-4f, false);
 				break;
-			case 19:
+			case 18:
 				this.Learn(-6f, false);
 				break;
-			case 20:
+			case 19:
 				this.Learn(-8f, false);
+				break;
+			case 20:
+				this.Learn(-12f, false);
 				break;
 			}
 		}
 
-		public float XpRequiredToLevelUpFrom(int startingLevel)
+		public static float XpRequiredToLevelUpFrom(int startingLevel)
 		{
-			return (float)(1000 + startingLevel * 1000);
+			return SkillRecord.XpForLevelUpCurve.Evaluate((float)startingLevel);
 		}
 
 		public void Learn(float xp, bool direct = false)
@@ -239,17 +257,24 @@ namespace RimWorld
 				if (this.pawn.needs.joy != null)
 				{
 					float amount = 0f;
-					switch (this.passion)
+					Passion passion = this.passion;
+					if (passion != Passion.Minor)
 					{
-					case Passion.None:
-						amount = 0f * xp;
-						break;
-					case Passion.Minor:
+						if (passion != Passion.Major)
+						{
+							if (passion == Passion.None)
+							{
+								amount = 0f * xp;
+							}
+						}
+						else
+						{
+							amount = 4E-05f * xp;
+						}
+					}
+					else
+					{
 						amount = 2E-05f * xp;
-						break;
-					case Passion.Major:
-						amount = 4E-05f * xp;
-						break;
 					}
 					this.pawn.needs.joy.GainJoy(amount, JoyKindDefOf.Work);
 				}
@@ -268,6 +293,25 @@ namespace RimWorld
 			{
 				this.xpSinceLastLevel -= this.XpRequiredForLevelUp;
 				this.levelInt++;
+				if (this.levelInt == 14)
+				{
+					if (this.passion == Passion.None)
+					{
+						TaleRecorder.RecordTale(TaleDefOf.GainedMasterSkillWithoutPassion, new object[]
+						{
+							this.pawn,
+							this.def
+						});
+					}
+					else
+					{
+						TaleRecorder.RecordTale(TaleDefOf.GainedMasterSkillWithPassion, new object[]
+						{
+							this.pawn,
+							this.def
+						});
+					}
+				}
 				if (this.levelInt >= 20)
 				{
 					this.levelInt = 20;
@@ -298,7 +342,7 @@ namespace RimWorld
 			switch (this.passion)
 			{
 			case Passion.None:
-				num = 0.333f;
+				num = 0.35f;
 				break;
 			case Passion.Minor:
 				num = 1f;

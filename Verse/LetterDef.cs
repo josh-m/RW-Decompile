@@ -20,6 +20,8 @@ namespace Verse
 
 		public string icon = "UI/Letters/LetterUnopened";
 
+		public bool pauseIfPauseOnUrgentLetter;
+
 		[Unsaved]
 		private Texture2D iconTex;
 

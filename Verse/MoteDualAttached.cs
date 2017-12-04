@@ -14,11 +14,11 @@ namespace Verse
 
 		public override void Draw()
 		{
-			this.UpdatePosition();
+			this.UpdatePositionAndRotation();
 			base.Draw();
 		}
 
-		protected void UpdatePosition()
+		protected void UpdatePositionAndRotation()
 		{
 			if (this.link1.Linked)
 			{
@@ -33,6 +33,10 @@ namespace Verse
 						this.link2.UpdateDrawPos();
 					}
 					this.exactPosition = (this.link1.LastDrawPos + this.link2.LastDrawPos) * 0.5f;
+					if (this.def.mote.rotateTowardsTarget)
+					{
+						this.exactRotation = this.link1.LastDrawPos.AngleToFlat(this.link2.LastDrawPos) + 90f;
+					}
 				}
 				else
 				{

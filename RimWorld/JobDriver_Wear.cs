@@ -9,14 +9,18 @@ namespace RimWorld
 	{
 		private const int DurationTicks = 60;
 
+		public override bool TryMakePreToilReservations()
+		{
+			return this.pawn.Reserve(this.job.targetA, this.job, 1, -1, null);
+		}
+
 		[DebuggerHidden]
 		protected override IEnumerable<Toil> MakeNewToils()
 		{
-			yield return Toils_Reserve.Reserve(TargetIndex.A, 1, -1, null);
 			Toil gotoApparel = new Toil();
 			gotoApparel.initAction = delegate
 			{
-				this.<>f__this.pawn.pather.StartPath(this.<>f__this.TargetThingA, PathEndMode.ClosestTouch);
+				this.$this.pawn.pather.StartPath(this.$this.TargetThingA, PathEndMode.ClosestTouch);
 			};
 			gotoApparel.defaultCompleteMode = ToilCompleteMode.PatherArrival;
 			gotoApparel.FailOnDespawnedNullOrForbidden(TargetIndex.A);
@@ -31,11 +35,11 @@ namespace RimWorld
 			{
 				initAction = delegate
 				{
-					Apparel apparel = (Apparel)this.<>f__this.CurJob.targetA.Thing;
-					this.<>f__this.pawn.apparel.Wear(apparel, true);
-					if (this.<>f__this.pawn.outfits != null && this.<>f__this.CurJob.playerForced)
+					Apparel apparel = (Apparel)this.$this.job.targetA.Thing;
+					this.$this.pawn.apparel.Wear(apparel, true);
+					if (this.$this.pawn.outfits != null && this.$this.job.playerForced)
 					{
-						this.<>f__this.pawn.outfits.forcedHandler.SetForced(apparel, true);
+						this.$this.pawn.outfits.forcedHandler.SetForced(apparel, true);
 					}
 				},
 				defaultCompleteMode = ToilCompleteMode.Instant

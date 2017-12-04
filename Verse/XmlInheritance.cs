@@ -346,7 +346,7 @@ namespace Verse
 			XmlInheritance.tempUsedNodeNames.Clear();
 			foreach (XmlNode xmlNode in originalNode.ChildNodes)
 			{
-				if (!(xmlNode.Name == "li"))
+				if (xmlNode.NodeType == XmlNodeType.Element && !(xmlNode.Name == "li"))
 				{
 					if (XmlInheritance.tempUsedNodeNames.Contains(xmlNode.Name))
 					{

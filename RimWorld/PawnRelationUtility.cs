@@ -19,10 +19,8 @@ namespace RimWorld
 				{
 					if (me.relations.RelatedToAnyoneOrAnyoneRelatedToMe && other.relations.RelatedToAnyoneOrAnyoneRelatedToMe)
 					{
-						ProfilerThreadCheck.BeginSample("GetRelations()");
 						try
 						{
-							bool isKin = false;
 							bool anyNonKinFamilyByBloodRelation = false;
 							List<PawnRelationDef> defs = DefDatabase<PawnRelationDef>.AllDefsListForReading;
 							int i = 0;
@@ -30,13 +28,9 @@ namespace RimWorld
 							while (i < count)
 							{
 								PawnRelationDef def = defs[i];
-								if (def.Worker.InRelation(me, other))
+								if (def != PawnRelationDefOf.Kin)
 								{
-									if (def == PawnRelationDefOf.Kin)
-									{
-										isKin = true;
-									}
-									else
+									if (def.Worker.InRelation(me, other))
 									{
 										if (def.familyByBloodRelation)
 										{
@@ -47,7 +41,7 @@ namespace RimWorld
 								}
 								i++;
 							}
-							if (isKin && !anyNonKinFamilyByBloodRelation)
+							if (!anyNonKinFamilyByBloodRelation && PawnRelationDefOf.Kin.Worker.InRelation(me, other))
 							{
 								yield return PawnRelationDefOf.Kin;
 							}
@@ -74,52 +68,48 @@ namespace RimWorld
 			return pawnRelationDef;
 		}
 
-		public static void Notify_PawnsSeenByPlayer(IEnumerable<Pawn> seenPawns, out string pawnRelationsInfo, bool informEvenIfSeenBefore = false)
+		public static void Notify_PawnsSeenByPlayer(IEnumerable<Pawn> seenPawns, out string pawnRelationsInfo, bool informEvenIfSeenBefore = false, bool writeSeenPawnsNames = true)
 		{
 			StringBuilder stringBuilder = new StringBuilder();
-			IEnumerable<Pawn> enumerable = from x in seenPawns
-			where x.RaceProps.IsFlesh
+			IEnumerable<Pawn> enumerable = from x in PawnsFinder.AllMapsCaravansAndTravelingTransportPods_FreeColonistsAndPrisoners
+			where x.relations.everSeenByPlayer
 			select x;
-			IEnumerable<Pawn> enumerable2 = from x in PawnsFinder.AllMapsCaravansAndTravelingTransportPods
-			where x.RaceProps.Humanlike && (x.Faction == Faction.OfPlayer || x.HostFaction == Faction.OfPlayer) && x.relations.everSeenByPlayer
-			select x;
-			if (!informEvenIfSeenBefore)
-			{
-				enumerable = from x in enumerable
-				where !x.relations.everSeenByPlayer
-				select x;
-			}
 			bool flag = false;
-			foreach (Pawn current in enumerable)
+			foreach (Pawn current in seenPawns)
 			{
-				bool flag2 = false;
-				foreach (Pawn current2 in enumerable2)
+				if (current.RaceProps.IsFlesh)
 				{
-					if (current != current2)
+					if (informEvenIfSeenBefore || !current.relations.everSeenByPlayer)
 					{
-						PawnRelationDef mostImportantRelation = current.GetMostImportantRelation(current2);
-						if (mostImportantRelation != null)
+						current.relations.everSeenByPlayer = true;
+						bool flag2 = false;
+						foreach (Pawn current2 in enumerable)
 						{
-							if (!flag2)
+							if (current != current2)
 							{
-								flag2 = true;
-								if (flag)
+								PawnRelationDef mostImportantRelation = current2.GetMostImportantRelation(current);
+								if (mostImportantRelation != null)
 								{
-									stringBuilder.AppendLine();
+									if (!flag2)
+									{
+										flag2 = true;
+										if (flag)
+										{
+											stringBuilder.AppendLine();
+										}
+										if (writeSeenPawnsNames)
+										{
+											stringBuilder.AppendLine(current.KindLabel.CapitalizeFirst() + " " + current.LabelShort + ":");
+										}
+									}
+									flag = true;
+									stringBuilder.AppendLine("  " + "Relationship".Translate(new object[]
+									{
+										mostImportantRelation.GetGenderSpecificLabelCap(current),
+										current2.KindLabel + " " + current2.LabelShort
+									}));
 								}
-								stringBuilder.AppendLine(current.KindLabel.CapitalizeFirst() + " " + current.LabelShort + ":");
 							}
-							flag = true;
-							stringBuilder.AppendLine(string.Concat(new string[]
-							{
-								"  ",
-								mostImportantRelation.GetGenderSpecificLabelCap(current2),
-								" - ",
-								current2.KindLabel,
-								" ",
-								current2.LabelShort
-							}));
-							current.relations.everSeenByPlayer = true;
 						}
 					}
 				}
@@ -134,10 +124,10 @@ namespace RimWorld
 			}
 		}
 
-		public static void Notify_PawnsSeenByPlayer(IEnumerable<Pawn> seenPawns, ref string letterLabel, ref string letterText, string relationsInfoHeader, bool informEvenIfSeenBefore = false)
+		public static void Notify_PawnsSeenByPlayer_Letter(IEnumerable<Pawn> seenPawns, ref string letterLabel, ref string letterText, string relationsInfoHeader, bool informEvenIfSeenBefore = false, bool writeSeenPawnsNames = true)
 		{
 			string text;
-			PawnRelationUtility.Notify_PawnsSeenByPlayer(seenPawns, out text, informEvenIfSeenBefore);
+			PawnRelationUtility.Notify_PawnsSeenByPlayer(seenPawns, out text, informEvenIfSeenBefore, writeSeenPawnsNames);
 			if (!text.NullOrEmpty())
 			{
 				if (letterLabel.NullOrEmpty())
@@ -197,7 +187,7 @@ namespace RimWorld
 
 		public static Pawn GetMostImportantColonyRelative(Pawn pawn)
 		{
-			IEnumerable<Pawn> enumerable = from x in PawnsFinder.AllMaps_FreeColonistsAndPrisoners
+			IEnumerable<Pawn> enumerable = from x in PawnsFinder.AllMapsCaravansAndTravelingTransportPods_FreeColonistsAndPrisoners
 			where x.relations.everSeenByPlayer
 			select x;
 			float num = 0f;

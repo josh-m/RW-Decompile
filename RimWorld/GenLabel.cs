@@ -33,6 +33,16 @@ namespace RimWorld
 
 			public bool wornByCorpse;
 
+			public static bool operator ==(GenLabel.LabelRequest lhs, GenLabel.LabelRequest rhs)
+			{
+				return lhs.Equals(rhs);
+			}
+
+			public static bool operator !=(GenLabel.LabelRequest lhs, GenLabel.LabelRequest rhs)
+			{
+				return !(lhs == rhs);
+			}
+
 			public override bool Equals(object obj)
 			{
 				return obj is GenLabel.LabelRequest && this.Equals((GenLabel.LabelRequest)obj);
@@ -67,21 +77,11 @@ namespace RimWorld
 				}
 				return num;
 			}
-
-			public static bool operator ==(GenLabel.LabelRequest lhs, GenLabel.LabelRequest rhs)
-			{
-				return lhs.Equals(rhs);
-			}
-
-			public static bool operator !=(GenLabel.LabelRequest lhs, GenLabel.LabelRequest rhs)
-			{
-				return !(lhs == rhs);
-			}
 		}
 
-		private const int LabelDictionaryMaxCount = 2000;
-
 		private static Dictionary<GenLabel.LabelRequest, string> labelDictionary = new Dictionary<GenLabel.LabelRequest, string>();
+
+		private const int LabelDictionaryMaxCount = 2000;
 
 		private static List<GenLabel.LabelElement> tmpThingsLabelElements = new List<GenLabel.LabelElement>();
 
@@ -257,43 +257,77 @@ namespace RimWorld
 			return stringBuilder.ToString();
 		}
 
-		public static string BestKindLabel(Pawn pawn, bool mustNoteGender = false, bool mustNoteLifeStage = false, bool plural = false)
+		public static string BestKindLabel(Pawn pawn, bool mustNoteGender = false, bool mustNoteLifeStage = false, bool plural = false, int pluralCount = -1)
 		{
 			bool flag = false;
 			bool flag2 = false;
 			string text = null;
-			switch (pawn.gender)
+			Gender gender = pawn.gender;
+			if (gender != Gender.None)
 			{
-			case Gender.None:
-				if (plural && !pawn.RaceProps.Humanlike && pawn.ageTracker.CurKindLifeStage.labelPlural != null)
+				if (gender != Gender.Male)
 				{
-					text = pawn.ageTracker.CurKindLifeStage.labelPlural;
-					flag2 = true;
-				}
-				else if (!pawn.RaceProps.Humanlike && pawn.ageTracker.CurKindLifeStage.label != null)
-				{
-					text = pawn.ageTracker.CurKindLifeStage.label;
-					flag2 = true;
-					if (plural)
+					if (gender == Gender.Female)
 					{
-						text = Find.ActiveLanguageWorker.Pluralize(text);
+						if (plural && !pawn.RaceProps.Humanlike && pawn.ageTracker.CurKindLifeStage.labelFemalePlural != null)
+						{
+							text = pawn.ageTracker.CurKindLifeStage.labelFemalePlural;
+							flag2 = true;
+							flag = true;
+						}
+						else if (!pawn.RaceProps.Humanlike && pawn.ageTracker.CurKindLifeStage.labelFemale != null)
+						{
+							text = pawn.ageTracker.CurKindLifeStage.labelFemale;
+							flag2 = true;
+							flag = true;
+							if (plural)
+							{
+								text = Find.ActiveLanguageWorker.Pluralize(text, pluralCount);
+							}
+						}
+						else if (plural && !pawn.RaceProps.Humanlike && pawn.ageTracker.CurKindLifeStage.labelPlural != null)
+						{
+							text = pawn.ageTracker.CurKindLifeStage.labelPlural;
+							flag2 = true;
+						}
+						else if (!pawn.RaceProps.Humanlike && pawn.ageTracker.CurKindLifeStage.label != null)
+						{
+							text = pawn.ageTracker.CurKindLifeStage.label;
+							flag2 = true;
+							if (plural)
+							{
+								text = Find.ActiveLanguageWorker.Pluralize(text, pluralCount);
+							}
+						}
+						else if (plural && pawn.kindDef.labelFemalePlural != null)
+						{
+							text = pawn.kindDef.labelFemalePlural;
+							flag = true;
+						}
+						else if (pawn.kindDef.labelFemale != null)
+						{
+							text = pawn.kindDef.labelFemale;
+							flag = true;
+							if (plural)
+							{
+								text = Find.ActiveLanguageWorker.Pluralize(text, pluralCount);
+							}
+						}
+						else if (plural && pawn.kindDef.labelPlural != null)
+						{
+							text = pawn.kindDef.labelPlural;
+						}
+						else
+						{
+							text = pawn.kindDef.label;
+							if (plural)
+							{
+								text = Find.ActiveLanguageWorker.Pluralize(text, pluralCount);
+							}
+						}
 					}
 				}
-				else if (plural && pawn.kindDef.labelPlural != null)
-				{
-					text = pawn.kindDef.labelPlural;
-				}
-				else
-				{
-					text = pawn.kindDef.label;
-					if (plural)
-					{
-						text = Find.ActiveLanguageWorker.Pluralize(text);
-					}
-				}
-				break;
-			case Gender.Male:
-				if (plural && !pawn.RaceProps.Humanlike && pawn.ageTracker.CurKindLifeStage.labelMalePlural != null)
+				else if (plural && !pawn.RaceProps.Humanlike && pawn.ageTracker.CurKindLifeStage.labelMalePlural != null)
 				{
 					text = pawn.ageTracker.CurKindLifeStage.labelMalePlural;
 					flag2 = true;
@@ -306,7 +340,7 @@ namespace RimWorld
 					flag = true;
 					if (plural)
 					{
-						text = Find.ActiveLanguageWorker.Pluralize(text);
+						text = Find.ActiveLanguageWorker.Pluralize(text, pluralCount);
 					}
 				}
 				else if (plural && !pawn.RaceProps.Humanlike && pawn.ageTracker.CurKindLifeStage.labelPlural != null)
@@ -320,7 +354,7 @@ namespace RimWorld
 					flag2 = true;
 					if (plural)
 					{
-						text = Find.ActiveLanguageWorker.Pluralize(text);
+						text = Find.ActiveLanguageWorker.Pluralize(text, pluralCount);
 					}
 				}
 				else if (plural && pawn.kindDef.labelMalePlural != null)
@@ -334,7 +368,7 @@ namespace RimWorld
 					flag = true;
 					if (plural)
 					{
-						text = Find.ActiveLanguageWorker.Pluralize(text);
+						text = Find.ActiveLanguageWorker.Pluralize(text, pluralCount);
 					}
 				}
 				else if (plural && pawn.kindDef.labelPlural != null)
@@ -346,68 +380,35 @@ namespace RimWorld
 					text = pawn.kindDef.label;
 					if (plural)
 					{
-						text = Find.ActiveLanguageWorker.Pluralize(text);
+						text = Find.ActiveLanguageWorker.Pluralize(text, pluralCount);
 					}
 				}
-				break;
-			case Gender.Female:
-				if (plural && !pawn.RaceProps.Humanlike && pawn.ageTracker.CurKindLifeStage.labelFemalePlural != null)
+			}
+			else if (plural && !pawn.RaceProps.Humanlike && pawn.ageTracker.CurKindLifeStage.labelPlural != null)
+			{
+				text = pawn.ageTracker.CurKindLifeStage.labelPlural;
+				flag2 = true;
+			}
+			else if (!pawn.RaceProps.Humanlike && pawn.ageTracker.CurKindLifeStage.label != null)
+			{
+				text = pawn.ageTracker.CurKindLifeStage.label;
+				flag2 = true;
+				if (plural)
 				{
-					text = pawn.ageTracker.CurKindLifeStage.labelFemalePlural;
-					flag2 = true;
-					flag = true;
+					text = Find.ActiveLanguageWorker.Pluralize(text, pluralCount);
 				}
-				else if (!pawn.RaceProps.Humanlike && pawn.ageTracker.CurKindLifeStage.labelFemale != null)
+			}
+			else if (plural && pawn.kindDef.labelPlural != null)
+			{
+				text = pawn.kindDef.labelPlural;
+			}
+			else
+			{
+				text = pawn.kindDef.label;
+				if (plural)
 				{
-					text = pawn.ageTracker.CurKindLifeStage.labelFemale;
-					flag2 = true;
-					flag = true;
-					if (plural)
-					{
-						text = Find.ActiveLanguageWorker.Pluralize(text);
-					}
+					text = Find.ActiveLanguageWorker.Pluralize(text, pluralCount);
 				}
-				else if (plural && !pawn.RaceProps.Humanlike && pawn.ageTracker.CurKindLifeStage.labelPlural != null)
-				{
-					text = pawn.ageTracker.CurKindLifeStage.labelPlural;
-					flag2 = true;
-				}
-				else if (!pawn.RaceProps.Humanlike && pawn.ageTracker.CurKindLifeStage.label != null)
-				{
-					text = pawn.ageTracker.CurKindLifeStage.label;
-					flag2 = true;
-					if (plural)
-					{
-						text = Find.ActiveLanguageWorker.Pluralize(text);
-					}
-				}
-				else if (plural && pawn.kindDef.labelFemalePlural != null)
-				{
-					text = pawn.kindDef.labelFemalePlural;
-					flag = true;
-				}
-				else if (pawn.kindDef.labelFemale != null)
-				{
-					text = pawn.kindDef.labelFemale;
-					flag = true;
-					if (plural)
-					{
-						text = Find.ActiveLanguageWorker.Pluralize(text);
-					}
-				}
-				else if (plural && pawn.kindDef.labelPlural != null)
-				{
-					text = pawn.kindDef.labelPlural;
-				}
-				else
-				{
-					text = pawn.kindDef.label;
-					if (plural)
-					{
-						text = Find.ActiveLanguageWorker.Pluralize(text);
-					}
-				}
-				break;
 			}
 			if (mustNoteGender && !flag && pawn.gender != Gender.None)
 			{

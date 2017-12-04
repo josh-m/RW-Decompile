@@ -7,6 +7,8 @@ namespace Verse.AI
 	{
 		private Pawn claimant;
 
+		private Job job;
+
 		private LocalTargetInfo target;
 
 		private ReservationLayerDef layer;
@@ -20,6 +22,14 @@ namespace Verse.AI
 			get
 			{
 				return this.claimant;
+			}
+		}
+
+		public Job Job
+		{
+			get
+			{
+				return this.job;
 			}
 		}
 
@@ -67,9 +77,10 @@ namespace Verse.AI
 		{
 		}
 
-		public Reservation(Pawn claimant, int maxPawns, int stackCount, LocalTargetInfo target, ReservationLayerDef layer)
+		public Reservation(Pawn claimant, Job job, int maxPawns, int stackCount, LocalTargetInfo target, ReservationLayerDef layer)
 		{
 			this.claimant = claimant;
+			this.job = job;
 			this.maxPawns = maxPawns;
 			this.stackCount = stackCount;
 			this.target = target;
@@ -79,6 +90,7 @@ namespace Verse.AI
 		public void ExposeData()
 		{
 			Scribe_References.Look<Pawn>(ref this.claimant, "claimant", false);
+			Scribe_References.Look<Job>(ref this.job, "job", false);
 			Scribe_TargetInfo.Look(ref this.target, "target");
 			Scribe_Values.Look<int>(ref this.maxPawns, "maxPawns", 0, false);
 			Scribe_Values.Look<int>(ref this.stackCount, "stackCount", 0, false);
@@ -90,10 +102,12 @@ namespace Verse.AI
 			return string.Concat(new object[]
 			{
 				(this.claimant == null) ? "null" : this.claimant.LabelShort,
+				":",
+				(this.job == null) ? "null" : this.job.ToString(),
 				", ",
 				this.target.ToString(),
 				", ",
-				this.layer.ToString(),
+				(this.layer == null) ? "null" : this.layer.ToString(),
 				", ",
 				this.maxPawns,
 				", ",

@@ -10,6 +10,7 @@ namespace RimWorld
 	{
 		public override void DrawGhost(ThingDef def, IntVec3 center, Rot4 rot)
 		{
+			Map visibleMap = Find.VisibleMap;
 			IntVec3 intVec = center + IntVec3.South.RotatedBy(rot);
 			IntVec3 intVec2 = center + IntVec3.North.RotatedBy(rot);
 			GenDraw.DrawFieldEdges(new List<IntVec3>
@@ -20,8 +21,8 @@ namespace RimWorld
 			{
 				intVec2
 			}, GenTemperature.ColorSpotHot);
-			RoomGroup roomGroup = intVec2.GetRoomGroup(base.Map);
-			RoomGroup roomGroup2 = intVec.GetRoomGroup(base.Map);
+			RoomGroup roomGroup = intVec2.GetRoomGroup(visibleMap);
+			RoomGroup roomGroup2 = intVec.GetRoomGroup(visibleMap);
 			if (roomGroup != null && roomGroup2 != null)
 			{
 				if (roomGroup == roomGroup2 && !roomGroup.UsesOutdoorTemperature)
@@ -42,11 +43,11 @@ namespace RimWorld
 			}
 		}
 
-		public override AcceptanceReport AllowsPlacing(BuildableDef def, IntVec3 center, Rot4 rot, Thing thingToIgnore = null)
+		public override AcceptanceReport AllowsPlacing(BuildableDef def, IntVec3 center, Rot4 rot, Map map, Thing thingToIgnore = null)
 		{
 			IntVec3 c = center + IntVec3.South.RotatedBy(rot);
 			IntVec3 c2 = center + IntVec3.North.RotatedBy(rot);
-			if (c.Impassable(base.Map) || c2.Impassable(base.Map))
+			if (c.Impassable(map) || c2.Impassable(map))
 			{
 				return "MustPlaceCoolerWithFreeSpaces".Translate();
 			}

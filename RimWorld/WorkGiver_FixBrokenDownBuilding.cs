@@ -43,6 +43,11 @@ namespace RimWorld
 			return pawn.Map.GetComponent<BreakdownManager>().brokenDownThings.Count == 0;
 		}
 
+		public override Danger MaxPathDanger(Pawn pawn)
+		{
+			return Danger.Deadly;
+		}
+
 		public override bool HasJobOnThing(Pawn pawn, Thing t, bool forced = false)
 		{
 			Building building = t as Building;
@@ -71,7 +76,8 @@ namespace RimWorld
 				JobFailReason.Is(WorkGiver_FixBrokenDownBuilding.NotInHomeAreaTrans);
 				return false;
 			}
-			if (!pawn.CanReserve(building, 1, -1, null, forced))
+			LocalTargetInfo target = building;
+			if (!pawn.CanReserve(target, 1, -1, null, forced))
 			{
 				return false;
 			}
@@ -102,8 +108,7 @@ namespace RimWorld
 
 		private Thing FindClosestComponent(Pawn pawn)
 		{
-			Predicate<Thing> validator = (Thing x) => !x.IsForbidden(pawn) && pawn.CanReserve(x, 1, -1, null, false);
-			return GenClosest.ClosestThingReachable(pawn.Position, pawn.Map, ThingRequest.ForDef(ThingDefOf.Component), PathEndMode.InteractionCell, TraverseParms.For(pawn, pawn.NormalMaxDanger(), TraverseMode.ByPawn, false), 9999f, validator, null, 0, -1, false, RegionType.Set_Passable, false);
+			return GenClosest.ClosestThingReachable(pawn.Position, pawn.Map, ThingRequest.ForDef(ThingDefOf.Component), PathEndMode.InteractionCell, TraverseParms.For(pawn, pawn.NormalMaxDanger(), TraverseMode.ByPawn, false), 9999f, (Thing x) => !x.IsForbidden(pawn) && pawn.CanReserve(x, 1, -1, null, false), null, 0, -1, false, RegionType.Set_Passable, false);
 		}
 	}
 }

@@ -9,10 +9,6 @@ namespace RimWorld
 {
 	public class DangerWatcher
 	{
-		private const int UpdateInterval = 101;
-
-		private const int ColonistHarmedDangerSeconds = 15;
-
 		private Map map;
 
 		private StoryDanger dangerRatingInt;
@@ -21,13 +17,17 @@ namespace RimWorld
 
 		private int lastColonistHarmedTick = -10000;
 
+		private const int UpdateInterval = 101;
+
+		private const int ColonistHarmedDangerSeconds = 15;
+
 		public StoryDanger DangerRating
 		{
 			get
 			{
 				if (Find.TickManager.TicksGame > this.lastUpdateTick + 101)
 				{
-					int num = this.map.attackTargetsCache.TargetsHostileToColony.Count((IAttackTarget x) => !x.ThreatDisabled());
+					int num = this.map.attackTargetsCache.TargetsHostileToColony.Count(new Func<IAttackTarget, bool>(GenHostility.IsActiveThreatToPlayer));
 					if (num == 0)
 					{
 						this.dangerRatingInt = StoryDanger.None;

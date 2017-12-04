@@ -10,16 +10,21 @@ namespace RimWorld
 	{
 		private const int StripTicks = 60;
 
+		public override bool TryMakePreToilReservations()
+		{
+			return this.pawn.Reserve(this.job.targetA, this.job, 1, -1, null);
+		}
+
 		[DebuggerHidden]
 		protected override IEnumerable<Toil> MakeNewToils()
 		{
+			this.FailOnDespawnedOrNull(TargetIndex.A);
 			this.FailOnAggroMentalState(TargetIndex.A);
-			this.FailOn(() => !StrippableUtility.CanBeStrippedByColony(this.<>f__this.TargetThingA));
-			yield return Toils_Reserve.Reserve(TargetIndex.A, 1, -1, null);
+			this.FailOn(() => !StrippableUtility.CanBeStrippedByColony(this.$this.TargetThingA));
 			Toil gotoThing = new Toil();
 			gotoThing.initAction = delegate
 			{
-				this.<>f__this.pawn.pather.StartPath(this.<>f__this.TargetThingA, PathEndMode.ClosestTouch);
+				this.$this.pawn.pather.StartPath(this.$this.TargetThingA, PathEndMode.ClosestTouch);
 			};
 			gotoThing.defaultCompleteMode = ToilCompleteMode.PatherArrival;
 			gotoThing.FailOnDespawnedNullOrForbidden(TargetIndex.A);
@@ -29,8 +34,8 @@ namespace RimWorld
 			{
 				initAction = delegate
 				{
-					Thing thing = this.<>f__this.CurJob.targetA.Thing;
-					Designation designation = this.<>f__this.Map.designationManager.DesignationOn(thing, DesignationDefOf.Strip);
+					Thing thing = this.$this.job.targetA.Thing;
+					Designation designation = this.$this.Map.designationManager.DesignationOn(thing, DesignationDefOf.Strip);
 					if (designation != null)
 					{
 						designation.Delete();
@@ -40,9 +45,19 @@ namespace RimWorld
 					{
 						strippable.Strip();
 					}
-					this.<>f__this.pawn.records.Increment(RecordDefOf.BodiesStripped);
+					this.$this.pawn.records.Increment(RecordDefOf.BodiesStripped);
 				},
 				defaultCompleteMode = ToilCompleteMode.Instant
+			};
+		}
+
+		public override object[] TaleParameters()
+		{
+			Corpse corpse = base.TargetA.Thing as Corpse;
+			return new object[]
+			{
+				this.pawn,
+				(corpse == null) ? base.TargetA.Thing : corpse.InnerPawn
 			};
 		}
 	}

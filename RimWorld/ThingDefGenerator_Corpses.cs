@@ -42,6 +42,7 @@ namespace RimWorld
 					d.inspectorTabs.Add(typeof(ITab_Pawn_Character));
 					d.inspectorTabs.Add(typeof(ITab_Pawn_Gear));
 					d.inspectorTabs.Add(typeof(ITab_Pawn_Social));
+					d.inspectorTabs.Add(typeof(ITab_Pawn_Combat));
 					d.comps.Add(new CompProperties_Forbiddable());
 					d.recipes = new List<RecipeDef>();
 					if (raceDef.race.IsMechanoid)
@@ -78,20 +79,20 @@ namespace RimWorld
 					ing.specialThoughtDirect = raceDef.race.FleshType.ateDirect;
 					if (raceDef.race.IsFlesh)
 					{
-						CompProperties_Rottable rottable = new CompProperties_Rottable();
-						rottable.daysToRotStart = 2.5f;
-						rottable.daysToDessicated = 5f;
-						rottable.rotDamagePerDay = 2f;
-						rottable.dessicatedDamagePerDay = 0.7f;
-						d.comps.Add(rottable);
-						CompProperties_SpawnerFilth corpseBileSpawner = new CompProperties_SpawnerFilth();
-						corpseBileSpawner.filthDef = ThingDefOf.FilthCorpseBile;
-						corpseBileSpawner.spawnCountOnSpawn = 0;
-						corpseBileSpawner.spawnMtbHours = 0f;
-						corpseBileSpawner.spawnRadius = 0.1f;
-						corpseBileSpawner.spawnEveryDays = 1f;
-						corpseBileSpawner.requiredRotStage = new RotStage?(RotStage.Rotting);
-						d.comps.Add(corpseBileSpawner);
+						CompProperties_Rottable compProperties_Rottable = new CompProperties_Rottable();
+						compProperties_Rottable.daysToRotStart = 2.5f;
+						compProperties_Rottable.daysToDessicated = 5f;
+						compProperties_Rottable.rotDamagePerDay = 2f;
+						compProperties_Rottable.dessicatedDamagePerDay = 0.7f;
+						d.comps.Add(compProperties_Rottable);
+						CompProperties_SpawnerFilth compProperties_SpawnerFilth = new CompProperties_SpawnerFilth();
+						compProperties_SpawnerFilth.filthDef = ThingDefOf.FilthCorpseBile;
+						compProperties_SpawnerFilth.spawnCountOnSpawn = 0;
+						compProperties_SpawnerFilth.spawnMtbHours = 0f;
+						compProperties_SpawnerFilth.spawnRadius = 0.1f;
+						compProperties_SpawnerFilth.spawnEveryDays = 1f;
+						compProperties_SpawnerFilth.requiredRotStage = new RotStage?(RotStage.Rotting);
+						d.comps.Add(compProperties_SpawnerFilth);
 					}
 					if (d.thingCategories == null)
 					{

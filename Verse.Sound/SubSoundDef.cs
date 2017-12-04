@@ -17,6 +17,9 @@ namespace Verse.Sound
 		[DefaultValue(false), Description("Whether to mute this subSound while the game is paused (either by the pausing in play or by opening a menu)")]
 		public bool muteWhenPaused;
 
+		[DefaultValue(false), Description("Whether this subSound's tempo should be affected by the current tick rate.")]
+		public bool tempoAffectedByGameSpeed;
+
 		[Description("The sound grains used for this sample. The game will choose one of these randomly when the sound plays. Sustainers choose one for each sample as it begins.")]
 		public List<AudioGrain> grains = new List<AudioGrain>();
 
@@ -204,7 +207,7 @@ namespace Verse.Sound
 				{
 					Type neededFilter = mapping.outParam.NeededFilterType;
 					if (neededFilter != null && !(from fil in this.filters
-					where fil.GetType() == this.<neededFilter>__2
+					where fil.GetType() == neededFilter
 					select fil).Any<SoundFilter>())
 					{
 						yield return "A parameter wants to modify the " + neededFilter.ToString() + " filter, but this sound doesn't have it.";

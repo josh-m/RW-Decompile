@@ -1,6 +1,7 @@
 using RimWorld;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using Verse.Sound;
 
@@ -12,6 +13,10 @@ namespace Verse
 
 		public static void DropRoofInCells(IntVec3 c, Map map)
 		{
+			if (!c.Roofed(map))
+			{
+				return;
+			}
 			RoofCollapserImmediate.DropRoofInCellPhaseOne(c, map);
 			RoofCollapserImmediate.DropRoofInCellPhaseTwo(c, map);
 			SoundDefOf.RoofCollapse.PlayOneShot(new TargetInfo(c, map, false));
@@ -22,12 +27,18 @@ namespace Verse
 			IntVec3 cell = IntVec3.Invalid;
 			foreach (IntVec3 current in cells)
 			{
-				RoofCollapserImmediate.DropRoofInCellPhaseOne(current, map);
+				if (current.Roofed(map))
+				{
+					RoofCollapserImmediate.DropRoofInCellPhaseOne(current, map);
+				}
 			}
 			foreach (IntVec3 current2 in cells)
 			{
-				RoofCollapserImmediate.DropRoofInCellPhaseTwo(current2, map);
-				cell = current2;
+				if (current2.Roofed(map))
+				{
+					RoofCollapserImmediate.DropRoofInCellPhaseTwo(current2, map);
+					cell = current2;
+				}
 			}
 			if (cell.IsValid)
 			{
@@ -41,15 +52,26 @@ namespace Verse
 			{
 				return;
 			}
+			IntVec3 cell = IntVec3.Invalid;
 			for (int i = 0; i < cells.Count; i++)
 			{
-				RoofCollapserImmediate.DropRoofInCellPhaseOne(cells[i], map);
+				if (cells[i].Roofed(map))
+				{
+					RoofCollapserImmediate.DropRoofInCellPhaseOne(cells[i], map);
+				}
 			}
 			for (int j = 0; j < cells.Count; j++)
 			{
-				RoofCollapserImmediate.DropRoofInCellPhaseTwo(cells[j], map);
+				if (cells[j].Roofed(map))
+				{
+					RoofCollapserImmediate.DropRoofInCellPhaseTwo(cells[j], map);
+					cell = cells[j];
+				}
 			}
-			SoundDefOf.RoofCollapse.PlayOneShot(new TargetInfo(cells[0], map, false));
+			if (cell.IsValid)
+			{
+				SoundDefOf.RoofCollapse.PlayOneShot(new TargetInfo(cell, map, false));
+			}
 		}
 
 		private static void DropRoofInCellPhaseOne(IntVec3 c, Map map)
@@ -72,15 +94,23 @@ namespace Verse
 						DamageInfo dinfo;
 						if (pawn != null)
 						{
+							DamageDef crush = DamageDefOf.Crush;
+							int amount = 99999;
 							BodyPartRecord brain = pawn.health.hediffSet.GetBrain();
-							dinfo = new DamageInfo(DamageDefOf.Crush, 99999, -1f, null, brain, null, DamageInfo.SourceCategory.Collapse);
+							dinfo = new DamageInfo(crush, amount, -1f, null, brain, null, DamageInfo.SourceCategory.Collapse);
 						}
 						else
 						{
 							dinfo = new DamageInfo(DamageDefOf.Crush, 99999, -1f, null, null, null, DamageInfo.SourceCategory.Collapse);
 							dinfo.SetBodyRegion(BodyPartHeight.Top, BodyPartDepth.Outside);
 						}
-						thing.TakeDamage(dinfo);
+						BattleLogEntry_DamageTaken battleLogEntry_DamageTaken = null;
+						if (i == 0 && pawn != null)
+						{
+							battleLogEntry_DamageTaken = new BattleLogEntry_DamageTaken(pawn, RulePackDefOf.DamageEvent_Ceiling, null);
+							Find.BattleLog.Add(battleLogEntry_DamageTaken);
+						}
+						thing.TakeDamage(dinfo).InsertIntoLog(battleLogEntry_DamageTaken);
 						if (!thing.Destroyed && thing.def.destroyable)
 						{
 							thing.Destroy(DestroyMode.Vanish);
@@ -102,9 +132,15 @@ namespace Verse
 						{
 							num *= thing2.def.building.roofCollapseDamageMultiplier;
 						}
+						BattleLogEntry_DamageTaken battleLogEntry_DamageTaken2 = null;
+						if (thing2 is Pawn)
+						{
+							battleLogEntry_DamageTaken2 = new BattleLogEntry_DamageTaken(thing2 as Pawn, RulePackDefOf.DamageEvent_Ceiling, null);
+							Find.BattleLog.Add(battleLogEntry_DamageTaken2);
+						}
 						DamageInfo dinfo2 = new DamageInfo(DamageDefOf.Crush, GenMath.RoundRandom(num), -1f, null, null, null, DamageInfo.SourceCategory.Collapse);
 						dinfo2.SetBodyRegion(BodyPartHeight.Top, BodyPartDepth.Outside);
-						thing2.TakeDamage(dinfo2);
+						thing2.TakeDamage(dinfo2).InsertIntoLog(battleLogEntry_DamageTaken2);
 					}
 				}
 			}
@@ -135,9 +171,19 @@ namespace Verse
 			{
 				FilthMaker.MakeFilth(c, map, roofDef.filthLeaving, 1);
 			}
-			if (!roofDef.isThickRoof)
+			if (roofDef.VanishOnCollapse)
 			{
 				map.roofGrid.SetRoof(c, null);
+			}
+			CellRect bound = CellRect.CenteredOn(c, 2);
+			foreach (Pawn current in from pawn in map.mapPawns.AllPawnsSpawned
+			where bound.Contains(pawn.Position)
+			select pawn)
+			{
+				TaleRecorder.RecordTale(TaleDefOf.CollapseDodged, new object[]
+				{
+					current
+				});
 			}
 		}
 	}

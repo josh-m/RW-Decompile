@@ -31,26 +31,14 @@ namespace Verse
 
 		public void ExposeData()
 		{
-			string compressedString = string.Empty;
-			string compressedString2 = string.Empty;
-			if (Scribe.mode == LoadSaveMode.Saving)
+			MapExposeUtility.ExposeUshort(this.map, (IntVec3 c) => this.defGrid[this.map.cellIndices.CellToIndex(c)], delegate(IntVec3 c, ushort val)
 			{
-				compressedString = GridSaveUtility.CompressedStringForShortGrid((IntVec3 c) => this.defGrid[this.map.cellIndices.CellToIndex(c)], this.map);
-				compressedString2 = GridSaveUtility.CompressedStringForShortGrid((IntVec3 c) => this.countGrid[this.map.cellIndices.CellToIndex(c)], this.map);
-			}
-			Scribe_Values.Look<string>(ref compressedString, "defGrid", null, false);
-			Scribe_Values.Look<string>(ref compressedString2, "countGrid", null, false);
-			if (Scribe.mode == LoadSaveMode.LoadingVars)
+				this.defGrid[this.map.cellIndices.CellToIndex(c)] = val;
+			}, "defGrid");
+			MapExposeUtility.ExposeUshort(this.map, (IntVec3 c) => this.countGrid[this.map.cellIndices.CellToIndex(c)], delegate(IntVec3 c, ushort val)
 			{
-				foreach (GridSaveUtility.LoadedGridShort current in GridSaveUtility.LoadedUShortGrid(compressedString, this.map))
-				{
-					this.defGrid[this.map.cellIndices.CellToIndex(current.cell)] = current.val;
-				}
-				foreach (GridSaveUtility.LoadedGridShort current2 in GridSaveUtility.LoadedUShortGrid(compressedString2, this.map))
-				{
-					this.countGrid[this.map.cellIndices.CellToIndex(current2.cell)] = current2.val;
-				}
-			}
+				this.countGrid[this.map.cellIndices.CellToIndex(c)] = val;
+			}, "countGrid");
 		}
 
 		public ThingDef ThingDefAt(IntVec3 c)

@@ -930,7 +930,7 @@ namespace Verse.Noise
 			0.322158,
 			-0.946284,
 			0.0,
-			0.018542199999999998,
+			0.0185422,
 			0.716349,
 			0.697496,
 			0.0,
@@ -1059,23 +1059,29 @@ namespace Verse.Noise
 			double position = 0.0;
 			double position2 = 0.0;
 			double position3 = 0.0;
-			switch (quality)
+			if (quality != QualityMode.Low)
 			{
-			case QualityMode.Low:
+				if (quality != QualityMode.Medium)
+				{
+					if (quality == QualityMode.High)
+					{
+						position = Utils.MapQuinticSCurve(x - (double)num);
+						position2 = Utils.MapQuinticSCurve(y - (double)num2);
+						position3 = Utils.MapQuinticSCurve(z - (double)num3);
+					}
+				}
+				else
+				{
+					position = Utils.MapCubicSCurve(x - (double)num);
+					position2 = Utils.MapCubicSCurve(y - (double)num2);
+					position3 = Utils.MapCubicSCurve(z - (double)num3);
+				}
+			}
+			else
+			{
 				position = x - (double)num;
 				position2 = y - (double)num2;
 				position3 = z - (double)num3;
-				break;
-			case QualityMode.Medium:
-				position = Utils.MapCubicSCurve(x - (double)num);
-				position2 = Utils.MapCubicSCurve(y - (double)num2);
-				position3 = Utils.MapCubicSCurve(z - (double)num3);
-				break;
-			case QualityMode.High:
-				position = Utils.MapQuinticSCurve(x - (double)num);
-				position2 = Utils.MapQuinticSCurve(y - (double)num2);
-				position3 = Utils.MapQuinticSCurve(z - (double)num3);
-				break;
 			}
 			double a = Utils.GradientNoise3D(x, y, z, num, num2, num3, seed);
 			double b = Utils.GradientNoise3D(x, y, z, ix, num2, num3, seed);

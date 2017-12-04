@@ -15,13 +15,13 @@ namespace Verse
 				return (T)((object)null);
 			}
 			T t = (T)((object)null);
-			foreach (ModContentPack current in LoadedModManager.RunningMods)
+			List<ModContentPack> runningModsListForReading = LoadedModManager.RunningModsListForReading;
+			for (int i = runningModsListForReading.Count - 1; i >= 0; i--)
 			{
-				t = current.GetContentHolder<T>().Get(itemPath);
+				t = runningModsListForReading[i].GetContentHolder<T>().Get(itemPath);
 				if (t != null)
 				{
-					T result = t;
-					return result;
+					return t;
 				}
 			}
 			if (typeof(T) == typeof(Texture2D))

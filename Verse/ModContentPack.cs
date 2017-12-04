@@ -156,6 +156,14 @@ namespace Verse
 			}
 			for (int i = 0; i < list.Count; i++)
 			{
+				if (list[i] == null || list[i].xmlDoc == null || list[i].xmlDoc.DocumentElement == null)
+				{
+					Log.Error(string.Format("{0}: unknown parse failure", list[i].fullFolderPath + "/" + list[i].name));
+				}
+				else if (list[i].xmlDoc.DocumentElement.Name != "Defs")
+				{
+					Log.Error(string.Format("{0}: root element named {1}; should be named Defs", list[i].fullFolderPath + "/" + list[i].name, list[i].xmlDoc.DocumentElement.Name));
+				}
 				XmlInheritance.TryRegisterAllFrom(list[i], this);
 			}
 			XmlInheritance.Resolve();
@@ -215,7 +223,9 @@ namespace Verse
 							}
 							else
 							{
-								this.patches.Add(DirectXmlToObject.ObjectFromXml<PatchOperation>(xmlNode, false));
+								PatchOperation patchOperation = DirectXmlToObject.ObjectFromXml<PatchOperation>(xmlNode, false);
+								patchOperation.sourceFile = list[i].FullFilePath;
+								this.patches.Add(patchOperation);
 							}
 						}
 					}

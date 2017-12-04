@@ -12,30 +12,33 @@ namespace RimWorld
 		{
 			get
 			{
-				return (Pawn)base.CurJob.targetA.Thing;
+				return (Pawn)this.job.targetA.Thing;
 			}
+		}
+
+		public override bool TryMakePreToilReservations()
+		{
+			return this.pawn.Reserve(this.Victim, this.job, 1, -1, null);
 		}
 
 		[DebuggerHidden]
 		protected override IEnumerable<Toil> MakeNewToils()
 		{
 			this.FailOnAggroMentalState(TargetIndex.A);
-			yield return Toils_Reserve.Reserve(TargetIndex.A, 1, -1, null);
-			yield return Toils_Interpersonal.GotoPrisoner(this.pawn, this.Victim, PrisonerInteractionModeDefOf.Execution).FailOn(() => !this.<>f__this.Victim.IsPrisonerOfColony || !this.<>f__this.Victim.guest.PrisonerIsSecure);
-			yield return new Toil
+			yield return Toils_Interpersonal.GotoPrisoner(this.pawn, this.Victim, PrisonerInteractionModeDefOf.Execution).FailOn(() => !this.$this.Victim.IsPrisonerOfColony || !this.$this.Victim.guest.PrisonerIsSecure);
+			Toil execute = new Toil();
+			execute.initAction = delegate
 			{
-				initAction = delegate
+				ExecutionUtility.DoExecutionByCut(execute.actor, this.$this.Victim);
+				ThoughtUtility.GiveThoughtsForPawnExecuted(this.$this.Victim, PawnExecutionKind.GenericBrutal);
+				TaleRecorder.RecordTale(TaleDefOf.ExecutedPrisoner, new object[]
 				{
-					ExecutionUtility.DoExecutionByCut(this.<execute>__0.actor, this.<>f__this.Victim);
-					ThoughtUtility.GiveThoughtsForPawnExecuted(this.<>f__this.Victim, PawnExecutionKind.GenericBrutal);
-					TaleRecorder.RecordTale(TaleDefOf.ExecutedPrisoner, new object[]
-					{
-						this.<>f__this.pawn,
-						this.<>f__this.Victim
-					});
-				},
-				defaultCompleteMode = ToilCompleteMode.Instant
+					this.$this.pawn,
+					this.$this.Victim
+				});
 			};
+			execute.defaultCompleteMode = ToilCompleteMode.Instant;
+			yield return execute;
 		}
 	}
 }

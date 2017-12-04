@@ -16,7 +16,7 @@ namespace Verse
 			}
 			Graphic graphic = GhostDrawer.GhostGraphicFor(baseGraphic, thingDef, ghostCol);
 			Vector3 loc = Gen.TrueCenter(center, rot, thingDef.Size, Altitudes.AltitudeFor(drawAltitude));
-			graphic.DrawFromDef(loc, rot, thingDef);
+			graphic.DrawFromDef(loc, rot, thingDef, 0f);
 			if (thingDef.PlaceWorkers != null)
 			{
 				for (int i = 0; i < thingDef.PlaceWorkers.Count; i++)

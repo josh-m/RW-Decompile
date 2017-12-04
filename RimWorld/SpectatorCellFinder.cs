@@ -214,7 +214,7 @@ namespace RimWorld
 				list.Add(intVec);
 				float a = Mathf.Lerp(1f, 0.08f, (float)i / (float)num);
 				Material mat = SolidColorMaterials.SimpleSolidColorMaterial(new Color(0f, 0.8f, 0f, a), false);
-				map.debugDrawer.FlashCell(intVec, mat, (i + 1).ToString());
+				map.debugDrawer.FlashCell(intVec, mat, (i + 1).ToString(), 50);
 			}
 			SpectateRectSide spectateRectSide = SpectatorCellFinder.FindSingleBestSide(spectateRect, map, allowedSides, margin);
 			IntVec3 centerCell = spectateRect.CenterCell;
@@ -233,7 +233,7 @@ namespace RimWorld
 				centerCell.x -= spectateRect.Width / 2 + 10;
 				break;
 			}
-			map.debugDrawer.FlashLine(spectateRect.CenterCell, centerCell);
+			map.debugDrawer.FlashLine(spectateRect.CenterCell, centerCell, 50);
 		}
 
 		public static SpectateRectSide FindSingleBestSide(CellRect spectateRect, Map map, SpectateRectSide allowedSides = SpectateRectSide.All, int margin = 1)

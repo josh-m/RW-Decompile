@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Verse;
@@ -8,17 +7,25 @@ namespace RimWorld
 {
 	public class ITab_Storage : ITab
 	{
-		private const float TopAreaHeight = 35f;
-
-		private Vector2 scrollPosition = default(Vector2);
+		private Vector2 scrollPosition;
 
 		private static readonly Vector2 WinSize = new Vector2(300f, 480f);
 
-		private IStoreSettingsParent SelStoreSettingsParent
+		protected virtual IStoreSettingsParent SelStoreSettingsParent
 		{
 			get
 			{
-				return (IStoreSettingsParent)base.SelObject;
+				Thing thing = base.SelObject as Thing;
+				if (thing == null)
+				{
+					return base.SelObject as IStoreSettingsParent;
+				}
+				IStoreSettingsParent thingOrThingCompStoreSettingsParent = this.GetThingOrThingCompStoreSettingsParent(thing);
+				if (thingOrThingCompStoreSettingsParent != null)
+				{
+					return thingOrThingCompStoreSettingsParent;
+				}
+				return null;
 			}
 		}
 
@@ -27,6 +34,22 @@ namespace RimWorld
 			get
 			{
 				return this.SelStoreSettingsParent.StorageTabVisible;
+			}
+		}
+
+		protected virtual bool IsPrioritySettingVisible
+		{
+			get
+			{
+				return true;
+			}
+		}
+
+		private float TopAreaHeight
+		{
+			get
+			{
+				return (float)((!this.IsPrioritySettingVisible) ? 20 : 35);
 			}
 		}
 
@@ -43,16 +66,15 @@ namespace RimWorld
 			StorageSettings settings = selStoreSettingsParent.GetStoreSettings();
 			Rect position = new Rect(0f, 0f, ITab_Storage.WinSize.x, ITab_Storage.WinSize.y).ContractedBy(10f);
 			GUI.BeginGroup(position);
-			Text.Font = GameFont.Small;
-			Rect rect = new Rect(0f, 0f, 160f, 29f);
-			if (Widgets.ButtonText(rect, "Priority".Translate() + ": " + settings.Priority.Label(), true, false, true))
+			if (this.IsPrioritySettingVisible)
 			{
-				List<FloatMenuOption> list = new List<FloatMenuOption>();
-				using (IEnumerator enumerator = Enum.GetValues(typeof(StoragePriority)).GetEnumerator())
+				Text.Font = GameFont.Small;
+				Rect rect = new Rect(0f, 0f, 160f, this.TopAreaHeight - 6f);
+				if (Widgets.ButtonText(rect, "Priority".Translate() + ": " + settings.Priority.Label(), true, false, true))
 				{
-					while (enumerator.MoveNext())
+					List<FloatMenuOption> list = new List<FloatMenuOption>();
+					foreach (StoragePriority storagePriority in Enum.GetValues(typeof(StoragePriority)))
 					{
-						StoragePriority storagePriority = (StoragePriority)((byte)enumerator.Current);
 						if (storagePriority != StoragePriority.Unstored)
 						{
 							StoragePriority localPr = storagePriority;
@@ -62,19 +84,42 @@ namespace RimWorld
 							}, MenuOptionPriority.Default, null, null, 0f, null, null));
 						}
 					}
+					Find.WindowStack.Add(new FloatMenu(list));
 				}
-				Find.WindowStack.Add(new FloatMenu(list));
+				UIHighlighter.HighlightOpportunity(rect, "StoragePriority");
 			}
-			UIHighlighter.HighlightOpportunity(rect, "StoragePriority");
 			ThingFilter parentFilter = null;
 			if (selStoreSettingsParent.GetParentStoreSettings() != null)
 			{
 				parentFilter = selStoreSettingsParent.GetParentStoreSettings().filter;
 			}
-			Rect rect2 = new Rect(0f, 35f, position.width, position.height - 35f);
+			Rect rect2 = new Rect(0f, this.TopAreaHeight, position.width, position.height - this.TopAreaHeight);
 			ThingFilterUI.DoThingFilterConfigWindow(rect2, ref this.scrollPosition, settings.filter, parentFilter, 8, null, null, null);
 			PlayerKnowledgeDatabase.KnowledgeDemonstrated(ConceptDefOf.StorageTab, KnowledgeAmount.FrameDisplayed);
 			GUI.EndGroup();
+		}
+
+		protected IStoreSettingsParent GetThingOrThingCompStoreSettingsParent(Thing t)
+		{
+			IStoreSettingsParent storeSettingsParent = t as IStoreSettingsParent;
+			if (storeSettingsParent != null)
+			{
+				return storeSettingsParent;
+			}
+			ThingWithComps thingWithComps = t as ThingWithComps;
+			if (thingWithComps != null)
+			{
+				List<ThingComp> allComps = thingWithComps.AllComps;
+				for (int i = 0; i < allComps.Count; i++)
+				{
+					storeSettingsParent = (allComps[i] as IStoreSettingsParent);
+					if (storeSettingsParent != null)
+					{
+						return storeSettingsParent;
+					}
+				}
+			}
+			return null;
 		}
 	}
 }

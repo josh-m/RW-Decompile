@@ -7,6 +7,7 @@ namespace RimWorld
 		Undefined,
 		NeverForNutrition,
 		DesperateOnly,
+		DesperateOnlyForHumanlikes,
 		RawBad,
 		RawTasty,
 		MealAwful,

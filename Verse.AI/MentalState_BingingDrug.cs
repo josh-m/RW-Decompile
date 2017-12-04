@@ -9,6 +9,8 @@ namespace Verse.AI
 	{
 		public ChemicalDef chemical;
 
+		public DrugCategory drugCategory;
+
 		private static List<ChemicalDef> addictions = new List<ChemicalDef>();
 
 		public override string InspectLine
@@ -23,6 +25,7 @@ namespace Verse.AI
 		{
 			base.ExposeData();
 			Scribe_Defs.Look<ChemicalDef>(ref this.chemical, "chemical");
+			Scribe_Values.Look<DrugCategory>(ref this.drugCategory, "drugCategory", DrugCategory.None, false);
 		}
 
 		public override void PostStart(string reason)
@@ -47,7 +50,7 @@ namespace Verse.AI
 						reason
 					});
 				}
-				Find.LetterStack.ReceiveLetter(label, text, LetterDefOf.BadNonUrgent, this.pawn, null);
+				Find.LetterStack.ReceiveLetter(label, text, LetterDefOf.ThreatSmall, this.pawn, null);
 			}
 		}
 
@@ -60,7 +63,7 @@ namespace Verse.AI
 				{
 					this.pawn.NameStringShort,
 					this.chemical.label
-				}), this.pawn, MessageSound.Silent);
+				}), this.pawn, MessageTypeDefOf.SituationResolved);
 			}
 		}
 
@@ -79,23 +82,29 @@ namespace Verse.AI
 			if (MentalState_BingingDrug.addictions.Count > 0)
 			{
 				this.chemical = MentalState_BingingDrug.addictions.RandomElement<ChemicalDef>();
+				this.drugCategory = DrugCategory.Any;
 				MentalState_BingingDrug.addictions.Clear();
 			}
 			else
 			{
-				if ((from x in DefDatabase<ChemicalDef>.AllDefsListForReading
+				this.chemical = (from x in DefDatabase<ChemicalDef>.AllDefsListForReading
 				where AddictionUtility.CanBingeOnNow(this.pawn, x, this.def.drugCategory)
-				select x).TryRandomElement(out this.chemical))
+				select x).RandomElementWithFallback(null);
+				if (this.chemical != null)
 				{
+					this.drugCategory = this.def.drugCategory;
 					return;
 				}
-				if ((from x in DefDatabase<ChemicalDef>.AllDefsListForReading
+				this.chemical = (from x in DefDatabase<ChemicalDef>.AllDefsListForReading
 				where AddictionUtility.CanBingeOnNow(this.pawn, x, DrugCategory.Any)
-				select x).TryRandomElement(out this.chemical))
+				select x).RandomElementWithFallback(null);
+				if (this.chemical != null)
 				{
+					this.drugCategory = DrugCategory.Any;
 					return;
 				}
 				this.chemical = DefDatabase<ChemicalDef>.AllDefsListForReading.RandomElement<ChemicalDef>();
+				this.drugCategory = DrugCategory.Any;
 			}
 		}
 	}

@@ -6,6 +6,8 @@ namespace RimWorld
 {
 	public class ScenPart_PawnFilter_Age : ScenPart
 	{
+		public IntRange allowedAgeRange = new IntRange(0, 999999);
+
 		private const int RangeMin = 15;
 
 		private const int RangeMax = 120;
@@ -13,8 +15,6 @@ namespace RimWorld
 		private const int RangeMinMax = 19;
 
 		private const int RangeMinWidth = 4;
-
-		public IntRange allowedAgeRange = new IntRange(0, 999999);
 
 		public override void DoEditInterface(Listing_ScenEdit listing)
 		{
@@ -66,18 +66,25 @@ namespace RimWorld
 		public override void Randomize()
 		{
 			this.allowedAgeRange = new IntRange(15, 120);
-			switch (Rand.RangeInclusive(0, 2))
+			int num = Rand.RangeInclusive(0, 2);
+			if (num != 0)
 			{
-			case 0:
+				if (num != 1)
+				{
+					if (num == 2)
+					{
+						this.allowedAgeRange.min = Rand.Range(20, 60);
+						this.allowedAgeRange.max = Rand.Range(20, 60);
+					}
+				}
+				else
+				{
+					this.allowedAgeRange.max = Rand.Range(20, 60);
+				}
+			}
+			else
+			{
 				this.allowedAgeRange.min = Rand.Range(20, 60);
-				break;
-			case 1:
-				this.allowedAgeRange.max = Rand.Range(20, 60);
-				break;
-			case 2:
-				this.allowedAgeRange.min = Rand.Range(20, 60);
-				this.allowedAgeRange.max = Rand.Range(20, 60);
-				break;
 			}
 			this.MakeAllowedAgeRangeValid();
 		}

@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -40,19 +39,15 @@ namespace Verse.Sound
 			if (widgetRow.ButtonText("Setup from preset...", "Set up the reverb filter from a preset.", true, false))
 			{
 				List<FloatMenuOption> list = new List<FloatMenuOption>();
-				using (IEnumerator enumerator = Enum.GetValues(typeof(AudioReverbPreset)).GetEnumerator())
+				foreach (AudioReverbPreset audioReverbPreset in Enum.GetValues(typeof(AudioReverbPreset)))
 				{
-					while (enumerator.MoveNext())
+					if (audioReverbPreset != AudioReverbPreset.User)
 					{
-						AudioReverbPreset audioReverbPreset = (AudioReverbPreset)((int)enumerator.Current);
-						if (audioReverbPreset != AudioReverbPreset.User)
+						AudioReverbPreset localPreset = audioReverbPreset;
+						list.Add(new FloatMenuOption(audioReverbPreset.ToString(), delegate
 						{
-							AudioReverbPreset localPreset = audioReverbPreset;
-							list.Add(new FloatMenuOption(audioReverbPreset.ToString(), delegate
-							{
-								this.SetupAs(localPreset);
-							}, MenuOptionPriority.Default, null, null, 0f, null, null));
-						}
+							this.SetupAs(localPreset);
+						}, MenuOptionPriority.Default, null, null, 0f, null, null));
 					}
 				}
 				Find.WindowStack.Add(new FloatMenu(list));

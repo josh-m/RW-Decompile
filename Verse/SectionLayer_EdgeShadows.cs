@@ -259,7 +259,7 @@ namespace Verse
 			}
 			if (sm.verts.Count > 0)
 			{
-				sm.FinalizeMesh(MeshParts.Verts | MeshParts.Tris | MeshParts.Colors, false);
+				sm.FinalizeMesh(MeshParts.Verts | MeshParts.Tris | MeshParts.Colors);
 			}
 		}
 	}

@@ -7,11 +7,11 @@ namespace Verse
 	{
 		private const int NumAltitudeLayers = 31;
 
+		private static readonly float[] Alts;
+
 		private const float LayerSpacing = 0.46875f;
 
 		public const float AltInc = 0.046875f;
-
-		private static readonly float[] Alts;
 
 		public static readonly Vector3 AltIncVect;
 

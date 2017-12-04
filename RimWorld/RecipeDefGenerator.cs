@@ -40,25 +40,26 @@ namespace RimWorld
 				r.efficiencyStat = rm.efficiencyStat;
 				if (def.MadeFromStuff)
 				{
-					IngredientCount ic = new IngredientCount();
-					ic.SetBaseCount((float)def.costStuffCount);
-					ic.filter.SetAllowAllWhoCanMake(def);
-					r.ingredients.Add(ic);
+					IngredientCount ingredientCount = new IngredientCount();
+					ingredientCount.SetBaseCount((float)def.costStuffCount);
+					ingredientCount.filter.SetAllowAllWhoCanMake(def);
+					r.ingredients.Add(ingredientCount);
 					r.fixedIngredientFilter.SetAllowAllWhoCanMake(def);
 					r.productHasIngredientStuff = true;
 				}
 				if (def.costList != null)
 				{
-					foreach (ThingCountClass c in def.costList)
+					foreach (ThingCountClass current in def.costList)
 					{
-						IngredientCount ic2 = new IngredientCount();
-						ic2.SetBaseCount((float)c.count);
-						ic2.filter.SetAllow(c.thingDef, true);
-						r.ingredients.Add(ic2);
+						IngredientCount ingredientCount2 = new IngredientCount();
+						ingredientCount2.SetBaseCount((float)current.count);
+						ingredientCount2.filter.SetAllow(current.thingDef, true);
+						r.ingredients.Add(ingredientCount2);
 					}
 				}
 				r.defaultIngredientFilter = rm.defaultIngredientFilter;
 				r.products.Add(new ThingCountClass(def, rm.productCount));
+				r.targetCountAdjustment = rm.targetCountAdjustment;
 				r.skillRequirements = rm.skillRequirements.ListFullCopyOrNull<SkillRequirement>();
 				r.workSkill = rm.workSkill;
 				r.workSkillLearnFactor = rm.workSkillLearnPerTick;
@@ -67,6 +68,7 @@ namespace RimWorld
 				r.effectWorking = rm.effectWorking;
 				r.soundWorking = rm.soundWorking;
 				r.researchPrerequisite = rm.researchPrerequisite;
+				r.factionPrerequisiteTags = rm.factionPrerequisiteTags;
 				yield return r;
 			}
 		}
@@ -91,6 +93,7 @@ namespace RimWorld
 				r.workerClass = typeof(Recipe_AdministerIngestible);
 				r.targetsBodyPart = false;
 				r.anesthetize = false;
+				r.surgerySuccessChanceFactor = 99999f;
 				r.workAmount = (float)def.ingestible.baseIngestTicks;
 				IngredientCount ic = new IngredientCount();
 				ic.SetBaseCount(1f);
@@ -98,9 +101,9 @@ namespace RimWorld
 				r.ingredients.Add(ic);
 				r.fixedIngredientFilter.SetAllow(def, true);
 				r.recipeUsers = new List<ThingDef>();
-				foreach (ThingDef fleshRace in DefDatabase<ThingDef>.AllDefs.Where((ThingDef d) => d.category == ThingCategory.Pawn && d.race.IsFlesh))
+				foreach (ThingDef current in DefDatabase<ThingDef>.AllDefs.Where((ThingDef d) => d.category == ThingCategory.Pawn && d.race.IsFlesh))
 				{
-					r.recipeUsers.Add(fleshRace);
+					r.recipeUsers.Add(current);
 				}
 				yield return r;
 			}

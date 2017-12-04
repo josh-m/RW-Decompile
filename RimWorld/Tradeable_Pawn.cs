@@ -41,6 +41,10 @@ namespace RimWorld
 		{
 			get
 			{
+				if (!this.HasAnyThing)
+				{
+					return string.Empty;
+				}
 				string str = this.AnyPawn.MainDesc(true);
 				return str + "\n\n" + this.AnyPawn.def.description;
 			}

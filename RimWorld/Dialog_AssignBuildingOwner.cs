@@ -8,11 +8,11 @@ namespace RimWorld
 {
 	public class Dialog_AssignBuildingOwner : Window
 	{
-		private const float EntryHeight = 35f;
-
 		private IAssignableBuilding assignable;
 
 		private Vector2 scrollPosition;
+
+		private const float EntryHeight = 35f;
 
 		public override Vector2 InitialSize
 		{

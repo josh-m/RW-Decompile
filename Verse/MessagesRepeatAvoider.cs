@@ -14,11 +14,17 @@ namespace Verse
 
 		public static bool MessageShowAllowed(string tag, float minSecondsSinceLastShow)
 		{
-			float num = -999f;
-			MessagesRepeatAvoider.lastShowTimes.TryGetValue(tag, out num);
-			bool result = RealTime.LastRealTime > num + minSecondsSinceLastShow;
-			MessagesRepeatAvoider.lastShowTimes[tag] = RealTime.LastRealTime;
-			return result;
+			float num;
+			if (!MessagesRepeatAvoider.lastShowTimes.TryGetValue(tag, out num))
+			{
+				num = -99999f;
+			}
+			bool flag = RealTime.LastRealTime > num + minSecondsSinceLastShow;
+			if (flag)
+			{
+				MessagesRepeatAvoider.lastShowTimes[tag] = RealTime.LastRealTime;
+			}
+			return flag;
 		}
 	}
 }

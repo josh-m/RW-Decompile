@@ -246,6 +246,10 @@ namespace Verse
 		{
 			get
 			{
+				if (Current.Game == null)
+				{
+					return null;
+				}
 				return Current.Game.VisibleMap;
 			}
 		}
@@ -334,6 +338,14 @@ namespace Verse
 			}
 		}
 
+		public static BattleLog BattleLog
+		{
+			get
+			{
+				return Current.Game.battleLog;
+			}
+		}
+
 		public static TickManager TickManager
 		{
 			get
@@ -387,6 +399,14 @@ namespace Verse
 			get
 			{
 				return Current.Game.dateNotifier;
+			}
+		}
+
+		public static SignalManager SignalManager
+		{
+			get
+			{
+				return Current.Game.signalManager;
 			}
 		}
 
@@ -483,6 +503,14 @@ namespace Verse
 			get
 			{
 				return Find.World.floodFiller;
+			}
+		}
+
+		public static WorldFeatures WorldFeatures
+		{
+			get
+			{
+				return Find.World.features;
 			}
 		}
 

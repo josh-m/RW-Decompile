@@ -119,7 +119,7 @@ namespace Verse
 				{
 					Log.Error("MaterialRequest is not present in the dictionary even though we've just added it there. The equality operators are most likely defined incorrectly.");
 				}
-				if (req.shader == ShaderDatabase.CutoutPlant)
+				if (req.shader == ShaderDatabase.CutoutPlant || req.shader == ShaderDatabase.TransparentPlant)
 				{
 					WindManager.Notify_PlantMaterialCreated(material);
 				}

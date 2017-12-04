@@ -8,11 +8,11 @@ namespace RimWorld
 {
 	public class ColonistBarDrawLocsFinder
 	{
-		private const float MarginTop = 21f;
-
 		private List<int> entriesInGroup = new List<int>();
 
 		private List<int> horizontalSlotsPerGroup = new List<int>();
+
+		private const float MarginTop = 21f;
 
 		private ColonistBar ColonistBar
 		{
@@ -57,11 +57,8 @@ namespace RimWorld
 			for (int j = 0; j < entries.Count; j++)
 			{
 				List<int> list;
-				List<int> expr_49 = list = this.entriesInGroup;
-				int num2;
-				int expr_5C = num2 = entries[j].group;
-				num2 = list[num2];
-				expr_49[expr_5C] = num2 + 1;
+				int group;
+				(list = this.entriesInGroup)[group = entries[j].group] = list[group] + 1;
 			}
 		}
 
@@ -144,16 +141,10 @@ namespace RimWorld
 					}
 					int num3 = this.horizontalSlotsPerGroup.IndexOf(num2);
 					List<int> list;
-					List<int> expr_89 = list = this.horizontalSlotsPerGroup;
-					int num4;
-					int expr_8E = num4 = num3;
-					num4 = list[num4];
-					expr_89[expr_8E] = num4 - 1;
-					List<int> list2;
-					List<int> expr_AB = list2 = this.horizontalSlotsPerGroup;
-					int expr_AF = num4 = j;
-					num4 = list2[num4];
-					expr_AB[expr_AF] = num4 + 1;
+					int index;
+					(list = this.horizontalSlotsPerGroup)[index = num3] = list[index] - 1;
+					int index2;
+					(list = this.horizontalSlotsPerGroup)[index2 = j] = list[index2] + 1;
 				}
 			}
 			return true;

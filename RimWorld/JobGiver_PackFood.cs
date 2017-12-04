@@ -38,7 +38,7 @@ namespace RimWorld
 				{
 					return false;
 				}
-				List<ThoughtDef> list = FoodUtility.ThoughtsFromIngesting(pawn, t);
+				List<ThoughtDef> list = FoodUtility.ThoughtsFromIngesting(pawn, t, FoodUtility.GetFinalIngestibleDef(t, false));
 				for (int j = 0; j < list.Count; j++)
 				{
 					if (list[j].stages[0].baseMoodEffect < 0f)
@@ -47,7 +47,7 @@ namespace RimWorld
 					}
 				}
 				return true;
-			}, (Thing x) => FoodUtility.FoodSourceOptimality(pawn, x, 0f, false), 24, 30);
+			}, (Thing x) => FoodUtility.FoodOptimality(pawn, x, FoodUtility.GetFinalIngestibleDef(x, false), 0f, false), 24, 30);
 			if (thing2 == null)
 			{
 				return null;

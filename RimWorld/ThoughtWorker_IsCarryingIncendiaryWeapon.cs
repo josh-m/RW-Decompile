@@ -12,10 +12,10 @@ namespace RimWorld
 			{
 				return false;
 			}
-			List<VerbProperties> verbs = p.equipment.Primary.def.Verbs;
-			for (int i = 0; i < verbs.Count; i++)
+			List<Verb> allVerbs = p.equipment.Primary.GetComp<CompEquippable>().AllVerbs;
+			for (int i = 0; i < allVerbs.Count; i++)
 			{
-				if (verbs[i].ai_IsIncendiary)
+				if (allVerbs[i].IsIncendiary())
 				{
 					return true;
 				}

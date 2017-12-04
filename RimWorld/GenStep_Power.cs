@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using Verse;
 using Verse.AI;
@@ -8,17 +9,21 @@ namespace RimWorld
 {
 	public class GenStep_Power : GenStep
 	{
-		private const int MaxDistToExistingNetForTurrets = 13;
-
 		public bool canSpawnBatteries = true;
 
 		public bool canSpawnPowerGenerators = true;
+
+		public bool spawnRoofOverNewBatteries = true;
 
 		public FloatRange newBatteriesInitialStoredEnergyPctRange = new FloatRange(0.2f, 0.5f);
 
 		private List<Thing> tmpThings = new List<Thing>();
 
 		private List<IntVec3> tmpCells = new List<IntVec3>();
+
+		private const int MaxDistToExistingNetForTurrets = 13;
+
+		private const int RoofPadding = 2;
 
 		private static readonly IntRange MaxDistanceBetweenBatteryAndTransmitter = new IntRange(20, 50);
 
@@ -246,7 +251,7 @@ namespace RimWorld
 					return true;
 				}
 				return false;
-			}, true);
+			}, 2147483647, true, null);
 			this.tmpPowerNetPredicateResults.Clear();
 			if (foundNetLocal != null)
 			{
@@ -282,7 +287,7 @@ namespace RimWorld
 					return true;
 				}
 				return false;
-			}, true);
+			}, 2147483647, true, null);
 			if (foundPath)
 			{
 				map.floodFiller.ReconstructLastFloodFillPath(end, GenStep_Power.tmpTransmitterCells);
@@ -290,7 +295,7 @@ namespace RimWorld
 			}
 		}
 
-		private bool TrySpawnPowerTransmittingBuildingNear(IntVec3 position, Map map, Faction faction, ThingDef def, out Building newBuilding)
+		private bool TrySpawnPowerTransmittingBuildingNear(IntVec3 position, Map map, Faction faction, ThingDef def, out Building newBuilding, Predicate<IntVec3> extraValidator = null)
 		{
 			TraverseParms traverseParams = TraverseParms.For(TraverseMode.PassAllDestroyableThings, Danger.Deadly, false);
 			IntVec3 loc;
@@ -314,8 +319,8 @@ namespace RimWorld
 					}
 					iterator.MoveNext();
 				}
-				return true;
-			}, map, out loc, 8))
+				return extraValidator == null || extraValidator(x);
+			}, map, out loc, 8, 2147483647))
 			{
 				newBuilding = (Building)GenSpawn.Spawn(ThingMaker.MakeThing(def, null), loc, map, Rot4.North, false);
 				newBuilding.SetFaction(faction, null);
@@ -327,7 +332,7 @@ namespace RimWorld
 
 		private bool TrySpawnPowerGeneratorNear(IntVec3 position, Map map, Faction faction, out Building newPowerGenerator)
 		{
-			if (this.TrySpawnPowerTransmittingBuildingNear(position, map, faction, ThingDefOf.SolarGenerator, out newPowerGenerator))
+			if (this.TrySpawnPowerTransmittingBuildingNear(position, map, faction, ThingDefOf.SolarGenerator, out newPowerGenerator, null))
 			{
 				map.powerNetManager.UpdatePowerNetsAndConnections_First();
 				newPowerGenerator.GetComp<CompPowerPlant>().UpdateDesiredPowerOutput();
@@ -338,10 +343,42 @@ namespace RimWorld
 
 		private bool TrySpawnBatteryNear(IntVec3 position, Map map, Faction faction, out Building newBattery)
 		{
-			if (this.TrySpawnPowerTransmittingBuildingNear(position, map, faction, ThingDefOf.Battery, out newBattery))
+			Predicate<IntVec3> extraValidator = null;
+			if (this.spawnRoofOverNewBatteries)
+			{
+				extraValidator = delegate(IntVec3 x)
+				{
+					CellRect.CellRectIterator iterator = GenAdj.OccupiedRect(x, Rot4.North, ThingDefOf.Battery.size).ExpandedBy(3).GetIterator();
+					while (!iterator.Done())
+					{
+						IntVec3 current = iterator.Current;
+						if (current.InBounds(map))
+						{
+							List<Thing> thingList = current.GetThingList(map);
+							for (int i = 0; i < thingList.Count; i++)
+							{
+								if (thingList[i].def.PlaceWorkers != null)
+								{
+									if (thingList[i].def.PlaceWorkers.Any((PlaceWorker y) => y is PlaceWorker_NotUnderRoof))
+									{
+										return false;
+									}
+								}
+							}
+						}
+						iterator.MoveNext();
+					}
+					return true;
+				};
+			}
+			if (this.TrySpawnPowerTransmittingBuildingNear(position, map, faction, ThingDefOf.Battery, out newBattery, extraValidator))
 			{
 				float randomInRange = this.newBatteriesInitialStoredEnergyPctRange.RandomInRange;
 				newBattery.GetComp<CompPowerBattery>().SetStoredEnergyPct(randomInRange);
+				if (this.spawnRoofOverNewBatteries)
+				{
+					this.SpawnRoofOver(newBattery);
+				}
 				return true;
 			}
 			return false;
@@ -388,6 +425,75 @@ namespace RimWorld
 			if (powerComp.PowerNet != null && powerComp.PowerNet.CurrentEnergyGainRate() > 1E-07f)
 			{
 				powerComp.PowerOn = true;
+			}
+		}
+
+		private void SpawnRoofOver(Thing thing)
+		{
+			CellRect cellRect = thing.OccupiedRect();
+			bool flag = true;
+			CellRect.CellRectIterator iterator = cellRect.GetIterator();
+			while (!iterator.Done())
+			{
+				if (!iterator.Current.Roofed(thing.Map))
+				{
+					flag = false;
+					break;
+				}
+				iterator.MoveNext();
+			}
+			if (flag)
+			{
+				return;
+			}
+			int num = 0;
+			CellRect cellRect2 = cellRect.ExpandedBy(2);
+			CellRect.CellRectIterator iterator2 = cellRect2.GetIterator();
+			while (!iterator2.Done())
+			{
+				if (iterator2.Current.InBounds(thing.Map) && iterator2.Current.GetRoofHolderOrImpassable(thing.Map) != null)
+				{
+					num++;
+				}
+				iterator2.MoveNext();
+			}
+			if (num < 2)
+			{
+				ThingDef stuff = Rand.Element<ThingDef>(ThingDefOf.WoodLog, ThingDefOf.Steel);
+				foreach (IntVec3 current in cellRect2.Corners)
+				{
+					if (current.InBounds(thing.Map))
+					{
+						if (current.Standable(thing.Map))
+						{
+							if (current.GetFirstItem(thing.Map) == null && current.GetFirstBuilding(thing.Map) == null && current.GetFirstPawn(thing.Map) == null)
+							{
+								if (!GenAdj.CellsAdjacent8Way(new TargetInfo(current, thing.Map, false)).Any((IntVec3 x) => !x.InBounds(thing.Map) || !x.Walkable(thing.Map)))
+								{
+									if (current.SupportsStructureType(thing.Map, ThingDefOf.Wall.terrainAffordanceNeeded))
+									{
+										Thing thing2 = ThingMaker.MakeThing(ThingDefOf.Wall, stuff);
+										GenSpawn.Spawn(thing2, current, thing.Map);
+										thing2.SetFaction(thing.Faction, null);
+										num++;
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+			if (num > 0)
+			{
+				CellRect.CellRectIterator iterator3 = cellRect2.GetIterator();
+				while (!iterator3.Done())
+				{
+					if (iterator3.Current.InBounds(thing.Map) && !iterator3.Current.Roofed(thing.Map))
+					{
+						thing.Map.roofGrid.SetRoof(iterator3.Current, RoofDefOf.RoofConstructed);
+					}
+					iterator3.MoveNext();
+				}
 			}
 		}
 	}

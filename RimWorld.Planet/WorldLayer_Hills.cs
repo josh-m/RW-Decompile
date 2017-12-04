@@ -35,43 +35,42 @@ namespace RimWorld.Planet
 			while (i < tilesCount)
 			{
 				Tile tile = grid[i];
-				Material mat;
-				FloatRange basePosOffsetRange;
+				Material material;
+				FloatRange floatRange;
 				switch (tile.hilliness)
 				{
 				case Hilliness.SmallHills:
-					mat = WorldMaterials.SmallHills;
-					basePosOffsetRange = WorldLayer_Hills.BasePosOffsetRange_SmallHills;
-					goto IL_19A;
+					material = WorldMaterials.SmallHills;
+					floatRange = WorldLayer_Hills.BasePosOffsetRange_SmallHills;
+					goto IL_180;
 				case Hilliness.LargeHills:
-					mat = WorldMaterials.LargeHills;
-					basePosOffsetRange = WorldLayer_Hills.BasePosOffsetRange_LargeHills;
-					goto IL_19A;
+					material = WorldMaterials.LargeHills;
+					floatRange = WorldLayer_Hills.BasePosOffsetRange_LargeHills;
+					goto IL_180;
 				case Hilliness.Mountainous:
-					mat = WorldMaterials.Mountains;
-					basePosOffsetRange = WorldLayer_Hills.BasePosOffsetRange_Mountains;
-					goto IL_19A;
+					material = WorldMaterials.Mountains;
+					floatRange = WorldLayer_Hills.BasePosOffsetRange_Mountains;
+					goto IL_180;
 				case Hilliness.Impassable:
-					mat = WorldMaterials.ImpassableMountains;
-					basePosOffsetRange = WorldLayer_Hills.BasePosOffsetRange_ImpassableMountains;
-					goto IL_19A;
+					material = WorldMaterials.ImpassableMountains;
+					floatRange = WorldLayer_Hills.BasePosOffsetRange_ImpassableMountains;
+					goto IL_180;
 				}
-				IL_2BF:
+				IL_25C:
 				i++;
 				continue;
-				IL_19A:
-				LayerSubMesh subMesh = base.GetSubMesh(mat);
-				Vector3 pos = grid.GetTileCenter(i);
-				Vector3 origPos = pos;
-				float length = pos.magnitude;
-				pos += Rand.PointOnSphere * basePosOffsetRange.RandomInRange * grid.averageTileSize;
-				pos = pos.normalized * length;
-				WorldRendererUtility.PrintQuadTangentialToPlanet(pos, origPos, WorldLayer_Hills.BaseSizeRange.RandomInRange * grid.averageTileSize, 0.005f, subMesh, false, true, false);
+				IL_180:
+				LayerSubMesh subMesh = base.GetSubMesh(material);
+				Vector3 vector = grid.GetTileCenter(i);
+				Vector3 posForTangents = vector;
+				float magnitude = vector.magnitude;
+				vector = (vector + Rand.UnitVector3 * floatRange.RandomInRange * grid.averageTileSize).normalized * magnitude;
+				WorldRendererUtility.PrintQuadTangentialToPlanet(vector, posForTangents, WorldLayer_Hills.BaseSizeRange.RandomInRange * grid.averageTileSize, 0.005f, subMesh, false, true, false);
 				WorldRendererUtility.PrintTextureAtlasUVs(Rand.Range(0, WorldLayer_Hills.TexturesInAtlas.x), Rand.Range(0, WorldLayer_Hills.TexturesInAtlas.z), WorldLayer_Hills.TexturesInAtlas.x, WorldLayer_Hills.TexturesInAtlas.z, subMesh);
-				goto IL_2BF;
+				goto IL_25C;
 			}
 			Rand.PopState();
-			base.FinalizeMesh(MeshParts.All, true);
+			base.FinalizeMesh(MeshParts.All);
 		}
 	}
 }

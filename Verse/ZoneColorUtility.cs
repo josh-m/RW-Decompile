@@ -7,8 +7,6 @@ namespace Verse
 {
 	public static class ZoneColorUtility
 	{
-		private const float ZoneOpacity = 0.09f;
-
 		private static List<Color> growingZoneColors;
 
 		private static List<Color> storageZoneColors;
@@ -16,6 +14,8 @@ namespace Verse
 		private static int nextGrowingZoneColorIndex;
 
 		private static int nextStorageZoneColorIndex;
+
+		private const float ZoneOpacity = 0.09f;
 
 		static ZoneColorUtility()
 		{

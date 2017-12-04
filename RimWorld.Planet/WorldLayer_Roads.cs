@@ -45,43 +45,43 @@ namespace RimWorld.Planet
 					List<WorldLayer_Paths.OutputDirection> outputs = new List<WorldLayer_Paths.OutputDirection>();
 					if (tile.roads != null)
 					{
-						bool allowSmoothTransitions = true;
-						for (int rc = 0; rc < tile.roads.Count - 1; rc++)
+						bool allowSmoothTransition = true;
+						for (int j = 0; j < tile.roads.Count - 1; j++)
 						{
-							if (tile.roads[rc].road.worldTransitionGroup != tile.roads[rc + 1].road.worldTransitionGroup)
+							if (tile.roads[j].road.worldTransitionGroup != tile.roads[j + 1].road.worldTransitionGroup)
 							{
-								allowSmoothTransitions = false;
+								allowSmoothTransition = false;
 							}
 						}
-						for (int roadLayer = 0; roadLayer < roadLayerDefs.Count; roadLayer++)
+						for (int k = 0; k < roadLayerDefs.Count; k++)
 						{
-							bool hasWidth = false;
+							bool flag = false;
 							outputs.Clear();
-							for (int rc2 = 0; rc2 < tile.roads.Count; rc2++)
+							for (int l = 0; l < tile.roads.Count; l++)
 							{
-								RoadDef roadDef = tile.roads[rc2].road;
-								float layerWidth = roadDef.GetLayerWidth(roadLayerDefs[roadLayer]);
+								RoadDef road = tile.roads[l].road;
+								float layerWidth = road.GetLayerWidth(roadLayerDefs[k]);
 								if (layerWidth > 0f)
 								{
-									hasWidth = true;
+									flag = true;
 								}
 								outputs.Add(new WorldLayer_Paths.OutputDirection
 								{
-									neighbor = tile.roads[rc2].neighbor,
+									neighbor = tile.roads[l].neighbor,
 									width = layerWidth,
-									distortionFrequency = roadDef.distortionFrequency,
-									distortionIntensity = roadDef.distortionIntensity
+									distortionFrequency = road.distortionFrequency,
+									distortionIntensity = road.distortionIntensity
 								});
 							}
-							if (hasWidth)
+							if (flag)
 							{
-								base.GeneratePaths(subMesh, i, outputs, roadLayerDefs[roadLayer].color, allowSmoothTransitions);
+								base.GeneratePaths(subMesh, i, outputs, roadLayerDefs[k].color, allowSmoothTransition);
 							}
 						}
 					}
 				}
 			}
-			base.FinalizeMesh(MeshParts.All, false);
+			base.FinalizeMesh(MeshParts.All);
 		}
 
 		public override Vector3 FinalizePoint(Vector3 inp, float distortionFrequency, float distortionIntensity)

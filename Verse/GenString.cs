@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace Verse
 {
@@ -28,13 +30,24 @@ namespace Verse
 			return GenString.numberStrings[num + 5000];
 		}
 
-		public static string TrimmedToLength(this string str, int length)
+		[DebuggerHidden]
+		public static IEnumerable<string> SplitBy(this string str, int chunkLength)
 		{
-			if (str == null || str.Length <= length)
+			if (!str.NullOrEmpty())
 			{
-				return str;
+				if (chunkLength < 1)
+				{
+					throw new ArgumentException();
+				}
+				for (int i = 0; i < str.Length; i += chunkLength)
+				{
+					if (chunkLength > str.Length - i)
+					{
+						chunkLength = str.Length - i;
+					}
+					yield return str.Substring(i, chunkLength);
+				}
 			}
-			return str.Substring(0, length);
 		}
 	}
 }

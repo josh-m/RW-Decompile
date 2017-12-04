@@ -5,9 +5,9 @@ namespace Verse
 {
 	public class DamageFlasher
 	{
-		private const int DamagedMatTicksTotal = 16;
-
 		private int lastDamageTick = -9999;
+
+		private const int DamagedMatTicksTotal = 16;
 
 		private int DamageFlashTicksLeft
 		{

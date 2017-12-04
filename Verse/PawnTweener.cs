@@ -5,8 +5,6 @@ namespace Verse
 {
 	public class PawnTweener
 	{
-		private const float SpringTightness = 0.09f;
-
 		private Pawn pawn;
 
 		private Vector3 tweenedPos = new Vector3(0f, 0f, 0f);
@@ -14,6 +12,8 @@ namespace Verse
 		private int lastDrawFrame = -1;
 
 		private Vector3 lastTickSpringPos;
+
+		private const float SpringTightness = 0.09f;
 
 		public Vector3 TweenedPos
 		{
@@ -53,7 +53,12 @@ namespace Verse
 				if (tickRateMultiplier < 5f)
 				{
 					Vector3 a = this.TweenedPosRoot() - this.tweenedPos;
-					this.tweenedPos += a * 0.09f * (RealTime.deltaTime * 60f * tickRateMultiplier);
+					float num = 0.09f * (RealTime.deltaTime * 60f * tickRateMultiplier);
+					if (RealTime.deltaTime > 0.05f)
+					{
+						num = Mathf.Min(num, 1f);
+					}
+					this.tweenedPos += a * num;
 				}
 				else
 				{

@@ -10,29 +10,49 @@ namespace RimWorld
 	[StaticConstructorOnStartup]
 	public static class InspectPaneUtility
 	{
+		private static Dictionary<string, string> truncatedLabelsCached = new Dictionary<string, string>();
+
 		public const float TabWidth = 72f;
 
 		public const float TabHeight = 30f;
 
-		public const float CornerButtonsSize = 24f;
+		private static readonly Texture2D InspectTabButtonFillTex = SolidColorMaterials.NewSolidColorTexture(new Color(0.07450981f, 0.08627451f, 0.105882354f, 1f));
 
-		public const float PaneWidth = 432f;
+		public const float CornerButtonsSize = 24f;
 
 		public const float PaneInnerMargin = 12f;
 
-		private static Dictionary<string, string> truncatedLabelsCached = new Dictionary<string, string>();
+		public const float PaneHeight = 165f;
 
-		private static readonly Texture2D InspectTabButtonFillTex = SolidColorMaterials.NewSolidColorTexture(new Color(0.07450981f, 0.08627451f, 0.105882354f, 1f));
-
-		public static readonly Vector2 PaneSize = new Vector2(432f, 165f);
-
-		public static readonly Vector2 PaneInnerSize = new Vector2(InspectPaneUtility.PaneSize.x - 24f, InspectPaneUtility.PaneSize.y - 24f);
+		private const int TabMinimum = 6;
 
 		private static List<Thing> selectedThings = new List<Thing>();
 
 		public static void Reset()
 		{
 			InspectPaneUtility.truncatedLabelsCached.Clear();
+		}
+
+		public static float PaneWidthFor(IInspectPane pane)
+		{
+			if (pane == null)
+			{
+				return 432f;
+			}
+			int num = 0;
+			foreach (InspectTabBase current in pane.CurTabs)
+			{
+				if (current.IsVisible)
+				{
+					num++;
+				}
+			}
+			return 72f * (float)Mathf.Max(6, num);
+		}
+
+		public static Vector2 PaneSizeFor(IInspectPane pane)
+		{
+			return new Vector2(InspectPaneUtility.PaneWidthFor(pane), 165f);
 		}
 
 		public static bool CanInspectTogether(object A, object B)
@@ -124,7 +144,7 @@ namespace RimWorld
 
 		public static void InspectPaneOnGUI(Rect inRect, IInspectPane pane)
 		{
-			pane.RecentHeight = InspectPaneUtility.PaneSize.y;
+			pane.RecentHeight = 165f;
 			if (pane.AnythingSelected)
 			{
 				try
@@ -177,7 +197,7 @@ namespace RimWorld
 			try
 			{
 				float y = pane.PaneTopY - 30f;
-				float num = 360f;
+				float num = InspectPaneUtility.PaneWidthFor(pane) - 72f;
 				float width = 0f;
 				bool flag = false;
 				foreach (InspectTabBase current in pane.CurTabs)

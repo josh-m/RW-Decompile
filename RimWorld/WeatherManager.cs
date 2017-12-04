@@ -8,8 +8,6 @@ namespace RimWorld
 {
 	public sealed class WeatherManager : IExposable
 	{
-		public const float TransitionTicks = 4000f;
-
 		public Map map;
 
 		public WeatherEventHandler eventHandler = new WeatherEventHandler();
@@ -23,6 +21,8 @@ namespace RimWorld
 		private List<Sustainer> ambienceSustainers = new List<Sustainer>();
 
 		public TemperatureMemory growthSeasonMemory;
+
+		public const float TransitionTicks = 4000f;
 
 		public float TransitionLerpFactor
 		{
@@ -77,6 +77,39 @@ namespace RimWorld
 			}
 		}
 
+		public WeatherDef CurPerceivedWeather
+		{
+			get
+			{
+				if (this.curWeather == null)
+				{
+					return this.lastWeather;
+				}
+				if (this.lastWeather == null)
+				{
+					return this.curWeather;
+				}
+				float num;
+				if (this.curWeather.perceivePriority > this.lastWeather.perceivePriority)
+				{
+					num = 0.18f;
+				}
+				else if (this.lastWeather.perceivePriority > this.curWeather.perceivePriority)
+				{
+					num = 0.82f;
+				}
+				else
+				{
+					num = 0.5f;
+				}
+				if (this.TransitionLerpFactor < num)
+				{
+					return this.lastWeather;
+				}
+				return this.curWeather;
+			}
+		}
+
 		public WeatherManager(Map map)
 		{
 			this.map = map;
@@ -107,14 +140,15 @@ namespace RimWorld
 
 		public void DoWeatherGUI(Rect rect)
 		{
+			WeatherDef curPerceivedWeather = this.CurPerceivedWeather;
 			Text.Anchor = TextAnchor.MiddleRight;
 			Rect rect2 = new Rect(rect);
 			rect2.width -= 15f;
 			Text.Font = GameFont.Small;
-			Widgets.Label(rect2, this.curWeather.LabelCap);
-			if (!this.curWeather.description.NullOrEmpty())
+			Widgets.Label(rect2, curPerceivedWeather.LabelCap);
+			if (!curPerceivedWeather.description.NullOrEmpty())
 			{
-				TooltipHandler.TipRegion(rect, this.curWeather.description);
+				TooltipHandler.TipRegion(rect, curPerceivedWeather.description);
 			}
 			Text.Anchor = TextAnchor.UpperLeft;
 		}

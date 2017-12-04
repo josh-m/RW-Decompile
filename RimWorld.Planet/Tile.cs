@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Verse;
 
 namespace RimWorld.Planet
 {
@@ -30,6 +31,10 @@ namespace RimWorld.Planet
 		public float temperature = 20f;
 
 		public float rainfall;
+
+		public float swampiness;
+
+		public WorldFeature feature;
 
 		public List<Tile.RoadLink> roads;
 
@@ -73,7 +78,9 @@ namespace RimWorld.Planet
 				this.temperature,
 				"°C rain=",
 				this.rainfall,
-				"mm roads=",
+				"mm swampiness=",
+				this.swampiness.ToStringPercent(),
+				" roads=",
 				(this.roads != null) ? this.roads.Count : 0,
 				" rivers=",
 				(this.rivers != null) ? this.rivers.Count : 0,

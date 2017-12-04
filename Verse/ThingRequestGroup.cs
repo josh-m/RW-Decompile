@@ -9,7 +9,6 @@ namespace Verse
 		Everything,
 		HaulableEver,
 		HaulableAlways,
-		Plant,
 		FoodSource,
 		FoodSourceNotPlantOrTree,
 		Corpse,
@@ -25,15 +24,23 @@ namespace Verse
 		Refuelable,
 		HaulableEverOrMinifiable,
 		Drug,
+		Shell,
+		HarvestablePlant,
+		Fire,
+		Plant,
 		Construction,
 		HasGUIOverlay,
 		Apparel,
 		MinifiedThing,
 		Grave,
 		Art,
-		ThisOrAnyCompIsThingHolder,
+		ThingHolder,
 		ActiveDropPod,
 		Transporter,
-		LongRangeMineralScanner
+		LongRangeMineralScanner,
+		AffectsSky,
+		PsychicDroneEmanator,
+		WindSource,
+		AlwaysFlee
 	}
 }

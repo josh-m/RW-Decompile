@@ -14,7 +14,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return (Plant)base.CurJob.GetTarget(TargetIndex.A).Thing;
+				return (Plant)this.job.GetTarget(TargetIndex.A).Thing;
 			}
 		}
 
@@ -24,41 +24,45 @@ namespace RimWorld
 			Scribe_Values.Look<float>(ref this.sowWorkDone, "sowWorkDone", 0f, false);
 		}
 
+		public override bool TryMakePreToilReservations()
+		{
+			return this.pawn.Reserve(this.job.targetA, this.job, 1, -1, null);
+		}
+
 		[DebuggerHidden]
 		protected override IEnumerable<Toil> MakeNewToils()
 		{
-			yield return Toils_Reserve.Reserve(TargetIndex.A, 1, -1, null);
-			yield return Toils_Goto.GotoCell(TargetIndex.A, PathEndMode.Touch).FailOn(() => GenPlant.AdjacentSowBlocker(this.<>f__this.CurJob.plantDefToSow, this.<>f__this.TargetA.Cell, this.<>f__this.Map) != null).FailOn(() => !this.<>f__this.CurJob.plantDefToSow.CanEverPlantAt(this.<>f__this.TargetLocA, this.<>f__this.Map));
+			yield return Toils_Goto.GotoCell(TargetIndex.A, PathEndMode.Touch).FailOn(() => GenPlant.AdjacentSowBlocker(this.$this.job.plantDefToSow, this.$this.TargetA.Cell, this.$this.Map) != null).FailOn(() => !this.$this.job.plantDefToSow.CanEverPlantAt(this.$this.TargetLocA, this.$this.Map));
 			Toil sowToil = new Toil();
 			sowToil.initAction = delegate
 			{
-				this.<>f__this.TargetThingA = GenSpawn.Spawn(this.<>f__this.CurJob.plantDefToSow, this.<>f__this.TargetLocA, this.<>f__this.Map);
-				this.<>f__this.pawn.Reserve(this.<>f__this.TargetThingA, 1, -1, null);
-				Plant plant = (Plant)this.<>f__this.TargetThingA;
+				this.$this.TargetThingA = GenSpawn.Spawn(this.$this.job.plantDefToSow, this.$this.TargetLocA, this.$this.Map);
+				this.$this.pawn.Reserve(this.$this.TargetThingA, sowToil.actor.CurJob, 1, -1, null);
+				Plant plant = (Plant)this.$this.TargetThingA;
 				plant.Growth = 0f;
 				plant.sown = true;
 			};
 			sowToil.tickAction = delegate
 			{
-				Pawn actor = this.<sowToil>__0.actor;
+				Pawn actor = sowToil.actor;
 				if (actor.skills != null)
 				{
 					actor.skills.Learn(SkillDefOf.Growing, 0.11f, false);
 				}
 				float statValue = actor.GetStatValue(StatDefOf.PlantWorkSpeed, true);
 				float num = statValue;
-				Plant plant = this.<>f__this.Plant;
+				Plant plant = this.$this.Plant;
 				if (plant.LifeStage != PlantLifeStage.Sowing)
 				{
-					Log.Error(this.<>f__this + " getting sowing work while not in Sowing life stage.");
+					Log.Error(this.$this + " getting sowing work while not in Sowing life stage.");
 				}
-				this.<>f__this.sowWorkDone += num;
-				if (this.<>f__this.sowWorkDone >= plant.def.plant.sowWork)
+				this.$this.sowWorkDone += num;
+				if (this.$this.sowWorkDone >= plant.def.plant.sowWork)
 				{
 					plant.Growth = 0.05f;
-					this.<>f__this.Map.mapDrawer.MapMeshDirty(plant.Position, MapMeshFlag.Things);
+					this.$this.Map.mapDrawer.MapMeshDirty(plant.Position, MapMeshFlag.Things);
 					actor.records.Increment(RecordDefOf.PlantsSown);
-					this.<>f__this.ReadyForNextToil();
+					this.$this.ReadyForNextToil();
 					return;
 				}
 			};
@@ -66,16 +70,16 @@ namespace RimWorld
 			sowToil.FailOnDespawnedNullOrForbidden(TargetIndex.A);
 			sowToil.FailOnCannotTouch(TargetIndex.A, PathEndMode.Touch);
 			sowToil.WithEffect(EffecterDefOf.Sow, TargetIndex.A);
-			sowToil.WithProgressBar(TargetIndex.A, () => this.<>f__this.sowWorkDone / this.<>f__this.Plant.def.plant.sowWork, true, -0.5f);
+			sowToil.WithProgressBar(TargetIndex.A, () => this.$this.sowWorkDone / this.$this.Plant.def.plant.sowWork, true, -0.5f);
 			sowToil.PlaySustainerOrSound(() => SoundDefOf.Interact_Sow);
 			sowToil.AddFinishAction(delegate
 			{
-				if (this.<>f__this.TargetThingA != null)
+				if (this.$this.TargetThingA != null)
 				{
-					Plant plant = (Plant)this.<sowToil>__0.actor.CurJob.GetTarget(TargetIndex.A).Thing;
-					if (this.<>f__this.sowWorkDone < plant.def.plant.sowWork && !this.<>f__this.TargetThingA.Destroyed)
+					Plant plant = (Plant)sowToil.actor.CurJob.GetTarget(TargetIndex.A).Thing;
+					if (this.$this.sowWorkDone < plant.def.plant.sowWork && !this.$this.TargetThingA.Destroyed)
 					{
-						this.<>f__this.TargetThingA.Destroy(DestroyMode.Vanish);
+						this.$this.TargetThingA.Destroy(DestroyMode.Vanish);
 					}
 				}
 			});
@@ -86,7 +90,7 @@ namespace RimWorld
 				{
 					initAction = delegate
 					{
-						this.<>f__this.pawn.needs.mood.thoughts.memories.TryGainMemory(ThoughtDefOf.GreenThumbHappy, null);
+						this.$this.pawn.needs.mood.thoughts.memories.TryGainMemory(ThoughtDefOf.GreenThumbHappy, null);
 					}
 				};
 			}

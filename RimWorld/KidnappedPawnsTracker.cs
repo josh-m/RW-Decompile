@@ -8,13 +8,13 @@ namespace RimWorld
 {
 	public class KidnappedPawnsTracker : IExposable
 	{
-		private const int TryRecruitInterval = 15051;
-
-		private const float RecruitMTBDays = 30f;
-
 		private Faction faction;
 
 		private List<Pawn> kidnappedPawns = new List<Pawn>();
+
+		private const int TryRecruitInterval = 15051;
+
+		private const float RecruitMTBDays = 30f;
 
 		public List<Pawn> KidnappedPawnsListForReading
 		{
@@ -88,7 +88,7 @@ namespace RimWorld
 
 		public void KidnappedPawnsTrackerTick()
 		{
-			this.kidnappedPawns.RemoveAll((Pawn x) => x.DestroyedOrNull());
+			this.kidnappedPawns.RemoveAll(new Predicate<Pawn>(ThingUtility.DestroyedOrNull));
 			if (Find.TickManager.TicksGame % 15051 == 0)
 			{
 				for (int i = this.kidnappedPawns.Count - 1; i >= 0; i--)

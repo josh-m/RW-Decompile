@@ -1,5 +1,4 @@
 using RimWorld;
-using RimWorld.Planet;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -9,10 +8,8 @@ using UnityEngine;
 
 namespace Verse
 {
-	public class Corpse : ThingWithComps, IBillGiver, IThoughtGiver, IStrippable, IThingHolder
+	public class Corpse : ThingWithComps, IThingHolder, IThoughtGiver, IStrippable, IBillGiver
 	{
-		private const int VanishAfterTicksSinceDessicated = 6000000;
-
 		private ThingOwner<Pawn> innerContainer;
 
 		private int timeOfDeath = -1000;
@@ -22,6 +19,8 @@ namespace Verse
 		private BillStack operationsBillStack;
 
 		public bool everBuriedInSarcophagus;
+
+		private const int VanishAfterTicksSinceDessicated = 6000000;
 
 		public Pawn InnerPawn
 		{
@@ -35,12 +34,19 @@ namespace Verse
 			}
 			set
 			{
-				if (this.innerContainer.Count > 0)
+				if (value == null)
 				{
-					Log.Error("Setting InnerPawn in corpse that already has one.");
 					this.innerContainer.Clear();
 				}
-				this.innerContainer.TryAdd(value, true);
+				else
+				{
+					if (this.innerContainer.Count > 0)
+					{
+						Log.Error("Setting InnerPawn in corpse that already has one.");
+						this.innerContainer.Clear();
+					}
+					this.innerContainer.TryAdd(value, true);
+				}
 			}
 		}
 
@@ -118,7 +124,7 @@ namespace Verse
 				}
 				if (this.GetRotStage() == RotStage.Fresh)
 				{
-					yield return new StatDrawEntry(StatCategoryDefOf.Basics, "Nutrition".Translate(), FoodUtility.GetBodyPartNutrition(this.InnerPawn, this.InnerPawn.RaceProps.body.corePart).ToString("0.##"), 0);
+					yield return new StatDrawEntry(StatCategoryDefOf.Basics, "Nutrition".Translate(), FoodUtility.GetBodyPartNutrition(this.InnerPawn, this.InnerPawn.RaceProps.body.corePart).ToString("0.##"), 0, string.Empty);
 					StatDef meatAmount = StatDefOf.MeatAmount;
 					yield return new StatDrawEntry(meatAmount.category, meatAmount, this.InnerPawn.GetStatValue(meatAmount, true), StatRequest.For(this.InnerPawn), ToStringNumberSense.Undefined);
 					StatDef leatherAmount = StatDefOf.LeatherAmount;
@@ -157,7 +163,7 @@ namespace Verse
 			this.innerContainer = new ThingOwner<Pawn>(this, true, LookMode.Reference);
 		}
 
-		public bool CurrentlyUsable()
+		public bool CurrentlyUsableForBills()
 		{
 			return this.InteractionCell.IsValid;
 		}
@@ -233,10 +239,6 @@ namespace Verse
 			{
 				pawn.apparel.DestroyAll(DestroyMode.Vanish);
 			}
-			if (pawn.IsWorldPawn())
-			{
-				Find.WorldPawns.DiscardIfUnimportant(pawn);
-			}
 		}
 
 		public override void TickRare()
@@ -286,7 +288,7 @@ namespace Verse
 					{
 						this.InnerPawn.LabelShort,
 						ingester.LabelIndefinite()
-					}).CapitalizeFirst(), ingester, MessageSound.Negative);
+					}).CapitalizeFirst(), ingester, MessageTypeDefOf.NegativeEvent);
 				}
 				numTaken = 1;
 			}
@@ -319,11 +321,11 @@ namespace Verse
 			if (this.InnerPawn.RaceProps.Humanlike)
 			{
 				butcher.needs.mood.thoughts.memories.TryGainMemory(ThoughtDefOf.ButcheredHumanlikeCorpse, null);
-				foreach (Pawn p in butcher.Map.mapPawns.SpawnedPawnsInFaction(butcher.Faction))
+				foreach (Pawn current in butcher.Map.mapPawns.SpawnedPawnsInFaction(butcher.Faction))
 				{
-					if (p != butcher && p.needs != null && p.needs.mood != null && p.needs.mood.thoughts != null)
+					if (current != butcher && current.needs != null && current.needs.mood != null && current.needs.mood.thoughts != null)
 					{
-						p.needs.mood.thoughts.memories.TryGainMemory(ThoughtDefOf.KnowButcheredHumanlikeCorpse, null);
+						current.needs.mood.thoughts.memories.TryGainMemory(ThoughtDefOf.KnowButcheredHumanlikeCorpse, null);
 					}
 				}
 				TaleRecorder.RecordTale(TaleDefOf.ButcheredHumanlikeCorpse, new object[]
@@ -431,16 +433,6 @@ namespace Verse
 			{
 				Find.ColonistBar.MarkColonistsDirty();
 			}
-		}
-
-		virtual IThingHolder get_ParentHolder()
-		{
-			return base.ParentHolder;
-		}
-
-		virtual Map get_Map()
-		{
-			return base.Map;
 		}
 	}
 }

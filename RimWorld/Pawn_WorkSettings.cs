@@ -8,12 +8,6 @@ namespace RimWorld
 {
 	public class Pawn_WorkSettings : IExposable
 	{
-		public const int LowestPriority = 4;
-
-		public const int DefaultPriority = 3;
-
-		private const int MaxInitialActiveWorks = 6;
-
 		private Pawn pawn;
 
 		private DefMap<WorkTypeDef, int> priorities;
@@ -23,6 +17,12 @@ namespace RimWorld
 		private List<WorkGiver> workGiversInOrderEmerg = new List<WorkGiver>();
 
 		private List<WorkGiver> workGiversInOrderNormal = new List<WorkGiver>();
+
+		public const int LowestPriority = 4;
+
+		public const int DefaultPriority = 3;
+
+		private const int MaxInitialActiveWorks = 6;
 
 		private static List<WorkTypeDef> wtsByPrio = new List<WorkTypeDef>();
 

@@ -9,13 +9,13 @@ namespace RimWorld
 {
 	public class JobDriver_Lovin : JobDriver
 	{
-		private const int TicksBetweenHeartMotes = 100;
-
 		private int ticksLeft;
 
 		private TargetIndex PartnerInd = TargetIndex.A;
 
 		private TargetIndex BedInd = TargetIndex.B;
+
+		private const int TicksBetweenHeartMotes = 100;
 
 		private static readonly SimpleCurve LovinIntervalHoursFromAgeCurve = new SimpleCurve
 		{
@@ -45,7 +45,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return (Pawn)((Thing)base.CurJob.GetTarget(this.PartnerInd));
+				return (Pawn)((Thing)this.job.GetTarget(this.PartnerInd));
 			}
 		}
 
@@ -53,7 +53,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return (Building_Bed)((Thing)base.CurJob.GetTarget(this.BedInd));
+				return (Building_Bed)((Thing)this.job.GetTarget(this.BedInd));
 			}
 		}
 
@@ -63,53 +63,61 @@ namespace RimWorld
 			Scribe_Values.Look<int>(ref this.ticksLeft, "ticksLeft", 0, false);
 		}
 
+		public override bool TryMakePreToilReservations()
+		{
+			return this.pawn.Reserve(this.Partner, this.job, 1, -1, null) && this.pawn.Reserve(this.Bed, this.job, this.Bed.SleepingSlotsCount, 0, null);
+		}
+
+		public override bool CanBeginNowWhileLyingDown()
+		{
+			return JobInBedUtility.InBedOrRestSpotNow(this.pawn, this.job.GetTarget(this.BedInd));
+		}
+
 		[DebuggerHidden]
 		protected override IEnumerable<Toil> MakeNewToils()
 		{
 			this.FailOnDespawnedOrNull(this.BedInd);
 			this.FailOnDespawnedOrNull(this.PartnerInd);
-			this.FailOn(() => !this.<>f__this.Partner.health.capacities.CanBeAwake);
+			this.FailOn(() => !this.$this.Partner.health.capacities.CanBeAwake);
 			this.KeepLyingDown(this.BedInd);
-			yield return Toils_Reserve.Reserve(this.PartnerInd, 1, -1, null);
-			yield return Toils_Reserve.Reserve(this.BedInd, this.Bed.SleepingSlotsCount, 0, null);
 			yield return Toils_Bed.ClaimBedIfNonMedical(this.BedInd, TargetIndex.None);
 			yield return Toils_Bed.GotoBed(this.BedInd);
 			yield return new Toil
 			{
 				initAction = delegate
 				{
-					if (this.<>f__this.Partner.CurJob == null || this.<>f__this.Partner.CurJob.def != JobDefOf.Lovin)
+					if (this.$this.Partner.CurJob == null || this.$this.Partner.CurJob.def != JobDefOf.Lovin)
 					{
-						Job newJob = new Job(JobDefOf.Lovin, this.<>f__this.pawn, this.<>f__this.Bed);
-						this.<>f__this.Partner.jobs.StartJob(newJob, JobCondition.InterruptForced, null, false, true, null, null);
-						this.<>f__this.ticksLeft = (int)(2500f * Mathf.Clamp(Rand.Range(0.1f, 1.1f), 0.1f, 2f));
+						Job newJob = new Job(JobDefOf.Lovin, this.$this.pawn, this.$this.Bed);
+						this.$this.Partner.jobs.StartJob(newJob, JobCondition.InterruptForced, null, false, true, null, null, false);
+						this.$this.ticksLeft = (int)(2500f * Mathf.Clamp(Rand.Range(0.1f, 1.1f), 0.1f, 2f));
 					}
 					else
 					{
-						this.<>f__this.ticksLeft = 9999999;
+						this.$this.ticksLeft = 9999999;
 					}
 				},
 				defaultCompleteMode = ToilCompleteMode.Instant
 			};
 			Toil doLovin = Toils_LayDown.LayDown(this.BedInd, true, false, false, false);
-			doLovin.FailOn(() => this.<>f__this.Partner.CurJob == null || this.<>f__this.Partner.CurJob.def != JobDefOf.Lovin);
+			doLovin.FailOn(() => this.$this.Partner.CurJob == null || this.$this.Partner.CurJob.def != JobDefOf.Lovin);
 			doLovin.AddPreTickAction(delegate
 			{
-				this.<>f__this.ticksLeft--;
-				if (this.<>f__this.ticksLeft <= 0)
+				this.$this.ticksLeft--;
+				if (this.$this.ticksLeft <= 0)
 				{
-					this.<>f__this.ReadyForNextToil();
+					this.$this.ReadyForNextToil();
 				}
-				else if (this.<>f__this.pawn.IsHashIntervalTick(100))
+				else if (this.$this.pawn.IsHashIntervalTick(100))
 				{
-					MoteMaker.ThrowMetaIcon(this.<>f__this.pawn.Position, this.<>f__this.pawn.Map, ThingDefOf.Mote_Heart);
+					MoteMaker.ThrowMetaIcon(this.$this.pawn.Position, this.$this.pawn.Map, ThingDefOf.Mote_Heart);
 				}
 			});
 			doLovin.AddFinishAction(delegate
 			{
 				Thought_Memory newThought = (Thought_Memory)ThoughtMaker.MakeThought(ThoughtDefOf.GotSomeLovin);
-				this.<>f__this.pawn.needs.mood.thoughts.memories.TryGainMemory(newThought, this.<>f__this.Partner);
-				this.<>f__this.pawn.mindState.canLovinTick = Find.TickManager.TicksGame + this.<>f__this.GenerateRandomMinTicksToNextLovin(this.<>f__this.pawn);
+				this.$this.pawn.needs.mood.thoughts.memories.TryGainMemory(newThought, this.$this.Partner);
+				this.$this.pawn.mindState.canLovinTick = Find.TickManager.TicksGame + this.$this.GenerateRandomMinTicksToNextLovin(this.$this.pawn);
 			});
 			doLovin.socialMode = RandomSocialMode.Off;
 			yield return doLovin;

@@ -38,9 +38,9 @@ namespace Verse
 		public static void AddAllInMods()
 		{
 			HashSet<string> hashSet = new HashSet<string>();
-			foreach (ModContentPack current in from m in LoadedModManager.RunningMods
+			foreach (ModContentPack current in (from m in LoadedModManager.RunningMods
 			orderby m.OverwritePriority
-			select m)
+			select m).ThenBy((ModContentPack x) => LoadedModManager.RunningModsListForReading.IndexOf(x)))
 			{
 				hashSet.Clear();
 				foreach (T current2 in GenDefDatabase.DefsToGoInDatabase<T>(current))
@@ -145,15 +145,23 @@ namespace Verse
 			}
 		}
 
-		public static void ResolveAllReferences()
+		public static void ResolveAllReferences(bool onlyExactlyMyType = true)
 		{
 			DefDatabase<T>.SetIndices();
 			for (int i = 0; i < DefDatabase<T>.defsList.Count; i++)
 			{
 				try
 				{
-					T t = DefDatabase<T>.defsList[i];
-					t.ResolveReferences();
+					if (onlyExactlyMyType)
+					{
+						T t = DefDatabase<T>.defsList[i];
+						if (t.GetType() != typeof(T))
+						{
+							goto IL_9A;
+						}
+					}
+					T t2 = DefDatabase<T>.defsList[i];
+					t2.ResolveReferences();
 				}
 				catch (Exception ex)
 				{
@@ -165,6 +173,7 @@ namespace Verse
 						ex
 					}));
 				}
+				IL_9A:;
 			}
 			DefDatabase<T>.SetIndices();
 		}

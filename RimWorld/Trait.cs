@@ -128,7 +128,7 @@ namespace RimWorld
 			{
 				if (current.Value != 0)
 				{
-					string value = "    " + current.Key.skillLabel + ":   " + current.Value.ToString("+##;-##");
+					string value = "    " + current.Key.skillLabel.CapitalizeFirst() + ":   " + current.Value.ToString("+##;-##");
 					if (num < count - 1)
 					{
 						stringBuilder.AppendLine(value);
@@ -156,8 +156,8 @@ namespace RimWorld
 				for (int i = 0; i < currentData.statOffsets.Count; i++)
 				{
 					StatModifier statModifier = currentData.statOffsets[i];
-					string toStringAsOffset = statModifier.ToStringAsOffset;
-					string value2 = "    " + statModifier.stat.LabelCap + " " + toStringAsOffset;
+					string valueToStringAsOffset = statModifier.ValueToStringAsOffset;
+					string value2 = "    " + statModifier.stat.LabelCap + " " + valueToStringAsOffset;
 					if (i < currentData.statOffsets.Count - 1)
 					{
 						stringBuilder.AppendLine(value2);

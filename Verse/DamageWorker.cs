@@ -8,9 +8,88 @@ namespace Verse
 {
 	public class DamageWorker
 	{
-		private const float ExplosionCamShakeMultiplier = 4f;
+		public struct DamageResult
+		{
+			public bool wounded;
+
+			public bool headshot;
+
+			public bool deflected;
+
+			public Thing hitThing;
+
+			public List<BodyPartRecord> parts;
+
+			public float totalDamageDealt;
+
+			public BodyPartRecord LastHitPart
+			{
+				get
+				{
+					if (this.parts == null)
+					{
+						return null;
+					}
+					if (this.parts.Count <= 0)
+					{
+						return null;
+					}
+					return this.parts[this.parts.Count - 1];
+				}
+			}
+
+			public static DamageWorker.DamageResult MakeNew()
+			{
+				return new DamageWorker.DamageResult
+				{
+					wounded = false,
+					headshot = false,
+					deflected = false,
+					totalDamageDealt = 0f
+				};
+			}
+
+			public void AddPart(Thing hitThing, BodyPartRecord part)
+			{
+				if (this.hitThing != null && this.hitThing != hitThing)
+				{
+					Log.ErrorOnce("Single damage worker referring to multiple things; will cause issues with combat log", 30667935);
+				}
+				this.hitThing = hitThing;
+				if (this.parts == null)
+				{
+					this.parts = new List<BodyPartRecord>();
+				}
+				this.parts.Add(part);
+			}
+
+			public void InsertIntoLog(IDamageResultLog log)
+			{
+				if (this.hitThing == null)
+				{
+					return;
+				}
+				if (log == null)
+				{
+					return;
+				}
+				Pawn hitPawn = this.hitThing as Pawn;
+				List<BodyPartDef> recipientParts = null;
+				List<bool> recipientPartsDestroyed = null;
+				if (!this.parts.NullOrEmpty<BodyPartRecord>() && hitPawn != null)
+				{
+					recipientParts = (from part in this.parts
+					select part.def).Distinct<BodyPartDef>().ToList<BodyPartDef>();
+					recipientPartsDestroyed = (from part in this.parts
+					select hitPawn.health.hediffSet.GetPartHealth(part) <= 0f).ToList<bool>();
+				}
+				log.FillTargets(recipientParts, recipientPartsDestroyed);
+			}
+		}
 
 		public DamageDef def;
+
+		private const float ExplosionCamShakeMultiplier = 4f;
 
 		private static List<Thing> thingsToAffect = new List<Thing>();
 
@@ -18,21 +97,21 @@ namespace Verse
 
 		private static List<IntVec3> adjWallCells = new List<IntVec3>();
 
-		public virtual float Apply(DamageInfo dinfo, Thing victim)
+		public virtual DamageWorker.DamageResult Apply(DamageInfo dinfo, Thing victim)
 		{
-			float result = 0f;
+			DamageWorker.DamageResult result = DamageWorker.DamageResult.MakeNew();
 			if (victim.SpawnedOrAnyParentSpawned)
 			{
 				ImpactSoundUtility.PlayImpactSound(victim, dinfo.Def.impactSoundType, victim.MapHeld);
 			}
 			if (victim.def.useHitPoints && dinfo.Def.harmsHealth)
 			{
-				result = (float)Mathf.Min(victim.HitPoints, dinfo.Amount);
-				victim.HitPoints -= dinfo.Amount;
+				result.totalDamageDealt = (float)Mathf.Min(victim.HitPoints, dinfo.Amount);
+				victim.HitPoints -= (int)result.totalDamageDealt;
 				if (victim.HitPoints <= 0)
 				{
 					victim.HitPoints = 0;
-					victim.Kill(null);
+					victim.Kill(new DamageInfo?(dinfo), null);
 				}
 			}
 			return result;
@@ -42,12 +121,12 @@ namespace Verse
 		{
 			if (this.def.explosionHeatEnergyPerCell > 1.401298E-45f)
 			{
-				GenTemperature.PushHeat(explosion.position, explosion.Map, this.def.explosionHeatEnergyPerCell * (float)cellsToAffect.Count);
+				GenTemperature.PushHeat(explosion.Position, explosion.Map, this.def.explosionHeatEnergyPerCell * (float)cellsToAffect.Count);
 			}
-			MoteMaker.MakeStaticMote(explosion.position, explosion.Map, ThingDefOf.Mote_ExplosionFlash, explosion.radius * 6f);
+			MoteMaker.MakeStaticMote(explosion.Position, explosion.Map, ThingDefOf.Mote_ExplosionFlash, explosion.radius * 6f);
 			if (explosion.Map == Find.VisibleMap)
 			{
-				float magnitude = (explosion.position.ToVector3() - Find.Camera.transform.position).magnitude;
+				float magnitude = (explosion.Position.ToVector3Shifted() - Find.Camera.transform.position).magnitude;
 				Find.CameraDriver.shaker.DoShake(4f * explosion.radius / magnitude);
 			}
 			this.ExplosionVisualEffectCenter(explosion);
@@ -57,14 +136,14 @@ namespace Verse
 		{
 			for (int i = 0; i < 4; i++)
 			{
-				MoteMaker.ThrowSmoke(explosion.position.ToVector3Shifted() + Gen.RandomHorizontalVector(explosion.radius * 0.7f), explosion.Map, explosion.radius * 0.6f);
+				MoteMaker.ThrowSmoke(explosion.Position.ToVector3Shifted() + Gen.RandomHorizontalVector(explosion.radius * 0.7f), explosion.Map, explosion.radius * 0.6f);
 			}
 			if (this.def.explosionInteriorMote != null)
 			{
 				int num = Mathf.RoundToInt(3.14159274f * explosion.radius * explosion.radius / 6f);
 				for (int j = 0; j < num; j++)
 				{
-					MoteMaker.ThrowExplosionInteriorMote(explosion.position.ToVector3Shifted() + Gen.RandomHorizontalVector(explosion.radius * 0.7f), explosion.Map, this.def.explosionInteriorMote);
+					MoteMaker.ThrowExplosionInteriorMote(explosion.Position.ToVector3Shifted() + Gen.RandomHorizontalVector(explosion.radius * 0.7f), explosion.Map, this.def.explosionInteriorMote);
 				}
 			}
 		}
@@ -77,7 +156,7 @@ namespace Verse
 			}
 			if (this.def.explosionCellMote != null && canThrowMotes)
 			{
-				float t = Mathf.Clamp01((explosion.position - c).LengthHorizontal / explosion.radius);
+				float t = Mathf.Clamp01((explosion.Position - c).LengthHorizontal / explosion.radius);
 				Color color = Color.Lerp(this.def.explosionColorCenter, this.def.explosionColorEdge, t);
 				MoteMaker.ThrowExplosionCell(c, explosion.Map, this.def.explosionCellMote, color);
 			}
@@ -97,21 +176,33 @@ namespace Verse
 			{
 				if (DamageWorker.thingsToAffect[j].def.Altitude >= num)
 				{
-					this.ExplosionDamageThing(explosion, DamageWorker.thingsToAffect[j], damagedThings);
+					this.ExplosionDamageThing(explosion, DamageWorker.thingsToAffect[j], damagedThings, c);
 				}
 			}
 			if (this.def.explosionSnowMeltAmount > 0.0001f)
 			{
-				float lengthHorizontal = (c - explosion.position).LengthHorizontal;
+				float lengthHorizontal = (c - explosion.Position).LengthHorizontal;
 				float num2 = 1f - lengthHorizontal / explosion.radius;
 				if (num2 > 0f)
 				{
 					explosion.Map.snowGrid.AddDepth(c, -num2 * this.def.explosionSnowMeltAmount);
 				}
 			}
+			if (this.def == DamageDefOf.Bomb || this.def == DamageDefOf.Flame)
+			{
+				List<Thing> list2 = explosion.Map.listerThings.ThingsOfDef(ThingDefOf.RectTrigger);
+				for (int k = 0; k < list2.Count; k++)
+				{
+					RectTrigger rectTrigger = (RectTrigger)list2[k];
+					if (rectTrigger.activateOnExplosion && rectTrigger.Rect.Contains(c))
+					{
+						rectTrigger.ActivatedBy(null);
+					}
+				}
+			}
 		}
 
-		protected virtual void ExplosionDamageThing(Explosion explosion, Thing t, List<Thing> damagedThings)
+		protected virtual void ExplosionDamageThing(Explosion explosion, Thing t, List<Thing> damagedThings, IntVec3 cell)
 		{
 			if (t.def.category == ThingCategory.Mote)
 			{
@@ -127,32 +218,47 @@ namespace Verse
 				t.Destroy(DestroyMode.Vanish);
 				return;
 			}
-			float angle;
-			if (t.Position == explosion.position)
+			float num;
+			if (t.Position == explosion.Position)
 			{
-				angle = (float)Rand.RangeInclusive(0, 359);
+				num = (float)Rand.RangeInclusive(0, 359);
 			}
 			else
 			{
-				angle = (t.Position - explosion.position).AngleFlat;
+				num = (t.Position - explosion.Position).AngleFlat;
 			}
-			ThingDef weaponGear = explosion.weaponGear;
-			DamageInfo dinfo = new DamageInfo(this.def, explosion.damAmount, angle, explosion.instigator, null, weaponGear, DamageInfo.SourceCategory.ThingOrUnknown);
+			DamageDef damageDef = this.def;
+			int amount = explosion.GetDamageAmountAt(cell);
+			float angle = num;
+			Thing instigator = explosion.instigator;
+			ThingDef weapon = explosion.weapon;
+			DamageInfo dinfo = new DamageInfo(damageDef, amount, angle, instigator, null, weapon, DamageInfo.SourceCategory.ThingOrUnknown);
 			if (this.def.explosionAffectOutsidePartsOnly)
 			{
 				dinfo.SetBodyRegion(BodyPartHeight.Undefined, BodyPartDepth.Outside);
 			}
 			if (t.def.category == ThingCategory.Building)
 			{
-				int amount = Mathf.RoundToInt((float)dinfo.Amount * this.def.explosionBuildingDamageFactor);
-				dinfo = new DamageInfo(this.def, amount, dinfo.Angle, explosion.instigator, null, null, DamageInfo.SourceCategory.ThingOrUnknown);
+				int num2 = Mathf.RoundToInt((float)dinfo.Amount * this.def.explosionBuildingDamageFactor);
+				damageDef = this.def;
+				amount = num2;
+				angle = dinfo.Angle;
+				instigator = explosion.instigator;
+				weapon = dinfo.Weapon;
+				dinfo = new DamageInfo(damageDef, amount, angle, instigator, null, weapon, DamageInfo.SourceCategory.ThingOrUnknown);
 			}
-			t.TakeDamage(dinfo);
+			BattleLogEntry_ExplosionImpact battleLogEntry_ExplosionImpact = null;
+			if (t is Pawn)
+			{
+				battleLogEntry_ExplosionImpact = new BattleLogEntry_ExplosionImpact(explosion.instigator, t, explosion.weapon, explosion.projectile, this.def);
+				Find.BattleLog.Add(battleLogEntry_ExplosionImpact);
+			}
+			t.TakeDamage(dinfo).InsertIntoLog(battleLogEntry_ExplosionImpact);
 		}
 
 		public IEnumerable<IntVec3> ExplosionCellsToHit(Explosion explosion)
 		{
-			return this.ExplosionCellsToHit(explosion.position, explosion.Map, explosion.radius);
+			return this.ExplosionCellsToHit(explosion.Position, explosion.Map, explosion.radius);
 		}
 
 		public virtual IEnumerable<IntVec3> ExplosionCellsToHit(IntVec3 center, Map map, float radius)

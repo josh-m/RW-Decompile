@@ -25,7 +25,7 @@ namespace RimWorld
 
 		public static void DoLeavingsFor(Thing diedThing, Map map, DestroyMode mode, CellRect leavingsRect)
 		{
-			if (Current.ProgramState != ProgramState.Playing || mode == DestroyMode.Vanish)
+			if ((Current.ProgramState != ProgramState.Playing && mode != DestroyMode.Refund) || mode == DestroyMode.Vanish)
 			{
 				return;
 			}
@@ -55,14 +55,15 @@ namespace RimWorld
 				Frame frame = diedThing as Frame;
 				if (frame != null)
 				{
-					for (int l = 0; l < frame.resourceContainer.Count; l++)
+					for (int l = frame.resourceContainer.Count - 1; l >= 0; l--)
 					{
 						int num = GenLeaving.GetBuildingResourcesLeaveCalculator(diedThing, mode)(frame.resourceContainer[l].stackCount);
 						if (num > 0)
 						{
-							thingOwner.TryAdd(frame.resourceContainer[l], num, true);
+							frame.resourceContainer.TryTransferToContainer(frame.resourceContainer[l], thingOwner, num, true);
 						}
 					}
+					frame.resourceContainer.ClearAndDestroyContents(DestroyMode.Vanish);
 				}
 				else
 				{
@@ -176,6 +177,8 @@ namespace RimWorld
 				return true;
 			case DestroyMode.Cancel:
 				return true;
+			case DestroyMode.Refund:
+				return true;
 			default:
 				throw new ArgumentException("Unknown destroy mode " + mode);
 			}
@@ -199,6 +202,8 @@ namespace RimWorld
 				return (int count) => GenMath.RoundRandom((float)count * 0.5f);
 			case DestroyMode.Cancel:
 				return (int count) => GenMath.RoundRandom((float)count * 1f);
+			case DestroyMode.Refund:
+				return (int count) => count;
 			default:
 				throw new ArgumentException("Unknown destroy mode " + mode);
 			}

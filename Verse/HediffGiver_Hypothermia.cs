@@ -43,9 +43,11 @@ namespace Verse
 						where !hediffSet.PartIsMissing(x)
 						select x).TryRandomElementByWeight((BodyPartRecord x) => x.def.frostbiteVulnerability, out bodyPartRecord))
 						{
-							int amount = Mathf.CeilToInt((float)bodyPartRecord.def.hitPoints * 0.5f);
-							BodyPartRecord forceHitPart = bodyPartRecord;
-							DamageInfo dinfo = new DamageInfo(DamageDefOf.Frostbite, amount, -1f, null, forceHitPart, null, DamageInfo.SourceCategory.ThingOrUnknown);
+							int num5 = Mathf.CeilToInt((float)bodyPartRecord.def.hitPoints * 0.5f);
+							DamageDef frostbite = DamageDefOf.Frostbite;
+							int amount = num5;
+							BodyPartRecord hitPart = bodyPartRecord;
+							DamageInfo dinfo = new DamageInfo(frostbite, amount, -1f, null, hitPart, null, DamageInfo.SourceCategory.ThingOrUnknown);
 							pawn.TakeDamage(dinfo);
 						}
 					}

@@ -5,8 +5,6 @@ namespace Verse.AI
 {
 	public class MentalState : IExposable
 	{
-		private const int TickInterval = 150;
-
 		public Pawn pawn;
 
 		public MentalStateDef def;
@@ -14,6 +12,8 @@ namespace Verse.AI
 		private int age;
 
 		public bool causedByMood;
+
+		private const int TickInterval = 150;
 
 		public int Age
 		{
@@ -28,6 +28,14 @@ namespace Verse.AI
 			get
 			{
 				return this.def.baseInspectLine;
+			}
+		}
+
+		protected virtual bool CanEndBeforeMaxDurationNow
+		{
+			get
+			{
+				return true;
 			}
 		}
 
@@ -57,7 +65,7 @@ namespace Verse.AI
 				}
 				if (!text.NullOrEmpty())
 				{
-					Messages.Message(text.AdjustedFor(this.pawn), this.pawn, MessageSound.Silent);
+					Messages.Message(text.AdjustedFor(this.pawn), this.pawn, MessageTypeDefOf.SituationResolved);
 				}
 			}
 		}
@@ -67,17 +75,12 @@ namespace Verse.AI
 			if (this.pawn.IsHashIntervalTick(150))
 			{
 				this.age += 150;
-				if (this.age >= this.def.maxTicksBeforeRecovery || (this.age >= this.def.minTicksBeforeRecovery && Rand.MTBEventOccurs(this.def.recoveryMtbDays, 60000f, 150f)))
+				if (this.age >= this.def.maxTicksBeforeRecovery || (this.age >= this.def.minTicksBeforeRecovery && this.CanEndBeforeMaxDurationNow && Rand.MTBEventOccurs(this.def.recoveryMtbDays, 60000f, 150f)))
 				{
 					this.RecoverFromState();
 					return;
 				}
 				if (this.def.recoverFromSleep && !this.pawn.Awake())
-				{
-					this.RecoverFromState();
-					return;
-				}
-				if (this.def.recoverFromDowned && this.pawn.Downed)
 				{
 					this.RecoverFromState();
 					return;
@@ -123,6 +126,23 @@ namespace Verse.AI
 		public virtual RandomSocialMode SocialModeMax()
 		{
 			return RandomSocialMode.SuperActive;
+		}
+
+		public virtual string GetBeginLetterText()
+		{
+			if (this.def.beginLetter.NullOrEmpty())
+			{
+				return null;
+			}
+			return string.Format(this.def.beginLetter, this.pawn.Label).AdjustedFor(this.pawn).CapitalizeFirst();
+		}
+
+		public virtual void Notify_AttackedTarget(LocalTargetInfo hitTarget)
+		{
+		}
+
+		public virtual void Notify_SlaughteredAnimal()
+		{
 		}
 	}
 }

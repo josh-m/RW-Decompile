@@ -8,46 +8,6 @@ namespace RimWorld
 {
 	public class Fire : AttachableThing, ISizeReporter
 	{
-		public const float MinFireSize = 0.1f;
-
-		private const float MinSizeForSpark = 1f;
-
-		private const float TicksBetweenSparksBase = 150f;
-
-		private const float TicksBetweenSparksReductionPerFireSize = 40f;
-
-		private const float MinTicksBetweenSparks = 75f;
-
-		private const float MinFireSizeToEmitSpark = 1f;
-
-		private const float MaxFireSize = 1.75f;
-
-		private const int TicksToBurnFloor = 7500;
-
-		private const int ComplexCalcsInterval = 150;
-
-		private const float CellIgniteChancePerTickPerSize = 0.01f;
-
-		private const float MinSizeForIgniteMovables = 0.4f;
-
-		private const float FireBaseGrowthPerTick = 0.00055f;
-
-		private const int SmokeIntervalRandomAddon = 10;
-
-		private const float BaseSkyExtinguishChance = 0.04f;
-
-		private const int BaseSkyExtinguishDamage = 10;
-
-		private const float HeatPerFireSizePerInterval = 160f;
-
-		private const float HeatFactorWhenDoorPresent = 0.15f;
-
-		private const float SnowClearRadiusPerFireSize = 3f;
-
-		private const float SnowClearDepthFactor = 0.1f;
-
-		private const int FireCountParticlesOff = 15;
-
 		private int ticksSinceSpawn;
 
 		public float fireSize = 0.1f;
@@ -66,7 +26,47 @@ namespace RimWorld
 
 		private static int lastFireCountUpdateTick;
 
+		public const float MinFireSize = 0.1f;
+
+		private const float MinSizeForSpark = 1f;
+
+		private const float TicksBetweenSparksBase = 150f;
+
+		private const float TicksBetweenSparksReductionPerFireSize = 40f;
+
+		private const float MinTicksBetweenSparks = 75f;
+
+		private const float MinFireSizeToEmitSpark = 1f;
+
+		public const float MaxFireSize = 1.75f;
+
+		private const int TicksToBurnFloor = 7500;
+
+		private const int ComplexCalcsInterval = 150;
+
+		private const float CellIgniteChancePerTickPerSize = 0.01f;
+
+		private const float MinSizeForIgniteMovables = 0.4f;
+
+		private const float FireBaseGrowthPerTick = 0.00055f;
+
 		private static readonly IntRange SmokeIntervalRange = new IntRange(130, 200);
+
+		private const int SmokeIntervalRandomAddon = 10;
+
+		private const float BaseSkyExtinguishChance = 0.04f;
+
+		private const int BaseSkyExtinguishDamage = 10;
+
+		private const float HeatPerFireSizePerInterval = 160f;
+
+		private const float HeatFactorWhenDoorPresent = 0.15f;
+
+		private const float SnowClearRadiusPerFireSize = 3f;
+
+		private const float SnowClearDepthFactor = 0.1f;
+
+		private const int FireCountParticlesOff = 15;
 
 		public override string Label
 		{
@@ -238,7 +238,7 @@ namespace RimWorld
 			bool flag = false;
 			Fire.flammableList.Clear();
 			this.flammabilityMax = 0f;
-			if (!base.Position.GetTerrain(base.Map).HasTag("Water"))
+			if (!base.Position.GetTerrain(base.Map).extinguishesFire)
 			{
 				if (this.parent == null)
 				{
@@ -369,9 +369,11 @@ namespace RimWorld
 			Pawn pawn = targ as Pawn;
 			if (pawn != null)
 			{
+				BattleLogEntry_DamageTaken battleLogEntry_DamageTaken = new BattleLogEntry_DamageTaken(pawn, RulePackDefOf.DamageEvent_Fire, null);
+				Find.BattleLog.Add(battleLogEntry_DamageTaken);
 				DamageInfo dinfo = new DamageInfo(DamageDefOf.Flame, num2, -1f, this, null, null, DamageInfo.SourceCategory.ThingOrUnknown);
 				dinfo.SetBodyRegion(BodyPartHeight.Undefined, BodyPartDepth.Outside);
-				targ.TakeDamage(dinfo);
+				targ.TakeDamage(dinfo).InsertIntoLog(battleLogEntry_DamageTaken);
 				Apparel apparel;
 				if (pawn.apparel != null && pawn.apparel.WornApparel.TryRandomElement(out apparel))
 				{
@@ -381,19 +383,6 @@ namespace RimWorld
 			else
 			{
 				targ.TakeDamage(new DamageInfo(DamageDefOf.Flame, num2, -1f, this, null, null, DamageInfo.SourceCategory.ThingOrUnknown));
-			}
-		}
-
-		public override void PostApplyDamage(DamageInfo dinfo, float totalDamageDealt)
-		{
-			if (!base.Destroyed && dinfo.Def == DamageDefOf.Extinguish)
-			{
-				this.fireSize -= (float)dinfo.Amount / 100f;
-				if (this.fireSize <= 0.1f)
-				{
-					this.Destroy(DestroyMode.Vanish);
-					return;
-				}
 			}
 		}
 
@@ -421,7 +410,7 @@ namespace RimWorld
 				{
 					CellRect startRect = CellRect.SingleCell(base.Position);
 					CellRect endRect = CellRect.SingleCell(intVec);
-					if (!GenSight.LineOfSight(base.Position, intVec, base.Map, startRect, endRect))
+					if (!GenSight.LineOfSight(base.Position, intVec, base.Map, startRect, endRect, null))
 					{
 						return;
 					}

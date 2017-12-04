@@ -7,20 +7,6 @@ namespace Verse
 	[StaticConstructorOnStartup]
 	public class EditWindow_Log : EditWindow
 	{
-		private const float CountWidth = 28f;
-
-		private const float Yinc = 25f;
-
-		private const float DetailsPaneBorderHeight = 7f;
-
-		private const float DetailsPaneMinHeight = 20f;
-
-		private const float ListingMinHeight = 80f;
-
-		private const float TopAreaHeight = 26f;
-
-		private const float MessageMaxHeight = 30f;
-
 		private static LogMessage selectedMessage = null;
 
 		private static Vector2 messagesScrollPosition;
@@ -36,6 +22,20 @@ namespace Verse
 		private static bool canAutoOpen = true;
 
 		public static bool wantsToOpen = false;
+
+		private const float CountWidth = 28f;
+
+		private const float Yinc = 25f;
+
+		private const float DetailsPaneBorderHeight = 7f;
+
+		private const float DetailsPaneMinHeight = 20f;
+
+		private const float ListingMinHeight = 80f;
+
+		private const float TopAreaHeight = 26f;
+
+		private const float MessageMaxHeight = 30f;
 
 		private static readonly Texture2D AltMessageTex = SolidColorMaterials.NewSolidColorTexture(new Color(0.17f, 0.17f, 0.17f, 0.85f));
 

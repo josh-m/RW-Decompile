@@ -22,14 +22,13 @@ namespace Verse
 			select a)
 			{
 				Area localArea = current;
-				Action mouseoverGuiAction = delegate
-				{
-					localArea.MarkForDraw();
-				};
 				FloatMenuOption item = new FloatMenuOption(localArea.Label, delegate
 				{
 					selAction(localArea);
-				}, MenuOptionPriority.Default, mouseoverGuiAction, null, 0f, null, null);
+				}, MenuOptionPriority.Default, delegate
+				{
+					localArea.MarkForDraw();
+				}, null, 0f, null, null);
 				list.Add(item);
 			}
 			if (addManageOption)

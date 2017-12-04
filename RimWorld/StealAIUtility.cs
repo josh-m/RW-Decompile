@@ -11,9 +11,9 @@ namespace RimWorld
 	{
 		private const float MinMarketValueToTake = 320f;
 
-		private const float MinCombatPowerPerPawn = 100f;
-
 		private static readonly FloatRange StealThresholdValuePerCombatPowerRange = new FloatRange(2f, 10f);
+
+		private const float MinCombatPowerPerPawn = 100f;
 
 		private static List<Thing> tmpToSteal = new List<Thing>();
 
@@ -30,7 +30,7 @@ namespace RimWorld
 				return false;
 			}
 			Predicate<Thing> validator = (Thing t) => (thief == null || thief.CanReserve(t, 1, -1, null, false)) && (disallowed == null || !disallowed.Contains(t)) && t.def.stealable && !t.IsBurning();
-			item = GenClosest.ClosestThing_Regionwise_ReachablePrioritized(root, map, ThingRequest.ForGroup(ThingRequestGroup.HaulableEverOrMinifiable), PathEndMode.ClosestTouch, TraverseParms.For(TraverseMode.NoPassClosedDoors, Danger.Some, false), maxDist, validator, (Thing x) => StealAIUtility.GetValue(x), 15, 15);
+			item = GenClosest.ClosestThing_Regionwise_ReachablePrioritized(root, map, ThingRequest.ForGroup(ThingRequestGroup.HaulableEverOrMinifiable), PathEndMode.ClosestTouch, TraverseParms.For(TraverseMode.NoPassClosedDoors, Danger.Some, false), maxDist, validator, new Func<Thing, float>(StealAIUtility.GetValue), 15, 15);
 			if (item != null && StealAIUtility.GetValue(item) < 320f)
 			{
 				item = null;
@@ -74,7 +74,7 @@ namespace RimWorld
 
 		public static float GetValue(Thing thing)
 		{
-			return thing.GetInnerIfMinified().MarketValue * (float)thing.stackCount;
+			return thing.MarketValue * (float)thing.stackCount;
 		}
 	}
 }

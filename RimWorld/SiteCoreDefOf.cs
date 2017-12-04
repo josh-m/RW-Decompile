@@ -10,5 +10,9 @@ namespace RimWorld
 		public static SiteCoreDef ItemStash;
 
 		public static SiteCoreDef PreciousLump;
+
+		public static SiteCoreDef DownedRefugee;
+
+		public static SiteCoreDef PrisonerWillingToJoin;
 	}
 }

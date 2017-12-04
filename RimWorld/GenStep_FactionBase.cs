@@ -39,7 +39,7 @@ namespace RimWorld
 			Faction faction;
 			if (map.ParentFaction == null || map.ParentFaction == Faction.OfPlayer)
 			{
-				faction = Find.FactionManager.RandomEnemyFaction(false, false, true);
+				faction = Find.FactionManager.RandomEnemyFaction(false, false, true, TechLevel.Undefined);
 			}
 			else
 			{

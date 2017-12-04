@@ -41,8 +41,10 @@ namespace RimWorld
 			}
 			else
 			{
+				string label = labelCap;
+				float buttonBarPercent = this.ButtonBarPercent;
 				SoundDef mouseoverCategory = SoundDefOf.MouseoverCategory;
-				if (Widgets.ButtonTextSubtle(rect, labelCap, this.ButtonBarPercent, -1f, mouseoverCategory))
+				if (Widgets.ButtonTextSubtle(rect, label, buttonBarPercent, -1f, mouseoverCategory, default(Vector2)))
 				{
 					this.InterfaceTryActivate();
 				}

@@ -18,28 +18,6 @@ namespace RimWorld
 			public List<TransferableOneWay> cachedTransferables;
 		}
 
-		private const float TopAreaHeight = 55f;
-
-		private const float ColumnWidth = 120f;
-
-		private const float FirstTransferableY = 6f;
-
-		private const float RowInterval = 30f;
-
-		public const float CountColumnWidth = 75f;
-
-		public const float AdjustColumnWidth = 240f;
-
-		public const float MassColumnWidth = 100f;
-
-		private const float MarketValueColumnWidth = 100f;
-
-		private const float ExtraSpaceAfterSectionTitle = 5f;
-
-		private const float DaysUntilRotColumnWidth = 75f;
-
-		public const float TopAreaWidth = 515f;
-
 		private List<TransferableOneWayWidget.Section> sections = new List<TransferableOneWayWidget.Section>();
 
 		private string sourceLabel;
@@ -74,11 +52,33 @@ namespace RimWorld
 
 		private static List<TransferableCountToTransferStoppingPoint> stoppingPoints = new List<TransferableCountToTransferStoppingPoint>();
 
+		private const float TopAreaHeight = 55f;
+
 		protected readonly Vector2 AcceptButtonSize = new Vector2(160f, 40f);
 
 		protected readonly Vector2 OtherBottomButtonSize = new Vector2(160f, 40f);
 
+		private const float ColumnWidth = 120f;
+
+		private const float FirstTransferableY = 6f;
+
+		private const float RowInterval = 30f;
+
+		public const float CountColumnWidth = 75f;
+
+		public const float AdjustColumnWidth = 240f;
+
+		public const float MassColumnWidth = 100f;
+
 		public static readonly Color ItemMassColor = new Color(0.7f, 0.7f, 0.7f);
+
+		private const float MarketValueColumnWidth = 100f;
+
+		private const float ExtraSpaceAfterSectionTitle = 5f;
+
+		private const float DaysUntilRotColumnWidth = 75f;
+
+		public const float TopAreaWidth = 515f;
 
 		public float TotalNumbersColumnsWidths
 		{
@@ -158,7 +158,7 @@ namespace RimWorld
 			{
 				List<TransferableOneWay> cachedTransferables = this.sections[i].cachedTransferables;
 				cachedTransferables.Clear();
-				cachedTransferables.AddRange(this.sections[i].transferables.OrderBy((TransferableOneWay tr) => tr, this.sorter1.Comparer).ThenBy((TransferableOneWay tr) => tr, this.sorter2.Comparer).ThenBy((TransferableOneWay tr) => TransferableUIUtility.DefaultListOrderPriority(tr)).ToList<TransferableOneWay>());
+				cachedTransferables.AddRange(this.sections[i].transferables.OrderBy((TransferableOneWay tr) => tr, this.sorter1.Comparer).ThenBy((TransferableOneWay tr) => tr, this.sorter2.Comparer).ThenBy(new Func<TransferableOneWay, float>(TransferableUIUtility.DefaultListOrderPriority)).ToList<TransferableOneWay>());
 			}
 		}
 
@@ -277,41 +277,44 @@ namespace RimWorld
 				int threshold = (num2 > 0f) ? Mathf.FloorToInt(num2 / this.GetMass(trad.AnyThing)) : 0;
 				TransferableOneWayWidget.stoppingPoints.Add(new TransferableCountToTransferStoppingPoint(threshold, "M<", ">M"));
 			}
+			Rect rect3 = rect2;
+			int min = 0;
+			int max = maxCount;
 			List<TransferableCountToTransferStoppingPoint> extraStoppingPoints = TransferableOneWayWidget.stoppingPoints;
-			TransferableUIUtility.DoCountAdjustInterface(rect2, trad, index, 0, maxCount, false, extraStoppingPoints);
+			TransferableUIUtility.DoCountAdjustInterface(rect3, trad, index, min, max, false, extraStoppingPoints);
 			num -= 240f;
 			if (this.drawMarketValue)
 			{
-				Rect rect3 = new Rect(num - 100f, 0f, 100f, rect.height);
+				Rect rect4 = new Rect(num - 100f, 0f, 100f, rect.height);
 				Text.Anchor = TextAnchor.MiddleLeft;
-				this.DrawMarketValue(rect3, trad);
+				this.DrawMarketValue(rect4, trad);
 				num -= 100f;
 			}
 			if (this.drawMass)
 			{
-				Rect rect4 = new Rect(num - 100f, 0f, 100f, rect.height);
+				Rect rect5 = new Rect(num - 100f, 0f, 100f, rect.height);
 				Text.Anchor = TextAnchor.MiddleLeft;
-				this.DrawMass(rect4, trad, availableMass);
+				this.DrawMass(rect5, trad, availableMass);
 				num -= 100f;
 			}
 			if (this.drawDaysUntilRotForTile >= 0)
 			{
-				Rect rect5 = new Rect(num - 75f, 0f, 75f, rect.height);
+				Rect rect6 = new Rect(num - 75f, 0f, 75f, rect.height);
 				Text.Anchor = TextAnchor.MiddleLeft;
-				this.DrawDaysUntilRot(rect5, trad);
+				this.DrawDaysUntilRot(rect6, trad);
 				num -= 75f;
 			}
-			Rect rect6 = new Rect(num - 75f, 0f, 75f, rect.height);
-			if (Mouse.IsOver(rect6))
+			Rect rect7 = new Rect(num - 75f, 0f, 75f, rect.height);
+			if (Mouse.IsOver(rect7))
 			{
-				Widgets.DrawHighlight(rect6);
+				Widgets.DrawHighlight(rect7);
 			}
 			Text.Anchor = TextAnchor.MiddleLeft;
-			Rect rect7 = rect6;
-			rect7.xMin += 5f;
-			rect7.xMax -= 5f;
-			Widgets.Label(rect7, maxCount.ToStringCached());
-			TooltipHandler.TipRegion(rect6, this.sourceCountDesc);
+			Rect rect8 = rect7;
+			rect8.xMin += 5f;
+			rect8.xMax -= 5f;
+			Widgets.Label(rect8, maxCount.ToStringCached());
+			TooltipHandler.TipRegion(rect7, this.sourceCountDesc);
 			num -= 75f;
 			Rect idRect = new Rect(0f, 0f, num, rect.height);
 			TransferableUIUtility.DrawTransferableInfo(trad, idRect, Color.white);
@@ -363,7 +366,7 @@ namespace RimWorld
 			{
 				Widgets.DrawHighlight(rect);
 			}
-			Widgets.Label(rect, trad.AnyThing.GetInnerIfMinified().MarketValue.ToStringMoney());
+			Widgets.Label(rect, trad.AnyThing.MarketValue.ToStringMoney());
 			TooltipHandler.TipRegion(rect, "MarketValueTip".Translate());
 		}
 
@@ -469,7 +472,7 @@ namespace RimWorld
 			{
 				return 0f;
 			}
-			float num = thing.GetInnerIfMinified().GetStatValue(StatDefOf.Mass, true);
+			float num = thing.GetStatValue(StatDefOf.Mass, true);
 			Pawn pawn = thing as Pawn;
 			if (pawn != null)
 			{

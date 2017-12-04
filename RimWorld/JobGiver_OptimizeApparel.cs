@@ -9,6 +9,10 @@ namespace RimWorld
 {
 	public class JobGiver_OptimizeApparel : ThinkNode_JobGiver
 	{
+		private static NeededWarmth neededWarmth;
+
+		private static StringBuilder debugSb;
+
 		private const int ApparelOptimizeCheckIntervalMin = 6000;
 
 		private const int ApparelOptimizeCheckIntervalMax = 9000;
@@ -16,10 +20,6 @@ namespace RimWorld
 		private const float MinScoreGainToCare = 0.05f;
 
 		private const float ScoreFactorIfNotReplacing = 10f;
-
-		private static NeededWarmth neededWarmth;
-
-		private static StringBuilder debugSb;
 
 		private static readonly SimpleCurve InsulationColdScoreFactorCurve_NeedWarm = new SimpleCurve
 		{
@@ -162,7 +162,7 @@ namespace RimWorld
 
 		public static float ApparelScoreGain(Pawn pawn, Apparel ap)
 		{
-			if (ap.def == ThingDefOf.Apparel_ShieldBelt && pawn.equipment.Primary != null && !pawn.equipment.Primary.def.Verbs[0].MeleeRange)
+			if (ap.def == ThingDefOf.Apparel_ShieldBelt && pawn.equipment.Primary != null && pawn.equipment.Primary.def.IsRangedWeapon)
 			{
 				return -1000f;
 			}
@@ -171,7 +171,7 @@ namespace RimWorld
 			bool flag = false;
 			for (int i = 0; i < wornApparel.Count; i++)
 			{
-				if (!ApparelUtility.CanWearTogether(wornApparel[i].def, ap.def))
+				if (!ApparelUtility.CanWearTogether(wornApparel[i].def, ap.def, pawn.RaceProps.body))
 				{
 					if (!pawn.outfits.forcedHandler.AllowedToAutomaticallyDrop(wornApparel[i]))
 					{

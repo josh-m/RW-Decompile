@@ -8,6 +8,14 @@ namespace RimWorld
 {
 	public static class NeedsCardUtility
 	{
+		private static List<Need> displayNeeds = new List<Need>();
+
+		private static readonly Color MoodColor = new Color(0.1f, 1f, 0.1f);
+
+		private static readonly Color MoodColorNegative = new Color(0.8f, 0.4f, 0.4f);
+
+		private static readonly Color NoEffectColor = new Color(0.5f, 0.5f, 0.5f, 0.75f);
+
 		private const float ThoughtHeight = 20f;
 
 		private const float ThoughtSpacing = 4f;
@@ -19,14 +27,6 @@ namespace RimWorld
 		private const float MoodNumberWidth = 32f;
 
 		private const float NeedsColumnWidth = 225f;
-
-		private static List<Need> displayNeeds = new List<Need>();
-
-		private static readonly Color MoodColor = new Color(0.1f, 1f, 0.1f);
-
-		private static readonly Color MoodColorNegative = new Color(0.8f, 0.4f, 0.4f);
-
-		private static readonly Color NoEffectColor = new Color(0.5f, 0.5f, 0.5f, 0.75f);
 
 		public static readonly Vector2 FullSize = new Vector2(580f, 520f);
 

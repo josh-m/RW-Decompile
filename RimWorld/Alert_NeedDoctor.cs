@@ -18,9 +18,9 @@ namespace RimWorld
 					if (maps[i].IsPlayerHome)
 					{
 						bool healthyDoc = false;
-						foreach (Pawn p in maps[i].mapPawns.FreeColonistsSpawned)
+						foreach (Pawn current in maps[i].mapPawns.FreeColonistsSpawned)
 						{
-							if (!p.Downed && p.workSettings != null && p.workSettings.WorkIsActive(WorkTypeDefOf.Doctor))
+							if (!current.Downed && current.workSettings != null && current.workSettings.WorkIsActive(WorkTypeDefOf.Doctor))
 							{
 								healthyDoc = true;
 								break;
@@ -28,11 +28,11 @@ namespace RimWorld
 						}
 						if (!healthyDoc)
 						{
-							foreach (Pawn p2 in maps[i].mapPawns.FreeColonistsSpawned)
+							foreach (Pawn p in maps[i].mapPawns.FreeColonistsSpawned)
 							{
-								if ((p2.Downed && p2.needs.food.CurCategory < HungerCategory.Fed && p2.InBed()) || HealthAIUtility.ShouldBeTendedNow(p2))
+								if ((p.Downed && p.needs.food.CurCategory < HungerCategory.Fed && p.InBed()) || HealthAIUtility.ShouldBeTendedNow(p))
 								{
-									yield return p2;
+									yield return p;
 								}
 							}
 						}

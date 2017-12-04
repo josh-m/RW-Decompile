@@ -29,13 +29,13 @@ namespace RimWorld
 			return p.Position.Roofed(p.Map) || p.Map.weatherManager.RainRate <= 0.25f;
 		}
 
-		public static bool ShouldTrashBuilding(Pawn pawn, Building b)
+		public static bool ShouldTrashBuilding(Pawn pawn, Building b, bool attackAllInert = false)
 		{
 			if (!b.def.useHitPoints)
 			{
 				return false;
 			}
-			if (b.def.building.isInert || b.def.building.isTrap)
+			if ((b.def.building.isInert && !attackAllInert) || b.def.building.isTrap)
 			{
 				int num = GenLocalDate.HourOfDay(pawn) / 3;
 				int specialSeed = b.GetHashCode() * 612361 ^ pawn.GetHashCode() * 391 ^ num * 734273247;

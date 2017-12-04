@@ -81,6 +81,7 @@ namespace RimWorld.Planet
 
 		public static void ExitMapAndJoinOrCreateCaravan(Pawn pawn)
 		{
+			CaravanExitMapUtility.GenerateCaravanExitTale(pawn);
 			Caravan caravan = CaravanExitMapUtility.FindCaravanToJoinFor(pawn);
 			if (caravan != null)
 			{
@@ -98,7 +99,7 @@ namespace RimWorld.Planet
 					Messages.Message("MessagePawnLeftMapAndCreatedCaravan".Translate(new object[]
 					{
 						pawn.LabelShort
-					}).CapitalizeFirst(), caravan2, MessageSound.Benefit);
+					}).CapitalizeFirst(), caravan2, MessageTypeDefOf.TaskCompletion);
 				}
 			}
 			else
@@ -187,9 +188,7 @@ namespace RimWorld.Planet
 				return tileID;
 			}
 			int result;
-			if ((from x in CaravanExitMapUtility.tileCandidates
-			where CaravanExitMapUtility.IsGoodCaravanStartingTile(x)
-			select x).TryRandomElement(out result))
+			if (CaravanExitMapUtility.tileCandidates.Where(new Func<int, bool>(CaravanExitMapUtility.IsGoodCaravanStartingTile)).TryRandomElement(out result))
 			{
 				return result;
 			}
@@ -284,6 +283,27 @@ namespace RimWorld.Planet
 		public static void OpenTheOnlyJoinableCaravanForPrisonerOrAnimalDialog(Caravan c, Action confirmAction)
 		{
 			Find.WindowStack.Add(Dialog_MessageBox.CreateConfirmation("ConfirmLeavePrisonersOrAnimalsBehind".Translate(), confirmAction, false, null));
+		}
+
+		public static void GenerateCaravanExitTale(Pawn pawn)
+		{
+			if (pawn.Spawned && pawn.IsFreeColonist)
+			{
+				if (pawn.Map.IsPlayerHome)
+				{
+					TaleRecorder.RecordTale(TaleDefOf.CaravanFormed, new object[]
+					{
+						pawn
+					});
+				}
+				else if (GenHostility.AnyHostileActiveThreatToPlayer(pawn.Map))
+				{
+					TaleRecorder.RecordTale(TaleDefOf.CaravanFled, new object[]
+					{
+						pawn
+					});
+				}
+			}
 		}
 	}
 }

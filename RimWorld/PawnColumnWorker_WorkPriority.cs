@@ -127,7 +127,7 @@ namespace RimWorld
 		{
 			string text = string.Concat(new string[]
 			{
-				this.def.workType.gerundLabel,
+				this.def.workType.gerundLabel.CapitalizeFirst(),
 				"\n\n",
 				this.def.workType.description,
 				"\n\n",

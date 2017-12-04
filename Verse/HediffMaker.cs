@@ -15,6 +15,16 @@ namespace Verse
 			hediff.def = def;
 			hediff.pawn = pawn;
 			hediff.Part = partRecord;
+			hediff.loadID = Find.UniqueIDsManager.GetNextHediffID();
+			hediff.PostMake();
+			return hediff;
+		}
+
+		public static Hediff MakeConcreteExampleHediff(HediffDef def)
+		{
+			Hediff hediff = (Hediff)Activator.CreateInstance(def.hediffClass);
+			hediff.def = def;
+			hediff.loadID = Find.UniqueIDsManager.GetNextHediffID();
 			hediff.PostMake();
 			return hediff;
 		}

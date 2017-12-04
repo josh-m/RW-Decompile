@@ -6,14 +6,6 @@ namespace RimWorld
 {
 	public class TurretTop
 	{
-		private const float IdleTurnDegreesPerTick = 0.26f;
-
-		private const int IdleTurnDuration = 140;
-
-		private const int IdleTurnIntervalMin = 150;
-
-		private const int IdleTurnIntervalMax = 350;
-
 		private Building_Turret parentTurret;
 
 		private float curRotationInt;
@@ -23,6 +15,14 @@ namespace RimWorld
 		private int idleTurnTicksLeft;
 
 		private bool idleTurnClockwise;
+
+		private const float IdleTurnDegreesPerTick = 0.26f;
+
+		private const int IdleTurnDuration = 140;
+
+		private const int IdleTurnIntervalMin = 150;
+
+		private const int IdleTurnIntervalMax = 350;
 
 		private float CurRotation
 		{

@@ -7,12 +7,6 @@ namespace Verse
 {
 	public sealed class RoomGroupTempTracker
 	{
-		private const float ThinRoofEqualizeRate = 5E-05f;
-
-		private const float NoRoofEqualizeRate = 0.0007f;
-
-		private const float DeepEqualizeFractionPerTick = 5E-05f;
-
 		private RoomGroup roomGroup;
 
 		private float temperatureInt;
@@ -24,6 +18,12 @@ namespace Verse
 		private float thickRoofCoverage;
 
 		private int cycleIndex;
+
+		private const float ThinRoofEqualizeRate = 5E-05f;
+
+		private const float NoRoofEqualizeRate = 0.0007f;
+
+		private const float DeepEqualizeFractionPerTick = 5E-05f;
 
 		private static int debugGetFrame = -999;
 
@@ -86,12 +86,13 @@ namespace Verse
 			{
 				return;
 			}
+			Map map = this.Map;
 			if (!this.roomGroup.UsesOutdoorTemperature)
 			{
 				int num = 0;
 				foreach (IntVec3 current in this.roomGroup.Cells)
 				{
-					RoofDef roof = current.GetRoof(this.Map);
+					RoofDef roof = current.GetRoof(map);
 					if (roof == null)
 					{
 						this.noRoofCoverage += 1f;
@@ -111,14 +112,14 @@ namespace Verse
 					{
 						IntVec3 intVec = current2 + GenAdj.CardinalDirections[i];
 						IntVec3 intVec2 = current2 + GenAdj.CardinalDirections[i] * 2;
-						if (!intVec.InBounds(this.Map))
+						if (!intVec.InBounds(map))
 						{
-							goto IL_237;
+							goto IL_234;
 						}
-						Region region = intVec.GetRegion(this.Map, RegionType.Set_Passable);
+						Region region = intVec.GetRegion(map, RegionType.Set_Passable);
 						if (region == null)
 						{
-							goto IL_237;
+							goto IL_234;
 						}
 						if (region.type == RegionType.Portal)
 						{
@@ -140,27 +141,27 @@ namespace Verse
 							}
 							if (!flag)
 							{
-								goto IL_237;
+								goto IL_234;
 							}
 						}
-						IL_2CC:
+						IL_2BA:
 						i++;
 						continue;
-						IL_237:
-						if (!intVec2.InBounds(this.Map))
+						IL_234:
+						if (!intVec2.InBounds(map))
 						{
-							goto IL_2CC;
+							goto IL_2BA;
 						}
-						RoomGroup roomGroup = intVec2.GetRoomGroup(this.Map);
+						RoomGroup roomGroup = intVec2.GetRoomGroup(map);
 						if (roomGroup == this.roomGroup)
 						{
-							goto IL_2CC;
+							goto IL_2BA;
 						}
 						bool flag2 = false;
 						for (int k = 0; k < 4; k++)
 						{
 							IntVec3 loc = intVec2 + GenAdj.CardinalDirections[k];
-							if (loc.GetRoomGroup(this.Map) == this.roomGroup)
+							if (loc.GetRoomGroup(map) == this.roomGroup)
 							{
 								flag2 = true;
 								break;
@@ -169,9 +170,9 @@ namespace Verse
 						if (!flag2)
 						{
 							this.equalizeCells.Add(intVec2);
-							goto IL_2CC;
+							goto IL_2BA;
 						}
-						goto IL_2CC;
+						goto IL_2BA;
 					}
 				}
 				this.equalizeCells.Shuffle<IntVec3>();

@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using UnityEngine;
+using UnityEngine.Profiling;
 using Verse.AI;
 using Verse.Profile;
 using Verse.Steam;
@@ -49,7 +50,7 @@ namespace Verse
 			Rand.LogRandTests();
 		}
 
-		public static void DoLog_SteamWorkshopWtatus()
+		public static void DoLog_SteamWorkshopStatus()
 		{
 			Workshop.LogStatus();
 		}
@@ -69,14 +70,16 @@ namespace Verse
 			Find.VisibleMap.lordManager.LogLords();
 		}
 
+		[Category("Incident")]
 		public static void DoLog_PodContentsTest()
 		{
-			IncidentWorker_ResourcePodCrash.DebugLogPodContentsChoices();
+			ItemCollectionGenerator_ResourcePod.DebugLogPodContentsChoices();
 		}
 
+		[Category("Incident")]
 		public static void DoLog_PodContentsPossible()
 		{
-			IncidentWorker_ResourcePodCrash.DebugLogPossiblePodContentsDefs();
+			ItemCollectionGenerator_ResourcePod.DebugLogPossiblePodContentsDefs();
 		}
 
 		public static void DoLog_PathCostIgnoreRepeaters()
@@ -89,14 +92,127 @@ namespace Verse
 			StockGenerator_Animals.LogStockGeneration();
 		}
 
+		[Category("Memory")]
 		public static void DoLog_ObjectsLoaded()
 		{
 			MemoryTracker.LogObjectsLoaded();
 		}
 
+		[Category("Memory")]
 		public static void DoLog_ObjectHoldPaths()
 		{
 			MemoryTracker.LogObjectHoldPaths();
+		}
+
+		public static void DoLog_GrownCollections_Start()
+		{
+			CollectionsTracker.RememberCollections();
+		}
+
+		public static void DoLog_GrownCollections_End()
+		{
+			CollectionsTracker.LogGrownCollections();
+		}
+
+		[Category("Incident")]
+		public static void DoLog_PeaceTalksChances()
+		{
+			PeaceTalks.LogChances();
+		}
+
+		public static void DoLog_DamageTest()
+		{
+			ThingDef thingDef = ThingDef.Named("Bullet_BoltActionRifle");
+			PawnKindDef pawnKindDef = PawnKindDef.Named("Slave");
+			Faction faction = FactionUtility.DefaultFactionFrom(pawnKindDef.defaultFactionType);
+			DamageInfo dinfo = new DamageInfo(thingDef.projectile.damageDef, thingDef.projectile.damageAmountBase, -1f, null, null, null, DamageInfo.SourceCategory.ThingOrUnknown);
+			int num = 0;
+			int num2 = 0;
+			DefMap<BodyPartDef, int> defMap = new DefMap<BodyPartDef, int>();
+			for (int i = 0; i < 500; i++)
+			{
+				Pawn pawn = PawnGenerator.GeneratePawn(pawnKindDef, faction);
+				List<BodyPartDef> list = (from hd in pawn.health.hediffSet.GetMissingPartsCommonAncestors()
+				select hd.Part.def).ToList<BodyPartDef>();
+				for (int j = 0; j < 2; j++)
+				{
+					pawn.TakeDamage(dinfo);
+					if (pawn.Dead)
+					{
+						num++;
+						break;
+					}
+				}
+				List<BodyPartDef> list2 = (from hd in pawn.health.hediffSet.GetMissingPartsCommonAncestors()
+				select hd.Part.def).ToList<BodyPartDef>();
+				if (list2.Count > list.Count)
+				{
+					num2++;
+					foreach (BodyPartDef current in list2)
+					{
+						DefMap<BodyPartDef, int> defMap2;
+						BodyPartDef def;
+						(defMap2 = defMap)[def = current] = defMap2[def] + 1;
+					}
+					foreach (BodyPartDef current2 in list)
+					{
+						DefMap<BodyPartDef, int> defMap2;
+						BodyPartDef def2;
+						(defMap2 = defMap)[def2 = current2] = defMap2[def2] - 1;
+					}
+				}
+			}
+			StringBuilder stringBuilder = new StringBuilder();
+			stringBuilder.AppendLine("Damage test");
+			stringBuilder.AppendLine(string.Concat(new object[]
+			{
+				"Hit ",
+				500,
+				" ",
+				pawnKindDef.label,
+				"s with ",
+				2,
+				"x ",
+				thingDef.label,
+				" (",
+				thingDef.projectile.damageAmountBase,
+				" damage) each. Results:"
+			}));
+			stringBuilder.AppendLine(string.Concat(new object[]
+			{
+				"Killed: ",
+				num,
+				" / ",
+				500,
+				" (",
+				((float)num / 500f).ToStringPercent(),
+				")"
+			}));
+			stringBuilder.AppendLine(string.Concat(new object[]
+			{
+				"Part losers: ",
+				num2,
+				" / ",
+				500,
+				" (",
+				((float)num2 / 500f).ToStringPercent(),
+				")"
+			}));
+			stringBuilder.AppendLine("Parts lost:");
+			foreach (BodyPartDef current3 in DefDatabase<BodyPartDef>.AllDefs)
+			{
+				if (defMap[current3] > 0)
+				{
+					stringBuilder.AppendLine(string.Concat(new object[]
+					{
+						"   ",
+						current3.label,
+						": ",
+						defMap[current3]
+					}));
+				}
+			}
+			Log.Message(stringBuilder.ToString());
 		}
 
 		public static void DoLog_ListSolidBackstories()
@@ -131,16 +247,113 @@ namespace Verse
 			Find.WindowStack.Add(new FloatMenu(list));
 		}
 
+		public static void DoLog_WorkDisables()
+		{
+			List<FloatMenuOption> list = new List<FloatMenuOption>();
+			foreach (PawnKindDef current in from ki in DefDatabase<PawnKindDef>.AllDefs
+			where ki.RaceProps.Humanlike
+			select ki)
+			{
+				PawnKindDef pkInner = current;
+				Faction faction = FactionUtility.DefaultFactionFrom(pkInner.defaultFactionType);
+				FloatMenuOption item = new FloatMenuOption(pkInner.defName, delegate
+				{
+					int num = 500;
+					DefMap<WorkTypeDef, int> defMap = new DefMap<WorkTypeDef, int>();
+					for (int i = 0; i < num; i++)
+					{
+						Pawn pawn = PawnGenerator.GeneratePawn(pkInner, faction);
+						foreach (WorkTypeDef current2 in pawn.story.DisabledWorkTypes)
+						{
+							DefMap<WorkTypeDef, int> defMap2;
+							WorkTypeDef def;
+							(defMap2 = defMap)[def = current2] = defMap2[def] + 1;
+						}
+					}
+					StringBuilder stringBuilder = new StringBuilder();
+					stringBuilder.AppendLine(string.Concat(new object[]
+					{
+						"Generated ",
+						num,
+						" pawns of kind ",
+						pkInner.defName,
+						" on faction ",
+						faction
+					}));
+					stringBuilder.AppendLine("Work types disabled:");
+					foreach (WorkTypeDef current3 in DefDatabase<WorkTypeDef>.AllDefs)
+					{
+						if (current3.workTags != WorkTags.None)
+						{
+							stringBuilder.AppendLine(string.Concat(new object[]
+							{
+								"   ",
+								current3.defName,
+								": ",
+								defMap[current3],
+								"        ",
+								((float)defMap[current3] / (float)num).ToStringPercent()
+							}));
+						}
+					}
+					IEnumerable<Backstory> enumerable = BackstoryDatabase.allBackstories.Select((KeyValuePair<string, Backstory> kvp) => kvp.Value);
+					stringBuilder.AppendLine();
+					stringBuilder.AppendLine("Backstories WorkTypeDef disable rates (there are " + enumerable.Count<Backstory>() + " backstories):");
+					foreach (WorkTypeDef wt in DefDatabase<WorkTypeDef>.AllDefs)
+					{
+						int num2 = 0;
+						foreach (Backstory current4 in enumerable)
+						{
+							if (current4.DisabledWorkTypes.Any((WorkTypeDef wd) => wt == wd))
+							{
+								num2++;
+							}
+						}
+						stringBuilder.AppendLine(string.Concat(new object[]
+						{
+							"   ",
+							wt.defName,
+							": ",
+							num2,
+							"     ",
+							((float)num2 / (float)BackstoryDatabase.allBackstories.Count).ToStringPercent()
+						}));
+					}
+					stringBuilder.AppendLine();
+					stringBuilder.AppendLine("Backstories WorkTag disable rates (there are " + enumerable.Count<Backstory>() + " backstories):");
+					foreach (WorkTags workTags in Enum.GetValues(typeof(WorkTags)))
+					{
+						int num3 = 0;
+						foreach (Backstory current5 in enumerable)
+						{
+							if ((workTags & current5.workDisables) != WorkTags.None)
+							{
+								num3++;
+							}
+						}
+						stringBuilder.AppendLine(string.Concat(new object[]
+						{
+							"   ",
+							workTags,
+							": ",
+							num3,
+							"     ",
+							((float)num3 / (float)BackstoryDatabase.allBackstories.Count).ToStringPercent()
+						}));
+					}
+					Log.Message(stringBuilder.ToString());
+				}, MenuOptionPriority.Default, null, null, 0f, null, null);
+				list.Add(item);
+			}
+			Find.WindowStack.Add(new FloatMenu(list));
+		}
+
 		public static void DoLog_KeyStrings()
 		{
 			StringBuilder stringBuilder = new StringBuilder();
-			using (IEnumerator enumerator = Enum.GetValues(typeof(KeyCode)).GetEnumerator())
+			foreach (KeyCode k in Enum.GetValues(typeof(KeyCode)))
 			{
-				while (enumerator.MoveNext())
-				{
-					KeyCode keyCode = (KeyCode)((int)enumerator.Current);
-					stringBuilder.AppendLine(keyCode.ToString() + " - " + keyCode.ToStringReadable());
-				}
+				stringBuilder.AppendLine(k.ToString() + " - " + k.ToStringReadable());
 			}
 			Log.Message(stringBuilder.ToString());
 		}
@@ -173,11 +386,8 @@ namespace Verse
 						if (pawn.equipment.Primary != null)
 						{
 							DefMap<ThingDef, int> weapons2;
-							DefMap<ThingDef, int> expr_4B = weapons2 = weapons;
 							ThingDef def;
-							ThingDef expr_5E = def = pawn.equipment.Primary.def;
-							int num = weapons2[def];
-							expr_4B[expr_5E] = num + 1;
+							(weapons2 = weapons)[def = pawn.equipment.Primary.def] = weapons2[def] + 1;
 						}
 						pawn.Destroy(DestroyMode.Vanish);
 					}
@@ -193,10 +403,10 @@ namespace Verse
 					orderby weapons[t] descending
 					select t)
 					{
-						int num2 = weapons[current2];
-						if (num2 > 0)
+						int num = weapons[current2];
+						if (num > 0)
 						{
-							stringBuilder.AppendLine("  " + current2.defName + "    " + ((float)num2 / 500f).ToStringPercent());
+							stringBuilder.AppendLine("  " + current2.defName + "    " + ((float)num / 500f).ToStringPercent());
 						}
 					}
 					Log.Message(stringBuilder.ToString().TrimEndNewlines());
@@ -226,7 +436,7 @@ namespace Verse
 			stringBuilder.AppendLine();
 			foreach (SkillDef current2 in DefDatabase<SkillDef>.AllDefs)
 			{
-				stringBuilder.AppendLine(current2.label);
+				stringBuilder.AppendLine(current2.LabelCap);
 				foreach (RecipeDef current3 in DefDatabase<RecipeDef>.AllDefs)
 				{
 					if (current3.workSkill == current2)
@@ -250,6 +460,7 @@ namespace Verse
 			Log.Message(stringBuilder.ToString().TrimEndNewlines());
 		}
 
+		[Category("Incident")]
 		public static void DoLog_RaidStrategies()
 		{
 			StringBuilder stringBuilder = new StringBuilder();
@@ -272,6 +483,7 @@ namespace Verse
 			Log.Message(stringBuilder.ToString());
 		}
 
+		[Category("Incident")]
 		public static void DoLog_StockGeneratorsDefs()
 		{
 			if (Find.VisibleMap == null)
@@ -321,6 +533,7 @@ namespace Verse
 			Log.Message(sb.ToString());
 		}
 
+		[Category("Incident")]
 		public static void DoLog_TraderStockMarketValues()
 		{
 			StringBuilder stringBuilder = new StringBuilder();
@@ -331,6 +544,77 @@ namespace Verse
 			Log.Message(stringBuilder.ToString());
 		}
 
+		[Category("Incident")]
+		public static void DoLog_ItemCollectionGeneration()
+		{
+			List<DebugMenuOption> list = new List<DebugMenuOption>();
+			foreach (ItemCollectionGeneratorDef current in DefDatabase<ItemCollectionGeneratorDef>.AllDefs)
+			{
+				ItemCollectionGeneratorDef localDef = current;
+				DebugMenuOption item = new DebugMenuOption(localDef.defName, DebugMenuOptionMode.Action, delegate
+				{
+					Action<ItemCollectionGeneratorParams> generate = delegate(ItemCollectionGeneratorParams parms)
+					{
+						StringBuilder stringBuilder = new StringBuilder();
+						for (int i = 0; i < 50; i++)
+						{
+							List<Thing> list3 = localDef.Worker.Generate(parms);
+							if (stringBuilder.Length > 0)
+							{
+								stringBuilder.AppendLine();
+							}
+							float num = 0f;
+							for (int j = 0; j < list3.Count; j++)
+							{
+								stringBuilder.AppendLine("   - " + list3[j].LabelCap);
+								num += list3[j].MarketValue * (float)list3[j].stackCount;
+								list3[j].Destroy(DestroyMode.Vanish);
+							}
+							stringBuilder.AppendLine("Total market value: " + num.ToString("0.##"));
+						}
+						Log.Message(stringBuilder.ToString());
+					};
+					if (localDef == ItemCollectionGeneratorDefOf.TraderStock)
+					{
+						List<DebugMenuOption> list2 = new List<DebugMenuOption>();
+						foreach (Faction current2 in Find.FactionManager.AllFactions)
+						{
+							if (current2 != Faction.OfPlayer)
+							{
+								Faction localF = current2;
+								list2.Add(new DebugMenuOption(localF.Name + " (" + localF.def.defName + ")", DebugMenuOptionMode.Action, delegate
+								{
+									List<DebugMenuOption> list3 = new List<DebugMenuOption>();
+									foreach (TraderKindDef current3 in (from x in DefDatabase<TraderKindDef>.AllDefs
+									where x.orbital
+									select x).Concat(localF.def.caravanTraderKinds).Concat(localF.def.visitorTraderKinds).Concat(localF.def.baseTraderKinds))
+									{
+										TraderKindDef localKind = current3;
+										list3.Add(new DebugMenuOption(localKind.defName, DebugMenuOptionMode.Action, delegate
+										{
+											ItemCollectionGeneratorParams obj = default(ItemCollectionGeneratorParams);
+											obj.traderFaction = localF;
+											obj.traderDef = localKind;
+											generate(obj);
+										}));
+									}
+									Find.WindowStack.Add(new Dialog_DebugOptionListLister(list3));
+								}));
+							}
+						}
+						Find.WindowStack.Add(new Dialog_DebugOptionListLister(list2));
+					}
+					else
+					{
+						generate(default(ItemCollectionGeneratorParams));
+					}
+				});
+				list.Add(item);
+			}
+			Find.WindowStack.Add(new Dialog_DebugOptionListLister(list));
+		}
+
+		[Category("Incident")]
 		public static void DoLog_TraderStockGeneration()
 		{
 			List<FloatMenuOption> list = new List<FloatMenuOption>();
@@ -376,6 +660,7 @@ namespace Verse
 			Find.WindowStack.Add(new FloatMenu(list));
 		}
 
+		[Category("Memory")]
 		public static void DoLog_LoadedAssets()
 		{
 			StringBuilder stringBuilder = new StringBuilder();
@@ -432,13 +717,14 @@ namespace Verse
 			Log.Message(stringBuilder.ToString());
 		}
 
-		private static int TotalBytes(UnityEngine.Object[] arr)
+		[Category("Memory")]
+		private static long TotalBytes(UnityEngine.Object[] arr)
 		{
-			int num = 0;
+			long num = 0L;
 			for (int i = 0; i < arr.Length; i++)
 			{
 				UnityEngine.Object o = arr[i];
-				num += Profiler.GetRuntimeMemorySize(o);
+				num += Profiler.GetRuntimeMemorySizeLong(o);
 			}
 			return num;
 		}
@@ -475,6 +761,7 @@ namespace Verse
 			Log.Message(stringBuilder.ToString());
 		}
 
+		[Category("Text")]
 		public static void DoLog_TestRulepack()
 		{
 			List<FloatMenuOption> list = new List<FloatMenuOption>();
@@ -486,7 +773,7 @@ namespace Verse
 					StringBuilder stringBuilder = new StringBuilder();
 					for (int i = 0; i < 200; i++)
 					{
-						stringBuilder.AppendLine(NameGenerator.GenerateName(localNamer, null, false));
+						stringBuilder.AppendLine(NameGenerator.GenerateName(localNamer, null, false, null));
 					}
 					Log.Message(stringBuilder.ToString());
 				}, MenuOptionPriority.Default, null, null, 0f, null, null);
@@ -495,6 +782,7 @@ namespace Verse
 			Find.WindowStack.Add(new FloatMenu(list));
 		}
 
+		[Category("Text")]
 		public static void DoLog_GeneratedNames()
 		{
 			List<FloatMenuOption> list = new List<FloatMenuOption>();
@@ -507,7 +795,7 @@ namespace Verse
 					stringBuilder.AppendLine("Test names for " + localRp.defName + ":");
 					for (int i = 0; i < 200; i++)
 					{
-						stringBuilder.AppendLine(NameGenerator.GenerateName(localRp, null, false));
+						stringBuilder.AppendLine(NameGenerator.GenerateName(localRp, null, false, null));
 					}
 					Log.Message(stringBuilder.ToString());
 				}, MenuOptionPriority.Default, null, null, 0f, null, null);
@@ -516,31 +804,240 @@ namespace Verse
 			Find.WindowStack.Add(new FloatMenu(list));
 		}
 
+		private static void CreateDamagedDestroyedMenu(Action<Action<List<BodyPartDef>, List<bool>>> callback)
+		{
+			List<DebugMenuOption> list = new List<DebugMenuOption>();
+			IEnumerable<int> damagedes = Enumerable.Range(0, 5);
+			IEnumerable<int> destroyedes = Enumerable.Range(0, 5);
+			foreach (Pair<int, int> damageddestroyed in damagedes.Concat(-1).Cross(destroyedes.Concat(-1)))
+			{
+				DebugMenuOption item = new DebugMenuOption(string.Format("{0} damaged/{1} destroyed", (damageddestroyed.First != -1) ? damageddestroyed.First.ToString() : "(random)", (damageddestroyed.Second != -1) ? damageddestroyed.Second.ToString() : "(random)"), DebugMenuOptionMode.Action, delegate
+				{
+					callback(delegate(List<BodyPartDef> bodyparts, List<bool> flags)
+					{
+						int num = damageddestroyed.First;
+						int destroyed = damageddestroyed.Second;
+						if (num == -1)
+						{
+							num = damagedes.RandomElement<int>();
+						}
+						if (destroyed == -1)
+						{
+							destroyed = destroyedes.RandomElement<int>();
+						}
+						Pair<BodyPartDef, bool>[] source = (from idx in Enumerable.Range(0, num + destroyed)
+						select new Pair<BodyPartDef, bool>(DefDatabase<BodyPartDef>.AllDefsListForReading.RandomElement<BodyPartDef>(), idx < destroyed)).InRandomOrder(null).ToArray<Pair<BodyPartDef, bool>>();
+						bodyparts.Clear();
+						flags.Clear();
+						bodyparts.AddRange(from part in source
+						select part.First);
+						flags.AddRange(from part in source
+						select part.Second);
+					});
+				});
+				list.Add(item);
+			}
+			Find.WindowStack.Add(new Dialog_DebugOptionListLister(list));
+		}
+
+		[Category("Text")]
+		public static void DoLog_FlavorfulCombatTest()
+		{
+			List<DebugMenuOption> list = new List<DebugMenuOption>();
+			IEnumerable<ManeuverDef> maneuvers = DefDatabase<ManeuverDef>.AllDefsListForReading;
+			IEnumerable<RulePackDef> results = new RulePackDef[]
+			{
+				RulePackDefOf.Combat_Hit,
+				RulePackDefOf.Combat_Miss,
+				RulePackDefOf.Combat_Dodge
+			};
+			foreach (Pair<ManeuverDef, RulePackDef> maneuverresult in maneuvers.Concat(null).Cross(results.Concat(null)))
+			{
+				DebugMenuOption item = new DebugMenuOption(string.Format("{0}/{1}", (maneuverresult.First != null) ? maneuverresult.First.defName : "(random)", (maneuverresult.Second != null) ? maneuverresult.Second.defName : "(random)"), DebugMenuOptionMode.Action, delegate
+				{
+					DataAnalysisLogger.CreateDamagedDestroyedMenu(delegate(Action<List<BodyPartDef>, List<bool>> bodyPartCreator)
+					{
+						StringBuilder stringBuilder = new StringBuilder();
+						for (int i = 0; i < 100; i++)
+						{
+							ManeuverDef maneuver = maneuverresult.First;
+							RulePackDef rulePackDef = maneuverresult.Second;
+							if (maneuver == null)
+							{
+								maneuver = maneuvers.RandomElement<ManeuverDef>();
+							}
+							if (rulePackDef == null)
+							{
+								rulePackDef = results.RandomElement<RulePackDef>();
+							}
+							List<BodyPartDef> list2 = null;
+							List<bool> list3 = null;
+							if (rulePackDef == RulePackDefOf.Combat_Hit)
+							{
+								list2 = new List<BodyPartDef>();
+								list3 = new List<bool>();
+								bodyPartCreator(list2, list3);
+							}
+							Pair<ThingDef, Tool> pair = (from ttp in (from td in DefDatabase<ThingDef>.AllDefsListForReading
+							where td.IsMeleeWeapon && !td.tools.NullOrEmpty<Tool>()
+							select td).SelectMany((ThingDef td) => from tool in td.tools
+							select new Pair<ThingDef, Tool>(td, tool))
+							where ttp.Second.capacities.Contains(maneuver.requiredCapacity)
+							select ttp).RandomElement<Pair<ThingDef, Tool>>();
+							BattleLogEntry_MeleeCombat battleLogEntry_MeleeCombat = new BattleLogEntry_MeleeCombat(rulePackDef, maneuver.combatLogRules, CombatLogTester.GenerateRandom(), CombatLogTester.GenerateRandom(), (pair.Second == null) ? ImplementOwnerTypeDefOf.Bodypart : ImplementOwnerTypeDefOf.Weapon, (pair.Second == null) ? "body part" : pair.Second.label, pair.First, null);
+							battleLogEntry_MeleeCombat.FillTargets(list2, list3);
+							battleLogEntry_MeleeCombat.Debug_OverrideTicks(Rand.Int);
+							stringBuilder.AppendLine(battleLogEntry_MeleeCombat.ToGameStringFromPOV(null));
+						}
+						Log.Message(stringBuilder.ToString());
+					});
+				});
+				list.Add(item);
+			}
+			int rf;
+			for (rf = 0; rf < 2; rf++)
+			{
+				list.Add(new DebugMenuOption((rf != 0) ? "Ranged fire burst" : "Ranged fire singleshot", DebugMenuOptionMode.Action, delegate
+				{
+					StringBuilder stringBuilder = new StringBuilder();
+					for (int i = 0; i < 100; i++)
+					{
+						ThingDef thingDef = (from td in DefDatabase<ThingDef>.AllDefsListForReading
+						where td.IsRangedWeapon
+						select td).RandomElement<ThingDef>();
+						bool flag = Rand.Value < 0.2f;
+						bool flag2 = !flag && Rand.Value < 0.95f;
+						BattleLogEntry_RangedFire battleLogEntry_RangedFire = new BattleLogEntry_RangedFire(CombatLogTester.GenerateRandom(), (!flag) ? CombatLogTester.GenerateRandom() : null, (!flag2) ? thingDef : null, null, rf != 0);
+						battleLogEntry_RangedFire.Debug_OverrideTicks(Rand.Int);
+						stringBuilder.AppendLine(battleLogEntry_RangedFire.ToGameStringFromPOV(null));
+					}
+					Log.Message(stringBuilder.ToString());
+				}));
+			}
+			list.Add(new DebugMenuOption("Ranged impact hit", DebugMenuOptionMode.Action, delegate
+			{
+				DataAnalysisLogger.CreateDamagedDestroyedMenu(delegate(Action<List<BodyPartDef>, List<bool>> bodyPartCreator)
+				{
+					StringBuilder stringBuilder = new StringBuilder();
+					for (int i = 0; i < 100; i++)
+					{
+						ThingDef weaponDef = (from td in DefDatabase<ThingDef>.AllDefsListForReading
+						where td.IsRangedWeapon
+						select td).RandomElement<ThingDef>();
+						List<BodyPartDef> list2 = new List<BodyPartDef>();
+						List<bool> list3 = new List<bool>();
+						bodyPartCreator(list2, list3);
+						Pawn pawn = CombatLogTester.GenerateRandom();
+						BattleLogEntry_RangedImpact battleLogEntry_RangedImpact = new BattleLogEntry_RangedImpact(CombatLogTester.GenerateRandom(), pawn, pawn, weaponDef, null);
+						battleLogEntry_RangedImpact.FillTargets(list2, list3);
+						battleLogEntry_RangedImpact.Debug_OverrideTicks(Rand.Int);
+						stringBuilder.AppendLine(battleLogEntry_RangedImpact.ToGameStringFromPOV(null));
+					}
+					Log.Message(stringBuilder.ToString());
+				});
+			}));
+			list.Add(new DebugMenuOption("Ranged impact miss", DebugMenuOptionMode.Action, delegate
+			{
+				StringBuilder stringBuilder = new StringBuilder();
+				for (int i = 0; i < 100; i++)
+				{
+					ThingDef weaponDef = (from td in DefDatabase<ThingDef>.AllDefsListForReading
+					where td.IsRangedWeapon
+					select td).RandomElement<ThingDef>();
+					BattleLogEntry_RangedImpact battleLogEntry_RangedImpact = new BattleLogEntry_RangedImpact(CombatLogTester.GenerateRandom(), null, CombatLogTester.GenerateRandom(), weaponDef, null);
+					battleLogEntry_RangedImpact.Debug_OverrideTicks(Rand.Int);
+					stringBuilder.AppendLine(battleLogEntry_RangedImpact.ToGameStringFromPOV(null));
+				}
+				Log.Message(stringBuilder.ToString());
+			}));
+			list.Add(new DebugMenuOption("Ranged impact hit incorrect", DebugMenuOptionMode.Action, delegate
+			{
+				DataAnalysisLogger.CreateDamagedDestroyedMenu(delegate(Action<List<BodyPartDef>, List<bool>> bodyPartCreator)
+				{
+					StringBuilder stringBuilder = new StringBuilder();
+					for (int i = 0; i < 100; i++)
+					{
+						ThingDef weaponDef = (from td in DefDatabase<ThingDef>.AllDefsListForReading
+						where td.IsRangedWeapon
+						select td).RandomElement<ThingDef>();
+						List<BodyPartDef> list2 = new List<BodyPartDef>();
+						List<bool> list3 = new List<bool>();
+						bodyPartCreator(list2, list3);
+						BattleLogEntry_RangedImpact battleLogEntry_RangedImpact = new BattleLogEntry_RangedImpact(CombatLogTester.GenerateRandom(), CombatLogTester.GenerateRandom(), CombatLogTester.GenerateRandom(), weaponDef, null);
+						battleLogEntry_RangedImpact.FillTargets(list2, list3);
+						battleLogEntry_RangedImpact.Debug_OverrideTicks(Rand.Int);
+						stringBuilder.AppendLine(battleLogEntry_RangedImpact.ToGameStringFromPOV(null));
+					}
+					Log.Message(stringBuilder.ToString());
+				});
+			}));
+			foreach (RulePackDef transition in from def in DefDatabase<RulePackDef>.AllDefsListForReading
+			where def.defName.Contains("Transition") && !def.defName.Contains("Include")
+			select def)
+			{
+				list.Add(new DebugMenuOption(transition.defName, DebugMenuOptionMode.Action, delegate
+				{
+					StringBuilder stringBuilder = new StringBuilder();
+					for (int i = 0; i < 100; i++)
+					{
+						Pawn pawn = CombatLogTester.GenerateRandom();
+						Pawn initiator = CombatLogTester.GenerateRandom();
+						BodyPartRecord partRecord = pawn.health.hediffSet.GetNotMissingParts(BodyPartHeight.Undefined, BodyPartDepth.Undefined).RandomElement<BodyPartRecord>();
+						BattleLogEntry_StateTransition battleLogEntry_StateTransition = new BattleLogEntry_StateTransition(pawn, transition, initiator, HediffMaker.MakeHediff(DefDatabase<HediffDef>.AllDefsListForReading.RandomElement<HediffDef>(), pawn, partRecord), DefDatabase<BodyPartDef>.AllDefsListForReading.RandomElement<BodyPartDef>());
+						battleLogEntry_StateTransition.Debug_OverrideTicks(Rand.Int);
+						stringBuilder.AppendLine(battleLogEntry_StateTransition.ToGameStringFromPOV(null));
+					}
+					Log.Message(stringBuilder.ToString());
+				}));
+			}
+			foreach (RulePackDef damageEvent in from def in DefDatabase<RulePackDef>.AllDefsListForReading
+			where def.defName.Contains("DamageEvent") && !def.defName.Contains("Include")
+			select def)
+			{
+				list.Add(new DebugMenuOption(damageEvent.defName, DebugMenuOptionMode.Action, delegate
+				{
+					DataAnalysisLogger.CreateDamagedDestroyedMenu(delegate(Action<List<BodyPartDef>, List<bool>> bodyPartCreator)
+					{
+						StringBuilder stringBuilder = new StringBuilder();
+						for (int i = 0; i < 100; i++)
+						{
+							List<BodyPartDef> list2 = new List<BodyPartDef>();
+							List<bool> list3 = new List<bool>();
+							bodyPartCreator(list2, list3);
+							Pawn recipient = CombatLogTester.GenerateRandom();
+							BattleLogEntry_DamageTaken battleLogEntry_DamageTaken = new BattleLogEntry_DamageTaken(recipient, damageEvent, null);
+							battleLogEntry_DamageTaken.FillTargets(list2, list3);
+							battleLogEntry_DamageTaken.Debug_OverrideTicks(Rand.Int);
+							stringBuilder.AppendLine(battleLogEntry_DamageTaken.ToGameStringFromPOV(null));
+						}
+						Log.Message(stringBuilder.ToString());
+					});
+				}));
+			}
+			Find.WindowStack.Add(new Dialog_DebugOptionListLister(list));
+		}
+
 		public static void DoLog_ThingList()
 		{
 			List<FloatMenuOption> list = new List<FloatMenuOption>();
-			using (IEnumerator enumerator = Enum.GetValues(typeof(ThingRequestGroup)).GetEnumerator())
+			foreach (ThingRequestGroup localRg2 in Enum.GetValues(typeof(ThingRequestGroup)))
 			{
-				while (enumerator.MoveNext())
+				ThingRequestGroup localRg = localRg2;
+				FloatMenuOption item = new FloatMenuOption(localRg.ToString(), delegate
 				{
-					ThingRequestGroup localRg2 = (ThingRequestGroup)((byte)enumerator.Current);
-					ThingRequestGroup localRg = localRg2;
-					FloatMenuOption item = new FloatMenuOption(localRg.ToString(), delegate
+					StringBuilder stringBuilder = new StringBuilder();
+					List<Thing> list2 = Find.VisibleMap.listerThings.ThingsInGroup(localRg);
+					stringBuilder.AppendLine(string.Concat(new object[]
 					{
-						StringBuilder stringBuilder = new StringBuilder();
-						List<Thing> list2 = Find.VisibleMap.listerThings.ThingsInGroup(localRg);
-						stringBuilder.AppendLine(string.Concat(new object[]
-						{
-							"Global things in group ",
-							localRg,
-							" (count ",
-							list2.Count,
-							")"
-						}));
-						Log.Message(DebugLogsUtility.ThingListToUniqueCountString(list2));
-					}, MenuOptionPriority.Default, null, null, 0f, null, null);
-					list.Add(item);
-				}
+						"Global things in group ",
+						localRg,
+						" (count ",
+						list2.Count,
+						")"
+					}));
+					Log.Message(DebugLogsUtility.ThingListToUniqueCountString(list2));
+				}, MenuOptionPriority.Default, null, null, 0f, null, null);
+				list.Add(item);
 			}
 			Find.WindowStack.Add(new FloatMenu(list));
 		}
@@ -574,6 +1071,7 @@ namespace Verse
 			Log.Message(stringBuilder.ToString());
 		}
 
+		[Category("Text")]
 		public static void DoLog_TestPawnNames()
 		{
 			StringBuilder stringBuilder = new StringBuilder();
@@ -743,6 +1241,7 @@ namespace Verse
 			Log.Message(stringBuilder.ToString());
 		}
 
+		[Category("Incident")]
 		public static void DoLog_PawnArrivalCandidates()
 		{
 			StringBuilder stringBuilder = new StringBuilder();
@@ -759,10 +1258,13 @@ namespace Verse
 			Log.Message(stringBuilder.ToString());
 		}
 
+		[Category("Text")]
 		public static void DoLog_SpecificTaleDescs()
 		{
 			List<FloatMenuOption> list = new List<FloatMenuOption>();
-			foreach (TaleDef current in DefDatabase<TaleDef>.AllDefs)
+			foreach (TaleDef current in from def in DefDatabase<TaleDef>.AllDefs
+			orderby def.defName
+			select def)
 			{
 				TaleDef localDef = current;
 				FloatMenuOption item = new FloatMenuOption(localDef.defName, delegate
@@ -802,6 +1304,7 @@ namespace Verse
 			Log.Message(stringBuilder.ToString());
 		}
 
+		[Category("Incident")]
 		public static void DoLog_CaravanRequests()
 		{
 			StringBuilder stringBuilder = new StringBuilder();
@@ -816,11 +1319,212 @@ namespace Verse
 					break;
 				}
 				CaravanRequestComp component = settlement.GetComponent<CaravanRequestComp>();
-				incidentWorker_CaravanRequest.GenerateCaravanRequest(component, visibleMap);
-				stringBuilder.AppendLine(string.Format("  {0} -> {1}", GenLabel.ThingLabel(component.requestThingDef, null, component.requestCount), component.rewards[0].Label, ThingDefOf.Silver.label));
+				if (incidentWorker_CaravanRequest.TryGenerateCaravanRequest(component, visibleMap))
+				{
+					stringBuilder.AppendLine(string.Format("  {0} -> {1}", GenLabel.ThingLabel(component.requestThingDef, null, component.requestCount), component.rewards[0].Label, ThingDefOf.Silver.label));
+				}
 				settlement.GetComponent<CaravanRequestComp>().Disable();
 			}
 			Log.Message(stringBuilder.ToString());
+		}
+
+		public static void DoLog_MapDanger()
+		{
+			StringBuilder stringBuilder = new StringBuilder();
+			stringBuilder.AppendLine("Map danger status:");
+			foreach (Map current in Find.Maps)
+			{
+				stringBuilder.AppendLine(string.Format("{0}: {1}", current, current.dangerWatcher.DangerRating));
+			}
+			Log.Message(stringBuilder.ToString());
+		}
+
+		public static void DoLog_OreValues()
+		{
+			StringBuilder stringBuilder = new StringBuilder();
+			stringBuilder.AppendLine("Ore values:");
+			foreach (ThingDef current in from def in DefDatabase<ThingDef>.AllDefsListForReading
+			where def.mineable && def.building != null && def.building.mineableThing != null
+			orderby def.building.mineableThing.GetStatValueAbstract(StatDefOf.MarketValue, null) * (float)def.building.mineableYield
+			select def)
+			{
+				stringBuilder.AppendLine(string.Format("{0}: {1}", current.building.mineableThing.GetStatValueAbstract(StatDefOf.MarketValue, null) * (float)current.building.mineableYield, current));
+			}
+			Log.Message(stringBuilder.ToString());
+		}
+
+		public static void DoLog_ItemWorkTime()
+		{
+			StringBuilder stringBuilder = new StringBuilder();
+			stringBuilder.AppendLine("Item work time:");
+			Func<ThingDef, float> workToBuild = (ThingDef def) => Mathf.Max(def.GetStatValueAbstract(StatDefOf.WorkToMake, null), def.GetStatValueAbstract(StatDefOf.WorkToBuild, null));
+			foreach (ThingDef current in (from def in DefDatabase<ThingDef>.AllDefsListForReading
+			where workToBuild(def) > 1f
+			select def).OrderBy(workToBuild))
+			{
+				stringBuilder.AppendLine(string.Format("{0} {1}: {2}", workToBuild(current), (current.building == null) ? string.Empty : " B", current));
+			}
+			Log.Message(stringBuilder.ToString());
+		}
+
+		public static void DoLog_DefLabels()
+		{
+			List<DebugMenuOption> list = new List<DebugMenuOption>();
+			foreach (Type type in from def in GenDefDatabase.AllDefTypesWithDatabases()
+			orderby def.Name
+			select def)
+			{
+				DebugMenuOption item = new DebugMenuOption(type.Name, DebugMenuOptionMode.Action, delegate
+				{
+					IEnumerable source = (IEnumerable)GenGeneric.GetStaticPropertyOnGenericType(typeof(DefDatabase<>), type, "AllDefs");
+					StringBuilder stringBuilder = new StringBuilder();
+					foreach (Def current in source.Cast<Def>())
+					{
+						stringBuilder.AppendLine(current.label);
+					}
+					Log.Message(stringBuilder.ToString());
+				});
+				list.Add(item);
+			}
+			Find.WindowStack.Add(new Dialog_DebugOptionListLister(list));
+		}
+
+		[ModeRestrictionPlay]
+		public static void DoLog_PlantProportions()
+		{
+			GenPlant.LogPlantProportions();
+		}
+
+		[ModeRestrictionPlay]
+		public static void DoLog_DatabaseTalesList()
+		{
+			Find.TaleManager.LogTales();
+		}
+
+		[ModeRestrictionPlay]
+		public static void DoLog_DatabaseTalesInterest()
+		{
+			Find.TaleManager.LogTaleInterestSummary();
+		}
+
+		[ModeRestrictionPlay]
+		public static void DoLog_DatabaseTalesDescs()
+		{
+			TaleTester.LogTalesInDatabase();
+		}
+
+		[ModeRestrictionPlay]
+		public static void DoLog_RandomTalesDescs()
+		{
+			TaleTester.LogGeneratedTales(40);
+		}
+
+		[ModeRestrictionPlay]
+		public static void DoLog_TalelessDescs()
+		{
+			TaleTester.LogDescriptionsTaleless();
+		}
+
+		[ModeRestrictionPlay]
+		public static void DoLog_TemperatureData()
+		{
+			Find.VisibleMap.mapTemperature.DebugLogTemps();
+		}
+
+		[ModeRestrictionPlay]
+		public static void DoLog_WeatherChances()
+		{
+			Find.VisibleMap.weatherDecider.LogWeatherChances();
+		}
+
+		[ModeRestrictionPlay]
+		public static void DoLog_CelestialGlow()
+		{
+			GenCelestial.LogSunGlowForYear();
+		}
+
+		[ModeRestrictionPlay]
+		public static void DoLog_ListerPawns()
+		{
+			Find.VisibleMap.mapPawns.LogListedPawns();
+		}
+
+		[ModeRestrictionPlay]
+		public static void DoLog_WindSpeeds()
+		{
+			Find.VisibleMap.windManager.LogWindSpeeds();
+		}
+
+		[ModeRestrictionPlay]
+		public static void DoLog_KidnappedPawns()
+		{
+			Find.FactionManager.LogKidnappedPawns();
+		}
+
+		[Category("World Pawn"), ModeRestrictionPlay]
+		public static void DoLog_WorldPawnList()
+		{
+			Find.WorldPawns.LogWorldPawns();
+		}
+
+		[Category("World Pawn"), ModeRestrictionPlay]
+		public static void DoLog_WorldPawnMothballInfo()
+		{
+			Find.WorldPawns.LogWorldPawnMothballPrevention();
+		}
+
+		[Category("World Pawn"), ModeRestrictionPlay]
+		public static void DoLog_WorldPawnGcBreakdown()
+		{
+			Find.WorldPawns.gc.LogGC();
+		}
+
+		[Category("World Pawn"), ModeRestrictionPlay]
+		public static void DoLog_WorldPawnDotgraph()
+		{
+			Find.WorldPawns.gc.LogDotgraph();
+		}
+
+		[Category("World Pawn"), ModeRestrictionPlay]
+		public static void DoLog_RunWorldPawnGc()
+		{
+			Find.WorldPawns.gc.RunGC();
+		}
+
+		[Category("World Pawn"), ModeRestrictionPlay]
+		public static void DoLog_RunWorldPawnMothball()
+		{
+			Find.WorldPawns.DebugRunMothballProcessing();
+		}
+
+		[ModeRestrictionPlay]
+		public static void DoLog_DrawList()
+		{
+			Find.VisibleMap.dynamicDrawManager.LogDynamicDrawThings();
+		}
+
+		[Category("Incident"), ModeRestrictionPlay]
+		public static void DoLog_FutureIncidents()
+		{
+			StorytellerUtility.DebugLogTestFutureIncidents(false);
+		}
+
+		[Category("Incident"), ModeRestrictionPlay]
+		public static void DoLog_FutureIncidentsVisibleMap()
+		{
+			StorytellerUtility.DebugLogTestFutureIncidents(true);
+		}
+
+		[Category("Incident"), ModeRestrictionPlay]
+		public static void DoLog_IncidentTargets()
+		{
+			StorytellerUtility.DebugLogTestIncidentTargets();
+		}
+
+		[ModeRestrictionPlay]
+		public static void DoLog_MapPawns()
+		{
+			Find.VisibleMap.mapPawns.LogListedPawns();
 		}
 	}
 }

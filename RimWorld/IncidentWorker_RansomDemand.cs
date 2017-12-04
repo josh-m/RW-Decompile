@@ -12,10 +12,11 @@ namespace RimWorld
 
 		protected override bool CanFireNowSub(IIncidentTarget target)
 		{
-			return this.RandomKidnappedColonist() != null && base.CanFireNowSub(target);
+			Map map = (Map)target;
+			return CommsConsoleUtility.PlayerHasPoweredCommsConsole(map) && this.RandomKidnappedColonist() != null && base.CanFireNowSub(target);
 		}
 
-		public override bool TryExecute(IncidentParms parms)
+		protected override bool TryExecuteWorker(IncidentParms parms)
 		{
 			Map map = (Map)parms.target;
 			Pawn pawn = this.RandomKidnappedColonist();

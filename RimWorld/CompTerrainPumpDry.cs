@@ -7,18 +7,23 @@ namespace RimWorld
 	{
 		protected override void AffectCell(IntVec3 c)
 		{
-			TerrainDef terrain = c.GetTerrain(this.parent.Map);
+			CompTerrainPumpDry.AffectCell(this.parent.Map, c);
+		}
+
+		public static void AffectCell(Map map, IntVec3 c)
+		{
+			TerrainDef terrain = c.GetTerrain(map);
 			if (terrain.driesTo == null)
 			{
 				return;
 			}
-			if (this.parent.Map.Biome == BiomeDefOf.SeaIce)
+			if (map.Biome == BiomeDefOf.SeaIce)
 			{
-				this.parent.Map.terrainGrid.SetTerrain(c, TerrainDefOf.Ice);
+				map.terrainGrid.SetTerrain(c, TerrainDefOf.Ice);
 			}
 			else
 			{
-				this.parent.Map.terrainGrid.SetTerrain(c, terrain.driesTo);
+				map.terrainGrid.SetTerrain(c, terrain.driesTo);
 			}
 		}
 	}

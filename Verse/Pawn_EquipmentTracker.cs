@@ -2,11 +2,10 @@ using RimWorld;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 
 namespace Verse
 {
-	public class Pawn_EquipmentTracker : IExposable, IThingHolder
+	public class Pawn_EquipmentTracker : IThingHolder, IExposable
 	{
 		private Pawn pawn;
 
@@ -104,7 +103,7 @@ namespace Verse
 			{
 				this
 			});
-			if (Scribe.mode == LoadSaveMode.LoadingVars)
+			if (Scribe.mode == LoadSaveMode.PostLoadInit)
 			{
 				List<ThingWithComps> allEquipmentListForReading = this.AllEquipmentListForReading;
 				for (int i = 0; i < allEquipmentListForReading.Count; i++)
@@ -251,11 +250,7 @@ namespace Verse
 		[DebuggerHidden]
 		public IEnumerable<Gizmo> GetGizmos()
 		{
-			if (this.ShouldUseSquadAttackGizmo())
-			{
-				yield return this.GetSquadAttackGizmo();
-			}
-			else
+			if (PawnAttackGizmoUtility.CanShowEquipmentGizmos())
 			{
 				List<ThingWithComps> list = this.AllEquipmentListForReading;
 				for (int i = 0; i < list.Count; i++)
@@ -263,107 +258,28 @@ namespace Verse
 					ThingWithComps eq = list[i];
 					foreach (Command command in eq.GetComp<CompEquippable>().GetVerbsCommands())
 					{
-						switch (i)
+						if (i != 0)
 						{
-						case 0:
+							if (i != 1)
+							{
+								if (i == 2)
+								{
+									command.hotKey = KeyBindingDefOf.Misc3;
+								}
+							}
+							else
+							{
+								command.hotKey = KeyBindingDefOf.Misc2;
+							}
+						}
+						else
+						{
 							command.hotKey = KeyBindingDefOf.Misc1;
-							break;
-						case 1:
-							command.hotKey = KeyBindingDefOf.Misc2;
-							break;
-						case 2:
-							command.hotKey = KeyBindingDefOf.Misc3;
-							break;
 						}
 						yield return command;
 					}
 				}
 			}
-		}
-
-		public bool TryStartAttack(LocalTargetInfo targ)
-		{
-			if (this.pawn.stances.FullBodyBusy)
-			{
-				return false;
-			}
-			if (this.pawn.story != null && this.pawn.story.WorkTagIsDisabled(WorkTags.Violent))
-			{
-				return false;
-			}
-			bool allowManualCastWeapons = !this.pawn.IsColonist;
-			Verb verb = this.pawn.TryGetAttackVerb(allowManualCastWeapons);
-			return verb != null && verb.TryStartCastOn(targ, false, true);
-		}
-
-		private bool ShouldUseSquadAttackGizmo()
-		{
-			if (Find.Selector.NumSelected <= 1)
-			{
-				return false;
-			}
-			ThingDef thingDef = null;
-			bool flag = false;
-			List<object> selectedObjectsListForReading = Find.Selector.SelectedObjectsListForReading;
-			for (int i = 0; i < selectedObjectsListForReading.Count; i++)
-			{
-				Pawn pawn = selectedObjectsListForReading[i] as Pawn;
-				if (pawn != null && pawn.IsColonist)
-				{
-					ThingDef thingDef2;
-					if (pawn.equipment.Primary == null)
-					{
-						thingDef2 = null;
-					}
-					else
-					{
-						thingDef2 = pawn.equipment.Primary.def;
-					}
-					if (!flag)
-					{
-						thingDef = thingDef2;
-						flag = true;
-					}
-					else if (thingDef2 != thingDef)
-					{
-						return true;
-					}
-				}
-			}
-			return false;
-		}
-
-		private Gizmo GetSquadAttackGizmo()
-		{
-			Command_Target command_Target = new Command_Target();
-			command_Target.defaultLabel = "CommandSquadAttack".Translate();
-			command_Target.defaultDesc = "CommandSquadAttackDesc".Translate();
-			command_Target.targetingParams = TargetingParameters.ForAttackAny();
-			command_Target.hotKey = KeyBindingDefOf.Misc1;
-			command_Target.icon = TexCommand.SquadAttack;
-			string str;
-			if (FloatMenuUtility.GetAttackAction(this.pawn, LocalTargetInfo.Invalid, out str) == null)
-			{
-				command_Target.Disable(str.CapitalizeFirst() + ".");
-			}
-			command_Target.action = delegate(Thing target)
-			{
-				IEnumerable<Pawn> enumerable = Find.Selector.SelectedObjects.Where(delegate(object x)
-				{
-					Pawn pawn = x as Pawn;
-					return pawn != null && pawn.IsColonistPlayerControlled && pawn.Drafted;
-				}).Cast<Pawn>();
-				foreach (Pawn current in enumerable)
-				{
-					string text;
-					Action attackAction = FloatMenuUtility.GetAttackAction(current, target, out text);
-					if (attackAction != null)
-					{
-						attackAction();
-					}
-				}
-			};
-			return command_Target;
 		}
 
 		public void Notify_EquipmentAdded(ThingWithComps eq)

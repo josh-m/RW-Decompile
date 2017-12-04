@@ -54,7 +54,7 @@ namespace RimWorld
 						Messages.Message("KeyBindingOverwritten".Translate(new object[]
 						{
 							oldDef.label
-						}), MessageSound.Standard);
+						}), MessageTypeDefOf.TaskCompletion);
 					});
 					this.keyPrefsData.SetBinding(this.keyDef, this.slot, Event.current.keyCode);
 				}

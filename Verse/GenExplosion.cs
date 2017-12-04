@@ -9,20 +9,24 @@ namespace Verse
 	{
 		private static readonly int PawnNotifyCellCount = GenRadial.NumCellsInRadius(4.5f);
 
-		public static void DoExplosion(IntVec3 center, Map map, float radius, DamageDef damType, Thing instigator, SoundDef explosionSound = null, ThingDef projectile = null, ThingDef source = null, ThingDef postExplosionSpawnThingDef = null, float postExplosionSpawnChance = 0f, int postExplosionSpawnThingCount = 1, bool applyDamageToExplosionCellsNeighbors = false, ThingDef preExplosionSpawnThingDef = null, float preExplosionSpawnChance = 0f, int preExplosionSpawnThingCount = 1)
+		public static void DoExplosion(IntVec3 center, Map map, float radius, DamageDef damType, Thing instigator, int damAmount = -1, SoundDef explosionSound = null, ThingDef weapon = null, ThingDef projectile = null, ThingDef postExplosionSpawnThingDef = null, float postExplosionSpawnChance = 0f, int postExplosionSpawnThingCount = 1, bool applyDamageToExplosionCellsNeighbors = false, ThingDef preExplosionSpawnThingDef = null, float preExplosionSpawnChance = 0f, int preExplosionSpawnThingCount = 1, float chanceToStartFire = 0f, bool dealMoreDamageAtCenter = false)
 		{
 			if (map == null)
 			{
 				Log.Warning("Tried to do explosion in a null map.");
 				return;
 			}
-			Explosion explosion = new Explosion();
-			explosion.position = center;
+			if (damAmount == 0)
+			{
+				damAmount = 1;
+			}
+			Explosion explosion = (Explosion)GenSpawn.Spawn(ThingDefOf.Explosion, center, map);
 			explosion.radius = radius;
 			explosion.damType = damType;
 			explosion.instigator = instigator;
-			explosion.damAmount = ((projectile == null) ? GenMath.RoundRandom((float)damType.explosionDamage) : projectile.projectile.damageAmountBase);
-			explosion.weaponGear = source;
+			explosion.damAmount = ((damAmount <= 0) ? damType.explosionDamage : damAmount);
+			explosion.weapon = weapon;
+			explosion.projectile = projectile;
 			explosion.preExplosionSpawnThingDef = preExplosionSpawnThingDef;
 			explosion.preExplosionSpawnChance = preExplosionSpawnChance;
 			explosion.preExplosionSpawnThingCount = preExplosionSpawnThingCount;
@@ -30,7 +34,9 @@ namespace Verse
 			explosion.postExplosionSpawnChance = postExplosionSpawnChance;
 			explosion.postExplosionSpawnThingCount = postExplosionSpawnThingCount;
 			explosion.applyDamageToExplosionCellsNeighbors = applyDamageToExplosionCellsNeighbors;
-			map.GetComponent<ExplosionManager>().StartExplosion(explosion, explosionSound);
+			explosion.chanceToStartFire = chanceToStartFire;
+			explosion.dealMoreDamageAtCenter = dealMoreDamageAtCenter;
+			explosion.StartExplosion(explosionSound);
 		}
 
 		public static void RenderPredictedAreaOfEffect(IntVec3 loc, float radius)

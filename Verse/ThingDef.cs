@@ -10,10 +10,6 @@ namespace Verse
 {
 	public class ThingDef : BuildableDef
 	{
-		public const int SmallUnitPerVolume = 10;
-
-		public const float SmallVolumePerUnit = 0.1f;
-
 		public Type thingClass;
 
 		public ThingCategory category;
@@ -31,6 +27,8 @@ namespace Verse
 		public bool smallVolume;
 
 		public bool useHitPoints = true;
+
+		public bool receivesSignals;
 
 		public List<CompProperties> comps = new List<CompProperties>();
 
@@ -83,6 +81,13 @@ namespace Verse
 		private bool canOverlapZones = true;
 
 		public FloatRange startingHpRange = FloatRange.One;
+
+		[NoTranslate]
+		public List<string> itemGeneratorTags;
+
+		public bool alwaysFlee;
+
+		public List<Tool> tools;
 
 		public GraphicData graphicData;
 
@@ -211,6 +216,8 @@ namespace Verse
 
 		public BuildableDef entityDefToBuild;
 
+		public ThingDef projectileWhenLoaded;
+
 		public IngestibleProperties ingestible;
 
 		public FilthProperties filth;
@@ -231,9 +238,17 @@ namespace Verse
 
 		public StuffProperties stuffProps;
 
+		public SkyfallerProperties skyfaller;
+
+		public const int SmallUnitPerVolume = 10;
+
+		public const float SmallVolumePerUnit = 0.1f;
+
 		private List<RecipeDef> allRecipesCached;
 
 		private static List<VerbProperties> EmptyVerbPropertiesList = new List<VerbProperties>();
+
+		private Dictionary<ThingDef, Thing> concreteExamplesInt;
 
 		public bool EverHaulable
 		{
@@ -513,14 +528,8 @@ namespace Verse
 				{
 					return true;
 				}
-				switch (this.category)
-				{
-				case ThingCategory.Pawn:
-					return true;
-				case ThingCategory.Building:
-					return true;
-				}
-				return false;
+				ThingCategory thingCategory = this.category;
+				return thingCategory == ThingCategory.Pawn || thingCategory == ThingCategory.Building;
 			}
 		}
 
@@ -668,7 +677,7 @@ namespace Verse
 		{
 			get
 			{
-				return this.category == ThingCategory.Item && !this.verbs.NullOrEmpty<VerbProperties>();
+				return this.category == ThingCategory.Item && (!this.verbs.NullOrEmpty<VerbProperties>() || !this.tools.NullOrEmpty<Tool>());
 			}
 		}
 
@@ -712,11 +721,43 @@ namespace Verse
 			}
 		}
 
+		public bool IsNonMedicalDrug
+		{
+			get
+			{
+				return this.IsDrug && this.ingestible.drugCategory != DrugCategory.Medical;
+			}
+		}
+
 		public bool IsTable
 		{
 			get
 			{
 				return this.surfaceType == SurfaceType.Eat && this.HasComp(typeof(CompGatherSpot));
+			}
+		}
+
+		public bool IsWorkTable
+		{
+			get
+			{
+				return typeof(Building_WorkTable).IsAssignableFrom(this.thingClass);
+			}
+		}
+
+		public bool IsShell
+		{
+			get
+			{
+				return this.projectileWhenLoaded != null;
+			}
+		}
+
+		public bool IsArt
+		{
+			get
+			{
+				return this.IsWithinCategory(ThingCategoryDefOf.Art);
 			}
 		}
 
@@ -729,6 +770,22 @@ namespace Verse
 			}
 		}
 
+		public bool IsMeat
+		{
+			get
+			{
+				return this.category == ThingCategory.Item && this.thingCategories != null && this.thingCategories.Contains(ThingCategoryDefOf.MeatRaw);
+			}
+		}
+
+		public bool IsLeather
+		{
+			get
+			{
+				return this.category == ThingCategory.Item && this.thingCategories != null && this.thingCategories.Contains(ThingCategoryDefOf.Leathers);
+			}
+		}
+
 		public bool IsRangedWeapon
 		{
 			get
@@ -737,11 +794,14 @@ namespace Verse
 				{
 					return false;
 				}
-				for (int i = 0; i < this.verbs.Count; i++)
+				if (!this.verbs.NullOrEmpty<VerbProperties>())
 				{
-					if (!this.verbs[i].MeleeRange)
+					for (int i = 0; i < this.verbs.Count; i++)
 					{
-						return true;
+						if (!this.verbs[i].MeleeRange)
+						{
+							return true;
+						}
 					}
 				}
 				return false;
@@ -752,18 +812,15 @@ namespace Verse
 		{
 			get
 			{
-				if (!this.IsWeapon)
-				{
-					return false;
-				}
-				for (int i = 0; i < this.verbs.Count; i++)
-				{
-					if (this.verbs[i].MeleeRange)
-					{
-						return true;
-					}
-				}
-				return false;
+				return this.IsWeapon && !this.IsRangedWeapon;
+			}
+		}
+
+		public bool IsBuildingArtificial
+		{
+			get
+			{
+				return (this.category == ThingCategory.Building || this.IsFrame) && (this.building == null || (!this.building.isNaturalRock && !this.building.isResourceRock));
 			}
 		}
 
@@ -777,6 +834,57 @@ namespace Verse
 				}
 				return this.label;
 			}
+		}
+
+		public Thing GetConcreteExample(ThingDef stuff = null)
+		{
+			if (this.concreteExamplesInt == null)
+			{
+				this.concreteExamplesInt = new Dictionary<ThingDef, Thing>();
+			}
+			if (stuff == null)
+			{
+				stuff = ThingDefOf.Steel;
+			}
+			if (!this.concreteExamplesInt.ContainsKey(stuff))
+			{
+				if (this.race == null)
+				{
+					this.concreteExamplesInt[stuff] = ThingMaker.MakeThing(this, (!base.MadeFromStuff) ? null : stuff);
+				}
+				else
+				{
+					this.concreteExamplesInt[stuff] = PawnGenerator.GeneratePawn((from pkd in DefDatabase<PawnKindDef>.AllDefsListForReading
+					where pkd.race == this
+					select pkd).FirstOrDefault<PawnKindDef>(), null);
+				}
+			}
+			return this.concreteExamplesInt[stuff];
+		}
+
+		public List<Verb> GetConcreteExampleVerbs(Def def, ThingDef stuff = null)
+		{
+			List<Verb> result = null;
+			ThingDef thingDef = def as ThingDef;
+			if (thingDef != null)
+			{
+				Thing concreteExample = thingDef.GetConcreteExample(stuff);
+				if (concreteExample is Pawn)
+				{
+					result = (concreteExample as Pawn).verbTracker.AllVerbs;
+				}
+				else if (concreteExample is ThingWithComps)
+				{
+					result = (concreteExample as ThingWithComps).GetComp<CompEquippable>().AllVerbs;
+				}
+			}
+			HediffDef hediffDef = def as HediffDef;
+			if (hediffDef != null)
+			{
+				Hediff concreteExample2 = hediffDef.ConcreteExample;
+				result = concreteExample2.TryGetComp<HediffComp_VerbGiver>().VerbTracker.AllVerbs;
+			}
+			return result;
 		}
 
 		public CompProperties CompDefFor<T>() where T : ThingComp
@@ -836,30 +944,6 @@ namespace Verse
 			{
 				this.building = new BuildingProperties();
 			}
-			if (this.inspectorTabs != null)
-			{
-				for (int i = 0; i < this.inspectorTabs.Count; i++)
-				{
-					if (this.inspectorTabsResolved == null)
-					{
-						this.inspectorTabsResolved = new List<InspectTabBase>();
-					}
-					try
-					{
-						this.inspectorTabsResolved.Add(InspectTabManager.GetSharedInstance(this.inspectorTabs[i]));
-					}
-					catch (Exception ex)
-					{
-						Log.Error(string.Concat(new object[]
-						{
-							"Could not instantiate inspector tab of type ",
-							this.inspectorTabs[i],
-							": ",
-							ex
-						}));
-					}
-				}
-			}
 			if (this.building != null)
 			{
 				this.building.PostLoadSpecial(this);
@@ -901,11 +985,32 @@ namespace Verse
 			{
 				this.soundPickup = SoundDefOf.Standard_Pickup;
 			}
+			if (this.inspectorTabs != null && this.inspectorTabs.Any<Type>())
+			{
+				this.inspectorTabsResolved = new List<InspectTabBase>();
+				for (int i = 0; i < this.inspectorTabs.Count; i++)
+				{
+					try
+					{
+						this.inspectorTabsResolved.Add(InspectTabManager.GetSharedInstance(this.inspectorTabs[i]));
+					}
+					catch (Exception ex)
+					{
+						Log.Error(string.Concat(new object[]
+						{
+							"Could not instantiate inspector tab of type ",
+							this.inspectorTabs[i],
+							": ",
+							ex
+						}));
+					}
+				}
+			}
 			if (this.comps != null)
 			{
-				for (int i = 0; i < this.comps.Count; i++)
+				for (int j = 0; j < this.comps.Count; j++)
 				{
-					this.comps[i].ResolveReferences(this);
+					this.comps[j].ResolveReferences(this);
 				}
 			}
 		}
@@ -940,7 +1045,7 @@ namespace Verse
 				foreach (StatModifier statBase in this.statBases)
 				{
 					if ((from st in this.statBases
-					where st.stat == this.<statBase>__7.stat
+					where st.stat == statBase.stat
 					select st).Count<StatModifier>() > 1)
 					{
 						yield return string.Concat(new object[]
@@ -987,7 +1092,11 @@ namespace Verse
 			}
 			if (this.thingCategories != null)
 			{
-				ThingCategoryDef doubleCat = this.thingCategories.FirstOrDefault((ThingCategoryDef cat) => this.<>f__this.thingCategories.Count((ThingCategoryDef c) => c == cat) > 1);
+				ThingCategoryDef doubleCat = this.thingCategories.FirstOrDefault(delegate(ThingCategoryDef cat)
+				{
+					ThingDef $this = this.$this;
+					return this.$this.thingCategories.Count((ThingCategoryDef c) => c == cat) > 1;
+				});
 				if (doubleCat != null)
 				{
 					yield return string.Concat(new object[]
@@ -1035,7 +1144,7 @@ namespace Verse
 				foreach (DamageMultiplier mult in this.damageMultipliers)
 				{
 					if ((from m in this.damageMultipliers
-					where m.damageDef == this.<mult>__12.damageDef
+					where m.damageDef == mult.damageDef
 					select m).Count<DamageMultiplier>() > 1)
 					{
 						yield return this.defName + " has multiple damage multipliers for damageDef " + mult.damageDef;
@@ -1073,6 +1182,10 @@ namespace Verse
 			{
 				yield return "has smeltProducts but has smeltable=false";
 			}
+			if (this.equipmentType != EquipmentType.None && this.verbs.NullOrEmpty<VerbProperties>() && this.tools.NullOrEmpty<Tool>())
+			{
+				yield return "is equipment but has no verbs or tools";
+			}
 			if (this.graphicData != null && this.graphicData.shadowData != null)
 			{
 				if (this.castEdgeShadows)
@@ -1086,14 +1199,33 @@ namespace Verse
 			}
 			if (this.race != null && this.verbs != null)
 			{
-				for (int i = 0; i < this.verbs.Count; i++)
+				int i;
+				for (i = 0; i < this.verbs.Count; i++)
 				{
-					if (this.verbs[i].linkedBodyPartsGroup != null && !this.race.body.AllParts.Any((BodyPartRecord part) => part.groups.Contains(this.<>f__this.verbs[this.<i>__13].linkedBodyPartsGroup)))
+					if (this.verbs[i].linkedBodyPartsGroup != null && !this.race.body.AllParts.Any((BodyPartRecord part) => part.groups.Contains(this.$this.verbs[i].linkedBodyPartsGroup)))
 					{
 						yield return string.Concat(new object[]
 						{
 							"has verb with linkedBodyPartsGroup ",
 							this.verbs[i].linkedBodyPartsGroup,
+							" but body ",
+							this.race.body,
+							" has no parts with that group."
+						});
+					}
+				}
+			}
+			if (this.race != null && this.tools != null)
+			{
+				int i;
+				for (i = 0; i < this.tools.Count; i++)
+				{
+					if (this.tools[i].linkedBodyPartsGroup != null && !this.race.body.AllParts.Any((BodyPartRecord part) => part.groups.Contains(this.$this.tools[i].linkedBodyPartsGroup)))
+					{
+						yield return string.Concat(new object[]
+						{
+							"has tool with linkedBodyPartsGroup ",
+							this.tools[i].linkedBodyPartsGroup,
 							" but body ",
 							this.race.body,
 							" has no parts with that group."
@@ -1146,6 +1278,36 @@ namespace Verse
 					yield return e3;
 				}
 			}
+			if (this.recipes != null && this.race != null)
+			{
+				foreach (RecipeDef r in this.recipes)
+				{
+					if (r.requireBed != this.race.FleshType.requiresBedForSurgery)
+					{
+						yield return string.Format("surgery bed requirement mismatch; flesh-type {0} is {1}, recipe {2} is {3}", new object[]
+						{
+							this.race.FleshType,
+							this.race.FleshType.requiresBedForSurgery,
+							r,
+							r.requireBed
+						});
+					}
+				}
+			}
+			if (this.tools != null)
+			{
+				Tool dupeTool = this.tools.SelectMany(delegate(Tool lhs)
+				{
+					ThingDef $this = this.$this;
+					return from rhs in this.$this.tools
+					where lhs != rhs && lhs.Id == rhs.Id
+					select rhs;
+				}).FirstOrDefault<Tool>();
+				if (dupeTool != null)
+				{
+					yield return string.Format("duplicate thingdef tool id {0}", dupeTool.Id);
+				}
+			}
 		}
 
 		public static ThingDef Named(string defName)
@@ -1175,18 +1337,26 @@ namespace Verse
 			if (this.apparel != null)
 			{
 				string coveredParts = this.apparel.GetCoveredOuterPartsString(BodyDefOf.Human);
-				yield return new StatDrawEntry(StatCategoryDefOf.Apparel, "Covers".Translate(), coveredParts, 100);
+				yield return new StatDrawEntry(StatCategoryDefOf.Apparel, "Covers".Translate(), coveredParts, 100, string.Empty);
 			}
 			if (this.IsMedicine && this.MedicineTendXpGainFactor != 1f)
 			{
-				yield return new StatDrawEntry(StatCategoryDefOf.Basics, "MedicineXpGainFactor".Translate(), this.MedicineTendXpGainFactor.ToStringPercent(), 0);
+				yield return new StatDrawEntry(StatCategoryDefOf.Basics, "MedicineXpGainFactor".Translate(), this.MedicineTendXpGainFactor.ToStringPercent(), 0, string.Empty);
 			}
 			if (this.fillPercent > 0f && this.fillPercent < 1f && (this.category == ThingCategory.Item || this.category == ThingCategory.Building || this.category == ThingCategory.Plant))
 			{
-				yield return new StatDrawEntry(StatCategoryDefOf.Basics, "CoverEffectiveness".Translate(), this.BaseBlockChance().ToStringPercent(), 0)
+				yield return new StatDrawEntry(StatCategoryDefOf.Basics, "CoverEffectiveness".Translate(), this.BaseBlockChance().ToStringPercent(), 0, string.Empty)
 				{
 					overrideReportText = "CoverEffectivenessExplanation".Translate()
 				};
+			}
+			if (this.constructionSkillPrerequisite > 0)
+			{
+				StatCategoryDef basics = StatCategoryDefOf.Basics;
+				string label = "ConstructionSkillRequired".Translate();
+				string valueString = this.constructionSkillPrerequisite.ToString();
+				string overrideReportText = "ConstructionSkillRequiredExplanation".Translate();
+				yield return new StatDrawEntry(basics, label, valueString, 0, overrideReportText);
 			}
 			if (!this.verbs.NullOrEmpty<VerbProperties>())
 			{
@@ -1198,24 +1368,24 @@ namespace Verse
 				if (warmup > 0f)
 				{
 					string warmupLabel = (this.category != ThingCategory.Pawn) ? "WarmupTime".Translate() : "MeleeWarmupTime".Translate();
-					yield return new StatDrawEntry(verbStatCategory, warmupLabel, warmup.ToString("0.##") + " s", 40);
+					yield return new StatDrawEntry(verbStatCategory, warmupLabel, warmup.ToString("0.##") + " s", 40, string.Empty);
 				}
-				if (verb.projectileDef != null)
+				if (verb.defaultProjectile != null)
 				{
-					float dam = (float)verb.projectileDef.projectile.damageAmountBase;
-					yield return new StatDrawEntry(verbStatCategory, "Damage".Translate(), dam.ToString(), 50);
+					float dam = (float)verb.defaultProjectile.projectile.damageAmountBase;
+					yield return new StatDrawEntry(verbStatCategory, "Damage".Translate(), dam.ToString(), 50, string.Empty);
 				}
-				if (verb.projectileDef != null)
+				if (verb.LaunchesProjectile)
 				{
 					int burstShotCount = verb.burstShotCount;
 					float burstShotFireRate = 60f / verb.ticksBetweenBurstShots.TicksToSeconds();
 					float range = verb.range;
 					if (burstShotCount > 1)
 					{
-						yield return new StatDrawEntry(verbStatCategory, "BurstShotCount".Translate(), burstShotCount.ToString(), 20);
-						yield return new StatDrawEntry(verbStatCategory, "BurstShotFireRate".Translate(), burstShotFireRate.ToString("0.##") + " rpm", 19);
+						yield return new StatDrawEntry(verbStatCategory, "BurstShotCount".Translate(), burstShotCount.ToString(), 20, string.Empty);
+						yield return new StatDrawEntry(verbStatCategory, "BurstShotFireRate".Translate(), burstShotFireRate.ToString("0.##") + " rpm", 19, string.Empty);
 					}
-					yield return new StatDrawEntry(verbStatCategory, "Range".Translate(), range.ToString("0.##"), 10);
+					yield return new StatDrawEntry(verbStatCategory, "Range".Translate(), range.ToString("0.##"), 10, string.Empty);
 				}
 			}
 			if (this.plant != null)
@@ -1242,7 +1412,7 @@ namespace Verse
 			if (this.isBodyPartOrImplant)
 			{
 				foreach (RecipeDef def in from x in DefDatabase<RecipeDef>.AllDefs
-				where x.IsIngredient(this.<>f__this)
+				where x.IsIngredient(this.$this)
 				select x)
 				{
 					HediffDef diff = def.addsHediff;
@@ -1250,7 +1420,7 @@ namespace Verse
 					{
 						if (diff.addedPartProps != null)
 						{
-							yield return new StatDrawEntry(StatCategoryDefOf.Basics, "BodyPartEfficiency".Translate(), diff.addedPartProps.partEfficiency.ToStringByStyle(ToStringStyle.PercentZero, ToStringNumberSense.Absolute), 0);
+							yield return new StatDrawEntry(StatCategoryDefOf.Basics, "BodyPartEfficiency".Translate(), diff.addedPartProps.partEfficiency.ToStringByStyle(ToStringStyle.PercentZero, ToStringNumberSense.Absolute), 0, string.Empty);
 						}
 						foreach (StatDrawEntry s4 in diff.SpecialDisplayStats())
 						{
@@ -1259,19 +1429,33 @@ namespace Verse
 						HediffCompProperties_VerbGiver vg = diff.CompProps<HediffCompProperties_VerbGiver>();
 						if (vg != null)
 						{
-							VerbProperties verb2 = vg.verbs.FirstOrDefault<VerbProperties>();
-							if (!verb2.MeleeRange)
+							if (!vg.verbs.NullOrEmpty<VerbProperties>())
 							{
-								int projDamage = verb2.projectileDef.projectile.damageAmountBase;
-								yield return new StatDrawEntry(StatCategoryDefOf.Basics, "Damage".Translate(), projDamage.ToString(), 0);
+								VerbProperties verb2 = vg.verbs[0];
+								if (!verb2.MeleeRange)
+								{
+									if (verb2.defaultProjectile != null)
+									{
+										int projDamage = verb2.defaultProjectile.projectile.damageAmountBase;
+										yield return new StatDrawEntry(StatCategoryDefOf.Basics, "Damage".Translate(), projDamage.ToString(), 0, string.Empty);
+									}
+								}
+								else
+								{
+									int meleeDamage = verb2.meleeDamageBaseAmount;
+									yield return new StatDrawEntry(StatCategoryDefOf.Weapon, "Damage".Translate(), meleeDamage.ToString(), 0, string.Empty);
+								}
 							}
-							int meleeDamage = verb2.meleeDamageBaseAmount;
-							yield return new StatDrawEntry(StatCategoryDefOf.Weapon, "Damage".Translate(), meleeDamage.ToString(), 0);
+							else if (!vg.tools.NullOrEmpty<Tool>())
+							{
+								Tool tool = vg.tools[0];
+								yield return new StatDrawEntry(StatCategoryDefOf.Weapon, "Damage".Translate(), tool.power.ToString(), 0, string.Empty);
+							}
 						}
-						ThoughtDef thought = DefDatabase<ThoughtDef>.AllDefs.FirstOrDefault((ThoughtDef x) => x.hediff == this.<diff>__18);
+						ThoughtDef thought = DefDatabase<ThoughtDef>.AllDefs.FirstOrDefault((ThoughtDef x) => x.hediff == diff);
 						if (thought != null && thought.stages != null && thought.stages.Any<ThoughtStage>())
 						{
-							yield return new StatDrawEntry(StatCategoryDefOf.Basics, "MoodChange".Translate(), thought.stages.First<ThoughtStage>().baseMoodEffect.ToStringByStyle(ToStringStyle.Integer, ToStringNumberSense.Offset), 0);
+							yield return new StatDrawEntry(StatCategoryDefOf.Basics, "MoodChange".Translate(), thought.stages.First<ThoughtStage>().baseMoodEffect.ToStringByStyle(ToStringStyle.Integer, ToStringNumberSense.Offset), 0, string.Empty);
 						}
 					}
 				}

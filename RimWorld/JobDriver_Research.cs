@@ -10,6 +10,8 @@ namespace RimWorld
 	{
 		private const int JobEndInterval = 4000;
 
+		private const float BaseResearchSpeed = 1.1f;
+
 		private ResearchProjectDef Project
 		{
 			get
@@ -26,29 +28,33 @@ namespace RimWorld
 			}
 		}
 
+		public override bool TryMakePreToilReservations()
+		{
+			return this.pawn.Reserve(this.ResearchBench, this.job, 1, -1, null);
+		}
+
 		[DebuggerHidden]
 		protected override IEnumerable<Toil> MakeNewToils()
 		{
 			this.FailOnDespawnedNullOrForbidden(TargetIndex.A);
-			yield return Toils_Reserve.Reserve(TargetIndex.A, 1, -1, null);
 			yield return Toils_Goto.GotoThing(TargetIndex.A, PathEndMode.InteractionCell);
 			Toil research = new Toil();
 			research.tickAction = delegate
 			{
-				Pawn actor = this.<research>__0.actor;
-				float num = actor.GetStatValue(StatDefOf.ResearchSpeed, true);
-				num *= this.<>f__this.TargetThingA.GetStatValue(StatDefOf.ResearchSpeedFactor, true);
+				Pawn actor = research.actor;
+				float num = 1.1f * actor.GetStatValue(StatDefOf.ResearchSpeed, true);
+				num *= this.$this.TargetThingA.GetStatValue(StatDefOf.ResearchSpeedFactor, true);
 				Find.ResearchManager.ResearchPerformed(num, actor);
 				actor.skills.Learn(SkillDefOf.Intellectual, 0.11f, false);
 				actor.GainComfortFromCellIfPossible();
 			};
-			research.FailOn(() => this.<>f__this.Project == null);
-			research.FailOn(() => !this.<>f__this.Project.CanBeResearchedAt(this.<>f__this.ResearchBench, false));
+			research.FailOn(() => this.$this.Project == null);
+			research.FailOn(() => !this.$this.Project.CanBeResearchedAt(this.$this.ResearchBench, false));
 			research.FailOnCannotTouch(TargetIndex.A, PathEndMode.InteractionCell);
 			research.WithEffect(EffecterDefOf.Research, TargetIndex.A);
 			research.WithProgressBar(TargetIndex.A, delegate
 			{
-				ResearchProjectDef project = this.<>f__this.Project;
+				ResearchProjectDef project = this.$this.Project;
 				if (project == null)
 				{
 					return 0f;

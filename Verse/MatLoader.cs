@@ -16,7 +16,7 @@ namespace Verse
 			{
 				int seed = 0;
 				seed = Gen.HashCombine<string>(seed, this.path);
-				return Gen.HashCombine<int>(seed, this.renderQueue);
+				return Gen.HashCombineInt(seed, this.renderQueue);
 			}
 
 			public override bool Equals(object obj)
@@ -29,6 +29,16 @@ namespace Verse
 				return other.path == this.path && other.renderQueue == this.renderQueue;
 			}
 
+			public static bool operator ==(MatLoader.Request lhs, MatLoader.Request rhs)
+			{
+				return lhs.Equals(rhs);
+			}
+
+			public static bool operator !=(MatLoader.Request lhs, MatLoader.Request rhs)
+			{
+				return !(lhs == rhs);
+			}
+
 			public override string ToString()
 			{
 				return string.Concat(new object[]
@@ -39,16 +49,6 @@ namespace Verse
 					this.renderQueue,
 					")"
 				});
-			}
-
-			public static bool operator ==(MatLoader.Request lhs, MatLoader.Request rhs)
-			{
-				return lhs.Equals(rhs);
-			}
-
-			public static bool operator !=(MatLoader.Request lhs, MatLoader.Request rhs)
-			{
-				return !(lhs == rhs);
 			}
 		}
 

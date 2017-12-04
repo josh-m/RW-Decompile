@@ -31,7 +31,7 @@ namespace RimWorld
 			int int2 = Rand.Int;
 			ScenarioMaker.scen = new Scenario();
 			ScenarioMaker.scen.Category = ScenarioCategory.CustomLocal;
-			ScenarioMaker.scen.name = NameGenerator.GenerateName(RulePackDefOf.NamerScenario, null, false);
+			ScenarioMaker.scen.name = NameGenerator.GenerateName(RulePackDefOf.NamerScenario, null, false, null);
 			ScenarioMaker.scen.description = null;
 			ScenarioMaker.scen.summary = null;
 			Rand.Seed = @int;
@@ -114,7 +114,7 @@ namespace RimWorld
 			if (count > 0)
 			{
 				IEnumerable<ScenPartDef> allowedParts = from d in ScenarioMaker.AddableParts(scen)
-				where d.category == this.cat
+				where d.category == cat
 				select d;
 				int numYielded = 0;
 				int numTries = 0;

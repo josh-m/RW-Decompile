@@ -8,15 +8,18 @@ namespace RimWorld
 {
 	public class JobGiver_AISapper : ThinkNode_JobGiver
 	{
+		private bool canMineMineables = true;
+
+		private bool canMineNonMineables = true;
+
 		private const float ReachDestDist = 10f;
 
 		private const int CheckOverrideInterval = 500;
 
-		private bool canMineNonMineables = true;
-
 		public override ThinkNode DeepCopy(bool resolve = true)
 		{
 			JobGiver_AISapper jobGiver_AISapper = (JobGiver_AISapper)base.DeepCopy(resolve);
+			jobGiver_AISapper.canMineMineables = this.canMineMineables;
 			jobGiver_AISapper.canMineNonMineables = this.canMineNonMineables;
 			return jobGiver_AISapper;
 		}
@@ -50,7 +53,7 @@ namespace RimWorld
 				Thing thing = pawnPath.FirstBlockingBuilding(out cellBeforeBlocker, pawn);
 				if (thing != null)
 				{
-					Job job = DigUtility.PassBlockerJob(pawn, thing, cellBeforeBlocker, this.canMineNonMineables);
+					Job job = DigUtility.PassBlockerJob(pawn, thing, cellBeforeBlocker, this.canMineMineables, this.canMineNonMineables);
 					if (job != null)
 					{
 						return job;

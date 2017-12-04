@@ -73,7 +73,7 @@ namespace Verse
 				}
 				num3 -= distance / 10f;
 			}
-			return IntVec3.Invalid;
+			return pawn.Position;
 		}
 
 		public static bool CanFleeToLocation(Pawn pawn, IntVec3 location)
@@ -82,7 +82,7 @@ namespace Verse
 			{
 				return false;
 			}
-			if (pawn.Map.pawnDestinationManager.DestinationIsReserved(location, pawn))
+			if (!pawn.Map.pawnDestinationReservationManager.CanReserve(location, pawn))
 			{
 				return false;
 			}
@@ -128,7 +128,7 @@ namespace Verse
 							{
 								num4 *= 0.05f;
 							}
-							if (map.pawnDestinationManager.DestinationIsReserved(current, pawn))
+							if (!map.pawnDestinationReservationManager.CanReserve(current, pawn))
 							{
 								num4 *= 0.5f;
 							}
@@ -210,6 +210,45 @@ namespace Verse
 				debug_numExtraValidator
 			}));
 			return CellFinderLoose.RandomCellWith((IntVec3 x) => x.Standable(map), map, 1000);
+		}
+
+		public static bool TryFindSkyfallerCell(ThingDef skyfaller, Map map, out IntVec3 cell, int minDistToEdge = 10, IntVec3 nearLoc = default(IntVec3), int nearLocMaxDist = -1, bool allowRoofedCells = true, bool allowCellsWithItems = false, bool allowCellsWithBuildings = false, bool colonyReachable = false, Predicate<IntVec3> extraValidator = null)
+		{
+			Predicate<IntVec3> validator = delegate(IntVec3 x)
+			{
+				CellRect.CellRectIterator iterator = GenAdj.OccupiedRect(x, Rot4.North, skyfaller.size).GetIterator();
+				while (!iterator.Done())
+				{
+					IntVec3 current = iterator.Current;
+					if (!current.InBounds(map) || current.Fogged(map) || !current.Standable(map) || (current.Roofed(map) && current.GetRoof(map).isThickRoof))
+					{
+						return false;
+					}
+					if (!allowRoofedCells && current.Roofed(map))
+					{
+						return false;
+					}
+					if (!allowCellsWithItems && current.GetFirstItem(map) != null)
+					{
+						return false;
+					}
+					if (!allowCellsWithBuildings && current.GetFirstBuilding(map) != null)
+					{
+						return false;
+					}
+					if (current.GetFirstSkyfaller(map) != null)
+					{
+						return false;
+					}
+					iterator.MoveNext();
+				}
+				return (minDistToEdge <= 0 || x.DistanceToEdge(map) >= minDistToEdge) && (!colonyReachable || map.reachability.CanReachColony(x)) && (extraValidator == null || extraValidator(x));
+			};
+			if (nearLocMaxDist > 0)
+			{
+				return CellFinder.TryFindRandomCellNear(nearLoc, map, nearLocMaxDist, validator, out cell);
+			}
+			return CellFinderLoose.TryFindRandomNotEdgeCellWith(minDistToEdge, validator, map, out cell);
 		}
 	}
 }

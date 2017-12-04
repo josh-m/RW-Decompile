@@ -9,7 +9,7 @@ namespace RimWorld
 	{
 		private float rotProgressInt;
 
-		private CompProperties_Rottable PropsRot
+		public CompProperties_Rottable PropsRot
 		{
 			get
 			{
@@ -68,19 +68,48 @@ namespace RimWorld
 			}
 		}
 
+		public bool Active
+		{
+			get
+			{
+				if (this.PropsRot.disableIfHatcher)
+				{
+					CompHatcher compHatcher = this.parent.TryGetComp<CompHatcher>();
+					if (compHatcher != null && !compHatcher.TemperatureDamaged)
+					{
+						return false;
+					}
+				}
+				return true;
+			}
+		}
+
 		public override void PostExposeData()
 		{
 			base.PostExposeData();
 			Scribe_Values.Look<float>(ref this.rotProgressInt, "rotProg", 0f, false);
 		}
 
+		public override void CompTick()
+		{
+			this.Tick(1);
+		}
+
 		public override void CompTickRare()
 		{
+			this.Tick(250);
+		}
+
+		private void Tick(int interval)
+		{
+			if (!this.Active)
+			{
+				return;
+			}
 			float rotProgress = this.RotProgress;
-			float num = 1f;
 			float ambientTemperature = this.parent.AmbientTemperature;
-			num *= GenTemperature.RotRateAtTemperature(ambientTemperature);
-			this.RotProgress += Mathf.Round(num * 250f);
+			float num = GenTemperature.RotRateAtTemperature(ambientTemperature);
+			this.RotProgress += num * (float)interval;
 			if (this.Stage == RotStage.Rotting && this.PropsRot.rotDestroys)
 			{
 				if (this.parent.Spawned && this.parent.Map.slotGroupManager.SlotGroupAt(this.parent.Position) != null)
@@ -88,7 +117,7 @@ namespace RimWorld
 					Messages.Message("MessageRottedAwayInStorage".Translate(new object[]
 					{
 						this.parent.Label
-					}).CapitalizeFirst(), MessageSound.Silent);
+					}).CapitalizeFirst(), MessageTypeDefOf.NegativeEvent);
 					LessonAutoActivator.TeachOpportunity(ConceptDefOf.SpoilageAndFreezers, OpportunityType.GoodToKnow);
 				}
 				this.parent.Destroy(DestroyMode.Vanish);
@@ -110,15 +139,8 @@ namespace RimWorld
 
 		private bool ShouldTakeRotDamage()
 		{
-			if (this.parent.ParentHolder != null)
-			{
-				Thing thing = this.parent.ParentHolder as Thing;
-				if (thing != null && thing.def.category == ThingCategory.Building && thing.def.building.preventDeterioration)
-				{
-					return false;
-				}
-			}
-			return true;
+			Thing thing = this.parent.ParentHolder as Thing;
+			return thing == null || thing.def.category != ThingCategory.Building || !thing.def.building.preventDeteriorationInside;
 		}
 
 		public override void PreAbsorbStack(Thing otherStack, int count)
@@ -143,18 +165,29 @@ namespace RimWorld
 
 		public override string CompInspectStringExtra()
 		{
-			StringBuilder stringBuilder = new StringBuilder();
-			switch (this.Stage)
+			if (!this.Active)
 			{
-			case RotStage.Fresh:
+				return null;
+			}
+			StringBuilder stringBuilder = new StringBuilder();
+			RotStage stage = this.Stage;
+			if (stage != RotStage.Fresh)
+			{
+				if (stage != RotStage.Rotting)
+				{
+					if (stage == RotStage.Dessicated)
+					{
+						stringBuilder.Append("RotStateDessicated".Translate() + ".");
+					}
+				}
+				else
+				{
+					stringBuilder.Append("RotStateRotting".Translate() + ".");
+				}
+			}
+			else
+			{
 				stringBuilder.Append("RotStateFresh".Translate() + ".");
-				break;
-			case RotStage.Rotting:
-				stringBuilder.Append("RotStateRotting".Translate() + ".");
-				break;
-			case RotStage.Dessicated:
-				stringBuilder.Append("RotStateDessicated".Translate() + ".");
-				break;
 			}
 			float num = (float)this.PropsRot.TicksToRotStart - this.RotProgress;
 			if (num > 0f)
@@ -194,10 +227,14 @@ namespace RimWorld
 
 		public int TicksUntilRotAtTemp(float temp)
 		{
+			if (!this.Active)
+			{
+				return 72000000;
+			}
 			float num = GenTemperature.RotRateAtTemperature(temp);
 			if (num <= 0f)
 			{
-				return 2147483647;
+				return 72000000;
 			}
 			float num2 = (float)this.PropsRot.TicksToRotStart - this.RotProgress;
 			if (num2 <= 0f)

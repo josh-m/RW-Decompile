@@ -9,16 +9,6 @@ namespace Verse
 {
 	public class FloatMenu : Window
 	{
-		private const float OptionSpacing = -1f;
-
-		private const float MaxScreenHeightPercent = 0.9f;
-
-		private const float MinimumColumnWidth = 70f;
-
-		private const float FadeStartMouseDist = 5f;
-
-		private const float FadeFinishMouseDist = 100f;
-
 		public bool givesColonistOrders;
 
 		public bool vanishIfMouseDistant = true;
@@ -35,7 +25,17 @@ namespace Verse
 
 		private static readonly Vector2 TitleOffset = new Vector2(30f, -25f);
 
+		private const float OptionSpacing = -1f;
+
+		private const float MaxScreenHeightPercent = 0.9f;
+
+		private const float MinimumColumnWidth = 70f;
+
 		private static readonly Vector2 InitialPositionShift = new Vector2(4f, 0f);
+
+		private const float FadeStartMouseDist = 5f;
+
+		private const float FadeFinishMouseDist = 100f;
 
 		protected override float Margin
 		{

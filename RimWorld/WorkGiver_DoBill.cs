@@ -88,9 +88,7 @@ namespace RimWorld
 				for (int i = 0; i < things.Count; i++)
 				{
 					ThingDef def;
-					ThingDef expr_1C = def = things[i].def;
-					float num = this[def];
-					this[expr_1C] = num + (float)things[i].stackCount;
+					this[def = things[i].def] = this[def] + (float)things[i].stackCount;
 				}
 			}
 		}
@@ -135,38 +133,42 @@ namespace RimWorld
 			}
 		}
 
-		public WorkGiver_DoBill()
+		public override Danger MaxPathDanger(Pawn pawn)
 		{
-			if (WorkGiver_DoBill.MissingSkillTranslated == null)
-			{
-				WorkGiver_DoBill.MissingSkillTranslated = "MissingSkill".Translate();
-			}
-			if (WorkGiver_DoBill.MissingMaterialsTranslated == null)
-			{
-				WorkGiver_DoBill.MissingMaterialsTranslated = "MissingMaterials".Translate();
-			}
+			return Danger.Some;
+		}
+
+		public static void Reset()
+		{
+			WorkGiver_DoBill.MissingSkillTranslated = "MissingSkill".Translate();
+			WorkGiver_DoBill.MissingMaterialsTranslated = "MissingMaterials".Translate();
 		}
 
 		public override Job JobOnThing(Pawn pawn, Thing thing, bool forced = false)
 		{
 			IBillGiver billGiver = thing as IBillGiver;
-			if (billGiver == null || !this.ThingIsUsableBillGiver(thing) || !billGiver.CurrentlyUsable() || !billGiver.BillStack.AnyShouldDoNow || !pawn.CanReserve(thing, 1, -1, null, forced) || thing.IsBurning() || thing.IsForbidden(pawn))
+			if (billGiver != null && this.ThingIsUsableBillGiver(thing) && billGiver.BillStack.AnyShouldDoNow && billGiver.CurrentlyUsableForBills())
 			{
-				return null;
+				LocalTargetInfo target = thing;
+				if (pawn.CanReserve(target, 1, -1, null, forced) && !thing.IsBurning() && !thing.IsForbidden(pawn))
+				{
+					billGiver.BillStack.RemoveIncompletableBills();
+					return this.StartOrResumeBillJob(pawn, billGiver);
+				}
 			}
-			if (!pawn.CanReach(thing.InteractionCell, PathEndMode.OnCell, Danger.Some, false, TraverseMode.ByPawn))
-			{
-				return null;
-			}
-			billGiver.BillStack.RemoveIncompletableBills();
-			return this.StartOrResumeBillJob(pawn, billGiver);
+			return null;
 		}
 
 		private static UnfinishedThing ClosestUnfinishedThingForBill(Pawn pawn, Bill_ProductionWithUft bill)
 		{
 			Predicate<Thing> predicate = (Thing t) => !t.IsForbidden(pawn) && ((UnfinishedThing)t).Recipe == bill.recipe && ((UnfinishedThing)t).Creator == pawn && ((UnfinishedThing)t).ingredients.TrueForAll((Thing x) => bill.IsFixedOrAllowedIngredient(x.def)) && pawn.CanReserve(t, 1, -1, null, false);
+			IntVec3 position = pawn.Position;
+			Map map = pawn.Map;
+			ThingRequest thingReq = ThingRequest.ForDef(bill.recipe.unfinishedThingDef);
+			PathEndMode peMode = PathEndMode.InteractionCell;
+			TraverseParms traverseParams = TraverseParms.For(pawn, pawn.NormalMaxDanger(), TraverseMode.ByPawn, false);
 			Predicate<Thing> validator = predicate;
-			return (UnfinishedThing)GenClosest.ClosestThingReachable(pawn.Position, pawn.Map, ThingRequest.ForDef(bill.recipe.unfinishedThingDef), PathEndMode.InteractionCell, TraverseParms.For(pawn, pawn.NormalMaxDanger(), TraverseMode.ByPawn, false), 9999f, validator, null, 0, -1, false, RegionType.Set_Passable, false);
+			return (UnfinishedThing)GenClosest.ClosestThingReachable(position, map, thingReq, peMode, traverseParams, 9999f, validator, null, 0, -1, false, RegionType.Set_Passable, false);
 		}
 
 		private static Job FinishUftJob(Pawn pawn, UnfinishedThing uft, Bill_ProductionWithUft bill)
@@ -211,7 +213,7 @@ namespace RimWorld
 				Bill bill = giver.BillStack[i];
 				if (bill.recipe.requiredGiverWorkType == null || bill.recipe.requiredGiverWorkType == this.def.workType)
 				{
-					if (Find.TickManager.TicksGame >= bill.lastIngredientSearchFailTicks + WorkGiver_DoBill.ReCheckFailedBillTicksRange.RandomInRange || FloatMenuMakerMap.making)
+					if (Find.TickManager.TicksGame >= bill.lastIngredientSearchFailTicks + WorkGiver_DoBill.ReCheckFailedBillTicksRange.RandomInRange || FloatMenuMakerMap.makingFor == pawn)
 					{
 						bill.lastIngredientSearchFailTicks = 0;
 						if (bill.ShouldDoNow())
@@ -231,7 +233,7 @@ namespace RimWorld
 										{
 											if (bill_ProductionWithUft.BoundWorker != pawn || !pawn.CanReserveAndReach(bill_ProductionWithUft.BoundUft, PathEndMode.Touch, Danger.Deadly, 1, -1, null, false) || bill_ProductionWithUft.BoundUft.IsForbidden(pawn))
 											{
-												goto IL_18A;
+												goto IL_18E;
 											}
 											return WorkGiver_DoBill.FinishUftJob(pawn, bill_ProductionWithUft.BoundUft, bill_ProductionWithUft);
 										}
@@ -248,7 +250,7 @@ namespace RimWorld
 									{
 										return this.TryStartNewDoBillJob(pawn, bill, giver);
 									}
-									if (!FloatMenuMakerMap.making)
+									if (FloatMenuMakerMap.makingFor != pawn)
 									{
 										bill.lastIngredientSearchFailTicks = Find.TickManager.TicksGame;
 									}
@@ -261,7 +263,7 @@ namespace RimWorld
 						}
 					}
 				}
-				IL_18A:;
+				IL_18E:;
 			}
 			return null;
 		}

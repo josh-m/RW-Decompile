@@ -174,7 +174,10 @@ namespace Verse
 			{
 				base.Draw();
 			}
-			base.Comps_PostDraw();
+			else
+			{
+				base.Comps_PostDraw();
+			}
 		}
 
 		public override void SetFaction(Faction newFaction, Pawn recruiter = null)
@@ -189,6 +192,7 @@ namespace Verse
 			{
 				base.Map.listerBuildingsRepairable.Notify_BuildingSpawned(this);
 				base.Map.listerBuildings.Add(this);
+				base.Map.mapDrawer.MapMeshDirty(base.Position, MapMeshFlag.PowerGrid, true, false);
 			}
 		}
 
@@ -257,12 +261,15 @@ namespace Verse
 				{
 					return false;
 				}
-				List<Pawn> list = base.Map.mapPawns.SpawnedPawnsInFaction(base.Faction);
-				for (int i = 0; i < list.Count; i++)
+				if (by == Faction.OfPlayer)
 				{
-					if (list[i].RaceProps.Humanlike && GenHostility.IsActiveThreat(list[i]))
+					List<Pawn> list = base.Map.mapPawns.SpawnedPawnsInFaction(base.Faction);
+					for (int i = 0; i < list.Count; i++)
 					{
-						return false;
+						if (list[i].RaceProps.Humanlike && GenHostility.IsActiveThreatToPlayer(list[i]))
+						{
+							return false;
+						}
 					}
 				}
 			}

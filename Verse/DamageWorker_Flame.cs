@@ -6,7 +6,7 @@ namespace Verse
 {
 	public class DamageWorker_Flame : DamageWorker_AddInjury
 	{
-		public override float Apply(DamageInfo dinfo, Thing victim)
+		public override DamageWorker.DamageResult Apply(DamageInfo dinfo, Thing victim)
 		{
 			if (!dinfo.InstantOldInjury)
 			{
@@ -18,7 +18,7 @@ namespace Verse
 				Find.TickManager.slower.SignalForceNormalSpeedShort();
 			}
 			Map map = victim.Map;
-			float result = base.Apply(dinfo, victim);
+			DamageWorker.DamageResult result = base.Apply(dinfo, victim);
 			if (victim.Destroyed && map != null && pawn == null)
 			{
 				foreach (IntVec3 current in victim.OccupiedRect())

@@ -5,22 +5,27 @@ namespace RimWorld
 {
 	public static class GameConditionUtility
 	{
+		public static float LerpInOutValue(GameCondition gameCondition, float lerpTime, float lerpTarget = 1f)
+		{
+			if (gameCondition.Permanent)
+			{
+				return GameConditionUtility.LerpInOutValue((float)gameCondition.TicksPassed, lerpTime + 1f, lerpTime, lerpTarget);
+			}
+			return GameConditionUtility.LerpInOutValue((float)gameCondition.TicksPassed, (float)gameCondition.TicksLeft, lerpTime, lerpTarget);
+		}
+
 		public static float LerpInOutValue(float timePassed, float timeLeft, float lerpTime, float lerpTarget = 1f)
 		{
-			float t;
+			float num = 1f;
 			if (timePassed < lerpTime)
 			{
-				t = timePassed / lerpTime;
+				num = timePassed / lerpTime;
 			}
-			else if (timeLeft < lerpTime)
+			if (timeLeft < lerpTime)
 			{
-				t = timeLeft / lerpTime;
+				num = Mathf.Min(num, timeLeft / lerpTime);
 			}
-			else
-			{
-				t = 1f;
-			}
-			return Mathf.Lerp(0f, lerpTarget, t);
+			return Mathf.Lerp(0f, lerpTarget, num);
 		}
 	}
 }

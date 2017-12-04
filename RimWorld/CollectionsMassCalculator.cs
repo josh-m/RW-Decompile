@@ -55,11 +55,10 @@ namespace RimWorld
 					}
 					else
 					{
-						Thing innerIfMinified = thing.GetInnerIfMinified();
-						num += innerIfMinified.GetStatValue(StatDefOf.Mass, true) * (float)count;
+						num += thing.GetStatValue(StatDefOf.Mass, true) * (float)count;
 						if (ignoreCorpsesGearAndInventory)
 						{
-							Corpse corpse = innerIfMinified as Corpse;
+							Corpse corpse = thing as Corpse;
 							if (corpse != null)
 							{
 								num -= MassUtility.GearAndInventoryMass(corpse.InnerPawn) * (float)count;

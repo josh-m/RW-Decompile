@@ -25,13 +25,19 @@ namespace RimWorld
 			}
 		}
 
+		public override Danger MaxPathDanger(Pawn pawn)
+		{
+			return Danger.Deadly;
+		}
+
 		public override bool HasJobOnThing(Pawn pawn, Thing t, bool forced = false)
 		{
 			if (pawn.Map.designationManager.DesignationOn(t, DesignationDefOf.RearmTrap) == null)
 			{
 				return false;
 			}
-			if (!pawn.CanReserve(t, 1, -1, null, forced))
+			LocalTargetInfo target = t;
+			if (!pawn.CanReserve(target, 1, -1, null, forced))
 			{
 				return false;
 			}

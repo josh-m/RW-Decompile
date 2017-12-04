@@ -122,9 +122,7 @@ namespace RimWorld
 		public void Train(TrainableDef td, Pawn trainer)
 		{
 			DefMap<TrainableDef, int> defMap;
-			DefMap<TrainableDef, int> expr_06 = defMap = this.steps;
-			int num = defMap[td];
-			expr_06[td] = num + 1;
+			(defMap = this.steps)[td] = defMap[td] + 1;
 			if (this.IsCompleted(td) && td == TrainableDefOf.Obedience)
 			{
 				this.pawn.playerSettings.master = trainer;

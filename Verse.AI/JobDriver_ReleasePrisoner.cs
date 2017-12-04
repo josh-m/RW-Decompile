@@ -15,8 +15,13 @@ namespace Verse.AI
 		{
 			get
 			{
-				return (Pawn)base.CurJob.GetTarget(TargetIndex.A).Thing;
+				return (Pawn)this.job.GetTarget(TargetIndex.A).Thing;
 			}
+		}
+
+		public override bool TryMakePreToilReservations()
+		{
+			return this.pawn.Reserve(this.Prisoner, this.job, 1, -1, null);
 		}
 
 		[DebuggerHidden]
@@ -24,26 +29,23 @@ namespace Verse.AI
 		{
 			this.FailOnDestroyedOrNull(TargetIndex.A);
 			this.FailOnBurningImmobile(TargetIndex.B);
-			this.FailOn(() => ((Pawn)((Thing)this.<>f__this.GetActor().CurJob.GetTarget(TargetIndex.A))).guest.interactionMode != PrisonerInteractionModeDefOf.Release);
+			this.FailOn(() => ((Pawn)((Thing)this.$this.GetActor().CurJob.GetTarget(TargetIndex.A))).guest.interactionMode != PrisonerInteractionModeDefOf.Release);
 			this.FailOnDowned(TargetIndex.A);
 			this.FailOnAggroMentalState(TargetIndex.A);
-			Toil reserveTargetA = Toils_Reserve.Reserve(TargetIndex.A, 1, -1, null);
-			yield return reserveTargetA;
-			yield return Toils_Goto.GotoThing(TargetIndex.A, PathEndMode.ClosestTouch).FailOn(() => !this.<>f__this.Prisoner.IsPrisonerOfColony || !this.<>f__this.Prisoner.guest.PrisonerIsSecure).FailOnSomeonePhysicallyInteracting(TargetIndex.A);
-			yield return Toils_Haul.StartCarryThing(TargetIndex.A, false, false);
+			yield return Toils_Goto.GotoThing(TargetIndex.A, PathEndMode.ClosestTouch).FailOn(() => !this.$this.Prisoner.IsPrisonerOfColony || !this.$this.Prisoner.guest.PrisonerIsSecure).FailOnSomeonePhysicallyInteracting(TargetIndex.A);
+			yield return Toils_Haul.StartCarryThing(TargetIndex.A, false, false, false);
 			Toil carryToCell = Toils_Haul.CarryHauledThingToCell(TargetIndex.B);
 			yield return carryToCell;
 			yield return Toils_Haul.PlaceHauledThingInCell(TargetIndex.B, carryToCell, false);
-			yield return new Toil
+			Toil setReleased = new Toil();
+			setReleased.initAction = delegate
 			{
-				initAction = delegate
-				{
-					Pawn actor = this.<setReleased>__2.actor;
-					Job curJob = actor.jobs.curJob;
-					Pawn p = curJob.targetA.Thing as Pawn;
-					GenGuest.PrisonerRelease(p);
-				}
+				Pawn actor = setReleased.actor;
+				Job curJob = actor.jobs.curJob;
+				Pawn p = curJob.targetA.Thing as Pawn;
+				GenGuest.PrisonerRelease(p);
 			};
+			yield return setReleased;
 		}
 	}
 }

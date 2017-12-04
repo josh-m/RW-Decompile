@@ -8,32 +8,12 @@ namespace Verse.AI
 
 		public override ThinkResult TryIssueJobPackage(Pawn pawn, JobIssueParams jobParams)
 		{
-			ThinkResult result;
-			try
+			Job job = this.TryGiveJob(pawn);
+			if (job == null)
 			{
-				if (jobParams.maxDistToSquadFlag > 0f)
-				{
-					if (pawn.mindState.maxDistToSquadFlag > 0f)
-					{
-						Log.Error("Squad flag was not reset properly; raiders may behave strangely");
-					}
-					pawn.mindState.maxDistToSquadFlag = jobParams.maxDistToSquadFlag;
-				}
-				Job job = this.TryGiveJob(pawn);
-				if (job == null)
-				{
-					result = ThinkResult.NoJob;
-				}
-				else
-				{
-					result = new ThinkResult(job, this, null);
-				}
+				return ThinkResult.NoJob;
 			}
-			finally
-			{
-				pawn.mindState.maxDistToSquadFlag = -1f;
-			}
-			return result;
+			return new ThinkResult(job, this, null, false);
 		}
 	}
 }

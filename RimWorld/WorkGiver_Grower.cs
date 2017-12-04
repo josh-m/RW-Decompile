@@ -10,6 +10,14 @@ namespace RimWorld
 	{
 		protected static ThingDef wantedPlantDef;
 
+		public override bool AllowUnreachable
+		{
+			get
+			{
+				return true;
+			}
+		}
+
 		protected virtual bool ExtraRequirements(IPlantToGrowSettable settable, Pawn pawn)
 		{
 			return true;

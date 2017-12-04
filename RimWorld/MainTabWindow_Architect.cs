@@ -10,13 +10,13 @@ namespace RimWorld
 {
 	public class MainTabWindow_Architect : MainTabWindow
 	{
-		public const float WinWidth = 200f;
-
-		private const float ButHeight = 32f;
-
 		private List<ArchitectCategoryTab> desPanelsCached;
 
 		public ArchitectCategoryTab selectedDesPanel;
+
+		public const float WinWidth = 200f;
+
+		private const float ButHeight = 32f;
 
 		public float WinHeight
 		{
@@ -90,7 +90,7 @@ namespace RimWorld
 				{
 					rect.width += 1f;
 				}
-				if (Widgets.ButtonTextSubtle(rect, this.desPanelsCached[i].def.LabelCap, 0f, 8f, SoundDefOf.MouseoverCategory))
+				if (Widgets.ButtonTextSubtle(rect, this.desPanelsCached[i].def.LabelCap, 0f, 8f, SoundDefOf.MouseoverCategory, new Vector2(-1f, -1f)))
 				{
 					this.ClickedCategory(this.desPanelsCached[i]);
 				}

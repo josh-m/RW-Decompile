@@ -8,8 +8,6 @@ namespace RimWorld
 {
 	public class GenStep_Turrets : GenStep
 	{
-		private const int Padding = 7;
-
 		public IntRange widthRange = new IntRange(3, 4);
 
 		public IntRange turretsCountRange = new IntRange(4, 5);
@@ -17,6 +15,8 @@ namespace RimWorld
 		public IntRange mortarsCountRange = new IntRange(0, 1);
 
 		public IntRange guardsCountRange = IntRange.one;
+
+		private const int Padding = 7;
 
 		public override void Generate(Map map)
 		{
@@ -30,7 +30,7 @@ namespace RimWorld
 			{
 				faction = (from x in Find.FactionManager.AllFactions
 				where !x.defeated && x.HostileTo(Faction.OfPlayer) && !x.def.hidden && x.def.techLevel >= TechLevel.Industrial
-				select x).RandomElementWithFallback(Find.FactionManager.RandomEnemyFaction(false, false, true));
+				select x).RandomElementWithFallback(Find.FactionManager.RandomEnemyFaction(false, false, true, TechLevel.Undefined));
 			}
 			else
 			{
@@ -47,6 +47,12 @@ namespace RimWorld
 			resolveParams.edgeDefenseGuardsCount = new int?(this.guardsCountRange.RandomInRange);
 			BaseGen.globalSettings.map = map;
 			BaseGen.symbolStack.Push("edgeDefense", resolveParams);
+			BaseGen.Generate();
+			ResolveParams resolveParams2 = default(ResolveParams);
+			resolveParams2.rect = rect;
+			resolveParams2.faction = faction;
+			BaseGen.globalSettings.map = map;
+			BaseGen.symbolStack.Push("outdoorLighting", resolveParams2);
 			BaseGen.Generate();
 		}
 

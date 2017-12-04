@@ -8,6 +8,11 @@ namespace RimWorld
 {
 	public class JobDriver_OperateDeepDrill : JobDriver
 	{
+		public override bool TryMakePreToilReservations()
+		{
+			return this.pawn.Reserve(this.job.targetA, this.job, 1, -1, null);
+		}
+
 		[DebuggerHidden]
 		protected override IEnumerable<Toil> MakeNewToils()
 		{
@@ -15,15 +20,14 @@ namespace RimWorld
 			this.FailOnBurningImmobile(TargetIndex.A);
 			this.FailOn(delegate
 			{
-				CompDeepDrill compDeepDrill = this.<>f__this.CurJob.targetA.Thing.TryGetComp<CompDeepDrill>();
+				CompDeepDrill compDeepDrill = this.$this.job.targetA.Thing.TryGetComp<CompDeepDrill>();
 				return !compDeepDrill.CanDrillNow();
 			});
-			yield return Toils_Reserve.Reserve(TargetIndex.A, 1, -1, null);
 			yield return Toils_Goto.GotoThing(TargetIndex.A, PathEndMode.InteractionCell);
 			Toil work = new Toil();
 			work.tickAction = delegate
 			{
-				Pawn actor = this.<work>__0.actor;
+				Pawn actor = work.actor;
 				Building building = (Building)actor.CurJob.targetA.Thing;
 				CompDeepDrill comp = building.GetComp<CompDeepDrill>();
 				comp.DrillWorkDone(actor);

@@ -7,8 +7,6 @@ namespace RimWorld.Planet
 {
 	public class TravelingTransportPods : WorldObject, IThingHolder
 	{
-		private const float TravelSpeed = 0.00025f;
-
 		public int destinationTile = -1;
 
 		public IntVec3 destinationCell = IntVec3.Invalid;
@@ -24,6 +22,8 @@ namespace RimWorld.Planet
 		private int initialTile = -1;
 
 		private float traveledPct;
+
+		private const float TravelSpeed = 0.00025f;
 
 		private static List<Pawn> tmpPawns = new List<Pawn>();
 
@@ -234,7 +234,7 @@ namespace RimWorld.Planet
 					}
 					this.RemoveAllPods();
 					Find.WorldObjects.Remove(this);
-					Messages.Message("MessageTransportPodsArrivedAndLost".Translate(), new GlobalTargetInfo(this.destinationTile), MessageSound.Negative);
+					Messages.Message("MessageTransportPodsArrivedAndLost".Translate(), new GlobalTargetInfo(this.destinationTile), MessageTypeDefOf.NegativeEvent);
 				}
 			}
 			else
@@ -244,7 +244,7 @@ namespace RimWorld.Planet
 				{
 					LongEventHandler.QueueLongEvent(delegate
 					{
-						Map orGenerateMap = GetOrGenerateMapUtility.GetOrGenerateMap(mapParent.Tile, null);
+						Map orGenerateMap = GetOrGenerateMapUtility.GetOrGenerateMap(mapParent.Tile, mapParent.MapSizeGeneratedByTransportPodsArrival, null);
 						string extraMessagePart = null;
 						if (mapParent.Faction != null && !mapParent.Faction.HostileTo(Faction.OfPlayer))
 						{
@@ -293,7 +293,7 @@ namespace RimWorld.Planet
 				IntVec3 c;
 				DropCellFinder.TryFindDropSpotNear(intVec, map, out c, false, true);
 				this.pods[i].parent = null;
-				DropPodUtility.MakeDropPodAt(c, map, this.pods[i]);
+				DropPodUtility.MakeDropPodAt(c, map, this.pods[i], false);
 			}
 			this.RemoveAllPods();
 			Find.WorldObjects.Remove(this);
@@ -302,7 +302,7 @@ namespace RimWorld.Planet
 			{
 				text = text + " " + extraMessagePart;
 			}
-			Messages.Message(text, new TargetInfo(intVec, map, false), MessageSound.Benefit);
+			Messages.Message(text, new TargetInfo(intVec, map, false), MessageTypeDefOf.TaskCompletion);
 		}
 
 		private void SpawnCaravanAtDestinationTile()
@@ -350,7 +350,7 @@ namespace RimWorld.Planet
 			Find.WorldObjects.Remove(this);
 			TravelingTransportPods.tmpPawns.Clear();
 			TravelingTransportPods.tmpContainedThings.Clear();
-			Messages.Message("MessageTransportPodsArrived".Translate(), o, MessageSound.Benefit);
+			Messages.Message("MessageTransportPodsArrived".Translate(), o, MessageTypeDefOf.TaskCompletion);
 		}
 
 		private void GivePodContentsToCaravan(Caravan caravan)
@@ -385,7 +385,7 @@ namespace RimWorld.Planet
 			this.RemoveAllPods();
 			Find.WorldObjects.Remove(this);
 			TravelingTransportPods.tmpContainedThings.Clear();
-			Messages.Message("MessageTransportPodsArrivedAndAddedToCaravan".Translate(), caravan, MessageSound.Benefit);
+			Messages.Message("MessageTransportPodsArrivedAndAddedToCaravan".Translate(), caravan, MessageTypeDefOf.TaskCompletion);
 		}
 
 		private void RemoveAllPawnsFromWorldPawns()
@@ -426,11 +426,6 @@ namespace RimWorld.Planet
 			{
 				outChildren.Add(this.pods[i]);
 			}
-		}
-
-		virtual IThingHolder get_ParentHolder()
-		{
-			return base.ParentHolder;
 		}
 	}
 }

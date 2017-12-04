@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Profiling;
 
 namespace Verse
 {
@@ -59,9 +60,9 @@ namespace Verse
 			}
 		}
 
-		private const int NumFadeSteps = 30;
-
 		private static Dictionary<FadedMaterialPool.FadedMatRequest, Material> cachedMats = new Dictionary<FadedMaterialPool.FadedMatRequest, Material>(FadedMaterialPool.FadedMatRequestComparer.Instance);
+
+		private const int NumFadeSteps = 30;
 
 		public static int TotalMaterialCount
 		{
@@ -71,14 +72,14 @@ namespace Verse
 			}
 		}
 
-		public static int TotalMaterialBytes
+		public static long TotalMaterialBytes
 		{
 			get
 			{
-				int num = 0;
+				long num = 0L;
 				foreach (KeyValuePair<FadedMaterialPool.FadedMatRequest, Material> current in FadedMaterialPool.cachedMats)
 				{
-					num += Profiler.GetRuntimeMemorySize(current.Value);
+					num += Profiler.GetRuntimeMemorySizeLong(current.Value);
 				}
 				return num;
 			}

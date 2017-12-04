@@ -5,11 +5,11 @@ namespace Verse.Noise
 {
 	public class ConvertToIsland : ModuleBase
 	{
-		private const float WaterLevel = -0.12f;
-
 		public Vector3 viewCenter;
 
 		public float viewAngle;
+
+		private const float WaterLevel = -0.12f;
 
 		public ConvertToIsland() : base(1)
 		{

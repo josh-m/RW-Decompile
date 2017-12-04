@@ -8,13 +8,13 @@ namespace Verse
 	[StaticConstructorOnStartup]
 	public class HediffComp_TendDuration : HediffComp_SeverityPerDay
 	{
-		private const float TendQualityRandomVariance = 0.25f;
-
 		public int tendTick = -999999;
 
 		public float tendQuality;
 
 		private int tendedCount;
+
+		private const float TendQualityRandomVariance = 0.25f;
 
 		private static readonly Color UntendedColor;
 
@@ -152,16 +152,6 @@ namespace Verse
 			}
 		}
 
-		static HediffComp_TendDuration()
-		{
-			// Note: this type is marked as 'beforefieldinit'.
-			ColorInt colorInt = new ColorInt(116, 101, 72);
-			HediffComp_TendDuration.UntendedColor = colorInt.ToColor;
-			HediffComp_TendDuration.TendedIcon_Need_General = ContentFinder<Texture2D>.Get("UI/Icons/Medical/TendedNeed", true);
-			HediffComp_TendDuration.TendedIcon_Well_General = ContentFinder<Texture2D>.Get("UI/Icons/Medical/TendedWell", true);
-			HediffComp_TendDuration.TendedIcon_Well_Injury = ContentFinder<Texture2D>.Get("UI/Icons/Medical/BandageWell", true);
-		}
-
 		public override void CompExposeData()
 		{
 			Scribe_Values.Look<int>(ref this.tendTick, "tendTick", -999999, false);
@@ -230,6 +220,16 @@ namespace Verse
 				}));
 			}
 			return stringBuilder.ToString().Trim();
+		}
+
+		static HediffComp_TendDuration()
+		{
+			// Note: this type is marked as 'beforefieldinit'.
+			ColorInt colorInt = new ColorInt(116, 101, 72);
+			HediffComp_TendDuration.UntendedColor = colorInt.ToColor;
+			HediffComp_TendDuration.TendedIcon_Need_General = ContentFinder<Texture2D>.Get("UI/Icons/Medical/TendedNeed", true);
+			HediffComp_TendDuration.TendedIcon_Well_General = ContentFinder<Texture2D>.Get("UI/Icons/Medical/TendedWell", true);
+			HediffComp_TendDuration.TendedIcon_Well_Injury = ContentFinder<Texture2D>.Get("UI/Icons/Medical/BandageWell", true);
 		}
 	}
 }

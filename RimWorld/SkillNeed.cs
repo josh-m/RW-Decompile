@@ -9,9 +9,7 @@ namespace RimWorld
 	{
 		public SkillDef skill;
 
-		public bool reportInverse;
-
-		public virtual float FactorFor(Pawn pawn)
+		public virtual float ValueFor(Pawn pawn)
 		{
 			throw new NotImplementedException();
 		}

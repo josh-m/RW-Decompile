@@ -8,15 +8,13 @@ namespace RimWorld
 {
 	public class GenStep_Plants : GenStep
 	{
-		private const float PlantMinGrowth = 0.07f;
-
-		private const float PlantGrowthFactor = 1.2f;
-
 		private static Dictionary<ThingDef, int> numExtant = new Dictionary<ThingDef, int>();
 
 		private static Dictionary<ThingDef, float> desiredProportions = new Dictionary<ThingDef, float>();
 
 		private static int totalExtant = 0;
+
+		private const float PlantMinGrowth = 0.07f;
 
 		public override void Generate(Map map)
 		{
@@ -27,10 +25,11 @@ namespace RimWorld
 				GenStep_Plants.numExtant.Add(list[i], 0);
 			}
 			GenStep_Plants.desiredProportions = GenPlant.CalculateDesiredPlantProportions(map.Biome);
+			MapGenFloatGrid caves = MapGenerator.Caves;
 			float num = map.Biome.plantDensity * map.gameConditionManager.AggregatePlantDensityFactor();
 			foreach (IntVec3 c in map.AllCells.InRandomOrder(null))
 			{
-				if (c.GetEdifice(map) == null && c.GetCover(map) == null)
+				if (c.GetEdifice(map) == null && c.GetCover(map) == null && caves[c] <= 0f)
 				{
 					float num2 = map.fertilityGrid.FertilityAt(c);
 					float num3 = num2 * num;
@@ -91,9 +90,7 @@ namespace RimWorld
 		{
 			GenStep_Plants.totalExtant++;
 			Dictionary<ThingDef, int> dictionary;
-			Dictionary<ThingDef, int> expr_11 = dictionary = GenStep_Plants.numExtant;
-			int num = dictionary[plantDef];
-			expr_11[plantDef] = num + 1;
+			(dictionary = GenStep_Plants.numExtant)[plantDef] = dictionary[plantDef] + 1;
 		}
 	}
 }

@@ -38,17 +38,19 @@ namespace RimWorld
 			{
 				parms.raidArrivalMode = parms.raidStrategy.arriveModes.RandomElementByWeight(delegate(PawnsArriveMode am)
 				{
-					switch (am)
+					if (am == PawnsArriveMode.EdgeWalkIn)
 					{
-					case PawnsArriveMode.EdgeWalkIn:
 						return 70f;
-					case PawnsArriveMode.EdgeDrop:
+					}
+					if (am == PawnsArriveMode.EdgeDrop)
+					{
 						return 20f;
-					case PawnsArriveMode.CenterDrop:
-						return 10f;
-					default:
+					}
+					if (am != PawnsArriveMode.CenterDrop)
+					{
 						throw new NotImplementedException();
 					}
+					return 10f;
 				});
 			}
 		}
@@ -93,7 +95,7 @@ namespace RimWorld
 			return true;
 		}
 
-		public override bool TryExecute(IncidentParms parms)
+		protected override bool TryExecuteWorker(IncidentParms parms)
 		{
 			Map map = (Map)parms.target;
 			this.ResolveRaidPoints(parms);
@@ -108,7 +110,7 @@ namespace RimWorld
 				return false;
 			}
 			IncidentParmsUtility.AdjustPointsForGroupArrivalParams(parms);
-			PawnGroupMakerParms defaultPawnGroupMakerParms = IncidentParmsUtility.GetDefaultPawnGroupMakerParms(parms);
+			PawnGroupMakerParms defaultPawnGroupMakerParms = IncidentParmsUtility.GetDefaultPawnGroupMakerParms(parms, false);
 			List<Pawn> list = PawnGroupMakerUtility.GeneratePawns(PawnGroupKindDefOf.Normal, defaultPawnGroupMakerParms, true).ToList<Pawn>();
 			if (list.Count == 0)
 			{
@@ -118,7 +120,7 @@ namespace RimWorld
 			TargetInfo target = TargetInfo.Invalid;
 			if (parms.raidArrivalMode == PawnsArriveMode.CenterDrop || parms.raidArrivalMode == PawnsArriveMode.EdgeDrop)
 			{
-				DropPodUtility.DropThingsNear(parms.spawnCenter, map, list.Cast<Thing>(), parms.raidPodOpenDelay, false, true, true);
+				DropPodUtility.DropThingsNear(parms.spawnCenter, map, list.Cast<Thing>(), parms.raidPodOpenDelay, false, true, true, false);
 				target = new TargetInfo(parms.spawnCenter, map, false);
 			}
 			else
@@ -139,9 +141,9 @@ namespace RimWorld
 			}
 			string letterLabel = this.GetLetterLabel(parms);
 			string letterText = this.GetLetterText(parms, list);
-			PawnRelationUtility.Notify_PawnsSeenByPlayer(list, ref letterLabel, ref letterText, this.GetRelatedPawnsInfoLetterText(parms), true);
+			PawnRelationUtility.Notify_PawnsSeenByPlayer_Letter(list, ref letterLabel, ref letterText, this.GetRelatedPawnsInfoLetterText(parms), true, true);
 			Find.LetterStack.ReceiveLetter(letterLabel, letterText, this.GetLetterDef(), target, stringBuilder.ToString());
-			if (this.GetLetterDef() == LetterDefOf.BadUrgent)
+			if (this.GetLetterDef() == LetterDefOf.ThreatBig)
 			{
 				TaleRecorder.RecordTale(TaleDefOf.RaidArrived, new object[0]);
 			}

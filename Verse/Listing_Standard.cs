@@ -8,13 +8,13 @@ namespace Verse
 {
 	public class Listing_Standard : Listing
 	{
-		private const float DefSelectionLineHeight = 21f;
-
 		private GameFont font;
 
 		private List<Pair<Vector2, Vector2>> labelScrollbarPositions;
 
 		private List<Vector2> labelScrollbarPositionsSetThisFrame;
+
+		private const float DefSelectionLineHeight = 21f;
 
 		public Listing_Standard(GameFont font)
 		{
@@ -61,7 +61,7 @@ namespace Verse
 			if (flag)
 			{
 				Vector2 labelScrollbarPosition = this.GetLabelScrollbarPosition(this.curX, this.curY);
-				Widgets.LabelScrollable(rect, label, ref labelScrollbarPosition);
+				Widgets.LabelScrollable(rect, label, ref labelScrollbarPosition, false);
 				this.SetLabelScrollbarPosition(this.curX, this.curY, labelScrollbarPosition);
 			}
 			else
@@ -187,14 +187,14 @@ namespace Verse
 
 		public void IntRange(ref IntRange range, int min, int max)
 		{
-			Rect rect = base.GetRect(Text.LineHeight);
+			Rect rect = base.GetRect(28f);
 			Widgets.IntRange(rect, (int)base.CurHeight, ref range, min, max, null, 0);
 			base.Gap(this.verticalSpacing);
 		}
 
 		public float Slider(float val, float min, float max)
 		{
-			Rect rect = base.GetRect(30f);
+			Rect rect = base.GetRect(22f);
 			float result = Widgets.HorizontalSlider(rect, val, min, max, false, null, null, null, -1f);
 			base.Gap(this.verticalSpacing);
 			return result;

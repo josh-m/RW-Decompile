@@ -87,7 +87,7 @@ namespace Verse
 							Messages.Message("MessagePawnBeingBurned".Translate(new object[]
 							{
 								pawn.LabelShort
-							}).CapitalizeFirst(), pawn, MessageSound.SeriousAlert);
+							}).CapitalizeFirst(), pawn, MessageTypeDefOf.ThreatSmall);
 						}
 					}
 					Lord lord = pawn.GetLord();

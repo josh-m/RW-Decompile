@@ -79,9 +79,16 @@ namespace Verse
 
 		public bool anesthetize = true;
 
+		public bool requireBed = true;
+
 		public ResearchProjectDef researchPrerequisite;
 
+		[NoTranslate]
+		public List<string> factionPrerequisiteTags;
+
 		public ConceptDef conceptLearned;
+
+		public bool dontShowIfAnyIngredientMissing;
 
 		[Unsaved]
 		private RecipeWorker workerInt;
@@ -137,7 +144,18 @@ namespace Verse
 		{
 			get
 			{
-				return this.researchPrerequisite == null || this.researchPrerequisite.IsFinished;
+				if (this.researchPrerequisite != null && !this.researchPrerequisite.IsFinished)
+				{
+					return false;
+				}
+				if (this.factionPrerequisiteTags != null)
+				{
+					if (this.factionPrerequisiteTags.Any((string tag) => Faction.OfPlayer.def.recipePrerequisiteTags == null || !Faction.OfPlayer.def.recipePrerequisiteTags.Contains(tag)))
+					{
+						return false;
+					}
+				}
+				return true;
 			}
 		}
 
@@ -155,7 +173,7 @@ namespace Verse
 						stringBuilder.AppendLine(string.Concat(new object[]
 						{
 							"   ",
-							skillRequirement.skill.skillLabel,
+							skillRequirement.skill.skillLabel.CapitalizeFirst(),
 							": ",
 							skillRequirement.minLevel
 						}));
@@ -174,9 +192,12 @@ namespace Verse
 		{
 			get
 			{
-				for (int i = 0; i < this.recipeUsers.Count; i++)
+				if (this.recipeUsers != null)
 				{
-					yield return this.recipeUsers[i];
+					for (int i = 0; i < this.recipeUsers.Count; i++)
+					{
+						yield return this.recipeUsers[i];
+					}
 				}
 				List<ThingDef> thingDefs = DefDatabase<ThingDef>.AllDefsListForReading;
 				for (int j = 0; j < thingDefs.Count; j++)
@@ -194,6 +215,21 @@ namespace Verse
 			get
 			{
 				return this.unfinishedThingDef != null;
+			}
+		}
+
+		public bool IsSurgery
+		{
+			get
+			{
+				foreach (ThingDef current in this.AllRecipeUsers)
+				{
+					if (current.category == ThingCategory.Pawn)
+					{
+						return true;
+					}
+				}
+				return false;
 			}
 		}
 
@@ -216,8 +252,8 @@ namespace Verse
 				List<Thing> thingList = map.listerThings.ThingsInGroup(ThingRequestGroup.HaulableEver);
 				for (int j = 0; j < thingList.Count; j++)
 				{
-					Thing t = thingList[j];
-					if ((billDoer == null || !t.IsForbidden(billDoer)) && !t.Position.Fogged(map) && (ing.IsFixedIngredient || this.fixedIngredientFilter.Allows(t)) && ing.filter.Allows(t))
+					Thing thing = thingList[j];
+					if ((billDoer == null || !thing.IsForbidden(billDoer)) && !thing.Position.Fogged(map) && (ing.IsFixedIngredient || this.fixedIngredientFilter.Allows(thing)) && ing.filter.Allows(thing))
 					{
 						foundIng = true;
 						break;
@@ -233,7 +269,7 @@ namespace Verse
 					{
 						ThingDef def = (from x in ing.filter.AllowedThingDefs
 						orderby x.BaseMarketValue
-						select x).FirstOrDefault((ThingDef x) => this.<>f__this.fixedIngredientFilter.Allows(x));
+						select x).FirstOrDefault((ThingDef x) => this.$this.fixedIngredientFilter.Allows(x));
 						if (def != null)
 						{
 							yield return def;
@@ -265,6 +301,10 @@ namespace Verse
 			if (this.workerClass == null)
 			{
 				yield return "workerClass is null.";
+			}
+			if (this.surgerySuccessChanceFactor < 99999f && !this.requireBed)
+			{
+				yield return "failable surgery does not require bed";
 			}
 		}
 
@@ -321,6 +361,50 @@ namespace Verse
 				}
 			}
 			return this.premultipliedSmallIngredients;
+		}
+
+		[DebuggerHidden]
+		public override IEnumerable<StatDrawEntry> SpecialDisplayStats()
+		{
+			if (this.workSkill != null)
+			{
+				yield return new StatDrawEntry(StatCategoryDefOf.Basics, "Skill".Translate(), this.workSkill.LabelCap, 0, string.Empty);
+			}
+			if (this.ingredients != null && this.ingredients.Count > 0)
+			{
+				yield return new StatDrawEntry(StatCategoryDefOf.Basics, "Ingredients".Translate(), GenText.ToCommaList(from ic in this.ingredients
+				select ic.Summary, true), 0, string.Empty);
+			}
+			if (this.skillRequirements != null && this.skillRequirements.Count > 0)
+			{
+				yield return new StatDrawEntry(StatCategoryDefOf.Basics, "SkillRequirements".Translate(), GenText.ToCommaList(from sr in this.skillRequirements
+				select sr.Summary, true), 0, string.Empty);
+			}
+			if (this.products != null && this.products.Count > 0)
+			{
+				yield return new StatDrawEntry(StatCategoryDefOf.Basics, "Products".Translate(), GenText.ToCommaList(from pr in this.products
+				select pr.Summary, true), 0, string.Empty);
+			}
+			if (this.workSpeedStat != null)
+			{
+				yield return new StatDrawEntry(StatCategoryDefOf.Basics, "WorkSpeedStat".Translate(), this.workSpeedStat.LabelCap, 0, string.Empty);
+			}
+			if (this.efficiencyStat != null)
+			{
+				yield return new StatDrawEntry(StatCategoryDefOf.Basics, "EfficiencyStat".Translate(), this.efficiencyStat.LabelCap, 0, string.Empty);
+			}
+			if (this.IsSurgery)
+			{
+				if (this.surgerySuccessChanceFactor >= 99999f)
+				{
+					yield return new StatDrawEntry(StatCategoryDefOf.Surgery, "SurgerySuccessChanceFactor".Translate(), "Always", 0, string.Empty);
+				}
+				else
+				{
+					yield return new StatDrawEntry(StatCategoryDefOf.Surgery, "SurgerySuccessChanceFactor".Translate(), this.surgerySuccessChanceFactor.ToStringPercent(), 0, string.Empty);
+				}
+				yield return new StatDrawEntry(StatCategoryDefOf.Surgery, "SurgeryRequireBed".Translate(), this.requireBed.ToStringYesNo(), 0, string.Empty);
+			}
 		}
 	}
 }

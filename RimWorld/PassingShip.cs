@@ -3,7 +3,7 @@ using Verse;
 
 namespace RimWorld
 {
-	public class PassingShip : ICommunicable, IExposable, ILoadReferenceable
+	public class PassingShip : IExposable, ICommunicable, ILoadReferenceable
 	{
 		public PassingShipManager passingShipManager;
 
@@ -60,7 +60,7 @@ namespace RimWorld
 				Messages.Message("MessageShipHasLeftCommsRange".Translate(new object[]
 				{
 					this.FullTitle
-				}), MessageSound.Silent);
+				}), MessageTypeDefOf.SituationResolved);
 			}
 			this.passingShipManager.RemoveShip(this);
 		}

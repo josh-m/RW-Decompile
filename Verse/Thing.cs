@@ -1,4 +1,5 @@
 using RimWorld;
+using RimWorld.Planet;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -9,14 +10,8 @@ using Verse.AI;
 
 namespace Verse
 {
-	public class Thing : Entity, IExposable, ILoadReferenceable, ISelectable
+	public class Thing : Entity, IExposable, ISelectable, ILoadReferenceable, ISignalReceiver
 	{
-		private const sbyte UnspawnedState = -1;
-
-		private const sbyte MemoryState = -2;
-
-		private const sbyte DiscardedState = -3;
-
 		public ThingDef def;
 
 		public int thingIDNumber = -1;
@@ -39,7 +34,15 @@ namespace Verse
 
 		public ThingOwner holdingOwner;
 
+		protected const sbyte UnspawnedState = -1;
+
+		private const sbyte MemoryState = -2;
+
+		private const sbyte DiscardedState = -3;
+
 		public static bool allowDestroyNonDestroyable;
+
+		public const float SmeltCostRecoverFraction = 0.25f;
 
 		public virtual int HitPoints
 		{
@@ -262,17 +265,7 @@ namespace Verse
 		{
 			get
 			{
-				IThingHolder arg_1E_0;
-				if (this.holdingOwner != null)
-				{
-					IThingHolder owner = this.holdingOwner.Owner;
-					arg_1E_0 = owner;
-				}
-				else
-				{
-					arg_1E_0 = null;
-				}
-				return arg_1E_0;
+				return (this.holdingOwner == null) ? null : this.holdingOwner.Owner;
 			}
 		}
 
@@ -316,7 +309,7 @@ namespace Verse
 		{
 			get
 			{
-				if (this.stackCount != 1)
+				if (this.stackCount > 1)
 				{
 					return this.LabelNoCount + " x" + this.stackCount.ToStringCached();
 				}
@@ -404,19 +397,11 @@ namespace Verse
 			}
 		}
 
-		public virtual DrawTargetDef DrawLayer
-		{
-			get
-			{
-				return DrawTargetDefOf.Main;
-			}
-		}
-
 		public virtual IntVec3 InteractionCell
 		{
 			get
 			{
-				return Thing.InteractionCellWhenAt(this.def, this.Position, this.Rotation, this.Map);
+				return ThingUtility.InteractionCellWhenAt(this.def, this.Position, this.Rotation, this.Map);
 			}
 		}
 
@@ -506,6 +491,11 @@ namespace Verse
 				}
 				return Color.white;
 			}
+		}
+
+		public string UniqueVerbOwnerID()
+		{
+			return this.ThingID;
 		}
 
 		public static int IDNumberFromThingID(string thingID)
@@ -658,18 +648,22 @@ namespace Verse
 					slotGroup.parent.Notify_ReceivedThing(this);
 				}
 			}
+			if (this.def.receivesSignals)
+			{
+				Find.SignalManager.RegisterReceiver(this);
+			}
 		}
 
 		public override void DeSpawn()
 		{
 			if (this.Destroyed)
 			{
-				Log.Error("Tried to despawn " + this + " which is already destroyed.");
+				Log.Error("Tried to despawn " + this.ToStringSafe<Thing>() + " which is already destroyed.");
 				return;
 			}
 			if (!this.Spawned)
 			{
-				Log.Error("Tried to despawn " + this + " which is not spawned.");
+				Log.Error("Tried to despawn " + this.ToStringSafe<Thing>() + " which is not spawned.");
 				return;
 			}
 			Map map = this.Map;
@@ -678,6 +672,10 @@ namespace Verse
 			map.listerThings.Remove(this);
 			map.thingGrid.Deregister(this, false);
 			map.coverGrid.DeRegister(this);
+			if (this.def.receivesSignals)
+			{
+				Find.SignalManager.DeregisterReceiver(this);
+			}
 			map.tooltipGiverList.Notify_ThingDespawned(this);
 			if (this.def.graphicData != null && this.def.graphicData.Linked)
 			{
@@ -730,7 +728,7 @@ namespace Verse
 			}
 		}
 
-		public virtual void Kill(DamageInfo? dinfo = null)
+		public virtual void Kill(DamageInfo? dinfo = null, Hediff exactCulprit = null)
 		{
 			this.Destroy(DestroyMode.KillFinalize);
 		}
@@ -756,10 +754,10 @@ namespace Verse
 			this.mapIndexOrState = -2;
 			if (this.def.DiscardOnDestroyed)
 			{
-				this.Discard();
+				this.Discard(false);
 			}
 			CompExplosive compExplosive = this.TryGetComp<CompExplosive>();
-			bool flag = compExplosive != null && compExplosive.detonated;
+			bool flag = compExplosive != null && compExplosive.destroyedThroughDetonation;
 			if (spawned && !flag)
 			{
 				GenLeaving.DoLeavingsFor(this, map, mode);
@@ -789,11 +787,20 @@ namespace Verse
 
 		public virtual void Notify_MyMapRemoved()
 		{
+			if (this.def.receivesSignals)
+			{
+				Find.SignalManager.DeregisterReceiver(this);
+			}
 			if (!ThingOwnerUtility.AnyParentIs<Pawn>(this))
 			{
 				this.mapIndexOrState = -3;
 			}
 			this.RemoveAllReservationsAndDesignationsOnThis();
+		}
+
+		public void ForceSetStateToUnspawned()
+		{
+			this.mapIndexOrState = -1;
 		}
 
 		public void DecrementMapIndex()
@@ -809,7 +816,7 @@ namespace Verse
 				}));
 				return;
 			}
-			this.mapIndexOrState -= 1;
+			this.mapIndexOrState = (sbyte)((int)this.mapIndexOrState - 1);
 		}
 
 		private void RemoveAllReservationsAndDesignationsOnThis()
@@ -884,7 +891,7 @@ namespace Verse
 
 		public virtual void DrawAt(Vector3 drawLoc, bool flip = false)
 		{
-			this.Graphic.Draw(drawLoc, (!flip) ? this.Rotation : this.Rotation.Opposite, this);
+			this.Graphic.Draw(drawLoc, (!flip) ? this.Rotation : this.Rotation.Opposite, this, 0f);
 		}
 
 		public virtual void Print(SectionLayer layer)
@@ -969,15 +976,15 @@ namespace Verse
 			return this.def.inspectorTabsResolved;
 		}
 
-		public void TakeDamage(DamageInfo dinfo)
+		public DamageWorker.DamageResult TakeDamage(DamageInfo dinfo)
 		{
 			if (this.Destroyed)
 			{
-				return;
+				return DamageWorker.DamageResult.MakeNew();
 			}
 			if (dinfo.Amount == 0)
 			{
-				return;
+				return DamageWorker.DamageResult.MakeNew();
 			}
 			if (this.def.damageMultipliers != null)
 			{
@@ -994,28 +1001,30 @@ namespace Verse
 			this.PreApplyDamage(dinfo, out flag);
 			if (flag)
 			{
-				return;
+				return DamageWorker.DamageResult.MakeNew();
 			}
 			bool spawnedOrAnyParentSpawned = this.SpawnedOrAnyParentSpawned;
 			Map mapHeld = this.MapHeld;
-			float num = dinfo.Def.Worker.Apply(dinfo, this);
+			DamageWorker.DamageResult result = dinfo.Def.Worker.Apply(dinfo, this);
 			if (dinfo.Def.harmsHealth && spawnedOrAnyParentSpawned)
 			{
-				mapHeld.damageWatcher.Notify_DamageTaken(this, num);
+				mapHeld.damageWatcher.Notify_DamageTaken(this, result.totalDamageDealt);
 			}
 			if (dinfo.Def.externalViolence)
 			{
-				GenLeaving.DropFilthDueToDamage(this, num);
+				GenLeaving.DropFilthDueToDamage(this, result.totalDamageDealt);
 				if (dinfo.Instigator != null)
 				{
 					Pawn pawn = dinfo.Instigator as Pawn;
 					if (pawn != null)
 					{
-						pawn.records.AddTo(RecordDefOf.DamageDealt, num);
+						pawn.records.AddTo(RecordDefOf.DamageDealt, result.totalDamageDealt);
+						pawn.records.AccumulateStoryEvent(StoryEventDefOf.DamageDealt);
 					}
 				}
 			}
-			this.PostApplyDamage(dinfo, num);
+			this.PostApplyDamage(dinfo, result.totalDamageDealt);
+			return result;
 		}
 
 		public virtual void PreApplyDamage(DamageInfo dinfo, out bool absorbed)
@@ -1029,7 +1038,7 @@ namespace Verse
 
 		public virtual bool CanStackWith(Thing other)
 		{
-			return !this.Destroyed && !other.Destroyed && this.def == other.def && this.Stuff == other.Stuff;
+			return !this.Destroyed && !other.Destroyed && this.def.category == ThingCategory.Item && this.def == other.def && this.Stuff == other.Stuff;
 		}
 
 		public virtual bool TryAbsorbStack(Thing other, bool respectStackLimit)
@@ -1097,6 +1106,10 @@ namespace Verse
 		public virtual void Notify_ColorChanged()
 		{
 			this.graphicInt = null;
+		}
+
+		public virtual void Notify_SignalReceived(Signal signal)
+		{
 		}
 
 		public virtual TipSignal GetTooltip()
@@ -1179,7 +1192,7 @@ namespace Verse
 			return this.thingIDNumber;
 		}
 
-		public virtual void Discard()
+		public virtual void Discard(bool silentlyRemoveReferences = false)
 		{
 			if ((int)this.mapIndexOrState != -2)
 			{
@@ -1267,7 +1280,7 @@ namespace Verse
 			}
 			if (ingester.needs.mood != null)
 			{
-				List<ThoughtDef> list = FoodUtility.ThoughtsFromIngesting(ingester, this);
+				List<ThoughtDef> list = FoodUtility.ThoughtsFromIngesting(ingester, this, this.def);
 				for (int j = 0; j < list.Count; j++)
 				{
 					ingester.needs.mood.thoughts.memories.TryGainMemory(list[j], null);
@@ -1287,6 +1300,10 @@ namespace Verse
 			{
 				JoyKindDef joyKind = (this.def.ingestible.joyKind == null) ? JoyKindDefOf.Gluttonous : this.def.ingestible.joyKind;
 				ingester.needs.joy.GainJoy((float)num * this.def.ingestible.joy, joyKind);
+			}
+			if (ingester.IsCaravanMember())
+			{
+				CaravanPawnsNeedsUtility.Notify_CaravanMemberIngestedFood(ingester, this.def);
 			}
 			if (num > 0)
 			{
@@ -1318,66 +1335,6 @@ namespace Verse
 			});
 			numTaken = Mathf.Max(numTaken, 1);
 			nutritionIngested = (float)numTaken * this.def.ingestible.nutrition;
-		}
-
-		public static IntVec3 InteractionCellWhenAt(ThingDef def, IntVec3 center, Rot4 rot, Map map)
-		{
-			if (def.hasInteractionCell)
-			{
-				IntVec3 b = def.interactionCellOffset.RotatedBy(rot);
-				return center + b;
-			}
-			if (def.Size.x == 1 && def.Size.z == 1)
-			{
-				for (int i = 0; i < 8; i++)
-				{
-					IntVec3 intVec = center + GenAdj.AdjacentCells[i];
-					if (intVec.Standable(map) && intVec.GetDoor(map) == null)
-					{
-						return intVec;
-					}
-				}
-				for (int j = 0; j < 8; j++)
-				{
-					IntVec3 intVec2 = center + GenAdj.AdjacentCells[j];
-					if (intVec2.Standable(map))
-					{
-						return intVec2;
-					}
-				}
-				for (int k = 0; k < 8; k++)
-				{
-					IntVec3 intVec3 = center + GenAdj.AdjacentCells[k];
-					if (intVec3.Walkable(map))
-					{
-						return intVec3;
-					}
-				}
-				return center;
-			}
-			List<IntVec3> list = GenAdjFast.AdjacentCells8Way(center);
-			for (int l = 0; l < list.Count; l++)
-			{
-				if (list[l].Standable(map) && list[l].GetDoor(map) == null)
-				{
-					return list[l];
-				}
-			}
-			for (int m = 0; m < list.Count; m++)
-			{
-				if (list[m].Standable(map))
-				{
-					return list[m];
-				}
-			}
-			for (int n = 0; n < list.Count; n++)
-			{
-				if (list[n].Walkable(map))
-				{
-					return list[n];
-				}
-			}
-			return center;
 		}
 
 		public virtual bool PreventPlayerSellingThingsNearby(out string reason)

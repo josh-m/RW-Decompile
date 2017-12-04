@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using Verse;
 
@@ -12,7 +13,16 @@ namespace RimWorld
 			{
 				return null;
 			}
-			return pawn.relations.GetFirstDirectRelationPawn(PawnRelationDefOf.Parent, (Pawn x) => x.gender != Gender.Female);
+			List<DirectPawnRelation> directRelations = pawn.relations.DirectRelations;
+			for (int i = 0; i < directRelations.Count; i++)
+			{
+				DirectPawnRelation directPawnRelation = directRelations[i];
+				if (directPawnRelation.def == PawnRelationDefOf.Parent && directPawnRelation.otherPawn.gender != Gender.Female)
+				{
+					return directPawnRelation.otherPawn;
+				}
+			}
+			return null;
 		}
 
 		public static Pawn GetMother(this Pawn pawn)
@@ -21,7 +31,16 @@ namespace RimWorld
 			{
 				return null;
 			}
-			return pawn.relations.GetFirstDirectRelationPawn(PawnRelationDefOf.Parent, (Pawn x) => x.gender == Gender.Female);
+			List<DirectPawnRelation> directRelations = pawn.relations.DirectRelations;
+			for (int i = 0; i < directRelations.Count; i++)
+			{
+				DirectPawnRelation directPawnRelation = directRelations[i];
+				if (directPawnRelation.def == PawnRelationDefOf.Parent && directPawnRelation.otherPawn.gender == Gender.Female)
+				{
+					return directPawnRelation.otherPawn;
+				}
+			}
+			return null;
 		}
 
 		public static void SetFather(this Pawn pawn, Pawn newFather)

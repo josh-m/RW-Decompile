@@ -6,11 +6,11 @@ namespace RimWorld
 {
 	public class IncidentWorker_AmbrosiaSprout : IncidentWorker
 	{
+		private static readonly IntRange CountRange = new IntRange(10, 20);
+
 		private const int MinRoomCells = 64;
 
 		private const int SpawnRadius = 6;
-
-		private static readonly IntRange CountRange = new IntRange(10, 20);
 
 		protected override bool CanFireNowSub(IIncidentTarget target)
 		{
@@ -23,7 +23,7 @@ namespace RimWorld
 			return map.weatherManager.growthSeasonMemory.GrowthSeasonOutdoorsNow && this.TryFindRootCell(map, out intVec);
 		}
 
-		public override bool TryExecute(IncidentParms parms)
+		protected override bool TryExecuteWorker(IncidentParms parms)
 		{
 			Map map = (Map)parms.target;
 			IntVec3 root;

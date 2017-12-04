@@ -77,7 +77,7 @@ namespace Verse
 				this.map.floodFiller.FloodFill(root, (IntVec3 x) => this.newReg.extentsLimit.Contains(x) && x.GetExpectedRegionType(this.map) == this.newReg.type, delegate(IntVec3 x)
 				{
 					this.AddCell(x);
-				}, false);
+				}, 2147483647, false, null);
 			}
 		}
 

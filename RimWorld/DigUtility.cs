@@ -8,30 +8,42 @@ namespace RimWorld
 	{
 		private const int CheckOverrideInterval = 500;
 
-		public static Job PassBlockerJob(Pawn pawn, Thing blocker, IntVec3 cellBeforeBlocker, bool canMineNonMineables)
+		public static Job PassBlockerJob(Pawn pawn, Thing blocker, IntVec3 cellBeforeBlocker, bool canMineMineables, bool canMineNonMineables)
 		{
+			if (StatDefOf.MiningSpeed.Worker.IsDisabledFor(pawn))
+			{
+				canMineMineables = false;
+				canMineNonMineables = false;
+			}
 			if (blocker.def.mineable)
 			{
-				return DigUtility.MineOrWaitJob(pawn, blocker, cellBeforeBlocker);
-			}
-			if (pawn.equipment != null && pawn.equipment.Primary != null)
-			{
-				Verb primaryVerb = pawn.equipment.PrimaryEq.PrimaryVerb;
-				if (primaryVerb.verbProps.ai_IsBuildingDestroyer && (!primaryVerb.verbProps.ai_IsIncendiary || blocker.FlammableNow))
+				if (canMineMineables)
 				{
-					return new Job(JobDefOf.UseVerbOnThing)
-					{
-						targetA = blocker,
-						verbToUse = primaryVerb,
-						expiryInterval = JobGiver_AIFightEnemy.ExpiryInterval_ShooterSucceeded.RandomInRange
-					};
+					return DigUtility.MineOrWaitJob(pawn, blocker, cellBeforeBlocker);
 				}
+				return DigUtility.MeleeOrWaitJob(pawn, blocker, cellBeforeBlocker);
 			}
-			if (canMineNonMineables)
+			else
 			{
-				return DigUtility.MineOrWaitJob(pawn, blocker, cellBeforeBlocker);
+				if (pawn.equipment != null && pawn.equipment.Primary != null)
+				{
+					Verb primaryVerb = pawn.equipment.PrimaryEq.PrimaryVerb;
+					if (primaryVerb.verbProps.ai_IsBuildingDestroyer && (!primaryVerb.IsIncendiary() || blocker.FlammableNow))
+					{
+						return new Job(JobDefOf.UseVerbOnThing)
+						{
+							targetA = blocker,
+							verbToUse = primaryVerb,
+							expiryInterval = JobGiver_AIFightEnemy.ExpiryInterval_ShooterSucceeded.RandomInRange
+						};
+					}
+				}
+				if (canMineNonMineables)
+				{
+					return DigUtility.MineOrWaitJob(pawn, blocker, cellBeforeBlocker);
+				}
+				return DigUtility.MeleeOrWaitJob(pawn, blocker, cellBeforeBlocker);
 			}
-			return DigUtility.MeleeOrWaitJob(pawn, blocker, cellBeforeBlocker);
 		}
 
 		private static Job MeleeOrWaitJob(Pawn pawn, Thing blocker, IntVec3 cellBeforeBlocker)

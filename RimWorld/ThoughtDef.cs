@@ -38,6 +38,8 @@ namespace RimWorld
 
 		public HediffDef hediff;
 
+		public GameConditionDef gameCondition;
+
 		public bool nullifiedIfNotColonist;
 
 		public ThoughtDef thoughtToMake;
@@ -70,7 +72,7 @@ namespace RimWorld
 				{
 					return this.label;
 				}
-				if (this.stages.NullOrEmpty<ThoughtStage>())
+				if (!this.stages.NullOrEmpty<ThoughtStage>())
 				{
 					if (!this.stages[0].label.NullOrEmpty())
 					{

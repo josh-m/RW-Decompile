@@ -7,6 +7,12 @@ namespace RimWorld
 {
 	public class Tradeable : Transferable
 	{
+		public List<Thing> thingsColony = new List<Thing>();
+
+		public List<Thing> thingsTrader = new List<Thing>();
+
+		public string editBuffer;
+
 		private const float MinimumBuyPrice = 0.5f;
 
 		private const float MinimumSellPrice = 0.01f;
@@ -14,12 +20,6 @@ namespace RimWorld
 		public const float PriceFactorBuy_Global = 1.5f;
 
 		public const float PriceFactorSell_Global = 0.5f;
-
-		public List<Thing> thingsColony = new List<Thing>();
-
-		public List<Thing> thingsTrader = new List<Thing>();
-
-		public string editBuffer;
 
 		private float pricePlayerBuy = -1f;
 
@@ -140,7 +140,11 @@ namespace RimWorld
 		{
 			get
 			{
-				return this.ThingDef.description;
+				if (!this.HasAnyThing)
+				{
+					return string.Empty;
+				}
+				return this.AnyThing.GetDescription();
 			}
 		}
 
@@ -415,7 +419,7 @@ namespace RimWorld
 						text2,
 						"\n",
 						"TradeWithFactionBaseBonus".Translate(),
-						": -",
+						": ",
 						this.priceGain_FactionBase.ToStringPercent()
 					});
 				}

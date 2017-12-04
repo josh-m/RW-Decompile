@@ -7,6 +7,7 @@ namespace Verse
 		Integer,
 		FloatOne,
 		FloatTwo,
+		FloatMaxTwo,
 		PercentZero,
 		PercentOne,
 		PercentTwo,

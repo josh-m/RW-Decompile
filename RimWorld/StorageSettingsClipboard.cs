@@ -43,7 +43,7 @@ namespace RimWorld
 				action = delegate
 				{
 					SoundDefOf.TickHigh.PlayOneShotOnCamera(null);
-					StorageSettingsClipboard.Copy(this.s);
+					StorageSettingsClipboard.Copy(s);
 				},
 				hotKey = KeyBindingDefOf.Misc4
 			};
@@ -54,7 +54,7 @@ namespace RimWorld
 			paste.action = delegate
 			{
 				SoundDefOf.TickHigh.PlayOneShotOnCamera(null);
-				StorageSettingsClipboard.PasteInto(this.s);
+				StorageSettingsClipboard.PasteInto(s);
 			};
 			paste.hotKey = KeyBindingDefOf.Misc5;
 			if (!StorageSettingsClipboard.HasCopiedSettings)

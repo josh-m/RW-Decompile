@@ -73,7 +73,7 @@ namespace RimWorld.BaseGen
 			}
 			ThingDef result;
 			if ((from x in DefDatabase<ThingDef>.AllDefsListForReading
-			where x.category == ThingCategory.Plant && x.plant.Sowable && !x.plant.IsTree && x.plant.fertilityMin <= minFertility && x.plant.Harvestable
+			where x.category == ThingCategory.Plant && x.plant.Sowable && !x.plant.IsTree && !x.plant.cavePlant && x.plant.fertilityMin <= minFertility && x.plant.Harvestable
 			select x).TryRandomElement(out result))
 			{
 				return result;

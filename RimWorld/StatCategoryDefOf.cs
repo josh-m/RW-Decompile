@@ -32,5 +32,7 @@ namespace RimWorld
 		public static StatCategoryDef StuffStatOffsets;
 
 		public static StatCategoryDef StuffOfEquipmentStatFactors;
+
+		public static StatCategoryDef Surgery;
 	}
 }

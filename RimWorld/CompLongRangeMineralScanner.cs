@@ -9,33 +9,21 @@ namespace RimWorld
 {
 	public class CompLongRangeMineralScanner : ThingComp
 	{
-		private const float NoSitePartChance = 0.6f;
-
 		private CompPowerTrader powerComp;
 
 		private List<Pair<Vector3, float>> otherActiveMineralScanners = new List<Pair<Vector3, float>>();
 
 		private float cachedEffectiveAreaPct;
 
-		private List<SitePartDef> possibleSitePartsInt = new List<SitePartDef>();
+		private const float NoSitePartChance = 0.6f;
+
+		private static readonly string MineralScannerPreciousLumpThreatTag = "MineralScannerPreciousLumpThreat";
 
 		public CompProperties_LongRangeMineralScanner Props
 		{
 			get
 			{
 				return (CompProperties_LongRangeMineralScanner)this.props;
-			}
-		}
-
-		private List<SitePartDef> PossibleSiteParts
-		{
-			get
-			{
-				this.possibleSitePartsInt.Clear();
-				this.possibleSitePartsInt.Add(SitePartDefOf.Manhunters);
-				this.possibleSitePartsInt.Add(SitePartDefOf.Outpost);
-				this.possibleSitePartsInt.Add(SitePartDefOf.Turrets);
-				return this.possibleSitePartsInt;
 			}
 		}
 
@@ -153,25 +141,18 @@ namespace RimWorld
 
 		private void FoundMinerals()
 		{
-			int tile;
-			if (!TileFinder.TryFindNewSiteTile(out tile))
+			int tile = this.parent.Tile;
+			int tile2;
+			if (!TileFinder.TryFindNewSiteTile(out tile2, 8, 30, false, true, tile))
 			{
 				return;
 			}
-			Site site;
-			if (Rand.Chance(0.6f))
-			{
-				site = SiteMaker.TryMakeSite(SiteCoreDefOf.PreciousLump, null, true, null);
-			}
-			else
-			{
-				site = SiteMaker.TryMakeRandomSite(SiteCoreDefOf.PreciousLump, this.PossibleSiteParts, null, true, null);
-			}
+			Site site = SiteMaker.TryMakeSite_SingleSitePart(SiteCoreDefOf.PreciousLump, (!Rand.Chance(0.6f)) ? CompLongRangeMineralScanner.MineralScannerPreciousLumpThreatTag : null, null, true, null);
 			if (site != null)
 			{
-				site.Tile = tile;
+				site.Tile = tile2;
 				Find.WorldObjects.Add(site);
-				Find.LetterStack.ReceiveLetter("LetterLabelFoundPreciousLump".Translate(), "LetterFoundPreciousLump".Translate(), LetterDefOf.Good, site, null);
+				Find.LetterStack.ReceiveLetter("LetterLabelFoundPreciousLump".Translate(), "LetterFoundPreciousLump".Translate(), LetterDefOf.PositiveEvent, site, null);
 			}
 		}
 
@@ -236,7 +217,7 @@ namespace RimWorld
 					defaultLabel = "Dev: Find resources now",
 					action = delegate
 					{
-						this.<>f__this.FoundMinerals();
+						this.$this.FoundMinerals();
 					}
 				};
 			}

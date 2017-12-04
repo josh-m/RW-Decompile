@@ -31,6 +31,8 @@ namespace RimWorld
 
 		public bool showForCaravanMembers;
 
+		public bool scaleBar;
+
 		public float fallPerDay = 0.5f;
 
 		public float seekerRisePerHour;

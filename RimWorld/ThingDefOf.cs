@@ -24,8 +24,6 @@ namespace RimWorld
 
 		public static ThingDef Plasteel;
 
-		public static ThingDef MortarShell;
-
 		public static ThingDef Beer;
 
 		public static ThingDef SmokeleafJoint;
@@ -50,7 +48,21 @@ namespace RimWorld
 
 		public static ThingDef AIPersonaCore;
 
-		public static ThingDef Neurotrainer;
+		public static ThingDef TechprofSubpersonaCore;
+
+		public static ThingDef OrbitalTargeterBombardment;
+
+		public static ThingDef OrbitalTargeterPowerBeam;
+
+		public static ThingDef MechSerumNeurotrainer;
+
+		public static ThingDef Chemfuel;
+
+		public static ThingDef Uranium;
+
+		public static ThingDef Shell_HighExplosive;
+
+		public static ThingDef Shell_AntigrainWarhead;
 
 		public static ThingDef MealSurvivalPack;
 
@@ -68,11 +80,19 @@ namespace RimWorld
 
 		public static ThingDef Luciferium;
 
-		public static ThingDef ActiveDropPod;
-
 		public static ThingDef DropPodIncoming;
 
+		public static ThingDef ExplosiveDropPodIncoming;
+
 		public static ThingDef DropPodLeaving;
+
+		public static ThingDef ShipChunkIncoming;
+
+		public static ThingDef CrashedShipPartIncoming;
+
+		public static ThingDef MeteoriteIncoming;
+
+		public static ThingDef ActiveDropPod;
 
 		public static ThingDef Fire;
 
@@ -87,6 +107,8 @@ namespace RimWorld
 		public static ThingDef ShipChunk;
 
 		public static ThingDef ElephantTusk;
+
+		public static ThingDef GlowPod;
 
 		public static ThingDef FilthBlood;
 
@@ -114,6 +136,20 @@ namespace RimWorld
 
 		public static ThingDef RectTrigger;
 
+		public static ThingDef Explosion;
+
+		public static ThingDef Bombardment;
+
+		public static ThingDef PowerBeam;
+
+		public static ThingDef SignalAction_Letter;
+
+		public static ThingDef SignalAction_Ambush;
+
+		public static ThingDef Blight;
+
+		public static ThingDef Tornado;
+
 		public static ThingDef Sandstone;
 
 		public static ThingDef Ship_Beam;
@@ -126,6 +162,8 @@ namespace RimWorld
 
 		public static ThingDef Ship_Engine;
 
+		public static ThingDef Ship_SensorCluster;
+
 		public static ThingDef MineableSteel;
 
 		public static ThingDef Door;
@@ -133,6 +171,8 @@ namespace RimWorld
 		public static ThingDef Wall;
 
 		public static ThingDef Bed;
+
+		public static ThingDef Bedroll;
 
 		public static ThingDef SleepingSpot;
 
@@ -154,7 +194,7 @@ namespace RimWorld
 
 		public static ThingDef SolarGenerator;
 
-		public static ThingDef FueledGenerator;
+		public static ThingDef WoodFiredGenerator;
 
 		public static ThingDef PowerConduit;
 
@@ -202,15 +242,21 @@ namespace RimWorld
 
 		public static ThingDef CaravanPackingSpot;
 
-		public static ThingDef Turret_MortarBomb;
-
-		public static ThingDef Turret_MortarEMP;
+		public static ThingDef Turret_Mortar;
 
 		public static ThingDef PlantPot;
 
-		public static ThingDef TableShort;
+		public static ThingDef Table2x2c;
 
 		public static ThingDef DiningChair;
+
+		public static ThingDef PsychicEmanator;
+
+		public static ThingDef VanometricPowerCell;
+
+		public static ThingDef InfiniteChemreactor;
+
+		public static ThingDef CommsConsole;
 
 		public static ThingDef PlantPotato;
 
@@ -245,6 +291,8 @@ namespace RimWorld
 		public static ThingDef Mote_ShotFlash;
 
 		public static ThingDef Mote_DustPuff;
+
+		public static ThingDef Mote_TornadoDustPuff;
 
 		public static ThingDef Mote_TempRoof;
 
@@ -282,6 +330,8 @@ namespace RimWorld
 
 		public static ThingDef Mote_Horseshoe;
 
+		public static ThingDef Mote_Stone;
+
 		public static ThingDef Mote_ColonistFleeing;
 
 		public static ThingDef Mote_ColonistAttacking;
@@ -299,6 +349,10 @@ namespace RimWorld
 		public static ThingDef Mote_Stun;
 
 		public static ThingDef Mote_WaterSplash;
+
+		public static ThingDef Mote_Bombardment;
+
+		public static ThingDef Mote_PowerBeam;
 
 		public static ThingDef Gas_Smoke;
 	}

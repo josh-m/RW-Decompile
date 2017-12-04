@@ -8,13 +8,13 @@ namespace RimWorld
 {
 	public class Pawn_DrugPolicyTracker : IExposable
 	{
-		private const float DangerousDrugOverdoseSeverity = 0.5f;
-
 		public Pawn pawn;
 
 		private DrugPolicy curPolicy;
 
 		private List<DrugTakeRecord> drugTakeRecords = new List<DrugTakeRecord>();
+
+		private const float DangerousDrugOverdoseSeverity = 0.5f;
 
 		public DrugPolicy CurrentPolicy
 		{
@@ -130,7 +130,7 @@ namespace RimWorld
 				return false;
 			}
 			DrugPolicyEntry drugPolicyEntry = this.CurrentPolicy[thingDef];
-			return drugPolicyEntry.allowScheduled && (!thingDef.IsPleasureDrug || !this.pawn.IsTeetotaler());
+			return drugPolicyEntry.allowScheduled && (!thingDef.IsNonMedicalDrug || !this.pawn.IsTeetotaler());
 		}
 
 		public bool AllowedToTakeScheduledNow(ThingDef thingDef)

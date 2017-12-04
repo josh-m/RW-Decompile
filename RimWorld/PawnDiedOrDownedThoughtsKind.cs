@@ -5,8 +5,8 @@ namespace RimWorld
 	public enum PawnDiedOrDownedThoughtsKind
 	{
 		Died,
-		Abandoned,
-		AbandonedToDie,
+		Banished,
+		BanishedToDie,
 		Downed
 	}
 }

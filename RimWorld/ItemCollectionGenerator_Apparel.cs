@@ -13,14 +13,18 @@ namespace RimWorld
 		{
 			ItemCollectionGenerator_Apparel.apparel.Clear();
 			ItemCollectionGenerator_Apparel.apparel.AddRange(from x in ItemCollectionGeneratorUtility.allGeneratableItems
-			where x.IsApparel
+			where x.IsApparel && (x.itemGeneratorTags == null || !x.itemGeneratorTags.Contains(ItemCollectionGeneratorUtility.SpecialRewardTag))
 			select x);
 		}
 
 		protected override IEnumerable<ThingDef> AllowedDefs(ItemCollectionGeneratorParams parms)
 		{
+			ItemCollectionGenerator_Apparel.<AllowedDefs>c__AnonStorey0 <AllowedDefs>c__AnonStorey = new ItemCollectionGenerator_Apparel.<AllowedDefs>c__AnonStorey0();
+			ItemCollectionGenerator_Apparel.<AllowedDefs>c__AnonStorey0 arg_28_0 = <AllowedDefs>c__AnonStorey;
+			TechLevel? techLevel = parms.techLevel;
+			arg_28_0.techLevel = ((!techLevel.HasValue) ? TechLevel.Spacer : techLevel.Value);
 			return from x in ItemCollectionGenerator_Apparel.apparel
-			where x.techLevel <= parms.techLevel
+			where x.techLevel <= <AllowedDefs>c__AnonStorey.techLevel
 			select x;
 		}
 	}

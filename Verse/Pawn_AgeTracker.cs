@@ -8,8 +8,6 @@ namespace Verse
 {
 	public class Pawn_AgeTracker : IExposable
 	{
-		private const float BornAtLongitude = 0f;
-
 		private Pawn pawn;
 
 		private long ageBiologicalTicksInt = -1L;
@@ -19,6 +17,8 @@ namespace Verse
 		private int cachedLifeStageIndex = -1;
 
 		private int nextLifeStageChangeTick = -1;
+
+		private const float BornAtLongitude = 0f;
 
 		public long BirthAbsTicks
 		{
@@ -252,20 +252,29 @@ namespace Verse
 		public void AgeTick()
 		{
 			this.ageBiologicalTicksInt += 1L;
-			if (Find.TickManager.TicksGame == this.nextLifeStageChangeTick)
+			if (Find.TickManager.TicksGame >= this.nextLifeStageChangeTick)
 			{
 				this.RecalculateLifeStageIndex();
 			}
-			if (Find.TickManager.TicksGame % 60000 == 20000)
+			if (this.ageBiologicalTicksInt % 3600000L == 0L)
 			{
-				if (GenLocalDate.DayOfYear(this.pawn) == this.BirthDayOfYear)
-				{
-					this.BirthdayChronological();
-				}
-				if (this.ageBiologicalTicksInt % 3600000L < 60000L)
-				{
-					this.BirthdayBiological();
-				}
+				this.BirthdayBiological();
+			}
+		}
+
+		public void AgeTickMothballed(int interval)
+		{
+			long num = this.ageBiologicalTicksInt;
+			this.ageBiologicalTicksInt += (long)interval;
+			while (Find.TickManager.TicksGame >= this.nextLifeStageChangeTick)
+			{
+				this.RecalculateLifeStageIndex();
+			}
+			int num2 = (int)(num / 3600000L);
+			while ((long)num2 < this.ageBiologicalTicksInt / 3600000L)
+			{
+				this.BirthdayBiological();
+				num2 += 3600000;
 			}
 		}
 
@@ -301,6 +310,10 @@ namespace Verse
 				int num3 = (Current.ProgramState != ProgramState.Playing) ? 0 : Find.TickManager.TicksGame;
 				this.nextLifeStageChangeTick = num3 + Mathf.CeilToInt(num2 * 3600000f);
 			}
+			else
+			{
+				this.nextLifeStageChangeTick = 2147483647;
+			}
 		}
 
 		private void BirthdayBiological()
@@ -325,12 +338,8 @@ namespace Verse
 					this.AgeBiologicalYears,
 					stringBuilder
 				}).AdjustedFor(this.pawn);
-				Find.LetterStack.ReceiveLetter("LetterLabelBirthday".Translate(), text, LetterDefOf.BadNonUrgent, this.pawn, null);
+				Find.LetterStack.ReceiveLetter("LetterLabelBirthday".Translate(), text, LetterDefOf.NegativeEvent, this.pawn, null);
 			}
-		}
-
-		private void BirthdayChronological()
-		{
 		}
 
 		public void DebugForceBirthdayBiological()

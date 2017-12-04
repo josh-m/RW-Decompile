@@ -1,4 +1,3 @@
-using RimWorld.Planet;
 using System;
 using System.Collections.Generic;
 using Verse;
@@ -163,11 +162,6 @@ namespace RimWorld
 			if (!this.memories.Remove(th))
 			{
 				Log.Warning("Tried to remove memory thought of def " + th.def.defName + " but it's not here.");
-				return;
-			}
-			if (th.otherPawn != null && th.otherPawn.IsWorldPawn())
-			{
-				Find.WorldPawns.DiscardIfUnimportant(th.otherPawn);
 			}
 		}
 
@@ -202,6 +196,19 @@ namespace RimWorld
 			while (true)
 			{
 				Thought_Memory thought_Memory = this.memories.Find((Thought_Memory x) => x.def == def && x.otherPawn == otherPawn);
+				if (thought_Memory == null)
+				{
+					break;
+				}
+				this.RemoveMemory(thought_Memory);
+			}
+		}
+
+		public void RemoveMemoriesWhereOtherPawnIs(Pawn otherPawn)
+		{
+			while (true)
+			{
+				Thought_Memory thought_Memory = this.memories.Find((Thought_Memory x) => x.otherPawn == otherPawn);
 				if (thought_Memory == null)
 				{
 					break;
@@ -246,16 +253,21 @@ namespace RimWorld
 			}
 		}
 
-		public bool AnyMemoryConcerns(Pawn pawn)
+		public bool AnyMemoryConcerns(Pawn otherPawn)
 		{
 			for (int i = 0; i < this.memories.Count; i++)
 			{
-				if (this.memories[i].otherPawn == pawn)
+				if (this.memories[i].otherPawn == otherPawn)
 				{
 					return true;
 				}
 			}
 			return false;
+		}
+
+		public void Notify_PawnDiscarded(Pawn discarded)
+		{
+			this.RemoveMemoriesWhereOtherPawnIs(discarded);
 		}
 	}
 }

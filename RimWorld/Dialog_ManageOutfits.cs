@@ -8,15 +8,15 @@ namespace RimWorld
 {
 	public class Dialog_ManageOutfits : Window
 	{
+		private Vector2 scrollPosition;
+
+		private Outfit selOutfitInt;
+
 		private const float TopAreaHeight = 40f;
 
 		private const float TopButtonHeight = 35f;
 
 		private const float TopButtonWidth = 150f;
-
-		private Vector2 scrollPosition;
-
-		private Outfit selOutfitInt;
 
 		private static ThingFilter apparelGlobalFilter;
 
@@ -104,7 +104,7 @@ namespace RimWorld
 						AcceptanceReport acceptanceReport = Current.Game.outfitDatabase.TryDelete(localOut);
 						if (!acceptanceReport.Accepted)
 						{
-							Messages.Message(acceptanceReport.Reason, MessageSound.RejectInput);
+							Messages.Message(acceptanceReport.Reason, MessageTypeDefOf.RejectInput);
 						}
 						else if (localOut == this.SelectedOutfit)
 						{
@@ -128,8 +128,12 @@ namespace RimWorld
 			Rect rect5 = new Rect(0f, 0f, 200f, 30f);
 			Dialog_ManageOutfits.DoNameInputRect(rect5, ref this.SelectedOutfit.label);
 			Rect rect6 = new Rect(0f, 40f, 300f, rect4.height - 45f - 10f);
+			Rect rect7 = rect6;
+			ThingFilter filter = this.SelectedOutfit.filter;
+			ThingFilter parentFilter = Dialog_ManageOutfits.apparelGlobalFilter;
+			int openMask = 16;
 			IEnumerable<SpecialThingFilterDef> forceHiddenFilters = this.HiddenSpecialThingFilters();
-			ThingFilterUI.DoThingFilterConfigWindow(rect6, ref this.scrollPosition, this.SelectedOutfit.filter, Dialog_ManageOutfits.apparelGlobalFilter, 16, null, forceHiddenFilters, null);
+			ThingFilterUI.DoThingFilterConfigWindow(rect7, ref this.scrollPosition, filter, parentFilter, openMask, null, forceHiddenFilters, null);
 			GUI.EndGroup();
 		}
 

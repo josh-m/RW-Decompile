@@ -17,7 +17,7 @@ namespace RimWorld
 
 		public override void Draw()
 		{
-			base.UpdatePosition();
+			base.UpdatePositionAndRotation();
 			if (Find.CameraDriver.CurrentZoom == CameraZoomRange.Closest)
 			{
 				GenDraw.FillableBarRequest r = default(GenDraw.FillableBarRequest);

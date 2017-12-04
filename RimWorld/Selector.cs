@@ -12,13 +12,13 @@ namespace RimWorld
 {
 	public class Selector
 	{
-		private const float PawnSelectRadius = 1f;
-
-		private const int MaxNumSelected = 80;
-
 		public DragBox dragBox = new DragBox();
 
 		private List<object> selected = new List<object>();
+
+		private const float PawnSelectRadius = 1f;
+
+		private const int MaxNumSelected = 80;
 
 		private bool ShiftIsHeld
 		{
@@ -396,18 +396,18 @@ namespace RimWorld
 				List<Thing> selectableList = GenUI.ThingsUnderMouse(UI.MouseMapPosition(), 1f, selectParams);
 				if (selectableList.Count > 0 && selectableList[0] is Pawn && (selectableList[0].DrawPos - UI.MouseMapPosition()).MagnitudeHorizontal() < 0.4f)
 				{
-					for (int i = selectableList.Count - 1; i >= 0; i--)
+					for (int j = selectableList.Count - 1; j >= 0; j--)
 					{
-						Thing t = selectableList[i];
-						if (t.def.category == ThingCategory.Pawn && (t.DrawPos - UI.MouseMapPosition()).MagnitudeHorizontal() > 0.4f)
+						Thing thing = selectableList[j];
+						if (thing.def.category == ThingCategory.Pawn && (thing.DrawPos - UI.MouseMapPosition()).MagnitudeHorizontal() > 0.4f)
 						{
-							selectableList.Remove(t);
+							selectableList.Remove(thing);
 						}
 					}
 				}
-				for (int j = 0; j < selectableList.Count; j++)
+				for (int i = 0; i < selectableList.Count; i++)
 				{
-					yield return selectableList[j];
+					yield return selectableList[i];
 				}
 				Zone z = Find.VisibleMap.zoneManager.ZoneAt(UI.MouseCell());
 				if (z != null)

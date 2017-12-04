@@ -60,7 +60,7 @@ namespace RimWorld
 		protected List<Pawn> SpawnPawns(IncidentParms parms)
 		{
 			Map map = (Map)parms.target;
-			PawnGroupMakerParms defaultPawnGroupMakerParms = IncidentParmsUtility.GetDefaultPawnGroupMakerParms(parms);
+			PawnGroupMakerParms defaultPawnGroupMakerParms = IncidentParmsUtility.GetDefaultPawnGroupMakerParms(parms, false);
 			List<Pawn> list = PawnGroupMakerUtility.GeneratePawns(this.PawnGroupKindDef, defaultPawnGroupMakerParms, false).ToList<Pawn>();
 			foreach (Pawn current in list)
 			{

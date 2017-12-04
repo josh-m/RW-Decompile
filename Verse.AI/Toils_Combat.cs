@@ -47,7 +47,7 @@ namespace Verse.AI
 					return;
 				}
 				toil.actor.pather.StartPath(intVec, PathEndMode.OnCell);
-				actor.Map.pawnDestinationManager.ReserveDestinationFor(actor, intVec);
+				actor.Map.pawnDestinationReservationManager.Reserve(actor, curJob, intVec);
 			};
 			toil.FailOnDespawnedOrNull(targetInd);
 			toil.defaultCompleteMode = ToilCompleteMode.PatherArrival;
@@ -59,9 +59,10 @@ namespace Verse.AI
 			Toil toil = new Toil();
 			toil.initAction = delegate
 			{
-				Verb arg_43_0 = toil.actor.jobs.curJob.verbToUse;
+				Verb arg_45_0 = toil.actor.jobs.curJob.verbToUse;
+				LocalTargetInfo target = toil.actor.jobs.curJob.GetTarget(targetInd);
 				bool canFreeIntercept2 = canFreeIntercept;
-				arg_43_0.TryStartCastOn(toil.actor.jobs.curJob.GetTarget(targetInd), false, canFreeIntercept2);
+				arg_45_0.TryStartCastOn(target, false, canFreeIntercept2);
 			};
 			toil.defaultCompleteMode = ToilCompleteMode.FinishedBusy;
 			return toil;

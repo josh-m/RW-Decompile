@@ -5,10 +5,6 @@ namespace Verse
 {
 	public class Dialog_MessageBox : Window
 	{
-		private const float TitleHeight = 42f;
-
-		private const float ButtonHeight = 35f;
-
 		public string text;
 
 		public string title;
@@ -23,11 +19,21 @@ namespace Verse
 
 		public Action buttonBAction;
 
+		public string buttonCText;
+
+		public Action buttonCAction;
+
+		public bool buttonCClose = true;
+
 		public float interactionDelay;
 
 		private Vector2 scrollPosition = Vector2.zero;
 
 		private float creationRealTime = -1f;
+
+		private const float TitleHeight = 42f;
+
+		private const float ButtonHeight = 35f;
 
 		public override Vector2 InitialSize
 		{
@@ -79,7 +85,9 @@ namespace Verse
 
 		public static Dialog_MessageBox CreateConfirmation(string text, Action confirmedAct, bool destructive = false, string title = null)
 		{
-			return new Dialog_MessageBox(text, "Confirm".Translate(), confirmedAct, "GoBack".Translate(), null, title, destructive);
+			string text2 = "Confirm".Translate();
+			string text3 = "GoBack".Translate();
+			return new Dialog_MessageBox(text, text2, confirmedAct, text3, null, title, destructive);
 		}
 
 		public override void DoWindowContents(Rect inRect)
@@ -98,13 +106,15 @@ namespace Verse
 			Widgets.BeginScrollView(outRect, ref this.scrollPosition, viewRect, true);
 			Widgets.Label(new Rect(0f, 0f, viewRect.width, viewRect.height), this.text);
 			Widgets.EndScrollView();
+			int num2 = (!this.buttonCText.NullOrEmpty()) ? 3 : 2;
+			float num3 = inRect.width / (float)num2;
+			float width2 = num3 - 20f;
 			if (this.buttonADestructive)
 			{
 				GUI.color = new Color(1f, 0.3f, 0.35f);
 			}
 			string label = (!this.InteractionDelayExpired) ? (this.buttonAText + "(" + Mathf.Ceil(this.TimeUntilInteractive).ToString("F0") + ")") : this.buttonAText;
-			float width2 = inRect.width / 2f - 20f;
-			if (Widgets.ButtonText(new Rect(inRect.width / 2f + 20f, inRect.height - 35f, width2, 35f), label, true, false, true) && this.InteractionDelayExpired)
+			if (Widgets.ButtonText(new Rect(num3 * (float)(num2 - 1) + 10f, inRect.height - 35f, width2, 35f), label, true, false, true) && this.InteractionDelayExpired)
 			{
 				if (this.buttonAAction != null)
 				{
@@ -120,6 +130,17 @@ namespace Verse
 					this.buttonBAction();
 				}
 				this.Close(true);
+			}
+			if (this.buttonCText != null && Widgets.ButtonText(new Rect(num3 + 10f, inRect.height - 35f, width2, 35f), this.buttonCText, true, false, true))
+			{
+				if (this.buttonCAction != null)
+				{
+					this.buttonCAction();
+				}
+				if (this.buttonCClose)
+				{
+					this.Close(true);
+				}
 			}
 		}
 	}

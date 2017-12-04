@@ -7,6 +7,10 @@ namespace RimWorld
 {
 	public class Need_Joy : Need
 	{
+		public JoyToleranceSet tolerances = new JoyToleranceSet();
+
+		private int lastGainTick = -999;
+
 		private const float BaseFallPerTick = 1.00000007E-05f;
 
 		private const float ThreshLow = 0.15f;
@@ -18,10 +22,6 @@ namespace RimWorld
 		private const float ThreshVeryHigh = 0.85f;
 
 		private const float MinDownedJoy = 0.25f;
-
-		public JoyToleranceSet tolerances = new JoyToleranceSet();
-
-		private int lastGainTick = -999;
 
 		public JoyCategory CurCategory
 		{

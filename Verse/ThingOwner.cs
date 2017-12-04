@@ -9,7 +9,7 @@ using UnityEngine;
 
 namespace Verse
 {
-	public class ThingOwner<T> : ThingOwner, IEnumerable, IList<T>, ICollection<T>, IEnumerable<T> where T : Thing
+	public class ThingOwner<T> : ThingOwner, IList<T>, ICollection<T>, IEnumerable<T>, IEnumerable where T : Thing
 	{
 		private List<T> innerList = new List<T>();
 
@@ -69,46 +69,6 @@ namespace Verse
 		{
 		}
 
-		int IList<T>.IndexOf(T item)
-		{
-			return this.innerList.IndexOf(item);
-		}
-
-		void IList<T>.Insert(int index, T item)
-		{
-			throw new InvalidOperationException("ThingOwner doesn't allow inserting individual elements at any position.");
-		}
-
-		void ICollection<T>.Add(T item)
-		{
-			this.TryAdd(item, true);
-		}
-
-		void ICollection<T>.CopyTo(T[] array, int arrayIndex)
-		{
-			this.innerList.CopyTo(array, arrayIndex);
-		}
-
-		bool ICollection<T>.Contains(T item)
-		{
-			return this.innerList.Contains(item);
-		}
-
-		bool ICollection<T>.Remove(T item)
-		{
-			return this.Remove(item);
-		}
-
-		IEnumerator<T> IEnumerable<T>.GetEnumerator()
-		{
-			return this.innerList.GetEnumerator();
-		}
-
-		IEnumerator IEnumerable.GetEnumerator()
-		{
-			return this.innerList.GetEnumerator();
-		}
-
 		public override void ExposeData()
 		{
 			base.ExposeData();
@@ -141,18 +101,34 @@ namespace Verse
 
 		public override int TryAdd(Thing item, int count, bool canMergeWithExistingStacks = true)
 		{
+			if (count <= 0)
+			{
+				return 0;
+			}
 			if (item == null)
 			{
 				Log.Warning("Tried to add null item to ThingOwner.");
 				return 0;
 			}
-			if (this.Contains(item))
+			if (base.Contains(item))
 			{
 				Log.Warning("Tried to add " + item + " to ThingOwner but this item is already here.");
 				return 0;
 			}
-			if (count <= 0)
+			if (item.holdingOwner != null)
 			{
+				Log.Warning(string.Concat(new object[]
+				{
+					"Tried to add ",
+					count,
+					" of ",
+					item.ToStringSafe<Thing>(),
+					" to ThingOwner but this thing is already in another container. owner=",
+					this.owner.ToStringSafe<IThingHolder>(),
+					", current container owner=",
+					item.holdingOwner.Owner.ToStringSafe<IThingHolder>(),
+					". Use TryAddOrTransfer, TryTransferToContainer, or remove the item before adding it."
+				}));
 				return 0;
 			}
 			if (!this.CanAcceptAnyOf(item, canMergeWithExistingStacks))
@@ -162,10 +138,6 @@ namespace Verse
 			int stackCount = item.stackCount;
 			int num = Mathf.Min(stackCount, count);
 			Thing thing = item.SplitOff(num);
-			if (this.Contains(thing))
-			{
-				this.Remove(thing);
-			}
 			if (this.TryAdd((T)((object)thing), canMergeWithExistingStacks))
 			{
 				return num;
@@ -176,7 +148,6 @@ namespace Verse
 				item.TryAbsorbStack(thing, false);
 				return result;
 			}
-			this.TryAdd(thing, false);
 			return stackCount - item.stackCount;
 		}
 
@@ -192,7 +163,7 @@ namespace Verse
 			{
 				return false;
 			}
-			if (this.Contains(item))
+			if (base.Contains(item))
 			{
 				Log.Warning("Tried to add " + item.ToStringSafe<Thing>() + " to ThingOwner but this item is already here.");
 				return false;
@@ -205,8 +176,9 @@ namespace Verse
 					item.ToStringSafe<Thing>(),
 					" to ThingOwner but this thing is already in another container. owner=",
 					this.owner.ToStringSafe<IThingHolder>(),
-					", other container owner=",
-					item.holdingOwner.Owner.ToStringSafe<IThingHolder>()
+					", current container owner=",
+					item.holdingOwner.Owner.ToStringSafe<IThingHolder>(),
+					". Use TryAddOrTransfer, TryTransferToContainer, or remove the item before adding it."
 				}));
 				return false;
 			}
@@ -249,7 +221,7 @@ namespace Verse
 			return true;
 		}
 
-		public new void TryAddRange(IEnumerable<T> things, bool canMergeWithExistingStacks = true)
+		public new void TryAddRangeOrTransfer(IEnumerable<T> things, bool canMergeWithExistingStacks = true, bool destroyLeftover = false)
 		{
 			if (things == this)
 			{
@@ -259,6 +231,10 @@ namespace Verse
 			if (thingOwner != null)
 			{
 				thingOwner.TryTransferAllToContainer(this, canMergeWithExistingStacks);
+				if (destroyLeftover)
+				{
+					thingOwner.ClearAndDestroyContents(DestroyMode.Vanish);
+				}
 			}
 			else
 			{
@@ -267,14 +243,21 @@ namespace Verse
 				{
 					for (int i = 0; i < list.Count; i++)
 					{
-						this.TryAdd(list[i], canMergeWithExistingStacks);
+						if (!base.TryAddOrTransfer(list[i], canMergeWithExistingStacks) && destroyLeftover)
+						{
+							T t = list[i];
+							t.Destroy(DestroyMode.Vanish);
+						}
 					}
 				}
 				else
 				{
 					foreach (T current in things)
 					{
-						this.TryAdd(current, canMergeWithExistingStacks);
+						if (!base.TryAddOrTransfer(current, canMergeWithExistingStacks) && destroyLeftover)
+						{
+							current.Destroy(DestroyMode.Vanish);
+						}
 					}
 				}
 			}
@@ -292,7 +275,7 @@ namespace Verse
 
 		public override bool Remove(Thing item)
 		{
-			if (!this.Contains(item))
+			if (!base.Contains(item))
 			{
 				return false;
 			}
@@ -325,10 +308,10 @@ namespace Verse
 			return this.innerList[index];
 		}
 
-		public bool TryTransferToContainer(Thing item, ThingOwner otherContainer, int stackCount, out T resultingTransferredItem, bool canMergeWithExistingStacks = true)
+		public int TryTransferToContainer(Thing item, ThingOwner otherContainer, int stackCount, out T resultingTransferredItem, bool canMergeWithExistingStacks = true)
 		{
 			Thing thing;
-			bool result = base.TryTransferToContainer(item, otherContainer, stackCount, out thing, canMergeWithExistingStacks);
+			int result = base.TryTransferToContainer(item, otherContainer, stackCount, out thing, canMergeWithExistingStacks);
 			resultingTransferredItem = (T)((object)thing);
 			return result;
 		}
@@ -336,6 +319,11 @@ namespace Verse
 		public new T Take(Thing thing, int count)
 		{
 			return (T)((object)base.Take(thing, count));
+		}
+
+		public new T Take(Thing thing)
+		{
+			return (T)((object)base.Take(thing));
 		}
 
 		public bool TryDrop(Thing thing, IntVec3 dropLoc, Map map, ThingPlaceMode mode, int count, out T resultingThing, Action<T, int> placedAction = null)
@@ -385,8 +373,48 @@ namespace Verse
 			lastResultingThing = (T)((object)thing2);
 			return result;
 		}
+
+		int IList<T>.IndexOf(T item)
+		{
+			return this.innerList.IndexOf(item);
+		}
+
+		void IList<T>.Insert(int index, T item)
+		{
+			throw new InvalidOperationException("ThingOwner doesn't allow inserting individual elements at any position.");
+		}
+
+		void ICollection<T>.Add(T item)
+		{
+			this.TryAdd(item, true);
+		}
+
+		void ICollection<T>.CopyTo(T[] array, int arrayIndex)
+		{
+			this.innerList.CopyTo(array, arrayIndex);
+		}
+
+		bool ICollection<T>.Contains(T item)
+		{
+			return this.innerList.Contains(item);
+		}
+
+		bool ICollection<T>.Remove(T item)
+		{
+			return this.Remove(item);
+		}
+
+		IEnumerator<T> IEnumerable<T>.GetEnumerator()
+		{
+			return this.innerList.GetEnumerator();
+		}
+
+		IEnumerator IEnumerable.GetEnumerator()
+		{
+			return this.innerList.GetEnumerator();
+		}
 	}
-	public abstract class ThingOwner : IEnumerable<Thing>, IEnumerable, ICollection<Thing>, IList<Thing>, IExposable
+	public abstract class ThingOwner : IExposable, IList<Thing>, ICollection<Thing>, IEnumerable<Thing>, IEnumerable
 	{
 		protected IThingHolder owner;
 
@@ -492,42 +520,6 @@ namespace Verse
 		{
 			this.maxStacks = ((!oneStackOnly) ? 999999 : 1);
 			this.contentsLookMode = contentsLookMode;
-		}
-
-		void IList<Thing>.Insert(int index, Thing item)
-		{
-			throw new InvalidOperationException("ThingOwner doesn't allow inserting individual elements at any position.");
-		}
-
-		void ICollection<Thing>.Add(Thing item)
-		{
-			this.TryAdd(item, true);
-		}
-
-		void ICollection<Thing>.CopyTo(Thing[] array, int arrayIndex)
-		{
-			for (int i = 0; i < this.Count; i++)
-			{
-				array[i + arrayIndex] = this.GetAt(i);
-			}
-		}
-
-		[DebuggerHidden]
-		IEnumerator<Thing> IEnumerable<Thing>.GetEnumerator()
-		{
-			for (int i = 0; i < this.Count; i++)
-			{
-				yield return this.GetAt(i);
-			}
-		}
-
-		[DebuggerHidden]
-		IEnumerator IEnumerable.GetEnumerator()
-		{
-			for (int i = 0; i < this.Count; i++)
-			{
-				yield return this.GetAt(i);
-			}
 		}
 
 		public virtual void ExposeData()
@@ -667,7 +659,35 @@ namespace Verse
 			this.Remove(this.GetAt(index));
 		}
 
-		public void TryAddRange(IEnumerable<Thing> things, bool canMergeWithExistingStacks = true)
+		public int TryAddOrTransfer(Thing item, int count, bool canMergeWithExistingStacks = true)
+		{
+			if (item == null)
+			{
+				Log.Warning("Tried to add or transfer null item to ThingOwner.");
+				return 0;
+			}
+			if (item.holdingOwner != null)
+			{
+				return item.holdingOwner.TryTransferToContainer(item, this, count, canMergeWithExistingStacks);
+			}
+			return this.TryAdd(item, count, canMergeWithExistingStacks);
+		}
+
+		public bool TryAddOrTransfer(Thing item, bool canMergeWithExistingStacks = true)
+		{
+			if (item == null)
+			{
+				Log.Warning("Tried to add or transfer null item to ThingOwner.");
+				return false;
+			}
+			if (item.holdingOwner != null)
+			{
+				return item.holdingOwner.TryTransferToContainer(item, this, canMergeWithExistingStacks);
+			}
+			return this.TryAdd(item, canMergeWithExistingStacks);
+		}
+
+		public void TryAddRangeOrTransfer(IEnumerable<Thing> things, bool canMergeWithExistingStacks = true, bool destroyLeftover = false)
 		{
 			if (things == this)
 			{
@@ -677,6 +697,10 @@ namespace Verse
 			if (thingOwner != null)
 			{
 				thingOwner.TryTransferAllToContainer(this, canMergeWithExistingStacks);
+				if (destroyLeftover)
+				{
+					thingOwner.ClearAndDestroyContents(DestroyMode.Vanish);
+				}
 			}
 			else
 			{
@@ -685,14 +709,20 @@ namespace Verse
 				{
 					for (int i = 0; i < list.Count; i++)
 					{
-						this.TryAdd(list[i], canMergeWithExistingStacks);
+						if (!this.TryAddOrTransfer(list[i], canMergeWithExistingStacks) && destroyLeftover)
+						{
+							list[i].Destroy(DestroyMode.Vanish);
+						}
 					}
 				}
 				else
 				{
 					foreach (Thing current in things)
 					{
-						this.TryAdd(current, canMergeWithExistingStacks);
+						if (!this.TryAddOrTransfer(current, canMergeWithExistingStacks) && destroyLeftover)
+						{
+							current.Destroy(DestroyMode.Vanish);
+						}
 					}
 				}
 			}
@@ -714,39 +744,52 @@ namespace Verse
 
 		public bool TryTransferToContainer(Thing item, ThingOwner otherContainer, bool canMergeWithExistingStacks = true)
 		{
-			return this.TryTransferToContainer(item, otherContainer, item.stackCount, canMergeWithExistingStacks);
+			return this.TryTransferToContainer(item, otherContainer, item.stackCount, canMergeWithExistingStacks) == item.stackCount;
 		}
 
-		public bool TryTransferToContainer(Thing item, ThingOwner otherContainer, int count, bool canMergeWithExistingStacks = true)
+		public int TryTransferToContainer(Thing item, ThingOwner otherContainer, int count, bool canMergeWithExistingStacks = true)
 		{
 			Thing thing;
 			return this.TryTransferToContainer(item, otherContainer, count, out thing, canMergeWithExistingStacks);
 		}
 
-		public bool TryTransferToContainer(Thing item, ThingOwner otherContainer, int count, out Thing resultingTransferredItem, bool canMergeWithExistingStacks = true)
+		public int TryTransferToContainer(Thing item, ThingOwner otherContainer, int count, out Thing resultingTransferredItem, bool canMergeWithExistingStacks = true)
 		{
 			if (!this.Contains(item))
 			{
-				Log.Error("Can't transfer item " + item + " because it's not here.");
+				Log.Error(string.Concat(new object[]
+				{
+					"Can't transfer item ",
+					item,
+					" because it's not here. owner=",
+					this.owner.ToStringSafe<IThingHolder>()
+				}));
 				resultingTransferredItem = null;
-				return false;
+				return 0;
 			}
-			if (otherContainer == this)
+			if (otherContainer == this && count > 0)
 			{
 				resultingTransferredItem = item;
-				return true;
+				return item.stackCount;
 			}
 			if (!otherContainer.CanAcceptAnyOf(item, canMergeWithExistingStacks))
 			{
 				resultingTransferredItem = null;
-				return false;
+				return 0;
 			}
 			if (count <= 0)
 			{
 				resultingTransferredItem = null;
-				return false;
+				return 0;
 			}
-			Thing thing = item.SplitOff(count);
+			if (this.owner is Map || otherContainer.owner is Map)
+			{
+				Log.Warning("Can't transfer items to or from Maps directly. They must be spawned or despawned manually. Use TryAdd(item.SplitOff(count))");
+				resultingTransferredItem = null;
+				return 0;
+			}
+			int num = Mathf.Min(item.stackCount, count);
+			Thing thing = item.SplitOff(num);
 			if (this.Contains(thing))
 			{
 				this.Remove(thing);
@@ -755,23 +798,23 @@ namespace Verse
 			if (flag)
 			{
 				resultingTransferredItem = thing;
+				return thing.stackCount;
 			}
-			else
+			resultingTransferredItem = null;
+			if (!otherContainer.Contains(thing) && thing.stackCount > 0 && !thing.Destroyed)
 			{
-				if (!otherContainer.Contains(thing) && thing.stackCount > 0)
+				int result = num - thing.stackCount;
+				if (item != thing)
 				{
-					if (item != thing)
-					{
-						item.TryAbsorbStack(thing, false);
-					}
-					else
-					{
-						this.TryAdd(thing, false);
-					}
+					item.TryAbsorbStack(thing, false);
 				}
-				resultingTransferredItem = null;
+				else
+				{
+					this.TryAdd(thing, false);
+				}
+				return result;
 			}
-			return flag;
+			return thing.stackCount;
 		}
 
 		public void TryTransferAllToContainer(ThingOwner other, bool canMergeWithExistingStacks = true)
@@ -812,9 +855,9 @@ namespace Verse
 			return thing2;
 		}
 
-		public void Take(Thing thing)
+		public Thing Take(Thing thing)
 		{
-			this.Take(thing, thing.stackCount);
+			return this.Take(thing, thing.stackCount);
 		}
 
 		public bool TryDrop(Thing thing, ThingPlaceMode mode, int count, out Thing lastResultingThing, Action<Thing, int> placedAction = null)
@@ -1041,6 +1084,42 @@ namespace Verse
 			if (corpse != null && !corpse.Bugged && corpse.InnerPawn.Faction != null && corpse.InnerPawn.Faction.IsPlayer && Current.ProgramState == ProgramState.Playing)
 			{
 				Find.ColonistBar.MarkColonistsDirty();
+			}
+		}
+
+		void IList<Thing>.Insert(int index, Thing item)
+		{
+			throw new InvalidOperationException("ThingOwner doesn't allow inserting individual elements at any position.");
+		}
+
+		void ICollection<Thing>.Add(Thing item)
+		{
+			this.TryAdd(item, true);
+		}
+
+		void ICollection<Thing>.CopyTo(Thing[] array, int arrayIndex)
+		{
+			for (int i = 0; i < this.Count; i++)
+			{
+				array[i + arrayIndex] = this.GetAt(i);
+			}
+		}
+
+		[DebuggerHidden]
+		IEnumerator<Thing> IEnumerable<Thing>.GetEnumerator()
+		{
+			for (int i = 0; i < this.Count; i++)
+			{
+				yield return this.GetAt(i);
+			}
+		}
+
+		[DebuggerHidden]
+		IEnumerator IEnumerable.GetEnumerator()
+		{
+			for (int i = 0; i < this.Count; i++)
+			{
+				yield return this.GetAt(i);
 			}
 		}
 	}

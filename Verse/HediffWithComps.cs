@@ -119,6 +119,18 @@ namespace Verse
 			}
 		}
 
+		public override void PostRemoved()
+		{
+			base.PostRemoved();
+			if (this.comps != null)
+			{
+				for (int i = 0; i < this.comps.Count; i++)
+				{
+					this.comps[i].CompPostPostRemoved();
+				}
+			}
+		}
+
 		public override void PostTick()
 		{
 			base.PostTick();

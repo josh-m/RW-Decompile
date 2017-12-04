@@ -6,13 +6,13 @@ namespace Verse
 {
 	public class MouseoverReadout
 	{
-		private const float YInterval = 19f;
-
 		private TerrainDef cachedTerrain;
 
 		private string cachedTerrainString;
 
 		private string[] glowStrings;
+
+		private const float YInterval = 19f;
 
 		private static readonly Vector2 BotLeft = new Vector2(15f, 65f);
 
@@ -58,7 +58,7 @@ namespace Verse
 				return;
 			}
 			rect = new Rect(MouseoverReadout.BotLeft.x, (float)UI.screenHeight - MouseoverReadout.BotLeft.y - num, 999f, 999f);
-			int num2 = Mathf.RoundToInt(Find.VisibleMap.glowGrid.GameGlowAt(c) * 100f);
+			int num2 = Mathf.RoundToInt(Find.VisibleMap.glowGrid.GameGlowAt(c, false) * 100f);
 			Widgets.Label(rect, this.glowStrings[num2]);
 			num += 19f;
 			rect = new Rect(MouseoverReadout.BotLeft.x, (float)UI.screenHeight - MouseoverReadout.BotLeft.y - num, 999f, 999f);

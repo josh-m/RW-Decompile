@@ -5,13 +5,13 @@ namespace RimWorld
 {
 	public class Hediff_HeartAttack : HediffWithComps
 	{
+		private float intervalFactor;
+
 		private const int SeverityChangeInterval = 5000;
 
 		private const float TendSuccessChanceFactor = 0.65f;
 
 		private const float TendSeverityReduction = 0.3f;
-
-		private float intervalFactor;
 
 		public override void PostMake()
 		{

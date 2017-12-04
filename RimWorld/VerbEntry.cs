@@ -17,10 +17,18 @@ namespace RimWorld
 			}
 		}
 
+		public bool IsMeleeAttack
+		{
+			get
+			{
+				return this.verb.IsMeleeAttack;
+			}
+		}
+
 		public VerbEntry(Verb verb, Pawn pawn, Thing equipment = null)
 		{
 			this.verb = verb;
-			this.cachedSelectionWeight = verb.verbProps.AdjustedSelectionWeight(verb, pawn, equipment);
+			this.cachedSelectionWeight = verb.verbProps.AdjustedMeleeSelectionWeight(verb, pawn, equipment);
 		}
 
 		public override string ToString()

@@ -9,9 +9,18 @@ namespace Verse
 
 		public static void PrintShadow(SectionLayer layer, Vector3 center, ShadowData shadow, Rot4 rotation)
 		{
+			Printer_Shadow.PrintShadow(layer, center, shadow.volume, rotation);
+		}
+
+		public static void PrintShadow(SectionLayer layer, Vector3 center, Vector3 volume, Rot4 rotation)
+		{
+			if (!DebugViewSettings.drawShadows)
+			{
+				return;
+			}
 			LayerSubMesh subMesh = layer.GetSubMesh(MatBases.SunShadowFade);
-			Color32 item = new Color32(255, 0, 0, (byte)(255f * shadow.BaseY));
-			Vector3 vector = shadow.volume.RotatedBy(rotation) / 2f;
+			Color32 item = new Color32(255, 0, 0, (byte)Mathf.Min(255f * volume.y, 255f));
+			Vector3 vector = volume.RotatedBy(rotation) / 2f;
 			float x = center.x;
 			float z = center.z;
 			int count = subMesh.verts.Count;

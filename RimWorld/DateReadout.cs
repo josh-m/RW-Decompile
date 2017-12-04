@@ -9,10 +9,6 @@ namespace RimWorld
 {
 	public static class DateReadout
 	{
-		public const float Height = 48f;
-
-		private const float DateRightPadding = 7f;
-
 		private static string dateString;
 
 		private static int dateStringDay;
@@ -24,6 +20,24 @@ namespace RimWorld
 		private static int dateStringYear;
 
 		private static readonly List<string> fastHourStrings;
+
+		private const float DateRightPadding = 7f;
+
+		public static float Height
+		{
+			get
+			{
+				return (float)(48 + ((!DateReadout.SeasonLabelVisible) ? 0 : 26));
+			}
+		}
+
+		private static bool SeasonLabelVisible
+		{
+			get
+			{
+				return !WorldRendererUtility.WorldRenderedNow && Find.VisibleMap != null;
+			}
+		}
 
 		static DateReadout()
 		{
@@ -73,6 +87,7 @@ namespace RimWorld
 			Season season = GenDate.Season((long)Find.TickManager.TicksAbs, location);
 			Quadrum quadrum = GenDate.Quadrum((long)Find.TickManager.TicksAbs, location.x);
 			int num2 = GenDate.Year((long)Find.TickManager.TicksAbs, location.x);
+			string text = (!DateReadout.SeasonLabelVisible) ? string.Empty : season.LabelCap();
 			if (num != DateReadout.dateStringDay || season != DateReadout.dateStringSeason || quadrum != DateReadout.dateStringQuadrum || num2 != DateReadout.dateStringYear)
 			{
 				DateReadout.dateString = GenDate.DateReadoutStringAt((long)Find.TickManager.TicksAbs, location);
@@ -82,7 +97,7 @@ namespace RimWorld
 				DateReadout.dateStringYear = num2;
 			}
 			Text.Font = GameFont.Small;
-			float num3 = Mathf.Max(Text.CalcSize(DateReadout.fastHourStrings[index]).x, Text.CalcSize(DateReadout.dateString).x + 7f);
+			float num3 = Mathf.Max(Mathf.Max(Text.CalcSize(DateReadout.fastHourStrings[index]).x, Text.CalcSize(DateReadout.dateString).x + 7f), Text.CalcSize(text).x);
 			dateRect.xMin = dateRect.xMax - num3;
 			if (Mouse.IsOver(dateRect))
 			{
@@ -96,6 +111,11 @@ namespace RimWorld
 			Widgets.Label(rect, DateReadout.fastHourStrings[index]);
 			rect.yMin += 26f;
 			Widgets.Label(rect, DateReadout.dateString);
+			rect.yMin += 26f;
+			if (!text.NullOrEmpty())
+			{
+				Widgets.Label(rect, text);
+			}
 			Text.Anchor = TextAnchor.UpperLeft;
 			GUI.EndGroup();
 			TooltipHandler.TipRegion(dateRect, new TipSignal(delegate

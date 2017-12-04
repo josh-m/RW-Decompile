@@ -32,20 +32,23 @@ namespace RimWorld
 			{
 				forcedStage = 0;
 			}
+			else if (kind != PawnExecutionKind.GenericHumane)
+			{
+				if (kind != PawnExecutionKind.GenericBrutal)
+				{
+					if (kind == PawnExecutionKind.OrganHarvesting)
+					{
+						forcedStage = 3;
+					}
+				}
+				else
+				{
+					forcedStage = 2;
+				}
+			}
 			else
 			{
-				switch (kind)
-				{
-				case PawnExecutionKind.GenericBrutal:
-					forcedStage = 2;
-					break;
-				case PawnExecutionKind.GenericHumane:
-					forcedStage = 1;
-					break;
-				case PawnExecutionKind.OrganHarvesting:
-					forcedStage = 3;
-					break;
-				}
+				forcedStage = 1;
 			}
 			ThoughtDef def;
 			if (victim.IsColonist)
@@ -148,7 +151,6 @@ namespace RimWorld
 
 		public static bool CanGetThought(Pawn pawn, ThoughtDef def)
 		{
-			ProfilerThreadCheck.BeginSample("CanGetThought()");
 			try
 			{
 				if (!def.validWhileDespawned && !pawn.Spawned && !def.IsMemory)
@@ -205,7 +207,6 @@ namespace RimWorld
 			}
 			finally
 			{
-				ProfilerThreadCheck.EndSample();
 			}
 			return true;
 		}

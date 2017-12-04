@@ -76,6 +76,16 @@ namespace Verse.Sound
 			this.parameters[key] = value;
 		}
 
+		public static implicit operator SoundInfo(TargetInfo source)
+		{
+			return SoundInfo.InMap(source, MaintenanceType.None);
+		}
+
+		public static implicit operator SoundInfo(Thing sourceThing)
+		{
+			return SoundInfo.InMap(sourceThing, MaintenanceType.None);
+		}
+
 		public override string ToString()
 		{
 			string text = null;
@@ -114,16 +124,6 @@ namespace Verse.Sound
 				text4,
 				")"
 			});
-		}
-
-		public static implicit operator SoundInfo(TargetInfo source)
-		{
-			return SoundInfo.InMap(source, MaintenanceType.None);
-		}
-
-		public static implicit operator SoundInfo(Thing sourceThing)
-		{
-			return SoundInfo.InMap(sourceThing, MaintenanceType.None);
 		}
 	}
 }

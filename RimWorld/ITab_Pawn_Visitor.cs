@@ -51,7 +51,7 @@ namespace RimWorld
 					listing_Standard.Label("Dev: Prison break MTB days: " + (int)PrisonBreakUtility.InitiatePrisonBreakMtbDays(base.SelPawn), -1f);
 				}
 				Rect rect5 = listing_Standard.GetRect(200f).Rounded();
-				Widgets.DrawMenuSection(rect5, true);
+				Widgets.DrawMenuSection(rect5);
 				Rect position = rect5.ContractedBy(10f);
 				GUI.BeginGroup(position);
 				Rect rect6 = new Rect(0f, 0f, position.width, 30f);
@@ -59,12 +59,12 @@ namespace RimWorld
 				orderby pim.listOrder
 				select pim)
 				{
-					if (Widgets.RadioButtonLabeled(rect6, current.GetLabel(), base.SelPawn.guest.interactionMode == current))
+					if (Widgets.RadioButtonLabeled(rect6, current.LabelCap, base.SelPawn.guest.interactionMode == current))
 					{
 						base.SelPawn.guest.interactionMode = current;
 						if (current == PrisonerInteractionModeDefOf.Execution && base.SelPawn.MapHeld != null && !this.ColonyHasAnyWardenCapableOfViolence(base.SelPawn.MapHeld))
 						{
-							Messages.Message("MessageCantDoExecutionBecauseNoWardenCapableOfViolence".Translate(), base.SelPawn, MessageSound.SeriousAlert);
+							Messages.Message("MessageCantDoExecutionBecauseNoWardenCapableOfViolence".Translate(), base.SelPawn, MessageTypeDefOf.CautionInput);
 						}
 					}
 					rect6.y += 28f;

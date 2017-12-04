@@ -9,6 +9,12 @@ namespace RimWorld
 {
 	public static class LessonAutoActivator
 	{
+		private static Dictionary<ConceptDef, float> opportunities = new Dictionary<ConceptDef, float>();
+
+		private static float timeSinceLastLesson = 10000f;
+
+		private static List<ConceptDef> alertingConcepts = new List<ConceptDef>();
+
 		private const float MapStartGracePeriod = 8f;
 
 		private const float KnowledgeDecayRate = 0.00015f;
@@ -20,12 +26,6 @@ namespace RimWorld
 		private const int CheckInterval = 15;
 
 		private const float MaxLessonInterval = 900f;
-
-		private static Dictionary<ConceptDef, float> opportunities = new Dictionary<ConceptDef, float>();
-
-		private static float timeSinceLastLesson = 10000f;
-
-		private static List<ConceptDef> alertingConcepts = new List<ConceptDef>();
 
 		private static float SecondsSinceLesson
 		{
@@ -234,9 +234,7 @@ namespace RimWorld
 		{
 			StringBuilder stringBuilder = new StringBuilder();
 			stringBuilder.AppendLine("RelaxDesire: " + LessonAutoActivator.RelaxDesire);
-			foreach (ConceptDef current in from co in DefDatabase<ConceptDef>.AllDefs
-			orderby LessonAutoActivator.GetDesire(co) descending
-			select co)
+			foreach (ConceptDef current in DefDatabase<ConceptDef>.AllDefs.OrderByDescending(new Func<ConceptDef, float>(LessonAutoActivator.GetDesire)))
 			{
 				if (PlayerKnowledgeDatabase.IsComplete(current))
 				{
@@ -261,9 +259,7 @@ namespace RimWorld
 
 		public static void DebugForceInitiateBestLessonNow()
 		{
-			LessonAutoActivator.TryInitiateLesson((from def in DefDatabase<ConceptDef>.AllDefs
-			orderby LessonAutoActivator.GetDesire(def) descending
-			select def).First<ConceptDef>());
+			LessonAutoActivator.TryInitiateLesson(DefDatabase<ConceptDef>.AllDefs.OrderByDescending(new Func<ConceptDef, float>(LessonAutoActivator.GetDesire)).First<ConceptDef>());
 		}
 	}
 }

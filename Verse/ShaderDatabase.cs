@@ -21,6 +21,8 @@ namespace Verse
 
 		public static readonly Shader TransparentPostLight = ShaderDatabase.LoadShader("Map/TransparentPostLight");
 
+		public static readonly Shader TransparentPlant = ShaderDatabase.LoadShader("Map/TransparentPlant");
+
 		public static readonly Shader Mote = ShaderDatabase.LoadShader("Map/Mote");
 
 		public static readonly Shader MoteGlow = ShaderDatabase.LoadShader("Map/MoteGlow");
@@ -81,6 +83,8 @@ namespace Verse
 				return ShaderDatabase.Transparent;
 			case ShaderType.TransparentPostLight:
 				return ShaderDatabase.TransparentPostLight;
+			case ShaderType.TransparentPlant:
+				return ShaderDatabase.TransparentPlant;
 			case ShaderType.MetaOverlay:
 				return ShaderDatabase.MetaOverlay;
 			case ShaderType.Mote:

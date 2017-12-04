@@ -5,6 +5,10 @@ namespace Verse
 {
 	public class HediffComp_Infecter : HediffComp
 	{
+		private int ticksUntilInfect = -1;
+
+		private float infectionChanceFactorFromTendRoom = 1f;
+
 		private const int UninitializedValue = -1;
 
 		private const int WillNotInfectValue = -2;
@@ -12,10 +16,6 @@ namespace Verse
 		private const int FailedToMakeInfectionValue = -3;
 
 		private const int AlreadyMadeInfectionValue = -4;
-
-		private int ticksUntilInfect = -1;
-
-		private float infectionChanceFactorFromTendRoom = 1f;
 
 		private static readonly SimpleCurve InfectionChanceFactorFromTendQualityCurve = new SimpleCurve
 		{

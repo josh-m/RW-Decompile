@@ -70,7 +70,7 @@ namespace RimWorld.Planet
 					caravan.Label,
 					this.settlement.Label,
 					this.settlement.Faction.Name
-				}).CapitalizeFirst(), LetterDefOf.Good, t, null);
+				}).CapitalizeFirst(), LetterDefOf.NeutralEvent, t, null);
 			}
 			else
 			{
@@ -78,7 +78,7 @@ namespace RimWorld.Planet
 				{
 					caravan.Label,
 					this.settlement.Label
-				}).CapitalizeFirst(), LetterDefOf.Good, t, null);
+				}).CapitalizeFirst(), LetterDefOf.NeutralEvent, t, null);
 			}
 		}
 	}

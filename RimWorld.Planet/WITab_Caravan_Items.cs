@@ -7,13 +7,13 @@ namespace RimWorld.Planet
 {
 	public class WITab_Caravan_Items : WITab
 	{
-		private const float MassCarriedLineHeight = 22f;
-
 		private Vector2 scrollPosition;
 
 		private float scrollViewHeight;
 
 		private List<Thing> items = new List<Thing>();
+
+		private const float MassCarriedLineHeight = 22f;
 
 		public WITab_Caravan_Items()
 		{

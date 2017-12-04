@@ -11,11 +11,11 @@ namespace RimWorld
 {
 	public sealed class Autosaver
 	{
+		private int ticksSinceSave;
+
 		private const int NumAutosaves = 5;
 
 		public const float MaxPermadeathModeAutosaveInterval = 1f;
-
-		private int ticksSinceSave;
 
 		private float AutosaveIntervalDays
 		{
@@ -50,7 +50,6 @@ namespace RimWorld
 
 		private void DoAutosave()
 		{
-			ProfilerThreadCheck.BeginSample("DoAutosave");
 			string fileName;
 			if (Current.Game.Info.permadeathMode)
 			{
@@ -61,7 +60,6 @@ namespace RimWorld
 				fileName = this.NewAutosaveFileName();
 			}
 			GameDataSaveLoader.SaveGame(fileName);
-			ProfilerThreadCheck.EndSample();
 		}
 
 		private void DoMemoryCleanup()

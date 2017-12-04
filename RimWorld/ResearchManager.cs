@@ -105,6 +105,10 @@ namespace RimWorld
 			{
 				this.DoCompletionDialog(proj, null);
 			}
+			if (this.currentProj == proj)
+			{
+				this.currentProj = null;
+			}
 		}
 
 		private void DoCompletionDialog(ResearchProjectDef proj, Pawn researcher)

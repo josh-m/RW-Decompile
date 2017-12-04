@@ -12,6 +12,10 @@ namespace RimWorld
 			{
 				return null;
 			}
+			if (this.HasJobWithSpawnedAllowedTarget(pawn))
+			{
+				return null;
+			}
 			Region region = pawn.GetRegion(RegionType.Set_Passable);
 			if (region == null)
 			{
@@ -44,6 +48,25 @@ namespace RimWorld
 				return null;
 			}
 			return new Job(JobDefOf.Goto, c);
+		}
+
+		private bool HasJobWithSpawnedAllowedTarget(Pawn pawn)
+		{
+			Job curJob = pawn.CurJob;
+			return curJob != null && (this.IsSpawnedAllowedTarget(curJob.targetA, pawn) || this.IsSpawnedAllowedTarget(curJob.targetB, pawn) || this.IsSpawnedAllowedTarget(curJob.targetC, pawn));
+		}
+
+		private bool IsSpawnedAllowedTarget(LocalTargetInfo target, Pawn pawn)
+		{
+			if (!target.IsValid)
+			{
+				return false;
+			}
+			if (target.HasThing)
+			{
+				return target.Thing.Spawned && !target.Thing.Position.IsForbidden(pawn);
+			}
+			return target.Cell.InBounds(pawn.Map) && !target.Cell.IsForbidden(pawn);
 		}
 	}
 }

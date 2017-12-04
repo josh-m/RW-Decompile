@@ -26,7 +26,7 @@ namespace Verse.Sound
 			{
 				num = (float)Math.Pow(1.05946, (double)value);
 			}
-			sample.source.pitch = sample.resolvedPitch * num;
+			sample.source.pitch = AudioSourceUtility.GetSanitizedPitch(sample.SanitizedPitch * num, "SoundParamTarget_Pitch");
 		}
 	}
 }

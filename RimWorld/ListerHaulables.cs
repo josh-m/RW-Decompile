@@ -8,11 +8,11 @@ namespace RimWorld
 {
 	public class ListerHaulables
 	{
-		private const int CellsPerTick = 4;
-
 		private Map map;
 
 		private List<Thing> haulables = new List<Thing>();
+
+		private const int CellsPerTick = 4;
 
 		private static int groupCycleIndex;
 
@@ -96,11 +96,8 @@ namespace RimWorld
 			for (int i = 0; i < 4; i++)
 			{
 				List<int> list;
-				List<int> expr_B0 = list = this.cellCycleIndices;
-				int num2;
-				int expr_B4 = num2 = num;
-				num2 = list[num2];
-				expr_B0[expr_B4] = num2 + 1;
+				int index;
+				(list = this.cellCycleIndices)[index = num] = list[index] + 1;
 				IntVec3 c = slotGroup.CellsList[this.cellCycleIndices[num] % slotGroup.CellsList.Count];
 				List<Thing> thingList = c.GetThingList(this.map);
 				for (int j = 0; j < thingList.Count; j++)

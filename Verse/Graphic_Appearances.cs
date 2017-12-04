@@ -74,7 +74,7 @@ namespace Verse
 			return graphic.MatSingleFor(thing);
 		}
 
-		public override void DrawWorker(Vector3 loc, Rot4 rot, ThingDef thingDef, Thing thing)
+		public override void DrawWorker(Vector3 loc, Rot4 rot, ThingDef thingDef, Thing thing, float extraRotation)
 		{
 			StuffAppearanceDef stuffAppearanceDef = StuffAppearanceDefOf.Smooth;
 			if (thing != null && thing.Stuff != null)
@@ -82,7 +82,7 @@ namespace Verse
 				stuffAppearanceDef = thing.Stuff.stuffProps.appearance;
 			}
 			Graphic graphic = this.subGraphics[(int)stuffAppearanceDef.index];
-			graphic.DrawWorker(loc, rot, thingDef, thing);
+			graphic.DrawWorker(loc, rot, thingDef, thing, extraRotation);
 		}
 
 		public override string ToString()

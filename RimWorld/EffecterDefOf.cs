@@ -35,5 +35,7 @@ namespace RimWorld
 		public static EffecterDef Harvest;
 
 		public static EffecterDef Vomit;
+
+		public static EffecterDef PlayPoker;
 	}
 }

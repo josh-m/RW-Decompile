@@ -18,7 +18,7 @@ namespace RimWorld
 
 		public const float XpPerTickDeconstruction = 0.275f;
 
-		public const float XpPerTickFloorWork = 0.22f;
+		public const float XpPerTickFloorWork = 0.11f;
 
 		public const float XpPerTickGrowing = 0.11f;
 

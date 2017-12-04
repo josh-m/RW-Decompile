@@ -21,9 +21,9 @@ namespace RimWorld
 		[DebuggerHidden]
 		protected override IEnumerable<Toil> MakeNewToils()
 		{
-			this.FailOn(() => !this.<>f__this.Map.areaManager.BuildRoof[this.<>f__this.Cell]);
-			this.FailOn(() => !RoofCollapseUtility.WithinRangeOfRoofHolder(this.<>f__this.Cell, this.<>f__this.Map));
-			this.FailOn(() => !RoofCollapseUtility.ConnectedToRoofHolder(this.<>f__this.Cell, this.<>f__this.Map, true));
+			this.FailOn(() => !this.$this.Map.areaManager.BuildRoof[this.$this.Cell]);
+			this.FailOn(() => !RoofCollapseUtility.WithinRangeOfRoofHolder(this.$this.Cell, this.$this.Map));
+			this.FailOn(() => !RoofCollapseUtility.ConnectedToRoofHolder(this.$this.Cell, this.$this.Map, true));
 			foreach (Toil t in base.MakeNewToils())
 			{
 				yield return t;

@@ -14,7 +14,7 @@ namespace RimWorld
 
 		public static bool ShouldSeekMedicalRest(Pawn pawn)
 		{
-			return HealthAIUtility.ShouldSeekMedicalRestUrgent(pawn) || pawn.health.hediffSet.HasTendedAndHealingInjury() || HealthAIUtility.HasTendedImmunizableNonInjuryNonMissingPartHediff(pawn);
+			return HealthAIUtility.ShouldSeekMedicalRestUrgent(pawn) || pawn.health.hediffSet.HasTendedAndHealingInjury() || pawn.health.hediffSet.HasTendedImmunizableNotImmuneHediff();
 		}
 
 		public static bool ShouldBeTendedNowUrgent(Pawn pawn)
@@ -37,31 +37,6 @@ namespace RimWorld
 			return pawn.health.surgeryBills.AnyShouldDoNow;
 		}
 
-		public static bool HasTendedImmunizableNonInjuryNonMissingPartHediff(Pawn pawn)
-		{
-			List<Hediff> hediffs = pawn.health.hediffSet.hediffs;
-			for (int i = 0; i < hediffs.Count; i++)
-			{
-				if (!(hediffs[i] is Hediff_Injury))
-				{
-					if (!(hediffs[i] is Hediff_MissingPart))
-					{
-						if (hediffs[i].Visible)
-						{
-							if (hediffs[i].IsTended())
-							{
-								if (hediffs[i].def.PossibleToDevelopImmunityNaturally())
-								{
-									return true;
-								}
-							}
-						}
-					}
-				}
-			}
-			return false;
-		}
-
 		public static Thing FindBestMedicine(Pawn healer, Pawn patient)
 		{
 			if (patient.playerSettings == null || patient.playerSettings.medCare <= MedicalCareCategory.NoMeds)
@@ -70,8 +45,13 @@ namespace RimWorld
 			}
 			Predicate<Thing> predicate = (Thing m) => !m.IsForbidden(healer) && patient.playerSettings.medCare.AllowsMedicine(m.def) && healer.CanReserve(m, 1, -1, null, false);
 			Func<Thing, float> priorityGetter = (Thing t) => t.def.GetStatValueAbstract(StatDefOf.MedicalPotency, null);
+			IntVec3 position = patient.Position;
+			Map map = patient.Map;
+			List<Thing> searchSet = patient.Map.listerThings.ThingsInGroup(ThingRequestGroup.Medicine);
+			PathEndMode peMode = PathEndMode.ClosestTouch;
+			TraverseParms traverseParams = TraverseParms.For(healer, Danger.Deadly, TraverseMode.ByPawn, false);
 			Predicate<Thing> validator = predicate;
-			return GenClosest.ClosestThing_Global_Reachable(patient.Position, patient.Map, patient.Map.listerThings.ThingsInGroup(ThingRequestGroup.Medicine), PathEndMode.ClosestTouch, TraverseParms.For(healer, Danger.Deadly, TraverseMode.ByPawn, false), 9999f, validator, priorityGetter);
+			return GenClosest.ClosestThing_Global_Reachable(position, map, searchSet, peMode, traverseParams, 9999f, validator, priorityGetter);
 		}
 	}
 }

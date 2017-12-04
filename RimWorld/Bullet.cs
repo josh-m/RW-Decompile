@@ -11,12 +11,18 @@ namespace RimWorld
 		{
 			Map map = base.Map;
 			base.Impact(hitThing);
+			BattleLogEntry_RangedImpact battleLogEntry_RangedImpact = new BattleLogEntry_RangedImpact(this.launcher, hitThing, this.intendedTarget, this.equipmentDef, this.def);
+			Find.BattleLog.Add(battleLogEntry_RangedImpact);
 			if (hitThing != null)
 			{
 				int damageAmountBase = this.def.projectile.damageAmountBase;
+				DamageDef damageDef = this.def.projectile.damageDef;
+				int amount = damageAmountBase;
+				float y = this.ExactRotation.eulerAngles.y;
+				Thing launcher = this.launcher;
 				ThingDef equipmentDef = this.equipmentDef;
-				DamageInfo dinfo = new DamageInfo(this.def.projectile.damageDef, damageAmountBase, this.ExactRotation.eulerAngles.y, this.launcher, null, equipmentDef, DamageInfo.SourceCategory.ThingOrUnknown);
-				hitThing.TakeDamage(dinfo);
+				DamageInfo dinfo = new DamageInfo(damageDef, amount, y, launcher, null, equipmentDef, DamageInfo.SourceCategory.ThingOrUnknown);
+				hitThing.TakeDamage(dinfo).InsertIntoLog(battleLogEntry_RangedImpact);
 			}
 			else
 			{

@@ -10,12 +10,12 @@ namespace RimWorld
 {
 	public class CompTempControl : ThingComp
 	{
-		private const float DefaultTargetTemperature = 21f;
-
 		[Unsaved]
 		public bool operatingAtHighPower;
 
 		public float targetTemperature = -99999f;
+
+		private const float DefaultTargetTemperature = 21f;
 
 		public CompProperties_TempControl Props
 		{
@@ -59,21 +59,21 @@ namespace RimWorld
 			{
 				action = delegate
 				{
-					this.<>f__this.InterfaceChangeTargetTemperature(this.<offset>__2);
+					this.$this.InterfaceChangeTargetTemperature(offset);
 				},
 				defaultLabel = offset.ToStringTemperatureOffset("F0"),
 				defaultDesc = "CommandLowerTempDesc".Translate(),
 				hotKey = KeyBindingDefOf.Misc5,
 				icon = ContentFinder<Texture2D>.Get("UI/Commands/TempLower", true)
 			};
-			float offset2 = this.RoundedToCurrentTempModeOffset(-1f);
+			float offset4 = this.RoundedToCurrentTempModeOffset(-1f);
 			yield return new Command_Action
 			{
 				action = delegate
 				{
-					this.<>f__this.InterfaceChangeTargetTemperature(this.<offset>__4);
+					this.$this.InterfaceChangeTargetTemperature(offset4);
 				},
-				defaultLabel = offset2.ToStringTemperatureOffset("F0"),
+				defaultLabel = offset4.ToStringTemperatureOffset("F0"),
 				defaultDesc = "CommandLowerTempDesc".Translate(),
 				hotKey = KeyBindingDefOf.Misc4,
 				icon = ContentFinder<Texture2D>.Get("UI/Commands/TempLower", true)
@@ -82,9 +82,9 @@ namespace RimWorld
 			{
 				action = delegate
 				{
-					this.<>f__this.targetTemperature = 21f;
+					this.$this.targetTemperature = 21f;
 					SoundDefOf.TickTiny.PlayOneShotOnCamera(null);
-					this.<>f__this.ThrowCurrentTemperatureText();
+					this.$this.ThrowCurrentTemperatureText();
 				},
 				defaultLabel = "CommandResetTemp".Translate(),
 				defaultDesc = "CommandResetTempDesc".Translate(),
@@ -96,21 +96,21 @@ namespace RimWorld
 			{
 				action = delegate
 				{
-					this.<>f__this.InterfaceChangeTargetTemperature(this.<offset>__7);
+					this.$this.InterfaceChangeTargetTemperature(offset3);
 				},
 				defaultLabel = "+" + offset3.ToStringTemperatureOffset("F0"),
 				defaultDesc = "CommandRaiseTempDesc".Translate(),
 				hotKey = KeyBindingDefOf.Misc2,
 				icon = ContentFinder<Texture2D>.Get("UI/Commands/TempRaise", true)
 			};
-			float offset4 = this.RoundedToCurrentTempModeOffset(10f);
+			float offset2 = this.RoundedToCurrentTempModeOffset(10f);
 			yield return new Command_Action
 			{
 				action = delegate
 				{
-					this.<>f__this.InterfaceChangeTargetTemperature(this.<offset>__9);
+					this.$this.InterfaceChangeTargetTemperature(offset2);
 				},
-				defaultLabel = "+" + offset4.ToStringTemperatureOffset("F0"),
+				defaultLabel = "+" + offset2.ToStringTemperatureOffset("F0"),
 				defaultDesc = "CommandRaiseTempDesc".Translate(),
 				hotKey = KeyBindingDefOf.Misc3,
 				icon = ContentFinder<Texture2D>.Get("UI/Commands/TempRaise", true)

@@ -51,7 +51,7 @@ namespace RimWorld
 		{
 			if (Find.TickManager.TicksGame % 100 == 0)
 			{
-				GatherAnimalsAndSlavesForCaravanUtility.CheckArrived(this.lord, this.meetingPoint, "AllAnimalsGathered", (Pawn x) => x.RaceProps.Animal, (Pawn x) => GatherAnimalsAndSlavesForCaravanUtility.IsFollowingAnyone(x));
+				GatherAnimalsAndSlavesForCaravanUtility.CheckArrived(this.lord, this.meetingPoint, "AllAnimalsGathered", (Pawn x) => x.RaceProps.Animal, new Predicate<Pawn>(GatherAnimalsAndSlavesForCaravanUtility.IsFollowingAnyone));
 			}
 		}
 	}

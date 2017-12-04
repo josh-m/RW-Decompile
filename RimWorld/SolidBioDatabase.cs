@@ -35,6 +35,7 @@ namespace RimWorld
 					current.childhood.slot = BackstorySlot.Childhood;
 					current.adulthood.shuffleable = false;
 					current.adulthood.slot = BackstorySlot.Adulthood;
+					BackstoryHardcodedData.InjectHardcodedData(current);
 					BackstoryDatabase.AddBackstory(current.childhood);
 					BackstoryDatabase.AddBackstory(current.adulthood);
 				}

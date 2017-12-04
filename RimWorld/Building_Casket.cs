@@ -4,7 +4,7 @@ using Verse;
 
 namespace RimWorld
 {
-	public class Building_Casket : Building, IOpenable, IThingHolder
+	public class Building_Casket : Building, IThingHolder, IOpenable
 	{
 		protected ThingOwner innerContainer;
 
@@ -186,11 +186,6 @@ namespace RimWorld
 				text += "\n";
 			}
 			return text + "CasketContains".Translate() + ": " + str;
-		}
-
-		virtual IThingHolder get_ParentHolder()
-		{
-			return base.ParentHolder;
 		}
 	}
 }

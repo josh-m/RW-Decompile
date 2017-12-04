@@ -22,7 +22,7 @@ namespace RimWorld
 				if (room != null)
 				{
 					string str;
-					if (room.PsychologicallyOutdoors)
+					if (this.ConsideredOutdoors(req))
 					{
 						str = "Outdoors".Translate();
 					}
@@ -38,19 +38,24 @@ namespace RimWorld
 
 		private float OutdoorsFactor(StatRequest req)
 		{
+			if (this.ConsideredOutdoors(req))
+			{
+				return this.factorOutdoors;
+			}
+			return this.factorIndoors;
+		}
+
+		private bool ConsideredOutdoors(StatRequest req)
+		{
 			if (req.HasThing)
 			{
 				Room room = req.Thing.GetRoom(RegionType.Set_All);
 				if (room != null)
 				{
-					if (room.PsychologicallyOutdoors)
-					{
-						return this.factorOutdoors;
-					}
-					return this.factorIndoors;
+					return room.OutdoorsForWork || (req.HasThing && req.Thing.Spawned && !req.Thing.Map.roofGrid.Roofed(req.Thing.Position));
 				}
 			}
-			return 1f;
+			return false;
 		}
 	}
 }

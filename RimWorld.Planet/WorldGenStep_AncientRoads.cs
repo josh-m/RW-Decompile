@@ -20,13 +20,6 @@ namespace RimWorld.Planet
 			Rand.RandomizeStateFromTime();
 		}
 
-		public override void GenerateFromScribe(string seed)
-		{
-			Rand.Seed = GenText.StableStringHash(seed);
-			this.GenerateAncientRoads();
-			Rand.RandomizeStateFromTime();
-		}
-
 		private void GenerateAncientRoads()
 		{
 			Find.WorldPathGrid.RecalculateAllPerceivedPathCosts(Season.Spring.GetMiddleYearPct(0f));

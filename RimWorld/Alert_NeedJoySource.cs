@@ -35,6 +35,10 @@ namespace RimWorld
 			{
 				return false;
 			}
+			if (!map.mapPawns.AnyColonistSpawned)
+			{
+				return false;
+			}
 			return !map.listerBuildings.allBuildingsColonist.Any((Building b) => b.def.building.isJoySource);
 		}
 	}

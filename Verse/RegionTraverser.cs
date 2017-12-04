@@ -45,7 +45,6 @@ namespace Verse
 				{
 					return;
 				}
-				ProfilerThreadCheck.BeginSample("BreadthFirstTraversal");
 				this.closedIndex += 1u;
 				this.open.Clear();
 				this.numRegionsProcessed = 0;
@@ -57,20 +56,15 @@ namespace Verse
 					{
 						region.Debug_Notify_Traversed();
 					}
-					ProfilerThreadCheck.BeginSample("regionProcessor");
 					if (regionProcessor != null && regionProcessor(region))
 					{
 						this.FinalizeSearch();
-						ProfilerThreadCheck.EndSample();
-						ProfilerThreadCheck.EndSample();
 						return;
 					}
-					ProfilerThreadCheck.EndSample();
 					this.numRegionsProcessed++;
 					if (this.numRegionsProcessed >= maxRegions)
 					{
 						this.FinalizeSearch();
-						ProfilerThreadCheck.EndSample();
 						return;
 					}
 					for (int i = 0; i < region.links.Count; i++)
@@ -87,7 +81,6 @@ namespace Verse
 					}
 				}
 				this.FinalizeSearch();
-				ProfilerThreadCheck.EndSample();
 			}
 		}
 

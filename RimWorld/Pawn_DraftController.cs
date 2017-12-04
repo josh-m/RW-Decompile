@@ -34,7 +34,7 @@ namespace RimWorld
 				this.draftedInt = value;
 				if (!value && this.pawn.Spawned)
 				{
-					this.pawn.Map.pawnDestinationManager.UnreserveAllFor(this.pawn);
+					this.pawn.Map.pawnDestinationReservationManager.ReleaseAllClaimedBy(this.pawn);
 				}
 				if (this.pawn.jobs.curJob != null && this.pawn.jobs.IsCurrentJobPlayerInterruptible())
 				{
@@ -51,6 +51,7 @@ namespace RimWorld
 					{
 						lord.Notify_PawnLost(this.pawn, PawnLostCondition.Drafted);
 					}
+					this.autoUndrafter.Notify_Drafted();
 				}
 				else if (this.pawn.playerSettings != null)
 				{
@@ -101,10 +102,10 @@ namespace RimWorld
 		{
 			Command_Toggle draft = new Command_Toggle();
 			draft.hotKey = KeyBindingDefOf.CommandColonistDraft;
-			draft.isActive = (() => this.<>f__this.Drafted);
+			draft.isActive = new Func<bool>(this.get_Drafted);
 			draft.toggleAction = delegate
 			{
-				this.<>f__this.Drafted = !this.<>f__this.Drafted;
+				this.$this.Drafted = !this.$this.Drafted;
 				PlayerKnowledgeDatabase.KnowledgeDemonstrated(ConceptDefOf.Drafting, KnowledgeAmount.SpecificInteraction);
 			};
 			draft.defaultDesc = "CommandToggleDraftDesc".Translate();
@@ -136,10 +137,10 @@ namespace RimWorld
 				yield return new Command_Toggle
 				{
 					hotKey = KeyBindingDefOf.Misc6,
-					isActive = (() => this.<>f__this.FireAtWill),
+					isActive = new Func<bool>(this.get_FireAtWill),
 					toggleAction = delegate
 					{
-						this.<>f__this.FireAtWill = !this.<>f__this.FireAtWill;
+						this.$this.FireAtWill = !this.$this.FireAtWill;
 					},
 					icon = TexCommand.FireAtWill,
 					defaultLabel = "CommandFireAtWillLabel".Translate(),

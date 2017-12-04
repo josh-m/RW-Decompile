@@ -55,7 +55,7 @@ namespace Verse.AI
 				{
 					this.pawn.NameStringShort,
 					this.otherPawn.LabelShort
-				}), this.pawn, MessageSound.Silent);
+				}), this.pawn, MessageTypeDefOf.SituationResolved);
 			}
 			if (!this.pawn.Dead && this.pawn.needs.mood != null && !this.otherPawn.Dead)
 			{

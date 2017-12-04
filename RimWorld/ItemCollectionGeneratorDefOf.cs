@@ -15,9 +15,9 @@ namespace RimWorld
 
 		public static ItemCollectionGeneratorDef RawResources;
 
-		public static ItemCollectionGeneratorDef AIPersonaCores;
+		public static ItemCollectionGeneratorDef Food;
 
-		public static ItemCollectionGeneratorDef Neurotrainers;
+		public static ItemCollectionGeneratorDef Standard;
 
 		public static ItemCollectionGeneratorDef AncientTempleContents;
 
@@ -30,5 +30,15 @@ namespace RimWorld
 		public static ItemCollectionGeneratorDef CaravanRequestRewards;
 
 		public static ItemCollectionGeneratorDef BanditCampQuestRewards;
+
+		public static ItemCollectionGeneratorDef ItemStashQuest;
+
+		public static ItemCollectionGeneratorDef ResourcePod;
+
+		public static ItemCollectionGeneratorDef RefugeePod;
+
+		public static ItemCollectionGeneratorDef PeaceTalksGift;
+
+		public static ItemCollectionGeneratorDef Meteorite;
 	}
 }

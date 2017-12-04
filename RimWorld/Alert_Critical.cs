@@ -6,13 +6,13 @@ namespace RimWorld
 {
 	public abstract class Alert_Critical : Alert
 	{
+		private int lastActiveFrame = -1;
+
 		private const float PulseFreq = 0.5f;
 
 		private const float PulseAmpCritical = 0.6f;
 
 		private const float PulseAmpTutorial = 0.2f;
-
-		private int lastActiveFrame = -1;
 
 		protected override Color BGColor
 		{
@@ -35,7 +35,7 @@ namespace RimWorld
 				Messages.Message("MessageCriticalAlert".Translate(new object[]
 				{
 					this.GetLabel()
-				}), this.GetReport().culprit, MessageSound.SeriousAlert);
+				}), this.GetReport().culprit, MessageTypeDefOf.ThreatBig);
 			}
 			this.lastActiveFrame = Time.frameCount;
 		}

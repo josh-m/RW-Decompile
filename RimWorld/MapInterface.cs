@@ -126,7 +126,7 @@ namespace RimWorld
 				Find.VisibleMap.deepResourceGrid.DeepResourceGridUpdate();
 				if (DebugViewSettings.drawPawnDebug)
 				{
-					Find.VisibleMap.pawnDestinationManager.DebugDrawDestinations();
+					Find.VisibleMap.pawnDestinationReservationManager.DebugDrawDestinations();
 					Find.VisibleMap.reservationManager.DebugDrawReservations();
 				}
 				if (DebugViewSettings.drawFoodSearchFromMouse)
@@ -146,6 +146,10 @@ namespace RimWorld
 				Find.VisibleMap.regionGrid.DebugDraw();
 				InfestationCellFinder.DebugDraw();
 				StealAIDebugDrawer.DebugDraw();
+				if (DebugViewSettings.drawRiverDebug)
+				{
+					Find.VisibleMap.waterInfo.DebugDrawRiver();
+				}
 			}
 		}
 

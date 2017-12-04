@@ -6,11 +6,11 @@ namespace Verse.Sound
 {
 	public class AudioSourcePoolCamera
 	{
-		private const int NumSourcesCamera = 16;
-
 		public GameObject cameraSourcesContainer;
 
 		private List<AudioSource> sourcesCamera = new List<AudioSource>();
+
+		private const int NumSourcesCamera = 16;
 
 		public AudioSourcePoolCamera()
 		{

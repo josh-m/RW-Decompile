@@ -12,25 +12,21 @@ namespace RimWorld
 
 		private const TargetIndex LaySpotInd = TargetIndex.A;
 
+		public override bool TryMakePreToilReservations()
+		{
+			return true;
+		}
+
 		[DebuggerHidden]
 		protected override IEnumerable<Toil> MakeNewToils()
 		{
 			yield return Toils_Goto.GotoCell(TargetIndex.A, PathEndMode.OnCell);
-			yield return new Toil
+			yield return Toils_General.Wait(500);
+			yield return Toils_General.Do(delegate
 			{
-				defaultCompleteMode = ToilCompleteMode.Delay,
-				defaultDuration = 500
-			};
-			yield return new Toil
-			{
-				initAction = delegate
-				{
-					Pawn actor = this.<finalize>__1.actor;
-					Thing forbiddenIfOutsideHomeArea = GenSpawn.Spawn(actor.GetComp<CompEggLayer>().ProduceEgg(), actor.Position, this.<>f__this.Map);
-					forbiddenIfOutsideHomeArea.SetForbiddenIfOutsideHomeArea();
-				},
-				defaultCompleteMode = ToilCompleteMode.Instant
-			};
+				Thing forbiddenIfOutsideHomeArea = GenSpawn.Spawn(this.$this.pawn.GetComp<CompEggLayer>().ProduceEgg(), this.$this.pawn.Position, this.$this.Map);
+				forbiddenIfOutsideHomeArea.SetForbiddenIfOutsideHomeArea();
+			});
 		}
 	}
 }

@@ -7,13 +7,13 @@ namespace RimWorld.Planet
 {
 	public static class WorldSelectionDrawer
 	{
+		private static Dictionary<WorldObject, float> selectTimes = new Dictionary<WorldObject, float>();
+
 		private const float BaseSelectedTexJump = 25f;
 
 		private const float BaseSelectedTexScale = 0.4f;
 
 		private const float BaseSelectionRectSize = 35f;
-
-		private static Dictionary<WorldObject, float> selectTimes = new Dictionary<WorldObject, float>();
 
 		private static readonly Color HiddenSelectionBracketColor = new Color(1f, 1f, 1f, 0.35f);
 

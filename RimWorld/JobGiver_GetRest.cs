@@ -104,7 +104,7 @@ namespace RimWorld
 			}
 			Lord lord = pawn.GetLord();
 			Building_Bed building_Bed;
-			if (lord != null && lord.CurLordToil != null && !lord.CurLordToil.AllowRestingInBed)
+			if ((lord != null && lord.CurLordToil != null && !lord.CurLordToil.AllowRestingInBed) || pawn.IsWildMan())
 			{
 				building_Bed = null;
 			}

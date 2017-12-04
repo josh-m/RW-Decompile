@@ -16,8 +16,6 @@ namespace RimWorld
 
 		public const int GameStartHourOfDay = 6;
 
-		public const float SecondsPerTickAsFractionOfDay = 1.44f;
-
 		public const int TicksPerTwelfth = 300000;
 
 		public const int TicksPerSeason = 900000;
@@ -43,14 +41,6 @@ namespace RimWorld
 			get
 			{
 				return Find.TickManager.TicksGame;
-			}
-		}
-
-		private static int TicksAbs
-		{
-			get
-			{
-				return Find.TickManager.TicksAbs;
 			}
 		}
 
@@ -178,8 +168,8 @@ namespace RimWorld
 
 		public static Season Season(long absTicks, float latitude, float longitude)
 		{
-			Twelfth twelfth = GenDate.Twelfth(absTicks, longitude);
-			return twelfth.GetSeason(latitude);
+			float yearPct = GenDate.YearPercent(absTicks, longitude);
+			return SeasonUtility.GetReportedSeason(yearPct, latitude);
 		}
 
 		public static Quadrum Quadrum(long absTicks, float longitude)
@@ -213,20 +203,27 @@ namespace RimWorld
 
 		public static float DayPercent(long absTicks, float longitude)
 		{
-			long num = absTicks + GenDate.LocalTicksOffsetFromLongitude(longitude);
-			int num2 = (int)(num % 60000L);
-			if (num2 == 0)
+			long x = absTicks + GenDate.LocalTicksOffsetFromLongitude(longitude);
+			int num = (int)GenMath.PositiveMod(x, 60000L);
+			if (num == 0)
 			{
-				num2 = 1;
+				num = 1;
 			}
-			return (float)num2 / 60000f;
+			return (float)num / 60000f;
+		}
+
+		public static float YearPercent(long absTicks, float longitude)
+		{
+			long x = absTicks + GenDate.LocalTicksOffsetFromLongitude(longitude);
+			int num = (int)GenMath.PositiveMod(x, 3600000L);
+			return (float)num / 3600000f;
 		}
 
 		public static int HourInteger(long absTicks, float longitude)
 		{
-			long num = absTicks + GenDate.LocalTicksOffsetFromLongitude(longitude);
-			int num2 = (int)(num % 60000L);
-			return num2 / 2500;
+			long x = absTicks + GenDate.LocalTicksOffsetFromLongitude(longitude);
+			int num = (int)GenMath.PositiveMod(x, 60000L);
+			return num / 2500;
 		}
 
 		public static float HourFloat(long absTicks, float longitude)

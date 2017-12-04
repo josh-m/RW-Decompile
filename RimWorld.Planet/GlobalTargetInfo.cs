@@ -5,8 +5,6 @@ namespace RimWorld.Planet
 {
 	public struct GlobalTargetInfo : IEquatable<GlobalTargetInfo>
 	{
-		public const char WorldObjectLoadIDMarker = '@';
-
 		private Thing thingInt;
 
 		private IntVec3 cellInt;
@@ -16,6 +14,8 @@ namespace RimWorld.Planet
 		private WorldObject worldObjectInt;
 
 		private int tileInt;
+
+		public const char WorldObjectLoadIDMarker = '@';
 
 		public bool IsValid
 		{
@@ -177,58 +177,6 @@ namespace RimWorld.Planet
 			this.tileInt = tile;
 		}
 
-		public override bool Equals(object obj)
-		{
-			return obj is GlobalTargetInfo && this.Equals((GlobalTargetInfo)obj);
-		}
-
-		public bool Equals(GlobalTargetInfo other)
-		{
-			return this == other;
-		}
-
-		public override int GetHashCode()
-		{
-			if (this.thingInt != null)
-			{
-				return this.thingInt.GetHashCode();
-			}
-			if (this.cellInt.IsValid)
-			{
-				return Gen.HashCombine<Map>(this.cellInt.GetHashCode(), this.mapInt);
-			}
-			if (this.worldObjectInt != null)
-			{
-				return this.worldObjectInt.GetHashCode();
-			}
-			if (this.tileInt >= 0)
-			{
-				return this.tileInt;
-			}
-			return -1;
-		}
-
-		public override string ToString()
-		{
-			if (this.thingInt != null)
-			{
-				return this.thingInt.GetUniqueLoadID();
-			}
-			if (this.cellInt.IsValid)
-			{
-				return this.cellInt.ToString() + ", " + ((this.mapInt == null) ? "null" : this.mapInt.GetUniqueLoadID());
-			}
-			if (this.worldObjectInt != null)
-			{
-				return '@' + this.worldObjectInt.GetUniqueLoadID();
-			}
-			if (this.tileInt >= 0)
-			{
-				return this.tileInt.ToString();
-			}
-			return "null";
-		}
-
 		public static implicit operator GlobalTargetInfo(TargetInfo target)
 		{
 			if (target.HasThing)
@@ -365,6 +313,58 @@ namespace RimWorld.Planet
 		public static bool operator !=(GlobalTargetInfo a, GlobalTargetInfo b)
 		{
 			return !(a == b);
+		}
+
+		public override bool Equals(object obj)
+		{
+			return obj is GlobalTargetInfo && this.Equals((GlobalTargetInfo)obj);
+		}
+
+		public bool Equals(GlobalTargetInfo other)
+		{
+			return this == other;
+		}
+
+		public override int GetHashCode()
+		{
+			if (this.thingInt != null)
+			{
+				return this.thingInt.GetHashCode();
+			}
+			if (this.cellInt.IsValid)
+			{
+				return Gen.HashCombine<Map>(this.cellInt.GetHashCode(), this.mapInt);
+			}
+			if (this.worldObjectInt != null)
+			{
+				return this.worldObjectInt.GetHashCode();
+			}
+			if (this.tileInt >= 0)
+			{
+				return this.tileInt;
+			}
+			return -1;
+		}
+
+		public override string ToString()
+		{
+			if (this.thingInt != null)
+			{
+				return this.thingInt.GetUniqueLoadID();
+			}
+			if (this.cellInt.IsValid)
+			{
+				return this.cellInt.ToString() + ", " + ((this.mapInt == null) ? "null" : this.mapInt.GetUniqueLoadID());
+			}
+			if (this.worldObjectInt != null)
+			{
+				return '@' + this.worldObjectInt.GetUniqueLoadID();
+			}
+			if (this.tileInt >= 0)
+			{
+				return this.tileInt.ToString();
+			}
+			return "null";
 		}
 	}
 }

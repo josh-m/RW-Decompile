@@ -53,10 +53,10 @@ namespace RimWorld
 					return;
 				}
 				int count = Mathf.Min(thing.stackCount, curJob.count);
-				actor.carryTracker.TryStartCarry(thing, count);
-				if (thing != actor.carryTracker.CarriedThing && actor.Map.reservationManager.ReservedBy(thing, actor))
+				actor.carryTracker.TryStartCarry(thing, count, true);
+				if (thing != actor.carryTracker.CarriedThing && actor.Map.reservationManager.ReservedBy(thing, actor, curJob))
 				{
-					actor.Map.reservationManager.Release(thing, actor);
+					actor.Map.reservationManager.Release(thing, actor, curJob);
 				}
 				actor.jobs.curJob.targetA = actor.carryTracker.CarriedThing;
 			};
@@ -128,9 +128,9 @@ namespace RimWorld
 				if (thing != null)
 				{
 					intVec = thing.Position;
-					actor.Reserve(thing, 1, -1, null);
+					actor.Reserve(thing, actor.CurJob, 1, -1, null);
 				}
-				actor.Map.pawnDestinationManager.ReserveDestinationFor(actor, intVec);
+				actor.Map.pawnDestinationReservationManager.Reserve(actor, actor.CurJob, intVec);
 				actor.pather.StartPath(intVec, PathEndMode.OnCell);
 			};
 			toil.defaultCompleteMode = ToilCompleteMode.PatherArrival;
@@ -225,7 +225,6 @@ namespace RimWorld
 			{
 				Pawn actor = toil.actor;
 				Thing thing = actor.CurJob.GetTarget(ingestibleInd).Thing;
-				actor.Drawer.rotator.FaceCell(chewer.Position);
 				if (!thing.IngestibleNow)
 				{
 					chewer.jobs.EndCurrentJob(JobCondition.Incompletable, true);
@@ -234,11 +233,27 @@ namespace RimWorld
 				actor.jobs.curDriver.ticksLeftThisToil = Mathf.RoundToInt((float)thing.def.ingestible.baseIngestTicks * durationMultiplier);
 				if (thing.Spawned)
 				{
-					thing.Map.physicalInteractionReservationManager.Reserve(chewer, thing);
+					thing.Map.physicalInteractionReservationManager.Reserve(chewer, actor.CurJob, thing);
 				}
 			};
 			toil.tickAction = delegate
 			{
+				if (chewer != toil.actor)
+				{
+					toil.actor.rotationTracker.FaceCell(chewer.Position);
+				}
+				else
+				{
+					Thing thing = toil.actor.CurJob.GetTarget(ingestibleInd).Thing;
+					if (thing != null && thing.Spawned)
+					{
+						toil.actor.rotationTracker.FaceCell(thing.Position);
+					}
+					else if (eatSurfaceInd != TargetIndex.None && toil.actor.CurJob.GetTarget(eatSurfaceInd).IsValid)
+					{
+						toil.actor.rotationTracker.FaceCell(toil.actor.CurJob.GetTarget(eatSurfaceInd).Cell);
+					}
+				}
 				toil.actor.GainComfortFromCellIfPossible();
 			};
 			toil.WithProgressBar(ingestibleInd, delegate
@@ -270,9 +285,10 @@ namespace RimWorld
 				}
 				if (chewer.Map.physicalInteractionReservationManager.IsReservedBy(chewer, thing))
 				{
-					chewer.Map.physicalInteractionReservationManager.Release(chewer, thing);
+					chewer.Map.physicalInteractionReservationManager.Release(chewer, toil.actor.CurJob, thing);
 				}
 			});
+			toil.handlingFacing = true;
 			Toils_Ingest.AddIngestionEffects(toil, chewer, ingestibleInd, eatSurfaceInd);
 			return toil;
 		}

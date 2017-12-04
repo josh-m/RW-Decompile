@@ -6,11 +6,11 @@ namespace Verse
 	[StaticConstructorOnStartup]
 	public static class DebugMatsRandom
 	{
+		private static readonly Material[] mats;
+
 		public const int MaterialCount = 100;
 
 		private const float Opacity = 0.25f;
-
-		private static readonly Material[] mats;
 
 		static DebugMatsRandom()
 		{

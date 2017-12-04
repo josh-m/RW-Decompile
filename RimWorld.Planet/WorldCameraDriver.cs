@@ -6,6 +6,28 @@ namespace RimWorld.Planet
 {
 	public class WorldCameraDriver : MonoBehaviour
 	{
+		public Quaternion sphereRotation = Quaternion.identity;
+
+		private Vector2 rotationVelocity;
+
+		private Vector2 desiredRotation;
+
+		private float desiredAltitude;
+
+		public float altitude;
+
+		private Camera cachedCamera;
+
+		private Vector2 mouseDragVect;
+
+		private bool mouseCoveredByUI;
+
+		private float mouseTouchingScreenBottomEdgeStartTime = -1f;
+
+		private Quaternion rotationAnimation_prevSphereRotation = Quaternion.identity;
+
+		private float rotationAnimation_lerpFactor = 1f;
+
 		private const float SphereRadius = 100f;
 
 		private const float ScreenDollyEdgeWidth = 20f;
@@ -46,28 +68,6 @@ namespace RimWorld.Planet
 
 		private const float ScrollWheelZoomRate = 0.1f;
 
-		public Quaternion sphereRotation = Quaternion.identity;
-
-		private Vector2 rotationVelocity;
-
-		private Vector2 desiredRotation;
-
-		private float desiredAltitude;
-
-		public float altitude;
-
-		private Camera cachedCamera;
-
-		private Vector2 mouseDragVect;
-
-		private bool mouseCoveredByUI;
-
-		private float mouseTouchingScreenBottomEdgeStartTime = -1f;
-
-		private Quaternion rotationAnimation_prevSphereRotation = Quaternion.identity;
-
-		private float rotationAnimation_lerpFactor = 1f;
-
 		private Camera MyCamera
 		{
 			get
@@ -84,7 +84,12 @@ namespace RimWorld.Planet
 		{
 			get
 			{
-				if (this.AltitudePercent < 0.025f)
+				float altitudePercent = this.AltitudePercent;
+				if (altitudePercent < 0.025f)
+				{
+					return WorldCameraZoomRange.VeryClose;
+				}
+				if (altitudePercent < 0.042f)
 				{
 					return WorldCameraZoomRange.Close;
 				}
@@ -149,6 +154,7 @@ namespace RimWorld.Planet
 			{
 				return;
 			}
+			UnityGUIBugsFixer.OnGUI();
 			this.mouseCoveredByUI = false;
 			if (Find.WindowStack.GetWindowAt(UI.MousePositionOnUIInverted) != null)
 			{

@@ -11,8 +11,6 @@ namespace RimWorld
 
 		private int nextFactionID;
 
-		private int nextVerbID;
-
 		private int nextLordID;
 
 		private int nextTaleID;
@@ -28,6 +26,16 @@ namespace RimWorld
 		private int nextTransporterGroupID;
 
 		private int nextAncientCryptosleepCasketGroupID;
+
+		private int nextJobID;
+
+		private int nextSignalTagID;
+
+		private int nextWorldFeatureID;
+
+		private int nextHediffID;
+
+		private int nextBattleID;
 
 		public UniqueIDsManager()
 		{
@@ -47,11 +55,6 @@ namespace RimWorld
 		public int GetNextFactionID()
 		{
 			return UniqueIDsManager.GetNextID(ref this.nextFactionID);
-		}
-
-		public int GetNextVerbID()
-		{
-			return UniqueIDsManager.GetNextID(ref this.nextVerbID);
 		}
 
 		public int GetNextLordID()
@@ -94,6 +97,31 @@ namespace RimWorld
 			return UniqueIDsManager.GetNextID(ref this.nextAncientCryptosleepCasketGroupID);
 		}
 
+		public int GetNextJobID()
+		{
+			return UniqueIDsManager.GetNextID(ref this.nextJobID);
+		}
+
+		public int GetNextSignalTagID()
+		{
+			return UniqueIDsManager.GetNextID(ref this.nextSignalTagID);
+		}
+
+		public int GetNextWorldFeatureID()
+		{
+			return UniqueIDsManager.GetNextID(ref this.nextWorldFeatureID);
+		}
+
+		public int GetNextHediffID()
+		{
+			return UniqueIDsManager.GetNextID(ref this.nextHediffID);
+		}
+
+		public int GetNextBattleID()
+		{
+			return UniqueIDsManager.GetNextID(ref this.nextBattleID);
+		}
+
 		private static int GetNextID(ref int nextID)
 		{
 			if (Scribe.mode == LoadSaveMode.Saving || Scribe.mode == LoadSaveMode.LoadingVars)
@@ -115,7 +143,6 @@ namespace RimWorld
 			Scribe_Values.Look<int>(ref this.nextThingID, "nextThingID", 0, false);
 			Scribe_Values.Look<int>(ref this.nextBillID, "nextBillID", 0, false);
 			Scribe_Values.Look<int>(ref this.nextFactionID, "nextFactionID", 0, false);
-			Scribe_Values.Look<int>(ref this.nextVerbID, "nextVerbID", 0, false);
 			Scribe_Values.Look<int>(ref this.nextLordID, "nextLordID", 0, false);
 			Scribe_Values.Look<int>(ref this.nextTaleID, "nextTaleID", 0, false);
 			Scribe_Values.Look<int>(ref this.nextPassingShipID, "nextPassingShipID", 0, false);
@@ -124,6 +151,11 @@ namespace RimWorld
 			Scribe_Values.Look<int>(ref this.nextAreaID, "nextAreaID", 0, false);
 			Scribe_Values.Look<int>(ref this.nextTransporterGroupID, "nextTransporterGroupID", 0, false);
 			Scribe_Values.Look<int>(ref this.nextAncientCryptosleepCasketGroupID, "nextAncientCryptosleepCasketGroupID", 0, false);
+			Scribe_Values.Look<int>(ref this.nextJobID, "nextJobID", 0, false);
+			Scribe_Values.Look<int>(ref this.nextSignalTagID, "nextSignalTagID", 0, false);
+			Scribe_Values.Look<int>(ref this.nextWorldFeatureID, "nextWorldFeatureID", 0, false);
+			Scribe_Values.Look<int>(ref this.nextHediffID, "nextHediffID", 0, false);
+			Scribe_Values.Look<int>(ref this.nextBattleID, "nextBattleID", 0, false);
 		}
 	}
 }

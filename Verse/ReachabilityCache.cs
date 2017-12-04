@@ -29,6 +29,7 @@ namespace Verse
 
 			public CachedEntry(int firstRoomID, int secondRoomID, TraverseParms traverseParms)
 			{
+				this = default(ReachabilityCache.CachedEntry);
 				if (firstRoomID < secondRoomID)
 				{
 					this.FirstRoomID = firstRoomID;
@@ -40,6 +41,16 @@ namespace Verse
 					this.SecondRoomID = firstRoomID;
 				}
 				this.TraverseParms = traverseParms;
+			}
+
+			public static bool operator ==(ReachabilityCache.CachedEntry lhs, ReachabilityCache.CachedEntry rhs)
+			{
+				return lhs.Equals(rhs);
+			}
+
+			public static bool operator !=(ReachabilityCache.CachedEntry lhs, ReachabilityCache.CachedEntry rhs)
+			{
+				return !lhs.Equals(rhs);
 			}
 
 			public override bool Equals(object obj)
@@ -56,16 +67,6 @@ namespace Verse
 			{
 				int seed = Gen.HashCombineInt(this.FirstRoomID, this.SecondRoomID);
 				return Gen.HashCombineStruct<TraverseParms>(seed, this.TraverseParms);
-			}
-
-			public static bool operator ==(ReachabilityCache.CachedEntry lhs, ReachabilityCache.CachedEntry rhs)
-			{
-				return lhs.Equals(rhs);
-			}
-
-			public static bool operator !=(ReachabilityCache.CachedEntry lhs, ReachabilityCache.CachedEntry rhs)
-			{
-				return !lhs.Equals(rhs);
 			}
 		}
 

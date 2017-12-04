@@ -92,41 +92,6 @@ namespace Verse
 			this.a = (int)col.a;
 		}
 
-		public override bool Equals(object o)
-		{
-			return o is ColorInt && this.Equals((ColorInt)o);
-		}
-
-		public bool Equals(ColorInt other)
-		{
-			return this == other;
-		}
-
-		public override int GetHashCode()
-		{
-			return this.r + this.g * 256 + this.b * 256 * 256 + this.a * 256 * 256 * 256;
-		}
-
-		public void ClampToNonNegative()
-		{
-			if (this.r < 0)
-			{
-				this.r = 0;
-			}
-			if (this.g < 0)
-			{
-				this.g = 0;
-			}
-			if (this.b < 0)
-			{
-				this.b = 0;
-			}
-			if (this.a < 0)
-			{
-				this.a = 0;
-			}
-		}
-
 		public static ColorInt operator +(ColorInt colA, ColorInt colB)
 		{
 			return new ColorInt(colA.r + colB.r, colA.g + colB.g, colA.b + colB.b, colA.a + colB.a);
@@ -170,6 +135,41 @@ namespace Verse
 		public static bool operator !=(ColorInt a, ColorInt b)
 		{
 			return a.r != b.r || a.g != b.g || a.b != b.b || a.a != b.a;
+		}
+
+		public override bool Equals(object o)
+		{
+			return o is ColorInt && this.Equals((ColorInt)o);
+		}
+
+		public bool Equals(ColorInt other)
+		{
+			return this == other;
+		}
+
+		public override int GetHashCode()
+		{
+			return this.r + this.g * 256 + this.b * 256 * 256 + this.a * 256 * 256 * 256;
+		}
+
+		public void ClampToNonNegative()
+		{
+			if (this.r < 0)
+			{
+				this.r = 0;
+			}
+			if (this.g < 0)
+			{
+				this.g = 0;
+			}
+			if (this.b < 0)
+			{
+				this.b = 0;
+			}
+			if (this.a < 0)
+			{
+				this.a = 0;
+			}
 		}
 	}
 }

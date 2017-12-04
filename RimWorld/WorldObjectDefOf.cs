@@ -11,7 +11,7 @@ namespace RimWorld
 
 		public static WorldObjectDef AbandonedFactionBase;
 
-		public static WorldObjectDef JourneyDestination;
+		public static WorldObjectDef EscapeShip;
 
 		public static WorldObjectDef Ambush;
 
@@ -24,5 +24,9 @@ namespace RimWorld
 		public static WorldObjectDef RoutePlannerWaypoint;
 
 		public static WorldObjectDef Site;
+
+		public static WorldObjectDef PeaceTalks;
+
+		public static WorldObjectDef Debug_Arena;
 	}
 }

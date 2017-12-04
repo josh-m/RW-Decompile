@@ -28,24 +28,15 @@ namespace RimWorld
 			new Pair<ItemCollectionGenerator_RandomGeneralGoods.GoodsType, float>(ItemCollectionGenerator_RandomGeneralGoods.GoodsType.Resources, 0.234f)
 		};
 
-		protected override ItemCollectionGeneratorParams RandomTestParams
-		{
-			get
-			{
-				ItemCollectionGeneratorParams randomTestParams = base.RandomTestParams;
-				randomTestParams.count = Rand.RangeInclusive(10, 20);
-				randomTestParams.techLevel = TechLevel.Transcendent;
-				return randomTestParams;
-			}
-		}
-
 		protected override void Generate(ItemCollectionGeneratorParams parms, List<Thing> outThings)
 		{
-			int count = parms.count;
-			TechLevel techLevel = parms.techLevel;
-			for (int i = 0; i < count; i++)
+			int? count = parms.count;
+			int num = (!count.HasValue) ? Rand.RangeInclusive(10, 20) : count.Value;
+			TechLevel? techLevel = parms.techLevel;
+			TechLevel techLevel2 = (!techLevel.HasValue) ? TechLevel.Spacer : techLevel.Value;
+			for (int i = 0; i < num; i++)
 			{
-				outThings.Add(this.GenerateSingle(techLevel));
+				outThings.Add(this.GenerateSingle(techLevel2));
 			}
 		}
 
@@ -103,7 +94,7 @@ namespace RimWorld
 		{
 			ThingDef thingDef;
 			if (!(from x in ItemCollectionGeneratorUtility.allGeneratableItems
-			where x.IsNutritionGivingIngestible && !x.IsCorpse && ThingDefOf.Human.race.CanEverEat(x) && !x.HasComp(typeof(CompHatcher)) && x.techLevel <= techLevel && x.ingestible.preferability < FoodPreferability.MealAwful
+			where x.IsNutritionGivingIngestible && !x.IsCorpse && x.ingestible.HumanEdible && !x.HasComp(typeof(CompHatcher)) && x.techLevel <= techLevel && x.ingestible.preferability < FoodPreferability.MealAwful
 			select x).TryRandomElement(out thingDef))
 			{
 				return null;
@@ -116,19 +107,26 @@ namespace RimWorld
 
 		private Thing RandomMedicine(TechLevel techLevel)
 		{
-			ThingDef herbalMedicine;
-			if (techLevel.IsNeolithicOrWorse())
+			bool flag = Rand.Value < 0.75f && techLevel >= ThingDefOf.HerbalMedicine.techLevel;
+			ThingDef thingDef;
+			if (flag)
 			{
-				herbalMedicine = ThingDefOf.HerbalMedicine;
+				thingDef = (from x in ItemCollectionGeneratorUtility.allGeneratableItems
+				where x.IsMedicine && x.techLevel <= techLevel
+				select x).MaxBy((ThingDef x) => x.GetStatValueAbstract(StatDefOf.MedicalPotency, null));
 			}
 			else if (!(from x in ItemCollectionGeneratorUtility.allGeneratableItems
-			where x.IsMedicine && x.techLevel <= techLevel
-			select x).TryRandomElement(out herbalMedicine))
+			where x.IsMedicine
+			select x).TryRandomElement(out thingDef))
 			{
-				return null;
+				throw new Exception();
 			}
-			Thing thing = ThingMaker.MakeThing(herbalMedicine, null);
-			int max = Mathf.Min(herbalMedicine.stackLimit, 20);
+			if (techLevel.IsNeolithicOrWorse())
+			{
+				thingDef = ThingDefOf.HerbalMedicine;
+			}
+			Thing thing = ThingMaker.MakeThing(thingDef, null);
+			int max = Mathf.Min(thingDef.stackLimit, 20);
 			thing.stackCount = Rand.RangeInclusive(1, max);
 			return thing;
 		}

@@ -11,8 +11,6 @@ namespace RimWorld
 	[StaticConstructorOnStartup]
 	public class CompAffectedByFacilities : ThingComp
 	{
-		public const float MaxDistToLinkToFacility = 8f;
-
 		private List<Thing> linkedFacilities = new List<Thing>();
 
 		public static Material InactiveFacilityLineMat = MaterialPool.MatFrom(GenDraw.LineTexPath, ShaderDatabase.Transparent, new Color(1f, 0.5f, 0.5f));
@@ -109,29 +107,40 @@ namespace RimWorld
 			CompProperties_Facility compProperties = facilityDef.GetCompProperties<CompProperties_Facility>();
 			if (compProperties.mustBePlacedAdjacent)
 			{
-				bool flag = false;
-				foreach (IntVec3 current in GenAdj.CellsOccupiedBy(myPos, myRot, myDef.size))
+				CellRect rect = GenAdj.OccupiedRect(myPos, myRot, myDef.size);
+				CellRect rect2 = GenAdj.OccupiedRect(facilityPos, facilityRot, facilityDef.size);
+				if (!GenAdj.AdjacentTo8WayOrInside(rect, rect2))
 				{
-					foreach (IntVec3 current2 in GenAdj.CellsOccupiedBy(facilityPos, facilityRot, facilityDef.size))
+					return false;
+				}
+			}
+			if (compProperties.mustBePlacedAdjacentCardinalToBedHead)
+			{
+				if (!myDef.IsBed)
+				{
+					return false;
+				}
+				CellRect other = GenAdj.OccupiedRect(facilityPos, facilityRot, facilityDef.size);
+				bool flag = false;
+				int sleepingSlotsCount = BedUtility.GetSleepingSlotsCount(myDef.size);
+				for (int i = 0; i < sleepingSlotsCount; i++)
+				{
+					IntVec3 sleepingSlotPos = BedUtility.GetSleepingSlotPos(i, myPos, myRot, myDef.size);
+					if (sleepingSlotPos.IsAdjacentToCardinalOrInside(other))
 					{
-						if (Mathf.Abs(current.x - current2.x) <= 1 && Mathf.Abs(current.z - current2.z) <= 1)
-						{
-							flag = true;
-							goto IL_CB;
-						}
+						flag = true;
 					}
 				}
-				IL_CB:
 				if (!flag)
 				{
 					return false;
 				}
 			}
-			else
+			if (!compProperties.mustBePlacedAdjacent && !compProperties.mustBePlacedAdjacentCardinalToBedHead)
 			{
 				Vector3 a = Gen.TrueCenter(myPos, myRot, myDef.size, myDef.Altitude);
 				Vector3 b = Gen.TrueCenter(facilityPos, facilityRot, facilityDef.size, facilityDef.Altitude);
-				if (Vector3.Distance(a, b) > 8f)
+				if (Vector3.Distance(a, b) > compProperties.maxDistance)
 				{
 					return false;
 				}
@@ -182,7 +191,7 @@ namespace RimWorld
 						{
 							IntVec3 start = new IntVec3(j, 0, i);
 							IntVec3 end = new IntVec3(l, 0, k);
-							if (GenSight.LineOfSight(start, end, map, startRect, endRect))
+							if (GenSight.LineOfSight(start, end, map, startRect, endRect, null))
 							{
 								result = true;
 								return result;
@@ -302,7 +311,7 @@ namespace RimWorld
 				}
 				Vector3 myTrueCenter = Gen.TrueCenter(myPos, myRot, myDef.size, myDef.Altitude);
 				IOrderedEnumerable<Thing> sortedCandidates = from x in candidates
-				orderby Vector3.Distance(this.<myTrueCenter>__3, x.TrueCenter()), x.Position.x, x.Position.z
+				orderby Vector3.Distance(myTrueCenter, x.TrueCenter()), x.Position.x, x.Position.z
 				select x;
 				foreach (Thing th in sortedCandidates)
 				{
@@ -321,11 +330,8 @@ namespace RimWorld
 							CompAffectedByFacilities.alreadyReturnedCount.Add(th.def, 0);
 						}
 						Dictionary<ThingDef, int> dictionary;
-						Dictionary<ThingDef, int> expr_22F = dictionary = CompAffectedByFacilities.alreadyReturnedCount;
 						ThingDef def;
-						ThingDef expr_23C = def = th.def;
-						int num = dictionary[def];
-						expr_22F[expr_23C] = num + 1;
+						(dictionary = CompAffectedByFacilities.alreadyReturnedCount)[def = th.def] = dictionary[def] + 1;
 						yield return th;
 					}
 				}

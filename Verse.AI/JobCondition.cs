@@ -10,6 +10,7 @@ namespace Verse.AI
 		Incompletable,
 		InterruptOptional,
 		InterruptForced,
+		QueuedNoLongerValid,
 		Errored,
 		ErroredPather
 	}

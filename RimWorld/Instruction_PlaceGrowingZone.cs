@@ -15,13 +15,22 @@ namespace RimWorld
 		{
 			base.ExposeData();
 			Scribe_Values.Look<CellRect>(ref this.growingZoneRect, "growingZoneRect", default(CellRect), false);
+			if (Scribe.mode == LoadSaveMode.PostLoadInit)
+			{
+				this.RecacheCells();
+			}
+		}
+
+		private void RecacheCells()
+		{
+			this.cachedCells = this.growingZoneRect.Cells.ToList<IntVec3>();
 		}
 
 		public override void OnActivated()
 		{
 			base.OnActivated();
 			this.growingZoneRect = TutorUtility.FindUsableRect(10, 8, base.Map, 0.5f, false);
-			this.cachedCells = this.growingZoneRect.Cells.ToList<IntVec3>();
+			this.RecacheCells();
 		}
 
 		public override void LessonOnGUI()

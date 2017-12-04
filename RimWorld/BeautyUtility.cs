@@ -70,12 +70,12 @@ namespace RimWorld
 						}
 						if (!flag)
 						{
-							goto IL_17F;
+							goto IL_181;
 						}
 					}
 					BeautyUtility.beautyRelevantCells.Add(intVec);
 				}
-				IL_17F:;
+				IL_181:;
 			}
 			BeautyUtility.visibleRooms.Clear();
 		}

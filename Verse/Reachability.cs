@@ -183,16 +183,21 @@ namespace Verse
 					{
 						if (this.startingRegions.Any<Region>() && this.destRegions.Any<Region>())
 						{
-							switch (this.GetCachedResult(traverseParams))
+							BoolUnknown cachedResult = this.GetCachedResult(traverseParams);
+							if (cachedResult == BoolUnknown.True)
 							{
-							case BoolUnknown.True:
 								this.FinalizeCheck();
 								result = true;
 								return result;
-							case BoolUnknown.False:
+							}
+							if (cachedResult == BoolUnknown.False)
+							{
 								this.FinalizeCheck();
 								result = false;
 								return result;
+							}
+							if (cachedResult != BoolUnknown.Unknown)
+							{
 							}
 						}
 						if (traverseParams.mode == TraverseMode.PassAllDestroyableThings)
@@ -353,7 +358,7 @@ namespace Verse
 					return true;
 				}
 				return false;
-			}, false);
+			}, 2147483647, false, null);
 			if (foundCell.IsValid)
 			{
 				Region validRegionAt = this.regionGrid.GetValidRegionAt(foundCell);
@@ -423,7 +428,24 @@ namespace Verse
 					}
 				}
 			}
-			return false;
+			return this.CanReachBiggestMapEdgeRoom(c);
+		}
+
+		public bool CanReachBiggestMapEdgeRoom(IntVec3 c)
+		{
+			Room room = null;
+			for (int i = 0; i < this.map.regionGrid.allRooms.Count; i++)
+			{
+				Room room2 = this.map.regionGrid.allRooms[i];
+				if (room2.TouchesMapEdge)
+				{
+					if (room == null || room2.RegionCount > room.RegionCount)
+					{
+						room = room2;
+					}
+				}
+			}
+			return room != null && this.CanReach(c, room.Regions[0].AnyCell, PathEndMode.OnCell, TraverseParms.For(TraverseMode.PassDoors, Danger.Deadly, false));
 		}
 
 		public bool CanReachMapEdge(IntVec3 c, TraverseParms traverseParms)

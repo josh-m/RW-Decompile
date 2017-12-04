@@ -27,7 +27,7 @@ namespace RimWorld
 					"\n",
 					"ImpactDate".Translate().CapitalizeFirst(),
 					": ",
-					GenDate.DateFullStringAt((long)GenDate.TickGameToAbs(this.startTick + this.duration), Find.WorldGrid.LongLatOf(base.Map.Tile))
+					GenDate.DateFullStringAt((long)GenDate.TickGameToAbs(this.startTick + base.Duration), Find.WorldGrid.LongLatOf(base.Map.Tile))
 				});
 				text2 = text;
 				return string.Concat(new string[]

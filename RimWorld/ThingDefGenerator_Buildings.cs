@@ -89,6 +89,11 @@ namespace RimWorld
 			thingDef.defName = def.defName + ThingDefGenerator_Buildings.BlueprintDefNameSuffix;
 			thingDef.label = def.label + "BlueprintLabelExtra".Translate();
 			thingDef.size = def.size;
+			thingDef.clearBuildingArea = def.clearBuildingArea;
+			if (!isInstallBlueprint)
+			{
+				thingDef.constructionSkillPrerequisite = def.constructionSkillPrerequisite;
+			}
 			thingDef.drawPlaceWorkersWhileSelected = def.drawPlaceWorkersWhileSelected;
 			if (def.placeWorkers != null)
 			{
@@ -96,8 +101,8 @@ namespace RimWorld
 			}
 			if (isInstallBlueprint)
 			{
-				ThingDef expr_72 = thingDef;
-				expr_72.defName += ThingDefGenerator_Buildings.InstallBlueprintDefNameSuffix;
+				ThingDef expr_90 = thingDef;
+				expr_90.defName += ThingDefGenerator_Buildings.InstallBlueprintDefNameSuffix;
 			}
 			if (isInstallBlueprint && normalBlueprint != null)
 			{
@@ -181,6 +186,8 @@ namespace RimWorld
 			thingDef.selectable = def.selectable;
 			thingDef.constructEffect = def.constructEffect;
 			thingDef.building.isEdifice = def.building.isEdifice;
+			thingDef.constructionSkillPrerequisite = def.constructionSkillPrerequisite;
+			thingDef.clearBuildingArea = def.clearBuildingArea;
 			thingDef.drawPlaceWorkersWhileSelected = def.drawPlaceWorkersWhileSelected;
 			if (def.placeWorkers != null)
 			{
@@ -206,6 +213,8 @@ namespace RimWorld
 			thingDef.graphicData.shaderType = ShaderType.MetaOverlay;
 			thingDef.graphicData.texPath = ThingDefGenerator_Buildings.TerrainBlueprintGraphicPath;
 			thingDef.graphicData.graphicClass = typeof(Graphic_Single);
+			thingDef.constructionSkillPrerequisite = terrDef.constructionSkillPrerequisite;
+			thingDef.clearBuildingArea = false;
 			thingDef.entityDefToBuild = terrDef;
 			terrDef.blueprintDef = thingDef;
 			return thingDef;
@@ -224,6 +233,8 @@ namespace RimWorld
 			thingDef.selectable = true;
 			thingDef.constructEffect = terrDef.constructEffect;
 			thingDef.building.isEdifice = false;
+			thingDef.constructionSkillPrerequisite = terrDef.constructionSkillPrerequisite;
+			thingDef.clearBuildingArea = false;
 			thingDef.category = ThingCategory.Ethereal;
 			thingDef.entityDefToBuild = terrDef;
 			terrDef.frameDef = thingDef;

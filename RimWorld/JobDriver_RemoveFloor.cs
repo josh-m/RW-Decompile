@@ -34,6 +34,7 @@ namespace RimWorld
 			if (base.Map.terrainGrid.CanRemoveTopLayerAt(c))
 			{
 				base.Map.terrainGrid.RemoveTopLayer(base.TargetLocA, true);
+				FilthMaker.RemoveAllFilth(c, base.Map);
 			}
 		}
 	}

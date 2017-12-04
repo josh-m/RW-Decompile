@@ -25,6 +25,11 @@ namespace RimWorld
 			}
 		}
 
+		public override Danger MaxPathDanger(Pawn pawn)
+		{
+			return Danger.Deadly;
+		}
+
 		public override bool ShouldSkip(Pawn pawn)
 		{
 			return !WorkGiver_HunterHunt.HasHuntingWeapon(pawn) || WorkGiver_HunterHunt.HasShieldAndRangedWeapon(pawn);
@@ -33,7 +38,12 @@ namespace RimWorld
 		public override bool HasJobOnThing(Pawn pawn, Thing t, bool forced = false)
 		{
 			Pawn pawn2 = t as Pawn;
-			return pawn2 != null && pawn2.RaceProps.Animal && pawn.CanReserve(t, 1, -1, null, forced) && pawn.Map.designationManager.DesignationOn(t, DesignationDefOf.Hunt) != null;
+			if (pawn2 == null || !pawn2.AnimalOrWildMan())
+			{
+				return false;
+			}
+			LocalTargetInfo target = t;
+			return pawn.CanReserve(target, 1, -1, null, forced) && pawn.Map.designationManager.DesignationOn(t, DesignationDefOf.Hunt) != null;
 		}
 
 		public override Job JobOnThing(Pawn pawn, Thing t, bool forced = false)
@@ -43,12 +53,12 @@ namespace RimWorld
 
 		public static bool HasHuntingWeapon(Pawn p)
 		{
-			return p.equipment.Primary != null && p.equipment.Primary.def.IsRangedWeapon;
+			return p.equipment.Primary != null && p.equipment.Primary.def.IsRangedWeapon && p.equipment.PrimaryEq.PrimaryVerb.HarmsHealth();
 		}
 
 		public static bool HasShieldAndRangedWeapon(Pawn p)
 		{
-			if (p.equipment.Primary != null && !p.equipment.Primary.def.Verbs[0].MeleeRange)
+			if (p.equipment.Primary != null && p.equipment.Primary.def.IsRangedWeapon)
 			{
 				List<Apparel> wornApparel = p.apparel.WornApparel;
 				for (int i = 0; i < wornApparel.Count; i++)

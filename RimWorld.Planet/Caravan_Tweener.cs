@@ -5,13 +5,13 @@ namespace RimWorld.Planet
 {
 	public class Caravan_Tweener
 	{
-		private const float SpringTightness = 0.09f;
-
 		private Caravan caravan;
 
 		private Vector3 springPos = Vector3.zero;
 
 		private Vector3 lastTickSpringPos;
+
+		private const float SpringTightness = 0.09f;
 
 		public Vector3 TweenedPos
 		{

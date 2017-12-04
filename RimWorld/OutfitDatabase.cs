@@ -48,6 +48,13 @@ namespace RimWorld
 					}));
 				}
 			}
+			foreach (Pawn current2 in PawnsFinder.AllMapsWorldAndTemporary_AliveOrDead)
+			{
+				if (current2.outfits != null && current2.outfits.CurrentOutfit == outfit)
+				{
+					current2.outfits.CurrentOutfit = null;
+				}
+			}
 			this.outfits.Remove(outfit);
 			return AcceptanceReport.WasAccepted;
 		}

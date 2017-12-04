@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using Verse;
 
@@ -30,14 +31,6 @@ namespace RimWorld
 			get;
 		}
 
-		protected virtual IEnumerable<Pawn> Pawns
-		{
-			get
-			{
-				return Find.VisibleMap.mapPawns.FreeColonists;
-			}
-		}
-
 		protected override float Margin
 		{
 			get
@@ -55,6 +48,16 @@ namespace RimWorld
 					return Vector2.zero;
 				}
 				return new Vector2(this.table.Size.x + this.Margin * 2f, this.table.Size.y + this.ExtraBottomSpace + this.ExtraTopSpace + this.Margin * 2f);
+			}
+		}
+
+		protected virtual IEnumerable<Pawn> Pawns
+		{
+			get
+			{
+				return from x in Find.VisibleMap.mapPawns.FreeColonists
+				orderby x.Label
+				select x;
 			}
 		}
 
@@ -86,7 +89,7 @@ namespace RimWorld
 
 		private PawnTable CreateTable()
 		{
-			return new PawnTable(this.PawnTableDef, () => this.Pawns, 998, UI.screenWidth - (int)(this.Margin * 2f), 0, (int)((float)(UI.screenHeight - 35) - this.ExtraBottomSpace - this.ExtraTopSpace - this.Margin * 2f));
+			return new PawnTable(this.PawnTableDef, new Func<IEnumerable<Pawn>>(this.get_Pawns), 998, UI.screenWidth - (int)(this.Margin * 2f), 0, (int)((float)(UI.screenHeight - 35) - this.ExtraBottomSpace - this.ExtraTopSpace - this.Margin * 2f));
 		}
 
 		protected void SetDirty()

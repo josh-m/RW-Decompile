@@ -18,14 +18,20 @@ namespace RimWorld
 			}
 		}
 
+		public override bool TryMakePreToilReservations()
+		{
+			return true;
+		}
+
 		[DebuggerHidden]
 		protected override IEnumerable<Toil> MakeNewToils()
 		{
+			this.FailOnDestroyedOrNull(TargetIndex.A);
 			yield return new Toil
 			{
 				initAction = delegate
 				{
-					this.<>f__this.pawn.pather.StopDead();
+					this.$this.pawn.pather.StopDead();
 				},
 				defaultCompleteMode = ToilCompleteMode.Delay,
 				defaultDuration = 30
@@ -35,9 +41,9 @@ namespace RimWorld
 				initAction = delegate
 				{
 					ThingWithComps thingWithComps;
-					if (!this.<>f__this.pawn.equipment.TryDropEquipment(this.<>f__this.TargetEquipment, out thingWithComps, this.<>f__this.pawn.Position, true))
+					if (!this.$this.pawn.equipment.TryDropEquipment(this.$this.TargetEquipment, out thingWithComps, this.$this.pawn.Position, true))
 					{
-						this.<>f__this.EndJobWith(JobCondition.Incompletable);
+						this.$this.EndJobWith(JobCondition.Incompletable);
 					}
 				}
 			};

@@ -1,3 +1,4 @@
+using RimWorld;
 using System;
 
 namespace Verse
@@ -32,7 +33,7 @@ namespace Verse
 			Messages.Message("ZoneGainsName".Translate(new object[]
 			{
 				this.curName
-			}), MessageSound.Benefit);
+			}), MessageTypeDefOf.TaskCompletion);
 		}
 	}
 }

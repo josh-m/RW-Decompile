@@ -63,17 +63,9 @@ namespace RimWorld
 			}
 		}
 
-		private const float TopPadding = 20f;
-
-		private const float RowTopPadding = 3f;
-
-		private const float RowLeftRightPadding = 5f;
-
 		private static Vector2 listScrollPosition = Vector2.zero;
 
 		private static float listScrollViewHeight = 0f;
-
-		private static Vector2 logScrollPosition = Vector2.zero;
 
 		private static bool showAllRelations;
 
@@ -81,19 +73,23 @@ namespace RimWorld
 
 		private static Pawn cachedForPawn;
 
+		private const float TopPadding = 20f;
+
 		private static readonly Color RelationLabelColor = new Color(0.6f, 0.6f, 0.6f);
 
 		private static readonly Color PawnLabelColor = new Color(0.9f, 0.9f, 0.9f, 1f);
 
 		private static readonly Color HighlightColor = new Color(0.5f, 0.5f, 0.5f, 1f);
 
+		private const float RowTopPadding = 3f;
+
+		private const float RowLeftRightPadding = 5f;
+
 		private static SocialCardUtility.CachedSocialTabEntryComparer CachedEntriesComparer = new SocialCardUtility.CachedSocialTabEntryComparer();
 
 		private static HashSet<Pawn> tmpCached = new HashSet<Pawn>();
 
 		private static HashSet<Pawn> tmpToCache = new HashSet<Pawn>();
-
-		private static List<Pair<string, int>> logStrings = new List<Pair<string, int>>();
 
 		public static void DrawSocialCard(Rect rect, Pawn pawn)
 		{
@@ -115,7 +111,7 @@ namespace RimWorld
 				SocialCardUtility.DrawDebugOptions(rect6, pawn);
 			}
 			SocialCardUtility.DrawRelationsAndOpinions(rect4, pawn);
-			SocialCardUtility.DrawInteractionsLog(rect5, pawn);
+			InteractionCardUtility.DrawInteractionsLog(rect5, pawn, Find.PlayLog.AllEntries, 12);
 			GUI.EndGroup();
 		}
 
@@ -214,16 +210,21 @@ namespace RimWorld
 			GUI.color = Color.white;
 			Rect outRect = new Rect(0f, 0f, rect.width, rect.height);
 			Rect viewRect = new Rect(0f, 0f, rect.width - 16f, SocialCardUtility.listScrollViewHeight);
+			Rect rect2 = rect;
+			if (viewRect.height > outRect.height)
+			{
+				rect2.width -= 16f;
+			}
 			Widgets.BeginScrollView(outRect, ref SocialCardUtility.listScrollPosition, viewRect, true);
 			float num = 0f;
 			float y = SocialCardUtility.listScrollPosition.y;
 			float num2 = SocialCardUtility.listScrollPosition.y + outRect.height;
 			for (int i = 0; i < SocialCardUtility.cachedEntries.Count; i++)
 			{
-				float rowHeight = SocialCardUtility.GetRowHeight(SocialCardUtility.cachedEntries[i], viewRect.width, selPawnForSocialInfo);
+				float rowHeight = SocialCardUtility.GetRowHeight(SocialCardUtility.cachedEntries[i], rect2.width, selPawnForSocialInfo);
 				if (num > y - rowHeight && num < num2)
 				{
-					SocialCardUtility.DrawPawnRow(num, viewRect.width, SocialCardUtility.cachedEntries[i], selPawnForSocialInfo);
+					SocialCardUtility.DrawPawnRow(num, rect2.width, SocialCardUtility.cachedEntries[i], selPawnForSocialInfo);
 				}
 				num += rowHeight;
 			}
@@ -231,8 +232,8 @@ namespace RimWorld
 			{
 				GUI.color = Color.gray;
 				Text.Anchor = TextAnchor.UpperCenter;
-				Rect rect2 = new Rect(0f, 0f, viewRect.width, 30f);
-				Widgets.Label(rect2, "NoRelationships".Translate());
+				Rect rect3 = new Rect(0f, 0f, rect2.width, 30f);
+				Widgets.Label(rect3, "NoRelationships".Translate());
 				Text.Anchor = TextAnchor.UpperLeft;
 			}
 			if (Event.current.type == EventType.Layout)
@@ -264,7 +265,7 @@ namespace RimWorld
 						Messages.Message("MessageCantSelectDeadPawn".Translate(new object[]
 						{
 							otherPawn.LabelShort
-						}).CapitalizeFirst(), MessageSound.RejectInput);
+						}).CapitalizeFirst(), MessageTypeDefOf.RejectInput);
 					}
 					else if (otherPawn.SpawnedOrAnyParentSpawned || otherPawn.IsCaravanMember())
 					{
@@ -275,7 +276,7 @@ namespace RimWorld
 						Messages.Message("MessageCantSelectOffMapPawn".Translate(new object[]
 						{
 							otherPawn.LabelShort
-						}).CapitalizeFirst(), MessageSound.RejectInput);
+						}).CapitalizeFirst(), MessageTypeDefOf.RejectInput);
 					}
 				}
 				else if (Find.GameInitData.startingPawns.Contains(otherPawn))
@@ -508,58 +509,6 @@ namespace RimWorld
 				stringBuilder.Append("(debug) RomanceChanceFactor: " + selPawnForSocialInfo.relations.SecondaryRomanceChanceFactor(entry.otherPawn).ToString("F2"));
 			}
 			return stringBuilder.ToString();
-		}
-
-		private static void DrawInteractionsLog(Rect rect, Pawn pawn)
-		{
-			float width = rect.width - 26f - 3f;
-			List<PlayLogEntry> allEntries = Find.PlayLog.AllEntries;
-			SocialCardUtility.logStrings.Clear();
-			float num = 0f;
-			int num2 = 0;
-			for (int i = 0; i < allEntries.Count; i++)
-			{
-				if (allEntries[i].Concerns(pawn))
-				{
-					string text = allEntries[i].ToGameStringFromPOV(pawn);
-					SocialCardUtility.logStrings.Add(new Pair<string, int>(text, i));
-					num += Mathf.Max(26f, Text.CalcHeight(text, width));
-					num2++;
-					if (num2 >= 12)
-					{
-						break;
-					}
-				}
-			}
-			Rect viewRect = new Rect(0f, 0f, rect.width - 16f, num);
-			Widgets.BeginScrollView(rect, ref SocialCardUtility.logScrollPosition, viewRect, true);
-			float num3 = 0f;
-			for (int j = 0; j < SocialCardUtility.logStrings.Count; j++)
-			{
-				string first = SocialCardUtility.logStrings[j].First;
-				PlayLogEntry entry = allEntries[SocialCardUtility.logStrings[j].Second];
-				if (entry.Age > 7500)
-				{
-					GUI.color = new Color(1f, 1f, 1f, 0.5f);
-				}
-				float num4 = Mathf.Max(26f, Text.CalcHeight(first, width));
-				if (entry.Icon != null)
-				{
-					Rect position = new Rect(0f, num3, 26f, 26f);
-					GUI.DrawTexture(position, entry.Icon);
-				}
-				Rect rect2 = new Rect(29f, num3, width, num4);
-				Widgets.DrawHighlightIfMouseover(rect2);
-				Widgets.Label(rect2, first);
-				TooltipHandler.TipRegion(rect2, () => entry.GetTipString(), 613261 + j * 611);
-				if (Widgets.ButtonInvisible(rect2, false))
-				{
-					entry.ClickedFromPOV(pawn);
-				}
-				GUI.color = Color.white;
-				num3 += num4;
-			}
-			GUI.EndScrollView();
 		}
 
 		private static void DrawDebugOptions(Rect rect, Pawn pawn)

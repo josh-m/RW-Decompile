@@ -8,6 +8,8 @@ namespace RimWorld
 {
 	public class WorkGiver_Miner : WorkGiver_Scanner
 	{
+		private static string NoPathTrans;
+
 		public override PathEndMode PathEndMode
 		{
 			get
@@ -16,15 +18,25 @@ namespace RimWorld
 			}
 		}
 
+		public override Danger MaxPathDanger(Pawn pawn)
+		{
+			return Danger.Deadly;
+		}
+
+		public static void Reset()
+		{
+			WorkGiver_Miner.NoPathTrans = "NoPath".Translate();
+		}
+
 		[DebuggerHidden]
 		public override IEnumerable<Thing> PotentialWorkThingsGlobal(Pawn pawn)
 		{
 			foreach (Designation des in pawn.Map.designationManager.SpawnedDesignationsOfDef(DesignationDefOf.Mine))
 			{
 				bool mayBeAccessible = false;
-				for (int i = 0; i < 8; i++)
+				for (int j = 0; j < 8; j++)
 				{
-					IntVec3 c = des.target.Cell + GenAdj.AdjacentCells[i];
+					IntVec3 c = des.target.Cell + GenAdj.AdjacentCells[j];
 					if (c.InBounds(pawn.Map) && c.Walkable(pawn.Map))
 					{
 						mayBeAccessible = true;
@@ -33,10 +45,10 @@ namespace RimWorld
 				}
 				if (mayBeAccessible)
 				{
-					Thing j = MineUtility.MineableInCell(des.target.Cell, pawn.Map);
-					if (j != null)
+					Mineable i = des.target.Cell.GetFirstMineable(pawn.Map);
+					if (i != null)
 					{
-						yield return j;
+						yield return i;
 					}
 				}
 			}
@@ -77,15 +89,31 @@ namespace RimWorld
 						{
 							if (intVec2.Walkable(t.Map) && !intVec2.Standable(t.Map))
 							{
-								Thing firstHaulable = intVec2.GetFirstHaulable(t.Map);
-								if (firstHaulable != null && firstHaulable.def.passability == Traversability.PassThroughOnly)
+								Thing thing = null;
+								List<Thing> thingList = intVec2.GetThingList(t.Map);
+								for (int k = 0; k < thingList.Count; k++)
 								{
-									return HaulAIUtility.HaulAsideJobFor(pawn, firstHaulable);
+									if (thingList[k].def.designateHaulable && thingList[k].def.passability == Traversability.PassThroughOnly)
+									{
+										thing = thingList[k];
+										break;
+									}
+								}
+								if (thing != null)
+								{
+									Job job = HaulAIUtility.HaulAsideJobFor(pawn, thing);
+									if (job != null)
+									{
+										return job;
+									}
+									JobFailReason.Is(WorkGiver_Miner.NoPathTrans);
+									return null;
 								}
 							}
 						}
 					}
 				}
+				JobFailReason.Is(WorkGiver_Miner.NoPathTrans);
 				return null;
 			}
 			return new Job(JobDefOf.Mine, t, 1500, true);

@@ -2,6 +2,7 @@ using RimWorld.Planet;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Text;
 using UnityEngine;
 using Verse;
@@ -10,10 +11,6 @@ namespace RimWorld
 {
 	public class Storyteller : IExposable
 	{
-		public const int IntervalsPerDay = 60;
-
-		public const int CheckInterval = 1000;
-
 		public StorytellerDef def;
 
 		public DifficultyDef difficulty;
@@ -27,6 +24,10 @@ namespace RimWorld
 		public static readonly Vector2 PortraitSizeTiny = new Vector2(116f, 124f);
 
 		public static readonly Vector2 PortraitSizeLarge = new Vector2(580f, 620f);
+
+		public const int IntervalsPerDay = 60;
+
+		public const int CheckInterval = 1000;
 
 		private static List<IIncidentTarget> tmpAllIncidentTargets = new List<IIncidentTarget>();
 
@@ -132,11 +133,11 @@ namespace RimWorld
 					for (int j = 0; j < targets.Count; j++)
 					{
 						IIncidentTarget targ = targets[j];
-						if ((byte)(c.props.allowedTargetTypes & targ.Type) != 0)
+						if (c.props.allowedTargetTypes == null || c.props.allowedTargetTypes.Count == 0 || c.props.allowedTargetTypes.Intersect(targ.AcceptedTypes()).Any<IncidentTargetTypeDef>())
 						{
 							foreach (FiringIncident fi in c.MakeIntervalIncidents(targ))
 							{
-								if (Find.Storyteller.difficulty.allowBigThreats || fi.def.category != IncidentCategory.ThreatBig)
+								if (Find.Storyteller.difficulty.allowBigThreats || (fi.def.category != IncidentCategory.ThreatBig && fi.def.category != IncidentCategory.RaidBeacon))
 								{
 									yield return fi;
 								}

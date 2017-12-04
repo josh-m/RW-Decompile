@@ -11,27 +11,6 @@ namespace RimWorld.Planet
 	{
 		private static readonly Texture2D TradeCommandTex = ContentFinder<Texture2D>.Get("UI/Commands/Trade", true);
 
-		public static Pawn BestNegotiator(Caravan caravan)
-		{
-			Pawn pawn = null;
-			float num = -1f;
-			List<Pawn> pawnsListForReading = caravan.PawnsListForReading;
-			for (int i = 0; i < pawnsListForReading.Count; i++)
-			{
-				Pawn pawn2 = pawnsListForReading[i];
-				if (!pawn2.Downed && !pawn2.InMentalState && caravan.IsOwner(pawn2))
-				{
-					float statValue = pawn2.GetStatValue(StatDefOf.TradePriceImprovement, true);
-					if (pawn == null || statValue > num)
-					{
-						pawn = pawn2;
-						num = statValue;
-					}
-				}
-			}
-			return pawn;
-		}
-
 		public static Settlement SettlementVisitedNow(Caravan caravan)
 		{
 			if (!caravan.Spawned || caravan.pather.Moving)
@@ -52,7 +31,7 @@ namespace RimWorld.Planet
 
 		public static Command TradeCommand(Caravan caravan)
 		{
-			Pawn bestNegotiator = CaravanVisitUtility.BestNegotiator(caravan);
+			Pawn bestNegotiator = BestCaravanPawnUtility.FindBestNegotiator(caravan);
 			Command_Action command_Action = new Command_Action();
 			command_Action.defaultLabel = "CommandTrade".Translate();
 			command_Action.defaultDesc = "CommandTradeDesc".Translate();
@@ -65,16 +44,20 @@ namespace RimWorld.Planet
 					Find.WindowStack.Add(new Dialog_Trade(bestNegotiator, settlement));
 					string empty = string.Empty;
 					string empty2 = string.Empty;
-					PawnRelationUtility.Notify_PawnsSeenByPlayer(settlement.Goods.OfType<Pawn>(), ref empty, ref empty2, "LetterRelatedPawnsTradingWithSettlement".Translate(), false);
+					PawnRelationUtility.Notify_PawnsSeenByPlayer_Letter(settlement.Goods.OfType<Pawn>(), ref empty, ref empty2, "LetterRelatedPawnsTradingWithSettlement".Translate(), false, true);
 					if (!empty2.NullOrEmpty())
 					{
-						Find.LetterStack.ReceiveLetter(empty, empty2, LetterDefOf.Good, settlement, null);
+						Find.LetterStack.ReceiveLetter(empty, empty2, LetterDefOf.NeutralEvent, settlement, null);
 					}
 				}
 			};
 			if (bestNegotiator == null)
 			{
 				command_Action.Disable("CommandTradeFailNoNegotiator".Translate());
+			}
+			if (bestNegotiator != null && bestNegotiator.skills.GetSkill(SkillDefOf.Social).TotallyDisabled)
+			{
+				command_Action.Disable("CommandTradeFailSocialDisabled".Translate());
 			}
 			return command_Action;
 		}
@@ -102,7 +85,7 @@ namespace RimWorld.Planet
 						Messages.Message("CommandFulfillTradeOfferFailInsufficient".Translate(new object[]
 						{
 							GenLabel.ThingLabel(caravanRequest.requestThingDef, null, caravanRequest.requestCount)
-						}), MessageSound.Negative);
+						}), MessageTypeDefOf.RejectInput);
 						return;
 					}
 					Find.WindowStack.Add(Dialog_MessageBox.CreateConfirmation("CommandFulfillTradeOfferConfirm".Translate(new object[]

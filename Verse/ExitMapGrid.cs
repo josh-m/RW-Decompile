@@ -6,8 +6,6 @@ namespace Verse
 {
 	public sealed class ExitMapGrid : ICellBoolGiver
 	{
-		private const int MaxDistToEdge = 4;
-
 		private Map map;
 
 		private bool dirty = true;
@@ -15,6 +13,8 @@ namespace Verse
 		private BoolGrid exitMapGrid;
 
 		private CellBoolDrawer drawerInt;
+
+		private const int MaxDistToEdge = 2;
 
 		public bool MapUsesExitGrid
 		{
@@ -69,7 +69,7 @@ namespace Verse
 		{
 			get
 			{
-				return new Color(0.35f, 1f, 0.35f, 0.18f);
+				return new Color(0.35f, 1f, 0.35f, 0.12f);
 			}
 		}
 
@@ -129,9 +129,9 @@ namespace Verse
 			{
 				for (int j = cellRect.minX; j <= cellRect.maxX; j++)
 				{
-					if (i > 3 && i < cellRect.maxZ - 4 + 1 && j > 3 && j < cellRect.maxX - 4 + 1)
+					if (i > 1 && i < cellRect.maxZ - 2 + 1 && j > 1 && j < cellRect.maxX - 2 + 1)
 					{
-						j = cellRect.maxX - 4 + 1;
+						j = cellRect.maxX - 2 + 1;
 					}
 					IntVec3 intVec = new IntVec3(j, 0, i);
 					if (this.IsGoodExitCell(intVec))
@@ -152,7 +152,7 @@ namespace Verse
 			{
 				return false;
 			}
-			int num = GenRadial.NumCellsInRadius(4f);
+			int num = GenRadial.NumCellsInRadius(2f);
 			for (int i = 0; i < num; i++)
 			{
 				IntVec3 intVec = cell + GenRadial.RadialPattern[i];

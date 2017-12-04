@@ -5,9 +5,9 @@ namespace Verse
 {
 	public class Listing_Tree : Listing_Lines
 	{
-		protected const float OpenCloseWidgetSize = 18f;
-
 		public float nestIndentWidth = 11f;
+
+		protected const float OpenCloseWidgetSize = 18f;
 
 		protected virtual float LabelWidth
 		{

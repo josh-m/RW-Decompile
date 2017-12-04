@@ -8,7 +8,11 @@ namespace RimWorld
 {
 	public class Pawn_InteractionsTracker : IExposable
 	{
-		public const float MaxInteractRange = 6f;
+		private Pawn pawn;
+
+		private bool wantsRandomInteract;
+
+		private int lastInteractionTime = -9999;
 
 		private const int RandomInteractMTBTicks_Quiet = 22000;
 
@@ -23,12 +27,6 @@ namespace RimWorld
 		private const int InteractIntervalAbsoluteMin = 120;
 
 		public const int DirectTalkInteractInterval = 320;
-
-		private Pawn pawn;
-
-		private bool wantsRandomInteract;
-
-		private int lastInteractionTime = -9999;
 
 		private static List<Pawn> workingList = new List<Pawn>();
 
@@ -92,17 +90,23 @@ namespace RimWorld
 					if (Find.TickManager.TicksGame > this.lastInteractionTime + 320 && this.pawn.IsHashIntervalTick(60))
 					{
 						int num = 0;
-						switch (currentSocialMode)
+						if (currentSocialMode != RandomSocialMode.Quiet)
 						{
-						case RandomSocialMode.Quiet:
+							if (currentSocialMode != RandomSocialMode.Normal)
+							{
+								if (currentSocialMode == RandomSocialMode.SuperActive)
+								{
+									num = 550;
+								}
+							}
+							else
+							{
+								num = 6600;
+							}
+						}
+						else
+						{
 							num = 22000;
-							break;
-						case RandomSocialMode.Normal:
-							num = 6600;
-							break;
-						case RandomSocialMode.SuperActive:
-							num = 550;
-							break;
 						}
 						if (Rand.MTBEventOccurs((float)num, 1f, 60f) && !this.TryInteractRandomly())
 						{
@@ -122,9 +126,9 @@ namespace RimWorld
 			return Find.TickManager.TicksGame < this.lastInteractionTime + 120;
 		}
 
-		private bool CanInteractNowWith(Pawn recipient)
+		public bool CanInteractNowWith(Pawn recipient)
 		{
-			return recipient.Spawned && (float)(this.pawn.Position - recipient.Position).LengthHorizontalSquared <= 36f && InteractionUtility.CanInitiateInteraction(this.pawn) && InteractionUtility.CanReceiveInteraction(recipient) && GenSight.LineOfSight(this.pawn.Position, recipient.Position, this.pawn.Map, true, null, 0, 0);
+			return recipient.Spawned && InteractionUtility.IsGoodPositionForInteraction(this.pawn, recipient) && InteractionUtility.CanInitiateInteraction(this.pawn) && InteractionUtility.CanReceiveInteraction(recipient);
 		}
 
 		public bool TryInteractWith(Pawn recipient, InteractionDef intDef)
@@ -285,13 +289,21 @@ namespace RimWorld
 						this.pawn.LabelShort,
 						otherPawn.LabelShort,
 						thought.LabelCapSocial
-					}), this.pawn, MessageSound.SeriousAlert);
+					}), this.pawn, MessageTypeDefOf.ThreatSmall);
 				}
 			}
-			this.pawn.mindState.mentalStateHandler.TryStartMentalState(MentalStateDefOf.SocialFighting, null, false, false, otherPawn);
-			MentalStateHandler arg_F1_0 = otherPawn.mindState.mentalStateHandler;
+			MentalStateHandler arg_D6_0 = this.pawn.mindState.mentalStateHandler;
+			MentalStateDef socialFighting = MentalStateDefOf.SocialFighting;
+			arg_D6_0.TryStartMentalState(socialFighting, null, false, false, otherPawn);
+			MentalStateHandler arg_F9_0 = otherPawn.mindState.mentalStateHandler;
+			socialFighting = MentalStateDefOf.SocialFighting;
 			Pawn otherPawn2 = this.pawn;
-			arg_F1_0.TryStartMentalState(MentalStateDefOf.SocialFighting, null, false, false, otherPawn2);
+			arg_F9_0.TryStartMentalState(socialFighting, null, false, false, otherPawn2);
+			TaleRecorder.RecordTale(TaleDefOf.SocialFight, new object[]
+			{
+				this.pawn,
+				otherPawn
+			});
 		}
 
 		public float SocialFightChance(InteractionDef interaction, Pawn initiator)

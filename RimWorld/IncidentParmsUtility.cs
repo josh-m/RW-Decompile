@@ -5,18 +5,21 @@ namespace RimWorld
 {
 	public static class IncidentParmsUtility
 	{
-		public static PawnGroupMakerParms GetDefaultPawnGroupMakerParms(IncidentParms parms)
+		public static PawnGroupMakerParms GetDefaultPawnGroupMakerParms(IncidentParms parms, bool ensureCanGenerateAtLeastOnePawn = false)
 		{
-			return new PawnGroupMakerParms
+			PawnGroupMakerParms pawnGroupMakerParms = new PawnGroupMakerParms();
+			pawnGroupMakerParms.tile = parms.target.Tile;
+			pawnGroupMakerParms.points = parms.points;
+			pawnGroupMakerParms.faction = parms.faction;
+			pawnGroupMakerParms.traderKind = parms.traderKind;
+			pawnGroupMakerParms.generateFightersOnly = parms.generateFightersOnly;
+			pawnGroupMakerParms.raidStrategy = parms.raidStrategy;
+			pawnGroupMakerParms.forceOneIncap = parms.raidForceOneIncap;
+			if (ensureCanGenerateAtLeastOnePawn && parms.faction != null)
 			{
-				tile = parms.target.Tile,
-				points = parms.points,
-				faction = parms.faction,
-				traderKind = parms.traderKind,
-				generateFightersOnly = parms.generateFightersOnly,
-				raidStrategy = parms.raidStrategy,
-				forceOneIncap = parms.raidForceOneIncap
-			};
+				pawnGroupMakerParms.points = Mathf.Max(pawnGroupMakerParms.points, parms.faction.def.MinPointsToGenerateNormalPawnGroup());
+			}
+			return pawnGroupMakerParms;
 		}
 
 		public static void AdjustPointsForGroupArrivalParams(IncidentParms parms)
@@ -25,17 +28,24 @@ namespace RimWorld
 			{
 				parms.points *= parms.raidStrategy.pointsFactor;
 			}
-			switch (parms.raidArrivalMode)
+			PawnsArriveMode raidArrivalMode = parms.raidArrivalMode;
+			if (raidArrivalMode != PawnsArriveMode.EdgeWalkIn)
 			{
-			case PawnsArriveMode.EdgeWalkIn:
+				if (raidArrivalMode != PawnsArriveMode.EdgeDrop)
+				{
+					if (raidArrivalMode == PawnsArriveMode.CenterDrop)
+					{
+						parms.points *= 0.45f;
+					}
+				}
+				else
+				{
+					parms.points *= 1f;
+				}
+			}
+			else
+			{
 				parms.points *= 1f;
-				break;
-			case PawnsArriveMode.EdgeDrop:
-				parms.points *= 1f;
-				break;
-			case PawnsArriveMode.CenterDrop:
-				parms.points *= 0.45f;
-				break;
 			}
 			if (parms.raidStrategy != null)
 			{

@@ -75,7 +75,7 @@ namespace RimWorld
 			if (eDef != null)
 			{
 				foreach (StatDef stat in from st in DefDatabase<StatDef>.AllDefs
-				where st.Worker.ShouldShowFor(this.<eDef>__0)
+				where st.Worker.ShouldShowFor(eDef)
 				select st)
 				{
 					yield return new StatDrawEntry(stat.category, stat, eDef.GetStatValueAbstract(stat, stuff), StatRequest.For(eDef, stuff, QualityCategory.Normal), ToStringNumberSense.Undefined);
@@ -93,14 +93,18 @@ namespace RimWorld
 				yield return qe;
 			}
 			foreach (StatDef stat in from st in DefDatabase<StatDef>.AllDefs
-			where st.Worker.ShouldShowFor(this.thing.def)
+			where st.Worker.ShouldShowFor(thing.def)
 			select st)
 			{
-				yield return new StatDrawEntry(stat.category, stat, thing.GetStatValue(stat, true), StatRequest.For(thing), ToStringNumberSense.Undefined);
+				if (!stat.Worker.IsDisabledFor(thing))
+				{
+					yield return new StatDrawEntry(stat.category, stat, thing.GetStatValue(stat, true), StatRequest.For(thing), ToStringNumberSense.Undefined);
+				}
+				yield return new StatDrawEntry(stat.category, stat);
 			}
 			if (thing.def.useHitPoints)
 			{
-				yield return new StatDrawEntry(StatCategoryDefOf.BasicsNonPawn, "HitPointsBasic".Translate().CapitalizeFirst(), thing.HitPoints.ToString() + " / " + thing.MaxHitPoints.ToString(), 0)
+				yield return new StatDrawEntry(StatCategoryDefOf.BasicsNonPawn, "HitPointsBasic".Translate().CapitalizeFirst(), thing.HitPoints.ToString() + " / " + thing.MaxHitPoints.ToString(), 0, string.Empty)
 				{
 					overrideReportText = string.Concat(new string[]
 					{
@@ -110,7 +114,7 @@ namespace RimWorld
 						"\n\n",
 						StatDefOf.MaxHitPoints.LabelCap,
 						":\n\n",
-						StatDefOf.MaxHitPoints.Worker.GetExplanation(StatRequest.For(thing), ToStringNumberSense.Absolute)
+						StatDefOf.MaxHitPoints.Worker.GetExplanationUnfinalized(StatRequest.For(thing), ToStringNumberSense.Absolute)
 					})
 				};
 			}
@@ -167,7 +171,7 @@ namespace RimWorld
 
 		private static StatDrawEntry DescriptionEntry(Def def)
 		{
-			return new StatDrawEntry(StatCategoryDefOf.Basics, "Description".Translate(), string.Empty, 99999)
+			return new StatDrawEntry(StatCategoryDefOf.Basics, "Description".Translate(), string.Empty, 99999, string.Empty)
 			{
 				overrideReportText = def.description
 			};
@@ -175,7 +179,7 @@ namespace RimWorld
 
 		private static StatDrawEntry DescriptionEntry(Thing thing)
 		{
-			return new StatDrawEntry(StatCategoryDefOf.Basics, "Description".Translate(), string.Empty, 99999)
+			return new StatDrawEntry(StatCategoryDefOf.Basics, "Description".Translate(), string.Empty, 99999, string.Empty)
 			{
 				overrideReportText = thing.GetDescription()
 			};
@@ -183,7 +187,7 @@ namespace RimWorld
 
 		private static StatDrawEntry DescriptionEntry(WorldObject worldObject)
 		{
-			return new StatDrawEntry(StatCategoryDefOf.Basics, "Description".Translate(), string.Empty, 99999)
+			return new StatDrawEntry(StatCategoryDefOf.Basics, "Description".Translate(), string.Empty, 99999, string.Empty)
 			{
 				overrideReportText = worldObject.GetDescription()
 			};
@@ -196,7 +200,7 @@ namespace RimWorld
 			{
 				return null;
 			}
-			return new StatDrawEntry(StatCategoryDefOf.Basics, "Quality".Translate(), cat.GetLabel().CapitalizeFirst(), 99999)
+			return new StatDrawEntry(StatCategoryDefOf.Basics, "Quality".Translate(), cat.GetLabel().CapitalizeFirst(), 99999, string.Empty)
 			{
 				overrideReportText = "QualityDescription".Translate()
 			};

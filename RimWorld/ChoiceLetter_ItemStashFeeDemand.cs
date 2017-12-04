@@ -31,15 +31,15 @@ namespace RimWorld
 				accept.action = delegate
 				{
 					int tile;
-					if (!TileFinder.TryFindNewSiteTile(out tile))
+					if (!TileFinder.TryFindNewSiteTile(out tile, 8, 30, false, true, -1))
 					{
-						Find.LetterStack.RemoveLetter(this.<>f__this);
+						Find.LetterStack.RemoveLetter(this.$this);
 						return;
 					}
-					Site o = IncidentWorker_QuestItemStash.CreateSite(tile, this.<>f__this.sitePart, this.<>f__this.siteDaysTimeout, this.<>f__this.siteFaction, this.<>f__this.items, this.<>f__this.sitePartsKnown);
+					Site o = IncidentWorker_QuestItemStash.CreateSite(tile, this.$this.sitePart, this.$this.siteDaysTimeout, this.$this.siteFaction, this.$this.items, this.$this.sitePartsKnown);
 					CameraJumper.TryJumpAndSelect(o);
-					TradeUtility.LaunchSilver(this.<>f__this.map, this.<>f__this.fee);
-					Find.LetterStack.RemoveLetter(this.<>f__this);
+					TradeUtility.LaunchSilver(this.$this.map, this.$this.fee);
+					Find.LetterStack.RemoveLetter(this.$this);
 				};
 				accept.resolveTree = true;
 				if (this.map == null || !TradeUtility.ColonyHasEnoughSilver(this.map, this.fee))
@@ -98,11 +98,6 @@ namespace RimWorld
 		public void GetChildHolders(List<IThingHolder> outChildren)
 		{
 			ThingOwnerUtility.AppendThingHoldersFromThings(outChildren, this.GetDirectlyHeldThings());
-		}
-
-		virtual IThingHolder get_ParentHolder()
-		{
-			return base.ParentHolder;
 		}
 	}
 }

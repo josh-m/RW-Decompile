@@ -7,30 +7,36 @@ namespace Verse.AI
 {
 	public class JobDriver_Goto : JobDriver
 	{
+		public override bool TryMakePreToilReservations()
+		{
+			this.pawn.Map.pawnDestinationReservationManager.Reserve(this.pawn, this.job, this.job.targetA.Cell);
+			return true;
+		}
+
 		[DebuggerHidden]
 		protected override IEnumerable<Toil> MakeNewToils()
 		{
 			Toil gotoCell = Toils_Goto.GotoCell(TargetIndex.A, PathEndMode.OnCell);
 			gotoCell.AddPreTickAction(delegate
 			{
-				if (this.<>f__this.CurJob.exitMapOnArrival && this.<>f__this.pawn.Map.exitMapGrid.IsExitCell(this.<>f__this.pawn.Position))
+				if (this.$this.job.exitMapOnArrival && this.$this.pawn.Map.exitMapGrid.IsExitCell(this.$this.pawn.Position))
 				{
-					this.<>f__this.TryExitMap();
+					this.$this.TryExitMap();
 				}
 			});
-			gotoCell.FailOn(() => this.<>f__this.CurJob.failIfCantJoinOrCreateCaravan && !CaravanExitMapUtility.CanExitMapAndJoinOrCreateCaravanNow(this.<>f__this.pawn));
+			gotoCell.FailOn(() => this.$this.job.failIfCantJoinOrCreateCaravan && !CaravanExitMapUtility.CanExitMapAndJoinOrCreateCaravanNow(this.$this.pawn));
 			yield return gotoCell;
 			yield return new Toil
 			{
 				initAction = delegate
 				{
-					if (this.<>f__this.pawn.mindState != null && this.<>f__this.pawn.mindState.forcedGotoPosition == this.<>f__this.TargetA.Cell)
+					if (this.$this.pawn.mindState != null && this.$this.pawn.mindState.forcedGotoPosition == this.$this.TargetA.Cell)
 					{
-						this.<>f__this.pawn.mindState.forcedGotoPosition = IntVec3.Invalid;
+						this.$this.pawn.mindState.forcedGotoPosition = IntVec3.Invalid;
 					}
-					if (this.<>f__this.CurJob.exitMapOnArrival && (this.<>f__this.pawn.Position.OnEdge(this.<>f__this.pawn.Map) || this.<>f__this.pawn.Map.exitMapGrid.IsExitCell(this.<>f__this.pawn.Position)))
+					if (this.$this.job.exitMapOnArrival && (this.$this.pawn.Position.OnEdge(this.$this.pawn.Map) || this.$this.pawn.Map.exitMapGrid.IsExitCell(this.$this.pawn.Position)))
 					{
-						this.<>f__this.TryExitMap();
+						this.$this.TryExitMap();
 					}
 				},
 				defaultCompleteMode = ToilCompleteMode.Instant
@@ -39,7 +45,7 @@ namespace Verse.AI
 
 		private void TryExitMap()
 		{
-			if (base.CurJob.failIfCantJoinOrCreateCaravan && !CaravanExitMapUtility.CanExitMapAndJoinOrCreateCaravanNow(this.pawn))
+			if (this.job.failIfCantJoinOrCreateCaravan && !CaravanExitMapUtility.CanExitMapAndJoinOrCreateCaravanNow(this.pawn))
 			{
 				return;
 			}

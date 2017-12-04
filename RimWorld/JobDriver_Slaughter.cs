@@ -14,8 +14,13 @@ namespace RimWorld
 		{
 			get
 			{
-				return (Pawn)base.CurJob.targetA.Thing;
+				return (Pawn)this.job.targetA.Thing;
 			}
+		}
+
+		public override bool TryMakePreToilReservations()
+		{
+			return this.pawn.Reserve(this.Victim, this.job, 1, -1, null);
 		}
 
 		[DebuggerHidden]
@@ -23,18 +28,17 @@ namespace RimWorld
 		{
 			this.FailOnAggroMentalState(TargetIndex.A);
 			this.FailOnThingMissingDesignation(TargetIndex.A, DesignationDefOf.Slaughter);
-			yield return Toils_Reserve.Reserve(TargetIndex.A, 1, -1, null);
 			yield return Toils_Goto.GotoThing(TargetIndex.A, PathEndMode.Touch);
 			yield return Toils_General.WaitWith(TargetIndex.A, 180, true, false);
-			yield return new Toil
+			yield return Toils_General.Do(delegate
 			{
-				initAction = delegate
+				ExecutionUtility.DoExecutionByCut(this.$this.pawn, this.$this.Victim);
+				this.$this.pawn.records.Increment(RecordDefOf.AnimalsSlaughtered);
+				if (this.$this.pawn.InMentalState)
 				{
-					ExecutionUtility.DoExecutionByCut(this.<execute>__0.actor, this.<>f__this.Victim);
-					this.<>f__this.pawn.records.Increment(RecordDefOf.AnimalsSlaughtered);
-				},
-				defaultCompleteMode = ToilCompleteMode.Instant
-			};
+					this.$this.pawn.MentalState.Notify_SlaughteredAnimal();
+				}
+			});
 		}
 	}
 }

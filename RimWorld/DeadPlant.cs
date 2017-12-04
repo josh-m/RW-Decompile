@@ -20,11 +20,11 @@ namespace RimWorld
 			}
 		}
 
-		public override bool Dying
+		public override float CurrentDyingDamagePerTick
 		{
 			get
 			{
-				return false;
+				return 0f;
 			}
 		}
 

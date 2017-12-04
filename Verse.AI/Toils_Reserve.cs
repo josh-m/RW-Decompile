@@ -10,7 +10,7 @@ namespace Verse.AI
 			Toil toil = new Toil();
 			toil.initAction = delegate
 			{
-				if (!toil.actor.Reserve(toil.actor.jobs.curJob.GetTarget(ind), maxPawns, stackCount, layer))
+				if (!toil.actor.Reserve(toil.actor.jobs.curJob.GetTarget(ind), toil.actor.CurJob, maxPawns, stackCount, layer))
 				{
 					toil.actor.jobs.EndCurrentJob(JobCondition.Incompletable, true);
 				}
@@ -30,7 +30,7 @@ namespace Verse.AI
 				{
 					for (int i = 0; i < targetQueue.Count; i++)
 					{
-						if (!toil.actor.Reserve(targetQueue[i], maxPawns, stackCount, layer))
+						if (!toil.actor.Reserve(targetQueue[i], toil.actor.CurJob, maxPawns, stackCount, layer))
 						{
 							toil.actor.jobs.EndCurrentJob(JobCondition.Incompletable, true);
 						}
@@ -47,7 +47,7 @@ namespace Verse.AI
 			Toil toil = new Toil();
 			toil.initAction = delegate
 			{
-				toil.actor.Map.reservationManager.Release(toil.actor.jobs.curJob.GetTarget(ind), toil.actor);
+				toil.actor.Map.reservationManager.Release(toil.actor.jobs.curJob.GetTarget(ind), toil.actor, toil.actor.CurJob);
 			};
 			toil.defaultCompleteMode = ToilCompleteMode.Instant;
 			toil.atomicWithPrevious = true;

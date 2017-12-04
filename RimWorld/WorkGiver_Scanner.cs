@@ -32,6 +32,14 @@ namespace RimWorld
 			}
 		}
 
+		public virtual bool AllowUnreachable
+		{
+			get
+			{
+				return false;
+			}
+		}
+
 		public virtual PathEndMode PathEndMode
 		{
 			get
@@ -48,6 +56,11 @@ namespace RimWorld
 		public virtual IEnumerable<Thing> PotentialWorkThingsGlobal(Pawn pawn)
 		{
 			return null;
+		}
+
+		public virtual Danger MaxPathDanger(Pawn pawn)
+		{
+			return pawn.NormalMaxDanger();
 		}
 
 		public virtual bool HasJobOnThing(Pawn pawn, Thing t, bool forced = false)

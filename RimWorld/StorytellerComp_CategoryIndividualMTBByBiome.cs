@@ -30,10 +30,28 @@ namespace RimWorld
 						BiomeDef biome = Find.WorldGrid[target.Tile].biome;
 						if (inc.mtbDaysByBiome != null)
 						{
-							MTBByBiome entry = inc.mtbDaysByBiome.Find((MTBByBiome x) => x.biome == this.<biome>__3);
+							MTBByBiome entry = inc.mtbDaysByBiome.Find((MTBByBiome x) => x.biome == biome);
 							if (entry != null)
 							{
-								if (Rand.MTBEventOccurs(entry.mtbDays, 60000f, 1000f) && inc.Worker.CanFireNow(target))
+								float mtb = entry.mtbDays;
+								if (this.Props.applyCaravanStealthFactor)
+								{
+									Caravan caravan = target as Caravan;
+									if (caravan != null)
+									{
+										mtb *= CaravanIncidentUtility.CalculateCaravanStealthFactor(caravan.PawnsListForReading.Count);
+									}
+									else
+									{
+										Map map = target as Map;
+										if (map != null && map.info.parent.def.isTempIncidentMapOwner)
+										{
+											int pawnCount = map.mapPawns.SpawnedPawnsInFaction(Faction.OfPlayer).Count + map.mapPawns.PrisonersOfColonySpawnedCount;
+											mtb *= CaravanIncidentUtility.CalculateCaravanStealthFactor(pawnCount);
+										}
+									}
+								}
+								if (Rand.MTBEventOccurs(mtb, 60000f, 1000f) && inc.Worker.CanFireNow(target))
 								{
 									yield return new FiringIncident(inc, this, this.GenerateParms(inc.category, target));
 								}

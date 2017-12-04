@@ -12,10 +12,6 @@ namespace Verse
 	{
 		private class LiveMessage
 		{
-			private const float DefaultMessageLifespan = 13f;
-
-			private const float FadeoutDuration = 0.6f;
-
 			private int ID;
 
 			public string text;
@@ -31,6 +27,10 @@ namespace Verse
 			public Rect lastDrawRect;
 
 			private static int uniqueID;
+
+			private const float DefaultMessageLifespan = 13f;
+
+			private const float FadeoutDuration = 0.6f;
 
 			protected float Age
 			{
@@ -132,15 +132,15 @@ namespace Verse
 			}
 		}
 
-		private const int MessageYInterval = 26;
-
-		private const int MaxLiveMessages = 12;
-
 		private static List<Messages.LiveMessage> liveMessages = new List<Messages.LiveMessage>();
 
 		private static int mouseoverMessageIndex = -1;
 
 		public static readonly Vector2 MessagesTopLeftStandard = new Vector2(140f, 16f);
+
+		private const int MessageYInterval = 26;
+
+		private const int MaxLiveMessages = 12;
 
 		private static bool ShouldDrawMessageBackground
 		{
@@ -176,24 +176,24 @@ namespace Verse
 			Messages.liveMessages.RemoveAll((Messages.LiveMessage m) => m.Expired);
 		}
 
-		public static void Message(string text, GlobalTargetInfo lookTarget, MessageSound sound)
+		public static void Message(string text, GlobalTargetInfo lookTarget, MessageTypeDef type)
 		{
 			if (!Messages.AcceptsMessage(text, lookTarget))
 			{
 				return;
 			}
 			Messages.LiveMessage msg = new Messages.LiveMessage(text, lookTarget);
-			Messages.Message(msg, sound);
+			Messages.Message(msg, type);
 		}
 
-		public static void Message(string text, MessageSound sound)
+		public static void Message(string text, MessageTypeDef type)
 		{
 			if (!Messages.AcceptsMessage(text, TargetInfo.Invalid))
 			{
 				return;
 			}
 			Messages.LiveMessage msg = new Messages.LiveMessage(text);
-			Messages.Message(msg, sound);
+			Messages.Message(msg, type);
 		}
 
 		public static void MessagesDoGUI()
@@ -258,35 +258,16 @@ namespace Verse
 			return true;
 		}
 
-		private static void Message(Messages.LiveMessage msg, MessageSound sound)
+		private static void Message(Messages.LiveMessage msg, MessageTypeDef type)
 		{
 			Messages.liveMessages.Add(msg);
 			while (Messages.liveMessages.Count > 12)
 			{
 				Messages.liveMessages.RemoveAt(0);
 			}
-			if (sound != MessageSound.Silent)
+			if (type.sound != null)
 			{
-				SoundDef soundDef = null;
-				switch (sound)
-				{
-				case MessageSound.Standard:
-					soundDef = SoundDefOf.MessageAlert;
-					break;
-				case MessageSound.RejectInput:
-					soundDef = SoundDefOf.ClickReject;
-					break;
-				case MessageSound.Benefit:
-					soundDef = SoundDefOf.MessageBenefit;
-					break;
-				case MessageSound.Negative:
-					soundDef = SoundDefOf.MessageAlertNegative;
-					break;
-				case MessageSound.SeriousAlert:
-					soundDef = SoundDefOf.MessageSeriousAlert;
-					break;
-				}
-				soundDef.PlayOneShotOnCamera(null);
+				type.sound.PlayOneShotOnCamera(null);
 			}
 		}
 	}

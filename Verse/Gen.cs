@@ -1,5 +1,6 @@
 using RimWorld.Planet;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -138,10 +139,79 @@ namespace Verse
 			}
 			catch (Exception arg)
 			{
-				Log.Warning("Exception in ToString(): " + arg);
+				int num = 0;
+				bool flag = false;
+				try
+				{
+					num = obj.GetHashCode();
+					flag = true;
+				}
+				catch
+				{
+				}
+				if (flag)
+				{
+					Log.ErrorOnce("Exception in ToString(): " + arg, num ^ 1857461521);
+				}
+				else
+				{
+					Log.Error("Exception in ToString(): " + arg);
+				}
 				result = "error";
 			}
 			return result;
+		}
+
+		public static string ToStringSafeEnumerable(this IEnumerable enumerable)
+		{
+			if (enumerable == null)
+			{
+				return "null";
+			}
+			string result;
+			try
+			{
+				string text = string.Empty;
+				foreach (object current in enumerable)
+				{
+					if (text.Length > 0)
+					{
+						text += ", ";
+					}
+					text += current.ToStringSafe<object>();
+				}
+				result = text;
+			}
+			catch (Exception arg)
+			{
+				int num = 0;
+				bool flag = false;
+				try
+				{
+					num = enumerable.GetHashCode();
+					flag = true;
+				}
+				catch
+				{
+				}
+				if (flag)
+				{
+					Log.ErrorOnce("Exception while enumerating: " + arg, num ^ 581736153);
+				}
+				else
+				{
+					Log.Error("Exception while enumerating: " + arg);
+				}
+				result = "error";
+			}
+			return result;
+		}
+
+		public static void Swap<T>(ref T x, ref T y)
+		{
+			T t = y;
+			y = x;
+			x = t;
 		}
 
 		public static int HashCombine<T>(int seed, T obj)

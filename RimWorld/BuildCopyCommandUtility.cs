@@ -9,12 +9,8 @@ namespace RimWorld
 	{
 		public static Command BuildCopyCommand(BuildableDef buildable, ThingDef stuff)
 		{
-			Designator_Build des = BuildCopyCommandUtility.FindAllowedDesignator(buildable);
+			Designator_Build des = BuildCopyCommandUtility.FindAllowedDesignator(buildable, true);
 			if (des == null)
-			{
-				return null;
-			}
-			if (!des.Visible)
 			{
 				return null;
 			}
@@ -43,7 +39,7 @@ namespace RimWorld
 			return command_Action;
 		}
 
-		private static Designator_Build FindAllowedDesignator(BuildableDef buildable)
+		private static Designator_Build FindAllowedDesignator(BuildableDef buildable, bool mustBeVisible = true)
 		{
 			List<DesignationCategoryDef> allDefsListForReading = DefDatabase<DesignationCategoryDef>.AllDefsListForReading;
 			GameRules rules = Current.Game.Rules;
@@ -54,10 +50,13 @@ namespace RimWorld
 				{
 					if (rules.DesignatorAllowed(allResolvedDesignators[j]))
 					{
-						Designator_Build designator_Build = allResolvedDesignators[j] as Designator_Build;
-						if (designator_Build != null && designator_Build.PlacingDef == buildable)
+						if (!mustBeVisible || allResolvedDesignators[j].Visible)
 						{
-							return designator_Build;
+							Designator_Build designator_Build = allResolvedDesignators[j] as Designator_Build;
+							if (designator_Build != null && designator_Build.PlacingDef == buildable)
+							{
+								return designator_Build;
+							}
 						}
 					}
 				}

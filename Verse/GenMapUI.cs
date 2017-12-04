@@ -7,13 +7,13 @@ namespace Verse
 	[StaticConstructorOnStartup]
 	public static class GenMapUI
 	{
+		public static readonly Texture2D OverlayHealthTex = SolidColorMaterials.NewSolidColorTexture(new Color(1f, 0f, 0f, 0.25f));
+
 		public const float NameBGHeight = 12f;
 
 		public const float NameBGExtraWidth = 4f;
 
 		public const float LabelOffsetYStandard = -0.4f;
-
-		public static readonly Texture2D OverlayHealthTex = SolidColorMaterials.NewSolidColorTexture(new Color(1f, 0f, 0f, 0.25f));
 
 		public static readonly Color DefaultThingLabelColor = new Color(1f, 1f, 1f, 0.75f);
 

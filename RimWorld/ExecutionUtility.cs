@@ -17,17 +17,14 @@ namespace RimWorld
 				victim.health.DropBloodFilth();
 			}
 			BodyPartRecord bodyPartRecord = ExecutionUtility.ExecuteCutPart(victim);
-			int amount = Mathf.Clamp((int)victim.health.hediffSet.GetPartHealth(bodyPartRecord) - 1, 1, 20);
-			DamageInfo damageInfo = new DamageInfo(DamageDefOf.ExecutionCut, amount, -1f, executioner, bodyPartRecord, null, DamageInfo.SourceCategory.ThingOrUnknown);
+			int num2 = Mathf.Clamp((int)victim.health.hediffSet.GetPartHealth(bodyPartRecord) - 1, 1, 20);
+			DamageDef executionCut = DamageDefOf.ExecutionCut;
+			int amount = num2;
+			DamageInfo damageInfo = new DamageInfo(executionCut, amount, -1f, executioner, bodyPartRecord, null, DamageInfo.SourceCategory.ThingOrUnknown);
 			victim.TakeDamage(damageInfo);
 			if (!victim.Dead)
 			{
-				victim.Kill(new DamageInfo?(damageInfo));
-			}
-			Thing thing = position.GetThingList(map).FirstOrDefault((Thing t) => t is Corpse && ((Corpse)t).InnerPawn == victim);
-			if (thing != null)
-			{
-				thing.SetForbiddenIfOutsideHomeArea();
+				victim.Kill(new DamageInfo?(damageInfo), null);
 			}
 		}
 

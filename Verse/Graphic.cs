@@ -17,6 +17,8 @@ namespace Verse
 
 		private Graphic_Shadow cachedShadowGraphicInt;
 
+		private Graphic cachedShadowlessGraphicInt;
+
 		public Shader Shader
 		{
 			get
@@ -143,25 +145,29 @@ namespace Verse
 			return this.MatSingle;
 		}
 
-		public void Draw(Vector3 loc, Rot4 rot, Thing thing)
+		public void Draw(Vector3 loc, Rot4 rot, Thing thing, float extraRotation = 0f)
 		{
-			this.DrawWorker(loc, rot, thing.def, thing);
+			this.DrawWorker(loc, rot, thing.def, thing, extraRotation);
 		}
 
-		public void DrawFromDef(Vector3 loc, Rot4 rot, ThingDef thingDef)
+		public void DrawFromDef(Vector3 loc, Rot4 rot, ThingDef thingDef, float extraRotation = 0f)
 		{
-			this.DrawWorker(loc, rot, thingDef, null);
+			this.DrawWorker(loc, rot, thingDef, null, extraRotation);
 		}
 
-		public virtual void DrawWorker(Vector3 loc, Rot4 rot, ThingDef thingDef, Thing thing)
+		public virtual void DrawWorker(Vector3 loc, Rot4 rot, ThingDef thingDef, Thing thing, float extraRotation)
 		{
 			Mesh mesh = this.MeshAt(rot);
-			Quaternion rotation = this.QuatFromRot(rot);
+			Quaternion quaternion = this.QuatFromRot(rot);
+			if (extraRotation != 0f)
+			{
+				quaternion *= Quaternion.Euler(Vector3.up * extraRotation);
+			}
 			Material material = this.MatAt(rot, thing);
-			Graphics.DrawMesh(mesh, loc, rotation, material, 0);
+			Graphics.DrawMesh(mesh, loc, quaternion, material, 0);
 			if (this.ShadowGraphic != null)
 			{
-				this.ShadowGraphic.DrawWorker(loc, rot, thingDef, thing);
+				this.ShadowGraphic.DrawWorker(loc, rot, thingDef, thing, extraRotation);
 			}
 		}
 
@@ -215,6 +221,22 @@ namespace Verse
 		public virtual Graphic GetCopy(Vector2 newDrawSize)
 		{
 			return GraphicDatabase.Get(base.GetType(), this.path, this.Shader, newDrawSize, this.color, this.colorTwo);
+		}
+
+		public virtual Graphic GetShadowlessGraphic()
+		{
+			if (this.data == null || this.data.shadowData == null)
+			{
+				return this;
+			}
+			if (this.cachedShadowlessGraphicInt == null)
+			{
+				GraphicData graphicData = new GraphicData();
+				graphicData.CopyFrom(this.data);
+				graphicData.shadowData = null;
+				this.cachedShadowlessGraphicInt = graphicData.Graphic;
+			}
+			return this.cachedShadowlessGraphicInt;
 		}
 
 		protected Quaternion QuatFromRot(Rot4 rot)

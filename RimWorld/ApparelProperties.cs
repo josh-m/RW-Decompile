@@ -23,14 +23,26 @@ namespace RimWorld
 
 		public bool careIfWornByCorpse = true;
 
+		public bool hatRenderedFrontOfFace;
+
 		[Unsaved]
 		private float cachedHumanBodyCoverage = -1f;
+
+		[Unsaved]
+		private BodyPartGroupDef[][] interferingBodyPartGroups;
+
+		private static BodyPartGroupDef[] apparelRelevantGroups;
 
 		public ApparelLayer LastLayer
 		{
 			get
 			{
-				return this.layers[this.layers.Count - 1];
+				if (this.layers.Count > 0)
+				{
+					return this.layers[this.layers.Count - 1];
+				}
+				Log.ErrorOnce("Failed to get last layer on apparel item (see your config errors)", 31234937);
+				return ApparelLayer.Belt;
 			}
 		}
 
@@ -52,6 +64,13 @@ namespace RimWorld
 				}
 				return this.cachedHumanBodyCoverage;
 			}
+		}
+
+		public static void Reset()
+		{
+			ApparelProperties.apparelRelevantGroups = (from td in DefDatabase<ThingDef>.AllDefs
+			where td.IsApparel
+			select td).SelectMany((ThingDef td) => td.apparel.bodyPartGroups).Distinct<BodyPartGroupDef>().ToArray<BodyPartGroupDef>();
 		}
 
 		[DebuggerHidden]
@@ -92,6 +111,25 @@ namespace RimWorld
 				stringBuilder.Append(current.def.label);
 			}
 			return stringBuilder.ToString().CapitalizeFirst();
+		}
+
+		public BodyPartGroupDef[] GetInterferingBodyPartGroups(BodyDef body)
+		{
+			if (this.interferingBodyPartGroups == null)
+			{
+				this.interferingBodyPartGroups = new BodyPartGroupDef[DefDatabase<BodyPartGroupDef>.DefCount][];
+			}
+			if (this.interferingBodyPartGroups[(int)body.index] == null)
+			{
+				BodyPartRecord[] source = (from part in body.AllParts
+				where part.groups.Any((BodyPartGroupDef @group) => this.bodyPartGroups.Contains(@group))
+				select part).ToArray<BodyPartRecord>();
+				BodyPartGroupDef[] array = (from bpgd in source.SelectMany((BodyPartRecord bpr) => bpr.groups).Distinct<BodyPartGroupDef>()
+				where ApparelProperties.apparelRelevantGroups.Contains(bpgd)
+				select bpgd).ToArray<BodyPartGroupDef>();
+				this.interferingBodyPartGroups[(int)body.index] = array;
+			}
+			return this.interferingBodyPartGroups[(int)body.index];
 		}
 	}
 }

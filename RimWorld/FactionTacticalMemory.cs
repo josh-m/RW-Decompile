@@ -6,9 +6,9 @@ namespace RimWorld
 {
 	public class FactionTacticalMemory : IExposable
 	{
-		private const float TrapRememberChance = 0.2f;
-
 		private List<TrapMemory> traps = new List<TrapMemory>();
+
+		private const float TrapRememberChance = 0.2f;
 
 		public void ExposeData()
 		{

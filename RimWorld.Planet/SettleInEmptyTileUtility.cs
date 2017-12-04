@@ -28,8 +28,7 @@ namespace RimWorld.Planet
 			{
 				Map map = newHome.Map;
 				Pawn t = caravan.PawnsListForReading[0];
-				Predicate<IntVec3> extraCellValidator = (IntVec3 x) => x.GetRoom(map, RegionType.Set_Passable).CellCount >= 600;
-				CaravanEnterMapUtility.Enter(caravan, map, CaravanEnterMode.Center, CaravanDropInventoryMode.DropInstantly, false, extraCellValidator);
+				CaravanEnterMapUtility.Enter(caravan, map, CaravanEnterMode.Center, CaravanDropInventoryMode.DropInstantly, false, (IntVec3 x) => x.GetRoom(map, RegionType.Set_Passable).CellCount >= 600);
 				CameraJumper.TryJump(t);
 			}, "SpawningColonists", true, new Action<Exception>(GameAndMapInitExceptionHandlers.ErrorWhileGeneratingMap));
 		}

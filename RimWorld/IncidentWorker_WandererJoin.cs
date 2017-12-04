@@ -8,7 +8,7 @@ namespace RimWorld
 	{
 		private const float RelationWithColonistWeight = 20f;
 
-		public override bool TryExecute(IncidentParms parms)
+		protected override bool TryExecuteWorker(IncidentParms parms)
 		{
 			Map map = (Map)parms.target;
 			IntVec3 loc;
@@ -20,7 +20,7 @@ namespace RimWorld
 			{
 				PawnKindDefOf.Villager
 			}.RandomElement<PawnKindDef>();
-			PawnGenerationRequest request = new PawnGenerationRequest(pawnKindDef, Faction.OfPlayer, PawnGenerationContext.NonPlayer, -1, false, false, false, false, true, false, 20f, false, true, true, false, false, null, null, null, null, null, null);
+			PawnGenerationRequest request = new PawnGenerationRequest(pawnKindDef, Faction.OfPlayer, PawnGenerationContext.NonPlayer, -1, false, false, false, false, true, false, 20f, false, true, true, false, false, false, false, null, null, null, null, null, null, null);
 			Pawn pawn = PawnGenerator.GeneratePawn(request);
 			GenSpawn.Spawn(pawn, loc, map);
 			string text = "WandererJoin".Translate(new object[]
@@ -31,7 +31,7 @@ namespace RimWorld
 			text = text.AdjustedFor(pawn);
 			string label = "LetterLabelWandererJoin".Translate();
 			PawnRelationUtility.TryAppendRelationsWithColonistsInfo(ref text, ref label, pawn);
-			Find.LetterStack.ReceiveLetter(label, text, LetterDefOf.Good, pawn, null);
+			Find.LetterStack.ReceiveLetter(label, text, LetterDefOf.PositiveEvent, pawn, null);
 			return true;
 		}
 	}

@@ -10,6 +10,11 @@ namespace RimWorld.Planet
 			Find.World.ConstructComponents();
 		}
 
+		public override void GenerateWithoutWorldData(string seed)
+		{
+			this.GenerateFromScribe(seed);
+		}
+
 		public override void GenerateFromScribe(string seed)
 		{
 			Find.World.ConstructComponents();

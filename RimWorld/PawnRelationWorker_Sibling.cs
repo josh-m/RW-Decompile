@@ -119,16 +119,25 @@ namespace RimWorld
 			if (faction == null || faction.IsPlayer)
 			{
 				bool tryMedievalOrBetter = faction != null && faction.def.techLevel >= TechLevel.Medieval;
-				Find.FactionManager.TryGetRandomNonColonyHumanlikeFaction(out faction, tryMedievalOrBetter, true);
+				if (!Find.FactionManager.TryGetRandomNonColonyHumanlikeFaction(out faction, tryMedievalOrBetter, true, TechLevel.Undefined))
+				{
+					faction = Faction.OfSpacer;
+				}
 			}
+			PawnKindDef kindDef = existingChild.kindDef;
+			Faction faction2 = faction;
+			bool forceGenerateNewPawn = true;
+			bool allowDead = true;
+			bool allowDowned = true;
+			bool canGeneratePawnRelations = false;
 			Gender? fixedGender = new Gender?(genderToGenerate);
 			float? fixedMelanin = new float?(value3);
 			string fixedLastName = last;
-			PawnGenerationRequest request = new PawnGenerationRequest(existingChild.kindDef, faction, PawnGenerationContext.NonPlayer, -1, true, false, true, true, false, false, 1f, false, allowGay, true, false, false, null, new float?(value), new float?(value2), fixedGender, fixedMelanin, fixedLastName);
+			PawnGenerationRequest request = new PawnGenerationRequest(kindDef, faction2, PawnGenerationContext.NonPlayer, -1, forceGenerateNewPawn, false, allowDead, allowDowned, canGeneratePawnRelations, false, 1f, false, allowGay, true, false, false, false, false, null, null, new float?(value), new float?(value2), fixedGender, fixedMelanin, fixedLastName);
 			Pawn pawn = PawnGenerator.GeneratePawn(request);
 			if (!Find.WorldPawns.Contains(pawn))
 			{
-				Find.WorldPawns.PassToWorld(pawn, PawnDiscardDecideMode.KeepForever);
+				Find.WorldPawns.PassToWorld(pawn, PawnDiscardDecideMode.Decide);
 			}
 			return pawn;
 		}

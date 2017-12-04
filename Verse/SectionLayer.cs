@@ -1,4 +1,3 @@
-using RimWorld;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -26,14 +25,6 @@ namespace Verse
 			get
 			{
 				return true;
-			}
-		}
-
-		public virtual SectionLayerPhaseDef Phase
-		{
-			get
-			{
-				return SectionLayerPhaseDefOf.Main;
 			}
 		}
 
@@ -77,7 +68,7 @@ namespace Verse
 			{
 				if (this.subMeshes[i].verts.Count > 0)
 				{
-					this.subMeshes[i].FinalizeMesh(tags, false);
+					this.subMeshes[i].FinalizeMesh(tags);
 				}
 			}
 		}

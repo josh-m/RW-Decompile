@@ -20,8 +20,8 @@ namespace RimWorld.BaseGen
 			else
 			{
 				parms = default(ItemCollectionGeneratorParams);
-				parms.count = rp.rect.Cells.Count((IntVec3 x) => x.Standable(map) && x.GetFirstItem(map) == null);
-				parms.techLevel = TechLevel.Spacer;
+				parms.count = new int?(rp.rect.Cells.Count((IntVec3 x) => x.Standable(map) && x.GetFirstItem(map) == null));
+				parms.techLevel = new TechLevel?((rp.faction == null) ? TechLevel.Spacer : rp.faction.def.techLevel);
 			}
 			List<Thing> list = itemCollectionGeneratorDef.Worker.Generate(parms);
 			for (int i = 0; i < list.Count; i++)

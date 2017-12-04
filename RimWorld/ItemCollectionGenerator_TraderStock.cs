@@ -7,33 +7,38 @@ namespace RimWorld
 {
 	public class ItemCollectionGenerator_TraderStock : ItemCollectionGenerator
 	{
-		protected override ItemCollectionGeneratorParams RandomTestParams
-		{
-			get
-			{
-				ItemCollectionGeneratorParams randomTestParams = base.RandomTestParams;
-				randomTestParams.traderDef = DefDatabase<TraderKindDef>.AllDefsListForReading.RandomElement<TraderKindDef>();
-				randomTestParams.forTile = ((Find.VisibleMap == null) ? -1 : Find.VisibleMap.Tile);
-				randomTestParams.forFaction = (Find.FactionManager.RandomAlliedFaction(false, false, true) ?? Find.FactionManager.RandomEnemyFaction(false, false, true));
-				return randomTestParams;
-			}
-		}
-
 		protected override void Generate(ItemCollectionGeneratorParams parms, List<Thing> outThings)
 		{
-			TraderKindDef traderDef = parms.traderDef;
-			int forTile = parms.forTile;
-			Faction forFaction = parms.forFaction;
-			for (int i = 0; i < traderDef.stockGenerators.Count; i++)
+			TraderKindDef traderKindDef = parms.traderDef ?? DefDatabase<TraderKindDef>.AllDefsListForReading.RandomElement<TraderKindDef>();
+			Faction traderFaction = parms.traderFaction;
+			int? tile = parms.tile;
+			int forTile;
+			if (tile.HasValue)
 			{
-				StockGenerator stockGenerator = traderDef.stockGenerators[i];
+				forTile = parms.tile.Value;
+			}
+			else if (Find.AnyPlayerHomeMap != null)
+			{
+				forTile = Find.AnyPlayerHomeMap.Tile;
+			}
+			else if (Find.VisibleMap != null)
+			{
+				forTile = Find.VisibleMap.Tile;
+			}
+			else
+			{
+				forTile = -1;
+			}
+			for (int i = 0; i < traderKindDef.stockGenerators.Count; i++)
+			{
+				StockGenerator stockGenerator = traderKindDef.stockGenerators[i];
 				foreach (Thing current in stockGenerator.GenerateThings(forTile))
 				{
 					if (current.def.tradeability != Tradeability.Stockable)
 					{
 						Log.Error(string.Concat(new object[]
 						{
-							traderDef,
+							traderKindDef,
 							" generated carrying ",
 							current,
 							" which has is not Stockable. Ignoring..."
@@ -41,7 +46,7 @@ namespace RimWorld
 					}
 					else
 					{
-						current.PostGeneratedForTrader(traderDef, forTile, forFaction);
+						current.PostGeneratedForTrader(traderKindDef, forTile, traderFaction);
 						outThings.Add(current);
 					}
 				}
@@ -52,7 +57,7 @@ namespace RimWorld
 		{
 			ItemCollectionGeneratorParams parms = default(ItemCollectionGeneratorParams);
 			parms.traderDef = td;
-			parms.forTile = -1;
+			parms.tile = new int?(-1);
 			float num = 0f;
 			for (int i = 0; i < 50; i++)
 			{
@@ -71,7 +76,7 @@ namespace RimWorld
 			stringBuilder.AppendLine("Average total market value:" + this.AverageTotalStockValue(td).ToString("F0"));
 			ItemCollectionGeneratorParams parms = default(ItemCollectionGeneratorParams);
 			parms.traderDef = td;
-			parms.forTile = -1;
+			parms.tile = new int?(-1);
 			stringBuilder.AppendLine("Example generated stock:\n\n");
 			foreach (Thing current in base.Generate(parms))
 			{

@@ -167,10 +167,10 @@ namespace RimWorld.BaseGen
 			bool flag = false;
 			if (thingDef.category == ThingCategory.Building)
 			{
-				flag = rect.TryFindRandomInnerRectTouchingEdge(size, out empty, (CellRect x) => basePredicate(x) && !BaseGenUtility.AnyDoorCardinalAdjacentTo(x, map) && GenConstruct.TerrainCanSupport(x, map, thingDef));
+				flag = rect.TryFindRandomInnerRectTouchingEdge(size, out empty, (CellRect x) => basePredicate(x) && !BaseGenUtility.AnyDoorAdjacentCardinalTo(x, map) && GenConstruct.TerrainCanSupport(x, map, thingDef));
 				if (!flag)
 				{
-					flag = rect.TryFindRandomInnerRectTouchingEdge(size, out empty, (CellRect x) => basePredicate(x) && !BaseGenUtility.AnyDoorCardinalAdjacentTo(x, map));
+					flag = rect.TryFindRandomInnerRectTouchingEdge(size, out empty, (CellRect x) => basePredicate(x) && !BaseGenUtility.AnyDoorAdjacentCardinalTo(x, map));
 				}
 			}
 			if (!flag && !rect.TryFindRandomInnerRectTouchingEdge(size, out empty, basePredicate))

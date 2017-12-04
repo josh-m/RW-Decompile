@@ -8,15 +8,15 @@ namespace RimWorld
 {
 	public class Pawn_FilthTracker : IExposable
 	{
+		private Pawn pawn;
+
+		private List<Filth> carriedFilth = new List<Filth>();
+
 		private const float FilthPickupChance = 0.25f;
 
 		private const float FilthDropChance = 0.05f;
 
 		private const int MaxCarriedTerrainFilthThickness = 1;
-
-		private Pawn pawn;
-
-		private List<Filth> carriedFilth = new List<Filth>();
 
 		public string FilthReport
 		{

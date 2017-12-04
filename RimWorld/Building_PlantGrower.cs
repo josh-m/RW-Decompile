@@ -12,6 +12,14 @@ namespace RimWorld
 
 		private CompPowerTrader compPower;
 
+		IEnumerable<IntVec3> IPlantToGrowSettable.Cells
+		{
+			get
+			{
+				return this.OccupiedRect().Cells;
+			}
+		}
+
 		public IEnumerable<Plant> PlantsOnMe
 		{
 			get
@@ -116,11 +124,6 @@ namespace RimWorld
 		public bool CanAcceptSowNow()
 		{
 			return this.compPower == null || this.compPower.PowerOn;
-		}
-
-		virtual Map get_Map()
-		{
-			return base.Map;
 		}
 	}
 }

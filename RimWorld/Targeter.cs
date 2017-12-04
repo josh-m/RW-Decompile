@@ -43,7 +43,7 @@ namespace RimWorld
 			{
 				Job job = new Job(JobDefOf.UseVerbOnThing);
 				job.verbToUse = verb;
-				verb.CasterPawn.jobs.StartJob(job, JobCondition.None, null, false, true, null, null);
+				verb.CasterPawn.jobs.StartJob(job, JobCondition.None, null, false, true, null, null, false);
 			}
 			this.action = null;
 			this.caster = null;
@@ -141,11 +141,11 @@ namespace RimWorld
 			{
 				if (!this.targetingVerb.verbProps.MeleeRange)
 				{
-					if (this.targetingVerb.verbProps.minRange < GenRadial.MaxRadialPatternRadius)
+					if (this.targetingVerb.verbProps.minRange > 0f && this.targetingVerb.verbProps.minRange < GenRadial.MaxRadialPatternRadius)
 					{
 						GenDraw.DrawRadiusRing(this.targetingVerb.caster.Position, this.targetingVerb.verbProps.minRange);
 					}
-					if (this.targetingVerb.verbProps.range < GenRadial.MaxRadialPatternRadius)
+					if (this.targetingVerb.verbProps.range < (float)(Find.VisibleMap.Size.x + Find.VisibleMap.Size.z) && this.targetingVerb.verbProps.range < GenRadial.MaxRadialPatternRadius)
 					{
 						GenDraw.DrawRadiusRing(this.targetingVerb.caster.Position, this.targetingVerb.verbProps.range);
 					}
@@ -154,10 +154,21 @@ namespace RimWorld
 				if (targ.IsValid)
 				{
 					GenDraw.DrawTargetHighlight(targ);
+					bool flag;
+					float num = this.targetingVerb.HighlightFieldRadiusAroundTarget(out flag);
 					ShootLine shootLine;
-					if (this.targetingVerb.HighlightFieldRadiusAroundTarget() > 0.2f && this.targetingVerb.TryFindShootLineFromTo(this.targetingVerb.caster.Position, targ, out shootLine))
+					if (num > 0.2f && this.targetingVerb.TryFindShootLineFromTo(this.targetingVerb.caster.Position, targ, out shootLine))
 					{
-						GenExplosion.RenderPredictedAreaOfEffect(shootLine.Dest, this.targetingVerb.HighlightFieldRadiusAroundTarget());
+						if (flag)
+						{
+							GenExplosion.RenderPredictedAreaOfEffect(shootLine.Dest, num);
+						}
+						else
+						{
+							GenDraw.DrawFieldEdges((from x in GenRadial.RadialCellsAround(shootLine.Dest, num, true)
+							where x.InBounds(Find.VisibleMap)
+							select x).ToList<IntVec3>());
+						}
 					}
 				}
 			}

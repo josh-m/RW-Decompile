@@ -49,25 +49,27 @@ namespace RimWorld
 			int numKinds = this.kindCountRange.RandomInRange;
 			int count = this.countRange.RandomInRange;
 			List<PawnKindDef> kinds = new List<PawnKindDef>();
-			for (int i = 0; i < numKinds; i++)
+			for (int j = 0; j < numKinds; j++)
+			{
+				PawnKindDef item;
+				if (!(from k in DefDatabase<PawnKindDef>.AllDefs
+				where !kinds.Contains(k) && this.$this.PawnKindAllowed(k, forTile)
+				select k).TryRandomElementByWeight((PawnKindDef k) => this.$this.SelectionChance(k), out item))
+				{
+					break;
+				}
+				kinds.Add(item);
+			}
+			for (int i = 0; i < count; i++)
 			{
 				PawnKindDef kind;
-				if (!(from k in DefDatabase<PawnKindDef>.AllDefs
-				where !this.<kinds>__2.Contains(k) && this.<>f__this.PawnKindAllowed(k, this.forTile)
-				select k).TryRandomElementByWeight((PawnKindDef k) => this.<>f__this.SelectionChance(k), out kind))
+				if (!kinds.TryRandomElement(out kind))
 				{
 					break;
 				}
-				kinds.Add(kind);
-			}
-			for (int j = 0; j < count; j++)
-			{
-				PawnKindDef kind2;
-				if (!kinds.TryRandomElement(out kind2))
-				{
-					break;
-				}
-				PawnGenerationRequest request = new PawnGenerationRequest(kind2, null, PawnGenerationContext.NonPlayer, forTile, false, false, false, false, true, false, 1f, false, true, true, false, false, null, null, null, null, null, null);
+				PawnKindDef kind2 = kind;
+				int forTile2 = forTile;
+				PawnGenerationRequest request = new PawnGenerationRequest(kind2, null, PawnGenerationContext.NonPlayer, forTile2, false, false, false, false, true, false, 1f, false, true, true, false, false, false, false, null, null, null, null, null, null, null);
 				yield return PawnGenerator.GeneratePawn(request);
 			}
 		}
@@ -79,7 +81,7 @@ namespace RimWorld
 
 		public override bool HandlesThingDef(ThingDef thingDef)
 		{
-			return thingDef.category == ThingCategory.Pawn && thingDef.race.Animal;
+			return thingDef.category == ThingCategory.Pawn && thingDef.race.Animal && thingDef.tradeability != Tradeability.Never;
 		}
 
 		private bool PawnKindAllowed(PawnKindDef kind, int forTile)
@@ -100,7 +102,7 @@ namespace RimWorld
 					return false;
 				}
 			}
-			return kind.race.tradeTags != null && this.tradeTags.Find((string x) => kind.race.tradeTags.Contains(x)) != null;
+			return kind.race.tradeTags != null && this.tradeTags.Find((string x) => kind.race.tradeTags.Contains(x)) != null && kind.race.tradeability == Tradeability.Stockable;
 		}
 
 		public void LogAnimalChances()

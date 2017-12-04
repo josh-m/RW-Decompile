@@ -53,7 +53,7 @@ namespace RimWorld
 		private FiringIncident GenerateQueuedThreatSmall(IIncidentTarget target)
 		{
 			IncidentDef incidentDef;
-			if (!this.UsableIncidentsInCategory(IncidentCategory.ThreatSmall, target).TryRandomElementByWeight(new Func<IncidentDef, float>(base.IncidentChanceFinal), out incidentDef))
+			if (!this.UsableIncidentsInCategory(this.Props.threatSmallCategory, target).TryRandomElementByWeight(new Func<IncidentDef, float>(base.IncidentChanceFinal), out incidentDef))
 			{
 				return null;
 			}
@@ -65,9 +65,9 @@ namespace RimWorld
 
 		private FiringIncident GenerateQueuedThreatBig(IIncidentTarget target)
 		{
-			IncidentParms parms = this.GenerateParms(IncidentCategory.ThreatBig, target);
+			IncidentParms parms = this.GenerateParms(this.Props.threatBigCategory, target);
 			IncidentDef raidEnemy;
-			if (GenDate.DaysPassed < 20)
+			if ((float)GenDate.DaysPassed < this.Props.minDaysBeforeNonRaidThreatBig)
 			{
 				if (!IncidentDefOf.RaidEnemy.Worker.CanFireNow(target))
 				{
@@ -76,7 +76,7 @@ namespace RimWorld
 				raidEnemy = IncidentDefOf.RaidEnemy;
 			}
 			else if (!(from def in DefDatabase<IncidentDef>.AllDefs
-			where def.category == IncidentCategory.ThreatBig && parms.points >= def.minThreatPoints && def.Worker.CanFireNow(target)
+			where def.category == this.Props.threatBigCategory && parms.points >= def.minThreatPoints && def.Worker.CanFireNow(target)
 			select def).TryRandomElementByWeight(new Func<IncidentDef, float>(base.IncidentChanceFinal), out raidEnemy))
 			{
 				return null;

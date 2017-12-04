@@ -1,24 +1,39 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using Verse;
 using Verse.Noise;
 
 namespace RimWorld.Planet
 {
-	public sealed class World : IIncidentTarget, IExposable, ILoadReferenceable, IThingHolder
+	public sealed class World : IThingHolder, IExposable, IIncidentTarget, ILoadReferenceable
 	{
 		public WorldInfo info = new WorldInfo();
 
 		public List<WorldComponent> components = new List<WorldComponent>();
+
+		public FactionManager factionManager;
+
+		public UniqueIDsManager uniqueIDsManager;
+
+		public WorldPawns worldPawns;
+
+		public WorldObjectsHolder worldObjects;
+
+		public WorldSettings settings;
+
+		public GameConditionManager gameConditionManager;
+
+		public StoryState storyState;
+
+		public WorldFeatures features;
 
 		public WorldGrid grid;
 
 		public WorldPathGrid pathGrid;
 
 		public WorldRenderer renderer;
-
-		public WorldObjectsHolder worldObjects;
 
 		public WorldInterface UI;
 
@@ -32,19 +47,9 @@ namespace RimWorld.Planet
 
 		public WorldReachability reachability;
 
-		public WorldSettings settings;
-
-		public FactionManager factionManager;
-
-		public UniqueIDsManager uniqueIDsManager;
-
-		public WorldPawns worldPawns;
-
 		public WorldFloodFiller floodFiller;
 
-		public GameConditionManager gameConditionManager;
-
-		public StoryState storyState;
+		public ConfiguredTicksAbsAtGameStartCache ticksAbsCache;
 
 		public TileTemperaturesComp tileTemperatures;
 
@@ -94,24 +99,65 @@ namespace RimWorld.Planet
 			}
 		}
 
-		public IncidentTargetType Type
+		public float PlayerWealthForStoryteller
 		{
 			get
 			{
-				return IncidentTargetType.World;
+				float num = 0f;
+				List<Map> maps = Find.Maps;
+				for (int i = 0; i < maps.Count; i++)
+				{
+					num += maps[i].PlayerWealthForStoryteller;
+				}
+				List<Caravan> caravans = Find.WorldObjects.Caravans;
+				for (int j = 0; j < caravans.Count; j++)
+				{
+					num += caravans[j].PlayerWealthForStoryteller;
+				}
+				return num;
 			}
+		}
+
+		public IEnumerable<Pawn> FreeColonistsForStoryteller
+		{
+			get
+			{
+				return PawnsFinder.AllMapsCaravansAndTravelingTransportPods_FreeColonists;
+			}
+		}
+
+		public FloatRange IncidentPointsRandomFactorRange
+		{
+			get
+			{
+				return FloatRange.One;
+			}
+		}
+
+		[DebuggerHidden]
+		public IEnumerable<IncidentTargetTypeDef> AcceptedTypes()
+		{
+			yield return IncidentTargetTypeDefOf.World;
 		}
 
 		public void ExposeData()
 		{
 			Scribe_Deep.Look<WorldInfo>(ref this.info, "info", new object[0]);
+			Scribe_Deep.Look<WorldGrid>(ref this.grid, "grid", new object[0]);
 			if (Scribe.mode == LoadSaveMode.LoadingVars)
 			{
 				foreach (WorldGenStepDef current in from gs in DefDatabase<WorldGenStepDef>.AllDefs
 				orderby gs.order
 				select gs)
 				{
-					current.worldGenStep.GenerateFromScribe(this.info.seedString);
+					if (this.grid == null || !this.grid.HasWorldData)
+					{
+						current.worldGenStep.GenerateWithoutWorldData(this.info.seedString);
+					}
+					else
+					{
+						current.worldGenStep.GenerateFromScribe(this.info.seedString);
+					}
 				}
 			}
 			else
@@ -132,6 +178,7 @@ namespace RimWorld.Planet
 			{
 				this
 			});
+			Scribe_Deep.Look<WorldFeatures>(ref this.features, "features", new object[0]);
 			Scribe_Collections.Look<WorldComponent>(ref this.components, "components", LookMode.Deep, new object[]
 			{
 				this
@@ -145,21 +192,22 @@ namespace RimWorld.Planet
 
 		public void ConstructComponents()
 		{
-			this.renderer = new WorldRenderer();
 			this.worldObjects = new WorldObjectsHolder();
+			this.factionManager = new FactionManager();
+			this.uniqueIDsManager = new UniqueIDsManager();
+			this.worldPawns = new WorldPawns();
+			this.settings = new WorldSettings();
+			this.gameConditionManager = new GameConditionManager(null);
+			this.storyState = new StoryState(this);
+			this.renderer = new WorldRenderer();
 			this.UI = new WorldInterface();
 			this.debugDrawer = new WorldDebugDrawer();
 			this.dynamicDrawManager = new WorldDynamicDrawManager();
 			this.pathFinder = new WorldPathFinder();
 			this.pathPool = new WorldPathPool();
 			this.reachability = new WorldReachability();
-			this.factionManager = new FactionManager();
-			this.uniqueIDsManager = new UniqueIDsManager();
-			this.worldPawns = new WorldPawns();
 			this.floodFiller = new WorldFloodFiller();
-			this.settings = new WorldSettings();
-			this.gameConditionManager = new GameConditionManager(null);
-			this.storyState = new StoryState(this);
+			this.ticksAbsCache = new ConfiguredTicksAbsAtGameStartCache();
 			this.components.Clear();
 			this.FillComponents();
 		}
@@ -220,6 +268,7 @@ namespace RimWorld.Planet
 				ExpandableWorldObjectsUtility.ExpandableWorldObjectsUpdate();
 				this.renderer.DrawWorldLayers();
 				this.dynamicDrawManager.DrawDynamicWorldObjects();
+				this.features.UpdateFeatures();
 				NoiseDebugUI.RenderPlanetNoise();
 			}
 			WorldComponentUtility.WorldComponentUpdate(this);
@@ -283,6 +332,25 @@ namespace RimWorld.Planet
 			int index = Rand.Range(0, World.tmpOceanDirs.Count);
 			Rand.PopState();
 			return World.tmpOceanDirs[index];
+		}
+
+		public bool HasCaves(int tile)
+		{
+			Tile tile2 = this.grid[tile];
+			float chance;
+			if (tile2.hilliness >= Hilliness.Mountainous)
+			{
+				chance = 0.5f;
+			}
+			else
+			{
+				if (tile2.hilliness < Hilliness.LargeHills)
+				{
+					return false;
+				}
+				chance = 0.25f;
+			}
+			return Rand.ChanceSeeded(chance, Gen.HashCombineInt(Find.World.info.Seed, tile));
 		}
 
 		public IEnumerable<ThingDef> NaturalRockTypesIn(int tile)

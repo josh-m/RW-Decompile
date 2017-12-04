@@ -142,7 +142,7 @@ namespace RimWorld
 					Messages.Message("MessageBillComplete".Translate(new object[]
 					{
 						this.LabelCap
-					}), (Thing)this.billStack.billGiver, MessageSound.Benefit);
+					}), (Thing)this.billStack.billGiver, MessageTypeDefOf.TaskCompletion);
 				}
 			}
 		}
@@ -158,7 +158,7 @@ namespace RimWorld
 			{
 				Find.WindowStack.Add(new Dialog_BillConfig(this, ((Thing)this.billStack.billGiver).Position));
 			}
-			if (widgetRow.ButtonText(this.repeatMode.GetLabel().PadRight(20), null, true, false))
+			if (widgetRow.ButtonText(this.repeatMode.LabelCap.PadRight(20), null, true, false))
 			{
 				BillRepeatModeUtility.MakeConfigFloatMenu(this);
 			}

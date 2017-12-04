@@ -6,6 +6,14 @@ namespace RimWorld.BaseGen
 {
 	public class SymbolResolver_SingleThing : SymbolResolver
 	{
+		private static Rot4[] tmpRotations = new Rot4[]
+		{
+			Rot4.North,
+			Rot4.South,
+			Rot4.West,
+			Rot4.East
+		};
+
 		public override bool CanResolve(ResolveParams rp)
 		{
 			if (!base.CanResolve(rp))
@@ -58,15 +66,11 @@ namespace RimWorld.BaseGen
 			{
 				thingDef = rp.singleThingToSpawn.def;
 			}
-			Rot4? thingRot = rp.thingRot;
-			Rot4 rot = (!thingRot.HasValue) ? Rot4.North : thingRot.Value;
-			if (!thingDef.rotatable)
-			{
-				rot = Rot4.North;
-			}
+			Rot4? rot = rp.thingRot;
 			IntVec3 loc;
 			if (thingDef.category == ThingCategory.Item)
 			{
+				rot = new Rot4?(Rot4.North);
 				if (!this.TryFindSpawnCellForItem(rp.rect, out loc))
 				{
 					if (rp.singleThingToSpawn != null)
@@ -78,16 +82,34 @@ namespace RimWorld.BaseGen
 			}
 			else
 			{
-				loc = this.FindBestSpawnCellForNonItem(rp.rect, thingDef, rot);
+				bool flag;
+				bool flag2;
+				loc = this.FindBestSpawnCellForNonItem(rp.rect, thingDef, ref rot, out flag, out flag2);
+				if ((flag || flag2) && rp.skipSingleThingIfHasToWipeBuildingOrDoesntFit.HasValue && rp.skipSingleThingIfHasToWipeBuildingOrDoesntFit.Value)
+				{
+					return;
+				}
+			}
+			if (!rot.HasValue)
+			{
+				Log.Error("Could not resolve rotation. Bug.");
 			}
 			Thing thing;
 			if (rp.singleThingToSpawn == null)
 			{
-				ThingDef stuff = rp.singleThingStuff ?? GenStuff.DefaultStuffFor(thingDef);
+				ThingDef stuff;
+				if (rp.singleThingStuff != null && rp.singleThingStuff.stuffProps.CanMake(thingDef))
+				{
+					stuff = rp.singleThingStuff;
+				}
+				else
+				{
+					stuff = GenStuff.RandomStuffByCommonalityFor(thingDef, (rp.faction == null) ? TechLevel.Undefined : rp.faction.def.techLevel);
+				}
 				thing = ThingMaker.MakeThing(thingDef, stuff);
-				Thing arg_185_0 = thing;
+				Thing arg_1F2_0 = thing;
 				int? singleThingStackCount = rp.singleThingStackCount;
-				arg_185_0.stackCount = ((!singleThingStackCount.HasValue) ? 1 : singleThingStackCount.Value);
+				arg_1F2_0.stackCount = ((!singleThingStackCount.HasValue) ? 1 : singleThingStackCount.Value);
 				if (thing.stackCount <= 0)
 				{
 					thing.stackCount = 1;
@@ -101,15 +123,23 @@ namespace RimWorld.BaseGen
 				{
 					compQuality.SetQuality(QualityUtility.RandomBaseGenItemQuality(), ArtGenerationContext.Outsider);
 				}
+				if (rp.postThingGenerate != null)
+				{
+					rp.postThingGenerate(thing);
+				}
 			}
 			else
 			{
 				thing = rp.singleThingToSpawn;
 			}
-			thing = GenSpawn.Spawn(thing, loc, BaseGen.globalSettings.map, rot, false);
+			thing = GenSpawn.Spawn(thing, loc, BaseGen.globalSettings.map, rot.Value, false);
 			if (thing != null && thing.def.category == ThingCategory.Item)
 			{
 				thing.SetForbidden(true, false);
+			}
+			if (rp.postThingSpawn != null)
+			{
+				rp.postThingSpawn(thing);
 			}
 		}
 
@@ -134,7 +164,40 @@ namespace RimWorld.BaseGen
 			}, out result);
 		}
 
-		private IntVec3 FindBestSpawnCellForNonItem(CellRect rect, ThingDef thingDef, Rot4 rot)
+		private IntVec3 FindBestSpawnCellForNonItem(CellRect rect, ThingDef thingDef, ref Rot4? rot, out bool hasToWipeBuilding, out bool doesntFit)
+		{
+			if (!thingDef.rotatable)
+			{
+				rot = new Rot4?(Rot4.North);
+			}
+			if (!rot.HasValue)
+			{
+				SymbolResolver_SingleThing.tmpRotations.Shuffle<Rot4>();
+				for (int i = 0; i < SymbolResolver_SingleThing.tmpRotations.Length; i++)
+				{
+					IntVec3 result = this.FindBestSpawnCellForNonItem(rect, thingDef, SymbolResolver_SingleThing.tmpRotations[i], out hasToWipeBuilding, out doesntFit);
+					if (!hasToWipeBuilding && !doesntFit)
+					{
+						rot = new Rot4?(SymbolResolver_SingleThing.tmpRotations[i]);
+						return result;
+					}
+				}
+				for (int j = 0; j < SymbolResolver_SingleThing.tmpRotations.Length; j++)
+				{
+					IntVec3 result2 = this.FindBestSpawnCellForNonItem(rect, thingDef, SymbolResolver_SingleThing.tmpRotations[j], out hasToWipeBuilding, out doesntFit);
+					if (!doesntFit)
+					{
+						rot = new Rot4?(SymbolResolver_SingleThing.tmpRotations[j]);
+						return result2;
+					}
+				}
+				rot = new Rot4?(Rot4.Random);
+				return this.FindBestSpawnCellForNonItem(rect, thingDef, rot.Value, out hasToWipeBuilding, out doesntFit);
+			}
+			return this.FindBestSpawnCellForNonItem(rect, thingDef, rot.Value, out hasToWipeBuilding, out doesntFit);
+		}
+
+		private IntVec3 FindBestSpawnCellForNonItem(CellRect rect, ThingDef thingDef, Rot4 rot, out bool hasToWipeBuilding, out bool doesntFit)
 		{
 			Map map = BaseGen.globalSettings.map;
 			if (thingDef.category == ThingCategory.Building)
@@ -142,8 +205,10 @@ namespace RimWorld.BaseGen
 				foreach (IntVec3 current in rect.Cells.InRandomOrder(null))
 				{
 					CellRect rect2 = GenAdj.OccupiedRect(current, rot, thingDef.size);
-					if (rect2.FullyContainedWithin(rect) && !BaseGenUtility.AnyDoorCardinalAdjacentTo(rect2, map) && !this.AnyNonStandableCellOrAnyBuildingInside(rect2) && GenConstruct.TerrainCanSupport(rect2, map, thingDef))
+					if (rect2.FullyContainedWithin(rect) && !BaseGenUtility.AnyDoorAdjacentCardinalTo(rect2, map) && !this.AnyNonStandableCellOrAnyBuildingInside(rect2) && GenConstruct.TerrainCanSupport(rect2, map, thingDef))
 					{
+						hasToWipeBuilding = false;
+						doesntFit = false;
 						IntVec3 result = current;
 						return result;
 					}
@@ -151,8 +216,10 @@ namespace RimWorld.BaseGen
 				foreach (IntVec3 current2 in rect.Cells.InRandomOrder(null))
 				{
 					CellRect rect3 = GenAdj.OccupiedRect(current2, rot, thingDef.size);
-					if (rect3.FullyContainedWithin(rect) && !BaseGenUtility.AnyDoorCardinalAdjacentTo(rect3, map) && !this.AnyNonStandableCellOrAnyBuildingInside(rect3))
+					if (rect3.FullyContainedWithin(rect) && !BaseGenUtility.AnyDoorAdjacentCardinalTo(rect3, map) && !this.AnyNonStandableCellOrAnyBuildingInside(rect3))
 					{
+						hasToWipeBuilding = false;
+						doesntFit = false;
 						IntVec3 result = current2;
 						return result;
 					}
@@ -163,6 +230,8 @@ namespace RimWorld.BaseGen
 				CellRect rect4 = GenAdj.OccupiedRect(current3, rot, thingDef.size);
 				if (rect4.FullyContainedWithin(rect) && !this.AnyNonStandableCellOrAnyBuildingInside(rect4))
 				{
+					hasToWipeBuilding = false;
+					doesntFit = false;
 					IntVec3 result = current3;
 					return result;
 				}
@@ -171,6 +240,8 @@ namespace RimWorld.BaseGen
 			{
 				if (GenAdj.OccupiedRect(current4, rot, thingDef.size).FullyContainedWithin(rect))
 				{
+					hasToWipeBuilding = true;
+					doesntFit = false;
 					IntVec3 result = current4;
 					return result;
 				}
@@ -193,6 +264,8 @@ namespace RimWorld.BaseGen
 			{
 				centerCell.z -= cellRect.maxZ - map.Size.z + 1;
 			}
+			hasToWipeBuilding = true;
+			doesntFit = true;
 			return centerCell;
 		}
 

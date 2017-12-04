@@ -40,6 +40,7 @@ namespace Verse
 			else
 			{
 				this.icon = thingDef.uiIcon;
+				this.iconAngle = thingDef.uiIconAngle;
 				this.defaultLabel = "CommandSelectPlantToGrow".Translate(new object[]
 				{
 					thingDef.label
@@ -78,9 +79,7 @@ namespace Verse
 							")"
 						});
 					}
-					List<FloatMenuOption> arg_121_0 = list;
-					Func<Rect, bool> extraPartOnGUI = (Rect rect) => Widgets.InfoCardButton(rect.x + 5f, rect.y + (rect.height - 24f) / 2f, localPlantDef);
-					arg_121_0.Add(new FloatMenuOption(text, delegate
+					list.Add(new FloatMenuOption(text, delegate
 					{
 						string s = this.tutorTag + "-" + localPlantDef.defName;
 						if (!TutorSystem.AllowAction(s))
@@ -94,7 +93,7 @@ namespace Verse
 						PlayerKnowledgeDatabase.KnowledgeDemonstrated(ConceptDefOf.SetGrowingZonePlant, KnowledgeAmount.Total);
 						this.WarnAsAppropriate(localPlantDef);
 						TutorSystem.Notify_Event(s);
-					}, MenuOptionPriority.Default, null, null, 29f, extraPartOnGUI, null));
+					}, MenuOptionPriority.Default, null, null, 29f, (Rect rect) => Widgets.InfoCardButton(rect.x + 5f, rect.y + (rect.height - 24f) / 2f, localPlantDef), null));
 				}
 			}
 			Find.WindowStack.Add(new FloatMenu(list));
@@ -126,6 +125,32 @@ namespace Verse
 					plantDef.label,
 					plantDef.plant.sowMinSkill
 				}).CapitalizeFirst(), null, null, null, null, null, false));
+			}
+			if (plantDef.plant.cavePlant)
+			{
+				IntVec3 cell = IntVec3.Invalid;
+				for (int i = 0; i < this.settables.Count; i++)
+				{
+					foreach (IntVec3 current2 in this.settables[i].Cells)
+					{
+						if (!current2.Roofed(this.settables[i].Map) || this.settables[i].Map.glowGrid.GameGlowAt(current2, true) > 0f)
+						{
+							cell = current2;
+							break;
+						}
+					}
+					if (cell.IsValid)
+					{
+						break;
+					}
+				}
+				if (cell.IsValid)
+				{
+					Messages.Message("MessageWarningCavePlantsExposedToLight".Translate(new object[]
+					{
+						plantDef.label
+					}).CapitalizeFirst(), new TargetInfo(cell, this.settable.Map, false), MessageTypeDefOf.RejectInput);
+				}
 			}
 		}
 

@@ -121,5 +121,43 @@ namespace Verse
 			num2 += 3.14159274f;
 			return new Vector3(Mathf.Cos(num2), Mathf.Sin(num2));
 		}
+
+		public static Vector2 InverseQuadBilinear(Vector2 p, Vector2 p0, Vector2 p1, Vector2 p2, Vector2 p3)
+		{
+			float num = (p0 - p).Cross(p0 - p2);
+			float num2 = ((p0 - p).Cross(p1 - p3) + (p1 - p).Cross(p0 - p2)) / 2f;
+			float num3 = (p1 - p).Cross(p1 - p3);
+			float num4 = num2 * num2 - num * num3;
+			if (num4 < 0f)
+			{
+				return new Vector2(-1f, -1f);
+			}
+			num4 = Mathf.Sqrt(num4);
+			float num5;
+			if (Mathf.Abs(num - 2f * num2 + num3) < 0.0001f)
+			{
+				num5 = num / (num - num3);
+			}
+			else
+			{
+				float num6 = (num - num2 + num4) / (num - 2f * num2 + num3);
+				float num7 = (num - num2 - num4) / (num - 2f * num2 + num3);
+				if (Mathf.Abs(num6 - 0.5f) < Mathf.Abs(num7 - 0.5f))
+				{
+					num5 = num6;
+				}
+				else
+				{
+					num5 = num7;
+				}
+			}
+			float num8 = (1f - num5) * (p0.x - p2.x) + num5 * (p1.x - p3.x);
+			float num9 = (1f - num5) * (p0.y - p2.y) + num5 * (p1.y - p3.y);
+			if (Mathf.Abs(num8) < Mathf.Abs(num9))
+			{
+				return new Vector2(num5, ((1f - num5) * (p0.y - p.y) + num5 * (p1.y - p.y)) / num9);
+			}
+			return new Vector2(num5, ((1f - num5) * (p0.x - p.x) + num5 * (p1.x - p.x)) / num8);
+		}
 	}
 }

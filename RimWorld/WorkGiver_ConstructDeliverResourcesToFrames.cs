@@ -25,6 +25,10 @@ namespace RimWorld
 			{
 				return null;
 			}
+			if (GenConstruct.FirstBlockingThing(frame, pawn) != null)
+			{
+				return GenConstruct.HandleBlockingThingJob(frame, pawn, forced);
+			}
 			if (!GenConstruct.CanConstruct(frame, pawn, forced))
 			{
 				return null;

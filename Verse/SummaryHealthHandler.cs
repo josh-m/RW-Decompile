@@ -22,7 +22,6 @@ namespace Verse
 				}
 				if (this.dirty)
 				{
-					ProfilerThreadCheck.BeginSample("Recache summary health percent");
 					List<Hediff> hediffs = this.pawn.health.hediffSet.hediffs;
 					float num = 1f;
 					for (int i = 0; i < hediffs.Count; i++)
@@ -40,7 +39,6 @@ namespace Verse
 						num *= 1f - num3;
 					}
 					this.cachedSummaryHealthPercent = Mathf.Clamp(num, 0.05f, 1f);
-					ProfilerThreadCheck.EndSample();
 					this.dirty = false;
 				}
 				return this.cachedSummaryHealthPercent;

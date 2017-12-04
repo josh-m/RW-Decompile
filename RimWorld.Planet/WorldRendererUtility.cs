@@ -126,7 +126,7 @@ namespace RimWorld.Planet
 			Vector3 upwards;
 			if (randomizeRotation)
 			{
-				upwards = Rand.PointOnSphere;
+				upwards = Rand.UnitVector3;
 			}
 			else
 			{
@@ -162,6 +162,13 @@ namespace RimWorld.Planet
 			subMesh.uvs.Add(new Vector2(num3, num4 + num2));
 			subMesh.uvs.Add(new Vector2(num3 + num, num4 + num2));
 			subMesh.uvs.Add(new Vector2(num3 + num, num4));
+		}
+
+		public static bool HiddenBehindTerrainNow(Vector3 pos)
+		{
+			Vector3 normalized = pos.normalized;
+			Vector3 currentlyLookingAtPointOnSphere = Find.WorldCameraDriver.CurrentlyLookingAtPointOnSphere;
+			return Vector3.Angle(normalized, currentlyLookingAtPointOnSphere) > 73f;
 		}
 	}
 }

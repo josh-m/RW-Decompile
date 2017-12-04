@@ -97,13 +97,13 @@ namespace RimWorld
 			int selectedTile = Find.WorldInterface.SelectedTile;
 			if (selectedTile < 0)
 			{
-				Messages.Message("MustSelectLandingSite".Translate(), MessageSound.RejectInput);
+				Messages.Message("MustSelectLandingSite".Translate(), MessageTypeDefOf.RejectInput);
 				return false;
 			}
 			StringBuilder stringBuilder = new StringBuilder();
 			if (!TileFinder.IsValidTileForNewSettlement(selectedTile, stringBuilder))
 			{
-				Messages.Message(stringBuilder.ToString(), MessageSound.RejectInput);
+				Messages.Message(stringBuilder.ToString(), MessageTypeDefOf.RejectInput);
 				return false;
 			}
 			Tile tile = Find.WorldGrid[selectedTile];
@@ -132,9 +132,10 @@ namespace RimWorld
 			float num4 = Page.BottomButSize.x * (float)num3 + 10f * (float)(num3 + 1);
 			float num5 = (float)num2 * Page.BottomButSize.y + 10f * (float)(num2 + 1);
 			Rect rect = new Rect(((float)UI.screenWidth - num4) / 2f, (float)UI.screenHeight - num5 - 4f, num4, num5);
-			if (Find.WindowStack.IsOpen<WorldInspectPane>() && rect.x < InspectPaneUtility.PaneSize.x + 4f)
+			WorldInspectPane worldInspectPane = Find.WindowStack.WindowOfType<WorldInspectPane>();
+			if (worldInspectPane != null && rect.x < InspectPaneUtility.PaneWidthFor(worldInspectPane) + 4f)
 			{
-				rect.x = InspectPaneUtility.PaneSize.x + 4f;
+				rect.x = InspectPaneUtility.PaneWidthFor(worldInspectPane) + 4f;
 			}
 			Widgets.DrawWindowBackground(rect);
 			float num6 = rect.xMin + 10f;

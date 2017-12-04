@@ -45,7 +45,7 @@ namespace RimWorld
 				return null;
 			}
 			bool flag;
-			if (pawn.RaceProps.Animal)
+			if (pawn.AnimalOrWildMan())
 			{
 				flag = true;
 			}
@@ -54,11 +54,14 @@ namespace RimWorld
 				Hediff firstHediffOfDef = pawn.health.hediffSet.GetFirstHediffOfDef(HediffDefOf.Malnutrition, false);
 				flag = (firstHediffOfDef != null && firstHediffOfDef.Severity > 0.4f);
 			}
-			bool desperate = pawn.needs.food.CurCategory == HungerCategory.Starving;
+			bool flag2 = pawn.needs.food.CurCategory == HungerCategory.Starving;
+			bool desperate = flag2;
+			bool canRefillDispenser = true;
+			bool canUseInventory = true;
 			bool allowCorpse = flag;
 			Thing thing;
-			ThingDef def;
-			if (!FoodUtility.TryFindBestFoodSourceFor(pawn, pawn, desperate, out thing, out def, true, true, false, allowCorpse, false))
+			ThingDef thingDef;
+			if (!FoodUtility.TryFindBestFoodSourceFor(pawn, pawn, desperate, out thing, out thingDef, canRefillDispenser, canUseInventory, false, allowCorpse, false, pawn.IsWildMan()))
 			{
 				return null;
 			}
@@ -69,6 +72,10 @@ namespace RimWorld
 				{
 					killIncappedTarget = true
 				};
+			}
+			if (thing is Plant && thing.def.plant.harvestedThingDef == thingDef)
+			{
+				return new Job(JobDefOf.Harvest, thing);
 			}
 			Building_NutrientPasteDispenser building_NutrientPasteDispenser = thing as Building_NutrientPasteDispenser;
 			if (building_NutrientPasteDispenser != null && !building_NutrientPasteDispenser.HasEnoughFeedstockInHoppers())
@@ -83,16 +90,15 @@ namespace RimWorld
 						return job;
 					}
 				}
-				thing = FoodUtility.BestFoodSourceOnMap(pawn, pawn, desperate, FoodPreferability.MealLavish, false, !pawn.IsTeetotaler(), false, false, false, false, false);
+				thing = FoodUtility.BestFoodSourceOnMap(pawn, pawn, flag2, out thingDef, FoodPreferability.MealLavish, false, !pawn.IsTeetotaler(), false, false, false, false, false, false);
 				if (thing == null)
 				{
 					return null;
 				}
-				def = thing.def;
 			}
 			return new Job(JobDefOf.Ingest, thing)
 			{
-				count = FoodUtility.WillIngestStackCountOf(pawn, def)
+				count = FoodUtility.WillIngestStackCountOf(pawn, thingDef)
 			};
 		}
 	}

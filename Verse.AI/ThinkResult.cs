@@ -10,6 +10,8 @@ namespace Verse.AI
 
 		private JobTag? tag;
 
+		private bool fromQueue;
+
 		public Job Job
 		{
 			get
@@ -34,6 +36,14 @@ namespace Verse.AI
 			}
 		}
 
+		public bool FromQueue
+		{
+			get
+			{
+				return this.fromQueue;
+			}
+		}
+
 		public bool IsValid
 		{
 			get
@@ -46,15 +56,16 @@ namespace Verse.AI
 		{
 			get
 			{
-				return new ThinkResult(null, null, null);
+				return new ThinkResult(null, null, null, false);
 			}
 		}
 
-		public ThinkResult(Job job, ThinkNode sourceNode, JobTag? tag = null)
+		public ThinkResult(Job job, ThinkNode sourceNode, JobTag? tag = null, bool fromQueue = false)
 		{
 			this.jobInt = job;
 			this.sourceNodeInt = sourceNode;
 			this.tag = tag;
+			this.fromQueue = fromQueue;
 		}
 
 		public override string ToString()
@@ -76,7 +87,8 @@ namespace Verse.AI
 			int seed = 0;
 			seed = Gen.HashCombine<Job>(seed, this.jobInt);
 			seed = Gen.HashCombine<ThinkNode>(seed, this.sourceNodeInt);
-			return Gen.HashCombine<JobTag?>(seed, this.tag);
+			seed = Gen.HashCombine<JobTag?>(seed, this.tag);
+			return Gen.HashCombineStruct<bool>(seed, this.fromQueue);
 		}
 
 		public override bool Equals(object obj)
@@ -86,19 +98,20 @@ namespace Verse.AI
 
 		public bool Equals(ThinkResult other)
 		{
-			bool arg_59_0;
+			int arg_6D_0;
 			if (this.jobInt == other.jobInt && this.sourceNodeInt == other.sourceNodeInt)
 			{
 				JobTag? jobTag = this.tag;
 				JobTag arg_41_0 = jobTag.GetValueOrDefault();
 				JobTag? jobTag2 = other.tag;
-				arg_59_0 = (arg_41_0 == jobTag2.GetValueOrDefault() && jobTag.HasValue == jobTag2.HasValue);
+				if (arg_41_0 == jobTag2.GetValueOrDefault() && jobTag.HasValue == jobTag2.HasValue)
+				{
+					arg_6D_0 = ((this.fromQueue == other.fromQueue) ? 1 : 0);
+					return arg_6D_0 != 0;
+				}
 			}
-			else
-			{
-				arg_59_0 = false;
-			}
-			return arg_59_0;
+			arg_6D_0 = 0;
+			return arg_6D_0 != 0;
 		}
 
 		public static bool operator ==(ThinkResult lhs, ThinkResult rhs)

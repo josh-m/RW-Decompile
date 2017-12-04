@@ -26,7 +26,7 @@ namespace RimWorld.Planet
 			LayerSubMesh subMesh = base.GetSubMesh(WorldMaterials.PlanetGlow);
 			subMesh.verts.AddRange(tmpVerts);
 			subMesh.tris.AddRange(tmpIndices);
-			base.FinalizeMesh(MeshParts.All, true);
+			base.FinalizeMesh(MeshParts.All);
 		}
 	}
 }

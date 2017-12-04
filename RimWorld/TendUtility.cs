@@ -63,6 +63,10 @@ namespace RimWorld
 			{
 				patient.Faction.AffectGoodwillWith(doctor.Faction, 0.3f);
 			}
+			if (doctor != null && doctor.IsColonistPlayerControlled)
+			{
+				patient.records.AccumulateStoryEvent(StoryEventDefOf.TendedByPlayer);
+			}
 			if (doctor != null && doctor.RaceProps.Humanlike && patient.RaceProps.Animal && RelationsUtility.TryDevelopBondRelation(doctor, patient, 0.004f) && doctor.Faction != null && doctor.Faction != patient.Faction)
 			{
 				InteractionWorker_RecruitAttempt.DoRecruit(doctor, patient, 1f, false);

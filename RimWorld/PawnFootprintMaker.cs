@@ -6,19 +6,19 @@ namespace RimWorld
 {
 	public class PawnFootprintMaker
 	{
-		private const float FootprintIntervalDist = 0.632f;
-
-		private const float LeftRightOffsetDist = 0.17f;
-
-		private const float FootprintSplashSize = 2f;
-
 		private Pawn pawn;
 
 		private Vector3 lastFootprintPlacePos;
 
 		private bool lastFootprintRight;
 
+		private const float FootprintIntervalDist = 0.632f;
+
 		private static readonly Vector3 FootprintOffset = new Vector3(0f, 0f, -0.3f);
+
+		private const float LeftRightOffsetDist = 0.17f;
+
+		private const float FootprintSplashSize = 2f;
 
 		public PawnFootprintMaker(Pawn pawn)
 		{

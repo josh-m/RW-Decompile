@@ -20,7 +20,7 @@ namespace Verse
 					t.thingIDNumber
 				}));
 			}
-			t.thingIDNumber = Find.World.uniqueIDsManager.GetNextThingID();
+			t.thingIDNumber = Find.UniqueIDsManager.GetNextThingID();
 		}
 	}
 }

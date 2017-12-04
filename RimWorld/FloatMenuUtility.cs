@@ -52,9 +52,16 @@ namespace RimWorld
 					failStr = "CannotHitTarget".Translate();
 				}
 			}
+			else if (pawn.story.WorkTagIsDisabled(WorkTags.Violent))
+			{
+				failStr = "IsIncapableOfViolenceLower".Translate(new object[]
+				{
+					pawn.NameStringShort
+				});
+			}
 			else
 			{
-				if (!pawn.story.WorkTagIsDisabled(WorkTags.Violent))
+				if (pawn != target.Thing)
 				{
 					return delegate
 					{
@@ -62,10 +69,7 @@ namespace RimWorld
 						pawn.jobs.TryTakeOrderedJob(job, JobTag.Misc);
 					};
 				}
-				failStr = "IsIncapableOfViolenceLower".Translate(new object[]
-				{
-					pawn.NameStringShort
-				});
+				failStr = "CannotAttackSelf".Translate();
 			}
 			return null;
 		}
@@ -95,9 +99,13 @@ namespace RimWorld
 					pawn.NameStringShort
 				});
 			}
+			else if (pawn.meleeVerbs.TryGetMeleeVerb() == null)
+			{
+				failStr = "Incapable".Translate();
+			}
 			else
 			{
-				if (pawn.meleeVerbs.TryGetMeleeVerb() != null)
+				if (pawn != target.Thing)
 				{
 					return delegate
 					{
@@ -110,7 +118,7 @@ namespace RimWorld
 						pawn.jobs.TryTakeOrderedJob(job, JobTag.Misc);
 					};
 				}
-				failStr = "Incapable".Translate();
+				failStr = "CannotAttackSelf".Translate();
 			}
 			return null;
 		}
@@ -132,7 +140,7 @@ namespace RimWorld
 			}
 			if (pawn != null && !pawn.CanReserve(target, 1, -1, null, false) && pawn.CanReserve(target, 1, -1, null, true))
 			{
-				Pawn pawn2 = pawn.Map.reservationManager.FirstReserverWhoseReservationsRespects(target, pawn);
+				Pawn pawn2 = pawn.Map.reservationManager.FirstRespectedReserver(target, pawn);
 				if (pawn2 == null)
 				{
 					pawn2 = pawn.Map.physicalInteractionReservationManager.FirstReserverOf(target);

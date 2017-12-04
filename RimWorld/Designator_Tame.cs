@@ -56,7 +56,7 @@ namespace RimWorld
 		public override AcceptanceReport CanDesignateThing(Thing t)
 		{
 			Pawn pawn = t as Pawn;
-			if (pawn != null && pawn.def.race.Animal && pawn.Faction == null && pawn.RaceProps.wildness < 1f && !pawn.HostileTo(t) && base.Map.designationManager.DesignationOn(pawn, DesignationDefOf.Tame) == null)
+			if (pawn != null && pawn.AnimalOrWildMan() && pawn.Faction == null && pawn.RaceProps.wildness < 1f && !pawn.HostileTo(t) && base.Map.designationManager.DesignationOn(pawn, DesignationDefOf.Tame) == null)
 			{
 				return true;
 			}
@@ -73,9 +73,9 @@ namespace RimWorld
 				{
 					Messages.Message("MessageAnimalManhuntsOnTameFailed".Translate(new object[]
 					{
-						kind.label,
+						kind.GetLabelPlural(-1),
 						kind.RaceProps.manhunterOnTameFailChance.ToStringPercent("F2")
-					}), this.justDesignated.First((Pawn x) => x.kindDef == kind), MessageSound.Standard);
+					}), this.justDesignated.First((Pawn x) => x.kindDef == kind), MessageTypeDefOf.CautionInput);
 				}
 			}
 			IEnumerable<Pawn> source = from c in base.Map.mapPawns.FreeColonistsSpawned
@@ -102,7 +102,7 @@ namespace RimWorld
 							SkillDefOf.Animals.LabelCap,
 							pawn.LabelShort,
 							level
-						}), this.justDesignated.First((Pawn x) => x.def == ad), MessageSound.Negative);
+						}), this.justDesignated.First((Pawn x) => x.def == ad), MessageTypeDefOf.CautionInput);
 					}
 				}
 			}

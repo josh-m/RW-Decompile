@@ -7,9 +7,9 @@ namespace RimWorld.BaseGen
 {
 	public class SymbolResolver_BasePart_Outdoors_Leaf_PowerPlant : SymbolResolver
 	{
-		private const float MaxCoverage = 0.09f;
-
 		private static List<ThingDef> availablePowerPlants = new List<ThingDef>();
+
+		private const float MaxCoverage = 0.09f;
 
 		public override bool CanResolve(ResolveParams rp)
 		{
@@ -79,9 +79,9 @@ namespace RimWorld.BaseGen
 					SymbolResolver_BasePart_Outdoors_Leaf_PowerPlant.availablePowerPlants.Add(ThingDefOf.SolarGenerator);
 				}
 			}
-			if (rect.Width >= ThingDefOf.FueledGenerator.size.x && rect.Height >= ThingDefOf.FueledGenerator.size.z)
+			if (rect.Width >= ThingDefOf.WoodFiredGenerator.size.x && rect.Height >= ThingDefOf.WoodFiredGenerator.size.z)
 			{
-				SymbolResolver_BasePart_Outdoors_Leaf_PowerPlant.availablePowerPlants.Add(ThingDefOf.FueledGenerator);
+				SymbolResolver_BasePart_Outdoors_Leaf_PowerPlant.availablePowerPlants.Add(ThingDefOf.WoodFiredGenerator);
 			}
 		}
 	}

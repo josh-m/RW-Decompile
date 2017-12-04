@@ -7,8 +7,6 @@ namespace RimWorld
 	[StaticConstructorOnStartup]
 	internal class Gizmo_RefuelableFuelStatus : Gizmo
 	{
-		private const float ArrowScale = 0.5f;
-
 		public CompRefuelable refuelable;
 
 		private static readonly Texture2D FullBarTex = SolidColorMaterials.NewSolidColorTexture(new Color(0.35f, 0.35f, 0.2f));
@@ -16,6 +14,8 @@ namespace RimWorld
 		private static readonly Texture2D EmptyBarTex = SolidColorMaterials.NewSolidColorTexture(Color.black);
 
 		private static readonly Texture2D TargetLevelArrow = ContentFinder<Texture2D>.Get("UI/Misc/BarInstantMarkerRotated", true);
+
+		private const float ArrowScale = 0.5f;
 
 		public override float Width
 		{

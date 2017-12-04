@@ -82,6 +82,14 @@ namespace Verse
 			}
 		}
 
+		public ThingDef AnyAllowedDef
+		{
+			get
+			{
+				return this.allowedDefs.FirstOrDefault<ThingDef>();
+			}
+		}
+
 		public IEnumerable<ThingDef> AllowedThingDefs
 		{
 			get

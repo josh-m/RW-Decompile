@@ -5,8 +5,6 @@ namespace Verse
 {
 	public abstract class Dialog_OptionLister : Window
 	{
-		protected const float ButSpacing = 0f;
-
 		protected Vector2 scrollPosition;
 
 		protected string filter = string.Empty;
@@ -16,6 +14,8 @@ namespace Verse
 		protected Listing_Standard listing;
 
 		protected static readonly Vector2 ButSize = new Vector2(230f, 27f);
+
+		protected const float ButSpacing = 0f;
 
 		protected readonly float ColumnSpacing = 20f;
 

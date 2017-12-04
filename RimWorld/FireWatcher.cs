@@ -6,13 +6,13 @@ namespace RimWorld
 {
 	public class FireWatcher
 	{
-		private const int UpdateObservationsInterval = 426;
-
-		private const float BaseDangerPerFire = 0.5f;
-
 		private Map map;
 
 		private float fireDanger = -1f;
+
+		private const int UpdateObservationsInterval = 426;
+
+		private const float BaseDangerPerFire = 0.5f;
 
 		public float FireDanger
 		{

@@ -1,4 +1,3 @@
-using RimWorld.Planet;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -43,16 +42,6 @@ namespace RimWorld
 		public override bool Concerns(Thing th)
 		{
 			return base.Concerns(th) || this.pawnData.pawn == th;
-		}
-
-		public override void PostRemove()
-		{
-			base.PostRemove();
-			WorldPawns worldPawns = Find.WorldPawns;
-			if (worldPawns.Contains(this.pawnData.pawn))
-			{
-				worldPawns.DiscardIfUnimportant(this.pawnData.pawn);
-			}
 		}
 
 		public override void ExposeData()

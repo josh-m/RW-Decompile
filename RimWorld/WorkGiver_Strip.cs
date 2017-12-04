@@ -32,9 +32,19 @@ namespace RimWorld
 			}
 		}
 
+		public override Danger MaxPathDanger(Pawn pawn)
+		{
+			return Danger.Deadly;
+		}
+
 		public override bool HasJobOnThing(Pawn pawn, Thing t, bool forced = false)
 		{
-			return t.Map.designationManager.DesignationOn(t, DesignationDefOf.Strip) != null && pawn.CanReserve(t, 1, -1, null, forced) && StrippableUtility.CanBeStrippedByColony(t);
+			if (t.Map.designationManager.DesignationOn(t, DesignationDefOf.Strip) == null)
+			{
+				return false;
+			}
+			LocalTargetInfo target = t;
+			return pawn.CanReserve(target, 1, -1, null, forced) && StrippableUtility.CanBeStrippedByColony(t);
 		}
 
 		public override Job JobOnThing(Pawn pawn, Thing t, bool forced = false)

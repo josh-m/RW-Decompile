@@ -69,7 +69,7 @@ namespace RimWorld
 			{
 				TraitDegreeData dd = this.degreeDatas[i];
 				if ((from dd2 in this.degreeDatas
-				where dd2.degree == this.<dd>__3.degree
+				where dd2.degree == dd.degree
 				select dd2).Count<TraitDegreeData>() > 1)
 				{
 					yield return ">1 datas for degree " + dd.degree;

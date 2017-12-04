@@ -36,7 +36,7 @@ namespace RimWorld
 			}
 			else if (this.place is ThingDef)
 			{
-				if (this.proximitySpacing > 0 && GenClosest.ClosestThing_Global(position, map.listerThings.ThingsOfDef(this.place as ThingDef), (float)this.proximitySpacing, null) != null)
+				if (this.proximitySpacing > 0 && GenClosest.ClosestThing_Global(position, map.listerThings.ThingsOfDef(this.place as ThingDef), (float)this.proximitySpacing, null, null) != null)
 				{
 					return;
 				}

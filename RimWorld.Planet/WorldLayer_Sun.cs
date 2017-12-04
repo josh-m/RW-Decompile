@@ -38,7 +38,7 @@ namespace RimWorld.Planet
 			LayerSubMesh sunSubMesh = base.GetSubMesh(WorldMaterials.Sun);
 			WorldRendererUtility.PrintQuadTangentialToPlanet(Vector3.forward * 10f, 15f, 0f, sunSubMesh, true, false, true);
 			Rand.PopState();
-			base.FinalizeMesh(MeshParts.All, true);
+			base.FinalizeMesh(MeshParts.All);
 		}
 	}
 }

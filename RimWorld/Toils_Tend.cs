@@ -23,12 +23,12 @@ namespace RimWorld
 				int num2 = Mathf.Min(thing.stackCount, num);
 				if (num2 > 0)
 				{
-					actor.carryTracker.TryStartCarry(thing, num2);
+					actor.carryTracker.TryStartCarry(thing, num2, true);
 				}
 				curJob.count = num - num2;
 				if (thing.Spawned)
 				{
-					toil.actor.Map.reservationManager.Release(thing, actor);
+					toil.actor.Map.reservationManager.Release(thing, actor, curJob);
 				}
 				curJob.SetTarget(ind, actor.carryTracker.CarriedThing);
 			};

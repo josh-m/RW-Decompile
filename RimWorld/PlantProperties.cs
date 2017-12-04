@@ -7,8 +7,6 @@ namespace RimWorld
 {
 	public class PlantProperties
 	{
-		public const int MaxMaxMeshCount = 25;
-
 		public List<PlantBiomeRecord> wildBiomes;
 
 		public float wildCommonalityMaxFraction = 1.25f;
@@ -53,8 +51,6 @@ namespace RimWorld
 
 		public float growOptimalGlow = 1f;
 
-		public bool dieIfLeafless;
-
 		public float fertilityMin = 0.9f;
 
 		public float fertilitySensitivity = 0.5f;
@@ -64,6 +60,12 @@ namespace RimWorld
 		public float reproduceRadius = 20f;
 
 		public float reproduceMtbDays = 10f;
+
+		public bool dieIfLeafless;
+
+		public bool neverBlightable;
+
+		public bool cavePlant;
 
 		public float topWindExposure = 0.25f;
 
@@ -80,6 +82,8 @@ namespace RimWorld
 
 		[Unsaved]
 		public Graphic immatureGraphic;
+
+		public const int MaxMaxMeshCount = 25;
 
 		public bool Sowable
 		{
@@ -149,6 +153,14 @@ namespace RimWorld
 			}
 		}
 
+		public bool Blightable
+		{
+			get
+			{
+				return this.Sowable && this.Harvestable && !this.neverBlightable;
+			}
+		}
+
 		public void PostLoadSpecial(ThingDef parentDef)
 		{
 			if (!this.leaflessGraphicPath.NullOrEmpty())
@@ -181,7 +193,7 @@ namespace RimWorld
 		{
 			if (this.sowMinSkill > 0)
 			{
-				yield return new StatDrawEntry(StatCategoryDefOf.Basics, "MinGrowingSkillToSow".Translate(), this.sowMinSkill.ToString(), 0);
+				yield return new StatDrawEntry(StatCategoryDefOf.Basics, "MinGrowingSkillToSow".Translate(), this.sowMinSkill.ToString(), 0, string.Empty);
 			}
 			string attributes = string.Empty;
 			if (this.Harvestable)
@@ -200,20 +212,20 @@ namespace RimWorld
 				}
 				attributes += "LimitedLifespan".Translate();
 			}
-			yield return new StatDrawEntry(StatCategoryDefOf.Basics, "GrowingTime".Translate(), this.growDays.ToString("0.##") + " " + "Days".Translate(), 0)
+			yield return new StatDrawEntry(StatCategoryDefOf.Basics, "GrowingTime".Translate(), this.growDays.ToString("0.##") + " " + "Days".Translate(), 0, string.Empty)
 			{
 				overrideReportText = "GrowingTimeDesc".Translate()
 			};
-			yield return new StatDrawEntry(StatCategoryDefOf.Basics, "FertilityRequirement".Translate(), this.fertilityMin.ToStringPercent(), 0);
-			yield return new StatDrawEntry(StatCategoryDefOf.Basics, "FertilitySensitivity".Translate(), this.fertilitySensitivity.ToStringPercent(), 0);
-			yield return new StatDrawEntry(StatCategoryDefOf.Basics, "LightRequirement".Translate(), this.growMinGlow.ToStringPercent(), 0);
+			yield return new StatDrawEntry(StatCategoryDefOf.Basics, "FertilityRequirement".Translate(), this.fertilityMin.ToStringPercent(), 0, string.Empty);
+			yield return new StatDrawEntry(StatCategoryDefOf.Basics, "FertilitySensitivity".Translate(), this.fertilitySensitivity.ToStringPercent(), 0, string.Empty);
+			yield return new StatDrawEntry(StatCategoryDefOf.Basics, "LightRequirement".Translate(), this.growMinGlow.ToStringPercent(), 0, string.Empty);
 			if (!attributes.NullOrEmpty())
 			{
-				yield return new StatDrawEntry(StatCategoryDefOf.Basics, "Attributes".Translate(), attributes, 0);
+				yield return new StatDrawEntry(StatCategoryDefOf.Basics, "Attributes".Translate(), attributes, 0, string.Empty);
 			}
 			if (this.LimitedLifespan)
 			{
-				yield return new StatDrawEntry(StatCategoryDefOf.Basics, "LifeSpan".Translate(), this.LifespanDays.ToString("0.##") + " " + "Days".Translate(), 0);
+				yield return new StatDrawEntry(StatCategoryDefOf.Basics, "LifeSpan".Translate(), this.LifespanDays.ToString("0.##") + " " + "Days".Translate(), 0, string.Empty);
 			}
 		}
 	}

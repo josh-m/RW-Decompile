@@ -7,6 +7,7 @@ using Verse;
 
 namespace RimWorld
 {
+	[CaseInsensitiveXMLParsing]
 	public class Backstory
 	{
 		public string identifier;
@@ -135,19 +136,19 @@ namespace RimWorld
 				SkillDef skillDef = allDefsListForReading[i];
 				if (this.skillGainsResolved.ContainsKey(skillDef))
 				{
-					stringBuilder.AppendLine(skillDef.skillLabel + ":   " + this.skillGainsResolved[skillDef].ToString("+##;-##"));
+					stringBuilder.AppendLine(skillDef.skillLabel.CapitalizeFirst() + ":   " + this.skillGainsResolved[skillDef].ToString("+##;-##"));
 				}
 			}
 			stringBuilder.AppendLine();
 			foreach (WorkTypeDef current in this.DisabledWorkTypes)
 			{
-				stringBuilder.AppendLine(current.gerundLabel + " " + "DisabledLower".Translate());
+				stringBuilder.AppendLine(current.gerundLabel.CapitalizeFirst() + " " + "DisabledLower".Translate());
 			}
 			foreach (WorkGiverDef current2 in this.DisabledWorkGivers)
 			{
 				stringBuilder.AppendLine(string.Concat(new string[]
 				{
-					current2.workType.gerundLabel,
+					current2.workType.gerundLabel.CapitalizeFirst(),
 					" -> ",
 					current2.label,
 					" ",

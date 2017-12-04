@@ -40,7 +40,7 @@ namespace Verse
 				xmlWriter.WriteEndElement();
 				xmlWriter.WriteEndDocument();
 			}
-			Messages.Message("Fresh backstory translation file saved to " + GenFilePaths.BackstoryOutputFilePath, MessageSound.Standard);
+			Messages.Message("Fresh backstory translation file saved to " + GenFilePaths.BackstoryOutputFilePath, MessageTypeDefOf.NeutralEvent);
 		}
 	}
 }

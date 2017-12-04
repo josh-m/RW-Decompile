@@ -24,8 +24,6 @@ namespace Verse
 
 		public static IntVec3[] AdjacentCellsAroundBottom;
 
-		public static IntVec3[] InsideAndAdjacentCells;
-
 		private static List<IntVec3> adjRandomOrderList;
 
 		private static List<IntVec3> validCells;
@@ -41,7 +39,6 @@ namespace Verse
 			GenAdj.AdjacentCellsAndInside = new IntVec3[9];
 			GenAdj.AdjacentCellsAround = new IntVec3[8];
 			GenAdj.AdjacentCellsAroundBottom = new IntVec3[9];
-			GenAdj.InsideAndAdjacentCells = new IntVec3[9];
 			GenAdj.validCells = new List<IntVec3>();
 			GenAdj.SetupAdjacencyTables();
 		}
@@ -221,19 +218,37 @@ namespace Verse
 		{
 			GenAdj.AdjustForRotation(ref center, ref size, rot);
 			int minX = center.x - (size.x - 1) / 2 - 1;
-			int minZ = center.z - (size.z - 1) / 2 - 1;
 			int maxX = minX + size.x + 1;
+			int minZ = center.z - (size.z - 1) / 2 - 1;
 			int maxZ = minZ + size.z + 1;
-			for (int i = minX; i <= maxX; i++)
+			IntVec3 cur = new IntVec3(minX, 0, minZ);
+			do
 			{
-				for (int j = minZ; j <= maxZ; j++)
-				{
-					if ((i == minX || i == maxX || j == minZ || j == maxZ) && (i != minX || j != minZ) && (i != minX || j != maxZ) && (i != maxX || j != maxZ) && (i != maxX || j != minZ))
-					{
-						yield return new IntVec3(i, 0, j);
-					}
-				}
+				cur.x++;
+				yield return cur;
 			}
+			while (cur.x < maxX - 1);
+			cur.x++;
+			do
+			{
+				cur.z++;
+				yield return cur;
+			}
+			while (cur.z < maxZ - 1);
+			cur.z++;
+			do
+			{
+				cur.x--;
+				yield return cur;
+			}
+			while (cur.x > minX + 1);
+			cur.x--;
+			do
+			{
+				cur.z--;
+				yield return cur;
+			}
+			while (cur.z > minZ + 1);
 		}
 
 		[DebuggerHidden]
@@ -425,10 +440,28 @@ namespace Verse
 			return num <= 1 && num2 <= 1;
 		}
 
+		public static bool IsAdjacentToCardinalOrInside(this IntVec3 me, CellRect other)
+		{
+			if (other.IsEmpty)
+			{
+				return false;
+			}
+			CellRect cellRect = other.ExpandedBy(1);
+			return cellRect.Contains(me) && !cellRect.IsCorner(me);
+		}
+
 		public static bool IsAdjacentToCardinalOrInside(this Thing t1, Thing t2)
 		{
-			CellRect cellRect = t1.OccupiedRect().ExpandedBy(1);
-			CellRect cellRect2 = t2.OccupiedRect();
+			return GenAdj.IsAdjacentToCardinalOrInside(t1.OccupiedRect(), t2.OccupiedRect());
+		}
+
+		public static bool IsAdjacentToCardinalOrInside(CellRect rect1, CellRect rect2)
+		{
+			if (rect1.IsEmpty || rect2.IsEmpty)
+			{
+				return false;
+			}
+			CellRect cellRect = rect1.ExpandedBy(1);
 			int minX = cellRect.minX;
 			int maxX = cellRect.maxX;
 			int minZ = cellRect.minZ;
@@ -437,7 +470,7 @@ namespace Verse
 			int j = minZ;
 			while (i <= maxX)
 			{
-				if (cellRect2.Contains(new IntVec3(i, 0, j)) && (i != minX || j != minZ) && (i != minX || j != maxZ) && (i != maxX || j != minZ) && (i != maxX || j != maxZ))
+				if (rect2.Contains(new IntVec3(i, 0, j)) && (i != minX || j != minZ) && (i != minX || j != maxZ) && (i != maxX || j != minZ) && (i != maxX || j != maxZ))
 				{
 					return true;
 				}
@@ -446,7 +479,7 @@ namespace Verse
 			i--;
 			for (j++; j <= maxZ; j++)
 			{
-				if (cellRect2.Contains(new IntVec3(i, 0, j)) && (i != minX || j != minZ) && (i != minX || j != maxZ) && (i != maxX || j != minZ) && (i != maxX || j != maxZ))
+				if (rect2.Contains(new IntVec3(i, 0, j)) && (i != minX || j != minZ) && (i != minX || j != maxZ) && (i != maxX || j != minZ) && (i != maxX || j != maxZ))
 				{
 					return true;
 				}
@@ -454,7 +487,7 @@ namespace Verse
 			j--;
 			for (i--; i >= minX; i--)
 			{
-				if (cellRect2.Contains(new IntVec3(i, 0, j)) && (i != minX || j != minZ) && (i != minX || j != maxZ) && (i != maxX || j != minZ) && (i != maxX || j != maxZ))
+				if (rect2.Contains(new IntVec3(i, 0, j)) && (i != minX || j != minZ) && (i != minX || j != maxZ) && (i != maxX || j != minZ) && (i != maxX || j != maxZ))
 				{
 					return true;
 				}
@@ -462,7 +495,7 @@ namespace Verse
 			i++;
 			for (j--; j > minZ; j--)
 			{
-				if (cellRect2.Contains(new IntVec3(i, 0, j)) && (i != minX || j != minZ) && (i != minX || j != maxZ) && (i != maxX || j != minZ) && (i != maxX || j != maxZ))
+				if (rect2.Contains(new IntVec3(i, 0, j)) && (i != minX || j != minZ) && (i != minX || j != maxZ) && (i != maxX || j != minZ) && (i != maxX || j != maxZ))
 				{
 					return true;
 				}
@@ -483,6 +516,16 @@ namespace Verse
 			int num3 = num + size.x + 1;
 			int num4 = num2 + size.z + 1;
 			return root.x >= num && root.x <= num3 && root.z >= num2 && root.z <= num4;
+		}
+
+		public static bool AdjacentTo8WayOrInside(this Thing a, Thing b)
+		{
+			return GenAdj.AdjacentTo8WayOrInside(a.OccupiedRect(), b.OccupiedRect());
+		}
+
+		public static bool AdjacentTo8WayOrInside(CellRect rect1, CellRect rect2)
+		{
+			return !rect1.IsEmpty && !rect2.IsEmpty && rect1.ExpandedBy(1).Overlaps(rect2);
 		}
 
 		public static bool IsInside(this IntVec3 root, Thing t)

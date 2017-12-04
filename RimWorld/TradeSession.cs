@@ -30,7 +30,7 @@ namespace RimWorld
 			TradeSession.deal = new TradeDeal();
 			if (TradeSession.deal.cannotSellReasons.Count > 0)
 			{
-				Messages.Message("MessageCannotSellItemsReason".Translate() + GenText.ToCommaList(TradeSession.deal.cannotSellReasons, true), MessageSound.Negative);
+				Messages.Message("MessageCannotSellItemsReason".Translate() + GenText.ToCommaList(TradeSession.deal.cannotSellReasons, true), MessageTypeDefOf.NegativeEvent);
 			}
 		}
 

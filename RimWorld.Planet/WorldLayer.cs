@@ -10,13 +10,13 @@ namespace RimWorld.Planet
 	[StaticConstructorOnStartup]
 	public class WorldLayer
 	{
-		private const int MaxVerticesPerMesh = 40000;
-
 		protected List<LayerSubMesh> subMeshes = new List<LayerSubMesh>();
 
 		private bool dirty = true;
 
 		private static MaterialPropertyBlock propertyBlock = new MaterialPropertyBlock();
+
+		private const int MaxVerticesPerMesh = 40000;
 
 		public virtual bool ShouldRegenerate
 		{
@@ -86,13 +86,13 @@ namespace RimWorld.Planet
 			return layerSubMesh2;
 		}
 
-		protected void FinalizeMesh(MeshParts tags, bool optimize = false)
+		protected void FinalizeMesh(MeshParts tags)
 		{
 			for (int i = 0; i < this.subMeshes.Count; i++)
 			{
 				if (this.subMeshes[i].verts.Count > 0)
 				{
-					this.subMeshes[i].FinalizeMesh(tags, optimize);
+					this.subMeshes[i].FinalizeMesh(tags);
 				}
 			}
 		}

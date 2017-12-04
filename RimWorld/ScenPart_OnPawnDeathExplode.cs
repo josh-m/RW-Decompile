@@ -53,7 +53,7 @@ namespace RimWorld
 		{
 			if (corpse.Spawned)
 			{
-				GenExplosion.DoExplosion(corpse.Position, corpse.Map, this.radius, this.damage, null, null, null, null, null, 0f, 1, false, null, 0f, 1);
+				GenExplosion.DoExplosion(corpse.Position, corpse.Map, this.radius, this.damage, null, -1, null, null, null, null, 0f, 1, false, null, 0f, 1, 0f, false);
 			}
 		}
 

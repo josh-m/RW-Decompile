@@ -11,6 +11,14 @@ namespace RimWorld
 
 		public static bool ShouldStartFleeing(Pawn pawn)
 		{
+			List<Thing> list = pawn.Map.listerThings.ThingsInGroup(ThingRequestGroup.AlwaysFlee);
+			for (int i = 0; i < list.Count; i++)
+			{
+				if (SelfDefenseUtility.ShouldFleeFrom(list[i], pawn, true, false))
+				{
+					return true;
+				}
+			}
 			bool foundThreat = false;
 			Region region = pawn.GetRegion(RegionType.Set_Passable);
 			if (region == null)
@@ -19,17 +27,36 @@ namespace RimWorld
 			}
 			RegionTraverser.BreadthFirstTraverse(region, (Region from, Region reg) => reg.portal == null || reg.portal.Open, delegate(Region reg)
 			{
-				List<Thing> list = reg.ListerThings.ThingsInGroup(ThingRequestGroup.AttackTarget);
-				for (int i = 0; i < list.Count; i++)
+				List<Thing> list2 = reg.ListerThings.ThingsInGroup(ThingRequestGroup.AttackTarget);
+				for (int j = 0; j < list2.Count; j++)
 				{
-					if (list[i] != pawn && (float)list[i].Position.DistanceToSquared(pawn.Position) < 64f && list[i].HostileTo(pawn) && !((IAttackTarget)list[i]).ThreatDisabled() && GenSight.LineOfSight(pawn.Position, list[i].Position, pawn.Map, false, null, 0, 0))
+					if (SelfDefenseUtility.ShouldFleeFrom(list2[j], pawn, true, true))
 					{
 						foundThreat = true;
+						break;
 					}
 				}
 				return foundThreat;
 			}, 9, RegionType.Set_Passable);
 			return foundThreat;
+		}
+
+		public static bool ShouldFleeFrom(Thing t, Pawn pawn, bool checkDistance, bool checkLOS)
+		{
+			if (t == pawn || (checkDistance && !t.Position.InHorDistOf(pawn.Position, 8f)))
+			{
+				return false;
+			}
+			if (t.def.alwaysFlee)
+			{
+				return true;
+			}
+			if (!t.HostileTo(pawn))
+			{
+				return false;
+			}
+			IAttackTarget attackTarget = t as IAttackTarget;
+			return attackTarget != null && !attackTarget.ThreatDisabled() && t is IAttackTargetSearcher && (!checkLOS || GenSight.LineOfSight(pawn.Position, t.Position, pawn.Map, false, null, 0, 0));
 		}
 	}
 }

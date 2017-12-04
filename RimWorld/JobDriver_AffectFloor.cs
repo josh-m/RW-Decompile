@@ -30,44 +30,51 @@ namespace RimWorld
 			}
 		}
 
+		public override bool TryMakePreToilReservations()
+		{
+			Pawn pawn = this.pawn;
+			LocalTargetInfo targetA = this.job.targetA;
+			Job job = this.job;
+			ReservationLayerDef floor = ReservationLayerDefOf.Floor;
+			return pawn.Reserve(targetA, job, 1, -1, floor);
+		}
+
 		[DebuggerHidden]
 		protected override IEnumerable<Toil> MakeNewToils()
 		{
-			this.FailOn(() => !this.<>f__this.CurJob.ignoreDesignations && this.<>f__this.Map.designationManager.DesignationAt(this.<>f__this.TargetLocA, this.<>f__this.DesDef) == null);
-			ReservationLayerDef floor = ReservationLayerDefOf.Floor;
-			yield return Toils_Reserve.Reserve(TargetIndex.A, 1, -1, floor);
+			this.FailOn(() => !this.$this.job.ignoreDesignations && this.$this.Map.designationManager.DesignationAt(this.$this.TargetLocA, this.$this.DesDef) == null);
 			yield return Toils_Goto.GotoCell(TargetIndex.A, PathEndMode.Touch);
 			Toil doWork = new Toil();
 			doWork.initAction = delegate
 			{
-				this.<>f__this.workLeft = (float)this.<>f__this.BaseWorkAmount;
+				this.$this.workLeft = (float)this.$this.BaseWorkAmount;
 			};
 			doWork.tickAction = delegate
 			{
-				float num = (this.<>f__this.SpeedStat == null) ? 1f : this.<doWork>__0.actor.GetStatValue(this.<>f__this.SpeedStat, true);
-				this.<>f__this.workLeft -= num;
-				if (this.<doWork>__0.actor.skills != null)
+				float num = (this.$this.SpeedStat == null) ? 1f : doWork.actor.GetStatValue(this.$this.SpeedStat, true);
+				this.$this.workLeft -= num;
+				if (doWork.actor.skills != null)
 				{
-					this.<doWork>__0.actor.skills.Learn(SkillDefOf.Construction, 0.22f, false);
+					doWork.actor.skills.Learn(SkillDefOf.Construction, 0.11f, false);
 				}
-				if (this.<>f__this.clearSnow)
+				if (this.$this.clearSnow)
 				{
-					this.<>f__this.Map.snowGrid.SetDepth(this.<>f__this.TargetLocA, 0f);
+					this.$this.Map.snowGrid.SetDepth(this.$this.TargetLocA, 0f);
 				}
-				if (this.<>f__this.workLeft <= 0f)
+				if (this.$this.workLeft <= 0f)
 				{
-					this.<>f__this.DoEffect(this.<>f__this.TargetLocA);
-					Designation designation = this.<>f__this.Map.designationManager.DesignationAt(this.<>f__this.TargetLocA, this.<>f__this.DesDef);
+					this.$this.DoEffect(this.$this.TargetLocA);
+					Designation designation = this.$this.Map.designationManager.DesignationAt(this.$this.TargetLocA, this.$this.DesDef);
 					if (designation != null)
 					{
 						designation.Delete();
 					}
-					this.<>f__this.ReadyForNextToil();
+					this.$this.ReadyForNextToil();
 					return;
 				}
 			};
 			doWork.FailOnCannotTouch(TargetIndex.A, PathEndMode.Touch);
-			doWork.WithProgressBar(TargetIndex.A, () => 1f - this.<>f__this.workLeft / (float)this.<>f__this.BaseWorkAmount, false, -0.5f);
+			doWork.WithProgressBar(TargetIndex.A, () => 1f - this.$this.workLeft / (float)this.$this.BaseWorkAmount, false, -0.5f);
 			doWork.defaultCompleteMode = ToilCompleteMode.Never;
 			yield return doWork;
 		}

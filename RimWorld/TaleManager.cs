@@ -8,9 +8,9 @@ namespace RimWorld
 {
 	public sealed class TaleManager : IExposable
 	{
-		private const int MaxUnusedVolatileTales = 350;
-
 		private List<Tale> tales = new List<Tale>();
+
+		private const int MaxUnusedVolatileTales = 350;
 
 		public List<Tale> AllTalesListForReading
 		{
@@ -44,7 +44,6 @@ namespace RimWorld
 				return;
 			}
 			this.tales.Remove(tale);
-			tale.PostRemove();
 		}
 
 		private void CheckCullTales(Tale addedTale)
@@ -203,23 +202,49 @@ namespace RimWorld
 			}
 		}
 
-		public void Notify_PawnDiscarded(Pawn p)
+		public void Notify_PawnDiscarded(Pawn p, bool silentlyRemoveReferences)
 		{
 			for (int i = this.tales.Count - 1; i >= 0; i--)
 			{
 				if (this.tales[i].Concerns(p))
 				{
-					Log.Warning(string.Concat(new object[]
+					if (!silentlyRemoveReferences)
 					{
-						"Discarding pawn ",
-						p,
-						", but he is referenced by a tale ",
-						this.tales[i],
-						"."
-					}));
+						Log.Warning(string.Concat(new object[]
+						{
+							"Discarding pawn ",
+							p,
+							", but he is referenced by a tale ",
+							this.tales[i],
+							"."
+						}));
+					}
+					else if (!this.tales[i].Unused)
+					{
+						Log.Warning(string.Concat(new object[]
+						{
+							"Discarding pawn ",
+							p,
+							", but he is referenced by an active tale ",
+							this.tales[i],
+							"."
+						}));
+					}
 					this.RemoveTale(this.tales[i]);
 				}
 			}
+		}
+
+		public bool AnyActiveTaleConcerns(Pawn p)
+		{
+			for (int i = 0; i < this.tales.Count; i++)
+			{
+				if (!this.tales[i].Unused && this.tales[i].Concerns(p))
+				{
+					return true;
+				}
+			}
+			return false;
 		}
 
 		public bool AnyTaleConcerns(Pawn p)
@@ -309,29 +334,22 @@ namespace RimWorld
 			float num = (from t in this.tales
 			where t.def.usableForArt
 			select t).Sum((Tale t) => t.InterestLevel);
-			TaleDef def;
 			Func<TaleDef, float> defInterest = (TaleDef def) => (from t in this.tales
 			where t.def == def
 			select t).Sum((Tale t) => t.InterestLevel);
-			using (IEnumerator<TaleDef> enumerator = (from def in DefDatabase<TaleDef>.AllDefs
+			foreach (TaleDef def in from def in DefDatabase<TaleDef>.AllDefs
 			where def.usableForArt
 			orderby defInterest(def) descending
-			select def).GetEnumerator())
+			select def)
 			{
-				while (enumerator.MoveNext())
+				stringBuilder.AppendLine(string.Concat(new object[]
 				{
-					def = enumerator.Current;
-					stringBuilder.AppendLine(string.Concat(new object[]
-					{
-						def.label,
-						":   [",
-						(from t in this.tales
-						where t.def == def
-						select t).Count<Tale>(),
-						"]   ",
-						(defInterest(def) / num).ToStringPercent("F2")
-					}));
-				}
+					def.defName,
+					":   [",
+					this.tales.Where((Tale t) => t.def == def).Count<Tale>(),
+					"]   ",
+					(defInterest(def) / num).ToStringPercent("F2")
+				}));
 			}
 			Log.Message(stringBuilder.ToString());
 		}

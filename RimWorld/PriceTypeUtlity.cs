@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using UnityEngine;
 
 namespace RimWorld
@@ -29,17 +28,13 @@ namespace RimWorld
 		{
 			float num = 99999f;
 			PriceType priceType = PriceType.Undefined;
-			using (IEnumerator enumerator = Enum.GetValues(typeof(PriceType)).GetEnumerator())
+			foreach (PriceType priceType2 in Enum.GetValues(typeof(PriceType)))
 			{
-				while (enumerator.MoveNext())
+				float num2 = Mathf.Abs(priceFactor - priceType2.PriceMultiplier());
+				if (num2 < num)
 				{
-					PriceType priceType2 = (PriceType)((byte)enumerator.Current);
-					float num2 = Mathf.Abs(priceFactor - priceType2.PriceMultiplier());
-					if (num2 < num)
-					{
-						num = num2;
-						priceType = priceType2;
-					}
+					num = num2;
+					priceType = priceType2;
 				}
 			}
 			if (priceType == PriceType.Undefined)

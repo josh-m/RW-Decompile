@@ -166,6 +166,48 @@ namespace Verse
 			return null;
 		}
 
+		public static Mineable GetFirstMineable(this IntVec3 c, Map map)
+		{
+			List<Thing> thingList = c.GetThingList(map);
+			for (int i = 0; i < thingList.Count; i++)
+			{
+				Mineable mineable = thingList[i] as Mineable;
+				if (mineable != null)
+				{
+					return mineable;
+				}
+			}
+			return null;
+		}
+
+		public static Blight GetFirstBlight(this IntVec3 c, Map map)
+		{
+			List<Thing> thingList = c.GetThingList(map);
+			for (int i = 0; i < thingList.Count; i++)
+			{
+				Blight blight = thingList[i] as Blight;
+				if (blight != null)
+				{
+					return blight;
+				}
+			}
+			return null;
+		}
+
+		public static Skyfaller GetFirstSkyfaller(this IntVec3 c, Map map)
+		{
+			List<Thing> thingList = c.GetThingList(map);
+			for (int i = 0; i < thingList.Count; i++)
+			{
+				Skyfaller skyfaller = thingList[i] as Skyfaller;
+				if (skyfaller != null)
+				{
+					return skyfaller;
+				}
+			}
+			return null;
+		}
+
 		public static IPlantToGrowSettable GetPlantToGrowSettable(this IntVec3 c, Map map)
 		{
 			IPlantToGrowSettable plantToGrowSettable = c.GetEdifice(map) as IPlantToGrowSettable;
@@ -213,14 +255,14 @@ namespace Verse
 			return map.coverGrid[c];
 		}
 
-		public static Thing GetGas(this IntVec3 c, Map map)
+		public static Gas GetGas(this IntVec3 c, Map map)
 		{
-			List<Thing> list = map.thingGrid.ThingsListAt(c);
-			for (int i = 0; i < list.Count; i++)
+			List<Thing> thingList = c.GetThingList(map);
+			for (int i = 0; i < thingList.Count; i++)
 			{
-				if (list[i].def.category == ThingCategory.Gas)
+				if (thingList[i].def.category == ThingCategory.Gas)
 				{
-					return list[i];
+					return (Gas)thingList[i];
 				}
 			}
 			return null;

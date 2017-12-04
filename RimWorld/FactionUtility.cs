@@ -30,5 +30,10 @@ namespace RimWorld
 			}
 			return null;
 		}
+
+		public static bool IsPoliticallyProper(this Thing thing, Pawn pawn)
+		{
+			return thing.Faction == null || pawn.Faction == null || thing.Faction == pawn.Faction || thing.Faction == pawn.HostFaction;
+		}
 	}
 }

@@ -15,7 +15,7 @@ namespace RimWorld
 				{
 					IntVec3 intVec = UI.MouseCell();
 					CompPower compPower = PowerConnectionMaker.BestTransmitterForConnector(intVec, Find.VisibleMap, null);
-					if (compPower != null)
+					if (compPower != null && !compPower.parent.Position.Fogged(compPower.parent.Map))
 					{
 						PowerNetGraphics.RenderAnticipatedWirePieceConnecting(intVec, compPower.parent);
 					}

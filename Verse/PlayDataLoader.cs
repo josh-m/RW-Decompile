@@ -166,9 +166,14 @@ namespace Verse
 				ThingCategoryNodeDatabase.FinalizeInit();
 				TrainableUtility.Reset();
 				HaulAIUtility.Reset();
+				GenConstruct.Reset();
 				WorkGiver_FillFermentingBarrel.Reset();
+				WorkGiver_DoBill.Reset();
+				Pawn.Reset();
 				WorkGiver_InteractAnimal.Reset();
 				WorkGiver_Warden_DoExecution.Reset();
+				WorkGiver_GrowerSow.Reset();
+				WorkGiver_Miner.Reset();
 				MedicalCareUtility.Reset();
 				InspectPaneUtility.Reset();
 				GraphicDatabaseHeadRecords.Reset();
@@ -179,6 +184,8 @@ namespace Verse
 				BaseGen.Reset();
 				HealthUtility.Reset();
 				ResourceCounter.ResetDefs();
+				WildSpawner.Reset();
+				ApparelProperties.Reset();
 			}
 			finally
 			{
@@ -191,10 +198,13 @@ namespace Verse
 				{
 					if (current2 != typeof(ThingDef))
 					{
-						GenGeneric.InvokeStaticMethodOnGenericType(typeof(DefDatabase<>), current2, "ResolveAllReferences");
+						GenGeneric.InvokeStaticMethodOnGenericType(typeof(DefDatabase<>), current2, "ResolveAllReferences", new object[]
+						{
+							true
+						});
 					}
 				}
-				DefDatabase<ThingDef>.ResolveAllReferences();
+				DefDatabase<ThingDef>.ResolveAllReferences(true);
 			}
 			finally
 			{

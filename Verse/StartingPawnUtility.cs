@@ -23,6 +23,7 @@ namespace Verse
 				if (Find.World != null)
 				{
 					PawnUtility.DestroyStartingColonistFamily(StartingPawnUtility.StartingPawns[i]);
+					PawnComponentsUtility.RemoveComponentsOnDespawned(StartingPawnUtility.StartingPawns[i]);
 					Find.WorldPawns.PassToWorld(StartingPawnUtility.StartingPawns[i], PawnDiscardDecideMode.Discard);
 				}
 				StartingPawnUtility.StartingPawns.RemoveAt(i);
@@ -45,6 +46,7 @@ namespace Verse
 			Pawn pawn = StartingPawnUtility.StartingPawns[index];
 			PawnUtility.TryDestroyStartingColonistFamily(pawn);
 			pawn.relations.ClearAllRelations();
+			PawnComponentsUtility.RemoveComponentsOnDespawned(pawn);
 			Find.WorldPawns.PassToWorld(pawn, PawnDiscardDecideMode.Discard);
 			StartingPawnUtility.StartingPawns[index] = null;
 			for (int i = 0; i < Find.GameInitData.startingPawns.Count; i++)
@@ -61,7 +63,7 @@ namespace Verse
 
 		public static Pawn NewGeneratedStartingPawn()
 		{
-			PawnGenerationRequest request = new PawnGenerationRequest(Faction.OfPlayer.def.basicMemberKind, Faction.OfPlayer, PawnGenerationContext.PlayerStarter, -1, true, false, false, false, true, false, 26f, false, true, true, false, false, null, null, null, null, null, null);
+			PawnGenerationRequest request = new PawnGenerationRequest(Faction.OfPlayer.def.basicMemberKind, Faction.OfPlayer, PawnGenerationContext.PlayerStarter, -1, true, false, false, false, true, false, 26f, false, true, true, false, false, false, false, null, null, null, null, null, null, null);
 			Pawn pawn = null;
 			try
 			{

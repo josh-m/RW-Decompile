@@ -15,8 +15,6 @@ namespace RimWorld
 			Fadeout
 		}
 
-		private const float FadeoutDuration = 10f;
-
 		private AudioSource audioSource;
 
 		private MusicManagerPlay.MusicManagerState state;
@@ -45,6 +43,8 @@ namespace RimWorld
 
 		private static readonly FloatRange SongIntervalTension = new FloatRange(2f, 5f);
 
+		private const float FadeoutDuration = 10f;
+
 		private float CurTime
 		{
 			get
@@ -69,7 +69,7 @@ namespace RimWorld
 			}
 		}
 
-		public float CurVolume
+		private float CurVolume
 		{
 			get
 			{
@@ -79,6 +79,14 @@ namespace RimWorld
 					return num;
 				}
 				return this.lastStartedSong.volume * num * this.fadeoutFactor;
+			}
+		}
+
+		public float CurSanitizedVolume
+		{
+			get
+			{
+				return AudioSourceUtility.GetSanitizedVolume(this.CurVolume, "MusicManagerPlay");
 			}
 		}
 
@@ -126,7 +134,7 @@ namespace RimWorld
 			{
 				this.state = MusicManagerPlay.MusicManagerState.Fadeout;
 			}
-			this.audioSource.volume = this.CurVolume;
+			this.audioSource.volume = this.CurSanitizedVolume;
 			if (this.audioSource.isPlaying)
 			{
 				if (this.state == MusicManagerPlay.MusicManagerState.Fadeout)
@@ -135,7 +143,6 @@ namespace RimWorld
 					if (this.fadeoutFactor <= 0f)
 					{
 						this.audioSource.Stop();
-						this.ignorePrefsVolumeThisSong = false;
 						this.state = MusicManagerPlay.MusicManagerState.Normal;
 						this.fadeoutFactor = 1f;
 					}
@@ -162,6 +169,7 @@ namespace RimWorld
 				}
 				if (this.CurTime >= this.nextSongStartTime)
 				{
+					this.ignorePrefsVolumeThisSong = false;
 					this.StartNewSong();
 				}
 			}
@@ -169,7 +177,7 @@ namespace RimWorld
 
 		private void UpdateSubtleAmbienceSoundVolumeMultiplier()
 		{
-			if (this.IsPlaying && this.CurVolume > 0.001f)
+			if (this.IsPlaying && this.CurSanitizedVolume > 0.001f)
 			{
 				this.subtleAmbienceSoundVolumeMultiplier -= Time.deltaTime * 0.1f;
 			}
@@ -184,7 +192,7 @@ namespace RimWorld
 		{
 			this.lastStartedSong = this.ChooseNextSong();
 			this.audioSource.clip = this.lastStartedSong.clip;
-			this.audioSource.volume = this.CurVolume;
+			this.audioSource.volume = this.CurSanitizedVolume;
 			this.audioSource.spatialBlend = 0f;
 			this.audioSource.Play();
 			this.recentSongs.Enqueue(this.lastStartedSong);

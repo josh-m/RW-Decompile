@@ -1,3 +1,4 @@
+using RimWorld;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,7 +15,7 @@ namespace Verse
 			LoadedLanguage defaultLanguage = LanguageDatabase.defaultLanguage;
 			if (activeLanguage == defaultLanguage)
 			{
-				Messages.Message("Please activate a non-English language to scan.", MessageSound.RejectInput);
+				Messages.Message("Please activate a non-English language to scan.", MessageTypeDefOf.RejectInput);
 				return;
 			}
 			activeLanguage.LoadData();
@@ -67,7 +68,7 @@ namespace Verse
 				stringBuilder.AppendLine(current6);
 			}
 			Log.Message(stringBuilder.ToString());
-			Messages.Message("Translation report about " + activeLanguage.ToString() + " written to console. Hit ` to see it.", MessageSound.Standard);
+			Messages.Message("Translation report about " + activeLanguage.ToString() + " written to console. Hit ` to see it.", MessageTypeDefOf.NeutralEvent);
 		}
 
 		public static int CountParametersInString(string input)

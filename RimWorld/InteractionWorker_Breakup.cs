@@ -91,7 +91,7 @@ namespace RimWorld
 			}
 			if (PawnUtility.ShouldSendNotificationAbout(initiator) || PawnUtility.ShouldSendNotificationAbout(recipient))
 			{
-				Find.LetterStack.ReceiveLetter("LetterLabelBreakup".Translate(), stringBuilder.ToString(), LetterDefOf.BadNonUrgent, initiator, null);
+				Find.LetterStack.ReceiveLetter("LetterLabelBreakup".Translate(), stringBuilder.ToString(), LetterDefOf.NegativeEvent, initiator, null);
 			}
 		}
 	}

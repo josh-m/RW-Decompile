@@ -32,10 +32,13 @@ namespace RimWorld
 						{
 							foreach (Pawn current in PawnsFinder.AllMapsCaravansAndTravelingTransportPods_Colonists)
 							{
-								for (int j = 0; j < PawnDiedOrDownedThoughtsUtility.tmpAllColonistsThoughts.Count; j++)
+								if (current != victim)
 								{
-									ThoughtDef def = PawnDiedOrDownedThoughtsUtility.tmpAllColonistsThoughts[j];
-									current.needs.mood.thoughts.memories.TryGainMemory(def, null);
+									for (int j = 0; j < PawnDiedOrDownedThoughtsUtility.tmpAllColonistsThoughts.Count; j++)
+									{
+										ThoughtDef def = PawnDiedOrDownedThoughtsUtility.tmpAllColonistsThoughts[j];
+										current.needs.mood.thoughts.memories.TryGainMemory(def, null);
+									}
 								}
 							}
 						}
@@ -211,26 +214,26 @@ namespace RimWorld
 					}
 				}
 			}
-			if (thoughtsKind == PawnDiedOrDownedThoughtsKind.Abandoned && victim.IsColonist)
+			if (thoughtsKind == PawnDiedOrDownedThoughtsKind.Banished && victim.IsColonist)
 			{
-				outAllColonistsThoughts.Add(ThoughtDefOf.ColonistAbandoned);
+				outAllColonistsThoughts.Add(ThoughtDefOf.ColonistBanished);
 			}
-			if (thoughtsKind == PawnDiedOrDownedThoughtsKind.AbandonedToDie)
+			if (thoughtsKind == PawnDiedOrDownedThoughtsKind.BanishedToDie)
 			{
 				if (victim.IsColonist)
 				{
-					outAllColonistsThoughts.Add(ThoughtDefOf.ColonistAbandonedToDie);
+					outAllColonistsThoughts.Add(ThoughtDefOf.ColonistBanishedToDie);
 				}
 				else if (victim.IsPrisonerOfColony)
 				{
-					outAllColonistsThoughts.Add(ThoughtDefOf.PrisonerAbandonedToDie);
+					outAllColonistsThoughts.Add(ThoughtDefOf.PrisonerBanishedToDie);
 				}
 			}
 		}
 
 		private static void AppendThoughts_Relations(Pawn victim, DamageInfo? dinfo, PawnDiedOrDownedThoughtsKind thoughtsKind, List<IndividualThoughtToAdd> outIndividualThoughts, List<ThoughtDef> outAllColonistsThoughts)
 		{
-			if (thoughtsKind == PawnDiedOrDownedThoughtsKind.Abandoned && victim.RaceProps.Animal)
+			if (thoughtsKind == PawnDiedOrDownedThoughtsKind.Banished && victim.RaceProps.Animal)
 			{
 				List<DirectPawnRelation> directRelations = victim.relations.DirectRelations;
 				for (int i = 0; i < directRelations.Count; i++)
@@ -241,13 +244,13 @@ namespace RimWorld
 						{
 							if (directRelations[i].def == PawnRelationDefOf.Bond)
 							{
-								outIndividualThoughts.Add(new IndividualThoughtToAdd(ThoughtDefOf.BondedAnimalAbandoned, directRelations[i].otherPawn, victim, 1f, 1f));
+								outIndividualThoughts.Add(new IndividualThoughtToAdd(ThoughtDefOf.BondedAnimalBanished, directRelations[i].otherPawn, victim, 1f, 1f));
 							}
 						}
 					}
 				}
 			}
-			if (thoughtsKind == PawnDiedOrDownedThoughtsKind.Died || thoughtsKind == PawnDiedOrDownedThoughtsKind.AbandonedToDie)
+			if (thoughtsKind == PawnDiedOrDownedThoughtsKind.Died || thoughtsKind == PawnDiedOrDownedThoughtsKind.BanishedToDie)
 			{
 				foreach (Pawn current in victim.relations.PotentiallyRelatedPawns)
 				{
@@ -290,13 +293,19 @@ namespace RimWorld
 									int num = current2.relations.OpinionOf(victim);
 									if (num >= 20)
 									{
+										ThoughtDef thoughtDef = ThoughtDefOf.KilledMyFriend;
+										Pawn pawn2 = current2;
+										Pawn pawn3 = pawn;
 										float opinionOffsetFactor = victim.relations.GetFriendDiedThoughtPowerFactor(num);
-										outIndividualThoughts.Add(new IndividualThoughtToAdd(ThoughtDefOf.KilledMyFriend, current2, pawn, 1f, opinionOffsetFactor));
+										outIndividualThoughts.Add(new IndividualThoughtToAdd(thoughtDef, pawn2, pawn3, 1f, opinionOffsetFactor));
 									}
 									else if (num <= -20)
 									{
+										ThoughtDef thoughtDef = ThoughtDefOf.KilledMyRival;
+										Pawn pawn3 = current2;
+										Pawn pawn2 = pawn;
 										float opinionOffsetFactor = victim.relations.GetRivalDiedThoughtPowerFactor(num);
-										outIndividualThoughts.Add(new IndividualThoughtToAdd(ThoughtDefOf.KilledMyRival, current2, pawn, 1f, opinionOffsetFactor));
+										outIndividualThoughts.Add(new IndividualThoughtToAdd(thoughtDef, pawn3, pawn2, 1f, opinionOffsetFactor));
 									}
 								}
 							}

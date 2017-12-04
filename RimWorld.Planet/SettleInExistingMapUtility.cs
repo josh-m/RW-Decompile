@@ -43,7 +43,7 @@ namespace RimWorld.Planet
 				{
 					foreach (IAttackTarget current in map.attackTargetsCache.TargetsHostileToColony)
 					{
-						if (!current.ThreatDisabled())
+						if (GenHostility.IsActiveThreatToPlayer(current))
 						{
 							command_Settle.Disable("CommandSettleFailEnemies".Translate());
 							break;
@@ -63,7 +63,7 @@ namespace RimWorld.Planet
 			{
 				Find.WorldObjects.Remove(parent);
 			}
-			Messages.Message("MessageSettledInExistingMap".Translate(), factionBase, MessageSound.Benefit);
+			Messages.Message("MessageSettledInExistingMap".Translate(), factionBase, MessageTypeDefOf.PositiveEvent);
 			SettleInExistingMapUtility.tmpPlayerPawns.Clear();
 			SettleInExistingMapUtility.tmpPlayerPawns.AddRange(from x in map.mapPawns.AllPawnsSpawned
 			where x.Faction == Faction.OfPlayer || x.HostFaction == Faction.OfPlayer

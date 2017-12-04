@@ -8,19 +8,19 @@ namespace RimWorld
 {
 	public class JobDriver_FoodDeliver : JobDriver
 	{
-		private const TargetIndex FoodSourceInd = TargetIndex.A;
-
-		private const TargetIndex DelivereeInd = TargetIndex.B;
-
 		private bool usingNutrientPasteDispenser;
 
 		private bool eatingFromInventory;
+
+		private const TargetIndex FoodSourceInd = TargetIndex.A;
+
+		private const TargetIndex DelivereeInd = TargetIndex.B;
 
 		private Pawn Deliveree
 		{
 			get
 			{
-				return (Pawn)base.CurJob.targetB.Thing;
+				return (Pawn)this.job.targetB.Thing;
 			}
 		}
 
@@ -33,9 +33,9 @@ namespace RimWorld
 
 		public override string GetReport()
 		{
-			if (base.CurJob.GetTarget(TargetIndex.A).Thing is Building_NutrientPasteDispenser)
+			if (this.job.GetTarget(TargetIndex.A).Thing is Building_NutrientPasteDispenser && this.Deliveree != null)
 			{
-				return base.CurJob.def.reportString.Replace("TargetA", ThingDefOf.MealNutrientPaste.label).Replace("TargetB", ((Pawn)((Thing)base.CurJob.targetB)).LabelShort);
+				return this.job.def.reportString.Replace("TargetA", ThingDefOf.MealNutrientPaste.label).Replace("TargetB", this.Deliveree.LabelShort);
 			}
 			return base.GetReport();
 		}
@@ -47,10 +47,15 @@ namespace RimWorld
 			this.eatingFromInventory = (this.pawn.inventory != null && this.pawn.inventory.Contains(base.TargetThingA));
 		}
 
+		public override bool TryMakePreToilReservations()
+		{
+			return this.pawn.Reserve(this.Deliveree, this.job, 1, -1, null);
+		}
+
 		[DebuggerHidden]
 		protected override IEnumerable<Toil> MakeNewToils()
 		{
-			yield return Toils_Reserve.Reserve(TargetIndex.B, 1, -1, null);
+			this.FailOnDespawnedOrNull(TargetIndex.B);
 			if (this.eatingFromInventory)
 			{
 				yield return Toils_Misc.TakeItemFromInventoryToCarrier(this.pawn, TargetIndex.A);
@@ -69,7 +74,7 @@ namespace RimWorld
 			Toil toil = new Toil();
 			toil.initAction = delegate
 			{
-				Pawn actor = this.<toil>__0.actor;
+				Pawn actor = toil.actor;
 				Job curJob = actor.jobs.curJob;
 				actor.pather.StartPath(curJob.targetC, PathEndMode.OnCell);
 			};
@@ -77,19 +82,18 @@ namespace RimWorld
 			toil.FailOnDestroyedNullOrForbidden(TargetIndex.B);
 			toil.AddFailCondition(delegate
 			{
-				Pawn pawn = (Pawn)this.<toil>__0.actor.jobs.curJob.targetB.Thing;
+				Pawn pawn = (Pawn)toil.actor.jobs.curJob.targetB.Thing;
 				return !pawn.IsPrisonerOfColony || !pawn.guest.CanBeBroughtFood;
 			});
 			yield return toil;
-			yield return new Toil
+			Toil toil2 = new Toil();
+			toil2.initAction = delegate
 			{
-				initAction = delegate
-				{
-					Thing thing;
-					this.<>f__this.pawn.carryTracker.TryDropCarriedThing(this.<toil>__1.actor.jobs.curJob.targetC.Cell, ThingPlaceMode.Direct, out thing, null);
-				},
-				defaultCompleteMode = ToilCompleteMode.Instant
+				Thing thing;
+				this.$this.pawn.carryTracker.TryDropCarriedThing(toil2.actor.jobs.curJob.targetC.Cell, ThingPlaceMode.Direct, out thing, null);
 			};
+			toil2.defaultCompleteMode = ToilCompleteMode.Instant;
+			yield return toil2;
 		}
 	}
 }

@@ -1,25 +1,13 @@
 using RimWorld.Planet;
 using System;
 using System.Collections.Generic;
-using UnityEngine;
 using Verse;
 using Verse.AI.Group;
-using Verse.Sound;
 
 namespace RimWorld
 {
-	public class DropPodLeaving : Thing, IActiveDropPod, IThingHolder
+	public class DropPodLeaving : Skyfaller, IActiveDropPod, IThingHolder
 	{
-		private const int MinTicksSinceStart = -40;
-
-		private const int MaxTicksSinceStart = -15;
-
-		private const int TicksSinceStartToPlaySound = -10;
-
-		private const int LeaveMapAfterTicks = 220;
-
-		private ActiveDropPodInfo contents;
-
 		public int groupID = -1;
 
 		public int destinationTile = -1;
@@ -30,60 +18,20 @@ namespace RimWorld
 
 		public bool attackOnArrival;
 
-		private int ticksSinceStart;
-
 		private bool alreadyLeft;
 
-		private bool soundPlayed;
-
 		private static List<Thing> tmpActiveDropPods = new List<Thing>();
-
-		public override Vector3 DrawPos
-		{
-			get
-			{
-				return DropPodAnimationUtility.DrawPosAt(this.ticksSinceStart, base.Position);
-			}
-		}
 
 		public ActiveDropPodInfo Contents
 		{
 			get
 			{
-				return this.contents;
+				return ((ActiveDropPod)this.innerContainer[0]).Contents;
 			}
 			set
 			{
-				if (this.contents != null)
-				{
-					this.contents.parent = null;
-				}
-				if (value != null)
-				{
-					value.parent = this;
-				}
-				this.contents = value;
+				((ActiveDropPod)this.innerContainer[0]).Contents = value;
 			}
-		}
-
-		public ThingOwner GetDirectlyHeldThings()
-		{
-			return null;
-		}
-
-		public void GetChildHolders(List<IThingHolder> outChildren)
-		{
-			ThingOwnerUtility.AppendThingHoldersFromThings(outChildren, this.GetDirectlyHeldThings());
-			if (this.contents != null)
-			{
-				outChildren.Add(this.contents);
-			}
-		}
-
-		public override void PostMake()
-		{
-			base.PostMake();
-			this.ticksSinceStart = Rand.RangeInclusive(-40, -15);
 		}
 
 		public override void ExposeData()
@@ -94,37 +42,16 @@ namespace RimWorld
 			Scribe_Values.Look<IntVec3>(ref this.destinationCell, "destinationCell", default(IntVec3), false);
 			Scribe_Values.Look<PawnsArriveMode>(ref this.arriveMode, "arriveMode", PawnsArriveMode.Undecided, false);
 			Scribe_Values.Look<bool>(ref this.attackOnArrival, "attackOnArrival", false, false);
-			Scribe_Values.Look<int>(ref this.ticksSinceStart, "ticksSinceStart", 0, false);
-			Scribe_Deep.Look<ActiveDropPodInfo>(ref this.contents, "contents", new object[]
-			{
-				this
-			});
 			Scribe_Values.Look<bool>(ref this.alreadyLeft, "alreadyLeft", false, false);
-			Scribe_Values.Look<bool>(ref this.soundPlayed, "soundPlayed", false, false);
 		}
 
-		public override void Tick()
+		protected override void LeaveMap()
 		{
-			if (!this.soundPlayed && this.ticksSinceStart >= -10)
+			if (this.alreadyLeft)
 			{
-				SoundDefOf.DropPodLeaving.PlayOneShot(new TargetInfo(base.Position, base.Map, false));
-				this.soundPlayed = true;
+				base.LeaveMap();
+				return;
 			}
-			this.ticksSinceStart++;
-			if (!this.alreadyLeft && this.ticksSinceStart >= 220)
-			{
-				this.GroupLeftMap();
-			}
-		}
-
-		public override void DrawAt(Vector3 drawLoc, bool flip = false)
-		{
-			base.DrawAt(drawLoc, false);
-			DropPodAnimationUtility.DrawDropSpotShadow(this, this.ticksSinceStart);
-		}
-
-		private void GroupLeftMap()
-		{
 			if (this.groupID < 0)
 			{
 				Log.Error("Drop pod left the map, but its group ID is " + this.groupID);
@@ -158,16 +85,11 @@ namespace RimWorld
 				if (dropPodLeaving != null && dropPodLeaving.groupID == this.groupID)
 				{
 					dropPodLeaving.alreadyLeft = true;
-					travelingTransportPods.AddPod(dropPodLeaving.contents, true);
-					dropPodLeaving.contents = null;
+					travelingTransportPods.AddPod(dropPodLeaving.Contents, true);
+					dropPodLeaving.Contents = null;
 					dropPodLeaving.Destroy(DestroyMode.Vanish);
 				}
 			}
-		}
-
-		virtual IThingHolder get_ParentHolder()
-		{
-			return base.ParentHolder;
 		}
 	}
 }

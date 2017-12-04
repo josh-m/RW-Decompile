@@ -16,7 +16,7 @@ namespace RimWorld.Planet
 					foundTileLocal = t;
 				}
 				return flag;
-			}, maxTilesToScan);
+			}, maxTilesToScan, null);
 			foundTile = foundTileLocal;
 			return foundTileLocal >= 0;
 		}

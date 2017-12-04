@@ -5,13 +5,13 @@ namespace RimWorld
 {
 	public class CompBreakdownable : ThingComp
 	{
-		private const int BreakdownMTBTicks = 13680000;
-
-		public const string BreakdownSignal = "Breakdown";
-
 		private bool brokenDownInt;
 
 		private CompPowerTrader powerComp;
+
+		private const int BreakdownMTBTicks = 13679999;
+
+		public const string BreakdownSignal = "Breakdown";
 
 		public bool BrokenDown
 		{
@@ -50,7 +50,7 @@ namespace RimWorld
 
 		public void CheckForBreakdown()
 		{
-			if (this.CanBreakdownNow() && Rand.MTBEventOccurs(1.368E+07f, 1f, 1041f))
+			if (this.CanBreakdownNow() && Rand.MTBEventOccurs(13679999f, 1f, 1041f))
 			{
 				this.DoBreakdown();
 			}
@@ -84,7 +84,7 @@ namespace RimWorld
 				}), "LetterBuildingBrokenDown".Translate(new object[]
 				{
 					this.parent.LabelShort
-				}), LetterDefOf.BadNonUrgent, this.parent, null);
+				}), LetterDefOf.NegativeEvent, this.parent, null);
 			}
 		}
 

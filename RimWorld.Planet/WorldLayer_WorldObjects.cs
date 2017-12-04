@@ -21,28 +21,28 @@ namespace RimWorld.Planet
 			List<WorldObject> allObjects = Find.WorldObjects.AllWorldObjects;
 			for (int i = 0; i < allObjects.Count; i++)
 			{
-				WorldObject o = allObjects[i];
-				if (!o.def.useDynamicDrawer)
+				WorldObject worldObject = allObjects[i];
+				if (!worldObject.def.useDynamicDrawer)
 				{
-					if (!this.ShouldSkip(o))
+					if (!this.ShouldSkip(worldObject))
 					{
-						Material mat = o.Material;
-						if (mat == null)
+						Material material = worldObject.Material;
+						if (material == null)
 						{
-							Log.ErrorOnce("World object " + o + " returned null material.", Gen.HashCombineInt(1948576891, o.ID));
+							Log.ErrorOnce("World object " + worldObject + " returned null material.", Gen.HashCombineInt(1948576891, worldObject.ID));
 						}
 						else
 						{
-							LayerSubMesh subMesh = base.GetSubMesh(mat);
+							LayerSubMesh subMesh = base.GetSubMesh(material);
 							Rand.PushState();
-							Rand.Seed = o.ID;
-							o.Print(subMesh);
+							Rand.Seed = worldObject.ID;
+							worldObject.Print(subMesh);
 							Rand.PopState();
 						}
 					}
 				}
 			}
-			base.FinalizeMesh(MeshParts.All, false);
+			base.FinalizeMesh(MeshParts.All);
 		}
 	}
 }

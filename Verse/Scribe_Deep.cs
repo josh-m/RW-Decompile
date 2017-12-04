@@ -1,4 +1,5 @@
 using System;
+using System.Xml;
 
 namespace Verse
 {
@@ -73,6 +74,16 @@ namespace Verse
 						}
 						exposable.ExposeData();
 					}
+					catch (Exception ex)
+					{
+						Log.Error(string.Concat(new object[]
+						{
+							"Exception while saving ",
+							exposable.ToStringSafe<IExposable>(),
+							": ",
+							ex
+						}));
+					}
 					finally
 					{
 						Scribe.ExitNode();
@@ -82,7 +93,21 @@ namespace Verse
 			}
 			else if (Scribe.mode == LoadSaveMode.LoadingVars)
 			{
-				target = ScribeExtractor.SaveableFromNode<T>(Scribe.loader.curXmlParent[label], ctorArgs);
+				try
+				{
+					target = ScribeExtractor.SaveableFromNode<T>(Scribe.loader.curXmlParent[label], ctorArgs);
+				}
+				catch (Exception ex2)
+				{
+					Log.Error(string.Concat(new object[]
+					{
+						"Exception while loading ",
+						Scribe.loader.curXmlParent[label].ToStringSafe<XmlElement>(),
+						": ",
+						ex2
+					}));
+					target = default(T);
+				}
 			}
 		}
 	}

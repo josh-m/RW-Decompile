@@ -8,9 +8,9 @@ namespace RimWorld
 {
 	public class JobGiver_TakeCombatEnhancingDrug : ThinkNode_JobGiver
 	{
-		private const int TakeEveryTicks = 20000;
-
 		private bool onlyIfInDanger;
+
+		private const int TakeEveryTicks = 20000;
 
 		public override ThinkNode DeepCopy(bool resolve = true)
 		{

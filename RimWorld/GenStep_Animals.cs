@@ -17,7 +17,10 @@ namespace RimWorld
 					break;
 				}
 				IntVec3 loc = RCellFinder.RandomAnimalSpawnCell_MapGen(map);
-				map.wildSpawner.SpawnRandomWildAnimalAt(loc);
+				if (!map.wildSpawner.SpawnRandomWildAnimalAt(loc))
+				{
+					break;
+				}
 			}
 		}
 	}

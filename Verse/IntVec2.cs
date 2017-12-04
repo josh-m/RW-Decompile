@@ -89,6 +89,22 @@ namespace Verse
 			}
 		}
 
+		public int MagnitudeManhattan
+		{
+			get
+			{
+				return Mathf.Abs(this.x) + Mathf.Abs(this.z);
+			}
+		}
+
+		public int Area
+		{
+			get
+			{
+				return Mathf.Abs(this.x) * Mathf.Abs(this.z);
+			}
+		}
+
 		public static IntVec2 Invalid
 		{
 			get
@@ -173,21 +189,6 @@ namespace Verse
 			return new Vector2((float)this.x + 0.5f, (float)this.z + 0.5f);
 		}
 
-		public override bool Equals(object obj)
-		{
-			return obj is IntVec2 && this.Equals((IntVec2)obj);
-		}
-
-		public bool Equals(IntVec2 other)
-		{
-			return this.x == other.x && this.z == other.z;
-		}
-
-		public override int GetHashCode()
-		{
-			return Gen.HashCombineInt(this.x, this.z);
-		}
-
 		public static IntVec2 operator +(IntVec2 a, IntVec2 b)
 		{
 			return new IntVec2(a.x + b.x, a.z + b.z);
@@ -216,6 +217,21 @@ namespace Verse
 		public static bool operator !=(IntVec2 a, IntVec2 b)
 		{
 			return a.x != b.x || a.z != b.z;
+		}
+
+		public override bool Equals(object obj)
+		{
+			return obj is IntVec2 && this.Equals((IntVec2)obj);
+		}
+
+		public bool Equals(IntVec2 other)
+		{
+			return this.x == other.x && this.z == other.z;
+		}
+
+		public override int GetHashCode()
+		{
+			return Gen.HashCombineInt(this.x, this.z);
 		}
 	}
 }

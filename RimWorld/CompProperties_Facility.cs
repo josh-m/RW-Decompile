@@ -15,7 +15,11 @@ namespace RimWorld
 
 		public bool mustBePlacedAdjacent;
 
+		public bool mustBePlacedAdjacentCardinalToBedHead;
+
 		public bool canLinkToMedBedsOnly;
+
+		public float maxDistance = 8f;
 
 		public CompProperties_Facility()
 		{

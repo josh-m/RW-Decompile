@@ -11,7 +11,15 @@ namespace RimWorld
 {
 	public class ITab_Pawn_Gear : ITab
 	{
+		private Vector2 scrollPosition = Vector2.zero;
+
+		private float scrollViewHeight;
+
 		private const float TopPadding = 20f;
+
+		private static readonly Color ThingLabelColor = new Color(0.9f, 0.9f, 0.9f, 1f);
+
+		private static readonly Color HighlightColor = new Color(0.5f, 0.5f, 0.5f, 1f);
 
 		private const float ThingIconSize = 28f;
 
@@ -20,14 +28,6 @@ namespace RimWorld
 		private const float ThingLeftX = 36f;
 
 		private const float StandardLineHeight = 22f;
-
-		private Vector2 scrollPosition = Vector2.zero;
-
-		private float scrollViewHeight;
-
-		private static readonly Color ThingLabelColor = new Color(0.9f, 0.9f, 0.9f, 1f);
-
-		private static readonly Color HighlightColor = new Color(0.5f, 0.5f, 0.5f, 1f);
 
 		private static List<Thing> workingInvList = new List<Thing>();
 
@@ -43,7 +43,16 @@ namespace RimWorld
 		{
 			get
 			{
-				return this.SelPawnForGear.IsColonistPlayerControlled && !this.SelPawnForGear.Downed;
+				Pawn selPawnForGear = this.SelPawnForGear;
+				return !selPawnForGear.Downed && !selPawnForGear.InMentalState && (selPawnForGear.Faction == Faction.OfPlayer || selPawnForGear.IsPrisonerOfColony) && (!selPawnForGear.IsPrisonerOfColony || !selPawnForGear.Spawned || selPawnForGear.Map.mapPawns.AnyFreeColonistSpawned) && (!selPawnForGear.IsPrisonerOfColony || (!PrisonBreakUtility.IsPrisonBreaking(selPawnForGear) && (selPawnForGear.CurJob == null || !selPawnForGear.CurJob.exitMapOnArrival)));
+			}
+		}
+
+		private bool CanControlColonist
+		{
+			get
+			{
+				return this.CanControl && this.SelPawnForGear.IsColonistPlayerControlled;
 			}
 		}
 
@@ -132,12 +141,12 @@ namespace RimWorld
 			Text.Anchor = TextAnchor.UpperLeft;
 		}
 
-		private void DrawThingRow(ref float y, float width, Thing thing, bool showDropButtonIfPrisoner = false)
+		private void DrawThingRow(ref float y, float width, Thing thing, bool inventory = false)
 		{
 			Rect rect = new Rect(0f, y, width, 28f);
 			Widgets.InfoCardButton(rect.width - 24f, y, thing);
 			rect.width -= 24f;
-			if (this.CanControl || (this.SelPawnForGear.Faction == Faction.OfPlayer && this.SelPawnForGear.RaceProps.packAnimal) || (showDropButtonIfPrisoner && this.SelPawnForGear.IsPrisonerOfColony))
+			if (this.CanControl && (inventory || this.CanControlColonist || (this.SelPawnForGear.Spawned && !this.SelPawnForGear.Map.IsPlayerHome)))
 			{
 				Rect rect2 = new Rect(rect.width - 24f, y, 24f, 24f);
 				TooltipHandler.TipRegion(rect2, "DropThing".Translate());
@@ -148,7 +157,7 @@ namespace RimWorld
 				}
 				rect.width -= 24f;
 			}
-			if (this.CanControl)
+			if (this.CanControlColonist)
 			{
 				if (thing.def.IsNutritionGivingIngestible && thing.IngestibleNow && base.SelPawn.RaceProps.CanEverEat(thing))
 				{
@@ -188,7 +197,7 @@ namespace RimWorld
 				text = text + ", " + "ApparelForcedLower".Translate();
 			}
 			Text.WordWrap = false;
-			Widgets.Label(rect5, text);
+			Widgets.Label(rect5, text.Truncate(rect5.width, null));
 			Text.WordWrap = true;
 			string text2 = thing.LabelCap;
 			if (thing.def.useHitPoints)
@@ -228,8 +237,8 @@ namespace RimWorld
 					Widgets.ListSeparator(ref curY, width, "AverageArmor".Translate());
 				}
 				Rect rect = new Rect(0f, curY, width, 100f);
-				Widgets.Label(rect, label);
-				rect.xMin += 100f;
+				Widgets.Label(rect, label.Truncate(120f, null));
+				rect.xMin += 120f;
 				Widgets.Label(rect, num.ToStringPercent());
 				curY += 22f;
 			}

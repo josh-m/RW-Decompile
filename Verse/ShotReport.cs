@@ -8,16 +8,6 @@ namespace Verse
 {
 	public struct ShotReport
 	{
-		public const float LayingDownHitChanceFactorMinDistance = 4.5f;
-
-		public const float HitChanceFactorIfLayingDown = 0.2f;
-
-		private const float NonPawnShooterHitFactorPerDistance = 0.96f;
-
-		private const float ExecutionMaxDistance = 3.9f;
-
-		private const float ExecutionFactor = 7.5f;
-
 		private TargetInfo target;
 
 		private float distance;
@@ -37,6 +27,16 @@ namespace Verse
 		private float factorFromWeather;
 
 		private float forcedMissRadius;
+
+		public const float LayingDownHitChanceFactorMinDistance = 4.5f;
+
+		public const float HitChanceFactorIfLayingDown = 0.2f;
+
+		private const float NonPawnShooterHitFactorPerDistance = 0.96f;
+
+		private const float ExecutionMaxDistance = 3.9f;
+
+		private const float ExecutionFactor = 7.5f;
 
 		private float FactorFromPosture
 		{

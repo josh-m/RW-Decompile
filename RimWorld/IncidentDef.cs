@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using Verse;
 
 namespace RimWorld
@@ -11,7 +12,7 @@ namespace RimWorld
 
 		public IncidentCategory category;
 
-		public IncidentTargetType targetType;
+		public List<IncidentTargetTypeDef> targetTypes;
 
 		public float baseChance;
 
@@ -63,6 +64,8 @@ namespace RimWorld
 
 		public List<MTBByBiome> mtbDaysByBiome;
 
+		public TaleDef tale;
+
 		[Unsaved]
 		private IncidentWorker workerInt;
 
@@ -73,7 +76,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return this.category == IncidentCategory.ThreatSmall || this.category == IncidentCategory.ThreatBig;
+				return this.category == IncidentCategory.ThreatSmall || this.category == IncidentCategory.ThreatBig || this.category == IncidentCategory.RaidBeacon;
 			}
 		}
 
@@ -153,28 +156,31 @@ namespace RimWorld
 			{
 				yield return "category is undefined.";
 			}
-			if (this.targetType == IncidentTargetType.None)
+			if (this.targetTypes == null || this.targetTypes.Count == 0)
 			{
 				yield return "no target type";
 			}
-			if (this.TargetTypeAllowed(IncidentTargetType.World) && this.targetType != IncidentTargetType.World)
+			if (this.TargetTypeAllowed(IncidentTargetTypeDefOf.World))
 			{
-				yield return "allows world target type along with other targets. World targeting incidents should only target the world.";
+				if (this.targetTypes.Any((IncidentTargetTypeDef tt) => tt != IncidentTargetTypeDefOf.World))
+				{
+					yield return "allows world target type along with other targets. World targeting incidents should only target the world.";
+				}
 			}
-			if (this.TargetTypeAllowed(IncidentTargetType.World) && this.allowedBiomes != null)
+			if (this.TargetTypeAllowed(IncidentTargetTypeDefOf.World) && this.allowedBiomes != null)
 			{
 				yield return "world-targeting incident has a biome restriction list";
 			}
 		}
 
-		public bool TargetTypeAllowed(IncidentTargetType target)
+		public bool TargetTypeAllowed(IncidentTargetTypeDef target)
 		{
-			return (byte)(this.targetType & target) != 0;
+			return this.targetTypes.Contains(target);
 		}
 
 		public bool TargetAllowed(IIncidentTarget target)
 		{
-			return this.TargetTypeAllowed(target.Type);
+			return this.targetTypes.Intersect(target.AcceptedTypes()).Any<IncidentTargetTypeDef>();
 		}
 	}
 }

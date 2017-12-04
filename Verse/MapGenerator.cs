@@ -7,17 +7,43 @@ namespace Verse
 {
 	public static class MapGenerator
 	{
+		public static Map mapBeingGenerated;
+
 		private static Dictionary<string, object> data = new Dictionary<string, object>();
 
 		private static IntVec3 playerStartSpotInt = IntVec3.Invalid;
 
 		public static List<IntVec3> rootsToUnfog = new List<IntVec3>();
 
+		public const string ElevationName = "Elevation";
+
+		public const string FertilityName = "Fertility";
+
+		public const string CavesName = "Caves";
+
+		public const string RectOfInterestName = "RectOfInterest";
+
 		public static MapGenFloatGrid Elevation
 		{
 			get
 			{
-				return MapGenerator.GetVar<MapGenFloatGrid>("Elevation");
+				return MapGenerator.FloatGridNamed("Elevation");
+			}
+		}
+
+		public static MapGenFloatGrid Fertility
+		{
+			get
+			{
+				return MapGenerator.FloatGridNamed("Fertility");
+			}
+		}
+
+		public static MapGenFloatGrid Caves
+		{
+			get
+			{
+				return MapGenerator.FloatGridNamed("Caves");
 			}
 		}
 
@@ -45,6 +71,7 @@ namespace Verse
 			MapGenerator.playerStartSpotInt = IntVec3.Invalid;
 			MapGenerator.rootsToUnfog.Clear();
 			MapGenerator.data.Clear();
+			MapGenerator.mapBeingGenerated = null;
 			Map result;
 			try
 			{
@@ -57,6 +84,7 @@ namespace Verse
 				DeepProfiler.Start("Set up map");
 				Map map = new Map();
 				map.uniqueID = Find.UniqueIDsManager.GetNextMapID();
+				MapGenerator.mapBeingGenerated = map;
 				map.info.Size = mapSize;
 				map.info.parent = parent;
 				map.ConstructComponents();
@@ -76,6 +104,7 @@ namespace Verse
 					enumerable = enumerable.Concat(extraGenStepDefs);
 				}
 				map.areaManager.AddStartingAreas();
+				map.weatherDecider.StartInitialWeather();
 				DeepProfiler.Start("Generate contents into map");
 				MapGenerator.GenerateContentsIntoMap(enumerable, map);
 				DeepProfiler.End();
@@ -95,6 +124,7 @@ namespace Verse
 			finally
 			{
 				DeepProfiler.End();
+				MapGenerator.mapBeingGenerated = null;
 				Current.ProgramState = programState;
 			}
 			return result;
@@ -109,14 +139,14 @@ namespace Verse
 			orderby x.order, x.index
 			select x)
 			{
-				DeepProfiler.Start("Genstep - " + current.ToString());
+				DeepProfiler.Start("GenStep - " + current);
 				try
 				{
 					current.genStep.Generate(map);
 				}
-				catch (Exception ex)
+				catch (Exception arg)
 				{
-					Log.Error(ex.ToString());
+					Log.Error("Error in GenStep: " + arg);
 				}
 				finally
 				{
@@ -155,14 +185,14 @@ namespace Verse
 			MapGenerator.data[name] = var;
 		}
 
-		public static MapGenFloatGrid FloatGridNamed(string name, Map map)
+		public static MapGenFloatGrid FloatGridNamed(string name)
 		{
 			MapGenFloatGrid var = MapGenerator.GetVar<MapGenFloatGrid>(name);
 			if (var != null)
 			{
 				return var;
 			}
-			MapGenFloatGrid mapGenFloatGrid = new MapGenFloatGrid(map);
+			MapGenFloatGrid mapGenFloatGrid = new MapGenFloatGrid(MapGenerator.mapBeingGenerated);
 			MapGenerator.SetVar<MapGenFloatGrid>(name, mapGenFloatGrid);
 			return mapGenFloatGrid;
 		}

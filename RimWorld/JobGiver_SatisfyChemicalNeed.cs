@@ -68,8 +68,7 @@ namespace RimWorld
 					return innerContainer[i];
 				}
 			}
-			Predicate<Thing> validator = (Thing x) => this.DrugValidator(pawn, addictionHediff, x);
-			return GenClosest.ClosestThingReachable(pawn.Position, pawn.Map, ThingRequest.ForGroup(ThingRequestGroup.Drug), PathEndMode.ClosestTouch, TraverseParms.For(pawn, Danger.Deadly, TraverseMode.ByPawn, false), 9999f, validator, null, 0, -1, false, RegionType.Set_Passable, false);
+			return GenClosest.ClosestThingReachable(pawn.Position, pawn.Map, ThingRequest.ForGroup(ThingRequestGroup.Drug), PathEndMode.ClosestTouch, TraverseParms.For(pawn, Danger.Deadly, TraverseMode.ByPawn, false), 9999f, (Thing x) => this.DrugValidator(pawn, addictionHediff, x), null, 0, -1, false, RegionType.Set_Passable, false);
 		}
 
 		private bool DrugValidator(Pawn pawn, Hediff_Addiction addiction, Thing drug)
@@ -105,7 +104,7 @@ namespace RimWorld
 			if (pawn.drugs != null && !pawn.drugs.CurrentPolicy[drug.def].allowedForAddiction && pawn.story != null)
 			{
 				int num = pawn.story.traits.DegreeOfTrait(TraitDefOf.DrugDesire);
-				if (num <= 0 && !pawn.InMentalState)
+				if (num <= 0 && (!pawn.InMentalState || !pawn.MentalStateDef.ignoreDrugPolicy))
 				{
 					return false;
 				}

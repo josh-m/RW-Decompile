@@ -17,6 +17,15 @@ namespace RimWorld
 			}
 		}
 
+		private bool PowerOn
+		{
+			get
+			{
+				CompPowerTrader comp = this.parent.GetComp<CompPowerTrader>();
+				return comp != null && comp.PowerOn;
+			}
+		}
+
 		public override void PostSpawnSetup(bool respawningAfterLoad)
 		{
 			if (!respawningAfterLoad)
@@ -27,21 +36,37 @@ namespace RimWorld
 
 		public override void CompTick()
 		{
-			if (this.parent.Position.Fogged(this.parent.Map))
-			{
-				return;
-			}
-			this.ticksUntilSpawn--;
-			this.CheckShouldSpawn();
+			this.TickInterval(1);
 		}
 
 		public override void CompTickRare()
 		{
-			if (this.parent.Position.Fogged(this.parent.Map))
+			this.TickInterval(250);
+		}
+
+		private void TickInterval(int interval)
+		{
+			if (!this.parent.Spawned)
 			{
 				return;
 			}
-			this.ticksUntilSpawn -= 250;
+			Hive hive = this.parent as Hive;
+			if (hive != null)
+			{
+				if (!hive.active)
+				{
+					return;
+				}
+			}
+			else if (this.parent.Position.Fogged(this.parent.Map))
+			{
+				return;
+			}
+			if (this.PropsSpawner.requiresPower && !this.PowerOn)
+			{
+				return;
+			}
+			this.ticksUntilSpawn -= interval;
 			this.CheckShouldSpawn();
 		}
 
@@ -86,6 +111,13 @@ namespace RimWorld
 				{
 					t.SetForbidden(true, true);
 				}
+				if (this.PropsSpawner.showMessageIfOwned && this.parent.Faction == Faction.OfPlayer)
+				{
+					Messages.Message("MessageCompSpawnerSpawnedItem".Translate(new object[]
+					{
+						this.PropsSpawner.thingToSpawn.label
+					}).CapitalizeFirst(), thing, MessageTypeDefOf.PositiveEvent);
+				}
 				return true;
 			}
 			return false;
@@ -103,7 +135,7 @@ namespace RimWorld
 						Building_Door building_Door = edifice as Building_Door;
 						if (building_Door == null || building_Door.FreePassage)
 						{
-							if (GenSight.LineOfSight(this.parent.Position, current, this.parent.Map, false, null, 0, 0))
+							if (this.parent.def.passability == Traversability.Impassable || GenSight.LineOfSight(this.parent.Position, current, this.parent.Map, false, null, 0, 0))
 							{
 								bool flag = false;
 								List<Thing> thingList = current.GetThingList(this.parent.Map);
@@ -151,11 +183,23 @@ namespace RimWorld
 					icon = TexCommand.DesirePower,
 					action = delegate
 					{
-						this.<>f__this.TryDoSpawn();
-						this.<>f__this.ResetCountdown();
+						this.$this.TryDoSpawn();
+						this.$this.ResetCountdown();
 					}
 				};
 			}
+		}
+
+		public override string CompInspectStringExtra()
+		{
+			if (this.PropsSpawner.writeTimeLeftToSpawn && (!this.PropsSpawner.requiresPower || this.PowerOn))
+			{
+				return "NextSpawnedItemIn".Translate(new object[]
+				{
+					GenLabel.ThingLabel(this.PropsSpawner.thingToSpawn, null, this.PropsSpawner.spawnCount)
+				}) + ": " + this.ticksUntilSpawn.ToStringTicksToPeriod(true, false, true);
+			}
+			return null;
 		}
 	}
 }

@@ -6,9 +6,9 @@ namespace Verse.Sound
 {
 	public class AudioSourcePoolWorld
 	{
-		private const int NumSourcesWorld = 32;
-
 		private List<AudioSource> sourcesWorld = new List<AudioSource>();
+
+		private const int NumSourcesWorld = 32;
 
 		public AudioSourcePoolWorld()
 		{

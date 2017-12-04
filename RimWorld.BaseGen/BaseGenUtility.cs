@@ -29,6 +29,20 @@ namespace RimWorld.BaseGen
 			return d.IsStuff && d.stuffProps.CanMake(ThingDefOf.Wall) && d.BaseMarketValue / d.VolumePerUnit < 5f;
 		}
 
+		public static ThingDef RandomHightechWallStuff()
+		{
+			if (Rand.Value < 0.15f)
+			{
+				return ThingDefOf.Plasteel;
+			}
+			return ThingDefOf.Steel;
+		}
+
+		public static TerrainDef RandomHightechFloorDef()
+		{
+			return Rand.Element<TerrainDef>(TerrainDefOf.Concrete, TerrainDefOf.Concrete, TerrainDefOf.PavedTile, TerrainDefOf.PavedTile, TerrainDefOf.MetalTile);
+		}
+
 		public static TerrainDef RandomBasicFloorDef(Faction faction, bool allowCarpet = false)
 		{
 			if (allowCarpet && (faction == null || !faction.def.techLevel.IsNeolithicOrWorse()) && Rand.Chance(0.1f))
@@ -72,7 +86,7 @@ namespace RimWorld.BaseGen
 			return BaseGenUtility.CorrespondingTerrainDef(stuffDef, beautiful);
 		}
 
-		public static bool AnyDoorCardinalAdjacentTo(IntVec3 cell, Map map)
+		public static bool AnyDoorAdjacentCardinalTo(IntVec3 cell, Map map)
 		{
 			for (int i = 0; i < 4; i++)
 			{
@@ -85,11 +99,11 @@ namespace RimWorld.BaseGen
 			return false;
 		}
 
-		public static bool AnyDoorCardinalAdjacentTo(CellRect rect, Map map)
+		public static bool AnyDoorAdjacentCardinalTo(CellRect rect, Map map)
 		{
-			foreach (IntVec3 current in rect.ExpandedBy(1).EdgeCells)
+			foreach (IntVec3 current in rect.AdjacentCellsCardinal)
 			{
-				if (!rect.IsCorner(current) && current.InBounds(map))
+				if (current.InBounds(map))
 				{
 					if (current.GetDoor(map) != null)
 					{
@@ -98,6 +112,16 @@ namespace RimWorld.BaseGen
 				}
 			}
 			return false;
+		}
+
+		public static ThingDef WallStuffAt(IntVec3 c, Map map)
+		{
+			Building edifice = c.GetEdifice(map);
+			if (edifice != null && edifice.def == ThingDefOf.Wall)
+			{
+				return edifice.Stuff;
+			}
+			return null;
 		}
 	}
 }

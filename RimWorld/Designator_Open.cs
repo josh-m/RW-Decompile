@@ -31,7 +31,7 @@ namespace RimWorld
 		protected override void FinalizeDesignationFailed()
 		{
 			base.FinalizeDesignationFailed();
-			Messages.Message("MessageMustDesignateOpenable".Translate(), MessageSound.RejectInput);
+			Messages.Message("MessageMustDesignateOpenable".Translate(), MessageTypeDefOf.RejectInput);
 		}
 
 		public override AcceptanceReport CanDesignateCell(IntVec3 c)

@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -15,13 +14,9 @@ namespace RimWorld
 		static QualityUtility()
 		{
 			QualityUtility.AllQualityCategories = new List<QualityCategory>();
-			using (IEnumerator enumerator = Enum.GetValues(typeof(QualityCategory)).GetEnumerator())
+			foreach (QualityCategory item in Enum.GetValues(typeof(QualityCategory)))
 			{
-				while (enumerator.MoveNext())
-				{
-					QualityCategory item = (QualityCategory)((byte)enumerator.Current);
-					QualityUtility.AllQualityCategories.Add(item);
-				}
+				QualityUtility.AllQualityCategories.Add(item);
 			}
 		}
 
@@ -208,11 +203,16 @@ namespace RimWorld
 			return (QualityCategory)((int)num);
 		}
 
+		public static QualityCategory AddLevels(this QualityCategory quality, int levels)
+		{
+			return (QualityCategory)Mathf.Min((int)(quality + (byte)levels), 8);
+		}
+
 		internal static void LogGenerationData()
 		{
 			StringBuilder stringBuilder = new StringBuilder();
 			stringBuilder.AppendLine("Qualities for trader items");
-			stringBuilder.AppendLine(QualityUtility.DebugQualitiesString(() => QualityUtility.RandomTraderItemQuality()));
+			stringBuilder.AppendLine(QualityUtility.DebugQualitiesString(new Func<QualityCategory>(QualityUtility.RandomTraderItemQuality)));
 			foreach (PawnKindDef pk in DefDatabase<PawnKindDef>.AllDefs)
 			{
 				if (pk.RaceProps.Humanlike)

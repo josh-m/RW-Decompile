@@ -10,16 +10,6 @@ namespace RimWorld
 	[StaticConstructorOnStartup]
 	public class LearningReadout : IExposable
 	{
-		private const float OuterMargin = 8f;
-
-		private const float InnerMargin = 7f;
-
-		private const float ReadoutWidth = 200f;
-
-		private const float InfoPaneWidth = 310f;
-
-		private const float OpenButtonSize = 24f;
-
 		private List<ConceptDef> activeConcepts = new List<ConceptDef>();
 
 		private ConceptDef selectedConcept;
@@ -35,6 +25,16 @@ namespace RimWorld
 		private float lastConceptActivateRealTime = -999f;
 
 		private ConceptDef mouseoverConcept;
+
+		private const float OuterMargin = 8f;
+
+		private const float InnerMargin = 7f;
+
+		private const float ReadoutWidth = 200f;
+
+		private const float InfoPaneWidth = 310f;
+
+		private const float OpenButtonSize = 24f;
 
 		public static readonly Texture2D ProgressBarFillTex = SolidColorMaterials.NewSolidColorTexture(new Color(0.745098054f, 0.6039216f, 0.2f));
 
@@ -62,7 +62,7 @@ namespace RimWorld
 			Scribe_Defs.Look<ConceptDef>(ref this.selectedConcept, "selectedConcept");
 			if (Scribe.mode == LoadSaveMode.PostLoadInit)
 			{
-				this.activeConcepts.RemoveAll((ConceptDef c) => PlayerKnowledgeDatabase.IsComplete(c));
+				this.activeConcepts.RemoveAll(new Predicate<ConceptDef>(PlayerKnowledgeDatabase.IsComplete));
 			}
 		}
 
@@ -192,18 +192,8 @@ namespace RimWorld
 					}
 					num2 = rect3.yMax + 4f;
 				}
-				IEnumerable<ConceptDef> arg_2E3_0;
-				if (!this.showAllMode)
-				{
-					IEnumerable<ConceptDef> enumerable = this.activeConcepts;
-					arg_2E3_0 = enumerable;
-				}
-				else
-				{
-					arg_2E3_0 = DefDatabase<ConceptDef>.AllDefs;
-				}
-				IEnumerable<ConceptDef> enumerable2 = arg_2E3_0;
-				if (enumerable2.Any<ConceptDef>())
+				IEnumerable<ConceptDef> enumerable = this.showAllMode ? DefDatabase<ConceptDef>.AllDefs : this.activeConcepts;
+				if (enumerable.Any<ConceptDef>())
 				{
 					GUI.color = new Color(1f, 1f, 1f, 0.5f);
 					Widgets.DrawLineHorizontal(0f, num2, viewRect.width);
@@ -212,11 +202,11 @@ namespace RimWorld
 				}
 				if (this.showAllMode)
 				{
-					enumerable2 = from c in enumerable2
+					enumerable = from c in enumerable
 					orderby this.DisplayPriority(c) descending, c.label
 					select c;
 				}
-				foreach (ConceptDef current in enumerable2)
+				foreach (ConceptDef current in enumerable)
 				{
 					if (!current.TriggeredDirect)
 					{

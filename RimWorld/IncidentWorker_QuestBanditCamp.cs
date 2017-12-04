@@ -10,17 +10,15 @@ namespace RimWorld
 	{
 		private const float RelationsImprovement = 8f;
 
-		private static readonly IntRange RewardMarketValueRange = new IntRange(2000, 3000);
-
 		protected override bool CanFireNowSub(IIncidentTarget target)
 		{
 			Faction faction;
 			Faction faction2;
 			int num;
-			return base.CanFireNowSub(target) && this.TryFindFactions(out faction, out faction2) && TileFinder.TryFindNewSiteTile(out num);
+			return base.CanFireNowSub(target) && this.TryFindFactions(out faction, out faction2) && TileFinder.TryFindNewSiteTile(out num, 8, 30, false, true, -1);
 		}
 
-		public override bool TryExecute(IncidentParms parms)
+		protected override bool TryExecuteWorker(IncidentParms parms)
 		{
 			Faction faction;
 			Faction faction2;
@@ -29,15 +27,12 @@ namespace RimWorld
 				return false;
 			}
 			int tile;
-			if (!TileFinder.TryFindNewSiteTile(out tile))
+			if (!TileFinder.TryFindNewSiteTile(out tile, 8, 30, false, true, -1))
 			{
 				return false;
 			}
-			Site site = (Site)WorldObjectMaker.MakeWorldObject(WorldObjectDefOf.Site);
+			Site site = SiteMaker.MakeSite(SiteCoreDefOf.Nothing, SitePartDefOf.Outpost, faction2);
 			site.Tile = tile;
-			site.SetFaction(faction2);
-			site.core = SiteCoreDefOf.Nothing;
-			site.parts.Add(SitePartDefOf.Outpost);
 			List<Thing> list = this.GenerateRewards(faction);
 			site.GetComponent<DefeatAllEnemiesQuestComp>().StartQuest(faction, 8f, list);
 			Find.WorldObjects.Add(site);
@@ -54,9 +49,7 @@ namespace RimWorld
 		private List<Thing> GenerateRewards(Faction alliedFaction)
 		{
 			ItemCollectionGeneratorParams parms = default(ItemCollectionGeneratorParams);
-			parms.count = 1;
-			parms.totalMarketValue = (float)IncidentWorker_QuestBanditCamp.RewardMarketValueRange.RandomInRange;
-			parms.techLevel = alliedFaction.def.techLevel;
+			parms.techLevel = new TechLevel?(alliedFaction.def.techLevel);
 			return ItemCollectionGeneratorDefOf.BanditCampQuestRewards.Worker.Generate(parms);
 		}
 

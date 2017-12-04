@@ -63,7 +63,7 @@ namespace RimWorld
 					if (!pawn.Downed && pawn.mindState.duty.def == DutyDefOf.AssaultColony)
 					{
 						Thing thing = null;
-						if (this.TryFindGoodOpportunisticTaskTarget(pawn, out thing, list) && !base.Map.reservationManager.IsReserved(thing, this.lord.faction) && !GenAI.InDangerousCombat(pawn))
+						if (this.TryFindGoodOpportunisticTaskTarget(pawn, out thing, list) && !base.Map.reservationManager.IsReservedByAnyoneOf(thing, this.lord.faction) && !GenAI.InDangerousCombat(pawn))
 						{
 							pawn.mindState.duty = new PawnDuty(this.DutyDef);
 							pawn.jobs.EndCurrentJob(JobCondition.InterruptForced, true);

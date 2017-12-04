@@ -11,7 +11,7 @@ namespace RimWorld
 
 		private const float TotalBodySizeToSpawn = 2.5f;
 
-		public override bool TryExecute(IncidentParms parms)
+		protected override bool TryExecuteWorker(IncidentParms parms)
 		{
 			Map map = (Map)parms.target;
 			IntVec3 intVec;
@@ -36,11 +36,11 @@ namespace RimWorld
 			}
 			Find.LetterStack.ReceiveLetter("LetterLabelFarmAnimalsWanderIn".Translate(new object[]
 			{
-				pawnKindDef.label
+				pawnKindDef.GetLabelPlural(-1)
 			}).CapitalizeFirst(), "LetterFarmAnimalsWanderIn".Translate(new object[]
 			{
-				pawnKindDef.label
-			}), LetterDefOf.Good, new TargetInfo(intVec, map, false), null);
+				pawnKindDef.GetLabelPlural(-1)
+			}), LetterDefOf.PositiveEvent, new TargetInfo(intVec, map, false), null);
 			return true;
 		}
 	}

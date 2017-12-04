@@ -29,7 +29,7 @@ namespace RimWorld
 			if (Rand.MTBEventOccurs(this.ShipChunkDropMTBDays, 60000f, 1000f))
 			{
 				IncidentDef def = IncidentDefOf.ShipChunkDrop;
-				if (def.TargetAllowed(target))
+				if (def.Worker.CanFireNow(target))
 				{
 					yield return new FiringIncident(def, this, this.GenerateParms(def.category, target));
 				}

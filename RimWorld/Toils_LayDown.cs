@@ -37,7 +37,6 @@ namespace RimWorld
 					curDriver.layingDown = LayingDownState.LayingSurface;
 				}
 				curDriver.asleep = false;
-				actor.mindState.awokeVoluntarily = false;
 				if (actor.mindState.applyBedThoughtsTick == 0)
 				{
 					actor.mindState.applyBedThoughtsTick = Find.TickManager.TicksGame + Rand.Range(2500, 10000);
@@ -57,16 +56,20 @@ namespace RimWorld
 				actor.GainComfortFromCellIfPossible();
 				if (!curDriver.asleep)
 				{
-					if (canSleep && actor.needs.rest.CurLevel < RestUtility.FallAsleepMaxLevel(actor))
+					if (canSleep && ((actor.needs.rest != null && actor.needs.rest.CurLevel < RestUtility.FallAsleepMaxLevel(actor)) || curJob.forceSleep))
 					{
 						curDriver.asleep = true;
 					}
 				}
-				else if (!canSleep || actor.needs.rest.CurLevel >= RestUtility.WakeThreshold(actor))
+				else if (!canSleep)
 				{
 					curDriver.asleep = false;
 				}
-				if (curDriver.asleep && gainRestAndHealth)
+				else if ((actor.needs.rest == null || actor.needs.rest.CurLevel >= RestUtility.WakeThreshold(actor)) && !curJob.forceSleep)
+				{
+					curDriver.asleep = false;
+				}
+				if (curDriver.asleep && gainRestAndHealth && actor.needs.rest != null)
 				{
 					float num;
 					if (building_Bed != null && building_Bed.def.statBases.StatListContains(StatDefOf.BedRestEffectiveness))
@@ -109,9 +112,7 @@ namespace RimWorld
 				}
 				if (lookForOtherJobs && actor.IsHashIntervalTick(211))
 				{
-					actor.mindState.awokeVoluntarily = true;
 					actor.jobs.CheckForJobOverride();
-					actor.mindState.awokeVoluntarily = false;
 					return;
 				}
 			};
@@ -124,10 +125,6 @@ namespace RimWorld
 			{
 				Pawn actor = layDown.actor;
 				JobDriver curDriver = actor.jobs.curDriver;
-				if (!actor.mindState.awokeVoluntarily && curDriver.asleep && !actor.Dead && actor.needs.rest != null && actor.needs.rest.CurLevel < RestUtility.FallAsleepMaxLevel(actor) && actor.needs.mood != null)
-				{
-					actor.needs.mood.thoughts.memories.TryGainMemory(ThoughtDefOf.SleepDisturbed, null);
-				}
 				if (actor.mindState.applyBedThoughtsOnLeave)
 				{
 					Toils_LayDown.ApplyBedThoughts(actor);

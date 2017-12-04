@@ -7,18 +7,11 @@ namespace Verse
 	{
 		private List<WeatherEvent> liveEvents = new List<WeatherEvent>();
 
-		public WeatherEvent OverridingWeatherEvent
+		public List<WeatherEvent> LiveEventsListForReading
 		{
 			get
 			{
-				for (int i = 0; i < this.liveEvents.Count; i++)
-				{
-					if (this.liveEvents[i].CurrentlyOverridesSky)
-					{
-						return this.liveEvents[i];
-					}
-				}
-				return null;
+				return this.liveEvents;
 			}
 		}
 

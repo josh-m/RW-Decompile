@@ -12,7 +12,7 @@ namespace RimWorld.Planet
 			Rand.RandomizeStateFromTime();
 		}
 
-		public override void GenerateFromScribe(string seed)
+		public override void GenerateWithoutWorldData(string seed)
 		{
 		}
 	}

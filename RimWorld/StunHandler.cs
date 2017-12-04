@@ -6,10 +6,6 @@ namespace RimWorld
 {
 	public class StunHandler : IExposable
 	{
-		private const float StunDurationFactor_Standard = 20f;
-
-		private const float StunDurationFactor_EMP = 15f;
-
 		public Thing parent;
 
 		private int stunTicksLeft;
@@ -17,6 +13,10 @@ namespace RimWorld
 		private Mote moteStun;
 
 		private int EMPAdaptedTicksLeft;
+
+		private const float StunDurationFactor_Standard = 20f;
+
+		private const float StunDurationFactor_EMP = 15f;
 
 		public bool Stunned
 		{

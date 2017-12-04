@@ -49,6 +49,10 @@ namespace RimWorld
 
 		public static StatDef MinimumHandlingSkill;
 
+		public static StatDef MeleeDPS;
+
+		public static StatDef PainShockThreshold;
+
 		public static StatDef WorkSpeedGlobal;
 
 		public static StatDef MiningSpeed;
@@ -59,7 +63,7 @@ namespace RimWorld
 
 		public static StatDef ConstructionSpeed;
 
-		public static StatDef GiftImpact;
+		public static StatDef DiplomacyPower;
 
 		public static StatDef TradePriceImprovement;
 
@@ -105,9 +109,13 @@ namespace RimWorld
 
 		public static StatDef MeleeDodgeChance;
 
-		public static StatDef MeleeWeapon_DamageAmount;
+		public static StatDef Weapon_Bulk;
 
-		public static StatDef MeleeWeapon_Cooldown;
+		public static StatDef MeleeWeapon_AverageDPS;
+
+		public static StatDef MeleeWeapon_DamageMultiplier;
+
+		public static StatDef MeleeWeapon_CooldownMultiplier;
 
 		public static StatDef SharpDamageMultiplier;
 
@@ -160,5 +168,7 @@ namespace RimWorld
 		public static StatDef WorkTableWorkSpeedFactor;
 
 		public static StatDef EntertainmentStrengthFactor;
+
+		public static StatDef SurgerySuccessChanceFactor;
 	}
 }

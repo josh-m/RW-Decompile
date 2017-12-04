@@ -5,13 +5,13 @@ namespace RimWorld
 {
 	internal struct StrikeRecord : IExposable
 	{
-		private const int StrikeRecordExpiryDays = 15;
-
 		public IntVec3 cell;
 
 		public int ticksGame;
 
 		public ThingDef def;
+
+		private const int StrikeRecordExpiryDays = 15;
 
 		public bool Expired
 		{

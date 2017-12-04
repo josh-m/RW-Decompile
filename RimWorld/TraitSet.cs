@@ -10,18 +10,18 @@ namespace RimWorld
 
 		public List<Trait> allTraits = new List<Trait>();
 
-		public IEnumerable<MentalBreakDef> AllowedMentalBreaks
+		public IEnumerable<MentalBreakDef> TheOnlyAllowedMentalBreaks
 		{
 			get
 			{
 				for (int i = 0; i < this.allTraits.Count; i++)
 				{
 					Trait trait = this.allTraits[i];
-					if (trait.CurrentData.allowedMentalBreaks != null)
+					if (trait.CurrentData.theOnlyAllowedMentalBreaks != null)
 					{
-						for (int j = 0; j < trait.CurrentData.allowedMentalBreaks.Count; j++)
+						for (int j = 0; j < trait.CurrentData.theOnlyAllowedMentalBreaks.Count; j++)
 						{
-							yield return trait.CurrentData.allowedMentalBreaks[j];
+							yield return trait.CurrentData.theOnlyAllowedMentalBreaks[j];
 						}
 					}
 				}

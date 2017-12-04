@@ -7,6 +7,8 @@ namespace RimWorld
 {
 	public static class FilthMaker
 	{
+		private static List<Filth> toBeRemoved = new List<Filth>();
+
 		public static void MakeFilth(IntVec3 c, Map map, ThingDef filthDef, int count = 1)
 		{
 			for (int i = 0; i < count; i++)
@@ -70,6 +72,25 @@ namespace RimWorld
 				GenSpawn.Spawn(filth2, c, map);
 			}
 			return true;
+		}
+
+		public static void RemoveAllFilth(IntVec3 c, Map map)
+		{
+			FilthMaker.toBeRemoved.Clear();
+			List<Thing> thingList = c.GetThingList(map);
+			for (int i = 0; i < thingList.Count; i++)
+			{
+				Filth filth = thingList[i] as Filth;
+				if (filth != null)
+				{
+					FilthMaker.toBeRemoved.Add(filth);
+				}
+			}
+			for (int j = 0; j < FilthMaker.toBeRemoved.Count; j++)
+			{
+				FilthMaker.toBeRemoved[j].Destroy(DestroyMode.Vanish);
+			}
+			FilthMaker.toBeRemoved.Clear();
 		}
 	}
 }

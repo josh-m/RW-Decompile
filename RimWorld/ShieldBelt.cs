@@ -11,14 +11,6 @@ namespace RimWorld
 	[StaticConstructorOnStartup]
 	public class ShieldBelt : Apparel
 	{
-		private const float MinDrawSize = 1.2f;
-
-		private const float MaxDrawSize = 1.55f;
-
-		private const float MaxDamagedJitterDist = 0.05f;
-
-		private const int JitterDurationTicks = 8;
-
 		private float energy;
 
 		private int ticksToReset = -1;
@@ -28,6 +20,14 @@ namespace RimWorld
 		private Vector3 impactAngleVect;
 
 		private int lastAbsorbDamageTick = -9999;
+
+		private const float MinDrawSize = 1.2f;
+
+		private const float MaxDrawSize = 1.55f;
+
+		private const float MaxDamagedJitterDist = 0.05f;
+
+		private const int JitterDurationTicks = 8;
 
 		private int StartingTicksToReset = 3200;
 
@@ -82,7 +82,7 @@ namespace RimWorld
 			get
 			{
 				Pawn wearer = base.Wearer;
-				return !wearer.Dead && !wearer.Downed && (!wearer.IsPrisonerOfColony || (wearer.MentalStateDef != null && wearer.MentalStateDef.IsAggro)) && (wearer.Drafted || wearer.Faction.HostileTo(Faction.OfPlayer) || Find.TickManager.TicksGame < this.lastKeepDisplayTick + this.KeepDisplayingTicks);
+				return wearer.Spawned && !wearer.Dead && !wearer.Downed && (wearer.InAggroMentalState || wearer.Drafted || (wearer.Faction.HostileTo(Faction.OfPlayer) && !wearer.IsPrisoner) || Find.TickManager.TicksGame < this.lastKeepDisplayTick + this.KeepDisplayingTicks);
 			}
 		}
 

@@ -20,7 +20,7 @@ namespace RimWorld
 			return base.FactionCanBeGroupSource(f, map, desperate) && f.def.caravanTraderKinds.Any<TraderKindDef>();
 		}
 
-		public override bool TryExecute(IncidentParms parms)
+		protected override bool TryExecuteWorker(IncidentParms parms)
 		{
 			Map map = (Map)parms.target;
 			if (!base.TryResolveParms(parms))
@@ -63,8 +63,8 @@ namespace RimWorld
 				parms.faction.Name,
 				traderKindDef.label
 			}).CapitalizeFirst();
-			PawnRelationUtility.Notify_PawnsSeenByPlayer(list, ref label, ref text, "LetterRelatedPawnsNeutralGroup".Translate(), true);
-			Find.LetterStack.ReceiveLetter(label, text, LetterDefOf.Good, list[0], null);
+			PawnRelationUtility.Notify_PawnsSeenByPlayer_Letter(list, ref label, ref text, "LetterRelatedPawnsNeutralGroup".Translate(), true, true);
+			Find.LetterStack.ReceiveLetter(label, text, LetterDefOf.PositiveEvent, list[0], null);
 			IntVec3 chillSpot;
 			RCellFinder.TryFindRandomSpotJustOutsideColony(list[0], out chillSpot);
 			LordJob_TradeWithColony lordJob = new LordJob_TradeWithColony(parms.faction, chillSpot);

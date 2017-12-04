@@ -17,6 +17,8 @@ namespace RimWorld
 
 		public string eventTagInitiate;
 
+		public InstructionDef eventTagInitiateSource;
+
 		public List<string> eventTagsEnd;
 
 		public List<string> actionTagsAllowed;

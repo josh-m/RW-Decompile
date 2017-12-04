@@ -10,18 +10,6 @@ namespace RimWorld
 {
 	public class Dialog_Trade : Window
 	{
-		private const float TitleAreaHeight = 45f;
-
-		private const float BaseTopAreaHeight = 55f;
-
-		private const float ColumnWidth = 120f;
-
-		private const float FirstCommodityY = 6f;
-
-		private const float RowInterval = 30f;
-
-		private const float SpaceBetweenTraderNameAndTraderKind = 27f;
-
 		private Vector2 scrollPosition = Vector2.zero;
 
 		public static float lastCurrencyFlashTime = -100f;
@@ -49,6 +37,18 @@ namespace RimWorld
 		private bool daysWorthOfFoodDirty = true;
 
 		private Pair<float, float> cachedDaysWorthOfFood;
+
+		private const float TitleAreaHeight = 45f;
+
+		private const float BaseTopAreaHeight = 55f;
+
+		private const float ColumnWidth = 120f;
+
+		private const float FirstCommodityY = 6f;
+
+		private const float RowInterval = 30f;
+
+		private const float SpaceBetweenTraderNameAndTraderKind = 27f;
 
 		protected readonly Vector2 AcceptButtonSize = new Vector2(160f, 40f);
 
@@ -156,7 +156,7 @@ namespace RimWorld
 			this.absorbInputAroundWindow = true;
 			this.soundAppear = SoundDefOf.CommsWindow_Open;
 			this.soundClose = SoundDefOf.CommsWindow_Close;
-			if (!(trader is Pawn))
+			if (trader is PassingShip)
 			{
 				this.soundAmbient = SoundDefOf.RadioComms_Ambience;
 			}
@@ -167,12 +167,28 @@ namespace RimWorld
 		public override void PostOpen()
 		{
 			base.PostOpen();
-			if (TradeSession.playerNegotiator.health.capacities.GetLevel(PawnCapacityDefOf.Talking) < 0.99f)
+			Pawn playerNegotiator = TradeSession.playerNegotiator;
+			float level = playerNegotiator.health.capacities.GetLevel(PawnCapacityDefOf.Talking);
+			float level2 = playerNegotiator.health.capacities.GetLevel(PawnCapacityDefOf.Hearing);
+			if (level < 0.95f || level2 < 0.95f)
 			{
-				Find.WindowStack.Add(new Dialog_MessageBox("NegotiatorTalkingImpaired".Translate(new object[]
+				string text;
+				if (level < 0.95f)
 				{
-					TradeSession.playerNegotiator.LabelShort
-				}), null, null, null, null, null, false));
+					text = "NegotiatorTalkingImpaired".Translate(new object[]
+					{
+						playerNegotiator.LabelShort
+					});
+				}
+				else
+				{
+					text = "NegotiatorHearingImpaired".Translate(new object[]
+					{
+						playerNegotiator.LabelShort
+					});
+				}
+				text = text + "\n\n" + "NegotiatorCapacityImpaired".Translate();
+				Find.WindowStack.Add(new Dialog_MessageBox(text, null, null, null, null, null, false));
 			}
 			this.CacheTradeables();
 		}
@@ -185,7 +201,7 @@ namespace RimWorld
 			this.cachedTradeables = (from tr in TradeSession.deal.AllTradeables
 			where !tr.IsCurrency
 			orderby (!tr.TraderWillTrade) ? -1 : 0 descending
-			select tr).ThenBy((Tradeable tr) => tr, this.sorter1.Comparer).ThenBy((Tradeable tr) => tr, this.sorter2.Comparer).ThenBy((Tradeable tr) => TransferableUIUtility.DefaultListOrderPriority(tr)).ThenBy((Tradeable tr) => tr.ThingDef.label).ThenBy(delegate(Tradeable tr)
+			select tr).ThenBy((Tradeable tr) => tr, this.sorter1.Comparer).ThenBy((Tradeable tr) => tr, this.sorter2.Comparer).ThenBy(new Func<Tradeable, float>(TransferableUIUtility.DefaultListOrderPriority)).ThenBy((Tradeable tr) => tr.ThingDef.label).ThenBy(delegate(Tradeable tr)
 			{
 				QualityCategory result;
 				if (tr.AnyThing.TryGetQuality(out result))
@@ -283,6 +299,7 @@ namespace RimWorld
 									pawn
 								});
 							}
+							TradeSession.playerNegotiator.mindState.inspirationHandler.EndInspiration(InspirationDefOf.InspiredTrade);
 							this.Close(false);
 						}
 						else

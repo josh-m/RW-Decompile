@@ -31,6 +31,28 @@ namespace RimWorld
 			}
 		}
 
+		public static Twelfth GetMiddleTwelfth(this Quadrum quadrum)
+		{
+			switch (quadrum)
+			{
+			case Quadrum.Aprimay:
+				return Twelfth.Second;
+			case Quadrum.Jugust:
+				return Twelfth.Fifth;
+			case Quadrum.Septober:
+				return Twelfth.Eighth;
+			case Quadrum.Decembary:
+				return Twelfth.Eleventh;
+			default:
+				return Twelfth.Undefined;
+			}
+		}
+
+		public static float GetMiddleYearPct(this Quadrum quadrum)
+		{
+			return quadrum.GetMiddleTwelfth().GetMiddleYearPct();
+		}
+
 		public static string Label(this Quadrum quadrum)
 		{
 			switch (quadrum)
@@ -50,8 +72,8 @@ namespace RimWorld
 
 		public static Season GetSeason(this Quadrum q, float latitude)
 		{
-			Twelfth firstTwelfth = q.GetFirstTwelfth();
-			return firstTwelfth.GetSeason(latitude);
+			float middleYearPct = q.GetMiddleYearPct();
+			return SeasonUtility.GetReportedSeason(middleYearPct, latitude);
 		}
 
 		public static string QuadrumsRangeLabel(List<Twelfth> twelfths)

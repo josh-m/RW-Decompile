@@ -61,8 +61,8 @@ namespace RimWorld
 							this.parent.LabelShort
 						}), delegate
 						{
-							Job job = new Job(JobDefOf.ManTurret, this.<>f__this.parent);
-							this.pawn.jobs.TryTakeOrderedJob(job, JobTag.Misc);
+							Job job = new Job(JobDefOf.ManTurret, this.$this.parent);
+							pawn.jobs.TryTakeOrderedJob(job, JobTag.Misc);
 						}, MenuOptionPriority.Default, null, null, 0f, null, null);
 						yield return opt;
 					}

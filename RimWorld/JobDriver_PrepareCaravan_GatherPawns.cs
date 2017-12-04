@@ -15,17 +15,21 @@ namespace RimWorld
 		{
 			get
 			{
-				return (Pawn)base.CurJob.GetTarget(TargetIndex.A).Thing;
+				return (Pawn)this.job.GetTarget(TargetIndex.A).Thing;
 			}
+		}
+
+		public override bool TryMakePreToilReservations()
+		{
+			return this.pawn.Reserve(this.AnimalOrSlave, this.job, 1, -1, null);
 		}
 
 		[DebuggerHidden]
 		protected override IEnumerable<Toil> MakeNewToils()
 		{
-			this.FailOn(() => !this.<>f__this.Map.lordManager.lords.Contains(this.<>f__this.CurJob.lord));
-			this.FailOn(() => this.<>f__this.AnimalOrSlave.GetLord() != this.<>f__this.CurJob.lord);
-			yield return Toils_Reserve.Reserve(TargetIndex.A, 1, -1, null);
-			yield return Toils_Goto.GotoThing(TargetIndex.A, PathEndMode.Touch).FailOnDespawnedOrNull(TargetIndex.A).FailOn(() => GatherAnimalsAndSlavesForCaravanUtility.IsFollowingAnyone(this.<>f__this.AnimalOrSlave));
+			this.FailOn(() => !this.$this.Map.lordManager.lords.Contains(this.$this.job.lord));
+			this.FailOn(() => this.$this.AnimalOrSlave == null || this.$this.AnimalOrSlave.GetLord() != this.$this.job.lord);
+			yield return Toils_Goto.GotoThing(TargetIndex.A, PathEndMode.Touch).FailOnDespawnedOrNull(TargetIndex.A).FailOn(() => GatherAnimalsAndSlavesForCaravanUtility.IsFollowingAnyone(this.$this.AnimalOrSlave));
 			yield return this.SetFollowerToil();
 		}
 

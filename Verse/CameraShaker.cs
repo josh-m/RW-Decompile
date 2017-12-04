@@ -5,13 +5,25 @@ namespace Verse
 {
 	public class CameraShaker
 	{
+		private float curShakeMag;
+
 		private const float ShakeDecayRate = 0.5f;
 
 		private const float ShakeFrequency = 24f;
 
-		private const float MaxShakeMag = 0.1f;
+		private const float MaxShakeMag = 0.2f;
 
-		private float curShakeMag;
+		public float CurShakeMag
+		{
+			get
+			{
+				return this.curShakeMag;
+			}
+			set
+			{
+				this.curShakeMag = Mathf.Clamp(value, 0f, 0.2f);
+			}
+		}
 
 		public Vector3 ShakeOffset
 		{
@@ -26,11 +38,16 @@ namespace Verse
 
 		public void DoShake(float mag)
 		{
-			this.curShakeMag += mag;
-			if (this.curShakeMag > 0.1f)
+			if (mag <= 0f)
 			{
-				this.curShakeMag = 0.1f;
+				return;
 			}
+			this.CurShakeMag += mag;
+		}
+
+		public void SetMinShake(float mag)
+		{
+			this.CurShakeMag = Mathf.Max(this.CurShakeMag, mag);
 		}
 
 		public void Update()

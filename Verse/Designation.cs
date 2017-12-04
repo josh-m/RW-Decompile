@@ -6,13 +6,13 @@ namespace Verse
 {
 	public class Designation : IExposable
 	{
-		public const float ClaimedDesignationDrawAltitude = 15f;
-
 		public DesignationManager designationManager;
 
 		public DesignationDef def;
 
 		public LocalTargetInfo target;
+
+		public const float ClaimedDesignationDrawAltitude = 15f;
 
 		private Map Map
 		{

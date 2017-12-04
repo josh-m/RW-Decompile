@@ -23,5 +23,21 @@ namespace RimWorld
 		{
 			return this.thingDefs.Contains(thingDef);
 		}
+
+		[DebuggerHidden]
+		public override IEnumerable<string> ConfigErrors(TraderKindDef parentDef)
+		{
+			foreach (string e in base.ConfigErrors(parentDef))
+			{
+				yield return e;
+			}
+			for (int i = 0; i < this.thingDefs.Count; i++)
+			{
+				if (this.thingDefs[i].tradeability != Tradeability.Stockable)
+				{
+					yield return this.thingDefs[i] + " is not Stockable";
+				}
+			}
+		}
 	}
 }

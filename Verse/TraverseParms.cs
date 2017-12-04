@@ -47,6 +47,25 @@ namespace Verse
 			}
 		}
 
+		public static implicit operator TraverseParms(TraverseMode m)
+		{
+			if (m == TraverseMode.ByPawn)
+			{
+				throw new InvalidOperationException("Cannot implicitly convert TraverseMode.ByPawn to RegionTraverseParameters.");
+			}
+			return TraverseParms.For(m, Danger.Deadly, false);
+		}
+
+		public static bool operator ==(TraverseParms a, TraverseParms b)
+		{
+			return a.pawn == b.pawn && a.mode == b.mode && a.canBash == b.canBash && a.maxDanger == b.maxDanger;
+		}
+
+		public static bool operator !=(TraverseParms a, TraverseParms b)
+		{
+			return a.pawn != b.pawn || a.mode != b.mode || a.canBash != b.canBash || a.maxDanger != b.maxDanger;
+		}
+
 		public override bool Equals(object obj)
 		{
 			return obj is TraverseParms && this.Equals((TraverseParms)obj);
@@ -97,25 +116,6 @@ namespace Verse
 				text,
 				")"
 			});
-		}
-
-		public static implicit operator TraverseParms(TraverseMode m)
-		{
-			if (m == TraverseMode.ByPawn)
-			{
-				throw new InvalidOperationException("Cannot implicitly convert TraverseMode.ByPawn to RegionTraverseParameters.");
-			}
-			return TraverseParms.For(m, Danger.Deadly, false);
-		}
-
-		public static bool operator ==(TraverseParms a, TraverseParms b)
-		{
-			return a.pawn == b.pawn && a.mode == b.mode && a.canBash == b.canBash && a.maxDanger == b.maxDanger;
-		}
-
-		public static bool operator !=(TraverseParms a, TraverseParms b)
-		{
-			return a.pawn != b.pawn || a.mode != b.mode || a.canBash != b.canBash || a.maxDanger != b.maxDanger;
 		}
 	}
 }

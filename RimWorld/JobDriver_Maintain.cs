@@ -10,26 +10,30 @@ namespace RimWorld
 	{
 		private const int MaintainTicks = 180;
 
+		public override bool TryMakePreToilReservations()
+		{
+			return this.pawn.Reserve(this.job.targetA, this.job, 1, -1, null);
+		}
+
 		[DebuggerHidden]
 		protected override IEnumerable<Toil> MakeNewToils()
 		{
-			yield return Toils_Reserve.Reserve(TargetIndex.A, 1, -1, null);
+			this.FailOnDespawnedOrNull(TargetIndex.A);
 			yield return Toils_Goto.GotoThing(TargetIndex.A, PathEndMode.Touch);
 			Toil prepare = Toils_General.Wait(180);
 			prepare.WithProgressBarToilDelay(TargetIndex.A, false, -0.5f);
 			prepare.FailOnDespawnedNullOrForbidden(TargetIndex.A);
 			prepare.FailOnCannotTouch(TargetIndex.A, PathEndMode.Touch);
 			yield return prepare;
-			yield return new Toil
+			Toil maintain = new Toil();
+			maintain.initAction = delegate
 			{
-				initAction = delegate
-				{
-					Pawn actor = this.<maintain>__1.actor;
-					CompMaintainable compMaintainable = actor.CurJob.targetA.Thing.TryGetComp<CompMaintainable>();
-					compMaintainable.Maintained();
-				},
-				defaultCompleteMode = ToilCompleteMode.Instant
+				Pawn actor = maintain.actor;
+				CompMaintainable compMaintainable = actor.CurJob.targetA.Thing.TryGetComp<CompMaintainable>();
+				compMaintainable.Maintained();
 			};
+			maintain.defaultCompleteMode = ToilCompleteMode.Instant;
+			yield return maintain;
 		}
 	}
 }

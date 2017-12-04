@@ -7,6 +7,13 @@ namespace RimWorld
 {
 	public static class GenConstruct
 	{
+		private static string ConstructionSkillTooLowTrans;
+
+		public static void Reset()
+		{
+			GenConstruct.ConstructionSkillTooLowTrans = "ConstructionSkillTooLow".Translate();
+		}
+
 		public static Blueprint_Build PlaceBlueprintForBuild(BuildableDef sourceDef, IntVec3 center, Map map, Rot4 rotation, Faction faction, ThingDef stuff)
 		{
 			Blueprint_Build blueprint_Build = (Blueprint_Build)ThingMaker.MakeThing(sourceDef.blueprintDef, null);
@@ -80,16 +87,27 @@ namespace RimWorld
 
 		public static bool CanConstruct(Thing t, Pawn p, bool forced = false)
 		{
-			Blueprint blueprint = t as Blueprint;
-			if (blueprint != null)
+			if (GenConstruct.FirstBlockingThing(t, p) != null)
 			{
-				Thing thingToIgnore = GenConstruct.MiniToInstallOrBuildingToReinstall(blueprint);
-				if (blueprint.FirstBlockingThing(p, thingToIgnore, false) != null)
-				{
-					return false;
-				}
+				return false;
 			}
-			return p.CanReserveAndReach(t, PathEndMode.Touch, (!forced) ? p.NormalMaxDanger() : Danger.Deadly, 1, -1, null, forced) && !t.IsBurning();
+			LocalTargetInfo target = t;
+			PathEndMode peMode = PathEndMode.Touch;
+			Danger maxDanger = (!forced) ? p.NormalMaxDanger() : Danger.Deadly;
+			if (!p.CanReserveAndReach(target, peMode, maxDanger, 1, -1, null, forced))
+			{
+				return false;
+			}
+			if (t.IsBurning())
+			{
+				return false;
+			}
+			if (p.skills.GetSkill(SkillDefOf.Construction).Level < t.def.constructionSkillPrerequisite)
+			{
+				JobFailReason.Is(GenConstruct.ConstructionSkillTooLowTrans);
+				return false;
+			}
+			return true;
 		}
 
 		public static int AmountNeededByOf(IConstructible c, ThingDef resDef)
@@ -151,7 +169,7 @@ namespace RimWorld
 			ThingDef thingDef = entDef as ThingDef;
 			if (thingDef != null && thingDef.hasInteractionCell)
 			{
-				IntVec3 c = Thing.InteractionCellWhenAt(thingDef, center, rot, map);
+				IntVec3 c = ThingUtility.InteractionCellWhenAt(thingDef, center, rot, map);
 				if (!c.InBounds(map))
 				{
 					return new AcceptanceReport("InteractionSpotOutOfBounds".Translate());
@@ -206,7 +224,7 @@ namespace RimWorld
 								{
 									thingDef3 = thing2.def;
 								}
-								if (thingDef3.hasInteractionCell && cellRect.Contains(Thing.InteractionCellWhenAt(thingDef3, thing2.Position, thing2.Rotation, thing2.Map)))
+								if (thingDef3.hasInteractionCell && cellRect.Contains(ThingUtility.InteractionCellWhenAt(thingDef3, thing2.Position, thing2.Rotation, thing2.Map)))
 								{
 									return new AcceptanceReport("WouldBlockInteractionSpot".Translate(new object[]
 									{
@@ -263,7 +281,7 @@ namespace RimWorld
 			{
 				for (int m = 0; m < entDef.PlaceWorkers.Count; m++)
 				{
-					AcceptanceReport result = entDef.PlaceWorkers[m].AllowsPlacing(entDef, center, rot, thingToIgnore);
+					AcceptanceReport result = entDef.PlaceWorkers[m].AllowsPlacing(entDef, center, rot, map, thingToIgnore);
 					if (!result.Accepted)
 					{
 						return result;
@@ -333,33 +351,132 @@ namespace RimWorld
 			return true;
 		}
 
-		public static bool BlocksFramePlacement(Blueprint blue, Thing t)
+		public static Thing FirstBlockingThing(Thing constructible, Pawn pawnToIgnore)
 		{
+			Blueprint blueprint = constructible as Blueprint;
+			Thing thing;
+			if (blueprint != null)
+			{
+				thing = GenConstruct.MiniToInstallOrBuildingToReinstall(blueprint);
+			}
+			else
+			{
+				thing = null;
+			}
+			CellRect.CellRectIterator iterator = constructible.OccupiedRect().GetIterator();
+			while (!iterator.Done())
+			{
+				List<Thing> thingList = iterator.Current.GetThingList(constructible.Map);
+				for (int i = 0; i < thingList.Count; i++)
+				{
+					Thing thing2 = thingList[i];
+					if (GenConstruct.BlocksConstruction(constructible, thing2) && thing2 != pawnToIgnore && thing2 != thing)
+					{
+						return thing2;
+					}
+				}
+				iterator.MoveNext();
+			}
+			return null;
+		}
+
+		public static Job HandleBlockingThingJob(Thing constructible, Pawn worker, bool forced = false)
+		{
+			Thing thing = GenConstruct.FirstBlockingThing(constructible, worker);
+			if (thing == null)
+			{
+				return null;
+			}
+			if (thing.def.category == ThingCategory.Plant)
+			{
+				LocalTargetInfo target = thing;
+				PathEndMode peMode = PathEndMode.ClosestTouch;
+				Danger maxDanger = worker.NormalMaxDanger();
+				if (worker.CanReserveAndReach(target, peMode, maxDanger, 1, -1, null, forced))
+				{
+					return new Job(JobDefOf.CutPlant, thing);
+				}
+			}
+			else if (thing.def.category == ThingCategory.Item)
+			{
+				if (thing.def.EverHaulable)
+				{
+					return HaulAIUtility.HaulAsideJobFor(worker, thing);
+				}
+				Log.ErrorOnce(string.Concat(new object[]
+				{
+					"Never haulable ",
+					thing,
+					" blocking ",
+					constructible.ToStringSafe<Thing>(),
+					" at ",
+					constructible.Position
+				}), 6429262);
+			}
+			else if (thing.def.category == ThingCategory.Building)
+			{
+				LocalTargetInfo target = thing;
+				PathEndMode peMode = PathEndMode.Touch;
+				Danger maxDanger = worker.NormalMaxDanger();
+				if (worker.CanReserveAndReach(target, peMode, maxDanger, 1, -1, null, forced))
+				{
+					return new Job(JobDefOf.Deconstruct, thing)
+					{
+						ignoreDesignations = true
+					};
+				}
+			}
+			return null;
+		}
+
+		public static bool BlocksConstruction(Thing constructible, Thing t)
+		{
+			if (t == constructible)
+			{
+				return false;
+			}
+			ThingDef thingDef;
+			if (constructible is Blueprint)
+			{
+				thingDef = constructible.def;
+			}
+			else if (constructible is Frame)
+			{
+				thingDef = constructible.def.entityDefToBuild.blueprintDef;
+			}
+			else
+			{
+				thingDef = constructible.def.blueprintDef;
+			}
+			if (t.def.category == ThingCategory.Building && GenSpawn.SpawningWipes(thingDef.entityDefToBuild, t.def))
+			{
+				return true;
+			}
 			if (t.def.category == ThingCategory.Plant)
 			{
 				return t.def.plant.harvestWork >= 200f;
 			}
-			if (blue.def.entityDefToBuild is TerrainDef || blue.def.entityDefToBuild.passability == Traversability.Standable)
+			if (!thingDef.clearBuildingArea)
 			{
 				return false;
 			}
-			if (t.def == ThingDefOf.SteamGeyser && blue.def.entityDefToBuild.ForceAllowPlaceOver(t.def))
+			if (t.def == ThingDefOf.SteamGeyser && thingDef.entityDefToBuild.ForceAllowPlaceOver(t.def))
 			{
 				return false;
 			}
-			ThingDef thingDef = blue.def.entityDefToBuild as ThingDef;
-			if (thingDef != null)
+			ThingDef thingDef2 = thingDef.entityDefToBuild as ThingDef;
+			if (thingDef2 != null)
 			{
-				if (thingDef.EverTransmitsPower && t.def == ThingDefOf.PowerConduit && thingDef != ThingDefOf.PowerConduit)
+				if (thingDef2.EverTransmitsPower && t.def == ThingDefOf.PowerConduit && thingDef2 != ThingDefOf.PowerConduit)
 				{
 					return false;
 				}
-				if (t.def == ThingDefOf.Wall && thingDef.building != null && thingDef.building.canPlaceOverWall)
+				if (t.def == ThingDefOf.Wall && thingDef2.building != null && thingDef2.building.canPlaceOverWall)
 				{
 					return false;
 				}
 			}
-			return (t.def.IsEdifice() && thingDef.IsEdifice()) || (t.def.category == ThingCategory.Pawn || (t.def.category == ThingCategory.Item && blue.def.entityDefToBuild.passability == Traversability.Impassable)) || (t.def.Fillage >= FillCategory.Partial && thingDef != null && thingDef.Fillage >= FillCategory.Partial);
+			return (t.def.IsEdifice() && thingDef2.IsEdifice()) || (t.def.category == ThingCategory.Pawn || (t.def.category == ThingCategory.Item && thingDef.entityDefToBuild.passability == Traversability.Impassable)) || t.def.Fillage >= FillCategory.Partial;
 		}
 
 		public static bool TerrainCanSupport(CellRect rect, Map map, ThingDef thing)

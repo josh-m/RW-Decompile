@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -9,11 +8,11 @@ namespace RimWorld
 {
 	public static class Autotests_ColonyMaker
 	{
-		private const int OverRectSize = 100;
-
 		private static CellRect overRect;
 
 		private static BoolGrid usedCells;
+
+		private const int OverRectSize = 100;
 
 		private static Map Map
 		{
@@ -249,7 +248,7 @@ namespace RimWorld
 				{
 					if (current9.x % 7 == 0 && current9.z % 7 == 0)
 					{
-						GenExplosion.DoExplosion(current9, Find.VisibleMap, 3.9f, DamageDefOf.Flame, null, null, null, null, null, 0f, 1, false, null, 0f, 1);
+						GenExplosion.DoExplosion(current9, Find.VisibleMap, 3.9f, DamageDefOf.Flame, null, -1, null, null, null, null, 0f, 1, false, null, 0f, 1, 0f, false);
 					}
 				}
 			}
@@ -308,18 +307,14 @@ namespace RimWorld
 			if (flags.Contains(ColonyMakerFlag.Stockpiles))
 			{
 				Designator_ZoneAddStockpile_Resources designator_ZoneAddStockpile_Resources = new Designator_ZoneAddStockpile_Resources();
-				using (IEnumerator enumerator11 = Enum.GetValues(typeof(StoragePriority)).GetEnumerator())
+				foreach (StoragePriority priority in Enum.GetValues(typeof(StoragePriority)))
 				{
-					while (enumerator11.MoveNext())
-					{
-						StoragePriority priority = (StoragePriority)((byte)enumerator11.Current);
-						CellRect cellRect5;
-						Autotests_ColonyMaker.TryGetFreeRect(7, 7, out cellRect5);
-						cellRect5 = cellRect5.ContractedBy(1);
-						designator_ZoneAddStockpile_Resources.DesignateMultiCell(cellRect5.Cells);
-						Zone_Stockpile zone_Stockpile = (Zone_Stockpile)Autotests_ColonyMaker.Map.zoneManager.ZoneAt(cellRect5.CenterCell);
-						zone_Stockpile.settings.Priority = priority;
-					}
+					CellRect cellRect5;
+					Autotests_ColonyMaker.TryGetFreeRect(7, 7, out cellRect5);
+					cellRect5 = cellRect5.ContractedBy(1);
+					designator_ZoneAddStockpile_Resources.DesignateMultiCell(cellRect5.Cells);
+					Zone_Stockpile zone_Stockpile = (Zone_Stockpile)Autotests_ColonyMaker.Map.zoneManager.ZoneAt(cellRect5.CenterCell);
+					zone_Stockpile.settings.Priority = priority;
 				}
 			}
 			if (flags.Contains(ColonyMakerFlag.GrowingZones))

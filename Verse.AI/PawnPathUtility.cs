@@ -21,7 +21,7 @@ namespace Verse.AI
 			}
 			Building building = null;
 			IntVec3 intVec = IntVec3.Invalid;
-			for (int i = nodesReversed.Count - 2; i >= 1; i--)
+			for (int i = nodesReversed.Count - 2; i >= 0; i--)
 			{
 				Building edifice = nodesReversed[i].GetEdifice(pawn.Map);
 				if (edifice != null)

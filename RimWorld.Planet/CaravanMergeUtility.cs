@@ -15,6 +15,14 @@ namespace RimWorld.Planet
 
 		private static List<Caravan> tmpCaravansOnSameTile = new List<Caravan>();
 
+		public static bool ShouldShowMergeCommand
+		{
+			get
+			{
+				return CaravanMergeUtility.CanMergeAnySelectedCaravans || CaravanMergeUtility.AnySelectedCaravanCloseToAnyOtherMergeableCaravan;
+			}
+		}
+
 		public static bool CanMergeAnySelectedCaravans
 		{
 			get
@@ -39,6 +47,34 @@ namespace RimWorld.Planet
 			}
 		}
 
+		public static bool AnySelectedCaravanCloseToAnyOtherMergeableCaravan
+		{
+			get
+			{
+				List<WorldObject> selectedObjects = Find.WorldSelector.SelectedObjects;
+				List<Caravan> caravans = Find.WorldObjects.Caravans;
+				for (int i = 0; i < selectedObjects.Count; i++)
+				{
+					Caravan caravan = selectedObjects[i] as Caravan;
+					if (caravan != null && caravan.IsPlayerControlled)
+					{
+						for (int j = 0; j < caravans.Count; j++)
+						{
+							Caravan caravan2 = caravans[j];
+							if (caravan2 != caravan)
+							{
+								if (caravan2.IsPlayerControlled && CaravanMergeUtility.CloseToEachOther(caravan, caravan2))
+								{
+									return true;
+								}
+							}
+						}
+					}
+				}
+				return false;
+			}
+		}
+
 		public static Command MergeCommand(Caravan caravan)
 		{
 			Command_Action command_Action = new Command_Action();
@@ -50,6 +86,10 @@ namespace RimWorld.Planet
 				CaravanMergeUtility.TryMergeSelectedCaravans();
 				SoundDefOf.TickHigh.PlayOneShotOnCamera(null);
 			};
+			if (!CaravanMergeUtility.CanMergeAnySelectedCaravans)
+			{
+				command_Action.Disable("CommandMergeCaravansFailCaravansNotSelected".Translate());
+			}
 			return command_Action;
 		}
 

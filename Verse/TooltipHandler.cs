@@ -6,8 +6,6 @@ namespace Verse
 {
 	public static class TooltipHandler
 	{
-		private const float SpaceBetweenTooltips = 2f;
-
 		private static Dictionary<int, ActiveTip> activeTips = new Dictionary<int, ActiveTip>();
 
 		private static int frame = 0;
@@ -15,6 +13,8 @@ namespace Verse
 		private static List<int> dyingTips = new List<int>(32);
 
 		private static float TooltipDelay = 0.45f;
+
+		private const float SpaceBetweenTooltips = 2f;
 
 		public static void ClearTooltipsFrom(Rect rect)
 		{

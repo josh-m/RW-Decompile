@@ -9,7 +9,7 @@ namespace Verse
 		public Type compClass;
 
 		[DebuggerHidden]
-		public IEnumerable<string> ConfigErrors(HediffDef parentDef)
+		public virtual IEnumerable<string> ConfigErrors(HediffDef parentDef)
 		{
 			if (this.compClass == null)
 			{

@@ -69,6 +69,7 @@ namespace Verse
 			this.onGroundRandomRotateAngle = other.onGroundRandomRotateAngle;
 			this.drawRotated = other.drawRotated;
 			this.allowFlip = other.allowFlip;
+			this.flipExtraRotation = other.flipExtraRotation;
 			this.shadowData = other.shadowData;
 			this.damageData = other.damageData;
 			this.linkType = other.linkType;

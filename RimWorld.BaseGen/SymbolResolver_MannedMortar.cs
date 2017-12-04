@@ -8,6 +8,8 @@ namespace RimWorld.BaseGen
 {
 	public class SymbolResolver_MannedMortar : SymbolResolver
 	{
+		private const float MaxShellDefMarketValue = 250f;
+
 		public override bool CanResolve(ResolveParams rp)
 		{
 			Map map = BaseGen.globalSettings.map;
@@ -31,17 +33,22 @@ namespace RimWorld.BaseGen
 		public override void Resolve(ResolveParams rp)
 		{
 			Map map = BaseGen.globalSettings.map;
-			Faction faction = rp.faction ?? Find.FactionManager.RandomEnemyFaction(false, false, true);
+			Faction arg_3C_0;
+			if ((arg_3C_0 = rp.faction) == null)
+			{
+				arg_3C_0 = (Find.FactionManager.RandomEnemyFaction(false, false, true, TechLevel.Industrial) ?? Find.FactionManager.RandomEnemyFaction(false, false, true, TechLevel.Undefined));
+			}
+			Faction faction = arg_3C_0;
 			Rot4? thingRot = rp.thingRot;
 			Rot4 rot = (!thingRot.HasValue) ? Rot4.Random : thingRot.Value;
-			ThingDef arg_88_0;
-			if ((arg_88_0 = rp.mortarDef) == null)
+			ThingDef arg_9D_0;
+			if ((arg_9D_0 = rp.mortarDef) == null)
 			{
-				arg_88_0 = (from x in DefDatabase<ThingDef>.AllDefsListForReading
-				where x.category == ThingCategory.Building && x.building.IsMortar && x != ThingDefOf.Turret_MortarEMP
+				arg_9D_0 = (from x in DefDatabase<ThingDef>.AllDefsListForReading
+				where x.category == ThingCategory.Building && x.building.IsMortar
 				select x).RandomElement<ThingDef>();
 			}
-			ThingDef thingDef = arg_88_0;
+			ThingDef thingDef = arg_9D_0;
 			IntVec3 intVec;
 			if (!this.TryFindMortarSpawnCell(rp.rect, rot, thingDef, out intVec))
 			{
@@ -49,10 +56,12 @@ namespace RimWorld.BaseGen
 			}
 			if (thingDef.HasComp(typeof(CompMannable)))
 			{
-				IntVec3 c = Thing.InteractionCellWhenAt(thingDef, intVec, rot, map);
+				IntVec3 c = ThingUtility.InteractionCellWhenAt(thingDef, intVec, rot, map);
 				Lord singlePawnLord = LordMaker.MakeNewLord(faction, new LordJob_ManTurrets(), map, null);
+				PawnKindDef kind = faction.RandomPawnKind();
+				Faction faction2 = faction;
 				int tile = map.Tile;
-				PawnGenerationRequest value = new PawnGenerationRequest(faction.RandomPawnKind(), faction, PawnGenerationContext.NonPlayer, tile, false, false, false, false, true, true, 1f, false, true, true, true, false, null, null, null, null, null, null);
+				PawnGenerationRequest value = new PawnGenerationRequest(kind, faction2, PawnGenerationContext.NonPlayer, tile, false, false, false, false, true, true, 1f, false, true, true, true, false, false, false, null, null, null, null, null, null, null);
 				ResolveParams resolveParams = rp;
 				resolveParams.faction = faction;
 				resolveParams.singlePawnGenerationRequest = new PawnGenerationRequest?(value);
@@ -60,12 +69,16 @@ namespace RimWorld.BaseGen
 				resolveParams.singlePawnLord = singlePawnLord;
 				BaseGen.symbolStack.Push("pawn", resolveParams);
 			}
-			if (thingDef.building.turretShellDef != null)
+			ThingDef turret = thingDef;
+			bool allowEMP = false;
+			TechLevel techLevel = faction.def.techLevel;
+			ThingDef thingDef2 = TurretGunUtility.TryFindRandomShellDef(turret, allowEMP, true, techLevel, false, 250f);
+			if (thingDef2 != null)
 			{
 				ResolveParams resolveParams2 = rp;
 				resolveParams2.faction = faction;
-				resolveParams2.singleThingDef = thingDef.building.turretShellDef;
-				resolveParams2.singleThingStackCount = new int?(Rand.RangeInclusive(5, Mathf.Min(8, thingDef.building.turretShellDef.stackLimit)));
+				resolveParams2.singleThingDef = thingDef2;
+				resolveParams2.singleThingStackCount = new int?(Rand.RangeInclusive(5, Mathf.Min(8, thingDef2.stackLimit)));
 				BaseGen.symbolStack.Push("thing", resolveParams2);
 			}
 			ResolveParams resolveParams3 = rp;
@@ -99,7 +112,7 @@ namespace RimWorld.BaseGen
 			return CellFinder.TryFindRandomCellInsideWith(rect, delegate(IntVec3 x)
 			{
 				CellRect obj = GenAdj.OccupiedRect(x, rot, mortarDef.size);
-				return Thing.InteractionCellWhenAt(mortarDef, x, rot, map).Standable(map) && obj.FullyContainedWithin(rect) && edgeTouchCheck(obj);
+				return ThingUtility.InteractionCellWhenAt(mortarDef, x, rot, map).Standable(map) && obj.FullyContainedWithin(rect) && edgeTouchCheck(obj);
 			}, out cell);
 		}
 	}

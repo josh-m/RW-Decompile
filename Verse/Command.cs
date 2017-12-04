@@ -14,6 +14,8 @@ namespace Verse
 
 		public Texture2D icon;
 
+		public float iconAngle;
+
 		public Vector2 iconProportions = Vector2.one;
 
 		public Rect iconTexCoords = new Rect(0f, 0f, 1f, 1f);
@@ -121,7 +123,7 @@ namespace Verse
 			GUI.DrawTexture(rect, Command.BGTex);
 			MouseoverSounds.DoRegion(rect, SoundDefOf.MouseoverCommand);
 			GUI.color = this.IconDrawColor;
-			Widgets.DrawTextureFitted(new Rect(rect), badTex, this.iconDrawScale * 0.85f, this.iconProportions, this.iconTexCoords);
+			Widgets.DrawTextureFitted(rect, badTex, this.iconDrawScale * 0.85f, this.iconProportions, this.iconTexCoords, this.iconAngle);
 			GUI.color = Color.white;
 			bool flag2 = false;
 			KeyCode keyCode = (this.hotKey != null) ? this.hotKey.MainKey : KeyCode.None;
@@ -180,7 +182,7 @@ namespace Verse
 				{
 					if (!this.disabledReason.NullOrEmpty())
 					{
-						Messages.Message(this.disabledReason, MessageSound.RejectInput);
+						Messages.Message(this.disabledReason, MessageTypeDefOf.RejectInput);
 					}
 					return new GizmoResult(GizmoState.Mouseover, null);
 				}

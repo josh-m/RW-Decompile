@@ -42,6 +42,7 @@ namespace RimWorld
 
 			public CachedPortrait(RenderTexture renderTexture, bool dirty, float lastUseTime)
 			{
+				this = default(PortraitsCache.CachedPortrait);
 				this.RenderTexture = renderTexture;
 				this.Dirty = dirty;
 				this.LastUseTime = lastUseTime;
@@ -77,6 +78,7 @@ namespace RimWorld
 
 			public CachedPortraitsWithParams(Vector2 size, Vector3 cameraOffset, float cameraZoom)
 			{
+				this = default(PortraitsCache.CachedPortraitsWithParams);
 				this.CachedPortraits = new Dictionary<Pawn, PortraitsCache.CachedPortrait>();
 				this.Size = size;
 				this.CameraOffset = cameraOffset;

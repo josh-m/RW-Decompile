@@ -9,7 +9,7 @@ namespace Verse
 		{
 			get
 			{
-				return !this.pawn.health.hediffSet.HasHediff(HediffDefOf.AlcoholHigh) && base.Visible;
+				return !this.pawn.health.hediffSet.HasHediff(HediffDefOf.AlcoholHigh, false) && base.Visible;
 			}
 		}
 	}

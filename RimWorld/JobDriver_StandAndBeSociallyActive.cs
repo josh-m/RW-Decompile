@@ -8,6 +8,11 @@ namespace RimWorld
 {
 	public class JobDriver_StandAndBeSociallyActive : JobDriver
 	{
+		public override bool TryMakePreToilReservations()
+		{
+			return true;
+		}
+
 		[DebuggerHidden]
 		protected override IEnumerable<Toil> MakeNewToils()
 		{
@@ -15,12 +20,12 @@ namespace RimWorld
 			{
 				tickAction = delegate
 				{
-					Pawn pawn = this.<>f__this.FindClosePawn();
+					Pawn pawn = this.$this.FindClosePawn();
 					if (pawn != null)
 					{
-						this.<>f__this.pawn.Drawer.rotator.FaceCell(pawn.Position);
+						this.$this.pawn.rotationTracker.FaceCell(pawn.Position);
 					}
-					this.<>f__this.pawn.GainComfortFromCellIfPossible();
+					this.$this.pawn.GainComfortFromCellIfPossible();
 				},
 				socialMode = RandomSocialMode.SuperActive,
 				defaultCompleteMode = ToilCompleteMode.Never,

@@ -11,6 +11,14 @@ namespace Verse
 
 		private static Dictionary<Type, Mod> runningModClasses = new Dictionary<Type, Mod>();
 
+		public static List<ModContentPack> RunningModsListForReading
+		{
+			get
+			{
+				return LoadedModManager.runningMods;
+			}
+		}
+
 		public static IEnumerable<ModContentPack> RunningMods
 		{
 			get
@@ -63,11 +71,24 @@ namespace Verse
 				modContentPack.ReloadContent();
 				DeepProfiler.End();
 			}
+			foreach (Type type in typeof(Mod).InstantiableDescendantsAndSelf())
+			{
+				if (!LoadedModManager.runningModClasses.ContainsKey(type))
+				{
+					ModContentPack modContentPack2 = (from modpack in LoadedModManager.runningMods
+					where modpack.assemblies.loadedAssemblies.Contains(type.Assembly)
+					select modpack).FirstOrDefault<ModContentPack>();
+					LoadedModManager.runningModClasses[type] = (Mod)Activator.CreateInstance(type, new object[]
+					{
+						modContentPack2
+					});
+				}
+			}
 			for (int j = 0; j < LoadedModManager.runningMods.Count; j++)
 			{
-				ModContentPack modContentPack2 = LoadedModManager.runningMods[j];
-				DeepProfiler.Start("Loading " + modContentPack2);
-				modContentPack2.LoadDefs(LoadedModManager.runningMods.SelectMany((ModContentPack rm) => rm.Patches));
+				ModContentPack modContentPack3 = LoadedModManager.runningMods[j];
+				DeepProfiler.Start("Loading " + modContentPack3);
+				modContentPack3.LoadDefs(LoadedModManager.runningMods.SelectMany((ModContentPack rm) => rm.Patches));
 				DeepProfiler.End();
 			}
 			foreach (ModContentPack current2 in LoadedModManager.runningMods)
@@ -77,19 +98,6 @@ namespace Verse
 					current3.Complete(current2.Name);
 				}
 				current2.ClearPatchesCache();
-			}
-			foreach (Type type in typeof(Mod).InstantiableDescendantsAndSelf())
-			{
-				if (!LoadedModManager.runningModClasses.ContainsKey(type))
-				{
-					ModContentPack modContentPack3 = (from modpack in LoadedModManager.runningMods
-					where modpack.assemblies.loadedAssemblies.Contains(type.Assembly)
-					select modpack).FirstOrDefault<ModContentPack>();
-					LoadedModManager.runningModClasses[type] = (Mod)Activator.CreateInstance(type, new object[]
-					{
-						modContentPack3
-					});
-				}
 			}
 			XmlInheritance.Clear();
 		}

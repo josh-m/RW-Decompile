@@ -80,12 +80,12 @@ namespace RimWorld
 			{
 				this.bill.suspended = true;
 			}
-			if (listing_Standard.ButtonText(this.bill.repeatMode.GetLabel(), null))
+			if (listing_Standard.ButtonText(this.bill.repeatMode.LabelCap, null))
 			{
 				BillRepeatModeUtility.MakeConfigFloatMenu(this.bill);
 			}
-			string label = ("BillStoreMode_" + this.bill.storeMode).Translate();
-			if (listing_Standard.ButtonText(label, null))
+			string labelCap = this.bill.storeMode.LabelCap;
+			if (listing_Standard.ButtonText(labelCap, null))
 			{
 				List<FloatMenuOption> list = new List<FloatMenuOption>();
 				foreach (BillStoreModeDef current in from bsm in DefDatabase<BillStoreModeDef>.AllDefs
@@ -93,7 +93,7 @@ namespace RimWorld
 				select bsm)
 				{
 					BillStoreModeDef smLocal = current;
-					list.Add(new FloatMenuOption(("BillStoreMode_" + current).Translate(), delegate
+					list.Add(new FloatMenuOption(smLocal.LabelCap, delegate
 					{
 						this.bill.storeMode = smLocal;
 					}, MenuOptionPriority.Default, null, null, 0f, null, null));
@@ -149,7 +149,7 @@ namespace RimWorld
 			{
 				listing_Standard.Label("AllowedSkillRange".Translate(new object[]
 				{
-					this.bill.recipe.workSkill.label.ToLower()
+					this.bill.recipe.workSkill.label
 				}), -1f);
 				listing_Standard.IntRange(ref this.bill.allowedSkillRange, 0, 20);
 			}

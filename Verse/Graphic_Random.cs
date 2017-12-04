@@ -40,7 +40,7 @@ namespace Verse
 			return this.SubGraphicFor(thing).MatSingle;
 		}
 
-		public override void DrawWorker(Vector3 loc, Rot4 rot, ThingDef thingDef, Thing thing)
+		public override void DrawWorker(Vector3 loc, Rot4 rot, ThingDef thingDef, Thing thing, float extraRotation)
 		{
 			Graphic graphic;
 			if (thing != null)
@@ -51,12 +51,17 @@ namespace Verse
 			{
 				graphic = this.subGraphics[0];
 			}
-			graphic.DrawWorker(loc, rot, thingDef, thing);
+			graphic.DrawWorker(loc, rot, thingDef, thing, extraRotation);
 		}
 
 		public Graphic SubGraphicFor(Thing thing)
 		{
 			return this.subGraphics[thing.thingIDNumber % this.subGraphics.Length];
+		}
+
+		public Graphic FirstSubgraphic()
+		{
+			return this.subGraphics[0];
 		}
 
 		public override string ToString()

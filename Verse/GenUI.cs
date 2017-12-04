@@ -27,6 +27,12 @@ namespace Verse
 
 		public const float HorizontalSliderHeight = 16f;
 
+		public static readonly Vector2 TradeableDrawSize = new Vector2(150f, 45f);
+
+		public static readonly Color MouseoverColor = new Color(0.3f, 0.7f, 0.9f);
+
+		public static readonly Vector2 MaxWinSize = new Vector2(1010f, 754f);
+
 		public const float SmallIconSize = 24f;
 
 		public const int RootGUIDepth = 50;
@@ -37,14 +43,6 @@ namespace Verse
 
 		private const float MouseIconOffset = 12f;
 
-		public const float PawnDirectClickRadius = 0.4f;
-
-		public static readonly Vector2 TradeableDrawSize = new Vector2(150f, 45f);
-
-		public static readonly Color MouseoverColor = new Color(0.3f, 0.7f, 0.9f);
-
-		public static readonly Vector2 MaxWinSize = new Vector2(1010f, 754f);
-
 		private static readonly Material MouseoverBracketMaterial = MaterialPool.MatFrom("UI/Overlays/MouseoverBracketTex", ShaderDatabase.MetaOverlay);
 
 		private static readonly Texture2D UnderShadowTex = ContentFinder<Texture2D>.Get("UI/Misc/ScreenCornerShadow", true);
@@ -54,6 +52,8 @@ namespace Verse
 		private static Dictionary<string, float> labelWidthCache = new Dictionary<string, float>();
 
 		private static readonly Vector2 PieceBarSize = new Vector2(100f, 17f);
+
+		public const float PawnDirectClickRadius = 0.4f;
 
 		private static List<Pawn> clickedPawns = new List<Pawn>();
 
@@ -145,6 +145,11 @@ namespace Verse
 			return new Rect((float)((int)r.x), (float)((int)r.y), (float)((int)r.width), (float)((int)r.height));
 		}
 
+		public static Vector2 Rounded(this Vector2 v)
+		{
+			return new Vector2((float)((int)v.x), (float)((int)v.y));
+		}
+
 		public static float DistFromRect(Rect r, Vector2 p)
 		{
 			float num = Mathf.Abs(p.x - r.center.x) - r.width / 2f;
@@ -160,20 +165,20 @@ namespace Verse
 			return Mathf.Sqrt(num * num + num2 * num2);
 		}
 
-		public static void DrawMouseAttachment(Texture2D iconTex, string text)
+		public static void DrawMouseAttachment(Texture2D iconTex, string text, float angle = 0f)
 		{
 			Vector2 mousePosition = Event.current.mousePosition;
 			float num = mousePosition.y + 12f;
 			if (iconTex != null)
 			{
-				Rect position = new Rect(mousePosition.x + 12f, num, 32f, 32f);
-				GUI.DrawTexture(position, iconTex);
-				num += position.height;
+				Rect rect = new Rect(mousePosition.x + 12f, num, 32f, 32f);
+				Widgets.DrawTextureRotated(rect, iconTex, angle);
+				num += rect.height;
 			}
 			if (text != string.Empty)
 			{
-				Rect rect = new Rect(mousePosition.x + 12f, num, 200f, 9999f);
-				Widgets.Label(rect, text);
+				Rect rect2 = new Rect(mousePosition.x + 12f, num, 200f, 9999f);
+				Widgets.Label(rect2, text);
 			}
 		}
 
@@ -329,6 +334,11 @@ namespace Verse
 		public static Rect GetInnerRect(this Rect rect)
 		{
 			return rect.ContractedBy(17f);
+		}
+
+		public static Rect ExpandedBy(this Rect rect, float margin)
+		{
+			return new Rect(rect.x - margin, rect.y - margin, rect.width + margin * 2f, rect.height + margin * 2f);
 		}
 
 		public static Rect ContractedBy(this Rect rect, float margin)

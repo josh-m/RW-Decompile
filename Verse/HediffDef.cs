@@ -40,6 +40,12 @@ namespace Verse
 
 		public List<HediffGiver> hediffGivers;
 
+		public bool cureAllAtOnceIfCuredByItem;
+
+		public TaleDef taleOnVisible;
+
+		public bool everCurableByItem = true;
+
 		public bool displayWound;
 
 		public Color defaultLabelColor = Color.white;
@@ -48,11 +54,59 @@ namespace Verse
 
 		public AddedBodyPartProps addedPartProps;
 
+		public string labelNoun;
+
+		private bool alwaysAllowMothballCached;
+
+		private bool alwaysAllowMothball;
+
+		private Hediff concreteExampleInt;
+
 		public bool IsAddiction
 		{
 			get
 			{
 				return typeof(Hediff_Addiction).IsAssignableFrom(this.hediffClass);
+			}
+		}
+
+		public bool AlwaysAllowMothball
+		{
+			get
+			{
+				if (!this.alwaysAllowMothballCached)
+				{
+					this.alwaysAllowMothball = true;
+					if (this.comps != null && this.comps.Count > 0)
+					{
+						this.alwaysAllowMothball = false;
+					}
+					if (this.stages != null)
+					{
+						for (int i = 0; i < this.stages.Count; i++)
+						{
+							HediffStage hediffStage = this.stages[i];
+							if (hediffStage.deathMtbDays > 0f || (hediffStage.hediffGivers != null && hediffStage.hediffGivers.Count > 0))
+							{
+								this.alwaysAllowMothball = false;
+							}
+						}
+					}
+					this.alwaysAllowMothballCached = true;
+				}
+				return this.alwaysAllowMothball;
+			}
+		}
+
+		public Hediff ConcreteExample
+		{
+			get
+			{
+				if (this.concreteExampleInt == null)
+				{
+					this.concreteExampleInt = HediffMaker.MakeConcreteExampleHediff(this);
+				}
+				return this.concreteExampleInt;
 			}
 		}
 

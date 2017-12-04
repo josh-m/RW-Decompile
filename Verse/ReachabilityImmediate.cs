@@ -66,5 +66,11 @@ namespace Verse
 		{
 			return pawn.Spawned && (target.Map == null || target.Map == pawn.Map) && pawn.CanReachImmediate((LocalTargetInfo)target, peMode);
 		}
+
+		public static bool CanReachImmediate(IntVec3 start, CellRect rect, Map map, PathEndMode peMode, Pawn pawn)
+		{
+			IntVec3 c = rect.ClosestCellTo(start);
+			return ReachabilityImmediate.CanReachImmediate(start, c, map, peMode, pawn);
+		}
 	}
 }

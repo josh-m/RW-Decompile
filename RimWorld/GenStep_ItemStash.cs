@@ -8,11 +8,11 @@ namespace RimWorld
 {
 	public class GenStep_ItemStash : GenStep_Scatterer
 	{
-		private const int Radius = 3;
-
 		public List<ItemCollectionGeneratorDef> itemCollectionGeneratorDefs;
 
 		public FloatRange totalValueRange = new FloatRange(1000f, 2000f);
+
+		private const int Size = 7;
 
 		protected override bool CanScatterAt(IntVec3 c, Map map)
 		{
@@ -28,7 +28,7 @@ namespace RimWorld
 			{
 				return false;
 			}
-			CellRect.CellRectIterator iterator = CellRect.CenteredOn(c, 3).GetIterator();
+			CellRect.CellRectIterator iterator = CellRect.CenteredOn(c, 7, 7).GetIterator();
 			while (!iterator.Done())
 			{
 				if (!iterator.Current.InBounds(map) || iterator.Current.GetEdifice(map) != null)
@@ -42,7 +42,7 @@ namespace RimWorld
 
 		protected override void ScatterAt(IntVec3 loc, Map map, int count = 1)
 		{
-			CellRect cellRect = CellRect.CenteredOn(loc, 3).ClipInsideMap(map);
+			CellRect cellRect = CellRect.CenteredOn(loc, 7, 7).ClipInsideMap(map);
 			ResolveParams resolveParams = default(ResolveParams);
 			resolveParams.rect = cellRect;
 			resolveParams.faction = map.ParentFaction;

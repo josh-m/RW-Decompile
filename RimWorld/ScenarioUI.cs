@@ -10,7 +10,7 @@ namespace RimWorld
 
 		public static void DrawScenarioInfo(Rect rect, Scenario scen, ref Vector2 infoScrollPosition)
 		{
-			Widgets.DrawMenuSection(rect, true);
+			Widgets.DrawMenuSection(rect);
 			rect = rect.GetInnerRect();
 			if (scen == null)
 			{
@@ -32,7 +32,7 @@ namespace RimWorld
 
 		public static void DrawScenarioEditInterface(Rect rect, Scenario scen, ref Vector2 infoScrollPosition)
 		{
-			Widgets.DrawMenuSection(rect, true);
+			Widgets.DrawMenuSection(rect);
 			rect = rect.GetInnerRect();
 			if (scen == null)
 			{

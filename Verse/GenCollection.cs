@@ -27,9 +27,9 @@ namespace Verse
 			else
 			{
 				workingList.Clear();
-				foreach (T t in source)
+				foreach (T current in source)
 				{
-					workingList.Add(t);
+					workingList.Add(current);
 				}
 			}
 			int countUnChosen = workingList.Count;
@@ -89,12 +89,16 @@ namespace Verse
 					return false;
 				}
 			}
-			else if (!source.Any<T>())
+			else
 			{
-				result = default(T);
-				return false;
+				list = source.ToList<T>();
+				if (!list.Any<T>())
+				{
+					result = default(T);
+					return false;
+				}
 			}
-			result = source.RandomElement<T>();
+			result = list.RandomElement<T>();
 			return true;
 		}
 
@@ -202,10 +206,10 @@ namespace Verse
 
 		public static bool TryRandomElementByWeight<T>(this IEnumerable<T> source, Func<T, float> weightSelector, out T result)
 		{
-			float num = 0f;
 			IList<T> list = source as IList<T>;
 			if (list != null)
 			{
+				float num = 0f;
 				for (int i = 0; i < list.Count; i++)
 				{
 					float num2 = weightSelector(list[i]);
@@ -227,49 +231,19 @@ namespace Verse
 					result = list[0];
 					return true;
 				}
-			}
-			else
-			{
-				int num3 = 0;
-				foreach (T current in source)
+				if (num == 0f)
 				{
-					num3++;
-					float num4 = weightSelector(current);
-					if (num4 < 0f)
-					{
-						Log.Error(string.Concat(new object[]
-						{
-							"Negative weight in selector: ",
-							num4,
-							" from ",
-							current
-						}));
-						num4 = 0f;
-					}
-					num += num4;
+					result = default(T);
+					return false;
 				}
-				if (num3 == 1 && num > 0f)
-				{
-					result = source.First<T>();
-					return true;
-				}
-			}
-			if (num <= 0f)
-			{
-				result = default(T);
-				return false;
-			}
-			float num5 = Rand.Value * num;
-			float num6 = 0f;
-			if (list != null)
-			{
+				num *= Rand.Value;
 				for (int j = 0; j < list.Count; j++)
 				{
-					float num7 = weightSelector(list[j]);
-					if (num7 > 0f)
+					float num3 = weightSelector(list[j]);
+					if (num3 > 0f)
 					{
-						num6 += num7;
-						if (num6 >= num5)
+						num -= num3;
+						if (num <= 0f)
 						{
 							result = list[j];
 							return true;
@@ -277,24 +251,52 @@ namespace Verse
 					}
 				}
 			}
-			else
+			IEnumerator<T> enumerator = source.GetEnumerator();
+			result = default(T);
+			float num4 = 0f;
+			while (num4 == 0f && enumerator.MoveNext())
 			{
-				foreach (T current2 in source)
+				result = enumerator.Current;
+				num4 = weightSelector(result);
+				if (num4 < 0f)
 				{
-					float num8 = weightSelector(current2);
-					if (num8 > 0f)
+					Log.Error(string.Concat(new object[]
 					{
-						num6 += num8;
-						if (num6 >= num5)
-						{
-							result = current2;
-							return true;
-						}
-					}
+						"Negative weight in selector: ",
+						num4,
+						" from ",
+						result
+					}));
+					num4 = 0f;
 				}
 			}
-			result = default(T);
-			return false;
+			if (num4 == 0f)
+			{
+				result = default(T);
+				return false;
+			}
+			while (enumerator.MoveNext())
+			{
+				T current = enumerator.Current;
+				float num5 = weightSelector(current);
+				if (num5 < 0f)
+				{
+					Log.Error(string.Concat(new object[]
+					{
+						"Negative weight in selector: ",
+						num5,
+						" from ",
+						current
+					}));
+					num5 = 0f;
+				}
+				if (Rand.Range(0f, num4 + num5) >= num4)
+				{
+					result = current;
+				}
+				num4 += num5;
+			}
+			return true;
 		}
 
 		public static T RandomElementByWeightWithDefault<T>(this IEnumerable<T> source, Func<T, float> weightSelector, float defaultValueWeight)
@@ -334,9 +336,16 @@ namespace Verse
 			return source.RandomElementByWeight(weightSelector);
 		}
 
-		public static T RandomEnumValue<T>()
+		public static T FirstOrFallback<T>(this IEnumerable<T> source, T fallback = null)
 		{
-			return Enum.GetValues(typeof(T)).Cast<T>().RandomElement<T>();
+			using (IEnumerator<T> enumerator = source.GetEnumerator())
+			{
+				if (enumerator.MoveNext())
+				{
+					return enumerator.Current;
+				}
+			}
+			return fallback;
 		}
 
 		public static TSource MaxBy<TSource, TKey>(this IEnumerable<TSource> source, Func<TSource, TKey> selector)
@@ -628,6 +637,14 @@ namespace Verse
 			}
 		}
 
+		public static void AddRange<T>(this HashSet<T> set, HashSet<T> other)
+		{
+			foreach (T current in other)
+			{
+				set.Add(current);
+			}
+		}
+
 		public static float AverageWeighted<T>(this IEnumerable<T> list, Func<T, float> weight, Func<T, float> value)
 		{
 			float num = 0f;
@@ -660,6 +677,65 @@ namespace Verse
 				num++;
 			}
 			return num;
+		}
+
+		public static V TryGetValue<T, V>(this IDictionary<T, V> dict, T key)
+		{
+			V result;
+			dict.TryGetValue(key, out result);
+			return result;
+		}
+
+		[DebuggerHidden]
+		public static IEnumerable<Pair<T, V>> Cross<T, V>(this IEnumerable<T> lhs, IEnumerable<V> rhs)
+		{
+			T[] lhsv = lhs.ToArray<T>();
+			V[] rhsv = rhs.ToArray<V>();
+			for (int i = 0; i < lhsv.Length; i++)
+			{
+				for (int j = 0; j < rhsv.Length; j++)
+				{
+					yield return new Pair<T, V>(lhsv[i], rhsv[j]);
+				}
+			}
+		}
+
+		[DebuggerHidden]
+		public static IEnumerable<T> Concat<T>(this IEnumerable<T> lhs, T rhs)
+		{
+			foreach (T t in lhs)
+			{
+				yield return t;
+			}
+			yield return rhs;
+		}
+
+		public static LocalTargetInfo FirstValid(this List<LocalTargetInfo> source)
+		{
+			if (source == null)
+			{
+				return LocalTargetInfo.Invalid;
+			}
+			for (int i = 0; i < source.Count; i++)
+			{
+				if (source[i].IsValid)
+				{
+					return source[i];
+				}
+			}
+			return LocalTargetInfo.Invalid;
+		}
+
+		[DebuggerHidden]
+		public static IEnumerable<T> Except<T>(this IEnumerable<T> lhs, T rhs) where T : class
+		{
+			foreach (T t in lhs)
+			{
+				if (t != rhs)
+				{
+					yield return t;
+				}
+			}
 		}
 	}
 }

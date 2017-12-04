@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Verse;
 using Verse.AI;
 
@@ -6,11 +7,11 @@ namespace RimWorld
 {
 	public class AutoUndrafter : IExposable
 	{
-		private const int UndraftDelay = 5000;
-
 		private Pawn pawn;
 
 		private int lastNonWaitingTick;
+
+		private const int UndraftDelay = 5000;
 
 		public AutoUndrafter(Pawn pawn)
 		{
@@ -24,34 +25,40 @@ namespace RimWorld
 
 		public void AutoUndraftTick()
 		{
-			if (Find.TickManager.TicksGame % 100 == 0)
+			if (Find.TickManager.TicksGame % 100 == 0 && this.pawn.Drafted)
 			{
-				if (!this.pawn.drafter.Drafted)
+				if ((this.pawn.jobs.curJob != null && this.pawn.jobs.curJob.def != JobDefOf.WaitCombat) || this.AnyHostilePreventingAutoUndraft())
 				{
 					this.lastNonWaitingTick = Find.TickManager.TicksGame;
 				}
-				else
+				if (this.ShouldAutoUndraft())
 				{
-					if (this.pawn.jobs.curJob != null && this.pawn.jobs.curJob.def != JobDefOf.WaitCombat)
-					{
-						this.lastNonWaitingTick = Find.TickManager.TicksGame;
-					}
-					if (this.ShouldAutoUndraft())
-					{
-						this.pawn.drafter.Drafted = false;
-						this.lastNonWaitingTick = Find.TickManager.TicksGame;
-					}
+					this.pawn.drafter.Drafted = false;
 				}
 			}
 		}
 
+		public void Notify_Drafted()
+		{
+			this.lastNonWaitingTick = Find.TickManager.TicksGame;
+		}
+
 		private bool ShouldAutoUndraft()
 		{
-			if (Find.TickManager.TicksGame - this.lastNonWaitingTick < 5000)
+			return Find.TickManager.TicksGame - this.lastNonWaitingTick >= 5000 && !this.AnyHostilePreventingAutoUndraft();
+		}
+
+		private bool AnyHostilePreventingAutoUndraft()
+		{
+			List<IAttackTarget> potentialTargetsFor = this.pawn.Map.attackTargetsCache.GetPotentialTargetsFor(this.pawn);
+			for (int i = 0; i < potentialTargetsFor.Count; i++)
 			{
-				return false;
+				if (GenHostility.IsActiveThreatToPlayer(potentialTargetsFor[i]))
+				{
+					return true;
+				}
 			}
-			return !this.pawn.Map.attackTargetsCache.GetPotentialTargetsFor(this.pawn).Any((IAttackTarget x) => !x.ThreatDisabled());
+			return false;
 		}
 	}
 }

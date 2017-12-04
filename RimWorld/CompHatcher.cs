@@ -31,7 +31,7 @@ namespace RimWorld
 			}
 		}
 
-		protected bool TemperatureDamaged
+		public bool TemperatureDamaged
 		{
 			get
 			{
@@ -64,7 +64,7 @@ namespace RimWorld
 
 		public void Hatch()
 		{
-			PawnGenerationRequest request = new PawnGenerationRequest(this.Props.hatcherPawn, this.hatcheeFaction, PawnGenerationContext.NonPlayer, -1, false, true, false, false, true, false, 1f, false, true, true, false, false, null, null, null, null, null, null);
+			PawnGenerationRequest request = new PawnGenerationRequest(this.Props.hatcherPawn, this.hatcheeFaction, PawnGenerationContext.NonPlayer, -1, false, true, false, false, true, false, 1f, false, true, true, false, false, false, false, null, null, null, null, null, null, null);
 			for (int i = 0; i < this.parent.stackCount; i++)
 			{
 				Pawn pawn = PawnGenerator.GeneratePawn(request);

@@ -28,7 +28,7 @@ namespace RimWorld
 						}
 						if (thing is Frame)
 						{
-							actor.Reserve(thing, 1, -1, null);
+							actor.Reserve(thing, curJob, 1, -1, null);
 						}
 					}
 					if (flag2)

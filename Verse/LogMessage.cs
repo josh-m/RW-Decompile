@@ -17,17 +17,20 @@ namespace Verse
 		{
 			get
 			{
-				switch (this.type)
+				LogMessageType logMessageType = this.type;
+				if (logMessageType == LogMessageType.Message)
 				{
-				case LogMessageType.Message:
-					return Color.white;
-				case LogMessageType.Warning:
-					return Color.yellow;
-				case LogMessageType.Error:
-					return Color.red;
-				default:
 					return Color.white;
 				}
+				if (logMessageType == LogMessageType.Warning)
+				{
+					return Color.yellow;
+				}
+				if (logMessageType != LogMessageType.Error)
+				{
+					return Color.white;
+				}
+				return Color.red;
 			}
 		}
 

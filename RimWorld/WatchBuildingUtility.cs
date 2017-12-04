@@ -43,7 +43,7 @@ namespace RimWorld
 					{
 						bool flag = false;
 						Building building = null;
-						if (WatchBuildingUtility.EverPossibleToWatchFrom(intVec2, toWatch.Position, toWatch.Map, false) && !intVec2.IsForbidden(pawn) && pawn.CanReserve(intVec2, 1, -1, null, false) && !pawn.Map.pawnDestinationManager.DestinationIsReserved(intVec2, pawn))
+						if (WatchBuildingUtility.EverPossibleToWatchFrom(intVec2, toWatch.Position, toWatch.Map, false) && !intVec2.IsForbidden(pawn) && pawn.CanReserve(intVec2, 1, -1, null, false) && pawn.Map.pawnDestinationReservationManager.CanReserve(intVec2, pawn))
 						{
 							if (desireSit)
 							{

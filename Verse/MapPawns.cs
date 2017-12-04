@@ -39,7 +39,7 @@ namespace Verse
 		{
 			get
 			{
-				List<Thing> holders = this.map.listerThings.ThingsInGroup(ThingRequestGroup.ThisOrAnyCompIsThingHolder);
+				List<Thing> holders = this.map.listerThings.ThingsInGroup(ThingRequestGroup.ThingHolder);
 				for (int i = 0; i < holders.Count; i++)
 				{
 					IThingHolder holder = holders[i] as IThingHolder;
@@ -134,9 +134,7 @@ namespace Verse
 					Log.Error("ColonistCount while not playing. This should get the starting player pawn count.");
 					return 3;
 				}
-				return (from x in this.AllPawns
-				where x.RaceProps.Humanlike && x.Faction == Faction.OfPlayer
-				select x).Count<Pawn>();
+				return this.AllPawns.Count((Pawn x) => x.IsColonist);
 			}
 		}
 
@@ -191,8 +189,12 @@ namespace Verse
 					{
 						return true;
 					}
+					if (this.pawnsSpawned[i].relations != null && this.pawnsSpawned[i].relations.relativeInvolvedInRescueQuest != null)
+					{
+						return true;
+					}
 				}
-				List<Thing> list = this.map.listerThings.ThingsInGroup(ThingRequestGroup.ThisOrAnyCompIsThingHolder);
+				List<Thing> list = this.map.listerThings.ThingsInGroup(ThingRequestGroup.ThingHolder);
 				for (int j = 0; j < list.Count; j++)
 				{
 					if (list[j] is IActiveDropPod || list[j].TryGetComp<CompTransporter>() != null)
@@ -287,7 +289,7 @@ namespace Verse
 				List<Pawn> list = this.SpawnedPawnsInFaction(Faction.OfPlayer);
 				for (int i = 0; i < list.Count; i++)
 				{
-					if (list[i].RaceProps.Humanlike)
+					if (list[i].IsColonist)
 					{
 						num++;
 					}
@@ -303,12 +305,12 @@ namespace Verse
 				int num = 0;
 				for (int i = 0; i < this.pawnsSpawned.Count; i++)
 				{
-					if (this.pawnsSpawned[i].IsColonist && this.pawnsSpawned[i].HostFaction == null)
+					if (this.pawnsSpawned[i].IsFreeColonist)
 					{
 						num++;
 					}
 				}
-				List<Thing> list = this.map.listerThings.ThingsInGroup(ThingRequestGroup.ThisOrAnyCompIsThingHolder);
+				List<Thing> list = this.map.listerThings.ThingsInGroup(ThingRequestGroup.ThingHolder);
 				for (int j = 0; j < list.Count; j++)
 				{
 					Building_CryptosleepCasket building_CryptosleepCasket = list[j] as Building_CryptosleepCasket;
@@ -328,6 +330,38 @@ namespace Verse
 				}
 				MapPawns.tmpThings.Clear();
 				return num;
+			}
+		}
+
+		public bool AnyColonistSpawned
+		{
+			get
+			{
+				List<Pawn> list = this.SpawnedPawnsInFaction(Faction.OfPlayer);
+				for (int i = 0; i < list.Count; i++)
+				{
+					if (list[i].IsColonist)
+					{
+						return true;
+					}
+				}
+				return false;
+			}
+		}
+
+		public bool AnyFreeColonistSpawned
+		{
+			get
+			{
+				List<Pawn> list = this.SpawnedPawnsInFaction(Faction.OfPlayer);
+				for (int i = 0; i < list.Count; i++)
+				{
+					if (list[i].IsFreeColonist)
+					{
+						return true;
+					}
+				}
+				return false;
 			}
 		}
 

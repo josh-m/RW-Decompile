@@ -22,24 +22,30 @@ namespace RimWorld
 			if (Rand.MTBEventOccurs(this.Props.mtbDays, 60000f, 1000f))
 			{
 				List<IncidentCategory> triedCategories = new List<IncidentCategory>();
-				while (triedCategories.Count < this.Props.categoryWeights.Count)
+				IEnumerable<IncidentDef> options;
+				while (true)
 				{
+					if (triedCategories.Count >= this.Props.categoryWeights.Count)
+					{
+						break;
+					}
 					IncidentCategory category = this.DecideCategory(target, triedCategories);
 					triedCategories.Add(category);
 					IncidentParms parms = this.GenerateParms(category, target);
-					IEnumerable<IncidentDef> options = from d in DefDatabase<IncidentDef>.AllDefs
-					where d.category == this.<category>__1 && d.Worker.CanFireNow(this.target) && (!d.NeedsParms || d.minThreatPoints <= this.<parms>__2.points)
+					options = from d in DefDatabase<IncidentDef>.AllDefs
+					where d.category == category && d.Worker.CanFireNow(target) && (!d.NeedsParms || d.minThreatPoints <= parms.points)
 					select d;
 					if (options.Any<IncidentDef>())
 					{
-						IncidentDef incDef;
-						if (options.TryRandomElementByWeight(new Func<IncidentDef, float>(base.IncidentChanceFinal), out incDef))
-						{
-							yield return new FiringIncident(incDef, this, this.GenerateParms(incDef.category, target));
-							break;
-						}
-						break;
+						goto Block_2;
 					}
+				}
+				return;
+				Block_2:
+				IncidentDef incDef;
+				if (options.TryRandomElementByWeight(new Func<IncidentDef, float>(base.IncidentChanceFinal), out incDef))
+				{
+					yield return new FiringIncident(incDef, this, this.GenerateParms(incDef.category, target));
 				}
 			}
 		}

@@ -43,12 +43,12 @@ namespace Verse
 					{
 						stringBuilder.AppendLine("    -" + current2);
 					}
-					Find.LetterStack.ReceiveLetter("LetterLabelRoofCollapsed".Translate(), stringBuilder.ToString(), LetterDefOf.BadNonUrgent, new TargetInfo(roofCollapseBuffer.CellsMarkedToCollapse[0], this.map, false), null);
+					Find.LetterStack.ReceiveLetter("LetterLabelRoofCollapsed".Translate(), stringBuilder.ToString(), LetterDefOf.NegativeEvent, new TargetInfo(roofCollapseBuffer.CellsMarkedToCollapse[0], this.map, false), null);
 				}
 				else
 				{
 					string text = "RoofCollapsed".Translate();
-					Messages.Message(text, new TargetInfo(roofCollapseBuffer.CellsMarkedToCollapse[0], this.map, false), MessageSound.Negative);
+					Messages.Message(text, new TargetInfo(roofCollapseBuffer.CellsMarkedToCollapse[0], this.map, false), MessageTypeDefOf.NegativeHealthEvent);
 				}
 				roofCollapseBuffer.Clear();
 			}

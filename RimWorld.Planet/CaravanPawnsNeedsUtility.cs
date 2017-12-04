@@ -9,6 +9,8 @@ namespace RimWorld.Planet
 	{
 		private const float AutoRefillMiscNeedsIfBelowLevel = 0.3f;
 
+		private const float ExtraJoyFromEatingFood = 0.5f;
+
 		private static List<Thing> tmpInvFood = new List<Thing>();
 
 		public static void TrySatisfyPawnsNeeds(Caravan caravan)
@@ -134,7 +136,7 @@ namespace RimWorld.Planet
 						{
 							caravan.LabelCap,
 							pawn.Label
-						}), caravan, MessageSound.SeriousAlert);
+						}), caravan, MessageTypeDefOf.ThreatBig);
 					}
 				}
 			}
@@ -177,7 +179,7 @@ namespace RimWorld.Planet
 
 		public static bool CanNowEatForNutrition(ThingDef food, Pawn pawn)
 		{
-			return CaravanPawnsNeedsUtility.CanEverEatForNutrition(food, pawn) && (pawn.needs.food.CurCategory >= HungerCategory.Starving || food.ingestible.preferability > FoodPreferability.DesperateOnly);
+			return CaravanPawnsNeedsUtility.CanEverEatForNutrition(food, pawn) && (!pawn.RaceProps.Humanlike || pawn.needs.food.CurCategory >= HungerCategory.Starving || food.ingestible.preferability > FoodPreferability.DesperateOnlyForHumanlikes);
 		}
 
 		public static bool CanNowEatForNutrition(Thing food, Pawn pawn)
@@ -207,6 +209,10 @@ namespace RimWorld.Planet
 			float num = 0f;
 			if (food == ThingDefOf.Kibble || food == ThingDefOf.Hay)
 			{
+				num = 5f;
+			}
+			else if (food.ingestible.preferability == FoodPreferability.DesperateOnlyForHumanlikes)
+			{
 				num = 4f;
 			}
 			else if (food.ingestible.preferability == FoodPreferability.RawBad)
@@ -222,6 +228,33 @@ namespace RimWorld.Planet
 				num = 1f;
 			}
 			return num + Mathf.Min(food.ingestible.nutrition / 100f, 0.999f);
+		}
+
+		public static void Notify_CaravanMemberIngestedFood(Pawn p, ThingDef foodDef)
+		{
+			if (p.Dead || p.needs.joy == null)
+			{
+				return;
+			}
+			if (foodDef.ingestible.nutrition <= 0f)
+			{
+				return;
+			}
+			bool flag = false;
+			List<Pawn> pawnsListForReading = p.GetCaravan().PawnsListForReading;
+			for (int i = 0; i < pawnsListForReading.Count; i++)
+			{
+				if (pawnsListForReading[i] != p && pawnsListForReading[i].RaceProps.Humanlike && !pawnsListForReading[i].Downed && !pawnsListForReading[i].InMentalState)
+				{
+					if (p.IsPrisoner == pawnsListForReading[i].IsPrisoner)
+					{
+						flag = true;
+						break;
+					}
+				}
+			}
+			JoyKindDef joyKind = (!flag) ? JoyKindDefOf.Meditative : Rand.Element<JoyKindDef>(JoyKindDefOf.Meditative, JoyKindDefOf.Social);
+			p.needs.joy.GainJoy(0.5f, joyKind);
 		}
 	}
 }

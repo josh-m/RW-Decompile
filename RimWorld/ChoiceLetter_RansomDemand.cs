@@ -21,26 +21,26 @@ namespace RimWorld
 				DiaOption accept = new DiaOption("RansomDemand_Accept".Translate());
 				accept.action = delegate
 				{
-					this.<>f__this.faction.kidnapped.RemoveKidnappedPawn(this.<>f__this.kidnapped);
-					Find.WorldPawns.RemovePawn(this.<>f__this.kidnapped);
+					this.$this.faction.kidnapped.RemoveKidnappedPawn(this.$this.kidnapped);
+					Find.WorldPawns.RemovePawn(this.$this.kidnapped);
 					IntVec3 intVec;
-					if (this.<>f__this.faction.def.techLevel < TechLevel.Spacer)
+					if (this.$this.faction.def.techLevel < TechLevel.Spacer)
 					{
-						if (!CellFinder.TryFindRandomEdgeCellWith((IntVec3 c) => c.Standable(this.<>f__this.map) && this.<>f__this.map.reachability.CanReachColony(c), this.<>f__this.map, CellFinder.EdgeRoadChance_Friendly, out intVec) && !CellFinder.TryFindRandomEdgeCellWith((IntVec3 c) => c.Standable(this.<>f__this.map), this.<>f__this.map, CellFinder.EdgeRoadChance_Friendly, out intVec))
+						if (!CellFinder.TryFindRandomEdgeCellWith((IntVec3 c) => c.Standable(this.$this.map) && this.$this.map.reachability.CanReachColony(c), this.$this.map, CellFinder.EdgeRoadChance_Friendly, out intVec) && !CellFinder.TryFindRandomEdgeCellWith((IntVec3 c) => c.Standable(this.$this.map), this.$this.map, CellFinder.EdgeRoadChance_Friendly, out intVec))
 						{
 							Log.Warning("Could not find any edge cell.");
-							intVec = DropCellFinder.TradeDropSpot(this.<>f__this.map);
+							intVec = DropCellFinder.TradeDropSpot(this.$this.map);
 						}
-						GenSpawn.Spawn(this.<>f__this.kidnapped, intVec, this.<>f__this.map);
+						GenSpawn.Spawn(this.$this.kidnapped, intVec, this.$this.map);
 					}
 					else
 					{
-						intVec = DropCellFinder.TradeDropSpot(this.<>f__this.map);
-						TradeUtility.SpawnDropPod(intVec, this.<>f__this.map, this.<>f__this.kidnapped);
+						intVec = DropCellFinder.TradeDropSpot(this.$this.map);
+						TradeUtility.SpawnDropPod(intVec, this.$this.map, this.$this.kidnapped);
 					}
-					CameraJumper.TryJump(intVec, this.<>f__this.map);
-					TradeUtility.LaunchSilver(this.<>f__this.map, this.<>f__this.fee);
-					Find.LetterStack.RemoveLetter(this.<>f__this);
+					CameraJumper.TryJump(intVec, this.$this.map);
+					TradeUtility.LaunchSilver(this.$this.map, this.$this.fee);
+					Find.LetterStack.RemoveLetter(this.$this);
 				};
 				accept.resolveTree = true;
 				if (!TradeUtility.ColonyHasEnoughSilver(this.map, this.fee))

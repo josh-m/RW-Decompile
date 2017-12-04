@@ -47,6 +47,8 @@ namespace Verse
 
 		public bool holdSnow = true;
 
+		public bool extinguishesFire;
+
 		public Color color = Color.white;
 
 		public TerrainDef driesTo;

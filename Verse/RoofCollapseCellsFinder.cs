@@ -84,7 +84,6 @@ namespace Verse
 
 		private static bool CheckCollapseFlyingRoofAtAndAdjInternal(IntVec3 root, Map map, bool removalMode)
 		{
-			ProfilerThreadCheck.BeginSample("CheckCollapseFlyingRoofAtInternal()");
 			RoofCollapseBuffer roofCollapseBuffer = map.roofCollapseBuffer;
 			if (removalMode && roofCollapseBuffer.CellsMarkedToCollapse.Count > 0)
 			{
@@ -101,19 +100,24 @@ namespace Verse
 						{
 							if (!roofCollapseBuffer.IsMarkedToCollapse(intVec))
 							{
-								if (!RoofCollapseCellsFinder.ConnectsToRoofHolder(intVec, map))
+								if (!RoofCollapseCellsFinder.ConnectsToRoofHolder(intVec, map, RoofCollapseCellsFinder.visitedCells))
 								{
 									map.floodFiller.FloodFill(intVec, (IntVec3 x) => x.Roofed(map), delegate(IntVec3 x)
 									{
 										roofCollapseBuffer.MarkToCollapse(x);
-									}, false);
+									}, 2147483647, false, null);
 									if (removalMode)
 									{
-										for (int j = 0; j < roofCollapseBuffer.CellsMarkedToCollapse.Count; j++)
+										List<IntVec3> cellsMarkedToCollapse = roofCollapseBuffer.CellsMarkedToCollapse;
+										for (int j = cellsMarkedToCollapse.Count - 1; j >= 0; j--)
 										{
-											map.roofGrid.SetRoof(roofCollapseBuffer.CellsMarkedToCollapse[j], null);
+											RoofDef roofDef = map.roofGrid.RoofAt(cellsMarkedToCollapse[j]);
+											if (roofDef != null && roofDef.VanishOnCollapse)
+											{
+												map.roofGrid.SetRoof(cellsMarkedToCollapse[j], null);
+												cellsMarkedToCollapse.RemoveAt(j);
+											}
 										}
-										roofCollapseBuffer.Clear();
 									}
 								}
 							}
@@ -121,21 +125,20 @@ namespace Verse
 					}
 				}
 			}
-			ProfilerThreadCheck.EndSample();
 			return false;
 		}
 
-		private static bool ConnectsToRoofHolder(IntVec3 c, Map map)
+		public static bool ConnectsToRoofHolder(IntVec3 c, Map map, HashSet<IntVec3> visitedCells)
 		{
 			bool connected = false;
 			map.floodFiller.FloodFill(c, (IntVec3 x) => x.Roofed(map) && !connected, delegate(IntVec3 x)
 			{
-				if (RoofCollapseCellsFinder.visitedCells.Contains(x))
+				if (visitedCells.Contains(x))
 				{
 					connected = true;
 					return;
 				}
-				RoofCollapseCellsFinder.visitedCells.Add(x);
+				visitedCells.Add(x);
 				for (int i = 0; i < 5; i++)
 				{
 					IntVec3 c2 = x + GenAdj.CardinalDirectionsAndInside[i];
@@ -149,7 +152,7 @@ namespace Verse
 						}
 					}
 				}
-			}, false);
+			}, 2147483647, false, null);
 			return connected;
 		}
 	}

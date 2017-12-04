@@ -27,13 +27,9 @@ namespace Verse
 			public Vector2 preRotationOffset;
 		}
 
-		private const float TargetPulseFrequency = 8f;
-
-		private const float LineWidth = 0.2f;
-
-		private const float BaseWorldLineWidth = 0.2f;
-
 		private static readonly Material TargetSquareMatSingle = MaterialPool.MatFrom("UI/Overlays/TargetHighlight_Square", ShaderDatabase.Transparent);
+
+		private const float TargetPulseFrequency = 8f;
 
 		public static readonly string LineTexPath = "UI/Overlays/ThingLine";
 
@@ -58,6 +54,10 @@ namespace Verse
 		private static readonly Material WorldLineMatWhite = MaterialPool.MatFrom(GenDraw.LineTexPath, ShaderDatabase.WorldOverlayTransparent, Color.white, WorldMaterials.WorldLineRenderQueue);
 
 		private static readonly Material OneSidedWorldLineMatWhite = MaterialPool.MatFrom(GenDraw.OneSidedLineTexPath, ShaderDatabase.WorldOverlayTransparent, Color.white, WorldMaterials.WorldLineRenderQueue);
+
+		private const float LineWidth = 0.2f;
+
+		private const float BaseWorldLineWidth = 0.2f;
 
 		public static readonly Material InteractionCellMaterial = MaterialPool.MatFrom("UI/Overlays/InteractionCell", ShaderDatabase.Transparent);
 
@@ -128,6 +128,11 @@ namespace Verse
 		public static void DrawLineBetween(Vector3 A, Vector3 B)
 		{
 			GenDraw.DrawLineBetween(A, B, GenDraw.LineMatWhite);
+		}
+
+		public static void DrawLineBetween(Vector3 A, Vector3 B, float layer)
+		{
+			GenDraw.DrawLineBetween(A + Vector3.up * layer, B + Vector3.up * layer, GenDraw.LineMatWhite);
 		}
 
 		public static void DrawLineBetween(Vector3 A, Vector3 B, SimpleColor color)
@@ -231,7 +236,7 @@ namespace Verse
 						GenDraw.cachedEdgeTiles.Add(tile);
 					}
 					return false;
-				}, 2147483647);
+				}, 2147483647, null);
 				WorldGrid worldGrid = Find.WorldGrid;
 				Vector3 c = worldGrid.GetTileCenter(center);
 				Vector3 n = c.normalized;
@@ -308,7 +313,7 @@ namespace Verse
 		{
 			if (tDef.hasInteractionCell)
 			{
-				Vector3 position = Thing.InteractionCellWhenAt(tDef, center, placingRot, Find.VisibleMap).ToVector3ShiftedWithAltitude(AltitudeLayer.MetaOverlays);
+				Vector3 position = ThingUtility.InteractionCellWhenAt(tDef, center, placingRot, Find.VisibleMap).ToVector3ShiftedWithAltitude(AltitudeLayer.MetaOverlays);
 				Graphics.DrawMesh(MeshPool.plane10, position, Quaternion.identity, GenDraw.InteractionCellMaterial, 0);
 			}
 		}

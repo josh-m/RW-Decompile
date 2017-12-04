@@ -1,6 +1,5 @@
 using RimWorld.Planet;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Verse;
@@ -9,10 +8,6 @@ namespace RimWorld
 {
 	public class AlertsReadout
 	{
-		private const int StartTickDelay = 600;
-
-		public const float AlertListWidth = 164f;
-
 		private List<Alert> activeAlerts = new List<Alert>(16);
 
 		private int curAlertIndex;
@@ -22,6 +17,10 @@ namespace RimWorld
 		private int mouseoverAlertIndex = -1;
 
 		private readonly List<Alert> AllAlerts = new List<Alert>();
+
+		private const int StartTickDelay = 600;
+
+		public const float AlertListWidth = 164f;
 
 		private static int AlertCycleLength = 20;
 
@@ -37,13 +36,9 @@ namespace RimWorld
 			if (this.PriosInDrawOrder == null)
 			{
 				this.PriosInDrawOrder = new List<AlertPriority>();
-				using (IEnumerator enumerator2 = Enum.GetValues(typeof(AlertPriority)).GetEnumerator())
+				foreach (AlertPriority item in Enum.GetValues(typeof(AlertPriority)))
 				{
-					while (enumerator2.MoveNext())
-					{
-						AlertPriority item = (AlertPriority)((byte)enumerator2.Current);
-						this.PriosInDrawOrder.Add(item);
-					}
+					this.PriosInDrawOrder.Add(item);
 				}
 				this.PriosInDrawOrder.Reverse();
 			}

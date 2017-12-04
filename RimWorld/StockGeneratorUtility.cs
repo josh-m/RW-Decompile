@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using Verse;
 
 namespace RimWorld
@@ -46,9 +45,7 @@ namespace RimWorld
 			ThingDef stuff = null;
 			if (thingDef.MadeFromStuff)
 			{
-				stuff = (from st in DefDatabase<ThingDef>.AllDefs
-				where st.IsStuff && st.stuffProps.CanMake(thingDef)
-				select st).RandomElementByWeight((ThingDef st) => st.stuffProps.commonality);
+				stuff = GenStuff.RandomStuffByCommonalityFor(thingDef, TechLevel.Undefined);
 			}
 			Thing thing = ThingMaker.MakeThing(thingDef, stuff);
 			thing.stackCount = stackCount;

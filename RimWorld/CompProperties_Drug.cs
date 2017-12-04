@@ -68,7 +68,7 @@ namespace RimWorld
 			}
 			if (this.Addictive)
 			{
-				yield return new StatDrawEntry(StatCategoryDefOf.Basics, "Addictiveness".Translate(), this.addictiveness.ToStringPercent(), 0);
+				yield return new StatDrawEntry(StatCategoryDefOf.Basics, "Addictiveness".Translate(), this.addictiveness.ToStringPercent(), 0, string.Empty);
 			}
 		}
 	}

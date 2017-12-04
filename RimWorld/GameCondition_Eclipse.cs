@@ -12,7 +12,7 @@ namespace RimWorld
 
 		public override float SkyTargetLerpFactor()
 		{
-			return GameConditionUtility.LerpInOutValue((float)base.TicksPassed, (float)base.TicksLeft, 200f, 1f);
+			return GameConditionUtility.LerpInOutValue(this, 200f, 1f);
 		}
 
 		public override SkyTarget? SkyTarget()

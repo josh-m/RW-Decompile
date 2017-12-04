@@ -2,11 +2,12 @@ using RimWorld;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Verse.AI;
 using Verse.Sound;
 
 namespace Verse
 {
-	public class Pawn_CarryTracker : IExposable, IThingHolder
+	public class Pawn_CarryTracker : IThingHolder, IExposable
 	{
 		public Pawn pawn;
 
@@ -96,17 +97,23 @@ namespace Verse
 			return false;
 		}
 
-		public int TryStartCarry(Thing item, int count)
+		public int TryStartCarry(Thing item, int count, bool reserve = true)
 		{
 			if (this.pawn.Dead || this.pawn.Downed)
 			{
 				Log.Error("Dead/downed pawn " + this.pawn + " tried to start carry item.");
 				return 0;
 			}
-			int num = this.innerContainer.TryAdd(item, count, true);
+			count = Mathf.Min(count, this.AvailableStackSpace(item.def));
+			count = Mathf.Min(count, item.stackCount);
+			int num = this.innerContainer.TryAdd(item.SplitOff(count), count, true);
 			if (num > 0)
 			{
 				item.def.soundPickup.PlayOneShot(new TargetInfo(item.Position, this.pawn.Map, false));
+				if (reserve)
+				{
+					this.pawn.Reserve(this.CarriedThing, this.pawn.CurJob, 1, -1, null);
+				}
 			}
 			return num;
 		}

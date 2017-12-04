@@ -7,6 +7,58 @@ namespace RimWorld
 {
 	public static class Toils_Interpersonal
 	{
+		public static Toil GotoInteractablePosition(TargetIndex target)
+		{
+			Toil toil = new Toil();
+			toil.initAction = delegate
+			{
+				Pawn actor = toil.actor;
+				Pawn pawn = (Pawn)((Thing)actor.CurJob.GetTarget(target));
+				if (InteractionUtility.IsGoodPositionForInteraction(actor, pawn))
+				{
+					actor.jobs.curDriver.ReadyForNextToil();
+				}
+				else
+				{
+					actor.pather.StartPath(pawn, PathEndMode.Touch);
+				}
+			};
+			toil.tickAction = delegate
+			{
+				Pawn actor = toil.actor;
+				Pawn pawn = (Pawn)((Thing)actor.CurJob.GetTarget(target));
+				Map map = actor.Map;
+				if (InteractionUtility.IsGoodPositionForInteraction(actor, pawn) && actor.Position.InHorDistOf(pawn.Position, (float)Mathf.CeilToInt(3f)) && (!actor.pather.Moving || actor.pather.nextCell.GetDoor(map) == null))
+				{
+					actor.pather.StopDead();
+					actor.jobs.curDriver.ReadyForNextToil();
+				}
+				else if (!actor.pather.Moving)
+				{
+					IntVec3 intVec = IntVec3.Invalid;
+					for (int i = 0; i < 8; i++)
+					{
+						IntVec3 intVec2 = pawn.Position + GenAdj.AdjacentCells[i];
+						if (intVec2.InBounds(map) && intVec2.Standable(map) && intVec2 != actor.Position && InteractionUtility.IsGoodPositionForInteraction(intVec2, pawn.Position, map) && actor.CanReach(intVec2, PathEndMode.OnCell, Danger.Deadly, false, TraverseMode.ByPawn) && (!intVec.IsValid || actor.Position.DistanceToSquared(intVec2) < actor.Position.DistanceToSquared(intVec)))
+						{
+							intVec = intVec2;
+						}
+					}
+					if (intVec.IsValid)
+					{
+						actor.pather.StartPath(intVec, PathEndMode.OnCell);
+					}
+					else
+					{
+						actor.jobs.curDriver.EndJobWith(JobCondition.Incompletable);
+					}
+				}
+			};
+			toil.socialMode = RandomSocialMode.Off;
+			toil.defaultCompleteMode = ToilCompleteMode.Never;
+			return toil;
+		}
+
 		public static Toil GotoPrisoner(Pawn pawn, Pawn talkee, PrisonerInteractionModeDef mode)
 		{
 			Toil toil = new Toil();
@@ -14,7 +66,7 @@ namespace RimWorld
 			{
 				pawn.pather.StartPath(talkee, PathEndMode.Touch);
 			};
-			toil.AddFailCondition(() => talkee.Destroyed || (mode != PrisonerInteractionModeDefOf.Execution && !talkee.Awake()) || !talkee.IsPrisonerOfColony || (talkee.guest == null || talkee.guest.interactionMode != mode));
+			toil.AddFailCondition(() => talkee.DestroyedOrNull() || (mode != PrisonerInteractionModeDefOf.Execution && !talkee.Awake()) || !talkee.IsPrisonerOfColony || (talkee.guest == null || talkee.guest.interactionMode != mode));
 			toil.socialMode = RandomSocialMode.Off;
 			toil.defaultCompleteMode = ToilCompleteMode.PatherArrival;
 			return toil;
@@ -87,7 +139,7 @@ namespace RimWorld
 				{
 					return;
 				}
-				InteractionDef intDef = (!pawn.def.race.Animal) ? InteractionDefOf.RecruitAttempt : InteractionDefOf.TameAttempt;
+				InteractionDef intDef = (!pawn.AnimalOrWildMan()) ? InteractionDefOf.RecruitAttempt : InteractionDefOf.TameAttempt;
 				actor.interactions.TryInteractWith(pawn, intDef);
 			};
 			toil.socialMode = RandomSocialMode.Off;
@@ -156,6 +208,25 @@ namespace RimWorld
 			};
 			toil.defaultCompleteMode = ToilCompleteMode.Delay;
 			toil.defaultDuration = 100;
+			return toil;
+		}
+
+		public static Toil Interact(TargetIndex otherPawnInd, InteractionDef interaction)
+		{
+			Toil toil = new Toil();
+			toil.initAction = delegate
+			{
+				Pawn actor = toil.actor;
+				Pawn pawn = (Pawn)actor.jobs.curJob.GetTarget(otherPawnInd).Thing;
+				if (!pawn.Spawned)
+				{
+					return;
+				}
+				actor.interactions.TryInteractWith(pawn, interaction);
+			};
+			toil.socialMode = RandomSocialMode.Off;
+			toil.defaultCompleteMode = ToilCompleteMode.Delay;
+			toil.defaultDuration = 60;
 			return toil;
 		}
 	}

@@ -5,11 +5,11 @@ namespace Verse
 {
 	public class PlayLog : IExposable
 	{
+		private List<LogEntry> entries = new List<LogEntry>();
+
 		private const int Capacity = 150;
 
-		private List<PlayLogEntry> entries = new List<PlayLogEntry>();
-
-		public List<PlayLogEntry> AllEntries
+		public List<LogEntry> AllEntries
 		{
 			get
 			{
@@ -17,7 +17,7 @@ namespace Verse
 			}
 		}
 
-		public void Add(PlayLogEntry entry)
+		public void Add(LogEntry entry)
 		{
 			this.entries.Insert(0, entry);
 			this.ReduceToCapacity();
@@ -33,32 +33,34 @@ namespace Verse
 
 		public void ExposeData()
 		{
-			Scribe_Collections.Look<PlayLogEntry>(ref this.entries, "entries", LookMode.Deep, new object[0]);
+			Scribe_Collections.Look<LogEntry>(ref this.entries, "entries", LookMode.Deep, new object[0]);
 		}
 
-		public void Notify_PawnDiscarded(Pawn p)
+		public void Notify_PawnDiscarded(Pawn p, bool silentlyRemoveReferences)
 		{
 			for (int i = this.entries.Count - 1; i >= 0; i--)
 			{
 				if (this.entries[i].Concerns(p))
 				{
-					Log.Warning(string.Concat(new object[]
+					if (!silentlyRemoveReferences)
 					{
-						"Discarding pawn ",
-						p,
-						", but he is referenced by a play log entry ",
-						this.entries[i],
-						"."
-					}));
+						Log.Warning(string.Concat(new object[]
+						{
+							"Discarding pawn ",
+							p,
+							", but he is referenced by a play log entry ",
+							this.entries[i],
+							"."
+						}));
+					}
 					this.RemoveEntry(this.entries[i]);
 				}
 			}
 		}
 
-		private void RemoveEntry(PlayLogEntry entry)
+		private void RemoveEntry(LogEntry entry)
 		{
 			this.entries.Remove(entry);
-			entry.PostRemove();
 		}
 
 		public bool AnyEntryConcerns(Pawn p)

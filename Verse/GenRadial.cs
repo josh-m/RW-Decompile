@@ -1,18 +1,23 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using UnityEngine;
 
 namespace Verse
 {
 	public static class GenRadial
 	{
-		private const int RadialPatternCount = 10000;
-
 		public static IntVec3[] ManualRadialPattern;
 
 		public static IntVec3[] RadialPattern;
 
 		private static float[] RadialPatternRadii;
+
+		private const int RadialPatternCount = 10000;
+
+		private static List<IntVec3> tmpCells;
+
+		private static bool working;
 
 		public static float MaxRadialPatternRadius
 		{
@@ -27,6 +32,8 @@ namespace Verse
 			GenRadial.ManualRadialPattern = new IntVec3[49];
 			GenRadial.RadialPattern = new IntVec3[10000];
 			GenRadial.RadialPatternRadii = new float[10000];
+			GenRadial.tmpCells = new List<IntVec3>();
+			GenRadial.working = false;
 			GenRadial.SetupManualRadialPattern();
 			GenRadial.SetupRadialPattern();
 		}
@@ -214,14 +221,57 @@ namespace Verse
 							returnedThings.Add(t);
 							goto IL_14A;
 						}
-						IL_162:
+						IL_16A:
 						j++;
 						continue;
 						IL_14A:
 						yield return t;
-						goto IL_162;
+						goto IL_16A;
 					}
 				}
+			}
+		}
+
+		public static void ProcessEquidistantCells(IntVec3 center, float radius, Func<List<IntVec3>, bool> processor, Map map = null)
+		{
+			if (GenRadial.working)
+			{
+				Log.Error("Nested calls to ProcessEquidistantCells() are not allowed.");
+				return;
+			}
+			GenRadial.tmpCells.Clear();
+			GenRadial.working = true;
+			try
+			{
+				float num = -1f;
+				int num2 = GenRadial.NumCellsInRadius(radius);
+				for (int i = 0; i < num2; i++)
+				{
+					IntVec3 intVec = center + GenRadial.RadialPattern[i];
+					if (map == null || intVec.InBounds(map))
+					{
+						float num3 = (float)intVec.DistanceToSquared(center);
+						if (Mathf.Abs(num3 - num) > 0.0001f)
+						{
+							if (GenRadial.tmpCells.Any<IntVec3>() && processor(GenRadial.tmpCells))
+							{
+								return;
+							}
+							num = num3;
+							GenRadial.tmpCells.Clear();
+						}
+						GenRadial.tmpCells.Add(intVec);
+					}
+				}
+				if (GenRadial.tmpCells.Any<IntVec3>())
+				{
+					processor(GenRadial.tmpCells);
+				}
+			}
+			finally
+			{
+				GenRadial.tmpCells.Clear();
+				GenRadial.working = false;
 			}
 		}
 	}

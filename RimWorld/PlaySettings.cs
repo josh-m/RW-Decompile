@@ -21,7 +21,9 @@ namespace RimWorld
 
 		public bool usePlanetDayNightSystem = true;
 
-		public bool expandingIcons = true;
+		public bool showExpandingIcons = true;
+
+		public bool showWorldFeatures = true;
 
 		public bool useWorkPriorities;
 
@@ -35,7 +37,8 @@ namespace RimWorld
 			Scribe_Values.Look<bool>(ref this.autoHomeArea, "autoHomeArea", false, false);
 			Scribe_Values.Look<bool>(ref this.lockNorthUp, "lockNorthUp", false, false);
 			Scribe_Values.Look<bool>(ref this.usePlanetDayNightSystem, "usePlanetDayNightSystem", false, false);
-			Scribe_Values.Look<bool>(ref this.expandingIcons, "expandingIcons", false, false);
+			Scribe_Values.Look<bool>(ref this.showExpandingIcons, "showExpandingIcons", false, false);
+			Scribe_Values.Look<bool>(ref this.showWorldFeatures, "showWorldFeatures", false, false);
 			Scribe_Values.Look<bool>(ref this.useWorkPriorities, "useWorkPriorities", false, false);
 		}
 
@@ -55,7 +58,8 @@ namespace RimWorld
 					Find.WorldCameraDriver.RotateSoNorthIsUp(true);
 				}
 				row.ToggleableIcon(ref this.usePlanetDayNightSystem, TexButton.UsePlanetDayNightSystem, "UsePlanetDayNightSystemToggleButton".Translate(), SoundDefOf.MouseoverToggle, null);
-				row.ToggleableIcon(ref this.expandingIcons, TexButton.ExpandingIcons, "ExpandingIconsToggleButton".Translate(), SoundDefOf.MouseoverToggle, null);
+				row.ToggleableIcon(ref this.showExpandingIcons, TexButton.ShowExpandingIcons, "ShowExpandingIconsToggleButton".Translate(), SoundDefOf.MouseoverToggle, null);
+				row.ToggleableIcon(ref this.showWorldFeatures, TexButton.ShowWorldFeatures, "ShowWorldFeaturesToggleButton".Translate(), SoundDefOf.MouseoverToggle, null);
 			}
 			else
 			{

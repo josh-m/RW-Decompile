@@ -7,11 +7,11 @@ namespace RimWorld.Planet
 {
 	public static class DaysUntilRotCalculator
 	{
-		public const float InfiniteDaysUntilRot = 1000f;
-
 		private static List<Thing> tmpThings = new List<Thing>();
 
 		private static List<ThingStackPart> tmpThingStackParts = new List<ThingStackPart>();
+
+		public const float InfiniteDaysUntilRot = 1000f;
 
 		public static float ApproxDaysUntilRot(List<Thing> potentiallyFood, int assumingTile)
 		{
@@ -22,7 +22,7 @@ namespace RimWorld.Planet
 				if (thing.def.IsNutritionGivingIngestible)
 				{
 					CompRottable compRottable = thing.TryGetComp<CompRottable>();
-					if (compRottable != null)
+					if (compRottable != null && compRottable.Active)
 					{
 						num = Mathf.Min(num, (float)compRottable.ApproxTicksUntilRotWhenAtTempOfTile(assumingTile) / 60000f);
 					}

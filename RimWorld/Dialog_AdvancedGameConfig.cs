@@ -6,9 +6,9 @@ namespace RimWorld
 {
 	public class Dialog_AdvancedGameConfig : Window
 	{
-		private const float ColumnWidth = 200f;
-
 		private int selTile = -1;
+
+		private const float ColumnWidth = 200f;
 
 		private static readonly int[] MapSizes = new int[]
 		{
@@ -98,7 +98,7 @@ namespace RimWorld
 				}
 				else
 				{
-					season -= 1;
+					season = (Season)(season - Season.Spring);
 				}
 				Find.GameInitData.startingSeason = season;
 			}

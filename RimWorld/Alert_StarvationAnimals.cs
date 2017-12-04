@@ -14,7 +14,7 @@ namespace RimWorld
 			{
 				return from p in PawnsFinder.AllMaps_SpawnedPawnsInFaction(Faction.OfPlayer)
 				where p.HostFaction == null && !p.RaceProps.Humanlike
-				where p.needs.food != null && p.needs.food.TicksStarving > 30000
+				where p.needs.food != null && (p.needs.food.TicksStarving > 30000 || (p.health.hediffSet.HasHediff(HediffDefOf.Pregnant, true) && p.needs.food.TicksStarving > 5000))
 				select p;
 			}
 		}

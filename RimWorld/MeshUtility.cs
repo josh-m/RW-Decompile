@@ -78,6 +78,20 @@ namespace RimWorld
 			return viewAngle >= 180f || Vector3.Angle(viewCenter * radius, point) <= viewAngle;
 		}
 
+		public static bool VisibleForWorldgen(Vector3 point, float radius, Vector3 viewCenter, float viewAngle)
+		{
+			if (viewAngle >= 180f)
+			{
+				return true;
+			}
+			float num = Vector3.Angle(viewCenter * radius, point) + -1E-05f;
+			if (Mathf.Abs(num - viewAngle) < 1E-06f)
+			{
+				Log.Warning(string.Format("Angle difference {0} is within epsilon; recommend adjusting visibility tweak", num - viewAngle));
+			}
+			return num <= viewAngle;
+		}
+
 		public static Color32 MutateAlpha(this Color32 input, byte newAlpha)
 		{
 			input.a = newAlpha;

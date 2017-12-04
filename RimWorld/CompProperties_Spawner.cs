@@ -15,6 +15,12 @@ namespace RimWorld
 
 		public bool spawnForbidden;
 
+		public bool requiresPower;
+
+		public bool writeTimeLeftToSpawn;
+
+		public bool showMessageIfOwned;
+
 		public CompProperties_Spawner()
 		{
 			this.compClass = typeof(CompSpawner);

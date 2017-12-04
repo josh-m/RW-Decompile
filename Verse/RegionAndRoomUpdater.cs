@@ -84,15 +84,10 @@ namespace Verse
 				this.working = false;
 				return;
 			}
-			ProfilerThreadCheck.BeginSample("RebuildDirtyRegionsAndRooms");
 			try
 			{
-				ProfilerThreadCheck.BeginSample("Regenerate new regions from dirty cells");
 				this.RegenerateNewRegionsFromDirtyCells();
-				ProfilerThreadCheck.EndSample();
-				ProfilerThreadCheck.BeginSample("Create or update rooms");
 				this.CreateOrUpdateRooms();
-				ProfilerThreadCheck.EndSample();
 			}
 			catch (Exception arg)
 			{
@@ -102,7 +97,6 @@ namespace Verse
 			this.map.regionDirtyer.SetAllClean();
 			this.initialized = true;
 			this.working = false;
-			ProfilerThreadCheck.EndSample();
 			if (DebugSettings.detectRegionListersBugs)
 			{
 				Autotests_RegionListers.CheckBugs(this.map);
@@ -133,18 +127,10 @@ namespace Verse
 			this.reusedOldRooms.Clear();
 			this.newRoomGroups.Clear();
 			this.reusedOldRoomGroups.Clear();
-			ProfilerThreadCheck.BeginSample("Combine new regions into contiguous groups");
-			int num = this.CombineNewRegionsIntoContiguousGroups();
-			ProfilerThreadCheck.EndSample();
-			ProfilerThreadCheck.BeginSample("Process " + num + " new region groups");
-			this.CreateOrAttachToExistingRooms(num);
-			ProfilerThreadCheck.EndSample();
-			ProfilerThreadCheck.BeginSample("Combine new and reused rooms into contiguous groups");
-			int num2 = this.CombineNewAndReusedRoomsIntoContiguousGroups();
-			ProfilerThreadCheck.EndSample();
-			ProfilerThreadCheck.BeginSample("Process " + num2 + " new room groups");
-			this.CreateOrAttachToExistingRoomGroups(num2);
-			ProfilerThreadCheck.EndSample();
+			int numRegionGroups = this.CombineNewRegionsIntoContiguousGroups();
+			this.CreateOrAttachToExistingRooms(numRegionGroups);
+			int numRoomGroups = this.CombineNewAndReusedRoomsIntoContiguousGroups();
+			this.CreateOrAttachToExistingRoomGroups(numRoomGroups);
 			this.NotifyAffectedRoomsAndRoomGroupsAndUpdateTemperature();
 			this.newRooms.Clear();
 			this.reusedOldRooms.Clear();
@@ -170,7 +156,6 @@ namespace Verse
 		{
 			for (int i = 0; i < numRegionGroups; i++)
 			{
-				ProfilerThreadCheck.BeginSample("Remake currentRegionGroup list");
 				this.currentRegionGroup.Clear();
 				for (int j = 0; j < this.newRegions.Count; j++)
 				{
@@ -179,7 +164,6 @@ namespace Verse
 						this.currentRegionGroup.Add(this.newRegions[j]);
 					}
 				}
-				ProfilerThreadCheck.EndSample();
 				if (!this.currentRegionGroup[0].type.AllowsMultipleRegionsPerRoom())
 				{
 					if (this.currentRegionGroup.Count != 1)
@@ -192,11 +176,8 @@ namespace Verse
 				}
 				else
 				{
-					ProfilerThreadCheck.BeginSample("Determine neighboring old rooms");
 					bool flag;
 					Room room2 = this.FindCurrentRegionGroupNeighborWithMostRegions(out flag);
-					ProfilerThreadCheck.EndSample();
-					ProfilerThreadCheck.BeginSample("Apply final result");
 					if (room2 == null)
 					{
 						Room item = RegionTraverser.FloodAndSetRooms(this.currentRegionGroup[0], this.map, null);
@@ -215,7 +196,6 @@ namespace Verse
 						RegionTraverser.FloodAndSetRooms(this.currentRegionGroup[0], this.map, room2);
 						this.reusedOldRooms.Add(room2);
 					}
-					ProfilerThreadCheck.EndSample();
 				}
 			}
 		}
@@ -257,7 +237,6 @@ namespace Verse
 		{
 			for (int i = 0; i < numRoomGroups; i++)
 			{
-				ProfilerThreadCheck.BeginSample("Remake currentRoomGroup list");
 				this.currentRoomGroup.Clear();
 				foreach (Room current in this.reusedOldRooms)
 				{
@@ -273,12 +252,8 @@ namespace Verse
 						this.currentRoomGroup.Add(this.newRooms[j]);
 					}
 				}
-				ProfilerThreadCheck.EndSample();
-				ProfilerThreadCheck.BeginSample("Determine neighboring old room groups");
 				bool flag;
 				RoomGroup roomGroup = this.FindCurrentRoomGroupNeighborWithMostRegions(out flag);
-				ProfilerThreadCheck.EndSample();
-				ProfilerThreadCheck.BeginSample("Apply final result");
 				if (roomGroup == null)
 				{
 					RoomGroup roomGroup2 = RoomGroup.MakeNew(this.map);
@@ -298,7 +273,6 @@ namespace Verse
 					this.FloodAndSetRoomGroups(this.currentRoomGroup[0], roomGroup);
 					this.reusedOldRoomGroups.Add(roomGroup);
 				}
-				ProfilerThreadCheck.EndSample();
 			}
 		}
 

@@ -5,6 +5,7 @@ using Verse;
 
 namespace RimWorld
 {
+	[CaseInsensitiveXMLParsing]
 	public class PawnBio
 	{
 		public GenderPossibility gender;

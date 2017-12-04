@@ -167,7 +167,7 @@ namespace Verse
 				{
 					return GenPlace.PlaceSpotQuality.Unusable;
 				}
-				if (thing.def.category == ThingCategory.Item && thing2.def.category == ThingCategory.Item && (thing2.def != thing.def || thing2.stackCount >= thing.def.stackLimit))
+				if (thing.def.category == ThingCategory.Item && thing2.def.category == ThingCategory.Item && (!thing2.CanStackWith(thing) || thing2.stackCount >= thing.def.stackLimit))
 				{
 					return GenPlace.PlaceSpotQuality.Unusable;
 				}
@@ -179,7 +179,7 @@ namespace Verse
 					for (int j = 0; j < list.Count; j++)
 					{
 						Thing thing3 = list[j];
-						if (thing3.def.category == ThingCategory.Item && thing3.def == thing.def && thing3.stackCount < thing.def.stackLimit)
+						if (thing3.def.category == ThingCategory.Item && thing3.CanStackWith(thing) && thing3.stackCount < thing.def.stackLimit)
 						{
 							return GenPlace.PlaceSpotQuality.Perfect;
 						}

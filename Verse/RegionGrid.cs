@@ -5,8 +5,6 @@ namespace Verse
 {
 	public sealed class RegionGrid
 	{
-		private const int CleanSquaresPerFrame = 16;
-
 		private Map map;
 
 		private Region[] regionGrid;
@@ -16,6 +14,8 @@ namespace Verse
 		public List<Room> allRooms = new List<Room>();
 
 		public static HashSet<Region> allRegionsYielded = new HashSet<Region>();
+
+		private const int CleanSquaresPerFrame = 16;
 
 		public HashSet<Region> drawnRegions = new HashSet<Region>();
 

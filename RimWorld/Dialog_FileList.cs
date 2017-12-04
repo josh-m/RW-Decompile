@@ -8,6 +8,18 @@ namespace RimWorld
 {
 	public abstract class Dialog_FileList : Window
 	{
+		protected string interactButLabel = "Error";
+
+		protected float bottomAreaHeight;
+
+		protected List<SaveFileInfo> files = new List<SaveFileInfo>();
+
+		protected Vector2 scrollPosition = Vector2.zero;
+
+		protected string typingName = string.Empty;
+
+		private bool focusedNameArea;
+
 		protected const float BoxMargin = 20f;
 
 		protected const float EntrySpacing = 3f;
@@ -22,25 +34,13 @@ namespace RimWorld
 
 		protected const float EntryHeight = 36f;
 
+		private static readonly Color DefaultFileTextColor = new Color(1f, 1f, 0.6f);
+
 		protected const float NameTextFieldWidth = 400f;
 
 		protected const float NameTextFieldHeight = 35f;
 
 		protected const float NameTextFieldButtonSpace = 20f;
-
-		protected string interactButLabel = "Error";
-
-		protected float bottomAreaHeight;
-
-		protected List<SaveFileInfo> files = new List<SaveFileInfo>();
-
-		protected Vector2 scrollPosition = Vector2.zero;
-
-		protected string typingName = string.Empty;
-
-		private bool focusedNameArea;
-
-		private static readonly Color DefaultFileTextColor = new Color(1f, 1f, 0.6f);
 
 		public override Vector2 InitialSize
 		{
@@ -161,7 +161,7 @@ namespace RimWorld
 			{
 				if (this.typingName.NullOrEmpty())
 				{
-					Messages.Message("NeedAName".Translate(), MessageSound.RejectInput);
+					Messages.Message("NeedAName".Translate(), MessageTypeDefOf.RejectInput);
 				}
 				else
 				{

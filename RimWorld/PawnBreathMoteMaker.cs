@@ -6,6 +6,10 @@ namespace RimWorld
 {
 	public class PawnBreathMoteMaker
 	{
+		private Pawn pawn;
+
+		private bool doThisBreath;
+
 		private const int BreathDuration = 80;
 
 		private const int BreathInterval = 320;
@@ -14,13 +18,9 @@ namespace RimWorld
 
 		private const float MaxBreathTemperature = 0f;
 
-		private const float BreathRotationOffsetDist = 0.21f;
-
-		private Pawn pawn;
-
-		private bool doThisBreath;
-
 		private static readonly Vector3 BreathOffset = new Vector3(0f, 0f, -0.04f);
+
+		private const float BreathRotationOffsetDist = 0.21f;
 
 		public PawnBreathMoteMaker(Pawn pawn)
 		{

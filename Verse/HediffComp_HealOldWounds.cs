@@ -40,9 +40,7 @@ namespace Verse
 		private void TryHealRandomOldWound()
 		{
 			Hediff hediff;
-			if (!(from hd in base.Pawn.health.hediffSet.hediffs
-			where hd.IsOld()
-			select hd).TryRandomElement(out hediff))
+			if (!base.Pawn.health.hediffSet.hediffs.Where(new Func<Hediff, bool>(HediffUtility.IsOld)).TryRandomElement(out hediff))
 			{
 				return;
 			}
@@ -54,7 +52,7 @@ namespace Verse
 					this.parent.Label,
 					base.Pawn.LabelShort,
 					hediff.Label
-				}), MessageSound.Benefit);
+				}), MessageTypeDefOf.PositiveEvent);
 			}
 		}
 

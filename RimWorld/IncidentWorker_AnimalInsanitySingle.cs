@@ -9,7 +9,7 @@ namespace RimWorld
 	{
 		private const int FixedPoints = 30;
 
-		public override bool TryExecute(IncidentParms parms)
+		protected override bool TryExecuteWorker(IncidentParms parms)
 		{
 			Map map = (Map)parms.target;
 			int maxPoints = 150;
@@ -30,7 +30,7 @@ namespace RimWorld
 			{
 				pawn.Label
 			});
-			Find.LetterStack.ReceiveLetter("LetterLabelAnimalInsanitySingle".Translate(), text, LetterDefOf.BadUrgent, pawn, null);
+			Find.LetterStack.ReceiveLetter("LetterLabelAnimalInsanitySingle".Translate(), text, LetterDefOf.ThreatSmall, pawn, null);
 			return true;
 		}
 	}

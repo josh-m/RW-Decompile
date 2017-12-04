@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using Verse;
 
 namespace RimWorld
@@ -50,6 +51,20 @@ namespace RimWorld
 			return GenStuff.AllowedStuffsFor(td).RandomElement<ThingDef>();
 		}
 
+		public static ThingDef RandomStuffByCommonalityFor(ThingDef td, TechLevel maxTechLevel = TechLevel.Undefined)
+		{
+			if (!td.MadeFromStuff)
+			{
+				return null;
+			}
+			ThingDef result;
+			if (!GenStuff.TryRandomStuffByCommonalityFor(td, out result, maxTechLevel))
+			{
+				result = GenStuff.DefaultStuffFor(td);
+			}
+			return result;
+		}
+
 		[DebuggerHidden]
 		public static IEnumerable<ThingDef> AllowedStuffsFor(ThingDef td)
 		{
@@ -65,6 +80,23 @@ namespace RimWorld
 					}
 				}
 			}
+		}
+
+		public static bool TryRandomStuffByCommonalityFor(ThingDef td, out ThingDef stuff, TechLevel maxTechLevel = TechLevel.Undefined)
+		{
+			if (!td.MadeFromStuff)
+			{
+				stuff = null;
+				return true;
+			}
+			IEnumerable<ThingDef> source = GenStuff.AllowedStuffsFor(td);
+			if (maxTechLevel != TechLevel.Undefined)
+			{
+				source = from x in source
+				where x.techLevel <= maxTechLevel
+				select x;
+			}
+			return source.TryRandomElementByWeight((ThingDef x) => x.stuffProps.commonality, out stuff);
 		}
 	}
 }

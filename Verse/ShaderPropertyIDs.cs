@@ -48,6 +48,18 @@ namespace Verse
 
 		public static int SwayHead = Shader.PropertyToID(ShaderPropertyIDs.SwayHeadName);
 
+		public static int ShockwaveColor = Shader.PropertyToID("_ShockwaveColor");
+
 		public static int ShockwaveSpan = Shader.PropertyToID(ShaderPropertyIDs.ShockwaveSpanName);
+
+		public static int WaterCastVectSun = Shader.PropertyToID("_WaterCastVectSun");
+
+		public static int WaterCastVectMoon = Shader.PropertyToID("_WaterCastVectMoon");
+
+		public static int WaterOutputTex = Shader.PropertyToID("_WaterOutputTex");
+
+		public static int WaterOffsetTex = Shader.PropertyToID("_WaterOffsetTex");
+
+		public static int ShadowCompositeTex = Shader.PropertyToID("_ShadowCompositeTex");
 	}
 }

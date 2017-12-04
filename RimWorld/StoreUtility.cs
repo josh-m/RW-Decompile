@@ -205,12 +205,12 @@ namespace RimWorld
 			}
 			if (carrier != null)
 			{
-				if (!carrier.CanReserve(c, 1, -1, null, false))
+				if (!carrier.CanReserveNew(c))
 				{
 					return false;
 				}
 			}
-			else if (map.reservationManager.IsReserved(c, faction))
+			else if (faction != null && map.reservationManager.IsReservedByAnyoneOf(c, faction))
 			{
 				return false;
 			}

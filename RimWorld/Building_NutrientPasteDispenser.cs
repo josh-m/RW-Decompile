@@ -103,7 +103,7 @@ namespace RimWorld
 			return thing2;
 		}
 
-		protected virtual Thing FindFeedInAnyHopper()
+		public virtual Thing FindFeedInAnyHopper()
 		{
 			for (int i = 0; i < this.AdjCellsCardinalInBounds.Count; i++)
 			{

@@ -24,6 +24,11 @@ namespace RimWorld
 			}
 		}
 
+		public override Danger MaxPathDanger(Pawn pawn)
+		{
+			return Danger.Deadly;
+		}
+
 		public override IEnumerable<Thing> PotentialWorkThingsGlobal(Pawn pawn)
 		{
 			return pawn.Map.listerBuildings.AllBuildingsColonistOfDef(ThingDefOf.DeepDrill).Cast<Thing>();
@@ -61,7 +66,8 @@ namespace RimWorld
 			{
 				return false;
 			}
-			if (!pawn.CanReserve(building, 1, -1, null, forced))
+			LocalTargetInfo target = building;
+			if (!pawn.CanReserve(target, 1, -1, null, forced))
 			{
 				return false;
 			}

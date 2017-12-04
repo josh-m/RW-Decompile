@@ -7,13 +7,13 @@ namespace RimWorld
 {
 	public class IncidentWorker_RefugeeChased : IncidentWorker
 	{
+		private static readonly IntRange RaidDelay = new IntRange(1000, 2500);
+
 		private const float RaidPointsFactor = 1.35f;
 
 		private const float RelationWithColonistWeight = 20f;
 
-		private static readonly IntRange RaidDelay = new IntRange(1000, 2500);
-
-		public override bool TryExecute(IncidentParms parms)
+		protected override bool TryExecuteWorker(IncidentParms parms)
 		{
 			Map map = (Map)parms.target;
 			IntVec3 spawnSpot;
@@ -21,8 +21,7 @@ namespace RimWorld
 			{
 				return false;
 			}
-			Faction faction = Find.FactionManager.FirstFactionOfDef(FactionDefOf.Spacer);
-			PawnGenerationRequest request = new PawnGenerationRequest(PawnKindDefOf.SpaceRefugee, faction, PawnGenerationContext.NonPlayer, -1, false, false, false, false, true, false, 20f, false, true, true, false, false, null, null, null, null, null, null);
+			PawnGenerationRequest request = new PawnGenerationRequest(PawnKindDefOf.SpaceRefugee, Faction.OfSpacer, PawnGenerationContext.NonPlayer, -1, false, false, false, false, true, false, 20f, false, true, true, false, false, false, false, null, null, null, null, null, null, null);
 			Pawn refugee = PawnGenerator.GeneratePawn(request);
 			refugee.relations.everSeenByPlayer = true;
 			Faction enemyFac;

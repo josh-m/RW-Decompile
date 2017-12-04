@@ -36,7 +36,7 @@ namespace Verse
 		{
 			get
 			{
-				return this.VerbTracker;
+				return this.verbTracker;
 			}
 		}
 
@@ -45,6 +45,14 @@ namespace Verse
 			get
 			{
 				return this.parent.def.Verbs;
+			}
+		}
+
+		public List<Tool> Tools
+		{
+			get
+			{
+				return this.parent.def.tools;
 			}
 		}
 
@@ -89,6 +97,11 @@ namespace Verse
 			{
 				allVerbs[i].Notify_EquipmentLost();
 			}
+		}
+
+		public string UniqueVerbOwnerID()
+		{
+			return this.parent.ThingID;
 		}
 	}
 }

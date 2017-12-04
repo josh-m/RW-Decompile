@@ -51,7 +51,7 @@ namespace RimWorld
 				this.faction.Name,
 				Faction.OfPlayer.def.pawnsPlural
 			}).CapitalizeFirst();
-			transition3.AddPreAction(new TransitionAction_Message(message, MessageSound.SeriousAlert));
+			transition3.AddPreAction(new TransitionAction_Message(message, MessageTypeDefOf.ThreatBig));
 			stateGraph.AddTransition(transition3);
 			return stateGraph;
 		}

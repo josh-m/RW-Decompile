@@ -5,13 +5,13 @@ namespace RimWorld
 {
 	public class TemperatureMemory : IExposable
 	{
-		private const int TicksBuffer = 30000;
-
 		private Map map;
 
 		private int growthSeasonUntilTick = -1;
 
 		private int noGrowUntilTick = -1;
+
+		private const int TicksBuffer = 30000;
 
 		public bool GrowthSeasonOutdoorsNow
 		{

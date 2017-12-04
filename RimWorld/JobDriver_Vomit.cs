@@ -33,51 +33,55 @@ namespace RimWorld
 			Scribe_Values.Look<PawnPosture>(ref this.lastPosture, "lastPosture", PawnPosture.Standing, false);
 		}
 
+		public override bool TryMakePreToilReservations()
+		{
+			return true;
+		}
+
 		[DebuggerHidden]
 		protected override IEnumerable<Toil> MakeNewToils()
 		{
 			Toil to = new Toil();
 			to.initAction = delegate
 			{
-				this.<>f__this.ticksLeft = Rand.Range(300, 900);
+				this.$this.ticksLeft = Rand.Range(300, 900);
 				int num = 0;
 				IntVec3 c;
 				while (true)
 				{
-					c = this.<>f__this.pawn.Position + GenAdj.AdjacentCellsAndInside[Rand.Range(0, 9)];
+					c = this.$this.pawn.Position + GenAdj.AdjacentCellsAndInside[Rand.Range(0, 9)];
 					num++;
 					if (num > 12)
 					{
 						break;
 					}
-					if (c.InBounds(this.<>f__this.pawn.Map) && c.Standable(this.<>f__this.pawn.Map))
+					if (c.InBounds(this.$this.pawn.Map) && c.Standable(this.$this.pawn.Map))
 					{
 						goto IL_A1;
 					}
 				}
-				c = this.<>f__this.pawn.Position;
+				c = this.$this.pawn.Position;
 				IL_A1:
-				this.<>f__this.pawn.CurJob.targetA = c;
-				this.<>f__this.pawn.Drawer.rotator.FaceCell(c);
-				this.<>f__this.pawn.pather.StopDead();
+				this.$this.job.targetA = c;
+				this.$this.pawn.pather.StopDead();
 			};
 			to.tickAction = delegate
 			{
-				if (this.<>f__this.ticksLeft % 150 == 149)
+				if (this.$this.ticksLeft % 150 == 149)
 				{
-					FilthMaker.MakeFilth(this.<>f__this.pawn.CurJob.targetA.Cell, this.<>f__this.Map, ThingDefOf.FilthVomit, this.<>f__this.pawn.LabelIndefinite(), 1);
-					if (this.<>f__this.pawn.needs.food.CurLevelPercentage > 0.1f)
+					FilthMaker.MakeFilth(this.$this.job.targetA.Cell, this.$this.Map, ThingDefOf.FilthVomit, this.$this.pawn.LabelIndefinite(), 1);
+					if (this.$this.pawn.needs.food.CurLevelPercentage > 0.1f)
 					{
-						this.<>f__this.pawn.needs.food.CurLevel -= this.<>f__this.pawn.needs.food.MaxLevel * 0.04f;
+						this.$this.pawn.needs.food.CurLevel -= this.$this.pawn.needs.food.MaxLevel * 0.04f;
 					}
 				}
-				this.<>f__this.ticksLeft--;
-				if (this.<>f__this.ticksLeft <= 0)
+				this.$this.ticksLeft--;
+				if (this.$this.ticksLeft <= 0)
 				{
-					this.<>f__this.ReadyForNextToil();
+					this.$this.ReadyForNextToil();
 					TaleRecorder.RecordTale(TaleDefOf.Vomited, new object[]
 					{
-						this.<>f__this.pawn
+						this.$this.pawn
 					});
 				}
 			};

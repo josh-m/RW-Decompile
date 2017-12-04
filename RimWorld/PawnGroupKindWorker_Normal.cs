@@ -34,14 +34,16 @@ namespace RimWorld
 				}
 				return;
 			}
-			bool flag = parms.raidStrategy == null || parms.raidStrategy.pawnsCanBringFood;
+			bool flag = parms.raidStrategy == null || parms.raidStrategy.pawnsCanBringFood || (parms.faction != null && !parms.faction.HostileTo(Faction.OfPlayer));
 			bool flag2 = false;
 			foreach (PawnGenOption current in PawnGroupMakerUtility.ChoosePawnGenOptionsByPoints(parms.points, groupMaker.options, parms))
 			{
+				PawnKindDef kind = current.kind;
+				Faction faction = parms.faction;
 				int tile = parms.tile;
 				bool allowFood = flag;
 				bool inhabitants = parms.inhabitants;
-				PawnGenerationRequest request = new PawnGenerationRequest(current.kind, parms.faction, PawnGenerationContext.NonPlayer, tile, false, false, false, false, true, true, 1f, false, true, allowFood, inhabitants, false, null, null, null, null, null, null);
+				PawnGenerationRequest request = new PawnGenerationRequest(kind, faction, PawnGenerationContext.NonPlayer, tile, false, false, false, false, true, true, 1f, false, true, allowFood, inhabitants, false, false, false, null, null, null, null, null, null, null);
 				Pawn pawn = PawnGenerator.GeneratePawn(request);
 				if (parms.forceOneIncap && !flag2)
 				{

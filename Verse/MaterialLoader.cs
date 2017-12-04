@@ -10,8 +10,7 @@ namespace Verse
 		public static List<Material> MatsFromTexturesInFolder(string dirPath)
 		{
 			string path = "Textures/" + dirPath;
-			return (from Texture2D tex in Resources.LoadAll(path, typeof(Texture2D))
-			select MaterialPool.MatFrom(tex)).ToList<Material>();
+			return Resources.LoadAll(path, typeof(Texture2D)).Cast<Texture2D>().Select(new Func<Texture2D, Material>(MaterialPool.MatFrom)).ToList<Material>();
 		}
 
 		public static Material MatWithEnding(string dirPath, string ending)

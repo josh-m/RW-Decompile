@@ -93,15 +93,15 @@ namespace RimWorld
 			List<IntVec3> list;
 			if (!WalkPathFinder.TryFindWalkPath(visibleMap.mapPawns.FreeColonistsSpawned.First<Pawn>(), root, out list))
 			{
-				visibleMap.debugDrawer.FlashCell(root, 0.2f, "NOPATH");
+				visibleMap.debugDrawer.FlashCell(root, 0.2f, "NOPATH", 50);
 				return;
 			}
 			for (int i = 0; i < list.Count; i++)
 			{
-				visibleMap.debugDrawer.FlashCell(list[i], (float)i / (float)numEntries, i.ToString());
+				visibleMap.debugDrawer.FlashCell(list[i], (float)i / (float)numEntries, i.ToString(), 50);
 				if (i > 0)
 				{
-					visibleMap.debugDrawer.FlashLine(list[i], list[i - 1]);
+					visibleMap.debugDrawer.FlashLine(list[i], list[i - 1], 50);
 				}
 			}
 		}

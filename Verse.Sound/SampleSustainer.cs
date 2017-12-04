@@ -12,14 +12,6 @@ namespace Verse.Sound
 
 		public bool resolvedSkipAttack;
 
-		public override Map Map
-		{
-			get
-			{
-				return this.subSustainer.Info.Maker.Map;
-			}
-		}
-
 		public override float ParentStartRealTime
 		{
 			get
@@ -52,11 +44,48 @@ namespace Verse.Sound
 			}
 		}
 
-		protected override bool TestPlaying
+		public override SoundInfo Info
 		{
 			get
 			{
-				return this.subSustainer.Info.testPlay;
+				return this.subSustainer.Info;
+			}
+		}
+
+		protected override float Volume
+		{
+			get
+			{
+				float num = base.Volume * this.subSustainer.parent.scopeFader.inScopePercent;
+				float num2 = 1f;
+				if (this.subSustainer.parent.Ended)
+				{
+					num2 = 1f - Mathf.Min(this.subSustainer.parent.TimeSinceEnd / this.subDef.parentDef.sustainFadeoutTime, 1f);
+				}
+				float realtimeSinceStartup = Time.realtimeSinceStartup;
+				if (base.AgeRealTime < this.subDef.sustainAttack)
+				{
+					if (this.resolvedSkipAttack || this.subDef.sustainAttack < 0.01f)
+					{
+						return num * num2;
+					}
+					float num3 = base.AgeRealTime / this.subDef.sustainAttack;
+					num3 = Mathf.Sqrt(num3);
+					return Mathf.Lerp(0f, num, num3) * num2;
+				}
+				else
+				{
+					if (realtimeSinceStartup > this.scheduledEndTime - this.subDef.sustainRelease)
+					{
+						float num4 = (realtimeSinceStartup - (this.scheduledEndTime - this.subDef.sustainRelease)) / this.subDef.sustainRelease;
+						num4 = 1f - num4;
+						num4 = Mathf.Max(num4, 0f);
+						num4 = Mathf.Sqrt(num4);
+						num4 = 1f - num4;
+						return Mathf.Lerp(num, 0f, num4) * num2;
+					}
+					return num * num2;
+				}
 			}
 		}
 
@@ -89,8 +118,8 @@ namespace Verse.Sound
 				return null;
 			}
 			sampleSustainer.source.clip = clip;
-			sampleSustainer.source.volume = sampleSustainer.resolvedVolume;
-			sampleSustainer.source.pitch = sampleSustainer.resolvedPitch;
+			sampleSustainer.source.volume = sampleSustainer.SanitizedVolume;
+			sampleSustainer.source.pitch = sampleSustainer.SanitizedPitch;
 			sampleSustainer.source.minDistance = sampleSustainer.subDef.distRange.TrueMin;
 			sampleSustainer.source.maxDistance = sampleSustainer.subDef.distRange.TrueMax;
 			sampleSustainer.source.spatialBlend = 1f;
@@ -103,54 +132,10 @@ namespace Verse.Sound
 			{
 				sampleSustainer.source.loop = true;
 			}
-			sampleSustainer.ApplyMappedParameters();
-			sampleSustainer.UpdateSourceVolume();
+			sampleSustainer.Update();
 			sampleSustainer.source.Play();
 			sampleSustainer.source.Play();
 			return sampleSustainer;
-		}
-
-		public void UpdateSourceVolume()
-		{
-			float num = this.resolvedVolume * this.subSustainer.parent.scopeFader.inScopePercent * base.MappedVolumeMultiplier * base.ContextVolumeMultiplier;
-			if (base.AgeRealTime < this.subDef.sustainAttack)
-			{
-				if (this.resolvedSkipAttack || this.subDef.sustainAttack < 0.01f)
-				{
-					this.source.volume = num;
-				}
-				else
-				{
-					float num2 = base.AgeRealTime / this.subDef.sustainAttack;
-					num2 = Mathf.Sqrt(num2);
-					this.source.volume = Mathf.Lerp(0f, num, num2);
-				}
-			}
-			else if (Time.realtimeSinceStartup > this.scheduledEndTime - this.subDef.sustainRelease)
-			{
-				float num3 = (Time.realtimeSinceStartup - (this.scheduledEndTime - this.subDef.sustainRelease)) / this.subDef.sustainRelease;
-				num3 = 1f - num3;
-				num3 = Mathf.Sqrt(num3);
-				num3 = 1f - num3;
-				this.source.volume = Mathf.Lerp(num, 0f, num3);
-			}
-			else
-			{
-				this.source.volume = num;
-			}
-			if (this.subSustainer.parent.Ended)
-			{
-				float num4 = 1f - this.subSustainer.parent.TimeSinceEnd / this.subDef.parentDef.sustainFadeoutTime;
-				this.source.volume *= num4;
-			}
-			if (this.source.volume < 0.001f)
-			{
-				this.source.mute = true;
-			}
-			else
-			{
-				this.source.mute = false;
-			}
 		}
 
 		public override void SampleCleanup()

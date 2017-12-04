@@ -8,6 +8,8 @@ namespace Verse
 	{
 		public int productCount = 1;
 
+		public int targetCountAdjustment = 1;
+
 		public int workAmount = -1;
 
 		public StatDef workSpeedStat;
@@ -31,5 +33,8 @@ namespace Verse
 		public List<ThingDef> recipeUsers;
 
 		public ResearchProjectDef researchPrerequisite;
+
+		[NoTranslate]
+		public List<string> factionPrerequisiteTags;
 	}
 }

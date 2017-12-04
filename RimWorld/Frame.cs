@@ -11,12 +11,8 @@ using Verse.Sound;
 namespace RimWorld
 {
 	[StaticConstructorOnStartup]
-	public class Frame : Building, IConstructible, IThingHolder
+	public class Frame : Building, IThingHolder, IConstructible
 	{
-		protected const float UnderfieldOverdrawFactor = 1.15f;
-
-		protected const float CenterOverdrawFactor = 0.5f;
-
 		public ThingOwner resourceContainer;
 
 		public float workDone;
@@ -24,6 +20,12 @@ namespace RimWorld
 		private Material cachedCornerMat;
 
 		private Material cachedTileMat;
+
+		protected const float UnderfieldOverdrawFactor = 1.15f;
+
+		protected const float CenterOverdrawFactor = 0.5f;
+
+		private const int LongConstructionProjectThreshold = 10000;
 
 		private static readonly Material UnderfieldMat = MaterialPool.MatFrom("Things/Building/BuildingFrame/Underfield", ShaderDatabase.Transparent);
 
@@ -183,7 +185,7 @@ namespace RimWorld
 
 		public void CompleteConstruction(Pawn worker)
 		{
-			this.resourceContainer.Clear();
+			this.resourceContainer.ClearAndDestroyContents(DestroyMode.Vanish);
 			Map map = base.Map;
 			this.Destroy(DestroyMode.Vanish);
 			if (this.GetStatValue(StatDefOf.WorkToBuild, true) > 150f && this.def.entityDefToBuild is ThingDef && ((ThingDef)this.def.entityDefToBuild).category == ThingCategory.Building)
@@ -217,6 +219,7 @@ namespace RimWorld
 			else
 			{
 				map.terrainGrid.SetTerrain(base.Position, (TerrainDef)this.def.entityDefToBuild);
+				FilthMaker.RemoveAllFilth(base.Position, map);
 			}
 			if (thingDef != null && (thingDef.passability == Traversability.Impassable || thingDef.Fillage == FillCategory.Full) && (thing == null || !(thing is Building_Door)))
 			{
@@ -236,6 +239,14 @@ namespace RimWorld
 				}
 			}
 			worker.records.Increment(RecordDefOf.ThingsConstructed);
+			if (thing != null && thing.GetStatValue(StatDefOf.WorkToBuild, true) >= 10000f)
+			{
+				TaleRecorder.RecordTale(TaleDefOf.CompletedLongConstructionProject, new object[]
+				{
+					worker,
+					thing.def
+				});
+			}
 		}
 
 		public void FailConstruction(Pawn worker)
@@ -262,7 +273,7 @@ namespace RimWorld
 				{
 					this.Label,
 					worker.LabelShort
-				}), new TargetInfo(base.Position, map, false), MessageSound.Negative);
+				}), new TargetInfo(base.Position, map, false), MessageTypeDefOf.NegativeEvent);
 			}
 		}
 
@@ -302,9 +313,9 @@ namespace RimWorld
 				b.z = (float)intVec.z * ((float)base.RotatedSize.z / 2f - num3 / 2f);
 				Vector3 s2 = new Vector3(num3, 1f, num3);
 				Matrix4x4 matrix2 = default(Matrix4x4);
-				Vector3 arg_1EB_1 = this.DrawPos + Vector3.up * 0.03f + b;
+				Vector3 arg_1EA_1 = this.DrawPos + Vector3.up * 0.03f + b;
 				Rot4 rot = new Rot4(i);
-				matrix2.SetTRS(arg_1EB_1, rot.AsQuat, s2);
+				matrix2.SetTRS(arg_1EA_1, rot.AsQuat, s2);
 				Graphics.DrawMesh(MeshPool.plane10, matrix2, this.CornerMat, 0);
 			}
 			float num4 = this.PercentComplete / 1f;
@@ -367,11 +378,6 @@ namespace RimWorld
 			}
 			stringBuilder.Append("WorkLeft".Translate() + ": " + this.WorkLeft.ToStringWorkAmount());
 			return stringBuilder.ToString();
-		}
-
-		virtual IThingHolder get_ParentHolder()
-		{
-			return base.ParentHolder;
 		}
 	}
 }

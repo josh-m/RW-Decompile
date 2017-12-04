@@ -57,7 +57,7 @@ namespace RimWorld.Planet
 		{
 			get
 			{
-				return InspectPaneUtility.PaneSize;
+				return InspectPaneUtility.PaneSizeFor(this);
 			}
 		}
 
@@ -81,7 +81,7 @@ namespace RimWorld.Planet
 		{
 			get
 			{
-				float num = (float)UI.screenHeight - InspectPaneUtility.PaneSize.y;
+				float num = (float)UI.screenHeight - 165f;
 				if (Current.ProgramState == ProgramState.Playing)
 				{
 					num -= 35f;
@@ -235,10 +235,7 @@ namespace RimWorld.Planet
 			}
 			else if (this.SelectedTile >= 0)
 			{
-				GUI.BeginGroup(rect);
-				float num = 0f;
-				InspectPaneFiller.DrawInspectString(this.TileInspectString, ref num);
-				GUI.EndGroup();
+				InspectPaneFiller.DrawInspectString(this.TileInspectString, rect);
 			}
 		}
 

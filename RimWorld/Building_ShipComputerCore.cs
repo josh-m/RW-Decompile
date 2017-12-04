@@ -24,6 +24,31 @@ namespace RimWorld
 			{
 				yield return c;
 			}
+			if (ShipUtility.HasHibernatingParts(this))
+			{
+				yield return new Command_Action
+				{
+					action = delegate
+					{
+						DiaNode diaNode = new DiaNode("HibernateWarning".Translate());
+						DiaOption diaOption = new DiaOption("Confirm".Translate());
+						diaOption.action = delegate
+						{
+							ShipUtility.StartupHibernatingParts(this.$this);
+						};
+						diaOption.resolveTree = true;
+						diaNode.options.Add(diaOption);
+						DiaOption diaOption2 = new DiaOption("GoBack".Translate());
+						diaOption2.resolveTree = true;
+						diaNode.options.Add(diaOption2);
+						Find.WindowStack.Add(new Dialog_NodeTree(diaNode, true, false, null));
+					},
+					defaultLabel = "CommandShipStartup".Translate(),
+					defaultDesc = "CommandShipStartupDesc".Translate(),
+					hotKey = KeyBindingDefOf.Misc1,
+					icon = ContentFinder<Texture2D>.Get("UI/Commands/DesirePower", true)
+				};
+			}
 			Command_Action launch = new Command_Action();
 			launch.action = new Action(this.TryLaunch);
 			launch.defaultLabel = "CommandShipLaunch".Translate();
@@ -45,7 +70,7 @@ namespace RimWorld
 		{
 			if (this.CanLaunchNow)
 			{
-				ShipCountdown.InitiateCountdown(this, -1);
+				ShipCountdown.InitiateCountdown(this);
 			}
 		}
 	}

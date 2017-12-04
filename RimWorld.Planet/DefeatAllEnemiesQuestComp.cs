@@ -36,7 +36,7 @@ namespace RimWorld.Planet
 			this.requestingFaction = requestingFaction;
 			this.relationsImprovement = relationsImprovement;
 			this.rewards.ClearAndDestroyContents(DestroyMode.Vanish);
-			this.rewards.TryAddRange(rewards, true);
+			this.rewards.TryAddRangeOrTransfer(rewards, true, false);
 		}
 
 		public void StopQuest()
@@ -65,7 +65,7 @@ namespace RimWorld.Planet
 			{
 				return;
 			}
-			if (GenHostility.AnyHostileActiveThreat(mapParent.Map))
+			if (GenHostility.AnyHostileActiveThreatToPlayer(mapParent.Map))
 			{
 				return;
 			}
@@ -91,13 +91,13 @@ namespace RimWorld.Planet
 			DefeatAllEnemiesQuestComp.tmpRewards.AddRange(this.rewards);
 			this.rewards.Clear();
 			IntVec3 intVec = DropCellFinder.TradeDropSpot(map);
-			DropPodUtility.DropThingsNear(intVec, map, DefeatAllEnemiesQuestComp.tmpRewards, 110, false, false, true);
+			DropPodUtility.DropThingsNear(intVec, map, DefeatAllEnemiesQuestComp.tmpRewards, 110, false, false, true, false);
 			DefeatAllEnemiesQuestComp.tmpRewards.Clear();
 			Find.LetterStack.ReceiveLetter("LetterLabelDefeatAllEnemiesQuestCompleted".Translate(), "LetterDefeatAllEnemiesQuestCompleted".Translate(new object[]
 			{
 				this.requestingFaction.Name,
 				this.relationsImprovement.ToString("F0")
-			}), LetterDefOf.Good, new GlobalTargetInfo(intVec, map, false), null);
+			}), LetterDefOf.PositiveEvent, new GlobalTargetInfo(intVec, map, false), null);
 		}
 
 		public void GetChildHolders(List<IThingHolder> outChildren)
@@ -127,11 +127,6 @@ namespace RimWorld.Planet
 				}).CapitalizeFirst();
 			}
 			return null;
-		}
-
-		virtual IThingHolder get_ParentHolder()
-		{
-			return base.ParentHolder;
 		}
 	}
 }

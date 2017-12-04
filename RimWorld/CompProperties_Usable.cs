@@ -9,6 +9,8 @@ namespace RimWorld
 
 		public string useLabel;
 
+		public int useDuration = 100;
+
 		public CompProperties_Usable()
 		{
 			this.compClass = typeof(CompUsable);

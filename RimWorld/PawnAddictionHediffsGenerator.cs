@@ -7,9 +7,9 @@ namespace RimWorld
 {
 	public static class PawnAddictionHediffsGenerator
 	{
-		private const int MaxAddictions = 3;
-
 		private static List<ThingDef> allDrugs = new List<ThingDef>();
+
+		private const int MaxAddictions = 3;
 
 		private static readonly FloatRange GeneratedAddictionSeverityRange = new FloatRange(0.6f, 1f);
 

@@ -85,7 +85,7 @@ namespace RimWorld
 		{
 			if (this.AlreadyPreferred(name))
 			{
-				Messages.Message("MessageAlreadyPreferredName".Translate(), MessageSound.RejectInput);
+				Messages.Message("MessageAlreadyPreferredName".Translate(), MessageTypeDefOf.RejectInput);
 			}
 			else
 			{

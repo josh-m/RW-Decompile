@@ -1,6 +1,8 @@
+using RimWorld;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Verse.Sound;
 
 namespace Verse
 {
@@ -20,10 +22,6 @@ namespace Verse
 			public Rect absRect;
 		}
 
-		private const float MinMouseMoveToHighlightReorderable = 5f;
-
-		private const float LineWidth = 2f;
-
 		private static List<ReorderableWidget.ReorderableGroup> groups = new List<ReorderableWidget.ReorderableGroup>();
 
 		private static List<ReorderableWidget.ReorderableInstance> reorderables = new List<ReorderableWidget.ReorderableInstance>();
@@ -34,15 +32,21 @@ namespace Verse
 
 		private static bool released;
 
+		private static bool dragBegun;
+
 		private static Vector2 clickedAt;
 
 		private static Rect clickedInRect;
 
 		private static int lastInsertAt = -1;
 
+		private const float MinMouseMoveToHighlightReorderable = 5f;
+
 		private static readonly Color LineColor = new Color(1f, 1f, 1f, 0.3f);
 
 		private static readonly Color HighlightColor = new Color(1f, 1f, 1f, 0.3f);
+
+		private const float LineWidth = 2f;
 
 		public static void ReorderableWidgetOnGUI()
 		{
@@ -60,6 +64,7 @@ namespace Verse
 						if (ReorderableWidget.reorderables[i].rect == ReorderableWidget.clickedInRect)
 						{
 							ReorderableWidget.draggingReorderable = i;
+							ReorderableWidget.dragBegun = false;
 							break;
 						}
 					}
@@ -75,6 +80,7 @@ namespace Verse
 					ReorderableWidget.released = false;
 					if (ReorderableWidget.lastInsertAt >= 0 && ReorderableWidget.lastInsertAt != ReorderableWidget.draggingReorderable)
 					{
+						SoundDefOf.TickHigh.PlayOneShotOnCamera(null);
 						ReorderableWidget.groups[ReorderableWidget.reorderables[ReorderableWidget.draggingReorderable].groupID].reorderedAction(ReorderableWidget.draggingReorderable, ReorderableWidget.lastInsertAt);
 					}
 					ReorderableWidget.draggingReorderable = -1;
@@ -97,7 +103,7 @@ namespace Verse
 			return ReorderableWidget.groups.Count - 1;
 		}
 
-		public static void Reorderable(int groupID, Rect rect)
+		public static bool Reorderable(int groupID, Rect rect)
 		{
 			if (Event.current.type == EventType.Repaint)
 			{
@@ -107,8 +113,13 @@ namespace Verse
 				item.absRect = new Rect(UI.GUIToScreenPoint(rect.position), rect.size);
 				ReorderableWidget.reorderables.Add(item);
 				int num = ReorderableWidget.reorderables.Count - 1;
-				if (Vector2.Distance(ReorderableWidget.clickedAt, Event.current.mousePosition) > 5f)
+				if (ReorderableWidget.draggingReorderable != -1 && Vector2.Distance(ReorderableWidget.clickedAt, Event.current.mousePosition) > 5f)
 				{
+					if (!ReorderableWidget.dragBegun)
+					{
+						SoundDefOf.TickTiny.PlayOneShotOnCamera(null);
+						ReorderableWidget.dragBegun = true;
+					}
 					if (ReorderableWidget.draggingReorderable == num)
 					{
 						GUI.color = ReorderableWidget.HighlightColor;
@@ -131,6 +142,7 @@ namespace Verse
 						GUI.color = Color.white;
 					}
 				}
+				return ReorderableWidget.draggingReorderable == num && ReorderableWidget.dragBegun;
 			}
 			if (Event.current.rawType == EventType.MouseUp)
 			{
@@ -142,6 +154,7 @@ namespace Verse
 				ReorderableWidget.clickedAt = Event.current.mousePosition;
 				ReorderableWidget.clickedInRect = rect;
 			}
+			return false;
 		}
 
 		private static int CurrentInsertAt()

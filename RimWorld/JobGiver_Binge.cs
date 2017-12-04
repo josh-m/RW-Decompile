@@ -34,7 +34,7 @@ namespace RimWorld
 			{
 				return null;
 			}
-			ThingDef finalIngestibleDef = FoodUtility.GetFinalIngestibleDef(thing);
+			ThingDef finalIngestibleDef = FoodUtility.GetFinalIngestibleDef(thing, false);
 			return new Job(JobDefOf.Ingest, thing)
 			{
 				count = finalIngestibleDef.ingestible.maxNumToIngestAtOnce,

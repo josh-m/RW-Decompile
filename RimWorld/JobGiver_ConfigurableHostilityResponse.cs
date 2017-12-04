@@ -45,8 +45,9 @@ namespace RimWorld
 			{
 				num = Mathf.Clamp(pawn.equipment.PrimaryEq.PrimaryVerb.verbProps.range * 0.66f, 2f, 20f);
 			}
+			TargetScanFlags flags = TargetScanFlags.NeedLOSToPawns | TargetScanFlags.NeedLOSToNonPawns | TargetScanFlags.NeedReachableIfCantHitFromMyPos | TargetScanFlags.NeedThreat;
 			float maxDist = num;
-			Thing thing = (Thing)AttackTargetFinder.BestAttackTarget(pawn, TargetScanFlags.NeedLOSToPawns | TargetScanFlags.NeedLOSToNonPawns | TargetScanFlags.NeedReachableIfCantHitFromMyPos | TargetScanFlags.NeedThreat, null, 0f, maxDist, default(IntVec3), 3.40282347E+38f, false);
+			Thing thing = (Thing)AttackTargetFinder.BestAttackTarget(pawn, flags, null, 0f, maxDist, default(IntVec3), 3.40282347E+38f, false);
 			if (thing == null)
 			{
 				return null;
@@ -58,7 +59,8 @@ namespace RimWorld
 			return new Job(JobDefOf.AttackStatic, thing)
 			{
 				maxNumStaticAttacks = 2,
-				expiryInterval = 1800
+				expiryInterval = 2000,
+				endIfCantShootTargetFromCurPos = true
 			};
 		}
 
@@ -79,10 +81,19 @@ namespace RimWorld
 				List<IAttackTarget> potentialTargetsFor = pawn.Map.attackTargetsCache.GetPotentialTargetsFor(pawn);
 				for (int i = 0; i < potentialTargetsFor.Count; i++)
 				{
-					IAttackTarget attackTarget = potentialTargetsFor[i];
-					if (!attackTarget.ThreatDisabled())
+					Thing thing = potentialTargetsFor[i].Thing;
+					if (SelfDefenseUtility.ShouldFleeFrom(thing, pawn, false, false))
 					{
-						JobGiver_ConfigurableHostilityResponse.tmpThreats.Add((Thing)attackTarget);
+						JobGiver_ConfigurableHostilityResponse.tmpThreats.Add(thing);
+					}
+				}
+				List<Thing> list = pawn.Map.listerThings.ThingsInGroup(ThingRequestGroup.AlwaysFlee);
+				for (int j = 0; j < list.Count; j++)
+				{
+					Thing thing2 = list[j];
+					if (SelfDefenseUtility.ShouldFleeFrom(thing2, pawn, false, false))
+					{
+						JobGiver_ConfigurableHostilityResponse.tmpThreats.Add(thing2);
 					}
 				}
 				if (!JobGiver_ConfigurableHostilityResponse.tmpThreats.Any<Thing>())

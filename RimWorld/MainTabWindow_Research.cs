@@ -10,6 +10,24 @@ namespace RimWorld
 	[StaticConstructorOnStartup]
 	public class MainTabWindow_Research : MainTabWindow
 	{
+		protected ResearchProjectDef selectedProject;
+
+		private bool noBenchWarned;
+
+		private bool requiredByThisFound;
+
+		private Vector2 leftScrollPosition = Vector2.zero;
+
+		private float leftScrollViewHeight;
+
+		private Vector2 rightScrollPosition = default(Vector2);
+
+		private float rightViewWidth;
+
+		private float rightViewHeight;
+
+		private ResearchTabDef curTabInt;
+
 		private const float LeftAreaWidth = 200f;
 
 		private const int ModeSelectButHeight = 40;
@@ -31,24 +49,6 @@ namespace RimWorld
 		private const float PrereqsLineSpacing = 15f;
 
 		private const int ColumnMaxProjects = 6;
-
-		protected ResearchProjectDef selectedProject;
-
-		private bool noBenchWarned;
-
-		private bool requiredByThisFound;
-
-		private Vector2 leftScrollPosition = Vector2.zero;
-
-		private float leftScrollViewHeight;
-
-		private Vector2 rightScrollPosition = default(Vector2);
-
-		private float rightViewWidth;
-
-		private float rightViewHeight;
-
-		private ResearchTabDef curTabInt;
 
 		private static readonly Texture2D ResearchBarFillTex = SolidColorMaterials.NewSolidColorTexture(new Color(0.2f, 0.8f, 0.85f));
 
@@ -182,34 +182,43 @@ namespace RimWorld
 				Rect rect2 = new Rect(0f, num, viewRect.width, 0f);
 				Widgets.LabelCacheHeight(ref rect2, this.selectedProject.description, true, false);
 				num += rect2.height + 10f;
-				string label = string.Concat(new string[]
+				string text = string.Concat(new string[]
 				{
 					"ProjectTechLevel".Translate().CapitalizeFirst(),
 					": ",
-					this.selectedProject.techLevel.ToStringHuman(),
+					this.selectedProject.techLevel.ToStringHuman().CapitalizeFirst(),
 					"\n",
 					"YourTechLevel".Translate().CapitalizeFirst(),
 					": ",
-					Faction.OfPlayer.def.techLevel.ToStringHuman(),
-					"\n",
-					"ResearchCostMultiplier".Translate().CapitalizeFirst(),
-					": ",
-					this.selectedProject.CostFactor(Faction.OfPlayer.def.techLevel).ToStringPercent(),
-					"\n",
-					"ResearchCostComparison".Translate(new object[]
-					{
-						this.selectedProject.baseCost.ToString("F0"),
-						this.selectedProject.CostApparent.ToString("F0")
-					})
+					Faction.OfPlayer.def.techLevel.ToStringHuman().CapitalizeFirst()
 				});
+				float num2 = this.selectedProject.CostFactor(Faction.OfPlayer.def.techLevel);
+				if (num2 != 1f)
+				{
+					string text2 = text;
+					text = string.Concat(new string[]
+					{
+						text2,
+						"\n\n",
+						"ResearchCostMultiplier".Translate().CapitalizeFirst(),
+						": ",
+						num2.ToStringPercent(),
+						"\n",
+						"ResearchCostComparison".Translate(new object[]
+						{
+							this.selectedProject.baseCost.ToString("F0"),
+							this.selectedProject.CostApparent.ToString("F0")
+						})
+					});
+				}
 				Rect rect3 = new Rect(0f, num, viewRect.width, 0f);
-				Widgets.LabelCacheHeight(ref rect3, label, true, false);
+				Widgets.LabelCacheHeight(ref rect3, text, true, false);
 				num = rect3.yMax + 10f;
 				Rect rect4 = new Rect(0f, num, viewRect.width, 500f);
-				float num2 = this.DrawResearchPrereqs(this.selectedProject, rect4);
-				if (num2 > 0f)
+				float num3 = this.DrawResearchPrereqs(this.selectedProject, rect4);
+				if (num3 > 0f)
 				{
-					num += num2 + 15f;
+					num += num3 + 15f;
 				}
 				Rect rect5 = new Rect(0f, num, viewRect.width, 500f);
 				num += this.DrawResearchBenchRequirements(this.selectedProject, rect5);
@@ -229,21 +238,21 @@ namespace RimWorld
 				rect6.y = outRect.y + outRect.height + 20f;
 				if (this.selectedProject.IsFinished)
 				{
-					Widgets.DrawMenuSection(rect6, true);
+					Widgets.DrawMenuSection(rect6);
 					Text.Anchor = TextAnchor.MiddleCenter;
 					Widgets.Label(rect6, "Finished".Translate());
 					Text.Anchor = TextAnchor.UpperLeft;
 				}
 				else if (this.selectedProject == Find.ResearchManager.currentProj)
 				{
-					Widgets.DrawMenuSection(rect6, true);
+					Widgets.DrawMenuSection(rect6);
 					Text.Anchor = TextAnchor.MiddleCenter;
 					Widgets.Label(rect6, "InProgress".Translate());
 					Text.Anchor = TextAnchor.UpperLeft;
 				}
 				else if (!this.selectedProject.CanStartNow)
 				{
-					Widgets.DrawMenuSection(rect6, true);
+					Widgets.DrawMenuSection(rect6);
 					Text.Anchor = TextAnchor.MiddleCenter;
 					Widgets.Label(rect6, "Locked".Translate());
 					Text.Anchor = TextAnchor.UpperLeft;
@@ -296,7 +305,7 @@ namespace RimWorld
 		private void DrawRightRect(Rect rightOutRect)
 		{
 			rightOutRect.yMin += 32f;
-			Widgets.DrawMenuSection(rightOutRect, true);
+			Widgets.DrawMenuSection(rightOutRect);
 			List<TabRecord> list = new List<TabRecord>();
 			foreach (ResearchTabDef current in DefDatabase<ResearchTabDef>.AllDefs)
 			{

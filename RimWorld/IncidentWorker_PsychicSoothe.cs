@@ -14,7 +14,7 @@ namespace RimWorld
 			{
 				gender.ToString().Translate().ToLower()
 			});
-			Find.LetterStack.ReceiveLetter("LetterLabelPsychicSoothe".Translate(), text, LetterDefOf.Good, null);
+			Find.LetterStack.ReceiveLetter("LetterLabelPsychicSoothe".Translate(), text, LetterDefOf.PositiveEvent, null);
 		}
 	}
 }

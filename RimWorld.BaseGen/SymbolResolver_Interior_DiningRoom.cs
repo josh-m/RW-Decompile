@@ -15,7 +15,7 @@ namespace RimWorld.BaseGen
 			for (int i = 0; i < num; i++)
 			{
 				ResolveParams resolveParams = rp;
-				resolveParams.singleThingDef = ThingDefOf.TableShort;
+				resolveParams.singleThingDef = ThingDefOf.Table2x2c;
 				BaseGen.symbolStack.Push("thing", resolveParams);
 			}
 		}

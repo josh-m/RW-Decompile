@@ -1,3 +1,4 @@
+using RimWorld.Planet;
 using System;
 using UnityEngine;
 using Verse;
@@ -43,11 +44,12 @@ namespace RimWorld
 			{
 				GlobalControlsUtility.DoRealtimeClock(num, 200f, ref num2);
 			}
-			if (Find.VisibleMap.info.parent.ForceExitAndRemoveMapCountdownActive)
+			TimedForcedExit component = Find.VisibleMap.info.parent.GetComponent<TimedForcedExit>();
+			if (component != null && component.ForceExitAndRemoveMapCountdownActive)
 			{
 				Rect rect4 = new Rect(num, num2 - 26f, 193f, 26f);
 				Text.Anchor = TextAnchor.MiddleRight;
-				GlobalControls.DoCountdownTimer(rect4);
+				GlobalControls.DoCountdownTimer(rect4, component);
 				Text.Anchor = TextAnchor.UpperLeft;
 				num2 -= 26f;
 			}
@@ -115,9 +117,9 @@ namespace RimWorld
 			return str + " " + celsiusTemp.ToStringTemperature("F0");
 		}
 
-		private static void DoCountdownTimer(Rect rect)
+		private static void DoCountdownTimer(Rect rect, TimedForcedExit timedForcedExit)
 		{
-			string forceExitAndRemoveMapCountdownTimeLeftString = Find.VisibleMap.info.parent.ForceExitAndRemoveMapCountdownTimeLeftString;
+			string forceExitAndRemoveMapCountdownTimeLeftString = timedForcedExit.ForceExitAndRemoveMapCountdownTimeLeftString;
 			string text = "ForceExitAndRemoveMapCountdown".Translate(new object[]
 			{
 				forceExitAndRemoveMapCountdownTimeLeftString

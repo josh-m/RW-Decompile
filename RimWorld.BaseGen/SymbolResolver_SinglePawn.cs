@@ -65,10 +65,16 @@ namespace RimWorld.BaseGen
 							return;
 						}
 					}
+					PawnKindDef kind = pawnKindDef;
+					Faction faction2 = faction;
 					int tile = map.Tile;
-					value = new PawnGenerationRequest(pawnKindDef, faction, PawnGenerationContext.NonPlayer, tile, false, false, false, false, true, false, 1f, false, true, true, false, false, null, null, null, null, null, null);
+					value = new PawnGenerationRequest(kind, faction2, PawnGenerationContext.NonPlayer, tile, false, false, false, false, true, false, 1f, false, true, true, false, false, false, false, null, null, null, null, null, null, null);
 				}
 				pawn = PawnGenerator.GeneratePawn(value);
+				if (rp.postThingGenerate != null)
+				{
+					rp.postThingGenerate(pawn);
+				}
 			}
 			else
 			{
@@ -82,6 +88,10 @@ namespace RimWorld.BaseGen
 			if (rp.singlePawnLord != null)
 			{
 				rp.singlePawnLord.AddPawn(pawn);
+			}
+			if (rp.postThingSpawn != null)
+			{
+				rp.postThingSpawn(pawn);
 			}
 		}
 

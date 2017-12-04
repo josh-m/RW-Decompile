@@ -17,9 +17,10 @@ namespace RimWorld.Planet
 		{
 			get
 			{
-				Vector2 vector = GenWorldUI.WorldToUIPosition(Find.WorldGrid.NorthPolePos);
-				Vector2 vector2 = new Vector2((float)UI.screenWidth / 2f, (float)UI.screenHeight / 2f);
-				return Mathf.Atan2(vector.y - vector2.y, vector.x - vector2.x) * 57.29578f;
+				Vector2 b = GenWorldUI.WorldToUIPosition(Find.WorldGrid.NorthPolePos);
+				Vector2 a = new Vector2((float)UI.screenWidth / 2f, (float)UI.screenHeight / 2f);
+				b.y = (float)UI.screenHeight - b.y;
+				return a.AngleTo(b);
 			}
 		}
 

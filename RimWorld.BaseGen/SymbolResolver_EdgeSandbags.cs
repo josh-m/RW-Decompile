@@ -45,7 +45,7 @@ namespace RimWorld.BaseGen
 						}
 					}
 				}
-				else if (current.Standable(map) && !current.Roofed(map))
+				else if (current.Standable(map) && !current.Roofed(map) && current.SupportsStructureType(map, ThingDefOf.Sandbags.terrainAffordanceNeeded))
 				{
 					if (!GenSpawn.WouldWipeAnythingWith(current, Rot4.North, ThingDefOf.Sandbags, map, (Thing x) => x.def.category == ThingCategory.Building || x.def.category == ThingCategory.Item))
 					{

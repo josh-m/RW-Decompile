@@ -1,3 +1,4 @@
+using RimWorld;
 using System;
 using System.Linq;
 
@@ -7,29 +8,29 @@ namespace Verse.AI.Group
 	{
 		public string message;
 
-		public MessageSound sound;
+		public MessageTypeDef type;
 
 		public TargetInfo lookTarget;
 
-		public TransitionAction_Message(string message) : this(message, MessageSound.Standard)
+		public TransitionAction_Message(string message) : this(message, MessageTypeDefOf.NeutralEvent)
 		{
 			this.message = message;
 		}
 
-		public TransitionAction_Message(string message, MessageSound messageSound)
+		public TransitionAction_Message(string message, MessageTypeDef messageType)
 		{
 			this.lookTarget = TargetInfo.Invalid;
 			base..ctor();
 			this.message = message;
-			this.sound = messageSound;
+			this.type = messageType;
 		}
 
-		public TransitionAction_Message(string message, MessageSound messageSound, TargetInfo lookTarget)
+		public TransitionAction_Message(string message, MessageTypeDef messageType, TargetInfo lookTarget)
 		{
 			this.lookTarget = TargetInfo.Invalid;
 			base..ctor();
 			this.message = message;
-			this.sound = messageSound;
+			this.type = messageType;
 			this.lookTarget = lookTarget;
 		}
 
@@ -44,7 +45,7 @@ namespace Verse.AI.Group
 			{
 				target = trans.target.lord.ownedPawns.FirstOrDefault<Pawn>();
 			}
-			Messages.Message(this.message, target, this.sound);
+			Messages.Message(this.message, target, this.type);
 		}
 	}
 }

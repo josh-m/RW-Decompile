@@ -86,6 +86,34 @@ namespace Verse
 			this.cellInt = cell;
 		}
 
+		public static implicit operator LocalTargetInfo(Thing t)
+		{
+			return new LocalTargetInfo(t);
+		}
+
+		public static implicit operator LocalTargetInfo(IntVec3 c)
+		{
+			return new LocalTargetInfo(c);
+		}
+
+		public static explicit operator IntVec3(LocalTargetInfo targ)
+		{
+			if (targ.thingInt != null)
+			{
+				Log.ErrorOnce("Casted LocalTargetInfo to IntVec3 but it had Thing " + targ.thingInt, 6324165);
+			}
+			return targ.Cell;
+		}
+
+		public static explicit operator Thing(LocalTargetInfo targ)
+		{
+			if (targ.cellInt.IsValid)
+			{
+				Log.ErrorOnce("Casted LocalTargetInfo to Thing but it had cell " + targ.cellInt, 631672);
+			}
+			return targ.thingInt;
+		}
+
 		public TargetInfo ToTargetInfo(Map map)
 		{
 			if (!this.IsValid)
@@ -110,6 +138,20 @@ namespace Verse
 				return new GlobalTargetInfo(this.Thing);
 			}
 			return new GlobalTargetInfo(this.Cell, map, false);
+		}
+
+		public static bool operator ==(LocalTargetInfo a, LocalTargetInfo b)
+		{
+			if (a.Thing != null || b.Thing != null)
+			{
+				return a.Thing == b.Thing;
+			}
+			return (!a.cellInt.IsValid && !b.cellInt.IsValid) || a.cellInt == b.cellInt;
+		}
+
+		public static bool operator !=(LocalTargetInfo a, LocalTargetInfo b)
+		{
+			return !(a == b);
 		}
 
 		public override bool Equals(object obj)
@@ -142,48 +184,6 @@ namespace Verse
 				return this.Cell.ToString();
 			}
 			return "null";
-		}
-
-		public static implicit operator LocalTargetInfo(Thing t)
-		{
-			return new LocalTargetInfo(t);
-		}
-
-		public static implicit operator LocalTargetInfo(IntVec3 c)
-		{
-			return new LocalTargetInfo(c);
-		}
-
-		public static explicit operator IntVec3(LocalTargetInfo targ)
-		{
-			if (targ.thingInt != null)
-			{
-				Log.ErrorOnce("Casted LocalTargetInfo to IntVec3 but it had Thing " + targ.thingInt, 6324165);
-			}
-			return targ.Cell;
-		}
-
-		public static explicit operator Thing(LocalTargetInfo targ)
-		{
-			if (targ.cellInt.IsValid)
-			{
-				Log.ErrorOnce("Casted LocalTargetInfo to Thing but it had cell " + targ.cellInt, 631672);
-			}
-			return targ.thingInt;
-		}
-
-		public static bool operator ==(LocalTargetInfo a, LocalTargetInfo b)
-		{
-			if (a.Thing != null || b.Thing != null)
-			{
-				return a.Thing == b.Thing;
-			}
-			return (!a.cellInt.IsValid && !b.cellInt.IsValid) || a.cellInt == b.cellInt;
-		}
-
-		public static bool operator !=(LocalTargetInfo a, LocalTargetInfo b)
-		{
-			return !(a == b);
 		}
 	}
 }

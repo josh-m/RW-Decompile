@@ -26,5 +26,7 @@ namespace Verse
 		public Vector3 attachedDrawOffset;
 
 		public bool needsMaintenance;
+
+		public bool rotateTowardsTarget;
 	}
 }

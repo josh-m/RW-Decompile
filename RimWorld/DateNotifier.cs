@@ -25,14 +25,14 @@ namespace RimWorld
 				{
 					if (GenDate.YearsPassed == 0 && season == Season.Summer && this.AnyPlayerHomeAvgTempIsLowInWinter())
 					{
-						Find.LetterStack.ReceiveLetter("LetterLabelFirstSummerWarning".Translate(), "FirstSummerWarning".Translate(), LetterDefOf.Good, null);
+						Find.LetterStack.ReceiveLetter("LetterLabelFirstSummerWarning".Translate(), "FirstSummerWarning".Translate(), LetterDefOf.NeutralEvent, null);
 					}
 					else if (GenDate.DaysPassed > 5)
 					{
 						Messages.Message("MessageSeasonBegun".Translate(new object[]
 						{
 							season.Label()
-						}).CapitalizeFirst(), MessageSound.Standard);
+						}).CapitalizeFirst(), MessageTypeDefOf.NeutralEvent);
 					}
 				}
 				this.lastSeason = season;

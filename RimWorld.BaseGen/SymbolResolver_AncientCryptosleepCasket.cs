@@ -12,13 +12,13 @@ namespace RimWorld.BaseGen
 			int? ancientCryptosleepCasketGroupID = rp.ancientCryptosleepCasketGroupID;
 			int groupID = (!ancientCryptosleepCasketGroupID.HasValue) ? Find.UniqueIDsManager.GetNextAncientCryptosleepCasketGroupID() : ancientCryptosleepCasketGroupID.Value;
 			PodContentsType? podContentsType = rp.podContentsType;
-			PodContentsType podContentsType2 = (!podContentsType.HasValue) ? Gen.RandomEnumValue<PodContentsType>(true) : podContentsType.Value;
+			PodContentsType value = (!podContentsType.HasValue) ? Gen.RandomEnumValue<PodContentsType>(true) : podContentsType.Value;
 			Rot4? thingRot = rp.thingRot;
 			Rot4 rot = (!thingRot.HasValue) ? Rot4.North : thingRot.Value;
 			Building_AncientCryptosleepCasket building_AncientCryptosleepCasket = (Building_AncientCryptosleepCasket)ThingMaker.MakeThing(ThingDefOf.AncientCryptosleepCasket, null);
 			building_AncientCryptosleepCasket.groupID = groupID;
 			ItemCollectionGeneratorParams parms = default(ItemCollectionGeneratorParams);
-			parms.podContentsType = podContentsType2;
+			parms.podContentsType = new PodContentsType?(value);
 			List<Thing> list = ItemCollectionGeneratorDefOf.AncientPodContents.Worker.Generate(parms);
 			for (int i = 0; i < list.Count; i++)
 			{

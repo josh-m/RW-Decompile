@@ -15,6 +15,10 @@ namespace RimWorld
 
 		public RulePackDef baseNameMaker;
 
+		public RulePackDef factionNameMakerPlayer;
+
+		public RulePackDef baseNameMakerPlayer;
+
 		public string fixedName;
 
 		public bool humanlikeFaction = true;
@@ -23,7 +27,7 @@ namespace RimWorld
 
 		public List<PawnGroupMaker> pawnGroupMakers;
 
-		public float raidCommonality;
+		public SimpleCurve raidCommonalityFromPointsCurve;
 
 		public bool autoFlee = true;
 
@@ -39,7 +43,11 @@ namespace RimWorld
 
 		public PawnKindDef basicMemberKind;
 
+		[NoTranslate]
 		public List<string> startingResearchTags;
+
+		[NoTranslate]
+		public List<string> recipePrerequisiteTags;
 
 		public bool rescueesCanJoin;
 
@@ -73,6 +81,8 @@ namespace RimWorld
 		public List<TraderKindDef> visitorTraderKinds = new List<TraderKindDef>();
 
 		public List<TraderKindDef> baseTraderKinds = new List<TraderKindDef>();
+
+		public float geneticVariance = 1f;
 
 		public FloatRange startingGoodwill = FloatRange.Zero;
 
@@ -126,14 +136,14 @@ namespace RimWorld
 		{
 			if (this.pawnGroupMakers == null)
 			{
-				return 2.14748365E+09f;
+				return 9999999f;
 			}
 			IEnumerable<PawnGroupMaker> source = from x in this.pawnGroupMakers
 			where x.kindDef == PawnGroupKindDefOf.Normal
 			select x;
 			if (!source.Any<PawnGroupMaker>())
 			{
-				return 2.14748365E+09f;
+				return 9999999f;
 			}
 			return source.Min((PawnGroupMaker pgm) => pgm.MinPointsToGenerateAnything);
 		}
@@ -141,6 +151,15 @@ namespace RimWorld
 		public bool CanUseStuffForApparel(ThingDef stuffDef)
 		{
 			return this.apparelStuffFilter == null || this.apparelStuffFilter.Allows(stuffDef);
+		}
+
+		public float RaidCommonalityFromPoints(float points)
+		{
+			if (points < 0f || this.raidCommonalityFromPointsCurve == null)
+			{
+				return 1f;
+			}
+			return this.raidCommonalityFromPointsCurve.Evaluate(points);
 		}
 
 		public override void ResolveReferences()
@@ -176,6 +195,17 @@ namespace RimWorld
 				if (this.hairTags.Count == 0)
 				{
 					yield return this.defName + " is humanlikeFaction but has no hairTags.";
+				}
+			}
+			if (this.isPlayer)
+			{
+				if (this.baseNameMakerPlayer == null)
+				{
+					yield return "isPlayer is true but baseNameMakerPlayer is null";
+				}
+				if (this.factionNameMakerPlayer == null)
+				{
+					yield return "isPlayer is true but factionNameMakerPlayer is null";
 				}
 			}
 		}

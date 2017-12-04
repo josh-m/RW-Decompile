@@ -21,7 +21,7 @@ namespace RimWorld
 					if (record.def == part)
 					{
 						IEnumerable<Hediff> diffs = from x in pawn.health.hediffSet.hediffs
-						where x.Part == this.<record>__4
+						where x.Part == record
 						select x;
 						if (diffs.Count<Hediff>() != 1 || diffs.First<Hediff>().def != recipe.addsHediff)
 						{
@@ -38,11 +38,11 @@ namespace RimWorld
 			}
 		}
 
-		public override void ApplyOnPawn(Pawn pawn, BodyPartRecord part, Pawn billDoer, List<Thing> ingredients)
+		public override void ApplyOnPawn(Pawn pawn, BodyPartRecord part, Pawn billDoer, List<Thing> ingredients, Bill bill)
 		{
 			if (billDoer != null)
 			{
-				if (base.CheckSurgeryFail(billDoer, pawn, ingredients, part))
+				if (base.CheckSurgeryFail(billDoer, pawn, ingredients, part, bill))
 				{
 					return;
 				}

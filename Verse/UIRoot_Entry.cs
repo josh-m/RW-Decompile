@@ -12,6 +12,10 @@ namespace Verse
 		{
 			get
 			{
+				if (LongEventHandler.AnyEventNowOrWaiting)
+				{
+					return false;
+				}
 				for (int i = 0; i < Find.WindowStack.Count; i++)
 				{
 					if (this.windows[i].layer == WindowLayer.Dialog && !Find.WindowStack[i].IsDebug)

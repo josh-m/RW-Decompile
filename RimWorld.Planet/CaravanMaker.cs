@@ -30,10 +30,7 @@ namespace RimWorld.Planet
 			for (int i = 0; i < CaravanMaker.tmpPawns.Count; i++)
 			{
 				Pawn pawn = CaravanMaker.tmpPawns[i];
-				if (pawn.Spawned)
-				{
-					pawn.DeSpawn();
-				}
+				CaravanExitMapUtility.GenerateCaravanExitTale(pawn);
 				if (pawn.Dead)
 				{
 					Log.Warning("Tried to form a caravan with a dead pawn " + pawn);
@@ -43,10 +40,6 @@ namespace RimWorld.Planet
 					caravan.AddPawn(pawn, addToWorldPawnsIfNotAlready);
 					if (addToWorldPawnsIfNotAlready && !pawn.IsWorldPawn())
 					{
-						if (pawn.Spawned)
-						{
-							pawn.DeSpawn();
-						}
 						Find.WorldPawns.PassToWorld(pawn, PawnDiscardDecideMode.Decide);
 					}
 				}

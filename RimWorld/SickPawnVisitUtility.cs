@@ -70,7 +70,7 @@ namespace RimWorld
 			{
 				return true;
 			}
-			if (HealthAIUtility.HasTendedImmunizableNonInjuryNonMissingPartHediff(pawn))
+			if (pawn.health.hediffSet.HasTendedImmunizableNotImmuneHediff())
 			{
 				return false;
 			}

@@ -56,11 +56,6 @@ namespace Verse
 			return this == other;
 		}
 
-		public override int GetHashCode()
-		{
-			return Gen.HashCombine<ThingDef>(this.count, this.thingDef);
-		}
-
 		public static bool operator ==(ThingCount a, ThingCount b)
 		{
 			return a.thingDef == b.thingDef && a.count == b.count;
@@ -69,6 +64,16 @@ namespace Verse
 		public static bool operator !=(ThingCount a, ThingCount b)
 		{
 			return !(a == b);
+		}
+
+		public override int GetHashCode()
+		{
+			return Gen.HashCombine<ThingDef>(this.count, this.thingDef);
+		}
+
+		public static implicit operator ThingCount(ThingCountClass t)
+		{
+			return new ThingCount(t.thingDef, t.count);
 		}
 	}
 }

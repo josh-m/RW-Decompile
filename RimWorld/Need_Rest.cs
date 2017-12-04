@@ -7,9 +7,15 @@ namespace RimWorld
 {
 	public class Need_Rest : Need
 	{
+		private int lastRestTick = -999;
+
+		private float lastRestEffectiveness = 1f;
+
+		private int ticksAtZero;
+
 		private const float FullSleepHours = 10.5f;
 
-		public const float BaseRestGainPerTick = 3.809524E-05f;
+		public const float BaseRestGainPerTick = 3.8095237E-05f;
 
 		private const float BaseRestFallPerTick = 1.58333332E-05f;
 
@@ -24,12 +30,6 @@ namespace RimWorld
 		public const float CanWakeThreshold = 0.2f;
 
 		private const float BaseInvoluntarySleepMTBDays = 0.25f;
-
-		private int lastRestTick = -999;
-
-		private float lastRestEffectiveness = 1f;
-
-		private int ticksAtZero;
 
 		public RestCategory CurCategory
 		{
@@ -75,17 +75,7 @@ namespace RimWorld
 		{
 			get
 			{
-				float num = 1f;
-				List<Hediff> hediffs = this.pawn.health.hediffSet.hediffs;
-				for (int i = 0; i < hediffs.Count; i++)
-				{
-					HediffStage curStage = hediffs[i].CurStage;
-					if (curStage != null)
-					{
-						num *= curStage.restFallFactor;
-					}
-				}
-				return num;
+				return this.pawn.health.hediffSet.RestFallFactor;
 			}
 		}
 
@@ -141,7 +131,7 @@ namespace RimWorld
 			{
 				if (this.Resting)
 				{
-					this.CurLevel += 0.005714286f * this.lastRestEffectiveness;
+					this.CurLevel += 0.00571428565f * this.lastRestEffectiveness;
 				}
 				else
 				{
@@ -175,16 +165,24 @@ namespace RimWorld
 				{
 					mtb = 0.0625f;
 				}
-				if (Rand.MTBEventOccurs(mtb, 60000f, 150f))
+				if (Rand.MTBEventOccurs(mtb, 60000f, 150f) && (this.pawn.CurJob == null || this.pawn.CurJob.def != JobDefOf.LayDown))
 				{
-					this.pawn.jobs.StartJob(new Job(JobDefOf.LayDown, this.pawn.Position), JobCondition.InterruptForced, null, false, true, null, null);
+					this.pawn.jobs.StartJob(new Job(JobDefOf.LayDown, this.pawn.Position), JobCondition.InterruptForced, null, false, true, null, new JobTag?(JobTag.SatisfyingNeeds), false);
+					if (this.pawn.InMentalState)
+					{
+						this.pawn.mindState.mentalStateHandler.CurState.RecoverFromState();
+					}
 					if (PawnUtility.ShouldSendNotificationAbout(this.pawn))
 					{
 						Messages.Message("MessageInvoluntarySleep".Translate(new object[]
 						{
 							this.pawn.LabelShort
-						}), this.pawn, MessageSound.Negative);
+						}), this.pawn, MessageTypeDefOf.NegativeEvent);
 					}
+					TaleRecorder.RecordTale(TaleDefOf.Exhausted, new object[]
+					{
+						this.pawn
+					});
 				}
 			}
 		}

@@ -28,13 +28,12 @@ namespace Verse
 				}
 				catch (Exception ex)
 				{
-					Exception e = ex;
 					Log.Warning(string.Concat(new object[]
 					{
 						"Exception loading backstory translation data from file ",
 						fi,
 						": ",
-						e
+						ex
 					}));
 					break;
 				}

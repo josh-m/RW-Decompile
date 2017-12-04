@@ -1,3 +1,4 @@
+using RimWorld;
 using System;
 using System.Linq;
 using UnityEngine;
@@ -6,8 +7,6 @@ namespace Verse
 {
 	public class EditWindow_PackageEditor<TNewDef> : EditWindow where TNewDef : Def, new()
 	{
-		private const float EditButSize = 24f;
-
 		public ModContentPack curMod = LoadedModManager.RunningMods.First<ModContentPack>();
 
 		private DefPackage curPackage;
@@ -17,6 +16,8 @@ namespace Verse
 		private float viewHeight;
 
 		private string relFolder;
+
+		private const float EditButSize = 24f;
 
 		public override Vector2 InitialSize
 		{
@@ -49,7 +50,7 @@ namespace Verse
 			string str = this.curMod.ToString();
 			if (Widgets.ButtonText(rect, "Editing: " + str, true, false, true))
 			{
-				Messages.Message("Mod changing not implemented - it's always Core for now.", MessageSound.RejectInput);
+				Messages.Message("Mod changing not implemented - it's always Core for now.", MessageTypeDefOf.RejectInput);
 			}
 			TooltipHandler.TipRegion(rect, "Change the mod being edited.");
 			Rect rect2 = new Rect(rect.xMax + 4f, 0f, width, 24f);
@@ -91,7 +92,7 @@ namespace Verse
 			float num = 56f;
 			Rect rect3 = new Rect(0f, num, selectorInner.width, selectorInner.height - num);
 			Rect rect4 = new Rect(0f, 0f, rect3.width - 16f, this.viewHeight);
-			Widgets.DrawMenuSection(rect3, true);
+			Widgets.DrawMenuSection(rect3);
 			Widgets.BeginScrollView(rect3, ref this.scrollPosition, rect4, true);
 			Rect rect5 = rect4.ContractedBy(4f);
 			rect5.height = 9999f;

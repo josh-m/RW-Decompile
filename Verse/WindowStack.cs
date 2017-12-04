@@ -293,13 +293,13 @@ namespace Verse
 			return false;
 		}
 
-		public WindowType WindowOfType<WindowType>() where WindowType : Window
+		public WindowType WindowOfType<WindowType>() where WindowType : class
 		{
 			for (int i = 0; i < this.windows.Count; i++)
 			{
 				if (this.windows[i] is WindowType)
 				{
-					return (WindowType)((object)this.windows[i]);
+					return this.windows[i] as WindowType;
 				}
 			}
 			return (WindowType)((object)null);

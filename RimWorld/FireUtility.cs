@@ -9,7 +9,7 @@ namespace RimWorld
 	{
 		public static bool CanEverAttachFire(this Thing t)
 		{
-			return !t.Destroyed && t.FlammableNow && t.def.category == ThingCategory.Pawn;
+			return !t.Destroyed && t.FlammableNow && t.def.category == ThingCategory.Pawn && t.TryGetComp<CompAttachBase>() != null;
 		}
 
 		public static float ChanceToStartFireIn(IntVec3 c, Map map)
@@ -46,16 +46,17 @@ namespace RimWorld
 			return num;
 		}
 
-		public static void TryStartFireIn(IntVec3 c, Map map, float fireSize)
+		public static bool TryStartFireIn(IntVec3 c, Map map, float fireSize)
 		{
 			float num = FireUtility.ChanceToStartFireIn(c, map);
 			if (num <= 0f)
 			{
-				return;
+				return false;
 			}
 			Fire fire = (Fire)ThingMaker.MakeThing(ThingDefOf.Fire, null);
 			fire.fireSize = fireSize;
 			GenSpawn.Spawn(fire, c, map, Rot4.North, false);
+			return true;
 		}
 
 		public static void TryAttachFire(this Thing t, float fireSize)
@@ -68,7 +69,7 @@ namespace RimWorld
 			{
 				return;
 			}
-			Fire fire = ThingMaker.MakeThing(ThingDefOf.Fire, null) as Fire;
+			Fire fire = (Fire)ThingMaker.MakeThing(ThingDefOf.Fire, null);
 			fire.fireSize = fireSize;
 			fire.AttachTo(t);
 			GenSpawn.Spawn(fire, t.Position, t.Map, Rot4.North, false);

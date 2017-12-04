@@ -109,6 +109,22 @@ namespace Verse
 			Scribe_Values.Look<string>(ref this.lastInt, "last", null, false);
 		}
 
+		public void PostLoad()
+		{
+			if (this.firstInt != null)
+			{
+				this.firstInt = this.firstInt.Trim();
+			}
+			if (this.nickInt != null)
+			{
+				this.nickInt = this.nickInt.Trim();
+			}
+			if (this.lastInt != null)
+			{
+				this.lastInt = this.lastInt.Trim();
+			}
+		}
+
 		public void ResolveMissingPieces(string overrideLastName = null)
 		{
 			if (this.First.NullOrEmpty() && this.Nick.NullOrEmpty() && this.Last.NullOrEmpty())

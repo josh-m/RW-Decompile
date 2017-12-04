@@ -31,7 +31,7 @@ namespace RimWorld
 				this.strikeLoc = CellFinderLoose.RandomCellWith((IntVec3 sq) => sq.Standable(this.map) && !this.map.roofGrid.Roofed(sq), this.map, 1000);
 			}
 			this.boltMesh = LightningBoltMeshPool.RandomBoltMesh;
-			GenExplosion.DoExplosion(this.strikeLoc, this.map, 1.9f, DamageDefOf.Flame, null, null, null, null, null, 0f, 1, false, null, 0f, 1);
+			GenExplosion.DoExplosion(this.strikeLoc, this.map, 1.9f, DamageDefOf.Flame, null, -1, null, null, null, null, 0f, 1, false, null, 0f, 1, 0f, false);
 			Vector3 loc = this.strikeLoc.ToVector3Shifted();
 			for (int i = 0; i < 4; i++)
 			{

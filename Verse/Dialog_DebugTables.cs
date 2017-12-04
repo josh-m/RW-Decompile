@@ -6,13 +6,17 @@ namespace Verse
 {
 	public class Dialog_DebugTables : Window
 	{
-		private const float RowHeight = 23f;
-
-		private const float ColExtraWidth = 8f;
-
 		private string[,] table;
 
 		private Vector2 scrollPosition = Vector2.zero;
+
+		private List<float> colWidths = new List<float>();
+
+		private float totalWidth;
+
+		private const float RowHeight = 23f;
+
+		private const float ColExtraWidth = 8f;
 
 		public override Vector2 InitialSize
 		{
@@ -27,15 +31,7 @@ namespace Verse
 			this.table = tables;
 			this.doCloseButton = true;
 			this.doCloseX = true;
-		}
-
-		public override void DoWindowContents(Rect inRect)
-		{
 			Text.Font = GameFont.Tiny;
-			inRect.yMax -= 40f;
-			Rect viewRect = new Rect(0f, 0f, inRect.width - 16f, (float)this.table.GetLength(1) * 23f);
-			Widgets.BeginScrollView(inRect, ref this.scrollPosition, viewRect, true);
-			List<float> list = new List<float>();
 			for (int i = 0; i < this.table.GetLength(0); i++)
 			{
 				float num = 0f;
@@ -48,24 +44,37 @@ namespace Verse
 						num = x;
 					}
 				}
-				list.Add(num + 8f);
+				float num2 = num + 8f;
+				this.colWidths.Add(num2);
+				this.totalWidth += num2;
 			}
-			float num2 = 0f;
-			for (int k = 0; k < this.table.GetLength(0); k++)
+		}
+
+		public override void DoWindowContents(Rect inRect)
+		{
+			Text.Font = GameFont.Tiny;
+			inRect.yMax -= 40f;
+			Rect viewRect = new Rect(0f, 0f, this.totalWidth, (float)this.table.GetLength(1) * 23f);
+			Widgets.BeginScrollView(inRect, ref this.scrollPosition, viewRect, true);
+			float num = 0f;
+			for (int i = 0; i < this.table.GetLength(0); i++)
 			{
-				for (int l = 0; l < this.table.GetLength(1); l++)
+				for (int j = 0; j < this.table.GetLength(1); j++)
 				{
-					Rect rect = new Rect(num2, (float)l * 23f, list[k], 23f);
-					Rect rect2 = rect;
-					rect2.xMin -= 999f;
-					rect2.xMax += 999f;
-					if (Mouse.IsOver(rect2) || k % 2 == 0)
+					if ((float)(j + 1) * 23f - this.scrollPosition.y >= 0f && (float)j * 23f - this.scrollPosition.y <= inRect.height)
 					{
-						Widgets.DrawHighlight(rect);
+						Rect rect = new Rect(num, (float)j * 23f, this.colWidths[i], 23f);
+						Rect rect2 = rect;
+						rect2.xMin -= 999f;
+						rect2.xMax += 999f;
+						if (Mouse.IsOver(rect2) || i % 2 == 0)
+						{
+							Widgets.DrawHighlight(rect);
+						}
+						Widgets.Label(rect, this.table[i, j]);
 					}
-					Widgets.Label(rect, this.table[k, l]);
 				}
-				num2 += list[k];
+				num += this.colWidths[i];
 			}
 			Widgets.EndScrollView();
 		}

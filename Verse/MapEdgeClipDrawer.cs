@@ -6,11 +6,11 @@ namespace Verse
 	[StaticConstructorOnStartup]
 	public static class MapEdgeClipDrawer
 	{
-		private const float ClipWidth = 500f;
-
 		public static readonly Material ClipMat = SolidColorMaterials.NewSolidColorMaterial(new Color(0.1f, 0.1f, 0.1f), ShaderDatabase.MetaOverlay);
 
 		private static readonly float ClipAltitude = Altitudes.AltitudeFor(AltitudeLayer.WorldClipper);
+
+		private const float ClipWidth = 500f;
 
 		public static void DrawClippers(Map map)
 		{

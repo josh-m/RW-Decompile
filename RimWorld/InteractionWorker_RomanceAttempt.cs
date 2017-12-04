@@ -192,7 +192,7 @@ namespace RimWorld
 			if ((initiator.GetSpouse() != null && !initiator.GetSpouse().Dead) || (recipient.GetSpouse() != null && !recipient.GetSpouse().Dead))
 			{
 				label = "LetterLabelAffair".Translate();
-				textLetterDef = LetterDefOf.BadNonUrgent;
+				textLetterDef = LetterDefOf.NegativeEvent;
 				if (initiator.GetSpouse() != null && !initiator.GetSpouse().Dead)
 				{
 					t = initiator;
@@ -206,7 +206,7 @@ namespace RimWorld
 			else
 			{
 				label = "LetterLabelNewLovers".Translate();
-				textLetterDef = LetterDefOf.Good;
+				textLetterDef = LetterDefOf.PositiveEvent;
 				t = initiator;
 			}
 			StringBuilder stringBuilder = new StringBuilder();

@@ -8,17 +8,17 @@ namespace RimWorld
 {
 	public class ResourceReadout
 	{
-		private const float LineHeightSimple = 24f;
-
-		private const float LineHeightCategorized = 24f;
-
-		private const float DistFromScreenBottom = 200f;
-
 		private Vector2 scrollPosition;
 
 		private float lastDrawnHeight;
 
 		private readonly List<ThingCategoryDef> RootThingCategories;
+
+		private const float LineHeightSimple = 24f;
+
+		private const float LineHeightCategorized = 24f;
+
+		private const float DistFromScreenBottom = 200f;
 
 		public ResourceReadout()
 		{
@@ -123,8 +123,7 @@ namespace RimWorld
 		{
 			Rect rect = new Rect(x, y, 27f, 27f);
 			Color color = GUI.color;
-			GUI.color = thingDef.graphicData.color;
-			GUI.DrawTexture(rect, thingDef.uiIcon);
+			Widgets.ThingIcon(rect, thingDef);
 			GUI.color = color;
 			TooltipHandler.TipRegion(rect, new TipSignal(() => thingDef.LabelCap + ": " + thingDef.description, thingDef.GetHashCode()));
 		}

@@ -10,7 +10,7 @@ namespace Verse
 
 		private const float SizeVariance = 0.2f;
 
-		public override void DrawWorker(Vector3 loc, Rot4 rot, ThingDef thingDef, Thing thing)
+		public override void DrawWorker(Vector3 loc, Rot4 rot, ThingDef thingDef, Thing thing, float extraRotation)
 		{
 			Rand.PushState();
 			Rand.Seed = thing.thingIDNumber.GetHashCode();

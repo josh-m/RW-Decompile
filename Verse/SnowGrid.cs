@@ -5,13 +5,13 @@ namespace Verse
 {
 	public sealed class SnowGrid : IExposable
 	{
-		public const float MaxDepth = 1f;
-
 		private Map map;
 
 		private float[] depthGrid;
 
 		private double totalDepth;
+
+		public const float MaxDepth = 1f;
 
 		internal float[] DepthGridDirect_Unsafe
 		{
@@ -37,22 +37,10 @@ namespace Verse
 
 		public void ExposeData()
 		{
-			string compressedString = null;
-			if (Scribe.mode == LoadSaveMode.Saving)
+			MapExposeUtility.ExposeUshort(this.map, (IntVec3 c) => SnowGrid.SnowFloatToShort(this.GetDepth(c)), delegate(IntVec3 c, ushort val)
 			{
-				compressedString = GridSaveUtility.CompressedStringForShortGrid((IntVec3 c) => SnowGrid.SnowFloatToShort(this.GetDepth(c)), this.map);
-			}
-			Scribe_Values.Look<string>(ref compressedString, "depthGrid", null, false);
-			if (Scribe.mode == LoadSaveMode.LoadingVars)
-			{
-				this.totalDepth = 0.0;
-				foreach (GridSaveUtility.LoadedGridShort current in GridSaveUtility.LoadedUShortGrid(compressedString, this.map))
-				{
-					ushort val = current.val;
-					this.depthGrid[this.map.cellIndices.CellToIndex(current.cell)] = SnowGrid.SnowShortToFloat(val);
-					this.totalDepth += (double)val;
-				}
-			}
+				this.depthGrid[this.map.cellIndices.CellToIndex(c)] = SnowGrid.SnowShortToFloat(val);
+			}, "depthGrid");
 		}
 
 		private static ushort SnowFloatToShort(float depth)

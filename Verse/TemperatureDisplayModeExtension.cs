@@ -6,17 +6,19 @@ namespace Verse
 	{
 		public static string ToStringHuman(this TemperatureDisplayMode mode)
 		{
-			switch (mode)
+			if (mode == TemperatureDisplayMode.Celsius)
 			{
-			case TemperatureDisplayMode.Celsius:
 				return "Celsius".Translate();
-			case TemperatureDisplayMode.Fahrenheit:
+			}
+			if (mode == TemperatureDisplayMode.Fahrenheit)
+			{
 				return "Fahrenheit".Translate();
-			case TemperatureDisplayMode.Kelvin:
-				return "Kelvin".Translate();
-			default:
+			}
+			if (mode != TemperatureDisplayMode.Kelvin)
+			{
 				throw new NotImplementedException();
 			}
+			return "Kelvin".Translate();
 		}
 	}
 }

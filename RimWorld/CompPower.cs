@@ -174,7 +174,7 @@ namespace RimWorld
 					action = delegate
 					{
 						SoundDefOf.TickTiny.PlayOneShotOnCamera(null);
-						this.<>f__this.TryManualReconnect();
+						this.$this.TryManualReconnect();
 					},
 					hotKey = KeyBindingDefOf.Misc1,
 					defaultDesc = "CommandTryReconnectDesc".Translate(),

@@ -66,7 +66,7 @@ namespace RimWorld
 			AreaUtility.MakeAllowedAreaListFloatMenu(delegate(Area a)
 			{
 				Designator_AreaAllowed.selectedArea = a;
-				this.ProcessInput(ev);
+				base.ProcessInput(ev);
 			}, AllowedAreaMode.Any, false, true, base.Map);
 		}
 

@@ -20,6 +20,14 @@ namespace RimWorld
 			}
 		}
 
+		private static List<InfestationCellFinder.LocationCandidate> locationCandidates = new List<InfestationCellFinder.LocationCandidate>();
+
+		private static Dictionary<Region, float> regionsDistanceToUnroofed = new Dictionary<Region, float>();
+
+		private static ByteGrid closedAreaSize;
+
+		private static ByteGrid distToColonyBuilding;
+
 		private const float MinRequiredScore = 7.5f;
 
 		private const float MinMountainousnessScore = 0.17f;
@@ -35,14 +43,6 @@ namespace RimWorld
 		private const float MinCellTempToSpawnHive = -17f;
 
 		private const float MaxDistanceToColonyBuilding = 30f;
-
-		private static List<InfestationCellFinder.LocationCandidate> locationCandidates = new List<InfestationCellFinder.LocationCandidate>();
-
-		private static Dictionary<Region, float> regionsDistanceToUnroofed = new Dictionary<Region, float>();
-
-		private static ByteGrid closedAreaSize;
-
-		private static ByteGrid distToColonyBuilding;
 
 		private static HashSet<Region> tempUnroofedRegions = new HashSet<Region>();
 
@@ -116,7 +116,7 @@ namespace RimWorld
 			}
 			num2 = Mathf.Pow(num2, 1.55f);
 			float num3 = Mathf.InverseLerp(0f, 12f, (float)num);
-			float num4 = Mathf.Lerp(1f, 0.18f, map.glowGrid.GameGlowAt(cell));
+			float num4 = Mathf.Lerp(1f, 0.18f, map.glowGrid.GameGlowAt(cell, false));
 			float num5 = 1f - Mathf.Clamp(InfestationCellFinder.DistToBlocker(cell, map) / 11f, 0f, 0.6f);
 			float num6 = Mathf.InverseLerp(-17f, -7f, temperature);
 			float num7 = num2 * num3 * num5 * mountainousnessScoreAt * num4 * num6;
@@ -344,7 +344,7 @@ namespace RimWorld
 					}
 				}
 			}
-			Dijkstra<Region>.Run(InfestationCellFinder.tempUnroofedRegions, (Region x) => x.Neighbors, (Region a, Region b) => Mathf.Sqrt((float)a.extentsClose.CenterCell.DistanceToSquared(b.extentsClose.CenterCell)), ref InfestationCellFinder.regionsDistanceToUnroofed);
+			Dijkstra<Region>.Run(InfestationCellFinder.tempUnroofedRegions, (Region x) => x.Neighbors, (Region a, Region b) => Mathf.Sqrt((float)a.extentsClose.CenterCell.DistanceToSquared(b.extentsClose.CenterCell)), InfestationCellFinder.regionsDistanceToUnroofed, null);
 			InfestationCellFinder.tempUnroofedRegions.Clear();
 		}
 
@@ -369,12 +369,12 @@ namespace RimWorld
 						map.floodFiller.FloodFill(intVec, (IntVec3 c) => !c.Impassable(map), delegate(IntVec3 c)
 						{
 							area++;
-						}, false);
+						}, 2147483647, false, null);
 						area = Mathf.Min(area, 255);
 						map.floodFiller.FloodFill(intVec, (IntVec3 c) => !c.Impassable(map), delegate(IntVec3 c)
 						{
 							InfestationCellFinder.closedAreaSize[c] = (byte)area;
-						}, false);
+						}, 2147483647, false, null);
 					}
 				}
 			}
@@ -404,7 +404,7 @@ namespace RimWorld
 					return 1f;
 				}
 				return 1.41421354f;
-			}, ref InfestationCellFinder.tmpDistanceResult);
+			}, InfestationCellFinder.tmpDistanceResult, null);
 			for (int j = 0; j < InfestationCellFinder.tmpDistanceResult.Count; j++)
 			{
 				InfestationCellFinder.distToColonyBuilding[InfestationCellFinder.tmpDistanceResult[j].Key] = (byte)Mathf.Min(InfestationCellFinder.tmpDistanceResult[j].Value, 254.999f);

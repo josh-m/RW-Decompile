@@ -207,6 +207,7 @@ namespace Verse
 
 		public static Rot4 FromAngleFlat(float angle)
 		{
+			angle = GenMath.PositiveMod(angle, 360f);
 			if (angle < 45f)
 			{
 				return Rot4.North;
@@ -251,6 +252,16 @@ namespace Verse
 		public static Rot4 FromIntVec2(IntVec2 offset)
 		{
 			return Rot4.FromIntVec3(offset.ToIntVec3);
+		}
+
+		public static bool operator ==(Rot4 a, Rot4 b)
+		{
+			return a.AsInt == b.AsInt;
+		}
+
+		public static bool operator !=(Rot4 a, Rot4 b)
+		{
+			return a.AsInt != b.AsInt;
 		}
 
 		public override int GetHashCode()
@@ -302,25 +313,33 @@ namespace Verse
 			}
 			else
 			{
-				switch (str)
+				if (str != null)
 				{
-				case "North":
-					newRot = 0;
-					goto IL_C5;
-				case "East":
-					newRot = 1;
-					goto IL_C5;
-				case "South":
-					newRot = 2;
-					goto IL_C5;
-				case "West":
-					newRot = 3;
-					goto IL_C5;
+					if (str == "North")
+					{
+						newRot = 0;
+						goto IL_93;
+					}
+					if (str == "East")
+					{
+						newRot = 1;
+						goto IL_93;
+					}
+					if (str == "South")
+					{
+						newRot = 2;
+						goto IL_93;
+					}
+					if (str == "West")
+					{
+						newRot = 3;
+						goto IL_93;
+					}
 				}
 				newRot = 0;
 				Log.Error("Invalid rotation: " + str);
 			}
-			IL_C5:
+			IL_93:
 			return new Rot4(newRot);
 		}
 
@@ -332,16 +351,6 @@ namespace Verse
 		public bool Equals(Rot4 other)
 		{
 			return this.rotInt == other.rotInt;
-		}
-
-		public static bool operator ==(Rot4 a, Rot4 b)
-		{
-			return a.AsInt == b.AsInt;
-		}
-
-		public static bool operator !=(Rot4 a, Rot4 b)
-		{
-			return a.AsInt != b.AsInt;
 		}
 	}
 }

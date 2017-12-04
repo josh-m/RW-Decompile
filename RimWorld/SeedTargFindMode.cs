@@ -6,6 +6,7 @@ namespace RimWorld
 	{
 		MapGenCluster,
 		Reproduce,
-		MapEdge
+		MapEdge,
+		Cave
 	}
 }

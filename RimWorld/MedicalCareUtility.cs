@@ -8,11 +8,11 @@ namespace RimWorld
 	[StaticConstructorOnStartup]
 	public static class MedicalCareUtility
 	{
+		private static Texture2D[] careTextures;
+
 		public const float CareSetterHeight = 28f;
 
 		public const float CareSetterWidth = 140f;
-
-		private static Texture2D[] careTextures;
 
 		public static void Reset()
 		{

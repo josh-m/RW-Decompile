@@ -1,8 +1,10 @@
 using RimWorld;
 using System;
+using System.Runtime.InteropServices;
 
 namespace Verse
 {
+	[StructLayout(LayoutKind.Sequential, Size = 1)]
 	public struct PawnGenerationRequest
 	{
 		public PawnKindDef KindDef
@@ -101,7 +103,25 @@ namespace Verse
 			private set;
 		}
 
+		public bool ForceRedressWorldPawnIfFormerColonist
+		{
+			get;
+			private set;
+		}
+
+		public bool WorldPawnFactionDoesntMatter
+		{
+			get;
+			private set;
+		}
+
 		public Predicate<Pawn> Validator
+		{
+			get;
+			private set;
+		}
+
+		public float? MinChanceToRedressWorldPawn
 		{
 			get;
 			private set;
@@ -137,8 +157,9 @@ namespace Verse
 			private set;
 		}
 
-		public PawnGenerationRequest(PawnKindDef kind, Faction faction = null, PawnGenerationContext context = PawnGenerationContext.NonPlayer, int tile = -1, bool forceGenerateNewPawn = false, bool newborn = false, bool allowDead = false, bool allowDowned = false, bool canGeneratePawnRelations = true, bool mustBeCapableOfViolence = false, float colonistRelationChanceFactor = 1f, bool forceAddFreeWarmLayerIfNeeded = false, bool allowGay = true, bool allowFood = true, bool inhabitant = false, bool certainlyBeenInCryptosleep = false, Predicate<Pawn> validator = null, float? fixedBiologicalAge = null, float? fixedChronologicalAge = null, Gender? fixedGender = null, float? fixedMelanin = null, string fixedLastName = null)
+		public PawnGenerationRequest(PawnKindDef kind, Faction faction = null, PawnGenerationContext context = PawnGenerationContext.NonPlayer, int tile = -1, bool forceGenerateNewPawn = false, bool newborn = false, bool allowDead = false, bool allowDowned = false, bool canGeneratePawnRelations = true, bool mustBeCapableOfViolence = false, float colonistRelationChanceFactor = 1f, bool forceAddFreeWarmLayerIfNeeded = false, bool allowGay = true, bool allowFood = true, bool inhabitant = false, bool certainlyBeenInCryptosleep = false, bool forceRedressWorldPawnIfFormerColonist = false, bool worldPawnFactionDoesntMatter = false, Predicate<Pawn> validator = null, float? minChanceToRedressWorldPawn = null, float? fixedBiologicalAge = null, float? fixedChronologicalAge = null, Gender? fixedGender = null, float? fixedMelanin = null, string fixedLastName = null)
 		{
+			this = default(PawnGenerationRequest);
 			if (context == PawnGenerationContext.All)
 			{
 				Log.Error("Should not generate pawns with context 'All'");
@@ -165,7 +186,10 @@ namespace Verse
 			this.AllowFood = allowFood;
 			this.Inhabitant = inhabitant;
 			this.CertainlyBeenInCryptosleep = certainlyBeenInCryptosleep;
+			this.ForceRedressWorldPawnIfFormerColonist = forceRedressWorldPawnIfFormerColonist;
+			this.WorldPawnFactionDoesntMatter = worldPawnFactionDoesntMatter;
 			this.Validator = validator;
+			this.MinChanceToRedressWorldPawn = minChanceToRedressWorldPawn;
 			this.FixedBiologicalAge = fixedBiologicalAge;
 			this.FixedChronologicalAge = fixedChronologicalAge;
 			this.FixedGender = fixedGender;

@@ -7,6 +7,8 @@ namespace Verse
 		ByPawn,
 		PassDoors,
 		NoPassClosedDoors,
-		PassAllDestroyableThings
+		PassAllDestroyableThings,
+		NoPassClosedDoorsOrWater,
+		PassAllDestroyableThingsNotWater
 	}
 }

@@ -21,6 +21,9 @@ namespace RimWorld
 
 		public TechLevel minFactionTechLevel;
 
+		[NoTranslate]
+		public List<string> tags = new List<string>();
+
 		[Unsaved]
 		private Texture2D expandingIconTextureInt;
 

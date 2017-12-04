@@ -58,8 +58,13 @@ namespace RimWorld
 				Predicate<Thing> oldValidator = predicate;
 				predicate = ((Thing x) => PartyUtility.InPartyArea(x.Position, partySpot, pawn.Map) && oldValidator(x));
 			}
+			IntVec3 position = pawn.Position;
+			Map map = pawn.Map;
+			List<Thing> searchSet2 = searchSet;
+			PathEndMode peMode = PathEndMode.OnCell;
+			TraverseParms traverseParams = TraverseParms.For(pawn, Danger.Deadly, TraverseMode.ByPawn, false);
 			Predicate<Thing> validator = predicate;
-			return GenClosest.ClosestThing_Global_Reachable(pawn.Position, pawn.Map, searchSet, PathEndMode.OnCell, TraverseParms.For(pawn, Danger.Deadly, TraverseMode.ByPawn, false), 9999f, validator, null);
+			return GenClosest.ClosestThing_Global_Reachable(position, map, searchSet2, peMode, traverseParams, 9999f, validator, null);
 		}
 
 		protected virtual bool CanInteractWith(Pawn pawn, Thing t, bool inBed)
@@ -73,6 +78,10 @@ namespace RimWorld
 				return false;
 			}
 			if (!t.IsSociallyProper(pawn))
+			{
+				return false;
+			}
+			if (!t.IsPoliticallyProper(pawn))
 			{
 				return false;
 			}

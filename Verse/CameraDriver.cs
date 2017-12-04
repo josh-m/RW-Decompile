@@ -7,6 +7,34 @@ namespace Verse
 {
 	public class CameraDriver : MonoBehaviour
 	{
+		public CameraShaker shaker = new CameraShaker();
+
+		private Camera cachedCamera;
+
+		private GameObject reverbDummy;
+
+		public CameraMapConfig config = new CameraMapConfig_Normal();
+
+		private Vector3 velocity;
+
+		private Vector3 rootPos;
+
+		private float rootSize;
+
+		private float desiredSize;
+
+		private Vector2 desiredDolly = Vector2.zero;
+
+		private Vector2 mouseDragVect = Vector2.zero;
+
+		private bool mouseCoveredByUI;
+
+		private float mouseTouchingScreenBottomEdgeStartTime = -1f;
+
+		private static int lastViewRectGetFrame = -1;
+
+		private static CellRect lastViewRect;
+
 		public const float MaxDeltaTime = 0.025f;
 
 		private const float ScreenDollyEdgeWidth = 20f;
@@ -38,34 +66,6 @@ namespace Verse
 		private const float MaxAltitude = 65f;
 
 		private const float ReverbDummyAltitude = 65f;
-
-		public CameraShaker shaker = new CameraShaker();
-
-		private Camera cachedCamera;
-
-		private GameObject reverbDummy;
-
-		public CameraMapConfig config = new CameraMapConfig_Normal();
-
-		private Vector3 velocity;
-
-		private Vector3 rootPos;
-
-		private float rootSize;
-
-		private float desiredSize;
-
-		private Vector2 desiredDolly = Vector2.zero;
-
-		private Vector2 mouseDragVect = Vector2.zero;
-
-		private bool mouseCoveredByUI;
-
-		private float mouseTouchingScreenBottomEdgeStartTime = -1f;
-
-		private static int lastViewRectGetFrame = -1;
-
-		private static CellRect lastViewRect;
 
 		private Camera MyCamera
 		{
@@ -198,10 +198,6 @@ namespace Verse
 			{
 				return;
 			}
-			if (!WorldRendererUtility.WorldRenderedNow)
-			{
-				Find.VisibleMap.GenerateWaterMap();
-			}
 		}
 
 		public void OnPreCull()
@@ -231,6 +227,7 @@ namespace Verse
 			{
 				return;
 			}
+			UnityGUIBugsFixer.OnGUI();
 			this.mouseCoveredByUI = false;
 			if (Find.WindowStack.GetWindowAt(UI.MousePositionOnUIInverted) != null)
 			{
@@ -299,6 +296,10 @@ namespace Verse
 		{
 			if (LongEventHandler.ShouldWaitForEvent)
 			{
+				if (Current.SubcameraDriver != null)
+				{
+					Current.SubcameraDriver.UpdatePositions(this.MyCamera);
+				}
 				return;
 			}
 			if (Find.VisibleMap == null)
@@ -345,6 +346,7 @@ namespace Verse
 			this.rootSize += num * 0.4f;
 			this.shaker.Update();
 			this.ApplyPositionToGameObject();
+			Current.SubcameraDriver.UpdatePositions(this.MyCamera);
 			if (Find.VisibleMap != null)
 			{
 				RememberedCameraPos rememberedCameraPos = Find.VisibleMap.rememberedCameraPos;

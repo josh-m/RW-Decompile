@@ -71,11 +71,8 @@ namespace Verse
 			for (int j = 0; j < 4; j++)
 			{
 				List<Vector3> verts;
-				List<Vector3> expr_1C0 = verts = subMesh.verts;
 				int index;
-				int expr_1C7 = index = count + j;
-				Vector3 a = verts[index];
-				expr_1C0[expr_1C7] = a + center;
+				(verts = subMesh.verts)[index = count + j] = verts[index] + center;
 				subMesh.uvs.Add(uvs[j]);
 				subMesh.colors.Add(colors[j]);
 			}

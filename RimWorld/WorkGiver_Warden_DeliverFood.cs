@@ -32,7 +32,7 @@ namespace RimWorld
 			}
 			Thing thing;
 			ThingDef def;
-			if (!FoodUtility.TryFindBestFoodSourceFor(pawn, pawn2, pawn2.needs.food.CurCategory == HungerCategory.Starving, out thing, out def, false, true, false, false, false))
+			if (!FoodUtility.TryFindBestFoodSourceFor(pawn, pawn2, pawn2.needs.food.CurCategory == HungerCategory.Starving, out thing, out def, false, true, false, false, false, false))
 			{
 				return null;
 			}
@@ -71,7 +71,7 @@ namespace RimWorld
 				for (int j = 0; j < list.Count; j++)
 				{
 					Thing thing = list[j];
-					if (!thing.def.IsIngestible || thing.def.ingestible.preferability > FoodPreferability.DesperateOnly)
+					if (!thing.def.IsIngestible || thing.def.ingestible.preferability > FoodPreferability.DesperateOnlyForHumanlikes)
 					{
 						num2 += WorkGiver_Warden_DeliverFood.NutritionAvailableForFrom(prisoner, thing);
 					}

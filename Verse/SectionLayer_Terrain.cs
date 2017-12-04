@@ -29,6 +29,11 @@ namespace Verse
 			return terrain.DrawMatSingle;
 		}
 
+		public bool AllowRenderingFor(TerrainDef terrain)
+		{
+			return DebugViewSettings.drawTerrainWater || !terrain.HasTag("Water");
+		}
+
 		public override void Regenerate()
 		{
 			base.ClearSubMeshes(MeshParts.All);
@@ -42,7 +47,7 @@ namespace Verse
 				hashSet.Clear();
 				TerrainDef terrainDef = terrainGrid.TerrainAt(current);
 				LayerSubMesh subMesh = base.GetSubMesh(this.GetMaterialFor(terrainDef));
-				if (subMesh != null)
+				if (subMesh != null && this.AllowRenderingFor(terrainDef))
 				{
 					int count = subMesh.verts.Count;
 					subMesh.verts.Add(new Vector3((float)current.x, 0f, (float)current.z));
@@ -88,7 +93,7 @@ namespace Verse
 				foreach (TerrainDef current2 in hashSet)
 				{
 					LayerSubMesh subMesh2 = base.GetSubMesh(this.GetMaterialFor(current2));
-					if (subMesh2 != null)
+					if (subMesh2 != null && this.AllowRenderingFor(current2))
 					{
 						int count = subMesh2.verts.Count;
 						subMesh2.verts.Add(new Vector3((float)current.x + 0.5f, 0f, (float)current.z));

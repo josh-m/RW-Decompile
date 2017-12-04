@@ -26,6 +26,8 @@ namespace Verse
 
 		public float accuracyMultiplier = 1f;
 
+		public float perceivePriority;
+
 		public List<SoundDef> ambientSounds = new List<SoundDef>();
 
 		public List<WeatherEventMaker> eventMakers = new List<WeatherEventMaker>();

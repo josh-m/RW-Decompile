@@ -8,35 +8,39 @@ namespace RimWorld
 {
 	public class JobDriver_BuildSnowman : JobDriver
 	{
+		private float workLeft = -1000f;
+
 		protected const int BaseWorkAmount = 2300;
 
-		private float workLeft = -1000f;
+		public override bool TryMakePreToilReservations()
+		{
+			return this.pawn.Reserve(this.job.targetA, this.job, 1, -1, null);
+		}
 
 		[DebuggerHidden]
 		protected override IEnumerable<Toil> MakeNewToils()
 		{
-			yield return Toils_Reserve.Reserve(TargetIndex.A, 1, -1, null);
 			yield return Toils_Goto.GotoCell(TargetIndex.A, PathEndMode.Touch);
 			Toil doWork = new Toil();
 			doWork.initAction = delegate
 			{
-				this.<>f__this.workLeft = 2300f;
+				this.$this.workLeft = 2300f;
 			};
 			doWork.tickAction = delegate
 			{
-				this.<>f__this.workLeft -= this.<doWork>__0.actor.GetStatValue(StatDefOf.ConstructionSpeed, true);
-				if (this.<>f__this.workLeft <= 0f)
+				this.$this.workLeft -= doWork.actor.GetStatValue(StatDefOf.ConstructionSpeed, true);
+				if (this.$this.workLeft <= 0f)
 				{
 					Thing thing = ThingMaker.MakeThing(ThingDefOf.Snowman, null);
-					thing.SetFaction(this.<>f__this.pawn.Faction, null);
-					GenSpawn.Spawn(thing, this.<>f__this.TargetLocA, this.<>f__this.Map);
-					this.<>f__this.ReadyForNextToil();
+					thing.SetFaction(this.$this.pawn.Faction, null);
+					GenSpawn.Spawn(thing, this.$this.TargetLocA, this.$this.Map);
+					this.$this.ReadyForNextToil();
 					return;
 				}
-				JoyUtility.JoyTickCheckEnd(this.<>f__this.pawn, JoyTickFullJoyAction.EndJob, 1f);
+				JoyUtility.JoyTickCheckEnd(this.$this.pawn, JoyTickFullJoyAction.EndJob, 1f);
 			};
 			doWork.defaultCompleteMode = ToilCompleteMode.Never;
-			doWork.FailOn(() => !JoyUtility.EnjoyableOutsideNow(this.<>f__this.pawn, null));
+			doWork.FailOn(() => !JoyUtility.EnjoyableOutsideNow(this.$this.pawn, null));
 			doWork.FailOnCannotTouch(TargetIndex.A, PathEndMode.Touch);
 			yield return doWork;
 		}

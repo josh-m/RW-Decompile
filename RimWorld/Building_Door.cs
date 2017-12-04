@@ -11,16 +11,6 @@ namespace RimWorld
 {
 	public class Building_Door : Building
 	{
-		private const float BaseDoorOpenTicks = 45f;
-
-		private const int AutomaticCloseDelayTicks = 60;
-
-		private const int ApproachCloseDelayTicks = 300;
-
-		private const float VisualDoorOffsetStart = 0f;
-
-		private const float VisualDoorOffsetEnd = 0.45f;
-
 		public CompPowerTrader powerComp;
 
 		private bool openInt;
@@ -34,6 +24,18 @@ namespace RimWorld
 		protected int visualTicksOpen;
 
 		private bool freePassageWhenClearedReachabilityCache;
+
+		private const float BaseDoorOpenTicks = 45f;
+
+		private const int AutomaticCloseDelayTicks = 60;
+
+		private const int ApproachCloseDelayTicks = 300;
+
+		private const int MaxTicksSinceFriendlyTouchToAutoClose = 301;
+
+		private const float VisualDoorOffsetStart = 0f;
+
+		private const float VisualDoorOffsetEnd = 0.45f;
 
 		public bool Open
 		{
@@ -88,7 +90,7 @@ namespace RimWorld
 						for (int j = 0; j < thingList.Count; j++)
 						{
 							Pawn pawn = thingList[j] as Pawn;
-							if (pawn != null && !pawn.HostileTo(this))
+							if (pawn != null && !pawn.HostileTo(this) && !pawn.Downed)
 							{
 								if (pawn.Position == base.Position || (pawn.pather.MovingNow && pawn.pather.nextCell == base.Position))
 								{
@@ -160,7 +162,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return Find.TickManager.TicksGame < this.lastFriendlyTouchTick + 200;
+				return Find.TickManager.TicksGame < this.lastFriendlyTouchTick + 301;
 			}
 		}
 
@@ -278,6 +280,10 @@ namespace RimWorld
 
 		public void Notify_PawnApproaching(Pawn p)
 		{
+			if (!p.HostileTo(this))
+			{
+				this.FriendlyTouched();
+			}
 			if (this.PawnCanOpen(p))
 			{
 				base.Map.fogGrid.Notify_PawnEnteringDoor(this, p);
@@ -296,7 +302,7 @@ namespace RimWorld
 		public virtual bool PawnCanOpen(Pawn p)
 		{
 			Lord lord = p.GetLord();
-			return (lord != null && lord.LordJob != null && lord.LordJob.CanOpenAnyDoor(p)) || base.Faction == null || GenAI.MachinesLike(base.Faction, p);
+			return (lord != null && lord.LordJob != null && lord.LordJob.CanOpenAnyDoor(p)) || (p.IsWildMan() && !p.mindState.wildManEverReachedOutside) || base.Faction == null || (p.guest != null && p.guest.Released) || GenAI.MachinesLike(base.Faction, p);
 		}
 
 		public override bool BlocksPawn(Pawn p)
@@ -352,7 +358,7 @@ namespace RimWorld
 		{
 			base.Rotation = Building_Door.DoorRotationAt(base.Position, base.Map);
 			float num = Mathf.Clamp01((float)this.visualTicksOpen / (float)this.VisualTicksToOpen);
-			float d = 0f + 0.45f * num;
+			float d = 0.45f * num;
 			for (int i = 0; i < 2; i++)
 			{
 				Vector3 vector = default(Vector3);
@@ -442,10 +448,10 @@ namespace RimWorld
 					defaultDesc = "CommandToggleDoorHoldOpenDesc".Translate(),
 					hotKey = KeyBindingDefOf.Misc3,
 					icon = TexCommand.HoldOpen,
-					isActive = (() => this.<>f__this.holdOpenInt),
+					isActive = (() => this.$this.holdOpenInt),
 					toggleAction = delegate
 					{
-						this.<>f__this.holdOpenInt = !this.<>f__this.holdOpenInt;
+						this.$this.holdOpenInt = !this.$this.holdOpenInt;
 					}
 				};
 			}

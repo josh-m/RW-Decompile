@@ -30,6 +30,8 @@ namespace Verse
 
 		public bool execution;
 
+		public RulePackDef combatLogRules;
+
 		public bool isExplosive;
 
 		public int explosionDamage = 10;
@@ -54,13 +56,29 @@ namespace Verse
 
 		public bool harmAllLayersUntilOutside;
 
-		public bool hasChanceToAdditionallyDamageInnerSolidParts;
-
 		public HediffDef hediff;
 
 		public HediffDef hediffSkin;
 
 		public HediffDef hediffSolid;
+
+		public float stabChanceOfForcedInternal;
+
+		public float stabPierceBonus;
+
+		public SimpleCurve cutExtraTargetsCurve;
+
+		public float cutCleaveBonus;
+
+		public float bluntInnerHitFrequency;
+
+		public FloatRange bluntInnerHitConverted;
+
+		public FloatRange bluntInnerHitAdded;
+
+		public float scratchSplitPercentage = 0.5f;
+
+		public float biteDamageMultiplier = 1f;
 
 		public List<DamageDefAdditionalHediff> additionalHediffs;
 

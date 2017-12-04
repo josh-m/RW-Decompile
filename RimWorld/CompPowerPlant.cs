@@ -21,7 +21,7 @@ namespace RimWorld
 			base.PostSpawnSetup(respawningAfterLoad);
 			this.refuelableComp = this.parent.GetComp<CompRefuelable>();
 			this.breakdownableComp = this.parent.GetComp<CompBreakdownable>();
-			if (base.Props.basePowerConsumption < 0f && !this.parent.IsBrokenDown())
+			if (base.Props.basePowerConsumption < 0f && !this.parent.IsBrokenDown() && FlickUtility.WantsToBeOn(this.parent))
 			{
 				base.PowerOn = true;
 			}

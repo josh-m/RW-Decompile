@@ -1,4 +1,3 @@
-using RimWorld;
 using RimWorld.Planet;
 using System;
 using System.Collections.Generic;
@@ -9,15 +8,15 @@ namespace Verse
 {
 	public sealed class LetterStack : IExposable
 	{
-		private const float LettersBottomY = 350f;
-
-		public const float LetterSpacing = 12f;
-
 		private List<Letter> letters = new List<Letter>();
 
 		private int mouseoverLetterIndex = -1;
 
 		private float lastTopYInt;
+
+		private const float LettersBottomY = 350f;
+
+		public const float LetterSpacing = 12f;
 
 		public List<Letter> LettersListForReading
 		{
@@ -50,7 +49,7 @@ namespace Verse
 		public void ReceiveLetter(Letter let, string debugInfo = null)
 		{
 			let.def.arriveSound.PlayOneShotOnCamera(null);
-			if (let.def == LetterDefOf.BadUrgent && Prefs.PauseOnUrgentLetter && !Find.TickManager.Paused)
+			if (let.def.pauseIfPauseOnUrgentLetter && Prefs.PauseOnUrgentLetter && !Find.TickManager.Paused)
 			{
 				Find.TickManager.TogglePaused();
 			}

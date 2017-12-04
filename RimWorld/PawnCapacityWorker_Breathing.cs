@@ -8,7 +8,8 @@ namespace RimWorld
 	{
 		public override float CalculateCapacityLevel(HediffSet diffSet, List<PawnCapacityUtility.CapacityImpactor> impactors = null)
 		{
-			return PawnCapacityUtility.CalculateTagEfficiency(diffSet, "BreathingSource", 3.40282347E+38f, impactors) * PawnCapacityUtility.CalculateTagEfficiency(diffSet, "BreathingPathway", 1f, impactors);
+			string tag = "BreathingSource";
+			return PawnCapacityUtility.CalculateTagEfficiency(diffSet, tag, 3.40282347E+38f, impactors) * PawnCapacityUtility.CalculateTagEfficiency(diffSet, "BreathingPathway", 1f, impactors);
 		}
 
 		public override bool CanHaveCapacity(BodyDef body)

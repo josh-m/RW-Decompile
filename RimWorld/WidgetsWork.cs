@@ -11,19 +11,15 @@ namespace RimWorld
 	{
 		public const float WorkBoxSize = 25f;
 
-		private const int AwfulBGMax = 4;
-
-		private const int BadBGMax = 14;
-
-		private const int MaxLevelForCrunch = 2;
-
-		private const float PassionOpacity = 0.4f;
-
 		public static readonly Texture2D WorkBoxBGTex_Awful = ContentFinder<Texture2D>.Get("UI/Widgets/WorkBoxBG_Awful", true);
 
 		public static readonly Texture2D WorkBoxBGTex_Bad = ContentFinder<Texture2D>.Get("UI/Widgets/WorkBoxBG_Bad", true);
 
+		private const int AwfulBGMax = 4;
+
 		public static readonly Texture2D WorkBoxBGTex_Mid = ContentFinder<Texture2D>.Get("UI/Widgets/WorkBoxBG_Mid", true);
+
+		private const int BadBGMax = 14;
 
 		public static readonly Texture2D WorkBoxBGTex_Excellent = ContentFinder<Texture2D>.Get("UI/Widgets/WorkBoxBG_Excellent", true);
 
@@ -32,6 +28,12 @@ namespace RimWorld
 		public static readonly Texture2D PassionWorkboxMinorIcon = ContentFinder<Texture2D>.Get("UI/Icons/PassionMinorGray", true);
 
 		public static readonly Texture2D PassionWorkboxMajorIcon = ContentFinder<Texture2D>.Get("UI/Icons/PassionMajorGray", true);
+
+		public static readonly Texture2D WorkBoxOverlay_Warning = ContentFinder<Texture2D>.Get("UI/Widgets/WorkBoxOverlay_Warning", true);
+
+		private const int WarnIfSelectedMax = 2;
+
+		private const float PassionOpacity = 0.4f;
 
 		private static Color ColorOfPriority(int prio)
 		{
@@ -98,7 +100,7 @@ namespace RimWorld
 						p.workSettings.SetPriority(wType, num2);
 						SoundDefOf.AmountDecrement.PlayOneShotOnCamera(null);
 					}
-					if (!flag && p.workSettings.WorkIsActive(wType) && p.skills.AverageOfRelevantSkillsFor(wType) <= 2f)
+					if (!flag && p.workSettings.WorkIsActive(wType) && wType.relevantSkills.Any<SkillDef>() && p.skills.AverageOfRelevantSkillsFor(wType) <= 2f)
 					{
 						SoundDefOf.Crunch.PlayOneShotOnCamera(null);
 					}
@@ -125,7 +127,7 @@ namespace RimWorld
 					{
 						p.workSettings.SetPriority(wType, 3);
 						SoundDefOf.CheckboxTurnedOn.PlayOneShotOnCamera(null);
-						if (p.skills.AverageOfRelevantSkillsFor(wType) <= 2f)
+						if (wType.relevantSkills.Any<SkillDef>() && p.skills.AverageOfRelevantSkillsFor(wType) <= 2f)
 						{
 							SoundDefOf.Crunch.PlayOneShotOnCamera(null);
 						}
@@ -138,7 +140,7 @@ namespace RimWorld
 		public static string TipForPawnWorker(Pawn p, WorkTypeDef wDef, bool incapableBecauseOfCapacities)
 		{
 			StringBuilder stringBuilder = new StringBuilder();
-			stringBuilder.AppendLine(wDef.gerundLabel);
+			stringBuilder.AppendLine(wDef.gerundLabel.CapitalizeFirst());
 			if (p.story.WorkTypeIsDisabled(wDef))
 			{
 				stringBuilder.Append("CannotDoThisWork".Translate(new object[]
@@ -148,25 +150,19 @@ namespace RimWorld
 			}
 			else
 			{
-				string text = string.Empty;
-				if (wDef.relevantSkills.Count == 0)
+				float num = p.skills.AverageOfRelevantSkillsFor(wDef);
+				if (wDef.relevantSkills.Any<SkillDef>())
 				{
-					text = "NoneBrackets".Translate();
-				}
-				else
-				{
+					string text = string.Empty;
 					foreach (SkillDef current in wDef.relevantSkills)
 					{
-						text = text + current.skillLabel + ", ";
+						text = text + current.skillLabel.CapitalizeFirst() + ", ";
 					}
 					text = text.Substring(0, text.Length - 2);
-				}
-				if (wDef.relevantSkills.Count > 0)
-				{
 					stringBuilder.AppendLine("RelevantSkills".Translate(new object[]
 					{
 						text,
-						p.skills.AverageOfRelevantSkillsFor(wDef).ToString(),
+						num.ToString("0.#"),
 						20
 					}));
 				}
@@ -177,6 +173,12 @@ namespace RimWorld
 					stringBuilder.AppendLine();
 					stringBuilder.AppendLine();
 					stringBuilder.Append("IncapableOfWorkTypeBecauseOfCapacities".Translate());
+				}
+				if (wDef.relevantSkills.Any<SkillDef>() && num <= 2f && p.workSettings.WorkIsActive(wDef))
+				{
+					stringBuilder.AppendLine();
+					stringBuilder.AppendLine();
+					stringBuilder.Append("SelectedWorkTypeWithVeryBadSkill".Translate());
 				}
 			}
 			return stringBuilder.ToString();
@@ -209,6 +211,11 @@ namespace RimWorld
 			GUI.DrawTexture(rect, image);
 			GUI.color = new Color(GUI.color.r, GUI.color.g, GUI.color.b, a);
 			GUI.DrawTexture(rect, image2);
+			if (workDef.relevantSkills.Any<SkillDef>() && num <= 2f && p.workSettings.WorkIsActive(workDef))
+			{
+				GUI.color = Color.white;
+				GUI.DrawTexture(rect.ContractedBy(-2f), WidgetsWork.WorkBoxOverlay_Warning);
+			}
 			Passion passion = p.skills.MaxPassionOfRelevantSkillsFor(workDef);
 			if (passion > Passion.None)
 			{

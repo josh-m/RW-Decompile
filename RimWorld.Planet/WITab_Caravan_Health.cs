@@ -8,16 +8,6 @@ namespace RimWorld.Planet
 {
 	public class WITab_Caravan_Health : WITab
 	{
-		private const float RowHeight = 50f;
-
-		private const float PawnLabelHeight = 18f;
-
-		private const float PawnLabelColumnWidth = 100f;
-
-		private const float SpaceAroundIcon = 4f;
-
-		private const float PawnCapacityColumnWidth = 100f;
-
 		private Vector2 scrollPosition;
 
 		private float scrollViewHeight;
@@ -27,6 +17,16 @@ namespace RimWorld.Planet
 		private bool compactMode;
 
 		private static List<PawnCapacityDef> capacitiesToDisplay = new List<PawnCapacityDef>();
+
+		private const float RowHeight = 50f;
+
+		private const float PawnLabelHeight = 18f;
+
+		private const float PawnLabelColumnWidth = 100f;
+
+		private const float SpaceAroundIcon = 4f;
+
+		private const float PawnCapacityColumnWidth = 100f;
 
 		private List<Pawn> Pawns
 		{

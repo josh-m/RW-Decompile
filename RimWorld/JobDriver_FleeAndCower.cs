@@ -14,7 +14,7 @@ namespace RimWorld
 
 		public override string GetReport()
 		{
-			if (this.pawn.Position != base.CurJob.GetTarget(TargetIndex.A).Cell)
+			if (this.pawn.CurJob != this.job || this.pawn.Position != this.job.GetTarget(TargetIndex.A).Cell)
 			{
 				return base.GetReport();
 			}
@@ -34,9 +34,9 @@ namespace RimWorld
 				defaultDuration = 1200,
 				tickAction = delegate
 				{
-					if (this.<>f__this.pawn.IsHashIntervalTick(35) && SelfDefenseUtility.ShouldStartFleeing(this.<>f__this.pawn))
+					if (this.$this.pawn.IsHashIntervalTick(35) && SelfDefenseUtility.ShouldStartFleeing(this.$this.pawn))
 					{
-						this.<>f__this.EndJobWith(JobCondition.InterruptForced);
+						this.$this.EndJobWith(JobCondition.InterruptForced);
 					}
 				}
 			};

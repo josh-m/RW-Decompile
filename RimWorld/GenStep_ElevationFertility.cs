@@ -74,18 +74,18 @@ namespace RimWorld
 				NoiseDebugUI.StoreNoiseRender(moduleBase, "elev + mountain");
 			}
 			float b = (!map.TileInfo.WaterCovered) ? 3.40282347E+38f : 0f;
-			MapGenFloatGrid mapGenFloatGrid = MapGenerator.FloatGridNamed("Elevation", map);
+			MapGenFloatGrid elevation = MapGenerator.Elevation;
 			foreach (IntVec3 current in map.AllCells)
 			{
-				mapGenFloatGrid[current] = Mathf.Min(moduleBase.GetValue(current), b);
+				elevation[current] = Mathf.Min(moduleBase.GetValue(current), b);
 			}
 			ModuleBase moduleBase3 = new Perlin(0.020999999716877937, 2.0, 0.5, 6, Rand.Range(0, 2147483647), QualityMode.High);
 			moduleBase3 = new ScaleBias(0.5, 0.5, moduleBase3);
 			NoiseDebugUI.StoreNoiseRender(moduleBase3, "noiseFert base");
-			MapGenFloatGrid mapGenFloatGrid2 = MapGenerator.FloatGridNamed("Fertility", map);
+			MapGenFloatGrid fertility = MapGenerator.Fertility;
 			foreach (IntVec3 current2 in map.AllCells)
 			{
-				mapGenFloatGrid2[current2] = moduleBase3.GetValue(current2);
+				fertility[current2] = moduleBase3.GetValue(current2);
 			}
 		}
 	}

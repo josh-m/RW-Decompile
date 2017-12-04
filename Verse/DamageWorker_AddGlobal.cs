@@ -4,7 +4,7 @@ namespace Verse
 {
 	public class DamageWorker_AddGlobal : DamageWorker
 	{
-		public override float Apply(DamageInfo dinfo, Thing thing)
+		public override DamageWorker.DamageResult Apply(DamageInfo dinfo, Thing thing)
 		{
 			Pawn pawn = thing as Pawn;
 			if (pawn != null)
@@ -13,7 +13,7 @@ namespace Verse
 				hediff.Severity = (float)dinfo.Amount;
 				pawn.health.AddHediff(hediff, null, new DamageInfo?(dinfo));
 			}
-			return 0f;
+			return DamageWorker.DamageResult.MakeNew();
 		}
 	}
 }

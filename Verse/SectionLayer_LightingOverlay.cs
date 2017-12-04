@@ -6,13 +6,13 @@ namespace Verse
 {
 	public class SectionLayer_LightingOverlay : SectionLayer
 	{
-		private const byte RoofedAreaMinSkyCover = 100;
-
 		private Color32[] glowGrid;
 
 		private int firstCenterInd;
 
 		private CellRect sectRect;
+
+		private const byte RoofedAreaMinSkyCover = 100;
 
 		private static readonly IntVec3[] CheckSquareOffsets = new IntVec3[]
 		{
@@ -214,7 +214,7 @@ namespace Verse
 					sm.tris.Add(item5);
 				}
 			}
-			sm.FinalizeMesh(MeshParts.Verts | MeshParts.Tris, false);
+			sm.FinalizeMesh(MeshParts.Verts | MeshParts.Tris);
 		}
 
 		private void CalculateVertexIndices(int worldX, int worldZ, out int botLeft, out int topLeft, out int topRight, out int botRight, out int center)

@@ -31,7 +31,7 @@ namespace Verse
 			{
 				if (this.fi == null)
 				{
-					Log.Error("Trying to resolve null field for def named " + this.defName);
+					Log.Error("Trying to resolve null field for def named " + this.defName.ToStringSafe<string>());
 					return false;
 				}
 				Def defSilentFail = GenDefDatabase.GetDefSilentFail(this.fi.FieldType, this.defName);
@@ -44,11 +44,11 @@ namespace Verse
 							"Could not resolve cross-reference: No ",
 							this.fi.FieldType,
 							" named ",
-							this.defName,
+							this.defName.ToStringSafe<string>(),
 							" found to give to ",
 							this.wanter.GetType(),
 							" ",
-							this.wanter
+							this.wanter.ToStringSafe<object>()
 						}));
 					}
 					return false;
@@ -61,11 +61,11 @@ namespace Verse
 						"Could not resolve cross-reference: No ",
 						this.fi.FieldType,
 						" named ",
-						this.defName,
+						this.defName.ToStringSafe<string>(),
 						" found to give to ",
 						this.wanter.GetType(),
 						" ",
-						this.wanter,
+						this.wanter.ToStringSafe<object>(),
 						" (using undefined sound instead)"
 					}));
 				}

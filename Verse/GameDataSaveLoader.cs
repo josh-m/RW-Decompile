@@ -6,6 +6,8 @@ namespace Verse
 {
 	public static class GameDataSaveLoader
 	{
+		private static int lastSaveTick = -9999;
+
 		public const string SavedScenarioParentNodeName = "savedscenario";
 
 		public const string SavedWorldParentNodeName = "savedworld";
@@ -17,8 +19,6 @@ namespace Verse
 		public const string WorldNodeName = "world";
 
 		public const string ScenarioNodeName = "scenario";
-
-		private static int lastSaveTick = -9999;
 
 		public static bool CurrentGameStateIsValuable
 		{

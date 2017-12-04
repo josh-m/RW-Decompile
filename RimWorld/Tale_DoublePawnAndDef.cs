@@ -41,7 +41,7 @@ namespace RimWorld
 		public override void GenerateTestData()
 		{
 			base.GenerateTestData();
-			this.defData = TaleData_Def.GenerateFrom(DefDatabase<TrainableDef>.GetRandom());
+			this.defData = TaleData_Def.GenerateFrom((Def)GenGeneric.InvokeStaticMethodOnGenericType(typeof(DefDatabase<>), this.def.defType, "GetRandom"));
 		}
 	}
 }

@@ -115,12 +115,20 @@ namespace RimWorld
 
 		public override AcceptanceReport CanDesignateCell(IntVec3 c)
 		{
+			if (!c.InBounds(base.Map))
+			{
+				return false;
+			}
 			if (!(this.MiniToInstallOrBuildingToReinstall is MinifiedThing) && c.GetThingList(base.Map).Find((Thing x) => x.Position == c && x.Rotation == this.placingRot && x.def == this.PlacingDef) != null)
 			{
 				return new AcceptanceReport("IdenticalThingExists".Translate());
 			}
+			BuildableDef placingDef = this.PlacingDef;
+			IntVec3 c2 = c;
+			Rot4 placingRot = this.placingRot;
+			Map map = base.Map;
 			Thing miniToInstallOrBuildingToReinstall = this.MiniToInstallOrBuildingToReinstall;
-			return GenConstruct.CanPlaceBlueprintAt(this.PlacingDef, c, this.placingRot, base.Map, false, miniToInstallOrBuildingToReinstall);
+			return GenConstruct.CanPlaceBlueprintAt(placingDef, c2, placingRot, map, false, miniToInstallOrBuildingToReinstall);
 		}
 
 		public override void DesignateSingleCell(IntVec3 c)

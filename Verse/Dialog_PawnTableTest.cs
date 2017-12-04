@@ -8,8 +8,6 @@ namespace Verse
 {
 	public class Dialog_PawnTableTest : Window
 	{
-		private const int TableTitleHeight = 30;
-
 		private PawnColumnDef singleColumn;
 
 		private PawnTable pawnTableMin;
@@ -17,6 +15,8 @@ namespace Verse
 		private PawnTable pawnTableOptimal;
 
 		private PawnTable pawnTableMax;
+
+		private const int TableTitleHeight = 30;
 
 		public override Vector2 InitialSize
 		{
@@ -44,17 +44,17 @@ namespace Verse
 			int num = ((int)inRect.height - 90) / 3;
 			if (this.pawnTableMin == null)
 			{
-				this.pawnTableMin = new PawnTable(Gen.YieldSingle<PawnColumnDef>(this.singleColumn), () => this.Pawns, 0, 0, 0, 0);
+				this.pawnTableMin = new PawnTable(Gen.YieldSingle<PawnColumnDef>(this.singleColumn), new Func<IEnumerable<Pawn>>(this.get_Pawns), 0, 0, 0, 0);
 				this.pawnTableMin.SetMinMaxSize(Mathf.Min(this.singleColumn.Worker.GetMinWidth(this.pawnTableMin) + 16, (int)inRect.width), Mathf.Min(this.singleColumn.Worker.GetMinWidth(this.pawnTableMin) + 16, (int)inRect.width), 0, num);
 			}
 			if (this.pawnTableOptimal == null)
 			{
-				this.pawnTableOptimal = new PawnTable(Gen.YieldSingle<PawnColumnDef>(this.singleColumn), () => this.Pawns, 0, 0, 0, 0);
+				this.pawnTableOptimal = new PawnTable(Gen.YieldSingle<PawnColumnDef>(this.singleColumn), new Func<IEnumerable<Pawn>>(this.get_Pawns), 0, 0, 0, 0);
 				this.pawnTableOptimal.SetMinMaxSize(Mathf.Min(this.singleColumn.Worker.GetOptimalWidth(this.pawnTableOptimal) + 16, (int)inRect.width), Mathf.Min(this.singleColumn.Worker.GetOptimalWidth(this.pawnTableOptimal) + 16, (int)inRect.width), 0, num);
 			}
 			if (this.pawnTableMax == null)
 			{
-				this.pawnTableMax = new PawnTable(Gen.YieldSingle<PawnColumnDef>(this.singleColumn), () => this.Pawns, 0, 0, 0, 0);
+				this.pawnTableMax = new PawnTable(Gen.YieldSingle<PawnColumnDef>(this.singleColumn), new Func<IEnumerable<Pawn>>(this.get_Pawns), 0, 0, 0, 0);
 				this.pawnTableMax.SetMinMaxSize(Mathf.Min(this.singleColumn.Worker.GetMaxWidth(this.pawnTableMax) + 16, (int)inRect.width), Mathf.Min(this.singleColumn.Worker.GetMaxWidth(this.pawnTableMax) + 16, (int)inRect.width), 0, num);
 			}
 			int num2 = 0;

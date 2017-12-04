@@ -18,7 +18,7 @@ namespace RimWorld
 			p.mindState.mentalStateHandler.TryStartMentalState(MentalStateDefOf.Manhunter, null, true, false, null);
 		}
 
-		public override bool TryExecute(IncidentParms parms)
+		protected override bool TryExecuteWorker(IncidentParms parms)
 		{
 			Map map = (Map)parms.target;
 			if (parms.points <= 0f)
@@ -68,6 +68,7 @@ namespace RimWorld
 			}
 			string label;
 			string text;
+			LetterDef textLetterDef;
 			if (num2 == 1)
 			{
 				label = "LetterLabelAnimalInsanitySingle".Translate() + ": " + pawn.LabelCap;
@@ -75,16 +76,18 @@ namespace RimWorld
 				{
 					pawn.LabelShort
 				});
+				textLetterDef = LetterDefOf.ThreatSmall;
 			}
 			else
 			{
 				label = "LetterLabelAnimalInsanityMultiple".Translate() + ": " + animalDef.LabelCap;
 				text = "AnimalInsanityMultiple".Translate(new object[]
 				{
-					animalDef.label
+					animalDef.GetLabelPlural(-1)
 				});
+				textLetterDef = LetterDefOf.ThreatBig;
 			}
-			Find.LetterStack.ReceiveLetter(label, text, LetterDefOf.BadUrgent, pawn, null);
+			Find.LetterStack.ReceiveLetter(label, text, textLetterDef, pawn, null);
 			SoundDefOf.PsychicPulseGlobal.PlayOneShotOnCamera(map);
 			if (map == Find.VisibleMap)
 			{

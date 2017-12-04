@@ -143,6 +143,12 @@ namespace RimWorld
 			ThingOwnerUtility.AppendThingHoldersFromThings(outChildren, this.GetDirectlyHeldThings());
 		}
 
+		public override void CompTick()
+		{
+			base.CompTick();
+			this.innerContainer.ThingOwnerTick(true);
+		}
+
 		public List<CompTransporter> TransportersInGroup(Map map)
 		{
 			if (!this.LoadingInProgressOrReadyToLaunch)
@@ -170,7 +176,7 @@ namespace RimWorld
 					action = delegate
 					{
 						SoundDefOf.DesignateCancel.PlayOneShotOnCamera(null);
-						this.<>f__this.CancelLoad();
+						this.$this.CancelLoad();
 					}
 				};
 				yield return new Command_Action
@@ -180,7 +186,7 @@ namespace RimWorld
 					icon = CompTransporter.SelectPreviousInGroupCommandTex,
 					action = delegate
 					{
-						this.<>f__this.SelectPreviousInGroup();
+						this.$this.SelectPreviousInGroup();
 					}
 				};
 				yield return new Command_Action
@@ -190,7 +196,7 @@ namespace RimWorld
 					icon = CompTransporter.SelectAllInGroupCommandTex,
 					action = delegate
 					{
-						this.<>f__this.SelectAllInGroup();
+						this.$this.SelectAllInGroup();
 					}
 				};
 				yield return new Command_Action
@@ -200,7 +206,7 @@ namespace RimWorld
 					icon = CompTransporter.SelectNextInGroupCommandTex,
 					action = delegate
 					{
-						this.<>f__this.SelectNextInGroup();
+						this.$this.SelectNextInGroup();
 					}
 				};
 			}
@@ -210,11 +216,11 @@ namespace RimWorld
 				int selectedTransportersCount = 0;
 				for (int i = 0; i < Find.Selector.NumSelected; i++)
 				{
-					Thing t = Find.Selector.SelectedObjectsListForReading[i] as Thing;
-					if (t != null && t.def == this.parent.def)
+					Thing thing = Find.Selector.SelectedObjectsListForReading[i] as Thing;
+					if (thing != null && thing.def == this.parent.def)
 					{
-						CompLaunchable cl = t.TryGetComp<CompLaunchable>();
-						if (cl == null || (cl.FuelingPortSource != null && cl.FuelingPortSourceHasAnyFuel))
+						CompLaunchable compLaunchable = thing.TryGetComp<CompLaunchable>();
+						if (compLaunchable == null || (compLaunchable.FuelingPortSource != null && compLaunchable.FuelingPortSourceHasAnyFuel))
 						{
 							selectedTransportersCount++;
 						}
@@ -248,7 +254,7 @@ namespace RimWorld
 			base.PostDeSpawn(map);
 			if (this.CancelLoad(map))
 			{
-				Messages.Message("MessageTransportersLoadCanceled_TransporterDestroyed".Translate(), MessageSound.Negative);
+				Messages.Message("MessageTransportersLoadCanceled_TransporterDestroyed".Translate(), MessageTypeDefOf.NegativeEvent);
 			}
 			this.innerContainer.TryDropAll(this.parent.Position, map, ThingPlaceMode.Near);
 		}
@@ -346,7 +352,7 @@ namespace RimWorld
 			}
 			if (!this.AnyInGroupHasAnythingLeftToLoad)
 			{
-				Messages.Message("MessageFinishedLoadingTransporters".Translate(), this.parent, MessageSound.Benefit);
+				Messages.Message("MessageFinishedLoadingTransporters".Translate(), this.parent, MessageTypeDefOf.TaskCompletion);
 			}
 		}
 
@@ -373,11 +379,6 @@ namespace RimWorld
 			List<CompTransporter> list = this.TransportersInGroup(this.Map);
 			int num = list.IndexOf(this);
 			CameraJumper.TryJumpAndSelect(list[(num + 1) % list.Count].parent);
-		}
-
-		virtual IThingHolder get_ParentHolder()
-		{
-			return base.ParentHolder;
 		}
 	}
 }

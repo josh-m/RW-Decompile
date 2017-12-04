@@ -7,9 +7,9 @@ namespace RimWorld
 {
 	internal class JobGiver_FireStartingSpree : ThinkNode_JobGiver
 	{
-		private const float FireStartChance = 0.75f;
-
 		private IntRange waitTicks = new IntRange(80, 140);
+
+		private const float FireStartChance = 0.75f;
 
 		private static List<Thing> potentialTargets = new List<Thing>();
 
@@ -42,8 +42,9 @@ namespace RimWorld
 			if (intVec.IsValid)
 			{
 				pawn.mindState.nextMoveOrderIsWait = true;
-				pawn.Map.pawnDestinationManager.ReserveDestinationFor(pawn, intVec);
-				return new Job(JobDefOf.GotoWander, intVec);
+				Job job2 = new Job(JobDefOf.GotoWander, intVec);
+				pawn.Map.pawnDestinationReservationManager.Reserve(pawn, job2, intVec);
+				return job2;
 			}
 			return null;
 		}

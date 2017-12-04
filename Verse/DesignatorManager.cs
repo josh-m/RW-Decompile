@@ -76,7 +76,7 @@ namespace Verse
 					}
 					else
 					{
-						Messages.Message(acceptanceReport.Reason, MessageSound.Silent);
+						Messages.Message(acceptanceReport.Reason, MessageTypeDefOf.SilentInput);
 						this.selectedDesignator.Finalize(false);
 					}
 				}

@@ -6,17 +6,19 @@ namespace RimWorld
 	{
 		public static float Scale(this StoryDanger d)
 		{
-			switch (d)
+			if (d == StoryDanger.None)
 			{
-			case StoryDanger.None:
-				return 0f;
-			case StoryDanger.Low:
-				return 1f;
-			case StoryDanger.High:
-				return 2f;
-			default:
 				return 0f;
 			}
+			if (d == StoryDanger.Low)
+			{
+				return 1f;
+			}
+			if (d != StoryDanger.High)
+			{
+				return 0f;
+			}
+			return 2f;
 		}
 	}
 }

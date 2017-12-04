@@ -52,7 +52,7 @@ namespace RimWorld.Planet
 				Find.LetterStack.ReceiveLetter("LetterLabelCaravanEnteredAmbushMap".Translate(), "LetterCaravanEnteredAmbushMap".Translate(new object[]
 				{
 					caravan.Label
-				}).CapitalizeFirst(), LetterDefOf.Good, t, null);
+				}).CapitalizeFirst(), LetterDefOf.NeutralEvent, t, null);
 			}
 			else if (caravan.IsPlayerControlled || this.mapParent.Faction == Faction.OfPlayer)
 			{
@@ -60,7 +60,7 @@ namespace RimWorld.Planet
 				{
 					caravan.Label,
 					this.mapParent.Label
-				}).CapitalizeFirst(), t, MessageSound.Benefit);
+				}).CapitalizeFirst(), t, MessageTypeDefOf.TaskCompletion);
 			}
 		}
 

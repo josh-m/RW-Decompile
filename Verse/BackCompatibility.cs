@@ -2,13 +2,17 @@ using RimWorld;
 using RimWorld.Planet;
 using System;
 using System.Collections.Generic;
+using System.Xml;
 using Verse.AI;
 
 namespace Verse
 {
 	public static class BackCompatibility
 	{
-		public static readonly Pair<int, int>[] SaveCompatibleMinorVersions = new Pair<int, int>[0];
+		public static readonly Pair<int, int>[] SaveCompatibleMinorVersions = new Pair<int, int>[]
+		{
+			new Pair<int, int>(17, 18)
+		};
 
 		public static bool IsSaveCompatibleWith(string version)
 		{
@@ -104,6 +108,194 @@ namespace Verse
 				{
 					return "Bullet_BoltActionRifle";
 				}
+				if (defName == "Neurotrainer")
+				{
+					return "MechSerumNeurotrainer";
+				}
+				if (defName == "FueledGenerator")
+				{
+					return "WoodFiredGenerator";
+				}
+				if (defName == "Gun_Pistol")
+				{
+					return "Gun_Revolver";
+				}
+				if (defName == "Bullet_Pistol")
+				{
+					return "Bullet_Revolver";
+				}
+				if (defName == "TableShort")
+				{
+					return "Table2x2c";
+				}
+				if (defName == "TableLong")
+				{
+					return "Table2x4c";
+				}
+				if (defName == "TableShort_Blueprint")
+				{
+					return "Table2x2c_Blueprint";
+				}
+				if (defName == "TableLong_Blueprint")
+				{
+					return "Table2x4c_Blueprint";
+				}
+				if (defName == "TableShort_Frame")
+				{
+					return "Table2x2c_Frame";
+				}
+				if (defName == "TableLong_Frame")
+				{
+					return "Table2x4c_Frame";
+				}
+				if (defName == "TableShort_Install")
+				{
+					return "Table2x2c_Install";
+				}
+				if (defName == "TableLong_Install")
+				{
+					return "Table2x4c_Install";
+				}
+				if (defName == "Turret_MortarBomb")
+				{
+					return "Turret_Mortar";
+				}
+				if (defName == "Turret_Incendiary")
+				{
+					return "Turret_Mortar";
+				}
+				if (defName == "Turret_MortarIncendiary")
+				{
+					return "Turret_Mortar";
+				}
+				if (defName == "Turret_EMP")
+				{
+					return "Turret_Mortar";
+				}
+				if (defName == "Turret_MortarEMP")
+				{
+					return "Turret_Mortar";
+				}
+				if (defName == "Turret_MortarBomb_Blueprint")
+				{
+					return "Turret_Mortar_Blueprint";
+				}
+				if (defName == "Turret_Incendiary_Blueprint")
+				{
+					return "Turret_Mortar_Blueprint";
+				}
+				if (defName == "Turret_MortarIncendiary_Blueprint")
+				{
+					return "Turret_Mortar_Blueprint";
+				}
+				if (defName == "Turret_EMP_Blueprint")
+				{
+					return "Turret_Mortar_Blueprint";
+				}
+				if (defName == "Turret_MortarEMP_Blueprint")
+				{
+					return "Turret_Mortar_Blueprint";
+				}
+				if (defName == "Turret_MortarBomb_Frame")
+				{
+					return "Turret_Mortar_Frame";
+				}
+				if (defName == "Turret_Incendiary_Frame")
+				{
+					return "Turret_Mortar_Frame";
+				}
+				if (defName == "Turret_MortarIncendiary_Frame")
+				{
+					return "Turret_Mortar_Frame";
+				}
+				if (defName == "Turret_EMP_Frame")
+				{
+					return "Turret_Mortar_Frame";
+				}
+				if (defName == "Turret_MortarEMP_Frame")
+				{
+					return "Turret_Mortar_Frame";
+				}
+				if (defName == "Turret_MortarBomb_Install")
+				{
+					return "Turret_Mortar_Install";
+				}
+				if (defName == "Turret_Incendiary_Install")
+				{
+					return "Turret_Mortar_Install";
+				}
+				if (defName == "Turret_MortarIncendiary_Install")
+				{
+					return "Turret_Mortar_Install";
+				}
+				if (defName == "Turret_EMP_Install")
+				{
+					return "Turret_Mortar_Install";
+				}
+				if (defName == "Turret_MortarEMP_Install")
+				{
+					return "Turret_Mortar_Install";
+				}
+				if (defName == "Artillery_MortarBomb")
+				{
+					return "Artillery_Mortar";
+				}
+				if (defName == "Artillery_MortarIncendiary")
+				{
+					return "Artillery_Mortar";
+				}
+				if (defName == "Artillery_MortarEMP")
+				{
+					return "Artillery_Mortar";
+				}
+				if (defName == "TrapIEDBomb")
+				{
+					return "TrapIED_HighExplosive";
+				}
+				if (defName == "TrapIEDIncendiary")
+				{
+					return "TrapIED_Incendiary";
+				}
+				if (defName == "TrapIEDBomb_Blueprint")
+				{
+					return "TrapIED_HighExplosive_Blueprint";
+				}
+				if (defName == "TrapIEDIncendiary_Blueprint")
+				{
+					return "TrapIED_Incendiary_Blueprint";
+				}
+				if (defName == "TrapIEDBomb_Frame")
+				{
+					return "TrapIED_HighExplosive_Frame";
+				}
+				if (defName == "TrapIEDIncendiary_Frame")
+				{
+					return "TrapIED_Incendiary_Frame";
+				}
+				if (defName == "TrapIEDBomb_Install")
+				{
+					return "TrapIED_HighExplosive_Install";
+				}
+				if (defName == "TrapIEDIncendiary_Install")
+				{
+					return "TrapIED_Incendiary_Install";
+				}
+				if (defName == "Bullet_MortarBomb")
+				{
+					return "Bullet_Shell_HighExplosive";
+				}
+				if (defName == "Bullet_MortarIncendiary")
+				{
+					return "Bullet_Shell_Incendiary";
+				}
+				if (defName == "Bullet_MortarEMP")
+				{
+					return "Bullet_Shell_EMP";
+				}
+				if (defName == "MortarShell")
+				{
+					return "Shell_HighExplosive";
+				}
 			}
 			else if (defType == typeof(ConceptDef))
 			{
@@ -143,6 +335,10 @@ namespace Verse
 				if (defName == "MalariBlockProduction")
 				{
 					return "PenoxycylineProduction";
+				}
+				if (defName == "IEDBomb")
+				{
+					return "IEDs";
 				}
 			}
 			else if (defType == typeof(MentalStateDef))
@@ -197,7 +393,7 @@ namespace Verse
 			{
 				if (defName == "MakeArtilleryShell")
 				{
-					return "MakeMortarShell";
+					return "Make_Shell_HighExplosive";
 				}
 				if (defName == "Make_MalariBlock")
 				{
@@ -214,6 +410,22 @@ namespace Verse
 				if (defName == "Make_Gun_SurvivalRifle")
 				{
 					return "Make_Gun_BoltActionRifle";
+				}
+				if (defName == "Make_Gun_Pistol")
+				{
+					return "Make_Gun_Revolver";
+				}
+				if (defName == "Make_TableShort")
+				{
+					return "Make_Table2x2c";
+				}
+				if (defName == "Make_TableLong")
+				{
+					return "Make_Table2x4c";
+				}
+				if (defName == "MakeMortarShell")
+				{
+					return "Make_Shell_HighExplosive";
 				}
 			}
 			else if (defType == typeof(HediffDef))
@@ -256,12 +468,61 @@ namespace Verse
 				{
 					return "MedicalTendSpeed";
 				}
+				if (defName == "GiftImpact")
+				{
+					return "DiplomacyPower";
+				}
 			}
-			else if (defType == typeof(SkillDef) && defName == "Research")
+			else if (defType == typeof(SkillDef))
 			{
-				return "Intellectual";
+				if (defName == "Research")
+				{
+					return "Intellectual";
+				}
+			}
+			else if (defType == typeof(LetterDef))
+			{
+				if (defName == "BadUrgent")
+				{
+					return "ThreatBig";
+				}
+				if (defName == "BadNonUrgent")
+				{
+					return "NegativeEvent";
+				}
+				if (defName == "Good")
+				{
+					return "PositiveEvent";
+				}
+			}
+			else if (defType == typeof(WorldObjectDef) && defName == "JourneyDestination")
+			{
+				return "EscapeShip";
 			}
 			return defName;
+		}
+
+		public static Type GetBackCompatibleType(Type baseType, string providedClassName, XmlNode node)
+		{
+			if (baseType == typeof(WorldObject))
+			{
+				if (providedClassName == "RimWorld.Planet.WorldObject" && node["def"] != null && node["def"].InnerText == "JourneyDestination")
+				{
+					return WorldObjectDefOf.EscapeShip.worldObjectClass;
+				}
+			}
+			else if (baseType == typeof(Thing))
+			{
+				if (providedClassName == "Building_PoisonShipPart" && node["def"] != null && node["def"].InnerText == "CrashedPoisonShipPart")
+				{
+					return ThingDefOf.CrashedPoisonShipPart.thingClass;
+				}
+				if (providedClassName == "Building_PsychicEmanator" && node["def"] != null && node["def"].InnerText == "CrashedPsychicEmanatorShipPart")
+				{
+					return ThingDefOf.CrashedPsychicEmanatorShipPart.thingClass;
+				}
+			}
+			return GenTypes.GetTypeInAnyAssembly(providedClassName);
 		}
 
 		public static string BackCompatibleModifiedTranslationPath(Type defType, string path)
@@ -299,6 +560,10 @@ namespace Verse
 			{
 				map.storyState = new StoryState(map);
 			}
+			if (map.pawnDestinationReservationManager == null)
+			{
+				map.pawnDestinationReservationManager = new PawnDestinationReservationManager();
+			}
 		}
 
 		public static void CaravanPostLoadInit(Caravan caravan)
@@ -332,8 +597,16 @@ namespace Verse
 				}
 				if (flag)
 				{
-					jobTracker.jobQueue.Clear();
+					jobTracker.ClearQueuedJobs();
 				}
+			}
+		}
+
+		public static void RecordsTrackerPostLoadInit(Pawn_RecordsTracker recordTracker)
+		{
+			if (VersionControl.MajorFromVersionString(ScribeMetaHeaderUtility.loadedGameVersion) == 0 && VersionControl.MajorFromVersionString(ScribeMetaHeaderUtility.loadedGameVersion) <= 17 && Find.TaleManager.AnyTaleConcerns(recordTracker.pawn))
+			{
+				recordTracker.AccumulateStoryEvent(StoryEventDefOf.TaleCreated);
 			}
 		}
 
@@ -346,6 +619,66 @@ namespace Verse
 			if (world.settings == null)
 			{
 				world.settings = new WorldSettings();
+			}
+		}
+
+		public static void TurretPostLoadInit(Building_TurretGun turret)
+		{
+			if (turret.gun == null)
+			{
+				turret.MakeGun();
+			}
+		}
+
+		public static void ImportantPawnCompPostLoadInit(ImportantPawnComp c)
+		{
+			if (c.pawn == null)
+			{
+				c.pawn = new ThingOwner<Pawn>(c, true, LookMode.Deep);
+			}
+		}
+
+		public static void PawnPostLoadInit(Pawn p)
+		{
+			if (p.Spawned && p.rotationTracker == null)
+			{
+				p.rotationTracker = new Pawn_RotationTracker(p);
+			}
+		}
+
+		public static void WorldPawnPostLoadInit(WorldPawns wp)
+		{
+			if (VersionControl.MajorFromVersionString(ScribeMetaHeaderUtility.loadedGameVersion) == 0 && VersionControl.MajorFromVersionString(ScribeMetaHeaderUtility.loadedGameVersion) <= 17)
+			{
+				wp.UnpinAllForcefullyKeptPawns();
+			}
+			if (wp.gc == null)
+			{
+				wp.gc = new WorldPawnGC();
+			}
+		}
+
+		public static void MindStatePostLoadInit(Pawn_MindState mindState)
+		{
+			if (mindState.inspirationHandler == null)
+			{
+				mindState.inspirationHandler = new InspirationHandler(mindState.pawn);
+			}
+		}
+
+		public static void GameConditionPostLoadInit(GameCondition gameCondition)
+		{
+			if (!gameCondition.Permanent && gameCondition.Duration > 1000000000)
+			{
+				gameCondition.Permanent = true;
+			}
+		}
+
+		public static void GameLoadingVars(Game game)
+		{
+			if (game.battleLog == null)
+			{
+				game.battleLog = new BattleLog();
 			}
 		}
 	}

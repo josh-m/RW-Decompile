@@ -9,14 +9,6 @@ namespace RimWorld
 {
 	public class Hive : ThingWithComps
 	{
-		private const int InitialPawnSpawnDelay = 420;
-
-		private const int PawnSpawnRadius = 4;
-
-		private const float MaxSpawnedPawnsPoints = 500f;
-
-		private const int InitialPawnsPoints = 200;
-
 		public bool active = true;
 
 		public int nextPawnSpawnTick = -1;
@@ -24,6 +16,16 @@ namespace RimWorld
 		private List<Pawn> spawnedPawns = new List<Pawn>();
 
 		private int ticksToSpawnInitialPawns = -1;
+
+		public bool canSpawnPawns = true;
+
+		private const int InitialPawnSpawnDelay = 420;
+
+		private const int PawnSpawnRadius = 4;
+
+		public const float MaxSpawnedPawnsPoints = 500f;
+
+		public const float InitialPawnsPoints = 200f;
 
 		private static readonly FloatRange PawnSpawnIntervalDays = new FloatRange(0.85f, 1.1f);
 
@@ -106,12 +108,17 @@ namespace RimWorld
 		private void SpawnInitialPawnsNow()
 		{
 			this.ticksToSpawnInitialPawns = -1;
-			while (this.SpawnedPawnsPoints < 200f)
+			this.SpawnPawnsUntilPoints(200f);
+		}
+
+		public void SpawnPawnsUntilPoints(float points)
+		{
+			while (this.SpawnedPawnsPoints < points)
 			{
 				Pawn pawn;
 				if (!this.TrySpawnPawn(out pawn))
 				{
-					return;
+					break;
 				}
 			}
 			this.CalculateNextPawnSpawnTick();
@@ -197,6 +204,7 @@ namespace RimWorld
 			Scribe_Values.Look<int>(ref this.nextPawnSpawnTick, "nextPawnSpawnTick", 0, false);
 			Scribe_Collections.Look<Pawn>(ref this.spawnedPawns, "spawnedPawns", LookMode.Reference, new object[0]);
 			Scribe_Values.Look<int>(ref this.ticksToSpawnInitialPawns, "ticksToSpawnInitialPawns", 0, false);
+			Scribe_Values.Look<bool>(ref this.canSpawnPawns, "canSpawnPawns", true, false);
 			if (Scribe.mode == LoadSaveMode.PostLoadInit)
 			{
 				this.spawnedPawns.RemoveAll((Pawn x) => x == null);
@@ -233,6 +241,11 @@ namespace RimWorld
 
 		private bool TrySpawnPawn(out Pawn pawn)
 		{
+			if (!this.canSpawnPawns)
+			{
+				pawn = null;
+				return false;
+			}
 			List<PawnKindDef> list = new List<PawnKindDef>();
 			list.Add(PawnKindDefOf.Megascarab);
 			list.Add(PawnKindDefOf.Spelopede);
@@ -275,7 +288,7 @@ namespace RimWorld
 					action = delegate
 					{
 						Pawn pawn;
-						this.<>f__this.TrySpawnPawn(out pawn);
+						this.$this.TrySpawnPawn(out pawn);
 					}
 				};
 			}

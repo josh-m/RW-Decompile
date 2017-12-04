@@ -10,6 +10,8 @@ namespace RimWorld
 	{
 		private float storedEnergy;
 
+		private const float SelfDischargingWatts = 5f;
+
 		public float AmountCanAccept
 		{
 			get
@@ -56,6 +58,12 @@ namespace RimWorld
 			{
 				this.storedEnergy = props.storedEnergyMax;
 			}
+		}
+
+		public override void CompTick()
+		{
+			base.CompTick();
+			this.DrawPower(Mathf.Min(5f * CompPower.WattsToWattDaysPerTick, this.storedEnergy));
 		}
 
 		public void AddEnergy(float amount)
@@ -119,6 +127,19 @@ namespace RimWorld
 				(props.efficiency * 100f).ToString("F0"),
 				"%"
 			});
+			if (this.storedEnergy > 0f)
+			{
+				text2 = text;
+				text = string.Concat(new string[]
+				{
+					text2,
+					"\n",
+					"SelfDischarging".Translate(),
+					": ",
+					5f.ToString("F0"),
+					" W"
+				});
+			}
 			return text + "\n" + base.CompInspectStringExtra();
 		}
 
@@ -136,7 +157,7 @@ namespace RimWorld
 					defaultLabel = "DEBUG: Fill",
 					action = delegate
 					{
-						this.<>f__this.SetStoredEnergyPct(1f);
+						this.$this.SetStoredEnergyPct(1f);
 					}
 				};
 				yield return new Command_Action
@@ -144,7 +165,7 @@ namespace RimWorld
 					defaultLabel = "DEBUG: Empty",
 					action = delegate
 					{
-						this.<>f__this.SetStoredEnergyPct(0f);
+						this.$this.SetStoredEnergyPct(0f);
 					}
 				};
 			}

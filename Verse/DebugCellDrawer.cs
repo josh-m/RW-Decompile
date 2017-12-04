@@ -6,36 +6,36 @@ namespace Verse
 {
 	public sealed class DebugCellDrawer
 	{
-		private const int DefaultLifespanTicks = 50;
-
 		private List<DebugCell> debugCells = new List<DebugCell>();
 
 		private List<DebugLine> debugLines = new List<DebugLine>();
 
-		public void FlashCell(IntVec3 c, float colorPct = 0f, string text = null)
+		private const int DefaultLifespanTicks = 50;
+
+		public void FlashCell(IntVec3 c, float colorPct = 0f, string text = null, int duration = 50)
 		{
 			DebugCell debugCell = new DebugCell();
 			debugCell.c = c;
 			debugCell.displayString = text;
 			debugCell.colorPct = colorPct;
-			debugCell.ticksLeft = 50;
+			debugCell.ticksLeft = duration;
 			this.debugCells.Add(debugCell);
 		}
 
-		public void FlashCell(IntVec3 c, Material mat, string text = null)
+		public void FlashCell(IntVec3 c, Material mat, string text = null, int duration = 50)
 		{
 			DebugCell debugCell = new DebugCell();
 			debugCell.c = c;
 			debugCell.displayString = text;
 			debugCell.customMat = mat;
-			debugCell.ticksLeft = 50;
+			debugCell.ticksLeft = duration;
 			this.debugCells.Add(debugCell);
 		}
 
-		public void FlashLine(IntVec3 a, IntVec3 b)
+		public void FlashLine(IntVec3 a, IntVec3 b, int duration = 50)
 		{
 			DebugLine item = new DebugLine(a.ToVector3Shifted(), b.ToVector3Shifted());
-			item.TicksLeft = 50;
+			item.TicksLeft = duration;
 			this.debugLines.Add(item);
 		}
 

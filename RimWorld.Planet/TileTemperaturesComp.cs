@@ -9,8 +9,6 @@ namespace RimWorld.Planet
 	{
 		private class CachedTileTemperatureData
 		{
-			private const int CachedTempUpdateInterval = 60;
-
 			private int tile;
 
 			private int tickCachesNeedReset;
@@ -23,11 +21,13 @@ namespace RimWorld.Planet
 
 			private Perlin dailyVariationPerlinCached;
 
+			private const int CachedTempUpdateInterval = 60;
+
 			public CachedTileTemperatureData(int tile)
 			{
 				this.tile = tile;
 				int seed = Gen.HashCombineInt(tile, 199372327);
-				this.dailyVariationPerlinCached = new Perlin(4.9999998736893758E-06, 2.0, 0.5, 3, seed, QualityMode.Medium);
+				this.dailyVariationPerlinCached = new Perlin(5.0000000745058062E-06, 2.0, 0.5, 3, seed, QualityMode.Medium);
 				this.twelfthlyTempAverages = new float[12];
 				for (int i = 0; i < 12; i++)
 				{

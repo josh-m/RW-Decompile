@@ -13,6 +13,10 @@ namespace RimWorld
 
 		private const float SkyGlow = 0.85f;
 
+		private SkyColorSet ToxicFalloutColors;
+
+		private List<SkyOverlay> overlays;
+
 		private const int CheckInterval = 3451;
 
 		private const float ToxicPerDay = 0.5f;
@@ -20,10 +24,6 @@ namespace RimWorld
 		private const float PlantKillChance = 0.0065f;
 
 		private const float CorpseRotProgressAdd = 3000f;
-
-		private SkyColorSet ToxicFalloutColors;
-
-		private List<SkyOverlay> overlays;
 
 		public GameCondition_ToxicFallout()
 		{
@@ -83,7 +83,7 @@ namespace RimWorld
 					{
 						if (Rand.Value < 0.0065f)
 						{
-							thing.Kill(null);
+							thing.Kill(null, null);
 						}
 					}
 					else if (thing.def.category == ThingCategory.Item)
@@ -109,7 +109,7 @@ namespace RimWorld
 
 		public override float SkyTargetLerpFactor()
 		{
-			return GameConditionUtility.LerpInOutValue((float)base.TicksPassed, (float)base.TicksLeft, 5000f, 0.5f);
+			return GameConditionUtility.LerpInOutValue(this, 5000f, 0.5f);
 		}
 
 		public override SkyTarget? SkyTarget()

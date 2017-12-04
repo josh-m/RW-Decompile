@@ -19,6 +19,22 @@ namespace RimWorld
 
 		private const float SapperChance = 0.5f;
 
+		private static readonly SimpleCurve PrisonBreakMTBFactorForDaysSincePrisonBreak = new SimpleCurve
+		{
+			{
+				new CurvePoint(0f, 2f),
+				true
+			},
+			{
+				new CurvePoint(2f, 1.5f),
+				true
+			},
+			{
+				new CurvePoint(6f, 1f),
+				true
+			}
+		};
+
 		private static HashSet<Room> participatingRooms = new HashSet<Room>();
 
 		private static List<Pawn> allEscapingPrisoners = new List<Pawn>();
@@ -43,7 +59,13 @@ namespace RimWorld
 				return -1f;
 			}
 			float num = 45f;
-			return num / Mathf.Min(pawn.health.capacities.GetLevel(PawnCapacityDefOf.Moving), 1f);
+			num /= Mathf.Clamp(pawn.health.capacities.GetLevel(PawnCapacityDefOf.Moving), 0.01f, 1f);
+			if (pawn.guest.everParticipatedInPrisonBreak)
+			{
+				float x = (float)(Find.TickManager.TicksGame - pawn.guest.lastPrisonBreakTicks) / 60000f;
+				num *= PrisonBreakUtility.PrisonBreakMTBFactorForDaysSincePrisonBreak.Evaluate(x);
+			}
+			return num;
 		}
 
 		public static bool CanParticipateInPrisonBreak(Pawn pawn)
@@ -151,6 +173,8 @@ namespace RimWorld
 				{
 					pawn.jobs.CheckForJobOverride();
 				}
+				pawn.guest.everParticipatedInPrisonBreak = true;
+				pawn.guest.lastPrisonBreakTicks = Find.TickManager.TicksGame;
 				outAllEscapingPrisoners.Add(pawn);
 			}
 			PrisonBreakUtility.escapingPrisonersGroup.Clear();
@@ -239,7 +263,7 @@ namespace RimWorld
 			Find.LetterStack.ReceiveLetter("LetterLabelPrisonBreak".Translate(), "LetterPrisonBreak".Translate(new object[]
 			{
 				stringBuilder.ToString().TrimEndNewlines()
-			}), LetterDefOf.BadUrgent, PrisonBreakUtility.allEscapingPrisoners[0], null);
+			}), LetterDefOf.ThreatBig, PrisonBreakUtility.allEscapingPrisoners[0], null);
 		}
 	}
 }

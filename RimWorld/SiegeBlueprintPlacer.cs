@@ -10,17 +10,17 @@ namespace RimWorld
 {
 	public static class SiegeBlueprintPlacer
 	{
-		private const int MaxArtyCount = 2;
-
-		public const float ArtyCost = 60f;
-
-		private const int MinSandbagDistSquared = 36;
-
 		private static IntVec3 center;
 
 		private static Faction faction;
 
 		private static List<IntVec3> placedSandbagLocs = new List<IntVec3>();
+
+		private const int MaxArtyCount = 2;
+
+		public const float ArtyCost = 60f;
+
+		private const int MinSandbagDistSquared = 36;
 
 		private static readonly IntRange NumSandbagRange = new IntRange(2, 4);
 

@@ -17,7 +17,13 @@ namespace Verse
 
 		public HediffComp_VerbGiver ownerHediffComp;
 
-		public int loadID = -1;
+		public ImplementOwnerTypeDef implementOwnerType;
+
+		public Tool tool;
+
+		public ManeuverDef maneuver;
+
+		public string loadID;
 
 		public VerbState state;
 
@@ -81,6 +87,30 @@ namespace Verse
 			}
 		}
 
+		public BodyPartGroupDef LinkedBodyPartsGroup
+		{
+			get
+			{
+				if (this.tool != null)
+				{
+					return this.tool.linkedBodyPartsGroup;
+				}
+				if (this.verbProps == null)
+				{
+					return null;
+				}
+				return this.verbProps.linkedBodyPartsGroup;
+			}
+		}
+
+		public virtual bool IsMeleeAttack
+		{
+			get
+			{
+				return false;
+			}
+		}
+
 		public float GetDamageFactorFor(Pawn pawn)
 		{
 			if (pawn != null)
@@ -89,9 +119,9 @@ namespace Verse
 				{
 					return PawnCapacityUtility.CalculatePartEfficiency(this.ownerHediffComp.Pawn.health.hediffSet, this.ownerHediffComp.parent.Part, true, null);
 				}
-				if (this.verbProps.linkedBodyPartsGroup != null)
+				if (this.LinkedBodyPartsGroup != null)
 				{
-					return PawnCapacityUtility.CalculateNaturalPartsAverageEfficiency(pawn.health.hediffSet, this.verbProps.linkedBodyPartsGroup);
+					return PawnCapacityUtility.CalculateNaturalPartsAverageEfficiency(pawn.health.hediffSet, this.LinkedBodyPartsGroup);
 				}
 			}
 			return 1f;
@@ -125,7 +155,7 @@ namespace Verse
 
 		public virtual void ExposeData()
 		{
-			Scribe_Values.Look<int>(ref this.loadID, "loadID", 0, false);
+			Scribe_Values.Look<string>(ref this.loadID, "loadID", null, false);
 			Scribe_Values.Look<VerbState>(ref this.state, "state", VerbState.Idle, false);
 			Scribe_TargetInfo.Look(ref this.currentTarget, "currentTarget");
 			Scribe_Values.Look<int>(ref this.burstShotsLeft, "burstShotsLeft", 0, false);
@@ -135,6 +165,16 @@ namespace Verse
 		public string GetUniqueLoadID()
 		{
 			return "Verb_" + this.loadID;
+		}
+
+		public static string CalculateUniqueLoadID(IVerbOwner owner, Tool tool, ManeuverDef maneuver)
+		{
+			return string.Format("{0}_{1}_{2}", owner.UniqueVerbOwnerID(), (tool == null) ? "NT" : tool.Id, (maneuver == null) ? "NM" : maneuver.defName);
+		}
+
+		public static string CalculateUniqueLoadID(IVerbOwner owner, int index)
+		{
+			return string.Format("{0}_{1}", owner.UniqueVerbOwnerID(), index);
 		}
 
 		public bool TryStartCastOn(LocalTargetInfo castTarg, bool surpriseAttack = false, bool canFreeIntercept = true)
@@ -183,6 +223,14 @@ namespace Verse
 			this.burstShotsLeft = this.ShotsPerBurst;
 			this.state = VerbState.Bursting;
 			this.TryCastNextBurstShot();
+			if (this.CasterIsPawn && this.currentTarget.HasThing)
+			{
+				Pawn pawn = this.currentTarget.Thing as Pawn;
+				if (pawn != null && pawn.IsColonistPlayerControlled)
+				{
+					this.CasterPawn.records.AccumulateStoryEvent(StoryEventDefOf.AttackedPlayer);
+				}
+			}
 		}
 
 		public void VerbTick()
@@ -206,7 +254,7 @@ namespace Verse
 
 		protected void TryCastNextBurstShot()
 		{
-			LocalTargetInfo target = this.currentTarget;
+			LocalTargetInfo localTargetInfo = this.currentTarget;
 			if (this.TryCastShot())
 			{
 				if (this.verbProps.muzzleFlashScale > 0.01f)
@@ -229,7 +277,11 @@ namespace Verse
 					}
 					if (this.CasterPawn.mindState != null)
 					{
-						this.CasterPawn.mindState.Notify_AttackedTarget(target);
+						this.CasterPawn.mindState.Notify_AttackedTarget(localTargetInfo);
+					}
+					if (this.CasterPawn.MentalState != null)
+					{
+						this.CasterPawn.MentalState.Notify_AttackedTarget(localTargetInfo);
 					}
 					if (!this.CasterPawn.Spawned)
 					{
@@ -255,7 +307,7 @@ namespace Verse
 				this.state = VerbState.Idle;
 				if (this.CasterIsPawn)
 				{
-					this.CasterPawn.stances.SetStance(new Stance_Cooldown(this.verbProps.AdjustedCooldownTicks(this.ownerEquipment), this.currentTarget, this));
+					this.CasterPawn.stances.SetStance(new Stance_Cooldown(this.verbProps.AdjustedCooldownTicks(this, this.CasterPawn, this.ownerEquipment), this.currentTarget, this));
 				}
 				if (this.castCompleteCallback != null)
 				{
@@ -293,18 +345,23 @@ namespace Verse
 					{
 						casterPawn.stances.CancelBusyStanceSoft();
 					}
+					if (casterPawn.CurJob != null && casterPawn.CurJob.def == JobDefOf.AttackStatic)
+					{
+						casterPawn.jobs.EndCurrentJob(JobCondition.Incompletable, true);
+					}
 				}
 			}
 		}
 
-		public virtual float HighlightFieldRadiusAroundTarget()
+		public virtual float HighlightFieldRadiusAroundTarget(out bool needLOSToCenter)
 		{
+			needLOSToCenter = false;
 			return 0f;
 		}
 
 		public bool CanHitTarget(LocalTargetInfo targ)
 		{
-			return this.CanHitTargetFrom(this.caster.Position, targ);
+			return this.caster != null && this.caster.Spawned && this.CanHitTargetFrom(this.caster.Position, targ);
 		}
 
 		public virtual bool CanHitTargetFrom(IntVec3 root, LocalTargetInfo targ)
@@ -347,7 +404,7 @@ namespace Verse
 				resultingLine = new ShootLine(root, targ.Cell);
 				return false;
 			}
-			if (!this.verbProps.NeedsLineOfSight)
+			if (!this.verbProps.requireLineOfSight)
 			{
 				resultingLine = new ShootLine(root, targ.Cell);
 				return true;
@@ -443,28 +500,36 @@ namespace Verse
 
 		public override string ToString()
 		{
-			string str;
-			if (!this.verbProps.label.NullOrEmpty())
+			string text;
+			if (this.verbProps == null)
 			{
-				str = this.verbProps.label;
+				text = "null";
+			}
+			else if (!this.verbProps.label.NullOrEmpty())
+			{
+				text = this.verbProps.label;
 			}
 			else if (this.ownerHediffComp != null)
 			{
-				str = this.ownerHediffComp.Def.label;
+				text = this.ownerHediffComp.Def.label;
 			}
 			else if (this.ownerEquipment != null)
 			{
-				str = this.ownerEquipment.def.label;
+				text = this.ownerEquipment.def.label;
 			}
-			else if (this.verbProps.linkedBodyPartsGroup != null)
+			else if (this.LinkedBodyPartsGroup != null)
 			{
-				str = this.verbProps.linkedBodyPartsGroup.defName;
+				text = this.LinkedBodyPartsGroup.defName;
 			}
 			else
 			{
-				str = "unknown";
+				text = "unknown";
 			}
-			return base.GetType().ToString() + "(" + str + ")";
+			if (this.tool != null)
+			{
+				text = text + "/" + this.tool.Id;
+			}
+			return base.GetType().ToString() + "(" + text + ")";
 		}
 	}
 }

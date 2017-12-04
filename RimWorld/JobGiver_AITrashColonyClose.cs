@@ -22,11 +22,11 @@ namespace RimWorld
 				if (randomCell.InBounds(pawn.Map))
 				{
 					Building edifice = randomCell.GetEdifice(pawn.Map);
-					if (edifice != null && TrashUtility.ShouldTrashBuilding(pawn, edifice) && GenSight.LineOfSight(pawn.Position, randomCell, pawn.Map, false, null, 0, 0))
+					if (edifice != null && TrashUtility.ShouldTrashBuilding(pawn, edifice, false) && GenSight.LineOfSight(pawn.Position, randomCell, pawn.Map, false, null, 0, 0))
 					{
 						if (DebugViewSettings.drawDestSearch && Find.VisibleMap == pawn.Map)
 						{
-							Find.VisibleMap.debugDrawer.FlashCell(randomCell, 1f, "trash bld");
+							Find.VisibleMap.debugDrawer.FlashCell(randomCell, 1f, "trash bld", 50);
 						}
 						return TrashUtility.TrashJob(pawn, edifice);
 					}
@@ -37,14 +37,14 @@ namespace RimWorld
 						{
 							if (DebugViewSettings.drawDestSearch && Find.VisibleMap == pawn.Map)
 							{
-								Find.VisibleMap.debugDrawer.FlashCell(randomCell, 0.5f, "trash plant");
+								Find.VisibleMap.debugDrawer.FlashCell(randomCell, 0.5f, "trash plant", 50);
 							}
 							return TrashUtility.TrashJob(pawn, plant);
 						}
 					}
 					if (DebugViewSettings.drawDestSearch && Find.VisibleMap == pawn.Map)
 					{
-						Find.VisibleMap.debugDrawer.FlashCell(randomCell, 0f, "trash no");
+						Find.VisibleMap.debugDrawer.FlashCell(randomCell, 0f, "trash no", 50);
 					}
 				}
 			}

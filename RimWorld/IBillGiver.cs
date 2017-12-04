@@ -21,6 +21,6 @@ namespace RimWorld
 			get;
 		}
 
-		bool CurrentlyUsable();
+		bool CurrentlyUsableForBills();
 	}
 }

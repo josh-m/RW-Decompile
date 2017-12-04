@@ -118,7 +118,7 @@ namespace RimWorld
 			List<Lord> lords = Find.VisibleMap.lordManager.lords;
 			for (int i = 0; i < lords.Count; i++)
 			{
-				if (lords[i].faction.HostileTo(Faction.OfPlayer))
+				if (lords[i].faction != null && lords[i].faction.HostileTo(Faction.OfPlayer))
 				{
 					if (lord == null || lords[i].ownedPawns.Count > lord.ownedPawns.Count)
 					{

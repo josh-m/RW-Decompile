@@ -8,18 +8,6 @@ namespace RimWorld
 	[StaticConstructorOnStartup]
 	public class OverlayDrawer
 	{
-		private const int AltitudeIndex_Forbidden = 4;
-
-		private const int AltitudeIndex_BurningWick = 5;
-
-		private const int AltitudeIndex_QuestionMark = 6;
-
-		private const float PulseFrequency = 4f;
-
-		private const float PulseAmplitude = 0.7f;
-
-		private const float StackOffsetMultipiler = 0.25f;
-
 		private Dictionary<Thing, OverlayTypes> overlaysToDraw = new Dictionary<Thing, OverlayTypes>();
 
 		private Vector3 curOffset;
@@ -40,9 +28,21 @@ namespace RimWorld
 
 		private static readonly Material WickMaterialB;
 
+		private const int AltitudeIndex_Forbidden = 4;
+
+		private const int AltitudeIndex_BurningWick = 5;
+
+		private const int AltitudeIndex_QuestionMark = 6;
+
 		private static float SingleCellForbiddenOffset;
 
+		private const float PulseFrequency = 4f;
+
+		private const float PulseAmplitude = 0.7f;
+
 		private static readonly float BaseAlt;
+
+		private const float StackOffsetMultipiler = 0.25f;
 
 		static OverlayDrawer()
 		{
@@ -63,9 +63,7 @@ namespace RimWorld
 			if (this.overlaysToDraw.ContainsKey(t))
 			{
 				Dictionary<Thing, OverlayTypes> dictionary;
-				Dictionary<Thing, OverlayTypes> expr_17 = dictionary = this.overlaysToDraw;
-				OverlayTypes overlayTypes = dictionary[t];
-				expr_17[t] = (overlayTypes | overlayType);
+				(dictionary = this.overlaysToDraw)[t] = (dictionary[t] | overlayType);
 			}
 			else
 			{
@@ -89,17 +87,23 @@ namespace RimWorld
 					OverlayTypes overlayTypes = OverlayTypes.NeedsPower | OverlayTypes.PowerOff;
 					int bitCountOf = Gen.GetBitCountOf((long)(value & overlayTypes));
 					float num = this.StackOffsetFor(current.Key);
-					switch (bitCountOf)
+					if (bitCountOf != 1)
 					{
-					case 1:
+						if (bitCountOf != 2)
+						{
+							if (bitCountOf == 3)
+							{
+								this.curOffset = new Vector3(-1.5f * num, 0f, 0f);
+							}
+						}
+						else
+						{
+							this.curOffset = new Vector3(-0.5f * num, 0f, 0f);
+						}
+					}
+					else
+					{
 						this.curOffset = Vector3.zero;
-						break;
-					case 2:
-						this.curOffset = new Vector3(-0.5f * num, 0f, 0f);
-						break;
-					case 3:
-						this.curOffset = new Vector3(-1.5f * num, 0f, 0f);
-						break;
 					}
 					if ((value & OverlayTypes.NeedsPower) != (OverlayTypes)0)
 					{
@@ -141,40 +145,55 @@ namespace RimWorld
 
 		private void RenderNeedsPowerOverlay(Thing t)
 		{
-			this.RenderPulsingOverlay(t, OverlayDrawer.NeedsPowerMat, 2);
+			this.RenderPulsingOverlay(t, OverlayDrawer.NeedsPowerMat, 2, true);
 		}
 
 		private void RenderPowerOffOverlay(Thing t)
 		{
-			this.RenderPulsingOverlay(t, OverlayDrawer.PowerOffMat, 3);
+			this.RenderPulsingOverlay(t, OverlayDrawer.PowerOffMat, 3, true);
 		}
 
 		private void RenderBrokenDownOverlay(Thing t)
 		{
-			this.RenderPulsingOverlay(t, OverlayDrawer.BrokenDownMat, 4);
+			this.RenderPulsingOverlay(t, OverlayDrawer.BrokenDownMat, 4, true);
 		}
 
 		private void RenderOutOfFuelOverlay(Thing t)
 		{
-			this.RenderPulsingOverlay(t, OverlayDrawer.OutOfFuelMat, 5);
+			CompRefuelable compRefuelable = t.TryGetComp<CompRefuelable>();
+			ThingDef thingDef;
+			if (compRefuelable != null && compRefuelable.Props.fuelFilter.AnyAllowedDef != null)
+			{
+				thingDef = compRefuelable.Props.fuelFilter.AnyAllowedDef;
+			}
+			else
+			{
+				thingDef = ThingDefOf.Chemfuel;
+			}
+			Material mat = MaterialPool.MatFrom(thingDef.uiIcon, ShaderDatabase.MetaOverlay, Color.white);
+			this.RenderPulsingOverlay(t, mat, 5, false);
+			this.RenderPulsingOverlay(t, OverlayDrawer.OutOfFuelMat, 6, true);
 		}
 
-		private void RenderPulsingOverlay(Thing thing, Material mat, int altInd)
+		private void RenderPulsingOverlay(Thing thing, Material mat, int altInd, bool incrementOffset = true)
 		{
 			Mesh plane = MeshPool.plane08;
-			this.RenderPulsingOverlay(thing, mat, altInd, plane);
+			this.RenderPulsingOverlay(thing, mat, altInd, plane, incrementOffset);
 		}
 
-		private void RenderPulsingOverlay(Thing thing, Material mat, int altInd, Mesh mesh)
+		private void RenderPulsingOverlay(Thing thing, Material mat, int altInd, Mesh mesh, bool incrementOffset = true)
 		{
 			Vector3 vector = thing.TrueCenter();
 			vector.y = OverlayDrawer.BaseAlt + 0.046875f * (float)altInd;
 			vector += this.curOffset;
-			this.curOffset.x = this.curOffset.x + this.StackOffsetFor(thing);
-			this.RenderPulsingOverlay(thing, mat, vector, mesh);
+			if (incrementOffset)
+			{
+				this.curOffset.x = this.curOffset.x + this.StackOffsetFor(thing);
+			}
+			this.RenderPulsingOverlayInternal(thing, mat, vector, mesh);
 		}
 
-		private void RenderPulsingOverlay(Thing thing, Material mat, Vector3 drawPos, Mesh mesh)
+		private void RenderPulsingOverlayInternal(Thing thing, Material mat, Vector3 drawPos, Mesh mesh)
 		{
 			float num = (Time.realtimeSinceStartup + 397f * (float)(thing.thingIDNumber % 571)) * 4f;
 			float num2 = ((float)Math.Sin((double)num) + 1f) * 0.5f;
@@ -208,7 +227,7 @@ namespace RimWorld
 		private void RenderBurningWick(Thing parent)
 		{
 			Material material;
-			if (Rand.Value < 0.5f)
+			if ((parent.thingIDNumber + Find.TickManager.TicksGame) % 6 < 3)
 			{
 				material = OverlayDrawer.WickMaterialA;
 			}
@@ -230,7 +249,7 @@ namespace RimWorld
 				drawPos.x += (float)t.def.size.x - 0.52f;
 				drawPos.z += (float)t.def.size.z - 0.45f;
 			}
-			this.RenderPulsingOverlay(t, OverlayDrawer.QuestionMarkMat, drawPos, MeshPool.plane05);
+			this.RenderPulsingOverlayInternal(t, OverlayDrawer.QuestionMarkMat, drawPos, MeshPool.plane05);
 		}
 	}
 }

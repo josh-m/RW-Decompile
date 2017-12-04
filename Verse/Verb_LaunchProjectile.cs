@@ -6,9 +6,36 @@ namespace Verse
 {
 	public class Verb_LaunchProjectile : Verb
 	{
+		public virtual ThingDef Projectile
+		{
+			get
+			{
+				if (this.ownerEquipment != null)
+				{
+					CompChangeableProjectile comp = this.ownerEquipment.GetComp<CompChangeableProjectile>();
+					if (comp != null && comp.Loaded)
+					{
+						return comp.Projectile;
+					}
+				}
+				return this.verbProps.defaultProjectile;
+			}
+		}
+
+		public override void WarmupComplete()
+		{
+			base.WarmupComplete();
+			Find.BattleLog.Add(new BattleLogEntry_RangedFire(this.caster, (!this.currentTarget.HasThing) ? null : this.currentTarget.Thing, (this.ownerEquipment == null) ? null : this.ownerEquipment.def, this.Projectile, this.ShotsPerBurst > 1));
+		}
+
 		protected override bool TryCastShot()
 		{
 			if (this.currentTarget.HasThing && this.currentTarget.Thing.Map != this.caster.Map)
+			{
+				return false;
+			}
+			ThingDef projectile = this.Projectile;
+			if (projectile == null)
 			{
 				return false;
 			}
@@ -18,9 +45,25 @@ namespace Verse
 			{
 				return false;
 			}
+			if (this.ownerEquipment != null)
+			{
+				CompChangeableProjectile comp = this.ownerEquipment.GetComp<CompChangeableProjectile>();
+				if (comp != null)
+				{
+					comp.Notify_ProjectileLaunched();
+				}
+			}
+			Thing launcher = this.caster;
+			Thing equipment = this.ownerEquipment;
+			CompMannable compMannable = this.caster.TryGetComp<CompMannable>();
+			if (compMannable != null && compMannable.ManningPawn != null)
+			{
+				launcher = compMannable.ManningPawn;
+				equipment = this.caster;
+			}
 			Vector3 drawPos = this.caster.DrawPos;
-			Projectile projectile = (Projectile)GenSpawn.Spawn(this.verbProps.projectileDef, shootLine.Source, this.caster.Map);
-			projectile.FreeIntercept = (this.canFreeInterceptNow && !projectile.def.projectile.flyOverhead);
+			Projectile projectile2 = (Projectile)GenSpawn.Spawn(projectile, shootLine.Source, this.caster.Map);
+			projectile2.FreeIntercept = (this.canFreeInterceptNow && !projectile2.def.projectile.flyOverhead);
 			if (this.verbProps.forcedMissRadius > 0.5f)
 			{
 				float num = (float)(this.currentTarget.Cell - this.caster.Position).LengthHorizontalSquared;
@@ -54,13 +97,13 @@ namespace Verse
 						IntVec3 c = this.currentTarget.Cell + GenRadial.RadialPattern[num3];
 						if (this.currentTarget.HasThing)
 						{
-							projectile.ThingToNeverIntercept = this.currentTarget.Thing;
+							projectile2.ThingToNeverIntercept = this.currentTarget.Thing;
 						}
-						if (!projectile.def.projectile.flyOverhead)
+						if (!projectile2.def.projectile.flyOverhead)
 						{
-							projectile.InterceptWalls = true;
+							projectile2.InterceptWalls = true;
 						}
-						projectile.Launch(this.caster, drawPos, c, this.ownerEquipment);
+						projectile2.Launch(launcher, drawPos, c, equipment, this.currentTarget.Thing);
 						return true;
 					}
 				}
@@ -75,13 +118,13 @@ namespace Verse
 				shootLine.ChangeDestToMissWild();
 				if (this.currentTarget.HasThing)
 				{
-					projectile.ThingToNeverIntercept = this.currentTarget.Thing;
+					projectile2.ThingToNeverIntercept = this.currentTarget.Thing;
 				}
-				if (!projectile.def.projectile.flyOverhead)
+				if (!projectile2.def.projectile.flyOverhead)
 				{
-					projectile.InterceptWalls = true;
+					projectile2.InterceptWalls = true;
 				}
-				projectile.Launch(this.caster, drawPos, shootLine.Dest, this.ownerEquipment);
+				projectile2.Launch(launcher, drawPos, shootLine.Dest, equipment, this.currentTarget.Thing);
 				return true;
 			}
 			if (Rand.Value > shotReport.ChanceToNotHitCover)
@@ -93,11 +136,11 @@ namespace Verse
 				if (this.currentTarget.Thing != null && this.currentTarget.Thing.def.category == ThingCategory.Pawn)
 				{
 					Thing randomCoverToMissInto = shotReport.GetRandomCoverToMissInto();
-					if (!projectile.def.projectile.flyOverhead)
+					if (!projectile2.def.projectile.flyOverhead)
 					{
-						projectile.InterceptWalls = true;
+						projectile2.InterceptWalls = true;
 					}
-					projectile.Launch(this.caster, drawPos, randomCoverToMissInto, this.ownerEquipment);
+					projectile2.Launch(launcher, drawPos, randomCoverToMissInto, equipment, this.currentTarget.Thing);
 					return true;
 				}
 			}
@@ -105,24 +148,30 @@ namespace Verse
 			{
 				MoteMaker.ThrowText(this.caster.DrawPos, this.caster.Map, "ToHit", -1f);
 			}
-			if (!projectile.def.projectile.flyOverhead)
+			if (!projectile2.def.projectile.flyOverhead)
 			{
-				projectile.InterceptWalls = (!this.currentTarget.HasThing || this.currentTarget.Thing.def.Fillage == FillCategory.Full);
+				projectile2.InterceptWalls = (!this.currentTarget.HasThing || this.currentTarget.Thing.def.Fillage == FillCategory.Full);
 			}
 			if (this.currentTarget.Thing != null)
 			{
-				projectile.Launch(this.caster, drawPos, this.currentTarget, this.ownerEquipment);
+				projectile2.Launch(launcher, drawPos, this.currentTarget, equipment, this.currentTarget.Thing);
 			}
 			else
 			{
-				projectile.Launch(this.caster, drawPos, shootLine.Dest, this.ownerEquipment);
+				projectile2.Launch(launcher, drawPos, shootLine.Dest, equipment, this.currentTarget.Thing);
 			}
 			return true;
 		}
 
-		public override float HighlightFieldRadiusAroundTarget()
+		public override float HighlightFieldRadiusAroundTarget(out bool needLOSToCenter)
 		{
-			return this.verbProps.projectileDef.projectile.explosionRadius;
+			needLOSToCenter = true;
+			ThingDef projectile = this.Projectile;
+			if (projectile == null)
+			{
+				return 0f;
+			}
+			return projectile.projectile.explosionRadius;
 		}
 	}
 }

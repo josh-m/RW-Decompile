@@ -44,7 +44,7 @@ namespace RimWorld
 				{
 					return;
 				}
-				if (Current.ProgramState != ProgramState.Playing)
+				if (Current.ProgramState != ProgramState.Playing && Scribe.mode != LoadSaveMode.Inactive)
 				{
 					Log.Error("Tried to set ForPrisoners while game mode was " + Current.ProgramState);
 					return;
@@ -173,7 +173,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return this.def.size.x;
+				return BedUtility.GetSleepingSlotsCount(this.def.size);
 			}
 		}
 
@@ -305,10 +305,10 @@ namespace RimWorld
 				pris.defaultLabel = "CommandBedSetForPrisonersLabel".Translate();
 				pris.defaultDesc = "CommandBedSetForPrisonersDesc".Translate();
 				pris.icon = ContentFinder<Texture2D>.Get("UI/Commands/ForPrisoners", true);
-				pris.isActive = (() => this.<>f__this.ForPrisoners);
+				pris.isActive = new Func<bool>(this.get_ForPrisoners);
 				pris.toggleAction = delegate
 				{
-					this.<>f__this.ToggleForPrisonersByInterface();
+					this.$this.ToggleForPrisonersByInterface();
 				};
 				if (!Building_Bed.RoomCanBePrisonCell(this.GetRoom(RegionType.Set_Passable)) && !this.ForPrisoners)
 				{
@@ -323,10 +323,10 @@ namespace RimWorld
 					defaultLabel = "CommandBedSetAsMedicalLabel".Translate(),
 					defaultDesc = "CommandBedSetAsMedicalDesc".Translate(),
 					icon = ContentFinder<Texture2D>.Get("UI/Commands/AsMedical", true),
-					isActive = (() => this.<>f__this.Medical),
+					isActive = new Func<bool>(this.get_Medical),
 					toggleAction = delegate
 					{
-						this.<>f__this.Medical = !this.<>f__this.Medical;
+						this.$this.Medical = !this.$this.Medical;
 					},
 					hotKey = KeyBindingDefOf.Misc2
 				};
@@ -339,7 +339,7 @@ namespace RimWorld
 						defaultDesc = "CommandBedSetOwnerDesc".Translate(),
 						action = delegate
 						{
-							Find.WindowStack.Add(new Dialog_AssignBuildingOwner(this.<>f__this));
+							Find.WindowStack.Add(new Dialog_AssignBuildingOwner(this.$this));
 						},
 						hotKey = KeyBindingDefOf.Misc3
 					};
@@ -463,8 +463,10 @@ namespace RimWorld
 				if (this.Medical)
 				{
 					stringBuilder.AppendLine("MedicalBed".Translate());
-					stringBuilder.AppendLine("RoomSurgerySuccessChanceFactor".Translate() + ": " + this.GetRoom(RegionType.Set_Passable).GetStat(RoomStatDefOf.SurgerySuccessChanceFactor).ToStringPercent());
-					stringBuilder.AppendLine("RoomInfectionChanceFactor".Translate() + ": " + this.GetRoom(RegionType.Set_Passable).GetStat(RoomStatDefOf.InfectionChanceFactor).ToStringPercent());
+					if (base.Spawned)
+					{
+						stringBuilder.AppendLine("RoomInfectionChanceFactor".Translate() + ": " + this.GetRoom(RegionType.Set_Passable).GetStat(RoomStatDefOf.InfectionChanceFactor).ToStringPercent());
+					}
 				}
 				else if (this.PlayerCanSeeOwners)
 				{
@@ -499,7 +501,7 @@ namespace RimWorld
 		[DebuggerHidden]
 		public override IEnumerable<FloatMenuOption> GetFloatMenuOptions(Pawn myPawn)
 		{
-			if (myPawn.RaceProps.Humanlike && !this.ForPrisoners && this.Medical && !myPawn.Drafted && base.Faction == Faction.OfPlayer)
+			if (myPawn.RaceProps.Humanlike && !this.ForPrisoners && this.Medical && !myPawn.Drafted && base.Faction == Faction.OfPlayer && RestUtility.CanUseBedEver(myPawn, this.def))
 			{
 				if (!HealthAIUtility.ShouldSeekMedicalRest(myPawn) && !HealthAIUtility.ShouldSeekMedicalRestUrgent(myPawn))
 				{
@@ -509,12 +511,12 @@ namespace RimWorld
 				{
 					Action sleep = delegate
 					{
-						if (!this.<>f__this.ForPrisoners && this.<>f__this.Medical && this.myPawn.CanReserveAndReach(this.<>f__this, PathEndMode.ClosestTouch, Danger.Deadly, this.<>f__this.SleepingSlotsCount, -1, null, true))
+						if (!this.$this.ForPrisoners && this.$this.Medical && myPawn.CanReserveAndReach(this.$this, PathEndMode.ClosestTouch, Danger.Deadly, this.$this.SleepingSlotsCount, -1, null, true))
 						{
-							Job job = new Job(JobDefOf.LayDown, this.<>f__this);
+							Job job = new Job(JobDefOf.LayDown, this.$this);
 							job.restUntilHealed = true;
-							this.myPawn.jobs.TryTakeOrderedJob(job, JobTag.Misc);
-							this.myPawn.mindState.ResetLastDisturbanceTick();
+							myPawn.jobs.TryTakeOrderedJob(job, JobTag.Misc);
+							myPawn.mindState.ResetLastDisturbanceTick();
 						}
 					};
 					if (this.AnyUnoccupiedSleepingSlot)
@@ -616,32 +618,7 @@ namespace RimWorld
 
 		public IntVec3 GetSleepingSlotPos(int index)
 		{
-			if (index < 0 || index >= this.SleepingSlotsCount)
-			{
-				Log.Error(string.Concat(new object[]
-				{
-					"Tried to get sleeping slot pos with index ",
-					index,
-					", but there are only ",
-					this.SleepingSlotsCount,
-					" sleeping slots available."
-				}));
-				return base.Position;
-			}
-			CellRect cellRect = this.OccupiedRect();
-			if (base.Rotation == Rot4.North)
-			{
-				return new IntVec3(cellRect.minX + index, base.Position.y, cellRect.minZ);
-			}
-			if (base.Rotation == Rot4.East)
-			{
-				return new IntVec3(cellRect.minX, base.Position.y, cellRect.maxZ - index);
-			}
-			if (base.Rotation == Rot4.South)
-			{
-				return new IntVec3(cellRect.minX + index, base.Position.y, cellRect.maxZ);
-			}
-			return new IntVec3(cellRect.maxX, base.Position.y, cellRect.maxZ - index);
+			return BedUtility.GetSleepingSlotPos(index, base.Position, base.Rotation, this.def.size);
 		}
 
 		public void SortOwners()

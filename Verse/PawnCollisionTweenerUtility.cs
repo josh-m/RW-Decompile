@@ -31,14 +31,15 @@ namespace Verse
 				{
 					at = pawn.Position;
 				}
-				int num = 0;
-				int vertexIndex = 0;
-				PawnCollisionTweenerUtility.GetPawnsStandingAtOrAboutToStandAt(at, pawn.Map, out num, out vertexIndex, pawn);
-				if (num == 0)
+				int polygonVertices;
+				int vertexIndex;
+				bool flag2;
+				PawnCollisionTweenerUtility.GetPawnsStandingAtOrAboutToStandAt(at, pawn.Map, out polygonVertices, out vertexIndex, out flag2, pawn);
+				if (!flag2)
 				{
 					return Vector3.zero;
 				}
-				return GenGeo.RegularPolygonVertexPositionVec3(num, vertexIndex) * 0.32f;
+				return GenGeo.RegularPolygonVertexPositionVec3(polygonVertices, vertexIndex) * 0.32f;
 			}
 			else
 			{
@@ -47,10 +48,10 @@ namespace Verse
 				{
 					return Vector3.zero;
 				}
-				int num2 = pawn.thingIDNumber % 2;
+				int num = pawn.thingIDNumber % 2;
 				if (nextCell.x != pawn.Position.x)
 				{
-					if (num2 == 0)
+					if (num == 0)
 					{
 						return new Vector3(0f, 0f, 0.32f);
 					}
@@ -58,7 +59,7 @@ namespace Verse
 				}
 				else
 				{
-					if (num2 == 0)
+					if (num == 0)
 					{
 						return new Vector3(0.32f, 0f, 0f);
 					}
@@ -67,10 +68,11 @@ namespace Verse
 			}
 		}
 
-		private static void GetPawnsStandingAtOrAboutToStandAt(IntVec3 at, Map map, out int pawnsCount, out int pawnsWithLowerIdCount, Pawn forPawn)
+		private static void GetPawnsStandingAtOrAboutToStandAt(IntVec3 at, Map map, out int pawnsCount, out int pawnsWithLowerIdCount, out bool forPawnFound, Pawn forPawn)
 		{
 			pawnsCount = 0;
 			pawnsWithLowerIdCount = 0;
+			forPawnFound = false;
 			CellRect.CellRectIterator iterator = CellRect.SingleCell(at).ExpandedBy(1).GetIterator();
 			while (!iterator.Done())
 			{
@@ -89,12 +91,16 @@ namespace Verse
 								{
 									if (!pawn.pather.MovingNow || pawn.pather.nextCell != pawn.pather.Destination.Cell || pawn.pather.Destination.Cell != at)
 									{
-										goto IL_120;
+										goto IL_132;
 									}
 								}
 								else if (pawn.pather.MovingNow)
 								{
-									goto IL_120;
+									goto IL_132;
+								}
+								if (pawn == forPawn)
+								{
+									forPawnFound = true;
 								}
 								pawnsCount++;
 								if (pawn.thingIDNumber < forPawn.thingIDNumber)
@@ -103,7 +109,7 @@ namespace Verse
 								}
 							}
 						}
-						IL_120:;
+						IL_132:;
 					}
 				}
 				iterator.MoveNext();

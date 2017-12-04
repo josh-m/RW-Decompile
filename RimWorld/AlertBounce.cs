@@ -5,6 +5,14 @@ namespace RimWorld
 {
 	internal class AlertBounce
 	{
+		private float position;
+
+		private float velocity;
+
+		private float lastTime = Time.time;
+
+		private bool idle;
+
 		private const float StartPosition = 300f;
 
 		private const float StartVelocity = -200f;
@@ -16,14 +24,6 @@ namespace RimWorld
 		private const float DampingConstant = 1f;
 
 		private const float MaxDelta = 0.05f;
-
-		private float position;
-
-		private float velocity;
-
-		private float lastTime = Time.time;
-
-		private bool idle;
 
 		public void DoAlertStartEffect()
 		{

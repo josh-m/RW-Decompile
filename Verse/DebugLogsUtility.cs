@@ -21,11 +21,8 @@ namespace Verse
 					dictionary.Add(current.def, 0);
 				}
 				Dictionary<ThingDef, int> dictionary2;
-				Dictionary<ThingDef, int> expr_44 = dictionary2 = dictionary;
 				ThingDef def;
-				ThingDef expr_4D = def = current.def;
-				int num = dictionary2[def];
-				expr_44[expr_4D] = num + 1;
+				(dictionary2 = dictionary)[def = current.def] = dictionary2[def] + 1;
 			}
 			StringBuilder stringBuilder = new StringBuilder();
 			stringBuilder.AppendLine("Registered things in dynamic draw list:");

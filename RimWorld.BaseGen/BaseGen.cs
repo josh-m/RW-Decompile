@@ -6,8 +6,6 @@ namespace RimWorld.BaseGen
 {
 	public static class BaseGen
 	{
-		private const int MaxResolvedSymbols = 100000;
-
 		public static GlobalSettings globalSettings = new GlobalSettings();
 
 		public static SymbolStack symbolStack = new SymbolStack();
@@ -15,6 +13,8 @@ namespace RimWorld.BaseGen
 		private static Dictionary<string, List<RuleDef>> rulesBySymbol = new Dictionary<string, List<RuleDef>>();
 
 		private static bool working;
+
+		private const int MaxResolvedSymbols = 100000;
 
 		private static List<SymbolResolver> tmpResolvers = new List<SymbolResolver>();
 

@@ -18,7 +18,15 @@ namespace RimWorld
 		{
 			get
 			{
-				return base.CurJob.GetTarget(TargetIndex.A).Thing;
+				return this.job.GetTarget(TargetIndex.A).Thing;
+			}
+		}
+
+		protected CompRefuelable RefuelableComp
+		{
+			get
+			{
+				return this.Refuelable.TryGetComp<CompRefuelable>();
 			}
 		}
 
@@ -26,8 +34,13 @@ namespace RimWorld
 		{
 			get
 			{
-				return base.CurJob.GetTarget(TargetIndex.B).Thing;
+				return this.job.GetTarget(TargetIndex.B).Thing;
 			}
+		}
+
+		public override bool TryMakePreToilReservations()
+		{
+			return this.pawn.Reserve(this.Refuelable, this.job, 1, -1, null) && this.pawn.Reserve(this.Fuel, this.job, 1, -1, null);
 		}
 
 		[DebuggerHidden]
@@ -36,7 +49,7 @@ namespace RimWorld
 			this.FailOnDespawnedNullOrForbidden(TargetIndex.A);
 			this.FailOn(delegate
 			{
-				ThingWithComps thingWithComps = this.<>f__this.pawn.CurJob.GetTarget(TargetIndex.A).Thing as ThingWithComps;
+				ThingWithComps thingWithComps = this.$this.job.GetTarget(TargetIndex.A).Thing as ThingWithComps;
 				if (thingWithComps != null)
 				{
 					CompFlickable comp = thingWithComps.GetComp<CompFlickable>();
@@ -47,11 +60,15 @@ namespace RimWorld
 				}
 				return false;
 			});
-			yield return Toils_Reserve.Reserve(TargetIndex.A, 1, -1, null);
+			base.AddEndCondition(() => (!this.$this.RefuelableComp.IsFull) ? JobCondition.Ongoing : JobCondition.Succeeded);
+			yield return Toils_General.DoAtomic(delegate
+			{
+				this.$this.job.count = this.$this.RefuelableComp.GetFuelCountToFullyRefuel();
+			});
 			Toil reserveFuel = Toils_Reserve.Reserve(TargetIndex.B, 1, -1, null);
 			yield return reserveFuel;
 			yield return Toils_Goto.GotoThing(TargetIndex.B, PathEndMode.ClosestTouch).FailOnDespawnedNullOrForbidden(TargetIndex.B).FailOnSomeonePhysicallyInteracting(TargetIndex.B);
-			yield return Toils_Haul.StartCarryThing(TargetIndex.B, false, true).FailOnDestroyedNullOrForbidden(TargetIndex.B);
+			yield return Toils_Haul.StartCarryThing(TargetIndex.B, false, true, false).FailOnDestroyedNullOrForbidden(TargetIndex.B);
 			yield return Toils_Haul.CheckForGetOpportunityDuplicate(reserveFuel, TargetIndex.B, TargetIndex.None, true, null);
 			yield return Toils_Goto.GotoThing(TargetIndex.A, PathEndMode.Touch);
 			yield return Toils_General.Wait(240).FailOnDestroyedNullOrForbidden(TargetIndex.B).FailOnDestroyedNullOrForbidden(TargetIndex.A).FailOnCannotTouch(TargetIndex.A, PathEndMode.Touch).WithProgressBarToilDelay(TargetIndex.A, false, -0.5f);

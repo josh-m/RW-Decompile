@@ -8,8 +8,6 @@ namespace RimWorld
 {
 	public class LordJob_FormAndSendCaravan : LordJob
 	{
-		public const float CustomWakeThreshold = 0.5f;
-
 		public List<TransferableOneWay> transferables;
 
 		private IntVec3 meetingPoint;
@@ -21,6 +19,8 @@ namespace RimWorld
 		private bool caravanSent;
 
 		private LordToil gatherItems;
+
+		public const float CustomWakeThreshold = 0.5f;
 
 		public bool GatheringItemsNow
 		{
@@ -94,7 +94,7 @@ namespace RimWorld
 			transition.AddSource(lordToil_PrepareCaravan_Pause4);
 			transition.AddSource(lordToil_PrepareCaravan_Pause5);
 			transition.AddTrigger(new Trigger_Custom((TriggerSignal x) => x.type == TriggerSignalType.PawnLost && !this.caravanSent));
-			transition.AddPreAction(new TransitionAction_Message("MessageFailedToSendCaravanBecausePawnLost".Translate(), MessageSound.Negative));
+			transition.AddPreAction(new TransitionAction_Message("MessageFailedToSendCaravanBecausePawnLost".Translate(), MessageTypeDefOf.NegativeEvent));
 			transition.AddPostAction(new TransitionAction_Custom(delegate
 			{
 				CaravanFormingUtility.Notify_FormAndSendCaravanLordFailed(this.lord);
@@ -148,7 +148,7 @@ namespace RimWorld
 		private Transition PauseTransition(LordToil from, LordToil to)
 		{
 			Transition transition = new Transition(from, to);
-			transition.AddPreAction(new TransitionAction_Message("MessageCaravanFormationPaused".Translate(), MessageSound.Standard));
+			transition.AddPreAction(new TransitionAction_Message("MessageCaravanFormationPaused".Translate(), MessageTypeDefOf.NegativeEvent));
 			transition.AddTrigger(new Trigger_MentalState());
 			transition.AddPostAction(new TransitionAction_EndAllJobs());
 			return transition;
@@ -157,7 +157,7 @@ namespace RimWorld
 		private Transition UnpauseTransition(LordToil from, LordToil to)
 		{
 			Transition transition = new Transition(from, to);
-			transition.AddPreAction(new TransitionAction_Message("MessageCaravanFormationUnpaused".Translate(), MessageSound.Benefit));
+			transition.AddPreAction(new TransitionAction_Message("MessageCaravanFormationUnpaused".Translate(), MessageTypeDefOf.SilentInput));
 			transition.AddTrigger(new Trigger_NoMentalState());
 			transition.AddPostAction(new TransitionAction_EndAllJobs());
 			return transition;

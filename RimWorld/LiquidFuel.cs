@@ -5,9 +5,9 @@ namespace RimWorld
 {
 	public class LiquidFuel : Filth
 	{
-		private const int DryOutTime = 1500;
-
 		private int spawnTick;
+
+		private const int DryOutTime = 1500;
 
 		public override void ExposeData()
 		{

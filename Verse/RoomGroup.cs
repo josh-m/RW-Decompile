@@ -7,8 +7,6 @@ namespace Verse
 {
 	public class RoomGroup
 	{
-		private const float UseOutdoorTemperatureUnroofedFraction = 0.25f;
-
 		public int ID = -1;
 
 		private List<Room> rooms = new List<Room>();
@@ -20,6 +18,8 @@ namespace Verse
 		private int cachedCellCount = -1;
 
 		private static int nextRoomGroupID;
+
+		private const float UseOutdoorTemperatureUnroofedFraction = 0.25f;
 
 		public List<Room> Rooms
 		{

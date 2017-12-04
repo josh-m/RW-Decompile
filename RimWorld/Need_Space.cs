@@ -6,13 +6,13 @@ namespace RimWorld
 {
 	public class Need_Space : Need_Seeker
 	{
+		private static List<Room> tempScanRooms = new List<Room>();
+
 		private const float MinCramped = 0.01f;
 
 		private const float MinNormal = 0.3f;
 
 		private const float MinSpacious = 0.7f;
-
-		private static List<Room> tempScanRooms = new List<Room>();
 
 		public static readonly int SampleNumCells = GenRadial.NumCellsInRadius(7.9f);
 

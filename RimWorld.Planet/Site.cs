@@ -56,6 +56,14 @@ namespace RimWorld.Planet
 			}
 		}
 
+		public override IntVec3 MapSizeGeneratedByTransportPodsArrival
+		{
+			get
+			{
+				return SiteCoreWorker.MapSize;
+			}
+		}
+
 		public bool KnownDanger
 		{
 			get
@@ -177,7 +185,7 @@ namespace RimWorld.Planet
 			{
 				this.parts[i].Worker.PostMapGenerate(map);
 			}
-			this.anyEnemiesInitially = GenHostility.AnyHostileActiveThreat(base.Map);
+			this.anyEnemiesInitially = GenHostility.AnyHostileActiveThreatToPlayer(base.Map);
 		}
 
 		public override bool ShouldRemoveMapNow(out bool alsoRemoveWorldObject)
@@ -218,7 +226,7 @@ namespace RimWorld.Planet
 			{
 				return;
 			}
-			if (GenHostility.AnyHostileActiveThreat(base.Map))
+			if (GenHostility.AnyHostileActiveThreatToPlayer(base.Map))
 			{
 				return;
 			}
@@ -226,13 +234,23 @@ namespace RimWorld.Planet
 			int num = Mathf.RoundToInt(this.core.forceExitAndRemoveMapCountdownDurationDays * 60000f);
 			string text = (!this.anyEnemiesInitially) ? "MessageSiteCountdownBecauseNoEnemiesInitially".Translate(new object[]
 			{
-				MapParent.GetForceExitAndRemoveMapCountdownTimeLeftString(num)
+				TimedForcedExit.GetForceExitAndRemoveMapCountdownTimeLeftString(num)
 			}) : "MessageSiteCountdownBecauseNoMoreEnemies".Translate(new object[]
 			{
-				MapParent.GetForceExitAndRemoveMapCountdownTimeLeftString(num)
+				TimedForcedExit.GetForceExitAndRemoveMapCountdownTimeLeftString(num)
 			});
-			Messages.Message(text, this, MessageSound.Benefit);
-			base.StartForceExitAndRemoveMapCountdown(num);
+			Messages.Message(text, this, MessageTypeDefOf.PositiveEvent);
+			base.GetComponent<TimedForcedExit>().StartForceExitAndRemoveMapCountdown(num);
+			TaleRecorder.RecordTale(TaleDefOf.CaravanAssaultSuccessful, new object[]
+			{
+				base.Map.mapPawns.FreeColonists.RandomElement<Pawn>()
+			});
+		}
+
+		public override bool AllMatchingObjectsOnScreenMatchesWith(WorldObject other)
+		{
+			Site site = other as Site;
+			return site != null && site.LeadingSiteDef == this.LeadingSiteDef;
 		}
 
 		public override string GetInspectString()

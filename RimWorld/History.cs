@@ -33,8 +33,8 @@ namespace RimWorld
 			this.curveDrawerStyle.PointsRemoveOptimization = true;
 			this.curveDrawerStyle.MeasureLabelsXCount = 10;
 			this.curveDrawerStyle.MeasureLabelsYCount = 5;
+			this.curveDrawerStyle.XIntegersOnly = true;
 			this.curveDrawerStyle.LabelX = "Day".Translate();
-			this.curveDrawerStyle.LabelY = "Value".Translate();
 		}
 
 		public void HistoryTick()

@@ -11,11 +11,11 @@ namespace Verse
 {
 	public class DefInjectionPackage
 	{
-		private const BindingFlags FieldBindingFlags = BindingFlags.IgnoreCase | BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
-
 		public Type defType;
 
 		private Dictionary<string, string> injections = new Dictionary<string, string>();
+
+		private const BindingFlags FieldBindingFlags = BindingFlags.IgnoreCase | BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
 
 		public DefInjectionPackage(Type defType)
 		{

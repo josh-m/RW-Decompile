@@ -6,6 +6,18 @@ namespace Verse
 {
 	public sealed class GlowGrid
 	{
+		private Map map;
+
+		public Color32[] glowGrid;
+
+		public Color32[] glowGridNoCavePlants;
+
+		private bool glowGridDirty;
+
+		private HashSet<CompGlower> litGlowers = new HashSet<CompGlower>();
+
+		private List<IntVec3> initialGlowerLocs = new List<IntVec3>();
+
 		public const int AlphaOfNotOverlit = 0;
 
 		public const int AlphaOfOverlit = 1;
@@ -18,20 +30,11 @@ namespace Verse
 
 		private const float MaxGameGlowFromNonOverlitGroundLights = 0.5f;
 
-		private Map map;
-
-		public Color32[] glowGrid;
-
-		private bool glowGridDirty;
-
-		private HashSet<CompGlower> litGlowers = new HashSet<CompGlower>();
-
-		private List<IntVec3> initialGlowerLocs = new List<IntVec3>();
-
 		public GlowGrid(Map map)
 		{
 			this.map = map;
 			this.glowGrid = new Color32[map.cellIndices.NumGridCells];
+			this.glowGridNoCavePlants = new Color32[map.cellIndices.NumGridCells];
 		}
 
 		public Color32 VisualGlowAt(IntVec3 c)
@@ -39,7 +42,7 @@ namespace Verse
 			return this.glowGrid[this.map.cellIndices.CellToIndex(c)];
 		}
 
-		public float GameGlowAt(IntVec3 c)
+		public float GameGlowAt(IntVec3 c, bool ignoreCavePlants = false)
 		{
 			float num = 0f;
 			if (!this.map.roofGrid.Roofed(c))
@@ -50,7 +53,8 @@ namespace Verse
 					return num;
 				}
 			}
-			Color32 color = this.glowGrid[this.map.cellIndices.CellToIndex(c)];
+			Color32[] array = (!ignoreCavePlants) ? this.glowGrid : this.glowGridNoCavePlants;
+			Color32 color = array[this.map.cellIndices.CellToIndex(c)];
 			if (color.a == 1)
 			{
 				return 1f;
@@ -62,7 +66,7 @@ namespace Verse
 
 		public PsychGlow PsychGlowAt(IntVec3 c)
 		{
-			float glow = this.GameGlowAt(c);
+			float glow = this.GameGlowAt(c, false);
 			return GlowGrid.PsychGlowAtGlow(glow);
 		}
 
@@ -128,10 +132,15 @@ namespace Verse
 			for (int i = 0; i < numGridCells; i++)
 			{
 				this.glowGrid[i] = new Color32(0, 0, 0, 0);
+				this.glowGridNoCavePlants[i] = new Color32(0, 0, 0, 0);
 			}
 			foreach (CompGlower current2 in this.litGlowers)
 			{
-				this.map.glowFlooder.AddFloodGlowFor(current2);
+				this.map.glowFlooder.AddFloodGlowFor(current2, this.glowGrid);
+				if (current2.parent.def.category != ThingCategory.Plant || !current2.parent.def.plant.cavePlant)
+				{
+					this.map.glowFlooder.AddFloodGlowFor(current2, this.glowGridNoCavePlants);
+				}
 			}
 		}
 	}

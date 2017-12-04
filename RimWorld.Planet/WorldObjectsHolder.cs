@@ -25,6 +25,8 @@ namespace RimWorld.Planet
 
 		private List<Site> sites = new List<Site>();
 
+		private List<PeaceTalks> peaceTalks = new List<PeaceTalks>();
+
 		private static List<WorldObject> tmpUnsavedWorldObjects = new List<WorldObject>();
 
 		private static List<WorldObject> tmpWorldObjects = new List<WorldObject>();
@@ -101,6 +103,14 @@ namespace RimWorld.Planet
 			}
 		}
 
+		public List<PeaceTalks> PeaceTalks
+		{
+			get
+			{
+				return this.peaceTalks;
+			}
+		}
+
 		public int WorldObjectsCount
 		{
 			get
@@ -163,6 +173,7 @@ namespace RimWorld.Planet
 			}
 			if (Scribe.mode == LoadSaveMode.PostLoadInit)
 			{
+				this.worldObjects.RemoveAll((WorldObject wo) => wo == null);
 				for (int j = 0; j < this.worldObjects.Count; j++)
 				{
 					this.worldObjects[j].SpawnSetup();
@@ -245,6 +256,10 @@ namespace RimWorld.Planet
 			{
 				this.sites.Add((Site)o);
 			}
+			if (o is PeaceTalks)
+			{
+				this.peaceTalks.Add((PeaceTalks)o);
+			}
 		}
 
 		private void RemoveFromCache(WorldObject o)
@@ -281,6 +296,10 @@ namespace RimWorld.Planet
 			{
 				this.sites.Remove((Site)o);
 			}
+			if (o is PeaceTalks)
+			{
+				this.peaceTalks.Remove((PeaceTalks)o);
+			}
 		}
 
 		private void Recache()
@@ -293,6 +312,7 @@ namespace RimWorld.Planet
 			this.routePlannerWaypoints.Clear();
 			this.mapParents.Clear();
 			this.sites.Clear();
+			this.peaceTalks.Clear();
 			for (int i = 0; i < this.worldObjects.Count; i++)
 			{
 				this.AddToCache(this.worldObjects[i]);
@@ -343,7 +363,12 @@ namespace RimWorld.Planet
 			return false;
 		}
 
-		public T WorldObjectAt<T>(int tile) where T : class
+		public bool AnyWorldObjectAt<T>(int tile) where T : WorldObject
+		{
+			return this.WorldObjectAt<T>(tile) != null;
+		}
+
+		public T WorldObjectAt<T>(int tile) where T : WorldObject
 		{
 			for (int i = 0; i < this.worldObjects.Count; i++)
 			{
@@ -353,6 +378,23 @@ namespace RimWorld.Planet
 				}
 			}
 			return (T)((object)null);
+		}
+
+		public bool AnyWorldObjectAt(int tile, WorldObjectDef def)
+		{
+			return this.WorldObjectAt(tile, def) != null;
+		}
+
+		public WorldObject WorldObjectAt(int tile, WorldObjectDef def)
+		{
+			for (int i = 0; i < this.worldObjects.Count; i++)
+			{
+				if (this.worldObjects[i].Tile == tile && this.worldObjects[i].def == def)
+				{
+					return this.worldObjects[i];
+				}
+			}
+			return null;
 		}
 
 		public bool AnyFactionBaseAt(int tile)
@@ -475,6 +517,19 @@ namespace RimWorld.Planet
 				}
 			}
 			return null;
+		}
+
+		public void GetPlayerControlledCaravansAt(int tile, List<Caravan> outCaravans)
+		{
+			outCaravans.Clear();
+			for (int i = 0; i < this.caravans.Count; i++)
+			{
+				Caravan caravan = this.caravans[i];
+				if (caravan.Tile == tile && caravan.IsPlayerControlled)
+				{
+					outCaravans.Add(caravan);
+				}
+			}
 		}
 	}
 }

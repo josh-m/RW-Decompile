@@ -8,11 +8,21 @@ namespace RimWorld
 	{
 		public static Tale MakeRawTale(TaleDef def, params object[] args)
 		{
-			Tale tale = (Tale)Activator.CreateInstance(def.taleClass, args);
-			tale.def = def;
-			tale.id = Find.World.uniqueIDsManager.GetNextTaleID();
-			tale.date = Find.TickManager.TicksAbs;
-			return tale;
+			Tale result;
+			try
+			{
+				Tale tale = (Tale)Activator.CreateInstance(def.taleClass, args);
+				tale.def = def;
+				tale.id = Find.UniqueIDsManager.GetNextTaleID();
+				tale.date = Find.TickManager.TicksAbs;
+				result = tale;
+			}
+			catch (Exception arg)
+			{
+				Log.Error(string.Format("Failed to create tale object {0} with parameters {1}: {2}", def, GenText.ToCommaList(args.Select(new Func<object, string>(Gen.ToStringSafe<object>)), true), arg));
+				result = null;
+			}
+			return result;
 		}
 
 		public static Tale MakeRandomTestTale(TaleDef def = null)

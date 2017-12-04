@@ -1,5 +1,4 @@
 using RimWorld;
-using RimWorld.Planet;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -7,7 +6,7 @@ using Verse.Grammar;
 
 namespace Verse
 {
-	public class PlayLogEntry_Interaction : PlayLogEntry
+	public class PlayLogEntry_Interaction : LogEntry
 	{
 		private InteractionDef intDef;
 
@@ -16,14 +15,6 @@ namespace Verse
 		private Pawn recipient;
 
 		private List<RulePackDef> extraSentencePacks;
-
-		public override Texture2D Icon
-		{
-			get
-			{
-				return this.intDef.Symbol;
-			}
-		}
 
 		private string InitiatorName
 		{
@@ -47,7 +38,6 @@ namespace Verse
 
 		public PlayLogEntry_Interaction(InteractionDef intDef, Pawn initiator, Pawn recipient, List<RulePackDef> extraSentencePacks)
 		{
-			this.ticksAbs = Find.TickManager.TicksAbs;
 			this.intDef = intDef;
 			this.initiator = initiator;
 			this.recipient = recipient;
@@ -75,6 +65,11 @@ namespace Verse
 			}
 		}
 
+		public override Texture2D IconFromPOV(Thing pov)
+		{
+			return this.intDef.Symbol;
+		}
+
 		public override string ToGameStringFromPOV(Thing pov)
 		{
 			if (this.initiator == null || this.recipient == null)
@@ -83,29 +78,29 @@ namespace Verse
 				return "[" + this.intDef.label + " error: null pawn reference]";
 			}
 			Rand.PushState();
-			Rand.Seed = this.ticksAbs * 61261;
-			List<Rule> list = new List<Rule>();
+			Rand.Seed = this.randSeed;
+			GrammarRequest request = default(GrammarRequest);
 			string text;
 			if (pov == this.initiator)
 			{
-				list.AddRange(this.intDef.logRulesInitiator.Rules);
-				list.AddRange(GrammarUtility.RulesForPawn("me", this.initiator.Name, this.initiator.kindDef, this.initiator.gender, this.initiator.Faction));
-				list.AddRange(GrammarUtility.RulesForPawn("other", this.recipient.Name, this.recipient.kindDef, this.recipient.gender, this.recipient.Faction));
-				text = GrammarResolver.Resolve("logentry", list, "interaction from initiator");
+				request.Rules.AddRange(this.intDef.logRulesInitiator.Rules);
+				request.Rules.AddRange(GrammarUtility.RulesForPawn("me", this.initiator, request.Constants));
+				request.Rules.AddRange(GrammarUtility.RulesForPawn("other", this.recipient, request.Constants));
+				text = GrammarResolver.Resolve("logentry", request, "interaction from initiator", false);
 			}
 			else if (pov == this.recipient)
 			{
 				if (this.intDef.logRulesRecipient != null)
 				{
-					list.AddRange(this.intDef.logRulesRecipient.Rules);
+					request.Rules.AddRange(this.intDef.logRulesRecipient.Rules);
 				}
 				else
 				{
-					list.AddRange(this.intDef.logRulesInitiator.Rules);
+					request.Rules.AddRange(this.intDef.logRulesInitiator.Rules);
 				}
-				list.AddRange(GrammarUtility.RulesForPawn("me", this.recipient.Name, this.recipient.kindDef, this.recipient.gender, this.recipient.Faction));
-				list.AddRange(GrammarUtility.RulesForPawn("other", this.initiator.Name, this.initiator.kindDef, this.initiator.gender, this.initiator.Faction));
-				text = GrammarResolver.Resolve("logentry", list, "interaction from recipient");
+				request.Rules.AddRange(GrammarUtility.RulesForPawn("me", this.recipient, request.Constants));
+				request.Rules.AddRange(GrammarUtility.RulesForPawn("other", this.initiator, request.Constants));
+				text = GrammarResolver.Resolve("logentry", request, "interaction from recipient", false);
 			}
 			else
 			{
@@ -116,29 +111,15 @@ namespace Verse
 			{
 				for (int i = 0; i < this.extraSentencePacks.Count; i++)
 				{
-					list.Clear();
-					list.AddRange(this.extraSentencePacks[i].Rules);
-					list.AddRange(GrammarUtility.RulesForPawn("initiator", this.initiator.Name, this.initiator.kindDef, this.initiator.gender, this.initiator.Faction));
-					list.AddRange(GrammarUtility.RulesForPawn("recipient", this.recipient.Name, this.recipient.kindDef, this.recipient.gender, this.recipient.Faction));
-					text = text + " " + GrammarResolver.Resolve(this.extraSentencePacks[i].Rules[0].keyword, list, "extraSentencePack");
+					request.Clear();
+					request.Includes.Add(this.extraSentencePacks[i]);
+					request.Rules.AddRange(GrammarUtility.RulesForPawn("initiator", this.initiator, request.Constants));
+					request.Rules.AddRange(GrammarUtility.RulesForPawn("recipient", this.recipient, request.Constants));
+					text = text + " " + GrammarResolver.Resolve(this.extraSentencePacks[i].RulesPlusIncludes[0].keyword, request, "extraSentencePack", false);
 				}
 			}
 			Rand.PopState();
 			return text;
-		}
-
-		public override void PostRemove()
-		{
-			base.PostRemove();
-			WorldPawns worldPawns = Find.WorldPawns;
-			if (worldPawns.Contains(this.initiator))
-			{
-				worldPawns.DiscardIfUnimportant(this.initiator);
-			}
-			if (worldPawns.Contains(this.recipient))
-			{
-				worldPawns.DiscardIfUnimportant(this.recipient);
-			}
 		}
 
 		public override void ExposeData()

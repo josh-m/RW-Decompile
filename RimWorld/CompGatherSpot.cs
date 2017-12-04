@@ -66,10 +66,10 @@ namespace RimWorld
 			com.hotKey = KeyBindingDefOf.CommandTogglePower;
 			com.defaultLabel = "CommandGatherSpotToggleLabel".Translate();
 			com.icon = TexCommand.GatherSpotActive;
-			com.isActive = (() => this.<>f__this.Active);
+			com.isActive = new Func<bool>(this.get_Active);
 			com.toggleAction = delegate
 			{
-				this.<>f__this.Active = !this.<>f__this.Active;
+				this.$this.Active = !this.$this.Active;
 			};
 			if (this.Active)
 			{

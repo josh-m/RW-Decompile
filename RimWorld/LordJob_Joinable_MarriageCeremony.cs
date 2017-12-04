@@ -15,6 +15,8 @@ namespace RimWorld
 
 		private Trigger_TicksPassed afterPartyTimeoutTrigger;
 
+		private const int TicksPerPartyPulse = 2200;
+
 		public override bool LostImportantReferenceDuringLoading
 		{
 			get
@@ -45,42 +47,42 @@ namespace RimWorld
 		public override StateGraph CreateGraph()
 		{
 			StateGraph stateGraph = new StateGraph();
-			LordToil_Party lordToil_Party = new LordToil_Party(this.spot);
+			LordToil_Party lordToil_Party = new LordToil_Party(this.spot, 2200);
 			stateGraph.AddToil(lordToil_Party);
 			LordToil_MarriageCeremony lordToil_MarriageCeremony = new LordToil_MarriageCeremony(this.firstPawn, this.secondPawn, this.spot);
 			stateGraph.AddToil(lordToil_MarriageCeremony);
-			LordToil_Party lordToil_Party2 = new LordToil_Party(this.spot);
+			LordToil_Party lordToil_Party2 = new LordToil_Party(this.spot, 2200);
 			stateGraph.AddToil(lordToil_Party2);
 			LordToil_End lordToil_End = new LordToil_End();
 			stateGraph.AddToil(lordToil_End);
 			Transition transition = new Transition(lordToil_Party, lordToil_MarriageCeremony);
-			transition.AddTrigger(new Trigger_TickCondition(() => this.lord.ticksInToil >= 5000 && this.AreFiancesInPartyArea()));
+			transition.AddTrigger(new Trigger_TickCondition(() => this.lord.ticksInToil >= 5000 && this.AreFiancesInPartyArea(), 1));
 			transition.AddPreAction(new TransitionAction_Message("MessageMarriageCeremonyStarts".Translate(new object[]
 			{
 				this.firstPawn.LabelShort,
 				this.secondPawn.LabelShort
-			}), MessageSound.Benefit, this.firstPawn));
+			}), MessageTypeDefOf.PositiveEvent, this.firstPawn));
 			stateGraph.AddTransition(transition);
 			Transition transition2 = new Transition(lordToil_MarriageCeremony, lordToil_Party2);
-			transition2.AddTrigger(new Trigger_TickCondition(() => this.firstPawn.relations.DirectRelationExists(PawnRelationDefOf.Spouse, this.secondPawn)));
+			transition2.AddTrigger(new Trigger_TickCondition(() => this.firstPawn.relations.DirectRelationExists(PawnRelationDefOf.Spouse, this.secondPawn), 1));
 			transition2.AddPreAction(new TransitionAction_Message("MessageNewlyMarried".Translate(new object[]
 			{
 				this.firstPawn.LabelShort,
 				this.secondPawn.LabelShort
-			}), MessageSound.Benefit, new TargetInfo(this.spot, base.Map, false)));
+			}), MessageTypeDefOf.PositiveEvent, new TargetInfo(this.spot, base.Map, false)));
 			transition2.AddPreAction(new TransitionAction_Custom(delegate
 			{
 				this.AddAttendedWeddingThoughts();
 			}));
 			stateGraph.AddTransition(transition2);
 			Transition transition3 = new Transition(lordToil_Party2, lordToil_End);
-			transition3.AddTrigger(new Trigger_TickCondition(() => this.ShouldAfterPartyBeCalledOff()));
+			transition3.AddTrigger(new Trigger_TickCondition(() => this.ShouldAfterPartyBeCalledOff(), 1));
 			transition3.AddTrigger(new Trigger_PawnLostViolently());
 			transition3.AddPreAction(new TransitionAction_Message("MessageMarriageCeremonyCalledOff".Translate(new object[]
 			{
 				this.firstPawn.LabelShort,
 				this.secondPawn.LabelShort
-			}), MessageSound.Negative, new TargetInfo(this.spot, base.Map, false)));
+			}), MessageTypeDefOf.NegativeEvent, new TargetInfo(this.spot, base.Map, false)));
 			stateGraph.AddTransition(transition3);
 			this.afterPartyTimeoutTrigger = new Trigger_TicksPassed(7500);
 			Transition transition4 = new Transition(lordToil_Party2, lordToil_End);
@@ -89,26 +91,26 @@ namespace RimWorld
 			{
 				this.firstPawn.LabelShort,
 				this.secondPawn.LabelShort
-			}), MessageSound.Benefit, this.firstPawn));
+			}), MessageTypeDefOf.PositiveEvent, this.firstPawn));
 			stateGraph.AddTransition(transition4);
 			Transition transition5 = new Transition(lordToil_MarriageCeremony, lordToil_End);
 			transition5.AddSource(lordToil_Party);
-			transition5.AddTrigger(new Trigger_TickCondition(() => this.lord.ticksInToil >= 120000 && (this.firstPawn.Drafted || this.secondPawn.Drafted || !this.firstPawn.Position.InHorDistOf(this.spot, 4f) || !this.secondPawn.Position.InHorDistOf(this.spot, 4f))));
+			transition5.AddTrigger(new Trigger_TickCondition(() => this.lord.ticksInToil >= 120000 && (this.firstPawn.Drafted || this.secondPawn.Drafted || !this.firstPawn.Position.InHorDistOf(this.spot, 4f) || !this.secondPawn.Position.InHorDistOf(this.spot, 4f)), 1));
 			transition5.AddPreAction(new TransitionAction_Message("MessageMarriageCeremonyCalledOff".Translate(new object[]
 			{
 				this.firstPawn.LabelShort,
 				this.secondPawn.LabelShort
-			}), MessageSound.Negative, new TargetInfo(this.spot, base.Map, false)));
+			}), MessageTypeDefOf.NegativeEvent, new TargetInfo(this.spot, base.Map, false)));
 			stateGraph.AddTransition(transition5);
 			Transition transition6 = new Transition(lordToil_MarriageCeremony, lordToil_End);
 			transition6.AddSource(lordToil_Party);
-			transition6.AddTrigger(new Trigger_TickCondition(() => this.ShouldCeremonyBeCalledOff()));
+			transition6.AddTrigger(new Trigger_TickCondition(() => this.ShouldCeremonyBeCalledOff(), 1));
 			transition6.AddTrigger(new Trigger_PawnLostViolently());
 			transition6.AddPreAction(new TransitionAction_Message("MessageMarriageCeremonyCalledOff".Translate(new object[]
 			{
 				this.firstPawn.LabelShort,
 				this.secondPawn.LabelShort
-			}), MessageSound.Negative, new TargetInfo(this.spot, base.Map, false)));
+			}), MessageTypeDefOf.NegativeEvent, new TargetInfo(this.spot, base.Map, false)));
 			stateGraph.AddTransition(transition6);
 			return stateGraph;
 		}

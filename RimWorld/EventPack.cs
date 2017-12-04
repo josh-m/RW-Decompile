@@ -57,6 +57,11 @@ namespace RimWorld
 			this.cellsInt = cells;
 		}
 
+		public static implicit operator EventPack(string s)
+		{
+			return new EventPack(s);
+		}
+
 		public override string ToString()
 		{
 			if (this.Cell.IsValid)
@@ -64,11 +69,6 @@ namespace RimWorld
 				return this.Tag + "-" + this.Cell;
 			}
 			return this.Tag;
-		}
-
-		public static implicit operator EventPack(string s)
-		{
-			return new EventPack(s);
 		}
 	}
 }

@@ -8,8 +8,6 @@ namespace Verse
 {
 	public class Def : Editable
 	{
-		public const string DefaultDefName = "UnnamedDef";
-
 		[Description("The name of this Def. It is used as an identifier by the game code."), NoTranslate]
 		public string defName = "UnnamedDef";
 
@@ -33,6 +31,8 @@ namespace Verse
 
 		[Unsaved]
 		public ushort debugRandomId = (ushort)Rand.RangeInclusive(0, 65535);
+
+		public const string DefaultDefName = "UnnamedDef";
 
 		private static Regex AllowedDefnamesRegex = new Regex("^[a-zA-Z0-9\\-_]*$");
 
@@ -71,6 +71,16 @@ namespace Verse
 			if (!Def.AllowedDefnamesRegex.IsMatch(this.defName))
 			{
 				yield return "defName " + this.defName + " should only contain letters, numbers, underscores, or dashes.";
+			}
+			if (this.modExtensions != null)
+			{
+				for (int i = 0; i < this.modExtensions.Count; i++)
+				{
+					foreach (string err in this.modExtensions[i].ConfigErrors())
+					{
+						yield return err;
+					}
+				}
 			}
 		}
 

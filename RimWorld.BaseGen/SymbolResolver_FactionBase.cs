@@ -13,7 +13,7 @@ namespace RimWorld.BaseGen
 		public override void Resolve(ResolveParams rp)
 		{
 			Map map = BaseGen.globalSettings.map;
-			Faction faction = rp.faction ?? Find.FactionManager.RandomEnemyFaction(false, false, true);
+			Faction faction = rp.faction ?? Find.FactionManager.RandomEnemyFaction(false, false, true, TechLevel.Undefined);
 			int num = 0;
 			int? edgeDefenseWidth = rp.edgeDefenseWidth;
 			if (edgeDefenseWidth.HasValue)
@@ -49,6 +49,7 @@ namespace RimWorld.BaseGen
 				resolveParams.pawnGroupMakerParams.inhabitants = true;
 			}
 			BaseGen.symbolStack.Push("pawnGroup", resolveParams);
+			BaseGen.symbolStack.Push("outdoorLighting", rp);
 			if (faction.def.techLevel >= TechLevel.Industrial)
 			{
 				int num4 = (!Rand.Chance(0.75f)) ? 0 : GenMath.RoundRandom((float)rp.rect.Area / 400f);

@@ -2,79 +2,42 @@ using RimWorld.Planet;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using Verse;
 
 namespace RimWorld
 {
 	public static class PawnsFinder
 	{
-		public static IEnumerable<Pawn> AllMapsAndWorld_AliveOrDead
+		public static IEnumerable<Pawn> AllMapsWorldAndTemporary_AliveOrDead
 		{
 			get
 			{
-				foreach (Pawn alive in PawnsFinder.AllMapsAndWorld_Alive)
+				foreach (Pawn p in PawnsFinder.AllMapsWorldAndTemporary_Alive)
 				{
-					yield return alive;
+					yield return p;
 				}
 				if (Find.World != null)
 				{
-					foreach (Pawn p in Find.WorldPawns.AllPawnsDead)
+					foreach (Pawn p2 in Find.WorldPawns.AllPawnsDead)
 					{
-						yield return p;
+						yield return p2;
 					}
 				}
-				List<Pawn> makingPawns = PawnGroupKindWorker.pawnsBeingGeneratedNow;
-				if (makingPawns != null)
+				foreach (Pawn p3 in PawnsFinder.Temporary_Dead)
 				{
-					for (int i = 0; i < makingPawns.Count; i++)
-					{
-						if (makingPawns[i].Dead)
-						{
-							yield return makingPawns[i];
-						}
-					}
-				}
-				List<Thing> makingThings = ItemCollectionGenerator.thingsBeingGeneratedNow;
-				if (makingThings != null)
-				{
-					for (int j = 0; j < makingThings.Count; j++)
-					{
-						Pawn p2 = makingThings[j] as Pawn;
-						if (p2 != null && p2.Dead)
-						{
-							yield return p2;
-						}
-					}
+					yield return p3;
 				}
 			}
 		}
 
-		public static IEnumerable<Pawn> AllMapsAndWorld_Alive
+		public static IEnumerable<Pawn> AllMapsWorldAndTemporary_Alive
 		{
 			get
 			{
-				List<Pawn> makingPawns = PawnGroupKindWorker.pawnsBeingGeneratedNow;
-				if (makingPawns != null)
+				foreach (Pawn p in PawnsFinder.AllMaps)
 				{
-					for (int i = 0; i < makingPawns.Count; i++)
-					{
-						if (!makingPawns[i].Dead)
-						{
-							yield return makingPawns[i];
-						}
-					}
-				}
-				List<Thing> makingThings = ItemCollectionGenerator.thingsBeingGeneratedNow;
-				if (makingThings != null)
-				{
-					for (int j = 0; j < makingThings.Count; j++)
-					{
-						Pawn p = makingThings[j] as Pawn;
-						if (p != null && !p.Dead)
-						{
-							yield return p;
-						}
-					}
+					yield return p;
 				}
 				if (Find.World != null)
 				{
@@ -82,21 +45,10 @@ namespace RimWorld
 					{
 						yield return p2;
 					}
-					foreach (Pawn p3 in PawnsFinder.AllMaps)
-					{
-						yield return p3;
-					}
 				}
-				if (Current.ProgramState != ProgramState.Playing && Find.GameInitData != null && Find.GameInitData != null)
+				foreach (Pawn p3 in PawnsFinder.Temporary_Alive)
 				{
-					List<Pawn> startingPawns = Find.GameInitData.startingPawns;
-					for (int k = 0; k < startingPawns.Count; k++)
-					{
-						if (startingPawns[k] != null)
-						{
-							yield return startingPawns[k];
-						}
-					}
+					yield return p3;
 				}
 			}
 		}
@@ -127,6 +79,74 @@ namespace RimWorld
 					for (int j = 0; j < spawned.Count; j++)
 					{
 						yield return spawned[j];
+					}
+				}
+			}
+		}
+
+		public static IEnumerable<Pawn> Temporary
+		{
+			get
+			{
+				List<List<Pawn>> makingPawnsList = PawnGroupKindWorker.pawnsBeingGeneratedNow;
+				for (int i = 0; i < makingPawnsList.Count; i++)
+				{
+					List<Pawn> makingPawns = makingPawnsList[i];
+					for (int j = 0; j < makingPawns.Count; j++)
+					{
+						yield return makingPawns[j];
+					}
+				}
+				List<List<Thing>> makingThingsList = ItemCollectionGenerator.thingsBeingGeneratedNow;
+				for (int k = 0; k < makingThingsList.Count; k++)
+				{
+					List<Thing> makingThings = makingThingsList[k];
+					for (int l = 0; l < makingThings.Count; l++)
+					{
+						Pawn p = makingThings[l] as Pawn;
+						if (p != null)
+						{
+							yield return p;
+						}
+					}
+				}
+				if (Current.ProgramState != ProgramState.Playing && Find.GameInitData != null)
+				{
+					List<Pawn> startingPawns = Find.GameInitData.startingPawns;
+					for (int m = 0; m < startingPawns.Count; m++)
+					{
+						if (startingPawns[m] != null)
+						{
+							yield return startingPawns[m];
+						}
+					}
+				}
+			}
+		}
+
+		public static IEnumerable<Pawn> Temporary_Alive
+		{
+			get
+			{
+				foreach (Pawn p in PawnsFinder.Temporary)
+				{
+					if (!p.Dead)
+					{
+						yield return p;
+					}
+				}
+			}
+		}
+
+		public static IEnumerable<Pawn> Temporary_Dead
+		{
+			get
+			{
+				foreach (Pawn p in PawnsFinder.Temporary)
+				{
+					if (p.Dead)
+					{
+						yield return p;
 					}
 				}
 			}
@@ -183,7 +203,7 @@ namespace RimWorld
 			{
 				foreach (Pawn p in PawnsFinder.AllMapsCaravansAndTravelingTransportPods)
 				{
-					if (p.IsColonist && p.HostFaction == null)
+					if (p.IsFreeColonist)
 					{
 						yield return p;
 					}
@@ -202,6 +222,14 @@ namespace RimWorld
 						yield return p;
 					}
 				}
+			}
+		}
+
+		public static IEnumerable<Pawn> AllMapsCaravansAndTravelingTransportPods_FreeColonistsAndPrisoners
+		{
+			get
+			{
+				return PawnsFinder.AllMapsCaravansAndTravelingTransportPods_FreeColonists.Concat(PawnsFinder.AllMapsCaravansAndTravelingTransportPods_PrisonersOfColony);
 			}
 		}
 

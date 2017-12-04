@@ -18,7 +18,7 @@ namespace RimWorld
 
 		public override string GetReport()
 		{
-			if (this.pawn.HostileTo(this.Takee))
+			if (this.Takee == null || this.pawn.HostileTo(this.Takee))
 			{
 				return base.GetReport();
 			}
@@ -28,7 +28,7 @@ namespace RimWorld
 		[DebuggerHidden]
 		protected override IEnumerable<Toil> MakeNewToils()
 		{
-			this.FailOn(() => !this.<>f__this.Takee.Downed && this.<>f__this.Takee.Awake());
+			this.FailOn(() => this.$this.Takee == null || (!this.$this.Takee.Downed && this.$this.Takee.Awake()));
 			foreach (Toil t in base.MakeNewToils())
 			{
 				yield return t;

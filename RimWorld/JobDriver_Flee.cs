@@ -9,6 +9,14 @@ namespace RimWorld
 	{
 		protected const TargetIndex DestInd = TargetIndex.A;
 
+		protected const TargetIndex DangerInd = TargetIndex.B;
+
+		public override bool TryMakePreToilReservations()
+		{
+			this.pawn.Map.pawnDestinationReservationManager.Reserve(this.pawn, this.job, this.job.GetTarget(TargetIndex.A).Cell);
+			return true;
+		}
+
 		[DebuggerHidden]
 		protected override IEnumerable<Toil> MakeNewToils()
 		{
@@ -18,10 +26,9 @@ namespace RimWorld
 				defaultCompleteMode = ToilCompleteMode.Instant,
 				initAction = delegate
 				{
-					this.<>f__this.Map.pawnDestinationManager.ReserveDestinationFor(this.<>f__this.pawn, this.<>f__this.CurJob.GetTarget(TargetIndex.A).Cell);
-					if (this.<>f__this.pawn.IsColonist)
+					if (this.$this.pawn.IsColonist)
 					{
-						MoteMaker.MakeColonistActionOverlay(this.<>f__this.pawn, ThingDefOf.Mote_ColonistFleeing);
+						MoteMaker.MakeColonistActionOverlay(this.$this.pawn, ThingDefOf.Mote_ColonistFleeing);
 					}
 				}
 			};

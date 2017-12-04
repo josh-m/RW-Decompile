@@ -21,9 +21,13 @@ namespace RimWorld
 
 		public bool isTempIncidentMapOwner;
 
+		public List<IncidentTargetTypeDef> incidentTargetTypes;
+
 		public bool selectable = true;
 
 		public bool neverMultiSelect;
+
+		public MapGeneratorDef mapGenerator;
 
 		public List<Type> inspectorTabs;
 

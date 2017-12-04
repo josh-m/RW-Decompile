@@ -10,7 +10,7 @@ namespace RimWorld
 
 		public override float TemperatureOffset()
 		{
-			return GameConditionUtility.LerpInOutValue((float)base.TicksPassed, (float)base.TicksLeft, 12000f, 17f);
+			return GameConditionUtility.LerpInOutValue(this, 12000f, 17f);
 		}
 	}
 }

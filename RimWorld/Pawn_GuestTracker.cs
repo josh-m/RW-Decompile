@@ -6,10 +6,6 @@ namespace RimWorld
 {
 	public class Pawn_GuestTracker : IExposable
 	{
-		private const int DefaultWaitInsteadOfEscapingTicks = 25000;
-
-		private const int CheckInitiatePrisonBreakIntervalTicks = 2500;
-
 		private Pawn pawn;
 
 		private bool getsFoodInt = true;
@@ -20,13 +16,21 @@ namespace RimWorld
 
 		public bool isPrisonerInt;
 
-		public bool released;
+		private bool releasedInt;
 
 		private int ticksWhenAllowedToEscapeAgain;
 
 		public IntVec3 spotToWaitInsteadOfEscaping = IntVec3.Invalid;
 
+		public int lastPrisonBreakTicks = -1;
+
+		public bool everParticipatedInPrisonBreak;
+
+		private const int DefaultWaitInsteadOfEscapingTicks = 25000;
+
 		public int MinInteractionInterval = 7500;
+
+		private const int CheckInitiatePrisonBreakIntervalTicks = 2500;
 
 		public Faction HostFaction
 		{
@@ -77,11 +81,31 @@ namespace RimWorld
 			}
 		}
 
+		public bool Released
+		{
+			get
+			{
+				return this.releasedInt;
+			}
+			set
+			{
+				if (value == this.releasedInt)
+				{
+					return;
+				}
+				this.releasedInt = value;
+				if (this.pawn.Spawned)
+				{
+					this.pawn.Map.reachability.ClearCache();
+				}
+			}
+		}
+
 		public bool PrisonerIsSecure
 		{
 			get
 			{
-				if (this.released)
+				if (this.Released)
 				{
 					return false;
 				}
@@ -148,16 +172,18 @@ namespace RimWorld
 			Scribe_Values.Look<bool>(ref this.isPrisonerInt, "prisoner", false, false);
 			Scribe_Values.Look<bool>(ref this.getsFoodInt, "getsFood", false, false);
 			Scribe_Defs.Look<PrisonerInteractionModeDef>(ref this.interactionMode, "interactionMode");
-			Scribe_Values.Look<bool>(ref this.released, "released", false, false);
+			Scribe_Values.Look<bool>(ref this.releasedInt, "released", false, false);
 			Scribe_Values.Look<int>(ref this.ticksWhenAllowedToEscapeAgain, "ticksWhenAllowedToEscapeAgain", 0, false);
 			Scribe_Values.Look<IntVec3>(ref this.spotToWaitInsteadOfEscaping, "spotToWaitInsteadOfEscaping", default(IntVec3), false);
+			Scribe_Values.Look<int>(ref this.lastPrisonBreakTicks, "lastPrisonBreakTicks", 0, false);
+			Scribe_Values.Look<bool>(ref this.everParticipatedInPrisonBreak, "everParticipatedInPrisonBreak", false, false);
 		}
 
 		public void SetGuestStatus(Faction newHost, bool prisoner = false)
 		{
 			if (newHost != null)
 			{
-				this.released = false;
+				this.Released = false;
 			}
 			if (newHost == this.HostFaction && prisoner == this.IsPrisoner)
 			{
@@ -193,7 +219,6 @@ namespace RimWorld
 			this.isPrisonerInt = prisoner;
 			this.hostFactionInt = newHost;
 			this.pawn.ClearMind(false);
-			this.pawn.ClearReservations(true);
 			if (flag)
 			{
 				this.pawn.DropAndForbidEverything(false);
@@ -261,7 +286,7 @@ namespace RimWorld
 					Messages.Message("MessageRescueeJoined".Translate(new object[]
 					{
 						this.pawn.LabelShort
-					}).AdjustedFor(this.pawn), this.pawn, MessageSound.Benefit);
+					}).AdjustedFor(this.pawn), this.pawn, MessageTypeDefOf.PositiveEvent);
 				}
 			}
 		}

@@ -8,6 +8,10 @@ namespace RimWorld
 {
 	public static class LightningBoltMeshMaker
 	{
+		private static List<Vector2> verts2D;
+
+		private static Vector2 lightningTop;
+
 		private const float LightningHeight = 200f;
 
 		private const float LightningRootXVar = 50f;
@@ -21,10 +25,6 @@ namespace RimWorld
 		private const float PerturbAmp = 12f;
 
 		private const float PerturbFreq = 0.007f;
-
-		private static List<Vector2> verts2D;
-
-		private static Vector2 lightningTop;
 
 		public static Mesh NewBoltMesh()
 		{

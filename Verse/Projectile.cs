@@ -8,6 +8,30 @@ namespace Verse
 {
 	public abstract class Projectile : ThingWithComps
 	{
+		protected Vector3 origin;
+
+		protected Vector3 destination;
+
+		protected Thing assignedTarget;
+
+		protected Thing intendedTarget;
+
+		private bool interceptWallsInt = true;
+
+		private bool freeInterceptInt = true;
+
+		protected ThingDef equipmentDef;
+
+		protected Thing launcher;
+
+		private Thing neverInterceptTargetInt;
+
+		protected bool landed;
+
+		protected int ticksToImpact;
+
+		private Sustainer ambientSustainer;
+
 		private const float BasePawnInterceptChance = 0.4f;
 
 		private const float PawnInterceptChanceFactor_LayingDown = 0.1f;
@@ -25,28 +49,6 @@ namespace Verse
 		private const float InterceptChanceFactor_VeryShort = 0.5f;
 
 		private const float InterceptChanceFactor_Short = 0.75f;
-
-		protected Vector3 origin;
-
-		protected Vector3 destination;
-
-		protected Thing assignedTarget;
-
-		private bool interceptWallsInt = true;
-
-		private bool freeInterceptInt = true;
-
-		protected ThingDef equipmentDef;
-
-		protected Thing launcher;
-
-		private Thing neverInterceptTargetInt;
-
-		protected bool landed;
-
-		protected int ticksToImpact;
-
-		private Sustainer ambientSustainer;
 
 		private static List<IntVec3> checkedCells = new List<IntVec3>();
 
@@ -169,6 +171,7 @@ namespace Verse
 			Scribe_Values.Look<Vector3>(ref this.destination, "destination", default(Vector3), false);
 			Scribe_Values.Look<int>(ref this.ticksToImpact, "ticksToImpact", 0, false);
 			Scribe_References.Look<Thing>(ref this.assignedTarget, "assignedTarget", false);
+			Scribe_References.Look<Thing>(ref this.intendedTarget, "intendedTarget", false);
 			Scribe_References.Look<Thing>(ref this.launcher, "launcher", false);
 			Scribe_Defs.Look<ThingDef>(ref this.equipmentDef, "equipmentDef");
 			Scribe_Values.Look<bool>(ref this.interceptWallsInt, "interceptWalls", true, false);
@@ -179,13 +182,14 @@ namespace Verse
 
 		public void Launch(Thing launcher, LocalTargetInfo targ, Thing equipment = null)
 		{
-			this.Launch(launcher, base.Position.ToVector3Shifted(), targ, equipment);
+			this.Launch(launcher, base.Position.ToVector3Shifted(), targ, equipment, null);
 		}
 
-		public void Launch(Thing launcher, Vector3 origin, LocalTargetInfo targ, Thing equipment = null)
+		public void Launch(Thing launcher, Vector3 origin, LocalTargetInfo targ, Thing equipment = null, Thing intendedTarget = null)
 		{
 			this.launcher = launcher;
 			this.origin = origin;
+			this.intendedTarget = intendedTarget;
 			if (equipment != null)
 			{
 				this.equipmentDef = equipment.def;

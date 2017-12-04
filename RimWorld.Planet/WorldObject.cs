@@ -11,8 +11,6 @@ namespace RimWorld.Planet
 	[StaticConstructorOnStartup]
 	public class WorldObject : IExposable, ILoadReferenceable, ISelectable
 	{
-		private const float BaseDrawSize = 0.7f;
-
 		public WorldObjectDef def;
 
 		public int ID = -1;
@@ -26,6 +24,8 @@ namespace RimWorld.Planet
 		private List<WorldObjectComp> comps = new List<WorldObjectComp>();
 
 		private static MaterialPropertyBlock propertyBlock = new MaterialPropertyBlock();
+
+		private const float BaseDrawSize = 0.7f;
 
 		public List<WorldObjectComp> AllComps
 		{
@@ -182,6 +182,25 @@ namespace RimWorld.Planet
 			}
 		}
 
+		[DebuggerHidden]
+		public virtual IEnumerable<IncidentTargetTypeDef> AcceptedTypes()
+		{
+			if (this.def.incidentTargetTypes != null)
+			{
+				foreach (IncidentTargetTypeDef type in this.def.incidentTargetTypes)
+				{
+					yield return type;
+				}
+			}
+			for (int i = 0; i < this.comps.Count; i++)
+			{
+				foreach (IncidentTargetTypeDef type2 in this.comps[i].AcceptedTypes())
+				{
+					yield return type2;
+				}
+			}
+		}
+
 		public virtual void ExposeData()
 		{
 			Scribe_Defs.Look<WorldObjectDef>(ref this.def, "def");
@@ -327,8 +346,12 @@ namespace RimWorld.Planet
 				Color color = this.Material.color;
 				float num = 1f - transitionPct;
 				WorldObject.propertyBlock.SetColor(ShaderPropertyIDs.Color, new Color(color.r, color.g, color.b, color.a * num));
+				Vector3 drawPos = this.DrawPos;
+				float size = 0.7f * averageTileSize;
+				float altOffset = 0.015f;
+				Material material = this.Material;
 				MaterialPropertyBlock materialPropertyBlock = WorldObject.propertyBlock;
-				WorldRendererUtility.DrawQuadTangentialToPlanet(this.DrawPos, 0.7f * averageTileSize, 0.015f, this.Material, false, false, materialPropertyBlock);
+				WorldRendererUtility.DrawQuadTangentialToPlanet(drawPos, size, altOffset, material, false, false, materialPropertyBlock);
 			}
 			else
 			{
@@ -374,6 +397,11 @@ namespace RimWorld.Planet
 		}
 
 		[DebuggerHidden]
+		public virtual IEnumerable<Gizmo> GetCaravanGizmos(Caravan caravan)
+		{
+		}
+
+		[DebuggerHidden]
 		public virtual IEnumerable<FloatMenuOption> GetFloatMenuOptions(Caravan caravan)
 		{
 			for (int i = 0; i < this.comps.Count; i++)
@@ -392,6 +420,11 @@ namespace RimWorld.Planet
 				return this.def.inspectorTabsResolved;
 			}
 			return Enumerable.Empty<InspectTabBase>();
+		}
+
+		public virtual bool AllMatchingObjectsOnScreenMatchesWith(WorldObject other)
+		{
+			return this.Faction == other.Faction;
 		}
 
 		public override string ToString()

@@ -7,7 +7,9 @@ namespace RimWorld
 {
 	public static class FacilitiesUtility
 	{
-		private static int RegionsToSearch = (1 + 2 * Mathf.CeilToInt(0.6666667f)) * (1 + 2 * Mathf.CeilToInt(0.6666667f));
+		private const float MaxDistToLinkToFacilityEver = 10f;
+
+		private static int RegionsToSearch = (1 + 2 * Mathf.CeilToInt(0.8333333f)) * (1 + 2 * Mathf.CeilToInt(0.8333333f));
 
 		private static HashSet<Region> visited = new HashSet<Region>();
 
@@ -21,7 +23,6 @@ namespace RimWorld
 				return;
 			}
 			FacilitiesUtility.working = true;
-			ProfilerThreadCheck.BeginSample("NotifyFacilitiesAboutChangedLOSBlockers()");
 			try
 			{
 				FacilitiesUtility.visited.Clear();
@@ -53,7 +54,6 @@ namespace RimWorld
 			}
 			finally
 			{
-				ProfilerThreadCheck.EndSample();
 				FacilitiesUtility.working = false;
 				FacilitiesUtility.visited.Clear();
 			}

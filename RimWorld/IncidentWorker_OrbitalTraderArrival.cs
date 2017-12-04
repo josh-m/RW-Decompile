@@ -6,7 +6,7 @@ namespace RimWorld
 {
 	public class IncidentWorker_OrbitalTraderArrival : IncidentWorker
 	{
-		public override bool TryExecute(IncidentParms parms)
+		protected override bool TryExecuteWorker(IncidentParms parms)
 		{
 			Map map = (Map)parms.target;
 			if (map.passingShipManager.passingShips.Count >= 5)
@@ -25,7 +25,7 @@ namespace RimWorld
 					{
 						tradeShip.name,
 						tradeShip.def.label
-					}), LetterDefOf.Good, null);
+					}), LetterDefOf.PositiveEvent, null);
 				}
 				map.passingShipManager.AddShip(tradeShip);
 				tradeShip.GenerateThings();

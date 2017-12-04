@@ -6,9 +6,9 @@ namespace RimWorld
 {
 	public class JobGiver_RescueNearby : ThinkNode_JobGiver
 	{
-		private const float MinDistFromEnemy = 25f;
-
 		private float radius = 30f;
+
+		private const float MinDistFromEnemy = 25f;
 
 		public override ThinkNode DeepCopy(bool resolve = true)
 		{

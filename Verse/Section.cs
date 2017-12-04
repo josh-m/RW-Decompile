@@ -7,8 +7,6 @@ namespace Verse
 {
 	public class Section
 	{
-		public const int Size = 17;
-
 		public IntVec3 botLeft;
 
 		public Map map;
@@ -20,6 +18,8 @@ namespace Verse
 		private bool foundRect;
 
 		private CellRect calculatedRect;
+
+		public const int Size = 17;
 
 		public CellRect CellRect
 		{
@@ -48,17 +48,14 @@ namespace Verse
 			}
 		}
 
-		public void DrawSection(SectionLayerPhaseDef phase, bool drawSunShadowsOnly)
+		public void DrawSection(bool drawSunShadowsOnly)
 		{
 			int count = this.layers.Count;
 			for (int i = 0; i < count; i++)
 			{
-				if (this.layers[i].Phase == phase)
+				if (!drawSunShadowsOnly || this.layers[i] is SectionLayer_SunShadows)
 				{
-					if (!drawSunShadowsOnly || this.layers[i] is SectionLayer_SunShadows)
-					{
-						this.layers[i].DrawLayer();
-					}
+					this.layers[i].DrawLayer();
 				}
 			}
 			if (!drawSunShadowsOnly && DebugViewSettings.drawSectionEdges)

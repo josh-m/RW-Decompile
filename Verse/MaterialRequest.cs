@@ -76,6 +76,16 @@ namespace Verse
 			return other.shader == this.shader && other.mainTex == this.mainTex && other.color == this.color && other.colorTwo == this.colorTwo && other.maskTex == this.maskTex && other.renderQueue == this.renderQueue;
 		}
 
+		public static bool operator ==(MaterialRequest lhs, MaterialRequest rhs)
+		{
+			return lhs.Equals(rhs);
+		}
+
+		public static bool operator !=(MaterialRequest lhs, MaterialRequest rhs)
+		{
+			return !(lhs == rhs);
+		}
+
 		public override string ToString()
 		{
 			return string.Concat(new string[]
@@ -94,16 +104,6 @@ namespace Verse
 				this.renderQueue.ToString(),
 				")"
 			});
-		}
-
-		public static bool operator ==(MaterialRequest lhs, MaterialRequest rhs)
-		{
-			return lhs.Equals(rhs);
-		}
-
-		public static bool operator !=(MaterialRequest lhs, MaterialRequest rhs)
-		{
-			return !(lhs == rhs);
 		}
 	}
 }

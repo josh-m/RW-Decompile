@@ -14,32 +14,32 @@ namespace RimWorld
 			Rand.PushState();
 			Rand.Seed = seed;
 			string rootKeyword = null;
-			List<Rule> list = new List<Rule>();
-			list.AddRange(extraRules);
+			GrammarRequest request = default(GrammarRequest);
+			request.Rules.AddRange(extraRules);
 			if (purpose == TextGenerationPurpose.ArtDescription)
 			{
 				rootKeyword = "art_description_root";
 				if (tale != null && Rand.Value > 0.2f)
 				{
-					list.AddRange(RulePackDefOf.ArtDescriptionRoot_HasTale.Rules);
-					list.AddRange(tale.GetTextGenerationRules());
+					request.Includes.Add(RulePackDefOf.ArtDescriptionRoot_HasTale);
+					request.Rules.AddRange(tale.GetTextGenerationRules());
 				}
 				else
 				{
-					list.AddRange(RulePackDefOf.ArtDescriptionRoot_Taleless.Rules);
-					list.AddRange(RulePackDefOf.TalelessImages.Rules);
+					request.Includes.Add(RulePackDefOf.ArtDescriptionRoot_Taleless);
+					request.Includes.Add(RulePackDefOf.TalelessImages);
 				}
-				list.AddRange(RulePackDefOf.ArtDescriptionUtility_Global.Rules);
+				request.Includes.Add(RulePackDefOf.ArtDescriptionUtility_Global);
 			}
 			else if (purpose == TextGenerationPurpose.ArtName)
 			{
 				rootKeyword = "art_name";
 				if (tale != null)
 				{
-					list.AddRange(tale.GetTextGenerationRules());
+					request.Rules.AddRange(tale.GetTextGenerationRules());
 				}
 			}
-			string result = GrammarResolver.Resolve(rootKeyword, list, (tale == null) ? "null_tale" : tale.def.defName);
+			string result = GrammarResolver.Resolve(rootKeyword, request, (tale == null) ? "null_tale" : tale.def.defName, false);
 			Rand.PopState();
 			return result;
 		}

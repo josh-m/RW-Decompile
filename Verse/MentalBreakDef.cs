@@ -1,5 +1,6 @@
 using RimWorld;
 using System;
+using Verse.AI;
 
 namespace Verse
 {

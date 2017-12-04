@@ -120,9 +120,9 @@ namespace RimWorld
 				TradeShip.tmpExtantNames.AddRange(from x in maps[i].passingShipManager.passingShips
 				select x.name);
 			}
-			this.name = NameGenerator.GenerateName(RulePackDefOf.NamerTraderGeneral, TradeShip.tmpExtantNames, false);
+			this.name = NameGenerator.GenerateName(RulePackDefOf.NamerTraderGeneral, TradeShip.tmpExtantNames, false, null);
 			this.randomPriceFactorSeed = Rand.RangeInclusive(1, 10000000);
-			this.loadID = Find.World.uniqueIDsManager.GetNextPassingShipID();
+			this.loadID = Find.UniqueIDsManager.GetNextPassingShipID();
 		}
 
 		[DebuggerHidden]
@@ -142,8 +142,8 @@ namespace RimWorld
 		{
 			ItemCollectionGeneratorParams parms = default(ItemCollectionGeneratorParams);
 			parms.traderDef = this.def;
-			parms.forTile = base.Map.Tile;
-			this.things.TryAddRange(ItemCollectionGeneratorDefOf.TraderStock.Worker.Generate(parms), true);
+			parms.tile = new int?(base.Map.Tile);
+			this.things.TryAddRangeOrTransfer(ItemCollectionGeneratorDefOf.TraderStock.Worker.Generate(parms), true, false);
 		}
 
 		public override void PassingShipTick()
@@ -189,10 +189,10 @@ namespace RimWorld
 			LessonAutoActivator.TeachOpportunity(ConceptDefOf.BuildOrbitalTradeBeacon, OpportunityType.Critical);
 			string empty = string.Empty;
 			string empty2 = string.Empty;
-			PawnRelationUtility.Notify_PawnsSeenByPlayer(this.Goods.OfType<Pawn>(), ref empty, ref empty2, "LetterRelatedPawnsTradeShip".Translate(), false);
+			PawnRelationUtility.Notify_PawnsSeenByPlayer_Letter(this.Goods.OfType<Pawn>(), ref empty, ref empty2, "LetterRelatedPawnsTradeShip".Translate(), false, true);
 			if (!empty2.NullOrEmpty())
 			{
-				Find.LetterStack.ReceiveLetter(empty, empty2, LetterDefOf.Good, null);
+				Find.LetterStack.ReceiveLetter(empty, empty2, LetterDefOf.PositiveEvent, null);
 			}
 			TutorUtility.DoModalDialogIfNotKnown(ConceptDefOf.TradeGoodsMustBeNearBeacon);
 		}

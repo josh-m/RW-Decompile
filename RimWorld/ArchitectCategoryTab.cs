@@ -7,9 +7,9 @@ namespace RimWorld
 {
 	public class ArchitectCategoryTab
 	{
-		public const float InfoRectHeight = 230f;
-
 		public DesignationCategoryDef def;
+
+		public const float InfoRectHeight = 230f;
 
 		public static Rect InfoRect
 		{
@@ -22,11 +22,6 @@ namespace RimWorld
 		public ArchitectCategoryTab(DesignationCategoryDef def)
 		{
 			this.def = def;
-		}
-
-		public void PanelClosing()
-		{
-			Find.DesignatorManager.Deselect();
 		}
 
 		public void DesignationTabOnGUI()

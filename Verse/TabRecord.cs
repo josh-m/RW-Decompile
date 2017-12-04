@@ -6,15 +6,15 @@ namespace Verse
 	[StaticConstructorOnStartup]
 	public class TabRecord
 	{
-		private const float TabEndWidth = 30f;
-
-		private const float TabMiddleGraphicWidth = 4f;
-
 		public string label = "Tab";
 
 		public Action clickedAction;
 
 		public bool selected;
+
+		private const float TabEndWidth = 30f;
+
+		private const float TabMiddleGraphicWidth = 4f;
 
 		private static readonly Texture2D TabAtlas = ContentFinder<Texture2D>.Get("UI/Widgets/TabAtlas", true);
 

@@ -38,10 +38,10 @@ namespace RimWorld
 				}
 				if (this.IntervalsPassed == 204)
 				{
-					int arg_12B_1 = (!Find.Storyteller.difficulty.allowIntroThreats) ? 1 : 2;
+					IncidentCategory threatCategory = (!Find.Storyteller.difficulty.allowIntroThreats) ? IncidentCategory.Misc : IncidentCategory.ThreatSmall;
 					IncidentDef incDef;
 					if ((from def in DefDatabase<IncidentDef>.AllDefs
-					where def.TargetAllowed(this.target) && def.category == this.<threatCategory>__2
+					where def.TargetAllowed(target) && def.category == threatCategory
 					select def).TryRandomElementByWeight(new Func<IncidentDef, float>(base.IncidentChanceFinal), out incDef))
 					{
 						yield return new FiringIncident(incDef, this, null)
@@ -52,7 +52,7 @@ namespace RimWorld
 				}
 				IncidentDef incDef2;
 				if (this.IntervalsPassed == 264 && (from def in DefDatabase<IncidentDef>.AllDefs
-				where def.TargetAllowed(this.target) && def.category == IncidentCategory.Misc
+				where def.TargetAllowed(target) && def.category == IncidentCategory.Misc
 				select def).TryRandomElementByWeight(new Func<IncidentDef, float>(base.IncidentChanceFinal), out incDef2))
 				{
 					yield return new FiringIncident(incDef2, this, null)
@@ -66,7 +66,7 @@ namespace RimWorld
 					if (!Find.Storyteller.difficulty.allowIntroThreats)
 					{
 						inc2 = (from def in DefDatabase<IncidentDef>.AllDefs
-						where def.TargetAllowed(this.target) && def.category == IncidentCategory.Misc
+						where def.TargetAllowed(target) && def.category == IncidentCategory.Misc
 						select def).RandomElementByWeightWithFallback(new Func<IncidentDef, float>(base.IncidentChanceFinal), null);
 					}
 					if (inc2 != null && inc2.TargetAllowed(target))

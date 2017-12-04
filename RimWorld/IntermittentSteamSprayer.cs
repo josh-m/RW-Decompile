@@ -5,16 +5,6 @@ namespace RimWorld
 {
 	public class IntermittentSteamSprayer
 	{
-		private const int MinTicksBetweenSprays = 500;
-
-		private const int MaxTicksBetweenSprays = 2000;
-
-		private const int MinSprayDuration = 200;
-
-		private const int MaxSprayDuration = 500;
-
-		private const float SprayThickness = 0.6f;
-
 		private Thing parent;
 
 		private int ticksUntilSpray = 500;
@@ -24,6 +14,16 @@ namespace RimWorld
 		public Action startSprayCallback;
 
 		public Action endSprayCallback;
+
+		private const int MinTicksBetweenSprays = 500;
+
+		private const int MaxTicksBetweenSprays = 2000;
+
+		private const int MinSprayDuration = 200;
+
+		private const int MaxSprayDuration = 500;
+
+		private const float SprayThickness = 0.6f;
 
 		public IntermittentSteamSprayer(Thing parent)
 		{

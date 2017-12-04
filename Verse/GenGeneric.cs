@@ -52,6 +52,20 @@ namespace Verse
 			return methodInfo.Invoke(null, args);
 		}
 
+		private static PropertyInfo PropertyOnGenericType(Type genericBase, Type genericParam, string propertyName)
+		{
+			Type type = genericBase.MakeGenericType(new Type[]
+			{
+				genericParam
+			});
+			return type.GetProperty(propertyName, BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
+		}
+
+		public static object GetStaticPropertyOnGenericType(Type genericBase, Type genericParam, string propertyName)
+		{
+			return GenGeneric.PropertyOnGenericType(genericBase, genericParam, propertyName).GetGetMethod().Invoke(null, null);
+		}
+
 		public static bool HasGenericDefinition(this Type type, Type Def)
 		{
 			return type.GetTypeWithGenericDefinition(Def) != null;

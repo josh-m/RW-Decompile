@@ -34,6 +34,21 @@ namespace RimWorld
 			return this.subNodes[num].TryIssueJobPackage(pawn, jobParams);
 		}
 
+		public override ThinkNode DeepCopy(bool resolve = true)
+		{
+			ThinkNode_DutyConstant thinkNode_DutyConstant = (ThinkNode_DutyConstant)base.DeepCopy(resolve);
+			if (this.dutyDefToSubNode != null)
+			{
+				thinkNode_DutyConstant.dutyDefToSubNode = new DefMap<DutyDef, int>();
+				thinkNode_DutyConstant.dutyDefToSubNode.SetAll(-1);
+				foreach (DutyDef current in DefDatabase<DutyDef>.AllDefs)
+				{
+					thinkNode_DutyConstant.dutyDefToSubNode[current] = this.dutyDefToSubNode[current];
+				}
+			}
+			return thinkNode_DutyConstant;
+		}
+
 		protected override void ResolveSubnodes()
 		{
 			this.dutyDefToSubNode = new DefMap<DutyDef, int>();

@@ -9,10 +9,6 @@ namespace RimWorld
 	[StaticConstructorOnStartup]
 	public abstract class Need : IExposable
 	{
-		public const float MaxDrawHeight = 70f;
-
-		private const float BarInstantMarkerSize = 12f;
-
 		public NeedDef def;
 
 		protected Pawn pawn;
@@ -21,7 +17,13 @@ namespace RimWorld
 
 		protected List<float> threshPercents;
 
+		public const float MaxDrawHeight = 70f;
+
 		private static readonly Texture2D BarInstantMarkerTex = ContentFinder<Texture2D>.Get("UI/Misc/BarInstantMarker", true);
+
+		private static readonly Texture2D NeedUnitDividerTex = ContentFinder<Texture2D>.Get("UI/Misc/NeedUnitDivider", true);
+
+		private const float BarInstantMarkerSize = 12f;
 
 		public string LabelCap
 		{
@@ -172,22 +174,38 @@ namespace RimWorld
 			Text.Anchor = TextAnchor.UpperLeft;
 			Rect rect3 = new Rect(rect.x, rect.y + rect.height / 2f, rect.width, rect.height / 2f);
 			rect3 = new Rect(rect3.x + num3, rect3.y, rect3.width - num3 * 2f, rect3.height - num2);
-			Widgets.FillableBar(rect3, this.CurLevelPercentage);
+			Rect rect4 = rect3;
+			float num4 = 1f;
+			if (this.def.scaleBar && this.MaxLevel < 1f)
+			{
+				num4 = this.MaxLevel;
+			}
+			rect4.width *= num4;
+			Rect barRect = Widgets.FillableBar(rect4, this.CurLevelPercentage);
 			if (drawArrows)
 			{
-				Widgets.FillableBarChangeArrows(rect3, this.GUIChangeArrow);
+				Widgets.FillableBarChangeArrows(rect4, this.GUIChangeArrow);
 			}
 			if (this.threshPercents != null)
 			{
 				for (int i = 0; i < Mathf.Min(this.threshPercents.Count, maxThresholdMarkers); i++)
 				{
-					this.DrawBarThreshold(rect3, this.threshPercents[i]);
+					this.DrawBarThreshold(barRect, this.threshPercents[i] * num4);
+				}
+			}
+			if (this.def.scaleBar)
+			{
+				int num5 = 1;
+				while ((float)num5 < this.MaxLevel)
+				{
+					this.DrawBarDivision(barRect, (float)num5 / this.MaxLevel * num4);
+					num5++;
 				}
 			}
 			float curInstantLevelPercentage = this.CurInstantLevelPercentage;
 			if (curInstantLevelPercentage >= 0f)
 			{
-				this.DrawBarInstantMarkerAt(rect3, curInstantLevelPercentage);
+				this.DrawBarInstantMarkerAt(rect3, curInstantLevelPercentage * num4);
 			}
 			if (!this.def.tutorHighlightTag.NullOrEmpty())
 			{
@@ -228,6 +246,34 @@ namespace RimWorld
 				GUI.color = new Color(1f, 1f, 1f, 0.5f);
 			}
 			GUI.DrawTexture(position, image);
+			GUI.color = Color.white;
+		}
+
+		private void DrawBarDivision(Rect barRect, float threshPct)
+		{
+			float num = 5f;
+			Rect rect = new Rect(barRect.x + barRect.width * threshPct - (num - 1f), barRect.y, num, barRect.height);
+			if (threshPct < this.CurLevelPercentage)
+			{
+				GUI.color = new Color(0f, 0f, 0f, 0.9f);
+			}
+			else
+			{
+				GUI.color = new Color(0.5f, 0.5f, 0.5f, 0.5f);
+			}
+			Rect position = rect;
+			position.yMax = position.yMin + 4f;
+			GUI.DrawTextureWithTexCoords(position, Need.NeedUnitDividerTex, new Rect(0f, 0.5f, 1f, 0.5f));
+			Rect position2 = rect;
+			position2.yMin = position2.yMax - 4f;
+			GUI.DrawTextureWithTexCoords(position2, Need.NeedUnitDividerTex, new Rect(0f, 0f, 1f, 0.5f));
+			Rect position3 = rect;
+			position3.yMin = position.yMax;
+			position3.yMax = position2.yMin;
+			if (position3.height > 0f)
+			{
+				GUI.DrawTextureWithTexCoords(position3, Need.NeedUnitDividerTex, new Rect(0f, 0.4f, 1f, 0.2f));
+			}
 			GUI.color = Color.white;
 		}
 	}

@@ -130,7 +130,7 @@ namespace RimWorld
 					AcceptanceReport acceptanceReport = this.curScen.TryUploadReport();
 					if (!acceptanceReport.Accepted)
 					{
-						Messages.Message(acceptanceReport.Reason, MessageSound.RejectInput);
+						Messages.Message(acceptanceReport.Reason, MessageTypeDefOf.RejectInput);
 					}
 					else
 					{
@@ -166,7 +166,7 @@ namespace RimWorld
 						Messages.Message("TooMany".Translate(new object[]
 						{
 							current.def.maxUses
-						}) + ": " + current.def.label, MessageSound.RejectInput);
+						}) + ": " + current.def.label, MessageTypeDefOf.RejectInput);
 						bool result = false;
 						return result;
 					}
@@ -179,7 +179,7 @@ namespace RimWorld
 							current.def.label,
 							", ",
 							current2.def.label
-						}), MessageSound.RejectInput);
+						}), MessageTypeDefOf.RejectInput);
 						bool result = false;
 						return result;
 					}

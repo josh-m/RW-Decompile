@@ -75,7 +75,7 @@ namespace RimWorld
 							pawn.health.AddHediff(hediff_MissingPart, bodyPartRecord, null);
 							if (pawn.RaceProps.Humanlike && (bodyPartRecord.def == BodyPartDefOf.LeftLeg || bodyPartRecord.def == BodyPartDefOf.RightLeg) && Rand.Chance(0.5f))
 							{
-								RecipeDefOf.InstallPegLeg.Worker.ApplyOnPawn(pawn, bodyPartRecord, null, AgeInjuryUtility.emptyIngredientsList);
+								RecipeDefOf.InstallPegLeg.Worker.ApplyOnPawn(pawn, bodyPartRecord, null, AgeInjuryUtility.emptyIngredientsList, null);
 							}
 						}
 						else

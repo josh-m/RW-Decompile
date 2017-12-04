@@ -17,7 +17,7 @@ namespace RimWorld
 				return false;
 			}
 			Lord lord = pawn.GetLord();
-			return lord == null || lord.LordJob == null || !lord.LordJob.NeverInRestraints;
+			return (lord == null || lord.LordJob == null || !lord.LordJob.NeverInRestraints) && (pawn.guest == null || !pawn.guest.Released);
 		}
 
 		public static bool ShouldShowRestraintsInfo(Pawn pawn)

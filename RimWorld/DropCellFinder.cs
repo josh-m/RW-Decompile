@@ -80,7 +80,7 @@ namespace RimWorld
 		{
 			if (DebugViewSettings.drawDestSearch)
 			{
-				map.debugDrawer.FlashCell(center, 1f, "center");
+				map.debugDrawer.FlashCell(center, 1f, "center", 50);
 			}
 			Predicate<IntVec3> validator = (IntVec3 c) => DropCellFinder.IsGoodDropSpot(c, map, allowFogged, canRoofPunch) && map.reachability.CanReach(center, c, PathEndMode.OnCell, TraverseMode.PassDoors, Danger.Deadly);
 			int num = 5;
@@ -106,7 +106,7 @@ namespace RimWorld
 			{
 				if (DebugViewSettings.drawDestSearch)
 				{
-					map.debugDrawer.FlashCell(c, 0f, "phys");
+					map.debugDrawer.FlashCell(c, 0f, "phys", 50);
 				}
 				return false;
 			}

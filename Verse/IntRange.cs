@@ -37,7 +37,7 @@ namespace Verse
 		{
 			get
 			{
-				return Rand.Range(this.min, this.max + 1);
+				return Rand.RangeInclusive(this.min, this.max);
 			}
 		}
 
@@ -86,11 +86,6 @@ namespace Verse
 			return this.min == other.min && this.max == other.max;
 		}
 
-		internal bool Includes(int val)
-		{
-			return val > this.min && val < this.max;
-		}
-
 		public static bool operator ==(IntRange lhs, IntRange rhs)
 		{
 			return lhs.Equals(rhs);
@@ -99,6 +94,11 @@ namespace Verse
 		public static bool operator !=(IntRange lhs, IntRange rhs)
 		{
 			return !(lhs == rhs);
+		}
+
+		internal bool Includes(int val)
+		{
+			return val > this.min && val < this.max;
 		}
 	}
 }

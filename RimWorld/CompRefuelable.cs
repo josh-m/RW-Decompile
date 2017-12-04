@@ -10,15 +10,15 @@ namespace RimWorld
 	[StaticConstructorOnStartup]
 	public class CompRefuelable : ThingComp
 	{
-		public const string RefueledSignal = "Refueled";
-
-		public const string RanOutOfFuelSignal = "RanOutOfFuel";
-
 		private float fuel;
 
 		private float configuredTargetFuelLevel = -1f;
 
 		private CompFlickable flickComp;
+
+		public const string RefueledSignal = "Refueled";
+
+		public const string RanOutOfFuelSignal = "RanOutOfFuel";
 
 		private static readonly Texture2D SetTargetFuelLevelCommand = ContentFinder<Texture2D>.Get("UI/Commands/SetTargetFuelLevel", true);
 
@@ -228,8 +228,12 @@ namespace RimWorld
 
 		public void Refuel(Thing fuelThing)
 		{
-			this.Refuel((float)fuelThing.stackCount);
-			fuelThing.Destroy(DestroyMode.Vanish);
+			int num = Mathf.Min(fuelThing.stackCount, Mathf.CeilToInt(this.Props.fuelCapacity - this.fuel));
+			if (num > 0)
+			{
+				this.Refuel((float)num);
+				fuelThing.SplitOff(num).Destroy(DestroyMode.Vanish);
+			}
 		}
 
 		public void Refuel(float amount)
@@ -280,8 +284,8 @@ namespace RimWorld
 					defaultLabel = "Debug: Set fuel to 0.1",
 					action = delegate
 					{
-						this.<>f__this.fuel = 0.1f;
-						this.<>f__this.parent.BroadcastCompSignal("Refueled");
+						this.$this.fuel = 0.1f;
+						this.$this.parent.BroadcastCompSignal("Refueled");
 					}
 				};
 				yield return new Command_Action
@@ -289,8 +293,8 @@ namespace RimWorld
 					defaultLabel = "Debug: Set fuel to max",
 					action = delegate
 					{
-						this.<>f__this.fuel = this.<>f__this.Props.fuelCapacity;
-						this.<>f__this.parent.BroadcastCompSignal("Refueled");
+						this.$this.fuel = this.$this.Props.fuelCapacity;
+						this.$this.parent.BroadcastCompSignal("Refueled");
 					}
 				};
 			}

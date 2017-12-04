@@ -1,9 +1,10 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 
 namespace Verse.AI
 {
-	public class JobQueue : IExposable
+	public class JobQueue : IExposable, IEnumerable<QueuedJob>, IEnumerable
 	{
 		private List<QueuedJob> jobs = new List<QueuedJob>();
 
@@ -53,6 +54,18 @@ namespace Verse.AI
 			this.jobs.Add(new QueuedJob(j, tag));
 		}
 
+		public QueuedJob Extract(Job j)
+		{
+			int num = this.jobs.FindIndex((QueuedJob qj) => qj.job == j);
+			if (num >= 0)
+			{
+				QueuedJob result = this.jobs[num];
+				this.jobs.RemoveAt(num);
+				return result;
+			}
+			return null;
+		}
+
 		public QueuedJob Dequeue()
 		{
 			if (this.jobs.NullOrEmpty<QueuedJob>())
@@ -69,9 +82,14 @@ namespace Verse.AI
 			return this.jobs[0];
 		}
 
-		public void Clear()
+		public IEnumerator<QueuedJob> GetEnumerator()
 		{
-			this.jobs.Clear();
+			return this.jobs.GetEnumerator();
+		}
+
+		IEnumerator IEnumerable.GetEnumerator()
+		{
+			return this.jobs.GetEnumerator();
 		}
 	}
 }

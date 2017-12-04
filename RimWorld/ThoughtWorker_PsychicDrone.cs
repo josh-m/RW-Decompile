@@ -9,10 +9,10 @@ namespace RimWorld
 		protected override ThoughtState CurrentStateInternal(Pawn p)
 		{
 			PsychicDroneLevel psychicDroneLevel = PsychicDroneLevel.None;
-			Building_PsychicEmanator building_PsychicEmanator = ThoughtWorker_PsychicDrone.ExtantShipPart(p.Map);
-			if (building_PsychicEmanator != null)
+			CompPsychicDrone compPsychicDrone = ThoughtWorker_PsychicDrone.PsychicDroneEmanator(p.Map);
+			if (compPsychicDrone != null)
 			{
-				psychicDroneLevel = building_PsychicEmanator.droneLevel;
+				psychicDroneLevel = compPsychicDrone.DroneLevel;
 			}
 			GameCondition_PsychicEmanation activeCondition = p.Map.gameConditionManager.GetActiveCondition<GameCondition_PsychicEmanation>();
 			if (activeCondition != null && activeCondition.gender == p.gender && activeCondition.def.droneLevel > psychicDroneLevel)
@@ -38,14 +38,14 @@ namespace RimWorld
 			}
 		}
 
-		private static Building_PsychicEmanator ExtantShipPart(Map map)
+		private static CompPsychicDrone PsychicDroneEmanator(Map map)
 		{
-			List<Thing> list = map.listerThings.ThingsOfDef(ThingDefOf.CrashedPsychicEmanatorShipPart);
-			if (list.Count == 0)
+			List<Thing> list = map.listerThings.ThingsInGroup(ThingRequestGroup.PsychicDroneEmanator);
+			if (!list.Any<Thing>())
 			{
 				return null;
 			}
-			return (Building_PsychicEmanator)list[0];
+			return list[0].TryGetComp<CompPsychicDrone>();
 		}
 	}
 }

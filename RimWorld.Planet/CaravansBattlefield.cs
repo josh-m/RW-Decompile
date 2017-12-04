@@ -47,16 +47,20 @@ namespace RimWorld.Planet
 			{
 				return;
 			}
-			if (GenHostility.AnyHostileActiveThreat(base.Map))
+			if (GenHostility.AnyHostileActiveThreatToPlayer(base.Map))
 			{
 				return;
 			}
 			Messages.Message("MessageAmbushVictory".Translate(new object[]
 			{
-				MapParent.GetForceExitAndRemoveMapCountdownTimeLeftString(60000)
-			}), this, MessageSound.Benefit);
+				TimedForcedExit.GetForceExitAndRemoveMapCountdownTimeLeftString(60000)
+			}), this, MessageTypeDefOf.PositiveEvent);
+			TaleRecorder.RecordTale(TaleDefOf.CaravanAmbushDefeated, new object[]
+			{
+				base.Map.mapPawns.FreeColonists.RandomElement<Pawn>()
+			});
 			this.wonBattle = true;
-			base.StartForceExitAndRemoveMapCountdown();
+			base.GetComponent<TimedForcedExit>().StartForceExitAndRemoveMapCountdown();
 		}
 	}
 }

@@ -5,13 +5,13 @@ namespace RimWorld
 {
 	public class TrapMemory : IExposable
 	{
-		private const int TrapRecordTicksBeforeExpiry = 1680000;
-
 		public IntVec3 loc;
 
 		public Map map;
 
 		public int tick;
+
+		private const int TrapRecordTicksBeforeExpiry = 1680000;
 
 		public IntVec3 Cell
 		{

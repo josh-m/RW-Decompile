@@ -9,8 +9,6 @@ namespace Verse
 {
 	public sealed class Region
 	{
-		public const int GridSize = 12;
-
 		public RegionType type = RegionType.Normal;
 
 		public int id = -1;
@@ -47,11 +45,17 @@ namespace Verse
 
 		public int mark;
 
+		private List<KeyValuePair<Pawn, Danger>> cachedDangers = new List<KeyValuePair<Pawn, Danger>>();
+
+		private int cachedDangersForFrame;
+
 		private int debug_makeTick = -1000;
 
 		private int debug_lastTraverseTick = -1000;
 
 		private static int nextId = 1;
+
+		public const int GridSize = 12;
 
 		public Map Map
 		{
@@ -312,18 +316,45 @@ namespace Verse
 
 		public Danger DangerFor(Pawn p)
 		{
+			if (Current.ProgramState == ProgramState.Playing)
+			{
+				if (this.cachedDangersForFrame != Time.frameCount)
+				{
+					this.cachedDangers.Clear();
+					this.cachedDangersForFrame = Time.frameCount;
+				}
+				else
+				{
+					for (int i = 0; i < this.cachedDangers.Count; i++)
+					{
+						if (this.cachedDangers[i].Key == p)
+						{
+							return this.cachedDangers[i].Value;
+						}
+					}
+				}
+			}
 			Room room = this.Room;
 			float temperature = room.Temperature;
 			FloatRange floatRange = p.SafeTemperatureRange();
+			Danger danger;
 			if (floatRange.Includes(temperature))
 			{
-				return Danger.None;
+				danger = Danger.None;
 			}
-			if (floatRange.ExpandedBy(80f).Includes(temperature))
+			else if (floatRange.ExpandedBy(80f).Includes(temperature))
 			{
-				return Danger.Some;
+				danger = Danger.Some;
 			}
-			return Danger.Deadly;
+			else
+			{
+				danger = Danger.Deadly;
+			}
+			if (Current.ProgramState == ProgramState.Playing)
+			{
+				this.cachedDangers.Add(new KeyValuePair<Pawn, Danger>(p, danger));
+			}
+			return danger;
 		}
 
 		public AreaOverlap OverlapWith(Area a)
@@ -395,7 +426,7 @@ namespace Verse
 				}));
 				return;
 			}
-			this.mapIndex -= 1;
+			this.mapIndex = (sbyte)((int)this.mapIndex - 1);
 		}
 
 		public void Notify_MyMapRemoved()

@@ -65,8 +65,6 @@ namespace Verse.AI
 			}
 		}
 
-		private const int SampleCount = 11;
-
 		private Map map;
 
 		private Region[] regionGrid;
@@ -96,6 +94,8 @@ namespace Verse.AI
 		private List<Pair<RegionLink, int>> preciseRegionLinkDistances = new List<Pair<RegionLink, int>>();
 
 		private Dictionary<RegionLink, IntVec3> linkTargetCells = new Dictionary<RegionLink, IntVec3>();
+
+		private const int SampleCount = 11;
 
 		private static int[] pathCostSamples = new int[11];
 
@@ -383,7 +383,7 @@ namespace Verse.AI
 					iterator.MoveNext();
 				}
 			}
-			Dijkstra<int>.Run(RegionCostCalculator.tmpCellIndices, (int x) => this.PreciseRegionLinkDistancesNeighborsGetter(x, region), this.preciseRegionLinkDistancesDistanceGetter, ref RegionCostCalculator.tmpDistances);
+			Dijkstra<int>.Run(RegionCostCalculator.tmpCellIndices, (int x) => this.PreciseRegionLinkDistancesNeighborsGetter(x, region), this.preciseRegionLinkDistancesDistanceGetter, RegionCostCalculator.tmpDistances, null);
 			for (int i = 0; i < region.links.Count; i++)
 			{
 				RegionLink regionLink = region.links[i];

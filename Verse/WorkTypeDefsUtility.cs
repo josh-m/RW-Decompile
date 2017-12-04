@@ -24,7 +24,7 @@ namespace Verse
 				return "WorkTagNone".Translate();
 			case (WorkTags)1:
 			case (WorkTags)3:
-				IL_1C:
+				IL_1A:
 				if (tags == WorkTags.Violent)
 				{
 					return "WorkTagViolent".Translate();
@@ -84,7 +84,7 @@ namespace Verse
 			case WorkTags.ManualSkilled:
 				return "WorkTagManualSkilled".Translate();
 			}
-			goto IL_1C;
+			goto IL_1A;
 		}
 
 		public static bool OverlapsWithOnAnyWorkType(this WorkTags a, WorkTags b)

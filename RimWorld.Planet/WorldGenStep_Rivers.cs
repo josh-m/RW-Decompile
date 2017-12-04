@@ -8,18 +8,6 @@ namespace RimWorld.Planet
 {
 	public class WorldGenStep_Rivers : WorldGenStep
 	{
-		private const float HillinessSmallHillsElevation = 15f;
-
-		private const float HillinessLargeHillsElevation = 250f;
-
-		private const float HillinessMountainousElevation = 500f;
-
-		private const float HillinessImpassableElevation = 1000f;
-
-		private const float NonRiverEvaporation = 0f;
-
-		private const float EvaporationMultiple = 250f;
-
 		private static readonly SimpleCurve ElevationChangeCost = new SimpleCurve
 		{
 			{
@@ -48,14 +36,19 @@ namespace RimWorld.Planet
 			}
 		};
 
-		public override void GenerateFresh(string seed)
-		{
-			Rand.Seed = GenText.StableStringHash(seed);
-			this.GenerateRivers();
-			Rand.RandomizeStateFromTime();
-		}
+		private const float HillinessSmallHillsElevation = 15f;
 
-		public override void GenerateFromScribe(string seed)
+		private const float HillinessLargeHillsElevation = 250f;
+
+		private const float HillinessMountainousElevation = 500f;
+
+		private const float HillinessImpassableElevation = 1000f;
+
+		private const float NonRiverEvaporation = 0f;
+
+		private const float EvaporationMultiple = 250f;
+
+		public override void GenerateFresh(string seed)
 		{
 			Rand.Seed = GenText.StableStringHash(seed);
 			this.GenerateRivers();
@@ -66,6 +59,10 @@ namespace RimWorld.Planet
 		{
 			Find.WorldPathGrid.RecalculateAllPerceivedPathCosts(-1f);
 			List<int> coastalWaterTiles = this.GetCoastalWaterTiles();
+			if (!coastalWaterTiles.Any<int>())
+			{
+				return;
+			}
 			List<int> neighbors = new List<int>();
 			List<int>[] array = Find.WorldPathFinder.FloodPathsWithCostForTree(coastalWaterTiles, delegate(int st, int ed)
 			{
@@ -130,7 +127,12 @@ namespace RimWorld.Planet
 					bool flag = false;
 					for (int j = 0; j < list2.Count; j++)
 					{
-						flag |= (Find.WorldGrid[list2[j]].biome != BiomeDefOf.Ocean);
+						bool flag2 = Find.WorldGrid[list2[j]].biome != BiomeDefOf.Ocean;
+						if (flag2)
+						{
+							flag = true;
+							break;
+						}
 					}
 					if (flag)
 					{

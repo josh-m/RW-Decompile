@@ -98,13 +98,11 @@ namespace RimWorld
 		{
 			if (this.pawn.RaceProps.intelligence >= Intelligence.ToolUser)
 			{
-				UniqueIDsManager uniqueIDsManager = Find.World.uniqueIDsManager;
+				UniqueIDsManager uniqueIDsManager = Find.UniqueIDsManager;
 				this.beatFireVerb = new Verb_BeatFire();
-				this.beatFireVerb.loadID = uniqueIDsManager.GetNextVerbID();
 				if (!this.pawn.RaceProps.IsMechanoid)
 				{
 					this.igniteVerb = new Verb_Ignite();
-					this.igniteVerb.loadID = uniqueIDsManager.GetNextVerbID();
 				}
 				this.UpdateVerbsLinksAndProps();
 			}
@@ -116,11 +114,13 @@ namespace RimWorld
 			{
 				this.beatFireVerb.caster = this.pawn;
 				this.beatFireVerb.verbProps = NativeVerbPropertiesDatabase.VerbWithCategory(VerbCategory.BeatFire);
+				this.beatFireVerb.loadID = VerbUtility.GenerateBeatFireLoadId(this.pawn);
 			}
 			if (this.igniteVerb != null)
 			{
 				this.igniteVerb.caster = this.pawn;
 				this.igniteVerb.verbProps = NativeVerbPropertiesDatabase.VerbWithCategory(VerbCategory.Ignite);
+				this.igniteVerb.loadID = VerbUtility.GenerateIgniteLoadId(this.pawn);
 			}
 		}
 	}

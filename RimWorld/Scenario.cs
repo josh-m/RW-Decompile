@@ -12,12 +12,6 @@ namespace RimWorld
 {
 	public class Scenario : IExposable, WorkshopUploadable
 	{
-		public const int NameMaxLength = 55;
-
-		public const int SummaryMaxLength = 300;
-
-		public const int DescriptionMaxLength = 1000;
-
 		public string name;
 
 		public string summary;
@@ -39,6 +33,12 @@ namespace RimWorld
 		private string tempUploadDir;
 
 		public bool enabled = true;
+
+		public const int NameMaxLength = 55;
+
+		public const int SummaryMaxLength = 300;
+
+		public const int DescriptionMaxLength = 1000;
 
 		public FileInfo File
 		{

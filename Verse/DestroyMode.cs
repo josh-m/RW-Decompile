@@ -8,6 +8,7 @@ namespace Verse
 		KillFinalize,
 		Deconstruct,
 		FailConstruction,
-		Cancel
+		Cancel,
+		Refund
 	}
 }

@@ -1,25 +1,34 @@
 using System;
+using System.Collections.Generic;
 using Verse;
 
 namespace RimWorld
 {
 	public struct ItemCollectionGeneratorParams
 	{
-		public TechLevel techLevel;
+		public TechLevel? techLevel;
 
-		public int count;
+		public int? count;
 
-		public float totalMarketValue;
+		public IEnumerable<ThingDef> extraAllowedDefs;
 
-		public PodContentsType podContentsType;
+		public float? totalMarketValue;
+
+		public PodContentsType? podContentsType;
 
 		public Predicate<ThingDef> validator;
 
 		public TraderKindDef traderDef;
 
-		public int forTile;
+		public int? tile;
 
-		public Faction forFaction;
+		public Faction traderFaction;
+
+		public float? totalNutrition;
+
+		public bool? nonHumanEdibleFoodAllowed;
+
+		public FoodPreferability? minPreferability;
 
 		public object custom;
 	}

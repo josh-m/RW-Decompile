@@ -17,17 +17,20 @@ namespace Verse
 		{
 			get
 			{
-				switch (this.tickType)
+				TickerType tickerType = this.tickType;
+				if (tickerType == TickerType.Normal)
 				{
-				case TickerType.Normal:
 					return 1;
-				case TickerType.Rare:
+				}
+				if (tickerType == TickerType.Rare)
+				{
 					return 250;
-				case TickerType.Long:
-					return 2000;
-				default:
+				}
+				if (tickerType != TickerType.Long)
+				{
 					return -1;
 				}
+				return 2000;
 			}
 		}
 
@@ -104,17 +107,24 @@ namespace Verse
 				{
 					try
 					{
-						switch (this.tickType)
+						TickerType tickerType = this.tickType;
+						if (tickerType != TickerType.Normal)
 						{
-						case TickerType.Normal:
+							if (tickerType != TickerType.Rare)
+							{
+								if (tickerType == TickerType.Long)
+								{
+									list2[m].TickLong();
+								}
+							}
+							else
+							{
+								list2[m].TickRare();
+							}
+						}
+						else
+						{
 							list2[m].Tick();
-							break;
-						case TickerType.Rare:
-							list2[m].TickRare();
-							break;
-						case TickerType.Long:
-							list2[m].TickLong();
-							break;
 						}
 					}
 					catch (Exception ex)

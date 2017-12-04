@@ -28,7 +28,10 @@ namespace RimWorld
 					return;
 				}
 				this.curOutfit = value;
-				this.pawn.mindState.Notify_OutfitChanged();
+				if (this.pawn.mindState != null)
+				{
+					this.pawn.mindState.Notify_OutfitChanged();
+				}
 			}
 		}
 

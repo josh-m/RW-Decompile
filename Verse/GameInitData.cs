@@ -8,13 +8,13 @@ namespace Verse
 {
 	public class GameInitData
 	{
-		public const int DefaultMapSize = 250;
-
 		public int startingTile = -1;
 
 		public int mapSize = 250;
 
 		public List<Pawn> startingPawns = new List<Pawn>();
+
+		public int startingPawnCount = 3;
 
 		public Faction playerFaction;
 
@@ -25,6 +25,8 @@ namespace Verse
 		public bool startedFromEntry;
 
 		public string gameToLoad;
+
+		public const int DefaultMapSize = 250;
 
 		public bool QuickStarted
 		{
@@ -60,6 +62,12 @@ namespace Verse
 
 		public void PrepForMapGen()
 		{
+			while (this.startingPawns.Count > this.startingPawnCount)
+			{
+				PawnComponentsUtility.RemoveComponentsOnDespawned(this.startingPawns[this.startingPawnCount]);
+				Find.WorldPawns.PassToWorld(this.startingPawns[this.startingPawnCount], PawnDiscardDecideMode.KeepForever);
+				this.startingPawns.RemoveAt(this.startingPawnCount);
+			}
 			foreach (Pawn current in this.startingPawns)
 			{
 				current.SetFactionDirect(Faction.OfPlayer);

@@ -11,7 +11,7 @@ namespace Verse.AI
 
 		public override string GetReport()
 		{
-			if (base.CurJob.def != JobDefOf.WaitCombat)
+			if (this.job.def != JobDefOf.WaitCombat)
 			{
 				return base.GetReport();
 			}
@@ -22,27 +22,32 @@ namespace Verse.AI
 			return base.GetReport();
 		}
 
+		public override bool TryMakePreToilReservations()
+		{
+			return true;
+		}
+
 		[DebuggerHidden]
 		protected override IEnumerable<Toil> MakeNewToils()
 		{
 			Toil wait = new Toil();
 			wait.initAction = delegate
 			{
-				this.<>f__this.Map.pawnDestinationManager.ReserveDestinationFor(this.<>f__this.pawn, this.<>f__this.pawn.Position);
-				this.<>f__this.pawn.pather.StopDead();
-				this.<>f__this.CheckForAutoAttack();
+				this.$this.Map.pawnDestinationReservationManager.Reserve(this.$this.pawn, this.$this.job, this.$this.pawn.Position);
+				this.$this.pawn.pather.StopDead();
+				this.$this.CheckForAutoAttack();
 			};
 			wait.tickAction = delegate
 			{
-				if (this.<>f__this.CurJob.expiryInterval == -1 && this.<>f__this.CurJob.def == JobDefOf.WaitCombat && !this.<>f__this.pawn.Drafted)
+				if (this.$this.job.expiryInterval == -1 && this.$this.job.def == JobDefOf.WaitCombat && !this.$this.pawn.Drafted)
 				{
-					Log.Error(this.<>f__this.pawn + " in eternal WaitCombat without being drafted.");
-					this.<>f__this.ReadyForNextToil();
+					Log.Error(this.$this.pawn + " in eternal WaitCombat without being drafted.");
+					this.$this.ReadyForNextToil();
 					return;
 				}
-				if ((Find.TickManager.TicksGame + this.<>f__this.pawn.thingIDNumber) % 4 == 0)
+				if ((Find.TickManager.TicksGame + this.$this.pawn.thingIDNumber) % 4 == 0)
 				{
-					this.<>f__this.CheckForAutoAttack();
+					this.$this.CheckForAutoAttack();
 				}
 			};
 			this.DecorateWaitToil(wait);
@@ -110,21 +115,21 @@ namespace Verse.AI
 					this.pawn.natives.TryBeatFire(fire);
 					return;
 				}
-				if (flag && this.pawn.Faction != null && this.pawn.jobs.curJob.def == JobDefOf.WaitCombat && (this.pawn.drafter == null || this.pawn.drafter.FireAtWill))
+				if (flag && this.pawn.Faction != null && this.job.def == JobDefOf.WaitCombat && (this.pawn.drafter == null || this.pawn.drafter.FireAtWill))
 				{
 					bool allowManualCastWeapons = !this.pawn.IsColonist;
 					Verb verb = this.pawn.TryGetAttackVerb(allowManualCastWeapons);
 					if (verb != null && !verb.verbProps.MeleeRange)
 					{
 						TargetScanFlags targetScanFlags = TargetScanFlags.NeedLOSToPawns | TargetScanFlags.NeedLOSToNonPawns | TargetScanFlags.NeedThreat;
-						if (verb.verbProps.ai_IsIncendiary)
+						if (verb.IsIncendiary())
 						{
 							targetScanFlags |= TargetScanFlags.NeedNonBurning;
 						}
 						Thing thing = (Thing)AttackTargetFinder.BestShootTargetFromCurrentPosition(this.pawn, null, verb.verbProps.range, verb.verbProps.minRange, targetScanFlags);
 						if (thing != null)
 						{
-							this.pawn.equipment.TryStartAttack(thing);
+							this.pawn.TryStartAttack(thing);
 							return;
 						}
 					}

@@ -45,7 +45,7 @@ namespace Verse
 			return this.SubGraphicForStackCount(thing.stackCount, thing.def);
 		}
 
-		public override void DrawWorker(Vector3 loc, Rot4 rot, ThingDef thingDef, Thing thing)
+		public override void DrawWorker(Vector3 loc, Rot4 rot, ThingDef thingDef, Thing thing, float extraRotation)
 		{
 			Graphic graphic;
 			if (thing != null)
@@ -56,7 +56,7 @@ namespace Verse
 			{
 				graphic = this.subGraphics[0];
 			}
-			graphic.DrawWorker(loc, rot, thingDef, thing);
+			graphic.DrawWorker(loc, rot, thingDef, thing, extraRotation);
 		}
 
 		public Graphic SubGraphicForStackCount(int stackCount, ThingDef def)

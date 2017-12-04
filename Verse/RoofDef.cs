@@ -13,5 +13,13 @@ namespace Verse
 		public ThingDef filthLeaving;
 
 		public SoundDef soundPunchThrough;
+
+		public bool VanishOnCollapse
+		{
+			get
+			{
+				return !this.isThickRoof;
+			}
+		}
 	}
 }

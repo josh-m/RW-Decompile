@@ -16,7 +16,7 @@ namespace RimWorld
 			{
 				ThingDef finalDef;
 				if (!(from t in DefDatabase<ThingDef>.AllDefs
-				where this.<>f__this.HandlesThingDef(t) && t.techLevel <= this.<>f__this.maxTechLevelGenerate
+				where this.$this.HandlesThingDef(t) && t.tradeability == Tradeability.Stockable && t.techLevel <= this.$this.maxTechLevelGenerate
 				select t).TryRandomElementByWeight(new Func<ThingDef, float>(this.SelectionWeight), out finalDef))
 				{
 					break;
@@ -32,7 +32,7 @@ namespace RimWorld
 
 		public override bool HandlesThingDef(ThingDef thingDef)
 		{
-			return thingDef.tradeability == Tradeability.Stockable && thingDef.techLevel <= this.maxTechLevelBuy;
+			return thingDef.tradeability != Tradeability.Never && thingDef.techLevel <= this.maxTechLevelBuy;
 		}
 
 		protected virtual float SelectionWeight(ThingDef thingDef)

@@ -12,6 +12,16 @@ namespace RimWorld
 {
 	public class Page_ModsConfig : Page
 	{
+		public ModMetaData selectedMod;
+
+		private Vector2 modListScrollPosition = Vector2.zero;
+
+		private Vector2 modDescriptionScrollPosition = Vector2.zero;
+
+		private int activeModsWhenOpenedHash = -1;
+
+		private Dictionary<string, string> truncatedModNamesCache = new Dictionary<string, string>();
+
 		private const float ModListAreaWidth = 350f;
 
 		private const float ModsListButtonHeight = 30f;
@@ -27,16 +37,6 @@ namespace RimWorld
 		private const float VersionWidth = 30f;
 
 		private const float ModRowHeight = 26f;
-
-		public ModMetaData selectedMod;
-
-		private Vector2 modListScrollPosition = Vector2.zero;
-
-		private Vector2 modDescriptionScrollPosition = Vector2.zero;
-
-		private int activeModsWhenOpenedHash = -1;
-
-		private Dictionary<string, string> truncatedModNamesCache = new Dictionary<string, string>();
 
 		public Page_ModsConfig()
 		{
@@ -58,14 +58,13 @@ namespace RimWorld
 			{
 				yield return mod;
 			}
-			foreach (ModMetaData mod2 in from m in ModLister.AllInstalledMods
+			foreach (ModMetaData mod2 in from x in ModLister.AllInstalledMods
+			where !x.Active
+			select x into m
 			orderby m.VersionCompatible descending
 			select m)
 			{
-				if (!mod2.Active)
-				{
-					yield return mod2;
-				}
+				yield return mod2;
 			}
 		}
 
@@ -89,8 +88,8 @@ namespace RimWorld
 			num += 30f;
 			num += 17f;
 			Rect rect4 = new Rect(0f, num, 350f, mainRect.height - num);
-			Widgets.DrawMenuSection(rect4, true);
-			float height = (float)(ModLister.AllInstalledMods.Count<ModMetaData>() * 34 + 300);
+			Widgets.DrawMenuSection(rect4);
+			float height = (float)ModLister.AllInstalledMods.Count<ModMetaData>() * 26f + 8f;
 			Rect rect5 = new Rect(0f, 0f, rect4.width - 16f, height);
 			Widgets.BeginScrollView(rect4, ref this.modListScrollPosition, rect5, true);
 			Rect rect6 = rect5.ContractedBy(4f);
@@ -100,7 +99,6 @@ namespace RimWorld
 			int reorderableGroup = ReorderableWidget.NewGroup(delegate(int from, int to)
 			{
 				ModsConfig.Reorder(from, to);
-				SoundDefOf.TickHigh.PlayOneShotOnCamera(null);
 			});
 			int num2 = 0;
 			foreach (ModMetaData current in this.ModsInListOrder())
@@ -108,7 +106,8 @@ namespace RimWorld
 				this.DoModRow(listing_Standard, current, num2, reorderableGroup);
 				num2++;
 			}
-			for (int i = 0; i < WorkshopItems.DownloadingItemsCount; i++)
+			int downloadingItemsCount = WorkshopItems.DownloadingItemsCount;
+			for (int i = 0; i < downloadingItemsCount; i++)
 			{
 				this.DoModRowDownloading(listing_Standard, num2);
 				num2++;
@@ -209,7 +208,7 @@ namespace RimWorld
 							Messages.Message("MessageModNeedsWellFormattedTargetVersion".Translate(new object[]
 							{
 								VersionControl.CurrentVersionString
-							}), MessageSound.RejectInput);
+							}), MessageTypeDefOf.RejectInput);
 						}
 						else
 						{
@@ -283,7 +282,7 @@ namespace RimWorld
 				{
 					this.selectedMod = mod;
 				}
-				if (mod.Active && !active && mod.Name == ModContentPack.CoreModIdentifier)
+				if (mod.Active && !active && mod.IsCoreMod)
 				{
 					ModMetaData coreMod = mod;
 					Find.WindowStack.Add(Dialog_MessageBox.CreateConfirmation("ConfirmDisableCoreMod".Translate(), delegate
@@ -333,12 +332,7 @@ namespace RimWorld
 			ModsConfig.Save();
 			if (this.activeModsWhenOpenedHash != ModLister.InstalledModsListHash(true))
 			{
-				WindowStack arg_4E_0 = Find.WindowStack;
-				Action buttonAAction = delegate
-				{
-					GenCommandLine.Restart();
-				};
-				arg_4E_0.Add(new Dialog_MessageBox("ModsChanged".Translate(), null, buttonAAction, null, null, null, false));
+				ModsConfig.RestartFromChangedMods();
 			}
 		}
 	}

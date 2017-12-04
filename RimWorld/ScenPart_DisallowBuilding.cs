@@ -9,9 +9,9 @@ namespace RimWorld
 {
 	public class ScenPart_DisallowBuilding : ScenPart_Rule
 	{
-		private const string DisallowBuildingTag = "DisallowBuilding";
-
 		private ThingDef building;
+
+		private const string DisallowBuildingTag = "DisallowBuilding";
 
 		protected override void ApplyRule()
 		{

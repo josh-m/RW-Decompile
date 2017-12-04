@@ -26,7 +26,7 @@ namespace RimWorld
 
 		private bool TryGetValue(StatRequest req, out float value)
 		{
-			return PawnOrCorpseStatUtility.TryGetPawnOrCorpseStat(req, (Pawn x) => MassUtility.GearAndInventoryMass(x), (ThingDef x) => 0f, out value);
+			return PawnOrCorpseStatUtility.TryGetPawnOrCorpseStat(req, new Func<Pawn, float>(MassUtility.GearAndInventoryMass), (ThingDef x) => 0f, out value);
 		}
 	}
 }

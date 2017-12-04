@@ -7,14 +7,18 @@ namespace RimWorld
 {
 	public class CompIngredients : ThingComp
 	{
-		private const int MaxNumIngredients = 3;
-
 		public List<ThingDef> ingredients = new List<ThingDef>();
+
+		private const int MaxNumIngredients = 3;
 
 		public override void PostExposeData()
 		{
 			base.PostExposeData();
 			Scribe_Collections.Look<ThingDef>(ref this.ingredients, "ingredients", LookMode.Def, new object[0]);
+			if (Scribe.mode == LoadSaveMode.PostLoadInit && this.ingredients == null)
+			{
+				this.ingredients = new List<ThingDef>();
+			}
 		}
 
 		public void RegisterIngredient(ThingDef def)

@@ -86,10 +86,10 @@ namespace RimWorld
 			return null;
 		}
 
-		public bool TryGetRandomNonColonyHumanlikeFaction(out Faction faction, bool tryMedievalOrBetter, bool allowDefeated = false)
+		public bool TryGetRandomNonColonyHumanlikeFaction(out Faction faction, bool tryMedievalOrBetter, bool allowDefeated = false, TechLevel minTechLevel = TechLevel.Undefined)
 		{
 			IEnumerable<Faction> source = from x in this.AllFactions
-			where x != Faction.OfPlayer && !x.def.hidden && x.def.humanlikeFaction && (allowDefeated || !x.defeated)
+			where !x.IsPlayer && !x.def.hidden && x.def.humanlikeFaction && (allowDefeated || !x.defeated) && (minTechLevel == TechLevel.Undefined || x.def.techLevel >= minTechLevel)
 			select x;
 			return source.TryRandomElementByWeight(delegate(Faction x)
 			{
@@ -101,11 +101,11 @@ namespace RimWorld
 			}, out faction);
 		}
 
-		public Faction RandomEnemyFaction(bool allowHidden = false, bool allowDefeated = false, bool allowNonHumanlike = true)
+		public Faction RandomEnemyFaction(bool allowHidden = false, bool allowDefeated = false, bool allowNonHumanlike = true, TechLevel minTechLevel = TechLevel.Undefined)
 		{
 			Faction result;
 			if ((from x in this.AllFactions
-			where (allowHidden || !x.def.hidden) && (allowDefeated || !x.defeated) && (allowNonHumanlike || x.def.humanlikeFaction) && x.HostileTo(Faction.OfPlayer)
+			where !x.IsPlayer && (allowHidden || !x.def.hidden) && (allowDefeated || !x.defeated) && (allowNonHumanlike || x.def.humanlikeFaction) && (minTechLevel == TechLevel.Undefined || x.def.techLevel >= minTechLevel) && x.HostileTo(Faction.OfPlayer)
 			select x).TryRandomElement(out result))
 			{
 				return result;
@@ -113,11 +113,11 @@ namespace RimWorld
 			return null;
 		}
 
-		public Faction RandomAlliedFaction(bool allowHidden = false, bool allowDefeated = false, bool allowNonHumanlike = true)
+		public Faction RandomAlliedFaction(bool allowHidden = false, bool allowDefeated = false, bool allowNonHumanlike = true, TechLevel minTechLevel = TechLevel.Undefined)
 		{
 			Faction result;
 			if ((from x in this.AllFactions
-			where !x.IsPlayer && (allowHidden || !x.def.hidden) && (allowDefeated || !x.defeated) && (allowNonHumanlike || x.def.humanlikeFaction) && !x.HostileTo(Faction.OfPlayer)
+			where !x.IsPlayer && (allowHidden || !x.def.hidden) && (allowDefeated || !x.defeated) && (allowNonHumanlike || x.def.humanlikeFaction) && (minTechLevel == TechLevel.Undefined || x.def.techLevel >= minTechLevel) && !x.HostileTo(Faction.OfPlayer)
 			select x).TryRandomElement(out result))
 			{
 				return result;

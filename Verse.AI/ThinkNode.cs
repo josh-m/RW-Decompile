@@ -5,10 +5,6 @@ namespace Verse.AI
 {
 	public abstract class ThinkNode
 	{
-		public const int InvalidSaveKey = -1;
-
-		protected const int UnresolvedSaveKey = -2;
-
 		public List<ThinkNode> subNodes = new List<ThinkNode>();
 
 		public bool leaveJoinableLordIfIssuesJob;
@@ -20,6 +16,10 @@ namespace Verse.AI
 
 		[Unsaved]
 		public ThinkNode parent;
+
+		public const int InvalidSaveKey = -1;
+
+		protected const int UnresolvedSaveKey = -2;
 
 		public int UniqueSaveKey
 		{

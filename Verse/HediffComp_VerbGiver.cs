@@ -31,6 +31,14 @@ namespace Verse
 			}
 		}
 
+		public List<Tool> Tools
+		{
+			get
+			{
+				return this.Props.tools;
+			}
+		}
+
 		public HediffComp_VerbGiver()
 		{
 			this.verbTracker = new VerbTracker(this);
@@ -43,12 +51,21 @@ namespace Verse
 			{
 				this
 			});
+			if (Scribe.mode == LoadSaveMode.PostLoadInit && this.verbTracker == null)
+			{
+				this.verbTracker = new VerbTracker(this);
+			}
 		}
 
 		public override void CompPostTick(ref float severityAdjustment)
 		{
 			base.CompPostTick(ref severityAdjustment);
 			this.verbTracker.VerbsTick();
+		}
+
+		public string UniqueVerbOwnerID()
+		{
+			return this.parent.GetUniqueLoadID();
 		}
 	}
 }

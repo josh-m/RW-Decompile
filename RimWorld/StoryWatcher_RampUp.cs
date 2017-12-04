@@ -6,19 +6,19 @@ namespace RimWorld
 {
 	public class StoryWatcher_RampUp : IExposable
 	{
+		private float shortTermFactor = 1f;
+
+		private float longTermFactor = 1f;
+
 		private const int UpdateInterval = 5000;
 
 		private const float ShortFactor_GameStartGraceDays = 21f;
 
-		private const float ShortFactor_DaysToDouble = 162f;
+		private const float ShortFactor_DaysToDouble = 234f;
 
 		private const float LongFactor_GameStartGraceDays = 42f;
 
 		private const float LongFactor_DaysToDouble = 360f;
-
-		private float shortTermFactor = 1f;
-
-		private float longTermFactor = 1f;
 
 		public float TotalThreatPointsFactor
 		{
@@ -44,7 +44,7 @@ namespace RimWorld
 			}
 		}
 
-		public void Notify_PlayerPawnIncappedOrKilled(Pawn p)
+		public void Notify_ColonistViolentlyDownedOrKilled(Pawn p)
 		{
 			if (!p.RaceProps.Humanlike)
 			{
@@ -52,7 +52,8 @@ namespace RimWorld
 			}
 			float num = this.shortTermFactor - 1f;
 			float num2 = this.longTermFactor - 1f;
-			switch (PawnsFinder.AllMapsCaravansAndTravelingTransportPods_FreeColonists.Count<Pawn>())
+			int num3 = PawnsFinder.AllMapsCaravansAndTravelingTransportPods_FreeColonists.Count<Pawn>();
+			switch (num3)
 			{
 			case 0:
 				num *= 0f;
@@ -119,8 +120,8 @@ namespace RimWorld
 				num2 *= 0.95f;
 				break;
 			default:
-				num *= 0.8f;
-				num2 *= 0.95f;
+				num *= GenMath.LerpDoubleClamped(16f, 30f, 0.8f, 1f, (float)num3);
+				num2 *= GenMath.LerpDoubleClamped(16f, 30f, 0.95f, 1f, (float)num3);
 				break;
 			}
 			this.shortTermFactor = 1f + num;
@@ -133,7 +134,7 @@ namespace RimWorld
 			{
 				if ((float)GenDate.DaysPassed >= 21f)
 				{
-					this.shortTermFactor += 0.000514403335f;
+					this.shortTermFactor += 0.000356125354f;
 				}
 				if ((float)GenDate.DaysPassed >= 42f)
 				{

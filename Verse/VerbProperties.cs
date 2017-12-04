@@ -14,14 +14,6 @@ namespace Verse
 			Long
 		}
 
-		private const float DistTouch = 4f;
-
-		private const float DistShort = 15f;
-
-		private const float DistMedium = 30f;
-
-		private const float DistLong = 50f;
-
 		public VerbCategory category = VerbCategory.Nonnative;
 
 		public Type verbClass = typeof(Verb);
@@ -68,6 +60,8 @@ namespace Verse
 
 		public SoundDef soundCastTail;
 
+		public SoundDef soundAiming;
+
 		public float muzzleFlashScale;
 
 		public BodyPartGroupDef linkedBodyPartsGroup;
@@ -78,13 +72,11 @@ namespace Verse
 
 		public bool ai_IsWeapon = true;
 
-		public bool ai_IsIncendiary;
-
 		public bool ai_IsBuildingDestroyer;
 
 		public float ai_AvoidFriendlyFireRadius;
 
-		public ThingDef projectileDef;
+		public ThingDef defaultProjectile;
 
 		public float forcedMissRadius;
 
@@ -96,6 +88,20 @@ namespace Verse
 
 		public float accuracyLong = 1f;
 
+		public bool meleeShoot;
+
+		private const float DistTouch = 4f;
+
+		private const float DistShort = 15f;
+
+		private const float DistMedium = 30f;
+
+		private const float DistLong = 50f;
+
+		private const float MeleeGunfireWeighting = 0.25f;
+
+		private const float BodypartVerbWeighting = 0.3f;
+
 		public bool MeleeRange
 		{
 			get
@@ -104,19 +110,19 @@ namespace Verse
 			}
 		}
 
-		public bool NeedsLineOfSight
-		{
-			get
-			{
-				return !this.projectileDef.projectile.flyOverhead;
-			}
-		}
-
 		public bool CausesTimeSlowdown
 		{
 			get
 			{
 				return this.ai_IsWeapon && this.forceNormalTimeSpeed;
+			}
+		}
+
+		public bool LaunchesProjectile
+		{
+			get
+			{
+				return typeof(Verb_LaunchProjectile).IsAssignableFrom(this.verbClass);
 			}
 		}
 
@@ -137,20 +143,32 @@ namespace Verse
 			}
 		}
 
-		public float BaseSelectionWeight
+		public bool IsMeleeAttack
 		{
 			get
 			{
-				return this.AdjustedSelectionWeight(null, null, null);
+				return typeof(Verb_MeleeAttack).IsAssignableFrom(this.verbClass);
 			}
 		}
 
-		public int AdjustedMeleeDamageAmount(Verb ownerVerb, Pawn attacker, Thing equipment)
+		public float BaseMeleeSelectionWeight
 		{
-			float num;
-			if (ownerVerb != null && ownerVerb.ownerEquipment != null)
+			get
 			{
-				num = ownerVerb.ownerEquipment.GetStatValue(StatDefOf.MeleeWeapon_DamageAmount, true);
+				return this.AdjustedMeleeSelectionWeight(null, null, null);
+			}
+		}
+
+		public float AdjustedMeleeDamageAmount(Verb ownerVerb, Pawn attacker, Thing equipment)
+		{
+			if ((ownerVerb == null) ? (!typeof(Verb_MeleeAttack).IsAssignableFrom(this.verbClass)) : (!(ownerVerb is Verb_MeleeAttack)))
+			{
+				Log.ErrorOnce(string.Format("Attempting to get melee damage for a non-melee verb {0}", this), 26181238);
+			}
+			float num;
+			if (ownerVerb != null && ownerVerb.tool != null)
+			{
+				num = ownerVerb.tool.AdjustedMeleeDamageAmount(ownerVerb.ownerEquipment, this.meleeDamageDef);
 			}
 			else
 			{
@@ -160,25 +178,60 @@ namespace Verse
 			{
 				num *= ownerVerb.GetDamageFactorFor(attacker);
 			}
-			return Mathf.Max(1, Mathf.RoundToInt(num));
+			return num;
 		}
 
-		public float AdjustedSelectionWeight(Verb ownerVerb, Pawn attacker, Thing equipment)
+		private float AdjustedExpectedMeleeDamage(Verb ownerVerb, Pawn attacker, Thing equipment)
 		{
-			return (float)this.AdjustedMeleeDamageAmount(ownerVerb, attacker, equipment) * this.commonality;
+			if (this.IsMeleeAttack)
+			{
+				return this.AdjustedMeleeDamageAmount(ownerVerb, attacker, equipment);
+			}
+			if (this.LaunchesProjectile && this.defaultProjectile != null)
+			{
+				return (float)this.defaultProjectile.projectile.damageAmountBase;
+			}
+			return 0f;
 		}
 
-		public int AdjustedCooldownTicks(Thing equipment)
+		public float AdjustedMeleeSelectionWeight(Verb ownerVerb, Pawn attacker, Thing equipment)
 		{
-			if (equipment == null)
+			float num = this.AdjustedExpectedMeleeDamage(ownerVerb, attacker, equipment) * this.commonality * ((ownerVerb.tool != null) ? ownerVerb.tool.commonality : 1f);
+			if (this.IsMeleeAttack && equipment != null)
 			{
-				return this.defaultCooldownTime.SecondsToTicks();
+				return num;
 			}
-			if (this.MeleeRange)
+			if (this.IsMeleeAttack && ownerVerb.tool != null && ownerVerb.tool.alwaysTreatAsWeapon)
 			{
-				return equipment.GetStatValue(StatDefOf.MeleeWeapon_Cooldown, true).SecondsToTicks();
+				return num;
 			}
-			return equipment.GetStatValue(StatDefOf.RangedWeapon_Cooldown, true).SecondsToTicks();
+			if (this.IsMeleeAttack)
+			{
+				return num * 0.3f;
+			}
+			if (this.meleeShoot)
+			{
+				return num * 0.25f / equipment.GetStatValue(StatDefOf.Weapon_Bulk, true);
+			}
+			return 0f;
+		}
+
+		public float AdjustedCooldown(Verb ownerVerb, Pawn attacker, Thing equipment)
+		{
+			if (ownerVerb.tool != null)
+			{
+				return ownerVerb.tool.AdjustedCooldown(equipment);
+			}
+			if (equipment != null && !this.MeleeRange)
+			{
+				return equipment.GetStatValue(StatDefOf.RangedWeapon_Cooldown, true);
+			}
+			return this.defaultCooldownTime;
+		}
+
+		public int AdjustedCooldownTicks(Verb ownerVerb, Pawn attacker, Thing equipment)
+		{
+			return this.AdjustedCooldown(ownerVerb, attacker, equipment).SecondsToTicks();
 		}
 
 		private float AdjustedAccuracy(VerbProperties.RangeCategory cat, Thing equipment)
@@ -265,11 +318,16 @@ namespace Verse
 				{
 					"range=",
 					this.range,
-					", projectile=",
-					(this.projectileDef == null) ? "null" : this.projectileDef.defName
+					", defaultProjectile=",
+					this.defaultProjectile.ToStringSafe<ThingDef>()
 				});
 			}
 			return "VerbProperties(" + str + ")";
+		}
+
+		public new VerbProperties MemberwiseClone()
+		{
+			return (VerbProperties)base.MemberwiseClone();
 		}
 	}
 }

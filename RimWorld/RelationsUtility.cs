@@ -114,7 +114,7 @@ namespace RimWorld
 							animal.LabelShort
 						}).CapitalizeFirst();
 					}
-					Messages.Message(text2, humanlike, MessageSound.Benefit);
+					Messages.Message(text2, humanlike, MessageTypeDefOf.PositiveEvent);
 				}
 				return true;
 			}

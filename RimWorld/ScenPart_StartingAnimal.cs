@@ -149,10 +149,10 @@ namespace RimWorld
 				}
 				if (Rand.Value < this.bondToRandomPlayerPawnChance)
 				{
-					Pawn col = Find.GameInitData.startingPawns.RandomElement<Pawn>();
-					if (!col.story.traits.HasTrait(TraitDefOf.Psychopath))
+					Pawn pawn = Find.GameInitData.startingPawns.RandomElement<Pawn>();
+					if (!pawn.story.traits.HasTrait(TraitDefOf.Psychopath))
 					{
-						col.relations.AddDirectRelation(PawnRelationDefOf.Bond, animal);
+						pawn.relations.AddDirectRelation(PawnRelationDefOf.Bond, animal);
 					}
 				}
 				yield return animal;

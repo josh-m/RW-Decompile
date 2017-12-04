@@ -8,15 +8,15 @@ namespace RimWorld
 {
 	public class JobDriver_TendPatient : JobDriver
 	{
-		private const int BaseTendDuration = 600;
-
 		private bool usesMedicine;
+
+		private const int BaseTendDuration = 600;
 
 		protected Thing MedicineUsed
 		{
 			get
 			{
-				return base.CurJob.targetB.Thing;
+				return this.job.targetB.Thing;
 			}
 		}
 
@@ -24,7 +24,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return (Pawn)base.CurJob.targetA.Thing;
+				return (Pawn)this.job.targetA.Thing;
 			}
 		}
 
@@ -40,39 +40,43 @@ namespace RimWorld
 			this.usesMedicine = (this.MedicineUsed != null);
 		}
 
+		public override bool TryMakePreToilReservations()
+		{
+			return this.pawn.Reserve(this.Deliveree, this.job, 1, -1, null) && (!this.usesMedicine || this.pawn.Reserve(this.MedicineUsed, this.job, 1, -1, null));
+		}
+
 		[DebuggerHidden]
 		protected override IEnumerable<Toil> MakeNewToils()
 		{
 			this.FailOnDespawnedNullOrForbidden(TargetIndex.A);
 			this.FailOn(delegate
 			{
-				if (!WorkGiver_Tend.GoodLayingStatusForTend(this.<>f__this.Deliveree, this.<>f__this.pawn))
+				if (!WorkGiver_Tend.GoodLayingStatusForTend(this.$this.Deliveree, this.$this.pawn))
 				{
 					return true;
 				}
-				if (this.<>f__this.MedicineUsed != null)
+				if (this.$this.MedicineUsed != null)
 				{
-					if (this.<>f__this.Deliveree.playerSettings == null)
+					if (this.$this.Deliveree.playerSettings == null)
 					{
 						return true;
 					}
-					if (!this.<>f__this.Deliveree.playerSettings.medCare.AllowsMedicine(this.<>f__this.MedicineUsed.def))
+					if (!this.$this.Deliveree.playerSettings.medCare.AllowsMedicine(this.$this.MedicineUsed.def))
 					{
 						return true;
 					}
 				}
-				return this.<>f__this.pawn == this.<>f__this.Deliveree && (this.<>f__this.pawn.playerSettings == null || !this.<>f__this.pawn.playerSettings.selfTend);
+				return this.$this.pawn == this.$this.Deliveree && (this.$this.pawn.playerSettings == null || !this.$this.pawn.playerSettings.selfTend);
 			});
-			this.AddEndCondition(delegate
+			base.AddEndCondition(delegate
 			{
-				if (HealthAIUtility.ShouldBeTendedNow(this.<>f__this.Deliveree))
+				if (HealthAIUtility.ShouldBeTendedNow(this.$this.Deliveree))
 				{
 					return JobCondition.Ongoing;
 				}
 				return JobCondition.Succeeded;
 			});
 			this.FailOnAggroMentalState(TargetIndex.A);
-			yield return Toils_Reserve.Reserve(TargetIndex.A, 1, -1, null);
 			Toil reserveMedicine = null;
 			if (this.usesMedicine)
 			{
@@ -94,13 +98,13 @@ namespace RimWorld
 				{
 					initAction = delegate
 					{
-						if (this.<>f__this.MedicineUsed.DestroyedOrNull() && Medicine.GetMedicineCountToFullyHeal(this.<>f__this.Deliveree) > 0)
+						if (this.$this.MedicineUsed.DestroyedOrNull() && Medicine.GetMedicineCountToFullyHeal(this.$this.Deliveree) > 0)
 						{
-							Thing thing = HealthAIUtility.FindBestMedicine(this.<>f__this.pawn, this.<>f__this.Deliveree);
+							Thing thing = HealthAIUtility.FindBestMedicine(this.$this.pawn, this.$this.Deliveree);
 							if (thing != null)
 							{
-								this.<>f__this.CurJob.targetB = thing;
-								this.<>f__this.JumpToToil(this.<reserveMedicine>__0);
+								this.$this.job.targetB = thing;
+								this.$this.JumpToToil(reserveMedicine);
 							}
 						}
 					}

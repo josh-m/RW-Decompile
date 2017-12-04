@@ -5,6 +5,14 @@ namespace RimWorld
 {
 	public class DeathActionWorker_BigExplosion : DeathActionWorker
 	{
+		public override RulePackDef DeathRules
+		{
+			get
+			{
+				return RulePackDefOf.Transition_DiedExplosive;
+			}
+		}
+
 		public override void PawnDied(Corpse corpse)
 		{
 			float radius;
@@ -20,7 +28,7 @@ namespace RimWorld
 			{
 				radius = 4.9f;
 			}
-			GenExplosion.DoExplosion(corpse.Position, corpse.Map, radius, DamageDefOf.Flame, corpse.InnerPawn, null, null, null, null, 0f, 1, false, null, 0f, 1);
+			GenExplosion.DoExplosion(corpse.Position, corpse.Map, radius, DamageDefOf.Flame, corpse.InnerPawn, -1, null, null, null, null, 0f, 1, false, null, 0f, 1, 0f, false);
 		}
 	}
 }

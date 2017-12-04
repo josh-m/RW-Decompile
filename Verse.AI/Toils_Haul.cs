@@ -46,7 +46,7 @@ namespace Verse.AI
 			}
 		}
 
-		public static Toil StartCarryThing(TargetIndex haulableInd, bool putRemainderInQueue = false, bool subtractNumTakenFromJobCount = false)
+		public static Toil StartCarryThing(TargetIndex haulableInd, bool putRemainderInQueue = false, bool subtractNumTakenFromJobCount = false, bool failIfStackCountLessThanJobCount = false)
 		{
 			Toil toil = new Toil();
 			toil.initAction = delegate
@@ -78,6 +78,11 @@ namespace Verse.AI
 						curJob
 					}));
 				}
+				if (failIfStackCountLessThanJobCount && thing.stackCount < curJob.count)
+				{
+					actor.jobs.curDriver.EndJobWith(JobCondition.Incompletable);
+					return;
+				}
 				int num2 = Mathf.Min(new int[]
 				{
 					curJob.count,
@@ -89,7 +94,7 @@ namespace Verse.AI
 					throw new Exception("StartCarryThing desiredNumToTake = " + num2);
 				}
 				int stackCount = thing.stackCount;
-				int num3 = actor.carryTracker.TryStartCarry(thing, num2);
+				int num3 = actor.carryTracker.TryStartCarry(thing, num2, true);
 				if (num3 == 0)
 				{
 					actor.jobs.EndCurrentJob(JobCondition.Incompletable, true);
@@ -106,9 +111,9 @@ namespace Verse.AI
 						}
 						curJob.countQueue.Insert(0, num4);
 					}
-					else if (actor.Map.reservationManager.ReservedBy(thing, actor))
+					else if (actor.Map.reservationManager.ReservedBy(thing, actor, curJob))
 					{
-						actor.Map.reservationManager.Release(thing, actor);
+						actor.Map.reservationManager.Release(thing, actor, curJob);
 					}
 				}
 				if (subtractNumTakenFromJobCount)
@@ -116,7 +121,6 @@ namespace Verse.AI
 					curJob.count -= num3;
 				}
 				curJob.SetTarget(haulableInd, actor.carryTracker.CarriedThing);
-				actor.Reserve(actor.carryTracker.CarriedThing, 1, -1, null);
 				actor.records.Increment(RecordDefOf.ThingsHauled);
 			};
 			return toil;
@@ -141,6 +145,10 @@ namespace Verse.AI
 				if (actor.carryTracker.CarriedThing == null)
 				{
 					Log.Error("JumpToAlsoCollectTargetInQueue run on " + actor + " who is not carrying something.");
+					return;
+				}
+				if (actor.carryTracker.AvailableStackSpace(actor.carryTracker.CarriedThing.def) <= 0)
+				{
 					return;
 				}
 				for (int i = 0; i < targetQueue.Count; i++)
@@ -216,6 +224,11 @@ namespace Verse.AI
 			toil.initAction = delegate
 			{
 				Pawn actor = toil.actor;
+				if (actor.carryTracker.CarriedThing == null)
+				{
+					Log.Error(actor + " tried to place hauled thing in facing cell but is not hauling anything.");
+					return;
+				}
 				LocalTargetInfo target = actor.CurJob.GetTarget(facingTargetInd);
 				IntVec3 b;
 				if (target.HasThing)
@@ -226,7 +239,7 @@ namespace Verse.AI
 				{
 					b = target.Cell;
 				}
-				IntVec3 dropLoc = actor.Position + PawnRotator.RotFromAngleBiased((actor.Position - b).AngleFlat).FacingCell;
+				IntVec3 dropLoc = actor.Position + Pawn_RotationTracker.RotFromAngleBiased((actor.Position - b).AngleFlat).FacingCell;
 				Thing thing;
 				if (!actor.carryTracker.TryDropCarriedThing(dropLoc, ThingPlaceMode.Direct, out thing, null))
 				{
@@ -244,6 +257,11 @@ namespace Verse.AI
 				Pawn actor = toil.actor;
 				Job curJob = actor.jobs.curJob;
 				IntVec3 cell = curJob.GetTarget(cellInd).Cell;
+				if (actor.carryTracker.CarriedThing == null)
+				{
+					Log.Error(actor + " tried to place hauled thing in cell but is not hauling anything.");
+					return;
+				}
 				SlotGroup slotGroup = actor.Map.slotGroupManager.SlotGroupAt(cell);
 				if (slotGroup != null && slotGroup.Settings.AllowedToAccept(actor.carryTracker.CarriedThing))
 				{
@@ -279,7 +297,7 @@ namespace Verse.AI
 						{
 							if (actor.CanReserve(c, 1, -1, null, false))
 							{
-								actor.Reserve(c, 1, -1, null);
+								actor.Reserve(c, actor.CurJob, 1, -1, null);
 							}
 							actor.CurJob.SetTarget(cellInd, c);
 							actor.jobs.curDriver.JumpToToil(nextToilOnPlaceFailOrIncomplete);
@@ -436,7 +454,7 @@ namespace Verse.AI
 				}
 				else
 				{
-					actor.inventory.GetDirectlyHeldThings().TryAdd(thing, num, true);
+					actor.inventory.GetDirectlyHeldThings().TryAdd(thing.SplitOff(num), true);
 					if (thing.def.ingestible != null && thing.def.ingestible.preferability <= FoodPreferability.RawTasty)
 					{
 						actor.mindState.lastInventoryRawFoodUseTick = Find.TickManager.TicksGame;

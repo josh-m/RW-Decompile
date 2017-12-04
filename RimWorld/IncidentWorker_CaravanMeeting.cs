@@ -16,7 +16,7 @@ namespace RimWorld
 			return target is Map || CaravanIncidentUtility.CanFireIncidentWhichWantsToGenerateMapAt(target.Tile);
 		}
 
-		public override bool TryExecute(IncidentParms parms)
+		protected override bool TryExecuteWorker(IncidentParms parms)
 		{
 			if (parms.target is Map)
 			{
@@ -39,8 +39,8 @@ namespace RimWorld
 				PawnUtility.PawnKindsToCommaList(metCaravan.PawnsListForReading)
 			});
 			DiaNode diaNode = new DiaNode(text);
-			Pawn bestPlayerNegotiator = CaravanVisitUtility.BestNegotiator(caravan);
-			if (bestPlayerNegotiator != null && metCaravan.CanTradeNow)
+			Pawn bestPlayerNegotiator = BestCaravanPawnUtility.FindBestNegotiator(caravan);
+			if (metCaravan.CanTradeNow)
 			{
 				DiaOption diaOption = new DiaOption("CaravanMeeting_Trade".Translate());
 				diaOption.action = delegate
@@ -48,12 +48,16 @@ namespace RimWorld
 					Find.WindowStack.Add(new Dialog_Trade(bestPlayerNegotiator, metCaravan));
 					string empty = string.Empty;
 					string empty2 = string.Empty;
-					PawnRelationUtility.Notify_PawnsSeenByPlayer(metCaravan.Goods.OfType<Pawn>(), ref empty, ref empty2, "LetterRelatedPawnsTradingWithOtherCaravan".Translate(), false);
+					PawnRelationUtility.Notify_PawnsSeenByPlayer_Letter(metCaravan.Goods.OfType<Pawn>(), ref empty, ref empty2, "LetterRelatedPawnsTradingWithOtherCaravan".Translate(), false, true);
 					if (!empty2.NullOrEmpty())
 					{
-						Find.LetterStack.ReceiveLetter(empty, empty2, LetterDefOf.Good, new GlobalTargetInfo(caravan.Tile), null);
+						Find.LetterStack.ReceiveLetter(empty, empty2, LetterDefOf.NeutralEvent, new GlobalTargetInfo(caravan.Tile), null);
 					}
 				};
+				if (bestPlayerNegotiator == null)
+				{
+					diaOption.Disable("CaravanMeeting_TradeIncapable".Translate());
+				}
 				diaNode.options.Add(diaOption);
 			}
 			DiaOption diaOption2 = new DiaOption("CaravanMeeting_Attack".Translate());
@@ -79,7 +83,7 @@ namespace RimWorld
 					Messages.Message("MessageAttackedCaravanIsNowHostile".Translate(new object[]
 					{
 						faction.Name
-					}), new GlobalTargetInfo(list[0].Position, list[0].Map, false), MessageSound.SeriousAlert);
+					}), new GlobalTargetInfo(list[0].Position, list[0].Map, false), MessageTypeDefOf.ThreatBig);
 				}, "GeneratingMapForNewEncounter", false, null);
 			};
 			diaOption2.resolveTree = true;
@@ -95,9 +99,11 @@ namespace RimWorld
 			{
 				caravan.Label
 			});
-			WindowStack arg_1F8_0 = Find.WindowStack;
+			WindowStack arg_202_0 = Find.WindowStack;
+			DiaNode nodeRoot = diaNode;
+			bool delayInteractivity = true;
 			string title = text2;
-			arg_1F8_0.Add(new Dialog_NodeTree(diaNode, true, false, title));
+			arg_202_0.Add(new Dialog_NodeTree(nodeRoot, delayInteractivity, false, title));
 			return true;
 		}
 

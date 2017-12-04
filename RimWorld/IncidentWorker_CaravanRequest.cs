@@ -1,5 +1,6 @@
 using RimWorld.Planet;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using Verse;
@@ -8,15 +9,17 @@ namespace RimWorld
 {
 	public class IncidentWorker_CaravanRequest : IncidentWorker
 	{
+		private static readonly IntRange OfferDurationRange = new IntRange(10, 30);
+
 		private const float TravelBufferMultiple = 0.1f;
 
 		private const float TravelBufferAbsolute = 1f;
 
 		private const int MaxTileDistance = 36;
 
-		private static readonly IntRange OfferDurationRange = new IntRange(10, 30);
+		public static readonly IntRange BaseValueWantedRange = new IntRange(400, 3000);
 
-		private static readonly IntRange BaseValueWantedRange = new IntRange(400, 3000);
+		public static readonly FloatRange RewardMarketValueFactorRange = new FloatRange(1f, 2f);
 
 		private static readonly SimpleCurve ValueFactorFromWealthCurve = new SimpleCurve
 		{
@@ -34,12 +37,15 @@ namespace RimWorld
 			}
 		};
 
+		private static Dictionary<ThingDef, int> requestCountDict = new Dictionary<ThingDef, int>();
+
 		protected override bool CanFireNowSub(IIncidentTarget target)
 		{
-			return IncidentWorker_CaravanRequest.RandomNearbyTradeableSettlement(((Map)target).Tile) != null && base.CanFireNowSub(target);
+			Map map = (Map)target;
+			return this.AtLeast2HealthyColonists(map) && IncidentWorker_CaravanRequest.RandomNearbyTradeableSettlement(map.Tile) != null && base.CanFireNowSub(target);
 		}
 
-		public override bool TryExecute(IncidentParms parms)
+		protected override bool TryExecuteWorker(IncidentParms parms)
 		{
 			Settlement settlement = IncidentWorker_CaravanRequest.RandomNearbyTradeableSettlement(parms.target.Tile);
 			if (settlement == null)
@@ -47,7 +53,7 @@ namespace RimWorld
 				return false;
 			}
 			CaravanRequestComp component = settlement.GetComponent<CaravanRequestComp>();
-			if (!this.GenerateCaravanRequest(component, (Map)parms.target))
+			if (!this.TryGenerateCaravanRequest(component, (Map)parms.target))
 			{
 				return false;
 			}
@@ -57,24 +63,21 @@ namespace RimWorld
 				GenLabel.ThingLabel(component.requestThingDef, null, component.requestCount).CapitalizeFirst(),
 				component.rewards[0].LabelCap,
 				(component.expiration - Find.TickManager.TicksGame).ToStringTicksToDays("F0")
-			}), LetterDefOf.Good, settlement, null);
+			}), LetterDefOf.PositiveEvent, settlement, null);
 			return true;
 		}
 
-		public bool GenerateCaravanRequest(CaravanRequestComp target, Map map)
+		public bool TryGenerateCaravanRequest(CaravanRequestComp target, Map map)
 		{
 			int num = this.RandomOfferDuration(map.Tile, target.parent.Tile);
 			if (num < 1)
 			{
 				return false;
 			}
-			target.requestThingDef = IncidentWorker_CaravanRequest.RandomRequestedThingDef();
-			if (target.requestThingDef == null)
+			if (!IncidentWorker_CaravanRequest.TryFindRandomRequestedThingDef(map, out target.requestThingDef, out target.requestCount))
 			{
-				Log.Error("Attempted to create a caravan request, but couldn't find a valid request object");
 				return false;
 			}
-			target.requestCount = IncidentWorker_CaravanRequest.RandomRequestCount(target.requestThingDef, map);
 			target.rewards.ClearAndDestroyContents(DestroyMode.Vanish);
 			target.rewards.TryAdd(IncidentWorker_CaravanRequest.GenerateRewardFor(target.requestThingDef, target.requestCount, target.parent.Faction), true);
 			target.expiration = Find.TickManager.TicksGame + num;
@@ -88,8 +91,9 @@ namespace RimWorld
 			select settlement).RandomElementWithFallback(null);
 		}
 
-		private static ThingDef RandomRequestedThingDef()
+		private static bool TryFindRandomRequestedThingDef(Map map, out ThingDef thingDef, out int count)
 		{
+			IncidentWorker_CaravanRequest.requestCountDict.Clear();
 			Func<ThingDef, bool> globalValidator = delegate(ThingDef td)
 			{
 				if (td.BaseMarketValue / td.BaseMass < 5f)
@@ -101,22 +105,35 @@ namespace RimWorld
 					return false;
 				}
 				CompProperties_Rottable compProperties = td.GetCompProperties<CompProperties_Rottable>();
-				return (compProperties == null || compProperties.daysToRotStart >= 10f) && td != ThingDefOf.Silver && td.PlayerAcquirable;
-			};
-			if (Rand.Value < 0.8f)
-			{
-				ThingDef result = null;
-				bool flag = (from td in DefDatabase<ThingDef>.AllDefs
-				where (td.IsWithinCategory(ThingCategoryDefOf.FoodMeals) || td.IsWithinCategory(ThingCategoryDefOf.PlantFoodRaw) || td.IsWithinCategory(ThingCategoryDefOf.PlantMatter) || td.IsWithinCategory(ThingCategoryDefOf.ResourcesRaw)) && td.BaseMarketValue < 4f && globalValidator(td)
-				select td).TryRandomElement(out result);
-				if (flag)
+				if (compProperties != null && compProperties.daysToRotStart < 10f)
 				{
-					return result;
+					return false;
 				}
+				if (td.ingestible != null && td.ingestible.HumanEdible)
+				{
+					return false;
+				}
+				if (td == ThingDefOf.Silver)
+				{
+					return false;
+				}
+				if (!td.PlayerAcquirable)
+				{
+					return false;
+				}
+				int num = IncidentWorker_CaravanRequest.RandomRequestCount(td, map);
+				IncidentWorker_CaravanRequest.requestCountDict.Add(td, num);
+				return PlayerItemAccessibilityUtility.PossiblyAccessible(td, num, map);
+			};
+			if ((from td in ItemCollectionGeneratorUtility.allGeneratableItems
+			where globalValidator(td)
+			select td).TryRandomElement(out thingDef))
+			{
+				count = IncidentWorker_CaravanRequest.requestCountDict[thingDef];
+				return true;
 			}
-			return (from td in DefDatabase<ThingDef>.AllDefs
-			where (td.IsWithinCategory(ThingCategoryDefOf.Medicine) || td.IsWithinCategory(ThingCategoryDefOf.Drugs) || td.IsWithinCategory(ThingCategoryDefOf.Weapons) || td.IsWithinCategory(ThingCategoryDefOf.Apparel) || td.IsWithinCategory(ThingCategoryDefOf.ResourcesRaw)) && td.BaseMarketValue >= 4f && globalValidator(td)
-			select td).RandomElementWithFallback(null);
+			count = 0;
+			return false;
 		}
 
 		private static int RandomRequestCount(ThingDef thingDef, Map map)
@@ -124,16 +141,15 @@ namespace RimWorld
 			float num = (float)IncidentWorker_CaravanRequest.BaseValueWantedRange.RandomInRange;
 			float wealthTotal = map.wealthWatcher.WealthTotal;
 			num *= IncidentWorker_CaravanRequest.ValueFactorFromWealthCurve.Evaluate(wealthTotal);
-			return Mathf.Max(1, Mathf.RoundToInt(num / thingDef.BaseMarketValue));
+			return ThingUtility.RoundedResourceStackCount(Mathf.Max(1, Mathf.RoundToInt(num / thingDef.BaseMarketValue)));
 		}
 
 		private static Thing GenerateRewardFor(ThingDef thingDef, int quantity, Faction faction)
 		{
-			TechLevel techLevel = (faction != null) ? faction.def.techLevel : TechLevel.Spacer;
+			TechLevel value = (faction != null) ? faction.def.techLevel : TechLevel.Spacer;
 			ItemCollectionGeneratorParams parms = default(ItemCollectionGeneratorParams);
-			parms.count = 1;
-			parms.totalMarketValue = thingDef.BaseMarketValue * (float)quantity * Rand.Range(1f, 2f);
-			parms.techLevel = techLevel;
+			parms.totalMarketValue = new float?(thingDef.BaseMarketValue * (float)quantity * IncidentWorker_CaravanRequest.RewardMarketValueFactorRange.RandomInRange);
+			parms.techLevel = new TechLevel?(value);
 			parms.validator = ((ThingDef td) => td != thingDef);
 			return ItemCollectionGeneratorDefOf.CaravanRequestRewards.Worker.Generate(parms)[0];
 		}
@@ -150,6 +166,27 @@ namespace RimWorld
 				return -1;
 			}
 			return 60000 * num;
+		}
+
+		private bool AtLeast2HealthyColonists(Map map)
+		{
+			List<Pawn> list = map.mapPawns.SpawnedPawnsInFaction(Faction.OfPlayer);
+			int num = 0;
+			for (int i = 0; i < list.Count; i++)
+			{
+				if (list[i].IsFreeColonist)
+				{
+					if (!HealthAIUtility.ShouldSeekMedicalRest(list[i]))
+					{
+						num++;
+						if (num >= 2)
+						{
+							return true;
+						}
+					}
+				}
+			}
+			return false;
 		}
 	}
 }

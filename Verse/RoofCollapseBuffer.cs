@@ -52,16 +52,8 @@ namespace Verse
 			{
 				return false;
 			}
-			switch (t.def.category)
-			{
-			case ThingCategory.Pawn:
-				return true;
-			case ThingCategory.Item:
-				return t.MarketValue > 0.01f;
-			case ThingCategory.Building:
-				return true;
-			}
-			return false;
+			ThingCategory category = t.def.category;
+			return category == ThingCategory.Building || category == ThingCategory.Pawn || (category == ThingCategory.Item && t.MarketValue > 0.01f);
 		}
 
 		public void Clear()

@@ -98,6 +98,14 @@ namespace RimWorld
 
 		public static JobDef EnterTransporter;
 
+		public static JobDef Resurrect;
+
+		public static JobDef Insult;
+
+		public static JobDef HaulCorpseToPublicPlace;
+
+		public static JobDef InducePrisonerToEscape;
+
 		public static JobDef MarryAdjacentPawn;
 
 		public static JobDef SpectateCeremony;

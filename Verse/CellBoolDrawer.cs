@@ -6,10 +6,6 @@ namespace Verse
 {
 	public class CellBoolDrawer
 	{
-		private const float DefaultOpacity = 0.33f;
-
-		private const int MaxCellsPerMesh = 16383;
-
 		public ICellBoolGiver giver;
 
 		private bool wantDraw;
@@ -33,6 +29,10 @@ namespace Verse
 		private static List<int> tris = new List<int>();
 
 		private static List<Color> colors = new List<Color>();
+
+		private const float DefaultOpacity = 0.33f;
+
+		private const int MaxCellsPerMesh = 16383;
 
 		public CellBoolDrawer(ICellBoolGiver giver, int mapSizeX, int mapSizeZ, float opacity = 0.33f)
 		{
@@ -89,7 +89,7 @@ namespace Verse
 			}
 			Mesh mesh2 = this.meshes[num];
 			CellRect cellRect = new CellRect(0, 0, this.mapSizeX, this.mapSizeZ);
-			float y = Altitudes.AltitudeFor(AltitudeLayer.WorldDataOverlay);
+			float y = Altitudes.AltitudeFor(AltitudeLayer.MapDataOverlay);
 			bool careAboutVertexColors = false;
 			for (int j = cellRect.minX; j <= cellRect.maxX; j++)
 			{

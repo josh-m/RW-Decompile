@@ -46,5 +46,13 @@ namespace Verse
 		{
 			return Vector3Utility.RandomHorizontalOffset(maxDist).ToIntVec3();
 		}
+
+		public static int DistanceToEdge(this IntVec3 v, Map map)
+		{
+			int a = Mathf.Min(v.x, v.z);
+			a = Mathf.Min(a, map.Size.x - v.x - 1);
+			a = Mathf.Min(a, map.Size.z - v.z - 1);
+			return Mathf.Max(a, 0);
+		}
 	}
 }

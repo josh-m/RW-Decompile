@@ -7,48 +7,48 @@ namespace RimWorld.Planet
 {
 	public class WorldDebugDrawer
 	{
-		private const int DefaultLifespanTicks = 50;
-
-		private const float MaxDistToCameraToDisplayLabel = 39f;
-
 		private List<DebugTile> debugTiles = new List<DebugTile>();
 
 		private List<DebugWorldLine> debugLines = new List<DebugWorldLine>();
 
-		public void FlashTile(int tile, float colorPct = 0f, string text = null)
+		private const int DefaultLifespanTicks = 50;
+
+		private const float MaxDistToCameraToDisplayLabel = 39f;
+
+		public void FlashTile(int tile, float colorPct = 0f, string text = null, int duration = 50)
 		{
 			DebugTile debugTile = new DebugTile();
 			debugTile.tile = tile;
 			debugTile.displayString = text;
 			debugTile.colorPct = colorPct;
-			debugTile.ticksLeft = 50;
+			debugTile.ticksLeft = duration;
 			this.debugTiles.Add(debugTile);
 		}
 
-		public void FlashTile(int tile, Material mat, string text = null)
+		public void FlashTile(int tile, Material mat, string text = null, int duration = 50)
 		{
 			DebugTile debugTile = new DebugTile();
 			debugTile.tile = tile;
 			debugTile.displayString = text;
 			debugTile.customMat = mat;
-			debugTile.ticksLeft = 50;
+			debugTile.ticksLeft = duration;
 			this.debugTiles.Add(debugTile);
 		}
 
-		public void FlashLine(Vector3 a, Vector3 b, bool onPlanetSurface = false)
+		public void FlashLine(Vector3 a, Vector3 b, bool onPlanetSurface = false, int duration = 50)
 		{
 			DebugWorldLine debugWorldLine = new DebugWorldLine(a, b, onPlanetSurface);
-			debugWorldLine.TicksLeft = 50;
+			debugWorldLine.TicksLeft = duration;
 			this.debugLines.Add(debugWorldLine);
 		}
 
-		public void FlashLine(int tileA, int tileB)
+		public void FlashLine(int tileA, int tileB, int duration = 50)
 		{
 			WorldGrid worldGrid = Find.WorldGrid;
 			Vector3 tileCenter = worldGrid.GetTileCenter(tileA);
 			Vector3 tileCenter2 = worldGrid.GetTileCenter(tileB);
 			DebugWorldLine debugWorldLine = new DebugWorldLine(tileCenter, tileCenter2, true);
-			debugWorldLine.TicksLeft = 50;
+			debugWorldLine.TicksLeft = duration;
 			this.debugLines.Add(debugWorldLine);
 		}
 

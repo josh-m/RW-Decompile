@@ -10,7 +10,7 @@ namespace Verse.AI
 	{
 		private static List<IntVec3> yieldedIngPlaceCells = new List<IntVec3>();
 
-		public static Toil ExtractNextTargetFromQueue(TargetIndex ind)
+		public static Toil ExtractNextTargetFromQueue(TargetIndex ind, bool failIfCountFromQueueTooBig = true)
 		{
 			Toil toil = new Toil();
 			toil.initAction = delegate
@@ -22,6 +22,11 @@ namespace Verse.AI
 				{
 					return;
 				}
+				if (failIfCountFromQueueTooBig && !curJob.countQueue.NullOrEmpty<int>() && targetQueue[0].HasThing && curJob.countQueue[0] > targetQueue[0].Thing.stackCount)
+				{
+					actor.jobs.curDriver.EndJobWith(JobCondition.Incompletable);
+					return;
+				}
 				curJob.SetTarget(ind, targetQueue[0]);
 				targetQueue.RemoveAt(0);
 				if (!curJob.countQueue.NullOrEmpty<int>())
@@ -29,6 +34,23 @@ namespace Verse.AI
 					curJob.count = curJob.countQueue[0];
 					curJob.countQueue.RemoveAt(0);
 				}
+			};
+			return toil;
+		}
+
+		public static Toil ClearQueue(TargetIndex ind)
+		{
+			Toil toil = new Toil();
+			toil.initAction = delegate
+			{
+				Pawn actor = toil.actor;
+				Job curJob = actor.jobs.curJob;
+				List<LocalTargetInfo> targetQueue = curJob.GetTargetQueue(ind);
+				if (targetQueue.NullOrEmpty<LocalTargetInfo>())
+				{
+					return;
+				}
+				targetQueue.Clear();
 			};
 			return toil;
 		}
@@ -52,7 +74,7 @@ namespace Verse.AI
 			Toils_JobTransforms.yieldedIngPlaceCells.Clear();
 			IntVec3 interactCell = ((Thing)billGiver).InteractionCell;
 			foreach (IntVec3 c3 in from c in billGiver.IngredientStackCells
-			orderby (c - this.<interactCell>__0).LengthHorizontalSquared
+			orderby (c - interactCell).LengthHorizontalSquared
 			select c)
 			{
 				Toils_JobTransforms.yieldedIngPlaceCells.Add(c3);
@@ -130,6 +152,13 @@ namespace Verse.AI
 					curJob.SetTarget(ind, null);
 				}
 			};
+			return toil;
+		}
+
+		public static Toil SucceedOnNoTargetInQueue(TargetIndex ind)
+		{
+			Toil toil = new Toil();
+			toil.EndOnNoTargetInQueue(ind, JobCondition.Succeeded);
 			return toil;
 		}
 	}

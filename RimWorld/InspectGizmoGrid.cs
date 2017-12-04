@@ -43,7 +43,9 @@ namespace RimWorld
 							{
 								Command_Action command_Action = new Command_Action();
 								command_Action.defaultLabel = des.LabelCapReverseDesignating(t);
-								command_Action.icon = des.IconReverseDesignating(t);
+								float iconAngle;
+								command_Action.icon = des.IconReverseDesignating(t, out iconAngle);
+								command_Action.iconAngle = iconAngle;
 								command_Action.defaultDesc = des.DescReverseDesignating(t);
 								command_Action.action = delegate
 								{
@@ -61,7 +63,7 @@ namespace RimWorld
 						}
 					}
 				}
-				GizmoGridDrawer.DrawGizmoGrid(InspectGizmoGrid.gizmoList, InspectPaneUtility.PaneSize.x + 20f, out InspectGizmoGrid.mouseoverGizmo);
+				GizmoGridDrawer.DrawGizmoGrid(InspectGizmoGrid.gizmoList, InspectPaneUtility.PaneWidthFor(Find.WindowStack.WindowOfType<IInspectPane>()) + 20f, out InspectGizmoGrid.mouseoverGizmo);
 			}
 			catch (Exception ex)
 			{

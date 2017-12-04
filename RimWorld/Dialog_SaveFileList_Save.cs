@@ -36,7 +36,7 @@ namespace RimWorld
 			Messages.Message("SavedAs".Translate(new object[]
 			{
 				mapName
-			}), MessageSound.Silent);
+			}), MessageTypeDefOf.SilentInput);
 			PlayerKnowledgeDatabase.Save();
 			this.Close(true);
 		}

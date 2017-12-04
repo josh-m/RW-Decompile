@@ -7,9 +7,9 @@ namespace RimWorld
 {
 	public static class LightningBoltMeshPool
 	{
-		private const int NumBoltMeshesMax = 20;
-
 		private static List<Mesh> boltMeshes = new List<Mesh>();
+
+		private const int NumBoltMeshesMax = 20;
 
 		public static Mesh RandomBoltMesh
 		{

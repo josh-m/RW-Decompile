@@ -8,9 +8,11 @@ namespace Verse
 	{
 		private CellRect rect;
 
-		public Letter letter;
-
 		public bool destroyIfUnfogged;
+
+		public bool activateOnExplosion;
+
+		public string signalTag;
 
 		public CellRect Rect
 		{
@@ -63,14 +65,12 @@ namespace Verse
 			}
 		}
 
-		private void ActivatedBy(Pawn p)
+		public void ActivatedBy(Pawn p)
 		{
-			if (this.letter != null)
+			Find.SignalManager.SendSignal(new Signal(this.signalTag, new object[]
 			{
-				ChoiceLetter choiceLetter = (ChoiceLetter)this.letter;
-				choiceLetter.text = string.Format(choiceLetter.text, p.NameStringShort).AdjustedFor(p);
-				Find.LetterStack.ReceiveLetter(choiceLetter, null);
-			}
+				p
+			}));
 			if (!base.Destroyed)
 			{
 				this.Destroy(DestroyMode.Vanish);
@@ -81,7 +81,9 @@ namespace Verse
 		{
 			base.ExposeData();
 			Scribe_Values.Look<CellRect>(ref this.rect, "rect", default(CellRect), false);
-			Scribe_Deep.Look<Letter>(ref this.letter, "letter", new object[0]);
+			Scribe_Values.Look<bool>(ref this.destroyIfUnfogged, "destroyIfUnfogged", false, false);
+			Scribe_Values.Look<bool>(ref this.activateOnExplosion, "activateOnExplosion", false, false);
+			Scribe_Values.Look<string>(ref this.signalTag, "signalTag", null, false);
 		}
 	}
 }

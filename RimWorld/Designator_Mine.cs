@@ -49,12 +49,12 @@ namespace RimWorld
 			{
 				return true;
 			}
-			Thing thing = MineUtility.MineableInCell(c, base.Map);
-			if (thing == null)
+			Mineable firstMineable = c.GetFirstMineable(base.Map);
+			if (firstMineable == null)
 			{
 				return "MessageMustDesignateMineable".Translate();
 			}
-			AcceptanceReport result = this.CanDesignateThing(thing);
+			AcceptanceReport result = this.CanDesignateThing(firstMineable);
 			if (!result.Accepted)
 			{
 				return result;

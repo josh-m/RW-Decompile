@@ -12,10 +12,13 @@ namespace Verse.AI
 
 			public Pawn claimant;
 
+			public Job job;
+
 			public void ExposeData()
 			{
 				Scribe_References.Look<IAttackTarget>(ref this.target, "target", false);
 				Scribe_References.Look<Pawn>(ref this.claimant, "claimant", false);
+				Scribe_References.Look<Job>(ref this.job, "job", false);
 			}
 		}
 
@@ -28,7 +31,7 @@ namespace Verse.AI
 			this.map = map;
 		}
 
-		public void Reserve(Pawn claimant, IAttackTarget target)
+		public void Reserve(Pawn claimant, Job job, IAttackTarget target)
 		{
 			if (target == null)
 			{
@@ -42,10 +45,11 @@ namespace Verse.AI
 			AttackTargetReservationManager.AttackTargetReservation attackTargetReservation = new AttackTargetReservationManager.AttackTargetReservation();
 			attackTargetReservation.target = target;
 			attackTargetReservation.claimant = claimant;
+			attackTargetReservation.job = job;
 			this.reservations.Add(attackTargetReservation);
 		}
 
-		public void Release(Pawn claimant, IAttackTarget target)
+		public void Release(Pawn claimant, Job job, IAttackTarget target)
 		{
 			if (target == null)
 			{
@@ -55,7 +59,7 @@ namespace Verse.AI
 			for (int i = 0; i < this.reservations.Count; i++)
 			{
 				AttackTargetReservationManager.AttackTargetReservation attackTargetReservation = this.reservations[i];
-				if (attackTargetReservation.target == target && attackTargetReservation.claimant == claimant)
+				if (attackTargetReservation.target == target && attackTargetReservation.claimant == claimant && attackTargetReservation.job == job)
 				{
 					this.reservations.RemoveAt(i);
 					return;
@@ -64,6 +68,8 @@ namespace Verse.AI
 			Log.Warning(string.Concat(new object[]
 			{
 				claimant,
+				" with job ",
+				job,
 				" tried to release reservation on target ",
 				target,
 				", but it's not reserved by him."
@@ -99,6 +105,17 @@ namespace Verse.AI
 			this.reservations.RemoveAll((AttackTargetReservationManager.AttackTargetReservation x) => x.target == target);
 		}
 
+		public void ReleaseClaimedBy(Pawn claimant, Job job)
+		{
+			for (int i = this.reservations.Count - 1; i >= 0; i--)
+			{
+				if (this.reservations[i].claimant == claimant && this.reservations[i].job == job)
+				{
+					this.reservations.RemoveAt(i);
+				}
+			}
+		}
+
 		public void ReleaseAllClaimedBy(Pawn claimant)
 		{
 			for (int i = this.reservations.Count - 1; i >= 0; i--)
@@ -110,12 +127,28 @@ namespace Verse.AI
 			}
 		}
 
+		public IAttackTarget FirstReservationFor(Pawn claimant)
+		{
+			for (int i = this.reservations.Count - 1; i >= 0; i--)
+			{
+				if (this.reservations[i].claimant == claimant)
+				{
+					return this.reservations[i].target;
+				}
+			}
+			return null;
+		}
+
 		public void ExposeData()
 		{
 			Scribe_Collections.Look<AttackTargetReservationManager.AttackTargetReservation>(ref this.reservations, "reservations", LookMode.Deep, new object[0]);
 			if (Scribe.mode == LoadSaveMode.PostLoadInit)
 			{
 				this.reservations.RemoveAll((AttackTargetReservationManager.AttackTargetReservation x) => x.target == null);
+				if (this.reservations.RemoveAll((AttackTargetReservationManager.AttackTargetReservation x) => x.claimant.DestroyedOrNull()) != 0)
+				{
+					Log.Warning("Some attack target reservations had null or destroyed claimant.");
+				}
 			}
 		}
 

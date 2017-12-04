@@ -7,13 +7,13 @@ namespace RimWorld
 {
 	public abstract class Designator_Place : Designator
 	{
-		private const float RotButSize = 64f;
-
-		private const float RotButSpacing = 10f;
-
 		protected Rot4 placingRot = Rot4.North;
 
 		protected static float middleMouseDownTime;
+
+		private const float RotButSize = 64f;
+
+		private const float RotButSpacing = 10f;
 
 		public abstract BuildableDef PlacingDef
 		{

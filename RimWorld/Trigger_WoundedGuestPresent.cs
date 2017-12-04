@@ -31,10 +31,13 @@ namespace RimWorld
 				{
 					data.pawnCycleInd = 0;
 				}
-				Pawn pawn = lord.ownedPawns[data.pawnCycleInd];
-				if (pawn.Spawned && !pawn.Downed && pawn.MentalStateDef == null && KidnapAIUtility.ReachableWoundedGuest(pawn) != null)
+				if (lord.ownedPawns.Any<Pawn>())
 				{
-					return true;
+					Pawn pawn = lord.ownedPawns[data.pawnCycleInd];
+					if (pawn.Spawned && !pawn.Downed && !pawn.InMentalState && KidnapAIUtility.ReachableWoundedGuest(pawn) != null)
+					{
+						return true;
+					}
 				}
 			}
 			return false;

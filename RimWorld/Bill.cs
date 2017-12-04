@@ -8,14 +8,6 @@ namespace RimWorld
 {
 	public abstract class Bill : IExposable, ILoadReferenceable
 	{
-		public const int MaxIngredientSearchRadius = 999;
-
-		public const float ButSize = 24f;
-
-		private const float InterfaceBaseHeight = 53f;
-
-		private const float InterfaceStatusLineHeight = 17f;
-
 		[Unsaved]
 		public BillStack billStack;
 
@@ -34,6 +26,14 @@ namespace RimWorld
 		public bool deleted;
 
 		public int lastIngredientSearchFailTicks = -99999;
+
+		public const int MaxIngredientSearchRadius = 999;
+
+		public const float ButSize = 24f;
+
+		private const float InterfaceBaseHeight = 53f;
+
+		private const float InterfaceStatusLineHeight = 17f;
 
 		public Map Map
 		{
@@ -113,7 +113,7 @@ namespace RimWorld
 			this.recipe = recipe;
 			this.ingredientFilter = new ThingFilter();
 			this.ingredientFilter.CopyAllowancesFrom(recipe.defaultIngredientFilter);
-			this.loadID = Find.World.uniqueIDsManager.GetNextBillID();
+			this.loadID = Find.UniqueIDsManager.GetNextBillID();
 		}
 
 		public virtual void ExposeData()
@@ -165,6 +165,10 @@ namespace RimWorld
 
 		protected virtual void DoConfigInterface(Rect rect, Color baseColor)
 		{
+			rect.yMin += 29f;
+			float y = rect.center.y;
+			float num = rect.xMax - (rect.yMax - y);
+			Widgets.InfoCardButton(num - 12f, y - 12f, this.recipe);
 		}
 
 		public virtual void DoStatusLineInterface(Rect rect)
@@ -207,7 +211,7 @@ namespace RimWorld
 					SoundDefOf.TickLow.PlayOneShotOnCamera(null);
 				}
 			}
-			Rect rect2 = new Rect(28f, 0f, rect.width - 48f - 20f, 48f);
+			Rect rect2 = new Rect(28f, 0f, rect.width - 48f - 20f, rect.height + 5f);
 			Widgets.Label(rect2, this.LabelCap);
 			this.DoConfigInterface(rect.AtZero(), white);
 			Rect rect3 = new Rect(rect.width - 24f, 0f, 24f, 24f);

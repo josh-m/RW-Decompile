@@ -19,7 +19,7 @@ namespace RimWorld
 			List<Pawn> source = pawn.Map.mapPawns.SpawnedPawnsInFaction(pawn.Faction);
 			Pawn t;
 			if (!(from p in source
-			where p.RaceProps.Humanlike && p.Position.InHorDistOf(pawn.Position, 15f) && pawn.GetRoom(RegionType.Set_Passable) == p.GetRoom(RegionType.Set_Passable) && !p.Position.IsForbidden(pawn) && p.CanCasuallyInteractNow(false)
+			where !p.NonHumanlikeOrWildMan() && p != pawn && p.Position.InHorDistOf(pawn.Position, 15f) && pawn.GetRoom(RegionType.Set_Passable) == p.GetRoom(RegionType.Set_Passable) && !p.Position.IsForbidden(pawn) && p.CanCasuallyInteractNow(false)
 			select p).TryRandomElement(out t))
 			{
 				return null;

@@ -103,6 +103,38 @@ namespace Verse
 			}
 		}
 
+		public static IntVec3 NorthWest
+		{
+			get
+			{
+				return new IntVec3(-1, 0, 1);
+			}
+		}
+
+		public static IntVec3 NorthEast
+		{
+			get
+			{
+				return new IntVec3(1, 0, 1);
+			}
+		}
+
+		public static IntVec3 SouthWest
+		{
+			get
+			{
+				return new IntVec3(-1, 0, -1);
+			}
+		}
+
+		public static IntVec3 SouthEast
+		{
+			get
+			{
+				return new IntVec3(1, 0, -1);
+			}
+		}
+
 		public static IntVec3 Invalid
 		{
 			get
@@ -237,46 +269,6 @@ namespace Verse
 			return false;
 		}
 
-		public override bool Equals(object obj)
-		{
-			return obj is IntVec3 && this.Equals((IntVec3)obj);
-		}
-
-		public bool Equals(IntVec3 other)
-		{
-			return this.x == other.x && this.z == other.z && this.y == other.y;
-		}
-
-		public override int GetHashCode()
-		{
-			int seed = 0;
-			seed = Gen.HashCombineInt(seed, this.x);
-			seed = Gen.HashCombineInt(seed, this.y);
-			return Gen.HashCombineInt(seed, this.z);
-		}
-
-		public ulong UniqueHashCode()
-		{
-			ulong num = 0uL;
-			num += (ulong)(1L * (long)this.x);
-			num += (ulong)(4096L * (long)this.z);
-			return num + (ulong)(16777216L * (long)this.y);
-		}
-
-		public override string ToString()
-		{
-			return string.Concat(new string[]
-			{
-				"(",
-				this.x.ToString(),
-				", ",
-				this.y.ToString(),
-				", ",
-				this.z.ToString(),
-				")"
-			});
-		}
-
 		public static IntVec3 operator +(IntVec3 a, IntVec3 b)
 		{
 			return new IntVec3(a.x + b.x, a.y + b.y, a.z + b.z);
@@ -300,6 +292,46 @@ namespace Verse
 		public static bool operator !=(IntVec3 a, IntVec3 b)
 		{
 			return a.x != b.x || a.z != b.z || a.y != b.y;
+		}
+
+		public override bool Equals(object obj)
+		{
+			return obj is IntVec3 && this.Equals((IntVec3)obj);
+		}
+
+		public bool Equals(IntVec3 other)
+		{
+			return this.x == other.x && this.z == other.z && this.y == other.y;
+		}
+
+		public override int GetHashCode()
+		{
+			int seed = 0;
+			seed = Gen.HashCombineInt(seed, this.x);
+			seed = Gen.HashCombineInt(seed, this.y);
+			return Gen.HashCombineInt(seed, this.z);
+		}
+
+		public ulong UniqueHashCode()
+		{
+			ulong num = 0uL;
+			num += (ulong)((long)this.x);
+			num += (ulong)(4096L * (long)this.z);
+			return num + (ulong)(16777216L * (long)this.y);
+		}
+
+		public override string ToString()
+		{
+			return string.Concat(new string[]
+			{
+				"(",
+				this.x.ToString(),
+				", ",
+				this.y.ToString(),
+				", ",
+				this.z.ToString(),
+				")"
+			});
 		}
 	}
 }

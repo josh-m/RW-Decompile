@@ -46,37 +46,43 @@ namespace RimWorld
 				JobFailReason.Is(WorkGiver_FillFermentingBarrel.TemperatureTrans);
 				return false;
 			}
-			if (t.IsForbidden(pawn) || !pawn.CanReserveAndReach(t, PathEndMode.Touch, pawn.NormalMaxDanger(), 1, -1, null, forced))
+			if (!t.IsForbidden(pawn))
 			{
-				return false;
+				LocalTargetInfo target = t;
+				if (pawn.CanReserve(target, 1, -1, null, forced))
+				{
+					if (pawn.Map.designationManager.DesignationOn(t, DesignationDefOf.Deconstruct) != null)
+					{
+						return false;
+					}
+					if (this.FindWort(pawn, building_FermentingBarrel) == null)
+					{
+						JobFailReason.Is(WorkGiver_FillFermentingBarrel.NoWortTrans);
+						return false;
+					}
+					return !t.IsBurning();
+				}
 			}
-			if (pawn.Map.designationManager.DesignationOn(t, DesignationDefOf.Deconstruct) != null)
-			{
-				return false;
-			}
-			if (this.FindWort(pawn, building_FermentingBarrel) == null)
-			{
-				JobFailReason.Is(WorkGiver_FillFermentingBarrel.NoWortTrans);
-				return false;
-			}
-			return !t.IsBurning();
+			return false;
 		}
 
 		public override Job JobOnThing(Pawn pawn, Thing t, bool forced = false)
 		{
-			Building_FermentingBarrel building_FermentingBarrel = (Building_FermentingBarrel)t;
-			Thing t2 = this.FindWort(pawn, building_FermentingBarrel);
-			return new Job(JobDefOf.FillFermentingBarrel, t, t2)
-			{
-				count = building_FermentingBarrel.SpaceLeftForWort
-			};
+			Building_FermentingBarrel barrel = (Building_FermentingBarrel)t;
+			Thing t2 = this.FindWort(pawn, barrel);
+			return new Job(JobDefOf.FillFermentingBarrel, t, t2);
 		}
 
 		private Thing FindWort(Pawn pawn, Building_FermentingBarrel barrel)
 		{
 			Predicate<Thing> predicate = (Thing x) => !x.IsForbidden(pawn) && pawn.CanReserve(x, 1, -1, null, false);
+			IntVec3 position = pawn.Position;
+			Map map = pawn.Map;
+			ThingRequest thingReq = ThingRequest.ForDef(ThingDefOf.Wort);
+			PathEndMode peMode = PathEndMode.ClosestTouch;
+			TraverseParms traverseParams = TraverseParms.For(pawn, Danger.Deadly, TraverseMode.ByPawn, false);
 			Predicate<Thing> validator = predicate;
-			return GenClosest.ClosestThingReachable(pawn.Position, pawn.Map, ThingRequest.ForDef(ThingDefOf.Wort), PathEndMode.ClosestTouch, TraverseParms.For(pawn, Danger.Deadly, TraverseMode.ByPawn, false), 9999f, validator, null, 0, -1, false, RegionType.Set_Passable, false);
+			return GenClosest.ClosestThingReachable(position, map, thingReq, peMode, traverseParams, 9999f, validator, null, 0, -1, false, RegionType.Set_Passable, false);
 		}
 	}
 }

@@ -12,6 +12,8 @@ namespace RimWorld
 
 		private int partIndex = -1;
 
+		public ThingDef consumedInitialMedicineDef;
+
 		public override bool CheckIngredientsIfSociallyProper
 		{
 			get
@@ -108,7 +110,7 @@ namespace RimWorld
 			if (this.CompletableEver)
 			{
 				Pawn giverPawn = this.GiverPawn;
-				this.recipe.Worker.ApplyOnPawn(giverPawn, this.Part, billDoer, ingredients);
+				this.recipe.Worker.ApplyOnPawn(giverPawn, this.Part, billDoer, ingredients, this);
 				if (giverPawn.RaceProps.IsFlesh)
 				{
 					giverPawn.records.Increment(RecordDefOf.OperationsReceived);
@@ -121,6 +123,7 @@ namespace RimWorld
 		public override void Notify_DoBillStarted(Pawn billDoer)
 		{
 			base.Notify_DoBillStarted(billDoer);
+			this.consumedInitialMedicineDef = null;
 			if (!this.GiverPawn.Dead && this.recipe.anesthetize && HealthUtility.TryAnesthetize(this.GiverPawn))
 			{
 				List<ThingStackPartClass> placedThings = billDoer.CurJob.placedThings;
@@ -130,6 +133,7 @@ namespace RimWorld
 					{
 						this.recipe.Worker.ConsumeIngredient(placedThings[i].thing.SplitOff(1), this.recipe, billDoer.MapHeld);
 						placedThings[i].Count--;
+						this.consumedInitialMedicineDef = placedThings[i].thing.def;
 						if (placedThings[i].thing.Destroyed || placedThings[i].Count <= 0)
 						{
 							placedThings.RemoveAt(i);
@@ -144,6 +148,7 @@ namespace RimWorld
 		{
 			base.ExposeData();
 			Scribe_Values.Look<int>(ref this.partIndex, "partIndex", 0, false);
+			Scribe_Defs.Look<ThingDef>(ref this.consumedInitialMedicineDef, "consumedInitialMedicineDef");
 			if (Scribe.mode == LoadSaveMode.ResolvingCrossRefs)
 			{
 				if (this.partIndex < 0)

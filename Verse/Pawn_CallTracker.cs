@@ -5,10 +5,6 @@ namespace Verse
 {
 	public class Pawn_CallTracker
 	{
-		private const float AngryCallOnMeleeChance = 0.5f;
-
-		private const int AggressiveDurationAfterEngagingTarget = 360;
-
 		public Pawn pawn;
 
 		private int ticksToNextCall = -1;
@@ -16,6 +12,10 @@ namespace Verse
 		private static readonly IntRange CallOnAggroDelayRange = new IntRange(0, 120);
 
 		private static readonly IntRange CallOnMeleeDelayRange = new IntRange(0, 20);
+
+		private const float AngryCallOnMeleeChance = 0.5f;
+
+		private const int AggressiveDurationAfterEngagingTarget = 360;
 
 		private bool PawnAggressive
 		{

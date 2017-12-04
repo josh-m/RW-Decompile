@@ -9,16 +9,8 @@ using Verse;
 namespace RimWorld.Planet
 {
 	[StaticConstructorOnStartup]
-	public class Caravan : WorldObject, IIncidentTarget, ITrader, ILoadReferenceable, IThingHolder
+	public class Caravan : WorldObject, IThingHolder, IIncidentTarget, ITrader, ILoadReferenceable
 	{
-		private const int ImmobilizedCacheDuration = 60;
-
-		private const int DaysWorthOfFoodCacheDuration = 3000;
-
-		private const int TendIntervalTicks = 2000;
-
-		private const int TryTakeScheduledDrugsIntervalTicks = 120;
-
 		private string nameInt;
 
 		public ThingOwner<Pawn> pawns;
@@ -45,11 +37,17 @@ namespace RimWorld.Planet
 
 		private int cachedDaysWorthOfFoodForTicks = -99999;
 
+		private const int ImmobilizedCacheDuration = 60;
+
+		private const int DaysWorthOfFoodCacheDuration = 3000;
+
+		private const int TendIntervalTicks = 2000;
+
+		private const int TryTakeScheduledDrugsIntervalTicks = 120;
+
 		private static readonly Texture2D SplitCommand = ContentFinder<Texture2D>.Get("UI/Commands/SplitCaravan", true);
 
 		private static readonly Color PlayerCaravanColor = new Color(1f, 0.863f, 0.33f);
-
-		private static List<Pawn> tmpPawns = new List<Pawn>();
 
 		public List<Pawn> PawnsListForReading
 		{
@@ -286,11 +284,42 @@ namespace RimWorld.Planet
 			}
 		}
 
-		public IncidentTargetType Type
+		public float PlayerWealthForStoryteller
 		{
 			get
 			{
-				return IncidentTargetType.Caravan;
+				if (!this.IsPlayerControlled)
+				{
+					return 0f;
+				}
+				float num = 0f;
+				for (int i = 0; i < this.pawns.Count; i++)
+				{
+					num += WealthWatcher.GetEquipmentApparelAndInventoryWealth(this.pawns[i]);
+				}
+				return num * 0.5f;
+			}
+		}
+
+		public IEnumerable<Pawn> FreeColonistsForStoryteller
+		{
+			get
+			{
+				if (!this.IsPlayerControlled)
+				{
+					return Enumerable.Empty<Pawn>();
+				}
+				return from x in this.PawnsListForReading
+				where x.IsFreeColonist
+				select x;
+			}
+		}
+
+		public FloatRange IncidentPointsRandomFactorRange
+		{
+			get
+			{
+				return CaravanIncidentUtility.IncidentPointsRandomFactorRange;
 			}
 		}
 
@@ -463,9 +492,13 @@ namespace RimWorld.Planet
 				}));
 				return;
 			}
+			Pawn pawn = p.carryTracker.CarriedThing as Pawn;
+			if (p.Spawned)
+			{
+				p.DeSpawn();
+			}
 			if (this.pawns.TryAdd(p, true))
 			{
-				Pawn pawn = p.carryTracker.CarriedThing as Pawn;
 				if (pawn != null)
 				{
 					p.carryTracker.innerContainer.Remove(pawn);
@@ -482,6 +515,24 @@ namespace RimWorld.Planet
 			}
 		}
 
+		public void AddPawnOrItem(Thing thing, bool addCarriedPawnToWorldPawnsIfAny)
+		{
+			if (thing == null)
+			{
+				Log.Warning("Tried to add a null thing to " + this);
+				return;
+			}
+			Pawn pawn = thing as Pawn;
+			if (pawn != null)
+			{
+				this.AddPawn(pawn, addCarriedPawnToWorldPawnsIfAny);
+			}
+			else
+			{
+				CaravanInventoryUtility.GiveThing(this, thing);
+			}
+		}
+
 		public bool ContainsPawn(Pawn p)
 		{
 			return this.pawns.Contains(p);
@@ -490,17 +541,6 @@ namespace RimWorld.Planet
 		public void RemovePawn(Pawn p)
 		{
 			this.pawns.Remove(p);
-		}
-
-		public void RemoveAllPawnsAndDiscardIfUnimportant()
-		{
-			Caravan.tmpPawns.Clear();
-			Caravan.tmpPawns.AddRange(this.PawnsListForReading);
-			for (int i = 0; i < Caravan.tmpPawns.Count; i++)
-			{
-				this.RemovePawn(Caravan.tmpPawns[i]);
-				Find.WorldPawns.DiscardIfUnimportant(Caravan.tmpPawns[i]);
-			}
 		}
 
 		public void RemoveAllPawns()
@@ -621,7 +661,8 @@ namespace RimWorld.Planet
 				" ",
 				"CaravanHoursPerTile".Translate()
 			}));
-			stringBuilder.Append("CurrentTileMovementTime".Translate() + ": " + Caravan_PathFollower.CostToDisplay(this, base.Tile, this.pather.nextTile, -1f).ToStringTicksToPeriod(true, false, true));
+			stringBuilder.AppendLine("CurrentTileMovementTime".Translate() + ": " + Caravan_PathFollower.CostToDisplay(this, base.Tile, this.pather.nextTile, -1f).ToStringTicksToPeriod(true, false, true));
+			stringBuilder.Append("StealthFactor".Translate() + ": " + CaravanIncidentUtility.CalculateCaravanStealthFactor(this.PawnsListForReading.Count).ToString("F1"));
 			return stringBuilder.ToString();
 		}
 
@@ -634,7 +675,7 @@ namespace RimWorld.Planet
 			}
 			if (this.IsPlayerControlled)
 			{
-				if (CaravanMergeUtility.CanMergeAnySelectedCaravans)
+				if (CaravanMergeUtility.ShouldShowMergeCommand)
 				{
 					yield return CaravanMergeUtility.MergeCommand(this);
 				}
@@ -649,7 +690,7 @@ namespace RimWorld.Planet
 							icon = Caravan.SplitCommand,
 							action = delegate
 							{
-								Find.WindowStack.Add(new Dialog_SplitCaravan(this.<>f__this));
+								Find.WindowStack.Add(new Dialog_SplitCaravan(this.$this));
 							}
 						};
 					}
@@ -658,18 +699,12 @@ namespace RimWorld.Planet
 				{
 					yield return SettleInEmptyTileUtility.SettleCommand(this);
 				}
-				Settlement settlementVisitedNow = CaravanVisitUtility.SettlementVisitedNow(this);
-				if (settlementVisitedNow != null && settlementVisitedNow.CanTradeNow)
+				foreach (WorldObject wo in Find.WorldObjects.ObjectsAt(base.Tile))
 				{
-					yield return CaravanVisitUtility.TradeCommand(this);
-				}
-				if (settlementVisitedNow != null && settlementVisitedNow.GetComponent<CaravanRequestComp>() != null && settlementVisitedNow.GetComponent<CaravanRequestComp>().ActiveRequest)
-				{
-					yield return CaravanVisitUtility.FulfillRequestCommand(this);
-				}
-				if (CaravanJourneyDestinationUtility.AnyJurneyDestinationAt(base.Tile))
-				{
-					yield return CaravanJourneyDestinationUtility.TakeOffCommand(base.Tile);
+					foreach (Gizmo gizmo in wo.GetCaravanGizmos(this))
+					{
+						yield return gizmo;
+					}
 				}
 			}
 			if (Prefs.DevMode)
@@ -680,7 +715,7 @@ namespace RimWorld.Planet
 					action = delegate
 					{
 						Pawn pawn;
-						if ((from x in this.<>f__this.PawnsListForReading
+						if ((from x in this.$this.PawnsListForReading
 						where x.RaceProps.Humanlike && !x.InMentalState
 						select x).TryRandomElement(out pawn))
 						{
@@ -694,7 +729,7 @@ namespace RimWorld.Planet
 					action = delegate
 					{
 						Pawn pawn;
-						if ((from x in this.<>f__this.PawnsListForReading
+						if ((from x in this.$this.PawnsListForReading
 						where x.RaceProps.Humanlike && !x.InMentalState
 						select x).TryRandomElement(out pawn))
 						{
@@ -708,7 +743,7 @@ namespace RimWorld.Planet
 					action = delegate
 					{
 						Pawn pawn;
-						if ((from x in this.<>f__this.PawnsListForReading
+						if ((from x in this.$this.PawnsListForReading
 						where x.needs.food != null
 						select x).TryRandomElement(out pawn))
 						{
@@ -722,10 +757,10 @@ namespace RimWorld.Planet
 					action = delegate
 					{
 						Pawn pawn;
-						if (this.<>f__this.PawnsListForReading.TryRandomElement(out pawn))
+						if (this.$this.PawnsListForReading.TryRandomElement(out pawn))
 						{
-							pawn.Kill(null);
-							Messages.Message("Dev: Killed " + pawn.LabelShort, this.<>f__this, MessageSound.Benefit);
+							pawn.Kill(null, null);
+							Messages.Message("Dev: Killed " + pawn.LabelShort, this.$this, MessageTypeDefOf.TaskCompletion);
 						}
 					}
 				};
@@ -735,7 +770,7 @@ namespace RimWorld.Planet
 					action = delegate
 					{
 						Pawn pawn;
-						if (this.<>f__this.PawnsListForReading.TryRandomElement(out pawn))
+						if (this.$this.PawnsListForReading.TryRandomElement(out pawn))
 						{
 							DamageInfo dinfo = new DamageInfo(DamageDefOf.Scratch, 10, -1f, null, null, null, DamageInfo.SourceCategory.ThingOrUnknown);
 							pawn.TakeDamage(dinfo);
@@ -748,13 +783,22 @@ namespace RimWorld.Planet
 					action = delegate
 					{
 						Pawn pawn;
-						if ((from x in this.<>f__this.PawnsListForReading
+						if ((from x in this.$this.PawnsListForReading
 						where !x.Downed
 						select x).TryRandomElement(out pawn))
 						{
 							HealthUtility.DamageUntilDowned(pawn);
-							Messages.Message("Dev: Downed " + pawn.LabelShort, this.<>f__this, MessageSound.Benefit);
+							Messages.Message("Dev: Downed " + pawn.LabelShort, this.$this, MessageTypeDefOf.TaskCompletion);
 						}
+					}
+				};
+				yield return new Command_Action
+				{
+					defaultLabel = "Dev: Teleport to destination",
+					action = delegate
+					{
+						this.$this.Tile = this.$this.pather.Destination;
+						this.$this.pather.StopDead();
 					}
 				};
 			}
@@ -777,9 +821,8 @@ namespace RimWorld.Planet
 				this.RemovePawn(member);
 				if (base.Faction == Faction.OfPlayer)
 				{
-					Find.LetterStack.ReceiveLetter("LetterLabelAllCaravanColonistsDied".Translate(), "LetterAllCaravanColonistsDied".Translate(), LetterDefOf.BadNonUrgent, new GlobalTargetInfo(base.Tile), null);
+					Find.LetterStack.ReceiveLetter("LetterLabelAllCaravanColonistsDied".Translate(), "LetterAllCaravanColonistsDied".Translate(), LetterDefOf.NegativeEvent, new GlobalTargetInfo(base.Tile), null);
 				}
-				this.RemoveAllPawnsAndDiscardIfUnimportant();
 				Find.WorldObjects.Remove(this);
 			}
 			else
@@ -823,21 +866,6 @@ namespace RimWorld.Planet
 		public void GetChildHolders(List<IThingHolder> outChildren)
 		{
 			ThingOwnerUtility.AppendThingHoldersFromThings(outChildren, this.GetDirectlyHeldThings());
-		}
-
-		virtual IThingHolder get_ParentHolder()
-		{
-			return base.ParentHolder;
-		}
-
-		virtual int get_Tile()
-		{
-			return base.Tile;
-		}
-
-		virtual Faction get_Faction()
-		{
-			return base.Faction;
 		}
 	}
 }

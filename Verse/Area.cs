@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace Verse
 {
-	public abstract class Area : ICellBoolGiver, IExposable, ILoadReferenceable
+	public abstract class Area : IExposable, ILoadReferenceable, ICellBoolGiver
 	{
 		public AreaManager areaManager;
 

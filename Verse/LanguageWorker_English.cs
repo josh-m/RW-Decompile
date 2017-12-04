@@ -78,7 +78,7 @@ namespace Verse
 			return number + "th";
 		}
 
-		public override string Pluralize(string str)
+		public override string Pluralize(string str, int count = -1)
 		{
 			if (str.NullOrEmpty())
 			{

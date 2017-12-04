@@ -43,21 +43,21 @@ namespace Verse
 					CompIngredients ingredientsComp = product.TryGetComp<CompIngredients>();
 					if (ingredientsComp != null)
 					{
-						for (int j = 0; j < ingredients.Count; j++)
+						for (int l = 0; l < ingredients.Count; l++)
 						{
-							ingredientsComp.RegisterIngredient(ingredients[j].def);
+							ingredientsComp.RegisterIngredient(ingredients[l].def);
 						}
 					}
 					CompFoodPoisonable foodPoisonable = product.TryGetComp<CompFoodPoisonable>();
 					if (foodPoisonable != null)
 					{
-						float poisonChance = worker.GetStatValue(StatDefOf.FoodPoisonChance, true);
+						float num = worker.GetStatValue(StatDefOf.FoodPoisonChance, true);
 						Room room = worker.GetRoom(RegionType.Set_Passable);
 						if (room != null)
 						{
-							poisonChance *= room.GetStat(RoomStatDefOf.FoodPoisonChanceFactor);
+							num *= room.GetStat(RoomStatDefOf.FoodPoisonChanceFactor);
 						}
-						if (Rand.Value < poisonChance)
+						if (Rand.Value < num)
 						{
 							foodPoisonable.PoisonPercent = 1f;
 						}
@@ -67,12 +67,12 @@ namespace Verse
 			}
 			if (recipeDef.specialProducts != null)
 			{
-				for (int k = 0; k < recipeDef.specialProducts.Count; k++)
+				for (int j = 0; j < recipeDef.specialProducts.Count; j++)
 				{
-					for (int l = 0; l < ingredients.Count; l++)
+					for (int k = 0; k < ingredients.Count; k++)
 					{
-						Thing ing = ingredients[l];
-						SpecialProductType specialProductType = recipeDef.specialProducts[k];
+						Thing ing = ingredients[k];
+						SpecialProductType specialProductType = recipeDef.specialProducts[j];
 						if (specialProductType != SpecialProductType.Butchery)
 						{
 							if (specialProductType == SpecialProductType.Smelted)
@@ -105,7 +105,13 @@ namespace Verse
 					Log.Error(recipeDef + " needs workSkill because it creates a product with a quality.");
 				}
 				int level = worker.skills.GetSkill(recipeDef.workSkill).Level;
-				compQuality.SetQuality(QualityUtility.RandomCreationQuality(level), ArtGenerationContext.Colony);
+				QualityCategory qualityCategory = QualityUtility.RandomCreationQuality(level);
+				if (worker.InspirationDef == InspirationDefOf.InspiredArt && (product.def.IsArt || (product.def.minifiedDef != null && product.def.minifiedDef.IsArt)))
+				{
+					qualityCategory = qualityCategory.AddLevels(3);
+					worker.mindState.inspirationHandler.EndInspiration(InspirationDefOf.InspiredArt);
+				}
+				compQuality.SetQuality(qualityCategory, ArtGenerationContext.Colony);
 			}
 			CompArt compArt = product.TryGetComp<CompArt>();
 			if (compArt != null)

@@ -46,9 +46,12 @@ namespace RimWorld
 				Map map = maps[i];
 				if (map.IsPlayerHome)
 				{
-					if ((float)this.MedicineCount(map) < 2f * (float)map.mapPawns.FreeColonistsSpawnedCount)
+					if (map.mapPawns.AnyColonistSpawned)
 					{
-						return map;
+						if ((float)this.MedicineCount(map) < 2f * (float)map.mapPawns.FreeColonistsSpawnedCount)
+						{
+							return map;
+						}
 					}
 				}
 			}

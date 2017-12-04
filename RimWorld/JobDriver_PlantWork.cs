@@ -10,18 +10,29 @@ namespace RimWorld
 {
 	public abstract class JobDriver_PlantWork : JobDriver
 	{
-		protected const TargetIndex PlantInd = TargetIndex.A;
-
 		private float workDone;
 
 		protected float xpPerTick;
+
+		protected const TargetIndex PlantInd = TargetIndex.A;
 
 		protected Plant Plant
 		{
 			get
 			{
-				return (Plant)base.CurJob.targetA.Thing;
+				return (Plant)this.job.targetA.Thing;
 			}
+		}
+
+		public override bool TryMakePreToilReservations()
+		{
+			LocalTargetInfo target = this.job.GetTarget(TargetIndex.A);
+			if (target.IsValid && !this.pawn.Reserve(target, this.job, 1, -1, null))
+			{
+				return false;
+			}
+			this.pawn.ReserveAsManyAsPossible(this.job.GetTargetQueue(TargetIndex.A), this.job, 1, -1, null);
+			return true;
 		}
 
 		[DebuggerHidden]
@@ -29,32 +40,31 @@ namespace RimWorld
 		{
 			this.Init();
 			yield return Toils_JobTransforms.MoveCurrentTargetIntoQueue(TargetIndex.A);
-			yield return Toils_Reserve.ReserveQueue(TargetIndex.A, 1, -1, null);
 			Toil initExtractTargetFromQueue = Toils_JobTransforms.ClearDespawnedNullOrForbiddenQueuedTargets(TargetIndex.A);
 			yield return initExtractTargetFromQueue;
-			yield return Toils_JobTransforms.ExtractNextTargetFromQueue(TargetIndex.A);
-			Toil checkNextQueuedTarget = Toils_JobTransforms.ClearDespawnedNullOrForbiddenQueuedTargets(TargetIndex.A);
-			yield return Toils_Goto.GotoThing(TargetIndex.A, PathEndMode.Touch).JumpIfDespawnedOrNullOrForbidden(TargetIndex.A, checkNextQueuedTarget);
+			yield return Toils_JobTransforms.SucceedOnNoTargetInQueue(TargetIndex.A);
+			yield return Toils_JobTransforms.ExtractNextTargetFromQueue(TargetIndex.A, true);
+			yield return Toils_Goto.GotoThing(TargetIndex.A, PathEndMode.Touch).JumpIfDespawnedOrNullOrForbidden(TargetIndex.A, initExtractTargetFromQueue);
 			Toil cut = new Toil();
 			cut.tickAction = delegate
 			{
-				Pawn actor = this.<cut>__2.actor;
+				Pawn actor = cut.actor;
 				if (actor.skills != null)
 				{
-					actor.skills.Learn(SkillDefOf.Growing, this.<>f__this.xpPerTick, false);
+					actor.skills.Learn(SkillDefOf.Growing, this.$this.xpPerTick, false);
 				}
 				float statValue = actor.GetStatValue(StatDefOf.PlantWorkSpeed, true);
 				float num = statValue;
-				Plant plant = this.<>f__this.Plant;
-				this.<>f__this.workDone += num;
-				if (this.<>f__this.workDone >= plant.def.plant.harvestWork)
+				Plant plant = this.$this.Plant;
+				this.$this.workDone += num;
+				if (this.$this.workDone >= plant.def.plant.harvestWork)
 				{
 					if (plant.def.plant.harvestedThingDef != null)
 					{
 						if (actor.RaceProps.Humanlike && plant.def.plant.harvestFailable && Rand.Value > actor.GetStatValue(StatDefOf.PlantHarvestYield, true))
 						{
-							Vector3 loc = (this.<>f__this.pawn.DrawPos + plant.DrawPos) / 2f;
-							MoteMaker.ThrowText(loc, this.<>f__this.Map, "TextMote_HarvestFailed".Translate(), 3.65f);
+							Vector3 loc = (this.$this.pawn.DrawPos + plant.DrawPos) / 2f;
+							MoteMaker.ThrowText(loc, this.$this.Map, "TextMote_HarvestFailed".Translate(), 3.65f);
 						}
 						else
 						{
@@ -67,15 +77,15 @@ namespace RimWorld
 								{
 									thing.SetForbidden(true, true);
 								}
-								GenPlace.TryPlaceThing(thing, actor.Position, this.<>f__this.Map, ThingPlaceMode.Near, null);
+								GenPlace.TryPlaceThing(thing, actor.Position, this.$this.Map, ThingPlaceMode.Near, null);
 								actor.records.Increment(RecordDefOf.PlantsHarvested);
 							}
 						}
 					}
 					plant.def.plant.soundHarvestFinish.PlayOneShot(actor);
 					plant.PlantCollected();
-					this.<>f__this.workDone = 0f;
-					this.<>f__this.ReadyForNextToil();
+					this.$this.workDone = 0f;
+					this.$this.ReadyForNextToil();
 					return;
 				}
 			};
@@ -83,11 +93,15 @@ namespace RimWorld
 			cut.FailOnCannotTouch(TargetIndex.A, PathEndMode.Touch);
 			cut.defaultCompleteMode = ToilCompleteMode.Never;
 			cut.WithEffect(EffecterDefOf.Harvest, TargetIndex.A);
-			cut.WithProgressBar(TargetIndex.A, () => this.<>f__this.workDone / this.<>f__this.Plant.def.plant.harvestWork, true, -0.5f);
-			cut.PlaySustainerOrSound(() => this.<>f__this.Plant.def.plant.soundHarvesting);
+			cut.WithProgressBar(TargetIndex.A, () => this.$this.workDone / this.$this.Plant.def.plant.harvestWork, true, -0.5f);
+			cut.PlaySustainerOrSound(() => this.$this.Plant.def.plant.soundHarvesting);
 			yield return cut;
-			yield return checkNextQueuedTarget;
-			yield return Toils_Jump.JumpIfHaveTargetInQueue(TargetIndex.A, initExtractTargetFromQueue);
+			Toil plantWorkDoneToil = this.PlantWorkDoneToil();
+			if (plantWorkDoneToil != null)
+			{
+				yield return plantWorkDoneToil;
+			}
+			yield return Toils_Jump.Jump(initExtractTargetFromQueue);
 		}
 
 		public override void ExposeData()
@@ -98,6 +112,11 @@ namespace RimWorld
 
 		protected virtual void Init()
 		{
+		}
+
+		protected virtual Toil PlantWorkDoneToil()
+		{
+			return null;
 		}
 	}
 }

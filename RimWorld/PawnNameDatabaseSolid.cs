@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using Verse;
@@ -8,20 +7,16 @@ namespace RimWorld
 {
 	public static class PawnNameDatabaseSolid
 	{
-		private const float PreferredNameChance = 0.5f;
-
 		private static Dictionary<GenderPossibility, List<NameTriple>> solidNames;
+
+		private const float PreferredNameChance = 0.5f;
 
 		static PawnNameDatabaseSolid()
 		{
 			PawnNameDatabaseSolid.solidNames = new Dictionary<GenderPossibility, List<NameTriple>>();
-			using (IEnumerator enumerator = Enum.GetValues(typeof(GenderPossibility)).GetEnumerator())
+			foreach (GenderPossibility key in Enum.GetValues(typeof(GenderPossibility)))
 			{
-				while (enumerator.MoveNext())
-				{
-					GenderPossibility key = (GenderPossibility)((byte)enumerator.Current);
-					PawnNameDatabaseSolid.solidNames.Add(key, new List<NameTriple>());
-				}
+				PawnNameDatabaseSolid.solidNames.Add(key, new List<NameTriple>());
 			}
 		}
 

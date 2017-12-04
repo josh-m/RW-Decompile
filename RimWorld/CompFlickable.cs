@@ -9,12 +9,6 @@ namespace RimWorld
 {
 	public class CompFlickable : ThingComp
 	{
-		private const string OffGraphicSuffix = "_Off";
-
-		public const string FlickedOnSignal = "FlickedOn";
-
-		public const string FlickedOffSignal = "FlickedOff";
-
 		private bool switchOnInt = true;
 
 		private bool wantSwitchOn = true;
@@ -22,6 +16,12 @@ namespace RimWorld
 		private Graphic offGraphic;
 
 		private Texture2D cachedCommandTex;
+
+		private const string OffGraphicSuffix = "_Off";
+
+		public const string FlickedOnSignal = "FlickedOn";
+
+		public const string FlickedOffSignal = "FlickedOff";
 
 		private CompProperties_Flickable Props
 		{
@@ -126,11 +126,11 @@ namespace RimWorld
 					icon = this.CommandTex,
 					defaultLabel = this.Props.commandLabelKey.Translate(),
 					defaultDesc = this.Props.commandDescKey.Translate(),
-					isActive = (() => this.<>f__this.wantSwitchOn),
+					isActive = (() => this.$this.wantSwitchOn),
 					toggleAction = delegate
 					{
-						this.<>f__this.wantSwitchOn = !this.<>f__this.wantSwitchOn;
-						FlickUtility.UpdateFlickDesignation(this.<>f__this.parent);
+						this.$this.wantSwitchOn = !this.$this.wantSwitchOn;
+						FlickUtility.UpdateFlickDesignation(this.$this.parent);
 					}
 				};
 			}

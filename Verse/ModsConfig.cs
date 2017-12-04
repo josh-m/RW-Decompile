@@ -114,9 +114,24 @@ namespace Verse
 			}
 		}
 
+		public static void SetActiveToList(List<string> mods)
+		{
+			ModsConfig.data.activeMods = (from mod in mods
+			where ModLister.GetModWithIdentifier(mod) != null
+			select mod).ToList<string>();
+		}
+
 		public static void Save()
 		{
 			DirectXmlSaver.SaveDataObject(ModsConfig.data, GenFilePaths.ModsConfigFilePath);
+		}
+
+		public static void RestartFromChangedMods()
+		{
+			Find.WindowStack.Add(new Dialog_MessageBox("ModsChanged".Translate(), null, delegate
+			{
+				GenCommandLine.Restart();
+			}, null, null, null, false));
 		}
 	}
 }

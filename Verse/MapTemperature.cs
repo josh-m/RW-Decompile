@@ -111,7 +111,7 @@ namespace Verse
 				{
 					twelfth.GetQuadrum(),
 					"/",
-					twelfth.GetSeason(num),
+					SeasonUtility.GetReportedSeason(twelfth.GetMiddleYearPct(), num),
 					" - ",
 					twelfth.ToString(),
 					" ",

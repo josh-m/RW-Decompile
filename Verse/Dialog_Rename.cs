@@ -1,3 +1,4 @@
+using RimWorld;
 using System;
 using UnityEngine;
 
@@ -62,11 +63,11 @@ namespace Verse
 				{
 					if (acceptanceReport.Reason == null)
 					{
-						Messages.Message("NameIsInvalid".Translate(), MessageSound.RejectInput);
+						Messages.Message("NameIsInvalid".Translate(), MessageTypeDefOf.RejectInput);
 					}
 					else
 					{
-						Messages.Message(acceptanceReport.Reason, MessageSound.RejectInput);
+						Messages.Message(acceptanceReport.Reason, MessageTypeDefOf.RejectInput);
 					}
 				}
 				else

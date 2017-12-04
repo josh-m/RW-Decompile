@@ -19,8 +19,12 @@ namespace RimWorld
 
 		protected override IEnumerable<ThingDef> AllowedDefs(ItemCollectionGeneratorParams parms)
 		{
+			ItemCollectionGenerator_Artifacts.<AllowedDefs>c__AnonStorey0 <AllowedDefs>c__AnonStorey = new ItemCollectionGenerator_Artifacts.<AllowedDefs>c__AnonStorey0();
+			ItemCollectionGenerator_Artifacts.<AllowedDefs>c__AnonStorey0 arg_28_0 = <AllowedDefs>c__AnonStorey;
+			TechLevel? techLevel = parms.techLevel;
+			arg_28_0.techLevel = ((!techLevel.HasValue) ? TechLevel.Spacer : techLevel.Value);
 			return from x in ItemCollectionGenerator_Artifacts.artifacts
-			where x.techLevel <= parms.techLevel
+			where x.techLevel <= <AllowedDefs>c__AnonStorey.techLevel
 			select x;
 		}
 	}

@@ -15,11 +15,11 @@ namespace RimWorld
 			{
 				this.suggestingPawn = factionBase.Map.mapPawns.FreeColonistsSpawned.RandomElement<Pawn>();
 			}
-			this.curName = NameGenerator.GenerateName(RulePackDefOf.NamerFactionPlayerRandomized, null, false);
+			this.curName = NameGenerator.GenerateName(Faction.OfPlayer.def.factionNameMakerPlayer, null, false, null);
 			this.nameMessageKey = "NamePlayerFactionMessage";
 			this.invalidNameMessageKey = "PlayerFactionNameIsInvalid";
 			this.useSecondName = true;
-			this.curSecondName = NameGenerator.GenerateName(RulePackDefOf.NamerFactionBasePlayerRandomized, null, false);
+			this.curSecondName = NameGenerator.GenerateName(Faction.OfPlayer.def.baseNameMakerPlayer, null, false, null);
 			this.secondNameMessageKey = "NamePlayerFactionBaseMessage_NameFactionContinuation";
 			this.invalidSecondNameMessageKey = "PlayerFactionBaseNameIsInvalid";
 			this.gainedNameMessageKey = "PlayerFactionAndBaseGainsName";

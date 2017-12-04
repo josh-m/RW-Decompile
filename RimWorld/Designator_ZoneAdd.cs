@@ -74,7 +74,7 @@ namespace RimWorld
 						});
 					}
 				}
-				GenUI.DrawMouseAttachment(this.icon, text);
+				GenUI.DrawMouseAttachment(this.icon, text, 0f);
 			}
 		}
 

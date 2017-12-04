@@ -22,6 +22,11 @@ namespace RimWorld
 			}
 		}
 
+		public override Danger MaxPathDanger(Pawn pawn)
+		{
+			return Danger.Deadly;
+		}
+
 		public override bool HasJobOnThing(Pawn pawn, Thing t, bool forced = false)
 		{
 			CompTransporter transporter = t.TryGetComp<CompTransporter>();

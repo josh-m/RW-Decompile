@@ -1,5 +1,6 @@
 using RimWorld;
 using System;
+using System.Collections.Generic;
 
 namespace Verse.AI
 {
@@ -74,6 +75,22 @@ namespace Verse.AI
 					return JobCondition.Ongoing;
 				}
 				if (thing == null || !thing.Spawned || thing.Map != f.GetActor().Map)
+				{
+					return endCondition;
+				}
+				return JobCondition.Ongoing;
+			});
+			return f;
+		}
+
+		public static T EndOnNoTargetInQueue<T>(this T f, TargetIndex ind, JobCondition endCondition = JobCondition.Incompletable) where T : IJobEndable
+		{
+			f.AddEndCondition(delegate
+			{
+				Pawn actor = f.GetActor();
+				Job curJob = actor.jobs.curJob;
+				List<LocalTargetInfo> targetQueue = curJob.GetTargetQueue(ind);
+				if (targetQueue.NullOrEmpty<LocalTargetInfo>())
 				{
 					return endCondition;
 				}
@@ -166,6 +183,20 @@ namespace Verse.AI
 			return f;
 		}
 
+		public static T FailOnAggroMentalStateAndHostile<T>(this T f, TargetIndex ind) where T : IJobEndable
+		{
+			f.AddEndCondition(delegate
+			{
+				Pawn pawn = f.GetActor().jobs.curJob.GetTarget(ind).Thing as Pawn;
+				if (pawn != null && pawn.InAggroMentalState && pawn.HostileTo(f.GetActor()))
+				{
+					return JobCondition.Incompletable;
+				}
+				return JobCondition.Ongoing;
+			});
+			return f;
+		}
+
 		public static T FailOnSomeonePhysicallyInteracting<T>(this T f, TargetIndex ind) where T : IJobEndable
 		{
 			f.AddEndCondition(delegate
@@ -232,7 +263,8 @@ namespace Verse.AI
 				{
 					return JobCondition.Ongoing;
 				}
-				if (actor.Map.designationManager.DesignationOn(curJob.GetTarget(ind).Thing, desDef) == null)
+				Thing thing = curJob.GetTarget(ind).Thing;
+				if (thing == null || actor.Map.designationManager.DesignationOn(thing, desDef) == null)
 				{
 					return JobCondition.Incompletable;
 				}
@@ -286,7 +318,7 @@ namespace Verse.AI
 			return f;
 		}
 
-		public static Toil FailOnDespawnedOrForbiddenPlacedThings(this Toil toil)
+		public static Toil FailOnDespawnedNullOrForbiddenPlacedThings(this Toil toil)
 		{
 			toil.AddFailCondition(delegate
 			{
@@ -294,9 +326,10 @@ namespace Verse.AI
 				{
 					return false;
 				}
-				foreach (ThingStackPartClass current in toil.actor.jobs.curJob.placedThings)
+				for (int i = 0; i < toil.actor.jobs.curJob.placedThings.Count; i++)
 				{
-					if (!current.thing.Spawned || current.thing.Map != toil.actor.Map || (!toil.actor.CurJob.ignoreForbidden && current.thing.IsForbidden(toil.actor)))
+					ThingStackPartClass thingStackPartClass = toil.actor.jobs.curJob.placedThings[i];
+					if (thingStackPartClass.thing == null || !thingStackPartClass.thing.Spawned || thingStackPartClass.thing.Map != toil.actor.Map || (!toil.actor.CurJob.ignoreForbidden && thingStackPartClass.thing.IsForbidden(toil.actor)))
 					{
 						return true;
 					}

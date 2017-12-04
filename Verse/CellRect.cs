@@ -1,3 +1,4 @@
+using RimWorld.Planet;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -9,7 +10,7 @@ namespace Verse
 {
 	public struct CellRect : IEquatable<CellRect>
 	{
-		public struct Enumerator : IEnumerator, IDisposable, IEnumerator<IntVec3>
+		public struct Enumerator : IEnumerator<IntVec3>, IEnumerator, IDisposable
 		{
 			private CellRect ir;
 
@@ -40,10 +41,6 @@ namespace Verse
 				this.z = ir.minZ;
 			}
 
-			void IDisposable.Dispose()
-			{
-			}
-
 			public bool MoveNext()
 			{
 				this.x++;
@@ -59,6 +56,10 @@ namespace Verse
 			{
 				this.x = this.ir.minX - 1;
 				this.z = this.ir.minZ;
+			}
+
+			void IDisposable.Dispose()
+			{
 			}
 		}
 
@@ -123,6 +124,14 @@ namespace Verse
 			}
 		}
 
+		public bool IsEmpty
+		{
+			get
+			{
+				return this.Width <= 0 || this.Height <= 0;
+			}
+		}
+
 		public int Area
 		{
 			get
@@ -135,11 +144,15 @@ namespace Verse
 		{
 			get
 			{
+				if (this.minX > this.maxX)
+				{
+					return 0;
+				}
 				return this.maxX - this.minX + 1;
 			}
 			set
 			{
-				this.maxX = this.minX + value - 1;
+				this.maxX = this.minX + Mathf.Max(value, 0) - 1;
 			}
 		}
 
@@ -147,11 +160,38 @@ namespace Verse
 		{
 			get
 			{
+				if (this.minZ > this.maxZ)
+				{
+					return 0;
+				}
 				return this.maxZ - this.minZ + 1;
 			}
 			set
 			{
-				this.maxZ = this.minZ + value - 1;
+				this.maxZ = this.minZ + Mathf.Max(value, 0) - 1;
+			}
+		}
+
+		public IEnumerable<IntVec3> Corners
+		{
+			get
+			{
+				if (!this.IsEmpty)
+				{
+					yield return new IntVec3(this.minX, 0, this.minZ);
+					if (this.Width > 1)
+					{
+						yield return new IntVec3(this.maxX, 0, this.minZ);
+					}
+					if (this.Height > 1)
+					{
+						yield return new IntVec3(this.minX, 0, this.maxZ);
+						if (this.Width > 1)
+						{
+							yield return new IntVec3(this.maxX, 0, this.maxZ);
+						}
+					}
+				}
 			}
 		}
 
@@ -199,7 +239,7 @@ namespace Verse
 		{
 			get
 			{
-				return new Vector3(Rand.Range((float)this.minX, (float)this.maxX), 0f, Rand.Range((float)this.minZ, (float)this.maxZ));
+				return new Vector3(Rand.Range((float)this.minX, (float)this.maxX + 1f), 0f, Rand.Range((float)this.minZ, (float)this.maxZ + 1f));
 			}
 		}
 
@@ -235,27 +275,30 @@ namespace Verse
 		{
 			get
 			{
-				int x = this.minX;
-				int z = this.minZ;
-				while (x <= this.maxX)
+				if (!this.IsEmpty)
 				{
-					yield return new IntVec3(x, 0, z);
+					int x = this.minX;
+					int z = this.minZ;
+					while (x <= this.maxX)
+					{
+						yield return new IntVec3(x, 0, z);
+						x++;
+					}
+					x--;
+					for (z++; z <= this.maxZ; z++)
+					{
+						yield return new IntVec3(x, 0, z);
+					}
+					z--;
+					for (x--; x >= this.minX; x--)
+					{
+						yield return new IntVec3(x, 0, z);
+					}
 					x++;
-				}
-				x--;
-				for (z++; z <= this.maxZ; z++)
-				{
-					yield return new IntVec3(x, 0, z);
-				}
-				z--;
-				for (x--; x >= this.minX; x--)
-				{
-					yield return new IntVec3(x, 0, z);
-				}
-				x++;
-				for (z--; z > this.minZ; z--)
-				{
-					yield return new IntVec3(x, 0, z);
+					for (z--; z > this.minZ; z--)
+					{
+						yield return new IntVec3(x, 0, z);
+					}
 				}
 			}
 		}
@@ -276,6 +319,26 @@ namespace Verse
 			}
 		}
 
+		public IEnumerable<IntVec3> AdjacentCellsCardinal
+		{
+			get
+			{
+				if (!this.IsEmpty)
+				{
+					for (int x = this.minX; x <= this.maxX; x++)
+					{
+						yield return new IntVec3(x, 0, this.minZ - 1);
+						yield return new IntVec3(x, 0, this.maxZ + 1);
+					}
+					for (int z = this.minZ; z <= this.maxZ; z++)
+					{
+						yield return new IntVec3(this.minX - 1, 0, z);
+						yield return new IntVec3(this.maxX + 1, 0, z);
+					}
+				}
+			}
+		}
+
 		public CellRect(int minX, int minZ, int width, int height)
 		{
 			this.minX = minX;
@@ -287,6 +350,16 @@ namespace Verse
 		public CellRect.CellRectIterator GetIterator()
 		{
 			return new CellRect.CellRectIterator(this);
+		}
+
+		public static bool operator ==(CellRect lhs, CellRect rhs)
+		{
+			return lhs.Equals(rhs);
+		}
+
+		public static bool operator !=(CellRect lhs, CellRect rhs)
+		{
+			return !(lhs == rhs);
 		}
 
 		public static CellRect WholeMap(Map map)
@@ -327,6 +400,25 @@ namespace Verse
 			};
 		}
 
+		public static CellRect CenteredOn(IntVec3 center, int width, int height)
+		{
+			CellRect result = default(CellRect);
+			result.minX = center.x - width / 2;
+			result.minZ = center.z - height / 2;
+			result.maxX = result.minX + width - 1;
+			result.maxZ = result.minZ + height - 1;
+			return result;
+		}
+
+		public static CellRect ViewRect(Map map)
+		{
+			if (Current.ProgramState != ProgramState.Playing || Find.VisibleMap != map || WorldRendererUtility.WorldRenderedNow)
+			{
+				return CellRect.Empty;
+			}
+			return Find.CameraDriver.CurrentViewRect;
+		}
+
 		public static CellRect SingleCell(IntVec3 c)
 		{
 			return new CellRect(c.x, c.z, 1, 1);
@@ -342,6 +434,11 @@ namespace Verse
 			CellRect rhs = this;
 			rhs.ClipInsideRect(within);
 			return this == rhs;
+		}
+
+		public bool Overlaps(CellRect other)
+		{
+			return !this.IsEmpty && !other.IsEmpty && (this.minX <= other.maxX && this.maxX >= other.minX && this.maxZ >= other.minZ) && this.minZ <= other.maxZ;
 		}
 
 		public bool IsOnEdge(IntVec3 c)
@@ -521,11 +618,49 @@ namespace Verse
 				rect = CellRect.Empty;
 				return false;
 			}
+			if (size.x <= 0 || size.z <= 0 || this.IsEmpty)
+			{
+				rect = CellRect.Empty;
+				return false;
+			}
 			CellRect cellRect = this;
 			cellRect.maxX -= size.x - 1;
 			cellRect.maxZ -= size.z - 1;
 			IntVec3 intVec;
 			if (cellRect.EdgeCells.Where(delegate(IntVec3 x)
+			{
+				if (predicate == null)
+				{
+					return true;
+				}
+				CellRect obj = new CellRect(x.x, x.z, size.x, size.z);
+				return predicate(obj);
+			}).TryRandomElement(out intVec))
+			{
+				rect = new CellRect(intVec.x, intVec.z, size.x, size.z);
+				return true;
+			}
+			rect = CellRect.Empty;
+			return false;
+		}
+
+		public bool TryFindRandomInnerRect(IntVec2 size, out CellRect rect, Predicate<CellRect> predicate = null)
+		{
+			if (this.Width < size.x || this.Height < size.z)
+			{
+				rect = CellRect.Empty;
+				return false;
+			}
+			if (size.x <= 0 || size.z <= 0 || this.IsEmpty)
+			{
+				rect = CellRect.Empty;
+				return false;
+			}
+			CellRect cellRect = this;
+			cellRect.maxX -= size.x - 1;
+			cellRect.maxZ -= size.z - 1;
+			IntVec3 intVec;
+			if (cellRect.Cells.Where(delegate(IntVec3 x)
 			{
 				if (predicate == null)
 				{
@@ -555,6 +690,11 @@ namespace Verse
 		public CellRect ContractedBy(int dist)
 		{
 			return this.ExpandedBy(-dist);
+		}
+
+		public int IndexOf(IntVec3 location)
+		{
+			return location.x - this.minX + (location.z - this.minZ) * this.Width;
 		}
 
 		public void DebugDraw()
@@ -629,16 +769,6 @@ namespace Verse
 		public bool Equals(CellRect other)
 		{
 			return this.minX == other.minX && this.maxX == other.maxX && this.minZ == other.minZ && this.maxZ == other.maxZ;
-		}
-
-		public static bool operator ==(CellRect lhs, CellRect rhs)
-		{
-			return lhs.Equals(rhs);
-		}
-
-		public static bool operator !=(CellRect lhs, CellRect rhs)
-		{
-			return !(lhs == rhs);
 		}
 	}
 }

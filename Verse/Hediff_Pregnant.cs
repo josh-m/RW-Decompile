@@ -9,13 +9,13 @@ namespace Verse
 {
 	public class Hediff_Pregnant : HediffWithComps
 	{
+		public Pawn father;
+
 		private const int MiscarryCheckInterval = 1000;
 
 		private const float MTBMiscarryStarvingDays = 0.5f;
 
 		private const float MTBMiscarryWoundedDays = 0.5f;
-
-		public Pawn father;
 
 		public float GestationProgress
 		{
@@ -66,7 +66,7 @@ namespace Verse
 						Messages.Message("MessageMiscarriedStarvation".Translate(new object[]
 						{
 							this.pawn.LabelIndefinite()
-						}).CapitalizeFirst(), this.pawn, MessageSound.Negative);
+						}).CapitalizeFirst(), this.pawn, MessageTypeDefOf.NegativeHealthEvent);
 					}
 					this.Miscarry();
 					return;
@@ -78,7 +78,7 @@ namespace Verse
 						Messages.Message("MessageMiscarriedPoorHealth".Translate(new object[]
 						{
 							this.pawn.LabelIndefinite()
-						}).CapitalizeFirst(), this.pawn, MessageSound.Negative);
+						}).CapitalizeFirst(), this.pawn, MessageTypeDefOf.NegativeHealthEvent);
 					}
 					this.Miscarry();
 					return;
@@ -92,7 +92,7 @@ namespace Verse
 					Messages.Message("MessageGaveBirth".Translate(new object[]
 					{
 						this.pawn.LabelIndefinite()
-					}).CapitalizeFirst(), this.pawn, MessageSound.Benefit);
+					}).CapitalizeFirst(), this.pawn, MessageTypeDefOf.PositiveEvent);
 				}
 				Hediff_Pregnant.DoBirthSpawn(this.pawn, this.father);
 				this.pawn.health.RemoveHediff(this);
@@ -111,7 +111,7 @@ namespace Verse
 			{
 				num = 1;
 			}
-			PawnGenerationRequest request = new PawnGenerationRequest(mother.kindDef, mother.Faction, PawnGenerationContext.NonPlayer, -1, false, true, false, false, true, false, 1f, false, true, true, false, false, null, null, null, null, null, null);
+			PawnGenerationRequest request = new PawnGenerationRequest(mother.kindDef, mother.Faction, PawnGenerationContext.NonPlayer, -1, false, true, false, false, true, false, 1f, false, true, true, false, false, false, false, null, null, null, null, null, null, null);
 			Pawn pawn = null;
 			for (int i = 0; i < num; i++)
 			{
@@ -135,6 +135,11 @@ namespace Verse
 				{
 					Find.WorldPawns.PassToWorld(pawn, PawnDiscardDecideMode.Discard);
 				}
+				TaleRecorder.RecordTale(TaleDefOf.GaveBirth, new object[]
+				{
+					mother,
+					pawn
+				});
 			}
 			if (mother.Spawned)
 			{

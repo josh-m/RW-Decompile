@@ -85,7 +85,7 @@ namespace Verse
 		{
 			Scribe_Values.Look<int>(ref this.mapSizeX, "mapSizeX", 0, false);
 			Scribe_Values.Look<int>(ref this.mapSizeZ, "mapSizeZ", 0, false);
-			ArrayExposeUtility.ExposeByteArray(ref this.grid, "grid");
+			DataExposeUtility.ByteArray(ref this.grid, "grid");
 		}
 
 		public void Clear(byte value = 0)

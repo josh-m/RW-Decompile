@@ -9,36 +9,40 @@ namespace RimWorld
 {
 	public class JobDriver_Repair : JobDriver
 	{
+		protected float ticksToNextRepair;
+
 		private const float WarmupTicks = 80f;
 
 		private const float TicksBetweenRepairs = 20f;
 
-		protected float ticksToNextRepair;
+		public override bool TryMakePreToilReservations()
+		{
+			return this.pawn.Reserve(this.job.targetA, this.job, 1, -1, null);
+		}
 
 		[DebuggerHidden]
 		protected override IEnumerable<Toil> MakeNewToils()
 		{
 			this.FailOnDespawnedNullOrForbidden(TargetIndex.A);
-			yield return Toils_Reserve.Reserve(TargetIndex.A, 1, -1, null);
 			yield return Toils_Goto.GotoThing(TargetIndex.A, PathEndMode.Touch);
 			Toil repair = new Toil();
 			repair.initAction = delegate
 			{
-				this.<>f__this.ticksToNextRepair = 80f;
+				this.$this.ticksToNextRepair = 80f;
 			};
 			repair.tickAction = delegate
 			{
-				Pawn actor = this.<repair>__0.actor;
+				Pawn actor = repair.actor;
 				actor.skills.Learn(SkillDefOf.Construction, 0.275f, false);
 				float statValue = actor.GetStatValue(StatDefOf.ConstructionSpeed, true);
-				this.<>f__this.ticksToNextRepair -= statValue;
-				if (this.<>f__this.ticksToNextRepair <= 0f)
+				this.$this.ticksToNextRepair -= statValue;
+				if (this.$this.ticksToNextRepair <= 0f)
 				{
-					this.<>f__this.ticksToNextRepair += 20f;
-					this.<>f__this.TargetThingA.HitPoints++;
-					this.<>f__this.TargetThingA.HitPoints = Mathf.Min(this.<>f__this.TargetThingA.HitPoints, this.<>f__this.TargetThingA.MaxHitPoints);
-					this.<>f__this.Map.listerBuildingsRepairable.Notify_BuildingRepaired((Building)this.<>f__this.TargetThingA);
-					if (this.<>f__this.TargetThingA.HitPoints == this.<>f__this.TargetThingA.MaxHitPoints)
+					this.$this.ticksToNextRepair += 20f;
+					this.$this.TargetThingA.HitPoints++;
+					this.$this.TargetThingA.HitPoints = Mathf.Min(this.$this.TargetThingA.HitPoints, this.$this.TargetThingA.MaxHitPoints);
+					this.$this.Map.listerBuildingsRepairable.Notify_BuildingRepaired((Building)this.$this.TargetThingA);
+					if (this.$this.TargetThingA.HitPoints == this.$this.TargetThingA.MaxHitPoints)
 					{
 						actor.records.Increment(RecordDefOf.ThingsRepaired);
 						actor.jobs.EndCurrentJob(JobCondition.Succeeded, true);

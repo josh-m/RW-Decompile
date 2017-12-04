@@ -26,12 +26,12 @@ namespace RimWorld
 
 		public static bool WillBeOverEncumberedAfterPickingUp(Pawn pawn, Thing thing, int count)
 		{
-			return MassUtility.FreeSpace(pawn) < (float)count * thing.GetInnerIfMinified().GetStatValue(StatDefOf.Mass, true);
+			return MassUtility.FreeSpace(pawn) < (float)count * thing.GetStatValue(StatDefOf.Mass, true);
 		}
 
 		public static int CountToPickUpUntilOverEncumbered(Pawn pawn, Thing thing)
 		{
-			return Mathf.FloorToInt(MassUtility.FreeSpace(pawn) / thing.GetInnerIfMinified().GetStatValue(StatDefOf.Mass, true));
+			return Mathf.FloorToInt(MassUtility.FreeSpace(pawn) / thing.GetStatValue(StatDefOf.Mass, true));
 		}
 
 		public static float FreeSpace(Pawn pawn)
@@ -71,7 +71,7 @@ namespace RimWorld
 			for (int i = 0; i < p.inventory.innerContainer.Count; i++)
 			{
 				Thing thing = p.inventory.innerContainer[i];
-				num += (float)thing.stackCount * thing.GetInnerIfMinified().GetStatValue(StatDefOf.Mass, true);
+				num += (float)thing.stackCount * thing.GetStatValue(StatDefOf.Mass, true);
 			}
 			return num;
 		}

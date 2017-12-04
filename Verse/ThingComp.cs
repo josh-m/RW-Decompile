@@ -127,6 +127,10 @@ namespace Verse
 		{
 		}
 
+		public virtual void Notify_SignalReceived(Signal signal)
+		{
+		}
+
 		public override string ToString()
 		{
 			return string.Concat(new object[]

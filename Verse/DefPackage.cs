@@ -1,3 +1,4 @@
+using RimWorld;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -66,11 +67,11 @@ namespace Verse
 				DirectXmlSaveFormatter.AddWhitespaceFromRoot(xElement);
 				SaveOptions options = SaveOptions.DisableFormatting;
 				xDocument.Save(str, options);
-				Messages.Message("Saved in " + str, MessageSound.Benefit);
+				Messages.Message("Saved in " + str, MessageTypeDefOf.PositiveEvent);
 			}
 			catch (Exception ex)
 			{
-				Messages.Message("Exception saving XML: " + ex.ToString(), MessageSound.Negative);
+				Messages.Message("Exception saving XML: " + ex.ToString(), MessageTypeDefOf.NegativeEvent);
 				throw;
 			}
 		}

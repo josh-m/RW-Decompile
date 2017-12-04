@@ -18,8 +18,13 @@ namespace RimWorld
 		{
 			get
 			{
-				return PathEndMode.Touch;
+				return PathEndMode.ClosestTouch;
 			}
+		}
+
+		public override Danger MaxPathDanger(Pawn pawn)
+		{
+			return Danger.Deadly;
 		}
 
 		public override bool HasJobOnThing(Pawn pawn, Thing t, bool forced = false)
@@ -45,13 +50,14 @@ namespace RimWorld
 			{
 				return false;
 			}
-			if (!pawn.CanReserveAndReach(t, PathEndMode.ClosestTouch, Danger.Deadly, 1, -1, null, forced))
+			LocalTargetInfo target = t;
+			if (!pawn.CanReserve(target, 1, -1, null, forced))
 			{
 				return false;
 			}
 			Thing thing;
 			ThingDef thingDef;
-			if (!FoodUtility.TryFindBestFoodSourceFor(pawn, pawn2, pawn2.needs.food.CurCategory == HungerCategory.Starving, out thing, out thingDef, false, true, false, true, false))
+			if (!FoodUtility.TryFindBestFoodSourceFor(pawn, pawn2, pawn2.needs.food.CurCategory == HungerCategory.Starving, out thing, out thingDef, false, true, false, true, false, false))
 			{
 				JobFailReason.Is("NoFood".Translate());
 				return false;
@@ -64,7 +70,7 @@ namespace RimWorld
 			Pawn pawn2 = (Pawn)t;
 			Thing t2;
 			ThingDef def;
-			if (FoodUtility.TryFindBestFoodSourceFor(pawn, pawn2, pawn2.needs.food.CurCategory == HungerCategory.Starving, out t2, out def, false, true, false, true, false))
+			if (FoodUtility.TryFindBestFoodSourceFor(pawn, pawn2, pawn2.needs.food.CurCategory == HungerCategory.Starving, out t2, out def, false, true, false, true, false, false))
 			{
 				return new Job(JobDefOf.FeedPatient)
 				{

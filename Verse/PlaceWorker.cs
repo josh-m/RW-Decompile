@@ -4,15 +4,7 @@ namespace Verse
 {
 	public abstract class PlaceWorker
 	{
-		protected Map Map
-		{
-			get
-			{
-				return Find.VisibleMap;
-			}
-		}
-
-		public virtual AcceptanceReport AllowsPlacing(BuildableDef checkingDef, IntVec3 loc, Rot4 rot, Thing thingToIgnore = null)
+		public virtual AcceptanceReport AllowsPlacing(BuildableDef checkingDef, IntVec3 loc, Rot4 rot, Map map, Thing thingToIgnore = null)
 		{
 			return AcceptanceReport.WasAccepted;
 		}

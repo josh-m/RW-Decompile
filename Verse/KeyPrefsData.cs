@@ -75,7 +75,7 @@ namespace Verse
 			foreach (KeyBindingDef def in DefDatabase<KeyBindingDef>.AllDefs)
 			{
 				KeyBindingData prefData;
-				if (def != keyDef && (def.category == keyDef.category || keyDef.category.checkForConflicts.Contains(def.category)) && this.keyPrefs.TryGetValue(def, out prefData) && (prefData.keyBindingA == code || prefData.keyBindingB == code))
+				if (def != keyDef && ((def.category == keyDef.category && def.category.selfConflicting) || keyDef.category.checkForConflicts.Contains(def.category) || (keyDef.extraConflictTags != null && def.extraConflictTags != null && keyDef.extraConflictTags.Any((string tag) => def.extraConflictTags.Contains(tag)))) && this.keyPrefs.TryGetValue(def, out prefData) && (prefData.keyBindingA == code || prefData.keyBindingB == code))
 				{
 					yield return def;
 				}
@@ -133,11 +133,12 @@ namespace Verse
 
 		private void ErrorCheckOn(KeyBindingDef keyDef, KeyPrefs.BindingSlot slot)
 		{
-			KeyCode boundKeyCode = this.GetBoundKeyCode(keyDef, KeyPrefs.BindingSlot.A);
+			KeyCode boundKeyCode = this.GetBoundKeyCode(keyDef, slot);
 			if (boundKeyCode != KeyCode.None)
 			{
 				foreach (KeyBindingDef current in this.ConflictingBindings(keyDef, boundKeyCode))
 				{
+					bool flag = boundKeyCode != keyDef.GetDefaultKeyCode(slot);
 					Log.Error(string.Concat(new object[]
 					{
 						"Key binding conflict: ",
@@ -145,8 +146,22 @@ namespace Verse
 						" and ",
 						keyDef,
 						" are both bound to ",
-						boundKeyCode
+						boundKeyCode,
+						".",
+						(!flag) ? string.Empty : " Fixed automatically."
 					}));
+					if (flag)
+					{
+						if (slot == KeyPrefs.BindingSlot.A)
+						{
+							this.keyPrefs[keyDef].keyBindingA = keyDef.defaultKeyCodeA;
+						}
+						else
+						{
+							this.keyPrefs[keyDef].keyBindingB = keyDef.defaultKeyCodeB;
+						}
+						KeyPrefs.Save();
+					}
 				}
 			}
 		}

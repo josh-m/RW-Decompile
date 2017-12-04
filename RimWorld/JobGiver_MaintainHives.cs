@@ -20,7 +20,7 @@ namespace RimWorld
 					if (intVec.GetRoom(pawn.Map, RegionType.Set_Passable) == room)
 					{
 						Hive hive = (Hive)pawn.Map.thingGrid.ThingAt(intVec, ThingDefOf.Hive);
-						if (hive != null)
+						if (hive != null && pawn.CanReserve(hive, 1, -1, null, false))
 						{
 							CompMaintainable compMaintainable = hive.TryGetComp<CompMaintainable>();
 							if (compMaintainable.CurStage != MaintainableStage.Healthy)

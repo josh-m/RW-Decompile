@@ -6,10 +6,6 @@ namespace Verse
 {
 	public class Dialog_NodeTree : Window
 	{
-		private const float InteractivityDelay = 0.5f;
-
-		private const float TitleHeight = 36f;
-
 		private Vector2 scrollPosition;
 
 		protected string title;
@@ -21,6 +17,10 @@ namespace Verse
 		private float makeInteractiveAtTime;
 
 		public Color screenFillColor = Color.clear;
+
+		private const float InteractivityDelay = 0.5f;
+
+		private const float TitleHeight = 36f;
 
 		private float optTotalHeight;
 
@@ -50,7 +50,6 @@ namespace Verse
 			if (delayInteractivity)
 			{
 				this.makeInteractiveAtTime = Time.realtimeSinceStartup + 0.5f;
-				this.closeOnEscapeKey = false;
 			}
 			this.soundAppear = SoundDefOf.CommsWindow_Open;
 			this.soundClose = SoundDefOf.CommsWindow_Close;
@@ -104,10 +103,6 @@ namespace Verse
 
 		protected void DrawNode(Rect rect)
 		{
-			if (this.InteractiveNow)
-			{
-				this.closeOnEscapeKey = true;
-			}
 			GUI.BeginGroup(rect);
 			Text.Font = GameFont.Small;
 			Rect outRect = new Rect(0f, 0f, rect.width, rect.height - this.optTotalHeight);

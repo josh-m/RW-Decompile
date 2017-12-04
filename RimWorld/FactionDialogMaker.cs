@@ -11,6 +11,12 @@ namespace RimWorld
 {
 	public static class FactionDialogMaker
 	{
+		private static DiaNode root;
+
+		private static Pawn negotiator;
+
+		private static Faction faction;
+
 		private const float MinRelationsToCommunicate = -70f;
 
 		private const float MinRelationsFriendly = 40f;
@@ -24,12 +30,6 @@ namespace RimWorld
 		private const int TradeRequestCost_Wary = 1100;
 
 		private const int TradeRequestCost_Warm = 700;
-
-		private static DiaNode root;
-
-		private static Pawn negotiator;
-
-		private static Faction faction;
 
 		public static DiaNode FactionDialogFor(Pawn negotiator, Faction faction)
 		{
@@ -129,7 +129,7 @@ namespace RimWorld
 				}));
 				return diaOption;
 			}
-			float goodwillDelta = 12f * FactionDialogMaker.negotiator.GetStatValue(StatDefOf.GiftImpact, true);
+			float goodwillDelta = 12f * FactionDialogMaker.negotiator.GetStatValue(StatDefOf.DiplomacyPower, true);
 			DiaOption diaOption2 = new DiaOption("OfferGift".Translate() + " (" + "SilverForGoodwill".Translate(new object[]
 			{
 				300,
@@ -234,22 +234,20 @@ namespace RimWorld
 				return diaOption;
 			}
 			DiaOption diaOption2 = new DiaOption(text);
-			if (map.attackTargetsCache.TargetsHostileToColony.Any((IAttackTarget x) => !x.ThreatDisabled()))
+			if (map.attackTargetsCache.TargetsHostileToColony.Any(new Func<IAttackTarget, bool>(GenHostility.IsActiveThreatToPlayer)))
 			{
 				if (!map.attackTargetsCache.TargetsHostileToColony.Any((IAttackTarget p) => ((Thing)p).Faction != null && ((Thing)p).Faction.HostileTo(FactionDialogMaker.faction)))
 				{
-					IEnumerable<Faction> source = (from x in map.attackTargetsCache.TargetsHostileToColony
-					where !x.ThreatDisabled()
-					select x into pa
+					IEnumerable<Faction> source = (from pa in map.attackTargetsCache.TargetsHostileToColony.Where(new Func<IAttackTarget, bool>(GenHostility.IsActiveThreatToPlayer))
 					select ((Thing)pa).Faction into fa
 					where fa != null && !fa.HostileTo(FactionDialogMaker.faction)
 					select fa).Distinct<Faction>();
-					string arg_1B6_0 = "MilitaryAidConfirmMutualEnemy";
-					object[] expr_17D = new object[2];
-					expr_17D[0] = FactionDialogMaker.faction.Name;
-					expr_17D[1] = GenText.ToCommaList(from fa in source
+					string arg_1B2_0 = "MilitaryAidConfirmMutualEnemy";
+					object[] expr_178 = new object[2];
+					expr_178[0] = FactionDialogMaker.faction.Name;
+					expr_178[1] = GenText.ToCommaList(from fa in source
 					select fa.Name, true);
-					DiaNode diaNode = new DiaNode(arg_1B6_0.Translate(expr_17D));
+					DiaNode diaNode = new DiaNode(arg_1B2_0.Translate(expr_178));
 					DiaOption diaOption3 = new DiaOption("CallConfirm".Translate());
 					diaOption3.action = delegate
 					{

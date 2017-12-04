@@ -49,11 +49,20 @@ namespace Verse
 			}
 		}
 
-		public static Vector3 PointOnSphere
+		public static Vector3 UnitVector3
 		{
 			get
 			{
 				Vector3 vector = new Vector3(Rand.Gaussian(0f, 1f), Rand.Gaussian(0f, 1f), Rand.Gaussian(0f, 1f));
+				return vector.normalized;
+			}
+		}
+
+		public static Vector2 UnitVector2
+		{
+			get
+			{
+				Vector2 vector = new Vector2(Rand.Gaussian(0f, 1f), Rand.Gaussian(0f, 1f));
 				return vector.normalized;
 			}
 		}
@@ -148,7 +157,7 @@ namespace Verse
 
 		public static bool Chance(float chance)
 		{
-			return chance >= 1f || Rand.Value < chance;
+			return chance > 0f && (chance >= 1f || Rand.Value < chance);
 		}
 
 		public static bool ChanceSeeded(float chance, int specialSeed)
@@ -464,6 +473,11 @@ namespace Verse
 		public static bool TryRangeInclusiveWhere(int from, int to, Predicate<int> predicate, out int value)
 		{
 			int num = to - from + 1;
+			if (num <= 0)
+			{
+				value = 0;
+				return false;
+			}
 			int num2 = Mathf.Max(Mathf.RoundToInt(Mathf.Sqrt((float)num)), 5);
 			for (int i = 0; i < num2; i++)
 			{
@@ -503,7 +517,7 @@ namespace Verse
 			}
 			if (angle >= 180f)
 			{
-				return Rand.PointOnSphere;
+				return Rand.UnitVector3;
 			}
 			float num = Rand.Range(Mathf.Cos(angle * 0.0174532924f), 1f);
 			float f = Rand.Range(0f, 6.28318548f);

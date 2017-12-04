@@ -10,6 +10,8 @@ namespace Verse
 
 		public static bool drawTerrain = true;
 
+		public static bool drawTerrainWater = true;
+
 		public static bool drawThingsDynamic = true;
 
 		public static bool drawThingsPrinted = true;
@@ -27,6 +29,8 @@ namespace Verse
 		public static bool drawDestSearch;
 
 		public static bool drawSectionEdges;
+
+		public static bool drawRiverDebug;
 
 		public static bool drawPawnDebug;
 
@@ -158,8 +162,30 @@ namespace Verse
 
 		public static bool logTutor;
 
+		public static bool logSignals;
+
+		public static bool logWorldPawnGC;
+
+		public static bool logTaleRecording;
+
 		public static bool debugApparelOptimize;
 
 		public static bool showAllRoomStats;
+
+		public static void drawTerrainWaterToggled()
+		{
+			if (Find.VisibleMap != null)
+			{
+				Find.VisibleMap.mapDrawer.WholeMapChanged(MapMeshFlag.Terrain);
+			}
+		}
+
+		public static void drawShadowsToggled()
+		{
+			if (Find.VisibleMap != null)
+			{
+				Find.VisibleMap.mapDrawer.WholeMapChanged((MapMeshFlag)(-1));
+			}
+		}
 	}
 }

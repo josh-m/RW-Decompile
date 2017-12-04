@@ -26,6 +26,10 @@ namespace Verse
 
 		public bool collideWithPawns;
 
+		public bool isIdle;
+
+		public TaleDef taleOnCompletion;
+
 		public bool makeTargetPrisoner;
 
 		public int joyDuration = 4000;

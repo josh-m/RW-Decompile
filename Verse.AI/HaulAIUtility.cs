@@ -65,7 +65,8 @@ namespace Verse.AI
 			{
 				return false;
 			}
-			if (!p.CanReserve(t, 1, -1, null, forced))
+			LocalTargetInfo target = t;
+			if (!p.CanReserve(target, 1, -1, null, forced))
 			{
 				return false;
 			}

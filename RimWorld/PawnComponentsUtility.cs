@@ -8,30 +8,81 @@ namespace RimWorld
 	{
 		public static void CreateInitialComponents(Pawn pawn)
 		{
-			pawn.ageTracker = new Pawn_AgeTracker(pawn);
-			pawn.health = new Pawn_HealthTracker(pawn);
-			pawn.records = new Pawn_RecordsTracker(pawn);
-			pawn.inventory = new Pawn_InventoryTracker(pawn);
-			pawn.meleeVerbs = new Pawn_MeleeVerbs(pawn);
-			pawn.verbTracker = new VerbTracker(pawn);
-			pawn.carryTracker = new Pawn_CarryTracker(pawn);
-			pawn.needs = new Pawn_NeedsTracker(pawn);
-			pawn.mindState = new Pawn_MindState(pawn);
+			if (pawn.ageTracker == null)
+			{
+				pawn.ageTracker = new Pawn_AgeTracker(pawn);
+			}
+			if (pawn.health == null)
+			{
+				pawn.health = new Pawn_HealthTracker(pawn);
+			}
+			if (pawn.records == null)
+			{
+				pawn.records = new Pawn_RecordsTracker(pawn);
+			}
+			if (pawn.inventory == null)
+			{
+				pawn.inventory = new Pawn_InventoryTracker(pawn);
+			}
+			if (pawn.meleeVerbs == null)
+			{
+				pawn.meleeVerbs = new Pawn_MeleeVerbs(pawn);
+			}
+			if (pawn.verbTracker == null)
+			{
+				pawn.verbTracker = new VerbTracker(pawn);
+			}
+			if (pawn.carryTracker == null)
+			{
+				pawn.carryTracker = new Pawn_CarryTracker(pawn);
+			}
+			if (pawn.needs == null)
+			{
+				pawn.needs = new Pawn_NeedsTracker(pawn);
+			}
+			if (pawn.mindState == null)
+			{
+				pawn.mindState = new Pawn_MindState(pawn);
+			}
 			if (pawn.RaceProps.ToolUser)
 			{
-				pawn.equipment = new Pawn_EquipmentTracker(pawn);
-				pawn.apparel = new Pawn_ApparelTracker(pawn);
+				if (pawn.equipment == null)
+				{
+					pawn.equipment = new Pawn_EquipmentTracker(pawn);
+				}
+				if (pawn.apparel == null)
+				{
+					pawn.apparel = new Pawn_ApparelTracker(pawn);
+				}
 			}
 			if (pawn.RaceProps.Humanlike)
 			{
-				pawn.ownership = new Pawn_Ownership(pawn);
-				pawn.skills = new Pawn_SkillTracker(pawn);
-				pawn.story = new Pawn_StoryTracker(pawn);
-				pawn.guest = new Pawn_GuestTracker(pawn);
-				pawn.guilt = new Pawn_GuiltTracker();
-				pawn.workSettings = new Pawn_WorkSettings(pawn);
+				if (pawn.ownership == null)
+				{
+					pawn.ownership = new Pawn_Ownership(pawn);
+				}
+				if (pawn.skills == null)
+				{
+					pawn.skills = new Pawn_SkillTracker(pawn);
+				}
+				if (pawn.story == null)
+				{
+					pawn.story = new Pawn_StoryTracker(pawn);
+				}
+				if (pawn.guest == null)
+				{
+					pawn.guest = new Pawn_GuestTracker(pawn);
+				}
+				if (pawn.guilt == null)
+				{
+					pawn.guilt = new Pawn_GuiltTracker();
+				}
+				if (pawn.workSettings == null)
+				{
+					pawn.workSettings = new Pawn_WorkSettings(pawn);
+				}
 			}
-			if (pawn.RaceProps.IsFlesh)
+			if (pawn.RaceProps.IsFlesh && pawn.relations == null)
 			{
 				pawn.relations = new Pawn_RelationsTracker(pawn);
 			}
@@ -40,6 +91,10 @@ namespace RimWorld
 
 		public static void AddComponentsForSpawn(Pawn pawn)
 		{
+			if (pawn.rotationTracker == null)
+			{
+				pawn.rotationTracker = new Pawn_RotationTracker(pawn);
+			}
 			if (pawn.pather == null)
 			{
 				pawn.pather = new Pawn_PathFollower(pawn);
@@ -86,6 +141,7 @@ namespace RimWorld
 
 		public static void RemoveComponentsOnDespawned(Pawn pawn)
 		{
+			pawn.rotationTracker = null;
 			pawn.pather = null;
 			pawn.thinker = null;
 			pawn.jobs = null;

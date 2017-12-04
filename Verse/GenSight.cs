@@ -65,7 +65,7 @@ namespace Verse
 			return true;
 		}
 
-		public static bool LineOfSight(IntVec3 start, IntVec3 end, Map map, CellRect startRect, CellRect endRect)
+		public static bool LineOfSight(IntVec3 start, IntVec3 end, Map map, CellRect startRect, CellRect endRect, Func<IntVec3, bool> validator = null)
 		{
 			if (!start.InBounds(map) || !end.InBounds(map))
 			{
@@ -90,18 +90,25 @@ namespace Verse
 			int num7 = num - num2;
 			num *= 2;
 			num2 *= 2;
-			IntVec3 c = default(IntVec3);
+			IntVec3 intVec = default(IntVec3);
 			while (i > 1)
 			{
-				c.x = num3;
-				c.z = num4;
-				if (endRect.Contains(c))
+				intVec.x = num3;
+				intVec.z = num4;
+				if (endRect.Contains(intVec))
 				{
 					return true;
 				}
-				if (!startRect.Contains(c) && !c.CanBeSeenOverFast(map))
+				if (!startRect.Contains(intVec))
 				{
-					return false;
+					if (!intVec.CanBeSeenOverFast(map))
+					{
+						return false;
+					}
+					if (validator != null && !validator(intVec))
+					{
+						return false;
+					}
 				}
 				if (num7 > 0 || (num7 == 0 && flag))
 				{

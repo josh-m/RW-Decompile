@@ -95,6 +95,10 @@ namespace Verse.AI
 			{
 				return false;
 			}
+			if (!stateDef.Worker.StateCanOccur(this.pawn))
+			{
+				return false;
+			}
 			if ((this.pawn.IsColonist || this.pawn.HostFaction == Faction.OfPlayer) && stateDef.tale != null)
 			{
 				TaleRecorder.RecordTale(stateDef.tale, new object[]
@@ -102,29 +106,17 @@ namespace Verse.AI
 					this.pawn
 				});
 			}
-			if (!stateDef.beginLetter.NullOrEmpty() && PawnUtility.ShouldSendNotificationAbout(this.pawn))
-			{
-				string label = "MentalBreakLetterLabel".Translate() + ": " + stateDef.beginLetterLabel;
-				string text = string.Format(stateDef.beginLetter, this.pawn.Label).AdjustedFor(this.pawn).CapitalizeFirst();
-				if (reason != null)
-				{
-					text = text + "\n\n" + "FinalStraw".Translate(new object[]
-					{
-						reason
-					});
-				}
-				Find.LetterStack.ReceiveLetter(label, text, stateDef.beginLetterDef, this.pawn, null);
-			}
 			if (stateDef.IsExtreme && this.pawn.IsPlayerControlledCaravanMember())
 			{
-				Messages.Message("MessageCaravanMemberHasExtremeMentalBreak".Translate(), this.pawn.GetCaravan(), MessageSound.Negative);
+				Messages.Message("MessageCaravanMemberHasExtremeMentalBreak".Translate(), this.pawn.GetCaravan(), MessageTypeDefOf.ThreatSmall);
 			}
 			this.pawn.records.Increment(RecordDefOf.TimesInMentalState);
 			if (this.pawn.Drafted)
 			{
 				this.pawn.drafter.Drafted = false;
 			}
-			this.curStateInt = (MentalState)Activator.CreateInstance(stateDef.stateClass);
+			MentalState mentalState = (MentalState)Activator.CreateInstance(stateDef.stateClass);
+			this.curStateInt = mentalState;
 			this.curStateInt.pawn = this.pawn;
 			this.curStateInt.def = stateDef;
 			this.curStateInt.causedByMood = causedByMood;
@@ -140,9 +132,9 @@ namespace Verse.AI
 			{
 				this.pawn.caller.Notify_InAggroMentalState();
 			}
-			if (this.CurState != null)
+			if (this.curStateInt != null)
 			{
-				this.CurState.PostStart(reason);
+				this.curStateInt.PostStart(reason);
 			}
 			if (this.pawn.CurJob != null)
 			{
@@ -155,6 +147,22 @@ namespace Verse.AI
 			if (this.pawn.Spawned && forceWake && !this.pawn.Awake())
 			{
 				this.pawn.jobs.EndCurrentJob(JobCondition.InterruptForced, true);
+			}
+			if (PawnUtility.ShouldSendNotificationAbout(this.pawn))
+			{
+				string text = mentalState.GetBeginLetterText();
+				if (!text.NullOrEmpty())
+				{
+					string label = "MentalBreakLetterLabel".Translate() + ": " + stateDef.beginLetterLabel;
+					if (reason != null)
+					{
+						text = text + "\n\n" + "FinalStraw".Translate(new object[]
+						{
+							reason
+						});
+					}
+					Find.LetterStack.ReceiveLetter(label, text, stateDef.beginLetterDef, this.pawn, null);
+				}
 			}
 			return true;
 		}

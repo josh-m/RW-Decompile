@@ -80,29 +80,36 @@ namespace Verse
 			select x).RandomElement<HediffGrowthMode>();
 			if (PawnUtility.ShouldSendNotificationAbout(base.Pawn))
 			{
-				switch (this.growthMode)
+				HediffGrowthMode hediffGrowthMode = this.growthMode;
+				if (hediffGrowthMode != HediffGrowthMode.Growing)
 				{
-				case HediffGrowthMode.Growing:
+					if (hediffGrowthMode != HediffGrowthMode.Stable)
+					{
+						if (hediffGrowthMode == HediffGrowthMode.Remission)
+						{
+							Messages.Message("DiseaseGrowthModeChanged_Remission".Translate(new object[]
+							{
+								base.Pawn.LabelShort,
+								base.Def.label
+							}), base.Pawn, MessageTypeDefOf.PositiveEvent);
+						}
+					}
+					else
+					{
+						Messages.Message("DiseaseGrowthModeChanged_Stable".Translate(new object[]
+						{
+							base.Pawn.LabelShort,
+							base.Def.label
+						}), base.Pawn, MessageTypeDefOf.NeutralEvent);
+					}
+				}
+				else
+				{
 					Messages.Message("DiseaseGrowthModeChanged_Growing".Translate(new object[]
 					{
 						base.Pawn.LabelShort,
 						base.Def.label
-					}), base.Pawn, MessageSound.SeriousAlert);
-					break;
-				case HediffGrowthMode.Stable:
-					Messages.Message("DiseaseGrowthModeChanged_Stable".Translate(new object[]
-					{
-						base.Pawn.LabelShort,
-						base.Def.label
-					}), base.Pawn, MessageSound.Standard);
-					break;
-				case HediffGrowthMode.Remission:
-					Messages.Message("DiseaseGrowthModeChanged_Remission".Translate(new object[]
-					{
-						base.Pawn.LabelShort,
-						base.Def.label
-					}), base.Pawn, MessageSound.Benefit);
-					break;
+					}), base.Pawn, MessageTypeDefOf.NegativeHealthEvent);
 				}
 			}
 		}

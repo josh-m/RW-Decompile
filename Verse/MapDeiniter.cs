@@ -38,7 +38,7 @@ namespace Verse
 			}
 			try
 			{
-				Find.SoundRoot.sustainerManager.RemoveAllFromMap(map);
+				Find.SoundRoot.sustainerManager.EndAllInMap(map);
 			}
 			catch (Exception arg4)
 			{
@@ -46,19 +46,27 @@ namespace Verse
 			}
 			try
 			{
-				Find.TickManager.RemoveAllFromMap(map);
+				map.areaManager.Notify_MapRemoved();
 			}
 			catch (Exception arg5)
 			{
-				Log.Error("Error while deiniting map: could not remove things from the tick manager: " + arg5);
+				Log.Error("Error while deiniting map: could not remove areas: " + arg5);
+			}
+			try
+			{
+				Find.TickManager.RemoveAllFromMap(map);
+			}
+			catch (Exception arg6)
+			{
+				Log.Error("Error while deiniting map: could not remove things from the tick manager: " + arg6);
 			}
 			try
 			{
 				MapDeiniter.NotifyEverythingWhichUsesMapReference(map);
 			}
-			catch (Exception arg6)
+			catch (Exception arg7)
 			{
-				Log.Error("Error while deiniting map: could not notify things/regions/rooms/etc: " + arg6);
+				Log.Error("Error while deiniting map: could not notify things/regions/rooms/etc: " + arg7);
 			}
 		}
 
@@ -81,6 +89,10 @@ namespace Verse
 					}
 					else
 					{
+						if (pawn.Faction == Faction.OfPlayer || pawn.HostFaction == Faction.OfPlayer)
+						{
+							PawnBanishUtility.Banish(pawn, map.Tile);
+						}
 						MapDeiniter.CleanUpAndPassToWorld(pawn);
 					}
 				}

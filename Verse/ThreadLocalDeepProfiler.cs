@@ -57,11 +57,11 @@ namespace Verse
 			}
 		}
 
-		private const int MaxDepth = 50;
-
 		private Stack<ThreadLocalDeepProfiler.Watcher> watchers = new Stack<ThreadLocalDeepProfiler.Watcher>();
 
 		private static readonly string[] Prefixes;
+
+		private const int MaxDepth = 50;
 
 		static ThreadLocalDeepProfiler()
 		{
@@ -71,9 +71,9 @@ namespace Verse
 				ThreadLocalDeepProfiler.Prefixes[i] = string.Empty;
 				for (int j = 0; j < i; j++)
 				{
-					string[] expr_31_cp_0 = ThreadLocalDeepProfiler.Prefixes;
-					int expr_31_cp_1 = i;
-					expr_31_cp_0[expr_31_cp_1] += " -";
+					string[] prefixes;
+					int num;
+					(prefixes = ThreadLocalDeepProfiler.Prefixes)[num = i] = prefixes[num] + " -";
 				}
 			}
 		}

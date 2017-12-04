@@ -9,6 +9,10 @@ namespace RimWorld
 	[StaticConstructorOnStartup]
 	public class Dialog_ManageDrugPolicies : Window
 	{
+		private Vector2 scrollPosition;
+
+		private DrugPolicy selPolicy;
+
 		private const float TopAreaHeight = 40f;
 
 		private const float TopButtonHeight = 35f;
@@ -25,12 +29,6 @@ namespace RimWorld
 
 		private const float CellsPadding = 4f;
 
-		private const float UsageSpacing = 12f;
-
-		private Vector2 scrollPosition;
-
-		private DrugPolicy selPolicy;
-
 		private static readonly Texture2D IconForAddiction = ContentFinder<Texture2D>.Get("UI/Icons/DrugPolicy/ForAddiction", true);
 
 		private static readonly Texture2D IconForJoy = ContentFinder<Texture2D>.Get("UI/Icons/DrugPolicy/ForJoy", true);
@@ -38,6 +36,8 @@ namespace RimWorld
 		private static readonly Texture2D IconScheduled = ContentFinder<Texture2D>.Get("UI/Icons/DrugPolicy/Scheduled", true);
 
 		private static readonly Regex ValidNameRegex = Outfit.ValidNameRegex;
+
+		private const float UsageSpacing = 12f;
 
 		private DrugPolicy SelectedPolicy
 		{
@@ -118,7 +118,7 @@ namespace RimWorld
 						AcceptanceReport acceptanceReport = Current.Game.drugPolicyDatabase.TryDelete(localAssignedDrugs);
 						if (!acceptanceReport.Accepted)
 						{
-							Messages.Message(acceptanceReport.Reason, MessageSound.RejectInput);
+							Messages.Message(acceptanceReport.Reason, MessageTypeDefOf.RejectInput);
 						}
 						else if (localAssignedDrugs == this.SelectedPolicy)
 						{
@@ -167,7 +167,7 @@ namespace RimWorld
 			Rect rect4 = rect;
 			rect4.yMin = rect4.yMax - 50f;
 			this.DoColumnLabels(rect2);
-			Widgets.DrawMenuSection(rect3, true);
+			Widgets.DrawMenuSection(rect3);
 			if (this.SelectedPolicy.Count == 0)
 			{
 				GUI.color = Color.grey;

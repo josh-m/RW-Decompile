@@ -7,8 +7,6 @@ namespace Verse
 {
 	public abstract class GenStep_Scatterer : GenStep
 	{
-		private const int ScatterNearPlayerRadius = 20;
-
 		public int count = -1;
 
 		public FloatRange countPer10kCellsRange = FloatRange.Zero;
@@ -36,6 +34,8 @@ namespace Verse
 		[Unsaved]
 		protected List<IntVec3> usedSpots = new List<IntVec3>();
 
+		private const int ScatterNearPlayerRadius = 20;
+
 		public override void Generate(Map map)
 		{
 			if (!this.allowOnWater && map.TileInfo.WaterCovered)
@@ -60,7 +60,7 @@ namespace Verse
 		{
 			if (this.nearMapCenter)
 			{
-				if (RCellFinder.TryFindRandomCellNearWith(map.Center, (IntVec3 x) => this.CanScatterAt(x, map), map, out result, 3))
+				if (RCellFinder.TryFindRandomCellNearWith(map.Center, (IntVec3 x) => this.CanScatterAt(x, map), map, out result, 3, 2147483647))
 				{
 					return true;
 				}

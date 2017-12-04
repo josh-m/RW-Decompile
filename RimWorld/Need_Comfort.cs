@@ -7,6 +7,10 @@ namespace RimWorld
 {
 	public class Need_Comfort : Need_Seeker
 	{
+		public float lastComfortUsed;
+
+		public int lastComfortUseTick;
+
 		private const float MinNormal = 0.1f;
 
 		private const float MinComfortable = 0.6f;
@@ -18,10 +22,6 @@ namespace RimWorld
 		private const float MinLuxuriantlyComfortable = 0.9f;
 
 		public const int ComfortUseInterval = 10;
-
-		public float lastComfortUsed;
-
-		public int lastComfortUseTick;
 
 		public override float CurInstantLevel
 		{

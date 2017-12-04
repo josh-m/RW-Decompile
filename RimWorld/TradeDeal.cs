@@ -162,7 +162,7 @@ namespace RimWorld
 			if (this.SilverTradeable.CountPostDealFor(Transactor.Colony) < 0)
 			{
 				Find.WindowStack.WindowOfType<Dialog_Trade>().FlashSilver();
-				Messages.Message("MessageColonyCannotAfford".Translate(), MessageSound.RejectInput);
+				Messages.Message("MessageColonyCannotAfford".Translate(), MessageTypeDefOf.RejectInput);
 				actuallyTraded = false;
 				return false;
 			}

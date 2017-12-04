@@ -73,6 +73,11 @@ namespace Verse
 			{
 				return;
 			}
+			if (room.RegionType == RegionType.Portal)
+			{
+				return;
+			}
+			bool flag = false;
 			foreach (IntVec3 current in room.BorderCells)
 			{
 				Thing roofHolderOrImpassable = current.GetRoofHolderOrImpassable(this.map);
@@ -86,7 +91,15 @@ namespace Verse
 					{
 						return;
 					}
+					if (roofHolderOrImpassable.Faction == Faction.OfPlayer)
+					{
+						flag = true;
+					}
 				}
+			}
+			if (!flag)
+			{
+				return;
 			}
 			this.innerCells.Clear();
 			foreach (IntVec3 current2 in room.Cells)

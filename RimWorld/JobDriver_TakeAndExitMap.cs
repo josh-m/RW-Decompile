@@ -16,24 +16,28 @@ namespace RimWorld
 		{
 			get
 			{
-				return base.CurJob.GetTarget(TargetIndex.A).Thing;
+				return this.job.GetTarget(TargetIndex.A).Thing;
 			}
+		}
+
+		public override bool TryMakePreToilReservations()
+		{
+			return this.pawn.Reserve(this.Item, this.job, 1, -1, null);
 		}
 
 		[DebuggerHidden]
 		protected override IEnumerable<Toil> MakeNewToils()
 		{
 			this.FailOnDestroyedOrNull(TargetIndex.A);
-			yield return Toils_Reserve.Reserve(TargetIndex.A, 1, -1, null);
 			yield return Toils_Goto.GotoThing(TargetIndex.A, PathEndMode.ClosestTouch).FailOnSomeonePhysicallyInteracting(TargetIndex.A);
 			yield return Toils_Construct.UninstallIfMinifiable(TargetIndex.A).FailOnSomeonePhysicallyInteracting(TargetIndex.A);
-			yield return Toils_Haul.StartCarryThing(TargetIndex.A, false, false);
+			yield return Toils_Haul.StartCarryThing(TargetIndex.A, false, false, false);
 			Toil gotoCell = Toils_Goto.GotoCell(TargetIndex.B, PathEndMode.OnCell);
 			gotoCell.AddPreTickAction(delegate
 			{
-				if (this.<>f__this.Map.exitMapGrid.IsExitCell(this.<>f__this.pawn.Position))
+				if (this.$this.Map.exitMapGrid.IsExitCell(this.$this.pawn.Position))
 				{
-					this.<>f__this.pawn.ExitMap(true);
+					this.$this.pawn.ExitMap(true);
 				}
 			});
 			yield return gotoCell;
@@ -41,9 +45,9 @@ namespace RimWorld
 			{
 				initAction = delegate
 				{
-					if (this.<>f__this.pawn.Position.OnEdge(this.<>f__this.pawn.Map) || this.<>f__this.pawn.Map.exitMapGrid.IsExitCell(this.<>f__this.pawn.Position))
+					if (this.$this.pawn.Position.OnEdge(this.$this.pawn.Map) || this.$this.pawn.Map.exitMapGrid.IsExitCell(this.$this.pawn.Position))
 					{
-						this.<>f__this.pawn.ExitMap(true);
+						this.$this.pawn.ExitMap(true);
 					}
 				},
 				defaultCompleteMode = ToilCompleteMode.Instant

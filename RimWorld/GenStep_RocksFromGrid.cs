@@ -57,13 +57,17 @@ namespace RimWorld
 				minGridVal = num * 1.04f
 			});
 			MapGenFloatGrid elevation = MapGenerator.Elevation;
+			MapGenFloatGrid caves = MapGenerator.Caves;
 			foreach (IntVec3 current in map.AllCells)
 			{
 				float num2 = elevation[current];
 				if (num2 > num)
 				{
-					ThingDef def = GenStep_RocksFromGrid.RockDefAt(current);
-					GenSpawn.Spawn(def, current, map);
+					if (caves[current] <= 0f)
+					{
+						ThingDef def = GenStep_RocksFromGrid.RockDefAt(current);
+						GenSpawn.Spawn(def, current, map);
+					}
 					for (int i = 0; i < list.Count; i++)
 					{
 						if (num2 > list[i].minGridVal)
@@ -87,7 +91,7 @@ namespace RimWorld
 						{
 							visited[x] = true;
 							toRemove.Add(x);
-						}, false);
+						}, 2147483647, false, null);
 						if (toRemove.Count < 20)
 						{
 							for (int j = 0; j < toRemove.Count; j++)

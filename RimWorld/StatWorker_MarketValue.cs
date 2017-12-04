@@ -7,7 +7,7 @@ namespace RimWorld
 {
 	public class StatWorker_MarketValue : StatWorker
 	{
-		public const float ValuePerWork = 0.003f;
+		public const float ValuePerWork = 0.0036f;
 
 		private const float DefaultGuessStuffCost = 2f;
 
@@ -41,23 +41,24 @@ namespace RimWorld
 				}
 			}
 			float num2 = Mathf.Max(req.Def.GetStatValueAbstract(StatDefOf.WorkToMake, req.StuffDef), req.Def.GetStatValueAbstract(StatDefOf.WorkToBuild, req.StuffDef));
-			return num + num2 * 0.003f;
+			return num + num2 * 0.0036f;
 		}
 
-		public override string GetExplanation(StatRequest req, ToStringNumberSense numberSense)
+		public override string GetExplanationUnfinalized(StatRequest req, ToStringNumberSense numberSense)
 		{
 			if (req.HasThing && req.Thing is Pawn)
 			{
 				StringBuilder stringBuilder = new StringBuilder();
-				stringBuilder.Append(base.GetExplanation(req, numberSense));
-				Pawn pawn = req.Thing as Pawn;
+				stringBuilder.Append(base.GetExplanationUnfinalized(req, numberSense));
 				stringBuilder.AppendLine();
-				stringBuilder.AppendLine("StatsReport_CharacterQuality".Translate() + ": x" + PriceUtility.PawnQualityPriceFactor(pawn).ToStringPercent());
+				stringBuilder.AppendLine();
+				Pawn pawn = req.Thing as Pawn;
+				stringBuilder.Append("StatsReport_CharacterQuality".Translate() + ": x" + PriceUtility.PawnQualityPriceFactor(pawn).ToStringPercent());
 				return stringBuilder.ToString();
 			}
 			if (req.Def.statBases.StatListContains(StatDefOf.MarketValue))
 			{
-				return base.GetExplanation(req, numberSense);
+				return base.GetExplanationUnfinalized(req, numberSense);
 			}
 			StringBuilder stringBuilder2 = new StringBuilder();
 			stringBuilder2.AppendLine("StatsReport_MarketValueFromStuffsAndWork".Translate());

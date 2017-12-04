@@ -5,8 +5,6 @@ namespace Verse
 {
 	public abstract class Mote : Thing
 	{
-		protected const float MinSpeed = 0.02f;
-
 		public Vector3 exactPosition;
 
 		public float exactRotation;
@@ -26,6 +24,8 @@ namespace Verse
 		public MoteAttachLink link1 = MoteAttachLink.Invalid;
 
 		protected float skidSpeedMultiplierPerTick = Rand.Range(0.3f, 0.95f);
+
+		protected const float MinSpeed = 0.02f;
 
 		public float Scale
 		{

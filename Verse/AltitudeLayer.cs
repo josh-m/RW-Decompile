@@ -26,14 +26,14 @@ namespace Verse
 		PawnState,
 		Blueprint,
 		MoteOverhead,
-		FlyingItem,
 		Gas,
+		Skyfaller,
 		Weather,
 		LightingOverlay,
 		VisEffects,
 		FogOfWar,
 		WorldClipper,
-		WorldDataOverlay,
+		MapDataOverlay,
 		MetaOverlays,
 		_Count
 	}

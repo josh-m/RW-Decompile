@@ -7,13 +7,15 @@ namespace RimWorld
 {
 	public class WeatherDecider : IExposable
 	{
-		private const int FirstWeatherDuration = 10000;
-
 		private Map map;
 
 		private int curWeatherDuration = 10000;
 
 		private int ticksWhenRainAllowedAgain;
+
+		private const int FirstWeatherDuration = 10000;
+
+		private const float ChanceFactorRainOnFire = 15f;
 
 		public WeatherDecider(Map map)
 		{
@@ -47,6 +49,26 @@ namespace RimWorld
 			this.curWeatherDuration = weatherDef.durationRange.RandomInRange;
 		}
 
+		public void StartInitialWeather()
+		{
+			if (Find.GameInitData != null)
+			{
+				this.map.weatherManager.curWeather = WeatherDefOf.Clear;
+				this.curWeatherDuration = 10000;
+				this.map.weatherManager.curWeatherAge = 0;
+			}
+			else
+			{
+				this.map.weatherManager.curWeather = null;
+				WeatherDef weatherDef = this.ChooseNextWeather();
+				WeatherDef lastWeather = this.ChooseNextWeather();
+				this.map.weatherManager.curWeather = weatherDef;
+				this.map.weatherManager.lastWeather = lastWeather;
+				this.curWeatherDuration = weatherDef.durationRange.RandomInRange;
+				this.map.weatherManager.curWeatherAge = Rand.Range(0, this.curWeatherDuration);
+			}
+		}
+
 		private WeatherDef ChooseNextWeather()
 		{
 			if (TutorSystem.TutorialMode)
@@ -69,7 +91,7 @@ namespace RimWorld
 
 		private float CurrentWeatherCommonality(WeatherDef weather)
 		{
-			if (!this.map.weatherManager.curWeather.repeatable && weather == this.map.weatherManager.curWeather)
+			if (this.map.weatherManager.curWeather != null && !this.map.weatherManager.curWeather.repeatable && weather == this.map.weatherManager.curWeather)
 			{
 				return 0f;
 			}
@@ -101,7 +123,7 @@ namespace RimWorld
 					float num = weatherCommonalityRecord.commonality;
 					if (this.map.fireWatcher.LargeFireDangerPresent && weather.rainRate > 0.1f)
 					{
-						num *= 20f;
+						num *= 15f;
 					}
 					if (weatherCommonalityRecord.weather.commonalityRainfallFactor != null)
 					{

@@ -7,6 +7,8 @@ namespace Verse
 {
 	public abstract class Dialog_DebugOptionLister : Dialog_OptionLister
 	{
+		private const float DebugOptionsGap = 7f;
+
 		protected void DebugAction(string label, Action action)
 		{
 			if (!base.FilterAllows(label))
@@ -97,6 +99,19 @@ namespace Verse
 			{
 				this.totalOptionsHeight += 24f;
 			}
+		}
+
+		protected void DoLabel(string label)
+		{
+			Text.Font = GameFont.Small;
+			this.listing.Label(label, -1f);
+			this.totalOptionsHeight += Text.CalcHeight(label, 300f) + 2f;
+		}
+
+		protected void DoGap()
+		{
+			this.listing.Gap(7f);
+			this.totalOptionsHeight += 7f;
 		}
 	}
 }

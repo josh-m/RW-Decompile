@@ -18,7 +18,7 @@ namespace Verse
 			}
 		}
 
-		public override void DrawWorker(Vector3 loc, Rot4 rot, ThingDef thingDef, Thing thing)
+		public override void DrawWorker(Vector3 loc, Rot4 rot, ThingDef thingDef, Thing thing, float extraRotation)
 		{
 			Log.ErrorOnce("Graphic_Scatter cannot draw realtime.", 9432243);
 		}

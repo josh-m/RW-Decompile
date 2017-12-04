@@ -8,9 +8,9 @@ namespace RimWorld.BaseGen
 	{
 		private const float MechanoidsChance = 0.5f;
 
-		private const float HivesChance = 0.45f;
-
 		private static readonly IntRange MechanoidCountRange = new IntRange(1, 5);
+
+		private const float HivesChance = 0.45f;
 
 		private static readonly IntRange HivesCountRange = new IntRange(1, 2);
 

@@ -16,7 +16,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return (Pawn)base.CurJob.GetTarget(TargetIndex.A).Thing;
+				return (Pawn)this.job.GetTarget(TargetIndex.A).Thing;
 			}
 		}
 
@@ -24,8 +24,13 @@ namespace RimWorld
 		{
 			get
 			{
-				return (Building_CryptosleepCasket)base.CurJob.GetTarget(TargetIndex.B).Thing;
+				return (Building_CryptosleepCasket)this.job.GetTarget(TargetIndex.B).Thing;
 			}
+		}
+
+		public override bool TryMakePreToilReservations()
+		{
+			return this.pawn.Reserve(this.Takee, this.job, 1, -1, null) && this.pawn.Reserve(this.DropPod, this.job, 1, -1, null);
 		}
 
 		[DebuggerHidden]
@@ -34,10 +39,9 @@ namespace RimWorld
 			this.FailOnDestroyedOrNull(TargetIndex.A);
 			this.FailOnDestroyedOrNull(TargetIndex.B);
 			this.FailOnAggroMentalState(TargetIndex.A);
-			yield return Toils_Reserve.Reserve(TargetIndex.A, 1, -1, null);
-			yield return Toils_Reserve.Reserve(TargetIndex.B, 1, -1, null);
-			yield return Toils_Goto.GotoThing(TargetIndex.A, PathEndMode.OnCell).FailOnDestroyedNullOrForbidden(TargetIndex.A).FailOnDespawnedNullOrForbidden(TargetIndex.B).FailOn(() => this.<>f__this.DropPod.GetDirectlyHeldThings().Count > 0).FailOn(() => !this.<>f__this.Takee.Downed).FailOn(() => !this.<>f__this.pawn.CanReach(this.<>f__this.Takee, PathEndMode.OnCell, Danger.Deadly, false, TraverseMode.ByPawn)).FailOnSomeonePhysicallyInteracting(TargetIndex.A);
-			yield return Toils_Haul.StartCarryThing(TargetIndex.A, false, false);
+			this.FailOn(() => !this.$this.DropPod.Accepts(this.$this.Takee));
+			yield return Toils_Goto.GotoThing(TargetIndex.A, PathEndMode.OnCell).FailOnDestroyedNullOrForbidden(TargetIndex.A).FailOnDespawnedNullOrForbidden(TargetIndex.B).FailOn(() => this.$this.DropPod.GetDirectlyHeldThings().Count > 0).FailOn(() => !this.$this.Takee.Downed).FailOn(() => !this.$this.pawn.CanReach(this.$this.Takee, PathEndMode.OnCell, Danger.Deadly, false, TraverseMode.ByPawn)).FailOnSomeonePhysicallyInteracting(TargetIndex.A);
+			yield return Toils_Haul.StartCarryThing(TargetIndex.A, false, false, false);
 			yield return Toils_Goto.GotoThing(TargetIndex.B, PathEndMode.InteractionCell);
 			Toil prepare = Toils_General.Wait(500);
 			prepare.FailOnCannotTouch(TargetIndex.B, PathEndMode.InteractionCell);
@@ -47,9 +51,18 @@ namespace RimWorld
 			{
 				initAction = delegate
 				{
-					this.<>f__this.DropPod.TryAcceptThing(this.<>f__this.Takee, true);
+					this.$this.DropPod.TryAcceptThing(this.$this.Takee, true);
 				},
 				defaultCompleteMode = ToilCompleteMode.Instant
+			};
+		}
+
+		public override object[] TaleParameters()
+		{
+			return new object[]
+			{
+				this.pawn,
+				this.Takee
 			};
 		}
 	}

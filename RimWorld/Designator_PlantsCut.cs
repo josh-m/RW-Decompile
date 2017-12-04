@@ -19,12 +19,13 @@ namespace RimWorld
 			this.designationDef = DesignationDefOf.CutPlant;
 		}
 
-		public override Texture2D IconReverseDesignating(Thing t)
+		public override Texture2D IconReverseDesignating(Thing t, out float angle)
 		{
 			if (!t.def.plant.IsTree)
 			{
-				return base.IconReverseDesignating(t);
+				return base.IconReverseDesignating(t, out angle);
 			}
+			angle = 0f;
 			return TexCommand.TreeChop;
 		}
 

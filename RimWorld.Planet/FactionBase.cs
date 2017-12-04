@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using UnityEngine;
 using Verse;
 
@@ -67,6 +69,23 @@ namespace RimWorld.Planet
 		public FactionBase()
 		{
 			this.trader = new FactionBase_TraderTracker(this);
+		}
+
+		[DebuggerHidden]
+		public override IEnumerable<IncidentTargetTypeDef> AcceptedTypes()
+		{
+			foreach (IncidentTargetTypeDef type in base.AcceptedTypes())
+			{
+				yield return type;
+			}
+			if (base.Faction == Faction.OfPlayer)
+			{
+				yield return IncidentTargetTypeDefOf.MapPlayerHome;
+			}
+			else
+			{
+				yield return IncidentTargetTypeDefOf.MapMisc;
+			}
 		}
 
 		public override void ExposeData()

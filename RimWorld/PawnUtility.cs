@@ -12,6 +12,12 @@ namespace RimWorld
 {
 	public static class PawnUtility
 	{
+		private static List<Pawn> tmpPawns = new List<Pawn>();
+
+		private static List<string> tmpPawnKinds = new List<string>();
+
+		private static HashSet<PawnKindDef> tmpAddedPawnKinds = new HashSet<PawnKindDef>();
+
 		private const float RecruitDifficultyMin = 0.33f;
 
 		private const float RecruitDifficultyMax = 0.99f;
@@ -20,11 +26,7 @@ namespace RimWorld
 
 		private const float RecruitDifficultyOffsetPerTechDiff = 0.15f;
 
-		private static List<Pawn> tmpPawns = new List<Pawn>();
-
-		private static List<string> tmpPawnKinds = new List<string>();
-
-		private static HashSet<PawnKindDef> tmpAddedPawnKinds = new HashSet<PawnKindDef>();
+		private static List<Thing> tmpThings = new List<Thing>();
 
 		public static bool IsFactionLeader(Pawn pawn)
 		{
@@ -188,7 +190,7 @@ namespace RimWorld
 			}
 			Job job = new Job((!maintainPosture) ? JobDefOf.Wait : JobDefOf.WaitMaintainPosture, faceTarget);
 			job.expiryInterval = ticks;
-			pawn.jobs.StartJob(job, JobCondition.InterruptForced, null, true, true, null, null);
+			pawn.jobs.StartJob(job, JobCondition.InterruptForced, null, true, true, null, null, false);
 		}
 
 		public static void GiveNameBecauseOfNuzzle(Pawn namer, Pawn namee)
@@ -202,7 +204,7 @@ namespace RimWorld
 					namer,
 					text,
 					namee.Name.ToStringFull
-				}), namee, MessageSound.Standard);
+				}), namee, MessageTypeDefOf.NeutralEvent);
 			}
 		}
 
@@ -252,7 +254,7 @@ namespace RimWorld
 			{
 				return !compEggLayer.FullyFertilized;
 			}
-			return !female.health.hediffSet.HasHediff(HediffDefOf.Pregnant);
+			return !female.health.hediffSet.HasHediff(HediffDefOf.Pregnant, false);
 		}
 
 		public static void Mated(Pawn male, Pawn female)
@@ -266,7 +268,7 @@ namespace RimWorld
 			{
 				compEggLayer.Fertilize(male);
 			}
-			else if (Rand.Value < 0.5f && !female.health.hediffSet.HasHediff(HediffDefOf.Pregnant))
+			else if (Rand.Value < 0.5f && !female.health.hediffSet.HasHediff(HediffDefOf.Pregnant, false))
 			{
 				Hediff_Pregnant hediff_Pregnant = (Hediff_Pregnant)HediffMaker.MakeHediff(HediffDefOf.Pregnant, female, null);
 				hediff_Pregnant.father = male;
@@ -276,8 +278,16 @@ namespace RimWorld
 
 		public static bool PlayerForcedJobNowOrSoon(Pawn pawn)
 		{
+			if (pawn.jobs == null)
+			{
+				return false;
+			}
 			Job curJob = pawn.CurJob;
-			return curJob != null && curJob.playerForced;
+			if (curJob != null)
+			{
+				return curJob.playerForced;
+			}
+			return pawn.jobs.jobQueue.Any<QueuedJob>() && pawn.jobs.jobQueue.Peek().job.playerForced;
 		}
 
 		public static bool TrySpawnHatchedOrBornPawn(Pawn pawn, Thing motherOrEgg)
@@ -384,7 +394,7 @@ namespace RimWorld
 				{
 					flag = true;
 				}
-				else if (forPawn.Drafted)
+				else if (forPawn.Drafted && forPawn.pather.Moving)
 				{
 					flag = true;
 				}
@@ -398,11 +408,11 @@ namespace RimWorld
 					{
 						if (pawn.pather.MovingNow)
 						{
-							goto IL_13C;
+							goto IL_14C;
 						}
 						if (pawn.pather.Moving && pawn.pather.MovedRecently(60))
 						{
-							goto IL_13C;
+							goto IL_14C;
 						}
 					}
 					if (!PawnUtility.PawnsCanShareCellBecauseOfBodySize(pawn, forPawn))
@@ -421,7 +431,7 @@ namespace RimWorld
 						}
 					}
 				}
-				IL_13C:;
+				IL_14C:;
 			}
 			return null;
 		}
@@ -466,7 +476,7 @@ namespace RimWorld
 				{
 					return false;
 				}
-				if (p.RaceProps.Humanlike && p.guest.released && !p.Downed && !p.InBed())
+				if (p.RaceProps.Humanlike && p.guest.Released && !p.Downed && !p.InBed())
 				{
 					return false;
 				}
@@ -497,7 +507,7 @@ namespace RimWorld
 		{
 			PawnUtility.tmpPawns.Clear();
 			PawnUtility.tmpPawns.AddRange(pawns);
-			PawnUtility.tmpPawns.SortBy((Pawn x) => !x.RaceProps.Humanlike, (Pawn x) => x.KindLabelPlural);
+			PawnUtility.tmpPawns.SortBy((Pawn x) => !x.RaceProps.Humanlike, (Pawn x) => x.GetKindLabelPlural(-1));
 			PawnUtility.tmpAddedPawnKinds.Clear();
 			PawnUtility.tmpPawnKinds.Clear();
 			for (int i = 0; i < PawnUtility.tmpPawns.Count; i++)
@@ -519,7 +529,7 @@ namespace RimWorld
 					}
 					else
 					{
-						PawnUtility.tmpPawnKinds.Add(num + " " + PawnUtility.tmpPawns[i].KindLabelPlural);
+						PawnUtility.tmpPawnKinds.Add(num + " " + PawnUtility.tmpPawns[i].GetKindLabelPlural(num));
 					}
 				}
 			}
@@ -647,6 +657,51 @@ namespace RimWorld
 				return pawn.mindState.duty.focus.Cell;
 			}
 			return pawn.Position;
+		}
+
+		public static bool EverBeenColonistOrTameAnimal(Pawn pawn)
+		{
+			return pawn.records.GetAsInt(RecordDefOf.TimeAsColonistOrColonyAnimal) > 0;
+		}
+
+		public static bool EverBeenPrisoner(Pawn pawn)
+		{
+			return pawn.records.GetAsInt(RecordDefOf.TimeAsPrisoner) > 0;
+		}
+
+		public static void RecoverFromUnwalkablePositionOrKill(IntVec3 c, Map map)
+		{
+			if (!c.InBounds(map) || c.Walkable(map))
+			{
+				return;
+			}
+			PawnUtility.tmpThings.Clear();
+			PawnUtility.tmpThings.AddRange(c.GetThingList(map));
+			for (int i = 0; i < PawnUtility.tmpThings.Count; i++)
+			{
+				Pawn pawn = PawnUtility.tmpThings[i] as Pawn;
+				if (pawn != null)
+				{
+					IntVec3 position;
+					if (CellFinder.TryFindBestPawnStandCell(pawn, out position, false))
+					{
+						pawn.Position = position;
+						pawn.Notify_Teleported(true);
+					}
+					else
+					{
+						DamageDef crush = DamageDefOf.Crush;
+						int amount = 99999;
+						BodyPartRecord brain = pawn.health.hediffSet.GetBrain();
+						DamageInfo damageInfo = new DamageInfo(crush, amount, -1f, null, brain, null, DamageInfo.SourceCategory.Collapse);
+						pawn.TakeDamage(damageInfo);
+						if (!pawn.Dead)
+						{
+							pawn.Kill(new DamageInfo?(damageInfo), null);
+						}
+					}
+				}
+			}
 		}
 	}
 }

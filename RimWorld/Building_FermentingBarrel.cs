@@ -10,17 +10,17 @@ namespace RimWorld
 	[StaticConstructorOnStartup]
 	public class Building_FermentingBarrel : Building
 	{
-		public const int MaxCapacity = 25;
-
-		private const int BaseFermentationDuration = 600000;
-
-		public const float MinIdealTemperature = 7f;
-
 		private int wortCount;
 
 		private float progressInt;
 
 		private Material barFilledCachedMat;
+
+		public const int MaxCapacity = 25;
+
+		private const int BaseFermentationDuration = 600000;
+
+		public const float MinIdealTemperature = 7f;
 
 		private static readonly Vector2 BarSize = new Vector2(0.55f, 0.1f);
 
@@ -170,8 +170,12 @@ namespace RimWorld
 
 		public void AddWort(Thing wort)
 		{
-			this.AddWort(wort.stackCount);
-			wort.Destroy(DestroyMode.Vanish);
+			int num = Mathf.Min(wort.stackCount, 25 - this.wortCount);
+			if (num > 0)
+			{
+				this.AddWort(num);
+				wort.SplitOff(num).Destroy(DestroyMode.Vanish);
+			}
 		}
 
 		public override string GetInspectString()
@@ -284,7 +288,7 @@ namespace RimWorld
 					defaultLabel = "Debug: Set progress to 1",
 					action = delegate
 					{
-						this.<>f__this.Progress = 1f;
+						this.$this.Progress = 1f;
 					}
 				};
 			}

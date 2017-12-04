@@ -15,7 +15,7 @@ namespace RimWorld
 			{
 				this.suggestingPawn = factionBase.Map.mapPawns.FreeColonistsSpawned.RandomElement<Pawn>();
 			}
-			this.curName = NameGenerator.GenerateName(RulePackDefOf.NamerFactionBasePlayerRandomized, null, false);
+			this.curName = NameGenerator.GenerateName(Faction.OfPlayer.def.baseNameMakerPlayer, null, false, null);
 			this.nameMessageKey = "NamePlayerFactionBaseMessage";
 			this.gainedNameMessageKey = "PlayerFactionBaseGainsName";
 			this.invalidNameMessageKey = "PlayerFactionBaseNameIsInvalid";

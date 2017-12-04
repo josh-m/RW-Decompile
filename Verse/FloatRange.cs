@@ -81,12 +81,12 @@ namespace Verse
 
 		public float LerpThroughRange(float lerpPct)
 		{
-			return (1f - lerpPct) * this.min + lerpPct * this.max;
+			return Mathf.Lerp(this.min, this.max, lerpPct);
 		}
 
 		public float InverseLerpThroughRange(float f)
 		{
-			return (f - this.min) / (this.max - this.min);
+			return Mathf.InverseLerp(this.min, this.max, f);
 		}
 
 		public bool Includes(float f)
@@ -102,6 +102,16 @@ namespace Verse
 		public FloatRange ExpandedBy(float f)
 		{
 			return new FloatRange(this.min - f, this.max + f);
+		}
+
+		public static bool operator ==(FloatRange a, FloatRange b)
+		{
+			return a.min == b.min && a.max == b.max;
+		}
+
+		public static bool operator !=(FloatRange a, FloatRange b)
+		{
+			return a.min != b.min || a.max != b.max;
 		}
 
 		public static FloatRange FromString(string s)
@@ -136,16 +146,6 @@ namespace Verse
 		public bool Equals(FloatRange other)
 		{
 			return other.min == this.min && other.max == this.max;
-		}
-
-		public static bool operator ==(FloatRange a, FloatRange b)
-		{
-			return a.min == b.min && a.max == b.max;
-		}
-
-		public static bool operator !=(FloatRange a, FloatRange b)
-		{
-			return a.min != b.min || a.max != b.max;
 		}
 	}
 }

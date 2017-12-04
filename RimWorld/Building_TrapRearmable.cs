@@ -101,10 +101,10 @@ namespace RimWorld
 				defaultDesc = "CommandAutoRearmDesc".Translate(),
 				hotKey = KeyBindingDefOf.Misc3,
 				icon = TexCommand.RearmTrap,
-				isActive = (() => this.<>f__this.autoRearm),
+				isActive = (() => this.$this.autoRearm),
 				toggleAction = delegate
 				{
-					this.<>f__this.autoRearm = !this.<>f__this.autoRearm;
+					this.$this.autoRearm = !this.$this.autoRearm;
 				}
 			};
 		}

@@ -2,6 +2,7 @@ using RimWorld;
 using RimWorld.Planet;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using UnityEngine;
 using Verse.AI;
@@ -22,11 +23,15 @@ namespace Verse
 
 		public HediffDef sourceHediffDef;
 
+		public int loadID = -1;
+
 		protected float severityInt;
 
 		private bool recordedTale;
 
 		protected bool causesNoPain;
+
+		private bool visible;
 
 		[Unsaved]
 		public Pawn pawn;
@@ -127,7 +132,7 @@ namespace Verse
 		{
 			get
 			{
-				return this.CurStage == null || this.CurStage.everVisible;
+				return this.visible || this.CurStage == null || this.CurStage.becomeVisible;
 			}
 		}
 
@@ -244,7 +249,7 @@ namespace Verse
 				}
 				int curStageIndex = this.CurStageIndex;
 				this.severityInt = Mathf.Clamp(value, this.def.minSeverity, this.def.maxSeverity);
-				if (this.CurStageIndex != curStageIndex || flag)
+				if ((this.CurStageIndex != curStageIndex || flag) && this.pawn.health.hediffSet.hediffs.Contains(this))
 				{
 					this.pawn.health.Notify_HediffChanged(this);
 					if (!this.pawn.Dead && this.pawn.needs.mood != null)
@@ -294,6 +299,7 @@ namespace Verse
 
 		public virtual void ExposeData()
 		{
+			Scribe_Values.Look<int>(ref this.loadID, "loadID", 0, false);
 			Scribe_Defs.Look<HediffDef>(ref this.def, "def");
 			Scribe_Values.Look<int>(ref this.ageTicks, "ageTicks", 0, false);
 			Scribe_Defs.Look<ThingDef>(ref this.source, "source");
@@ -303,6 +309,7 @@ namespace Verse
 			Scribe_Values.Look<float>(ref this.severityInt, "severity", 0f, false);
 			Scribe_Values.Look<bool>(ref this.recordedTale, "recordedTale", false, false);
 			Scribe_Values.Look<bool>(ref this.causesNoPain, "causesNoPain", false, false);
+			Scribe_Values.Look<bool>(ref this.visible, "visible", false, false);
 			if (Scribe.mode == LoadSaveMode.PostLoadInit && this.partIndex >= 0)
 			{
 				this.cachedPart = this.pawn.RaceProps.body.GetPartAtIndex(this.partIndex);
@@ -317,6 +324,18 @@ namespace Verse
 				for (int i = 0; i < this.def.hediffGivers.Count; i++)
 				{
 					this.def.hediffGivers[i].OnIntervalPassed(this.pawn, this);
+				}
+			}
+			if (this.Visible && !this.visible)
+			{
+				this.visible = true;
+				if (this.def.taleOnVisible != null)
+				{
+					TaleRecorder.RecordTale(this.def.taleOnVisible, new object[]
+					{
+						this.pawn,
+						this.def
+					});
 				}
 			}
 			HediffStage curStage = this.CurStage;
@@ -340,9 +359,16 @@ namespace Verse
 						}
 					}
 				}
+				MentalBreakDef mentalBreakDef;
+				if (curStage.mentalBreakMtbDays > 0f && this.pawn.IsHashIntervalTick(60) && !this.pawn.InMentalState && Rand.MTBEventOccurs(curStage.mentalBreakMtbDays, 60000f, 60f) && (from x in DefDatabase<MentalBreakDef>.AllDefsListForReading
+				where x.Worker.BreakCanOccur(this.pawn)
+				select x).TryRandomElementByWeight((MentalBreakDef x) => x.Worker.CommonalityFor(this.pawn), out mentalBreakDef))
+				{
+					mentalBreakDef.Worker.TryStart(this.pawn, null, false);
+				}
 				if (curStage.vomitMtbDays > 0f && this.pawn.IsHashIntervalTick(600) && Rand.MTBEventOccurs(curStage.vomitMtbDays, 60000f, 600f) && this.pawn.Spawned && this.pawn.Awake())
 				{
-					this.pawn.jobs.StartJob(new Job(JobDefOf.Vomit), JobCondition.InterruptForced, null, true, true, null, null);
+					this.pawn.jobs.StartJob(new Job(JobDefOf.Vomit), JobCondition.InterruptForced, null, true, true, null, null, false);
 				}
 				Thought_Memory th;
 				if (curStage.forgetMemoryThoughtMtbDays > 0f && this.pawn.needs.mood != null && this.pawn.IsHashIntervalTick(400) && Rand.MTBEventOccurs(curStage.forgetMemoryThoughtMtbDays, 60000f, 400f) && this.pawn.needs.mood.thoughts.memories.Memories.TryRandomElement(out th))
@@ -365,7 +391,7 @@ namespace Verse
 				{
 					bool flag = PawnUtility.ShouldSendNotificationAbout(this.pawn);
 					Caravan caravan = this.pawn.GetCaravan();
-					this.pawn.Kill(null);
+					this.pawn.Kill(null, null);
 					if (flag)
 					{
 						this.pawn.health.NotifyPlayerOfKilled(null, this, caravan);
@@ -437,7 +463,12 @@ namespace Verse
 
 		public virtual string DebugString()
 		{
-			string text = "severity: " + this.Severity.ToString("F3") + ((this.Severity < this.def.maxSeverity) ? string.Empty : " (reached max)");
+			string text = string.Empty;
+			if (!this.Visible)
+			{
+				text += "hidden\n";
+			}
+			text = text + "severity: " + this.Severity.ToString("F3") + ((this.Severity < this.def.maxSeverity) ? string.Empty : " (reached max)");
 			if (this.TendableNow)
 			{
 				text = text + "\ntend priority: " + this.TendPriority;
@@ -461,6 +492,11 @@ namespace Verse
 		public override int GetHashCode()
 		{
 			return this.def.GetHashCode();
+		}
+
+		public string GetUniqueLoadID()
+		{
+			return "Hediff_" + this.loadID;
 		}
 	}
 }

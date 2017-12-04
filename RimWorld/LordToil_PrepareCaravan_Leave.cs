@@ -43,7 +43,7 @@ namespace RimWorld
 			for (int i = 0; i < this.lord.ownedPawns.Count; i++)
 			{
 				Pawn pawn = this.lord.ownedPawns[i];
-				pawn.mindState.duty = new PawnDuty(DutyDefOf.Travel, this.exitSpot, -1f);
+				pawn.mindState.duty = new PawnDuty(DutyDefOf.TravelOrWait, this.exitSpot, -1f);
 				pawn.mindState.duty.locomotion = LocomotionUrgency.Jog;
 			}
 		}

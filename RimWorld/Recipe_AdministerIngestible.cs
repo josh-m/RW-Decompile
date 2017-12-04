@@ -7,10 +7,10 @@ namespace RimWorld
 {
 	public class Recipe_AdministerIngestible : Recipe_Surgery
 	{
-		public override void ApplyOnPawn(Pawn pawn, BodyPartRecord part, Pawn billDoer, List<Thing> ingredients)
+		public override void ApplyOnPawn(Pawn pawn, BodyPartRecord part, Pawn billDoer, List<Thing> ingredients, Bill bill)
 		{
 			ingredients[0].Ingested(pawn, 0f);
-			if (pawn.IsTeetotaler() && ingredients[0].def.IsDrug)
+			if (pawn.IsTeetotaler() && ingredients[0].def.IsNonMedicalDrug)
 			{
 				pawn.needs.mood.thoughts.memories.TryGainMemory(ThoughtDefOf.ForcedMeToTakeDrugs, billDoer);
 			}
@@ -26,12 +26,12 @@ namespace RimWorld
 
 		public override bool IsViolationOnPawn(Pawn pawn, BodyPartRecord part, Faction billDoerFaction)
 		{
-			return pawn.Faction != billDoerFaction && this.recipe.ingredients[0].filter.AllowedThingDefs.First<ThingDef>().ingestible.drugCategory != DrugCategory.Medical;
+			return pawn.Faction != billDoerFaction && this.recipe.ingredients[0].filter.AllowedThingDefs.First<ThingDef>().IsNonMedicalDrug;
 		}
 
 		public override string GetLabelWhenUsedOn(Pawn pawn, BodyPartRecord part)
 		{
-			if (pawn.IsTeetotaler() && this.recipe.ingredients[0].filter.BestThingRequest.singleDef.IsDrug)
+			if (pawn.IsTeetotaler() && this.recipe.ingredients[0].filter.BestThingRequest.singleDef.IsNonMedicalDrug)
 			{
 				return base.GetLabelWhenUsedOn(pawn, part) + " (" + "TeetotalerUnhappy".Translate() + ")";
 			}

@@ -14,77 +14,87 @@ namespace Verse
 
 		public static string GetLabel(this Gender gender)
 		{
-			switch (gender)
+			if (gender == Gender.None)
 			{
-			case Gender.None:
 				return "NoneLower".Translate();
-			case Gender.Male:
+			}
+			if (gender == Gender.Male)
+			{
 				return "Male".Translate();
-			case Gender.Female:
-				return "Female".Translate();
-			default:
+			}
+			if (gender != Gender.Female)
+			{
 				throw new ArgumentException();
 			}
+			return "Female".Translate();
 		}
 
 		public static string GetPronoun(this Gender gender)
 		{
-			switch (gender)
+			if (gender == Gender.None)
 			{
-			case Gender.None:
 				return "Proit".Translate();
-			case Gender.Male:
+			}
+			if (gender == Gender.Male)
+			{
 				return "Prohe".Translate();
-			case Gender.Female:
-				return "Proshe".Translate();
-			default:
+			}
+			if (gender != Gender.Female)
+			{
 				throw new ArgumentException();
 			}
+			return "Proshe".Translate();
 		}
 
 		public static string GetPossessive(this Gender gender)
 		{
-			switch (gender)
+			if (gender == Gender.None)
 			{
-			case Gender.None:
 				return "Proits".Translate();
-			case Gender.Male:
+			}
+			if (gender == Gender.Male)
+			{
 				return "Prohis".Translate();
-			case Gender.Female:
-				return "Proher".Translate();
-			default:
+			}
+			if (gender != Gender.Female)
+			{
 				throw new ArgumentException();
 			}
+			return "Proher".Translate();
 		}
 
 		public static string GetObjective(this Gender gender)
 		{
-			switch (gender)
+			if (gender == Gender.None)
 			{
-			case Gender.None:
 				return "ProitObj".Translate();
-			case Gender.Male:
+			}
+			if (gender == Gender.Male)
+			{
 				return "ProhimObj".Translate();
-			case Gender.Female:
-				return "ProherObj".Translate();
-			default:
+			}
+			if (gender != Gender.Female)
+			{
 				throw new ArgumentException();
 			}
+			return "ProherObj".Translate();
 		}
 
 		public static Texture2D GetIcon(this Gender gender)
 		{
-			switch (gender)
+			if (gender == Gender.None)
 			{
-			case Gender.None:
 				return GenderUtility.GenderlessIcon;
-			case Gender.Male:
+			}
+			if (gender == Gender.Male)
+			{
 				return GenderUtility.MaleIcon;
-			case Gender.Female:
-				return GenderUtility.FemaleIcon;
-			default:
+			}
+			if (gender != Gender.Female)
+			{
 				throw new ArgumentException();
 			}
+			return GenderUtility.FemaleIcon;
 		}
 	}
 }

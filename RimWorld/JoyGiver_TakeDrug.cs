@@ -11,6 +11,10 @@ namespace RimWorld
 
 		protected override Thing BestIngestItem(Pawn pawn, Predicate<Thing> extraValidator)
 		{
+			if (pawn.drugs == null)
+			{
+				return null;
+			}
 			Predicate<Thing> predicate = (Thing t) => this.CanIngestForJoy(pawn, t) && (extraValidator == null || extraValidator(t));
 			ThingOwner<Thing> innerContainer = pawn.inventory.innerContainer;
 			for (int i = 0; i < innerContainer.Count; i++)
@@ -35,8 +39,13 @@ namespace RimWorld
 				List<Thing> list = pawn.Map.listerThings.ThingsOfDef(JoyGiver_TakeDrug.takeableDrugs[k]);
 				if (list.Count > 0)
 				{
+					IntVec3 position = pawn.Position;
+					Map map = pawn.Map;
+					List<Thing> searchSet = list;
+					PathEndMode peMode = PathEndMode.OnCell;
+					TraverseParms traverseParams = TraverseParms.For(pawn, Danger.Deadly, TraverseMode.ByPawn, false);
 					Predicate<Thing> validator = predicate;
-					Thing thing = GenClosest.ClosestThing_Global_Reachable(pawn.Position, pawn.Map, list, PathEndMode.OnCell, TraverseParms.For(pawn, Danger.Deadly, TraverseMode.ByPawn, false), 9999f, validator, null);
+					Thing thing = GenClosest.ClosestThing_Global_Reachable(position, map, searchSet, peMode, traverseParams, 9999f, validator, null);
 					if (thing != null)
 					{
 						return thing;

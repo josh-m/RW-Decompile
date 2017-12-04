@@ -27,7 +27,7 @@ namespace RimWorld
 				{
 					Log.Error("Dead pawn in PawnsFinder.AllMaps_FreeColonists:" + p);
 				}
-				else
+				else if (!ThingOwnerUtility.ContentsFrozen(p.ParentHolder))
 				{
 					p.needs.mood.thoughts.GetAllMoodThoughts(Alert_Thought.tmpThoughts);
 					try

@@ -11,14 +11,6 @@ namespace RimWorld
 	[StaticConstructorOnStartup]
 	public static class HealthCardUtility
 	{
-		public const float TopPadding = 20f;
-
-		private const float ThoughtLevelHeight = 25f;
-
-		private const float ThoughtLevelSpacing = 4f;
-
-		private const float IconSize = 20f;
-
 		private static Vector2 scrollPosition = Vector2.zero;
 
 		private static float scrollViewHeight = 0f;
@@ -34,6 +26,14 @@ namespace RimWorld
 		private static bool showAllHediffs = false;
 
 		private static bool showHediffsDebugInfo = false;
+
+		public const float TopPadding = 20f;
+
+		private const float ThoughtLevelHeight = 25f;
+
+		private const float ThoughtLevelSpacing = 4f;
+
+		private const float IconSize = 20f;
 
 		private static readonly Color HighlightColor = new Color(0.5f, 0.5f, 0.5f, 1f);
 
@@ -77,7 +77,7 @@ namespace RimWorld
 			{
 				HealthCardUtility.onOperationTab = false;
 			}
-			Widgets.DrawMenuSection(rect, true);
+			Widgets.DrawMenuSection(rect);
 			List<TabRecord> list = new List<TabRecord>();
 			list.Add(new TabRecord("HealthOverview".Translate(), delegate
 			{
@@ -220,7 +220,7 @@ namespace RimWorld
 					yield return mpca[i];
 				}
 				IEnumerable<Hediff> visibleDiffs = from d in pawn.health.hediffSet.hediffs
-				where !(d is Hediff_MissingPart) && d.Visible && (this.showBloodLoss || d.def != HediffDefOf.BloodLoss)
+				where !(d is Hediff_MissingPart) && d.Visible && (showBloodLoss || d.def != HediffDefOf.BloodLoss)
 				select d;
 				foreach (Hediff diff in visibleDiffs)
 				{
@@ -251,16 +251,19 @@ namespace RimWorld
 						{
 							if (!enumerable.Any((ThingDef x) => x.IsDrug))
 							{
-								if (current.targetsBodyPart)
+								if (!enumerable.Any<ThingDef>() || !current.dontShowIfAnyIngredientMissing)
 								{
-									foreach (BodyPartRecord current2 in current.Worker.GetPartsToApplyOn(pawn, current))
+									if (current.targetsBodyPart)
 									{
-										list.Add(HealthCardUtility.GenerateSurgeryOption(pawn, thingForMedBills, current, enumerable, current2));
+										foreach (BodyPartRecord current2 in current.Worker.GetPartsToApplyOn(pawn, current))
+										{
+											list.Add(HealthCardUtility.GenerateSurgeryOption(pawn, thingForMedBills, current, enumerable, current2));
+										}
 									}
-								}
-								else
-								{
-									list.Add(HealthCardUtility.GenerateSurgeryOption(pawn, thingForMedBills, current, enumerable, null));
+									else
+									{
+										list.Add(HealthCardUtility.GenerateSurgeryOption(pawn, thingForMedBills, current, enumerable, null));
+									}
 								}
 							}
 						}
@@ -280,6 +283,7 @@ namespace RimWorld
 			{
 				text = text + " (" + part.def.label + ")";
 			}
+			FloatMenuOption floatMenuOption;
 			if (missingIngredients.Any<ThingDef>())
 			{
 				text += " (";
@@ -297,60 +301,66 @@ namespace RimWorld
 					});
 				}
 				text += ")";
-				return new FloatMenuOption(text, null, MenuOptionPriority.Default, null, null, 0f, null, null);
+				floatMenuOption = new FloatMenuOption(text, null, MenuOptionPriority.Default, null, null, 0f, null, null);
 			}
-			Action action = delegate
+			else
 			{
-				Pawn pawn2 = thingForMedBills as Pawn;
-				if (pawn2 == null)
+				Action action = delegate
 				{
-					return;
-				}
-				Bill_Medical bill_Medical = new Bill_Medical(recipe);
-				pawn2.BillStack.AddBill(bill_Medical);
-				bill_Medical.Part = part;
-				if (recipe.conceptLearned != null)
-				{
-					PlayerKnowledgeDatabase.KnowledgeDemonstrated(recipe.conceptLearned, KnowledgeAmount.Total);
-				}
-				Map map = thingForMedBills.Map;
-				if (!map.mapPawns.FreeColonists.Any((Pawn col) => recipe.PawnSatisfiesSkillRequirements(col)))
-				{
-					Bill.CreateNoPawnsWithSkillDialog(recipe);
-				}
-				if (!pawn2.InBed() && pawn2.RaceProps.IsFlesh)
-				{
-					if (pawn2.RaceProps.Humanlike)
+					Pawn pawn2 = thingForMedBills as Pawn;
+					if (pawn2 == null)
 					{
-						if (!map.listerBuildings.allBuildingsColonist.Any((Building x) => x is Building_Bed && RestUtility.CanUseBedEver(pawn, x.def) && ((Building_Bed)x).Medical))
+						return;
+					}
+					Bill_Medical bill_Medical = new Bill_Medical(recipe);
+					pawn2.BillStack.AddBill(bill_Medical);
+					bill_Medical.Part = part;
+					if (recipe.conceptLearned != null)
+					{
+						PlayerKnowledgeDatabase.KnowledgeDemonstrated(recipe.conceptLearned, KnowledgeAmount.Total);
+					}
+					Map map = thingForMedBills.Map;
+					if (!map.mapPawns.FreeColonists.Any((Pawn col) => recipe.PawnSatisfiesSkillRequirements(col)))
+					{
+						Bill.CreateNoPawnsWithSkillDialog(recipe);
+					}
+					if (!pawn2.InBed() && pawn2.RaceProps.IsFlesh)
+					{
+						if (pawn2.RaceProps.Humanlike)
 						{
-							Messages.Message("MessageNoMedicalBeds".Translate(), pawn2, MessageSound.Negative);
+							if (!map.listerBuildings.allBuildingsColonist.Any((Building x) => x is Building_Bed && RestUtility.CanUseBedEver(pawn, x.def) && ((Building_Bed)x).Medical))
+							{
+								Messages.Message("MessageNoMedicalBeds".Translate(), pawn2, MessageTypeDefOf.CautionInput);
+							}
+						}
+						else if (!map.listerBuildings.allBuildingsColonist.Any((Building x) => x is Building_Bed && RestUtility.CanUseBedEver(pawn, x.def)))
+						{
+							Messages.Message("MessageNoAnimalBeds".Translate(), pawn2, MessageTypeDefOf.CautionInput);
 						}
 					}
-					else if (!map.listerBuildings.allBuildingsColonist.Any((Building x) => x is Building_Bed && RestUtility.CanUseBedEver(pawn, x.def)))
+					if (pawn2.Faction != null && !pawn2.Faction.def.hidden && !pawn2.Faction.HostileTo(Faction.OfPlayer) && recipe.Worker.IsViolationOnPawn(pawn2, part, Faction.OfPlayer))
 					{
-						Messages.Message("MessageNoAnimalBeds".Translate(), pawn2, MessageSound.Negative);
+						Messages.Message("MessageMedicalOperationWillAngerFaction".Translate(new object[]
+						{
+							pawn2.Faction
+						}), pawn2, MessageTypeDefOf.CautionInput);
 					}
-				}
-				if (pawn2.Faction != null && !pawn2.Faction.def.hidden && !pawn2.Faction.HostileTo(Faction.OfPlayer) && recipe.Worker.IsViolationOnPawn(pawn2, part, Faction.OfPlayer))
-				{
-					Messages.Message("MessageMedicalOperationWillAngerFaction".Translate(new object[]
+					ThingDef minRequiredMedicine = HealthCardUtility.GetMinRequiredMedicine(recipe);
+					if (minRequiredMedicine != null && pawn2.playerSettings != null && !pawn2.playerSettings.medCare.AllowsMedicine(minRequiredMedicine))
 					{
-						pawn2.Faction
-					}), pawn2, MessageSound.Negative);
-				}
-				ThingDef minRequiredMedicine = HealthCardUtility.GetMinRequiredMedicine(recipe);
-				if (minRequiredMedicine != null && pawn2.playerSettings != null && !pawn2.playerSettings.medCare.AllowsMedicine(minRequiredMedicine))
-				{
-					Messages.Message("MessageTooLowMedCare".Translate(new object[]
-					{
-						minRequiredMedicine.label,
-						pawn2.LabelShort,
-						pawn2.playerSettings.medCare.GetLabel()
-					}), pawn2, MessageSound.Negative);
-				}
-			};
-			return new FloatMenuOption(text, action, MenuOptionPriority.Default, null, null, 0f, null, null);
+						Messages.Message("MessageTooLowMedCare".Translate(new object[]
+						{
+							minRequiredMedicine.label,
+							pawn2.LabelShort,
+							pawn2.playerSettings.medCare.GetLabel()
+						}), pawn2, MessageTypeDefOf.CautionInput);
+					}
+				};
+				floatMenuOption = new FloatMenuOption(text, action, MenuOptionPriority.Default, null, null, 0f, null, null);
+			}
+			floatMenuOption.extraPartWidth = 29f;
+			floatMenuOption.extraPartOnGUI = ((Rect rect) => Widgets.InfoCardButton(rect.x + 5f, rect.y + (rect.height - 24f) / 2f, recipe));
+			return floatMenuOption;
 		}
 
 		private static ThingDef GetMinRequiredMedicine(RecipeDef recipe)
@@ -409,10 +419,41 @@ namespace RimWorld
 			}
 			GUI.color = Color.white;
 			curY += 34f;
+			GUI.color = Color.white;
+			if (pawn.IsColonist && !pawn.Dead)
+			{
+				bool selfTend = pawn.playerSettings.selfTend;
+				Rect rect2 = new Rect(0f, curY, leftRect.width, 24f);
+				Widgets.CheckboxLabeled(rect2, "SelfTend".Translate(), ref pawn.playerSettings.selfTend, false);
+				if (pawn.playerSettings.selfTend && !selfTend)
+				{
+					if (pawn.story.WorkTypeIsDisabled(WorkTypeDefOf.Doctor))
+					{
+						pawn.playerSettings.selfTend = false;
+						Messages.Message("MessageCannotSelfTendEver".Translate(new object[]
+						{
+							pawn.LabelShort
+						}), MessageTypeDefOf.RejectInput);
+					}
+					else if (pawn.workSettings.GetPriority(WorkTypeDefOf.Doctor) == 0)
+					{
+						Messages.Message("MessageSelfTendUnsatisfied".Translate(new object[]
+						{
+							pawn.LabelShort
+						}), MessageTypeDefOf.CautionInput);
+					}
+				}
+				TooltipHandler.TipRegion(rect2, "SelfTendTip".Translate(new object[]
+				{
+					Faction.OfPlayer.def.pawnsPlural,
+					0.7f.ToStringPercent()
+				}).CapitalizeFirst());
+				curY += 28f;
+			}
 			if (pawn.playerSettings != null && !pawn.Dead && Current.ProgramState == ProgramState.Playing)
 			{
-				Rect rect2 = new Rect(0f, curY, 140f, 28f);
-				MedicalCareUtility.MedicalCareSetter(rect2, ref pawn.playerSettings.medCare);
+				Rect rect3 = new Rect(0f, curY, 140f, 28f);
+				MedicalCareUtility.MedicalCareSetter(rect3, ref pawn.playerSettings.medCare);
 				if (Widgets.ButtonText(new Rect(leftRect.width - 70f, curY, 70f, 28f), "MedGroupDefaults".Translate(), true, false, true))
 				{
 					Find.WindowStack.Add(new Dialog_MedicalDefaults());
@@ -459,36 +500,6 @@ namespace RimWorld
 						curY = HealthCardUtility.DrawLeftRow(leftRect, curY, current.GetLabelFor(pawn.RaceProps.IsFlesh, pawn.RaceProps.Humanlike).CapitalizeFirst(), efficiencyLabel.First, efficiencyLabel.Second, new TipSignal(textGetter, pawn.thingIDNumber ^ (int)current.index));
 					}
 				}
-			}
-			GUI.color = Color.white;
-			if (pawn.IsColonist)
-			{
-				bool selfTend = pawn.playerSettings.selfTend;
-				Rect rect3 = new Rect(0f, leftRect.height - 24f, leftRect.width, 24f);
-				Widgets.CheckboxLabeled(rect3, "SelfTend".Translate(), ref pawn.playerSettings.selfTend, false);
-				if (pawn.playerSettings.selfTend && !selfTend)
-				{
-					if (pawn.story.WorkTypeIsDisabled(WorkTypeDefOf.Doctor))
-					{
-						pawn.playerSettings.selfTend = false;
-						Messages.Message("MessageCannotSelfTendEver".Translate(new object[]
-						{
-							pawn.LabelShort
-						}), MessageSound.RejectInput);
-					}
-					else if (pawn.workSettings.GetPriority(WorkTypeDefOf.Doctor) == 0)
-					{
-						Messages.Message("MessageSelfTendUnsatisfied".Translate(new object[]
-						{
-							pawn.LabelShort
-						}), MessageSound.Standard);
-					}
-				}
-				TooltipHandler.TipRegion(rect3, "SelfTendTip".Translate(new object[]
-				{
-					Faction.OfPlayer.def.pawnsPlural,
-					0.7f.ToStringPercent()
-				}).CapitalizeFirst());
 			}
 			return curY;
 		}

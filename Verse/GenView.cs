@@ -5,9 +5,9 @@ namespace Verse
 {
 	public static class GenView
 	{
-		private const int ViewRectMargin = 5;
-
 		private static CellRect viewRect;
+
+		private const int ViewRectMargin = 5;
 
 		public static bool ShouldSpawnMotesAt(this Vector3 loc, Map map)
 		{

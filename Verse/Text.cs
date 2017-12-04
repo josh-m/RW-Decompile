@@ -1,13 +1,10 @@
 using System;
-using System.Collections;
 using UnityEngine;
 
 namespace Verse
 {
 	public static class Text
 	{
-		private const int NumFonts = 3;
-
 		private static GameFont fontInt;
 
 		private static TextAnchor anchorInt;
@@ -25,6 +22,8 @@ namespace Verse
 		private static readonly float[] lineHeights;
 
 		private static GUIContent tmpTextGUIContent;
+
+		private const int NumFonts = 3;
 
 		public static GameFont Font
 		{
@@ -106,17 +105,20 @@ namespace Verse
 		{
 			get
 			{
-				switch (Text.fontInt)
+				GameFont gameFont = Text.fontInt;
+				if (gameFont == GameFont.Tiny)
 				{
-				case GameFont.Tiny:
 					return Text.textFieldStyles[0];
-				case GameFont.Small:
+				}
+				if (gameFont == GameFont.Small)
+				{
 					return Text.textFieldStyles[1];
-				case GameFont.Medium:
-					return Text.textFieldStyles[2];
-				default:
+				}
+				if (gameFont != GameFont.Medium)
+				{
 					throw new NotImplementedException();
 				}
+				return Text.textFieldStyles[2];
 			}
 		}
 
@@ -124,17 +126,20 @@ namespace Verse
 		{
 			get
 			{
-				switch (Text.fontInt)
+				GameFont gameFont = Text.fontInt;
+				if (gameFont == GameFont.Tiny)
 				{
-				case GameFont.Tiny:
 					return Text.textAreaStyles[0];
-				case GameFont.Small:
+				}
+				if (gameFont == GameFont.Small)
+				{
 					return Text.textAreaStyles[1];
-				case GameFont.Medium:
-					return Text.textAreaStyles[2];
-				default:
+				}
+				if (gameFont != GameFont.Medium)
+				{
 					throw new NotImplementedException();
 				}
+				return Text.textAreaStyles[2];
 			}
 		}
 
@@ -142,17 +147,20 @@ namespace Verse
 		{
 			get
 			{
-				switch (Text.fontInt)
+				GameFont gameFont = Text.fontInt;
+				if (gameFont == GameFont.Tiny)
 				{
-				case GameFont.Tiny:
 					return Text.textAreaReadOnlyStyles[0];
-				case GameFont.Small:
+				}
+				if (gameFont == GameFont.Small)
+				{
 					return Text.textAreaReadOnlyStyles[1];
-				case GameFont.Medium:
-					return Text.textAreaReadOnlyStyles[2];
-				default:
+				}
+				if (gameFont != GameFont.Medium)
+				{
 					throw new NotImplementedException();
 				}
+				return Text.textAreaReadOnlyStyles[2];
 			}
 		}
 
@@ -204,16 +212,12 @@ namespace Verse
 			}
 			GUI.skin.settings.doubleClickSelectsWord = true;
 			int num = 0;
-			using (IEnumerator enumerator = Enum.GetValues(typeof(GameFont)).GetEnumerator())
+			foreach (GameFont font4 in Enum.GetValues(typeof(GameFont)))
 			{
-				while (enumerator.MoveNext())
-				{
-					GameFont font4 = (GameFont)((byte)enumerator.Current);
-					Text.Font = font4;
-					float num2 = Text.CalcHeight("W", 999f);
-					Text.lineHeights[num] = num2;
-					num++;
-				}
+				Text.Font = font4;
+				float num2 = Text.CalcHeight("W", 999f);
+				Text.lineHeights[num] = num2;
+				num++;
 			}
 			Text.Font = GameFont.Small;
 		}

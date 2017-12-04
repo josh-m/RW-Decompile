@@ -8,8 +8,6 @@ namespace RimWorld
 {
 	public class Designator_Build : Designator_Place
 	{
-		private const float DragPriceDrawNumberX = 29f;
-
 		protected BuildableDef entDef;
 
 		private ThingDef stuffDef;
@@ -19,6 +17,8 @@ namespace RimWorld
 		private static readonly Vector2 TerrainTextureCroppedSize = new Vector2(64f, 64f);
 
 		private static readonly Vector2 DragPriceDrawOffset = new Vector2(19f, 17f);
+
+		private const float DragPriceDrawNumberX = 29f;
 
 		public override BuildableDef PlacingDef
 		{
@@ -68,6 +68,14 @@ namespace RimWorld
 				if (DebugSettings.godMode)
 				{
 					return true;
+				}
+				if (this.entDef.minTechLevelToBuild != TechLevel.Undefined && Faction.OfPlayer.def.techLevel < this.entDef.minTechLevelToBuild)
+				{
+					return false;
+				}
+				if (this.entDef.maxTechLevelToBuild != TechLevel.Undefined && Faction.OfPlayer.def.techLevel > this.entDef.maxTechLevelToBuild)
+				{
+					return false;
 				}
 				if (this.entDef.researchPrerequisites != null)
 				{
@@ -125,6 +133,7 @@ namespace RimWorld
 		{
 			this.entDef = entDef;
 			this.icon = entDef.uiIcon;
+			this.iconAngle = entDef.uiIconAngle;
 			this.hotKey = entDef.designationHotKey;
 			this.tutorTag = entDef.defName;
 			ThingDef thingDef = entDef as ThingDef;
@@ -219,7 +228,7 @@ namespace RimWorld
 						string labelCap = localStuffDef.LabelCap;
 						list.Add(new FloatMenuOption(labelCap, delegate
 						{
-							this.ProcessInput(ev);
+							base.ProcessInput(ev);
 							Find.DesignatorManager.Select(this);
 							this.stuffDef = localStuffDef;
 							this.writeStuff = true;
@@ -231,7 +240,7 @@ namespace RimWorld
 				}
 				if (list.Count == 0)
 				{
-					Messages.Message("NoStuffsToBuildWith".Translate(), MessageSound.RejectInput);
+					Messages.Message("NoStuffsToBuildWith".Translate(), MessageTypeDefOf.RejectInput);
 				}
 				else
 				{
@@ -303,6 +312,15 @@ namespace RimWorld
 			{
 				this.stuffDef = null;
 			}
+			ThingDef thingDef = this.entDef as ThingDef;
+			if (thingDef != null)
+			{
+				Widgets.InfoCardButton(width - 24f - 6f, 6f, thingDef, this.stuffDef);
+			}
+			else
+			{
+				Widgets.InfoCardButton(width - 24f - 6f, 6f, this.entDef);
+			}
 			Text.Font = GameFont.Tiny;
 			List<ThingCountClass> list = this.entDef.CostListAdjusted(this.stuffDef, false);
 			for (int i = 0; i < list.Count; i++)
@@ -341,16 +359,13 @@ namespace RimWorld
 				Widgets.Label(new Rect(60f, curY + 2f, width2, num), text);
 				curY += num;
 			}
-			ThingDef thingDef = this.entDef as ThingDef;
-			if (thingDef != null)
+			if (this.entDef.constructionSkillPrerequisite > 0)
 			{
-				Widgets.InfoCardButton(0f, curY, thingDef, this.stuffDef);
+				Text.Font = GameFont.Tiny;
+				Rect rect = new Rect(0f, curY + 2f, width, 24f);
+				Widgets.Label(rect, string.Format("{0}: {1}", "ConstructionNeeded".Translate(), this.entDef.constructionSkillPrerequisite));
+				curY += 18f;
 			}
-			else
-			{
-				Widgets.InfoCardButton(0f, curY, this.entDef);
-			}
-			curY += 24f;
 		}
 
 		public void SetStuffDef(ThingDef stuffDef)

@@ -37,6 +37,7 @@ namespace RimWorld
 
 		public static void TryGenerateWeaponFor(Pawn pawn)
 		{
+			PawnWeaponGenerator.workingWeapons.Clear();
 			if (pawn.kindDef.weaponTags == null || pawn.kindDef.weaponTags.Count == 0)
 			{
 				return;
@@ -91,11 +92,16 @@ namespace RimWorld
 			}
 			if (thing.IsMeleeWeapon)
 			{
-				if (thing.Verbs.NullOrEmpty<VerbProperties>())
+				if (thing.tools.NullOrEmpty<Tool>())
 				{
 					return false;
 				}
-				DamageArmorCategoryDef armorCategory = thing.Verbs[0].meleeDamageDef.armorCategory;
+				DamageDef damageDef = ThingUtility.PrimaryMeleeWeaponDamageType(thing);
+				if (damageDef == null)
+				{
+					return false;
+				}
+				DamageArmorCategoryDef armorCategory = damageDef.armorCategory;
 				if (armorCategory != null && armorCategory.multStat != null && stuff.GetStatValueAbstract(armorCategory.multStat, null) < 0.7f)
 				{
 					return true;

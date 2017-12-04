@@ -10,11 +10,11 @@ namespace RimWorld
 
 		public float value;
 
-		public string ToStringAsOffset
+		public string ValueToStringAsOffset
 		{
 			get
 			{
-				return this.stat.ValueToString(this.value, ToStringNumberSense.Offset);
+				return this.stat.Worker.ValueToString(this.value, false, ToStringNumberSense.Offset);
 			}
 		}
 
@@ -22,7 +22,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return this.stat.ValueToString(this.value, ToStringNumberSense.Factor);
+				return this.stat.Worker.ValueToString(this.value, false, ToStringNumberSense.Factor);
 			}
 		}
 
@@ -30,6 +30,15 @@ namespace RimWorld
 		{
 			DirectXmlCrossRefLoader.RegisterObjectWantsCrossRef(this, "stat", xmlRoot.Name);
 			this.value = (float)ParseHelper.FromString(xmlRoot.FirstChild.Value, typeof(float));
+		}
+
+		public override string ToString()
+		{
+			if (this.stat == null)
+			{
+				return "(null stat)";
+			}
+			return this.stat.defName + "-" + this.value.ToString();
 		}
 	}
 }

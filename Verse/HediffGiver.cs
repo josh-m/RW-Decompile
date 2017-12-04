@@ -42,7 +42,7 @@ namespace Verse
 					{
 						pawn.LabelShort,
 						this.hediff.LabelCap
-					}), LetterDefOf.BadNonUrgent, pawn, null);
+					}), LetterDefOf.NegativeEvent, pawn, null);
 				}
 				else
 				{
@@ -55,7 +55,7 @@ namespace Verse
 						pawn.LabelShort,
 						this.hediff.LabelCap,
 						cause.LabelCap
-					}), LetterDefOf.BadNonUrgent, pawn, null);
+					}), LetterDefOf.NegativeEvent, pawn, null);
 				}
 			}
 		}

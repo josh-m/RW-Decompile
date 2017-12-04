@@ -1,12 +1,11 @@
 using System;
+using UnityEngine;
 using Verse;
 
 namespace RimWorld
 {
-	public abstract class Designator_AreaBuildRoof : Designator
+	public class Designator_AreaBuildRoof : Designator
 	{
-		private DesignateMode mode;
-
 		public override int DraggableDimensions
 		{
 			get
@@ -23,12 +22,17 @@ namespace RimWorld
 			}
 		}
 
-		public Designator_AreaBuildRoof(DesignateMode mode)
+		public Designator_AreaBuildRoof()
 		{
-			this.mode = mode;
-			this.soundDragSustain = SoundDefOf.DesignateDragStandard;
-			this.soundDragChanged = SoundDefOf.DesignateDragStandardChanged;
+			this.defaultLabel = "DesignatorAreaBuildRoofExpand".Translate();
+			this.defaultDesc = "DesignatorAreaBuildRoofExpandDesc".Translate();
+			this.icon = ContentFinder<Texture2D>.Get("UI/Designators/BuildRoofArea", true);
+			this.hotKey = KeyBindingDefOf.Misc10;
+			this.soundDragSustain = SoundDefOf.DesignateDragAreaAdd;
+			this.soundDragChanged = SoundDefOf.DesignateDragAreaAddChanged;
+			this.soundSucceeded = SoundDefOf.DesignateAreaAdd;
 			this.useMouseIcon = true;
+			this.tutorTag = "AreaBuildRoofExpand";
 		}
 
 		public override AcceptanceReport CanDesignateCell(IntVec3 c)
@@ -42,24 +46,13 @@ namespace RimWorld
 				return false;
 			}
 			bool flag = base.Map.areaManager.BuildRoof[c];
-			if (this.mode == DesignateMode.Add)
-			{
-				return !flag;
-			}
-			return flag;
+			return !flag;
 		}
 
 		public override void DesignateSingleCell(IntVec3 c)
 		{
-			if (this.mode == DesignateMode.Add)
-			{
-				base.Map.areaManager.BuildRoof[c] = true;
-				base.Map.areaManager.NoRoof[c] = false;
-			}
-			else if (this.mode == DesignateMode.Remove)
-			{
-				base.Map.areaManager.BuildRoof[c] = false;
-			}
+			base.Map.areaManager.BuildRoof[c] = true;
+			base.Map.areaManager.NoRoof[c] = false;
 		}
 
 		public override void SelectedUpdate()

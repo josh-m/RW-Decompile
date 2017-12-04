@@ -42,13 +42,9 @@ namespace Verse
 		{
 			if (this.discovered)
 			{
-				if (!this.parent.CurStage.everVisible)
-				{
-					this.discovered = false;
-				}
 				return;
 			}
-			if (!this.parent.CurStage.everVisible)
+			if (!this.parent.CurStage.becomeVisible)
 			{
 				return;
 			}
@@ -90,11 +86,11 @@ namespace Verse
 				}
 				if (base.Pawn.RaceProps.Humanlike)
 				{
-					Find.LetterStack.ReceiveLetter(label, text, LetterDefOf.BadNonUrgent, base.Pawn, null);
+					Find.LetterStack.ReceiveLetter(label, text, LetterDefOf.NegativeEvent, base.Pawn, null);
 				}
 				else
 				{
-					Messages.Message(text, base.Pawn, MessageSound.Standard);
+					Messages.Message(text, base.Pawn, MessageTypeDefOf.NeutralEvent);
 				}
 			}
 		}

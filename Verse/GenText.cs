@@ -116,7 +116,7 @@ namespace Verse
 			{
 				return pawn.LabelShort;
 			}
-			string str = Find.ActiveLanguageWorker.WithIndefiniteArticle(GenLabel.BestKindLabel(pawn, false, false, false));
+			string str = Find.ActiveLanguageWorker.WithIndefiniteArticle(pawn.KindLabel);
 			return Find.ActiveLanguageWorker.PostProcessed(str);
 		}
 
@@ -126,13 +126,19 @@ namespace Verse
 			{
 				return pawn.LabelShort;
 			}
-			string str = Find.ActiveLanguageWorker.WithDefiniteArticle(GenLabel.BestKindLabel(pawn, false, false, false));
+			string str = Find.ActiveLanguageWorker.WithDefiniteArticle(pawn.KindLabel);
 			return Find.ActiveLanguageWorker.PostProcessed(str);
 		}
 
 		public static string RandomSeedString()
 		{
-			return GrammarResolver.Resolve("seed", RulePackDefOf.SeedGenerator.Rules, null).ToLower();
+			return GrammarResolver.Resolve("seed", new GrammarRequest
+			{
+				Includes = 
+				{
+					RulePackDefOf.SeedGenerator
+				}
+			}, null, false).ToLower();
 		}
 
 		public static string WithoutVowels(string s)
@@ -143,19 +149,31 @@ namespace Verse
 			select c).ToArray<char>());
 		}
 
+		public static string WithoutVowelsIfLong(string s)
+		{
+			if (s.NullOrEmpty() || s.Length <= 5)
+			{
+				return s;
+			}
+			return s.Substring(0, 2) + GenText.WithoutVowels(s.Substring(2));
+		}
+
 		public static string MarchingEllipsis(float offset = 0f)
 		{
-			switch (Mathf.FloorToInt(Time.realtimeSinceStartup + offset) % 3)
+			int num = Mathf.FloorToInt(Time.realtimeSinceStartup + offset) % 3;
+			if (num == 0)
 			{
-			case 0:
 				return ".";
-			case 1:
+			}
+			if (num == 1)
+			{
 				return "..";
-			case 2:
-				return "...";
-			default:
+			}
+			if (num != 2)
+			{
 				throw new Exception();
 			}
+			return "...";
 		}
 
 		public static void SetTextSizeToFit(string text, Rect r)
@@ -371,7 +389,7 @@ namespace Verse
 			{
 				return str.ToUpper();
 			}
-			return str[0].ToString().ToUpper() + str.Substring(1);
+			return char.ToUpper(str[0]) + str.Substring(1);
 		}
 
 		public static string ToNewsCase(string str)
@@ -454,14 +472,12 @@ namespace Verse
 			return Find.ActiveLanguageWorker.ToTitleCase(str);
 		}
 
-		public static string ToCommaList(IEnumerable<object> items, bool useAnd = true)
-		{
-			return GenText.ToCommaList(from it in items
-			select it.ToString(), useAnd);
-		}
-
 		public static string ToCommaList(IEnumerable<string> items, bool useAnd = true)
 		{
+			if (items == null)
+			{
+				return string.Empty;
+			}
 			string text = null;
 			string text2 = null;
 			int num = 0;
@@ -534,6 +550,11 @@ namespace Verse
 			return stringBuilder.ToString();
 		}
 
+		public static string ToLineList(IEnumerable<string> entries, string prefix = "")
+		{
+			return GenText.ToTextList(entries, "\n" + prefix);
+		}
+
 		public static string ToSpaceList(IEnumerable<string> entries)
 		{
 			return GenText.ToTextList(entries, " ");
@@ -590,6 +611,15 @@ namespace Verse
 			return text;
 		}
 
+		public static string TrimmedToLength(this string str, int length)
+		{
+			if (str == null || str.Length <= length)
+			{
+				return str;
+			}
+			return str.Substring(0, length);
+		}
+
 		public static bool ContainsEmptyLines(string str)
 		{
 			return str.NullOrEmpty() || (str[0] == '\n' || str[0] == '\r') || (str[str.Length - 1] == '\n' || str[str.Length - 1] == '\r') || (str.Contains("\n\n") || str.Contains("\r\n\r\n") || str.Contains("\r\r"));
@@ -600,6 +630,17 @@ namespace Verse
 			if (style == ToStringStyle.Temperature && numberSense == ToStringNumberSense.Offset)
 			{
 				style = ToStringStyle.TemperatureOffset;
+			}
+			if (numberSense == ToStringNumberSense.Factor)
+			{
+				if (f >= 10f)
+				{
+					style = ToStringStyle.FloatMaxTwo;
+				}
+				else
+				{
+					style = ToStringStyle.PercentZero;
+				}
 			}
 			string text;
 			switch (style)
@@ -612,6 +653,9 @@ namespace Verse
 				break;
 			case ToStringStyle.FloatTwo:
 				text = f.ToString("F2");
+				break;
+			case ToStringStyle.FloatMaxTwo:
+				text = f.ToString("0.##");
 				break;
 			case ToStringStyle.PercentZero:
 				text = f.ToStringPercent();
@@ -688,6 +732,11 @@ namespace Verse
 			return ((float)bytes / 1024f).ToString(format) + "Kb";
 		}
 
+		public static string ToStringYesNo(this bool b)
+		{
+			return (!b) ? "No".Translate() : "Yes".Translate();
+		}
+
 		public static string ToStringLongitude(this float longitude)
 		{
 			bool flag = longitude < 0f;
@@ -749,6 +798,15 @@ namespace Verse
 			return text;
 		}
 
+		public static string ToStringSign(this float val)
+		{
+			if (val >= 0f)
+			{
+				return "+";
+			}
+			return string.Empty;
+		}
+
 		public static string ToStringTemperature(this float celsiusTemp, string format = "F1")
 		{
 			celsiusTemp = GenTemperature.CelsiusTo(celsiusTemp, Prefs.TemperatureMode);
@@ -763,17 +821,20 @@ namespace Verse
 
 		public static string ToStringTemperatureRaw(this float temp, string format = "F1")
 		{
-			switch (Prefs.TemperatureMode)
+			TemperatureDisplayMode temperatureMode = Prefs.TemperatureMode;
+			if (temperatureMode == TemperatureDisplayMode.Celsius)
 			{
-			case TemperatureDisplayMode.Celsius:
 				return temp.ToString(format) + "C";
-			case TemperatureDisplayMode.Fahrenheit:
+			}
+			if (temperatureMode == TemperatureDisplayMode.Fahrenheit)
+			{
 				return temp.ToString(format) + "F";
-			case TemperatureDisplayMode.Kelvin:
-				return temp.ToString(format) + "K";
-			default:
+			}
+			if (temperatureMode != TemperatureDisplayMode.Kelvin)
+			{
 				throw new InvalidOperationException();
 			}
+			return temp.ToString(format) + "K";
 		}
 
 		public static string ToStringTwoDigits(this Vector2 v)
@@ -803,253 +864,276 @@ namespace Verse
 			return (b / 8f / 1024f).ToString(format) + "kb";
 		}
 
+		public static string ToStringBytes(this long b, string format = "F2")
+		{
+			return ((float)b / 8f / 1024f).ToString(format) + "kb";
+		}
+
+		public static string ToStringBytes(this ulong b, string format = "F2")
+		{
+			return (b / 8f / 1024f).ToString(format) + "kb";
+		}
+
 		public static string ToStringReadable(this KeyCode k)
 		{
 			switch (k)
 			{
-			case KeyCode.Escape:
-				return "Esc";
-			case (KeyCode)28:
-			case (KeyCode)29:
-			case (KeyCode)30:
-			case (KeyCode)31:
-			case KeyCode.Space:
-			case (KeyCode)37:
-			case KeyCode.Equals:
-			case (KeyCode)65:
-			case (KeyCode)66:
-			case (KeyCode)67:
-			case (KeyCode)68:
-			case (KeyCode)69:
-			case (KeyCode)70:
-			case (KeyCode)71:
-			case (KeyCode)72:
-			case (KeyCode)73:
-			case (KeyCode)74:
-			case (KeyCode)75:
-			case (KeyCode)76:
-			case (KeyCode)77:
-			case (KeyCode)78:
-			case (KeyCode)79:
-			case (KeyCode)80:
-			case (KeyCode)81:
-			case (KeyCode)82:
-			case (KeyCode)83:
-			case (KeyCode)84:
-			case (KeyCode)85:
-			case (KeyCode)86:
-			case (KeyCode)87:
-			case (KeyCode)88:
-			case (KeyCode)89:
-			case (KeyCode)90:
-				IL_123:
+			case KeyCode.Keypad0:
+				return "Kp0";
+			case KeyCode.Keypad1:
+				return "Kp1";
+			case KeyCode.Keypad2:
+				return "Kp2";
+			case KeyCode.Keypad3:
+				return "Kp3";
+			case KeyCode.Keypad4:
+				return "Kp4";
+			case KeyCode.Keypad5:
+				return "Kp5";
+			case KeyCode.Keypad6:
+				return "Kp6";
+			case KeyCode.Keypad7:
+				return "Kp7";
+			case KeyCode.Keypad8:
+				return "Kp8";
+			case KeyCode.Keypad9:
+				return "Kp9";
+			case KeyCode.KeypadPeriod:
+				return "Kp.";
+			case KeyCode.KeypadDivide:
+				return "Kp/";
+			case KeyCode.KeypadMultiply:
+				return "Kp*";
+			case KeyCode.KeypadMinus:
+				return "Kp-";
+			case KeyCode.KeypadPlus:
+				return "Kp+";
+			case KeyCode.KeypadEnter:
+				return "KpEnt";
+			case KeyCode.KeypadEquals:
+				return "Kp=";
+			case KeyCode.UpArrow:
+				return "Up";
+			case KeyCode.DownArrow:
+				return "Down";
+			case KeyCode.RightArrow:
+				return "Right";
+			case KeyCode.LeftArrow:
+				return "Left";
+			case KeyCode.Insert:
+				return "Ins";
+			case KeyCode.Home:
+				return "Home";
+			case KeyCode.End:
+				return "End";
+			case KeyCode.PageUp:
+				return "PgUp";
+			case KeyCode.PageDown:
+				return "PgDn";
+			case KeyCode.F1:
+			case KeyCode.F2:
+			case KeyCode.F3:
+			case KeyCode.F4:
+			case KeyCode.F5:
+			case KeyCode.F6:
+			case KeyCode.F7:
+			case KeyCode.F8:
+			case KeyCode.F9:
+			case KeyCode.F10:
+			case KeyCode.F11:
+			case KeyCode.F12:
+			case KeyCode.F13:
+			case KeyCode.F14:
+			case KeyCode.F15:
+			case (KeyCode)297:
+			case (KeyCode)298:
+			case (KeyCode)299:
+			case (KeyCode)314:
+				IL_10C:
 				switch (k)
 				{
-				case KeyCode.Keypad0:
-					return "Kp0";
-				case KeyCode.Keypad1:
-					return "Kp1";
-				case KeyCode.Keypad2:
-					return "Kp2";
-				case KeyCode.Keypad3:
-					return "Kp3";
-				case KeyCode.Keypad4:
-					return "Kp4";
-				case KeyCode.Keypad5:
-					return "Kp5";
-				case KeyCode.Keypad6:
-					return "Kp6";
-				case KeyCode.Keypad7:
-					return "Kp7";
-				case KeyCode.Keypad8:
-					return "Kp8";
-				case KeyCode.Keypad9:
-					return "Kp9";
-				case KeyCode.KeypadPeriod:
-					return "Kp.";
-				case KeyCode.KeypadDivide:
-					return "Kp/";
-				case KeyCode.KeypadMultiply:
-					return "Kp*";
-				case KeyCode.KeypadMinus:
-					return "Kp-";
-				case KeyCode.KeypadPlus:
-					return "Kp+";
-				case KeyCode.KeypadEnter:
-					return "KpEnt";
-				case KeyCode.KeypadEquals:
-					return "Kp=";
-				case KeyCode.UpArrow:
-					return "Up";
-				case KeyCode.DownArrow:
-					return "Down";
-				case KeyCode.RightArrow:
-					return "Right";
-				case KeyCode.LeftArrow:
-					return "Left";
-				case KeyCode.Insert:
-					return "Ins";
-				case KeyCode.Home:
-					return "Home";
-				case KeyCode.End:
-					return "End";
-				case KeyCode.PageUp:
-					return "PgUp";
-				case KeyCode.PageDown:
-					return "PgDn";
-				case KeyCode.F1:
-				case KeyCode.F2:
-				case KeyCode.F3:
-				case KeyCode.F4:
-				case KeyCode.F5:
-				case KeyCode.F6:
-				case KeyCode.F7:
-				case KeyCode.F8:
-				case KeyCode.F9:
-				case KeyCode.F10:
-				case KeyCode.F11:
-				case KeyCode.F12:
-				case KeyCode.F13:
-				case KeyCode.F14:
-				case KeyCode.F15:
-				case (KeyCode)297:
-				case (KeyCode)298:
-				case (KeyCode)299:
-				case (KeyCode)314:
-					IL_22F:
-					switch (k)
+				case KeyCode.Exclaim:
+					return "!";
+				case KeyCode.DoubleQuote:
+					return "\"";
+				case KeyCode.Hash:
+					return "#";
+				case KeyCode.Dollar:
+					return "$";
+				case (KeyCode)37:
+				case KeyCode.Equals:
+				case (KeyCode)65:
+				case (KeyCode)66:
+				case (KeyCode)67:
+				case (KeyCode)68:
+				case (KeyCode)69:
+				case (KeyCode)70:
+				case (KeyCode)71:
+				case (KeyCode)72:
+				case (KeyCode)73:
+				case (KeyCode)74:
+				case (KeyCode)75:
+				case (KeyCode)76:
+				case (KeyCode)77:
+				case (KeyCode)78:
+				case (KeyCode)79:
+				case (KeyCode)80:
+				case (KeyCode)81:
+				case (KeyCode)82:
+				case (KeyCode)83:
+				case (KeyCode)84:
+				case (KeyCode)85:
+				case (KeyCode)86:
+				case (KeyCode)87:
+				case (KeyCode)88:
+				case (KeyCode)89:
+				case (KeyCode)90:
+					IL_215:
+					if (k == KeyCode.Clear)
 					{
-					case KeyCode.Backspace:
-						return "Bksp";
-					case KeyCode.Tab:
-					case (KeyCode)10:
-					case (KeyCode)11:
-						IL_24F:
-						if (k != KeyCode.Delete)
-						{
-							return k.ToString();
-						}
-						return "Del";
-					case KeyCode.Clear:
 						return "Clr";
-					case KeyCode.Return:
+					}
+					if (k == KeyCode.Return)
+					{
 						return "Ent";
 					}
-					goto IL_24F;
-				case KeyCode.Numlock:
-					return "NumL";
-				case KeyCode.CapsLock:
-					return "CapL";
-				case KeyCode.ScrollLock:
-					return "ScrL";
-				case KeyCode.RightShift:
-					return "RShf";
-				case KeyCode.LeftShift:
-					return "LShf";
-				case KeyCode.RightControl:
-					return "RCtrl";
-				case KeyCode.LeftControl:
-					return "LCtrl";
-				case KeyCode.RightAlt:
-					return "RAlt";
-				case KeyCode.LeftAlt:
-					return "LAlt";
-				case KeyCode.RightCommand:
-					return "Appl";
-				case KeyCode.LeftCommand:
-					return "Cmd";
-				case KeyCode.LeftWindows:
-					return "Win";
-				case KeyCode.RightWindows:
-					return "Win";
-				case KeyCode.AltGr:
-					return "AltGr";
-				case KeyCode.Help:
-					return "Help";
-				case KeyCode.Print:
-					return "Prnt";
-				case KeyCode.SysReq:
-					return "SysReq";
-				case KeyCode.Break:
-					return "Brk";
-				case KeyCode.Menu:
-					return "Menu";
+					if (k == KeyCode.Backspace)
+					{
+						return "Bksp";
+					}
+					if (k == KeyCode.Escape)
+					{
+						return "Esc";
+					}
+					if (k != KeyCode.Delete)
+					{
+						return k.ToString();
+					}
+					return "Del";
+				case KeyCode.Ampersand:
+					return "&";
+				case KeyCode.Quote:
+					return "'";
+				case KeyCode.LeftParen:
+					return "(";
+				case KeyCode.RightParen:
+					return ")";
+				case KeyCode.Asterisk:
+					return "*";
+				case KeyCode.Plus:
+					return "+";
+				case KeyCode.Comma:
+					return ",";
+				case KeyCode.Minus:
+					return "-";
+				case KeyCode.Period:
+					return ".";
+				case KeyCode.Slash:
+					return "/";
+				case KeyCode.Alpha0:
+					return "0";
+				case KeyCode.Alpha1:
+					return "1";
+				case KeyCode.Alpha2:
+					return "2";
+				case KeyCode.Alpha3:
+					return "3";
+				case KeyCode.Alpha4:
+					return "4";
+				case KeyCode.Alpha5:
+					return "5";
+				case KeyCode.Alpha6:
+					return "6";
+				case KeyCode.Alpha7:
+					return "7";
+				case KeyCode.Alpha8:
+					return "8";
+				case KeyCode.Alpha9:
+					return "9";
+				case KeyCode.Colon:
+					return ":";
+				case KeyCode.Semicolon:
+					return ";";
+				case KeyCode.Less:
+					return "<";
+				case KeyCode.Greater:
+					return ">";
+				case KeyCode.Question:
+					return "?";
+				case KeyCode.At:
+					return "@";
+				case KeyCode.LeftBracket:
+					return "[";
+				case KeyCode.Backslash:
+					return "\\";
+				case KeyCode.RightBracket:
+					return "]";
+				case KeyCode.Caret:
+					return "^";
+				case KeyCode.Underscore:
+					return "_";
+				case KeyCode.BackQuote:
+					return "`";
 				}
-				goto IL_22F;
-			case KeyCode.Exclaim:
-				return "!";
-			case KeyCode.DoubleQuote:
-				return "\"";
-			case KeyCode.Hash:
-				return "#";
-			case KeyCode.Dollar:
-				return "$";
-			case KeyCode.Ampersand:
-				return "&";
-			case KeyCode.Quote:
-				return "'";
-			case KeyCode.LeftParen:
-				return "(";
-			case KeyCode.RightParen:
-				return ")";
-			case KeyCode.Asterisk:
-				return "*";
-			case KeyCode.Plus:
-				return "+";
-			case KeyCode.Comma:
-				return ",";
-			case KeyCode.Minus:
-				return "-";
-			case KeyCode.Period:
-				return ".";
-			case KeyCode.Slash:
-				return "/";
-			case KeyCode.Alpha0:
-				return "0";
-			case KeyCode.Alpha1:
-				return "1";
-			case KeyCode.Alpha2:
-				return "2";
-			case KeyCode.Alpha3:
-				return "3";
-			case KeyCode.Alpha4:
-				return "4";
-			case KeyCode.Alpha5:
-				return "5";
-			case KeyCode.Alpha6:
-				return "6";
-			case KeyCode.Alpha7:
-				return "7";
-			case KeyCode.Alpha8:
-				return "8";
-			case KeyCode.Alpha9:
-				return "9";
-			case KeyCode.Colon:
-				return ":";
-			case KeyCode.Semicolon:
-				return ";";
-			case KeyCode.Less:
-				return "<";
-			case KeyCode.Greater:
-				return ">";
-			case KeyCode.Question:
-				return "?";
-			case KeyCode.At:
-				return "@";
-			case KeyCode.LeftBracket:
-				return "[";
-			case KeyCode.Backslash:
-				return "\\";
-			case KeyCode.RightBracket:
-				return "]";
-			case KeyCode.Caret:
-				return "^";
-			case KeyCode.Underscore:
-				return "_";
-			case KeyCode.BackQuote:
-				return "`";
+				goto IL_215;
+			case KeyCode.Numlock:
+				return "NumL";
+			case KeyCode.CapsLock:
+				return "CapL";
+			case KeyCode.ScrollLock:
+				return "ScrL";
+			case KeyCode.RightShift:
+				return "RShf";
+			case KeyCode.LeftShift:
+				return "LShf";
+			case KeyCode.RightControl:
+				return "RCtrl";
+			case KeyCode.LeftControl:
+				return "LCtrl";
+			case KeyCode.RightAlt:
+				return "RAlt";
+			case KeyCode.LeftAlt:
+				return "LAlt";
+			case KeyCode.RightCommand:
+				return "Appl";
+			case KeyCode.LeftCommand:
+				return "Cmd";
+			case KeyCode.LeftWindows:
+				return "Win";
+			case KeyCode.RightWindows:
+				return "Win";
+			case KeyCode.AltGr:
+				return "AltGr";
+			case KeyCode.Help:
+				return "Help";
+			case KeyCode.Print:
+				return "Prnt";
+			case KeyCode.SysReq:
+				return "SysReq";
+			case KeyCode.Break:
+				return "Brk";
+			case KeyCode.Menu:
+				return "Menu";
 			}
-			goto IL_123;
+			goto IL_10C;
+		}
+
+		public static void AppendWithComma(this StringBuilder sb, string text)
+		{
+			sb.AppendWithSeparator(text, ", ");
+		}
+
+		public static void AppendWithSeparator(this StringBuilder sb, string text, string separator)
+		{
+			if (text.NullOrEmpty())
+			{
+				return;
+			}
+			if (sb.Length > 0)
+			{
+				sb.Append(separator);
+			}
+			sb.Append(text);
 		}
 	}
 }

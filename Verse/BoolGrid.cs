@@ -111,7 +111,7 @@ namespace Verse
 			Scribe_Values.Look<int>(ref this.trueCountInt, "trueCount", 0, false);
 			Scribe_Values.Look<int>(ref this.mapSizeX, "mapSizeX", 0, false);
 			Scribe_Values.Look<int>(ref this.mapSizeZ, "mapSizeZ", 0, false);
-			ArrayExposeUtility.ExposeBoolArray(ref this.arr, this.mapSizeX, this.mapSizeZ, "arr");
+			DataExposeUtility.BoolArray(ref this.arr, this.mapSizeX * this.mapSizeZ, "arr");
 		}
 
 		public void Clear()

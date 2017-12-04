@@ -63,6 +63,11 @@ namespace RimWorld
 			return GenLocalDate.DayPercent(map.Tile);
 		}
 
+		public static float YearPercent(Map map)
+		{
+			return GenLocalDate.YearPercent(map.Tile);
+		}
+
 		public static int HourInteger(Map map)
 		{
 			return GenLocalDate.HourInteger(map.Tile);
@@ -126,6 +131,11 @@ namespace RimWorld
 			return GenDate.DayPercent((long)GenLocalDate.TicksAbs, GenLocalDate.LongitudeForDate(thing));
 		}
 
+		public static float YearPercent(Thing thing)
+		{
+			return GenDate.YearPercent((long)GenLocalDate.TicksAbs, GenLocalDate.LongitudeForDate(thing));
+		}
+
 		public static int HourInteger(Thing thing)
 		{
 			return GenDate.HourInteger((long)GenLocalDate.TicksAbs, GenLocalDate.LongitudeForDate(thing));
@@ -187,6 +197,11 @@ namespace RimWorld
 		public static float DayPercent(int tile)
 		{
 			return GenDate.DayPercent((long)GenLocalDate.TicksAbs, Find.WorldGrid.LongLatOf(tile).x);
+		}
+
+		public static float YearPercent(int tile)
+		{
+			return GenDate.YearPercent((long)GenLocalDate.TicksAbs, Find.WorldGrid.LongLatOf(tile).x);
 		}
 
 		public static int HourInteger(int tile)

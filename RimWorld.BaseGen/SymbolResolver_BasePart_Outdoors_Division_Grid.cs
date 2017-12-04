@@ -18,6 +18,12 @@ namespace RimWorld.BaseGen
 			public bool merged;
 		}
 
+		private List<Pair<int, int>> optionsX = new List<Pair<int, int>>();
+
+		private List<Pair<int, int>> optionsZ = new List<Pair<int, int>>();
+
+		private List<SymbolResolver_BasePart_Outdoors_Division_Grid.Child> children = new List<SymbolResolver_BasePart_Outdoors_Division_Grid.Child>();
+
 		private const int MinWidthOrHeight = 13;
 
 		private const int MinRoomsPerRow = 2;
@@ -31,12 +37,6 @@ namespace RimWorld.BaseGen
 		private const int MinRoomSize = 6;
 
 		private const float AllowNonSquareRoomsInTheFirstStepChance = 0.2f;
-
-		private List<Pair<int, int>> optionsX = new List<Pair<int, int>>();
-
-		private List<Pair<int, int>> optionsZ = new List<Pair<int, int>>();
-
-		private List<SymbolResolver_BasePart_Outdoors_Division_Grid.Child> children = new List<SymbolResolver_BasePart_Outdoors_Division_Grid.Child>();
 
 		private static List<Pair<Pair<int, int>, Pair<int, int>>> options = new List<Pair<Pair<int, int>, Pair<int, int>>>();
 

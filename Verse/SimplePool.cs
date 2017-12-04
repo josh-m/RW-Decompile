@@ -11,7 +11,7 @@ namespace Verse
 		{
 			if (SimplePool<T>.freeItems.Count == 0)
 			{
-				return (default(T) == null) ? Activator.CreateInstance<T>() : default(T);
+				return Activator.CreateInstance<T>();
 			}
 			T result = SimplePool<T>.freeItems[SimplePool<T>.freeItems.Count - 1];
 			SimplePool<T>.freeItems.RemoveAt(SimplePool<T>.freeItems.Count - 1);

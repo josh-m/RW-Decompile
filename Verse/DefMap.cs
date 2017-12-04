@@ -56,7 +56,7 @@ namespace Verse
 			this.values = new List<V>(defCount);
 			for (int i = 0; i < defCount; i++)
 			{
-				this.values.Add((default(V) == null) ? Activator.CreateInstance<V>() : default(V));
+				this.values.Add(Activator.CreateInstance<V>());
 			}
 		}
 

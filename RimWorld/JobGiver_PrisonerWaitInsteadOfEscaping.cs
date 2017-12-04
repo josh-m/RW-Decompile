@@ -12,6 +12,11 @@ namespace RimWorld
 			{
 				return null;
 			}
+			Room room = pawn.GetRoom(RegionType.Set_Passable);
+			if (room != null && room.isPrisonCell)
+			{
+				return null;
+			}
 			IntVec3 spotToWaitInsteadOfEscaping = pawn.guest.spotToWaitInsteadOfEscaping;
 			if (!spotToWaitInsteadOfEscaping.IsValid || !pawn.CanReach(spotToWaitInsteadOfEscaping, PathEndMode.OnCell, Danger.Deadly, false, TraverseMode.ByPawn))
 			{

@@ -18,13 +18,13 @@ namespace RimWorld
 				p.guest.SetGuestStatus(null, false);
 				return;
 			}
-			p.guest.released = true;
+			p.guest.Released = true;
 			IntVec3 c;
 			if (RCellFinder.TryFindBestExitSpot(p, out c, TraverseMode.ByPawn))
 			{
 				Job job = new Job(JobDefOf.Goto, c);
 				job.exitMapOnArrival = true;
-				p.jobs.StartJob(job, JobCondition.None, null, false, true, null, null);
+				p.jobs.StartJob(job, JobCondition.None, null, false, true, null, null, false);
 			}
 		}
 	}

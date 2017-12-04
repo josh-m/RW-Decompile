@@ -18,10 +18,6 @@ namespace RimWorld
 			Items
 		}
 
-		private const float TitleRectHeight = 40f;
-
-		private const float BottomAreaHeight = 55f;
-
 		private Map map;
 
 		private List<CompTransporter> transporters;
@@ -43,6 +39,10 @@ namespace RimWorld
 		private bool daysWorthOfFoodDirty = true;
 
 		private Pair<float, float> cachedDaysWorthOfFood;
+
+		private const float TitleRectHeight = 40f;
+
+		private const float BottomAreaHeight = 55f;
 
 		private readonly Vector2 BottomButtonSize = new Vector2(160f, 40f);
 
@@ -81,7 +81,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return Find.ActiveLanguageWorker.Pluralize(this.transporters[0].parent.Label);
+				return Find.ActiveLanguageWorker.Pluralize(this.transporters[0].parent.Label, -1);
 			}
 		}
 
@@ -165,7 +165,7 @@ namespace RimWorld
 				this.tab = Dialog_LoadTransporters.Tab.Items;
 			}, this.tab == Dialog_LoadTransporters.Tab.Items));
 			inRect.yMin += 72f;
-			Widgets.DrawMenuSection(inRect, true);
+			Widgets.DrawMenuSection(inRect);
 			TabDrawer.DrawTabs(inRect, Dialog_LoadTransporters.tabsList);
 			inRect = inRect.ContractedBy(17f);
 			GUI.BeginGroup(inRect);
@@ -310,7 +310,7 @@ namespace RimWorld
 					}
 				}
 			}
-			Messages.Message("MessageTransportersLoadingProcessStarted".Translate(), this.transporters[0].parent, MessageSound.Benefit);
+			Messages.Message("MessageTransportersLoadingProcessStarted".Translate(), this.transporters[0].parent, MessageTypeDefOf.TaskCompletion);
 			return true;
 		}
 
@@ -363,13 +363,13 @@ namespace RimWorld
 		{
 			if (!this.transferables.Any((TransferableOneWay x) => x.CountToTransfer != 0))
 			{
-				Messages.Message("CantSendEmptyTransportPods".Translate(), MessageSound.RejectInput);
+				Messages.Message("CantSendEmptyTransportPods".Translate(), MessageTypeDefOf.RejectInput);
 				return false;
 			}
 			if (this.MassUsage > this.MassCapacity)
 			{
 				this.FlashMass();
-				Messages.Message("TooBigTransportersMassUsage".Translate(), MessageSound.RejectInput);
+				Messages.Message("TooBigTransportersMassUsage".Translate(), MessageTypeDefOf.RejectInput);
 				return false;
 			}
 			Pawn pawn = pawns.Find((Pawn x) => !x.MapHeld.reachability.CanReach(x.PositionHeld, this.transporters[0].parent, PathEndMode.Touch, TraverseParms.For(TraverseMode.PassDoors, Danger.Deadly, false)));
@@ -378,7 +378,7 @@ namespace RimWorld
 				Messages.Message("PawnCantReachTransporters".Translate(new object[]
 				{
 					pawn.LabelShort
-				}).CapitalizeFirst(), MessageSound.RejectInput);
+				}).CapitalizeFirst(), MessageTypeDefOf.RejectInput);
 				return false;
 			}
 			Map map = this.transporters[0].parent.Map;
@@ -409,7 +409,7 @@ namespace RimWorld
 								Messages.Message("TransporterItemIsUnreachableSingle".Translate(new object[]
 								{
 									this.transferables[i].ThingDef.label
-								}), MessageSound.RejectInput);
+								}), MessageTypeDefOf.RejectInput);
 							}
 							else
 							{
@@ -417,7 +417,7 @@ namespace RimWorld
 								{
 									countToTransfer,
 									this.transferables[i].ThingDef.label
-								}), MessageSound.RejectInput);
+								}), MessageTypeDefOf.RejectInput);
 							}
 							return false;
 						}

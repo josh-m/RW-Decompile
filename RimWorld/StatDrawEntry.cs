@@ -55,7 +55,7 @@ namespace RimWorld
 				{
 					return this.value.ToStringByStyle(ToStringStyle.PercentZero, ToStringNumberSense.Absolute);
 				}
-				if (this.stat != null)
+				if (this.valueStringInt == null)
 				{
 					return this.stat.Worker.GetStatDrawEntryLabel(this.stat, this.value, this.numberSense, this.optionalReq);
 				}
@@ -95,7 +95,7 @@ namespace RimWorld
 			}
 		}
 
-		public StatDrawEntry(StatCategoryDef category, string label, string valueString, int displayPriorityWithinCategory = 0)
+		public StatDrawEntry(StatCategoryDef category, string label, string valueString, int displayPriorityWithinCategory = 0, string overrideReportText = "")
 		{
 			this.category = category;
 			this.stat = null;
@@ -104,6 +104,18 @@ namespace RimWorld
 			this.valueStringInt = valueString;
 			this.displayOrderWithinCategory = displayPriorityWithinCategory;
 			this.numberSense = ToStringNumberSense.Absolute;
+			this.overrideReportText = overrideReportText;
+		}
+
+		public StatDrawEntry(StatCategoryDef category, StatDef stat)
+		{
+			this.category = category;
+			this.stat = stat;
+			this.labelInt = null;
+			this.value = 0f;
+			this.valueStringInt = "-";
+			this.displayOrderWithinCategory = 0;
+			this.numberSense = ToStringNumberSense.Undefined;
 		}
 
 		public string GetExplanationText(StatRequest optionalReq)
@@ -123,10 +135,18 @@ namespace RimWorld
 			stringBuilder.AppendLine();
 			if (!optionalReq.Empty)
 			{
-				stringBuilder.AppendLine(this.stat.Worker.GetExplanation(optionalReq, this.numberSense));
-				this.stat.Worker.FinalizeExplanation(stringBuilder, optionalReq, this.numberSense, this.value);
+				if (this.stat.Worker.IsDisabledFor(optionalReq.Thing))
+				{
+					stringBuilder.AppendLine("StatsReport_PermanentlyDisabled".Translate());
+				}
+				else
+				{
+					stringBuilder.AppendLine(this.stat.Worker.GetExplanationUnfinalized(optionalReq, this.numberSense).TrimEndNewlines());
+					stringBuilder.AppendLine();
+					stringBuilder.AppendLine(this.stat.Worker.GetExplanationFinalizePart(optionalReq, this.numberSense, this.value));
+				}
 			}
-			return stringBuilder.ToString();
+			return stringBuilder.ToString().TrimEndNewlines();
 		}
 
 		public float Draw(float x, float y, float width, bool selected, Action clickedCallback)

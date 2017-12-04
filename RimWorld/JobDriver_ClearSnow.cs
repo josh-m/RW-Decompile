@@ -8,9 +8,9 @@ namespace RimWorld
 {
 	public class JobDriver_ClearSnow : JobDriver
 	{
-		private const float ClearWorkPerSnowDepth = 100f;
-
 		private float workDone;
+
+		private const float ClearWorkPerSnowDepth = 100f;
 
 		private float TotalNeededWork
 		{
@@ -20,29 +20,33 @@ namespace RimWorld
 			}
 		}
 
+		public override bool TryMakePreToilReservations()
+		{
+			return this.pawn.Reserve(this.job.targetA, this.job, 1, -1, null);
+		}
+
 		[DebuggerHidden]
 		protected override IEnumerable<Toil> MakeNewToils()
 		{
-			yield return Toils_Reserve.Reserve(TargetIndex.A, 1, -1, null);
 			yield return Toils_Goto.GotoCell(TargetIndex.A, PathEndMode.Touch);
 			Toil clearToil = new Toil();
 			clearToil.tickAction = delegate
 			{
-				Pawn actor = this.<clearToil>__0.actor;
+				Pawn actor = clearToil.actor;
 				float statValue = actor.GetStatValue(StatDefOf.WorkSpeedGlobal, true);
 				float num = statValue;
-				this.<>f__this.workDone += num;
-				if (this.<>f__this.workDone >= this.<>f__this.TotalNeededWork)
+				this.$this.workDone += num;
+				if (this.$this.workDone >= this.$this.TotalNeededWork)
 				{
-					this.<>f__this.Map.snowGrid.SetDepth(this.<>f__this.TargetLocA, 0f);
-					this.<>f__this.ReadyForNextToil();
+					this.$this.Map.snowGrid.SetDepth(this.$this.TargetLocA, 0f);
+					this.$this.ReadyForNextToil();
 					return;
 				}
 			};
 			clearToil.defaultCompleteMode = ToilCompleteMode.Never;
 			clearToil.WithEffect(EffecterDefOf.ClearSnow, TargetIndex.A);
 			clearToil.PlaySustainerOrSound(() => SoundDefOf.Interact_ClearSnow);
-			clearToil.WithProgressBar(TargetIndex.A, () => this.<>f__this.workDone / this.<>f__this.TotalNeededWork, true, -0.5f);
+			clearToil.WithProgressBar(TargetIndex.A, () => this.$this.workDone / this.$this.TotalNeededWork, true, -0.5f);
 			clearToil.FailOnCannotTouch(TargetIndex.A, PathEndMode.Touch);
 			yield return clearToil;
 		}

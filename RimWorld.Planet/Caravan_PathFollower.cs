@@ -6,16 +6,6 @@ namespace RimWorld.Planet
 {
 	public class Caravan_PathFollower : IExposable
 	{
-		public const int MaxMoveTicks = 120000;
-
-		private const int MaxCheckAheadNodes = 20;
-
-		private const int MinCostWalk = 50;
-
-		private const int MinCostAmble = 60;
-
-		public const float DefaultPathCostToPayPerTick = 1f;
-
 		private Caravan caravan;
 
 		private bool moving;
@@ -33,6 +23,16 @@ namespace RimWorld.Planet
 		public WorldPath curPath;
 
 		public int lastPathedTargetTile;
+
+		public const int MaxMoveTicks = 120000;
+
+		private const int MaxCheckAheadNodes = 20;
+
+		private const int MinCostWalk = 50;
+
+		private const int MinCostAmble = 60;
+
+		public const float DefaultPathCostToPayPerTick = 1f;
 
 		public int Destination
 		{
@@ -209,7 +209,7 @@ namespace RimWorld.Planet
 				Messages.Message("MessageCaravanArrivedAtDestination".Translate(new object[]
 				{
 					this.caravan.Label
-				}).CapitalizeFirst(), this.caravan, MessageSound.Benefit);
+				}).CapitalizeFirst(), this.caravan, MessageTypeDefOf.TaskCompletion);
 			}
 		}
 

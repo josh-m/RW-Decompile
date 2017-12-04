@@ -32,7 +32,7 @@ namespace Verse.AI
 			ThinkResult result = base.TryIssueJobPackage(pawn, jobParams);
 			if (result.IsValid && !result.Tag.HasValue)
 			{
-				result = new ThinkResult(result.Job, result.SourceNode, new JobTag?(this.tagToGive));
+				result = new ThinkResult(result.Job, result.SourceNode, new JobTag?(this.tagToGive), false);
 			}
 			return result;
 		}

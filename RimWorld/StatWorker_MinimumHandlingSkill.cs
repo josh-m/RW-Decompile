@@ -11,7 +11,7 @@ namespace RimWorld
 			return this.ValueFromReq(req);
 		}
 
-		public override string GetExplanation(StatRequest req, ToStringNumberSense numberSense)
+		public override string GetExplanationUnfinalized(StatRequest req, ToStringNumberSense numberSense)
 		{
 			float wildness = ((ThingDef)req.Def).race.wildness;
 			return string.Concat(new string[]

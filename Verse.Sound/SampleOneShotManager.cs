@@ -89,7 +89,7 @@ namespace Verse.Sound
 		{
 			for (int i = 0; i < this.samples.Count; i++)
 			{
-				this.samples[i].ApplyMappedParameters();
+				this.samples[i].Update();
 			}
 			this.cleanupList.Clear();
 			for (int j = 0; j < this.samples.Count; j++)

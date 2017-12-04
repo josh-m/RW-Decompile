@@ -8,7 +8,7 @@ namespace RimWorld
 {
 	public abstract class Blueprint : ThingWithComps, IConstructible
 	{
-		private static List<Thing> tmpAdjacentThings = new List<Thing>();
+		private static List<CompSpawnerMechanoidsOnDamaged> tmpCrashedShipParts = new List<CompSpawnerMechanoidsOnDamaged>();
 
 		public override string Label
 		{
@@ -47,37 +47,16 @@ namespace RimWorld
 		public virtual bool TryReplaceWithSolidThing(Pawn workerPawn, out Thing createdThing, out bool jobEnded)
 		{
 			jobEnded = false;
-			if (this.FirstBlockingThing(workerPawn, null, false) != null)
+			if (GenConstruct.FirstBlockingThing(this, workerPawn) != null)
 			{
 				workerPawn.jobs.EndCurrentJob(JobCondition.Incompletable, true);
 				jobEnded = true;
 				createdThing = null;
 				return false;
 			}
-			Thing thing = this.FirstBlockingThing(null, null, false);
-			if (thing != null)
-			{
-				Log.Error(string.Concat(new object[]
-				{
-					workerPawn,
-					" tried to replace blueprint ",
-					this.ToString(),
-					" at ",
-					base.Position,
-					" with solid thing, but it is blocked by ",
-					thing,
-					" at ",
-					thing.Position
-				}));
-				if (thing != workerPawn)
-				{
-					createdThing = null;
-					return false;
-				}
-			}
 			createdThing = this.MakeSolidThing();
 			Map map = base.Map;
-			GenAdjFast.AdjacentThings8Way(this, Blueprint.tmpAdjacentThings);
+			CellRect cellRect = this.OccupiedRect();
 			GenSpawn.WipeExistingThings(base.Position, base.Rotation, createdThing.def, map, DestroyMode.Deconstruct);
 			if (!base.Destroyed)
 			{
@@ -85,15 +64,30 @@ namespace RimWorld
 			}
 			createdThing.SetFactionDirect(workerPawn.Faction);
 			GenSpawn.Spawn(createdThing, base.Position, map, base.Rotation, false);
-			for (int i = 0; i < Blueprint.tmpAdjacentThings.Count; i++)
+			Blueprint.tmpCrashedShipParts.Clear();
+			CellRect.CellRectIterator iterator = cellRect.ExpandedBy(3).GetIterator();
+			while (!iterator.Done())
 			{
-				Building_CrashedShipPart building_CrashedShipPart = Blueprint.tmpAdjacentThings[i] as Building_CrashedShipPart;
-				if (building_CrashedShipPart != null)
+				if (iterator.Current.InBounds(map))
 				{
-					building_CrashedShipPart.Notify_AdjacentBlueprintReplacedWithSolidThing(workerPawn);
+					List<Thing> thingList = iterator.Current.GetThingList(map);
+					for (int i = 0; i < thingList.Count; i++)
+					{
+						CompSpawnerMechanoidsOnDamaged compSpawnerMechanoidsOnDamaged = thingList[i].TryGetComp<CompSpawnerMechanoidsOnDamaged>();
+						if (compSpawnerMechanoidsOnDamaged != null)
+						{
+							Blueprint.tmpCrashedShipParts.Add(compSpawnerMechanoidsOnDamaged);
+						}
+					}
 				}
+				iterator.MoveNext();
 			}
-			Blueprint.tmpAdjacentThings.Clear();
+			Blueprint.tmpCrashedShipParts.RemoveDuplicates<CompSpawnerMechanoidsOnDamaged>();
+			for (int j = 0; j < Blueprint.tmpCrashedShipParts.Count; j++)
+			{
+				Blueprint.tmpCrashedShipParts[j].Notify_BlueprintReplacedWithSolidThingNearby(workerPawn);
+			}
+			Blueprint.tmpCrashedShipParts.Clear();
 			return true;
 		}
 
@@ -119,28 +113,6 @@ namespace RimWorld
 					if (thing.def.EverHaulable)
 					{
 						return thing;
-					}
-				}
-				iterator.MoveNext();
-			}
-			return null;
-		}
-
-		public Thing FirstBlockingThing(Pawn pawnToIgnore = null, Thing thingToIgnore = null, bool haulableOnly = false)
-		{
-			CellRect.CellRectIterator iterator = this.OccupiedRect().GetIterator();
-			while (!iterator.Done())
-			{
-				List<Thing> thingList = iterator.Current.GetThingList(base.Map);
-				for (int i = 0; i < thingList.Count; i++)
-				{
-					Thing thing = thingList[i];
-					if (!haulableOnly || thing.def.EverHaulable)
-					{
-						if (GenConstruct.BlocksFramePlacement(this, thing) && thing != pawnToIgnore && thing != thingToIgnore)
-						{
-							return thing;
-						}
 					}
 				}
 				iterator.MoveNext();

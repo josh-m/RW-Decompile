@@ -12,6 +12,8 @@ namespace RimWorld
 
 		public Color graphColor = Color.green;
 
+		public string graphLabelY;
+
 		[Unsaved]
 		private HistoryAutoRecorderWorker workerInt;
 
@@ -24,6 +26,14 @@ namespace RimWorld
 					this.workerInt = (HistoryAutoRecorderWorker)Activator.CreateInstance(this.workerClass);
 				}
 				return this.workerInt;
+			}
+		}
+
+		public string GraphLabelY
+		{
+			get
+			{
+				return (this.graphLabelY == null) ? "Value".Translate() : this.graphLabelY;
 			}
 		}
 

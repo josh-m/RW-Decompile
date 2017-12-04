@@ -15,8 +15,12 @@ namespace RimWorld
 			{
 				return 0f;
 			}
-			num2 *= PawnCapacityUtility.CalculateTagEfficiency(diffSet, "Pelvis", 3.40282347E+38f, impactors);
-			num2 *= PawnCapacityUtility.CalculateTagEfficiency(diffSet, "Spine", 3.40282347E+38f, impactors);
+			float arg_4F_0 = num2;
+			string tag = "Pelvis";
+			num2 = arg_4F_0 * PawnCapacityUtility.CalculateTagEfficiency(diffSet, tag, 3.40282347E+38f, impactors);
+			float arg_6B_0 = num2;
+			tag = "Spine";
+			num2 = arg_6B_0 * PawnCapacityUtility.CalculateTagEfficiency(diffSet, tag, 3.40282347E+38f, impactors);
 			num2 = Mathf.Lerp(num2, num2 * base.CalculateCapacityAndRecord(diffSet, PawnCapacityDefOf.Breathing, impactors), 0.2f);
 			num2 = Mathf.Lerp(num2, num2 * base.CalculateCapacityAndRecord(diffSet, PawnCapacityDefOf.BloodPumping, impactors), 0.2f);
 			return num2 * Mathf.Min(base.CalculateCapacityAndRecord(diffSet, PawnCapacityDefOf.Consciousness, impactors), 1f);

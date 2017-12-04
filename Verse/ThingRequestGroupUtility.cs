@@ -18,8 +18,6 @@ namespace Verse
 				return true;
 			case ThingRequestGroup.HaulableAlways:
 				return true;
-			case ThingRequestGroup.Plant:
-				return false;
 			case ThingRequestGroup.FoodSource:
 				return true;
 			case ThingRequestGroup.FoodSourceNotPlantOrTree:
@@ -50,6 +48,14 @@ namespace Verse
 				return true;
 			case ThingRequestGroup.Drug:
 				return true;
+			case ThingRequestGroup.Shell:
+				return true;
+			case ThingRequestGroup.HarvestablePlant:
+				return true;
+			case ThingRequestGroup.Fire:
+				return true;
+			case ThingRequestGroup.Plant:
+				return false;
 			case ThingRequestGroup.Construction:
 				return false;
 			case ThingRequestGroup.HasGUIOverlay:
@@ -62,13 +68,21 @@ namespace Verse
 				return false;
 			case ThingRequestGroup.Art:
 				return false;
-			case ThingRequestGroup.ThisOrAnyCompIsThingHolder:
+			case ThingRequestGroup.ThingHolder:
 				return false;
 			case ThingRequestGroup.ActiveDropPod:
 				return false;
 			case ThingRequestGroup.Transporter:
 				return false;
 			case ThingRequestGroup.LongRangeMineralScanner:
+				return false;
+			case ThingRequestGroup.AffectsSky:
+				return false;
+			case ThingRequestGroup.PsychicDroneEmanator:
+				return false;
+			case ThingRequestGroup.WindSource:
+				return false;
+			case ThingRequestGroup.AlwaysFlee:
 				return false;
 			default:
 				throw new ArgumentException("group");

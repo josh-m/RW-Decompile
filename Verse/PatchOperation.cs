@@ -13,6 +13,8 @@ namespace Verse
 			Never
 		}
 
+		public string sourceFile;
+
 		private bool neverSucceeded = true;
 
 		private PatchOperation.Success success;
@@ -45,11 +47,16 @@ namespace Verse
 			return false;
 		}
 
-		public void Complete(string modIdentifier)
+		public virtual void Complete(string modIdentifier)
 		{
 			if (this.neverSucceeded)
 			{
-				Log.Error(string.Format("[{0}] Patch operation {1} failed", modIdentifier, this));
+				string text = string.Format("[{0}] Patch operation {1} failed", modIdentifier, this);
+				if (!string.IsNullOrEmpty(this.sourceFile))
+				{
+					text = text + "\nfile: " + this.sourceFile;
+				}
+				Log.Error(text);
 			}
 		}
 	}

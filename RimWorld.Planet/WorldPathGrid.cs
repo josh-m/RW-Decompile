@@ -6,11 +6,11 @@ namespace RimWorld.Planet
 {
 	public class WorldPathGrid
 	{
-		private const int ImpassableCost = 1000000;
-
 		public int[] pathGrid;
 
 		private int allPathCostsRecalculatedDayOfYear = -1;
+
+		private const int ImpassableCost = 1000000;
 
 		private static int DayOfYearAt0Long
 		{
@@ -88,12 +88,14 @@ namespace RimWorld.Planet
 			{
 				yearPercent = (float)WorldPathGrid.DayOfYearAt0Long / 60f;
 			}
-			float num2 = yearPercent;
-			if (Find.WorldGrid.LongLatOf(tile).y < 0f)
-			{
-				num2 = (num2 + 0.5f) % 1f;
-			}
-			num += Mathf.RoundToInt(tile2.biome.pathCost.Evaluate(num2));
+			float num2;
+			float num3;
+			float num4;
+			float num5;
+			float num6;
+			float num7;
+			SeasonUtility.GetSeason(yearPercent, Find.WorldGrid.LongLatOf(tile).y, out num2, out num3, out num4, out num5, out num6, out num7);
+			num += Mathf.RoundToInt((float)tile2.biome.pathCost_spring * num2 + (float)tile2.biome.pathCost_summer * num3 + (float)tile2.biome.pathCost_fall * num4 + (float)tile2.biome.pathCost_winter * num5 + (float)tile2.biome.pathCost_summer * num6 + (float)tile2.biome.pathCost_winter * num7);
 			if (tile2.hilliness == Hilliness.Impassable)
 			{
 				return 1000000;

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using UnityEngine;
 using Verse;
 
 namespace RimWorld
@@ -88,24 +89,18 @@ namespace RimWorld
 				if (plant != null && dictionary.ContainsKey(plant.def))
 				{
 					Dictionary<ThingDef, float> dictionary2;
-					Dictionary<ThingDef, float> expr_9B = dictionary2 = dictionary;
-					ThingDef key;
-					ThingDef expr_A5 = key = plant.def;
-					float num2 = dictionary2[key];
-					expr_9B[expr_A5] = num2 + 1f;
+					ThingDef def;
+					(dictionary2 = dictionary)[def = plant.def] = dictionary2[def] + 1f;
 					num += 1f;
 				}
 			}
 			foreach (ThingDef current3 in Find.VisibleMap.Biome.AllWildPlants)
 			{
-				Dictionary<ThingDef, float> dictionary3;
-				Dictionary<ThingDef, float> expr_10B = dictionary3 = dictionary;
+				Dictionary<ThingDef, float> dictionary2;
 				ThingDef key;
-				ThingDef expr_110 = key = current3;
-				float num2 = dictionary3[key];
-				expr_10B[expr_110] = num2 / num;
+				(dictionary2 = dictionary)[key = current3] = dictionary2[key] / num;
 			}
-			Dictionary<ThingDef, float> dictionary4 = GenPlant.CalculateDesiredPlantProportions(Find.VisibleMap.Biome);
+			Dictionary<ThingDef, float> dictionary3 = GenPlant.CalculateDesiredPlantProportions(Find.VisibleMap.Biome);
 			StringBuilder stringBuilder = new StringBuilder();
 			stringBuilder.AppendLine("PLANT           EXPECTED             FOUND");
 			foreach (ThingDef current4 in Find.VisibleMap.Biome.AllWildPlants)
@@ -114,7 +109,7 @@ namespace RimWorld
 				{
 					current4.LabelCap,
 					"       ",
-					dictionary4[current4].ToStringPercent(),
+					dictionary3[current4].ToStringPercent(),
 					"        ",
 					dictionary[current4].ToStringPercent()
 				}));
@@ -138,11 +133,8 @@ namespace RimWorld
 			foreach (ThingDef current2 in biome.AllWildPlants)
 			{
 				Dictionary<ThingDef, float> dictionary2;
-				Dictionary<ThingDef, float> expr_7C = dictionary2 = dictionary;
 				ThingDef key;
-				ThingDef expr_81 = key = current2;
-				float num3 = dictionary2[key];
-				expr_7C[expr_81] = num3 / num;
+				(dictionary2 = dictionary)[key = current2] = dictionary2[key] / num;
 			}
 			return dictionary;
 		}
@@ -154,7 +146,7 @@ namespace RimWorld
 			where def.category == ThingCategory.Plant
 			select def)
 			{
-				if (sel.TrueForAll((IPlantToGrowSettable x) => GenPlant.CanSowOnGrower(this.<plantDef>__1, x)))
+				if (sel.TrueForAll((IPlantToGrowSettable x) => GenPlant.CanSowOnGrower(plantDef, x)))
 				{
 					yield return plantDef;
 				}
@@ -215,6 +207,17 @@ namespace RimWorld
 				}
 			}
 			Log.Message(stringBuilder.ToString());
+		}
+
+		public static byte GetWindExposure(Plant plant)
+		{
+			return (byte)Mathf.Min(255f * plant.def.plant.topWindExposure, 255f);
+		}
+
+		public static void SetWindExposureColors(Color32[] colors, Plant plant)
+		{
+			colors[1].a = (colors[2].a = GenPlant.GetWindExposure(plant));
+			colors[0].a = (colors[3].a = 0);
 		}
 	}
 }

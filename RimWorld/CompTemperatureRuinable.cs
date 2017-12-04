@@ -6,9 +6,9 @@ namespace RimWorld
 {
 	public class CompTemperatureRuinable : ThingComp
 	{
-		public const string RuinedSignal = "RuinedByTemperature";
-
 		protected float ruinedPercent;
+
+		public const string RuinedSignal = "RuinedByTemperature";
 
 		public CompProperties_TemperatureRuinable Props
 		{

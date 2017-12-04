@@ -113,7 +113,22 @@ namespace Verse.Noise
 			{
 				if (NoiseDebugUI.planetNoises.Any<NoiseDebugUI.NoisePlanet>() && Widgets.ButtonText(new Rect(400f, 40f, 200f, 30f), "Next planet noise", true, false, true))
 				{
-					if (NoiseDebugUI.currentPlanetNoise == null || NoiseDebugUI.planetNoises.IndexOf(NoiseDebugUI.currentPlanetNoise) == -1)
+					if (Event.current.button == 1)
+					{
+						if (NoiseDebugUI.currentPlanetNoise == null || NoiseDebugUI.planetNoises.IndexOf(NoiseDebugUI.currentPlanetNoise) == -1)
+						{
+							NoiseDebugUI.currentPlanetNoise = NoiseDebugUI.planetNoises[NoiseDebugUI.planetNoises.Count - 1];
+						}
+						else if (NoiseDebugUI.planetNoises.IndexOf(NoiseDebugUI.currentPlanetNoise) == 0)
+						{
+							NoiseDebugUI.currentPlanetNoise = null;
+						}
+						else
+						{
+							NoiseDebugUI.currentPlanetNoise = NoiseDebugUI.planetNoises[NoiseDebugUI.planetNoises.IndexOf(NoiseDebugUI.currentPlanetNoise) - 1];
+						}
+					}
+					else if (NoiseDebugUI.currentPlanetNoise == null || NoiseDebugUI.planetNoises.IndexOf(NoiseDebugUI.currentPlanetNoise) == -1)
 					{
 						NoiseDebugUI.currentPlanetNoise = NoiseDebugUI.planetNoises[0];
 					}
@@ -169,12 +184,11 @@ namespace Verse.Noise
 			if (NoiseDebugUI.planetNoiseMesh == null)
 			{
 				List<int> triangles;
-				SphereGenerator.Generate(5, 100.3f, Vector3.forward, 360f, out NoiseDebugUI.planetNoiseMeshVerts, out triangles);
+				SphereGenerator.Generate(6, 100.3f, Vector3.forward, 360f, out NoiseDebugUI.planetNoiseMeshVerts, out triangles);
 				NoiseDebugUI.planetNoiseMesh = new Mesh();
 				NoiseDebugUI.planetNoiseMesh.name = "NoiseDebugUI";
 				NoiseDebugUI.planetNoiseMesh.SetVertices(NoiseDebugUI.planetNoiseMeshVerts);
 				NoiseDebugUI.planetNoiseMesh.SetTriangles(triangles, 0);
-				NoiseDebugUI.planetNoiseMesh.Optimize();
 				NoiseDebugUI.lastDrawnPlanetNoise = null;
 			}
 			if (NoiseDebugUI.lastDrawnPlanetNoise != NoiseDebugUI.currentPlanetNoise)

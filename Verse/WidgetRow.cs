@@ -7,12 +7,6 @@ namespace Verse
 {
 	public class WidgetRow
 	{
-		public const float IconSize = 24f;
-
-		public const float DefaultGap = 4f;
-
-		private const float DefaultMaxWidth = 99999f;
-
 		private float startX;
 
 		private float curX;
@@ -24,6 +18,12 @@ namespace Verse
 		private float gap;
 
 		private UIDirection growDirection = UIDirection.RightThenUp;
+
+		public const float IconSize = 24f;
+
+		public const float DefaultGap = 4f;
+
+		private const float DefaultMaxWidth = 99999f;
 
 		public float FinalX
 		{

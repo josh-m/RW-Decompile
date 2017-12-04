@@ -10,15 +10,15 @@ namespace RimWorld.Planet
 {
 	public class WorldSelector
 	{
-		private const int MaxNumSelected = 80;
-
-		private const float MaxDragBoxDiagonalToSelectTile = 30f;
-
 		public WorldDragBox dragBox = new WorldDragBox();
 
 		private List<WorldObject> selected = new List<WorldObject>();
 
 		public int selectedTile = -1;
+
+		private const int MaxNumSelected = 80;
+
+		private const float MaxDragBoxDiagonalToSelectTile = 30f;
 
 		private bool ShiftIsHeld
 		{
@@ -390,9 +390,9 @@ namespace RimWorld.Planet
 			List<WorldObject> allWorldObjects = Find.WorldObjects.AllWorldObjects;
 			for (int i = 0; i < allWorldObjects.Count; i++)
 			{
-				if (list[0].Faction == allWorldObjects[i].Faction)
+				if (type == allWorldObjects[i].GetType())
 				{
-					if (type == allWorldObjects[i].GetType())
+					if (allWorldObjects[i] == list[0] || allWorldObjects[i].AllMatchingObjectsOnScreenMatchesWith(list[0]))
 					{
 						if (allWorldObjects[i].VisibleToCameraNow())
 						{

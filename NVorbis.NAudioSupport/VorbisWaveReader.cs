@@ -4,7 +4,7 @@ using System.IO;
 
 namespace NVorbis.NAudioSupport
 {
-	internal class VorbisWaveReader : WaveStream, IDisposable, IWaveProvider, ISampleProvider
+	internal class VorbisWaveReader : WaveStream, IDisposable, ISampleProvider, IWaveProvider
 	{
 		private VorbisReader _reader;
 

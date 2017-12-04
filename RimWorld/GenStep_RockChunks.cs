@@ -7,13 +7,13 @@ namespace RimWorld
 {
 	public class GenStep_RockChunks : GenStep
 	{
+		private ModuleBase freqFactorNoise;
+
 		private const float ThreshLooseRock = 0.55f;
 
 		private const float PlaceProbabilityPerCell = 0.006f;
 
 		private const float RubbleProbability = 0.5f;
-
-		private ModuleBase freqFactorNoise;
 
 		public override void Generate(Map map)
 		{
@@ -24,10 +24,11 @@ namespace RimWorld
 			this.freqFactorNoise = new Perlin(0.014999999664723873, 2.0, 0.5, 6, Rand.Range(0, 999999), QualityMode.Medium);
 			this.freqFactorNoise = new ScaleBias(1.0, 1.0, this.freqFactorNoise);
 			NoiseDebugUI.StoreNoiseRender(this.freqFactorNoise, "rock_chunks_freq_factor");
+			MapGenFloatGrid elevation = MapGenerator.Elevation;
 			foreach (IntVec3 current in map.AllCells)
 			{
 				float num = 0.006f * this.freqFactorNoise.GetValue(current);
-				if (MapGenerator.Elevation[current] < 0.55f && Rand.Value < num)
+				if (elevation[current] < 0.55f && Rand.Value < num)
 				{
 					this.GrowLowRockFormationFrom(current, map);
 				}
@@ -40,6 +41,7 @@ namespace RimWorld
 			ThingDef rockRubble = ThingDefOf.RockRubble;
 			ThingDef mineableThing = Find.World.NaturalRockTypesIn(map.Tile).RandomElement<ThingDef>().building.mineableThing;
 			Rot4 random = Rot4.Random;
+			MapGenFloatGrid elevation = MapGenerator.Elevation;
 			IntVec3 intVec = root;
 			while (true)
 			{
@@ -51,7 +53,7 @@ namespace RimWorld
 					{
 						break;
 					}
-					if (MapGenerator.Elevation[intVec] > 0.55f)
+					if (elevation[intVec] > 0.55f)
 					{
 						return;
 					}

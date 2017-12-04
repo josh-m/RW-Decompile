@@ -28,6 +28,14 @@ namespace Verse
 		[Unsaved]
 		public float coverageAbs;
 
+		public bool IsCorePart
+		{
+			get
+			{
+				return this.parent == null;
+			}
+		}
+
 		public override string ToString()
 		{
 			return string.Concat(new object[]
@@ -65,6 +73,15 @@ namespace Verse
 				{
 					yield return record;
 				}
+			}
+		}
+
+		[DebuggerHidden]
+		public IEnumerable<BodyPartRecord> GetDirectChildParts()
+		{
+			for (int i = 0; i < this.parts.Count; i++)
+			{
+				yield return this.parts[i];
 			}
 		}
 

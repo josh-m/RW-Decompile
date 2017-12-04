@@ -7,6 +7,8 @@ namespace RimWorld
 	{
 		public Type workerClass = typeof(SitePartWorker);
 
+		public string descriptionDialogue;
+
 		[Unsaved]
 		private SitePartWorker workerInt;
 

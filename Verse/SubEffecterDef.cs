@@ -36,7 +36,7 @@ namespace Verse
 
 		public SoundDef soundDef;
 
-		public int intermittentSoundInterval = 50;
+		public IntRange intermittentSoundInterval = new IntRange(300, 600);
 
 		public int ticksBeforeSustainerStart;
 

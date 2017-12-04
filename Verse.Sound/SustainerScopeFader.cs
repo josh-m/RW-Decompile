@@ -4,13 +4,13 @@ namespace Verse.Sound
 {
 	public class SustainerScopeFader
 	{
-		private const float ScopeMatchFallRate = 0.03f;
-
-		private const float ScopeMatchRiseRate = 0.05f;
-
 		public bool inScope = true;
 
 		public float inScopePercent = 1f;
+
+		private const float ScopeMatchFallRate = 0.03f;
+
+		private const float ScopeMatchRiseRate = 0.05f;
 
 		public void SustainerScopeUpdate()
 		{

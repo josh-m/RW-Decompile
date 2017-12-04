@@ -32,7 +32,7 @@ namespace RimWorld
 		[DebuggerHidden]
 		public override IEnumerable<StatDrawEntry> SpecialDisplayStats(ThingDef parentDef)
 		{
-			yield return new StatDrawEntry(StatCategoryDefOf.Basics, this.need.LabelCap, this.offset.ToStringPercent(), 0);
+			yield return new StatDrawEntry(StatCategoryDefOf.Basics, this.need.LabelCap, this.offset.ToStringPercent(), 0, string.Empty);
 		}
 	}
 }

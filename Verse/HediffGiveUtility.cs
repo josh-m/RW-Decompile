@@ -27,7 +27,7 @@ namespace Verse
 						select p;
 					}
 					source = from p in source
-					where !pawn.health.hediffSet.HasHediff(hediff, p) && !pawn.health.hediffSet.PartOrAnyAncestorHasDirectlyAddedParts(p)
+					where !pawn.health.hediffSet.HasHediff(hediff, p, false) && !pawn.health.hediffSet.PartOrAnyAncestorHasDirectlyAddedParts(p)
 					select p;
 					if (!source.Any<BodyPartRecord>())
 					{
@@ -44,7 +44,7 @@ namespace Verse
 				}
 				return result;
 			}
-			if (!pawn.health.hediffSet.HasHediff(hediff))
+			if (!pawn.health.hediffSet.HasHediff(hediff, false))
 			{
 				Hediff hediff3 = HediffMaker.MakeHediff(hediff, pawn, null);
 				pawn.health.AddHediff(hediff3, null, null);

@@ -94,7 +94,7 @@ namespace RimWorld
 			if (accepted)
 			{
 				label = "LetterLabelAcceptedProposal".Translate();
-				textLetterDef = LetterDefOf.Good;
+				textLetterDef = LetterDefOf.PositiveEvent;
 				stringBuilder.AppendLine("LetterAcceptedProposal".Translate(new object[]
 				{
 					initiator,
@@ -104,7 +104,7 @@ namespace RimWorld
 			else
 			{
 				label = "LetterLabelRejectedProposal".Translate();
-				textLetterDef = LetterDefOf.BadNonUrgent;
+				textLetterDef = LetterDefOf.NegativeEvent;
 				stringBuilder.AppendLine("LetterRejectedProposal".Translate(new object[]
 				{
 					initiator,

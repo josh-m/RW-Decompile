@@ -12,7 +12,7 @@ namespace RimWorld
 			{
 				return pawn.CurJob;
 			}
-			return null;
+			return new Job(JobDefOf.LayDown, pawn.Position);
 		}
 	}
 }

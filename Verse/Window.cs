@@ -7,8 +7,6 @@ namespace Verse
 {
 	public abstract class Window
 	{
-		protected const float StandardMargin = 18f;
-
 		public WindowLayer layer = WindowLayer.Dialog;
 
 		public string optionalTitle;
@@ -50,6 +48,8 @@ namespace Verse
 		public SoundDef soundAmbient;
 
 		public bool silenceAmbientSound;
+
+		protected const float StandardMargin = 18f;
 
 		protected readonly Vector2 CloseButSize = new Vector2(120f, 40f);
 
@@ -165,6 +165,7 @@ namespace Verse
 			Rect winRect = this.windowRect.AtZero();
 			this.windowRect = GUI.Window(this.ID, this.windowRect, delegate(int x)
 			{
+				UnityGUIBugsFixer.OnGUI();
 				Find.WindowStack.currentlyDrawnWindow = this;
 				if (this.doWindowBackground)
 				{

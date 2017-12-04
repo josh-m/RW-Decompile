@@ -10,14 +10,6 @@ namespace Verse.Sound
 
 		private SoundParams externalParams = new SoundParams();
 
-		public override Map Map
-		{
-			get
-			{
-				return this.info.Maker.Map;
-			}
-		}
-
 		public override float ParentStartRealTime
 		{
 			get
@@ -50,11 +42,11 @@ namespace Verse.Sound
 			}
 		}
 
-		protected override bool TestPlaying
+		public override SoundInfo Info
 		{
 			get
 			{
-				return this.info.testPlay;
+				return this.info;
 			}
 		}
 
@@ -85,8 +77,8 @@ namespace Verse.Sound
 				return null;
 			}
 			sampleOneShot.source.clip = clip;
-			sampleOneShot.source.volume = sampleOneShot.resolvedVolume * info.volumeFactor;
-			sampleOneShot.source.pitch = sampleOneShot.resolvedPitch * info.pitchFactor;
+			sampleOneShot.source.volume = sampleOneShot.SanitizedVolume;
+			sampleOneShot.source.pitch = sampleOneShot.SanitizedPitch;
 			sampleOneShot.source.minDistance = sampleOneShot.subDef.distRange.TrueMin;
 			sampleOneShot.source.maxDistance = sampleOneShot.subDef.distRange.TrueMax;
 			if (!def.onCamera)
@@ -108,7 +100,7 @@ namespace Verse.Sound
 			{
 				sampleOneShot.externalParams[current.Key] = current.Value;
 			}
-			sampleOneShot.ApplyMappedParameters();
+			sampleOneShot.Update();
 			sampleOneShot.source.Play();
 			Find.SoundRoot.oneShotManager.TryAddPlayingOneShot(sampleOneShot);
 			return sampleOneShot;

@@ -10,8 +10,6 @@ namespace RimWorld
 	[StaticConstructorOnStartup]
 	public class WorldTargeter
 	{
-		private const float BaseFeedbackTexSize = 0.8f;
-
 		private Func<GlobalTargetInfo, bool> action;
 
 		private bool canTargetTiles;
@@ -23,6 +21,8 @@ namespace RimWorld
 		private Action onUpdate;
 
 		private Func<GlobalTargetInfo, string> extraLabelGetter;
+
+		private const float BaseFeedbackTexSize = 0.8f;
 
 		public bool IsTargeting
 		{

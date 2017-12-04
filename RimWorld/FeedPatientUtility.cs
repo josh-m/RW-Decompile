@@ -11,14 +11,7 @@ namespace RimWorld
 			{
 				return false;
 			}
-			if (p.RaceProps.Humanlike)
-			{
-				if (p.Faction != Faction.OfPlayer && p.HostFaction != Faction.OfPlayer)
-				{
-					return false;
-				}
-			}
-			else
+			if (p.NonHumanlikeOrWildMan())
 			{
 				Building_Bed building_Bed = p.CurrentBed();
 				if (building_Bed == null || building_Bed.Faction != Faction.OfPlayer)
@@ -26,11 +19,22 @@ namespace RimWorld
 					return false;
 				}
 			}
-			if (!HealthAIUtility.ShouldSeekMedicalRest(p))
+			else
+			{
+				if (p.Faction != Faction.OfPlayer && p.HostFaction != Faction.OfPlayer)
+				{
+					return false;
+				}
+				if (!p.InBed())
+				{
+					return false;
+				}
+			}
+			if (!p.RaceProps.EatsFood)
 			{
 				return false;
 			}
-			if (!p.RaceProps.EatsFood)
+			if (!HealthAIUtility.ShouldSeekMedicalRest(p))
 			{
 				return false;
 			}

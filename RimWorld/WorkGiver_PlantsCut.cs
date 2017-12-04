@@ -16,6 +16,11 @@ namespace RimWorld
 			}
 		}
 
+		public override Danger MaxPathDanger(Pawn pawn)
+		{
+			return Danger.Deadly;
+		}
+
 		[DebuggerHidden]
 		public override IEnumerable<Thing> PotentialWorkThingsGlobal(Pawn pawn)
 		{
@@ -36,7 +41,8 @@ namespace RimWorld
 			{
 				return null;
 			}
-			if (!pawn.CanReserve(t, 1, -1, null, false))
+			LocalTargetInfo target = t;
+			if (!pawn.CanReserve(target, 1, -1, null, forced))
 			{
 				return null;
 			}

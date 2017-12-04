@@ -21,8 +21,11 @@ namespace RimWorld
 				{
 					return;
 				}
-				int amount = Rand.RangeInclusive(1, 5);
-				pawn.TakeDamage(new DamageInfo(DamageDefOf.Flame, amount, -1f, user, brain, this.parent.def, DamageInfo.SourceCategory.ThingOrUnknown));
+				int num = Rand.RangeInclusive(1, 5);
+				Thing arg_6B_0 = pawn;
+				DamageDef flame = DamageDefOf.Flame;
+				int amount = num;
+				arg_6B_0.TakeDamage(new DamageInfo(flame, amount, -1f, user, brain, this.parent.def, DamageInfo.SourceCategory.ThingOrUnknown));
 			}
 		}
 	}

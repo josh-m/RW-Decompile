@@ -44,6 +44,8 @@ namespace Verse
 
 		public PlayLog playLog = new PlayLog();
 
+		public BattleLog battleLog = new BattleLog();
+
 		public OutfitDatabase outfitDatabase = new OutfitDatabase();
 
 		public DrugPolicyDatabase drugPolicyDatabase = new DrugPolicyDatabase();
@@ -55,6 +57,8 @@ namespace Verse
 		public Autosaver autosaver = new Autosaver();
 
 		public DateNotifier dateNotifier = new DateNotifier();
+
+		public SignalManager signalManager = new SignalManager();
 
 		public Scenario Scenario
 		{
@@ -254,12 +258,20 @@ namespace Verse
 			Scribe_Deep.Look<History>(ref this.history, "history", new object[0]);
 			Scribe_Deep.Look<TaleManager>(ref this.taleManager, "taleManager", new object[0]);
 			Scribe_Deep.Look<PlayLog>(ref this.playLog, "playLog", new object[0]);
+			Scribe_Deep.Look<BattleLog>(ref this.battleLog, "battleLog", new object[0]);
 			Scribe_Deep.Look<OutfitDatabase>(ref this.outfitDatabase, "outfitDatabase", new object[0]);
 			Scribe_Deep.Look<DrugPolicyDatabase>(ref this.drugPolicyDatabase, "drugPolicyDatabase", new object[0]);
 			Scribe_Deep.Look<Tutor>(ref this.tutor, "tutor", new object[0]);
 			Scribe_Deep.Look<DateNotifier>(ref this.dateNotifier, "dateNotifier", new object[0]);
-			Scribe_Collections.Look<GameComponent>(ref this.components, "components", LookMode.Deep, new object[0]);
-			this.FillComponents();
+			Scribe_Collections.Look<GameComponent>(ref this.components, "components", LookMode.Deep, new object[]
+			{
+				this
+			});
+			if (Scribe.mode == LoadSaveMode.LoadingVars)
+			{
+				this.FillComponents();
+				BackCompatibility.GameLoadingVars(this);
+			}
 		}
 
 		private void FillComponents()
@@ -509,6 +521,7 @@ namespace Verse
 					{
 						this.VisibleMap = null;
 					}
+					Find.World.renderer.wantedMode = WorldRenderMode.Planet;
 				}
 				else
 				{

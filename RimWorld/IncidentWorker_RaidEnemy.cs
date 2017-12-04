@@ -12,9 +12,9 @@ namespace RimWorld
 			return base.FactionCanBeGroupSource(f, map, desperate) && f.HostileTo(Faction.OfPlayer) && (desperate || (float)GenDate.DaysPassed >= f.def.earliestRaidDays);
 		}
 
-		public override bool TryExecute(IncidentParms parms)
+		protected override bool TryExecuteWorker(IncidentParms parms)
 		{
-			if (!base.TryExecute(parms))
+			if (!base.TryExecuteWorker(parms))
 			{
 				return false;
 			}
@@ -30,23 +30,12 @@ namespace RimWorld
 			{
 				return true;
 			}
-			float maxPoints = parms.points;
-			if (maxPoints <= 0f)
+			float num = parms.points;
+			if (num <= 0f)
 			{
-				maxPoints = 999999f;
+				num = 999999f;
 			}
-			if (!(from f in Find.FactionManager.AllFactions
-			where this.FactionCanBeGroupSource(f, map, false) && maxPoints >= f.def.MinPointsToGenerateNormalPawnGroup()
-			select f).TryRandomElementByWeight((Faction f) => f.def.raidCommonality, out parms.faction))
-			{
-				if (!(from f in Find.FactionManager.AllFactions
-				where this.FactionCanBeGroupSource(f, map, true) && maxPoints >= f.def.MinPointsToGenerateNormalPawnGroup()
-				select f).TryRandomElementByWeight((Faction f) => f.def.raidCommonality, out parms.faction))
-				{
-					return false;
-				}
-			}
-			return true;
+			return PawnGroupMakerUtility.TryGetRandomFactionForNormalPawnGroup(num, out parms.faction, (Faction f) => this.FactionCanBeGroupSource(f, map, false), true, true, true, true) || PawnGroupMakerUtility.TryGetRandomFactionForNormalPawnGroup(num, out parms.faction, (Faction f) => this.FactionCanBeGroupSource(f, map, true), true, true, true, true);
 		}
 
 		protected override void ResolveRaidPoints(IncidentParms parms)
@@ -78,29 +67,36 @@ namespace RimWorld
 		protected override string GetLetterText(IncidentParms parms, List<Pawn> pawns)
 		{
 			string text = null;
-			switch (parms.raidArrivalMode)
+			PawnsArriveMode raidArrivalMode = parms.raidArrivalMode;
+			if (raidArrivalMode != PawnsArriveMode.EdgeWalkIn)
 			{
-			case PawnsArriveMode.EdgeWalkIn:
+				if (raidArrivalMode != PawnsArriveMode.EdgeDrop)
+				{
+					if (raidArrivalMode == PawnsArriveMode.CenterDrop)
+					{
+						text = "EnemyRaidCenterDrop".Translate(new object[]
+						{
+							parms.faction.def.pawnsPlural,
+							parms.faction.Name
+						});
+					}
+				}
+				else
+				{
+					text = "EnemyRaidEdgeDrop".Translate(new object[]
+					{
+						parms.faction.def.pawnsPlural,
+						parms.faction.Name
+					});
+				}
+			}
+			else
+			{
 				text = "EnemyRaidWalkIn".Translate(new object[]
 				{
 					parms.faction.def.pawnsPlural,
 					parms.faction.Name
 				});
-				break;
-			case PawnsArriveMode.EdgeDrop:
-				text = "EnemyRaidEdgeDrop".Translate(new object[]
-				{
-					parms.faction.def.pawnsPlural,
-					parms.faction.Name
-				});
-				break;
-			case PawnsArriveMode.CenterDrop:
-				text = "EnemyRaidCenterDrop".Translate(new object[]
-				{
-					parms.faction.def.pawnsPlural,
-					parms.faction.Name
-				});
-				break;
 			}
 			text += "\n\n";
 			text += parms.raidStrategy.arrivalTextEnemy;
@@ -119,7 +115,7 @@ namespace RimWorld
 
 		protected override LetterDef GetLetterDef()
 		{
-			return LetterDefOf.BadUrgent;
+			return LetterDefOf.ThreatBig;
 		}
 
 		protected override string GetRelatedPawnsInfoLetterText(IncidentParms parms)

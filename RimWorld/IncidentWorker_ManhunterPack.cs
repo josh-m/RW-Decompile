@@ -12,7 +12,7 @@ namespace RimWorld
 
 		private const int AnimalsStayDurationMax = 135000;
 
-		public override bool TryExecute(IncidentParms parms)
+		protected override bool TryExecuteWorker(IncidentParms parms)
 		{
 			Map map = (Map)parms.target;
 			PawnKindDef pawnKindDef;
@@ -37,8 +37,8 @@ namespace RimWorld
 			}
 			Find.LetterStack.ReceiveLetter("LetterLabelManhunterPackArrived".Translate(), "ManhunterPackArrived".Translate(new object[]
 			{
-				pawnKindDef.label
-			}), LetterDefOf.BadUrgent, list[0], null);
+				pawnKindDef.GetLabelPlural(-1)
+			}), LetterDefOf.ThreatBig, list[0], null);
 			Find.TickManager.slower.SignalForceNormalSpeedShort();
 			LessonAutoActivator.TeachOpportunity(ConceptDefOf.ForbiddingDoors, OpportunityType.Critical);
 			LessonAutoActivator.TeachOpportunity(ConceptDefOf.AllowedAreas, OpportunityType.Important);

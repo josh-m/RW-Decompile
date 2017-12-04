@@ -29,7 +29,7 @@ namespace Verse.AI
 				Log.Error("BestAttackTarget with " + searcher + " who has no attack verb.");
 				return null;
 			}
-			bool onlyTargetMachines = verb != null && verb.verbProps.projectileDef != null && verb.verbProps.projectileDef.projectile.damageDef == DamageDefOf.EMP;
+			bool onlyTargetMachines = verb != null && verb.IsEMP();
 			float minDistanceSquared = minDist * minDist;
 			float num = maxTravelRadiusFromLocus + verb.verbProps.range;
 			float maxLocusDistSquared = num * num;
@@ -38,7 +38,7 @@ namespace Verse.AI
 			{
 				losValidator = delegate(IntVec3 vec3)
 				{
-					Thing gas = vec3.GetGas(searcherThing.Map);
+					Gas gas = vec3.GetGas(searcherThing.Map);
 					return gas == null || !gas.def.gas.blockTurretTracking;
 				};
 			}
@@ -100,6 +100,31 @@ namespace Verse.AI
 						return false;
 					}
 				}
+				if (thing.def.size.x == 1 && thing.def.size.z == 1)
+				{
+					if (thing.Position.Fogged(thing.Map))
+					{
+						return false;
+					}
+				}
+				else
+				{
+					bool flag2 = false;
+					CellRect.CellRectIterator iterator = thing.OccupiedRect().GetIterator();
+					while (!iterator.Done())
+					{
+						if (!iterator.Current.Fogged(thing.Map))
+						{
+							flag2 = true;
+							break;
+						}
+						iterator.MoveNext();
+					}
+					if (!flag2)
+					{
+						return false;
+					}
+				}
 				return true;
 			};
 			if (AttackTargetFinder.HasRangedAttack(searcher))
@@ -141,23 +166,28 @@ namespace Verse.AI
 					{
 						validator2 = ((Thing t) => innerValidator((IAttackTarget)t));
 					}
-					result = (IAttackTarget)GenClosest.ClosestThing_Global(searcherThing.Position, AttackTargetFinder.tmpTargets, maxDist, validator2);
+					result = (IAttackTarget)GenClosest.ClosestThing_Global(searcherThing.Position, AttackTargetFinder.tmpTargets, maxDist, validator2, null);
 				}
 				AttackTargetFinder.tmpTargets.Clear();
 				return result;
 			}
-			if (searcherPawn != null && searcherPawn.mindState.duty != null && searcherPawn.mindState.duty.radius > 0f)
+			if (searcherPawn != null && searcherPawn.mindState.duty != null && searcherPawn.mindState.duty.radius > 0f && !searcherPawn.InMentalState)
 			{
 				Predicate<IAttackTarget> oldValidator = innerValidator;
 				innerValidator = ((IAttackTarget t) => oldValidator(t) && t.Thing.Position.InHorDistOf(searcherPawn.mindState.duty.focus.Cell, searcherPawn.mindState.duty.radius));
 			}
-			int searchRegionsMax = (maxDist <= 800f) ? 40 : -1;
-			IntVec3 arg_415_0 = searcherThing.Position;
-			Map arg_415_1 = searcherThing.Map;
-			ThingRequest arg_415_2 = ThingRequest.ForGroup(ThingRequestGroup.AttackTarget);
-			PathEndMode arg_415_3 = PathEndMode.Touch;
+			IntVec3 position = searcherThing.Position;
+			Map map = searcherThing.Map;
+			ThingRequest thingReq = ThingRequest.ForGroup(ThingRequestGroup.AttackTarget);
+			PathEndMode peMode = PathEndMode.Touch;
+			Pawn searcherPawn2 = searcherPawn;
+			Danger maxDanger = Danger.Deadly;
 			bool canBash2 = canBash;
-			IAttackTarget attackTarget2 = (IAttackTarget)GenClosest.ClosestThingReachable(arg_415_0, arg_415_1, arg_415_2, arg_415_3, TraverseParms.For(searcherPawn, Danger.Deadly, TraverseMode.ByPawn, canBash2), maxDist, (Thing x) => innerValidator((IAttackTarget)x), null, 0, searchRegionsMax, false, RegionType.Set_Passable, false);
+			TraverseParms traverseParams = TraverseParms.For(searcherPawn2, maxDanger, TraverseMode.ByPawn, canBash2);
+			float maxDist2 = maxDist;
+			Predicate<Thing> validator3 = (Thing x) => innerValidator((IAttackTarget)x);
+			int searchRegionsMax = (maxDist <= 800f) ? 40 : -1;
+			IAttackTarget attackTarget2 = (IAttackTarget)GenClosest.ClosestThingReachable(position, map, thingReq, peMode, traverseParams, maxDist2, validator3, null, 0, searchRegionsMax, false, RegionType.Set_Passable, false);
 			if (attackTarget2 != null && PawnUtility.ShouldCollideWithPawns(searcherPawn))
 			{
 				IAttackTarget attackTarget3 = AttackTargetFinder.FindBestReachableMeleeTarget(innerValidator, searcherPawn, maxDist, canBash);
@@ -257,7 +287,7 @@ namespace Verse.AI
 					}
 				}
 				return reachableTarget != null;
-			}, false);
+			}, 2147483647, false, null);
 			return reachableTarget;
 		}
 

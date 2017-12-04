@@ -16,7 +16,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return (Pawn)base.CurJob.GetTarget(TargetIndex.A).Thing;
+				return (Pawn)this.job.GetTarget(TargetIndex.A).Thing;
 			}
 		}
 
@@ -24,23 +24,26 @@ namespace RimWorld
 		{
 			get
 			{
-				return base.CurJob.GetTarget(TargetIndex.B).Thing;
+				return this.job.GetTarget(TargetIndex.B).Thing;
 			}
+		}
+
+		public override bool TryMakePreToilReservations()
+		{
+			return this.pawn.Reserve(this.Patient, this.job, 1, -1, null) && (this.Chair == null || this.pawn.Reserve(this.Chair, this.job, 1, -1, null));
 		}
 
 		[DebuggerHidden]
 		protected override IEnumerable<Toil> MakeNewToils()
 		{
 			this.FailOnDespawnedNullOrForbidden(TargetIndex.A);
-			this.FailOn(() => !this.<>f__this.Patient.InBed() || !this.<>f__this.Patient.Awake());
+			this.FailOn(() => !this.$this.Patient.InBed() || !this.$this.Patient.Awake());
 			if (this.Chair != null)
 			{
 				this.FailOnDespawnedNullOrForbidden(TargetIndex.B);
 			}
-			yield return Toils_Reserve.Reserve(TargetIndex.A, 1, -1, null);
 			if (this.Chair != null)
 			{
-				yield return Toils_Reserve.Reserve(TargetIndex.B, 1, -1, null);
 				yield return Toils_Goto.GotoThing(TargetIndex.B, PathEndMode.OnCell);
 			}
 			else
@@ -52,23 +55,24 @@ namespace RimWorld
 			{
 				tickAction = delegate
 				{
-					this.<>f__this.Patient.needs.joy.GainJoy(this.<>f__this.CurJob.def.joyGainRate * 0.000144f, this.<>f__this.CurJob.def.joyKind);
-					if (this.<>f__this.pawn.IsHashIntervalTick(320))
+					this.$this.Patient.needs.joy.GainJoy(this.$this.job.def.joyGainRate * 0.000144f, this.$this.job.def.joyKind);
+					if (this.$this.pawn.IsHashIntervalTick(320))
 					{
 						InteractionDef intDef = (Rand.Value >= 0.8f) ? InteractionDefOf.DeepTalk : InteractionDefOf.Chitchat;
-						this.<>f__this.pawn.interactions.TryInteractWith(this.<>f__this.Patient, intDef);
+						this.$this.pawn.interactions.TryInteractWith(this.$this.Patient, intDef);
 					}
-					this.<>f__this.pawn.Drawer.rotator.FaceCell(this.<>f__this.Patient.Position);
-					this.<>f__this.pawn.GainComfortFromCellIfPossible();
-					JoyUtility.JoyTickCheckEnd(this.<>f__this.pawn, JoyTickFullJoyAction.None, 1f);
-					if (this.<>f__this.pawn.needs.joy.CurLevelPercentage > 0.9999f && this.<>f__this.Patient.needs.joy.CurLevelPercentage > 0.9999f)
+					this.$this.pawn.rotationTracker.FaceCell(this.$this.Patient.Position);
+					this.$this.pawn.GainComfortFromCellIfPossible();
+					JoyUtility.JoyTickCheckEnd(this.$this.pawn, JoyTickFullJoyAction.None, 1f);
+					if (this.$this.pawn.needs.joy.CurLevelPercentage > 0.9999f && this.$this.Patient.needs.joy.CurLevelPercentage > 0.9999f)
 					{
-						this.<>f__this.pawn.jobs.EndCurrentJob(JobCondition.Succeeded, true);
+						this.$this.pawn.jobs.EndCurrentJob(JobCondition.Succeeded, true);
 					}
 				},
+				handlingFacing = true,
 				socialMode = RandomSocialMode.Off,
 				defaultCompleteMode = ToilCompleteMode.Delay,
-				defaultDuration = base.CurJob.def.joyDuration
+				defaultDuration = this.job.def.joyDuration
 			};
 		}
 	}

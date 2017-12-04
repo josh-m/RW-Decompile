@@ -40,14 +40,6 @@ namespace RimWorld
 			}
 		}
 
-		public override string TipDescription
-		{
-			get
-			{
-				return this.ThingDef.description;
-			}
-		}
-
 		public override bool Interactive
 		{
 			get
@@ -61,6 +53,18 @@ namespace RimWorld
 			get
 			{
 				return TransferablePositiveCountDirection.Destination;
+			}
+		}
+
+		public override string TipDescription
+		{
+			get
+			{
+				if (!this.HasAnyThing)
+				{
+					return string.Empty;
+				}
+				return this.AnyThing.GetDescription();
 			}
 		}
 

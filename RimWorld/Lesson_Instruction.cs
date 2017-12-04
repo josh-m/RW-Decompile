@@ -7,11 +7,11 @@ namespace RimWorld
 {
 	public abstract class Lesson_Instruction : Lesson
 	{
+		public InstructionDef def;
+
 		private const float RectWidth = 310f;
 
 		private const float BarHeight = 30f;
-
-		public InstructionDef def;
 
 		protected Map Map
 		{
@@ -42,6 +42,14 @@ namespace RimWorld
 			get
 			{
 				return this.def.rejectInputMessage;
+			}
+		}
+
+		public override InstructionDef Instruction
+		{
+			get
+			{
+				return this.def;
 			}
 		}
 

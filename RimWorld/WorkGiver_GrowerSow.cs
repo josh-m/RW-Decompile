@@ -7,12 +7,22 @@ namespace RimWorld
 {
 	public class WorkGiver_GrowerSow : WorkGiver_Grower
 	{
+		protected static string CantSowCavePlantBecauseOfLightTrans;
+
+		protected static string CantSowCavePlantBecauseUnroofedTrans;
+
 		public override PathEndMode PathEndMode
 		{
 			get
 			{
 				return PathEndMode.ClosestTouch;
 			}
+		}
+
+		public static void Reset()
+		{
+			WorkGiver_GrowerSow.CantSowCavePlantBecauseOfLightTrans = "CantSowCavePlantBecauseOfLight".Translate();
+			WorkGiver_GrowerSow.CantSowCavePlantBecauseUnroofedTrans = "CantSowCavePlantBecauseUnroofed".Translate();
 		}
 
 		protected override bool ExtraRequirements(IPlantToGrowSettable settable, Pawn pawn)
@@ -41,23 +51,25 @@ namespace RimWorld
 
 		public override Job JobOnCell(Pawn pawn, IntVec3 c)
 		{
+			Map map = pawn.Map;
 			if (c.IsForbidden(pawn))
 			{
 				return null;
 			}
-			if (!GenPlant.GrowthSeasonNow(c, pawn.Map))
+			if (!GenPlant.GrowthSeasonNow(c, map))
 			{
 				return null;
 			}
 			if (WorkGiver_Grower.wantedPlantDef == null)
 			{
-				WorkGiver_Grower.wantedPlantDef = WorkGiver_Grower.CalculateWantedPlantDef(c, pawn.Map);
+				WorkGiver_Grower.wantedPlantDef = WorkGiver_Grower.CalculateWantedPlantDef(c, map);
 				if (WorkGiver_Grower.wantedPlantDef == null)
 				{
 					return null;
 				}
 			}
-			List<Thing> thingList = c.GetThingList(pawn.Map);
+			List<Thing> thingList = c.GetThingList(map);
+			bool flag = false;
 			for (int i = 0; i < thingList.Count; i++)
 			{
 				Thing thing = thingList[i];
@@ -67,10 +79,31 @@ namespace RimWorld
 				}
 				if ((thing is Blueprint || thing is Frame) && thing.Faction == pawn.Faction)
 				{
+					flag = true;
+				}
+			}
+			if (flag)
+			{
+				Thing edifice = c.GetEdifice(map);
+				if (edifice == null || edifice.def.fertility < 0f)
+				{
 					return null;
 				}
 			}
-			Plant plant = c.GetPlant(pawn.Map);
+			if (WorkGiver_Grower.wantedPlantDef.plant.cavePlant)
+			{
+				if (!c.Roofed(map))
+				{
+					JobFailReason.Is(WorkGiver_GrowerSow.CantSowCavePlantBecauseUnroofedTrans);
+					return null;
+				}
+				if (map.glowGrid.GameGlowAt(c, true) > 0f)
+				{
+					JobFailReason.Is(WorkGiver_GrowerSow.CantSowCavePlantBecauseOfLightTrans);
+					return null;
+				}
+			}
+			Plant plant = c.GetPlant(map);
 			if (plant != null && plant.def.plant.blockAdjacentSow)
 			{
 				if (!pawn.CanReserve(plant, 1, -1, null, false) || plant.IsForbidden(pawn))
@@ -81,7 +114,7 @@ namespace RimWorld
 			}
 			else
 			{
-				Thing thing2 = GenPlant.AdjacentSowBlocker(WorkGiver_Grower.wantedPlantDef, c, pawn.Map);
+				Thing thing2 = GenPlant.AdjacentSowBlocker(WorkGiver_Grower.wantedPlantDef, c, map);
 				if (thing2 != null)
 				{
 					Plant plant2 = thing2 as Plant;
@@ -131,7 +164,7 @@ namespace RimWorld
 						j++;
 					}
 				}
-				if (!WorkGiver_Grower.wantedPlantDef.CanEverPlantAt(c, pawn.Map) || !GenPlant.GrowthSeasonNow(c, pawn.Map) || !pawn.CanReserve(c, 1, -1, null, false))
+				if (!WorkGiver_Grower.wantedPlantDef.CanEverPlantAt(c, map) || !GenPlant.GrowthSeasonNow(c, map) || !pawn.CanReserve(c, 1, -1, null, false))
 				{
 					return null;
 				}

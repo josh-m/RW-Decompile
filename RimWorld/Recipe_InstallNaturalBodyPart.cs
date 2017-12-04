@@ -20,7 +20,7 @@ namespace RimWorld
 					BodyPartRecord record = bpList[j];
 					if (record.def == recipePart)
 					{
-						if (pawn.health.hediffSet.hediffs.Any((Hediff x) => x.Part == this.<record>__4))
+						if (pawn.health.hediffSet.hediffs.Any((Hediff x) => x.Part == record))
 						{
 							if (record.parent == null || pawn.health.hediffSet.GetNotMissingParts(BodyPartHeight.Undefined, BodyPartDepth.Undefined).Contains(record.parent))
 							{
@@ -35,11 +35,11 @@ namespace RimWorld
 			}
 		}
 
-		public override void ApplyOnPawn(Pawn pawn, BodyPartRecord part, Pawn billDoer, List<Thing> ingredients)
+		public override void ApplyOnPawn(Pawn pawn, BodyPartRecord part, Pawn billDoer, List<Thing> ingredients, Bill bill)
 		{
 			if (billDoer != null)
 			{
-				if (base.CheckSurgeryFail(billDoer, pawn, ingredients, part))
+				if (base.CheckSurgeryFail(billDoer, pawn, ingredients, part, bill))
 				{
 					return;
 				}

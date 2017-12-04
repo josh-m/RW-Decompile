@@ -33,7 +33,7 @@ namespace Verse
 				{
 				}
 				ILoadReferenceable loadReferenceable;
-				if (this.allObjectsByLoadID.TryGetValue(reffable.GetUniqueLoadID(), out loadReferenceable))
+				if (this.allObjectsByLoadID.TryGetValue(text, out loadReferenceable))
 				{
 					Log.Error(string.Concat(new object[]
 					{

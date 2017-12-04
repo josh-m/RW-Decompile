@@ -82,14 +82,15 @@ namespace RimWorld
 		protected Job TakeFoodForAnimalInteractJob(Pawn pawn, Pawn tamee)
 		{
 			float num = JobDriver_InteractAnimal.RequiredNutritionPerFeed(tamee) * 2f * 4f;
-			Thing thing = FoodUtility.BestFoodSourceOnMap(pawn, tamee, false, FoodPreferability.RawTasty, false, false, false, false, false, false, false);
+			ThingDef thingDef;
+			Thing thing = FoodUtility.BestFoodSourceOnMap(pawn, tamee, false, out thingDef, FoodPreferability.RawTasty, false, false, false, false, false, false, false, false);
 			if (thing == null)
 			{
 				return null;
 			}
 			return new Job(JobDefOf.TakeInventory, thing)
 			{
-				count = Mathf.CeilToInt(num / thing.def.ingestible.nutrition)
+				count = Mathf.CeilToInt(num / thingDef.ingestible.nutrition)
 			};
 		}
 	}

@@ -8,7 +8,8 @@ namespace RimWorld
 	{
 		public override float CalculateCapacityLevel(HediffSet diffSet, List<PawnCapacityUtility.CapacityImpactor> impactors = null)
 		{
-			return PawnCapacityUtility.CalculateTagEfficiency(diffSet, "MetabolismSource", 3.40282347E+38f, impactors);
+			string tag = "MetabolismSource";
+			return PawnCapacityUtility.CalculateTagEfficiency(diffSet, tag, 3.40282347E+38f, impactors);
 		}
 
 		public override bool CanHaveCapacity(BodyDef body)

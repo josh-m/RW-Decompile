@@ -14,7 +14,7 @@ namespace RimWorld
 		{
 			get
 			{
-				Thing thing = base.CurJob.GetTarget(this.TransporterInd).Thing;
+				Thing thing = this.job.GetTarget(this.TransporterInd).Thing;
 				if (thing == null)
 				{
 					return null;
@@ -23,20 +23,24 @@ namespace RimWorld
 			}
 		}
 
+		public override bool TryMakePreToilReservations()
+		{
+			return this.pawn.Reserve(this.job.GetTarget(this.TransporterInd), this.job, 1, -1, null);
+		}
+
 		[DebuggerHidden]
 		protected override IEnumerable<Toil> MakeNewToils()
 		{
 			this.FailOnDespawnedOrNull(this.TransporterInd);
-			this.FailOn(() => !this.<>f__this.Transporter.LoadingInProgressOrReadyToLaunch);
-			yield return Toils_Reserve.Reserve(this.TransporterInd, 1, -1, null);
+			this.FailOn(() => !this.$this.Transporter.LoadingInProgressOrReadyToLaunch);
 			yield return Toils_Goto.GotoThing(this.TransporterInd, PathEndMode.Touch);
 			yield return new Toil
 			{
 				initAction = delegate
 				{
-					CompTransporter transporter = this.<>f__this.Transporter;
-					this.<>f__this.pawn.DeSpawn();
-					transporter.GetDirectlyHeldThings().TryAdd(this.<>f__this.pawn, true);
+					CompTransporter transporter = this.$this.Transporter;
+					this.$this.pawn.DeSpawn();
+					transporter.GetDirectlyHeldThings().TryAdd(this.$this.pawn, true);
 				}
 			};
 		}

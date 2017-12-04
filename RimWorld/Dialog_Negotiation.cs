@@ -6,13 +6,13 @@ namespace RimWorld
 {
 	public class Dialog_Negotiation : Dialog_NodeTree
 	{
-		private const float TitleHeight = 70f;
-
-		private const float InfoHeight = 60f;
-
 		protected Pawn negotiator;
 
 		protected ICommunicable commTarget;
+
+		private const float TitleHeight = 70f;
+
+		private const float InfoHeight = 60f;
 
 		public override Vector2 InitialSize
 		{

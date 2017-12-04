@@ -162,7 +162,7 @@ namespace Verse
 					HediffStage curStage = diffSet.hediffs[j].CurStage;
 					num2 += curStage.partEfficiencyOffset;
 					flag |= curStage.partIgnoreMissingHP;
-					if (curStage.partEfficiencyOffset != 0f && curStage.everVisible && impactors != null)
+					if (curStage.partEfficiencyOffset != 0f && curStage.becomeVisible && impactors != null)
 					{
 						impactors.Add(new PawnCapacityUtility.CapacityImpactorHediff
 						{
@@ -174,14 +174,21 @@ namespace Verse
 			if (!flag)
 			{
 				float num3 = diffSet.GetPartHealth(part) / part.def.GetMaxHealth(diffSet.pawn);
-				if (num3 != 1f && impactors != null)
+				if (num3 != 1f)
 				{
-					impactors.Add(new PawnCapacityUtility.CapacityImpactorBodyPartHealth
+					if (DamageWorker_AddInjury.ShouldReduceDamageToPreservePart(part))
 					{
-						bodyPart = part
-					});
+						num3 = Mathf.InverseLerp(0.1f, 1f, num3);
+					}
+					if (impactors != null)
+					{
+						impactors.Add(new PawnCapacityUtility.CapacityImpactorBodyPartHealth
+						{
+							bodyPart = part
+						});
+					}
+					num *= num3;
 				}
-				num *= num3;
 			}
 			num += num2;
 			if (num > 0.0001f)
@@ -230,13 +237,15 @@ namespace Verse
 			List<PawnCapacityUtility.CapacityImpactor> list = null;
 			foreach (BodyPartRecord current in body.GetPartsWithTag(tag))
 			{
+				BodyPartRecord part = current;
 				List<PawnCapacityUtility.CapacityImpactor> impactors2 = list;
-				float num3 = PawnCapacityUtility.CalculatePartEfficiency(diffSet, current, false, impactors2);
+				float num3 = PawnCapacityUtility.CalculatePartEfficiency(diffSet, part, false, impactors2);
 				if (impactors != null && num3 != 1f && list == null)
 				{
 					list = new List<PawnCapacityUtility.CapacityImpactor>();
+					part = current;
 					impactors2 = list;
-					PawnCapacityUtility.CalculatePartEfficiency(diffSet, current, false, impactors2);
+					PawnCapacityUtility.CalculatePartEfficiency(diffSet, part, false, impactors2);
 				}
 				num += num3;
 				num2++;

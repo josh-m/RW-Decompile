@@ -18,6 +18,8 @@ namespace RimWorld
 
 		public float dessicatedDamagePerDay;
 
+		public bool disableIfHatcher;
+
 		public int TicksToRotStart
 		{
 			get
@@ -51,12 +53,14 @@ namespace RimWorld
 			{
 				yield return e;
 			}
-			if (parentDef.tickerType != TickerType.Rare)
+			if (parentDef.tickerType != TickerType.Normal && parentDef.tickerType != TickerType.Rare)
 			{
 				yield return string.Concat(new object[]
 				{
 					"CompRottable needs tickerType ",
 					TickerType.Rare,
+					" or ",
+					TickerType.Normal,
 					", has ",
 					parentDef.tickerType
 				});

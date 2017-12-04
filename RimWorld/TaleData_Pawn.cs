@@ -34,7 +34,7 @@ namespace RimWorld
 
 		public override IEnumerable<Rule> GetRules(string prefix)
 		{
-			return GrammarUtility.RulesForPawn(prefix, this.name, this.kind, this.gender, this.faction);
+			return GrammarUtility.RulesForPawn(prefix, this.name, this.kind, this.gender, this.faction, null);
 		}
 
 		public static TaleData_Pawn GenerateFrom(Pawn pawn)

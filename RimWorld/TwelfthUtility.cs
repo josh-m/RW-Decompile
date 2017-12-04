@@ -6,71 +6,6 @@ namespace RimWorld
 {
 	public static class TwelfthUtility
 	{
-		public static Season GetSeason(this Twelfth twelfth, float latitude)
-		{
-			if (latitude >= 0f)
-			{
-				switch (twelfth)
-				{
-				case Twelfth.First:
-					return Season.Spring;
-				case Twelfth.Second:
-					return Season.Spring;
-				case Twelfth.Third:
-					return Season.Spring;
-				case Twelfth.Fourth:
-					return Season.Summer;
-				case Twelfth.Fifth:
-					return Season.Summer;
-				case Twelfth.Sixth:
-					return Season.Summer;
-				case Twelfth.Seventh:
-					return Season.Fall;
-				case Twelfth.Eighth:
-					return Season.Fall;
-				case Twelfth.Ninth:
-					return Season.Fall;
-				case Twelfth.Tenth:
-					return Season.Winter;
-				case Twelfth.Eleventh:
-					return Season.Winter;
-				case Twelfth.Twelfth:
-					return Season.Winter;
-				}
-			}
-			else
-			{
-				switch (twelfth)
-				{
-				case Twelfth.First:
-					return Season.Fall;
-				case Twelfth.Second:
-					return Season.Fall;
-				case Twelfth.Third:
-					return Season.Fall;
-				case Twelfth.Fourth:
-					return Season.Winter;
-				case Twelfth.Fifth:
-					return Season.Winter;
-				case Twelfth.Sixth:
-					return Season.Winter;
-				case Twelfth.Seventh:
-					return Season.Spring;
-				case Twelfth.Eighth:
-					return Season.Spring;
-				case Twelfth.Ninth:
-					return Season.Spring;
-				case Twelfth.Tenth:
-					return Season.Summer;
-				case Twelfth.Eleventh:
-					return Season.Summer;
-				case Twelfth.Twelfth:
-					return Season.Summer;
-				}
-			}
-			return Season.Undefined;
-		}
-
 		public static Quadrum GetQuadrum(this Twelfth twelfth)
 		{
 			switch (twelfth)
@@ -125,6 +60,11 @@ namespace RimWorld
 				return Twelfth.Undefined;
 			}
 			return (twelfth + 1) % Twelfth.Undefined;
+		}
+
+		public static float GetMiddleYearPct(this Twelfth twelfth)
+		{
+			return ((float)twelfth + 0.5f) / 12f;
 		}
 
 		public static float GetBeginningYearPct(this Twelfth twelfth)

@@ -43,11 +43,10 @@ namespace Verse.AI
 				pawn.mindState.nextMoveOrderIsWait = false;
 				return null;
 			}
-			pawn.Map.pawnDestinationManager.ReserveDestinationFor(pawn, exactWanderDest);
-			return new Job(JobDefOf.GotoWander, exactWanderDest)
-			{
-				locomotionUrgency = this.locomotionUrgency
-			};
+			Job job = new Job(JobDefOf.GotoWander, exactWanderDest);
+			pawn.Map.pawnDestinationReservationManager.Reserve(pawn, job, exactWanderDest);
+			job.locomotionUrgency = this.locomotionUrgency;
+			return job;
 		}
 
 		protected virtual IntVec3 GetExactWanderDest(Pawn pawn)

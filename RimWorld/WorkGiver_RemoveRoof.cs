@@ -39,8 +39,13 @@ namespace RimWorld
 			{
 				return false;
 			}
+			if (c.IsForbidden(pawn))
+			{
+				return false;
+			}
+			LocalTargetInfo target = c;
 			ReservationLayerDef ceiling = ReservationLayerDefOf.Ceiling;
-			return pawn.CanReserveAndReach(c, PathEndMode.ClosestTouch, pawn.NormalMaxDanger(), 1, -1, ceiling, false);
+			return pawn.CanReserve(target, 1, -1, ceiling, false);
 		}
 
 		public override Job JobOnCell(Pawn pawn, IntVec3 c)

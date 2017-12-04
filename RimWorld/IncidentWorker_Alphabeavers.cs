@@ -5,7 +5,7 @@ namespace RimWorld
 {
 	internal class IncidentWorker_Alphabeavers : IncidentWorker
 	{
-		public override bool TryExecute(IncidentParms parms)
+		protected override bool TryExecuteWorker(IncidentParms parms)
 		{
 			Map map = (Map)parms.target;
 			PawnKindDef alphabeaver = PawnKindDefOf.Alphabeaver;
@@ -21,7 +21,7 @@ namespace RimWorld
 				Pawn newThing = PawnGenerator.GeneratePawn(alphabeaver, null);
 				GenSpawn.Spawn(newThing, loc, map);
 			}
-			Find.LetterStack.ReceiveLetter("LetterLabelBeaversArrived".Translate(), "BeaversArrived".Translate(), LetterDefOf.BadNonUrgent, new TargetInfo(intVec, map, false), null);
+			Find.LetterStack.ReceiveLetter("LetterLabelBeaversArrived".Translate(), "BeaversArrived".Translate(), LetterDefOf.ThreatSmall, new TargetInfo(intVec, map, false), null);
 			return true;
 		}
 	}

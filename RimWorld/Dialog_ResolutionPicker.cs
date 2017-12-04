@@ -37,7 +37,7 @@ namespace RimWorld
 				{
 					if (!ResolutionUtility.UIScaleSafeWithResolution(Prefs.UIScale, current.width, current.height))
 					{
-						Messages.Message("MessageScreenResTooSmallForUIScale".Translate(), MessageSound.RejectInput);
+						Messages.Message("MessageScreenResTooSmallForUIScale".Translate(), MessageTypeDefOf.RejectInput);
 					}
 					else
 					{

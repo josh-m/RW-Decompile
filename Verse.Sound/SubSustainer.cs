@@ -7,8 +7,6 @@ namespace Verse.Sound
 {
 	public class SubSustainer
 	{
-		private const float MinSampleStartInterval = 0.01f;
-
 		public Sustainer parent;
 
 		public SubSoundDef subDef;
@@ -22,6 +20,8 @@ namespace Verse.Sound
 		public int creationTick = -1;
 
 		public float creationRealTime = -1f;
+
+		private const float MinSampleStartInterval = 0.01f;
 
 		public SoundInfo Info
 		{
@@ -124,11 +124,7 @@ namespace Verse.Sound
 			}
 			for (int j = 0; j < this.samples.Count; j++)
 			{
-				this.samples[j].ApplyMappedParameters();
-			}
-			for (int k = 0; k < this.samples.Count; k++)
-			{
-				this.samples[k].UpdateSourceVolume();
+				this.samples[j].Update();
 			}
 		}
 

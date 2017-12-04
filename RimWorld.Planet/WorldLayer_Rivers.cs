@@ -10,11 +10,11 @@ namespace RimWorld.Planet
 {
 	public class WorldLayer_Rivers : WorldLayer_Paths
 	{
+		private Color32 riverColor = new Color32(73, 82, 100, 255);
+
 		private const float PerlinFrequency = 0.6f;
 
 		private const float PerlinMagnitude = 0.1f;
-
-		private Color32 riverColor = new Color32(73, 82, 100, 255);
 
 		private ModuleBase riverDisplacementX = new Perlin(0.60000002384185791, 2.0, 0.5, 3, 84905524, QualityMode.Medium);
 
@@ -55,24 +55,24 @@ namespace RimWorld.Planet
 				{
 					outputs.Clear();
 					outputsBorder.Clear();
-					for (int rc = 0; rc < tile.rivers.Count; rc++)
+					for (int j = 0; j < tile.rivers.Count; j++)
 					{
 						outputs.Add(new WorldLayer_Paths.OutputDirection
 						{
-							neighbor = tile.rivers[rc].neighbor,
-							width = tile.rivers[rc].river.widthOnWorld - 0.2f
+							neighbor = tile.rivers[j].neighbor,
+							width = tile.rivers[j].river.widthOnWorld - 0.2f
 						});
 						outputsBorder.Add(new WorldLayer_Paths.OutputDirection
 						{
-							neighbor = tile.rivers[rc].neighbor,
-							width = tile.rivers[rc].river.widthOnWorld
+							neighbor = tile.rivers[j].neighbor,
+							width = tile.rivers[j].river.widthOnWorld
 						});
 					}
 					base.GeneratePaths(subMesh, i, outputs, this.riverColor, true);
 					base.GeneratePaths(subMeshBorder, i, outputsBorder, this.riverColor, true);
 				}
 			}
-			base.FinalizeMesh(MeshParts.All, false);
+			base.FinalizeMesh(MeshParts.All);
 		}
 
 		public override Vector3 FinalizePoint(Vector3 inp, float distortionFrequency, float distortionIntensity)

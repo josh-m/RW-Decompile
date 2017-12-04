@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Verse;
 
 namespace RimWorld
@@ -20,9 +21,21 @@ namespace RimWorld
 			get;
 		}
 
-		IncidentTargetType Type
+		float PlayerWealthForStoryteller
 		{
 			get;
 		}
+
+		IEnumerable<Pawn> FreeColonistsForStoryteller
+		{
+			get;
+		}
+
+		FloatRange IncidentPointsRandomFactorRange
+		{
+			get;
+		}
+
+		IEnumerable<IncidentTargetTypeDef> AcceptedTypes();
 	}
 }

@@ -5,13 +5,13 @@ namespace RimWorld.BaseGen
 {
 	public class SymbolResolver_AncientShrinesGroup : SymbolResolver
 	{
+		public static readonly IntVec2 StandardAncientShrineSize = new IntVec2(4, 3);
+
 		private const int MaxNumCaskets = 6;
 
 		private const float SkipShrineChance = 0.25f;
 
 		public const int MarginCells = 1;
-
-		public static readonly IntVec2 StandardAncientShrineSize = new IntVec2(4, 3);
 
 		public override void Resolve(ResolveParams rp)
 		{

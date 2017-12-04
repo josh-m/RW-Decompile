@@ -11,6 +11,8 @@ namespace RimWorld
 
 		public bool usuallyDefinedInBackstories = true;
 
+		public bool pawnCreatorSummaryVisible;
+
 		public WorkTags disablingWorkTags;
 
 		public override void PostLoad()

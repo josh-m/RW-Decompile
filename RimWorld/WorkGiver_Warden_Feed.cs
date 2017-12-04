@@ -23,7 +23,7 @@ namespace RimWorld
 			}
 			Thing t2;
 			ThingDef def;
-			if (!FoodUtility.TryFindBestFoodSourceFor(pawn, pawn2, pawn2.needs.food.CurCategory == HungerCategory.Starving, out t2, out def, false, true, false, false, false))
+			if (!FoodUtility.TryFindBestFoodSourceFor(pawn, pawn2, pawn2.needs.food.CurCategory == HungerCategory.Starving, out t2, out def, false, true, false, false, false, false))
 			{
 				JobFailReason.Is("NoFood".Translate());
 				return null;

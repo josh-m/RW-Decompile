@@ -8,7 +8,8 @@ namespace RimWorld
 	{
 		public override void DrawGhost(ThingDef def, IntVec3 center, Rot4 rot)
 		{
-			List<Building> allBuildingsColonist = base.Map.listerBuildings.allBuildingsColonist;
+			Map visibleMap = Find.VisibleMap;
+			List<Building> allBuildingsColonist = visibleMap.listerBuildings.allBuildingsColonist;
 			for (int i = 0; i < allBuildingsColonist.Count; i++)
 			{
 				Building thing = allBuildingsColonist[i];
@@ -18,7 +19,7 @@ namespace RimWorld
 					CompPowerTrader compPowerTrader = thing.TryGetComp<CompPowerTrader>();
 					if (compPowerTrader == null || compPowerTrader.PowerOn)
 					{
-						base.Map.deepResourceGrid.MarkForDraw();
+						visibleMap.deepResourceGrid.MarkForDraw();
 					}
 				}
 			}

@@ -1,5 +1,4 @@
 using System;
-using System.Linq;
 using UnityEngine;
 using Verse;
 
@@ -10,32 +9,19 @@ namespace RimWorld
 	{
 		private const float BarHeight = 16f;
 
-		private const float BarWidth = 93f;
-
-		private const float BarSpacing = 6f;
-
 		private static readonly Texture2D MoodTex;
 
 		private static readonly Texture2D BarBGTex;
 
 		private static readonly Texture2D HealthTex;
 
-		private static bool debug_inspectLengthWarned;
+		private const float BarWidth = 93f;
+
+		private const float BarSpacing = 6f;
 
 		private static bool debug_inspectStringExceptionErrored;
 
-		static InspectPaneFiller()
-		{
-			// Note: this type is marked as 'beforefieldinit'.
-			ColorInt colorInt = new ColorInt(26, 52, 52);
-			InspectPaneFiller.MoodTex = SolidColorMaterials.NewSolidColorTexture(colorInt.ToColor);
-			ColorInt colorInt2 = new ColorInt(10, 10, 10);
-			InspectPaneFiller.BarBGTex = SolidColorMaterials.NewSolidColorTexture(colorInt2.ToColor);
-			ColorInt colorInt3 = new ColorInt(35, 35, 35);
-			InspectPaneFiller.HealthTex = SolidColorMaterials.NewSolidColorTexture(colorInt3.ToColor);
-			InspectPaneFiller.debug_inspectLengthWarned = false;
-			InspectPaneFiller.debug_inspectStringExceptionErrored = false;
-		}
+		private static Vector2 inspectStringScrollPos;
 
 		public static void DoPaneContentsFor(ISelectable sel, Rect rect)
 		{
@@ -61,7 +47,9 @@ namespace RimWorld
 					}
 					num += 18f;
 				}
-				InspectPaneFiller.DrawInspectStringFor(sel, ref num);
+				Rect rect2 = rect.AtZero();
+				rect2.yMin = num;
+				InspectPaneFiller.DrawInspectStringFor(sel, rect2);
 			}
 			catch (Exception ex)
 			{
@@ -172,7 +160,7 @@ namespace RimWorld
 			}
 		}
 
-		public static void DrawInspectStringFor(ISelectable sel, ref float y)
+		public static void DrawInspectStringFor(ISelectable sel, Rect rect)
 		{
 			string text;
 			try
@@ -203,34 +191,27 @@ namespace RimWorld
 			}
 			if (!text.NullOrEmpty() && GenText.ContainsEmptyLines(text))
 			{
-				Log.ErrorOnce("Inspect string for " + sel + " contains empty lines.", 837163521);
+				Log.ErrorOnce(string.Format("Inspect string for {0} contains empty lines.\n\nSTART\n{1}\nEND", sel, text), 837163521);
 			}
-			InspectPaneFiller.DrawInspectString(text, ref y);
-			if (Prefs.DevMode)
-			{
-				text = text.Trim();
-				if (!InspectPaneFiller.debug_inspectLengthWarned)
-				{
-					if (text.Count((char f) => f == '\n') > 5)
-					{
-						Log.ErrorOnce(string.Concat(new object[]
-						{
-							sel,
-							" gave an inspect string over six lines (some may be empty):\n",
-							text,
-							"END"
-						}), 778772);
-						InspectPaneFiller.debug_inspectLengthWarned = true;
-					}
-				}
-			}
+			InspectPaneFiller.DrawInspectString(text, rect);
 		}
 
-		public static void DrawInspectString(string str, ref float y)
+		public static void DrawInspectString(string str, Rect rect)
 		{
 			Text.Font = GameFont.Small;
-			Rect rect = new Rect(0f, y, InspectPaneUtility.PaneInnerSize.x, 200f);
-			Widgets.Label(rect, str);
+			Widgets.LabelScrollable(rect, str, ref InspectPaneFiller.inspectStringScrollPos, true);
+		}
+
+		static InspectPaneFiller()
+		{
+			// Note: this type is marked as 'beforefieldinit'.
+			ColorInt colorInt = new ColorInt(26, 52, 52);
+			InspectPaneFiller.MoodTex = SolidColorMaterials.NewSolidColorTexture(colorInt.ToColor);
+			ColorInt colorInt2 = new ColorInt(10, 10, 10);
+			InspectPaneFiller.BarBGTex = SolidColorMaterials.NewSolidColorTexture(colorInt2.ToColor);
+			ColorInt colorInt3 = new ColorInt(35, 35, 35);
+			InspectPaneFiller.HealthTex = SolidColorMaterials.NewSolidColorTexture(colorInt3.ToColor);
+			InspectPaneFiller.debug_inspectStringExceptionErrored = false;
 		}
 	}
 }

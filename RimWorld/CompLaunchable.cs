@@ -10,13 +10,13 @@ namespace RimWorld
 	[StaticConstructorOnStartup]
 	public class CompLaunchable : ThingComp
 	{
-		private const float FuelPerTile = 2.25f;
-
 		private CompTransporter cachedCompTransporter;
 
 		private static readonly Texture2D TargeterMouseAttachment = ContentFinder<Texture2D>.Get("UI/Overlays/LaunchableMouseAttachment", true);
 
 		private static readonly Texture2D LaunchCommandTex = ContentFinder<Texture2D>.Get("UI/Commands/LaunchShip", true);
+
+		private const float FuelPerTile = 2.25f;
 
 		public Building FuelingPortSource
 		{
@@ -233,18 +233,19 @@ namespace RimWorld
 				launch.defaultLabel = "CommandLaunchGroup".Translate();
 				launch.defaultDesc = "CommandLaunchGroupDesc".Translate();
 				launch.icon = CompLaunchable.LaunchCommandTex;
+				launch.alsoClickIfOtherInGroupClicked = false;
 				launch.action = delegate
 				{
-					if (this.<>f__this.AnyInGroupHasAnythingLeftToLoad)
+					if (this.$this.AnyInGroupHasAnythingLeftToLoad)
 					{
 						Find.WindowStack.Add(Dialog_MessageBox.CreateConfirmation("ConfirmSendNotCompletelyLoadedPods".Translate(new object[]
 						{
-							this.<>f__this.FirstThingLeftToLoadInGroup.LabelCapNoCount
-						}), new Action(this.<>f__this.StartChoosingDestination), false, null));
+							this.$this.FirstThingLeftToLoadInGroup.LabelCapNoCount
+						}), new Action(this.$this.StartChoosingDestination), false, null));
 					}
 					else
 					{
-						this.<>f__this.StartChoosingDestination();
+						this.$this.StartChoosingDestination();
 					}
 				};
 				if (!this.AllInGroupConnectedToFuelingPort)
@@ -319,7 +320,7 @@ namespace RimWorld
 			}
 			if (!target.IsValid)
 			{
-				Messages.Message("MessageTransportPodsDestinationIsInvalid".Translate(), MessageSound.RejectInput);
+				Messages.Message("MessageTransportPodsDestinationIsInvalid".Translate(), MessageTypeDefOf.RejectInput);
 				return false;
 			}
 			int num = Find.WorldGrid.TraversalDistanceBetween(this.parent.Map.Tile, target.Tile);
@@ -328,7 +329,7 @@ namespace RimWorld
 				Messages.Message("MessageTransportPodsDestinationIsTooFar".Translate(new object[]
 				{
 					CompLaunchable.FuelNeededToLaunchAtDist((float)num).ToString("0.#")
-				}), MessageSound.RejectInput);
+				}), MessageTypeDefOf.RejectInput);
 				return false;
 			}
 			MapParent mapParent = target.WorldObject as MapParent;
@@ -337,22 +338,20 @@ namespace RimWorld
 				Map myMap = this.parent.Map;
 				Map map = mapParent.Map;
 				Current.Game.VisibleMap = map;
-				Targeter arg_13B_0 = Find.Targeter;
-				Action actionWhenFinished = delegate
-				{
-					if (Find.Maps.Contains(myMap))
-					{
-						Current.Game.VisibleMap = myMap;
-					}
-				};
-				arg_13B_0.BeginTargeting(TargetingParameters.ForDropPodsDestination(), delegate(LocalTargetInfo x)
+				Find.Targeter.BeginTargeting(TargetingParameters.ForDropPodsDestination(), delegate(LocalTargetInfo x)
 				{
 					if (!this.LoadingInProgressOrReadyToLaunch)
 					{
 						return;
 					}
 					this.TryLaunch(x.ToGlobalTargetInfo(map), PawnsArriveMode.Undecided, false);
-				}, null, actionWhenFinished, CompLaunchable.TargeterMouseAttachment);
+				}, null, delegate
+				{
+					if (Find.Maps.Contains(myMap))
+					{
+						Current.Game.VisibleMap = myMap;
+					}
+				}, CompLaunchable.TargeterMouseAttachment);
 				return true;
 			}
 			bool flag;
@@ -414,7 +413,7 @@ namespace RimWorld
 			}
 			if (Find.World.Impassable(target.Tile))
 			{
-				Messages.Message("MessageTransportPodsDestinationIsInvalid".Translate(), MessageSound.RejectInput);
+				Messages.Message("MessageTransportPodsDestinationIsInvalid".Translate(), MessageTypeDefOf.RejectInput);
 				return false;
 			}
 			this.TryLaunch(target, PawnsArriveMode.Undecided, false);
@@ -455,16 +454,16 @@ namespace RimWorld
 				{
 					fuelingPortSource.TryGetComp<CompRefuelable>().ConsumeFuel(amount);
 				}
-				DropPodLeaving dropPodLeaving = (DropPodLeaving)ThingMaker.MakeThing(ThingDefOf.DropPodLeaving, null);
+				ThingOwner directlyHeldThings = compTransporter.GetDirectlyHeldThings();
+				ActiveDropPod activeDropPod = (ActiveDropPod)ThingMaker.MakeThing(ThingDefOf.ActiveDropPod, null);
+				activeDropPod.Contents = new ActiveDropPodInfo();
+				activeDropPod.Contents.innerContainer.TryAddRangeOrTransfer(directlyHeldThings, true, true);
+				DropPodLeaving dropPodLeaving = (DropPodLeaving)SkyfallerMaker.MakeSkyfaller(ThingDefOf.DropPodLeaving, activeDropPod);
 				dropPodLeaving.groupID = groupID;
 				dropPodLeaving.destinationTile = target.Tile;
 				dropPodLeaving.destinationCell = target.Cell;
 				dropPodLeaving.arriveMode = arriveMode;
 				dropPodLeaving.attackOnArrival = attackOnArrival;
-				ThingOwner directlyHeldThings = compTransporter.GetDirectlyHeldThings();
-				dropPodLeaving.Contents = new ActiveDropPodInfo();
-				dropPodLeaving.Contents.innerContainer.TryAddRange(directlyHeldThings, true);
-				directlyHeldThings.Clear();
 				compTransporter.CleanUpLoadingVars(map);
 				compTransporter.parent.Destroy(DestroyMode.Vanish);
 				GenSpawn.Spawn(dropPodLeaving, compTransporter.parent.Position, map);
@@ -475,7 +474,7 @@ namespace RimWorld
 		{
 			if (this.Transporter.CancelLoad())
 			{
-				Messages.Message("MessageTransportersLoadCanceled_FuelingPortGiverDeSpawned".Translate(), this.parent, MessageSound.Negative);
+				Messages.Message("MessageTransportersLoadCanceled_FuelingPortGiverDeSpawned".Translate(), this.parent, MessageTypeDefOf.NegativeEvent);
 			}
 		}
 

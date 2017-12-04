@@ -1,5 +1,6 @@
 using RimWorld;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Verse
@@ -64,6 +65,57 @@ namespace Verse
 			return newThing;
 		}
 
+		public static void SpawnBuildingAsPossible(Building building, Map map, bool respawningAfterLoad = false)
+		{
+			bool flag = false;
+			foreach (IntVec3 current in building.OccupiedRect())
+			{
+				List<Thing> thingList = current.GetThingList(map);
+				for (int i = 0; i < thingList.Count; i++)
+				{
+					if (thingList[i] is Pawn && building.def.passability == Traversability.Impassable)
+					{
+						flag = true;
+						break;
+					}
+					if ((thingList[i].def.category == ThingCategory.Building || thingList[i].def.category == ThingCategory.Item) && GenSpawn.SpawningWipes(building.def, thingList[i].def))
+					{
+						flag = true;
+						break;
+					}
+				}
+				if (flag)
+				{
+					break;
+				}
+			}
+			if (flag)
+			{
+				bool flag2 = false;
+				if (building.def.Minifiable)
+				{
+					MinifiedThing minifiedThing = building.MakeMinified();
+					if (GenPlace.TryPlaceThing(minifiedThing, building.Position, map, ThingPlaceMode.Near, null))
+					{
+						flag2 = true;
+					}
+					else
+					{
+						minifiedThing.GetDirectlyHeldThings().Clear();
+						minifiedThing.Destroy(DestroyMode.Vanish);
+					}
+				}
+				if (!flag2)
+				{
+					GenLeaving.DoLeavingsFor(building, map, DestroyMode.Refund, building.OccupiedRect());
+				}
+			}
+			else
+			{
+				GenSpawn.Spawn(building, building.Position, map, building.Rotation, respawningAfterLoad);
+			}
+		}
+
 		public static void WipeExistingThings(IntVec3 thingPos, Rot4 thingRot, BuildableDef thingDef, Map map, DestroyMode mode)
 		{
 			foreach (IntVec3 current in GenAdj.CellsOccupiedBy(thingPos, thingRot, thingDef.Size))
@@ -119,6 +171,10 @@ namespace Verse
 				return false;
 			}
 			if (thingDef2.category == ThingCategory.Filth && thingDef.passability != Traversability.Standable)
+			{
+				return true;
+			}
+			if (thingDef2.category == ThingCategory.Item && thingDef.passability == Traversability.Impassable && thingDef.surfaceType == SurfaceType.None)
 			{
 				return true;
 			}

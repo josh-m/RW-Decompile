@@ -7,8 +7,6 @@ namespace RimWorld
 {
 	public class WealthWatcher
 	{
-		private const int MinCountInterval = 5000;
-
 		private Map map;
 
 		private float wealthItems;
@@ -18,6 +16,8 @@ namespace RimWorld
 		private int totalHealth;
 
 		private float lastCountTick = -99999f;
+
+		private const int MinCountInterval = 5000;
 
 		public int HealthTotal
 		{
@@ -89,44 +89,62 @@ namespace RimWorld
 			}
 			foreach (Pawn current in this.map.mapPawns.FreeColonists)
 			{
-				if (current.equipment != null)
+				this.wealthItems += WealthWatcher.GetEquipmentApparelAndInventoryWealth(current);
+			}
+			List<Thing> list2 = this.map.listerThings.ThingsInGroup(ThingRequestGroup.BuildingFrame);
+			for (int j = 0; j < list2.Count; j++)
+			{
+				ThingOwner resourceContainer = ((Frame)list2[j]).resourceContainer;
+				for (int k = 0; k < resourceContainer.Count; k++)
 				{
-					foreach (ThingWithComps current2 in current.equipment.AllEquipmentListForReading)
-					{
-						this.wealthItems += current2.MarketValue;
-					}
-				}
-				if (current.apparel != null)
-				{
-					List<Apparel> wornApparel = current.apparel.WornApparel;
-					for (int j = 0; j < wornApparel.Count; j++)
-					{
-						this.wealthItems += wornApparel[j].MarketValue;
-					}
+					this.wealthItems += (float)resourceContainer[k].stackCount * resourceContainer[k].MarketValue;
 				}
 			}
-			foreach (Frame frame in this.map.listerThings.ThingsInGroup(ThingRequestGroup.BuildingFrame))
+			List<Thing> list3 = this.map.listerThings.ThingsInGroup(ThingRequestGroup.BuildingArtificial);
+			for (int l = 0; l < list3.Count; l++)
 			{
-				foreach (Thing current3 in ((IEnumerable<Thing>)frame.resourceContainer))
-				{
-					this.wealthItems += (float)current3.stackCount * current3.MarketValue;
-				}
-			}
-			List<Thing> list2 = this.map.listerThings.ThingsInGroup(ThingRequestGroup.BuildingArtificial);
-			for (int k = 0; k < list2.Count; k++)
-			{
-				Thing thing2 = list2[k];
+				Thing thing2 = list3[l];
 				if (thing2.Faction == Faction.OfPlayer)
 				{
 					this.wealthBuildings += thing2.MarketValue;
 					this.totalHealth += thing2.HitPoints;
 				}
 			}
-			foreach (Pawn current4 in this.map.mapPawns.FreeColonists)
+			foreach (Pawn current2 in this.map.mapPawns.FreeColonists)
 			{
-				this.totalHealth += Mathf.RoundToInt(current4.health.summaryHealth.SummaryHealthPercent * 100f);
+				this.totalHealth += Mathf.RoundToInt(current2.health.summaryHealth.SummaryHealthPercent * 100f);
 			}
 			this.lastCountTick = (float)Find.TickManager.TicksGame;
+		}
+
+		public static float GetEquipmentApparelAndInventoryWealth(Pawn p)
+		{
+			float num = 0f;
+			if (p.equipment != null)
+			{
+				List<ThingWithComps> allEquipmentListForReading = p.equipment.AllEquipmentListForReading;
+				for (int i = 0; i < allEquipmentListForReading.Count; i++)
+				{
+					num += allEquipmentListForReading[i].MarketValue * (float)allEquipmentListForReading[i].stackCount;
+				}
+			}
+			if (p.apparel != null)
+			{
+				List<Apparel> wornApparel = p.apparel.WornApparel;
+				for (int j = 0; j < wornApparel.Count; j++)
+				{
+					num += wornApparel[j].MarketValue * (float)wornApparel[j].stackCount;
+				}
+			}
+			if (p.inventory != null)
+			{
+				ThingOwner<Thing> innerContainer = p.inventory.innerContainer;
+				for (int k = 0; k < innerContainer.Count; k++)
+				{
+					num += innerContainer[k].MarketValue * (float)innerContainer[k].stackCount;
+				}
+			}
+			return num;
 		}
 	}
 }

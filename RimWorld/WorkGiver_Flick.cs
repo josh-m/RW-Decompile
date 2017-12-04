@@ -8,6 +8,19 @@ namespace RimWorld
 {
 	public class WorkGiver_Flick : WorkGiver_Scanner
 	{
+		public override PathEndMode PathEndMode
+		{
+			get
+			{
+				return PathEndMode.Touch;
+			}
+		}
+
+		public override Danger MaxPathDanger(Pawn pawn)
+		{
+			return Danger.Deadly;
+		}
+
 		[DebuggerHidden]
 		public override IEnumerable<Thing> PotentialWorkThingsGlobal(Pawn pawn)
 		{
@@ -23,7 +36,12 @@ namespace RimWorld
 
 		public override bool HasJobOnThing(Pawn pawn, Thing t, bool forced = false)
 		{
-			return pawn.Map.designationManager.DesignationOn(t, DesignationDefOf.Flick) != null && pawn.CanReserveAndReach(t, PathEndMode.Touch, pawn.NormalMaxDanger(), 1, -1, null, forced);
+			if (pawn.Map.designationManager.DesignationOn(t, DesignationDefOf.Flick) == null)
+			{
+				return false;
+			}
+			LocalTargetInfo target = t;
+			return pawn.CanReserve(target, 1, -1, null, forced);
 		}
 
 		public override Job JobOnThing(Pawn pawn, Thing t, bool forced = false)

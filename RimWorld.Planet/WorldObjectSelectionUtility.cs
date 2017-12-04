@@ -36,9 +36,7 @@ namespace RimWorld.Planet
 
 		public static bool HiddenBehindTerrainNow(this WorldObject o)
 		{
-			Vector3 normalized = o.DrawPos.normalized;
-			Vector3 currentlyLookingAtPointOnSphere = Find.WorldCameraDriver.CurrentlyLookingAtPointOnSphere;
-			return Vector3.Angle(normalized, currentlyLookingAtPointOnSphere) > 73f;
+			return WorldRendererUtility.HiddenBehindTerrainNow(o.DrawPos);
 		}
 
 		public static Vector2 ScreenPos(this WorldObject o)

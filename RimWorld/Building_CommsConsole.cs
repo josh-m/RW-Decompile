@@ -74,13 +74,24 @@ namespace RimWorld
 					item4
 				};
 			}
-			if (!this.CanUseCommsNow)
+			if (myPawn.skills.GetSkill(SkillDefOf.Social).TotallyDisabled)
 			{
-				Log.Error(myPawn + " could not use comm console for unknown reason.");
-				FloatMenuOption item5 = new FloatMenuOption("Cannot use now", null, MenuOptionPriority.Default, null, null, 0f, null, null);
+				FloatMenuOption item5 = new FloatMenuOption("CannotPrioritizeWorkTypeDisabled".Translate(new object[]
+				{
+					SkillDefOf.Social.LabelCap
+				}), null, MenuOptionPriority.Default, null, null, 0f, null, null);
 				return new List<FloatMenuOption>
 				{
 					item5
+				};
+			}
+			if (!this.CanUseCommsNow)
+			{
+				Log.Error(myPawn + " could not use comm console for unknown reason.");
+				FloatMenuOption item6 = new FloatMenuOption("Cannot use now", null, MenuOptionPriority.Default, null, null, 0f, null, null);
+				return new List<FloatMenuOption>
+				{
+					item6
 				};
 			}
 			List<FloatMenuOption> list = new List<FloatMenuOption>();
@@ -122,7 +133,7 @@ namespace RimWorld
 					ICommunicable localCommTarget = localCommTarget;
 					if (commTarget is TradeShip && !Building_OrbitalTradeBeacon.AllPowered(this.Map).Any<Building_OrbitalTradeBeacon>())
 					{
-						Messages.Message("MessageNeedBeaconToTradeWithShip".Translate(), this, MessageSound.RejectInput);
+						Messages.Message("MessageNeedBeaconToTradeWithShip".Translate(), this, MessageTypeDefOf.RejectInput);
 						return;
 					}
 					Job job = new Job(JobDefOf.UseCommsConsole, this);

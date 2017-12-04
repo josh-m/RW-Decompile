@@ -74,8 +74,8 @@ namespace RimWorld
 			outPawns.Add(pawn);
 			ItemCollectionGeneratorParams parms2 = default(ItemCollectionGeneratorParams);
 			parms2.traderDef = traderKindDef;
-			parms2.forTile = parms.tile;
-			parms2.forFaction = parms.faction;
+			parms2.tile = new int?(parms.tile);
+			parms2.traderFaction = parms.faction;
 			List<Thing> wares = ItemCollectionGeneratorDefOf.TraderStock.Worker.Generate(parms2).InRandomOrder(null).ToList<Thing>();
 			foreach (Pawn current in this.GetSlavesAndAnimalsFromWares(parms, pawn, wares))
 			{
@@ -87,8 +87,10 @@ namespace RimWorld
 
 		private Pawn GenerateTrader(PawnGroupMakerParms parms, PawnGroupMaker groupMaker, TraderKindDef traderKind)
 		{
+			PawnKindDef kind = groupMaker.traders.RandomElementByWeight((PawnGenOption x) => x.selectionWeight).kind;
+			Faction faction = parms.faction;
 			int tile = parms.tile;
-			PawnGenerationRequest request = new PawnGenerationRequest(groupMaker.traders.RandomElementByWeight((PawnGenOption x) => (float)x.selectionWeight).kind, parms.faction, PawnGenerationContext.NonPlayer, tile, false, false, false, false, true, false, 1f, false, true, true, parms.inhabitants, false, null, null, null, null, null, null);
+			PawnGenerationRequest request = new PawnGenerationRequest(kind, faction, PawnGenerationContext.NonPlayer, tile, false, false, false, false, true, false, 1f, false, true, true, parms.inhabitants, false, false, false, null, null, null, null, null, null, null);
 			Pawn pawn = PawnGenerator.GeneratePawn(request);
 			pawn.mindState.wantsToTradeWithColony = true;
 			PawnComponentsUtility.AddAndRemoveDynamicComponents(pawn, true);
@@ -106,12 +108,14 @@ namespace RimWorld
 			int num = Mathf.CeilToInt((float)list.Count / 8f);
 			PawnKindDef kind = (from x in groupMaker.carriers
 			where parms.tile == -1 || Find.WorldGrid[parms.tile].biome.IsPackAnimalAllowed(x.kind.race)
-			select x).RandomElementByWeight((PawnGenOption x) => (float)x.selectionWeight).kind;
+			select x).RandomElementByWeight((PawnGenOption x) => x.selectionWeight).kind;
 			List<Pawn> list2 = new List<Pawn>();
 			for (int j = 0; j < num; j++)
 			{
+				PawnKindDef kind2 = kind;
+				Faction faction = parms.faction;
 				int tile = parms.tile;
-				PawnGenerationRequest request = new PawnGenerationRequest(kind, parms.faction, PawnGenerationContext.NonPlayer, tile, false, false, false, false, true, false, 1f, false, true, true, parms.inhabitants, false, null, null, null, null, null, null);
+				PawnGenerationRequest request = new PawnGenerationRequest(kind2, faction, PawnGenerationContext.NonPlayer, tile, false, false, false, false, true, false, 1f, false, true, true, parms.inhabitants, false, false, false, null, null, null, null, null, null, null);
 				Pawn pawn = PawnGenerator.GeneratePawn(request);
 				if (i < list.Count)
 				{
@@ -154,9 +158,11 @@ namespace RimWorld
 			float points = parms.points;
 			foreach (PawnGenOption current in PawnGroupMakerUtility.ChoosePawnGenOptionsByPoints(points, groupMaker.guards, parms))
 			{
+				PawnKindDef kind = current.kind;
+				Faction faction = parms.faction;
 				int tile = parms.tile;
 				bool inhabitants = parms.inhabitants;
-				PawnGenerationRequest request = new PawnGenerationRequest(current.kind, parms.faction, PawnGenerationContext.NonPlayer, tile, false, false, false, false, true, true, 1f, false, true, true, inhabitants, false, null, null, null, null, null, null);
+				PawnGenerationRequest request = new PawnGenerationRequest(kind, faction, PawnGenerationContext.NonPlayer, tile, false, false, false, false, true, true, 1f, false, true, true, inhabitants, false, false, false, null, null, null, null, null, null, null);
 				Pawn item = PawnGenerator.GeneratePawn(request);
 				outPawns.Add(item);
 			}

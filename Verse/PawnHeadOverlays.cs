@@ -6,11 +6,11 @@ namespace Verse
 	[StaticConstructorOnStartup]
 	public class PawnHeadOverlays
 	{
+		private Pawn pawn;
+
 		private const float AngerBlinkPeriod = 1.2f;
 
 		private const float AngerBlinkLength = 0.4f;
-
-		private Pawn pawn;
 
 		private static readonly Material UnhappyMat = MaterialPool.MatFrom("Things/Pawn/Effects/Unhappy");
 

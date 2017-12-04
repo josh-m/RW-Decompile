@@ -8,7 +8,7 @@ namespace RimWorld
 {
 	public class BiomeDef : Def
 	{
-		public Type workerClass;
+		public Type workerClass = typeof(BiomeWorker);
 
 		public bool implemented = true;
 
@@ -32,7 +32,13 @@ namespace RimWorld
 
 		public bool hasVirtualPlants = true;
 
-		public SimpleCurve pathCost;
+		public int pathCost_spring = 1650;
+
+		public int pathCost_summer = 1650;
+
+		public int pathCost_fall = 1650;
+
+		public int pathCost_winter = 27500;
 
 		public List<WeatherCommonalityRecord> baseWeatherCommonalities = new List<WeatherCommonalityRecord>();
 

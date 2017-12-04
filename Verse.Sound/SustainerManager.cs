@@ -51,7 +51,6 @@ namespace Verse.Sound
 
 		public void UpdateAllSustainerScopes()
 		{
-			ProfilerThreadCheck.BeginSample("UpdateAllSustainerScopes");
 			for (int i = 0; i < this.allSustainers.Count; i++)
 			{
 				Sustainer sustainer = this.allSustainers[i];
@@ -111,12 +110,17 @@ namespace Verse.Sound
 				SimplePool<List<Sustainer>>.Return(current3.Value);
 			}
 			SustainerManager.playingPerDef.Clear();
-			ProfilerThreadCheck.EndSample();
 		}
 
-		public void RemoveAllFromMap(Map map)
+		public void EndAllInMap(Map map)
 		{
-			this.allSustainers.RemoveAll((Sustainer sustainer) => sustainer.info.Maker.Map == map);
+			for (int i = this.allSustainers.Count - 1; i >= 0; i--)
+			{
+				if (this.allSustainers[i].info.Maker.Map == map)
+				{
+					this.allSustainers[i].End();
+				}
+			}
 		}
 	}
 }

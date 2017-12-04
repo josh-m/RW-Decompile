@@ -48,10 +48,10 @@ namespace RimWorld
 			{
 				if (!Prefs.DevMode)
 				{
-					Messages.Message("MustChooseDifficulty".Translate(), MessageSound.RejectInput);
+					Messages.Message("MustChooseDifficulty".Translate(), MessageTypeDefOf.RejectInput);
 					return false;
 				}
-				Messages.Message("Difficulty has been automatically selected (debug mode only)", MessageSound.Silent);
+				Messages.Message("Difficulty has been automatically selected (debug mode only)", MessageTypeDefOf.SilentInput);
 				this.difficulty = DifficultyDefOf.Hard;
 			}
 			Current.Game.storyteller = new Storyteller(this.storyteller, this.difficulty);

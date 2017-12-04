@@ -9,7 +9,7 @@ namespace RimWorld
 	{
 		private const float TraderChance = 0.75f;
 
-		public override bool TryExecute(IncidentParms parms)
+		protected override bool TryExecuteWorker(IncidentParms parms)
 		{
 			Map map = (Map)parms.target;
 			if (!base.TryResolveParms(parms))
@@ -63,8 +63,8 @@ namespace RimWorld
 					text5
 				});
 			}
-			PawnRelationUtility.Notify_PawnsSeenByPlayer(list, ref label, ref text3, "LetterRelatedPawnsNeutralGroup".Translate(), true);
-			Find.LetterStack.ReceiveLetter(label, text3, LetterDefOf.Good, list[0], null);
+			PawnRelationUtility.Notify_PawnsSeenByPlayer_Letter(list, ref label, ref text3, "LetterRelatedPawnsNeutralGroup".Translate(), true, true);
+			Find.LetterStack.ReceiveLetter(label, text3, LetterDefOf.NeutralEvent, list[0], null);
 			return true;
 		}
 
@@ -83,8 +83,8 @@ namespace RimWorld
 			pawn.inventory.DestroyAll(DestroyMode.Vanish);
 			ItemCollectionGeneratorParams parms = default(ItemCollectionGeneratorParams);
 			parms.traderDef = traderKindDef;
-			parms.forTile = map.Tile;
-			parms.forFaction = faction;
+			parms.tile = new int?(map.Tile);
+			parms.traderFaction = faction;
 			foreach (Thing current in ItemCollectionGeneratorDefOf.TraderStock.Worker.Generate(parms))
 			{
 				Pawn pawn2 = current as Pawn;

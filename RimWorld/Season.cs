@@ -8,6 +8,8 @@ namespace RimWorld
 		Spring,
 		Summer,
 		Fall,
-		Winter
+		Winter,
+		PermanentSummer,
+		PermanentWinter
 	}
 }

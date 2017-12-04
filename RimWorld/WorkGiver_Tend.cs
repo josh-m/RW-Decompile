@@ -22,17 +22,30 @@ namespace RimWorld
 			}
 		}
 
+		public override Danger MaxPathDanger(Pawn pawn)
+		{
+			return Danger.Deadly;
+		}
+
 		public override bool HasJobOnThing(Pawn pawn, Thing t, bool forced = false)
 		{
 			Pawn pawn2 = t as Pawn;
-			return pawn2 != null && (!this.def.tendToHumanlikesOnly || pawn2.RaceProps.Humanlike) && (!this.def.tendToAnimalsOnly || pawn2.RaceProps.Animal) && WorkGiver_Tend.GoodLayingStatusForTend(pawn2, pawn) && HealthAIUtility.ShouldBeTendedNow(pawn2) && pawn.CanReserve(pawn2, 1, -1, null, forced);
+			if (pawn2 != null && (!this.def.tendToHumanlikesOnly || pawn2.RaceProps.Humanlike) && (!this.def.tendToAnimalsOnly || pawn2.RaceProps.Animal) && WorkGiver_Tend.GoodLayingStatusForTend(pawn2, pawn) && HealthAIUtility.ShouldBeTendedNow(pawn2))
+			{
+				LocalTargetInfo target = pawn2;
+				if (pawn.CanReserve(target, 1, -1, null, forced))
+				{
+					return true;
+				}
+			}
+			return false;
 		}
 
 		public static bool GoodLayingStatusForTend(Pawn patient, Pawn doctor)
 		{
 			if (patient == doctor)
 			{
-				return patient.GetPosture() == PawnPosture.Standing;
+				return true;
 			}
 			if (patient.RaceProps.Humanlike)
 			{

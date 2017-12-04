@@ -6,6 +6,8 @@ namespace RimWorld
 {
 	internal static class BeachMaker
 	{
+		private static ModuleBase beachNoise;
+
 		private const float PerlinFrequency = 0.03f;
 
 		private const float MaxForDeepWater = 0.1f;
@@ -13,8 +15,6 @@ namespace RimWorld
 		private const float MaxForShallowWater = 0.45f;
 
 		private const float MaxForSand = 1f;
-
-		private static ModuleBase beachNoise;
 
 		private static readonly FloatRange CoastWidthRange = new FloatRange(20f, 60f);
 

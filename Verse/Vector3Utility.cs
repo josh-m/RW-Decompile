@@ -47,5 +47,21 @@ namespace Verse
 				return orig;
 			}
 		}
+
+		public static float AngleToFlat(this Vector3 a, Vector3 b)
+		{
+			return new Vector2(a.x, a.z).AngleTo(new Vector2(b.x, b.z));
+		}
+
+		public static Vector3 FromAngleFlat(float angle)
+		{
+			Vector2 vector = Vector2Utility.FromAngle(angle);
+			return new Vector3(vector.x, 0f, vector.y);
+		}
+
+		public static float ToAngleFlat(this Vector3 v)
+		{
+			return new Vector2(v.x, v.z).ToAngle();
+		}
 	}
 }

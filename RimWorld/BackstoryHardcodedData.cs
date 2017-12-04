@@ -63,5 +63,18 @@ namespace RimWorld
 				bs.AddForcedTrait(TraitDefOf.NaturalMood, 1);
 			}
 		}
+
+		public static void InjectHardcodedData(PawnBio bio)
+		{
+			if (bio.name.First == "Xia" && bio.name.Last == "Xue")
+			{
+				bio.childhood.AddForcedTrait(TraitDefOf.Beauty, 2);
+			}
+			if (bio.name.First == "Kena" && bio.name.Last == "Réveil")
+			{
+				bio.childhood.AddForcedTrait(TraitDefOf.PsychicSensitivity, 2);
+				bio.childhood.AddForcedTrait(TraitDefOf.NaturalMood, -2);
+			}
+		}
 	}
 }

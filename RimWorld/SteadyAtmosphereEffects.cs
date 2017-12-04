@@ -8,22 +8,6 @@ namespace RimWorld
 {
 	public class SteadyAtmosphereEffects
 	{
-		private const float MapFractionCheckPerTick = 0.0006f;
-
-		private const float RainFireCheckInterval = 97f;
-
-		private const float RainFireChanceOverall = 0.02f;
-
-		private const float RainFireChancePerBuilding = 0.2f;
-
-		private const float SnowFallRateFactor = 0.046f;
-
-		private const float SnowMeltRateFactor = 0.0058f;
-
-		private const float AutoIgnitionChanceFactor = 0.7f;
-
-		private const float FireGlowRate = 0.33f;
-
 		private Map map;
 
 		private ModuleBase snowNoise;
@@ -38,7 +22,23 @@ namespace RimWorld
 
 		private float deteriorationRate;
 
+		private const float MapFractionCheckPerTick = 0.0006f;
+
+		private const float RainFireCheckInterval = 97f;
+
+		private const float RainFireChanceOverall = 0.02f;
+
+		private const float RainFireChancePerBuilding = 0.2f;
+
+		private const float SnowFallRateFactor = 0.046f;
+
+		private const float SnowMeltRateFactor = 0.0058f;
+
 		private static readonly FloatRange AutoIgnitionTemperatureRange = new FloatRange(240f, 1000f);
+
+		private const float AutoIgnitionChanceFactor = 0.7f;
+
+		private const float FireGlowRate = 0.33f;
 
 		public SteadyAtmosphereEffects(Map map)
 		{
@@ -159,7 +159,7 @@ namespace RimWorld
 		private static bool ProtectedByEdifice(IntVec3 c, Map map)
 		{
 			Building edifice = c.GetEdifice(map);
-			return edifice != null && edifice.def.building != null && edifice.def.building.preventDeterioration;
+			return edifice != null && edifice.def.building != null && edifice.def.building.preventDeteriorationOnTop;
 		}
 
 		private float MeltAmountAt(float temperature)
@@ -217,24 +217,15 @@ namespace RimWorld
 
 		private void RollForRainFire()
 		{
-			float num = 0.2f * (float)this.map.listerBuildings.allBuildingsColonistElecFire.Count * this.map.weatherManager.RainRate;
-			if (Rand.Value > num)
+			float chance = 0.2f * (float)this.map.listerBuildings.allBuildingsColonistElecFire.Count * this.map.weatherManager.RainRate;
+			if (!Rand.Chance(chance))
 			{
 				return;
 			}
 			Building building = this.map.listerBuildings.allBuildingsColonistElecFire.RandomElement<Building>();
 			if (!this.map.roofGrid.Roofed(building.Position))
 			{
-				ThingWithComps thingWithComps = building;
-				CompPowerTrader comp = thingWithComps.GetComp<CompPowerTrader>();
-				if ((comp != null && comp.PowerOn && comp.Props.shortCircuitInRain) || (thingWithComps.GetComp<CompPowerBattery>() != null && thingWithComps.GetComp<CompPowerBattery>().StoredEnergy > 100f))
-				{
-					GenExplosion.DoExplosion(building.OccupiedRect().RandomCell, this.map, 1.9f, DamageDefOf.Flame, null, null, null, null, null, 0f, 1, false, null, 0f, 1);
-					Find.LetterStack.ReceiveLetter("LetterLabelShortCircuit".Translate(), "ShortCircuitRain".Translate(new object[]
-					{
-						building.Label
-					}), LetterDefOf.BadUrgent, new TargetInfo(building.Position, building.Map, false), null);
-				}
+				ShortCircuitUtility.TryShortCircuitInRain(building);
 			}
 		}
 	}

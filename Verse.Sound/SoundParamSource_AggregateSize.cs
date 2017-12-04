@@ -20,9 +20,5 @@ namespace Verse.Sound
 			}
 			return samp.ExternalParams.sizeAggregator.AggregateSize;
 		}
-
-		public void SetTo(float value)
-		{
-		}
 	}
 }

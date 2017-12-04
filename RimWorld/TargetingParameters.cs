@@ -122,7 +122,7 @@ namespace RimWorld
 						return false;
 					}
 					Pawn pawn = targ.Thing as Pawn;
-					return pawn != null && pawn != arrester && pawn.CanBeArrested();
+					return pawn != null && pawn != arrester && pawn.CanBeArrestedBy(arrester) && !pawn.Downed;
 				}
 			};
 		}
@@ -134,7 +134,19 @@ namespace RimWorld
 			targetingParameters.canTargetBuildings = true;
 			targetingParameters.canTargetItems = true;
 			targetingParameters.mapObjectTargetsMustBeAutoAttackable = true;
-			targetingParameters.validator = ((TargetInfo targ) => targ.HasThing && (targ.Thing.HostileTo(Faction.OfPlayer) || (targ.Thing is Pawn && !((Pawn)targ.Thing).RaceProps.Humanlike)));
+			targetingParameters.validator = delegate(TargetInfo targ)
+			{
+				if (!targ.HasThing)
+				{
+					return false;
+				}
+				if (targ.Thing.HostileTo(Faction.OfPlayer))
+				{
+					return true;
+				}
+				Pawn pawn = targ.Thing as Pawn;
+				return pawn != null && pawn.NonHumanlikeOrWildMan();
+			};
 			return targetingParameters;
 		}
 

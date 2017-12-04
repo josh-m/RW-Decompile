@@ -5,11 +5,11 @@ namespace Verse
 {
 	public class SubEffecter_ProgressBar : SubEffecter
 	{
+		public MoteProgressBar mote;
+
 		private const float Width = 0.68f;
 
 		private const float Height = 0.12f;
-
-		public MoteProgressBar mote;
 
 		public SubEffecter_ProgressBar(SubEffecterDef def) : base(def)
 		{

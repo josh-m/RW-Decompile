@@ -52,9 +52,12 @@ namespace RimWorld
 				for (int i = 0; i < this.lord.ownedPawns.Count; i++)
 				{
 					Pawn pawn = this.lord.ownedPawns[i];
-					if (pawn.equipment.Primary != null && pawn.equipment.Primary.def.Verbs[0].ai_IsBuildingDestroyer)
+					if (pawn.equipment.Primary != null)
 					{
-						list.Add(pawn);
+						if (pawn.equipment.Primary.GetComp<CompEquippable>().AllVerbs.Any((Verb verb) => verb.verbProps.ai_IsBuildingDestroyer))
+						{
+							list.Add(pawn);
+						}
 					}
 				}
 				if (list.Count == 0 && this.lord.ownedPawns.Count >= 2)

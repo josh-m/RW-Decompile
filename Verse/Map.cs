@@ -4,13 +4,12 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using UnityEngine;
 using Verse.AI;
 using Verse.AI.Group;
 
 namespace Verse
 {
-	public sealed class Map : IIncidentTarget, IExposable, ILoadReferenceable, IThingHolder
+	public sealed class Map : IIncidentTarget, IThingHolder, IExposable, ILoadReferenceable
 	{
 		public MapFileCompressor compressor;
 
@@ -36,7 +35,7 @@ namespace Verse
 
 		public MapDrawer mapDrawer;
 
-		public PawnDestinationManager pawnDestinationManager;
+		public PawnDestinationReservationManager pawnDestinationReservationManager;
 
 		public TooltipGiverList tooltipGiverList;
 
@@ -174,6 +173,8 @@ namespace Verse
 
 		public RoadInfo roadInfo;
 
+		public WaterInfo waterInfo;
+
 		public int Index
 		{
 			get
@@ -295,19 +296,36 @@ namespace Verse
 			}
 		}
 
-		public IncidentTargetType Type
+		public float PlayerWealthForStoryteller
 		{
 			get
 			{
 				if (this.IsPlayerHome)
 				{
-					return IncidentTargetType.MapPlayerHome;
+					return this.wealthWatcher.WealthItems + this.wealthWatcher.WealthBuildings * 0.5f;
 				}
-				if (this.IsTempIncidentMap)
+				float num = 0f;
+				foreach (Pawn current in this.mapPawns.FreeColonists)
 				{
-					return IncidentTargetType.MapTempIncident;
+					num += WealthWatcher.GetEquipmentApparelAndInventoryWealth(current);
 				}
-				return IncidentTargetType.MapMisc;
+				return num;
+			}
+		}
+
+		public IEnumerable<Pawn> FreeColonistsForStoryteller
+		{
+			get
+			{
+				return this.mapPawns.FreeColonists;
+			}
+		}
+
+		public FloatRange IncidentPointsRandomFactorRange
+		{
+			get
+			{
+				return FloatRange.One;
 			}
 		}
 
@@ -320,6 +338,11 @@ namespace Verse
 			}
 		}
 
+		public IEnumerable<IncidentTargetTypeDef> AcceptedTypes()
+		{
+			return this.info.parent.AcceptedTypes();
+		}
+
 		public void ConstructComponents()
 		{
 			this.spawnedThings = new ThingOwner<Thing>(this);
@@ -330,7 +353,7 @@ namespace Verse
 			this.dynamicDrawManager = new DynamicDrawManager(this);
 			this.mapDrawer = new MapDrawer(this);
 			this.tooltipGiverList = new TooltipGiverList();
-			this.pawnDestinationManager = new PawnDestinationManager();
+			this.pawnDestinationReservationManager = new PawnDestinationReservationManager();
 			this.reservationManager = new ReservationManager(this);
 			this.physicalInteractionReservationManager = new PhysicalInteractionReservationManager();
 			this.designationManager = new DesignationManager(this);
@@ -490,6 +513,7 @@ namespace Verse
 				}
 			}
 			this.roadInfo = this.GetComponent<RoadInfo>();
+			this.waterInfo = this.GetComponent<WaterInfo>();
 		}
 
 		public void FinalizeLoading()
@@ -507,18 +531,40 @@ namespace Verse
 			DeepProfiler.Start("Spawn everything into the map");
 			foreach (Thing current2 in list2)
 			{
+				if (!(current2 is Building))
+				{
+					try
+					{
+						GenSpawn.Spawn(current2, current2.Position, this, current2.Rotation, true);
+					}
+					catch (Exception ex)
+					{
+						Log.Error(string.Concat(new object[]
+						{
+							"Exception spawning loaded thing ",
+							current2,
+							": ",
+							ex
+						}));
+					}
+				}
+			}
+			foreach (Building current3 in from t in list2.OfType<Building>()
+			orderby t.def.size.Magnitude
+			select t)
+			{
 				try
 				{
-					GenSpawn.Spawn(current2, current2.Position, this, current2.Rotation, true);
+					GenSpawn.SpawnBuildingAsPossible(current3, this, true);
 				}
-				catch (Exception ex)
+				catch (Exception ex2)
 				{
 					Log.Error(string.Concat(new object[]
 					{
 						"Exception spawning loaded thing ",
-						current2,
+						current3,
 						": ",
-						ex
+						ex2
 					}));
 				}
 			}
@@ -575,6 +621,7 @@ namespace Verse
 			{
 				this
 			});
+			Scribe_Deep.Look<PawnDestinationReservationManager>(ref this.pawnDestinationReservationManager, "pawnDestinationReservationManager", new object[0]);
 			Scribe_Deep.Look<LordManager>(ref this.lordManager, "lordManager", new object[]
 			{
 				this
@@ -796,12 +843,13 @@ namespace Verse
 			this.lordManager.LordManagerUpdate();
 			if (!worldRenderedNow && Find.VisibleMap == this)
 			{
+				this.waterInfo.SetTextures();
 				Find.FactionManager.FactionsDebugDrawOnMap();
 				this.mapDrawer.MapMeshDrawerUpdate_First();
 				this.powerNetGrid.DrawDebugPowerNetGrid();
 				DoorsDebugDrawer.DrawDebug();
-				this.mapDrawer.DrawMapMesh(SectionLayerPhaseDefOf.Main);
-				this.dynamicDrawManager.DrawDynamicThings(DrawTargetDefOf.Main);
+				this.mapDrawer.DrawMapMesh();
+				this.dynamicDrawManager.DrawDynamicThings();
 				this.gameConditionManager.GameConditionManagerDraw();
 				MapEdgeClipDrawer.DrawClippers(this);
 				this.designationManager.DrawDesignations();
@@ -817,28 +865,6 @@ namespace Verse
 			}
 			this.weatherManager.WeatherManagerUpdate();
 			MapComponentUtility.MapComponentUpdate(this);
-		}
-
-		public void GenerateWaterMap()
-		{
-			GL.PushMatrix();
-			GL.LoadIdentity();
-			GL.LoadProjectionMatrix(Matrix4x4.identity);
-			GL.modelview = Matrix4x4.identity;
-			try
-			{
-				RenderTexture waterLight = GlobalRenderTexture.WaterLight;
-				Graphics.SetRenderTarget(waterLight);
-				GL.Clear(false, true, Color.black);
-				this.mapDrawer.DrawMapMesh(SectionLayerPhaseDefOf.WaterGeneration);
-				this.dynamicDrawManager.DrawDynamicThings(DrawTargetDefOf.WaterHeight);
-				Shader.SetGlobalTexture("_WaterOutputTex", waterLight);
-			}
-			finally
-			{
-				Graphics.SetRenderTarget(null);
-				GL.PopMatrix();
-			}
 		}
 
 		public T GetComponent<T>() where T : MapComponent

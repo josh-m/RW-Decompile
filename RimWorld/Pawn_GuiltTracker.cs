@@ -6,9 +6,9 @@ namespace RimWorld
 {
 	public class Pawn_GuiltTracker : IExposable
 	{
-		private const int GuiltyDuration = 60000;
-
 		public int lastGuiltyTick = -99999;
+
+		private const int GuiltyDuration = 60000;
 
 		public bool IsGuilty
 		{

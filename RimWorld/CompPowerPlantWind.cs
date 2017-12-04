@@ -9,16 +9,6 @@ namespace RimWorld
 	[StaticConstructorOnStartup]
 	public class CompPowerPlantWind : CompPowerPlant
 	{
-		private const float MaxUsableWindIntensity = 1.5f;
-
-		private const float SpinRateFactor = 0.05f;
-
-		private const float PowerReductionPercentPerObstacle = 0.2f;
-
-		private const string TranslateWindPathIsBlockedBy = "WindTurbine_WindPathIsBlockedBy";
-
-		private const string TranslateWindPathIsBlockedByRoof = "WindTurbine_WindPathIsBlockedByRoof";
-
 		public int updateWeatherEveryXTicks = 250;
 
 		private int ticksSinceWeatherUpdate;
@@ -32,6 +22,16 @@ namespace RimWorld
 		private List<IntVec3> windPathBlockedCells = new List<IntVec3>();
 
 		private float spinPosition;
+
+		private const float MaxUsableWindIntensity = 1.5f;
+
+		private const float SpinRateFactor = 0.05f;
+
+		private const float PowerReductionPercentPerObstacle = 0.2f;
+
+		private const string TranslateWindPathIsBlockedBy = "WindTurbine_WindPathIsBlockedBy";
+
+		private const string TranslateWindPathIsBlockedByRoof = "WindTurbine_WindPathIsBlockedByRoof";
 
 		private static Vector2 BarSize;
 

@@ -21,6 +21,8 @@ namespace Verse
 
 		public const string DictionaryFromXmlMethodName = "DictionaryFromXml";
 
+		private static Dictionary<Type, Dictionary<string, FieldInfo>> fieldInfoLookup = new Dictionary<Type, Dictionary<string, FieldInfo>>();
+
 		public static T ObjectFromXml<T>(XmlNode xmlRoot, bool doPostLoad) where T : new()
 		{
 			MethodInfo methodInfo = DirectXmlToObject.CustomDataLoadMethodOf(typeof(T));
@@ -137,7 +139,7 @@ namespace Verse
 						Type genericTypeDefinition = typeof(T).GetGenericTypeDefinition();
 						if (genericTypeDefinition == typeof(List<>) || genericTypeDefinition == typeof(HashSet<>) || genericTypeDefinition == typeof(Dictionary<, >))
 						{
-							return (default(T) == null) ? Activator.CreateInstance<T>() : default(T);
+							return Activator.CreateInstance<T>();
 						}
 					}
 				}
@@ -175,17 +177,7 @@ namespace Verse
 								list2.Add(xmlNode.Name);
 							}
 						}
-						FieldInfo fieldInfo = null;
-						Type type3 = t2.GetType();
-						while (true)
-						{
-							fieldInfo = type3.GetField(xmlNode.Name, BindingFlags.IgnoreCase | BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-							if (fieldInfo != null || type3.BaseType == typeof(object))
-							{
-								break;
-							}
-							type3 = type3.BaseType;
-						}
+						FieldInfo fieldInfo = DirectXmlToObject.GetFieldInfoForType(t2.GetType(), xmlNode.Name, xmlRoot);
 						if (fieldInfo == null)
 						{
 							FieldInfo[] fields = t2.GetType().GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
@@ -265,7 +257,7 @@ namespace Verse
 							catch (Exception ex3)
 							{
 								Log.Error("Exception loading from " + xmlNode.ToString() + ": " + ex3.ToString());
-								goto IL_7F3;
+								goto IL_78D;
 							}
 							if (!typeof(T).IsValueType)
 							{
@@ -279,7 +271,7 @@ namespace Verse
 							}
 						}
 					}
-					IL_7F3:;
+					IL_78D:;
 				}
 				if (doPostLoad)
 				{
@@ -426,6 +418,51 @@ namespace Verse
 				return false;
 			}
 			return true;
+		}
+
+		private static FieldInfo GetFieldInfoForType(Type type, string token, XmlNode debugXmlNode)
+		{
+			Dictionary<string, FieldInfo> dictionary = DirectXmlToObject.fieldInfoLookup.TryGetValue(type);
+			if (dictionary == null)
+			{
+				dictionary = new Dictionary<string, FieldInfo>();
+				DirectXmlToObject.fieldInfoLookup[type] = dictionary;
+			}
+			FieldInfo fieldInfo = dictionary.TryGetValue(token);
+			if (fieldInfo == null && !dictionary.ContainsKey(token))
+			{
+				fieldInfo = DirectXmlToObject.SearchTypeHierarchy(type, token, BindingFlags.Default);
+				if (fieldInfo == null)
+				{
+					fieldInfo = DirectXmlToObject.SearchTypeHierarchy(type, token, BindingFlags.IgnoreCase);
+					if (fieldInfo != null && !type.HasAttribute<CaseInsensitiveXMLParsing>())
+					{
+						string text = string.Format("Attempt to use string {0} to refer to field {1} in type {2}; xml tags are now case-sensitive", token, fieldInfo.Name, type);
+						if (debugXmlNode != null)
+						{
+							text = text + ". XML: " + debugXmlNode.OuterXml;
+						}
+						Log.Error(text);
+					}
+				}
+				dictionary[token] = fieldInfo;
+			}
+			return fieldInfo;
+		}
+
+		private static FieldInfo SearchTypeHierarchy(Type type, string token, BindingFlags extraFlags)
+		{
+			FieldInfo field;
+			while (true)
+			{
+				field = type.GetField(token, extraFlags | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+				if (field != null || type.BaseType == typeof(object))
+				{
+					break;
+				}
+				type = type.BaseType;
+			}
+			return field;
 		}
 	}
 }

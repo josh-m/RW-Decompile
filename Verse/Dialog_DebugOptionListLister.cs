@@ -27,5 +27,18 @@ namespace Verse
 				}
 			}
 		}
+
+		public static void ShowSimpleDebugMenu<T>(IEnumerable<T> elements, Func<T, string> label, Action<T> chosen)
+		{
+			List<DebugMenuOption> list = new List<DebugMenuOption>();
+			foreach (T t in elements)
+			{
+				list.Add(new DebugMenuOption(label(t), DebugMenuOptionMode.Action, delegate
+				{
+					chosen(t);
+				}));
+			}
+			Find.WindowStack.Add(new Dialog_DebugOptionListLister(list));
+		}
 	}
 }

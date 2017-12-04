@@ -7,7 +7,7 @@ namespace Verse
 	{
 		private void Start()
 		{
-			Screen.SetResolution(UI.screenWidth, UI.screenHeight, Screen.fullScreen);
+			Screen.SetResolution(Screen.width, Screen.height, Screen.fullScreen);
 		}
 	}
 }

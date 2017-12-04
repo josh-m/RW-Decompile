@@ -7,14 +7,6 @@ namespace Verse.AI
 {
 	public static class CastPositionFinder
 	{
-		private const float BaseAIPreference = 0.3f;
-
-		private const float MinimumPreferredRange = 5f;
-
-		private const float OptimalRangeFactor = 0.8f;
-
-		private const float OptimalRangeFactorImportance = 0.3f;
-
 		private static CastPositionRequest req;
 
 		private static IntVec3 casterLoc;
@@ -46,6 +38,14 @@ namespace Verse.AI
 		private static IntVec3 bestSpot = IntVec3.Invalid;
 
 		private static float bestSpotPref = 0.001f;
+
+		private const float BaseAIPreference = 0.3f;
+
+		private const float MinimumPreferredRange = 5f;
+
+		private const float OptimalRangeFactor = 0.8f;
+
+		private const float OptimalRangeFactorImportance = 0.3f;
 
 		public static bool TryFindCastPosition(CastPositionRequest newReq, out IntVec3 dest)
 		{
@@ -168,7 +168,7 @@ namespace Verse.AI
 			{
 				if (DebugViewSettings.drawCastPositionSearch)
 				{
-					CastPositionFinder.req.caster.Map.debugDrawer.FlashCell(c, 0f, "range target");
+					CastPositionFinder.req.caster.Map.debugDrawer.FlashCell(c, 0f, "range target", 50);
 				}
 				return;
 			}
@@ -176,7 +176,7 @@ namespace Verse.AI
 			{
 				if (DebugViewSettings.drawCastPositionSearch)
 				{
-					CastPositionFinder.req.caster.Map.debugDrawer.FlashCell(c, 0.1f, "range home");
+					CastPositionFinder.req.caster.Map.debugDrawer.FlashCell(c, 0.1f, "range home", 50);
 				}
 				return;
 			}
@@ -187,7 +187,7 @@ namespace Verse.AI
 				{
 					if (DebugViewSettings.drawCastPositionSearch)
 					{
-						CastPositionFinder.req.caster.Map.debugDrawer.FlashCell(c, 0.2f, "range caster");
+						CastPositionFinder.req.caster.Map.debugDrawer.FlashCell(c, 0.2f, "range caster", 50);
 					}
 					return;
 				}
@@ -200,7 +200,7 @@ namespace Verse.AI
 			{
 				if (DebugViewSettings.drawCastPositionSearch)
 				{
-					CastPositionFinder.req.caster.Map.debugDrawer.FlashCell(c, 0.64f, "reg radius");
+					CastPositionFinder.req.caster.Map.debugDrawer.FlashCell(c, 0.64f, "reg radius", 50);
 				}
 				return;
 			}
@@ -208,7 +208,7 @@ namespace Verse.AI
 			{
 				if (DebugViewSettings.drawCastPositionSearch)
 				{
-					CastPositionFinder.req.caster.Map.debugDrawer.FlashCell(c, 0.4f, "can't reach");
+					CastPositionFinder.req.caster.Map.debugDrawer.FlashCell(c, 0.4f, "can't reach", 50);
 				}
 				return;
 			}
@@ -220,7 +220,7 @@ namespace Verse.AI
 			}
 			if (DebugViewSettings.drawCastPositionSearch)
 			{
-				CastPositionFinder.req.caster.Map.debugDrawer.FlashCell(c, num / 4f, num.ToString("F3"));
+				CastPositionFinder.req.caster.Map.debugDrawer.FlashCell(c, num / 4f, num.ToString("F3"), 50);
 			}
 			if (num < CastPositionFinder.bestSpotPref)
 			{
@@ -230,15 +230,15 @@ namespace Verse.AI
 			{
 				if (DebugViewSettings.drawCastPositionSearch)
 				{
-					CastPositionFinder.req.caster.Map.debugDrawer.FlashCell(c, 0.6f, "can't hit");
+					CastPositionFinder.req.caster.Map.debugDrawer.FlashCell(c, 0.6f, "can't hit", 50);
 				}
 				return;
 			}
-			if (CastPositionFinder.req.caster.Map.pawnDestinationManager.DestinationIsReserved(c, CastPositionFinder.req.caster))
+			if (!CastPositionFinder.req.caster.Map.pawnDestinationReservationManager.CanReserve(c, CastPositionFinder.req.caster))
 			{
 				if (DebugViewSettings.drawCastPositionSearch)
 				{
-					CastPositionFinder.req.caster.Map.debugDrawer.FlashCell(c, num * 0.9f, "resvd");
+					CastPositionFinder.req.caster.Map.debugDrawer.FlashCell(c, num * 0.9f, "resvd", 50);
 				}
 				return;
 			}
@@ -246,7 +246,7 @@ namespace Verse.AI
 			{
 				if (DebugViewSettings.drawCastPositionSearch)
 				{
-					CastPositionFinder.req.caster.Map.debugDrawer.FlashCell(c, 0.9f, "danger");
+					CastPositionFinder.req.caster.Map.debugDrawer.FlashCell(c, 0.9f, "danger", 50);
 				}
 				return;
 			}

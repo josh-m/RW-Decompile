@@ -12,6 +12,10 @@ namespace RimWorld
 			{
 				return;
 			}
+			if (ist.playOnlyIfHitPawn && !(hitThing is Pawn))
+			{
+				return;
+			}
 			if (map == null)
 			{
 				Log.Warning("Can't play impact sound because map is null.");

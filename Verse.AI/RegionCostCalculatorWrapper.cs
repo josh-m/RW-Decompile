@@ -105,17 +105,22 @@ namespace Verse.AI
 			{
 				return this.OctileDistanceToEnd(cell);
 			}
-			if (this.cachedBestLink == null)
+			if (this.cachedBestLink != null)
 			{
-				return 10000;
+				int num = this.regionCostCalculator.RegionLinkDistance(cell, this.cachedBestLink, this.cachedRegionCellPathCost);
+				int num3;
+				if (this.cachedSecondBestLink != null)
+				{
+					int num2 = this.regionCostCalculator.RegionLinkDistance(cell, this.cachedSecondBestLink, this.cachedRegionCellPathCost);
+					num3 = Mathf.Min(this.cachedSecondBestLinkCost + num2, this.cachedBestLinkCost + num);
+				}
+				else
+				{
+					num3 = this.cachedBestLinkCost + num;
+				}
+				return num3 + this.OctileDistanceToEndEps(cell);
 			}
-			int num = this.regionCostCalculator.RegionLinkDistance(cell, this.cachedBestLink, this.cachedRegionCellPathCost);
-			if (this.cachedSecondBestLink != null)
-			{
-				int num2 = this.regionCostCalculator.RegionLinkDistance(cell, this.cachedSecondBestLink, this.cachedRegionCellPathCost);
-				return Mathf.Min(this.cachedSecondBestLinkCost + num2, this.cachedBestLinkCost + num);
-			}
-			return this.cachedBestLinkCost + num;
+			return 10000;
 		}
 
 		private int OctileDistanceToEnd(IntVec3 cell)
@@ -123,6 +128,13 @@ namespace Verse.AI
 			int dx = Mathf.Abs(cell.x - this.endCell.x);
 			int dz = Mathf.Abs(cell.z - this.endCell.z);
 			return GenMath.OctileDistance(dx, dz, this.moveTicksCardinal, this.moveTicksDiagonal);
+		}
+
+		private int OctileDistanceToEndEps(IntVec3 cell)
+		{
+			int dx = Mathf.Abs(cell.x - this.endCell.x);
+			int dz = Mathf.Abs(cell.z - this.endCell.z);
+			return GenMath.OctileDistance(dx, dz, 2, 3);
 		}
 	}
 }

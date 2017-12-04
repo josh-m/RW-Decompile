@@ -388,11 +388,8 @@ namespace RimWorld
 							if (num5 > 0f)
 							{
 								List<float> list;
-								List<float> expr_1FC = list = this.cachedColumnWidths;
 								int index;
-								int expr_201 = index = l;
-								float num7 = list[index];
-								expr_1FC[expr_201] = num7 + num5;
+								(list = this.cachedColumnWidths)[index = l] = list[index] + num5;
 								usedWidth += num5;
 							}
 						}
@@ -412,12 +409,12 @@ namespace RimWorld
 				}
 			}
 			Log.Error("Too many iterations.");
-			goto IL_26B;
+			goto IL_267;
 			Block_13:
 			noMoreFreeSpace = true;
 			Block_14:
 			Block_15:
-			IL_26B:
+			IL_267:
 			noMoreFreeSpace = false;
 		}
 
@@ -464,11 +461,8 @@ namespace RimWorld
 						if (num4 > 0f)
 						{
 							List<float> list;
-							List<float> expr_16B = list = this.cachedColumnWidths;
 							int index;
-							int expr_170 = index = k;
-							float num6 = list[index];
-							expr_16B[expr_170] = num6 + num4;
+							(list = this.cachedColumnWidths)[index = k] = list[index] + num4;
 							usedWidth += num4;
 						}
 					}
@@ -527,11 +521,8 @@ namespace RimWorld
 			for (int i = 0; i < this.cachedColumnWidths.Count; i++)
 			{
 				List<float> list;
-				List<float> expr_0D = list = this.cachedColumnWidths;
 				int index;
-				int expr_10 = index = i;
-				float num = list[index];
-				expr_0D[expr_10] = num - toSubtract * this.cachedColumnWidths[i] / totalUsedWidth;
+				(list = this.cachedColumnWidths)[index = i] = list[index] - toSubtract * this.cachedColumnWidths[i] / totalUsedWidth;
 			}
 		}
 
@@ -545,11 +536,8 @@ namespace RimWorld
 			for (int j = 0; j < this.columns.Count; j++)
 			{
 				List<float> list;
-				List<float> expr_4E = list = this.cachedColumnWidths;
 				int index;
-				int expr_51 = index = j;
-				float num2 = list[index];
-				expr_4E[expr_51] = num2 + toDistribute * Mathf.Max(this.GetOptimalWidth(this.columns[j]), 1f) / num;
+				(list = this.cachedColumnWidths)[index = j] = list[index] + toDistribute * Mathf.Max(this.GetOptimalWidth(this.columns[j]), 1f) / num;
 			}
 		}
 

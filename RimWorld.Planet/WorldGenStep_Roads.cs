@@ -31,6 +31,10 @@ namespace RimWorld.Planet
 			}
 		}
 
+		private static readonly FloatRange ExtraRoadNodesPer100kTiles = new FloatRange(30f, 50f);
+
+		private static readonly IntRange RoadDistanceFromSettlement = new IntRange(-4, 4);
+
 		private const float ChanceExtraNonSpanningTreeLink = 0.015f;
 
 		private const float ChanceHideSpanningTreeLink = 0.1f;
@@ -38,10 +42,6 @@ namespace RimWorld.Planet
 		private const float ChanceWorldObjectReclusive = 0.05f;
 
 		private const int PotentialSpanningTreeLinksPerSettlement = 8;
-
-		private static readonly FloatRange ExtraRoadNodesPer100kTiles = new FloatRange(30f, 50f);
-
-		private static readonly IntRange RoadDistanceFromSettlement = new IntRange(-4, 4);
 
 		public override void GenerateFresh(string seed)
 		{
@@ -52,7 +52,7 @@ namespace RimWorld.Planet
 			Rand.RandomizeStateFromTime();
 		}
 
-		public override void GenerateFromScribe(string seed)
+		public override void GenerateWithoutWorldData(string seed)
 		{
 			Rand.Seed = GenText.StableStringHash(seed);
 			this.GenerateRoadNetwork();
@@ -67,7 +67,7 @@ namespace RimWorld.Planet
 			int num = GenMath.RoundRandom((float)Find.WorldGrid.TilesCount / 100000f * WorldGenStep_Roads.ExtraRoadNodesPer100kTiles.RandomInRange);
 			for (int i = 0; i < num; i++)
 			{
-				list.Add(TileFinder.RandomFactionBaseTileFor(null, false));
+				list.Add(TileFinder.RandomFactionBaseTileFor(null, false, null));
 			}
 			List<int> list2 = new List<int>();
 			for (int j = 0; j < list.Count; j++)
@@ -112,8 +112,7 @@ namespace RimWorld.Planet
 				list.Clear();
 				list.Add(srcTile);
 				int found = 0;
-				WorldPathFinder arg_D8_0 = Find.WorldPathFinder;
-				Func<int, float, bool> terminator = delegate(int tile, float distance)
+				Find.WorldPathFinder.FloodPathsWithCost(list, (int src, int dst) => WorldPathFinder.StandardPathCost(src, dst, null), null, delegate(int tile, float distance)
 				{
 					if (tile != srcTile && tileToIndexLookup.ContainsKey(tile))
 					{
@@ -126,8 +125,7 @@ namespace RimWorld.Planet
 						});
 					}
 					return found >= 8;
-				};
-				arg_D8_0.FloodPathsWithCost(list, (int src, int dst) => WorldPathFinder.StandardPathCost(src, dst, null), null, terminator);
+				});
 			}
 			linkProspective.Sort((WorldGenStep_Roads.Link lhs, WorldGenStep_Roads.Link rhs) => lhs.distance.CompareTo(rhs.distance));
 			return linkProspective;

@@ -48,6 +48,13 @@ namespace RimWorld
 					}));
 				}
 			}
+			foreach (Pawn current2 in PawnsFinder.AllMapsWorldAndTemporary_AliveOrDead)
+			{
+				if (current2.drugs != null && current2.drugs.CurrentPolicy == policy)
+				{
+					current2.drugs.CurrentPolicy = null;
+				}
+			}
 			this.policies.Remove(policy);
 			return AcceptanceReport.WasAccepted;
 		}

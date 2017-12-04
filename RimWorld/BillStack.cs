@@ -7,6 +7,11 @@ namespace RimWorld
 {
 	public class BillStack : IExposable
 	{
+		[Unsaved]
+		public IBillGiver billGiver;
+
+		private List<Bill> bills = new List<Bill>();
+
 		public const int MaxCount = 15;
 
 		private const float TopAreaHeight = 35f;
@@ -14,11 +19,6 @@ namespace RimWorld
 		private const float BillInterfaceSpacing = 6f;
 
 		private const float ExtraViewHeight = 60f;
-
-		[Unsaved]
-		public IBillGiver billGiver;
-
-		private List<Bill> bills = new List<Bill>();
 
 		public List<Bill> Bills
 		{

@@ -105,7 +105,7 @@ namespace RimWorld
 							this.planetCoverage = coverage;
 							if (this.planetCoverage == 1f)
 							{
-								Messages.Message("MessageMaxPlanetCoveragePerformanceWarning".Translate(), MessageSound.Standard);
+								Messages.Message("MessageMaxPlanetCoveragePerformanceWarning".Translate(), MessageTypeDefOf.CautionInput);
 							}
 						}
 					}, MenuOptionPriority.Default, null, null, 0f, null, null);

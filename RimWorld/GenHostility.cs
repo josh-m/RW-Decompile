@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Verse;
 using Verse.AI;
+using Verse.AI.Group;
 
 namespace RimWorld
 {
@@ -85,12 +86,17 @@ namespace RimWorld
 			return null;
 		}
 
-		public static bool AnyHostileActiveThreat(Map map)
+		public static bool AnyHostileActiveThreatToPlayer(Map map)
 		{
-			HashSet<IAttackTarget> targetsHostileToColony = map.attackTargetsCache.TargetsHostileToColony;
-			foreach (IAttackTarget current in targetsHostileToColony)
+			return GenHostility.AnyHostileActiveThreatTo(map, Faction.OfPlayer);
+		}
+
+		public static bool AnyHostileActiveThreatTo(Map map, Faction faction)
+		{
+			HashSet<IAttackTarget> hashSet = map.attackTargetsCache.TargetsHostileToFaction(faction);
+			foreach (IAttackTarget current in hashSet)
 			{
-				if (GenHostility.IsActiveThreat(current))
+				if (GenHostility.IsActiveThreatTo(current, faction))
 				{
 					return true;
 				}
@@ -98,8 +104,17 @@ namespace RimWorld
 			return false;
 		}
 
-		public static bool IsActiveThreat(IAttackTarget target)
+		public static bool IsActiveThreatToPlayer(IAttackTarget target)
 		{
+			return GenHostility.IsActiveThreatTo(target, Faction.OfPlayer);
+		}
+
+		public static bool IsActiveThreatTo(IAttackTarget target, Faction faction)
+		{
+			if (!target.Thing.HostileTo(faction))
+			{
+				return false;
+			}
 			if (!(target.Thing is IAttackTargetSearcher))
 			{
 				return false;
@@ -109,13 +124,22 @@ namespace RimWorld
 				return false;
 			}
 			Pawn pawn = target.Thing as Pawn;
-			if (pawn != null && (pawn.MentalStateDef == MentalStateDefOf.PanicFlee || pawn.IsPrisoner))
+			if (pawn != null)
+			{
+				Lord lord = pawn.GetLord();
+				if (lord != null && lord.LordJob is LordJob_DefendAndExpandHive && (pawn.mindState.duty == null || pawn.mindState.duty.def != DutyDefOf.AssaultColony))
+				{
+					return false;
+				}
+			}
+			Pawn pawn2 = target.Thing as Pawn;
+			if (pawn2 != null && (pawn2.MentalStateDef == MentalStateDefOf.PanicFlee || pawn2.IsPrisoner))
 			{
 				return false;
 			}
 			if (target.Thing.Spawned)
 			{
-				TraverseParms traverseParms = (pawn == null) ? TraverseParms.For(TraverseMode.PassDoors, Danger.Deadly, false) : TraverseParms.For(pawn, Danger.Deadly, TraverseMode.ByPawn, false);
+				TraverseParms traverseParms = (pawn2 == null) ? TraverseParms.For(TraverseMode.PassDoors, Danger.Deadly, false) : TraverseParms.For(pawn2, Danger.Deadly, TraverseMode.ByPawn, false);
 				if (!target.Thing.Map.reachability.CanReachUnfogged(target.Thing.Position, traverseParms))
 				{
 					return false;
@@ -126,7 +150,7 @@ namespace RimWorld
 
 		public static void Notify_PawnLostForTutor(Pawn pawn, Map map)
 		{
-			if (!map.IsPlayerHome && map.mapPawns.FreeColonistsSpawnedCount != 0 && !GenHostility.AnyHostileActiveThreat(map))
+			if (!map.IsPlayerHome && map.mapPawns.FreeColonistsSpawnedCount != 0 && !GenHostility.AnyHostileActiveThreatToPlayer(map))
 			{
 				LessonAutoActivator.TeachOpportunity(ConceptDefOf.ReformCaravan, OpportunityType.Important);
 			}

@@ -8,6 +8,8 @@ namespace RimWorld
 {
 	public class JobDriver_Hunt : JobDriver
 	{
+		private int jobStartTick = -1;
+
 		private const TargetIndex VictimInd = TargetIndex.A;
 
 		private const TargetIndex CorpseInd = TargetIndex.A;
@@ -15,8 +17,6 @@ namespace RimWorld
 		private const TargetIndex StoreCellInd = TargetIndex.B;
 
 		private const int MaxHuntTicks = 5000;
-
-		private int jobStartTick = -1;
 
 		public Pawn Victim
 		{
@@ -27,7 +27,7 @@ namespace RimWorld
 				{
 					return corpse.InnerPawn;
 				}
-				return (Pawn)base.CurJob.GetTarget(TargetIndex.A).Thing;
+				return (Pawn)this.job.GetTarget(TargetIndex.A).Thing;
 			}
 		}
 
@@ -35,7 +35,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return base.CurJob.GetTarget(TargetIndex.A).Thing as Corpse;
+				return this.job.GetTarget(TargetIndex.A).Thing as Corpse;
 			}
 		}
 
@@ -47,7 +47,16 @@ namespace RimWorld
 
 		public override string GetReport()
 		{
-			return base.CurJob.def.reportString.Replace("TargetA", this.Victim.LabelShort);
+			if (this.Victim != null)
+			{
+				return this.job.def.reportString.Replace("TargetA", this.Victim.LabelShort);
+			}
+			return base.GetReport();
+		}
+
+		public override bool TryMakePreToilReservations()
+		{
+			return this.pawn.Reserve(this.Victim, this.job, 1, -1, null);
 		}
 
 		[DebuggerHidden]
@@ -55,37 +64,36 @@ namespace RimWorld
 		{
 			this.FailOn(delegate
 			{
-				if (!this.<>f__this.CurJob.ignoreDesignations)
+				if (!this.$this.job.ignoreDesignations)
 				{
-					Pawn victim = this.<>f__this.Victim;
-					if (victim != null && !victim.Dead && this.<>f__this.Map.designationManager.DesignationOn(victim, DesignationDefOf.Hunt) == null)
+					Pawn victim = this.$this.Victim;
+					if (victim != null && !victim.Dead && this.$this.Map.designationManager.DesignationOn(victim, DesignationDefOf.Hunt) == null)
 					{
 						return true;
 					}
 				}
 				return false;
 			});
-			yield return Toils_Reserve.Reserve(TargetIndex.A, 1, -1, null);
 			yield return new Toil
 			{
 				initAction = delegate
 				{
-					this.<>f__this.jobStartTick = Find.TickManager.TicksGame;
+					this.$this.jobStartTick = Find.TickManager.TicksGame;
 				}
 			};
 			yield return Toils_Combat.TrySetJobToUseAttackVerb();
 			Toil startCollectCorpse = this.StartCollectCorpseToil();
-			Toil gotoCastPos = Toils_Combat.GotoCastPosition(TargetIndex.A, true).JumpIfDespawnedOrNull(TargetIndex.A, startCollectCorpse).FailOn(() => Find.TickManager.TicksGame > this.<>f__this.jobStartTick + 5000);
+			Toil gotoCastPos = Toils_Combat.GotoCastPosition(TargetIndex.A, true).JumpIfDespawnedOrNull(TargetIndex.A, startCollectCorpse).FailOn(() => Find.TickManager.TicksGame > this.$this.jobStartTick + 5000);
 			yield return gotoCastPos;
 			Toil moveIfCannotHit = Toils_Jump.JumpIfTargetNotHittable(TargetIndex.A, gotoCastPos);
 			yield return moveIfCannotHit;
 			yield return Toils_Jump.JumpIfTargetDownedDistant(TargetIndex.A, gotoCastPos);
-			yield return Toils_Combat.CastVerb(TargetIndex.A, false).JumpIfDespawnedOrNull(TargetIndex.A, startCollectCorpse).FailOn(() => Find.TickManager.TicksGame > this.<>f__this.jobStartTick + 5000);
+			yield return Toils_Combat.CastVerb(TargetIndex.A, false).JumpIfDespawnedOrNull(TargetIndex.A, startCollectCorpse).FailOn(() => Find.TickManager.TicksGame > this.$this.jobStartTick + 5000);
 			yield return Toils_Jump.JumpIfTargetDespawnedOrNull(TargetIndex.A, startCollectCorpse);
 			yield return Toils_Jump.Jump(moveIfCannotHit);
 			yield return startCollectCorpse;
 			yield return Toils_Goto.GotoCell(TargetIndex.A, PathEndMode.ClosestTouch).FailOnDespawnedNullOrForbidden(TargetIndex.A).FailOnSomeonePhysicallyInteracting(TargetIndex.A);
-			yield return Toils_Haul.StartCarryThing(TargetIndex.A, false, false);
+			yield return Toils_Haul.StartCarryThing(TargetIndex.A, false, false, false);
 			Toil carryToCell = Toils_Haul.CarryHauledThingToCell(TargetIndex.B);
 			yield return carryToCell;
 			yield return Toils_Haul.PlaceHauledThingInCell(TargetIndex.B, carryToCell, true);
@@ -116,12 +124,12 @@ namespace RimWorld
 				IntVec3 c;
 				if (StoreUtility.TryFindBestBetterStoreCellFor(corpse, this.pawn, this.Map, StoragePriority.Unstored, this.pawn.Faction, out c, true))
 				{
-					this.pawn.Reserve(corpse, 1, -1, null);
-					this.pawn.Reserve(c, 1, -1, null);
-					this.pawn.CurJob.SetTarget(TargetIndex.B, c);
-					this.pawn.CurJob.SetTarget(TargetIndex.A, corpse);
-					this.pawn.CurJob.count = 1;
-					this.pawn.CurJob.haulMode = HaulMode.ToCellStorage;
+					this.pawn.Reserve(corpse, this.job, 1, -1, null);
+					this.pawn.Reserve(c, this.job, 1, -1, null);
+					this.job.SetTarget(TargetIndex.B, c);
+					this.job.SetTarget(TargetIndex.A, corpse);
+					this.job.count = 1;
+					this.job.haulMode = HaulMode.ToCellStorage;
 					return;
 				}
 				this.pawn.jobs.EndCurrentJob(JobCondition.Succeeded, true);

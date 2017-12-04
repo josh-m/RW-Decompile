@@ -7,11 +7,11 @@ namespace Verse
 {
 	public class SimpleCurveView
 	{
-		private const float ResetZoomBuffer = 0.1f;
-
 		public Rect rect;
 
 		private Dictionary<object, float> debugInputValues = new Dictionary<object, float>();
+
+		private const float ResetZoomBuffer = 0.1f;
 
 		private static Rect identityRect = new Rect(0f, 0f, 1f, 1f);
 

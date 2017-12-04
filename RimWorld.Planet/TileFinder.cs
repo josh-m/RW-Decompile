@@ -10,12 +10,14 @@ namespace RimWorld.Planet
 	{
 		private static List<Pair<int, int>> tmpTiles = new List<Pair<int, int>>();
 
+		private static List<int> tmpPlayerTiles = new List<int>();
+
 		public static int RandomStartingTile()
 		{
-			return TileFinder.RandomFactionBaseTileFor(Faction.OfPlayer, true);
+			return TileFinder.RandomFactionBaseTileFor(Faction.OfPlayer, true, null);
 		}
 
-		public static int RandomFactionBaseTileFor(Faction faction, bool mustBeAutoChoosable = false)
+		public static int RandomFactionBaseTileFor(Faction faction, bool mustBeAutoChoosable = false, Predicate<int> extraValidator = null)
 		{
 			for (int i = 0; i < 500; i++)
 			{
@@ -29,6 +31,10 @@ namespace RimWorld.Planet
 						return 0f;
 					}
 					if (mustBeAutoChoosable && !tile.biome.canAutoChoose)
+					{
+						return 0f;
+					}
+					if (extraValidator != null && !extraValidator(x))
 					{
 						return 0f;
 					}
@@ -106,7 +112,7 @@ namespace RimWorld.Planet
 				}
 				return false;
 			}
-			if (Find.WorldObjects.AnyMapParentAt(tile) || Current.Game.FindMap(tile) != null)
+			if (Find.WorldObjects.AnyMapParentAt(tile) || Current.Game.FindMap(tile) != null || Find.WorldObjects.AnyWorldObjectOfDefAt(WorldObjectDefOf.AbandonedFactionBase, tile))
 			{
 				if (reason != null)
 				{
@@ -117,7 +123,7 @@ namespace RimWorld.Planet
 			return true;
 		}
 
-		public static bool TryFindPassableTileWithTraversalDistance(int rootTile, int minDist, int maxDist, out int result, Predicate<int> validator = null, bool ignoreFirstTilePassability = false)
+		public static bool TryFindPassableTileWithTraversalDistance(int rootTile, int minDist, int maxDist, out int result, Predicate<int> validator = null, bool ignoreFirstTilePassability = false, bool preferCloserTiles = false)
 		{
 			TileFinder.tmpTiles.Clear();
 			Find.WorldFloodFiller.FloodFill(rootTile, (int x) => !Find.World.Impassable(x) || (x == rootTile && ignoreFirstTilePassability), delegate(int tile, int traversalDistance)
@@ -131,37 +137,76 @@ namespace RimWorld.Planet
 					TileFinder.tmpTiles.Add(new Pair<int, int>(tile, traversalDistance));
 				}
 				return false;
-			}, 2147483647);
-			Pair<int, int> pair;
-			if (TileFinder.tmpTiles.TryRandomElementByWeight((Pair<int, int> x) => 1f - (float)(x.Second - minDist) / ((float)(maxDist - minDist) + 0.01f), out pair))
+			}, 2147483647, null);
+			if (preferCloserTiles)
 			{
-				result = pair.First;
-				return true;
+				Pair<int, int> pair;
+				if (TileFinder.tmpTiles.TryRandomElementByWeight((Pair<int, int> x) => 1f - (float)(x.Second - minDist) / ((float)(maxDist - minDist) + 0.01f), out pair))
+				{
+					result = pair.First;
+					return true;
+				}
+				result = -1;
+				return false;
 			}
-			result = -1;
-			return false;
+			else
+			{
+				Pair<int, int> pair;
+				if (TileFinder.tmpTiles.TryRandomElement(out pair))
+				{
+					result = pair.First;
+					return true;
+				}
+				result = -1;
+				return false;
+			}
 		}
 
-		public static bool TryFindRandomPlayerTile(out int tile)
+		public static bool TryFindRandomPlayerTile(out int tile, bool allowCaravans, Predicate<int> validator = null)
 		{
+			TileFinder.tmpPlayerTiles.Clear();
+			List<Map> maps = Find.Maps;
+			for (int i = 0; i < maps.Count; i++)
+			{
+				if (maps[i].IsPlayerHome && maps[i].mapPawns.FreeColonistsSpawnedCount != 0 && (validator == null || validator(maps[i].Tile)))
+				{
+					TileFinder.tmpPlayerTiles.Add(maps[i].Tile);
+				}
+			}
+			if (allowCaravans)
+			{
+				List<Caravan> caravans = Find.WorldObjects.Caravans;
+				for (int j = 0; j < caravans.Count; j++)
+				{
+					if (caravans[j].IsPlayerControlled && (validator == null || validator(caravans[j].Tile)))
+					{
+						TileFinder.tmpPlayerTiles.Add(caravans[j].Tile);
+					}
+				}
+			}
+			if (TileFinder.tmpPlayerTiles.TryRandomElement(out tile))
+			{
+				return true;
+			}
 			Map map;
 			if ((from x in Find.Maps
-			where x.IsPlayerHome && x.mapPawns.FreeColonistsSpawnedCount != 0
+			where x.IsPlayerHome && (validator == null || validator(x.Tile))
 			select x).TryRandomElement(out map))
 			{
 				tile = map.Tile;
 				return true;
 			}
+			Map map2;
 			if ((from x in Find.Maps
-			where x.IsPlayerHome
-			select x).TryRandomElement(out map))
+			where x.mapPawns.FreeColonistsSpawnedCount != 0 && (validator == null || validator(x.Tile))
+			select x).TryRandomElement(out map2))
 			{
-				tile = map.Tile;
+				tile = map2.Tile;
 				return true;
 			}
 			Caravan caravan;
-			if ((from x in Find.WorldObjects.Caravans
-			where x.IsPlayerControlled
+			if (!allowCaravans && (from x in Find.WorldObjects.Caravans
+			where x.IsPlayerControlled && (validator == null || validator(x.Tile))
 			select x).TryRandomElement(out caravan))
 			{
 				tile = caravan.Tile;
@@ -171,15 +216,33 @@ namespace RimWorld.Planet
 			return false;
 		}
 
-		public static bool TryFindNewSiteTile(out int tile)
+		public static bool TryFindNewSiteTile(out int tile, int minDist = 8, int maxDist = 30, bool allowCaravans = false, bool preferCloserTiles = true, int nearThisTile = -1)
 		{
-			int rootTile;
-			if (!TileFinder.TryFindRandomPlayerTile(out rootTile))
+			Func<int, int> findTile = delegate(int root)
+			{
+				int minDist2 = minDist;
+				int maxDist2 = maxDist;
+				Predicate<int> validator = (int x) => !Find.WorldObjects.AnyWorldObjectAt(x) && TileFinder.IsValidTileForNewSettlement(x, null);
+				bool preferCloserTiles2 = preferCloserTiles;
+				int result;
+				if (TileFinder.TryFindPassableTileWithTraversalDistance(root, minDist2, maxDist2, out result, validator, false, preferCloserTiles2))
+				{
+					return result;
+				}
+				return -1;
+			};
+			int arg;
+			if (nearThisTile != -1)
+			{
+				arg = nearThisTile;
+			}
+			else if (!TileFinder.TryFindRandomPlayerTile(out arg, allowCaravans, (int x) => findTile(x) != -1))
 			{
 				tile = -1;
 				return false;
 			}
-			return TileFinder.TryFindPassableTileWithTraversalDistance(rootTile, 8, 30, out tile, (int x) => !Find.WorldObjects.AnyWorldObjectAt(x) && TileFinder.IsValidTileForNewSettlement(x, null), false);
+			tile = findTile(arg);
+			return tile != -1;
 		}
 	}
 }

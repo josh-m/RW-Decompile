@@ -8,10 +8,6 @@ namespace RimWorld
 {
 	public class Dialog_KeyBindings : Window
 	{
-		protected const float EntryHeight = 34f;
-
-		protected const float CategoryHeadingHeight = 40f;
-
 		protected Vector2 scrollPosition;
 
 		protected float contentHeight;
@@ -19,6 +15,10 @@ namespace RimWorld
 		protected KeyPrefsData keyPrefsData;
 
 		protected Vector2 WindowSize = new Vector2(900f, 760f);
+
+		protected const float EntryHeight = 34f;
+
+		protected const float CategoryHeadingHeight = 40f;
 
 		private static List<KeyBindingDef> keyBindingsWorkingList = new List<KeyBindingDef>();
 

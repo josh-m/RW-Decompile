@@ -7,11 +7,11 @@ namespace Verse.AI
 {
 	public sealed class PathGrid
 	{
-		public const int ImpassableCost = 10000;
-
 		private Map map;
 
 		public int[] pathGrid;
+
+		public const int ImpassableCost = 10000;
 
 		public PathGrid(Map map)
 		{

@@ -21,6 +21,8 @@ namespace Verse
 
 		private static ColorCorrectionCurves colorCorrectionCurvesInt;
 
+		private static SubcameraDriver subcameraDriverInt;
+
 		private static Game gameInt;
 
 		private static World creatingWorldInt;
@@ -70,6 +72,14 @@ namespace Verse
 			get
 			{
 				return Current.colorCorrectionCurvesInt;
+			}
+		}
+
+		public static SubcameraDriver SubcameraDriver
+		{
+			get
+			{
+				return Current.subcameraDriverInt;
 			}
 		}
 
@@ -129,6 +139,7 @@ namespace Verse
 				Current.rootInt = Current.rootPlayInt;
 				Current.cameraDriverInt = Current.cameraInt.GetComponent<CameraDriver>();
 				Current.colorCorrectionCurvesInt = Current.cameraInt.GetComponent<ColorCorrectionCurves>();
+				Current.subcameraDriverInt = GameObject.Find("Subcameras").GetComponent<SubcameraDriver>();
 			}
 		}
 	}

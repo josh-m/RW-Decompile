@@ -5,15 +5,15 @@ namespace Verse
 {
 	public class PawnLeaner
 	{
-		private const float LeanOffsetPctChangeRate = 0.075f;
-
-		private const float LeanOffsetDistanceMultiplier = 0.5f;
-
 		private Pawn pawn;
 
 		private IntVec3 shootSourceOffset = new IntVec3(0, 0, 0);
 
 		private float leanOffsetCurPct;
+
+		private const float LeanOffsetPctChangeRate = 0.075f;
+
+		private const float LeanOffsetDistanceMultiplier = 0.5f;
 
 		public Vector3 LeanOffset
 		{

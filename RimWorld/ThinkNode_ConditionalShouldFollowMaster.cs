@@ -17,13 +17,13 @@ namespace RimWorld
 			{
 				return false;
 			}
-			Pawn master = pawn.playerSettings.master;
-			if (master == null)
+			Pawn respectedMaster = pawn.playerSettings.RespectedMaster;
+			if (respectedMaster == null)
 			{
 				return false;
 			}
-			Pawn carriedBy = master.CarriedBy;
-			return (master.Spawned || carriedBy != null) && ((carriedBy != null && carriedBy.HostileTo(master)) || (pawn.playerSettings.followDrafted && master.Drafted) || (pawn.playerSettings.followFieldwork && master.mindState.lastJobTag == JobTag.Fieldwork));
+			Pawn carriedBy = respectedMaster.CarriedBy;
+			return (respectedMaster.Spawned || carriedBy != null) && ((carriedBy != null && carriedBy.HostileTo(respectedMaster)) || (pawn.playerSettings.followDrafted && respectedMaster.Drafted) || (pawn.playerSettings.followFieldwork && respectedMaster.mindState.lastJobTag == JobTag.Fieldwork));
 		}
 	}
 }

@@ -21,7 +21,7 @@ namespace RimWorld
 		[DebuggerHidden]
 		protected override IEnumerable<Toil> MakeNewToils()
 		{
-			this.FailOn(() => !this.<>f__this.Map.areaManager.NoRoof[this.<>f__this.Cell]);
+			this.FailOn(() => !this.$this.Map.areaManager.NoRoof[this.$this.Cell]);
 			foreach (Toil t in base.MakeNewToils())
 			{
 				yield return t;

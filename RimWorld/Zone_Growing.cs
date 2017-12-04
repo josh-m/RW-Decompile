@@ -13,6 +13,14 @@ namespace RimWorld
 
 		public bool allowSow = true;
 
+		IEnumerable<IntVec3> IPlantToGrowSettable.Cells
+		{
+			get
+			{
+				return base.Cells;
+			}
+		}
+
 		public override bool IsMultiselectable
 		{
 			get
@@ -87,7 +95,7 @@ namespace RimWorld
 			}
 			return "PeriodDays".Translate(new object[]
 			{
-				list.Count * 5
+				list.Count * 5 + "/" + 60
 			}) + " (" + QuadrumUtility.QuadrumsRangeLabel(list) + ")";
 		}
 
@@ -105,10 +113,10 @@ namespace RimWorld
 				defaultDesc = "CommandAllowSowDesc".Translate(),
 				hotKey = KeyBindingDefOf.CommandItemForbid,
 				icon = TexCommand.Forbidden,
-				isActive = (() => this.<>f__this.allowSow),
+				isActive = (() => this.$this.allowSow),
 				toggleAction = delegate
 				{
-					this.<>f__this.allowSow = !this.<>f__this.allowSow;
+					this.$this.allowSow = !this.$this.allowSow;
 				}
 			};
 		}
@@ -126,11 +134,6 @@ namespace RimWorld
 		public bool CanAcceptSowNow()
 		{
 			return true;
-		}
-
-		virtual Map get_Map()
-		{
-			return base.Map;
 		}
 	}
 }

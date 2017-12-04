@@ -29,6 +29,8 @@ namespace Verse
 
 			public bool alreadyDisplayed;
 
+			public bool canEverUseStandardWindow = true;
+
 			public bool UseAnimatedDots
 			{
 				get
@@ -41,7 +43,7 @@ namespace Verse
 			{
 				get
 				{
-					return !this.doAsynchronously && !this.alreadyDisplayed && this.eventActionEnumerator == null && !this.eventText.NullOrEmpty();
+					return !this.alreadyDisplayed && this.UseStandardWindow && !this.eventText.NullOrEmpty();
 				}
 			}
 
@@ -49,7 +51,7 @@ namespace Verse
 			{
 				get
 				{
-					return !LongEventHandler.currentEvent.doAsynchronously && LongEventHandler.currentEvent.eventActionEnumerator == null;
+					return this.canEverUseStandardWindow && !this.doAsynchronously && this.eventActionEnumerator == null;
 				}
 			}
 		}
@@ -74,27 +76,16 @@ namespace Verse
 		{
 			get
 			{
-				if (!LongEventHandler.AnyEventNowOrWaiting)
-				{
-					return false;
-				}
-				if (LongEventHandler.currentEvent != null && !LongEventHandler.currentEvent.ShouldWaitUntilDisplayed)
-				{
-					return true;
-				}
-				if (LongEventHandler.currentEvent == null && LongEventHandler.eventQueue.Any<LongEventHandler.QueuedLongEvent>())
-				{
-					LongEventHandler.QueuedLongEvent queuedLongEvent = LongEventHandler.eventQueue.Peek();
-					if (queuedLongEvent.doAsynchronously)
-					{
-						return true;
-					}
-					if (!queuedLongEvent.ShouldWaitUntilDisplayed)
-					{
-						return true;
-					}
-				}
-				return Find.UIRoot == null || Find.WindowStack == null;
+				return LongEventHandler.AnyEventNowOrWaiting && ((LongEventHandler.currentEvent != null && !LongEventHandler.currentEvent.UseStandardWindow) || (Find.UIRoot == null || Find.WindowStack == null));
+			}
+		}
+
+		public static bool CanApplyUIScaleNow
+		{
+			get
+			{
+				LongEventHandler.QueuedLongEvent queuedLongEvent = LongEventHandler.currentEvent;
+				return queuedLongEvent == null || queuedLongEvent.levelToLoad.NullOrEmpty();
 			}
 		}
 
@@ -103,6 +94,19 @@ namespace Verse
 			get
 			{
 				return LongEventHandler.currentEvent != null || LongEventHandler.eventQueue.Count > 0;
+			}
+		}
+
+		private static bool AnyEventWhichDoesntUseStandardWindowNowOrWaiting
+		{
+			get
+			{
+				LongEventHandler.QueuedLongEvent queuedLongEvent = LongEventHandler.currentEvent;
+				if (queuedLongEvent != null && !queuedLongEvent.UseStandardWindow)
+				{
+					return true;
+				}
+				return LongEventHandler.eventQueue.Any((LongEventHandler.QueuedLongEvent x) => !x.UseStandardWindow);
 			}
 		}
 
@@ -121,6 +125,7 @@ namespace Verse
 			queuedLongEvent.eventTextKey = textKey;
 			queuedLongEvent.doAsynchronously = doAsynchronously;
 			queuedLongEvent.exceptionHandler = exceptionHandler;
+			queuedLongEvent.canEverUseStandardWindow = !LongEventHandler.AnyEventWhichDoesntUseStandardWindowNowOrWaiting;
 			LongEventHandler.eventQueue.Enqueue(queuedLongEvent);
 		}
 
@@ -131,6 +136,7 @@ namespace Verse
 			queuedLongEvent.eventTextKey = textKey;
 			queuedLongEvent.doAsynchronously = false;
 			queuedLongEvent.exceptionHandler = exceptionHandler;
+			queuedLongEvent.canEverUseStandardWindow = !LongEventHandler.AnyEventWhichDoesntUseStandardWindowNowOrWaiting;
 			LongEventHandler.eventQueue.Enqueue(queuedLongEvent);
 		}
 
@@ -142,6 +148,7 @@ namespace Verse
 			queuedLongEvent.eventTextKey = textKey;
 			queuedLongEvent.doAsynchronously = doAsynchronously;
 			queuedLongEvent.exceptionHandler = exceptionHandler;
+			queuedLongEvent.canEverUseStandardWindow = !LongEventHandler.AnyEventWhichDoesntUseStandardWindowNowOrWaiting;
 			LongEventHandler.eventQueue.Enqueue(queuedLongEvent);
 		}
 

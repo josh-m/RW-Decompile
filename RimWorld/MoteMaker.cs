@@ -168,6 +168,21 @@ namespace RimWorld
 			GenSpawn.Spawn(moteThrown, loc.ToIntVec3(), map);
 		}
 
+		public static void ThrowTornadoDustPuff(Vector3 loc, Map map, float scale, Color color)
+		{
+			if (!loc.ShouldSpawnMotesAt(map) || map.moteCounter.SaturatedLowPriority)
+			{
+				return;
+			}
+			MoteThrown moteThrown = (MoteThrown)ThingMaker.MakeThing(ThingDefOf.Mote_TornadoDustPuff, null);
+			moteThrown.Scale = 1.9f * scale;
+			moteThrown.rotationRate = (float)Rand.Range(-60, 60);
+			moteThrown.exactPosition = loc;
+			moteThrown.instanceColor = color;
+			moteThrown.SetVelocity((float)Rand.Range(0, 360), Rand.Range(0.6f, 0.75f));
+			GenSpawn.Spawn(moteThrown, loc.ToIntVec3(), map);
+		}
+
 		public static void ThrowSmoke(Vector3 loc, Map map, float size)
 		{
 			if (!loc.ShouldSpawnMotesAt(map) || map.moteCounter.SaturatedLowPriority)
@@ -267,6 +282,16 @@ namespace RimWorld
 
 		public static void ThrowHorseshoe(Pawn thrower, IntVec3 targetCell)
 		{
+			MoteMaker.ThrowObjectAt(thrower, targetCell, ThingDefOf.Mote_Horseshoe);
+		}
+
+		public static void ThrowStone(Pawn thrower, IntVec3 targetCell)
+		{
+			MoteMaker.ThrowObjectAt(thrower, targetCell, ThingDefOf.Mote_Stone);
+		}
+
+		private static void ThrowObjectAt(Pawn thrower, IntVec3 targetCell, ThingDef mote)
+		{
 			if (!thrower.Position.ShouldSpawnMotesAt(thrower.Map) || thrower.Map.moteCounter.Saturated)
 			{
 				return;
@@ -274,7 +299,7 @@ namespace RimWorld
 			float num = Rand.Range(3.8f, 5.6f);
 			Vector3 vector = targetCell.ToVector3Shifted() + Vector3Utility.RandomHorizontalOffset((1f - (float)thrower.skills.GetSkill(SkillDefOf.Shooting).Level / 20f) * 1.8f);
 			vector.y = thrower.DrawPos.y;
-			MoteThrown moteThrown = (MoteThrown)ThingMaker.MakeThing(ThingDefOf.Mote_Horseshoe, null);
+			MoteThrown moteThrown = (MoteThrown)ThingMaker.MakeThing(mote, null);
 			moteThrown.Scale = 1f;
 			moteThrown.rotationRate = (float)Rand.Range(-300, 300);
 			moteThrown.exactPosition = thrower.DrawPos;
@@ -431,6 +456,24 @@ namespace RimWorld
 			MoteSplash moteSplash = (MoteSplash)ThingMaker.MakeThing(ThingDefOf.Mote_WaterSplash, null);
 			moteSplash.Initialize(loc, size, velocity);
 			GenSpawn.Spawn(moteSplash, loc.ToIntVec3(), map);
+		}
+
+		public static void MakeBombardmentMote(IntVec3 cell, Map map)
+		{
+			Mote mote = (Mote)ThingMaker.MakeThing(ThingDefOf.Mote_Bombardment, null);
+			mote.exactPosition = cell.ToVector3Shifted();
+			mote.Scale = (float)Mathf.Max(23, 25) * 6f;
+			mote.rotationRate = 1.2f;
+			GenSpawn.Spawn(mote, cell, map);
+		}
+
+		public static void MakePowerBeamMote(IntVec3 cell, Map map)
+		{
+			Mote mote = (Mote)ThingMaker.MakeThing(ThingDefOf.Mote_PowerBeam, null);
+			mote.exactPosition = cell.ToVector3Shifted();
+			mote.Scale = 90f;
+			mote.rotationRate = 1.2f;
+			GenSpawn.Spawn(mote, cell, map);
 		}
 
 		public static void PlaceTempRoof(IntVec3 cell, Map map)

@@ -8,12 +8,6 @@ namespace Verse
 {
 	public class EditWindow_CurveEditor : EditWindow
 	{
-		private const float ViewDragPanSpeed = 0.002f;
-
-		private const float ScrollZoomSpeed = 0.025f;
-
-		private const float PointClickDistanceLimit = 7f;
-
 		private SimpleCurve curve;
 
 		public List<float> debugInputValues;
@@ -21,6 +15,12 @@ namespace Verse
 		private int draggingPointIndex = -1;
 
 		private int draggingButton = -1;
+
+		private const float ViewDragPanSpeed = 0.002f;
+
+		private const float ScrollZoomSpeed = 0.025f;
+
+		private const float PointClickDistanceLimit = 7f;
 
 		private bool DraggingView
 		{
@@ -105,7 +105,7 @@ namespace Verse
 
 		private void DoCurveEditor(Rect screenRect)
 		{
-			Widgets.DrawMenuSection(screenRect, true);
+			Widgets.DrawMenuSection(screenRect);
 			SimpleCurveDrawer.DrawCurve(screenRect, this.curve, null, null, default(Rect));
 			Vector2 mousePosition = Event.current.mousePosition;
 			if (Mouse.IsOver(screenRect))
@@ -151,14 +151,14 @@ namespace Verse
 					float num2 = -1f * Event.current.delta.y * 0.025f;
 					float num3 = this.curve.View.rect.center.x - this.curve.View.rect.x;
 					float num4 = this.curve.View.rect.center.y - this.curve.View.rect.y;
-					SimpleCurveView expr_363_cp_0 = this.curve.View;
-					expr_363_cp_0.rect.xMin = expr_363_cp_0.rect.xMin + num3 * num2;
-					SimpleCurveView expr_384_cp_0 = this.curve.View;
-					expr_384_cp_0.rect.xMax = expr_384_cp_0.rect.xMax - num3 * num2;
-					SimpleCurveView expr_3A5_cp_0 = this.curve.View;
-					expr_3A5_cp_0.rect.yMin = expr_3A5_cp_0.rect.yMin + num4 * num2;
-					SimpleCurveView expr_3C6_cp_0 = this.curve.View;
-					expr_3C6_cp_0.rect.yMax = expr_3C6_cp_0.rect.yMax - num4 * num2;
+					SimpleCurveView expr_37D_cp_0 = this.curve.View;
+					expr_37D_cp_0.rect.xMin = expr_37D_cp_0.rect.xMin + num3 * num2;
+					SimpleCurveView expr_39E_cp_0 = this.curve.View;
+					expr_39E_cp_0.rect.xMax = expr_39E_cp_0.rect.xMax - num3 * num2;
+					SimpleCurveView expr_3BF_cp_0 = this.curve.View;
+					expr_3BF_cp_0.rect.yMin = expr_3BF_cp_0.rect.yMin + num4 * num2;
+					SimpleCurveView expr_3E0_cp_0 = this.curve.View;
+					expr_3E0_cp_0.rect.yMax = expr_3E0_cp_0.rect.yMax - num4 * num2;
 					Event.current.Use();
 				}
 				if (Event.current.type == EventType.MouseDown && (Event.current.button == 0 || Event.current.button == 2))
@@ -213,10 +213,10 @@ namespace Verse
 				if (Event.current.type == EventType.MouseDrag)
 				{
 					Vector2 delta = Event.current.delta;
-					SimpleCurveView expr_668_cp_0 = this.curve.View;
-					expr_668_cp_0.rect.x = expr_668_cp_0.rect.x - delta.x * this.curve.View.rect.width * 0.002f;
-					SimpleCurveView expr_6A7_cp_0 = this.curve.View;
-					expr_6A7_cp_0.rect.y = expr_6A7_cp_0.rect.y + delta.y * this.curve.View.rect.height * 0.002f;
+					SimpleCurveView expr_691_cp_0 = this.curve.View;
+					expr_691_cp_0.rect.x = expr_691_cp_0.rect.x - delta.x * this.curve.View.rect.width * 0.002f;
+					SimpleCurveView expr_6D0_cp_0 = this.curve.View;
+					expr_6D0_cp_0.rect.y = expr_6D0_cp_0.rect.y + delta.y * this.curve.View.rect.height * 0.002f;
 					Event.current.Use();
 				}
 				if (Event.current.type == EventType.MouseUp && Event.current.button == this.draggingButton)

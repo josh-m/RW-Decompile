@@ -15,7 +15,7 @@ namespace RimWorld
 			return base.CanFireNowSub(target) && HivesUtility.TotalSpawnedHivesCount(map) < 30 && InfestationCellFinder.TryFindCell(out intVec, map);
 		}
 
-		public override bool TryExecute(IncidentParms parms)
+		protected override bool TryExecuteWorker(IncidentParms parms)
 		{
 			Map map = (Map)parms.target;
 			Hive t = null;
@@ -54,14 +54,13 @@ namespace RimWorld
 
 		private static void SpawnInsectJellyInstantly(Hive hive)
 		{
-			CompSpawner compSpawner = (CompSpawner)hive.AllComps.Find(delegate(ThingComp x)
+			foreach (CompSpawner current in hive.GetComps<CompSpawner>())
 			{
-				CompSpawner compSpawner2 = x as CompSpawner;
-				return compSpawner2 != null && compSpawner2.PropsSpawner.thingToSpawn == ThingDefOf.InsectJelly;
-			});
-			if (compSpawner != null)
-			{
-				compSpawner.TryDoSpawn();
+				if (current.PropsSpawner.thingToSpawn == ThingDefOf.InsectJelly)
+				{
+					current.TryDoSpawn();
+					break;
+				}
 			}
 		}
 	}

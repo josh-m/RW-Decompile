@@ -9,7 +9,7 @@ namespace RimWorld
 {
 	public static class FloatMenuMakerMap
 	{
-		public static bool making;
+		public static Pawn makingFor;
 
 		private static bool CanTakeOrder(Pawn pawn)
 		{
@@ -27,7 +27,7 @@ namespace RimWorld
 				Messages.Message("IsIncapped".Translate(new object[]
 				{
 					pawn.LabelCap
-				}), pawn, MessageSound.RejectInput);
+				}), pawn, MessageTypeDefOf.RejectInput);
 				return;
 			}
 			if (pawn.Map != Find.VisibleMap)
@@ -61,8 +61,7 @@ namespace RimWorld
 			{
 				return list;
 			}
-			DangerUtility.NotifyDirectOrderingThisFrame(pawn);
-			FloatMenuMakerMap.making = true;
+			FloatMenuMakerMap.makingFor = pawn;
 			try
 			{
 				if (intVec.Fogged(pawn.Map))
@@ -95,35 +94,9 @@ namespace RimWorld
 			}
 			finally
 			{
-				DangerUtility.DoneDirectOrdering();
-				FloatMenuMakerMap.making = false;
+				FloatMenuMakerMap.makingFor = null;
 			}
-			FloatMenuMakerMap.DisableIfNotInterruptibleNow(list, pawn);
 			return list;
-		}
-
-		private static void DisableIfNotInterruptibleNow(List<FloatMenuOption> opts, Pawn pawn)
-		{
-			if (!pawn.jobs.IsCurrentJobPlayerInterruptible())
-			{
-				string str;
-				if (pawn.CurJob != null && pawn.CurJob.def == JobDefOf.Vomit)
-				{
-					str = "VomitingLower".Translate();
-				}
-				else
-				{
-					str = "NotInterruptibleLower".Translate();
-				}
-				for (int i = 0; i < opts.Count; i++)
-				{
-					if (!opts[i].Disabled)
-					{
-						opts[i].action = null;
-						opts[i].Label = opts[i].Label + " (" + str + ")";
-					}
-				}
-			}
 		}
 
 		private static void AddDraftedOrders(Vector3 clickPos, Pawn pawn, List<FloatMenuOption> opts)
@@ -175,9 +148,12 @@ namespace RimWorld
 						attackTarg.Thing.Label
 					});
 				}
-				MenuOptionPriority priority = (!attackTarg.HasThing || !pawn.HostileTo(attackTarg.Thing)) ? MenuOptionPriority.VeryLow : MenuOptionPriority.AttackEnemy;
+				MenuOptionPriority menuOptionPriority = (!attackTarg.HasThing || !pawn.HostileTo(attackTarg.Thing)) ? MenuOptionPriority.VeryLow : MenuOptionPriority.AttackEnemy;
+				string label = string.Empty;
+				Action action = null;
+				MenuOptionPriority priority = menuOptionPriority;
 				Thing thing = attackTarg.Thing;
-				FloatMenuOption floatMenuOption2 = new FloatMenuOption(string.Empty, null, priority, null, thing, 0f, null, null);
+				FloatMenuOption floatMenuOption2 = new FloatMenuOption(label, action, priority, null, thing, 0f, null, null);
 				if (meleeAct == null)
 				{
 					text2 = text2 + " (" + str2 + ")";
@@ -198,38 +174,38 @@ namespace RimWorld
 				foreach (LocalTargetInfo current2 in GenUI.TargetsAt(clickPos, TargetingParameters.ForArrest(pawn), true))
 				{
 					LocalTargetInfo dest = current2;
-					if (!((Pawn)dest.Thing).Downed)
+					if (!pawn.CanReach(dest, PathEndMode.OnCell, Danger.Deadly, false, TraverseMode.ByPawn))
 					{
-						if (!pawn.CanReach(dest, PathEndMode.OnCell, Danger.Deadly, false, TraverseMode.ByPawn))
+						opts.Add(new FloatMenuOption("CannotArrest".Translate() + " (" + "NoPath".Translate() + ")", null, MenuOptionPriority.Default, null, null, 0f, null, null));
+					}
+					else
+					{
+						Pawn pTarg = (Pawn)dest.Thing;
+						Action action2 = delegate
 						{
-							opts.Add(new FloatMenuOption("CannotArrest".Translate() + " (" + "NoPath".Translate() + ")", null, MenuOptionPriority.Default, null, null, 0f, null, null));
-						}
-						else
+							Building_Bed building_Bed = RestUtility.FindBedFor(pTarg, pawn, true, false, false);
+							if (building_Bed == null)
+							{
+								building_Bed = RestUtility.FindBedFor(pTarg, pawn, true, false, true);
+							}
+							if (building_Bed == null)
+							{
+								Messages.Message("CannotArrest".Translate() + ": " + "NoPrisonerBed".Translate(), pTarg, MessageTypeDefOf.RejectInput);
+								return;
+							}
+							Job job = new Job(JobDefOf.Arrest, pTarg, building_Bed);
+							job.count = 1;
+							pawn.jobs.TryTakeOrderedJob(job, JobTag.Misc);
+							TutorUtility.DoModalDialogIfNotKnown(ConceptDefOf.ArrestingCreatesEnemies);
+						};
+						string label = "TryToArrest".Translate(new object[]
 						{
-							Pawn pTarg = (Pawn)dest.Thing;
-							Action action = delegate
-							{
-								Building_Bed building_Bed = RestUtility.FindBedFor(pTarg, pawn, true, false, false);
-								if (building_Bed == null)
-								{
-									building_Bed = RestUtility.FindBedFor(pTarg, pawn, true, false, true);
-								}
-								if (building_Bed == null)
-								{
-									Messages.Message("CannotArrest".Translate() + ": " + "NoPrisonerBed".Translate(), pTarg, MessageSound.RejectInput);
-									return;
-								}
-								Job job = new Job(JobDefOf.Arrest, pTarg, building_Bed);
-								job.count = 1;
-								pawn.jobs.TryTakeOrderedJob(job, JobTag.Misc);
-								TutorUtility.DoModalDialogIfNotKnown(ConceptDefOf.ArrestingCreatesEnemies);
-							};
-							Thing thing = dest.Thing;
-							opts.Add(FloatMenuUtility.DecoratePrioritizedTask(new FloatMenuOption("TryToArrest".Translate(new object[]
-							{
-								dest.Thing.LabelCap
-							}), action, MenuOptionPriority.High, null, thing, 0f, null, null), pawn, pTarg, "ReservedBy"));
-						}
+							dest.Thing.LabelCap
+						});
+						Action action = action2;
+						MenuOptionPriority priority = MenuOptionPriority.High;
+						Thing thing = dest.Thing;
+						opts.Add(FloatMenuUtility.DecoratePrioritizedTask(new FloatMenuOption(label, action, priority, null, thing, 0f, null, null), pawn, pTarg, "ReservedBy"));
 					}
 				}
 			}
@@ -265,7 +241,7 @@ namespace RimWorld
 						text = text + " (" + "ReservedForPrisoners".Translate() + ")";
 					}
 					FloatMenuOption item5;
-					if (t.def.IsPleasureDrug && pawn.IsTeetotaler())
+					if (t.def.IsNonMedicalDrug && pawn.IsTeetotaler())
 					{
 						item5 = new FloatMenuOption(text + " (" + TraitDefOf.DrugDesire.DataAtDegree(-1).label + ")", null, MenuOptionPriority.Default, null, null, 0f, null, null);
 					}
@@ -296,11 +272,11 @@ namespace RimWorld
 					{
 						if (!victim.IsPrisonerOfColony && !victim.InMentalState && (victim.Faction == Faction.OfPlayer || victim.Faction == null || !victim.Faction.HostileTo(Faction.OfPlayer)))
 						{
-							Pawn victim2 = victim;
-							opts.Add(FloatMenuUtility.DecoratePrioritizedTask(new FloatMenuOption("Rescue".Translate(new object[]
+							string label = "Rescue".Translate(new object[]
 							{
 								victim.LabelCap
-							}), delegate
+							});
+							Action action = delegate
 							{
 								Building_Bed building_Bed = RestUtility.FindBedFor(victim, pawn, false, false, false);
 								if (building_Bed == null)
@@ -318,22 +294,25 @@ namespace RimWorld
 									{
 										str2 = "NoNonPrisonerBed".Translate();
 									}
-									Messages.Message("CannotRescue".Translate() + ": " + str2, victim, MessageSound.RejectInput);
+									Messages.Message("CannotRescue".Translate() + ": " + str2, victim, MessageTypeDefOf.RejectInput);
 									return;
 								}
 								Job job = new Job(JobDefOf.Rescue, victim, building_Bed);
 								job.count = 1;
 								pawn.jobs.TryTakeOrderedJob(job, JobTag.Misc);
 								PlayerKnowledgeDatabase.KnowledgeDemonstrated(ConceptDefOf.Rescuing, KnowledgeAmount.Total);
-							}, MenuOptionPriority.RescueOrCapture, null, victim2, 0f, null, null), pawn, victim, "ReservedBy"));
-						}
-						if (victim.RaceProps.Humanlike && (victim.InMentalState || victim.Faction != Faction.OfPlayer || (victim.Downed && (victim.guilt.IsGuilty || victim.IsPrisonerOfColony))))
-						{
+							};
+							MenuOptionPriority priority2 = MenuOptionPriority.RescueOrCapture;
 							Pawn victim2 = victim;
-							opts.Add(FloatMenuUtility.DecoratePrioritizedTask(new FloatMenuOption("Capture".Translate(new object[]
+							opts.Add(FloatMenuUtility.DecoratePrioritizedTask(new FloatMenuOption(label, action, priority2, null, victim2, 0f, null, null), pawn, victim, "ReservedBy"));
+						}
+						if (!victim.NonHumanlikeOrWildMan() && (victim.InMentalState || victim.Faction != Faction.OfPlayer || (victim.Downed && (victim.guilt.IsGuilty || victim.IsPrisonerOfColony))))
+						{
+							string label = "Capture".Translate(new object[]
 							{
 								victim.LabelCap
-							}), delegate
+							});
+							Action action = delegate
 							{
 								Building_Bed building_Bed = RestUtility.FindBedFor(victim, pawn, true, false, false);
 								if (building_Bed == null)
@@ -342,14 +321,17 @@ namespace RimWorld
 								}
 								if (building_Bed == null)
 								{
-									Messages.Message("CannotCapture".Translate() + ": " + "NoPrisonerBed".Translate(), victim, MessageSound.RejectInput);
+									Messages.Message("CannotCapture".Translate() + ": " + "NoPrisonerBed".Translate(), victim, MessageTypeDefOf.RejectInput);
 									return;
 								}
 								Job job = new Job(JobDefOf.Capture, victim, building_Bed);
 								job.count = 1;
 								pawn.jobs.TryTakeOrderedJob(job, JobTag.Misc);
 								PlayerKnowledgeDatabase.KnowledgeDemonstrated(ConceptDefOf.Capturing, KnowledgeAmount.Total);
-							}, MenuOptionPriority.RescueOrCapture, null, victim2, 0f, null, null), pawn, victim, "ReservedBy"));
+							};
+							MenuOptionPriority priority2 = MenuOptionPriority.RescueOrCapture;
+							Pawn victim2 = victim;
+							opts.Add(FloatMenuUtility.DecoratePrioritizedTask(new FloatMenuOption(label, action, priority2, null, victim2, 0f, null, null), pawn, victim, "ReservedBy"));
 						}
 					}
 				}
@@ -359,12 +341,12 @@ namespace RimWorld
 					Pawn victim = (Pawn)localTargetInfo.Thing;
 					if (victim.Downed && pawn.CanReserveAndReach(victim, PathEndMode.OnCell, Danger.Deadly, 1, -1, null, true) && Building_CryptosleepCasket.FindCryptosleepCasketFor(victim, pawn, true) != null)
 					{
-						string label = "CarryToCryptosleepCasket".Translate(new object[]
+						string text2 = "CarryToCryptosleepCasket".Translate(new object[]
 						{
 							localTargetInfo.Thing.LabelCap
 						});
 						JobDef jDef = JobDefOf.CarryToCryptosleepCasket;
-						Action action = delegate
+						Action action2 = delegate
 						{
 							Building_CryptosleepCasket building_CryptosleepCasket = Building_CryptosleepCasket.FindCryptosleepCasketFor(victim, pawn, false);
 							if (building_CryptosleepCasket == null)
@@ -373,13 +355,15 @@ namespace RimWorld
 							}
 							if (building_CryptosleepCasket == null)
 							{
-								Messages.Message("CannotCarryToCryptosleepCasket".Translate() + ": " + "NoCryptosleepCasket".Translate(), victim, MessageSound.RejectInput);
+								Messages.Message("CannotCarryToCryptosleepCasket".Translate() + ": " + "NoCryptosleepCasket".Translate(), victim, MessageTypeDefOf.RejectInput);
 								return;
 							}
 							Job job = new Job(jDef, victim, building_CryptosleepCasket);
 							job.count = 1;
 							pawn.jobs.TryTakeOrderedJob(job, JobTag.Misc);
 						};
+						string label = text2;
+						Action action = action2;
 						Pawn victim2 = victim;
 						opts.Add(FloatMenuUtility.DecoratePrioritizedTask(new FloatMenuOption(label, action, MenuOptionPriority.Default, null, victim2, 0f, null, null), pawn, victim, "ReservedBy"));
 					}
@@ -451,15 +435,15 @@ namespace RimWorld
 					}
 					else
 					{
-						string text2 = "Equip".Translate(new object[]
+						string text3 = "Equip".Translate(new object[]
 						{
 							labelShort
 						});
 						if (equipment.def.IsRangedWeapon && pawn.story != null && pawn.story.traits.HasTrait(TraitDefOf.Brawler))
 						{
-							text2 = text2 + " " + "EquipWarningBrawler".Translate();
+							text3 = text3 + " " + "EquipWarningBrawler".Translate();
 						}
-						item3 = FloatMenuUtility.DecoratePrioritizedTask(new FloatMenuOption(text2, delegate
+						item3 = FloatMenuUtility.DecoratePrioritizedTask(new FloatMenuOption(text3, delegate
 						{
 							equipment.SetForbidden(false, true);
 							pawn.jobs.TryTakeOrderedJob(new Job(JobDefOf.Equip, equipment), JobTag.Misc);
@@ -701,14 +685,14 @@ namespace RimWorld
 			}
 			if (pawn.equipment != null && pawn.equipment.Primary != null && GenUI.TargetsAt(clickPos, TargetingParameters.ForSelf(pawn), true).Any<LocalTargetInfo>())
 			{
-				Action action2 = delegate
+				Action action3 = delegate
 				{
 					pawn.jobs.TryTakeOrderedJob(new Job(JobDefOf.DropEquipment, pawn.equipment.Primary), JobTag.Misc);
 				};
 				opts.Add(new FloatMenuOption("Drop".Translate(new object[]
 				{
 					pawn.equipment.Primary.Label
-				}), action2, MenuOptionPriority.Default, null, null, 0f, null, null));
+				}), action3, MenuOptionPriority.Default, null, null, 0f, null, null));
 			}
 			foreach (LocalTargetInfo current6 in GenUI.TargetsAt(clickPos, TargetingParameters.ForTrade(), true))
 			{
@@ -717,10 +701,17 @@ namespace RimWorld
 				{
 					opts.Add(new FloatMenuOption("CannotTrade".Translate() + " (" + "NoPath".Translate() + ")", null, MenuOptionPriority.Default, null, null, 0f, null, null));
 				}
+				else if (pawn.skills.GetSkill(SkillDefOf.Social).TotallyDisabled)
+				{
+					opts.Add(new FloatMenuOption("CannotPrioritizeWorkTypeDisabled".Translate(new object[]
+					{
+						SkillDefOf.Social.LabelCap
+					}), null, MenuOptionPriority.Default, null, null, 0f, null, null));
+				}
 				else
 				{
 					Pawn pTarg = (Pawn)dest.Thing;
-					Action action3 = delegate
+					Action action4 = delegate
 					{
 						Job job = new Job(JobDefOf.TradeWithPawn, pTarg);
 						job.playerForced = true;
@@ -732,11 +723,14 @@ namespace RimWorld
 					{
 						str = " (" + pTarg.Faction.Name + ")";
 					}
-					Thing thing = dest.Thing;
-					opts.Add(FloatMenuUtility.DecoratePrioritizedTask(new FloatMenuOption("TradeWith".Translate(new object[]
+					string label = "TradeWith".Translate(new object[]
 					{
 						pTarg.LabelShort + ", " + pTarg.TraderKind.label
-					}) + str, action3, MenuOptionPriority.InitiateSocial, null, thing, 0f, null, null), pawn, pTarg, "ReservedBy"));
+					}) + str;
+					Action action = action4;
+					MenuOptionPriority priority2 = MenuOptionPriority.InitiateSocial;
+					Thing thing = dest.Thing;
+					opts.Add(FloatMenuUtility.DecoratePrioritizedTask(new FloatMenuOption(label, action, priority2, null, thing, 0f, null, null), pawn, pTarg, "ReservedBy"));
 				}
 			}
 			foreach (Thing current7 in pawn.Map.thingGrid.ThingsAt(c))
@@ -807,7 +801,7 @@ namespace RimWorld
 										{
 											if (!JobFailReason.HaveReason)
 											{
-												goto IL_5EF;
+												goto IL_5DB;
 											}
 											label = "CannotGenericWork".Translate(new object[]
 											{
@@ -905,7 +899,7 @@ namespace RimWorld
 									}
 								}
 							}
-							IL_5EF:;
+							IL_5DB:;
 						}
 					}
 				}
@@ -944,7 +938,7 @@ namespace RimWorld
 									{
 										if (!JobFailReason.HaveReason)
 										{
-											goto IL_A08;
+											goto IL_9E5;
 										}
 										label = "CannotGenericWork".Translate(new object[]
 										{
@@ -1014,7 +1008,7 @@ namespace RimWorld
 								}
 							}
 						}
-						IL_A08:;
+						IL_9E5:;
 					}
 				}
 			}

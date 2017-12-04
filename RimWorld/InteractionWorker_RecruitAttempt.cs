@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using Verse;
 
@@ -67,23 +68,40 @@ namespace RimWorld
 			}
 		};
 
+		private const int MenagerieThreshold = 10;
+
+		private const float WildManRecruitChanceFactor = 0.25f;
+
 		public override void Interacted(Pawn initiator, Pawn recipient, List<RulePackDef> extraSentencePacks)
 		{
 			if (recipient.mindState.CheckStartMentalStateBecauseRecruitAttempted(initiator))
 			{
 				return;
 			}
+			bool flag = initiator.InspirationDef == InspirationDefOf.InspiredRecruitment && recipient.RaceProps.Humanlike;
 			float num = 1f;
-			if (DebugSettings.instantRecruit)
+			if (flag || DebugSettings.instantRecruit)
 			{
 				num = 1f;
 			}
 			else
 			{
-				num *= ((!recipient.RaceProps.Humanlike) ? initiator.GetStatValue(StatDefOf.TameAnimalChance, true) : initiator.GetStatValue(StatDefOf.RecruitPrisonerChance, true));
-				float num2 = (!recipient.RaceProps.Humanlike) ? InteractionWorker_RecruitAttempt.RecruitChanceFactorCurve_Wildness.Evaluate(recipient.RaceProps.wildness) : (1f - recipient.RecruitDifficulty(initiator.Faction, true));
+				num *= ((!recipient.NonHumanlikeOrWildMan()) ? initiator.GetStatValue(StatDefOf.RecruitPrisonerChance, true) : initiator.GetStatValue(StatDefOf.TameAnimalChance, true));
+				float num2;
+				if (recipient.IsWildMan())
+				{
+					num2 = 0.25f;
+				}
+				else if (recipient.RaceProps.Humanlike)
+				{
+					num2 = 1f - recipient.RecruitDifficulty(initiator.Faction, true);
+				}
+				else
+				{
+					num2 = InteractionWorker_RecruitAttempt.RecruitChanceFactorCurve_Wildness.Evaluate(recipient.RaceProps.wildness);
+				}
 				num *= num2;
-				if (recipient.RaceProps.Humanlike)
+				if (!recipient.NonHumanlikeOrWildMan())
 				{
 					float x = (float)recipient.relations.OpinionOf(initiator);
 					num *= InteractionWorker_RecruitAttempt.RecruitChanceFactorCurve_Opinion.Evaluate(x);
@@ -99,24 +117,28 @@ namespace RimWorld
 				}
 				num = Mathf.Clamp(num, 0.005f, 1f);
 			}
-			if (Rand.Value < num)
+			if (Rand.Chance(num))
 			{
 				InteractionWorker_RecruitAttempt.DoRecruit(initiator, recipient, num, true);
 				extraSentencePacks.Add(RulePackDefOf.Sentence_RecruitAttemptAccepted);
+				if (flag)
+				{
+					initiator.mindState.inspirationHandler.EndInspiration(InspirationDefOf.InspiredRecruitment);
+				}
 			}
 			else
 			{
 				string text;
-				if (recipient.RaceProps.Humanlike)
+				if (recipient.NonHumanlikeOrWildMan())
 				{
-					text = "TextMote_RecruitFail".Translate(new object[]
+					text = "TextMote_TameFail".Translate(new object[]
 					{
 						num.ToStringPercent()
 					});
 				}
 				else
 				{
-					text = "TextMote_TameFail".Translate(new object[]
+					text = "TextMote_RecruitFail".Translate(new object[]
 					{
 						num.ToStringPercent()
 					});
@@ -147,7 +169,7 @@ namespace RimWorld
 						recruiter,
 						recruitee,
 						recruitChance.ToStringPercent()
-					}), LetterDefOf.Good, recruitee, null);
+					}), LetterDefOf.PositiveEvent, recruitee, null);
 				}
 				TaleRecorder.RecordTale(TaleDefOf.Recruited, new object[]
 				{
@@ -169,7 +191,7 @@ namespace RimWorld
 							text,
 							recruitChance.ToStringPercent(),
 							recruitee.Name.ToStringFull
-						}).AdjustedFor(recruitee), recruitee, MessageSound.Benefit);
+						}).AdjustedFor(recruitee), recruitee, MessageTypeDefOf.PositiveEvent);
 					}
 					else
 					{
@@ -178,7 +200,7 @@ namespace RimWorld
 							recruiter.LabelShort,
 							text,
 							recruitChance.ToStringPercent()
-						}), recruitee, MessageSound.Benefit);
+						}), recruitee, MessageTypeDefOf.PositiveEvent);
 					}
 					MoteMaker.ThrowText((recruiter.DrawPos + recruitee.DrawPos) / 2f, recruiter.Map, "TextMote_TameSuccess".Translate(new object[]
 					{
@@ -187,10 +209,18 @@ namespace RimWorld
 				}
 				recruiter.records.Increment(RecordDefOf.AnimalsTamed);
 				RelationsUtility.TryDevelopBondRelation(recruiter, recruitee, 0.01f);
-				float num = Mathf.Lerp(0.02f, 1f, recruitee.RaceProps.wildness);
-				if (Rand.Value < num)
+				float chance = Mathf.Lerp(0.02f, 1f, recruitee.RaceProps.wildness);
+				if (Rand.Chance(chance) || recruitee.IsWildMan())
 				{
 					TaleRecorder.RecordTale(TaleDefOf.TamedAnimal, new object[]
+					{
+						recruiter,
+						recruitee
+					});
+				}
+				if (PawnsFinder.AllMapsWorldAndTemporary_Alive.Count((Pawn p) => p.playerSettings != null && p.playerSettings.master == recruiter) >= 10)
+				{
+					TaleRecorder.RecordTale(TaleDefOf.IncreasedMenagerie, new object[]
 					{
 						recruiter,
 						recruitee

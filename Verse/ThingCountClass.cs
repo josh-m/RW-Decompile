@@ -9,6 +9,14 @@ namespace Verse
 
 		public int count;
 
+		public string Summary
+		{
+			get
+			{
+				return this.count + "x " + ((this.thingDef == null) ? "null" : this.thingDef.label);
+			}
+		}
+
 		public ThingCountClass()
 		{
 		}
@@ -45,6 +53,11 @@ namespace Verse
 		public override int GetHashCode()
 		{
 			return (int)this.thingDef.shortHash + this.count << 16;
+		}
+
+		public static implicit operator ThingCountClass(ThingCount t)
+		{
+			return new ThingCountClass(t.ThingDef, t.Count);
 		}
 	}
 }

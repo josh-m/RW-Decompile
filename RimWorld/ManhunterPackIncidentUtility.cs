@@ -32,7 +32,7 @@ namespace RimWorld
 			List<Pawn> list = new List<Pawn>();
 			for (int i = 0; i < num; i++)
 			{
-				PawnGenerationRequest request = new PawnGenerationRequest(animalKind, null, PawnGenerationContext.NonPlayer, tile, false, false, false, false, true, false, 1f, false, true, true, false, false, null, null, null, null, null, null);
+				PawnGenerationRequest request = new PawnGenerationRequest(animalKind, null, PawnGenerationContext.NonPlayer, tile, false, false, false, false, true, false, 1f, false, true, true, false, false, false, false, null, null, null, null, null, null, null);
 				Pawn item = PawnGenerator.GeneratePawn(request);
 				list.Add(item);
 			}

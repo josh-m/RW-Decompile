@@ -31,7 +31,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return (Pawn)base.CurJob.targetA.Thing;
+				return (Pawn)this.job.targetA.Thing;
 			}
 		}
 
@@ -43,18 +43,24 @@ namespace RimWorld
 
 		protected abstract Toil FinalInteractToil();
 
+		public override bool TryMakePreToilReservations()
+		{
+			return this.pawn.Reserve(this.Animal, this.job, 1, -1, null);
+		}
+
 		[DebuggerHidden]
 		protected override IEnumerable<Toil> MakeNewToils()
 		{
 			this.FailOnDespawnedNullOrForbidden(TargetIndex.A);
 			this.FailOnDowned(TargetIndex.A);
 			this.FailOnNotCasualInterruptible(TargetIndex.A);
-			yield return Toils_Reserve.Reserve(TargetIndex.A, 1, -1, null);
 			yield return Toils_Goto.GotoThing(TargetIndex.A, PathEndMode.Touch);
 			yield return Toils_Interpersonal.WaitToBeAbleToInteract(this.pawn);
+			yield return Toils_Interpersonal.GotoInteractablePosition(TargetIndex.A);
 			yield return JobDriver_InteractAnimal.TalkToAnimal(TargetIndex.A);
 			yield return Toils_Goto.GotoThing(TargetIndex.A, PathEndMode.Touch);
 			yield return Toils_Interpersonal.WaitToBeAbleToInteract(this.pawn);
+			yield return Toils_Interpersonal.GotoInteractablePosition(TargetIndex.A);
 			yield return JobDriver_InteractAnimal.TalkToAnimal(TargetIndex.A);
 			foreach (Toil t in this.FeedToils())
 			{
@@ -62,6 +68,7 @@ namespace RimWorld
 			}
 			yield return Toils_Goto.GotoThing(TargetIndex.A, PathEndMode.Touch);
 			yield return Toils_Interpersonal.WaitToBeAbleToInteract(this.pawn);
+			yield return Toils_Interpersonal.GotoInteractablePosition(TargetIndex.A);
 			yield return JobDriver_InteractAnimal.TalkToAnimal(TargetIndex.A);
 			foreach (Toil t2 in this.FeedToils())
 			{
@@ -70,6 +77,7 @@ namespace RimWorld
 			yield return Toils_Goto.GotoThing(TargetIndex.A, PathEndMode.Touch);
 			yield return Toils_Interpersonal.SetLastInteractTime(TargetIndex.A);
 			yield return Toils_Interpersonal.WaitToBeAbleToInteract(this.pawn);
+			yield return Toils_Interpersonal.GotoInteractablePosition(TargetIndex.A);
 			yield return this.FinalInteractToil();
 		}
 
@@ -85,7 +93,7 @@ namespace RimWorld
 			{
 				initAction = delegate
 				{
-					this.<>f__this.feedNutritionLeft = JobDriver_InteractAnimal.RequiredNutritionPerFeed(this.<>f__this.Animal);
+					this.$this.feedNutritionLeft = JobDriver_InteractAnimal.RequiredNutritionPerFeed(this.$this.Animal);
 				},
 				defaultCompleteMode = ToilCompleteMode.Instant
 			};
@@ -95,7 +103,7 @@ namespace RimWorld
 			yield return Toils_Ingest.FinalizeIngest(this.Animal, TargetIndex.B);
 			yield return Toils_General.PutCarriedThingInInventory();
 			yield return Toils_General.ClearTarget(TargetIndex.B);
-			yield return Toils_Jump.JumpIf(gotoAnimal, () => this.<>f__this.feedNutritionLeft > 0f);
+			yield return Toils_Jump.JumpIf(gotoAnimal, () => this.$this.feedNutritionLeft > 0f);
 		}
 
 		private static Toil TalkToAnimal(TargetIndex tameeInd)

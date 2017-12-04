@@ -21,13 +21,13 @@ namespace Verse
 
 		private DamageInfo.SourceCategory categoryInt;
 
-		private BodyPartRecord forceHitPartInt;
+		private BodyPartRecord hitPartInt;
 
 		private BodyPartHeight heightInt;
 
 		private BodyPartDepth depthInt;
 
-		private ThingDef weaponGearInt;
+		private ThingDef weaponInt;
 
 		private BodyPartGroupDef weaponBodyPartGroupInt;
 
@@ -81,11 +81,11 @@ namespace Verse
 			}
 		}
 
-		public BodyPartRecord ForceHitPart
+		public BodyPartRecord HitPart
 		{
 			get
 			{
-				return this.forceHitPartInt;
+				return this.hitPartInt;
 			}
 		}
 
@@ -105,11 +105,11 @@ namespace Verse
 			}
 		}
 
-		public ThingDef WeaponGear
+		public ThingDef Weapon
 		{
 			get
 			{
-				return this.weaponGearInt;
+				return this.weaponInt;
 			}
 		}
 
@@ -145,7 +145,7 @@ namespace Verse
 			}
 		}
 
-		public DamageInfo(DamageDef def, int amount, float angle = -1f, Thing instigator = null, BodyPartRecord forceHitPart = null, ThingDef weaponGear = null, DamageInfo.SourceCategory category = DamageInfo.SourceCategory.ThingOrUnknown)
+		public DamageInfo(DamageDef def, int amount, float angle = -1f, Thing instigator = null, BodyPartRecord hitPart = null, ThingDef weapon = null, DamageInfo.SourceCategory category = DamageInfo.SourceCategory.ThingOrUnknown)
 		{
 			this.defInt = def;
 			this.amountInt = amount;
@@ -159,10 +159,10 @@ namespace Verse
 			}
 			this.instigatorInt = instigator;
 			this.categoryInt = category;
-			this.forceHitPartInt = forceHitPart;
+			this.hitPartInt = hitPart;
 			this.heightInt = BodyPartHeight.Undefined;
 			this.depthInt = BodyPartDepth.Undefined;
-			this.weaponGearInt = weaponGear;
+			this.weaponInt = weapon;
 			this.weaponBodyPartGroupInt = null;
 			this.weaponHediffInt = null;
 			this.instantOldInjuryInt = false;
@@ -176,10 +176,10 @@ namespace Verse
 			this.angleInt = cloneSource.angleInt;
 			this.instigatorInt = cloneSource.instigatorInt;
 			this.categoryInt = cloneSource.categoryInt;
-			this.forceHitPartInt = cloneSource.forceHitPartInt;
+			this.hitPartInt = cloneSource.hitPartInt;
 			this.heightInt = cloneSource.heightInt;
 			this.depthInt = cloneSource.depthInt;
-			this.weaponGearInt = cloneSource.weaponGearInt;
+			this.weaponInt = cloneSource.weaponInt;
 			this.weaponBodyPartGroupInt = cloneSource.weaponBodyPartGroupInt;
 			this.weaponHediffInt = cloneSource.weaponHediffInt;
 			this.instantOldInjuryInt = cloneSource.instantOldInjuryInt;
@@ -197,9 +197,9 @@ namespace Verse
 			this.depthInt = depth;
 		}
 
-		public void SetForcedHitPart(BodyPartRecord forceHitPart)
+		public void SetHitPart(BodyPartRecord forceHitPart)
 		{
-			this.forceHitPartInt = forceHitPart;
+			this.hitPartInt = forceHitPart;
 		}
 
 		public void SetInstantOldInjury(bool val)

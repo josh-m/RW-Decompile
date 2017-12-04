@@ -10,11 +10,17 @@ namespace RimWorld
 {
 	public class LordToil_Siege : LordToil
 	{
+		public Dictionary<Pawn, DutyDef> rememberedDuties = new Dictionary<Pawn, DutyDef>();
+
 		private const float BaseRadiusMin = 14f;
 
 		private const float BaseRadiusMax = 25f;
 
+		private static readonly FloatRange MealCountRangePerRaider = new FloatRange(1f, 3f);
+
 		private const int StartBuildingDelay = 450;
+
+		private static readonly FloatRange BuilderCountFraction = new FloatRange(0.25f, 0.4f);
 
 		private const float FractionLossesToAssault = 0.4f;
 
@@ -27,12 +33,6 @@ namespace RimWorld
 		private const int ReplenishAtMeals = 5;
 
 		private const int MealReplenishCount = 12;
-
-		public Dictionary<Pawn, DutyDef> rememberedDuties = new Dictionary<Pawn, DutyDef>();
-
-		private static readonly FloatRange MealCountRangePerRaider = new FloatRange(1f, 3f);
-
-		private static readonly FloatRange BuilderCountFraction = new FloatRange(0.25f, 0.4f);
 
 		public override IntVec3 FlagLoc
 		{
@@ -103,11 +103,18 @@ namespace RimWorld
 					}
 				}
 				ThingDef thingDef = current.def.entityDefToBuild as ThingDef;
-				if (thingDef != null && thingDef.building != null && thingDef.building.turretShellDef != null)
+				if (thingDef != null)
 				{
-					Thing thing3 = ThingMaker.MakeThing(thingDef.building.turretShellDef, null);
-					thing3.stackCount = 5;
-					list.Add(thing3);
+					ThingDef turret = thingDef;
+					bool allowEMP = false;
+					TechLevel techLevel = this.lord.faction.def.techLevel;
+					ThingDef thingDef2 = TurretGunUtility.TryFindRandomShellDef(turret, allowEMP, true, techLevel, false, 250f);
+					if (thingDef2 != null)
+					{
+						Thing thing3 = ThingMaker.MakeThing(thingDef2, null);
+						thing3.stackCount = 5;
+						list.Add(thing3);
+					}
 				}
 			}
 			for (int i = 0; i < list.Count; i++)
@@ -144,7 +151,7 @@ namespace RimWorld
 				list4.Add(item);
 			}
 			list2.Add(list4);
-			DropPodUtility.DropThingGroupsNear(data.siegeCenter, base.Map, list2, 110, false, false, true);
+			DropPodUtility.DropThingGroupsNear(data.siegeCenter, base.Map, list2, 110, false, false, true, false);
 			data.desiredBuilderFraction = LordToil_Siege.BuilderCountFraction.RandomInRange;
 		}
 
@@ -299,7 +306,7 @@ namespace RimWorld
 						List<Thing> thingList = c.GetThingList(base.Map);
 						for (int j = 0; j < thingList.Count; j++)
 						{
-							if (thingList[j].def == ThingDefOf.MortarShell)
+							if (thingList[j].def.IsShell)
 							{
 								num2 += thingList[j].stackCount;
 							}
@@ -312,7 +319,14 @@ namespace RimWorld
 				}
 				if (num2 < 4)
 				{
-					this.DropSupplies(ThingDefOf.MortarShell, 10);
+					ThingDef turret_Mortar = ThingDefOf.Turret_Mortar;
+					bool allowEMP = false;
+					TechLevel techLevel = this.lord.faction.def.techLevel;
+					ThingDef thingDef = TurretGunUtility.TryFindRandomShellDef(turret_Mortar, allowEMP, true, techLevel, false, 250f);
+					if (thingDef != null)
+					{
+						this.DropSupplies(thingDef, 10);
+					}
 				}
 				if (num3 < 5)
 				{
@@ -327,7 +341,7 @@ namespace RimWorld
 			Thing thing = ThingMaker.MakeThing(thingDef, null);
 			thing.stackCount = count;
 			list.Add(thing);
-			DropPodUtility.DropThingsNear(this.Data.siegeCenter, base.Map, list, 110, false, false, true);
+			DropPodUtility.DropThingsNear(this.Data.siegeCenter, base.Map, list, 110, false, false, true, false);
 		}
 
 		public override void Cleanup()

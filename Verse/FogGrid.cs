@@ -1,5 +1,6 @@
 using RimWorld;
 using System;
+using System.Collections.Generic;
 
 namespace Verse
 {
@@ -9,6 +10,8 @@ namespace Verse
 
 		public bool[] fogGrid;
 
+		private const int AlwaysSendLetterIfUnfoggedMoreCellsThan = 600;
+
 		public FogGrid(Map map)
 		{
 			this.map = map;
@@ -16,10 +19,27 @@ namespace Verse
 
 		public void ExposeData()
 		{
-			ArrayExposeUtility.ExposeBoolArray(ref this.fogGrid, this.map.Size.x, this.map.Size.z, "fogGrid");
+			DataExposeUtility.BoolArray(ref this.fogGrid, this.map.Area, "fogGrid");
 		}
 
 		public void Unfog(IntVec3 c)
+		{
+			this.UnfogWorker(c);
+			List<Thing> thingList = c.GetThingList(this.map);
+			for (int i = 0; i < thingList.Count; i++)
+			{
+				Thing thing = thingList[i];
+				if (thing.def.Fillage == FillCategory.Full)
+				{
+					foreach (IntVec3 current in thing.OccupiedRect().Cells)
+					{
+						this.UnfogWorker(current);
+					}
+				}
+			}
+		}
+
+		private void UnfogWorker(IntVec3 c)
 		{
 			int num = this.map.cellIndices.CellToIndex(c);
 			if (!this.fogGrid[num])
@@ -32,7 +52,7 @@ namespace Verse
 				this.map.mapDrawer.MapMeshDirty(c, MapMeshFlag.FogOfWar);
 			}
 			Designation designation = this.map.designationManager.DesignationAt(c, DesignationDefOf.Mine);
-			if (designation != null && MineUtility.MineableInCell(c, this.map) == null)
+			if (designation != null && c.GetFirstMineable(this.map) == null)
 			{
 				designation.Delete();
 			}
@@ -153,11 +173,11 @@ namespace Verse
 			{
 				if (floodUnfogResult.mechanoidFound)
 				{
-					Find.LetterStack.ReceiveLetter("LetterLabelAreaRevealed".Translate(), "AreaRevealedWithMechanoids".Translate(), LetterDefOf.BadUrgent, new TargetInfo(c, this.map, false), null);
+					Find.LetterStack.ReceiveLetter("LetterLabelAreaRevealed".Translate(), "AreaRevealedWithMechanoids".Translate(), LetterDefOf.ThreatBig, new TargetInfo(c, this.map, false), null);
 				}
-				else
+				else if (!floodUnfogResult.allOnScreen || floodUnfogResult.cellsUnfogged >= 600)
 				{
-					Find.LetterStack.ReceiveLetter("LetterLabelAreaRevealed".Translate(), "AreaRevealed".Translate(), LetterDefOf.Good, new TargetInfo(c, this.map, false), null);
+					Find.LetterStack.ReceiveLetter("LetterLabelAreaRevealed".Translate(), "AreaRevealed".Translate(), LetterDefOf.NeutralEvent, new TargetInfo(c, this.map, false), null);
 				}
 			}
 		}

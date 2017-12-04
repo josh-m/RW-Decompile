@@ -25,18 +25,6 @@ namespace RimWorld
 			}
 		}
 
-		public const float BaseSelectedTexJump = 20f;
-
-		public const float BaseSelectedTexScale = 0.4f;
-
-		public const float EntryInAnotherMapAlpha = 0.4f;
-
-		public const float BaseSpaceBetweenGroups = 25f;
-
-		public const float BaseSpaceBetweenColonistsHorizontal = 24f;
-
-		public const float BaseSpaceBetweenColonistsVertical = 32f;
-
 		public ColonistBarColonistDrawer drawer = new ColonistBarColonistDrawer();
 
 		private ColonistBarDrawLocsFinder drawLocsFinder = new ColonistBarDrawLocsFinder();
@@ -52,6 +40,18 @@ namespace RimWorld
 		public static readonly Texture2D BGTex = Command.BGTex;
 
 		public static readonly Vector2 BaseSize = new Vector2(48f, 48f);
+
+		public const float BaseSelectedTexJump = 20f;
+
+		public const float BaseSelectedTexScale = 0.4f;
+
+		public const float EntryInAnotherMapAlpha = 0.4f;
+
+		public const float BaseSpaceBetweenGroups = 25f;
+
+		public const float BaseSpaceBetweenColonistsHorizontal = 24f;
+
+		public const float BaseSpaceBetweenColonistsVertical = 32f;
 
 		private static List<Pawn> tmpPawns = new List<Pawn>();
 

@@ -8,7 +8,7 @@ using Verse;
 
 namespace RimWorld
 {
-	public class Building_Grave : Building_Casket, IAssignableBuilding, IStoreSettingsParent
+	public class Building_Grave : Building_Casket, IStoreSettingsParent, IAssignableBuilding
 	{
 		private StorageSettings storageSettings;
 
@@ -234,7 +234,7 @@ namespace RimWorld
 					defaultDesc = "CommandGraveAssignColonistDesc".Translate(),
 					action = delegate
 					{
-						Find.WindowStack.Add(new Dialog_AssignBuildingOwner(this.<>f__this));
+						Find.WindowStack.Add(new Dialog_AssignBuildingOwner(this.$this));
 					},
 					hotKey = KeyBindingDefOf.Misc3
 				};

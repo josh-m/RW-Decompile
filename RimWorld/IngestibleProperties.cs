@@ -33,6 +33,8 @@ namespace RimWorld
 
 		public string ingestReportString;
 
+		public string ingestReportStringEat;
+
 		public HoldOffsetSet ingestHoldOffsetStanding;
 
 		public bool ingestHoldUsesTable = true;
@@ -51,7 +53,9 @@ namespace RimWorld
 
 		public bool nurseable;
 
-		public float optimalityOffset;
+		public float optimalityOffsetHumanlikes;
+
+		public float optimalityOffsetFeedingAnimals;
 
 		public DrugCategory drugCategory;
 
@@ -100,9 +104,9 @@ namespace RimWorld
 					FoodPreferability.NeverForNutrition
 				});
 			}
-			if (!parentDef.IsCorpse && this.preferability > FoodPreferability.DesperateOnly && !parentDef.socialPropernessMatters && parentDef.EverHaulable)
+			if (!parentDef.IsCorpse && this.preferability > FoodPreferability.DesperateOnlyForHumanlikes && !parentDef.socialPropernessMatters && parentDef.EverHaulable)
 			{
-				yield return "ingestible preferability > DesperateOnly but socialPropernessMatters=false. This will cause bugs wherein wardens will look in prison cells for food to give to prisoners and so will repeatedly pick up and drop food inside the cell.";
+				yield return "ingestible preferability > DesperateOnlyForHumanlikes but socialPropernessMatters=false. This will cause bugs wherein wardens will look in prison cells for food to give to prisoners and so will repeatedly pick up and drop food inside the cell.";
 			}
 			if (this.joy > 0f && this.joyKind == null)
 			{
@@ -115,11 +119,11 @@ namespace RimWorld
 		{
 			if (!parentDef.IsCorpse)
 			{
-				yield return new StatDrawEntry(StatCategoryDefOf.Basics, "Nutrition".Translate(), this.nutrition.ToString("0.##"), 0);
+				yield return new StatDrawEntry(StatCategoryDefOf.Basics, "Nutrition".Translate(), this.nutrition.ToString("0.##"), 0, string.Empty);
 			}
 			if (this.joy > 0f)
 			{
-				yield return new StatDrawEntry(StatCategoryDefOf.Basics, "Joy".Translate(), this.joy.ToStringPercent("F2") + " (" + this.JoyKind.label + ")", 0);
+				yield return new StatDrawEntry(StatCategoryDefOf.Basics, "Joy".Translate(), this.joy.ToStringPercent("F2") + " (" + this.JoyKind.label + ")", 0, string.Empty);
 			}
 			if (this.outcomeDoers != null)
 			{

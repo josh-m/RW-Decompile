@@ -11,14 +11,14 @@ namespace RimWorld
 			{
 				return;
 			}
-			Pawn firstDirectRelationPawn = designated.relations.GetFirstDirectRelationPawn(PawnRelationDefOf.Bond, null);
+			Pawn firstDirectRelationPawn = designated.relations.GetFirstDirectRelationPawn(PawnRelationDefOf.Bond, (Pawn x) => !x.Dead);
 			if (firstDirectRelationPawn != null)
 			{
 				Messages.Message("MessageSlaughteringBondedAnimal".Translate(new object[]
 				{
 					designated.LabelShort,
 					firstDirectRelationPawn.LabelShort
-				}), designated, MessageSound.Standard);
+				}), designated, MessageTypeDefOf.CautionInput);
 			}
 		}
 	}

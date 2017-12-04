@@ -8,11 +8,11 @@ namespace RimWorld
 {
 	public class GameCondition_Flashstorm : GameCondition
 	{
-		private const int RainDisableTicksAfterConditionEnds = 30000;
-
 		private static readonly IntRange AreaRadiusRange = new IntRange(45, 60);
 
 		private static readonly IntRange TicksBetweenStrikes = new IntRange(320, 800);
+
+		private const int RainDisableTicksAfterConditionEnds = 30000;
 
 		public IntVec2 centerLocation;
 
@@ -39,10 +39,8 @@ namespace RimWorld
 		{
 			if (Find.TickManager.TicksGame > this.nextLightningTicks)
 			{
-				Vector2 a = new Vector2(Rand.Gaussian(0f, 1f), Rand.Gaussian(0f, 1f));
-				a.Normalize();
-				a *= Rand.Range(0f, (float)this.areaRadius);
-				IntVec3 intVec = new IntVec3((int)Math.Round((double)a.x) + this.centerLocation.x, 0, (int)Math.Round((double)a.y) + this.centerLocation.z);
+				Vector2 vector = Rand.UnitVector2 * Rand.Range(0f, (float)this.areaRadius);
+				IntVec3 intVec = new IntVec3((int)Math.Round((double)vector.x) + this.centerLocation.x, 0, (int)Math.Round((double)vector.y) + this.centerLocation.z);
 				if (this.IsGoodLocationForStrike(intVec))
 				{
 					base.Map.weatherManager.eventHandler.AddEvent(new WeatherEvent_LightningStrike(base.Map, intVec));

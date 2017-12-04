@@ -114,7 +114,7 @@ namespace RimWorld
 						{
 							this.curName,
 							this.curSecondName
-						}), MessageSound.Benefit);
+						}), MessageTypeDefOf.TaskCompletion);
 					}
 					else
 					{
@@ -122,13 +122,13 @@ namespace RimWorld
 						Messages.Message(this.gainedNameMessageKey.Translate(new object[]
 						{
 							this.curName
-						}), MessageSound.Benefit);
+						}), MessageTypeDefOf.TaskCompletion);
 					}
 					Find.WindowStack.TryRemove(this, true);
 				}
 				else
 				{
-					Messages.Message(this.invalidNameMessageKey.Translate(), MessageSound.RejectInput);
+					Messages.Message(this.invalidNameMessageKey.Translate(), MessageTypeDefOf.RejectInput);
 				}
 				Event.current.Use();
 			}

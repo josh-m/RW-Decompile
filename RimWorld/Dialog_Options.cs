@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -58,6 +57,8 @@ namespace RimWorld
 			Prefs.VolumeGame = listing_Standard.Slider(Prefs.VolumeGame, 0f, 1f);
 			listing_Standard.Label("MusicVolume".Translate(), -1f);
 			Prefs.VolumeMusic = listing_Standard.Slider(Prefs.VolumeMusic, 0f, 1f);
+			listing_Standard.Label("AmbientVolume".Translate(), -1f);
+			Prefs.VolumeAmbient = listing_Standard.Slider(Prefs.VolumeAmbient, 0f, 1f);
 			if (listing_Standard.ButtonTextLabeled("Resolution".Translate(), Dialog_Options.ResToString(Screen.width, Screen.height)))
 			{
 				Find.WindowStack.Add(new Dialog_ResolutionPicker());
@@ -81,7 +82,7 @@ namespace RimWorld
 				{
 					if (!ResolutionUtility.UIScaleSafeWithResolution(num, Screen.width, Screen.height))
 					{
-						Messages.Message("MessageScreenResTooSmallForUIScale".Translate(), MessageSound.RejectInput);
+						Messages.Message("MessageScreenResTooSmallForUIScale".Translate(), MessageTypeDefOf.RejectInput);
 					}
 					else
 					{
@@ -111,7 +112,7 @@ namespace RimWorld
 			{
 				if (Current.ProgramState == ProgramState.Playing)
 				{
-					Messages.Message("ChangeLanguageFromMainMenu".Translate(), MessageSound.RejectInput);
+					Messages.Message("ChangeLanguageFromMainMenu".Translate(), MessageTypeDefOf.RejectInput);
 				}
 				else
 				{
@@ -136,7 +137,7 @@ namespace RimWorld
 			Prefs.AdaptiveTrainingEnabled = adaptiveTrainingEnabled;
 			if (listing_Standard.ButtonText("ResetAdaptiveTutor".Translate(), null))
 			{
-				Messages.Message("AdaptiveTutorIsReset".Translate(), MessageSound.Benefit);
+				Messages.Message("AdaptiveTutorIsReset".Translate(), MessageTypeDefOf.TaskCompletion);
 				PlayerKnowledgeDatabase.ResetPersistent();
 			}
 			bool runInBackground = Prefs.RunInBackground;
@@ -171,17 +172,13 @@ namespace RimWorld
 			if (listing_Standard.ButtonTextLabeled("TemperatureMode".Translate(), Prefs.TemperatureMode.ToStringHuman()))
 			{
 				List<FloatMenuOption> list2 = new List<FloatMenuOption>();
-				using (IEnumerator enumerator2 = Enum.GetValues(typeof(TemperatureDisplayMode)).GetEnumerator())
+				foreach (TemperatureDisplayMode localTmode2 in Enum.GetValues(typeof(TemperatureDisplayMode)))
 				{
-					while (enumerator2.MoveNext())
+					TemperatureDisplayMode localTmode = localTmode2;
+					list2.Add(new FloatMenuOption(localTmode.ToString(), delegate
 					{
-						TemperatureDisplayMode localTmode2 = (TemperatureDisplayMode)((byte)enumerator2.Current);
-						TemperatureDisplayMode localTmode = localTmode2;
-						list2.Add(new FloatMenuOption(localTmode.ToString(), delegate
-						{
-							Prefs.TemperatureMode = localTmode;
-						}, MenuOptionPriority.Default, null, null, 0f, null, null));
-					}
+						Prefs.TemperatureMode = localTmode;
+					}, MenuOptionPriority.Default, null, null, 0f, null, null));
 				}
 				Find.WindowStack.Add(new FloatMenu(list2));
 			}
@@ -240,17 +237,13 @@ namespace RimWorld
 			if (listing_Standard.ButtonTextLabeled("ShowAnimalNames".Translate(), Prefs.AnimalNameMode.ToStringHuman()))
 			{
 				List<FloatMenuOption> list4 = new List<FloatMenuOption>();
-				using (IEnumerator enumerator3 = Enum.GetValues(typeof(AnimalNameDisplayMode)).GetEnumerator())
+				foreach (AnimalNameDisplayMode localMode2 in Enum.GetValues(typeof(AnimalNameDisplayMode)))
 				{
-					while (enumerator3.MoveNext())
+					AnimalNameDisplayMode localMode = localMode2;
+					list4.Add(new FloatMenuOption(localMode.ToStringHuman(), delegate
 					{
-						AnimalNameDisplayMode localMode2 = (AnimalNameDisplayMode)((byte)enumerator3.Current);
-						AnimalNameDisplayMode localMode = localMode2;
-						list4.Add(new FloatMenuOption(localMode.ToStringHuman(), delegate
-						{
-							Prefs.AnimalNameMode = localMode;
-						}, MenuOptionPriority.Default, null, null, 0f, null, null));
-					}
+						Prefs.AnimalNameMode = localMode;
+					}, MenuOptionPriority.Default, null, null, 0f, null, null));
 				}
 				Find.WindowStack.Add(new FloatMenu(list4));
 			}
@@ -278,7 +271,7 @@ namespace RimWorld
 			}
 			listing_Standard.Label(string.Empty, -1f);
 			listing_Standard.Label("NamesYouWantToSee".Translate(), -1f);
-			Prefs.PreferredNames.RemoveAll((string n) => n.NullOrEmpty());
+			Prefs.PreferredNames.RemoveAll(new Predicate<string>(GenText.NullOrEmpty));
 			for (int j = 0; j < Prefs.PreferredNames.Count; j++)
 			{
 				string name = Prefs.PreferredNames[j];

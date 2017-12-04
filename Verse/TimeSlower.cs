@@ -4,11 +4,11 @@ namespace Verse
 {
 	public class TimeSlower
 	{
+		private int forceNormalSpeedUntil;
+
 		private const int ForceTicksStandard = 790;
 
 		private const int ForceTicksShort = 250;
-
-		private int forceNormalSpeedUntil;
 
 		public bool ForcedNormalSpeed
 		{

@@ -6,13 +6,13 @@ namespace RimWorld
 {
 	public class CompDeepDrill : ThingComp
 	{
-		private const float ResourceLumpWork = 14000f;
-
 		private CompPowerTrader powerComp;
 
 		private float lumpProgress;
 
 		private float lumpYieldPct;
+
+		private const float ResourceLumpWork = 14000f;
 
 		public float ProgressToNextLumpPercent
 		{
@@ -68,6 +68,10 @@ namespace RimWorld
 			else
 			{
 				Log.Error("Drill tried to ProduceLump but couldn't.");
+			}
+			if (!this.ResourcesPresent())
+			{
+				Messages.Message("DeepDrillExhausted".Translate(), this.parent, MessageTypeDefOf.TaskCompletion);
 			}
 		}
 

@@ -5,9 +5,9 @@ namespace RimWorld
 {
 	internal static class PlantPosIndices
 	{
-		private const int ListCount = 8;
-
 		private static int[][][] rootList;
+
+		private const int ListCount = 8;
 
 		static PlantPosIndices()
 		{

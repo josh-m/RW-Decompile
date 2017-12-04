@@ -9,6 +9,8 @@ namespace RimWorld
 {
 	public class IncidentWorker_CaravanDemand : IncidentWorker
 	{
+		private static readonly FloatRange DemandAsPercentageOfCaravan = new FloatRange(0.02f, 0.35f);
+
 		private const float DemandSilverWeight = 5f;
 
 		private const float DemandAnimalWeight = 1f;
@@ -19,34 +21,28 @@ namespace RimWorld
 
 		private const float DemandFallbackWeight = 1f;
 
-		private static readonly FloatRange DemandAsPercentageOfCaravan = new FloatRange(0.02f, 0.35f);
-
 		protected override bool CanFireNowSub(IIncidentTarget target)
 		{
 			return CaravanIncidentUtility.CanFireIncidentWhichWantsToGenerateMapAt(target.Tile);
 		}
 
-		public override bool TryExecute(IncidentParms parms)
+		protected override bool TryExecuteWorker(IncidentParms parms)
 		{
 			Caravan caravan = (Caravan)parms.target;
-			Faction faction = Find.FactionManager.RandomEnemyFaction(false, false, true);
-			if (faction == null)
+			if (!PawnGroupMakerUtility.TryGetRandomFactionForNormalPawnGroup(parms.points, out parms.faction, null, false, false, false, true))
 			{
 				return false;
 			}
-			PawnGroupMakerParms pawnGroupMakerParms = new PawnGroupMakerParms();
-			pawnGroupMakerParms.tile = caravan.Tile;
-			pawnGroupMakerParms.generateFightersOnly = true;
-			pawnGroupMakerParms.faction = faction;
-			pawnGroupMakerParms.points = parms.points;
-			List<Pawn> attackers = PawnGroupMakerUtility.GeneratePawns(PawnGroupKindDefOf.Normal, pawnGroupMakerParms, true).ToList<Pawn>();
+			PawnGroupMakerParms defaultPawnGroupMakerParms = IncidentParmsUtility.GetDefaultPawnGroupMakerParms(parms, false);
+			defaultPawnGroupMakerParms.generateFightersOnly = true;
+			List<Pawn> attackers = PawnGroupMakerUtility.GeneratePawns(PawnGroupKindDefOf.Normal, defaultPawnGroupMakerParms, true).ToList<Pawn>();
 			List<Thing> demands = this.GenerateDemands(caravan);
 			if (demands.Count == 0)
 			{
 				return false;
 			}
 			CameraJumper.TryJumpAndSelect(caravan);
-			DiaNode diaNode = new DiaNode(this.GenerateMessageText(faction, attackers.Count, demands));
+			DiaNode diaNode = new DiaNode(this.GenerateMessageText(parms.faction, attackers.Count, demands));
 			DiaOption diaOption = new DiaOption("CaravanDemand_Give".Translate());
 			diaOption.action = delegate
 			{
@@ -61,12 +57,14 @@ namespace RimWorld
 			};
 			diaOption2.resolveTree = true;
 			diaNode.options.Add(diaOption2);
-			WindowStack arg_173_0 = Find.WindowStack;
+			WindowStack arg_15D_0 = Find.WindowStack;
+			DiaNode nodeRoot = diaNode;
+			bool delayInteractivity = true;
 			string title = "CaravanDemandTitle".Translate(new object[]
 			{
-				faction.Name
+				parms.faction.Name
 			});
-			arg_173_0.Add(new Dialog_NodeTree(diaNode, true, false, title));
+			arg_15D_0.Add(new Dialog_NodeTree(nodeRoot, delayInteractivity, false, title));
 			return true;
 		}
 
@@ -84,9 +82,9 @@ namespace RimWorld
 				{
 					break;
 				}
-				if (list2.Count((Thing thing) => thing is Pawn && (thing as Pawn).IsColonist) == 1)
+				if (list2.Count((Thing thing) => thing is Pawn && ((Pawn)thing).IsColonist) == 1)
 				{
-					list2.RemoveAll((Thing thing) => thing is Pawn && (thing as Pawn).IsColonist);
+					list2.RemoveAll((Thing thing) => thing is Pawn && ((Pawn)thing).IsColonist);
 				}
 				Thing thing2 = list2.RandomElementByWeight(delegate(Thing thing)
 				{
@@ -96,7 +94,7 @@ namespace RimWorld
 					}
 					if (thing is Pawn)
 					{
-						Pawn pawn = thing as Pawn;
+						Pawn pawn = (Pawn)thing;
 						if (pawn.RaceProps.Animal)
 						{
 							return 1f;
@@ -138,7 +136,7 @@ namespace RimWorld
 				Thing thing = demands[i];
 				if (thing is Pawn)
 				{
-					Pawn pawn = thing as Pawn;
+					Pawn pawn = (Pawn)thing;
 					caravan.RemovePawn(pawn);
 					foreach (Thing current in ThingOwnerUtility.GetAllThingsRecursively(pawn, false))
 					{
@@ -177,6 +175,10 @@ namespace RimWorld
 		private void ActionFight(Caravan caravan, List<Pawn> attackers)
 		{
 			Faction enemyFaction = attackers[0].Faction;
+			TaleRecorder.RecordTale(TaleDefOf.CaravanAmbushedByHumanlike, new object[]
+			{
+				caravan.RandomOwner()
+			});
 			LongEventHandler.QueueLongEvent(delegate
 			{
 				Map map = CaravanIncidentUtility.SetupCaravanAttackMap(caravan, attackers);
@@ -185,12 +187,8 @@ namespace RimWorld
 				{
 					LordMaker.MakeNewLord(enemyFaction, lordJob_AssaultColony, map, attackers);
 				}
-				this.SendStandardLetter(attackers[0], new string[]
-				{
-					enemyFaction.def.pawnsPlural,
-					enemyFaction.Name
-				});
 				Find.TickManager.CurTimeSpeed = TimeSpeed.Paused;
+				CameraJumper.TryJump(attackers[0]);
 			}, "GeneratingMapForNewEncounter", false, null);
 		}
 	}

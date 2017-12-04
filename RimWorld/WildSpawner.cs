@@ -8,13 +8,19 @@ namespace RimWorld
 {
 	public class WildSpawner
 	{
+		private Map map;
+
+		private static List<ThingDef> cavePlants;
+
 		private const int AnimalCheckInterval = 1210;
 
 		private const float BaseAnimalSpawnChancePerInterval = 0.0268888883f;
 
 		private const int PlantTrySpawnIntervalAt100EdgeLength = 650;
 
-		private Map map;
+		private const int CavePlantSpawnIntervalPer10kCells = 3600000;
+
+		private static List<IntVec3> undergroundCells = new List<IntVec3>();
 
 		private float DesiredAnimalDensity
 		{
@@ -81,6 +87,13 @@ namespace RimWorld
 			this.map = map;
 		}
 
+		public static void Reset()
+		{
+			WildSpawner.cavePlants = (from x in DefDatabase<ThingDef>.AllDefsListForReading
+			where x.category == ThingCategory.Plant && x.plant.cavePlant
+			select x).ToList<ThingDef>();
+		}
+
 		public void WildSpawnerTick()
 		{
 			IntVec3 loc;
@@ -93,11 +106,16 @@ namespace RimWorld
 			{
 				int num2 = this.map.Size.x * 2 + this.map.Size.z * 2;
 				float num3 = 650f / ((float)num2 / 100f);
-				int num4 = GenMath.RoundRandom(num3 / num);
-				if (Find.TickManager.TicksGame % num4 == 0)
+				int num4 = (int)(num3 / num);
+				if (num4 <= 0 || Find.TickManager.TicksGame % num4 == 0)
 				{
 					this.TrySpawnPlantFromMapEdge();
 				}
+			}
+			int num5 = (int)(3600000f / ((float)this.map.Area / 10000f));
+			if (num5 <= 0 || Find.TickManager.TicksGame % num5 == 0)
+			{
+				this.TrySpawnCavePlant();
 			}
 		}
 
@@ -115,7 +133,45 @@ namespace RimWorld
 			}
 		}
 
-		public void SpawnRandomWildAnimalAt(IntVec3 loc)
+		private void TrySpawnCavePlant()
+		{
+			WildSpawner.undergroundCells.Clear();
+			CellRect.CellRectIterator iterator = CellRect.WholeMap(this.map).GetIterator();
+			while (!iterator.Done())
+			{
+				IntVec3 current = iterator.Current;
+				if (GenPlantReproduction.GoodRoofForCavePlantReproduction(current, this.map))
+				{
+					if (current.GetFirstItem(this.map) == null && current.GetFirstPawn(this.map) == null && current.GetFirstBuilding(this.map) == null)
+					{
+						bool flag = false;
+						for (int i = 0; i < WildSpawner.cavePlants.Count; i++)
+						{
+							if (WildSpawner.cavePlants[i].CanEverPlantAt(current, this.map))
+							{
+								flag = true;
+								break;
+							}
+						}
+						if (flag)
+						{
+							WildSpawner.undergroundCells.Add(current);
+						}
+					}
+				}
+				iterator.MoveNext();
+			}
+			if (WildSpawner.undergroundCells.Any<IntVec3>())
+			{
+				IntVec3 cell = WildSpawner.undergroundCells.RandomElement<IntVec3>();
+				ThingDef plantDef = (from x in WildSpawner.cavePlants
+				where x.CanEverPlantAt(cell, this.map)
+				select x).RandomElement<ThingDef>();
+				GenPlantReproduction.TryReproduceFrom(cell, plantDef, SeedTargFindMode.Cave, this.map);
+			}
+		}
+
+		public bool SpawnRandomWildAnimalAt(IntVec3 loc)
 		{
 			PawnKindDef pawnKindDef = (from a in this.map.Biome.AllWildAnimals
 			where this.map.mapTemperature.SeasonAcceptableFor(a.race)
@@ -123,7 +179,7 @@ namespace RimWorld
 			if (pawnKindDef == null)
 			{
 				Log.Error("No spawnable animals right now.");
-				return;
+				return false;
 			}
 			int randomInRange = pawnKindDef.wildSpawn_GroupSizeRange.RandomInRange;
 			int radius = Mathf.CeilToInt(Mathf.Sqrt((float)pawnKindDef.wildSpawn_GroupSizeRange.max));
@@ -133,6 +189,7 @@ namespace RimWorld
 				Pawn newThing = PawnGenerator.GeneratePawn(pawnKindDef, null);
 				GenSpawn.Spawn(newThing, loc2, this.map);
 			}
+			return true;
 		}
 
 		public string DebugString()

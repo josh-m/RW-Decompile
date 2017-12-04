@@ -26,11 +26,11 @@ namespace RimWorld
 			}
 		}
 
-		public override void ApplyOnPawn(Pawn pawn, BodyPartRecord part, Pawn billDoer, List<Thing> ingredients)
+		public override void ApplyOnPawn(Pawn pawn, BodyPartRecord part, Pawn billDoer, List<Thing> ingredients, Bill bill)
 		{
 			if (billDoer != null)
 			{
-				if (base.CheckSurgeryFail(billDoer, pawn, ingredients, part))
+				if (base.CheckSurgeryFail(billDoer, pawn, ingredients, part, bill))
 				{
 					return;
 				}
@@ -55,7 +55,7 @@ namespace RimWorld
 							this.recipe.removesHediff.label
 						});
 					}
-					Messages.Message(text, pawn, MessageSound.Benefit);
+					Messages.Message(text, pawn, MessageTypeDefOf.PositiveEvent);
 				}
 			}
 			Hediff hediff = pawn.health.hediffSet.hediffs.Find((Hediff x) => x.def == this.recipe.removesHediff && x.Part == part && x.Visible);

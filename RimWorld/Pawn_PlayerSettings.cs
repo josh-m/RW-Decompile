@@ -74,6 +74,22 @@ namespace RimWorld
 			}
 		}
 
+		public bool RespectsMaster
+		{
+			get
+			{
+				return this.master != null && this.pawn.Faction == Faction.OfPlayer && this.master.Faction == this.pawn.Faction;
+			}
+		}
+
+		public Pawn RespectedMaster
+		{
+			get
+			{
+				return (!this.RespectsMaster) ? null : this.master;
+			}
+		}
+
 		public bool UsesConfigurableHostilityResponse
 		{
 			get
@@ -122,13 +138,13 @@ namespace RimWorld
 						defaultDesc = "CommandReleaseAnimalsDesc".Translate(),
 						icon = TexCommand.ReleaseAnimals,
 						hotKey = KeyBindingDefOf.Misc7,
-						isActive = (() => this.<>f__this.animalsReleased),
+						isActive = (() => this.$this.animalsReleased),
 						toggleAction = delegate
 						{
-							this.<>f__this.animalsReleased = !this.<>f__this.animalsReleased;
-							if (this.<>f__this.animalsReleased)
+							this.$this.animalsReleased = !this.$this.animalsReleased;
+							if (this.$this.animalsReleased)
 							{
-								foreach (Pawn current in PawnUtility.SpawnedMasteredPawns(this.<>f__this.pawn))
+								foreach (Pawn current in PawnUtility.SpawnedMasteredPawns(this.$this.pawn))
 								{
 									if (current.caller != null)
 									{

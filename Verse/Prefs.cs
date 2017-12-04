@@ -36,6 +36,19 @@ namespace Verse
 			}
 		}
 
+		public static float VolumeAmbient
+		{
+			get
+			{
+				return Prefs.data.volumeAmbient;
+			}
+			set
+			{
+				Prefs.data.volumeAmbient = value;
+				Prefs.Apply();
+			}
+		}
+
 		public static bool AdaptiveTrainingEnabled
 		{
 			get
@@ -140,6 +153,7 @@ namespace Verse
 				{
 					Prefs.data.logVerbose = false;
 					Prefs.data.resetModsConfigOnCrash = true;
+					DebugSettings.godMode = false;
 				}
 				Prefs.Apply();
 			}

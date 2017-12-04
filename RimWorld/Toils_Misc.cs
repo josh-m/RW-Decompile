@@ -56,5 +56,56 @@ namespace RimWorld
 			};
 			return toil;
 		}
+
+		public static Toil FindRandomAdjacentReachableCell(TargetIndex adjacentToInd, TargetIndex cellInd)
+		{
+			Toil findCell = new Toil();
+			findCell.initAction = delegate
+			{
+				Pawn actor = findCell.actor;
+				Job curJob = actor.CurJob;
+				LocalTargetInfo target = curJob.GetTarget(adjacentToInd);
+				if (target.HasThing && (!target.Thing.Spawned || target.Thing.Map != actor.Map))
+				{
+					Log.Error(string.Concat(new object[]
+					{
+						actor,
+						" could not find standable cell adjacent to ",
+						target,
+						" because this thing is either unspawned or spawned somewhere else."
+					}));
+					actor.jobs.curDriver.EndJobWith(JobCondition.Errored);
+					return;
+				}
+				int num = 0;
+				IntVec3 c;
+				while (true)
+				{
+					num++;
+					if (num > 100)
+					{
+						break;
+					}
+					if (target.HasThing)
+					{
+						c = target.Thing.RandomAdjacentCell8Way();
+					}
+					else
+					{
+						c = target.Cell.RandomAdjacentCell8Way();
+					}
+					if (c.Standable(actor.Map) && actor.CanReserve(c, 1, -1, null, false) && actor.CanReach(c, PathEndMode.OnCell, Danger.Deadly, false, TraverseMode.ByPawn))
+					{
+						goto Block_7;
+					}
+				}
+				Log.Error(actor + " could not find standable cell adjacent to " + target);
+				actor.jobs.curDriver.EndJobWith(JobCondition.Errored);
+				return;
+				Block_7:
+				curJob.SetTarget(cellInd, c);
+			};
+			return findCell;
+		}
 	}
 }

@@ -23,6 +23,11 @@ namespace RimWorld
 			}
 		}
 
+		public override Danger MaxPathDanger(Pawn pawn)
+		{
+			return Danger.Deadly;
+		}
+
 		public override IEnumerable<Thing> PotentialWorkThingsGlobal(Pawn pawn)
 		{
 			return pawn.Map.listerBuildingsRepairable.RepairableBuildings(pawn.Faction);
@@ -57,7 +62,12 @@ namespace RimWorld
 				JobFailReason.Is(WorkGiver_FixBrokenDownBuilding.NotInHomeAreaTrans);
 				return false;
 			}
-			return t.def.useHitPoints && t.HitPoints != t.MaxHitPoints && pawn.CanReserve(building, 1, -1, null, forced) && building.Map.designationManager.DesignationOn(building, DesignationDefOf.Deconstruct) == null && !building.IsBurning();
+			if (!t.def.useHitPoints || t.HitPoints == t.MaxHitPoints)
+			{
+				return false;
+			}
+			LocalTargetInfo target = building;
+			return pawn.CanReserve(target, 1, -1, null, forced) && building.Map.designationManager.DesignationOn(building, DesignationDefOf.Deconstruct) == null && !building.IsBurning();
 		}
 
 		public override Job JobOnThing(Pawn pawn, Thing t, bool forced = false)

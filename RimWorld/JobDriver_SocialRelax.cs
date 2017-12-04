@@ -19,7 +19,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return base.CurJob.GetTarget(TargetIndex.A).Thing;
+				return this.job.GetTarget(TargetIndex.A).Thing;
 			}
 		}
 
@@ -27,7 +27,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return base.CurJob.GetTarget(TargetIndex.B).HasThing;
+				return this.job.GetTarget(TargetIndex.B).HasThing;
 			}
 		}
 
@@ -35,7 +35,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return base.CurJob.GetTarget(TargetIndex.C).HasThing;
+				return this.job.GetTarget(TargetIndex.C).HasThing;
 			}
 		}
 
@@ -47,6 +47,11 @@ namespace RimWorld
 			}
 		}
 
+		public override bool TryMakePreToilReservations()
+		{
+			return this.pawn.Reserve(this.job.GetTarget(TargetIndex.B), this.job, 1, -1, null) && (!this.HasDrink || this.pawn.Reserve(this.job.GetTarget(TargetIndex.C), this.job, 1, -1, null));
+		}
+
 		[DebuggerHidden]
 		protected override IEnumerable<Toil> MakeNewToils()
 		{
@@ -55,27 +60,26 @@ namespace RimWorld
 			{
 				this.EndOnDespawnedOrNull(TargetIndex.B, JobCondition.Incompletable);
 			}
-			yield return Toils_Reserve.Reserve(TargetIndex.B, 1, -1, null);
 			if (this.HasDrink)
 			{
 				this.FailOnDestroyedNullOrForbidden(TargetIndex.C);
-				yield return Toils_Reserve.Reserve(TargetIndex.C, 1, -1, null);
 				yield return Toils_Goto.GotoThing(TargetIndex.C, PathEndMode.OnCell).FailOnSomeonePhysicallyInteracting(TargetIndex.C);
-				yield return Toils_Haul.StartCarryThing(TargetIndex.C, false, false);
+				yield return Toils_Haul.StartCarryThing(TargetIndex.C, false, false, false);
 			}
 			yield return Toils_Goto.GotoCell(TargetIndex.B, PathEndMode.OnCell);
 			Toil chew = new Toil();
 			chew.tickAction = delegate
 			{
-				this.<>f__this.pawn.Drawer.rotator.FaceCell(this.<>f__this.ClosestGatherSpotParentCell);
-				this.<>f__this.pawn.GainComfortFromCellIfPossible();
-				JoyUtility.JoyTickCheckEnd(this.<>f__this.pawn, JoyTickFullJoyAction.GoToNextToil, 1f);
+				this.$this.pawn.rotationTracker.FaceCell(this.$this.ClosestGatherSpotParentCell);
+				this.$this.pawn.GainComfortFromCellIfPossible();
+				JoyUtility.JoyTickCheckEnd(this.$this.pawn, JoyTickFullJoyAction.GoToNextToil, 1f);
 			};
+			chew.handlingFacing = true;
 			chew.defaultCompleteMode = ToilCompleteMode.Delay;
-			chew.defaultDuration = base.CurJob.def.joyDuration;
+			chew.defaultDuration = this.job.def.joyDuration;
 			chew.AddFinishAction(delegate
 			{
-				JoyUtility.TryGainRecRoomThought(this.<>f__this.pawn);
+				JoyUtility.TryGainRecRoomThought(this.$this.pawn);
 			});
 			chew.socialMode = RandomSocialMode.SuperActive;
 			Toils_Ingest.AddIngestionEffects(chew, this.pawn, TargetIndex.C, TargetIndex.None);

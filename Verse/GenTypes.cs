@@ -66,9 +66,7 @@ namespace Verse
 
 		public static IEnumerable<Type> AllTypesWithAttribute<TAttr>() where TAttr : Attribute
 		{
-			return from x in GenTypes.AllTypes
-			where x.HasAttribute<TAttr>()
-			select x;
+			return GenTypes.AllTypes.Where(new Func<Type, bool>(GenAttribute.HasAttribute<TAttr>));
 		}
 
 		public static IEnumerable<Type> AllSubclasses(this Type baseType)

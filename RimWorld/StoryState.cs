@@ -50,7 +50,7 @@ namespace RimWorld
 				return;
 			}
 			int ticksGame = Find.TickManager.TicksGame;
-			if (qi.def.category == IncidentCategory.ThreatBig)
+			if (qi.def.category == IncidentCategory.ThreatBig || qi.def.category == IncidentCategory.RaidBeacon)
 			{
 				if (this.lastThreatBigTick <= ticksGame)
 				{

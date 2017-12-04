@@ -17,5 +17,18 @@ namespace RimWorld
 				}
 			});
 		}
+
+		public static bool InBedOrRestSpotNow(Pawn pawn, LocalTargetInfo bedOrRestSpot)
+		{
+			if (!bedOrRestSpot.IsValid || !pawn.Spawned)
+			{
+				return false;
+			}
+			if (bedOrRestSpot.HasThing)
+			{
+				return bedOrRestSpot.Thing.Map == pawn.Map && RestUtility.GetBedSleepingSlotPosFor(pawn, (Building_Bed)bedOrRestSpot.Thing) == pawn.Position;
+			}
+			return bedOrRestSpot.Cell == pawn.Position;
+		}
 	}
 }

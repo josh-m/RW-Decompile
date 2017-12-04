@@ -9,6 +9,8 @@ namespace RimWorld
 {
 	public abstract class Building_Trap : Building
 	{
+		private List<Pawn> touchingPawns = new List<Pawn>();
+
 		private const float KnowerSpringChance = 0.004f;
 
 		private const ushort KnowerPathFindCost = 800;
@@ -16,8 +18,6 @@ namespace RimWorld
 		private const ushort KnowerPathWalkCost = 30;
 
 		private const float AnimalSpringChanceFactor = 0.1f;
-
-		private List<Pawn> touchingPawns = new List<Pawn>();
 
 		public virtual bool Armed
 		{
@@ -91,7 +91,7 @@ namespace RimWorld
 					}), "LetterFriendlyTrapSprung".Translate(new object[]
 					{
 						p.NameStringShort
-					}), LetterDefOf.BadNonUrgent, new TargetInfo(base.Position, base.Map, false), null);
+					}), LetterDefOf.NegativeEvent, new TargetInfo(base.Position, base.Map, false), null);
 				}
 			}
 		}
@@ -106,12 +106,12 @@ namespace RimWorld
 			{
 				return true;
 			}
-			if (p.guest != null && p.guest.released)
+			if (p.guest != null && p.guest.Released)
 			{
 				return true;
 			}
 			Lord lord = p.GetLord();
-			return p.guest != null && lord != null && lord.LordJob is LordJob_FormAndSendCaravan;
+			return p.RaceProps.Humanlike && lord != null && lord.LordJob is LordJob_FormAndSendCaravan;
 		}
 
 		public override ushort PathFindCostFor(Pawn p)

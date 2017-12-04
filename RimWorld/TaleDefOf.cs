@@ -59,6 +59,56 @@ namespace RimWorld
 
 		public static TaleDef Breakup;
 
+		public static TaleDef CaravanAmbushedByHumanlike;
+
+		public static TaleDef CaravanFormed;
+
+		public static TaleDef CaravanFled;
+
+		public static TaleDef CaravanAmbushDefeated;
+
+		public static TaleDef CaravanRemoteMining;
+
+		public static TaleDef CaravanAssaultSuccessful;
+
+		public static TaleDef MinedValuable;
+
+		public static TaleDef CompletedLongConstructionProject;
+
+		public static TaleDef CompletedLongCraftingProject;
+
+		public static TaleDef AttendedParty;
+
+		public static TaleDef GainedMasterSkillWithPassion;
+
+		public static TaleDef GainedMasterSkillWithoutPassion;
+
+		public static TaleDef IncreasedMenagerie;
+
+		public static TaleDef Wounded;
+
+		public static TaleDef Downed;
+
+		public static TaleDef KilledLongRange;
+
+		public static TaleDef KilledMelee;
+
+		public static TaleDef KilledMajorThreat;
+
+		public static TaleDef KilledCapacity;
+
+		public static TaleDef KilledMortar;
+
+		public static TaleDef Exhausted;
+
+		public static TaleDef GaveBirth;
+
+		public static TaleDef LaunchedShip;
+
+		public static TaleDef SocialFight;
+
+		public static TaleDef CollapseDodged;
+
 		public static TaleDef RaidArrived;
 	}
 }

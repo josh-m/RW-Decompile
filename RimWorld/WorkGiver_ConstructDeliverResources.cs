@@ -8,11 +8,11 @@ namespace RimWorld
 {
 	public abstract class WorkGiver_ConstructDeliverResources : WorkGiver_Scanner
 	{
+		private static List<Thing> resourcesAvailable = new List<Thing>();
+
 		private const float MultiPickupRadius = 5f;
 
 		private const float NearbyConstructScanRadius = 8f;
-
-		private static List<Thing> resourcesAvailable = new List<Thing>();
 
 		private static string MissingMaterialsTranslated;
 
@@ -22,6 +22,11 @@ namespace RimWorld
 			{
 				WorkGiver_ConstructDeliverResources.MissingMaterialsTranslated = "MissingMaterials".Translate();
 			}
+		}
+
+		public override Danger MaxPathDanger(Pawn pawn)
+		{
+			return Danger.Deadly;
 		}
 
 		private static bool ResourceValidator(Pawn pawn, ThingCountClass need, Thing th)
@@ -37,35 +42,33 @@ namespace RimWorld
 				return this.InstallJob(pawn, blueprint_Install);
 			}
 			bool flag = false;
+			ThingCountClass thingCountClass = null;
 			List<ThingCountClass> list = c.MaterialsNeeded();
 			int count = list.Count;
 			int i = 0;
 			while (i < count)
 			{
-				WorkGiver_ConstructDeliverResources.<ResourceDeliverJobFor>c__AnonStorey2AF <ResourceDeliverJobFor>c__AnonStorey2AF = new WorkGiver_ConstructDeliverResources.<ResourceDeliverJobFor>c__AnonStorey2AF();
-				<ResourceDeliverJobFor>c__AnonStorey2AF.<>f__ref$686 = <ResourceDeliverJobFor>c__AnonStorey2AE;
-				<ResourceDeliverJobFor>c__AnonStorey2AF.need = list[i];
-				if (!pawn.Map.itemAvailability.ThingsAvailableAnywhere(<ResourceDeliverJobFor>c__AnonStorey2AF.need, pawn))
+				ThingCountClass need = list[i];
+				if (!pawn.Map.itemAvailability.ThingsAvailableAnywhere(need, pawn))
 				{
 					flag = true;
+					thingCountClass = need;
 					break;
 				}
-				WorkGiver_ConstructDeliverResources.<ResourceDeliverJobFor>c__AnonStorey2AF arg_EE_0 = <ResourceDeliverJobFor>c__AnonStorey2AF;
-				Predicate<Thing> validator = (Thing r) => WorkGiver_ConstructDeliverResources.ResourceValidator(<ResourceDeliverJobFor>c__AnonStorey2AF.<>f__ref$686.pawn, <ResourceDeliverJobFor>c__AnonStorey2AF.need, r);
-				arg_EE_0.foundRes = GenClosest.ClosestThingReachable(pawn.Position, pawn.Map, ThingRequest.ForDef(<ResourceDeliverJobFor>c__AnonStorey2AF.need.thingDef), PathEndMode.ClosestTouch, TraverseParms.For(pawn, Danger.Deadly, TraverseMode.ByPawn, false), 9999f, validator, null, 0, -1, false, RegionType.Set_Passable, false);
-				if (<ResourceDeliverJobFor>c__AnonStorey2AF.foundRes != null)
+				Thing foundRes = GenClosest.ClosestThingReachable(pawn.Position, pawn.Map, ThingRequest.ForDef(need.thingDef), PathEndMode.ClosestTouch, TraverseParms.For(pawn, Danger.Deadly, TraverseMode.ByPawn, false), 9999f, (Thing r) => WorkGiver_ConstructDeliverResources.ResourceValidator(pawn, need, r), null, 0, -1, false, RegionType.Set_Passable, false);
+				if (foundRes != null)
 				{
 					int resTotalAvailable;
-					this.FindAvailableNearbyResources(<ResourceDeliverJobFor>c__AnonStorey2AF.foundRes, pawn, out resTotalAvailable);
+					this.FindAvailableNearbyResources(foundRes, pawn, out resTotalAvailable);
 					int num;
 					Job job;
-					HashSet<Thing> hashSet = this.FindNearbyNeeders(pawn, <ResourceDeliverJobFor>c__AnonStorey2AF.need, c, resTotalAvailable, canRemoveExistingFloorUnderNearbyNeeders, out num, out job);
+					HashSet<Thing> hashSet = this.FindNearbyNeeders(pawn, need, c, resTotalAvailable, canRemoveExistingFloorUnderNearbyNeeders, out num, out job);
 					if (job != null)
 					{
 						return job;
 					}
 					hashSet.Add((Thing)c);
-					Thing thing = hashSet.MinBy((Thing nee) => IntVec3Utility.ManhattanDistanceFlat(<ResourceDeliverJobFor>c__AnonStorey2AF.foundRes.Position, nee.Position));
+					Thing thing = hashSet.MinBy((Thing nee) => IntVec3Utility.ManhattanDistanceFlat(foundRes.Position, nee.Position));
 					hashSet.Remove(thing);
 					int num2 = 0;
 					int j = 0;
@@ -76,9 +79,9 @@ namespace RimWorld
 					}
 					while (num2 < num && j < WorkGiver_ConstructDeliverResources.resourcesAvailable.Count);
 					WorkGiver_ConstructDeliverResources.resourcesAvailable.RemoveRange(j, WorkGiver_ConstructDeliverResources.resourcesAvailable.Count - j);
-					WorkGiver_ConstructDeliverResources.resourcesAvailable.Remove(<ResourceDeliverJobFor>c__AnonStorey2AF.foundRes);
+					WorkGiver_ConstructDeliverResources.resourcesAvailable.Remove(foundRes);
 					Job job2 = new Job(JobDefOf.HaulToContainer);
-					job2.targetA = <ResourceDeliverJobFor>c__AnonStorey2AF.foundRes;
+					job2.targetA = foundRes;
 					job2.targetQueueA = new List<LocalTargetInfo>();
 					for (j = 0; j < WorkGiver_ConstructDeliverResources.resourcesAvailable.Count; j++)
 					{
@@ -101,12 +104,13 @@ namespace RimWorld
 				else
 				{
 					flag = true;
+					thingCountClass = need;
 					i++;
 				}
 			}
 			if (flag)
 			{
-				JobFailReason.Is(WorkGiver_ConstructDeliverResources.MissingMaterialsTranslated);
+				JobFailReason.Is(string.Format("{0}: {1}", WorkGiver_ConstructDeliverResources.MissingMaterialsTranslated, thingCountClass.thingDef.label));
 			}
 			return null;
 		}
@@ -143,7 +147,7 @@ namespace RimWorld
 			neededTotal = need.count;
 			HashSet<Thing> hashSet = new HashSet<Thing>();
 			Thing thing = (Thing)c;
-			foreach (Thing current in GenRadial.RadialDistinctThingsAround(thing.Position, thing.Map, 8f, false))
+			foreach (Thing current in GenRadial.RadialDistinctThingsAround(thing.Position, thing.Map, 8f, true))
 			{
 				if (neededTotal >= resTotalAvailable)
 				{
@@ -203,8 +207,9 @@ namespace RimWorld
 			{
 				return null;
 			}
+			LocalTargetInfo target = blue.Position;
 			ReservationLayerDef floor = ReservationLayerDefOf.Floor;
-			if (!pawn.CanReserve(blue.Position, 1, -1, floor, false))
+			if (!pawn.CanReserve(target, 1, -1, floor, false))
 			{
 				return null;
 			}
@@ -217,7 +222,7 @@ namespace RimWorld
 		private Job InstallJob(Pawn pawn, Blueprint_Install install)
 		{
 			Thing miniToInstallOrBuildingToReinstall = install.MiniToInstallOrBuildingToReinstall;
-			if (miniToInstallOrBuildingToReinstall.IsForbidden(pawn) || !pawn.CanReserveAndReach(miniToInstallOrBuildingToReinstall, PathEndMode.OnCell, pawn.NormalMaxDanger(), 1, -1, null, false))
+			if (miniToInstallOrBuildingToReinstall.IsForbidden(pawn) || !pawn.CanReserveAndReach(miniToInstallOrBuildingToReinstall, PathEndMode.ClosestTouch, pawn.NormalMaxDanger(), 1, -1, null, false))
 			{
 				return null;
 			}

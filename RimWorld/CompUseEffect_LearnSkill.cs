@@ -7,14 +7,6 @@ namespace RimWorld
 	{
 		private const float XPGainAmount = 50000f;
 
-		public override float OrderPriority
-		{
-			get
-			{
-				return -1000f;
-			}
-		}
-
 		public override void DoEffect(Pawn user)
 		{
 			base.DoEffect(user);
@@ -27,12 +19,11 @@ namespace RimWorld
 				Messages.Message("NeurotrainerUsed".Translate(new object[]
 				{
 					user.LabelShort,
-					skill.label,
+					skill.LabelCap,
 					level,
 					level2
-				}), user, MessageSound.Benefit);
+				}), user, MessageTypeDefOf.PositiveEvent);
 			}
-			this.parent.Destroy(DestroyMode.Vanish);
 		}
 	}
 }

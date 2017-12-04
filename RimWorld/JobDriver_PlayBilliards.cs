@@ -11,65 +11,61 @@ namespace RimWorld
 	{
 		private const int ShotDuration = 600;
 
+		public override bool TryMakePreToilReservations()
+		{
+			return this.pawn.Reserve(this.job.targetA, this.job, this.job.def.joyMaxParticipants, 0, null);
+		}
+
 		[DebuggerHidden]
 		protected override IEnumerable<Toil> MakeNewToils()
 		{
 			this.EndOnDespawnedOrNull(TargetIndex.A, JobCondition.Incompletable);
-			yield return Toils_Reserve.Reserve(TargetIndex.A, base.CurJob.def.joyMaxParticipants, 0, null);
-			Toil chooseCell = new Toil();
-			chooseCell.initAction = delegate
-			{
-				int num = 0;
-				while (true)
-				{
-					this.<>f__this.CurJob.targetB = this.<>f__this.CurJob.targetA.Thing.RandomAdjacentCell8Way();
-					num++;
-					if (num > 100)
-					{
-						break;
-					}
-					if (this.<>f__this.pawn.CanReserve((IntVec3)this.<>f__this.CurJob.targetB, 1, -1, null, false))
-					{
-						return;
-					}
-				}
-				Log.Error(this.<>f__this.pawn + " could not find cell adjacent to billiards table " + this.<>f__this.TargetThingA);
-				this.<>f__this.EndJobWith(JobCondition.Errored);
-			};
+			Toil chooseCell = Toils_Misc.FindRandomAdjacentReachableCell(TargetIndex.A, TargetIndex.B);
 			yield return chooseCell;
 			yield return Toils_Reserve.Reserve(TargetIndex.B, 1, -1, null);
 			yield return Toils_Goto.GotoCell(TargetIndex.B, PathEndMode.OnCell);
 			Toil play = new Toil();
 			play.initAction = delegate
 			{
-				this.<>f__this.CurJob.locomotionUrgency = LocomotionUrgency.Walk;
+				this.$this.job.locomotionUrgency = LocomotionUrgency.Walk;
 			};
 			play.tickAction = delegate
 			{
-				this.<>f__this.pawn.Drawer.rotator.FaceCell(this.<>f__this.TargetA.Thing.OccupiedRect().ClosestCellTo(this.<>f__this.pawn.Position));
-				if (this.<>f__this.pawn.jobs.curDriver.ticksLeftThisToil == 300)
+				this.$this.pawn.rotationTracker.FaceCell(this.$this.TargetA.Thing.OccupiedRect().ClosestCellTo(this.$this.pawn.Position));
+				if (this.$this.ticksLeftThisToil == 300)
 				{
-					SoundDefOf.PlayBilliards.PlayOneShot(new TargetInfo(this.<>f__this.pawn.Position, this.<>f__this.pawn.Map, false));
+					SoundDefOf.PlayBilliards.PlayOneShot(new TargetInfo(this.$this.pawn.Position, this.$this.pawn.Map, false));
 				}
-				if (Find.TickManager.TicksGame > this.<>f__this.startTick + this.<>f__this.CurJob.def.joyDuration)
+				if (Find.TickManager.TicksGame > this.$this.startTick + this.$this.job.def.joyDuration)
 				{
-					this.<>f__this.EndJobWith(JobCondition.Succeeded);
+					this.$this.EndJobWith(JobCondition.Succeeded);
 					return;
 				}
-				float statValue = this.<>f__this.TargetThingA.GetStatValue(StatDefOf.EntertainmentStrengthFactor, true);
+				float statValue = this.$this.TargetThingA.GetStatValue(StatDefOf.EntertainmentStrengthFactor, true);
+				Pawn pawn = this.$this.pawn;
 				float extraJoyGainFactor = statValue;
-				JoyUtility.JoyTickCheckEnd(this.<>f__this.pawn, JoyTickFullJoyAction.EndJob, extraJoyGainFactor);
+				JoyUtility.JoyTickCheckEnd(pawn, JoyTickFullJoyAction.EndJob, extraJoyGainFactor);
 			};
+			play.handlingFacing = true;
 			play.socialMode = RandomSocialMode.SuperActive;
 			play.defaultCompleteMode = ToilCompleteMode.Delay;
 			play.defaultDuration = 600;
 			play.AddFinishAction(delegate
 			{
-				JoyUtility.TryGainRecRoomThought(this.<>f__this.pawn);
+				JoyUtility.TryGainRecRoomThought(this.$this.pawn);
 			});
 			yield return play;
 			yield return Toils_Reserve.Release(TargetIndex.B);
 			yield return Toils_Jump.Jump(chooseCell);
+		}
+
+		public override object[] TaleParameters()
+		{
+			return new object[]
+			{
+				this.pawn,
+				base.TargetA.Thing.def
+			};
 		}
 	}
 }

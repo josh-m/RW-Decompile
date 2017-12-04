@@ -48,7 +48,8 @@ namespace RimWorld
 			{
 				return false;
 			}
-			return pawn.CanReserve(t, 1, -1, null, forced) && pawn.Map.designationManager.DesignationOn(t, this.Designation) != null;
+			LocalTargetInfo target = t;
+			return pawn.CanReserve(target, 1, -1, null, forced) && pawn.Map.designationManager.DesignationOn(t, this.Designation) != null;
 		}
 
 		public override Job JobOnThing(Pawn pawn, Thing t, bool forced = false)

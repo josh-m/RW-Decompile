@@ -18,7 +18,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return base.CurJob.targetA.Thing;
+				return this.job.targetA.Thing;
 			}
 		}
 
@@ -26,25 +26,29 @@ namespace RimWorld
 		{
 			get
 			{
-				return (Pawn)base.CurJob.targetB.Thing;
+				return (Pawn)this.job.targetB.Thing;
 			}
 		}
 
 		public override string GetReport()
 		{
-			if (base.CurJob.GetTarget(TargetIndex.A).Thing is Building_NutrientPasteDispenser)
+			if (this.job.GetTarget(TargetIndex.A).Thing is Building_NutrientPasteDispenser && this.Deliveree != null)
 			{
-				return base.CurJob.def.reportString.Replace("TargetA", ThingDefOf.MealNutrientPaste.label).Replace("TargetB", ((Pawn)((Thing)base.CurJob.targetB)).LabelShort);
+				return this.job.def.reportString.Replace("TargetA", ThingDefOf.MealNutrientPaste.label).Replace("TargetB", this.Deliveree.LabelShort);
 			}
 			return base.GetReport();
+		}
+
+		public override bool TryMakePreToilReservations()
+		{
+			return this.pawn.Reserve(this.Deliveree, this.job, 1, -1, null) && (base.TargetThingA is Building_NutrientPasteDispenser || (this.pawn.inventory != null && this.pawn.inventory.Contains(base.TargetThingA)) || this.pawn.Reserve(this.Food, this.job, 1, -1, null));
 		}
 
 		[DebuggerHidden]
 		protected override IEnumerable<Toil> MakeNewToils()
 		{
 			this.FailOnDespawnedNullOrForbidden(TargetIndex.B);
-			this.FailOn(() => !FoodUtility.ShouldBeFedBySomeone(this.<>f__this.Deliveree));
-			yield return Toils_Reserve.Reserve(TargetIndex.B, 1, -1, null);
+			this.FailOn(() => !FoodUtility.ShouldBeFedBySomeone(this.$this.Deliveree));
 			if (this.pawn.inventory != null && this.pawn.inventory.Contains(base.TargetThingA))
 			{
 				yield return Toils_Misc.TakeItemFromInventoryToCarrier(this.pawn, TargetIndex.A);
@@ -56,7 +60,6 @@ namespace RimWorld
 			}
 			else
 			{
-				yield return Toils_Reserve.Reserve(TargetIndex.A, 1, -1, null);
 				yield return Toils_Goto.GotoThing(TargetIndex.A, PathEndMode.ClosestTouch).FailOnForbidden(TargetIndex.A);
 				yield return Toils_Ingest.PickupIngestible(TargetIndex.A, this.Deliveree);
 			}

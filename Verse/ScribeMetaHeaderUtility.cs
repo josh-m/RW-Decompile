@@ -17,14 +17,6 @@ namespace Verse
 			Scenario
 		}
 
-		public const string MetaNodeName = "meta";
-
-		public const string GameVersionNodeName = "gameVersion";
-
-		public const string ModIdsNodeName = "modIds";
-
-		public const string ModNamesNodeName = "modNames";
-
 		private static ScribeMetaHeaderUtility.ScribeHeaderMode lastMode;
 
 		public static string loadedGameVersion;
@@ -32,6 +24,14 @@ namespace Verse
 		public static List<string> loadedModIdsList;
 
 		public static List<string> loadedModNamesList;
+
+		public const string MetaNodeName = "meta";
+
+		public const string GameVersionNodeName = "gameVersion";
+
+		public const string ModIdsNodeName = "modIds";
+
+		public const string ModNamesNodeName = "modNames";
 
 		public static void WriteMetaHeader()
 		{
@@ -127,10 +127,12 @@ namespace Verse
 					});
 				}
 			}
+			bool flag = false;
 			string text4;
 			string text5;
 			if (!ScribeMetaHeaderUtility.LoadedModsMatchesActiveMods(out text4, out text5))
 			{
+				flag = true;
 				string text6 = "ModsMismatchWarningText".Translate(new object[]
 				{
 					text4,
@@ -151,10 +153,35 @@ namespace Verse
 			}
 			if (text != null)
 			{
+				ScribeMetaHeaderUtility.<TryCreateDialogsForVersionMismatchWarnings>c__AnonStorey0 <TryCreateDialogsForVersionMismatchWarnings>c__AnonStorey = new ScribeMetaHeaderUtility.<TryCreateDialogsForVersionMismatchWarnings>c__AnonStorey0();
+				ScribeMetaHeaderUtility.<TryCreateDialogsForVersionMismatchWarnings>c__AnonStorey0 arg_152_0 = <TryCreateDialogsForVersionMismatchWarnings>c__AnonStorey;
+				string text7 = text;
 				string title = text2;
-				Dialog_MessageBox dialog_MessageBox = Dialog_MessageBox.CreateConfirmation(text, confirmedAction, false, title);
-				dialog_MessageBox.buttonAText = "LoadAnyway".Translate();
-				Find.WindowStack.Add(dialog_MessageBox);
+				arg_152_0.dialog = Dialog_MessageBox.CreateConfirmation(text7, confirmedAction, false, title);
+				<TryCreateDialogsForVersionMismatchWarnings>c__AnonStorey.dialog.buttonAText = "LoadAnyway".Translate();
+				if (flag)
+				{
+					<TryCreateDialogsForVersionMismatchWarnings>c__AnonStorey.dialog.buttonCText = "ChangeLoadedMods".Translate();
+					<TryCreateDialogsForVersionMismatchWarnings>c__AnonStorey.dialog.buttonCAction = delegate
+					{
+						int num = ModLister.InstalledModsListHash(false);
+						ModsConfig.SetActiveToList(ScribeMetaHeaderUtility.loadedModIdsList);
+						ModsConfig.Save();
+						if (num == ModLister.InstalledModsListHash(false))
+						{
+							IEnumerable<string> items = from id in Enumerable.Range(0, ScribeMetaHeaderUtility.loadedModIdsList.Count)
+							where ModLister.GetModWithIdentifier(ScribeMetaHeaderUtility.loadedModIdsList[id]) == null
+							select ScribeMetaHeaderUtility.loadedModNamesList[id];
+							Messages.Message(string.Format("{0}: {1}", "MissingMods".Translate(), GenText.ToCommaList(items, true)), MessageTypeDefOf.RejectInput);
+							<TryCreateDialogsForVersionMismatchWarnings>c__AnonStorey.dialog.buttonCClose = false;
+						}
+						else
+						{
+							ModsConfig.RestartFromChangedMods();
+						}
+					};
+				}
+				Find.WindowStack.Add(<TryCreateDialogsForVersionMismatchWarnings>c__AnonStorey.dialog);
 				return true;
 			}
 			return false;

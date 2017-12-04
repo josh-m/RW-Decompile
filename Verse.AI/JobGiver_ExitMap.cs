@@ -13,6 +13,10 @@ namespace Verse.AI
 
 		protected bool forceCanDig;
 
+		protected bool forceCanDigIfAnyHostileActiveThreat;
+
+		protected bool forceCanDigIfCantReachMapEdge;
+
 		protected bool failIfCantJoinOrCreateCaravan;
 
 		public override ThinkNode DeepCopy(bool resolve = true)
@@ -22,6 +26,8 @@ namespace Verse.AI
 			jobGiver_ExitMap.jobMaxDuration = this.jobMaxDuration;
 			jobGiver_ExitMap.canBash = this.canBash;
 			jobGiver_ExitMap.forceCanDig = this.forceCanDig;
+			jobGiver_ExitMap.forceCanDigIfAnyHostileActiveThreat = this.forceCanDigIfAnyHostileActiveThreat;
+			jobGiver_ExitMap.forceCanDigIfCantReachMapEdge = this.forceCanDigIfCantReachMapEdge;
 			jobGiver_ExitMap.failIfCantJoinOrCreateCaravan = this.failIfCantJoinOrCreateCaravan;
 			return jobGiver_ExitMap;
 		}
@@ -29,7 +35,7 @@ namespace Verse.AI
 		protected override Job TryGiveJob(Pawn pawn)
 		{
 			bool flag = false;
-			if (this.forceCanDig || (pawn.mindState.duty != null && pawn.mindState.duty.canDig))
+			if (this.forceCanDig || (pawn.mindState.duty != null && pawn.mindState.duty.canDig) || (this.forceCanDigIfCantReachMapEdge && !pawn.CanReachMapEdge()) || (this.forceCanDigIfAnyHostileActiveThreat && pawn.Faction != null && GenHostility.AnyHostileActiveThreatTo(pawn.Map, pawn.Faction)))
 			{
 				flag = true;
 			}
@@ -46,7 +52,7 @@ namespace Verse.AI
 					Thing thing = pawnPath.FirstBlockingBuilding(out cellBeforeBlocker, pawn);
 					if (thing != null)
 					{
-						Job job = DigUtility.PassBlockerJob(pawn, thing, cellBeforeBlocker, true);
+						Job job = DigUtility.PassBlockerJob(pawn, thing, cellBeforeBlocker, true, true);
 						if (job != null)
 						{
 							return job;

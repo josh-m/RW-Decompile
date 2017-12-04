@@ -10,8 +10,6 @@ namespace Verse.AI.Group
 	[StaticConstructorOnStartup]
 	public class Lord : IExposable, ILoadReferenceable
 	{
-		private const int AttackTargetCacheInterval = 60;
-
 		public LordManager lordManager;
 
 		private LordToil curLordToil;
@@ -39,6 +37,8 @@ namespace Verse.AI.Group
 		public int initialColonyHealthTotal;
 
 		public int lastPawnHarmTick = -99999;
+
+		private const int AttackTargetCacheInterval = 60;
 
 		private static readonly Material FlagTex = MaterialPool.MatFrom("UI/Overlays/SquadFlag");
 
@@ -233,7 +233,7 @@ namespace Verse.AI.Group
 			this.graph = lordJob.CreateGraph();
 			Rand.PopState();
 			this.graph.ErrorCheck();
-			if (this.faction.def.autoFlee)
+			if (this.faction != null && this.faction.def.autoFlee)
 			{
 				LordToil_PanicFlee lordToil_PanicFlee = new LordToil_PanicFlee();
 				lordToil_PanicFlee.avoidGridMode = AvoidGridMode.Smart;
@@ -288,7 +288,7 @@ namespace Verse.AI.Group
 				Log.Error(string.Concat(new object[]
 				{
 					"Lord for ",
-					this.faction,
+					this.faction.ToStringSafe<Faction>(),
 					" tried to add ",
 					p,
 					" whom it already controls."
@@ -559,8 +559,11 @@ namespace Verse.AI.Group
 					current.mindState.duty
 				}));
 			}
-			stringBuilder.AppendLine("Faction data:");
-			stringBuilder.AppendLine(this.faction.DebugString());
+			if (this.faction != null)
+			{
+				stringBuilder.AppendLine("Faction data:");
+				stringBuilder.AppendLine(this.faction.DebugString());
+			}
 			stringBuilder.AppendLine("Raw save data:");
 			stringBuilder.AppendLine(Scribe.saver.DebugOutputFor(this));
 			return stringBuilder.ToString();

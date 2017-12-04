@@ -8,13 +8,13 @@ namespace RimWorld
 {
 	public class GenStep_PreciousLump : GenStep_ScatterLumpsMineable
 	{
-		public List<ThingDef> mineables;
+		public List<ThingOption> mineables;
 
 		public FloatRange totalValueRange = new FloatRange(1000f, 2000f);
 
 		public override void Generate(Map map)
 		{
-			this.forcedDefToScatter = this.mineables.RandomElement<ThingDef>();
+			this.forcedDefToScatter = this.mineables.RandomElementByWeight((ThingOption x) => x.weight).thingDef;
 			this.count = 1;
 			float randomInRange = this.totalValueRange.RandomInRange;
 			float baseMarketValue = this.forcedDefToScatter.building.mineableThing.BaseMarketValue;

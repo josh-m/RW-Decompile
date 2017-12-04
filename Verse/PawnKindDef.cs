@@ -112,6 +112,15 @@ namespace Verse
 			}
 		}
 
+		public string GetLabelPlural(int count = -1)
+		{
+			if (!this.labelPlural.NullOrEmpty())
+			{
+				return this.labelPlural;
+			}
+			return Find.ActiveLanguageWorker.Pluralize(this.label, count);
+		}
+
 		[DebuggerHidden]
 		public override IEnumerable<string> ConfigErrors()
 		{
@@ -138,11 +147,12 @@ namespace Verse
 			if (this.weaponMoney.min > 0f)
 			{
 				float minCost = 999999f;
-				for (int i = 0; i < this.weaponTags.Count; i++)
+				int i;
+				for (i = 0; i < this.weaponTags.Count; i++)
 				{
 					minCost = Mathf.Min(minCost, (from d in DefDatabase<ThingDef>.AllDefs
-					where d.weaponTags != null && d.weaponTags.Contains(this.<>f__this.weaponTags[this.<i>__3])
-					select d).Min((ThingDef d) => PawnWeaponGenerator.CheapestNonDerpPriceFor(d)));
+					where d.weaponTags != null && d.weaponTags.Contains(this.$this.weaponTags[i])
+					select d).Min(new Func<ThingDef, float>(PawnWeaponGenerator.CheapestNonDerpPriceFor)));
 				}
 				if (minCost > this.weaponMoney.min)
 				{

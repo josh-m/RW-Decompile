@@ -10,6 +10,8 @@ namespace Verse
 
 		public const int SmallPawnFragmentedDamageMinimumDamageAmount = 10;
 
+		public static float ChanceToAdditionallyDamageInnerSolidPart = 0.2f;
+
 		public const float MinBleedingRateToBleed = 0.1f;
 
 		public const float BleedSeverityRecoveryPerInterval = 0.00033333333f;
@@ -41,6 +43,8 @@ namespace Verse
 		public const float DelicateBodyPartOldInjuryChanceThreshold = 0.8f;
 
 		public const float MinDamagePartPctForInfection = 0.2f;
+
+		public static readonly IntRange InfectionDelayRange = new IntRange(15000, 45000);
 
 		public const float AnimalsInfectionChanceFactor = 0.2f;
 
@@ -85,9 +89,5 @@ namespace Verse
 		public const float TendPriority_PerBleedRate = 1.5f;
 
 		public const float TendPriority_DiseaseSeverityDecreasesWhenTended = 0.025f;
-
-		public static float ChanceToAdditionallyDamageInnerSolidPart = 0.2f;
-
-		public static readonly IntRange InfectionDelayRange = new IntRange(15000, 45000);
 	}
 }

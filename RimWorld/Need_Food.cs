@@ -7,13 +7,13 @@ namespace RimWorld
 {
 	public class Need_Food : Need
 	{
+		private int lastNonStarvingTick = -99999;
+
 		private const float BaseFoodFallPerTick = 2.66666666E-05f;
 
-		private const float MalnutritionSeverityPerDay = 0.17f;
+		private const float BaseMalnutritionSeverityPerDay = 0.17f;
 
-		private const float MalnutritionSeverityPerInterval = 0.00113333331f;
-
-		private int lastNonStarvingTick = -99999;
+		private const float BaseMalnutritionSeverityPerInterval = 0.00113333331f;
 
 		public bool Starving
 		{
@@ -111,17 +111,7 @@ namespace RimWorld
 		{
 			get
 			{
-				float num = this.pawn.ageTracker.CurLifeStage.hungerRateFactor * this.pawn.RaceProps.baseHungerRate;
-				List<Hediff> hediffs = this.pawn.health.hediffSet.hediffs;
-				for (int i = 0; i < hediffs.Count; i++)
-				{
-					HediffStage curStage = hediffs[i].CurStage;
-					if (curStage != null)
-					{
-						num *= curStage.hungerRateFactor;
-					}
-				}
-				return num;
+				return this.pawn.ageTracker.CurLifeStage.hungerRateFactor * this.pawn.RaceProps.baseHungerRate * this.pawn.health.hediffSet.HungerRateFactor;
 			}
 		}
 
@@ -130,6 +120,14 @@ namespace RimWorld
 			get
 			{
 				return Mathf.Max(0, Find.TickManager.TicksGame - this.lastNonStarvingTick);
+			}
+		}
+
+		private float MalnutritionSeverityPerInterval
+		{
+			get
+			{
+				return 0.00113333331f * Mathf.Lerp(0.8f, 1.2f, Rand.ValueSeeded(this.pawn.thingIDNumber ^ 2551674));
 			}
 		}
 
@@ -174,11 +172,11 @@ namespace RimWorld
 			{
 				if (this.Starving)
 				{
-					HealthUtility.AdjustSeverity(this.pawn, HediffDefOf.Malnutrition, 0.00113333331f);
+					HealthUtility.AdjustSeverity(this.pawn, HediffDefOf.Malnutrition, this.MalnutritionSeverityPerInterval);
 				}
 				else
 				{
-					HealthUtility.AdjustSeverity(this.pawn, HediffDefOf.Malnutrition, -0.00113333331f);
+					HealthUtility.AdjustSeverity(this.pawn, HediffDefOf.Malnutrition, -this.MalnutritionSeverityPerInterval);
 				}
 			}
 		}

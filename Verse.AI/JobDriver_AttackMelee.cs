@@ -15,24 +15,33 @@ namespace Verse.AI
 			Scribe_Values.Look<int>(ref this.numMeleeAttacksMade, "numMeleeAttacksMade", 0, false);
 		}
 
+		public override bool TryMakePreToilReservations()
+		{
+			IAttackTarget attackTarget = this.job.targetA.Thing as IAttackTarget;
+			if (attackTarget != null)
+			{
+				this.pawn.Map.attackTargetReservationManager.Reserve(this.pawn, this.job, attackTarget);
+			}
+			return true;
+		}
+
 		[DebuggerHidden]
 		protected override IEnumerable<Toil> MakeNewToils()
 		{
-			yield return Toils_ReserveAttackTarget.TryReserve(TargetIndex.A);
 			yield return Toils_Misc.ThrowColonistAttackingMote(TargetIndex.A);
 			yield return Toils_Combat.FollowAndMeleeAttack(TargetIndex.A, delegate
 			{
-				Thing thing = this.<>f__this.CurJob.GetTarget(TargetIndex.A).Thing;
-				if (this.<>f__this.pawn.meleeVerbs.TryMeleeAttack(thing, this.<>f__this.CurJob.verbToUse, false))
+				Thing thing = this.$this.job.GetTarget(TargetIndex.A).Thing;
+				if (this.$this.pawn.meleeVerbs.TryMeleeAttack(thing, this.$this.job.verbToUse, false))
 				{
-					if (this.<>f__this.pawn.CurJob == null || this.<>f__this.pawn.jobs.curDriver != this.<>f__this)
+					if (this.$this.pawn.CurJob == null || this.$this.pawn.jobs.curDriver != this.$this)
 					{
 						return;
 					}
-					this.<>f__this.numMeleeAttacksMade++;
-					if (this.<>f__this.numMeleeAttacksMade >= this.<>f__this.pawn.CurJob.maxNumMeleeAttacks)
+					this.$this.numMeleeAttacksMade++;
+					if (this.$this.numMeleeAttacksMade >= this.$this.job.maxNumMeleeAttacks)
 					{
-						this.<>f__this.EndJobWith(JobCondition.Succeeded);
+						this.$this.EndJobWith(JobCondition.Succeeded);
 						return;
 					}
 				}
@@ -41,7 +50,7 @@ namespace Verse.AI
 
 		public override void Notify_PatherFailed()
 		{
-			if (base.CurJob.attackDoorIfTargetLost)
+			if (this.job.attackDoorIfTargetLost)
 			{
 				Thing thing;
 				using (PawnPath pawnPath = base.Map.pathFinder.FindPath(this.pawn.Position, base.TargetA.Cell, TraverseParms.For(this.pawn, Danger.Deadly, TraverseMode.PassDoors, false), PathEndMode.OnCell))
@@ -55,9 +64,9 @@ namespace Verse.AI
 				}
 				if (thing != null)
 				{
-					base.CurJob.targetA = thing;
-					base.CurJob.maxNumMeleeAttacks = Rand.RangeInclusive(2, 5);
-					base.CurJob.expiryInterval = Rand.Range(2000, 4000);
+					this.job.targetA = thing;
+					this.job.maxNumMeleeAttacks = Rand.RangeInclusive(2, 5);
+					this.job.expiryInterval = Rand.Range(2000, 4000);
 					return;
 				}
 			}
@@ -66,7 +75,7 @@ namespace Verse.AI
 
 		public override bool IsContinuation(Job j)
 		{
-			return base.CurJob.GetTarget(TargetIndex.A) == j.GetTarget(TargetIndex.A);
+			return this.job.GetTarget(TargetIndex.A) == j.GetTarget(TargetIndex.A);
 		}
 	}
 }

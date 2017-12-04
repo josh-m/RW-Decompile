@@ -27,7 +27,7 @@ namespace RimWorld
 
 		public override bool HasJobOnCell(Pawn pawn, IntVec3 c)
 		{
-			return pawn.Map.snowGrid.GetDepth(c) >= 0.2f && pawn.CanReserveAndReach(c, PathEndMode.Touch, pawn.NormalMaxDanger(), 1, -1, null, false);
+			return pawn.Map.snowGrid.GetDepth(c) >= 0.2f && !c.IsForbidden(pawn) && pawn.CanReserve(c, 1, -1, null, false);
 		}
 
 		public override Job JobOnCell(Pawn pawn, IntVec3 c)

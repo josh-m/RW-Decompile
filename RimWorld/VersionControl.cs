@@ -249,17 +249,23 @@ namespace RimWorld
 				{
 					throw new ArgumentException("str");
 				}
-				switch (i)
+				if (i != 0)
 				{
-				case 0:
+					if (i != 1)
+					{
+						if (i == 2)
+						{
+							build = num;
+						}
+					}
+					else
+					{
+						minor = num;
+					}
+				}
+				else
+				{
 					major = num;
-					break;
-				case 1:
-					minor = num;
-					break;
-				case 2:
-					build = num;
-					break;
 				}
 			}
 			return new Version(major, minor, build);

@@ -8,11 +8,11 @@ namespace RimWorld
 {
 	public class JoyToleranceSet : IExposable
 	{
+		private DefMap<JoyKindDef, float> tolerances = new DefMap<JoyKindDef, float>();
+
 		private const float ToleranceGainRate = 0.4f;
 
 		private const float ToleranceDropPerDay = 0.0833333358f;
-
-		private DefMap<JoyKindDef, float> tolerances = new DefMap<JoyKindDef, float>();
 
 		public float this[JoyKindDef d]
 		{

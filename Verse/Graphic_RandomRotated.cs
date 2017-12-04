@@ -23,16 +23,17 @@ namespace Verse
 			this.maxAngle = maxAngle;
 		}
 
-		public override void DrawWorker(Vector3 loc, Rot4 rot, ThingDef thingDef, Thing thing)
+		public override void DrawWorker(Vector3 loc, Rot4 rot, ThingDef thingDef, Thing thing, float extraRotation)
 		{
 			Mesh mesh = this.MeshAt(rot);
-			float angle = 0f;
+			float num = 0f;
 			if (thing != null)
 			{
-				angle = -this.maxAngle + (float)(thing.thingIDNumber * 542) % (this.maxAngle * 2f);
+				num = -this.maxAngle + (float)(thing.thingIDNumber * 542) % (this.maxAngle * 2f);
 			}
+			num += extraRotation;
 			Material matSingle = this.subGraphic.MatSingle;
-			Graphics.DrawMesh(mesh, loc, Quaternion.AngleAxis(angle, Vector3.up), matSingle, 0, null, 0);
+			Graphics.DrawMesh(mesh, loc, Quaternion.AngleAxis(num, Vector3.up), matSingle, 0, null, 0);
 		}
 
 		public override string ToString()

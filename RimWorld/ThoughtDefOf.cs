@@ -103,13 +103,17 @@ namespace RimWorld
 
 		public static ThoughtDef DebugBad;
 
-		public static ThoughtDef ColonistAbandoned;
+		public static ThoughtDef ColonistBanished;
 
-		public static ThoughtDef ColonistAbandonedToDie;
+		public static ThoughtDef ColonistBanishedToDie;
 
-		public static ThoughtDef PrisonerAbandonedToDie;
+		public static ThoughtDef PrisonerBanishedToDie;
 
-		public static ThoughtDef BondedAnimalAbandoned;
+		public static ThoughtDef BondedAnimalBanished;
+
+		public static ThoughtDef FailedToRescueRelative;
+
+		public static ThoughtDef RescuedRelative;
 
 		public static ThoughtDef ApparelDamaged;
 

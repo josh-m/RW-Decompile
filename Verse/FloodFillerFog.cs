@@ -5,15 +5,14 @@ namespace Verse
 {
 	public static class FloodFillerFog
 	{
-		private const int MaxNumTestUnfog = 500;
-
 		private static bool testMode = false;
 
 		private static List<IntVec3> cellsToUnfog = new List<IntVec3>(1024);
 
+		private const int MaxNumTestUnfog = 500;
+
 		public static FloodUnfogResult FloodUnfog(IntVec3 root, Map map)
 		{
-			ProfilerThreadCheck.BeginSample("FloodUnfog");
 			FloodFillerFog.cellsToUnfog.Clear();
 			FloodUnfogResult result = default(FloodUnfogResult);
 			bool[] fogGridDirect = map.fogGrid.fogGrid;
@@ -21,6 +20,8 @@ namespace Verse
 			List<IntVec3> newlyUnfoggedCells = new List<IntVec3>();
 			int numUnfogged = 0;
 			bool expanding = false;
+			CellRect viewRect = CellRect.ViewRect(map);
+			result.allOnScreen = true;
 			Predicate<IntVec3> predicate = delegate(IntVec3 c)
 			{
 				if (!fogGridDirect[map.cellIndices.CellToIndex(c)])
@@ -47,13 +48,18 @@ namespace Verse
 						}
 					}
 				}
+				if (!viewRect.Contains(c))
+				{
+					result.allOnScreen = false;
+				}
+				result.cellsUnfogged++;
 				if (FloodFillerFog.testMode)
 				{
 					numUnfogged++;
-					map.debugDrawer.FlashCell(c, (float)numUnfogged / 200f, numUnfogged.ToStringCached());
+					map.debugDrawer.FlashCell(c, (float)numUnfogged / 200f, numUnfogged.ToStringCached(), 50);
 				}
 			};
-			map.floodFiller.FloodFill(root, predicate, processor, false);
+			map.floodFiller.FloodFill(root, predicate, processor, 2147483647, false, null);
 			expanding = true;
 			for (int i = 0; i < newlyUnfoggedCells.Count; i++)
 			{
@@ -75,11 +81,10 @@ namespace Verse
 				fogGrid.Unfog(FloodFillerFog.cellsToUnfog[k]);
 				if (FloodFillerFog.testMode)
 				{
-					map.debugDrawer.FlashCell(FloodFillerFog.cellsToUnfog[k], 0.3f, "x");
+					map.debugDrawer.FlashCell(FloodFillerFog.cellsToUnfog[k], 0.3f, "x", 50);
 				}
 			}
 			FloodFillerFog.cellsToUnfog.Clear();
-			ProfilerThreadCheck.EndSample();
 			return result;
 		}
 

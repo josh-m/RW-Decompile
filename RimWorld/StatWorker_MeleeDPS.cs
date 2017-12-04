@@ -7,12 +7,17 @@ namespace RimWorld
 {
 	public class StatWorker_MeleeDPS : StatWorker
 	{
+		public override bool IsDisabledFor(Thing thing)
+		{
+			return base.IsDisabledFor(thing) || StatDefOf.MeleeHitChance.Worker.IsDisabledFor(thing);
+		}
+
 		public override float GetValueUnfinalized(StatRequest req, bool applyPostProcess = true)
 		{
 			return this.GetMeleeDamage(req, applyPostProcess) * this.GetMeleeHitChance(req, applyPostProcess) / this.GetMeleeCooldown(req, applyPostProcess);
 		}
 
-		public override string GetExplanation(StatRequest req, ToStringNumberSense numberSense)
+		public override string GetExplanationUnfinalized(StatRequest req, ToStringNumberSense numberSense)
 		{
 			StringBuilder stringBuilder = new StringBuilder();
 			stringBuilder.AppendLine("StatsReport_MeleeDPSExplanation".Translate());
@@ -28,7 +33,9 @@ namespace RimWorld
 			stringBuilder.AppendLine();
 			stringBuilder.AppendLine("StatsReport_MeleeHitChance".Translate());
 			stringBuilder.AppendLine();
-			stringBuilder.Append(this.GetMeleeHitChanceExplanation(req));
+			stringBuilder.AppendLine(StatDefOf.MeleeHitChance.Worker.GetExplanationUnfinalized(req, StatDefOf.MeleeHitChance.toStringNumberSense).TrimEndNewlines().Indented());
+			stringBuilder.AppendLine();
+			stringBuilder.Append(StatDefOf.MeleeHitChance.Worker.GetExplanationFinalizePart(req, StatDefOf.MeleeHitChance.toStringNumberSense, this.GetMeleeHitChance(req, true)).Indented());
 			return stringBuilder.ToString();
 		}
 
@@ -58,13 +65,19 @@ namespace RimWorld
 			float num = 0f;
 			for (int i = 0; i < updatedAvailableVerbsList.Count; i++)
 			{
-				num += updatedAvailableVerbsList[i].SelectionWeight;
+				if (updatedAvailableVerbsList[i].IsMeleeAttack)
+				{
+					num += updatedAvailableVerbsList[i].SelectionWeight;
+				}
 			}
 			float num2 = 0f;
 			for (int j = 0; j < updatedAvailableVerbsList.Count; j++)
 			{
-				ThingWithComps ownerEquipment = updatedAvailableVerbsList[j].verb.ownerEquipment;
-				num2 += updatedAvailableVerbsList[j].SelectionWeight / num * (float)updatedAvailableVerbsList[j].verb.verbProps.AdjustedMeleeDamageAmount(updatedAvailableVerbsList[j].verb, pawn, ownerEquipment);
+				if (updatedAvailableVerbsList[j].IsMeleeAttack)
+				{
+					ThingWithComps ownerEquipment = updatedAvailableVerbsList[j].verb.ownerEquipment;
+					num2 += updatedAvailableVerbsList[j].SelectionWeight / num * updatedAvailableVerbsList[j].verb.verbProps.AdjustedMeleeDamageAmount(updatedAvailableVerbsList[j].verb, pawn, ownerEquipment);
+				}
 			}
 			return num2;
 		}
@@ -93,33 +106,21 @@ namespace RimWorld
 			float num = 0f;
 			for (int i = 0; i < updatedAvailableVerbsList.Count; i++)
 			{
-				num += updatedAvailableVerbsList[i].SelectionWeight;
+				if (updatedAvailableVerbsList[i].IsMeleeAttack)
+				{
+					num += updatedAvailableVerbsList[i].SelectionWeight;
+				}
 			}
 			float num2 = 0f;
 			for (int j = 0; j < updatedAvailableVerbsList.Count; j++)
 			{
-				ThingWithComps ownerEquipment = updatedAvailableVerbsList[j].verb.ownerEquipment;
-				num2 += updatedAvailableVerbsList[j].SelectionWeight / num * (float)updatedAvailableVerbsList[j].verb.verbProps.AdjustedCooldownTicks(ownerEquipment);
+				if (updatedAvailableVerbsList[j].IsMeleeAttack)
+				{
+					ThingWithComps ownerEquipment = updatedAvailableVerbsList[j].verb.ownerEquipment;
+					num2 += updatedAvailableVerbsList[j].SelectionWeight / num * (float)updatedAvailableVerbsList[j].verb.verbProps.AdjustedCooldownTicks(updatedAvailableVerbsList[j].verb, pawn, ownerEquipment);
+				}
 			}
 			return num2 / 60f;
-		}
-
-		private string GetMeleeHitChanceExplanation(StatRequest req)
-		{
-			StringBuilder stringBuilder = new StringBuilder();
-			stringBuilder.AppendLine(StatDefOf.MeleeHitChance.Worker.GetExplanation(req, StatDefOf.MeleeHitChance.toStringNumberSense));
-			StatDefOf.MeleeHitChance.Worker.FinalizeExplanation(stringBuilder, req, StatDefOf.MeleeHitChance.toStringNumberSense, this.GetMeleeHitChance(req, true));
-			StringBuilder stringBuilder2 = new StringBuilder();
-			string[] array = stringBuilder.ToString().Split(new char[]
-			{
-				'\n'
-			});
-			for (int i = 0; i < array.Length; i++)
-			{
-				stringBuilder2.Append("  ");
-				stringBuilder2.AppendLine(array[i]);
-			}
-			return stringBuilder2.ToString();
 		}
 	}
 }

@@ -73,10 +73,5 @@ namespace RimWorld.Planet
 			base.PostPostRemove();
 			this.rewards.ClearAndDestroyContents(DestroyMode.Vanish);
 		}
-
-		virtual IThingHolder get_ParentHolder()
-		{
-			return base.ParentHolder;
-		}
 	}
 }

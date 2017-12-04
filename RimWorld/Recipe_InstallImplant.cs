@@ -24,7 +24,7 @@ namespace RimWorld
 						{
 							if (!pawn.health.hediffSet.PartOrAnyAncestorHasDirectlyAddedParts(record))
 							{
-								if (!pawn.health.hediffSet.hediffs.Any((Hediff x) => x.Part == this.<record>__4 && x.def == this.recipe.addsHediff))
+								if (!pawn.health.hediffSet.hediffs.Any((Hediff x) => x.Part == record && x.def == recipe.addsHediff))
 								{
 									yield return record;
 								}
@@ -35,11 +35,11 @@ namespace RimWorld
 			}
 		}
 
-		public override void ApplyOnPawn(Pawn pawn, BodyPartRecord part, Pawn billDoer, List<Thing> ingredients)
+		public override void ApplyOnPawn(Pawn pawn, BodyPartRecord part, Pawn billDoer, List<Thing> ingredients, Bill bill)
 		{
 			if (billDoer != null)
 			{
-				if (base.CheckSurgeryFail(billDoer, pawn, ingredients, part))
+				if (base.CheckSurgeryFail(billDoer, pawn, ingredients, part, bill))
 				{
 					return;
 				}

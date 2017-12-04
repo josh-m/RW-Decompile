@@ -4,11 +4,11 @@ namespace RimWorld
 {
 	public struct ThoughtState
 	{
-		private const int InactiveIndex = -99999;
-
 		private int stageIndex;
 
 		private string reason;
+
+		private const int InactiveIndex = -99999;
 
 		public bool Active
 		{

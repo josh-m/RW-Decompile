@@ -28,11 +28,29 @@ namespace Verse
 			}
 		}
 
+		public static int TicksGame
+		{
+			get
+			{
+				if (Current.Game != null && Find.TickManager != null)
+				{
+					return Find.TickManager.TicksGame;
+				}
+				return 0;
+			}
+		}
+
 		public static int ConfiguredTicksAbsAtGameStart
 		{
 			get
 			{
 				GameInitData gameInitData = Find.GameInitData;
+				ConfiguredTicksAbsAtGameStartCache ticksAbsCache = Find.World.ticksAbsCache;
+				int result;
+				if (ticksAbsCache.TryGetCachedValue(gameInitData, out result))
+				{
+					return result;
+				}
 				Vector2 vector;
 				if (gameInitData.startingTile >= 0)
 				{
@@ -56,7 +74,9 @@ namespace Verse
 					twelfth = Season.Summer.GetFirstTwelfth(0f);
 				}
 				int num = (24 - GenDate.TimeZoneAt(vector.x)) % 24;
-				return 300000 * (int)twelfth + 2500 * (6 + num);
+				int num2 = 300000 * (int)twelfth + 2500 * (6 + num);
+				ticksAbsCache.Cache(num2, gameInitData);
+				return num2;
 			}
 		}
 

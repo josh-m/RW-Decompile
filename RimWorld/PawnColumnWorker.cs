@@ -9,9 +9,9 @@ namespace RimWorld
 	[StaticConstructorOnStartup]
 	public abstract class PawnColumnWorker
 	{
-		protected const int DefaultCellHeight = 30;
-
 		public PawnColumnDef def;
+
+		protected const int DefaultCellHeight = 30;
 
 		private static readonly Texture2D SortingIcon = ContentFinder<Texture2D>.Get("UI/Icons/Sorting", true);
 

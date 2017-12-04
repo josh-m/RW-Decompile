@@ -9,6 +9,8 @@ namespace Verse
 
 		public List<KeyBindingCategoryDef> checkForConflicts = new List<KeyBindingCategoryDef>();
 
+		public bool selfConflicting = true;
+
 		public static KeyBindingCategoryDef Named(string defName)
 		{
 			return DefDatabase<KeyBindingCategoryDef>.GetNamed(defName, true);

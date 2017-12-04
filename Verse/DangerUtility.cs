@@ -1,37 +1,17 @@
 using RimWorld;
 using System;
-using UnityEngine;
 
 namespace Verse
 {
 	public static class DangerUtility
 	{
-		private static Pawn directOrderingPawn;
-
-		private static int directOrderFrame = -1;
-
-		public static void NotifyDirectOrderingThisFrame(Pawn p)
-		{
-			DangerUtility.directOrderingPawn = p;
-			DangerUtility.directOrderFrame = Time.frameCount;
-		}
-
-		public static void DoneDirectOrdering()
-		{
-			DangerUtility.directOrderingPawn = null;
-		}
-
 		public static Danger NormalMaxDanger(this Pawn p)
 		{
 			if (p.CurJob != null && p.CurJob.playerForced)
 			{
 				return Danger.Deadly;
 			}
-			if (Time.frameCount != DangerUtility.directOrderFrame)
-			{
-				DangerUtility.directOrderingPawn = null;
-			}
-			if (DangerUtility.directOrderingPawn == p)
+			if (FloatMenuMakerMap.makingFor == p)
 			{
 				return Danger.Deadly;
 			}

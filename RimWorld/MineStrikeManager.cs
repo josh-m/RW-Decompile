@@ -7,9 +7,9 @@ namespace RimWorld
 {
 	public class MineStrikeManager : IExposable
 	{
-		private const int RecentStrikeIgnoreRadius = 12;
-
 		private List<StrikeRecord> strikeRecords = new List<StrikeRecord>();
+
+		private const int RecentStrikeIgnoreRadius = 12;
 
 		private static readonly int RadialVisibleCells = GenRadial.NumCellsInRadius(5.9f);
 
@@ -30,7 +30,7 @@ namespace RimWorld
 				if (intVec.InBounds(miner.Map))
 				{
 					Building edifice = intVec.GetEdifice(miner.Map);
-					if (edifice != null && edifice.def != justMinedDef && this.MineableIsWorthLetter(edifice.def) && !this.AlreadyVisibleNearby(intVec, miner.Map, edifice.def) && !this.RecentlyStruck(intVec, edifice.def))
+					if (edifice != null && edifice.def != justMinedDef && MineStrikeManager.MineableIsValuable(edifice.def) && !this.AlreadyVisibleNearby(intVec, miner.Map, edifice.def) && !this.RecentlyStruck(intVec, edifice.def))
 					{
 						StrikeRecord item = default(StrikeRecord);
 						item.cell = intVec;
@@ -40,7 +40,7 @@ namespace RimWorld
 						Messages.Message("StruckMineable".Translate(new object[]
 						{
 							edifice.def.label
-						}), edifice, MessageSound.Benefit);
+						}), edifice, MessageTypeDefOf.PositiveEvent);
 						TaleRecorder.RecordTale(TaleDefOf.StruckMineable, new object[]
 						{
 							miner,
@@ -85,9 +85,14 @@ namespace RimWorld
 			return false;
 		}
 
-		private bool MineableIsWorthLetter(ThingDef mineableDef)
+		public static bool MineableIsValuable(ThingDef mineableDef)
 		{
-			return mineableDef.mineable && mineableDef.building.mineableThing.GetStatValueAbstract(StatDefOf.MarketValue, null) * (float)mineableDef.building.mineableYield > 10f;
+			return mineableDef.mineable && mineableDef.building.mineableThing != null && mineableDef.building.mineableThing.GetStatValueAbstract(StatDefOf.MarketValue, null) * (float)mineableDef.building.mineableYield > 10f;
+		}
+
+		public static bool MineableIsVeryValuable(ThingDef mineableDef)
+		{
+			return mineableDef.mineable && mineableDef.building.mineableThing != null && mineableDef.building.mineableThing.GetStatValueAbstract(StatDefOf.MarketValue, null) * (float)mineableDef.building.mineableYield > 100f;
 		}
 
 		public string DebugStrikeRecords()

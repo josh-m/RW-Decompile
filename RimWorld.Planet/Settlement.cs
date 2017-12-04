@@ -1,29 +1,25 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using UnityEngine;
 using Verse;
 
 namespace RimWorld.Planet
 {
+	[StaticConstructorOnStartup]
 	public class Settlement : MapParent, ITrader
 	{
 		public Settlement_TraderTracker trader;
 
 		public List<Pawn> previouslyGeneratedInhabitants = new List<Pawn>();
 
+		public static readonly Texture2D FormCaravanCommand = ContentFinder<Texture2D>.Get("UI/Commands/FormCaravan", true);
+
 		protected override bool UseGenericEnterMapFloatMenuOption
 		{
 			get
 			{
 				return !this.Attackable;
-			}
-		}
-
-		public virtual bool Abandonable
-		{
-			get
-			{
-				return base.Faction == Faction.OfPlayer;
 			}
 		}
 
@@ -197,22 +193,31 @@ namespace RimWorld.Planet
 			{
 				yield return g;
 			}
-			if (this.Abandonable)
-			{
-				yield return SettlementAbandonUtility.AbandonCommand(this);
-			}
-			if (base.Faction != Faction.OfPlayer && !PlayerKnowledgeDatabase.IsComplete(ConceptDefOf.FormCaravan))
+			if (base.Faction != Faction.OfPlayer && Current.ProgramState == ProgramState.Playing && !PlayerKnowledgeDatabase.IsComplete(ConceptDefOf.FormCaravan))
 			{
 				Command_Action formCaravan = new Command_Action();
 				formCaravan.defaultLabel = "CommandFormCaravan".Translate();
 				formCaravan.defaultDesc = "CommandFormCaravanDesc".Translate();
-				formCaravan.icon = MapParent.FormCaravanCommand;
+				formCaravan.icon = Settlement.FormCaravanCommand;
 				formCaravan.action = delegate
 				{
 					Find.Tutor.learningReadout.TryActivateConcept(ConceptDefOf.FormCaravan);
-					Messages.Message("MessageSelectOwnBaseToFormCaravan".Translate(), MessageSound.RejectInput);
+					Messages.Message("MessageSelectOwnBaseToFormCaravan".Translate(), MessageTypeDefOf.RejectInput);
 				};
 				yield return formCaravan;
+			}
+		}
+
+		[DebuggerHidden]
+		public override IEnumerable<Gizmo> GetCaravanGizmos(Caravan caravan)
+		{
+			if (this.CanTradeNow)
+			{
+				yield return CaravanVisitUtility.TradeCommand(caravan);
+			}
+			if (base.GetComponent<CaravanRequestComp>() != null && base.GetComponent<CaravanRequestComp>().ActiveRequest)
+			{
+				yield return CaravanVisitUtility.FulfillRequestCommand(caravan);
 			}
 		}
 
@@ -230,7 +235,7 @@ namespace RimWorld.Planet
 					this.Label
 				}), delegate
 				{
-					this.caravan.pather.StartPath(this.<>f__this.Tile, new CaravanArrivalAction_VisitSettlement(this.<>f__this), true);
+					caravan.pather.StartPath(this.$this.Tile, new CaravanArrivalAction_VisitSettlement(this.$this), true);
 				}, MenuOptionPriority.Default, null, null, 0f, null, this);
 				if (Prefs.DevMode)
 				{
@@ -239,9 +244,9 @@ namespace RimWorld.Planet
 						this.Label
 					}) + " (Dev: instantly)", delegate
 					{
-						this.caravan.Tile = this.<>f__this.Tile;
-						this.caravan.pather.StopDead();
-						new CaravanArrivalAction_VisitSettlement(this.<>f__this).Arrived(this.caravan);
+						caravan.Tile = this.$this.Tile;
+						caravan.pather.StopDead();
+						new CaravanArrivalAction_VisitSettlement(this.$this).Arrived(caravan);
 					}, MenuOptionPriority.Default, null, null, 0f, null, this);
 				}
 			}
@@ -252,7 +257,7 @@ namespace RimWorld.Planet
 					this.Label
 				}), delegate
 				{
-					this.caravan.pather.StartPath(this.<>f__this.Tile, new CaravanArrivalAction_AttackSettlement(this.<>f__this), true);
+					caravan.pather.StartPath(this.$this.Tile, new CaravanArrivalAction_AttackSettlement(this.$this), true);
 				}, MenuOptionPriority.Default, null, null, 0f, null, this);
 				if (Prefs.DevMode)
 				{
@@ -261,8 +266,8 @@ namespace RimWorld.Planet
 						this.Label
 					}) + " (Dev: instantly)", delegate
 					{
-						this.caravan.Tile = this.<>f__this.Tile;
-						new CaravanArrivalAction_AttackSettlement(this.<>f__this).Arrived(this.caravan);
+						caravan.Tile = this.$this.Tile;
+						new CaravanArrivalAction_AttackSettlement(this.$this).Arrived(caravan);
 					}, MenuOptionPriority.Default, null, null, 0f, null, this);
 				}
 			}
@@ -275,11 +280,6 @@ namespace RimWorld.Planet
 			{
 				outChildren.Add(this.trader);
 			}
-		}
-
-		virtual Faction get_Faction()
-		{
-			return base.Faction;
 		}
 	}
 }

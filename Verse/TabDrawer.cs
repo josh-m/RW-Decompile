@@ -9,13 +9,13 @@ namespace Verse
 {
 	public static class TabDrawer
 	{
+		private static List<TabRecord> tabList = new List<TabRecord>();
+
 		private const float MaxTabWidth = 200f;
 
 		public const float TabHeight = 32f;
 
 		public const float TabHoriztonalOverlap = 10f;
-
-		private static List<TabRecord> tabList = new List<TabRecord>();
 
 		public static TabRecord DrawTabs(Rect baseRect, IEnumerable<TabRecord> tabsEnum)
 		{

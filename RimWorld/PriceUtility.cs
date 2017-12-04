@@ -8,6 +8,8 @@ namespace RimWorld
 {
 	public static class PriceUtility
 	{
+		private const float MinFactor = 0.1f;
+
 		private const float SummaryHealthImpact = 0.8f;
 
 		private const float CapacityImpact = 0.5f;
@@ -50,7 +52,20 @@ namespace RimWorld
 			{
 				num *= PriceUtility.AverageSkillCurve.Evaluate(pawn.skills.skills.Average((SkillRecord sk) => (float)sk.Level));
 			}
-			return num * pawn.ageTracker.CurLifeStage.marketValueFactor;
+			num *= pawn.ageTracker.CurLifeStage.marketValueFactor;
+			if (pawn.story != null && pawn.story.traits != null)
+			{
+				for (int j = 0; j < pawn.story.traits.allTraits.Count; j++)
+				{
+					Trait trait = pawn.story.traits.allTraits[j];
+					num += trait.CurrentData.marketValueFactorOffset;
+				}
+			}
+			if (num < 0.1f)
+			{
+				num = 0.1f;
+			}
+			return num;
 		}
 	}
 }

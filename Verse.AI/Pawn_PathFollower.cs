@@ -6,24 +6,6 @@ namespace Verse.AI
 {
 	public class Pawn_PathFollower : IExposable
 	{
-		private const int MaxMoveTicks = 450;
-
-		private const int MaxCheckAheadNodes = 20;
-
-		private const float SnowReductionFromWalking = 0.001f;
-
-		private const int ClamorCellsInterval = 12;
-
-		private const int MinCostWalk = 50;
-
-		private const int MinCostAmble = 60;
-
-		private const float StaggerMoveSpeedFactor = 0.17f;
-
-		private const int CheckForMovingCollidingPawnsIfCloserToTargetThanX = 30;
-
-		private const int AttackBlockingHostilePawnAfterTicks = 180;
-
 		protected Pawn pawn;
 
 		private bool moving;
@@ -53,6 +35,24 @@ namespace Verse.AI
 		private int foundPathWithDanger = -999999;
 
 		private int failedToFindCloseUnoccupiedCellTicks = -999999;
+
+		private const int MaxMoveTicks = 450;
+
+		private const int MaxCheckAheadNodes = 20;
+
+		private const float SnowReductionFromWalking = 0.001f;
+
+		private const int ClamorCellsInterval = 12;
+
+		private const int MinCostWalk = 50;
+
+		private const int MinCostAmble = 60;
+
+		private const float StaggerMoveSpeedFactor = 0.17f;
+
+		private const int CheckForMovingCollidingPawnsIfCloserToTargetThanX = 30;
+
+		private const int AttackBlockingHostilePawnAfterTicks = 180;
 
 		public LocalTargetInfo Destination
 		{
@@ -126,9 +126,9 @@ namespace Verse.AI
 			{
 				this.nextCell = this.pawn.Position;
 			}
-			if (!this.destination.HasThing && this.pawn.Map.pawnDestinationManager.DestinationReservedFor(this.pawn) != this.destination.Cell)
+			if (!this.destination.HasThing && this.pawn.Map.pawnDestinationReservationManager.MostRecentReservationFor(this.pawn) != this.destination.Cell)
 			{
-				this.pawn.Map.pawnDestinationManager.UnreserveAllFor(this.pawn);
+				this.pawn.Map.pawnDestinationReservationManager.ObsoleteAllClaimedBy(this.pawn);
 			}
 			if (this.AtDestinationPosition())
 			{
@@ -162,18 +162,14 @@ namespace Verse.AI
 
 		public void PatherTick()
 		{
-			if (this.pawn.stances.FullBodyBusy)
-			{
-				return;
-			}
 			if (this.WillCollideWithPawnAt(this.pawn.Position))
 			{
 				if (!this.FailedToFindCloseUnoccupiedCellRecently())
 				{
-					IntVec3 position;
-					if (CellFinder.TryFindBestPawnStandCell(this.pawn, out position))
+					IntVec3 intVec;
+					if (CellFinder.TryFindBestPawnStandCell(this.pawn, out intVec, true) && intVec != this.pawn.Position)
 					{
-						this.pawn.Position = position;
+						this.pawn.Position = intVec;
 						this.ResetToCurrentPosition();
 						if (this.moving && this.TrySetNewPath())
 						{
@@ -185,6 +181,10 @@ namespace Verse.AI
 						this.failedToFindCloseUnoccupiedCellTicks = Find.TickManager.TicksGame;
 					}
 				}
+				return;
+			}
+			if (this.pawn.stances.FullBodyBusy)
+			{
 				return;
 			}
 			if (!this.moving || !this.WillCollideWithPawnOnNextPathCell())
@@ -215,7 +215,7 @@ namespace Verse.AI
 					Job job = new Job(JobDefOf.AttackMelee, pawn);
 					job.maxNumMeleeAttacks = 1;
 					job.expiryInterval = 300;
-					this.pawn.jobs.StartJob(job, JobCondition.Incompletable, null, false, true, null, null);
+					this.pawn.jobs.StartJob(job, JobCondition.Incompletable, null, false, true, null, null, false);
 					return;
 				}
 			}
@@ -226,7 +226,6 @@ namespace Verse.AI
 			if (this.moving)
 			{
 				this.StartPath(this.destination, this.peMode);
-				this.pawn.Map.pawnDestinationManager.ReserveDestinationFor(this.pawn, this.destination.Cell);
 			}
 		}
 
@@ -372,7 +371,7 @@ namespace Verse.AI
 					{
 						Job job = new Job(JobDefOf.AttackMelee, building);
 						job.expiryInterval = 300;
-						this.pawn.jobs.StartJob(job, JobCondition.Incompletable, null, false, true, null, null);
+						this.pawn.jobs.StartJob(job, JobCondition.Incompletable, null, false, true, null, null, false);
 						return;
 					}
 					this.PatherFailed();
@@ -386,6 +385,10 @@ namespace Verse.AI
 				stance_Cooldown.neverAimWeapon = true;
 				this.pawn.stances.SetStance(stance_Cooldown);
 				building_Door2.StartManualOpenBy(this.pawn);
+				if (!this.pawn.HostileTo(building_Door2))
+				{
+					building_Door2.FriendlyTouched();
+				}
 				return;
 			}
 			this.lastCell = this.pawn.Position;
@@ -405,10 +408,10 @@ namespace Verse.AI
 				this.pawn.Map.snowGrid.AddDepth(this.pawn.Position, -0.001f);
 			}
 			Building_Door building_Door3 = this.pawn.Map.thingGrid.ThingAt<Building_Door>(this.lastCell);
-			if (building_Door3 != null && !building_Door3.BlockedOpenMomentary && !this.pawn.HostileTo(building_Door3))
+			if (building_Door3 != null && !this.pawn.HostileTo(building_Door3))
 			{
 				building_Door3.FriendlyTouched();
-				if (!building_Door3.HoldOpen && building_Door3.SlowsPawns)
+				if (!building_Door3.BlockedOpenMomentary && !building_Door3.HoldOpen && building_Door3.SlowsPawns)
 				{
 					building_Door3.StartManualCloseBy(this.pawn);
 					return;
@@ -424,12 +427,6 @@ namespace Verse.AI
 			}
 			else
 			{
-				if (this.curPath.NodesLeftCount == 0)
-				{
-					Log.Error(this.pawn + " ran out of path nodes. Force-arriving.");
-					this.PatherArrived();
-					return;
-				}
 				this.SetupMoveIntoNextCell();
 			}
 		}
@@ -511,7 +508,7 @@ namespace Verse.AI
 					}
 					break;
 				case LocomotionUrgency.Jog:
-					num *= 1;
+					num = num;
 					break;
 				case LocomotionUrgency.Sprint:
 					num = Mathf.RoundToInt((float)num * 0.75f);
@@ -582,11 +579,15 @@ namespace Verse.AI
 
 		private bool NeedNewPath()
 		{
-			if (this.curPath == null || !this.curPath.Found || this.curPath.NodesLeftCount == 0)
+			if (!this.destination.IsValid || this.curPath == null || !this.curPath.Found || this.curPath.NodesLeftCount == 0)
 			{
 				return true;
 			}
 			if (this.destination.HasThing && this.destination.Thing.Map != this.pawn.Map)
+			{
+				return true;
+			}
+			if (!ReachabilityImmediate.CanReachImmediate(this.curPath.LastNode, this.destination, this.pawn.Map, this.peMode, this.pawn))
 			{
 				return true;
 			}

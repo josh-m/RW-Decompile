@@ -9,8 +9,6 @@ namespace Verse
 {
 	public abstract class Zone : IExposable, ISelectable
 	{
-		private const int StaticFireCheckInterval = 1000;
-
 		public ZoneManager zoneManager;
 
 		public string label;
@@ -28,6 +26,8 @@ namespace Verse
 		private int lastStaticFireCheckTick = -9999;
 
 		private bool lastStaticFireCheckResult;
+
+		private const int StaticFireCheckInterval = 1000;
 
 		private static BoolGrid extantGrid;
 
@@ -252,7 +252,7 @@ namespace Verse
 				defaultDesc = "CommandRenameZoneDesc".Translate(),
 				action = delegate
 				{
-					Find.WindowStack.Add(new Dialog_RenameZone(this.<>f__this));
+					Find.WindowStack.Add(new Dialog_RenameZone(this.$this));
 				},
 				hotKey = KeyBindingDefOf.Misc1
 			};
@@ -261,13 +261,13 @@ namespace Verse
 				icon = ContentFinder<Texture2D>.Get("UI/Commands/HideZone", true),
 				defaultLabel = ((!this.hidden) ? "CommandHideZoneLabel".Translate() : "CommandUnhideZoneLabel".Translate()),
 				defaultDesc = "CommandHideZoneDesc".Translate(),
-				isActive = (() => this.<>f__this.hidden),
+				isActive = (() => this.$this.hidden),
 				toggleAction = delegate
 				{
-					this.<>f__this.hidden = !this.<>f__this.hidden;
-					foreach (IntVec3 current in this.<>f__this.Cells)
+					this.$this.hidden = !this.$this.hidden;
+					foreach (IntVec3 current in this.$this.Cells)
 					{
-						this.<>f__this.Map.mapDrawer.MapMeshDirty(current, MapMeshFlag.Zone);
+						this.$this.Map.mapDrawer.MapMeshDirty(current, MapMeshFlag.Zone);
 					}
 				},
 				hotKey = KeyBindingDefOf.Misc2
@@ -315,7 +315,7 @@ namespace Verse
 				Zone.foundGrid.Set(c, true);
 				numFound++;
 			};
-			this.Map.floodFiller.FloodFill(this.cells[0], passCheck, processor, false);
+			this.Map.floodFiller.FloodFill(this.cells[0], passCheck, processor, 2147483647, false, null);
 			if (numFound < this.cells.Count)
 			{
 				foreach (IntVec3 current in this.Map.AllCells)

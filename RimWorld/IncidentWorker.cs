@@ -28,7 +28,7 @@ namespace RimWorld
 			{
 				return false;
 			}
-			if (PawnsFinder.AllMapsCaravansAndTravelingTransportPods_FreeColonists.Count<Pawn>() < this.def.minPopulation)
+			if (this.def.minPopulation > 0 && PawnsFinder.AllMapsCaravansAndTravelingTransportPods_FreeColonists.Count<Pawn>() < this.def.minPopulation)
 			{
 				return false;
 			}
@@ -86,7 +86,36 @@ namespace RimWorld
 			return true;
 		}
 
-		public virtual bool TryExecute(IncidentParms parms)
+		public bool TryExecute(IncidentParms parms)
+		{
+			bool flag = this.TryExecuteWorker(parms);
+			if (flag && this.def.tale != null)
+			{
+				Pawn pawn = null;
+				if (parms.target is Caravan)
+				{
+					pawn = (parms.target as Caravan).RandomOwner();
+				}
+				else if (parms.target is Map)
+				{
+					pawn = (parms.target as Map).mapPawns.FreeColonistsSpawned.RandomElementWithFallback(null);
+				}
+				else if (parms.target is World)
+				{
+					pawn = PawnsFinder.AllMapsCaravansAndTravelingTransportPods_FreeColonists.RandomElementWithFallback(null);
+				}
+				if (pawn != null)
+				{
+					TaleRecorder.RecordTale(this.def.tale, new object[]
+					{
+						pawn
+					});
+				}
+			}
+			return flag;
+		}
+
+		protected virtual bool TryExecuteWorker(IncidentParms parms)
 		{
 			Log.Error("Unimplemented incident " + this);
 			return false;

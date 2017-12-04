@@ -19,7 +19,7 @@ namespace RimWorld
 
 		private HistoryAutoRecorderGroup historyAutoRecorderGroup;
 
-		private Vector2 graphSection = default(Vector2);
+		private FloatRange graphSection;
 
 		private static List<CurveMark> marks = new List<CurveMark>();
 
@@ -37,7 +37,7 @@ namespace RimWorld
 			this.historyAutoRecorderGroup = Find.History.Groups().FirstOrDefault<HistoryAutoRecorderGroup>();
 			if (this.historyAutoRecorderGroup != null)
 			{
-				this.graphSection = new Vector2(0f, (float)Find.TickManager.TicksGame / 60000f);
+				this.graphSection = new FloatRange(0f, (float)Find.TickManager.TicksGame / 60000f);
 			}
 			List<Map> maps = Find.Maps;
 			for (int i = 0; i < maps.Count; i++)
@@ -145,25 +145,25 @@ namespace RimWorld
 						MainTabWindow_History.marks.Add(new CurveMark(x, tale.ShortSummary, tale.def.historyGraphColor));
 					}
 				}
-				this.historyAutoRecorderGroup.DrawGraph(graphRect, legendRect, this.graphSection, Find.History.curveDrawerStyle, MainTabWindow_History.marks);
+				this.historyAutoRecorderGroup.DrawGraph(graphRect, legendRect, this.graphSection, MainTabWindow_History.marks);
 			}
 			Text.Font = GameFont.Small;
 			float num = (float)Find.TickManager.TicksGame / 60000f;
 			if (Widgets.ButtonText(new Rect(legendRect.xMin + legendRect.width, legendRect.yMin, 110f, 40f), "Last30Days".Translate(), true, false, true))
 			{
-				this.graphSection = new Vector2(Mathf.Max(0f, num - 30f), num);
+				this.graphSection = new FloatRange(Mathf.Max(0f, num - 30f), num);
 			}
 			if (Widgets.ButtonText(new Rect(legendRect.xMin + legendRect.width + 110f + 4f, legendRect.yMin, 110f, 40f), "Last100Days".Translate(), true, false, true))
 			{
-				this.graphSection = new Vector2(Mathf.Max(0f, num - 100f), num);
+				this.graphSection = new FloatRange(Mathf.Max(0f, num - 100f), num);
 			}
 			if (Widgets.ButtonText(new Rect(legendRect.xMin + legendRect.width + 228f, legendRect.yMin, 110f, 40f), "Last300Days".Translate(), true, false, true))
 			{
-				this.graphSection = new Vector2(Mathf.Max(0f, num - 300f), num);
+				this.graphSection = new FloatRange(Mathf.Max(0f, num - 300f), num);
 			}
 			if (Widgets.ButtonText(new Rect(legendRect.xMin + legendRect.width + 342f, legendRect.yMin, 110f, 40f), "AllDays".Translate(), true, false, true))
 			{
-				this.graphSection = new Vector2(0f, num);
+				this.graphSection = new FloatRange(0f, num);
 			}
 			if (Widgets.ButtonText(new Rect(rect2.x, rect2.y, 110f, 40f), "SelectGraph".Translate(), true, false, true))
 			{

@@ -18,12 +18,12 @@ namespace RimWorld
 		{
 			if (Scribe.mode == LoadSaveMode.Saving)
 			{
-				this.tmpDefName = this.def.defName;
-				this.tmpDefType = this.def.GetType();
+				this.tmpDefName = ((this.def == null) ? null : this.def.defName);
+				this.tmpDefType = ((this.def == null) ? null : this.def.GetType());
 			}
 			Scribe_Values.Look<string>(ref this.tmpDefName, "defName", null, false);
 			Scribe_Values.Look<Type>(ref this.tmpDefType, "defType", null, false);
-			if (Scribe.mode == LoadSaveMode.LoadingVars)
+			if (Scribe.mode == LoadSaveMode.LoadingVars && this.tmpDefName != null)
 			{
 				this.def = GenDefDatabase.GetDef(this.tmpDefType, this.tmpDefName, true);
 			}
@@ -32,9 +32,12 @@ namespace RimWorld
 		[DebuggerHidden]
 		public override IEnumerable<Rule> GetRules(string prefix)
 		{
-			yield return new Rule_String(prefix + "_label", this.def.label);
-			yield return new Rule_String(prefix + "_labelDefinite", Find.ActiveLanguageWorker.WithDefiniteArticle(this.def.label));
-			yield return new Rule_String(prefix + "_labelIndefinite", Find.ActiveLanguageWorker.WithIndefiniteArticle(this.def.label));
+			if (this.def != null)
+			{
+				yield return new Rule_String(prefix + "_label", this.def.label);
+				yield return new Rule_String(prefix + "_labelDefinite", Find.ActiveLanguageWorker.WithDefiniteArticle(this.def.label));
+				yield return new Rule_String(prefix + "_labelIndefinite", Find.ActiveLanguageWorker.WithIndefiniteArticle(this.def.label));
+			}
 		}
 
 		public static TaleData_Def GenerateFrom(Def def)

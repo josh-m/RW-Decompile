@@ -44,7 +44,7 @@ namespace RimWorld
 				{
 					return "Mood_OnEdge".Translate();
 				}
-				if (this.CurLevel < 0.35f)
+				if (this.CurLevel < this.pawn.mindState.mentalBreaker.BreakThresholdMinor)
 				{
 					return "Mood_Stressed".Translate();
 				}

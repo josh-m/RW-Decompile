@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using UnityEngine;
+using UnityEngine.Profiling;
 using Verse.AI;
 using Verse.AI.Group;
 using Verse.Sound;
@@ -155,11 +156,11 @@ namespace Verse
 			if (DebugViewSettings.writeMemoryUsage)
 			{
 				stringBuilder.AppendLine("---");
-				stringBuilder.AppendLine("Total allocated: " + Profiler.GetTotalAllocatedMemory().ToStringBytes("F2"));
-				stringBuilder.AppendLine("Total reserved: " + Profiler.GetTotalReservedMemory().ToStringBytes("F2"));
-				stringBuilder.AppendLine("Total reserved unused: " + Profiler.GetTotalUnusedReservedMemory().ToStringBytes("F2"));
-				stringBuilder.AppendLine("Mono heap size: " + Profiler.GetMonoHeapSize().ToStringBytes("F2"));
-				stringBuilder.AppendLine("Mono used size: " + Profiler.GetMonoUsedSize().ToStringBytes("F2"));
+				stringBuilder.AppendLine("Total allocated: " + Profiler.GetTotalAllocatedMemoryLong().ToStringBytes("F2"));
+				stringBuilder.AppendLine("Total reserved: " + Profiler.GetTotalReservedMemoryLong().ToStringBytes("F2"));
+				stringBuilder.AppendLine("Total reserved unused: " + Profiler.GetTotalUnusedReservedMemoryLong().ToStringBytes("F2"));
+				stringBuilder.AppendLine("Mono heap size: " + Profiler.GetMonoHeapSizeLong().ToStringBytes("F2"));
+				stringBuilder.AppendLine("Mono used size: " + Profiler.GetMonoUsedSizeLong().ToStringBytes("F2"));
 			}
 			if (Current.ProgramState == ProgramState.Playing)
 			{
@@ -390,7 +391,7 @@ namespace Verse
 					if (DebugViewSettings.drawGlow)
 					{
 						stringBuilder.AppendLine("---");
-						stringBuilder.AppendLine("Game glow: " + Find.VisibleMap.glowGrid.GameGlowAt(intVec));
+						stringBuilder.AppendLine("Game glow: " + Find.VisibleMap.glowGrid.GameGlowAt(intVec, false));
 						stringBuilder.AppendLine("Psych glow: " + Find.VisibleMap.glowGrid.PsychGlowAt(intVec));
 						stringBuilder.AppendLine("Visual Glow: " + Find.VisibleMap.glowGrid.VisualGlowAt(intVec));
 						stringBuilder.AppendLine("GlowReport:\n" + ((SectionLayer_LightingOverlay)Find.VisibleMap.mapDrawer.SectionAt(intVec).GetLayer(typeof(SectionLayer_LightingOverlay))).GlowReportAt(intVec));
@@ -413,7 +414,7 @@ namespace Verse
 						stringBuilder.AppendLine("\nLinkFlags: ");
 						foreach (object current11 in Enum.GetValues(typeof(LinkFlags)))
 						{
-							if ((Find.VisibleMap.linkGrid.LinkFlagsAt(intVec) & (LinkFlags)((int)current11)) != LinkFlags.None)
+							if ((Find.VisibleMap.linkGrid.LinkFlagsAt(intVec) & (LinkFlags)current11) != LinkFlags.None)
 							{
 								stringBuilder.Append(" " + current11);
 							}

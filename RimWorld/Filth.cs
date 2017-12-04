@@ -7,17 +7,17 @@ namespace RimWorld
 {
 	public class Filth : Thing
 	{
-		private const int MaxThickness = 5;
-
-		private const int MinAgeToPickUp = 400;
-
-		private const int MaxNumSources = 3;
-
 		public int thickness = 1;
 
 		public List<string> sources;
 
 		private int growTick;
+
+		private const int MaxThickness = 5;
+
+		private const int MinAgeToPickUp = 400;
+
+		private const int MaxNumSources = 3;
 
 		public bool CanFilthAttachNow
 		{

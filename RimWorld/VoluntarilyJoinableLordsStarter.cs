@@ -6,15 +6,15 @@ namespace RimWorld
 {
 	public class VoluntarilyJoinableLordsStarter : IExposable
 	{
-		private const int CheckStartPartyIntervalTicks = 5000;
-
-		private const float StartPartyMTBDays = 40f;
-
 		private Map map;
 
 		private int lastLordStartTick = -999999;
 
 		private bool startPartyASAP;
+
+		private const int CheckStartPartyIntervalTicks = 5000;
+
+		private const float StartPartyMTBDays = 40f;
 
 		public VoluntarilyJoinableLordsStarter(Map map)
 		{
@@ -33,7 +33,7 @@ namespace RimWorld
 			{
 				firstFiance.LabelShort,
 				secondFiance.LabelShort
-			}), new TargetInfo(intVec, this.map, false), MessageSound.Standard);
+			}), new TargetInfo(intVec, this.map, false), MessageTypeDefOf.PositiveEvent);
 			this.lastLordStartTick = Find.TickManager.TicksGame;
 			return true;
 		}
@@ -50,11 +50,11 @@ namespace RimWorld
 			{
 				return false;
 			}
-			LordMaker.MakeNewLord(pawn.Faction, new LordJob_Joinable_Party(intVec), this.map, null);
+			LordMaker.MakeNewLord(pawn.Faction, new LordJob_Joinable_Party(intVec, pawn), this.map, null);
 			Find.LetterStack.ReceiveLetter("LetterLabelNewParty".Translate(), "LetterNewParty".Translate(new object[]
 			{
 				pawn.LabelShort
-			}), LetterDefOf.Good, new TargetInfo(intVec, this.map, false), null);
+			}), LetterDefOf.PositiveEvent, new TargetInfo(intVec, this.map, false), null);
 			this.lastLordStartTick = Find.TickManager.TicksGame;
 			this.startPartyASAP = false;
 			return true;

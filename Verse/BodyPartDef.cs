@@ -7,6 +7,7 @@ namespace Verse
 {
 	public class BodyPartDef : Def
 	{
+		[NoTranslate]
 		public List<string> tags = new List<string>();
 
 		public int hitPoints = 100;

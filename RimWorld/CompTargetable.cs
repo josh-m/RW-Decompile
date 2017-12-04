@@ -77,6 +77,22 @@ namespace RimWorld
 					return false;
 				}
 			}
+			if (this.Props.fleshCorpsesOnly)
+			{
+				Corpse corpse = t as Corpse;
+				if (corpse != null && !corpse.InnerPawn.RaceProps.IsFlesh)
+				{
+					return false;
+				}
+			}
+			if (this.Props.nonDessicatedCorpsesOnly)
+			{
+				Corpse corpse2 = t as Corpse;
+				if (corpse2 != null && corpse2.GetRotStage() == RotStage.Dessicated)
+				{
+					return false;
+				}
+			}
 			return true;
 		}
 	}

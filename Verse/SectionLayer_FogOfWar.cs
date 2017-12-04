@@ -1,14 +1,13 @@
 using System;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace Verse
 {
 	public class SectionLayer_FogOfWar : SectionLayer
 	{
-		private const byte FogBrightness = 35;
-
 		private bool[] vertsCovered = new bool[9];
+
+		private const byte FogBrightness = 35;
 
 		public override bool Visible
 		{
@@ -30,11 +29,11 @@ namespace Verse
 			{
 				SectionLayerGeometryMaker_Solid.MakeBaseGeometry(this.section, subMesh, AltitudeLayer.FogOfWar);
 			}
+			subMesh.Clear(MeshParts.Colors);
 			bool[] fogGrid = base.Map.fogGrid.fogGrid;
 			CellRect cellRect = this.section.CellRect;
 			int num = base.Map.Size.z - 1;
 			int num2 = base.Map.Size.x - 1;
-			subMesh.colors = new List<Color32>(subMesh.mesh.vertexCount);
 			bool flag = false;
 			CellIndices cellIndices = base.Map.cellIndices;
 			for (int i = cellRect.minX; i <= cellRect.maxX; i++)
@@ -114,7 +113,7 @@ namespace Verse
 			if (flag)
 			{
 				subMesh.disabled = false;
-				subMesh.FinalizeMesh(MeshParts.Colors, false);
+				subMesh.FinalizeMesh(MeshParts.Colors);
 			}
 			else
 			{

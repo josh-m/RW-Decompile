@@ -7,13 +7,13 @@ namespace RimWorld.Planet
 {
 	public static class DaysWorthOfFoodCalculator
 	{
-		public const float InfiniteDaysWorthOfFood = 1000f;
-
 		private static List<Pawn> tmpPawns = new List<Pawn>();
 
 		private static List<ThingCount> tmpThingCounts = new List<ThingCount>();
 
 		private static List<ThingStackPart> tmpThingStackParts = new List<ThingStackPart>();
+
+		public const float InfiniteDaysWorthOfFood = 1000f;
 
 		private static List<float> tmpDaysWorthOfFoodPerPawn = new List<float>();
 
@@ -85,36 +85,33 @@ namespace RimWorld.Planet
 								float num3 = Mathf.Min(DaysWorthOfFoodCalculator.tmpFood[num2].ThingDef.ingestible.nutrition, pawn.needs.food.NutritionBetweenHungryAndFed);
 								float num4 = num3 / pawn.needs.food.NutritionBetweenHungryAndFed * (float)pawn.needs.food.TicksUntilHungryWhenFed / 60000f;
 								List<float> list;
-								List<float> expr_25A = list = DaysWorthOfFoodCalculator.tmpDaysWorthOfFoodPerPawn;
 								int index;
-								int expr_25F = index = m;
-								float num5 = list[index];
-								expr_25A[expr_25F] = num5 + num4;
+								(list = DaysWorthOfFoodCalculator.tmpDaysWorthOfFoodPerPawn)[index = m] = list[index] + num4;
 								DaysWorthOfFoodCalculator.tmpFood[num2] = DaysWorthOfFoodCalculator.tmpFood[num2].WithCount(DaysWorthOfFoodCalculator.tmpFood[num2].Count - 1);
 								flag = true;
 							}
 							while (DaysWorthOfFoodCalculator.tmpDaysWorthOfFoodPerPawn[m] < num);
-							IL_2C5:
+							IL_2CB:
 							num = Mathf.Max(num, DaysWorthOfFoodCalculator.tmpDaysWorthOfFoodPerPawn[m]);
-							goto IL_2DA;
+							goto IL_2E0;
 							Block_13:
 							DaysWorthOfFoodCalculator.tmpAnyFoodLeftIngestibleByPawn[m] = false;
-							goto IL_2C5;
+							goto IL_2CB;
 						}
 					}
-					IL_2DA:;
+					IL_2E0:;
 				}
 			}
 			while (flag);
-			float num6 = 1000f;
+			float num5 = 1000f;
 			for (int n = 0; n < pawns.Count; n++)
 			{
 				if (pawns[n].RaceProps.EatsFood && (!assumeCanEatLocalPlants || !VirtualPlantsUtility.CanEverEatVirtualPlants(pawns[n])))
 				{
-					num6 = Mathf.Min(num6, DaysWorthOfFoodCalculator.tmpDaysWorthOfFoodPerPawn[n]);
+					num5 = Mathf.Min(num5, DaysWorthOfFoodCalculator.tmpDaysWorthOfFoodPerPawn[n]);
 				}
 			}
-			return num6;
+			return num5;
 		}
 
 		public static float ApproxDaysWorthOfFood(Caravan caravan)

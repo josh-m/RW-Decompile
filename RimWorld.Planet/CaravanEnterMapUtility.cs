@@ -86,7 +86,12 @@ namespace RimWorld.Planet
 		private static IntVec3 FindNearEdgeCell(Map map, Predicate<IntVec3> extraCellValidator)
 		{
 			Predicate<IntVec3> baseValidator = (IntVec3 x) => x.Standable(map) && !x.Fogged(map);
+			Faction hostFaction = map.ParentFaction;
 			IntVec3 root;
+			if (CellFinder.TryFindRandomEdgeCellWith((IntVec3 x) => baseValidator(x) && (extraCellValidator == null || extraCellValidator(x)) && ((hostFaction != null && map.reachability.CanReachFactionBase(x, hostFaction)) || (hostFaction == null && map.reachability.CanReachBiggestMapEdgeRoom(x))), map, CellFinder.EdgeRoadChance_Neutral, out root))
+			{
+				return CellFinder.RandomClosewalkCellNear(root, map, 5, null);
+			}
 			if (extraCellValidator != null && CellFinder.TryFindRandomEdgeCellWith((IntVec3 x) => baseValidator(x) && extraCellValidator(x), map, CellFinder.EdgeRoadChance_Neutral, out root))
 			{
 				return CellFinder.RandomClosewalkCellNear(root, map, 5, null);

@@ -43,7 +43,7 @@ namespace RimWorld.Planet
 				{
 					caravan.Label,
 					this.settlement.Label
-				}).CapitalizeFirst(), caravan, MessageSound.Benefit);
+				}).CapitalizeFirst(), caravan, MessageTypeDefOf.TaskCompletion);
 			}
 		}
 

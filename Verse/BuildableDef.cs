@@ -30,7 +30,11 @@ namespace Verse
 
 		public List<ResearchProjectDef> researchPrerequisites;
 
+		public int constructionSkillPrerequisite;
+
 		public int placingDraggableDimensions;
+
+		public bool clearBuildingArea = true;
 
 		public EffecterDef repairEffect;
 
@@ -57,6 +61,9 @@ namespace Verse
 		public Texture2D uiIcon = BaseContent.BadTex;
 
 		[Unsaved]
+		public float uiIconAngle;
+
+		[Unsaved]
 		public Graphic graphic = BaseContent.BadGraphic;
 
 		public bool menuHidden;
@@ -69,6 +76,10 @@ namespace Verse
 		public DesignationCategoryDef designationCategory;
 
 		public KeyBindingDef designationHotKey;
+
+		public TechLevel minTechLevelToBuild;
+
+		public TechLevel maxTechLevelToBuild;
 
 		[Unsaved]
 		private List<PlaceWorker> placeWorkersInstantiatedInt;
@@ -156,9 +167,27 @@ namespace Verse
 				{
 					this.uiIcon = ContentFinder<Texture2D>.Get(this.uiIconPath, true);
 				}
-				else if (this.DrawMatSingle != null && this.DrawMatSingle != BaseContent.BadMat)
+				else if (this.graphic != null)
 				{
-					this.uiIcon = (Texture2D)this.DrawMatSingle.mainTexture;
+					Graphic_Random graphic_Random = this.graphic as Graphic_Random;
+					Material material;
+					if (graphic_Random != null)
+					{
+						material = graphic_Random.FirstSubgraphic().MatAt(this.defaultPlacingRot, null);
+					}
+					else
+					{
+						material = this.graphic.MatAt(this.defaultPlacingRot, null);
+					}
+					if (material != BaseContent.BadMat)
+					{
+						this.uiIcon = (Texture2D)material.mainTexture;
+						ThingDef thingDef = this as ThingDef;
+						if (thingDef != null && thingDef.rotatable && this.graphic.ShouldDrawRotated && this.defaultPlacingRot == Rot4.South)
+						{
+							this.uiIconAngle = 180f;
+						}
+					}
 				}
 			});
 		}

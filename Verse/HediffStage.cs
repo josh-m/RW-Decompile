@@ -10,7 +10,7 @@ namespace Verse
 
 		public string label;
 
-		public bool everVisible = true;
+		public bool becomeVisible = true;
 
 		public bool lifeThreatening;
 
@@ -32,9 +32,15 @@ namespace Verse
 
 		public float hungerRateFactor = 1f;
 
+		public float hungerRateFactorOffset;
+
 		public float restFallFactor = 1f;
 
+		public float restFallFactorOffset;
+
 		public float socialFightChanceFactor = 1f;
+
+		public float mentalBreakMtbDays = -1f;
 
 		public List<HediffDef> makeImmuneTo;
 

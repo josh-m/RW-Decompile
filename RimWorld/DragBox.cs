@@ -6,11 +6,11 @@ namespace RimWorld
 {
 	public class DragBox
 	{
-		private const float DragBoxMinDiagonal = 0.5f;
-
 		public bool active;
 
 		public Vector3 start;
+
+		private const float DragBoxMinDiagonal = 0.5f;
 
 		public float LeftX
 		{

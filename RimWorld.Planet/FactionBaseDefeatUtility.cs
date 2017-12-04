@@ -22,7 +22,7 @@ namespace RimWorld.Planet
 			stringBuilder.Append("LetterFactionBaseDefeated".Translate(new object[]
 			{
 				factionBase.Label,
-				MapParent.GetForceExitAndRemoveMapCountdownTimeLeftString(60000)
+				TimedForcedExit.GetForceExitAndRemoveMapCountdownTimeLeftString(60000)
 			}));
 			if (!FactionBaseDefeatUtility.HasAnyOtherBase(factionBase))
 			{
@@ -34,13 +34,17 @@ namespace RimWorld.Planet
 					factionBase.Faction.Name
 				}));
 			}
-			Find.LetterStack.ReceiveLetter("LetterLabelFactionBaseDefeated".Translate(), stringBuilder.ToString(), LetterDefOf.Good, new GlobalTargetInfo(factionBase.Tile), null);
+			Find.LetterStack.ReceiveLetter("LetterLabelFactionBaseDefeated".Translate(), stringBuilder.ToString(), LetterDefOf.PositiveEvent, new GlobalTargetInfo(factionBase.Tile), null);
 			DestroyedFactionBase destroyedFactionBase = (DestroyedFactionBase)WorldObjectMaker.MakeWorldObject(WorldObjectDefOf.DestroyedFactionBase);
 			destroyedFactionBase.Tile = factionBase.Tile;
 			Find.WorldObjects.Add(destroyedFactionBase);
 			map.info.parent = destroyedFactionBase;
 			Find.WorldObjects.Remove(factionBase);
-			destroyedFactionBase.StartForceExitAndRemoveMapCountdown();
+			destroyedFactionBase.GetComponent<TimedForcedExit>().StartForceExitAndRemoveMapCountdown();
+			TaleRecorder.RecordTale(TaleDefOf.CaravanAssaultSuccessful, new object[]
+			{
+				map.mapPawns.FreeColonists.RandomElement<Pawn>()
+			});
 		}
 
 		private static bool IsDefeated(Map map, Faction faction)
@@ -49,7 +53,7 @@ namespace RimWorld.Planet
 			for (int i = 0; i < list.Count; i++)
 			{
 				Pawn pawn = list[i];
-				if (pawn.RaceProps.Humanlike && GenHostility.IsActiveThreat(pawn))
+				if (pawn.RaceProps.Humanlike && GenHostility.IsActiveThreatToPlayer(pawn))
 				{
 					return false;
 				}

@@ -32,9 +32,7 @@ namespace Verse
 				DamageDef localDef = current;
 				list.Add(new DebugMenuOption(localDef.LabelCap, DebugMenuOptionMode.Tool, delegate
 				{
-					Pawn pawn = (from t in Find.VisibleMap.thingGrid.ThingsAt(UI.MouseCell())
-					where t is Pawn
-					select t).Cast<Pawn>().FirstOrDefault<Pawn>();
+					Pawn pawn = Find.VisibleMap.thingGrid.ThingsAt(UI.MouseCell()).OfType<Pawn>().FirstOrDefault<Pawn>();
 					if (pawn != null)
 					{
 						Find.WindowStack.Add(new Dialog_DebugOptionListLister(DebugTools_Health.Options_Damage_BodyParts(pawn, localDef)));
@@ -60,9 +58,11 @@ namespace Verse
 				BodyPartRecord localPart = current;
 				list.Add(new DebugMenuOption(localPart.def.LabelCap, DebugMenuOptionMode.Action, delegate
 				{
-					Thing arg_2C_0 = p;
+					Thing arg_30_0 = p;
+					DamageDef def2 = def;
+					int amount = 5;
 					BodyPartRecord localPart = localPart;
-					arg_2C_0.TakeDamage(new DamageInfo(def, 5, -1f, null, localPart, null, DamageInfo.SourceCategory.ThingOrUnknown));
+					arg_30_0.TakeDamage(new DamageInfo(def2, amount, -1f, null, localPart, null, DamageInfo.SourceCategory.ThingOrUnknown));
 				}));
 			}
 			return list;
@@ -125,6 +125,20 @@ namespace Verse
 				list.Add(new DebugMenuOption(localPart.def.LabelCap, DebugMenuOptionMode.Action, delegate
 				{
 					p.health.AddHediff(def, localPart, null);
+				}));
+			}
+			return list;
+		}
+
+		public static List<DebugMenuOption> Options_RemoveHediff(Pawn pawn)
+		{
+			List<DebugMenuOption> list = new List<DebugMenuOption>();
+			foreach (Hediff current in pawn.health.hediffSet.hediffs)
+			{
+				Hediff localH = current;
+				list.Add(new DebugMenuOption(localH.LabelCap + ((localH.Part == null) ? string.Empty : (" (" + localH.Part.def + ")")), DebugMenuOptionMode.Action, delegate
+				{
+					pawn.health.RemoveHediff(localH);
 				}));
 			}
 			return list;

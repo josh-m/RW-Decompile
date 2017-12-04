@@ -23,11 +23,6 @@ namespace Verse.Sound
 
 		private Dictionary<SoundParamTarget, float> volumeInMappings = new Dictionary<SoundParamTarget, float>();
 
-		public abstract Map Map
-		{
-			get;
-		}
-
 		public float AgeRealTime
 		{
 			get
@@ -68,14 +63,31 @@ namespace Verse.Sound
 			get;
 		}
 
+		public abstract SoundInfo Info
+		{
+			get;
+		}
+
+		public Map Map
+		{
+			get
+			{
+				return this.Info.Maker.Map;
+			}
+		}
+
+		protected bool TestPlaying
+		{
+			get
+			{
+				return this.Info.testPlay;
+			}
+		}
+
 		protected float MappedVolumeMultiplier
 		{
 			get
 			{
-				if (this.subDef.muteWhenPaused && Find.TickManager.Paused && !this.TestPlaying)
-				{
-					return 0f;
-				}
 				float num = 1f;
 				foreach (float num2 in this.volumeInMappings.Values)
 				{
@@ -97,9 +109,45 @@ namespace Verse.Sound
 			}
 		}
 
-		protected abstract bool TestPlaying
+		protected virtual float Volume
 		{
-			get;
+			get
+			{
+				if (this.subDef.muteWhenPaused && Current.ProgramState == ProgramState.Playing && Find.TickManager.Paused && !this.TestPlaying)
+				{
+					return 0f;
+				}
+				return this.resolvedVolume * this.Info.volumeFactor * this.MappedVolumeMultiplier * this.ContextVolumeMultiplier;
+			}
+		}
+
+		public float SanitizedVolume
+		{
+			get
+			{
+				return AudioSourceUtility.GetSanitizedVolume(this.Volume, this.subDef.parentDef);
+			}
+		}
+
+		protected virtual float Pitch
+		{
+			get
+			{
+				float num = this.resolvedPitch * this.Info.pitchFactor;
+				if (this.subDef.tempoAffectedByGameSpeed && Current.ProgramState == ProgramState.Playing && !this.TestPlaying && !Find.TickManager.Paused)
+				{
+					num *= Find.TickManager.TickRateMultiplier;
+				}
+				return num;
+			}
+		}
+
+		public float SanitizedPitch
+		{
+			get
+			{
+				return AudioSourceUtility.GetSanitizedPitch(this.Pitch, this.subDef.parentDef);
+			}
 		}
 
 		public Sample(SubSoundDef def)
@@ -120,6 +168,35 @@ namespace Verse.Sound
 			select m.outParam).OfType<SoundParamTarget_Volume>())
 			{
 				this.volumeInMappings.Add(current, 0f);
+			}
+		}
+
+		public virtual void Update()
+		{
+			this.source.pitch = this.SanitizedPitch;
+			this.ApplyMappedParameters();
+			this.source.volume = this.SanitizedVolume;
+			if (this.source.volume < 0.001f)
+			{
+				this.source.mute = true;
+			}
+			else
+			{
+				this.source.mute = false;
+			}
+			if (this.subDef.tempoAffectedByGameSpeed && !this.TestPlaying)
+			{
+				if (Current.ProgramState == ProgramState.Playing && Find.TickManager.Paused)
+				{
+					if (this.source.isPlaying)
+					{
+						this.source.Pause();
+					}
+				}
+				else if (!this.source.isPlaying)
+				{
+					this.source.UnPause();
+				}
 			}
 		}
 

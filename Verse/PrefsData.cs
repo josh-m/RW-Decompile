@@ -10,6 +10,8 @@ namespace Verse
 
 		public float volumeMusic = 0.4f;
 
+		public float volumeAmbient = 1f;
+
 		public float uiScale = 1f;
 
 		public bool hatsOnlyOnMap;

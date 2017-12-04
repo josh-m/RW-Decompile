@@ -57,7 +57,7 @@ namespace Verse
 			return CultureInfo.CurrentCulture.TextInfo.ToTitleCase(str);
 		}
 
-		public virtual string Pluralize(string str)
+		public virtual string Pluralize(string str, int count = -1)
 		{
 			return str;
 		}

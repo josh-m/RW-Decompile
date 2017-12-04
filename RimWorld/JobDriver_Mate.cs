@@ -18,8 +18,13 @@ namespace RimWorld
 		{
 			get
 			{
-				return (Pawn)base.CurJob.GetTarget(TargetIndex.A).Thing;
+				return (Pawn)this.job.GetTarget(TargetIndex.A).Thing;
 			}
+		}
+
+		public override bool TryMakePreToilReservations()
+		{
+			return true;
 		}
 
 		[DebuggerHidden]
@@ -32,26 +37,20 @@ namespace RimWorld
 			Toil prepare = Toils_General.WaitWith(TargetIndex.A, 500, false, false);
 			prepare.tickAction = delegate
 			{
-				if (this.<>f__this.pawn.IsHashIntervalTick(100))
+				if (this.$this.pawn.IsHashIntervalTick(100))
 				{
-					MoteMaker.ThrowMetaIcon(this.<>f__this.pawn.Position, this.<>f__this.pawn.Map, ThingDefOf.Mote_Heart);
+					MoteMaker.ThrowMetaIcon(this.$this.pawn.Position, this.$this.pawn.Map, ThingDefOf.Mote_Heart);
 				}
-				if (this.<>f__this.Female.IsHashIntervalTick(100))
+				if (this.$this.Female.IsHashIntervalTick(100))
 				{
-					MoteMaker.ThrowMetaIcon(this.<>f__this.Female.Position, this.<>f__this.pawn.Map, ThingDefOf.Mote_Heart);
+					MoteMaker.ThrowMetaIcon(this.$this.Female.Position, this.$this.pawn.Map, ThingDefOf.Mote_Heart);
 				}
 			};
 			yield return prepare;
-			yield return new Toil
+			yield return Toils_General.Do(delegate
 			{
-				initAction = delegate
-				{
-					Pawn actor = this.<finalize>__1.actor;
-					Pawn female = this.<>f__this.Female;
-					PawnUtility.Mated(actor, female);
-				},
-				defaultCompleteMode = ToilCompleteMode.Instant
-			};
+				PawnUtility.Mated(this.$this.pawn, this.$this.Female);
+			});
 		}
 	}
 }

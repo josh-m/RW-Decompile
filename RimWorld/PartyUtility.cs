@@ -3,6 +3,7 @@ using System.Linq;
 using UnityEngine;
 using Verse;
 using Verse.AI;
+using Verse.AI.Group;
 
 namespace RimWorld
 {
@@ -40,29 +41,14 @@ namespace RimWorld
 			{
 				if (current.health.hediffSet.BleedRateTotal > 0f)
 				{
-					bool result = false;
-					return result;
+					return false;
 				}
 				if (current.Drafted)
 				{
 					num++;
 				}
 			}
-			if ((float)num / (float)freeColonistsSpawnedCount >= 0.5f)
-			{
-				return false;
-			}
-			int num2 = Mathf.RoundToInt((float)map.mapPawns.FreeColonistsSpawnedCount * 0.65f);
-			num2 = Mathf.Clamp(num2, 2, 10);
-			int num3 = 0;
-			foreach (Pawn current2 in map.mapPawns.FreeColonistsSpawned)
-			{
-				if (PartyUtility.ShouldPawnKeepPartying(current2))
-				{
-					num3++;
-				}
-			}
-			return num3 >= num2;
+			return (float)num / (float)freeColonistsSpawnedCount < 0.5f && PartyUtility.EnoughPotentialGuestsToStartParty(map, null);
 		}
 
 		public static bool AcceptableGameConditionsToContinueParty(Map map)
@@ -70,9 +56,30 @@ namespace RimWorld
 			return map.dangerWatcher.DangerRating != StoryDanger.High;
 		}
 
+		public static bool EnoughPotentialGuestsToStartParty(Map map, IntVec3? partySpot = null)
+		{
+			int num = Mathf.RoundToInt((float)map.mapPawns.FreeColonistsSpawnedCount * 0.65f);
+			num = Mathf.Clamp(num, 2, 10);
+			int num2 = 0;
+			foreach (Pawn current in map.mapPawns.FreeColonistsSpawned)
+			{
+				if (PartyUtility.ShouldPawnKeepPartying(current))
+				{
+					if (!partySpot.HasValue || !partySpot.Value.IsForbidden(current))
+					{
+						if (!partySpot.HasValue || current.CanReach(partySpot.Value, PathEndMode.Touch, Danger.Some, false, TraverseMode.ByPawn))
+						{
+							num2++;
+						}
+					}
+				}
+			}
+			return num2 >= num;
+		}
+
 		public static Pawn FindRandomPartyOrganizer(Faction faction, Map map)
 		{
-			Predicate<Pawn> validator = (Pawn x) => x.RaceProps.Humanlike && !x.InBed() && PartyUtility.ShouldPawnKeepPartying(x);
+			Predicate<Pawn> validator = (Pawn x) => x.RaceProps.Humanlike && !x.InBed() && !x.InMentalState && x.GetLord() == null && PartyUtility.ShouldPawnKeepPartying(x);
 			Pawn result;
 			if ((from x in map.mapPawns.SpawnedPawnsInFaction(faction)
 			where validator(x)

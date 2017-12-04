@@ -44,7 +44,7 @@ namespace RimWorld
 			{
 				this.faction.def.pawnsPlural,
 				this.faction
-			}), MessageSound.SeriousAlert));
+			}), MessageTypeDefOf.ThreatBig));
 			transition2.AddPostAction(new TransitionAction_WakeAll());
 			stateGraph.AddTransition(transition2);
 			return stateGraph;

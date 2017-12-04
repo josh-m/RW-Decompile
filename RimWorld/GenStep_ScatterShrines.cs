@@ -7,13 +7,13 @@ namespace RimWorld
 {
 	public class GenStep_ScatterShrines : GenStep_ScatterRuinsSimple
 	{
-		private const int MarginCells = 1;
-
 		private static readonly IntRange ShrinesCountX = new IntRange(1, 4);
 
 		private static readonly IntRange ShrinesCountZ = new IntRange(1, 4);
 
 		private static readonly IntRange ExtraHeightRange = new IntRange(0, 8);
+
+		private const int MarginCells = 1;
 
 		protected override bool CanScatterAt(IntVec3 c, Map map)
 		{
@@ -65,9 +65,15 @@ namespace RimWorld
 			BaseGen.globalSettings.map = map;
 			BaseGen.symbolStack.Push("ancientTemple", resolveParams);
 			BaseGen.Generate();
+			int nextSignalTagID = Find.UniqueIDsManager.GetNextSignalTagID();
+			string signalTag = "ancientTempleApproached-" + nextSignalTagID;
+			SignalAction_Letter signalAction_Letter = (SignalAction_Letter)ThingMaker.MakeThing(ThingDefOf.SignalAction_Letter, null);
+			signalAction_Letter.signalTag = signalTag;
+			signalAction_Letter.letter = LetterMaker.MakeLetter("LetterLabelAncientShrineWarning".Translate(), "AncientShrineWarning".Translate(), LetterDefOf.NeutralEvent, new TargetInfo(rect.CenterCell, map, false));
+			GenSpawn.Spawn(signalAction_Letter, rect.CenterCell, map);
 			RectTrigger rectTrigger = (RectTrigger)ThingMaker.MakeThing(ThingDefOf.RectTrigger, null);
+			rectTrigger.signalTag = signalTag;
 			rectTrigger.Rect = rect.ExpandedBy(1).ClipInsideMap(map);
-			rectTrigger.letter = LetterMaker.MakeLetter("LetterLabelAncientShrineWarning".Translate(), "AncientShrineWarning".Translate(), LetterDefOf.BadNonUrgent, new TargetInfo(rect.CenterCell, map, false));
 			rectTrigger.destroyIfUnfogged = true;
 			GenSpawn.Spawn(rectTrigger, rect.CenterCell, map);
 		}

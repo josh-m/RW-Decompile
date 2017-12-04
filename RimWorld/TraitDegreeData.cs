@@ -29,13 +29,13 @@ namespace RimWorld
 
 		public List<MentalStateDef> disallowedMentalStates;
 
-		public List<MentalBreakDef> allowedMentalBreaks;
+		public List<MentalBreakDef> theOnlyAllowedMentalBreaks;
 
 		public Dictionary<SkillDef, int> skillGains = new Dictionary<SkillDef, int>();
 
 		public float socialFightChanceFactor = 1f;
 
-		public float painShockThreshold = -1f;
+		public float marketValueFactorOffset;
 
 		public float Commonality
 		{

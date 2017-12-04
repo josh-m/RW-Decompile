@@ -7,11 +7,11 @@ namespace Verse
 	[StaticConstructorOnStartup]
 	public static class UIHighlighter
 	{
+		private static List<Pair<string, int>> liveTags = new List<Pair<string, int>>();
+
 		private const float PulseFrequency = 1.2f;
 
 		private const float PulseAmplitude = 0.7f;
-
-		private static List<Pair<string, int>> liveTags = new List<Pair<string, int>>();
 
 		private static readonly Texture2D TutorHighlightAtlas = ContentFinder<Texture2D>.Get("UI/Widgets/TutorHighlightAtlas", true);
 

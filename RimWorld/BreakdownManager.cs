@@ -6,11 +6,11 @@ namespace RimWorld
 {
 	public class BreakdownManager : MapComponent
 	{
-		public const int CheckIntervalTicks = 1041;
-
 		private List<CompBreakdownable> comps = new List<CompBreakdownable>();
 
 		public HashSet<Thing> brokenDownThings = new HashSet<Thing>();
+
+		public const int CheckIntervalTicks = 1041;
 
 		public BreakdownManager(Map map) : base(map)
 		{

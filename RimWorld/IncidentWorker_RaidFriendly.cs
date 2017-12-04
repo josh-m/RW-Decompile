@@ -22,9 +22,7 @@ namespace RimWorld
 				return false;
 			}
 			Map map = (Map)target;
-			return (from p in map.attackTargetsCache.TargetsHostileToColony
-			where !p.ThreatDisabled()
-			select p).Sum(delegate(IAttackTarget p)
+			return map.attackTargetsCache.TargetsHostileToColony.Where(new Func<IAttackTarget, bool>(GenHostility.IsActiveThreatToPlayer)).Sum(delegate(IAttackTarget p)
 			{
 				Pawn pawn = p as Pawn;
 				if (pawn != null)
@@ -72,29 +70,36 @@ namespace RimWorld
 		protected override string GetLetterText(IncidentParms parms, List<Pawn> pawns)
 		{
 			string text = null;
-			switch (parms.raidArrivalMode)
+			PawnsArriveMode raidArrivalMode = parms.raidArrivalMode;
+			if (raidArrivalMode != PawnsArriveMode.EdgeWalkIn)
 			{
-			case PawnsArriveMode.EdgeWalkIn:
+				if (raidArrivalMode != PawnsArriveMode.EdgeDrop)
+				{
+					if (raidArrivalMode == PawnsArriveMode.CenterDrop)
+					{
+						text = "FriendlyRaidCenterDrop".Translate(new object[]
+						{
+							parms.faction.def.pawnsPlural,
+							parms.faction.Name
+						});
+					}
+				}
+				else
+				{
+					text = "FriendlyRaidEdgeDrop".Translate(new object[]
+					{
+						parms.faction.def.pawnsPlural,
+						parms.faction.Name
+					});
+				}
+			}
+			else
+			{
 				text = "FriendlyRaidWalkIn".Translate(new object[]
 				{
 					parms.faction.def.pawnsPlural,
 					parms.faction.Name
 				});
-				break;
-			case PawnsArriveMode.EdgeDrop:
-				text = "FriendlyRaidEdgeDrop".Translate(new object[]
-				{
-					parms.faction.def.pawnsPlural,
-					parms.faction.Name
-				});
-				break;
-			case PawnsArriveMode.CenterDrop:
-				text = "FriendlyRaidCenterDrop".Translate(new object[]
-				{
-					parms.faction.def.pawnsPlural,
-					parms.faction.Name
-				});
-				break;
 			}
 			text += "\n\n";
 			text += parms.raidStrategy.arrivalTextFriendly;
@@ -113,7 +118,7 @@ namespace RimWorld
 
 		protected override LetterDef GetLetterDef()
 		{
-			return LetterDefOf.BadNonUrgent;
+			return LetterDefOf.PositiveEvent;
 		}
 
 		protected override string GetRelatedPawnsInfoLetterText(IncidentParms parms)

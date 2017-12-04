@@ -8,6 +8,10 @@ namespace Verse
 {
 	public static class GenFilePaths
 	{
+		private static string saveDataPath = null;
+
+		private static string coreModsFolderPath = null;
+
 		public const string SoundsFolder = "Sounds/";
 
 		public const string TexturesFolder = "Textures/";
@@ -27,10 +31,6 @@ namespace Verse
 		public const string ExternalHistoryFileExtension = ".rwh";
 
 		private const string SaveDataFolderCommand = "savedatafolder";
-
-		private static string saveDataPath = null;
-
-		private static string coreModsFolderPath = null;
 
 		private static readonly string[] FilePathRaw = new string[]
 		{

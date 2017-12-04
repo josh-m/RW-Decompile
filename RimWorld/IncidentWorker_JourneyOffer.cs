@@ -1,6 +1,5 @@
 using RimWorld.Planet;
 using System;
-using System.Collections.Generic;
 using Verse;
 
 namespace RimWorld
@@ -11,27 +10,25 @@ namespace RimWorld
 
 		private const int MaxTraversalDistance = 800;
 
-		private List<int> possibleRootTiles = new List<int>();
-
 		protected override bool CanFireNowSub(IIncidentTarget target)
 		{
-			this.FindPossibleRootTiles();
-			return this.possibleRootTiles.Any<int>();
+			int num;
+			return this.TryFindRootTile(out num);
 		}
 
-		public override bool TryExecute(IncidentParms parms)
+		protected override bool TryExecuteWorker(IncidentParms parms)
 		{
-			this.FindPossibleRootTiles();
-			if (!this.possibleRootTiles.Any<int>())
+			int rootTile;
+			if (!this.TryFindRootTile(out rootTile))
 			{
 				return false;
 			}
 			int tile;
-			if (!this.TryFindDestinationTile(this.possibleRootTiles.RandomElement<int>(), out tile))
+			if (!this.TryFindDestinationTile(rootTile, out tile))
 			{
 				return false;
 			}
-			WorldObject journeyDestination = WorldObjectMaker.MakeWorldObject(WorldObjectDefOf.JourneyDestination);
+			WorldObject journeyDestination = WorldObjectMaker.MakeWorldObject(WorldObjectDefOf.EscapeShip);
 			journeyDestination.Tile = tile;
 			Find.WorldObjects.Add(journeyDestination);
 			DiaNode diaNode = new DiaNode("JourneyOffer".Translate());
@@ -49,30 +46,10 @@ namespace RimWorld
 			return true;
 		}
 
-		private void FindPossibleRootTiles()
+		private bool TryFindRootTile(out int tile)
 		{
-			this.possibleRootTiles.Clear();
-			List<Map> maps = Find.Maps;
-			for (int i = 0; i < maps.Count; i++)
-			{
-				int num;
-				if (maps[i].IsPlayerHome && this.TryFindDestinationTileActual(maps[i].Tile, 200, out num))
-				{
-					this.possibleRootTiles.Add(maps[i].Tile);
-				}
-			}
-			if (!this.possibleRootTiles.Any<int>())
-			{
-				List<Caravan> caravans = Find.WorldObjects.Caravans;
-				for (int j = 0; j < caravans.Count; j++)
-				{
-					int num;
-					if (caravans[j].IsPlayerControlled && this.TryFindDestinationTileActual(caravans[j].Tile, 200, out num))
-					{
-						this.possibleRootTiles.Add(caravans[j].Tile);
-					}
-				}
-			}
+			int unused;
+			return TileFinder.TryFindRandomPlayerTile(out tile, false, (int x) => this.TryFindDestinationTileActual(x, 200, out unused));
 		}
 
 		private bool TryFindDestinationTile(int rootTile, out int tile)
@@ -89,7 +66,7 @@ namespace RimWorld
 				{
 					return true;
 				}
-				if ((float)num <= 200.001f)
+				if (num <= 200)
 				{
 					return false;
 				}
@@ -100,7 +77,7 @@ namespace RimWorld
 
 		private bool TryFindDestinationTileActual(int rootTile, int minDist, out int tile)
 		{
-			return TileFinder.TryFindPassableTileWithTraversalDistance(rootTile, minDist, 800, out tile, (int x) => !Find.WorldObjects.AnyWorldObjectAt(x), true);
+			return TileFinder.TryFindPassableTileWithTraversalDistance(rootTile, minDist, 800, out tile, (int x) => !Find.WorldObjects.AnyWorldObjectAt(x) && Find.WorldGrid[x].biome.canBuildBase && Find.WorldGrid[x].biome.canAutoChoose, true, true);
 		}
 	}
 }

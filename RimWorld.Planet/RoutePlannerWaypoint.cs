@@ -72,7 +72,7 @@ namespace RimWorld.Planet
 				icon = TexCommand.RemoveRoutePlannerWaypoint,
 				action = delegate
 				{
-					Find.WorldRoutePlanner.TryRemoveWaypoint(this.<>f__this, true);
+					Find.WorldRoutePlanner.TryRemoveWaypoint(this.$this, true);
 				}
 			};
 		}

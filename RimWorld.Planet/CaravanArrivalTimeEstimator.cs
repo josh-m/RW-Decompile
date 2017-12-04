@@ -6,10 +6,6 @@ namespace RimWorld.Planet
 {
 	public static class CaravanArrivalTimeEstimator
 	{
-		private const int CacheDuration = 100;
-
-		private const int MaxIterations = 10000;
-
 		private static int cacheTicks = -1;
 
 		private static Caravan cachedForCaravan;
@@ -17,6 +13,10 @@ namespace RimWorld.Planet
 		private static int cachedForDest = -1;
 
 		private static int cachedResult = -1;
+
+		private const int CacheDuration = 100;
+
+		private const int MaxIterations = 10000;
 
 		public static int EstimatedTicksToArrive(Caravan caravan, bool allowCaching)
 		{

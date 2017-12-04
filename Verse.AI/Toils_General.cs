@@ -26,8 +26,17 @@ namespace Verse.AI
 				Pawn pawn = toil.actor.CurJob.GetTarget(targetInd).Thing as Pawn;
 				if (pawn != null)
 				{
-					bool maintainPosture2 = maintainPosture;
-					PawnUtility.ForceWait(pawn, ticks, null, maintainPosture2);
+					if (pawn == toil.actor)
+					{
+						Log.Warning("Executing WaitWith toil but otherPawn is the same as toil.actor");
+					}
+					else
+					{
+						Pawn pawn2 = pawn;
+						int ticks2 = ticks;
+						bool maintainPosture2 = maintainPosture;
+						PawnUtility.ForceWait(pawn2, ticks2, null, maintainPosture2);
+					}
 				}
 			};
 			toil.FailOnDespawnedOrNull(targetInd);
@@ -74,6 +83,46 @@ namespace Verse.AI
 				}
 			};
 			return toil;
+		}
+
+		public static Toil Do(Action action)
+		{
+			return new Toil
+			{
+				initAction = action
+			};
+		}
+
+		public static Toil DoAtomic(Action action)
+		{
+			return new Toil
+			{
+				initAction = action,
+				atomicWithPrevious = true
+			};
+		}
+
+		public static Toil Open(TargetIndex openableInd)
+		{
+			Toil open = new Toil();
+			open.initAction = delegate
+			{
+				Pawn actor = open.actor;
+				Thing thing = actor.CurJob.GetTarget(openableInd).Thing;
+				Designation designation = actor.Map.designationManager.DesignationOn(thing, DesignationDefOf.Open);
+				if (designation != null)
+				{
+					designation.Delete();
+				}
+				IOpenable openable = (IOpenable)thing;
+				if (openable.CanOpen)
+				{
+					openable.Open();
+					actor.records.Increment(RecordDefOf.ContainersOpened);
+				}
+			};
+			open.defaultCompleteMode = ToilCompleteMode.Instant;
+			return open;
 		}
 	}
 }

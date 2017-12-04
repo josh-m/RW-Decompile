@@ -37,7 +37,7 @@ namespace RimWorld
 			}
 		}
 
-		public static bool CanWearTogether(ThingDef A, ThingDef B)
+		public static bool CanWearTogether(ThingDef A, ThingDef B, BodyDef body)
 		{
 			bool flag = false;
 			for (int i = 0; i < A.apparel.layers.Count; i++)
@@ -62,32 +62,27 @@ namespace RimWorld
 			{
 				return true;
 			}
-			for (int k = 0; k < A.apparel.bodyPartGroups.Count; k++)
+			BodyPartGroupDef[] interferingBodyPartGroups = A.apparel.GetInterferingBodyPartGroups(body);
+			BodyPartGroupDef[] interferingBodyPartGroups2 = B.apparel.GetInterferingBodyPartGroups(body);
+			for (int k = 0; k < interferingBodyPartGroups.Length; k++)
 			{
-				for (int l = 0; l < B.apparel.bodyPartGroups.Count; l++)
+				if (interferingBodyPartGroups2.Contains(interferingBodyPartGroups[k]))
 				{
-					BodyPartGroupDef item = A.apparel.bodyPartGroups[k];
-					BodyPartGroupDef item2 = B.apparel.bodyPartGroups[l];
-					for (int m = 0; m < BodyDefOf.Human.AllParts.Count; m++)
-					{
-						BodyPartRecord bodyPartRecord = BodyDefOf.Human.AllParts[m];
-						if (bodyPartRecord.groups.Contains(item) && bodyPartRecord.groups.Contains(item2))
-						{
-							return false;
-						}
-					}
+					return false;
 				}
 			}
 			return true;
 		}
 
-		public static void GenerateLayerGroupPairs(ThingDef td, Action<ApparelUtility.LayerGroupPair> callback)
+		public static void GenerateLayerGroupPairs(BodyDef body, ThingDef td, Action<ApparelUtility.LayerGroupPair> callback)
 		{
 			for (int i = 0; i < td.apparel.layers.Count; i++)
 			{
-				for (int j = 0; j < td.apparel.bodyPartGroups.Count; j++)
+				ApparelLayer layer = td.apparel.layers[i];
+				BodyPartGroupDef[] interferingBodyPartGroups = td.apparel.GetInterferingBodyPartGroups(body);
+				for (int j = 0; j < interferingBodyPartGroups.Length; j++)
 				{
-					callback(new ApparelUtility.LayerGroupPair(td.apparel.layers[i], td.apparel.bodyPartGroups[j]));
+					callback(new ApparelUtility.LayerGroupPair(layer, interferingBodyPartGroups[j]));
 				}
 			}
 		}

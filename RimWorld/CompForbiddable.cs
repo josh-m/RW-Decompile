@@ -84,7 +84,7 @@ namespace RimWorld
 				Command_Toggle com = new Command_Toggle();
 				com.hotKey = KeyBindingDefOf.CommandItemForbid;
 				com.icon = TexCommand.Forbidden;
-				com.isActive = (() => !this.<>f__this.forbiddenInt);
+				com.isActive = (() => !this.$this.forbiddenInt);
 				com.defaultLabel = "CommandForbid".Translate();
 				if (this.forbiddenInt)
 				{
@@ -99,7 +99,7 @@ namespace RimWorld
 					com.tutorTag = "ToggleForbidden-Door";
 					com.toggleAction = delegate
 					{
-						this.<>f__this.Forbidden = !this.<>f__this.Forbidden;
+						this.$this.Forbidden = !this.$this.Forbidden;
 						PlayerKnowledgeDatabase.KnowledgeDemonstrated(ConceptDefOf.ForbiddingDoors, KnowledgeAmount.SpecificInteraction);
 					};
 				}
@@ -108,7 +108,7 @@ namespace RimWorld
 					com.tutorTag = "ToggleForbidden";
 					com.toggleAction = delegate
 					{
-						this.<>f__this.Forbidden = !this.<>f__this.Forbidden;
+						this.$this.Forbidden = !this.$this.Forbidden;
 						PlayerKnowledgeDatabase.KnowledgeDemonstrated(ConceptDefOf.Forbidding, KnowledgeAmount.SpecificInteraction);
 					};
 				}

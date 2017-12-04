@@ -10,15 +10,20 @@ namespace RimWorld
 	{
 		private const int RearmTicks = 1125;
 
+		public override bool TryMakePreToilReservations()
+		{
+			return this.pawn.Reserve(this.job.targetA, this.job, 1, -1, null);
+		}
+
 		[DebuggerHidden]
 		protected override IEnumerable<Toil> MakeNewToils()
 		{
+			this.FailOnDespawnedOrNull(TargetIndex.A);
 			this.FailOnThingMissingDesignation(TargetIndex.A, DesignationDefOf.RearmTrap);
-			yield return Toils_Reserve.Reserve(TargetIndex.A, 1, -1, null);
 			Toil gotoThing = new Toil();
 			gotoThing.initAction = delegate
 			{
-				this.<>f__this.pawn.pather.StartPath(this.<>f__this.TargetThingA, PathEndMode.Touch);
+				this.$this.pawn.pather.StartPath(this.$this.TargetThingA, PathEndMode.Touch);
 			};
 			gotoThing.defaultCompleteMode = ToilCompleteMode.PatherArrival;
 			gotoThing.FailOnDespawnedNullOrForbidden(TargetIndex.A);
@@ -28,15 +33,15 @@ namespace RimWorld
 			{
 				initAction = delegate
 				{
-					Thing thing = this.<>f__this.CurJob.targetA.Thing;
-					Designation designation = this.<>f__this.Map.designationManager.DesignationOn(thing, DesignationDefOf.RearmTrap);
+					Thing thing = this.$this.job.targetA.Thing;
+					Designation designation = this.$this.Map.designationManager.DesignationOn(thing, DesignationDefOf.RearmTrap);
 					if (designation != null)
 					{
 						designation.Delete();
 					}
 					Building_TrapRearmable building_TrapRearmable = thing as Building_TrapRearmable;
 					building_TrapRearmable.Rearm();
-					this.<>f__this.pawn.records.Increment(RecordDefOf.TrapsRearmed);
+					this.$this.pawn.records.Increment(RecordDefOf.TrapsRearmed);
 				},
 				defaultCompleteMode = ToilCompleteMode.Instant
 			};

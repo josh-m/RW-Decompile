@@ -22,6 +22,19 @@ namespace RimWorld
 
 		public static float ChanceOfBecomingChildOf(Pawn child, Pawn father, Pawn mother, PawnGenerationRequest? childGenerationRequest, PawnGenerationRequest? fatherGenerationRequest, PawnGenerationRequest? motherGenerationRequest)
 		{
+			float result;
+			try
+			{
+				result = ChildRelationUtility.ChanceOfBecomingChildOfInternal(child, father, mother, childGenerationRequest, fatherGenerationRequest, motherGenerationRequest);
+			}
+			finally
+			{
+			}
+			return result;
+		}
+
+		private static float ChanceOfBecomingChildOfInternal(Pawn child, Pawn father, Pawn mother, PawnGenerationRequest? childGenerationRequest, PawnGenerationRequest? fatherGenerationRequest, PawnGenerationRequest? motherGenerationRequest)
+		{
 			if (father != null && father.gender != Gender.Male)
 			{
 				Log.Warning("Tried to calculate chance for father with gender \"" + father.gender + "\".");
@@ -178,11 +191,11 @@ namespace RimWorld
 			{
 				float num = Mathf.Min(fatherMelanin.Value, motherMelanin.Value);
 				float num2 = Mathf.Max(fatherMelanin.Value, motherMelanin.Value);
-				if (childMelanin.HasValue && childMelanin.Value < num - 0.05f)
+				if (childMelanin < num - 0.05f)
 				{
 					return 0f;
 				}
-				if (childMelanin.HasValue && childMelanin.Value > num2 + 0.05f)
+				if (childMelanin > num2 + 0.05f)
 				{
 					return 0f;
 				}

@@ -30,6 +30,8 @@ namespace Verse
 
 		public static readonly Texture2D Rename = ContentFinder<Texture2D>.Get("UI/Buttons/Rename", true);
 
+		public static readonly Texture2D Banish = ContentFinder<Texture2D>.Get("UI/Buttons/Banish", true);
+
 		public static readonly Texture2D OpenStatsReport = ContentFinder<Texture2D>.Get("UI/Buttons/OpenStatsReport", true);
 
 		public static readonly Texture2D Copy = ContentFinder<Texture2D>.Get("UI/Buttons/Copy", true);
@@ -126,7 +128,9 @@ namespace Verse
 
 		public static readonly Texture2D UsePlanetDayNightSystem = ContentFinder<Texture2D>.Get("UI/Buttons/UsePlanetDayNightSystem", true);
 
-		public static readonly Texture2D ExpandingIcons = ContentFinder<Texture2D>.Get("UI/Buttons/ExpandingIcons", true);
+		public static readonly Texture2D ShowExpandingIcons = ContentFinder<Texture2D>.Get("UI/Buttons/ShowExpandingIcons", true);
+
+		public static readonly Texture2D ShowWorldFeatures = ContentFinder<Texture2D>.Get("UI/Buttons/ShowWorldFeatures", true);
 
 		public static readonly Texture2D[] SpeedButtonTextures = new Texture2D[]
 		{

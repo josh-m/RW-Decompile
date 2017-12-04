@@ -8,14 +8,6 @@ namespace RimWorld
 {
 	public class PowerNet
 	{
-		private const int MaxRestartTryInterval = 200;
-
-		private const int MinRestartTryInterval = 30;
-
-		private const int ShutdownInterval = 20;
-
-		private const float MinStoredEnergyToTurnOn = 5f;
-
 		public PowerNetManager powerNetManager;
 
 		public bool hasPowerSource;
@@ -34,6 +26,18 @@ namespace RimWorld
 
 		private float debugLastApparentStoredEnergy;
 
+		private const int MaxRestartTryInterval = 200;
+
+		private const int MinRestartTryInterval = 30;
+
+		private const float RestartMinFraction = 0.05f;
+
+		private const int ShutdownInterval = 20;
+
+		private const float ShutdownMinFraction = 0.05f;
+
+		private const float MinStoredEnergyToTurnOn = 5f;
+
 		private static List<CompPowerTrader> partsWantingPowerOn = new List<CompPowerTrader>();
 
 		private static List<CompPowerTrader> potentialShutdownParts = new List<CompPowerTrader>();
@@ -41,6 +45,33 @@ namespace RimWorld
 		private List<CompPowerBattery> givingBats = new List<CompPowerBattery>();
 
 		private static List<CompPowerBattery> batteriesShuffled = new List<CompPowerBattery>();
+
+		public Map Map
+		{
+			get
+			{
+				return this.powerNetManager.map;
+			}
+		}
+
+		public bool HasActivePowerSource
+		{
+			get
+			{
+				if (!this.hasPowerSource)
+				{
+					return false;
+				}
+				for (int i = 0; i < this.transmitters.Count; i++)
+				{
+					if (this.IsActivePowerSource(this.transmitters[i]))
+					{
+						return true;
+					}
+				}
+				return false;
+			}
+		}
 
 		public PowerNet(IEnumerable<CompPower> newTransmitters)
 		{
@@ -72,6 +103,17 @@ namespace RimWorld
 		private bool IsPowerSource(CompPower cp)
 		{
 			return cp is CompPowerBattery || (cp is CompPowerTrader && cp.Props.basePowerConsumption < 0f);
+		}
+
+		private bool IsActivePowerSource(CompPower cp)
+		{
+			CompPowerBattery compPowerBattery = cp as CompPowerBattery;
+			if (compPowerBattery != null && compPowerBattery.StoredEnergy > 0f)
+			{
+				return true;
+			}
+			CompPowerTrader compPowerTrader = cp as CompPowerTrader;
+			return compPowerTrader != null && compPowerTrader.PowerOutput > 0f;
 		}
 
 		public void RegisterConnector(CompPower b)
@@ -164,7 +206,7 @@ namespace RimWorld
 		{
 			float num = this.CurrentEnergyGainRate();
 			float num2 = this.CurrentStoredEnergy();
-			if (num2 + num >= -1E-07f && !this.powerNetManager.map.gameConditionManager.ConditionIsActive(GameConditionDefOf.SolarFlare))
+			if (num2 + num >= -1E-07f && !this.Map.gameConditionManager.ConditionIsActive(GameConditionDefOf.SolarFlare))
 			{
 				float num3;
 				if (this.batteryComps.Count > 0 && num2 >= 0.1f)
@@ -200,11 +242,18 @@ namespace RimWorld
 						}
 						if (Find.TickManager.TicksGame % num4 == 0)
 						{
-							CompPowerTrader compPowerTrader = PowerNet.partsWantingPowerOn.RandomElement<CompPowerTrader>();
-							if (num + num2 >= -(compPowerTrader.EnergyOutputPerTick + 1E-07f))
+							int num5 = Mathf.Max(1, Mathf.RoundToInt((float)PowerNet.partsWantingPowerOn.Count * 0.05f));
+							for (int j = 0; j < num5; j++)
 							{
-								compPowerTrader.PowerOn = true;
-								num += compPowerTrader.EnergyOutputPerTick;
+								CompPowerTrader compPowerTrader = PowerNet.partsWantingPowerOn.RandomElement<CompPowerTrader>();
+								if (!compPowerTrader.PowerOn)
+								{
+									if (num + num2 >= -(compPowerTrader.EnergyOutputPerTick + 1E-07f))
+									{
+										compPowerTrader.PowerOn = true;
+										num += compPowerTrader.EnergyOutputPerTick;
+									}
+								}
 							}
 						}
 					}
@@ -214,16 +263,20 @@ namespace RimWorld
 			else if (Find.TickManager.TicksGame % 20 == 0)
 			{
 				PowerNet.potentialShutdownParts.Clear();
-				for (int j = 0; j < this.powerComps.Count; j++)
+				for (int k = 0; k < this.powerComps.Count; k++)
 				{
-					if (this.powerComps[j].PowerOn && this.powerComps[j].EnergyOutputPerTick < 0f)
+					if (this.powerComps[k].PowerOn && this.powerComps[k].EnergyOutputPerTick < 0f)
 					{
-						PowerNet.potentialShutdownParts.Add(this.powerComps[j]);
+						PowerNet.potentialShutdownParts.Add(this.powerComps[k]);
 					}
 				}
 				if (PowerNet.potentialShutdownParts.Count > 0)
 				{
-					PowerNet.potentialShutdownParts.RandomElement<CompPowerTrader>().PowerOn = false;
+					int num6 = Mathf.Max(1, Mathf.RoundToInt((float)PowerNet.potentialShutdownParts.Count * 0.05f));
+					for (int l = 0; l < num6; l++)
+					{
+						PowerNet.potentialShutdownParts.RandomElement<CompPowerTrader>().PowerOn = false;
+					}
 				}
 			}
 		}
@@ -296,7 +349,7 @@ namespace RimWorld
 				}
 				if (energy < num2 * (float)PowerNet.batteriesShuffled.Count)
 				{
-					goto IL_12F;
+					goto IL_128;
 				}
 				for (int j = PowerNet.batteriesShuffled.Count - 1; j >= 0; j--)
 				{
@@ -314,20 +367,20 @@ namespace RimWorld
 				}
 				if (energy < 0.0005f || !PowerNet.batteriesShuffled.Any<CompPowerBattery>())
 				{
-					goto IL_196;
+					goto IL_18F;
 				}
 			}
 			Log.Error("Too many iterations.");
-			goto IL_1A0;
-			IL_12F:
+			goto IL_199;
+			IL_128:
 			float amount = energy / (float)PowerNet.batteriesShuffled.Count;
 			for (int k = 0; k < PowerNet.batteriesShuffled.Count; k++)
 			{
 				PowerNet.batteriesShuffled[k].AddEnergy(amount);
 			}
 			energy = 0f;
-			IL_196:
-			IL_1A0:
+			IL_18F:
+			IL_199:
 			PowerNet.batteriesShuffled.Clear();
 		}
 

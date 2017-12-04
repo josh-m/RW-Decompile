@@ -120,53 +120,35 @@ namespace Verse
 
 		private void ExposeTerrainGrid(TerrainDef[] grid, string label)
 		{
-			string compressedString = string.Empty;
-			if (Scribe.mode == LoadSaveMode.Saving)
+			Dictionary<ushort, TerrainDef> terrainDefsByShortHash = new Dictionary<ushort, TerrainDef>();
+			foreach (TerrainDef current in DefDatabase<TerrainDef>.AllDefs)
 			{
-				compressedString = GridSaveUtility.CompressedStringForShortGrid(delegate(IntVec3 c)
-				{
-					TerrainDef terrainDef2 = grid[this.map.cellIndices.CellToIndex(c)];
-					return (terrainDef2 == null) ? 0 : terrainDef2.shortHash;
-				}, this.map);
+				terrainDefsByShortHash.Add(current.shortHash, current);
 			}
-			Scribe_Values.Look<string>(ref compressedString, label, null, false);
-			if (Scribe.mode == LoadSaveMode.LoadingVars)
+			Func<IntVec3, ushort> shortReader = delegate(IntVec3 c)
 			{
-				Dictionary<ushort, TerrainDef> dictionary = new Dictionary<ushort, TerrainDef>();
-				foreach (TerrainDef current in DefDatabase<TerrainDef>.AllDefs)
+				TerrainDef terrainDef = grid[this.map.cellIndices.CellToIndex(c)];
+				return (terrainDef == null) ? 0 : terrainDef.shortHash;
+			};
+			Action<IntVec3, ushort> shortWriter = delegate(IntVec3 c, ushort val)
+			{
+				TerrainDef terrainDef = terrainDefsByShortHash.TryGetValue(val);
+				if (terrainDef == null && val != 0)
 				{
-					dictionary.Add(current.shortHash, current);
-				}
-				foreach (GridSaveUtility.LoadedGridShort current2 in GridSaveUtility.LoadedUShortGrid(compressedString, this.map))
-				{
-					TerrainDef terrainDef = null;
-					try
+					Log.Error(string.Concat(new object[]
 					{
-						if (current2.val == 0)
-						{
-							terrainDef = null;
-						}
-						else
-						{
-							terrainDef = dictionary[current2.val];
-						}
-					}
-					catch (KeyNotFoundException)
-					{
-						Log.Error(string.Concat(new object[]
-						{
-							"Did not find terrain def with short hash ",
-							current2.val,
-							" for cell ",
-							current2.cell,
-							"."
-						}));
-						terrainDef = TerrainDefOf.Sand;
-						dictionary.Add(current2.val, terrainDef);
-					}
-					grid[this.map.cellIndices.CellToIndex(current2.cell)] = terrainDef;
+						"Did not find terrain def with short hash ",
+						val,
+						" for cell ",
+						c,
+						"."
+					}));
+					terrainDef = TerrainDefOf.Sand;
+					terrainDefsByShortHash.Add(val, terrainDef);
 				}
-			}
+				grid[this.map.cellIndices.CellToIndex(c)] = terrainDef;
+			};
+			MapExposeUtility.ExposeUshort(this.map, shortReader, shortWriter, label);
 		}
 
 		public string DebugStringAt(IntVec3 c)

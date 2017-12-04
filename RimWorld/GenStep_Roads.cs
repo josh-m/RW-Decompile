@@ -127,7 +127,7 @@ namespace RimWorld
 					vector += Vector3Utility.HorizontalVectorFromAngle(current2.angle);
 				}
 				vector /= (float)(-(float)list2.Count);
-				vector += Rand.PointOnSphere * 1f / 6f;
+				vector += Rand.UnitVector3 * 1f / 6f;
 				vector.y = 0f;
 				for (int i = 0; i < list2.Count; i++)
 				{
@@ -191,7 +191,15 @@ namespace RimWorld
 		private Action PrepDrawRoad(Map map, TerrainDef rockDef, IntVec3 start, IntVec3 end, RoadDef roadDef, RoadPathingDef pathingDef, out IntVec3 centerpoint)
 		{
 			centerpoint = IntVec3.Invalid;
-			PawnPath pawnPath = map.pathFinder.FindPath(start, end, TraverseParms.For(TraverseMode.NoPassClosedDoors, Danger.Deadly, false), PathEndMode.OnCell);
+			PawnPath pawnPath = map.pathFinder.FindPath(start, end, TraverseParms.For(TraverseMode.NoPassClosedDoorsOrWater, Danger.Deadly, false), PathEndMode.OnCell);
+			if (pawnPath == PawnPath.NotFound)
+			{
+				pawnPath = map.pathFinder.FindPath(start, end, TraverseParms.For(TraverseMode.NoPassClosedDoors, Danger.Deadly, false), PathEndMode.OnCell);
+			}
+			if (pawnPath == PawnPath.NotFound)
+			{
+				pawnPath = map.pathFinder.FindPath(start, end, TraverseParms.For(TraverseMode.PassAllDestroyableThingsNotWater, Danger.Deadly, false), PathEndMode.OnCell);
+			}
 			if (pawnPath == PawnPath.NotFound)
 			{
 				pawnPath = map.pathFinder.FindPath(start, end, TraverseParms.For(TraverseMode.PassAllDestroyableThings, Danger.Deadly, false), PathEndMode.OnCell);
@@ -240,7 +248,7 @@ namespace RimWorld
 					num2++;
 				}
 			}
-			if (pathing == RoadPathingDefOf.Avoid && pathStartIndex + 1 < pathEndIndex)
+			if (pathStartIndex + 1 < pathEndIndex)
 			{
 				for (int k = 0; k < list.Count; k++)
 				{
@@ -253,7 +261,7 @@ namespace RimWorld
 						IntVec3 c = intVec + GenAdj.CardinalDirections[num4];
 						if (c.InBounds(map))
 						{
-							flag |= c.Impassable(map);
+							flag |= (pathing == RoadPathingDefOf.Avoid && c.Impassable(map));
 							if (c.GetTerrain(map).HasTag("Water"))
 							{
 								num3++;
@@ -366,7 +374,15 @@ namespace RimWorld
 			for (int i = 0; i < this.endcapSamples.Length; i++)
 			{
 				int index = Mathf.RoundToInt((float)input.Count * this.endcapSamples[i]);
-				PawnPath pawnPath = map.pathFinder.FindPath(input[index], input[input.Count - 1], TraverseParms.For(TraverseMode.NoPassClosedDoors, Danger.Deadly, false), PathEndMode.OnCell);
+				PawnPath pawnPath = map.pathFinder.FindPath(input[index], input[input.Count - 1], TraverseParms.For(TraverseMode.NoPassClosedDoorsOrWater, Danger.Deadly, false), PathEndMode.OnCell);
+				if (pawnPath == PawnPath.NotFound)
+				{
+					pawnPath = map.pathFinder.FindPath(input[index], input[input.Count - 1], TraverseParms.For(TraverseMode.NoPassClosedDoors, Danger.Deadly, false), PathEndMode.OnCell);
+				}
+				if (pawnPath == PawnPath.NotFound)
+				{
+					pawnPath = map.pathFinder.FindPath(input[index], input[input.Count - 1], TraverseParms.For(TraverseMode.PassAllDestroyableThingsNotWater, Danger.Deadly, false), PathEndMode.OnCell);
+				}
 				if (pawnPath == PawnPath.NotFound)
 				{
 					pawnPath = map.pathFinder.FindPath(input[index], input[input.Count - 1], TraverseParms.For(TraverseMode.PassAllDestroyableThings, Danger.Deadly, false), PathEndMode.OnCell);

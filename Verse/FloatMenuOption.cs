@@ -8,20 +8,6 @@ namespace Verse
 {
 	public class FloatMenuOption
 	{
-		public const float MaxWidth = 300f;
-
-		private const float NormalVerticalMargin = 4f;
-
-		private const float TinyVerticalMargin = 1f;
-
-		private const float NormalHorizontalMargin = 6f;
-
-		private const float TinyHorizontalMargin = 3f;
-
-		private const float MouseOverLabelShift = 4f;
-
-		public const float ExtraPartHeight = 30f;
-
 		private string labelInt;
 
 		public Action action;
@@ -48,6 +34,18 @@ namespace Verse
 
 		private float cachedRequiredWidth;
 
+		public const float MaxWidth = 300f;
+
+		private const float NormalVerticalMargin = 4f;
+
+		private const float TinyVerticalMargin = 1f;
+
+		private const float NormalHorizontalMargin = 6f;
+
+		private const float TinyHorizontalMargin = 3f;
+
+		private const float MouseOverLabelShift = 4f;
+
 		private static readonly Color ColorBGActive;
 
 		private static readonly Color ColorBGActiveMouseover;
@@ -57,6 +55,8 @@ namespace Verse
 		private static readonly Color ColorTextActive;
 
 		private static readonly Color ColorTextDisabled;
+
+		public const float ExtraPartHeight = 30f;
 
 		public string Label
 		{
@@ -167,19 +167,6 @@ namespace Verse
 			this.revalidateWorldClickTarget = revalidateWorldClickTarget;
 		}
 
-		static FloatMenuOption()
-		{
-			// Note: this type is marked as 'beforefieldinit'.
-			ColorInt colorInt = new ColorInt(21, 25, 29);
-			FloatMenuOption.ColorBGActive = colorInt.ToColor;
-			ColorInt colorInt2 = new ColorInt(29, 45, 50);
-			FloatMenuOption.ColorBGActiveMouseover = colorInt2.ToColor;
-			ColorInt colorInt3 = new ColorInt(40, 40, 40);
-			FloatMenuOption.ColorBGDisabled = colorInt3.ToColor;
-			FloatMenuOption.ColorTextActive = Color.white;
-			FloatMenuOption.ColorTextDisabled = new Color(0.9f, 0.9f, 0.9f);
-		}
-
 		public void SetSizeMode(FloatMenuSizeMode newSizeMode)
 		{
 			this.sizeMode = newSizeMode;
@@ -210,28 +197,30 @@ namespace Verse
 
 		public virtual bool DoGUI(Rect rect, bool colonistOrdering)
 		{
-			bool flag = !this.Disabled && Mouse.IsOver(rect);
+			Rect rect2 = rect;
+			rect2.height -= 1f;
+			bool flag = !this.Disabled && Mouse.IsOver(rect2);
 			bool flag2 = false;
 			Text.Font = this.CurrentFont;
-			Rect rect2 = rect;
-			rect2.xMin += this.HorizontalMargin;
-			rect2.xMax -= this.HorizontalMargin;
-			rect2.xMax -= 4f;
-			rect2.xMax -= this.extraPartWidth;
+			Rect rect3 = rect;
+			rect3.xMin += this.HorizontalMargin;
+			rect3.xMax -= this.HorizontalMargin;
+			rect3.xMax -= 4f;
+			rect3.xMax -= this.extraPartWidth;
 			if (flag)
 			{
-				rect2.x += 4f;
+				rect3.x += 4f;
 			}
-			Rect rect3 = default(Rect);
+			Rect rect4 = default(Rect);
 			if (this.extraPartWidth != 0f)
 			{
-				float num = Mathf.Min(Text.CalcSize(this.Label).x, rect2.width - 4f);
-				rect3 = new Rect(rect2.xMin + num, rect2.yMin, this.extraPartWidth, 30f);
-				flag2 = Mouse.IsOver(rect3);
+				float num = Mathf.Min(Text.CalcSize(this.Label).x, rect3.width - 4f);
+				rect4 = new Rect(rect3.xMin + num, rect3.yMin, this.extraPartWidth, 30f);
+				flag2 = Mouse.IsOver(rect4);
 			}
 			if (!this.Disabled)
 			{
-				MouseoverSounds.DoRegion(rect);
+				MouseoverSounds.DoRegion(rect2);
 			}
 			Color color = GUI.color;
 			if (this.Disabled)
@@ -250,16 +239,16 @@ namespace Verse
 			GUI.color = (this.Disabled ? FloatMenuOption.ColorTextDisabled : FloatMenuOption.ColorTextActive) * color;
 			if (this.sizeMode == FloatMenuSizeMode.Tiny)
 			{
-				rect2.y += 1f;
+				rect3.y += 1f;
 			}
 			Widgets.DrawAtlas(rect, TexUI.FloatMenuOptionBG);
 			Text.Anchor = TextAnchor.MiddleLeft;
-			Widgets.Label(rect2, this.Label);
+			Widgets.Label(rect3, this.Label);
 			Text.Anchor = TextAnchor.UpperLeft;
 			GUI.color = color;
 			if (this.extraPartOnGUI != null)
 			{
-				bool flag3 = this.extraPartOnGUI(rect3);
+				bool flag3 = this.extraPartOnGUI(rect4);
 				GUI.color = color;
 				if (flag3)
 				{
@@ -274,7 +263,7 @@ namespace Verse
 			{
 				UIHighlighter.HighlightOpportunity(rect, this.tutorTag);
 			}
-			if (!Widgets.ButtonInvisible(rect, false))
+			if (!Widgets.ButtonInvisible(rect2, false))
 			{
 				return false;
 			}
@@ -293,6 +282,19 @@ namespace Verse
 		public override string ToString()
 		{
 			return "FloatMenuOption(" + this.Label + ")";
+		}
+
+		static FloatMenuOption()
+		{
+			// Note: this type is marked as 'beforefieldinit'.
+			ColorInt colorInt = new ColorInt(21, 25, 29);
+			FloatMenuOption.ColorBGActive = colorInt.ToColor;
+			ColorInt colorInt2 = new ColorInt(29, 45, 50);
+			FloatMenuOption.ColorBGActiveMouseover = colorInt2.ToColor;
+			ColorInt colorInt3 = new ColorInt(40, 40, 40);
+			FloatMenuOption.ColorBGDisabled = colorInt3.ToColor;
+			FloatMenuOption.ColorTextActive = Color.white;
+			FloatMenuOption.ColorTextDisabled = new Color(0.9f, 0.9f, 0.9f);
 		}
 	}
 }

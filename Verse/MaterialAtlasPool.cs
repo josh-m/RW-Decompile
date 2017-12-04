@@ -8,9 +8,9 @@ namespace Verse
 	{
 		private class MaterialAtlas
 		{
-			private const float TexPadding = 0.03125f;
-
 			protected Material[] subMats = new Material[16];
+
+			private const float TexPadding = 0.03125f;
 
 			public MaterialAtlas(Material newRootMat)
 			{

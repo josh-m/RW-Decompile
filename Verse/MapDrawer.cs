@@ -135,7 +135,7 @@ namespace Verse
 			return true;
 		}
 
-		public void DrawMapMesh(SectionLayerPhaseDef phase)
+		public void DrawMapMesh()
 		{
 			CellRect currentViewRect = Find.CameraDriver.CurrentViewRect;
 			currentViewRect.minX -= 17;
@@ -145,7 +145,7 @@ namespace Verse
 			{
 				IntVec3 current = iterator.Current;
 				Section section = this.sections[current.x, current.z];
-				section.DrawSection(phase, !currentViewRect.Contains(section.botLeft));
+				section.DrawSection(!currentViewRect.Contains(section.botLeft));
 				iterator.MoveNext();
 			}
 		}
@@ -193,22 +193,22 @@ namespace Verse
 
 		private CellRect GetSunShadowsViewRect(CellRect rect)
 		{
-			Vector2 vector = GenCelestial.CurShadowVector(this.map);
-			if (vector.x < 0f)
+			GenCelestial.LightInfo lightSourceInfo = GenCelestial.GetLightSourceInfo(this.map, GenCelestial.LightType.Shadow);
+			if (lightSourceInfo.vector.x < 0f)
 			{
-				rect.maxX -= Mathf.FloorToInt(vector.x);
+				rect.maxX -= Mathf.FloorToInt(lightSourceInfo.vector.x);
 			}
 			else
 			{
-				rect.minX -= Mathf.CeilToInt(vector.x);
+				rect.minX -= Mathf.CeilToInt(lightSourceInfo.vector.x);
 			}
-			if (vector.y < 0f)
+			if (lightSourceInfo.vector.y < 0f)
 			{
-				rect.maxZ -= Mathf.FloorToInt(vector.y);
+				rect.maxZ -= Mathf.FloorToInt(lightSourceInfo.vector.y);
 			}
 			else
 			{
-				rect.minZ -= Mathf.CeilToInt(vector.y);
+				rect.minZ -= Mathf.CeilToInt(lightSourceInfo.vector.y);
 			}
 			return rect;
 		}

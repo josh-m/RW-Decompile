@@ -5,15 +5,15 @@ using Verse;
 
 namespace RimWorld.Planet
 {
-	public abstract class Settlement_TraderTracker : IExposable, IThingHolder
+	public abstract class Settlement_TraderTracker : IThingHolder, IExposable
 	{
-		private const float DefaultTradePriceImprovement = 0.02f;
-
 		public Settlement settlement;
 
 		private ThingOwner<Thing> stock;
 
 		private int lastStockGenerationTicks = -1;
+
+		private const float DefaultTradePriceImprovement = 0.02f;
 
 		private List<Pawn> tmpSavedPawns = new List<Pawn>();
 
@@ -155,7 +155,6 @@ namespace RimWorld.Planet
 				CaravanInventoryUtility.MoveAllInventoryToSomeoneElse(pawn, caravan.PawnsListForReading, null);
 				if (pawn.RaceProps.Humanlike)
 				{
-					Find.WorldPawns.DiscardIfUnimportant(pawn);
 					return;
 				}
 				if (!this.stock.TryAdd(pawn, false))
@@ -211,7 +210,6 @@ namespace RimWorld.Planet
 						if (pawn != null && pawn.Destroyed)
 						{
 							this.stock.Remove(pawn);
-							Find.WorldPawns.DiscardIfUnimportant(pawn);
 						}
 					}
 					for (int j = this.stock.Count - 1; j >= 0; j--)
@@ -235,12 +233,7 @@ namespace RimWorld.Planet
 				{
 					Thing thing = this.stock[i];
 					this.stock.Remove(thing);
-					Pawn pawn = thing as Pawn;
-					if (pawn != null)
-					{
-						Find.WorldPawns.DiscardIfUnimportant(pawn);
-					}
-					else if (!thing.Destroyed)
+					if (!(thing is Pawn) && !thing.Destroyed)
 					{
 						thing.Destroy(DestroyMode.Vanish);
 					}
@@ -262,9 +255,9 @@ namespace RimWorld.Planet
 			{
 				ItemCollectionGeneratorParams parms = default(ItemCollectionGeneratorParams);
 				parms.traderDef = this.TraderKind;
-				parms.forTile = this.settlement.Tile;
-				parms.forFaction = this.settlement.Faction;
-				this.stock.TryAddRange(ItemCollectionGeneratorDefOf.TraderStock.Worker.Generate(parms), true);
+				parms.tile = new int?(this.settlement.Tile);
+				parms.traderFaction = this.settlement.Faction;
+				this.stock.TryAddRangeOrTransfer(ItemCollectionGeneratorDefOf.TraderStock.Worker.Generate(parms), true, false);
 			}
 			for (int i = 0; i < this.stock.Count; i++)
 			{

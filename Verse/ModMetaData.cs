@@ -24,8 +24,6 @@ namespace Verse
 			public string description = "No description provided.";
 		}
 
-		private const string AboutFolderName = "About";
-
 		private DirectoryInfo rootDirInt;
 
 		private ContentSource source;
@@ -39,6 +37,8 @@ namespace Verse
 		private WorkshopItemHook workshopHookInt;
 
 		private PublishedFileId_t publishedFileIdInt = PublishedFileId_t.Invalid;
+
+		private const string AboutFolderName = "About";
 
 		public string Identifier
 		{

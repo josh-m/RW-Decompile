@@ -6,6 +6,8 @@ namespace Verse
 {
 	public class PawnUIOverlay
 	{
+		private Pawn pawn;
+
 		private const float PawnLabelOffsetY = -0.6f;
 
 		private const int PawnStatBarWidth = 32;
@@ -13,8 +15,6 @@ namespace Verse
 		private const float ActivityIconSize = 13f;
 
 		private const float ActivityIconOffsetY = 12f;
-
-		private Pawn pawn;
 
 		public PawnUIOverlay(Pawn pawn)
 		{
@@ -29,22 +29,24 @@ namespace Verse
 			}
 			if (!this.pawn.RaceProps.Humanlike)
 			{
-				switch (Prefs.AnimalNameMode)
+				AnimalNameDisplayMode animalNameMode = Prefs.AnimalNameMode;
+				if (animalNameMode == AnimalNameDisplayMode.None)
 				{
-				case AnimalNameDisplayMode.None:
 					return;
-				case AnimalNameDisplayMode.TameNamed:
-					if (this.pawn.Name == null || this.pawn.Name.Numerical)
+				}
+				if (animalNameMode != AnimalNameDisplayMode.TameAll)
+				{
+					if (animalNameMode == AnimalNameDisplayMode.TameNamed)
 					{
-						return;
+						if (this.pawn.Name == null || this.pawn.Name.Numerical)
+						{
+							return;
+						}
 					}
-					break;
-				case AnimalNameDisplayMode.TameAll:
-					if (this.pawn.Name == null)
-					{
-						return;
-					}
-					break;
+				}
+				else if (this.pawn.Name == null)
+				{
+					return;
 				}
 			}
 			Vector2 pos = GenMapUI.LabelDrawPosFor(this.pawn, -0.6f);

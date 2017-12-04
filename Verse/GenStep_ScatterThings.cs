@@ -7,8 +7,6 @@ namespace Verse
 {
 	public class GenStep_ScatterThings : GenStep_Scatterer
 	{
-		private const int ClusterRadius = 4;
-
 		public ThingDef thingDef;
 
 		public ThingDef stuff;
@@ -27,6 +25,8 @@ namespace Verse
 
 		[Unsaved]
 		private int leftInCluster;
+
+		private const int ClusterRadius = 4;
 
 		private List<Rot4> possibleRotationsInt;
 
@@ -232,16 +232,10 @@ namespace Verse
 						{
 							int num4 = (int)((float)(list[num2] - list[num3]) * Rand.Value);
 							List<int> list2;
-							List<int> expr_9B = list2 = list;
-							int num5;
-							int expr_9F = num5 = num2;
-							num5 = list2[num5];
-							expr_9B[expr_9F] = num5 - num4;
-							List<int> list3;
-							List<int> expr_B8 = list3 = list;
-							int expr_BD = num5 = num3;
-							num5 = list3[num5];
-							expr_B8[expr_BD] = num5 + num4;
+							int index;
+							(list2 = list)[index = num2] = list2[index] - num4;
+							int index2;
+							(list2 = list)[index2 = num3] = list2[index2] + num4;
 						}
 					}
 				}

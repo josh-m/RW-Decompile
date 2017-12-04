@@ -6,15 +6,15 @@ using Verse;
 
 namespace RimWorld
 {
-	public class Pawn_ApparelTracker : IExposable, IThingHolder
+	public class Pawn_ApparelTracker : IThingHolder, IExposable
 	{
-		private const int RecordWalkedNakedTaleIntervalTicks = 60000;
-
 		public Pawn pawn;
 
 		private ThingOwner<Apparel> wornApparel;
 
 		private int lastApparelWearoutTick = -1;
+
+		private const int RecordWalkedNakedTaleIntervalTicks = 60000;
 
 		private static List<Apparel> tmpApparelList = new List<Apparel>();
 
@@ -66,6 +66,22 @@ namespace RimWorld
 				bool flag;
 				bool flag2;
 				this.HasBasicApparel(out flag, out flag2);
+				if (!flag)
+				{
+					bool flag3 = false;
+					foreach (BodyPartRecord current in this.pawn.health.hediffSet.GetNotMissingParts(BodyPartHeight.Undefined, BodyPartDepth.Undefined))
+					{
+						if (current.IsInGroup(BodyPartGroupDefOf.Legs))
+						{
+							flag3 = true;
+							break;
+						}
+					}
+					if (!flag3)
+					{
+						flag = true;
+					}
+				}
 				if (this.pawn.gender == Gender.Male)
 				{
 					return !flag;
@@ -137,7 +153,7 @@ namespace RimWorld
 					this.pawn
 				});
 				text = text.CapitalizeFirst();
-				Messages.Message(text, this.pawn, MessageSound.Negative);
+				Messages.Message(text, this.pawn, MessageTypeDefOf.NegativeEvent);
 			}
 		}
 
@@ -145,7 +161,7 @@ namespace RimWorld
 		{
 			for (int i = 0; i < this.wornApparel.Count; i++)
 			{
-				if (!ApparelUtility.CanWearTogether(apDef, this.wornApparel[i].def))
+				if (!ApparelUtility.CanWearTogether(apDef, this.wornApparel[i].def, this.pawn.RaceProps.body))
 				{
 					return false;
 				}
@@ -173,7 +189,7 @@ namespace RimWorld
 			for (int i = this.wornApparel.Count - 1; i >= 0; i--)
 			{
 				Apparel apparel = this.wornApparel[i];
-				if (!ApparelUtility.CanWearTogether(newApparel.def, apparel.def))
+				if (!ApparelUtility.CanWearTogether(newApparel.def, apparel.def, this.pawn.RaceProps.body))
 				{
 					if (dropReplacedApparel)
 					{

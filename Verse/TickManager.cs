@@ -247,7 +247,14 @@ namespace Verse
 		{
 			if (!this.Paused)
 			{
-				this.realTimeToTickThrough += Time.deltaTime;
+				if (Mathf.Abs(Time.deltaTime - this.CurTimePerTick) < this.CurTimePerTick * 0.2f)
+				{
+					this.realTimeToTickThrough += this.CurTimePerTick;
+				}
+				else
+				{
+					this.realTimeToTickThrough += Time.deltaTime;
+				}
 				int num = 0;
 				while (this.realTimeToTickThrough > 0f && (float)num < this.TickRateMultiplier * 2f)
 				{

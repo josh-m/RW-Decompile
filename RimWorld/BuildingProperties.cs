@@ -32,8 +32,6 @@ namespace RimWorld
 
 		public bool wantsHopperAdjacent;
 
-		public bool ignoreNeedsPower;
-
 		public bool allowWireConnection = true;
 
 		public bool shipPart;
@@ -48,7 +46,9 @@ namespace RimWorld
 
 		public bool allowAutoroof = true;
 
-		public bool preventDeterioration;
+		public bool preventDeteriorationOnTop;
+
+		public bool preventDeteriorationInside;
 
 		public bool isMealSource;
 
@@ -83,8 +83,6 @@ namespace RimWorld
 		public SoundDef soundDispense;
 
 		public ThingDef turretGunDef;
-
-		public ThingDef turretShellDef;
 
 		public float turretBurstWarmupTime;
 
@@ -178,19 +176,7 @@ namespace RimWorld
 		{
 			get
 			{
-				if (!this.IsTurret)
-				{
-					return false;
-				}
-				List<VerbProperties> verbs = this.turretGunDef.Verbs;
-				for (int i = 0; i < verbs.Count; i++)
-				{
-					if (verbs[i].projectileDef != null && verbs[i].projectileDef.projectile.flyOverhead)
-					{
-						return true;
-					}
-				}
-				return false;
+				return this.IsTurret && this.turretGunDef.HasComp(typeof(CompChangeableProjectile)) && this.turretGunDef.building.fixedStorageSettings.filter.Allows(ThingDefOf.Shell_HighExplosive);
 			}
 		}
 

@@ -10,16 +10,6 @@ namespace RimWorld
 	[StaticConstructorOnStartup]
 	public class ColonistBarColonistDrawer
 	{
-		private const float PawnTextureCameraZoom = 1.28205f;
-
-		private const float PawnTextureHorizontalPadding = 1f;
-
-		private const float BaseIconSize = 20f;
-
-		private const float BaseGroupFrameMargin = 12f;
-
-		public const float DoubleClickTime = 0.5f;
-
 		private Dictionary<string, string> pawnLabelsCache = new Dictionary<string, string>();
 
 		private static readonly Texture2D MoodBGTex = SolidColorMaterials.NewSolidColorTexture(new Color(0.4f, 0.47f, 0.53f, 0.44f));
@@ -45,6 +35,16 @@ namespace RimWorld
 		public static readonly Vector2 PawnTextureSize = new Vector2(ColonistBar.BaseSize.x - 2f, 75f);
 
 		private static readonly Vector3 PawnTextureCameraOffset = new Vector3(0f, 0f, 0.3f);
+
+		private const float PawnTextureCameraZoom = 1.28205f;
+
+		private const float PawnTextureHorizontalPadding = 1f;
+
+		private const float BaseIconSize = 20f;
+
+		private const float BaseGroupFrameMargin = 12f;
+
+		public const float DoubleClickTime = 0.5f;
 
 		private static Vector2[] bracketLocs = new Vector2[4];
 

@@ -13,7 +13,7 @@ namespace RimWorld.Planet
 	{
 		private static readonly Texture2D AbandonCommandTex = ContentFinder<Texture2D>.Get("UI/Commands/AbandonHome", true);
 
-		public static Command AbandonCommand(Settlement settlement)
+		public static Command AbandonCommand(MapParent settlement)
 		{
 			Command_Action command_Action = new Command_Action();
 			command_Action.defaultLabel = "CommandAbandonHome".Translate();
@@ -30,12 +30,12 @@ namespace RimWorld.Planet
 			return command_Action;
 		}
 
-		public static bool AllColonistsThere(Settlement settlement)
+		public static bool AllColonistsThere(MapParent settlement)
 		{
 			return !CaravanUtility.PlayerHasAnyCaravan() && !Find.Maps.Any((Map x) => x.info.parent != settlement && x.mapPawns.FreeColonistsSpawned.Any<Pawn>());
 		}
 
-		public static void TryAbandonViaInterface(Settlement settlement)
+		public static void TryAbandonViaInterface(MapParent settlement)
 		{
 			Map map = settlement.Map;
 			if (map == null)
@@ -65,7 +65,7 @@ namespace RimWorld.Planet
 						stringBuilder2
 					}));
 				}
-				PawnDiedOrDownedThoughtsUtility.BuildMoodThoughtsListString(map.mapPawns.AllPawns, PawnDiedOrDownedThoughtsKind.Abandoned, stringBuilder, null, "\n\n" + "ConfirmAbandonHomeNegativeThoughts_Everyone".Translate(), "ConfirmAbandonHomeNegativeThoughts");
+				PawnDiedOrDownedThoughtsUtility.BuildMoodThoughtsListString(map.mapPawns.AllPawns, PawnDiedOrDownedThoughtsKind.Banished, stringBuilder, null, "\n\n" + "ConfirmAbandonHomeNegativeThoughts_Everyone".Translate(), "ConfirmAbandonHomeNegativeThoughts");
 				if (stringBuilder.Length == 0)
 				{
 					SettlementAbandonUtility.Abandon(settlement);
@@ -81,19 +81,15 @@ namespace RimWorld.Planet
 			}
 		}
 
-		private static void Abandon(Settlement settlement)
+		private static void Abandon(MapParent settlement)
 		{
-			if (settlement.HasMap)
-			{
-				PawnDiedOrDownedThoughtsUtility.TryGiveThoughts(settlement.Map.mapPawns.AllPawns, PawnDiedOrDownedThoughtsKind.Abandoned);
-			}
 			Find.WorldObjects.Remove(settlement);
 			FactionBase factionBase = settlement as FactionBase;
 			if (factionBase != null)
 			{
 				SettlementAbandonUtility.AddAbandonedBase(factionBase);
 			}
-			Find.GameEnder.CheckGameOver();
+			Find.GameEnder.CheckOrUpdateGameOver();
 		}
 
 		private static void AddAbandonedBase(FactionBase factionBase)

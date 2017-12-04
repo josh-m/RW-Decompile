@@ -40,7 +40,7 @@ namespace Verse
 			{
 				return;
 			}
-			if (thing.Spawned)
+			if (thing.Spawned && thing.def.selectable)
 			{
 				bool flag = CameraJumper.TryHideWorld();
 				bool flag2 = false;
@@ -68,7 +68,7 @@ namespace Verse
 			{
 				return;
 			}
-			if (worldObject.Spawned)
+			if (worldObject.Spawned && worldObject.SelectableNow)
 			{
 				CameraJumper.TryShowWorld();
 				Find.WorldSelector.ClearSelection();
@@ -203,14 +203,19 @@ namespace Verse
 					if (thing2 != null && thing2.Spawned)
 					{
 						result = thing2;
+						break;
 					}
-					if (!result.HasThing)
+					ThingComp thingComp = parentHolder as ThingComp;
+					if (thingComp != null && thingComp.parent.Spawned)
 					{
-						WorldObject worldObject = parentHolder as WorldObject;
-						if (worldObject != null && worldObject.Spawned)
-						{
-							result = worldObject;
-						}
+						result = thingComp.parent;
+						break;
+					}
+					WorldObject worldObject = parentHolder as WorldObject;
+					if (worldObject != null && worldObject.Spawned)
+					{
+						result = worldObject;
+						break;
 					}
 				}
 				if (result.IsValid)

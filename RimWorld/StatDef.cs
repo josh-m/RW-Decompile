@@ -25,17 +25,41 @@ namespace RimWorld
 
 		public bool showOnMechanoids = true;
 
+		public bool showOnNonWorkTables = true;
+
+		public bool neverDisabled;
+
 		public int displayPriorityInCategory;
 
 		public ToStringNumberSense toStringNumberSense = ToStringNumberSense.Absolute;
 
 		public ToStringStyle toStringStyle;
 
+		public ToStringStyle? toStringStyleUnfinalized;
+
 		public string formatString;
 
 		public float defaultBaseValue = 1f;
 
-		public float minValue;
+		public List<SkillNeed> skillNeedOffsets;
+
+		public float noSkillOffset;
+
+		public List<PawnCapacityOffset> capacityOffsets;
+
+		public List<StatDef> statFactors;
+
+		public bool applyFactorsIfNegative = true;
+
+		public List<SkillNeed> skillNeedFactors;
+
+		public float noSkillFactor = 1f;
+
+		public List<PawnCapacityFactor> capacityFactors;
+
+		public SimpleCurve postProcessCurve;
+
+		public float minValue = -9999999f;
 
 		public float maxValue = 9999999f;
 
@@ -43,17 +67,9 @@ namespace RimWorld
 
 		public float roundToFiveOver = 3.40282347E+38f;
 
-		public List<StatDef> statFactors;
+		public bool minifiedThingInherits;
 
-		public bool applyFactorsIfNegative = true;
-
-		public float noSkillFactor = 1f;
-
-		public List<SkillNeed> skillNeedFactors;
-
-		public List<PawnCapacityFactor> capacityFactors;
-
-		public SimpleCurve postProcessCurve;
+		public bool scenarioRandomizable;
 
 		public List<StatPart> parts;
 
@@ -76,6 +92,15 @@ namespace RimWorld
 					this.workerInt.InitSetStat(this);
 				}
 				return this.workerInt;
+			}
+		}
+
+		public ToStringStyle ToStringStyleUnfinalized
+		{
+			get
+			{
+				ToStringStyle? toStringStyle = this.toStringStyleUnfinalized;
+				return (!toStringStyle.HasValue) ? this.toStringStyle : this.toStringStyleUnfinalized.Value;
 			}
 		}
 
@@ -117,12 +142,7 @@ namespace RimWorld
 
 		public string ValueToString(float val, ToStringNumberSense numberSense = ToStringNumberSense.Absolute)
 		{
-			string text = val.ToStringByStyle(this.toStringStyle, numberSense);
-			if (!this.formatString.NullOrEmpty())
-			{
-				text = string.Format(this.formatString, text);
-			}
-			return text;
+			return this.Worker.ValueToString(val, true, numberSense);
 		}
 
 		public static StatDef Named(string defName)

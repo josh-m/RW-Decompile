@@ -20,7 +20,7 @@ namespace RimWorld
 			return this.Candidates(map).Any<Pawn>();
 		}
 
-		public override bool TryExecute(IncidentParms parms)
+		protected override bool TryExecuteWorker(IncidentParms parms)
 		{
 			Map map = (Map)parms.target;
 			Pawn pawn = null;
@@ -64,8 +64,8 @@ namespace RimWorld
 			}
 			Find.LetterStack.ReceiveLetter("LetterLabelAnimalSelfTame".Translate(new object[]
 			{
-				GenLabel.BestKindLabel(pawn, false, false, false)
-			}).CapitalizeFirst(), text2, LetterDefOf.Good, pawn, null);
+				pawn.KindLabel
+			}).CapitalizeFirst(), text2, LetterDefOf.PositiveEvent, pawn, null);
 			return true;
 		}
 	}

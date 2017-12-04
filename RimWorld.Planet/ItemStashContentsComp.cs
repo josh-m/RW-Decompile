@@ -51,7 +51,7 @@ namespace RimWorld.Planet
 			}
 			ItemStashContentsComp.tmpContents.Clear();
 			ItemStashContentsComp.tmpContents.AddRange(this.contents);
-			ItemStashContentsComp.tmpContents.SortByDescending((Thing x) => x.GetInnerIfMinified().MarketValue * (float)x.stackCount);
+			ItemStashContentsComp.tmpContents.SortByDescending((Thing x) => x.MarketValue * (float)x.stackCount);
 			ItemStashContentsComp.tmpContentsStr.Clear();
 			for (int i = 0; i < Mathf.Min(5, ItemStashContentsComp.tmpContents.Count); i++)
 			{
@@ -72,11 +72,6 @@ namespace RimWorld.Planet
 			{
 				text
 			});
-		}
-
-		virtual IThingHolder get_ParentHolder()
-		{
-			return base.ParentHolder;
 		}
 	}
 }
