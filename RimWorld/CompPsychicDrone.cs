@@ -71,25 +71,9 @@ namespace RimWorld
 
 		public override string CompInspectStringExtra()
 		{
-			string text = "Error";
-			switch (this.droneLevel)
-			{
-			case PsychicDroneLevel.BadLow:
-				text = "PsychicDroneLevelLow".Translate();
-				break;
-			case PsychicDroneLevel.BadMedium:
-				text = "PsychicDroneLevelMedium".Translate();
-				break;
-			case PsychicDroneLevel.BadHigh:
-				text = "PsychicDroneLevelHigh".Translate();
-				break;
-			case PsychicDroneLevel.BadExtreme:
-				text = "PsychicDroneLevelExtreme".Translate();
-				break;
-			}
 			return "PsychicDroneLevel".Translate(new object[]
 			{
-				text
+				this.droneLevel.GetLabelCap()
 			});
 		}
 	}

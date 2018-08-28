@@ -12,10 +12,13 @@ namespace RimWorld
 {
 	public class Scenario : IExposable, WorkshopUploadable
 	{
+		[MustTranslate]
 		public string name;
 
+		[MustTranslate]
 		public string summary;
 
+		[MustTranslate]
 		public string description;
 
 		internal ScenPart_PlayerFaction playerFaction;
@@ -26,10 +29,12 @@ namespace RimWorld
 
 		private ScenarioCategory categoryInt;
 
+		[NoTranslate]
 		public string fileName;
 
 		private WorkshopItemHook workshopHookInt;
 
+		[NoTranslate]
 		private string tempUploadDir;
 
 		public bool enabled = true;
@@ -66,7 +71,7 @@ namespace RimWorld
 			{
 				if (this.categoryInt == ScenarioCategory.Undefined)
 				{
-					Log.Error("Category is Undefined on Scenario " + this);
+					Log.Error("Category is Undefined on Scenario " + this, false);
 				}
 				return this.categoryInt;
 			}
@@ -84,6 +89,13 @@ namespace RimWorld
 			Scribe_Values.Look<PublishedFileId_t>(ref this.publishedFileIdInt, "publishedFileId", PublishedFileId_t.Invalid, false);
 			Scribe_Deep.Look<ScenPart_PlayerFaction>(ref this.playerFaction, "playerFaction", new object[0]);
 			Scribe_Collections.Look<ScenPart>(ref this.parts, "parts", LookMode.Deep, new object[0]);
+			if (Scribe.mode == LoadSaveMode.PostLoadInit)
+			{
+				if (this.parts.RemoveAll((ScenPart x) => x == null) != 0)
+				{
+					Log.Warning("Some ScenParts were null after loading.", false);
+				}
+			}
 		}
 
 		[DebuggerHidden]
@@ -137,7 +149,7 @@ namespace RimWorld
 			}
 			catch (Exception ex)
 			{
-				Log.ErrorOnce("Exception in Scenario.GetFullInformationText():\n" + ex.ToString(), 10395878);
+				Log.ErrorOnce("Exception in Scenario.GetFullInformationText():\n" + ex.ToString(), 10395878, false);
 				result = "Cannot read data.";
 			}
 			return result;
@@ -195,11 +207,11 @@ namespace RimWorld
 			return page;
 		}
 
-		public bool AllowPlayerStartingPawn(Pawn pawn)
+		public bool AllowPlayerStartingPawn(Pawn pawn, bool tryingToRedress, PawnGenerationRequest req)
 		{
 			foreach (ScenPart current in this.AllParts)
 			{
-				if (!current.AllowPlayerStartingPawn(pawn))
+				if (!current.AllowPlayerStartingPawn(pawn, tryingToRedress, req))
 				{
 					return false;
 				}
@@ -207,11 +219,19 @@ namespace RimWorld
 			return true;
 		}
 
-		public void Notify_PawnGenerated(Pawn pawn, PawnGenerationContext context)
+		public void Notify_NewPawnGenerating(Pawn pawn, PawnGenerationContext context)
 		{
 			foreach (ScenPart current in this.AllParts)
 			{
-				current.Notify_PawnGenerated(pawn, context);
+				current.Notify_NewPawnGenerating(pawn, context);
+			}
+		}
+
+		public void Notify_PawnGenerated(Pawn pawn, PawnGenerationContext context, bool redressed)
+		{
+			foreach (ScenPart current in this.AllParts)
+			{
+				current.Notify_PawnGenerated(pawn, context, redressed);
 			}
 		}
 
@@ -289,7 +309,7 @@ namespace RimWorld
 		{
 			if (!this.parts.Contains(part))
 			{
-				Log.Error("Cannot remove: " + part);
+				Log.Error("Cannot remove: " + part, false);
 			}
 			this.parts.Remove(part);
 		}

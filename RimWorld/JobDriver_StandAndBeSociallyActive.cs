@@ -8,7 +8,7 @@ namespace RimWorld
 {
 	public class JobDriver_StandAndBeSociallyActive : JobDriver
 	{
-		public override bool TryMakePreToilReservations()
+		public override bool TryMakePreToilReservations(bool errorOnFailed)
 		{
 			return true;
 		}

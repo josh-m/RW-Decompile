@@ -21,7 +21,7 @@ namespace Verse
 			ShootLeanUtility.blockedArrays.Enqueue(ar);
 			if (ShootLeanUtility.blockedArrays.Count > 128)
 			{
-				Log.ErrorOnce("Too many blocked arrays to be feasible. >128", 388121);
+				Log.ErrorOnce("Too many blocked arrays to be feasible. >128", 388121, false);
 			}
 		}
 

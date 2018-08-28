@@ -32,7 +32,6 @@ namespace Verse
 		{
 			if (text == null)
 			{
-				Log.Error("TipSignal with null text.");
 				text = string.Empty;
 			}
 			this.text = text;

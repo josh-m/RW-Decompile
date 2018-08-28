@@ -1,4 +1,4 @@
-using RimWorld.Planet;
+using RimWorld;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -34,9 +34,9 @@ namespace Verse
 			}
 		}
 
-		public void ReceiveLetter(string label, string text, LetterDef textLetterDef, GlobalTargetInfo lookTarget, string debugInfo = null)
+		public void ReceiveLetter(string label, string text, LetterDef textLetterDef, LookTargets lookTargets, Faction relatedFaction = null, string debugInfo = null)
 		{
-			ChoiceLetter let = LetterMaker.MakeLetter(label, text, textLetterDef, lookTarget);
+			ChoiceLetter let = LetterMaker.MakeLetter(label, text, textLetterDef, lookTargets, relatedFaction);
 			this.ReceiveLetter(let, debugInfo);
 		}
 
@@ -48,14 +48,24 @@ namespace Verse
 
 		public void ReceiveLetter(Letter let, string debugInfo = null)
 		{
-			let.def.arriveSound.PlayOneShotOnCamera(null);
-			if (let.def.pauseIfPauseOnUrgentLetter && Prefs.PauseOnUrgentLetter && !Find.TickManager.Paused)
+			if (!let.CanShowInLetterStack)
 			{
-				Find.TickManager.TogglePaused();
+				return;
 			}
-			this.letters.Add(let);
+			let.def.arriveSound.PlayOneShotOnCamera(null);
+			if (let.def.pauseIfPauseOnUrgentLetter && Prefs.PauseOnUrgentLetter)
+			{
+				Find.TickManager.Pause();
+			}
+			else if (let.def.forcedSlowdown)
+			{
+				Find.TickManager.slower.SignalForceNormalSpeedShort();
+			}
 			let.arrivalTime = Time.time;
+			let.arrivalTick = Find.TickManager.TicksGame;
 			let.debugInfo = debugInfo;
+			this.letters.Add(let);
+			Find.Archive.Add(let);
 			let.Received();
 		}
 
@@ -74,11 +84,14 @@ namespace Verse
 				num -= 42f;
 			}
 			this.lastTopYInt = num;
-			num = baseY - 30f;
-			for (int j = this.letters.Count - 1; j >= 0; j--)
+			if (Event.current.type == EventType.Repaint)
 			{
-				this.letters[j].CheckForMouseOverTextAt(num);
-				num -= 42f;
+				num = baseY - 30f;
+				for (int j = this.letters.Count - 1; j >= 0; j--)
+				{
+					this.letters[j].CheckForMouseOverTextAt(num);
+					num -= 42f;
+				}
 			}
 		}
 
@@ -100,16 +113,12 @@ namespace Verse
 		{
 			if (this.mouseoverLetterIndex >= 0 && this.mouseoverLetterIndex < this.letters.Count)
 			{
-				GlobalTargetInfo lookTarget = this.letters[this.mouseoverLetterIndex].lookTarget;
-				if (lookTarget.IsValid && lookTarget.IsMapTarget && lookTarget.Map == Find.VisibleMap)
-				{
-					GenDraw.DrawArrowPointingAt(((TargetInfo)lookTarget).CenterVector3, false);
-				}
+				this.letters[this.mouseoverLetterIndex].lookTargets.TryHighlight(true, true, false);
 			}
 			this.mouseoverLetterIndex = -1;
 			for (int i = this.letters.Count - 1; i >= 0; i--)
 			{
-				if (!this.letters[i].StillValid)
+				if (!this.letters[i].CanShowInLetterStack)
 				{
 					this.RemoveLetter(this.letters[i]);
 				}
@@ -123,13 +132,10 @@ namespace Verse
 
 		public void ExposeData()
 		{
-			Scribe_Collections.Look<Letter>(ref this.letters, "letters", LookMode.Deep, new object[0]);
+			Scribe_Collections.Look<Letter>(ref this.letters, "letters", LookMode.Reference, new object[0]);
 			if (Scribe.mode == LoadSaveMode.PostLoadInit)
 			{
-				if (this.letters.RemoveAll((Letter x) => x == null) != 0)
-				{
-					Log.Error("Some letters were null.");
-				}
+				this.letters.RemoveAll((Letter x) => x == null);
 			}
 		}
 	}

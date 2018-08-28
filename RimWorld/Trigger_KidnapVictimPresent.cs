@@ -26,21 +26,28 @@ namespace RimWorld
 
 		public override bool ActivateOn(Lord lord, TriggerSignal signal)
 		{
-			if (signal.type == TriggerSignalType.Tick && Find.TickManager.TicksGame % 120 == 0 && Find.TickManager.TicksGame - lord.lastPawnHarmTick > 300)
+			if (signal.type == TriggerSignalType.Tick && Find.TickManager.TicksGame % 120 == 0)
 			{
-				TriggerData_PawnCycleInd data = this.Data;
-				data.pawnCycleInd++;
-				if (data.pawnCycleInd >= lord.ownedPawns.Count)
+				if (this.data == null || !(this.data is TriggerData_PawnCycleInd))
 				{
-					data.pawnCycleInd = 0;
+					BackCompatibility.TriggerDataPawnCycleIndNull(this);
 				}
-				if (lord.ownedPawns.Any<Pawn>())
+				if (Find.TickManager.TicksGame - lord.lastPawnHarmTick > 300)
 				{
-					Pawn pawn = lord.ownedPawns[data.pawnCycleInd];
-					Pawn pawn2;
-					if (pawn.Spawned && !pawn.Downed && pawn.MentalStateDef == null && KidnapAIUtility.TryFindGoodKidnapVictim(pawn, 8f, out pawn2, null) && !GenAI.InDangerousCombat(pawn))
+					TriggerData_PawnCycleInd data = this.Data;
+					data.pawnCycleInd++;
+					if (data.pawnCycleInd >= lord.ownedPawns.Count)
 					{
-						return true;
+						data.pawnCycleInd = 0;
+					}
+					if (lord.ownedPawns.Any<Pawn>())
+					{
+						Pawn pawn = lord.ownedPawns[data.pawnCycleInd];
+						Pawn pawn2;
+						if (pawn.Spawned && !pawn.Downed && pawn.MentalStateDef == null && KidnapAIUtility.TryFindGoodKidnapVictim(pawn, 8f, out pawn2, null) && !GenAI.InDangerousCombat(pawn))
+						{
+							return true;
+						}
 					}
 				}
 			}

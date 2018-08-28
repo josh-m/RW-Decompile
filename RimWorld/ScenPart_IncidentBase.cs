@@ -28,6 +28,11 @@ namespace RimWorld
 		{
 			base.ExposeData();
 			Scribe_Defs.Look<IncidentDef>(ref this.incident, "incident");
+			if (Scribe.mode == LoadSaveMode.PostLoadInit && this.incident == null)
+			{
+				this.incident = this.RandomizableIncidents().FirstOrDefault<IncidentDef>();
+				Log.Error("ScenPart has null incident after loading. Changing to " + this.incident.ToStringSafe<IncidentDef>(), false);
+			}
 		}
 
 		public override void DoEditInterface(Listing_ScenEdit listing)

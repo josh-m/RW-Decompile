@@ -28,15 +28,7 @@ namespace Verse
 
 		private float forcedMissRadius;
 
-		public const float LayingDownHitChanceFactorMinDistance = 4.5f;
-
-		public const float HitChanceFactorIfLayingDown = 0.2f;
-
-		private const float NonPawnShooterHitFactorPerDistance = 0.96f;
-
-		private const float ExecutionMaxDistance = 3.9f;
-
-		private const float ExecutionFactor = 7.5f;
+		private ShootLine shootLine;
 
 		private float FactorFromPosture
 		{
@@ -82,7 +74,36 @@ namespace Verse
 			}
 		}
 
-		public float ChanceToNotHitCover
+		public float AimOnTargetChance_StandardTarget
+		{
+			get
+			{
+				float num = this.factorFromShooterAndDist * this.factorFromEquipment * this.factorFromWeather * this.FactorFromCoveringGas * this.FactorFromExecution;
+				if (num < 0.0201f)
+				{
+					num = 0.0201f;
+				}
+				return num;
+			}
+		}
+
+		public float AimOnTargetChance_IgnoringPosture
+		{
+			get
+			{
+				return this.AimOnTargetChance_StandardTarget * this.factorFromTargetSize;
+			}
+		}
+
+		public float AimOnTargetChance
+		{
+			get
+			{
+				return this.AimOnTargetChance_IgnoringPosture * this.FactorFromPosture;
+			}
+		}
+
+		public float PassCoverChance
 		{
 			get
 			{
@@ -90,52 +111,37 @@ namespace Verse
 			}
 		}
 
-		public float ChanceToNotGoWild_IgnoringPosture
-		{
-			get
-			{
-				return this.factorFromShooterAndDist * this.factorFromEquipment * this.factorFromWeather * this.factorFromTargetSize * this.FactorFromCoveringGas * this.FactorFromExecution;
-			}
-		}
-
 		public float TotalEstimatedHitChance
 		{
 			get
 			{
-				float value = this.ChanceToNotGoWild_IgnoringPosture * this.FactorFromPosture * this.ChanceToNotHitCover;
+				float value = this.AimOnTargetChance * this.PassCoverChance;
 				return Mathf.Clamp01(value);
+			}
+		}
+
+		public ShootLine ShootLine
+		{
+			get
+			{
+				return this.shootLine;
 			}
 		}
 
 		public static ShotReport HitReportFor(Thing caster, Verb verb, LocalTargetInfo target)
 		{
-			Pawn pawn = caster as Pawn;
 			IntVec3 cell = target.Cell;
 			ShotReport result;
 			result.distance = (cell - caster.Position).LengthHorizontal;
 			result.target = target.ToTargetInfo(caster.Map);
-			float f;
-			if (pawn != null)
-			{
-				f = pawn.GetStatValue(StatDefOf.ShootingAccuracy, true);
-			}
-			else
-			{
-				f = 0.96f;
-			}
-			result.factorFromShooterAndDist = Mathf.Pow(f, result.distance);
-			if (result.factorFromShooterAndDist < 0.0201f)
-			{
-				result.factorFromShooterAndDist = 0.0201f;
-			}
-			result.factorFromEquipment = verb.verbProps.GetHitChanceFactor(verb.ownerEquipment, result.distance);
-			result.covers = CoverUtility.CalculateCoverGiverSet(cell, caster.Position, caster.Map);
-			result.coversOverallBlockChance = CoverUtility.CalculateOverallBlockChance(cell, caster.Position, caster.Map);
+			result.factorFromShooterAndDist = ShotReport.HitFactorFromShooter(caster, result.distance);
+			result.factorFromEquipment = verb.verbProps.GetHitChanceFactor(verb.EquipmentSource, result.distance);
+			result.covers = CoverUtility.CalculateCoverGiverSet(target, caster.Position, caster.Map);
+			result.coversOverallBlockChance = CoverUtility.CalculateOverallBlockChance(target, caster.Position, caster.Map);
 			result.coveringGas = null;
-			ShootLine shootLine;
-			if (verb.TryFindShootLineFromTo(verb.caster.Position, target, out shootLine))
+			if (verb.TryFindShootLineFromTo(verb.caster.Position, target, out result.shootLine))
 			{
-				foreach (IntVec3 current in shootLine.Points())
+				foreach (IntVec3 current in result.shootLine.Points())
 				{
 					Thing gas = current.GetGas(caster.Map);
 					if (gas != null && (result.coveringGas == null || result.coveringGas.gas.accuracyPenalty < gas.def.gas.accuracyPenalty))
@@ -144,7 +150,11 @@ namespace Verse
 					}
 				}
 			}
-			if (!caster.Position.Roofed(caster.Map) && !target.Cell.Roofed(caster.Map))
+			else
+			{
+				result.shootLine = new ShootLine(IntVec3.Invalid, IntVec3.Invalid);
+			}
+			if (!caster.Position.Roofed(caster.Map) || !target.Cell.Roofed(caster.Map))
 			{
 				result.factorFromWeather = caster.Map.weatherManager.CurWeatherAccuracyMultiplier;
 			}
@@ -152,22 +162,37 @@ namespace Verse
 			{
 				result.factorFromWeather = 1f;
 			}
-			result.factorFromTargetSize = 1f;
 			if (target.HasThing)
 			{
-				Pawn pawn2 = target.Thing as Pawn;
-				if (pawn2 != null)
+				Pawn pawn = target.Thing as Pawn;
+				if (pawn != null)
 				{
-					result.factorFromTargetSize = pawn2.BodySize;
+					result.factorFromTargetSize = pawn.BodySize;
 				}
 				else
 				{
-					result.factorFromTargetSize = target.Thing.def.fillPercent * 1.7f;
+					result.factorFromTargetSize = target.Thing.def.fillPercent * (float)target.Thing.def.size.x * (float)target.Thing.def.size.z * 2.5f;
 				}
 				result.factorFromTargetSize = Mathf.Clamp(result.factorFromTargetSize, 0.5f, 2f);
 			}
+			else
+			{
+				result.factorFromTargetSize = 1f;
+			}
 			result.forcedMissRadius = verb.verbProps.forcedMissRadius;
 			return result;
+		}
+
+		public static float HitFactorFromShooter(Thing caster, float distance)
+		{
+			float accRating = (!(caster is Pawn)) ? caster.GetStatValue(StatDefOf.ShootingAccuracyTurret, true) : caster.GetStatValue(StatDefOf.ShootingAccuracyPawn, true);
+			return ShotReport.HitFactorFromShooter(accRating, distance);
+		}
+
+		public static float HitFactorFromShooter(float accRating, float distance)
+		{
+			float a = Mathf.Pow(accRating, distance);
+			return Mathf.Max(a, 0.0201f);
 		}
 
 		public string GetTextReadout()
@@ -177,15 +202,13 @@ namespace Verse
 			{
 				stringBuilder.AppendLine();
 				stringBuilder.AppendLine("WeaponMissRadius".Translate() + "   " + this.forcedMissRadius.ToString("F1"));
+				stringBuilder.AppendLine("DirectHitChance".Translate() + "   " + (1f / (float)GenRadial.NumCellsInRadius(this.forcedMissRadius)).ToStringPercent());
 			}
 			else
 			{
 				stringBuilder.AppendLine(" " + this.TotalEstimatedHitChance.ToStringPercent());
 				stringBuilder.AppendLine("   " + "ShootReportShooterAbility".Translate() + "  " + this.factorFromShooterAndDist.ToStringPercent());
-				if (this.factorFromEquipment < 0.99f)
-				{
-					stringBuilder.AppendLine("   " + "ShootReportWeapon".Translate() + "        " + this.factorFromEquipment.ToStringPercent());
-				}
+				stringBuilder.AppendLine("   " + "ShootReportWeapon".Translate() + "        " + this.factorFromEquipment.ToStringPercent());
 				if (this.target.HasThing && this.factorFromTargetSize != 1f)
 				{
 					stringBuilder.AppendLine("   " + "TargetSize".Translate() + "       " + this.factorFromTargetSize.ToStringPercent());
@@ -206,17 +229,20 @@ namespace Verse
 				{
 					stringBuilder.AppendLine("   " + "Execution".Translate() + "   " + this.FactorFromExecution.ToStringPercent());
 				}
-				if (this.ChanceToNotHitCover < 1f)
+				if (this.PassCoverChance < 1f)
 				{
-					stringBuilder.AppendLine("   " + "ShootingCover".Translate() + "        " + this.ChanceToNotHitCover.ToStringPercent());
+					stringBuilder.AppendLine("   " + "ShootingCover".Translate() + "        " + this.PassCoverChance.ToStringPercent());
 					for (int i = 0; i < this.covers.Count; i++)
 					{
 						CoverInfo coverInfo = this.covers[i];
-						stringBuilder.AppendLine("     " + "CoverThingBlocksPercentOfShots".Translate(new object[]
+						if (coverInfo.BlockChance > 0f)
 						{
-							coverInfo.Thing.LabelCap,
-							coverInfo.BlockChance.ToStringPercent()
-						}));
+							stringBuilder.AppendLine("     " + "CoverThingBlocksPercentOfShots".Translate(new object[]
+							{
+								coverInfo.Thing.LabelCap,
+								coverInfo.BlockChance.ToStringPercent()
+							}));
+						}
 					}
 				}
 				else
@@ -229,7 +255,12 @@ namespace Verse
 
 		public Thing GetRandomCoverToMissInto()
 		{
-			return this.covers.RandomElementByWeight((CoverInfo c) => c.BlockChance).Thing;
+			CoverInfo coverInfo;
+			if (this.covers.TryRandomElementByWeight((CoverInfo c) => c.BlockChance, out coverInfo))
+			{
+				return coverInfo.Thing;
+			}
+			return null;
 		}
 	}
 }

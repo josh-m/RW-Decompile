@@ -17,7 +17,7 @@ namespace Verse
 		{
 			if (newColorTwo != Color.white)
 			{
-				Log.ErrorOnce("Cannot use Graphic_Random.GetColoredVersion with a non-white colorTwo.", 9910251);
+				Log.ErrorOnce("Cannot use Graphic_Random.GetColoredVersion with a non-white colorTwo.", 9910251, false);
 			}
 			return GraphicDatabase.Get<Graphic_Random>(this.path, newShader, this.drawSize, newColor, Color.white, this.data);
 		}
@@ -56,6 +56,10 @@ namespace Verse
 
 		public Graphic SubGraphicFor(Thing thing)
 		{
+			if (thing == null)
+			{
+				return this.subGraphics[0];
+			}
 			return this.subGraphics[thing.thingIDNumber % this.subGraphics.Length];
 		}
 

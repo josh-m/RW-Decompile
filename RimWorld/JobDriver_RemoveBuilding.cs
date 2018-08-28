@@ -33,7 +33,7 @@ namespace RimWorld
 			get;
 		}
 
-		protected abstract int TotalNeededWork
+		protected abstract float TotalNeededWork
 		{
 			get;
 		}
@@ -45,9 +45,12 @@ namespace RimWorld
 			Scribe_Values.Look<float>(ref this.totalNeededWork, "totalNeededWork", 0f, false);
 		}
 
-		public override bool TryMakePreToilReservations()
+		public override bool TryMakePreToilReservations(bool errorOnFailed)
 		{
-			return this.pawn.Reserve(this.Target, this.job, 1, -1, null);
+			Pawn pawn = this.pawn;
+			LocalTargetInfo target = this.Target;
+			Job job = this.job;
+			return pawn.Reserve(target, job, 1, -1, null, errorOnFailed);
 		}
 
 		[DebuggerHidden]
@@ -59,7 +62,7 @@ namespace RimWorld
 			Toil doWork = new Toil().FailOnDestroyedNullOrForbidden(TargetIndex.A).FailOnCannotTouch(TargetIndex.A, PathEndMode.Touch);
 			doWork.initAction = delegate
 			{
-				this.$this.totalNeededWork = (float)this.$this.TotalNeededWork;
+				this.$this.totalNeededWork = this.$this.TotalNeededWork;
 				this.$this.workLeft = this.$this.totalNeededWork;
 			};
 			doWork.tickAction = delegate
@@ -73,6 +76,7 @@ namespace RimWorld
 			};
 			doWork.defaultCompleteMode = ToilCompleteMode.Never;
 			doWork.WithProgressBar(TargetIndex.A, () => 1f - this.$this.workLeft / this.$this.totalNeededWork, false, -0.5f);
+			doWork.activeSkill = (() => SkillDefOf.Construction);
 			yield return doWork;
 			yield return new Toil
 			{

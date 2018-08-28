@@ -78,7 +78,7 @@ namespace RimWorld
 			WeatherDef result;
 			if (!DefDatabase<WeatherDef>.AllDefs.TryRandomElementByWeight((WeatherDef w) => this.CurrentWeatherCommonality(w), out result))
 			{
-				Log.Warning("All weather commonalities were zero. Defaulting to " + WeatherDefOf.Clear.defName + ".");
+				Log.Warning("All weather commonalities were zero. Defaulting to " + WeatherDefOf.Clear.defName + ".", false);
 				return WeatherDefOf.Clear;
 			}
 			return result;
@@ -144,7 +144,7 @@ namespace RimWorld
 			{
 				stringBuilder.AppendLine(current.label + " - " + this.CurrentWeatherCommonality(current).ToString());
 			}
-			Log.Message(stringBuilder.ToString());
+			Log.Message(stringBuilder.ToString(), false);
 		}
 	}
 }

@@ -25,7 +25,7 @@ namespace RimWorld.BaseGen
 			{
 				if (rp.singlePawnToSpawn != null)
 				{
-					Find.WorldPawns.PassToWorld(rp.singlePawnToSpawn, PawnDiscardDecideMode.Discard);
+					Find.WorldPawns.PassToWorld(rp.singlePawnToSpawn, PawnDiscardDecideMode.Decide);
 				}
 				return;
 			}
@@ -68,7 +68,7 @@ namespace RimWorld.BaseGen
 					PawnKindDef kind = pawnKindDef;
 					Faction faction2 = faction;
 					int tile = map.Tile;
-					value = new PawnGenerationRequest(kind, faction2, PawnGenerationContext.NonPlayer, tile, false, false, false, false, true, false, 1f, false, true, true, false, false, false, false, null, null, null, null, null, null, null);
+					value = new PawnGenerationRequest(kind, faction2, PawnGenerationContext.NonPlayer, tile, false, false, false, false, true, false, 1f, false, true, true, false, false, false, false, null, null, null, null, null, null, null, null);
 				}
 				pawn = PawnGenerator.GeneratePawn(value);
 				if (rp.postThingGenerate != null)
@@ -84,7 +84,7 @@ namespace RimWorld.BaseGen
 			{
 				pawn.mindState.Active = false;
 			}
-			GenSpawn.Spawn(pawn, loc, map);
+			GenSpawn.Spawn(pawn, loc, map, WipeMode.Vanish);
 			if (rp.singlePawnLord != null)
 			{
 				rp.singlePawnLord.AddPawn(pawn);

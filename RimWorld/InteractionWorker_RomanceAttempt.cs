@@ -100,7 +100,7 @@ namespace RimWorld
 			return Mathf.Clamp01(num);
 		}
 
-		public override void Interacted(Pawn initiator, Pawn recipient, List<RulePackDef> extraSentencePacks)
+		public override void Interacted(Pawn initiator, Pawn recipient, List<RulePackDef> extraSentencePacks, out string letterText, out string letterLabel, out LetterDef letterDef)
 		{
 			if (Rand.Value < this.SuccessChance(initiator, recipient))
 			{
@@ -129,9 +129,15 @@ namespace RimWorld
 				initiator.needs.mood.thoughts.memories.RemoveMemoriesOfDefWhereOtherPawnIs(ThoughtDefOf.FailedRomanceAttemptOnMeLowOpinionMood, recipient);
 				recipient.needs.mood.thoughts.memories.RemoveMemoriesOfDefWhereOtherPawnIs(ThoughtDefOf.FailedRomanceAttemptOnMe, initiator);
 				recipient.needs.mood.thoughts.memories.RemoveMemoriesOfDefWhereOtherPawnIs(ThoughtDefOf.FailedRomanceAttemptOnMeLowOpinionMood, initiator);
-				if (initiator.IsColonist || recipient.IsColonist)
+				if (PawnUtility.ShouldSendNotificationAbout(initiator) || PawnUtility.ShouldSendNotificationAbout(recipient))
 				{
-					this.SendNewLoversLetter(initiator, recipient, list, list2);
+					this.GetNewLoversLetter(initiator, recipient, list, list2, out letterText, out letterLabel, out letterDef);
+				}
+				else
+				{
+					letterText = null;
+					letterLabel = null;
+					letterDef = null;
 				}
 				extraSentencePacks.Add(RulePackDefOf.Sentence_RomanceAttemptAccepted);
 				LovePartnerRelationUtility.TryToShareBed(initiator, recipient);
@@ -145,6 +151,9 @@ namespace RimWorld
 					recipient.needs.mood.thoughts.memories.TryGainMemory(ThoughtDefOf.FailedRomanceAttemptOnMeLowOpinionMood, initiator);
 				}
 				extraSentencePacks.Add(RulePackDefOf.Sentence_RomanceAttemptRejected);
+				letterText = null;
+				letterLabel = null;
+				letterDef = null;
 			}
 		}
 
@@ -183,31 +192,19 @@ namespace RimWorld
 			pawn.needs.mood.thoughts.memories.TryGainMemory(ThoughtDefOf.CheatedOnMe, cheater);
 		}
 
-		private void SendNewLoversLetter(Pawn initiator, Pawn recipient, List<Pawn> initiatorOldLoversAndFiances, List<Pawn> recipientOldLoversAndFiances)
+		private void GetNewLoversLetter(Pawn initiator, Pawn recipient, List<Pawn> initiatorOldLoversAndFiances, List<Pawn> recipientOldLoversAndFiances, out string letterText, out string letterLabel, out LetterDef letterDef)
 		{
 			bool flag = false;
-			string label;
-			LetterDef textLetterDef;
-			Pawn t;
 			if ((initiator.GetSpouse() != null && !initiator.GetSpouse().Dead) || (recipient.GetSpouse() != null && !recipient.GetSpouse().Dead))
 			{
-				label = "LetterLabelAffair".Translate();
-				textLetterDef = LetterDefOf.NegativeEvent;
-				if (initiator.GetSpouse() != null && !initiator.GetSpouse().Dead)
-				{
-					t = initiator;
-				}
-				else
-				{
-					t = recipient;
-				}
+				letterLabel = "LetterLabelAffair".Translate();
+				letterDef = LetterDefOf.NegativeEvent;
 				flag = true;
 			}
 			else
 			{
-				label = "LetterLabelNewLovers".Translate();
-				textLetterDef = LetterDefOf.PositiveEvent;
-				t = initiator;
+				letterLabel = "LetterLabelNewLovers".Translate();
+				letterDef = LetterDefOf.PositiveEvent;
 			}
 			StringBuilder stringBuilder = new StringBuilder();
 			if (flag)
@@ -235,19 +232,14 @@ namespace RimWorld
 					}));
 				}
 			}
-			else
-			{
-				stringBuilder.AppendLine("LetterNewLovers".Translate(new object[]
-				{
-					initiator.LabelShort,
-					recipient.LabelShort
-				}));
-			}
 			for (int i = 0; i < initiatorOldLoversAndFiances.Count; i++)
 			{
 				if (!initiatorOldLoversAndFiances[i].Dead)
 				{
-					stringBuilder.AppendLine();
+					if (stringBuilder.Length > 0)
+					{
+						stringBuilder.AppendLine();
+					}
 					stringBuilder.AppendLine("LetterNoLongerLovers".Translate(new object[]
 					{
 						initiator.LabelShort,
@@ -259,7 +251,10 @@ namespace RimWorld
 			{
 				if (!recipientOldLoversAndFiances[j].Dead)
 				{
-					stringBuilder.AppendLine();
+					if (stringBuilder.Length > 0)
+					{
+						stringBuilder.AppendLine();
+					}
 					stringBuilder.AppendLine("LetterNoLongerLovers".Translate(new object[]
 					{
 						recipient.LabelShort,
@@ -267,7 +262,7 @@ namespace RimWorld
 					}));
 				}
 			}
-			Find.LetterStack.ReceiveLetter(label, stringBuilder.ToString().TrimEndNewlines(), textLetterDef, t, null);
+			letterText = stringBuilder.ToString().TrimEndNewlines();
 		}
 	}
 }

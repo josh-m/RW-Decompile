@@ -29,7 +29,7 @@ namespace Verse
 				}
 			}
 			CompProperties_Power compProperties = b.def.GetCompProperties<CompProperties_Power>();
-			if (compProperties != null && compProperties.startElectricalFires)
+			if (compProperties != null && compProperties.shortCircuitInRain)
 			{
 				this.allBuildingsColonistElecFire.Add(b);
 			}
@@ -43,7 +43,7 @@ namespace Verse
 				this.allBuildingsColonistCombatTargets.Remove(b);
 			}
 			CompProperties_Power compProperties = b.def.GetCompProperties<CompProperties_Power>();
-			if (compProperties != null && compProperties.startElectricalFires)
+			if (compProperties != null && compProperties.shortCircuitInRain)
 			{
 				this.allBuildingsColonistElecFire.Remove(b);
 			}

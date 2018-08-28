@@ -6,6 +6,7 @@ namespace RimWorld.Planet
 	{
 		VeryClose,
 		Close,
-		Far
+		Far,
+		VeryFar
 	}
 }

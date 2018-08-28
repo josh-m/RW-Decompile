@@ -8,13 +8,15 @@ namespace RimWorld
 	{
 		public static MentalStateDef Berserk;
 
-		public static MentalStateDef BingingDrugExtreme;
+		public static MentalStateDef Binging_DrugExtreme;
 
-		public static MentalStateDef WanderPsychotic;
+		public static MentalStateDef Wander_Psychotic;
 
-		public static MentalStateDef BingingDrugMajor;
+		public static MentalStateDef Binging_DrugMajor;
 
-		public static MentalStateDef WanderSad;
+		public static MentalStateDef Wander_Sad;
+
+		public static MentalStateDef Wander_OwnRoom;
 
 		public static MentalStateDef PanicFlee;
 
@@ -23,5 +25,10 @@ namespace RimWorld
 		public static MentalStateDef ManhunterPermanent;
 
 		public static MentalStateDef SocialFighting;
+
+		static MentalStateDefOf()
+		{
+			DefOfHelper.EnsureInitializedInCtor(typeof(MentalStateDefOf));
+		}
 	}
 }

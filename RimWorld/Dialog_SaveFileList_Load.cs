@@ -1,6 +1,5 @@
 using System;
 using Verse;
-using Verse.Profile;
 
 namespace RimWorld
 {
@@ -13,17 +12,7 @@ namespace RimWorld
 
 		protected override void DoFileInteraction(string saveFileName)
 		{
-			PreLoadUtility.CheckVersionAndLoad(GenFilePaths.FilePathForSavedGame(saveFileName), ScribeMetaHeaderUtility.ScribeHeaderMode.Map, delegate
-			{
-				Action preLoadLevelAction = delegate
-				{
-					MemoryUtility.ClearAllMapsAndWorld();
-					Current.Game = new Game();
-					Current.Game.InitData = new GameInitData();
-					Current.Game.InitData.gameToLoad = saveFileName;
-				};
-				LongEventHandler.QueueLongEvent(preLoadLevelAction, "Play", "LoadingLongEvent", true, null);
-			});
+			GameDataSaveLoader.CheckVersionAndLoadGame(saveFileName);
 		}
 	}
 }

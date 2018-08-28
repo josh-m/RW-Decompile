@@ -33,9 +33,9 @@ namespace RimWorld
 
 		private void SelfConsume()
 		{
-			if (this.ownerEquipment != null && !this.ownerEquipment.Destroyed)
+			if (base.EquipmentSource != null && !base.EquipmentSource.Destroyed)
 			{
-				this.ownerEquipment.Destroy(DestroyMode.Vanish);
+				base.EquipmentSource.Destroy(DestroyMode.Vanish);
 			}
 		}
 	}

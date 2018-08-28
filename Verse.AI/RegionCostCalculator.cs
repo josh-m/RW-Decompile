@@ -81,6 +81,8 @@ namespace Verse.AI
 
 		private Area allowedArea;
 
+		private bool drafted;
+
 		private Func<int, int, float> preciseRegionLinkDistancesDistanceGetter;
 
 		private Dictionary<int, RegionLink> regionMinLink = new Dictionary<int, RegionLink>();
@@ -111,7 +113,7 @@ namespace Verse.AI
 			this.preciseRegionLinkDistancesDistanceGetter = new Func<int, int, float>(this.PreciseRegionLinkDistancesDistanceGetter);
 		}
 
-		public void Init(CellRect destination, HashSet<Region> destRegions, TraverseParms parms, int moveTicksCardinal, int moveTicksDiagonal, ByteGrid avoidGrid, Area allowedArea)
+		public void Init(CellRect destination, HashSet<Region> destRegions, TraverseParms parms, int moveTicksCardinal, int moveTicksDiagonal, ByteGrid avoidGrid, Area allowedArea, bool drafted)
 		{
 			this.regionGrid = this.map.regionGrid.DirectGrid;
 			this.traverseParms = parms;
@@ -120,6 +122,7 @@ namespace Verse.AI
 			this.moveTicksDiagonal = moveTicksDiagonal;
 			this.avoidGrid = avoidGrid;
 			this.allowedArea = allowedArea;
+			this.drafted = drafted;
 			this.regionMinLink.Clear();
 			this.distances.Clear();
 			this.linkTargetCells.Clear();
@@ -131,7 +134,7 @@ namespace Verse.AI
 				for (int i = 0; i < current.links.Count; i++)
 				{
 					RegionLink regionLink = current.links[i];
-					if (regionLink.GetOtherRegion(current).type.Passable())
+					if (regionLink.GetOtherRegion(current).Allows(this.traverseParms, false))
 					{
 						int num = this.RegionLinkDistance(this.destinationCell, regionLink, minPathCost);
 						int num2;
@@ -187,9 +190,9 @@ namespace Verse.AI
 					if (otherRegion != null && otherRegion.valid)
 					{
 						int num2 = 0;
-						if (otherRegion.portal != null)
+						if (otherRegion.door != null)
 						{
-							num2 = PathFinder.GetBuildingCost(otherRegion.portal, this.traverseParms, this.traverseParms.pawn);
+							num2 = PathFinder.GetBuildingCost(otherRegion.door, this.traverseParms, this.traverseParms.pawn);
 							if (num2 == 2147483647)
 							{
 								continue;
@@ -202,7 +205,7 @@ namespace Verse.AI
 							RegionLink regionLink = otherRegion.links[i];
 							if (regionLink != regionLinkQueueEntry.Link && regionLink.GetOtherRegion(otherRegion).type.Passable())
 							{
-								int num3 = (otherRegion.portal == null) ? this.RegionLinkDistance(regionLinkQueueEntry.Link, regionLink, minPathCost) : num2;
+								int num3 = (otherRegion.door == null) ? this.RegionLinkDistance(regionLinkQueueEntry.Link, regionLink, minPathCost) : num2;
 								num3 = Math.Max(num3, 1);
 								int num4 = num + num3;
 								int estimatedPathCost = this.MinimumRegionLinkDistance(this.destinationCell, regionLink) + num4;
@@ -290,6 +293,14 @@ namespace Verse.AI
 			if (this.allowedArea != null && !ignoreAllowedAreaCost && !this.allowedArea[index])
 			{
 				num += 600;
+			}
+			if (this.drafted)
+			{
+				num += this.map.terrainGrid.topGrid[index].extraDraftedPerceivedPathCost;
+			}
+			else
+			{
+				num += this.map.terrainGrid.topGrid[index].extraNonDraftedPerceivedPathCost;
 			}
 			return num;
 		}
@@ -387,12 +398,12 @@ namespace Verse.AI
 			for (int i = 0; i < region.links.Count; i++)
 			{
 				RegionLink regionLink = region.links[i];
-				if (regionLink.GetOtherRegion(region).type.Passable())
+				if (regionLink.GetOtherRegion(region).Allows(this.traverseParms, false))
 				{
 					float num;
 					if (!RegionCostCalculator.tmpDistances.TryGetValue(this.map.cellIndices.CellToIndex(this.linkTargetCells[regionLink]), out num))
 					{
-						Log.ErrorOnce("Dijkstra couldn't reach one of the cells even though they are in the same region. There is most likely something wrong with the neighbor nodes getter.", 1938471531);
+						Log.ErrorOnce("Dijkstra couldn't reach one of the cells even though they are in the same region. There is most likely something wrong with the neighbor nodes getter.", 1938471531, false);
 						num = 100f;
 					}
 					outDistances.Add(new Pair<RegionLink, int>(regionLink, (int)num));

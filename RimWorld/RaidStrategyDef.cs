@@ -8,15 +8,15 @@ namespace RimWorld
 	{
 		public Type workerClass;
 
+		public SimpleCurve selectionWeightPerPointsCurve;
+
+		public float minPawns = 1f;
+
 		[MustTranslate]
 		public string arrivalTextFriendly;
 
 		[MustTranslate]
 		public string arrivalTextEnemy;
-
-		public float pointsFactor = 1f;
-
-		public float selectionChance = 1f;
 
 		[MustTranslate]
 		public string letterLabelEnemy;
@@ -24,13 +24,11 @@ namespace RimWorld
 		[MustTranslate]
 		public string letterLabelFriendly;
 
-		public List<PawnsArriveMode> arriveModes;
-
-		public float minPawns = 1f;
-
-		public float minDaysPassed;
+		public SimpleCurve pointsFactorCurve;
 
 		public bool pawnsCanBringFood;
+
+		public List<PawnsArrivalModeDef> arriveModes;
 
 		private RaidStrategyWorker workerInt;
 

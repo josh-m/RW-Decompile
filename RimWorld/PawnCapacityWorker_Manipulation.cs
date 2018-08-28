@@ -9,13 +9,13 @@ namespace RimWorld
 		public override float CalculateCapacityLevel(HediffSet diffSet, List<PawnCapacityUtility.CapacityImpactor> impactors = null)
 		{
 			float num = 0f;
-			float num2 = PawnCapacityUtility.CalculateLimbEfficiency(diffSet, "ManipulationLimbCore", "ManipulationLimbSegment", "ManipulationLimbDigit", 0.8f, out num, impactors);
+			float num2 = PawnCapacityUtility.CalculateLimbEfficiency(diffSet, BodyPartTagDefOf.ManipulationLimbCore, BodyPartTagDefOf.ManipulationLimbSegment, BodyPartTagDefOf.ManipulationLimbDigit, 0.8f, out num, impactors);
 			return num2 * base.CalculateCapacityAndRecord(diffSet, PawnCapacityDefOf.Consciousness, impactors);
 		}
 
 		public override bool CanHaveCapacity(BodyDef body)
 		{
-			return body.HasPartWithTag("ManipulationLimbCore");
+			return body.HasPartWithTag(BodyPartTagDefOf.ManipulationLimbCore);
 		}
 	}
 }

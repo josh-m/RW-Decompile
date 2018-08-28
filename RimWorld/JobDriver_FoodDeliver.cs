@@ -47,9 +47,12 @@ namespace RimWorld
 			this.eatingFromInventory = (this.pawn.inventory != null && this.pawn.inventory.Contains(base.TargetThingA));
 		}
 
-		public override bool TryMakePreToilReservations()
+		public override bool TryMakePreToilReservations(bool errorOnFailed)
 		{
-			return this.pawn.Reserve(this.Deliveree, this.job, 1, -1, null);
+			Pawn pawn = this.pawn;
+			LocalTargetInfo target = this.Deliveree;
+			Job job = this.job;
+			return pawn.Reserve(target, job, 1, -1, null, errorOnFailed);
 		}
 
 		[DebuggerHidden]

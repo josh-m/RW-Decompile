@@ -11,10 +11,10 @@ namespace RimWorld
 			this.defaultLabel = "DesignatorHarvestWood".Translate();
 			this.defaultDesc = "DesignatorHarvestWoodDesc".Translate();
 			this.icon = ContentFinder<Texture2D>.Get("UI/Designators/HarvestWood", true);
-			this.soundDragSustain = SoundDefOf.DesignateDragStandard;
-			this.soundDragChanged = SoundDefOf.DesignateDragStandardChanged;
+			this.soundDragSustain = SoundDefOf.Designate_DragStandard;
+			this.soundDragChanged = SoundDefOf.Designate_DragStandard_Changed;
 			this.useMouseIcon = true;
-			this.soundSucceeded = SoundDefOf.DesignateHarvest;
+			this.soundSucceeded = SoundDefOf.Designate_Harvest;
 			this.hotKey = KeyBindingDefOf.Misc1;
 			this.designationDef = DesignationDefOf.HarvestPlant;
 			this.tutorTag = "PlantsHarvestWood";
@@ -33,6 +33,11 @@ namespace RimWorld
 				return "MessageMustDesignateHarvestableWood".Translate();
 			}
 			return true;
+		}
+
+		protected override bool RemoveAllDesignationsAffects(LocalTargetInfo target)
+		{
+			return target.Thing.def.plant.harvestTag == "Wood";
 		}
 	}
 }

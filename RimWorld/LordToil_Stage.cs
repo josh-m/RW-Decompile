@@ -23,6 +23,14 @@ namespace RimWorld
 			}
 		}
 
+		public override bool ForceHighStoryDanger
+		{
+			get
+			{
+				return true;
+			}
+		}
+
 		public LordToil_Stage(IntVec3 stagingLoc)
 		{
 			this.data = new LordToilData_Stage();

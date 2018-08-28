@@ -67,8 +67,9 @@ namespace RimWorld
 		{
 			if (this.actionWhenFinished != null)
 			{
-				this.actionWhenFinished();
+				Action action = this.actionWhenFinished;
 				this.actionWhenFinished = null;
+				action();
 			}
 			this.targetingVerb = null;
 			this.action = null;
@@ -93,11 +94,11 @@ namespace RimWorld
 							this.action(obj);
 						}
 					}
-					SoundDefOf.TickHigh.PlayOneShotOnCamera(null);
+					SoundDefOf.Tick_High.PlayOneShotOnCamera(null);
 					this.StopTargeting();
 					Event.current.Use();
 				}
-				if ((Event.current.type == EventType.MouseDown && Event.current.button == 1) || (Event.current.type == EventType.KeyDown && Event.current.keyCode == KeyCode.Escape))
+				if ((Event.current.type == EventType.MouseDown && Event.current.button == 1) || KeyBindingDefOf.Cancel.KeyDownEvent)
 				{
 					SoundDefOf.CancelMode.PlayOneShotOnCamera(null);
 					this.StopTargeting();
@@ -139,17 +140,7 @@ namespace RimWorld
 		{
 			if (this.targetingVerb != null)
 			{
-				if (!this.targetingVerb.verbProps.MeleeRange)
-				{
-					if (this.targetingVerb.verbProps.minRange > 0f && this.targetingVerb.verbProps.minRange < GenRadial.MaxRadialPatternRadius)
-					{
-						GenDraw.DrawRadiusRing(this.targetingVerb.caster.Position, this.targetingVerb.verbProps.minRange);
-					}
-					if (this.targetingVerb.verbProps.range < (float)(Find.VisibleMap.Size.x + Find.VisibleMap.Size.z) && this.targetingVerb.verbProps.range < GenRadial.MaxRadialPatternRadius)
-					{
-						GenDraw.DrawRadiusRing(this.targetingVerb.caster.Position, this.targetingVerb.verbProps.range);
-					}
-				}
+				this.targetingVerb.verbProps.DrawRadiusRing(this.targetingVerb.caster.Position);
 				LocalTargetInfo targ = this.CurrentTargetUnderMouse(true);
 				if (targ.IsValid)
 				{
@@ -166,7 +157,7 @@ namespace RimWorld
 						else
 						{
 							GenDraw.DrawFieldEdges((from x in GenRadial.RadialCellsAround(shootLine.Dest, num, true)
-							where x.InBounds(Find.VisibleMap)
+							where x.InBounds(Find.CurrentMap)
 							select x).ToList<IntVec3>());
 						}
 					}
@@ -207,14 +198,14 @@ namespace RimWorld
 
 		private void ConfirmStillValid()
 		{
-			if (this.caster != null && (this.caster.Map != Find.VisibleMap || this.caster.Destroyed || !Find.Selector.IsSelected(this.caster)))
+			if (this.caster != null && (this.caster.Map != Find.CurrentMap || this.caster.Destroyed || !Find.Selector.IsSelected(this.caster)))
 			{
 				this.StopTargeting();
 			}
 			if (this.targetingVerb != null)
 			{
 				Selector selector = Find.Selector;
-				if (this.targetingVerb.caster.Map != Find.VisibleMap || this.targetingVerb.caster.Destroyed || !selector.IsSelected(this.targetingVerb.caster))
+				if (this.targetingVerb.caster.Map != Find.CurrentMap || this.targetingVerb.caster.Destroyed || !selector.IsSelected(this.targetingVerb.caster))
 				{
 					this.StopTargeting();
 				}
@@ -253,7 +244,7 @@ namespace RimWorld
 				for (int j = 0; j < numSelected; j++)
 				{
 					Building_Turret building_Turret = selectedObjects[j] as Building_Turret;
-					if (building_Turret != null && building_Turret.Map == Find.VisibleMap)
+					if (building_Turret != null && building_Turret.Map == Find.CurrentMap)
 					{
 						LocalTargetInfo targ = this.CurrentTargetUnderMouse(true);
 						building_Turret.OrderAttack(targ);
@@ -269,7 +260,7 @@ namespace RimWorld
 			{
 				return;
 			}
-			if (verb.verbProps.MeleeRange)
+			if (verb.verbProps.IsMeleeAttack)
 			{
 				Job job = new Job(JobDefOf.AttackMelee, targetA);
 				job.playerForced = true;
@@ -306,7 +297,7 @@ namespace RimWorld
 					localTargetInfo = current;
 				}
 			}
-			if (localTargetInfo.IsValid && mustBeHittableNowIfNotMelee && !(localTargetInfo.Thing is Pawn) && this.targetingVerb != null && !this.targetingVerb.verbProps.MeleeRange)
+			if (localTargetInfo.IsValid && mustBeHittableNowIfNotMelee && !(localTargetInfo.Thing is Pawn) && this.targetingVerb != null && !this.targetingVerb.verbProps.IsMeleeAttack)
 			{
 				if (this.targetingVerbAdditionalPawns != null && this.targetingVerbAdditionalPawns.Any<Pawn>())
 				{

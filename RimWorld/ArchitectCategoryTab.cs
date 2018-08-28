@@ -9,13 +9,13 @@ namespace RimWorld
 	{
 		public DesignationCategoryDef def;
 
-		public const float InfoRectHeight = 230f;
+		public const float InfoRectHeight = 270f;
 
 		public static Rect InfoRect
 		{
 			get
 			{
-				return new Rect(0f, (float)(UI.screenHeight - 35) - ((MainTabWindow_Architect)MainButtonDefOf.Architect.TabWindow).WinHeight - 230f, 200f, 230f);
+				return new Rect(0f, (float)(UI.screenHeight - 35) - ((MainTabWindow_Architect)MainButtonDefOf.Architect.TabWindow).WinHeight - 270f, 200f, 270f);
 			}
 		}
 
@@ -28,7 +28,7 @@ namespace RimWorld
 		{
 			if (Find.DesignatorManager.SelectedDesignator != null)
 			{
-				Find.DesignatorManager.SelectedDesignator.DoExtraGuiControls(0f, (float)(UI.screenHeight - 35) - ((MainTabWindow_Architect)MainButtonDefOf.Architect.TabWindow).WinHeight - 230f);
+				Find.DesignatorManager.SelectedDesignator.DoExtraGuiControls(0f, (float)(UI.screenHeight - 35) - ((MainTabWindow_Architect)MainButtonDefOf.Architect.TabWindow).WinHeight - 270f);
 			}
 			float startX = 210f;
 			Gizmo selectedDesignator;
@@ -48,10 +48,10 @@ namespace RimWorld
 				{
 					Rect position = infoRect.AtZero().ContractedBy(7f);
 					GUI.BeginGroup(position);
-					Rect rect = new Rect(0f, 0f, position.width, 999f);
+					Rect rect = new Rect(0f, 0f, position.width - designator.PanelReadoutTitleExtraRightMargin, 999f);
 					Text.Font = GameFont.Small;
 					Widgets.Label(rect, designator.LabelCap);
-					float num = 24f;
+					float num = Mathf.Max(24f, Text.CalcHeight(designator.LabelCap, rect.width));
 					designator.DrawPanelReadout(ref num, position.width);
 					Rect rect2 = new Rect(0f, num, position.width, position.height - num);
 					string desc = designator.Desc;

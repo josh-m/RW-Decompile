@@ -75,7 +75,7 @@ namespace Verse
 				}
 				if (tags != WorkTags.Mining)
 				{
-					Log.Error("Unknown or mixed worktags for naming: " + (int)tags);
+					Log.Error("Unknown or mixed worktags for naming: " + (int)tags, false);
 					return "Worktag";
 				}
 				return "WorkTagMining".Translate();

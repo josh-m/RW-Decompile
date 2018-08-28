@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using Verse;
 
@@ -28,9 +29,9 @@ namespace RimWorld
 			this.defaultDesc = "DesignatorRemoveFloorDesc".Translate();
 			this.icon = ContentFinder<Texture2D>.Get("UI/Designators/RemoveFloor", true);
 			this.useMouseIcon = true;
-			this.soundDragSustain = SoundDefOf.DesignateDragStandard;
-			this.soundDragChanged = SoundDefOf.DesignateDragStandardChanged;
-			this.soundSucceeded = SoundDefOf.DesignateSmoothFloor;
+			this.soundDragSustain = SoundDefOf.Designate_DragStandard;
+			this.soundDragChanged = SoundDefOf.Designate_DragStandard_Changed;
+			this.soundSucceeded = SoundDefOf.Designate_SmoothSurface;
 			this.hotKey = KeyBindingDefOf.Misc1;
 		}
 
@@ -53,6 +54,10 @@ namespace RimWorld
 			{
 				return "TerrainMustBeRemovable".Translate();
 			}
+			if (WorkGiver_ConstructRemoveFloor.AnyBuildingBlockingFloorRemoval(c, base.Map))
+			{
+				return false;
+			}
 			return AcceptanceReport.WasAccepted;
 		}
 
@@ -69,6 +74,11 @@ namespace RimWorld
 		public override void SelectedUpdate()
 		{
 			GenUI.RenderMouseoverBracket();
+		}
+
+		public override void RenderHighlight(List<IntVec3> dragCells)
+		{
+			DesignatorUtility.RenderHighlightOverSelectableCells(this, dragCells);
 		}
 	}
 }

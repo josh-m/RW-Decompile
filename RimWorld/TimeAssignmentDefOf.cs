@@ -12,5 +12,10 @@ namespace RimWorld
 		public static TimeAssignmentDef Joy;
 
 		public static TimeAssignmentDef Sleep;
+
+		static TimeAssignmentDefOf()
+		{
+			DefOfHelper.EnsureInitializedInCtor(typeof(TimeAssignmentDefOf));
+		}
 	}
 }

@@ -1,4 +1,7 @@
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using UnityEngine;
 
 namespace Verse
 {
@@ -13,13 +16,18 @@ namespace Verse
 		{
 		}
 
-		public virtual void DrawGhost(ThingDef def, IntVec3 center, Rot4 rot)
+		public virtual void DrawGhost(ThingDef def, IntVec3 center, Rot4 rot, Color ghostCol)
 		{
 		}
 
 		public virtual bool ForceAllowPlaceOver(BuildableDef other)
 		{
 			return false;
+		}
+
+		[DebuggerHidden]
+		public virtual IEnumerable<TerrainAffordanceDef> DisplayAffordances()
+		{
 		}
 	}
 }

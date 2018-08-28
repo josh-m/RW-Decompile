@@ -9,11 +9,11 @@ namespace RimWorld
 	{
 		public struct LayerGroupPair
 		{
-			private readonly ApparelLayer layer;
+			private readonly ApparelLayerDef layer;
 
 			private readonly BodyPartGroupDef group;
 
-			public LayerGroupPair(ApparelLayer layer, BodyPartGroupDef group)
+			public LayerGroupPair(ApparelLayerDef layer, BodyPartGroupDef group)
 			{
 				this.layer = layer;
 				this.group = group;
@@ -62,11 +62,20 @@ namespace RimWorld
 			{
 				return true;
 			}
+			List<BodyPartGroupDef> bodyPartGroups = A.apparel.bodyPartGroups;
+			List<BodyPartGroupDef> bodyPartGroups2 = B.apparel.bodyPartGroups;
 			BodyPartGroupDef[] interferingBodyPartGroups = A.apparel.GetInterferingBodyPartGroups(body);
 			BodyPartGroupDef[] interferingBodyPartGroups2 = B.apparel.GetInterferingBodyPartGroups(body);
-			for (int k = 0; k < interferingBodyPartGroups.Length; k++)
+			for (int k = 0; k < bodyPartGroups.Count; k++)
 			{
-				if (interferingBodyPartGroups2.Contains(interferingBodyPartGroups[k]))
+				if (interferingBodyPartGroups2.Contains(bodyPartGroups[k]))
+				{
+					return false;
+				}
+			}
+			for (int l = 0; l < bodyPartGroups2.Count; l++)
+			{
+				if (interferingBodyPartGroups.Contains(bodyPartGroups2[l]))
 				{
 					return false;
 				}
@@ -78,7 +87,7 @@ namespace RimWorld
 		{
 			for (int i = 0; i < td.apparel.layers.Count; i++)
 			{
-				ApparelLayer layer = td.apparel.layers[i];
+				ApparelLayerDef layer = td.apparel.layers[i];
 				BodyPartGroupDef[] interferingBodyPartGroups = td.apparel.GetInterferingBodyPartGroups(body);
 				for (int j = 0; j < interferingBodyPartGroups.Length; j++)
 				{
@@ -103,7 +112,7 @@ namespace RimWorld
 			{
 				return true;
 			}
-			IEnumerable<BodyPartRecord> notMissingParts = p.health.hediffSet.GetNotMissingParts(BodyPartHeight.Undefined, BodyPartDepth.Undefined);
+			IEnumerable<BodyPartRecord> notMissingParts = p.health.hediffSet.GetNotMissingParts(BodyPartHeight.Undefined, BodyPartDepth.Undefined, null, null);
 			List<BodyPartGroupDef> groups = apparel.apparel.bodyPartGroups;
 			int i;
 			for (i = 0; i < groups.Count; i++)

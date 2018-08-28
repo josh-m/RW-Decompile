@@ -70,7 +70,7 @@ namespace RimWorld
 		{
 			if (amount < 0f)
 			{
-				Log.Error("Cannot add negative energy " + amount);
+				Log.Error("Cannot add negative energy " + amount, false);
 				return;
 			}
 			if (amount > this.AmountCanAccept)
@@ -86,7 +86,7 @@ namespace RimWorld
 			this.storedEnergy -= amount;
 			if (this.storedEnergy < 0f)
 			{
-				Log.Error("Drawing power we don't have from " + this.parent);
+				Log.Error("Drawing power we don't have from " + this.parent, false);
 				this.storedEnergy = 0f;
 			}
 		}

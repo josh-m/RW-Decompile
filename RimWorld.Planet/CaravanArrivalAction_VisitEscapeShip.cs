@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Verse;
 
 namespace RimWorld.Planet
@@ -6,6 +7,17 @@ namespace RimWorld.Planet
 	public class CaravanArrivalAction_VisitEscapeShip : CaravanArrivalAction
 	{
 		private MapParent target;
+
+		public override string Label
+		{
+			get
+			{
+				return "VisitEscapeShip".Translate(new object[]
+				{
+					this.target.Label
+				});
+			}
+		}
 
 		public override string ReportString
 		{
@@ -18,21 +30,27 @@ namespace RimWorld.Planet
 			}
 		}
 
-		public override bool ShouldFail
-		{
-			get
-			{
-				return base.ShouldFail || this.target == null || !this.target.Spawned;
-			}
-		}
-
 		public CaravanArrivalAction_VisitEscapeShip()
 		{
 		}
 
-		public CaravanArrivalAction_VisitEscapeShip(MapParent target)
+		public CaravanArrivalAction_VisitEscapeShip(EscapeShipComp escapeShip)
 		{
-			this.target = target;
+			this.target = (MapParent)escapeShip.parent;
+		}
+
+		public override FloatMenuAcceptanceReport StillValid(Caravan caravan, int destinationTile)
+		{
+			FloatMenuAcceptanceReport floatMenuAcceptanceReport = base.StillValid(caravan, destinationTile);
+			if (!floatMenuAcceptanceReport)
+			{
+				return floatMenuAcceptanceReport;
+			}
+			if (this.target != null && this.target.Tile != destinationTile)
+			{
+				return false;
+			}
+			return CaravanArrivalAction_VisitEscapeShip.CanVisit(caravan, this.target);
 		}
 
 		public override void Arrived(Caravan caravan)
@@ -41,9 +59,7 @@ namespace RimWorld.Planet
 			{
 				LongEventHandler.QueueLongEvent(delegate
 				{
-					this.target.SetFaction(Faction.OfPlayer);
 					this.DoArrivalAction(caravan);
-					Find.LetterStack.ReceiveLetter("EscapeShipFoundLabel".Translate(), "EscapeShipFound".Translate(), LetterDefOf.PositiveEvent, new GlobalTargetInfo(this.target.Map.Center, this.target.Map, false), null);
 				}, "GeneratingMapForNewEncounter", false, null);
 			}
 			else
@@ -60,9 +76,42 @@ namespace RimWorld.Planet
 
 		private void DoArrivalAction(Caravan caravan)
 		{
+			bool flag = !this.target.HasMap;
+			if (flag)
+			{
+				this.target.SetFaction(Faction.OfPlayer);
+			}
 			Map orGenerateMap = GetOrGenerateMapUtility.GetOrGenerateMap(this.target.Tile, null);
 			CaravanEnterMapUtility.Enter(caravan, orGenerateMap, CaravanEnterMode.Edge, CaravanDropInventoryMode.UnloadIndividually, false, null);
-			Find.TickManager.CurTimeSpeed = TimeSpeed.Paused;
+			if (flag)
+			{
+				Find.TickManager.Notify_GeneratedPotentiallyHostileMap();
+				Find.LetterStack.ReceiveLetter("EscapeShipFoundLabel".Translate(), "EscapeShipFound".Translate(), LetterDefOf.PositiveEvent, new GlobalTargetInfo(this.target.Map.Center, this.target.Map, false), null, null);
+			}
+		}
+
+		public static FloatMenuAcceptanceReport CanVisit(Caravan caravan, MapParent escapeShip)
+		{
+			if (escapeShip == null || !escapeShip.Spawned || escapeShip.GetComponent<EscapeShipComp>() == null)
+			{
+				return false;
+			}
+			if (escapeShip.EnterCooldownBlocksEntering())
+			{
+				return FloatMenuAcceptanceReport.WithFailMessage("MessageEnterCooldownBlocksEntering".Translate(new object[]
+				{
+					escapeShip.EnterCooldownDaysLeft().ToString("0.#")
+				}));
+			}
+			return true;
+		}
+
+		public static IEnumerable<FloatMenuOption> GetFloatMenuOptions(Caravan caravan, MapParent escapeShip)
+		{
+			return CaravanArrivalActionUtility.GetFloatMenuOptions<CaravanArrivalAction_VisitEscapeShip>(() => CaravanArrivalAction_VisitEscapeShip.CanVisit(caravan, escapeShip), () => new CaravanArrivalAction_VisitEscapeShip(escapeShip.GetComponent<EscapeShipComp>()), "VisitEscapeShip".Translate(new object[]
+			{
+				escapeShip.Label
+			}), caravan, escapeShip.Tile, escapeShip);
 		}
 	}
 }

@@ -119,7 +119,7 @@ namespace RimWorld
 						"..",
 						rightMostTwelfth,
 						")"
-					}));
+					}), false);
 					break;
 				}
 				twelfths.Remove(twelfth);

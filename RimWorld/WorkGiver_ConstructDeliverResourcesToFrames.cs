@@ -29,7 +29,8 @@ namespace RimWorld
 			{
 				return GenConstruct.HandleBlockingThingJob(frame, pawn, forced);
 			}
-			if (!GenConstruct.CanConstruct(frame, pawn, forced))
+			bool checkConstructionSkill = this.def.workType == WorkTypeDefOf.Construction;
+			if (!GenConstruct.CanConstruct(frame, pawn, checkConstructionSkill, forced))
 			{
 				return null;
 			}

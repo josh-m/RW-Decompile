@@ -38,37 +38,33 @@ namespace RimWorld
 
 		public static RulePackDef NamerScenario;
 
-		public static RulePackDef ArtName_Sculpture;
+		public static RulePackDef NamerArtSculpture;
 
 		public static RulePackDef ArtDescription_Sculpture;
 
-		public static RulePackDef ArtName_WeaponMelee;
+		public static RulePackDef NamerArtWeaponMelee;
 
 		public static RulePackDef ArtDescription_WeaponMelee;
 
-		public static RulePackDef ArtName_WeaponGun;
+		public static RulePackDef NamerArtWeaponGun;
 
 		public static RulePackDef ArtDescription_WeaponGun;
 
-		public static RulePackDef ArtName_Furniture;
+		public static RulePackDef NamerArtFurniture;
 
 		public static RulePackDef ArtDescription_Furniture;
 
-		public static RulePackDef ArtName_SarcophagusPlate;
+		public static RulePackDef NamerArtSarcophagusPlate;
 
 		public static RulePackDef ArtDescription_SarcophagusPlate;
 
 		public static RulePackDef SeedGenerator;
 
-		public static RulePackDef Combat_Hit;
-
-		public static RulePackDef Combat_Dodge;
-
-		public static RulePackDef Combat_Miss;
-
 		public static RulePackDef Combat_RangedFire;
 
 		public static RulePackDef Combat_RangedDamage;
+
+		public static RulePackDef Combat_RangedDeflect;
 
 		public static RulePackDef Combat_RangedMiss;
 
@@ -87,5 +83,24 @@ namespace RimWorld
 		public static RulePackDef DamageEvent_PowerBeam;
 
 		public static RulePackDef DamageEvent_Tornado;
+
+		public static RulePackDef Event_Stun;
+
+		public static RulePackDef Battle_Solo;
+
+		public static RulePackDef Battle_Duel;
+
+		public static RulePackDef Battle_Internal;
+
+		public static RulePackDef Battle_War;
+
+		public static RulePackDef Battle_Brawl;
+
+		public static RulePackDef DynamicWrapper;
+
+		static RulePackDefOf()
+		{
+			DefOfHelper.EnsureInitializedInCtor(typeof(RulePackDefOf));
+		}
 	}
 }

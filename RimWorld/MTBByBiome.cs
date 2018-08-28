@@ -14,7 +14,7 @@ namespace RimWorld
 		{
 			if (xmlRoot.ChildNodes.Count != 1)
 			{
-				Log.Error("Misconfigured MTBByBiome: " + xmlRoot.OuterXml);
+				Log.Error("Misconfigured MTBByBiome: " + xmlRoot.OuterXml, false);
 				return;
 			}
 			DirectXmlCrossRefLoader.RegisterObjectWantsCrossRef(this, "biome", xmlRoot.Name);

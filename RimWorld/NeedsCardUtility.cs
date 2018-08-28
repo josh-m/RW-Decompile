@@ -94,7 +94,7 @@ namespace RimWorld
 			List<Need> allNeeds = pawn.needs.AllNeeds;
 			for (int i = 0; i < allNeeds.Count; i++)
 			{
-				if (allNeeds[i].def.showOnNeedList)
+				if (allNeeds[i].ShowOnNeedList)
 				{
 					NeedsCardUtility.displayNeeds.Add(allNeeds[i]);
 				}
@@ -159,7 +159,7 @@ namespace RimWorld
 						{
 							stringBuilder.Append("ThoughtExpiresIn".Translate(new object[]
 							{
-								(group.def.DurationTicks - thought_Memory.age).ToStringTicksToPeriod(true, false, true)
+								(group.def.DurationTicks - thought_Memory.age).ToStringTicksToPeriod()
 							}));
 						}
 						else
@@ -167,12 +167,12 @@ namespace RimWorld
 							Thought_Memory thought_Memory2 = (Thought_Memory)NeedsCardUtility.thoughtGroup[NeedsCardUtility.thoughtGroup.Count - 1];
 							stringBuilder.Append("ThoughtStartsExpiringIn".Translate(new object[]
 							{
-								(group.def.DurationTicks - thought_Memory.age).ToStringTicksToPeriod(true, false, true)
+								(group.def.DurationTicks - thought_Memory.age).ToStringTicksToPeriod()
 							}));
 							stringBuilder.AppendLine();
 							stringBuilder.Append("ThoughtFinishesExpiringIn".Translate(new object[]
 							{
-								(group.def.DurationTicks - thought_Memory2.age).ToStringTicksToPeriod(true, false, true)
+								(group.def.DurationTicks - thought_Memory2.age).ToStringTicksToPeriod()
 							}));
 						}
 					}
@@ -245,7 +245,7 @@ namespace RimWorld
 					pawn,
 					": ",
 					ex.ToString()
-				}), 3452698);
+				}), 3452698, false);
 			}
 			return true;
 		}

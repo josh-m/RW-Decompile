@@ -26,11 +26,11 @@ namespace RimWorld
 				ChoiceLetter choiceLetter = this.letter as ChoiceLetter;
 				if (choiceLetter != null)
 				{
-					choiceLetter.text = string.Format(choiceLetter.text, pawn.NameStringShort).AdjustedFor(pawn);
+					choiceLetter.text = string.Format(choiceLetter.text, pawn.LabelShort).AdjustedFor(pawn, "PAWN");
 				}
-				if (!this.letter.lookTarget.IsValid)
+				if (!this.letter.lookTargets.IsValid())
 				{
-					this.letter.lookTarget = pawn;
+					this.letter.lookTargets = pawn;
 				}
 			}
 			Find.LetterStack.ReceiveLetter(this.letter, null);

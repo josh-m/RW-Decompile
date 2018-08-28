@@ -1,11 +1,40 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Verse
 {
 	public static class UnityGUIBugsFixer
 	{
+		private static List<Resolution> resolutions = new List<Resolution>();
+
 		private const float ScrollFactor = -6f;
+
+		public static List<Resolution> ScreenResolutionsWithoutDuplicates
+		{
+			get
+			{
+				UnityGUIBugsFixer.resolutions.Clear();
+				Resolution[] array = Screen.resolutions;
+				for (int i = 0; i < array.Length; i++)
+				{
+					bool flag = false;
+					for (int j = 0; j < UnityGUIBugsFixer.resolutions.Count; j++)
+					{
+						if (UnityGUIBugsFixer.resolutions[j].width == array[i].width && UnityGUIBugsFixer.resolutions[j].height == array[i].height)
+						{
+							flag = true;
+							break;
+						}
+					}
+					if (!flag)
+					{
+						UnityGUIBugsFixer.resolutions.Add(array[i]);
+					}
+				}
+				return UnityGUIBugsFixer.resolutions;
+			}
+		}
 
 		public static void OnGUI()
 		{

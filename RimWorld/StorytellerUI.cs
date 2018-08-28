@@ -12,7 +12,7 @@ namespace RimWorld
 
 		private static readonly Texture2D StorytellerHighlightTex = ContentFinder<Texture2D>.Get("UI/HeroArt/Storytellers/Highlight", true);
 
-		internal static void DrawStorytellerSelectionInterface(Rect rect, ref StorytellerDef chosenStoryteller, ref DifficultyDef difficulty, Listing_Standard selectedStorytellerInfoListing)
+		public static void DrawStorytellerSelectionInterface(Rect rect, ref StorytellerDef chosenStoryteller, ref DifficultyDef difficulty, Listing_Standard infoListing)
 		{
 			GUI.BeginGroup(rect);
 			if (chosenStoryteller != null && chosenStoryteller.listVisible)
@@ -45,39 +45,60 @@ namespace RimWorld
 			}
 			Widgets.EndScrollView();
 			Text.Font = GameFont.Small;
-			Rect rect3 = new Rect(outRect.xMax + 8f, 0f, 240f, 999f);
+			Rect rect3 = new Rect(outRect.xMax + 8f, 0f, 300f, 999f);
 			Widgets.Label(rect3, "HowStorytellersWork".Translate());
 			if (chosenStoryteller != null && chosenStoryteller.listVisible)
 			{
-				Rect rect4 = new Rect(outRect.xMax + 8f, outRect.yMin + 200f, 290f, 0f);
+				Rect rect4 = new Rect(outRect.xMax + 8f, outRect.yMin + 160f, 290f, 0f);
 				rect4.height = rect.height - rect4.y;
 				Text.Font = GameFont.Medium;
 				Rect rect5 = new Rect(rect4.x + 15f, rect4.y - 40f, 9999f, 40f);
 				Widgets.Label(rect5, chosenStoryteller.label);
 				Text.Anchor = TextAnchor.UpperLeft;
 				Text.Font = GameFont.Small;
-				selectedStorytellerInfoListing.Begin(rect4);
-				selectedStorytellerInfoListing.Label(chosenStoryteller.description, 120f);
-				selectedStorytellerInfoListing.Gap(6f);
+				infoListing.Begin(rect4);
+				infoListing.Label(chosenStoryteller.description, 160f, null);
+				infoListing.Gap(6f);
 				foreach (DifficultyDef current2 in DefDatabase<DifficultyDef>.AllDefs)
 				{
-					Rect rect6 = selectedStorytellerInfoListing.GetRect(30f);
-					if (Mouse.IsOver(rect6))
+					if (!current2.isExtreme || Prefs.ExtremeDifficultyUnlocked)
 					{
-						Widgets.DrawHighlight(rect6);
-					}
-					TooltipHandler.TipRegion(rect6, current2.description);
-					if (Widgets.RadioButtonLabeled(rect6, current2.LabelCap, difficulty == current2))
-					{
-						difficulty = current2;
+						GUI.color = current2.drawColor;
+						string text = current2.LabelCap;
+						bool active = difficulty == current2;
+						string text2 = current2.description;
+						if (infoListing.RadioButton(text, active, 0f, text2))
+						{
+							difficulty = current2;
+						}
+						infoListing.Gap(3f);
 					}
 				}
-				selectedStorytellerInfoListing.Gap(30f);
+				GUI.color = Color.white;
 				if (Current.ProgramState == ProgramState.Entry)
 				{
-					selectedStorytellerInfoListing.CheckboxLabeled("PermadeathMode".Translate(), ref Find.GameInitData.permadeath, "PermadeathModeInfo".Translate());
+					infoListing.Gap(25f);
+					bool flag = Find.GameInitData.permadeathChosen && Find.GameInitData.permadeath;
+					bool flag2 = Find.GameInitData.permadeathChosen && !Find.GameInitData.permadeath;
+					string text2 = "ReloadAnytimeMode".Translate();
+					bool active = flag2;
+					string text = "ReloadAnytimeModeInfo".Translate();
+					if (infoListing.RadioButton(text2, active, 0f, text))
+					{
+						Find.GameInitData.permadeathChosen = true;
+						Find.GameInitData.permadeath = false;
+					}
+					infoListing.Gap(3f);
+					text = "CommitmentMode".TranslateWithBackup("PermadeathMode");
+					active = flag;
+					text2 = "PermadeathModeInfo".Translate();
+					if (infoListing.RadioButton(text, active, 0f, text2))
+					{
+						Find.GameInitData.permadeathChosen = true;
+						Find.GameInitData.permadeath = true;
+					}
 				}
-				selectedStorytellerInfoListing.End();
+				infoListing.End();
 			}
 			GUI.EndGroup();
 		}

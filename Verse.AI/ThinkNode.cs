@@ -59,7 +59,7 @@ namespace Verse.AI
 		{
 			if (this.priority < 0f)
 			{
-				Log.ErrorOnce("ThinkNode_PrioritySorter has child node which didn't give a priority: " + this, this.GetHashCode());
+				Log.ErrorOnce("ThinkNode_PrioritySorter has child node which didn't give a priority: " + this, this.GetHashCode(), false);
 				return 0f;
 			}
 			return this.priority;

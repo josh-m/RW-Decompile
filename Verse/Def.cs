@@ -11,11 +11,14 @@ namespace Verse
 		[Description("The name of this Def. It is used as an identifier by the game code."), NoTranslate]
 		public string defName = "UnnamedDef";
 
-		[DefaultValue(null), Description("A human-readable label used to identify this in game.")]
+		[DefaultValue(null), Description("A human-readable label used to identify this in game."), MustTranslate]
 		public string label;
 
-		[DefaultValue(null), Description("A human-readable description given when the Def is inspected by players.")]
+		[DefaultValue(null), Description("A human-readable description given when the Def is inspected by players."), MustTranslate]
 		public string description;
+
+		[DefaultValue(false), Description("Disables config error checking. Intended for mod use. (Be careful!)"), MustTranslate]
+		public bool ignoreConfigErrors;
 
 		[DefaultValue(null), Description("Mod-specific data. Not used by core game code.")]
 		public List<DefModExtension> modExtensions;
@@ -27,7 +30,16 @@ namespace Verse
 		public ushort index = 65535;
 
 		[Unsaved]
+		public ModContentPack modContentPack;
+
+		[Unsaved]
+		public DefPackage defPackage;
+
+		[Unsaved]
 		private string cachedLabelCap;
+
+		[Unsaved]
+		public bool generated;
 
 		[Unsaved]
 		public ushort debugRandomId = (ushort)Rand.RangeInclusive(0, 65535);
@@ -53,7 +65,7 @@ namespace Verse
 		}
 
 		[DebuggerHidden]
-		public virtual IEnumerable<StatDrawEntry> SpecialDisplayStats()
+		public virtual IEnumerable<StatDrawEntry> SpecialDisplayStats(StatRequest req)
 		{
 		}
 
@@ -80,6 +92,21 @@ namespace Verse
 					{
 						yield return err;
 					}
+				}
+			}
+			if (this.description != null)
+			{
+				if (this.description == string.Empty)
+				{
+					yield return "empty description";
+				}
+				if (char.IsWhiteSpace(this.description[0]))
+				{
+					yield return "description has leading whitespace";
+				}
+				if (char.IsWhiteSpace(this.description[this.description.Length - 1]))
+				{
+					yield return "description has trailing whitespace";
 				}
 			}
 		}

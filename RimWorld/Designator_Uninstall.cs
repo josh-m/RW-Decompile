@@ -15,15 +15,23 @@ namespace RimWorld
 			}
 		}
 
+		protected override DesignationDef Designation
+		{
+			get
+			{
+				return DesignationDefOf.Uninstall;
+			}
+		}
+
 		public Designator_Uninstall()
 		{
 			this.defaultLabel = "DesignatorUninstall".Translate();
 			this.defaultDesc = "DesignatorUninstallDesc".Translate();
 			this.icon = ContentFinder<Texture2D>.Get("UI/Designators/Uninstall", true);
-			this.soundDragSustain = SoundDefOf.DesignateDragStandard;
-			this.soundDragChanged = SoundDefOf.DesignateDragStandardChanged;
+			this.soundDragSustain = SoundDefOf.Designate_DragStandard;
+			this.soundDragChanged = SoundDefOf.Designate_DragStandard_Changed;
 			this.useMouseIcon = true;
-			this.soundSucceeded = SoundDefOf.DesignateDeconstruct;
+			this.soundSucceeded = SoundDefOf.Designate_Deconstruct;
 			this.hotKey = KeyBindingDefOf.Misc12;
 		}
 
@@ -75,7 +83,7 @@ namespace RimWorld
 			}
 			else
 			{
-				base.Map.designationManager.AddDesignation(new Designation(t, DesignationDefOf.Uninstall));
+				base.Map.designationManager.AddDesignation(new Designation(t, this.Designation));
 			}
 		}
 
@@ -105,7 +113,7 @@ namespace RimWorld
 					return false;
 				}
 			}
-			if (base.Map.designationManager.DesignationOn(t, DesignationDefOf.Uninstall) != null)
+			if (base.Map.designationManager.DesignationOn(t, this.Designation) != null)
 			{
 				return false;
 			}

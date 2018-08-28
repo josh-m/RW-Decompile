@@ -17,7 +17,7 @@ namespace RimWorld
 			{
 				return null;
 			}
-			Predicate<IntVec3> cellValidator = (IntVec3 x) => !PawnUtility.KnownDangerAt(x, pawn);
+			Predicate<IntVec3> cellValidator = (IntVec3 x) => !PawnUtility.KnownDangerAt(x, pawn.Map, pawn) && !x.GetTerrain(pawn.Map).avoidWander && x.Standable(pawn.Map) && !x.Roofed(pawn.Map);
 			Predicate<Region> validator = delegate(Region x)
 			{
 				IntVec3 intVec;

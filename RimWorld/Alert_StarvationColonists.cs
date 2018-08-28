@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using Verse;
 
@@ -12,9 +11,13 @@ namespace RimWorld
 		{
 			get
 			{
-				return from p in PawnsFinder.AllMaps_FreeColonistsSpawned
-				where p.needs.food != null && p.needs.food.Starving
-				select p;
+				foreach (Pawn p in PawnsFinder.AllMapsCaravansAndTravelingTransportPods_Alive_FreeColonists_NoCryptosleep)
+				{
+					if (p.needs.food != null && p.needs.food.Starving)
+					{
+						yield return p;
+					}
+				}
 			}
 		}
 
@@ -29,14 +32,14 @@ namespace RimWorld
 			StringBuilder stringBuilder = new StringBuilder();
 			foreach (Pawn current in this.StarvingColonists)
 			{
-				stringBuilder.AppendLine("    " + current.NameStringShort);
+				stringBuilder.AppendLine("    " + current.LabelShort);
 			}
 			return string.Format("StarvationDesc".Translate(), stringBuilder.ToString());
 		}
 
 		public override AlertReport GetReport()
 		{
-			return AlertReport.CulpritIs(this.StarvingColonists.FirstOrDefault<Pawn>());
+			return AlertReport.CulpritsAre(this.StarvingColonists);
 		}
 	}
 }

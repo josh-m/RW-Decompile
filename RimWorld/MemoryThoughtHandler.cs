@@ -67,11 +67,24 @@ namespace RimWorld
 			}
 		}
 
+		public void TryGainMemoryFast(ThoughtDef mem)
+		{
+			Thought_Memory firstMemoryOfDef = this.GetFirstMemoryOfDef(mem);
+			if (firstMemoryOfDef != null)
+			{
+				firstMemoryOfDef.Renew();
+			}
+			else
+			{
+				this.TryGainMemory(mem, null);
+			}
+		}
+
 		public void TryGainMemory(ThoughtDef def, Pawn otherPawn = null)
 		{
 			if (!def.IsMemory)
 			{
-				Log.Error(def + " is not a memory thought.");
+				Log.Error(def + " is not a memory thought.", false);
 				return;
 			}
 			this.TryGainMemory((Thought_Memory)ThoughtMaker.MakeThought(def), otherPawn);
@@ -85,7 +98,7 @@ namespace RimWorld
 			}
 			if (newThought is Thought_MemorySocial && newThought.otherPawn == null && otherPawn == null)
 			{
-				Log.Error("Can't gain social thought " + newThought.def + " because its otherPawn is null and otherPawn passed to this method is also null. Social thoughts must have otherPawn.");
+				Log.Error("Can't gain social thought " + newThought.def + " because its otherPawn is null and otherPawn passed to this method is also null. Social thoughts must have otherPawn.", false);
 				return;
 			}
 			newThought.pawn = this.pawn;
@@ -95,9 +108,9 @@ namespace RimWorld
 			{
 				this.memories.Add(newThought);
 			}
-			if (newThought.def.stackLimitPerPawn >= 0)
+			if (newThought.def.stackLimitForSameOtherPawn >= 0)
 			{
-				while (this.NumMemoriesInGroup(newThought) > newThought.def.stackLimitPerPawn)
+				while (this.NumMemoriesInGroup(newThought) > newThought.def.stackLimitForSameOtherPawn)
 				{
 					this.RemoveMemory(this.OldestMemoryInGroup(newThought));
 				}
@@ -161,7 +174,7 @@ namespace RimWorld
 		{
 			if (!this.memories.Remove(th))
 			{
-				Log.Warning("Tried to remove memory thought of def " + th.def.defName + " but it's not here.");
+				Log.Warning("Tried to remove memory thought of def " + th.def.defName + " but it's not here.", false);
 			}
 		}
 
@@ -189,6 +202,18 @@ namespace RimWorld
 				}
 			}
 			return num;
+		}
+
+		public Thought_Memory GetFirstMemoryOfDef(ThoughtDef def)
+		{
+			for (int i = 0; i < this.memories.Count; i++)
+			{
+				if (this.memories[i].def == def)
+				{
+					return this.memories[i];
+				}
+			}
+			return null;
 		}
 
 		public void RemoveMemoriesOfDefWhereOtherPawnIs(ThoughtDef def, Pawn otherPawn)
@@ -221,7 +246,7 @@ namespace RimWorld
 		{
 			if (!def.IsMemory)
 			{
-				Log.Warning(def + " is not a memory thought.");
+				Log.Warning(def + " is not a memory thought.", false);
 				return;
 			}
 			while (true)
@@ -239,7 +264,7 @@ namespace RimWorld
 		{
 			if (!def.IsMemory)
 			{
-				Log.Warning(def + " is not a memory thought.");
+				Log.Warning(def + " is not a memory thought.", false);
 				return;
 			}
 			while (true)

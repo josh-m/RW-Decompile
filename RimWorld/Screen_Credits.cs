@@ -98,7 +98,6 @@ namespace RimWorld
 			this.doWindowBackground = false;
 			this.doCloseButton = false;
 			this.doCloseX = false;
-			this.closeOnEscapeKey = true;
 			this.forcePause = true;
 			this.creds = CreditsAssembler.AllCredits().ToList<CreditsEntry>();
 			this.creds.Insert(0, new CreditRecord_Space(100f));

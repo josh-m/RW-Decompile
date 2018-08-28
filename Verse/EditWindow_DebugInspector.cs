@@ -1,5 +1,4 @@
 using RimWorld;
-using RimWorld.Planet;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -53,7 +52,7 @@ namespace Verse
 
 		public override void DoWindowContents(Rect inRect)
 		{
-			if (KeyBindingDefOf.ToggleDebugInspector.KeyDownEvent)
+			if (KeyBindingDefOf.Dev_ToggleDebugInspector.KeyDownEvent)
 			{
 				Event.current.Use();
 				this.Close(true);
@@ -88,8 +87,8 @@ namespace Verse
 			for (int i = 0; i < array2.Length; i++)
 			{
 				string label = array2[i];
-				listing_Standard.Label(label, -1f);
-				listing_Standard.Gap(-10f);
+				listing_Standard.Label(label, -1f, null);
+				listing_Standard.Gap(-9f);
 			}
 			listing_Standard.End();
 			if (Event.current.type == EventType.Repaint)
@@ -107,15 +106,15 @@ namespace Verse
 		private string CurrentDebugString()
 		{
 			StringBuilder stringBuilder = new StringBuilder();
-			if (WorldRendererUtility.WorldRenderedNow || Find.VisibleMap == null)
-			{
-				stringBuilder.AppendLine("World view");
-				return stringBuilder.ToString();
-			}
-			if (DebugViewSettings.writeGameConditions)
+			if (DebugViewSettings.writeGame)
 			{
 				stringBuilder.AppendLine("---");
-				stringBuilder.AppendLine(Find.VisibleMap.gameConditionManager.DebugString());
+				stringBuilder.AppendLine((Current.Game != null) ? Current.Game.DebugString() : "Current.Game = null");
+			}
+			if (DebugViewSettings.writeMusicManagerPlay)
+			{
+				stringBuilder.AppendLine("---");
+				stringBuilder.AppendLine(Find.MusicManagerPlay.DebugString());
 			}
 			if (DebugViewSettings.writePlayingSounds)
 			{
@@ -138,11 +137,6 @@ namespace Verse
 				stringBuilder.AppendLine("Recent sound events:\n       ...");
 				stringBuilder.AppendLine(DebugSoundEventsLog.EventsListingDebugString);
 			}
-			if (DebugViewSettings.writeGame)
-			{
-				stringBuilder.AppendLine("---");
-				stringBuilder.AppendLine((Current.Game != null) ? Current.Game.DebugString() : "Current.Game = null");
-			}
 			if (DebugViewSettings.writeSteamItems)
 			{
 				stringBuilder.AppendLine("---");
@@ -164,208 +158,214 @@ namespace Verse
 			}
 			if (Current.ProgramState == ProgramState.Playing)
 			{
-				IntVec3 intVec = UI.MouseCell();
 				stringBuilder.AppendLine("Tick " + Find.TickManager.TicksGame);
-				stringBuilder.AppendLine("Inspecting " + intVec.ToString());
-				if (DebugViewSettings.writeCellContents || this.fullMode)
-				{
-					stringBuilder.AppendLine("---");
-					if (intVec.InBounds(Find.VisibleMap))
-					{
-						foreach (Designation current3 in Find.VisibleMap.designationManager.AllDesignationsAt(intVec))
-						{
-							stringBuilder.AppendLine(current3.ToString());
-						}
-						foreach (Thing current4 in Find.VisibleMap.thingGrid.ThingsAt(intVec))
-						{
-							if (!this.fullMode)
-							{
-								stringBuilder.AppendLine(current4.LabelCap + " - " + current4.ToString());
-							}
-							else
-							{
-								stringBuilder.AppendLine(Scribe.saver.DebugOutputFor(current4));
-								stringBuilder.AppendLine();
-							}
-						}
-					}
-				}
-				if (DebugViewSettings.debugApparelOptimize)
-				{
-					stringBuilder.AppendLine("---");
-					foreach (Thing current5 in Find.VisibleMap.thingGrid.ThingsAt(intVec))
-					{
-						Apparel apparel = current5 as Apparel;
-						if (apparel != null)
-						{
-							stringBuilder.AppendLine(apparel.LabelCap);
-							stringBuilder.AppendLine("   raw: " + JobGiver_OptimizeApparel.ApparelScoreRaw(null, apparel).ToString("F2"));
-							Pawn pawn = Find.Selector.SingleSelectedThing as Pawn;
-							if (pawn != null)
-							{
-								stringBuilder.AppendLine("  Pawn: " + pawn);
-								stringBuilder.AppendLine("  gain: " + JobGiver_OptimizeApparel.ApparelScoreGain(pawn, apparel).ToString("F2"));
-							}
-						}
-					}
-				}
-				if (DebugViewSettings.drawPawnDebug)
-				{
-					stringBuilder.AppendLine("---");
-					stringBuilder.AppendLine(Find.VisibleMap.reservationManager.DebugString());
-				}
-				if (DebugViewSettings.writeMoteSaturation)
-				{
-					stringBuilder.AppendLine("---");
-					stringBuilder.AppendLine("Mote count: " + Find.VisibleMap.moteCounter.MoteCount);
-					stringBuilder.AppendLine("Mote saturation: " + Find.VisibleMap.moteCounter.Saturation);
-				}
-				if (DebugViewSettings.writeSnowDepth)
-				{
-					stringBuilder.AppendLine("---");
-					stringBuilder.AppendLine("Snow depth: " + Find.VisibleMap.snowGrid.GetDepth(intVec));
-				}
-				if (DebugViewSettings.drawDeepResources)
-				{
-					stringBuilder.AppendLine("---");
-					stringBuilder.AppendLine("Deep resource def: " + Find.VisibleMap.deepResourceGrid.ThingDefAt(intVec));
-					stringBuilder.AppendLine("Deep resource count: " + Find.VisibleMap.deepResourceGrid.CountAt(intVec));
-				}
-				if (DebugViewSettings.writeEcosystem)
-				{
-					stringBuilder.AppendLine("---");
-					stringBuilder.AppendLine(Find.VisibleMap.wildSpawner.DebugString());
-				}
-				if (DebugViewSettings.writeTotalSnowDepth)
-				{
-					stringBuilder.AppendLine("---");
-					stringBuilder.AppendLine("Total snow depth: " + Find.VisibleMap.snowGrid.TotalDepth);
-				}
-				if (DebugViewSettings.writeCanReachColony)
-				{
-					stringBuilder.AppendLine("---");
-					stringBuilder.AppendLine("CanReachColony: " + Find.VisibleMap.reachability.CanReachColony(UI.MouseCell()));
-				}
-				if (DebugViewSettings.writeMentalStateCalcs)
-				{
-					stringBuilder.AppendLine("---");
-					foreach (Pawn current6 in (from t in Find.VisibleMap.thingGrid.ThingsAt(UI.MouseCell())
-					where t is Pawn
-					select t).Cast<Pawn>())
-					{
-						stringBuilder.AppendLine(current6.mindState.mentalBreaker.DebugString());
-					}
-				}
-				if (DebugViewSettings.writeWind)
-				{
-					stringBuilder.AppendLine("---");
-					stringBuilder.AppendLine(Find.VisibleMap.windManager.DebugString());
-				}
-				if (DebugViewSettings.writeWorkSettings)
-				{
-					foreach (Pawn current7 in (from t in Find.VisibleMap.thingGrid.ThingsAt(UI.MouseCell())
-					where t is Pawn
-					select t).Cast<Pawn>())
-					{
-						if (current7.workSettings != null)
-						{
-							stringBuilder.AppendLine("---");
-							stringBuilder.AppendLine(current7.workSettings.DebugString());
-						}
-					}
-				}
-				if (DebugViewSettings.writeApparelScore)
-				{
-					stringBuilder.AppendLine("---");
-					if (intVec.InBounds(Find.VisibleMap))
-					{
-						foreach (Thing current8 in intVec.GetThingList(Find.VisibleMap))
-						{
-							Apparel apparel2 = current8 as Apparel;
-							if (apparel2 != null)
-							{
-								stringBuilder.AppendLine(apparel2.Label + ": " + JobGiver_OptimizeApparel.ApparelScoreRaw(null, apparel2).ToString("F2"));
-							}
-						}
-					}
-				}
-				if (DebugViewSettings.writeRecentStrikes)
-				{
-					stringBuilder.AppendLine("---");
-					stringBuilder.AppendLine(Find.VisibleMap.mineStrikeManager.DebugStrikeRecords());
-				}
 				if (DebugViewSettings.writeStoryteller)
 				{
 					stringBuilder.AppendLine("---");
 					stringBuilder.AppendLine(Find.Storyteller.DebugString());
+				}
+			}
+			if (Current.ProgramState == ProgramState.Playing && Find.CurrentMap != null)
+			{
+				if (DebugViewSettings.writeMapGameConditions)
+				{
 					stringBuilder.AppendLine("---");
-					stringBuilder.AppendLine(Find.StoryWatcher.DebugString());
+					stringBuilder.AppendLine(Find.CurrentMap.gameConditionManager.DebugString());
+				}
+				if (DebugViewSettings.drawPawnDebug)
+				{
+					stringBuilder.AppendLine("---");
+					stringBuilder.AppendLine(Find.CurrentMap.reservationManager.DebugString());
+				}
+				if (DebugViewSettings.writeMoteSaturation)
+				{
+					stringBuilder.AppendLine("---");
+					stringBuilder.AppendLine("Mote count: " + Find.CurrentMap.moteCounter.MoteCount);
+					stringBuilder.AppendLine("Mote saturation: " + Find.CurrentMap.moteCounter.Saturation);
+				}
+				if (DebugViewSettings.writeEcosystem)
+				{
+					stringBuilder.AppendLine("---");
+					stringBuilder.AppendLine(Find.CurrentMap.wildAnimalSpawner.DebugString());
+				}
+				if (DebugViewSettings.writeTotalSnowDepth)
+				{
+					stringBuilder.AppendLine("---");
+					stringBuilder.AppendLine("Total snow depth: " + Find.CurrentMap.snowGrid.TotalDepth);
+				}
+				if (DebugViewSettings.writeWind)
+				{
+					stringBuilder.AppendLine("---");
+					stringBuilder.AppendLine(Find.CurrentMap.windManager.DebugString());
+				}
+				if (DebugViewSettings.writeRecentStrikes)
+				{
+					stringBuilder.AppendLine("---");
+					stringBuilder.AppendLine(Find.CurrentMap.mineStrikeManager.DebugStrikeRecords());
 				}
 				if (DebugViewSettings.writeListRepairableBldgs)
 				{
 					stringBuilder.AppendLine("---");
-					stringBuilder.AppendLine(Find.VisibleMap.listerBuildingsRepairable.DebugString());
+					stringBuilder.AppendLine(Find.CurrentMap.listerBuildingsRepairable.DebugString());
 				}
 				if (DebugViewSettings.writeListFilthInHomeArea)
 				{
 					stringBuilder.AppendLine("---");
-					stringBuilder.AppendLine(Find.VisibleMap.listerFilthInHomeArea.DebugString());
-				}
-				if (DebugViewSettings.writeTerrain)
-				{
-					stringBuilder.AppendLine("---");
-					stringBuilder.AppendLine(Find.VisibleMap.terrainGrid.DebugStringAt(intVec));
+					stringBuilder.AppendLine(Find.CurrentMap.listerFilthInHomeArea.DebugString());
 				}
 				if (DebugViewSettings.writeListHaulables)
 				{
 					stringBuilder.AppendLine("---");
-					stringBuilder.AppendLine(Find.VisibleMap.listerHaulables.DebugString());
+					stringBuilder.AppendLine(Find.CurrentMap.listerHaulables.DebugString());
+				}
+				if (DebugViewSettings.writeListMergeables)
+				{
+					stringBuilder.AppendLine("---");
+					stringBuilder.AppendLine(Find.CurrentMap.listerMergeables.DebugString());
 				}
 				if (DebugViewSettings.drawLords)
 				{
-					foreach (Lord current9 in Find.VisibleMap.lordManager.lords)
+					foreach (Lord current3 in Find.CurrentMap.lordManager.lords)
 					{
 						stringBuilder.AppendLine("---");
-						stringBuilder.AppendLine(current9.DebugString());
+						stringBuilder.AppendLine(current3.DebugString());
 					}
 				}
-				if (DebugViewSettings.writeMusicManagerPlay)
+				IntVec3 intVec = UI.MouseCell();
+				if (intVec.InBounds(Find.CurrentMap))
 				{
-					stringBuilder.AppendLine("---");
-					stringBuilder.AppendLine(Find.MusicManagerPlay.DebugString());
-				}
-				if (DebugViewSettings.writeAttackTargets)
-				{
-					foreach (Pawn current10 in Find.VisibleMap.thingGrid.ThingsAt(UI.MouseCell()).OfType<Pawn>())
+					stringBuilder.AppendLine("Inspecting " + intVec.ToString());
+					if (DebugViewSettings.writeTerrain)
 					{
 						stringBuilder.AppendLine("---");
-						stringBuilder.AppendLine("Potential attack targets for " + current10.LabelShort + ":");
-						List<IAttackTarget> potentialTargetsFor = Find.VisibleMap.attackTargetsCache.GetPotentialTargetsFor(current10);
-						for (int i = 0; i < potentialTargetsFor.Count; i++)
+						stringBuilder.AppendLine(Find.CurrentMap.terrainGrid.DebugStringAt(intVec));
+					}
+					if (DebugViewSettings.writeAttackTargets)
+					{
+						foreach (Pawn current4 in Find.CurrentMap.thingGrid.ThingsAt(UI.MouseCell()).OfType<Pawn>())
 						{
-							Thing thing = (Thing)potentialTargetsFor[i];
-							stringBuilder.AppendLine(string.Concat(new object[]
+							stringBuilder.AppendLine("---");
+							stringBuilder.AppendLine("Potential attack targets for " + current4.LabelShort + ":");
+							List<IAttackTarget> potentialTargetsFor = Find.CurrentMap.attackTargetsCache.GetPotentialTargetsFor(current4);
+							for (int i = 0; i < potentialTargetsFor.Count; i++)
 							{
-								thing.LabelShort,
-								", ",
-								thing.Faction,
-								(!potentialTargetsFor[i].ThreatDisabled()) ? string.Empty : " (threat disabled)"
-							}));
+								Thing thing = (Thing)potentialTargetsFor[i];
+								stringBuilder.AppendLine(string.Concat(new object[]
+								{
+									thing.LabelShort,
+									", ",
+									thing.Faction,
+									(!potentialTargetsFor[i].ThreatDisabled(null)) ? string.Empty : " (threat disabled)"
+								}));
+							}
 						}
 					}
-				}
-				if (intVec.InBounds(Find.VisibleMap))
-				{
+					if (DebugViewSettings.writeSnowDepth)
+					{
+						stringBuilder.AppendLine("---");
+						stringBuilder.AppendLine("Snow depth: " + Find.CurrentMap.snowGrid.GetDepth(intVec));
+					}
+					if (DebugViewSettings.drawDeepResources)
+					{
+						stringBuilder.AppendLine("---");
+						stringBuilder.AppendLine("Deep resource def: " + Find.CurrentMap.deepResourceGrid.ThingDefAt(intVec));
+						stringBuilder.AppendLine("Deep resource count: " + Find.CurrentMap.deepResourceGrid.CountAt(intVec));
+					}
+					if (DebugViewSettings.writeCanReachColony)
+					{
+						stringBuilder.AppendLine("---");
+						stringBuilder.AppendLine("CanReachColony: " + Find.CurrentMap.reachability.CanReachColony(UI.MouseCell()));
+					}
+					if (DebugViewSettings.writeMentalStateCalcs)
+					{
+						stringBuilder.AppendLine("---");
+						foreach (Pawn current5 in (from t in Find.CurrentMap.thingGrid.ThingsAt(UI.MouseCell())
+						where t is Pawn
+						select t).Cast<Pawn>())
+						{
+							stringBuilder.AppendLine(current5.mindState.mentalBreaker.DebugString());
+						}
+					}
+					if (DebugViewSettings.writeWorkSettings)
+					{
+						foreach (Pawn current6 in (from t in Find.CurrentMap.thingGrid.ThingsAt(UI.MouseCell())
+						where t is Pawn
+						select t).Cast<Pawn>())
+						{
+							if (current6.workSettings != null)
+							{
+								stringBuilder.AppendLine("---");
+								stringBuilder.AppendLine(current6.workSettings.DebugString());
+							}
+						}
+					}
+					if (DebugViewSettings.writeApparelScore)
+					{
+						stringBuilder.AppendLine("---");
+						if (intVec.InBounds(Find.CurrentMap))
+						{
+							foreach (Thing current7 in intVec.GetThingList(Find.CurrentMap))
+							{
+								Apparel apparel = current7 as Apparel;
+								if (apparel != null)
+								{
+									stringBuilder.AppendLine(apparel.Label + ": " + JobGiver_OptimizeApparel.ApparelScoreRaw(null, apparel).ToString("F2"));
+								}
+							}
+						}
+					}
+					if (DebugViewSettings.writeCellContents || this.fullMode)
+					{
+						stringBuilder.AppendLine("---");
+						if (intVec.InBounds(Find.CurrentMap))
+						{
+							foreach (Designation current8 in Find.CurrentMap.designationManager.AllDesignationsAt(intVec))
+							{
+								stringBuilder.AppendLine(current8.ToString());
+							}
+							foreach (Thing current9 in Find.CurrentMap.thingGrid.ThingsAt(intVec))
+							{
+								if (!this.fullMode)
+								{
+									stringBuilder.AppendLine(current9.LabelCap + " - " + current9.ToString());
+								}
+								else
+								{
+									stringBuilder.AppendLine(Scribe.saver.DebugOutputFor(current9));
+									stringBuilder.AppendLine();
+								}
+							}
+						}
+					}
+					if (DebugViewSettings.debugApparelOptimize)
+					{
+						stringBuilder.AppendLine("---");
+						foreach (Thing current10 in Find.CurrentMap.thingGrid.ThingsAt(intVec))
+						{
+							Apparel apparel2 = current10 as Apparel;
+							if (apparel2 != null)
+							{
+								stringBuilder.AppendLine(apparel2.LabelCap);
+								stringBuilder.AppendLine("   raw: " + JobGiver_OptimizeApparel.ApparelScoreRaw(null, apparel2).ToString("F2"));
+								Pawn pawn = Find.Selector.SingleSelectedThing as Pawn;
+								if (pawn != null)
+								{
+									stringBuilder.AppendLine("  Pawn: " + pawn);
+									stringBuilder.AppendLine("  gain: " + JobGiver_OptimizeApparel.ApparelScoreGain(pawn, apparel2).ToString("F2"));
+								}
+							}
+						}
+					}
 					if (DebugViewSettings.drawRegions)
 					{
 						stringBuilder.AppendLine("---");
-						Region regionAt_NoRebuild_InvalidAllowed = Find.VisibleMap.regionGrid.GetRegionAt_NoRebuild_InvalidAllowed(intVec);
+						Region regionAt_NoRebuild_InvalidAllowed = Find.CurrentMap.regionGrid.GetRegionAt_NoRebuild_InvalidAllowed(intVec);
 						stringBuilder.AppendLine("Region:\n" + ((regionAt_NoRebuild_InvalidAllowed == null) ? "null" : regionAt_NoRebuild_InvalidAllowed.DebugString));
 					}
 					if (DebugViewSettings.drawRooms)
 					{
 						stringBuilder.AppendLine("---");
-						Room room = intVec.GetRoom(Find.VisibleMap, RegionType.Set_All);
+						Room room = intVec.GetRoom(Find.CurrentMap, RegionType.Set_All);
 						if (room != null)
 						{
 							stringBuilder.AppendLine(room.DebugString());
@@ -378,7 +378,7 @@ namespace Verse
 					if (DebugViewSettings.drawRoomGroups)
 					{
 						stringBuilder.AppendLine("---");
-						RoomGroup roomGroup = intVec.GetRoomGroup(Find.VisibleMap);
+						RoomGroup roomGroup = intVec.GetRoomGroup(Find.CurrentMap);
 						if (roomGroup != null)
 						{
 							stringBuilder.AppendLine(roomGroup.DebugString());
@@ -391,22 +391,22 @@ namespace Verse
 					if (DebugViewSettings.drawGlow)
 					{
 						stringBuilder.AppendLine("---");
-						stringBuilder.AppendLine("Game glow: " + Find.VisibleMap.glowGrid.GameGlowAt(intVec, false));
-						stringBuilder.AppendLine("Psych glow: " + Find.VisibleMap.glowGrid.PsychGlowAt(intVec));
-						stringBuilder.AppendLine("Visual Glow: " + Find.VisibleMap.glowGrid.VisualGlowAt(intVec));
-						stringBuilder.AppendLine("GlowReport:\n" + ((SectionLayer_LightingOverlay)Find.VisibleMap.mapDrawer.SectionAt(intVec).GetLayer(typeof(SectionLayer_LightingOverlay))).GlowReportAt(intVec));
-						stringBuilder.AppendLine("SkyManager.CurSkyGlow: " + Find.VisibleMap.skyManager.CurSkyGlow);
+						stringBuilder.AppendLine("Game glow: " + Find.CurrentMap.glowGrid.GameGlowAt(intVec, false));
+						stringBuilder.AppendLine("Psych glow: " + Find.CurrentMap.glowGrid.PsychGlowAt(intVec));
+						stringBuilder.AppendLine("Visual Glow: " + Find.CurrentMap.glowGrid.VisualGlowAt(intVec));
+						stringBuilder.AppendLine("GlowReport:\n" + ((SectionLayer_LightingOverlay)Find.CurrentMap.mapDrawer.SectionAt(intVec).GetLayer(typeof(SectionLayer_LightingOverlay))).GlowReportAt(intVec));
+						stringBuilder.AppendLine("SkyManager.CurSkyGlow: " + Find.CurrentMap.skyManager.CurSkyGlow);
 					}
 					if (DebugViewSettings.writePathCosts)
 					{
 						stringBuilder.AppendLine("---");
-						stringBuilder.AppendLine("Perceived path cost: " + Find.VisibleMap.pathGrid.PerceivedPathCostAt(intVec));
-						stringBuilder.AppendLine("Real path cost: " + Find.VisibleMap.pathGrid.CalculatedCostAt(intVec, false, IntVec3.Invalid));
+						stringBuilder.AppendLine("Perceived path cost: " + Find.CurrentMap.pathGrid.PerceivedPathCostAt(intVec));
+						stringBuilder.AppendLine("Real path cost: " + Find.CurrentMap.pathGrid.CalculatedCostAt(intVec, false, IntVec3.Invalid));
 					}
 					if (DebugViewSettings.writeFertility)
 					{
 						stringBuilder.AppendLine("---");
-						stringBuilder.AppendLine("\nFertility: " + Find.VisibleMap.fertilityGrid.FertilityAt(intVec).ToString("##0.00"));
+						stringBuilder.AppendLine("\nFertility: " + Find.CurrentMap.fertilityGrid.FertilityAt(intVec).ToString("##0.00"));
 					}
 					if (DebugViewSettings.writeLinkFlags)
 					{
@@ -414,7 +414,7 @@ namespace Verse
 						stringBuilder.AppendLine("\nLinkFlags: ");
 						foreach (object current11 in Enum.GetValues(typeof(LinkFlags)))
 						{
-							if ((Find.VisibleMap.linkGrid.LinkFlagsAt(intVec) & (LinkFlags)current11) != LinkFlags.None)
+							if ((Find.CurrentMap.linkGrid.LinkFlagsAt(intVec) & (LinkFlags)current11) != LinkFlags.None)
 							{
 								stringBuilder.Append(" " + current11);
 							}
@@ -423,13 +423,13 @@ namespace Verse
 					if (DebugViewSettings.writeSkyManager)
 					{
 						stringBuilder.AppendLine("---");
-						stringBuilder.AppendLine(Find.VisibleMap.skyManager.DebugString());
+						stringBuilder.AppendLine(Find.CurrentMap.skyManager.DebugString());
 					}
 					if (DebugViewSettings.writeCover)
 					{
 						stringBuilder.AppendLine("---");
 						stringBuilder.Append("Cover: ");
-						Thing thing2 = Find.VisibleMap.coverGrid[intVec];
+						Thing thing2 = Find.CurrentMap.coverGrid[intVec];
 						if (thing2 == null)
 						{
 							stringBuilder.AppendLine("null");
@@ -442,7 +442,7 @@ namespace Verse
 					if (DebugViewSettings.drawPower)
 					{
 						stringBuilder.AppendLine("---");
-						foreach (Thing current12 in Find.VisibleMap.thingGrid.ThingsAt(intVec))
+						foreach (Thing current12 in Find.CurrentMap.thingGrid.ThingsAt(intVec))
 						{
 							ThingWithComps thingWithComps = current12 as ThingWithComps;
 							if (thingWithComps != null && thingWithComps.GetComp<CompPowerTrader>() != null)
@@ -450,7 +450,7 @@ namespace Verse
 								stringBuilder.AppendLine(" " + thingWithComps.GetComp<CompPowerTrader>().DebugString);
 							}
 						}
-						PowerNet powerNet = Find.VisibleMap.powerNetGrid.TransmittedPowerNetAt(intVec);
+						PowerNet powerNet = Find.CurrentMap.powerNetGrid.TransmittedPowerNetAt(intVec);
 						if (powerNet != null)
 						{
 							stringBuilder.AppendLine(string.Empty + powerNet.DebugString());
@@ -465,7 +465,7 @@ namespace Verse
 						Pawn pawn2 = Find.Selector.SingleSelectedThing as Pawn;
 						if (pawn2 != null)
 						{
-							List<Thing> thingList = intVec.GetThingList(Find.VisibleMap);
+							List<Thing> thingList = intVec.GetThingList(Find.CurrentMap);
 							for (int j = 0; j < thingList.Count; j++)
 							{
 								Pawn pawn3 = thingList[j] as Pawn;

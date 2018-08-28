@@ -14,20 +14,20 @@ namespace RimWorld
 
 		public static bool ShouldSeekMedicalRest(Pawn pawn)
 		{
-			return HealthAIUtility.ShouldSeekMedicalRestUrgent(pawn) || pawn.health.hediffSet.HasTendedAndHealingInjury() || pawn.health.hediffSet.HasTendedImmunizableNotImmuneHediff();
+			return HealthAIUtility.ShouldSeekMedicalRestUrgent(pawn) || pawn.health.hediffSet.HasTendedAndHealingInjury() || pawn.health.hediffSet.HasImmunizableNotImmuneHediff();
 		}
 
-		public static bool ShouldBeTendedNowUrgent(Pawn pawn)
+		public static bool ShouldBeTendedNowByPlayerUrgent(Pawn pawn)
 		{
-			return HealthAIUtility.ShouldBeTendedNow(pawn) && HealthUtility.TicksUntilDeathDueToBloodLoss(pawn) < 15000;
+			return HealthAIUtility.ShouldBeTendedNowByPlayer(pawn) && HealthUtility.TicksUntilDeathDueToBloodLoss(pawn) < 45000;
 		}
 
-		public static bool ShouldBeTendedNow(Pawn pawn)
+		public static bool ShouldBeTendedNowByPlayer(Pawn pawn)
 		{
-			return pawn.playerSettings != null && HealthAIUtility.ShouldEverReceiveMedicalCare(pawn) && pawn.health.HasHediffsNeedingTendByColony(false);
+			return pawn.playerSettings != null && HealthAIUtility.ShouldEverReceiveMedicalCareFromPlayer(pawn) && pawn.health.HasHediffsNeedingTendByPlayer(false);
 		}
 
-		public static bool ShouldEverReceiveMedicalCare(Pawn pawn)
+		public static bool ShouldEverReceiveMedicalCareFromPlayer(Pawn pawn)
 		{
 			return (pawn.playerSettings == null || pawn.playerSettings.medCare != MedicalCareCategory.NoCare) && (pawn.guest == null || pawn.guest.interactionMode != PrisonerInteractionModeDefOf.Execution) && pawn.Map.designationManager.DesignationOn(pawn, DesignationDefOf.Slaughter) == null;
 		}
@@ -43,7 +43,11 @@ namespace RimWorld
 			{
 				return null;
 			}
-			Predicate<Thing> predicate = (Thing m) => !m.IsForbidden(healer) && patient.playerSettings.medCare.AllowsMedicine(m.def) && healer.CanReserve(m, 1, -1, null, false);
+			if (Medicine.GetMedicineCountToFullyHeal(patient) <= 0)
+			{
+				return null;
+			}
+			Predicate<Thing> predicate = (Thing m) => !m.IsForbidden(healer) && patient.playerSettings.medCare.AllowsMedicine(m.def) && healer.CanReserve(m, 10, 1, null, false);
 			Func<Thing, float> priorityGetter = (Thing t) => t.def.GetStatValueAbstract(StatDefOf.MedicalPotency, null);
 			IntVec3 position = patient.Position;
 			Map map = patient.Map;

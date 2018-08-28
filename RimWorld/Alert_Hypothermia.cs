@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using Verse;
 
@@ -12,7 +11,7 @@ namespace RimWorld
 		{
 			get
 			{
-				foreach (Pawn p in PawnsFinder.AllMaps_FreeColonistsSpawned)
+				foreach (Pawn p in PawnsFinder.AllMapsCaravansAndTravelingTransportPods_Alive_FreeColonists_NoCryptosleep)
 				{
 					if (!p.SafeTemperatureRange().Includes(p.AmbientTemperature))
 					{
@@ -36,7 +35,7 @@ namespace RimWorld
 			StringBuilder stringBuilder = new StringBuilder();
 			foreach (Pawn current in this.HypothermiaDangerColonists)
 			{
-				stringBuilder.AppendLine("    " + current.NameStringShort);
+				stringBuilder.AppendLine("    " + current.LabelShort);
 			}
 			return "AlertHypothermiaDesc".Translate(new object[]
 			{
@@ -46,12 +45,7 @@ namespace RimWorld
 
 		public override AlertReport GetReport()
 		{
-			Pawn pawn = this.HypothermiaDangerColonists.FirstOrDefault<Pawn>();
-			if (pawn == null)
-			{
-				return false;
-			}
-			return AlertReport.CulpritIs(pawn);
+			return AlertReport.CulpritsAre(this.HypothermiaDangerColonists);
 		}
 	}
 }

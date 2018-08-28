@@ -62,8 +62,8 @@ namespace RimWorld
 		{
 			this.JState = Jetter.JetterState.WickBurning;
 			this.WickTicksLeft = 25;
-			SoundDef.Named("MetalHitImportant").PlayOneShot(this);
-			this.wickSoundSustainer = SoundDef.Named("HissSmall").TrySpawnSustainer(this);
+			SoundDefOf.MetalHitImportant.PlayOneShot(this);
+			this.wickSoundSustainer = SoundDefOf.HissSmall.TrySpawnSustainer(this);
 		}
 
 		protected void StartJetting()
@@ -72,7 +72,7 @@ namespace RimWorld
 			this.TicksUntilMove = 3;
 			this.wickSoundSustainer.End();
 			this.wickSoundSustainer = null;
-			this.wickSoundSustainer = SoundDef.Named("HissJet").TrySpawnSustainer(this);
+			this.wickSoundSustainer = SoundDefOf.HissJet.TrySpawnSustainer(this);
 		}
 
 		protected void MoveJetter()
@@ -81,7 +81,7 @@ namespace RimWorld
 			if (!intVec.Walkable(base.Map) || base.Map.thingGrid.CellContains(intVec, ThingCategory.Pawn) || intVec.GetEdifice(base.Map) != null)
 			{
 				this.Destroy(DestroyMode.Vanish);
-				GenExplosion.DoExplosion(base.Position, base.Map, 2.9f, DamageDefOf.Bomb, null, -1, null, null, null, null, 0f, 1, false, null, 0f, 1, 0f, false);
+				GenExplosion.DoExplosion(base.Position, base.Map, 2.9f, DamageDefOf.Bomb, null, -1, -1f, null, null, null, null, null, 0f, 1, false, null, 0f, 1, 0f, false);
 				return;
 			}
 			base.Position = intVec;

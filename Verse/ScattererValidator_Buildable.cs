@@ -6,7 +6,7 @@ namespace Verse
 	{
 		public int radius = 1;
 
-		public TerrainAffordance affordance = TerrainAffordance.Heavy;
+		public TerrainAffordanceDef affordance;
 
 		public override bool Allows(IntVec3 c, Map map)
 		{
@@ -24,7 +24,7 @@ namespace Verse
 					{
 						return false;
 					}
-					if (!c2.GetTerrain(map).affordances.Contains(this.affordance))
+					if (this.affordance != null && !c2.GetTerrain(map).affordances.Contains(this.affordance))
 					{
 						return false;
 					}

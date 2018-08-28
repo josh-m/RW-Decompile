@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace Verse
 {
-	internal class TemperatureSaveLoad
+	public class TemperatureSaveLoad
 	{
 		private Map map;
 
@@ -69,7 +69,7 @@ namespace Verse
 
 		private ushort TempFloatToShort(float temp)
 		{
-			temp = Mathf.Clamp(temp, -270f, 2000f);
+			temp = Mathf.Clamp(temp, -273.15f, 2000f);
 			temp *= 16f;
 			return (ushort)((int)temp + 32768);
 		}

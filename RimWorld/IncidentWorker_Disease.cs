@@ -1,27 +1,16 @@
-using RimWorld.Planet;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEngine;
+using System.Text;
 using Verse;
 
 namespace RimWorld
 {
-	public class IncidentWorker_Disease : IncidentWorker
+	public abstract class IncidentWorker_Disease : IncidentWorker
 	{
-		private IEnumerable<Pawn> PotentialVictimCandidates(IIncidentTarget target)
-		{
-			Map map = target as Map;
-			if (map != null)
-			{
-				return map.mapPawns.FreeColonistsAndPrisoners;
-			}
-			return from x in ((Caravan)target).PawnsListForReading
-			where x.IsFreeColonist || x.IsPrisonerOfColony
-			select x;
-		}
+		protected abstract IEnumerable<Pawn> PotentialVictimCandidates(IIncidentTarget target);
 
-		private IEnumerable<Pawn> PotentialVictims(IIncidentTarget target)
+		protected IEnumerable<Pawn> PotentialVictims(IIncidentTarget target)
 		{
 			return this.PotentialVictimCandidates(target).Where(delegate(Pawn p)
 			{
@@ -45,9 +34,11 @@ namespace RimWorld
 						return false;
 					}
 				}
-				return p.health.immunity.DiseaseContractChanceFactor(this.def.diseaseIncident, null) > 0f;
+				return p.RaceProps.IsFlesh;
 			});
 		}
+
+		protected abstract IEnumerable<Pawn> ActualVictims(IncidentParms parms);
 
 		private static bool CanAddHediffToAnyPartOfDef(Pawn pawn, HediffDef hediffDef, BodyPartDef partDef)
 		{
@@ -63,27 +54,101 @@ namespace RimWorld
 			return false;
 		}
 
-		protected override bool CanFireNowSub(IIncidentTarget target)
+		protected override bool CanFireNowSub(IncidentParms parms)
 		{
-			return this.PotentialVictims(target).Any<Pawn>();
+			return this.PotentialVictims(parms.target).Any<Pawn>();
 		}
 
 		protected override bool TryExecuteWorker(IncidentParms parms)
 		{
-			int num = this.PotentialVictimCandidates(parms.target).Count<Pawn>();
-			IntRange intRange = new IntRange(Mathf.RoundToInt((float)num * this.def.diseaseVictimFractionRange.min), Mathf.RoundToInt((float)num * this.def.diseaseVictimFractionRange.max));
-			int num2 = intRange.RandomInRange;
-			num2 = Mathf.Clamp(num2, 1, this.def.diseaseMaxVictims);
-			for (int i = 0; i < num2; i++)
+			string text;
+			List<Pawn> list = this.ApplyToPawns(this.ActualVictims(parms).ToList<Pawn>(), out text);
+			if (!list.Any<Pawn>() && text.NullOrEmpty())
 			{
-				Pawn pawn;
-				if (!this.PotentialVictims(parms.target).TryRandomElementByWeight((Pawn x) => x.health.immunity.DiseaseContractChanceFactor(this.def.diseaseIncident, null), out pawn))
-				{
-					break;
-				}
-				HediffGiveUtility.TryApply(pawn, this.def.diseaseIncident, this.def.diseasePartsToAffect, false, 1, null);
+				return false;
 			}
+			StringBuilder stringBuilder = new StringBuilder();
+			for (int i = 0; i < list.Count; i++)
+			{
+				if (stringBuilder.Length != 0)
+				{
+					stringBuilder.AppendLine();
+				}
+				stringBuilder.Append("  - " + list[i].LabelCap);
+			}
+			string text2;
+			if (list.Any<Pawn>())
+			{
+				text2 = string.Format(this.def.letterText, new object[]
+				{
+					list.Count.ToString(),
+					Faction.OfPlayer.def.pawnsPlural,
+					this.def.diseaseIncident.label,
+					stringBuilder.ToString()
+				});
+			}
+			else
+			{
+				text2 = string.Empty;
+			}
+			if (!text.NullOrEmpty())
+			{
+				if (!text2.NullOrEmpty())
+				{
+					text2 += "\n\n";
+				}
+				text2 += text;
+			}
+			Find.LetterStack.ReceiveLetter(this.def.letterLabel, text2, this.def.letterDef, list, null, null);
 			return true;
+		}
+
+		public List<Pawn> ApplyToPawns(IEnumerable<Pawn> pawns, out string blockedInfo)
+		{
+			List<Pawn> list = new List<Pawn>();
+			Dictionary<HediffDef, List<Pawn>> dictionary = new Dictionary<HediffDef, List<Pawn>>();
+			foreach (Pawn current in pawns)
+			{
+				HediffDef hediffDef = null;
+				if (Rand.Chance(current.health.immunity.DiseaseContractChanceFactor(this.def.diseaseIncident, out hediffDef, null)))
+				{
+					HediffGiverUtility.TryApply(current, this.def.diseaseIncident, this.def.diseasePartsToAffect, false, 1, null);
+					TaleRecorder.RecordTale(TaleDefOf.IllnessRevealed, new object[]
+					{
+						current,
+						this.def.diseaseIncident
+					});
+					list.Add(current);
+				}
+				else if (hediffDef != null)
+				{
+					if (!dictionary.ContainsKey(hediffDef))
+					{
+						dictionary[hediffDef] = new List<Pawn>();
+					}
+					dictionary[hediffDef].Add(current);
+				}
+			}
+			blockedInfo = string.Empty;
+			foreach (KeyValuePair<HediffDef, List<Pawn>> current2 in dictionary)
+			{
+				if (current2.Key != this.def.diseaseIncident)
+				{
+					if (blockedInfo.Length != 0)
+					{
+						blockedInfo += "\n\n";
+					}
+					string arg_19F_0 = blockedInfo;
+					string arg_19A_0 = "LetterDisease_Blocked";
+					object[] expr_146 = new object[3];
+					expr_146[0] = current2.Key.LabelCap;
+					expr_146[1] = this.def.diseaseIncident.label;
+					expr_146[2] = (from victim in current2.Value
+					select victim.LabelShort).ToCommaList(true);
+					blockedInfo = arg_19F_0 + arg_19A_0.Translate(expr_146);
+				}
+			}
+			return list;
 		}
 	}
 }

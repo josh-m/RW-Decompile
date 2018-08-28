@@ -2,6 +2,7 @@ using RimWorld.Planet;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
 using Verse;
 using Verse.AI;
 using Verse.AI.Group;
@@ -12,9 +13,7 @@ namespace RimWorld
 	{
 		public float points;
 
-		public bool manhunters;
-
-		public bool mechanoids;
+		public SignalActionAmbushType ambushType;
 
 		public IntVec3 spawnNear = IntVec3.Invalid;
 
@@ -28,8 +27,7 @@ namespace RimWorld
 		{
 			base.ExposeData();
 			Scribe_Values.Look<float>(ref this.points, "points", 0f, false);
-			Scribe_Values.Look<bool>(ref this.manhunters, "manhunters", false, false);
-			Scribe_Values.Look<bool>(ref this.mechanoids, "mechanoids", false, false);
+			Scribe_Values.Look<SignalActionAmbushType>(ref this.ambushType, "ambushType", SignalActionAmbushType.Normal, false);
 			Scribe_Values.Look<IntVec3>(ref this.spawnNear, "spawnNear", default(IntVec3), false);
 			Scribe_Values.Look<CellRect>(ref this.spawnAround, "spawnAround", default(CellRect), false);
 			Scribe_Values.Look<bool>(ref this.spawnPawnsOnEdge, "spawnPawnsOnEdge", false, false);
@@ -49,16 +47,16 @@ namespace RimWorld
 				{
 					if (!CellFinder.TryFindRandomEdgeCellWith((IntVec3 x) => x.Standable(base.Map) && !x.Fogged(base.Map) && base.Map.reachability.CanReachColony(x), base.Map, CellFinder.EdgeRoadChance_Ignore, out loc))
 					{
-						Find.WorldPawns.PassToWorld(current, PawnDiscardDecideMode.Discard);
+						Find.WorldPawns.PassToWorld(current, PawnDiscardDecideMode.Decide);
 						break;
 					}
 				}
 				else if (!SiteGenStepUtility.TryFindSpawnCellAroundOrNear(this.spawnAround, this.spawnNear, base.Map, out loc))
 				{
-					Find.WorldPawns.PassToWorld(current, PawnDiscardDecideMode.Discard);
+					Find.WorldPawns.PassToWorld(current, PawnDiscardDecideMode.Decide);
 					break;
 				}
-				GenSpawn.Spawn(current, loc, base.Map);
+				GenSpawn.Spawn(current, loc, base.Map, WipeMode.Vanish);
 				if (!this.spawnPawnsOnEdge)
 				{
 					for (int i = 0; i < 10; i++)
@@ -72,11 +70,11 @@ namespace RimWorld
 			{
 				return;
 			}
-			if (this.manhunters)
+			if (this.ambushType == SignalActionAmbushType.Manhunters)
 			{
 				for (int j = 0; j < list.Count; j++)
 				{
-					list[j].mindState.mentalStateHandler.TryStartMentalState(MentalStateDefOf.ManhunterPermanent, null, false, false, null);
+					list[j].mindState.mentalStateHandler.TryStartMentalState(MentalStateDefOf.ManhunterPermanent, null, false, false, null, false);
 				}
 			}
 			else
@@ -95,12 +93,12 @@ namespace RimWorld
 			Find.LetterStack.ReceiveLetter("LetterLabelAmbushInExistingMap".Translate(), "LetterAmbushInExistingMap".Translate(new object[]
 			{
 				Faction.OfPlayer.def.pawnsPlural
-			}).CapitalizeFirst(), LetterDefOf.ThreatBig, list[0], null);
+			}).CapitalizeFirst(), LetterDefOf.ThreatBig, list[0], null, null);
 		}
 
 		private IEnumerable<Pawn> GenerateAmbushPawns()
 		{
-			if (this.manhunters)
+			if (this.ambushType == SignalActionAmbushType.Manhunters)
 			{
 				PawnKindDef animalKind;
 				if (!ManhunterPackIncidentUtility.TryFindManhunterAnimalKind(this.points, base.Map.Tile, out animalKind) && !ManhunterPackIncidentUtility.TryFindManhunterAnimalKind(this.points, -1, out animalKind))
@@ -112,7 +110,7 @@ namespace RimWorld
 			else
 			{
 				Faction faction;
-				if (this.mechanoids)
+				if (this.ambushType == SignalActionAmbushType.Mechanoids)
 				{
 					faction = Faction.OfMechanoids;
 				}
@@ -124,11 +122,13 @@ namespace RimWorld
 				{
 					return Enumerable.Empty<Pawn>();
 				}
-				PawnGroupMakerParms pawnGroupMakerParms = new PawnGroupMakerParms();
-				pawnGroupMakerParms.tile = base.Map.Tile;
-				pawnGroupMakerParms.faction = faction;
-				pawnGroupMakerParms.points = this.points;
-				return PawnGroupMakerUtility.GeneratePawns(PawnGroupKindDefOf.Normal, pawnGroupMakerParms, true);
+				return PawnGroupMakerUtility.GeneratePawns(new PawnGroupMakerParms
+				{
+					groupKind = PawnGroupKindDefOf.Combat,
+					tile = base.Map.Tile,
+					faction = faction,
+					points = Mathf.Max(this.points, faction.def.MinPointsToGeneratePawnGroup(PawnGroupKindDefOf.Combat))
+				}, true);
 			}
 		}
 	}

@@ -9,26 +9,33 @@ namespace RimWorld
 	{
 		public Type instructionClass = typeof(Instruction_Basic);
 
+		[MustTranslate]
 		public string text;
 
 		public bool startCentered;
 
 		public bool tutorialModeOnly = true;
 
+		[NoTranslate]
 		public string eventTagInitiate;
 
 		public InstructionDef eventTagInitiateSource;
 
+		[NoTranslate]
 		public List<string> eventTagsEnd;
 
+		[NoTranslate]
 		public List<string> actionTagsAllowed;
 
+		[MustTranslate]
 		public string rejectInputMessage;
 
 		public ConceptDef concept;
 
+		[NoTranslate]
 		public List<string> highlightTags;
 
+		[MustTranslate]
 		public string onMapInstruction;
 
 		public int targetCount;
@@ -46,6 +53,8 @@ namespace RimWorld
 		public bool endTutorial;
 
 		public bool resetBuildDesignatorStuffs;
+
+		private static List<string> tmpParseErrors = new List<string>();
 
 		[DebuggerHidden]
 		public override IEnumerable<string> ConfigErrors()
@@ -65,6 +74,12 @@ namespace RimWorld
 			if (this.eventTagInitiate.NullOrEmpty())
 			{
 				yield return "no eventTagInitiate";
+			}
+			InstructionDef.tmpParseErrors.Clear();
+			this.text.AdjustedForKeys(InstructionDef.tmpParseErrors, false);
+			for (int i = 0; i < InstructionDef.tmpParseErrors.Count; i++)
+			{
+				yield return "text error: " + InstructionDef.tmpParseErrors[i];
 			}
 		}
 	}

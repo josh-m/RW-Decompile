@@ -57,7 +57,10 @@ namespace Verse
 			{
 				current4.parentCategory.childSpecialFilters.Add(current4);
 			}
-			ThingCategoryNodeDatabase.rootNode.catDef.childCategories[0].treeNode.SetOpen(-1, true);
+			if (ThingCategoryNodeDatabase.rootNode.catDef.childCategories.Any<ThingCategoryDef>())
+			{
+				ThingCategoryNodeDatabase.rootNode.catDef.childCategories[0].treeNode.SetOpen(-1, true);
+			}
 			ThingCategoryNodeDatabase.initialized = true;
 		}
 

@@ -76,7 +76,6 @@ namespace RimWorld
 			{
 				Find.GameInitData.startingTile = Find.WorldSelector.FirstSelectedObject.Tile;
 			}
-			this.closeOnEscapeKey = !Find.WorldRoutePlanner.Active;
 		}
 
 		public override void ExtraOnGUI()
@@ -97,13 +96,13 @@ namespace RimWorld
 			int selectedTile = Find.WorldInterface.SelectedTile;
 			if (selectedTile < 0)
 			{
-				Messages.Message("MustSelectLandingSite".Translate(), MessageTypeDefOf.RejectInput);
+				Messages.Message("MustSelectLandingSite".Translate(), MessageTypeDefOf.RejectInput, false);
 				return false;
 			}
 			StringBuilder stringBuilder = new StringBuilder();
 			if (!TileFinder.IsValidTileForNewSettlement(selectedTile, stringBuilder))
 			{
-				Messages.Message(stringBuilder.ToString(), MessageTypeDefOf.RejectInput);
+				Messages.Message(stringBuilder.ToString(), MessageTypeDefOf.RejectInput, false);
 				return false;
 			}
 			Tile tile = Find.WorldGrid[selectedTile];
@@ -112,8 +111,12 @@ namespace RimWorld
 
 		protected override void DoNext()
 		{
-			Find.GameInitData.startingTile = Find.WorldInterface.SelectedTile;
-			base.DoNext();
+			int selTile = Find.WorldInterface.SelectedTile;
+			SettlementProximityGoodwillUtility.CheckConfirmSettle(selTile, delegate
+			{
+				Find.GameInitData.startingTile = selTile;
+				base.DoNext();
+			});
 		}
 
 		private void DoCustomBottomButtons()

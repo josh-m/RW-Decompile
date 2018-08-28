@@ -3,14 +3,14 @@ using UnityEngine;
 
 namespace Verse
 {
-	internal static class SectionLayerGeometryMaker_Solid
+	public static class SectionLayerGeometryMaker_Solid
 	{
 		public static void MakeBaseGeometry(Section section, LayerSubMesh sm, AltitudeLayer altitudeLayer)
 		{
 			sm.Clear(MeshParts.Verts | MeshParts.Tris);
 			CellRect cellRect = new CellRect(section.botLeft.x, section.botLeft.z, 17, 17);
 			cellRect.ClipInsideMap(section.map);
-			float y = Altitudes.AltitudeFor(altitudeLayer);
+			float y = altitudeLayer.AltitudeFor();
 			sm.verts.Capacity = cellRect.Area * 9;
 			for (int i = cellRect.minX; i <= cellRect.maxX; i++)
 			{

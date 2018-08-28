@@ -21,10 +21,10 @@ namespace RimWorld
 			this.defaultLabel = "DesignatorClaim".Translate();
 			this.defaultDesc = "DesignatorClaimDesc".Translate();
 			this.icon = ContentFinder<Texture2D>.Get("UI/Designators/Claim", true);
-			this.soundDragSustain = SoundDefOf.DesignateDragStandard;
-			this.soundDragChanged = SoundDefOf.DesignateDragStandardChanged;
+			this.soundDragSustain = SoundDefOf.Designate_DragStandard;
+			this.soundDragChanged = SoundDefOf.Designate_DragStandard_Changed;
 			this.useMouseIcon = true;
-			this.soundSucceeded = SoundDefOf.DesignateClaim;
+			this.soundSucceeded = SoundDefOf.Designate_Claim;
 			this.hotKey = KeyBindingDefOf.Misc4;
 		}
 

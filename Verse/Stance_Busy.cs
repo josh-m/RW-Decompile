@@ -65,6 +65,11 @@ namespace Verse
 			{
 				this.SetPieSizeFactor();
 			}
+			if (Scribe.mode == LoadSaveMode.PostLoadInit && this.verb != null && this.verb.BuggedAfterLoading)
+			{
+				this.verb = null;
+				Log.Warning(base.GetType() + " had a bugged verb after loading.", false);
+			}
 		}
 
 		public override void StanceTick()

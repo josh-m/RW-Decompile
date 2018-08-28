@@ -14,7 +14,7 @@ namespace RimWorld
 				{
 					return ThingRequest.ForGroup(ThingRequestGroup.Nothing);
 				}
-				return ThingRequest.ForGroup(ThingRequestGroup.BuildingArtificial);
+				return ThingRequest.ForGroup(ThingRequestGroup.ResearchBench);
 			}
 		}
 
@@ -26,7 +26,7 @@ namespace RimWorld
 			}
 		}
 
-		public override bool ShouldSkip(Pawn pawn)
+		public override bool ShouldSkip(Pawn pawn, bool forced = false)
 		{
 			return Find.ResearchManager.currentProj == null;
 		}

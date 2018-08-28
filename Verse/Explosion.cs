@@ -14,11 +14,15 @@ namespace Verse
 
 		public int damAmount;
 
+		public float armorPenetration;
+
 		public Thing instigator;
 
 		public ThingDef weapon;
 
 		public ThingDef projectile;
+
+		public Thing intendedTarget;
 
 		public bool applyDamageToExplosionCellsNeighbors;
 
@@ -36,7 +40,7 @@ namespace Verse
 
 		public float chanceToStartFire;
 
-		public bool dealMoreDamageAtCenter;
+		public bool damageFalloff;
 
 		private int startTick;
 
@@ -64,9 +68,9 @@ namespace Verse
 			}
 		}
 
-		public override void DeSpawn()
+		public override void DeSpawn(DestroyMode mode = DestroyMode.Vanish)
 		{
-			base.DeSpawn();
+			base.DeSpawn(mode);
 			this.cellsToAffect.Clear();
 			SimplePool<List<IntVec3>>.Return(this.cellsToAffect);
 			this.cellsToAffect = null;
@@ -82,7 +86,7 @@ namespace Verse
 		{
 			if (!base.Spawned)
 			{
-				Log.Error("Called StartExplosion() on unspawned thing.");
+				Log.Error("Called StartExplosion() on unspawned thing.", false);
 				return;
 			}
 			this.startTick = Find.TickManager.TicksGame;
@@ -131,7 +135,7 @@ namespace Verse
 						this.cellsToAffect[i],
 						": ",
 						ex
-					}));
+					}), false);
 				}
 				this.cellsToAffect.RemoveAt(i);
 			}
@@ -143,7 +147,7 @@ namespace Verse
 
 		public int GetDamageAmountAt(IntVec3 c)
 		{
-			if (!this.dealMoreDamageAtCenter)
+			if (!this.damageFalloff)
 			{
 				return this.damAmount;
 			}
@@ -152,15 +156,27 @@ namespace Verse
 			return Mathf.Max(a, 1);
 		}
 
+		public float GetArmorPenetrationAt(IntVec3 c)
+		{
+			if (!this.damageFalloff)
+			{
+				return this.armorPenetration;
+			}
+			float t = c.DistanceTo(base.Position) / this.radius;
+			return Mathf.Lerp(this.armorPenetration, this.armorPenetration * 0.2f, t);
+		}
+
 		public override void ExposeData()
 		{
 			base.ExposeData();
 			Scribe_Values.Look<float>(ref this.radius, "radius", 0f, false);
 			Scribe_Defs.Look<DamageDef>(ref this.damType, "damType");
 			Scribe_Values.Look<int>(ref this.damAmount, "damAmount", 0, false);
+			Scribe_Values.Look<float>(ref this.armorPenetration, "armorPenetration", 0f, false);
 			Scribe_References.Look<Thing>(ref this.instigator, "instigator", false);
 			Scribe_Defs.Look<ThingDef>(ref this.weapon, "weapon");
 			Scribe_Defs.Look<ThingDef>(ref this.projectile, "projectile");
+			Scribe_References.Look<Thing>(ref this.intendedTarget, "intendedTarget", false);
 			Scribe_Values.Look<bool>(ref this.applyDamageToExplosionCellsNeighbors, "applyDamageToExplosionCellsNeighbors", false, false);
 			Scribe_Defs.Look<ThingDef>(ref this.preExplosionSpawnThingDef, "preExplosionSpawnThingDef");
 			Scribe_Values.Look<float>(ref this.preExplosionSpawnChance, "preExplosionSpawnChance", 0f, false);
@@ -169,7 +185,7 @@ namespace Verse
 			Scribe_Values.Look<float>(ref this.postExplosionSpawnChance, "postExplosionSpawnChance", 0f, false);
 			Scribe_Values.Look<int>(ref this.postExplosionSpawnThingCount, "postExplosionSpawnThingCount", 1, false);
 			Scribe_Values.Look<float>(ref this.chanceToStartFire, "chanceToStartFire", 0f, false);
-			Scribe_Values.Look<bool>(ref this.dealMoreDamageAtCenter, "dealMoreDamageAtCenter", false, false);
+			Scribe_Values.Look<bool>(ref this.damageFalloff, "dealMoreDamageAtCenter", false, false);
 			Scribe_Values.Look<int>(ref this.startTick, "startTick", 0, false);
 			Scribe_Collections.Look<IntVec3>(ref this.cellsToAffect, "cellsToAffect", LookMode.Value, new object[0]);
 			Scribe_Collections.Look<Thing>(ref this.damagedThings, "damagedThings", LookMode.Reference, new object[0]);
@@ -187,6 +203,10 @@ namespace Verse
 
 		private void AffectCell(IntVec3 c)
 		{
+			if (!c.InBounds(base.Map))
+			{
+				return;
+			}
 			bool flag = this.ShouldCellBeAffectedOnlyByDamage(c);
 			if (!flag && Rand.Chance(this.preExplosionSpawnChance) && c.Walkable(base.Map))
 			{
@@ -198,7 +218,7 @@ namespace Verse
 				this.TrySpawnExplosionThing(this.postExplosionSpawnThingDef, c, this.postExplosionSpawnThingCount);
 			}
 			float num = this.chanceToStartFire;
-			if (this.dealMoreDamageAtCenter)
+			if (this.damageFalloff)
 			{
 				num *= Mathf.Lerp(1f, 0.2f, c.DistanceTo(base.Position) / this.radius);
 			}
@@ -222,7 +242,7 @@ namespace Verse
 			{
 				Thing thing = ThingMaker.MakeThing(thingDef, null);
 				thing.stackCount = count;
-				GenSpawn.Spawn(thing, c, base.Map);
+				GenSpawn.Spawn(thing, c, base.Map, WipeMode.Vanish);
 			}
 		}
 

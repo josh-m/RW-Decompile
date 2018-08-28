@@ -23,7 +23,7 @@ namespace Verse
 
 		public CellRect extentsLimit;
 
-		public Building_Door portal;
+		public Building_Door door;
 
 		private int precalculatedHashCode;
 
@@ -48,6 +48,10 @@ namespace Verse
 		private List<KeyValuePair<Pawn, Danger>> cachedDangers = new List<KeyValuePair<Pawn, Danger>>();
 
 		private int cachedDangersForFrame;
+
+		private float cachedBaseDesiredPlantsCount;
+
+		private int cachedBaseDesiredPlantsCountForTick = -999999;
 
 		private int debug_makeTick = -1000;
 
@@ -192,7 +196,7 @@ namespace Verse
 					}
 					iterator.MoveNext();
 				}
-				Log.Error("Couldn't find any cell in region " + this.ToString());
+				Log.Error("Couldn't find any cell in region " + this.ToString(), false);
 				return this.extentsClose.RandomCell;
 			}
 		}
@@ -242,6 +246,14 @@ namespace Verse
 			}
 		}
 
+		public bool IsDoorway
+		{
+			get
+			{
+				return this.door != null;
+			}
+		}
+
 		private Region()
 		{
 		}
@@ -268,7 +280,7 @@ namespace Verse
 
 		public bool Allows(TraverseParms tp, bool isDestination)
 		{
-			if (tp.mode != TraverseMode.PassAllDestroyableThings && !this.type.Passable())
+			if (tp.mode != TraverseMode.PassAllDestroyableThings && tp.mode != TraverseMode.PassAllDestroyableThingsNotWater && !this.type.Passable())
 			{
 				return false;
 			}
@@ -288,26 +300,30 @@ namespace Verse
 			{
 			case TraverseMode.ByPawn:
 			{
-				if (this.portal == null)
+				if (this.door == null)
 				{
 					return true;
 				}
 				ByteGrid avoidGrid = tp.pawn.GetAvoidGrid();
-				if (avoidGrid != null && avoidGrid[this.portal.Position] == 255)
+				if (avoidGrid != null && avoidGrid[this.door.Position] == 255)
 				{
 					return false;
 				}
-				if (tp.pawn.HostileTo(this.portal))
+				if (tp.pawn.HostileTo(this.door))
 				{
-					return this.portal.CanPhysicallyPass(tp.pawn) || tp.canBash;
+					return this.door.CanPhysicallyPass(tp.pawn) || tp.canBash;
 				}
-				return this.portal.CanPhysicallyPass(tp.pawn) && !this.portal.IsForbiddenToPass(tp.pawn);
+				return this.door.CanPhysicallyPass(tp.pawn) && !this.door.IsForbiddenToPass(tp.pawn);
 			}
 			case TraverseMode.PassDoors:
 				return true;
 			case TraverseMode.NoPassClosedDoors:
-				return this.portal == null || this.portal.FreePassage;
+				return this.door == null || this.door.FreePassage;
 			case TraverseMode.PassAllDestroyableThings:
+				return true;
+			case TraverseMode.NoPassClosedDoorsOrWater:
+				return this.door == null || this.door.FreePassage;
+			case TraverseMode.PassAllDestroyableThingsNotWater:
 				return true;
 			default:
 				throw new NotImplementedException();
@@ -355,6 +371,23 @@ namespace Verse
 				this.cachedDangers.Add(new KeyValuePair<Pawn, Danger>(p, danger));
 			}
 			return danger;
+		}
+
+		public float GetBaseDesiredPlantsCount(bool allowCache = true)
+		{
+			int ticksGame = Find.TickManager.TicksGame;
+			if (allowCache && ticksGame - this.cachedBaseDesiredPlantsCountForTick < 2500)
+			{
+				return this.cachedBaseDesiredPlantsCount;
+			}
+			this.cachedBaseDesiredPlantsCount = 0f;
+			Map map = this.Map;
+			foreach (IntVec3 current in this.Cells)
+			{
+				this.cachedBaseDesiredPlantsCount += map.wildPlantSpawner.GetBaseDesiredPlantsCountAt(current);
+			}
+			this.cachedBaseDesiredPlantsCountForTick = ticksGame;
+			return this.cachedBaseDesiredPlantsCount;
 		}
 
 		public AreaOverlap OverlapWith(Area a)
@@ -423,7 +456,7 @@ namespace Verse
 					this.id,
 					", but mapIndex=",
 					this.mapIndex
-				}));
+				}), false);
 				return;
 			}
 			this.mapIndex = (sbyte)((int)this.mapIndex - 1);
@@ -431,15 +464,16 @@ namespace Verse
 
 		public void Notify_MyMapRemoved()
 		{
+			this.listerThings.Clear();
 			this.mapIndex = -1;
 		}
 
 		public override string ToString()
 		{
 			string str;
-			if (this.portal != null)
+			if (this.door != null)
 			{
-				str = this.portal.ToString();
+				str = this.door.ToString();
 			}
 			else
 			{
@@ -457,7 +491,7 @@ namespace Verse
 				this.links.Count,
 				", cells=",
 				this.CellCount,
-				(this.portal == null) ? null : (", portal=" + str),
+				(this.door == null) ? null : (", portal=" + str),
 				")"
 			});
 		}

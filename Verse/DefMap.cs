@@ -1,9 +1,11 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Verse
 {
-	public class DefMap<D, V> : IExposable where D : Def, new() where V : new()
+	public class DefMap<D, V> : IExposable, IEnumerable<KeyValuePair<D, V>>, IEnumerable where D : Def, new() where V : new()
 	{
 		private List<V> values;
 
@@ -63,6 +65,18 @@ namespace Verse
 		public void ExposeData()
 		{
 			Scribe_Collections.Look<V>(ref this.values, "vals", LookMode.Undefined, new object[0]);
+			if (Scribe.mode == LoadSaveMode.PostLoadInit)
+			{
+				int defCount = DefDatabase<D>.DefCount;
+				for (int i = this.values.Count; i < defCount; i++)
+				{
+					this.values.Add(Activator.CreateInstance<V>());
+				}
+				while (this.values.Count > defCount)
+				{
+					this.values.RemoveLast<V>();
+				}
+			}
 		}
 
 		public void SetAll(V val)
@@ -71,6 +85,17 @@ namespace Verse
 			{
 				this.values[i] = val;
 			}
+		}
+
+		IEnumerator IEnumerable.GetEnumerator()
+		{
+			return this.GetEnumerator();
+		}
+
+		public IEnumerator<KeyValuePair<D, V>> GetEnumerator()
+		{
+			return (from d in DefDatabase<D>.AllDefsListForReading
+			select new KeyValuePair<D, V>(d, this[d])).GetEnumerator();
 		}
 	}
 }

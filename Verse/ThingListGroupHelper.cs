@@ -100,6 +100,14 @@ namespace Verse
 				return def.HasComp(typeof(CompWindSource));
 			case ThingRequestGroup.AlwaysFlee:
 				return def.alwaysFlee;
+			case ThingRequestGroup.ResearchBench:
+				return typeof(Building_ResearchBench).IsAssignableFrom(def.thingClass);
+			case ThingRequestGroup.Facility:
+				return def.HasComp(typeof(CompFacility));
+			case ThingRequestGroup.AffectedByFacilities:
+				return def.HasComp(typeof(CompAffectedByFacilities));
+			case ThingRequestGroup.CreatesInfestations:
+				return def.HasComp(typeof(CompCreatesInfestations));
 			default:
 				throw new ArgumentException("group");
 			}

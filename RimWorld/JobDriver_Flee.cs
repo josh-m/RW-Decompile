@@ -11,7 +11,7 @@ namespace RimWorld
 
 		protected const TargetIndex DangerInd = TargetIndex.B;
 
-		public override bool TryMakePreToilReservations()
+		public override bool TryMakePreToilReservations(bool errorOnFailed)
 		{
 			this.pawn.Map.pawnDestinationReservationManager.Reserve(this.pawn, this.job, this.job.GetTarget(TargetIndex.A).Cell);
 			return true;

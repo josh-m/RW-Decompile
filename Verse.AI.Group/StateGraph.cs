@@ -33,9 +33,16 @@ namespace Verse.AI.Group
 			this.lordToils.Add(toil);
 		}
 
-		public void AddTransition(Transition transition)
+		public void AddTransition(Transition transition, bool highPriority = false)
 		{
-			this.transitions.Add(transition);
+			if (highPriority)
+			{
+				this.transitions.Insert(0, transition);
+			}
+			else
+			{
+				this.transitions.Add(transition);
+			}
 		}
 
 		public StateGraph AttachSubgraph(StateGraph subGraph)
@@ -55,7 +62,7 @@ namespace Verse.AI.Group
 		{
 			if (this.lordToils.Count == 0)
 			{
-				Log.Error("Graph has 0 lord toils.");
+				Log.Error("Graph has 0 lord toils.", false);
 			}
 			foreach (LordToil toil in this.lordToils.Distinct<LordToil>())
 			{
@@ -71,7 +78,7 @@ namespace Verse.AI.Group
 						" registered ",
 						num,
 						" times."
-					}));
+					}), false);
 				}
 			}
 			foreach (Transition trans in this.transitions)
@@ -88,7 +95,7 @@ namespace Verse.AI.Group
 						" registered ",
 						num2,
 						" times."
-					}));
+					}), false);
 				}
 			}
 			StateGraph.checkedToils = new HashSet<LordToil>();
@@ -100,7 +107,7 @@ namespace Verse.AI.Group
 		{
 			if (!this.lordToils.Contains(toil))
 			{
-				Log.Error("Unregistered linked lord toil: " + toil);
+				Log.Error("Unregistered linked lord toil: " + toil, false);
 			}
 			StateGraph.checkedToils.Add(toil);
 			for (int i = 0; i < this.transitions.Count; i++)

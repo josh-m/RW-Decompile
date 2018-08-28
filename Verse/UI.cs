@@ -27,6 +27,18 @@ namespace Verse
 			}
 		}
 
+		public static Vector2 MousePosUIInvertedUseEventIfCan
+		{
+			get
+			{
+				if (Event.current != null)
+				{
+					return UI.GUIToScreenPoint(Event.current.mousePosition);
+				}
+				return UI.MousePositionOnUIInverted;
+			}
+		}
+
 		public static void ApplyUIScale()
 		{
 			if (Prefs.UIScale == 1f || !LongEventHandler.CanApplyUIScaleNow)

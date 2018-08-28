@@ -15,10 +15,6 @@ namespace Verse
 
 		public override Graphic GetColoredVersion(Shader newShader, Color newColor, Color newColorTwo)
 		{
-			if (newColorTwo != Color.white)
-			{
-				Log.ErrorOnce("Cannot use this GetColoredVersion with a non-white colorTwo.", 908251);
-			}
 			return GraphicDatabase.Get<Graphic_StackCount>(this.path, newShader, this.drawSize, newColor, newColorTwo, this.data);
 		}
 
@@ -91,7 +87,7 @@ namespace Verse
 				{
 					return this.subGraphics[this.subGraphics.Length - 1];
 				}
-				int num = 1 + Mathf.RoundToInt(Mathf.InverseLerp(2f, (float)(def.stackLimit - 1), (float)(this.subGraphics.Length - 2)));
+				int num = Mathf.Min(1 + Mathf.RoundToInt((float)stackCount / (float)def.stackLimit * ((float)this.subGraphics.Length - 3f) + 1E-05f), this.subGraphics.Length - 2);
 				return this.subGraphics[num];
 			}
 			}

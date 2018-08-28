@@ -24,5 +24,10 @@ namespace RimWorld
 		public static ScenPartDef ScatterThingsAnywhere;
 
 		public static ScenPartDef GameStartDialog;
+
+		static ScenPartDefOf()
+		{
+			DefOfHelper.EnsureInitializedInCtor(typeof(ScenPartDefOf));
+		}
 	}
 }

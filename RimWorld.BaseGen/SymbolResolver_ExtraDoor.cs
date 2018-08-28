@@ -44,7 +44,7 @@ namespace RimWorld.BaseGen
 				ThingDef stuff = arg_E2_0;
 				Thing thing = ThingMaker.MakeThing(ThingDefOf.Door, stuff);
 				thing.SetFaction(rp.faction, null);
-				GenSpawn.Spawn(thing, intVec, BaseGen.globalSettings.map);
+				GenSpawn.Spawn(thing, intVec, BaseGen.globalSettings.map, WipeMode.Vanish);
 			}
 		}
 

@@ -34,6 +34,10 @@ namespace RimWorld
 			{
 				return false;
 			}
+			if (p.Spawned && p.Map.designationManager.DesignationOn(p, DesignationDefOf.Slaughter) != null)
+			{
+				return false;
+			}
 			if (!HealthAIUtility.ShouldSeekMedicalRest(p))
 			{
 				return false;

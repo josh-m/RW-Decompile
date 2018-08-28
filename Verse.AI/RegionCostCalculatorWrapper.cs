@@ -28,8 +28,6 @@ namespace Verse.AI
 
 		private int cachedSecondBestLinkCost;
 
-		private int cachedRegionCellPathCost;
-
 		private bool cachedRegionIsDestination;
 
 		private Region[] regionGrid;
@@ -40,7 +38,7 @@ namespace Verse.AI
 			this.regionCostCalculator = new RegionCostCalculator(map);
 		}
 
-		public void Init(CellRect end, TraverseParms traverseParms, int moveTicksCardinal, int moveTicksDiagonal, ByteGrid avoidGrid, Area allowedArea, List<int> disallowedCorners)
+		public void Init(CellRect end, TraverseParms traverseParms, int moveTicksCardinal, int moveTicksDiagonal, ByteGrid avoidGrid, Area allowedArea, bool drafted, List<int> disallowedCorners)
 		{
 			this.moveTicksCardinal = moveTicksCardinal;
 			this.moveTicksDiagonal = moveTicksDiagonal;
@@ -50,7 +48,6 @@ namespace Verse.AI
 			this.cachedSecondBestLink = null;
 			this.cachedBestLinkCost = 0;
 			this.cachedSecondBestLinkCost = 0;
-			this.cachedRegionCellPathCost = 0;
 			this.cachedRegionIsDestination = false;
 			this.regionGrid = this.map.regionGrid.DirectGrid;
 			this.destRegions.Clear();
@@ -73,7 +70,10 @@ namespace Verse.AI
 						Region region2 = current.GetRegion(this.map, RegionType.Set_Passable);
 						if (region2 != null)
 						{
-							this.destRegions.Add(region2);
+							if (region2.Allows(traverseParms, true))
+							{
+								this.destRegions.Add(region2);
+							}
 						}
 					}
 					iterator.MoveNext();
@@ -81,9 +81,9 @@ namespace Verse.AI
 			}
 			if (this.destRegions.Count == 0)
 			{
-				Log.Error("Couldn't find any destination regions. This shouldn't ever happen because we've checked reachability.");
+				Log.Error("Couldn't find any destination regions. This shouldn't ever happen because we've checked reachability.", false);
 			}
-			this.regionCostCalculator.Init(end, this.destRegions, traverseParms, moveTicksCardinal, moveTicksDiagonal, avoidGrid, allowedArea);
+			this.regionCostCalculator.Init(end, this.destRegions, traverseParms, moveTicksCardinal, moveTicksDiagonal, avoidGrid, allowedArea, drafted);
 		}
 
 		public int GetPathCostFromDestToRegion(int cellIndex)
@@ -98,7 +98,6 @@ namespace Verse.AI
 					return this.OctileDistanceToEnd(cell);
 				}
 				this.cachedBestLinkCost = this.regionCostCalculator.GetRegionBestDistances(region, out this.cachedBestLink, out this.cachedSecondBestLink, out this.cachedSecondBestLinkCost);
-				this.cachedRegionCellPathCost = this.regionCostCalculator.RegionMedianPathCost(region);
 				this.cachedRegion = region;
 			}
 			else if (this.cachedRegionIsDestination)
@@ -107,11 +106,11 @@ namespace Verse.AI
 			}
 			if (this.cachedBestLink != null)
 			{
-				int num = this.regionCostCalculator.RegionLinkDistance(cell, this.cachedBestLink, this.cachedRegionCellPathCost);
+				int num = this.regionCostCalculator.RegionLinkDistance(cell, this.cachedBestLink, 1);
 				int num3;
 				if (this.cachedSecondBestLink != null)
 				{
-					int num2 = this.regionCostCalculator.RegionLinkDistance(cell, this.cachedSecondBestLink, this.cachedRegionCellPathCost);
+					int num2 = this.regionCostCalculator.RegionLinkDistance(cell, this.cachedSecondBestLink, 1);
 					num3 = Mathf.Min(this.cachedSecondBestLinkCost + num2, this.cachedBestLinkCost + num);
 				}
 				else

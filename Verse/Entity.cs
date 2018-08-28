@@ -30,9 +30,17 @@ namespace Verse
 			}
 		}
 
+		public virtual string LabelShortCap
+		{
+			get
+			{
+				return this.LabelShort.CapitalizeFirst();
+			}
+		}
+
 		public abstract void SpawnSetup(Map map, bool respawningAfterLoad);
 
-		public abstract void DeSpawn();
+		public abstract void DeSpawn(DestroyMode mode = DestroyMode.Vanish);
 
 		public virtual void Tick()
 		{

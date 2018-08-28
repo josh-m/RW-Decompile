@@ -6,7 +6,7 @@ using Verse;
 
 namespace RimWorld
 {
-	public class Zone_Stockpile : Zone, ISlotGroupParent, IStoreSettingsParent
+	public class Zone_Stockpile : Zone, ISlotGroupParent, IStoreSettingsParent, IHaulDestination
 	{
 		public StorageSettings settings;
 
@@ -40,6 +40,7 @@ namespace RimWorld
 
 		public Zone_Stockpile()
 		{
+			this.slotGroup = new SlotGroup(this);
 		}
 
 		public Zone_Stockpile(StorageSettingsPreset preset, ZoneManager zoneManager) : base(preset.PresetName(), zoneManager)
@@ -56,10 +57,6 @@ namespace RimWorld
 			{
 				this
 			});
-			if (Scribe.mode == LoadSaveMode.PostLoadInit)
-			{
-				this.slotGroup = new SlotGroup(this);
-			}
 		}
 
 		public override void AddCell(IntVec3 sq)
@@ -77,10 +74,10 @@ namespace RimWorld
 			this.slotGroup.Notify_LostCell(sq);
 		}
 
-		public override void Deregister()
+		public override void PostDeregister()
 		{
-			base.Deregister();
-			this.slotGroup.Notify_ParentDestroying();
+			base.PostDeregister();
+			BillUtility.Notify_ZoneStockpileRemoved(this);
 		}
 
 		[DebuggerHidden]
@@ -100,6 +97,12 @@ namespace RimWorld
 			{
 				yield return g2;
 			}
+		}
+
+		[DebuggerHidden]
+		public override IEnumerable<Gizmo> GetZoneAddGizmos()
+		{
+			yield return DesignatorUtility.FindAllowedDesignator<Designator_ZoneAddStockpile_Expand>();
 		}
 
 		public SlotGroup GetSlotGroup()
@@ -129,6 +132,11 @@ namespace RimWorld
 		public StorageSettings GetStoreSettings()
 		{
 			return this.settings;
+		}
+
+		public bool Accepts(Thing t)
+		{
+			return this.settings.AllowedToAccept(t);
 		}
 
 		public string SlotYielderLabel()

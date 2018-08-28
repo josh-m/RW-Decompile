@@ -17,21 +17,29 @@ namespace RimWorld
 			}
 		}
 
+		protected override DesignationDef Designation
+		{
+			get
+			{
+				return DesignationDefOf.Open;
+			}
+		}
+
 		public Designator_Open()
 		{
 			this.defaultLabel = "DesignatorOpen".Translate();
 			this.defaultDesc = "DesignatorOpenDesc".Translate();
 			this.icon = ContentFinder<Texture2D>.Get("UI/Designators/Open", true);
-			this.soundDragSustain = SoundDefOf.DesignateDragStandard;
-			this.soundDragChanged = SoundDefOf.DesignateDragStandardChanged;
+			this.soundDragSustain = SoundDefOf.Designate_DragStandard;
+			this.soundDragChanged = SoundDefOf.Designate_DragStandard_Changed;
 			this.useMouseIcon = true;
-			this.soundSucceeded = SoundDefOf.DesignateClaim;
+			this.soundSucceeded = SoundDefOf.Designate_Claim;
 		}
 
 		protected override void FinalizeDesignationFailed()
 		{
 			base.FinalizeDesignationFailed();
-			Messages.Message("MessageMustDesignateOpenable".Translate(), MessageTypeDefOf.RejectInput);
+			Messages.Message("MessageMustDesignateOpenable".Translate(), MessageTypeDefOf.RejectInput, false);
 		}
 
 		public override AcceptanceReport CanDesignateCell(IntVec3 c)
@@ -58,7 +66,7 @@ namespace RimWorld
 		public override AcceptanceReport CanDesignateThing(Thing t)
 		{
 			IOpenable openable = t as IOpenable;
-			if (openable == null || !openable.CanOpen || base.Map.designationManager.DesignationOn(t, DesignationDefOf.Open) != null)
+			if (openable == null || !openable.CanOpen || base.Map.designationManager.DesignationOn(t, this.Designation) != null)
 			{
 				return false;
 			}
@@ -67,7 +75,7 @@ namespace RimWorld
 
 		public override void DesignateThing(Thing t)
 		{
-			base.Map.designationManager.AddDesignation(new Designation(t, DesignationDefOf.Open));
+			base.Map.designationManager.AddDesignation(new Designation(t, this.Designation));
 		}
 
 		[DebuggerHidden]

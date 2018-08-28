@@ -86,7 +86,7 @@ namespace RimWorld
 		{
 			if (!b.parent.Spawned)
 			{
-				Log.Warning("Can't check potential connectors for " + b + " because it's unspawned.");
+				Log.Warning("Can't check potential connectors for " + b + " because it's unspawned.", false);
 			}
 			else
 			{

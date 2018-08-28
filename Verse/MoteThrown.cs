@@ -100,7 +100,14 @@ namespace Verse
 			}
 			base.Position = intVec;
 			this.exactPosition = vector;
-			this.exactRotation += this.rotationRate * deltaTime;
+			if (this.def.mote.rotateTowardsMoveDirection && this.velocity != default(Vector3))
+			{
+				this.exactRotation = this.velocity.AngleFlat();
+			}
+			else
+			{
+				this.exactRotation += this.rotationRate * deltaTime;
+			}
 			this.velocity += this.def.mote.acceleration * deltaTime;
 			if (this.def.mote.speedPerTime != 0f)
 			{

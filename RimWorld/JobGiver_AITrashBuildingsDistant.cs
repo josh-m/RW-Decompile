@@ -28,7 +28,11 @@ namespace RimWorld
 				Building building = allBuildingsColonist.RandomElement<Building>();
 				if (TrashUtility.ShouldTrashBuilding(pawn, building, this.attackAllInert))
 				{
-					return TrashUtility.TrashJob(pawn, building);
+					Job job = TrashUtility.TrashJob(pawn, building, this.attackAllInert);
+					if (job != null)
+					{
+						return job;
+					}
 				}
 			}
 			return null;

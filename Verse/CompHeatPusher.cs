@@ -18,7 +18,13 @@ namespace Verse
 		{
 			get
 			{
-				return true;
+				if (!this.parent.SpawnedOrAnyParentSpawned)
+				{
+					return false;
+				}
+				CompProperties_HeatPusher props = this.Props;
+				float ambientTemperature = this.parent.AmbientTemperature;
+				return ambientTemperature < props.heatPushMaxTemperature && ambientTemperature > props.heatPushMinTemperature;
 			}
 		}
 
@@ -27,12 +33,16 @@ namespace Verse
 			base.CompTick();
 			if (this.parent.IsHashIntervalTick(60) && this.ShouldPushHeatNow)
 			{
-				CompProperties_HeatPusher props = this.Props;
-				float ambientTemperature = this.parent.AmbientTemperature;
-				if (ambientTemperature < props.heatPushMaxTemperature && ambientTemperature > props.heatPushMinTemperature)
-				{
-					GenTemperature.PushHeat(this.parent.Position, this.parent.Map, props.heatPerSecond);
-				}
+				GenTemperature.PushHeat(this.parent.PositionHeld, this.parent.MapHeld, this.Props.heatPerSecond);
+			}
+		}
+
+		public override void CompTickRare()
+		{
+			base.CompTickRare();
+			if (this.ShouldPushHeatNow)
+			{
+				GenTemperature.PushHeat(this.parent.PositionHeld, this.parent.MapHeld, this.Props.heatPerSecond * 4.16666651f);
 			}
 		}
 	}

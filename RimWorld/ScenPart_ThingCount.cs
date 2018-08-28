@@ -65,7 +65,7 @@ namespace RimWorld
 			if (this.thingDef.MadeFromStuff && Widgets.ButtonText(rect2, this.stuff.LabelCap, true, false, true))
 			{
 				List<FloatMenuOption> list2 = new List<FloatMenuOption>();
-				foreach (ThingDef current2 in from t in GenStuff.AllowedStuffsFor(this.thingDef)
+				foreach (ThingDef current2 in from t in GenStuff.AllowedStuffsFor(this.thingDef, TechLevel.Undefined)
 				orderby t.label
 				select t)
 				{

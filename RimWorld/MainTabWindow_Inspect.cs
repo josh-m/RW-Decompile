@@ -15,6 +15,8 @@ namespace RimWorld
 
 		private static IntVec3 lastSelectCell;
 
+		private Gizmo mouseoverGizmo;
+
 		public Type OpenTabType
 		{
 			get
@@ -140,7 +142,8 @@ namespace RimWorld
 
 		public MainTabWindow_Inspect()
 		{
-			this.closeOnEscapeKey = false;
+			this.closeOnAccept = false;
+			this.closeOnCancel = false;
 		}
 
 		public override void ExtraOnGUI()
@@ -166,7 +169,7 @@ namespace RimWorld
 
 		public void DrawInspectGizmos()
 		{
-			InspectGizmoGrid.DrawInspectGizmoGridFor(this.Selected);
+			InspectGizmoGrid.DrawInspectGizmoGridFor(this.Selected, out this.mouseoverGizmo);
 		}
 
 		public void DoPaneContents(Rect rect)
@@ -186,7 +189,7 @@ namespace RimWorld
 					Pawn pawn = singleSelectedThing as Pawn;
 					if (pawn != null && pawn.playerSettings != null && pawn.playerSettings.UsesConfigurableHostilityResponse)
 					{
-						HostilityResponseModeUtility.DrawResponseButton(new Vector2(rect.width - 72f, 0f), pawn);
+						HostilityResponseModeUtility.DrawResponseButton(new Rect(rect.width - 72f, 0f, 24f, 24f), pawn, false);
 						lineEndWidth += 24f;
 					}
 				}
@@ -223,6 +226,10 @@ namespace RimWorld
 		{
 			base.WindowUpdate();
 			InspectPaneUtility.UpdateTabs(this);
+			if (this.mouseoverGizmo != null)
+			{
+				this.mouseoverGizmo.GizmoUpdateOnMouseover();
+			}
 		}
 
 		public void CloseOpenTab()

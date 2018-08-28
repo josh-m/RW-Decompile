@@ -2,6 +2,7 @@ using RimWorld;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using UnityEngine;
 
 namespace Verse
@@ -28,7 +29,7 @@ namespace Verse
 
 		public int renderPrecedence;
 
-		public List<TerrainAffordance> affordances = new List<TerrainAffordance>();
+		public List<TerrainAffordanceDef> affordances = new List<TerrainAffordanceDef>();
 
 		public bool layerable;
 
@@ -58,7 +59,25 @@ namespace Verse
 
 		public TerrainDef burnedDef;
 
-		public ThingDef terrainFilthDef;
+		public List<Tool> tools;
+
+		public float extraDeteriorationFactor;
+
+		public float destroyOnBombDamageThreshold = -1f;
+
+		public bool destroyBuildingsOnDestroyed;
+
+		public ThoughtDef traversedThought;
+
+		public int extraDraftedPerceivedPathCost;
+
+		public int extraNonDraftedPerceivedPathCost;
+
+		public EffecterDef destroyEffect;
+
+		public EffecterDef destroyEffectWater;
+
+		public ThingDef generatedFilth;
 
 		public bool acceptTerrainSourceFilth;
 
@@ -66,14 +85,6 @@ namespace Verse
 
 		[Unsaved]
 		public Material waterDepthMaterial;
-
-		public override Color IconDrawColor
-		{
-			get
-			{
-				return this.color;
-			}
-		}
 
 		public bool Removable
 		{
@@ -88,6 +99,22 @@ namespace Verse
 			get
 			{
 				return this.researchPrerequisites != null && this.researchPrerequisites.Contains(ResearchProjectDefOf.CarpetMaking);
+			}
+		}
+
+		public bool IsRiver
+		{
+			get
+			{
+				return this.HasTag("River");
+			}
+		}
+
+		public bool IsWater
+		{
+			get
+			{
+				return this.HasTag("Water");
 			}
 		}
 
@@ -119,19 +146,32 @@ namespace Verse
 				}
 				if (!this.waterDepthShader.NullOrEmpty())
 				{
-					this.waterDepthMaterial = new Material(ShaderDatabase.LoadShader(this.waterDepthShader));
+					this.waterDepthMaterial = MaterialAllocator.Create(ShaderDatabase.LoadShader(this.waterDepthShader));
 					this.waterDepthMaterial.renderQueue = 2000 + this.renderPrecedence;
 					this.waterDepthMaterial.SetTexture("_AlphaAddTex", TexGame.AlphaAddTex);
 					if (this.waterDepthShaderParameters != null)
 					{
-						for (int i = 0; i < this.waterDepthShaderParameters.Count; i++)
+						for (int j = 0; j < this.waterDepthShaderParameters.Count; j++)
 						{
-							this.waterDepthMaterial.SetFloat(this.waterDepthShaderParameters[i].name, this.waterDepthShaderParameters[i].value);
+							this.waterDepthShaderParameters[j].Apply(this.waterDepthMaterial);
 						}
 					}
 				}
 			});
+			if (this.tools != null)
+			{
+				for (int i = 0; i < this.tools.Count; i++)
+				{
+					this.tools[i].id = i.ToString();
+				}
+			}
 			base.PostLoad();
+		}
+
+		protected override void ResolveIcon()
+		{
+			base.ResolveIcon();
+			this.uiIconColor = this.color;
 		}
 
 		[DebuggerHidden]
@@ -153,13 +193,13 @@ namespace Verse
 			{
 				yield return "Render order " + this.renderPrecedence + " is out of range (must be < 400)";
 			}
-			if (this.terrainFilthDef != null && this.acceptTerrainSourceFilth)
+			if (this.generatedFilth != null && this.acceptTerrainSourceFilth)
 			{
 				yield return this.defName + " makes terrain filth and also accepts it.";
 			}
-			if (this.Flammable() && this.burnedDef == null)
+			if (this.Flammable() && this.burnedDef == null && !this.layerable)
 			{
-				yield return "flammable but burnedDef is null";
+				yield return "flammable but burnedDef is null and not layerable";
 			}
 			if (this.burnedDef != null && this.burnedDef.Flammable())
 			{
@@ -175,6 +215,22 @@ namespace Verse
 		public bool HasTag(string tag)
 		{
 			return this.tags != null && this.tags.Contains(tag);
+		}
+
+		[DebuggerHidden]
+		public override IEnumerable<StatDrawEntry> SpecialDisplayStats(StatRequest req)
+		{
+			foreach (StatDrawEntry stat in base.SpecialDisplayStats(req))
+			{
+				yield return stat;
+			}
+			string[] affordance = (from ta in this.affordances.Distinct<TerrainAffordanceDef>()
+			orderby ta.order
+			select ta.label).ToArray<string>();
+			if (affordance.Length > 0)
+			{
+				yield return new StatDrawEntry(StatCategoryDefOf.Basics, "Supports".Translate(), affordance.ToCommaList(false).CapitalizeFirst(), 0, string.Empty);
+			}
 		}
 	}
 }

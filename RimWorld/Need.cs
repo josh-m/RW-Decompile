@@ -93,7 +93,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return ThingOwnerUtility.ContentsFrozen(this.pawn.ParentHolder) || (this.def.freezeWhileSleeping && !this.pawn.Awake()) || !this.IsPawnInteractableOrVisible;
+				return this.pawn.Suspended || (this.def.freezeWhileSleeping && !this.pawn.Awake()) || (this.def.freezeInMentalState && this.pawn.InMentalState) || !this.IsPawnInteractableOrVisible;
 			}
 		}
 
@@ -102,6 +102,14 @@ namespace RimWorld
 			get
 			{
 				return this.pawn.SpawnedOrAnyParentSpawned || this.pawn.IsCaravanMember() || PawnUtility.IsTravelingInTransportPodWorldObject(this.pawn);
+			}
+		}
+
+		public virtual bool ShowOnNeedList
+		{
+			get
+			{
+				return this.def.showOnNeedList;
 			}
 		}
 
@@ -138,11 +146,6 @@ namespace RimWorld
 		public virtual void SetInitialLevel()
 		{
 			this.CurLevelPercentage = 0.5f;
-		}
-
-		public void ForceSetLevel(float levelPercent)
-		{
-			this.CurLevelPercentage = levelPercent;
 		}
 
 		public virtual void DrawOnGUI(Rect rect, int maxThresholdMarkers = 2147483647, float customMargin = -1f, bool drawArrows = true, bool doTooltip = true)
@@ -218,7 +221,7 @@ namespace RimWorld
 		{
 			if (pct > 1f)
 			{
-				Log.ErrorOnce(this.def + " drawing bar percent > 1 : " + pct, 6932178);
+				Log.ErrorOnce(this.def + " drawing bar percent > 1 : " + pct, 6932178, false);
 			}
 			float num = 12f;
 			if (barRect.width < 150f)

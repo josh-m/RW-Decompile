@@ -20,6 +20,16 @@ namespace RimWorld
 			return base.FactionCanBeGroupSource(f, map, desperate) && f.def.caravanTraderKinds.Any<TraderKindDef>();
 		}
 
+		protected override bool CanFireNowSub(IncidentParms parms)
+		{
+			if (!base.CanFireNowSub(parms))
+			{
+				return false;
+			}
+			Map map = (Map)parms.target;
+			return parms.faction == null || !NeutralGroupIncidentUtility.AnyBlockingHostileLord(map, parms.faction);
+		}
+
 		protected override bool TryExecuteWorker(IncidentParms parms)
 		{
 			Map map = (Map)parms.target;
@@ -63,8 +73,11 @@ namespace RimWorld
 				parms.faction.Name,
 				traderKindDef.label
 			}).CapitalizeFirst();
-			PawnRelationUtility.Notify_PawnsSeenByPlayer_Letter(list, ref label, ref text, "LetterRelatedPawnsNeutralGroup".Translate(), true, true);
-			Find.LetterStack.ReceiveLetter(label, text, LetterDefOf.PositiveEvent, list[0], null);
+			PawnRelationUtility.Notify_PawnsSeenByPlayer_Letter(list, ref label, ref text, "LetterRelatedPawnsNeutralGroup".Translate(new object[]
+			{
+				Faction.OfPlayer.def.pawnsPlural
+			}), true, true);
+			Find.LetterStack.ReceiveLetter(label, text, LetterDefOf.PositiveEvent, list[0], parms.faction, null);
 			IntVec3 chillSpot;
 			RCellFinder.TryFindRandomSpotJustOutsideColony(list[0], out chillSpot);
 			LordJob_TradeWithColony lordJob = new LordJob_TradeWithColony(parms.faction, chillSpot);
@@ -75,7 +88,6 @@ namespace RimWorld
 		protected override void ResolveParmsPoints(IncidentParms parms)
 		{
 			parms.points = TraderCaravanUtility.GenerateGuardPoints();
-			IncidentParmsUtility.AdjustPointsForGroupArrivalParams(parms);
 		}
 	}
 }

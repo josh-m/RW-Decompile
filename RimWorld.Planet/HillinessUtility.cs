@@ -20,7 +20,7 @@ namespace RimWorld.Planet
 			case Hilliness.Impassable:
 				return "Hilliness_Impassable".Translate();
 			default:
-				Log.ErrorOnce("Hilliness label unknown: " + h.ToString(), 694362);
+				Log.ErrorOnce("Hilliness label unknown: " + h.ToString(), 694362, false);
 				return h.ToString();
 			}
 		}

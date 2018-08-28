@@ -6,6 +6,7 @@ namespace RimWorld
 	{
 		Ignore,
 		IgnoreIfAssignedToUnload,
+		IgnoreIfAssignedToUnloadOrPlayerPawn,
 		DontIgnore
 	}
 }

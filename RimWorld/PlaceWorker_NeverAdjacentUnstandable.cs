@@ -8,7 +8,7 @@ namespace RimWorld
 {
 	public class PlaceWorker_NeverAdjacentUnstandable : PlaceWorker
 	{
-		public override void DrawGhost(ThingDef def, IntVec3 center, Rot4 rot)
+		public override void DrawGhost(ThingDef def, IntVec3 center, Rot4 rot, Color ghostCol)
 		{
 			GenDraw.DrawFieldEdges(GenAdj.OccupiedRect(center, rot, def.size).ExpandedBy(1).Cells.ToList<IntVec3>(), Color.white);
 		}

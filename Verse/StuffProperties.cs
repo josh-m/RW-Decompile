@@ -23,7 +23,7 @@ namespace Verse
 
 		public EffecterDef constructEffect;
 
-		public StuffAppearanceDef appearance = StuffAppearanceDefOf.Smooth;
+		public StuffAppearanceDef appearance;
 
 		public bool allowColorGenerators;
 
@@ -33,8 +33,12 @@ namespace Verse
 
 		public SoundDef soundMeleeHitBlunt;
 
-		public bool CanMake(ThingDef t)
+		public bool CanMake(BuildableDef t)
 		{
+			if (!t.MadeFromStuff)
+			{
+				return false;
+			}
 			for (int i = 0; i < t.stuffCategories.Count; i++)
 			{
 				for (int j = 0; j < this.categories.Count; j++)
@@ -46,6 +50,14 @@ namespace Verse
 				}
 			}
 			return false;
+		}
+
+		public void ResolveReferencesSpecial()
+		{
+			if (this.appearance == null)
+			{
+				this.appearance = StuffAppearanceDefOf.Smooth;
+			}
 		}
 	}
 }

@@ -48,7 +48,17 @@ namespace RimWorld.Planet
 		}
 
 		[DebuggerHidden]
-		public virtual IEnumerable<IncidentTargetTypeDef> AcceptedTypes()
+		public virtual IEnumerable<FloatMenuOption> GetTransportPodsFloatMenuOptions(IEnumerable<IThingHolder> pods, CompLaunchable representative)
+		{
+		}
+
+		[DebuggerHidden]
+		public virtual IEnumerable<Gizmo> GetCaravanGizmos(Caravan caravan)
+		{
+		}
+
+		[DebuggerHidden]
+		public virtual IEnumerable<IncidentTargetTagDef> IncidentTargetTags()
 		{
 		}
 
@@ -63,6 +73,18 @@ namespace RimWorld.Planet
 		}
 
 		public virtual void PostPostRemove()
+		{
+		}
+
+		public virtual void PostMyMapRemoved()
+		{
+		}
+
+		public virtual void PostMapGenerate()
+		{
+		}
+
+		public virtual void PostCaravanFormed(Caravan caravan)
 		{
 		}
 

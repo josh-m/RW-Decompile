@@ -12,5 +12,12 @@ namespace RimWorld
 		public static StuffCategoryDef Stony;
 
 		public static StuffCategoryDef Fabric;
+
+		public static StuffCategoryDef Leathery;
+
+		static StuffCategoryDefOf()
+		{
+			DefOfHelper.EnsureInitializedInCtor(typeof(StuffCategoryDefOf));
+		}
 	}
 }

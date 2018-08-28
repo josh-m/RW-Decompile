@@ -65,7 +65,7 @@ namespace RimWorld
 		{
 			if (thing == null)
 			{
-				Log.Error("StatRequest for null thing.");
+				Log.Error("StatRequest for null thing.", false);
 				return StatRequest.ForEmpty();
 			}
 			StatRequest result = default(StatRequest);
@@ -80,7 +80,7 @@ namespace RimWorld
 		{
 			if (def == null)
 			{
-				Log.Error("StatRequest for null def.");
+				Log.Error("StatRequest for null def.", false);
 				return StatRequest.ForEmpty();
 			}
 			return new StatRequest

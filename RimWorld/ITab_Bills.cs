@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using Verse;
+using Verse.Sound;
 
 namespace RimWorld
 {
@@ -15,6 +16,15 @@ namespace RimWorld
 		private Bill mouseoverBill;
 
 		private static readonly Vector2 WinSize = new Vector2(420f, 480f);
+
+		[TweakValue("Interface", 0f, 128f)]
+		private static float PasteX = 48f;
+
+		[TweakValue("Interface", 0f, 128f)]
+		private static float PasteY = 3f;
+
+		[TweakValue("Interface", 0f, 32f)]
+		private static float PasteSize = 24f;
 
 		protected Building_WorkTable SelTable
 		{
@@ -34,7 +44,40 @@ namespace RimWorld
 		protected override void FillTab()
 		{
 			PlayerKnowledgeDatabase.KnowledgeDemonstrated(ConceptDefOf.BillsTab, KnowledgeAmount.FrameDisplayed);
-			Rect rect = new Rect(0f, 0f, ITab_Bills.WinSize.x, ITab_Bills.WinSize.y).ContractedBy(10f);
+			Rect rect = new Rect(ITab_Bills.WinSize.x - ITab_Bills.PasteX, ITab_Bills.PasteY, ITab_Bills.PasteSize, ITab_Bills.PasteSize);
+			if (BillUtility.Clipboard == null)
+			{
+				GUI.color = Color.gray;
+				Widgets.DrawTextureFitted(rect, TexButton.Paste, 1f);
+				GUI.color = Color.white;
+				TooltipHandler.TipRegion(rect, "PasteBillTip".Translate());
+			}
+			else if (!this.SelTable.def.AllRecipes.Contains(BillUtility.Clipboard.recipe) || !BillUtility.Clipboard.recipe.AvailableNow)
+			{
+				GUI.color = Color.gray;
+				Widgets.DrawTextureFitted(rect, TexButton.Paste, 1f);
+				GUI.color = Color.white;
+				TooltipHandler.TipRegion(rect, "ClipboardBillNotAvailableHere".Translate());
+			}
+			else if (this.SelTable.billStack.Count >= 15)
+			{
+				GUI.color = Color.gray;
+				Widgets.DrawTextureFitted(rect, TexButton.Paste, 1f);
+				GUI.color = Color.white;
+				TooltipHandler.TipRegion(rect, "PasteBillTip".Translate() + " (" + "PasteBillTip_LimitReached".Translate() + ")");
+			}
+			else
+			{
+				if (Widgets.ButtonImageFitted(rect, TexButton.Paste, Color.white))
+				{
+					Bill bill = BillUtility.Clipboard.Clone();
+					bill.InitializeAfterClone();
+					this.SelTable.billStack.AddBill(bill);
+					SoundDefOf.Tick_Low.PlayOneShotOnCamera(null);
+				}
+				TooltipHandler.TipRegion(rect, "PasteBillTip".Translate());
+			}
+			Rect rect2 = new Rect(0f, 0f, ITab_Bills.WinSize.x, ITab_Bills.WinSize.y).ContractedBy(10f);
 			Func<List<FloatMenuOption>> recipeOptionsMaker = delegate
 			{
 				List<FloatMenuOption> list = new List<FloatMenuOption>();
@@ -49,8 +92,8 @@ namespace RimWorld
 							{
 								Bill.CreateNoPawnsWithSkillDialog(recipe);
 							}
-							Bill bill = recipe.MakeNewBill();
-							this.SelTable.billStack.AddBill(bill);
+							Bill bill2 = recipe.MakeNewBill();
+							this.SelTable.billStack.AddBill(bill2);
 							if (recipe.conceptLearned != null)
 							{
 								PlayerKnowledgeDatabase.KnowledgeDemonstrated(recipe.conceptLearned, KnowledgeAmount.Total);
@@ -68,7 +111,7 @@ namespace RimWorld
 				}
 				return list;
 			};
-			this.mouseoverBill = this.SelTable.billStack.DoListing(rect, recipeOptionsMaker, ref this.scrollPosition, ref this.viewHeight);
+			this.mouseoverBill = this.SelTable.billStack.DoListing(rect2, recipeOptionsMaker, ref this.scrollPosition, ref this.viewHeight);
 		}
 
 		public override void TabUpdate()

@@ -150,7 +150,7 @@ namespace RimWorld.Planet
 		{
 			if (!allowNullMap && cell.IsValid && map == null)
 			{
-				Log.Warning("Constructed GlobalTargetInfo with cell=" + cell + " and a null map.");
+				Log.Warning("Constructed GlobalTargetInfo with cell=" + cell + " and a null map.", false);
 			}
 			this.thingInt = null;
 			this.cellInt = cell;
@@ -200,12 +200,12 @@ namespace RimWorld.Planet
 		{
 			if (targ.worldObjectInt != null)
 			{
-				Log.ErrorOnce("Casted GlobalTargetInfo to LocalTargetInfo but it had WorldObject " + targ.worldObjectInt, 134566);
+				Log.ErrorOnce("Casted GlobalTargetInfo to LocalTargetInfo but it had WorldObject " + targ.worldObjectInt, 134566, false);
 				return LocalTargetInfo.Invalid;
 			}
 			if (targ.tileInt >= 0)
 			{
-				Log.ErrorOnce("Casted GlobalTargetInfo to LocalTargetInfo but it had tile " + targ.tileInt, 7833122);
+				Log.ErrorOnce("Casted GlobalTargetInfo to LocalTargetInfo but it had tile " + targ.tileInt, 7833122, false);
 				return LocalTargetInfo.Invalid;
 			}
 			if (!targ.IsValid)
@@ -223,12 +223,12 @@ namespace RimWorld.Planet
 		{
 			if (targ.worldObjectInt != null)
 			{
-				Log.ErrorOnce("Casted GlobalTargetInfo to TargetInfo but it had WorldObject " + targ.worldObjectInt, 134566);
+				Log.ErrorOnce("Casted GlobalTargetInfo to TargetInfo but it had WorldObject " + targ.worldObjectInt, 134566, false);
 				return TargetInfo.Invalid;
 			}
 			if (targ.tileInt >= 0)
 			{
-				Log.ErrorOnce("Casted GlobalTargetInfo to TargetInfo but it had tile " + targ.tileInt, 7833122);
+				Log.ErrorOnce("Casted GlobalTargetInfo to TargetInfo but it had tile " + targ.tileInt, 7833122, false);
 				return TargetInfo.Invalid;
 			}
 			if (!targ.IsValid)
@@ -246,15 +246,15 @@ namespace RimWorld.Planet
 		{
 			if (targ.thingInt != null)
 			{
-				Log.ErrorOnce("Casted GlobalTargetInfo to IntVec3 but it had Thing " + targ.thingInt, 6324165);
+				Log.ErrorOnce("Casted GlobalTargetInfo to IntVec3 but it had Thing " + targ.thingInt, 6324165, false);
 			}
 			if (targ.worldObjectInt != null)
 			{
-				Log.ErrorOnce("Casted GlobalTargetInfo to IntVec3 but it had WorldObject " + targ.worldObjectInt, 134566);
+				Log.ErrorOnce("Casted GlobalTargetInfo to IntVec3 but it had WorldObject " + targ.worldObjectInt, 134566, false);
 			}
 			if (targ.tileInt >= 0)
 			{
-				Log.ErrorOnce("Casted GlobalTargetInfo to IntVec3 but it had tile " + targ.tileInt, 7833122);
+				Log.ErrorOnce("Casted GlobalTargetInfo to IntVec3 but it had tile " + targ.tileInt, 7833122, false);
 			}
 			return targ.Cell;
 		}
@@ -263,15 +263,15 @@ namespace RimWorld.Planet
 		{
 			if (targ.cellInt.IsValid)
 			{
-				Log.ErrorOnce("Casted GlobalTargetInfo to Thing but it had cell " + targ.cellInt, 631672);
+				Log.ErrorOnce("Casted GlobalTargetInfo to Thing but it had cell " + targ.cellInt, 631672, false);
 			}
 			if (targ.worldObjectInt != null)
 			{
-				Log.ErrorOnce("Casted GlobalTargetInfo to Thing but it had WorldObject " + targ.worldObjectInt, 134566);
+				Log.ErrorOnce("Casted GlobalTargetInfo to Thing but it had WorldObject " + targ.worldObjectInt, 134566, false);
 			}
 			if (targ.tileInt >= 0)
 			{
-				Log.ErrorOnce("Casted GlobalTargetInfo to Thing but it had tile " + targ.tileInt, 7833122);
+				Log.ErrorOnce("Casted GlobalTargetInfo to Thing but it had tile " + targ.tileInt, 7833122, false);
 			}
 			return targ.thingInt;
 		}
@@ -280,15 +280,15 @@ namespace RimWorld.Planet
 		{
 			if (targ.thingInt != null)
 			{
-				Log.ErrorOnce("Casted GlobalTargetInfo to WorldObject but it had Thing " + targ.thingInt, 6324165);
+				Log.ErrorOnce("Casted GlobalTargetInfo to WorldObject but it had Thing " + targ.thingInt, 6324165, false);
 			}
 			if (targ.cellInt.IsValid)
 			{
-				Log.ErrorOnce("Casted GlobalTargetInfo to WorldObject but it had cell " + targ.cellInt, 631672);
+				Log.ErrorOnce("Casted GlobalTargetInfo to WorldObject but it had cell " + targ.cellInt, 631672, false);
 			}
 			if (targ.tileInt >= 0)
 			{
-				Log.ErrorOnce("Casted GlobalTargetInfo to WorldObject but it had tile " + targ.tileInt, 7833122);
+				Log.ErrorOnce("Casted GlobalTargetInfo to WorldObject but it had tile " + targ.tileInt, 7833122, false);
 			}
 			return targ.worldObjectInt;
 		}

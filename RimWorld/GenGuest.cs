@@ -12,19 +12,25 @@ namespace RimWorld
 			{
 				p.ownership.UnclaimAll();
 			}
-			if (p.Faction == Faction.OfPlayer)
+			if (p.Faction == Faction.OfPlayer || p.IsWildMan())
 			{
 				p.needs.mood.thoughts.memories.TryGainMemory(ThoughtDefOf.WasImprisoned, null);
 				p.guest.SetGuestStatus(null, false);
-				return;
+				if (p.IsWildMan())
+				{
+					p.mindState.WildManEverReachedOutside = false;
+				}
 			}
-			p.guest.Released = true;
-			IntVec3 c;
-			if (RCellFinder.TryFindBestExitSpot(p, out c, TraverseMode.ByPawn))
+			else
 			{
-				Job job = new Job(JobDefOf.Goto, c);
-				job.exitMapOnArrival = true;
-				p.jobs.StartJob(job, JobCondition.None, null, false, true, null, null, false);
+				p.guest.Released = true;
+				IntVec3 c;
+				if (RCellFinder.TryFindBestExitSpot(p, out c, TraverseMode.ByPawn))
+				{
+					Job job = new Job(JobDefOf.Goto, c);
+					job.exitMapOnArrival = true;
+					p.jobs.StartJob(job, JobCondition.None, null, false, true, null, null, false);
+				}
 			}
 		}
 	}

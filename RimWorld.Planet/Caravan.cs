@@ -11,6 +11,8 @@ namespace RimWorld.Planet
 	[StaticConstructorOnStartup]
 	public class Caravan : WorldObject, IThingHolder, IIncidentTarget, ITrader, ILoadReferenceable
 	{
+		private int uniqueId = -1;
+
 		private string nameInt;
 
 		public ThingOwner<Pawn> pawns;
@@ -25,6 +27,14 @@ namespace RimWorld.Planet
 
 		public Caravan_TraderTracker trader;
 
+		public Caravan_ForageTracker forage;
+
+		public Caravan_NeedsTracker needs;
+
+		public Caravan_CarryTracker carryTracker;
+
+		public Caravan_BedsTracker beds;
+
 		public StoryState storyState;
 
 		private Material cachedMat;
@@ -37,13 +47,11 @@ namespace RimWorld.Planet
 
 		private int cachedDaysWorthOfFoodForTicks = -99999;
 
+		public bool notifiedOutOfFood;
+
 		private const int ImmobilizedCacheDuration = 60;
 
 		private const int DaysWorthOfFoodCacheDuration = 3000;
-
-		private const int TendIntervalTicks = 2000;
-
-		private const int TryTakeScheduledDrugsIntervalTicks = 120;
 
 		private static readonly Texture2D SplitCommand = ContentFinder<Texture2D>.Get("UI/Commands/SplitCaravan", true);
 
@@ -142,7 +150,7 @@ namespace RimWorld.Planet
 		{
 			get
 			{
-				return this.Resting || this.AnyPawnHasExtremeMentalBreak || this.AllOwnersHaveMentalBreak || this.AllOwnersDowned || this.ImmobilizedByMass;
+				return this.NightResting || this.AllOwnersHaveMentalBreak || this.AllOwnersDowned || this.ImmobilizedByMass;
 			}
 		}
 
@@ -150,7 +158,17 @@ namespace RimWorld.Planet
 		{
 			get
 			{
-				return CollectionsMassCalculator.Capacity<Pawn>(this.PawnsListForReading);
+				return CollectionsMassCalculator.Capacity<Pawn>(this.PawnsListForReading, null);
+			}
+		}
+
+		public string MassCapacityExplanation
+		{
+			get
+			{
+				StringBuilder stringBuilder = new StringBuilder();
+				CollectionsMassCalculator.Capacity<Pawn>(this.PawnsListForReading, stringBuilder);
+				return stringBuilder.ToString();
 			}
 		}
 
@@ -192,11 +210,11 @@ namespace RimWorld.Planet
 			}
 		}
 
-		public bool Resting
+		public bool NightResting
 		{
 			get
 			{
-				return CaravanRestUtility.RestingNowAt(base.Tile);
+				return base.Spawned && (!this.pather.Moving || this.pather.nextTile != this.pather.Destination || !Caravan_PathFollower.IsValidFinalPushDestination(this.pather.Destination) || Mathf.CeilToInt(this.pather.nextTileCostLeft / 1f) > 10000) && CaravanNightRestUtility.RestingNowAt(base.Tile);
 			}
 		}
 
@@ -204,7 +222,11 @@ namespace RimWorld.Planet
 		{
 			get
 			{
-				return CaravanRestUtility.LeftRestTicksAt(base.Tile);
+				if (!this.NightResting)
+				{
+					return 0;
+				}
+				return CaravanNightRestUtility.LeftRestTicksAt(base.Tile);
 			}
 		}
 
@@ -212,7 +234,11 @@ namespace RimWorld.Planet
 		{
 			get
 			{
-				return CaravanRestUtility.LeftNonRestTicksAt(base.Tile);
+				if (this.NightResting)
+				{
+					return 0;
+				}
+				return CaravanNightRestUtility.LeftNonRestTicksAt(base.Tile);
 			}
 		}
 
@@ -228,34 +254,11 @@ namespace RimWorld.Planet
 			}
 		}
 
-		private bool AnyPawnHasExtremeMentalBreak
-		{
-			get
-			{
-				return this.FirstPawnWithExtremeMentalBreak != null;
-			}
-		}
-
-		private Pawn FirstPawnWithExtremeMentalBreak
-		{
-			get
-			{
-				for (int i = 0; i < this.pawns.Count; i++)
-				{
-					if (this.pawns[i].InMentalState && this.pawns[i].MentalStateDef.IsExtreme)
-					{
-						return this.pawns[i];
-					}
-				}
-				return null;
-			}
-		}
-
 		public int TicksPerMove
 		{
 			get
 			{
-				return CaravanTicksPerMoveUtility.GetTicksPerMove(this);
+				return CaravanTicksPerMoveUtility.GetTicksPerMove(this, null);
 			}
 		}
 
@@ -264,6 +267,50 @@ namespace RimWorld.Planet
 			get
 			{
 				return false;
+			}
+		}
+
+		public float Visibility
+		{
+			get
+			{
+				return CaravanVisibilityCalculator.Visibility(this, null);
+			}
+		}
+
+		public string VisibilityExplanation
+		{
+			get
+			{
+				StringBuilder stringBuilder = new StringBuilder();
+				CaravanVisibilityCalculator.Visibility(this, stringBuilder);
+				return stringBuilder.ToString();
+			}
+		}
+
+		public string TicksPerMoveExplanation
+		{
+			get
+			{
+				StringBuilder stringBuilder = new StringBuilder();
+				CaravanTicksPerMoveUtility.GetTicksPerMove(this, stringBuilder);
+				return stringBuilder.ToString();
+			}
+		}
+
+		public IEnumerable<Thing> AllThings
+		{
+			get
+			{
+				return CaravanInventoryUtility.AllInventoryItems(this).Concat(this.pawns);
+			}
+		}
+
+		public int ConstantRandSeed
+		{
+			get
+			{
+				return this.uniqueId ^ 728241121;
 			}
 		}
 
@@ -279,7 +326,7 @@ namespace RimWorld.Planet
 		{
 			get
 			{
-				Log.ErrorOnce("Attempted to retrieve condition manager directly from caravan", 13291050);
+				Log.ErrorOnce("Attempted to retrieve condition manager directly from caravan", 13291050, false);
 				return null;
 			}
 		}
@@ -296,12 +343,16 @@ namespace RimWorld.Planet
 				for (int i = 0; i < this.pawns.Count; i++)
 				{
 					num += WealthWatcher.GetEquipmentApparelAndInventoryWealth(this.pawns[i]);
+					if (this.pawns[i].Faction == Faction.OfPlayer)
+					{
+						num += this.pawns[i].MarketValue;
+					}
 				}
-				return num * 0.5f;
+				return num * 0.7f;
 			}
 		}
 
-		public IEnumerable<Pawn> FreeColonistsForStoryteller
+		public IEnumerable<Pawn> PlayerPawnsForStoryteller
 		{
 			get
 			{
@@ -310,7 +361,7 @@ namespace RimWorld.Planet
 					return Enumerable.Empty<Pawn>();
 				}
 				return from x in this.PawnsListForReading
-				where x.IsFreeColonist
+				where x.Faction == Faction.OfPlayer
 				select x;
 			}
 		}
@@ -319,7 +370,7 @@ namespace RimWorld.Planet
 		{
 			get
 			{
-				return CaravanIncidentUtility.IncidentPointsRandomFactorRange;
+				return StorytellerUtility.CaravanPointsRandomFactorRange;
 			}
 		}
 
@@ -378,7 +429,26 @@ namespace RimWorld.Planet
 			this.gotoMote = new Caravan_GotoMoteRenderer();
 			this.tweener = new Caravan_Tweener(this);
 			this.trader = new Caravan_TraderTracker(this);
+			this.forage = new Caravan_ForageTracker(this);
+			this.needs = new Caravan_NeedsTracker(this);
+			this.carryTracker = new Caravan_CarryTracker(this);
+			this.beds = new Caravan_BedsTracker(this);
 			this.storyState = new StoryState(this);
+		}
+
+		public void SetUniqueId(int newId)
+		{
+			if (this.uniqueId != -1 || newId < 0)
+			{
+				Log.Error(string.Concat(new object[]
+				{
+					"Tried to set caravan with uniqueId ",
+					this.uniqueId,
+					" to have uniqueId ",
+					newId
+				}), false);
+			}
+			this.uniqueId = newId;
 		}
 
 		public IEnumerable<Thing> ColonyThingsWillingToBuy(Pawn playerNegotiator)
@@ -403,6 +473,7 @@ namespace RimWorld.Planet
 			{
 				this.pawns.RemoveAll((Pawn x) => x.Destroyed);
 			}
+			Scribe_Values.Look<int>(ref this.uniqueId, "uniqueId", 0, false);
 			Scribe_Values.Look<string>(ref this.nameInt, "name", null, false);
 			Scribe_Deep.Look<ThingOwner<Pawn>>(ref this.pawns, "pawns", new object[]
 			{
@@ -414,6 +485,22 @@ namespace RimWorld.Planet
 				this
 			});
 			Scribe_Deep.Look<Caravan_TraderTracker>(ref this.trader, "trader", new object[]
+			{
+				this
+			});
+			Scribe_Deep.Look<Caravan_ForageTracker>(ref this.forage, "forage", new object[]
+			{
+				this
+			});
+			Scribe_Deep.Look<Caravan_NeedsTracker>(ref this.needs, "needs", new object[]
+			{
+				this
+			});
+			Scribe_Deep.Look<Caravan_CarryTracker>(ref this.carryTracker, "carryTracker", new object[]
+			{
+				this
+			});
+			Scribe_Deep.Look<Caravan_BedsTracker>(ref this.beds, "beds", new object[]
 			{
 				this
 			});
@@ -430,6 +517,8 @@ namespace RimWorld.Planet
 		public override void PostAdd()
 		{
 			base.PostAdd();
+			this.carryTracker.Notify_CaravanSpawned();
+			this.beds.Notify_CaravanSpawned();
 			Find.ColonistBar.MarkColonistsDirty();
 		}
 
@@ -446,21 +535,18 @@ namespace RimWorld.Planet
 			this.CheckAnyNonWorldPawns();
 			this.pather.PatherTick();
 			this.tweener.TweenerTick();
-			CaravanPawnsNeedsUtility.TrySatisfyPawnsNeeds(this);
-			if (this.IsHashIntervalTick(120))
-			{
-				CaravanDrugPolicyUtility.TryTakeScheduledDrugs(this);
-			}
-			if (this.IsHashIntervalTick(2000))
-			{
-				CaravanTendUtility.TryTendToRandomPawn(this);
-			}
+			this.forage.ForageTrackerTick();
+			this.carryTracker.CarryTrackerTick();
+			this.beds.BedsTrackerTick();
+			this.needs.NeedsTrackerTick();
+			CaravanDrugPolicyUtility.CheckTakeScheduledDrugs(this);
+			CaravanTendUtility.CheckTend(this);
 		}
 
 		public override void SpawnSetup()
 		{
 			base.SpawnSetup();
-			this.tweener.ResetToPosition();
+			this.tweener.ResetTweenedPosToRoot();
 		}
 
 		public override void DrawExtraSelectionOverlays()
@@ -477,7 +563,7 @@ namespace RimWorld.Planet
 		{
 			if (p == null)
 			{
-				Log.Warning("Tried to add a null pawn to " + this);
+				Log.Warning("Tried to add a null pawn to " + this, false);
 				return;
 			}
 			if (p.Dead)
@@ -489,19 +575,30 @@ namespace RimWorld.Planet
 					" to ",
 					this,
 					", but this pawn is dead."
-				}));
+				}), false);
 				return;
 			}
 			Pawn pawn = p.carryTracker.CarriedThing as Pawn;
+			if (pawn != null)
+			{
+				p.carryTracker.innerContainer.Remove(pawn);
+			}
 			if (p.Spawned)
 			{
-				p.DeSpawn();
+				p.DeSpawn(DestroyMode.Vanish);
 			}
 			if (this.pawns.TryAdd(p, true))
 			{
+				if (this.ShouldAutoCapture(p))
+				{
+					p.guest.CapturedBy(base.Faction, null);
+				}
 				if (pawn != null)
 				{
-					p.carryTracker.innerContainer.Remove(pawn);
+					if (this.ShouldAutoCapture(pawn))
+					{
+						pawn.guest.CapturedBy(base.Faction, p);
+					}
 					this.AddPawn(pawn, addCarriedPawnToWorldPawnsIfAny);
 					if (addCarriedPawnToWorldPawnsIfAny)
 					{
@@ -511,7 +608,7 @@ namespace RimWorld.Planet
 			}
 			else
 			{
-				Log.Error("Couldn't add pawn " + p + " to caravan.");
+				Log.Error("Couldn't add pawn " + p + " to caravan.", false);
 			}
 		}
 
@@ -519,7 +616,7 @@ namespace RimWorld.Planet
 		{
 			if (thing == null)
 			{
-				Log.Warning("Tried to add a null thing to " + this);
+				Log.Warning("Tried to add a null thing to " + this, false);
 				return;
 			}
 			Pawn pawn = thing as Pawn;
@@ -561,30 +658,89 @@ namespace RimWorld.Planet
 			{
 				stringBuilder.AppendLine();
 			}
-			if (this.Resting)
+			int num = 0;
+			int num2 = 0;
+			int num3 = 0;
+			int num4 = 0;
+			int num5 = 0;
+			for (int i = 0; i < this.pawns.Count; i++)
 			{
-				stringBuilder.Append("CaravanResting".Translate());
-			}
-			else if (this.AnyPawnHasExtremeMentalBreak)
-			{
-				stringBuilder.Append("CaravanMemberMentalBreak".Translate(new object[]
+				if (this.pawns[i].IsColonist)
 				{
-					this.FirstPawnWithExtremeMentalBreak.LabelShort
+					num++;
+				}
+				else if (this.pawns[i].RaceProps.Animal)
+				{
+					num2++;
+				}
+				else if (this.pawns[i].IsPrisoner)
+				{
+					num3++;
+				}
+				if (this.pawns[i].Downed)
+				{
+					num4++;
+				}
+				if (this.pawns[i].InMentalState)
+				{
+					num5++;
+				}
+			}
+			stringBuilder.Append("CaravanColonistsCount".Translate(new object[]
+			{
+				num,
+				(num != 1) ? Faction.OfPlayer.def.pawnsPlural : Faction.OfPlayer.def.pawnSingular
+			}));
+			if (num2 == 1)
+			{
+				stringBuilder.Append(", " + "CaravanAnimal".Translate());
+			}
+			else if (num2 > 1)
+			{
+				stringBuilder.Append(", " + "CaravanAnimalsCount".Translate(new object[]
+				{
+					num2
 				}));
 			}
-			else if (this.AllOwnersDowned)
+			if (num3 == 1)
 			{
-				stringBuilder.Append("AllCaravanMembersDowned".Translate());
+				stringBuilder.Append(", " + "CaravanPrisoner".Translate());
 			}
-			else if (this.AllOwnersHaveMentalBreak)
+			else if (num3 > 1)
 			{
-				stringBuilder.Append("AllCaravanMembersMentalBreak".Translate());
-			}
-			else if (this.pather.Moving)
-			{
-				if (this.pather.arrivalAction != null)
+				stringBuilder.Append(", " + "CaravanPrisonersCount".Translate(new object[]
 				{
-					stringBuilder.Append(this.pather.arrivalAction.ReportString);
+					num3
+				}));
+			}
+			stringBuilder.AppendLine();
+			if (num5 > 0)
+			{
+				stringBuilder.Append("CaravanPawnsInMentalState".Translate(new object[]
+				{
+					num5
+				}));
+			}
+			if (num4 > 0)
+			{
+				if (num5 > 0)
+				{
+					stringBuilder.Append(", ");
+				}
+				stringBuilder.Append("CaravanPawnsDowned".Translate(new object[]
+				{
+					num4
+				}));
+			}
+			if (num5 > 0 || num4 > 0)
+			{
+				stringBuilder.AppendLine();
+			}
+			if (this.pather.Moving)
+			{
+				if (this.pather.ArrivalAction != null)
+				{
+					stringBuilder.Append(this.pather.ArrivalAction.ReportString);
 				}
 				else
 				{
@@ -593,12 +749,12 @@ namespace RimWorld.Planet
 			}
 			else
 			{
-				Settlement settlement = CaravanVisitUtility.SettlementVisitedNow(this);
-				if (settlement != null)
+				SettlementBase settlementBase = CaravanVisitUtility.SettlementVisitedNow(this);
+				if (settlementBase != null)
 				{
 					stringBuilder.Append("CaravanVisiting".Translate(new object[]
 					{
-						settlement.Label
+						settlementBase.Label
 					}));
 				}
 				else
@@ -608,20 +764,30 @@ namespace RimWorld.Planet
 			}
 			if (this.pather.Moving)
 			{
-				float num = (float)CaravanArrivalTimeEstimator.EstimatedTicksToArrive(this, true) / 60000f;
+				float num6 = (float)CaravanArrivalTimeEstimator.EstimatedTicksToArrive(this, true) / 60000f;
 				stringBuilder.AppendLine();
 				stringBuilder.Append("CaravanEstimatedTimeToDestination".Translate(new object[]
 				{
-					num.ToString("0.#")
+					num6.ToString("0.#")
 				}));
 			}
-			if (this.ImmobilizedByMass)
+			if (this.AllOwnersDowned)
+			{
+				stringBuilder.AppendLine();
+				stringBuilder.Append("AllCaravanMembersDowned".Translate());
+			}
+			else if (this.AllOwnersHaveMentalBreak)
+			{
+				stringBuilder.AppendLine();
+				stringBuilder.Append("AllCaravanMembersMentalBreak".Translate());
+			}
+			else if (this.ImmobilizedByMass)
 			{
 				stringBuilder.AppendLine();
 				stringBuilder.Append("CaravanImmobilizedByMass".Translate());
 			}
 			string text;
-			if (CaravanPawnsNeedsUtility.AnyPawnOutOfFood(this, out text))
+			if (this.needs.AnyPawnOutOfFood(out text))
 			{
 				stringBuilder.AppendLine();
 				stringBuilder.Append("CaravanOutOfFood".Translate());
@@ -632,52 +798,46 @@ namespace RimWorld.Planet
 					stringBuilder.Append(".");
 				}
 			}
-			else if (this.DaysWorthOfFood.First < 1000f)
+			if (!this.pather.MovingNow)
 			{
-				Pair<float, float> daysWorthOfFood = this.DaysWorthOfFood;
+				int usedBedCount = this.beds.GetUsedBedCount();
 				stringBuilder.AppendLine();
-				if (daysWorthOfFood.Second < 1000f)
+				stringBuilder.Append(CaravanBedUtility.AppendUsingBedsLabel("CaravanResting".Translate(), usedBedCount));
+			}
+			else
+			{
+				string inspectStringLine = this.carryTracker.GetInspectStringLine();
+				if (!inspectStringLine.NullOrEmpty())
 				{
-					stringBuilder.Append("CaravanDaysOfFoodRot".Translate(new object[]
-					{
-						daysWorthOfFood.First.ToString("0.#"),
-						daysWorthOfFood.Second.ToString("0.#")
-					}));
+					stringBuilder.AppendLine();
+					stringBuilder.Append(inspectStringLine);
 				}
-				else
+				string inBedForMedicalReasonsInspectStringLine = this.beds.GetInBedForMedicalReasonsInspectStringLine();
+				if (!inBedForMedicalReasonsInspectStringLine.NullOrEmpty())
 				{
-					stringBuilder.Append("CaravanDaysOfFood".Translate(new object[]
-					{
-						daysWorthOfFood.First.ToString("0.#")
-					}));
+					stringBuilder.AppendLine();
+					stringBuilder.Append(inBedForMedicalReasonsInspectStringLine);
 				}
 			}
-			stringBuilder.AppendLine();
-			stringBuilder.AppendLine(string.Concat(new string[]
-			{
-				"CaravanBaseMovementTime".Translate(),
-				": ",
-				((float)this.TicksPerMove / 2500f).ToString("0.##"),
-				" ",
-				"CaravanHoursPerTile".Translate()
-			}));
-			stringBuilder.AppendLine("CurrentTileMovementTime".Translate() + ": " + Caravan_PathFollower.CostToDisplay(this, base.Tile, this.pather.nextTile, -1f).ToStringTicksToPeriod(true, false, true));
-			stringBuilder.Append("StealthFactor".Translate() + ": " + CaravanIncidentUtility.CalculateCaravanStealthFactor(this.PawnsListForReading.Count).ToString("F1"));
 			return stringBuilder.ToString();
 		}
 
 		[DebuggerHidden]
 		public override IEnumerable<Gizmo> GetGizmos()
 		{
+			if (Find.WorldSelector.SingleSelectedObject == this)
+			{
+				yield return new Gizmo_CaravanInfo(this);
+			}
 			foreach (Gizmo g in base.GetGizmos())
 			{
 				yield return g;
 			}
 			if (this.IsPlayerControlled)
 			{
-				if (CaravanMergeUtility.ShouldShowMergeCommand)
+				if (Find.WorldSelector.SingleSelectedObject == this)
 				{
-					yield return CaravanMergeUtility.MergeCommand(this);
+					yield return SettleInEmptyTileUtility.SettleCommand(this);
 				}
 				if (Find.WorldSelector.SingleSelectedObject == this)
 				{
@@ -695,9 +855,36 @@ namespace RimWorld.Planet
 						};
 					}
 				}
-				if (Find.WorldSelector.SingleSelectedObject == this)
+				if (this.pather.Moving)
 				{
-					yield return SettleInEmptyTileUtility.SettleCommand(this);
+					yield return new Command_Toggle
+					{
+						hotKey = KeyBindingDefOf.Misc1,
+						isActive = (() => this.$this.pather.Paused),
+						toggleAction = delegate
+						{
+							if (!this.$this.pather.Moving)
+							{
+								return;
+							}
+							this.$this.pather.Paused = !this.$this.pather.Paused;
+						},
+						defaultDesc = "CommandToggleCaravanPauseDesc".Translate(new object[]
+						{
+							2f.ToString("0.#"),
+							0.3f.ToStringPercent()
+						}),
+						icon = TexCommand.PauseCaravan,
+						defaultLabel = "CommandPauseCaravan".Translate()
+					};
+				}
+				if (CaravanMergeUtility.ShouldShowMergeCommand)
+				{
+					yield return CaravanMergeUtility.MergeCommand(this);
+				}
+				foreach (Gizmo g2 in this.forage.GetGizmos())
+				{
+					yield return g2;
 				}
 				foreach (WorldObject wo in Find.WorldObjects.ObjectsAt(base.Tile))
 				{
@@ -719,21 +906,7 @@ namespace RimWorld.Planet
 						where x.RaceProps.Humanlike && !x.InMentalState
 						select x).TryRandomElement(out pawn))
 						{
-							pawn.mindState.mentalStateHandler.TryStartMentalState(MentalStateDefOf.WanderSad, null, false, false, null);
-						}
-					}
-				};
-				yield return new Command_Action
-				{
-					defaultLabel = "Dev: Extreme mental break",
-					action = delegate
-					{
-						Pawn pawn;
-						if ((from x in this.$this.PawnsListForReading
-						where x.RaceProps.Humanlike && !x.InMentalState
-						select x).TryRandomElement(out pawn))
-						{
-							pawn.mindState.mentalStateHandler.TryStartMentalState(MentalStateDefOf.Berserk, null, false, false, null);
+							pawn.mindState.mentalStateHandler.TryStartMentalState(MentalStateDefOf.Wander_Sad, null, false, false, null, false);
 						}
 					}
 				};
@@ -760,7 +933,7 @@ namespace RimWorld.Planet
 						if (this.$this.PawnsListForReading.TryRandomElement(out pawn))
 						{
 							pawn.Kill(null, null);
-							Messages.Message("Dev: Killed " + pawn.LabelShort, this.$this, MessageTypeDefOf.TaskCompletion);
+							Messages.Message("Dev: Killed " + pawn.LabelShort, this.$this, MessageTypeDefOf.TaskCompletion, false);
 						}
 					}
 				};
@@ -772,7 +945,7 @@ namespace RimWorld.Planet
 						Pawn pawn;
 						if (this.$this.PawnsListForReading.TryRandomElement(out pawn))
 						{
-							DamageInfo dinfo = new DamageInfo(DamageDefOf.Scratch, 10, -1f, null, null, null, DamageInfo.SourceCategory.ThingOrUnknown);
+							DamageInfo dinfo = new DamageInfo(DamageDefOf.Scratch, 10f, 999f, -1f, null, null, null, DamageInfo.SourceCategory.ThingOrUnknown, null);
 							pawn.TakeDamage(dinfo);
 						}
 					}
@@ -787,8 +960,25 @@ namespace RimWorld.Planet
 						where !x.Downed
 						select x).TryRandomElement(out pawn))
 						{
-							HealthUtility.DamageUntilDowned(pawn);
-							Messages.Message("Dev: Downed " + pawn.LabelShort, this.$this, MessageTypeDefOf.TaskCompletion);
+							HealthUtility.DamageUntilDowned(pawn, true);
+							Messages.Message("Dev: Downed " + pawn.LabelShort, this.$this, MessageTypeDefOf.TaskCompletion, false);
+						}
+					}
+				};
+				yield return new Command_Action
+				{
+					defaultLabel = "Dev: Plague on random pawn",
+					action = delegate
+					{
+						Pawn pawn;
+						if ((from x in this.$this.PawnsListForReading
+						where !x.Downed
+						select x).TryRandomElement(out pawn))
+						{
+							Hediff hediff = HediffMaker.MakeHediff(HediffDefOf.Plague, pawn, null);
+							hediff.Severity = HediffDefOf.Plague.stages[1].minSeverity - 0.001f;
+							pawn.health.AddHediff(hediff, null, null, null);
+							Messages.Message("Dev: Gave advanced plague to " + pawn.LabelShort, this.$this, MessageTypeDefOf.TaskCompletion, false);
 						}
 					}
 				};
@@ -804,6 +994,19 @@ namespace RimWorld.Planet
 			}
 		}
 
+		[DebuggerHidden]
+		public override IEnumerable<FloatMenuOption> GetTransportPodsFloatMenuOptions(IEnumerable<IThingHolder> pods, CompLaunchable representative)
+		{
+			foreach (FloatMenuOption o in base.GetTransportPodsFloatMenuOptions(pods, representative))
+			{
+				yield return o;
+			}
+			foreach (FloatMenuOption f in TransportPodsArrivalAction_GiveToCaravan.GetFloatMenuOptions(representative, pods, this))
+			{
+				yield return f;
+			}
+		}
+
 		public void RecacheImmobilizedNow()
 		{
 			this.cachedImmobilizedForTicks = -99999;
@@ -816,13 +1019,21 @@ namespace RimWorld.Planet
 
 		public virtual void Notify_MemberDied(Pawn member)
 		{
+			if (!base.Spawned)
+			{
+				Log.Error("Caravan member died in an unspawned caravan. Unspawned caravans shouldn't be kept for more than a single frame.", false);
+			}
 			if (!this.PawnsListForReading.Any((Pawn x) => x != member && this.IsOwner(x)))
 			{
 				this.RemovePawn(member);
 				if (base.Faction == Faction.OfPlayer)
 				{
-					Find.LetterStack.ReceiveLetter("LetterLabelAllCaravanColonistsDied".Translate(), "LetterAllCaravanColonistsDied".Translate(), LetterDefOf.NegativeEvent, new GlobalTargetInfo(base.Tile), null);
+					Find.LetterStack.ReceiveLetter("LetterLabelAllCaravanColonistsDied".Translate(), "LetterAllCaravanColonistsDied".Translate(new object[]
+					{
+						this.Name
+					}).CapitalizeFirst(), LetterDefOf.NegativeEvent, new GlobalTargetInfo(base.Tile), null, null);
 				}
+				this.pawns.Clear();
 				Find.WorldObjects.Remove(this);
 			}
 			else
@@ -832,16 +1043,31 @@ namespace RimWorld.Planet
 			}
 		}
 
+		public virtual void Notify_Merged(List<Caravan> group)
+		{
+			this.notifiedOutOfFood = false;
+		}
+
+		public virtual void Notify_StartedTrading()
+		{
+			this.notifiedOutOfFood = false;
+		}
+
 		private void CheckAnyNonWorldPawns()
 		{
 			for (int i = this.pawns.Count - 1; i >= 0; i--)
 			{
 				if (!this.pawns[i].IsWorldPawn())
 				{
-					Log.Error("Caravan member " + this.pawns[i] + " is not a world pawn. Removing...");
+					Log.Error("Caravan member " + this.pawns[i] + " is not a world pawn. Removing...", false);
 					this.pawns.Remove(this.pawns[i]);
 				}
 			}
+		}
+
+		private bool ShouldAutoCapture(Pawn p)
+		{
+			return CaravanUtility.ShouldAutoCapture(p, base.Faction);
 		}
 
 		public void Notify_PawnRemoved(Pawn p)
@@ -849,6 +1075,8 @@ namespace RimWorld.Planet
 			Find.ColonistBar.MarkColonistsDirty();
 			this.RecacheImmobilizedNow();
 			this.RecacheDaysWorthOfFood();
+			this.carryTracker.Notify_PawnRemoved();
+			this.beds.Notify_PawnRemoved();
 		}
 
 		public void Notify_PawnAdded(Pawn p)
@@ -856,6 +1084,17 @@ namespace RimWorld.Planet
 			Find.ColonistBar.MarkColonistsDirty();
 			this.RecacheImmobilizedNow();
 			this.RecacheDaysWorthOfFood();
+		}
+
+		public void Notify_DestinationOrPauseStatusChanged()
+		{
+			this.RecacheDaysWorthOfFood();
+		}
+
+		public void Notify_Teleported()
+		{
+			this.tweener.ResetTweenedPosToRoot();
+			this.pather.Notify_Teleported_Int();
 		}
 
 		public ThingOwner GetDirectlyHeldThings()

@@ -1,3 +1,4 @@
+using RimWorld;
 using System;
 
 namespace Verse
@@ -7,5 +8,7 @@ namespace Verse
 		public HediffDef hediff;
 
 		public float severityPerDamageDealt = 0.1f;
+
+		public StatDef victimSeverityScaling;
 	}
 }

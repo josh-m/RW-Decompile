@@ -30,9 +30,24 @@ namespace RimWorld
 			}
 		}
 
-		public override bool TryMakePreToilReservations()
+		public override bool TryMakePreToilReservations(bool errorOnFailed)
 		{
-			return this.pawn.Reserve(this.Corpse, this.job, 1, -1, null) && this.pawn.Reserve(this.Item, this.job, 1, -1, null);
+			Pawn pawn = this.pawn;
+			LocalTargetInfo target = this.Corpse;
+			Job job = this.job;
+			bool arg_58_0;
+			if (pawn.Reserve(target, job, 1, -1, null, errorOnFailed))
+			{
+				pawn = this.pawn;
+				target = this.Item;
+				job = this.job;
+				arg_58_0 = pawn.Reserve(target, job, 1, -1, null, errorOnFailed);
+			}
+			else
+			{
+				arg_58_0 = false;
+			}
+			return arg_58_0;
 		}
 
 		[DebuggerHidden]
@@ -41,7 +56,7 @@ namespace RimWorld
 			yield return Toils_Goto.GotoThing(TargetIndex.B, PathEndMode.Touch).FailOnDespawnedOrNull(TargetIndex.B).FailOnDespawnedOrNull(TargetIndex.A);
 			yield return Toils_Haul.StartCarryThing(TargetIndex.B, false, false, false);
 			yield return Toils_Goto.GotoThing(TargetIndex.A, PathEndMode.Touch).FailOnDespawnedOrNull(TargetIndex.A);
-			Toil prepare = Toils_General.Wait(600);
+			Toil prepare = Toils_General.Wait(600, TargetIndex.None);
 			prepare.WithProgressBarToilDelay(TargetIndex.A, false, -0.5f);
 			prepare.FailOnDespawnedOrNull(TargetIndex.A);
 			prepare.FailOnCannotTouch(TargetIndex.A, PathEndMode.Touch);
@@ -56,7 +71,7 @@ namespace RimWorld
 			Messages.Message("MessagePawnResurrected".Translate(new object[]
 			{
 				innerPawn.LabelIndefinite()
-			}).CapitalizeFirst(), innerPawn, MessageTypeDefOf.PositiveEvent);
+			}).CapitalizeFirst(), innerPawn, MessageTypeDefOf.PositiveEvent, true);
 			this.Item.SplitOff(1).Destroy(DestroyMode.Vanish);
 		}
 	}

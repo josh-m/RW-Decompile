@@ -16,12 +16,12 @@ namespace Verse
 					" from ",
 					stuff,
 					" which is not a stuff. Assigning default."
-				}));
+				}), false);
 				stuff = GenStuff.DefaultStuffFor(def);
 			}
 			if (def.MadeFromStuff && stuff == null)
 			{
-				Log.Error("MakeThing error: " + def + " is madeFromStuff but stuff=null. Assigning default.");
+				Log.Error("MakeThing error: " + def + " is madeFromStuff but stuff=null. Assigning default.", false);
 				stuff = GenStuff.DefaultStuffFor(def);
 			}
 			if (!def.MadeFromStuff && stuff != null)
@@ -33,7 +33,7 @@ namespace Verse
 					" is not madeFromStuff but stuff=",
 					stuff,
 					". Setting to null."
-				}));
+				}), false);
 				stuff = null;
 			}
 			Thing thing = (Thing)Activator.CreateInstance(def.thingClass);

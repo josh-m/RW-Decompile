@@ -63,9 +63,26 @@ namespace RimWorld
 			Scribe_Values.Look<int>(ref this.ticksLeft, "ticksLeft", 0, false);
 		}
 
-		public override bool TryMakePreToilReservations()
+		public override bool TryMakePreToilReservations(bool errorOnFailed)
 		{
-			return this.pawn.Reserve(this.Partner, this.job, 1, -1, null) && this.pawn.Reserve(this.Bed, this.job, this.Bed.SleepingSlotsCount, 0, null);
+			Pawn pawn = this.pawn;
+			LocalTargetInfo target = this.Partner;
+			Job job = this.job;
+			bool arg_6A_0;
+			if (pawn.Reserve(target, job, 1, -1, null, errorOnFailed))
+			{
+				pawn = this.pawn;
+				target = this.Bed;
+				job = this.job;
+				int sleepingSlotsCount = this.Bed.SleepingSlotsCount;
+				int stackCount = 0;
+				arg_6A_0 = pawn.Reserve(target, job, sleepingSlotsCount, stackCount, null, errorOnFailed);
+			}
+			else
+			{
+				arg_6A_0 = false;
+			}
+			return arg_6A_0;
 		}
 
 		public override bool CanBeginNowWhileLyingDown()

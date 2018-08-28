@@ -8,7 +8,11 @@ namespace Verse
 	{
 		public float minSeverity;
 
+		[MustTranslate]
 		public string label;
+
+		[TranslationHandle, Unsaved]
+		public string untranslatedLabel;
 
 		public bool becomeVisible = true;
 
@@ -72,6 +76,11 @@ namespace Verse
 			{
 				return this.opinionOfOthersFactor != 1f;
 			}
+		}
+
+		public void PostLoad()
+		{
+			this.untranslatedLabel = this.label;
 		}
 
 		public IEnumerable<StatDrawEntry> SpecialDisplayStats()

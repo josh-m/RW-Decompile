@@ -9,7 +9,7 @@ namespace RimWorld
 	{
 		private const int TicksBetweenSleepZs = 100;
 
-		private const float GroundRestEffectiveness = 0.8f;
+		public const float GroundRestEffectiveness = 0.8f;
 
 		private const int GetUpOrStartJobWhileInBedCheckInterval = 211;
 
@@ -26,15 +26,15 @@ namespace RimWorld
 					Building_Bed t = (Building_Bed)actor.CurJob.GetTarget(bedOrRestSpotIndex).Thing;
 					if (!t.OccupiedRect().Contains(actor.Position))
 					{
-						Log.Error("Can't start LayDown toil because pawn is not in the bed. pawn=" + actor);
+						Log.Error("Can't start LayDown toil because pawn is not in the bed. pawn=" + actor, false);
 						actor.jobs.EndCurrentJob(JobCondition.Errored, true);
 						return;
 					}
-					curDriver.layingDown = LayingDownState.LayingInBed;
+					actor.jobs.posture = PawnPosture.LayingInBed;
 				}
 				else
 				{
-					curDriver.layingDown = LayingDownState.LayingSurface;
+					actor.jobs.posture = PawnPosture.LayingOnGroundNormal;
 				}
 				curDriver.asleep = false;
 				if (actor.mindState.applyBedThoughtsTick == 0)
@@ -71,18 +71,16 @@ namespace RimWorld
 				}
 				if (curDriver.asleep && gainRestAndHealth && actor.needs.rest != null)
 				{
-					float num;
+					float restEffectiveness;
 					if (building_Bed != null && building_Bed.def.statBases.StatListContains(StatDefOf.BedRestEffectiveness))
 					{
-						num = building_Bed.GetStatValue(StatDefOf.BedRestEffectiveness, true);
+						restEffectiveness = building_Bed.GetStatValue(StatDefOf.BedRestEffectiveness, true);
 					}
 					else
 					{
-						num = 0.8f;
+						restEffectiveness = 0.8f;
 					}
-					float num2 = RestUtility.PawnHealthRestEffectivenessFactor(actor);
-					num = 0.7f * num + 0.3f * num * num2;
-					actor.needs.rest.TickResting(num);
+					actor.needs.rest.TickResting(restEffectiveness);
 				}
 				if (actor.mindState.applyBedThoughtsTick != 0 && actor.mindState.applyBedThoughtsTick <= Find.TickManager.TicksGame)
 				{
@@ -129,7 +127,6 @@ namespace RimWorld
 				{
 					Toils_LayDown.ApplyBedThoughts(actor);
 				}
-				curDriver.layingDown = LayingDownState.NotLaying;
 				curDriver.asleep = false;
 			});
 			return layDown;

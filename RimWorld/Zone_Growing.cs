@@ -9,7 +9,7 @@ namespace RimWorld
 {
 	public class Zone_Growing : Zone, IPlantToGrowSettable
 	{
-		private ThingDef plantDefToGrow = ThingDefOf.PlantPotato;
+		private ThingDef plantDefToGrow = ThingDefOf.Plant_Potato;
 
 		public bool allowSow = true;
 
@@ -70,7 +70,7 @@ namespace RimWorld
 						"\n"
 					});
 				}
-				if (GenPlant.GrowthSeasonNow(c, base.Map))
+				if (PlantUtility.GrowthSeasonNow(c, base.Map, true))
 				{
 					text += "GrowSeasonHereNow".Translate();
 				}
@@ -111,7 +111,7 @@ namespace RimWorld
 			{
 				defaultLabel = "CommandAllowSow".Translate(),
 				defaultDesc = "CommandAllowSowDesc".Translate(),
-				hotKey = KeyBindingDefOf.CommandItemForbid,
+				hotKey = KeyBindingDefOf.Command_ItemForbid,
 				icon = TexCommand.Forbidden,
 				isActive = (() => this.$this.allowSow),
 				toggleAction = delegate
@@ -119,6 +119,12 @@ namespace RimWorld
 					this.$this.allowSow = !this.$this.allowSow;
 				}
 			};
+		}
+
+		[DebuggerHidden]
+		public override IEnumerable<Gizmo> GetZoneAddGizmos()
+		{
+			yield return DesignatorUtility.FindAllowedDesignator<Designator_ZoneAdd_Growing_Expand>();
 		}
 
 		public ThingDef GetPlantDefToGrow()

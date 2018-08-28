@@ -1,44 +1,72 @@
 using RimWorld;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
 
 namespace Verse
 {
 	public class Tool
 	{
+		[Unsaved]
 		public string id;
 
+		[MustTranslate]
 		public string label;
+
+		[TranslationHandle, Unsaved]
+		public string untranslatedLabel;
 
 		public bool labelUsedInLogging = true;
 
-		public List<ToolCapacityDef> capacities;
+		public List<ToolCapacityDef> capacities = new List<ToolCapacityDef>();
 
 		public float power;
+
+		public float armorPenetration = -1f;
 
 		public float cooldownTime;
 
 		public SurpriseAttackProps surpriseAttack;
 
-		public float commonality = 1f;
+		public HediffDef hediff;
+
+		public float chanceFactor = 1f;
 
 		public bool alwaysTreatAsWeapon;
 
 		public BodyPartGroupDef linkedBodyPartsGroup;
 
-		public string Id
+		public bool ensureLinkedBodyPartsGroupAlwaysUsable;
+
+		public string LabelCap
 		{
 			get
 			{
-				if (!this.id.NullOrEmpty())
-				{
-					return this.id;
-				}
-				return this.label;
+				return this.label.CapitalizeFirst();
 			}
 		}
 
-		public float AdjustedMeleeDamageAmount(Thing ownerEquipment, DamageDef damageDef)
+		public IEnumerable<ManeuverDef> Maneuvers
+		{
+			get
+			{
+				return from x in DefDatabase<ManeuverDef>.AllDefsListForReading
+				where this.capacities.Contains(x.requiredCapacity)
+				select x;
+			}
+		}
+
+		public IEnumerable<VerbProperties> VerbsProperties
+		{
+			get
+			{
+				return from x in this.Maneuvers
+				select x.verb;
+			}
+		}
+
+		public float AdjustedBaseMeleeDamageAmount(Thing ownerEquipment, DamageDef damageDef)
 		{
 			float num = this.power;
 			if (ownerEquipment != null)
@@ -60,6 +88,20 @@ namespace Verse
 		public override string ToString()
 		{
 			return this.label;
+		}
+
+		public void PostLoad()
+		{
+			this.untranslatedLabel = this.label;
+		}
+
+		[DebuggerHidden]
+		public IEnumerable<string> ConfigErrors()
+		{
+			if (this.id.NullOrEmpty())
+			{
+				yield return "tool has null id (power=" + this.power.ToString("0.##") + ")";
+			}
 		}
 	}
 }

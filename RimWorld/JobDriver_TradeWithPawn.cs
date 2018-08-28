@@ -16,9 +16,12 @@ namespace RimWorld
 			}
 		}
 
-		public override bool TryMakePreToilReservations()
+		public override bool TryMakePreToilReservations(bool errorOnFailed)
 		{
-			return this.pawn.Reserve(this.Trader, this.job, 1, -1, null);
+			Pawn pawn = this.pawn;
+			LocalTargetInfo target = this.Trader;
+			Job job = this.job;
+			return pawn.Reserve(target, job, 1, -1, null, errorOnFailed);
 		}
 
 		[DebuggerHidden]
@@ -32,7 +35,7 @@ namespace RimWorld
 				Pawn actor = trade.actor;
 				if (this.$this.Trader.CanTradeNow)
 				{
-					Find.WindowStack.Add(new Dialog_Trade(actor, this.$this.Trader));
+					Find.WindowStack.Add(new Dialog_Trade(actor, this.$this.Trader, false));
 				}
 			};
 			yield return trade;

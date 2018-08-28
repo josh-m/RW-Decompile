@@ -26,7 +26,7 @@ namespace Verse
 		{
 			get
 			{
-				return Altitudes.AltitudeFor(AltitudeLayer.MetaOverlays);
+				return AltitudeLayer.MetaOverlays.AltitudeFor();
 			}
 		}
 
@@ -46,7 +46,7 @@ namespace Verse
 			Scribe_TargetInfo.Look(ref this.target, "target");
 			if (Scribe.mode == LoadSaveMode.ResolvingCrossRefs && this.def == DesignationDefOf.Haul && !this.target.HasThing)
 			{
-				Log.Error("Haul designation has no target! Deleting.");
+				Log.Error("Haul designation has no target! Deleting.", false);
 				this.Delete();
 			}
 		}

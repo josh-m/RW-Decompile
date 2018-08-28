@@ -28,7 +28,7 @@ namespace RimWorld
 			moteThrown.exactPosition += new Vector3(0.35f, 0f, 0.35f);
 			moteThrown.exactPosition += new Vector3(Rand.Value, 0f, Rand.Value) * 0.1f;
 			moteThrown.SetVelocity((float)Rand.Range(30, 60), 0.42f);
-			GenSpawn.Spawn(moteThrown, cell, map);
+			GenSpawn.Spawn(moteThrown, cell, map, WipeMode.Vanish);
 			return moteThrown;
 		}
 
@@ -37,16 +37,17 @@ namespace RimWorld
 			MoteMaker.MakeStaticMote(cell.ToVector3Shifted(), map, moteDef, scale);
 		}
 
-		public static void MakeStaticMote(Vector3 loc, Map map, ThingDef moteDef, float scale = 1f)
+		public static Mote MakeStaticMote(Vector3 loc, Map map, ThingDef moteDef, float scale = 1f)
 		{
 			if (!loc.ShouldSpawnMotesAt(map) || map.moteCounter.Saturated)
 			{
-				return;
+				return null;
 			}
 			Mote mote = (Mote)ThingMaker.MakeThing(moteDef, null);
 			mote.exactPosition = loc;
 			mote.Scale = scale;
-			GenSpawn.Spawn(mote, loc.ToIntVec3(), map);
+			GenSpawn.Spawn(mote, loc.ToIntVec3(), map, WipeMode.Vanish);
+			return mote;
 		}
 
 		public static void ThrowText(Vector3 loc, Map map, string text, float timeBeforeStartFadeout = -1f)
@@ -70,7 +71,7 @@ namespace RimWorld
 			{
 				moteText.overrideTimeBeforeStartFadeout = timeBeforeStartFadeout;
 			}
-			GenSpawn.Spawn(moteText, intVec, map);
+			GenSpawn.Spawn(moteText, intVec, map, WipeMode.Vanish);
 		}
 
 		public static void ThrowMetaPuffs(CellRect rect, Map map)
@@ -109,7 +110,7 @@ namespace RimWorld
 			moteThrown.rotationRate = (float)Rand.Range(-60, 60);
 			moteThrown.exactPosition = loc;
 			moteThrown.SetVelocity((float)Rand.Range(0, 360), Rand.Range(0.6f, 0.78f));
-			GenSpawn.Spawn(moteThrown, loc.ToIntVec3(), map);
+			GenSpawn.Spawn(moteThrown, loc.ToIntVec3(), map, WipeMode.Vanish);
 		}
 
 		private static MoteThrown NewBaseAirPuff()
@@ -130,10 +131,10 @@ namespace RimWorld
 			moteThrown.exactPosition = loc;
 			moteThrown.exactPosition += new Vector3(Rand.Range(-0.02f, 0.02f), 0f, Rand.Range(-0.02f, 0.02f));
 			moteThrown.SetVelocity((float)Rand.Range(-45, 45), Rand.Range(1.2f, 1.5f));
-			GenSpawn.Spawn(moteThrown, loc.ToIntVec3(), map);
+			GenSpawn.Spawn(moteThrown, loc.ToIntVec3(), map, WipeMode.Vanish);
 		}
 
-		internal static void ThrowBreathPuff(Vector3 loc, Map map, float throwAngle, Vector3 inheritVelocity)
+		public static void ThrowBreathPuff(Vector3 loc, Map map, float throwAngle, Vector3 inheritVelocity)
 		{
 			if (!loc.ToIntVec3().ShouldSpawnMotesAt(map) || map.moteCounter.SaturatedLowPriority)
 			{
@@ -145,7 +146,7 @@ namespace RimWorld
 			moteThrown.SetVelocity(throwAngle + (float)Rand.Range(-10, 10), Rand.Range(0.1f, 0.8f));
 			moteThrown.Velocity += inheritVelocity * 0.5f;
 			moteThrown.Scale = Rand.Range(0.6f, 0.7f);
-			GenSpawn.Spawn(moteThrown, loc.ToIntVec3(), map);
+			GenSpawn.Spawn(moteThrown, loc.ToIntVec3(), map, WipeMode.Vanish);
 		}
 
 		public static void ThrowDustPuff(IntVec3 cell, Map map, float scale)
@@ -165,7 +166,22 @@ namespace RimWorld
 			moteThrown.rotationRate = (float)Rand.Range(-60, 60);
 			moteThrown.exactPosition = loc;
 			moteThrown.SetVelocity((float)Rand.Range(0, 360), Rand.Range(0.6f, 0.75f));
-			GenSpawn.Spawn(moteThrown, loc.ToIntVec3(), map);
+			GenSpawn.Spawn(moteThrown, loc.ToIntVec3(), map, WipeMode.Vanish);
+		}
+
+		public static void ThrowDustPuffThick(Vector3 loc, Map map, float scale, Color color)
+		{
+			if (!loc.ShouldSpawnMotesAt(map) || map.moteCounter.SaturatedLowPriority)
+			{
+				return;
+			}
+			MoteThrown moteThrown = (MoteThrown)ThingMaker.MakeThing(ThingDefOf.Mote_DustPuffThick, null);
+			moteThrown.Scale = scale;
+			moteThrown.rotationRate = (float)Rand.Range(-60, 60);
+			moteThrown.exactPosition = loc;
+			moteThrown.instanceColor = color;
+			moteThrown.SetVelocity((float)Rand.Range(0, 360), Rand.Range(0.6f, 0.75f));
+			GenSpawn.Spawn(moteThrown, loc.ToIntVec3(), map, WipeMode.Vanish);
 		}
 
 		public static void ThrowTornadoDustPuff(Vector3 loc, Map map, float scale, Color color)
@@ -180,7 +196,7 @@ namespace RimWorld
 			moteThrown.exactPosition = loc;
 			moteThrown.instanceColor = color;
 			moteThrown.SetVelocity((float)Rand.Range(0, 360), Rand.Range(0.6f, 0.75f));
-			GenSpawn.Spawn(moteThrown, loc.ToIntVec3(), map);
+			GenSpawn.Spawn(moteThrown, loc.ToIntVec3(), map, WipeMode.Vanish);
 		}
 
 		public static void ThrowSmoke(Vector3 loc, Map map, float size)
@@ -194,7 +210,7 @@ namespace RimWorld
 			moteThrown.rotationRate = Rand.Range(-30f, 30f);
 			moteThrown.exactPosition = loc;
 			moteThrown.SetVelocity((float)Rand.Range(30, 40), Rand.Range(0.5f, 0.7f));
-			GenSpawn.Spawn(moteThrown, loc.ToIntVec3(), map);
+			GenSpawn.Spawn(moteThrown, loc.ToIntVec3(), map, WipeMode.Vanish);
 		}
 
 		public static void ThrowFireGlow(IntVec3 c, Map map, float size)
@@ -214,7 +230,7 @@ namespace RimWorld
 			moteThrown.rotationRate = Rand.Range(-3f, 3f);
 			moteThrown.exactPosition = vector;
 			moteThrown.SetVelocity((float)Rand.Range(0, 360), 0.12f);
-			GenSpawn.Spawn(moteThrown, vector.ToIntVec3(), map);
+			GenSpawn.Spawn(moteThrown, vector.ToIntVec3(), map, WipeMode.Vanish);
 		}
 
 		public static void ThrowHeatGlow(IntVec3 c, Map map, float size)
@@ -234,7 +250,7 @@ namespace RimWorld
 			moteThrown.rotationRate = Rand.Range(-3f, 3f);
 			moteThrown.exactPosition = vector;
 			moteThrown.SetVelocity((float)Rand.Range(0, 360), 0.12f);
-			GenSpawn.Spawn(moteThrown, vector.ToIntVec3(), map);
+			GenSpawn.Spawn(moteThrown, vector.ToIntVec3(), map, WipeMode.Vanish);
 		}
 
 		public static void ThrowMicroSparks(Vector3 loc, Map map)
@@ -250,7 +266,7 @@ namespace RimWorld
 			moteThrown.exactPosition -= new Vector3(0.5f, 0f, 0.5f);
 			moteThrown.exactPosition += new Vector3(Rand.Value, 0f, Rand.Value);
 			moteThrown.SetVelocity((float)Rand.Range(35, 45), 1.2f);
-			GenSpawn.Spawn(moteThrown, loc.ToIntVec3(), map);
+			GenSpawn.Spawn(moteThrown, loc.ToIntVec3(), map, WipeMode.Vanish);
 		}
 
 		public static void ThrowLightningGlow(Vector3 loc, Map map, float size)
@@ -264,7 +280,7 @@ namespace RimWorld
 			moteThrown.rotationRate = Rand.Range(-3f, 3f);
 			moteThrown.exactPosition = loc + size * new Vector3(Rand.Value - 0.5f, 0f, Rand.Value - 0.5f);
 			moteThrown.SetVelocity((float)Rand.Range(0, 360), 1.2f);
-			GenSpawn.Spawn(moteThrown, loc.ToIntVec3(), map);
+			GenSpawn.Spawn(moteThrown, loc.ToIntVec3(), map, WipeMode.Vanish);
 		}
 
 		public static void PlaceFootprint(Vector3 loc, Map map, float rot)
@@ -277,7 +293,7 @@ namespace RimWorld
 			moteThrown.Scale = 0.5f;
 			moteThrown.exactRotation = rot;
 			moteThrown.exactPosition = loc;
-			GenSpawn.Spawn(moteThrown, loc.ToIntVec3(), map);
+			GenSpawn.Spawn(moteThrown, loc.ToIntVec3(), map, WipeMode.Vanish);
 		}
 
 		public static void ThrowHorseshoe(Pawn thrower, IntVec3 targetCell)
@@ -305,14 +321,14 @@ namespace RimWorld
 			moteThrown.exactPosition = thrower.DrawPos;
 			moteThrown.SetVelocity((vector - moteThrown.exactPosition).AngleFlat(), num);
 			moteThrown.airTimeLeft = (float)Mathf.RoundToInt((moteThrown.exactPosition - vector).MagnitudeHorizontal() / num);
-			GenSpawn.Spawn(moteThrown, thrower.Position, thrower.Map);
+			GenSpawn.Spawn(moteThrown, thrower.Position, thrower.Map, WipeMode.Vanish);
 		}
 
 		public static Mote MakeStunOverlay(Thing stunnedThing)
 		{
 			Mote mote = (Mote)ThingMaker.MakeThing(ThingDefOf.Mote_Stun, null);
 			mote.Attach(stunnedThing);
-			GenSpawn.Spawn(mote, stunnedThing.Position, stunnedThing.Map);
+			GenSpawn.Spawn(mote, stunnedThing.Position, stunnedThing.Map, WipeMode.Vanish);
 			return mote;
 		}
 
@@ -321,7 +337,7 @@ namespace RimWorld
 			MoteDualAttached moteDualAttached = (MoteDualAttached)ThingMaker.MakeThing(moteDef, null);
 			moteDualAttached.Scale = 0.5f;
 			moteDualAttached.Attach(A, B);
-			GenSpawn.Spawn(moteDualAttached, A.Cell, A.Map ?? B.Map);
+			GenSpawn.Spawn(moteDualAttached, A.Cell, A.Map ?? B.Map, WipeMode.Vanish);
 			return moteDualAttached;
 		}
 
@@ -331,7 +347,7 @@ namespace RimWorld
 			moteThrownAttached.Attach(pawn);
 			moteThrownAttached.Scale = 1.5f;
 			moteThrownAttached.SetVelocity(Rand.Range(20f, 25f), 0.4f);
-			GenSpawn.Spawn(moteThrownAttached, pawn.Position, pawn.Map);
+			GenSpawn.Spawn(moteThrownAttached, pawn.Position, pawn.Map, WipeMode.Vanish);
 		}
 
 		private static MoteBubble ExistingMoteBubbleOn(Pawn pawn)
@@ -391,7 +407,7 @@ namespace RimWorld
 			MoteBubble moteBubble2 = (MoteBubble)ThingMaker.MakeThing(def, null);
 			moteBubble2.SetupMoteBubble(thought.Icon, null);
 			moteBubble2.Attach(pawn);
-			GenSpawn.Spawn(moteBubble2, pawn.Position, pawn.Map);
+			GenSpawn.Spawn(moteBubble2, pawn.Position, pawn.Map, WipeMode.Vanish);
 			return moteBubble2;
 		}
 
@@ -412,7 +428,7 @@ namespace RimWorld
 			MoteBubble moteBubble2 = (MoteBubble)ThingMaker.MakeThing(interactionMote, null);
 			moteBubble2.SetupMoteBubble(symbol, recipient);
 			moteBubble2.Attach(initiator);
-			GenSpawn.Spawn(moteBubble2, initiator.Position, initiator.Map);
+			GenSpawn.Spawn(moteBubble2, initiator.Position, initiator.Map, WipeMode.Vanish);
 			return moteBubble2;
 		}
 
@@ -426,7 +442,7 @@ namespace RimWorld
 			mote.exactRotation = (float)(90 * Rand.RangeInclusive(0, 3));
 			mote.exactPosition = cell.ToVector3Shifted();
 			mote.instanceColor = color;
-			GenSpawn.Spawn(mote, cell, map);
+			GenSpawn.Spawn(mote, cell, map, WipeMode.Vanish);
 			if (Rand.Value < 0.7f)
 			{
 				MoteMaker.ThrowDustPuff(cell, map, 1.2f);
@@ -444,7 +460,7 @@ namespace RimWorld
 			moteThrown.rotationRate = Rand.Range(-30f, 30f);
 			moteThrown.exactPosition = loc;
 			moteThrown.SetVelocity((float)Rand.Range(0, 360), Rand.Range(0.48f, 0.72f));
-			GenSpawn.Spawn(moteThrown, loc.ToIntVec3(), map);
+			GenSpawn.Spawn(moteThrown, loc.ToIntVec3(), map, WipeMode.Vanish);
 		}
 
 		public static void MakeWaterSplash(Vector3 loc, Map map, float size, float velocity)
@@ -455,7 +471,7 @@ namespace RimWorld
 			}
 			MoteSplash moteSplash = (MoteSplash)ThingMaker.MakeThing(ThingDefOf.Mote_WaterSplash, null);
 			moteSplash.Initialize(loc, size, velocity);
-			GenSpawn.Spawn(moteSplash, loc.ToIntVec3(), map);
+			GenSpawn.Spawn(moteSplash, loc.ToIntVec3(), map, WipeMode.Vanish);
 		}
 
 		public static void MakeBombardmentMote(IntVec3 cell, Map map)
@@ -464,7 +480,7 @@ namespace RimWorld
 			mote.exactPosition = cell.ToVector3Shifted();
 			mote.Scale = (float)Mathf.Max(23, 25) * 6f;
 			mote.rotationRate = 1.2f;
-			GenSpawn.Spawn(mote, cell, map);
+			GenSpawn.Spawn(mote, cell, map, WipeMode.Vanish);
 		}
 
 		public static void MakePowerBeamMote(IntVec3 cell, Map map)
@@ -473,7 +489,7 @@ namespace RimWorld
 			mote.exactPosition = cell.ToVector3Shifted();
 			mote.Scale = 90f;
 			mote.rotationRate = 1.2f;
-			GenSpawn.Spawn(mote, cell, map);
+			GenSpawn.Spawn(mote, cell, map, WipeMode.Vanish);
 		}
 
 		public static void PlaceTempRoof(IntVec3 cell, Map map)
@@ -484,7 +500,7 @@ namespace RimWorld
 			}
 			Mote mote = (Mote)ThingMaker.MakeThing(ThingDefOf.Mote_TempRoof, null);
 			mote.exactPosition = cell.ToVector3Shifted();
-			GenSpawn.Spawn(mote, cell, map);
+			GenSpawn.Spawn(mote, cell, map, WipeMode.Vanish);
 		}
 	}
 }

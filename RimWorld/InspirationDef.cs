@@ -22,9 +22,15 @@ namespace RimWorld
 
 		public List<SkillRequirement> requiredSkills;
 
+		public List<SkillRequirement> requiredAnySkill;
+
 		public List<WorkTypeDef> requiredNonDisabledWorkTypes;
 
+		public List<WorkTypeDef> requiredAnyNonDisabledWorkType;
+
 		public List<PawnCapacityDef> requiredCapacities;
+
+		public List<SkillDef> associatedSkills;
 
 		public List<StatModifier> statOffsets;
 

@@ -51,12 +51,17 @@ namespace Verse
 			}
 			else
 			{
-				if (req.group != ThingRequestGroup.Undefined)
+				if (req.group == ThingRequestGroup.Undefined)
 				{
-					List<Thing> list = this.listsByGroup[(int)req.group];
-					return list ?? ListerThings.EmptyList;
+					throw new InvalidOperationException("Invalid ThingRequest " + req);
 				}
-				throw new InvalidOperationException("Invalid ThingRequest " + req);
+				if (this.use == ListerThingsUse.Region && !req.group.StoreInRegion())
+				{
+					Log.ErrorOnce("Tried to get things in group " + req.group + " in a region, but this group is never stored in regions. Most likely a global query should have been used.", 1968735132, false);
+					return ListerThings.EmptyList;
+				}
+				List<Thing> list = this.listsByGroup[(int)req.group];
+				return list ?? ListerThings.EmptyList;
 			}
 		}
 
@@ -122,6 +127,18 @@ namespace Verse
 		public static bool EverListable(ThingDef def, ListerThingsUse use)
 		{
 			return (def.category != ThingCategory.Mote || (def.drawGUIOverlay && use != ListerThingsUse.Region)) && (def.category != ThingCategory.Projectile || use != ListerThingsUse.Region) && def.category != ThingCategory.Gas;
+		}
+
+		public void Clear()
+		{
+			this.listsByDef.Clear();
+			for (int i = 0; i < this.listsByGroup.Length; i++)
+			{
+				if (this.listsByGroup[i] != null)
+				{
+					this.listsByGroup[i].Clear();
+				}
+			}
 		}
 	}
 }

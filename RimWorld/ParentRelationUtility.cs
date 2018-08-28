@@ -56,7 +56,7 @@ namespace RimWorld
 					" as ",
 					pawn,
 					"'s father."
-				}));
+				}), false);
 				return;
 			}
 			Pawn father = pawn.GetFather();
@@ -86,7 +86,7 @@ namespace RimWorld
 					" as ",
 					pawn,
 					"'s mother."
-				}));
+				}), false);
 				return;
 			}
 			Pawn mother = pawn.GetMother();

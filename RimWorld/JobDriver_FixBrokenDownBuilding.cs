@@ -31,9 +31,24 @@ namespace RimWorld
 			}
 		}
 
-		public override bool TryMakePreToilReservations()
+		public override bool TryMakePreToilReservations(bool errorOnFailed)
 		{
-			return this.pawn.Reserve(this.Building, this.job, 1, -1, null) && this.pawn.Reserve(this.Components, this.job, 1, -1, null);
+			Pawn pawn = this.pawn;
+			LocalTargetInfo target = this.Building;
+			Job job = this.job;
+			bool arg_58_0;
+			if (pawn.Reserve(target, job, 1, -1, null, errorOnFailed))
+			{
+				pawn = this.pawn;
+				target = this.Components;
+				job = this.job;
+				arg_58_0 = pawn.Reserve(target, job, 1, -1, null, errorOnFailed);
+			}
+			else
+			{
+				arg_58_0 = false;
+			}
+			return arg_58_0;
 		}
 
 		[DebuggerHidden]
@@ -43,7 +58,7 @@ namespace RimWorld
 			yield return Toils_Goto.GotoThing(TargetIndex.B, PathEndMode.Touch).FailOnDespawnedNullOrForbidden(TargetIndex.B).FailOnSomeonePhysicallyInteracting(TargetIndex.B);
 			yield return Toils_Haul.StartCarryThing(TargetIndex.B, false, false, false);
 			yield return Toils_Goto.GotoThing(TargetIndex.A, PathEndMode.Touch).FailOnDespawnedOrNull(TargetIndex.A);
-			Toil repair = Toils_General.Wait(1000);
+			Toil repair = Toils_General.Wait(1000, TargetIndex.None);
 			repair.FailOnDespawnedOrNull(TargetIndex.A);
 			repair.FailOnCannotTouch(TargetIndex.A, PathEndMode.Touch);
 			repair.WithEffect(this.Building.def.repairEffect, TargetIndex.A);

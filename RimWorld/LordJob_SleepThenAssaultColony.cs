@@ -15,6 +15,14 @@ namespace RimWorld
 
 		private const float AnyColonistCloseCheckRadius = 6f;
 
+		public override bool GuiltyOnDowned
+		{
+			get
+			{
+				return true;
+			}
+		}
+
 		public LordJob_SleepThenAssaultColony()
 		{
 		}
@@ -31,14 +39,14 @@ namespace RimWorld
 			LordToil_Sleep lordToil_Sleep = new LordToil_Sleep();
 			stateGraph.StartingToil = lordToil_Sleep;
 			LordToil startingToil = stateGraph.AttachSubgraph(new LordJob_AssaultColony(this.faction, true, true, false, false, true).CreateGraph()).StartingToil;
-			Transition transition = new Transition(lordToil_Sleep, startingToil);
-			transition.AddTrigger(new Trigger_PawnHarmed(1f, false));
+			Transition transition = new Transition(lordToil_Sleep, startingToil, false, true);
+			transition.AddTrigger(new Trigger_PawnHarmed(1f, false, null));
 			transition.AddPreAction(new TransitionAction_Message("MessageSleepingPawnsWokenUp".Translate(new object[]
 			{
 				this.faction.def.pawnsPlural
-			}).CapitalizeFirst(), MessageTypeDefOf.ThreatBig));
+			}).CapitalizeFirst(), MessageTypeDefOf.ThreatBig, null, 1f));
 			transition.AddPostAction(new TransitionAction_WakeAll());
-			stateGraph.AddTransition(transition);
+			stateGraph.AddTransition(transition, false);
 			if (this.wakeUpIfColonistClose)
 			{
 				transition.AddTrigger(new Trigger_Custom((TriggerSignal x) => Find.TickManager.TicksGame % 30 == 0 && this.AnyColonistClose()));

@@ -14,7 +14,7 @@ namespace RimWorld
 		{
 			this.wanderRadius = 7f;
 			this.ticksBetweenWandersRange = new IntRange(125, 200);
-			this.wanderDestValidator = ((Pawn pawn, IntVec3 loc) => true);
+			this.wanderDestValidator = ((Pawn pawn, IntVec3 loc, IntVec3 root) => true);
 		}
 
 		protected override IntVec3 GetWanderRoot(Pawn pawn)

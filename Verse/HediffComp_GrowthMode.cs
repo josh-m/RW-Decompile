@@ -91,7 +91,7 @@ namespace Verse
 							{
 								base.Pawn.LabelShort,
 								base.Def.label
-							}), base.Pawn, MessageTypeDefOf.PositiveEvent);
+							}), base.Pawn, MessageTypeDefOf.PositiveEvent, true);
 						}
 					}
 					else
@@ -100,7 +100,7 @@ namespace Verse
 						{
 							base.Pawn.LabelShort,
 							base.Def.label
-						}), base.Pawn, MessageTypeDefOf.NeutralEvent);
+						}), base.Pawn, MessageTypeDefOf.NeutralEvent, true);
 					}
 				}
 				else
@@ -109,7 +109,7 @@ namespace Verse
 					{
 						base.Pawn.LabelShort,
 						base.Def.label
-					}), base.Pawn, MessageTypeDefOf.NegativeHealthEvent);
+					}), base.Pawn, MessageTypeDefOf.NegativeHealthEvent, true);
 				}
 			}
 		}

@@ -11,9 +11,9 @@ namespace RimWorld
 			this.defaultLabel = "DesignatorExpandAreaAllowed".Translate();
 			this.defaultDesc = "DesignatorExpandAreaAllowedDesc".Translate();
 			this.icon = ContentFinder<Texture2D>.Get("UI/Designators/AreaAllowedExpand", true);
-			this.soundDragSustain = SoundDefOf.DesignateDragAreaAdd;
-			this.soundDragChanged = SoundDefOf.DesignateDragAreaAddChanged;
-			this.soundSucceeded = SoundDefOf.DesignateAreaAdd;
+			this.soundDragSustain = SoundDefOf.Designate_DragAreaAdd;
+			this.soundDragChanged = null;
+			this.soundSucceeded = SoundDefOf.Designate_AreaAdd;
 			this.hotKey = KeyBindingDefOf.Misc8;
 			this.tutorTag = "AreaAllowedExpand";
 		}

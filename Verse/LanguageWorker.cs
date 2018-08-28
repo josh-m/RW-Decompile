@@ -9,7 +9,7 @@ namespace Verse
 		{
 			if (str.NullOrEmpty())
 			{
-				throw new ArgumentException();
+				return string.Empty;
 			}
 			if ("IndefiniteForm".CanTranslate())
 			{
@@ -21,11 +21,16 @@ namespace Verse
 			return "IndefiniteArticle".Translate() + " " + str;
 		}
 
+		public string WithIndefiniteArticlePostProcessed(string str)
+		{
+			return this.PostProcessed(this.WithIndefiniteArticle(str));
+		}
+
 		public virtual string WithDefiniteArticle(string str)
 		{
 			if (str.NullOrEmpty())
 			{
-				throw new ArgumentException();
+				return string.Empty;
 			}
 			if ("DefiniteForm".CanTranslate())
 			{
@@ -37,6 +42,11 @@ namespace Verse
 			return "DefiniteArticle".Translate() + " " + str;
 		}
 
+		public string WithDefiniteArticlePostProcessed(string str)
+		{
+			return this.PostProcessed(this.WithDefiniteArticle(str));
+		}
+
 		public virtual string OrdinalNumber(int number)
 		{
 			return number.ToString();
@@ -44,7 +54,7 @@ namespace Verse
 
 		public virtual string PostProcessed(string str)
 		{
-			str = str.Replace("  ", " ");
+			str = str.MergeMultipleSpaces(true);
 			return str;
 		}
 
@@ -60,6 +70,16 @@ namespace Verse
 		public virtual string Pluralize(string str, int count = -1)
 		{
 			return str;
+		}
+
+		public virtual string PostProcessedBackstoryDescription(string desc)
+		{
+			return desc;
+		}
+
+		public virtual string PostProcessedKeyedTranslation(string translation, string key, params object[] args)
+		{
+			return translation;
 		}
 	}
 }

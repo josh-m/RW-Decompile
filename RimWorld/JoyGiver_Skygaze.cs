@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using Verse;
 using Verse.AI;
 
@@ -9,17 +8,7 @@ namespace RimWorld
 	{
 		public override float GetChance(Pawn pawn)
 		{
-			float num = 1f;
-			List<GameCondition> activeConditions = pawn.Map.gameConditionManager.ActiveConditions;
-			for (int i = 0; i < activeConditions.Count; i++)
-			{
-				num *= activeConditions[i].SkyGazeChanceFactor;
-			}
-			activeConditions = Find.World.gameConditionManager.ActiveConditions;
-			for (int j = 0; j < activeConditions.Count; j++)
-			{
-				num *= activeConditions[j].SkyGazeChanceFactor;
-			}
+			float num = pawn.Map.gameConditionManager.AggregateSkyGazeChanceFactor(pawn.Map);
 			return base.GetChance(pawn) * num;
 		}
 

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace Verse
 {
@@ -36,15 +37,15 @@ namespace Verse
 			return hediffComp_TendDuration != null && hediffComp_TendDuration.IsTended;
 		}
 
-		public static bool IsOld(this Hediff hd)
+		public static bool IsPermanent(this Hediff hd)
 		{
 			HediffWithComps hediffWithComps = hd as HediffWithComps;
 			if (hediffWithComps == null)
 			{
 				return false;
 			}
-			HediffComp_GetsOld hediffComp_GetsOld = hediffWithComps.TryGetComp<HediffComp_GetsOld>();
-			return hediffComp_GetsOld != null && hediffComp_GetsOld.IsOld;
+			HediffComp_GetsPermanent hediffComp_GetsPermanent = hediffWithComps.TryGetComp<HediffComp_GetsPermanent>();
+			return hediffComp_GetsPermanent != null && hediffComp_GetsPermanent.IsPermanent;
 		}
 
 		public static bool FullyImmune(this Hediff hd)
@@ -60,12 +61,26 @@ namespace Verse
 
 		public static bool CanHealFromTending(this Hediff_Injury hd)
 		{
-			return hd.IsTended() && !hd.IsOld();
+			return hd.IsTended() && !hd.IsPermanent();
 		}
 
 		public static bool CanHealNaturally(this Hediff_Injury hd)
 		{
-			return !hd.IsOld();
+			return !hd.IsPermanent();
+		}
+
+		public static int CountAddedParts(this HediffSet hs)
+		{
+			int num = 0;
+			List<Hediff> hediffs = hs.hediffs;
+			for (int i = 0; i < hediffs.Count; i++)
+			{
+				if (hediffs[i] is Hediff_AddedPart)
+				{
+					num++;
+				}
+			}
+			return num;
 		}
 	}
 }

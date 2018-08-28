@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using Verse;
 
@@ -18,9 +19,9 @@ namespace RimWorld
 			}
 		}
 
-		protected override bool CanFireNowSub(IIncidentTarget target)
+		protected override bool CanFireNowSub(IncidentParms parms)
 		{
-			Map map = (Map)target;
+			Map map = (Map)parms.target;
 			return map.listerThings.ThingsOfDef(this.def.shipPart).Count <= 0;
 		}
 
@@ -29,12 +30,12 @@ namespace RimWorld
 			Map map = (Map)parms.target;
 			int num = 0;
 			int countToSpawn = this.CountToSpawn;
-			IntVec3 cell = IntVec3.Invalid;
+			List<TargetInfo> list = new List<TargetInfo>();
 			float shrapnelDirection = Rand.Range(0f, 360f);
 			for (int i = 0; i < countToSpawn; i++)
 			{
 				IntVec3 intVec;
-				if (!CellFinderLoose.TryFindSkyfallerCell(ThingDefOf.CrashedShipPartIncoming, map, out intVec, 14, default(IntVec3), -1, false, true, true, true, null))
+				if (!CellFinderLoose.TryFindSkyfallerCell(ThingDefOf.CrashedShipPartIncoming, map, out intVec, 14, default(IntVec3), -1, false, true, true, true, true, false, null))
 				{
 					break;
 				}
@@ -43,13 +44,13 @@ namespace RimWorld
 				building_CrashedShipPart.GetComp<CompSpawnerMechanoidsOnDamaged>().pointsLeft = Mathf.Max(parms.points * 0.9f, 300f);
 				Skyfaller skyfaller = SkyfallerMaker.MakeSkyfaller(ThingDefOf.CrashedShipPartIncoming, building_CrashedShipPart);
 				skyfaller.shrapnelDirection = shrapnelDirection;
-				GenSpawn.Spawn(skyfaller, intVec, map);
+				GenSpawn.Spawn(skyfaller, intVec, map, WipeMode.Vanish);
 				num++;
-				cell = intVec;
+				list.Add(new TargetInfo(intVec, map, false));
 			}
 			if (num > 0)
 			{
-				base.SendStandardLetter(new TargetInfo(cell, map, false), new string[0]);
+				base.SendStandardLetter(list, null, new string[0]);
 			}
 			return num > 0;
 		}

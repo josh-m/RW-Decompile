@@ -46,7 +46,7 @@ namespace RimWorld
 			}
 			if (this.spraySustainer != null && Find.TickManager.TicksGame > this.spraySustainerStartTick + 1000)
 			{
-				Log.Message("Geyser spray sustainer still playing after 1000 ticks. Force-ending.");
+				Log.Message("Geyser spray sustainer still playing after 1000 ticks. Force-ending.", false);
 				this.spraySustainer.End();
 				this.spraySustainer = null;
 			}

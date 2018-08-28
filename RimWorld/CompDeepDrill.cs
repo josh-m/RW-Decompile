@@ -8,17 +8,27 @@ namespace RimWorld
 	{
 		private CompPowerTrader powerComp;
 
-		private float lumpProgress;
+		private float portionProgress;
 
-		private float lumpYieldPct;
+		private float portionYieldPct;
 
-		private const float ResourceLumpWork = 14000f;
+		private int lastUsedTick = -99999;
 
-		public float ProgressToNextLumpPercent
+		private const float WorkPerPortionBase = 12000f;
+
+		public static float WorkPerPortionCurrentDifficulty
 		{
 			get
 			{
-				return this.lumpProgress / 14000f;
+				return 12000f / Find.Storyteller.difficulty.mineYieldFactor;
+			}
+		}
+
+		public float ProgressToNextPortionPercent
+		{
+			get
+			{
+				return this.portionProgress / CompDeepDrill.WorkPerPortionCurrentDifficulty;
 			}
 		}
 
@@ -29,107 +39,115 @@ namespace RimWorld
 
 		public override void PostExposeData()
 		{
-			Scribe_Values.Look<float>(ref this.lumpProgress, "lumpProgress", 0f, false);
-			Scribe_Values.Look<float>(ref this.lumpYieldPct, "lumpYieldPct", 0f, false);
+			Scribe_Values.Look<float>(ref this.portionProgress, "portionProgress", 0f, false);
+			Scribe_Values.Look<float>(ref this.portionYieldPct, "portionYieldPct", 0f, false);
+			Scribe_Values.Look<int>(ref this.lastUsedTick, "lastUsedTick", 0, false);
 		}
 
 		public void DrillWorkDone(Pawn driller)
 		{
 			float statValue = driller.GetStatValue(StatDefOf.MiningSpeed, true);
-			this.lumpProgress += statValue;
-			this.lumpYieldPct += statValue * driller.GetStatValue(StatDefOf.MiningYield, true) / 14000f;
-			if (this.lumpProgress > 14000f)
+			this.portionProgress += statValue;
+			this.portionYieldPct += statValue * driller.GetStatValue(StatDefOf.MiningYield, true) / CompDeepDrill.WorkPerPortionCurrentDifficulty;
+			this.lastUsedTick = Find.TickManager.TicksGame;
+			if (this.portionProgress > CompDeepDrill.WorkPerPortionCurrentDifficulty)
 			{
-				this.TryProduceLump(this.lumpYieldPct);
-				this.lumpProgress = 0f;
-				this.lumpYieldPct = 0f;
+				this.TryProducePortion(this.portionYieldPct);
+				this.portionProgress = 0f;
+				this.portionYieldPct = 0f;
 			}
 		}
 
-		private void TryProduceLump(float yieldPct)
+		public override void PostDeSpawn(Map map)
+		{
+			this.portionProgress = 0f;
+			this.portionYieldPct = 0f;
+			this.lastUsedTick = -99999;
+		}
+
+		private void TryProducePortion(float yieldPct)
 		{
 			ThingDef thingDef;
 			int num;
 			IntVec3 c;
-			if (this.TryGetNextResource(out thingDef, out num, out c))
+			bool nextResource = this.GetNextResource(out thingDef, out num, out c);
+			if (thingDef == null)
 			{
-				int num2 = Mathf.Min(new int[]
-				{
-					num,
-					thingDef.deepCountPerCell / 2,
-					thingDef.stackLimit
-				});
+				return;
+			}
+			int num2 = Mathf.Min(num, thingDef.deepCountPerPortion);
+			if (nextResource)
+			{
 				this.parent.Map.deepResourceGrid.SetAt(c, thingDef, num - num2);
-				int stackCount = Mathf.Max(1, GenMath.RoundRandom((float)num2 * yieldPct));
-				Thing thing = ThingMaker.MakeThing(thingDef, null);
-				thing.stackCount = stackCount;
-				GenPlace.TryPlaceThing(thing, this.parent.InteractionCell, this.parent.Map, ThingPlaceMode.Near, null);
 			}
-			else
+			int stackCount = Mathf.Max(1, GenMath.RoundRandom((float)num2 * yieldPct));
+			Thing thing = ThingMaker.MakeThing(thingDef, null);
+			thing.stackCount = stackCount;
+			GenPlace.TryPlaceThing(thing, this.parent.InteractionCell, this.parent.Map, ThingPlaceMode.Near, null, null);
+			if (nextResource && !this.ValuableResourcesPresent())
 			{
-				Log.Error("Drill tried to ProduceLump but couldn't.");
-			}
-			if (!this.ResourcesPresent())
-			{
-				Messages.Message("DeepDrillExhausted".Translate(), this.parent, MessageTypeDefOf.TaskCompletion);
+				if (DeepDrillUtility.GetBaseResource(this.parent.Map) == null)
+				{
+					Messages.Message("DeepDrillExhaustedNoFallback".Translate(), this.parent, MessageTypeDefOf.TaskCompletion, true);
+				}
+				else
+				{
+					Messages.Message("DeepDrillExhausted".Translate(new object[]
+					{
+						Find.ActiveLanguageWorker.Pluralize(DeepDrillUtility.GetBaseResource(this.parent.Map).label, -1)
+					}), this.parent, MessageTypeDefOf.TaskCompletion, true);
+					this.parent.SetForbidden(true, true);
+				}
 			}
 		}
 
-		public bool TryGetNextResource(out ThingDef resDef, out int countPresent, out IntVec3 cell)
+		private bool GetNextResource(out ThingDef resDef, out int countPresent, out IntVec3 cell)
 		{
-			for (int i = 0; i < 9; i++)
-			{
-				IntVec3 intVec = this.parent.Position + GenRadial.RadialPattern[i];
-				if (intVec.InBounds(this.parent.Map))
-				{
-					ThingDef thingDef = this.parent.Map.deepResourceGrid.ThingDefAt(intVec);
-					if (thingDef != null)
-					{
-						resDef = thingDef;
-						countPresent = this.parent.Map.deepResourceGrid.CountAt(intVec);
-						cell = intVec;
-						return true;
-					}
-				}
-			}
-			resDef = null;
-			countPresent = 0;
-			cell = IntVec3.Invalid;
-			return false;
+			return DeepDrillUtility.GetNextResource(this.parent.Position, this.parent.Map, out resDef, out countPresent, out cell);
 		}
 
 		public bool CanDrillNow()
 		{
-			return (this.powerComp == null || this.powerComp.PowerOn) && this.ResourcesPresent();
+			return (this.powerComp == null || this.powerComp.PowerOn) && (DeepDrillUtility.GetBaseResource(this.parent.Map) != null || this.ValuableResourcesPresent());
 		}
 
-		public bool ResourcesPresent()
+		public bool ValuableResourcesPresent()
 		{
 			ThingDef thingDef;
 			int num;
 			IntVec3 intVec;
-			return this.TryGetNextResource(out thingDef, out num, out intVec);
+			return this.GetNextResource(out thingDef, out num, out intVec);
+		}
+
+		public bool UsedLastTick()
+		{
+			return this.lastUsedTick >= Find.TickManager.TicksGame - 1;
 		}
 
 		public override string CompInspectStringExtra()
 		{
+			if (!this.parent.Spawned)
+			{
+				return null;
+			}
 			ThingDef thingDef;
 			int num;
 			IntVec3 intVec;
-			if (this.TryGetNextResource(out thingDef, out num, out intVec))
+			this.GetNextResource(out thingDef, out num, out intVec);
+			if (thingDef == null)
 			{
-				return string.Concat(new string[]
-				{
-					"ResourceBelow".Translate(),
-					": ",
-					thingDef.label,
-					"\n",
-					"ProgressToNextLump".Translate(),
-					": ",
-					this.ProgressToNextLumpPercent.ToStringPercent("F0")
-				});
+				return "DeepDrillNoResources".Translate();
 			}
-			return "ResourceBelow".Translate() + ": " + "NothingLower".Translate();
+			return string.Concat(new string[]
+			{
+				"ResourceBelow".Translate(),
+				": ",
+				thingDef.LabelCap,
+				"\n",
+				"ProgressToNextPortion".Translate(),
+				": ",
+				this.ProgressToNextPortionPercent.ToStringPercent("F0")
+			});
 		}
 	}
 }

@@ -18,7 +18,7 @@ namespace Verse.AI
 			Scribe_Values.Look<int>(ref this.numAttacksMade, "numAttacksMade", 0, false);
 		}
 
-		public override bool TryMakePreToilReservations()
+		public override bool TryMakePreToilReservations(bool errorOnFailed)
 		{
 			return true;
 		}
@@ -65,7 +65,7 @@ namespace Verse.AI
 					}
 					else if (this.$this.job.endIfCantShootTargetFromCurPos && !this.$this.pawn.stances.FullBodyBusy)
 					{
-						Verb verb = this.$this.pawn.TryGetAttackVerb(!this.$this.pawn.IsColonist);
+						Verb verb = this.$this.pawn.TryGetAttackVerb(this.$this.TargetA.Thing, !this.$this.pawn.IsColonist);
 						if (verb == null || !verb.CanHitTargetFrom(this.$this.pawn.Position, this.$this.TargetA))
 						{
 							this.$this.EndJobWith(JobCondition.Incompletable);

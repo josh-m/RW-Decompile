@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace Verse
 {
-	internal static class MeshMakerShadows
+	public static class MeshMakerShadows
 	{
 		private static List<Vector3> vertsList = new List<Vector3>();
 

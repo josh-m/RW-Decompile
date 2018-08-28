@@ -10,7 +10,7 @@ namespace Verse.AI.Group
 			if (signal.type == TriggerSignalType.PawnLost && (signal.condition == PawnLostCondition.IncappedOrKilled || signal.condition == PawnLostCondition.MadePrisoner))
 			{
 				TraderCaravanRole traderCaravanRole = signal.Pawn.GetTraderCaravanRole();
-				if (traderCaravanRole == TraderCaravanRole.Trader || traderCaravanRole == TraderCaravanRole.Carrier)
+				if (traderCaravanRole == TraderCaravanRole.Trader || signal.Pawn.RaceProps.packAnimal)
 				{
 					return true;
 				}

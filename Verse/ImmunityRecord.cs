@@ -8,28 +8,15 @@ namespace Verse
 	{
 		public HediffDef hediffDef;
 
+		public HediffDef source;
+
 		public float immunity;
 
-		public float ImmunityChangePerTick(Pawn pawn, bool sick, Hediff diseaseInstance)
+		public void ExposeData()
 		{
-			if (!pawn.RaceProps.IsFlesh)
-			{
-				return 0f;
-			}
-			HediffCompProperties_Immunizable hediffCompProperties_Immunizable = this.hediffDef.CompProps<HediffCompProperties_Immunizable>();
-			float num = (!sick) ? hediffCompProperties_Immunizable.immunityPerDayNotSick : hediffCompProperties_Immunizable.immunityPerDaySick;
-			num /= 60000f;
-			float num2 = pawn.GetStatValue(StatDefOf.ImmunityGainSpeed, true);
-			if (diseaseInstance != null)
-			{
-				int value = Gen.HashCombineInt(diseaseInstance.GetHashCode(), 156482735);
-				num2 *= Mathf.Lerp(0.8f, 1.2f, (float)Mathf.Abs(value) / 2.14748365E+09f);
-			}
-			if (num > 0f)
-			{
-				return num * num2;
-			}
-			return num / num2;
+			Scribe_Defs.Look<HediffDef>(ref this.hediffDef, "hediffDef");
+			Scribe_Defs.Look<HediffDef>(ref this.source, "source");
+			Scribe_Values.Look<float>(ref this.immunity, "immunity", 0f, false);
 		}
 
 		public void ImmunityTick(Pawn pawn, bool sick, Hediff diseaseInstance)
@@ -38,10 +25,27 @@ namespace Verse
 			this.immunity = Mathf.Clamp01(this.immunity);
 		}
 
-		public void ExposeData()
+		public float ImmunityChangePerTick(Pawn pawn, bool sick, Hediff diseaseInstance)
 		{
-			Scribe_Defs.Look<HediffDef>(ref this.hediffDef, "hediffDef");
-			Scribe_Values.Look<float>(ref this.immunity, "immunity", 0f, false);
+			if (!pawn.RaceProps.IsFlesh)
+			{
+				return 0f;
+			}
+			HediffCompProperties_Immunizable hediffCompProperties_Immunizable = this.hediffDef.CompProps<HediffCompProperties_Immunizable>();
+			if (sick)
+			{
+				float num = hediffCompProperties_Immunizable.immunityPerDaySick;
+				num *= pawn.GetStatValue(StatDefOf.ImmunityGainSpeed, true);
+				if (diseaseInstance != null)
+				{
+					Rand.PushState();
+					Rand.Seed = Gen.HashCombineInt(diseaseInstance.loadID ^ Find.World.info.persistentRandomValue, 156482735);
+					num *= Mathf.Lerp(0.8f, 1.2f, Rand.Value);
+					Rand.PopState();
+				}
+				return num / 60000f;
+			}
+			return hediffCompProperties_Immunizable.immunityPerDayNotSick / 60000f;
 		}
 	}
 }

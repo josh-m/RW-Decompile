@@ -148,17 +148,17 @@ namespace RimWorld
 					if (table.SortingBy != this.def)
 					{
 						table.SortBy(this.def, true);
-						SoundDefOf.TickHigh.PlayOneShotOnCamera(null);
+						SoundDefOf.Tick_High.PlayOneShotOnCamera(null);
 					}
 					else if (table.SortingDescending)
 					{
 						table.SortBy(this.def, false);
-						SoundDefOf.TickHigh.PlayOneShotOnCamera(null);
+						SoundDefOf.Tick_High.PlayOneShotOnCamera(null);
 					}
 					else
 					{
 						table.SortBy(null, false);
-						SoundDefOf.TickLow.PlayOneShotOnCamera(null);
+						SoundDefOf.Tick_Low.PlayOneShotOnCamera(null);
 					}
 				}
 				else if (Event.current.button == 1)
@@ -166,17 +166,17 @@ namespace RimWorld
 					if (table.SortingBy != this.def)
 					{
 						table.SortBy(this.def, false);
-						SoundDefOf.TickHigh.PlayOneShotOnCamera(null);
+						SoundDefOf.Tick_High.PlayOneShotOnCamera(null);
 					}
 					else if (table.SortingDescending)
 					{
 						table.SortBy(null, false);
-						SoundDefOf.TickLow.PlayOneShotOnCamera(null);
+						SoundDefOf.Tick_Low.PlayOneShotOnCamera(null);
 					}
 					else
 					{
 						table.SortBy(this.def, true);
-						SoundDefOf.TickHigh.PlayOneShotOnCamera(null);
+						SoundDefOf.Tick_High.PlayOneShotOnCamera(null);
 					}
 				}
 			}

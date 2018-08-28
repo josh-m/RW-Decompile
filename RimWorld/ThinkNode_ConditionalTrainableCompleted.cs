@@ -17,7 +17,7 @@ namespace RimWorld
 
 		protected override bool Satisfied(Pawn pawn)
 		{
-			return pawn.training != null && pawn.training.IsCompleted(this.trainable);
+			return pawn.training != null && pawn.training.HasLearned(this.trainable);
 		}
 	}
 }

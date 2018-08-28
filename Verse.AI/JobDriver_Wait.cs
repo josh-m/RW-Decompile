@@ -11,7 +11,7 @@ namespace Verse.AI
 
 		public override string GetReport()
 		{
-			if (this.job.def != JobDefOf.WaitCombat)
+			if (this.job.def != JobDefOf.Wait_Combat)
 			{
 				return base.GetReport();
 			}
@@ -22,7 +22,7 @@ namespace Verse.AI
 			return base.GetReport();
 		}
 
-		public override bool TryMakePreToilReservations()
+		public override bool TryMakePreToilReservations(bool errorOnFailed)
 		{
 			return true;
 		}
@@ -39,9 +39,9 @@ namespace Verse.AI
 			};
 			wait.tickAction = delegate
 			{
-				if (this.$this.job.expiryInterval == -1 && this.$this.job.def == JobDefOf.WaitCombat && !this.$this.pawn.Drafted)
+				if (this.$this.job.expiryInterval == -1 && this.$this.job.def == JobDefOf.Wait_Combat && !this.$this.pawn.Drafted)
 				{
-					Log.Error(this.$this.pawn + " in eternal WaitCombat without being drafted.");
+					Log.Error(this.$this.pawn + " in eternal WaitCombat without being drafted.", false);
 					this.$this.ReadyForNextToil();
 					return;
 				}
@@ -77,6 +77,7 @@ namespace Verse.AI
 			{
 				return;
 			}
+			this.collideWithPawns = false;
 			bool flag = this.pawn.story == null || !this.pawn.story.WorkTagIsDisabled(WorkTags.Violent);
 			bool flag2 = this.pawn.RaceProps.ToolUser && this.pawn.Faction == Faction.OfPlayer && !this.pawn.story.WorkTagIsDisabled(WorkTags.Firefighting);
 			if (flag || flag2)
@@ -96,6 +97,7 @@ namespace Verse.AI
 								if (pawn != null && !pawn.Downed && this.pawn.HostileTo(pawn))
 								{
 									this.pawn.meleeVerbs.TryMeleeAttack(pawn, null, false);
+									this.collideWithPawns = true;
 									return;
 								}
 							}
@@ -115,21 +117,21 @@ namespace Verse.AI
 					this.pawn.natives.TryBeatFire(fire);
 					return;
 				}
-				if (flag && this.pawn.Faction != null && this.job.def == JobDefOf.WaitCombat && (this.pawn.drafter == null || this.pawn.drafter.FireAtWill))
+				if (flag && this.pawn.Faction != null && this.job.def == JobDefOf.Wait_Combat && (this.pawn.drafter == null || this.pawn.drafter.FireAtWill))
 				{
-					bool allowManualCastWeapons = !this.pawn.IsColonist;
-					Verb verb = this.pawn.TryGetAttackVerb(allowManualCastWeapons);
-					if (verb != null && !verb.verbProps.MeleeRange)
+					Verb currentEffectiveVerb = this.pawn.CurrentEffectiveVerb;
+					if (currentEffectiveVerb != null && !currentEffectiveVerb.verbProps.IsMeleeAttack)
 					{
 						TargetScanFlags targetScanFlags = TargetScanFlags.NeedLOSToPawns | TargetScanFlags.NeedLOSToNonPawns | TargetScanFlags.NeedThreat;
-						if (verb.IsIncendiary())
+						if (currentEffectiveVerb.IsIncendiary())
 						{
 							targetScanFlags |= TargetScanFlags.NeedNonBurning;
 						}
-						Thing thing = (Thing)AttackTargetFinder.BestShootTargetFromCurrentPosition(this.pawn, null, verb.verbProps.range, verb.verbProps.minRange, targetScanFlags);
+						Thing thing = (Thing)AttackTargetFinder.BestShootTargetFromCurrentPosition(this.pawn, targetScanFlags, null, 0f, 9999f);
 						if (thing != null)
 						{
 							this.pawn.TryStartAttack(thing);
+							this.collideWithPawns = true;
 							return;
 						}
 					}

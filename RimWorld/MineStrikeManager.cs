@@ -40,7 +40,7 @@ namespace RimWorld
 						Messages.Message("StruckMineable".Translate(new object[]
 						{
 							edifice.def.label
-						}), edifice, MessageTypeDefOf.PositiveEvent);
+						}), edifice, MessageTypeDefOf.PositiveEvent, true);
 						TaleRecorder.RecordTale(TaleDefOf.StruckMineable, new object[]
 						{
 							miner,

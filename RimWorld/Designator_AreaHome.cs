@@ -3,7 +3,7 @@ using Verse;
 
 namespace RimWorld
 {
-	public abstract class Designator_AreaHome : Designator
+	public abstract class Designator_AreaHome : Designator_Area
 	{
 		private DesignateMode mode;
 
@@ -26,8 +26,8 @@ namespace RimWorld
 		public Designator_AreaHome(DesignateMode mode)
 		{
 			this.mode = mode;
-			this.soundDragSustain = SoundDefOf.DesignateDragStandard;
-			this.soundDragChanged = SoundDefOf.DesignateDragStandardChanged;
+			this.soundDragSustain = SoundDefOf.Designate_DragStandard;
+			this.soundDragChanged = SoundDefOf.Designate_DragStandard_Changed;
 			this.useMouseIcon = true;
 			this.hotKey = KeyBindingDefOf.Misc7;
 		}

@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace Verse
 {
-	internal static class GUIEventFilterForOSX
+	public static class GUIEventFilterForOSX
 	{
 		private static List<Event> eventsThisFrame = new List<Event>();
 
@@ -50,7 +50,7 @@ namespace Verse
 					Time.frameCount,
 					": REJECTED ",
 					Event.current.ToStringFull()
-				}));
+				}), false);
 			}
 			Event.current.Use();
 		}

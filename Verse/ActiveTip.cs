@@ -14,6 +14,8 @@ namespace Verse
 
 		private const int TipMargin = 4;
 
+		private const float MaxWidth = 260f;
+
 		public static readonly Texture2D TooltipBGAtlas = ContentFinder<Texture2D>.Get("UI/Widgets/TooltipBG", true);
 
 		private string FinalText
@@ -29,7 +31,7 @@ namespace Verse
 					}
 					catch (Exception ex)
 					{
-						Log.Error(ex.ToString());
+						Log.Error(ex.ToString(), false);
 						text = "Error getting tip text.";
 					}
 				}
@@ -45,12 +47,11 @@ namespace Verse
 		{
 			get
 			{
-				float num = (float)((!LanguageDatabase.activeLanguage.info.canBeTiny) ? 320 : 260);
 				string finalText = this.FinalText;
 				Vector2 vector = Text.CalcSize(finalText);
-				if (vector.x > num)
+				if (vector.x > 260f)
 				{
-					vector.x = num;
+					vector.x = 260f;
 					vector.y = Text.CalcHeight(finalText, vector.x);
 				}
 				Rect rect = new Rect(0f, 0f, vector.x, vector.y);

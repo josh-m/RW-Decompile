@@ -8,10 +8,10 @@ namespace Verse
 	{
 		protected override BodyPartRecord ChooseHitPart(DamageInfo dinfo, Pawn pawn)
 		{
-			return pawn.health.hediffSet.GetRandomNotMissingPart(dinfo.Def, dinfo.Height, BodyPartDepth.Outside);
+			return pawn.health.hediffSet.GetRandomNotMissingPart(dinfo.Def, dinfo.Height, BodyPartDepth.Outside, null);
 		}
 
-		protected override void ApplySpecialEffectsToPart(Pawn pawn, float totalDamage, DamageInfo dinfo, ref DamageWorker.DamageResult result)
+		protected override void ApplySpecialEffectsToPart(Pawn pawn, float totalDamage, DamageInfo dinfo, DamageWorker.DamageResult result)
 		{
 			if (dinfo.HitPart.depth == BodyPartDepth.Inside)
 			{
@@ -29,7 +29,7 @@ namespace Verse
 				{
 					DamageInfo dinfo2 = dinfo;
 					dinfo2.SetHitPart(list[i]);
-					base.FinalizeAndAddInjury(pawn, totalDamage / num * ((i != 0) ? 1f : 0.5f), dinfo2, ref result);
+					base.FinalizeAndAddInjury(pawn, totalDamage / num * ((i != 0) ? 1f : 0.5f), dinfo2, result);
 				}
 			}
 			else
@@ -42,7 +42,10 @@ namespace Verse
 					if (dinfo.HitPart.parent != null)
 					{
 						enumerable = enumerable.Concat(dinfo.HitPart.parent);
-						enumerable = enumerable.Concat(dinfo.HitPart.parent.GetDirectChildParts());
+						if (dinfo.HitPart.parent.parent != null)
+						{
+							enumerable = enumerable.Concat(dinfo.HitPart.parent.GetDirectChildParts());
+						}
 					}
 					list2 = enumerable.Except(dinfo.HitPart).InRandomOrder(null).Take(num2).ToList<BodyPartRecord>();
 				}
@@ -60,7 +63,7 @@ namespace Verse
 				{
 					DamageInfo dinfo3 = dinfo;
 					dinfo3.SetHitPart(list2[j]);
-					base.FinalizeAndAddInjury(pawn, num3, dinfo3, ref result);
+					base.FinalizeAndAddInjury(pawn, num3, dinfo3, result);
 				}
 			}
 		}

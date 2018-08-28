@@ -17,7 +17,7 @@ namespace RimWorld
 				}
 				catch (Exception ex)
 				{
-					Log.Error("Exception loading " + current.Name + ": " + ex.ToString());
+					Log.Error("Exception loading " + current.Name + ": " + ex.ToString(), false);
 				}
 			}
 		}

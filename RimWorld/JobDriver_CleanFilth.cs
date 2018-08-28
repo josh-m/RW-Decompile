@@ -24,7 +24,7 @@ namespace RimWorld
 			}
 		}
 
-		public override bool TryMakePreToilReservations()
+		public override bool TryMakePreToilReservations(bool errorOnFailed)
 		{
 			this.pawn.ReserveAsManyAsPossible(this.job.GetTargetQueue(TargetIndex.A), this.job, 1, -1, null);
 			return true;
@@ -33,7 +33,7 @@ namespace RimWorld
 		[DebuggerHidden]
 		protected override IEnumerable<Toil> MakeNewToils()
 		{
-			Toil initExtractTargetFromQueue = Toils_JobTransforms.ClearDespawnedNullOrForbiddenQueuedTargets(TargetIndex.A);
+			Toil initExtractTargetFromQueue = Toils_JobTransforms.ClearDespawnedNullOrForbiddenQueuedTargets(TargetIndex.A, null);
 			yield return initExtractTargetFromQueue;
 			yield return Toils_JobTransforms.SucceedOnNoTargetInQueue(TargetIndex.A);
 			yield return Toils_JobTransforms.ExtractNextTargetFromQueue(TargetIndex.A, true);

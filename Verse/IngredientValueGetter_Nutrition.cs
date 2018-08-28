@@ -1,3 +1,4 @@
+using RimWorld;
 using System;
 
 namespace Verse
@@ -10,7 +11,7 @@ namespace Verse
 			{
 				return 0f;
 			}
-			return t.ingestible.nutrition;
+			return t.GetStatValueAbstract(StatDefOf.Nutrition, null);
 		}
 
 		public override string BillRequirementsDescription(RecipeDef r, IngredientCount ing)

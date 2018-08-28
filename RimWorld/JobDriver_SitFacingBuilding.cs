@@ -8,26 +8,41 @@ namespace RimWorld
 {
 	public class JobDriver_SitFacingBuilding : JobDriver
 	{
-		public override bool TryMakePreToilReservations()
+		public override bool TryMakePreToilReservations(bool errorOnFailed)
 		{
-			return this.pawn.Reserve(this.job.targetA, this.job, this.job.def.joyMaxParticipants, 0, null) && this.pawn.Reserve(this.job.targetB, this.job, 1, -1, null);
+			Pawn pawn = this.pawn;
+			LocalTargetInfo target = this.job.targetA;
+			Job job = this.job;
+			int joyMaxParticipants = this.job.def.joyMaxParticipants;
+			int stackCount = 0;
+			bool arg_71_0;
+			if (pawn.Reserve(target, job, joyMaxParticipants, stackCount, null, errorOnFailed))
+			{
+				pawn = this.pawn;
+				target = this.job.targetB;
+				job = this.job;
+				arg_71_0 = pawn.Reserve(target, job, 1, -1, null, errorOnFailed);
+			}
+			else
+			{
+				arg_71_0 = false;
+			}
+			return arg_71_0;
 		}
 
 		[DebuggerHidden]
 		protected override IEnumerable<Toil> MakeNewToils()
 		{
 			this.EndOnDespawnedOrNull(TargetIndex.A, JobCondition.Incompletable);
-			this.EndOnDespawnedOrNull(TargetIndex.B, JobCondition.Incompletable);
-			yield return Toils_Goto.GotoThing(TargetIndex.B, PathEndMode.OnCell);
+			yield return Toils_Goto.Goto(TargetIndex.B, PathEndMode.OnCell);
 			Toil play = new Toil();
 			play.tickAction = delegate
 			{
-				this.$this.pawn.rotationTracker.FaceCell(this.$this.TargetA.Cell);
+				this.$this.pawn.rotationTracker.FaceTarget(this.$this.TargetA);
 				this.$this.pawn.GainComfortFromCellIfPossible();
-				float statValue = this.$this.TargetThingA.GetStatValue(StatDefOf.EntertainmentStrengthFactor, true);
 				Pawn pawn = this.$this.pawn;
-				float extraJoyGainFactor = statValue;
-				JoyUtility.JoyTickCheckEnd(pawn, JoyTickFullJoyAction.EndJob, extraJoyGainFactor);
+				Building joySource = (Building)this.$this.TargetThingA;
+				JoyUtility.JoyTickCheckEnd(pawn, JoyTickFullJoyAction.EndJob, 1f, joySource);
 			};
 			play.handlingFacing = true;
 			play.defaultCompleteMode = ToilCompleteMode.Delay;

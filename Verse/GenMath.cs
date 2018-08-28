@@ -7,6 +7,7 @@ using UnityEngine;
 
 namespace Verse
 {
+	[HasDebugOutput]
 	public static class GenMath
 	{
 		public struct BezierCubicControls
@@ -24,6 +25,10 @@ namespace Verse
 
 		public const float Sqrt2 = 1.41421354f;
 
+		private static List<float> tmpElements = new List<float>();
+
+		private static List<Pair<float, float>> tmpPairs = new List<Pair<float, float>>();
+
 		private static List<float> tmpScores = new List<float>();
 
 		private static List<float> tmpCalcList = new List<float>();
@@ -36,6 +41,11 @@ namespace Verse
 		public static int RoundTo(int value, int roundToNearest)
 		{
 			return (int)Math.Round((double)((float)value / (float)roundToNearest)) * roundToNearest;
+		}
+
+		public static float RoundTo(float value, float roundToNearest)
+		{
+			return (float)((int)Math.Round((double)(value / roundToNearest))) * roundToNearest;
 		}
 
 		public static float ChanceEitherHappens(float chanceA, float chanceB)
@@ -57,6 +67,57 @@ namespace Verse
 		public static float WeightedAverage(float A, float weightA, float B, float weightB)
 		{
 			return (A * weightA + B * weightB) / (weightA + weightB);
+		}
+
+		public static float Median<T>(IList<T> list, Func<T, float> orderBy, float noneValue = 0f, float center = 0.5f)
+		{
+			if (list.NullOrEmpty<T>())
+			{
+				return noneValue;
+			}
+			GenMath.tmpElements.Clear();
+			for (int i = 0; i < list.Count; i++)
+			{
+				GenMath.tmpElements.Add(orderBy(list[i]));
+			}
+			GenMath.tmpElements.Sort();
+			return GenMath.tmpElements[Mathf.Min(Mathf.FloorToInt((float)GenMath.tmpElements.Count * center), GenMath.tmpElements.Count - 1)];
+		}
+
+		public static float WeightedMedian(IList<Pair<float, float>> list, float noneValue = 0f, float center = 0.5f)
+		{
+			GenMath.tmpPairs.Clear();
+			GenMath.tmpPairs.AddRange(list);
+			float num = 0f;
+			for (int i = 0; i < GenMath.tmpPairs.Count; i++)
+			{
+				float second = GenMath.tmpPairs[i].Second;
+				if (second < 0f)
+				{
+					Log.ErrorOnce("Negative weight in WeightedMedian: " + second, GenMath.tmpPairs.GetHashCode(), false);
+				}
+				else
+				{
+					num += second;
+				}
+			}
+			if (num <= 0f)
+			{
+				return noneValue;
+			}
+			GenMath.tmpPairs.SortBy((Pair<float, float> x) => x.First);
+			float num2 = 0f;
+			for (int j = 0; j < GenMath.tmpPairs.Count; j++)
+			{
+				float first = GenMath.tmpPairs[j].First;
+				float second2 = GenMath.tmpPairs[j].Second;
+				num2 += second2 / num;
+				if (num2 >= center)
+				{
+					return first;
+				}
+			}
+			return GenMath.tmpPairs.Last<Pair<float, float>>().First;
 		}
 
 		public static float Sqrt(float f)
@@ -167,7 +228,8 @@ namespace Verse
 			return 1f / (1f - val);
 		}
 
-		public static void LogTestMathPerf()
+		[Category("System"), DebugOutput]
+		public static void TestMathPerf()
 		{
 			IntVec3 intVec = new IntVec3(72, 0, 65);
 			StringBuilder stringBuilder = new StringBuilder();
@@ -240,7 +302,7 @@ namespace Verse
 			}
 			stringBuilder.AppendLine("Verse.IntVec3.LengthHorizontalSquared: " + stopwatch6.ElapsedTicks);
 			stringBuilder.AppendLine("total: " + num);
-			Log.Message(stringBuilder.ToString());
+			Log.Message(stringBuilder.ToString(), false);
 		}
 
 		public static float Min(float a, float b, float c)
@@ -325,6 +387,15 @@ namespace Verse
 		public static float PositiveMod(float x, float m)
 		{
 			return (x % m + m) % m;
+		}
+
+		public static int PositiveModRemap(long x, int d, int m)
+		{
+			if (x < 0L)
+			{
+				x -= (long)(d - 1);
+			}
+			return (int)((x / (long)d % (long)m + (long)m) % (long)m);
 		}
 
 		public static Vector3 BezierCubicEvaluate(float t, GenMath.BezierCubicControls bcc)
@@ -535,9 +606,39 @@ namespace Verse
 			return elem8;
 		}
 
-		public static T MaxByRandomIfEqual<T>(T elem1, float by1, T elem2, float by2, T elem3, float by3, T elem4, float by4, T elem5, float by5, T elem6, float by6, T elem7, float by7, T elem8, float by8)
+		public static T MinBy<T>(T elem1, float by1, T elem2, float by2, T elem3, float by3)
 		{
-			return GenMath.MaxBy<T>(elem1, by1 + Rand.Range(0f, 0.0001f), elem2, by2 + Rand.Range(0f, 0.0001f), elem3, by3 + Rand.Range(0f, 0.0001f), elem4, by4 + Rand.Range(0f, 0.0001f), elem5, by5 + Rand.Range(0f, 0.0001f), elem6, by6 + Rand.Range(0f, 0.0001f), elem7, by7 + Rand.Range(0f, 0.0001f), elem8, by8 + Rand.Range(0f, 0.0001f));
+			return GenMath.MaxBy<T>(elem1, -by1, elem2, -by2, elem3, -by3);
+		}
+
+		public static T MinBy<T>(T elem1, float by1, T elem2, float by2, T elem3, float by3, T elem4, float by4)
+		{
+			return GenMath.MaxBy<T>(elem1, -by1, elem2, -by2, elem3, -by3, elem4, -by4);
+		}
+
+		public static T MinBy<T>(T elem1, float by1, T elem2, float by2, T elem3, float by3, T elem4, float by4, T elem5, float by5)
+		{
+			return GenMath.MaxBy<T>(elem1, -by1, elem2, -by2, elem3, -by3, elem4, -by4, elem5, -by5);
+		}
+
+		public static T MinBy<T>(T elem1, float by1, T elem2, float by2, T elem3, float by3, T elem4, float by4, T elem5, float by5, T elem6, float by6)
+		{
+			return GenMath.MaxBy<T>(elem1, -by1, elem2, -by2, elem3, -by3, elem4, -by4, elem5, -by5, elem6, -by6);
+		}
+
+		public static T MinBy<T>(T elem1, float by1, T elem2, float by2, T elem3, float by3, T elem4, float by4, T elem5, float by5, T elem6, float by6, T elem7, float by7)
+		{
+			return GenMath.MaxBy<T>(elem1, -by1, elem2, -by2, elem3, -by3, elem4, -by4, elem5, -by5, elem6, -by6, elem7, -by7);
+		}
+
+		public static T MinBy<T>(T elem1, float by1, T elem2, float by2, T elem3, float by3, T elem4, float by4, T elem5, float by5, T elem6, float by6, T elem7, float by7, T elem8, float by8)
+		{
+			return GenMath.MaxBy<T>(elem1, -by1, elem2, -by2, elem3, -by3, elem4, -by4, elem5, -by5, elem6, -by6, elem7, -by7, elem8, -by8);
+		}
+
+		public static T MaxByRandomIfEqual<T>(T elem1, float by1, T elem2, float by2, T elem3, float by3, T elem4, float by4, T elem5, float by5, T elem6, float by6, T elem7, float by7, T elem8, float by8, float eps = 0.0001f)
+		{
+			return GenMath.MaxBy<T>(elem1, by1 + Rand.Range(0f, eps), elem2, by2 + Rand.Range(0f, eps), elem3, by3 + Rand.Range(0f, eps), elem4, by4 + Rand.Range(0f, eps), elem5, by5 + Rand.Range(0f, eps), elem6, by6 + Rand.Range(0f, eps), elem7, by7 + Rand.Range(0f, eps), elem8, by8 + Rand.Range(0f, eps));
 		}
 
 		public static float Stddev(IEnumerable<float> data)

@@ -21,14 +21,13 @@ namespace RimWorld
 		public Dialog_FactionDuringLanding()
 		{
 			this.doCloseButton = true;
-			this.closeOnEscapeKey = true;
 			this.forcePause = true;
 			this.absorbInputAroundWindow = true;
 		}
 
 		public override void DoWindowContents(Rect inRect)
 		{
-			FactionUIUtility.DoWindowContents(inRect, ref this.scrollPosition, ref this.scrollViewHeight);
+			FactionUIUtility.DoWindowContents(new Rect(inRect.x, inRect.y, inRect.width, inRect.height - this.CloseButSize.y), ref this.scrollPosition, ref this.scrollViewHeight);
 		}
 	}
 }

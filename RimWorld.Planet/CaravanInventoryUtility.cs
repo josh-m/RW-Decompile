@@ -31,6 +31,11 @@ namespace RimWorld.Planet
 			return CaravanInventoryUtility.inventoryItems;
 		}
 
+		public static void CaravanInventoryUtilityStaticUpdate()
+		{
+			CaravanInventoryUtility.inventoryItems.Clear();
+		}
+
 		public static Pawn GetOwnerOf(Caravan caravan, Thing item)
 		{
 			IThingHolder parentHolder = item.ParentHolder;
@@ -53,7 +58,7 @@ namespace RimWorld.Planet
 			for (int i = 0; i < list.Count; i++)
 			{
 				Thing thing2 = list[i];
-				if (CaravanPawnsNeedsUtility.CanNowEatForNutrition(thing2, forPawn))
+				if (CaravanPawnsNeedsUtility.CanEatForNutritionNow(thing2, forPawn))
 				{
 					float foodScore = CaravanPawnsNeedsUtility.GetFoodScore(thing2, forPawn);
 					if (thing == null || foodScore > num)
@@ -74,7 +79,7 @@ namespace RimWorld.Planet
 			return false;
 		}
 
-		public static bool TryGetBestDrug(Caravan caravan, Pawn forPawn, Need_Chemical chemical, out Thing drug, out Pawn owner)
+		public static bool TryGetDrugToSatisfyChemicalNeed(Caravan caravan, Pawn forPawn, Need_Chemical chemical, out Thing drug, out Pawn owner)
 		{
 			Hediff_Addiction addictionHediff = chemical.AddictionHediff;
 			if (addictionHediff == null)
@@ -195,7 +200,7 @@ namespace RimWorld.Planet
 					" (item stack count = ",
 					item.stackCount,
 					")"
-				}));
+				}), false);
 				return;
 			}
 			Pawn pawn = CaravanInventoryUtility.FindPawnToMoveInventoryTo(item, candidates, ignoreCandidates, itemOwner);
@@ -210,7 +215,7 @@ namespace RimWorld.Planet
 		{
 			if (item is Pawn)
 			{
-				Log.Error("Called FindPawnToMoveInventoryTo but the item is a pawn.");
+				Log.Error("Called FindPawnToMoveInventoryTo but the item is a pawn.", false);
 				return null;
 			}
 			Pawn result;
@@ -283,7 +288,7 @@ namespace RimWorld.Planet
 		public static List<Thing> TakeThings(Caravan caravan, Func<Thing, int> takeQuantity)
 		{
 			List<Thing> list = new List<Thing>();
-			foreach (Thing current in CaravanInventoryUtility.AllInventoryItems(caravan))
+			foreach (Thing current in CaravanInventoryUtility.AllInventoryItems(caravan).ToList<Thing>())
 			{
 				int num = takeQuantity(current);
 				if (num > 0)
@@ -305,19 +310,19 @@ namespace RimWorld.Planet
 					") to a caravan (",
 					caravan,
 					")."
-				}));
+				}), false);
 				return;
 			}
 			Pawn pawn = CaravanInventoryUtility.FindPawnToMoveInventoryTo(thing, caravan.PawnsListForReading, null, null);
 			if (pawn == null)
 			{
-				Log.Error(string.Format("Failed to give item {0} to caravan {1}; item was lost", thing, caravan));
+				Log.Error(string.Format("Failed to give item {0} to caravan {1}; item was lost", thing, caravan), false);
 				thing.Destroy(DestroyMode.Vanish);
 				return;
 			}
 			if (!pawn.inventory.innerContainer.TryAdd(thing, true))
 			{
-				Log.Error(string.Format("Failed to give item {0} to caravan {1}; item was lost", thing, caravan));
+				Log.Error(string.Format("Failed to give item {0} to caravan {1}; item was lost", thing, caravan), false);
 				thing.Destroy(DestroyMode.Vanish);
 				return;
 			}

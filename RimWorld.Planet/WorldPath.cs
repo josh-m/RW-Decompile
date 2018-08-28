@@ -71,7 +71,7 @@ namespace RimWorld.Planet
 			}
 		}
 
-		public void AddNode(int tile)
+		public void AddNodeAtStart(int tile)
 		{
 			this.nodes.Add(tile);
 		}
@@ -80,7 +80,7 @@ namespace RimWorld.Planet
 		{
 			if (this == WorldPath.NotFound)
 			{
-				Log.Warning("Calling SetupFound with totalCost=" + totalCost + " on WorldPath.NotFound");
+				Log.Warning("Calling SetupFound with totalCost=" + totalCost + " on WorldPath.NotFound", false);
 				return;
 			}
 			this.totalCostInt = totalCost;

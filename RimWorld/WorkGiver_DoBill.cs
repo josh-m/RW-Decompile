@@ -93,13 +93,11 @@ namespace RimWorld
 			}
 		}
 
-		private List<ThingAmount> chosenIngThings = new List<ThingAmount>();
+		private List<ThingCount> chosenIngThings = new List<ThingCount>();
 
 		private static readonly IntRange ReCheckFailedBillTicksRange = new IntRange(500, 600);
 
 		private static string MissingMaterialsTranslated;
-
-		private static string MissingSkillTranslated;
 
 		private static List<Thing> relevantThings = new List<Thing>();
 
@@ -138,22 +136,30 @@ namespace RimWorld
 			return Danger.Some;
 		}
 
-		public static void Reset()
+		public static void ResetStaticData()
 		{
-			WorkGiver_DoBill.MissingSkillTranslated = "MissingSkill".Translate();
 			WorkGiver_DoBill.MissingMaterialsTranslated = "MissingMaterials".Translate();
 		}
 
 		public override Job JobOnThing(Pawn pawn, Thing thing, bool forced = false)
 		{
 			IBillGiver billGiver = thing as IBillGiver;
-			if (billGiver != null && this.ThingIsUsableBillGiver(thing) && billGiver.BillStack.AnyShouldDoNow && billGiver.CurrentlyUsableForBills())
+			if (billGiver != null && this.ThingIsUsableBillGiver(thing) && billGiver.BillStack.AnyShouldDoNow && billGiver.UsableForBillsAfterFueling())
 			{
 				LocalTargetInfo target = thing;
 				if (pawn.CanReserve(target, 1, -1, null, forced) && !thing.IsBurning() && !thing.IsForbidden(pawn))
 				{
-					billGiver.BillStack.RemoveIncompletableBills();
-					return this.StartOrResumeBillJob(pawn, billGiver);
+					CompRefuelable compRefuelable = thing.TryGetComp<CompRefuelable>();
+					if (compRefuelable == null || compRefuelable.HasFuel)
+					{
+						billGiver.BillStack.RemoveIncompletableBills();
+						return this.StartOrResumeBillJob(pawn, billGiver);
+					}
+					if (!RefuelWorkGiverUtility.CanRefuel(pawn, thing, forced))
+					{
+						return null;
+					}
+					return RefuelWorkGiverUtility.RefuelJob(pawn, thing, forced, null, null);
 				}
 			}
 			return null;
@@ -183,7 +189,7 @@ namespace RimWorld
 					uft,
 					" but its creator is ",
 					uft.Creator
-				}));
+				}), false);
 				return null;
 			}
 			Job job = WorkGiverUtility.HaulStuffOffBillGiverJob(pawn, bill.billStack.billGiver, uft);
@@ -220,9 +226,13 @@ namespace RimWorld
 						{
 							if (bill.PawnAllowedToStartAnew(pawn))
 							{
-								if (!bill.recipe.PawnSatisfiesSkillRequirements(pawn))
+								SkillRequirement skillRequirement = bill.recipe.FirstSkillRequirementPawnDoesntSatisfy(pawn);
+								if (skillRequirement != null)
 								{
-									JobFailReason.Is(WorkGiver_DoBill.MissingSkillTranslated);
+									JobFailReason.Is("UnderRequiredSkill".Translate(new object[]
+									{
+										skillRequirement.minLevel
+									}), bill.Label);
 								}
 								else
 								{
@@ -233,7 +243,7 @@ namespace RimWorld
 										{
 											if (bill_ProductionWithUft.BoundWorker != pawn || !pawn.CanReserveAndReach(bill_ProductionWithUft.BoundUft, PathEndMode.Touch, Danger.Deadly, 1, -1, null, false) || bill_ProductionWithUft.BoundUft.IsForbidden(pawn))
 											{
-												goto IL_18E;
+												goto IL_1D9;
 											}
 											return WorkGiver_DoBill.FinishUftJob(pawn, bill_ProductionWithUft.BoundUft, bill_ProductionWithUft);
 										}
@@ -248,7 +258,9 @@ namespace RimWorld
 									}
 									if (WorkGiver_DoBill.TryFindBestBillIngredients(bill, pawn, (Thing)giver, this.chosenIngThings))
 									{
-										return this.TryStartNewDoBillJob(pawn, bill, giver);
+										Job result = this.TryStartNewDoBillJob(pawn, bill, giver);
+										this.chosenIngThings.Clear();
+										return result;
 									}
 									if (FloatMenuMakerMap.makingFor != pawn)
 									{
@@ -256,15 +268,17 @@ namespace RimWorld
 									}
 									else
 									{
-										JobFailReason.Is(WorkGiver_DoBill.MissingMaterialsTranslated);
+										JobFailReason.Is(WorkGiver_DoBill.MissingMaterialsTranslated, bill.Label);
 									}
+									this.chosenIngThings.Clear();
 								}
 							}
 						}
 					}
 				}
-				IL_18E:;
+				IL_1D9:;
 			}
+			this.chosenIngThings.Clear();
 			return null;
 		}
 
@@ -280,15 +294,15 @@ namespace RimWorld
 			job2.countQueue = new List<int>(this.chosenIngThings.Count);
 			for (int i = 0; i < this.chosenIngThings.Count; i++)
 			{
-				job2.targetQueueB.Add(this.chosenIngThings[i].thing);
-				job2.countQueue.Add(this.chosenIngThings[i].count);
+				job2.targetQueueB.Add(this.chosenIngThings[i].Thing);
+				job2.countQueue.Add(this.chosenIngThings[i].Count);
 			}
 			job2.haulMode = HaulMode.ToCellNonStorage;
 			job2.bill = bill;
 			return job2;
 		}
 
-		private bool ThingIsUsableBillGiver(Thing thing)
+		public bool ThingIsUsableBillGiver(Thing thing)
 		{
 			Pawn pawn = thing as Pawn;
 			Corpse corpse = thing as Corpse;
@@ -334,7 +348,7 @@ namespace RimWorld
 			return false;
 		}
 
-		private static bool TryFindBestBillIngredients(Bill bill, Pawn pawn, Thing billGiver, List<ThingAmount> chosen)
+		private static bool TryFindBestBillIngredients(Bill bill, Pawn pawn, Thing billGiver, List<ThingCount> chosen)
 		{
 			chosen.Clear();
 			WorkGiver_DoBill.newRelevantThings.Clear();
@@ -359,6 +373,8 @@ namespace RimWorld
 				WorkGiver_DoBill.AddEveryMedicineToRelevantThings(pawn, billGiver, WorkGiver_DoBill.relevantThings, baseValidator, pawn.Map);
 				if (WorkGiver_DoBill.TryFindBestBillIngredientsInSet(WorkGiver_DoBill.relevantThings, bill, chosen))
 				{
+					WorkGiver_DoBill.relevantThings.Clear();
+					WorkGiver_DoBill.ingredientsOrdered.Clear();
 					return true;
 				}
 			}
@@ -408,6 +424,8 @@ namespace RimWorld
 			RegionTraverser.BreadthFirstTraverse(rootReg, entryCondition, regionProcessor, 99999, RegionType.Set_Passable);
 			WorkGiver_DoBill.relevantThings.Clear();
 			WorkGiver_DoBill.newRelevantThings.Clear();
+			WorkGiver_DoBill.processedThings.Clear();
+			WorkGiver_DoBill.ingredientsOrdered.Clear();
 			return foundAll;
 		}
 
@@ -422,7 +440,7 @@ namespace RimWorld
 			{
 				return building.InteractionCell;
 			}
-			Log.Error("Tried to find bill ingredients for " + billGiver + " which has no interaction cell.");
+			Log.Error("Tried to find bill ingredients for " + billGiver + " which has no interaction cell.", false);
 			return forPawn.Position;
 		}
 
@@ -482,7 +500,7 @@ namespace RimWorld
 			}
 		}
 
-		private static bool TryFindBestBillIngredientsInSet(List<Thing> availableThings, Bill bill, List<ThingAmount> chosen)
+		private static bool TryFindBestBillIngredientsInSet(List<Thing> availableThings, Bill bill, List<ThingCount> chosen)
 		{
 			if (bill.recipe.allowMixingIngredients)
 			{
@@ -491,7 +509,7 @@ namespace RimWorld
 			return WorkGiver_DoBill.TryFindBestBillIngredientsInSet_NoMix(availableThings, bill, chosen);
 		}
 
-		private static bool TryFindBestBillIngredientsInSet_NoMix(List<Thing> availableThings, Bill bill, List<ThingAmount> chosen)
+		private static bool TryFindBestBillIngredientsInSet_NoMix(List<Thing> availableThings, Bill bill, List<ThingCount> chosen)
 		{
 			RecipeDef recipe = bill.recipe;
 			chosen.Clear();
@@ -514,11 +532,11 @@ namespace RimWorld
 								{
 									if (availableThings[k].def == WorkGiver_DoBill.availableCounts.GetDef(j))
 									{
-										int num2 = availableThings[k].stackCount - ThingAmount.CountUsed(chosen, availableThings[k]);
+										int num2 = availableThings[k].stackCount - ThingCountUtility.CountOf(chosen, availableThings[k]);
 										if (num2 > 0)
 										{
 											int num3 = Mathf.Min(Mathf.FloorToInt(num), num2);
-											ThingAmount.AddToList(chosen, availableThings[k], num3);
+											ThingCountUtility.AddToList(chosen, availableThings[k], num3);
 											num -= (float)num3;
 											if (num < 0.001f)
 											{
@@ -547,7 +565,7 @@ namespace RimWorld
 			return true;
 		}
 
-		private static bool TryFindBestBillIngredientsInSet_AllowMix(List<Thing> availableThings, Bill bill, List<ThingAmount> chosen)
+		private static bool TryFindBestBillIngredientsInSet_AllowMix(List<Thing> availableThings, Bill bill, List<ThingCount> chosen)
 		{
 			chosen.Clear();
 			for (int i = 0; i < bill.recipe.ingredients.Count; i++)
@@ -563,7 +581,7 @@ namespace RimWorld
 						{
 							float num2 = bill.recipe.IngredientValueGetter.ValuePerUnitOf(thing.def);
 							int num3 = Mathf.Min(Mathf.CeilToInt(num / num2), thing.stackCount);
-							ThingAmount.AddToList(chosen, thing, num3);
+							ThingCountUtility.AddToList(chosen, thing, num3);
 							num -= (float)num3 * num2;
 							if (num <= 0.0001f)
 							{

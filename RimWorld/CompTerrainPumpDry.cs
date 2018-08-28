@@ -13,18 +13,33 @@ namespace RimWorld
 		public static void AffectCell(Map map, IntVec3 c)
 		{
 			TerrainDef terrain = c.GetTerrain(map);
-			if (terrain.driesTo == null)
+			TerrainDef terrainToDryTo = CompTerrainPumpDry.GetTerrainToDryTo(map, terrain);
+			if (terrainToDryTo != null)
 			{
-				return;
+				map.terrainGrid.SetTerrain(c, terrainToDryTo);
+			}
+			TerrainDef terrainDef = map.terrainGrid.UnderTerrainAt(c);
+			if (terrainDef != null)
+			{
+				TerrainDef terrainToDryTo2 = CompTerrainPumpDry.GetTerrainToDryTo(map, terrainDef);
+				if (terrainToDryTo2 != null)
+				{
+					map.terrainGrid.SetUnderTerrain(c, terrainToDryTo2);
+				}
+			}
+		}
+
+		private static TerrainDef GetTerrainToDryTo(Map map, TerrainDef terrainDef)
+		{
+			if (terrainDef.driesTo == null)
+			{
+				return null;
 			}
 			if (map.Biome == BiomeDefOf.SeaIce)
 			{
-				map.terrainGrid.SetTerrain(c, TerrainDefOf.Ice);
+				return TerrainDefOf.Ice;
 			}
-			else
-			{
-				map.terrainGrid.SetTerrain(c, terrain.driesTo);
-			}
+			return terrainDef.driesTo;
 		}
 	}
 }

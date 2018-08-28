@@ -73,7 +73,7 @@ namespace RimWorld
 					{
 						this.name,
 						", ",
-						this.childhood.Title,
+						this.childhood.title,
 						": ",
 						error
 					});
@@ -87,7 +87,7 @@ namespace RimWorld
 					{
 						this.name,
 						", ",
-						this.adulthood.Title,
+						this.adulthood.title,
 						": ",
 						error2
 					});

@@ -81,20 +81,28 @@ namespace RimWorld
 
 		public bool TryDoSpawn()
 		{
+			if (!this.parent.Spawned)
+			{
+				return false;
+			}
 			if (this.PropsSpawner.spawnMaxAdjacent >= 0)
 			{
 				int num = 0;
 				for (int i = 0; i < 9; i++)
 				{
-					List<Thing> thingList = (this.parent.Position + GenAdj.AdjacentCellsAndInside[i]).GetThingList(this.parent.Map);
-					for (int j = 0; j < thingList.Count; j++)
+					IntVec3 c = this.parent.Position + GenAdj.AdjacentCellsAndInside[i];
+					if (c.InBounds(this.parent.Map))
 					{
-						if (thingList[j].def == this.PropsSpawner.thingToSpawn)
+						List<Thing> thingList = c.GetThingList(this.parent.Map);
+						for (int j = 0; j < thingList.Count; j++)
 						{
-							num += thingList[j].stackCount;
-							if (num >= this.PropsSpawner.spawnMaxAdjacent)
+							if (thingList[j].def == this.PropsSpawner.thingToSpawn)
 							{
-								return false;
+								num += thingList[j].stackCount;
+								if (num >= this.PropsSpawner.spawnMaxAdjacent)
+								{
+									return false;
+								}
 							}
 						}
 					}
@@ -106,7 +114,7 @@ namespace RimWorld
 				Thing thing = ThingMaker.MakeThing(this.PropsSpawner.thingToSpawn, null);
 				thing.stackCount = this.PropsSpawner.spawnCount;
 				Thing t;
-				GenPlace.TryPlaceThing(thing, center, this.parent.Map, ThingPlaceMode.Direct, out t, null);
+				GenPlace.TryPlaceThing(thing, center, this.parent.Map, ThingPlaceMode.Direct, out t, null, null);
 				if (this.PropsSpawner.spawnForbidden)
 				{
 					t.SetForbidden(true, true);
@@ -115,8 +123,8 @@ namespace RimWorld
 				{
 					Messages.Message("MessageCompSpawnerSpawnedItem".Translate(new object[]
 					{
-						this.PropsSpawner.thingToSpawn.label
-					}).CapitalizeFirst(), thing, MessageTypeDefOf.PositiveEvent);
+						this.PropsSpawner.thingToSpawn.LabelCap
+					}).CapitalizeFirst(), thing, MessageTypeDefOf.PositiveEvent, true);
 				}
 				return true;
 			}
@@ -169,7 +177,8 @@ namespace RimWorld
 
 		public override void PostExposeData()
 		{
-			Scribe_Values.Look<int>(ref this.ticksUntilSpawn, "ticksUntilSpawn", 0, false);
+			string str = (!this.PropsSpawner.saveKeysPrefix.NullOrEmpty()) ? (this.PropsSpawner.saveKeysPrefix + "_") : null;
+			Scribe_Values.Look<int>(ref this.ticksUntilSpawn, str + "ticksUntilSpawn", 0, false);
 		}
 
 		[DebuggerHidden]
@@ -197,7 +206,7 @@ namespace RimWorld
 				return "NextSpawnedItemIn".Translate(new object[]
 				{
 					GenLabel.ThingLabel(this.PropsSpawner.thingToSpawn, null, this.PropsSpawner.spawnCount)
-				}) + ": " + this.ticksUntilSpawn.ToStringTicksToPeriod(true, false, true);
+				}) + ": " + this.ticksUntilSpawn.ToStringTicksToPeriod();
 			}
 			return null;
 		}

@@ -16,6 +16,14 @@ namespace Verse
 			}
 		}
 
+		public bool CanBeFoundInRegion
+		{
+			get
+			{
+				return !this.IsUndefined && (this.singleDef != null || this.group == ThingRequestGroup.Nothing || this.group.StoreInRegion());
+			}
+		}
+
 		public static ThingRequest ForUndefined()
 		{
 			return new ThingRequest

@@ -8,5 +8,12 @@ namespace RimWorld
 		public static BillStoreModeDef DropOnFloor;
 
 		public static BillStoreModeDef BestStockpile;
+
+		public static BillStoreModeDef SpecificStockpile;
+
+		static BillStoreModeDefOf()
+		{
+			DefOfHelper.EnsureInitializedInCtor(typeof(BillStoreModeDefOf));
+		}
 	}
 }

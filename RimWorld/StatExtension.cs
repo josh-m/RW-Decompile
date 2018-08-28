@@ -15,6 +15,22 @@ namespace RimWorld
 			return stat.Worker.GetValueAbstract(def, stuff);
 		}
 
+		public static bool StatBaseDefined(this BuildableDef def, StatDef stat)
+		{
+			if (def.statBases == null)
+			{
+				return false;
+			}
+			for (int i = 0; i < def.statBases.Count; i++)
+			{
+				if (def.statBases[i].stat == stat)
+				{
+					return true;
+				}
+			}
+			return false;
+		}
+
 		public static void SetStatBaseValue(this BuildableDef def, StatDef stat, float newBaseValue)
 		{
 			StatUtility.SetStatValueInList(ref def.statBases, stat, newBaseValue);

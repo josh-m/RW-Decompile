@@ -48,7 +48,7 @@ namespace Verse
 					}
 					catch (ReflectionTypeLoadException)
 					{
-						Log.Error("Exception getting types in assembly " + assembly.ToString());
+						Log.Error("Exception getting types in assembly " + assembly.ToString(), false);
 					}
 					if (assemblyTypes != null)
 					{
@@ -152,6 +152,12 @@ namespace Verse
 				}
 			}
 			return type.FullName;
+		}
+
+		public static bool IsCustomType(Type type)
+		{
+			string @namespace = type.Namespace;
+			return !@namespace.StartsWith("System") && !@namespace.StartsWith("UnityEngine") && !@namespace.StartsWith("Steamworks");
 		}
 	}
 }

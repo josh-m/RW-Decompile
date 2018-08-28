@@ -30,12 +30,13 @@ namespace RimWorld
 			get
 			{
 				List<IntVec3> cellsList = this.CellsList;
+				Map map = this.Map;
 				for (int i = 0; i < cellsList.Count; i++)
 				{
-					List<Thing> thingList = this.Map.thingGrid.ThingsListAt(cellsList[i]);
+					List<Thing> thingList = map.thingGrid.ThingsListAt(cellsList[i]);
 					for (int j = 0; j < thingList.Count; j++)
 					{
-						if (thingList[j].def.EverStoreable)
+						if (thingList[j].def.EverStorable(false))
 						{
 							yield return thingList[j];
 						}
@@ -55,33 +56,30 @@ namespace RimWorld
 		public SlotGroup(ISlotGroupParent parent)
 		{
 			this.parent = parent;
-			this.Map.slotGroupManager.AddGroup(this);
 		}
 
 		[DebuggerHidden]
 		public IEnumerator<IntVec3> GetEnumerator()
 		{
-			for (int i = 0; i < this.CellsList.Count; i++)
+			List<IntVec3> cellsList = this.CellsList;
+			for (int i = 0; i < cellsList.Count; i++)
 			{
-				yield return this.CellsList[i];
+				yield return cellsList[i];
 			}
 		}
 
 		public void Notify_AddedCell(IntVec3 c)
 		{
-			this.Map.slotGroupManager.SetCellFor(c, this);
+			this.Map.haulDestinationManager.SetCellFor(c, this);
 			this.Map.listerHaulables.RecalcAllInCell(c);
+			this.Map.listerMergeables.RecalcAllInCell(c);
 		}
 
 		public void Notify_LostCell(IntVec3 c)
 		{
-			this.Map.slotGroupManager.ClearCellFor(c, this);
+			this.Map.haulDestinationManager.ClearCellFor(c, this);
 			this.Map.listerHaulables.RecalcAllInCell(c);
-		}
-
-		public void Notify_ParentDestroying()
-		{
-			this.Map.slotGroupManager.RemoveGroup(this);
+			this.Map.listerMergeables.RecalcAllInCell(c);
 		}
 
 		public override string ToString()

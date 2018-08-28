@@ -19,9 +19,12 @@ namespace Verse.AI
 			}
 		}
 
-		public override bool TryMakePreToilReservations()
+		public override bool TryMakePreToilReservations(bool errorOnFailed)
 		{
-			return this.pawn.Reserve(this.Prisoner, this.job, 1, -1, null);
+			Pawn pawn = this.pawn;
+			LocalTargetInfo target = this.Prisoner;
+			Job job = this.job;
+			return pawn.Reserve(target, job, 1, -1, null, errorOnFailed);
 		}
 
 		[DebuggerHidden]

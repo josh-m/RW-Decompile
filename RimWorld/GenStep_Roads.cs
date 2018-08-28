@@ -24,13 +24,15 @@ namespace RimWorld
 			public Action action;
 		}
 
-		private struct DistanceElement
+		public struct DistanceElement
 		{
 			public float fromRoad;
 
 			public float alongPath;
 
 			public bool touched;
+
+			public IntVec3 origin;
 		}
 
 		private const float CurveControlPointDistance = 4f;
@@ -46,7 +48,15 @@ namespace RimWorld
 			0.95f
 		};
 
-		public override void Generate(Map map)
+		public override int SeedPart
+		{
+			get
+			{
+				return 1187464702;
+			}
+		}
+
+		public override void Generate(Map map, GenStepParams parms)
 		{
 			List<GenStep_Roads.NeededRoad> neededRoads = this.CalculateNeededRoads(map);
 			if (neededRoads.Count == 0)
@@ -147,7 +157,7 @@ namespace RimWorld
 			{
 				foreach (IntVec3 current in GenRadial.RadialCellsAround(pos, 8f, true))
 				{
-					if (current.InBounds(map) && current.GetTerrain(map).HasTag("Water"))
+					if (current.InBounds(map) && current.GetTerrain(map).IsWater)
 					{
 						return false;
 					}
@@ -178,7 +188,7 @@ namespace RimWorld
 					return result;
 				}
 			}
-			Log.Error(string.Format("Can't find exit from map from {0} to angle {1}", crossroads, angle));
+			Log.Error(string.Format("Can't find exit from map from {0} to angle {1}", crossroads, angle), false);
 			return IntVec3.Invalid;
 		}
 
@@ -211,13 +221,20 @@ namespace RimWorld
 			List<IntVec3> list = this.RefinePath(pawnPath.NodesReversed, map);
 			pawnPath.ReleaseToPool();
 			GenStep_Roads.DistanceElement[,] distance = new GenStep_Roads.DistanceElement[map.Size.x, map.Size.z];
+			for (int i = 0; i < distance.GetLength(0); i++)
+			{
+				for (int j = 0; j < distance.GetLength(1); j++)
+				{
+					distance[i, j].origin = IntVec3.Invalid;
+				}
+			}
 			int count = list.Count;
 			int centerpointIndex = Mathf.RoundToInt(Rand.Range(0.3f, 0.7f) * (float)count);
 			int num = Mathf.Max(1, GenMath.RoundRandom((float)count / (float)roadDef.tilesPerSegment));
-			for (int i = 0; i < num; i++)
+			for (int k = 0; k < num; k++)
 			{
-				int pathStartIndex = Mathf.RoundToInt((float)(count - 1) / (float)num * (float)i);
-				int pathEndIndex = Mathf.RoundToInt((float)(count - 1) / (float)num * (float)(i + 1));
+				int pathStartIndex = Mathf.RoundToInt((float)(count - 1) / (float)num * (float)k);
+				int pathEndIndex = Mathf.RoundToInt((float)(count - 1) / (float)num * (float)(k + 1));
 				this.DrawCurveSegment(distance, list, pathStartIndex, pathEndIndex, pathingDef, map, centerpointIndex, ref centerpoint);
 			}
 			return delegate
@@ -230,7 +247,7 @@ namespace RimWorld
 		{
 			if (pathStartIndex == pathEndIndex)
 			{
-				Log.ErrorOnce("Zero-length segment drawn in road routine", 78187971);
+				Log.ErrorOnce("Zero-length segment drawn in road routine", 78187971, false);
 				return;
 			}
 			GenMath.BezierCubicControls bcc = this.GenerateBezierControls(path, pathStartIndex, pathEndIndex);
@@ -243,7 +260,7 @@ namespace RimWorld
 			int num2 = 0;
 			for (int j = pathStartIndex; j <= pathEndIndex; j++)
 			{
-				if (j > 0 && j <= path.Count && path[j].InBounds(map) && path[j].GetTerrain(map).HasTag("Water"))
+				if (j > 0 && j < path.Count && path[j].InBounds(map) && path[j].GetTerrain(map).IsWater)
 				{
 					num2++;
 				}
@@ -262,7 +279,7 @@ namespace RimWorld
 						if (c.InBounds(map))
 						{
 							flag |= (pathing == RoadPathingDefOf.Avoid && c.Impassable(map));
-							if (c.GetTerrain(map).HasTag("Water"))
+							if (c.GetTerrain(map).IsWater)
 							{
 								num3++;
 							}
@@ -283,7 +300,7 @@ namespace RimWorld
 			}
 			for (int l = 0; l < list.Count; l++)
 			{
-				this.FillDistanceField(distance, list[l].x, list[l].z, GenMath.LerpDouble(0f, (float)(list.Count - 1), (float)pathStartIndex, (float)pathEndIndex, (float)l), 10f);
+				this.FillDistanceField(distance, list[l].x, list[l].z, GenMath.LerpDouble(0f, (float)(list.Count - 1), (float)pathStartIndex, (float)pathEndIndex, (float)l), 10f, map);
 			}
 			if (centerpointIndex >= pathStartIndex && centerpointIndex < pathEndIndex)
 			{
@@ -327,7 +344,7 @@ namespace RimWorld
 									IntVec3 position = new IntVec3(i, 0, j);
 									if (Rand.Value < num)
 									{
-										roadDefGenStep.Place(map, position, rockDef);
+										roadDefGenStep.Place(map, position, rockDef, distanceElement.origin, distance);
 									}
 								}
 							}
@@ -337,12 +354,13 @@ namespace RimWorld
 			}
 		}
 
-		private void FillDistanceField(GenStep_Roads.DistanceElement[,] field, float cx, float cz, float alongPath, float radius)
+		private void FillDistanceField(GenStep_Roads.DistanceElement[,] field, float cx, float cz, float alongPath, float radius, Map map)
 		{
 			int num = Mathf.Clamp(Mathf.FloorToInt(cx - radius), 0, field.GetLength(0) - 1);
 			int num2 = Mathf.Clamp(Mathf.FloorToInt(cx + radius), 0, field.GetLength(0) - 1);
 			int num3 = Mathf.Clamp(Mathf.FloorToInt(cz - radius), 0, field.GetLength(1) - 1);
 			int num4 = Mathf.Clamp(Mathf.FloorToInt(cz + radius), 0, field.GetLength(1) - 1);
+			IntVec3 origin = new Vector3(cx, 0f, cz).ToIntVec3().ClampInsideMap(map);
 			for (int i = num; i <= num2; i++)
 			{
 				float num5 = ((float)i + 0.5f - cx) * ((float)i + 0.5f - cx);
@@ -355,6 +373,7 @@ namespace RimWorld
 					{
 						field[i, j].fromRoad = num7;
 						field[i, j].alongPath = alongPath;
+						field[i, j].origin = origin;
 					}
 					field[i, j].touched = true;
 				}

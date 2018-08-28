@@ -34,11 +34,21 @@ namespace Verse
 			return this.topGrid[this.map.cellIndices.CellToIndex(c)];
 		}
 
+		public TerrainDef UnderTerrainAt(int ind)
+		{
+			return this.underGrid[ind];
+		}
+
+		public TerrainDef UnderTerrainAt(IntVec3 c)
+		{
+			return this.underGrid[this.map.cellIndices.CellToIndex(c)];
+		}
+
 		public void SetTerrain(IntVec3 c, TerrainDef newTerr)
 		{
 			if (newTerr == null)
 			{
-				Log.Error("Tried to set terrain at " + c + " to null.");
+				Log.Error("Tried to set terrain at " + c + " to null.", false);
 				return;
 			}
 			if (Current.ProgramState == ProgramState.Playing)
@@ -72,6 +82,17 @@ namespace Verse
 			this.DoTerrainChangedEffects(c);
 		}
 
+		public void SetUnderTerrain(IntVec3 c, TerrainDef newTerr)
+		{
+			if (!c.InBounds(this.map))
+			{
+				Log.Error("Tried to set terrain out of bounds at " + c, false);
+				return;
+			}
+			int num = this.map.cellIndices.CellToIndex(c);
+			this.underGrid[num] = newTerr;
+		}
+
 		public void RemoveTopLayer(IntVec3 c, bool doLeavings = true)
 		{
 			int num = this.map.cellIndices.CellToIndex(c);
@@ -83,8 +104,8 @@ namespace Verse
 			{
 				this.topGrid[num] = this.underGrid[num];
 				this.underGrid[num] = null;
+				this.DoTerrainChangedEffects(c);
 			}
-			this.DoTerrainChangedEffects(c);
 		}
 
 		public bool CanRemoveTopLayerAt(IntVec3 c)
@@ -103,6 +124,14 @@ namespace Verse
 				{
 					thingList[i].Destroy(DestroyMode.Vanish);
 				}
+				else if (thingList[i].def.category == ThingCategory.Filth && !this.TerrainAt(c).acceptFilth)
+				{
+					thingList[i].Destroy(DestroyMode.Vanish);
+				}
+				else if ((thingList[i].def.IsBlueprint || thingList[i].def.IsFrame) && !GenConstruct.CanBuildOnTerrain(thingList[i].def.entityDefToBuild, thingList[i].Position, this.map, thingList[i].Rotation, null))
+				{
+					thingList[i].Destroy(DestroyMode.Cancel);
+				}
 			}
 			this.map.pathGrid.RecalculatePerceivedPathCostAt(c);
 			Region regionAt_NoRebuild_InvalidAllowed = this.map.regionGrid.GetRegionAt_NoRebuild_InvalidAllowed(c);
@@ -116,6 +145,46 @@ namespace Verse
 		{
 			this.ExposeTerrainGrid(this.topGrid, "topGrid");
 			this.ExposeTerrainGrid(this.underGrid, "underGrid");
+		}
+
+		public void Notify_TerrainBurned(IntVec3 c)
+		{
+			TerrainDef terrain = c.GetTerrain(this.map);
+			this.Notify_TerrainDestroyed(c);
+			if (terrain.burnedDef != null)
+			{
+				this.SetTerrain(c, terrain.burnedDef);
+			}
+		}
+
+		public void Notify_TerrainDestroyed(IntVec3 c)
+		{
+			if (!this.CanRemoveTopLayerAt(c))
+			{
+				return;
+			}
+			TerrainDef terrainDef = this.TerrainAt(c);
+			this.RemoveTopLayer(c, false);
+			if (terrainDef.destroyBuildingsOnDestroyed)
+			{
+				Building firstBuilding = c.GetFirstBuilding(this.map);
+				if (firstBuilding != null)
+				{
+					firstBuilding.Kill(null, null);
+				}
+			}
+			if (terrainDef.destroyEffectWater != null && this.TerrainAt(c) != null && this.TerrainAt(c).IsWater)
+			{
+				Effecter effecter = terrainDef.destroyEffectWater.Spawn();
+				effecter.Trigger(new TargetInfo(c, this.map, false), new TargetInfo(c, this.map, false));
+				effecter.Cleanup();
+			}
+			else if (terrainDef.destroyEffect != null)
+			{
+				Effecter effecter2 = terrainDef.destroyEffect.Spawn();
+				effecter2.Trigger(new TargetInfo(c, this.map, false), new TargetInfo(c, this.map, false));
+				effecter2.Cleanup();
+			}
 		}
 
 		private void ExposeTerrainGrid(TerrainDef[] grid, string label)
@@ -132,19 +201,24 @@ namespace Verse
 			};
 			Action<IntVec3, ushort> shortWriter = delegate(IntVec3 c, ushort val)
 			{
-				TerrainDef terrainDef = terrainDefsByShortHash.TryGetValue(val);
+				TerrainDef terrainDef = terrainDefsByShortHash.TryGetValue(val, null);
 				if (terrainDef == null && val != 0)
 				{
-					Log.Error(string.Concat(new object[]
+					TerrainDef terrainDef2 = BackCompatibility.BackCompatibleTerrainWithShortHash(val);
+					if (terrainDef2 == null)
 					{
-						"Did not find terrain def with short hash ",
-						val,
-						" for cell ",
-						c,
-						"."
-					}));
-					terrainDef = TerrainDefOf.Sand;
-					terrainDefsByShortHash.Add(val, terrainDef);
+						Log.Error(string.Concat(new object[]
+						{
+							"Did not find terrain def with short hash ",
+							val,
+							" for cell ",
+							c,
+							"."
+						}), false);
+						terrainDef2 = TerrainDefOf.Soil;
+					}
+					terrainDef = terrainDef2;
+					terrainDefsByShortHash.Add(val, terrainDef2);
 				}
 				grid[this.map.cellIndices.CellToIndex(c)] = terrainDef;
 			};

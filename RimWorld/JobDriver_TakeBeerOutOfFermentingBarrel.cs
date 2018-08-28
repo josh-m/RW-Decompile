@@ -32,9 +32,12 @@ namespace RimWorld
 			}
 		}
 
-		public override bool TryMakePreToilReservations()
+		public override bool TryMakePreToilReservations(bool errorOnFailed)
 		{
-			return this.pawn.Reserve(this.Barrel, this.job, 1, -1, null);
+			Pawn pawn = this.pawn;
+			LocalTargetInfo target = this.Barrel;
+			Job job = this.job;
+			return pawn.Reserve(target, job, 1, -1, null, errorOnFailed);
 		}
 
 		[DebuggerHidden]
@@ -43,14 +46,14 @@ namespace RimWorld
 			this.FailOnDespawnedNullOrForbidden(TargetIndex.A);
 			this.FailOnBurningImmobile(TargetIndex.A);
 			yield return Toils_Goto.GotoThing(TargetIndex.A, PathEndMode.Touch);
-			yield return Toils_General.Wait(200).FailOnDestroyedNullOrForbidden(TargetIndex.A).FailOnCannotTouch(TargetIndex.A, PathEndMode.Touch).FailOn(() => !this.$this.Barrel.Fermented).WithProgressBarToilDelay(TargetIndex.A, false, -0.5f);
+			yield return Toils_General.Wait(200, TargetIndex.None).FailOnDestroyedNullOrForbidden(TargetIndex.A).FailOnCannotTouch(TargetIndex.A, PathEndMode.Touch).FailOn(() => !this.$this.Barrel.Fermented).WithProgressBarToilDelay(TargetIndex.A, false, -0.5f);
 			yield return new Toil
 			{
 				initAction = delegate
 				{
 					Thing thing = this.$this.Barrel.TakeOutBeer();
-					GenPlace.TryPlaceThing(thing, this.$this.pawn.Position, this.$this.Map, ThingPlaceMode.Near, null);
-					StoragePriority currentPriority = HaulAIUtility.StoragePriorityAtFor(thing.Position, thing);
+					GenPlace.TryPlaceThing(thing, this.$this.pawn.Position, this.$this.Map, ThingPlaceMode.Near, null, null);
+					StoragePriority currentPriority = StoreUtility.CurrentStoragePriorityOf(thing);
 					IntVec3 c;
 					if (StoreUtility.TryFindBestBetterStoreCellFor(thing, this.$this.pawn, this.$this.Map, currentPriority, this.$this.pawn.Faction, out c, true))
 					{

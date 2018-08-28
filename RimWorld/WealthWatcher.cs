@@ -13,11 +13,19 @@ namespace RimWorld
 
 		private float wealthBuildings;
 
+		private float wealthPawns;
+
+		private float wealthFloorsOnly;
+
 		private int totalHealth;
 
 		private float lastCountTick = -99999f;
 
+		private static float[] cachedTerrainMarketValue;
+
 		private const int MinCountInterval = 5000;
+
+		private List<Thing> tmpThings = new List<Thing>();
 
 		public int HealthTotal
 		{
@@ -33,7 +41,7 @@ namespace RimWorld
 			get
 			{
 				this.RecountIfNeeded();
-				return this.wealthItems + this.wealthBuildings;
+				return this.wealthItems + this.wealthBuildings + this.wealthPawns;
 			}
 		}
 
@@ -55,9 +63,42 @@ namespace RimWorld
 			}
 		}
 
+		public float WealthFloorsOnly
+		{
+			get
+			{
+				this.RecountIfNeeded();
+				return this.wealthFloorsOnly;
+			}
+		}
+
+		public float WealthPawns
+		{
+			get
+			{
+				this.RecountIfNeeded();
+				return this.wealthPawns;
+			}
+		}
+
 		public WealthWatcher(Map map)
 		{
 			this.map = map;
+		}
+
+		public static void ResetStaticData()
+		{
+			int num = -1;
+			List<TerrainDef> allDefsListForReading = DefDatabase<TerrainDef>.AllDefsListForReading;
+			for (int i = 0; i < allDefsListForReading.Count; i++)
+			{
+				num = Mathf.Max(num, (int)allDefsListForReading[i].index);
+			}
+			WealthWatcher.cachedTerrainMarketValue = new float[num + 1];
+			for (int j = 0; j < allDefsListForReading.Count; j++)
+			{
+				WealthWatcher.cachedTerrainMarketValue[(int)allDefsListForReading[j].index] = allDefsListForReading[j].GetStatValueAbstract(StatDefOf.MarketValue, null);
+			}
 		}
 
 		private void RecountIfNeeded()
@@ -72,47 +113,33 @@ namespace RimWorld
 		{
 			if (!allowDuringInit && Current.ProgramState != ProgramState.Playing)
 			{
-				Log.Error("WealthWatcher recount in game mode " + Current.ProgramState);
+				Log.Error("WealthWatcher recount in game mode " + Current.ProgramState, false);
 				return;
 			}
-			this.wealthItems = 0f;
+			this.wealthItems = this.CalculateWealthItems();
 			this.wealthBuildings = 0f;
+			this.wealthPawns = 0f;
+			this.wealthFloorsOnly = 0f;
 			this.totalHealth = 0;
-			List<Thing> list = this.map.listerThings.ThingsInGroup(ThingRequestGroup.HaulableAlways);
+			List<Thing> list = this.map.listerThings.ThingsInGroup(ThingRequestGroup.BuildingArtificial);
 			for (int i = 0; i < list.Count; i++)
 			{
 				Thing thing = list[i];
-				if (!thing.Position.Fogged(thing.Map))
+				if (thing.Faction == Faction.OfPlayer)
 				{
-					this.wealthItems += (float)thing.stackCount * thing.MarketValue;
+					this.wealthBuildings += thing.MarketValue;
+					this.totalHealth += thing.HitPoints;
 				}
 			}
-			foreach (Pawn current in this.map.mapPawns.FreeColonists)
+			this.wealthFloorsOnly = this.CalculateWealthFloors();
+			this.wealthBuildings += this.wealthFloorsOnly;
+			foreach (Pawn current in this.map.mapPawns.PawnsInFaction(Faction.OfPlayer))
 			{
-				this.wealthItems += WealthWatcher.GetEquipmentApparelAndInventoryWealth(current);
-			}
-			List<Thing> list2 = this.map.listerThings.ThingsInGroup(ThingRequestGroup.BuildingFrame);
-			for (int j = 0; j < list2.Count; j++)
-			{
-				ThingOwner resourceContainer = ((Frame)list2[j]).resourceContainer;
-				for (int k = 0; k < resourceContainer.Count; k++)
+				this.wealthPawns += current.MarketValue;
+				if (current.IsFreeColonist)
 				{
-					this.wealthItems += (float)resourceContainer[k].stackCount * resourceContainer[k].MarketValue;
+					this.totalHealth += Mathf.RoundToInt(current.health.summaryHealth.SummaryHealthPercent * 100f);
 				}
-			}
-			List<Thing> list3 = this.map.listerThings.ThingsInGroup(ThingRequestGroup.BuildingArtificial);
-			for (int l = 0; l < list3.Count; l++)
-			{
-				Thing thing2 = list3[l];
-				if (thing2.Faction == Faction.OfPlayer)
-				{
-					this.wealthBuildings += thing2.MarketValue;
-					this.totalHealth += thing2.HitPoints;
-				}
-			}
-			foreach (Pawn current2 in this.map.mapPawns.FreeColonists)
-			{
-				this.totalHealth += Mathf.RoundToInt(current2.health.summaryHealth.SummaryHealthPercent * 100f);
 			}
 			this.lastCountTick = (float)Find.TickManager.TicksGame;
 		}
@@ -143,6 +170,49 @@ namespace RimWorld
 				{
 					num += innerContainer[k].MarketValue * (float)innerContainer[k].stackCount;
 				}
+			}
+			return num;
+		}
+
+		private float CalculateWealthItems()
+		{
+			this.tmpThings.Clear();
+			ThingOwnerUtility.GetAllThingsRecursively<Thing>(this.map, ThingRequest.ForGroup(ThingRequestGroup.HaulableEver), this.tmpThings, false, delegate(IThingHolder x)
+			{
+				if (x is PassingShip || x is MapComponent)
+				{
+					return false;
+				}
+				Pawn pawn = x as Pawn;
+				return pawn == null || pawn.Faction == Faction.OfPlayer;
+			}, true);
+			float num = 0f;
+			for (int i = 0; i < this.tmpThings.Count; i++)
+			{
+				if (this.tmpThings[i].SpawnedOrAnyParentSpawned && !this.tmpThings[i].PositionHeld.Fogged(this.map))
+				{
+					num += this.tmpThings[i].MarketValue * (float)this.tmpThings[i].stackCount;
+				}
+			}
+			this.tmpThings.Clear();
+			return num;
+		}
+
+		private float CalculateWealthFloors()
+		{
+			TerrainDef[] topGrid = this.map.terrainGrid.topGrid;
+			bool[] fogGrid = this.map.fogGrid.fogGrid;
+			IntVec3 size = this.map.Size;
+			float num = 0f;
+			int i = 0;
+			int num2 = size.x * size.z;
+			while (i < num2)
+			{
+				if (!fogGrid[i])
+				{
+					num += WealthWatcher.cachedTerrainMarketValue[(int)topGrid[i].index];
+				}
+				i++;
 			}
 			return num;
 		}

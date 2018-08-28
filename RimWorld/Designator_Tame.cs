@@ -19,15 +19,23 @@ namespace RimWorld
 			}
 		}
 
+		protected override DesignationDef Designation
+		{
+			get
+			{
+				return DesignationDefOf.Tame;
+			}
+		}
+
 		public Designator_Tame()
 		{
 			this.defaultLabel = "DesignatorTame".Translate();
 			this.defaultDesc = "DesignatorTameDesc".Translate();
 			this.icon = ContentFinder<Texture2D>.Get("UI/Designators/Tame", true);
-			this.soundDragSustain = SoundDefOf.DesignateDragStandard;
-			this.soundDragChanged = SoundDefOf.DesignateDragStandardChanged;
+			this.soundDragSustain = SoundDefOf.Designate_DragStandard;
+			this.soundDragChanged = SoundDefOf.Designate_DragStandard_Changed;
 			this.useMouseIcon = true;
-			this.soundSucceeded = SoundDefOf.DesignateClaim;
+			this.soundSucceeded = SoundDefOf.Designate_Claim;
 			this.hotKey = KeyBindingDefOf.Misc4;
 			this.tutorTag = "Tame";
 		}
@@ -56,11 +64,7 @@ namespace RimWorld
 		public override AcceptanceReport CanDesignateThing(Thing t)
 		{
 			Pawn pawn = t as Pawn;
-			if (pawn != null && pawn.AnimalOrWildMan() && pawn.Faction == null && pawn.RaceProps.wildness < 1f && !pawn.HostileTo(t) && base.Map.designationManager.DesignationOn(pawn, DesignationDefOf.Tame) == null)
-			{
-				return true;
-			}
-			return false;
+			return pawn != null && TameUtility.CanTame(pawn) && base.Map.designationManager.DesignationOn(pawn, this.Designation) == null;
 		}
 
 		protected override void FinalizeDesignationSucceeded()
@@ -69,42 +73,7 @@ namespace RimWorld
 			foreach (PawnKindDef kind in (from p in this.justDesignated
 			select p.kindDef).Distinct<PawnKindDef>())
 			{
-				if (kind.RaceProps.manhunterOnTameFailChance > 0f)
-				{
-					Messages.Message("MessageAnimalManhuntsOnTameFailed".Translate(new object[]
-					{
-						kind.GetLabelPlural(-1),
-						kind.RaceProps.manhunterOnTameFailChance.ToStringPercent("F2")
-					}), this.justDesignated.First((Pawn x) => x.kindDef == kind), MessageTypeDefOf.CautionInput);
-				}
-			}
-			IEnumerable<Pawn> source = from c in base.Map.mapPawns.FreeColonistsSpawned
-			where c.workSettings.WorkIsActive(WorkTypeDefOf.Handling)
-			select c;
-			if (!source.Any<Pawn>())
-			{
-				source = base.Map.mapPawns.FreeColonistsSpawned;
-			}
-			if (source.Any<Pawn>())
-			{
-				Pawn pawn = source.MaxBy((Pawn c) => c.skills.GetSkill(SkillDefOf.Animals).Level);
-				int level = pawn.skills.GetSkill(SkillDefOf.Animals).Level;
-				foreach (ThingDef ad in (from t in this.justDesignated
-				select t.def).Distinct<ThingDef>())
-				{
-					int num = Mathf.RoundToInt(ad.GetStatValueAbstract(StatDefOf.MinimumHandlingSkill, null));
-					if (num > level)
-					{
-						Messages.Message("MessageNoHandlerSkilledEnough".Translate(new object[]
-						{
-							ad.label,
-							num.ToStringCached(),
-							SkillDefOf.Animals.LabelCap,
-							pawn.LabelShort,
-							level
-						}), this.justDesignated.First((Pawn x) => x.def == ad), MessageTypeDefOf.CautionInput);
-					}
-				}
+				TameUtility.ShowDesignationWarnings(this.justDesignated.First((Pawn x) => x.kindDef == kind), true);
 			}
 			this.justDesignated.Clear();
 			PlayerKnowledgeDatabase.KnowledgeDemonstrated(ConceptDefOf.AnimalTaming, KnowledgeAmount.Total);
@@ -113,7 +82,7 @@ namespace RimWorld
 		public override void DesignateThing(Thing t)
 		{
 			base.Map.designationManager.RemoveAllDesignationsOn(t, false);
-			base.Map.designationManager.AddDesignation(new Designation(t, DesignationDefOf.Tame));
+			base.Map.designationManager.AddDesignation(new Designation(t, this.Designation));
 			this.justDesignated.Add((Pawn)t);
 		}
 

@@ -8,7 +8,7 @@ namespace Verse
 	{
 		public static readonly Material ClipMat = SolidColorMaterials.NewSolidColorMaterial(new Color(0.1f, 0.1f, 0.1f), ShaderDatabase.MetaOverlay);
 
-		private static readonly float ClipAltitude = Altitudes.AltitudeFor(AltitudeLayer.WorldClipper);
+		private static readonly float ClipAltitude = AltitudeLayer.WorldClipper.AltitudeFor();
 
 		private const float ClipWidth = 500f;
 

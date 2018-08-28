@@ -8,7 +8,8 @@ namespace RimWorld
 	{
 		protected override bool TryFindShootingPosition(Pawn pawn, out IntVec3 dest)
 		{
-			Verb verb = pawn.TryGetAttackVerb(!pawn.IsColonist);
+			Thing enemyTarget = pawn.mindState.enemyTarget;
+			Verb verb = pawn.TryGetAttackVerb(enemyTarget, !pawn.IsColonist);
 			if (verb == null)
 			{
 				dest = IntVec3.Invalid;
@@ -17,7 +18,7 @@ namespace RimWorld
 			return CastPositionFinder.TryFindCastPosition(new CastPositionRequest
 			{
 				caster = pawn,
-				target = pawn.mindState.enemyTarget,
+				target = enemyTarget,
 				verb = verb,
 				maxRangeFromTarget = 9999f,
 				locus = (IntVec3)pawn.mindState.duty.focus,

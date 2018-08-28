@@ -10,6 +10,8 @@ namespace RimWorld
 	{
 		public const float NoMedicinePotency = 0.3f;
 
+		public const float NoMedicineQualityMax = 0.7f;
+
 		public const float NoDoctorTendQuality = 0.75f;
 
 		public const float SelfTendQualityFactor = 0.7f;
@@ -30,38 +32,18 @@ namespace RimWorld
 			}
 			if (medicine != null && medicine.Destroyed)
 			{
-				Log.Warning("Tried to use destroyed medicine.");
+				Log.Warning("Tried to use destroyed medicine.", false);
 				medicine = null;
 			}
-			float num = (medicine == null) ? 0.3f : medicine.def.GetStatValueAbstract(StatDefOf.MedicalPotency, null);
-			float num2;
-			if (doctor != null)
-			{
-				num2 = doctor.GetStatValue(StatDefOf.MedicalTendQuality, true);
-			}
-			else
-			{
-				num2 = 0.75f;
-			}
-			num2 *= num;
-			Building_Bed building_Bed = patient.CurrentBed();
-			if (building_Bed != null)
-			{
-				num2 += building_Bed.GetStatValue(StatDefOf.MedicalTendQualityOffset, true);
-			}
-			if (doctor == patient)
-			{
-				num2 *= 0.7f;
-			}
-			num2 = Mathf.Clamp01(num2);
+			float quality = TendUtility.CalculateBaseTendQuality(doctor, patient, (medicine == null) ? null : medicine.def);
 			TendUtility.GetOptimalHediffsToTendWithSingleTreatment(patient, medicine != null, TendUtility.tmpHediffsToTend, null);
 			for (int i = 0; i < TendUtility.tmpHediffsToTend.Count; i++)
 			{
-				TendUtility.tmpHediffsToTend[i].Tended(num2, i);
+				TendUtility.tmpHediffsToTend[i].Tended(quality, i);
 			}
-			if (doctor != null && doctor.Faction != null && patient.HostFaction == null && patient.Faction != null && patient.Faction != doctor.Faction)
+			if (doctor != null && doctor.Faction == Faction.OfPlayer && patient.Faction != doctor.Faction && !patient.IsPrisoner && patient.Faction != null)
 			{
-				patient.Faction.AffectGoodwillWith(doctor.Faction, 0.3f);
+				patient.mindState.timesGuestTendedToByPlayer++;
 			}
 			if (doctor != null && doctor.IsColonistPlayerControlled)
 			{
@@ -76,9 +58,13 @@ namespace RimWorld
 			{
 				doctor.records.Increment(RecordDefOf.TimesTendedOther);
 			}
+			if (doctor == patient && !doctor.Dead)
+			{
+				doctor.mindState.Notify_SelfTended();
+			}
 			if (medicine != null)
 			{
-				if ((patient.Spawned || (doctor != null && doctor.Spawned)) && num > ThingDefOf.Medicine.GetStatValueAbstract(StatDefOf.MedicalPotency, null))
+				if ((patient.Spawned || (doctor != null && doctor.Spawned)) && medicine != null && medicine.GetStatValue(StatDefOf.MedicalPotency, true) > ThingDefOf.MedicineIndustrial.GetStatValueAbstract(StatDefOf.MedicalPotency, null))
 				{
 					SoundDefOf.TechMedicineUsed.PlayOneShot(new TargetInfo(patient.Position, patient.Map, false));
 				}
@@ -91,6 +77,37 @@ namespace RimWorld
 					medicine.Destroy(DestroyMode.Vanish);
 				}
 			}
+		}
+
+		public static float CalculateBaseTendQuality(Pawn doctor, Pawn patient, ThingDef medicine)
+		{
+			float medicinePotency = (medicine == null) ? 0.3f : medicine.GetStatValueAbstract(StatDefOf.MedicalPotency, null);
+			float medicineQualityMax = (medicine == null) ? 0.7f : medicine.GetStatValueAbstract(StatDefOf.MedicalQualityMax, null);
+			return TendUtility.CalculateBaseTendQuality(doctor, patient, medicinePotency, medicineQualityMax);
+		}
+
+		public static float CalculateBaseTendQuality(Pawn doctor, Pawn patient, float medicinePotency, float medicineQualityMax)
+		{
+			float num;
+			if (doctor != null)
+			{
+				num = doctor.GetStatValue(StatDefOf.MedicalTendQuality, true);
+			}
+			else
+			{
+				num = 0.75f;
+			}
+			num *= medicinePotency;
+			Building_Bed building_Bed = (patient == null) ? null : patient.CurrentBed();
+			if (building_Bed != null)
+			{
+				num += building_Bed.GetStatValue(StatDefOf.MedicalTendQualityOffset, true);
+			}
+			if (doctor == patient && doctor != null)
+			{
+				num *= 0.7f;
+			}
+			return Mathf.Clamp(num, 0f, medicineQualityMax);
 		}
 
 		public static void GetOptimalHediffsToTendWithSingleTreatment(Pawn patient, bool usingMedicine, List<Hediff> outHediffsToTend, List<Hediff> tendableHediffsInTendPriorityOrder = null)
@@ -106,7 +123,7 @@ namespace RimWorld
 				List<Hediff> hediffs = patient.health.hediffSet.hediffs;
 				for (int i = 0; i < hediffs.Count; i++)
 				{
-					if (hediffs[i].TendableNow)
+					if (hediffs[i].TendableNow(false))
 					{
 						TendUtility.tmpHediffs.Add(hediffs[i]);
 					}

@@ -8,9 +8,12 @@ namespace RimWorld
 {
 	public class JobDriver_Flick : JobDriver
 	{
-		public override bool TryMakePreToilReservations()
+		public override bool TryMakePreToilReservations(bool errorOnFailed)
 		{
-			return this.pawn.Reserve(this.job.targetA, this.job, 1, -1, null);
+			Pawn pawn = this.pawn;
+			LocalTargetInfo targetA = this.job.targetA;
+			Job job = this.job;
+			return pawn.Reserve(targetA, job, 1, -1, null, errorOnFailed);
 		}
 
 		[DebuggerHidden]
@@ -23,7 +26,7 @@ namespace RimWorld
 				return designation == null;
 			});
 			yield return Toils_Goto.GotoThing(TargetIndex.A, PathEndMode.Touch);
-			yield return Toils_General.Wait(15).FailOnCannotTouch(TargetIndex.A, PathEndMode.Touch);
+			yield return Toils_General.Wait(15, TargetIndex.None).FailOnCannotTouch(TargetIndex.A, PathEndMode.Touch);
 			Toil finalize = new Toil();
 			finalize.initAction = delegate
 			{

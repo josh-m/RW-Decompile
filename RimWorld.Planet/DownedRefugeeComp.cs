@@ -15,21 +15,25 @@ namespace RimWorld.Planet
 
 		protected override void RemovePawnOnWorldObjectRemoved()
 		{
-			for (int i = this.pawn.Count - 1; i >= 0; i--)
+			if (this.pawn.Any)
 			{
-				if (!this.pawn[i].Dead)
+				if (!this.pawn[0].Dead)
 				{
-					this.pawn[i].Kill(null, null);
+					if (this.pawn[0].relations != null)
+					{
+						this.pawn[0].relations.Notify_FailedRescueQuest();
+					}
+					HealthUtility.HealNonPermanentInjuriesAndRestoreLegs(this.pawn[0]);
 				}
+				this.pawn.ClearAndDestroyContentsOrPassToWorld(DestroyMode.Vanish);
 			}
-			this.pawn.ClearAndDestroyContents(DestroyMode.Vanish);
 		}
 
 		public override string CompInspectStringExtra()
 		{
 			if (this.pawn.Any)
 			{
-				return "Refugee".Translate() + ": " + this.pawn[0].LabelShort;
+				return "Refugee".Translate() + ": " + this.pawn[0].LabelCap;
 			}
 			return null;
 		}

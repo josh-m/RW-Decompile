@@ -90,7 +90,7 @@ namespace Verse
 					GenFilePaths.KeyPrefsFilePath,
 					ex.ToString()
 				}));
-				Log.Error("Exception saving keyprefs: " + ex);
+				Log.Error("Exception saving keyprefs: " + ex, false);
 			}
 		}
 	}

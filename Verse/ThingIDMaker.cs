@@ -18,7 +18,7 @@ namespace Verse
 					t,
 					" which already has id ",
 					t.thingIDNumber
-				}));
+				}), false);
 			}
 			t.thingIDNumber = Find.UniqueIDsManager.GetNextThingID();
 		}

@@ -74,7 +74,7 @@ namespace Verse.Sound
 					" of ",
 					this.parent.def,
 					" could not resolve any grains."
-				}));
+				}), false);
 				this.parent.End();
 				return;
 			}

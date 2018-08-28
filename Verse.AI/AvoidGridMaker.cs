@@ -39,21 +39,10 @@ namespace Verse.AI
 				byteGrid = new ByteGrid(map);
 				faction.avoidGridsSmart.Add(map, byteGrid);
 			}
-			ByteGrid byteGrid2;
-			if (faction.avoidGridsBasic.TryGetValue(map, out byteGrid2))
-			{
-				byteGrid2.Clear(0);
-			}
-			else
-			{
-				byteGrid2 = new ByteGrid(map);
-				faction.avoidGridsBasic.Add(map, byteGrid2);
-			}
 			AvoidGridMaker.GenerateAvoidGridInternal(byteGrid, faction, map, AvoidGridMode.Smart);
-			AvoidGridMaker.GenerateAvoidGridInternal(byteGrid2, faction, map, AvoidGridMode.Basic);
 		}
 
-		internal static void Notify_CombatDangerousBuildingDespawned(Building building, Map map)
+		public static void Notify_CombatDangerousBuildingDespawned(Building building, Map map)
 		{
 			foreach (Faction current in Find.FactionManager.AllFactions)
 			{
@@ -66,22 +55,18 @@ namespace Verse.AI
 
 		private static void GenerateAvoidGridInternal(ByteGrid grid, Faction faction, Map map, AvoidGridMode mode)
 		{
-			List<TrapMemory> list = faction.TacticalMemory.TrapMemories();
-			for (int i = 0; i < list.Count; i++)
-			{
-				if (list[i].map == map)
-				{
-					AvoidGridMaker.PrintAvoidGridAroundTrapLoc(list[i], grid);
-				}
-			}
+			List<Building> allBuildingsColonist = map.listerBuildings.allBuildingsColonist;
 			if (mode == AvoidGridMode.Smart)
 			{
-				List<Building> allBuildingsColonist = map.listerBuildings.allBuildingsColonist;
-				for (int j = 0; j < allBuildingsColonist.Count; j++)
+				for (int i = 0; i < allBuildingsColonist.Count; i++)
 				{
-					if (allBuildingsColonist[j].def.building.ai_combatDangerous)
+					if (Rand.Chance(0.5f) && allBuildingsColonist[i].def.building.isTrap)
 					{
-						Building_TurretGun building_TurretGun = allBuildingsColonist[j] as Building_TurretGun;
+						AvoidGridMaker.PrintAvoidGridAroundTrapLoc(allBuildingsColonist[i], grid);
+					}
+					if (allBuildingsColonist[i].def.building.ai_combatDangerous)
+					{
+						Building_TurretGun building_TurretGun = allBuildingsColonist[i] as Building_TurretGun;
 						if (building_TurretGun != null)
 						{
 							AvoidGridMaker.PrintAvoidGridAroundTurret(building_TurretGun, grid);
@@ -92,16 +77,16 @@ namespace Verse.AI
 			AvoidGridMaker.ExpandAvoidGridIntoEdifices(grid, map);
 		}
 
-		private static void PrintAvoidGridAroundTrapLoc(TrapMemory mem, ByteGrid avoidGrid)
+		private static void PrintAvoidGridAroundTrapLoc(Building b, ByteGrid avoidGrid)
 		{
-			Room room = mem.Cell.GetRoom(mem.map, RegionType.Set_Passable);
+			Room room = b.Position.GetRoom(b.Map, RegionType.Set_Passable);
 			for (int i = 0; i < AvoidGridMaker.TrapRadialCells; i++)
 			{
-				IntVec3 intVec = mem.Cell + GenRadial.RadialPattern[i];
-				if (intVec.InBounds(mem.map) && intVec.Walkable(mem.map) && intVec.GetRoom(mem.map, RegionType.Set_Passable) == room)
+				IntVec3 intVec = b.Position + GenRadial.RadialPattern[i];
+				if (intVec.InBounds(b.Map) && intVec.Walkable(b.Map) && intVec.GetRoom(b.Map, RegionType.Set_Passable) == room)
 				{
-					float num = (float)Mathf.Max(1, intVec.DistanceToSquared(mem.Cell));
-					int num2 = Mathf.Max(1, Mathf.RoundToInt(32f * mem.PowerPercent / num));
+					float num = (float)Mathf.Max(1, intVec.DistanceToSquared(b.Position));
+					int num2 = Mathf.Max(1, Mathf.RoundToInt(80f / num));
 					AvoidGridMaker.IncrementAvoidGrid(avoidGrid, intVec, num2);
 				}
 			}
@@ -109,13 +94,16 @@ namespace Verse.AI
 
 		private static void PrintAvoidGridAroundTurret(Building_TurretGun tur, ByteGrid avoidGrid)
 		{
-			int num = GenRadial.NumCellsInRadius(tur.GunCompEq.PrimaryVerb.verbProps.range + 4f);
-			for (int i = 0; i < num; i++)
+			float range = tur.GunCompEq.PrimaryVerb.verbProps.range;
+			float num = tur.GunCompEq.PrimaryVerb.verbProps.EffectiveMinRange(true);
+			int num2 = GenRadial.NumCellsInRadius(range + 4f);
+			int num3 = (num >= 1f) ? GenRadial.NumCellsInRadius(num) : 0;
+			for (int i = num3; i < num2; i++)
 			{
 				IntVec3 intVec = tur.Position + GenRadial.RadialPattern[i];
 				if (intVec.InBounds(tur.Map) && intVec.Walkable(tur.Map) && GenSight.LineOfSight(intVec, tur.Position, tur.Map, true, null, 0, 0))
 				{
-					AvoidGridMaker.IncrementAvoidGrid(avoidGrid, intVec, 12);
+					AvoidGridMaker.IncrementAvoidGrid(avoidGrid, intVec, 45);
 				}
 			}
 		}

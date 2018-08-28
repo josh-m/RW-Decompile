@@ -22,7 +22,9 @@ namespace RimWorld
 
 		private const int MaxNameLength = 12;
 
-		private const int MaxNickLength = 9;
+		public const int MaxNickLength = 16;
+
+		public const int MaxTitleLength = 25;
 
 		private static Regex validNameRegex = new Regex("^[a-zA-Z0-9 '\\-]*$");
 
@@ -50,7 +52,7 @@ namespace RimWorld
 				{
 					GUI.color = new Color(1f, 1f, 1f, 0.5f);
 				}
-				CharacterCardUtility.DoNameInputRect(rect4, ref nick, 9);
+				CharacterCardUtility.DoNameInputRect(rect4, ref nick, 16);
 				GUI.color = Color.white;
 				CharacterCardUtility.DoNameInputRect(rect5, ref last, 12);
 				if (nameTriple.First != first || nameTriple.Nick != nick || nameTriple.Last != last)
@@ -73,7 +75,7 @@ namespace RimWorld
 				Rect rect6 = new Rect(creationRect.width - 24f - 100f, 0f, 100f, rect2.height);
 				if (Widgets.ButtonText(rect6, "Randomize".Translate(), true, false, true))
 				{
-					SoundDefOf.TickTiny.PlayOneShotOnCamera(null);
+					SoundDefOf.Tick_Tiny.PlayOneShotOnCamera(null);
 					randomizeCallback();
 				}
 				UIHighlighter.HighlightOpportunity(rect6, "RandomizePawn");
@@ -96,7 +98,7 @@ namespace RimWorld
 							Messages.Message("MessageCantBanishDownedPawn".Translate(new object[]
 							{
 								pawn.LabelShort
-							}).AdjustedFor(pawn), pawn, MessageTypeDefOf.RejectInput);
+							}).AdjustedFor(pawn, "PAWN"), pawn, MessageTypeDefOf.RejectInput, false);
 						}
 						else
 						{
@@ -111,7 +113,7 @@ namespace RimWorld
 					TooltipHandler.TipRegion(rect8, "RenameColonist".Translate());
 					if (Widgets.ButtonImage(rect8, TexButton.Rename))
 					{
-						Find.WindowStack.Add(new Dialog_ChangeNameTriple(pawn));
+						Find.WindowStack.Add(new Dialog_NamePawn(pawn));
 					}
 					num -= 40f;
 				}
@@ -146,10 +148,22 @@ namespace RimWorld
 					Rect rect11 = new Rect(rect10);
 					rect11.x += 90f;
 					rect11.width -= 90f;
-					string title = backstory.Title;
-					Widgets.Label(rect11, title);
+					string label2 = backstory.TitleCapFor(pawn.gender);
+					Widgets.Label(rect11, label2);
 					num2 += rect10.height + 2f;
 				}
+			}
+			if (pawn.story != null && pawn.story.title != null)
+			{
+				Rect rect12 = new Rect(0f, num2, position.width, 24f);
+				Text.Anchor = TextAnchor.MiddleLeft;
+				Widgets.Label(rect12, "Current".Translate() + ":");
+				Text.Anchor = TextAnchor.UpperLeft;
+				Rect rect13 = new Rect(rect12);
+				rect13.x += 90f;
+				rect13.width -= 90f;
+				Widgets.Label(rect13, pawn.story.title);
+				num2 += rect12.height + 2f;
 			}
 			num2 += 25f;
 			Text.Font = GameFont.Medium;
@@ -182,8 +196,8 @@ namespace RimWorld
 			}
 			string text = stringBuilder.ToString();
 			text = text.Substring(0, text.Length - 2);
-			Rect rect12 = new Rect(0f, num2, position.width, 999f);
-			Widgets.Label(rect12, text);
+			Rect rect14 = new Rect(0f, num2, position.width, 999f);
+			Widgets.Label(rect14, text);
 			num2 += 100f;
 			Text.Font = GameFont.Medium;
 			Widgets.Label(new Rect(0f, num2, 200f, 30f), "Traits".Translate());
@@ -192,16 +206,16 @@ namespace RimWorld
 			for (int i = 0; i < pawn.story.traits.allTraits.Count; i++)
 			{
 				Trait trait = pawn.story.traits.allTraits[i];
-				Rect rect13 = new Rect(0f, num2, position.width, 24f);
-				if (Mouse.IsOver(rect13))
+				Rect rect15 = new Rect(0f, num2, position.width, 24f);
+				if (Mouse.IsOver(rect15))
 				{
-					Widgets.DrawHighlight(rect13);
+					Widgets.DrawHighlight(rect15);
 				}
-				Widgets.Label(rect13, trait.LabelCap);
-				num2 += rect13.height + 2f;
+				Widgets.Label(rect15, trait.LabelCap);
+				num2 += rect15.height + 2f;
 				Trait trLocal = trait;
 				TipSignal tip = new TipSignal(() => trLocal.TipString(pawn), (int)num2 * 37);
-				TooltipHandler.TipRegion(rect13, tip);
+				TooltipHandler.TipRegion(rect15, tip);
 			}
 			GUI.EndGroup();
 			GUI.BeginGroup(position2);

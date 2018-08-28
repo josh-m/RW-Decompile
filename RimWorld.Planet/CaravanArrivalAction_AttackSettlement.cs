@@ -1,11 +1,23 @@
 using System;
+using System.Collections.Generic;
 using Verse;
 
 namespace RimWorld.Planet
 {
 	public class CaravanArrivalAction_AttackSettlement : CaravanArrivalAction
 	{
-		private Settlement settlement;
+		private SettlementBase settlement;
+
+		public override string Label
+		{
+			get
+			{
+				return "AttackSettlement".Translate(new object[]
+				{
+					this.settlement.Label
+				});
+			}
+		}
 
 		public override string ReportString
 		{
@@ -18,68 +30,62 @@ namespace RimWorld.Planet
 			}
 		}
 
-		public override bool ShouldFail
-		{
-			get
-			{
-				return base.ShouldFail || this.settlement == null || !this.settlement.Spawned || !this.settlement.Attackable;
-			}
-		}
-
 		public CaravanArrivalAction_AttackSettlement()
 		{
 		}
 
-		public CaravanArrivalAction_AttackSettlement(Settlement settlement)
+		public CaravanArrivalAction_AttackSettlement(SettlementBase settlement)
 		{
 			this.settlement = settlement;
 		}
 
+		public override FloatMenuAcceptanceReport StillValid(Caravan caravan, int destinationTile)
+		{
+			FloatMenuAcceptanceReport floatMenuAcceptanceReport = base.StillValid(caravan, destinationTile);
+			if (!floatMenuAcceptanceReport)
+			{
+				return floatMenuAcceptanceReport;
+			}
+			if (this.settlement != null && this.settlement.Tile != destinationTile)
+			{
+				return false;
+			}
+			return CaravanArrivalAction_AttackSettlement.CanAttack(caravan, this.settlement);
+		}
+
 		public override void Arrived(Caravan caravan)
 		{
-			if (!this.settlement.HasMap)
-			{
-				LongEventHandler.QueueLongEvent(delegate
-				{
-					this.DoArrivalAction(caravan);
-				}, "GeneratingMapForNewEncounter", false, null);
-			}
-			else
-			{
-				this.DoArrivalAction(caravan);
-			}
+			SettlementUtility.Attack(caravan, this.settlement);
 		}
 
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_References.Look<Settlement>(ref this.settlement, "settlement", false);
+			Scribe_References.Look<SettlementBase>(ref this.settlement, "settlement", false);
 		}
 
-		private void DoArrivalAction(Caravan caravan)
+		public static FloatMenuAcceptanceReport CanAttack(Caravan caravan, SettlementBase settlement)
 		{
-			Pawn t = caravan.PawnsListForReading[0];
-			Map orGenerateMap = GetOrGenerateMapUtility.GetOrGenerateMap(this.settlement.Tile, null);
-			CaravanEnterMapUtility.Enter(caravan, orGenerateMap, CaravanEnterMode.Edge, CaravanDropInventoryMode.DoNotDrop, true, null);
-			Find.TickManager.CurTimeSpeed = TimeSpeed.Paused;
-			if (!this.settlement.Faction.HostileTo(Faction.OfPlayer))
+			if (settlement == null || !settlement.Spawned || !settlement.Attackable)
 			{
-				this.settlement.Faction.SetHostileTo(Faction.OfPlayer, true);
-				Find.LetterStack.ReceiveLetter("LetterLabelCaravanEnteredEnemyBase".Translate(), "LetterCaravanEnteredEnemyBaseBecameHostile".Translate(new object[]
-				{
-					caravan.Label,
-					this.settlement.Label,
-					this.settlement.Faction.Name
-				}).CapitalizeFirst(), LetterDefOf.NeutralEvent, t, null);
+				return false;
 			}
-			else
+			if (settlement.EnterCooldownBlocksEntering())
 			{
-				Find.LetterStack.ReceiveLetter("LetterLabelCaravanEnteredEnemyBase".Translate(), "LetterCaravanEnteredEnemyBase".Translate(new object[]
+				return FloatMenuAcceptanceReport.WithFailMessage("MessageEnterCooldownBlocksEntering".Translate(new object[]
 				{
-					caravan.Label,
-					this.settlement.Label
-				}).CapitalizeFirst(), LetterDefOf.NeutralEvent, t, null);
+					settlement.EnterCooldownDaysLeft().ToString("0.#")
+				}));
 			}
+			return true;
+		}
+
+		public static IEnumerable<FloatMenuOption> GetFloatMenuOptions(Caravan caravan, SettlementBase settlement)
+		{
+			return CaravanArrivalActionUtility.GetFloatMenuOptions<CaravanArrivalAction_AttackSettlement>(() => CaravanArrivalAction_AttackSettlement.CanAttack(caravan, settlement), () => new CaravanArrivalAction_AttackSettlement(settlement), "AttackSettlement".Translate(new object[]
+			{
+				settlement.Label
+			}), caravan, settlement.Tile, settlement);
 		}
 	}
 }

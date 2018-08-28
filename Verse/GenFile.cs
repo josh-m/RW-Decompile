@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using UnityEngine;
 
 namespace Verse
@@ -18,7 +19,7 @@ namespace Verse
 			TextAsset textAsset = Resources.Load("Text/" + filePath) as TextAsset;
 			if (textAsset == null)
 			{
-				Log.Message("Found no text asset in resources at " + filePath);
+				Log.Message("Found no text asset in resources at " + filePath, false);
 				return null;
 			}
 			return GenFile.GetTextWithoutBOM(textAsset);
@@ -87,6 +88,24 @@ namespace Verse
 					GenFile.DirectoryCopy(directoryInfo2.FullName, destDirName2, copySubDirs, useLinuxLineEndings);
 				}
 			}
+		}
+
+		public static string SanitizedFileName(string fileName)
+		{
+			char[] invalidFileNameChars = Path.GetInvalidFileNameChars();
+			string text = string.Empty;
+			for (int i = 0; i < fileName.Length; i++)
+			{
+				if (!invalidFileNameChars.Contains(fileName[i]))
+				{
+					text += fileName[i];
+				}
+			}
+			if (text.Length == 0)
+			{
+				text = "unnamed";
+			}
+			return text;
 		}
 	}
 }

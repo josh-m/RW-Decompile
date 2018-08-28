@@ -83,7 +83,7 @@ namespace RimWorld
 				action = delegate
 				{
 					this.$this.targetTemperature = 21f;
-					SoundDefOf.TickTiny.PlayOneShotOnCamera(null);
+					SoundDefOf.Tick_Tiny.PlayOneShotOnCamera(null);
 					this.$this.ThrowCurrentTemperatureText();
 				},
 				defaultLabel = "CommandResetTemp".Translate(),
@@ -128,7 +128,7 @@ namespace RimWorld
 				SoundDefOf.AmountDecrement.PlayOneShotOnCamera(null);
 			}
 			this.targetTemperature += offset;
-			this.targetTemperature = Mathf.Clamp(this.targetTemperature, -270f, 2000f);
+			this.targetTemperature = Mathf.Clamp(this.targetTemperature, -273.15f, 2000f);
 			this.ThrowCurrentTemperatureText();
 		}
 

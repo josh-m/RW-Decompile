@@ -22,7 +22,7 @@ namespace RimWorld
 		{
 			if (this.IntervalsPassed == 840)
 			{
-				IncidentDef inc = IncidentDefOf.JourneyOffer;
+				IncidentDef inc = IncidentDefOf.Quest_JourneyOffer;
 				if (inc.TargetAllowed(target))
 				{
 					FiringIncident fi = new FiringIncident(inc, this, this.GenerateParms(inc.category, target));

@@ -8,67 +8,66 @@ namespace RimWorld
 {
 	public class JobDriver_RemoveApparel : JobDriver
 	{
-		private const int DurationTicks = 60;
+		private int duration;
 
-		private Apparel TargetApparel
+		private const TargetIndex ApparelInd = TargetIndex.A;
+
+		private Apparel Apparel
 		{
 			get
 			{
-				return (Apparel)base.TargetA.Thing;
+				return (Apparel)this.job.GetTarget(TargetIndex.A).Thing;
 			}
 		}
 
-		public override bool TryMakePreToilReservations()
+		public override void ExposeData()
+		{
+			base.ExposeData();
+			Scribe_Values.Look<int>(ref this.duration, "duration", 0, false);
+		}
+
+		public override bool TryMakePreToilReservations(bool errorOnFailed)
 		{
 			return true;
+		}
+
+		public override void Notify_Starting()
+		{
+			base.Notify_Starting();
+			this.duration = (int)(this.Apparel.GetStatValue(StatDefOf.EquipDelay, true) * 60f);
 		}
 
 		[DebuggerHidden]
 		protected override IEnumerable<Toil> MakeNewToils()
 		{
 			this.FailOnDestroyedOrNull(TargetIndex.A);
-			yield return new Toil
+			yield return Toils_General.Wait(this.duration, TargetIndex.None).WithProgressBarToilDelay(TargetIndex.A, false, -0.5f);
+			yield return Toils_General.Do(delegate
 			{
-				initAction = delegate
+				if (this.$this.pawn.apparel.WornApparel.Contains(this.$this.Apparel))
 				{
-					this.$this.pawn.pather.StopDead();
-				},
-				defaultCompleteMode = ToilCompleteMode.Delay,
-				defaultDuration = 60
-			};
-			yield return new Toil
-			{
-				initAction = delegate
-				{
-					if (this.$this.pawn.apparel.WornApparel.Contains(this.$this.TargetApparel))
+					Apparel apparel;
+					if (this.$this.pawn.apparel.TryDrop(this.$this.Apparel, out apparel))
 					{
-						Apparel apparel;
-						if (this.$this.pawn.apparel.TryDrop(this.$this.TargetApparel, out apparel))
+						this.$this.job.targetA = apparel;
+						if (this.$this.job.haulDroppedApparel)
 						{
-							this.$this.job.targetA = apparel;
-							if (this.$this.job.haulDroppedApparel)
+							apparel.SetForbidden(false, false);
+							StoragePriority currentPriority = StoreUtility.CurrentStoragePriorityOf(apparel);
+							IntVec3 c;
+							if (StoreUtility.TryFindBestBetterStoreCellFor(apparel, this.$this.pawn, this.$this.Map, currentPriority, this.$this.pawn.Faction, out c, true))
 							{
-								apparel.SetForbidden(false, false);
-								StoragePriority currentPriority = HaulAIUtility.StoragePriorityAtFor(apparel.Position, apparel);
-								IntVec3 c;
-								if (StoreUtility.TryFindBestBetterStoreCellFor(apparel, this.$this.pawn, this.$this.Map, currentPriority, this.$this.pawn.Faction, out c, true))
-								{
-									this.$this.job.count = apparel.stackCount;
-									this.$this.job.targetB = c;
-								}
-								else
-								{
-									this.$this.EndJobWith(JobCondition.Incompletable);
-								}
+								this.$this.job.count = apparel.stackCount;
+								this.$this.job.targetB = c;
 							}
 							else
 							{
-								this.$this.EndJobWith(JobCondition.Succeeded);
+								this.$this.EndJobWith(JobCondition.Incompletable);
 							}
 						}
 						else
 						{
-							this.$this.EndJobWith(JobCondition.Incompletable);
+							this.$this.EndJobWith(JobCondition.Succeeded);
 						}
 					}
 					else
@@ -76,7 +75,11 @@ namespace RimWorld
 						this.$this.EndJobWith(JobCondition.Incompletable);
 					}
 				}
-			};
+				else
+				{
+					this.$this.EndJobWith(JobCondition.Incompletable);
+				}
+			});
 			if (this.job.haulDroppedApparel)
 			{
 				yield return Toils_Reserve.Reserve(TargetIndex.B, 1, -1, null);

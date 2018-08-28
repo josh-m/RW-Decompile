@@ -27,7 +27,7 @@ namespace RimWorld
 				}
 				else if (Rand.Value < this.Props.addictiveness && num >= this.Props.minToleranceToAddict)
 				{
-					ingester.health.AddHediff(addictionHediffDef, null, null);
+					ingester.health.AddHediff(addictionHediffDef, null, null, null);
 					if (PawnUtility.ShouldSendNotificationAbout(ingester))
 					{
 						Find.LetterStack.ReceiveLetter("LetterLabelNewlyAddicted".Translate(new object[]
@@ -37,7 +37,7 @@ namespace RimWorld
 						{
 							ingester.LabelShort,
 							this.Props.chemical.label
-						}).AdjustedFor(ingester).CapitalizeFirst(), LetterDefOf.NegativeEvent, ingester, null);
+						}).AdjustedFor(ingester, "PAWN").CapitalizeFirst(), LetterDefOf.NegativeEvent, ingester, null, null);
 					}
 					AddictionUtility.CheckDrugAddictionTeachOpportunity(ingester);
 				}
@@ -63,7 +63,7 @@ namespace RimWorld
 						{
 							ingester.LabelIndefinite(),
 							this.parent.LabelNoCount
-						}).CapitalizeFirst(), MessageTypeDefOf.NegativeHealthEvent);
+						}).CapitalizeFirst(), ingester, MessageTypeDefOf.NegativeHealthEvent, true);
 					}
 				}
 				else

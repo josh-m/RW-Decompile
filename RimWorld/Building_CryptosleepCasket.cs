@@ -17,7 +17,7 @@ namespace RimWorld
 			{
 				if (allowSpecialEffects)
 				{
-					SoundDef.Named("CryptosleepCasketAccept").PlayOneShot(new TargetInfo(base.Position, base.Map, false));
+					SoundDefOf.CryptosleepCasket_Accept.PlayOneShot(new TargetInfo(base.Position, base.Map, false));
 				}
 				return true;
 			}
@@ -77,23 +77,23 @@ namespace RimWorld
 
 		public override void EjectContents()
 		{
-			ThingDef filthSlime = ThingDefOf.FilthSlime;
+			ThingDef filth_Slime = ThingDefOf.Filth_Slime;
 			foreach (Thing current in ((IEnumerable<Thing>)this.innerContainer))
 			{
 				Pawn pawn = current as Pawn;
 				if (pawn != null)
 				{
 					PawnComponentsUtility.AddComponentsForSpawn(pawn);
-					pawn.filth.GainFilth(filthSlime);
+					pawn.filth.GainFilth(filth_Slime);
 					if (pawn.RaceProps.IsFlesh)
 					{
-						pawn.health.AddHediff(HediffDefOf.CryptosleepSickness, null, null);
+						pawn.health.AddHediff(HediffDefOf.CryptosleepSickness, null, null, null);
 					}
 				}
 			}
 			if (!base.Destroyed)
 			{
-				SoundDef.Named("CryptosleepCasketEject").PlayOneShot(SoundInfo.InMap(new TargetInfo(base.Position, base.Map, false), MaintenanceType.None));
+				SoundDefOf.CryptosleepCasket_Eject.PlayOneShot(SoundInfo.InMap(new TargetInfo(base.Position, base.Map, false), MaintenanceType.None));
 			}
 			base.EjectContents();
 		}

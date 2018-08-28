@@ -22,9 +22,18 @@ namespace RimWorld
 			{
 				if (Rand.MTBEventOccurs(this.Props.mtbDays, 60000f, 1000f))
 				{
-					yield return new FiringIncident(this.Props.incident, this, this.GenerateParms(this.Props.incident.category, target));
+					IncidentParms parms = this.GenerateParms(this.Props.incident.category, target);
+					if (this.Props.incident.Worker.CanFireNow(parms, false))
+					{
+						yield return new FiringIncident(this.Props.incident, this, parms);
+					}
 				}
 			}
+		}
+
+		public override string ToString()
+		{
+			return base.ToString() + " " + this.Props.incident;
 		}
 	}
 }

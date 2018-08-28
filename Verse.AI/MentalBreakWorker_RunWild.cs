@@ -7,7 +7,16 @@ namespace Verse.AI
 	{
 		public override bool BreakCanOccur(Pawn pawn)
 		{
-			return pawn.IsColonistPlayerControlled && !pawn.Downed && pawn.Spawned && pawn.Map.mapTemperature.SeasonAndOutdoorTemperatureAcceptableFor(pawn.def) && base.BreakCanOccur(pawn);
+			if (!pawn.IsColonistPlayerControlled || pawn.Downed || !pawn.Spawned || !base.BreakCanOccur(pawn))
+			{
+				return false;
+			}
+			if (pawn.Map.GameConditionManager.ConditionIsActive(GameConditionDefOf.ToxicFallout))
+			{
+				return false;
+			}
+			float seasonalTemp = Find.World.tileTemperatures.GetSeasonalTemp(pawn.Map.Tile);
+			return seasonalTemp >= pawn.def.GetStatValueAbstract(StatDefOf.ComfyTemperatureMin, null) - 7f && seasonalTemp <= pawn.def.GetStatValueAbstract(StatDefOf.ComfyTemperatureMax, null) + 7f;
 		}
 
 		public override bool TryStart(Pawn pawn, Thought reason, bool causedByMood)
@@ -21,7 +30,7 @@ namespace Verse.AI
 			pawn.needs.mood.thoughts.memories.TryGainMemory(ThoughtDefOf.Catharsis, null);
 			if (pawn.Spawned && !pawn.Downed)
 			{
-				pawn.jobs.EndCurrentJob(JobCondition.InterruptForced, true);
+				pawn.jobs.StopAll(false);
 			}
 			return true;
 		}

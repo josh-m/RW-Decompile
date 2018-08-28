@@ -25,7 +25,7 @@ namespace RimWorld
 						" at tick ",
 						Find.TickManager.TicksGame,
 						". This is too far in the future. Resetting."
-					}));
+					}), false);
 					this.lastThreatBigTick = Find.TickManager.TicksGame - 1;
 				}
 				return this.lastThreatBigTick;
@@ -43,32 +43,25 @@ namespace RimWorld
 			Scribe_Collections.Look<IncidentDef, int>(ref this.lastFireTicks, "lastFireTicks", LookMode.Def, LookMode.Value);
 		}
 
-		public void Notify_IncidentFired(FiringIncident qi)
+		public void Notify_IncidentFired(FiringIncident fi)
 		{
-			if (qi.parms.forced || qi.parms.target != this.target)
+			if (fi.parms.forced || fi.parms.target != this.target)
 			{
 				return;
 			}
 			int ticksGame = Find.TickManager.TicksGame;
-			if (qi.def.category == IncidentCategory.ThreatBig || qi.def.category == IncidentCategory.RaidBeacon)
+			if (fi.def.category == IncidentCategoryDefOf.ThreatBig || fi.def.category == IncidentCategoryDefOf.RaidBeacon)
 			{
-				if (this.lastThreatBigTick <= ticksGame)
-				{
-					this.lastThreatBigTick = ticksGame;
-				}
-				else
-				{
-					Log.Error("Queueing threats backwards in time (" + qi + ")");
-				}
+				this.lastThreatBigTick = ticksGame;
 				Find.StoryWatcher.statsRecord.numThreatBigs++;
 			}
-			if (this.lastFireTicks.ContainsKey(qi.def))
+			if (this.lastFireTicks.ContainsKey(fi.def))
 			{
-				this.lastFireTicks[qi.def] = ticksGame;
+				this.lastFireTicks[fi.def] = ticksGame;
 			}
 			else
 			{
-				this.lastFireTicks.Add(qi.def, ticksGame);
+				this.lastFireTicks.Add(fi.def, ticksGame);
 			}
 		}
 

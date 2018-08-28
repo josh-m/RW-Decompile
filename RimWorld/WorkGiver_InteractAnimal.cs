@@ -11,7 +11,11 @@ namespace RimWorld
 
 		protected static string AnimalInteractedTooRecentlyTrans;
 
-		private static string AnimalsSkillTooLowTrans;
+		private static string CantInteractAnimalDownedTrans;
+
+		private static string CantInteractAnimalAsleepTrans;
+
+		private static string CantInteractAnimalBusyTrans;
 
 		public override PathEndMode PathEndMode
 		{
@@ -21,30 +25,44 @@ namespace RimWorld
 			}
 		}
 
-		public static void Reset()
+		public static void ResetStaticData()
 		{
 			WorkGiver_InteractAnimal.NoUsableFoodTrans = "NoUsableFood".Translate();
 			WorkGiver_InteractAnimal.AnimalInteractedTooRecentlyTrans = "AnimalInteractedTooRecently".Translate();
-			WorkGiver_InteractAnimal.AnimalsSkillTooLowTrans = "AnimalsSkillTooLow".Translate();
+			WorkGiver_InteractAnimal.CantInteractAnimalDownedTrans = "CantInteractAnimalDowned".Translate();
+			WorkGiver_InteractAnimal.CantInteractAnimalAsleepTrans = "CantInteractAnimalAsleep".Translate();
+			WorkGiver_InteractAnimal.CantInteractAnimalBusyTrans = "CantInteractAnimalBusy".Translate();
 		}
 
-		protected virtual bool CanInteractWithAnimal(Pawn pawn, Pawn animal)
+		protected virtual bool CanInteractWithAnimal(Pawn pawn, Pawn animal, bool forced)
 		{
-			if (!pawn.CanReserve(animal, 1, -1, null, false))
+			LocalTargetInfo target = animal;
+			if (!pawn.CanReserve(target, 1, -1, null, forced))
 			{
 				return false;
 			}
 			if (animal.Downed)
 			{
+				JobFailReason.Is(WorkGiver_InteractAnimal.CantInteractAnimalDownedTrans, null);
+				return false;
+			}
+			if (!animal.Awake())
+			{
+				JobFailReason.Is(WorkGiver_InteractAnimal.CantInteractAnimalAsleepTrans, null);
 				return false;
 			}
 			if (!animal.CanCasuallyInteractNow(false))
 			{
+				JobFailReason.Is(WorkGiver_InteractAnimal.CantInteractAnimalBusyTrans, null);
 				return false;
 			}
-			if (Mathf.RoundToInt(animal.GetStatValue(StatDefOf.MinimumHandlingSkill, true)) > pawn.skills.GetSkill(SkillDefOf.Animals).Level)
+			int num = TrainableUtility.MinimumHandlingSkill(animal);
+			if (num > pawn.skills.GetSkill(SkillDefOf.Animals).Level)
 			{
-				JobFailReason.Is(WorkGiver_InteractAnimal.AnimalsSkillTooLowTrans);
+				JobFailReason.Is("AnimalsSkillTooLow".Translate(new object[]
+				{
+					num
+				}), null);
 				return false;
 			}
 			return true;
@@ -63,7 +81,7 @@ namespace RimWorld
 				{
 					for (int j = 0; j < thing.stackCount; j++)
 					{
-						num3 += thing.def.ingestible.nutrition;
+						num3 += thing.GetStatValue(StatDefOf.Nutrition, true);
 						if (num3 >= num2)
 						{
 							num++;
@@ -82,15 +100,16 @@ namespace RimWorld
 		protected Job TakeFoodForAnimalInteractJob(Pawn pawn, Pawn tamee)
 		{
 			float num = JobDriver_InteractAnimal.RequiredNutritionPerFeed(tamee) * 2f * 4f;
-			ThingDef thingDef;
-			Thing thing = FoodUtility.BestFoodSourceOnMap(pawn, tamee, false, out thingDef, FoodPreferability.RawTasty, false, false, false, false, false, false, false, false);
+			ThingDef foodDef;
+			Thing thing = FoodUtility.BestFoodSourceOnMap(pawn, tamee, false, out foodDef, FoodPreferability.RawTasty, false, false, false, false, false, false, false, false, false);
 			if (thing == null)
 			{
 				return null;
 			}
+			float nutrition = FoodUtility.GetNutrition(thing, foodDef);
 			return new Job(JobDefOf.TakeInventory, thing)
 			{
-				count = Mathf.CeilToInt(num / thingDef.ingestible.nutrition)
+				count = Mathf.CeilToInt(num / nutrition)
 			};
 		}
 	}

@@ -59,7 +59,7 @@ namespace Verse
 					}
 					catch (Exception ex)
 					{
-						Log.Error("Exception loading " + fileInfo.Name + ": " + ex.ToString());
+						Log.Error("Exception loading " + fileInfo.Name + ": " + ex.ToString(), false);
 						break;
 					}
 					if (assembly != null)
@@ -100,7 +100,7 @@ namespace Verse
 						stringBuilder.AppendLine("   => " + ex2.ToString());
 					}
 				}
-				Log.Error(stringBuilder.ToString());
+				Log.Error(stringBuilder.ToString(), false);
 				bool result = false;
 				return result;
 			}
@@ -112,7 +112,7 @@ namespace Verse
 					asm.GetName().Name,
 					": ",
 					ex3
-				}));
+				}), false);
 				bool result = false;
 				return result;
 			}

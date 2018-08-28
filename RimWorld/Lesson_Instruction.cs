@@ -66,7 +66,7 @@ namespace RimWorld
 			{
 				Thing thing = ThingMaker.MakeThing(this.def.giveOnActivateDef, null);
 				thing.stackCount = this.def.giveOnActivateCount;
-				GenSpawn.Spawn(thing, TutorUtility.FindUsableRect(2, 2, this.Map, 0f, false).CenterCell, this.Map);
+				GenSpawn.Spawn(thing, TutorUtility.FindUsableRect(2, 2, this.Map, 0f, false).CenterCell, this.Map, WipeMode.Vanish);
 			}
 			if (this.def.resetBuildDesignatorStuffs)
 			{
@@ -87,7 +87,7 @@ namespace RimWorld
 		public override void LessonOnGUI()
 		{
 			Text.Font = GameFont.Small;
-			string textAdj = this.def.text.AdjustedForKeys();
+			string textAdj = this.def.text.AdjustedForKeys(null, true);
 			float num = Text.CalcHeight(textAdj, 290f);
 			float num2 = num + 20f;
 			if (this.ShowProgressBar)

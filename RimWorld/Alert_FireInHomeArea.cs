@@ -35,12 +35,7 @@ namespace RimWorld
 
 		public override AlertReport GetReport()
 		{
-			Fire fireInHomeArea = this.FireInHomeArea;
-			if (fireInHomeArea != null)
-			{
-				return AlertReport.CulpritIs(fireInHomeArea);
-			}
-			return false;
+			return this.FireInHomeArea;
 		}
 	}
 }

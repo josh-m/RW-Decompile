@@ -12,13 +12,15 @@ namespace Verse
 
 		public int mapSize = 250;
 
-		public List<Pawn> startingPawns = new List<Pawn>();
+		public List<Pawn> startingAndOptionalPawns = new List<Pawn>();
 
-		public int startingPawnCount = 3;
+		public int startingPawnCount = -1;
 
 		public Faction playerFaction;
 
 		public Season startingSeason;
+
+		public bool permadeathChosen;
 
 		public bool permadeath;
 
@@ -44,7 +46,7 @@ namespace Verse
 		public void ResetWorldRelatedMapInitData()
 		{
 			Current.Game.World = null;
-			this.startingPawns.Clear();
+			this.startingAndOptionalPawns.Clear();
 			this.playerFaction = null;
 			this.startingTile = -1;
 		}
@@ -55,25 +57,26 @@ namespace Verse
 			{
 				"startedFromEntry: ",
 				this.startedFromEntry,
-				"\nstartingPawns: ",
-				this.startingPawns.Count
+				"\nstartingAndOptionalPawns: ",
+				this.startingAndOptionalPawns.Count
 			});
 		}
 
 		public void PrepForMapGen()
 		{
-			while (this.startingPawns.Count > this.startingPawnCount)
+			while (this.startingAndOptionalPawns.Count > this.startingPawnCount)
 			{
-				PawnComponentsUtility.RemoveComponentsOnDespawned(this.startingPawns[this.startingPawnCount]);
-				Find.WorldPawns.PassToWorld(this.startingPawns[this.startingPawnCount], PawnDiscardDecideMode.KeepForever);
-				this.startingPawns.RemoveAt(this.startingPawnCount);
+				PawnComponentsUtility.RemoveComponentsOnDespawned(this.startingAndOptionalPawns[this.startingPawnCount]);
+				Find.WorldPawns.PassToWorld(this.startingAndOptionalPawns[this.startingPawnCount], PawnDiscardDecideMode.KeepForever);
+				this.startingAndOptionalPawns.RemoveAt(this.startingPawnCount);
 			}
-			foreach (Pawn current in this.startingPawns)
+			List<Pawn> list = this.startingAndOptionalPawns;
+			foreach (Pawn current in list)
 			{
 				current.SetFactionDirect(Faction.OfPlayer);
 				PawnComponentsUtility.AddAndRemoveDynamicComponents(current, false);
 			}
-			foreach (Pawn current2 in this.startingPawns)
+			foreach (Pawn current2 in list)
 			{
 				current2.workSettings.DisableAll();
 			}
@@ -81,7 +84,7 @@ namespace Verse
 			{
 				if (w.alwaysStartActive)
 				{
-					foreach (Pawn current3 in from col in this.startingPawns
+					foreach (Pawn current3 in from col in list
 					where !col.story.WorkTypeIsDisabled(w)
 					select col)
 					{
@@ -91,7 +94,7 @@ namespace Verse
 				else
 				{
 					bool flag = false;
-					foreach (Pawn current4 in this.startingPawns)
+					foreach (Pawn current4 in list)
 					{
 						if (!current4.story.WorkTypeIsDisabled(w) && current4.skills.AverageOfRelevantSkillsFor(w) >= 6f)
 						{
@@ -101,17 +104,13 @@ namespace Verse
 					}
 					if (!flag)
 					{
-						IEnumerable<Pawn> source = from col in this.startingPawns
+						IEnumerable<Pawn> source = from col in list
 						where !col.story.WorkTypeIsDisabled(w)
 						select col;
 						if (source.Any<Pawn>())
 						{
 							Pawn pawn = source.InRandomOrder(null).MaxBy((Pawn c) => c.skills.AverageOfRelevantSkillsFor(w));
 							pawn.workSettings.SetPriority(w, 3);
-						}
-						else if (w.requireCapableColonist)
-						{
-							Log.Error("No colonist could do requireCapableColonist work type " + w);
 						}
 					}
 				}

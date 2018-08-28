@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Verse
 {
-	internal static class MapMeshFlagUtility
+	public static class MapMeshFlagUtility
 	{
 		public static List<MapMeshFlag> allFlags;
 

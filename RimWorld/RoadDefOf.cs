@@ -10,5 +10,10 @@ namespace RimWorld
 		public static RoadDef AncientAsphaltRoad;
 
 		public static RoadDef AncientAsphaltHighway;
+
+		static RoadDefOf()
+		{
+			DefOfHelper.EnsureInitializedInCtor(typeof(RoadDefOf));
+		}
 	}
 }

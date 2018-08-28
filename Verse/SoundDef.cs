@@ -30,10 +30,10 @@ namespace Verse
 		public string slot = string.Empty;
 
 		[DefaultValue(""), Description("The name of the SoundDef that will be played when this sustainer starts."), LoadAlias("sustainerStartSound")]
-		public string sustainStartSound = string.Empty;
+		public SoundDef sustainStartSound;
 
 		[DefaultValue(""), Description("The name of the SoundDef that will be played when this sustainer ends."), LoadAlias("sustainerStopSound")]
-		public string sustainStopSound = string.Empty;
+		public SoundDef sustainStopSound;
 
 		[DefaultValue(0f), Description("After a sustainer is ended, the sound will fade out over this many real-time seconds.")]
 		public float sustainFadeoutTime;
@@ -115,7 +115,7 @@ namespace Verse
 			{
 				yield return "Max voices is less than 1.";
 			}
-			if (!this.sustain && (this.sustainStartSound != string.Empty || this.sustainStopSound != string.Empty))
+			if (!this.sustain && (this.sustainStartSound != null || this.sustainStopSound != null))
 			{
 				yield return "Sustainer start and end sounds only work with sounds defined as sustainers.";
 			}
@@ -149,17 +149,17 @@ namespace Verse
 		{
 			if (this.testSustainer == null)
 			{
-				if (widgetRow.ButtonIcon(TexButton.Play, null))
+				if (widgetRow.ButtonIcon(TexButton.Play, null, null))
 				{
 					this.ResolveReferences();
 					SoundInfo info;
 					if (this.HasSubSoundsInWorld)
 					{
 						IntVec3 mapPosition = Find.CameraDriver.MapPosition;
-						info = SoundInfo.InMap(new TargetInfo(mapPosition, Find.VisibleMap, false), MaintenanceType.PerFrame);
+						info = SoundInfo.InMap(new TargetInfo(mapPosition, Find.CurrentMap, false), MaintenanceType.PerFrame);
 						for (int i = 0; i < 5; i++)
 						{
-							MoteMaker.ThrowDustPuff(mapPosition, Find.VisibleMap, 1.5f);
+							MoteMaker.ThrowDustPuff(mapPosition, Find.CurrentMap, 1.5f);
 						}
 					}
 					else
@@ -180,7 +180,7 @@ namespace Verse
 			else
 			{
 				this.testSustainer.Maintain();
-				if (widgetRow.ButtonIcon(TexButton.Stop, null))
+				if (widgetRow.ButtonIcon(TexButton.Stop, null, null))
 				{
 					this.testSustainer.End();
 					this.testSustainer = null;
@@ -215,7 +215,7 @@ namespace Verse
 			}
 			if (DefDatabase<SoundDef>.DefCount == 0)
 			{
-				Log.Warning("Tried to get SoundDef named " + defName + ", but sound defs aren't loaded yet (is it a static variable initialized before play data?).");
+				Log.Warning("Tried to get SoundDef named " + defName + ", but sound defs aren't loaded yet (is it a static variable initialized before play data?).", false);
 			}
 			return SoundDef.UndefinedDefNamed(defName);
 		}

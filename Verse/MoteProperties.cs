@@ -28,5 +28,15 @@ namespace Verse
 		public bool needsMaintenance;
 
 		public bool rotateTowardsTarget;
+
+		public bool rotateTowardsMoveDirection;
+
+		public float Lifespan
+		{
+			get
+			{
+				return this.fadeInTime + this.solidTime + this.fadeOutTime;
+			}
+		}
 	}
 }

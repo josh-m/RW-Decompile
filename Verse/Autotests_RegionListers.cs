@@ -46,7 +46,7 @@ namespace Verse
 								" is expected to be registered twice in ",
 								region,
 								"? This should never happen."
-							}));
+							}), false);
 						}
 						else
 						{
@@ -56,7 +56,7 @@ namespace Verse
 								lister[i],
 								" is registered twice in ",
 								region
-							}));
+							}), false);
 						}
 					}
 				}
@@ -82,7 +82,7 @@ namespace Verse
 							" should be registered in ",
 							current.Key,
 							" but it's not."
-						}));
+						}), false);
 					}
 				}
 			}
@@ -111,7 +111,7 @@ namespace Verse
 							" is registered in ",
 							current,
 							" but it shouldn't be."
-						}));
+						}), false);
 					}
 				}
 			}

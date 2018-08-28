@@ -43,20 +43,29 @@ namespace RimWorld.Planet
 
 		private const int PotentialSpanningTreeLinksPerSettlement = 8;
 
+		public override int SeedPart
+		{
+			get
+			{
+				return 1538475135;
+			}
+		}
+
 		public override void GenerateFresh(string seed)
 		{
-			Rand.Seed = GenText.StableStringHash(seed);
 			this.GenerateRoadEndpoints();
+			Rand.PushState();
 			Rand.Seed = GenText.StableStringHash(seed);
 			this.GenerateRoadNetwork();
-			Rand.RandomizeStateFromTime();
+			Rand.PopState();
 		}
 
 		public override void GenerateWithoutWorldData(string seed)
 		{
+			Rand.PushState();
 			Rand.Seed = GenText.StableStringHash(seed);
 			this.GenerateRoadNetwork();
-			Rand.RandomizeStateFromTime();
+			Rand.PopState();
 		}
 
 		private void GenerateRoadEndpoints()
@@ -67,7 +76,7 @@ namespace RimWorld.Planet
 			int num = GenMath.RoundRandom((float)Find.WorldGrid.TilesCount / 100000f * WorldGenStep_Roads.ExtraRoadNodesPer100kTiles.RandomInRange);
 			for (int i = 0; i < num; i++)
 			{
-				list.Add(TileFinder.RandomFactionBaseTileFor(null, false, null));
+				list.Add(TileFinder.RandomSettlementTileFor(null, false, null));
 			}
 			List<int> list2 = new List<int>();
 			for (int j = 0; j < list.Count; j++)
@@ -90,7 +99,7 @@ namespace RimWorld.Planet
 
 		private void GenerateRoadNetwork()
 		{
-			Find.WorldPathGrid.RecalculateAllPerceivedPathCosts(Season.Spring.GetMiddleYearPct(0f));
+			Find.WorldPathGrid.RecalculateAllPerceivedPathCosts(new int?(0));
 			List<WorldGenStep_Roads.Link> linkProspective = this.GenerateProspectiveLinks(Find.World.genData.roadNodes);
 			List<WorldGenStep_Roads.Link> linkFinal = this.GenerateFinalLinks(linkProspective, Find.World.genData.roadNodes.Count);
 			this.DrawLinksOnWorld(linkFinal, Find.World.genData.roadNodes);
@@ -112,7 +121,7 @@ namespace RimWorld.Planet
 				list.Clear();
 				list.Add(srcTile);
 				int found = 0;
-				Find.WorldPathFinder.FloodPathsWithCost(list, (int src, int dst) => WorldPathFinder.StandardPathCost(src, dst, null), null, delegate(int tile, float distance)
+				Find.WorldPathFinder.FloodPathsWithCost(list, (int src, int dst) => Caravan_PathFollower.CostToMove(3300, src, dst, null, true, null, null), null, delegate(int tile, float distance)
 				{
 					if (tile != srcTile && tileToIndexLookup.ContainsKey(tile))
 					{

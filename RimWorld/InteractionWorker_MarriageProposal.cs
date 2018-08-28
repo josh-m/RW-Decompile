@@ -43,11 +43,11 @@ namespace RimWorld
 			return num;
 		}
 
-		public override void Interacted(Pawn initiator, Pawn recipient, List<RulePackDef> extraSentencePacks)
+		public override void Interacted(Pawn initiator, Pawn recipient, List<RulePackDef> extraSentencePacks, out string letterText, out string letterLabel, out LetterDef letterDef)
 		{
 			float num = this.AcceptanceChance(initiator, recipient);
 			bool flag = Rand.Value < num;
-			bool brokeUp = false;
+			bool flag2 = false;
 			if (flag)
 			{
 				initiator.relations.RemoveDirectRelation(PawnRelationDefOf.Lover, recipient);
@@ -69,13 +69,49 @@ namespace RimWorld
 				{
 					initiator.relations.RemoveDirectRelation(PawnRelationDefOf.Lover, recipient);
 					initiator.relations.AddDirectRelation(PawnRelationDefOf.ExLover, recipient);
-					brokeUp = true;
+					flag2 = true;
 					extraSentencePacks.Add(RulePackDefOf.Sentence_MarriageProposalRejectedBrokeUp);
 				}
 			}
-			if (initiator.IsColonist || recipient.IsColonist)
+			if (PawnUtility.ShouldSendNotificationAbout(initiator) || PawnUtility.ShouldSendNotificationAbout(recipient))
 			{
-				this.SendLetter(initiator, recipient, flag, brokeUp);
+				StringBuilder stringBuilder = new StringBuilder();
+				if (flag)
+				{
+					letterLabel = "LetterLabelAcceptedProposal".Translate();
+					letterDef = LetterDefOf.PositiveEvent;
+					stringBuilder.AppendLine("LetterAcceptedProposal".Translate(new object[]
+					{
+						initiator,
+						recipient
+					}));
+				}
+				else
+				{
+					letterLabel = "LetterLabelRejectedProposal".Translate();
+					letterDef = LetterDefOf.NegativeEvent;
+					stringBuilder.AppendLine("LetterRejectedProposal".Translate(new object[]
+					{
+						initiator,
+						recipient
+					}));
+					if (flag2)
+					{
+						stringBuilder.AppendLine();
+						stringBuilder.AppendLine("LetterNoLongerLovers".Translate(new object[]
+						{
+							initiator,
+							recipient
+						}));
+					}
+				}
+				letterText = stringBuilder.ToString().TrimEndNewlines();
+			}
+			else
+			{
+				letterLabel = null;
+				letterText = null;
+				letterDef = null;
 			}
 		}
 
@@ -84,43 +120,6 @@ namespace RimWorld
 			float num = 0.9f;
 			num *= Mathf.Clamp01(GenMath.LerpDouble(-20f, 60f, 0f, 1f, (float)recipient.relations.OpinionOf(initiator)));
 			return Mathf.Clamp01(num);
-		}
-
-		private void SendLetter(Pawn initiator, Pawn recipient, bool accepted, bool brokeUp)
-		{
-			StringBuilder stringBuilder = new StringBuilder();
-			string label;
-			LetterDef textLetterDef;
-			if (accepted)
-			{
-				label = "LetterLabelAcceptedProposal".Translate();
-				textLetterDef = LetterDefOf.PositiveEvent;
-				stringBuilder.AppendLine("LetterAcceptedProposal".Translate(new object[]
-				{
-					initiator,
-					recipient
-				}));
-			}
-			else
-			{
-				label = "LetterLabelRejectedProposal".Translate();
-				textLetterDef = LetterDefOf.NegativeEvent;
-				stringBuilder.AppendLine("LetterRejectedProposal".Translate(new object[]
-				{
-					initiator,
-					recipient
-				}));
-				if (brokeUp)
-				{
-					stringBuilder.AppendLine();
-					stringBuilder.AppendLine("LetterNoLongerLovers".Translate(new object[]
-					{
-						initiator,
-						recipient
-					}));
-				}
-			}
-			Find.LetterStack.ReceiveLetter(label, stringBuilder.ToString().TrimEndNewlines(), textLetterDef, initiator, null);
 		}
 	}
 }

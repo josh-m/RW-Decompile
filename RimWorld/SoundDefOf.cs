@@ -6,11 +6,11 @@ namespace RimWorld
 	[DefOf]
 	public static class SoundDefOf
 	{
-		public static SoundDef TickHigh;
+		public static SoundDef Tick_High;
 
-		public static SoundDef TickLow;
+		public static SoundDef Tick_Low;
 
-		public static SoundDef TickTiny;
+		public static SoundDef Tick_Tiny;
 
 		public static SoundDef Crunch;
 
@@ -30,9 +30,9 @@ namespace RimWorld
 
 		public static SoundDef RadioButtonClicked;
 
-		public static SoundDef CheckboxTurnedOff;
+		public static SoundDef Checkbox_TurnedOff;
 
-		public static SoundDef CheckboxTurnedOn;
+		public static SoundDef Checkbox_TurnedOn;
 
 		public static SoundDef RowTabSelect;
 
@@ -40,9 +40,9 @@ namespace RimWorld
 
 		public static SoundDef ExecuteTrade;
 
-		public static SoundDef FloatMenuOpen;
+		public static SoundDef FloatMenu_Open;
 
-		public static SoundDef FloatMenuCancel;
+		public static SoundDef FloatMenu_Cancel;
 
 		public static SoundDef DialogBoxAppear;
 
@@ -56,9 +56,9 @@ namespace RimWorld
 
 		public static SoundDef DragSlider;
 
-		public static SoundDef LessonActivated;
+		public static SoundDef Lesson_Activated;
 
-		public static SoundDef LessonDeactivated;
+		public static SoundDef Lesson_Deactivated;
 
 		public static SoundDef DraftOn;
 
@@ -70,17 +70,29 @@ namespace RimWorld
 
 		public static SoundDef RadioComms_Ambience;
 
-		public static SoundDef MouseoverStandard;
+		public static SoundDef InfoCard_Open;
 
-		public static SoundDef MouseoverThump;
+		public static SoundDef InfoCard_Close;
 
-		public static SoundDef MouseoverCategory;
+		public static SoundDef Clock_Stop;
 
-		public static SoundDef MouseoverCommand;
+		public static SoundDef Clock_Normal;
 
-		public static SoundDef MouseoverToggle;
+		public static SoundDef Clock_Fast;
 
-		public static SoundDef MouseoverTab;
+		public static SoundDef Clock_Superfast;
+
+		public static SoundDef Mouseover_Standard;
+
+		public static SoundDef Mouseover_Thump;
+
+		public static SoundDef Mouseover_Category;
+
+		public static SoundDef Mouseover_Command;
+
+		public static SoundDef Mouseover_ButtonToggle;
+
+		public static SoundDef Mouseover_Tab;
 
 		public static SoundDef ThingSelected;
 
@@ -92,77 +104,67 @@ namespace RimWorld
 
 		public static SoundDef ColonistOrdered;
 
-		public static SoundDef LetterArriveBadUrgent;
+		public static SoundDef LetterArrive_BadUrgent;
 
 		public static SoundDef LetterArrive;
 
-		public static SoundDef DesignateDragStandard;
+		public static SoundDef Designate_DragStandard;
 
-		public static SoundDef DesignateDragStandardChanged;
+		public static SoundDef Designate_DragStandard_Changed;
 
-		public static SoundDef DesignateDragBuilding;
+		public static SoundDef Designate_DragBuilding;
 
-		public static SoundDef DesignateDragBuildingChanged;
+		public static SoundDef Designate_DragAreaAdd;
 
-		public static SoundDef DesignateDragAreaAdd;
+		public static SoundDef Designate_DragAreaDelete;
 
-		public static SoundDef DesignateDragAreaAddChanged;
+		public static SoundDef Designate_Failed;
 
-		public static SoundDef DesignateDragAreaDelete;
+		public static SoundDef Designate_AreaAdd;
 
-		public static SoundDef DesignateDragAreaDeleteChanged;
+		public static SoundDef Designate_AreaDelete;
 
-		public static SoundDef DesignateFailed;
+		public static SoundDef Designate_ZoneAdd;
 
-		public static SoundDef DesignateAreaAdd;
+		public static SoundDef Designate_ZoneDelete;
 
-		public static SoundDef DesignateAreaDelete;
+		public static SoundDef Designate_Cancel;
 
-		public static SoundDef DesignateZoneAdd;
+		public static SoundDef Designate_Haul;
 
-		public static SoundDef DesignateZoneDelete;
+		public static SoundDef Designate_Mine;
 
-		public static SoundDef DesignateCancel;
+		public static SoundDef Designate_SmoothSurface;
 
-		public static SoundDef DesignateHaul;
+		public static SoundDef Designate_PlanRemove;
 
-		public static SoundDef DesignateMine;
+		public static SoundDef Designate_PlanAdd;
 
-		public static SoundDef DesignateSmoothFloor;
+		public static SoundDef Designate_Claim;
 
-		public static SoundDef DesignatePlanRemove;
+		public static SoundDef Designate_Deconstruct;
 
-		public static SoundDef DesignatePlanAdd;
+		public static SoundDef Designate_Hunt;
 
-		public static SoundDef DesignateClaim;
+		public static SoundDef Designate_PlaceBuilding;
 
-		public static SoundDef DesignateDeconstruct;
+		public static SoundDef Designate_CutPlants;
 
-		public static SoundDef DesignateHunt;
-
-		public static SoundDef DesignatePlaceBuilding;
-
-		public static SoundDef DesignateCutPlants;
-
-		public static SoundDef DesignateHarvest;
+		public static SoundDef Designate_Harvest;
 
 		public static SoundDef Standard_Drop;
 
 		public static SoundDef Standard_Pickup;
 
-		public static SoundDef BulletImpactGround;
+		public static SoundDef BulletImpact_Ground;
 
-		public static SoundDef BulletImpactMetal;
+		public static SoundDef Ambient_AltitudeWind;
 
-		public static SoundDef BulletImpactFlesh;
+		public static SoundDef Ambient_Space;
 
-		public static SoundDef AmbientAltitudeWind;
+		public static SoundDef Power_OnSmall;
 
-		public static SoundDef AmbientSpace;
-
-		public static SoundDef PowerOnSmall;
-
-		public static SoundDef PowerOffSmall;
+		public static SoundDef Power_OffSmall;
 
 		public static SoundDef Thunder_OnMap;
 
@@ -170,17 +172,19 @@ namespace RimWorld
 
 		public static SoundDef Interact_CleanFilth;
 
-		public static SoundDef Interact_ClearSnow;
-
 		public static SoundDef Interact_Sow;
 
 		public static SoundDef Interact_Tend;
 
-		public static SoundDef RoofStart;
+		public static SoundDef Interact_BeatFire;
 
-		public static SoundDef RoofFinish;
+		public static SoundDef Interact_Ignite;
 
-		public static SoundDef RoofCollapse;
+		public static SoundDef Roof_Start;
+
+		public static SoundDef Roof_Finish;
+
+		public static SoundDef Roof_Collapse;
 
 		public static SoundDef PsychicPulseGlobal;
 
@@ -192,31 +196,29 @@ namespace RimWorld
 
 		public static SoundDef PlayBilliards;
 
-		public static SoundDef BuildingComplete;
+		public static SoundDef Building_Complete;
 
 		public static SoundDef RawMeat_Eat;
 
 		public static SoundDef HissSmall;
 
+		public static SoundDef HissJet;
+
 		public static SoundDef MetalHitImportant;
 
-		public static SoundDef DoorOpen;
+		public static SoundDef Door_OpenPowered;
 
-		public static SoundDef DoorClose;
+		public static SoundDef Door_ClosePowered;
 
-		public static SoundDef DoorOpenManual;
+		public static SoundDef Door_OpenManual;
 
-		public static SoundDef DoorCloseManual;
+		public static SoundDef Door_CloseManual;
 
-		public static SoundDef DropPodFall;
+		public static SoundDef EnergyShield_AbsorbDamage;
 
-		public static SoundDef DropPodLeaving;
+		public static SoundDef EnergyShield_Reset;
 
-		public static SoundDef EnergyShieldAbsorbDamage;
-
-		public static SoundDef EnergyShieldReset;
-
-		public static SoundDef EnergyShieldBroken;
+		public static SoundDef EnergyShield_Broken;
 
 		public static SoundDef Pawn_Melee_Punch_HitPawn;
 
@@ -224,14 +226,49 @@ namespace RimWorld
 
 		public static SoundDef Pawn_Melee_Punch_Miss;
 
-		public static SoundDef ArtilleryShellLoaded;
+		public static SoundDef Artillery_ShellLoaded;
 
 		public static SoundDef TechMedicineUsed;
 
 		public static SoundDef OrbitalBeam;
 
+		public static SoundDef DropPod_Open;
+
+		public static SoundDef Building_Deconstructed;
+
+		public static SoundDef CryptosleepCasket_Accept;
+
+		public static SoundDef CryptosleepCasket_Eject;
+
+		public static SoundDef TrapSpring;
+
+		public static SoundDef TrapArm;
+
+		public static SoundDef FireBurning;
+
+		public static SoundDef Vomit;
+
+		public static SoundDef ResearchStart;
+
+		public static SoundDef ThingUninstalled;
+
+		public static SoundDef ShipTakeoff;
+
+		public static SoundDef Corpse_Drop;
+
+		public static SoundDef Tornado;
+
+		public static SoundDef Tunnel;
+
+		public static SoundDef Hive_Spawn;
+
 		public static SoundDef GameStartSting;
 
 		public static SoundDef PlanetkillerImpact;
+
+		static SoundDefOf()
+		{
+			DefOfHelper.EnsureInitializedInCtor(typeof(SoundDefOf));
+		}
 	}
 }

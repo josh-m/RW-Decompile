@@ -14,7 +14,17 @@ namespace Verse
 
 		public float uiScale = 1f;
 
+		public bool customCursorEnabled = true;
+
 		public bool hatsOnlyOnMap;
+
+		public bool plantWindSway = true;
+
+		public bool showRealtimeClock;
+
+		public AnimalNameDisplayMode animalNameMode;
+
+		public bool extremeDifficultyUnlocked;
 
 		public bool adaptiveTrainingEnabled = true;
 
@@ -24,25 +34,20 @@ namespace Verse
 
 		public bool runInBackground;
 
-		public bool customCursorEnabled = true;
-
 		public bool edgeScreenScroll = true;
 
 		public TemperatureDisplayMode temperatureMode;
 
 		public float autosaveIntervalDays = 1f;
 
-		public bool showRealtimeClock;
+		public bool testMapSizes;
 
-		public int maxNumberOfPlayerHomes = 1;
-
-		public bool plantWindSway = true;
+		[LoadAlias("maxNumberOfPlayerHomes")]
+		public int maxNumberOfPlayerSettlements = 1;
 
 		public bool pauseOnLoad;
 
 		public bool pauseOnUrgentLetter;
-
-		public AnimalNameDisplayMode animalNameMode;
 
 		public bool devMode;
 
@@ -53,14 +58,6 @@ namespace Verse
 		public bool pauseOnError;
 
 		public bool resetModsConfigOnCrash = true;
-
-		public PrefsData()
-		{
-			if (UnityData.isDebugBuild)
-			{
-				this.devMode = true;
-			}
-		}
 
 		public void Apply()
 		{

@@ -40,7 +40,7 @@ namespace Verse
 				Dialog_MessageBox window = new Dialog_MessageBox(text, "Quit".Translate(), delegate
 				{
 					Application.Quit();
-				}, "Ignore".Translate(), null, null, false);
+				}, "Ignore".Translate(), null, null, false, null, null);
 				Find.WindowStack.Add(window);
 			}
 		}
@@ -57,8 +57,10 @@ namespace Verse
 			{
 				Find.Tutor.TutorOnGUI();
 			}
+			ReorderableWidget.ReorderableWidgetOnGUI_BeforeWindowStack();
 			this.windows.WindowStackOnGUI();
-			ReorderableWidget.ReorderableWidgetOnGUI();
+			ReorderableWidget.ReorderableWidgetOnGUI_AfterWindowStack();
+			Widgets.WidgetsOnGUI();
 			if (Find.World != null)
 			{
 				Find.World.UI.HandleLowPriorityInput();

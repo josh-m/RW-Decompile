@@ -11,7 +11,7 @@ namespace RimWorld
 	{
 		private const int MinStartVisibleFactions = 5;
 
-		private static readonly FloatRange FactionBasesPer100kTiles = new FloatRange(75f, 85f);
+		private static readonly FloatRange SettlementsPer100kTiles = new FloatRange(75f, 85f);
 
 		public static void GenerateFactionsIntoWorld()
 		{
@@ -37,18 +37,18 @@ namespace RimWorld
 				Find.World.factionManager.Add(faction2);
 				i++;
 			}
-			int num = GenMath.RoundRandom((float)Find.WorldGrid.TilesCount / 100000f * FactionGenerator.FactionBasesPer100kTiles.RandomInRange);
-			num -= Find.WorldObjects.FactionBases.Count;
+			int num = GenMath.RoundRandom((float)Find.WorldGrid.TilesCount / 100000f * FactionGenerator.SettlementsPer100kTiles.RandomInRange);
+			num -= Find.WorldObjects.Settlements.Count;
 			for (int k = 0; k < num; k++)
 			{
 				Faction faction3 = (from x in Find.World.factionManager.AllFactionsListForReading
 				where !x.def.isPlayer && !x.def.hidden
-				select x).RandomElementByWeight((Faction x) => x.def.baseSelectionWeight);
-				FactionBase factionBase = (FactionBase)WorldObjectMaker.MakeWorldObject(WorldObjectDefOf.FactionBase);
-				factionBase.SetFaction(faction3);
-				factionBase.Tile = TileFinder.RandomFactionBaseTileFor(faction3, false, null);
-				factionBase.Name = FactionBaseNameGenerator.GenerateFactionBaseName(factionBase);
-				Find.WorldObjects.Add(factionBase);
+				select x).RandomElementByWeight((Faction x) => x.def.settlementGenerationWeight);
+				Settlement settlement = (Settlement)WorldObjectMaker.MakeWorldObject(WorldObjectDefOf.Settlement);
+				settlement.SetFaction(faction3);
+				settlement.Tile = TileFinder.RandomSettlementTileFor(faction3, false, null);
+				settlement.Name = SettlementNameGenerator.GenerateSettlementName(settlement, null);
+				Find.WorldObjects.Add(settlement);
 			}
 		}
 
@@ -61,9 +61,11 @@ namespace RimWorld
 					Faction faction = (from f in Find.World.factionManager.AllFactions
 					where f.def == facDef
 					select f).RandomElement<Faction>();
-					float goodwillChange = -(faction.GoodwillWith(player) + 100f) * Rand.Range(0.8f, 0.9f);
-					faction.AffectGoodwillWith(player, goodwillChange);
-					faction.SetHostileTo(player, true);
+					int num = faction.GoodwillWith(player);
+					int randomInRange = DiplomacyTuning.ForcedStartingEnemyGoodwillRange.RandomInRange;
+					int goodwillChange = randomInRange - num;
+					faction.TryAffectGoodwillWith(player, goodwillChange, false, false, null, null);
+					faction.TrySetRelationKind(player, FactionRelationKind.Hostile, false, null, null);
 				}
 			}
 		}
@@ -98,17 +100,17 @@ namespace RimWorld
 			}
 			if (!facDef.hidden && !facDef.isPlayer)
 			{
-				FactionBase factionBase = (FactionBase)WorldObjectMaker.MakeWorldObject(WorldObjectDefOf.FactionBase);
-				factionBase.SetFaction(faction);
-				factionBase.Tile = TileFinder.RandomFactionBaseTileFor(faction, false, null);
-				factionBase.Name = FactionBaseNameGenerator.GenerateFactionBaseName(factionBase);
-				Find.WorldObjects.Add(factionBase);
+				Settlement settlement = (Settlement)WorldObjectMaker.MakeWorldObject(WorldObjectDefOf.Settlement);
+				settlement.SetFaction(faction);
+				settlement.Tile = TileFinder.RandomSettlementTileFor(faction, false, null);
+				settlement.Name = SettlementNameGenerator.GenerateSettlementName(settlement, null);
+				Find.WorldObjects.Add(settlement);
 			}
 			faction.GenerateNewLeader();
 			return faction;
 		}
 
-		private static float NewRandomColorFromSpectrum(Faction faction)
+		public static float NewRandomColorFromSpectrum(Faction faction)
 		{
 			float num = -1f;
 			float result = 0f;
@@ -120,7 +122,7 @@ namespace RimWorld
 				for (int j = 0; j < allFactionsListForReading.Count; j++)
 				{
 					Faction faction2 = allFactionsListForReading[j];
-					if (faction2 != faction && faction2.def == faction.def)
+					if (faction2.def == faction.def)
 					{
 						float num3 = Mathf.Abs(value - faction2.colorFromSpectrum);
 						if (num3 < num2)

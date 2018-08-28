@@ -93,7 +93,7 @@ namespace RimWorld
 		{
 			if (!this.Active)
 			{
-				Log.Error("LayEgg while not Active: " + this.parent);
+				Log.Error("LayEgg while not Active: " + this.parent, false);
 			}
 			this.eggProgress = 0f;
 			int randomInRange = this.Props.eggCountRange.RandomInRange;

@@ -67,7 +67,7 @@ namespace Verse.AI
 					" looked for ThinkNode of type ",
 					typeof(T),
 					" and didn't find it."
-				}));
+				}), false);
 			}
 			return t;
 		}

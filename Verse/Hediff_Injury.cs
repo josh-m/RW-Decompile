@@ -6,7 +6,7 @@ namespace Verse
 {
 	public class Hediff_Injury : HediffWithComps
 	{
-		private static readonly Color OldInjuryColor = new Color(0.72f, 0.72f, 0.72f);
+		private static readonly Color PermanentInjuryColor = new Color(0.72f, 0.72f, 0.72f);
 
 		public override int UIGroupKey
 		{
@@ -25,16 +25,16 @@ namespace Verse
 		{
 			get
 			{
-				HediffComp_GetsOld hediffComp_GetsOld = this.TryGetComp<HediffComp_GetsOld>();
-				if (hediffComp_GetsOld != null && hediffComp_GetsOld.IsOld)
+				HediffComp_GetsPermanent hediffComp_GetsPermanent = this.TryGetComp<HediffComp_GetsPermanent>();
+				if (hediffComp_GetsPermanent != null && hediffComp_GetsPermanent.IsPermanent)
 				{
-					if (base.Part.def.IsDelicate && !hediffComp_GetsOld.Props.instantlyOldLabel.NullOrEmpty())
+					if (base.Part.def.delicate && !hediffComp_GetsPermanent.Props.instantlyPermanentLabel.NullOrEmpty())
 					{
-						return hediffComp_GetsOld.Props.instantlyOldLabel;
+						return hediffComp_GetsPermanent.Props.instantlyPermanentLabel;
 					}
-					if (!hediffComp_GetsOld.Props.oldLabel.NullOrEmpty())
+					if (!hediffComp_GetsPermanent.Props.permanentLabel.NullOrEmpty())
 					{
-						return hediffComp_GetsOld.Props.oldLabel;
+						return hediffComp_GetsPermanent.Props.permanentLabel;
 					}
 				}
 				return base.LabelBase;
@@ -64,8 +64,8 @@ namespace Verse
 					stringBuilder.Append(this.source.label);
 					if (this.sourceBodyPartGroup != null)
 					{
-						stringBuilder.Append(" - ");
-						stringBuilder.Append(this.sourceBodyPartGroup.label);
+						stringBuilder.Append(" ");
+						stringBuilder.Append(this.sourceBodyPartGroup.LabelShort);
 					}
 				}
 				return stringBuilder.ToString();
@@ -76,9 +76,9 @@ namespace Verse
 		{
 			get
 			{
-				if (this.IsOld())
+				if (this.IsPermanent())
 				{
-					return Hediff_Injury.OldInjuryColor;
+					return Hediff_Injury.PermanentInjuryColor;
 				}
 				return Color.white;
 			}
@@ -92,7 +92,7 @@ namespace Verse
 				{
 					return null;
 				}
-				return this.Severity.ToString("0.##");
+				return this.Severity.ToString("F1");
 			}
 		}
 
@@ -100,7 +100,7 @@ namespace Verse
 		{
 			get
 			{
-				if (this.IsOld() || !this.Visible)
+				if (this.IsPermanent() || !this.Visible)
 				{
 					return 0f;
 				}
@@ -116,10 +116,10 @@ namespace Verse
 				{
 					return 0f;
 				}
-				HediffComp_GetsOld hediffComp_GetsOld = this.TryGetComp<HediffComp_GetsOld>();
-				if (hediffComp_GetsOld != null && hediffComp_GetsOld.IsOld)
+				HediffComp_GetsPermanent hediffComp_GetsPermanent = this.TryGetComp<HediffComp_GetsPermanent>();
+				if (hediffComp_GetsPermanent != null && hediffComp_GetsPermanent.IsPermanent)
 				{
-					return this.Severity * this.def.injuryProps.averagePainPerSeverityOld * hediffComp_GetsOld.painFactor;
+					return this.Severity * this.def.injuryProps.averagePainPerSeverityPermanent * hediffComp_GetsPermanent.PainFactor;
 				}
 				return this.Severity * this.def.injuryProps.painPerSeverity;
 			}
@@ -137,7 +137,7 @@ namespace Verse
 				{
 					return 0f;
 				}
-				if (base.Part.def.IsSolid(base.Part, this.pawn.health.hediffSet.hediffs) || this.IsTended() || this.IsOld())
+				if (base.Part.def.IsSolid(base.Part, this.pawn.health.hediffSet.hediffs) || this.IsTended() || this.IsPermanent())
 				{
 					return 0f;
 				}
@@ -148,7 +148,7 @@ namespace Verse
 				float num = this.Severity * this.def.injuryProps.bleedRate;
 				if (base.Part != null)
 				{
-					num *= base.Part.def.bleedingRateMultiplier;
+					num *= base.Part.def.bleedRate;
 				}
 				return num;
 			}
@@ -199,7 +199,35 @@ namespace Verse
 		public override bool TryMergeWith(Hediff other)
 		{
 			Hediff_Injury hediff_Injury = other as Hediff_Injury;
-			return hediff_Injury != null && hediff_Injury.def == this.def && hediff_Injury.Part == base.Part && !hediff_Injury.IsTended() && !hediff_Injury.IsOld() && !this.IsTended() && !this.IsOld() && this.def.injuryProps.canMerge && base.TryMergeWith(other);
+			return hediff_Injury != null && hediff_Injury.def == this.def && hediff_Injury.Part == base.Part && !hediff_Injury.IsTended() && !hediff_Injury.IsPermanent() && !this.IsTended() && !this.IsPermanent() && this.def.injuryProps.canMerge && base.TryMergeWith(other);
+		}
+
+		public override void PostAdd(DamageInfo? dinfo)
+		{
+			base.PostAdd(dinfo);
+			if (base.Part != null && base.Part.coverageAbs <= 0f)
+			{
+				Log.Error(string.Concat(new object[]
+				{
+					"Added injury to ",
+					base.Part.def,
+					" but it should be impossible to hit it. pawn=",
+					this.pawn.ToStringSafe<Pawn>(),
+					" dinfo=",
+					dinfo.ToStringSafe<DamageInfo?>()
+				}), false);
+			}
+		}
+
+		public override void ExposeData()
+		{
+			base.ExposeData();
+			if (Scribe.mode == LoadSaveMode.PostLoadInit && base.Part == null)
+			{
+				Log.Error("Hediff_Injury has null part after loading.", false);
+				this.pawn.health.hediffSet.hediffs.Remove(this);
+				return;
+			}
 		}
 	}
 }

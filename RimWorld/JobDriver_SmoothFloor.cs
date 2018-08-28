@@ -9,7 +9,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return 1400;
+				return 2800;
 			}
 		}
 

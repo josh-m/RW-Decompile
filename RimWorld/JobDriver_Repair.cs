@@ -15,9 +15,12 @@ namespace RimWorld
 
 		private const float TicksBetweenRepairs = 20f;
 
-		public override bool TryMakePreToilReservations()
+		public override bool TryMakePreToilReservations(bool errorOnFailed)
 		{
-			return this.pawn.Reserve(this.job.targetA, this.job, 1, -1, null);
+			Pawn pawn = this.pawn;
+			LocalTargetInfo targetA = this.job.targetA;
+			Job job = this.job;
+			return pawn.Reserve(targetA, job, 1, -1, null, errorOnFailed);
 		}
 
 		[DebuggerHidden]
@@ -33,7 +36,7 @@ namespace RimWorld
 			repair.tickAction = delegate
 			{
 				Pawn actor = repair.actor;
-				actor.skills.Learn(SkillDefOf.Construction, 0.275f, false);
+				actor.skills.Learn(SkillDefOf.Construction, 0.05f, false);
 				float statValue = actor.GetStatValue(StatDefOf.ConstructionSpeed, true);
 				this.$this.ticksToNextRepair -= statValue;
 				if (this.$this.ticksToNextRepair <= 0f)
@@ -52,6 +55,7 @@ namespace RimWorld
 			repair.FailOnCannotTouch(TargetIndex.A, PathEndMode.Touch);
 			repair.WithEffect(base.TargetThingA.def.repairEffect, TargetIndex.A);
 			repair.defaultCompleteMode = ToilCompleteMode.Never;
+			repair.activeSkill = (() => SkillDefOf.Construction);
 			yield return repair;
 		}
 	}

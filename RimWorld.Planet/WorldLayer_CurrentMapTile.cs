@@ -14,11 +14,11 @@ namespace RimWorld.Planet
 				{
 					return -1;
 				}
-				if (Find.VisibleMap == null)
+				if (Find.CurrentMap == null)
 				{
 					return -1;
 				}
-				return Find.VisibleMap.Tile;
+				return Find.CurrentMap.Tile;
 			}
 		}
 

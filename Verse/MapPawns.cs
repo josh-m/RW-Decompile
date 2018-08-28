@@ -1,8 +1,10 @@
 using RimWorld;
+using RimWorld.Planet;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Verse.AI;
 
 namespace Verse
 {
@@ -16,9 +18,9 @@ namespace Verse
 
 		private List<Pawn> prisonersOfColonySpawned = new List<Pawn>();
 
-		private static List<Thing> tmpThings = new List<Thing>();
+		private List<Thing> tmpThings = new List<Thing>();
 
-		private static List<IThingHolder> tmpMapChildHolders = new List<IThingHolder>();
+		private List<Pawn> tmpUnspawnedPawns = new List<Pawn>();
 
 		public IEnumerable<Pawn> AllPawns
 		{
@@ -39,63 +41,19 @@ namespace Verse
 		{
 			get
 			{
-				List<Thing> holders = this.map.listerThings.ThingsInGroup(ThingRequestGroup.ThingHolder);
-				for (int i = 0; i < holders.Count; i++)
+				this.tmpUnspawnedPawns.Clear();
+				ThingOwnerUtility.GetAllThingsRecursively<Pawn>(this.map, ThingRequest.ForGroup(ThingRequestGroup.Pawn), this.tmpUnspawnedPawns, true, null, false);
+				for (int j = this.tmpUnspawnedPawns.Count - 1; j >= 0; j--)
 				{
-					IThingHolder holder = holders[i] as IThingHolder;
-					if (holder != null)
+					if (this.tmpUnspawnedPawns[j].Dead)
 					{
-						ThingOwnerUtility.GetAllThingsRecursively(holder, MapPawns.tmpThings, true);
-						for (int j = 0; j < MapPawns.tmpThings.Count; j++)
-						{
-							Pawn p = MapPawns.tmpThings[j] as Pawn;
-							if (p != null)
-							{
-								if (!p.Dead)
-								{
-									yield return p;
-								}
-							}
-						}
-					}
-					ThingWithComps twc = holders[i] as ThingWithComps;
-					if (twc != null)
-					{
-						List<ThingComp> comps = twc.AllComps;
-						for (int k = 0; k < comps.Count; k++)
-						{
-							IThingHolder compHolder = comps[k] as IThingHolder;
-							if (compHolder != null)
-							{
-								ThingOwnerUtility.GetAllThingsRecursively(compHolder, MapPawns.tmpThings, true);
-								for (int l = 0; l < MapPawns.tmpThings.Count; l++)
-								{
-									Pawn p2 = MapPawns.tmpThings[l] as Pawn;
-									if (p2 != null && !p2.Dead)
-									{
-										yield return p2;
-									}
-								}
-							}
-						}
+						this.tmpUnspawnedPawns.RemoveAt(j);
 					}
 				}
-				MapPawns.tmpMapChildHolders.Clear();
-				this.map.GetNonThingChildHolders(MapPawns.tmpMapChildHolders);
-				for (int m = 0; m < MapPawns.tmpMapChildHolders.Count; m++)
+				for (int i = this.tmpUnspawnedPawns.Count - 1; i >= 0; i--)
 				{
-					ThingOwnerUtility.GetAllThingsRecursively(MapPawns.tmpMapChildHolders[m], MapPawns.tmpThings, true);
-					for (int n = 0; n < MapPawns.tmpThings.Count; n++)
-					{
-						Pawn p3 = MapPawns.tmpThings[n] as Pawn;
-						if (p3 != null && !p3.Dead)
-						{
-							yield return p3;
-						}
-					}
+					yield return this.tmpUnspawnedPawns[i];
 				}
-				MapPawns.tmpMapChildHolders.Clear();
-				MapPawns.tmpThings.Clear();
 			}
 		}
 
@@ -131,7 +89,7 @@ namespace Verse
 			{
 				if (Current.ProgramState != ProgramState.Playing)
 				{
-					Log.Error("ColonistCount while not playing. This should get the starting player pawn count.");
+					Log.Error("ColonistCount while not playing. This should get the starting player pawn count.", false);
 					return 3;
 				}
 				return this.AllPawns.Count((Pawn x) => x.IsColonist);
@@ -185,11 +143,23 @@ namespace Verse
 				Faction ofPlayer = Faction.OfPlayer;
 				for (int i = 0; i < this.pawnsSpawned.Count; i++)
 				{
-					if (this.pawnsSpawned[i].Faction == ofPlayer || this.pawnsSpawned[i].HostFaction == ofPlayer)
+					if (!this.pawnsSpawned[i].Downed && this.pawnsSpawned[i].IsColonist)
 					{
 						return true;
 					}
 					if (this.pawnsSpawned[i].relations != null && this.pawnsSpawned[i].relations.relativeInvolvedInRescueQuest != null)
+					{
+						return true;
+					}
+					if (this.pawnsSpawned[i].Faction == ofPlayer || this.pawnsSpawned[i].HostFaction == ofPlayer)
+					{
+						Job curJob = this.pawnsSpawned[i].CurJob;
+						if (curJob != null && curJob.exitMapOnArrival)
+						{
+							return true;
+						}
+					}
+					if (CaravanExitMapUtility.FindCaravanToJoinFor(this.pawnsSpawned[i]) != null && !this.pawnsSpawned[i].Downed)
 					{
 						return true;
 					}
@@ -200,19 +170,20 @@ namespace Verse
 					if (list[j] is IActiveDropPod || list[j].TryGetComp<CompTransporter>() != null)
 					{
 						IThingHolder holder = list[j].TryGetComp<CompTransporter>() ?? ((IThingHolder)list[j]);
-						ThingOwnerUtility.GetAllThingsRecursively(holder, MapPawns.tmpThings, true);
-						for (int k = 0; k < MapPawns.tmpThings.Count; k++)
+						this.tmpThings.Clear();
+						ThingOwnerUtility.GetAllThingsRecursively(holder, this.tmpThings, true, null);
+						for (int k = 0; k < this.tmpThings.Count; k++)
 						{
-							Pawn pawn = MapPawns.tmpThings[k] as Pawn;
-							if (pawn != null && (pawn.Faction == ofPlayer || pawn.HostFaction == ofPlayer))
+							Pawn pawn = this.tmpThings[k] as Pawn;
+							if (pawn != null && !pawn.Dead && !pawn.Downed && pawn.IsColonist)
 							{
-								MapPawns.tmpThings.Clear();
+								this.tmpThings.Clear();
 								return true;
 							}
 						}
 					}
 				}
-				MapPawns.tmpThings.Clear();
+				this.tmpThings.Clear();
 				return false;
 			}
 		}
@@ -317,18 +288,19 @@ namespace Verse
 					if ((building_CryptosleepCasket != null && building_CryptosleepCasket.def.building.isPlayerEjectable) || list[j] is IActiveDropPod || list[j].TryGetComp<CompTransporter>() != null)
 					{
 						IThingHolder holder = list[j].TryGetComp<CompTransporter>() ?? ((IThingHolder)list[j]);
-						ThingOwnerUtility.GetAllThingsRecursively(holder, MapPawns.tmpThings, true);
-						for (int k = 0; k < MapPawns.tmpThings.Count; k++)
+						this.tmpThings.Clear();
+						ThingOwnerUtility.GetAllThingsRecursively(holder, this.tmpThings, true, null);
+						for (int k = 0; k < this.tmpThings.Count; k++)
 						{
-							Pawn pawn = MapPawns.tmpThings[k] as Pawn;
-							if (pawn != null && pawn.IsColonist && pawn.HostFaction == null)
+							Pawn pawn = this.tmpThings[k] as Pawn;
+							if (pawn != null && !pawn.Dead && pawn.IsFreeColonist)
 							{
 								num++;
 							}
 						}
 					}
 				}
-				MapPawns.tmpThings.Clear();
+				this.tmpThings.Clear();
 				return num;
 			}
 		}
@@ -386,7 +358,7 @@ namespace Verse
 		{
 			if (faction == null)
 			{
-				Log.Error("Called PawnsInFaction with null faction.");
+				Log.Error("Called PawnsInFaction with null faction.", false);
 				return new List<Pawn>();
 			}
 			return from x in this.AllPawns
@@ -399,7 +371,7 @@ namespace Verse
 			this.EnsureFactionsListsInit();
 			if (faction == null)
 			{
-				Log.Error("Called SpawnedPawnsInFaction with null faction.");
+				Log.Error("Called SpawnedPawnsInFaction with null faction.", false);
 				return new List<Pawn>();
 			}
 			return this.pawnsInFactionSpawned[faction];
@@ -430,7 +402,7 @@ namespace Verse
 					" in ",
 					base.GetType(),
 					"."
-				}));
+				}), false);
 				return;
 			}
 			if (!p.Spawned)
@@ -442,12 +414,12 @@ namespace Verse
 					" in ",
 					base.GetType(),
 					"."
-				}));
+				}), false);
 				return;
 			}
 			if (p.Map != this.map)
 			{
-				Log.Warning("Tried to register pawn " + p + " but his Map is not this one.");
+				Log.Warning("Tried to register pawn " + p + " but his Map is not this one.", false);
 				return;
 			}
 			if (!p.mindState.Active)
@@ -505,18 +477,7 @@ namespace Verse
 
 		private void DoListChangedNotifications()
 		{
-			if (Find.WindowStack != null)
-			{
-				WindowStack windowStack = Find.WindowStack;
-				for (int i = 0; i < windowStack.Count; i++)
-				{
-					MainTabWindow_PawnTable mainTabWindow_PawnTable = windowStack[i] as MainTabWindow_PawnTable;
-					if (mainTabWindow_PawnTable != null)
-					{
-						mainTabWindow_PawnTable.Notify_PawnsChanged();
-					}
-				}
-			}
+			MainTabWindowUtility.NotifyAllPawnTables_PawnsChanged();
 			if (Find.ColonistBar != null)
 			{
 				Find.ColonistBar.MarkColonistsDirty();
@@ -550,7 +511,7 @@ namespace Verse
 			{
 				stringBuilder.AppendLine("    " + current5.ToString());
 			}
-			Log.Message(stringBuilder.ToString());
+			Log.Message(stringBuilder.ToString(), false);
 		}
 	}
 }

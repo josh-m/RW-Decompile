@@ -17,7 +17,7 @@ namespace RimWorld
 			{
 				if (!bill.recipe.WorkerCounter.CanCountProducts(bill))
 				{
-					Messages.Message("RecipeCannotHaveTargetCount".Translate(), MessageTypeDefOf.RejectInput);
+					Messages.Message("RecipeCannotHaveTargetCount".Translate(), MessageTypeDefOf.RejectInput, false);
 				}
 				else
 				{

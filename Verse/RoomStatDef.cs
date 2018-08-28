@@ -14,9 +14,13 @@ namespace Verse
 
 		public bool isHidden;
 
-		public float defaultScore;
+		public float roomlessScore;
 
 		public List<RoomStatScoreStage> scoreStages;
+
+		public RoomStatDef inputStat;
+
+		public SimpleCurve curve;
 
 		[Unsaved]
 		private RoomStatWorker workerInt;
@@ -28,6 +32,7 @@ namespace Verse
 				if (this.workerInt == null)
 				{
 					this.workerInt = (RoomStatWorker)Activator.CreateInstance(this.workerClass);
+					this.workerInt.def = this;
 				}
 				return this.workerInt;
 			}

@@ -7,6 +7,7 @@ namespace RimWorld
 {
 	public class LifeStageDef : Def
 	{
+		[MustTranslate]
 		private string adjective;
 
 		public bool visible = true;
@@ -21,6 +22,7 @@ namespace RimWorld
 
 		public float voxVolume = 1f;
 
+		[NoTranslate]
 		public string icon;
 
 		[Unsaved]
@@ -37,6 +39,8 @@ namespace RimWorld
 		public float marketValueFactor = 1f;
 
 		public float foodMaxFactor = 1f;
+
+		public float meleeDamageFactor = 1f;
 
 		public string Adjective
 		{

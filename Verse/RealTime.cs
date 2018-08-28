@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using UnityEngine;
 
 namespace Verse
@@ -37,6 +38,10 @@ namespace Verse
 			else
 			{
 				RealTime.moteList.Clear();
+			}
+			if (DebugSettings.lowFPS && Time.deltaTime < 100f)
+			{
+				Thread.Sleep((int)(100f - Time.deltaTime));
 			}
 		}
 	}

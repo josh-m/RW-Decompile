@@ -12,19 +12,19 @@ namespace Verse
 
 		protected Vector3 destination;
 
-		protected Thing assignedTarget;
+		protected LocalTargetInfo usedTarget;
 
-		protected Thing intendedTarget;
-
-		private bool interceptWallsInt = true;
-
-		private bool freeInterceptInt = true;
+		protected LocalTargetInfo intendedTarget;
 
 		protected ThingDef equipmentDef;
 
 		protected Thing launcher;
 
-		private Thing neverInterceptTargetInt;
+		protected ThingDef targetCoverDef;
+
+		private ProjectileHitFlags desiredHitFlags = ProjectileHitFlags.All;
+
+		protected float weaponDamageMultiplier = 1f;
 
 		protected bool landed;
 
@@ -32,89 +32,27 @@ namespace Verse
 
 		private Sustainer ambientSustainer;
 
-		private const float BasePawnInterceptChance = 0.4f;
-
-		private const float PawnInterceptChanceFactor_LayingDown = 0.1f;
-
-		private const float PawnInterceptChanceFactor_NonWildNonEnemy = 0.4f;
-
-		private const float InterceptChanceOnRandomObjectPerFillPercent = 0.07f;
-
-		private const float InterceptDist_Possible = 4f;
-
-		private const float InterceptDist_Short = 7f;
-
-		private const float InterceptDist_Normal = 10f;
-
-		private const float InterceptChanceFactor_VeryShort = 0.5f;
-
-		private const float InterceptChanceFactor_Short = 0.75f;
-
 		private static List<IntVec3> checkedCells = new List<IntVec3>();
 
 		private static readonly List<Thing> cellThingsFiltered = new List<Thing>();
 
-		public bool InterceptWalls
+		public ProjectileHitFlags HitFlags
 		{
 			get
 			{
-				return this.def.projectile.alwaysFreeIntercept || (!this.def.projectile.flyOverhead && this.interceptWallsInt);
+				if (this.def.projectile.alwaysFreeIntercept)
+				{
+					return ProjectileHitFlags.All;
+				}
+				if (this.def.projectile.flyOverhead)
+				{
+					return ProjectileHitFlags.None;
+				}
+				return this.desiredHitFlags;
 			}
 			set
 			{
-				if (!value && this.def.projectile.alwaysFreeIntercept)
-				{
-					Log.Error("Tried to set interceptWalls to false on projectile with alwaysFreeIntercept=true");
-					return;
-				}
-				if (value && this.def.projectile.flyOverhead)
-				{
-					Log.Error("Tried to set interceptWalls to true on a projectile with flyOverhead=true");
-					return;
-				}
-				this.interceptWallsInt = value;
-				if (!this.interceptWallsInt && this is Projectile_Explosive)
-				{
-					Log.Message("Non interceptWallsInt explosive.");
-				}
-			}
-		}
-
-		public bool FreeIntercept
-		{
-			get
-			{
-				return this.def.projectile.alwaysFreeIntercept || (!this.def.projectile.flyOverhead && this.freeInterceptInt);
-			}
-			set
-			{
-				if (!value && this.def.projectile.alwaysFreeIntercept)
-				{
-					Log.Error("Tried to set FreeIntercept to false on projectile with alwaysFreeIntercept=true");
-					return;
-				}
-				if (value && this.def.projectile.flyOverhead)
-				{
-					Log.Error("Tried to set FreeIntercept to true on a projectile with flyOverhead=true");
-					return;
-				}
-				this.freeInterceptInt = value;
-			}
-		}
-
-		public Thing ThingToNeverIntercept
-		{
-			get
-			{
-				return this.neverInterceptTargetInt;
-			}
-			set
-			{
-				if (value.def.Fillage == FillCategory.Full)
-				{
-					return;
-				}
-				this.neverInterceptTargetInt = value;
+				this.desiredHitFlags = value;
 			}
 		}
 
@@ -164,45 +102,62 @@ namespace Verse
 			}
 		}
 
+		public int DamageAmount
+		{
+			get
+			{
+				return this.def.projectile.GetDamageAmount(this.weaponDamageMultiplier, null);
+			}
+		}
+
+		public float ArmorPenetration
+		{
+			get
+			{
+				return this.def.projectile.GetArmorPenetration(this.weaponDamageMultiplier, null);
+			}
+		}
+
 		public override void ExposeData()
 		{
 			base.ExposeData();
 			Scribe_Values.Look<Vector3>(ref this.origin, "origin", default(Vector3), false);
 			Scribe_Values.Look<Vector3>(ref this.destination, "destination", default(Vector3), false);
 			Scribe_Values.Look<int>(ref this.ticksToImpact, "ticksToImpact", 0, false);
-			Scribe_References.Look<Thing>(ref this.assignedTarget, "assignedTarget", false);
-			Scribe_References.Look<Thing>(ref this.intendedTarget, "intendedTarget", false);
+			Scribe_TargetInfo.Look(ref this.usedTarget, "usedTarget");
+			Scribe_TargetInfo.Look(ref this.intendedTarget, "intendedTarget");
 			Scribe_References.Look<Thing>(ref this.launcher, "launcher", false);
 			Scribe_Defs.Look<ThingDef>(ref this.equipmentDef, "equipmentDef");
-			Scribe_Values.Look<bool>(ref this.interceptWallsInt, "interceptWalls", true, false);
-			Scribe_Values.Look<bool>(ref this.freeInterceptInt, "interceptRandomTargets", true, false);
+			Scribe_Defs.Look<ThingDef>(ref this.targetCoverDef, "targetCoverDef");
+			Scribe_Values.Look<ProjectileHitFlags>(ref this.desiredHitFlags, "desiredHitFlags", ProjectileHitFlags.All, false);
+			Scribe_Values.Look<float>(ref this.weaponDamageMultiplier, "weaponDamageMultiplier", 1f, false);
 			Scribe_Values.Look<bool>(ref this.landed, "landed", false, false);
-			Scribe_References.Look<Thing>(ref this.neverInterceptTargetInt, "neverInterceptTarget", false);
 		}
 
-		public void Launch(Thing launcher, LocalTargetInfo targ, Thing equipment = null)
+		public void Launch(Thing launcher, LocalTargetInfo usedTarget, LocalTargetInfo intendedTarget, ProjectileHitFlags hitFlags, Thing equipment = null)
 		{
-			this.Launch(launcher, base.Position.ToVector3Shifted(), targ, equipment, null);
+			this.Launch(launcher, base.Position.ToVector3Shifted(), usedTarget, intendedTarget, hitFlags, equipment, null);
 		}
 
-		public void Launch(Thing launcher, Vector3 origin, LocalTargetInfo targ, Thing equipment = null, Thing intendedTarget = null)
+		public void Launch(Thing launcher, Vector3 origin, LocalTargetInfo usedTarget, LocalTargetInfo intendedTarget, ProjectileHitFlags hitFlags, Thing equipment = null, ThingDef targetCoverDef = null)
 		{
 			this.launcher = launcher;
 			this.origin = origin;
+			this.usedTarget = usedTarget;
 			this.intendedTarget = intendedTarget;
+			this.targetCoverDef = targetCoverDef;
+			this.HitFlags = hitFlags;
 			if (equipment != null)
 			{
 				this.equipmentDef = equipment.def;
+				this.weaponDamageMultiplier = equipment.GetStatValue(StatDefOf.RangedWeapon_DamageMultiplier, true);
 			}
 			else
 			{
 				this.equipmentDef = null;
+				this.weaponDamageMultiplier = 1f;
 			}
-			if (targ.Thing != null)
-			{
-				this.assignedTarget = targ.Thing;
-			}
-			this.destination = targ.Cell.ToVector3Shifted() + new Vector3(Rand.Range(-0.3f, 0.3f), 0f, Rand.Range(-0.3f, 0.3f));
+			this.destination = usedTarget.Cell.ToVector3Shifted() + Gen.RandomHorizontalVector(0.3f);
 			this.ticksToImpact = this.StartingTicksToImpact;
 			if (!this.def.projectile.soundAmbient.NullOrUndefined())
 			{
@@ -266,135 +221,193 @@ namespace Verse
 			}
 			if (intVec2.AdjacentToCardinal(intVec))
 			{
-				bool flag = this.CheckForFreeIntercept(intVec2);
-				if (DebugViewSettings.drawInterceptChecks)
-				{
-					if (flag)
-					{
-						MoteMaker.ThrowText(intVec2.ToVector3Shifted(), base.Map, "x", -1f);
-					}
-					else
-					{
-						MoteMaker.ThrowText(intVec2.ToVector3Shifted(), base.Map, "o", -1f);
-					}
-				}
-				return flag;
+				return this.CheckForFreeIntercept(intVec2);
 			}
-			if ((float)this.origin.ToIntVec3().DistanceToSquared(intVec2) > 16f)
+			if (VerbUtility.InterceptChanceFactorFromDistance(this.origin, intVec2) <= 0f)
 			{
-				Vector3 vector = lastExactPos;
-				Vector3 v = newExactPos - lastExactPos;
-				Vector3 b = v.normalized * 0.2f;
-				int num = (int)(v.MagnitudeHorizontal() / 0.2f);
-				Projectile.checkedCells.Clear();
-				int num2 = 0;
-				while (true)
-				{
-					vector += b;
-					IntVec3 intVec3 = vector.ToIntVec3();
-					if (!Projectile.checkedCells.Contains(intVec3))
-					{
-						if (this.CheckForFreeIntercept(intVec3))
-						{
-							break;
-						}
-						Projectile.checkedCells.Add(intVec3);
-					}
-					if (DebugViewSettings.drawInterceptChecks)
-					{
-						MoteMaker.ThrowText(vector, base.Map, "o", -1f);
-					}
-					num2++;
-					if (num2 > num)
-					{
-						return false;
-					}
-					if (intVec3 == intVec2)
-					{
-						return false;
-					}
-				}
-				if (DebugViewSettings.drawInterceptChecks)
-				{
-					MoteMaker.ThrowText(vector, base.Map, "x", -1f);
-				}
-				return true;
+				return false;
 			}
-			return false;
+			Vector3 vector = lastExactPos;
+			Vector3 v = newExactPos - lastExactPos;
+			Vector3 b = v.normalized * 0.2f;
+			int num = (int)(v.MagnitudeHorizontal() / 0.2f);
+			Projectile.checkedCells.Clear();
+			int num2 = 0;
+			while (true)
+			{
+				vector += b;
+				IntVec3 intVec3 = vector.ToIntVec3();
+				if (!Projectile.checkedCells.Contains(intVec3))
+				{
+					if (this.CheckForFreeIntercept(intVec3))
+					{
+						break;
+					}
+					Projectile.checkedCells.Add(intVec3);
+				}
+				num2++;
+				if (num2 > num)
+				{
+					return false;
+				}
+				if (intVec3 == intVec2)
+				{
+					return false;
+				}
+			}
+			return true;
 		}
 
 		private bool CheckForFreeIntercept(IntVec3 c)
 		{
-			float num = (c.ToVector3Shifted() - this.origin).MagnitudeHorizontalSquared();
-			if (num < 16f)
+			if (this.destination.ToIntVec3() == c)
 			{
 				return false;
 			}
-			List<Thing> list = base.Map.thingGrid.ThingsListAt(c);
-			for (int i = 0; i < list.Count; i++)
+			float num = VerbUtility.InterceptChanceFactorFromDistance(this.origin, c);
+			if (num <= 0f)
 			{
-				Thing thing = list[i];
-				if (thing != this.ThingToNeverIntercept)
+				return false;
+			}
+			bool flag = false;
+			List<Thing> thingList = c.GetThingList(base.Map);
+			for (int i = 0; i < thingList.Count; i++)
+			{
+				Thing thing = thingList[i];
+				if (this.CanHit(thing))
 				{
-					if (thing != this.launcher)
+					bool flag2 = false;
+					if (thing.def.Fillage == FillCategory.Full)
 					{
-						if (thing.def.Fillage == FillCategory.Full && this.InterceptWalls)
+						Building_Door building_Door = thing as Building_Door;
+						if (building_Door == null || !building_Door.Open)
 						{
+							this.ThrowDebugText("int-wall", c);
 							this.Impact(thing);
 							return true;
 						}
-						if (this.FreeIntercept)
+						flag2 = true;
+					}
+					float num2 = 0f;
+					Pawn pawn = thing as Pawn;
+					if (pawn != null)
+					{
+						num2 = 0.4f * Mathf.Clamp(pawn.BodySize, 0.1f, 2f);
+						if (pawn.GetPosture() != PawnPosture.Standing)
 						{
-							float num2 = 0f;
-							Pawn pawn = thing as Pawn;
-							if (pawn != null)
-							{
-								num2 = 0.4f;
-								if (pawn.GetPosture() != PawnPosture.Standing)
-								{
-									num2 *= 0.1f;
-								}
-								if (this.launcher != null && pawn.Faction != null && this.launcher.Faction != null && !pawn.Faction.HostileTo(this.launcher.Faction))
-								{
-									num2 *= 0.4f;
-								}
-								num2 *= Mathf.Clamp(pawn.BodySize, 0.1f, 2f);
-							}
-							else if (thing.def.fillPercent > 0.2f)
-							{
-								num2 = thing.def.fillPercent * 0.07f;
-							}
-							if (num2 > 1E-05f)
-							{
-								if (num < 49f)
-								{
-									num2 *= 0.5f;
-								}
-								else if (num < 100f)
-								{
-									num2 *= 0.75f;
-								}
-								if (DebugViewSettings.drawShooting)
-								{
-									MoteMaker.ThrowText(this.ExactPosition, base.Map, num2.ToStringPercent(), -1f);
-								}
-								if (Rand.Value < num2)
-								{
-									this.Impact(thing);
-									return true;
-								}
-							}
+							num2 *= 0.1f;
+						}
+						if (this.launcher != null && pawn.Faction != null && this.launcher.Faction != null && !pawn.Faction.HostileTo(this.launcher.Faction))
+						{
+							num2 *= 0.4f;
 						}
 					}
+					else if (thing.def.fillPercent > 0.2f)
+					{
+						if (flag2)
+						{
+							num2 = 0.05f;
+						}
+						else if (this.DestinationCell.AdjacentTo8Way(c))
+						{
+							num2 = thing.def.fillPercent * 1f;
+						}
+						else
+						{
+							num2 = thing.def.fillPercent * 0.15f;
+						}
+					}
+					num2 *= num;
+					if (num2 > 1E-05f)
+					{
+						if (Rand.Chance(num2))
+						{
+							this.ThrowDebugText("int-" + num2.ToStringPercent(), c);
+							this.Impact(thing);
+							return true;
+						}
+						flag = true;
+						this.ThrowDebugText(num2.ToStringPercent(), c);
+					}
 				}
+			}
+			if (!flag)
+			{
+				this.ThrowDebugText("o", c);
 			}
 			return false;
 		}
 
+		private void ThrowDebugText(string text, IntVec3 c)
+		{
+			if (DebugViewSettings.drawShooting)
+			{
+				MoteMaker.ThrowText(c.ToVector3Shifted(), base.Map, text, -1f);
+			}
+		}
+
 		public override void Draw()
 		{
-			Graphics.DrawMesh(MeshPool.plane10, this.DrawPos, this.ExactRotation, this.def.DrawMatSingle, 0);
+			Mesh mesh = MeshPool.GridPlane(this.def.graphicData.drawSize);
+			Graphics.DrawMesh(mesh, this.DrawPos, this.ExactRotation, this.def.DrawMatSingle, 0);
 			base.Comps_PostDraw();
+		}
+
+		protected bool CanHit(Thing thing)
+		{
+			if (!thing.Spawned)
+			{
+				return false;
+			}
+			if (thing == this.launcher)
+			{
+				return false;
+			}
+			bool flag = false;
+			CellRect.CellRectIterator iterator = thing.OccupiedRect().GetIterator();
+			while (!iterator.Done())
+			{
+				List<Thing> thingList = iterator.Current.GetThingList(base.Map);
+				bool flag2 = false;
+				for (int i = 0; i < thingList.Count; i++)
+				{
+					if (thingList[i] != thing && thingList[i].def.Fillage == FillCategory.Full && thingList[i].def.Altitude >= thing.def.Altitude)
+					{
+						flag2 = true;
+						break;
+					}
+				}
+				if (!flag2)
+				{
+					flag = true;
+					break;
+				}
+				iterator.MoveNext();
+			}
+			if (!flag)
+			{
+				return false;
+			}
+			ProjectileHitFlags hitFlags = this.HitFlags;
+			if (thing == this.intendedTarget && (hitFlags & ProjectileHitFlags.IntendedTarget) != ProjectileHitFlags.None)
+			{
+				return true;
+			}
+			if (thing != this.intendedTarget)
+			{
+				if (thing is Pawn)
+				{
+					if ((hitFlags & ProjectileHitFlags.NonTargetPawns) != ProjectileHitFlags.None)
+					{
+						return true;
+					}
+				}
+				else if ((hitFlags & ProjectileHitFlags.NonTargetWorld) != ProjectileHitFlags.None)
+				{
+					return true;
+				}
+			}
+			return thing == this.intendedTarget && thing.def.Fillage == FillCategory.Full;
 		}
 
 		private void ImpactSomething()
@@ -406,24 +419,25 @@ namespace Verse
 				{
 					if (roofDef.isThickRoof)
 					{
+						this.ThrowDebugText("hit-thick-roof", base.Position);
 						this.def.projectile.soundHitThickRoof.PlayOneShot(new TargetInfo(base.Position, base.Map, false));
 						this.Destroy(DestroyMode.Vanish);
 						return;
 					}
 					if (base.Position.GetEdifice(base.Map) == null || base.Position.GetEdifice(base.Map).def.Fillage != FillCategory.Full)
 					{
-						RoofCollapserImmediate.DropRoofInCells(base.Position, base.Map);
+						RoofCollapserImmediate.DropRoofInCells(base.Position, base.Map, null);
 					}
 				}
 			}
-			if (this.assignedTarget == null)
+			if (!this.usedTarget.HasThing || !this.CanHit(this.usedTarget.Thing))
 			{
 				Projectile.cellThingsFiltered.Clear();
 				List<Thing> thingList = base.Position.GetThingList(base.Map);
 				for (int i = 0; i < thingList.Count; i++)
 				{
 					Thing thing = thingList[i];
-					if (thing.def.category == ThingCategory.Building || thing.def.category == ThingCategory.Pawn || thing.def.category == ThingCategory.Item || thing.def.category == ThingCategory.Plant)
+					if ((thing.def.category == ThingCategory.Building || thing.def.category == ThingCategory.Pawn || thing.def.category == ThingCategory.Item || thing.def.category == ThingCategory.Plant) && this.CanHit(thing))
 					{
 						Projectile.cellThingsFiltered.Add(thing);
 					}
@@ -431,50 +445,50 @@ namespace Verse
 				Projectile.cellThingsFiltered.Shuffle<Thing>();
 				for (int j = 0; j < Projectile.cellThingsFiltered.Count; j++)
 				{
-					Thing t = Projectile.cellThingsFiltered[j];
-					if (Rand.Value < Projectile.ImpactSomethingHitThingChance(t))
+					Thing thing2 = Projectile.cellThingsFiltered[j];
+					Pawn pawn = thing2 as Pawn;
+					float num;
+					if (pawn != null)
 					{
+						num = 0.5f * Mathf.Clamp(pawn.BodySize, 0.1f, 2f);
+						if (pawn.GetPosture() != PawnPosture.Standing && (this.origin - this.destination).MagnitudeHorizontalSquared() >= 20.25f)
+						{
+							num *= 0.2f;
+						}
+						if (this.launcher != null && pawn.Faction != null && this.launcher.Faction != null && !pawn.Faction.HostileTo(this.launcher.Faction))
+						{
+							num *= VerbUtility.InterceptChanceFactorFromDistance(this.origin, base.Position);
+						}
+					}
+					else
+					{
+						num = 1.5f * thing2.def.fillPercent;
+					}
+					if (Rand.Chance(num))
+					{
+						this.ThrowDebugText("hit-" + num.ToStringPercent(), base.Position);
 						this.Impact(Projectile.cellThingsFiltered.RandomElement<Thing>());
 						return;
 					}
+					this.ThrowDebugText("miss-" + num.ToStringPercent(), base.Position);
 				}
 				this.Impact(null);
 				return;
 			}
-			Pawn pawn = this.assignedTarget as Pawn;
-			if (pawn != null && pawn.GetPosture() != PawnPosture.Standing && (this.origin - this.destination).MagnitudeHorizontalSquared() >= 20.25f && Rand.Value > 0.2f)
+			Pawn pawn2 = this.usedTarget.Thing as Pawn;
+			if (pawn2 != null && pawn2.GetPosture() != PawnPosture.Standing && (this.origin - this.destination).MagnitudeHorizontalSquared() >= 20.25f && !Rand.Chance(0.2f))
 			{
+				this.ThrowDebugText("miss-laying", base.Position);
 				this.Impact(null);
 				return;
 			}
-			this.Impact(this.assignedTarget);
-		}
-
-		private static float ImpactSomethingHitThingChance(Thing t)
-		{
-			Pawn pawn = t as Pawn;
-			if (pawn != null)
-			{
-				return pawn.BodySize * 0.5f;
-			}
-			return t.def.fillPercent * 1.5f;
+			this.Impact(this.usedTarget.Thing);
 		}
 
 		protected virtual void Impact(Thing hitThing)
 		{
+			GenClamor.DoClamor(this, 2.1f, ClamorDefOf.Impact);
 			this.Destroy(DestroyMode.Vanish);
-		}
-
-		public void ForceInstantImpact()
-		{
-			if (!this.DestinationCell.InBounds(base.Map))
-			{
-				this.Destroy(DestroyMode.Vanish);
-				return;
-			}
-			this.ticksToImpact = 0;
-			base.Position = this.DestinationCell;
-			this.ImpactSomething();
 		}
 	}
 }

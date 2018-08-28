@@ -8,17 +8,27 @@ namespace RimWorld
 {
 	public class GenStep_Turrets : GenStep
 	{
+		public IntRange defaultTurretsCountRange = new IntRange(4, 5);
+
+		public IntRange defaultMortarsCountRange = new IntRange(0, 1);
+
 		public IntRange widthRange = new IntRange(3, 4);
 
-		public IntRange turretsCountRange = new IntRange(4, 5);
-
-		public IntRange mortarsCountRange = new IntRange(0, 1);
-
-		public IntRange guardsCountRange = IntRange.one;
+		public IntRange guardsCountRange = new IntRange(1, 1);
 
 		private const int Padding = 7;
 
-		public override void Generate(Map map)
+		public const int DefaultGuardsCount = 1;
+
+		public override int SeedPart
+		{
+			get
+			{
+				return 895502705;
+			}
+		}
+
+		public override void Generate(Map map, GenStepParams parms)
 		{
 			CellRect cellRect;
 			if (!MapGenerator.TryGetVar<CellRect>("RectOfInterest", out cellRect))
@@ -38,12 +48,24 @@ namespace RimWorld
 			}
 			int randomInRange = this.widthRange.RandomInRange;
 			CellRect rect = cellRect.ExpandedBy(7 + randomInRange).ClipInsideMap(map);
+			int value;
+			int value2;
+			if (parms.siteCoreOrPart != null)
+			{
+				value = parms.siteCoreOrPart.parms.turretsCount;
+				value2 = parms.siteCoreOrPart.parms.mortarsCount;
+			}
+			else
+			{
+				value = this.defaultTurretsCountRange.RandomInRange;
+				value2 = this.defaultMortarsCountRange.RandomInRange;
+			}
 			ResolveParams resolveParams = default(ResolveParams);
 			resolveParams.rect = rect;
 			resolveParams.faction = faction;
 			resolveParams.edgeDefenseWidth = new int?(randomInRange);
-			resolveParams.edgeDefenseTurretsCount = new int?(this.turretsCountRange.RandomInRange);
-			resolveParams.edgeDefenseMortarsCount = new int?(this.mortarsCountRange.RandomInRange);
+			resolveParams.edgeDefenseTurretsCount = new int?(value);
+			resolveParams.edgeDefenseMortarsCount = new int?(value2);
 			resolveParams.edgeDefenseGuardsCount = new int?(this.guardsCountRange.RandomInRange);
 			BaseGen.globalSettings.map = map;
 			BaseGen.symbolStack.Push("edgeDefense", resolveParams);

@@ -70,6 +70,22 @@ namespace RimWorld
 		public void ExposeData()
 		{
 			Scribe_Deep.Look<DefMap<WorkTypeDef, int>>(ref this.priorities, "priorities", new object[0]);
+			if (Scribe.mode == LoadSaveMode.PostLoadInit && this.priorities != null)
+			{
+				List<WorkTypeDef> disabledWorkTypes = this.pawn.story.DisabledWorkTypes;
+				for (int i = 0; i < disabledWorkTypes.Count; i++)
+				{
+					this.Disable(disabledWorkTypes[i]);
+				}
+			}
+		}
+
+		public void EnableAndInitializeIfNotAlreadyInitialized()
+		{
+			if (this.priorities == null)
+			{
+				this.EnableAndInitialize();
+			}
 		}
 
 		public void EnableAndInitialize()
@@ -111,7 +127,7 @@ namespace RimWorld
 		{
 			if (this.priorities == null)
 			{
-				Log.Error(this.pawn + " did not have work settings initialized.");
+				Log.Error(this.pawn + " did not have work settings initialized.", false);
 				this.EnableAndInitialize();
 			}
 		}
@@ -127,12 +143,12 @@ namespace RimWorld
 					w,
 					" for pawn ",
 					this.pawn
-				}));
+				}), false);
 				return;
 			}
 			if (priority < 0 || priority > 4)
 			{
-				Log.Message("Trying to set work to invalid priority " + priority);
+				Log.Message("Trying to set work to invalid priority " + priority, false);
 			}
 			this.priorities[w] = priority;
 			if (priority == 0)

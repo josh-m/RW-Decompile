@@ -13,10 +13,10 @@ namespace Verse
 				throw new ArgumentNullException("p");
 			}
 			List<DebugMenuOption> list = new List<DebugMenuOption>();
-			foreach (BodyPartRecord current in p.health.hediffSet.GetNotMissingParts(BodyPartHeight.Undefined, BodyPartDepth.Undefined))
+			foreach (BodyPartRecord current in p.health.hediffSet.GetNotMissingParts(BodyPartHeight.Undefined, BodyPartDepth.Undefined, null, null))
 			{
 				BodyPartRecord localPart = current;
-				list.Add(new DebugMenuOption(localPart.def.LabelCap, DebugMenuOptionMode.Action, delegate
+				list.Add(new DebugMenuOption(localPart.LabelCap, DebugMenuOptionMode.Action, delegate
 				{
 					p.health.RestorePart(localPart, null, true);
 				}));
@@ -32,7 +32,7 @@ namespace Verse
 				DamageDef localDef = current;
 				list.Add(new DebugMenuOption(localDef.LabelCap, DebugMenuOptionMode.Tool, delegate
 				{
-					Pawn pawn = Find.VisibleMap.thingGrid.ThingsAt(UI.MouseCell()).OfType<Pawn>().FirstOrDefault<Pawn>();
+					Pawn pawn = Find.CurrentMap.thingGrid.ThingsAt(UI.MouseCell()).OfType<Pawn>().FirstOrDefault<Pawn>();
 					if (pawn != null)
 					{
 						Find.WindowStack.Add(new Dialog_DebugOptionListLister(DebugTools_Health.Options_Damage_BodyParts(pawn, localDef)));
@@ -51,18 +51,18 @@ namespace Verse
 			List<DebugMenuOption> list = new List<DebugMenuOption>();
 			list.Add(new DebugMenuOption("(no body part)", DebugMenuOptionMode.Action, delegate
 			{
-				p.TakeDamage(new DamageInfo(def, 5, -1f, null, null, null, DamageInfo.SourceCategory.ThingOrUnknown));
+				p.TakeDamage(new DamageInfo(def, 5f, 0f, -1f, null, null, null, DamageInfo.SourceCategory.ThingOrUnknown, null));
 			}));
 			foreach (BodyPartRecord current in p.RaceProps.body.AllParts)
 			{
 				BodyPartRecord localPart = current;
-				list.Add(new DebugMenuOption(localPart.def.LabelCap, DebugMenuOptionMode.Action, delegate
+				list.Add(new DebugMenuOption(localPart.LabelCap, DebugMenuOptionMode.Action, delegate
 				{
-					Thing arg_30_0 = p;
+					Thing arg_3A_0 = p;
 					DamageDef def2 = def;
-					int amount = 5;
+					float amount = 5f;
 					BodyPartRecord localPart = localPart;
-					arg_30_0.TakeDamage(new DamageInfo(def2, amount, -1f, null, localPart, null, DamageInfo.SourceCategory.ThingOrUnknown));
+					arg_3A_0.TakeDamage(new DamageInfo(def2, amount, 0f, -1f, null, localPart, null, DamageInfo.SourceCategory.ThingOrUnknown, null));
 				}));
 			}
 			return list;
@@ -71,37 +71,17 @@ namespace Verse
 		public static List<DebugMenuOption> Options_AddHediff()
 		{
 			List<DebugMenuOption> list = new List<DebugMenuOption>();
-			foreach (Type current in (from t in typeof(Hediff).AllSubclasses()
-			where !t.IsAbstract
-			select t).Concat(Gen.YieldSingle<Type>(typeof(Hediff))))
-			{
-				Type localDiffType = current;
-				if (localDiffType != typeof(Hediff_Injury))
-				{
-					list.Add(new DebugMenuOption(localDiffType.ToString(), DebugMenuOptionMode.Action, delegate
-					{
-						Find.WindowStack.Add(new Dialog_DebugOptionListLister(DebugTools_Health.Options_HediffsDefs(localDiffType)));
-					}));
-				}
-			}
-			return list;
-		}
-
-		private static List<DebugMenuOption> Options_HediffsDefs(Type diffType)
-		{
-			List<DebugMenuOption> list = new List<DebugMenuOption>();
 			foreach (HediffDef current in from d in DefDatabase<HediffDef>.AllDefs
-			where d.hediffClass == diffType
+			orderby d.hediffClass.ToStringSafe<Type>()
 			select d)
 			{
 				HediffDef localDef = current;
 				list.Add(new DebugMenuOption(localDef.LabelCap, DebugMenuOptionMode.Tool, delegate
 				{
-					Pawn pawn = Find.VisibleMap.thingGrid.ThingsAt(UI.MouseCell()).Where((Thing t) => t is Pawn).Cast<Pawn>().FirstOrDefault<Pawn>();
+					Pawn pawn = Find.CurrentMap.thingGrid.ThingsAt(UI.MouseCell()).Where((Thing t) => t is Pawn).Cast<Pawn>().FirstOrDefault<Pawn>();
 					if (pawn != null)
 					{
 						Find.WindowStack.Add(new Dialog_DebugOptionListLister(DebugTools_Health.Options_Hediff_BodyParts(pawn, localDef)));
-						DebugTools.curTool = null;
 					}
 				}));
 			}
@@ -117,14 +97,16 @@ namespace Verse
 			List<DebugMenuOption> list = new List<DebugMenuOption>();
 			list.Add(new DebugMenuOption("(no body part)", DebugMenuOptionMode.Action, delegate
 			{
-				p.health.AddHediff(def, null, null);
+				p.health.AddHediff(def, null, null, null);
 			}));
-			foreach (BodyPartRecord current in p.RaceProps.body.AllParts)
+			foreach (BodyPartRecord current in from pa in p.RaceProps.body.AllParts
+			orderby pa.Label
+			select pa)
 			{
 				BodyPartRecord localPart = current;
-				list.Add(new DebugMenuOption(localPart.def.LabelCap, DebugMenuOptionMode.Action, delegate
+				list.Add(new DebugMenuOption(localPart.LabelCap, DebugMenuOptionMode.Action, delegate
 				{
-					p.health.AddHediff(def, localPart, null);
+					p.health.AddHediff(def, localPart, null, null);
 				}));
 			}
 			return list;

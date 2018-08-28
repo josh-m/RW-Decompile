@@ -34,6 +34,26 @@ namespace Verse
 			return num3 / 120f;
 		}
 
+		public static float MinTemperatureAtTile(int tile)
+		{
+			float num = 3.40282347E+38f;
+			for (int i = 0; i < 3600000; i += 26999)
+			{
+				num = Mathf.Min(num, GenTemperature.GetTemperatureFromSeasonAtTile(i, tile));
+			}
+			return num;
+		}
+
+		public static float MaxTemperatureAtTile(int tile)
+		{
+			float num = -3.40282347E+38f;
+			for (int i = 0; i < 3600000; i += 26999)
+			{
+				num = Mathf.Max(num, GenTemperature.GetTemperatureFromSeasonAtTile(i, tile));
+			}
+			return num;
+		}
+
 		public static FloatRange ComfortableTemperatureRange(this Pawn p)
 		{
 			return new FloatRange(p.GetStatValue(StatDefOf.ComfyTemperatureMin, true), p.GetStatValue(StatDefOf.ComfyTemperatureMax, true));
@@ -44,7 +64,7 @@ namespace Verse
 			FloatRange result = new FloatRange(raceDef.GetStatValueAbstract(StatDefOf.ComfyTemperatureMin, null), raceDef.GetStatValueAbstract(StatDefOf.ComfyTemperatureMax, null));
 			if (apparel != null)
 			{
-				result.min += apparel.Sum((ThingStuffPair x) => x.InsulationCold);
+				result.min -= apparel.Sum((ThingStuffPair x) => x.InsulationCold);
 				result.max += apparel.Sum((ThingStuffPair x) => x.InsulationHeat);
 			}
 			return result;
@@ -77,7 +97,7 @@ namespace Verse
 		{
 			if (map == null)
 			{
-				Log.Error("Got temperature for null map.");
+				Log.Error("Got temperature for null map.", false);
 				tempResult = 21f;
 				return true;
 			}
@@ -259,7 +279,7 @@ namespace Verse
 		{
 			if (map == null)
 			{
-				Log.Error("Added heat to null map.");
+				Log.Error("Added heat to null map.", false);
 				return false;
 			}
 			RoomGroup roomGroup = c.GetRoomGroup(map);
@@ -449,6 +469,11 @@ namespace Verse
 				return false;
 			}
 			return false;
+		}
+
+		public static string GetAverageTemperatureLabel(int tile)
+		{
+			return Find.WorldGrid[tile].temperature.ToStringTemperature("F1") + " " + string.Format("({0} {1} {2})", GenTemperature.MinTemperatureAtTile(tile).ToStringTemperature("F0"), "RangeTo".Translate(), GenTemperature.MaxTemperatureAtTile(tile).ToStringTemperature("F0"));
 		}
 
 		public static float CelsiusTo(float temp, TemperatureDisplayMode oldMode)

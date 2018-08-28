@@ -16,7 +16,7 @@ namespace Verse
 				{
 					if (suggestedMapParentDef == null)
 					{
-						Log.Error("Tried to get or generate map at " + tile + ", but there isn't any MapParent world object here and map parent def argument is null.");
+						Log.Error("Tried to get or generate map at " + tile + ", but there isn't any MapParent world object here and map parent def argument is null.", false);
 						return null;
 					}
 					mapParent = (MapParent)WorldObjectMaker.MakeWorldObject(suggestedMapParentDef);

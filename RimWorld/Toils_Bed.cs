@@ -20,7 +20,7 @@ namespace RimWorld
 				}
 				else
 				{
-					actor.pather.StartPath(RestUtility.GetBedSleepingSlotPosFor(actor, bed), PathEndMode.OnCell);
+					actor.pather.StartPath(bedSleepingSlotPosFor, PathEndMode.OnCell);
 				}
 			};
 			gotoBed.tickAction = delegate

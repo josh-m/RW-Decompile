@@ -7,42 +7,72 @@ namespace Verse
 {
 	public class BodyPartDef : Def
 	{
-		[NoTranslate]
-		public List<string> tags = new List<string>();
+		[MustTranslate]
+		public string labelShort;
 
-		public int hitPoints = 100;
+		public List<BodyPartTagDef> tags = new List<BodyPartTagDef>();
 
-		public float oldInjuryBaseChance = 0.2f;
+		public int hitPoints = 10;
 
-		public float amputateIfGeneratedInjuredChance;
+		public float permanentInjuryChanceFactor = 1f;
 
-		public float bleedingRateMultiplier = 1f;
-
-		private bool skinCovered;
-
-		public bool useDestroyedOutLabel;
-
-		public ThingDef spawnThingOnRemoved;
-
-		private bool isSolid;
-
-		public bool dontSuggestAmputation;
+		public float bleedRate = 1f;
 
 		public float frostbiteVulnerability;
 
+		private bool skinCovered;
+
+		private bool solid;
+
+		public bool alive = true;
+
+		public bool delicate;
+
 		public bool beautyRelated;
 
-		public bool isAlive = true;
+		public bool conceptual;
 
-		public bool isConceptual;
+		public bool socketed;
+
+		public ThingDef spawnThingOnRemoved;
+
+		public bool pawnGeneratorCanAmputate;
+
+		public bool canSuggestAmputation = true;
 
 		public Dictionary<DamageDef, float> hitChanceFactors;
 
-		public bool IsDelicate
+		public bool destroyableByDamage = true;
+
+		public bool IsSolidInDefinition_Debug
 		{
 			get
 			{
-				return this.oldInjuryBaseChance >= 0.8f;
+				return this.solid;
+			}
+		}
+
+		public bool IsSkinCoveredInDefinition_Debug
+		{
+			get
+			{
+				return this.skinCovered;
+			}
+		}
+
+		public string LabelShort
+		{
+			get
+			{
+				return (!this.labelShort.NullOrEmpty()) ? this.labelShort : this.label;
+			}
+		}
+
+		public string LabelShortCap
+		{
+			get
+			{
+				return this.LabelShort.CapitalizeFirst();
 			}
 		}
 
@@ -57,6 +87,10 @@ namespace Verse
 			{
 				yield return "frostbitePriority > max 10: " + this.frostbiteVulnerability;
 			}
+			if (this.solid && this.bleedRate > 0f)
+			{
+				yield return "solid but bleedRate is not zero";
+			}
 		}
 
 		public bool IsSolid(BodyPartRecord part, List<Hediff> hediffs)
@@ -67,11 +101,11 @@ namespace Verse
 				{
 					if (hediffs[i].Part == bodyPartRecord && hediffs[i] is Hediff_AddedPart)
 					{
-						return hediffs[i].def.addedPartProps.isSolid;
+						return hediffs[i].def.addedPartProps.solid;
 					}
 				}
 			}
-			return this.isSolid;
+			return this.solid;
 		}
 
 		public bool IsSkinCovered(BodyPartRecord part, HediffSet body)
@@ -86,7 +120,7 @@ namespace Verse
 
 		public float GetHitChanceFactorFor(DamageDef damage)
 		{
-			if (this.isConceptual)
+			if (this.conceptual)
 			{
 				return 0f;
 			}

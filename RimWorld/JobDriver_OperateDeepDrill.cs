@@ -8,9 +8,12 @@ namespace RimWorld
 {
 	public class JobDriver_OperateDeepDrill : JobDriver
 	{
-		public override bool TryMakePreToilReservations()
+		public override bool TryMakePreToilReservations(bool errorOnFailed)
 		{
-			return this.pawn.Reserve(this.job.targetA, this.job, 1, -1, null);
+			Pawn pawn = this.pawn;
+			LocalTargetInfo targetA = this.job.targetA;
+			Job job = this.job;
+			return pawn.Reserve(targetA, job, 1, -1, null, errorOnFailed);
 		}
 
 		[DebuggerHidden]
@@ -31,11 +34,12 @@ namespace RimWorld
 				Building building = (Building)actor.CurJob.targetA.Thing;
 				CompDeepDrill comp = building.GetComp<CompDeepDrill>();
 				comp.DrillWorkDone(actor);
-				actor.skills.Learn(SkillDefOf.Mining, 0.0714999959f, false);
+				actor.skills.Learn(SkillDefOf.Mining, 0.065f, false);
 			};
 			work.defaultCompleteMode = ToilCompleteMode.Never;
 			work.WithEffect(EffecterDefOf.Drill, TargetIndex.A);
 			work.FailOnCannotTouch(TargetIndex.A, PathEndMode.InteractionCell);
+			work.activeSkill = (() => SkillDefOf.Mining);
 			yield return work;
 		}
 	}

@@ -14,6 +14,14 @@ namespace RimWorld
 			}
 		}
 
+		public override bool AllowSelfTend
+		{
+			get
+			{
+				return false;
+			}
+		}
+
 		public override void UpdateAllDuties()
 		{
 			for (int i = 0; i < this.lord.ownedPawns.Count; i++)

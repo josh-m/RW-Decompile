@@ -69,12 +69,12 @@ namespace Verse
 			ushort num2 = (ushort)count;
 			if (count > 65535)
 			{
-				Log.Error("Cannot store count " + count + " in DeepResourceGrid: out of ushort range.");
+				Log.Error("Cannot store count " + count + " in DeepResourceGrid: out of ushort range.", false);
 				num2 = 65535;
 			}
 			if (count < 0)
 			{
-				Log.Error("Cannot store count " + count + " in DeepResourceGrid: out of ushort range.");
+				Log.Error("Cannot store count " + count + " in DeepResourceGrid: out of ushort range.", false);
 				num2 = 0;
 			}
 			int num3 = this.map.cellIndices.CellToIndex(c);
@@ -98,7 +98,7 @@ namespace Verse
 
 		public void MarkForDraw()
 		{
-			if (this.map == Find.VisibleMap)
+			if (this.map == Find.CurrentMap)
 			{
 				this.drawer.MarkForDraw();
 			}

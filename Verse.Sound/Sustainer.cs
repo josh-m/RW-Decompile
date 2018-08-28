@@ -59,7 +59,7 @@ namespace Verse.Sound
 							" info is ",
 							this.info,
 							" but its worldRootObject is null"
-						}));
+						}), false);
 					}
 					return 0f;
 				}
@@ -81,7 +81,7 @@ namespace Verse.Sound
 				{
 					if (info.IsOnCamera)
 					{
-						Log.Error("Playing sound " + def.ToString() + " on camera, but it has sub-sounds in the world.");
+						Log.Error("Playing sound " + def.ToString() + " on camera, but it has sub-sounds in the world.", false);
 					}
 					this.worldRootObject = new GameObject("SustainerRootObject_" + def.defName);
 					this.UpdateRootObjectPosition();
@@ -155,7 +155,7 @@ namespace Verse.Sound
 		{
 			if (this.Ended)
 			{
-				Log.Error("Tried to maintain ended sustainer: " + this.def);
+				Log.Error("Tried to maintain ended sustainer: " + this.def, false);
 				return;
 			}
 			if (this.info.Maintenance == MaintenanceType.PerTick)
@@ -187,7 +187,7 @@ namespace Verse.Sound
 					this.subSustainers[i].Cleanup();
 				}
 			}
-			if (this.def.sustainStopSound != string.Empty)
+			if (this.def.sustainStopSound != null)
 			{
 				if (this.worldRootObject != null)
 				{
@@ -195,12 +195,12 @@ namespace Verse.Sound
 					if (map != null)
 					{
 						SoundInfo soundInfo = SoundInfo.InMap(new TargetInfo(this.worldRootObject.transform.position.ToIntVec3(), map, false), MaintenanceType.None);
-						SoundDef.Named(this.def.sustainStopSound).PlayOneShot(soundInfo);
+						this.def.sustainStopSound.PlayOneShot(soundInfo);
 					}
 				}
 				else
 				{
-					SoundDef.Named(this.def.sustainStopSound).PlayOneShot(SoundInfo.OnCamera(MaintenanceType.None));
+					this.def.sustainStopSound.PlayOneShot(SoundInfo.OnCamera(MaintenanceType.None));
 				}
 			}
 			if (this.worldRootObject != null)

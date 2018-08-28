@@ -37,6 +37,8 @@ namespace RimWorld
 
 		private bool entriesDirty = true;
 
+		private List<Pawn> colonistsToHighlight = new List<Pawn>();
+
 		public static readonly Texture2D BGTex = Command.BGTex;
 
 		public static readonly Vector2 BaseSize = new Vector2(48f, 48f);
@@ -148,15 +150,31 @@ namespace RimWorld
 				List<ColonistBar.Entry> entries = this.Entries;
 				int num = -1;
 				bool showGroupFrames = this.ShowGroupFrames;
+				int reorderableGroup = -1;
 				for (int i = 0; i < this.cachedDrawLocs.Count; i++)
 				{
 					Rect rect = new Rect(this.cachedDrawLocs[i].x, this.cachedDrawLocs[i].y, this.Size.x, this.Size.y);
 					ColonistBar.Entry entry = entries[i];
 					bool flag = num != entry.group;
 					num = entry.group;
+					if (flag)
+					{
+						reorderableGroup = ReorderableWidget.NewGroup(delegate(int from, int to)
+						{
+							this.Reorder(from, to, entry.group);
+						}, ReorderableDirection.Horizontal, this.SpaceBetweenColonistsHorizontal, delegate(int index, Vector2 dragStartPos)
+						{
+							this.DrawColonistMouseAttachment(index, dragStartPos, entry.group);
+						});
+					}
+					bool reordering;
 					if (entry.pawn != null)
 					{
-						this.drawer.HandleClicks(rect, entry.pawn);
+						this.drawer.HandleClicks(rect, entry.pawn, reorderableGroup, out reordering);
+					}
+					else
+					{
+						reordering = false;
 					}
 					if (Event.current.type == EventType.Repaint)
 					{
@@ -166,7 +184,7 @@ namespace RimWorld
 						}
 						if (entry.pawn != null)
 						{
-							this.drawer.DrawColonist(rect, entry.pawn, entry.map);
+							this.drawer.DrawColonist(rect, entry.pawn, entry.map, this.colonistsToHighlight.Contains(entry.pawn), reordering);
 						}
 					}
 				}
@@ -184,6 +202,10 @@ namespace RimWorld
 						}
 					}
 				}
+			}
+			if (Event.current.type == EventType.Repaint)
+			{
+				this.colonistsToHighlight.Clear();
 			}
 		}
 
@@ -229,7 +251,7 @@ namespace RimWorld
 							ColonistBar.tmpPawns.Add(corpse.InnerPawn);
 						}
 					}
-					ColonistBar.tmpPawns.SortBy((Pawn x) => x.thingIDNumber);
+					PlayerPawnsDisplayOrderUtility.Sort(ColonistBar.tmpPawns);
 					for (int l = 0; l < ColonistBar.tmpPawns.Count; l++)
 					{
 						this.cachedEntries.Add(new ColonistBar.Entry(ColonistBar.tmpPawns[l], ColonistBar.tmpMaps[i], num));
@@ -249,7 +271,7 @@ namespace RimWorld
 					{
 						ColonistBar.tmpPawns.Clear();
 						ColonistBar.tmpPawns.AddRange(ColonistBar.tmpCaravans[m].PawnsListForReading);
-						ColonistBar.tmpPawns.SortBy((Pawn x) => x.thingIDNumber);
+						PlayerPawnsDisplayOrderUtility.Sort(ColonistBar.tmpPawns);
 						for (int n = 0; n < ColonistBar.tmpPawns.Count; n++)
 						{
 							if (ColonistBar.tmpPawns[n].IsColonist)
@@ -276,6 +298,109 @@ namespace RimWorld
 				return Mathf.Lerp(1f, 0.2f, t);
 			}
 			return 1f;
+		}
+
+		public void Highlight(Pawn pawn)
+		{
+			if (!this.Visible)
+			{
+				return;
+			}
+			if (!this.colonistsToHighlight.Contains(pawn))
+			{
+				this.colonistsToHighlight.Add(pawn);
+			}
+		}
+
+		private void Reorder(int from, int to, int entryGroup)
+		{
+			int num = 0;
+			Pawn pawn = null;
+			Pawn pawn2 = null;
+			Pawn pawn3 = null;
+			for (int i = 0; i < this.cachedEntries.Count; i++)
+			{
+				if (this.cachedEntries[i].group == entryGroup && this.cachedEntries[i].pawn != null)
+				{
+					if (num == from)
+					{
+						pawn = this.cachedEntries[i].pawn;
+					}
+					if (num == to)
+					{
+						pawn2 = this.cachedEntries[i].pawn;
+					}
+					pawn3 = this.cachedEntries[i].pawn;
+					num++;
+				}
+			}
+			if (pawn == null)
+			{
+				return;
+			}
+			int num2 = (pawn2 == null) ? (pawn3.playerSettings.displayOrder + 1) : pawn2.playerSettings.displayOrder;
+			for (int j = 0; j < this.cachedEntries.Count; j++)
+			{
+				Pawn pawn4 = this.cachedEntries[j].pawn;
+				if (pawn4 != null)
+				{
+					if (pawn4.playerSettings.displayOrder == num2)
+					{
+						if (pawn2 != null && this.cachedEntries[j].group == entryGroup)
+						{
+							if (pawn4.thingIDNumber < pawn2.thingIDNumber)
+							{
+								pawn4.playerSettings.displayOrder--;
+							}
+							else
+							{
+								pawn4.playerSettings.displayOrder++;
+							}
+						}
+					}
+					else if (pawn4.playerSettings.displayOrder > num2)
+					{
+						pawn4.playerSettings.displayOrder++;
+					}
+					else
+					{
+						pawn4.playerSettings.displayOrder--;
+					}
+				}
+			}
+			pawn.playerSettings.displayOrder = num2;
+			this.MarkColonistsDirty();
+			MainTabWindowUtility.NotifyAllPawnTables_PawnsChanged();
+		}
+
+		private void DrawColonistMouseAttachment(int index, Vector2 dragStartPos, int entryGroup)
+		{
+			Pawn pawn = null;
+			Vector2 vector = default(Vector2);
+			int num = 0;
+			for (int i = 0; i < this.cachedEntries.Count; i++)
+			{
+				if (this.cachedEntries[i].group == entryGroup && this.cachedEntries[i].pawn != null)
+				{
+					if (num == index)
+					{
+						pawn = this.cachedEntries[i].pawn;
+						vector = this.cachedDrawLocs[i];
+						break;
+					}
+					num++;
+				}
+			}
+			if (pawn != null)
+			{
+				RenderTexture renderTexture = PortraitsCache.Get(pawn, ColonistBarColonistDrawer.PawnTextureSize, ColonistBarColonistDrawer.PawnTextureCameraOffset, 1.28205f);
+				Rect rect = new Rect(vector.x, vector.y, this.Size.x, this.Size.y);
+				Rect pawnTextureRect = this.drawer.GetPawnTextureRect(rect.position);
+				pawnTextureRect.position += Event.current.mousePosition - dragStartPos;
+				RenderTexture iconTex = renderTexture;
+				Rect? customRect = new Rect?(pawnTextureRect);
+				GenUI.DrawMouseAttachment(iconTex, string.Empty, 0f, default(Vector2), customRect);
+			}
 		}
 
 		public bool AnyColonistOrCorpseAt(Vector2 pos)
@@ -350,9 +475,9 @@ namespace RimWorld
 					goto IL_1A1;
 				}
 			}
-			if (ColonistBar.tmpColonistsWithMap.Any((Pair<Thing, Map> x) => x.Second == Find.VisibleMap))
+			if (ColonistBar.tmpColonistsWithMap.Any((Pair<Thing, Map> x) => x.Second == Find.CurrentMap))
 			{
-				ColonistBar.tmpColonistsWithMap.RemoveAll((Pair<Thing, Map> x) => x.Second != Find.VisibleMap);
+				ColonistBar.tmpColonistsWithMap.RemoveAll((Pair<Thing, Map> x) => x.Second != Find.CurrentMap);
 			}
 			IL_1A1:
 			ColonistBar.tmpColonists.Clear();

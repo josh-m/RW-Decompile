@@ -50,6 +50,10 @@ namespace Verse.AI
 		{
 		}
 
+		public virtual void PreStart()
+		{
+		}
+
 		public virtual void PostEnd()
 		{
 			if (!this.def.recoveryMessage.NullOrEmpty() && PawnUtility.ShouldSendNotificationAbout(this.pawn))
@@ -57,15 +61,15 @@ namespace Verse.AI
 				string text = null;
 				try
 				{
-					text = string.Format(this.def.recoveryMessage, this.pawn.NameStringShort);
+					text = string.Format(this.def.recoveryMessage, this.pawn.LabelShort);
 				}
 				catch (Exception arg)
 				{
-					Log.Error("Exception formatting string: " + arg);
+					Log.Error("Exception formatting string: " + arg, false);
 				}
 				if (!text.NullOrEmpty())
 				{
-					Messages.Message(text.AdjustedFor(this.pawn), this.pawn, MessageTypeDefOf.SituationResolved);
+					Messages.Message(text.AdjustedFor(this.pawn, "PAWN").CapitalizeFirst(), this.pawn, MessageTypeDefOf.SituationResolved, true);
 				}
 			}
 		}
@@ -98,12 +102,20 @@ namespace Verse.AI
 					this.def,
 					" but pawn's mental state is not this, it is ",
 					this.pawn.MentalState
-				}));
+				}), false);
 			}
-			this.pawn.mindState.mentalStateHandler.ClearMentalStateDirect();
-			if (this.causedByMood && this.def.moodRecoveryThought != null && this.pawn.needs.mood != null)
+			if (!this.pawn.Dead)
 			{
-				this.pawn.needs.mood.thoughts.memories.TryGainMemory(this.def.moodRecoveryThought, null);
+				this.pawn.mindState.mentalStateHandler.ClearMentalStateDirect();
+				if (this.causedByMood && this.def.moodRecoveryThought != null && this.pawn.needs.mood != null)
+				{
+					this.pawn.needs.mood.thoughts.memories.TryGainMemory(this.def.moodRecoveryThought, null);
+				}
+				this.pawn.mindState.mentalBreaker.Notify_RecoveredFromMentalState();
+			}
+			if (this.pawn.Spawned)
+			{
+				this.pawn.jobs.EndCurrentJob(JobCondition.InterruptForced, true);
 			}
 			this.PostEnd();
 		}
@@ -134,7 +146,7 @@ namespace Verse.AI
 			{
 				return null;
 			}
-			return string.Format(this.def.beginLetter, this.pawn.Label).AdjustedFor(this.pawn).CapitalizeFirst();
+			return string.Format(this.def.beginLetter, this.pawn.LabelShort).AdjustedFor(this.pawn, "PAWN").CapitalizeFirst();
 		}
 
 		public virtual void Notify_AttackedTarget(LocalTargetInfo hitTarget)

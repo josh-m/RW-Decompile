@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace Verse
 {
-	internal static class MeshMakerPlanes
+	public static class MeshMakerPlanes
 	{
 		private const float BackLiftAmount = 0.00234375f;
 

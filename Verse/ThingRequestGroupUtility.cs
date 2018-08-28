@@ -55,7 +55,7 @@ namespace Verse
 			case ThingRequestGroup.Fire:
 				return true;
 			case ThingRequestGroup.Plant:
-				return false;
+				return true;
 			case ThingRequestGroup.Construction:
 				return false;
 			case ThingRequestGroup.HasGUIOverlay:
@@ -83,6 +83,14 @@ namespace Verse
 			case ThingRequestGroup.WindSource:
 				return false;
 			case ThingRequestGroup.AlwaysFlee:
+				return false;
+			case ThingRequestGroup.ResearchBench:
+				return false;
+			case ThingRequestGroup.Facility:
+				return false;
+			case ThingRequestGroup.AffectedByFacilities:
+				return false;
+			case ThingRequestGroup.CreatesInfestations:
 				return false;
 			default:
 				throw new ArgumentException("group");

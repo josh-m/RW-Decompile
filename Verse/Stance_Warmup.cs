@@ -69,7 +69,7 @@ namespace Verse
 				this.stanceTracker.SetStance(new Stance_Mobile());
 				return;
 			}
-			if (this.focusTarg.HasThing && (!this.focusTarg.Thing.Spawned || !this.verb.CanHitTargetFrom(base.Pawn.Position, this.focusTarg)))
+			if (this.focusTarg.HasThing && (!this.focusTarg.Thing.Spawned || this.verb == null || !this.verb.CanHitTargetFrom(base.Pawn.Position, this.focusTarg)))
 			{
 				this.stanceTracker.SetStance(new Stance_Mobile());
 				return;

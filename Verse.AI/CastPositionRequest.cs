@@ -20,6 +20,6 @@ namespace Verse.AI
 
 		public bool wantCoverFromTarget;
 
-		public int maxRegionsRadius;
+		public int maxRegions;
 	}
 }

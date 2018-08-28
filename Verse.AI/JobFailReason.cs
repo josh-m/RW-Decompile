@@ -6,6 +6,8 @@ namespace Verse.AI
 	{
 		private static string lastReason;
 
+		private static string lastCustomJobString;
+
 		public static string Reason
 		{
 			get
@@ -22,14 +24,24 @@ namespace Verse.AI
 			}
 		}
 
-		public static void Is(string reason)
+		public static string CustomJobString
+		{
+			get
+			{
+				return JobFailReason.lastCustomJobString;
+			}
+		}
+
+		public static void Is(string reason, string customJobString = null)
 		{
 			JobFailReason.lastReason = reason;
+			JobFailReason.lastCustomJobString = customJobString;
 		}
 
 		public static void Clear()
 		{
 			JobFailReason.lastReason = null;
+			JobFailReason.lastCustomJobString = null;
 		}
 	}
 }

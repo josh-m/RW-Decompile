@@ -52,7 +52,8 @@ namespace RimWorld
 			{
 				nameShortIndefinite = Find.ActiveLanguageWorker.WithIndefiniteArticle(this.name);
 			}
-			yield return new Rule_String(prefix + "_nameShortIndefinite", nameShortIndefinite);
+			yield return new Rule_String(prefix + "_indefinite", nameShortIndefinite);
+			yield return new Rule_String(prefix + "_nameIndef", nameShortIndefinite);
 			string nameShortDefinite;
 			if (this.IsPawn)
 			{
@@ -62,7 +63,8 @@ namespace RimWorld
 			{
 				nameShortDefinite = Find.ActiveLanguageWorker.WithDefiniteArticle(this.name);
 			}
-			yield return new Rule_String(prefix + "_nameShortDefinite", nameShortDefinite);
+			yield return new Rule_String(prefix + "_definite", nameShortDefinite);
+			yield return new Rule_String(prefix + "_nameDef", nameShortDefinite);
 			yield return new Rule_String(prefix + "_pronoun", this.gender.GetPronoun());
 			yield return new Rule_String(prefix + "_possessive", this.gender.GetPossessive());
 		}

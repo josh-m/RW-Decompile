@@ -11,7 +11,7 @@ namespace RimWorld
 			float factor = this.GetFactor(room.GetStat(RoomStatDefOf.Wealth) / 1500f);
 			float factor2 = this.GetFactor(room.GetStat(RoomStatDefOf.Beauty) / 3f);
 			float factor3 = this.GetFactor(room.GetStat(RoomStatDefOf.Space) / 125f);
-			float factor4 = this.GetFactor(1f + room.GetStat(RoomStatDefOf.Cleanliness) / 2.5f);
+			float factor4 = this.GetFactor(1f + Mathf.Min(room.GetStat(RoomStatDefOf.Cleanliness), 0f) / 2.5f);
 			float a = (factor + factor2 + factor3 + factor4) / 4f;
 			float b = Mathf.Min(factor, Mathf.Min(factor2, Mathf.Min(factor3, factor4)));
 			float num = Mathf.Lerp(a, b, 0.35f);

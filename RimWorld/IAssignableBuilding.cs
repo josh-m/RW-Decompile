@@ -24,5 +24,7 @@ namespace RimWorld
 		void TryAssignPawn(Pawn pawn);
 
 		void TryUnassignPawn(Pawn pawn);
+
+		bool AssignedAnything(Pawn pawn);
 	}
 }

@@ -67,7 +67,7 @@ namespace RimWorld
 			}
 			else
 			{
-				text = Find.ActiveLanguageWorker.WithIndefiniteArticle(culprit.Label);
+				text = Find.ActiveLanguageWorker.WithIndefiniteArticlePostProcessed(culprit.Label);
 			}
 			StringBuilder stringBuilder = new StringBuilder();
 			if (flag)
@@ -105,7 +105,7 @@ namespace RimWorld
 				stringBuilder.AppendLine();
 				stringBuilder.Append("ShortCircuitWasHuge".Translate());
 			}
-			Find.LetterStack.ReceiveLetter("LetterLabelShortCircuit".Translate(), stringBuilder.ToString(), LetterDefOf.NegativeEvent, new TargetInfo(culprit.Position, map, false), null);
+			Find.LetterStack.ReceiveLetter("LetterLabelShortCircuit".Translate(), stringBuilder.ToString(), LetterDefOf.NegativeEvent, new TargetInfo(culprit.Position, map, false), null, null);
 		}
 
 		public static bool TryShortCircuitInRain(Thing thing)
@@ -120,13 +120,13 @@ namespace RimWorld
 				TargetInfo target = new TargetInfo(thing.Position, thing.Map, false);
 				if (thing.Faction == Faction.OfPlayer)
 				{
-					Find.LetterStack.ReceiveLetter("LetterLabelShortCircuit".Translate(), text, LetterDefOf.NegativeEvent, target, null);
+					Find.LetterStack.ReceiveLetter("LetterLabelShortCircuit".Translate(), text, LetterDefOf.NegativeEvent, target, null, null);
 				}
 				else
 				{
-					Messages.Message(text, target, MessageTypeDefOf.NeutralEvent);
+					Messages.Message(text, target, MessageTypeDefOf.NeutralEvent, true);
 				}
-				GenExplosion.DoExplosion(thing.OccupiedRect().RandomCell, thing.Map, 1.9f, DamageDefOf.Flame, null, -1, null, null, null, null, 0f, 1, false, null, 0f, 1, 0f, false);
+				GenExplosion.DoExplosion(thing.OccupiedRect().RandomCell, thing.Map, 1.9f, DamageDefOf.Flame, null, -1, -1f, null, null, null, null, null, 0f, 1, false, null, 0f, 1, 0f, false);
 				return true;
 			}
 			return false;
@@ -143,10 +143,10 @@ namespace RimWorld
 			}
 			explosionRadius = Mathf.Sqrt(totalEnergy) * 0.05f;
 			explosionRadius = Mathf.Clamp(explosionRadius, 1.5f, 14.9f);
-			GenExplosion.DoExplosion(culprit.Position, net.Map, explosionRadius, DamageDefOf.Flame, null, -1, null, null, null, null, 0f, 1, false, null, 0f, 1, 0f, false);
+			GenExplosion.DoExplosion(culprit.Position, net.Map, explosionRadius, DamageDefOf.Flame, null, -1, -1f, null, null, null, null, null, 0f, 1, false, null, 0f, 1, 0f, false);
 			if (explosionRadius > 3.5f)
 			{
-				GenExplosion.DoExplosion(culprit.Position, net.Map, explosionRadius * 0.3f, DamageDefOf.Bomb, null, -1, null, null, null, null, 0f, 1, false, null, 0f, 1, 0f, false);
+				GenExplosion.DoExplosion(culprit.Position, net.Map, explosionRadius * 0.3f, DamageDefOf.Bomb, null, -1, -1f, null, null, null, null, null, 0f, 1, false, null, 0f, 1, 0f, false);
 			}
 		}
 

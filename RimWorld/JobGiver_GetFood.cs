@@ -8,10 +8,13 @@ namespace RimWorld
 	{
 		private HungerCategory minCategory;
 
+		public bool forceScanWholeMap;
+
 		public override ThinkNode DeepCopy(bool resolve = true)
 		{
 			JobGiver_GetFood jobGiver_GetFood = (JobGiver_GetFood)base.DeepCopy(resolve);
 			jobGiver_GetFood.minCategory = this.minCategory;
+			jobGiver_GetFood.forceScanWholeMap = this.forceScanWholeMap;
 			return jobGiver_GetFood;
 		}
 
@@ -59,9 +62,10 @@ namespace RimWorld
 			bool canRefillDispenser = true;
 			bool canUseInventory = true;
 			bool allowCorpse = flag;
+			bool flag3 = this.forceScanWholeMap;
 			Thing thing;
 			ThingDef thingDef;
-			if (!FoodUtility.TryFindBestFoodSourceFor(pawn, pawn, desperate, out thing, out thingDef, canRefillDispenser, canUseInventory, false, allowCorpse, false, pawn.IsWildMan()))
+			if (!FoodUtility.TryFindBestFoodSourceFor(pawn, pawn, desperate, out thing, out thingDef, canRefillDispenser, canUseInventory, false, allowCorpse, false, pawn.IsWildMan(), flag3))
 			{
 				return null;
 			}
@@ -90,15 +94,16 @@ namespace RimWorld
 						return job;
 					}
 				}
-				thing = FoodUtility.BestFoodSourceOnMap(pawn, pawn, flag2, out thingDef, FoodPreferability.MealLavish, false, !pawn.IsTeetotaler(), false, false, false, false, false, false);
+				thing = FoodUtility.BestFoodSourceOnMap(pawn, pawn, flag2, out thingDef, FoodPreferability.MealLavish, false, !pawn.IsTeetotaler(), false, false, false, false, false, false, this.forceScanWholeMap);
 				if (thing == null)
 				{
 					return null;
 				}
 			}
+			float nutrition = FoodUtility.GetNutrition(thing, thingDef);
 			return new Job(JobDefOf.Ingest, thing)
 			{
-				count = FoodUtility.WillIngestStackCountOf(pawn, thingDef)
+				count = FoodUtility.WillIngestStackCountOf(pawn, thingDef, nutrition)
 			};
 		}
 	}

@@ -1,6 +1,7 @@
 using RimWorld.Planet;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using Verse.AI;
 
@@ -119,18 +120,18 @@ namespace Verse
 
 		public static DamageDef PrimaryMeleeWeaponDamageType(ThingDef thing)
 		{
-			List<Tool> tools = thing.tools;
-			Tool tool2 = tools.MaxBy((Tool tool) => tool.power);
-			List<ManeuverDef> allDefsListForReading = DefDatabase<ManeuverDef>.AllDefsListForReading;
-			for (int i = 0; i < allDefsListForReading.Count; i++)
+			return ThingUtility.PrimaryMeleeWeaponDamageType(thing.tools);
+		}
+
+		public static DamageDef PrimaryMeleeWeaponDamageType(List<Tool> tools)
+		{
+			if (tools.NullOrEmpty<Tool>())
 			{
-				ManeuverDef maneuverDef = allDefsListForReading[i];
-				if (tool2.capacities.Contains(maneuverDef.requiredCapacity))
-				{
-					return maneuverDef.verb.meleeDamageDef;
-				}
+				return null;
 			}
-			return null;
+			Tool tool2 = tools.MaxBy((Tool tool) => tool.power);
+			ManeuverDef maneuverDef = tool2.Maneuvers.FirstOrDefault<ManeuverDef>();
+			return (maneuverDef == null) ? null : maneuverDef.verb.meleeDamageDef;
 		}
 	}
 }

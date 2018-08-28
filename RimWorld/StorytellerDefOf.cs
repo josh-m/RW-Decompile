@@ -8,5 +8,10 @@ namespace RimWorld
 		public static StorytellerDef Cassandra;
 
 		public static StorytellerDef Tutor;
+
+		static StorytellerDefOf()
+		{
+			DefOfHelper.EnsureInitializedInCtor(typeof(StorytellerDefOf));
+		}
 	}
 }

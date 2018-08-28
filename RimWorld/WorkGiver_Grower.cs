@@ -63,7 +63,7 @@ namespace RimWorld
 				{
 					if (growZone.cells.Count == 0)
 					{
-						Log.ErrorOnce("Grow zone has 0 cells: " + growZone, -563487);
+						Log.ErrorOnce("Grow zone has 0 cells: " + growZone, -563487, false);
 					}
 					else if (this.ExtraRequirements(growZone, pawn))
 					{

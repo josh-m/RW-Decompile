@@ -9,14 +9,6 @@ namespace RimWorld
 
 		private float cachedSelectionWeight;
 
-		public float SelectionWeight
-		{
-			get
-			{
-				return this.cachedSelectionWeight;
-			}
-		}
-
 		public bool IsMeleeAttack
 		{
 			get
@@ -25,10 +17,19 @@ namespace RimWorld
 			}
 		}
 
-		public VerbEntry(Verb verb, Pawn pawn, Thing equipment = null)
+		public VerbEntry(Verb verb, Pawn pawn)
 		{
 			this.verb = verb;
-			this.cachedSelectionWeight = verb.verbProps.AdjustedMeleeSelectionWeight(verb, pawn, equipment);
+			this.cachedSelectionWeight = verb.verbProps.AdjustedMeleeSelectionWeight(verb, pawn);
+		}
+
+		public float GetSelectionWeight(Thing target)
+		{
+			if (!this.verb.IsUsableOn(target))
+			{
+				return 0f;
+			}
+			return this.cachedSelectionWeight;
 		}
 
 		public override string ToString()

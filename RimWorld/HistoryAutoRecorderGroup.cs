@@ -9,27 +9,11 @@ namespace RimWorld
 	{
 		public HistoryAutoRecorderGroupDef def;
 
-		public List<HistoryAutoRecorder> recorders;
+		public List<HistoryAutoRecorder> recorders = new List<HistoryAutoRecorder>();
 
-		private List<SimpleCurveDrawInfo> curves;
+		private List<SimpleCurveDrawInfo> curves = new List<SimpleCurveDrawInfo>();
 
 		private int cachedGraphTickCount = -1;
-
-		public HistoryAutoRecorderGroup()
-		{
-			this.recorders = new List<HistoryAutoRecorder>();
-			this.curves = new List<SimpleCurveDrawInfo>();
-		}
-
-		public void CreateRecorders()
-		{
-			foreach (HistoryAutoRecorderDef current in this.def.historyAutoRecorderDefs)
-			{
-				HistoryAutoRecorder historyAutoRecorder = new HistoryAutoRecorder();
-				historyAutoRecorder.def = current;
-				this.recorders.Add(historyAutoRecorder);
-			}
-		}
 
 		public float GetMaxDay()
 		{
@@ -93,6 +77,7 @@ namespace RimWorld
 			curveDrawerStyle.UseFixedScale = this.def.useFixedScale;
 			curveDrawerStyle.FixedScale = this.def.fixedScale;
 			curveDrawerStyle.YIntegersOnly = this.def.integersOnly;
+			curveDrawerStyle.OnlyPositiveValues = this.def.onlyPositiveValues;
 			SimpleCurveDrawer.DrawCurves(graphRect, this.curves, curveDrawerStyle, marks, legendRect);
 			Text.Anchor = TextAnchor.UpperLeft;
 		}
@@ -101,6 +86,28 @@ namespace RimWorld
 		{
 			Scribe_Defs.Look<HistoryAutoRecorderGroupDef>(ref this.def, "def");
 			Scribe_Collections.Look<HistoryAutoRecorder>(ref this.recorders, "recorders", LookMode.Deep, new object[0]);
+			if (Scribe.mode == LoadSaveMode.PostLoadInit)
+			{
+				this.AddOrRemoveHistoryRecorders();
+			}
+		}
+
+		public void AddOrRemoveHistoryRecorders()
+		{
+			if (this.recorders.RemoveAll((HistoryAutoRecorder x) => x == null) != 0)
+			{
+				Log.Warning("Some history auto recorders were null.", false);
+			}
+			foreach (HistoryAutoRecorderDef recorderDef in this.def.historyAutoRecorderDefs)
+			{
+				if (!this.recorders.Any((HistoryAutoRecorder x) => x.def == recorderDef))
+				{
+					HistoryAutoRecorder historyAutoRecorder = new HistoryAutoRecorder();
+					historyAutoRecorder.def = recorderDef;
+					this.recorders.Add(historyAutoRecorder);
+				}
+			}
+			this.recorders.RemoveAll((HistoryAutoRecorder x) => x.def == null);
 		}
 	}
 }

@@ -34,9 +34,17 @@ namespace RimWorld
 
 		public bool prioritizeSustains;
 
-		public bool canBeDoneByNonColonists;
+		public bool nonColonistsCanDo;
 
 		public JobTag tagToGive = JobTag.MiscWork;
+
+		public WorkGiverEquivalenceGroupDef equivalenceGroup;
+
+		public bool canBeDoneWhileDrafted;
+
+		public int autoTakeablePriorityDrafted = -1;
+
+		public ThingDef forceMote;
 
 		public List<ThingDef> fixedBillGiverDefs;
 

@@ -26,13 +26,13 @@ namespace RimWorld
 			{
 				Vector3 drawPos = this.DrawPos;
 				drawPos.y += 0.01f;
-				float num = Graphic_Mote.CalculateMoteAlpha(this);
-				if (num <= 0f)
+				float alpha = this.Alpha;
+				if (alpha <= 0f)
 				{
 					return;
 				}
 				Color instanceColor = this.instanceColor;
-				instanceColor.a *= num;
+				instanceColor.a *= alpha;
 				Material material = this.iconMat;
 				if (instanceColor != material.color)
 				{

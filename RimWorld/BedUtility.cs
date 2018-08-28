@@ -22,7 +22,7 @@ namespace RimWorld
 					", but there are only ",
 					sleepingSlotsCount,
 					" sleeping slots available."
-				}));
+				}), false);
 				return bedCenter;
 			}
 			CellRect cellRect = GenAdj.OccupiedRect(bedCenter, bedRot, bedSize);

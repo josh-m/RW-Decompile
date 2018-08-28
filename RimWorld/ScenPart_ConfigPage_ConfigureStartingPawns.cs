@@ -57,31 +57,26 @@ namespace RimWorld
 
 		public override void PostWorldGenerate()
 		{
+			Find.GameInitData.startingPawnCount = this.pawnCount;
 			int num = 0;
-			while (true)
+			do
 			{
 				StartingPawnUtility.ClearAllStartingPawns();
 				for (int i = 0; i < this.pawnCount; i++)
 				{
-					Find.GameInitData.startingPawns.Add(StartingPawnUtility.NewGeneratedStartingPawn());
+					Find.GameInitData.startingAndOptionalPawns.Add(StartingPawnUtility.NewGeneratedStartingPawn());
 				}
 				num++;
 				if (num > 20)
 				{
 					break;
 				}
-				if (StartingPawnUtility.WorkTypeRequirementsSatisfied())
-				{
-					goto Block_3;
-				}
 			}
-			return;
-			Block_3:
-			while (Find.GameInitData.startingPawns.Count < this.pawnChoiceCount)
+			while (!StartingPawnUtility.WorkTypeRequirementsSatisfied());
+			while (Find.GameInitData.startingAndOptionalPawns.Count < this.pawnChoiceCount)
 			{
-				Find.GameInitData.startingPawns.Add(StartingPawnUtility.NewGeneratedStartingPawn());
+				Find.GameInitData.startingAndOptionalPawns.Add(StartingPawnUtility.NewGeneratedStartingPawn());
 			}
-			Find.GameInitData.startingPawnCount = this.pawnCount;
 		}
 	}
 }

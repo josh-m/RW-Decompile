@@ -61,7 +61,7 @@ namespace RimWorld.BaseGen
 				PawnKindDef kind = faction.RandomPawnKind();
 				Faction faction2 = faction;
 				int tile = map.Tile;
-				PawnGenerationRequest value = new PawnGenerationRequest(kind, faction2, PawnGenerationContext.NonPlayer, tile, false, false, false, false, true, true, 1f, false, true, true, true, false, false, false, null, null, null, null, null, null, null);
+				PawnGenerationRequest value = new PawnGenerationRequest(kind, faction2, PawnGenerationContext.NonPlayer, tile, false, false, false, false, true, true, 1f, false, true, true, true, false, false, false, null, null, null, null, null, null, null, null);
 				ResolveParams resolveParams = rp;
 				resolveParams.faction = faction;
 				resolveParams.singlePawnGenerationRequest = new PawnGenerationRequest?(value);

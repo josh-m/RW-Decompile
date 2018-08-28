@@ -82,11 +82,11 @@ namespace RimWorld
 			this.ListScenariosOnListing(listing_Standard, ScenarioLister.ScenariosInCategory(ScenarioCategory.FromDef));
 			listing_Standard.Gap(12f);
 			Text.Font = GameFont.Small;
-			listing_Standard.Label("ScenariosCustom".Translate(), -1f);
+			listing_Standard.Label("ScenariosCustom".Translate(), -1f, null);
 			this.ListScenariosOnListing(listing_Standard, ScenarioLister.ScenariosInCategory(ScenarioCategory.CustomLocal));
 			listing_Standard.Gap(12f);
 			Text.Font = GameFont.Small;
-			listing_Standard.Label("ScenariosSteamWorkshop".Translate(), -1f);
+			listing_Standard.Label("ScenariosSteamWorkshop".Translate(), -1f, null);
 			if (listing_Standard.ButtonText("OpenSteamWorkshop".Translate(), null))
 			{
 				SteamUtility.OpenSteamWorkshopPage();
@@ -114,7 +114,7 @@ namespace RimWorld
 			if (!flag)
 			{
 				GUI.color = new Color(1f, 1f, 1f, 0.5f);
-				listing.Label("(" + "NoneLower".Translate() + ")", -1f);
+				listing.Label("(" + "NoneLower".Translate() + ")", -1f, null);
 				GUI.color = Color.white;
 			}
 		}
@@ -136,7 +136,7 @@ namespace RimWorld
 			if (scen.enabled)
 			{
 				WidgetRow widgetRow = new WidgetRow(rect.xMax, rect.y, UIDirection.LeftThenDown, 99999f, 4f);
-				if (scen.Category == ScenarioCategory.CustomLocal && widgetRow.ButtonIcon(TexButton.DeleteX, "Delete".Translate()))
+				if (scen.Category == ScenarioCategory.CustomLocal && widgetRow.ButtonIcon(TexButton.DeleteX, "Delete".Translate(), new Color?(GenUI.SubtleMouseoverColor)))
 				{
 					Find.WindowStack.Add(Dialog_MessageBox.CreateConfirmation("ConfirmDelete".Translate(new object[]
 					{
@@ -147,7 +147,7 @@ namespace RimWorld
 						ScenarioLister.MarkDirty();
 					}, true, null));
 				}
-				if (scen.Category == ScenarioCategory.SteamWorkshop && widgetRow.ButtonIcon(TexButton.DeleteX, "Unsubscribe".Translate()))
+				if (scen.Category == ScenarioCategory.SteamWorkshop && widgetRow.ButtonIcon(TexButton.DeleteX, "Unsubscribe".Translate(), new Color?(GenUI.SubtleMouseoverColor)))
 				{
 					Find.WindowStack.Add(Dialog_MessageBox.CreateConfirmation("ConfirmUnsubscribe".Translate(new object[]
 					{
@@ -165,7 +165,7 @@ namespace RimWorld
 				}
 				if (scen.GetPublishedFileId() != PublishedFileId_t.Invalid)
 				{
-					if (widgetRow.ButtonIcon(ContentSource.SteamWorkshop.GetIcon(), "WorkshopPage".Translate()))
+					if (widgetRow.ButtonIcon(ContentSource.SteamWorkshop.GetIcon(), "WorkshopPage".Translate(), null))
 					{
 						SteamUtility.OpenWorkshopPage(scen.GetPublishedFileId());
 					}

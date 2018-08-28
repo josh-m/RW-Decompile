@@ -48,6 +48,7 @@ namespace RimWorld
 					TutorSystem.Notify_Event("GameStartDialogClosed");
 				};
 				Find.WindowStack.Add(dialog_NodeTree);
+				Find.Archive.Add(new ArchivedDialog(diaNode.text, null, null));
 			}
 		}
 	}

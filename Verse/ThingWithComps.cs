@@ -46,7 +46,7 @@ namespace Verse
 		{
 			get
 			{
-				string text = GenLabel.ThingLabel(this);
+				string text = base.LabelNoCount;
 				if (this.comps != null)
 				{
 					int i = 0;
@@ -58,6 +58,32 @@ namespace Verse
 					}
 				}
 				return text;
+			}
+		}
+
+		public override string DescriptionFlavor
+		{
+			get
+			{
+				StringBuilder stringBuilder = new StringBuilder();
+				stringBuilder.Append(base.DescriptionFlavor);
+				if (this.comps != null)
+				{
+					for (int i = 0; i < this.comps.Count; i++)
+					{
+						string descriptionPart = this.comps[i].GetDescriptionPart();
+						if (!descriptionPart.NullOrEmpty())
+						{
+							if (stringBuilder.Length > 0)
+							{
+								stringBuilder.AppendLine();
+								stringBuilder.AppendLine();
+							}
+							stringBuilder.Append(descriptionPart);
+						}
+					}
+				}
+				return stringBuilder.ToString();
 			}
 		}
 
@@ -135,6 +161,22 @@ namespace Verse
 			}
 		}
 
+		public override string GetCustomLabelNoCount(bool includeHp = true)
+		{
+			string text = base.GetCustomLabelNoCount(includeHp);
+			if (this.comps != null)
+			{
+				int i = 0;
+				int count = this.comps.Count;
+				while (i < count)
+				{
+					text = this.comps[i].TransformLabel(text);
+					i++;
+				}
+			}
+			return text;
+		}
+
 		public override void ExposeData()
 		{
 			base.ExposeData();
@@ -182,10 +224,10 @@ namespace Verse
 			}
 		}
 
-		public override void DeSpawn()
+		public override void DeSpawn(DestroyMode mode = DestroyMode.Vanish)
 		{
 			Map map = base.Map;
-			base.DeSpawn();
+			base.DeSpawn(mode);
 			if (this.comps != null)
 			{
 				for (int i = 0; i < this.comps.Count; i++)
@@ -236,9 +278,9 @@ namespace Verse
 			}
 		}
 
-		public override void PreApplyDamage(DamageInfo dinfo, out bool absorbed)
+		public override void PreApplyDamage(ref DamageInfo dinfo, out bool absorbed)
 		{
-			base.PreApplyDamage(dinfo, out absorbed);
+			base.PreApplyDamage(ref dinfo, out absorbed);
 			if (absorbed)
 			{
 				return;
@@ -414,7 +456,7 @@ namespace Verse
 				{
 					if (Prefs.DevMode && char.IsWhiteSpace(text[text.Length - 1]))
 					{
-						Log.ErrorOnce(this.comps[i].GetType() + " CompInspectStringExtra ended with whitespace: " + text, 25612);
+						Log.ErrorOnce(this.comps[i].GetType() + " CompInspectStringExtra ended with whitespace: " + text, 25612, false);
 						text = text.TrimEndNewlines();
 					}
 					if (stringBuilder.Length != 0)
@@ -422,29 +464,6 @@ namespace Verse
 						stringBuilder.AppendLine();
 					}
 					stringBuilder.Append(text);
-				}
-			}
-			return stringBuilder.ToString();
-		}
-
-		public override string GetDescription()
-		{
-			StringBuilder stringBuilder = new StringBuilder();
-			stringBuilder.Append(base.GetDescription());
-			if (this.comps != null)
-			{
-				for (int i = 0; i < this.comps.Count; i++)
-				{
-					string descriptionPart = this.comps[i].GetDescriptionPart();
-					if (!descriptionPart.NullOrEmpty())
-					{
-						if (stringBuilder.Length > 0)
-						{
-							stringBuilder.AppendLine();
-							stringBuilder.AppendLine();
-						}
-						stringBuilder.Append(descriptionPart);
-					}
 				}
 			}
 			return stringBuilder.ToString();

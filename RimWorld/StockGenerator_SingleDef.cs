@@ -30,9 +30,9 @@ namespace RimWorld
 			{
 				yield return e;
 			}
-			if (this.thingDef.tradeability != Tradeability.Stockable)
+			if (!this.thingDef.tradeability.TraderCanSell())
 			{
-				yield return this.thingDef + " is not Stockable";
+				yield return this.thingDef + " tradeability doesn't allow traders to sell this thing";
 			}
 		}
 	}

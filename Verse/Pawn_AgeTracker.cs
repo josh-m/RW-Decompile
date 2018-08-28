@@ -16,7 +16,7 @@ namespace Verse
 
 		private int cachedLifeStageIndex = -1;
 
-		private int nextLifeStageChangeTick = -1;
+		private long nextLifeStageChangeTick = -1L;
 
 		private const float BornAtLongitude = 0f;
 
@@ -227,7 +227,7 @@ namespace Verse
 			{
 				if (this.pawn.RaceProps.Humanlike)
 				{
-					Log.ErrorOnce("Tried to get CurKindLifeStage from humanlike pawn " + this.pawn, 8888811);
+					Log.ErrorOnce("Tried to get CurKindLifeStage from humanlike pawn " + this.pawn, 8888811, false);
 					return null;
 				}
 				return this.pawn.kindDef.lifeStages[this.CurLifeStageIndex];
@@ -252,7 +252,7 @@ namespace Verse
 		public void AgeTick()
 		{
 			this.ageBiologicalTicksInt += 1L;
-			if (Find.TickManager.TicksGame >= this.nextLifeStageChangeTick)
+			if ((long)Find.TickManager.TicksGame >= this.nextLifeStageChangeTick)
 			{
 				this.RecalculateLifeStageIndex();
 			}
@@ -266,7 +266,7 @@ namespace Verse
 		{
 			long num = this.ageBiologicalTicksInt;
 			this.ageBiologicalTicksInt += (long)interval;
-			while (Find.TickManager.TicksGame >= this.nextLifeStageChangeTick)
+			while ((long)Find.TickManager.TicksGame >= this.nextLifeStageChangeTick)
 			{
 				this.RecalculateLifeStageIndex();
 			}
@@ -308,11 +308,11 @@ namespace Verse
 			{
 				float num2 = lifeStageAges[this.cachedLifeStageIndex + 1].minAge - this.AgeBiologicalYearsFloat;
 				int num3 = (Current.ProgramState != ProgramState.Playing) ? 0 : Find.TickManager.TicksGame;
-				this.nextLifeStageChangeTick = num3 + Mathf.CeilToInt(num2 * 3600000f);
+				this.nextLifeStageChangeTick = (long)num3 + (long)Mathf.Ceil(num2 * 3600000f);
 			}
 			else
 			{
-				this.nextLifeStageChangeTick = 2147483647;
+				this.nextLifeStageChangeTick = 9223372036854775807L;
 			}
 		}
 
@@ -337,8 +337,8 @@ namespace Verse
 					this.pawn,
 					this.AgeBiologicalYears,
 					stringBuilder
-				}).AdjustedFor(this.pawn);
-				Find.LetterStack.ReceiveLetter("LetterLabelBirthday".Translate(), text, LetterDefOf.NegativeEvent, this.pawn, null);
+				}).AdjustedFor(this.pawn, "PAWN");
+				Find.LetterStack.ReceiveLetter("LetterLabelBirthday".Translate(), text, LetterDefOf.NegativeEvent, this.pawn, null, null);
 			}
 		}
 

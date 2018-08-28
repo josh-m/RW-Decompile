@@ -34,10 +34,10 @@ namespace Verse.AI
 			this.ChooseRandomChemical();
 			if (PawnUtility.ShouldSendNotificationAbout(this.pawn))
 			{
-				string label = "MentalBreakLetterLabel".Translate() + ": " + "LetterLabelDrugBinge".Translate(new object[]
+				string label = "LetterLabelDrugBinge".Translate(new object[]
 				{
 					this.chemical.label
-				});
+				}).CapitalizeFirst() + ": " + this.pawn.LabelShortCap;
 				string text = "LetterDrugBinge".Translate(new object[]
 				{
 					this.pawn.Label,
@@ -47,10 +47,10 @@ namespace Verse.AI
 				{
 					text = text + "\n\n" + "FinalStraw".Translate(new object[]
 					{
-						reason
+						reason.CapitalizeFirst()
 					});
 				}
-				Find.LetterStack.ReceiveLetter(label, text, LetterDefOf.ThreatSmall, this.pawn, null);
+				Find.LetterStack.ReceiveLetter(label, text, LetterDefOf.ThreatSmall, this.pawn, null, null);
 			}
 		}
 
@@ -61,9 +61,9 @@ namespace Verse.AI
 			{
 				Messages.Message("MessageNoLongerBingingOnDrug".Translate(new object[]
 				{
-					this.pawn.NameStringShort,
+					this.pawn.LabelShort,
 					this.chemical.label
-				}), this.pawn, MessageTypeDefOf.SituationResolved);
+				}), this.pawn, MessageTypeDefOf.SituationResolved, true);
 			}
 		}
 

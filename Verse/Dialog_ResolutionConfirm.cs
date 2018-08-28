@@ -34,7 +34,8 @@ namespace Verse
 		private Dialog_ResolutionConfirm()
 		{
 			this.startTime = Time.realtimeSinceStartup;
-			this.closeOnEscapeKey = false;
+			this.closeOnAccept = false;
+			this.closeOnCancel = false;
 			this.absorbInputAroundWindow = true;
 		}
 
@@ -90,7 +91,7 @@ namespace Verse
 					this.oldRes.z,
 					", fs=",
 					this.oldFullscreen
-				}));
+				}), false);
 			}
 			Screen.SetResolution(this.oldRes.x, this.oldRes.z, this.oldFullscreen);
 			Prefs.UIScale = this.oldUIScale;

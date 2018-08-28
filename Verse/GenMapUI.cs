@@ -9,9 +9,13 @@ namespace Verse
 	{
 		public static readonly Texture2D OverlayHealthTex = SolidColorMaterials.NewSolidColorTexture(new Color(1f, 0f, 0f, 0.25f));
 
-		public const float NameBGHeight = 12f;
+		public const float NameBGHeight_Tiny = 12f;
 
-		public const float NameBGExtraWidth = 4f;
+		public const float NameBGExtraWidth_Tiny = 4f;
+
+		public const float NameBGHeight_Small = 16f;
+
+		public const float NameBGExtraWidth_Small = 6f;
 
 		public const float LabelOffsetYStandard = -0.4f;
 
@@ -57,6 +61,7 @@ namespace Verse
 			Widgets.Label(rect, text);
 			GUI.color = Color.white;
 			Text.Anchor = TextAnchor.UpperLeft;
+			Text.Font = GameFont.Small;
 		}
 
 		public static void DrawPawnLabel(Pawn pawn, Vector2 pos, float alpha = 1f, float truncateToWidth = 9999f, Dictionary<string, string> truncatedLabelsCache = null, GameFont font = GameFont.Tiny, bool alwaysDrawBg = true, bool alignCenter = true)
@@ -149,7 +154,7 @@ namespace Verse
 		{
 			GameFont font2 = Text.Font;
 			Text.Font = font;
-			string result = pawn.NameStringShort.CapitalizeFirst().Truncate(truncateToWidth, truncatedLabelsCache);
+			string result = pawn.LabelShort.CapitalizeFirst().Truncate(truncateToWidth, truncatedLabelsCache);
 			Text.Font = font2;
 			return result;
 		}

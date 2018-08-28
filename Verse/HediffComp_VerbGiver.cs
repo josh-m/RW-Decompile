@@ -1,3 +1,4 @@
+using RimWorld;
 using System;
 using System.Collections.Generic;
 
@@ -6,6 +7,22 @@ namespace Verse
 	public class HediffComp_VerbGiver : HediffComp, IVerbOwner
 	{
 		public VerbTracker verbTracker;
+
+		Thing IVerbOwner.ConstantCaster
+		{
+			get
+			{
+				return base.Pawn;
+			}
+		}
+
+		ImplementOwnerTypeDef IVerbOwner.ImplementOwnerTypeDef
+		{
+			get
+			{
+				return ImplementOwnerTypeDefOf.Hediff;
+			}
+		}
 
 		public HediffCompProperties_VerbGiver Props
 		{
@@ -63,9 +80,14 @@ namespace Verse
 			this.verbTracker.VerbsTick();
 		}
 
-		public string UniqueVerbOwnerID()
+		string IVerbOwner.UniqueVerbOwnerID()
 		{
-			return this.parent.GetUniqueLoadID();
+			return this.parent.GetUniqueLoadID() + "_" + this.parent.comps.IndexOf(this);
+		}
+
+		bool IVerbOwner.VerbsStillUsableBy(Pawn p)
+		{
+			return p.health.hediffSet.hediffs.Contains(this.parent);
 		}
 	}
 }

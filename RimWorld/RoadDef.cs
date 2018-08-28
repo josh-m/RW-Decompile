@@ -27,6 +27,7 @@ namespace RimWorld
 
 		public List<RoadDef.WorldRenderStep> worldRenderSteps;
 
+		[NoTranslate]
 		public string worldTransitionGroup = string.Empty;
 
 		public float distortionFrequency = 1f;

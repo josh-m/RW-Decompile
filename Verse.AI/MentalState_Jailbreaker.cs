@@ -1,3 +1,4 @@
+using RimWorld;
 using System;
 
 namespace Verse.AI
@@ -17,7 +18,18 @@ namespace Verse.AI
 
 		public void Notify_InducedPrisonerToEscape()
 		{
-			base.RecoverFromState();
+			if (MentalStateDefOf.Wander_OwnRoom.Worker.StateCanOccur(this.pawn))
+			{
+				this.pawn.mindState.mentalStateHandler.TryStartMentalState(MentalStateDefOf.Wander_OwnRoom, null, false, false, null, true);
+			}
+			else if (MentalStateDefOf.Wander_Sad.Worker.StateCanOccur(this.pawn))
+			{
+				this.pawn.mindState.mentalStateHandler.TryStartMentalState(MentalStateDefOf.Wander_Sad, null, false, false, null, true);
+			}
+			else
+			{
+				base.RecoverFromState();
+			}
 		}
 	}
 }

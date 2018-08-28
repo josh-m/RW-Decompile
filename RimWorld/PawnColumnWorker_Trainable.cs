@@ -52,7 +52,7 @@ namespace RimWorld
 			{
 				return -2147483648;
 			}
-			if (pawn.training.IsCompleted(this.def.trainable))
+			if (pawn.training.HasLearned(this.def.trainable))
 			{
 				return 4;
 			}
@@ -81,7 +81,7 @@ namespace RimWorld
 				List<Pawn> pawnsListForReading = table.PawnsListForReading;
 				for (int i = 0; i < pawnsListForReading.Count; i++)
 				{
-					if (pawnsListForReading[i].training != null && !pawnsListForReading[i].training.IsCompleted(this.def.trainable))
+					if (pawnsListForReading[i].training != null && !pawnsListForReading[i].training.HasLearned(this.def.trainable))
 					{
 						bool flag;
 						AcceptanceReport acceptanceReport = pawnsListForReading[i].training.CanAssignToTrain(this.def.trainable, out flag);
@@ -104,11 +104,11 @@ namespace RimWorld
 				}
 				if (Event.current.button == 0)
 				{
-					SoundDefOf.CheckboxTurnedOn.PlayOneShotOnCamera(null);
+					SoundDefOf.Checkbox_TurnedOn.PlayOneShotOnCamera(null);
 				}
 				else if (Event.current.button == 1)
 				{
-					SoundDefOf.CheckboxTurnedOff.PlayOneShotOnCamera(null);
+					SoundDefOf.Checkbox_TurnedOff.PlayOneShotOnCamera(null);
 				}
 			}
 		}

@@ -12,6 +12,7 @@ namespace RimWorld
 
 		public Color graphColor = Color.green;
 
+		[MustTranslate]
 		public string graphLabelY;
 
 		[Unsaved]

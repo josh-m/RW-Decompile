@@ -2,14 +2,18 @@ using RimWorld.Planet;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using UnityEngine;
 using Verse;
 using Verse.Sound;
 
 namespace RimWorld
 {
+	[StaticConstructorOnStartup]
 	public class Dialog_Trade : Window
 	{
+		private bool giftsOnly;
+
 		private Vector2 scrollPosition = Vector2.zero;
 
 		public static float lastCurrencyFlashTime = -100f;
@@ -34,13 +38,33 @@ namespace RimWorld
 
 		private float cachedMassCapacity;
 
+		private string cachedMassCapacityExplanation;
+
+		private bool tilesPerDayDirty = true;
+
+		private float cachedTilesPerDay;
+
+		private string cachedTilesPerDayExplanation;
+
 		private bool daysWorthOfFoodDirty = true;
 
 		private Pair<float, float> cachedDaysWorthOfFood;
 
+		private bool foragedFoodPerDayDirty = true;
+
+		private Pair<ThingDef, float> cachedForagedFoodPerDay;
+
+		private string cachedForagedFoodPerDayExplanation;
+
+		private bool visibilityDirty = true;
+
+		private float cachedVisibility;
+
+		private string cachedVisibilityExplanation;
+
 		private const float TitleAreaHeight = 45f;
 
-		private const float BaseTopAreaHeight = 55f;
+		private const float TopAreaHeight = 58f;
 
 		private const float ColumnWidth = 120f;
 
@@ -50,9 +74,21 @@ namespace RimWorld
 
 		private const float SpaceBetweenTraderNameAndTraderKind = 27f;
 
-		protected readonly Vector2 AcceptButtonSize = new Vector2(160f, 40f);
+		private const float ShowSellableItemsIconSize = 32f;
 
-		protected readonly Vector2 OtherBottomButtonSize = new Vector2(160f, 40f);
+		private const float GiftModeIconSize = 32f;
+
+		private const float TradeModeIconSize = 32f;
+
+		protected static readonly Vector2 AcceptButtonSize = new Vector2(160f, 40f);
+
+		protected static readonly Vector2 OtherBottomButtonSize = new Vector2(160f, 40f);
+
+		private static readonly Texture2D ShowSellableItemsIcon = ContentFinder<Texture2D>.Get("UI/Commands/SellableItems", true);
+
+		private static readonly Texture2D GiftModeIcon = ContentFinder<Texture2D>.Get("UI/Buttons/GiftMode", true);
+
+		private static readonly Texture2D TradeModeIcon = ContentFinder<Texture2D>.Get("UI/Buttons/TradeMode", true);
 
 		public override Vector2 InitialSize
 		{
@@ -70,24 +106,11 @@ namespace RimWorld
 			}
 		}
 
-		private bool EnvironmentAllowsEatingVirtualPlantsNow
+		private BiomeDef Biome
 		{
 			get
 			{
-				return VirtualPlantsUtility.EnvironmentAllowsEatingVirtualPlantsNowAt(this.Tile);
-			}
-		}
-
-		private float TopAreaHeight
-		{
-			get
-			{
-				float num = 55f;
-				if (this.playerIsCaravan)
-				{
-					num += 28f;
-				}
-				return num;
+				return Find.WorldGrid[this.Tile].biome;
 			}
 		}
 
@@ -98,6 +121,7 @@ namespace RimWorld
 				if (this.massUsageDirty)
 				{
 					this.massUsageDirty = false;
+					TradeSession.deal.UpdateCurrencyCount();
 					if (this.cachedCurrencyTradeable != null)
 					{
 						this.cachedTradeables.Add(this.cachedCurrencyTradeable);
@@ -119,17 +143,37 @@ namespace RimWorld
 				if (this.massCapacityDirty)
 				{
 					this.massCapacityDirty = false;
+					TradeSession.deal.UpdateCurrencyCount();
 					if (this.cachedCurrencyTradeable != null)
 					{
 						this.cachedTradeables.Add(this.cachedCurrencyTradeable);
 					}
-					this.cachedMassCapacity = CollectionsMassCalculator.CapacityLeftAfterTradeableTransfer(this.playerCaravanAllPawnsAndItems, this.cachedTradeables);
+					StringBuilder stringBuilder = new StringBuilder();
+					this.cachedMassCapacity = CollectionsMassCalculator.CapacityLeftAfterTradeableTransfer(this.playerCaravanAllPawnsAndItems, this.cachedTradeables, stringBuilder);
+					this.cachedMassCapacityExplanation = stringBuilder.ToString();
 					if (this.cachedCurrencyTradeable != null)
 					{
 						this.cachedTradeables.RemoveLast<Tradeable>();
 					}
 				}
 				return this.cachedMassCapacity;
+			}
+		}
+
+		private float TilesPerDay
+		{
+			get
+			{
+				if (this.tilesPerDayDirty)
+				{
+					this.tilesPerDayDirty = false;
+					TradeSession.deal.UpdateCurrencyCount();
+					Caravan caravan = TradeSession.playerNegotiator.GetCaravan();
+					StringBuilder stringBuilder = new StringBuilder();
+					this.cachedTilesPerDay = TilesPerDayCalculator.ApproxTilesPerDayLeftAfterTradeableTransfer(this.playerCaravanAllPawnsAndItems, this.cachedTradeables, this.MassUsage, this.MassCapacity, this.Tile, (caravan == null || !caravan.pather.Moving) ? -1 : caravan.pather.nextTile, stringBuilder);
+					this.cachedTilesPerDayExplanation = stringBuilder.ToString();
+				}
+				return this.cachedTilesPerDay;
 			}
 		}
 
@@ -140,18 +184,51 @@ namespace RimWorld
 				if (this.daysWorthOfFoodDirty)
 				{
 					this.daysWorthOfFoodDirty = false;
-					float first = DaysWorthOfFoodCalculator.ApproxDaysWorthOfFoodLeftAfterTradeableTransfer(this.playerCaravanAllPawnsAndItems, this.cachedTradeables, this.EnvironmentAllowsEatingVirtualPlantsNow, IgnorePawnsInventoryMode.Ignore);
+					TradeSession.deal.UpdateCurrencyCount();
+					float first = DaysWorthOfFoodCalculator.ApproxDaysWorthOfFoodLeftAfterTradeableTransfer(this.playerCaravanAllPawnsAndItems, this.cachedTradeables, this.Tile, IgnorePawnsInventoryMode.Ignore, Faction.OfPlayer);
 					this.cachedDaysWorthOfFood = new Pair<float, float>(first, DaysUntilRotCalculator.ApproxDaysUntilRotLeftAfterTradeableTransfer(this.playerCaravanAllPawnsAndItems, this.cachedTradeables, this.Tile, IgnorePawnsInventoryMode.Ignore));
 				}
 				return this.cachedDaysWorthOfFood;
 			}
 		}
 
-		public Dialog_Trade(Pawn playerNegotiator, ITrader trader)
+		private Pair<ThingDef, float> ForagedFoodPerDay
 		{
-			TradeSession.SetupWith(trader, playerNegotiator);
+			get
+			{
+				if (this.foragedFoodPerDayDirty)
+				{
+					this.foragedFoodPerDayDirty = false;
+					TradeSession.deal.UpdateCurrencyCount();
+					StringBuilder stringBuilder = new StringBuilder();
+					this.cachedForagedFoodPerDay = ForagedFoodPerDayCalculator.ForagedFoodPerDayLeftAfterTradeableTransfer(this.playerCaravanAllPawnsAndItems, this.cachedTradeables, this.Biome, Faction.OfPlayer, stringBuilder);
+					this.cachedForagedFoodPerDayExplanation = stringBuilder.ToString();
+				}
+				return this.cachedForagedFoodPerDay;
+			}
+		}
+
+		private float Visibility
+		{
+			get
+			{
+				if (this.visibilityDirty)
+				{
+					this.visibilityDirty = false;
+					TradeSession.deal.UpdateCurrencyCount();
+					StringBuilder stringBuilder = new StringBuilder();
+					this.cachedVisibility = CaravanVisibilityCalculator.VisibilityLeftAfterTradeableTransfer(this.playerCaravanAllPawnsAndItems, this.cachedTradeables, stringBuilder);
+					this.cachedVisibilityExplanation = stringBuilder.ToString();
+				}
+				return this.cachedVisibility;
+			}
+		}
+
+		public Dialog_Trade(Pawn playerNegotiator, ITrader trader, bool giftsOnly = false)
+		{
+			this.giftsOnly = giftsOnly;
+			TradeSession.SetupWith(trader, playerNegotiator, giftsOnly);
 			this.SetupPlayerCaravanVariables();
-			this.closeOnEscapeKey = true;
 			this.forcePause = true;
 			this.absorbInputAroundWindow = true;
 			this.soundAppear = SoundDefOf.CommsWindow_Open;
@@ -167,28 +244,31 @@ namespace RimWorld
 		public override void PostOpen()
 		{
 			base.PostOpen();
-			Pawn playerNegotiator = TradeSession.playerNegotiator;
-			float level = playerNegotiator.health.capacities.GetLevel(PawnCapacityDefOf.Talking);
-			float level2 = playerNegotiator.health.capacities.GetLevel(PawnCapacityDefOf.Hearing);
-			if (level < 0.95f || level2 < 0.95f)
+			if (!this.giftsOnly)
 			{
-				string text;
-				if (level < 0.95f)
+				Pawn playerNegotiator = TradeSession.playerNegotiator;
+				float level = playerNegotiator.health.capacities.GetLevel(PawnCapacityDefOf.Talking);
+				float level2 = playerNegotiator.health.capacities.GetLevel(PawnCapacityDefOf.Hearing);
+				if (level < 0.95f || level2 < 0.95f)
 				{
-					text = "NegotiatorTalkingImpaired".Translate(new object[]
+					string text;
+					if (level < 0.95f)
 					{
-						playerNegotiator.LabelShort
-					});
-				}
-				else
-				{
-					text = "NegotiatorHearingImpaired".Translate(new object[]
+						text = "NegotiatorTalkingImpaired".Translate(new object[]
+						{
+							playerNegotiator.LabelShort
+						});
+					}
+					else
 					{
-						playerNegotiator.LabelShort
-					});
+						text = "NegotiatorHearingImpaired".Translate(new object[]
+						{
+							playerNegotiator.LabelShort
+						});
+					}
+					text = text + "\n\n" + "NegotiatorCapacityImpaired".Translate();
+					Find.WindowStack.Add(new Dialog_MessageBox(text, null, null, null, null, null, false, null, null));
 				}
-				text = text + "\n\n" + "NegotiatorCapacityImpaired".Translate();
-				Find.WindowStack.Add(new Dialog_MessageBox(text, null, null, null, null, null, false));
 			}
 			this.CacheTradeables();
 		}
@@ -214,7 +294,14 @@ namespace RimWorld
 
 		public override void DoWindowContents(Rect inRect)
 		{
+			if (this.playerIsCaravan)
+			{
+				CaravanUIUtility.DrawCaravanInfo(new CaravanUIUtility.CaravanInfo(this.MassUsage, this.MassCapacity, this.cachedMassCapacityExplanation, this.TilesPerDay, this.cachedTilesPerDayExplanation, this.DaysWorthOfFood, this.ForagedFoodPerDay, this.cachedForagedFoodPerDayExplanation, this.Visibility, this.cachedVisibilityExplanation, -1f, -1f, null), null, this.Tile, null, -9999f, new Rect(12f, 0f, inRect.width - 24f, 40f), true, null, false);
+				inRect.yMin += 52f;
+			}
 			TradeSession.deal.UpdateCurrencyCount();
+			GUI.BeginGroup(inRect);
+			inRect = inRect.AtZero();
 			TransferableUIUtility.DoTransferableSorters(this.sorter1, this.sorter2, delegate(TransferableSorterDef x)
 			{
 				this.sorter1 = x;
@@ -225,62 +312,55 @@ namespace RimWorld
 				this.CacheTradeables();
 			});
 			float num = inRect.width - 590f;
-			Rect rect = new Rect(num, 0f, inRect.width - num, this.TopAreaHeight);
-			GUI.BeginGroup(rect);
+			Rect position = new Rect(num, 0f, inRect.width - num, 58f);
+			GUI.BeginGroup(position);
 			Text.Font = GameFont.Medium;
-			Rect rect2 = new Rect(0f, 0f, rect.width / 2f, rect.height);
+			Rect rect = new Rect(0f, 0f, position.width / 2f, position.height);
 			Text.Anchor = TextAnchor.UpperLeft;
-			Widgets.Label(rect2, Faction.OfPlayer.Name);
-			Rect rect3 = new Rect(rect.width / 2f, 0f, rect.width / 2f, rect.height);
+			Widgets.Label(rect, Faction.OfPlayer.Name);
+			Rect rect2 = new Rect(position.width / 2f, 0f, position.width / 2f, position.height);
 			Text.Anchor = TextAnchor.UpperRight;
 			string text = TradeSession.trader.TraderName;
-			if (Text.CalcSize(text).x > rect3.width)
+			if (Text.CalcSize(text).x > rect2.width)
 			{
 				Text.Font = GameFont.Small;
-				text = text.Truncate(rect3.width, null);
+				text = text.Truncate(rect2.width, null);
 			}
-			Widgets.Label(rect3, text);
+			Widgets.Label(rect2, text);
 			Text.Font = GameFont.Small;
 			Text.Anchor = TextAnchor.UpperLeft;
-			Rect rect4 = new Rect(0f, 27f, rect.width / 2f, rect.height / 2f);
-			Widgets.Label(rect4, "Negotiator".Translate() + ": " + TradeSession.playerNegotiator.LabelShort);
+			Rect rect3 = new Rect(0f, 27f, position.width / 2f, position.height / 2f);
+			Widgets.Label(rect3, "Negotiator".Translate() + ": " + TradeSession.playerNegotiator.LabelShort);
 			Text.Anchor = TextAnchor.UpperRight;
-			Rect rect5 = new Rect(rect.width / 2f, 27f, rect.width / 2f, rect.height / 2f);
-			Widgets.Label(rect5, TradeSession.trader.TraderKind.LabelCap);
+			Rect rect4 = new Rect(position.width / 2f, 27f, position.width / 2f, position.height / 2f);
+			Widgets.Label(rect4, TradeSession.trader.TraderKind.LabelCap);
 			Text.Anchor = TextAnchor.UpperLeft;
-			GUI.color = new Color(1f, 1f, 1f, 0.6f);
-			Text.Font = GameFont.Tiny;
-			Rect rect6 = new Rect(rect.width / 2f - 100f - 30f, 0f, 200f, rect.height);
-			Text.Anchor = TextAnchor.LowerCenter;
-			Widgets.Label(rect6, "PositiveBuysNegativeSells".Translate());
-			Text.Anchor = TextAnchor.UpperLeft;
-			GUI.color = Color.white;
-			if (this.playerIsCaravan)
+			if (!TradeSession.giftMode)
 			{
-				Text.Font = GameFont.Small;
-				float massUsage = this.MassUsage;
-				float massCapacity = this.MassCapacity;
-				Rect rect7 = rect.AtZero();
-				rect7.y = 45f;
-				TransferableUIUtility.DrawMassInfo(rect7, massUsage, massCapacity, "TradeMassUsageTooltip".Translate(), -9999f, false);
-				CaravanUIUtility.DrawDaysWorthOfFoodInfo(new Rect(rect7.x, rect7.y + 19f, rect7.width, rect7.height), this.DaysWorthOfFood.First, this.DaysWorthOfFood.Second, this.EnvironmentAllowsEatingVirtualPlantsNow, false, 200f);
+				GUI.color = new Color(1f, 1f, 1f, 0.6f);
+				Text.Font = GameFont.Tiny;
+				Rect rect5 = new Rect(position.width / 2f - 100f - 30f, 0f, 200f, position.height);
+				Text.Anchor = TextAnchor.LowerCenter;
+				Widgets.Label(rect5, "PositiveBuysNegativeSells".Translate());
+				Text.Anchor = TextAnchor.UpperLeft;
+				GUI.color = Color.white;
 			}
 			GUI.EndGroup();
 			float num2 = 0f;
 			if (this.cachedCurrencyTradeable != null)
 			{
 				float num3 = inRect.width - 16f;
-				Rect rect8 = new Rect(0f, this.TopAreaHeight, num3, 30f);
-				TradeUI.DrawTradeableRow(rect8, this.cachedCurrencyTradeable, 1);
+				Rect rect6 = new Rect(0f, 58f, num3, 30f);
+				TradeUI.DrawTradeableRow(rect6, this.cachedCurrencyTradeable, 1);
 				GUI.color = Color.gray;
-				Widgets.DrawLineHorizontal(0f, this.TopAreaHeight + 30f - 1f, num3);
+				Widgets.DrawLineHorizontal(0f, 87f, num3);
 				GUI.color = Color.white;
 				num2 = 30f;
 			}
-			Rect mainRect = new Rect(0f, this.TopAreaHeight + num2, inRect.width, inRect.height - this.TopAreaHeight - 38f - num2 - 20f);
+			Rect mainRect = new Rect(0f, 58f + num2, inRect.width, inRect.height - 58f - 38f - num2 - 20f);
 			this.FillMainRect(mainRect);
-			Rect rect9 = new Rect(inRect.width / 2f - this.AcceptButtonSize.x / 2f, inRect.height - 55f, this.AcceptButtonSize.x, this.AcceptButtonSize.y);
-			if (Widgets.ButtonText(rect9, "AcceptButton".Translate(), true, false, true))
+			Rect rect7 = new Rect(inRect.width / 2f - Dialog_Trade.AcceptButtonSize.x / 2f, inRect.height - 55f, Dialog_Trade.AcceptButtonSize.x, Dialog_Trade.AcceptButtonSize.y);
+			if (Widgets.ButtonText(rect7, (!TradeSession.giftMode) ? "AcceptButton".Translate() : ("OfferGifts".Translate() + " (" + FactionGiftUtility.GetGoodwillChange(TradeSession.deal.AllTradeables, TradeSession.trader.Faction).ToStringWithSign() + ")"), true, false, true))
 			{
 				Action action = delegate
 				{
@@ -290,16 +370,6 @@ namespace RimWorld
 						if (flag)
 						{
 							SoundDefOf.ExecuteTrade.PlayOneShotOnCamera(null);
-							Pawn pawn = TradeSession.trader as Pawn;
-							if (pawn != null)
-							{
-								TaleRecorder.RecordTale(TaleDefOf.TradedWith, new object[]
-								{
-									TradeSession.playerNegotiator,
-									pawn
-								});
-							}
-							TradeSession.playerNegotiator.mindState.inspirationHandler.EndInspiration(InspirationDefOf.InspiredTrade);
 							this.Close(false);
 						}
 						else
@@ -320,21 +390,60 @@ namespace RimWorld
 				}
 				Event.current.Use();
 			}
-			Rect rect10 = new Rect(rect9.x - 10f - this.OtherBottomButtonSize.x, rect9.y, this.OtherBottomButtonSize.x, this.OtherBottomButtonSize.y);
-			if (Widgets.ButtonText(rect10, "ResetButton".Translate(), true, false, true))
+			Rect rect8 = new Rect(rect7.x - 10f - Dialog_Trade.OtherBottomButtonSize.x, rect7.y, Dialog_Trade.OtherBottomButtonSize.x, Dialog_Trade.OtherBottomButtonSize.y);
+			if (Widgets.ButtonText(rect8, "ResetButton".Translate(), true, false, true))
 			{
-				SoundDefOf.TickLow.PlayOneShotOnCamera(null);
+				SoundDefOf.Tick_Low.PlayOneShotOnCamera(null);
 				TradeSession.deal.Reset();
 				this.CacheTradeables();
 				this.CountToTransferChanged();
-				Event.current.Use();
 			}
-			Rect rect11 = new Rect(rect9.xMax + 10f, rect9.y, this.OtherBottomButtonSize.x, this.OtherBottomButtonSize.y);
-			if (Widgets.ButtonText(rect11, "CancelButton".Translate(), true, false, true))
+			Rect rect9 = new Rect(rect7.xMax + 10f, rect7.y, Dialog_Trade.OtherBottomButtonSize.x, Dialog_Trade.OtherBottomButtonSize.y);
+			if (Widgets.ButtonText(rect9, "CancelButton".Translate(), true, false, true))
 			{
 				this.Close(true);
 				Event.current.Use();
 			}
+			float y = Dialog_Trade.OtherBottomButtonSize.y;
+			Rect rect10 = new Rect(inRect.width - y, rect7.y, y, y);
+			if (Widgets.ButtonImageWithBG(rect10, Dialog_Trade.ShowSellableItemsIcon, new Vector2?(new Vector2(32f, 32f))))
+			{
+				Find.WindowStack.Add(new Dialog_SellableItems(TradeSession.trader.TraderKind));
+			}
+			TooltipHandler.TipRegion(rect10, "CommandShowSellableItemsDesc".Translate());
+			Faction faction = TradeSession.trader.Faction;
+			if (faction != null && !this.giftsOnly && !faction.def.permanentEnemy)
+			{
+				Rect rect11 = new Rect(rect10.x - y - 4f, rect7.y, y, y);
+				if (TradeSession.giftMode)
+				{
+					if (Widgets.ButtonImageWithBG(rect11, Dialog_Trade.TradeModeIcon, new Vector2?(new Vector2(32f, 32f))))
+					{
+						TradeSession.giftMode = false;
+						TradeSession.deal.Reset();
+						this.CacheTradeables();
+						this.CountToTransferChanged();
+						SoundDefOf.Tick_High.PlayOneShotOnCamera(null);
+					}
+					TooltipHandler.TipRegion(rect11, "TradeModeTip".Translate());
+				}
+				else
+				{
+					if (Widgets.ButtonImageWithBG(rect11, Dialog_Trade.GiftModeIcon, new Vector2?(new Vector2(32f, 32f))))
+					{
+						TradeSession.giftMode = true;
+						TradeSession.deal.Reset();
+						this.CacheTradeables();
+						this.CountToTransferChanged();
+						SoundDefOf.Tick_High.PlayOneShotOnCamera(null);
+					}
+					TooltipHandler.TipRegion(rect11, "GiftModeTip".Translate(new object[]
+					{
+						faction.Name
+					}));
+				}
+			}
+			GUI.EndGroup();
 		}
 
 		public override void Close(bool doCloseSound = true)
@@ -394,6 +503,7 @@ namespace RimWorld
 					this.playerCaravanAllPawnsAndItems.Add(pawnsListForReading[i]);
 				}
 				this.playerCaravanAllPawnsAndItems.AddRange(CaravanInventoryUtility.AllInventoryItems(caravan));
+				caravan.Notify_StartedTrading();
 			}
 			else
 			{
@@ -405,7 +515,10 @@ namespace RimWorld
 		{
 			this.massUsageDirty = true;
 			this.massCapacityDirty = true;
+			this.tilesPerDayDirty = true;
 			this.daysWorthOfFoodDirty = true;
+			this.foragedFoodPerDayDirty = true;
+			this.visibilityDirty = true;
 		}
 	}
 }

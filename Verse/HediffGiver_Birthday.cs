@@ -30,7 +30,7 @@ namespace Verse
 						pawn,
 						", gotAtAge=",
 						gotAtAge
-					}));
+					}), false);
 					return;
 				}
 				for (int i = 0; i < HediffGiver_Birthday.addedHediffs.Count; i++)

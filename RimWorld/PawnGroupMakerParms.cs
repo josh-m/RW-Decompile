@@ -4,6 +4,8 @@ namespace RimWorld
 {
 	public class PawnGroupMakerParms
 	{
+		public PawnGroupKindDef groupKind;
+
 		public int tile = -1;
 
 		public bool inhabitants;
@@ -16,15 +18,21 @@ namespace RimWorld
 
 		public bool generateFightersOnly;
 
+		public bool dontUseSingleUseRocketLaunchers;
+
 		public RaidStrategyDef raidStrategy;
 
 		public bool forceOneIncap;
+
+		public int? seed;
 
 		public override string ToString()
 		{
 			return string.Concat(new object[]
 			{
-				"tile=",
+				"groupKind=",
+				this.groupKind,
+				", tile=",
 				this.tile,
 				", inhabitants=",
 				this.inhabitants,
@@ -36,10 +44,14 @@ namespace RimWorld
 				this.traderKind,
 				", generateFightersOnly=",
 				this.generateFightersOnly,
+				", dontUseSingleUseRocketLaunchers=",
+				this.dontUseSingleUseRocketLaunchers,
 				", raidStrategy=",
 				this.raidStrategy,
 				", forceOneIncap=",
-				this.forceOneIncap
+				this.forceOneIncap,
+				", seed=",
+				this.seed
 			});
 		}
 	}

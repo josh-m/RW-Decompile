@@ -44,7 +44,7 @@ namespace Verse
 			return (float)indentLevel * this.nestIndentWidth;
 		}
 
-		protected void LabelLeft(string label, string tipText, int indentLevel)
+		protected void LabelLeft(string label, string tipText, int indentLevel, float widthOffset = 0f)
 		{
 			Rect rect = new Rect(0f, this.curY, base.ColumnWidth, this.lineHeight);
 			rect.xMin = this.XAtIndentLevel(indentLevel) + 18f;
@@ -58,10 +58,10 @@ namespace Verse
 				TooltipHandler.TipRegion(rect, tipText);
 			}
 			Text.Anchor = TextAnchor.MiddleLeft;
-			rect.width = this.LabelWidth;
+			rect.width = this.LabelWidth - rect.xMin + widthOffset;
 			rect.yMax += 5f;
 			rect.yMin -= 5f;
-			Widgets.Label(rect, label);
+			Widgets.Label(rect, label.Truncate(rect.width, null));
 			Text.Anchor = TextAnchor.UpperLeft;
 		}
 

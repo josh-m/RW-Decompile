@@ -62,32 +62,33 @@ namespace RimWorld
 			}
 		}
 
-		private static Dictionary<CostListCalculator.CostListPair, List<ThingCountClass>> cachedCosts = new Dictionary<CostListCalculator.CostListPair, List<ThingCountClass>>(CostListCalculator.FastCostListPairComparer.Instance);
+		private static Dictionary<CostListCalculator.CostListPair, List<ThingDefCountClass>> cachedCosts = new Dictionary<CostListCalculator.CostListPair, List<ThingDefCountClass>>(CostListCalculator.FastCostListPairComparer.Instance);
 
 		public static void Reset()
 		{
 			CostListCalculator.cachedCosts.Clear();
 		}
 
-		public static List<ThingCountClass> CostListAdjusted(this Thing thing)
+		public static List<ThingDefCountClass> CostListAdjusted(this Thing thing)
 		{
 			return thing.def.CostListAdjusted(thing.Stuff, true);
 		}
 
-		public static List<ThingCountClass> CostListAdjusted(this BuildableDef entDef, ThingDef stuff, bool errorOnNullStuff = true)
+		public static List<ThingDefCountClass> CostListAdjusted(this BuildableDef entDef, ThingDef stuff, bool errorOnNullStuff = true)
 		{
 			CostListCalculator.CostListPair key = new CostListCalculator.CostListPair(entDef, stuff);
-			List<ThingCountClass> list;
+			List<ThingDefCountClass> list;
 			if (!CostListCalculator.cachedCosts.TryGetValue(key, out list))
 			{
-				list = new List<ThingCountClass>();
+				list = new List<ThingDefCountClass>();
 				int num = 0;
 				if (entDef.MadeFromStuff)
 				{
 					if (errorOnNullStuff && stuff == null)
 					{
-						Log.Error("Cannot get AdjustedCostList for " + entDef + " with null Stuff.");
-						return null;
+						Log.Error("Cannot get AdjustedCostList for " + entDef + " with null Stuff.", false);
+						ThingDef thingDef = GenStuff.DefaultStuffFor(entDef);
+						return (thingDef == null) ? null : entDef.CostListAdjusted(GenStuff.DefaultStuffFor(entDef), true);
 					}
 					if (stuff != null)
 					{
@@ -111,28 +112,28 @@ namespace RimWorld
 						" with stuff ",
 						stuff,
 						" but is not MadeFromStuff."
-					}));
+					}), false);
 				}
 				bool flag = false;
 				if (entDef.costList != null)
 				{
 					for (int i = 0; i < entDef.costList.Count; i++)
 					{
-						ThingCountClass thingCountClass = entDef.costList[i];
-						if (thingCountClass.thingDef == stuff)
+						ThingDefCountClass thingDefCountClass = entDef.costList[i];
+						if (thingDefCountClass.thingDef == stuff)
 						{
-							list.Add(new ThingCountClass(thingCountClass.thingDef, thingCountClass.count + num));
+							list.Add(new ThingDefCountClass(thingDefCountClass.thingDef, thingDefCountClass.count + num));
 							flag = true;
 						}
 						else
 						{
-							list.Add(thingCountClass);
+							list.Add(thingDefCountClass);
 						}
 					}
 				}
 				if (!flag && num > 0)
 				{
-					list.Add(new ThingCountClass(stuff, num));
+					list.Add(new ThingDefCountClass(stuff, num));
 				}
 				CostListCalculator.cachedCosts.Add(key, list);
 			}

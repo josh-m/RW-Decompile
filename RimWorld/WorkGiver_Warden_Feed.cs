@@ -21,16 +21,17 @@ namespace RimWorld
 			{
 				return null;
 			}
-			Thing t2;
-			ThingDef def;
-			if (!FoodUtility.TryFindBestFoodSourceFor(pawn, pawn2, pawn2.needs.food.CurCategory == HungerCategory.Starving, out t2, out def, false, true, false, false, false, false))
+			Thing thing;
+			ThingDef thingDef;
+			if (!FoodUtility.TryFindBestFoodSourceFor(pawn, pawn2, pawn2.needs.food.CurCategory == HungerCategory.Starving, out thing, out thingDef, false, true, false, false, false, false, false))
 			{
-				JobFailReason.Is("NoFood".Translate());
+				JobFailReason.Is("NoFood".Translate(), null);
 				return null;
 			}
-			return new Job(JobDefOf.FeedPatient, t2, pawn2)
+			float nutrition = FoodUtility.GetNutrition(thing, thingDef);
+			return new Job(JobDefOf.FeedPatient, thing, pawn2)
 			{
-				count = FoodUtility.WillIngestStackCountOf(pawn2, def)
+				count = FoodUtility.WillIngestStackCountOf(pawn2, thingDef, nutrition)
 			};
 		}
 	}

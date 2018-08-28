@@ -1,3 +1,4 @@
+using RimWorld.Planet;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -8,7 +9,7 @@ namespace RimWorld
 {
 	public sealed class GameConditionManager : IExposable
 	{
-		public Map map;
+		public Map ownerMap;
 
 		private List<GameCondition> activeConditions = new List<GameCondition>();
 
@@ -24,17 +25,17 @@ namespace RimWorld
 		{
 			get
 			{
-				if (this.map == null)
-				{
-					return null;
-				}
-				return Find.World.gameConditionManager;
+				return (this.ownerMap != null) ? Find.World.gameConditionManager : null;
 			}
 		}
 
 		public GameConditionManager(Map map)
 		{
-			this.map = map;
+			this.ownerMap = map;
+		}
+
+		public GameConditionManager(World world)
+		{
 		}
 
 		public void RegisterCondition(GameCondition cond)
@@ -72,15 +73,27 @@ namespace RimWorld
 			}
 		}
 
-		public void GameConditionManagerDraw()
+		public void GameConditionManagerDraw(Map map)
 		{
 			for (int i = this.activeConditions.Count - 1; i >= 0; i--)
 			{
-				this.activeConditions[i].GameConditionDraw();
+				this.activeConditions[i].GameConditionDraw(map);
 			}
 			if (this.Parent != null)
 			{
-				this.Parent.GameConditionManagerDraw();
+				this.Parent.GameConditionManagerDraw(map);
+			}
+		}
+
+		public void DoSteadyEffects(IntVec3 c, Map map)
+		{
+			for (int i = 0; i < this.activeConditions.Count; i++)
+			{
+				this.activeConditions[i].DoCellSteadyEffects(c, map);
+			}
+			if (this.Parent != null)
+			{
+				this.Parent.DoSteadyEffects(c, map);
 			}
 		}
 
@@ -122,6 +135,18 @@ namespace RimWorld
 			return (T)((object)null);
 		}
 
+		public void GetChildren(List<GameConditionManager> outChildren)
+		{
+			if (this == Find.World.gameConditionManager)
+			{
+				List<Map> maps = Find.Maps;
+				for (int i = 0; i < maps.Count; i++)
+				{
+					outChildren.Add(maps[i].gameConditionManager);
+				}
+			}
+		}
+
 		public float TotalHeightAt(float width)
 		{
 			float num = 0f;
@@ -160,25 +185,25 @@ namespace RimWorld
 			}
 		}
 
-		internal float AggregateSkyTargetLerpFactor()
+		internal float AggregateSkyTargetLerpFactor(Map map)
 		{
 			float num = 0f;
 			for (int i = 0; i < this.activeConditions.Count; i++)
 			{
-				num += (1f - num) * this.activeConditions[i].SkyTargetLerpFactor();
+				num += (1f - num) * this.activeConditions[i].SkyTargetLerpFactor(map);
 			}
 			if (this.Parent != null)
 			{
-				num += this.Parent.AggregateSkyTargetLerpFactor();
+				num += this.Parent.AggregateSkyTargetLerpFactor(map);
 			}
 			return Mathf.Clamp01(num);
 		}
 
-		internal SkyTarget? AggregateSkyTarget()
+		internal SkyTarget? AggregateSkyTarget(Map map)
 		{
 			SkyTarget value = default(SkyTarget);
 			float num = 0f;
-			this.AggregateSkyTargetWorker(ref value, ref num);
+			this.AggregateSkyTargetWorker(ref value, ref num, map);
 			if (num == 0f)
 			{
 				return null;
@@ -186,29 +211,29 @@ namespace RimWorld
 			return new SkyTarget?(value);
 		}
 
-		private void AggregateSkyTargetWorker(ref SkyTarget total, ref float lfTotal)
+		private void AggregateSkyTargetWorker(ref SkyTarget total, ref float lfTotal, Map map)
 		{
 			for (int i = 0; i < this.activeConditions.Count; i++)
 			{
 				GameCondition gameCondition = this.activeConditions[i];
-				float num = gameCondition.SkyTargetLerpFactor();
+				float num = gameCondition.SkyTargetLerpFactor(map);
 				if (num > 0f)
 				{
 					if (lfTotal == 0f)
 					{
-						total = gameCondition.SkyTarget().Value;
+						total = gameCondition.SkyTarget(map).Value;
 						lfTotal = num;
 					}
 					else
 					{
 						lfTotal += num;
-						total = SkyTarget.LerpDarken(total, gameCondition.SkyTarget().Value, num / lfTotal);
+						total = SkyTarget.LerpDarken(total, gameCondition.SkyTarget(map).Value, num / lfTotal);
 					}
 				}
 			}
 			if (this.Parent != null)
 			{
-				this.Parent.AggregateSkyTargetWorker(ref total, ref lfTotal);
+				this.Parent.AggregateSkyTargetWorker(ref total, ref lfTotal, map);
 			}
 		}
 
@@ -226,53 +251,81 @@ namespace RimWorld
 			return num;
 		}
 
-		internal float AggregateAnimalDensityFactor()
+		internal float AggregateAnimalDensityFactor(Map map)
 		{
 			float num = 1f;
 			for (int i = 0; i < this.activeConditions.Count; i++)
 			{
-				num *= this.activeConditions[i].AnimalDensityFactor();
+				num *= this.activeConditions[i].AnimalDensityFactor(map);
 			}
 			if (this.Parent != null)
 			{
-				num += this.Parent.AggregateAnimalDensityFactor();
+				num *= this.Parent.AggregateAnimalDensityFactor(map);
 			}
 			return num;
 		}
 
-		internal float AggregatePlantDensityFactor()
+		internal float AggregatePlantDensityFactor(Map map)
 		{
 			float num = 1f;
 			for (int i = 0; i < this.activeConditions.Count; i++)
 			{
-				num *= this.activeConditions[i].PlantDensityFactor();
+				num *= this.activeConditions[i].PlantDensityFactor(map);
 			}
 			if (this.Parent != null)
 			{
-				num += this.Parent.AggregatePlantDensityFactor();
+				num *= this.Parent.AggregatePlantDensityFactor(map);
 			}
 			return num;
 		}
 
-		internal bool AllowEnjoyableOutsideNow()
+		internal float AggregateSkyGazeJoyGainFactor(Map map)
+		{
+			float num = 1f;
+			for (int i = 0; i < this.activeConditions.Count; i++)
+			{
+				num *= this.activeConditions[i].SkyGazeJoyGainFactor(map);
+			}
+			if (this.Parent != null)
+			{
+				num *= this.Parent.AggregateSkyGazeJoyGainFactor(map);
+			}
+			return num;
+		}
+
+		internal float AggregateSkyGazeChanceFactor(Map map)
+		{
+			float num = 1f;
+			for (int i = 0; i < this.activeConditions.Count; i++)
+			{
+				num *= this.activeConditions[i].SkyGazeChanceFactor(map);
+			}
+			if (this.Parent != null)
+			{
+				num *= this.Parent.AggregateSkyGazeChanceFactor(map);
+			}
+			return num;
+		}
+
+		internal bool AllowEnjoyableOutsideNow(Map map)
 		{
 			GameConditionDef gameConditionDef;
-			return this.AllowEnjoyableOutsideNow(out gameConditionDef);
+			return this.AllowEnjoyableOutsideNow(map, out gameConditionDef);
 		}
 
-		internal bool AllowEnjoyableOutsideNow(out GameConditionDef reason)
+		internal bool AllowEnjoyableOutsideNow(Map map, out GameConditionDef reason)
 		{
 			for (int i = 0; i < this.activeConditions.Count; i++)
 			{
 				GameCondition gameCondition = this.activeConditions[i];
-				if (!gameCondition.AllowEnjoyableOutsideNow())
+				if (!gameCondition.AllowEnjoyableOutsideNow(map))
 				{
 					reason = gameCondition.def;
 					return false;
 				}
 			}
 			reason = null;
-			return this.Parent == null || this.Parent.AllowEnjoyableOutsideNow(out reason);
+			return this.Parent == null || this.Parent.AllowEnjoyableOutsideNow(map, out reason);
 		}
 
 		public string DebugString()

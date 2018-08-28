@@ -31,9 +31,12 @@ namespace RimWorld
 			return GenClosest.ClosestThingReachable(gun.Position, gun.Map, ThingRequest.ForGroup(ThingRequestGroup.Shell), PathEndMode.OnCell, TraverseParms.For(pawn, Danger.Deadly, TraverseMode.ByPawn, false), 40f, validator, null, 0, -1, false, RegionType.Set_Passable, false);
 		}
 
-		public override bool TryMakePreToilReservations()
+		public override bool TryMakePreToilReservations(bool errorOnFailed)
 		{
-			return this.pawn.Reserve(this.job.targetA, this.job, 1, -1, null);
+			Pawn pawn = this.pawn;
+			LocalTargetInfo targetA = this.job.targetA;
+			Job job = this.job;
+			return pawn.Reserve(targetA, job, 1, -1, null, errorOnFailed);
 		}
 
 		[DebuggerHidden]
@@ -61,7 +64,7 @@ namespace RimWorld
 						{
 							actor.LabelShort,
 							building_TurretGun.Label
-						}).CapitalizeFirst(), building_TurretGun, MessageTypeDefOf.NegativeEvent);
+						}).CapitalizeFirst(), building_TurretGun, MessageTypeDefOf.NegativeEvent, true);
 					}
 					actor.jobs.EndCurrentJob(JobCondition.Incompletable, true);
 				}
@@ -80,7 +83,7 @@ namespace RimWorld
 					Pawn actor = loadIfNeeded.actor;
 					Building building = (Building)actor.CurJob.targetA.Thing;
 					Building_TurretGun building_TurretGun = building as Building_TurretGun;
-					SoundDefOf.ArtilleryShellLoaded.PlayOneShot(new TargetInfo(building_TurretGun.Position, building_TurretGun.Map, false));
+					SoundDefOf.Artillery_ShellLoaded.PlayOneShot(new TargetInfo(building_TurretGun.Position, building_TurretGun.Map, false));
 					building_TurretGun.gun.TryGetComp<CompChangeableProjectile>().LoadShell(actor.CurJob.targetB.Thing.def, 1);
 					actor.carryTracker.innerContainer.ClearAndDestroyContents(DestroyMode.Vanish);
 				}

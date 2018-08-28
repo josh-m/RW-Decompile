@@ -31,7 +31,7 @@ namespace RimWorld
 			pawn.mindState.nextMoveOrderIsWait = !pawn.mindState.nextMoveOrderIsWait;
 			if (pawn.mindState.nextMoveOrderIsWait && !this.exactCell)
 			{
-				return new Job(JobDefOf.WaitWander)
+				return new Job(JobDefOf.Wait_Wander)
 				{
 					expiryInterval = this.WaitTicks.RandomInRange
 				};

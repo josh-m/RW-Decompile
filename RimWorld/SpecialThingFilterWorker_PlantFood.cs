@@ -14,5 +14,10 @@ namespace RimWorld
 		{
 			return def.ingestible != null && (def.ingestible.foodType & FoodTypeFlags.Plant) != FoodTypeFlags.None;
 		}
+
+		public override bool CanEverMatch(ThingDef def)
+		{
+			return this.AlwaysMatches(def);
+		}
 	}
 }

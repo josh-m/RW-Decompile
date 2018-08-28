@@ -23,12 +23,12 @@ namespace RimWorld
 			{
 				return null;
 			}
-			return pawn.playerSettings.master;
+			return pawn.playerSettings.Master;
 		}
 
 		protected override float GetRadius(Pawn pawn)
 		{
-			if (pawn.playerSettings.master.playerSettings.animalsReleased && pawn.training.IsCompleted(TrainableDefOf.Release))
+			if (pawn.playerSettings.Master.playerSettings.animalsReleased && pawn.training.HasLearned(TrainableDefOf.Release))
 			{
 				return 50f;
 			}

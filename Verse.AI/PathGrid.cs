@@ -2,9 +2,11 @@ using RimWorld;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using UnityEngine;
 
 namespace Verse.AI
 {
+	[HasDebugOutput]
 	public sealed class PathGrid
 	{
 		private Map map;
@@ -12,6 +14,8 @@ namespace Verse.AI
 		public int[] pathGrid;
 
 		public const int ImpassableCost = 10000;
+
+		private const int MaxThingsPathCost = 450;
 
 		public PathGrid(Map map)
 		{
@@ -107,6 +111,7 @@ namespace Verse.AI
 			int num2 = SnowUtility.MovementTicksAddOn(this.map.snowGrid.GetCategory(c));
 			num += num2;
 			List<Thing> list = this.map.thingGrid.ThingsListAt(c);
+			int num3 = 0;
 			for (int i = 0; i < list.Count; i++)
 			{
 				Thing thing = list[i];
@@ -114,9 +119,10 @@ namespace Verse.AI
 				{
 					return 10000;
 				}
-				if (!PathGrid.IsPathCostIgnoreRepeater(thing.def) || !prevCell.IsValid || !this.ContainsPathCostIgnoreRepeater(prevCell))
+				if (num3 < 450 && (!PathGrid.IsPathCostIgnoreRepeater(thing.def) || !prevCell.IsValid || !this.ContainsPathCostIgnoreRepeater(prevCell)))
 				{
-					num += thing.def.pathCost;
+					num += Mathf.Min(thing.def.pathCost, 450 - num3);
+					num3 += thing.def.pathCost;
 				}
 				if (prevCell.IsValid && thing is Building_Door)
 				{
@@ -180,7 +186,8 @@ namespace Verse.AI
 			return def.pathCost >= 25 && def.pathCostIgnoreRepeat;
 		}
 
-		public static void LogPathCostIgnoreRepeaters()
+		[DebugOutput]
+		public static void ThingPathCostsIgnoreRepeaters()
 		{
 			StringBuilder stringBuilder = new StringBuilder();
 			stringBuilder.AppendLine("===============PATH COST IGNORE REPEATERS==============");
@@ -199,7 +206,7 @@ namespace Verse.AI
 					stringBuilder.AppendLine(current2.defName + " " + current2.pathCost);
 				}
 			}
-			Log.Message(stringBuilder.ToString());
+			Log.Message(stringBuilder.ToString(), false);
 		}
 	}
 }

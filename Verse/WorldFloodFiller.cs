@@ -41,7 +41,7 @@ namespace Verse
 		{
 			if (this.working)
 			{
-				Log.Error("Nested FloodFill calls are not allowed. This will cause bugs.");
+				Log.Error("Nested FloodFill calls are not allowed. This will cause bugs.", false);
 			}
 			this.working = true;
 			this.ClearVisited();
@@ -119,7 +119,7 @@ namespace Verse
 				}
 				if (this.openSet.Count > num)
 				{
-					Log.Error("Overflow on world flood fill (>" + num + " cells). Make sure we're not flooding over the same area after we check it.");
+					Log.Error("Overflow on world flood fill (>" + num + " cells). Make sure we're not flooding over the same area after we check it.", false);
 					this.working = false;
 					return;
 				}

@@ -10,6 +10,14 @@ namespace Verse
 	{
 		public abstract class CapacityImpactor
 		{
+			public virtual bool IsDirect
+			{
+				get
+				{
+					return true;
+				}
+			}
+
 			public abstract string Readable(Pawn pawn);
 		}
 
@@ -19,13 +27,21 @@ namespace Verse
 
 			public override string Readable(Pawn pawn)
 			{
-				return string.Format("{0}: {1} / {2}", this.bodyPart.def.LabelCap, pawn.health.hediffSet.GetPartHealth(this.bodyPart), this.bodyPart.def.GetMaxHealth(pawn));
+				return string.Format("{0}: {1} / {2}", this.bodyPart.LabelCap, pawn.health.hediffSet.GetPartHealth(this.bodyPart), this.bodyPart.def.GetMaxHealth(pawn));
 			}
 		}
 
 		public class CapacityImpactorCapacity : PawnCapacityUtility.CapacityImpactor
 		{
 			public PawnCapacityDef capacity;
+
+			public override bool IsDirect
+			{
+				get
+				{
+					return false;
+				}
+			}
 
 			public override string Readable(Pawn pawn)
 			{
@@ -45,6 +61,14 @@ namespace Verse
 
 		public class CapacityImpactorPain : PawnCapacityUtility.CapacityImpactor
 		{
+			public override bool IsDirect
+			{
+				get
+				{
+					return false;
+				}
+			}
+
 			public override string Readable(Pawn pawn)
 			{
 				return string.Format("{0}: {1}%", "Pain".Translate(), (pawn.health.hediffSet.PainTotal * 100f).ToString("F0"));
@@ -70,7 +94,7 @@ namespace Verse
 				return 0f;
 			}
 			float num = capacity.Worker.CalculateCapacityLevel(diffSet, impactors);
-			if (num > 0f && capacity.minValue <= 0f)
+			if (num > 0f)
 			{
 				float num2 = 99999f;
 				float num3 = 1f;
@@ -211,7 +235,7 @@ namespace Verse
 		{
 			float num = 0f;
 			int num2 = 0;
-			IEnumerable<BodyPartRecord> enumerable = from x in diffSet.GetNotMissingParts(BodyPartHeight.Undefined, BodyPartDepth.Undefined)
+			IEnumerable<BodyPartRecord> enumerable = from x in diffSet.GetNotMissingParts(BodyPartHeight.Undefined, BodyPartDepth.Undefined, null, null)
 			where x.groups.Contains(bodyPartGroup)
 			select x;
 			foreach (BodyPartRecord current in enumerable)
@@ -229,41 +253,56 @@ namespace Verse
 			return num / (float)num2;
 		}
 
-		public static float CalculateTagEfficiency(HediffSet diffSet, string tag, float maximum = 3.40282347E+38f, List<PawnCapacityUtility.CapacityImpactor> impactors = null)
+		public static float CalculateTagEfficiency(HediffSet diffSet, BodyPartTagDef tag, float maximum = 3.40282347E+38f, FloatRange lerp = default(FloatRange), List<PawnCapacityUtility.CapacityImpactor> impactors = null, float bestPartEfficiencySpecialWeight = -1f)
 		{
 			BodyDef body = diffSet.pawn.RaceProps.body;
 			float num = 0f;
 			int num2 = 0;
+			float num3 = 0f;
 			List<PawnCapacityUtility.CapacityImpactor> list = null;
 			foreach (BodyPartRecord current in body.GetPartsWithTag(tag))
 			{
 				BodyPartRecord part = current;
 				List<PawnCapacityUtility.CapacityImpactor> impactors2 = list;
-				float num3 = PawnCapacityUtility.CalculatePartEfficiency(diffSet, part, false, impactors2);
-				if (impactors != null && num3 != 1f && list == null)
+				float num4 = PawnCapacityUtility.CalculatePartEfficiency(diffSet, part, false, impactors2);
+				if (impactors != null && num4 != 1f && list == null)
 				{
 					list = new List<PawnCapacityUtility.CapacityImpactor>();
 					part = current;
 					impactors2 = list;
 					PawnCapacityUtility.CalculatePartEfficiency(diffSet, part, false, impactors2);
 				}
-				num += num3;
+				num += num4;
+				num3 = Mathf.Max(num3, num4);
 				num2++;
 			}
 			if (num2 == 0)
 			{
 				return 1f;
 			}
-			float num4 = num / (float)num2;
-			float num5 = Mathf.Min(num4, maximum);
-			if (impactors != null && list != null && (maximum != 1f || num4 <= 1f || num5 == 1f))
+			float num5;
+			if (bestPartEfficiencySpecialWeight >= 0f && num2 >= 2)
+			{
+				num5 = num3 * bestPartEfficiencySpecialWeight + (num - num3) / (float)(num2 - 1) * (1f - bestPartEfficiencySpecialWeight);
+			}
+			else
+			{
+				num5 = num / (float)num2;
+			}
+			float num6 = num5;
+			if (lerp != default(FloatRange))
+			{
+				num6 = lerp.LerpThroughRange(num6);
+			}
+			num6 = Mathf.Min(num6, maximum);
+			if (impactors != null && list != null && (maximum != 1f || num5 <= 1f || num6 == 1f))
 			{
 				impactors.AddRange(list);
 			}
-			return num5;
+			return num6;
 		}
 
-		public static float CalculateLimbEfficiency(HediffSet diffSet, string limbCoreTag, string limbSegmentTag, string limbDigitTag, float appendageWeight, out float functionalPercentage, List<PawnCapacityUtility.CapacityImpactor> impactors)
+		public static float CalculateLimbEfficiency(HediffSet diffSet, BodyPartTagDef limbCoreTag, BodyPartTagDef limbSegmentTag, BodyPartTagDef limbDigitTag, float appendageWeight, out float functionalPercentage, List<PawnCapacityUtility.CapacityImpactor> impactors)
 		{
 			BodyDef body = diffSet.pawn.RaceProps.body;
 			float num = 0f;

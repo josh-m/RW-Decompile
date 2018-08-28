@@ -29,7 +29,7 @@ namespace RimWorld
 				{
 					text2,
 					" (",
-					this.AnyPawn.gender.GetLabel(),
+					this.AnyPawn.GetGenderLabel(),
 					", ",
 					this.AnyPawn.ageTracker.AgeBiologicalYearsFloat.ToString("F0"),
 					")"
@@ -62,7 +62,7 @@ namespace RimWorld
 		{
 			if (base.ActionToDo == TradeAction.PlayerSells)
 			{
-				List<Pawn> list = this.thingsColony.Take(-base.CountToTransfer).Cast<Pawn>().ToList<Pawn>();
+				List<Pawn> list = this.thingsColony.Take(base.CountToTransferToDestination).Cast<Pawn>().ToList<Pawn>();
 				for (int i = 0; i < list.Count; i++)
 				{
 					TradeSession.trader.GiveSoldThingToTrader(list[i], 1, TradeSession.playerNegotiator);
@@ -70,7 +70,7 @@ namespace RimWorld
 			}
 			else if (base.ActionToDo == TradeAction.PlayerBuys)
 			{
-				List<Pawn> list2 = this.thingsTrader.Take(base.CountToTransfer).Cast<Pawn>().ToList<Pawn>();
+				List<Pawn> list2 = this.thingsTrader.Take(base.CountToTransferToSource).Cast<Pawn>().ToList<Pawn>();
 				for (int j = 0; j < list2.Count; j++)
 				{
 					TradeSession.trader.GiveSoldThingToPlayer(list2[j], 1, TradeSession.playerNegotiator);

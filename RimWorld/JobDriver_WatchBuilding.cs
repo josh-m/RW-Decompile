@@ -8,13 +8,21 @@ namespace RimWorld
 {
 	public class JobDriver_WatchBuilding : JobDriver
 	{
-		public override bool TryMakePreToilReservations()
+		public override bool TryMakePreToilReservations(bool errorOnFailed)
 		{
-			if (!this.pawn.Reserve(this.job.targetA, this.job, this.job.def.joyMaxParticipants, 0, null))
+			Pawn pawn = this.pawn;
+			LocalTargetInfo target = this.job.targetA;
+			Job job = this.job;
+			int num = this.job.def.joyMaxParticipants;
+			int num2 = 0;
+			if (!pawn.Reserve(target, job, num, num2, null, errorOnFailed))
 			{
 				return false;
 			}
-			if (!this.pawn.Reserve(this.job.targetB, this.job, 1, -1, null))
+			pawn = this.pawn;
+			target = this.job.targetB;
+			job = this.job;
+			if (!pawn.Reserve(target, job, 1, -1, null, errorOnFailed))
 			{
 				return false;
 			}
@@ -22,14 +30,25 @@ namespace RimWorld
 			{
 				if (base.TargetC.Thing is Building_Bed)
 				{
-					if (!this.pawn.Reserve(this.job.targetC, this.job, ((Building_Bed)base.TargetC.Thing).SleepingSlotsCount, 0, null))
+					pawn = this.pawn;
+					LocalTargetInfo targetC = this.job.targetC;
+					job = this.job;
+					num2 = ((Building_Bed)base.TargetC.Thing).SleepingSlotsCount;
+					num = 0;
+					if (!pawn.Reserve(targetC, job, num2, num, null, errorOnFailed))
 					{
 						return false;
 					}
 				}
-				else if (!this.pawn.Reserve(this.job.targetC, this.job, 1, -1, null))
+				else
 				{
-					return false;
+					pawn = this.pawn;
+					LocalTargetInfo targetC = this.job.targetC;
+					job = this.job;
+					if (!pawn.Reserve(targetC, job, 1, -1, null, errorOnFailed))
+					{
+						return false;
+					}
 				}
 			}
 			return true;
@@ -77,10 +96,9 @@ namespace RimWorld
 		{
 			this.pawn.rotationTracker.FaceCell(base.TargetA.Cell);
 			this.pawn.GainComfortFromCellIfPossible();
-			float statValue = base.TargetThingA.GetStatValue(StatDefOf.EntertainmentStrengthFactor, true);
 			Pawn pawn = this.pawn;
-			float extraJoyGainFactor = statValue;
-			JoyUtility.JoyTickCheckEnd(pawn, JoyTickFullJoyAction.EndJob, extraJoyGainFactor);
+			Building joySource = (Building)base.TargetThingA;
+			JoyUtility.JoyTickCheckEnd(pawn, JoyTickFullJoyAction.EndJob, 1f, joySource);
 		}
 
 		public override object[] TaleParameters()

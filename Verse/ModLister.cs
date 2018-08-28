@@ -34,11 +34,11 @@ namespace Verse
 			ModLister.RebuildModList();
 		}
 
-		internal static void EnsureInit()
+		public static void EnsureInit()
 		{
 		}
 
-		internal static void RebuildModList()
+		public static void RebuildModList()
 		{
 			string s = "Rebuilding mods list";
 			ModLister.mods.Clear();
@@ -71,7 +71,7 @@ namespace Verse
 			}
 			if (Prefs.LogVerbose)
 			{
-				Log.Message(s);
+				Log.Message(s, false);
 			}
 		}
 
@@ -90,7 +90,7 @@ namespace Verse
 			return num;
 		}
 
-		internal static ModMetaData GetModWithIdentifier(string identifier)
+		public static ModMetaData GetModWithIdentifier(string identifier)
 		{
 			for (int i = 0; i < ModLister.mods.Count; i++)
 			{
@@ -100,6 +100,18 @@ namespace Verse
 				}
 			}
 			return null;
+		}
+
+		public static bool HasActiveModWithName(string name)
+		{
+			for (int i = 0; i < ModLister.mods.Count; i++)
+			{
+				if (ModLister.mods[i].Active && ModLister.mods[i].Name == name)
+				{
+					return true;
+				}
+			}
+			return false;
 		}
 	}
 }

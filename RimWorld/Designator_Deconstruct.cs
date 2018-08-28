@@ -15,16 +15,24 @@ namespace RimWorld
 			}
 		}
 
+		protected override DesignationDef Designation
+		{
+			get
+			{
+				return DesignationDefOf.Deconstruct;
+			}
+		}
+
 		public Designator_Deconstruct()
 		{
 			this.defaultLabel = "DesignatorDeconstruct".Translate();
 			this.defaultDesc = "DesignatorDeconstructDesc".Translate();
 			this.icon = ContentFinder<Texture2D>.Get("UI/Designators/Deconstruct", true);
-			this.soundDragSustain = SoundDefOf.DesignateDragStandard;
-			this.soundDragChanged = SoundDefOf.DesignateDragStandardChanged;
+			this.soundDragSustain = SoundDefOf.Designate_DragStandard;
+			this.soundDragChanged = SoundDefOf.Designate_DragStandard_Changed;
 			this.useMouseIcon = true;
-			this.soundSucceeded = SoundDefOf.DesignateDeconstruct;
-			this.hotKey = KeyBindingDefOf.DesignatorDeconstruct;
+			this.soundSucceeded = SoundDefOf.Designate_Deconstruct;
+			this.hotKey = KeyBindingDefOf.Designator_Deconstruct;
 		}
 
 		public override AcceptanceReport CanDesignateCell(IntVec3 c)
@@ -65,10 +73,6 @@ namespace RimWorld
 
 		public override void DesignateThing(Thing t)
 		{
-			if (t.def.Claimable && t.Faction != Faction.OfPlayer)
-			{
-				t.SetFaction(Faction.OfPlayer, null);
-			}
 			Thing innerIfMinified = t.GetInnerIfMinified();
 			if (DebugSettings.godMode || innerIfMinified.GetStatValue(StatDefOf.WorkToBuild, true) == 0f || t.def.IsFrame)
 			{
@@ -76,7 +80,7 @@ namespace RimWorld
 			}
 			else
 			{
-				base.Map.designationManager.AddDesignation(new Designation(t, DesignationDefOf.Deconstruct));
+				base.Map.designationManager.AddDesignation(new Designation(t, this.Designation));
 			}
 		}
 
@@ -91,18 +95,11 @@ namespace RimWorld
 			{
 				return false;
 			}
-			if (!DebugSettings.godMode)
+			if (!building.DeconstructibleBy(Faction.OfPlayer))
 			{
-				if (!building.def.building.IsDeconstructible)
-				{
-					return false;
-				}
-				if (building.Faction != Faction.OfPlayer && !building.ClaimableBy(Faction.OfPlayer) && !building.def.building.alwaysDeconstructible)
-				{
-					return false;
-				}
+				return false;
 			}
-			if (base.Map.designationManager.DesignationOn(t, DesignationDefOf.Deconstruct) != null)
+			if (base.Map.designationManager.DesignationOn(t, this.Designation) != null)
 			{
 				return false;
 			}

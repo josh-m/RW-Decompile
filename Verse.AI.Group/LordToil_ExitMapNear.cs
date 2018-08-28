@@ -21,6 +21,14 @@ namespace Verse.AI.Group
 			}
 		}
 
+		public override bool AllowSelfTend
+		{
+			get
+			{
+				return false;
+			}
+		}
+
 		public LordToil_ExitMapNear(IntVec3 near, float radius, LocomotionUrgency locomotion = LocomotionUrgency.None, bool canDig = false)
 		{
 			this.near = near;

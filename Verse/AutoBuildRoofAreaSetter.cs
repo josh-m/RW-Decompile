@@ -23,7 +23,7 @@ namespace Verse
 
 		public void TryGenerateAreaOnImpassable(IntVec3 c)
 		{
-			if (!c.Roofed(this.map) && c.Impassable(this.map) && RoofCollapseUtility.WithinRangeOfRoofHolder(c, this.map))
+			if (!c.Roofed(this.map) && c.Impassable(this.map) && RoofCollapseUtility.WithinRangeOfRoofHolder(c, this.map, false))
 			{
 				bool flag = false;
 				for (int i = 0; i < 9; i++)
@@ -150,7 +150,7 @@ namespace Verse
 			{
 				if (this.map.roofGrid.RoofAt(current4) == null && !this.justRoofedCells.Contains(current4))
 				{
-					if (!this.map.areaManager.NoRoof[current4] && RoofCollapseUtility.WithinRangeOfRoofHolder(current4, this.map))
+					if (!this.map.areaManager.NoRoof[current4] && RoofCollapseUtility.WithinRangeOfRoofHolder(current4, this.map, true))
 					{
 						this.map.areaManager.BuildRoof[current4] = true;
 						this.justRoofedCells.Add(current4);

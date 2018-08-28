@@ -5,7 +5,8 @@ namespace Verse
 	internal enum DefInjectionPathPartKind
 	{
 		Field,
-		FieldWithListIndex,
-		ListIndex
+		ListIndex,
+		ListHandle,
+		ListHandleWithIndex
 	}
 }

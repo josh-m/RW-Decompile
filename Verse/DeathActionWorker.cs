@@ -13,6 +13,14 @@ namespace Verse
 			}
 		}
 
+		public virtual bool DangerousInMelee
+		{
+			get
+			{
+				return false;
+			}
+		}
+
 		public abstract void PawnDied(Corpse corpse);
 	}
 }

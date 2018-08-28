@@ -8,13 +8,13 @@ namespace RimWorld
 	{
 		public override float CalculateCapacityLevel(HediffSet diffSet, List<PawnCapacityUtility.CapacityImpactor> impactors = null)
 		{
-			string tag = "BloodPumpingSource";
-			return PawnCapacityUtility.CalculateTagEfficiency(diffSet, tag, 3.40282347E+38f, impactors);
+			BodyPartTagDef bloodPumpingSource = BodyPartTagDefOf.BloodPumpingSource;
+			return PawnCapacityUtility.CalculateTagEfficiency(diffSet, bloodPumpingSource, 3.40282347E+38f, default(FloatRange), impactors, -1f);
 		}
 
 		public override bool CanHaveCapacity(BodyDef body)
 		{
-			return body.HasPartWithTag("BloodPumpingSource");
+			return body.HasPartWithTag(BodyPartTagDefOf.BloodPumpingSource);
 		}
 	}
 }

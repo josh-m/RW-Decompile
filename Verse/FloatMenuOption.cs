@@ -16,6 +16,8 @@ namespace Verse
 
 		public bool autoTakeable;
 
+		public float autoTakeablePriority;
+
 		public Action mouseoverGuiAction;
 
 		public Thing revalidateClickTarget;
@@ -144,15 +146,10 @@ namespace Verse
 			{
 				if (this.Disabled)
 				{
-					Log.Error("Setting priority on disabled FloatMenuOption: " + this.Label);
+					Log.Error("Setting priority on disabled FloatMenuOption: " + this.Label, false);
 				}
 				this.priorityInt = value;
 			}
-		}
-
-		public FloatMenuOption(MenuOptionPriority priority = MenuOptionPriority.Default)
-		{
-			this.priorityInt = priority;
 		}
 
 		public FloatMenuOption(string label, Action action, MenuOptionPriority priority = MenuOptionPriority.Default, Action mouseoverGuiAction = null, Thing revalidateClickTarget = null, float extraPartWidth = 0f, Func<Rect, bool> extraPartOnGUI = null, WorldObject revalidateWorldClickTarget = null)
@@ -170,14 +167,20 @@ namespace Verse
 		public void SetSizeMode(FloatMenuSizeMode newSizeMode)
 		{
 			this.sizeMode = newSizeMode;
+			GameFont font = Text.Font;
 			Text.Font = this.CurrentFont;
 			float width = 300f - (2f * this.HorizontalMargin + 4f + this.extraPartWidth);
 			this.cachedRequiredHeight = 2f * this.VerticalMargin + Text.CalcHeight(this.Label, width);
 			this.cachedRequiredWidth = this.HorizontalMargin + 4f + Text.CalcSize(this.Label).x + this.extraPartWidth + this.HorizontalMargin;
+			Text.Font = font;
 		}
 
-		public void Chosen(bool colonistOrdering)
+		public void Chosen(bool colonistOrdering, FloatMenu floatMenu)
 		{
+			if (floatMenu != null)
+			{
+				floatMenu.PreOptionChosen(this);
+			}
 			if (!this.Disabled)
 			{
 				if (this.action != null)
@@ -195,7 +198,7 @@ namespace Verse
 			}
 		}
 
-		public virtual bool DoGUI(Rect rect, bool colonistOrdering)
+		public virtual bool DoGUI(Rect rect, bool colonistOrdering, FloatMenu floatMenu)
 		{
 			Rect rect2 = rect;
 			rect2.height -= 1f;
@@ -271,7 +274,7 @@ namespace Verse
 			{
 				return false;
 			}
-			this.Chosen(colonistOrdering);
+			this.Chosen(colonistOrdering, floatMenu);
 			if (this.tutorTag != null)
 			{
 				TutorSystem.Notify_Event(this.tutorTag);
@@ -281,7 +284,14 @@ namespace Verse
 
 		public override string ToString()
 		{
-			return "FloatMenuOption(" + this.Label + ")";
+			return string.Concat(new string[]
+			{
+				"FloatMenuOption(",
+				this.Label,
+				", ",
+				(!this.Disabled) ? "enabled" : "disabled",
+				")"
+			});
 		}
 
 		static FloatMenuOption()

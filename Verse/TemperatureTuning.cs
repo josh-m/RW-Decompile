@@ -4,7 +4,7 @@ namespace Verse
 {
 	public static class TemperatureTuning
 	{
-		public const float MinimumTemperature = -270f;
+		public const float MinimumTemperature = -273.15f;
 
 		public const float MaximumTemperature = 2000f;
 
@@ -38,7 +38,7 @@ namespace Verse
 
 		public const int RoomTempEqualizeInterval = 120;
 
-		public const int Door_TempEqualizeIntervalOpen = 22;
+		public const int Door_TempEqualizeIntervalOpen = 34;
 
 		public const int Door_TempEqualizeIntervalClosed = 375;
 

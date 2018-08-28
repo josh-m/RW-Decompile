@@ -25,7 +25,7 @@ namespace Verse
 							thing,
 							" with saveDestroyedThings==false. label=",
 							label
-						}));
+						}), false);
 					}
 					else if (thing.Discarded)
 					{
@@ -35,7 +35,7 @@ namespace Verse
 							thing,
 							". This mode means that the thing is no longer managed by anything in the code and should not be deep-saved anywhere. (even with saveDestroyedThings==true) , label=",
 							label
-						}));
+						}), false);
 					}
 				}
 				IExposable exposable = target as IExposable;
@@ -47,7 +47,7 @@ namespace Verse
 						label,
 						" of type ",
 						typeof(T)
-					}));
+					}), false);
 					return;
 				}
 				if (target == null)
@@ -82,7 +82,7 @@ namespace Verse
 							exposable.ToStringSafe<IExposable>(),
 							": ",
 							ex
-						}));
+						}), false);
 					}
 					finally
 					{
@@ -105,7 +105,7 @@ namespace Verse
 						Scribe.loader.curXmlParent[label].ToStringSafe<XmlElement>(),
 						": ",
 						ex2
-					}));
+					}), false);
 					target = default(T);
 				}
 			}

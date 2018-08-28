@@ -1,7 +1,5 @@
 using System;
-using System.Collections.Generic;
 using Verse;
-using Verse.Grammar;
 
 namespace RimWorld
 {
@@ -44,9 +42,9 @@ namespace RimWorld
 			}
 		}
 
-		public string GenerateText(TextGenerationPurpose purpose, List<Rule> extraRules)
+		public string GenerateText(TextGenerationPurpose purpose, RulePackDef extraInclude)
 		{
-			return TaleTextGenerator.GenerateTextFromTale(purpose, this.tale, this.seed, extraRules);
+			return TaleTextGenerator.GenerateTextFromTale(purpose, this.tale, this.seed, extraInclude);
 		}
 
 		public override string ToString()

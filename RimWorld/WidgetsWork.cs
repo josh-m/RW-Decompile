@@ -121,12 +121,12 @@ namespace RimWorld
 					if (p.workSettings.GetPriority(wType) > 0)
 					{
 						p.workSettings.SetPriority(wType, 0);
-						SoundDefOf.CheckboxTurnedOff.PlayOneShotOnCamera(null);
+						SoundDefOf.Checkbox_TurnedOff.PlayOneShotOnCamera(null);
 					}
 					else
 					{
 						p.workSettings.SetPriority(wType, 3);
-						SoundDefOf.CheckboxTurnedOn.PlayOneShotOnCamera(null);
+						SoundDefOf.Checkbox_TurnedOn.PlayOneShotOnCamera(null);
 						if (wType.relevantSkills.Any<SkillDef>() && p.skills.AverageOfRelevantSkillsFor(wType) <= 2f)
 						{
 							SoundDefOf.Crunch.PlayOneShotOnCamera(null);
@@ -145,7 +145,7 @@ namespace RimWorld
 			{
 				stringBuilder.Append("CannotDoThisWork".Translate(new object[]
 				{
-					p.NameStringShort
+					p.LabelShort
 				}));
 			}
 			else

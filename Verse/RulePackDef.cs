@@ -11,7 +11,11 @@ namespace Verse
 
 		private RulePack rulePack;
 
+		[Unsaved]
 		private List<Rule> cachedRules;
+
+		[Unsaved]
+		private List<Rule> cachedUntranslatedRules;
 
 		public List<Rule> RulesPlusIncludes
 		{
@@ -36,11 +40,60 @@ namespace Verse
 			}
 		}
 
+		public List<Rule> UntranslatedRulesPlusIncludes
+		{
+			get
+			{
+				if (this.cachedUntranslatedRules == null)
+				{
+					this.cachedUntranslatedRules = new List<Rule>();
+					if (this.rulePack != null)
+					{
+						this.cachedUntranslatedRules.AddRange(this.rulePack.UntranslatedRules);
+					}
+					if (this.include != null)
+					{
+						for (int i = 0; i < this.include.Count; i++)
+						{
+							this.cachedUntranslatedRules.AddRange(this.include[i].UntranslatedRulesPlusIncludes);
+						}
+					}
+				}
+				return this.cachedUntranslatedRules;
+			}
+		}
+
 		public List<Rule> RulesImmediate
 		{
 			get
 			{
 				return (this.rulePack == null) ? null : this.rulePack.Rules;
+			}
+		}
+
+		public List<Rule> UntranslatedRulesImmediate
+		{
+			get
+			{
+				return (this.rulePack == null) ? null : this.rulePack.UntranslatedRules;
+			}
+		}
+
+		public string FirstRuleKeyword
+		{
+			get
+			{
+				List<Rule> rulesPlusIncludes = this.RulesPlusIncludes;
+				return (!rulesPlusIncludes.Any<Rule>()) ? "none" : rulesPlusIncludes[0].keyword;
+			}
+		}
+
+		public string FirstUntranslatedRuleKeyword
+		{
+			get
+			{
+				List<Rule> untranslatedRulesPlusIncludes = this.UntranslatedRulesPlusIncludes;
+				return (!untranslatedRulesPlusIncludes.Any<Rule>()) ? "none" : untranslatedRulesPlusIncludes[0].keyword;
 			}
 		}
 

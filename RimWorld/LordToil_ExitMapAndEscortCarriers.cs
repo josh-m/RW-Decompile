@@ -16,6 +16,14 @@ namespace RimWorld
 			}
 		}
 
+		public override bool AllowSelfTend
+		{
+			get
+			{
+				return false;
+			}
+		}
+
 		public override void UpdateAllDuties()
 		{
 			Pawn trader;
@@ -100,7 +108,7 @@ namespace RimWorld
 			Thing thing = GenClosest.ClosestThingReachable(p.Position, p.Map, ThingRequest.ForGroup(ThingRequestGroup.Corpse), PathEndMode.ClosestTouch, TraverseParms.For(p, Danger.Deadly, TraverseMode.ByPawn, false), 20f, delegate(Thing x)
 			{
 				Pawn innerPawn = ((Corpse)x).InnerPawn;
-				return innerPawn.Faction == p.Faction && innerPawn.GetTraderCaravanRole() == TraderCaravanRole.Carrier;
+				return innerPawn.Faction == p.Faction && innerPawn.RaceProps.packAnimal;
 			}, null, 0, 15, false, RegionType.Set_Passable, false);
 			Thing thing2 = GenClosest.ClosestThingReachable(p.Position, p.Map, ThingRequest.ForGroup(ThingRequestGroup.Pawn), PathEndMode.ClosestTouch, TraverseParms.For(p, Danger.Deadly, TraverseMode.ByPawn, false), 20f, delegate(Thing x)
 			{

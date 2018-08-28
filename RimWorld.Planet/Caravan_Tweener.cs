@@ -7,7 +7,7 @@ namespace RimWorld.Planet
 	{
 		private Caravan caravan;
 
-		private Vector3 springPos = Vector3.zero;
+		private Vector3 tweenedPos = Vector3.zero;
 
 		private Vector3 lastTickSpringPos;
 
@@ -17,7 +17,7 @@ namespace RimWorld.Planet
 		{
 			get
 			{
-				return this.springPos;
+				return this.tweenedPos;
 			}
 		}
 
@@ -44,14 +44,15 @@ namespace RimWorld.Planet
 
 		public void TweenerTick()
 		{
-			this.lastTickSpringPos = this.springPos;
-			Vector3 a = this.TweenedPosRoot - this.springPos;
-			this.springPos += a * 0.09f;
+			this.lastTickSpringPos = this.tweenedPos;
+			Vector3 a = this.TweenedPosRoot - this.tweenedPos;
+			this.tweenedPos += a * 0.09f;
 		}
 
-		public void ResetToPosition()
+		public void ResetTweenedPosToRoot()
 		{
-			this.springPos = this.TweenedPosRoot;
+			this.tweenedPos = this.TweenedPosRoot;
+			this.lastTickSpringPos = this.tweenedPos;
 		}
 	}
 }

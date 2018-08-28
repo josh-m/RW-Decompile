@@ -36,6 +36,8 @@ namespace Verse
 		public EditWindow_DefEditor(Def def)
 		{
 			this.def = def;
+			this.closeOnAccept = false;
+			this.closeOnCancel = false;
 			this.optionalTitle = def.ToString();
 		}
 

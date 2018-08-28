@@ -16,7 +16,7 @@ namespace RimWorld
 			}
 		}
 
-		public static void Reset()
+		public static void ResetStaticData()
 		{
 			WorkGiver_Warden_DoExecution.IncapableOfViolenceLowerTrans = "IncapableOfViolenceLower".Translate();
 		}
@@ -34,7 +34,7 @@ namespace RimWorld
 			}
 			if (pawn.story != null && pawn.story.WorkTagIsDisabled(WorkTags.Violent))
 			{
-				JobFailReason.Is(WorkGiver_Warden_DoExecution.IncapableOfViolenceLowerTrans);
+				JobFailReason.Is(WorkGiver_Warden_DoExecution.IncapableOfViolenceLowerTrans, null);
 				return null;
 			}
 			return new Job(JobDefOf.PrisonerExecution, t);

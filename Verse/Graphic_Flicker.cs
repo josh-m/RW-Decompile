@@ -24,38 +24,39 @@ namespace Verse
 		{
 			if (thingDef == null)
 			{
-				Log.ErrorOnce("Fire DrawWorker with null thingDef: " + loc, 3427324);
+				Log.ErrorOnce("Fire DrawWorker with null thingDef: " + loc, 3427324, false);
 				return;
 			}
 			if (this.subGraphics == null)
 			{
-				Log.ErrorOnce("Graphic_Flicker has no subgraphics " + thingDef, 358773632);
+				Log.ErrorOnce("Graphic_Flicker has no subgraphics " + thingDef, 358773632, false);
 				return;
 			}
 			int num = Find.TickManager.TicksGame;
-			int num2 = 0;
-			int num3 = 0;
-			float num4 = 1f;
-			CompFireOverlay compFireOverlay = null;
 			if (thing != null)
 			{
-				compFireOverlay = thing.TryGetComp<CompFireOverlay>();
 				num += Mathf.Abs(thing.thingIDNumber ^ 8453458);
-				num2 = num / 15;
-				num3 = Mathf.Abs(num2 ^ thing.thingIDNumber * 391) % this.subGraphics.Length;
-				Fire fire = thing as Fire;
-				if (fire != null)
+			}
+			int num2 = num / 15;
+			int num3 = Mathf.Abs(num2 ^ ((thing == null) ? 0 : thing.thingIDNumber) * 391) % this.subGraphics.Length;
+			float num4 = 1f;
+			CompProperties_FireOverlay compProperties_FireOverlay = null;
+			Fire fire = thing as Fire;
+			if (fire != null)
+			{
+				num4 = fire.fireSize;
+			}
+			else if (thingDef != null)
+			{
+				compProperties_FireOverlay = thingDef.GetCompProperties<CompProperties_FireOverlay>();
+				if (compProperties_FireOverlay != null)
 				{
-					num4 = fire.fireSize;
-				}
-				else if (compFireOverlay != null)
-				{
-					num4 = compFireOverlay.Props.fireSize;
+					num4 = compProperties_FireOverlay.fireSize;
 				}
 			}
 			if (num3 < 0 || num3 >= this.subGraphics.Length)
 			{
-				Log.ErrorOnce("Fire drawing out of range: " + num3, 7453435);
+				Log.ErrorOnce("Fire drawing out of range: " + num3, 7453435, false);
 				num3 = 0;
 			}
 			Graphic graphic = this.subGraphics[num3];
@@ -63,9 +64,9 @@ namespace Verse
 			Vector3 a = GenRadial.RadialPattern[num2 % GenRadial.RadialPattern.Length].ToVector3() / GenRadial.MaxRadialPatternRadius;
 			a *= 0.05f;
 			Vector3 vector = loc + a * num4;
-			if (compFireOverlay != null)
+			if (compProperties_FireOverlay != null)
 			{
-				vector += compFireOverlay.Props.offset;
+				vector += compProperties_FireOverlay.offset;
 			}
 			Vector3 s = new Vector3(num5, 1f, num5);
 			Matrix4x4 matrix = default(Matrix4x4);

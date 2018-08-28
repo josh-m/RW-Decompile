@@ -65,7 +65,11 @@ namespace RimWorld
 		[DebuggerHidden]
 		protected override IEnumerable<Rule> SpecialTextGenerationRules()
 		{
-			foreach (Rule r in this.firstPawnData.GetRules("anyPawn"))
+			if (this.def.firstPawnSymbol.NullOrEmpty() || this.def.secondPawnSymbol.NullOrEmpty())
+			{
+				Log.Error(this.def + " uses DoublePawn tale class but firstPawnSymbol and secondPawnSymbol are not both set", false);
+			}
+			foreach (Rule r in this.firstPawnData.GetRules("ANYPAWN"))
 			{
 				yield return r;
 			}
@@ -75,7 +79,7 @@ namespace RimWorld
 			}
 			if (this.secondPawnData != null)
 			{
-				foreach (Rule r3 in this.firstPawnData.GetRules("anyPawn"))
+				foreach (Rule r3 in this.firstPawnData.GetRules("ANYPAWN"))
 				{
 					yield return r3;
 				}

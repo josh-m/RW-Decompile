@@ -30,6 +30,11 @@ namespace RimWorld
 		protected override Job TryGiveJob(Pawn pawn)
 		{
 			Pawn defendee = this.GetDefendee(pawn);
+			if (defendee == null)
+			{
+				Log.Error(base.GetType() + " has null defendee. pawn=" + pawn.ToStringSafe<Pawn>(), false);
+				return null;
+			}
 			Pawn carriedBy = defendee.CarriedBy;
 			if (carriedBy != null)
 			{
@@ -60,7 +65,7 @@ namespace RimWorld
 
 		protected override bool TryFindShootingPosition(Pawn pawn, out IntVec3 dest)
 		{
-			Verb verb = pawn.TryGetAttackVerb(!pawn.IsColonist);
+			Verb verb = pawn.TryGetAttackVerb(null, !pawn.IsColonist);
 			if (verb == null)
 			{
 				dest = IntVec3.Invalid;
@@ -75,7 +80,7 @@ namespace RimWorld
 				locus = this.GetDefendee(pawn).PositionHeld,
 				maxRangeFromLocus = this.GetFlagRadius(pawn),
 				wantCoverFromTarget = (verb.verbProps.range > 7f),
-				maxRegionsRadius = 50
+				maxRegions = 50
 			}, out dest);
 		}
 	}

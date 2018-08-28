@@ -22,7 +22,7 @@ namespace Verse.AI
 						base.GetType(),
 						" TryIssueJobPackage: ",
 						ex.ToString()
-					}));
+					}), false);
 				}
 				if (result.IsValid)
 				{

@@ -12,31 +12,29 @@ namespace RimWorld
 			bool flag3 = StatPart_WorkTableUnpowered.Applies(this.parent);
 			if (flag || flag2 || flag3)
 			{
-				string text = "WorkSpeedPenalty".Translate() + ": ";
-				bool flag4 = false;
+				string str = "WorkSpeedPenalty".Translate() + ": ";
+				string text = string.Empty;
 				if (flag)
 				{
 					text += "Outdoors".Translate().ToLower();
-					flag4 = true;
 				}
 				if (flag2)
 				{
-					if (flag4)
+					if (!text.NullOrEmpty())
 					{
 						text += ", ";
 					}
 					text += "BadTemperature".Translate().ToLower();
-					flag4 = true;
 				}
 				if (flag3)
 				{
-					if (flag4)
+					if (!text.NullOrEmpty())
 					{
 						text += ", ";
 					}
 					text += "NoPower".Translate().ToLower();
 				}
-				return text;
+				return str + text.CapitalizeFirst();
 			}
 			return null;
 		}

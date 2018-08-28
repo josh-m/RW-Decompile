@@ -43,9 +43,12 @@ namespace RimWorld
 
 		protected abstract Toil FinalInteractToil();
 
-		public override bool TryMakePreToilReservations()
+		public override bool TryMakePreToilReservations(bool errorOnFailed)
 		{
-			return this.pawn.Reserve(this.Animal, this.job, 1, -1, null);
+			Pawn pawn = this.pawn;
+			LocalTargetInfo target = this.Animal;
+			Job job = this.job;
+			return pawn.Reserve(target, job, 1, -1, null, errorOnFailed);
 		}
 
 		[DebuggerHidden]
@@ -135,12 +138,12 @@ namespace RimWorld
 					return;
 				}
 				actor.mindState.lastInventoryRawFoodUseTick = Find.TickManager.TicksGame;
-				int num = FoodUtility.StackCountForNutrition(thing.def, this.feedNutritionLeft);
+				int num = FoodUtility.StackCountForNutrition(this.feedNutritionLeft, thing.GetStatValue(StatDefOf.Nutrition, true));
 				int stackCount = thing.stackCount;
 				Thing thing2 = actor.inventory.innerContainer.Take(thing, Mathf.Min(num, stackCount));
 				actor.carryTracker.TryStartCarry(thing2);
 				actor.CurJob.SetTarget(TargetIndex.B, thing2);
-				float num2 = (float)thing2.stackCount * thing2.def.ingestible.nutrition;
+				float num2 = (float)thing2.stackCount * thing2.GetStatValue(StatDefOf.Nutrition, true);
 				this.ticksLeftThisToil = Mathf.CeilToInt(270f * (num2 / JobDriver_InteractAnimal.RequiredNutritionPerFeed(pawn)));
 				if (num <= stackCount)
 				{

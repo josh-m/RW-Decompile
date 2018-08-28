@@ -70,7 +70,7 @@ namespace Verse.Sound
 
 		public static void DoRegion(Rect rect)
 		{
-			MouseoverSounds.DoRegion(rect, SoundDefOf.MouseoverStandard);
+			MouseoverSounds.DoRegion(rect, SoundDefOf.Mouseover_Standard);
 		}
 
 		public static void DoRegion(Rect rect, SoundDef sound)

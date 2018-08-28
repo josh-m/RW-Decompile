@@ -8,6 +8,8 @@ namespace Verse
 	{
 		protected string curName;
 
+		private bool focusedRenameField;
+
 		protected virtual int MaxNameLength
 		{
 			get
@@ -28,8 +30,8 @@ namespace Verse
 		{
 			this.forcePause = true;
 			this.doCloseX = true;
-			this.closeOnEscapeKey = true;
 			this.absorbInputAroundWindow = true;
+			this.closeOnAccept = false;
 			this.closeOnClickedOutside = true;
 		}
 
@@ -51,23 +53,29 @@ namespace Verse
 				flag = true;
 				Event.current.Use();
 			}
+			GUI.SetNextControlName("RenameField");
 			string text = Widgets.TextField(new Rect(0f, 15f, inRect.width, 35f), this.curName);
 			if (text.Length < this.MaxNameLength)
 			{
 				this.curName = text;
+			}
+			if (!this.focusedRenameField)
+			{
+				UI.FocusControl("RenameField", this);
+				this.focusedRenameField = true;
 			}
 			if (Widgets.ButtonText(new Rect(15f, inRect.height - 35f - 15f, inRect.width - 15f - 15f, 35f), "OK", true, false, true) || flag)
 			{
 				AcceptanceReport acceptanceReport = this.NameIsValid(this.curName);
 				if (!acceptanceReport.Accepted)
 				{
-					if (acceptanceReport.Reason == null)
+					if (acceptanceReport.Reason.NullOrEmpty())
 					{
-						Messages.Message("NameIsInvalid".Translate(), MessageTypeDefOf.RejectInput);
+						Messages.Message("NameIsInvalid".Translate(), MessageTypeDefOf.RejectInput, false);
 					}
 					else
 					{
-						Messages.Message(acceptanceReport.Reason, MessageTypeDefOf.RejectInput);
+						Messages.Message(acceptanceReport.Reason, MessageTypeDefOf.RejectInput, false);
 					}
 				}
 				else

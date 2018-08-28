@@ -45,16 +45,16 @@ namespace RimWorld
 			stateGraph.AddToil(lordToil_Party);
 			LordToil_End lordToil_End = new LordToil_End();
 			stateGraph.AddToil(lordToil_End);
-			Transition transition = new Transition(lordToil_Party, lordToil_End);
+			Transition transition = new Transition(lordToil_Party, lordToil_End, false, true);
 			transition.AddTrigger(new Trigger_TickCondition(() => this.ShouldBeCalledOff(), 1));
-			transition.AddTrigger(new Trigger_PawnLostViolently());
-			transition.AddPreAction(new TransitionAction_Message("MessagePartyCalledOff".Translate(), MessageTypeDefOf.NegativeEvent, new TargetInfo(this.spot, base.Map, false)));
-			stateGraph.AddTransition(transition);
+			transition.AddTrigger(new Trigger_PawnKilled());
+			transition.AddPreAction(new TransitionAction_Message("MessagePartyCalledOff".Translate(), MessageTypeDefOf.NegativeEvent, new TargetInfo(this.spot, base.Map, false), null, 1f));
+			stateGraph.AddTransition(transition, false);
 			this.timeoutTrigger = new Trigger_TicksPassed(Rand.RangeInclusive(5000, 15000));
-			Transition transition2 = new Transition(lordToil_Party, lordToil_End);
+			Transition transition2 = new Transition(lordToil_Party, lordToil_End, false, true);
 			transition2.AddTrigger(this.timeoutTrigger);
-			transition2.AddPreAction(new TransitionAction_Message("MessagePartyFinished".Translate(), MessageTypeDefOf.SituationResolved, new TargetInfo(this.spot, base.Map, false)));
-			stateGraph.AddTransition(transition2);
+			transition2.AddPreAction(new TransitionAction_Message("MessagePartyFinished".Translate(), MessageTypeDefOf.SituationResolved, new TargetInfo(this.spot, base.Map, false), null, 1f));
+			stateGraph.AddTransition(transition2, false);
 			return stateGraph;
 		}
 

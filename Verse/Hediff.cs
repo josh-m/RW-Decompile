@@ -15,7 +15,7 @@ namespace Verse
 
 		public int ageTicks;
 
-		private int partIndex = -1;
+		private BodyPartRecord part;
 
 		public ThingDef source;
 
@@ -33,17 +33,28 @@ namespace Verse
 
 		private bool visible;
 
-		[Unsaved]
-		public Pawn pawn;
+		public WeakReference<LogEntry> combatLogEntry;
+
+		public string combatLogText;
+
+		public int temp_partIndexToSetLater = -1;
 
 		[Unsaved]
-		private BodyPartRecord cachedPart;
+		public Pawn pawn;
 
 		public virtual string LabelBase
 		{
 			get
 			{
 				return this.def.label;
+			}
+		}
+
+		public string LabelBaseCap
+		{
+			get
+			{
+				return this.LabelBase.CapitalizeFirst();
 			}
 		}
 
@@ -247,9 +258,10 @@ namespace Verse
 					value = this.def.lethalSeverity;
 					flag = true;
 				}
+				bool flag2 = this is Hediff_Injury && value > this.severityInt && Mathf.RoundToInt(value) != Mathf.RoundToInt(this.severityInt);
 				int curStageIndex = this.CurStageIndex;
 				this.severityInt = Mathf.Clamp(value, this.def.minSeverity, this.def.maxSeverity);
-				if ((this.CurStageIndex != curStageIndex || flag) && this.pawn.health.hediffSet.hediffs.Contains(this))
+				if ((this.CurStageIndex != curStageIndex || flag || flag2) && this.pawn.health.hediffSet.hediffs.Contains(this))
 				{
 					this.pawn.health.Notify_HediffChanged(this);
 					if (!this.pawn.Dead && this.pawn.needs.mood != null)
@@ -264,55 +276,71 @@ namespace Verse
 		{
 			get
 			{
-				if (this.cachedPart == null && this.partIndex >= 0)
-				{
-					this.cachedPart = this.pawn.RaceProps.body.GetPartAtIndex(this.partIndex);
-				}
-				return this.cachedPart;
+				return this.part;
 			}
 			set
 			{
-				if (this.pawn == null)
+				if (this.pawn == null && this.part != null)
 				{
-					Log.Error("Hediff: Cannot set Part without setting pawn first.");
+					Log.Error("Hediff: Cannot set Part without setting pawn first.", false);
 					return;
 				}
-				if (value != null)
+				if (UnityData.isDebugBuild && this.part != null && !this.pawn.RaceProps.body.AllParts.Contains(this.part))
 				{
-					this.partIndex = this.pawn.RaceProps.body.GetIndexOfPart(value);
+					Log.Error("Hediff: Cannot set BodyPartRecord which doesn't belong to the pawn " + this.pawn.ToStringSafe<Pawn>(), false);
+					return;
 				}
-				else
-				{
-					this.partIndex = -1;
-				}
-				this.cachedPart = value;
+				this.part = value;
 			}
 		}
 
-		public virtual bool TendableNow
+		public virtual bool TendableNow(bool ignoreTimer = false)
 		{
-			get
+			if (!this.def.tendable || this.Severity <= 0f || this.FullyImmune() || !this.Visible || this.IsPermanent())
 			{
-				return this.def.tendable && this.Severity > 0f && this.Visible && !this.FullyImmune() && !this.IsTended() && !this.IsOld();
+				return false;
 			}
+			if (!ignoreTimer)
+			{
+				HediffComp_TendDuration hediffComp_TendDuration = this.TryGetComp<HediffComp_TendDuration>();
+				if (hediffComp_TendDuration != null && !hediffComp_TendDuration.AllowTend)
+				{
+					return false;
+				}
+			}
+			return true;
 		}
 
 		public virtual void ExposeData()
 		{
+			if (Scribe.mode == LoadSaveMode.Saving && this.combatLogEntry != null)
+			{
+				LogEntry target = this.combatLogEntry.Target;
+				if (!Current.Game.battleLog.IsEntryActive(target))
+				{
+					this.combatLogEntry = null;
+				}
+			}
 			Scribe_Values.Look<int>(ref this.loadID, "loadID", 0, false);
 			Scribe_Defs.Look<HediffDef>(ref this.def, "def");
 			Scribe_Values.Look<int>(ref this.ageTicks, "ageTicks", 0, false);
 			Scribe_Defs.Look<ThingDef>(ref this.source, "source");
 			Scribe_Defs.Look<BodyPartGroupDef>(ref this.sourceBodyPartGroup, "sourceBodyPartGroup");
 			Scribe_Defs.Look<HediffDef>(ref this.sourceHediffDef, "sourceHediffDef");
-			Scribe_Values.Look<int>(ref this.partIndex, "partIndex", -1, false);
+			Scribe_BodyParts.Look(ref this.part, "part", null);
 			Scribe_Values.Look<float>(ref this.severityInt, "severity", 0f, false);
 			Scribe_Values.Look<bool>(ref this.recordedTale, "recordedTale", false, false);
 			Scribe_Values.Look<bool>(ref this.causesNoPain, "causesNoPain", false, false);
 			Scribe_Values.Look<bool>(ref this.visible, "visible", false, false);
-			if (Scribe.mode == LoadSaveMode.PostLoadInit && this.partIndex >= 0)
+			Scribe_References.Look<LogEntry>(ref this.combatLogEntry, "combatLogEntry", false);
+			Scribe_Values.Look<string>(ref this.combatLogText, "combatLogText", null, false);
+			if (Scribe.mode == LoadSaveMode.LoadingVars)
 			{
-				this.cachedPart = this.pawn.RaceProps.body.GetPartAtIndex(this.partIndex);
+				BackCompatibility.HediffLoadingVars(this);
+			}
+			if (Scribe.mode == LoadSaveMode.ResolvingCrossRefs)
+			{
+				BackCompatibility.HediffResolvingCrossRefs(this);
 			}
 		}
 
@@ -355,7 +383,7 @@ namespace Verse
 						MentalStateGiver mentalStateGiver = curStage.mentalStateGivers[k];
 						if (Rand.MTBEventOccurs(mentalStateGiver.mtbDays, 60000f, 60f))
 						{
-							this.pawn.mindState.mentalStateHandler.TryStartMentalState(mentalStateGiver.mentalState, null, false, false, null);
+							this.pawn.mindState.mentalStateHandler.TryStartMentalState(mentalStateGiver.mentalState, null, false, false, null, false);
 						}
 					}
 				}
@@ -385,7 +413,7 @@ namespace Verse
 				}
 				if (curStage.destroyPart && this.Part != null && this.Part != this.pawn.RaceProps.body.corePart)
 				{
-					this.pawn.health.AddHediff(HediffDefOf.MissingBodyPart, this.Part, null);
+					this.pawn.health.AddHediff(HediffDefOf.MissingBodyPart, this.Part, null, null);
 				}
 				if (curStage.deathMtbDays > 0f && this.pawn.IsHashIntervalTick(200) && Rand.MTBEventOccurs(curStage.deathMtbDays, 60000f, 200f))
 				{
@@ -469,11 +497,11 @@ namespace Verse
 				text += "hidden\n";
 			}
 			text = text + "severity: " + this.Severity.ToString("F3") + ((this.Severity < this.def.maxSeverity) ? string.Empty : " (reached max)");
-			if (this.TendableNow)
+			if (this.TendableNow(false))
 			{
 				text = text + "\ntend priority: " + this.TendPriority;
 			}
-			return text.Indented();
+			return text.Indented("    ");
 		}
 
 		public override string ToString()
@@ -482,16 +510,11 @@ namespace Verse
 			{
 				"(",
 				this.def.defName,
-				(this.cachedPart == null) ? string.Empty : (" " + this.cachedPart.def.label),
+				(this.part == null) ? string.Empty : (" " + this.part.Label),
 				" ticksSinceCreation=",
 				this.ageTicks,
 				")"
 			});
-		}
-
-		public override int GetHashCode()
-		{
-			return this.def.GetHashCode();
 		}
 
 		public string GetUniqueLoadID()

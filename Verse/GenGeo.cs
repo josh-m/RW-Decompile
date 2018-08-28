@@ -104,7 +104,7 @@ namespace Verse
 					polygonVertices,
 					" vertexIndex=",
 					vertexIndex
-				}));
+				}), false);
 				return Vector2.zero;
 			}
 			if (polygonVertices == 1)

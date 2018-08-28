@@ -19,6 +19,8 @@ namespace RimWorld.Planet
 
 		private float recentHeight;
 
+		public Gizmo mouseoverGizmo;
+
 		private static List<object> tmpObjectsList = new List<object>();
 
 		public Type OpenTabType
@@ -156,11 +158,25 @@ namespace RimWorld.Planet
 				stringBuilder.Append(" ");
 				stringBuilder.Append(vector.x.ToStringLongitude());
 				Tile tile = Find.WorldGrid[this.SelectedTile];
-				if (tile.VisibleRoads != null)
+				if (!tile.biome.impassable)
 				{
-					stringBuilder.Append("\n" + (from rl in tile.VisibleRoads
+					stringBuilder.AppendLine();
+					stringBuilder.Append(tile.hilliness.GetLabelCap());
+				}
+				if (tile.Roads != null)
+				{
+					stringBuilder.AppendLine();
+					stringBuilder.Append((from rl in tile.Roads
 					select rl.road).MaxBy((RoadDef road) => road.priority).LabelCap);
 				}
+				if (!Find.World.Impassable(this.SelectedTile))
+				{
+					string str = (WorldPathGrid.CalculatedMovementDifficultyAt(this.SelectedTile, false, null, null) * Find.WorldGrid.GetRoadMovementDifficultyMultiplier(this.SelectedTile, -1, null)).ToString("0.#");
+					stringBuilder.AppendLine();
+					stringBuilder.Append("MovementDifficulty".Translate() + ": " + str);
+				}
+				stringBuilder.AppendLine();
+				stringBuilder.Append("AvgTemp".Translate() + ": " + GenTemperature.GetAverageTemperatureLabel(this.SelectedTile));
 				return stringBuilder.ToString();
 			}
 		}
@@ -171,7 +187,8 @@ namespace RimWorld.Planet
 			this.soundAppear = null;
 			this.soundClose = null;
 			this.closeOnClickedOutside = false;
-			this.closeOnEscapeKey = false;
+			this.closeOnAccept = false;
+			this.closeOnCancel = false;
 			this.preventCameraMotion = false;
 		}
 
@@ -194,7 +211,7 @@ namespace RimWorld.Planet
 					WorldInspectPane.tmpObjectsList.Add(selected[i]);
 				}
 			}
-			InspectGizmoGrid.DrawInspectGizmoGridFor(WorldInspectPane.tmpObjectsList);
+			InspectGizmoGrid.DrawInspectGizmoGridFor(WorldInspectPane.tmpObjectsList, out this.mouseoverGizmo);
 			WorldInspectPane.tmpObjectsList.Clear();
 		}
 
@@ -266,6 +283,10 @@ namespace RimWorld.Planet
 		{
 			base.WindowUpdate();
 			InspectPaneUtility.UpdateTabs(this);
+			if (this.mouseoverGizmo != null)
+			{
+				this.mouseoverGizmo.GizmoUpdateOnMouseover();
+			}
 		}
 
 		public override void ExtraOnGUI()

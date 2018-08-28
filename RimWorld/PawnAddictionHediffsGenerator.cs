@@ -45,12 +45,12 @@ namespace RimWorld
 					{
 						Hediff hediff = HediffMaker.MakeHediff(chemicalDef.addictionHediff, pawn, null);
 						hediff.Severity = PawnAddictionHediffsGenerator.GeneratedAddictionSeverityRange.RandomInRange;
-						pawn.health.AddHediff(hediff, null, null);
+						pawn.health.AddHediff(hediff, null, null, null);
 						if (chemicalDef.toleranceHediff != null && Rand.Value < chemicalDef.onGeneratedAddictedToleranceChance)
 						{
 							Hediff hediff2 = HediffMaker.MakeHediff(chemicalDef.toleranceHediff, pawn, null);
 							hediff2.Severity = PawnAddictionHediffsGenerator.GeneratedToleranceSeverityRange.RandomInRange;
-							pawn.health.AddHediff(hediff2, null, null);
+							pawn.health.AddHediff(hediff2, null, null, null);
 						}
 						if (chemicalDef.onGeneratedAddictedEvents != null)
 						{

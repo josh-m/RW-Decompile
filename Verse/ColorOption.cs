@@ -5,7 +5,7 @@ namespace Verse
 {
 	public class ColorOption
 	{
-		public float weight = 10f;
+		public float weight = 1f;
 
 		public Color min = new Color(-1f, -1f, -1f, -1f);
 

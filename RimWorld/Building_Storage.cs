@@ -6,7 +6,7 @@ using Verse;
 
 namespace RimWorld
 {
-	public class Building_Storage : Building, ISlotGroupParent, IStoreSettingsParent
+	public class Building_Storage : Building, ISlotGroupParent, IStoreSettingsParent, IHaulDestination
 	{
 		public StorageSettings settings;
 
@@ -28,6 +28,11 @@ namespace RimWorld
 			{
 				return this.def.building.ignoreStoredThingsBeauty;
 			}
+		}
+
+		public Building_Storage()
+		{
+			this.slotGroup = new SlotGroup(this);
 		}
 
 		public SlotGroup GetSlotGroup()
@@ -80,6 +85,11 @@ namespace RimWorld
 			return this.LabelCap;
 		}
 
+		public bool Accepts(Thing t)
+		{
+			return this.settings.AllowedToAccept(t);
+		}
+
 		public override void PostMake()
 		{
 			base.PostMake();
@@ -92,9 +102,8 @@ namespace RimWorld
 
 		public override void SpawnSetup(Map map, bool respawningAfterLoad)
 		{
+			this.cachedOccupiedCells = null;
 			base.SpawnSetup(map, respawningAfterLoad);
-			this.cachedOccupiedCells = this.AllSlotCells().ToList<IntVec3>();
-			this.slotGroup = new SlotGroup(this);
 		}
 
 		public override void ExposeData()
@@ -104,15 +113,6 @@ namespace RimWorld
 			{
 				this
 			});
-		}
-
-		public override void DeSpawn()
-		{
-			if (this.slotGroup != null)
-			{
-				this.slotGroup.Notify_ParentDestroying();
-			}
-			base.DeSpawn();
 		}
 
 		[DebuggerHidden]

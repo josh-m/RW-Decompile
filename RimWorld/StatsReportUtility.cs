@@ -13,6 +13,8 @@ namespace RimWorld
 	{
 		private static StatDrawEntry selectedEntry;
 
+		private static StatDrawEntry mousedOverEntry;
+
 		private static Vector2 scrollPosition;
 
 		private static float listHeight;
@@ -23,6 +25,7 @@ namespace RimWorld
 		{
 			StatsReportUtility.scrollPosition = default(Vector2);
 			StatsReportUtility.selectedEntry = null;
+			StatsReportUtility.mousedOverEntry = null;
 			StatsReportUtility.cachedDrawEntries.Clear();
 		}
 
@@ -30,7 +33,9 @@ namespace RimWorld
 		{
 			if (StatsReportUtility.cachedDrawEntries.NullOrEmpty<StatDrawEntry>())
 			{
-				StatsReportUtility.cachedDrawEntries.AddRange(def.SpecialDisplayStats());
+				BuildableDef buildableDef = def as BuildableDef;
+				StatRequest req = (buildableDef == null) ? StatRequest.ForEmpty() : StatRequest.For(buildableDef, stuff, QualityCategory.Normal);
+				StatsReportUtility.cachedDrawEntries.AddRange(def.SpecialDisplayStats(req));
 				StatsReportUtility.cachedDrawEntries.AddRange(from r in StatsReportUtility.StatsToDraw(def, stuff)
 				where r.ShouldDisplay
 				select r);
@@ -43,7 +48,7 @@ namespace RimWorld
 		{
 			if (StatsReportUtility.cachedDrawEntries.NullOrEmpty<StatDrawEntry>())
 			{
-				StatsReportUtility.cachedDrawEntries.AddRange(thing.def.SpecialDisplayStats());
+				StatsReportUtility.cachedDrawEntries.AddRange(thing.def.SpecialDisplayStats(StatRequest.For(thing)));
 				StatsReportUtility.cachedDrawEntries.AddRange(from r in StatsReportUtility.StatsToDraw(thing)
 				where r.ShouldDisplay
 				select r);
@@ -57,7 +62,7 @@ namespace RimWorld
 		{
 			if (StatsReportUtility.cachedDrawEntries.NullOrEmpty<StatDrawEntry>())
 			{
-				StatsReportUtility.cachedDrawEntries.AddRange(worldObject.def.SpecialDisplayStats());
+				StatsReportUtility.cachedDrawEntries.AddRange(worldObject.def.SpecialDisplayStats(StatRequest.ForEmpty()));
 				StatsReportUtility.cachedDrawEntries.AddRange(from r in StatsReportUtility.StatsToDraw(worldObject)
 				where r.ShouldDisplay
 				select r);
@@ -74,8 +79,9 @@ namespace RimWorld
 			BuildableDef eDef = def as BuildableDef;
 			if (eDef != null)
 			{
+				StatRequest statRequest = StatRequest.For(eDef, stuff, QualityCategory.Normal);
 				foreach (StatDef stat in from st in DefDatabase<StatDef>.AllDefs
-				where st.Worker.ShouldShowFor(eDef)
+				where st.Worker.ShouldShowFor(statRequest)
 				select st)
 				{
 					yield return new StatDrawEntry(stat.category, stat, eDef.GetStatValueAbstract(stat, stuff), StatRequest.For(eDef, stuff, QualityCategory.Normal), ToStringNumberSense.Undefined);
@@ -93,7 +99,7 @@ namespace RimWorld
 				yield return qe;
 			}
 			foreach (StatDef stat in from st in DefDatabase<StatDef>.AllDefs
-			where st.Worker.ShouldShowFor(thing.def)
+			where st.Worker.ShouldShowFor(StatRequest.For(thing))
 			select st)
 			{
 				if (!stat.Worker.IsDisabledFor(thing))
@@ -118,7 +124,7 @@ namespace RimWorld
 					})
 				};
 			}
-			foreach (StatDrawEntry stat2 in thing.SpecialDisplayStats)
+			foreach (StatDrawEntry stat2 in thing.SpecialDisplayStats())
 			{
 				yield return stat2;
 			}
@@ -163,10 +169,6 @@ namespace RimWorld
 			StatsReportUtility.cachedDrawEntries = (from sd in original
 			orderby sd.category.displayOrder, sd.DisplayPriorityWithinCategory descending, sd.LabelCap
 			select sd).ToList<StatDrawEntry>();
-			if (StatsReportUtility.cachedDrawEntries.Count > 0)
-			{
-				StatsReportUtility.SelectEntry(StatsReportUtility.cachedDrawEntries[0], false);
-			}
 		}
 
 		private static StatDrawEntry DescriptionEntry(Def def)
@@ -181,7 +183,7 @@ namespace RimWorld
 		{
 			return new StatDrawEntry(StatCategoryDefOf.Basics, "Description".Translate(), string.Empty, 99999, string.Empty)
 			{
-				overrideReportText = thing.GetDescription()
+				overrideReportText = thing.DescriptionFlavor
 			};
 		}
 
@@ -211,24 +213,26 @@ namespace RimWorld
 			StatsReportUtility.selectedEntry = rec;
 			if (playSound)
 			{
-				SoundDefOf.TickHigh.PlayOneShotOnCamera(null);
+				SoundDefOf.Tick_High.PlayOneShotOnCamera(null);
 			}
 		}
 
 		private static void DrawStatsWorker(Rect rect, Thing optionalThing, WorldObject optionalWorldObject)
 		{
-			Rect outRect = new Rect(rect);
-			outRect.width *= 0.5f;
 			Rect rect2 = new Rect(rect);
-			rect2.x = outRect.xMax;
-			rect2.width = rect.xMax - rect2.x;
+			rect2.width *= 0.5f;
+			Rect rect3 = new Rect(rect);
+			rect3.x = rect2.xMax;
+			rect3.width = rect.xMax - rect3.x;
 			Text.Font = GameFont.Small;
-			Rect viewRect = new Rect(0f, 0f, outRect.width - 16f, StatsReportUtility.listHeight);
-			Widgets.BeginScrollView(outRect, ref StatsReportUtility.scrollPosition, viewRect, true);
+			Rect viewRect = new Rect(0f, 0f, rect2.width - 16f, StatsReportUtility.listHeight);
+			Widgets.BeginScrollView(rect2, ref StatsReportUtility.scrollPosition, viewRect, true);
 			float num = 0f;
 			string b = null;
-			foreach (StatDrawEntry ent in StatsReportUtility.cachedDrawEntries)
+			StatsReportUtility.mousedOverEntry = null;
+			for (int i = 0; i < StatsReportUtility.cachedDrawEntries.Count; i++)
 			{
+				StatDrawEntry ent = StatsReportUtility.cachedDrawEntries[i];
 				if (ent.category.LabelCap != b)
 				{
 					Widgets.ListSeparator(ref num, viewRect.width, ent.category.LabelCap);
@@ -237,18 +241,27 @@ namespace RimWorld
 				num += ent.Draw(8f, num, viewRect.width - 8f, StatsReportUtility.selectedEntry == ent, delegate
 				{
 					StatsReportUtility.SelectEntry(ent, true);
-				});
+				}, delegate
+				{
+					StatsReportUtility.mousedOverEntry = ent;
+				}, StatsReportUtility.scrollPosition, rect2);
 			}
 			StatsReportUtility.listHeight = num + 100f;
 			Widgets.EndScrollView();
-			Rect rect3 = rect2.ContractedBy(10f);
-			GUI.BeginGroup(rect3);
-			if (StatsReportUtility.selectedEntry != null)
+			Rect rect4 = rect3.ContractedBy(10f);
+			GUI.BeginGroup(rect4);
+			StatDrawEntry arg_1AB_0;
+			if ((arg_1AB_0 = StatsReportUtility.selectedEntry) == null)
+			{
+				arg_1AB_0 = (StatsReportUtility.mousedOverEntry ?? StatsReportUtility.cachedDrawEntries.FirstOrDefault<StatDrawEntry>());
+			}
+			StatDrawEntry statDrawEntry = arg_1AB_0;
+			if (statDrawEntry != null)
 			{
 				StatRequest optionalReq;
-				if (StatsReportUtility.selectedEntry.hasOptionalReq)
+				if (statDrawEntry.hasOptionalReq)
 				{
-					optionalReq = StatsReportUtility.selectedEntry.optionalReq;
+					optionalReq = statDrawEntry.optionalReq;
 				}
 				else if (optionalThing != null)
 				{
@@ -258,9 +271,9 @@ namespace RimWorld
 				{
 					optionalReq = StatRequest.ForEmpty();
 				}
-				string explanationText = StatsReportUtility.selectedEntry.GetExplanationText(optionalReq);
-				Rect rect4 = rect3.AtZero();
-				Widgets.Label(rect4, explanationText);
+				string explanationText = statDrawEntry.GetExplanationText(optionalReq);
+				Rect rect5 = rect4.AtZero();
+				Widgets.Label(rect5, explanationText);
 			}
 			GUI.EndGroup();
 		}

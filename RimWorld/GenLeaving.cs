@@ -20,10 +20,10 @@ namespace RimWorld
 
 		public static void DoLeavingsFor(Thing diedThing, Map map, DestroyMode mode)
 		{
-			GenLeaving.DoLeavingsFor(diedThing, map, mode, diedThing.OccupiedRect());
+			GenLeaving.DoLeavingsFor(diedThing, map, mode, diedThing.OccupiedRect(), null);
 		}
 
-		public static void DoLeavingsFor(Thing diedThing, Map map, DestroyMode mode, CellRect leavingsRect)
+		public static void DoLeavingsFor(Thing diedThing, Map map, DestroyMode mode, CellRect leavingsRect, Predicate<IntVec3> nearPlaceValidator = null)
 		{
 			if ((Current.ProgramState != ProgramState.Playing && mode != DestroyMode.Refund) || mode == DestroyMode.Vanish)
 			{
@@ -67,24 +67,24 @@ namespace RimWorld
 				}
 				else
 				{
-					List<ThingCountClass> list = diedThing.CostListAdjusted();
+					List<ThingDefCountClass> list = diedThing.CostListAdjusted();
 					for (int m = 0; m < list.Count; m++)
 					{
-						ThingCountClass thingCountClass = list[m];
-						int num2 = GenLeaving.GetBuildingResourcesLeaveCalculator(diedThing, mode)(thingCountClass.count);
-						if (num2 > 0 && mode == DestroyMode.KillFinalize && thingCountClass.thingDef.slagDef != null)
+						ThingDefCountClass thingDefCountClass = list[m];
+						int num2 = GenLeaving.GetBuildingResourcesLeaveCalculator(diedThing, mode)(thingDefCountClass.count);
+						if (num2 > 0 && mode == DestroyMode.KillFinalize && thingDefCountClass.thingDef.slagDef != null)
 						{
-							int count = thingCountClass.thingDef.slagDef.smeltProducts.First((ThingCountClass pro) => pro.thingDef == ThingDefOf.Steel).count;
+							int count = thingDefCountClass.thingDef.slagDef.smeltProducts.First((ThingDefCountClass pro) => pro.thingDef == ThingDefOf.Steel).count;
 							int num3 = num2 / 2 / 8;
 							for (int n = 0; n < num3; n++)
 							{
-								thingOwner.TryAdd(ThingMaker.MakeThing(thingCountClass.thingDef.slagDef, null), true);
+								thingOwner.TryAdd(ThingMaker.MakeThing(thingDefCountClass.thingDef.slagDef, null), true);
 							}
 							num2 -= num3 * count;
 						}
 						if (num2 > 0)
 						{
-							Thing thing2 = ThingMaker.MakeThing(thingCountClass.thingDef, null);
+							Thing thing2 = ThingMaker.MakeThing(thingDefCountClass.thingDef, null);
 							thing2.stackCount = num2;
 							thingOwner.TryAdd(thing2, true);
 						}
@@ -99,8 +99,12 @@ namespace RimWorld
 				{
 					thingOwner[0].SetForbidden(true, false);
 				}
-				Thing thing3;
-				if (!thingOwner.TryDrop(thingOwner[0], list2[num4], map, ThingPlaceMode.Near, out thing3, null))
+				ThingOwner<Thing> arg_33A_0 = thingOwner;
+				Thing thing3 = thingOwner[0];
+				IntVec3 dropLoc = list2[num4];
+				ThingPlaceMode mode2 = ThingPlaceMode.Near;
+				Thing thing4;
+				if (!arg_33A_0.TryDrop(thing3, dropLoc, map, mode2, out thing4, null, nearPlaceValidator))
 				{
 					Log.Warning(string.Concat(new object[]
 					{
@@ -108,7 +112,7 @@ namespace RimWorld
 						diedThing,
 						" at ",
 						leavingsRect.CenterCell
-					}));
+					}), false);
 					return;
 				}
 				num4++;
@@ -126,14 +130,14 @@ namespace RimWorld
 				return;
 			}
 			ThingOwner<Thing> thingOwner = new ThingOwner<Thing>();
-			List<ThingCountClass> list = terrain.CostListAdjusted(null, true);
+			List<ThingDefCountClass> list = terrain.CostListAdjusted(null, true);
 			for (int i = 0; i < list.Count; i++)
 			{
-				ThingCountClass thingCountClass = list[i];
-				int num = GenMath.RoundRandom((float)thingCountClass.count * terrain.resourcesFractionWhenDeconstructed);
+				ThingDefCountClass thingDefCountClass = list[i];
+				int num = GenMath.RoundRandom((float)thingDefCountClass.count * terrain.resourcesFractionWhenDeconstructed);
 				if (num > 0)
 				{
-					Thing thing = ThingMaker.MakeThing(thingCountClass.thingDef, null);
+					Thing thing = ThingMaker.MakeThing(thingDefCountClass.thingDef, null);
 					thing.stackCount = num;
 					thingOwner.TryAdd(thing, true);
 				}
@@ -141,7 +145,7 @@ namespace RimWorld
 			while (thingOwner.Count > 0)
 			{
 				Thing thing2;
-				if (!thingOwner.TryDrop(thingOwner[0], cell, map, ThingPlaceMode.Near, out thing2, null))
+				if (!thingOwner.TryDrop(thingOwner[0], cell, map, ThingPlaceMode.Near, out thing2, null, null))
 				{
 					Log.Warning(string.Concat(new object[]
 					{
@@ -149,7 +153,7 @@ namespace RimWorld
 						terrain,
 						" at ",
 						cell
-					}));
+					}), false);
 					return;
 				}
 			}
@@ -168,6 +172,8 @@ namespace RimWorld
 			switch (mode)
 			{
 			case DestroyMode.Vanish:
+				return false;
+			case DestroyMode.WillReplace:
 				return false;
 			case DestroyMode.KillFinalize:
 				return true;
@@ -204,9 +210,8 @@ namespace RimWorld
 				return (int count) => GenMath.RoundRandom((float)count * 1f);
 			case DestroyMode.Refund:
 				return (int count) => count;
-			default:
-				throw new ArgumentException("Unknown destroy mode " + mode);
 			}
+			throw new ArgumentException("Unknown destroy mode " + mode);
 		}
 
 		public static void DropFilthDueToDamage(Thing t, float damageDealt)
@@ -233,6 +238,7 @@ namespace RimWorld
 			{
 				FilthMaker.MakeFilth(GenLeaving.tmpCellsCandidates.RandomElement<IntVec3>(), t.Map, t.def.filthLeaving, 1);
 			}
+			GenLeaving.tmpCellsCandidates.Clear();
 		}
 	}
 }

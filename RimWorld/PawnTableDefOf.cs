@@ -12,5 +12,12 @@ namespace RimWorld
 		public static PawnTableDef Restrict;
 
 		public static PawnTableDef Animals;
+
+		public static PawnTableDef Wildlife;
+
+		static PawnTableDefOf()
+		{
+			DefOfHelper.EnsureInitializedInCtor(typeof(PawnTableDefOf));
+		}
 	}
 }

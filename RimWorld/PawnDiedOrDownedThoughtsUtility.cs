@@ -30,7 +30,7 @@ namespace RimWorld
 						}
 						if (PawnDiedOrDownedThoughtsUtility.tmpAllColonistsThoughts.Any<ThoughtDef>())
 						{
-							foreach (Pawn current in PawnsFinder.AllMapsCaravansAndTravelingTransportPods_Colonists)
+							foreach (Pawn current in PawnsFinder.AllMapsCaravansAndTravelingTransportPods_Alive_Colonists)
 							{
 								if (current != victim)
 								{
@@ -49,7 +49,7 @@ namespace RimWorld
 			}
 			catch (Exception arg)
 			{
-				Log.Error("Could not give thoughts: " + arg);
+				Log.Error("Could not give thoughts: " + arg, false);
 			}
 		}
 
@@ -155,7 +155,7 @@ namespace RimWorld
 		{
 			bool flag = dinfo.HasValue && dinfo.Value.Def.execution;
 			bool flag2 = victim.IsPrisonerOfColony && !victim.guilt.IsGuilty && !victim.InAggroMentalState;
-			bool flag3 = dinfo.HasValue && dinfo.Value.Def.externalViolence && dinfo.Value.Instigator != null && dinfo.Value.Instigator is Pawn;
+			bool flag3 = dinfo.HasValue && dinfo.Value.Def.ExternalViolenceFor(victim) && dinfo.Value.Instigator != null && dinfo.Value.Instigator is Pawn;
 			if (flag3)
 			{
 				Pawn pawn = (Pawn)dinfo.Value.Instigator;
@@ -165,22 +165,15 @@ namespace RimWorld
 					{
 						outIndividualThoughts.Add(new IndividualThoughtToAdd(ThoughtDefOf.KilledHumanlikeBloodlust, pawn, null, 1f, 1f));
 					}
-					if (thoughtsKind == PawnDiedOrDownedThoughtsKind.Died && victim.HostileTo(pawn))
+					if (thoughtsKind == PawnDiedOrDownedThoughtsKind.Died && victim.HostileTo(pawn) && victim.Faction != null && PawnUtility.IsFactionLeader(victim) && victim.Faction.HostileTo(pawn.Faction))
 					{
-						if (victim.Faction != null && PawnUtility.IsFactionLeader(victim) && victim.Faction.HostileTo(pawn.Faction))
-						{
-							outIndividualThoughts.Add(new IndividualThoughtToAdd(ThoughtDefOf.DefeatedHostileFactionLeader, pawn, victim, 1f, 1f));
-						}
-						if (victim.kindDef.combatPower > 250f)
-						{
-							outIndividualThoughts.Add(new IndividualThoughtToAdd(ThoughtDefOf.DefeatedMajorEnemy, pawn, victim, 1f, 1f));
-						}
+						outIndividualThoughts.Add(new IndividualThoughtToAdd(ThoughtDefOf.DefeatedHostileFactionLeader, pawn, victim, 1f, 1f));
 					}
 				}
 			}
 			if (thoughtsKind == PawnDiedOrDownedThoughtsKind.Died && !flag)
 			{
-				foreach (Pawn current in PawnsFinder.AllMapsCaravansAndTravelingTransportPods)
+				foreach (Pawn current in PawnsFinder.AllMapsCaravansAndTravelingTransportPods_Alive)
 				{
 					if (current != victim && current.needs.mood != null)
 					{
@@ -204,11 +197,11 @@ namespace RimWorld
 							}
 							else if (victim.Faction == Faction.OfPlayer && victim.Faction == current.Faction && victim.HostFaction != current.Faction)
 							{
-								outIndividualThoughts.Add(new IndividualThoughtToAdd(ThoughtDefOf.KnowColonistDied, current, null, 1f, 1f));
+								outIndividualThoughts.Add(new IndividualThoughtToAdd(ThoughtDefOf.KnowColonistDied, current, victim, 1f, 1f));
 							}
 							if (flag2 && current.Faction == Faction.OfPlayer && !current.IsPrisoner)
 							{
-								outIndividualThoughts.Add(new IndividualThoughtToAdd(ThoughtDefOf.KnowPrisonerDiedInnocent, current, null, 1f, 1f));
+								outIndividualThoughts.Add(new IndividualThoughtToAdd(ThoughtDefOf.KnowPrisonerDiedInnocent, current, victim, 1f, 1f));
 							}
 						}
 					}
@@ -314,7 +307,7 @@ namespace RimWorld
 				}
 				if (victim.RaceProps.Humanlike)
 				{
-					foreach (Pawn current3 in PawnsFinder.AllMapsCaravansAndTravelingTransportPods)
+					foreach (Pawn current3 in PawnsFinder.AllMapsCaravansAndTravelingTransportPods_Alive)
 					{
 						if (!current3.Dead && current3.RaceProps.IsFlesh && current3.needs.mood != null)
 						{
@@ -347,6 +340,30 @@ namespace RimWorld
 				return victim.GetCaravan() == p.GetCaravan();
 			}
 			return victim.Spawned && p.Spawned && p.Position.InHorDistOf(victim.Position, 12f) && GenSight.LineOfSight(victim.Position, p.Position, victim.Map, false, null, 0, 0);
+		}
+
+		public static void RemoveDiedThoughts(Pawn pawn)
+		{
+			foreach (Pawn current in PawnsFinder.AllMapsWorldAndTemporary_Alive)
+			{
+				if (current.needs.mood != null && current != pawn)
+				{
+					MemoryThoughtHandler memories = current.needs.mood.thoughts.memories;
+					memories.RemoveMemoriesOfDefWhereOtherPawnIs(ThoughtDefOf.KnowColonistDied, pawn);
+					memories.RemoveMemoriesOfDefWhereOtherPawnIs(ThoughtDefOf.KnowPrisonerDiedInnocent, pawn);
+					memories.RemoveMemoriesOfDefWhereOtherPawnIs(ThoughtDefOf.PawnWithGoodOpinionDied, pawn);
+					memories.RemoveMemoriesOfDefWhereOtherPawnIs(ThoughtDefOf.PawnWithBadOpinionDied, pawn);
+					List<PawnRelationDef> allDefsListForReading = DefDatabase<PawnRelationDef>.AllDefsListForReading;
+					for (int i = 0; i < allDefsListForReading.Count; i++)
+					{
+						ThoughtDef genderSpecificDiedThought = allDefsListForReading[i].GetGenderSpecificDiedThought(pawn);
+						if (genderSpecificDiedThought != null)
+						{
+							memories.RemoveMemoriesOfDefWhereOtherPawnIs(genderSpecificDiedThought, pawn);
+						}
+					}
+				}
+			}
 		}
 	}
 }

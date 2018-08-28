@@ -31,7 +31,16 @@ namespace RimWorld
 		{
 			get
 			{
-				return this.def.baseInspectLine;
+				int numTicks = (int)((this.def.baseDurationDays - this.AgeDays) * 60000f);
+				return string.Concat(new string[]
+				{
+					this.def.baseInspectLine,
+					" (",
+					"ExpiresIn".Translate(),
+					": ",
+					numTicks.ToStringTicksToPeriod(),
+					")"
+				});
 			}
 		}
 
@@ -75,8 +84,9 @@ namespace RimWorld
 			{
 				return;
 			}
-			string text = string.Format(this.def.beginLetter.AdjustedFor(this.pawn), this.pawn.LabelCap);
-			Find.LetterStack.ReceiveLetter(this.def.beginLetterLabel, text, this.def.beginLetterDef, this.pawn, null);
+			string text = string.Format(this.def.beginLetter.AdjustedFor(this.pawn, "PAWN"), this.pawn.LabelCap);
+			string label = (this.def.beginLetterLabel ?? this.def.LabelCap).CapitalizeFirst() + ": " + this.pawn.LabelShortCap;
+			Find.LetterStack.ReceiveLetter(label, text, this.def.beginLetterDef, this.pawn, null, null);
 		}
 
 		protected virtual void AddEndMessage()
@@ -89,8 +99,8 @@ namespace RimWorld
 			{
 				return;
 			}
-			string text = string.Format(this.def.endMessage.AdjustedFor(this.pawn), this.pawn.LabelCap);
-			Messages.Message(text, this.pawn, MessageTypeDefOf.NeutralEvent);
+			string text = string.Format(this.def.endMessage.AdjustedFor(this.pawn, "PAWN"), this.pawn.LabelCap);
+			Messages.Message(text, this.pawn, MessageTypeDefOf.NeutralEvent, true);
 		}
 	}
 }

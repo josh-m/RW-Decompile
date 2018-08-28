@@ -29,14 +29,14 @@ namespace RimWorld
 			StringBuilder stringBuilder = new StringBuilder();
 			foreach (Pawn current in this.ExhaustedColonists)
 			{
-				stringBuilder.AppendLine("    " + current.NameStringShort);
+				stringBuilder.AppendLine("    " + current.LabelShort);
 			}
 			return string.Format("ExhaustionDesc".Translate(), stringBuilder.ToString());
 		}
 
 		public override AlertReport GetReport()
 		{
-			return AlertReport.CulpritIs(this.ExhaustedColonists.FirstOrDefault<Pawn>());
+			return AlertReport.CulpritsAre(this.ExhaustedColonists);
 		}
 	}
 }

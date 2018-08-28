@@ -107,7 +107,7 @@ namespace RimWorld
 			{
 				this.keyPrefsData.ResetToDefaults();
 				this.keyPrefsData.ErrorCheck();
-				SoundDefOf.TickLow.PlayOneShotOnCamera(null);
+				SoundDefOf.Tick_Low.PlayOneShotOnCamera(null);
 				Event.current.Use();
 			}
 			if (Widgets.ButtonText(rect4, "CancelButton".Translate(), true, false, true))

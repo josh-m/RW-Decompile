@@ -75,7 +75,7 @@ namespace RimWorld
 
 		private void DoReadoutCategorized(Rect rect)
 		{
-			Listing_ResourceReadout listing_ResourceReadout = new Listing_ResourceReadout(Find.VisibleMap);
+			Listing_ResourceReadout listing_ResourceReadout = new Listing_ResourceReadout(Find.CurrentMap);
 			listing_ResourceReadout.Begin(rect);
 			listing_ResourceReadout.nestIndentWidth = 7f;
 			listing_ResourceReadout.lineHeight = 24f;
@@ -93,7 +93,7 @@ namespace RimWorld
 			GUI.BeginGroup(rect);
 			Text.Anchor = TextAnchor.MiddleLeft;
 			float num = 0f;
-			foreach (KeyValuePair<ThingDef, int> current in Find.VisibleMap.resourceCounter.AllCountedAmounts)
+			foreach (KeyValuePair<ThingDef, int> current in Find.CurrentMap.resourceCounter.AllCountedAmounts)
 			{
 				if (current.Value > 0 || current.Key.resourceReadoutAlwaysShow)
 				{
@@ -114,7 +114,7 @@ namespace RimWorld
 		{
 			this.DrawIcon(rect.x, rect.y, thingDef);
 			rect.y += 2f;
-			int count = Find.VisibleMap.resourceCounter.GetCount(thingDef);
+			int count = Find.CurrentMap.resourceCounter.GetCount(thingDef);
 			Rect rect2 = new Rect(34f, rect.y, rect.width - 34f, rect.height);
 			Widgets.Label(rect2, count.ToStringCached());
 		}
@@ -125,7 +125,7 @@ namespace RimWorld
 			Color color = GUI.color;
 			Widgets.ThingIcon(rect, thingDef);
 			GUI.color = color;
-			TooltipHandler.TipRegion(rect, new TipSignal(() => thingDef.LabelCap + ": " + thingDef.description, thingDef.GetHashCode()));
+			TooltipHandler.TipRegion(rect, new TipSignal(() => thingDef.LabelCap + ": " + thingDef.description.CapitalizeFirst(), thingDef.GetHashCode()));
 		}
 	}
 }

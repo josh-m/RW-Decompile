@@ -1,7 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
 using Verse;
 
 namespace RimWorld
@@ -11,40 +8,31 @@ namespace RimWorld
 		public override void DoEffect(Pawn usedBy)
 		{
 			base.DoEffect(usedBy);
-			IEnumerable<ResearchProjectDef> availableResearchProjects = this.GetAvailableResearchProjects();
-			if (availableResearchProjects.Any<ResearchProjectDef>())
+			ResearchProjectDef currentProj = Find.ResearchManager.currentProj;
+			if (currentProj != null)
 			{
-				this.FinishInstantly(availableResearchProjects.RandomElement<ResearchProjectDef>());
-			}
-			else if (Find.ResearchManager.currentProj != null && !Find.ResearchManager.currentProj.IsFinished)
-			{
-				this.FinishInstantly(Find.ResearchManager.currentProj);
+				this.FinishInstantly(currentProj, usedBy);
 			}
 		}
 
-		[DebuggerHidden]
-		private IEnumerable<ResearchProjectDef> GetAvailableResearchProjects()
+		public override bool CanBeUsedBy(Pawn p, out string failReason)
 		{
-			List<ResearchProjectDef> researchProjects = DefDatabase<ResearchProjectDef>.AllDefsListForReading;
-			for (int i = 0; i < researchProjects.Count; i++)
+			if (Find.ResearchManager.currentProj == null)
 			{
-				if (researchProjects[i] != Find.ResearchManager.currentProj || Find.ResearchManager.currentProj.ProgressPercent < 0.2f)
-				{
-					if (!researchProjects[i].IsFinished && researchProjects[i].PrerequisitesCompleted)
-					{
-						yield return researchProjects[i];
-					}
-				}
+				failReason = "NoActiveResearchProjectToFinish".Translate();
+				return false;
 			}
+			failReason = null;
+			return true;
 		}
 
-		private void FinishInstantly(ResearchProjectDef proj)
+		private void FinishInstantly(ResearchProjectDef proj, Pawn usedBy)
 		{
-			Find.ResearchManager.InstantFinish(proj, false);
+			Find.ResearchManager.FinishProject(proj, false, null);
 			Messages.Message("MessageResearchProjectFinishedByItem".Translate(new object[]
 			{
-				proj.label
-			}), MessageTypeDefOf.PositiveEvent);
+				proj.LabelCap
+			}), usedBy, MessageTypeDefOf.PositiveEvent, true);
 		}
 	}
 }

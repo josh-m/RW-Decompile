@@ -30,6 +30,30 @@ namespace Verse.AI.Group
 			}
 		}
 
+		public virtual bool GuiltyOnDowned
+		{
+			get
+			{
+				return false;
+			}
+		}
+
+		public virtual bool CanBlockHostileVisitors
+		{
+			get
+			{
+				return true;
+			}
+		}
+
+		public virtual bool AddFleeToil
+		{
+			get
+			{
+				return true;
+			}
+		}
+
 		protected Map Map
 		{
 			get
@@ -64,6 +88,11 @@ namespace Verse.AI.Group
 		public virtual bool CanOpenAnyDoor(Pawn p)
 		{
 			return false;
+		}
+
+		public virtual bool ValidateAttackTarget(Pawn searcher, Thing target)
+		{
+			return true;
 		}
 	}
 }

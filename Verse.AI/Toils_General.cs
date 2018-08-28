@@ -5,7 +5,7 @@ namespace Verse.AI
 {
 	public static class Toils_General
 	{
-		public static Toil Wait(int ticks)
+		public static Toil Wait(int ticks, TargetIndex face = TargetIndex.None)
 		{
 			Toil toil = new Toil();
 			toil.initAction = delegate
@@ -14,6 +14,14 @@ namespace Verse.AI
 			};
 			toil.defaultCompleteMode = ToilCompleteMode.Delay;
 			toil.defaultDuration = ticks;
+			if (face != TargetIndex.None)
+			{
+				toil.handlingFacing = true;
+				toil.tickAction = delegate
+				{
+					toil.actor.rotationTracker.FaceTarget(toil.actor.CurJob.GetTarget(face));
+				};
+			}
 			return toil;
 		}
 
@@ -28,7 +36,7 @@ namespace Verse.AI
 				{
 					if (pawn == toil.actor)
 					{
-						Log.Warning("Executing WaitWith toil but otherPawn is the same as toil.actor");
+						Log.Warning("Executing WaitWith toil but otherPawn is the same as toil.actor", false);
 					}
 					else
 					{
@@ -123,6 +131,15 @@ namespace Verse.AI
 			};
 			open.defaultCompleteMode = ToilCompleteMode.Instant;
 			return open;
+		}
+
+		public static Toil Label()
+		{
+			return new Toil
+			{
+				atomicWithPrevious = true,
+				defaultCompleteMode = ToilCompleteMode.Instant
+			};
 		}
 	}
 }

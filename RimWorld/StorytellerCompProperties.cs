@@ -1,16 +1,20 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using Verse;
 
 namespace RimWorld
 {
 	public class StorytellerCompProperties
 	{
+		[TranslationHandle]
 		public Type compClass;
 
 		public float minDaysPassed;
 
-		public List<IncidentTargetTypeDef> allowedTargetTypes;
+		public List<IncidentTargetTagDef> allowedTargetTags;
+
+		public List<IncidentTargetTagDef> disallowedTargetTags;
 
 		public float minIncChancePopulationIntentFactor = 0.05f;
 
@@ -28,7 +32,7 @@ namespace RimWorld
 		{
 			if (this.compClass == null)
 			{
-				yield return parentDef.defName + " has StorytellerCompProperties with null compClass.";
+				yield return "a StorytellerCompProperties has null compClass.";
 			}
 		}
 

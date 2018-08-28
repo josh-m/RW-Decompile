@@ -23,15 +23,6 @@ namespace RimWorld
 			get;
 		}
 
-		public override void Tick()
-		{
-			base.Tick();
-			if (!GenConstruct.CanBuildOnTerrain(this.def.entityDefToBuild, base.Position, base.Map, base.Rotation, null))
-			{
-				this.Destroy(DestroyMode.Cancel);
-			}
-		}
-
 		public override void Draw()
 		{
 			if (this.def.drawerType == DrawerType.RealtimeOnly)
@@ -63,7 +54,7 @@ namespace RimWorld
 				this.Destroy(DestroyMode.Vanish);
 			}
 			createdThing.SetFactionDirect(workerPawn.Faction);
-			GenSpawn.Spawn(createdThing, base.Position, map, base.Rotation, false);
+			GenSpawn.Spawn(createdThing, base.Position, map, base.Rotation, WipeMode.Vanish, false);
 			Blueprint.tmpCrashedShipParts.Clear();
 			CellRect.CellRectIterator iterator = cellRect.ExpandedBy(3).GetIterator();
 			while (!iterator.Done())
@@ -91,9 +82,22 @@ namespace RimWorld
 			return true;
 		}
 
+		public override void SpawnSetup(Map map, bool respawningAfterLoad)
+		{
+			map.blueprintGrid.Register(this);
+			base.SpawnSetup(map, respawningAfterLoad);
+		}
+
+		public override void DeSpawn(DestroyMode mode = DestroyMode.Vanish)
+		{
+			Map map = base.Map;
+			base.DeSpawn(mode);
+			map.blueprintGrid.DeRegister(this);
+		}
+
 		protected abstract Thing MakeSolidThing();
 
-		public abstract List<ThingCountClass> MaterialsNeeded();
+		public abstract List<ThingDefCountClass> MaterialsNeeded();
 
 		public abstract ThingDef UIStuff();
 
@@ -118,6 +122,23 @@ namespace RimWorld
 				iterator.MoveNext();
 			}
 			return null;
+		}
+
+		public override ushort PathFindCostFor(Pawn p)
+		{
+			if (base.Faction == null)
+			{
+				return 0;
+			}
+			if (this.def.entityDefToBuild is TerrainDef)
+			{
+				return 0;
+			}
+			if ((p.Faction == base.Faction || p.HostFaction == base.Faction) && (base.Map.reservationManager.IsReservedByAnyoneOf(this, p.Faction) || (p.HostFaction != null && base.Map.reservationManager.IsReservedByAnyoneOf(this, p.HostFaction))))
+			{
+				return Frame.AvoidUnderConstructionPathFindCost;
+			}
+			return 0;
 		}
 
 		public override string GetInspectString()

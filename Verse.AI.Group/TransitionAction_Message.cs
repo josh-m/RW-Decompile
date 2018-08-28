@@ -12,40 +12,60 @@ namespace Verse.AI.Group
 
 		public TargetInfo lookTarget;
 
-		public TransitionAction_Message(string message) : this(message, MessageTypeDefOf.NeutralEvent)
+		public Func<TargetInfo> lookTargetGetter;
+
+		public string repeatAvoiderTag;
+
+		public float repeatAvoiderSeconds;
+
+		public TransitionAction_Message(string message, string repeatAvoiderTag = null, float repeatAvoiderSeconds = 1f) : this(message, MessageTypeDefOf.NeutralEvent, repeatAvoiderTag, repeatAvoiderSeconds)
 		{
-			this.message = message;
 		}
 
-		public TransitionAction_Message(string message, MessageTypeDef messageType)
+		public TransitionAction_Message(string message, MessageTypeDef messageType, string repeatAvoiderTag = null, float repeatAvoiderSeconds = 1f)
 		{
 			this.lookTarget = TargetInfo.Invalid;
 			base..ctor();
 			this.message = message;
 			this.type = messageType;
+			this.repeatAvoiderTag = repeatAvoiderTag;
+			this.repeatAvoiderSeconds = repeatAvoiderSeconds;
 		}
 
-		public TransitionAction_Message(string message, MessageTypeDef messageType, TargetInfo lookTarget)
+		public TransitionAction_Message(string message, MessageTypeDef messageType, TargetInfo lookTarget, string repeatAvoiderTag = null, float repeatAvoiderSeconds = 1f)
 		{
 			this.lookTarget = TargetInfo.Invalid;
 			base..ctor();
 			this.message = message;
 			this.type = messageType;
 			this.lookTarget = lookTarget;
+			this.repeatAvoiderTag = repeatAvoiderTag;
+			this.repeatAvoiderSeconds = repeatAvoiderSeconds;
+		}
+
+		public TransitionAction_Message(string message, MessageTypeDef messageType, Func<TargetInfo> lookTargetGetter, string repeatAvoiderTag = null, float repeatAvoiderSeconds = 1f)
+		{
+			this.lookTarget = TargetInfo.Invalid;
+			base..ctor();
+			this.message = message;
+			this.type = messageType;
+			this.lookTargetGetter = lookTargetGetter;
+			this.repeatAvoiderTag = repeatAvoiderTag;
+			this.repeatAvoiderSeconds = repeatAvoiderSeconds;
 		}
 
 		public override void DoAction(Transition trans)
 		{
-			TargetInfo target;
-			if (this.lookTarget.IsValid)
+			if (!this.repeatAvoiderTag.NullOrEmpty() && !MessagesRepeatAvoider.MessageShowAllowed(this.repeatAvoiderTag, this.repeatAvoiderSeconds))
 			{
-				target = this.lookTarget;
+				return;
 			}
-			else
+			TargetInfo target = (this.lookTargetGetter == null) ? this.lookTarget : this.lookTargetGetter();
+			if (!target.IsValid)
 			{
 				target = trans.target.lord.ownedPawns.FirstOrDefault<Pawn>();
 			}
-			Messages.Message(this.message, target, this.type);
+			Messages.Message(this.message, target, this.type, true);
 		}
 	}
 }

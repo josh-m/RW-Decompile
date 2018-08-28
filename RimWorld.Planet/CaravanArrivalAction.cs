@@ -5,17 +5,19 @@ namespace RimWorld.Planet
 {
 	public abstract class CaravanArrivalAction : IExposable
 	{
+		public abstract string Label
+		{
+			get;
+		}
+
 		public abstract string ReportString
 		{
 			get;
 		}
 
-		public virtual bool ShouldFail
+		public virtual FloatMenuAcceptanceReport StillValid(Caravan caravan, int destinationTile)
 		{
-			get
-			{
-				return false;
-			}
+			return true;
 		}
 
 		public abstract void Arrived(Caravan caravan);

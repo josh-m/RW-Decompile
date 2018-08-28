@@ -7,12 +7,12 @@ namespace RimWorld
 {
 	public class IncidentWorker_MakeGameCondition : IncidentWorker
 	{
-		protected override bool CanFireNowSub(IIncidentTarget target)
+		protected override bool CanFireNowSub(IncidentParms parms)
 		{
-			GameConditionManager gameConditionManager = target.GameConditionManager;
+			GameConditionManager gameConditionManager = parms.target.GameConditionManager;
 			if (gameConditionManager == null)
 			{
-				Log.ErrorOnce(string.Format("Couldn't find condition manager for incident target {0}", target), 70849667);
+				Log.ErrorOnce(string.Format("Couldn't find condition manager for incident target {0}", parms.target), 70849667, false);
 				return false;
 			}
 			if (gameConditionManager.ConditionIsActive(this.def.gameCondition))

@@ -33,7 +33,7 @@ namespace RimWorld
 			}
 			AddictionUtility.ModifyChemicalEffectForToleranceAndBodySize(pawn, this.toleranceChemical, ref num);
 			hediff.Severity = num;
-			pawn.health.AddHediff(hediff, null, null);
+			pawn.health.AddHediff(hediff, null, null, null);
 		}
 
 		[DebuggerHidden]
@@ -41,7 +41,7 @@ namespace RimWorld
 		{
 			if (parentDef.IsDrug && this.chance >= 1f)
 			{
-				foreach (StatDrawEntry s in this.hediffDef.SpecialDisplayStats())
+				foreach (StatDrawEntry s in this.hediffDef.SpecialDisplayStats(StatRequest.ForEmpty()))
 				{
 					yield return s;
 				}

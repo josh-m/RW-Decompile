@@ -6,5 +6,10 @@ namespace RimWorld
 	public static class ChemicalDefOf
 	{
 		public static ChemicalDef Alcohol;
+
+		static ChemicalDefOf()
+		{
+			DefOfHelper.EnsureInitializedInCtor(typeof(ChemicalDefOf));
+		}
 	}
 }

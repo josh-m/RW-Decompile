@@ -9,7 +9,7 @@ namespace Verse.AI
 		{
 			if (pawn.Drafted)
 			{
-				return new Job(JobDefOf.WaitCombat, pawn.Position);
+				return new Job(JobDefOf.Wait_Combat, pawn.Position);
 			}
 			return null;
 		}

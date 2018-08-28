@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using Verse;
 
 namespace RimWorld
@@ -16,11 +15,6 @@ namespace RimWorld
 		public ThoughtState CurrentSocialState(Pawn p, Pawn otherPawn)
 		{
 			return this.PostProcessedState(this.CurrentSocialStateInternal(p, otherPawn));
-		}
-
-		public virtual IEnumerable<Pawn> PotentialPawnCandidates(Pawn p)
-		{
-			throw new NotImplementedException(this.def.defName + " (potential pawn candidates)");
 		}
 
 		private ThoughtState PostProcessedState(ThoughtState state)

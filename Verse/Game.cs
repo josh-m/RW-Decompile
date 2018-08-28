@@ -12,7 +12,7 @@ namespace Verse
 	{
 		private GameInitData initData;
 
-		public sbyte visibleMapIndex = -1;
+		public sbyte currentMapIndex = -1;
 
 		private GameInfo info = new GameInfo();
 
@@ -60,6 +60,8 @@ namespace Verse
 
 		public SignalManager signalManager = new SignalManager();
 
+		public UniqueIDsManager uniqueIDsManager = new UniqueIDsManager();
+
 		public Scenario Scenario
 		{
 			get
@@ -88,15 +90,15 @@ namespace Verse
 			}
 		}
 
-		public Map VisibleMap
+		public Map CurrentMap
 		{
 			get
 			{
-				if ((int)this.visibleMapIndex < 0)
+				if ((int)this.currentMapIndex < 0)
 				{
 					return null;
 				}
-				return this.maps[(int)this.visibleMapIndex];
+				return this.maps[(int)this.currentMapIndex];
 			}
 			set
 			{
@@ -110,13 +112,13 @@ namespace Verse
 					num = this.maps.IndexOf(value);
 					if (num < 0)
 					{
-						Log.Error("Could not set visible map because it does not exist.");
+						Log.Error("Could not set current map because it does not exist.", false);
 						return;
 					}
 				}
-				if ((int)this.visibleMapIndex != num)
+				if ((int)this.currentMapIndex != num)
 				{
-					this.visibleMapIndex = (sbyte)num;
+					this.currentMapIndex = (sbyte)num;
 					Find.MapUI.Notify_SwitchedMap();
 					AmbientSoundManager.Notify_SwitchedMap();
 				}
@@ -188,17 +190,17 @@ namespace Verse
 		{
 			if (map == null)
 			{
-				Log.Error("Tried to add null map.");
+				Log.Error("Tried to add null map.", false);
 				return;
 			}
 			if (this.maps.Contains(map))
 			{
-				Log.Error("Tried to add map but it's already here.");
+				Log.Error("Tried to add map but it's already here.", false);
 				return;
 			}
 			if (this.maps.Count > 127)
 			{
-				Log.Error("Can't add map. Reached maps count limit (" + 127 + ").");
+				Log.Error("Can't add map. Reached maps count limit (" + 127 + ").", false);
 				return;
 			}
 			this.maps.Add(map);
@@ -233,10 +235,10 @@ namespace Verse
 		{
 			if (Scribe.mode == LoadSaveMode.LoadingVars)
 			{
-				Log.Error("You must use special LoadData method to load Game.");
+				Log.Error("You must use special LoadData method to load Game.", false);
 				return;
 			}
-			Scribe_Values.Look<sbyte>(ref this.visibleMapIndex, "visibleMapIndex", -1, false);
+			Scribe_Values.Look<sbyte>(ref this.currentMapIndex, "currentMapIndex", -1, false);
 			this.ExposeSmallComponents();
 			Scribe_Deep.Look<World>(ref this.worldInt, "world", new object[0]);
 			Scribe_Collections.Look<Map>(ref this.maps, "maps", LookMode.Deep, new object[0]);
@@ -263,6 +265,7 @@ namespace Verse
 			Scribe_Deep.Look<DrugPolicyDatabase>(ref this.drugPolicyDatabase, "drugPolicyDatabase", new object[0]);
 			Scribe_Deep.Look<Tutor>(ref this.tutor, "tutor", new object[0]);
 			Scribe_Deep.Look<DateNotifier>(ref this.dateNotifier, "dateNotifier", new object[0]);
+			Scribe_Deep.Look<UniqueIDsManager>(ref this.uniqueIDsManager, "uniqueIDsManager", new object[0]);
 			Scribe_Collections.Look<GameComponent>(ref this.components, "components", LookMode.Deep, new object[]
 			{
 				this
@@ -292,17 +295,17 @@ namespace Verse
 
 		public void InitNewGame()
 		{
-			string str = GenText.ToCommaList(from mod in LoadedModManager.RunningMods
-			select mod.ToString(), true);
-			Log.Message("Initializing new game with mods " + str);
+			string str = (from mod in LoadedModManager.RunningMods
+			select mod.ToString()).ToCommaList(false);
+			Log.Message("Initializing new game with mods " + str, false);
 			if (this.maps.Any<Map>())
 			{
-				Log.Error("Called InitNewGame() but there already is a map. There should be 0 maps...");
+				Log.Error("Called InitNewGame() but there already is a map. There should be 0 maps...", false);
 				return;
 			}
 			if (this.initData == null)
 			{
-				Log.Error("Called InitNewGame() but init data is null. Create it first.");
+				Log.Error("Called InitNewGame() but init data is null. Create it first.", false);
 				return;
 			}
 			MemoryUtility.UnloadUnusedUnityAssets();
@@ -311,22 +314,22 @@ namespace Verse
 			{
 				Current.ProgramState = ProgramState.MapInitializing;
 				IntVec3 intVec = new IntVec3(this.initData.mapSize, 1, this.initData.mapSize);
-				FactionBase factionBase = null;
-				List<FactionBase> factionBases = Find.WorldObjects.FactionBases;
-				for (int i = 0; i < factionBases.Count; i++)
+				Settlement settlement = null;
+				List<Settlement> settlements = Find.WorldObjects.Settlements;
+				for (int i = 0; i < settlements.Count; i++)
 				{
-					if (factionBases[i].Faction == Faction.OfPlayer)
+					if (settlements[i].Faction == Faction.OfPlayer)
 					{
-						factionBase = factionBases[i];
+						settlement = settlements[i];
 						break;
 					}
 				}
-				if (factionBase == null)
+				if (settlement == null)
 				{
-					Log.Error("Could not generate starting map because there is no any player faction base.");
+					Log.Error("Could not generate starting map because there is no any player faction base.", false);
 				}
 				this.tickManager.gameStartAbsTick = GenTicks.ConfiguredTicksAbsAtGameStart;
-				Map visibleMap = MapGenerator.GenerateMap(intVec, factionBase, factionBase.MapGeneratorDef, factionBase.ExtraGenStepDefs, null);
+				Map currentMap = MapGenerator.GenerateMap(intVec, settlement, settlement.MapGeneratorDef, settlement.ExtraGenStepDefs, null);
 				this.worldInt.info.initialMapSize = intVec;
 				if (this.initData.permadeath)
 				{
@@ -335,8 +338,8 @@ namespace Verse
 				}
 				PawnUtility.GiveAllStartingPlayerPawnsThought(ThoughtDefOf.NewColonyOptimism);
 				this.FinalizeInit();
-				Current.Game.VisibleMap = visibleMap;
-				Find.CameraDriver.JumpToVisibleMapLoc(MapGenerator.PlayerStartSpot);
+				Current.Game.CurrentMap = currentMap;
+				Find.CameraDriver.JumpToCurrentMapLoc(MapGenerator.PlayerStartSpot);
 				Find.CameraDriver.ResetSize();
 				if (Prefs.PauseOnLoad && this.initData.startedFromEntry)
 				{
@@ -349,13 +352,13 @@ namespace Verse
 				Find.Scenario.PostGameStart();
 				if (Faction.OfPlayer.def.startingResearchTags != null)
 				{
-					foreach (string current in Faction.OfPlayer.def.startingResearchTags)
+					foreach (ResearchProjectTagDef current in Faction.OfPlayer.def.startingResearchTags)
 					{
 						foreach (ResearchProjectDef current2 in DefDatabase<ResearchProjectDef>.AllDefs)
 						{
 							if (current2.HasTag(current))
 							{
-								this.researchManager.InstantFinish(current2, false);
+								this.researchManager.FinishProject(current2, false, null);
 							}
 						}
 					}
@@ -373,13 +376,12 @@ namespace Verse
 		{
 			if (this.maps.Any<Map>())
 			{
-				Log.Error("Called LoadGame() but there already is a map. There should be 0 maps...");
+				Log.Error("Called LoadGame() but there already is a map. There should be 0 maps...", false);
 				return;
 			}
 			MemoryUtility.UnloadUnusedUnityAssets();
 			Current.ProgramState = ProgramState.MapInitializing;
 			this.ExposeSmallComponents();
-			BackCompatibility.AfterLoadingSmallGameClassComponents(this);
 			LongEventHandler.SetCurrentEventText("LoadingWorld".Translate());
 			if (Scribe.EnterNode("world"))
 			{
@@ -395,16 +397,20 @@ namespace Verse
 				this.World.FinalizeInit();
 				LongEventHandler.SetCurrentEventText("LoadingMap".Translate());
 				Scribe_Collections.Look<Map>(ref this.maps, "maps", LookMode.Deep, new object[0]);
+				if (this.maps.RemoveAll((Map x) => x == null) != 0)
+				{
+					Log.Warning("Some maps were null after loading.", false);
+				}
 				int num = -1;
-				Scribe_Values.Look<int>(ref num, "visibleMapIndex", -1, false);
+				Scribe_Values.Look<int>(ref num, "currentMapIndex", -1, false);
 				if (num < 0 && this.maps.Any<Map>())
 				{
-					Log.Error("Visible map is null after loading but there are maps available. Setting visible map to [0].");
+					Log.Error("Current map is null after loading but there are maps available. Setting current map to [0].", false);
 					num = 0;
 				}
 				if (num >= this.maps.Count)
 				{
-					Log.Error("Visible map index out of bounds after loading.");
+					Log.Error("Current map index out of bounds after loading.", false);
 					if (this.maps.Any<Map>())
 					{
 						num = 0;
@@ -414,8 +420,8 @@ namespace Verse
 						num = -1;
 					}
 				}
-				this.visibleMapIndex = -128;
-				this.VisibleMap = ((num < 0) ? null : this.maps[num]);
+				this.currentMapIndex = -128;
+				this.CurrentMap = ((num < 0) ? null : this.maps[num]);
 				LongEventHandler.SetCurrentEventText("InitializingGame".Translate());
 				Find.CameraDriver.Expose();
 				DeepProfiler.Start("FinalizeLoading");
@@ -424,7 +430,22 @@ namespace Verse
 				LongEventHandler.SetCurrentEventText("SpawningAllThings".Translate());
 				for (int i = 0; i < this.maps.Count; i++)
 				{
-					this.maps[i].FinalizeLoading();
+					try
+					{
+						this.maps[i].FinalizeLoading();
+					}
+					catch (Exception arg)
+					{
+						Log.Error("Error in Map.FinalizeLoading(): " + arg, false);
+					}
+					try
+					{
+						this.maps[i].Parent.FinalizeLoading();
+					}
+					catch (Exception arg2)
+					{
+						Log.Error("Error in MapParent.FinalizeLoading(): " + arg2, false);
+					}
 				}
 				this.FinalizeInit();
 				if (Prefs.PauseOnLoad)
@@ -438,7 +459,7 @@ namespace Verse
 				GameComponentUtility.LoadedGame();
 				return;
 			}
-			Log.Error("Could not find world XML node.");
+			Log.Error("Could not find world XML node.", false);
 		}
 
 		public void UpdateEntry()
@@ -497,35 +518,35 @@ namespace Verse
 		{
 			if (map == null)
 			{
-				Log.Error("Tried to remove null map.");
+				Log.Error("Tried to remove null map.", false);
 				return;
 			}
 			if (!this.maps.Contains(map))
 			{
-				Log.Error("Tried to remove map " + map + " but it's not here.");
+				Log.Error("Tried to remove map " + map + " but it's not here.", false);
 				return;
 			}
-			Map visibleMap = this.VisibleMap;
+			Map currentMap = this.CurrentMap;
 			MapDeiniter.Deinit(map);
 			this.maps.Remove(map);
-			if (visibleMap != null)
+			if (currentMap != null)
 			{
-				sbyte b = (sbyte)this.maps.IndexOf(visibleMap);
+				sbyte b = (sbyte)this.maps.IndexOf(currentMap);
 				if ((int)b < 0)
 				{
 					if (this.maps.Any<Map>())
 					{
-						this.VisibleMap = this.maps[0];
+						this.CurrentMap = this.maps[0];
 					}
 					else
 					{
-						this.VisibleMap = null;
+						this.CurrentMap = null;
 					}
 					Find.World.renderer.wantedMode = WorldRenderMode.Planet;
 				}
 				else
 				{
-					this.visibleMapIndex = b;
+					this.currentMapIndex = b;
 				}
 			}
 			if (Current.ProgramState == ProgramState.Playing)
@@ -533,9 +554,9 @@ namespace Verse
 				Find.ColonistBar.MarkColonistsDirty();
 			}
 			MapComponentUtility.MapRemoved(map);
-			if (map.info.parent != null)
+			if (map.Parent != null)
 			{
-				map.info.parent.Notify_MyMapRemoved(map);
+				map.Parent.Notify_MyMapRemoved(map);
 			}
 		}
 

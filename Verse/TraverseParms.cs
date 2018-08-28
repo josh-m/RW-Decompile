@@ -16,7 +16,7 @@ namespace Verse
 		{
 			if (pawn == null)
 			{
-				Log.Error("TraverseParms for null pawn.");
+				Log.Error("TraverseParms for null pawn.", false);
 				return TraverseParms.For(TraverseMode.NoPassClosedDoors, maxDanger, canBash);
 			}
 			return new TraverseParms
@@ -43,7 +43,7 @@ namespace Verse
 		{
 			if (this.mode == TraverseMode.ByPawn && this.pawn == null)
 			{
-				Log.Error("Invalid traverse parameters: IfPawnAllowed but traverser = null.");
+				Log.Error("Invalid traverse parameters: IfPawnAllowed but traverser = null.", false);
 			}
 		}
 

@@ -27,7 +27,7 @@ namespace RimWorld
 			bool flag = pawn == t && pawn.playerSettings != null && base.HasJobOnThing(pawn, t, forced);
 			if (flag && !pawn.playerSettings.selfTend)
 			{
-				JobFailReason.Is("SelfTendDisabled".Translate());
+				JobFailReason.Is("SelfTendDisabled".Translate(), null);
 			}
 			return flag && pawn.playerSettings.selfTend;
 		}

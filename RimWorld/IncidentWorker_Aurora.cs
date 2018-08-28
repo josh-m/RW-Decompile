@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Verse;
 
 namespace RimWorld
@@ -7,14 +8,26 @@ namespace RimWorld
 	{
 		private const int EnsureMinDurationTicks = 5000;
 
-		protected override bool CanFireNowSub(IIncidentTarget target)
+		protected override bool CanFireNowSub(IncidentParms parms)
 		{
-			if (!base.CanFireNowSub(target))
+			if (!base.CanFireNowSub(parms))
 			{
 				return false;
 			}
-			Map map = (Map)target;
-			return GenCelestial.CurCelestialSunGlow(map) <= 0.5f && GenCelestial.CelestialSunGlow(map, Find.TickManager.TicksAbs + 5000) <= 0.5f;
+			List<Map> maps = Find.Maps;
+			for (int i = 0; i < maps.Count; i++)
+			{
+				if (maps[i].IsPlayerHome && !this.AuroraWillEndSoon(maps[i]))
+				{
+					return true;
+				}
+			}
+			return false;
+		}
+
+		private bool AuroraWillEndSoon(Map map)
+		{
+			return GenCelestial.CurCelestialSunGlow(map) > 0.5f || GenCelestial.CelestialSunGlow(map, Find.TickManager.TicksAbs + 5000) > 0.5f;
 		}
 	}
 }

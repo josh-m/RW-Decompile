@@ -44,11 +44,11 @@ namespace RimWorld
 			Listing_ScenEdit listing_ScenEdit = new Listing_ScenEdit(scen);
 			listing_ScenEdit.ColumnWidth = rect2.width;
 			listing_ScenEdit.Begin(rect2);
-			listing_ScenEdit.Label("Title".Translate(), -1f);
+			listing_ScenEdit.Label("Title".Translate(), -1f, null);
 			scen.name = listing_ScenEdit.TextEntry(scen.name, 1).TrimmedToLength(55);
-			listing_ScenEdit.Label("Summary".Translate(), -1f);
+			listing_ScenEdit.Label("Summary".Translate(), -1f, null);
 			scen.summary = listing_ScenEdit.TextEntry(scen.summary, 2).TrimmedToLength(300);
-			listing_ScenEdit.Label("Description".Translate(), -1f);
+			listing_ScenEdit.Label("Description".Translate(), -1f, null);
 			scen.description = listing_ScenEdit.TextEntry(scen.description, 4).TrimmedToLength(1000);
 			listing_ScenEdit.Gap(12f);
 			foreach (ScenPart current in scen.AllParts)

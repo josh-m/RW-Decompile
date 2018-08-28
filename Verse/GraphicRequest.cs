@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Verse
@@ -21,7 +22,9 @@ namespace Verse
 
 		public int renderQueue;
 
-		public GraphicRequest(Type graphicClass, string path, Shader shader, Vector2 drawSize, Color color, Color colorTwo, GraphicData graphicData, int renderQueue)
+		public List<ShaderParameter> shaderParameters;
+
+		public GraphicRequest(Type graphicClass, string path, Shader shader, Vector2 drawSize, Color color, Color colorTwo, GraphicData graphicData, int renderQueue, List<ShaderParameter> shaderParameters)
 		{
 			this.graphicClass = graphicClass;
 			this.path = path;
@@ -31,6 +34,7 @@ namespace Verse
 			this.colorTwo = colorTwo;
 			this.graphicData = graphicData;
 			this.renderQueue = renderQueue;
+			this.shaderParameters = ((!shaderParameters.NullOrEmpty<ShaderParameter>()) ? shaderParameters : null);
 		}
 
 		public override int GetHashCode()
@@ -47,7 +51,8 @@ namespace Verse
 			seed = Gen.HashCombineStruct<Color>(seed, this.color);
 			seed = Gen.HashCombineStruct<Color>(seed, this.colorTwo);
 			seed = Gen.HashCombine<GraphicData>(seed, this.graphicData);
-			return Gen.HashCombine<int>(seed, this.renderQueue);
+			seed = Gen.HashCombine<int>(seed, this.renderQueue);
+			return Gen.HashCombine<List<ShaderParameter>>(seed, this.shaderParameters);
 		}
 
 		public override bool Equals(object obj)
@@ -57,7 +62,7 @@ namespace Verse
 
 		public bool Equals(GraphicRequest other)
 		{
-			return this.graphicClass == other.graphicClass && this.path == other.path && this.shader == other.shader && this.drawSize == other.drawSize && this.color == other.color && this.colorTwo == other.colorTwo && this.graphicData == other.graphicData && this.renderQueue == other.renderQueue;
+			return this.graphicClass == other.graphicClass && this.path == other.path && this.shader == other.shader && this.drawSize == other.drawSize && this.color == other.color && this.colorTwo == other.colorTwo && this.graphicData == other.graphicData && this.renderQueue == other.renderQueue && this.shaderParameters == other.shaderParameters;
 		}
 
 		public static bool operator ==(GraphicRequest lhs, GraphicRequest rhs)

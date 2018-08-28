@@ -20,17 +20,17 @@ namespace Verse
 		{
 			if (Scribe.mode != LoadSaveMode.Inactive)
 			{
-				Log.Error("Called InitLoading() but current mode is " + Scribe.mode);
+				Log.Error("Called InitLoading() but current mode is " + Scribe.mode, false);
 				Scribe.ForceStop();
 			}
 			if (this.curParent != null)
 			{
-				Log.Error("Current parent is not null in InitLoading");
+				Log.Error("Current parent is not null in InitLoading", false);
 				this.curParent = null;
 			}
 			if (this.curPathRelToParent != null)
 			{
-				Log.Error("Current path relative to parent is not null in InitLoading");
+				Log.Error("Current path relative to parent is not null in InitLoading", false);
 				this.curPathRelToParent = null;
 			}
 			try
@@ -54,7 +54,7 @@ namespace Verse
 					filePath,
 					"\n",
 					ex
-				}));
+				}), false);
 				this.ForceStop();
 				throw;
 			}
@@ -64,7 +64,7 @@ namespace Verse
 		{
 			if (Scribe.mode != LoadSaveMode.Inactive)
 			{
-				Log.Error("Called InitLoadingMetaHeaderOnly() but current mode is " + Scribe.mode);
+				Log.Error("Called InitLoadingMetaHeaderOnly() but current mode is " + Scribe.mode, false);
 				Scribe.ForceStop();
 			}
 			try
@@ -97,7 +97,7 @@ namespace Verse
 					filePath,
 					"\n",
 					ex
-				}));
+				}), false);
 				this.ForceStop();
 				throw;
 			}
@@ -107,7 +107,7 @@ namespace Verse
 		{
 			if (Scribe.mode != LoadSaveMode.LoadingVars)
 			{
-				Log.Error("Called FinalizeLoading() but current mode is " + Scribe.mode);
+				Log.Error("Called FinalizeLoading() but current mode is " + Scribe.mode, false);
 				return;
 			}
 			try
@@ -122,7 +122,7 @@ namespace Verse
 			}
 			catch (Exception arg)
 			{
-				Log.Error("Exception in FinalizeLoading(): " + arg);
+				Log.Error("Exception in FinalizeLoading(): " + arg, false);
 				this.ForceStop();
 				throw;
 			}
@@ -156,14 +156,7 @@ namespace Verse
 			if (this.curPathRelToParent != null)
 			{
 				int num = this.curPathRelToParent.LastIndexOf('/');
-				if (num > 0)
-				{
-					this.curPathRelToParent = this.curPathRelToParent.Substring(0, num);
-				}
-				else
-				{
-					this.curPathRelToParent = null;
-				}
+				this.curPathRelToParent = ((num <= 0) ? null : this.curPathRelToParent.Substring(0, num));
 			}
 		}
 
@@ -171,6 +164,7 @@ namespace Verse
 		{
 			this.curXmlParent = null;
 			this.curParent = null;
+			this.curPathRelToParent = null;
 			this.crossRefs.Clear(false);
 			this.initer.Clear();
 			if (Scribe.mode == LoadSaveMode.LoadingVars || Scribe.mode == LoadSaveMode.ResolvingCrossRefs || Scribe.mode == LoadSaveMode.PostLoadInit)

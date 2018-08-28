@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Text;
 using UnityEngine;
 using Verse;
 
@@ -296,7 +297,7 @@ namespace RimWorld.Planet
 		{
 			if (roadDef == null)
 			{
-				Log.ErrorOnce("Attempted to remove road with overlayRoad; not supported", 90292249);
+				Log.ErrorOnce("Attempted to remove road with overlayRoad; not supported", 90292249, false);
 				return;
 			}
 			RoadDef roadDef2 = this.GetRoadDef(fromTile, toTile, false);
@@ -312,23 +313,23 @@ namespace RimWorld.Planet
 				{
 					return;
 				}
-				tile.roads.RemoveAll((Tile.RoadLink rl) => rl.neighbor == toTile);
-				tile2.roads.RemoveAll((Tile.RoadLink rl) => rl.neighbor == fromTile);
+				tile.potentialRoads.RemoveAll((Tile.RoadLink rl) => rl.neighbor == toTile);
+				tile2.potentialRoads.RemoveAll((Tile.RoadLink rl) => rl.neighbor == fromTile);
 			}
-			if (tile.roads == null)
+			if (tile.potentialRoads == null)
 			{
-				tile.roads = new List<Tile.RoadLink>();
+				tile.potentialRoads = new List<Tile.RoadLink>();
 			}
-			if (tile2.roads == null)
+			if (tile2.potentialRoads == null)
 			{
-				tile2.roads = new List<Tile.RoadLink>();
+				tile2.potentialRoads = new List<Tile.RoadLink>();
 			}
-			tile.roads.Add(new Tile.RoadLink
+			tile.potentialRoads.Add(new Tile.RoadLink
 			{
 				neighbor = toTile,
 				road = roadDef
 			});
-			tile2.roads.Add(new Tile.RoadLink
+			tile2.potentialRoads.Add(new Tile.RoadLink
 			{
 				neighbor = fromTile,
 				road = roadDef
@@ -339,11 +340,11 @@ namespace RimWorld.Planet
 		{
 			if (!this.IsNeighbor(fromTile, toTile))
 			{
-				Log.ErrorOnce("Tried to find road information between non-neighboring tiles", 12390444);
+				Log.ErrorOnce("Tried to find road information between non-neighboring tiles", 12390444, false);
 				return null;
 			}
 			Tile tile = this.tiles[fromTile];
-			List<Tile.RoadLink> list = (!visibleOnly) ? tile.roads : tile.VisibleRoads;
+			List<Tile.RoadLink> list = (!visibleOnly) ? tile.potentialRoads : tile.Roads;
 			if (list == null)
 			{
 				return null;
@@ -362,7 +363,7 @@ namespace RimWorld.Planet
 		{
 			if (riverDef == null)
 			{
-				Log.ErrorOnce("Attempted to remove river with overlayRiver; not supported", 90292250);
+				Log.ErrorOnce("Attempted to remove river with overlayRiver; not supported", 90292250, false);
 				return;
 			}
 			RiverDef riverDef2 = this.GetRiverDef(fromTile, toTile, false);
@@ -378,23 +379,23 @@ namespace RimWorld.Planet
 				{
 					return;
 				}
-				tile.rivers.RemoveAll((Tile.RiverLink rl) => rl.neighbor == toTile);
-				tile2.rivers.RemoveAll((Tile.RiverLink rl) => rl.neighbor == fromTile);
+				tile.potentialRivers.RemoveAll((Tile.RiverLink rl) => rl.neighbor == toTile);
+				tile2.potentialRivers.RemoveAll((Tile.RiverLink rl) => rl.neighbor == fromTile);
 			}
-			if (tile.rivers == null)
+			if (tile.potentialRivers == null)
 			{
-				tile.rivers = new List<Tile.RiverLink>();
+				tile.potentialRivers = new List<Tile.RiverLink>();
 			}
-			if (tile2.rivers == null)
+			if (tile2.potentialRivers == null)
 			{
-				tile2.rivers = new List<Tile.RiverLink>();
+				tile2.potentialRivers = new List<Tile.RiverLink>();
 			}
-			tile.rivers.Add(new Tile.RiverLink
+			tile.potentialRivers.Add(new Tile.RiverLink
 			{
 				neighbor = toTile,
 				river = riverDef
 			});
-			tile2.rivers.Add(new Tile.RiverLink
+			tile2.potentialRivers.Add(new Tile.RiverLink
 			{
 				neighbor = fromTile,
 				river = riverDef
@@ -405,11 +406,11 @@ namespace RimWorld.Planet
 		{
 			if (!this.IsNeighbor(fromTile, toTile))
 			{
-				Log.ErrorOnce("Tried to find river information between non-neighboring tiles", 12390444);
+				Log.ErrorOnce("Tried to find river information between non-neighboring tiles", 12390444, false);
 				return null;
 			}
 			Tile tile = this.tiles[fromTile];
-			List<Tile.RiverLink> list = (!visibleOnly) ? tile.rivers : tile.VisibleRivers;
+			List<Tile.RiverLink> list = (!visibleOnly) ? tile.potentialRivers : tile.Rivers;
 			if (list == null)
 			{
 				return null;
@@ -424,35 +425,87 @@ namespace RimWorld.Planet
 			return null;
 		}
 
-		public float GetRoadMovementMultiplierFast(int fromTile, int toTile)
+		public float GetRoadMovementDifficultyMultiplier(int fromTile, int toTile, StringBuilder explanation = null)
 		{
-			List<Tile.RoadLink> roads = this.tiles[fromTile].roads;
+			List<Tile.RoadLink> roads = this.tiles[fromTile].Roads;
 			if (roads == null)
 			{
 				return 1f;
+			}
+			if (toTile == -1)
+			{
+				toTile = this.FindMostReasonableAdjacentTileForDisplayedPathCost(fromTile);
 			}
 			for (int i = 0; i < roads.Count; i++)
 			{
 				if (roads[i].neighbor == toTile)
 				{
-					return roads[i].road.movementCostMultiplier;
+					float movementCostMultiplier = roads[i].road.movementCostMultiplier;
+					if (explanation != null)
+					{
+						if (explanation.Length > 0)
+						{
+							explanation.AppendLine();
+						}
+						explanation.Append(roads[i].road.LabelCap + ": " + movementCostMultiplier.ToStringPercent());
+					}
+					return movementCostMultiplier;
 				}
 			}
 			return 1f;
 		}
 
-		public int TraversalDistanceBetween(int start, int end)
+		public int FindMostReasonableAdjacentTileForDisplayedPathCost(int fromTile)
+		{
+			Tile tile = this.tiles[fromTile];
+			float num = 1f;
+			int num2 = -1;
+			List<Tile.RoadLink> roads = tile.Roads;
+			if (roads != null)
+			{
+				for (int i = 0; i < roads.Count; i++)
+				{
+					float movementCostMultiplier = roads[i].road.movementCostMultiplier;
+					if (movementCostMultiplier < num && !Find.World.Impassable(roads[i].neighbor))
+					{
+						num = movementCostMultiplier;
+						num2 = roads[i].neighbor;
+					}
+				}
+			}
+			if (num2 != -1)
+			{
+				return num2;
+			}
+			WorldGrid.tmpNeighbors.Clear();
+			this.GetTileNeighbors(fromTile, WorldGrid.tmpNeighbors);
+			for (int j = 0; j < WorldGrid.tmpNeighbors.Count; j++)
+			{
+				if (!Find.World.Impassable(WorldGrid.tmpNeighbors[j]))
+				{
+					return WorldGrid.tmpNeighbors[j];
+				}
+			}
+			return fromTile;
+		}
+
+		public int TraversalDistanceBetween(int start, int end, bool passImpassable = true, int maxDist = 2147483647)
 		{
 			if (start < 0 || end < 0)
 			{
-				return 0;
+				return 2147483647;
 			}
-			if (this.cachedTraversalDistanceForStart == start && this.cachedTraversalDistanceForEnd == end)
+			if (this.cachedTraversalDistanceForStart == start && this.cachedTraversalDistanceForEnd == end && passImpassable && maxDist == 2147483647)
 			{
 				return this.cachedTraversalDistance;
 			}
-			int finalDist = -1;
-			Find.WorldFloodFiller.FloodFill(start, (int x) => true, delegate(int tile, int dist)
+			if (!passImpassable && !Find.WorldReachability.CanReach(start, end))
+			{
+				return 2147483647;
+			}
+			int finalDist = 2147483647;
+			int maxTilesToProcess = (maxDist != 2147483647) ? this.TilesNumWithinTraversalDistance(maxDist + 1) : 2147483647;
+			Find.WorldFloodFiller.FloodFill(start, (int x) => passImpassable || !Find.World.Impassable(x), delegate(int tile, int dist)
 			{
 				if (tile == end)
 				{
@@ -460,22 +513,23 @@ namespace RimWorld.Planet
 					return true;
 				}
 				return false;
-			}, 2147483647, null);
-			if (finalDist < 0)
+			}, maxTilesToProcess, null);
+			if (passImpassable && maxDist == 2147483647)
 			{
-				Log.Error(string.Concat(new object[]
-				{
-					"Could not reach tile ",
-					end,
-					" from ",
-					start
-				}));
+				this.cachedTraversalDistance = finalDist;
+				this.cachedTraversalDistanceForStart = start;
+				this.cachedTraversalDistanceForEnd = end;
+			}
+			return finalDist;
+		}
+
+		public int TilesNumWithinTraversalDistance(int traversalDist)
+		{
+			if (traversalDist < 0)
+			{
 				return 0;
 			}
-			this.cachedTraversalDistance = finalDist;
-			this.cachedTraversalDistanceForStart = start;
-			this.cachedTraversalDistanceForEnd = end;
-			return finalDist;
+			return 3 * traversalDist * (traversalDist + 1) + 1;
 		}
 
 		public bool IsOnEdge(int tileID)
@@ -560,18 +614,18 @@ namespace RimWorld.Planet
 			List<ushort> list3 = new List<ushort>();
 			for (int m = 0; m < this.TilesCount; m++)
 			{
-				List<Tile.RoadLink> roads = this.tiles[m].roads;
-				if (roads != null)
+				List<Tile.RoadLink> potentialRoads = this.tiles[m].potentialRoads;
+				if (potentialRoads != null)
 				{
-					for (int j = 0; j < roads.Count; j++)
+					for (int j = 0; j < potentialRoads.Count; j++)
 					{
-						Tile.RoadLink roadLink = roads[j];
+						Tile.RoadLink roadLink = potentialRoads[j];
 						if (roadLink.neighbor >= m)
 						{
 							byte b = (byte)this.GetNeighborId(m, roadLink.neighbor);
 							if (b < 0)
 							{
-								Log.ErrorOnce("Couldn't find valid neighbor for road piece", 81637014);
+								Log.ErrorOnce("Couldn't find valid neighbor for road piece", 81637014, false);
 							}
 							else
 							{
@@ -591,18 +645,18 @@ namespace RimWorld.Planet
 			List<ushort> list6 = new List<ushort>();
 			for (int k = 0; k < this.TilesCount; k++)
 			{
-				List<Tile.RiverLink> rivers = this.tiles[k].rivers;
-				if (rivers != null)
+				List<Tile.RiverLink> potentialRivers = this.tiles[k].potentialRivers;
+				if (potentialRivers != null)
 				{
-					for (int l = 0; l < rivers.Count; l++)
+					for (int l = 0; l < potentialRivers.Count; l++)
 					{
-						Tile.RiverLink riverLink = rivers[l];
+						Tile.RiverLink riverLink = potentialRivers[l];
 						if (riverLink.neighbor >= k)
 						{
 							byte b2 = (byte)this.GetNeighborId(k, riverLink.neighbor);
 							if (b2 < 0)
 							{
-								Log.ErrorOnce("Couldn't find valid neighbor for river piece", 81637014);
+								Log.ErrorOnce("Couldn't find valid neighbor for river piece", 81637014, false);
 							}
 							else
 							{
@@ -633,13 +687,13 @@ namespace RimWorld.Planet
 			{
 				for (int j = 0; j < this.TilesCount; j++)
 				{
-					this.tiles[j].roads = null;
-					this.tiles[j].rivers = null;
+					this.tiles[j].potentialRoads = null;
+					this.tiles[j].potentialRivers = null;
 				}
 			}
 			DataSerializeUtility.LoadUshort(this.tileBiome, this.TilesCount, delegate(int i, ushort data)
 			{
-				this.tiles[i].biome = DefDatabase<BiomeDef>.GetByShortHash(data);
+				this.tiles[i].biome = (DefDatabase<BiomeDef>.GetByShortHash(data) ?? BiomeDefOf.TemperateForest);
 			});
 			DataSerializeUtility.LoadUshort(this.tileElevation, this.TilesCount, delegate(int i, ushort data)
 			{
@@ -671,20 +725,20 @@ namespace RimWorld.Planet
 				RoadDef byShortHash = DefDatabase<RoadDef>.GetByShortHash(array3[k]);
 				if (byShortHash != null)
 				{
-					if (this.tiles[num].roads == null)
+					if (this.tiles[num].potentialRoads == null)
 					{
-						this.tiles[num].roads = new List<Tile.RoadLink>();
+						this.tiles[num].potentialRoads = new List<Tile.RoadLink>();
 					}
-					if (this.tiles[tileNeighbor].roads == null)
+					if (this.tiles[tileNeighbor].potentialRoads == null)
 					{
-						this.tiles[tileNeighbor].roads = new List<Tile.RoadLink>();
+						this.tiles[tileNeighbor].potentialRoads = new List<Tile.RoadLink>();
 					}
-					this.tiles[num].roads.Add(new Tile.RoadLink
+					this.tiles[num].potentialRoads.Add(new Tile.RoadLink
 					{
 						neighbor = tileNeighbor,
 						road = byShortHash
 					});
-					this.tiles[tileNeighbor].roads.Add(new Tile.RoadLink
+					this.tiles[tileNeighbor].potentialRoads.Add(new Tile.RoadLink
 					{
 						neighbor = num,
 						road = byShortHash
@@ -701,20 +755,20 @@ namespace RimWorld.Planet
 				RiverDef byShortHash2 = DefDatabase<RiverDef>.GetByShortHash(array6[l]);
 				if (byShortHash2 != null)
 				{
-					if (this.tiles[num2].rivers == null)
+					if (this.tiles[num2].potentialRivers == null)
 					{
-						this.tiles[num2].rivers = new List<Tile.RiverLink>();
+						this.tiles[num2].potentialRivers = new List<Tile.RiverLink>();
 					}
-					if (this.tiles[tileNeighbor2].rivers == null)
+					if (this.tiles[tileNeighbor2].potentialRivers == null)
 					{
-						this.tiles[tileNeighbor2].rivers = new List<Tile.RiverLink>();
+						this.tiles[tileNeighbor2].potentialRivers = new List<Tile.RiverLink>();
 					}
-					this.tiles[num2].rivers.Add(new Tile.RiverLink
+					this.tiles[num2].potentialRivers.Add(new Tile.RiverLink
 					{
 						neighbor = tileNeighbor2,
 						river = byShortHash2
 					});
-					this.tiles[tileNeighbor2].rivers.Add(new Tile.RiverLink
+					this.tiles[tileNeighbor2].potentialRivers.Add(new Tile.RiverLink
 					{
 						neighbor = num2,
 						river = byShortHash2

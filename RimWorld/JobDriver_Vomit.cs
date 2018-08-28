@@ -10,30 +10,17 @@ namespace RimWorld
 	{
 		private int ticksLeft;
 
-		private PawnPosture lastPosture;
-
-		public override PawnPosture Posture
+		public override void SetInitialPosture()
 		{
-			get
-			{
-				return this.lastPosture;
-			}
-		}
-
-		public override void Notify_LastPosture(PawnPosture posture, LayingDownState layingDown)
-		{
-			this.lastPosture = posture;
-			this.layingDown = layingDown;
 		}
 
 		public override void ExposeData()
 		{
 			base.ExposeData();
 			Scribe_Values.Look<int>(ref this.ticksLeft, "ticksLeft", 0, false);
-			Scribe_Values.Look<PawnPosture>(ref this.lastPosture, "lastPosture", PawnPosture.Standing, false);
 		}
 
-		public override bool TryMakePreToilReservations()
+		public override bool TryMakePreToilReservations(bool errorOnFailed)
 		{
 			return true;
 		}
@@ -69,7 +56,7 @@ namespace RimWorld
 			{
 				if (this.$this.ticksLeft % 150 == 149)
 				{
-					FilthMaker.MakeFilth(this.$this.job.targetA.Cell, this.$this.Map, ThingDefOf.FilthVomit, this.$this.pawn.LabelIndefinite(), 1);
+					FilthMaker.MakeFilth(this.$this.job.targetA.Cell, this.$this.Map, ThingDefOf.Filth_Vomit, this.$this.pawn.LabelIndefinite(), 1);
 					if (this.$this.pawn.needs.food.CurLevelPercentage > 0.1f)
 					{
 						this.$this.pawn.needs.food.CurLevel -= this.$this.pawn.needs.food.MaxLevel * 0.04f;
@@ -87,7 +74,7 @@ namespace RimWorld
 			};
 			to.defaultCompleteMode = ToilCompleteMode.Never;
 			to.WithEffect(EffecterDefOf.Vomit, TargetIndex.A);
-			to.PlaySustainerOrSound(() => SoundDef.Named("Vomit"));
+			to.PlaySustainerOrSound(() => SoundDefOf.Vomit);
 			yield return to;
 		}
 	}

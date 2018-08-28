@@ -97,7 +97,7 @@ namespace RimWorld
 		public IEnumerable<Thing> ColonyThingsWillingToBuy(Pawn playerNegotiator)
 		{
 			IEnumerable<Thing> items = from x in this.pawn.Map.listerThings.AllThings
-			where TradeUtility.EverTradeable(x.def) && x.def.category == ThingCategory.Item && !x.Position.Fogged(x.Map) && (this.$this.pawn.Map.areaManager.Home[x.Position] || x.IsInAnyStorage()) && TradeUtility.TradeableNow(x) && this.$this.ReachableForTrade(x)
+			where x.def.category == ThingCategory.Item && TradeUtility.PlayerSellableNow(x) && !x.Position.Fogged(x.Map) && (this.$this.pawn.Map.areaManager.Home[x.Position] || x.IsInAnyStorage()) && this.$this.ReachableForTrade(x)
 			select x;
 			foreach (Thing t in items)
 			{
@@ -119,7 +119,7 @@ namespace RimWorld
 		{
 			if (this.Goods.Contains(toGive))
 			{
-				Log.Error("Tried to add " + toGive + " to stock (pawn's trader tracker), but it's already here.");
+				Log.Error("Tried to add " + toGive + " to stock (pawn's trader tracker), but it's already here.", false);
 				return;
 			}
 			Pawn pawn = toGive as Pawn;
@@ -156,7 +156,7 @@ namespace RimWorld
 				Lord lord = pawn.GetLord();
 				if (lord != null)
 				{
-					lord.Notify_PawnLost(pawn, PawnLostCondition.Undefined);
+					lord.Notify_PawnLost(pawn, PawnLostCondition.Undefined, null);
 				}
 				if (this.soldPrisoners.Contains(pawn))
 				{
@@ -169,7 +169,7 @@ namespace RimWorld
 				Map mapHeld = toGive.MapHeld;
 				Thing thing = toGive.SplitOff(countToGive);
 				thing.PreTraded(TradeAction.PlayerBuys, playerNegotiator, this.pawn);
-				if (GenPlace.TryPlaceThing(thing, positionHeld, mapHeld, ThingPlaceMode.Near, null))
+				if (GenPlace.TryPlaceThing(thing, positionHeld, mapHeld, ThingPlaceMode.Near, null, null))
 				{
 					Lord lord2 = this.pawn.GetLord();
 					if (lord2 != null)
@@ -185,7 +185,7 @@ namespace RimWorld
 						thing,
 						" at ",
 						positionHeld
-					}));
+					}), false);
 					thing.Destroy(DestroyMode.Vanish);
 				}
 			}
@@ -195,7 +195,7 @@ namespace RimWorld
 		{
 			if (!newPawn.Spawned)
 			{
-				GenSpawn.Spawn(newPawn, this.pawn.Position, this.pawn.Map);
+				GenSpawn.Spawn(newPawn, this.pawn.Position, this.pawn.Map, WipeMode.Vanish);
 			}
 			if (newPawn.Faction != this.pawn.Faction)
 			{
@@ -218,7 +218,7 @@ namespace RimWorld
 					", but ",
 					this.pawn,
 					" has no lord. Traders without lord can't buy pawns."
-				}));
+				}), false);
 				return;
 			}
 			if (newPawn.RaceProps.Humanlike)

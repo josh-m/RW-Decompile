@@ -48,7 +48,7 @@ namespace Verse
 			}
 			if (hex.Length != 6 && hex.Length != 8)
 			{
-				Log.Error(hex + " is not a valid hex color.");
+				Log.Error(hex + " is not a valid hex color.", false);
 				return Color.white;
 			}
 			int r = int.Parse(hex.Substring(0, 2), NumberStyles.HexNumber);

@@ -80,7 +80,7 @@ namespace RimWorld
 			Rect rect3 = new Rect(200f, num, 200f, 30f);
 			if (Widgets.ButtonText(rect3, "RandomizeSeed".Translate(), true, false, true))
 			{
-				SoundDefOf.TickTiny.PlayOneShotOnCamera(null);
+				SoundDefOf.Tick_Tiny.PlayOneShotOnCamera(null);
 				this.seedString = GenText.RandomSeedString();
 			}
 			num += 40f;
@@ -105,7 +105,7 @@ namespace RimWorld
 							this.planetCoverage = coverage;
 							if (this.planetCoverage == 1f)
 							{
-								Messages.Message("MessageMaxPlanetCoveragePerformanceWarning".Translate(), MessageTypeDefOf.CautionInput);
+								Messages.Message("MessageMaxPlanetCoveragePerformanceWarning".Translate(), MessageTypeDefOf.CautionInput, false);
 							}
 						}
 					}, MenuOptionPriority.Default, null, null, 0f, null, null);

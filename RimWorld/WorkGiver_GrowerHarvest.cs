@@ -14,13 +14,30 @@ namespace RimWorld
 			}
 		}
 
-		public override bool HasJobOnCell(Pawn pawn, IntVec3 c)
+		public override bool HasJobOnCell(Pawn pawn, IntVec3 c, bool forced = false)
 		{
 			Plant plant = c.GetPlant(pawn.Map);
-			return plant != null && !plant.IsForbidden(pawn) && plant.HarvestableNow && plant.LifeStage == PlantLifeStage.Mature && plant.YieldNow() > 0 && pawn.CanReserve(plant, 1, -1, null, false);
+			if (plant == null)
+			{
+				return false;
+			}
+			if (plant.IsForbidden(pawn))
+			{
+				return false;
+			}
+			if (!plant.HarvestableNow || plant.LifeStage != PlantLifeStage.Mature)
+			{
+				return false;
+			}
+			if (!plant.CanYieldNow())
+			{
+				return false;
+			}
+			LocalTargetInfo target = plant;
+			return pawn.CanReserve(target, 1, -1, null, forced);
 		}
 
-		public override Job JobOnCell(Pawn pawn, IntVec3 c)
+		public override Job JobOnCell(Pawn pawn, IntVec3 c, bool forced = false)
 		{
 			Job job = new Job(JobDefOf.Harvest);
 			Map map = pawn.Map;
@@ -28,18 +45,21 @@ namespace RimWorld
 			float num = 0f;
 			for (int i = 0; i < 40; i++)
 			{
-				IntVec3 c2 = c + GenRadial.RadialPattern[i];
-				if (c.GetRoom(map, RegionType.Set_Passable) == room)
+				IntVec3 intVec = c + GenRadial.RadialPattern[i];
+				if (intVec.GetRoom(map, RegionType.Set_Passable) == room)
 				{
-					if (this.HasJobOnCell(pawn, c2))
+					if (this.HasJobOnCell(pawn, intVec, false))
 					{
-						Plant plant = c2.GetPlant(map);
-						num += plant.def.plant.harvestWork;
-						if (num > 2400f)
+						Plant plant = intVec.GetPlant(map);
+						if (!(intVec != c) || plant.def == WorkGiver_Grower.CalculateWantedPlantDef(intVec, map))
 						{
-							break;
+							num += plant.def.plant.harvestWork;
+							if (intVec != c && num > 2400f)
+							{
+								break;
+							}
+							job.AddQueuedTarget(TargetIndex.A, plant);
 						}
-						job.AddQueuedTarget(TargetIndex.A, plant);
 					}
 				}
 			}

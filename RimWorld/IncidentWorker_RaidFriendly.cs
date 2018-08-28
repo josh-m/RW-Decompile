@@ -12,16 +12,16 @@ namespace RimWorld
 		{
 			IEnumerable<Faction> source = (from p in map.attackTargetsCache.TargetsHostileToColony
 			select ((Thing)p).Faction).Distinct<Faction>();
-			return base.FactionCanBeGroupSource(f, map, desperate) && !f.def.hidden && !f.HostileTo(Faction.OfPlayer) && (!source.Any<Faction>() || source.Any((Faction hf) => hf.HostileTo(f)));
+			return base.FactionCanBeGroupSource(f, map, desperate) && !f.def.hidden && f.PlayerRelationKind == FactionRelationKind.Ally && (!source.Any<Faction>() || source.Any((Faction hf) => hf.HostileTo(f)));
 		}
 
-		protected override bool CanFireNowSub(IIncidentTarget target)
+		protected override bool CanFireNowSub(IncidentParms parms)
 		{
-			if (!base.CanFireNowSub(target))
+			if (!base.CanFireNowSub(parms))
 			{
 				return false;
 			}
-			Map map = (Map)target;
+			Map map = (Map)parms.target;
 			return map.attackTargetsCache.TargetsHostileToColony.Where(new Func<IAttackTarget, bool>(GenHostility.IsActiveThreatToPlayer)).Sum(delegate(IAttackTarget p)
 			{
 				Pawn pawn = p as Pawn;
@@ -44,11 +44,11 @@ namespace RimWorld
 			{
 				return false;
 			}
-			parms.faction = base.CandidateFactions(map, false).RandomElementByWeight((Faction fac) => fac.PlayerGoodwill + 120.000008f);
+			parms.faction = base.CandidateFactions(map, false).RandomElementByWeight((Faction fac) => (float)fac.PlayerGoodwill + 120.000008f);
 			return true;
 		}
 
-		protected override void ResolveRaidStrategy(IncidentParms parms)
+		protected override void ResolveRaidStrategy(IncidentParms parms, PawnGroupKindDef groupKind)
 		{
 			if (parms.raidStrategy != null)
 			{
@@ -59,7 +59,10 @@ namespace RimWorld
 
 		protected override void ResolveRaidPoints(IncidentParms parms)
 		{
-			parms.points = (float)Rand.Range(400, 800);
+			if (parms.points <= 0f)
+			{
+				parms.points = StorytellerUtility.DefaultThreatPointsNow(parms.target);
+			}
 		}
 
 		protected override string GetLetterLabel(IncidentParms parms)
@@ -69,38 +72,7 @@ namespace RimWorld
 
 		protected override string GetLetterText(IncidentParms parms, List<Pawn> pawns)
 		{
-			string text = null;
-			PawnsArriveMode raidArrivalMode = parms.raidArrivalMode;
-			if (raidArrivalMode != PawnsArriveMode.EdgeWalkIn)
-			{
-				if (raidArrivalMode != PawnsArriveMode.EdgeDrop)
-				{
-					if (raidArrivalMode == PawnsArriveMode.CenterDrop)
-					{
-						text = "FriendlyRaidCenterDrop".Translate(new object[]
-						{
-							parms.faction.def.pawnsPlural,
-							parms.faction.Name
-						});
-					}
-				}
-				else
-				{
-					text = "FriendlyRaidEdgeDrop".Translate(new object[]
-					{
-						parms.faction.def.pawnsPlural,
-						parms.faction.Name
-					});
-				}
-			}
-			else
-			{
-				text = "FriendlyRaidWalkIn".Translate(new object[]
-				{
-					parms.faction.def.pawnsPlural,
-					parms.faction.Name
-				});
-			}
+			string text = string.Format(parms.raidArrivalMode.textFriendly, parms.faction.def.pawnsPlural, parms.faction.Name);
 			text += "\n\n";
 			text += parms.raidStrategy.arrivalTextFriendly;
 			Pawn pawn = pawns.Find((Pawn x) => x.Faction.leader == x);
@@ -125,6 +97,7 @@ namespace RimWorld
 		{
 			return "LetterRelatedPawnsRaidFriendly".Translate(new object[]
 			{
+				Faction.OfPlayer.def.pawnsPlural,
 				parms.faction.def.pawnsPlural
 			});
 		}

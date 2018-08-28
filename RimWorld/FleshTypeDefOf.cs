@@ -10,5 +10,10 @@ namespace RimWorld
 		public static FleshTypeDef Mechanoid;
 
 		public static FleshTypeDef Insectoid;
+
+		static FleshTypeDefOf()
+		{
+			DefOfHelper.EnsureInitializedInCtor(typeof(FleshTypeDefOf));
+		}
 	}
 }

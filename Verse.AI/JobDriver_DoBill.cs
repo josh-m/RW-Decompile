@@ -52,10 +52,17 @@ namespace Verse.AI
 			Scribe_Values.Look<int>(ref this.ticksSpentDoingRecipeWork, "ticksSpentDoingRecipeWork", 0, false);
 		}
 
-		public override bool TryMakePreToilReservations()
+		public override bool TryMakePreToilReservations(bool errorOnFailed)
 		{
+			Pawn pawn = this.pawn;
+			LocalTargetInfo target = this.job.GetTarget(TargetIndex.A);
+			Job job = this.job;
+			if (!pawn.Reserve(target, job, 1, -1, null, errorOnFailed))
+			{
+				return false;
+			}
 			this.pawn.ReserveAsManyAsPossible(this.job.GetTargetQueue(TargetIndex.B), this.job, 1, -1, null);
-			return this.pawn.Reserve(this.job.GetTarget(TargetIndex.A), this.job, 1, -1, null);
+			return true;
 		}
 
 		[DebuggerHidden]
@@ -118,7 +125,7 @@ namespace Verse.AI
 			yield return Toils_Recipe.MakeUnfinishedThingIfNeeded();
 			yield return Toils_Recipe.DoRecipeWork().FailOnDespawnedNullOrForbiddenPlacedThings().FailOnCannotTouch(TargetIndex.A, PathEndMode.InteractionCell);
 			yield return Toils_Recipe.FinishRecipeAndStartStoringProduct();
-			if (!this.job.RecipeDef.products.NullOrEmpty<ThingCountClass>() || !this.job.RecipeDef.specialProducts.NullOrEmpty<SpecialProductType>())
+			if (!this.job.RecipeDef.products.NullOrEmpty<ThingDefCountClass>() || !this.job.RecipeDef.specialProducts.NullOrEmpty<SpecialProductType>())
 			{
 				yield return Toils_Reserve.Reserve(TargetIndex.B, 1, -1, null);
 				Toil carryToCell = Toils_Haul.CarryHauledThingToCell(TargetIndex.B);
@@ -145,7 +152,7 @@ namespace Verse.AI
 				Pawn actor = toil.actor;
 				if (actor.carryTracker.CarriedThing == null)
 				{
-					Log.Error("JumpToAlsoCollectTargetInQueue run on " + actor + " who is not carrying something.");
+					Log.Error("JumpToAlsoCollectTargetInQueue run on " + actor + " who is not carrying something.", false);
 					return;
 				}
 				if (actor.carryTracker.Full)

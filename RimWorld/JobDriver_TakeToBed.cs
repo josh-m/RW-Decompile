@@ -29,9 +29,26 @@ namespace RimWorld
 			}
 		}
 
-		public override bool TryMakePreToilReservations()
+		public override bool TryMakePreToilReservations(bool errorOnFailed)
 		{
-			return this.pawn.Reserve(this.Takee, this.job, 1, -1, null) && this.pawn.Reserve(this.DropBed, this.job, this.DropBed.SleepingSlotsCount, 0, null);
+			Pawn pawn = this.pawn;
+			LocalTargetInfo target = this.Takee;
+			Job job = this.job;
+			bool arg_6A_0;
+			if (pawn.Reserve(target, job, 1, -1, null, errorOnFailed))
+			{
+				pawn = this.pawn;
+				target = this.DropBed;
+				job = this.job;
+				int sleepingSlotsCount = this.DropBed.SleepingSlotsCount;
+				int stackCount = 0;
+				arg_6A_0 = pawn.Reserve(target, job, sleepingSlotsCount, stackCount, null, errorOnFailed);
+			}
+			else
+			{
+				arg_6A_0 = false;
+			}
+			return arg_6A_0;
 		}
 
 		[DebuggerHidden]
@@ -76,7 +93,7 @@ namespace RimWorld
 						{
 							lord.Notify_PawnAttemptArrested(pawn);
 						}
-						GenClamor.DoClamor(pawn, 10f, ClamorType.Harm);
+						GenClamor.DoClamor(pawn, 10f, ClamorDefOf.Harm);
 						if (this.$this.job.def == JobDefOf.Arrest && !pawn.CheckAcceptArrest(this.$this.pawn))
 						{
 							this.$this.pawn.jobs.EndCurrentJob(JobCondition.Incompletable, true);
@@ -136,20 +153,7 @@ namespace RimWorld
 				}
 				if (!this.Takee.IsPrisonerOfColony)
 				{
-					if (this.Takee.Faction != null)
-					{
-						this.Takee.Faction.Notify_MemberCaptured(this.Takee, this.pawn.Faction);
-					}
-					this.Takee.guest.SetGuestStatus(Faction.OfPlayer, true);
-					if (this.Takee.guest.IsPrisoner)
-					{
-						TaleRecorder.RecordTale(TaleDefOf.Captured, new object[]
-						{
-							this.pawn,
-							this.Takee
-						});
-						this.pawn.records.Increment(RecordDefOf.PeopleCaptured);
-					}
+					this.Takee.guest.CapturedBy(Faction.OfPlayer, this.pawn);
 				}
 			}
 		}

@@ -29,7 +29,7 @@ namespace Verse
 
 		public override void Regenerate()
 		{
-			float y = Altitudes.AltitudeFor(AltitudeLayer.Zone);
+			float y = AltitudeLayer.Zone.AltitudeFor();
 			ZoneManager zoneManager = base.Map.zoneManager;
 			CellRect cellRect = new CellRect(this.section.botLeft.x, this.section.botLeft.z, 17, 17);
 			cellRect.ClipInsideMap(base.Map);

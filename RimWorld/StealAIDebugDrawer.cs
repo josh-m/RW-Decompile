@@ -30,12 +30,12 @@ namespace RimWorld
 			float num = StealAIUtility.StartStealingMarketValueThreshold(StealAIDebugDrawer.debugDrawLord);
 			if (lord != StealAIDebugDrawer.debugDrawLord)
 			{
-				foreach (IntVec3 current in Find.VisibleMap.AllCells)
+				foreach (IntVec3 current in Find.CurrentMap.AllCells)
 				{
-					StealAIDebugDrawer.debugDrawGrid[current] = (StealAIDebugDrawer.TotalMarketValueAround(current, Find.VisibleMap, StealAIDebugDrawer.debugDrawLord.ownedPawns.Count) > num);
+					StealAIDebugDrawer.debugDrawGrid[current] = (StealAIDebugDrawer.TotalMarketValueAround(current, Find.CurrentMap, StealAIDebugDrawer.debugDrawLord.ownedPawns.Count) > num);
 				}
 			}
-			foreach (IntVec3 current2 in Find.VisibleMap.AllCells)
+			foreach (IntVec3 current2 in Find.CurrentMap.AllCells)
 			{
 				if (StealAIDebugDrawer.debugDrawGrid[current2])
 				{
@@ -80,7 +80,7 @@ namespace RimWorld
 					IntVec3 intVec = thing.Position + GenRadial.RadialPattern[i];
 					if (intVec.InBounds(thing.Map))
 					{
-						StealAIDebugDrawer.debugDrawGrid[intVec] = (StealAIDebugDrawer.TotalMarketValueAround(intVec, Find.VisibleMap, StealAIDebugDrawer.debugDrawLord.ownedPawns.Count) > num2);
+						StealAIDebugDrawer.debugDrawGrid[intVec] = (StealAIDebugDrawer.TotalMarketValueAround(intVec, Find.CurrentMap, StealAIDebugDrawer.debugDrawLord.ownedPawns.Count) > num2);
 					}
 				}
 			}
@@ -115,7 +115,7 @@ namespace RimWorld
 		private static Lord FindHostileLord()
 		{
 			Lord lord = null;
-			List<Lord> lords = Find.VisibleMap.lordManager.lords;
+			List<Lord> lords = Find.CurrentMap.lordManager.lords;
 			for (int i = 0; i < lords.Count; i++)
 			{
 				if (lords[i].faction != null && lords[i].faction.HostileTo(Faction.OfPlayer))
@@ -133,11 +133,11 @@ namespace RimWorld
 		{
 			if (StealAIDebugDrawer.debugDrawGrid == null)
 			{
-				StealAIDebugDrawer.debugDrawGrid = new BoolGrid(Find.VisibleMap);
+				StealAIDebugDrawer.debugDrawGrid = new BoolGrid(Find.CurrentMap);
 			}
-			else if (!StealAIDebugDrawer.debugDrawGrid.MapSizeMatches(Find.VisibleMap))
+			else if (!StealAIDebugDrawer.debugDrawGrid.MapSizeMatches(Find.CurrentMap))
 			{
-				StealAIDebugDrawer.debugDrawGrid.ClearAndResizeTo(Find.VisibleMap);
+				StealAIDebugDrawer.debugDrawGrid.ClearAndResizeTo(Find.CurrentMap);
 			}
 		}
 	}

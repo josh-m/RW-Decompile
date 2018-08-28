@@ -16,7 +16,7 @@ namespace RimWorld.Planet
 			{
 				if (this.drawingNow)
 				{
-					Log.Warning("Cannot register drawable " + o + " while drawing is in progress. WorldObjects shouldn't be spawned in Draw methods.");
+					Log.Warning("Cannot register drawable " + o + " while drawing is in progress. WorldObjects shouldn't be spawned in Draw methods.", false);
 				}
 				this.drawObjects.Add(o);
 			}
@@ -28,7 +28,7 @@ namespace RimWorld.Planet
 			{
 				if (this.drawingNow)
 				{
-					Log.Warning("Cannot deregister drawable " + o + " while drawing is in progress. WorldObjects shouldn't be despawned in Draw methods.");
+					Log.Warning("Cannot deregister drawable " + o + " while drawing is in progress. WorldObjects shouldn't be despawned in Draw methods.", false);
 				}
 				this.drawObjects.Remove(o);
 			}
@@ -56,13 +56,13 @@ namespace RimWorld.Planet
 							current,
 							": ",
 							ex
-						}));
+						}), false);
 					}
 				}
 			}
 			catch (Exception arg)
 			{
-				Log.Error("Exception drawing dynamic world objects: " + arg);
+				Log.Error("Exception drawing dynamic world objects: " + arg, false);
 			}
 			this.drawingNow = false;
 		}

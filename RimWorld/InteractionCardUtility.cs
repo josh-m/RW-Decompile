@@ -9,11 +9,17 @@ namespace RimWorld
 	{
 		private static Vector2 logScrollPosition = Vector2.zero;
 
+		public const float ImageSize = 26f;
+
+		public const float ImagePadRight = 3f;
+
+		public const float TextOffset = 29f;
+
 		private static List<Pair<string, int>> logStrings = new List<Pair<string, int>>();
 
 		public static void DrawInteractionsLog(Rect rect, Pawn pawn, List<LogEntry> entries, int maxEntries)
 		{
-			float width = rect.width - 26f - 3f - 16f - 10f;
+			float width = rect.width - 29f - 16f - 10f;
 			InteractionCardUtility.logStrings.Clear();
 			float num = 0f;
 			int num2 = 0;
@@ -21,7 +27,7 @@ namespace RimWorld
 			{
 				if (entries[i].Concerns(pawn))
 				{
-					string text = entries[i].ToGameStringFromPOV(pawn);
+					string text = entries[i].ToGameStringFromPOV(pawn, false);
 					InteractionCardUtility.logStrings.Add(new Pair<string, int>(text, i));
 					num += Mathf.Max(26f, Text.CalcHeight(text, width));
 					num2++;
@@ -60,7 +66,7 @@ namespace RimWorld
 				GUI.color = Color.white;
 				num3 += num4;
 			}
-			GUI.EndScrollView();
+			Widgets.EndScrollView();
 		}
 	}
 }

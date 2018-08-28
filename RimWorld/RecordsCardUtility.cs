@@ -71,7 +71,7 @@ namespace RimWorld
 			string text;
 			if (record.type == RecordType.Time)
 			{
-				text = pawn.records.GetAsInt(record).ToStringTicksToPeriod(true, false, true);
+				text = pawn.records.GetAsInt(record).ToStringTicksToPeriod();
 			}
 			else
 			{

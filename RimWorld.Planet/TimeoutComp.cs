@@ -65,7 +65,7 @@ namespace RimWorld.Planet
 			{
 				return "WorldObjectTimeout".Translate(new object[]
 				{
-					this.TicksLeft.ToStringTicksToPeriod(false, false, false)
+					this.TicksLeft.ToStringTicksToPeriod()
 				});
 			}
 			return null;

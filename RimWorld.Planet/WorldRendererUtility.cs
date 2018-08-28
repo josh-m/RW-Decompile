@@ -14,7 +14,7 @@ namespace RimWorld.Planet
 				{
 					return WorldRenderMode.None;
 				}
-				if (Current.ProgramState == ProgramState.Playing && Find.VisibleMap == null)
+				if (Current.ProgramState == ProgramState.Playing && Find.CurrentMap == null)
 				{
 					return WorldRenderMode.Planet;
 				}
@@ -93,7 +93,7 @@ namespace RimWorld.Planet
 		{
 			if (material == null)
 			{
-				Log.Warning("Tried to draw quad with null material.");
+				Log.Warning("Tried to draw quad with null material.", false);
 				return;
 			}
 			Vector3 normalized = pos.normalized;

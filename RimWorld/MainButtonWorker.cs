@@ -8,6 +8,8 @@ namespace RimWorld
 	{
 		public MainButtonDef def;
 
+		private const float CompactModeMargin = 2f;
+
 		public virtual float ButtonBarPercent
 		{
 			get
@@ -30,8 +32,14 @@ namespace RimWorld
 		public virtual void DoButton(Rect rect)
 		{
 			Text.Font = GameFont.Small;
-			string labelCap = this.def.LabelCap;
-			if ((!this.def.validWithoutMap || this.def == MainButtonDefOf.World) && Find.VisibleMap == null)
+			string text = this.def.LabelCap;
+			float num = this.def.LabelCapWidth;
+			if (num > rect.width - 2f)
+			{
+				text = this.def.ShortenedLabelCap;
+				num = this.def.ShortenedLabelCapWidth;
+			}
+			if ((!this.def.validWithoutMap || this.def == MainButtonDefOf.World) && Find.CurrentMap == null)
 			{
 				Widgets.DrawAtlas(rect, Widgets.ButtonSubtleAtlas);
 				if (Event.current.type == EventType.MouseDown && Mouse.IsOver(rect))
@@ -41,10 +49,11 @@ namespace RimWorld
 			}
 			else
 			{
-				string label = labelCap;
-				float buttonBarPercent = this.ButtonBarPercent;
-				SoundDef mouseoverCategory = SoundDefOf.MouseoverCategory;
-				if (Widgets.ButtonTextSubtle(rect, label, buttonBarPercent, -1f, mouseoverCategory, default(Vector2)))
+				bool flag = num > 0.85f * rect.width - 1f;
+				Rect rect2 = rect;
+				string label = text;
+				float textLeftMargin = (!flag) ? -1f : 2f;
+				if (Widgets.ButtonTextSubtle(rect2, label, this.ButtonBarPercent, textLeftMargin, SoundDefOf.Mouseover_Category, default(Vector2)))
 				{
 					this.InterfaceTryActivate();
 				}

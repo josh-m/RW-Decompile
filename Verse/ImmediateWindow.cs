@@ -30,7 +30,8 @@ namespace Verse
 			this.soundAppear = null;
 			this.soundClose = null;
 			this.closeOnClickedOutside = false;
-			this.closeOnEscapeKey = false;
+			this.closeOnAccept = false;
+			this.closeOnCancel = false;
 			this.focusWhenOpened = false;
 			this.preventCameraMotion = false;
 		}

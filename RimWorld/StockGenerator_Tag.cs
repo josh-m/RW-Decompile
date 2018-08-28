@@ -8,9 +8,12 @@ namespace RimWorld
 {
 	public class StockGenerator_Tag : StockGenerator
 	{
+		[NoTranslate]
 		private string tradeTag;
 
 		private IntRange thingDefCountRange = IntRange.one;
+
+		private List<ThingDef> excludedThingDefs;
 
 		[DebuggerHidden]
 		public override IEnumerable<Thing> GenerateThings(int forTile)
@@ -21,7 +24,7 @@ namespace RimWorld
 			{
 				ThingDef chosenThingDef;
 				if (!(from d in DefDatabase<ThingDef>.AllDefs
-				where this.$this.HandlesThingDef(d) && d.tradeability == Tradeability.Stockable && !generatedDefs.Contains(d)
+				where this.$this.HandlesThingDef(d) && d.tradeability.TraderCanSell() && (this.$this.excludedThingDefs == null || !this.$this.excludedThingDefs.Contains(d)) && !generatedDefs.Contains(d)
 				select d).TryRandomElement(out chosenThingDef))
 				{
 					break;
@@ -36,7 +39,7 @@ namespace RimWorld
 
 		public override bool HandlesThingDef(ThingDef thingDef)
 		{
-			return thingDef.tradeTags != null && thingDef.tradeability != Tradeability.Never && thingDef.techLevel <= this.maxTechLevelBuy && thingDef.tradeTags.Contains(this.tradeTag);
+			return thingDef.tradeTags != null && thingDef.tradeability != Tradeability.None && thingDef.techLevel <= this.maxTechLevelBuy && thingDef.tradeTags.Contains(this.tradeTag);
 		}
 	}
 }

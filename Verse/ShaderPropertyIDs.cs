@@ -61,5 +61,7 @@ namespace Verse
 		public static int WaterOffsetTex = Shader.PropertyToID("_WaterOffsetTex");
 
 		public static int ShadowCompositeTex = Shader.PropertyToID("_ShadowCompositeTex");
+
+		public static int FallIntensity = Shader.PropertyToID("_FallIntensity");
 	}
 }

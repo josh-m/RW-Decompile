@@ -58,7 +58,7 @@ namespace RimWorld
 			Text.Anchor = TextAnchor.UpperLeft;
 			Rect rect = new Rect(5f, 5f, 140f, 30f);
 			bool useWorkPriorities = Current.Game.playSettings.useWorkPriorities;
-			Widgets.CheckboxLabeled(rect, "ManualPriorities".Translate(), ref Current.Game.playSettings.useWorkPriorities, false);
+			Widgets.CheckboxLabeled(rect, "ManualPriorities".Translate(), ref Current.Game.playSettings.useWorkPriorities, false, null, null, false);
 			if (useWorkPriorities != Current.Game.playSettings.useWorkPriorities)
 			{
 				foreach (Pawn current in PawnsFinder.AllMapsWorldAndTemporary_Alive)

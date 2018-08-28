@@ -14,7 +14,17 @@ namespace RimWorld
 			public float minGridVal;
 		}
 
+		private float maxMineableValue = 3.40282347E+38f;
+
 		private const int MinRoofedCellsPerGroup = 20;
+
+		public override int SeedPart
+		{
+			get
+			{
+				return 1182952823;
+			}
+		}
 
 		public static ThingDef RockDefAt(IntVec3 c)
 		{
@@ -31,13 +41,13 @@ namespace RimWorld
 			}
 			if (thingDef == null)
 			{
-				Log.ErrorOnce("Did not get rock def to generate at " + c, 50812);
+				Log.ErrorOnce("Did not get rock def to generate at " + c, 50812, false);
 				thingDef = ThingDefOf.Sandstone;
 			}
 			return thingDef;
 		}
 
-		public override void Generate(Map map)
+		public override void Generate(Map map, GenStepParams parms)
 		{
 			if (map.TileInfo.WaterCovered)
 			{
@@ -66,7 +76,7 @@ namespace RimWorld
 					if (caves[current] <= 0f)
 					{
 						ThingDef def = GenStep_RocksFromGrid.RockDefAt(current);
-						GenSpawn.Spawn(def, current, map);
+						GenSpawn.Spawn(def, current, map, WipeMode.Vanish);
 					}
 					for (int i = 0; i < list.Count; i++)
 					{
@@ -103,6 +113,7 @@ namespace RimWorld
 				}
 			}
 			GenStep_ScatterLumpsMineable genStep_ScatterLumpsMineable = new GenStep_ScatterLumpsMineable();
+			genStep_ScatterLumpsMineable.maxValue = this.maxMineableValue;
 			float num3 = 10f;
 			switch (Find.WorldGrid[map.Tile].hilliness)
 			{
@@ -123,7 +134,7 @@ namespace RimWorld
 				break;
 			}
 			genStep_ScatterLumpsMineable.countPer10kCellsRange = new FloatRange(num3, num3);
-			genStep_ScatterLumpsMineable.Generate(map);
+			genStep_ScatterLumpsMineable.Generate(map, parms);
 			map.regionAndRoomUpdater.Enabled = true;
 		}
 

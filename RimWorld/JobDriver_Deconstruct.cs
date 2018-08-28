@@ -1,12 +1,17 @@
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using UnityEngine;
 using Verse;
+using Verse.AI;
 
 namespace RimWorld
 {
 	public class JobDriver_Deconstruct : JobDriver_RemoveBuilding
 	{
-		private const int MaxDeconstructWork = 3000;
+		private const float MaxDeconstructWork = 3000f;
+
+		private const float MinDeconstructWork = 20f;
 
 		protected override DesignationDef Designation
 		{
@@ -16,13 +21,23 @@ namespace RimWorld
 			}
 		}
 
-		protected override int TotalNeededWork
+		protected override float TotalNeededWork
 		{
 			get
 			{
 				Building building = base.Building;
-				int value = Mathf.RoundToInt(building.GetStatValue(StatDefOf.WorkToBuild, true));
-				return Mathf.Clamp(value, 20, 3000);
+				float statValue = building.GetStatValue(StatDefOf.WorkToBuild, true);
+				return Mathf.Clamp(statValue, 20f, 3000f);
+			}
+		}
+
+		[DebuggerHidden]
+		protected override IEnumerable<Toil> MakeNewToils()
+		{
+			this.FailOn(() => this.$this.Building == null || !this.$this.Building.DeconstructibleBy(this.$this.pawn.Faction));
+			foreach (Toil t in base.MakeNewToils())
+			{
+				yield return t;
 			}
 		}
 
@@ -34,9 +49,9 @@ namespace RimWorld
 
 		protected override void TickAction()
 		{
-			if (base.Target.def.CostListAdjusted(base.Target.Stuff, true).Count > 0)
+			if (base.Building.def.CostListAdjusted(base.Building.Stuff, true).Count > 0)
 			{
-				this.pawn.skills.Learn(SkillDefOf.Construction, 0.275f, false);
+				this.pawn.skills.Learn(SkillDefOf.Construction, 0.25f, false);
 			}
 		}
 	}

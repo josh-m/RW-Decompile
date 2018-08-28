@@ -31,6 +31,17 @@ namespace RimWorld
 			}
 		}
 
+		protected override bool CanFireNowSub(IncidentParms parms)
+		{
+			if (!base.CanFireNowSub(parms))
+			{
+				return false;
+			}
+			Map map = (Map)parms.target;
+			IntVec3 intVec;
+			return this.TryFindShipChunkDropCell(map.Center, map, 999999, out intVec);
+		}
+
 		protected override bool TryExecuteWorker(IncidentParms parms)
 		{
 			Map map = (Map)parms.target;
@@ -40,7 +51,7 @@ namespace RimWorld
 				return false;
 			}
 			this.SpawnShipChunks(intVec, map, this.RandomCountToDrop);
-			Messages.Message("MessageShipChunkDrop".Translate(), new TargetInfo(intVec, map, false), MessageTypeDefOf.NeutralEvent);
+			Messages.Message("MessageShipChunkDrop".Translate(), new TargetInfo(intVec, map, false), MessageTypeDefOf.NeutralEvent, true);
 			return true;
 		}
 
@@ -65,7 +76,7 @@ namespace RimWorld
 		private bool TryFindShipChunkDropCell(IntVec3 nearLoc, Map map, int maxDist, out IntVec3 pos)
 		{
 			ThingDef shipChunkIncoming = ThingDefOf.ShipChunkIncoming;
-			return CellFinderLoose.TryFindSkyfallerCell(shipChunkIncoming, map, out pos, 10, nearLoc, maxDist, true, false, false, false, null);
+			return CellFinderLoose.TryFindSkyfallerCell(shipChunkIncoming, map, out pos, 10, nearLoc, maxDist, true, false, false, false, true, false, null);
 		}
 	}
 }

@@ -6,7 +6,7 @@ namespace Verse.AI
 	{
 		public override bool StateCanOccur(Pawn pawn)
 		{
-			return base.StateCanOccur(pawn) && MurderousRageMentalStateUtility.FindPawn(pawn) != null;
+			return base.StateCanOccur(pawn) && MurderousRageMentalStateUtility.FindPawnToKill(pawn) != null;
 		}
 	}
 }

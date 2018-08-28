@@ -15,13 +15,15 @@ namespace RimWorld
 
 		public bool saved = true;
 
+		public bool canBePlayerHome;
+
 		public List<WorldObjectCompProperties> comps = new List<WorldObjectCompProperties>();
 
 		public bool allowCaravanIncidentsWhichGenerateMap;
 
 		public bool isTempIncidentMapOwner;
 
-		public List<IncidentTargetTypeDef> incidentTargetTypes;
+		public List<IncidentTargetTagDef> IncidentTargetTags;
 
 		public bool selectable = true;
 
@@ -51,6 +53,8 @@ namespace RimWorld
 
 		[Unsaved]
 		private Texture2D expandingIconTextureInt;
+
+		public bool expandMore;
 
 		public bool blockExitGridUntilBattleIsWon;
 
@@ -109,7 +113,7 @@ namespace RimWorld
 							this.inspectorTabs[i],
 							": ",
 							ex
-						}));
+						}), false);
 					}
 				}
 			}
@@ -137,6 +141,10 @@ namespace RimWorld
 				{
 					yield return e2;
 				}
+			}
+			if (this.expandMore && !this.expandingIcon)
+			{
+				yield return "has expandMore but doesn't have any expanding icon";
 			}
 		}
 	}

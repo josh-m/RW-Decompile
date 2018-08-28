@@ -8,13 +8,13 @@ namespace RimWorld
 	{
 		public override float CalculateCapacityLevel(HediffSet diffSet, List<PawnCapacityUtility.CapacityImpactor> impactors = null)
 		{
-			string tag = "MetabolismSource";
-			return PawnCapacityUtility.CalculateTagEfficiency(diffSet, tag, 3.40282347E+38f, impactors);
+			BodyPartTagDef metabolismSource = BodyPartTagDefOf.MetabolismSource;
+			return PawnCapacityUtility.CalculateTagEfficiency(diffSet, metabolismSource, 3.40282347E+38f, default(FloatRange), impactors, -1f);
 		}
 
 		public override bool CanHaveCapacity(BodyDef body)
 		{
-			return body.HasPartWithTag("MetabolismSource");
+			return body.HasPartWithTag(BodyPartTagDefOf.MetabolismSource);
 		}
 	}
 }

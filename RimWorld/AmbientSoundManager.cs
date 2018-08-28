@@ -15,7 +15,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return Find.SoundRoot.sustainerManager.SustainerExists(SoundDefOf.AmbientSpace);
+				return Find.SoundRoot.sustainerManager.SustainerExists(SoundDefOf.Ambient_Space);
 			}
 		}
 
@@ -23,7 +23,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return Find.SoundRoot.sustainerManager.SustainerExists(SoundDefOf.AmbientAltitudeWind);
+				return Find.SoundRoot.sustainerManager.SustainerExists(SoundDefOf.Ambient_AltitudeWind);
 			}
 		}
 
@@ -31,7 +31,7 @@ namespace RimWorld
 		{
 			if (!AmbientSoundManager.WorldAmbientSoundCreated)
 			{
-				SoundDefOf.AmbientSpace.TrySpawnSustainer(SoundInfo.OnCamera(MaintenanceType.None));
+				SoundDefOf.Ambient_Space.TrySpawnSustainer(SoundInfo.OnCamera(MaintenanceType.None));
 			}
 		}
 
@@ -44,7 +44,7 @@ namespace RimWorld
 		{
 			if (!AmbientSoundManager.AltitudeWindSoundCreated)
 			{
-				SoundDefOf.AmbientAltitudeWind.TrySpawnSustainer(SoundInfo.OnCamera(MaintenanceType.None));
+				SoundDefOf.Ambient_AltitudeWind.TrySpawnSustainer(SoundInfo.OnCamera(MaintenanceType.None));
 			}
 			SustainerManager sustainerManager = Find.SoundRoot.sustainerManager;
 			for (int i = 0; i < AmbientSoundManager.biomeAmbientSustainers.Count; i++)
@@ -56,9 +56,9 @@ namespace RimWorld
 				}
 			}
 			AmbientSoundManager.biomeAmbientSustainers.Clear();
-			if (Find.VisibleMap != null)
+			if (Find.CurrentMap != null)
 			{
-				List<SoundDef> soundsAmbient = Find.VisibleMap.Biome.soundsAmbient;
+				List<SoundDef> soundsAmbient = Find.CurrentMap.Biome.soundsAmbient;
 				for (int j = 0; j < soundsAmbient.Count; j++)
 				{
 					Sustainer item = soundsAmbient[j].TrySpawnSustainer(SoundInfo.OnCamera(MaintenanceType.None));

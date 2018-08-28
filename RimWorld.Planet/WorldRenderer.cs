@@ -72,18 +72,11 @@ namespace RimWorld.Planet
 		[DebuggerHidden]
 		private IEnumerable RegenerateDirtyLayersNow_Async()
 		{
-			for (int i = 0; i < this.layers.Count; i++)
-			{
-				if (this.layers[i].Dirty)
-				{
-					foreach (object result in this.layers[i].Regenerate())
-					{
-						yield return result;
-					}
-					yield return null;
-				}
-			}
-			this.asynchronousRegenerationActive = false;
+			WorldRenderer.<RegenerateDirtyLayersNow_Async>c__Iterator0 <RegenerateDirtyLayersNow_Async>c__Iterator = new WorldRenderer.<RegenerateDirtyLayersNow_Async>c__Iterator0();
+			<RegenerateDirtyLayersNow_Async>c__Iterator.$this = this;
+			WorldRenderer.<RegenerateDirtyLayersNow_Async>c__Iterator0 expr_0E = <RegenerateDirtyLayersNow_Async>c__Iterator;
+			expr_0E.$PC = -2;
+			return expr_0E;
 		}
 
 		public void Notify_StaticWorldObjectPosChanged()
@@ -107,7 +100,7 @@ namespace RimWorld.Planet
 		{
 			if (this.asynchronousRegenerationActive)
 			{
-				Log.Error("Called DrawWorldLayers() but already regenerating. This shouldn't ever happen because LongEventHandler should have stopped us.");
+				Log.Error("Called DrawWorldLayers() but already regenerating. This shouldn't ever happen because LongEventHandler should have stopped us.", false);
 				return;
 			}
 			if (this.ShouldRegenerateDirtyLayersInLongEvent)
@@ -119,7 +112,14 @@ namespace RimWorld.Planet
 			WorldRendererUtility.UpdateWorldShadersParams();
 			for (int i = 0; i < this.layers.Count; i++)
 			{
-				this.layers[i].Render();
+				try
+				{
+					this.layers[i].Render();
+				}
+				catch (Exception arg)
+				{
+					Log.Error("Error drawing WorldLayer: " + arg, false);
+				}
 			}
 		}
 

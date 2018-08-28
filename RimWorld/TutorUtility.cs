@@ -46,7 +46,7 @@ namespace RimWorld
 				while (!iterator.Done())
 				{
 					IntVec3 current = iterator.Current;
-					if (current.Fogged(map) || !current.Walkable(map) || !current.GetTerrain(map).affordances.Contains(TerrainAffordance.Heavy) || current.GetTerrain(map).fertility < minFertility || current.GetZone(map) != null || TutorUtility.ContainsBlockingThing(current, map, noItems) || current.InNoBuildEdgeArea(map) || current.InNoZoneEdgeArea(map))
+					if (current.Fogged(map) || !current.Walkable(map) || !current.GetTerrain(map).affordances.Contains(TerrainAffordanceDefOf.Heavy) || current.GetTerrain(map).fertility < minFertility || current.GetZone(map) != null || TutorUtility.ContainsBlockingThing(current, map, noItems) || current.InNoBuildEdgeArea(map) || current.InNoZoneEdgeArea(map))
 					{
 						flag = false;
 						break;
@@ -131,7 +131,7 @@ namespace RimWorld
 			if (!PlayerKnowledgeDatabase.IsComplete(conc))
 			{
 				string helpTextAdjusted = conc.HelpTextAdjusted;
-				Find.WindowStack.Add(new Dialog_MessageBox(helpTextAdjusted, null, null, null, null, null, false));
+				Find.WindowStack.Add(new Dialog_MessageBox(helpTextAdjusted, null, null, null, null, null, false, null, null));
 				PlayerKnowledgeDatabase.KnowledgeDemonstrated(conc, KnowledgeAmount.Total);
 			}
 		}

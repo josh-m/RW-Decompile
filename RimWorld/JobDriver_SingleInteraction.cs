@@ -18,9 +18,9 @@ namespace RimWorld
 			}
 		}
 
-		public override bool TryMakePreToilReservations()
+		public override bool TryMakePreToilReservations(bool errorOnFailed)
 		{
-			return this.pawn.Reserve(this.OtherPawn, this.job, 1, -1, null);
+			return true;
 		}
 
 		[DebuggerHidden]

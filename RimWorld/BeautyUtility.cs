@@ -16,6 +16,10 @@ namespace RimWorld
 
 		public static float AverageBeautyPerceptible(IntVec3 root, Map map)
 		{
+			if (!root.IsValid || !root.InBounds(map))
+			{
+				return 0f;
+			}
 			BeautyUtility.tempCountedThings.Clear();
 			float num = 0f;
 			int num2 = 0;
@@ -25,9 +29,12 @@ namespace RimWorld
 				num += BeautyUtility.CellBeauty(BeautyUtility.beautyRelevantCells[i], map, BeautyUtility.tempCountedThings);
 				num2++;
 			}
-			num /= (float)num2;
 			BeautyUtility.tempCountedThings.Clear();
-			return num;
+			if (num2 == 0)
+			{
+				return 0f;
+			}
+			return num / (float)num2;
 		}
 
 		public static void FillBeautyRelevantCells(IntVec3 root, Map map)
@@ -86,47 +93,50 @@ namespace RimWorld
 			float num2 = 0f;
 			bool flag = false;
 			List<Thing> list = map.thingGrid.ThingsListAt(c);
-			int i = 0;
-			while (i < list.Count)
+			for (int i = 0; i < list.Count; i++)
 			{
 				Thing thing = list[i];
-				if (countedThings == null)
+				if (BeautyUtility.BeautyRelevant(thing.def.category))
 				{
-					goto IL_4D;
+					if (countedThings != null)
+					{
+						if (countedThings.Contains(thing))
+						{
+							goto IL_E7;
+						}
+						countedThings.Add(thing);
+					}
+					SlotGroup slotGroup = thing.GetSlotGroup();
+					if (slotGroup == null || !slotGroup.parent.IgnoreStoredThingsBeauty)
+					{
+						float num3 = thing.GetStatValue(StatDefOf.Beauty, true);
+						if (thing is Filth && !map.roofGrid.Roofed(c))
+						{
+							num3 *= 0.3f;
+						}
+						if (thing.def.Fillage == FillCategory.Full)
+						{
+							flag = true;
+							num2 += num3;
+						}
+						else
+						{
+							num += num3;
+						}
+					}
 				}
-				if (!countedThings.Contains(thing))
-				{
-					countedThings.Add(thing);
-					goto IL_4D;
-				}
-				IL_CC:
-				i++;
-				continue;
-				IL_4D:
-				SlotGroup slotGroup = thing.GetSlotGroup();
-				if (slotGroup != null && slotGroup.parent.IgnoreStoredThingsBeauty)
-				{
-					goto IL_CC;
-				}
-				float num3 = thing.GetStatValue(StatDefOf.Beauty, true);
-				if (thing is Filth && !map.roofGrid.Roofed(c))
-				{
-					num3 *= 0.3f;
-				}
-				if (thing.def.Fillage == FillCategory.Full)
-				{
-					flag = true;
-					num2 += num3;
-					goto IL_CC;
-				}
-				num += num3;
-				goto IL_CC;
+				IL_E7:;
 			}
 			if (flag)
 			{
 				return num2;
 			}
 			return num + map.terrainGrid.TerrainAt(c).GetStatValueAbstract(StatDefOf.Beauty, null);
+		}
+
+		public static bool BeautyRelevant(ThingCategory cat)
+		{
+			return cat == ThingCategory.Building || cat == ThingCategory.Item || cat == ThingCategory.Plant || cat == ThingCategory.Filth;
 		}
 	}
 }

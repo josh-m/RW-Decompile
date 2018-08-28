@@ -19,65 +19,101 @@ namespace RimWorld
 			return null;
 		}
 
-		protected override bool CanFireNowSub(IIncidentTarget target)
+		protected override bool CanFireNowSub(IncidentParms parms)
 		{
-			return target is Map || CaravanIncidentUtility.CanFireIncidentWhichWantsToGenerateMapAt(target.Tile);
+			Map map = parms.target as Map;
+			if (map != null)
+			{
+				IntVec3 intVec;
+				return this.TryFindEntryCell(map, out intVec);
+			}
+			return CaravanIncidentUtility.CanFireIncidentWhichWantsToGenerateMapAt(parms.target.Tile);
 		}
 
 		protected override bool TryExecuteWorker(IncidentParms parms)
 		{
-			if (parms.target is Map)
+			Map map = parms.target as Map;
+			IntVec3 existingMapEdgeCell = IntVec3.Invalid;
+			if (map != null && !this.TryFindEntryCell(map, out existingMapEdgeCell))
 			{
-				return this.DoExecute(parms);
+				return false;
+			}
+			List<Pawn> generatedEnemies = this.GeneratePawns(parms);
+			if (!generatedEnemies.Any<Pawn>())
+			{
+				return false;
+			}
+			if (map != null)
+			{
+				return this.DoExecute(parms, generatedEnemies, existingMapEdgeCell);
 			}
 			LongEventHandler.QueueLongEvent(delegate
 			{
-				this.DoExecute(parms);
+				this.DoExecute(parms, generatedEnemies, existingMapEdgeCell);
 			}, "GeneratingMapForNewEncounter", false, null);
 			return true;
 		}
 
-		private bool DoExecute(IncidentParms parms)
+		private bool DoExecute(IncidentParms parms, List<Pawn> generatedEnemies, IntVec3 existingMapEdgeCell)
 		{
 			Map map = parms.target as Map;
-			IntVec3 invalid = IntVec3.Invalid;
-			if (map != null && !CellFinder.TryFindRandomEdgeCellWith((IntVec3 x) => x.Standable(map) && map.reachability.CanReachColony(x), map, CellFinder.EdgeRoadChance_Hostile, out invalid))
-			{
-				return false;
-			}
-			List<Pawn> list = this.GeneratePawns(parms);
-			if (!list.Any<Pawn>())
-			{
-				return false;
-			}
 			bool flag = false;
 			if (map == null)
 			{
-				map = CaravanIncidentUtility.SetupCaravanAttackMap((Caravan)parms.target, list);
+				map = CaravanIncidentUtility.SetupCaravanAttackMap((Caravan)parms.target, generatedEnemies, false);
 				flag = true;
 			}
 			else
 			{
-				for (int i = 0; i < list.Count; i++)
+				for (int i = 0; i < generatedEnemies.Count; i++)
 				{
-					IntVec3 loc = CellFinder.RandomSpawnCellForPawnNear(invalid, map, 4);
-					GenSpawn.Spawn(list[i], loc, map, Rot4.Random, false);
+					IntVec3 loc = CellFinder.RandomSpawnCellForPawnNear(existingMapEdgeCell, map, 4);
+					GenSpawn.Spawn(generatedEnemies[i], loc, map, Rot4.Random, WipeMode.Vanish, false);
 				}
 			}
-			this.PostProcessGeneratedPawnsAfterSpawning(list);
-			LordJob lordJob = this.CreateLordJob(list, parms);
+			this.PostProcessGeneratedPawnsAfterSpawning(generatedEnemies);
+			LordJob lordJob = this.CreateLordJob(generatedEnemies, parms);
 			if (lordJob != null)
 			{
-				LordMaker.MakeNewLord(parms.faction, lordJob, map, list);
+				LordMaker.MakeNewLord(parms.faction, lordJob, map, generatedEnemies);
 			}
-			this.SendAmbushLetter(list[0], parms);
+			string letterLabel = this.GetLetterLabel(generatedEnemies[0], parms);
+			string letterText = this.GetLetterText(generatedEnemies[0], parms);
+			PawnRelationUtility.Notify_PawnsSeenByPlayer_Letter(generatedEnemies, ref letterLabel, ref letterText, this.GetRelatedPawnsInfoLetterText(parms), true, true);
+			Find.LetterStack.ReceiveLetter(letterLabel, letterText, this.GetLetterDef(generatedEnemies[0], parms), generatedEnemies[0], parms.faction, null);
 			if (flag)
 			{
-				Find.TickManager.CurTimeSpeed = TimeSpeed.Paused;
+				Find.TickManager.Notify_GeneratedPotentiallyHostileMap();
 			}
 			return true;
 		}
 
-		protected abstract void SendAmbushLetter(Pawn anyPawn, IncidentParms parms);
+		private bool TryFindEntryCell(Map map, out IntVec3 cell)
+		{
+			return CellFinder.TryFindRandomEdgeCellWith((IntVec3 x) => x.Standable(map) && map.reachability.CanReachColony(x), map, CellFinder.EdgeRoadChance_Hostile, out cell);
+		}
+
+		protected virtual string GetLetterLabel(Pawn anyPawn, IncidentParms parms)
+		{
+			return this.def.letterLabel;
+		}
+
+		protected virtual string GetLetterText(Pawn anyPawn, IncidentParms parms)
+		{
+			return this.def.letterText;
+		}
+
+		protected virtual LetterDef GetLetterDef(Pawn anyPawn, IncidentParms parms)
+		{
+			return this.def.letterDef;
+		}
+
+		protected virtual string GetRelatedPawnsInfoLetterText(IncidentParms parms)
+		{
+			return "LetterRelatedPawnsGroupGeneric".Translate(new object[]
+			{
+				Faction.OfPlayer.def.pawnsPlural
+			});
+		}
 	}
 }

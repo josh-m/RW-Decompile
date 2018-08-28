@@ -30,7 +30,7 @@ namespace RimWorld
 				IntVec3 result;
 				if (!DropCellFinder.TryFindDropSpotNear(position, map, out result, false, false))
 				{
-					Log.Error("Could find no good TradeDropSpot near dropCenter " + position + ". Using a random standable unfogged cell.");
+					Log.Error("Could find no good TradeDropSpot near dropCenter " + position + ". Using a random standable unfogged cell.", false);
 					result = CellFinderLoose.RandomCellWith((IntVec3 c) => c.Standable(map) && !c.Fogged(map), map, 1000);
 				}
 				return result;
@@ -59,7 +59,7 @@ namespace RimWorld
 				for (int i = 0; i < list.Count; i++)
 				{
 					IntVec3 position2 = list[i].Position;
-					if (CellFinder.TryFindRandomCellNear(position2, map, num, validator, out position))
+					if (CellFinder.TryFindRandomCellNear(position2, map, num, validator, out position, -1))
 					{
 						return position;
 					}
@@ -72,7 +72,7 @@ namespace RimWorld
 			}
 			return position;
 			Block_9:
-			Log.Error("Failed to generate trade drop center. Giving random.");
+			Log.Error("Failed to generate trade drop center. Giving random.", false);
 			return CellFinderLoose.RandomCellWith(validator, map, 1000);
 		}
 
@@ -84,7 +84,7 @@ namespace RimWorld
 			}
 			Predicate<IntVec3> validator = (IntVec3 c) => DropCellFinder.IsGoodDropSpot(c, map, allowFogged, canRoofPunch) && map.reachability.CanReach(center, c, PathEndMode.OnCell, TraverseMode.PassDoors, Danger.Deadly);
 			int num = 5;
-			while (!CellFinder.TryFindRandomCellNear(center, map, num, validator, out result))
+			while (!CellFinder.TryFindRandomCellNear(center, map, num, validator, out result, -1))
 			{
 				num += 3;
 				if (num > 16)
@@ -118,7 +118,7 @@ namespace RimWorld
 			for (int i = 0; i < thingList.Count; i++)
 			{
 				Thing thing = thingList[i];
-				if (thing is IActiveDropPod || thing.def.category == ThingCategory.Skyfaller)
+				if (thing is IActiveDropPod || thing is Skyfaller)
 				{
 					return false;
 				}

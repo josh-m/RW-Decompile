@@ -6,9 +6,7 @@ namespace Verse
 	{
 		Undefined,
 		Aggro,
-		Sad,
-		Panic,
-		Indulgent,
+		Malicious,
 		Misc
 	}
 }

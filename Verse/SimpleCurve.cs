@@ -34,7 +34,7 @@ namespace Verse
 			}
 		}
 
-		public IEnumerable<CurvePoint> AllPoints
+		public List<CurvePoint> Points
 		{
 			get
 			{
@@ -135,7 +135,7 @@ namespace Verse
 		{
 			if (this.points.Count == 0)
 			{
-				Log.Error("Evaluating a SimpleCurve with no points.");
+				Log.Error("Evaluating a SimpleCurve with no points.", false);
 				return 0f;
 			}
 			if (x <= this.points[0].x)
@@ -172,12 +172,12 @@ namespace Verse
 			}
 			if (this.points[0].y != 0f)
 			{
-				Log.Warning("PeriodProbabilityFromCumulative should only run on curves whose first point is 0.");
+				Log.Warning("PeriodProbabilityFromCumulative should only run on curves whose first point is 0.", false);
 			}
 			float num = this.Evaluate(startX + span) - this.Evaluate(startX);
 			if (num < 0f)
 			{
-				Log.Error("PeriodicProbability got negative probability from " + this + ": slope should never be negative.");
+				Log.Error("PeriodicProbability got negative probability from " + this + ": slope should never be negative.", false);
 				num = 0f;
 			}
 			if (num > 1f)

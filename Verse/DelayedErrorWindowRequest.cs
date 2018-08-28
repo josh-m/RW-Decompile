@@ -20,11 +20,11 @@ namespace Verse
 			{
 				for (int i = 0; i < DelayedErrorWindowRequest.requests.Count; i++)
 				{
-					WindowStack arg_4E_0 = Find.WindowStack;
+					WindowStack arg_50_0 = Find.WindowStack;
 					string text = DelayedErrorWindowRequest.requests[i].text;
 					string buttonAText = "OK".Translate();
 					string title = DelayedErrorWindowRequest.requests[i].title;
-					arg_4E_0.Add(new Dialog_MessageBox(text, buttonAText, null, null, null, title, false));
+					arg_50_0.Add(new Dialog_MessageBox(text, buttonAText, null, null, null, title, false, null, null));
 				}
 			}
 			finally

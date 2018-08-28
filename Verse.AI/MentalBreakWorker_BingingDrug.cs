@@ -8,15 +8,11 @@ namespace Verse.AI
 	{
 		public override float CommonalityFor(Pawn pawn)
 		{
-			int num = this.BingeableAddictionsCount(pawn);
-			float num2;
-			if (num == 0)
+			float num = base.CommonalityFor(pawn);
+			int num2 = this.BingeableAddictionsCount(pawn);
+			if (num2 > 0)
 			{
-				num2 = this.def.baseCommonality * 1f;
-			}
-			else
-			{
-				num2 = this.def.baseCommonality * 1.4f * (float)num;
+				num *= 1.4f * (float)num2;
 			}
 			if (pawn.story != null)
 			{
@@ -25,15 +21,15 @@ namespace Verse.AI
 				{
 					if (trait.Degree == 1)
 					{
-						num2 *= 2.5f;
+						num *= 2.5f;
 					}
 					else if (trait.Degree == 2)
 					{
-						num2 *= 5f;
+						num *= 5f;
 					}
 				}
 			}
-			return num2;
+			return num;
 		}
 
 		private int BingeableAddictionsCount(Pawn pawn)

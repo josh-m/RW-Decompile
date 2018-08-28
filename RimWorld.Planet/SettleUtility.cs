@@ -10,7 +10,7 @@ namespace RimWorld.Planet
 	{
 		public static readonly Texture2D SettleCommandTex = ContentFinder<Texture2D>.Get("UI/Commands/Settle", true);
 
-		public static bool PlayerHomesCountLimitReached
+		public static bool PlayerSettlementsCountLimitReached
 		{
 			get
 			{
@@ -18,23 +18,23 @@ namespace RimWorld.Planet
 				List<Map> maps = Find.Maps;
 				for (int i = 0; i < maps.Count; i++)
 				{
-					if (maps[i].IsPlayerHome)
+					if (maps[i].IsPlayerHome && maps[i].Parent is SettlementBase)
 					{
 						num++;
 					}
 				}
-				return num >= Prefs.MaxNumberOfPlayerHomes;
+				return num >= Prefs.MaxNumberOfPlayerSettlements;
 			}
 		}
 
-		public static FactionBase AddNewHome(int tile, Faction faction)
+		public static Settlement AddNewHome(int tile, Faction faction)
 		{
-			FactionBase factionBase = (FactionBase)WorldObjectMaker.MakeWorldObject(WorldObjectDefOf.FactionBase);
-			factionBase.Tile = tile;
-			factionBase.SetFaction(faction);
-			factionBase.Name = FactionBaseNameGenerator.GenerateFactionBaseName(factionBase);
-			Find.WorldObjects.Add(factionBase);
-			return factionBase;
+			Settlement settlement = (Settlement)WorldObjectMaker.MakeWorldObject(WorldObjectDefOf.Settlement);
+			settlement.Tile = tile;
+			settlement.SetFaction(faction);
+			settlement.Name = SettlementNameGenerator.GenerateSettlementName(settlement, null);
+			Find.WorldObjects.Add(settlement);
+			return settlement;
 		}
 	}
 }

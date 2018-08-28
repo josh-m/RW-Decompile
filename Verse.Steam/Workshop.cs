@@ -9,6 +9,7 @@ using System.Text;
 
 namespace Verse.Steam
 {
+	[HasDebugOutput]
 	public static class Workshop
 	{
 		private static WorkshopItemHook uploadingHook;
@@ -54,7 +55,7 @@ namespace Verse.Steam
 		{
 			if (Workshop.curStage != WorkshopInteractStage.None)
 			{
-				Messages.Message("UploadAlreadyInProgress".Translate(), MessageTypeDefOf.RejectInput);
+				Messages.Message("UploadAlreadyInProgress".Translate(), MessageTypeDefOf.RejectInput, false);
 				return;
 			}
 			Workshop.uploadingHook = item.GetWorkshopItemHook();
@@ -68,7 +69,7 @@ namespace Verse.Steam
 						Workshop.uploadingHook.Name,
 						"' with PublishedFileId ",
 						Workshop.uploadingHook.PublishedFileId
-					}));
+					}), false);
 				}
 				Workshop.curStage = WorkshopInteractStage.SubmittingItem;
 				Workshop.curUpdateHandle = SteamUGC.StartItemUpdate(SteamUtils.GetAppID(), Workshop.uploadingHook.PublishedFileId);
@@ -81,7 +82,7 @@ namespace Verse.Steam
 			{
 				if (Prefs.LogVerbose)
 				{
-					Log.Message("Workshop: Starting item creation for mod '" + Workshop.uploadingHook.Name + "'.");
+					Log.Message("Workshop: Starting item creation for mod '" + Workshop.uploadingHook.Name + "'.", false);
 				}
 				Workshop.curStage = WorkshopInteractStage.CreatingItem;
 				SteamAPICall_t hAPICall2 = SteamUGC.CreateItem(SteamUtils.GetAppID(), EWorkshopFileType.k_EWorkshopFileTypeFirst);
@@ -100,7 +101,7 @@ namespace Verse.Steam
 		{
 			if (Workshop.detailsQueryCount >= 0)
 			{
-				Log.Error("Requested Workshop item details while a details request was already pending.");
+				Log.Error("Requested Workshop item details while a details request was already pending.", false);
 				return;
 			}
 			Workshop.detailsQueryCount = publishedFileIds.Length;
@@ -118,7 +119,7 @@ namespace Verse.Steam
 			}
 			if (Prefs.LogVerbose)
 			{
-				Log.Message("Workshop: Item subscribed: " + result.m_nPublishedFileId);
+				Log.Message("Workshop: Item subscribed: " + result.m_nPublishedFileId, false);
 			}
 			WorkshopItems.Notify_Subscribed(result.m_nPublishedFileId);
 		}
@@ -131,7 +132,7 @@ namespace Verse.Steam
 			}
 			if (Prefs.LogVerbose)
 			{
-				Log.Message("Workshop: Item installed: " + result.m_nPublishedFileId);
+				Log.Message("Workshop: Item installed: " + result.m_nPublishedFileId, false);
 			}
 			WorkshopItems.Notify_Installed(result.m_nPublishedFileId);
 		}
@@ -144,7 +145,7 @@ namespace Verse.Steam
 			}
 			if (Prefs.LogVerbose)
 			{
-				Log.Message("Workshop: Item unsubscribed: " + result.m_nPublishedFileId);
+				Log.Message("Workshop: Item unsubscribed: " + result.m_nPublishedFileId, false);
 			}
 			Page_ModsConfig page_ModsConfig = Find.WindowStack.WindowOfType<Page_ModsConfig>();
 			if (page_ModsConfig != null)
@@ -165,24 +166,24 @@ namespace Verse.Steam
 			{
 				Workshop.uploadingHook = null;
 				Dialog_WorkshopOperationInProgress.CloseAll();
-				Log.Error("Workshop: OnItemCreated failure. Result: " + result.m_eResult.GetLabel());
+				Log.Error("Workshop: OnItemCreated failure. Result: " + result.m_eResult.GetLabel(), false);
 				Find.WindowStack.Add(new Dialog_MessageBox("WorkshopSubmissionFailed".Translate(new object[]
 				{
 					GenText.SplitCamelCase(result.m_eResult.GetLabel())
-				}), null, null, null, null, null, false));
+				}), null, null, null, null, null, false, null, null));
 				return;
 			}
 			Workshop.uploadingHook.PublishedFileId = result.m_nPublishedFileId;
 			if (Prefs.LogVerbose)
 			{
-				Log.Message("Workshop: Item created. PublishedFileId: " + Workshop.uploadingHook.PublishedFileId);
+				Log.Message("Workshop: Item created. PublishedFileId: " + Workshop.uploadingHook.PublishedFileId, false);
 			}
 			Workshop.curUpdateHandle = SteamUGC.StartItemUpdate(SteamUtils.GetAppID(), Workshop.uploadingHook.PublishedFileId);
 			Workshop.SetWorkshopItemDataFrom(Workshop.curUpdateHandle, Workshop.uploadingHook, true);
 			Workshop.curStage = WorkshopInteractStage.SubmittingItem;
 			if (Prefs.LogVerbose)
 			{
-				Log.Message("Workshop: Submitting item.");
+				Log.Message("Workshop: Submitting item.", false);
 			}
 			SteamAPICall_t hAPICall = SteamUGC.SubmitItemUpdate(Workshop.curUpdateHandle, "[Auto-generated text]: Initial upload.");
 			Workshop.submitResult = CallResult<SubmitItemUpdateResult_t>.Create(new CallResult<SubmitItemUpdateResult_t>.APIDispatchDelegate(Workshop.OnItemSubmitted));
@@ -196,11 +197,11 @@ namespace Verse.Steam
 			{
 				Workshop.uploadingHook = null;
 				Dialog_WorkshopOperationInProgress.CloseAll();
-				Log.Error("Workshop: OnItemSubmitted failure. Result: " + result.m_eResult.GetLabel());
+				Log.Error("Workshop: OnItemSubmitted failure. Result: " + result.m_eResult.GetLabel(), false);
 				Find.WindowStack.Add(new Dialog_MessageBox("WorkshopSubmissionFailed".Translate(new object[]
 				{
 					GenText.SplitCamelCase(result.m_eResult.GetLabel())
-				}), null, null, null, null, null, false));
+				}), null, null, null, null, null, false, null, null));
 			}
 			else
 			{
@@ -208,10 +209,10 @@ namespace Verse.Steam
 				Messages.Message("WorkshopUploadSucceeded".Translate(new object[]
 				{
 					Workshop.uploadingHook.Name
-				}), MessageTypeDefOf.TaskCompletion);
+				}), MessageTypeDefOf.TaskCompletion, false);
 				if (Prefs.LogVerbose)
 				{
-					Log.Message("Workshop: Item submit result: " + result.m_eResult);
+					Log.Message("Workshop: Item submit result: " + result.m_eResult, false);
 				}
 			}
 			Workshop.curStage = WorkshopInteractStage.None;
@@ -222,13 +223,13 @@ namespace Verse.Steam
 		{
 			if (IOFailure)
 			{
-				Log.Error("Workshop: OnGotItemDetails IOFailure.");
+				Log.Error("Workshop: OnGotItemDetails IOFailure.", false);
 				Workshop.detailsQueryCount = -1;
 				return;
 			}
 			if (Workshop.detailsQueryCount < 0)
 			{
-				Log.Warning("Got unexpected Steam Workshop item details response.");
+				Log.Warning("Got unexpected Steam Workshop item details response.", false);
 			}
 			string text = "Steam Workshop Item details received:";
 			for (int i = 0; i < Workshop.detailsQueryCount; i++)
@@ -257,7 +258,7 @@ namespace Verse.Steam
 				}
 				text += "\n";
 			}
-			Log.Message(text.TrimEndNewlines());
+			Log.Message(text.TrimEndNewlines(), false);
 			Workshop.detailsQueryCount = -1;
 		}
 
@@ -284,7 +285,7 @@ namespace Verse.Steam
 			}
 			if (!File.Exists(hook.PreviewImagePath))
 			{
-				Log.Warning("Missing preview file at " + hook.PreviewImagePath);
+				Log.Warning("Missing preview file at " + hook.PreviewImagePath, false);
 			}
 			else
 			{
@@ -311,7 +312,8 @@ namespace Verse.Steam
 			}
 		}
 
-		internal static void LogStatus()
+		[Category("System"), DebugOutput]
+		internal static void SteamWorkshopStatus()
 		{
 			StringBuilder stringBuilder = new StringBuilder();
 			stringBuilder.AppendLine("All subscribed items (" + SteamUGC.GetNumSubscribedItems() + " total):");
@@ -325,7 +327,7 @@ namespace Verse.Steam
 			{
 				stringBuilder.AppendLine("   " + current.Identifier + ": " + Workshop.ItemStatusString(current.GetPublishedFileId()));
 			}
-			Log.Message(stringBuilder.ToString());
+			Log.Message(stringBuilder.ToString(), false);
 			List<PublishedFileId_t> list2 = Workshop.AllSubscribedItems().ToList<PublishedFileId_t>();
 			PublishedFileId_t[] array = new PublishedFileId_t[list2.Count];
 			for (int j = 0; j < list2.Count; j++)

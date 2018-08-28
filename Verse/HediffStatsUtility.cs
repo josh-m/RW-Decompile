@@ -122,8 +122,8 @@ namespace Verse
 				}
 				if (stage.makeImmuneTo != null)
 				{
-					yield return new StatDrawEntry(StatCategoryDefOf.Basics, "PreventsInfection".Translate(), GenText.ToCommaList(from im in stage.makeImmuneTo
-					select im.label, false).CapitalizeFirst(), 0, string.Empty);
+					yield return new StatDrawEntry(StatCategoryDefOf.Basics, "PreventsInfection".Translate(), (from im in stage.makeImmuneTo
+					select im.label).ToCommaList(false).CapitalizeFirst(), 0, string.Empty);
 				}
 				if (stage.statOffsets != null)
 				{

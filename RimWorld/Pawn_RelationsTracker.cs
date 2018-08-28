@@ -259,7 +259,7 @@ namespace RimWorld
 							" has relation \"",
 							this.directRelations[i].def.defName,
 							"\" with null pawn after loading. This means that we forgot to serialize pawns somewhere (e.g. pawns from passing trade ships)."
-						}));
+						}), false);
 					}
 				}
 				this.directRelations.RemoveAll((DirectPawnRelation x) => x.otherPawn == null);
@@ -273,7 +273,7 @@ namespace RimWorld
 			Scribe_References.Look<Pawn>(ref this.relativeInvolvedInRescueQuest, "relativeInvolvedInRescueQuest", false);
 		}
 
-		public void SocialTrackerTick()
+		public void RelationsTrackerTick()
 		{
 			if (this.pawn.Dead)
 			{
@@ -287,7 +287,7 @@ namespace RimWorld
 		{
 			if (def.implied)
 			{
-				Log.Warning(def + " is not a direct relation.");
+				Log.Warning(def + " is not a direct relation.", false);
 				return null;
 			}
 			return this.directRelations.Find((DirectPawnRelation x) => x.def == def && x.otherPawn == otherPawn);
@@ -297,7 +297,7 @@ namespace RimWorld
 		{
 			if (def.implied)
 			{
-				Log.Warning(def + " is not a direct relation.");
+				Log.Warning(def + " is not a direct relation.", false);
 				return null;
 			}
 			for (int i = 0; i < this.directRelations.Count; i++)
@@ -315,7 +315,7 @@ namespace RimWorld
 		{
 			if (def.implied)
 			{
-				Log.Warning(def + " is not a direct relation.");
+				Log.Warning(def + " is not a direct relation.", false);
 				return false;
 			}
 			for (int i = 0; i < this.directRelations.Count; i++)
@@ -341,7 +341,7 @@ namespace RimWorld
 					this.pawn,
 					", otherPawn=",
 					otherPawn
-				}));
+				}), false);
 				return;
 			}
 			if (otherPawn == this.pawn)
@@ -352,7 +352,7 @@ namespace RimWorld
 					def,
 					" with self, pawn=",
 					this.pawn
-				}));
+				}), false);
 				return;
 			}
 			if (this.DirectRelationExists(def, otherPawn))
@@ -365,7 +365,7 @@ namespace RimWorld
 					this.pawn,
 					", otherPawn=",
 					otherPawn
-				}));
+				}), false);
 				return;
 			}
 			int startTicks = (Current.ProgramState != ProgramState.Playing) ? 0 : Find.TickManager.TicksGame;
@@ -397,7 +397,7 @@ namespace RimWorld
 					this.pawn,
 					", otherPawn=",
 					otherPawn
-				}));
+				}), false);
 			}
 		}
 
@@ -413,7 +413,7 @@ namespace RimWorld
 					this.pawn,
 					", otherPawn=",
 					otherPawn
-				}));
+				}), false);
 				return false;
 			}
 			for (int i = 0; i < this.directRelations.Count; i++)
@@ -704,27 +704,11 @@ namespace RimWorld
 				}
 			}
 			this.RemoveMySpouseMarriageRelatedThoughts();
-			if (this.everSeenByPlayer && !PawnGenerator.IsBeingGenerated(this.pawn))
+			if (this.everSeenByPlayer && !PawnGenerator.IsBeingGenerated(this.pawn) && !this.pawn.RaceProps.Animal)
 			{
-				if (this.pawn.RaceProps.Animal)
-				{
-					this.SendBondedAnimalDiedLetter(mapBeforeDeath);
-				}
-				else
-				{
-					this.AffectBondedAnimalsOnMyDeath();
-				}
+				this.AffectBondedAnimalsOnMyDeath();
 			}
-			if (this.relativeInvolvedInRescueQuest != null && !this.relativeInvolvedInRescueQuest.Dead && this.relativeInvolvedInRescueQuest.needs.mood != null)
-			{
-				Messages.Message("MessageFailedToRescueRelative".Translate(new object[]
-				{
-					this.pawn.LabelShort,
-					this.relativeInvolvedInRescueQuest.LabelShort
-				}), this.relativeInvolvedInRescueQuest, MessageTypeDefOf.PawnDeath);
-				this.relativeInvolvedInRescueQuest.needs.mood.thoughts.memories.TryGainMemory(ThoughtDefOf.FailedToRescueRelative, this.pawn);
-			}
-			this.relativeInvolvedInRescueQuest = null;
+			this.Notify_FailedRescueQuest();
 		}
 
 		public void Notify_PassedToWorld()
@@ -737,14 +721,14 @@ namespace RimWorld
 
 		public void Notify_ExitedMap()
 		{
-			this.Rescued();
+			this.CheckRescued();
 		}
 
 		public void Notify_ChangedFaction()
 		{
 			if (this.pawn.Faction == Faction.OfPlayer)
 			{
-				this.Rescued();
+				this.CheckRescued();
 			}
 		}
 
@@ -778,7 +762,21 @@ namespace RimWorld
 			}
 		}
 
-		private void Rescued()
+		public void Notify_FailedRescueQuest()
+		{
+			if (this.relativeInvolvedInRescueQuest != null && !this.relativeInvolvedInRescueQuest.Dead && this.relativeInvolvedInRescueQuest.needs.mood != null)
+			{
+				Messages.Message("MessageFailedToRescueRelative".Translate(new object[]
+				{
+					this.pawn.LabelShort,
+					this.relativeInvolvedInRescueQuest.LabelShort
+				}), this.relativeInvolvedInRescueQuest, MessageTypeDefOf.PawnDeath, true);
+				this.relativeInvolvedInRescueQuest.needs.mood.thoughts.memories.TryGainMemory(ThoughtDefOf.FailedToRescueRelative, this.pawn);
+			}
+			this.relativeInvolvedInRescueQuest = null;
+		}
+
+		private void CheckRescued()
 		{
 			if (this.relativeInvolvedInRescueQuest != null && !this.relativeInvolvedInRescueQuest.Dead && this.relativeInvolvedInRescueQuest.needs.mood != null)
 			{
@@ -786,7 +784,7 @@ namespace RimWorld
 				{
 					this.pawn.LabelShort,
 					this.relativeInvolvedInRescueQuest.LabelShort
-				}), this.relativeInvolvedInRescueQuest, MessageTypeDefOf.PositiveEvent);
+				}), this.relativeInvolvedInRescueQuest, MessageTypeDefOf.PositiveEvent, true);
 				this.relativeInvolvedInRescueQuest.needs.mood.thoughts.memories.TryGainMemory(ThoughtDefOf.RescuedRelative, this.pawn);
 			}
 			this.relativeInvolvedInRescueQuest = null;
@@ -813,8 +811,12 @@ namespace RimWorld
 			}
 		}
 
-		private void SendBondedAnimalDiedLetter(Map mapBeforeDeath)
+		public void CheckAppendBondedAnimalDiedInfo(ref string letter, ref string label)
 		{
+			if (!this.pawn.RaceProps.Animal || !this.everSeenByPlayer || PawnGenerator.IsBeingGenerated(this.pawn))
+			{
+				return;
+			}
 			Predicate<Pawn> isAffected = (Pawn x) => !x.Dead && (!x.RaceProps.Humanlike || !x.story.traits.HasTrait(TraitDefOf.Psychopath));
 			int num = 0;
 			for (int i = 0; i < this.directRelations.Count; i++)
@@ -832,23 +834,11 @@ namespace RimWorld
 			if (num == 1)
 			{
 				Pawn firstDirectRelationPawn = this.GetFirstDirectRelationPawn(PawnRelationDefOf.Bond, (Pawn x) => isAffected(x));
-				if (this.pawn.Name != null)
+				str = "LetterPartBondedAnimalDied".Translate(new object[]
 				{
-					str = "LetterNamedBondedAnimalDied".Translate(new object[]
-					{
-						this.pawn.KindLabel,
-						this.pawn.Name.ToStringShort,
-						firstDirectRelationPawn.LabelShort
-					});
-				}
-				else
-				{
-					str = "LetterBondedAnimalDied".Translate(new object[]
-					{
-						this.pawn.KindLabel,
-						firstDirectRelationPawn.LabelShort
-					});
-				}
+					this.pawn.LabelDefinite(),
+					firstDirectRelationPawn.LabelShort
+				}).CapitalizeFirst();
 			}
 			else
 			{
@@ -860,26 +850,17 @@ namespace RimWorld
 						stringBuilder.AppendLine("  - " + this.directRelations[j].otherPawn.LabelShort);
 					}
 				}
-				if (this.pawn.Name != null)
+				str = "LetterPartBondedAnimalDiedMulti".Translate(new object[]
 				{
-					str = "LetterNamedBondedAnimalDiedMulti".Translate(new object[]
-					{
-						this.pawn.KindLabel,
-						this.pawn.Name.ToStringShort,
-						stringBuilder.ToString().TrimEndNewlines()
-					});
-				}
-				else
-				{
-					str = "LetterBondedAnimalDiedMulti".Translate(new object[]
-					{
-						this.pawn.KindLabel,
-						stringBuilder.ToString().TrimEndNewlines()
-					});
-				}
+					stringBuilder.ToString().TrimEndNewlines()
+				});
 			}
-			TargetInfo target = (mapBeforeDeath == null) ? TargetInfo.Invalid : new TargetInfo(this.pawn.Position, mapBeforeDeath, false);
-			Find.LetterStack.ReceiveLetter("LetterLabelBondedAnimalDied".Translate(), str.CapitalizeFirst(), LetterDefOf.NegativeEvent, target, null);
+			label = label + " (" + "LetterLabelSuffixBondedAnimalDied".Translate() + ")";
+			if (!letter.NullOrEmpty())
+			{
+				letter += "\n\n";
+			}
+			letter += str;
 		}
 
 		private void AffectBondedAnimalsOnMyDeath()
@@ -896,11 +877,11 @@ namespace RimWorld
 					MentalStateDef stateDef;
 					if (value < 0.25f)
 					{
-						stateDef = MentalStateDefOf.WanderSad;
+						stateDef = MentalStateDefOf.Wander_Sad;
 					}
 					if (value < 0.5f)
 					{
-						stateDef = MentalStateDefOf.WanderPsychotic;
+						stateDef = MentalStateDefOf.Wander_Psychotic;
 					}
 					else if (value < 0.75f)
 					{
@@ -910,7 +891,7 @@ namespace RimWorld
 					{
 						stateDef = MentalStateDefOf.Manhunter;
 					}
-					this.directRelations[i].otherPawn.mindState.mentalStateHandler.TryStartMentalState(stateDef, null, true, false, null);
+					this.directRelations[i].otherPawn.mindState.mentalStateHandler.TryStartMentalState(stateDef, null, true, false, null, false);
 				}
 			}
 			if (num == 1)
@@ -920,7 +901,7 @@ namespace RimWorld
 				{
 					str = "MessageNamedBondedAnimalMentalBreak".Translate(new object[]
 					{
-						pawn.KindLabel,
+						pawn.KindLabelIndefinite(),
 						pawn.Name.ToStringShort,
 						this.pawn.LabelShort
 					});
@@ -929,11 +910,11 @@ namespace RimWorld
 				{
 					str = "MessageBondedAnimalMentalBreak".Translate(new object[]
 					{
-						pawn.KindLabel,
+						pawn.LabelIndefinite(),
 						this.pawn.LabelShort
 					});
 				}
-				Messages.Message(str.CapitalizeFirst(), pawn, MessageTypeDefOf.ThreatSmall);
+				Messages.Message(str.CapitalizeFirst(), pawn, MessageTypeDefOf.ThreatSmall, true);
 			}
 			else if (num > 1)
 			{
@@ -941,7 +922,7 @@ namespace RimWorld
 				{
 					num,
 					this.pawn.LabelShort
-				}).CapitalizeFirst(), pawn, MessageTypeDefOf.ThreatSmall);
+				}).CapitalizeFirst(), pawn, MessageTypeDefOf.ThreatSmall, true);
 			}
 		}
 

@@ -38,7 +38,7 @@ namespace RimWorld.Planet
 					this.activeGCProcess = this.PawnGCPass().GetEnumerator();
 					if (DebugViewSettings.logWorldPawnGC)
 					{
-						Log.Message(string.Format("World pawn GC started at rate {0}", this.currentGCRate));
+						Log.Message(string.Format("World pawn GC started at rate {0}", this.currentGCRate), false);
 					}
 				}
 				if (this.activeGCProcess != null)
@@ -57,7 +57,7 @@ namespace RimWorld.Planet
 						this.activeGCProcess = null;
 						if (DebugViewSettings.logWorldPawnGC)
 						{
-							Log.Message("World pawn GC complete");
+							Log.Message("World pawn GC complete", false);
 						}
 					}
 				}
@@ -72,7 +72,7 @@ namespace RimWorld.Planet
 				this.currentGCRate = Mathf.Min(this.currentGCRate * 2, 16777216);
 				if (DebugViewSettings.logWorldPawnGC)
 				{
-					Log.Message("World pawn GC cancelled");
+					Log.Message("World pawn GC cancelled", false);
 				}
 			}
 		}
@@ -151,9 +151,9 @@ namespace RimWorld.Planet
 				string key;
 				(dictionary3 = dictionary2)[key = text] = dictionary3[key] + 1;
 			}
-			return GenText.ToTextList(from kvp in dictionary2
+			return (from kvp in dictionary2
 			orderby kvp.Value descending
-			select string.Format("{0}: {1}", kvp.Value, kvp.Key), "\n");
+			select string.Format("{0}: {1}", kvp.Value, kvp.Key)).ToLineList(null);
 		}
 
 		[DebuggerHidden]
@@ -306,7 +306,7 @@ namespace RimWorld.Planet
 			StringBuilder stringBuilder = new StringBuilder();
 			stringBuilder.AppendLine("======= GC =======");
 			stringBuilder.AppendLine(this.PawnGCDebugResults());
-			Log.Message(stringBuilder.ToString());
+			Log.Message(stringBuilder.ToString(), false);
 		}
 
 		public void RunGC()
@@ -318,7 +318,7 @@ namespace RimWorld.Planet
 			}
 			float num = PerfLogger.Duration() * 1000f;
 			PerfLogger.Flush();
-			Log.Message(string.Format("World pawn GC run complete in {0} ms", num));
+			Log.Message(string.Format("World pawn GC run complete in {0} ms", num), false);
 		}
 
 		public void LogDotgraph()
@@ -329,14 +329,14 @@ namespace RimWorld.Planet
 			this.AccumulatePawnGCDataImmediate();
 			this.logDotgraph.AppendLine("}");
 			GUIUtility.systemCopyBuffer = this.logDotgraph.ToString();
-			Log.Message("Dotgraph copied to clipboard");
+			Log.Message("Dotgraph copied to clipboard", false);
 			this.logDotgraph = null;
 			this.logDotgraphUniqueLinks = null;
 		}
 
 		public static string DotgraphIdentifier(Pawn pawn)
 		{
-			return new string(pawn.NameStringShort.Where(new Func<char, bool>(char.IsLetter)).ToArray<char>()) + "_" + pawn.thingIDNumber.ToString();
+			return new string(pawn.LabelShort.Where(new Func<char, bool>(char.IsLetter)).ToArray<char>()) + "_" + pawn.thingIDNumber.ToString();
 		}
 	}
 }

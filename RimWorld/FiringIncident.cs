@@ -42,7 +42,7 @@ namespace RimWorld
 			}
 			if (this.source != null)
 			{
-				text2 = text2 + ", source=" + this.source.GetType().Name;
+				text2 = text2 + ", source=" + this.source;
 			}
 			return text2;
 		}

@@ -36,7 +36,7 @@ namespace RimWorld
 		{
 			Listing_Standard listing_Standard = new Listing_Standard();
 			listing_Standard.Begin(inRect);
-			listing_Standard.Label("TypeFirstNickOrLastName".Translate(), -1f);
+			listing_Standard.Label("TypeFirstNickOrLastName".Translate(), -1f, null);
 			string text = listing_Standard.TextEntry(this.searchName, 1);
 			if (text.Length < 20)
 			{
@@ -85,7 +85,7 @@ namespace RimWorld
 		{
 			if (this.AlreadyPreferred(name))
 			{
-				Messages.Message("MessageAlreadyPreferredName".Translate(), MessageTypeDefOf.RejectInput);
+				Messages.Message("MessageAlreadyPreferredName".Translate(), MessageTypeDefOf.RejectInput, false);
 			}
 			else
 			{

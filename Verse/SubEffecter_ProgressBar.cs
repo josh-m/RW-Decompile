@@ -11,7 +11,7 @@ namespace Verse
 
 		private const float Height = 0.12f;
 
-		public SubEffecter_ProgressBar(SubEffecterDef def) : base(def)
+		public SubEffecter_ProgressBar(SubEffecterDef def, Effecter parent) : base(def, parent)
 		{
 		}
 

@@ -12,13 +12,17 @@ namespace RimWorld
 
 		public bool ignoreWhenCalculatingOptimalTableSize;
 
+		[NoTranslate]
 		public string headerIcon;
 
 		public Vector2 headerIconSize;
 
+		[MustTranslate]
 		public string headerTip;
 
 		public bool headerAlwaysInteractable;
+
+		public bool paintable;
 
 		public TrainableDef trainable;
 
@@ -29,6 +33,8 @@ namespace RimWorld
 		public bool moveWorkTypeLabelDown;
 
 		public int widthPriority;
+
+		public int width = -1;
 
 		[Unsaved]
 		private PawnColumnWorker workerInt;

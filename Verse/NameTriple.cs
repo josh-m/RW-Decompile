@@ -97,9 +97,9 @@ namespace Verse
 
 		public NameTriple(string first, string nick, string last)
 		{
-			this.firstInt = first;
-			this.nickInt = nick;
-			this.lastInt = last;
+			this.firstInt = first.Trim();
+			this.nickInt = nick.Trim();
+			this.lastInt = last.Trim();
 		}
 
 		public override void ExposeData()
@@ -129,7 +129,7 @@ namespace Verse
 		{
 			if (this.First.NullOrEmpty() && this.Nick.NullOrEmpty() && this.Last.NullOrEmpty())
 			{
-				Log.Error("Cannot resolve misssing pieces in PawnName: No name data.");
+				Log.Error("Cannot resolve misssing pieces in PawnName: No name data.", false);
 				this.firstInt = (this.nickInt = (this.lastInt = "Empty"));
 				return;
 			}
@@ -188,7 +188,7 @@ namespace Verse
 		{
 			if (rawName.Trim().Length == 0)
 			{
-				Log.Error("Tried to parse PawnName from empty or whitespace string.");
+				Log.Error("Tried to parse PawnName from empty or whitespace string.", false);
 				return NameTriple.Invalid;
 			}
 			NameTriple nameTriple = new NameTriple();
@@ -232,12 +232,12 @@ namespace Verse
 						nameTriple.lastInt = string.Empty;
 						for (int j = 1; j < array.Length; j++)
 						{
-							NameTriple expr_137 = nameTriple;
-							expr_137.lastInt += array[j];
+							NameTriple expr_138 = nameTriple;
+							expr_138.lastInt += array[j];
 							if (j < array.Length - 1)
 							{
-								NameTriple expr_15A = nameTriple;
-								expr_15A.lastInt += " ";
+								NameTriple expr_15B = nameTriple;
+								expr_15B.lastInt += " ";
 							}
 						}
 					}

@@ -31,7 +31,7 @@ namespace RimWorld
 			int int2 = Rand.Int;
 			ScenarioMaker.scen = new Scenario();
 			ScenarioMaker.scen.Category = ScenarioCategory.CustomLocal;
-			ScenarioMaker.scen.name = NameGenerator.GenerateName(RulePackDefOf.NamerScenario, null, false, null);
+			ScenarioMaker.scen.name = NameGenerator.GenerateName(RulePackDefOf.NamerScenario, null, false, null, null);
 			ScenarioMaker.scen.description = null;
 			ScenarioMaker.scen.summary = null;
 			Rand.Seed = @int;
@@ -95,7 +95,7 @@ namespace RimWorld
 			}
 			foreach (string current2 in ScenarioMaker.scen.ConfigErrors())
 			{
-				Log.Error(current2);
+				Log.Error(current2, false);
 			}
 			Rand.PopState();
 			Scenario result = ScenarioMaker.scen;
@@ -141,7 +141,7 @@ namespace RimWorld
 							" to scenario ",
 							scen,
 							" after 50 tries."
-						}));
+						}), false);
 						break;
 					}
 				}

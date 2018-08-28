@@ -6,5 +6,10 @@ namespace RimWorld
 	public static class ScenarioDefOf
 	{
 		public static ScenarioDef Crashlanded;
+
+		static ScenarioDefOf()
+		{
+			DefOfHelper.EnsureInitializedInCtor(typeof(ScenarioDefOf));
+		}
 	}
 }

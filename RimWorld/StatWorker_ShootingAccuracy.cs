@@ -1,6 +1,5 @@
 using System;
 using System.Text;
-using UnityEngine;
 using Verse;
 
 namespace RimWorld
@@ -14,13 +13,14 @@ namespace RimWorld
 			stringBuilder.AppendLine();
 			for (int i = 5; i <= 45; i += 5)
 			{
+				float f = ShotReport.HitFactorFromShooter(finalVal, (float)i);
 				stringBuilder.AppendLine(string.Concat(new string[]
 				{
 					"distance".Translate().CapitalizeFirst(),
 					" ",
 					i.ToString(),
 					": ",
-					Mathf.Pow(finalVal, (float)i).ToStringPercent()
+					f.ToStringPercent()
 				}));
 			}
 			return stringBuilder.ToString();

@@ -15,13 +15,9 @@ namespace RimWorld.Planet
 
 		public FactionManager factionManager;
 
-		public UniqueIDsManager uniqueIDsManager;
-
 		public WorldPawns worldPawns;
 
 		public WorldObjectsHolder worldObjects;
-
-		public WorldSettings settings;
 
 		public GameConditionManager gameConditionManager;
 
@@ -118,11 +114,11 @@ namespace RimWorld.Planet
 			}
 		}
 
-		public IEnumerable<Pawn> FreeColonistsForStoryteller
+		public IEnumerable<Pawn> PlayerPawnsForStoryteller
 		{
 			get
 			{
-				return PawnsFinder.AllMapsCaravansAndTravelingTransportPods_FreeColonists;
+				return PawnsFinder.AllMapsCaravansAndTravelingTransportPods_Alive_OfPlayerFaction;
 			}
 		}
 
@@ -134,10 +130,18 @@ namespace RimWorld.Planet
 			}
 		}
 
-		[DebuggerHidden]
-		public IEnumerable<IncidentTargetTypeDef> AcceptedTypes()
+		public int ConstantRandSeed
 		{
-			yield return IncidentTargetTypeDefOf.World;
+			get
+			{
+				return this.info.persistentRandomValue;
+			}
+		}
+
+		[DebuggerHidden]
+		public IEnumerable<IncidentTargetTagDef> IncidentTargetTags()
+		{
+			yield return IncidentTargetTagDefOf.World;
 		}
 
 		public void ExposeData()
@@ -146,18 +150,13 @@ namespace RimWorld.Planet
 			Scribe_Deep.Look<WorldGrid>(ref this.grid, "grid", new object[0]);
 			if (Scribe.mode == LoadSaveMode.LoadingVars)
 			{
-				foreach (WorldGenStepDef current in from gs in DefDatabase<WorldGenStepDef>.AllDefs
-				orderby gs.order
-				select gs)
+				if (this.grid == null || !this.grid.HasWorldData)
 				{
-					if (this.grid == null || !this.grid.HasWorldData)
-					{
-						current.worldGenStep.GenerateWithoutWorldData(this.info.seedString);
-					}
-					else
-					{
-						current.worldGenStep.GenerateFromScribe(this.info.seedString);
-					}
+					WorldGenerator.GenerateWithoutWorldData(this.info.seedString);
+				}
+				else
+				{
+					WorldGenerator.GenerateFromScribe(this.info.seedString);
 				}
 			}
 			else
@@ -168,12 +167,13 @@ namespace RimWorld.Planet
 
 		public void ExposeComponents()
 		{
-			Scribe_Deep.Look<UniqueIDsManager>(ref this.uniqueIDsManager, "uniqueIDsManager", new object[0]);
 			Scribe_Deep.Look<FactionManager>(ref this.factionManager, "factionManager", new object[0]);
 			Scribe_Deep.Look<WorldPawns>(ref this.worldPawns, "worldPawns", new object[0]);
 			Scribe_Deep.Look<WorldObjectsHolder>(ref this.worldObjects, "worldObjects", new object[0]);
-			Scribe_Deep.Look<WorldSettings>(ref this.settings, "settings", new object[0]);
-			Scribe_Deep.Look<GameConditionManager>(ref this.gameConditionManager, "gameConditionManager", new object[1]);
+			Scribe_Deep.Look<GameConditionManager>(ref this.gameConditionManager, "gameConditionManager", new object[]
+			{
+				this
+			});
 			Scribe_Deep.Look<StoryState>(ref this.storyState, "storyState", new object[]
 			{
 				this
@@ -183,21 +183,19 @@ namespace RimWorld.Planet
 			{
 				this
 			});
+			this.FillComponents();
 			if (Scribe.mode == LoadSaveMode.LoadingVars)
 			{
-				BackCompatibility.WorldLoadingVars(this);
+				BackCompatibility.WorldLoadingVars();
 			}
-			this.FillComponents();
 		}
 
 		public void ConstructComponents()
 		{
 			this.worldObjects = new WorldObjectsHolder();
 			this.factionManager = new FactionManager();
-			this.uniqueIDsManager = new UniqueIDsManager();
 			this.worldPawns = new WorldPawns();
-			this.settings = new WorldSettings();
-			this.gameConditionManager = new GameConditionManager(null);
+			this.gameConditionManager = new GameConditionManager(this);
 			this.storyState = new StoryState(this);
 			this.renderer = new WorldRenderer();
 			this.UI = new WorldInterface();
@@ -232,7 +230,7 @@ namespace RimWorld.Planet
 
 		public void FinalizeInit()
 		{
-			this.pathGrid.RecalculateAllPerceivedPathCosts(-1f);
+			this.pathGrid.RecalculateAllPerceivedPathCosts();
 			AmbientSoundManager.EnsureWorldAmbientSoundCreated();
 			WorldComponentUtility.FinalizeInit(this);
 		}
@@ -255,7 +253,7 @@ namespace RimWorld.Planet
 			}
 			catch (Exception ex)
 			{
-				Log.Error(ex.ToString());
+				Log.Error(ex.ToString(), false);
 			}
 		}
 
@@ -358,7 +356,7 @@ namespace RimWorld.Planet
 			Rand.PushState();
 			Rand.Seed = tile;
 			List<ThingDef> list = (from d in DefDatabase<ThingDef>.AllDefs
-			where d.category == ThingCategory.Building && d.building.isNaturalRock && !d.building.isResourceRock
+			where d.category == ThingCategory.Building && d.building.isNaturalRock && !d.building.isResourceRock && !d.IsSmoothed
 			select d).ToList<ThingDef>();
 			int num = Rand.RangeInclusive(2, 3);
 			if (num > list.Count)

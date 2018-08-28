@@ -8,7 +8,7 @@ namespace RimWorld
 {
 	public abstract class PawnColumnWorker_Checkbox : PawnColumnWorker
 	{
-		private const int HorizontalPadding = 2;
+		public const int HorizontalPadding = 2;
 
 		public override void DoCell(Rect rect, Pawn pawn, PawnTable table)
 		{
@@ -18,11 +18,13 @@ namespace RimWorld
 			}
 			int num = (int)((rect.width - 24f) / 2f);
 			int num2 = Mathf.Max(3, 0);
-			Vector2 topLeft = new Vector2(rect.x + (float)num, rect.y + (float)num2);
-			Rect rect2 = new Rect(topLeft.x, topLeft.y, 24f, 24f);
+			Vector2 vector = new Vector2(rect.x + (float)num, rect.y + (float)num2);
+			Rect rect2 = new Rect(vector.x, vector.y, 24f, 24f);
 			bool value = this.GetValue(pawn);
 			bool flag = value;
-			Widgets.Checkbox(topLeft, ref value, 24f, false);
+			Vector2 topLeft = vector;
+			bool paintable = this.def.paintable;
+			Widgets.Checkbox(topLeft, ref value, 24f, false, paintable, null, null);
 			if (Mouse.IsOver(rect2))
 			{
 				string tip = this.GetTip(pawn);
@@ -109,11 +111,11 @@ namespace RimWorld
 				}
 				if (Event.current.button == 0)
 				{
-					SoundDefOf.CheckboxTurnedOn.PlayOneShotOnCamera(null);
+					SoundDefOf.Checkbox_TurnedOn.PlayOneShotOnCamera(null);
 				}
 				else if (Event.current.button == 1)
 				{
-					SoundDefOf.CheckboxTurnedOff.PlayOneShotOnCamera(null);
+					SoundDefOf.Checkbox_TurnedOff.PlayOneShotOnCamera(null);
 				}
 			}
 		}

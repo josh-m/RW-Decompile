@@ -5,9 +5,9 @@ namespace RimWorld
 {
 	public class StatPart_WorkTableTemperature : StatPart
 	{
-		public const float WorkRateFactor = 0.6f;
+		public const float WorkRateFactor = 0.7f;
 
-		public const float MinTemp = 5f;
+		public const float MinTemp = 9f;
 
 		public const float MaxTemp = 35f;
 
@@ -15,7 +15,7 @@ namespace RimWorld
 		{
 			if (req.HasThing && StatPart_WorkTableTemperature.Applies(req.Thing))
 			{
-				val *= 0.6f;
+				val *= 0.7f;
 			}
 		}
 
@@ -23,7 +23,7 @@ namespace RimWorld
 		{
 			if (req.HasThing && StatPart_WorkTableTemperature.Applies(req.Thing))
 			{
-				return "BadTemperature".Translate().CapitalizeFirst() + ": x" + 0.6f.ToStringPercent();
+				return "BadTemperature".Translate().CapitalizeFirst() + ": x" + 0.7f.ToStringPercent();
 			}
 			return null;
 		}
@@ -44,7 +44,7 @@ namespace RimWorld
 				return false;
 			}
 			float temperatureForCell = GenTemperature.GetTemperatureForCell(c, map);
-			return temperatureForCell < 5f || temperatureForCell > 35f;
+			return temperatureForCell < 9f || temperatureForCell > 35f;
 		}
 	}
 }

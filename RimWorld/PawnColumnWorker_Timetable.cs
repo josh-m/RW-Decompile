@@ -84,7 +84,7 @@ namespace RimWorld
 				Widgets.DrawBox(rect, 2);
 				if (assignment != TimeAssignmentSelector.selectedAssignment && TimeAssignmentSelector.selectedAssignment != null && Input.GetMouseButton(0))
 				{
-					SoundDefOf.DesignateDragStandardChanged.PlayOneShotOnCamera(null);
+					SoundDefOf.Designate_DragStandard_Changed.PlayOneShotOnCamera(null);
 					p.timetable.SetAssignment(hour, TimeAssignmentSelector.selectedAssignment);
 					PlayerKnowledgeDatabase.KnowledgeDemonstrated(ConceptDefOf.TimeAssignments, KnowledgeAmount.SmallInteraction);
 				}

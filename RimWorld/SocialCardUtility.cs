@@ -265,7 +265,7 @@ namespace RimWorld
 						Messages.Message("MessageCantSelectDeadPawn".Translate(new object[]
 						{
 							otherPawn.LabelShort
-						}).CapitalizeFirst(), MessageTypeDefOf.RejectInput);
+						}).CapitalizeFirst(), MessageTypeDefOf.RejectInput, false);
 					}
 					else if (otherPawn.SpawnedOrAnyParentSpawned || otherPawn.IsCaravanMember())
 					{
@@ -276,10 +276,10 @@ namespace RimWorld
 						Messages.Message("MessageCantSelectOffMapPawn".Translate(new object[]
 						{
 							otherPawn.LabelShort
-						}).CapitalizeFirst(), MessageTypeDefOf.RejectInput);
+						}).CapitalizeFirst(), MessageTypeDefOf.RejectInput, false);
 					}
 				}
-				else if (Find.GameInitData.startingPawns.Contains(otherPawn))
+				else if (Find.GameInitData.startingAndOptionalPawns.Contains(otherPawn))
 				{
 					Page_ConfigureStartingPawns page_ConfigureStartingPawns = Find.WindowStack.WindowOfType<Page_ConfigureStartingPawns>();
 					if (page_ConfigureStartingPawns != null)
@@ -440,11 +440,17 @@ namespace RimWorld
 			{
 				return "Neutral".Translate();
 			}
-			if (!faction.HostileTo(fromPOV.Faction))
+			switch (faction.RelationKindWith(fromPOV.Faction))
 			{
+			case FactionRelationKind.Hostile:
+				return "Hostile".Translate() + ", " + faction.Name;
+			case FactionRelationKind.Neutral:
 				return "Neutral".Translate() + ", " + faction.Name;
+			case FactionRelationKind.Ally:
+				return "Ally".Translate() + ", " + faction.Name;
+			default:
+				return string.Empty;
 			}
-			return "Hostile".Translate() + ", " + faction.Name;
 		}
 
 		private static string GetRelationsString(SocialCardUtility.CachedSocialTabEntry entry, Pawn selPawnForSocialInfo)
@@ -514,7 +520,7 @@ namespace RimWorld
 		private static void DrawDebugOptions(Rect rect, Pawn pawn)
 		{
 			GUI.BeginGroup(rect);
-			Widgets.CheckboxLabeled(new Rect(0f, 0f, 145f, 22f), "Dev: AllRelations", ref SocialCardUtility.showAllRelations, false);
+			Widgets.CheckboxLabeled(new Rect(0f, 0f, 145f, 22f), "Dev: AllRelations", ref SocialCardUtility.showAllRelations, false, null, null, false);
 			if (Widgets.ButtonText(new Rect(150f, 0f, 115f, 22f), "Debug info", true, false, true))
 			{
 				List<FloatMenuOption> list = new List<FloatMenuOption>();
@@ -549,7 +555,7 @@ namespace RimWorld
 							}));
 						}
 					}
-					Find.WindowStack.Add(new Dialog_MessageBox(stringBuilder.ToString(), null, null, null, null, null, false));
+					Find.WindowStack.Add(new Dialog_MessageBox(stringBuilder.ToString(), null, null, null, null, null, false, null, null));
 				}, MenuOptionPriority.Default, null, null, 0f, null, null));
 				list.Add(new FloatMenuOption("CompatibilityTo", delegate
 				{
@@ -576,7 +582,7 @@ namespace RimWorld
 							}));
 						}
 					}
-					Find.WindowStack.Add(new Dialog_MessageBox(stringBuilder.ToString(), null, null, null, null, null, false));
+					Find.WindowStack.Add(new Dialog_MessageBox(stringBuilder.ToString(), null, null, null, null, null, false, null, null));
 				}, MenuOptionPriority.Default, null, null, 0f, null, null));
 				if (pawn.RaceProps.Humanlike)
 				{
@@ -640,7 +646,7 @@ namespace RimWorld
 								}
 							}
 						}
-						Find.WindowStack.Add(new Dialog_MessageBox(stringBuilder.ToString(), null, null, null, null, null, false));
+						Find.WindowStack.Add(new Dialog_MessageBox(stringBuilder.ToString(), null, null, null, null, null, false, null, null));
 					}, MenuOptionPriority.Default, null, null, 0f, null, null));
 					list.Add(new FloatMenuOption("Lovin' MTB", delegate
 					{
@@ -669,7 +675,7 @@ namespace RimWorld
 								}));
 							}
 						}
-						Find.WindowStack.Add(new Dialog_MessageBox(stringBuilder.ToString(), null, null, null, null, null, false));
+						Find.WindowStack.Add(new Dialog_MessageBox(stringBuilder.ToString(), null, null, null, null, null, false, null, null));
 					}, MenuOptionPriority.Default, null, null, 0f, null, null));
 				}
 				list.Add(new FloatMenuOption("Test per pawns pair compatibility factor probability", delegate
@@ -742,7 +748,7 @@ namespace RimWorld
 					stringBuilder.AppendLine("trials: " + 10000);
 					stringBuilder.AppendLine("min: " + num10);
 					stringBuilder.AppendLine("max: " + num9);
-					Find.WindowStack.Add(new Dialog_MessageBox(stringBuilder.ToString(), null, null, null, null, null, false));
+					Find.WindowStack.Add(new Dialog_MessageBox(stringBuilder.ToString(), null, null, null, null, null, false, null, null));
 				}, MenuOptionPriority.Default, null, null, 0f, null, null));
 				Find.WindowStack.Add(new FloatMenu(list));
 			}

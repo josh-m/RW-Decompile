@@ -88,6 +88,21 @@ namespace Verse.AI.Group
 			}
 		}
 
+		public bool AnyActivePawn
+		{
+			get
+			{
+				for (int i = 0; i < this.ownedPawns.Count; i++)
+				{
+					if (this.ownedPawns[i].mindState != null && this.ownedPawns[i].mindState.Active)
+					{
+						return true;
+					}
+				}
+				return false;
+			}
+		}
+
 		private void Init()
 		{
 			this.initialized = true;
@@ -115,6 +130,7 @@ namespace Verse.AI.Group
 			if (Scribe.mode == LoadSaveMode.PostLoadInit)
 			{
 				this.extraForbiddenThings.RemoveAll((Thing x) => x == null);
+				this.ownedPawns.RemoveAll((Pawn x) => x == null);
 			}
 			this.ExposeData_StateGraph();
 		}
@@ -172,7 +188,7 @@ namespace Verse.AI.Group
 								this.curJob.GetType(),
 								"\"), because lord toil index is out of bounds: ",
 								current.Key
-							}));
+							}), false);
 						}
 						else
 						{
@@ -193,7 +209,7 @@ namespace Verse.AI.Group
 								this.curJob.GetType(),
 								"\"), because trigger index is out of bounds: ",
 								current2.Key
-							}));
+							}), false);
 						}
 						else
 						{
@@ -209,7 +225,7 @@ namespace Verse.AI.Group
 							this.curJob.GetType(),
 							"\"): ",
 							this.tmpCurLordToilIdx
-						}));
+						}), false);
 					}
 					else
 					{
@@ -233,20 +249,20 @@ namespace Verse.AI.Group
 			this.graph = lordJob.CreateGraph();
 			Rand.PopState();
 			this.graph.ErrorCheck();
-			if (this.faction != null && this.faction.def.autoFlee)
+			if (this.faction != null && !this.faction.IsPlayer && this.faction.def.autoFlee && lordJob.AddFleeToil)
 			{
 				LordToil_PanicFlee lordToil_PanicFlee = new LordToil_PanicFlee();
 				lordToil_PanicFlee.avoidGridMode = AvoidGridMode.Smart;
 				for (int i = 0; i < this.graph.lordToils.Count; i++)
 				{
-					Transition transition = new Transition(this.graph.lordToils[i], lordToil_PanicFlee);
+					Transition transition = new Transition(this.graph.lordToils[i], lordToil_PanicFlee, false, true);
 					transition.AddPreAction(new TransitionAction_Message("MessageFightersFleeing".Translate(new object[]
 					{
 						this.faction.def.pawnsPlural.CapitalizeFirst(),
 						this.faction.Name
-					})));
+					}), null, 1f));
 					transition.AddTrigger(new Trigger_FractionPawnsLost(0.5f));
-					this.graph.AddTransition(transition);
+					this.graph.AddTransition(transition, true);
 				}
 				this.graph.AddToil(lordToil_PanicFlee);
 			}
@@ -292,7 +308,7 @@ namespace Verse.AI.Group
 					" tried to add ",
 					p,
 					" whom it already controls."
-				}));
+				}), false);
 				return;
 			}
 			if (p.GetLord() != null)
@@ -306,7 +322,7 @@ namespace Verse.AI.Group
 					" but this pawn is already a member of lord ",
 					p.GetLord(),
 					". Pawns can't be members of more than one lord at the same time."
-				}));
+				}), false);
 				return;
 			}
 			this.ownedPawns.Add(p);
@@ -337,7 +353,7 @@ namespace Verse.AI.Group
 			this.ticksInToil = 0;
 			if (this.curLordToil.lord != this)
 			{
-				Log.Error("curLordToil lord is " + ((this.curLordToil.lord != null) ? this.curLordToil.lord.ToString() : "null (forgot to add toil to graph?)"));
+				Log.Error("curLordToil lord is " + ((this.curLordToil.lord != null) ? this.curLordToil.lord.ToString() : "null (forgot to add toil to graph?)"), false);
 				this.curLordToil.lord = this;
 			}
 			this.curLordToil.Init();
@@ -384,16 +400,17 @@ namespace Verse.AI.Group
 			this.CheckTransitionOnSignal(TriggerSignal.ForMemo(memo));
 		}
 
-		public void Notify_FactionRelationsChanged(Faction otherFaction)
+		public void Notify_FactionRelationsChanged(Faction otherFaction, FactionRelationKind previousRelationKind)
 		{
 			this.CheckTransitionOnSignal(new TriggerSignal
 			{
 				type = TriggerSignalType.FactionRelationsChanged,
-				faction = otherFaction
+				faction = otherFaction,
+				previousRelationKind = new FactionRelationKind?(previousRelationKind)
 			});
 		}
 
-		public void Notify_PawnLost(Pawn pawn, PawnLostCondition cond)
+		public void Notify_PawnLost(Pawn pawn, PawnLostCondition cond, DamageInfo? dinfo = null)
 		{
 			if (this.ownedPawns.Contains(pawn))
 			{
@@ -402,20 +419,26 @@ namespace Verse.AI.Group
 				{
 					this.numPawnsLostViolently++;
 				}
-				if (this.ownedPawns.Count == 0 && !this.CanExistWithoutPawns)
+				this.curJob.Notify_PawnLost(pawn, cond);
+				if (this.lordManager.lords.Contains(this))
 				{
-					this.lordManager.RemoveLord(this);
-				}
-				else
-				{
-					this.curLordToil.Notify_PawnLost(pawn, cond);
-					this.curJob.Notify_PawnLost(pawn, cond);
-					this.CheckTransitionOnSignal(new TriggerSignal
+					if (this.ownedPawns.Count == 0 && !this.CanExistWithoutPawns)
 					{
-						type = TriggerSignalType.PawnLost,
-						thing = pawn,
-						condition = cond
-					});
+						this.lordManager.RemoveLord(this);
+					}
+					else
+					{
+						this.curLordToil.Notify_PawnLost(pawn, cond);
+						TriggerSignal signal = default(TriggerSignal);
+						signal.type = TriggerSignalType.PawnLost;
+						signal.thing = pawn;
+						signal.condition = cond;
+						if (dinfo.HasValue)
+						{
+							signal.dinfo = dinfo.Value;
+						}
+						this.CheckTransitionOnSignal(signal);
+					}
 				}
 				return;
 			}
@@ -425,7 +448,7 @@ namespace Verse.AI.Group
 				pawn,
 				" it didn't have. Condition=",
 				cond
-			}));
+			}), false);
 		}
 
 		public void Notify_BuildingDamaged(Building building, DamageInfo dinfo)

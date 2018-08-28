@@ -32,11 +32,9 @@ namespace Verse
 			this.debugCells.Add(debugCell);
 		}
 
-		public void FlashLine(IntVec3 a, IntVec3 b, int duration = 50)
+		public void FlashLine(IntVec3 a, IntVec3 b, int duration = 50, SimpleColor color = SimpleColor.White)
 		{
-			DebugLine item = new DebugLine(a.ToVector3Shifted(), b.ToVector3Shifted());
-			item.TicksLeft = duration;
-			this.debugLines.Add(item);
+			this.debugLines.Add(new DebugLine(a.ToVector3Shifted(), b.ToVector3Shifted(), duration, color));
 		}
 
 		public void DebugDrawerUpdate()
@@ -62,14 +60,7 @@ namespace Verse
 					this.debugCells.RemoveAt(i);
 				}
 			}
-			for (int j = this.debugLines.Count - 1; j >= 0; j--)
-			{
-				this.debugLines[j] = new DebugLine(this.debugLines[j].a, this.debugLines[j].b, this.debugLines[j].TicksLeft - 1);
-				if (this.debugLines[j].TicksLeft <= 0)
-				{
-					this.debugLines.RemoveAt(j);
-				}
-			}
+			this.debugLines.RemoveAll((DebugLine dl) => dl.Done);
 		}
 
 		public void DebugDrawerOnGUI()

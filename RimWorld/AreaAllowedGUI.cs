@@ -8,17 +8,19 @@ namespace RimWorld
 {
 	public static class AreaAllowedGUI
 	{
-		public static void DoAllowedAreaSelectors(Rect rect, Pawn p, AllowedAreaMode mode)
+		private static bool dragging;
+
+		public static void DoAllowedAreaSelectors(Rect rect, Pawn p)
 		{
-			if (Find.VisibleMap == null)
+			if (Find.CurrentMap == null)
 			{
 				return;
 			}
-			List<Area> allAreas = Find.VisibleMap.areaManager.AllAreas;
+			List<Area> allAreas = Find.CurrentMap.areaManager.AllAreas;
 			int num = 1;
 			for (int i = 0; i < allAreas.Count; i++)
 			{
-				if (allAreas[i].AssignableAsAllowed(mode))
+				if (allAreas[i].AssignableAsAllowed())
 				{
 					num++;
 				}
@@ -31,7 +33,7 @@ namespace RimWorld
 			int num3 = 1;
 			for (int j = 0; j < allAreas.Count; j++)
 			{
-				if (allAreas[j].AssignableAsAllowed(mode))
+				if (allAreas[j].AssignableAsAllowed())
 				{
 					float num4 = (float)num3 * num2;
 					Rect rect3 = new Rect(rect.x + num4, rect.y, num2, rect.height);
@@ -57,16 +59,28 @@ namespace RimWorld
 			{
 				Widgets.DrawBox(rect, 2);
 			}
+			if (Event.current.rawType == EventType.MouseUp && Event.current.button == 0)
+			{
+				AreaAllowedGUI.dragging = false;
+			}
+			if (!Input.GetMouseButton(0) && Event.current.type != EventType.MouseDown)
+			{
+				AreaAllowedGUI.dragging = false;
+			}
 			if (Mouse.IsOver(rect))
 			{
 				if (area != null)
 				{
 					area.MarkForDraw();
 				}
-				if (Input.GetMouseButton(0) && p.playerSettings.AreaRestriction != area)
+				if (Event.current.type == EventType.MouseDown && Event.current.button == 0)
+				{
+					AreaAllowedGUI.dragging = true;
+				}
+				if (AreaAllowedGUI.dragging && p.playerSettings.AreaRestriction != area)
 				{
 					p.playerSettings.AreaRestriction = area;
-					SoundDefOf.DesignateDragStandardChanged.PlayOneShotOnCamera(null);
+					SoundDefOf.Designate_DragStandard_Changed.PlayOneShotOnCamera(null);
 				}
 			}
 			Text.Anchor = TextAnchor.UpperLeft;

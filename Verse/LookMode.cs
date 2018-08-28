@@ -11,6 +11,7 @@ namespace Verse
 		Def,
 		LocalTargetInfo,
 		TargetInfo,
-		GlobalTargetInfo
+		GlobalTargetInfo,
+		BodyPart
 	}
 }

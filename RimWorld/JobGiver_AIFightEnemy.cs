@@ -60,22 +60,22 @@ namespace RimWorld
 				return null;
 			}
 			bool allowManualCastWeapons = !pawn.IsColonist;
-			Verb verb = pawn.TryGetAttackVerb(allowManualCastWeapons);
+			Verb verb = pawn.TryGetAttackVerb(enemyTarget, allowManualCastWeapons);
 			if (verb == null)
 			{
 				return null;
 			}
-			if (verb.verbProps.MeleeRange)
+			if (verb.verbProps.IsMeleeAttack)
 			{
 				return this.MeleeAttackJob(enemyTarget);
 			}
-			bool flag = CoverUtility.CalculateOverallBlockChance(pawn.Position, enemyTarget.Position, pawn.Map) > 0.01f;
+			bool flag = CoverUtility.CalculateOverallBlockChance(pawn, enemyTarget.Position, pawn.Map) > 0.01f;
 			bool flag2 = pawn.Position.Standable(pawn.Map);
 			bool flag3 = verb.CanHitTarget(enemyTarget);
 			bool flag4 = (pawn.Position - enemyTarget.Position).LengthHorizontalSquared < 25;
 			if ((flag && flag2 && flag3) || (flag4 && flag3))
 			{
-				return new Job(JobDefOf.WaitCombat, JobGiver_AIFightEnemy.ExpiryInterval_ShooterSucceeded.RandomInRange, true);
+				return new Job(JobDefOf.Wait_Combat, JobGiver_AIFightEnemy.ExpiryInterval_ShooterSucceeded.RandomInRange, true);
 			}
 			IntVec3 intVec;
 			if (!this.TryFindShootingPosition(pawn, out intVec))
@@ -84,7 +84,7 @@ namespace RimWorld
 			}
 			if (intVec == pawn.Position)
 			{
-				return new Job(JobDefOf.WaitCombat, JobGiver_AIFightEnemy.ExpiryInterval_ShooterSucceeded.RandomInRange, true);
+				return new Job(JobDefOf.Wait_Combat, JobGiver_AIFightEnemy.ExpiryInterval_ShooterSucceeded.RandomInRange, true);
 			}
 			return new Job(JobDefOf.Goto, intVec)
 			{
@@ -106,7 +106,7 @@ namespace RimWorld
 		protected virtual void UpdateEnemyTarget(Pawn pawn)
 		{
 			Thing thing = pawn.mindState.enemyTarget;
-			if (thing != null && (thing.Destroyed || Find.TickManager.TicksGame - pawn.mindState.lastEngageTargetTick > 400 || !pawn.CanReach(thing, PathEndMode.Touch, Danger.Deadly, false, TraverseMode.ByPawn) || (float)(pawn.Position - thing.Position).LengthHorizontalSquared > this.targetKeepRadius * this.targetKeepRadius || ((IAttackTarget)thing).ThreatDisabled()))
+			if (thing != null && (thing.Destroyed || Find.TickManager.TicksGame - pawn.mindState.lastEngageTargetTick > 400 || !pawn.CanReach(thing, PathEndMode.Touch, Danger.Deadly, false, TraverseMode.ByPawn) || (float)(pawn.Position - thing.Position).LengthHorizontalSquared > this.targetKeepRadius * this.targetKeepRadius || ((IAttackTarget)thing).ThreatDisabled(pawn)))
 			{
 				thing = null;
 			}
@@ -137,8 +137,7 @@ namespace RimWorld
 				}
 			}
 			pawn.mindState.enemyTarget = thing;
-			Pawn pawn2 = thing as Pawn;
-			if (pawn2 != null && pawn2.Faction == Faction.OfPlayer && pawn.Position.InHorDistOf(pawn2.Position, 30f))
+			if (thing is Pawn && thing.Faction == Faction.OfPlayer && pawn.Position.InHorDistOf(thing.Position, 40f))
 			{
 				Find.TickManager.slower.SignalForceNormalSpeed();
 			}
@@ -146,7 +145,7 @@ namespace RimWorld
 
 		private Thing FindAttackTargetIfPossible(Pawn pawn)
 		{
-			if (pawn.TryGetAttackVerb(!pawn.IsColonist) == null)
+			if (pawn.TryGetAttackVerb(null, !pawn.IsColonist) == null)
 			{
 				return null;
 			}
@@ -164,7 +163,7 @@ namespace RimWorld
 			{
 				targetScanFlags |= TargetScanFlags.NeedNonBurning;
 			}
-			return (Thing)AttackTargetFinder.BestAttackTarget(pawn, targetScanFlags, (Thing x) => this.ExtraTargetValidator(pawn, x), 0f, this.targetAcquireRadius, this.GetFlagPosition(pawn), this.GetFlagRadius(pawn), false);
+			return (Thing)AttackTargetFinder.BestAttackTarget(pawn, targetScanFlags, (Thing x) => this.ExtraTargetValidator(pawn, x), 0f, this.targetAcquireRadius, this.GetFlagPosition(pawn), this.GetFlagRadius(pawn), false, true);
 		}
 
 		private bool PrimaryVerbIsIncendiary(Pawn pawn)

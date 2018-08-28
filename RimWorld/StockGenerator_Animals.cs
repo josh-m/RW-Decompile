@@ -7,15 +7,20 @@ using Verse;
 
 namespace RimWorld
 {
+	[HasDebugOutput]
 	public class StockGenerator_Animals : StockGenerator
 	{
+		[NoTranslate]
+		private List<string> tradeTagsSell;
+
+		[NoTranslate]
+		private List<string> tradeTagsBuy;
+
 		private IntRange kindCountRange = new IntRange(1, 1);
 
 		private float minWildness;
 
 		private float maxWildness = 1f;
-
-		private List<string> tradeTags;
 
 		private bool checkTemperature;
 
@@ -69,7 +74,7 @@ namespace RimWorld
 				}
 				PawnKindDef kind2 = kind;
 				int forTile2 = forTile;
-				PawnGenerationRequest request = new PawnGenerationRequest(kind2, null, PawnGenerationContext.NonPlayer, forTile2, false, false, false, false, true, false, 1f, false, true, true, false, false, false, false, null, null, null, null, null, null, null);
+				PawnGenerationRequest request = new PawnGenerationRequest(kind2, null, PawnGenerationContext.NonPlayer, forTile2, false, false, false, false, true, false, 1f, false, true, true, false, false, false, false, null, null, null, null, null, null, null, null);
 				yield return PawnGenerator.GeneratePawn(request);
 			}
 		}
@@ -81,7 +86,7 @@ namespace RimWorld
 
 		public override bool HandlesThingDef(ThingDef thingDef)
 		{
-			return thingDef.category == ThingCategory.Pawn && thingDef.race.Animal && thingDef.tradeability != Tradeability.Never;
+			return thingDef.category == ThingCategory.Pawn && thingDef.race.Animal && thingDef.tradeability != Tradeability.None && (this.tradeTagsSell.Any((string tag) => thingDef.tradeTags.Contains(tag)) || this.tradeTagsBuy.Any((string tag) => thingDef.tradeTags.Contains(tag)));
 		}
 
 		private bool PawnKindAllowed(PawnKindDef kind, int forTile)
@@ -102,7 +107,7 @@ namespace RimWorld
 					return false;
 				}
 			}
-			return kind.race.tradeTags != null && this.tradeTags.Find((string x) => kind.race.tradeTags.Contains(x)) != null && kind.race.tradeability == Tradeability.Stockable;
+			return kind.race.tradeTags != null && this.tradeTagsSell.Any((string x) => kind.race.tradeTags.Contains(x)) && kind.race.tradeability.TraderCanSell();
 		}
 
 		public void LogAnimalChances()
@@ -112,18 +117,19 @@ namespace RimWorld
 			{
 				stringBuilder.AppendLine(current.defName + ": " + this.SelectionChance(current).ToString("F2"));
 			}
-			Log.Message(stringBuilder.ToString());
+			Log.Message(stringBuilder.ToString(), false);
 		}
 
-		internal static void LogStockGeneration()
+		[DebugOutput]
+		private static void StockGenerationAnimals()
 		{
 			new StockGenerator_Animals
 			{
-				tradeTags = new List<string>(),
-				tradeTags = 
+				tradeTagsSell = new List<string>(),
+				tradeTagsSell = 
 				{
-					"StandardAnimal",
-					"BadassAnimal"
+					"AnimalCommon",
+					"AnimalUncommon"
 				}
 			}.LogAnimalChances();
 		}

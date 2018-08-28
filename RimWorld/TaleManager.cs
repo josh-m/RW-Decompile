@@ -40,7 +40,7 @@ namespace RimWorld
 		{
 			if (!tale.Unused)
 			{
-				Log.Warning("Tried to remove used tale " + tale);
+				Log.Warning("Tried to remove used tale " + tale, false);
 				return;
 			}
 			this.tales.Remove(tale);
@@ -217,7 +217,7 @@ namespace RimWorld
 							", but he is referenced by a tale ",
 							this.tales[i],
 							"."
-						}));
+						}), false);
 					}
 					else if (!this.tales[i].Unused)
 					{
@@ -228,7 +228,7 @@ namespace RimWorld
 							", but he is referenced by an active tale ",
 							this.tales[i],
 							"."
-						}));
+						}), false);
 					}
 					this.RemoveTale(this.tales[i]);
 				}
@@ -325,7 +325,7 @@ namespace RimWorld
 			{
 				stringBuilder.AppendLine(current4.ToString());
 			}
-			Log.Message(stringBuilder.ToString());
+			Log.Message(stringBuilder.ToString(), false);
 		}
 
 		public void LogTaleInterestSummary()
@@ -351,7 +351,7 @@ namespace RimWorld
 					(defInterest(def) / num).ToStringPercent("F2")
 				}));
 			}
-			Log.Message(stringBuilder.ToString());
+			Log.Message(stringBuilder.ToString(), false);
 		}
 	}
 }

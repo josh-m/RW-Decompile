@@ -18,70 +18,78 @@ namespace RimWorld
 			}
 		}
 
-		public bool CanFireNow(IIncidentTarget target)
+		public bool CanFireNow(IncidentParms parms, bool forced = false)
 		{
-			if (!this.def.TargetAllowed(target))
+			if (!parms.forced)
 			{
-				return false;
-			}
-			if (GenDate.DaysPassed < this.def.earliestDay)
-			{
-				return false;
-			}
-			if (this.def.minPopulation > 0 && PawnsFinder.AllMapsCaravansAndTravelingTransportPods_FreeColonists.Count<Pawn>() < this.def.minPopulation)
-			{
-				return false;
-			}
-			if (Find.Storyteller.difficulty.difficulty < this.def.minDifficulty)
-			{
-				return false;
-			}
-			if (this.def.allowedBiomes != null)
-			{
-				BiomeDef biome = Find.WorldGrid[target.Tile].biome;
-				if (!this.def.allowedBiomes.Contains(biome))
+				if (!this.def.TargetAllowed(parms.target))
 				{
 					return false;
 				}
-			}
-			for (int i = 0; i < Find.Scenario.parts.Count; i++)
-			{
-				ScenPart_DisableIncident scenPart_DisableIncident = Find.Scenario.parts[i] as ScenPart_DisableIncident;
-				if (scenPart_DisableIncident != null && scenPart_DisableIncident.Incident == this.def)
+				if (GenDate.DaysPassed < this.def.earliestDay)
 				{
 					return false;
 				}
-			}
-			Dictionary<IncidentDef, int> lastFireTicks = target.StoryState.lastFireTicks;
-			int ticksGame = Find.TickManager.TicksGame;
-			int num;
-			if (lastFireTicks.TryGetValue(this.def, out num))
-			{
-				float num2 = (float)(ticksGame - num) / 60000f;
-				if (num2 < this.def.minRefireDays)
+				if (Find.Storyteller.difficulty.difficulty < this.def.minDifficulty)
 				{
 					return false;
 				}
-			}
-			List<IncidentDef> refireCheckIncidents = this.def.RefireCheckIncidents;
-			if (refireCheckIncidents != null)
-			{
-				for (int j = 0; j < refireCheckIncidents.Count; j++)
+				if (this.def.allowedBiomes != null)
 				{
-					if (lastFireTicks.TryGetValue(refireCheckIncidents[j], out num))
+					BiomeDef biome = Find.WorldGrid[parms.target.Tile].biome;
+					if (!this.def.allowedBiomes.Contains(biome))
 					{
-						float num3 = (float)(ticksGame - num) / 60000f;
-						if (num3 < this.def.minRefireDays)
+						return false;
+					}
+				}
+				Scenario scenario = Find.Scenario;
+				for (int i = 0; i < scenario.parts.Count; i++)
+				{
+					ScenPart_DisableIncident scenPart_DisableIncident = scenario.parts[i] as ScenPart_DisableIncident;
+					if (scenPart_DisableIncident != null && scenPart_DisableIncident.Incident == this.def)
+					{
+						return false;
+					}
+				}
+				if (this.def.minPopulation > 0 && PawnsFinder.AllMapsCaravansAndTravelingTransportPods_Alive_FreeColonists.Count<Pawn>() < this.def.minPopulation)
+				{
+					return false;
+				}
+				Dictionary<IncidentDef, int> lastFireTicks = parms.target.StoryState.lastFireTicks;
+				int ticksGame = Find.TickManager.TicksGame;
+				int num;
+				if (lastFireTicks.TryGetValue(this.def, out num))
+				{
+					float num2 = (float)(ticksGame - num) / 60000f;
+					if (num2 < this.def.minRefireDays)
+					{
+						return false;
+					}
+				}
+				List<IncidentDef> refireCheckIncidents = this.def.RefireCheckIncidents;
+				if (refireCheckIncidents != null)
+				{
+					for (int j = 0; j < refireCheckIncidents.Count; j++)
+					{
+						if (lastFireTicks.TryGetValue(refireCheckIncidents[j], out num))
 						{
-							return false;
+							float num3 = (float)(ticksGame - num) / 60000f;
+							if (num3 < this.def.minRefireDays)
+							{
+								return false;
+							}
 						}
 					}
 				}
+				if (this.def.minGreatestPopulation > 0 && Find.StoryWatcher.statsRecord.greatestPopulation < this.def.minGreatestPopulation)
+				{
+					return false;
+				}
 			}
-			return this.CanFireNowSub(target);
+			return this.CanFireNowSub(parms);
 		}
 
-		protected virtual bool CanFireNowSub(IIncidentTarget target)
+		protected virtual bool CanFireNowSub(IncidentParms parms)
 		{
 			return true;
 		}
@@ -89,27 +97,38 @@ namespace RimWorld
 		public bool TryExecute(IncidentParms parms)
 		{
 			bool flag = this.TryExecuteWorker(parms);
-			if (flag && this.def.tale != null)
+			if (flag)
 			{
-				Pawn pawn = null;
-				if (parms.target is Caravan)
+				if (this.def.tale != null)
 				{
-					pawn = (parms.target as Caravan).RandomOwner();
-				}
-				else if (parms.target is Map)
-				{
-					pawn = (parms.target as Map).mapPawns.FreeColonistsSpawned.RandomElementWithFallback(null);
-				}
-				else if (parms.target is World)
-				{
-					pawn = PawnsFinder.AllMapsCaravansAndTravelingTransportPods_FreeColonists.RandomElementWithFallback(null);
-				}
-				if (pawn != null)
-				{
-					TaleRecorder.RecordTale(this.def.tale, new object[]
+					Pawn pawn = null;
+					if (parms.target is Caravan)
 					{
-						pawn
-					});
+						pawn = ((Caravan)parms.target).RandomOwner();
+					}
+					else if (parms.target is Map)
+					{
+						pawn = ((Map)parms.target).mapPawns.FreeColonistsSpawned.RandomElementWithFallback(null);
+					}
+					else if (parms.target is World)
+					{
+						pawn = PawnsFinder.AllMapsCaravansAndTravelingTransportPods_Alive_FreeColonists_NoCryptosleep.RandomElementWithFallback(null);
+					}
+					if (pawn != null)
+					{
+						TaleRecorder.RecordTale(this.def.tale, new object[]
+						{
+							pawn
+						});
+					}
+				}
+				if (this.def.category.tale != null)
+				{
+					Tale tale = TaleRecorder.RecordTale(this.def.category.tale, new object[0]);
+					if (tale != null)
+					{
+						tale.customLabel = this.def.label;
+					}
 				}
 			}
 			return flag;
@@ -117,7 +136,7 @@ namespace RimWorld
 
 		protected virtual bool TryExecuteWorker(IncidentParms parms)
 		{
-			Log.Error("Unimplemented incident " + this);
+			Log.Error("Unimplemented incident " + this, false);
 			return false;
 		}
 
@@ -125,19 +144,19 @@ namespace RimWorld
 		{
 			if (this.def.letterLabel.NullOrEmpty() || this.def.letterText.NullOrEmpty())
 			{
-				Log.Error("Sending standard incident letter with no label or text.");
+				Log.Error("Sending standard incident letter with no label or text.", false);
 			}
 			Find.LetterStack.ReceiveLetter(this.def.letterLabel, this.def.letterText, this.def.letterDef, null);
 		}
 
-		protected void SendStandardLetter(GlobalTargetInfo target, params string[] textArgs)
+		protected void SendStandardLetter(LookTargets lookTargets, Faction relatedFaction = null, params string[] textArgs)
 		{
 			if (this.def.letterLabel.NullOrEmpty() || this.def.letterText.NullOrEmpty())
 			{
-				Log.Error("Sending standard incident letter with no label or text.");
+				Log.Error("Sending standard incident letter with no label or text.", false);
 			}
 			string text = string.Format(this.def.letterText, textArgs).CapitalizeFirst();
-			Find.LetterStack.ReceiveLetter(this.def.letterLabel, text, this.def.letterDef, target, null);
+			Find.LetterStack.ReceiveLetter(this.def.letterLabel, text, this.def.letterDef, lookTargets, relatedFaction, null);
 		}
 	}
 }

@@ -11,7 +11,7 @@ namespace Verse
 
 		private List<Area> areas = new List<Area>();
 
-		private const int MaxAllowedAreasPerMode = 5;
+		public const int MaxAllowedAreas = 10;
 
 		public List<Area> AllAreas
 		{
@@ -65,8 +65,7 @@ namespace Verse
 			this.areas.Add(new Area_NoRoof(this));
 			this.areas.Add(new Area_SnowClear(this));
 			Area_Allowed area_Allowed;
-			this.TryMakeNewAllowed(AllowedAreaMode.Humanlike, out area_Allowed);
-			this.TryMakeNewAllowed(AllowedAreaMode.Animal, out area_Allowed);
+			this.TryMakeNewAllowed(out area_Allowed);
 		}
 
 		public void ExposeData()
@@ -90,7 +89,7 @@ namespace Verse
 		{
 			if (!area.Mutable)
 			{
-				Log.Error("Tried to delete non-Deletable area " + area);
+				Log.Error("Tried to delete non-Deletable area " + area, false);
 				return;
 			}
 			this.areas.Remove(area);
@@ -141,7 +140,7 @@ namespace Verse
 
 		private void NotifyEveryoneAreaRemoved(Area area)
 		{
-			foreach (Pawn current in PawnsFinder.AllMapsWorldAndTemporary_Alive)
+			foreach (Pawn current in PawnsFinder.All_AliveOrDead)
 			{
 				if (current.playerSettings != null)
 				{
@@ -158,21 +157,21 @@ namespace Verse
 			}
 		}
 
-		public bool CanMakeNewAllowed(AllowedAreaMode mode)
+		public bool CanMakeNewAllowed()
 		{
 			return (from a in this.areas
-			where a is Area_Allowed && ((Area_Allowed)a).mode == mode
-			select a).Count<Area>() < 5;
+			where a is Area_Allowed
+			select a).Count<Area>() < 10;
 		}
 
-		public bool TryMakeNewAllowed(AllowedAreaMode mode, out Area_Allowed area)
+		public bool TryMakeNewAllowed(out Area_Allowed area)
 		{
-			if (!this.CanMakeNewAllowed(mode))
+			if (!this.CanMakeNewAllowed())
 			{
 				area = null;
 				return false;
 			}
-			area = new Area_Allowed(this, mode, null);
+			area = new Area_Allowed(this, null);
 			this.areas.Add(area);
 			this.SortAreas();
 			return true;

@@ -9,7 +9,7 @@ namespace Verse
 	public static class GenRecipe
 	{
 		[DebuggerHidden]
-		public static IEnumerable<Thing> MakeRecipeProducts(RecipeDef recipeDef, Pawn worker, List<Thing> ingredients, Thing dominantIngredient)
+		public static IEnumerable<Thing> MakeRecipeProducts(RecipeDef recipeDef, Pawn worker, List<Thing> ingredients, Thing dominantIngredient, IBillGiver billGiver)
 		{
 			float efficiency;
 			if (recipeDef.efficiencyStat == null)
@@ -20,11 +20,19 @@ namespace Verse
 			{
 				efficiency = worker.GetStatValue(recipeDef.efficiencyStat, true);
 			}
+			if (recipeDef.workTableEfficiencyStat != null)
+			{
+				Building_WorkTable building_WorkTable = billGiver as Building_WorkTable;
+				if (building_WorkTable != null)
+				{
+					efficiency *= building_WorkTable.GetStatValue(recipeDef.workTableEfficiencyStat, true);
+				}
+			}
 			if (recipeDef.products != null)
 			{
 				for (int i = 0; i < recipeDef.products.Count; i++)
 				{
-					ThingCountClass prod = recipeDef.products[i];
+					ThingDefCountClass prod = recipeDef.products[i];
 					ThingDef stuffDef;
 					if (prod.thingDef.MadeFromStuff)
 					{
@@ -51,15 +59,19 @@ namespace Verse
 					CompFoodPoisonable foodPoisonable = product.TryGetComp<CompFoodPoisonable>();
 					if (foodPoisonable != null)
 					{
-						float num = worker.GetStatValue(StatDefOf.FoodPoisonChance, true);
 						Room room = worker.GetRoom(RegionType.Set_Passable);
-						if (room != null)
+						float chance = (room == null) ? RoomStatDefOf.FoodPoisonChance.roomlessScore : room.GetStat(RoomStatDefOf.FoodPoisonChance);
+						if (Rand.Chance(chance))
 						{
-							num *= room.GetStat(RoomStatDefOf.FoodPoisonChanceFactor);
+							foodPoisonable.SetPoisoned(FoodPoisonCause.FilthyKitchen);
 						}
-						if (Rand.Value < num)
+						else
 						{
-							foodPoisonable.PoisonPercent = 1f;
+							float statValue = worker.GetStatValue(StatDefOf.FoodPoisonChance, true);
+							if (Rand.Chance(statValue))
+							{
+								foodPoisonable.SetPoisoned(FoodPoisonCause.IncompetentCook);
+							}
 						}
 					}
 					yield return GenRecipe.PostProcessProduct(product, recipeDef, worker);
@@ -102,16 +114,11 @@ namespace Verse
 			{
 				if (recipeDef.workSkill == null)
 				{
-					Log.Error(recipeDef + " needs workSkill because it creates a product with a quality.");
+					Log.Error(recipeDef + " needs workSkill because it creates a product with a quality.", false);
 				}
-				int level = worker.skills.GetSkill(recipeDef.workSkill).Level;
-				QualityCategory qualityCategory = QualityUtility.RandomCreationQuality(level);
-				if (worker.InspirationDef == InspirationDefOf.InspiredArt && (product.def.IsArt || (product.def.minifiedDef != null && product.def.minifiedDef.IsArt)))
-				{
-					qualityCategory = qualityCategory.AddLevels(3);
-					worker.mindState.inspirationHandler.EndInspiration(InspirationDefOf.InspiredArt);
-				}
-				compQuality.SetQuality(qualityCategory, ArtGenerationContext.Colony);
+				QualityCategory q = QualityUtility.GenerateQualityCreatedByPawn(worker, recipeDef.workSkill);
+				compQuality.SetQuality(q, ArtGenerationContext.Colony);
+				QualityUtility.SendCraftNotification(product, worker);
 			}
 			CompArt compArt = product.TryGetComp<CompArt>();
 			if (compArt != null)

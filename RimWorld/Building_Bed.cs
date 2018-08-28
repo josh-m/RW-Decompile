@@ -26,7 +26,7 @@ namespace RimWorld
 
 		private static readonly Color SheetColorRoyal = new Color(0.670588255f, 0.9137255f, 0.745098054f);
 
-		private static readonly Color SheetColorForPrisoner = new Color(1f, 0.7176471f, 0.129411772f);
+		public static readonly Color SheetColorForPrisoner = new Color(1f, 0.7176471f, 0.129411772f);
 
 		private static readonly Color SheetColorMedical = new Color(0.3882353f, 0.623529434f, 0.8862745f);
 
@@ -46,17 +46,13 @@ namespace RimWorld
 				}
 				if (Current.ProgramState != ProgramState.Playing && Scribe.mode != LoadSaveMode.Inactive)
 				{
-					Log.Error("Tried to set ForPrisoners while game mode was " + Current.ProgramState);
+					Log.Error("Tried to set ForPrisoners while game mode was " + Current.ProgramState, false);
 					return;
 				}
 				this.RemoveAllOwners();
 				this.forPrisonersInt = value;
 				this.Notify_ColorChanged();
-				if (base.Spawned)
-				{
-					base.Map.mapDrawer.MapMeshDirty(base.Position, MapMeshFlag.Things);
-					this.NotifyRoomBedTypeChanged();
-				}
+				this.NotifyRoomBedTypeChanged();
 			}
 		}
 
@@ -90,7 +86,7 @@ namespace RimWorld
 			{
 				if (this.Medical)
 				{
-					Log.Warning("Tried to check for unowned sleeping slot on medical bed " + this);
+					Log.Warning("Tried to check for unowned sleeping slot on medical bed " + this, false);
 					return false;
 				}
 				return this.owners.Count < this.SleepingSlotsCount;
@@ -237,6 +233,11 @@ namespace RimWorld
 			}
 		}
 
+		public bool AssignedAnything(Pawn pawn)
+		{
+			return pawn.ownership.OwnedBed != null;
+		}
+
 		public override void SpawnSetup(Map map, bool respawningAfterLoad)
 		{
 			base.SpawnSetup(map, respawningAfterLoad);
@@ -255,14 +256,14 @@ namespace RimWorld
 			}
 		}
 
-		public override void DeSpawn()
+		public override void DeSpawn(DestroyMode mode = DestroyMode.Vanish)
 		{
 			this.RemoveAllOwners();
 			this.ForPrisoners = false;
 			this.Medical = false;
 			this.alreadySetDefaultMed = false;
 			Room room = this.GetRoom(RegionType.Set_Passable);
-			base.DeSpawn();
+			base.DeSpawn(mode);
 			if (room != null)
 			{
 				room.Notify_RoomShapeOrContainedBedsChanged();
@@ -355,12 +356,10 @@ namespace RimWorld
 			}
 			Building_Bed.lastPrisonerSetChangeFrame = Time.frameCount;
 			bool newForPrisoners = !this.ForPrisoners;
-			SoundDef soundDef = (!newForPrisoners) ? SoundDefOf.CheckboxTurnedOff : SoundDefOf.CheckboxTurnedOn;
+			SoundDef soundDef = (!newForPrisoners) ? SoundDefOf.Checkbox_TurnedOff : SoundDefOf.Checkbox_TurnedOn;
 			soundDef.PlayOneShotOnCamera(null);
 			List<Building_Bed> bedsToAffect = new List<Building_Bed>();
-			foreach (Building_Bed current in (from so in Find.Selector.SelectedObjects
-			where so is Building_Bed
-			select so).Cast<Building_Bed>())
+			foreach (Building_Bed current in Find.Selector.SelectedObjects.OfType<Building_Bed>())
 			{
 				if (current.ForPrisoners != newForPrisoners)
 				{
@@ -434,7 +433,7 @@ namespace RimWorld
 						for (int i = 0; i < current3.owners.Count; i++)
 						{
 							stringBuilder.AppendLine();
-							stringBuilder.Append(current3.owners[i].NameStringShort);
+							stringBuilder.Append(current3.owners[i].LabelShort);
 						}
 					}
 				}
@@ -472,7 +471,7 @@ namespace RimWorld
 				{
 					if (this.owners.Count == 0)
 					{
-						stringBuilder.AppendLine("Owner".Translate() + ": " + "Nobody".Translate().ToLower());
+						stringBuilder.AppendLine("Owner".Translate() + ": " + "Nobody".Translate());
 					}
 					else if (this.owners.Count == 1)
 					{
@@ -513,20 +512,20 @@ namespace RimWorld
 					{
 						if (!this.$this.ForPrisoners && this.$this.Medical && myPawn.CanReserveAndReach(this.$this, PathEndMode.ClosestTouch, Danger.Deadly, this.$this.SleepingSlotsCount, -1, null, true))
 						{
-							Job job = new Job(JobDefOf.LayDown, this.$this);
-							job.restUntilHealed = true;
-							myPawn.jobs.TryTakeOrderedJob(job, JobTag.Misc);
+							if (myPawn.CurJobDef == JobDefOf.LayDown && myPawn.CurJob.GetTarget(TargetIndex.A).Thing == this.$this)
+							{
+								myPawn.CurJob.restUntilHealed = true;
+							}
+							else
+							{
+								Job job = new Job(JobDefOf.LayDown, this.$this);
+								job.restUntilHealed = true;
+								myPawn.jobs.TryTakeOrderedJob(job, JobTag.Misc);
+							}
 							myPawn.mindState.ResetLastDisturbanceTick();
 						}
 					};
-					if (this.AnyUnoccupiedSleepingSlot)
-					{
-						yield return FloatMenuUtility.DecoratePrioritizedTask(new FloatMenuOption("UseMedicalBed".Translate(), sleep, MenuOptionPriority.Default, null, null, 0f, null, null), myPawn, this, "ReservedBy");
-					}
-					else
-					{
-						yield return FloatMenuUtility.DecoratePrioritizedTask(new FloatMenuOption("UseMedicalBed".Translate(), sleep, MenuOptionPriority.Default, null, null, 0f, null, null), myPawn, this, "SomeoneElseSleeping");
-					}
+					yield return FloatMenuUtility.DecoratePrioritizedTask(new FloatMenuOption("UseMedicalBed".Translate(), sleep, MenuOptionPriority.Default, null, null, 0f, null, null), myPawn, this, (!this.AnyUnoccupiedSleepingSlot) ? "SomeoneElseSleeping" : "ReservedBy");
 				}
 			}
 		}
@@ -550,7 +549,7 @@ namespace RimWorld
 					{
 						return;
 					}
-					GenMapUI.DrawThingLabel(this, this.owners[0].NameStringShort, defaultThingLabelColor);
+					GenMapUI.DrawThingLabel(this, this.owners[0].LabelShort, defaultThingLabelColor);
 				}
 				else
 				{
@@ -559,7 +558,7 @@ namespace RimWorld
 						if (!this.owners[i].InBed() || this.owners[i].CurrentBed() != this || !(this.owners[i].Position == this.GetSleepingSlotPos(i)))
 						{
 							Vector3 multiOwnersLabelScreenPosFor = this.GetMultiOwnersLabelScreenPosFor(i);
-							GenMapUI.DrawThingLabel(multiOwnersLabelScreenPosFor, this.owners[i].NameStringShort, defaultThingLabelColor);
+							GenMapUI.DrawThingLabel(multiOwnersLabelScreenPosFor, this.owners[i].LabelShort, defaultThingLabelColor);
 						}
 					}
 				}
@@ -581,7 +580,7 @@ namespace RimWorld
 				{
 					if (pawn.CurJob != null)
 					{
-						if (pawn.jobs.curDriver.layingDown == LayingDownState.LayingInBed)
+						if (pawn.GetPosture() == PawnPosture.LayingInBed)
 						{
 							return pawn;
 						}
@@ -600,7 +599,7 @@ namespace RimWorld
 					return i;
 				}
 			}
-			Log.Error("Could not find pawn " + curOccupant + " on any of sleeping slots.");
+			Log.Error("Could not find pawn " + curOccupant + " on any of sleeping slots.", false);
 			return 0;
 		}
 
@@ -681,7 +680,7 @@ namespace RimWorld
 		private Vector3 AdjustOwnerLabelPosToAvoidOverlapping(Vector3 screenPos, int slotIndex)
 		{
 			Text.Font = GameFont.Tiny;
-			float num = Text.CalcSize(this.owners[slotIndex].NameStringShort).x + 1f;
+			float num = Text.CalcSize(this.owners[slotIndex].LabelShort).x + 1f;
 			Vector2 vector = this.DrawPos.MapToUIPosition();
 			float num2 = Mathf.Abs(screenPos.x - vector.x);
 			IntVec3 sleepingSlotPos = this.GetSleepingSlotPos(slotIndex);

@@ -80,28 +80,28 @@ namespace Verse
 		{
 			if (!UnityData.IsInMainThread)
 			{
-				Log.Error("Tried to get a material from a different thread.");
+				Log.Error("Tried to get a material from a different thread.", false);
 				return null;
 			}
 			if (req.mainTex == null)
 			{
-				Log.Error("MatFrom with null sourceTex.");
+				Log.Error("MatFrom with null sourceTex.", false);
 				return BaseContent.BadMat;
 			}
 			if (req.shader == null)
 			{
-				Log.Warning("Matfrom with null shader.");
+				Log.Warning("Matfrom with null shader.", false);
 				return BaseContent.BadMat;
 			}
 			if (req.maskTex != null && !req.shader.SupportsMaskTex())
 			{
-				Log.Error("MaterialRequest has maskTex but shader does not support it. req=" + req.ToString());
+				Log.Error("MaterialRequest has maskTex but shader does not support it. req=" + req.ToString(), false);
 				req.maskTex = null;
 			}
 			Material material;
 			if (!MaterialPool.matDictionary.TryGetValue(req, out material))
 			{
-				material = new Material(req.shader);
+				material = MaterialAllocator.Create(req.shader);
 				material.name = req.shader.name + "_" + req.mainTex.name;
 				material.mainTexture = req.mainTex;
 				material.color = req.color;
@@ -114,10 +114,17 @@ namespace Verse
 				{
 					material.renderQueue = req.renderQueue;
 				}
+				if (!req.shaderParameters.NullOrEmpty<ShaderParameter>())
+				{
+					for (int i = 0; i < req.shaderParameters.Count; i++)
+					{
+						req.shaderParameters[i].Apply(material);
+					}
+				}
 				MaterialPool.matDictionary.Add(req, material);
 				if (!MaterialPool.matDictionary.ContainsKey(req))
 				{
-					Log.Error("MaterialRequest is not present in the dictionary even though we've just added it there. The equality operators are most likely defined incorrectly.");
+					Log.Error("MaterialRequest is not present in the dictionary even though we've just added it there. The equality operators are most likely defined incorrectly.", false);
 				}
 				if (req.shader == ShaderDatabase.CutoutPlant || req.shader == ShaderDatabase.TransparentPlant)
 				{

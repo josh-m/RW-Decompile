@@ -17,7 +17,7 @@ namespace Verse
 			}
 		}
 
-		public override Material MatFront
+		public override Material MatWest
 		{
 			get
 			{
@@ -25,7 +25,7 @@ namespace Verse
 			}
 		}
 
-		public override Material MatSide
+		public override Material MatSouth
 		{
 			get
 			{
@@ -33,7 +33,15 @@ namespace Verse
 			}
 		}
 
-		public override Material MatBack
+		public override Material MatEast
+		{
+			get
+			{
+				return this.mat;
+			}
+		}
+
+		public override Material MatNorth
 		{
 			get
 			{
@@ -62,6 +70,7 @@ namespace Verse
 			req2.color = this.color;
 			req2.colorTwo = this.colorTwo;
 			req2.renderQueue = req.renderQueue;
+			req2.shaderParameters = req.shaderParameters;
 			if (req.shader.SupportsMaskTex())
 			{
 				req2.maskTex = ContentFinder<Texture2D>.Get(req.path + Graphic_Single.MaskSuffix, false);

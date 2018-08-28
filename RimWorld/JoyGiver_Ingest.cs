@@ -8,6 +8,8 @@ namespace RimWorld
 {
 	public class JoyGiver_Ingest : JoyGiver
 	{
+		private static List<Thing> tmpCandidates = new List<Thing>();
+
 		public override Job TryGiveJob(Pawn pawn)
 		{
 			return this.TryGiveJobInternal(pawn, null);
@@ -39,18 +41,21 @@ namespace RimWorld
 					return innerContainer[i];
 				}
 			}
-			List<Thing> searchSet = this.GetSearchSet(pawn);
-			if (searchSet.Count == 0)
+			JoyGiver_Ingest.tmpCandidates.Clear();
+			this.GetSearchSet(pawn, JoyGiver_Ingest.tmpCandidates);
+			if (JoyGiver_Ingest.tmpCandidates.Count == 0)
 			{
 				return null;
 			}
 			IntVec3 position = pawn.Position;
 			Map map = pawn.Map;
-			List<Thing> searchSet2 = searchSet;
+			List<Thing> searchSet = JoyGiver_Ingest.tmpCandidates;
 			PathEndMode peMode = PathEndMode.OnCell;
 			TraverseParms traverseParams = TraverseParms.For(pawn, Danger.Deadly, TraverseMode.ByPawn, false);
 			Predicate<Thing> validator = predicate;
-			return GenClosest.ClosestThing_Global_Reachable(position, map, searchSet2, peMode, traverseParams, 9999f, validator, null);
+			Thing result = GenClosest.ClosestThing_Global_Reachable(position, map, searchSet, peMode, traverseParams, 9999f, validator, null);
+			JoyGiver_Ingest.tmpCandidates.Clear();
+			return result;
 		}
 
 		protected virtual bool CanIngestForJoy(Pawn pawn, Thing t)

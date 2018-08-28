@@ -60,7 +60,15 @@ namespace RimWorld
 
 		private static List<IntVec3> subGroup = new List<IntVec3>();
 
-		public override void Generate(Map map)
+		public override int SeedPart
+		{
+			get
+			{
+				return 647814558;
+			}
+		}
+
+		public override void Generate(Map map, GenStepParams parms)
 		{
 			if (!Find.World.HasCaves(map.Tile))
 			{
@@ -187,7 +195,7 @@ namespace RimWorld
 			}
 			if (!GenStep_Caves.tmpCells.Any<IntVec3>())
 			{
-				Log.Warning("Could not find any valid edge cell.");
+				Log.Warning("Could not find any valid edge cell.", false);
 				return group.RandomElement<IntVec3>();
 			}
 			return GenStep_Caves.tmpCells.RandomElement<IntVec3>();
@@ -214,7 +222,7 @@ namespace RimWorld
 				num7,
 				num8
 			});
-			return GenMath.MaxByRandomIfEqual<float>(0f, num + num8 / 2f + num6 / 2f, 45f, num8 + num3 / 2f + num / 2f, 90f, num3 + num8 / 2f + num7 / 2f, 135f, num7 + num3 / 2f + num2 / 2f, 180f, num2 + num7 / 2f + num5 / 2f, 225f, num5 + num4 / 2f + num2 / 2f, 270f, num4 + num6 / 2f + num5 / 2f, 315f, num6 + num4 / 2f + num / 2f);
+			return GenMath.MaxByRandomIfEqual<float>(0f, num + num8 / 2f + num6 / 2f, 45f, num8 + num3 / 2f + num / 2f, 90f, num3 + num8 / 2f + num7 / 2f, 135f, num7 + num3 / 2f + num2 / 2f, 180f, num2 + num7 / 2f + num5 / 2f, 225f, num5 + num4 / 2f + num2 / 2f, 270f, num4 + num6 / 2f + num5 / 2f, 315f, num6 + num4 / 2f + num / 2f, 0.0001f);
 		}
 
 		private void Dig(IntVec3 start, float dir, float width, List<IntVec3> group, Map map, bool closed, HashSet<IntVec3> visited = null)

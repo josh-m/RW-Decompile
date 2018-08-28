@@ -13,13 +13,17 @@ namespace Verse
 
 		private DamageDef defInt;
 
-		private int amountInt;
+		private float amountInt;
+
+		private float armorPenetrationInt;
 
 		private float angleInt;
 
 		private Thing instigatorInt;
 
 		private DamageInfo.SourceCategory categoryInt;
+
+		public Thing intendedTargetInt;
 
 		private BodyPartRecord hitPartInt;
 
@@ -33,7 +37,7 @@ namespace Verse
 
 		private HediffDef weaponHediffInt;
 
-		private bool instantOldInjuryInt;
+		private bool instantPermanentInjuryInt;
 
 		private bool allowDamagePropagationInt;
 
@@ -43,17 +47,29 @@ namespace Verse
 			{
 				return this.defInt;
 			}
+			set
+			{
+				this.defInt = value;
+			}
 		}
 
-		public int Amount
+		public float Amount
 		{
 			get
 			{
 				if (!DebugSettings.enableDamage)
 				{
-					return 0;
+					return 0f;
 				}
 				return this.amountInt;
+			}
+		}
+
+		public float ArmorPenetrationInt
+		{
+			get
+			{
+				return this.armorPenetrationInt;
 			}
 		}
 
@@ -70,6 +86,14 @@ namespace Verse
 			get
 			{
 				return this.categoryInt;
+			}
+		}
+
+		public Thing IntendedTarget
+		{
+			get
+			{
+				return this.intendedTargetInt;
 			}
 		}
 
@@ -129,11 +153,11 @@ namespace Verse
 			}
 		}
 
-		public bool InstantOldInjury
+		public bool InstantPermanentInjury
 		{
 			get
 			{
-				return this.instantOldInjuryInt;
+				return this.instantPermanentInjuryInt;
 			}
 		}
 
@@ -141,14 +165,15 @@ namespace Verse
 		{
 			get
 			{
-				return !this.InstantOldInjury && this.allowDamagePropagationInt;
+				return !this.InstantPermanentInjury && this.allowDamagePropagationInt;
 			}
 		}
 
-		public DamageInfo(DamageDef def, int amount, float angle = -1f, Thing instigator = null, BodyPartRecord hitPart = null, ThingDef weapon = null, DamageInfo.SourceCategory category = DamageInfo.SourceCategory.ThingOrUnknown)
+		public DamageInfo(DamageDef def, float amount, float armorPenetration = 0f, float angle = -1f, Thing instigator = null, BodyPartRecord hitPart = null, ThingDef weapon = null, DamageInfo.SourceCategory category = DamageInfo.SourceCategory.ThingOrUnknown, Thing intendedTarget = null)
 		{
 			this.defInt = def;
 			this.amountInt = amount;
+			this.armorPenetrationInt = armorPenetration;
 			if (angle < 0f)
 			{
 				this.angleInt = (float)Rand.RangeInclusive(0, 359);
@@ -165,14 +190,16 @@ namespace Verse
 			this.weaponInt = weapon;
 			this.weaponBodyPartGroupInt = null;
 			this.weaponHediffInt = null;
-			this.instantOldInjuryInt = false;
+			this.instantPermanentInjuryInt = false;
 			this.allowDamagePropagationInt = true;
+			this.intendedTargetInt = intendedTarget;
 		}
 
 		public DamageInfo(DamageInfo cloneSource)
 		{
 			this.defInt = cloneSource.defInt;
 			this.amountInt = cloneSource.amountInt;
+			this.armorPenetrationInt = cloneSource.armorPenetrationInt;
 			this.angleInt = cloneSource.angleInt;
 			this.instigatorInt = cloneSource.instigatorInt;
 			this.categoryInt = cloneSource.categoryInt;
@@ -182,11 +209,12 @@ namespace Verse
 			this.weaponInt = cloneSource.weaponInt;
 			this.weaponBodyPartGroupInt = cloneSource.weaponBodyPartGroupInt;
 			this.weaponHediffInt = cloneSource.weaponHediffInt;
-			this.instantOldInjuryInt = cloneSource.instantOldInjuryInt;
+			this.instantPermanentInjuryInt = cloneSource.instantPermanentInjuryInt;
 			this.allowDamagePropagationInt = cloneSource.allowDamagePropagationInt;
+			this.intendedTargetInt = cloneSource.intendedTargetInt;
 		}
 
-		public void SetAmount(int newAmount)
+		public void SetAmount(float newAmount)
 		{
 			this.amountInt = newAmount;
 		}
@@ -202,9 +230,9 @@ namespace Verse
 			this.hitPartInt = forceHitPart;
 		}
 
-		public void SetInstantOldInjury(bool val)
+		public void SetInstantPermanentInjury(bool val)
 		{
-			this.instantOldInjuryInt = val;
+			this.instantPermanentInjuryInt = val;
 		}
 
 		public void SetWeaponBodyPartGroup(BodyPartGroupDef gr)

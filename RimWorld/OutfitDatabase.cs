@@ -38,7 +38,7 @@ namespace RimWorld
 
 		public AcceptanceReport TryDelete(Outfit outfit)
 		{
-			foreach (Pawn current in PawnsFinder.AllMapsCaravansAndTravelingTransportPods)
+			foreach (Pawn current in PawnsFinder.AllMapsCaravansAndTravelingTransportPods_Alive)
 			{
 				if (current.outfits != null && current.outfits.CurrentOutfit == outfit)
 				{
@@ -84,7 +84,7 @@ namespace RimWorld
 			Outfit outfit2 = this.MakeNewOutfit();
 			outfit2.label = "OutfitWorker".Translate();
 			outfit2.filter.SetDisallowAll(null, null);
-			outfit2.filter.SetAllow(SpecialThingFilterDefOf.AllowNonDeadmansApparel, true);
+			outfit2.filter.SetAllow(SpecialThingFilterDefOf.AllowDeadmansApparel, false);
 			foreach (ThingDef current in DefDatabase<ThingDef>.AllDefs)
 			{
 				if (current.apparel != null && current.apparel.defaultOutfitTags != null && current.apparel.defaultOutfitTags.Contains("Worker"))
@@ -95,7 +95,7 @@ namespace RimWorld
 			Outfit outfit3 = this.MakeNewOutfit();
 			outfit3.label = "OutfitSoldier".Translate();
 			outfit3.filter.SetDisallowAll(null, null);
-			outfit3.filter.SetAllow(SpecialThingFilterDefOf.AllowNonDeadmansApparel, true);
+			outfit3.filter.SetAllow(SpecialThingFilterDefOf.AllowDeadmansApparel, false);
 			foreach (ThingDef current2 in DefDatabase<ThingDef>.AllDefs)
 			{
 				if (current2.apparel != null && current2.apparel.defaultOutfitTags != null && current2.apparel.defaultOutfitTags.Contains("Soldier"))
@@ -106,7 +106,7 @@ namespace RimWorld
 			Outfit outfit4 = this.MakeNewOutfit();
 			outfit4.label = "OutfitNudist".Translate();
 			outfit4.filter.SetDisallowAll(null, null);
-			outfit4.filter.SetAllow(SpecialThingFilterDefOf.AllowNonDeadmansApparel, true);
+			outfit4.filter.SetAllow(SpecialThingFilterDefOf.AllowDeadmansApparel, false);
 			foreach (ThingDef current3 in DefDatabase<ThingDef>.AllDefs)
 			{
 				if (current3.apparel != null && !current3.apparel.bodyPartGroups.Contains(BodyPartGroupDefOf.Legs) && !current3.apparel.bodyPartGroups.Contains(BodyPartGroupDefOf.Torso))

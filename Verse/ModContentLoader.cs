@@ -46,7 +46,7 @@ namespace Verse
 			{
 				if (typeof(T) != typeof(string))
 				{
-					Log.Error("Unknown content type " + typeof(T));
+					Log.Error("Unknown content type " + typeof(T), false);
 					return false;
 				}
 				array = ModContentLoader<T>.AcceptableExtensionsString;
@@ -155,7 +155,7 @@ namespace Verse
 					contentDirPath,
 					"\nException: ",
 					ex.ToString()
-				}));
+				}), false);
 			}
 			if (typeof(T) == typeof(Texture2D))
 			{

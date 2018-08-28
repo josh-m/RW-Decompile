@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace Verse
 {
-	internal static class BeautyDrawer
+	public static class BeautyDrawer
 	{
 		private static List<Thing> beautyCountedThings = new List<Thing>();
 
@@ -13,13 +13,31 @@ namespace Verse
 
 		private static Color ColorBeautiful = Color.green;
 
-		public static void DrawBeautyAroundMouse()
+		public static void BeautyDrawerOnGUI()
 		{
-			BeautyUtility.FillBeautyRelevantCells(UI.MouseCell(), Find.VisibleMap);
+			if (Event.current.type != EventType.Repaint || !BeautyDrawer.ShouldShow())
+			{
+				return;
+			}
+			BeautyDrawer.DrawBeautyAroundMouse();
+		}
+
+		private static bool ShouldShow()
+		{
+			return Find.PlaySettings.showBeauty && !Mouse.IsInputBlockedNow && UI.MouseCell().InBounds(Find.CurrentMap) && !UI.MouseCell().Fogged(Find.CurrentMap);
+		}
+
+		private static void DrawBeautyAroundMouse()
+		{
+			if (!Find.PlaySettings.showBeauty)
+			{
+				return;
+			}
+			BeautyUtility.FillBeautyRelevantCells(UI.MouseCell(), Find.CurrentMap);
 			for (int i = 0; i < BeautyUtility.beautyRelevantCells.Count; i++)
 			{
 				IntVec3 intVec = BeautyUtility.beautyRelevantCells[i];
-				float num = BeautyUtility.CellBeauty(intVec, Find.VisibleMap, BeautyDrawer.beautyCountedThings);
+				float num = BeautyUtility.CellBeauty(intVec, Find.CurrentMap, BeautyDrawer.beautyCountedThings);
 				if (num != 0f)
 				{
 					Vector3 v = GenMapUI.LabelDrawPosFor(intVec);

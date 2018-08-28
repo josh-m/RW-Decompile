@@ -7,5 +7,10 @@ namespace RimWorld
 	public static class DamageArmorCategoryDefOf
 	{
 		public static DamageArmorCategoryDef Sharp;
+
+		static DamageArmorCategoryDefOf()
+		{
+			DefOfHelper.EnsureInitializedInCtor(typeof(DamageArmorCategoryDefOf));
+		}
 	}
 }

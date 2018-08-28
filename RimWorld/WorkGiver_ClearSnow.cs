@@ -20,17 +20,26 @@ namespace RimWorld
 			return pawn.Map.areaManager.SnowClear.ActiveCells;
 		}
 
-		public override bool ShouldSkip(Pawn pawn)
+		public override bool ShouldSkip(Pawn pawn, bool forced = false)
 		{
 			return pawn.Map.areaManager.SnowClear.TrueCount == 0;
 		}
 
-		public override bool HasJobOnCell(Pawn pawn, IntVec3 c)
+		public override bool HasJobOnCell(Pawn pawn, IntVec3 c, bool forced = false)
 		{
-			return pawn.Map.snowGrid.GetDepth(c) >= 0.2f && !c.IsForbidden(pawn) && pawn.CanReserve(c, 1, -1, null, false);
+			if (pawn.Map.snowGrid.GetDepth(c) < 0.2f)
+			{
+				return false;
+			}
+			if (c.IsForbidden(pawn))
+			{
+				return false;
+			}
+			LocalTargetInfo target = c;
+			return pawn.CanReserve(target, 1, -1, null, forced);
 		}
 
-		public override Job JobOnCell(Pawn pawn, IntVec3 c)
+		public override Job JobOnCell(Pawn pawn, IntVec3 c, bool forced = false)
 		{
 			return new Job(JobDefOf.ClearSnow, c);
 		}

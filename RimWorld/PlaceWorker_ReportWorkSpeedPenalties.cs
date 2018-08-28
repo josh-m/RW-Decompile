@@ -20,20 +20,22 @@ namespace RimWorld
 				{
 					def.label
 				}).CapitalizeFirst() + ": ";
+				string text2 = string.Empty;
 				if (flag)
 				{
-					text += "Outdoors".Translate().CapitalizeFirst();
+					text2 += "Outdoors".Translate();
 				}
 				if (flag2)
 				{
-					if (flag)
+					if (!text2.NullOrEmpty())
 					{
-						text += ", ";
+						text2 += ", ";
 					}
-					text += "BadTemperature".Translate().CapitalizeFirst();
+					text2 += "BadTemperature".Translate();
 				}
+				text += text2.CapitalizeFirst();
 				text += ".";
-				Messages.Message(text, MessageTypeDefOf.CautionInput);
+				Messages.Message(text, new TargetInfo(loc, map, false), MessageTypeDefOf.CautionInput, false);
 			}
 		}
 	}

@@ -99,13 +99,13 @@ namespace RimWorld
 			}
 			if (listing_Standard.ButtonText("RandomizeSeed".Translate(), null))
 			{
-				SoundDefOf.TickTiny.PlayOneShotOnCamera(null);
+				SoundDefOf.Tick_Tiny.PlayOneShotOnCamera(null);
 				this.RandomizeSeedAndScenario();
 				this.seedIsValid = true;
 			}
 			if (this.seedIsValid)
 			{
-				listing_Standard.Label("Seed".Translate().CapitalizeFirst(), -1f);
+				listing_Standard.Label("Seed".Translate().CapitalizeFirst(), -1f, null);
 				string a = listing_Standard.TextEntry(this.seed, 1);
 				if (a != this.seed)
 				{
@@ -130,17 +130,17 @@ namespace RimWorld
 					AcceptanceReport acceptanceReport = this.curScen.TryUploadReport();
 					if (!acceptanceReport.Accepted)
 					{
-						Messages.Message(acceptanceReport.Reason, MessageTypeDefOf.RejectInput);
+						Messages.Message(acceptanceReport.Reason, MessageTypeDefOf.RejectInput, false);
 					}
 					else
 					{
-						SoundDefOf.TickHigh.PlayOneShotOnCamera(null);
+						SoundDefOf.Tick_High.PlayOneShotOnCamera(null);
 						Find.WindowStack.Add(Dialog_MessageBox.CreateConfirmation("ConfirmSteamWorkshopUpload".Translate(), delegate
 						{
-							SoundDefOf.TickHigh.PlayOneShotOnCamera(null);
+							SoundDefOf.Tick_High.PlayOneShotOnCamera(null);
 							Find.WindowStack.Add(Dialog_MessageBox.CreateConfirmation("ConfirmContentAuthor".Translate(), delegate
 							{
-								SoundDefOf.TickHigh.PlayOneShotOnCamera(null);
+								SoundDefOf.Tick_High.PlayOneShotOnCamera(null);
 								Workshop.Upload(this.curScen);
 							}, true, null));
 						}, true, null));
@@ -166,7 +166,7 @@ namespace RimWorld
 						Messages.Message("TooMany".Translate(new object[]
 						{
 							current.def.maxUses
-						}) + ": " + current.def.label, MessageTypeDefOf.RejectInput);
+						}) + ": " + current.def.label, MessageTypeDefOf.RejectInput, false);
 						bool result = false;
 						return result;
 					}
@@ -179,7 +179,7 @@ namespace RimWorld
 							current.def.label,
 							", ",
 							current2.def.label
-						}), MessageTypeDefOf.RejectInput);
+						}), MessageTypeDefOf.RejectInput, false);
 						bool result = false;
 						return result;
 					}

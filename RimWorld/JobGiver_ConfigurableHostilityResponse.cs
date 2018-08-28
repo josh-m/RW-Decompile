@@ -39,20 +39,20 @@ namespace RimWorld
 			{
 				return null;
 			}
-			bool flag = pawn.equipment.Primary == null || pawn.equipment.Primary.def.IsMeleeWeapon;
+			bool isMeleeAttack = pawn.CurrentEffectiveVerb.IsMeleeAttack;
 			float num = 8f;
-			if (!flag)
+			if (!isMeleeAttack)
 			{
-				num = Mathf.Clamp(pawn.equipment.PrimaryEq.PrimaryVerb.verbProps.range * 0.66f, 2f, 20f);
+				num = Mathf.Clamp(pawn.CurrentEffectiveVerb.verbProps.range * 0.66f, 2f, 20f);
 			}
 			TargetScanFlags flags = TargetScanFlags.NeedLOSToPawns | TargetScanFlags.NeedLOSToNonPawns | TargetScanFlags.NeedReachableIfCantHitFromMyPos | TargetScanFlags.NeedThreat;
 			float maxDist = num;
-			Thing thing = (Thing)AttackTargetFinder.BestAttackTarget(pawn, flags, null, 0f, maxDist, default(IntVec3), 3.40282347E+38f, false);
+			Thing thing = (Thing)AttackTargetFinder.BestAttackTarget(pawn, flags, null, 0f, maxDist, default(IntVec3), 3.40282347E+38f, false, true);
 			if (thing == null)
 			{
 				return null;
 			}
-			if (flag || pawn.CanReachImmediate(thing, PathEndMode.Touch))
+			if (isMeleeAttack || pawn.CanReachImmediate(thing, PathEndMode.Touch))
 			{
 				return new Job(JobDefOf.AttackMelee, thing);
 			}
@@ -98,8 +98,36 @@ namespace RimWorld
 				}
 				if (!JobGiver_ConfigurableHostilityResponse.tmpThreats.Any<Thing>())
 				{
-					Log.Warning(pawn.LabelShort + " decided to flee but there is no any threat around.");
-					return null;
+					Log.Error(pawn.LabelShort + " decided to flee but there is not any threat around.", false);
+					Region region = pawn.GetRegion(RegionType.Set_Passable);
+					if (region == null)
+					{
+						return null;
+					}
+					RegionTraverser.BreadthFirstTraverse(region, (Region from, Region reg) => reg.door == null || reg.door.Open, delegate(Region reg)
+					{
+						List<Thing> list2 = reg.ListerThings.ThingsInGroup(ThingRequestGroup.AttackTarget);
+						for (int k = 0; k < list2.Count; k++)
+						{
+							Thing thing3 = list2[k];
+							if (SelfDefenseUtility.ShouldFleeFrom(thing3, pawn, false, false))
+							{
+								JobGiver_ConfigurableHostilityResponse.tmpThreats.Add(thing3);
+								Log.Warning(string.Format("  Found a viable threat {0}; tests are {1}, {2}, {3}", new object[]
+								{
+									thing3.LabelShort,
+									thing3.Map.attackTargetsCache.Debug_CheckIfInAllTargets(thing3 as IAttackTarget),
+									thing3.Map.attackTargetsCache.Debug_CheckIfHostileToFaction(pawn.Faction, thing3 as IAttackTarget),
+									thing3 is IAttackTarget
+								}), false);
+							}
+						}
+						return false;
+					}, 9, RegionType.Set_Passable);
+					if (!JobGiver_ConfigurableHostilityResponse.tmpThreats.Any<Thing>())
+					{
+						return null;
+					}
 				}
 				c = CellFinderLoose.GetFleeDest(pawn, JobGiver_ConfigurableHostilityResponse.tmpThreats, 23f);
 				JobGiver_ConfigurableHostilityResponse.tmpThreats.Clear();

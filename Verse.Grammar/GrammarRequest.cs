@@ -7,6 +7,8 @@ namespace Verse.Grammar
 	{
 		private List<Rule> rules;
 
+		private List<RulePack> includesBare;
+
 		private List<RulePackDef> includes;
 
 		private Dictionary<string, string> constants;
@@ -20,6 +22,18 @@ namespace Verse.Grammar
 					this.rules = new List<Rule>();
 				}
 				return this.rules;
+			}
+		}
+
+		public List<RulePack> IncludesBare
+		{
+			get
+			{
+				if (this.includesBare == null)
+				{
+					this.includesBare = new List<RulePack>();
+				}
+				return this.includesBare;
 			}
 		}
 
@@ -53,6 +67,10 @@ namespace Verse.Grammar
 			{
 				this.rules.Clear();
 			}
+			if (this.includesBare != null)
+			{
+				this.includesBare.Clear();
+			}
 			if (this.includes != null)
 			{
 				this.includes.Clear();
@@ -66,6 +84,11 @@ namespace Verse.Grammar
 		public List<Rule> GetRules()
 		{
 			return this.rules;
+		}
+
+		public List<RulePack> GetIncludesBare()
+		{
+			return this.includesBare;
 		}
 
 		public List<RulePackDef> GetIncludes()

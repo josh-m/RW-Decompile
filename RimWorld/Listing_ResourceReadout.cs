@@ -92,7 +92,7 @@ namespace RimWorld
 			{
 				GUI.DrawTexture(rect, TexUI.HighlightTex);
 			}
-			TooltipHandler.TipRegion(rect, new TipSignal(() => thingDef.LabelCap + ": " + thingDef.description, (int)thingDef.shortHash));
+			TooltipHandler.TipRegion(rect, new TipSignal(() => thingDef.LabelCap + ": " + thingDef.description.CapitalizeFirst(), (int)thingDef.shortHash));
 			Rect rect2 = new Rect(rect);
 			float num = 28f;
 			rect2.height = num;

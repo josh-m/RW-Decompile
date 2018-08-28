@@ -22,6 +22,7 @@ namespace Verse
 			}
 			this.path = req.path;
 			this.color = req.color;
+			this.colorTwo = req.colorTwo;
 			this.drawSize = req.drawSize;
 			List<Texture2D> list = (from x in ContentFinder<Texture2D>.GetAllInFolder(req.path)
 			where !x.name.EndsWith(Graphic_Single.MaskSuffix)
@@ -29,7 +30,7 @@ namespace Verse
 			select x).ToList<Texture2D>();
 			if (list.NullOrEmpty<Texture2D>())
 			{
-				Log.Error("Collection cannot init: No textures found at path " + req.path);
+				Log.Error("Collection cannot init: No textures found at path " + req.path, false);
 				this.subGraphics = new Graphic[]
 				{
 					BaseContent.BadGraphic
@@ -40,7 +41,7 @@ namespace Verse
 			for (int i = 0; i < list.Count; i++)
 			{
 				string path = req.path + "/" + list[i].name;
-				this.subGraphics[i] = GraphicDatabase.Get<Graphic_Single>(path, req.shader, this.drawSize, this.color);
+				this.subGraphics[i] = GraphicDatabase.Get(typeof(Graphic_Single), path, req.shader, this.drawSize, this.color, this.colorTwo, null, req.shaderParameters);
 			}
 		}
 	}

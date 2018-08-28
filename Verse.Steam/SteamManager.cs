@@ -35,11 +35,11 @@ namespace Verse.Steam
 			}
 			if (!Packsize.Test())
 			{
-				Log.Error("[Steamworks.NET] Packsize Test returned false, the wrong version of Steamworks.NET is being run in this platform.");
+				Log.Error("[Steamworks.NET] Packsize Test returned false, the wrong version of Steamworks.NET is being run in this platform.", false);
 			}
 			if (!DllCheck.Test())
 			{
-				Log.Error("[Steamworks.NET] DllCheck Test returned false, One or more of the Steamworks binaries seems to be the wrong version.");
+				Log.Error("[Steamworks.NET] DllCheck Test returned false, One or more of the Steamworks binaries seems to be the wrong version.", false);
 			}
 			try
 			{
@@ -51,14 +51,14 @@ namespace Verse.Steam
 			}
 			catch (DllNotFoundException arg)
 			{
-				Log.Error("[Steamworks.NET] Could not load [lib]steam_api.dll/so/dylib. It's likely not in the correct location. Refer to the README for more details.\n" + arg);
+				Log.Error("[Steamworks.NET] Could not load [lib]steam_api.dll/so/dylib. It's likely not in the correct location. Refer to the README for more details.\n" + arg, false);
 				Application.Quit();
 				return;
 			}
 			SteamManager.initializedInt = SteamAPI.Init();
 			if (!SteamManager.initializedInt)
 			{
-				Log.Warning("[Steamworks.NET] SteamAPI.Init() failed. Possible causes: Steam client not running, launched from outside Steam without steam_appid.txt in place, running with different privileges than Steam client (e.g. \"as administrator\")");
+				Log.Warning("[Steamworks.NET] SteamAPI.Init() failed. Possible causes: Steam client not running, launched from outside Steam without steam_appid.txt in place, running with different privileges than Steam client (e.g. \"as administrator\")", false);
 			}
 			else
 			{
@@ -91,7 +91,7 @@ namespace Verse.Steam
 
 		private static void SteamAPIDebugTextHook(int nSeverity, StringBuilder pchDebugText)
 		{
-			Log.Error(pchDebugText.ToString());
+			Log.Error(pchDebugText.ToString(), false);
 		}
 	}
 }

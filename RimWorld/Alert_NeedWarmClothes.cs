@@ -54,11 +54,11 @@ namespace RimWorld
 			{
 				if (list[i].IsInAnyStorage())
 				{
-					if (list[i].GetStatValue(StatDefOf.Insulation_Cold, true) < 0f)
+					if (list[i].GetStatValue(StatDefOf.Insulation_Cold, true) > 0f)
 					{
 						if (list[i].def.apparel.bodyPartGroups.Contains(BodyPartGroupDefOf.Torso))
 						{
-							if (list[i].def.apparel.layers.Contains(ApparelLayer.OnSkin))
+							if (list[i].def.apparel.layers.Contains(ApparelLayerDefOf.OnSkin))
 							{
 								Alert_NeedWarmClothes.shirts.Add(list[i]);
 							}
@@ -74,9 +74,9 @@ namespace RimWorld
 					}
 				}
 			}
-			Alert_NeedWarmClothes.jackets.SortByDescending((Thing x) => x.GetStatValue(StatDefOf.Insulation_Cold, true));
-			Alert_NeedWarmClothes.shirts.SortByDescending((Thing x) => x.GetStatValue(StatDefOf.Insulation_Cold, true));
-			Alert_NeedWarmClothes.pants.SortByDescending((Thing x) => x.GetStatValue(StatDefOf.Insulation_Cold, true));
+			Alert_NeedWarmClothes.jackets.SortBy((Thing x) => x.GetStatValue(StatDefOf.Insulation_Cold, true));
+			Alert_NeedWarmClothes.shirts.SortBy((Thing x) => x.GetStatValue(StatDefOf.Insulation_Cold, true));
+			Alert_NeedWarmClothes.pants.SortBy((Thing x) => x.GetStatValue(StatDefOf.Insulation_Cold, true));
 			float num = ThingDefOf.Human.GetStatValueAbstract(StatDefOf.ComfyTemperatureMin, null) - this.LowestTemperatureComing(map);
 			if (num <= 0f)
 			{
@@ -90,24 +90,22 @@ namespace RimWorld
 				{
 					Thing thing = Alert_NeedWarmClothes.jackets[Alert_NeedWarmClothes.jackets.Count - 1];
 					Alert_NeedWarmClothes.jackets.RemoveLast<Thing>();
-					float num4 = -thing.GetStatValue(StatDefOf.Insulation_Cold, true);
-					num3 += num4;
+					num3 += thing.GetStatValue(StatDefOf.Insulation_Cold, true);
 				}
 				if (num3 < num && Alert_NeedWarmClothes.shirts.Any<Thing>())
 				{
 					Thing thing2 = Alert_NeedWarmClothes.shirts[Alert_NeedWarmClothes.shirts.Count - 1];
 					Alert_NeedWarmClothes.shirts.RemoveLast<Thing>();
-					float num5 = -thing2.GetStatValue(StatDefOf.Insulation_Cold, true);
-					num3 += num5;
+					num3 += thing2.GetStatValue(StatDefOf.Insulation_Cold, true);
 				}
 				if (num3 < num && Alert_NeedWarmClothes.pants.Any<Thing>())
 				{
 					for (int j = 0; j < Alert_NeedWarmClothes.pants.Count; j++)
 					{
-						float num6 = -Alert_NeedWarmClothes.pants[j].GetStatValue(StatDefOf.Insulation_Cold, true);
-						if (num6 + num3 >= num)
+						float statValue = Alert_NeedWarmClothes.pants[j].GetStatValue(StatDefOf.Insulation_Cold, true);
+						if (statValue + num3 >= num)
 						{
-							num3 += num6;
+							num3 += statValue;
 							Alert_NeedWarmClothes.pants.RemoveAt(j);
 							break;
 						}
@@ -119,6 +117,9 @@ namespace RimWorld
 				}
 				num2++;
 			}
+			Alert_NeedWarmClothes.jackets.Clear();
+			Alert_NeedWarmClothes.shirts.Clear();
+			Alert_NeedWarmClothes.pants.Clear();
 			return num2;
 		}
 

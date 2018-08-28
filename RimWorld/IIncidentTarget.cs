@@ -26,7 +26,7 @@ namespace RimWorld
 			get;
 		}
 
-		IEnumerable<Pawn> FreeColonistsForStoryteller
+		IEnumerable<Pawn> PlayerPawnsForStoryteller
 		{
 			get;
 		}
@@ -36,6 +36,11 @@ namespace RimWorld
 			get;
 		}
 
-		IEnumerable<IncidentTargetTypeDef> AcceptedTypes();
+		int ConstantRandSeed
+		{
+			get;
+		}
+
+		IEnumerable<IncidentTargetTagDef> IncidentTargetTags();
 	}
 }

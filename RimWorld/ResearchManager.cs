@@ -10,7 +10,7 @@ namespace RimWorld
 
 		private Dictionary<ResearchProjectDef, float> progress = new Dictionary<ResearchProjectDef, float>();
 
-		private float GlobalProgressFactor = 0.007f;
+		private float ResearchPointsPerWorkTick = 0.00825f;
 
 		public bool AnyProjectIsAvailable
 		{
@@ -41,10 +41,11 @@ namespace RimWorld
 		{
 			if (this.currentProj == null)
 			{
-				Log.Error("Researched without having an active project.");
+				Log.Error("Researched without having an active project.", false);
 				return;
 			}
-			amount *= this.GlobalProgressFactor;
+			amount *= this.ResearchPointsPerWorkTick;
+			amount *= Find.Storyteller.difficulty.researchSpeedFactor;
 			if (researcher != null && researcher.Faction != null)
 			{
 				amount /= this.currentProj.CostFactor(researcher.Faction.def.techLevel);
@@ -62,17 +63,7 @@ namespace RimWorld
 			this.progress[this.currentProj] = num;
 			if (this.currentProj.IsFinished)
 			{
-				this.ReapplyAllMods();
-				this.DoCompletionDialog(this.currentProj, researcher);
-				if (researcher != null)
-				{
-					TaleRecorder.RecordTale(TaleDefOf.FinishedResearchProject, new object[]
-					{
-						researcher,
-						this.currentProj
-					});
-				}
-				this.currentProj = null;
+				this.FinishProject(this.currentProj, true, researcher);
 			}
 		}
 
@@ -87,7 +78,7 @@ namespace RimWorld
 			}
 		}
 
-		public void InstantFinish(ResearchProjectDef proj, bool doCompletionDialog = false)
+		public void FinishProject(ResearchProjectDef proj, bool doCompletionDialog = false, Pawn researcher = null)
 		{
 			if (proj.prerequisites != null)
 			{
@@ -95,38 +86,50 @@ namespace RimWorld
 				{
 					if (!proj.prerequisites[i].IsFinished)
 					{
-						this.InstantFinish(proj.prerequisites[i], false);
+						this.FinishProject(proj.prerequisites[i], false, null);
 					}
 				}
 			}
 			this.progress[proj] = proj.baseCost;
+			if (researcher != null)
+			{
+				TaleRecorder.RecordTale(TaleDefOf.FinishedResearchProject, new object[]
+				{
+					researcher,
+					this.currentProj
+				});
+			}
 			this.ReapplyAllMods();
 			if (doCompletionDialog)
 			{
-				this.DoCompletionDialog(proj, null);
+				string text = "ResearchFinished".Translate(new object[]
+				{
+					this.currentProj.LabelCap
+				}) + "\n\n" + this.currentProj.description;
+				DiaNode diaNode = new DiaNode(text);
+				diaNode.options.Add(DiaOption.DefaultOK);
+				DiaOption diaOption = new DiaOption("ResearchScreen".Translate());
+				diaOption.resolveTree = true;
+				diaOption.action = delegate
+				{
+					Find.MainTabsRoot.SetCurrentTab(MainButtonDefOf.Research, true);
+				};
+				diaNode.options.Add(diaOption);
+				Find.WindowStack.Add(new Dialog_NodeTree(diaNode, true, false, null));
+			}
+			if (!proj.discoveredLetterTitle.NullOrEmpty() && Find.Storyteller.difficulty.difficulty >= proj.discoveredLetterMinDifficulty)
+			{
+				Find.LetterStack.ReceiveLetter(proj.discoveredLetterTitle, proj.discoveredLetterText, LetterDefOf.NeutralEvent, null);
+			}
+			if (proj.unlockExtremeDifficulty && Find.Storyteller.difficulty.difficulty >= DifficultyDefOf.Rough.difficulty)
+			{
+				Prefs.ExtremeDifficultyUnlocked = true;
+				Prefs.Save();
 			}
 			if (this.currentProj == proj)
 			{
 				this.currentProj = null;
 			}
-		}
-
-		private void DoCompletionDialog(ResearchProjectDef proj, Pawn researcher)
-		{
-			string text = "ResearchFinished".Translate(new object[]
-			{
-				this.currentProj.LabelCap
-			}) + "\n\n" + this.currentProj.DescriptionDiscovered;
-			DiaNode diaNode = new DiaNode(text);
-			diaNode.options.Add(DiaOption.DefaultOK);
-			DiaOption diaOption = new DiaOption("ResearchScreen".Translate());
-			diaOption.resolveTree = true;
-			diaOption.action = delegate
-			{
-				Find.MainTabsRoot.SetCurrentTab(MainButtonDefOf.Research, true);
-			};
-			diaNode.options.Add(diaOption);
-			Find.WindowStack.Add(new Dialog_NodeTree(diaNode, true, false, null));
 		}
 
 		public void DebugSetAllProjectsFinished()

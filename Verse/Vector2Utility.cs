@@ -10,11 +10,16 @@ namespace Verse
 			return new Vector2(v.y, v.x);
 		}
 
-		public static Vector2 RotatedBy(this Vector2 v, float angle)
+		public static Vector2 RotatedBy(this Vector2 v, Rot4 rot)
 		{
-			Vector3 point = new Vector3(v.x, 0f, v.y);
-			point = Quaternion.AngleAxis(angle, Vector3.up) * point;
-			return new Vector2(point.x, point.z);
+			return v.RotatedBy(rot.AsAngle);
+		}
+
+		public static Vector2 RotatedBy(this Vector2 v, float degrees)
+		{
+			float num = Mathf.Sin(degrees * 0.0174532924f);
+			float num2 = Mathf.Cos(degrees * 0.0174532924f);
+			return new Vector2(num2 * v.x - num * v.y, num * v.x + num2 * v.y);
 		}
 
 		public static float AngleTo(this Vector2 a, Vector2 b)
@@ -40,6 +45,43 @@ namespace Verse
 		public static float Cross(this Vector2 u, Vector2 v)
 		{
 			return u.x * v.y - u.y * v.x;
+		}
+
+		public static float DistanceToRect(this Vector2 u, Rect rect)
+		{
+			if (rect.Contains(u))
+			{
+				return 0f;
+			}
+			if (u.x < rect.xMin && u.y < rect.yMin)
+			{
+				return Vector2.Distance(u, new Vector2(rect.xMin, rect.yMin));
+			}
+			if (u.x > rect.xMax && u.y < rect.yMin)
+			{
+				return Vector2.Distance(u, new Vector2(rect.xMax, rect.yMin));
+			}
+			if (u.x < rect.xMin && u.y > rect.yMax)
+			{
+				return Vector2.Distance(u, new Vector2(rect.xMin, rect.yMax));
+			}
+			if (u.x > rect.xMax && u.y > rect.yMax)
+			{
+				return Vector2.Distance(u, new Vector2(rect.xMax, rect.yMax));
+			}
+			if (u.x < rect.xMin)
+			{
+				return rect.xMin - u.x;
+			}
+			if (u.x > rect.xMax)
+			{
+				return u.x - rect.xMax;
+			}
+			if (u.y < rect.yMin)
+			{
+				return rect.yMin - u.y;
+			}
+			return u.y - rect.yMax;
 		}
 	}
 }

@@ -43,12 +43,12 @@ namespace RimWorld.Planet
 				if (!tile.WaterCovered)
 				{
 					List<WorldLayer_Paths.OutputDirection> outputs = new List<WorldLayer_Paths.OutputDirection>();
-					if (tile.roads != null)
+					if (tile.potentialRoads != null)
 					{
 						bool allowSmoothTransition = true;
-						for (int j = 0; j < tile.roads.Count - 1; j++)
+						for (int j = 0; j < tile.potentialRoads.Count - 1; j++)
 						{
-							if (tile.roads[j].road.worldTransitionGroup != tile.roads[j + 1].road.worldTransitionGroup)
+							if (tile.potentialRoads[j].road.worldTransitionGroup != tile.potentialRoads[j + 1].road.worldTransitionGroup)
 							{
 								allowSmoothTransition = false;
 							}
@@ -57,9 +57,9 @@ namespace RimWorld.Planet
 						{
 							bool flag = false;
 							outputs.Clear();
-							for (int l = 0; l < tile.roads.Count; l++)
+							for (int l = 0; l < tile.potentialRoads.Count; l++)
 							{
-								RoadDef road = tile.roads[l].road;
+								RoadDef road = tile.potentialRoads[l].road;
 								float layerWidth = road.GetLayerWidth(roadLayerDefs[k]);
 								if (layerWidth > 0f)
 								{
@@ -67,7 +67,7 @@ namespace RimWorld.Planet
 								}
 								outputs.Add(new WorldLayer_Paths.OutputDirection
 								{
-									neighbor = tile.roads[l].neighbor,
+									neighbor = tile.potentialRoads[l].neighbor,
 									width = layerWidth,
 									distortionFrequency = road.distortionFrequency,
 									distortionIntensity = road.distortionIntensity
@@ -88,7 +88,13 @@ namespace RimWorld.Planet
 		{
 			Vector3 coordinate = inp * distortionFrequency;
 			float magnitude = inp.magnitude;
-			inp = (inp + new Vector3(this.roadDisplacementX.GetValue(coordinate), this.roadDisplacementY.GetValue(coordinate), this.roadDisplacementZ.GetValue(coordinate)) * distortionIntensity).normalized * magnitude;
+			Vector3 a = new Vector3(this.roadDisplacementX.GetValue(coordinate), this.roadDisplacementY.GetValue(coordinate), this.roadDisplacementZ.GetValue(coordinate));
+			if ((double)a.magnitude > 0.0001)
+			{
+				float d = (1f / (1f + Mathf.Exp(-a.magnitude / 1f * 2f)) * 2f - 1f) * 1f;
+				a = a.normalized * d;
+			}
+			inp = (inp + a * distortionIntensity).normalized * magnitude;
 			return inp + inp.normalized * 0.012f;
 		}
 	}

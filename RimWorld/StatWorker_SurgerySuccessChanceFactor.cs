@@ -5,17 +5,18 @@ namespace RimWorld
 {
 	public class StatWorker_SurgerySuccessChanceFactor : StatWorker
 	{
-		public override bool ShouldShowFor(BuildableDef eDef)
+		public override bool ShouldShowFor(StatRequest req)
 		{
-			if (!base.ShouldShowFor(eDef))
+			if (!base.ShouldShowFor(req))
 			{
 				return false;
 			}
-			if (!(eDef is ThingDef))
+			BuildableDef def = req.Def;
+			if (!(def is ThingDef))
 			{
 				return false;
 			}
-			ThingDef thingDef = eDef as ThingDef;
+			ThingDef thingDef = def as ThingDef;
 			return typeof(Building_Bed).IsAssignableFrom(thingDef.thingClass);
 		}
 	}

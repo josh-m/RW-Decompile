@@ -19,7 +19,7 @@ namespace RimWorld
 
 		public CrownType crownType;
 
-		public BodyType bodyType;
+		public BodyTypeDef bodyType;
 
 		private string headGraphicPath;
 
@@ -27,17 +27,59 @@ namespace RimWorld
 
 		public TraitSet traits;
 
+		public string title;
+
 		private List<WorkTypeDef> cachedDisabledWorkTypes;
 
 		public string Title
 		{
 			get
 			{
+				if (this.title != null)
+				{
+					return this.title;
+				}
+				return this.TitleDefault;
+			}
+			set
+			{
+				this.title = null;
+				if (value != this.Title && !value.NullOrEmpty())
+				{
+					this.title = value;
+				}
+			}
+		}
+
+		public string TitleCap
+		{
+			get
+			{
+				return this.Title.CapitalizeFirst();
+			}
+		}
+
+		public string TitleDefault
+		{
+			get
+			{
 				if (this.adulthood != null)
 				{
-					return this.adulthood.Title;
+					return this.adulthood.TitleFor(this.pawn.gender);
 				}
-				return this.childhood.Title;
+				if (this.childhood != null)
+				{
+					return this.childhood.TitleFor(this.pawn.gender);
+				}
+				return string.Empty;
+			}
+		}
+
+		public string TitleDefaultCap
+		{
+			get
+			{
+				return this.TitleDefault.CapitalizeFirst();
 			}
 		}
 
@@ -45,11 +87,27 @@ namespace RimWorld
 		{
 			get
 			{
+				if (this.title != null)
+				{
+					return this.title;
+				}
 				if (this.adulthood != null)
 				{
-					return this.adulthood.TitleShort;
+					return this.adulthood.TitleShortFor(this.pawn.gender);
 				}
-				return this.childhood.TitleShort;
+				if (this.childhood != null)
+				{
+					return this.childhood.TitleShortFor(this.pawn.gender);
+				}
+				return string.Empty;
+			}
+		}
+
+		public string TitleShortCap
+		{
+			get
+			{
+				return this.TitleShort.CapitalizeFirst();
 			}
 		}
 
@@ -151,19 +209,19 @@ namespace RimWorld
 		{
 			string text = (this.childhood == null) ? null : this.childhood.identifier;
 			Scribe_Values.Look<string>(ref text, "childhood", null, false);
-			if (Scribe.mode == LoadSaveMode.LoadingVars && !text.NullOrEmpty() && !BackstoryDatabase.TryGetWithIdentifier(text, out this.childhood))
+			if (Scribe.mode == LoadSaveMode.LoadingVars && !text.NullOrEmpty() && !BackstoryDatabase.TryGetWithIdentifier(text, out this.childhood, true))
 			{
-				Log.Error("Couldn't load child backstory with identifier " + text + ". Giving random.");
+				Log.Error("Couldn't load child backstory with identifier " + text + ". Giving random.", false);
 				this.childhood = BackstoryDatabase.RandomBackstory(BackstorySlot.Childhood);
 			}
 			string text2 = (this.adulthood == null) ? null : this.adulthood.identifier;
 			Scribe_Values.Look<string>(ref text2, "adulthood", null, false);
-			if (Scribe.mode == LoadSaveMode.LoadingVars && !text2.NullOrEmpty() && !BackstoryDatabase.TryGetWithIdentifier(text2, out this.adulthood))
+			if (Scribe.mode == LoadSaveMode.LoadingVars && !text2.NullOrEmpty() && !BackstoryDatabase.TryGetWithIdentifier(text2, out this.adulthood, true))
 			{
-				Log.Error("Couldn't load adult backstory with identifier " + text2 + ". Giving random.");
+				Log.Error("Couldn't load adult backstory with identifier " + text2 + ". Giving random.", false);
 				this.adulthood = BackstoryDatabase.RandomBackstory(BackstorySlot.Adulthood);
 			}
-			Scribe_Values.Look<BodyType>(ref this.bodyType, "bodyType", BodyType.Undefined, false);
+			Scribe_Defs.Look<BodyTypeDef>(ref this.bodyType, "bodyType");
 			Scribe_Values.Look<CrownType>(ref this.crownType, "crownType", CrownType.Undefined, false);
 			Scribe_Values.Look<string>(ref this.headGraphicPath, "headGraphicPath", null, false);
 			Scribe_Defs.Look<HairDef>(ref this.hairDef, "hairDef");
@@ -173,6 +231,7 @@ namespace RimWorld
 			{
 				this.pawn
 			});
+			Scribe_Values.Look<string>(ref this.title, "title", null, false);
 			if (Scribe.mode == LoadSaveMode.PostLoadInit && this.hairDef == null)
 			{
 				this.hairDef = DefDatabase<HairDef>.AllDefs.RandomElement<HairDef>();

@@ -31,7 +31,15 @@ namespace RimWorld
 
 		private static List<IntVec3> tmpTransmitterCells = new List<IntVec3>();
 
-		public override void Generate(Map map)
+		public override int SeedPart
+		{
+			get
+			{
+				return 1186199651;
+			}
+		}
+
+		public override void Generate(Map map, GenStepParams parms)
 		{
 			map.skyManager.ForceSetCurSkyGlow(1f);
 			map.powerNetManager.UpdatePowerNetsAndConnections_First();
@@ -270,7 +278,7 @@ namespace RimWorld
 			{
 				if (cells[i].GetTransmitter(map) == null)
 				{
-					Thing thing = GenSpawn.Spawn(ThingDefOf.PowerConduit, cells[i], map);
+					Thing thing = GenSpawn.Spawn(ThingDefOf.PowerConduit, cells[i], map, WipeMode.Vanish);
 					thing.SetFaction(faction, null);
 				}
 			}
@@ -322,7 +330,7 @@ namespace RimWorld
 				return extraValidator == null || extraValidator(x);
 			}, map, out loc, 8, 2147483647))
 			{
-				newBuilding = (Building)GenSpawn.Spawn(ThingMaker.MakeThing(def, null), loc, map, Rot4.North, false);
+				newBuilding = (Building)GenSpawn.Spawn(ThingMaker.MakeThing(def, null), loc, map, Rot4.North, WipeMode.Vanish, false);
 				newBuilding.SetFaction(faction, null);
 				return true;
 			}
@@ -473,7 +481,7 @@ namespace RimWorld
 									if (current.SupportsStructureType(thing.Map, ThingDefOf.Wall.terrainAffordanceNeeded))
 									{
 										Thing thing2 = ThingMaker.MakeThing(ThingDefOf.Wall, stuff);
-										GenSpawn.Spawn(thing2, current, thing.Map);
+										GenSpawn.Spawn(thing2, current, thing.Map, WipeMode.Vanish);
 										thing2.SetFaction(thing.Faction, null);
 										num++;
 									}

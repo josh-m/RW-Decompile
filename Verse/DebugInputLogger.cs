@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace Verse
 {
-	internal static class DebugInputLogger
+	public static class DebugInputLogger
 	{
 		public static void InputLogOnGUI()
 		{
@@ -19,7 +19,7 @@ namespace Verse
 					Time.frameCount,
 					": ",
 					Event.current.ToStringFull()
-				}));
+				}), false);
 			}
 		}
 

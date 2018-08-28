@@ -87,7 +87,7 @@ namespace RimWorld
 				}
 				catch (Exception ex)
 				{
-					Log.ErrorOnce("Exception processing alert " + alert.ToString() + ": " + ex.ToString(), 743575);
+					Log.ErrorOnce("Exception processing alert " + alert.ToString() + ": " + ex.ToString(), 743575, false);
 					if (this.activeAlerts.Contains(alert))
 					{
 						this.activeAlerts.Remove(alert);
@@ -103,16 +103,19 @@ namespace RimWorld
 				}
 				catch (Exception ex2)
 				{
-					Log.ErrorOnce("Exception updating alert " + alert2.ToString() + ": " + ex2.ToString(), 743575);
+					Log.ErrorOnce("Exception updating alert " + alert2.ToString() + ": " + ex2.ToString(), 743575, false);
 					this.activeAlerts.RemoveAt(k);
 				}
 			}
 			if (this.mouseoverAlertIndex >= 0 && this.mouseoverAlertIndex < this.activeAlerts.Count)
 			{
-				GlobalTargetInfo culprit = this.activeAlerts[this.mouseoverAlertIndex].GetReport().culprit;
-				if (culprit.IsValid && culprit.IsMapTarget && Find.VisibleMap != null && culprit.Map == Find.VisibleMap)
+				IEnumerable<GlobalTargetInfo> culprits = this.activeAlerts[this.mouseoverAlertIndex].GetReport().culprits;
+				if (culprits != null)
 				{
-					GenDraw.DrawArrowPointingAt(((TargetInfo)culprit).CenterVector3, false);
+					foreach (GlobalTargetInfo current in culprits)
+					{
+						TargetHighlighter.Highlight(current, true, true, false);
+					}
 				}
 			}
 			this.mouseoverAlertIndex = -1;
@@ -120,7 +123,7 @@ namespace RimWorld
 
 		public void AlertsReadoutOnGUI()
 		{
-			if (Event.current.type == EventType.Layout)
+			if (Event.current.type == EventType.Layout || Event.current.type == EventType.MouseDrag)
 			{
 				return;
 			}

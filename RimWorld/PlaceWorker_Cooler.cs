@@ -8,9 +8,9 @@ namespace RimWorld
 {
 	public class PlaceWorker_Cooler : PlaceWorker
 	{
-		public override void DrawGhost(ThingDef def, IntVec3 center, Rot4 rot)
+		public override void DrawGhost(ThingDef def, IntVec3 center, Rot4 rot, Color ghostCol)
 		{
-			Map visibleMap = Find.VisibleMap;
+			Map currentMap = Find.CurrentMap;
 			IntVec3 intVec = center + IntVec3.South.RotatedBy(rot);
 			IntVec3 intVec2 = center + IntVec3.North.RotatedBy(rot);
 			GenDraw.DrawFieldEdges(new List<IntVec3>
@@ -21,8 +21,8 @@ namespace RimWorld
 			{
 				intVec2
 			}, GenTemperature.ColorSpotHot);
-			RoomGroup roomGroup = intVec2.GetRoomGroup(visibleMap);
-			RoomGroup roomGroup2 = intVec.GetRoomGroup(visibleMap);
+			RoomGroup roomGroup = intVec2.GetRoomGroup(currentMap);
+			RoomGroup roomGroup2 = intVec.GetRoomGroup(currentMap);
 			if (roomGroup != null && roomGroup2 != null)
 			{
 				if (roomGroup == roomGroup2 && !roomGroup.UsesOutdoorTemperature)

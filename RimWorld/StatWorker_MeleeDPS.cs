@@ -14,6 +14,10 @@ namespace RimWorld
 
 		public override float GetValueUnfinalized(StatRequest req, bool applyPostProcess = true)
 		{
+			if (req.Thing == null)
+			{
+				Log.Error("Getting MeleeDPS stat for " + req.Def + " without concrete pawn. This always returns 0.", false);
+			}
 			return this.GetMeleeDamage(req, applyPostProcess) * this.GetMeleeHitChance(req, applyPostProcess) / this.GetMeleeCooldown(req, applyPostProcess);
 		}
 
@@ -33,9 +37,9 @@ namespace RimWorld
 			stringBuilder.AppendLine();
 			stringBuilder.AppendLine("StatsReport_MeleeHitChance".Translate());
 			stringBuilder.AppendLine();
-			stringBuilder.AppendLine(StatDefOf.MeleeHitChance.Worker.GetExplanationUnfinalized(req, StatDefOf.MeleeHitChance.toStringNumberSense).TrimEndNewlines().Indented());
+			stringBuilder.AppendLine(StatDefOf.MeleeHitChance.Worker.GetExplanationUnfinalized(req, StatDefOf.MeleeHitChance.toStringNumberSense).TrimEndNewlines().Indented("    "));
 			stringBuilder.AppendLine();
-			stringBuilder.Append(StatDefOf.MeleeHitChance.Worker.GetExplanationFinalizePart(req, StatDefOf.MeleeHitChance.toStringNumberSense, this.GetMeleeHitChance(req, true)).Indented());
+			stringBuilder.Append(StatDefOf.MeleeHitChance.Worker.GetExplanationFinalizePart(req, StatDefOf.MeleeHitChance.toStringNumberSense, this.GetMeleeHitChance(req, true)).Indented("    "));
 			return stringBuilder.ToString();
 		}
 
@@ -57,7 +61,7 @@ namespace RimWorld
 			{
 				return 0f;
 			}
-			List<VerbEntry> updatedAvailableVerbsList = pawn.meleeVerbs.GetUpdatedAvailableVerbsList();
+			List<VerbEntry> updatedAvailableVerbsList = pawn.meleeVerbs.GetUpdatedAvailableVerbsList(false);
 			if (updatedAvailableVerbsList.Count == 0)
 			{
 				return 0f;
@@ -67,16 +71,19 @@ namespace RimWorld
 			{
 				if (updatedAvailableVerbsList[i].IsMeleeAttack)
 				{
-					num += updatedAvailableVerbsList[i].SelectionWeight;
+					num += updatedAvailableVerbsList[i].GetSelectionWeight(null);
 				}
+			}
+			if (num == 0f)
+			{
+				return 0f;
 			}
 			float num2 = 0f;
 			for (int j = 0; j < updatedAvailableVerbsList.Count; j++)
 			{
 				if (updatedAvailableVerbsList[j].IsMeleeAttack)
 				{
-					ThingWithComps ownerEquipment = updatedAvailableVerbsList[j].verb.ownerEquipment;
-					num2 += updatedAvailableVerbsList[j].SelectionWeight / num * updatedAvailableVerbsList[j].verb.verbProps.AdjustedMeleeDamageAmount(updatedAvailableVerbsList[j].verb, pawn, ownerEquipment);
+					num2 += updatedAvailableVerbsList[j].GetSelectionWeight(null) / num * updatedAvailableVerbsList[j].verb.verbProps.AdjustedMeleeDamageAmount(updatedAvailableVerbsList[j].verb, pawn);
 				}
 			}
 			return num2;
@@ -98,7 +105,7 @@ namespace RimWorld
 			{
 				return 1f;
 			}
-			List<VerbEntry> updatedAvailableVerbsList = pawn.meleeVerbs.GetUpdatedAvailableVerbsList();
+			List<VerbEntry> updatedAvailableVerbsList = pawn.meleeVerbs.GetUpdatedAvailableVerbsList(false);
 			if (updatedAvailableVerbsList.Count == 0)
 			{
 				return 1f;
@@ -108,16 +115,19 @@ namespace RimWorld
 			{
 				if (updatedAvailableVerbsList[i].IsMeleeAttack)
 				{
-					num += updatedAvailableVerbsList[i].SelectionWeight;
+					num += updatedAvailableVerbsList[i].GetSelectionWeight(null);
 				}
+			}
+			if (num == 0f)
+			{
+				return 1f;
 			}
 			float num2 = 0f;
 			for (int j = 0; j < updatedAvailableVerbsList.Count; j++)
 			{
 				if (updatedAvailableVerbsList[j].IsMeleeAttack)
 				{
-					ThingWithComps ownerEquipment = updatedAvailableVerbsList[j].verb.ownerEquipment;
-					num2 += updatedAvailableVerbsList[j].SelectionWeight / num * (float)updatedAvailableVerbsList[j].verb.verbProps.AdjustedCooldownTicks(updatedAvailableVerbsList[j].verb, pawn, ownerEquipment);
+					num2 += updatedAvailableVerbsList[j].GetSelectionWeight(null) / num * (float)updatedAvailableVerbsList[j].verb.verbProps.AdjustedCooldownTicks(updatedAvailableVerbsList[j].verb, pawn);
 				}
 			}
 			return num2 / 60f;

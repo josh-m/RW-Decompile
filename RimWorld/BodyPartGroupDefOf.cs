@@ -19,5 +19,10 @@ namespace RimWorld
 		public static BodyPartGroupDef UpperHead;
 
 		public static BodyPartGroupDef Eyes;
+
+		static BodyPartGroupDefOf()
+		{
+			DefOfHelper.EnsureInitializedInCtor(typeof(BodyPartGroupDefOf));
+		}
 	}
 }

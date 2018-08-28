@@ -48,16 +48,22 @@ namespace RimWorld.Planet
 
 		private const float EvaporationMultiple = 250f;
 
+		public override int SeedPart
+		{
+			get
+			{
+				return 605014749;
+			}
+		}
+
 		public override void GenerateFresh(string seed)
 		{
-			Rand.Seed = GenText.StableStringHash(seed);
 			this.GenerateRivers();
-			Rand.RandomizeStateFromTime();
 		}
 
 		private void GenerateRivers()
 		{
-			Find.WorldPathGrid.RecalculateAllPerceivedPathCosts(-1f);
+			Find.WorldPathGrid.RecalculateAllPerceivedPathCosts();
 			List<int> coastalWaterTiles = this.GetCoastalWaterTiles();
 			if (!coastalWaterTiles.Any<int>())
 			{

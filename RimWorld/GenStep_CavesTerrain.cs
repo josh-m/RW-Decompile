@@ -14,7 +14,15 @@ namespace RimWorld
 
 		private const float GravelThreshold = 0.55f;
 
-		public override void Generate(Map map)
+		public override int SeedPart
+		{
+			get
+			{
+				return 1921024373;
+			}
+		}
+
+		public override void Generate(Map map, GenStepParams parms)
 		{
 			if (!Find.World.HasCaves(map.Tile))
 			{
@@ -28,7 +36,7 @@ namespace RimWorld
 				if (caves[current] > 0f)
 				{
 					TerrainDef terrain = current.GetTerrain(map);
-					if (terrain != TerrainDefOf.WaterMovingShallow && terrain != TerrainDefOf.WaterMovingDeep)
+					if (!terrain.IsRiver)
 					{
 						float num = (float)perlin.GetValue((double)current.x, 0.0, (double)current.z);
 						float num2 = (float)perlin2.GetValue((double)current.x, 0.0, (double)current.z);

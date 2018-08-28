@@ -53,7 +53,7 @@ namespace Verse
 		{
 			if (this.finalized)
 			{
-				Log.Warning("Finalizing mesh which is already finalized. Did you forget to call Clear()?");
+				Log.Warning("Finalizing mesh which is already finalized. Did you forget to call Clear()?", false);
 			}
 			if ((byte)(parts & MeshParts.Verts) != 0 || (byte)(parts & MeshParts.Tris) != 0)
 			{
@@ -67,7 +67,7 @@ namespace Verse
 				}
 				else
 				{
-					Log.Error("Cannot cook Verts for " + this.material.ToString() + ": no ingredients data. If you want to not render this submesh, disable it.");
+					Log.Error("Cannot cook Verts for " + this.material.ToString() + ": no ingredients data. If you want to not render this submesh, disable it.", false);
 				}
 			}
 			if ((byte)(parts & MeshParts.Tris) != 0)
@@ -78,7 +78,7 @@ namespace Verse
 				}
 				else
 				{
-					Log.Error("Cannot cook Tris for " + this.material.ToString() + ": no ingredients data.");
+					Log.Error("Cannot cook Tris for " + this.material.ToString() + ": no ingredients data.", false);
 				}
 			}
 			if ((byte)(parts & MeshParts.Colors) != 0 && this.colors.Count > 0)

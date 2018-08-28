@@ -26,7 +26,7 @@ namespace RimWorld
 			}
 			return new Job(JobDefOf.Ingest, thing)
 			{
-				count = FoodUtility.WillIngestStackCountOf(pawn, thing.def)
+				count = FoodUtility.WillIngestStackCountOf(pawn, thing.def, thing.def.GetStatValueAbstract(StatDefOf.Nutrition, null))
 			};
 		}
 

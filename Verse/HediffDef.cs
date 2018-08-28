@@ -46,6 +46,10 @@ namespace Verse
 
 		public bool everCurableByItem = true;
 
+		public string battleStateLabel;
+
+		public string labelNounPretty;
+
 		public bool displayWound;
 
 		public Color defaultLabelColor = Color.white;
@@ -54,6 +58,7 @@ namespace Verse
 
 		public AddedBodyPartProps addedPartProps;
 
+		[MustTranslate]
 		public string labelNoun;
 
 		private bool alwaysAllowMothballCached;
@@ -104,7 +109,7 @@ namespace Verse
 			{
 				if (this.concreteExampleInt == null)
 				{
-					this.concreteExampleInt = HediffMaker.MakeConcreteExampleHediff(this);
+					this.concreteExampleInt = HediffMaker.Debug_MakeConcreteExampleHediff(this);
 				}
 				return this.concreteExampleInt;
 			}
@@ -140,7 +145,7 @@ namespace Verse
 			return null;
 		}
 
-		public T CompProps<T>() where T : class
+		public T CompProps<T>() where T : HediffCompProperties
 		{
 			if (this.comps != null)
 			{
@@ -160,6 +165,15 @@ namespace Verse
 		{
 			HediffCompProperties_Immunizable hediffCompProperties_Immunizable = this.CompProps<HediffCompProperties_Immunizable>();
 			return hediffCompProperties_Immunizable != null && (hediffCompProperties_Immunizable.immunityPerDayNotSick > 0f || hediffCompProperties_Immunizable.immunityPerDaySick > 0f);
+		}
+
+		public string PrettyTextForPart(BodyPartRecord bodyPart)
+		{
+			if (this.labelNounPretty.NullOrEmpty())
+			{
+				return null;
+			}
+			return string.Format(this.labelNounPretty, this.label, bodyPart.Label);
 		}
 
 		[DebuggerHidden]
@@ -225,7 +239,7 @@ namespace Verse
 		}
 
 		[DebuggerHidden]
-		public override IEnumerable<StatDrawEntry> SpecialDisplayStats()
+		public override IEnumerable<StatDrawEntry> SpecialDisplayStats(StatRequest req)
 		{
 			if (this.stages != null && this.stages.Count == 1)
 			{

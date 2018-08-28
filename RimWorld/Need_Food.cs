@@ -9,7 +9,7 @@ namespace RimWorld
 	{
 		private int lastNonStarvingTick = -99999;
 
-		private const float BaseFoodFallPerTick = 2.66666666E-05f;
+		public const float BaseFoodFallPerTick = 2.66666666E-05f;
 
 		private const float BaseMalnutritionSeverityPerDay = 0.17f;
 
@@ -111,7 +111,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return this.pawn.ageTracker.CurLifeStage.hungerRateFactor * this.pawn.RaceProps.baseHungerRate * this.pawn.health.hediffSet.HungerRateFactor;
+				return this.pawn.ageTracker.CurLifeStage.hungerRateFactor * this.pawn.RaceProps.baseHungerRate * this.pawn.health.hediffSet.HungerRateFactor * this.pawn.GetStatValue(StatDefOf.HungerRateMultiplier, true);
 			}
 		}
 

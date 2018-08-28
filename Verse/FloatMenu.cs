@@ -13,6 +13,8 @@ namespace Verse
 
 		public bool vanishIfMouseDistant = true;
 
+		public Action onCloseCallback;
+
 		protected List<FloatMenuOption> options;
 
 		private string title;
@@ -224,10 +226,12 @@ namespace Verse
 		{
 			if (options.NullOrEmpty<FloatMenuOption>())
 			{
-				Log.Error("Created FloatMenu with no options. Closing.");
+				Log.Error("Created FloatMenu with no options. Closing.", false);
 				this.Close(true);
 			}
-			this.options = options;
+			this.options = (from op in options
+			orderby op.Priority descending
+			select op).ToList<FloatMenuOption>();
 			for (int i = 0; i < options.Count; i++)
 			{
 				options[i].SetSizeMode(this.SizeMode);
@@ -236,7 +240,7 @@ namespace Verse
 			this.closeOnClickedOutside = true;
 			this.doWindowBackground = false;
 			this.drawShadow = false;
-			SoundDefOf.FloatMenuOpen.PlayOneShotOnCamera(null);
+			SoundDefOf.FloatMenu_Open.PlayOneShotOnCamera(null);
 		}
 
 		public FloatMenu(List<FloatMenuOption> options, string title, bool needSelection = false) : this(options)
@@ -303,11 +307,10 @@ namespace Verse
 				rect.width -= 10f;
 				Widgets.BeginScrollView(rect, ref this.scrollPosition, new Rect(0f, 0f, this.TotalWidth - 16f, this.TotalViewHeight), true);
 			}
-			foreach (FloatMenuOption current in from op in this.options
-			orderby op.Priority descending
-			select op)
+			for (int i = 0; i < this.options.Count; i++)
 			{
-				float requiredHeight = current.RequiredHeight;
+				FloatMenuOption floatMenuOption = this.options[i];
+				float requiredHeight = floatMenuOption.RequiredHeight;
 				if (zero.y + requiredHeight + -1f > maxViewHeight)
 				{
 					zero.y = 0f;
@@ -315,7 +318,7 @@ namespace Verse
 				}
 				Rect rect2 = new Rect(zero.x, zero.y, columnWidth, requiredHeight);
 				zero.y += requiredHeight + -1f;
-				bool flag = current.DoGUI(rect2, this.givesColonistOrders);
+				bool flag = floatMenuOption.DoGUI(rect2, this.givesColonistOrders, this);
 				if (flag)
 				{
 					Find.WindowStack.TryRemove(this, true);
@@ -334,10 +337,23 @@ namespace Verse
 			GUI.color = Color.white;
 		}
 
+		public override void PostClose()
+		{
+			base.PostClose();
+			if (this.onCloseCallback != null)
+			{
+				this.onCloseCallback();
+			}
+		}
+
 		public void Cancel()
 		{
-			SoundDefOf.FloatMenuCancel.PlayOneShotOnCamera(null);
+			SoundDefOf.FloatMenu_Cancel.PlayOneShotOnCamera(null);
 			Find.WindowStack.TryRemove(this, true);
+		}
+
+		public virtual void PreOptionChosen(FloatMenuOption opt)
+		{
 		}
 
 		private void UpdateBaseColor()

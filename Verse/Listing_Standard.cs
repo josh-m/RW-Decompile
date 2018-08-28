@@ -32,6 +32,14 @@ namespace Verse
 			Text.Font = this.font;
 		}
 
+		public void BeginScrollView(Rect rect, ref Vector2 scrollPosition, ref Rect viewRect)
+		{
+			Widgets.BeginScrollView(rect, ref scrollPosition, viewRect, true);
+			rect.height = 100000f;
+			rect.width -= 20f;
+			this.Begin(rect.AtZero());
+		}
+
 		public override void End()
 		{
 			base.End();
@@ -48,7 +56,14 @@ namespace Verse
 			}
 		}
 
-		public void Label(string label, float maxHeight = -1f)
+		public void EndScrollView(ref Rect viewRect)
+		{
+			viewRect = new Rect(0f, 0f, this.listingRect.width, this.curY);
+			Widgets.EndScrollView();
+			this.End();
+		}
+
+		public void Label(string label, float maxHeight = -1f, string tooltip = null)
 		{
 			float num = Text.CalcHeight(label, base.ColumnWidth);
 			bool flag = false;
@@ -61,17 +76,21 @@ namespace Verse
 			if (flag)
 			{
 				Vector2 labelScrollbarPosition = this.GetLabelScrollbarPosition(this.curX, this.curY);
-				Widgets.LabelScrollable(rect, label, ref labelScrollbarPosition, false);
+				Widgets.LabelScrollable(rect, label, ref labelScrollbarPosition, false, true);
 				this.SetLabelScrollbarPosition(this.curX, this.curY, labelScrollbarPosition);
 			}
 			else
 			{
 				Widgets.Label(rect, label);
 			}
+			if (tooltip != null)
+			{
+				TooltipHandler.TipRegion(rect, tooltip);
+			}
 			base.Gap(this.verticalSpacing);
 		}
 
-		public void LabelDouble(string leftLabel, string rightLabel)
+		public void LabelDouble(string leftLabel, string rightLabel, string tip = null)
 		{
 			float num = base.ColumnWidth / 2f;
 			float width = base.ColumnWidth - num;
@@ -79,17 +98,31 @@ namespace Verse
 			float b = Text.CalcHeight(rightLabel, width);
 			float height = Mathf.Max(a, b);
 			Rect rect = base.GetRect(height);
+			if (!tip.NullOrEmpty())
+			{
+				Widgets.DrawHighlightIfMouseover(rect);
+				TooltipHandler.TipRegion(rect, tip);
+			}
 			Widgets.Label(rect.LeftHalf(), leftLabel);
 			Widgets.Label(rect.RightHalf(), rightLabel);
 			base.Gap(this.verticalSpacing);
 		}
 
-		public bool RadioButton(string label, bool active, float tabIn = 0f)
+		public bool RadioButton(string label, bool active, float tabIn = 0f, string tooltip = null)
 		{
 			float lineHeight = Text.LineHeight;
-			base.NewColumnIfNeeded(lineHeight);
-			bool result = Widgets.RadioButtonLabeled(new Rect(this.curX + tabIn, this.curY, base.ColumnWidth - tabIn, lineHeight), label, active);
-			this.curY += lineHeight + this.verticalSpacing;
+			Rect rect = base.GetRect(lineHeight);
+			rect.xMin += tabIn;
+			if (!tooltip.NullOrEmpty())
+			{
+				if (Mouse.IsOver(rect))
+				{
+					Widgets.DrawHighlight(rect);
+				}
+				TooltipHandler.TipRegion(rect, tooltip);
+			}
+			bool result = Widgets.RadioButtonLabeled(rect, label, active);
+			base.Gap(this.verticalSpacing);
 			return result;
 		}
 
@@ -105,7 +138,7 @@ namespace Verse
 				}
 				TooltipHandler.TipRegion(rect, tooltip);
 			}
-			Widgets.CheckboxLabeled(rect, label, ref checkOn, false);
+			Widgets.CheckboxLabeled(rect, label, ref checkOn, false, null, null, false);
 			base.Gap(this.verticalSpacing);
 		}
 
@@ -147,6 +180,15 @@ namespace Verse
 			return result;
 		}
 
+		public void None()
+		{
+			GUI.color = Color.gray;
+			Text.Anchor = TextAnchor.UpperCenter;
+			this.Label("NoneBrackets".Translate(), -1f, null);
+			GenUI.ResetLabelAlign();
+			GUI.color = Color.white;
+		}
+
 		public string TextEntry(string text, int lineCount = 1)
 		{
 			Rect rect = base.GetRect(Text.LineHeight * (float)lineCount);
@@ -178,10 +220,10 @@ namespace Verse
 			base.Gap(this.verticalSpacing);
 		}
 
-		public void TextFieldNumericLabeled<T>(string label, ref int val, ref string buffer, float min = 0f, float max = 1E+09f)
+		public void TextFieldNumericLabeled<T>(string label, ref T val, ref string buffer, float min = 0f, float max = 1E+09f) where T : struct
 		{
 			Rect rect = base.GetRect(Text.LineHeight);
-			Widgets.TextFieldNumericLabeled<int>(rect, label, ref val, ref buffer, min, max);
+			Widgets.TextFieldNumericLabeled<T>(rect, label, ref val, ref buffer, min, max);
 			base.Gap(this.verticalSpacing);
 		}
 
@@ -231,10 +273,31 @@ namespace Verse
 			Rect rect = base.GetRect(24f);
 			if (Widgets.ButtonText(rect, label, true, false, true))
 			{
-				SoundDefOf.TickLow.PlayOneShotOnCamera(null);
+				SoundDefOf.Tick_Low.PlayOneShotOnCamera(null);
 				val = target;
 			}
 			base.Gap(this.verticalSpacing);
+		}
+
+		public void IntEntry(ref int val, ref string editBuffer, int multiplier = 1)
+		{
+			Rect rect = base.GetRect(24f);
+			Widgets.IntEntry(rect, ref val, ref editBuffer, multiplier);
+			base.Gap(this.verticalSpacing);
+		}
+
+		public Listing_Standard BeginSection(float height)
+		{
+			Rect rect = base.GetRect(height + 8f);
+			Widgets.DrawMenuSection(rect);
+			Listing_Standard listing_Standard = new Listing_Standard();
+			listing_Standard.Begin(rect.ContractedBy(4f));
+			return listing_Standard;
+		}
+
+		public void EndSection(Listing_Standard listing)
+		{
+			listing.End();
 		}
 
 		private Vector2 GetLabelScrollbarPosition(float x, float y)
@@ -294,7 +357,7 @@ namespace Verse
 			if (deleteCallback != null)
 			{
 				Rect butRect = new Rect(rect.xMax, rect.y, 21f, 21f);
-				if (Widgets.ButtonImage(butRect, TexButton.DeleteX))
+				if (Widgets.ButtonImage(butRect, TexButton.DeleteX, Color.white, GenUI.SubtleMouseoverColor))
 				{
 					deleteCallback();
 				}
@@ -308,7 +371,7 @@ namespace Verse
 		{
 			Text.Font = GameFont.Tiny;
 			base.NewColumnIfNeeded(22f);
-			Widgets.CheckboxLabeled(new Rect(this.curX, this.curY, base.ColumnWidth, 22f), label, ref checkOn, false);
+			Widgets.CheckboxLabeled(new Rect(this.curX, this.curY, base.ColumnWidth, 22f), label, ref checkOn, false, null, null, false);
 			base.Gap(22f + this.verticalSpacing);
 		}
 

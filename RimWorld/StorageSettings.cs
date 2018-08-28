@@ -12,11 +12,11 @@ namespace RimWorld
 		[LoadAlias("priority")]
 		private StoragePriority priorityInt = StoragePriority.Normal;
 
-		private bool OwnerIsSlotGroupParent
+		private IHaulDestination HaulDestinationOwner
 		{
 			get
 			{
-				return this.owner is ISlotGroupParent;
+				return this.owner as IHaulDestination;
 			}
 		}
 
@@ -37,9 +37,13 @@ namespace RimWorld
 			set
 			{
 				this.priorityInt = value;
-				if (Current.ProgramState == ProgramState.Playing && this.OwnerIsSlotGroupParent && this.SlotGroupParentOwner.Map != null)
+				if (Current.ProgramState == ProgramState.Playing && this.HaulDestinationOwner != null && this.HaulDestinationOwner.Map != null)
 				{
-					this.SlotGroupParentOwner.Map.slotGroupManager.Notify_GroupChangedPriority();
+					this.HaulDestinationOwner.Map.haulDestinationManager.Notify_HaulDestinationChangedPriority();
+				}
+				if (Current.ProgramState == ProgramState.Playing && this.SlotGroupParentOwner != null && this.SlotGroupParentOwner.Map != null)
+				{
+					this.SlotGroupParentOwner.Map.listerHaulables.RecalcAllInCells(this.SlotGroupParentOwner.AllSlotCells());
 				}
 			}
 		}
@@ -98,9 +102,26 @@ namespace RimWorld
 			return true;
 		}
 
+		public bool AllowedToAccept(ThingDef t)
+		{
+			if (!this.filter.Allows(t))
+			{
+				return false;
+			}
+			if (this.owner != null)
+			{
+				StorageSettings parentStoreSettings = this.owner.GetParentStoreSettings();
+				if (parentStoreSettings != null && !parentStoreSettings.AllowedToAccept(t))
+				{
+					return false;
+				}
+			}
+			return true;
+		}
+
 		private void TryNotifyChanged()
 		{
-			if (this.owner != null && this.OwnerIsSlotGroupParent && this.SlotGroupParentOwner.GetSlotGroup() != null)
+			if (this.owner != null && this.SlotGroupParentOwner != null && this.SlotGroupParentOwner.GetSlotGroup() != null && this.SlotGroupParentOwner.Map != null)
 			{
 				this.SlotGroupParentOwner.Map.listerHaulables.Notify_SlotGroupChanged(this.SlotGroupParentOwner.GetSlotGroup());
 			}

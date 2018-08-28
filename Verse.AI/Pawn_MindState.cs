@@ -3,7 +3,6 @@ using RimWorld.Planet;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using Verse.AI.Group;
 
 namespace Verse.AI
 {
@@ -53,11 +52,11 @@ namespace Verse.AI
 
 		public Pawn meleeThreat;
 
-		public int lastMeleeThreatHarmTick;
+		public int lastMeleeThreatHarmTick = -99999;
 
-		public int lastEngageTargetTick;
+		public int lastEngageTargetTick = -99999;
 
-		public int lastAttackTargetTick;
+		public int lastAttackTargetTick = -99999;
 
 		public LocalTargetInfo lastAttackedTarget;
 
@@ -68,6 +67,8 @@ namespace Verse.AI
 		public Dictionary<int, int> thinkData = new Dictionary<int, int>();
 
 		public int lastAssignedInteractTime = -99999;
+
+		public int interactionsToday;
 
 		public int lastInventoryRawFoodUseTick;
 
@@ -83,9 +84,17 @@ namespace Verse.AI
 
 		public bool applyBedThoughtsOnLeave;
 
-		public bool willJoinColonyIfRescued;
+		public bool willJoinColonyIfRescuedInt;
 
-		public bool wildManEverReachedOutside;
+		private bool wildManEverReachedOutsideInt;
+
+		public int timesGuestTendedToByPlayer;
+
+		public int lastSelfTendTick = -99999;
+
+		public bool spawnedByInfestationThingComp;
+
+		public int lastPredatorHuntingPlayerNotificationTick = -99999;
 
 		public float maxDistToSquadFlag = -1f;
 
@@ -138,6 +147,43 @@ namespace Verse.AI
 			}
 		}
 
+		public bool WildManEverReachedOutside
+		{
+			get
+			{
+				return this.wildManEverReachedOutsideInt;
+			}
+			set
+			{
+				if (this.wildManEverReachedOutsideInt == value)
+				{
+					return;
+				}
+				this.wildManEverReachedOutsideInt = value;
+				ReachabilityUtility.ClearCacheFor(this.pawn);
+			}
+		}
+
+		public bool WillJoinColonyIfRescued
+		{
+			get
+			{
+				return this.willJoinColonyIfRescuedInt;
+			}
+			set
+			{
+				if (this.willJoinColonyIfRescuedInt == value)
+				{
+					return;
+				}
+				this.willJoinColonyIfRescuedInt = value;
+				if (this.pawn.Spawned)
+				{
+					this.pawn.Map.attackTargetsCache.UpdateTarget(this.pawn);
+				}
+			}
+		}
+
 		public Pawn_MindState()
 		{
 		}
@@ -173,21 +219,27 @@ namespace Verse.AI
 			this.canLovinTick = -99999;
 			this.canSleepTick = -99999;
 			this.meleeThreat = null;
-			this.lastMeleeThreatHarmTick = 0;
-			this.lastEngageTargetTick = 0;
-			this.lastAttackTargetTick = 0;
+			this.lastMeleeThreatHarmTick = -99999;
+			this.lastEngageTargetTick = -99999;
+			this.lastAttackTargetTick = -99999;
 			this.lastAttackedTarget = LocalTargetInfo.Invalid;
 			this.enemyTarget = null;
 			this.duty = null;
 			this.thinkData.Clear();
 			this.lastAssignedInteractTime = -99999;
+			this.interactionsToday = 0;
 			this.lastInventoryRawFoodUseTick = 0;
 			this.priorityWork.Clear();
 			this.nextMoveOrderIsWait = true;
 			this.lastTakeCombatEnhancingDrugTick = -99999;
 			this.lastHarmTick = -99999;
 			this.anyCloseHostilesRecently = false;
-			this.willJoinColonyIfRescued = false;
+			this.WillJoinColonyIfRescued = false;
+			this.WildManEverReachedOutside = false;
+			this.timesGuestTendedToByPlayer = 0;
+			this.lastSelfTendTick = -99999;
+			this.spawnedByInfestationThingComp = false;
+			this.lastPredatorHuntingPlayerNotificationTick = -99999;
 		}
 
 		public void ExposeData()
@@ -199,7 +251,7 @@ namespace Verse.AI
 			Scribe_Values.Look<int>(ref this.lastJobGiverKey, "lastJobGiverKey", -1, false);
 			if (Scribe.mode == LoadSaveMode.PostLoadInit && this.lastJobGiverKey != -1 && !this.lastJobGiverThinkTree.TryGetThinkNodeWithSaveKey(this.lastJobGiverKey, out this.lastJobGiver))
 			{
-				Log.Warning("Could not find think node with key " + this.lastJobGiverKey);
+				Log.Warning("Could not find think node with key " + this.lastJobGiverKey, false);
 			}
 			Scribe_References.Look<Pawn>(ref this.meleeThreat, "meleeThreat", false);
 			Scribe_References.Look<Thing>(ref this.enemyTarget, "enemyTarget", false);
@@ -219,6 +271,7 @@ namespace Verse.AI
 			Scribe_Values.Look<IntVec3>(ref this.forcedGotoPosition, "forcedGotoPosition", IntVec3.Invalid, false);
 			Scribe_Values.Look<int>(ref this.lastMeleeThreatHarmTick, "lastMeleeThreatHarmTick", 0, false);
 			Scribe_Values.Look<int>(ref this.lastAssignedInteractTime, "lastAssignedInteractTime", -99999, false);
+			Scribe_Values.Look<int>(ref this.interactionsToday, "interactionsToday", 0, false);
 			Scribe_Values.Look<int>(ref this.lastInventoryRawFoodUseTick, "lastInventoryRawFoodUseTick", 0, false);
 			Scribe_Values.Look<int>(ref this.lastDisturbanceTick, "lastDisturbanceTick", -99999, false);
 			Scribe_Values.Look<bool>(ref this.wantsToTradeWithColony, "wantsToTradeWithColony", false, false);
@@ -247,8 +300,12 @@ namespace Verse.AI
 			});
 			Scribe_Values.Look<int>(ref this.applyBedThoughtsTick, "applyBedThoughtsTick", 0, false);
 			Scribe_Values.Look<bool>(ref this.applyBedThoughtsOnLeave, "applyBedThoughtsOnLeave", false, false);
-			Scribe_Values.Look<bool>(ref this.willJoinColonyIfRescued, "willJoinColonyIfRescued", false, false);
-			Scribe_Values.Look<bool>(ref this.wildManEverReachedOutside, "wildManEverReachedOutside", false, false);
+			Scribe_Values.Look<bool>(ref this.willJoinColonyIfRescuedInt, "willJoinColonyIfRescued", false, false);
+			Scribe_Values.Look<bool>(ref this.wildManEverReachedOutsideInt, "wildManEverReachedOutside", false, false);
+			Scribe_Values.Look<int>(ref this.timesGuestTendedToByPlayer, "timesGuestTendedToByPlayer", 0, false);
+			Scribe_Values.Look<int>(ref this.lastSelfTendTick, "lastSelfTendTick", 0, false);
+			Scribe_Values.Look<bool>(ref this.spawnedByInfestationThingComp, "spawnedByInfestationThingComp", false, false);
+			Scribe_Values.Look<int>(ref this.lastPredatorHuntingPlayerNotificationTick, "lastPredatorHuntingPlayerNotificationTick", -99999, false);
 			if (Scribe.mode == LoadSaveMode.PostLoadInit)
 			{
 				BackCompatibility.MindStatePostLoadInit(this);
@@ -268,7 +325,7 @@ namespace Verse.AI
 			this.mentalStateHandler.MentalStateHandlerTick();
 			this.mentalBreaker.MentalBreakerTick();
 			this.inspirationHandler.InspirationHandlerTick();
-			if (this.pawn.CurJob == null || this.pawn.jobs.curDriver.layingDown == LayingDownState.NotLaying)
+			if (!this.pawn.GetPosture().Laying())
 			{
 				this.applyBedThoughtsTick = 0;
 			}
@@ -284,53 +341,64 @@ namespace Verse.AI
 					this.anyCloseHostilesRecently = false;
 				}
 			}
-			if (this.willJoinColonyIfRescued && this.pawn.Spawned && this.pawn.IsHashIntervalTick(30))
+			if (this.WillJoinColonyIfRescued && this.pawn.Spawned && this.pawn.IsHashIntervalTick(30))
 			{
 				if (this.pawn.Faction == Faction.OfPlayer)
 				{
-					this.willJoinColonyIfRescued = false;
+					this.WillJoinColonyIfRescued = false;
 				}
-				else if (this.pawn.CanReachMapEdge())
+				else if (this.pawn.IsPrisoner && !this.pawn.HostFaction.HostileTo(Faction.OfPlayer))
+				{
+					this.WillJoinColonyIfRescued = false;
+				}
+				else if (!this.pawn.IsPrisoner && this.pawn.Faction != null && this.pawn.Faction.HostileTo(Faction.OfPlayer) && !this.pawn.Downed)
+				{
+					this.WillJoinColonyIfRescued = false;
+				}
+				else
 				{
 					foreach (Pawn current in this.pawn.Map.mapPawns.FreeColonistsSpawned)
 					{
-						if (current.IsColonistPlayerControlled)
+						if (current.IsColonistPlayerControlled && current.Position.InHorDistOf(this.pawn.Position, 4f) && GenSight.LineOfSight(this.pawn.Position, current.Position, this.pawn.Map, false, null, 0, 0))
 						{
-							this.PrisonerRescued(current);
+							this.JoinColonyBecauseRescuedBy(current);
 							break;
 						}
 					}
 				}
-				else
+			}
+			if (this.pawn.Spawned && this.pawn.IsWildMan() && !this.WildManEverReachedOutside && this.pawn.GetRoom(RegionType.Set_Passable) != null && this.pawn.GetRoom(RegionType.Set_Passable).TouchesMapEdge)
+			{
+				this.WildManEverReachedOutside = true;
+			}
+			if (Find.TickManager.TicksGame % 123 == 0 && this.pawn.Spawned && this.pawn.RaceProps.IsFlesh && this.pawn.needs.mood != null)
+			{
+				TerrainDef terrain = this.pawn.Position.GetTerrain(this.pawn.Map);
+				if (terrain.traversedThought != null)
 				{
-					Room room = this.pawn.GetRoom(RegionType.Set_Passable);
-					if (room != null)
-					{
-						List<Thing> containedAndAdjacentThings = room.ContainedAndAdjacentThings;
-						for (int i = 0; i < containedAndAdjacentThings.Count; i++)
-						{
-							Pawn pawn = containedAndAdjacentThings[i] as Pawn;
-							if (pawn != null && pawn.IsColonistPlayerControlled)
-							{
-								this.PrisonerRescued(pawn);
-								break;
-							}
-						}
-					}
+					this.pawn.needs.mood.thoughts.memories.TryGainMemoryFast(terrain.traversedThought);
+				}
+				WeatherDef curWeatherLerped = this.pawn.Map.weatherManager.CurWeatherLerped;
+				if (curWeatherLerped.exposedThought != null && !this.pawn.Position.Roofed(this.pawn.Map))
+				{
+					this.pawn.needs.mood.thoughts.memories.TryGainMemoryFast(curWeatherLerped.exposedThought);
 				}
 			}
-			if (this.pawn.Spawned && this.pawn.IsWildMan() && !this.wildManEverReachedOutside && this.pawn.GetRoom(RegionType.Set_Passable) != null && this.pawn.GetRoom(RegionType.Set_Passable).TouchesMapEdge)
+			if (GenLocalDate.DayTick(this.pawn) == 0)
 			{
-				this.wildManEverReachedOutside = true;
-				this.pawn.Map.reachability.ClearCache();
+				this.interactionsToday = 0;
 			}
 		}
 
-		private void PrisonerRescued(Pawn by)
+		private void JoinColonyBecauseRescuedBy(Pawn by)
 		{
-			this.willJoinColonyIfRescued = false;
+			this.WillJoinColonyIfRescued = false;
 			InteractionWorker_RecruitAttempt.DoRecruit(by, this.pawn, 1f, false);
-			Messages.Message("MessagePrisonerRescued".Translate().AdjustedFor(this.pawn).CapitalizeFirst(), this.pawn, MessageTypeDefOf.PositiveEvent);
+			if (this.pawn.needs != null && this.pawn.needs.mood != null)
+			{
+				this.pawn.needs.mood.thoughts.memories.TryGainMemory(ThoughtDefOf.Rescued, null);
+			}
+			Find.LetterStack.ReceiveLetter("LetterLabelRescueQuestFinished".Translate(), "LetterRescueQuestFinished".Translate().AdjustedFor(this.pawn, "PAWN").CapitalizeFirst(), LetterDefOf.PositiveEvent, this.pawn, null, null);
 		}
 
 		public void ResetLastDisturbanceTick()
@@ -341,25 +409,16 @@ namespace Verse.AI
 		[DebuggerHidden]
 		public IEnumerable<Gizmo> GetGizmos()
 		{
-			foreach (Gizmo g in this.priorityWork.GetGizmos())
+			if (this.pawn.IsColonistPlayerControlled)
 			{
-				yield return g;
-			}
-			Lord lord = this.pawn.GetLord();
-			if (lord != null && lord.LordJob is LordJob_FormAndSendCaravan)
-			{
-				yield return new Command_Action
+				foreach (Gizmo g in this.priorityWork.GetGizmos())
 				{
-					defaultLabel = "CommandCancelFormingCaravan".Translate(),
-					defaultDesc = "CommandCancelFormingCaravanDesc".Translate(),
-					icon = TexCommand.ClearPrioritizedWork,
-					activateSound = SoundDefOf.TickLow,
-					action = delegate
-					{
-						CaravanFormingUtility.StopFormingCaravan(lord);
-					},
-					hotKey = KeyBindingDefOf.DesignatorCancel
-				};
+					yield return g;
+				}
+			}
+			foreach (Gizmo g2 in CaravanFormingUtility.GetGizmos(this.pawn))
+			{
+				yield return g2;
 			}
 		}
 
@@ -379,28 +438,27 @@ namespace Verse.AI
 
 		public void Notify_DamageTaken(DamageInfo dinfo)
 		{
-			if (dinfo.Def.externalViolence)
+			this.mentalStateHandler.Notify_DamageTaken(dinfo);
+			if (dinfo.Def.ExternalViolenceFor(this.pawn))
 			{
 				this.lastHarmTick = Find.TickManager.TicksGame;
-				Pawn pawn = dinfo.Instigator as Pawn;
-				if (!this.mentalStateHandler.InMentalState && dinfo.Instigator != null && (pawn != null || dinfo.Instigator is Building_Turret) && dinfo.Instigator.Faction != null && (dinfo.Instigator.Faction.def.humanlikeFaction || (pawn != null && pawn.def.race.intelligence >= Intelligence.ToolUser)) && this.pawn.Faction == null && (this.pawn.CurJob == null || this.pawn.CurJob.def != JobDefOf.PredatorHunt) && Rand.Chance(this.GetManhunterOnDamageChance(this.pawn) * Find.Storyteller.difficulty.manhunterChanceOnDamageFactor))
+				if (this.pawn.Spawned)
 				{
-					this.StartManhunterBecauseOfPawnAction("AnimalManhunterFromDamage");
-				}
-				else if (dinfo.Instigator != null && Pawn_MindState.CanStartFleeingBecauseOfPawnAction(this.pawn))
-				{
-					this.StartFleeingBecauseOfPawnAction(dinfo.Instigator);
+					Pawn pawn = dinfo.Instigator as Pawn;
+					if (!this.mentalStateHandler.InMentalState && dinfo.Instigator != null && (pawn != null || dinfo.Instigator is Building_Turret) && dinfo.Instigator.Faction != null && (dinfo.Instigator.Faction.def.humanlikeFaction || (pawn != null && pawn.def.race.intelligence >= Intelligence.ToolUser)) && this.pawn.Faction == null && (this.pawn.RaceProps.Animal || this.pawn.IsWildMan()) && (this.pawn.CurJob == null || this.pawn.CurJob.def != JobDefOf.PredatorHunt || dinfo.Instigator != ((JobDriver_PredatorHunt)this.pawn.jobs.curDriver).Prey) && Rand.Chance(PawnUtility.GetManhunterOnDamageChance(this.pawn, dinfo.Instigator)))
+					{
+						this.StartManhunterBecauseOfPawnAction("AnimalManhunterFromDamage");
+					}
+					else if (dinfo.Instigator != null && dinfo.Def.makesAnimalsFlee && Pawn_MindState.CanStartFleeingBecauseOfPawnAction(this.pawn))
+					{
+						this.StartFleeingBecauseOfPawnAction(dinfo.Instigator);
+					}
 				}
 				if (this.pawn.GetPosture() != PawnPosture.Standing)
 				{
 					this.lastDisturbanceTick = Find.TickManager.TicksGame;
 				}
 			}
-		}
-
-		private float GetManhunterOnDamageChance(Pawn pawn)
-		{
-			return (pawn.kindDef != PawnKindDefOf.WildMan) ? pawn.RaceProps.manhunterOnDamageChance : 0.5f;
 		}
 
 		internal void Notify_EngagedTarget()
@@ -416,11 +474,11 @@ namespace Verse.AI
 
 		internal bool CheckStartMentalStateBecauseRecruitAttempted(Pawn tamer)
 		{
-			if (!this.pawn.RaceProps.Animal)
+			if (!this.pawn.RaceProps.Animal && (!this.pawn.IsWildMan() || this.pawn.IsPrisoner))
 			{
 				return false;
 			}
-			if (!this.mentalStateHandler.InMentalState && this.pawn.Faction == null && Rand.Value < this.pawn.RaceProps.manhunterOnTameFailChance)
+			if (!this.mentalStateHandler.InMentalState && this.pawn.Faction == null && Rand.Chance(this.pawn.RaceProps.manhunterOnTameFailChance))
 			{
 				this.StartManhunterBecauseOfPawnAction("AnimalManhunterFromTaming");
 				return true;
@@ -457,8 +515,18 @@ namespace Verse.AI
 		{
 			if (this.pawn.IsWildMan())
 			{
-				this.wildManEverReachedOutside = false;
+				this.WildManEverReachedOutside = false;
 			}
+		}
+
+		public void Notify_SelfTended()
+		{
+			this.lastSelfTendTick = Find.TickManager.TicksGame;
+		}
+
+		public void Notify_PredatorHuntingPlayerNotification()
+		{
+			this.lastPredatorHuntingPlayerNotificationTick = Find.TickManager.TicksGame;
 		}
 
 		[DebuggerHidden]
@@ -477,46 +545,41 @@ namespace Verse.AI
 
 		private void StartManhunterBecauseOfPawnAction(string letterTextKey)
 		{
-			if (!this.mentalStateHandler.TryStartMentalState(MentalStateDefOf.Manhunter, null, false, false, null))
+			if (!this.mentalStateHandler.TryStartMentalState(MentalStateDefOf.Manhunter, null, false, false, null, false))
 			{
 				return;
 			}
 			string text = letterTextKey.Translate(new object[]
 			{
 				this.pawn.Label
-			});
-			GlobalTargetInfo lookTarget = this.pawn;
+			}).AdjustedFor(this.pawn, "PAWN");
+			GlobalTargetInfo target = this.pawn;
 			int num = 1;
 			if (Find.Storyteller.difficulty.allowBigThreats && Rand.Value < 0.5f)
 			{
 				foreach (Pawn current in this.GetPackmates(this.pawn, 24f))
 				{
-					if (current.mindState.mentalStateHandler.TryStartMentalState(MentalStateDefOf.Manhunter, null, false, false, null))
+					if (current.mindState.mentalStateHandler.TryStartMentalState(MentalStateDefOf.Manhunter, null, false, false, null, false))
 					{
 						num++;
 					}
 				}
 				if (num > 1)
 				{
-					lookTarget = new TargetInfo(this.pawn.Position, this.pawn.Map, false);
+					target = new TargetInfo(this.pawn.Position, this.pawn.Map, false);
 					text += "\n\n";
-					text += ((!"AnimalManhunterOthers".CanTranslate()) ? "AnimalManhunterFromDamageOthers".Translate(new object[]
-					{
-						this.pawn.def.label
-					}) : "AnimalManhunterOthers".Translate(new object[]
+					text += "AnimalManhunterOthers".Translate(new object[]
 					{
 						this.pawn.kindDef.GetLabelPlural(-1)
-					}));
+					});
 				}
 			}
-			string label = (!"LetterLabelAnimalManhunterRevenge".CanTranslate()) ? "LetterLabelAnimalManhunterFromDamage".Translate(new object[]
+			string text2 = (!this.pawn.RaceProps.Animal) ? this.pawn.def.label : this.pawn.Label;
+			string label = "LetterLabelAnimalManhunterRevenge".Translate(new object[]
 			{
-				this.pawn.Label
-			}).CapitalizeFirst() : "LetterLabelAnimalManhunterRevenge".Translate(new object[]
-			{
-				this.pawn.Label
+				text2
 			}).CapitalizeFirst();
-			Find.LetterStack.ReceiveLetter(label, text, (num != 1) ? LetterDefOf.ThreatBig : LetterDefOf.ThreatSmall, lookTarget, null);
+			Find.LetterStack.ReceiveLetter(label, text, (num != 1) ? LetterDefOf.ThreatBig : LetterDefOf.ThreatSmall, target, null, null);
 		}
 
 		private static bool CanStartFleeingBecauseOfPawnAction(Pawn p)
@@ -524,7 +587,7 @@ namespace Verse.AI
 			return p.RaceProps.Animal && !p.InMentalState && !p.IsFighting() && !p.Downed && !p.Dead && !ThinkNode_ConditionalShouldFollowMaster.ShouldFollowMaster(p);
 		}
 
-		private void StartFleeingBecauseOfPawnAction(Thing instigator)
+		public void StartFleeingBecauseOfPawnAction(Thing instigator)
 		{
 			List<Thing> threats = new List<Thing>
 			{

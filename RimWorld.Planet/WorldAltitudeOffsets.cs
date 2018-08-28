@@ -29,5 +29,7 @@ namespace RimWorld.Planet
 		public const float LineStrip = 0.05f;
 
 		public const float WorldFeature = 0.06f;
+
+		public static float WorldText = 0.4f;
 	}
 }

@@ -15,6 +15,14 @@ namespace RimWorld
 			}
 		}
 
+		public override bool AllowSelfTend
+		{
+			get
+			{
+				return false;
+			}
+		}
+
 		public override void Init()
 		{
 			base.Init();
@@ -23,7 +31,7 @@ namespace RimWorld
 				Pawn pawn = this.lord.ownedPawns[i];
 				if (!this.HasFleeingDuty(pawn) || pawn.mindState.duty.def == DutyDefOf.ExitMapRandom)
 				{
-					pawn.mindState.mentalStateHandler.TryStartMentalState(MentalStateDefOf.PanicFlee, null, false, false, null);
+					pawn.mindState.mentalStateHandler.TryStartMentalState(MentalStateDefOf.PanicFlee, null, false, false, null, false);
 				}
 			}
 		}

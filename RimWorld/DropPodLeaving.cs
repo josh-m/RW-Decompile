@@ -12,11 +12,7 @@ namespace RimWorld
 
 		public int destinationTile = -1;
 
-		public IntVec3 destinationCell = IntVec3.Invalid;
-
-		public PawnsArriveMode arriveMode;
-
-		public bool attackOnArrival;
+		public TransportPodsArrivalAction arrivalAction;
 
 		private bool alreadyLeft;
 
@@ -39,9 +35,7 @@ namespace RimWorld
 			base.ExposeData();
 			Scribe_Values.Look<int>(ref this.groupID, "groupID", 0, false);
 			Scribe_Values.Look<int>(ref this.destinationTile, "destinationTile", 0, false);
-			Scribe_Values.Look<IntVec3>(ref this.destinationCell, "destinationCell", default(IntVec3), false);
-			Scribe_Values.Look<PawnsArriveMode>(ref this.arriveMode, "arriveMode", PawnsArriveMode.Undecided, false);
-			Scribe_Values.Look<bool>(ref this.attackOnArrival, "attackOnArrival", false, false);
+			Scribe_Deep.Look<TransportPodsArrivalAction>(ref this.arrivalAction, "arrivalAction", new object[0]);
 			Scribe_Values.Look<bool>(ref this.alreadyLeft, "alreadyLeft", false, false);
 		}
 
@@ -54,13 +48,13 @@ namespace RimWorld
 			}
 			if (this.groupID < 0)
 			{
-				Log.Error("Drop pod left the map, but its group ID is " + this.groupID);
+				Log.Error("Drop pod left the map, but its group ID is " + this.groupID, false);
 				this.Destroy(DestroyMode.Vanish);
 				return;
 			}
 			if (this.destinationTile < 0)
 			{
-				Log.Error("Drop pod left the map, but its destination tile is " + this.destinationTile);
+				Log.Error("Drop pod left the map, but its destination tile is " + this.destinationTile, false);
 				this.Destroy(DestroyMode.Vanish);
 				return;
 			}
@@ -73,9 +67,7 @@ namespace RimWorld
 			travelingTransportPods.Tile = base.Map.Tile;
 			travelingTransportPods.SetFaction(Faction.OfPlayer);
 			travelingTransportPods.destinationTile = this.destinationTile;
-			travelingTransportPods.destinationCell = this.destinationCell;
-			travelingTransportPods.arriveMode = this.arriveMode;
-			travelingTransportPods.attackOnArrival = this.attackOnArrival;
+			travelingTransportPods.arrivalAction = this.arrivalAction;
 			Find.WorldObjects.Add(travelingTransportPods);
 			DropPodLeaving.tmpActiveDropPods.Clear();
 			DropPodLeaving.tmpActiveDropPods.AddRange(base.Map.listerThings.ThingsInGroup(ThingRequestGroup.ActiveDropPod));

@@ -18,9 +18,12 @@ namespace Verse
 
 		public SoundDef arriveSound;
 
+		[NoTranslate]
 		public string icon = "UI/Letters/LetterUnopened";
 
 		public bool pauseIfPauseOnUrgentLetter;
+
+		public bool forcedSlowdown;
 
 		[Unsaved]
 		private Texture2D iconTex;

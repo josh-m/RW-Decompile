@@ -14,6 +14,7 @@ namespace Verse
 
 		public bool devModeOnly;
 
+		[NoTranslate]
 		public List<string> extraConflictTags;
 
 		public KeyCode MainKey

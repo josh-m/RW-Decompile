@@ -16,15 +16,12 @@ namespace Verse
 		public override void WarmupComplete()
 		{
 			base.WarmupComplete();
-			if (base.CasterIsPawn && base.CasterPawn.skills != null)
+			Pawn pawn = this.currentTarget.Thing as Pawn;
+			if (pawn != null && !pawn.Downed && base.CasterIsPawn && base.CasterPawn.skills != null)
 			{
-				float xp = 6f;
-				Pawn pawn = this.currentTarget.Thing as Pawn;
-				if (pawn != null && pawn.HostileTo(this.caster) && !pawn.Downed)
-				{
-					xp = 240f;
-				}
-				base.CasterPawn.skills.Learn(SkillDefOf.Shooting, xp, false);
+				float num = (!pawn.HostileTo(this.caster)) ? 20f : 170f;
+				float num2 = this.verbProps.AdjustedFullCycleTime(this, base.CasterPawn);
+				base.CasterPawn.skills.Learn(SkillDefOf.Shooting, num * num2, false);
 			}
 		}
 

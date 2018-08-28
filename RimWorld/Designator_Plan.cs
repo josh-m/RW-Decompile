@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Verse;
 
 namespace RimWorld
@@ -6,8 +7,6 @@ namespace RimWorld
 	public abstract class Designator_Plan : Designator
 	{
 		private DesignateMode mode;
-
-		private DesignationDef desDef = DesignationDefOf.Plan;
 
 		public override int DraggableDimensions
 		{
@@ -25,14 +24,21 @@ namespace RimWorld
 			}
 		}
 
+		protected override DesignationDef Designation
+		{
+			get
+			{
+				return DesignationDefOf.Plan;
+			}
+		}
+
 		public Designator_Plan(DesignateMode mode)
 		{
 			this.mode = mode;
-			this.soundDragSustain = SoundDefOf.DesignateDragStandard;
-			this.soundDragChanged = SoundDefOf.DesignateDragStandardChanged;
+			this.soundDragSustain = SoundDefOf.Designate_DragStandard;
+			this.soundDragChanged = SoundDefOf.Designate_DragStandard_Changed;
 			this.useMouseIcon = true;
 			this.hotKey = KeyBindingDefOf.Misc9;
-			this.desDef = DesignationDefOf.Plan;
 		}
 
 		public override AcceptanceReport CanDesignateCell(IntVec3 c)
@@ -47,12 +53,12 @@ namespace RimWorld
 			}
 			if (this.mode == DesignateMode.Add)
 			{
-				if (base.Map.designationManager.DesignationAt(c, this.desDef) != null)
+				if (base.Map.designationManager.DesignationAt(c, this.Designation) != null)
 				{
 					return false;
 				}
 			}
-			else if (this.mode == DesignateMode.Remove && base.Map.designationManager.DesignationAt(c, this.desDef) == null)
+			else if (this.mode == DesignateMode.Remove && base.Map.designationManager.DesignationAt(c, this.Designation) == null)
 			{
 				return false;
 			}
@@ -63,11 +69,11 @@ namespace RimWorld
 		{
 			if (this.mode == DesignateMode.Add)
 			{
-				base.Map.designationManager.AddDesignation(new Designation(c, this.desDef));
+				base.Map.designationManager.AddDesignation(new Designation(c, this.Designation));
 			}
 			else if (this.mode == DesignateMode.Remove)
 			{
-				base.Map.designationManager.DesignationAt(c, this.desDef).Delete();
+				base.Map.designationManager.DesignationAt(c, this.Designation).Delete();
 			}
 		}
 
@@ -75,6 +81,11 @@ namespace RimWorld
 		{
 			GenUI.RenderMouseoverBracket();
 			GenDraw.DrawNoBuildEdgeLines();
+		}
+
+		public override void RenderHighlight(List<IntVec3> dragCells)
+		{
+			DesignatorUtility.RenderHighlightOverSelectableCells(this, dragCells);
 		}
 	}
 }

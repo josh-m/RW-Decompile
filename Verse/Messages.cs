@@ -1,5 +1,3 @@
-using RimWorld;
-using RimWorld.Planet;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -10,129 +8,7 @@ namespace Verse
 	[StaticConstructorOnStartup]
 	public static class Messages
 	{
-		private class LiveMessage
-		{
-			private int ID;
-
-			public string text;
-
-			private float startingTime;
-
-			public int startingFrame;
-
-			public GlobalTargetInfo lookTarget;
-
-			private Vector2 cachedSize = new Vector2(-1f, -1f);
-
-			public Rect lastDrawRect;
-
-			private static int uniqueID;
-
-			private const float DefaultMessageLifespan = 13f;
-
-			private const float FadeoutDuration = 0.6f;
-
-			protected float Age
-			{
-				get
-				{
-					return RealTime.LastRealTime - this.startingTime;
-				}
-			}
-
-			protected float TimeLeft
-			{
-				get
-				{
-					return 13f - this.Age;
-				}
-			}
-
-			public bool Expired
-			{
-				get
-				{
-					return this.TimeLeft <= 0f;
-				}
-			}
-
-			public float Alpha
-			{
-				get
-				{
-					if (this.TimeLeft < 0.6f)
-					{
-						return this.TimeLeft / 0.6f;
-					}
-					return 1f;
-				}
-			}
-
-			public LiveMessage(string text)
-			{
-				this.text = text;
-				this.lookTarget = GlobalTargetInfo.Invalid;
-				this.startingFrame = RealTime.frameCount;
-				this.startingTime = RealTime.LastRealTime;
-				this.ID = Messages.LiveMessage.uniqueID++;
-			}
-
-			public LiveMessage(string text, GlobalTargetInfo lookTarget) : this(text)
-			{
-				this.lookTarget = lookTarget;
-			}
-
-			public Rect CalculateRect(float x, float y)
-			{
-				Text.Font = GameFont.Small;
-				if (this.cachedSize.x < 0f)
-				{
-					this.cachedSize = Text.CalcSize(this.text);
-				}
-				this.lastDrawRect = new Rect(x, y, this.cachedSize.x, this.cachedSize.y);
-				this.lastDrawRect = this.lastDrawRect.ContractedBy(-2f);
-				return this.lastDrawRect;
-			}
-
-			public void Draw(int xOffset, int yOffset)
-			{
-				Rect rect = this.CalculateRect((float)xOffset, (float)yOffset);
-				Find.WindowStack.ImmediateWindow(Gen.HashCombineInt(this.ID, 45574281), rect, WindowLayer.Super, delegate
-				{
-					Text.Font = GameFont.Small;
-					Text.Anchor = TextAnchor.MiddleLeft;
-					Rect rect = rect.AtZero();
-					float alpha = this.Alpha;
-					GUI.color = new Color(1f, 1f, 1f, alpha);
-					if (Messages.ShouldDrawMessageBackground)
-					{
-						GUI.color = new Color(0.15f, 0.15f, 0.15f, 0.8f * alpha);
-						GUI.DrawTexture(rect, BaseContent.WhiteTex);
-						GUI.color = new Color(1f, 1f, 1f, alpha);
-					}
-					if (this.lookTarget.IsValid)
-					{
-						UIHighlighter.HighlightOpportunity(rect, "Messages");
-						Widgets.DrawHighlightIfMouseover(rect);
-					}
-					Rect rect2 = new Rect(2f, 0f, rect.width - 2f, rect.height);
-					Widgets.Label(rect2, this.text);
-					if (Current.ProgramState == ProgramState.Playing && this.lookTarget.IsValid && Widgets.ButtonInvisible(rect, false))
-					{
-						CameraJumper.TryJumpAndSelect(this.lookTarget);
-						PlayerKnowledgeDatabase.KnowledgeDemonstrated(ConceptDefOf.ClickingMessages, KnowledgeAmount.Total);
-					}
-					Text.Anchor = TextAnchor.UpperLeft;
-					GUI.color = Color.white;
-					if (Mouse.IsOver(rect))
-					{
-						Messages.mouseoverMessageIndex = Messages.liveMessages.IndexOf(this);
-					}
-				}, false, false, 0f);
-			}
-		}
-
-		private static List<Messages.LiveMessage> liveMessages = new List<Messages.LiveMessage>();
+		private static List<Message> liveMessages = new List<Message>();
 
 		private static int mouseoverMessageIndex = -1;
 
@@ -142,58 +18,60 @@ namespace Verse
 
 		private const int MaxLiveMessages = 12;
 
-		private static bool ShouldDrawMessageBackground
-		{
-			get
-			{
-				if (Current.ProgramState != ProgramState.Playing)
-				{
-					return true;
-				}
-				WindowStack windowStack = Find.WindowStack;
-				for (int i = 0; i < windowStack.Count; i++)
-				{
-					if (windowStack[i].CausesMessageBackground())
-					{
-						return true;
-					}
-				}
-				return false;
-			}
-		}
-
 		public static void Update()
 		{
-			if (Current.ProgramState == ProgramState.Playing && Messages.mouseoverMessageIndex >= 0 && Messages.liveMessages.Count >= Messages.mouseoverMessageIndex + 1)
+			if (Current.ProgramState == ProgramState.Playing && Messages.mouseoverMessageIndex >= 0 && Messages.mouseoverMessageIndex < Messages.liveMessages.Count)
 			{
-				GlobalTargetInfo lookTarget = Messages.liveMessages[Messages.mouseoverMessageIndex].lookTarget;
-				if (lookTarget.IsValid && lookTarget.IsMapTarget && lookTarget.Map == Find.VisibleMap)
-				{
-					GenDraw.DrawArrowPointingAt(((TargetInfo)lookTarget).CenterVector3, false);
-				}
+				Messages.liveMessages[Messages.mouseoverMessageIndex].lookTargets.TryHighlight(true, true, false);
 			}
 			Messages.mouseoverMessageIndex = -1;
-			Messages.liveMessages.RemoveAll((Messages.LiveMessage m) => m.Expired);
+			Messages.liveMessages.RemoveAll((Message m) => m.Expired);
 		}
 
-		public static void Message(string text, GlobalTargetInfo lookTarget, MessageTypeDef type)
+		public static void Message(string text, LookTargets lookTargets, MessageTypeDef def, bool historical = true)
 		{
-			if (!Messages.AcceptsMessage(text, lookTarget))
+			if (!Messages.AcceptsMessage(text, lookTargets))
 			{
 				return;
 			}
-			Messages.LiveMessage msg = new Messages.LiveMessage(text, lookTarget);
-			Messages.Message(msg, type);
+			Message msg = new Message(text, def, lookTargets);
+			Messages.Message(msg, historical);
 		}
 
-		public static void Message(string text, MessageTypeDef type)
+		public static void Message(string text, MessageTypeDef def, bool historical = true)
 		{
 			if (!Messages.AcceptsMessage(text, TargetInfo.Invalid))
 			{
 				return;
 			}
-			Messages.LiveMessage msg = new Messages.LiveMessage(text);
-			Messages.Message(msg, type);
+			Message msg = new Message(text, def);
+			Messages.Message(msg, historical);
+		}
+
+		public static void Message(Message msg, bool historical = true)
+		{
+			if (!Messages.AcceptsMessage(msg.text, msg.lookTargets))
+			{
+				return;
+			}
+			if (historical && Find.Archive != null)
+			{
+				Find.Archive.Add(msg);
+			}
+			Messages.liveMessages.Add(msg);
+			while (Messages.liveMessages.Count > 12)
+			{
+				Messages.liveMessages.RemoveAt(0);
+			}
+			if (msg.def.sound != null)
+			{
+				msg.def.sound.PlayOneShotOnCamera(null);
+			}
+		}
+
+		public static bool IsLive(Message msg)
+		{
+			return Messages.liveMessages.Contains(msg);
 		}
 
 		public static void MessagesDoGUI()
@@ -218,11 +96,11 @@ namespace Verse
 			float num = 0f;
 			for (int i = 0; i < Messages.liveMessages.Count; i++)
 			{
-				Messages.LiveMessage liveMessage = Messages.liveMessages[i];
-				if (rect.Overlaps(liveMessage.lastDrawRect))
+				Message message = Messages.liveMessages[i];
+				if (rect.Overlaps(message.lastDrawRect))
 				{
 					result = true;
-					num = Mathf.Max(num, liveMessage.Alpha);
+					num = Mathf.Max(num, message.Alpha);
 				}
 			}
 			messageAlpha = num;
@@ -238,11 +116,11 @@ namespace Verse
 		{
 			for (int i = 0; i < Messages.liveMessages.Count; i++)
 			{
-				Messages.liveMessages[i].lookTarget = GlobalTargetInfo.Invalid;
+				Messages.liveMessages[i].lookTargets = null;
 			}
 		}
 
-		private static bool AcceptsMessage(string text, GlobalTargetInfo lookTarget)
+		private static bool AcceptsMessage(string text, LookTargets lookTargets)
 		{
 			if (text.NullOrEmpty())
 			{
@@ -250,7 +128,7 @@ namespace Verse
 			}
 			for (int i = 0; i < Messages.liveMessages.Count; i++)
 			{
-				if (Messages.liveMessages[i].text == text && Messages.liveMessages[i].lookTarget == lookTarget && Messages.liveMessages[i].startingFrame == RealTime.frameCount)
+				if (Messages.liveMessages[i].text == text && Messages.liveMessages[i].startingFrame == RealTime.frameCount && LookTargets.SameTargets(Messages.liveMessages[i].lookTargets, lookTargets))
 				{
 					return false;
 				}
@@ -258,17 +136,9 @@ namespace Verse
 			return true;
 		}
 
-		private static void Message(Messages.LiveMessage msg, MessageTypeDef type)
+		public static void Notify_Mouseover(Message msg)
 		{
-			Messages.liveMessages.Add(msg);
-			while (Messages.liveMessages.Count > 12)
-			{
-				Messages.liveMessages.RemoveAt(0);
-			}
-			if (type.sound != null)
-			{
-				type.sound.PlayOneShotOnCamera(null);
-			}
+			Messages.mouseoverMessageIndex = Messages.liveMessages.IndexOf(msg);
 		}
 	}
 }

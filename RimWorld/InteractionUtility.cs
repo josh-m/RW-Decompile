@@ -9,8 +9,6 @@ namespace RimWorld
 	{
 		public const float MaxInteractRange = 6f;
 
-		private static List<ISocialThought> tmpSocialThoughts = new List<ISocialThought>();
-
 		public static bool CanInitiateInteraction(Pawn pawn)
 		{
 			return pawn.interactions != null && pawn.health.capacities.CapableOf(PawnCapacityDefOf.Talking) && pawn.Awake() && !pawn.IsBurning();
@@ -50,7 +48,7 @@ namespace RimWorld
 			List<Verb> allVerbs = p.verbTracker.AllVerbs;
 			for (int i = 0; i < allVerbs.Count; i++)
 			{
-				if (allVerbs[i] is Verb_MeleeAttack && allVerbs[i].IsStillUsableBy(p))
+				if (allVerbs[i].IsMeleeAttack && allVerbs[i].IsStillUsableBy(p))
 				{
 					return true;
 				}
@@ -67,33 +65,8 @@ namespace RimWorld
 			}
 			List<Verb> allVerbs = p.verbTracker.AllVerbs;
 			return (from x in allVerbs
-			where x is Verb_MeleeAttack && x.IsStillUsableBy(p)
-			select x).TryRandomElementByWeight((Verb x) => x.verbProps.AdjustedMeleeDamageAmount(x, p, null), out verb);
-		}
-
-		public static bool HasAnySocialFightProvokingThought(Pawn pawn, Pawn otherPawn)
-		{
-			Thought thought;
-			return InteractionUtility.TryGetRandomSocialFightProvokingThought(pawn, otherPawn, out thought);
-		}
-
-		public static bool TryGetRandomSocialFightProvokingThought(Pawn pawn, Pawn otherPawn, out Thought thought)
-		{
-			if (pawn.needs.mood == null)
-			{
-				thought = null;
-				return false;
-			}
-			pawn.needs.mood.thoughts.GetSocialThoughts(otherPawn, InteractionUtility.tmpSocialThoughts);
-			ISocialThought socialThought;
-			bool result = InteractionUtility.tmpSocialThoughts.Where(delegate(ISocialThought x)
-			{
-				ThoughtDef def = ((Thought)x).def;
-				return def != ThoughtDefOf.HadAngeringFight && def != ThoughtDefOf.HadCatharticFight && x.OpinionOffset() < 0f;
-			}).TryRandomElementByWeight((ISocialThought x) => -x.OpinionOffset(), out socialThought);
-			InteractionUtility.tmpSocialThoughts.Clear();
-			thought = (Thought)socialThought;
-			return result;
+			where x.IsMeleeAttack && x.IsStillUsableBy(p)
+			select x).TryRandomElementByWeight((Verb x) => x.verbProps.AdjustedMeleeDamageAmount(x, p), out verb);
 		}
 	}
 }

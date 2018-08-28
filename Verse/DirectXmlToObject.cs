@@ -7,6 +7,8 @@ namespace Verse
 {
 	public static class DirectXmlToObject
 	{
+		public static Stack<Type> currentlyInstantiatingObjectOfType = new Stack<Type>();
+
 		public const string DictionaryKeyName = "key";
 
 		public const string DictionaryValueName = "value";
@@ -30,7 +32,16 @@ namespace Verse
 			{
 				xmlRoot = XmlInheritance.GetResolvedNodeFor(xmlRoot);
 				Type type = DirectXmlToObject.ClassTypeOf<T>(xmlRoot);
-				T t = (T)((object)Activator.CreateInstance(type));
+				DirectXmlToObject.currentlyInstantiatingObjectOfType.Push(type);
+				T t;
+				try
+				{
+					t = (T)((object)Activator.CreateInstance(type));
+				}
+				finally
+				{
+					DirectXmlToObject.currentlyInstantiatingObjectOfType.Pop();
+				}
 				try
 				{
 					methodInfo.Invoke(t, new object[]
@@ -48,7 +59,7 @@ namespace Verse
 						xmlRoot.OuterXml,
 						"\n\nException is:\n ",
 						ex.ToString()
-					}));
+					}), false);
 					t = default(T);
 				}
 				if (doPostLoad)
@@ -61,7 +72,7 @@ namespace Verse
 			{
 				if (typeof(T) != typeof(string))
 				{
-					Log.Error("CDATA can only be used for strings. Bad xml: " + xmlRoot.OuterXml);
+					Log.Error("CDATA can only be used for strings. Bad xml: " + xmlRoot.OuterXml, false);
 					return default(T);
 				}
 				return (T)((object)xmlRoot.FirstChild.Value);
@@ -84,7 +95,7 @@ namespace Verse
 							typeof(T),
 							": ",
 							ex2
-						}));
+						}), false);
 					}
 					return default(T);
 				}
@@ -145,7 +156,17 @@ namespace Verse
 				}
 				xmlRoot = XmlInheritance.GetResolvedNodeFor(xmlRoot);
 				Type type2 = DirectXmlToObject.ClassTypeOf<T>(xmlRoot);
-				T t2 = (T)((object)Activator.CreateInstance(type2));
+				Type type3 = Nullable.GetUnderlyingType(type2) ?? type2;
+				DirectXmlToObject.currentlyInstantiatingObjectOfType.Push(type3);
+				T t2;
+				try
+				{
+					t2 = (T)((object)Activator.CreateInstance(type3));
+				}
+				finally
+				{
+					DirectXmlToObject.currentlyInstantiatingObjectOfType.Pop();
+				}
 				List<string> list2 = null;
 				if (xmlRoot.ChildNodes.Count > 1)
 				{
@@ -170,7 +191,7 @@ namespace Verse
 									xmlNode.InnerText,
 									".\n\nWhole XML:\n\n",
 									xmlRoot.OuterXml
-								}));
+								}), false);
 							}
 							else
 							{
@@ -201,7 +222,19 @@ namespace Verse
 								}
 							}
 						}
-						if (fieldInfo == null)
+						if (fieldInfo != null && fieldInfo.TryGetAttribute<UnsavedAttribute>() != null)
+						{
+							Log.Error(string.Concat(new string[]
+							{
+								"XML error: ",
+								xmlNode.OuterXml,
+								" corresponds to a field in type ",
+								t2.GetType().Name,
+								" which has an Unsaved attribute. Context: ",
+								xmlRoot.OuterXml
+							}), false);
+						}
+						else if (fieldInfo == null)
 						{
 							bool flag = false;
 							object[] customAttributes2 = t2.GetType().GetCustomAttributes(typeof(IgnoreSavedElementAttribute), true);
@@ -223,8 +256,9 @@ namespace Verse
 									xmlNode.OuterXml,
 									" doesn't correspond to any field in type ",
 									t2.GetType().Name,
-									"."
-								}));
+									". Context: ",
+									xmlRoot.OuterXml
+								}), false);
 							}
 						}
 						else if (typeof(Def).IsAssignableFrom(fieldInfo.FieldType))
@@ -256,8 +290,8 @@ namespace Verse
 							}
 							catch (Exception ex3)
 							{
-								Log.Error("Exception loading from " + xmlNode.ToString() + ": " + ex3.ToString());
-								goto IL_78D;
+								Log.Error("Exception loading from " + xmlNode.ToString() + ": " + ex3.ToString(), false);
+								goto IL_850;
 							}
 							if (!typeof(T).IsValueType)
 							{
@@ -271,7 +305,7 @@ namespace Verse
 							}
 						}
 					}
-					IL_78D:;
+					IL_850:;
 				}
 				if (doPostLoad)
 				{
@@ -291,7 +325,7 @@ namespace Verse
 			Type typeInAnyAssembly = GenTypes.GetTypeInAnyAssembly(xmlAttribute.Value);
 			if (typeInAnyAssembly == null)
 			{
-				Log.Error("Could not find type named " + xmlAttribute.Value + " from node " + xmlRoot.OuterXml);
+				Log.Error("Could not find type named " + xmlAttribute.Value + " from node " + xmlRoot.OuterXml, false);
 				return typeof(T);
 			}
 			return typeInAnyAssembly;
@@ -315,7 +349,7 @@ namespace Verse
 					obj.ToStringSafe<object>(),
 					": ",
 					ex
-				}));
+				}), false);
 			}
 		}
 
@@ -331,7 +365,7 @@ namespace Verse
 					{
 						if (flag)
 						{
-							DirectXmlCrossRefLoader.RegisterListWantsCrossRef<T>(list, xmlNode.InnerText);
+							DirectXmlCrossRefLoader.RegisterListWantsCrossRef<T>(list, xmlNode.InnerText, listRootNode.Name);
 						}
 						else
 						{
@@ -348,7 +382,7 @@ namespace Verse
 					ex,
 					"\nXML:\n",
 					listRootNode.OuterXml
-				}));
+				}), false);
 			}
 			return list;
 		}
@@ -378,7 +412,7 @@ namespace Verse
 					{
 						if (DirectXmlToObject.ValidateListNode(xmlNode2, dictRootNode, typeof(KeyValuePair<K, V>)))
 						{
-							DirectXmlCrossRefLoader.RegisterDictionaryWantsCrossRef<K, V>(dictionary, xmlNode2);
+							DirectXmlCrossRefLoader.RegisterDictionaryWantsCrossRef<K, V>(dictionary, xmlNode2, dictRootNode.Name);
 						}
 					}
 				}
@@ -391,7 +425,7 @@ namespace Verse
 					dictRootNode.OuterXml,
 					".\n\nException: ",
 					ex
-				}));
+				}), false);
 			}
 			return dictionary;
 		}
@@ -409,12 +443,12 @@ namespace Verse
 			}
 			if (listEntryNode is XmlText)
 			{
-				Log.Error("XML format error: Raw text found inside a list element. Did you mean to surround it with list item <li> tags? " + listRootNode.OuterXml);
+				Log.Error("XML format error: Raw text found inside a list element. Did you mean to surround it with list item <li> tags? " + listRootNode.OuterXml, false);
 				return false;
 			}
 			if (listEntryNode.Name != "li" && DirectXmlToObject.CustomDataLoadMethodOf(listItemType) == null)
 			{
-				Log.Error("XML format error: List item found with name that is not <li>, and which does not have a custom XML loader method, in " + listRootNode.OuterXml);
+				Log.Error("XML format error: List item found with name that is not <li>, and which does not have a custom XML loader method, in " + listRootNode.OuterXml, false);
 				return false;
 			}
 			return true;
@@ -422,13 +456,13 @@ namespace Verse
 
 		private static FieldInfo GetFieldInfoForType(Type type, string token, XmlNode debugXmlNode)
 		{
-			Dictionary<string, FieldInfo> dictionary = DirectXmlToObject.fieldInfoLookup.TryGetValue(type);
+			Dictionary<string, FieldInfo> dictionary = DirectXmlToObject.fieldInfoLookup.TryGetValue(type, null);
 			if (dictionary == null)
 			{
 				dictionary = new Dictionary<string, FieldInfo>();
 				DirectXmlToObject.fieldInfoLookup[type] = dictionary;
 			}
-			FieldInfo fieldInfo = dictionary.TryGetValue(token);
+			FieldInfo fieldInfo = dictionary.TryGetValue(token, null);
 			if (fieldInfo == null && !dictionary.ContainsKey(token))
 			{
 				fieldInfo = DirectXmlToObject.SearchTypeHierarchy(type, token, BindingFlags.Default);
@@ -442,7 +476,7 @@ namespace Verse
 						{
 							text = text + ". XML: " + debugXmlNode.OuterXml;
 						}
-						Log.Error(text);
+						Log.Error(text, false);
 					}
 				}
 				dictionary[token] = fieldInfo;

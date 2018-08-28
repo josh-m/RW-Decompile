@@ -154,7 +154,7 @@ namespace RimWorld
 					}
 					foreach (Pawn current2 in list)
 					{
-						HealthUtility.DamageUntilDowned(current2);
+						HealthUtility.DamageUntilDowned(current2, true);
 					}
 				}
 				this.EjectContents();
@@ -165,7 +165,7 @@ namespace RimWorld
 
 		public virtual void EjectContents()
 		{
-			this.innerContainer.TryDropAll(this.InteractionCell, base.Map, ThingPlaceMode.Near);
+			this.innerContainer.TryDropAll(this.InteractionCell, base.Map, ThingPlaceMode.Near, null, null);
 			this.contentsKnown = true;
 		}
 
@@ -185,7 +185,7 @@ namespace RimWorld
 			{
 				text += "\n";
 			}
-			return text + "CasketContains".Translate() + ": " + str;
+			return text + "CasketContains".Translate() + ": " + str.CapitalizeFirst();
 		}
 	}
 }

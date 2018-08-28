@@ -41,8 +41,7 @@ namespace RimWorld
 			{
 				return;
 			}
-			AllowedAreaMode mode = (!pawn.RaceProps.Humanlike) ? AllowedAreaMode.Animal : AllowedAreaMode.Humanlike;
-			AreaAllowedGUI.DoAllowedAreaSelectors(rect, pawn, mode);
+			AreaAllowedGUI.DoAllowedAreaSelectors(rect, pawn);
 		}
 
 		public override void DoHeader(Rect rect, PawnTable table)
@@ -51,7 +50,7 @@ namespace RimWorld
 			Rect rect2 = new Rect(rect.x, rect.y + (rect.height - 65f), Mathf.Min(rect.width, 360f), 32f);
 			if (Widgets.ButtonText(rect2, "ManageAreas".Translate(), true, false, true))
 			{
-				Find.WindowStack.Add(new Dialog_ManageAreas(Find.VisibleMap));
+				Find.WindowStack.Add(new Dialog_ManageAreas(Find.CurrentMap));
 			}
 		}
 
@@ -73,7 +72,7 @@ namespace RimWorld
 		protected override void HeaderClicked(Rect headerRect, PawnTable table)
 		{
 			base.HeaderClicked(headerRect, table);
-			if (Event.current.shift && Find.VisibleMap != null)
+			if (Event.current.shift && Find.CurrentMap != null)
 			{
 				List<Pawn> pawnsListForReading = table.PawnsListForReading;
 				for (int i = 0; i < pawnsListForReading.Count; i++)
@@ -84,7 +83,7 @@ namespace RimWorld
 					}
 					if (Event.current.button == 0)
 					{
-						pawnsListForReading[i].playerSettings.AreaRestriction = Find.VisibleMap.areaManager.Home;
+						pawnsListForReading[i].playerSettings.AreaRestriction = Find.CurrentMap.areaManager.Home;
 					}
 					else if (Event.current.button == 1)
 					{
@@ -93,11 +92,11 @@ namespace RimWorld
 				}
 				if (Event.current.button == 0)
 				{
-					SoundDefOf.CheckboxTurnedOn.PlayOneShotOnCamera(null);
+					SoundDefOf.Checkbox_TurnedOn.PlayOneShotOnCamera(null);
 				}
 				else if (Event.current.button == 1)
 				{
-					SoundDefOf.CheckboxTurnedOff.PlayOneShotOnCamera(null);
+					SoundDefOf.Checkbox_TurnedOff.PlayOneShotOnCamera(null);
 				}
 			}
 		}

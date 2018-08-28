@@ -6,7 +6,8 @@ namespace RimWorld
 	{
 		public Dialog_NamePlayerFaction()
 		{
-			this.curName = NameGenerator.GenerateName(Faction.OfPlayer.def.factionNameMakerPlayer, null, false, null);
+			this.nameGenerator = (() => NameGenerator.GenerateName(Faction.OfPlayer.def.factionNameMaker, new Predicate<string>(this.IsValidName), false, null, null));
+			this.curName = this.nameGenerator();
 			this.nameMessageKey = "NamePlayerFactionMessage";
 			this.gainedNameMessageKey = "PlayerFactionGainsName";
 			this.invalidNameMessageKey = "PlayerFactionNameIsInvalid";

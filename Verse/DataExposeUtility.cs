@@ -55,7 +55,7 @@ namespace Verse
 			{
 				if (arr.Length != elements)
 				{
-					Log.ErrorOnce(string.Format("Bool array length mismatch for {0}", label), 74135877);
+					Log.ErrorOnce(string.Format("Bool array length mismatch for {0}", label), 74135877, false);
 				}
 				elements = arr.Length;
 			}
@@ -70,9 +70,9 @@ namespace Verse
 				{
 					if (arr[i])
 					{
-						byte[] expr_67_cp_0 = array;
-						int expr_67_cp_1 = num2;
-						expr_67_cp_0[expr_67_cp_1] |= b;
+						byte[] expr_68_cp_0 = array;
+						int expr_68_cp_1 = num2;
+						expr_68_cp_0[expr_68_cp_1] |= b;
 					}
 					b *= 2;
 					if (b == 0)

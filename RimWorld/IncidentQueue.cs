@@ -58,10 +58,10 @@ namespace RimWorld
 			return true;
 		}
 
-		public bool Add(IncidentDef def, int fireTick, IncidentParms parms = null)
+		public bool Add(IncidentDef def, int fireTick, IncidentParms parms = null, int retryDurationTicks = 0)
 		{
 			FiringIncident firingInc = new FiringIncident(def, null, parms);
-			QueuedIncident qi = new QueuedIncident(firingInc, fireTick);
+			QueuedIncident qi = new QueuedIncident(firingInc, fireTick, retryDurationTicks);
 			this.Add(qi);
 			return true;
 		}
@@ -71,12 +71,37 @@ namespace RimWorld
 			for (int i = this.queuedIncidents.Count - 1; i >= 0; i--)
 			{
 				QueuedIncident queuedIncident = this.queuedIncidents[i];
-				if (queuedIncident.FireTick <= Find.TickManager.TicksGame)
+				if (!queuedIncident.TriedToFire)
 				{
-					Find.Storyteller.TryFire(queuedIncident.FiringIncident);
+					if (queuedIncident.FireTick <= Find.TickManager.TicksGame)
+					{
+						bool flag = Find.Storyteller.TryFire(queuedIncident.FiringIncident);
+						queuedIncident.Notify_TriedToFire();
+						if (flag || queuedIncident.RetryDurationTicks == 0)
+						{
+							this.queuedIncidents.Remove(queuedIncident);
+						}
+					}
+				}
+				else if (queuedIncident.FireTick + queuedIncident.RetryDurationTicks <= Find.TickManager.TicksGame)
+				{
 					this.queuedIncidents.Remove(queuedIncident);
 				}
+				else if (Find.TickManager.TicksGame % 833 == Rand.RangeSeeded(0, 833, queuedIncident.FireTick))
+				{
+					bool flag2 = Find.Storyteller.TryFire(queuedIncident.FiringIncident);
+					queuedIncident.Notify_TriedToFire();
+					if (flag2)
+					{
+						this.queuedIncidents.Remove(queuedIncident);
+					}
+				}
 			}
+		}
+
+		public void Notify_MapRemoved(Map map)
+		{
+			this.queuedIncidents.RemoveAll((QueuedIncident x) => x.FiringIncident.parms.target == map);
 		}
 	}
 }

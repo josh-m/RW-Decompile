@@ -63,7 +63,7 @@ namespace RimWorld
 		public override IEnumerable<Gizmo> CompGetGizmosExtra()
 		{
 			Command_Toggle com = new Command_Toggle();
-			com.hotKey = KeyBindingDefOf.CommandTogglePower;
+			com.hotKey = KeyBindingDefOf.Command_TogglePower;
 			com.defaultLabel = "CommandGatherSpotToggleLabel".Translate();
 			com.icon = TexCommand.GatherSpotActive;
 			com.isActive = new Func<bool>(this.get_Active);

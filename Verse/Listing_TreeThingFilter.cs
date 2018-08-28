@@ -34,7 +34,7 @@ namespace Verse
 			this.suppressSmallVolumeTags = suppressSmallVolumeTags;
 		}
 
-		public void DoCategoryChildren(TreeNode_ThingCategory node, int indentLevel, int openMask, bool isRoot = false)
+		public void DoCategoryChildren(TreeNode_ThingCategory node, int indentLevel, int openMask, Map map, bool isRoot = false)
 		{
 			if (isRoot)
 			{
@@ -58,7 +58,7 @@ namespace Verse
 			{
 				if (this.Visible(current2))
 				{
-					this.DoCategory(current2, indentLevel, openMask);
+					this.DoCategory(current2, indentLevel, openMask, map);
 				}
 			}
 			foreach (ThingDef current3 in from n in node.catDef.childThingDefs
@@ -67,7 +67,7 @@ namespace Verse
 			{
 				if (this.Visible(current3))
 				{
-					this.DoThingDef(current3, indentLevel);
+					this.DoThingDef(current3, indentLevel, map);
 				}
 			}
 		}
@@ -78,10 +78,10 @@ namespace Verse
 			{
 				return;
 			}
-			base.LabelLeft("*" + sfDef.LabelCap, sfDef.description, nestLevel);
+			base.LabelLeft("*" + sfDef.LabelCap, sfDef.description, nestLevel, 0f);
 			bool flag = this.filter.Allows(sfDef);
 			bool flag2 = flag;
-			Widgets.Checkbox(new Vector2(this.LabelWidth, this.curY), ref flag, this.lineHeight, false);
+			Widgets.Checkbox(new Vector2(this.LabelWidth, this.curY), ref flag, this.lineHeight, false, true, null, null);
 			if (flag != flag2)
 			{
 				this.filter.SetAllow(sfDef, flag);
@@ -89,27 +89,27 @@ namespace Verse
 			base.EndLine();
 		}
 
-		public void DoCategory(TreeNode_ThingCategory node, int indentLevel, int openMask)
+		public void DoCategory(TreeNode_ThingCategory node, int indentLevel, int openMask, Map map)
 		{
 			base.OpenCloseWidget(node, indentLevel, openMask);
-			base.LabelLeft(node.LabelCap, node.catDef.description, indentLevel);
+			base.LabelLeft(node.LabelCap, node.catDef.description, indentLevel, 0f);
 			MultiCheckboxState multiCheckboxState = this.AllowanceStateOf(node);
-			if (Widgets.CheckboxMulti(new Vector2(this.LabelWidth, this.curY), multiCheckboxState, this.lineHeight))
+			MultiCheckboxState multiCheckboxState2 = Widgets.CheckboxMulti(new Rect(this.LabelWidth, this.curY, this.lineHeight, this.lineHeight), multiCheckboxState, true);
+			if (multiCheckboxState != multiCheckboxState2)
 			{
-				bool allow = multiCheckboxState == MultiCheckboxState.Off;
-				this.filter.SetAllow(node.catDef, allow, this.forceHiddenDefs, this.hiddenSpecialFilters);
+				this.filter.SetAllow(node.catDef, multiCheckboxState2 == MultiCheckboxState.On, this.forceHiddenDefs, this.hiddenSpecialFilters);
 			}
 			base.EndLine();
 			if (node.IsOpen(openMask))
 			{
-				this.DoCategoryChildren(node, indentLevel + 1, openMask, false);
+				this.DoCategoryChildren(node, indentLevel + 1, openMask, map, false);
 			}
 		}
 
-		private void DoThingDef(ThingDef tDef, int nestLevel)
+		private void DoThingDef(ThingDef tDef, int nestLevel, Map map)
 		{
 			bool flag = (this.suppressSmallVolumeTags == null || !this.suppressSmallVolumeTags.Contains(tDef)) && tDef.IsStuff && tDef.smallVolume;
-			string text = tDef.description;
+			string text = tDef.DescriptionDetailed;
 			if (flag)
 			{
 				text = text + "\n\n" + "ThisIsSmallVolume".Translate(new object[]
@@ -117,19 +117,40 @@ namespace Verse
 					10.ToStringCached()
 				});
 			}
-			base.LabelLeft(tDef.LabelCap, text, nestLevel);
+			float num = -4f;
 			if (flag)
 			{
-				Rect rect = new Rect(this.LabelWidth - 30f, this.curY, 30f, 30f);
+				Rect rect = new Rect(this.LabelWidth - 19f, this.curY, 19f, 20f);
 				Text.Font = GameFont.Tiny;
+				Text.Anchor = TextAnchor.UpperRight;
 				GUI.color = Color.gray;
-				Widgets.Label(rect, "x" + 10.ToStringCached());
+				Widgets.Label(rect, "/" + 10.ToStringCached());
 				Text.Font = GameFont.Small;
+				GenUI.ResetLabelAlign();
 				GUI.color = Color.white;
 			}
+			num -= 19f;
+			if (map != null)
+			{
+				int count = map.resourceCounter.GetCount(tDef);
+				if (count > 0)
+				{
+					string text2 = count.ToStringCached();
+					Rect rect2 = new Rect(0f, this.curY, this.LabelWidth + num, 40f);
+					Text.Font = GameFont.Tiny;
+					Text.Anchor = TextAnchor.UpperRight;
+					GUI.color = new Color(0.5f, 0.5f, 0.1f);
+					Widgets.Label(rect2, text2);
+					num -= Text.CalcSize(text2).x;
+					GenUI.ResetLabelAlign();
+					Text.Font = GameFont.Small;
+					GUI.color = Color.white;
+				}
+			}
+			base.LabelLeft(tDef.LabelCap, text, nestLevel, num);
 			bool flag2 = this.filter.Allows(tDef);
 			bool flag3 = flag2;
-			Widgets.Checkbox(new Vector2(this.LabelWidth, this.curY), ref flag2, this.lineHeight, false);
+			Widgets.Checkbox(new Vector2(this.LabelWidth, this.curY), ref flag2, this.lineHeight, false, true, null, null);
 			if (flag2 != flag3)
 			{
 				this.filter.SetAllow(tDef, flag2);
@@ -152,22 +173,20 @@ namespace Verse
 					}
 				}
 			}
+			bool flag = false;
 			foreach (SpecialThingFilterDef current2 in cat.catDef.DescendantSpecialThingFilterDefs)
 			{
-				if (this.Visible(current2))
+				if (this.Visible(current2) && !this.filter.Allows(current2))
 				{
-					num++;
-					if (this.filter.Allows(current2))
-					{
-						num2++;
-					}
+					flag = true;
+					break;
 				}
 			}
 			if (num2 == 0)
 			{
 				return MultiCheckboxState.Off;
 			}
-			if (num == num2)
+			if (num == num2 && !flag)
 			{
 				return MultiCheckboxState.On;
 			}

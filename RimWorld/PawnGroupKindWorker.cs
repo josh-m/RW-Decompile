@@ -22,7 +22,7 @@ namespace RimWorld
 			}
 			catch (Exception arg)
 			{
-				Log.Error("Exception while generating pawn group: " + arg);
+				Log.Error("Exception while generating pawn group: " + arg, false);
 				for (int i = 0; i < list.Count; i++)
 				{
 					list[i].Destroy(DestroyMode.Vanish);
@@ -42,5 +42,7 @@ namespace RimWorld
 		{
 			return true;
 		}
+
+		public abstract IEnumerable<PawnKindDef> GeneratePawnKindsExample(PawnGroupMakerParms parms, PawnGroupMaker groupMaker);
 	}
 }

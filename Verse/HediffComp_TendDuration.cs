@@ -8,13 +8,13 @@ namespace Verse
 	[StaticConstructorOnStartup]
 	public class HediffComp_TendDuration : HediffComp_SeverityPerDay
 	{
-		public int tendTick = -999999;
+		public int tendTicksLeft = -1;
 
 		public float tendQuality;
 
-		private int tendedCount;
+		private float totalTendQuality;
 
-		private const float TendQualityRandomVariance = 0.25f;
+		public const float TendQualityRandomVariance = 0.25f;
 
 		private static readonly Color UntendedColor;
 
@@ -36,7 +36,7 @@ namespace Verse
 		{
 			get
 			{
-				return base.CompShouldRemove || (this.TProps.disappearsAtTendedCount >= 0 && this.tendedCount >= this.TProps.disappearsAtTendedCount);
+				return base.CompShouldRemove || (this.TProps.disappearsAtTotalTendQuality >= 0 && this.totalTendQuality >= (float)this.TProps.disappearsAtTotalTendQuality);
 			}
 		}
 
@@ -44,15 +44,19 @@ namespace Verse
 		{
 			get
 			{
-				if (Current.ProgramState != ProgramState.Playing)
+				return Current.ProgramState == ProgramState.Playing && this.tendTicksLeft > 0;
+			}
+		}
+
+		public bool AllowTend
+		{
+			get
+			{
+				if (this.TProps.TendIsPermanent)
 				{
-					return false;
+					return !this.IsTended;
 				}
-				if (this.TProps.tendDuration > 0)
-				{
-					return Find.TickManager.TicksGame <= this.tendTick + this.TProps.tendDuration;
-				}
-				return this.tendTick > 0;
+				return this.TProps.TendTicksOverlap > this.tendTicksLeft;
 			}
 		}
 
@@ -60,64 +64,77 @@ namespace Verse
 		{
 			get
 			{
-				if (this.parent.IsOld())
+				if (this.parent.IsPermanent())
 				{
 					return null;
 				}
 				StringBuilder stringBuilder = new StringBuilder();
 				if (!this.IsTended)
 				{
-					if (!base.Pawn.Dead && this.parent.TendableNow)
+					if (!base.Pawn.Dead && this.parent.TendableNow(false))
 					{
 						stringBuilder.AppendLine("NeedsTendingNow".Translate());
 					}
 				}
 				else
 				{
-					string text;
-					if (this.parent.Part != null && this.parent.Part.def.IsSolid(this.parent.Part, base.Pawn.health.hediffSet.hediffs))
+					if (this.TProps.showTendQuality)
 					{
-						text = this.TProps.labelSolidTendedWell;
-					}
-					else if (this.parent.Part != null && this.parent.Part.depth == BodyPartDepth.Inside)
-					{
-						text = this.TProps.labelTendedWellInner;
-					}
-					else
-					{
-						text = this.TProps.labelTendedWell;
-					}
-					if (text != null)
-					{
-						stringBuilder.AppendLine(string.Concat(new string[]
+						string text;
+						if (this.parent.Part != null && this.parent.Part.def.IsSolid(this.parent.Part, base.Pawn.health.hediffSet.hediffs))
 						{
-							text.CapitalizeFirst(),
-							" (",
-							"Quality".Translate().ToLower(),
-							" ",
-							this.tendQuality.ToStringPercent("F0"),
-							")"
-						}));
-					}
-					if (!base.Pawn.Dead && this.TProps.tendDuration > 0)
-					{
-						int numTicks = this.tendTick + this.TProps.tendDuration - Find.TickManager.TicksGame;
-						string text2 = numTicks.ToStringTicksToPeriod(true, false, true);
-						if ("NextTendIn".CanTranslate())
+							text = this.TProps.labelSolidTendedWell;
+						}
+						else if (this.parent.Part != null && this.parent.Part.depth == BodyPartDepth.Inside)
 						{
-							text2 = "NextTendIn".Translate(new object[]
-							{
-								text2
-							});
+							text = this.TProps.labelTendedWellInner;
 						}
 						else
 						{
-							text2 = "NextTreatmentIn".Translate(new object[]
-							{
-								text2
-							});
+							text = this.TProps.labelTendedWell;
 						}
-						stringBuilder.AppendLine(text2);
+						if (text != null)
+						{
+							stringBuilder.AppendLine(string.Concat(new string[]
+							{
+								text.CapitalizeFirst(),
+								" (",
+								"Quality".Translate().ToLower(),
+								" ",
+								this.tendQuality.ToStringPercent("F0"),
+								")"
+							}));
+						}
+						else
+						{
+							stringBuilder.AppendLine(string.Format("{0}: {1}", "TendQuality".Translate(), this.tendQuality.ToStringPercent()));
+						}
+					}
+					if (!base.Pawn.Dead && !this.TProps.TendIsPermanent && this.parent.TendableNow(true))
+					{
+						int num = this.tendTicksLeft - this.TProps.TendTicksOverlap;
+						if (num < 0)
+						{
+							stringBuilder.AppendLine("CanTendNow".Translate());
+						}
+						else if ("NextTendIn".CanTranslate())
+						{
+							stringBuilder.AppendLine("NextTendIn".Translate(new object[]
+							{
+								num.ToStringTicksToPeriod()
+							}));
+						}
+						else
+						{
+							stringBuilder.AppendLine("NextTreatmentIn".Translate(new object[]
+							{
+								num.ToStringTicksToPeriod()
+							}));
+						}
+						stringBuilder.AppendLine("TreatmentExpiresIn".Translate(new object[]
+						{
+							this.tendTicksLeft.ToStringTicksToPeriod()
+						}));
 					}
 				}
 				return stringBuilder.ToString().TrimEndNewlines();
@@ -130,7 +147,7 @@ namespace Verse
 			{
 				if (this.parent is Hediff_Injury)
 				{
-					if (this.IsTended && !this.parent.IsOld())
+					if (this.IsTended && !this.parent.IsPermanent())
 					{
 						Color color = Color.Lerp(HediffComp_TendDuration.UntendedColor, Color.white, Mathf.Clamp01(this.tendQuality));
 						return new TextureAndColor(HediffComp_TendDuration.TendedIcon_Well_Injury, color);
@@ -154,9 +171,9 @@ namespace Verse
 
 		public override void CompExposeData()
 		{
-			Scribe_Values.Look<int>(ref this.tendTick, "tendTick", -999999, false);
+			Scribe_Values.Look<int>(ref this.tendTicksLeft, "tendTicksLeft", -1, false);
 			Scribe_Values.Look<float>(ref this.tendQuality, "tendQuality", 0f, false);
-			Scribe_Values.Look<int>(ref this.tendedCount, "tendedCount", 0, false);
+			Scribe_Values.Look<float>(ref this.totalTendQuality, "totalTendQuality", 0f, false);
 		}
 
 		protected override float SeverityChangePerDay()
@@ -168,11 +185,27 @@ namespace Verse
 			return 0f;
 		}
 
+		public override void CompPostTick(ref float severityAdjustment)
+		{
+			base.CompPostTick(ref severityAdjustment);
+			if (this.tendTicksLeft > 0 && !this.TProps.TendIsPermanent)
+			{
+				this.tendTicksLeft--;
+			}
+		}
+
 		public override void CompTended(float quality, int batchPosition = 0)
 		{
 			this.tendQuality = Mathf.Clamp01(quality + Rand.Range(-0.25f, 0.25f));
-			this.tendTick = Find.TickManager.TicksGame;
-			this.tendedCount++;
+			this.totalTendQuality += this.tendQuality;
+			if (this.TProps.TendIsPermanent)
+			{
+				this.tendTicksLeft = 1;
+			}
+			else
+			{
+				this.tendTicksLeft = Mathf.Max(0, this.tendTicksLeft) + this.TProps.TendTicksFull;
+			}
 			if (batchPosition == 0 && base.Pawn.Spawned)
 			{
 				string text = string.Concat(new string[]
@@ -197,26 +230,24 @@ namespace Verse
 			if (this.IsTended)
 			{
 				stringBuilder.AppendLine("tendQuality: " + this.tendQuality.ToStringPercent());
-				if (this.TProps.tendDuration > 0)
+				if (!this.TProps.TendIsPermanent)
 				{
-					int num = Find.TickManager.TicksGame - this.tendTick;
-					stringBuilder.AppendLine("ticks since tend: " + num);
-					stringBuilder.AppendLine("tend duration passed: " + ((float)num / (float)this.TProps.tendDuration).ToStringPercent());
-					stringBuilder.AppendLine("severity change per day: " + (this.TProps.severityPerDayTended * this.tendQuality).ToString());
+					stringBuilder.AppendLine("tendTicksLeft: " + this.tendTicksLeft);
 				}
 			}
 			else
 			{
 				stringBuilder.AppendLine("untended");
 			}
-			if (this.TProps.disappearsAtTendedCount >= 0)
+			stringBuilder.AppendLine("severity/day: " + this.SeverityChangePerDay().ToString());
+			if (this.TProps.disappearsAtTotalTendQuality >= 0)
 			{
 				stringBuilder.AppendLine(string.Concat(new object[]
 				{
-					"tended count: ",
-					this.tendedCount,
+					"totalTendQuality: ",
+					this.totalTendQuality.ToString("F2"),
 					" / ",
-					this.TProps.disappearsAtTendedCount
+					this.TProps.disappearsAtTotalTendQuality
 				}));
 			}
 			return stringBuilder.ToString().Trim();

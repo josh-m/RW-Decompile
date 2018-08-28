@@ -56,7 +56,7 @@ namespace RimWorld
 				case SkyfallerMovementType.Decelerate:
 					return SkyfallerDrawPosUtility.DrawPos_Decelerate(base.DrawPos, this.ticksToImpact, this.angle, this.def.skyfaller.speed);
 				default:
-					Log.ErrorOnce("SkyfallerMovementType not handled: " + this.def.skyfaller.movementType, this.thingIDNumber ^ 1948576711);
+					Log.ErrorOnce("SkyfallerMovementType not handled: " + this.def.skyfaller.movementType, this.thingIDNumber ^ 1948576711, false);
 					return SkyfallerDrawPosUtility.DrawPos_Accelerate(base.DrawPos, this.ticksToImpact, this.angle, this.def.skyfaller.speed);
 				}
 			}
@@ -160,7 +160,7 @@ namespace RimWorld
 				}
 				else if (this.ticksToImpact > 220)
 				{
-					Log.Error("ticksToImpact > LeaveMapAfterTicks. Was there an exception? Destroying skyfaller.");
+					Log.Error("ticksToImpact > LeaveMapAfterTicks. Was there an exception? Destroying skyfaller.", false);
 					this.Destroy(DestroyMode.Vanish);
 				}
 			}
@@ -182,7 +182,7 @@ namespace RimWorld
 				}
 				else if (this.ticksToImpact < 0)
 				{
-					Log.Error("ticksToImpact < 0. Was there an exception? Destroying skyfaller.");
+					Log.Error("ticksToImpact < 0. Was there an exception? Destroying skyfaller.", false);
 					this.Destroy(DestroyMode.Vanish);
 				}
 			}
@@ -218,22 +218,26 @@ namespace RimWorld
 					}
 					Building edifice = c.GetEdifice(this.Map);
 					return edifice == null || !edifice.def.holdsRoof;
-				}), base.Map);
+				}), base.Map, null);
 			}
 		}
 
 		protected virtual void Impact()
 		{
-			if (this.def.skyfaller.explosionDamage != null)
+			if (this.def.skyfaller.CausesExplosion)
 			{
-				GenExplosion.DoExplosion(base.Position, base.Map, this.def.skyfaller.explosionRadius, this.def.skyfaller.explosionDamage, null, GenMath.RoundRandom((float)this.def.skyfaller.explosionDamage.explosionDamage * this.def.skyfaller.explosionDamageFactor), null, null, null, null, 0f, 1, false, null, 0f, 1, 0f, false);
+				GenExplosion.DoExplosion(base.Position, base.Map, this.def.skyfaller.explosionRadius, this.def.skyfaller.explosionDamage, null, GenMath.RoundRandom((float)this.def.skyfaller.explosionDamage.defaultDamage * this.def.skyfaller.explosionDamageFactor), -1f, null, null, null, null, null, 0f, 1, false, null, 0f, 1, 0f, false);
 			}
 			for (int i = this.innerContainer.Count - 1; i >= 0; i--)
 			{
 				GenPlace.TryPlaceThing(this.innerContainer[i], base.Position, base.Map, ThingPlaceMode.Near, delegate(Thing thing, int count)
 				{
 					PawnUtility.RecoverFromUnwalkablePositionOrKill(thing.Position, thing.Map);
-				});
+					if (thing.def.Fillage == FillCategory.Full && this.def.skyfaller.CausesExplosion && thing.Position.InHorDistOf(base.Position, this.def.skyfaller.explosionRadius))
+					{
+						base.Map.terrainGrid.Notify_TerrainDestroyed(thing.Position);
+					}
+				}, null);
 			}
 			this.innerContainer.ClearAndDestroyContents(DestroyMode.Vanish);
 			CellRect cellRect = this.OccupiedRect();
@@ -245,7 +249,7 @@ namespace RimWorld
 			{
 				SkyfallerShrapnelUtility.MakeShrapnel(base.Position, base.Map, this.shrapnelDirection, this.def.skyfaller.shrapnelDistanceFactor, this.def.skyfaller.metalShrapnelCountRange.RandomInRange, this.def.skyfaller.rubbleShrapnelCountRange.RandomInRange, true);
 			}
-			if (this.def.skyfaller.cameraShake > 0f && base.Map == Find.VisibleMap)
+			if (this.def.skyfaller.cameraShake > 0f && base.Map == Find.CurrentMap)
 			{
 				Find.CameraDriver.shaker.DoShake(this.def.skyfaller.cameraShake);
 			}
@@ -298,7 +302,7 @@ namespace RimWorld
 			}
 			ticksToImpact = Mathf.Max(ticksToImpact, 0);
 			Vector3 pos = center;
-			pos.y = Altitudes.AltitudeFor(AltitudeLayer.Shadows);
+			pos.y = AltitudeLayer.Shadows.AltitudeFor();
 			float num = 1f + (float)ticksToImpact / 100f;
 			Vector3 s = new Vector3(num * shadowSize.x, 1f, num * shadowSize.y);
 			Color white = Color.white;

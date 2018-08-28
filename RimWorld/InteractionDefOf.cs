@@ -28,5 +28,10 @@ namespace RimWorld
 		public static InteractionDef TameAttempt;
 
 		public static InteractionDef Nuzzle;
+
+		static InteractionDefOf()
+		{
+			DefOfHelper.EnsureInitializedInCtor(typeof(InteractionDefOf));
+		}
 	}
 }

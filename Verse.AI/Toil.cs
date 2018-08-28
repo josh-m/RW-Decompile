@@ -24,13 +24,15 @@ namespace Verse.AI
 
 		public RandomSocialMode socialMode = RandomSocialMode.Normal;
 
+		public Func<SkillDef> activeSkill;
+
 		public ToilCompleteMode defaultCompleteMode = ToilCompleteMode.Instant;
 
 		public int defaultDuration;
 
 		public bool handlingFacing;
 
-		public void Cleanup()
+		public void Cleanup(int myIndex, JobDriver jobDriver)
 		{
 			if (this.finishActions != null)
 			{
@@ -45,14 +47,18 @@ namespace Verse.AI
 						Log.Error(string.Concat(new object[]
 						{
 							"Pawn ",
-							this.actor,
+							this.actor.ToStringSafe<Pawn>(),
 							" threw exception while executing toil's finish action (",
 							i,
-							"), curJob=",
-							this.actor.CurJob,
+							"), jobDriver=",
+							jobDriver.ToStringSafe<JobDriver>(),
+							", job=",
+							jobDriver.job.ToStringSafe<Job>(),
+							", toilIndex=",
+							myIndex,
 							": ",
 							ex
-						}));
+						}), false);
 					}
 				}
 			}

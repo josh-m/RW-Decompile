@@ -14,11 +14,11 @@ namespace RimWorld
 
 		public static ThingDef WoodLog;
 
-		public static ThingDef HerbalMedicine;
+		public static ThingDef MedicineHerbal;
 
-		public static ThingDef Medicine;
+		public static ThingDef MedicineIndustrial;
 
-		public static ThingDef GlitterworldMedicine;
+		public static ThingDef MedicineUltratech;
 
 		public static ThingDef BlocksGranite;
 
@@ -30,11 +30,15 @@ namespace RimWorld
 
 		public static ThingDef Chocolate;
 
-		public static ThingDef Component;
+		public static ThingDef ComponentIndustrial;
+
+		public static ThingDef ComponentSpacer;
 
 		public static ThingDef InsectJelly;
 
 		public static ThingDef Cloth;
+
+		public static ThingDef Leather_Plain;
 
 		public static ThingDef Hyperweave;
 
@@ -78,11 +82,11 @@ namespace RimWorld
 
 		public static ThingDef Hay;
 
+		public static ThingDef Meat_Human;
+
 		public static ThingDef Luciferium;
 
 		public static ThingDef DropPodIncoming;
-
-		public static ThingDef ExplosiveDropPodIncoming;
 
 		public static ThingDef DropPodLeaving;
 
@@ -110,29 +114,33 @@ namespace RimWorld
 
 		public static ThingDef GlowPod;
 
-		public static ThingDef FilthBlood;
+		public static ThingDef MinifiedThing;
 
-		public static ThingDef FilthAmnioticFluid;
+		public static ThingDef Filth_Blood;
 
-		public static ThingDef FilthDirt;
+		public static ThingDef Filth_AmnioticFluid;
 
-		public static ThingDef FilthVomit;
+		public static ThingDef Filth_Dirt;
 
-		public static ThingDef FilthAnimalFilth;
+		public static ThingDef Filth_Vomit;
 
-		public static ThingDef FilthSlime;
+		public static ThingDef Filth_AnimalFilth;
 
-		public static ThingDef FilthFireFoam;
+		public static ThingDef Filth_Trash;
 
-		public static ThingDef FilthFuel;
+		public static ThingDef Filth_Slime;
 
-		public static ThingDef RockRubble;
+		public static ThingDef Filth_FireFoam;
 
-		public static ThingDef SlagRubble;
+		public static ThingDef Filth_Fuel;
 
-		public static ThingDef FilthCorpseBile;
+		public static ThingDef Filth_RubbleRock;
 
-		public static ThingDef FilthAsh;
+		public static ThingDef Filth_RubbleBuilding;
+
+		public static ThingDef Filth_CorpseBile;
+
+		public static ThingDef Filth_Ash;
 
 		public static ThingDef RectTrigger;
 
@@ -150,6 +158,8 @@ namespace RimWorld
 
 		public static ThingDef Tornado;
 
+		public static ThingDef TunnelHiveSpawner;
+
 		public static ThingDef Sandstone;
 
 		public static ThingDef Ship_Beam;
@@ -165,6 +175,10 @@ namespace RimWorld
 		public static ThingDef Ship_SensorCluster;
 
 		public static ThingDef MineableSteel;
+
+		public static ThingDef MineableComponentsIndustrial;
+
+		public static ThingDef MineableGold;
 
 		public static ThingDef Door;
 
@@ -202,6 +216,8 @@ namespace RimWorld
 
 		public static ThingDef GeothermalGenerator;
 
+		public static ThingDef WatermillGenerator;
+
 		public static ThingDef Hopper;
 
 		public static ThingDef BilliardsTable;
@@ -212,9 +228,7 @@ namespace RimWorld
 
 		public static ThingDef RoyalBed;
 
-		public static ThingDef TurretGun;
-
-		public static ThingDef TrapDeadfall;
+		public static ThingDef TrapSpike;
 
 		public static ThingDef Cooler;
 
@@ -227,6 +241,8 @@ namespace RimWorld
 		public static ThingDef FermentingBarrel;
 
 		public static ThingDef DeepDrill;
+
+		public static ThingDef LongRangeMineralScanner;
 
 		public static ThingDef CollapsedRocks;
 
@@ -242,8 +258,6 @@ namespace RimWorld
 
 		public static ThingDef CaravanPackingSpot;
 
-		public static ThingDef Turret_Mortar;
-
 		public static ThingDef PlantPot;
 
 		public static ThingDef Table2x2c;
@@ -258,13 +272,19 @@ namespace RimWorld
 
 		public static ThingDef CommsConsole;
 
-		public static ThingDef PlantPotato;
+		public static ThingDef Turret_Mortar;
 
-		public static ThingDef PlantTreeOak;
+		public static ThingDef Turret_MiniTurret;
 
-		public static ThingDef PlantGrass;
+		public static ThingDef Plant_Potato;
 
-		public static ThingDef PlantAmbrosia;
+		public static ThingDef Plant_TreeOak;
+
+		public static ThingDef Plant_Grass;
+
+		public static ThingDef Plant_Ambrosia;
+
+		public static ThingDef Plant_Dandelion;
 
 		public static ThingDef BurnedTree;
 
@@ -275,6 +295,8 @@ namespace RimWorld
 		public static ThingDef Dromedary;
 
 		public static ThingDef Cow;
+
+		public static ThingDef Thrumbo;
 
 		public static ThingDef Spark;
 
@@ -292,6 +314,8 @@ namespace RimWorld
 
 		public static ThingDef Mote_DustPuff;
 
+		public static ThingDef Mote_DustPuffThick;
+
 		public static ThingDef Mote_TornadoDustPuff;
 
 		public static ThingDef Mote_TempRoof;
@@ -306,7 +330,9 @@ namespace RimWorld
 
 		public static ThingDef Mote_FeedbackGoto;
 
-		public static ThingDef Mote_FeedbackAttack;
+		public static ThingDef Mote_FeedbackShoot;
+
+		public static ThingDef Mote_FeedbackMelee;
 
 		public static ThingDef Mote_FeedbackEquip;
 
@@ -354,6 +380,13 @@ namespace RimWorld
 
 		public static ThingDef Mote_PowerBeam;
 
+		public static ThingDef Mote_Leaf;
+
 		public static ThingDef Gas_Smoke;
+
+		static ThingDefOf()
+		{
+			DefOfHelper.EnsureInitializedInCtor(typeof(ThingDefOf));
+		}
 	}
 }

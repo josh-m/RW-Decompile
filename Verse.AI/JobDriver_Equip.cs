@@ -7,9 +7,12 @@ namespace Verse.AI
 {
 	public class JobDriver_Equip : JobDriver
 	{
-		public override bool TryMakePreToilReservations()
+		public override bool TryMakePreToilReservations(bool errorOnFailed)
 		{
-			return this.pawn.Reserve(this.job.targetA, this.job, 1, -1, null);
+			Pawn pawn = this.pawn;
+			LocalTargetInfo targetA = this.job.targetA;
+			Job job = this.job;
+			return pawn.Reserve(targetA, job, 1, -1, null, errorOnFailed);
 		}
 
 		[DebuggerHidden]
@@ -30,7 +33,7 @@ namespace Verse.AI
 					else
 					{
 						thingWithComps2 = thingWithComps;
-						thingWithComps2.DeSpawn();
+						thingWithComps2.DeSpawn(DestroyMode.Vanish);
 					}
 					this.$this.pawn.equipment.MakeRoomFor(thingWithComps2);
 					this.$this.pawn.equipment.AddEquipment(thingWithComps2);

@@ -38,7 +38,7 @@ namespace RimWorld.BaseGen
 		{
 			if (BaseGen.working)
 			{
-				Log.Error("Cannot call Generate() while already generating. Nested calls are not allowed.");
+				Log.Error("Cannot call Generate() while already generating. Nested calls are not allowed.", false);
 				return;
 			}
 			BaseGen.working = true;
@@ -46,11 +46,11 @@ namespace RimWorld.BaseGen
 			{
 				if (BaseGen.symbolStack.Empty)
 				{
-					Log.Warning("Symbol stack is empty.");
+					Log.Warning("Symbol stack is empty.", false);
 				}
 				else if (BaseGen.globalSettings.map == null)
 				{
-					Log.Error("Called BaseGen.Resolve() with null map.");
+					Log.Error("Called BaseGen.Resolve() with null map.", false);
 				}
 				else
 				{
@@ -61,7 +61,7 @@ namespace RimWorld.BaseGen
 						num2++;
 						if (num2 > 100000)
 						{
-							Log.Error("Error in BaseGen: Too many iterations. Infinite loop?");
+							Log.Error("Error in BaseGen: Too many iterations. Infinite loop?", false);
 							break;
 						}
 						Pair<string, ResolveParams> toResolve = BaseGen.symbolStack.Pop();
@@ -84,14 +84,14 @@ namespace RimWorld.BaseGen
 								toResolve.Second,
 								"\n\nException: ",
 								ex
-							}));
+							}), false);
 						}
 					}
 				}
 			}
 			catch (Exception arg)
 			{
-				Log.Error("Error in BaseGen: " + arg);
+				Log.Error("Error in BaseGen: " + arg, false);
 			}
 			finally
 			{
@@ -130,7 +130,7 @@ namespace RimWorld.BaseGen
 					first,
 					"\" with any resolver that could resolve ",
 					second
-				}));
+				}), false);
 				return;
 			}
 			SymbolResolver symbolResolver2 = BaseGen.tmpResolvers.RandomElementByWeight((SymbolResolver x) => x.selectionWeight);

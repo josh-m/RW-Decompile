@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.Linq;
 using Verse.AI;
 using Verse.AI.Group;
+using Verse.Profile;
 
 namespace Verse
 {
@@ -49,7 +50,7 @@ namespace Verse
 
 		public PassingShipManager passingShipManager;
 
-		public SlotGroupManager slotGroupManager;
+		public HaulDestinationManager haulDestinationManager;
 
 		public DebugCellDrawer debugDrawer;
 
@@ -78,6 +79,8 @@ namespace Verse
 		public CoverGrid coverGrid;
 
 		public EdificeGrid edificeGrid;
+
+		public BlueprintGrid blueprintGrid;
 
 		public FogGrid fogGrid;
 
@@ -127,6 +130,8 @@ namespace Verse
 
 		public ListerHaulables listerHaulables;
 
+		public ListerMergeables listerMergeables;
+
 		public ListerFilthInHomeArea listerFilthInHomeArea;
 
 		public Reachability reachability;
@@ -139,9 +144,11 @@ namespace Verse
 
 		public RoofCollapseBuffer roofCollapseBuffer;
 
-		public WildSpawner wildSpawner;
+		public WildAnimalSpawner wildAnimalSpawner;
 
-		public SteadyAtmosphereEffects steadyAtmosphereEffects;
+		public WildPlantSpawner wildPlantSpawner;
+
+		public SteadyEnvironmentEffects steadyEnvironmentEffects;
 
 		public SkyManager skyManager;
 
@@ -174,6 +181,13 @@ namespace Verse
 		public RoadInfo roadInfo;
 
 		public WaterInfo waterInfo;
+
+		public RetainedCaravanData retainedCaravanData;
+
+		public const string ThingSaveKey = "thing";
+
+		[TweakValue("Graphics_Shadow", 0f, 100f)]
+		private static bool AlwaysRedrawShadows;
 
 		public int Index
 		{
@@ -244,7 +258,7 @@ namespace Verse
 		{
 			get
 			{
-				return this.info.parent is FactionBase && this.info.parent.Faction == Faction.OfPlayer;
+				return this.info != null && this.info.parent.def.canBePlayerHome && this.info.parent.Faction == Faction.OfPlayer;
 			}
 		}
 
@@ -302,22 +316,29 @@ namespace Verse
 			{
 				if (this.IsPlayerHome)
 				{
-					return this.wealthWatcher.WealthItems + this.wealthWatcher.WealthBuildings * 0.5f;
+					return this.wealthWatcher.WealthItems + this.wealthWatcher.WealthBuildings * 0.5f + this.wealthWatcher.WealthPawns;
 				}
 				float num = 0f;
-				foreach (Pawn current in this.mapPawns.FreeColonists)
+				foreach (Pawn current in this.mapPawns.PawnsInFaction(Faction.OfPlayer))
 				{
-					num += WealthWatcher.GetEquipmentApparelAndInventoryWealth(current);
+					if (current.IsFreeColonist)
+					{
+						num += WealthWatcher.GetEquipmentApparelAndInventoryWealth(current);
+					}
+					if (current.RaceProps.Animal)
+					{
+						num += current.MarketValue;
+					}
 				}
 				return num;
 			}
 		}
 
-		public IEnumerable<Pawn> FreeColonistsForStoryteller
+		public IEnumerable<Pawn> PlayerPawnsForStoryteller
 		{
 			get
 			{
-				return this.mapPawns.FreeColonists;
+				return this.mapPawns.PawnsInFaction(Faction.OfPlayer);
 			}
 		}
 
@@ -329,6 +350,27 @@ namespace Verse
 			}
 		}
 
+		public MapParent Parent
+		{
+			get
+			{
+				return this.info.parent;
+			}
+		}
+
+		public int ConstantRandSeed
+		{
+			get
+			{
+				return this.uniqueID ^ 16622162;
+			}
+		}
+
+		public Map()
+		{
+			MapLeakTracker.AddReference(this);
+		}
+
 		[DebuggerHidden]
 		public IEnumerator<IntVec3> GetEnumerator()
 		{
@@ -338,9 +380,9 @@ namespace Verse
 			}
 		}
 
-		public IEnumerable<IncidentTargetTypeDef> AcceptedTypes()
+		public IEnumerable<IncidentTargetTagDef> IncidentTargetTags()
 		{
-			return this.info.parent.AcceptedTypes();
+			return this.info.parent.IncidentTargetTags();
 		}
 
 		public void ConstructComponents()
@@ -360,7 +402,7 @@ namespace Verse
 			this.lordManager = new LordManager(this);
 			this.debugDrawer = new DebugCellDrawer();
 			this.passingShipManager = new PassingShipManager(this);
-			this.slotGroupManager = new SlotGroupManager(this);
+			this.haulDestinationManager = new HaulDestinationManager(this);
 			this.gameConditionManager = new GameConditionManager(this);
 			this.weatherManager = new WeatherManager(this);
 			this.zoneManager = new ZoneManager(this);
@@ -374,6 +416,7 @@ namespace Verse
 			this.thingGrid = new ThingGrid(this);
 			this.coverGrid = new CoverGrid(this);
 			this.edificeGrid = new EdificeGrid(this);
+			this.blueprintGrid = new BlueprintGrid(this);
 			this.fogGrid = new FogGrid(this);
 			this.glowGrid = new GlowGrid(this);
 			this.regionGrid = new RegionGrid(this);
@@ -398,14 +441,16 @@ namespace Verse
 			this.windManager = new WindManager(this);
 			this.listerBuildingsRepairable = new ListerBuildingsRepairable();
 			this.listerHaulables = new ListerHaulables(this);
+			this.listerMergeables = new ListerMergeables(this);
 			this.listerFilthInHomeArea = new ListerFilthInHomeArea(this);
 			this.reachability = new Reachability(this);
 			this.itemAvailability = new ItemAvailability(this);
 			this.autoBuildRoofAreaSetter = new AutoBuildRoofAreaSetter(this);
 			this.roofCollapseBufferResolver = new RoofCollapseBufferResolver(this);
 			this.roofCollapseBuffer = new RoofCollapseBuffer();
-			this.wildSpawner = new WildSpawner(this);
-			this.steadyAtmosphereEffects = new SteadyAtmosphereEffects(this);
+			this.wildAnimalSpawner = new WildAnimalSpawner(this);
+			this.wildPlantSpawner = new WildPlantSpawner(this);
+			this.steadyEnvironmentEffects = new SteadyEnvironmentEffects(this);
 			this.skyManager = new SkyManager(this);
 			this.overlayDrawer = new OverlayDrawer();
 			this.floodFiller = new FloodFiller(this);
@@ -420,6 +465,7 @@ namespace Verse
 			this.rememberedCameraPos = new RememberedCameraPos(this);
 			this.mineStrikeManager = new MineStrikeManager();
 			this.storyState = new StoryState(this);
+			this.retainedCaravanData = new RetainedCaravanData(this);
 			this.components.Clear();
 			this.FillComponents();
 		}
@@ -447,7 +493,7 @@ namespace Verse
 								{
 									if (hashSet.Contains(current.ThingID))
 									{
-										Log.Error("Saving Thing with already-used ID " + current.ThingID);
+										Log.Error("Saving Thing with already-used ID " + current.ThingID, false);
 									}
 									else
 									{
@@ -465,7 +511,7 @@ namespace Verse
 									current,
 									": ",
 									ex
-								}));
+								}), false);
 							}
 						}
 					}
@@ -476,7 +522,7 @@ namespace Verse
 				}
 				else
 				{
-					Log.Error("Could not enter the things node while saving.");
+					Log.Error("Could not enter the things node while saving.", false);
 				}
 				this.compressor = null;
 			}
@@ -529,23 +575,27 @@ namespace Verse
 			this.loadedFullThings.Clear();
 			DeepProfiler.End();
 			DeepProfiler.Start("Spawn everything into the map");
+			BackCompatibility.PreCheckSpawnBackCompatibleThingAfterLoading(this);
 			foreach (Thing current2 in list2)
 			{
 				if (!(current2 is Building))
 				{
 					try
 					{
-						GenSpawn.Spawn(current2, current2.Position, this, current2.Rotation, true);
+						if (!BackCompatibility.CheckSpawnBackCompatibleThingAfterLoading(current2, this))
+						{
+							GenSpawn.Spawn(current2, current2.Position, this, current2.Rotation, WipeMode.FullRefund, true);
+						}
 					}
 					catch (Exception ex)
 					{
 						Log.Error(string.Concat(new object[]
 						{
 							"Exception spawning loaded thing ",
-							current2,
+							current2.ToStringSafe<Thing>(),
 							": ",
 							ex
-						}));
+						}), false);
 					}
 				}
 			}
@@ -562,12 +612,13 @@ namespace Verse
 					Log.Error(string.Concat(new object[]
 					{
 						"Exception spawning loaded thing ",
-						current3,
+						current3.ToStringSafe<Building>(),
 						": ",
 						ex2
-					}));
+					}), false);
 				}
 			}
+			BackCompatibility.PostCheckSpawnBackCompatibleThingAfterLoading(this);
 			DeepProfiler.End();
 			this.FinalizeInit();
 		}
@@ -589,11 +640,11 @@ namespace Verse
 				{
 					Log.Error(string.Concat(new object[]
 					{
-						"Exception PostMapInit in ",
-						current,
+						"Error in PostMapInit() for ",
+						current.ToStringSafe<Thing>(),
 						": ",
 						ex
-					}));
+					}), false);
 				}
 			}
 			this.listerFilthInHomeArea.RebuildAll();
@@ -684,7 +735,15 @@ namespace Verse
 				this
 			});
 			Scribe_Deep.Look<MineStrikeManager>(ref this.mineStrikeManager, "mineStrikeManager", new object[0]);
+			Scribe_Deep.Look<RetainedCaravanData>(ref this.retainedCaravanData, "retainedCaravanData", new object[]
+			{
+				this
+			});
 			Scribe_Deep.Look<StoryState>(ref this.storyState, "storyState", new object[]
+			{
+				this
+			});
+			Scribe_Deep.Look<WildPlantSpawner>(ref this.wildPlantSpawner, "wildPlantSpawner", new object[]
 			{
 				this
 			});
@@ -709,7 +768,7 @@ namespace Verse
 			}
 			catch (Exception ex)
 			{
-				Log.Error(ex.ToString());
+				Log.Error(ex.ToString(), false);
 			}
 			this.roofCollapseBufferResolver.CollapseRoofsMarkedToCollapse();
 			this.windManager.WindManagerTick();
@@ -719,7 +778,7 @@ namespace Verse
 			}
 			catch (Exception ex2)
 			{
-				Log.Error(ex2.ToString());
+				Log.Error(ex2.ToString(), false);
 			}
 		}
 
@@ -727,107 +786,107 @@ namespace Verse
 		{
 			try
 			{
-				this.wildSpawner.WildSpawnerTick();
+				this.wildAnimalSpawner.WildAnimalSpawnerTick();
 			}
 			catch (Exception ex)
 			{
-				Log.Error(ex.ToString());
+				Log.Error(ex.ToString(), false);
+			}
+			try
+			{
+				this.wildPlantSpawner.WildPlantSpawnerTick();
+			}
+			catch (Exception ex2)
+			{
+				Log.Error(ex2.ToString(), false);
 			}
 			try
 			{
 				this.powerNetManager.PowerNetsTick();
 			}
-			catch (Exception ex2)
+			catch (Exception ex3)
 			{
-				Log.Error(ex2.ToString());
+				Log.Error(ex3.ToString(), false);
 			}
 			try
 			{
-				this.steadyAtmosphereEffects.SteadyAtmosphereEffectsTick();
+				this.steadyEnvironmentEffects.SteadyEnvironmentEffectsTick();
 			}
-			catch (Exception ex3)
+			catch (Exception ex4)
 			{
-				Log.Error(ex3.ToString());
+				Log.Error(ex4.ToString(), false);
 			}
 			try
 			{
 				this.lordManager.LordManagerTick();
 			}
-			catch (Exception ex4)
+			catch (Exception ex5)
 			{
-				Log.Error(ex4.ToString());
+				Log.Error(ex5.ToString(), false);
 			}
 			try
 			{
 				this.passingShipManager.PassingShipManagerTick();
 			}
-			catch (Exception ex5)
+			catch (Exception ex6)
 			{
-				Log.Error(ex5.ToString());
+				Log.Error(ex6.ToString(), false);
 			}
 			try
 			{
 				this.debugDrawer.DebugDrawerTick();
 			}
-			catch (Exception ex6)
+			catch (Exception ex7)
 			{
-				Log.Error(ex6.ToString());
+				Log.Error(ex7.ToString(), false);
 			}
 			try
 			{
 				this.lordsStarter.VoluntarilyJoinableLordsStarterTick();
 			}
-			catch (Exception ex7)
+			catch (Exception ex8)
 			{
-				Log.Error(ex7.ToString());
+				Log.Error(ex8.ToString(), false);
 			}
 			try
 			{
 				this.gameConditionManager.GameConditionManagerTick();
 			}
-			catch (Exception ex8)
+			catch (Exception ex9)
 			{
-				Log.Error(ex8.ToString());
+				Log.Error(ex9.ToString(), false);
 			}
 			try
 			{
 				this.weatherManager.WeatherManagerTick();
 			}
-			catch (Exception ex9)
+			catch (Exception ex10)
 			{
-				Log.Error(ex9.ToString());
+				Log.Error(ex10.ToString(), false);
 			}
 			try
 			{
 				this.resourceCounter.ResourceCounterTick();
 			}
-			catch (Exception ex10)
+			catch (Exception ex11)
 			{
-				Log.Error(ex10.ToString());
+				Log.Error(ex11.ToString(), false);
 			}
 			try
 			{
 				this.weatherDecider.WeatherDeciderTick();
 			}
-			catch (Exception ex11)
+			catch (Exception ex12)
 			{
-				Log.Error(ex11.ToString());
+				Log.Error(ex12.ToString(), false);
 			}
 			try
 			{
 				this.fireWatcher.FireWatcherTick();
 			}
-			catch (Exception ex12)
-			{
-				Log.Error(ex12.ToString());
-			}
-			try
-			{
-				this.damageWatcher.DamageWatcherTick();
-			}
 			catch (Exception ex13)
 			{
-				Log.Error(ex13.ToString());
+				Log.Error(ex13.ToString(), false);
 			}
 			MapComponentUtility.MapComponentTick(this);
 		}
@@ -841,8 +900,13 @@ namespace Verse
 			this.regionAndRoomUpdater.TryRebuildDirtyRegionsAndRooms();
 			this.glowGrid.GlowGridUpdate_First();
 			this.lordManager.LordManagerUpdate();
-			if (!worldRenderedNow && Find.VisibleMap == this)
+			if (!worldRenderedNow && Find.CurrentMap == this)
 			{
+				if (Map.AlwaysRedrawShadows)
+				{
+					this.mapDrawer.WholeMapChanged(MapMeshFlag.Things);
+				}
+				PlantFallColors.SetFallShaderGlobals(this);
 				this.waterInfo.SetTextures();
 				Find.FactionManager.FactionsDebugDrawOnMap();
 				this.mapDrawer.MapMeshDrawerUpdate_First();
@@ -850,7 +914,7 @@ namespace Verse
 				DoorsDebugDrawer.DrawDebug();
 				this.mapDrawer.DrawMapMesh();
 				this.dynamicDrawManager.DrawDynamicThings();
-				this.gameConditionManager.GameConditionManagerDraw();
+				this.gameConditionManager.GameConditionManagerDraw(this);
 				MapEdgeClipDrawer.DrawClippers(this);
 				this.designationManager.DrawDesignations();
 				this.overlayDrawer.DrawAllOverlays();
@@ -861,7 +925,7 @@ namespace Verse
 			}
 			catch (Exception ex)
 			{
-				Log.Error(ex.ToString());
+				Log.Error(ex.ToString(), false);
 			}
 			this.weatherManager.WeatherManagerUpdate();
 			MapComponentUtility.MapComponentUpdate(this);
@@ -914,12 +978,7 @@ namespace Verse
 
 		public void GetChildHolders(List<IThingHolder> outChildren)
 		{
-			ThingOwnerUtility.AppendThingHoldersFromThings(outChildren, this.GetDirectlyHeldThings());
-			this.GetNonThingChildHolders(outChildren);
-		}
-
-		public void GetNonThingChildHolders(List<IThingHolder> outChildren)
-		{
+			ThingOwnerUtility.AppendThingHoldersFromThings(outChildren, this.listerThings.ThingsInGroup(ThingRequestGroup.ThingHolder));
 			List<PassingShip> passingShips = this.passingShipManager.passingShips;
 			for (int i = 0; i < passingShips.Count; i++)
 			{

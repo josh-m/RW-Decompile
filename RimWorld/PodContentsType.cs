@@ -5,10 +5,10 @@ namespace RimWorld
 	public enum PodContentsType
 	{
 		Empty,
-		SpacerFriendly,
-		SpacerIncapped,
-		SpacerHalfEaten,
-		SpacerHostile,
+		AncientFriendly,
+		AncientIncapped,
+		AncientHalfEaten,
+		AncientHostile,
 		Slave
 	}
 }

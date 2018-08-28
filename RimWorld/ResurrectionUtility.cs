@@ -2,7 +2,6 @@ using RimWorld.Planet;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEngine;
 using Verse;
 using Verse.AI.Group;
 
@@ -10,26 +9,52 @@ namespace RimWorld
 {
 	public static class ResurrectionUtility
 	{
-		private const float BrainDamageChancePerDaySinceDeath = 0.2f;
+		private static SimpleCurve DementiaChancePerRotDaysCurve = new SimpleCurve
+		{
+			{
+				new CurvePoint(0.1f, 0.02f),
+				true
+			},
+			{
+				new CurvePoint(5f, 0.8f),
+				true
+			}
+		};
 
-		private const float MinBrainDamageChance = 0.08f;
+		private static SimpleCurve BlindnessChancePerRotDaysCurve = new SimpleCurve
+		{
+			{
+				new CurvePoint(0.1f, 0.02f),
+				true
+			},
+			{
+				new CurvePoint(5f, 0.8f),
+				true
+			}
+		};
 
-		private const float BlindnessChancePerDaySinceDeath = 0.12f;
-
-		private const float MinBlindnessChance = 0.04f;
-
-		private const float ResurrectionPsychosisChance = 0.3f;
+		private static SimpleCurve ResurrectionPsychosisChancePerRotDaysCurve = new SimpleCurve
+		{
+			{
+				new CurvePoint(0.1f, 0.02f),
+				true
+			},
+			{
+				new CurvePoint(5f, 0.8f),
+				true
+			}
+		};
 
 		public static void Resurrect(Pawn pawn)
 		{
 			if (!pawn.Dead)
 			{
-				Log.Error("Tried to resurrect a pawn who is not dead: " + pawn.ToStringSafe<Pawn>());
+				Log.Error("Tried to resurrect a pawn who is not dead: " + pawn.ToStringSafe<Pawn>(), false);
 				return;
 			}
 			if (pawn.Discarded)
 			{
-				Log.Error("Tried to resurrect a discarded pawn: " + pawn.ToStringSafe<Pawn>());
+				Log.Error("Tried to resurrect a discarded pawn: " + pawn.ToStringSafe<Pawn>(), false);
 				return;
 			}
 			Corpse corpse = pawn.Corpse;
@@ -57,11 +82,11 @@ namespace RimWorld
 				{
 					pawn.workSettings.EnableAndInitialize();
 				}
-				Find.Storyteller.intenderPopulation.Notify_PopulationGained();
+				Find.StoryWatcher.watcherPopAdaptation.Notify_PawnEvent(pawn, PopAdaptationEvent.GainedColonist);
 			}
 			if (flag)
 			{
-				GenSpawn.Spawn(pawn, loc, map);
+				GenSpawn.Spawn(pawn, loc, map, WipeMode.Vanish);
 				for (int i = 0; i < 10; i++)
 				{
 					MoteMaker.ThrowAirPuffUp(pawn.DrawPos, map);
@@ -79,68 +104,65 @@ namespace RimWorld
 					}
 				}
 			}
+			PawnDiedOrDownedThoughtsUtility.RemoveDiedThoughts(pawn);
 		}
 
 		public static void ResurrectWithSideEffects(Pawn pawn)
 		{
 			Corpse corpse = pawn.Corpse;
-			float num;
-			bool flag;
+			float x2;
 			if (corpse != null)
 			{
 				CompRottable comp = corpse.GetComp<CompRottable>();
-				num = comp.RotProgress / 60000f;
-				flag = (comp.Stage == RotStage.Fresh);
+				x2 = comp.RotProgress / 60000f;
 			}
 			else
 			{
-				num = 0f;
-				flag = true;
+				x2 = 0f;
 			}
 			ResurrectionUtility.Resurrect(pawn);
 			BodyPartRecord brain = pawn.health.hediffSet.GetBrain();
-			float chance = Mathf.Max(0.2f * num, 0.08f);
+			Hediff hediff = HediffMaker.MakeHediff(HediffDefOf.ResurrectionSickness, pawn, null);
+			if (!pawn.health.WouldDieAfterAddingHediff(hediff))
+			{
+				pawn.health.AddHediff(hediff, null, null, null);
+			}
+			float chance = ResurrectionUtility.DementiaChancePerRotDaysCurve.Evaluate(x2);
 			if (Rand.Chance(chance) && brain != null)
 			{
-				int num2 = Rand.RangeInclusive(1, 5);
-				int b = Mathf.FloorToInt(pawn.health.hediffSet.GetPartHealth(brain)) - 1;
-				num2 = Mathf.Min(num2, b);
-				if (num2 > 0 && !pawn.health.WouldDieAfterAddingHediff(HediffDefOf.Burn, brain, (float)num2))
+				Hediff hediff2 = HediffMaker.MakeHediff(HediffDefOf.Dementia, pawn, brain);
+				if (!pawn.health.WouldDieAfterAddingHediff(hediff2))
 				{
-					DamageDef burn = DamageDefOf.Burn;
-					int amount = num2;
-					BodyPartRecord hitPart = brain;
-					pawn.TakeDamage(new DamageInfo(burn, amount, -1f, null, hitPart, null, DamageInfo.SourceCategory.ThingOrUnknown));
+					pawn.health.AddHediff(hediff2, null, null, null);
 				}
 			}
-			float chance2 = Mathf.Max(0.12f * num, 0.04f);
+			float chance2 = ResurrectionUtility.BlindnessChancePerRotDaysCurve.Evaluate(x2);
 			if (Rand.Chance(chance2))
 			{
-				IEnumerable<BodyPartRecord> enumerable = from x in pawn.health.hediffSet.GetNotMissingParts(BodyPartHeight.Undefined, BodyPartDepth.Undefined)
-				where x.def == BodyPartDefOf.LeftEye || x.def == BodyPartDefOf.RightEye
+				IEnumerable<BodyPartRecord> enumerable = from x in pawn.health.hediffSet.GetNotMissingParts(BodyPartHeight.Undefined, BodyPartDepth.Undefined, null, null)
+				where x.def == BodyPartDefOf.Eye
 				select x;
 				foreach (BodyPartRecord current in enumerable)
 				{
-					Hediff hediff = HediffMaker.MakeHediff(HediffDefOf.Blindness, pawn, current);
-					pawn.health.AddHediff(hediff, null, null);
+					Hediff hediff3 = HediffMaker.MakeHediff(HediffDefOf.Blindness, pawn, current);
+					pawn.health.AddHediff(hediff3, null, null, null);
 				}
 			}
-			Hediff hediff2 = HediffMaker.MakeHediff(HediffDefOf.ResurrectionSickness, pawn, null);
-			if (!pawn.health.WouldDieAfterAddingHediff(hediff2))
+			if (brain != null)
 			{
-				pawn.health.AddHediff(hediff2, null, null);
-			}
-			if ((!flag || Rand.Chance(0.3f)) && brain != null)
-			{
-				Hediff hediff3 = HediffMaker.MakeHediff(HediffDefOf.ResurrectionPsychosis, pawn, brain);
-				if (!pawn.health.WouldDieAfterAddingHediff(hediff3))
+				float chance3 = ResurrectionUtility.ResurrectionPsychosisChancePerRotDaysCurve.Evaluate(x2);
+				if (Rand.Chance(chance3))
 				{
-					pawn.health.AddHediff(hediff3, null, null);
+					Hediff hediff4 = HediffMaker.MakeHediff(HediffDefOf.ResurrectionPsychosis, pawn, brain);
+					if (!pawn.health.WouldDieAfterAddingHediff(hediff4))
+					{
+						pawn.health.AddHediff(hediff4, null, null, null);
+					}
 				}
 			}
 			if (pawn.Dead)
 			{
-				Log.Error("The pawn has died while being resurrected.");
+				Log.Error("The pawn has died while being resurrected.", false);
 				ResurrectionUtility.Resurrect(pawn);
 			}
 		}

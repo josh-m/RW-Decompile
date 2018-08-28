@@ -22,7 +22,17 @@ namespace RimWorld
 
 		public static EffecterDef Mine;
 
-		public static EffecterDef ArmorDeflect;
+		public static EffecterDef Deflect_Metal;
+
+		public static EffecterDef Deflect_Metal_Bullet;
+
+		public static EffecterDef Deflect_General;
+
+		public static EffecterDef Deflect_General_Bullet;
+
+		public static EffecterDef DamageDiminished_Metal;
+
+		public static EffecterDef DamageDiminished_General;
 
 		public static EffecterDef Drill;
 
@@ -37,5 +47,10 @@ namespace RimWorld
 		public static EffecterDef Vomit;
 
 		public static EffecterDef PlayPoker;
+
+		static EffecterDefOf()
+		{
+			DefOfHelper.EnsureInitializedInCtor(typeof(EffecterDefOf));
+		}
 	}
 }

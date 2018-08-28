@@ -17,7 +17,7 @@ namespace RimWorld
 			{
 				if (this.authorNameInt.NullOrEmpty())
 				{
-					return "UnknownLower".Translate();
+					return "UnknownLower".Translate().CapitalizeFirst();
 				}
 				return this.authorNameInt;
 			}
@@ -29,7 +29,7 @@ namespace RimWorld
 			{
 				if (this.titleInt.NullOrEmpty())
 				{
-					Log.Error("CompArt got title but it wasn't configured.");
+					Log.Error("CompArt got title but it wasn't configured.", false);
 					this.titleInt = "Error";
 				}
 				return this.titleInt;
@@ -198,20 +198,20 @@ namespace RimWorld
 		{
 			if (this.taleRef == null)
 			{
-				Log.Error("Did CompArt.GenerateImageDescription without initializing art: " + this.parent);
+				Log.Error("Did CompArt.GenerateImageDescription without initializing art: " + this.parent, false);
 				this.InitializeArt(ArtGenerationContext.Outsider);
 			}
-			return this.taleRef.GenerateText(TextGenerationPurpose.ArtDescription, this.Props.descriptionMaker.RulesPlusIncludes);
+			return this.taleRef.GenerateText(TextGenerationPurpose.ArtDescription, this.Props.descriptionMaker);
 		}
 
 		private string GenerateTitle()
 		{
 			if (this.taleRef == null)
 			{
-				Log.Error("Did CompArt.GenerateTitle without initializing art: " + this.parent);
+				Log.Error("Did CompArt.GenerateTitle without initializing art: " + this.parent, false);
 				this.InitializeArt(ArtGenerationContext.Outsider);
 			}
-			return GenText.CapitalizeAsTitle(this.taleRef.GenerateText(TextGenerationPurpose.ArtName, this.Props.nameMaker.RulesPlusIncludes));
+			return GenText.CapitalizeAsTitle(this.taleRef.GenerateText(TextGenerationPurpose.ArtName, this.Props.nameMaker));
 		}
 	}
 }

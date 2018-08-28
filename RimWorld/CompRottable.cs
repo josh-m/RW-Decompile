@@ -112,12 +112,12 @@ namespace RimWorld
 			this.RotProgress += num * (float)interval;
 			if (this.Stage == RotStage.Rotting && this.PropsRot.rotDestroys)
 			{
-				if (this.parent.Spawned && this.parent.Map.slotGroupManager.SlotGroupAt(this.parent.Position) != null)
+				if (this.parent.IsInAnyStorage() && this.parent.SpawnedOrAnyParentSpawned)
 				{
 					Messages.Message("MessageRottedAwayInStorage".Translate(new object[]
 					{
 						this.parent.Label
-					}).CapitalizeFirst(), MessageTypeDefOf.NegativeEvent);
+					}).CapitalizeFirst(), new TargetInfo(this.parent.PositionHeld, this.parent.MapHeld, false), MessageTypeDefOf.NegativeEvent, true);
 					LessonAutoActivator.TeachOpportunity(ConceptDefOf.SpoilageAndFreezers, OpportunityType.GoodToKnow);
 				}
 				this.parent.Destroy(DestroyMode.Vanish);
@@ -128,11 +128,11 @@ namespace RimWorld
 			{
 				if (this.Stage == RotStage.Rotting && this.PropsRot.rotDamagePerDay > 0f)
 				{
-					this.parent.TakeDamage(new DamageInfo(DamageDefOf.Rotting, GenMath.RoundRandom(this.PropsRot.rotDamagePerDay), -1f, null, null, null, DamageInfo.SourceCategory.ThingOrUnknown));
+					this.parent.TakeDamage(new DamageInfo(DamageDefOf.Rotting, (float)GenMath.RoundRandom(this.PropsRot.rotDamagePerDay), 0f, -1f, null, null, null, DamageInfo.SourceCategory.ThingOrUnknown, null));
 				}
 				else if (this.Stage == RotStage.Dessicated && this.PropsRot.dessicatedDamagePerDay > 0f)
 				{
-					this.parent.TakeDamage(new DamageInfo(DamageDefOf.Rotting, GenMath.RoundRandom(this.PropsRot.dessicatedDamagePerDay), -1f, null, null, null, DamageInfo.SourceCategory.ThingOrUnknown));
+					this.parent.TakeDamage(new DamageInfo(DamageDefOf.Rotting, (float)GenMath.RoundRandom(this.PropsRot.dessicatedDamagePerDay), 0f, -1f, null, null, null, DamageInfo.SourceCategory.ThingOrUnknown, null));
 				}
 			}
 		}
@@ -159,7 +159,7 @@ namespace RimWorld
 		{
 			if (this.Stage != RotStage.Fresh)
 			{
-				FoodUtility.AddFoodPoisoningHediff(ingester, this.parent);
+				FoodUtility.AddFoodPoisoningHediff(ingester, this.parent, FoodPoisonCause.Rotten);
 			}
 		}
 
@@ -205,23 +205,23 @@ namespace RimWorld
 				{
 					stringBuilder.Append("CurrentlyRefrigerated".Translate(new object[]
 					{
-						ticksUntilRotAtCurrentTemp.ToStringTicksToPeriodVagueMax()
+						ticksUntilRotAtCurrentTemp.ToStringTicksToPeriodVague(true, true)
 					}) + ".");
 				}
 				else
 				{
 					stringBuilder.Append("NotRefrigerated".Translate(new object[]
 					{
-						ticksUntilRotAtCurrentTemp.ToStringTicksToPeriodVagueMax()
+						ticksUntilRotAtCurrentTemp.ToStringTicksToPeriodVague(true, true)
 					}) + ".");
 				}
 			}
 			return stringBuilder.ToString();
 		}
 
-		public int ApproxTicksUntilRotWhenAtTempOfTile(int tile)
+		public int ApproxTicksUntilRotWhenAtTempOfTile(int tile, int ticksAbs)
 		{
-			float temperatureFromSeasonAtTile = GenTemperature.GetTemperatureFromSeasonAtTile(Find.TickManager.TicksAbs, tile);
+			float temperatureFromSeasonAtTile = GenTemperature.GetTemperatureFromSeasonAtTile(ticksAbs, tile);
 			return this.TicksUntilRotAtTemp(temperatureFromSeasonAtTile);
 		}
 
@@ -250,6 +250,14 @@ namespace RimWorld
 			if (corpse != null)
 			{
 				corpse.RotStageChanged();
+			}
+		}
+
+		public void RotImmediately()
+		{
+			if (this.RotProgress < (float)this.PropsRot.TicksToRotStart)
+			{
+				this.RotProgress = (float)this.PropsRot.TicksToRotStart;
 			}
 		}
 	}

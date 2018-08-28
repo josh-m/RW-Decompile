@@ -5,10 +5,13 @@ namespace RimWorld
 	[DefOf]
 	public static class DifficultyDefOf
 	{
-		public static DifficultyDef VeryEasy;
+		public static DifficultyDef Easy;
 
-		public static DifficultyDef Medium;
+		public static DifficultyDef Rough;
 
-		public static DifficultyDef Hard;
+		static DifficultyDefOf()
+		{
+			DefOfHelper.EnsureInitializedInCtor(typeof(DifficultyDefOf));
+		}
 	}
 }

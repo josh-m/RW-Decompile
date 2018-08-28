@@ -12,13 +12,27 @@ namespace RimWorld
 
 		public int repeatCount = 1;
 
-		public int targetCount = 10;
+		private BillStoreModeDef storeMode = BillStoreModeDefOf.BestStockpile;
 
-		public BillStoreModeDef storeMode = BillStoreModeDefOf.BestStockpile;
+		private Zone_Stockpile storeZone;
+
+		public int targetCount = 10;
 
 		public bool pauseWhenSatisfied;
 
 		public int unpauseWhenYouHave = 5;
+
+		public bool includeEquipped;
+
+		public bool includeTainted;
+
+		public Zone_Stockpile includeFromZone;
+
+		public FloatRange hpRange = FloatRange.ZeroToOne;
+
+		public QualityRange qualityRange = QualityRange.All;
+
+		public bool limitToAllowedStuff;
 
 		public bool paused;
 
@@ -73,12 +87,19 @@ namespace RimWorld
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Values.Look<int>(ref this.repeatCount, "repeatCount", 0, false);
-			Scribe_Values.Look<int>(ref this.targetCount, "targetCount", 0, false);
 			Scribe_Defs.Look<BillRepeatModeDef>(ref this.repeatMode, "repeatMode");
+			Scribe_Values.Look<int>(ref this.repeatCount, "repeatCount", 0, false);
 			Scribe_Defs.Look<BillStoreModeDef>(ref this.storeMode, "storeMode");
+			Scribe_References.Look<Zone_Stockpile>(ref this.storeZone, "storeZone", false);
+			Scribe_Values.Look<int>(ref this.targetCount, "targetCount", 0, false);
 			Scribe_Values.Look<bool>(ref this.pauseWhenSatisfied, "pauseWhenSatisfied", false, false);
 			Scribe_Values.Look<int>(ref this.unpauseWhenYouHave, "unpauseWhenYouHave", 0, false);
+			Scribe_Values.Look<bool>(ref this.includeEquipped, "includeEquipped", false, false);
+			Scribe_Values.Look<bool>(ref this.includeTainted, "includeTainted", false, false);
+			Scribe_References.Look<Zone_Stockpile>(ref this.includeFromZone, "includeFromZone", false);
+			Scribe_Values.Look<FloatRange>(ref this.hpRange, "hpRange", FloatRange.ZeroToOne, false);
+			Scribe_Values.Look<QualityRange>(ref this.qualityRange, "qualityRange", QualityRange.All, false);
+			Scribe_Values.Look<bool>(ref this.limitToAllowedStuff, "limitToAllowedStuff", false, false);
 			Scribe_Values.Look<bool>(ref this.paused, "paused", false, false);
 			if (this.repeatMode == null)
 			{
@@ -93,6 +114,21 @@ namespace RimWorld
 		public override BillStoreModeDef GetStoreMode()
 		{
 			return this.storeMode;
+		}
+
+		public override Zone_Stockpile GetStoreZone()
+		{
+			return this.storeZone;
+		}
+
+		public override void SetStoreMode(BillStoreModeDef mode, Zone_Stockpile zone = null)
+		{
+			this.storeMode = mode;
+			this.storeZone = zone;
+			if (this.storeMode == BillStoreModeDefOf.SpecificStockpile != (this.storeZone != null))
+			{
+				Log.ErrorOnce("Inconsistent bill StoreMode data set", 75645354, false);
+			}
 		}
 
 		public override bool ShouldDoNow()
@@ -142,7 +178,7 @@ namespace RimWorld
 					Messages.Message("MessageBillComplete".Translate(new object[]
 					{
 						this.LabelCap
-					}), (Thing)this.billStack.billGiver, MessageTypeDefOf.TaskCompletion);
+					}), (Thing)this.billStack.billGiver, MessageTypeDefOf.TaskCompletion, true);
 				}
 			}
 		}
@@ -162,7 +198,7 @@ namespace RimWorld
 			{
 				BillRepeatModeUtility.MakeConfigFloatMenu(this);
 			}
-			if (widgetRow.ButtonIcon(TexButton.Plus, null))
+			if (widgetRow.ButtonIcon(TexButton.Plus, null, null))
 			{
 				if (this.repeatMode == BillRepeatModeDefOf.Forever)
 				{
@@ -185,7 +221,7 @@ namespace RimWorld
 					TutorSystem.Notify_Event(this.recipe.defName + "-RepeatCountSetTo-" + this.repeatCount);
 				}
 			}
-			if (widgetRow.ButtonIcon(TexButton.Minus, null))
+			if (widgetRow.ButtonIcon(TexButton.Minus, null, null))
 			{
 				if (this.repeatMode == BillRepeatModeDefOf.Forever)
 				{
@@ -225,6 +261,94 @@ namespace RimWorld
 					this.paused = false;
 				}
 			}
+		}
+
+		public override void ValidateSettings()
+		{
+			base.ValidateSettings();
+			if (this.storeZone != null)
+			{
+				if (!this.storeZone.zoneManager.AllZones.Contains(this.storeZone))
+				{
+					if (this != BillUtility.Clipboard)
+					{
+						Messages.Message("MessageBillValidationStoreZoneDeleted".Translate(new object[]
+						{
+							this.LabelCap,
+							this.billStack.billGiver.LabelShort.CapitalizeFirst(),
+							this.storeZone.label
+						}), this.billStack.billGiver as Thing, MessageTypeDefOf.NegativeEvent, true);
+					}
+					this.SetStoreMode(BillStoreModeDefOf.DropOnFloor, null);
+				}
+				else if (base.Map != null && !base.Map.zoneManager.AllZones.Contains(this.storeZone))
+				{
+					if (this != BillUtility.Clipboard)
+					{
+						Messages.Message("MessageBillValidationStoreZoneUnavailable".Translate(new object[]
+						{
+							this.LabelCap,
+							this.billStack.billGiver.LabelShort.CapitalizeFirst(),
+							this.storeZone.label
+						}), this.billStack.billGiver as Thing, MessageTypeDefOf.NegativeEvent, true);
+					}
+					this.SetStoreMode(BillStoreModeDefOf.DropOnFloor, null);
+				}
+			}
+			else if (this.storeMode == BillStoreModeDefOf.SpecificStockpile)
+			{
+				this.SetStoreMode(BillStoreModeDefOf.DropOnFloor, null);
+				Log.ErrorOnce("Found SpecificStockpile bill store mode without associated stockpile, recovering", 46304128, false);
+			}
+			if (this.includeFromZone != null)
+			{
+				if (!this.includeFromZone.zoneManager.AllZones.Contains(this.includeFromZone))
+				{
+					if (this != BillUtility.Clipboard)
+					{
+						Messages.Message("MessageBillValidationIncludeZoneDeleted".Translate(new object[]
+						{
+							this.LabelCap,
+							this.billStack.billGiver.LabelShort.CapitalizeFirst(),
+							this.includeFromZone.label
+						}), this.billStack.billGiver as Thing, MessageTypeDefOf.NegativeEvent, true);
+					}
+					this.includeFromZone = null;
+				}
+				else if (base.Map != null && !base.Map.zoneManager.AllZones.Contains(this.includeFromZone))
+				{
+					if (this != BillUtility.Clipboard)
+					{
+						Messages.Message("MessageBillValidationIncludeZoneUnavailable".Translate(new object[]
+						{
+							this.LabelCap,
+							this.billStack.billGiver.LabelShort.CapitalizeFirst(),
+							this.includeFromZone.label
+						}), this.billStack.billGiver as Thing, MessageTypeDefOf.NegativeEvent, true);
+					}
+					this.includeFromZone = null;
+				}
+			}
+		}
+
+		public override Bill Clone()
+		{
+			Bill_Production bill_Production = (Bill_Production)base.Clone();
+			bill_Production.repeatMode = this.repeatMode;
+			bill_Production.repeatCount = this.repeatCount;
+			bill_Production.storeMode = this.storeMode;
+			bill_Production.storeZone = this.storeZone;
+			bill_Production.targetCount = this.targetCount;
+			bill_Production.pauseWhenSatisfied = this.pauseWhenSatisfied;
+			bill_Production.unpauseWhenYouHave = this.unpauseWhenYouHave;
+			bill_Production.includeEquipped = this.includeEquipped;
+			bill_Production.includeTainted = this.includeTainted;
+			bill_Production.includeFromZone = this.includeFromZone;
+			bill_Production.hpRange = this.hpRange;
+			bill_Production.qualityRange = this.qualityRange;
+			bill_Production.limitToAllowedStuff = this.limitToAllowedStuff;
+			bill_Production.paused = this.paused;
+			return bill_Production;
 		}
 	}
 }

@@ -16,8 +16,7 @@ namespace RimWorld
 			{
 				return;
 			}
-			Vector2 pos = new Vector2(rect.x, rect.y + 3f);
-			HostilityResponseModeUtility.DrawResponseButton(pos, pawn);
+			HostilityResponseModeUtility.DrawResponseButton(rect, pawn, true);
 		}
 
 		public override int GetMinCellHeight(Pawn pawn)

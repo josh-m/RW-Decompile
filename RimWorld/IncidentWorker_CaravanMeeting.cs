@@ -11,9 +11,10 @@ namespace RimWorld
 	{
 		private const int MapSize = 100;
 
-		protected override bool CanFireNowSub(IIncidentTarget target)
+		protected override bool CanFireNowSub(IncidentParms parms)
 		{
-			return target is Map || CaravanIncidentUtility.CanFireIncidentWhichWantsToGenerateMapAt(target.Tile);
+			Faction faction;
+			return parms.target is Map || (CaravanIncidentUtility.CanFireIncidentWhichWantsToGenerateMapAt(parms.target.Tile) && this.TryFindFaction(out faction));
 		}
 
 		protected override bool TryExecuteWorker(IncidentParms parms)
@@ -24,9 +25,7 @@ namespace RimWorld
 			}
 			Caravan caravan = (Caravan)parms.target;
 			Faction faction;
-			if (!(from x in Find.FactionManager.AllFactionsListForReading
-			where !x.IsPlayer && !x.HostileTo(Faction.OfPlayer) && !x.def.hidden && x.def.humanlikeFaction && x.def.caravanTraderKinds.Any<TraderKindDef>()
-			select x).TryRandomElement(out faction))
+			if (!this.TryFindFaction(out faction))
 			{
 				return false;
 			}
@@ -35,9 +34,10 @@ namespace RimWorld
 			Caravan metCaravan = CaravanMaker.MakeCaravan(pawns, faction, -1, false);
 			string text = "CaravanMeeting".Translate(new object[]
 			{
+				caravan.Name,
 				faction.Name,
-				PawnUtility.PawnKindsToCommaList(metCaravan.PawnsListForReading)
-			});
+				PawnUtility.PawnKindsToCommaList(metCaravan.PawnsListForReading, true)
+			}).CapitalizeFirst();
 			DiaNode diaNode = new DiaNode(text);
 			Pawn bestPlayerNegotiator = BestCaravanPawnUtility.FindBestNegotiator(caravan);
 			if (metCaravan.CanTradeNow)
@@ -45,14 +45,11 @@ namespace RimWorld
 				DiaOption diaOption = new DiaOption("CaravanMeeting_Trade".Translate());
 				diaOption.action = delegate
 				{
-					Find.WindowStack.Add(new Dialog_Trade(bestPlayerNegotiator, metCaravan));
-					string empty = string.Empty;
-					string empty2 = string.Empty;
-					PawnRelationUtility.Notify_PawnsSeenByPlayer_Letter(metCaravan.Goods.OfType<Pawn>(), ref empty, ref empty2, "LetterRelatedPawnsTradingWithOtherCaravan".Translate(), false, true);
-					if (!empty2.NullOrEmpty())
+					Find.WindowStack.Add(new Dialog_Trade(bestPlayerNegotiator, metCaravan, false));
+					PawnRelationUtility.Notify_PawnsSeenByPlayer_Letter_Send(metCaravan.Goods.OfType<Pawn>(), "LetterRelatedPawnsTradingWithOtherCaravan".Translate(new object[]
 					{
-						Find.LetterStack.ReceiveLetter(empty, empty2, LetterDefOf.NeutralEvent, new GlobalTargetInfo(caravan.Tile), null);
-					}
+						Faction.OfPlayer.def.pawnsPlural
+					}), LetterDefOf.NeutralEvent, false, true);
 				};
 				if (bestPlayerNegotiator == null)
 				{
@@ -65,12 +62,13 @@ namespace RimWorld
 			{
 				LongEventHandler.QueueLongEvent(delegate
 				{
-					if (!faction.HostileTo(Faction.OfPlayer))
-					{
-						faction.SetHostileTo(Faction.OfPlayer, true);
-					}
 					Pawn t = caravan.PawnsListForReading[0];
-					Map map = CaravanIncidentUtility.GetOrGenerateMapForIncident(caravan, new IntVec3(100, 1, 100), WorldObjectDefOf.AttackedCaravan);
+					Faction arg_49_0 = faction;
+					Faction ofPlayer = Faction.OfPlayer;
+					FactionRelationKind kind = FactionRelationKind.Hostile;
+					string reason = "GoodwillChangedReason_AttackedCaravan".Translate();
+					arg_49_0.TrySetRelationKind(ofPlayer, kind, true, reason, new GlobalTargetInfo?(t));
+					Map map = CaravanIncidentUtility.GetOrGenerateMapForIncident(caravan, new IntVec3(100, 1, 100), WorldObjectDefOf.AttackedNonPlayerCaravan);
 					IntVec3 playerSpot;
 					IntVec3 enemySpot;
 					MultipleCaravansCellFinder.FindStartingCellsFor2Groups(map, out playerSpot, out enemySpot);
@@ -78,12 +76,12 @@ namespace RimWorld
 					List<Pawn> list = metCaravan.PawnsListForReading.ToList<Pawn>();
 					CaravanEnterMapUtility.Enter(metCaravan, map, (Pawn p) => CellFinder.RandomClosewalkCellNear(enemySpot, map, 12, null), CaravanDropInventoryMode.DoNotDrop, false);
 					LordMaker.MakeNewLord(faction, new LordJob_DefendAttackedTraderCaravan(list[0].Position), map, list);
-					Find.TickManager.CurTimeSpeed = TimeSpeed.Paused;
+					Find.TickManager.Notify_GeneratedPotentiallyHostileMap();
 					CameraJumper.TryJumpAndSelect(t);
-					Messages.Message("MessageAttackedCaravanIsNowHostile".Translate(new object[]
+					PawnRelationUtility.Notify_PawnsSeenByPlayer_Letter_Send(list, "LetterRelatedPawnsGroupGeneric".Translate(new object[]
 					{
-						faction.Name
-					}), new GlobalTargetInfo(list[0].Position, list[0].Map, false), MessageTypeDefOf.ThreatBig);
+						Faction.OfPlayer.def.pawnsPlural
+					}), LetterDefOf.NeutralEvent, true, true);
 				}, "GeneratingMapForNewEncounter", false, null);
 			};
 			diaOption2.resolveTree = true;
@@ -99,20 +97,32 @@ namespace RimWorld
 			{
 				caravan.Label
 			});
-			WindowStack arg_202_0 = Find.WindowStack;
+			WindowStack arg_1F5_0 = Find.WindowStack;
 			DiaNode nodeRoot = diaNode;
+			Faction faction2 = faction;
 			bool delayInteractivity = true;
 			string title = text2;
-			arg_202_0.Add(new Dialog_NodeTree(nodeRoot, delayInteractivity, false, title));
+			arg_1F5_0.Add(new Dialog_NodeTreeWithFactionInfo(nodeRoot, faction2, delayInteractivity, false, title));
+			Find.Archive.Add(new ArchivedDialog(diaNode.text, text2, faction));
 			return true;
+		}
+
+		private bool TryFindFaction(out Faction faction)
+		{
+			return (from x in Find.FactionManager.AllFactionsListForReading
+			where !x.IsPlayer && !x.HostileTo(Faction.OfPlayer) && !x.def.hidden && x.def.humanlikeFaction && x.def.caravanTraderKinds.Any<TraderKindDef>()
+			select x).TryRandomElement(out faction);
 		}
 
 		private List<Pawn> GenerateCaravanPawns(Faction faction)
 		{
-			PawnGroupMakerParms pawnGroupMakerParms = new PawnGroupMakerParms();
-			pawnGroupMakerParms.faction = faction;
-			pawnGroupMakerParms.points = TraderCaravanUtility.GenerateGuardPoints();
-			return PawnGroupMakerUtility.GeneratePawns(PawnGroupKindDefOf.Trader, pawnGroupMakerParms, true).ToList<Pawn>();
+			return PawnGroupMakerUtility.GeneratePawns(new PawnGroupMakerParms
+			{
+				groupKind = PawnGroupKindDefOf.Trader,
+				faction = faction,
+				points = TraderCaravanUtility.GenerateGuardPoints(),
+				dontUseSingleUseRocketLaunchers = true
+			}, true).ToList<Pawn>();
 		}
 
 		private void RemoveAllPawnsAndPassToWorld(Caravan caravan)
@@ -120,7 +130,7 @@ namespace RimWorld
 			List<Pawn> pawnsListForReading = caravan.PawnsListForReading;
 			for (int i = 0; i < pawnsListForReading.Count; i++)
 			{
-				Find.WorldPawns.PassToWorld(pawnsListForReading[i], PawnDiscardDecideMode.Discard);
+				Find.WorldPawns.PassToWorld(pawnsListForReading[i], PawnDiscardDecideMode.Decide);
 			}
 			caravan.RemoveAllPawns();
 		}

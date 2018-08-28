@@ -48,12 +48,20 @@ namespace RimWorld
 			}));
 			Text.Anchor = TextAnchor.UpperRight;
 			Widgets.Label(rect4, this.commTarget.GetInfoText());
+			Faction faction = this.commTarget.GetFaction();
+			if (faction != null)
+			{
+				FactionRelationKind playerRelationKind = faction.PlayerRelationKind;
+				GUI.color = playerRelationKind.GetColor();
+				Rect rect5 = new Rect(rect4.x, rect4.y + Text.CalcHeight(this.commTarget.GetInfoText(), rect4.width) + Text.SpaceBetweenLines, rect4.width, 30f);
+				Widgets.Label(rect5, playerRelationKind.GetLabel());
+			}
 			Text.Anchor = TextAnchor.UpperLeft;
 			GUI.color = Color.white;
 			GUI.EndGroup();
 			float num = 147f;
-			Rect rect5 = new Rect(0f, num, inRect.width, inRect.height - num);
-			base.DrawNode(rect5);
+			Rect rect6 = new Rect(0f, num, inRect.width, inRect.height - num);
+			base.DrawNode(rect6);
 		}
 	}
 }

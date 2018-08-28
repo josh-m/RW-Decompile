@@ -25,6 +25,22 @@ namespace Verse
 			}
 		}
 
+		public int TrueMin
+		{
+			get
+			{
+				return Mathf.Min(this.min, this.max);
+			}
+		}
+
+		public int TrueMax
+		{
+			get
+			{
+				return Mathf.Max(this.min, this.max);
+			}
+		}
+
 		public float Average
 		{
 			get
@@ -98,7 +114,7 @@ namespace Verse
 
 		internal bool Includes(int val)
 		{
-			return val > this.min && val < this.max;
+			return val >= this.min && val <= this.max;
 		}
 	}
 }

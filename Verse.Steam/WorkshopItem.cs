@@ -46,7 +46,7 @@ namespace Verse.Steam
 				DirectoryInfo directoryInfo = new DirectoryInfo(path);
 				if (!directoryInfo.Exists)
 				{
-					Log.Error("Created WorkshopItem for " + pfid + " but there is no folder for it.");
+					Log.Error("Created WorkshopItem for " + pfid + " but there is no folder for it.", false);
 				}
 				FileInfo[] files = directoryInfo.GetFiles();
 				for (int i = 0; i < files.Length; i++)

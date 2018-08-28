@@ -32,7 +32,7 @@ namespace RimWorld
 						Messages.Message("MessageSeasonBegun".Translate(new object[]
 						{
 							season.Label()
-						}).CapitalizeFirst(), MessageTypeDefOf.NeutralEvent);
+						}).CapitalizeFirst(), MessageTypeDefOf.NeutralEvent, true);
 					}
 				}
 				this.lastSeason = season;

@@ -4,8 +4,9 @@ namespace Verse
 {
 	public enum MentalBreakIntensity : byte
 	{
-		Extreme,
+		None,
+		Minor,
 		Major,
-		Minor
+		Extreme
 	}
 }

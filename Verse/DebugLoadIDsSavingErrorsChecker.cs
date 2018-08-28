@@ -78,7 +78,7 @@ namespace Verse
 							" is referenced (xml node name: ",
 							current.label,
 							") but is not deep-saved. This will cause errors during loading."
-						}));
+						}), false);
 					}
 				}
 			}
@@ -99,7 +99,7 @@ namespace Verse
 					obj,
 					", but current mode is ",
 					Scribe.mode
-				}));
+				}), false);
 				return;
 			}
 			if (obj == null)
@@ -116,7 +116,7 @@ namespace Verse
 					", but it's already here. label=",
 					label,
 					" (not cleared after the previous save? different objects have the same load ID? the same object is deep-saved twice?)"
-				}));
+				}), false);
 			}
 		}
 
@@ -134,7 +134,7 @@ namespace Verse
 					obj,
 					", but current mode is ",
 					Scribe.mode
-				}));
+				}), false);
 				return;
 			}
 			if (obj == null)

@@ -21,7 +21,7 @@ namespace Verse
 					s,
 					" for cross ref resolve, but current mode is ",
 					Scribe.mode
-				}));
+				}), false);
 				return;
 			}
 			if (s == null)
@@ -72,7 +72,7 @@ namespace Verse
 				}
 				catch (Exception arg)
 				{
-					Log.Error("Could not resolve cross refs: " + arg);
+					Log.Error("Could not resolve cross refs: " + arg, false);
 				}
 			}
 			Scribe.loader.curParent = null;

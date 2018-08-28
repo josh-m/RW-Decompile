@@ -31,8 +31,8 @@ namespace RimWorld
 				return null;
 			}
 			Thing thing;
-			ThingDef def;
-			if (!FoodUtility.TryFindBestFoodSourceFor(pawn, pawn2, pawn2.needs.food.CurCategory == HungerCategory.Starving, out thing, out def, false, true, false, false, false, false))
+			ThingDef thingDef;
+			if (!FoodUtility.TryFindBestFoodSourceFor(pawn, pawn2, pawn2.needs.food.CurCategory == HungerCategory.Starving, out thing, out thingDef, false, true, false, false, false, false, false))
 			{
 				return null;
 			}
@@ -44,9 +44,10 @@ namespace RimWorld
 			{
 				return null;
 			}
+			float nutrition = FoodUtility.GetNutrition(thing, thingDef);
 			return new Job(JobDefOf.DeliverFood, thing, pawn2)
 			{
-				count = FoodUtility.WillIngestStackCountOf(pawn2, def),
+				count = FoodUtility.WillIngestStackCountOf(pawn2, thingDef, nutrition),
 				targetC = RCellFinder.SpotToChewStandingNear(pawn2, thing)
 			};
 		}
@@ -93,7 +94,7 @@ namespace RimWorld
 		{
 			if (foodSource.def.IsNutritionGivingIngestible && p.RaceProps.WillAutomaticallyEat(foodSource))
 			{
-				return foodSource.def.ingestible.nutrition * (float)foodSource.stackCount;
+				return foodSource.GetStatValue(StatDefOf.Nutrition, true) * (float)foodSource.stackCount;
 			}
 			if (p.RaceProps.ToolUser && p.health.capacities.CapableOf(PawnCapacityDefOf.Manipulation))
 			{

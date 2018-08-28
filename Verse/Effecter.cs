@@ -14,7 +14,7 @@ namespace Verse
 			this.def = def;
 			for (int i = 0; i < def.children.Count; i++)
 			{
-				this.children.Add(def.children[i].Spawn());
+				this.children.Add(def.children[i].Spawn(this));
 			}
 		}
 

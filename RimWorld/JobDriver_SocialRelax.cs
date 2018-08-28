@@ -47,9 +47,26 @@ namespace RimWorld
 			}
 		}
 
-		public override bool TryMakePreToilReservations()
+		public override bool TryMakePreToilReservations(bool errorOnFailed)
 		{
-			return this.pawn.Reserve(this.job.GetTarget(TargetIndex.B), this.job, 1, -1, null) && (!this.HasDrink || this.pawn.Reserve(this.job.GetTarget(TargetIndex.C), this.job, 1, -1, null));
+			Pawn pawn = this.pawn;
+			LocalTargetInfo target = this.job.GetTarget(TargetIndex.B);
+			Job job = this.job;
+			if (!pawn.Reserve(target, job, 1, -1, null, errorOnFailed))
+			{
+				return false;
+			}
+			if (this.HasDrink)
+			{
+				pawn = this.pawn;
+				target = this.job.GetTarget(TargetIndex.C);
+				job = this.job;
+				if (!pawn.Reserve(target, job, 1, -1, null, errorOnFailed))
+				{
+					return false;
+				}
+			}
+			return true;
 		}
 
 		[DebuggerHidden]
@@ -72,7 +89,7 @@ namespace RimWorld
 			{
 				this.$this.pawn.rotationTracker.FaceCell(this.$this.ClosestGatherSpotParentCell);
 				this.$this.pawn.GainComfortFromCellIfPossible();
-				JoyUtility.JoyTickCheckEnd(this.$this.pawn, JoyTickFullJoyAction.GoToNextToil, 1f);
+				JoyUtility.JoyTickCheckEnd(this.$this.pawn, JoyTickFullJoyAction.GoToNextToil, 1f, null);
 			};
 			chew.handlingFacing = true;
 			chew.defaultCompleteMode = ToilCompleteMode.Delay;

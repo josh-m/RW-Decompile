@@ -291,7 +291,7 @@ namespace Verse
 				num++;
 				if (type == null)
 				{
-					Log.Error(childType + " is not a subclass of " + parentType);
+					Log.Error(childType + " is not a subclass of " + parentType, false);
 					return -1;
 				}
 			}

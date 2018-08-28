@@ -6,7 +6,7 @@ namespace Verse
 	{
 		public float painPerSeverity = 1f;
 
-		public float averagePainPerSeverityOld = 0.5f;
+		public float averagePainPerSeverityPermanent = 0.5f;
 
 		public float bleedRate;
 

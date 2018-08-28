@@ -30,8 +30,8 @@ namespace RimWorld
 			}
 			IncidentParms incidentParms = new IncidentParms();
 			incidentParms.target = base.Map;
-			incidentParms.points = 30f;
-			incidentParms.raidArrivalMode = PawnsArriveMode.EdgeWalkIn;
+			incidentParms.points = PawnKindDefOf.Drifter.combatPower;
+			incidentParms.raidArrivalMode = PawnsArrivalModeDefOf.EdgeWalkIn;
 			incidentParms.raidStrategy = RaidStrategyDefOf.ImmediateAttack;
 			incidentParms.raidForceOneIncap = true;
 			incidentParms.raidNeverFleeIndividual = true;
@@ -76,7 +76,7 @@ namespace RimWorld
 				{
 					if (current.HostileTo(Faction.OfPlayer))
 					{
-						HealthUtility.DamageUntilDowned(current);
+						HealthUtility.DamageUntilDowned(current, true);
 					}
 				}
 			}

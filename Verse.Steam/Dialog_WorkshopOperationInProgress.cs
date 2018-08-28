@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace Verse.Steam
 {
-	internal class Dialog_WorkshopOperationInProgress : Window
+	public class Dialog_WorkshopOperationInProgress : Window
 	{
 		public override Vector2 InitialSize
 		{
@@ -17,7 +17,8 @@ namespace Verse.Steam
 		public Dialog_WorkshopOperationInProgress()
 		{
 			this.forcePause = true;
-			this.closeOnEscapeKey = false;
+			this.closeOnAccept = false;
+			this.closeOnCancel = false;
 			this.absorbInputAroundWindow = true;
 			this.preventDrawTutor = true;
 		}

@@ -77,7 +77,7 @@ namespace RimWorld
 			}
 		}
 
-		public WeatherDef CurPerceivedWeather
+		public WeatherDef CurWeatherPerceived
 		{
 			get
 			{
@@ -102,11 +102,23 @@ namespace RimWorld
 				{
 					num = 0.5f;
 				}
-				if (this.TransitionLerpFactor < num)
+				return (this.TransitionLerpFactor >= num) ? this.curWeather : this.lastWeather;
+			}
+		}
+
+		public WeatherDef CurWeatherLerped
+		{
+			get
+			{
+				if (this.curWeather == null)
 				{
 					return this.lastWeather;
 				}
-				return this.curWeather;
+				if (this.lastWeather == null)
+				{
+					return this.curWeather;
+				}
+				return (this.TransitionLerpFactor >= 0.5f) ? this.curWeather : this.lastWeather;
 			}
 		}
 
@@ -140,15 +152,15 @@ namespace RimWorld
 
 		public void DoWeatherGUI(Rect rect)
 		{
-			WeatherDef curPerceivedWeather = this.CurPerceivedWeather;
+			WeatherDef curWeatherPerceived = this.CurWeatherPerceived;
 			Text.Anchor = TextAnchor.MiddleRight;
 			Rect rect2 = new Rect(rect);
 			rect2.width -= 15f;
 			Text.Font = GameFont.Small;
-			Widgets.Label(rect2, curPerceivedWeather.LabelCap);
-			if (!curPerceivedWeather.description.NullOrEmpty())
+			Widgets.Label(rect2, curWeatherPerceived.LabelCap);
+			if (!curWeatherPerceived.description.NullOrEmpty())
 			{
-				TooltipHandler.TipRegion(rect, curPerceivedWeather.description);
+				TooltipHandler.TipRegion(rect, curWeatherPerceived.description);
 			}
 			Text.Anchor = TextAnchor.UpperLeft;
 		}
@@ -216,7 +228,7 @@ namespace RimWorld
 
 		private float VolumeOfAmbientSound(SoundDef soundDef)
 		{
-			if (this.map != Find.VisibleMap)
+			if (this.map != Find.CurrentMap)
 			{
 				return 0f;
 			}

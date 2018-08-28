@@ -15,7 +15,7 @@ namespace Verse.AI
 			Scribe_Values.Look<int>(ref this.numMeleeAttacksMade, "numMeleeAttacksMade", 0, false);
 		}
 
-		public override bool TryMakePreToilReservations()
+		public override bool TryMakePreToilReservations(bool errorOnFailed)
 		{
 			IAttackTarget attackTarget = this.job.targetA.Thing as IAttackTarget;
 			if (attackTarget != null)
@@ -28,6 +28,14 @@ namespace Verse.AI
 		[DebuggerHidden]
 		protected override IEnumerable<Toil> MakeNewToils()
 		{
+			yield return Toils_General.DoAtomic(delegate
+			{
+				Pawn pawn = this.$this.job.targetA.Thing as Pawn;
+				if (pawn != null && pawn.Downed && this.$this.pawn.mindState.duty != null && this.$this.pawn.mindState.duty.attackDownedIfStarving && this.$this.pawn.Starving())
+				{
+					this.$this.job.killIncappedTarget = true;
+				}
+			});
 			yield return Toils_Misc.ThrowColonistAttackingMote(TargetIndex.A);
 			yield return Toils_Combat.FollowAndMeleeAttack(TargetIndex.A, delegate
 			{

@@ -4,10 +4,8 @@ using Verse;
 
 namespace RimWorld
 {
-	public abstract class Transferable
+	public abstract class Transferable : IExposable
 	{
-		private int countToTransfer;
-
 		private string editBuffer = "0";
 
 		public abstract Thing AnyThing
@@ -35,6 +33,14 @@ namespace RimWorld
 			get;
 		}
 
+		public string LabelCap
+		{
+			get
+			{
+				return this.Label.CapitalizeFirst();
+			}
+		}
+
 		public abstract string TipDescription
 		{
 			get;
@@ -45,16 +51,25 @@ namespace RimWorld
 			get;
 		}
 
-		public int CountToTransfer
+		public abstract int CountToTransfer
+		{
+			get;
+			protected set;
+		}
+
+		public int CountToTransferToSource
 		{
 			get
 			{
-				return this.countToTransfer;
+				return (this.PositiveCountDirection != TransferablePositiveCountDirection.Source) ? (-this.CountToTransfer) : this.CountToTransfer;
 			}
-			protected set
+		}
+
+		public int CountToTransferToDestination
+		{
+			get
 			{
-				this.countToTransfer = value;
-				this.editBuffer = value.ToStringCached();
+				return (this.PositiveCountDirection != TransferablePositiveCountDirection.Source) ? this.CountToTransfer : (-this.CountToTransfer);
 			}
 		}
 
@@ -70,18 +85,18 @@ namespace RimWorld
 			}
 		}
 
-		public abstract int GetMinimum();
+		public abstract int GetMinimumToTransfer();
 
-		public abstract int GetMaximum();
+		public abstract int GetMaximumToTransfer();
 
 		public int GetRange()
 		{
-			return this.GetMaximum() - this.GetMinimum();
+			return this.GetMaximumToTransfer() - this.GetMinimumToTransfer();
 		}
 
 		public int ClampAmount(int amount)
 		{
-			return Mathf.Clamp(amount, this.GetMinimum(), this.GetMaximum());
+			return Mathf.Clamp(amount, this.GetMinimumToTransfer(), this.GetMaximumToTransfer());
 		}
 
 		public AcceptanceReport CanAdjustBy(int adjustment)
@@ -116,15 +131,39 @@ namespace RimWorld
 		{
 			if (!this.CanAdjustTo(destination).Accepted)
 			{
-				Log.Error("Failed to adjust transferable counts");
+				Log.Error("Failed to adjust transferable counts", false);
 				return;
 			}
 			this.CountToTransfer = this.ClampAmount(destination);
 		}
 
-		public void ForceTo(int destination)
+		public void ForceTo(int value)
 		{
-			this.CountToTransfer = destination;
+			this.CountToTransfer = value;
+		}
+
+		public void ForceToSource(int value)
+		{
+			if (this.PositiveCountDirection == TransferablePositiveCountDirection.Source)
+			{
+				this.ForceTo(value);
+			}
+			else
+			{
+				this.ForceTo(-value);
+			}
+		}
+
+		public void ForceToDestination(int value)
+		{
+			if (this.PositiveCountDirection == TransferablePositiveCountDirection.Source)
+			{
+				this.ForceTo(-value);
+			}
+			else
+			{
+				this.ForceTo(value);
+			}
 		}
 
 		public virtual AcceptanceReport UnderflowReport()
@@ -135,6 +174,10 @@ namespace RimWorld
 		public virtual AcceptanceReport OverflowReport()
 		{
 			return false;
+		}
+
+		public virtual void ExposeData()
+		{
 		}
 	}
 }

@@ -51,7 +51,7 @@ namespace Verse
 		{
 			if (this.working)
 			{
-				Log.Error("Nested FloodFill calls are not allowed. This will cause bugs.");
+				Log.Error("Nested FloodFill calls are not allowed. This will cause bugs.", false);
 			}
 			this.working = true;
 			this.ClearVisited();
@@ -143,7 +143,7 @@ namespace Verse
 				}
 				if (this.openSet.Count > area)
 				{
-					Log.Error("Overflow on flood fill (>" + area + " cells). Make sure we're not flooding over the same area after we check it.");
+					Log.Error("Overflow on flood fill (>" + area + " cells). Make sure we're not flooding over the same area after we check it.", false);
 					this.working = false;
 					return;
 				}
@@ -179,7 +179,7 @@ namespace Verse
 				}
 				intVec = this.parentGrid[intVec];
 			}
-			Log.Error("Too many iterations.");
+			Log.Error("Too many iterations.", false);
 			Block_4:
 			Block_5:
 			outPath.Reverse();

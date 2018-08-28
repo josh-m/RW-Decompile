@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using Verse;
 
@@ -9,11 +10,7 @@ namespace RimWorld.Planet
 	{
 		public int destinationTile = -1;
 
-		public IntVec3 destinationCell = IntVec3.Invalid;
-
-		public PawnsArriveMode arriveMode;
-
-		public bool attackOnArrival;
+		public TransportPodsArrivalAction arrivalAction;
 
 		private List<ActiveDropPodInfo> pods = new List<ActiveDropPodInfo>();
 
@@ -24,10 +21,6 @@ namespace RimWorld.Planet
 		private float traveledPct;
 
 		private const float TravelSpeed = 0.00025f;
-
-		private static List<Pawn> tmpPawns = new List<Pawn>();
-
-		private static List<Thing> tmpContainedThings = new List<Thing>();
 
 		private Vector3 Start
 		{
@@ -136,9 +129,7 @@ namespace RimWorld.Planet
 			base.ExposeData();
 			Scribe_Collections.Look<ActiveDropPodInfo>(ref this.pods, "pods", LookMode.Deep, new object[0]);
 			Scribe_Values.Look<int>(ref this.destinationTile, "destinationTile", 0, false);
-			Scribe_Values.Look<IntVec3>(ref this.destinationCell, "destinationCell", default(IntVec3), false);
-			Scribe_Values.Look<PawnsArriveMode>(ref this.arriveMode, "arriveMode", PawnsArriveMode.Undecided, false);
-			Scribe_Values.Look<bool>(ref this.attackOnArrival, "attackOnArrival", false, false);
+			Scribe_Deep.Look<TransportPodsArrivalAction>(ref this.arrivalAction, "arrivalAction", new object[0]);
 			Scribe_Values.Look<bool>(ref this.arrived, "arrived", false, false);
 			Scribe_Values.Look<int>(ref this.initialTile, "initialTile", 0, false);
 			Scribe_Values.Look<float>(ref this.traveledPct, "traveledPct", 0f, false);
@@ -180,11 +171,11 @@ namespace RimWorld.Planet
 				{
 					if (!base.Spawned)
 					{
-						Log.Warning("Passing pawn " + pawn + " to world, but the TravelingTransportPod is not spawned. This means that WorldPawns can discard this pawn which can cause bugs.");
+						Log.Warning("Passing pawn " + pawn + " to world, but the TravelingTransportPod is not spawned. This means that WorldPawns can discard this pawn which can cause bugs.", false);
 					}
 					if (justLeftTheMap)
 					{
-						pawn.ExitMap(false);
+						pawn.ExitMap(false, Rot4.Invalid);
 					}
 					else
 					{
@@ -214,204 +205,80 @@ namespace RimWorld.Planet
 				return;
 			}
 			this.arrived = true;
-			Map map = Current.Game.FindMap(this.destinationTile);
-			if (map != null)
+			if (this.arrivalAction == null || !this.arrivalAction.StillValid(this.pods.Cast<IThingHolder>(), this.destinationTile))
 			{
-				this.SpawnDropPodsInMap(map, null);
-			}
-			else if (!this.PodsHaveAnyPotentialCaravanOwner)
-			{
-				Caravan caravan = Find.WorldObjects.PlayerControlledCaravanAt(this.destinationTile);
-				if (caravan != null)
+				this.arrivalAction = null;
+				List<Map> maps = Find.Maps;
+				for (int i = 0; i < maps.Count; i++)
 				{
-					this.GivePodContentsToCaravan(caravan);
-				}
-				else
-				{
-					for (int i = 0; i < this.pods.Count; i++)
+					if (maps[i].Tile == this.destinationTile)
 					{
-						this.pods[i].innerContainer.ClearAndDestroyContentsOrPassToWorld(DestroyMode.Vanish);
-					}
-					this.RemoveAllPods();
-					Find.WorldObjects.Remove(this);
-					Messages.Message("MessageTransportPodsArrivedAndLost".Translate(), new GlobalTargetInfo(this.destinationTile), MessageTypeDefOf.NegativeEvent);
-				}
-			}
-			else
-			{
-				MapParent mapParent = Find.WorldObjects.MapParentAt(this.destinationTile);
-				if (mapParent != null && mapParent.TransportPodsCanLandAndGenerateMap && this.attackOnArrival)
-				{
-					LongEventHandler.QueueLongEvent(delegate
-					{
-						Map orGenerateMap = GetOrGenerateMapUtility.GetOrGenerateMap(mapParent.Tile, mapParent.MapSizeGeneratedByTransportPodsArrival, null);
-						string extraMessagePart = null;
-						if (mapParent.Faction != null && !mapParent.Faction.HostileTo(Faction.OfPlayer))
-						{
-							mapParent.Faction.SetHostileTo(Faction.OfPlayer, true);
-							extraMessagePart = "MessageTransportPodsArrived_BecameHostile".Translate(new object[]
-							{
-								mapParent.Faction.Name
-							}).CapitalizeFirst();
-						}
-						Find.TickManager.CurTimeSpeed = TimeSpeed.Paused;
-						this.SpawnDropPodsInMap(orGenerateMap, extraMessagePart);
-					}, "GeneratingMapForNewEncounter", false, null);
-				}
-				else
-				{
-					this.SpawnCaravanAtDestinationTile();
-				}
-			}
-		}
-
-		private void SpawnDropPodsInMap(Map map, string extraMessagePart = null)
-		{
-			this.RemoveAllPawnsFromWorldPawns();
-			IntVec3 intVec;
-			if (this.destinationCell.IsValid && this.destinationCell.InBounds(map))
-			{
-				intVec = this.destinationCell;
-			}
-			else if (this.arriveMode == PawnsArriveMode.CenterDrop)
-			{
-				if (!DropCellFinder.TryFindRaidDropCenterClose(out intVec, map))
-				{
-					intVec = DropCellFinder.FindRaidDropCenterDistant(map);
-				}
-			}
-			else
-			{
-				if (this.arriveMode != PawnsArriveMode.EdgeDrop && this.arriveMode != PawnsArriveMode.Undecided)
-				{
-					Log.Warning("Unsupported arrive mode " + this.arriveMode);
-				}
-				intVec = DropCellFinder.FindRaidDropCenterDistant(map);
-			}
-			for (int i = 0; i < this.pods.Count; i++)
-			{
-				IntVec3 c;
-				DropCellFinder.TryFindDropSpotNear(intVec, map, out c, false, true);
-				this.pods[i].parent = null;
-				DropPodUtility.MakeDropPodAt(c, map, this.pods[i], false);
-			}
-			this.RemoveAllPods();
-			Find.WorldObjects.Remove(this);
-			string text = "MessageTransportPodsArrived".Translate();
-			if (extraMessagePart != null)
-			{
-				text = text + " " + extraMessagePart;
-			}
-			Messages.Message(text, new TargetInfo(intVec, map, false), MessageTypeDefOf.TaskCompletion);
-		}
-
-		private void SpawnCaravanAtDestinationTile()
-		{
-			TravelingTransportPods.tmpPawns.Clear();
-			for (int i = 0; i < this.pods.Count; i++)
-			{
-				ThingOwner innerContainer = this.pods[i].innerContainer;
-				for (int j = innerContainer.Count - 1; j >= 0; j--)
-				{
-					Pawn pawn = innerContainer[j] as Pawn;
-					if (pawn != null)
-					{
-						TravelingTransportPods.tmpPawns.Add(pawn);
-						innerContainer.Remove(pawn);
+						this.arrivalAction = new TransportPodsArrivalAction_LandInSpecificCell(maps[i].Parent, DropCellFinder.RandomDropSpot(maps[i]));
+						break;
 					}
 				}
-			}
-			int startingTile;
-			if (!GenWorldClosest.TryFindClosestPassableTile(this.destinationTile, out startingTile))
-			{
-				startingTile = this.destinationTile;
-			}
-			Caravan o = CaravanMaker.MakeCaravan(TravelingTransportPods.tmpPawns, base.Faction, startingTile, true);
-			for (int k = 0; k < this.pods.Count; k++)
-			{
-				TravelingTransportPods.tmpContainedThings.Clear();
-				TravelingTransportPods.tmpContainedThings.AddRange(this.pods[k].innerContainer);
-				for (int l = 0; l < TravelingTransportPods.tmpContainedThings.Count; l++)
+				if (this.arrivalAction == null)
 				{
-					this.pods[k].innerContainer.Remove(TravelingTransportPods.tmpContainedThings[l]);
-					Pawn pawn2 = CaravanInventoryUtility.FindPawnToMoveInventoryTo(TravelingTransportPods.tmpContainedThings[l], TravelingTransportPods.tmpPawns, null, null);
-					bool flag = false;
-					if (pawn2 != null)
+					if (TransportPodsArrivalAction_FormCaravan.CanFormCaravanAt(this.pods.Cast<IThingHolder>(), this.destinationTile))
 					{
-						flag = pawn2.inventory.innerContainer.TryAdd(TravelingTransportPods.tmpContainedThings[l], true);
-					}
-					if (!flag)
-					{
-						TravelingTransportPods.tmpContainedThings[l].Destroy(DestroyMode.Vanish);
-					}
-				}
-			}
-			this.RemoveAllPods();
-			Find.WorldObjects.Remove(this);
-			TravelingTransportPods.tmpPawns.Clear();
-			TravelingTransportPods.tmpContainedThings.Clear();
-			Messages.Message("MessageTransportPodsArrived".Translate(), o, MessageTypeDefOf.TaskCompletion);
-		}
-
-		private void GivePodContentsToCaravan(Caravan caravan)
-		{
-			for (int i = 0; i < this.pods.Count; i++)
-			{
-				TravelingTransportPods.tmpContainedThings.Clear();
-				TravelingTransportPods.tmpContainedThings.AddRange(this.pods[i].innerContainer);
-				for (int j = 0; j < TravelingTransportPods.tmpContainedThings.Count; j++)
-				{
-					this.pods[i].innerContainer.Remove(TravelingTransportPods.tmpContainedThings[j]);
-					Pawn pawn = TravelingTransportPods.tmpContainedThings[j] as Pawn;
-					if (pawn != null)
-					{
-						caravan.AddPawn(pawn, true);
+						this.arrivalAction = new TransportPodsArrivalAction_FormCaravan();
 					}
 					else
 					{
-						Pawn pawn2 = CaravanInventoryUtility.FindPawnToMoveInventoryTo(TravelingTransportPods.tmpContainedThings[j], caravan.PawnsListForReading, null, null);
-						bool flag = false;
-						if (pawn2 != null)
+						List<Caravan> caravans = Find.WorldObjects.Caravans;
+						for (int j = 0; j < caravans.Count; j++)
 						{
-							flag = pawn2.inventory.innerContainer.TryAdd(TravelingTransportPods.tmpContainedThings[j], true);
-						}
-						if (!flag)
-						{
-							TravelingTransportPods.tmpContainedThings[j].Destroy(DestroyMode.Vanish);
+							if (caravans[j].Tile == this.destinationTile && TransportPodsArrivalAction_GiveToCaravan.CanGiveTo(this.pods.Cast<IThingHolder>(), caravans[j]))
+							{
+								this.arrivalAction = new TransportPodsArrivalAction_GiveToCaravan(caravans[j]);
+								break;
+							}
 						}
 					}
 				}
 			}
-			this.RemoveAllPods();
-			Find.WorldObjects.Remove(this);
-			TravelingTransportPods.tmpContainedThings.Clear();
-			Messages.Message("MessageTransportPodsArrivedAndAddedToCaravan".Translate(), caravan, MessageTypeDefOf.TaskCompletion);
-		}
-
-		private void RemoveAllPawnsFromWorldPawns()
-		{
-			for (int i = 0; i < this.pods.Count; i++)
+			if (this.arrivalAction != null && this.arrivalAction.ShouldUseLongEvent(this.pods, this.destinationTile))
 			{
-				ThingOwner innerContainer = this.pods[i].innerContainer;
-				for (int j = 0; j < innerContainer.Count; j++)
+				LongEventHandler.QueueLongEvent(delegate
 				{
-					Pawn pawn = innerContainer[j] as Pawn;
-					if (pawn != null && pawn.IsWorldPawn())
-					{
-						Find.WorldPawns.RemovePawn(pawn);
-					}
-				}
+					this.DoArrivalAction();
+				}, "GeneratingMapForNewEncounter", false, null);
+			}
+			else
+			{
+				this.DoArrivalAction();
 			}
 		}
 
-		private void RemoveAllPods()
+		private void DoArrivalAction()
 		{
 			for (int i = 0; i < this.pods.Count; i++)
 			{
 				this.pods[i].savePawnsWithReferenceMode = false;
 				this.pods[i].parent = null;
 			}
+			if (this.arrivalAction != null)
+			{
+				try
+				{
+					this.arrivalAction.Arrived(this.pods, this.destinationTile);
+				}
+				catch (Exception arg)
+				{
+					Log.Error("Exception in transport pods arrival action: " + arg, false);
+				}
+				this.arrivalAction = null;
+			}
+			else
+			{
+				for (int j = 0; j < this.pods.Count; j++)
+				{
+					this.pods[j].innerContainer.ClearAndDestroyContentsOrPassToWorld(DestroyMode.Vanish);
+				}
+				Messages.Message("MessageTransportPodsArrivedAndLost".Translate(), new GlobalTargetInfo(this.destinationTile), MessageTypeDefOf.NegativeEvent, true);
+			}
 			this.pods.Clear();
+			Find.WorldObjects.Remove(this);
 		}
 
 		public ThingOwner GetDirectlyHeldThings()

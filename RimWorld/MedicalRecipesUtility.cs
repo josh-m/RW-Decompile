@@ -5,7 +5,7 @@ using Verse;
 
 namespace RimWorld
 {
-	internal class MedicalRecipesUtility
+	public class MedicalRecipesUtility
 	{
 		public static bool IsCleanAndDroppable(Pawn pawn, BodyPartRecord part)
 		{
@@ -30,14 +30,14 @@ namespace RimWorld
 		{
 			if (MedicalRecipesUtility.IsCleanAndDroppable(pawn, part))
 			{
-				return GenSpawn.Spawn(part.def.spawnThingOnRemoved, pos, map);
+				return GenSpawn.Spawn(part.def.spawnThingOnRemoved, pos, map, WipeMode.Vanish);
 			}
 			return null;
 		}
 
 		public static void SpawnThingsFromHediffs(Pawn pawn, BodyPartRecord part, IntVec3 pos, Map map)
 		{
-			if (!pawn.health.hediffSet.GetNotMissingParts(BodyPartHeight.Undefined, BodyPartDepth.Undefined).Contains(part))
+			if (!pawn.health.hediffSet.GetNotMissingParts(BodyPartHeight.Undefined, BodyPartDepth.Undefined, null, null).Contains(part))
 			{
 				return;
 			}
@@ -48,7 +48,7 @@ namespace RimWorld
 			{
 				if (current.def.spawnThingOnRemoved != null)
 				{
-					GenSpawn.Spawn(current.def.spawnThingOnRemoved, pos, map);
+					GenSpawn.Spawn(current.def.spawnThingOnRemoved, pos, map, WipeMode.Vanish);
 				}
 			}
 			for (int i = 0; i < part.parts.Count; i++)

@@ -8,7 +8,7 @@ namespace RimWorld
 	{
 		public static bool HostileTo(this Faction fac, Faction other)
 		{
-			return fac != null && other != null && other != fac && fac.RelationWith(other, false).hostile;
+			return fac != null && other != null && other != fac && fac.RelationWith(other, false).kind == FactionRelationKind.Hostile;
 		}
 
 		public static Faction DefaultFactionFrom(FactionDef ft)

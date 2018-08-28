@@ -39,13 +39,13 @@ namespace RimWorld
 			Scribe_Values.Look<float>(ref this.workLeft, "workLeft", 0f, false);
 		}
 
-		public override bool TryMakePreToilReservations()
+		public override bool TryMakePreToilReservations(bool errorOnFailed)
 		{
 			Pawn pawn = this.pawn;
 			LocalTargetInfo target = this.Cell;
 			Job job = this.job;
 			ReservationLayerDef ceiling = ReservationLayerDefOf.Ceiling;
-			return pawn.Reserve(target, job, 1, -1, ceiling);
+			return pawn.Reserve(target, job, 1, -1, ceiling, errorOnFailed);
 		}
 
 		[DebuggerHidden]
@@ -70,8 +70,8 @@ namespace RimWorld
 				}
 			};
 			doWork.FailOnCannotTouch(TargetIndex.B, this.PathEndMode);
-			doWork.PlaySoundAtStart(SoundDefOf.RoofStart);
-			doWork.PlaySoundAtEnd(SoundDefOf.RoofFinish);
+			doWork.PlaySoundAtStart(SoundDefOf.Roof_Start);
+			doWork.PlaySoundAtEnd(SoundDefOf.Roof_Finish);
 			doWork.WithEffect(EffecterDefOf.RoofWork, TargetIndex.A);
 			doWork.FailOn(new Func<bool>(this.DoWorkFailOn));
 			doWork.WithProgressBar(TargetIndex.A, () => 1f - this.$this.workLeft / 65f, false, -0.5f);

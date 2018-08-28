@@ -9,6 +9,34 @@ namespace RimWorld
 	{
 		private const float TraderChance = 0.75f;
 
+		private static readonly SimpleCurve PointsCurve = new SimpleCurve
+		{
+			{
+				new CurvePoint(45f, 0f),
+				true
+			},
+			{
+				new CurvePoint(50f, 1f),
+				true
+			},
+			{
+				new CurvePoint(100f, 1f),
+				true
+			},
+			{
+				new CurvePoint(200f, 0.25f),
+				true
+			},
+			{
+				new CurvePoint(300f, 0.1f),
+				true
+			},
+			{
+				new CurvePoint(500f, 0f),
+				true
+			}
+		};
+
 		protected override bool TryExecuteWorker(IncidentParms parms)
 		{
 			Map map = (Map)parms.target;
@@ -40,13 +68,13 @@ namespace RimWorld
 				label = "LetterLabelSingleVisitorArrives".Translate();
 				text3 = "SingleVisitorArrives".Translate(new object[]
 				{
-					list[0].story.Title.ToLower(),
+					list[0].story.Title,
 					parms.faction.Name,
 					list[0].Name,
 					text,
 					text2
 				});
-				text3 = text3.AdjustedFor(list[0]);
+				text3 = text3.AdjustedFor(list[0], "PAWN");
 			}
 			else
 			{
@@ -63,9 +91,21 @@ namespace RimWorld
 					text5
 				});
 			}
-			PawnRelationUtility.Notify_PawnsSeenByPlayer_Letter(list, ref label, ref text3, "LetterRelatedPawnsNeutralGroup".Translate(), true, true);
-			Find.LetterStack.ReceiveLetter(label, text3, LetterDefOf.NeutralEvent, list[0], null);
+			PawnRelationUtility.Notify_PawnsSeenByPlayer_Letter(list, ref label, ref text3, "LetterRelatedPawnsNeutralGroup".Translate(new object[]
+			{
+				Faction.OfPlayer.def.pawnsPlural
+			}), true, true);
+			Find.LetterStack.ReceiveLetter(label, text3, LetterDefOf.NeutralEvent, list[0], parms.faction, null);
 			return true;
+		}
+
+		protected override void ResolveParmsPoints(IncidentParms parms)
+		{
+			if (parms.points >= 0f)
+			{
+				return;
+			}
+			parms.points = Rand.ByCurve(IncidentWorker_VisitorGroup.PointsCurve);
 		}
 
 		private bool TryConvertOnePawnToSmallTrader(List<Pawn> pawns, Faction faction, Map map)
@@ -78,14 +118,14 @@ namespace RimWorld
 			Lord lord = pawn.GetLord();
 			pawn.mindState.wantsToTradeWithColony = true;
 			PawnComponentsUtility.AddAndRemoveDynamicComponents(pawn, true);
-			TraderKindDef traderKindDef = faction.def.visitorTraderKinds.RandomElementByWeight((TraderKindDef traderDef) => traderDef.commonality);
+			TraderKindDef traderKindDef = faction.def.visitorTraderKinds.RandomElementByWeight((TraderKindDef traderDef) => traderDef.CalculatedCommonality);
 			pawn.trader.traderKind = traderKindDef;
 			pawn.inventory.DestroyAll(DestroyMode.Vanish);
-			ItemCollectionGeneratorParams parms = default(ItemCollectionGeneratorParams);
+			ThingSetMakerParams parms = default(ThingSetMakerParams);
 			parms.traderDef = traderKindDef;
 			parms.tile = new int?(map.Tile);
 			parms.traderFaction = faction;
-			foreach (Thing current in ItemCollectionGeneratorDefOf.TraderStock.Worker.Generate(parms))
+			foreach (Thing current in ThingSetMakerDefOf.TraderStock.root.Generate(parms))
 			{
 				Pawn pawn2 = current as Pawn;
 				if (pawn2 != null)
@@ -95,7 +135,7 @@ namespace RimWorld
 						pawn2.SetFaction(pawn.Faction, null);
 					}
 					IntVec3 loc = CellFinder.RandomClosewalkCellNear(pawn.Position, map, 5, null);
-					GenSpawn.Spawn(pawn2, loc, map);
+					GenSpawn.Spawn(pawn2, loc, map, WipeMode.Vanish);
 					lord.AddPawn(pawn2);
 				}
 				else if (!pawn.inventory.innerContainer.TryAdd(current, true))

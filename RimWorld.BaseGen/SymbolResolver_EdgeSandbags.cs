@@ -59,7 +59,7 @@ namespace RimWorld.BaseGen
 						}
 						Thing thing = ThingMaker.MakeThing(ThingDefOf.Sandbags, null);
 						thing.SetFaction(rp.faction, null);
-						GenSpawn.Spawn(thing, current, map);
+						GenSpawn.Spawn(thing, current, map, WipeMode.Vanish);
 					}
 				}
 			}

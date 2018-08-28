@@ -26,12 +26,12 @@ namespace RimWorld.Planet
 		{
 			if (this.lhs == null || this.rhs == null)
 			{
-				Log.ErrorOnce("DebugArena improperly set up", 73785616);
+				Log.ErrorOnce("DebugArena improperly set up", 73785616, false);
 				return;
 			}
 			if ((this.tickFightStarted == 0 && Find.TickManager.TicksGame - this.tickCreated > 10000) || (this.tickFightStarted != 0 && Find.TickManager.TicksGame - this.tickFightStarted > 60000))
 			{
-				Log.Message("Fight timed out");
+				Log.Message("Fight timed out", false);
 				ArenaUtility.ArenaResult obj = default(ArenaUtility.ArenaResult);
 				obj.tickDuration = Find.TickManager.TicksGame - this.tickCreated;
 				obj.winner = ArenaUtility.ArenaResult.Winner.Other;
@@ -52,8 +52,8 @@ namespace RimWorld.Planet
 			}
 			if (this.tickFightStarted != 0)
 			{
-				bool flag = !this.lhs.Any((Pawn pawn) => !pawn.Dead && !pawn.Downed);
-				bool flag2 = !this.rhs.Any((Pawn pawn) => !pawn.Dead && !pawn.Downed);
+				bool flag = !this.lhs.Any((Pawn pawn) => !pawn.Dead && !pawn.Downed && pawn.Spawned);
+				bool flag2 = !this.rhs.Any((Pawn pawn) => !pawn.Dead && !pawn.Downed && pawn.Spawned);
 				if (flag || flag2)
 				{
 					ArenaUtility.ArenaResult obj2 = default(ArenaUtility.ArenaResult);

@@ -80,6 +80,8 @@ namespace RimWorld
 
 		public static HediffDef Asthma;
 
+		public static HediffDef Dementia;
+
 		public static HediffDef PegLeg;
 
 		public static HediffDef Denture;
@@ -95,5 +97,10 @@ namespace RimWorld
 		public static HediffDef BionicLeg;
 
 		public static HediffDef PowerClaw;
+
+		static HediffDefOf()
+		{
+			DefOfHelper.EnsureInitializedInCtor(typeof(HediffDefOf));
+		}
 	}
 }

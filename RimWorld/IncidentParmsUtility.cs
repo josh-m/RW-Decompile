@@ -1,13 +1,17 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
+using Verse;
 
 namespace RimWorld
 {
 	public static class IncidentParmsUtility
 	{
-		public static PawnGroupMakerParms GetDefaultPawnGroupMakerParms(IncidentParms parms, bool ensureCanGenerateAtLeastOnePawn = false)
+		public static PawnGroupMakerParms GetDefaultPawnGroupMakerParms(PawnGroupKindDef groupKind, IncidentParms parms, bool ensureCanGenerateAtLeastOnePawn = false)
 		{
 			PawnGroupMakerParms pawnGroupMakerParms = new PawnGroupMakerParms();
+			pawnGroupMakerParms.groupKind = groupKind;
 			pawnGroupMakerParms.tile = parms.target.Tile;
 			pawnGroupMakerParms.points = parms.points;
 			pawnGroupMakerParms.faction = parms.faction;
@@ -15,42 +19,45 @@ namespace RimWorld
 			pawnGroupMakerParms.generateFightersOnly = parms.generateFightersOnly;
 			pawnGroupMakerParms.raidStrategy = parms.raidStrategy;
 			pawnGroupMakerParms.forceOneIncap = parms.raidForceOneIncap;
+			pawnGroupMakerParms.seed = parms.pawnGroupMakerSeed;
 			if (ensureCanGenerateAtLeastOnePawn && parms.faction != null)
 			{
-				pawnGroupMakerParms.points = Mathf.Max(pawnGroupMakerParms.points, parms.faction.def.MinPointsToGenerateNormalPawnGroup());
+				pawnGroupMakerParms.points = Mathf.Max(pawnGroupMakerParms.points, parms.faction.def.MinPointsToGeneratePawnGroup(groupKind));
 			}
 			return pawnGroupMakerParms;
 		}
 
-		public static void AdjustPointsForGroupArrivalParams(IncidentParms parms)
+		public static List<List<Pawn>> SplitIntoGroups(List<Pawn> pawns, Dictionary<Pawn, int> groups)
 		{
-			if (parms.raidStrategy != null)
+			List<List<Pawn>> list = new List<List<Pawn>>();
+			List<Pawn> list2 = pawns.ToList<Pawn>();
+			while (list2.Any<Pawn>())
 			{
-				parms.points *= parms.raidStrategy.pointsFactor;
-			}
-			PawnsArriveMode raidArrivalMode = parms.raidArrivalMode;
-			if (raidArrivalMode != PawnsArriveMode.EdgeWalkIn)
-			{
-				if (raidArrivalMode != PawnsArriveMode.EdgeDrop)
+				List<Pawn> list3 = new List<Pawn>();
+				Pawn pawn = list2.Last<Pawn>();
+				list2.RemoveLast<Pawn>();
+				list3.Add(pawn);
+				for (int i = list2.Count - 1; i >= 0; i--)
 				{
-					if (raidArrivalMode == PawnsArriveMode.CenterDrop)
+					if (IncidentParmsUtility.GetGroup(pawn, groups) == IncidentParmsUtility.GetGroup(list2[i], groups))
 					{
-						parms.points *= 0.45f;
+						list3.Add(list2[i]);
+						list2.RemoveAt(i);
 					}
 				}
-				else
-				{
-					parms.points *= 1f;
-				}
+				list.Add(list3);
 			}
-			else
+			return list;
+		}
+
+		private static int GetGroup(Pawn pawn, Dictionary<Pawn, int> groups)
+		{
+			int result;
+			if (groups == null || !groups.TryGetValue(pawn, out result))
 			{
-				parms.points *= 1f;
+				return -1;
 			}
-			if (parms.raidStrategy != null)
-			{
-				parms.points = Mathf.Max(parms.points, parms.raidStrategy.Worker.MinimumPoints(parms.faction) * 1.05f);
-			}
+			return result;
 		}
 	}
 }

@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using UnityEngine;
 using Verse;
 using Verse.AI;
 
@@ -24,11 +23,11 @@ namespace RimWorld
 		private static readonly SimpleCurve InsulationColdScoreFactorCurve_NeedWarm = new SimpleCurve
 		{
 			{
-				new CurvePoint(-30f, 8f),
+				new CurvePoint(0f, 1f),
 				true
 			},
 			{
-				new CurvePoint(0f, 1f),
+				new CurvePoint(30f, 8f),
 				true
 			}
 		};
@@ -40,42 +39,38 @@ namespace RimWorld
 				true
 			},
 			{
-				new CurvePoint(0.2f, 0.15f),
+				new CurvePoint(0.2f, 0.2f),
 				true
 			},
 			{
-				new CurvePoint(0.25f, 0.3f),
+				new CurvePoint(0.22f, 0.6f),
 				true
 			},
 			{
-				new CurvePoint(0.5f, 0.4f),
+				new CurvePoint(0.5f, 0.6f),
 				true
 			},
 			{
-				new CurvePoint(0.55f, 0.85f),
-				true
-			},
-			{
-				new CurvePoint(1f, 1f),
+				new CurvePoint(0.52f, 1f),
 				true
 			}
 		};
 
 		private void SetNextOptimizeTick(Pawn pawn)
 		{
-			pawn.mindState.nextApparelOptimizeTick = Find.TickManager.TicksGame + UnityEngine.Random.Range(6000, 9000);
+			pawn.mindState.nextApparelOptimizeTick = Find.TickManager.TicksGame + Rand.Range(6000, 9000);
 		}
 
 		protected override Job TryGiveJob(Pawn pawn)
 		{
 			if (pawn.outfits == null)
 			{
-				Log.ErrorOnce(pawn + " tried to run JobGiver_OptimizeApparel without an OutfitTracker", 5643897);
+				Log.ErrorOnce(pawn + " tried to run JobGiver_OptimizeApparel without an OutfitTracker", 5643897, false);
 				return null;
 			}
 			if (pawn.Faction != Faction.OfPlayer)
 			{
-				Log.ErrorOnce("Non-colonist " + pawn + " tried to optimize apparel.", 764323);
+				Log.ErrorOnce("Non-colonist " + pawn + " tried to optimize apparel.", 764323, false);
 				return null;
 			}
 			if (!DebugViewSettings.debugApparelOptimize)
@@ -122,7 +117,7 @@ namespace RimWorld
 				Apparel apparel = (Apparel)list[j];
 				if (currentOutfit.filter.Allows(apparel))
 				{
-					if (apparel.Map.slotGroupManager.SlotGroupAt(apparel.Position) != null)
+					if (apparel.IsInAnyStorage())
 					{
 						if (!apparel.IsForbidden(pawn))
 						{
@@ -149,7 +144,7 @@ namespace RimWorld
 			if (DebugViewSettings.debugApparelOptimize)
 			{
 				JobGiver_OptimizeApparel.debugSb.AppendLine("BEST: " + thing);
-				Log.Message(JobGiver_OptimizeApparel.debugSb.ToString());
+				Log.Message(JobGiver_OptimizeApparel.debugSb.ToString(), false);
 				JobGiver_OptimizeApparel.debugSb = null;
 			}
 			if (thing == null)
@@ -162,7 +157,7 @@ namespace RimWorld
 
 		public static float ApparelScoreGain(Pawn pawn, Apparel ap)
 		{
-			if (ap.def == ThingDefOf.Apparel_ShieldBelt && pawn.equipment.Primary != null && pawn.equipment.Primary.def.IsRangedWeapon)
+			if (ap is ShieldBelt && pawn.equipment.Primary != null && pawn.equipment.Primary.def.IsWeaponUsingProjectiles)
 			{
 				return -1000f;
 			}

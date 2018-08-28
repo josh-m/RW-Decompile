@@ -29,6 +29,7 @@ namespace RimWorld
 
 		protected override void DoFileInteraction(string mapName)
 		{
+			mapName = GenFile.SanitizedFileName(mapName);
 			LongEventHandler.QueueLongEvent(delegate
 			{
 				GameDataSaveLoader.SaveGame(mapName);
@@ -36,7 +37,7 @@ namespace RimWorld
 			Messages.Message("SavedAs".Translate(new object[]
 			{
 				mapName
-			}), MessageTypeDefOf.SilentInput);
+			}), MessageTypeDefOf.SilentInput, false);
 			PlayerKnowledgeDatabase.Save();
 			this.Close(true);
 		}

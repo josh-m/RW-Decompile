@@ -30,13 +30,13 @@ namespace RimWorld
 			}
 		}
 
-		public override bool TryMakePreToilReservations()
+		public override bool TryMakePreToilReservations(bool errorOnFailed)
 		{
 			Pawn pawn = this.pawn;
 			LocalTargetInfo targetA = this.job.targetA;
 			Job job = this.job;
 			ReservationLayerDef floor = ReservationLayerDefOf.Floor;
-			return pawn.Reserve(targetA, job, 1, -1, floor);
+			return pawn.Reserve(targetA, job, 1, -1, floor, errorOnFailed);
 		}
 
 		[DebuggerHidden]
@@ -55,7 +55,7 @@ namespace RimWorld
 				this.$this.workLeft -= num;
 				if (doWork.actor.skills != null)
 				{
-					doWork.actor.skills.Learn(SkillDefOf.Construction, 0.11f, false);
+					doWork.actor.skills.Learn(SkillDefOf.Construction, 0.1f, false);
 				}
 				if (this.$this.clearSnow)
 				{
@@ -76,6 +76,7 @@ namespace RimWorld
 			doWork.FailOnCannotTouch(TargetIndex.A, PathEndMode.Touch);
 			doWork.WithProgressBar(TargetIndex.A, () => 1f - this.$this.workLeft / (float)this.$this.BaseWorkAmount, false, -0.5f);
 			doWork.defaultCompleteMode = ToilCompleteMode.Never;
+			doWork.activeSkill = (() => SkillDefOf.Construction);
 			yield return doWork;
 		}
 

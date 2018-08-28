@@ -8,7 +8,7 @@ using Verse;
 
 namespace RimWorld
 {
-	public class Building_Grave : Building_Casket, IStoreSettingsParent, IAssignableBuilding
+	public class Building_Grave : Building_Casket, IStoreSettingsParent, IAssignableBuilding, IHaulDestination
 	{
 		private StorageSettings storageSettings;
 
@@ -115,6 +115,11 @@ namespace RimWorld
 			}
 		}
 
+		public bool AssignedAnything(Pawn pawn)
+		{
+			return pawn.ownership.AssignedGrave != null;
+		}
+
 		public StorageSettings GetStoreSettings()
 		{
 			return this.storageSettings;
@@ -162,6 +167,12 @@ namespace RimWorld
 				comp.InitializeArt(this.Corpse.InnerPawn);
 			}
 			base.Map.mapDrawer.MapMeshDirty(base.Position, MapMeshFlag.Things | MapMeshFlag.Buildings);
+			worker.records.Increment(RecordDefOf.CorpsesBuried);
+			TaleRecorder.RecordTale(TaleDefOf.BuriedCorpse, new object[]
+			{
+				worker,
+				(this.Corpse == null) ? null : this.Corpse.InnerPawn
+			});
 		}
 
 		public override bool Accepts(Thing thing)
@@ -245,7 +256,19 @@ namespace RimWorld
 		{
 			StringBuilder stringBuilder = new StringBuilder();
 			stringBuilder.Append(base.GetInspectString());
-			if (!this.HasCorpse && this.assignedPawn != null)
+			if (this.HasCorpse)
+			{
+				if (base.Tile != -1)
+				{
+					string text = GenDate.DateFullStringAt((long)GenDate.TickGameToAbs(this.Corpse.timeOfDeath), Find.WorldGrid.LongLatOf(base.Tile));
+					stringBuilder.AppendLine();
+					stringBuilder.Append("DiedOn".Translate(new object[]
+					{
+						text
+					}));
+				}
+			}
+			else if (this.assignedPawn != null)
 			{
 				stringBuilder.AppendLine();
 				stringBuilder.Append("AssignedColonist".Translate());

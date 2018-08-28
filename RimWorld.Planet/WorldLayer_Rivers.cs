@@ -51,21 +51,21 @@ namespace RimWorld.Planet
 					subMeshBorder = base.GetSubMesh(WorldMaterials.RiversBorder);
 				}
 				Tile tile = grid[i];
-				if (tile.rivers != null)
+				if (tile.potentialRivers != null)
 				{
 					outputs.Clear();
 					outputsBorder.Clear();
-					for (int j = 0; j < tile.rivers.Count; j++)
+					for (int j = 0; j < tile.potentialRivers.Count; j++)
 					{
 						outputs.Add(new WorldLayer_Paths.OutputDirection
 						{
-							neighbor = tile.rivers[j].neighbor,
-							width = tile.rivers[j].river.widthOnWorld - 0.2f
+							neighbor = tile.potentialRivers[j].neighbor,
+							width = tile.potentialRivers[j].river.widthOnWorld - 0.2f
 						});
 						outputsBorder.Add(new WorldLayer_Paths.OutputDirection
 						{
-							neighbor = tile.rivers[j].neighbor,
-							width = tile.rivers[j].river.widthOnWorld
+							neighbor = tile.potentialRivers[j].neighbor,
+							width = tile.potentialRivers[j].river.widthOnWorld
 						});
 					}
 					base.GeneratePaths(subMesh, i, outputs, this.riverColor, true);

@@ -233,7 +233,7 @@ namespace RimWorld
 				centerCell.x -= spectateRect.Width / 2 + 10;
 				break;
 			}
-			map.debugDrawer.FlashLine(spectateRect.CenterCell, centerCell, 50);
+			map.debugDrawer.FlashLine(spectateRect.CenterCell, centerCell, 50, SimpleColor.White);
 		}
 
 		public static SpectateRectSide FindSingleBestSide(CellRect spectateRect, Map map, SpectateRectSide allowedSides = SpectateRectSide.All, int margin = 1)

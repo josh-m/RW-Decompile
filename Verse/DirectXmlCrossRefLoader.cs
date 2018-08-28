@@ -31,10 +31,10 @@ namespace Verse
 			{
 				if (this.fi == null)
 				{
-					Log.Error("Trying to resolve null field for def named " + this.defName.ToStringSafe<string>());
+					Log.Error("Trying to resolve null field for def named " + this.defName.ToStringSafe<string>(), false);
 					return false;
 				}
-				Def defSilentFail = GenDefDatabase.GetDefSilentFail(this.fi.FieldType, this.defName);
+				Def defSilentFail = GenDefDatabase.GetDefSilentFail(this.fi.FieldType, this.defName, true);
 				if (defSilentFail == null)
 				{
 					if (failReportMode == FailMode.LogErrors)
@@ -49,7 +49,7 @@ namespace Verse
 							this.wanter.GetType(),
 							" ",
 							this.wanter.ToStringSafe<object>()
-						}));
+						}), false);
 					}
 					return false;
 				}
@@ -67,7 +67,7 @@ namespace Verse
 						" ",
 						this.wanter.ToStringSafe<object>(),
 						" (using undefined sound instead)"
-					}));
+					}), false);
 				}
 				this.fi.SetValue(this.wanter, defSilentFail);
 				return true;
@@ -78,9 +78,12 @@ namespace Verse
 		{
 			private List<string> defNames = new List<string>();
 
-			public WantedRefForList(object wanter)
+			private object debugWanterInfo;
+
+			public WantedRefForList(object wanter, object debugWanterInfo)
 			{
 				this.wanter = wanter;
+				this.debugWanterInfo = debugWanterInfo;
 			}
 
 			public void AddWantedListEntry(string newTargetDefName)
@@ -93,7 +96,7 @@ namespace Verse
 				bool flag = false;
 				for (int i = 0; i < this.defNames.Count; i++)
 				{
-					T t = DirectXmlCrossRefLoader.TryResolveDef<T>(this.defNames[i], failReportMode);
+					T t = DirectXmlCrossRefLoader.TryResolveDef<T>(this.defNames[i], failReportMode, this.debugWanterInfo);
 					if (t != null)
 					{
 						((List<T>)this.wanter).Add(t);
@@ -113,9 +116,12 @@ namespace Verse
 		{
 			private List<XmlNode> wantedDictRefs = new List<XmlNode>();
 
-			public WantedRefForDictionary(object wanter)
+			private object debugWanterInfo;
+
+			public WantedRefForDictionary(object wanter, object debugWanterInfo)
 			{
 				this.wanter = wanter;
+				this.debugWanterInfo = debugWanterInfo;
 			}
 
 			public void AddWantedDictEntry(XmlNode entryNode)
@@ -136,7 +142,7 @@ namespace Verse
 					K first;
 					if (flag)
 					{
-						first = DirectXmlCrossRefLoader.TryResolveDef<K>(xmlNode.InnerText, failReportMode);
+						first = DirectXmlCrossRefLoader.TryResolveDef<K>(xmlNode.InnerText, failReportMode, this.debugWanterInfo);
 					}
 					else
 					{
@@ -145,7 +151,7 @@ namespace Verse
 					V second;
 					if (flag2)
 					{
-						second = DirectXmlCrossRefLoader.TryResolveDef<V>(xmlNode2.InnerText, failReportMode);
+						second = DirectXmlCrossRefLoader.TryResolveDef<V>(xmlNode2.InnerText, failReportMode, this.debugWanterInfo);
 					}
 					else
 					{
@@ -169,7 +175,7 @@ namespace Verse
 							current2.First,
 							", ",
 							current2.Second
-						}));
+						}), false);
 					}
 				}
 				return true;
@@ -198,7 +204,7 @@ namespace Verse
 			DirectXmlCrossRefLoader.wantedRefs.Add(item);
 		}
 
-		public static void RegisterListWantsCrossRef<T>(List<T> wanterList, string targetDefName) where T : new()
+		public static void RegisterListWantsCrossRef<T>(List<T> wanterList, string targetDefName, object debugWanterInfo = null) where T : new()
 		{
 			DirectXmlCrossRefLoader.WantedRefForList<T> wantedRefForList = null;
 			foreach (DirectXmlCrossRefLoader.WantedRef current in DirectXmlCrossRefLoader.wantedRefs)
@@ -211,13 +217,13 @@ namespace Verse
 			}
 			if (wantedRefForList == null)
 			{
-				wantedRefForList = new DirectXmlCrossRefLoader.WantedRefForList<T>(wanterList);
+				wantedRefForList = new DirectXmlCrossRefLoader.WantedRefForList<T>(wanterList, debugWanterInfo);
 				DirectXmlCrossRefLoader.wantedRefs.Add(wantedRefForList);
 			}
 			wantedRefForList.AddWantedListEntry(targetDefName);
 		}
 
-		public static void RegisterDictionaryWantsCrossRef<K, V>(Dictionary<K, V> wanterDict, XmlNode entryNode) where K : new() where V : new()
+		public static void RegisterDictionaryWantsCrossRef<K, V>(Dictionary<K, V> wanterDict, XmlNode entryNode, object debugWanterInfo = null) where K : new() where V : new()
 		{
 			DirectXmlCrossRefLoader.WantedRefForDictionary<K, V> wantedRefForDictionary = null;
 			foreach (DirectXmlCrossRefLoader.WantedRef current in DirectXmlCrossRefLoader.wantedRefs)
@@ -230,28 +236,33 @@ namespace Verse
 			}
 			if (wantedRefForDictionary == null)
 			{
-				wantedRefForDictionary = new DirectXmlCrossRefLoader.WantedRefForDictionary<K, V>(wanterDict);
+				wantedRefForDictionary = new DirectXmlCrossRefLoader.WantedRefForDictionary<K, V>(wanterDict, debugWanterInfo);
 				DirectXmlCrossRefLoader.wantedRefs.Add(wantedRefForDictionary);
 			}
 			wantedRefForDictionary.AddWantedDictEntry(entryNode);
 		}
 
-		public static T TryResolveDef<T>(string defName, FailMode failReportMode)
+		public static T TryResolveDef<T>(string defName, FailMode failReportMode, object debugWanterInfo = null)
 		{
-			T t = (T)((object)GenDefDatabase.GetDefSilentFail(typeof(T), defName));
+			T t = (T)((object)GenDefDatabase.GetDefSilentFail(typeof(T), defName, true));
 			if (t != null)
 			{
 				return t;
 			}
 			if (failReportMode == FailMode.LogErrors)
 			{
-				Log.Error(string.Concat(new object[]
+				string text = string.Concat(new object[]
 				{
 					"Could not resolve cross-reference to ",
 					typeof(T),
 					" named ",
 					defName
-				}));
+				});
+				if (debugWanterInfo != null)
+				{
+					text = text + " (wanter=" + debugWanterInfo.ToStringSafe<object>() + ")";
+				}
+				Log.Error(text, false);
 			}
 			return default(T);
 		}

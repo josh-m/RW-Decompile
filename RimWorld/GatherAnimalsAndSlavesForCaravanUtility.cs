@@ -15,6 +15,7 @@ namespace RimWorld
 		public static void SetFollower(Pawn p, Pawn follower)
 		{
 			p.mindState.duty.focus = follower;
+			p.mindState.duty.radius = 10f;
 		}
 
 		public static void CheckArrived(Lord lord, IntVec3 meetingPoint, string memo, Predicate<Pawn> shouldCheckIfArrived, Predicate<Pawn> extraValidator = null)

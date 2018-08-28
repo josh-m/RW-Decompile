@@ -91,7 +91,7 @@ namespace RimWorld
 			{
 				if (this.secondPawn != pawn)
 				{
-					Log.Warning("Called ExactStandingSpotFor but it's not this pawn's ceremony.");
+					Log.Warning("Called ExactStandingSpotFor but it's not this pawn's ceremony.", false);
 					return IntVec3.Invalid;
 				}
 				pawn2 = this.firstPawn;
@@ -126,7 +126,7 @@ namespace RimWorld
 					}
 				}
 			}
-			Log.Warning("Marriage spot is 1x1. There's no place for 2 pawns.");
+			Log.Warning("Marriage spot is 1x1. There's no place for 2 pawns.", false);
 			return IntVec3.Invalid;
 		}
 

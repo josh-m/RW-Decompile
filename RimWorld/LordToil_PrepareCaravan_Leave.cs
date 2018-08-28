@@ -33,6 +33,14 @@ namespace RimWorld
 			}
 		}
 
+		public override bool AllowSelfTend
+		{
+			get
+			{
+				return false;
+			}
+		}
+
 		public LordToil_PrepareCaravan_Leave(IntVec3 exitSpot)
 		{
 			this.exitSpot = exitSpot;

@@ -61,7 +61,15 @@ namespace RimWorld
 		{
 			get
 			{
-				return this.GunCompEq.verbTracker.PrimaryVerb;
+				return this.GunCompEq.PrimaryVerb;
+			}
+		}
+
+		private bool PlayerControlled
+		{
+			get
+			{
+				return (base.Faction == Faction.OfPlayer || this.MannedByColonist) && !this.MannedByNonColonist;
 			}
 		}
 
@@ -69,7 +77,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return this.mannableComp != null && (base.Faction == Faction.OfPlayer || this.MannedByColonist) && !this.MannedByNonColonist;
+				return this.mannableComp != null && this.PlayerControlled;
 			}
 		}
 
@@ -77,7 +85,36 @@ namespace RimWorld
 		{
 			get
 			{
-				return (base.Faction == Faction.OfPlayer || this.MannedByColonist) && !this.MannedByNonColonist;
+				return this.PlayerControlled;
+			}
+		}
+
+		private bool IsMortar
+		{
+			get
+			{
+				return this.def.building.IsMortar;
+			}
+		}
+
+		private bool IsMortarOrProjectileFliesOverhead
+		{
+			get
+			{
+				return this.AttackVerb.ProjectileFliesOverhead() || this.IsMortar;
+			}
+		}
+
+		private bool CanExtractShell
+		{
+			get
+			{
+				if (!this.PlayerControlled)
+				{
+					return false;
+				}
+				CompChangeableProjectile compChangeableProjectile = this.gun.TryGetComp<CompChangeableProjectile>();
+				return compChangeableProjectile != null && compChangeableProjectile.Loaded;
 			}
 		}
 
@@ -115,9 +152,9 @@ namespace RimWorld
 			this.MakeGun();
 		}
 
-		public override void DeSpawn()
+		public override void DeSpawn(DestroyMode mode = DestroyMode.Vanish)
 		{
-			base.DeSpawn();
+			base.DeSpawn(mode);
 			this.ResetCurrentTarget();
 		}
 
@@ -151,14 +188,14 @@ namespace RimWorld
 				}
 				return;
 			}
-			if ((targ.Cell - base.Position).LengthHorizontal < this.GunCompEq.PrimaryVerb.verbProps.minRange)
+			if ((targ.Cell - base.Position).LengthHorizontal < this.AttackVerb.verbProps.EffectiveMinRange(targ, this))
 			{
-				Messages.Message("MessageTargetBelowMinimumRange".Translate(), this, MessageTypeDefOf.RejectInput);
+				Messages.Message("MessageTargetBelowMinimumRange".Translate(), this, MessageTypeDefOf.RejectInput, false);
 				return;
 			}
-			if ((targ.Cell - base.Position).LengthHorizontal > this.GunCompEq.PrimaryVerb.verbProps.range)
+			if ((targ.Cell - base.Position).LengthHorizontal > this.AttackVerb.verbProps.range)
 			{
-				Messages.Message("MessageTargetBeyondMaximumRange".Translate(), this, MessageTypeDefOf.RejectInput);
+				Messages.Message("MessageTargetBeyondMaximumRange".Translate(), this, MessageTypeDefOf.RejectInput, false);
 				return;
 			}
 			if (this.forcedTarget != targ)
@@ -174,7 +211,7 @@ namespace RimWorld
 				Messages.Message("MessageTurretWontFireBecauseHoldFire".Translate(new object[]
 				{
 					this.def.label
-				}), this, MessageTypeDefOf.RejectInput);
+				}), this, MessageTypeDefOf.RejectInput, false);
 			}
 		}
 
@@ -197,7 +234,7 @@ namespace RimWorld
 			if (flag && base.Spawned)
 			{
 				this.GunCompEq.verbTracker.VerbsTick();
-				if (!this.stunner.Stunned && this.GunCompEq.PrimaryVerb.state != VerbState.Bursting)
+				if (!this.stunner.Stunned && this.AttackVerb.state != VerbState.Bursting)
 				{
 					if (this.WarmingUp)
 					{
@@ -229,7 +266,7 @@ namespace RimWorld
 
 		protected void TryStartShootSomething(bool canBeginBurstImmediately)
 		{
-			if (!base.Spawned || (this.holdFire && this.CanToggleHoldFire) || (this.GunCompEq.PrimaryVerb.ProjectileFliesOverhead() && base.Map.roofGrid.Roofed(base.Position)))
+			if (!base.Spawned || (this.holdFire && this.CanToggleHoldFire) || (this.AttackVerb.ProjectileFliesOverhead() && base.Map.roofGrid.Roofed(base.Position)) || !this.AttackVerb.Available())
 			{
 				this.ResetCurrentTarget();
 				return;
@@ -272,28 +309,28 @@ namespace RimWorld
 		{
 			IAttackTargetSearcher attackTargetSearcher = this.TargSearcher();
 			Faction faction = attackTargetSearcher.Thing.Faction;
-			float range = this.GunCompEq.PrimaryVerb.verbProps.range;
-			float minRange = this.GunCompEq.PrimaryVerb.verbProps.minRange;
+			float range = this.AttackVerb.verbProps.range;
 			Building t;
-			if (Rand.Value < 0.5f && this.GunCompEq.PrimaryVerb.ProjectileFliesOverhead() && faction.HostileTo(Faction.OfPlayer) && base.Map.listerBuildings.allBuildingsColonist.Where(delegate(Building x)
+			if (Rand.Value < 0.5f && this.AttackVerb.ProjectileFliesOverhead() && faction.HostileTo(Faction.OfPlayer) && base.Map.listerBuildings.allBuildingsColonist.Where(delegate(Building x)
 			{
-				float num = (float)x.Position.DistanceToSquared(this.Position);
-				return num > minRange * minRange && num < range * range;
+				float num = this.AttackVerb.verbProps.EffectiveMinRange(x, this);
+				float num2 = (float)x.Position.DistanceToSquared(this.Position);
+				return num2 > num * num && num2 < range * range;
 			}).TryRandomElement(out t))
 			{
 				return t;
 			}
 			TargetScanFlags targetScanFlags = TargetScanFlags.NeedThreat;
-			if (!this.GunCompEq.PrimaryVerb.ProjectileFliesOverhead())
+			if (!this.AttackVerb.ProjectileFliesOverhead())
 			{
 				targetScanFlags |= TargetScanFlags.NeedLOSToAll;
 				targetScanFlags |= TargetScanFlags.LOSBlockableByGas;
 			}
-			if (this.GunCompEq.PrimaryVerb.IsIncendiary())
+			if (this.AttackVerb.IsIncendiary())
 			{
 				targetScanFlags |= TargetScanFlags.NeedNonBurning;
 			}
-			return (Thing)AttackTargetFinder.BestShootTargetFromCurrentPosition(attackTargetSearcher, new Predicate<Thing>(this.IsValidTarget), range, minRange, targetScanFlags);
+			return (Thing)AttackTargetFinder.BestShootTargetFromCurrentPosition(attackTargetSearcher, targetScanFlags, new Predicate<Thing>(this.IsValidTarget), 0f, 9999f);
 		}
 
 		private IAttackTargetSearcher TargSearcher()
@@ -310,7 +347,7 @@ namespace RimWorld
 			Pawn pawn = t as Pawn;
 			if (pawn != null)
 			{
-				if (this.GunCompEq.PrimaryVerb.ProjectileFliesOverhead())
+				if (this.AttackVerb.ProjectileFliesOverhead())
 				{
 					RoofDef roofDef = base.Map.roofGrid.RoofAt(t.Position);
 					if (roofDef != null && roofDef.isThickRoof)
@@ -332,20 +369,22 @@ namespace RimWorld
 
 		protected void BeginBurst()
 		{
-			this.GunCompEq.PrimaryVerb.TryStartCastOn(this.CurrentTarget, false, true);
+			this.AttackVerb.TryStartCastOn(this.CurrentTarget, false, true);
 			base.OnAttackedTarget(this.CurrentTarget);
 		}
 
 		protected void BurstComplete()
 		{
+			this.burstCooldownTicksLeft = this.BurstCooldownTime().SecondsToTicks();
+		}
+
+		protected float BurstCooldownTime()
+		{
 			if (this.def.building.turretBurstCooldownTime >= 0f)
 			{
-				this.burstCooldownTicksLeft = this.def.building.turretBurstCooldownTime.SecondsToTicks();
+				return this.def.building.turretBurstCooldownTime;
 			}
-			else
-			{
-				this.burstCooldownTicksLeft = this.GunCompEq.PrimaryVerb.verbProps.defaultCooldownTime.SecondsToTicks();
-			}
+			return this.AttackVerb.verbProps.defaultCooldownTime;
 		}
 
 		public override string GetInspectString()
@@ -356,14 +395,17 @@ namespace RimWorld
 			{
 				stringBuilder.AppendLine(inspectString);
 			}
-			stringBuilder.AppendLine("GunInstalled".Translate() + ": " + this.gun.Label);
-			if (this.GunCompEq.PrimaryVerb.verbProps.minRange > 0f)
+			if (this.AttackVerb.verbProps.minRange > 0f)
 			{
-				stringBuilder.AppendLine("MinimumRange".Translate() + ": " + this.GunCompEq.PrimaryVerb.verbProps.minRange.ToString("F0"));
+				stringBuilder.AppendLine("MinimumRange".Translate() + ": " + this.AttackVerb.verbProps.minRange.ToString("F0"));
 			}
-			if (base.Spawned && this.burstCooldownTicksLeft > 0)
+			if (base.Spawned && this.IsMortarOrProjectileFliesOverhead && base.Position.Roofed(base.Map))
 			{
-				stringBuilder.AppendLine("CanFireIn".Translate() + ": " + this.burstCooldownTicksLeft.TicksToSecondsString());
+				stringBuilder.AppendLine("CannotFire".Translate() + ": " + "Roofed".Translate().CapitalizeFirst());
+			}
+			else if (base.Spawned && this.burstCooldownTicksLeft > 0 && this.BurstCooldownTime() > 5f)
+			{
+				stringBuilder.AppendLine("CanFireIn".Translate() + ": " + this.burstCooldownTicksLeft.ToStringSecondsFromTicks());
 			}
 			CompChangeableProjectile compChangeableProjectile = this.gun.TryGetComp<CompChangeableProjectile>();
 			if (compChangeableProjectile != null)
@@ -391,15 +433,15 @@ namespace RimWorld
 
 		public override void DrawExtraSelectionOverlays()
 		{
-			float range = this.GunCompEq.PrimaryVerb.verbProps.range;
+			float range = this.AttackVerb.verbProps.range;
 			if (range < 90f)
 			{
 				GenDraw.DrawRadiusRing(base.Position, range);
 			}
-			float minRange = this.GunCompEq.PrimaryVerb.verbProps.minRange;
-			if (minRange < 90f && minRange > 0.1f)
+			float num = this.AttackVerb.verbProps.EffectiveMinRange(false);
+			if (num < 90f && num > 0.1f)
 			{
-				GenDraw.DrawRadiusRing(base.Position, minRange);
+				GenDraw.DrawRadiusRing(base.Position, num);
 			}
 			if (this.WarmingUp)
 			{
@@ -418,7 +460,7 @@ namespace RimWorld
 					b = this.forcedTarget.Cell.ToVector3Shifted();
 				}
 				Vector3 a = this.TrueCenter();
-				b.y = Altitudes.AltitudeFor(AltitudeLayer.MetaOverlays);
+				b.y = AltitudeLayer.MetaOverlays.AltitudeFor();
 				a.y = b.y;
 				GenDraw.DrawLineBetween(a, b, Building_TurretGun.ForcedTargetLineMat);
 			}
@@ -431,34 +473,37 @@ namespace RimWorld
 			{
 				yield return c;
 			}
-			CompChangeableProjectile changeableProjectile = this.gun.TryGetComp<CompChangeableProjectile>();
-			if (changeableProjectile != null)
+			if (this.CanExtractShell)
 			{
-				Command_Action extract = new Command_Action();
-				extract.defaultLabel = "CommandExtractShell".Translate();
-				extract.defaultDesc = "CommandExtractShellDesc".Translate();
-				extract.icon = ContentFinder<Texture2D>.Get("Things/Item/Resource/Shell/Shell_HighExplosive", true);
-				extract.alsoClickIfOtherInGroupClicked = false;
-				extract.action = delegate
+				CompChangeableProjectile changeableProjectile = this.gun.TryGetComp<CompChangeableProjectile>();
+				yield return new Command_Action
 				{
-					GenPlace.TryPlaceThing(changeableProjectile.RemoveShell(), this.$this.Position, this.$this.Map, ThingPlaceMode.Near, null);
+					defaultLabel = "CommandExtractShell".Translate(),
+					defaultDesc = "CommandExtractShellDesc".Translate(),
+					icon = changeableProjectile.LoadedShell.uiIcon,
+					iconAngle = changeableProjectile.LoadedShell.uiIconAngle,
+					iconOffset = changeableProjectile.LoadedShell.uiIconOffset,
+					iconDrawScale = GenUI.IconDrawScale(changeableProjectile.LoadedShell),
+					alsoClickIfOtherInGroupClicked = false,
+					action = delegate
+					{
+						GenPlace.TryPlaceThing(changeableProjectile.RemoveShell(), this.$this.Position, this.$this.Map, ThingPlaceMode.Near, null, null);
+					}
 				};
-				if (changeableProjectile.Projectile == null)
-				{
-					extract.Disable("CommandExtractShellFailNoShell".Translate());
-				}
-				yield return extract;
 			}
 			if (this.CanSetForcedTarget)
 			{
-				yield return new Command_VerbTarget
+				Command_VerbTarget attack = new Command_VerbTarget();
+				attack.defaultLabel = "CommandSetForceAttackTarget".Translate();
+				attack.defaultDesc = "CommandSetForceAttackTargetDesc".Translate();
+				attack.icon = ContentFinder<Texture2D>.Get("UI/Commands/Attack", true);
+				attack.verb = this.AttackVerb;
+				attack.hotKey = KeyBindingDefOf.Misc4;
+				if (base.Spawned && this.IsMortarOrProjectileFliesOverhead && base.Position.Roofed(base.Map))
 				{
-					defaultLabel = "CommandSetForceAttackTarget".Translate(),
-					defaultDesc = "CommandSetForceAttackTargetDesc".Translate(),
-					icon = ContentFinder<Texture2D>.Get("UI/Commands/Attack", true),
-					verb = this.GunCompEq.PrimaryVerb,
-					hotKey = KeyBindingDefOf.Misc4
-				};
+					attack.Disable("CannotFire".Translate() + ": " + "Roofed".Translate().CapitalizeFirst());
+				}
+				yield return attack;
 			}
 			if (this.forcedTarget.IsValid)
 			{
@@ -469,7 +514,7 @@ namespace RimWorld
 				stop.action = delegate
 				{
 					this.$this.ResetForcedTarget();
-					SoundDefOf.TickLow.PlayOneShotOnCamera(null);
+					SoundDefOf.Tick_Low.PlayOneShotOnCamera(null);
 				};
 				if (!this.forcedTarget.IsValid)
 				{

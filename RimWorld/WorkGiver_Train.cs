@@ -33,7 +33,7 @@ namespace RimWorld
 			}
 			if (Find.TickManager.TicksGame < pawn2.mindState.lastAssignedInteractTime + 15000)
 			{
-				JobFailReason.Is(WorkGiver_InteractAnimal.AnimalInteractedTooRecentlyTrans);
+				JobFailReason.Is(WorkGiver_InteractAnimal.AnimalInteractedTooRecentlyTrans, null);
 				return null;
 			}
 			if (pawn2.training == null)
@@ -44,7 +44,7 @@ namespace RimWorld
 			{
 				return null;
 			}
-			if (!this.CanInteractWithAnimal(pawn, pawn2))
+			if (!this.CanInteractWithAnimal(pawn, pawn2, forced))
 			{
 				return null;
 			}
@@ -53,7 +53,7 @@ namespace RimWorld
 				Job job = base.TakeFoodForAnimalInteractJob(pawn, pawn2);
 				if (job == null)
 				{
-					JobFailReason.Is(WorkGiver_InteractAnimal.NoUsableFoodTrans);
+					JobFailReason.Is(WorkGiver_InteractAnimal.NoUsableFoodTrans, null);
 				}
 				return job;
 			}

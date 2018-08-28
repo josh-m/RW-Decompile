@@ -45,7 +45,7 @@ namespace RimWorld
 			return result;
 		}
 
-		public override void Interacted(Pawn initiator, Pawn recipient, List<RulePackDef> extraSentencePacks)
+		public override void Interacted(Pawn initiator, Pawn recipient, List<RulePackDef> extraSentencePacks, out string letterText, out string letterLabel, out LetterDef letterDef)
 		{
 			Thought thought = this.RandomBreakupReason(initiator, recipient);
 			if (initiator.relations.DirectRelationExists(PawnRelationDefOf.Spouse, recipient))
@@ -75,23 +75,31 @@ namespace RimWorld
 				initiator,
 				recipient
 			});
-			StringBuilder stringBuilder = new StringBuilder();
-			stringBuilder.AppendLine("LetterNoLongerLovers".Translate(new object[]
-			{
-				initiator.LabelShort,
-				recipient.LabelShort
-			}));
-			if (thought != null)
-			{
-				stringBuilder.AppendLine();
-				stringBuilder.AppendLine("FinalStraw".Translate(new object[]
-				{
-					thought.CurStage.label
-				}));
-			}
 			if (PawnUtility.ShouldSendNotificationAbout(initiator) || PawnUtility.ShouldSendNotificationAbout(recipient))
 			{
-				Find.LetterStack.ReceiveLetter("LetterLabelBreakup".Translate(), stringBuilder.ToString(), LetterDefOf.NegativeEvent, initiator, null);
+				StringBuilder stringBuilder = new StringBuilder();
+				stringBuilder.AppendLine("LetterNoLongerLovers".Translate(new object[]
+				{
+					initiator.LabelShort,
+					recipient.LabelShort
+				}));
+				if (thought != null)
+				{
+					stringBuilder.AppendLine();
+					stringBuilder.AppendLine("FinalStraw".Translate(new object[]
+					{
+						thought.CurStage.label.CapitalizeFirst()
+					}));
+				}
+				letterLabel = "LetterLabelBreakup".Translate();
+				letterText = stringBuilder.ToString().TrimEndNewlines();
+				letterDef = LetterDefOf.NegativeEvent;
+			}
+			else
+			{
+				letterLabel = null;
+				letterText = null;
+				letterDef = null;
 			}
 		}
 	}

@@ -8,18 +8,33 @@ namespace RimWorld
 {
 	public class GenStep_PreciousLump : GenStep_ScatterLumpsMineable
 	{
-		public List<ThingOption> mineables;
+		public List<ThingDef> mineables;
 
 		public FloatRange totalValueRange = new FloatRange(1000f, 2000f);
 
-		public override void Generate(Map map)
+		public override int SeedPart
 		{
-			this.forcedDefToScatter = this.mineables.RandomElementByWeight((ThingOption x) => x.weight).thingDef;
+			get
+			{
+				return 1634184421;
+			}
+		}
+
+		public override void Generate(Map map, GenStepParams parms)
+		{
+			if (parms.siteCoreOrPart != null && parms.siteCoreOrPart.parms.preciousLumpResources != null)
+			{
+				this.forcedDefToScatter = parms.siteCoreOrPart.parms.preciousLumpResources;
+			}
+			else
+			{
+				this.forcedDefToScatter = this.mineables.RandomElement<ThingDef>();
+			}
 			this.count = 1;
 			float randomInRange = this.totalValueRange.RandomInRange;
 			float baseMarketValue = this.forcedDefToScatter.building.mineableThing.BaseMarketValue;
 			this.forcedLumpSize = Mathf.Max(Mathf.RoundToInt(randomInRange / ((float)this.forcedDefToScatter.building.mineableYield * baseMarketValue)), 1);
-			base.Generate(map);
+			base.Generate(map, parms);
 		}
 
 		protected override bool CanScatterAt(IntVec3 c, Map map)

@@ -49,6 +49,10 @@ namespace RimWorld
 			{
 				return false;
 			}
+			if (traveler.HasReserved(building_Bed, new LocalTargetInfo?(sleeper), null, null))
+			{
+				return false;
+			}
 			if (!RestUtility.CanUseBedEver(sleeper, building_Bed.def))
 			{
 				return false;
@@ -82,7 +86,7 @@ namespace RimWorld
 			}
 			else
 			{
-				if (building_Bed.Faction != traveler.Faction)
+				if (building_Bed.Faction != traveler.Faction && (traveler.HostFaction == null || building_Bed.Faction != traveler.HostFaction))
 				{
 					return false;
 				}
@@ -93,7 +97,7 @@ namespace RimWorld
 			}
 			if (building_Bed.Medical)
 			{
-				if (!allowMedBedEvenIfSetToNoCare && !HealthAIUtility.ShouldEverReceiveMedicalCare(sleeper))
+				if (!allowMedBedEvenIfSetToNoCare && !HealthAIUtility.ShouldEverReceiveMedicalCareFromPlayer(sleeper))
 				{
 					return false;
 				}
@@ -309,7 +313,7 @@ namespace RimWorld
 					return bed.GetSleepingSlotPos(k);
 				}
 			}
-			Log.Error("Could not find good sleeping slot position for " + pawn + ". Perhaps AnyUnoccupiedSleepingSlot check is missing somewhere.");
+			Log.Error("Could not find good sleeping slot position for " + pawn + ". Perhaps AnyUnoccupiedSleepingSlot check is missing somewhere.", false);
 			return bed.GetSleepingSlotPos(0);
 		}
 
@@ -325,22 +329,17 @@ namespace RimWorld
 
 		public static bool DisturbancePreventsLyingDown(Pawn pawn)
 		{
-			return Find.TickManager.TicksGame - pawn.mindState.lastDisturbanceTick < 400;
-		}
-
-		public static float PawnHealthRestEffectivenessFactor(Pawn pawn)
-		{
-			return pawn.health.capacities.GetLevel(PawnCapacityDefOf.BloodPumping) * pawn.health.capacities.GetLevel(PawnCapacityDefOf.Metabolism) * pawn.health.capacities.GetLevel(PawnCapacityDefOf.Breathing);
+			return !pawn.Downed && Find.TickManager.TicksGame - pawn.mindState.lastDisturbanceTick < 400;
 		}
 
 		public static bool Awake(this Pawn p)
 		{
-			return p.health.capacities.CanBeAwake && (!p.Spawned || p.CurJob == null || !p.jobs.curDriver.asleep);
+			return p.health.capacities.CanBeAwake && (!p.Spawned || p.CurJob == null || p.jobs.curDriver == null || !p.jobs.curDriver.asleep);
 		}
 
 		public static Building_Bed CurrentBed(this Pawn p)
 		{
-			if (!p.Spawned || p.CurJob == null || p.jobs.curDriver.layingDown != LayingDownState.LayingInBed)
+			if (!p.Spawned || p.CurJob == null || p.GetPosture() != PawnPosture.LayingInBed)
 			{
 				return null;
 			}
@@ -375,7 +374,7 @@ namespace RimWorld
 
 		public static void WakeUp(Pawn p)
 		{
-			if (p.CurJob != null && p.jobs.curDriver.layingDown != LayingDownState.NotLaying && !p.Downed)
+			if (p.CurJob != null && (p.GetPosture().Laying() || p.CurJobDef == JobDefOf.LayDown) && !p.Downed)
 			{
 				p.jobs.EndCurrentJob(JobCondition.InterruptForced, true);
 			}

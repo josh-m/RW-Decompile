@@ -20,7 +20,7 @@ namespace Verse
 
 		public override void DrawWorker(Vector3 loc, Rot4 rot, ThingDef thingDef, Thing thing, float extraRotation)
 		{
-			Log.ErrorOnce("Graphic_Scatter cannot draw realtime.", 9432243);
+			Log.ErrorOnce("Graphic_Scatter cannot draw realtime.", 9432243, false);
 		}
 
 		public override void Print(SectionLayer layer, Thing thing)
@@ -45,7 +45,7 @@ namespace Verse
 				Vector2 size = new Vector2(Rand.Range(0.8f, 1.2f), Rand.Range(0.8f, 1.2f));
 				float rot = (float)Rand.RangeInclusive(0, 360);
 				bool flipUv = Rand.Value < 0.5f;
-				Printer_Plane.PrintPlane(layer, center, size, matSingle, rot, flipUv, null, null, 0.01f);
+				Printer_Plane.PrintPlane(layer, center, size, matSingle, rot, flipUv, null, null, 0.01f, 0f);
 			}
 			Rand.PopState();
 		}

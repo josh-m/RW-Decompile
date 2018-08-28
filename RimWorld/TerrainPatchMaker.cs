@@ -19,6 +19,12 @@ namespace RimWorld
 
 		public int perlinOctaves = 6;
 
+		public float minFertility = -999f;
+
+		public float maxFertility = 999f;
+
+		public int minSize;
+
 		[Unsaved]
 		private ModuleBase noise;
 
@@ -36,8 +42,12 @@ namespace RimWorld
 			this.currentlyInitializedForMap = null;
 		}
 
-		public TerrainDef TerrainAt(IntVec3 c, Map map)
+		public TerrainDef TerrainAt(IntVec3 c, Map map, float fertility)
 		{
+			if (fertility < this.minFertility || fertility > this.maxFertility)
+			{
+				return null;
+			}
 			if (this.noise != null && map != this.currentlyInitializedForMap)
 			{
 				this.Cleanup();
@@ -45,6 +55,19 @@ namespace RimWorld
 			if (this.noise == null)
 			{
 				this.Init(map);
+			}
+			if (this.minSize > 0)
+			{
+				int count = 0;
+				map.floodFiller.FloodFill(c, (IntVec3 x) => TerrainThreshold.TerrainAtValue(this.thresholds, this.noise.GetValue(x)) != null, delegate(IntVec3 x)
+				{
+					count++;
+					return count >= this.minSize;
+				}, 2147483647, false, null);
+				if (count < this.minSize)
+				{
+					return null;
+				}
 			}
 			return TerrainThreshold.TerrainAtValue(this.thresholds, this.noise.GetValue(c));
 		}

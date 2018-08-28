@@ -34,7 +34,7 @@ namespace RimWorld
 			{
 				return false;
 			}
-			if (animal.RaceProps.TrainableIntelligence.intelligenceOrder < TrainableIntelligenceDefOf.Intermediate.intelligenceOrder)
+			if (animal.RaceProps.trainability.intelligenceOrder < TrainabilityDefOf.Intermediate.intelligenceOrder)
 			{
 				return false;
 			}
@@ -104,7 +104,7 @@ namespace RimWorld
 							humanlike.LabelShort,
 							text,
 							animal.Name.ToStringFull
-						}).AdjustedFor(animal).CapitalizeFirst();
+						}).AdjustedFor(animal, "PAWN").CapitalizeFirst();
 					}
 					else
 					{
@@ -114,7 +114,7 @@ namespace RimWorld
 							animal.LabelShort
 						}).CapitalizeFirst();
 					}
-					Messages.Message(text2, humanlike, MessageTypeDefOf.PositiveEvent);
+					Messages.Message(text2, humanlike, MessageTypeDefOf.PositiveEvent, true);
 				}
 				return true;
 			}

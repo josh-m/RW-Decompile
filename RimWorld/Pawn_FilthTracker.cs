@@ -12,7 +12,9 @@ namespace RimWorld
 
 		private List<Filth> carriedFilth = new List<Filth>();
 
-		private const float FilthPickupChance = 0.25f;
+		private ThingDef lastTerrainFilthDef;
+
+		private const float FilthPickupChance = 0.1f;
 
 		private const float FilthDropChance = 0.05f;
 
@@ -46,6 +48,7 @@ namespace RimWorld
 
 		public void ExposeData()
 		{
+			Scribe_Defs.Look<ThingDef>(ref this.lastTerrainFilthDef, "lastTerrainFilthDef");
 			Scribe_Collections.Look<Filth>(ref this.carriedFilth, "carriedFilth", LookMode.Deep, new object[0]);
 		}
 
@@ -55,34 +58,53 @@ namespace RimWorld
 			{
 				this.TryDropFilth();
 			}
-			if (Rand.Value < 0.25f)
+			if (Rand.Value < 0.1f)
 			{
 				this.TryPickupFilth();
 			}
-			if (!this.pawn.RaceProps.Humanlike && Rand.Value < PawnUtility.AnimalFilthChancePerCell(this.pawn.def, this.pawn.BodySize) && this.pawn.Position.GetTerrain(this.pawn.Map).acceptTerrainSourceFilth)
+			if (!this.pawn.RaceProps.Humanlike)
 			{
-				FilthMaker.MakeFilth(this.pawn.Position, this.pawn.Map, ThingDefOf.FilthAnimalFilth, 1);
+				if (Rand.Value < PawnUtility.AnimalFilthChancePerCell(this.pawn.def, this.pawn.BodySize) && this.pawn.Position.GetTerrain(this.pawn.Map).acceptTerrainSourceFilth)
+				{
+					FilthMaker.MakeFilth(this.pawn.Position, this.pawn.Map, ThingDefOf.Filth_AnimalFilth, 1);
+					FilthMonitor.Notify_FilthAnimalGenerated();
+				}
+			}
+			else if (Rand.Value < PawnUtility.HumanFilthChancePerCell(this.pawn.def, this.pawn.BodySize) && this.pawn.Position.GetTerrain(this.pawn.Map).acceptTerrainSourceFilth)
+			{
+				ThingDef filth_Trash;
+				if (this.lastTerrainFilthDef != null && Rand.Chance(0.66f))
+				{
+					filth_Trash = this.lastTerrainFilthDef;
+				}
+				else
+				{
+					filth_Trash = ThingDefOf.Filth_Trash;
+				}
+				FilthMaker.MakeFilth(this.pawn.Position, this.pawn.Map, filth_Trash, 1);
+				FilthMonitor.Notify_FilthHumanGenerated();
 			}
 		}
 
 		private void TryPickupFilth()
 		{
 			TerrainDef terrDef = this.pawn.Map.terrainGrid.TerrainAt(this.pawn.Position);
-			if (terrDef.terrainFilthDef != null)
+			if (terrDef.generatedFilth != null)
 			{
 				for (int i = this.carriedFilth.Count - 1; i >= 0; i--)
 				{
-					if (this.carriedFilth[i].def.filth.terrainSourced && this.carriedFilth[i].def != terrDef.terrainFilthDef)
+					if (this.carriedFilth[i].def.filth.terrainSourced && this.carriedFilth[i].def != terrDef.generatedFilth)
 					{
 						this.ThinCarriedFilth(this.carriedFilth[i]);
 					}
 				}
 				Filth filth = (from f in this.carriedFilth
-				where f.def == terrDef.terrainFilthDef
+				where f.def == terrDef.generatedFilth
 				select f).FirstOrDefault<Filth>();
 				if (filth == null || filth.thickness < 1)
 				{
-					this.GainFilth(terrDef.terrainFilthDef);
+					this.GainFilth(terrDef.generatedFilth);
+					FilthMonitor.Notify_FilthAccumulated();
 				}
 			}
 			List<Thing> thingList = this.pawn.Position.GetThingList(this.pawn.Map);
@@ -105,9 +127,11 @@ namespace RimWorld
 			}
 			for (int i = this.carriedFilth.Count - 1; i >= 0; i--)
 			{
-				if (this.carriedFilth[i].CanDropAt(this.pawn.Position, this.pawn.Map))
+				Filth filth = this.carriedFilth[i];
+				if (filth.CanDropAt(this.pawn.Position, this.pawn.Map))
 				{
 					this.DropCarriedFilth(this.carriedFilth[i]);
+					FilthMonitor.Notify_FilthDropped();
 				}
 			}
 		}
@@ -129,11 +153,19 @@ namespace RimWorld
 
 		public void GainFilth(ThingDef filthDef)
 		{
+			if (filthDef.filth.terrainSourced)
+			{
+				this.lastTerrainFilthDef = filthDef;
+			}
 			this.GainFilth(filthDef, null);
 		}
 
 		public void GainFilth(ThingDef filthDef, IEnumerable<string> sources)
 		{
+			if (filthDef.filth.terrainSourced)
+			{
+				this.lastTerrainFilthDef = filthDef;
+			}
 			Filth filth = null;
 			for (int i = 0; i < this.carriedFilth.Count; i++)
 			{

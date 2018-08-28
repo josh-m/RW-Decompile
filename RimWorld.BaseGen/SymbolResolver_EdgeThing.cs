@@ -188,7 +188,7 @@ namespace RimWorld.BaseGen
 				}
 				iterator.MoveNext();
 			}
-			Log.Error("We found a valid rect but we couldn't find the root position. This should never happen.");
+			Log.Error("We found a valid rect but we couldn't find the root position. This should never happen.", false);
 			spawnCell = IntVec3.Invalid;
 			return false;
 		}

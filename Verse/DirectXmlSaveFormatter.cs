@@ -5,7 +5,7 @@ using System.Xml.Linq;
 
 namespace Verse
 {
-	internal static class DirectXmlSaveFormatter
+	public static class DirectXmlSaveFormatter
 	{
 		public static void AddWhitespaceFromRoot(XElement root)
 		{

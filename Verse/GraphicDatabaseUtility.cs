@@ -42,7 +42,7 @@ namespace Verse
 				}
 				else
 				{
-					Log.Error("Cannot load assets with >3 pieces.");
+					Log.Error("Cannot load assets with >3 pieces.", false);
 				}
 				if (!loadedAssetNames.Contains(assetName))
 				{

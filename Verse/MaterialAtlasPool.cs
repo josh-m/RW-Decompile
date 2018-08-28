@@ -20,7 +20,7 @@ namespace Verse
 					float x = (float)(i % 4) * 0.25f + 0.03125f;
 					float y = (float)(i / 4) * 0.25f + 0.03125f;
 					Vector2 mainTextureOffset = new Vector2(x, y);
-					Material material = new Material(newRootMat);
+					Material material = MaterialAllocator.Create(newRootMat);
 					material.name = newRootMat.name + "_ASM" + i;
 					material.mainTextureScale = mainTextureScale;
 					material.mainTextureOffset = mainTextureOffset;
@@ -32,7 +32,7 @@ namespace Verse
 			{
 				if ((int)linkSet >= this.subMats.Length)
 				{
-					Log.Warning("Cannot get submat of index " + (int)linkSet + ": out of range.");
+					Log.Warning("Cannot get submat of index " + (int)linkSet + ": out of range.", false);
 					return BaseContent.BadMat;
 				}
 				return this.subMats[(int)linkSet];

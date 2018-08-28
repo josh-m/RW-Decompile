@@ -1,4 +1,5 @@
 using System;
+using UnityEngine;
 
 namespace Verse
 {
@@ -6,9 +7,9 @@ namespace Verse
 	{
 		private int forceNormalSpeedUntil;
 
-		private const int ForceTicksStandard = 790;
+		private const int ForceTicksStandard = 800;
 
-		private const int ForceTicksShort = 250;
+		private const int ForceTicksShort = 240;
 
 		public bool ForcedNormalSpeed
 		{
@@ -20,12 +21,15 @@ namespace Verse
 
 		public void SignalForceNormalSpeed()
 		{
-			this.forceNormalSpeedUntil = Find.TickManager.TicksGame + 790;
+			this.forceNormalSpeedUntil = Mathf.Max(new int[]
+			{
+				Find.TickManager.TicksGame + 800
+			});
 		}
 
 		public void SignalForceNormalSpeedShort()
 		{
-			this.forceNormalSpeedUntil = Find.TickManager.TicksGame + 250;
+			this.forceNormalSpeedUntil = Mathf.Max(this.forceNormalSpeedUntil, Find.TickManager.TicksGame + 240);
 		}
 	}
 }

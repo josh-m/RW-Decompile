@@ -40,7 +40,7 @@ namespace RimWorld.BaseGen
 			}
 			Thing thing = ThingMaker.MakeThing(ThingDefOf.Wall, wallStuff);
 			thing.SetFaction(rp.faction, null);
-			return GenSpawn.Spawn(thing, c, map);
+			return GenSpawn.Spawn(thing, c, map, WipeMode.Vanish);
 		}
 	}
 }

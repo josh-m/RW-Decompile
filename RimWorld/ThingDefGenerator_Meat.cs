@@ -28,7 +28,7 @@ namespace RimWorld
 							d.category = ThingCategory.Item;
 							d.thingClass = typeof(ThingWithComps);
 							d.graphicData = new GraphicData();
-							d.graphicData.graphicClass = typeof(Graphic_Single);
+							d.graphicData.graphicClass = typeof(Graphic_StackCount);
 							d.useHitPoints = true;
 							d.selectable = true;
 							d.SetStatBaseValue(StatDefOf.MaxHitPoints, 100f);
@@ -39,56 +39,76 @@ namespace RimWorld
 							rotProps.daysToRotStart = 2f;
 							rotProps.rotDestroys = true;
 							d.comps.Add(rotProps);
-							d.comps.Add(new CompProperties_FoodPoisoningChance());
 							d.tickerType = TickerType.Rare;
-							d.SetStatBaseValue(StatDefOf.Beauty, -20f);
+							d.SetStatBaseValue(StatDefOf.Beauty, -4f);
 							d.alwaysHaulable = true;
 							d.rotatable = false;
 							d.pathCost = 15;
 							d.drawGUIOverlay = true;
 							d.socialPropernessMatters = true;
+							d.modContentPack = sourceDef.modContentPack;
 							d.category = ThingCategory.Item;
-							d.description = "MeatDesc".Translate(new object[]
+							if (sourceDef.race.Humanlike)
 							{
-								sourceDef.label
-							});
+								d.description = "MeatHumanDesc".Translate(new object[]
+								{
+									sourceDef.label
+								});
+							}
+							else if (sourceDef.race.FleshType == FleshTypeDefOf.Insectoid)
+							{
+								d.description = "MeatInsectDesc".Translate(new object[]
+								{
+									sourceDef.label
+								});
+							}
+							else
+							{
+								d.description = "MeatDesc".Translate(new object[]
+								{
+									sourceDef.label
+								});
+							}
 							d.useHitPoints = true;
 							d.SetStatBaseValue(StatDefOf.MaxHitPoints, 60f);
 							d.SetStatBaseValue(StatDefOf.DeteriorationRate, 6f);
 							d.SetStatBaseValue(StatDefOf.Mass, 0.03f);
 							d.SetStatBaseValue(StatDefOf.Flammability, 0.5f);
-							d.BaseMarketValue = ThingDefGenerator_Meat.GetMeatMarketValue(sourceDef);
+							d.SetStatBaseValue(StatDefOf.Nutrition, 0.05f);
+							d.SetStatBaseValue(StatDefOf.FoodPoisonChanceFixedHuman, 0.02f);
+							d.BaseMarketValue = sourceDef.race.meatMarketValue;
 							if (d.thingCategories == null)
 							{
 								d.thingCategories = new List<ThingCategoryDef>();
 							}
-							DirectXmlCrossRefLoader.RegisterListWantsCrossRef<ThingCategoryDef>(d.thingCategories, "MeatRaw");
+							DirectXmlCrossRefLoader.RegisterListWantsCrossRef<ThingCategoryDef>(d.thingCategories, "MeatRaw", d);
 							d.ingestible = new IngestibleProperties();
+							d.ingestible.parent = d;
 							d.ingestible.foodType = FoodTypeFlags.Meat;
 							d.ingestible.preferability = FoodPreferability.RawBad;
 							DirectXmlCrossRefLoader.RegisterObjectWantsCrossRef(d.ingestible, "tasteThought", ThoughtDefOf.AteRawFood.defName);
-							d.ingestible.nutrition = 0.05f;
 							d.ingestible.ingestEffect = EffecterDefOf.EatMeat;
-							d.ingestible.ingestSound = SoundDef.Named("RawMeat_Eat");
+							d.ingestible.ingestSound = SoundDefOf.RawMeat_Eat;
 							d.ingestible.specialThoughtDirect = sourceDef.race.FleshType.ateDirect;
 							d.ingestible.specialThoughtAsIngredient = sourceDef.race.FleshType.ateAsIngredient;
+							d.graphicData.color = sourceDef.race.meatColor;
 							if (sourceDef.race.Humanlike)
 							{
-								d.graphicData.texPath = "Things/Item/Resource/MeatFoodRaw/MeatHuman";
+								d.graphicData.texPath = "Things/Item/Resource/MeatFoodRaw/Meat_Human";
+							}
+							else if (sourceDef.race.FleshType == FleshTypeDefOf.Insectoid)
+							{
+								d.graphicData.texPath = "Things/Item/Resource/MeatFoodRaw/Meat_Insect";
+							}
+							else if (sourceDef.race.baseBodySize < 0.7f)
+							{
+								d.graphicData.texPath = "Things/Item/Resource/MeatFoodRaw/Meat_Small";
 							}
 							else
 							{
-								if (sourceDef.race.baseBodySize < 0.7f)
-								{
-									d.graphicData.texPath = "Things/Item/Resource/MeatFoodRaw/MeatSmall";
-								}
-								else
-								{
-									d.graphicData.texPath = "Things/Item/Resource/MeatFoodRaw/MeatBig";
-								}
-								d.graphicData.color = sourceDef.race.meatColor;
+								d.graphicData.texPath = "Things/Item/Resource/MeatFoodRaw/Meat_Big";
 							}
-							d.defName = sourceDef.defName + "_Meat";
+							d.defName = "Meat_" + sourceDef.defName;
 							if (sourceDef.race.meatLabel.NullOrEmpty())
 							{
 								d.label = "MeatLabel".Translate(new object[]
@@ -107,15 +127,6 @@ namespace RimWorld
 					}
 				}
 			}
-		}
-
-		private static float GetMeatMarketValue(ThingDef sourceDef)
-		{
-			if (sourceDef.race.Humanlike)
-			{
-				return 0.8f;
-			}
-			return 2f;
 		}
 	}
 }

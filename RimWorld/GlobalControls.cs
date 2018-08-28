@@ -28,7 +28,7 @@ namespace RimWorld
 			num2 -= 4f;
 			GlobalControlsUtility.DoDate(num, 200f, ref num2);
 			Rect rect = new Rect(num - 30f, num2 - 26f, 230f, 26f);
-			Find.VisibleMap.weatherManager.DoWeatherGUI(rect);
+			Find.CurrentMap.weatherManager.DoWeatherGUI(rect);
 			num2 -= rect.height;
 			Rect rect2 = new Rect(num - 100f, num2 - 26f, 293f, 26f);
 			Text.Anchor = TextAnchor.MiddleRight;
@@ -36,15 +36,15 @@ namespace RimWorld
 			Text.Anchor = TextAnchor.UpperLeft;
 			num2 -= 26f;
 			float num3 = 230f;
-			float num4 = Find.VisibleMap.gameConditionManager.TotalHeightAt(num3 - 15f);
+			float num4 = Find.CurrentMap.gameConditionManager.TotalHeightAt(num3 - 15f);
 			Rect rect3 = new Rect(num - 30f, num2 - num4, num3, num4);
-			Find.VisibleMap.gameConditionManager.DoConditionsUI(rect3);
+			Find.CurrentMap.gameConditionManager.DoConditionsUI(rect3);
 			num2 -= rect3.height;
 			if (Prefs.ShowRealtimeClock)
 			{
 				GlobalControlsUtility.DoRealtimeClock(num, 200f, ref num2);
 			}
-			TimedForcedExit component = Find.VisibleMap.info.parent.GetComponent<TimedForcedExit>();
+			TimedForcedExit component = Find.CurrentMap.Parent.GetComponent<TimedForcedExit>();
 			if (component != null && component.ForceExitAndRemoveMapCountdownActive)
 			{
 				Rect rect4 = new Rect(num, num2 - 26f, 193f, 26f);
@@ -61,15 +61,15 @@ namespace RimWorld
 		{
 			IntVec3 intVec = UI.MouseCell();
 			IntVec3 c = intVec;
-			Room room = intVec.GetRoom(Find.VisibleMap, RegionType.Set_All);
+			Room room = intVec.GetRoom(Find.CurrentMap, RegionType.Set_All);
 			if (room == null)
 			{
 				for (int i = 0; i < 9; i++)
 				{
 					IntVec3 intVec2 = intVec + GenAdj.AdjacentCellsAndInside[i];
-					if (intVec2.InBounds(Find.VisibleMap))
+					if (intVec2.InBounds(Find.CurrentMap))
 					{
-						Room room2 = intVec2.GetRoom(Find.VisibleMap, RegionType.Set_All);
+						Room room2 = intVec2.GetRoom(Find.CurrentMap, RegionType.Set_All);
 						if (room2 != null && ((!room2.PsychologicallyOutdoors && !room2.UsesOutdoorTemperature) || (!room2.PsychologicallyOutdoors && (room == null || room.PsychologicallyOutdoors)) || (room2.PsychologicallyOutdoors && room == null)))
 						{
 							c = intVec2;
@@ -78,16 +78,16 @@ namespace RimWorld
 					}
 				}
 			}
-			if (room == null && intVec.InBounds(Find.VisibleMap))
+			if (room == null && intVec.InBounds(Find.CurrentMap))
 			{
-				Building edifice = intVec.GetEdifice(Find.VisibleMap);
+				Building edifice = intVec.GetEdifice(Find.CurrentMap);
 				if (edifice != null)
 				{
-					CellRect.CellRectIterator iterator = edifice.OccupiedRect().ExpandedBy(1).ClipInsideMap(Find.VisibleMap).GetIterator();
+					CellRect.CellRectIterator iterator = edifice.OccupiedRect().ExpandedBy(1).ClipInsideMap(Find.CurrentMap).GetIterator();
 					while (!iterator.Done())
 					{
 						IntVec3 current = iterator.Current;
-						room = current.GetRoom(Find.VisibleMap, RegionType.Set_All);
+						room = current.GetRoom(Find.CurrentMap, RegionType.Set_All);
 						if (room != null && !room.PsychologicallyOutdoors)
 						{
 							c = current;
@@ -98,7 +98,7 @@ namespace RimWorld
 				}
 			}
 			string str;
-			if (c.InBounds(Find.VisibleMap) && !c.Fogged(Find.VisibleMap) && room != null && !room.PsychologicallyOutdoors)
+			if (c.InBounds(Find.CurrentMap) && !c.Fogged(Find.CurrentMap) && room != null && !room.PsychologicallyOutdoors)
 			{
 				if (room.OpenRoofCount == 0)
 				{
@@ -113,7 +113,7 @@ namespace RimWorld
 			{
 				str = "Outdoors".Translate();
 			}
-			float celsiusTemp = (room != null && !c.Fogged(Find.VisibleMap)) ? room.Temperature : Find.VisibleMap.mapTemperature.OutdoorTemp;
+			float celsiusTemp = (room != null && !c.Fogged(Find.CurrentMap)) ? room.Temperature : Find.CurrentMap.mapTemperature.OutdoorTemp;
 			return str + " " + celsiusTemp.ToStringTemperature("F0");
 		}
 

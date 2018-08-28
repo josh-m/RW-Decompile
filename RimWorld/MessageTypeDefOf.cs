@@ -29,5 +29,10 @@ namespace RimWorld
 		public static MessageTypeDef CautionInput;
 
 		public static MessageTypeDef SilentInput;
+
+		static MessageTypeDefOf()
+		{
+			DefOfHelper.EnsureInitializedInCtor(typeof(MessageTypeDefOf));
+		}
 	}
 }

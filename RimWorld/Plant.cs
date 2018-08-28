@@ -56,11 +56,18 @@ namespace RimWorld
 
 		private const float MinAnimalEatPlantsTemperature = 0f;
 
-		public const float SeedShootMinGrowthPercent = 0.6f;
-
 		public const float TopVerticesAltitudeBias = 0.1f;
 
 		private static Graphic GraphicSowing = GraphicDatabase.Get<Graphic_Single>("Things/Plant/Plant_Sowing", ShaderDatabase.Cutout, Vector2.one, Color.white);
+
+		[TweakValue("Graphics", -1f, 1f)]
+		private static float LeafSpawnRadius = 0.4f;
+
+		[TweakValue("Graphics", 0f, 2f)]
+		private static float LeafSpawnYMin = 0.3f;
+
+		[TweakValue("Graphics", 0f, 2f)]
+		private static float LeafSpawnYMax = 1f;
 
 		public virtual float Growth
 		{
@@ -144,14 +151,6 @@ namespace RimWorld
 			}
 		}
 
-		public virtual bool CanReproduceNow
-		{
-			get
-			{
-				return base.Spawned && this.def.plant.reproduces && this.growthInt >= 0.6f && GenPlant.SnowAllowsPlanting(base.Position, base.Map) && !this.Blighted;
-			}
-		}
-
 		public override bool IngestibleNow
 		{
 			get
@@ -215,6 +214,10 @@ namespace RimWorld
 			get
 			{
 				if (this.Blighted)
+				{
+					return 0f;
+				}
+				if (base.Spawned && !PlantUtility.GrowthSeasonNow(base.Position, base.Map, false))
 				{
 					return 0f;
 				}
@@ -396,7 +399,7 @@ namespace RimWorld
 				}
 				if (!base.Spawned)
 				{
-					Log.Warning("Can't determine if crop when unspawned.");
+					Log.Warning("Can't determine if crop when unspawned.", false);
 					return false;
 				}
 				return this.def == WorkGiver_Grower.CalculateWantedPlantDef(base.Position, base.Map);
@@ -406,16 +409,16 @@ namespace RimWorld
 		public override void SpawnSetup(Map map, bool respawningAfterLoad)
 		{
 			base.SpawnSetup(map, respawningAfterLoad);
-			if (Current.ProgramState == ProgramState.Playing)
+			if (Current.ProgramState == ProgramState.Playing && !respawningAfterLoad)
 			{
 				this.CheckTemperatureMakeLeafless();
 			}
 		}
 
-		public override void DeSpawn()
+		public override void DeSpawn(DestroyMode mode = DestroyMode.Vanish)
 		{
 			Blight firstBlight = base.Position.GetFirstBlight(base.Map);
-			base.DeSpawn();
+			base.DeSpawn(mode);
 			if (firstBlight != null)
 			{
 				firstBlight.Notify_PlantDeSpawned();
@@ -439,15 +442,7 @@ namespace RimWorld
 
 		protected override void IngestedCalculateAmounts(Pawn ingester, float nutritionWanted, out int numTaken, out float nutritionIngested)
 		{
-			float num = this.def.ingestible.nutrition;
-			if (this.def.plant.Sowable)
-			{
-				num *= this.growthInt;
-			}
-			else
-			{
-				num *= Mathf.Lerp(0.5f, 1f, this.growthInt);
-			}
+			float statValue = this.GetStatValue(StatDefOf.Nutrition, true);
 			if (this.def.plant.HarvestDestroys)
 			{
 				numTaken = 1;
@@ -465,7 +460,7 @@ namespace RimWorld
 				}
 				numTaken = 0;
 			}
-			nutritionIngested = num;
+			nutritionIngested = statValue;
 		}
 
 		public virtual void PlantCollected()
@@ -499,10 +494,10 @@ namespace RimWorld
 				{
 					Messages.Message("MessagePlantDiedOfPoison".Translate(new object[]
 					{
-						this.Label
-					}).CapitalizeFirst(), new TargetInfo(base.Position, map, false), MessageTypeDefOf.NegativeEvent);
+						this.GetCustomLabelNoCount(false)
+					}).CapitalizeFirst(), new TargetInfo(base.Position, map, false), MessageTypeDefOf.NegativeEvent, true);
 				}
-				base.TakeDamage(new DamageInfo(DamageDefOf.Rotting, 99999, -1f, null, null, null, DamageInfo.SourceCategory.ThingOrUnknown));
+				base.TakeDamage(new DamageInfo(DamageDefOf.Rotting, 99999f, 0f, -1f, null, null, null, DamageInfo.SourceCategory.ThingOrUnknown, null));
 			}
 			else if (this.def.plant.dieIfLeafless)
 			{
@@ -514,19 +509,19 @@ namespace RimWorld
 						{
 							Messages.Message("MessagePlantDiedOfCold".Translate(new object[]
 							{
-								this.Label
-							}).CapitalizeFirst(), new TargetInfo(base.Position, map, false), MessageTypeDefOf.NegativeEvent);
+								this.GetCustomLabelNoCount(false)
+							}).CapitalizeFirst(), new TargetInfo(base.Position, map, false), MessageTypeDefOf.NegativeEvent, true);
 						}
 					}
 					else if (cause == Plant.LeaflessCause.Poison && MessagesRepeatAvoider.MessageShowAllowed("MessagePlantDiedOfPoison-" + this.def.defName, 240f))
 					{
 						Messages.Message("MessagePlantDiedOfPoison".Translate(new object[]
 						{
-							this.Label
-						}).CapitalizeFirst(), new TargetInfo(base.Position, map, false), MessageTypeDefOf.NegativeEvent);
+							this.GetCustomLabelNoCount(false)
+						}).CapitalizeFirst(), new TargetInfo(base.Position, map, false), MessageTypeDefOf.NegativeEvent, true);
 					}
 				}
-				base.TakeDamage(new DamageInfo(DamageDefOf.Rotting, 99999, -1f, null, null, null, DamageInfo.SourceCategory.ThingOrUnknown));
+				base.TakeDamage(new DamageInfo(DamageDefOf.Rotting, 99999f, 0f, -1f, null, null, null, DamageInfo.SourceCategory.ThingOrUnknown, null));
 			}
 			else
 			{
@@ -545,7 +540,7 @@ namespace RimWorld
 			{
 				return;
 			}
-			if (GenPlant.GrowthSeasonNow(base.Position, base.Map))
+			if (PlantUtility.GrowthSeasonNow(base.Position, base.Map, false))
 			{
 				float num = this.growthInt;
 				bool flag = this.LifeStage == PlantLifeStage.Mature;
@@ -557,10 +552,6 @@ namespace RimWorld
 				if (((!flag && this.LifeStage == PlantLifeStage.Mature) || (int)(num * 10f) != (int)(this.growthInt * 10f)) && this.CurrentlyCultivated())
 				{
 					base.Map.mapDrawer.MapMeshDirty(base.Position, MapMeshFlag.Things);
-				}
-				if (this.CanReproduceNow && Rand.MTBEventOccurs(this.def.plant.reproduceMtbDays, 60000f, 2000f))
-				{
-					GenPlantReproduction.TryReproduceFrom(base.Position, this.def, SeedTargFindMode.Reproduce, base.Map);
 				}
 			}
 			if (!this.HasEnoughLightToGrow)
@@ -578,8 +569,8 @@ namespace RimWorld
 				bool isCrop = this.IsCrop;
 				bool harvestableNow = this.HarvestableNow;
 				bool dyingBecauseExposedToLight = this.DyingBecauseExposedToLight;
-				int amount = Mathf.CeilToInt(this.CurrentDyingDamagePerTick * 2000f);
-				base.TakeDamage(new DamageInfo(DamageDefOf.Rotting, amount, -1f, null, null, null, DamageInfo.SourceCategory.ThingOrUnknown));
+				int num2 = Mathf.CeilToInt(this.CurrentDyingDamagePerTick * 2000f);
+				base.TakeDamage(new DamageInfo(DamageDefOf.Rotting, (float)num2, 0f, -1f, null, null, null, DamageInfo.SourceCategory.ThingOrUnknown, null));
 				if (base.Destroyed)
 				{
 					if (isCrop && this.def.plant.Harvestable && MessagesRepeatAvoider.MessageShowAllowed("MessagePlantDiedOfRot-" + this.def.defName, 240f))
@@ -599,13 +590,24 @@ namespace RimWorld
 						}
 						Messages.Message(key.Translate(new object[]
 						{
-							this.Label
-						}).CapitalizeFirst(), new TargetInfo(base.Position, map, false), MessageTypeDefOf.NegativeEvent);
+							this.GetCustomLabelNoCount(false)
+						}).CapitalizeFirst(), new TargetInfo(base.Position, map, false), MessageTypeDefOf.NegativeEvent, true);
 					}
 					return;
 				}
 			}
 			this.cachedLabelMouseover = null;
+			if (this.def.plant.dropLeaves)
+			{
+				MoteLeaf moteLeaf = MoteMaker.MakeStaticMote(Vector3.zero, base.Map, ThingDefOf.Mote_Leaf, 1f) as MoteLeaf;
+				if (moteLeaf != null)
+				{
+					float num3 = this.def.plant.visualSizeRange.LerpThroughRange(this.growthInt);
+					float treeHeight = this.def.graphicData.drawSize.x * num3;
+					Vector3 b = Rand.InsideUnitCircleVec3 * Plant.LeafSpawnRadius;
+					moteLeaf.Initialize(base.Position.ToVector3Shifted() + Vector3.up * Rand.Range(Plant.LeafSpawnYMin, Plant.LeafSpawnYMax) + b + Vector3.forward * this.def.graphicData.shadowData.offset.z, Rand.Value * 2000.TicksToSeconds(), b.z > 0f, treeHeight);
+				}
+			}
 		}
 
 		protected virtual bool CurrentlyCultivated()
@@ -627,17 +629,14 @@ namespace RimWorld
 			return edifice != null && edifice.def.building.SupportsPlants;
 		}
 
+		public virtual bool CanYieldNow()
+		{
+			return this.HarvestableNow && this.def.plant.harvestYield > 0f && !this.Blighted;
+		}
+
 		public virtual int YieldNow()
 		{
-			if (!this.HarvestableNow)
-			{
-				return 0;
-			}
-			if (this.def.plant.harvestYield <= 0f)
-			{
-				return 0;
-			}
-			if (this.Blighted)
+			if (!this.CanYieldNow())
 			{
 				return 0;
 			}
@@ -687,33 +686,33 @@ namespace RimWorld
 					{
 					case 1:
 						num7 = 1;
-						goto IL_19E;
+						goto IL_19F;
 					case 2:
 					case 3:
 						IL_13C:
 						if (maxMeshCount == 9)
 						{
 							num7 = 3;
-							goto IL_19E;
+							goto IL_19F;
 						}
 						if (maxMeshCount == 16)
 						{
 							num7 = 4;
-							goto IL_19E;
+							goto IL_19F;
 						}
 						if (maxMeshCount != 25)
 						{
-							Log.Error(this.def + " must have plant.MaxMeshCount that is a perfect square.");
-							goto IL_19E;
+							Log.Error(this.def + " must have plant.MaxMeshCount that is a perfect square.", false);
+							goto IL_19F;
 						}
 						num7 = 5;
-						goto IL_19E;
+						goto IL_19F;
 					case 4:
 						num7 = 2;
-						goto IL_19E;
+						goto IL_19F;
 					}
 					goto IL_13C;
-					IL_19E:
+					IL_19F:
 					float num8 = 1f / (float)num7;
 					vector = base.Position.ToVector3();
 					vector.y = this.def.Altitude;
@@ -728,13 +727,13 @@ namespace RimWorld
 				}
 				bool @bool = Rand.Bool;
 				Material matSingle = this.Graphic.MatSingle;
-				GenPlant.SetWindExposureColors(Plant.workingColors, this);
+				PlantUtility.SetWindExposureColors(Plant.workingColors, this);
 				Vector2 vector2 = new Vector2(num3, num3);
 				Vector3 center = vector;
 				Vector2 size = vector2;
 				Material mat = matSingle;
 				bool flipUv = @bool;
-				Printer_Plane.PrintPlane(layer, center, size, mat, 0f, flipUv, null, Plant.workingColors, 0.1f);
+				Printer_Plane.PrintPlane(layer, center, size, mat, 0f, flipUv, null, Plant.workingColors, 0.1f, (float)(this.HashOffset() % 1024));
 				num4++;
 				if (num4 >= num)
 				{
@@ -818,7 +817,7 @@ namespace RimWorld
 		{
 			if (!this.Blighted)
 			{
-				GenSpawn.Spawn(ThingDefOf.Blight, base.Position, base.Map);
+				GenSpawn.Spawn(ThingDefOf.Blight, base.Position, base.Map, WipeMode.Vanish);
 			}
 		}
 

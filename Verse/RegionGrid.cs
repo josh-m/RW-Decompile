@@ -25,7 +25,7 @@ namespace Verse
 			{
 				if (!this.map.regionAndRoomUpdater.Enabled && this.map.regionAndRoomUpdater.AnythingToRebuild)
 				{
-					Log.Warning("Trying to get the region grid but RegionAndRoomUpdater is disabled. The result may be incorrect.");
+					Log.Warning("Trying to get the region grid but RegionAndRoomUpdater is disabled. The result may be incorrect.", false);
 				}
 				this.map.regionAndRoomUpdater.TryRebuildDirtyRegionsAndRooms();
 				return this.regionGrid;
@@ -61,7 +61,7 @@ namespace Verse
 			{
 				if (!this.map.regionAndRoomUpdater.Enabled && this.map.regionAndRoomUpdater.AnythingToRebuild)
 				{
-					Log.Warning("Trying to get all valid regions but RegionAndRoomUpdater is disabled. The result may be incorrect.");
+					Log.Warning("Trying to get all valid regions but RegionAndRoomUpdater is disabled. The result may be incorrect.", false);
 				}
 				this.map.regionAndRoomUpdater.TryRebuildDirtyRegionsAndRooms();
 				RegionGrid.allRegionsYielded.Clear();
@@ -93,12 +93,12 @@ namespace Verse
 		{
 			if (!c.InBounds(this.map))
 			{
-				Log.Error("Tried to get valid region out of bounds at " + c);
+				Log.Error("Tried to get valid region out of bounds at " + c, false);
 				return null;
 			}
 			if (!this.map.regionAndRoomUpdater.Enabled && this.map.regionAndRoomUpdater.AnythingToRebuild)
 			{
-				Log.Warning("Trying to get valid region at " + c + " but RegionAndRoomUpdater is disabled. The result may be incorrect.");
+				Log.Warning("Trying to get valid region at " + c + " but RegionAndRoomUpdater is disabled. The result may be incorrect.", false);
 			}
 			this.map.regionAndRoomUpdater.TryRebuildDirtyRegionsAndRooms();
 			Region region = this.regionGrid[this.map.cellIndices.CellToIndex(c)];
@@ -113,7 +113,7 @@ namespace Verse
 		{
 			if (!c.InBounds(this.map))
 			{
-				Log.Error("Tried to get valid region out of bounds at " + c);
+				Log.Error("Tried to get valid region out of bounds at " + c, false);
 				return null;
 			}
 			Region region = this.regionGrid[this.map.cellIndices.CellToIndex(c)];
@@ -153,7 +153,7 @@ namespace Verse
 
 		public void DebugDraw()
 		{
-			if (this.map != Find.VisibleMap)
+			if (this.map != Find.CurrentMap)
 			{
 				return;
 			}

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using Verse;
@@ -12,8 +13,6 @@ namespace RimWorld
 		private int prevColorIndex = -1;
 
 		private float curColorTransition;
-
-		private SkyColorSet AuroraSkyColors = new SkyColorSet(Color.white, new Color(0.92f, 0.92f, 0.92f), Color.white, 1f);
 
 		private const int LerpTicks = 200;
 
@@ -43,22 +42,6 @@ namespace RimWorld
 			new Color(0.75f, 0f, 1f)
 		};
 
-		public override float SkyGazeChanceFactor
-		{
-			get
-			{
-				return 5f;
-			}
-		}
-
-		public override float SkyGazeJoyGainFactor
-		{
-			get
-			{
-				return 3f;
-			}
-		}
-
 		public Color CurrentColor
 		{
 			get
@@ -75,11 +58,19 @@ namespace RimWorld
 			}
 		}
 
-		private float Brightness
+		private bool BrightInAllMaps
 		{
 			get
 			{
-				return (!base.Permanent) ? 0.73f : Mathf.Lerp(0.73f, 1f, GenCelestial.CurCelestialSunGlow(base.Map));
+				List<Map> maps = Find.Maps;
+				for (int i = 0; i < maps.Count; i++)
+				{
+					if (GenCelestial.CurCelestialSunGlow(maps[i]) <= 0.5f)
+					{
+						return false;
+					}
+				}
+				return true;
 			}
 		}
 
@@ -99,18 +90,32 @@ namespace RimWorld
 			this.curColorTransition = 1f;
 		}
 
-		public override float SkyTargetLerpFactor()
+		public override float SkyGazeChanceFactor(Map map)
+		{
+			return 8f;
+		}
+
+		public override float SkyGazeJoyGainFactor(Map map)
+		{
+			return 5f;
+		}
+
+		public override float SkyTargetLerpFactor(Map map)
 		{
 			return GameConditionUtility.LerpInOutValue(this, 200f, 1f);
 		}
 
-		public override SkyTarget? SkyTarget()
+		public override SkyTarget? SkyTarget(Map map)
 		{
 			Color currentColor = this.CurrentColor;
-			this.AuroraSkyColors.sky = Color.Lerp(Color.white, currentColor, 0.075f) * this.Brightness;
-			this.AuroraSkyColors.overlay = Color.Lerp(Color.white, currentColor, 0.025f) * this.Brightness;
-			float glow = Mathf.Max(GenCelestial.CurCelestialSunGlow(base.Map), 0.25f);
-			return new SkyTarget?(new SkyTarget(glow, this.AuroraSkyColors, 1f, 1f));
+			SkyColorSet colorSet = new SkyColorSet(Color.Lerp(Color.white, currentColor, 0.075f) * this.Brightness(map), new Color(0.92f, 0.92f, 0.92f), Color.Lerp(Color.white, currentColor, 0.025f) * this.Brightness(map), 1f);
+			float glow = Mathf.Max(GenCelestial.CurCelestialSunGlow(map), 0.25f);
+			return new SkyTarget?(new SkyTarget(glow, colorSet, 1f, 1f));
+		}
+
+		private float Brightness(Map map)
+		{
+			return Mathf.Max(0.73f, GenCelestial.CurCelestialSunGlow(map));
 		}
 
 		public override void GameConditionTick()
@@ -122,7 +127,7 @@ namespace RimWorld
 				this.curColorIndex = this.GetNewColorIndex();
 				this.curColorTransition = 0f;
 			}
-			if (!base.Permanent && base.TicksLeft > 200 && GenCelestial.CurCelestialSunGlow(base.Map) > 0.5f)
+			if (!base.Permanent && base.TicksLeft > 200 && this.BrightInAllMaps)
 			{
 				base.TicksLeft = 200;
 			}

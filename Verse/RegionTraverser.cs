@@ -15,6 +15,8 @@ namespace Verse
 
 			private int closedArrayPos;
 
+			private const int skippableRegionSize = 4;
+
 			public BFSWorker(int closedArrayPos)
 			{
 				this.closedArrayPos = closedArrayPos;
@@ -61,7 +63,10 @@ namespace Verse
 						this.FinalizeSearch();
 						return;
 					}
-					this.numRegionsProcessed++;
+					if (RegionTraverser.ShouldCountRegion(region))
+					{
+						this.numRegionsProcessed++;
+					}
 					if (this.numRegionsProcessed >= maxRegions)
 					{
 						this.FinalizeSearch();
@@ -88,14 +93,14 @@ namespace Verse
 
 		public static int NumWorkers;
 
+		public static readonly RegionEntryPredicate PassAll;
+
 		static RegionTraverser()
 		{
 			RegionTraverser.freeWorkers = new Queue<RegionTraverser.BFSWorker>();
 			RegionTraverser.NumWorkers = 8;
-			for (int i = 0; i < RegionTraverser.NumWorkers; i++)
-			{
-				RegionTraverser.freeWorkers.Enqueue(new RegionTraverser.BFSWorker(i));
-			}
+			RegionTraverser.PassAll = ((Region from, Region to) => true);
+			RegionTraverser.RecreateWorkers();
 		}
 
 		public static Room FloodAndSetRooms(Region root, Map map, Room existingRoom)
@@ -142,10 +147,6 @@ namespace Verse
 
 		public static bool WithinRegions(this IntVec3 A, IntVec3 B, Map map, int regionLookCount, TraverseParms traverseParams, RegionType traversableRegionTypes = RegionType.Set_Passable)
 		{
-			if (traverseParams.mode == TraverseMode.PassAllDestroyableThings)
-			{
-				throw new ArgumentException("traverseParams (PassAllDestroyableThings not supported)");
-			}
 			Region region = A.GetRegion(map, traversableRegionTypes);
 			if (region == null)
 			{
@@ -184,6 +185,20 @@ namespace Verse
 			}, maxRegions, traversableRegionTypes);
 		}
 
+		public static bool ShouldCountRegion(Region r)
+		{
+			return !r.IsDoorway;
+		}
+
+		public static void RecreateWorkers()
+		{
+			RegionTraverser.freeWorkers.Clear();
+			for (int i = 0; i < RegionTraverser.NumWorkers; i++)
+			{
+				RegionTraverser.freeWorkers.Enqueue(new RegionTraverser.BFSWorker(i));
+			}
+		}
+
 		public static void BreadthFirstTraverse(IntVec3 start, Map map, RegionEntryPredicate entryCondition, RegionProcessor regionProcessor, int maxRegions = 999999, RegionType traversableRegionTypes = RegionType.Set_Passable)
 		{
 			Region region = start.GetRegion(map, traversableRegionTypes);
@@ -198,12 +213,12 @@ namespace Verse
 		{
 			if (RegionTraverser.freeWorkers.Count == 0)
 			{
-				Log.Error("No free workers for breadth-first traversal. Either BFS recurred deeper than " + RegionTraverser.NumWorkers + ", or a bug has put this system in an inconsistent state. Resetting.");
+				Log.Error("No free workers for breadth-first traversal. Either BFS recurred deeper than " + RegionTraverser.NumWorkers + ", or a bug has put this system in an inconsistent state. Resetting.", false);
 				return;
 			}
 			if (root == null)
 			{
-				Log.Error("BreadthFirstTraverse with null root region.");
+				Log.Error("BreadthFirstTraverse with null root region.", false);
 				return;
 			}
 			RegionTraverser.BFSWorker bFSWorker = RegionTraverser.freeWorkers.Dequeue();
@@ -213,7 +228,7 @@ namespace Verse
 			}
 			catch (Exception ex)
 			{
-				Log.Error("Exception in BreadthFirstTraverse: " + ex.ToString());
+				Log.Error("Exception in BreadthFirstTraverse: " + ex.ToString(), false);
 			}
 			finally
 			{

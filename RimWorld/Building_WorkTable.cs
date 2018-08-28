@@ -22,14 +22,6 @@ namespace RimWorld
 			}
 		}
 
-		public virtual bool UsableNow
-		{
-			get
-			{
-				return (this.CanWorkWithoutPower || (this.powerComp != null && this.powerComp.PowerOn)) && (this.refuelableComp == null || this.refuelableComp.HasFuel) && (this.breakdownableComp == null || !this.breakdownableComp.BrokenDown);
-			}
-		}
-
 		public BillStack BillStack
 		{
 			get
@@ -74,6 +66,10 @@ namespace RimWorld
 			this.powerComp = base.GetComp<CompPowerTrader>();
 			this.refuelableComp = base.GetComp<CompRefuelable>();
 			this.breakdownableComp = base.GetComp<CompBreakdownable>();
+			foreach (Bill current in this.billStack)
+			{
+				current.ValidateSettings();
+			}
 		}
 
 		public virtual void UsedThisTick()
@@ -86,7 +82,12 @@ namespace RimWorld
 
 		public bool CurrentlyUsableForBills()
 		{
-			return this.UsableNow;
+			return this.UsableForBillsAfterFueling() && (this.CanWorkWithoutPower || (this.powerComp != null && this.powerComp.PowerOn));
+		}
+
+		public bool UsableForBillsAfterFueling()
+		{
+			return (this.CanWorkWithoutPower || (this.powerComp != null && this.powerComp.PowerOn)) && (this.breakdownableComp == null || !this.breakdownableComp.BrokenDown);
 		}
 	}
 }

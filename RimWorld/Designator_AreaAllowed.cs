@@ -4,7 +4,7 @@ using Verse;
 
 namespace RimWorld
 {
-	public abstract class Designator_AreaAllowed : Designator
+	public abstract class Designator_AreaAllowed : Designator_Area
 	{
 		private static Area selectedArea;
 
@@ -34,8 +34,8 @@ namespace RimWorld
 
 		public Designator_AreaAllowed(DesignateMode mode)
 		{
-			this.soundDragSustain = SoundDefOf.DesignateDragStandard;
-			this.soundDragChanged = SoundDefOf.DesignateDragStandardChanged;
+			this.soundDragSustain = SoundDefOf.Designate_DragStandard;
+			this.soundDragChanged = SoundDefOf.Designate_DragStandard_Changed;
 			this.useMouseIcon = true;
 		}
 
@@ -67,7 +67,7 @@ namespace RimWorld
 			{
 				Designator_AreaAllowed.selectedArea = a;
 				base.ProcessInput(ev);
-			}, AllowedAreaMode.Any, false, true, base.Map);
+			}, false, true, base.Map);
 		}
 
 		protected override void FinalizeDesignationSucceeded()

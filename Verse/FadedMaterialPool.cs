@@ -100,7 +100,7 @@ namespace Verse
 			Material material;
 			if (!FadedMaterialPool.cachedMats.TryGetValue(key, out material))
 			{
-				material = new Material(sourceMat);
+				material = MaterialAllocator.Create(sourceMat);
 				material.color = new Color(1f, 1f, 1f, (float)FadedMaterialPool.IndexFromAlpha(alpha) / 30f);
 				FadedMaterialPool.cachedMats.Add(key, material);
 			}

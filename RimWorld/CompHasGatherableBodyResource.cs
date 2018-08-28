@@ -80,22 +80,24 @@ namespace RimWorld
 		{
 			if (!this.Active)
 			{
-				Log.Error(doer + " gathered body resources while not Active: " + this.parent);
+				Log.Error(doer + " gathered body resources while not Active: " + this.parent, false);
 			}
-			if (Rand.Value > doer.GetStatValue(StatDefOf.AnimalGatherYield, true))
+			if (!Rand.Chance(doer.GetStatValue(StatDefOf.AnimalGatherYield, true)))
 			{
 				Vector3 loc = (doer.DrawPos + this.parent.DrawPos) / 2f;
 				MoteMaker.ThrowText(loc, this.parent.Map, "TextMote_ProductWasted".Translate(), 3.65f);
-				return;
 			}
-			int i = GenMath.RoundRandom((float)this.ResourceAmount * this.fullness);
-			while (i > 0)
+			else
 			{
-				int num = Mathf.Clamp(i, 1, this.ResourceDef.stackLimit);
-				i -= num;
-				Thing thing = ThingMaker.MakeThing(this.ResourceDef, null);
-				thing.stackCount = num;
-				GenPlace.TryPlaceThing(thing, doer.Position, doer.Map, ThingPlaceMode.Near, null);
+				int i = GenMath.RoundRandom((float)this.ResourceAmount * this.fullness);
+				while (i > 0)
+				{
+					int num = Mathf.Clamp(i, 1, this.ResourceDef.stackLimit);
+					i -= num;
+					Thing thing = ThingMaker.MakeThing(this.ResourceDef, null);
+					thing.stackCount = num;
+					GenPlace.TryPlaceThing(thing, doer.Position, doer.Map, ThingPlaceMode.Near, null, null);
+				}
 			}
 			this.fullness = 0f;
 		}

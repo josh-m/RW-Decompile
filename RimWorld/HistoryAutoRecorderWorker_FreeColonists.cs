@@ -8,7 +8,7 @@ namespace RimWorld
 	{
 		public override float PullRecord()
 		{
-			return (float)PawnsFinder.AllMapsCaravansAndTravelingTransportPods_FreeColonists.Count<Pawn>();
+			return (float)PawnsFinder.AllMapsCaravansAndTravelingTransportPods_Alive_FreeColonists.Count<Pawn>();
 		}
 	}
 }

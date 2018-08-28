@@ -59,7 +59,7 @@ namespace RimWorld.Planet
 					Pawn pawn = this.pawn[0];
 					if (pawn.needs.food != null)
 					{
-						pawn.needs.food.ForceSetLevel(0.8f);
+						pawn.needs.food.CurLevelPercentage = 0.8f;
 					}
 				}
 			}

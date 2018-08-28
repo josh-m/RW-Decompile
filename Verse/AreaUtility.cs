@@ -7,7 +7,7 @@ namespace Verse
 {
 	public static class AreaUtility
 	{
-		public static void MakeAllowedAreaListFloatMenu(Action<Area> selAction, AllowedAreaMode mode, bool addNullAreaOption, bool addManageOption, Map map)
+		public static void MakeAllowedAreaListFloatMenu(Action<Area> selAction, bool addNullAreaOption, bool addManageOption, Map map)
 		{
 			List<FloatMenuOption> list = new List<FloatMenuOption>();
 			if (addNullAreaOption)
@@ -18,7 +18,7 @@ namespace Verse
 				}, MenuOptionPriority.High, null, null, 0f, null, null));
 			}
 			foreach (Area current in from a in map.areaManager.AllAreas
-			where a.AssignableAsAllowed(mode)
+			where a.AssignableAsAllowed()
 			select a)
 			{
 				Area localArea = current;

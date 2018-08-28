@@ -25,7 +25,7 @@ namespace RimWorld
 				spotMustBeStandable = true,
 				minSpacing = 5f,
 				clusterSize = ((this.thingDef.category != ThingCategory.Building) ? 4 : 1)
-			}.Generate(map);
+			}.Generate(map, default(GenStepParams));
 		}
 	}
 }

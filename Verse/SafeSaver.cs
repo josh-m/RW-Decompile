@@ -51,7 +51,7 @@ namespace Verse
 							SafeSaver.GetOldFileFullPath(path),
 							"\": ",
 							ex
-						}));
+						}), false);
 						throw;
 					}
 					try
@@ -68,7 +68,7 @@ namespace Verse
 							SafeSaver.GetFileFullPath(path),
 							"\": ",
 							ex2
-						}));
+						}), false);
 						SafeSaver.RemoveFileIfExists(SafeSaver.GetFileFullPath(path), false);
 						SafeSaver.RemoveFileIfExists(SafeSaver.GetNewFileFullPath(path), false);
 						try
@@ -85,7 +85,7 @@ namespace Verse
 								SafeSaver.GetFileFullPath(path),
 								"\": ",
 								ex3
-							}));
+							}), false);
 						}
 						throw;
 					}
@@ -125,7 +125,7 @@ namespace Verse
 					fullPath,
 					"\": ",
 					ex
-				}));
+				}), false);
 				Scribe.saver.ForceStop();
 				SafeSaver.RemoveFileIfExists(fullPath, false);
 				throw;
@@ -149,7 +149,7 @@ namespace Verse
 					path,
 					"\": ",
 					ex
-				}));
+				}), false);
 				if (rethrow)
 				{
 					throw;

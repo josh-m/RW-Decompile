@@ -85,7 +85,7 @@ namespace Verse
 					", we are running version ",
 					VersionControl.CurrentVersionStringWithRev,
 					"."
-				}));
+				}), false);
 			}
 		}
 
@@ -172,7 +172,7 @@ namespace Verse
 							IEnumerable<string> items = from id in Enumerable.Range(0, ScribeMetaHeaderUtility.loadedModIdsList.Count)
 							where ModLister.GetModWithIdentifier(ScribeMetaHeaderUtility.loadedModIdsList[id]) == null
 							select ScribeMetaHeaderUtility.loadedModNamesList[id];
-							Messages.Message(string.Format("{0}: {1}", "MissingMods".Translate(), GenText.ToCommaList(items, true)), MessageTypeDefOf.RejectInput);
+							Messages.Message(string.Format("{0}: {1}", "MissingMods".Translate(), items.ToCommaList(false)), MessageTypeDefOf.RejectInput, false);
 							<TryCreateDialogsForVersionMismatchWarnings>c__AnonStorey.dialog.buttonCClose = false;
 						}
 						else
@@ -203,10 +203,10 @@ namespace Verse
 			}
 			else
 			{
-				loadedModsSummary = GenText.ToCommaList(ScribeMetaHeaderUtility.loadedModNamesList, true);
+				loadedModsSummary = ScribeMetaHeaderUtility.loadedModNamesList.ToCommaList(false);
 			}
-			runningModsSummary = GenText.ToCommaList(from id in list
-			select ModLister.GetModWithIdentifier(id).Name, true);
+			runningModsSummary = (from id in list
+			select ModLister.GetModWithIdentifier(id).Name).ToCommaList(false);
 			return false;
 		}
 
@@ -251,7 +251,7 @@ namespace Verse
 			}
 			catch (Exception ex)
 			{
-				Log.Error("Exception getting game version of " + file.Name + ": " + ex.ToString());
+				Log.Error("Exception getting game version of " + file.Name + ": " + ex.ToString(), false);
 			}
 			return null;
 		}

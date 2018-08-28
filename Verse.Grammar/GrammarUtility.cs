@@ -8,22 +8,18 @@ namespace Verse.Grammar
 {
 	public static class GrammarUtility
 	{
-		public static IEnumerable<Rule> RulesForPawn(string prefix, Pawn pawn, Dictionary<string, string> constants = null)
+		public static IEnumerable<Rule> RulesForPawn(string pawnSymbol, Pawn pawn, Dictionary<string, string> constants = null)
 		{
 			if (pawn == null)
 			{
-				Log.ErrorOnce(string.Format("Tried to insert rule {0} for null pawn", prefix), 16015097);
+				Log.ErrorOnce(string.Format("Tried to insert rule {0} for null pawn", pawnSymbol), 16015097, false);
 				return Enumerable.Empty<Rule>();
 			}
-			if (pawn.RaceProps.Humanlike)
-			{
-				return GrammarUtility.RulesForPawn(prefix, pawn.Name, pawn.kindDef, pawn.gender, pawn.Faction, constants);
-			}
-			return GrammarUtility.RulesForPawn(prefix, null, pawn.kindDef, pawn.gender, pawn.Faction, constants);
+			return GrammarUtility.RulesForPawn(pawnSymbol, pawn.Name, (pawn.story == null) ? null : pawn.story.Title, pawn.kindDef, pawn.gender, pawn.Faction, constants);
 		}
 
 		[DebuggerHidden]
-		public static IEnumerable<Rule> RulesForPawn(string prefix, Name name, PawnKindDef kind, Gender gender, Faction faction, Dictionary<string, string> constants = null)
+		public static IEnumerable<Rule> RulesForPawn(string pawnSymbol, Name name, string title, PawnKindDef kind, Gender gender, Faction faction, Dictionary<string, string> constants = null)
 		{
 			string nameFull;
 			if (name != null)
@@ -34,7 +30,7 @@ namespace Verse.Grammar
 			{
 				nameFull = Find.ActiveLanguageWorker.WithIndefiniteArticle(kind.label);
 			}
-			yield return new Rule_String(prefix + "_nameFull", nameFull);
+			yield return new Rule_String(pawnSymbol + "_nameFull", nameFull);
 			string nameShort;
 			if (name != null)
 			{
@@ -44,18 +40,7 @@ namespace Verse.Grammar
 			{
 				nameShort = kind.label;
 			}
-			yield return new Rule_String(prefix + "_nameShort", nameShort);
-			string nameShortIndef;
-			if (name != null)
-			{
-				nameShortIndef = name.ToStringShort;
-			}
-			else
-			{
-				nameShortIndef = Find.ActiveLanguageWorker.WithIndefiniteArticle(kind.label);
-			}
-			yield return new Rule_String(prefix + "_nameShortIndef", nameShortIndef);
-			yield return new Rule_String(prefix + "_nameShortIndefinite", nameShortIndef);
+			yield return new Rule_String(pawnSymbol + "_label", nameShort);
 			string nameShortDef;
 			if (name != null)
 			{
@@ -65,19 +50,38 @@ namespace Verse.Grammar
 			{
 				nameShortDef = Find.ActiveLanguageWorker.WithDefiniteArticle(kind.label);
 			}
-			yield return new Rule_String(prefix + "_nameShortDef", nameShortDef);
-			yield return new Rule_String(prefix + "_nameShortDefinite", nameShortDef);
-			if (constants != null && kind != null)
+			yield return new Rule_String(pawnSymbol + "_definite", nameShortDef);
+			yield return new Rule_String(pawnSymbol + "_nameDef", nameShortDef);
+			string nameShortIndef;
+			if (name != null)
 			{
-				constants[prefix + "_flesh"] = kind.race.race.FleshType.defName;
+				nameShortIndef = name.ToStringShort;
 			}
+			else
+			{
+				nameShortIndef = Find.ActiveLanguageWorker.WithIndefiniteArticle(kind.label);
+			}
+			yield return new Rule_String(pawnSymbol + "_indefinite", nameShortIndef);
+			yield return new Rule_String(pawnSymbol + "_nameIndef", nameShortIndef);
+			yield return new Rule_String(pawnSymbol + "_pronoun", gender.GetPronoun());
+			yield return new Rule_String(pawnSymbol + "_possessive", gender.GetPossessive());
+			yield return new Rule_String(pawnSymbol + "_objective", gender.GetObjective());
 			if (faction != null)
 			{
-				yield return new Rule_String(prefix + "_factionName", faction.Name);
+				yield return new Rule_String(pawnSymbol + "_factionName", faction.Name);
 			}
-			yield return new Rule_String(prefix + "_pronoun", gender.GetPronoun());
-			yield return new Rule_String(prefix + "_possessive", gender.GetPossessive());
-			yield return new Rule_String(prefix + "_objective", gender.GetObjective());
+			if (kind != null)
+			{
+				yield return new Rule_String(pawnSymbol + "_kind", GenLabel.BestKindLabel(kind, gender, false, -1));
+			}
+			if (title != null)
+			{
+				yield return new Rule_String(pawnSymbol + "_title", title);
+			}
+			if (constants != null && kind != null)
+			{
+				constants[pawnSymbol + "_flesh"] = kind.race.race.FleshType.defName;
+			}
 		}
 
 		[DebuggerHidden]
@@ -85,24 +89,63 @@ namespace Verse.Grammar
 		{
 			if (def == null)
 			{
-				Log.ErrorOnce(string.Format("Tried to insert rule {0} for null def", prefix), 79641686);
+				Log.ErrorOnce(string.Format("Tried to insert rule {0} for null def", prefix), 79641686, false);
 			}
 			else
 			{
 				yield return new Rule_String(prefix + "_label", def.label);
-				yield return new Rule_String(prefix + "_labelDefinite", Find.ActiveLanguageWorker.WithDefiniteArticle(def.label));
-				yield return new Rule_String(prefix + "_labelIndefinite", Find.ActiveLanguageWorker.WithIndefiniteArticle(def.label));
+				yield return new Rule_String(prefix + "_definite", Find.ActiveLanguageWorker.WithDefiniteArticle(def.label));
+				yield return new Rule_String(prefix + "_indefinite", Find.ActiveLanguageWorker.WithIndefiniteArticle(def.label));
 				yield return new Rule_String(prefix + "_possessive", "Proits".Translate());
-				HediffDef hediffDef = def as HediffDef;
-				if (hediffDef != null)
-				{
-					string noun = hediffDef.labelNoun;
-					if (noun.NullOrEmpty())
-					{
-						noun = hediffDef.label;
-					}
-					yield return new Rule_String(prefix + "_labelNoun", noun);
-				}
+			}
+		}
+
+		[DebuggerHidden]
+		public static IEnumerable<Rule> RulesForBodyPartRecord(string prefix, BodyPartRecord part)
+		{
+			if (part == null)
+			{
+				Log.ErrorOnce(string.Format("Tried to insert rule {0} for null body part", prefix), 394876778, false);
+			}
+			else
+			{
+				yield return new Rule_String(prefix + "_label", part.Label);
+				yield return new Rule_String(prefix + "_definite", Find.ActiveLanguageWorker.WithDefiniteArticle(part.Label));
+				yield return new Rule_String(prefix + "_indefinite", Find.ActiveLanguageWorker.WithIndefiniteArticle(part.Label));
+				yield return new Rule_String(prefix + "_possessive", "Proits".Translate());
+			}
+		}
+
+		[DebuggerHidden]
+		public static IEnumerable<Rule> RulesForHediffDef(string prefix, HediffDef def, BodyPartRecord part)
+		{
+			foreach (Rule rule in GrammarUtility.RulesForDef(prefix, def))
+			{
+				yield return rule;
+			}
+			string noun = def.labelNoun;
+			if (noun.NullOrEmpty())
+			{
+				noun = def.label;
+			}
+			yield return new Rule_String(prefix + "_labelNoun", noun);
+			string pretty = def.PrettyTextForPart(part);
+			if (!pretty.NullOrEmpty())
+			{
+				yield return new Rule_String(prefix + "_labelNounPretty", pretty);
+			}
+		}
+
+		[DebuggerHidden]
+		public static IEnumerable<Rule> RulesForFaction(string prefix, Faction faction)
+		{
+			if (faction == null)
+			{
+				yield return new Rule_String(prefix + "_name", "FactionUnaffiliated".Translate());
+			}
+			else
+			{
+				yield return new Rule_String(prefix + "_name", faction.Name);
 			}
 		}
 	}

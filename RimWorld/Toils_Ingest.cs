@@ -48,7 +48,7 @@ namespace RimWorld
 				Thing thing = curJob.GetTarget(ind).Thing;
 				if (curJob.count <= 0)
 				{
-					Log.Error("Tried to do PickupIngestible toil with job.maxNumToCarry = " + curJob.count);
+					Log.Error("Tried to do PickupIngestible toil with job.maxNumToCarry = " + curJob.count, false);
 					actor.jobs.EndCurrentJob(JobCondition.Errored, true);
 					return;
 				}
@@ -128,7 +128,7 @@ namespace RimWorld
 				if (thing != null)
 				{
 					intVec = thing.Position;
-					actor.Reserve(thing, actor.CurJob, 1, -1, null);
+					actor.Reserve(thing, actor.CurJob, 1, -1, null, true);
 				}
 				actor.Map.pawnDestinationReservationManager.Reserve(actor, actor.CurJob, intVec);
 				actor.pather.StartPath(intVec, PathEndMode.OnCell);

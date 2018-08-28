@@ -12,6 +12,8 @@ namespace Verse.AI
 
 		private int curNodeIndex;
 
+		private bool usedRegionHeuristics;
+
 		public bool inUse;
 
 		public bool Found
@@ -35,6 +37,22 @@ namespace Verse.AI
 			get
 			{
 				return this.curNodeIndex + 1;
+			}
+		}
+
+		public int NodesConsumedCount
+		{
+			get
+			{
+				return this.nodes.Count - this.NodesLeftCount;
+			}
+		}
+
+		public bool UsedRegionHeuristics
+		{
+			get
+			{
+				return this.usedRegionHeuristics;
 			}
 		}
 
@@ -75,14 +93,15 @@ namespace Verse.AI
 			this.nodes.Add(nodePosition);
 		}
 
-		public void SetupFound(float totalCost)
+		public void SetupFound(float totalCost, bool usedRegionHeuristics)
 		{
 			if (this == PawnPath.NotFound)
 			{
-				Log.Warning("Calling SetupFound with totalCost=" + totalCost + " on PawnPath.NotFound");
+				Log.Warning("Calling SetupFound with totalCost=" + totalCost + " on PawnPath.NotFound", false);
 				return;
 			}
 			this.totalCostInt = totalCost;
+			this.usedRegionHeuristics = usedRegionHeuristics;
 			this.curNodeIndex = this.nodes.Count - 1;
 		}
 
@@ -96,6 +115,7 @@ namespace Verse.AI
 			if (this != PawnPath.NotFound)
 			{
 				this.totalCostInt = 0f;
+				this.usedRegionHeuristics = false;
 				this.nodes.Clear();
 				this.inUse = false;
 			}
@@ -154,7 +174,7 @@ namespace Verse.AI
 			{
 				return;
 			}
-			float y = Altitudes.AltitudeFor(AltitudeLayer.Item);
+			float y = AltitudeLayer.Item.AltitudeFor();
 			if (this.NodesLeftCount > 0)
 			{
 				for (int i = 0; i < this.NodesLeftCount - 1; i++)

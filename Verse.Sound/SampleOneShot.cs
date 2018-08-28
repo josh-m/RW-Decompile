@@ -66,7 +66,7 @@ namespace Verse.Sound
 					def,
 					", ",
 					info
-				}), 632321);
+				}), 632321, false);
 				return null;
 			}
 			SampleOneShot sampleOneShot = new SampleOneShot(def);

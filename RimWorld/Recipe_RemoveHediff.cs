@@ -55,7 +55,7 @@ namespace RimWorld
 							this.recipe.removesHediff.label
 						});
 					}
-					Messages.Message(text, pawn, MessageTypeDefOf.PositiveEvent);
+					Messages.Message(text, pawn, MessageTypeDefOf.PositiveEvent, true);
 				}
 			}
 			Hediff hediff = pawn.health.hediffSet.hediffs.Find((Hediff x) => x.def == this.recipe.removesHediff && x.Part == part && x.Visible);

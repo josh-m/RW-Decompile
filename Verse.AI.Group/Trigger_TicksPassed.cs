@@ -33,6 +33,10 @@ namespace Verse.AI.Group
 		{
 			if (signal.type == TriggerSignalType.Tick)
 			{
+				if (this.data == null || !(this.data is TriggerData_TicksPassed))
+				{
+					BackCompatibility.TriggerDataTicksPassedNull(this);
+				}
 				TriggerData_TicksPassed data = this.Data;
 				data.ticksPassed++;
 				return data.ticksPassed > this.duration;

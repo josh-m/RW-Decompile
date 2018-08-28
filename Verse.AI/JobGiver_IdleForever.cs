@@ -7,7 +7,7 @@ namespace Verse.AI
 	{
 		protected override Job TryGiveJob(Pawn pawn)
 		{
-			return new Job(JobDefOf.WaitDowned);
+			return new Job(JobDefOf.Wait_Downed);
 		}
 	}
 }

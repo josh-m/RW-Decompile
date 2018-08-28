@@ -24,18 +24,23 @@ namespace RimWorld
 
 		public static DesignationDef RemoveFloor;
 
+		public static DesignationDef SmoothWall;
+
 		public static DesignationDef Flick;
 
 		public static DesignationDef Plan;
 
 		public static DesignationDef Strip;
 
-		public static DesignationDef RearmTrap;
-
 		public static DesignationDef Slaughter;
 
 		public static DesignationDef Tame;
 
 		public static DesignationDef Open;
+
+		static DesignationDefOf()
+		{
+			DefOfHelper.EnsureInitializedInCtor(typeof(DesignationDefOf));
+		}
 	}
 }

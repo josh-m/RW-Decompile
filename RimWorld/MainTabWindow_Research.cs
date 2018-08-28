@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using UnityEngine;
 using Verse;
 using Verse.Sound;
@@ -27,6 +28,10 @@ namespace RimWorld
 		private float rightViewHeight;
 
 		private ResearchTabDef curTabInt;
+
+		private bool editMode;
+
+		private ResearchProjectDef draggingTab;
 
 		private const float LeftAreaWidth = 200f;
 
@@ -150,7 +155,7 @@ namespace RimWorld
 				}
 				if (!flag)
 				{
-					Find.WindowStack.Add(new Dialog_MessageBox("ResearchMenuWithoutBench".Translate(), null, null, null, null, null, false));
+					Find.WindowStack.Add(new Dialog_MessageBox("ResearchMenuWithoutBench".Translate(), null, null, null, null, null, false, null, null));
 				}
 				this.noBenchWarned = true;
 			}
@@ -225,7 +230,7 @@ namespace RimWorld
 				num += 3f;
 				this.leftScrollViewHeight = num;
 				Widgets.EndScrollView();
-				bool flag = Prefs.DevMode && this.selectedProject.PrerequisitesCompleted && this.selectedProject != Find.ResearchManager.currentProj && !this.selectedProject.IsFinished;
+				bool flag = Prefs.DevMode && this.selectedProject != Find.ResearchManager.currentProj && !this.selectedProject.IsFinished;
 				Rect rect6 = new Rect(0f, 0f, 90f, 50f);
 				if (flag)
 				{
@@ -259,7 +264,7 @@ namespace RimWorld
 				}
 				else if (Widgets.ButtonText(rect6, "Research".Translate(), true, false, true))
 				{
-					SoundDef.Named("ResearchStart").PlayOneShotOnCamera(null);
+					SoundDefOf.ResearchStart.PlayOneShotOnCamera(null);
 					Find.ResearchManager.currentProj = this.selectedProject;
 					TutorSystem.Notify_Event("StartResearchProject");
 				}
@@ -270,7 +275,7 @@ namespace RimWorld
 					if (Widgets.ButtonText(rect7, "Debug Insta-finish", true, false, true))
 					{
 						Find.ResearchManager.currentProj = this.selectedProject;
-						Find.ResearchManager.InstantFinish(this.selectedProject, false);
+						Find.ResearchManager.FinishProject(this.selectedProject, false, null);
 					}
 				}
 				Rect rect8 = new Rect(15f, rect6.y + rect6.height + 20f, position.width - 30f, 35f);
@@ -290,6 +295,16 @@ namespace RimWorld
 		private float CoordToPixelsY(float y)
 		{
 			return y * 100f;
+		}
+
+		private float PixelsToCoordX(float x)
+		{
+			return x / 190f;
+		}
+
+		private float PixelsToCoordY(float y)
+		{
+			return y / 100f;
 		}
 
 		private float PosX(ResearchProjectDef d)
@@ -315,16 +330,44 @@ namespace RimWorld
 					this.CurTab = localTabDef;
 				}, this.CurTab == localTabDef));
 			}
-			TabDrawer.DrawTabs(rightOutRect, list);
+			TabDrawer.DrawTabs(rightOutRect, list, 200f);
+			if (Prefs.DevMode)
+			{
+				Rect rect = rightOutRect;
+				rect.yMax = rect.yMin + 20f;
+				rect.xMin = rect.xMax - 80f;
+				Rect butRect = rect.RightPartPixels(30f);
+				rect = rect.LeftPartPixels(rect.width - 30f);
+				Widgets.CheckboxLabeled(rect, "Edit", ref this.editMode, false, null, null, false);
+				if (Widgets.ButtonImageFitted(butRect, TexButton.Copy))
+				{
+					StringBuilder stringBuilder = new StringBuilder();
+					foreach (ResearchProjectDef current2 in from def in DefDatabase<ResearchProjectDef>.AllDefsListForReading
+					where def.Debug_IsPositionModified()
+					select def)
+					{
+						stringBuilder.AppendLine(current2.defName);
+						stringBuilder.AppendLine(string.Format("  <researchViewX>{0}</researchViewX>", current2.ResearchViewX.ToString("F2")));
+						stringBuilder.AppendLine(string.Format("  <researchViewY>{0}</researchViewY>", current2.ResearchViewY.ToString("F2")));
+						stringBuilder.AppendLine();
+					}
+					GUIUtility.systemCopyBuffer = stringBuilder.ToString();
+					Messages.Message("Modified data copied to clipboard.", MessageTypeDefOf.SituationResolved, false);
+				}
+			}
+			else
+			{
+				this.editMode = false;
+			}
 			Rect outRect = rightOutRect.ContractedBy(10f);
-			Rect rect = new Rect(0f, 0f, this.rightViewWidth, this.rightViewHeight);
-			Rect position = rect.ContractedBy(10f);
-			rect.width = this.rightViewWidth;
-			position = rect.ContractedBy(10f);
+			Rect rect2 = new Rect(0f, 0f, this.rightViewWidth, this.rightViewHeight);
+			Rect position = rect2.ContractedBy(10f);
+			rect2.width = this.rightViewWidth;
+			position = rect2.ContractedBy(10f);
 			Vector2 start = default(Vector2);
 			Vector2 end = default(Vector2);
-			Widgets.ScrollHorizontal(outRect, ref this.rightScrollPosition, rect, 20f);
-			Widgets.BeginScrollView(outRect, ref this.rightScrollPosition, rect, true);
+			Widgets.ScrollHorizontal(outRect, ref this.rightScrollPosition, rect2, 20f);
+			Widgets.BeginScrollView(outRect, ref this.rightScrollPosition, rect2, true);
 			GUI.BeginGroup(position);
 			List<ResearchProjectDef> allDefsListForReading = DefDatabase<ResearchProjectDef>.AllDefsListForReading;
 			for (int i = 0; i < 2; i++)
@@ -366,7 +409,7 @@ namespace RimWorld
 				{
 					Rect source = new Rect(this.PosX(researchProjectDef3), this.PosY(researchProjectDef3), 140f, 50f);
 					string label = this.GetLabel(researchProjectDef3);
-					Rect rect2 = new Rect(source);
+					Rect rect3 = new Rect(source);
 					Color textColor = Widgets.NormalOptionColor;
 					Color color = default(Color);
 					Color borderColor = default(Color);
@@ -419,15 +462,27 @@ namespace RimWorld
 							}
 						}
 					}
-					if (Widgets.CustomButtonText(ref rect2, label, color, textColor, borderColor, true, 1, true, true))
+					if (Widgets.CustomButtonText(ref rect3, label, color, textColor, borderColor, true, 1, true, true))
 					{
 						SoundDefOf.Click.PlayOneShotOnCamera(null);
 						this.selectedProject = researchProjectDef3;
+					}
+					if (this.editMode && Mouse.IsOver(rect3) && Input.GetMouseButtonDown(0))
+					{
+						this.draggingTab = researchProjectDef3;
 					}
 				}
 			}
 			GUI.EndGroup();
 			Widgets.EndScrollView();
+			if (!Input.GetMouseButton(0))
+			{
+				this.draggingTab = null;
+			}
+			if (this.draggingTab != null && !Input.GetMouseButtonDown(0) && Event.current.type == EventType.Layout)
+			{
+				this.draggingTab.Debug_ApplyPositionDelta(new Vector2(this.PixelsToCoordX(Event.current.delta.x), this.PixelsToCoordY(Event.current.delta.y)));
+			}
 		}
 
 		private float DrawResearchPrereqs(ResearchProjectDef project, Rect rect)

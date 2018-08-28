@@ -22,7 +22,7 @@ namespace RimWorld.Planet
 		{
 			if (this.pawn.Any)
 			{
-				return "Prisoner".Translate() + ": " + this.pawn[0].LabelShort;
+				return "Prisoner".Translate() + ": " + this.pawn[0].LabelCap;
 			}
 			return null;
 		}

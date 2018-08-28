@@ -1,3 +1,4 @@
+using RimWorld;
 using System;
 using UnityEngine;
 
@@ -43,7 +44,7 @@ namespace Verse
 		public override void Print(SectionLayer layer, Thing thing)
 		{
 			Material mat = this.LinkedDrawMatFrom(thing, thing.Position);
-			Printer_Plane.PrintPlane(layer, thing.TrueCenter(), new Vector2(1f, 1f), mat, 0f, false, null, null, 0.01f);
+			Printer_Plane.PrintPlane(layer, thing.TrueCenter(), new Vector2(1f, 1f), mat, 0f, false, null, null, 0.01f, 0f);
 		}
 
 		public override Material MatSingleFor(Thing thing)

@@ -28,7 +28,7 @@ namespace Verse
 				}
 				Vector3 b = this.link1.LastDrawPos - this.attacheeLastPosition;
 				vector += b;
-				vector.y = Altitudes.AltitudeFor(AltitudeLayer.MoteOverhead);
+				vector.y = AltitudeLayer.MoteOverhead.AltitudeFor();
 				this.attacheeLastPosition = this.link1.LastDrawPos;
 			}
 			return vector;

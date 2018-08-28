@@ -4,22 +4,47 @@ using System.Linq;
 using System.Text;
 using UnityEngine;
 using Verse;
+using Verse.Sound;
 
 namespace RimWorld
 {
+	[StaticConstructorOnStartup]
 	public class MainTabWindow_History : MainTabWindow
 	{
 		private enum HistoryTab : byte
 		{
 			Graph,
+			Messages,
 			Statistics
 		}
-
-		private MainTabWindow_History.HistoryTab curTab;
 
 		private HistoryAutoRecorderGroup historyAutoRecorderGroup;
 
 		private FloatRange graphSection;
+
+		private Vector2 messagesScrollPos;
+
+		private float messagesLastHeight;
+
+		private static MainTabWindow_History.HistoryTab curTab = MainTabWindow_History.HistoryTab.Graph;
+
+		private static bool showLetters = true;
+
+		private static bool showMessages;
+
+		private const float MessagesRowHeight = 30f;
+
+		private const float PinColumnSize = 30f;
+
+		private const float PinSize = 22f;
+
+		private const float IconColumnSize = 30f;
+
+		private const float DateSize = 200f;
+
+		private const float SpaceBetweenColumns = 10f;
+
+		private static readonly Texture2D PinTex = ContentFinder<Texture2D>.Get("UI/Icons/Pin", true);
 
 		private static List<CurveMark> marks = new List<CurveMark>();
 
@@ -54,19 +79,30 @@ namespace RimWorld
 			List<TabRecord> list = new List<TabRecord>();
 			list.Add(new TabRecord("Graph".Translate(), delegate
 			{
-				this.curTab = MainTabWindow_History.HistoryTab.Graph;
-			}, this.curTab == MainTabWindow_History.HistoryTab.Graph));
+				MainTabWindow_History.curTab = MainTabWindow_History.HistoryTab.Graph;
+			}, MainTabWindow_History.curTab == MainTabWindow_History.HistoryTab.Graph));
+			list.Add(new TabRecord("Messages".Translate(), delegate
+			{
+				MainTabWindow_History.curTab = MainTabWindow_History.HistoryTab.Messages;
+			}, MainTabWindow_History.curTab == MainTabWindow_History.HistoryTab.Messages));
 			list.Add(new TabRecord("Statistics".Translate(), delegate
 			{
-				this.curTab = MainTabWindow_History.HistoryTab.Statistics;
-			}, this.curTab == MainTabWindow_History.HistoryTab.Statistics));
-			TabDrawer.DrawTabs(rect2, list);
-			MainTabWindow_History.HistoryTab historyTab = this.curTab;
+				MainTabWindow_History.curTab = MainTabWindow_History.HistoryTab.Statistics;
+			}, MainTabWindow_History.curTab == MainTabWindow_History.HistoryTab.Statistics));
+			TabDrawer.DrawTabs(rect2, list, 200f);
+			MainTabWindow_History.HistoryTab historyTab = MainTabWindow_History.curTab;
 			if (historyTab != MainTabWindow_History.HistoryTab.Graph)
 			{
-				if (historyTab == MainTabWindow_History.HistoryTab.Statistics)
+				if (historyTab != MainTabWindow_History.HistoryTab.Messages)
 				{
-					this.DoStatisticsPage(rect2);
+					if (historyTab == MainTabWindow_History.HistoryTab.Statistics)
+					{
+						this.DoStatisticsPage(rect2);
+					}
+				}
+				else
+				{
+					this.DoMessagesPage(rect2);
 				}
 			}
 			else
@@ -97,23 +133,24 @@ namespace RimWorld
 				timeSpan.Seconds,
 				"LetterSecond".Translate()
 			}));
-			stringBuilder.AppendLine("Storyteller".Translate() + ": " + Find.Storyteller.def.label);
+			stringBuilder.AppendLine("Storyteller".Translate() + ": " + Find.Storyteller.def.LabelCap);
 			DifficultyDef difficulty = Find.Storyteller.difficulty;
-			stringBuilder.AppendLine("Difficulty".Translate() + ": " + difficulty.label);
-			if (Find.VisibleMap != null)
+			stringBuilder.AppendLine("Difficulty".Translate() + ": " + difficulty.LabelCap);
+			if (Find.CurrentMap != null)
 			{
 				stringBuilder.AppendLine();
-				stringBuilder.AppendLine("ThisMapColonyWealthTotal".Translate() + ": " + Find.VisibleMap.wealthWatcher.WealthTotal.ToString("F0"));
-				stringBuilder.AppendLine("ThisMapColonyWealthItems".Translate() + ": " + Find.VisibleMap.wealthWatcher.WealthItems.ToString("F0"));
-				stringBuilder.AppendLine("ThisMapColonyWealthBuildings".Translate() + ": " + Find.VisibleMap.wealthWatcher.WealthBuildings.ToString("F0"));
+				stringBuilder.AppendLine("ThisMapColonyWealthTotal".Translate() + ": " + Find.CurrentMap.wealthWatcher.WealthTotal.ToString("F0"));
+				stringBuilder.AppendLine("ThisMapColonyWealthItems".Translate() + ": " + Find.CurrentMap.wealthWatcher.WealthItems.ToString("F0"));
+				stringBuilder.AppendLine("ThisMapColonyWealthBuildings".Translate() + ": " + Find.CurrentMap.wealthWatcher.WealthBuildings.ToString("F0"));
+				stringBuilder.AppendLine("ThisMapColonyWealthColonistsAndTameAnimals".Translate() + ": " + Find.CurrentMap.wealthWatcher.WealthPawns.ToString("F0"));
 			}
 			stringBuilder.AppendLine();
 			stringBuilder.AppendLine("NumThreatBigs".Translate() + ": " + Find.StoryWatcher.statsRecord.numThreatBigs);
 			stringBuilder.AppendLine("NumEnemyRaids".Translate() + ": " + Find.StoryWatcher.statsRecord.numRaidsEnemy);
 			stringBuilder.AppendLine();
-			if (Find.VisibleMap != null)
+			if (Find.CurrentMap != null)
 			{
-				stringBuilder.AppendLine("ThisMapDamageTaken".Translate() + ": " + Find.VisibleMap.damageWatcher.DamageTakenEver);
+				stringBuilder.AppendLine("ThisMapDamageTaken".Translate() + ": " + Find.CurrentMap.damageWatcher.DamageTakenEver);
 			}
 			stringBuilder.AppendLine("ColonistsKilled".Translate() + ": " + Find.StoryWatcher.statsRecord.colonistsKilled);
 			stringBuilder.AppendLine();
@@ -123,6 +160,143 @@ namespace RimWorld
 			Rect rect2 = new Rect(0f, 0f, 400f, 400f);
 			Widgets.Label(rect2, stringBuilder.ToString());
 			GUI.EndGroup();
+		}
+
+		private void DoMessagesPage(Rect rect)
+		{
+			rect.yMin += 10f;
+			Widgets.CheckboxLabeled(new Rect(rect.x, rect.y, 200f, 30f), "ShowLetters".Translate(), ref MainTabWindow_History.showLetters, false, null, null, true);
+			Widgets.CheckboxLabeled(new Rect(rect.x + 200f, rect.y, 200f, 30f), "ShowMessages".Translate(), ref MainTabWindow_History.showMessages, false, null, null, true);
+			rect.yMin += 40f;
+			bool flag = false;
+			Rect outRect = rect;
+			Rect viewRect = new Rect(0f, 0f, outRect.width - 16f, this.messagesLastHeight);
+			Widgets.BeginScrollView(outRect, ref this.messagesScrollPos, viewRect, true);
+			float num = 0f;
+			List<IArchivable> archivablesListForReading = Find.Archive.ArchivablesListForReading;
+			for (int i = archivablesListForReading.Count - 1; i >= 0; i--)
+			{
+				if (MainTabWindow_History.showLetters || (!(archivablesListForReading[i] is Letter) && !(archivablesListForReading[i] is ArchivedDialog)))
+				{
+					if (MainTabWindow_History.showMessages || !(archivablesListForReading[i] is Message))
+					{
+						flag = true;
+						if (num + 30f >= this.messagesScrollPos.y && num <= this.messagesScrollPos.y + outRect.height)
+						{
+							this.DoArchivableRow(new Rect(0f, num, viewRect.width, 30f), archivablesListForReading[i], i);
+						}
+						num += 30f;
+					}
+				}
+			}
+			this.messagesLastHeight = num;
+			Widgets.EndScrollView();
+			if (!flag)
+			{
+				Widgets.NoneLabel(rect.yMin + 3f, rect.width, "(" + "NoMessages".Translate() + ")");
+			}
+		}
+
+		private void DoArchivableRow(Rect rect, IArchivable archivable, int index)
+		{
+			if (index % 2 == 1)
+			{
+				Widgets.DrawLightHighlight(rect);
+			}
+			Widgets.DrawHighlightIfMouseover(rect);
+			Text.Font = GameFont.Small;
+			Text.Anchor = TextAnchor.MiddleLeft;
+			Text.WordWrap = false;
+			Rect rect2 = rect;
+			Rect rect3 = rect2;
+			rect3.width = 30f;
+			rect2.xMin += 40f;
+			float num;
+			if (Find.Archive.IsPinned(archivable))
+			{
+				num = 1f;
+			}
+			else if (Mouse.IsOver(rect3))
+			{
+				num = 0.25f;
+			}
+			else
+			{
+				num = 0f;
+			}
+			if (num > 0f)
+			{
+				GUI.color = new Color(1f, 1f, 1f, num);
+				GUI.DrawTexture(new Rect(rect3.x + (rect3.width - 22f) / 2f, rect3.y + (rect3.height - 22f) / 2f, 22f, 22f).Rounded(), MainTabWindow_History.PinTex);
+				GUI.color = Color.white;
+			}
+			Rect rect4 = rect2;
+			Rect outerRect = rect2;
+			outerRect.width = 30f;
+			rect2.xMin += 40f;
+			Texture archivedIcon = archivable.ArchivedIcon;
+			if (archivedIcon != null)
+			{
+				GUI.color = archivable.ArchivedIconColor;
+				Widgets.DrawTextureFitted(outerRect, archivedIcon, 0.8f);
+				GUI.color = Color.white;
+			}
+			Rect rect5 = rect2;
+			rect5.width = 200f;
+			rect2.xMin += 210f;
+			Vector2 location = (Find.CurrentMap == null) ? default(Vector2) : Find.WorldGrid.LongLatOf(Find.CurrentMap.Tile);
+			GUI.color = new Color(0.75f, 0.75f, 0.75f);
+			int num2 = GenDate.TickGameToAbs(archivable.CreatedTicksGame);
+			string str = string.Concat(new object[]
+			{
+				GenDate.DateFullStringAt((long)num2, location),
+				", ",
+				GenDate.HourInteger((long)num2, location.x),
+				"LetterHour".Translate()
+			});
+			Widgets.Label(rect5, str.Truncate(rect5.width, null));
+			GUI.color = Color.white;
+			Rect rect6 = rect2;
+			Widgets.Label(rect6, archivable.ArchivedLabel.Truncate(rect6.width, null));
+			GenUI.ResetLabelAlign();
+			Text.WordWrap = true;
+			TooltipHandler.TipRegion(rect3, "PinArchivableTip".Translate(new object[]
+			{
+				200
+			}));
+			if (Mouse.IsOver(rect4))
+			{
+				TooltipHandler.TipRegion(rect4, archivable.ArchivedTooltip);
+			}
+			if (Widgets.ButtonInvisible(rect3, false))
+			{
+				if (Find.Archive.IsPinned(archivable))
+				{
+					Find.Archive.Unpin(archivable);
+					SoundDefOf.Checkbox_TurnedOff.PlayOneShotOnCamera(null);
+				}
+				else
+				{
+					Find.Archive.Pin(archivable);
+					SoundDefOf.Checkbox_TurnedOn.PlayOneShotOnCamera(null);
+				}
+			}
+			if (Widgets.ButtonInvisible(rect4, false))
+			{
+				if (Event.current.button == 1)
+				{
+					LookTargets lookTargets = archivable.LookTargets;
+					if (CameraJumper.CanJump(lookTargets.TryGetPrimaryTarget()))
+					{
+						CameraJumper.TryJumpAndSelect(lookTargets.TryGetPrimaryTarget());
+						Find.MainTabsRoot.EscapeCurrentTab(true);
+					}
+				}
+				else
+				{
+					archivable.OpenArchived();
+				}
+			}
 		}
 
 		private void DoGraphPage(Rect rect)
@@ -172,10 +346,13 @@ namespace RimWorld
 				for (int j = 0; j < list2.Count; j++)
 				{
 					HistoryAutoRecorderGroup groupLocal = list2[j];
-					list.Add(new FloatMenuOption(groupLocal.def.LabelCap, delegate
+					if (!groupLocal.def.devModeOnly || Prefs.DevMode)
 					{
-						this.historyAutoRecorderGroup = groupLocal;
-					}, MenuOptionPriority.Default, null, null, 0f, null, null));
+						list.Add(new FloatMenuOption(groupLocal.def.LabelCap, delegate
+						{
+							this.historyAutoRecorderGroup = groupLocal;
+						}, MenuOptionPriority.Default, null, null, 0f, null, null));
+					}
 				}
 				FloatMenu window = new FloatMenu(list, "SelectGraph".Translate(), false);
 				Find.WindowStack.Add(window);

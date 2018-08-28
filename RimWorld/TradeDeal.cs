@@ -35,7 +35,7 @@ namespace RimWorld
 			}
 		}
 
-		public IEnumerable<Tradeable> AllTradeables
+		public List<Tradeable> AllTradeables
 		{
 			get
 			{
@@ -46,11 +46,6 @@ namespace RimWorld
 		public TradeDeal()
 		{
 			this.Reset();
-		}
-
-		public IEnumerator<Tradeable> GetEnumerator()
-		{
-			return this.tradeables.GetEnumerator();
 		}
 
 		public void Reset()
@@ -64,28 +59,37 @@ namespace RimWorld
 		{
 			foreach (Thing current in TradeSession.trader.ColonyThingsWillingToBuy(TradeSession.playerNegotiator))
 			{
-				string text;
-				if (!TradeSession.playerNegotiator.IsWorldPawn() && !this.InSellablePosition(current, out text))
+				if (TradeUtility.PlayerSellableNow(current))
 				{
-					if (text != null && !this.cannotSellReasons.Contains(text))
+					string text;
+					if (!TradeSession.playerNegotiator.IsWorldPawn() && !this.InSellablePosition(current, out text))
 					{
-						this.cannotSellReasons.Add(text);
+						if (text != null && !this.cannotSellReasons.Contains(text))
+						{
+							this.cannotSellReasons.Add(text);
+						}
+					}
+					else
+					{
+						this.AddToTradeables(current, Transactor.Colony);
 					}
 				}
-				else
+			}
+			if (!TradeSession.giftMode)
+			{
+				foreach (Thing current2 in TradeSession.trader.Goods)
 				{
-					this.AddToTradeables(current, Transactor.Colony);
+					this.AddToTradeables(current2, Transactor.Trader);
 				}
 			}
-			foreach (Thing current2 in TradeSession.trader.Goods)
+			if (!TradeSession.giftMode)
 			{
-				this.AddToTradeables(current2, Transactor.Trader);
-			}
-			if (this.tradeables.Find((Tradeable x) => x.IsCurrency) == null)
-			{
-				Thing thing = ThingMaker.MakeThing(ThingDefOf.Silver, null);
-				thing.stackCount = 0;
-				this.AddToTradeables(thing, Transactor.Trader);
+				if (this.tradeables.Find((Tradeable x) => x.IsCurrency) == null)
+				{
+					Thing thing = ThingMaker.MakeThing(ThingDefOf.Silver, null);
+					thing.stackCount = 0;
+					this.AddToTradeables(thing, Transactor.Trader);
+				}
 			}
 		}
 
@@ -127,7 +131,7 @@ namespace RimWorld
 
 		private void AddToTradeables(Thing t, Transactor trans)
 		{
-			Tradeable tradeable = TransferableUtility.TransferableMatching<Tradeable>(t, this.tradeables);
+			Tradeable tradeable = TransferableUtility.TradeableMatching(t, this.tradeables);
 			if (tradeable == null)
 			{
 				Pawn pawn = t as Pawn;
@@ -146,51 +150,92 @@ namespace RimWorld
 
 		public void UpdateCurrencyCount()
 		{
-			float num = 0f;
-			foreach (Tradeable current in this.tradeables)
+			if (this.SilverTradeable == null || TradeSession.giftMode)
 			{
-				if (!current.IsCurrency)
+				return;
+			}
+			float num = 0f;
+			for (int i = 0; i < this.tradeables.Count; i++)
+			{
+				Tradeable tradeable = this.tradeables[i];
+				if (!tradeable.IsCurrency)
 				{
-					num += current.CurTotalSilverCost;
+					num += tradeable.CurTotalSilverCostForSource;
 				}
 			}
-			this.SilverTradeable.ForceTo(-Mathf.RoundToInt(num));
+			this.SilverTradeable.ForceToSource(-Mathf.RoundToInt(num));
 		}
 
 		public bool TryExecute(out bool actuallyTraded)
 		{
-			if (this.SilverTradeable.CountPostDealFor(Transactor.Colony) < 0)
+			if (TradeSession.giftMode)
+			{
+				this.UpdateCurrencyCount();
+				this.LimitCurrencyCountToFunds();
+				int goodwillChange = FactionGiftUtility.GetGoodwillChange(this.tradeables, TradeSession.trader.Faction);
+				FactionGiftUtility.GiveGift(this.tradeables, TradeSession.trader.Faction, TradeSession.playerNegotiator);
+				actuallyTraded = ((float)goodwillChange > 0f);
+				return true;
+			}
+			if (this.SilverTradeable == null || this.SilverTradeable.CountPostDealFor(Transactor.Colony) < 0)
 			{
 				Find.WindowStack.WindowOfType<Dialog_Trade>().FlashSilver();
-				Messages.Message("MessageColonyCannotAfford".Translate(), MessageTypeDefOf.RejectInput);
+				Messages.Message("MessageColonyCannotAfford".Translate(), MessageTypeDefOf.RejectInput, false);
 				actuallyTraded = false;
 				return false;
 			}
 			this.UpdateCurrencyCount();
-			this.LimitCurrencyCountToTraderFunds();
+			this.LimitCurrencyCountToFunds();
 			actuallyTraded = false;
+			float num = 0f;
 			foreach (Tradeable current in this.tradeables)
 			{
 				if (current.ActionToDo != TradeAction.None)
 				{
 					actuallyTraded = true;
 				}
+				if (current.ActionToDo == TradeAction.PlayerSells)
+				{
+					num += current.CurTotalSilverCostForDestination;
+				}
 				current.ResolveTrade();
 			}
 			this.Reset();
+			if (TradeSession.trader.Faction != null)
+			{
+				TradeSession.trader.Faction.Notify_PlayerTraded(num, TradeSession.playerNegotiator);
+			}
+			Pawn pawn = TradeSession.trader as Pawn;
+			if (pawn != null)
+			{
+				TaleRecorder.RecordTale(TaleDefOf.TradedWith, new object[]
+				{
+					TradeSession.playerNegotiator,
+					pawn
+				});
+			}
+			TradeSession.playerNegotiator.mindState.inspirationHandler.EndInspiration(InspirationDefOf.Inspired_Trade);
 			return true;
 		}
 
 		public bool DoesTraderHaveEnoughSilver()
 		{
-			return this.SilverTradeable.CountPostDealFor(Transactor.Trader) >= 0;
+			return TradeSession.giftMode || (this.SilverTradeable != null && this.SilverTradeable.CountPostDealFor(Transactor.Trader) >= 0);
 		}
 
-		private void LimitCurrencyCountToTraderFunds()
+		private void LimitCurrencyCountToFunds()
 		{
-			if (this.SilverTradeable.CountToTransfer > this.SilverTradeable.CountHeldBy(Transactor.Trader))
+			if (this.SilverTradeable == null)
 			{
-				this.SilverTradeable.ForceTo(this.SilverTradeable.CountHeldBy(Transactor.Trader));
+				return;
+			}
+			if (this.SilverTradeable.CountToTransferToSource > this.SilverTradeable.CountHeldBy(Transactor.Trader))
+			{
+				this.SilverTradeable.ForceToSource(this.SilverTradeable.CountHeldBy(Transactor.Trader));
+			}
+			if (this.SilverTradeable.CountToTransferToDestination > this.SilverTradeable.CountHeldBy(Transactor.Colony))
+			{
+				this.SilverTradeable.ForceToDestination(this.SilverTradeable.CountHeldBy(Transactor.Colony));
 			}
 		}
 	}

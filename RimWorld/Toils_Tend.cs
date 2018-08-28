@@ -7,6 +7,27 @@ namespace RimWorld
 {
 	public class Toils_Tend
 	{
+		public const int MaxMedicineReservations = 10;
+
+		public static Toil ReserveMedicine(TargetIndex ind, Pawn injured)
+		{
+			Toil toil = new Toil();
+			toil.initAction = delegate
+			{
+				Pawn actor = toil.actor;
+				Job curJob = actor.jobs.curJob;
+				Thing thing = curJob.GetTarget(ind).Thing;
+				int num = actor.Map.reservationManager.CanReserveStack(actor, thing, 10, null, false);
+				if (num <= 0 || !actor.Reserve(thing, curJob, 10, Mathf.Min(num, Medicine.GetMedicineCountToFullyHeal(injured)), null, true))
+				{
+					toil.actor.jobs.EndCurrentJob(JobCondition.Incompletable, true);
+				}
+			};
+			toil.defaultCompleteMode = ToilCompleteMode.Instant;
+			toil.atomicWithPrevious = true;
+			return toil;
+		}
+
 		public static Toil PickupMedicine(TargetIndex ind, Pawn injured)
 		{
 			Toil toil = new Toil();
@@ -20,7 +41,7 @@ namespace RimWorld
 				{
 					num -= actor.carryTracker.CarriedThing.stackCount;
 				}
-				int num2 = Mathf.Min(thing.stackCount, num);
+				int num2 = Mathf.Min(actor.Map.reservationManager.CanReserveStack(actor, thing, 10, null, false), num);
 				if (num2 > 0)
 				{
 					actor.carryTracker.TryStartCarry(thing, num2, true);
@@ -42,7 +63,7 @@ namespace RimWorld
 			toil.initAction = delegate
 			{
 				Pawn actor = toil.actor;
-				Medicine medicine = (Medicine)actor.jobs.curJob.targetB.Thing;
+				Medicine medicine = (Medicine)actor.CurJob.targetB.Thing;
 				float num = (!patient.RaceProps.Animal) ? 500f : 175f;
 				float num2 = (medicine != null) ? medicine.def.MedicineTendXpGainFactor : 0.5f;
 				actor.skills.Learn(SkillDefOf.Medicine, num * num2, false);
@@ -50,6 +71,10 @@ namespace RimWorld
 				if (medicine != null && medicine.Destroyed)
 				{
 					actor.CurJob.SetTarget(TargetIndex.B, LocalTargetInfo.Invalid);
+				}
+				if (toil.actor.CurJob.endAfterTendedOnce)
+				{
+					actor.jobs.EndCurrentJob(JobCondition.Succeeded, true);
 				}
 			};
 			toil.defaultCompleteMode = ToilCompleteMode.Instant;

@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using Verse;
 
 namespace RimWorld
@@ -60,7 +61,7 @@ namespace RimWorld
 				Messages.Message("MessageShipHasLeftCommsRange".Translate(new object[]
 				{
 					this.FullTitle
-				}), MessageTypeDefOf.SituationResolved);
+				}), MessageTypeDefOf.SituationResolved, true);
 			}
 			this.passingShipManager.RemoveShip(this);
 		}
@@ -78,6 +79,29 @@ namespace RimWorld
 		public string GetInfoText()
 		{
 			return this.FullTitle;
+		}
+
+		Faction ICommunicable.GetFaction()
+		{
+			return null;
+		}
+
+		public FloatMenuOption CommFloatMenuOption(Building_CommsConsole console, Pawn negotiator)
+		{
+			string label = "CallOnRadio".Translate(new object[]
+			{
+				this.GetCallLabel()
+			});
+			Action action = delegate
+			{
+				if (!Building_OrbitalTradeBeacon.AllPowered(this.Map).Any<Building_OrbitalTradeBeacon>())
+				{
+					Messages.Message("MessageNeedBeaconToTradeWithShip".Translate(), console, MessageTypeDefOf.RejectInput, false);
+					return;
+				}
+				console.GiveUseCommsJob(negotiator, this);
+			};
+			return FloatMenuUtility.DecoratePrioritizedTask(new FloatMenuOption(label, action, MenuOptionPriority.InitiateSocial, null, null, 0f, null, null), negotiator, console, "ReservedBy");
 		}
 
 		public string GetUniqueLoadID()

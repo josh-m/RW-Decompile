@@ -10,7 +10,7 @@ namespace RimWorld
 	{
 		private const int NuzzleDuration = 100;
 
-		public override bool TryMakePreToilReservations()
+		public override bool TryMakePreToilReservations(bool errorOnFailed)
 		{
 			return true;
 		}

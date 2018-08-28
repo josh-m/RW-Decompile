@@ -79,7 +79,7 @@ namespace RimWorld.Planet
 		public void WorldSelectorOnGUI()
 		{
 			this.HandleWorldClicks();
-			if (Event.current.type == EventType.KeyDown && Event.current.keyCode == KeyCode.Escape && this.selected.Count > 0)
+			if (KeyBindingDefOf.Cancel.KeyDownEvent && this.selected.Count > 0)
 			{
 				this.ClearSelection();
 				Event.current.Use();
@@ -169,7 +169,7 @@ namespace RimWorld.Planet
 		{
 			if (obj == null)
 			{
-				Log.Error("Cannot select null.");
+				Log.Error("Cannot select null.", false);
 				return;
 			}
 			this.selectedTile = -1;
@@ -409,9 +409,9 @@ namespace RimWorld.Planet
 			{
 				return;
 			}
-			if (c.autoJoinable && CaravanExitMapUtility.IsTheOnlyJoinableCaravanForAnyPrisonerOrAnimal(c))
+			if (c.autoJoinable && CaravanExitMapUtility.AnyoneTryingToJoinCaravan(c))
 			{
-				CaravanExitMapUtility.OpenTheOnlyJoinableCaravanForPrisonerOrAnimalDialog(c, delegate
+				CaravanExitMapUtility.OpenSomeoneTryingToJoinCaravanDialog(c, delegate
 				{
 					this.AutoOrderToTileNow(c, tile);
 				});
@@ -431,7 +431,7 @@ namespace RimWorld.Planet
 			int num = CaravanUtility.BestGotoDestNear(tile, c);
 			if (num >= 0)
 			{
-				c.pather.StartPath(num, null, true);
+				c.pather.StartPath(num, null, true, true);
 				c.gotoMote.OrderedToTile(num);
 				SoundDefOf.ColonistOrdered.PlayOneShotOnCamera(null);
 			}

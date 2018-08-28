@@ -16,7 +16,7 @@ namespace RimWorld
 			{
 				return TraderCaravanRole.Trader;
 			}
-			if (p.kindDef.RaceProps.packAnimal)
+			if (p.kindDef.RaceProps.packAnimal && p.inventory.innerContainer.Any)
 			{
 				return TraderCaravanRole.Carrier;
 			}

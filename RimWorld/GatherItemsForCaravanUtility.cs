@@ -49,7 +49,7 @@ namespace RimWorld
 		{
 			if (!transferable.HasAnyThing)
 			{
-				Log.Warning("Can't determine transferable count hauled by others because transferable has 0 things.");
+				Log.Warning("Can't determine transferable count hauled by others because transferable has 0 things.", false);
 				return 0;
 			}
 			List<Pawn> allPawnsSpawned = lord.Map.mapPawns.AllPawnsSpawned;
@@ -62,7 +62,7 @@ namespace RimWorld
 					if (pawn2.CurJob != null && pawn2.CurJob.def == JobDefOf.PrepareCaravan_GatherItems && pawn2.CurJob.lord == lord)
 					{
 						Thing toHaul = ((JobDriver_PrepareCaravan_GatherItems)pawn2.jobs.curDriver).ToHaul;
-						if (transferable.things.Contains(toHaul) || TransferableUtility.TransferAsOne(transferable.AnyThing, toHaul))
+						if (transferable.things.Contains(toHaul) || TransferableUtility.TransferAsOne(transferable.AnyThing, toHaul, TransferAsOneMode.PodsOrCaravanPacking))
 						{
 							num += toHaul.stackCount;
 						}

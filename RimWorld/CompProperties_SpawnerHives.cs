@@ -9,7 +9,19 @@ namespace RimWorld
 
 		public float HiveSpawnRadius = 10f;
 
-		public FloatRange HiveSpawnIntervalDays = new FloatRange(1.6f, 2.1f);
+		public FloatRange HiveSpawnIntervalDays = new FloatRange(2f, 3f);
+
+		public SimpleCurve ReproduceRateFactorFromNearbyHiveCountCurve = new SimpleCurve
+		{
+			{
+				new CurvePoint(0f, 1f),
+				true
+			},
+			{
+				new CurvePoint(7f, 0.35f),
+				true
+			}
+		};
 
 		public CompProperties_SpawnerHives()
 		{

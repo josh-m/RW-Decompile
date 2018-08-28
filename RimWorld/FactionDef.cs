@@ -13,17 +13,18 @@ namespace RimWorld
 
 		public RulePackDef factionNameMaker;
 
-		public RulePackDef baseNameMaker;
+		public RulePackDef settlementNameMaker;
 
-		public RulePackDef factionNameMakerPlayer;
+		public RulePackDef playerInitialSettlementNameMaker;
 
-		public RulePackDef baseNameMakerPlayer;
-
+		[MustTranslate]
 		public string fixedName;
 
 		public bool humanlikeFaction = true;
 
 		public bool hidden;
+
+		public float listOrderPriority;
 
 		public List<PawnGroupMaker> pawnGroupMakers;
 
@@ -43,8 +44,7 @@ namespace RimWorld
 
 		public PawnKindDef basicMemberKind;
 
-		[NoTranslate]
-		public List<string> startingResearchTags;
+		public List<ResearchProjectTagDef> startingResearchTags;
 
 		[NoTranslate]
 		public List<string> recipePrerequisiteTags;
@@ -52,11 +52,16 @@ namespace RimWorld
 		public bool rescueesCanJoin;
 
 		[MustTranslate]
+		public string pawnSingular = "member";
+
+		[MustTranslate]
 		public string pawnsPlural = "members";
 
 		public string leaderTitle = "leader";
 
-		public float maxPawnOptionCostFactor = 1f;
+		public float forageabilityFactor = 1f;
+
+		public SimpleCurve maxPawnCostPerTotalPointsCurve;
 
 		public int requiredCountAtGameStart;
 
@@ -64,14 +69,16 @@ namespace RimWorld
 
 		public bool canMakeRandomly;
 
-		public float baseSelectionWeight;
+		public float settlementGenerationWeight;
 
 		public RulePackDef pawnNameMaker;
 
 		public TechLevel techLevel;
 
-		public string backstoryCategory;
+		[NoTranslate]
+		public List<string> backstoryCategories;
 
+		[NoTranslate]
 		public List<string> hairTags = new List<string>();
 
 		public ThingFilter apparelStuffFilter;
@@ -84,20 +91,22 @@ namespace RimWorld
 
 		public float geneticVariance = 1f;
 
-		public FloatRange startingGoodwill = FloatRange.Zero;
+		public IntRange startingGoodwill = IntRange.zero;
 
 		public bool mustStartOneEnemy;
 
-		public FloatRange naturalColonyGoodwill = FloatRange.Zero;
+		public IntRange naturalColonyGoodwill = IntRange.zero;
 
-		public float goodwillDailyGain = 2f;
+		public float goodwillDailyGain;
 
-		public float goodwillDailyFall = 2f;
+		public float goodwillDailyFall;
 
-		public bool appreciative = true;
+		public bool permanentEnemy;
 
+		[NoTranslate]
 		public string homeIconPath;
 
+		[NoTranslate]
 		public string expandingIconTexture;
 
 		public List<Color> colorSpectrum;
@@ -109,7 +118,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return this.startingGoodwill.max >= 0f || this.appreciative;
+				return !this.permanentEnemy;
 			}
 		}
 
@@ -132,18 +141,18 @@ namespace RimWorld
 			}
 		}
 
-		public float MinPointsToGenerateNormalPawnGroup()
+		public float MinPointsToGeneratePawnGroup(PawnGroupKindDef groupKind)
 		{
 			if (this.pawnGroupMakers == null)
 			{
-				return 9999999f;
+				return 0f;
 			}
 			IEnumerable<PawnGroupMaker> source = from x in this.pawnGroupMakers
-			where x.kindDef == PawnGroupKindDefOf.Normal
+			where x.kindDef == groupKind
 			select x;
 			if (!source.Any<PawnGroupMaker>())
 			{
-				return 9999999f;
+				return 0f;
 			}
 			return source.Min((PawnGroupMaker pgm) => pgm.MinPointsToGenerateAnything);
 		}
@@ -178,6 +187,10 @@ namespace RimWorld
 			{
 				yield return error;
 			}
+			if (this.pawnGroupMakers != null && this.maxPawnCostPerTotalPointsCurve == null)
+			{
+				yield return "has pawnGroupMakers but missing maxPawnCostPerTotalPointsCurve";
+			}
 			if (!this.isPlayer && this.factionNameMaker == null && this.fixedName == null)
 			{
 				yield return "FactionTypeDef " + this.defName + " lacks a factionNameMaker and a fixedName.";
@@ -188,9 +201,9 @@ namespace RimWorld
 			}
 			if (this.humanlikeFaction)
 			{
-				if (this.backstoryCategory == null)
+				if (this.backstoryCategories.NullOrEmpty<string>())
 				{
-					yield return this.defName + " is humanlikeFaction but has no backstory category.";
+					yield return this.defName + " is humanlikeFaction but has no backstory categories.";
 				}
 				if (this.hairTags.Count == 0)
 				{
@@ -199,13 +212,36 @@ namespace RimWorld
 			}
 			if (this.isPlayer)
 			{
-				if (this.baseNameMakerPlayer == null)
+				if (this.settlementNameMaker == null)
 				{
-					yield return "isPlayer is true but baseNameMakerPlayer is null";
+					yield return "isPlayer is true but settlementNameMaker is null";
 				}
-				if (this.factionNameMakerPlayer == null)
+				if (this.factionNameMaker == null)
 				{
-					yield return "isPlayer is true but factionNameMakerPlayer is null";
+					yield return "isPlayer is true but factionNameMaker is null";
+				}
+				if (this.playerInitialSettlementNameMaker == null)
+				{
+					yield return "isPlayer is true but playerInitialSettlementNameMaker is null";
+				}
+			}
+			if (this.permanentEnemy)
+			{
+				if (this.mustStartOneEnemy)
+				{
+					yield return "permanentEnemy has mustStartOneEnemy = true, which is redundant";
+				}
+				if (this.goodwillDailyFall != 0f || this.goodwillDailyGain != 0f)
+				{
+					yield return "permanentEnemy has a goodwillDailyFall or goodwillDailyGain";
+				}
+				if (this.startingGoodwill != IntRange.zero)
+				{
+					yield return "permanentEnemy has a startingGoodwill defined";
+				}
+				if (this.naturalColonyGoodwill != IntRange.zero)
+				{
+					yield return "permanentEnemy has a naturalColonyGoodwill defined";
 				}
 			}
 		}

@@ -40,7 +40,7 @@ namespace Verse
 
 			public void PrintOnto(SectionLayer layer)
 			{
-				Printer_Plane.PrintPlane(layer, this.loc, Vector2.one * this.size, this.def.mat, this.rotation, false, null, null, 0.01f);
+				Printer_Plane.PrintPlane(layer, this.loc, Vector2.one * this.size, this.def.mat, this.rotation, false, null, null, 0.01f, 0f);
 			}
 		}
 

@@ -10,7 +10,7 @@ namespace Verse
 			get
 			{
 				WindowStack windowStack = Find.WindowStack;
-				return windowStack.MouseObscuredNow || !windowStack.CurrentWindowGetsInput;
+				return (Widgets.mouseOverScrollViewStack.Count > 0 && !Widgets.mouseOverScrollViewStack.Peek()) || windowStack.MouseObscuredNow || !windowStack.CurrentWindowGetsInput;
 			}
 		}
 

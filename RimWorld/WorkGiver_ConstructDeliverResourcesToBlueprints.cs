@@ -29,7 +29,12 @@ namespace RimWorld
 			{
 				return GenConstruct.HandleBlockingThingJob(blueprint, pawn, forced);
 			}
-			if (!GenConstruct.CanConstruct(blueprint, pawn, forced))
+			bool flag = this.def.workType == WorkTypeDefOf.Construction;
+			if (!GenConstruct.CanConstruct(blueprint, pawn, flag, forced))
+			{
+				return null;
+			}
+			if (!flag && WorkGiver_ConstructDeliverResources.ShouldRemoveExistingFloorFirst(pawn, blueprint))
 			{
 				return null;
 			}

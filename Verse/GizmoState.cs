@@ -6,6 +6,7 @@ namespace Verse
 	{
 		Clear,
 		Mouseover,
-		Interacted
+		Interacted,
+		OpenedFloatMenu
 	}
 }

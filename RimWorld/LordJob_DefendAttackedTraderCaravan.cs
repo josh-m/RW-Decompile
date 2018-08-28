@@ -25,10 +25,10 @@ namespace RimWorld
 			stateGraph.StartingToil = lordToil_DefendTraderCaravan;
 			LordToil_ExitMap lordToil_ExitMap = new LordToil_ExitMap(LocomotionUrgency.None, false);
 			stateGraph.AddToil(lordToil_ExitMap);
-			Transition transition = new Transition(lordToil_DefendTraderCaravan, lordToil_ExitMap);
-			transition.AddTrigger(new Trigger_BecameColonyAlly());
+			Transition transition = new Transition(lordToil_DefendTraderCaravan, lordToil_ExitMap, false, true);
+			transition.AddTrigger(new Trigger_BecameNonHostileToPlayer());
 			transition.AddTrigger(new Trigger_TraderAndAllTraderCaravanGuardsLost());
-			stateGraph.AddTransition(transition);
+			stateGraph.AddTransition(transition, false);
 			return stateGraph;
 		}
 

@@ -10,7 +10,7 @@ namespace Verse.AI
 			Toil toil = new Toil();
 			toil.initAction = delegate
 			{
-				if (!toil.actor.Reserve(toil.actor.jobs.curJob.GetTarget(ind), toil.actor.CurJob, maxPawns, stackCount, layer))
+				if (!toil.actor.Reserve(toil.actor.jobs.curJob.GetTarget(ind), toil.actor.CurJob, maxPawns, stackCount, layer, true))
 				{
 					toil.actor.jobs.EndCurrentJob(JobCondition.Incompletable, true);
 				}
@@ -30,7 +30,7 @@ namespace Verse.AI
 				{
 					for (int i = 0; i < targetQueue.Count; i++)
 					{
-						if (!toil.actor.Reserve(targetQueue[i], toil.actor.CurJob, maxPawns, stackCount, layer))
+						if (!toil.actor.Reserve(targetQueue[i], toil.actor.CurJob, maxPawns, stackCount, layer, true))
 						{
 							toil.actor.jobs.EndCurrentJob(JobCondition.Incompletable, true);
 						}

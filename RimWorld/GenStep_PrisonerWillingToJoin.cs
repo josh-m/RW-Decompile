@@ -9,13 +9,21 @@ namespace RimWorld
 	{
 		private const int Size = 8;
 
+		public override int SeedPart
+		{
+			get
+			{
+				return 69356099;
+			}
+		}
+
 		protected override bool CanScatterAt(IntVec3 c, Map map)
 		{
 			if (!base.CanScatterAt(c, map))
 			{
 				return false;
 			}
-			if (!c.SupportsStructureType(map, TerrainAffordance.Heavy))
+			if (!c.SupportsStructureType(map, TerrainAffordanceDefOf.Heavy))
 			{
 				return false;
 			}
@@ -47,7 +55,7 @@ namespace RimWorld
 				faction = map.ParentFaction;
 			}
 			CellRect cellRect = CellRect.CenteredOn(loc, 8, 8).ClipInsideMap(map);
-			PrisonerWillingToJoinComp component = map.info.parent.GetComponent<PrisonerWillingToJoinComp>();
+			PrisonerWillingToJoinComp component = map.Parent.GetComponent<PrisonerWillingToJoinComp>();
 			Pawn singlePawnToSpawn;
 			if (component != null && component.pawn.Any)
 			{
@@ -70,7 +78,7 @@ namespace RimWorld
 			resolveParams2.postThingSpawn = delegate(Thing x)
 			{
 				MapGenerator.rootsToUnfog.Add(x.Position);
-				((Pawn)x).mindState.willJoinColonyIfRescued = true;
+				((Pawn)x).mindState.WillJoinColonyIfRescued = true;
 			};
 			BaseGen.globalSettings.map = map;
 			BaseGen.symbolStack.Push("pawn", resolveParams2);

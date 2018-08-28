@@ -13,7 +13,7 @@ namespace Verse.AI.Group
 
 		private List<Func<bool>> failConditions = new List<Func<bool>>();
 
-		public AvoidGridMode avoidGridMode = AvoidGridMode.Basic;
+		public AvoidGridMode avoidGridMode;
 
 		public Map Map
 		{
@@ -55,6 +55,14 @@ namespace Verse.AI.Group
 			}
 		}
 
+		public virtual bool AllowSelfTend
+		{
+			get
+			{
+				return true;
+			}
+		}
+
 		public virtual bool ShouldFail
 		{
 			get
@@ -66,6 +74,14 @@ namespace Verse.AI.Group
 						return true;
 					}
 				}
+				return false;
+			}
+		}
+
+		public virtual bool ForceHighStoryDanger
+		{
+			get
+			{
 				return false;
 			}
 		}

@@ -1,3 +1,4 @@
+using RimWorld;
 using System;
 using System.Collections.Generic;
 
@@ -7,16 +8,17 @@ namespace Verse
 	{
 		public const float CoverPercent_Corner = 0.75f;
 
-		public static List<CoverInfo> CalculateCoverGiverSet(IntVec3 targetLoc, IntVec3 shooterLoc, Map map)
+		public static List<CoverInfo> CalculateCoverGiverSet(LocalTargetInfo target, IntVec3 shooterLoc, Map map)
 		{
+			IntVec3 cell = target.Cell;
 			List<CoverInfo> list = new List<CoverInfo>();
 			for (int i = 0; i < 8; i++)
 			{
-				IntVec3 intVec = targetLoc + GenAdj.AdjacentCells[i];
+				IntVec3 intVec = cell + GenAdj.AdjacentCells[i];
 				if (intVec.InBounds(map))
 				{
 					CoverInfo item;
-					if (CoverUtility.TryFindAdjustedCoverInCell(shooterLoc, targetLoc, intVec, map, out item))
+					if (CoverUtility.TryFindAdjustedCoverInCell(shooterLoc, target, intVec, map, out item) && item.BlockChance > 0f)
 					{
 						list.Add(item);
 					}
@@ -25,16 +27,17 @@ namespace Verse
 			return list;
 		}
 
-		public static float CalculateOverallBlockChance(IntVec3 targetLoc, IntVec3 shooterLoc, Map map)
+		public static float CalculateOverallBlockChance(LocalTargetInfo target, IntVec3 shooterLoc, Map map)
 		{
+			IntVec3 cell = target.Cell;
 			float num = 0f;
 			for (int i = 0; i < 8; i++)
 			{
-				IntVec3 intVec = targetLoc + GenAdj.AdjacentCells[i];
+				IntVec3 intVec = cell + GenAdj.AdjacentCells[i];
 				if (intVec.InBounds(map))
 				{
 					CoverInfo coverInfo;
-					if (CoverUtility.TryFindAdjustedCoverInCell(shooterLoc, targetLoc, intVec, map, out coverInfo))
+					if (CoverUtility.TryFindAdjustedCoverInCell(shooterLoc, target, intVec, map, out coverInfo))
 					{
 						num += (1f - num) * coverInfo.BlockChance;
 					}
@@ -43,22 +46,23 @@ namespace Verse
 			return num;
 		}
 
-		private static bool TryFindAdjustedCoverInCell(IntVec3 shooterLoc, IntVec3 targetLoc, IntVec3 adjCell, Map map, out CoverInfo result)
+		private static bool TryFindAdjustedCoverInCell(IntVec3 shooterLoc, LocalTargetInfo target, IntVec3 adjCell, Map map, out CoverInfo result)
 		{
+			IntVec3 cell = target.Cell;
 			Thing cover = adjCell.GetCover(map);
-			if (cover == null || shooterLoc == targetLoc)
+			if (cover == null || cover == target.Thing || shooterLoc == cell)
 			{
 				result = CoverInfo.Invalid;
 				return false;
 			}
-			float angleFlat = (shooterLoc - targetLoc).AngleFlat;
-			float angleFlat2 = (adjCell - targetLoc).AngleFlat;
+			float angleFlat = (shooterLoc - cell).AngleFlat;
+			float angleFlat2 = (adjCell - cell).AngleFlat;
 			float num = GenGeo.AngleDifferenceBetween(angleFlat2, angleFlat);
-			if (!targetLoc.AdjacentToCardinal(adjCell))
+			if (!cell.AdjacentToCardinal(adjCell))
 			{
 				num *= 1.75f;
 			}
-			float num2 = cover.def.BaseBlockChance();
+			float num2 = cover.BaseBlockChance();
 			if (num < 15f)
 			{
 				num2 *= 1f;
@@ -106,6 +110,16 @@ namespace Verse
 			return def.fillPercent;
 		}
 
+		public static float BaseBlockChance(this Thing thing)
+		{
+			Building_Door building_Door = thing as Building_Door;
+			if (building_Door != null && building_Door.Open)
+			{
+				return 0f;
+			}
+			return thing.def.BaseBlockChance();
+		}
+
 		public static float TotalSurroundingCoverScore(IntVec3 c, Map map)
 		{
 			float num = 0f;
@@ -117,7 +131,7 @@ namespace Verse
 					Thing cover = c2.GetCover(map);
 					if (cover != null)
 					{
-						num += cover.def.BaseBlockChance();
+						num += cover.BaseBlockChance();
 					}
 				}
 			}

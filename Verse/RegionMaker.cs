@@ -39,7 +39,7 @@ namespace Verse
 			}
 			if (this.working)
 			{
-				Log.Error("Trying to generate a new region but we are currently generating one. Nested calls are not allowed.");
+				Log.Error("Trying to generate a new region but we are currently generating one. Nested calls are not allowed.", false);
 				return null;
 			}
 			this.working = true;
@@ -51,7 +51,7 @@ namespace Verse
 				this.newReg.type = expectedRegionType;
 				if (this.newReg.type == RegionType.Portal)
 				{
-					this.newReg.portal = root.GetDoor(this.map);
+					this.newReg.door = root.GetDoor(this.map);
 				}
 				this.FloodFillAndAddCells(root);
 				this.CreateLinks();
@@ -160,7 +160,7 @@ namespace Verse
 					}
 					if (!hashSet.Add(intVec))
 					{
-						Log.Error("We've processed the same cell twice.");
+						Log.Error("We've processed the same cell twice.", false);
 					}
 					num++;
 				}
@@ -173,7 +173,7 @@ namespace Verse
 					}
 					if (!hashSet.Add(intVec2))
 					{
-						Log.Error("We've processed the same cell twice.");
+						Log.Error("We've processed the same cell twice.", false);
 					}
 					num2++;
 				}

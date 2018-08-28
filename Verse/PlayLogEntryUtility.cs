@@ -32,7 +32,7 @@ namespace Verse
 		}
 
 		[DebuggerHidden]
-		public static IEnumerable<Rule> RulesForDamagedParts(string prefix, List<BodyPartDef> bodyParts, List<bool> bodyPartsDestroyed, Dictionary<string, string> constants)
+		public static IEnumerable<Rule> RulesForDamagedParts(string prefix, BodyDef body, List<BodyPartRecord> bodyParts, List<bool> bodyPartsDestroyed, Dictionary<string, string> constants)
 		{
 			if (bodyParts != null)
 			{
@@ -40,21 +40,19 @@ namespace Verse
 				int damagedIndex = 0;
 				for (int i = 0; i < bodyParts.Count; i++)
 				{
-					yield return new Rule_String(string.Format(prefix + "{0}_label", i), bodyParts[i].label);
+					yield return new Rule_String(string.Format(prefix + "{0}_label", i), bodyParts[i].Label);
 					constants[string.Format(prefix + "{0}_destroyed", i)] = bodyPartsDestroyed[i].ToString();
 					if (bodyPartsDestroyed[i])
 					{
-						string arg_12A_0 = prefix + "_destroyed{0}_label";
-						int num;
-						destroyedIndex = (num = destroyedIndex) + 1;
-						yield return new Rule_String(string.Format(arg_12A_0, num), bodyParts[i].label);
+						yield return new Rule_String(string.Format(prefix + "_destroyed{0}_label", destroyedIndex), bodyParts[i].Label);
+						constants[string.Format("{0}_destroyed{1}_outside", prefix, destroyedIndex)] = (bodyParts[i].depth == BodyPartDepth.Outside).ToString();
+						destroyedIndex++;
 					}
 					else
 					{
-						string arg_18F_0 = prefix + "_damaged{0}_label";
-						int num;
-						damagedIndex = (num = damagedIndex) + 1;
-						yield return new Rule_String(string.Format(arg_18F_0, num), bodyParts[i].label);
+						yield return new Rule_String(string.Format(prefix + "_damaged{0}_label", damagedIndex), bodyParts[i].Label);
+						constants[string.Format("{0}_damaged{1}_outside", prefix, damagedIndex)] = (bodyParts[i].depth == BodyPartDepth.Outside).ToString();
+						damagedIndex++;
 					}
 				}
 				constants[prefix + "_count"] = bodyParts.Count.ToString();

@@ -7,9 +7,9 @@ namespace RimWorld
 	{
 		protected override void Init()
 		{
-			if (base.Plant.def.plant.harvestedThingDef != null && base.Plant.YieldNow() > 0)
+			if (base.Plant.def.plant.harvestedThingDef != null && base.Plant.CanYieldNow())
 			{
-				this.xpPerTick = 0.11f;
+				this.xpPerTick = 0.085f;
 			}
 			else
 			{

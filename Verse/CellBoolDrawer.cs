@@ -89,7 +89,7 @@ namespace Verse
 			}
 			Mesh mesh2 = this.meshes[num];
 			CellRect cellRect = new CellRect(0, 0, this.mapSizeX, this.mapSizeZ);
-			float y = Altitudes.AltitudeFor(AltitudeLayer.MapDataOverlay);
+			float y = AltitudeLayer.MapDataOverlay.AltitudeFor();
 			bool careAboutVertexColors = false;
 			for (int j = cellRect.minX; j <= cellRect.maxX; j++)
 			{

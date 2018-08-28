@@ -20,5 +20,11 @@ namespace RimWorld
 				return JobDefOf.Deconstruct;
 			}
 		}
+
+		public override bool HasJobOnThing(Pawn pawn, Thing t, bool forced = false)
+		{
+			Building building = t.GetInnerIfMinified() as Building;
+			return building != null && building.DeconstructibleBy(pawn.Faction) && base.HasJobOnThing(pawn, t, forced);
+		}
 	}
 }

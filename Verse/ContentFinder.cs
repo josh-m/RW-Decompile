@@ -11,7 +11,7 @@ namespace Verse
 		{
 			if (!UnityData.IsInMainThread)
 			{
-				Log.Error("Tried to get a resource \"" + itemPath + "\" from a different thread. All resources must be loaded in the main thread.");
+				Log.Error("Tried to get a resource \"" + itemPath + "\" from a different thread. All resources must be loaded in the main thread.", false);
 				return (T)((object)null);
 			}
 			T t = (T)((object)null);
@@ -45,7 +45,7 @@ namespace Verse
 					" at ",
 					itemPath,
 					" in any active mod or in base resources."
-				}));
+				}), false);
 			}
 			return (T)((object)null);
 		}
@@ -55,7 +55,7 @@ namespace Verse
 		{
 			if (!UnityData.IsInMainThread)
 			{
-				Log.Error("Tried to get all resources in a folder \"" + folderPath + "\" from a different thread. All resources must be loaded in the main thread.");
+				Log.Error("Tried to get all resources in a folder \"" + folderPath + "\" from a different thread. All resources must be loaded in the main thread.", false);
 			}
 			else
 			{

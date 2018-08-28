@@ -30,7 +30,7 @@ namespace Verse
 			new Vector2(0f, 0f)
 		};
 
-		public static void PrintPlane(SectionLayer layer, Vector3 center, Vector2 size, Material mat, float rot = 0f, bool flipUv = false, Vector2[] uvs = null, Color32[] colors = null, float topVerticesAltitudeBias = 0.01f)
+		public static void PrintPlane(SectionLayer layer, Vector3 center, Vector2 size, Material mat, float rot = 0f, bool flipUv = false, Vector2[] uvs = null, Color32[] colors = null, float topVerticesAltitudeBias = 0.01f, float uvzPayload = 0f)
 		{
 			if (colors == null)
 			{
@@ -73,7 +73,7 @@ namespace Verse
 				List<Vector3> verts;
 				int index;
 				(verts = subMesh.verts)[index = count + j] = verts[index] + center;
-				subMesh.uvs.Add(uvs[j]);
+				subMesh.uvs.Add(new Vector3(uvs[j].x, uvs[j].y, uvzPayload));
 				subMesh.colors.Add(colors[j]);
 			}
 			subMesh.tris.Add(count);

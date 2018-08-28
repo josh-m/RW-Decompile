@@ -7,7 +7,7 @@ namespace RimWorld
 	{
 		public static void DebugDrawInteractionCells()
 		{
-			if (Find.VisibleMap == null)
+			if (Find.CurrentMap == null)
 			{
 				return;
 			}

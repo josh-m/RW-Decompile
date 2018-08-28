@@ -9,15 +9,22 @@ namespace RimWorld
 	{
 		public List<PlantBiomeRecord> wildBiomes;
 
-		public float wildCommonalityMaxFraction = 1.25f;
+		public int wildClusterRadius = -1;
 
-		public IntRange wildClusterSizeRange = IntRange.one;
+		public float wildClusterWeight = 15f;
 
-		public float wildClusterRadius = -1f;
+		public float wildOrder = 2f;
 
+		public bool wildEqualLocalDistribution = true;
+
+		public bool cavePlant;
+
+		public float cavePlantWeight = 1f;
+
+		[NoTranslate]
 		public List<string> sowTags = new List<string>();
 
-		public float sowWork = 250f;
+		public float sowWork = 10f;
 
 		public int sowMinSkill;
 
@@ -25,12 +32,15 @@ namespace RimWorld
 
 		public List<ResearchProjectDef> sowResearchPrerequisites;
 
-		public float harvestWork = 150f;
+		public bool mustBeWildToSow;
+
+		public float harvestWork = 10f;
 
 		public float harvestYield;
 
 		public ThingDef harvestedThingDef;
 
+		[NoTranslate]
 		public string harvestTag;
 
 		public float harvestMinGrowth = 0.65f;
@@ -45,7 +55,7 @@ namespace RimWorld
 
 		public float growDays = 2f;
 
-		public float lifespanFraction = 6f;
+		public float lifespanDaysPerGrowDays = 8f;
 
 		public float growMinGlow = 0.51f;
 
@@ -55,17 +65,13 @@ namespace RimWorld
 
 		public float fertilitySensitivity = 0.5f;
 
-		public bool reproduces = true;
-
-		public float reproduceRadius = 20f;
-
-		public float reproduceMtbDays = 10f;
-
 		public bool dieIfLeafless;
 
 		public bool neverBlightable;
 
-		public bool cavePlant;
+		public bool interferesWithRoof;
+
+		public PlantPurpose purpose = PlantPurpose.Misc;
 
 		public float topWindExposure = 0.25f;
 
@@ -73,15 +79,19 @@ namespace RimWorld
 
 		public FloatRange visualSizeRange = new FloatRange(0.9f, 1.1f);
 
+		[NoTranslate]
 		private string leaflessGraphicPath;
 
 		[Unsaved]
 		public Graphic leaflessGraphic;
 
+		[NoTranslate]
 		private string immatureGraphicPath;
 
 		[Unsaved]
 		public Graphic immatureGraphic;
+
+		public bool dropLeaves;
 
 		public const int MaxMaxMeshCount = 25;
 
@@ -109,18 +119,6 @@ namespace RimWorld
 			}
 		}
 
-		public float WildClusterRadiusActual
-		{
-			get
-			{
-				if (this.wildClusterRadius > 0f)
-				{
-					return this.wildClusterRadius;
-				}
-				return this.reproduceRadius;
-			}
-		}
-
 		public bool IsTree
 		{
 			get
@@ -133,7 +131,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return this.growDays * this.lifespanFraction;
+				return this.growDays * this.lifespanDaysPerGrowDays;
 			}
 		}
 
@@ -149,7 +147,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return this.lifespanFraction > 0f;
+				return this.lifespanDaysPerGrowDays > 0f;
 			}
 		}
 
@@ -158,6 +156,14 @@ namespace RimWorld
 			get
 			{
 				return this.Sowable && this.Harvestable && !this.neverBlightable;
+			}
+		}
+
+		public bool GrowsInClusters
+		{
+			get
+			{
+				return this.wildClusterRadius > 0;
 			}
 		}
 
@@ -227,6 +233,12 @@ namespace RimWorld
 			{
 				yield return new StatDrawEntry(StatCategoryDefOf.Basics, "LifeSpan".Translate(), this.LifespanDays.ToString("0.##") + " " + "Days".Translate(), 0, string.Empty);
 			}
+			if (this.harvestYield > 0f)
+			{
+				yield return new StatDrawEntry(StatCategoryDefOf.Basics, "HarvestYield".Translate(), this.harvestYield.ToString("F0"), 0, string.Empty);
+			}
+			yield return new StatDrawEntry(StatCategoryDefOf.Basics, "MinGrowthTemperature".Translate(), 0f.ToStringTemperature("F1"), 0, string.Empty);
+			yield return new StatDrawEntry(StatCategoryDefOf.Basics, "MaxGrowthTemperature".Translate(), 58f.ToStringTemperature("F1"), 0, string.Empty);
 		}
 	}
 }

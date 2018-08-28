@@ -56,6 +56,8 @@ namespace Verse
 
 		public static readonly Texture2D FloatMenuOptionBG;
 
+		public static readonly Material GrayscaleGUI;
+
 		static TexUI()
 		{
 			// Note: this type is marked as 'beforefieldinit'.
@@ -92,6 +94,7 @@ namespace Verse
 			TexUI.TextBGBlack = ContentFinder<Texture2D>.Get("UI/Widgets/TextBGBlack", true);
 			TexUI.GrayTextBG = ContentFinder<Texture2D>.Get("UI/Overlays/GrayTextBG", true);
 			TexUI.FloatMenuOptionBG = ContentFinder<Texture2D>.Get("UI/Widgets/FloatMenuOptionBG", true);
+			TexUI.GrayscaleGUI = MatLoader.LoadMat("Misc/GrayscaleGUI", -1);
 		}
 	}
 }

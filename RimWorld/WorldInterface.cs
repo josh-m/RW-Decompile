@@ -36,9 +36,9 @@ namespace RimWorld
 			this.inspectPane.Reset();
 			if (Current.ProgramState == ProgramState.Playing)
 			{
-				if (Find.VisibleMap != null)
+				if (Find.CurrentMap != null)
 				{
-					this.SelectedTile = Find.VisibleMap.Tile;
+					this.SelectedTile = Find.CurrentMap.Tile;
 				}
 				else
 				{
@@ -49,7 +49,7 @@ namespace RimWorld
 			{
 				if (Find.GameInitData.startingTile >= 0 && Find.World != null && !Find.WorldGrid.InBounds(Find.GameInitData.startingTile))
 				{
-					Log.Error("Map world tile was out of bounds.");
+					Log.Error("Map world tile was out of bounds.", false);
 					Find.GameInitData.startingTile = -1;
 				}
 				this.SelectedTile = Find.GameInitData.startingTile;

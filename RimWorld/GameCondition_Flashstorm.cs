@@ -43,7 +43,7 @@ namespace RimWorld
 				IntVec3 intVec = new IntVec3((int)Math.Round((double)vector.x) + this.centerLocation.x, 0, (int)Math.Round((double)vector.y) + this.centerLocation.z);
 				if (this.IsGoodLocationForStrike(intVec))
 				{
-					base.Map.weatherManager.eventHandler.AddEvent(new WeatherEvent_LightningStrike(base.Map, intVec));
+					base.SingleMap.weatherManager.eventHandler.AddEvent(new WeatherEvent_LightningStrike(base.SingleMap, intVec));
 					this.nextLightningTicks = Find.TickManager.TicksGame + GameCondition_Flashstorm.TicksBetweenStrikes.RandomInRange;
 				}
 			}
@@ -51,19 +51,19 @@ namespace RimWorld
 
 		public override void End()
 		{
-			base.Map.weatherDecider.DisableRainFor(30000);
+			base.SingleMap.weatherDecider.DisableRainFor(30000);
 			base.End();
 		}
 
 		private void FindGoodCenterLocation()
 		{
-			if (base.Map.Size.x <= 16 || base.Map.Size.z <= 16)
+			if (base.SingleMap.Size.x <= 16 || base.SingleMap.Size.z <= 16)
 			{
 				throw new Exception("Map too small for flashstorm.");
 			}
 			for (int i = 0; i < 10; i++)
 			{
-				this.centerLocation = new IntVec2(Rand.Range(8, base.Map.Size.x - 8), Rand.Range(8, base.Map.Size.z - 8));
+				this.centerLocation = new IntVec2(Rand.Range(8, base.SingleMap.Size.x - 8), Rand.Range(8, base.SingleMap.Size.z - 8));
 				if (this.IsGoodCenterLocation(this.centerLocation))
 				{
 					break;
@@ -73,7 +73,7 @@ namespace RimWorld
 
 		private bool IsGoodLocationForStrike(IntVec3 loc)
 		{
-			return loc.InBounds(base.Map) && !loc.Roofed(base.Map) && loc.Standable(base.Map);
+			return loc.InBounds(base.SingleMap) && !loc.Roofed(base.SingleMap) && loc.Standable(base.SingleMap);
 		}
 
 		private bool IsGoodCenterLocation(IntVec2 loc)

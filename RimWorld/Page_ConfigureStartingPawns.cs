@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using UnityEngine;
 using Verse;
 using Verse.Sound;
@@ -40,9 +41,9 @@ namespace RimWorld
 		public override void PreOpen()
 		{
 			base.PreOpen();
-			if (Find.GameInitData.startingPawns.Count > 0)
+			if (Find.GameInitData.startingAndOptionalPawns.Count > 0)
 			{
-				this.curPawn = Find.GameInitData.startingPawns[0];
+				this.curPawn = Find.GameInitData.startingAndOptionalPawns[0];
 			}
 		}
 
@@ -83,21 +84,21 @@ namespace RimWorld
 				{
 					return;
 				}
-				Pawn item = Find.GameInitData.startingPawns[from];
-				Find.GameInitData.startingPawns.RemoveAt(from);
-				Find.GameInitData.startingPawns.Insert(to, item);
+				Pawn item = Find.GameInitData.startingAndOptionalPawns[from];
+				Find.GameInitData.startingAndOptionalPawns.Insert(to, item);
+				Find.GameInitData.startingAndOptionalPawns.RemoveAt((from >= to) ? (from + 1) : from);
 				TutorSystem.Notify_Event("ReorderPawn");
-			});
+			}, ReorderableDirection.Vertical, -1f, null);
 			rect2.y += 15f;
 			this.DrawPawnListLabelAbove(rect2, "StartingPawnsSelected".Translate());
-			for (int i = 0; i < Find.GameInitData.startingPawns.Count; i++)
+			for (int i = 0; i < Find.GameInitData.startingAndOptionalPawns.Count; i++)
 			{
 				if (i == Find.GameInitData.startingPawnCount)
 				{
 					rect2.y += 30f;
 					this.DrawPawnListLabelAbove(rect2, "StartingPawnsLeftBehind".Translate());
 				}
-				Pawn pawn = Find.GameInitData.startingPawns[i];
+				Pawn pawn = Find.GameInitData.startingAndOptionalPawns[i];
 				GUI.BeginGroup(rect2);
 				Rect rect3 = new Rect(Vector2.zero, rect2.size);
 				Widgets.DrawOptionBackground(rect3, this.curPawn == pawn);
@@ -117,21 +118,21 @@ namespace RimWorld
 					label = pawn.LabelShort;
 				}
 				Widgets.Label(rect4.TopPart(0.5f).Rounded(), label);
-				if (Text.CalcSize(pawn.story.Title).x > rect4.width)
+				if (Text.CalcSize(pawn.story.TitleCap).x > rect4.width)
 				{
-					Widgets.Label(rect4.BottomPart(0.5f).Rounded(), pawn.story.TitleShort);
+					Widgets.Label(rect4.BottomPart(0.5f).Rounded(), pawn.story.TitleShortCap);
 				}
 				else
 				{
-					Widgets.Label(rect4.BottomPart(0.5f).Rounded(), pawn.story.Title);
+					Widgets.Label(rect4.BottomPart(0.5f).Rounded(), pawn.story.TitleCap);
 				}
 				if (Event.current.type == EventType.MouseDown && Mouse.IsOver(rect3))
 				{
 					this.curPawn = pawn;
-					SoundDefOf.TickTiny.PlayOneShotOnCamera(null);
+					SoundDefOf.Tick_Tiny.PlayOneShotOnCamera(null);
 				}
 				GUI.EndGroup();
-				if (ReorderableWidget.Reorderable(groupID, rect2.ExpandedBy(4f)))
+				if (ReorderableWidget.Reorderable(groupID, rect2.ExpandedBy(4f), false))
 				{
 					Widgets.DrawRectFast(rect2, Widgets.WindowBGFillColor * new Color(1f, 1f, 1f, 0.5f), null);
 				}
@@ -216,14 +217,14 @@ namespace RimWorld
 
 		private Pawn FindBestSkillOwner(SkillDef skill)
 		{
-			Pawn pawn = Find.GameInitData.startingPawns[0];
+			Pawn pawn = Find.GameInitData.startingAndOptionalPawns[0];
 			SkillRecord skillRecord = pawn.skills.GetSkill(skill);
 			for (int i = 1; i < Find.GameInitData.startingPawnCount; i++)
 			{
-				SkillRecord skill2 = Find.GameInitData.startingPawns[i].skills.GetSkill(skill);
+				SkillRecord skill2 = Find.GameInitData.startingAndOptionalPawns[i].skills.GetSkill(skill);
 				if (skillRecord.TotallyDisabled || skill2.Level > skillRecord.Level || (skill2.Level == skillRecord.Level && skill2.passion > skillRecord.passion))
 				{
-					pawn = Find.GameInitData.startingPawns[i];
+					pawn = Find.GameInitData.startingAndOptionalPawns[i];
 					skillRecord = skill2;
 				}
 			}
@@ -236,7 +237,17 @@ namespace RimWorld
 			{
 				return;
 			}
-			this.curPawn = StartingPawnUtility.RandomizeInPlace(this.curPawn);
+			int num = 0;
+			do
+			{
+				this.curPawn = StartingPawnUtility.RandomizeInPlace(this.curPawn);
+				num++;
+				if (num > 20)
+				{
+					break;
+				}
+			}
+			while (!StartingPawnUtility.WorkTypeRequirementsSatisfied());
 			TutorSystem.Notify_Event("RandomizePawn");
 		}
 
@@ -246,11 +257,20 @@ namespace RimWorld
 			{
 				return false;
 			}
-			foreach (Pawn current in Find.GameInitData.startingPawns)
+			if (TutorSystem.TutorialMode)
+			{
+				WorkTypeDef workTypeDef = StartingPawnUtility.RequiredWorkTypesDisabledForEveryone().FirstOrDefault<WorkTypeDef>();
+				if (workTypeDef != null)
+				{
+					Messages.Message("RequiredWorkTypeDisabledForEveryone".Translate() + ": " + workTypeDef.gerundLabel.CapitalizeFirst() + ".", MessageTypeDefOf.RejectInput, false);
+					return false;
+				}
+			}
+			foreach (Pawn current in Find.GameInitData.startingAndOptionalPawns)
 			{
 				if (!current.Name.IsValid)
 				{
-					Messages.Message("EveryoneNeedsValidName".Translate(), MessageTypeDefOf.RejectInput);
+					Messages.Message("EveryoneNeedsValidName".Translate(), MessageTypeDefOf.RejectInput, false);
 					return false;
 				}
 			}
@@ -260,15 +280,44 @@ namespace RimWorld
 
 		protected override void DoNext()
 		{
-			foreach (Pawn current in Find.GameInitData.startingPawns)
+			this.CheckWarnRequiredWorkTypesDisabledForEveryone(delegate
 			{
-				NameTriple nameTriple = current.Name as NameTriple;
-				if (nameTriple != null && string.IsNullOrEmpty(nameTriple.Nick))
+				foreach (Pawn current in Find.GameInitData.startingAndOptionalPawns)
 				{
-					current.Name = new NameTriple(nameTriple.First, nameTriple.First, nameTriple.Last);
+					NameTriple nameTriple = current.Name as NameTriple;
+					if (nameTriple != null && string.IsNullOrEmpty(nameTriple.Nick))
+					{
+						current.Name = new NameTriple(nameTriple.First, nameTriple.First, nameTriple.Last);
+					}
 				}
+				base.DoNext();
+			});
+		}
+
+		private void CheckWarnRequiredWorkTypesDisabledForEveryone(Action nextAction)
+		{
+			IEnumerable<WorkTypeDef> enumerable = StartingPawnUtility.RequiredWorkTypesDisabledForEveryone();
+			if (enumerable.Any<WorkTypeDef>())
+			{
+				StringBuilder stringBuilder = new StringBuilder();
+				foreach (WorkTypeDef current in enumerable)
+				{
+					if (stringBuilder.Length > 0)
+					{
+						stringBuilder.AppendLine();
+					}
+					stringBuilder.Append("  - " + current.gerundLabel.CapitalizeFirst());
+				}
+				string text = "ConfirmRequiredWorkTypeDisabledForEveryone".Translate(new object[]
+				{
+					stringBuilder.ToString()
+				});
+				Find.WindowStack.Add(Dialog_MessageBox.CreateConfirmation(text, nextAction, false, null));
 			}
-			base.DoNext();
+			else
+			{
+				nextAction();
+			}
 		}
 
 		public void SelectPawn(Pawn c)

@@ -16,7 +16,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return new Vector2(700f, 700f);
+				return new Vector2(450f, 400f);
 			}
 		}
 
@@ -25,7 +25,6 @@ namespace RimWorld
 			this.map = map;
 			this.forcePause = true;
 			this.doCloseX = true;
-			this.closeOnEscapeKey = true;
 			this.doCloseButton = true;
 			this.closeOnClickedOutside = true;
 			this.absorbInputAroundWindow = true;
@@ -37,25 +36,29 @@ namespace RimWorld
 			listing_Standard.ColumnWidth = inRect.width;
 			listing_Standard.Begin(inRect);
 			List<Area> allAreas = this.map.areaManager.AllAreas;
-			for (int i = 0; i < allAreas.Count; i++)
+			int i = 0;
+			for (int j = 0; j < allAreas.Count; j++)
 			{
-				if (allAreas[i].Mutable)
+				if (allAreas[j].Mutable)
 				{
 					Rect rect = listing_Standard.GetRect(24f);
-					Dialog_ManageAreas.DoAreaRow(rect, allAreas[i]);
+					Dialog_ManageAreas.DoAreaRow(rect, allAreas[j]);
 					listing_Standard.Gap(6f);
+					i++;
 				}
 			}
-			listing_Standard.ColumnWidth = inRect.width / 2f;
-			if (this.map.areaManager.CanMakeNewAllowed(AllowedAreaMode.Humanlike) && listing_Standard.ButtonText("NewArea".Translate(), null))
+			if (this.map.areaManager.CanMakeNewAllowed())
 			{
-				Area_Allowed area_Allowed;
-				this.map.areaManager.TryMakeNewAllowed(AllowedAreaMode.Humanlike, out area_Allowed);
-			}
-			if (this.map.areaManager.CanMakeNewAllowed(AllowedAreaMode.Animal) && listing_Standard.ButtonText("NewAreaAnimal".Translate(), null))
-			{
-				Area_Allowed area_Allowed2;
-				this.map.areaManager.TryMakeNewAllowed(AllowedAreaMode.Animal, out area_Allowed2);
+				while (i < 9)
+				{
+					listing_Standard.Gap(30f);
+					i++;
+				}
+				if (listing_Standard.ButtonText("NewArea".Translate(), null))
+				{
+					Area_Allowed area_Allowed;
+					this.map.areaManager.TryMakeNewAllowed(out area_Allowed);
+				}
 			}
 			listing_Standard.End();
 		}
@@ -82,7 +85,10 @@ namespace RimWorld
 			{
 				area.Invert();
 			}
-			if (widgetRow.ButtonIcon(TexButton.DeleteX, null))
+			WidgetRow arg_D3_0 = widgetRow;
+			Texture2D deleteX = TexButton.DeleteX;
+			Color? mouseoverColor = new Color?(GenUI.SubtleMouseoverColor);
+			if (arg_D3_0.ButtonIcon(deleteX, null, mouseoverColor))
 			{
 				area.Delete();
 			}

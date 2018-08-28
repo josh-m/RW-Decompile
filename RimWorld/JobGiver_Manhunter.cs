@@ -18,7 +18,7 @@ namespace RimWorld
 
 		protected override Job TryGiveJob(Pawn pawn)
 		{
-			if (pawn.TryGetAttackVerb(false) == null)
+			if (pawn.TryGetAttackVerb(null, false) == null)
 			{
 				return null;
 			}
@@ -45,7 +45,7 @@ namespace RimWorld
 					IntVec3 loc;
 					if (!pawnPath.TryFindLastCellBeforeBlockingDoor(pawn, out loc))
 					{
-						Log.Error(pawn + " did TryFindLastCellBeforeDoor but found none when it should have been one. Target: " + pawn2.LabelCap);
+						Log.Error(pawn + " did TryFindLastCellBeforeDoor but found none when it should have been one. Target: " + pawn2.LabelCap, false);
 						result = null;
 						return result;
 					}
@@ -74,12 +74,12 @@ namespace RimWorld
 
 		private Pawn FindPawnTarget(Pawn pawn)
 		{
-			return (Pawn)AttackTargetFinder.BestAttackTarget(pawn, TargetScanFlags.NeedThreat, (Thing x) => x is Pawn && x.def.race.intelligence >= Intelligence.ToolUser, 0f, 9999f, default(IntVec3), 3.40282347E+38f, true);
+			return (Pawn)AttackTargetFinder.BestAttackTarget(pawn, TargetScanFlags.NeedThreat, (Thing x) => x is Pawn && x.def.race.intelligence >= Intelligence.ToolUser, 0f, 9999f, default(IntVec3), 3.40282347E+38f, true, true);
 		}
 
 		private Building FindTurretTarget(Pawn pawn)
 		{
-			return (Building)AttackTargetFinder.BestAttackTarget(pawn, TargetScanFlags.NeedLOSToPawns | TargetScanFlags.NeedLOSToNonPawns | TargetScanFlags.NeedReachable | TargetScanFlags.NeedThreat, (Thing t) => t is Building, 0f, 70f, default(IntVec3), 3.40282347E+38f, false);
+			return (Building)AttackTargetFinder.BestAttackTarget(pawn, TargetScanFlags.NeedLOSToPawns | TargetScanFlags.NeedLOSToNonPawns | TargetScanFlags.NeedReachable | TargetScanFlags.NeedThreat, (Thing t) => t is Building, 0f, 70f, default(IntVec3), 3.40282347E+38f, false, true);
 		}
 	}
 }

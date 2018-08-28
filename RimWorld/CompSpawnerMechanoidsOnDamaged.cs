@@ -38,7 +38,7 @@ namespace RimWorld
 				{
 					this.lord.ReceiveMemo(CompSpawnerMechanoidsOnDamaged.MemoDamaged);
 				}
-				float num = (float)(this.parent.HitPoints - dinfo.Amount);
+				float num = (float)this.parent.HitPoints - dinfo.Amount;
 				if ((num < (float)this.parent.MaxHitPoints * 0.98f && dinfo.Instigator != null && dinfo.Instigator.Faction != null) || num < (float)this.parent.MaxHitPoints * 0.9f)
 				{
 					this.TrySpawnMechanoids();
@@ -68,26 +68,27 @@ namespace RimWorld
 			if (this.lord == null)
 			{
 				IntVec3 invalid;
-				if (!CellFinder.TryFindRandomCellNear(this.parent.Position, this.parent.Map, 5, (IntVec3 c) => c.Standable(this.parent.Map) && this.parent.Map.reachability.CanReach(c, this.parent, PathEndMode.Touch, TraverseParms.For(TraverseMode.PassDoors, Danger.Deadly, false)), out invalid))
+				if (!CellFinder.TryFindRandomCellNear(this.parent.Position, this.parent.Map, 5, (IntVec3 c) => c.Standable(this.parent.Map) && this.parent.Map.reachability.CanReach(c, this.parent, PathEndMode.Touch, TraverseParms.For(TraverseMode.PassDoors, Danger.Deadly, false)), out invalid, -1))
 				{
-					Log.Error("Found no place for mechanoids to defend " + this);
+					Log.Error("Found no place for mechanoids to defend " + this, false);
 					invalid = IntVec3.Invalid;
 				}
 				LordJob_MechanoidsDefendShip lordJob = new LordJob_MechanoidsDefendShip(this.parent, this.parent.Faction, 21f, invalid);
 				this.lord = LordMaker.MakeNewLord(Faction.OfMechanoids, lordJob, this.parent.Map, null);
 			}
-			PawnKindDef kindDef;
+			PawnKindDef kind;
 			while ((from def in DefDatabase<PawnKindDef>.AllDefs
 			where def.RaceProps.IsMechanoid && def.isFighter && def.combatPower <= this.pointsLeft
-			select def).TryRandomElement(out kindDef))
+			select def).TryRandomElement(out kind))
 			{
 				IntVec3 center;
 				if ((from cell in GenAdj.CellsAdjacent8Way(this.parent)
 				where this.CanSpawnMechanoidAt(cell)
 				select cell).TryRandomElement(out center))
 				{
-					Pawn pawn = PawnGenerator.GeneratePawn(kindDef, Faction.OfMechanoids);
-					if (GenPlace.TryPlaceThing(pawn, center, this.parent.Map, ThingPlaceMode.Near, null))
+					PawnGenerationRequest request = new PawnGenerationRequest(kind, Faction.OfMechanoids, PawnGenerationContext.NonPlayer, -1, true, false, false, false, true, false, 1f, false, true, true, false, false, false, false, null, null, null, null, null, null, null, null);
+					Pawn pawn = PawnGenerator.GeneratePawn(request);
+					if (GenPlace.TryPlaceThing(pawn, center, this.parent.Map, ThingPlaceMode.Near, null, null))
 					{
 						this.lord.AddPawn(pawn);
 						this.pointsLeft -= pawn.kindDef.combatPower;
@@ -95,12 +96,12 @@ namespace RimWorld
 					}
 					Find.WorldPawns.PassToWorld(pawn, PawnDiscardDecideMode.Discard);
 				}
-				IL_164:
+				IL_1B9:
 				this.pointsLeft = 0f;
 				SoundDefOf.PsychicPulseGlobal.PlayOneShotOnCamera(this.parent.Map);
 				return;
 			}
-			goto IL_164;
+			goto IL_1B9;
 		}
 
 		private bool CanSpawnMechanoidAt(IntVec3 c)

@@ -71,7 +71,7 @@ namespace Verse.AI
 			return toil;
 		}
 
-		public static Toil JumpIfTargetDownedDistant(TargetIndex ind, Toil jumpToil)
+		public static Toil JumpIfTargetDowned(TargetIndex ind, Toil jumpToil)
 		{
 			Toil toil = new Toil();
 			toil.initAction = delegate
@@ -79,8 +79,7 @@ namespace Verse.AI
 				Pawn actor = toil.actor;
 				Job curJob = actor.jobs.curJob;
 				Pawn pawn = curJob.GetTarget(ind).Thing as Pawn;
-				int executionRange = pawn.RaceProps.executionRange;
-				if (pawn != null && pawn.Downed && (actor.Position - pawn.Position).LengthHorizontalSquared > executionRange * executionRange)
+				if (pawn != null && pawn.Downed)
 				{
 					actor.jobs.curDriver.JumpToToil(jumpToil);
 				}

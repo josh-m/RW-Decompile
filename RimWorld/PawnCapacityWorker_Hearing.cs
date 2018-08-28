@@ -8,13 +8,13 @@ namespace RimWorld
 	{
 		public override float CalculateCapacityLevel(HediffSet diffSet, List<PawnCapacityUtility.CapacityImpactor> impactors = null)
 		{
-			string tag = "HearingSource";
-			return PawnCapacityUtility.CalculateTagEfficiency(diffSet, tag, 3.40282347E+38f, impactors);
+			BodyPartTagDef hearingSource = BodyPartTagDefOf.HearingSource;
+			return PawnCapacityUtility.CalculateTagEfficiency(diffSet, hearingSource, 3.40282347E+38f, default(FloatRange), impactors, 0.75f);
 		}
 
 		public override bool CanHaveCapacity(BodyDef body)
 		{
-			return body.HasPartWithTag("HearingSource");
+			return body.HasPartWithTag(BodyPartTagDefOf.HearingSource);
 		}
 	}
 }

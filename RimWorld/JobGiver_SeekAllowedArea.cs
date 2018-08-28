@@ -26,7 +26,7 @@ namespace RimWorld
 			Region reg = null;
 			RegionProcessor regionProcessor = delegate(Region r)
 			{
-				if (r.portal != null)
+				if (r.IsDoorway)
 				{
 					return false;
 				}

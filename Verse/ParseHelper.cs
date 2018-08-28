@@ -23,7 +23,7 @@ namespace Verse
 				}
 				else if (itemType == typeof(int))
 				{
-					result = int.Parse(str, CultureInfo.InvariantCulture);
+					result = ParseHelper.ParseIntPermissive(str);
 				}
 				else if (itemType == typeof(float))
 				{
@@ -51,6 +51,12 @@ namespace Verse
 					{
 						try
 						{
+							object obj = BackCompatibility.BackCompatibleEnum(itemType, str);
+							if (obj != null)
+							{
+								result = obj;
+								return result;
+							}
 							result = Enum.Parse(itemType, str);
 							return result;
 						}
@@ -80,7 +86,7 @@ namespace Verse
 							Type typeInAnyAssembly = GenTypes.GetTypeInAnyAssembly(str);
 							if (typeInAnyAssembly == null)
 							{
-								Log.Error("Could not find a type named " + str);
+								Log.Error("Could not find a type named " + str, false);
 							}
 							result = typeInAnyAssembly;
 						}
@@ -271,6 +277,17 @@ namespace Verse
 			return type.IsPrimitive || type.IsEnum || type == typeof(string) || type == typeof(IntVec3) || type == typeof(IntVec2) || type == typeof(Type) || type == typeof(Action) || type == typeof(Vector3) || type == typeof(Vector2) || type == typeof(Rect) || type == typeof(Color) || type == typeof(PublishedFileId_t) || type == typeof(Rot4) || type == typeof(CellRect) || type == typeof(CurvePoint) || type == typeof(NameTriple) || type == typeof(FloatRange) || type == typeof(IntRange) || type == typeof(QualityRange) || type == typeof(ColorInt);
 		}
 
+		private static int ParseIntPermissive(string str)
+		{
+			int result;
+			if (!int.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out result))
+			{
+				result = (int)float.Parse(str, CultureInfo.InvariantCulture);
+				Log.Warning("Parsed " + str + " as int.", false);
+			}
+			return result;
+		}
+
 		private static Vector3 FromStringVector3(string Str)
 		{
 			Str = Str.TrimStart(new char[]
@@ -321,6 +338,47 @@ namespace Verse
 				y = Convert.ToSingle(array[1]);
 			}
 			return new Vector2(x, y);
+		}
+
+		public static Vector4 FromStringVector4Adaptive(string Str)
+		{
+			Str = Str.TrimStart(new char[]
+			{
+				'('
+			});
+			Str = Str.TrimEnd(new char[]
+			{
+				')'
+			});
+			string[] array = Str.Split(new char[]
+			{
+				','
+			});
+			float x = 0f;
+			float y = 0f;
+			float z = 0f;
+			float w = 0f;
+			if (array.Length >= 1)
+			{
+				x = Convert.ToSingle(array[0]);
+			}
+			if (array.Length >= 2)
+			{
+				y = Convert.ToSingle(array[1]);
+			}
+			if (array.Length >= 3)
+			{
+				z = Convert.ToSingle(array[2]);
+			}
+			if (array.Length >= 4)
+			{
+				w = Convert.ToSingle(array[3]);
+			}
+			if (array.Length >= 5)
+			{
+				Log.ErrorOnce(string.Format("Too many elements in vector {0}", Str), 16139142, false);
+			}
+			return new Vector4(x, y, z, w);
 		}
 
 		public static Rect FromStringRect(string str)

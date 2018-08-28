@@ -7,6 +7,15 @@ namespace Verse
 	{
 		private static readonly Color32 LowVertexColor = new Color32(0, 0, 0, 0);
 
+		[TweakValue("Graphics_Shadow", -5f, 5f)]
+		private static float GlobalShadowSizeOffsetX = 0f;
+
+		[TweakValue("Graphics_Shadow", -5f, 5f)]
+		private static float GlobalShadowSizeOffsetY = 0f;
+
+		[TweakValue("Graphics_Shadow", -5f, 5f)]
+		private static float GlobalShadowSizeOffsetZ = 0f;
+
 		public static void PrintShadow(SectionLayer layer, Vector3 center, ShadowData shadow, Rot4 rotation)
 		{
 			Printer_Shadow.PrintShadow(layer, center, shadow.volume, rotation);
@@ -19,8 +28,8 @@ namespace Verse
 				return;
 			}
 			LayerSubMesh subMesh = layer.GetSubMesh(MatBases.SunShadowFade);
-			Color32 item = new Color32(255, 0, 0, (byte)Mathf.Min(255f * volume.y, 255f));
-			Vector3 vector = volume.RotatedBy(rotation) / 2f;
+			Color32 item = new Color32(255, 0, 0, (byte)Mathf.Min(255f * (volume.y + Printer_Shadow.GlobalShadowSizeOffsetY), 255f));
+			Vector3 vector = (volume + new Vector3(Printer_Shadow.GlobalShadowSizeOffsetX, 0f, Printer_Shadow.GlobalShadowSizeOffsetZ)).RotatedBy(rotation).Abs() / 2f;
 			float x = center.x;
 			float z = center.z;
 			int count = subMesh.verts.Count;

@@ -16,16 +16,16 @@ namespace RimWorld
 			Scribe_Values.Look<float>(ref this.yieldPct, "yieldPct", 0f, false);
 		}
 
-		public override void PreApplyDamage(DamageInfo dinfo, out bool absorbed)
+		public override void PreApplyDamage(ref DamageInfo dinfo, out bool absorbed)
 		{
-			base.PreApplyDamage(dinfo, out absorbed);
+			base.PreApplyDamage(ref dinfo, out absorbed);
 			if (absorbed)
 			{
 				return;
 			}
 			if (this.def.building.mineableThing != null && this.def.building.mineableYieldWasteable && dinfo.Def == DamageDefOf.Mining && dinfo.Instigator != null && dinfo.Instigator is Pawn)
 			{
-				this.Notify_TookMiningDamage(dinfo.Amount, (Pawn)dinfo.Instigator);
+				this.Notify_TookMiningDamage(GenMath.RoundRandom(dinfo.Amount), (Pawn)dinfo.Instigator);
 			}
 			absorbed = false;
 		}
@@ -34,7 +34,7 @@ namespace RimWorld
 		{
 			Map map = base.Map;
 			base.Destroy(DestroyMode.KillFinalize);
-			this.TrySpawnYield(map, this.yieldPct, true);
+			this.TrySpawnYield(map, this.yieldPct, true, pawn);
 		}
 
 		public override void Destroy(DestroyMode mode)
@@ -43,11 +43,11 @@ namespace RimWorld
 			base.Destroy(mode);
 			if (mode == DestroyMode.KillFinalize)
 			{
-				this.TrySpawnYield(map, 0.2f, false);
+				this.TrySpawnYield(map, 0.2f, false, null);
 			}
 		}
 
-		private void TrySpawnYield(Map map, float yieldChance, bool moteOnWaste)
+		private void TrySpawnYield(Map map, float yieldChance, bool moteOnWaste, Pawn pawn)
 		{
 			if (this.def.building.mineableThing == null)
 			{
@@ -57,14 +57,18 @@ namespace RimWorld
 			{
 				return;
 			}
-			int num = this.def.building.mineableYield;
+			int num = Mathf.Max(1, Mathf.RoundToInt((float)this.def.building.mineableYield * Find.Storyteller.difficulty.mineYieldFactor));
 			if (this.def.building.mineableYieldWasteable)
 			{
 				num = Mathf.Max(1, GenMath.RoundRandom((float)num * this.yieldPct));
 			}
 			Thing thing = ThingMaker.MakeThing(this.def.building.mineableThing, null);
 			thing.stackCount = num;
-			GenSpawn.Spawn(thing, base.Position, map);
+			GenSpawn.Spawn(thing, base.Position, map, WipeMode.Vanish);
+			if ((pawn == null || !pawn.IsColonist) && thing.def.EverHaulable && !thing.def.designateHaulable)
+			{
+				thing.SetForbidden(true, true);
+			}
 		}
 
 		public void Notify_TookMiningDamage(int amount, Pawn miner)

@@ -108,7 +108,7 @@ namespace RimWorld
 					this.def.defName,
 					" for ",
 					this.pawn
-				}));
+				}), false);
 				return 0f;
 			}
 			float num = this.BaseMoodOffset;

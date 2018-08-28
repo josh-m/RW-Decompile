@@ -39,9 +39,26 @@ namespace RimWorld
 			return base.GetReport();
 		}
 
-		public override bool TryMakePreToilReservations()
+		public override bool TryMakePreToilReservations(bool errorOnFailed)
 		{
-			return this.pawn.Reserve(this.Deliveree, this.job, 1, -1, null) && (base.TargetThingA is Building_NutrientPasteDispenser || (this.pawn.inventory != null && this.pawn.inventory.Contains(base.TargetThingA)) || this.pawn.Reserve(this.Food, this.job, 1, -1, null));
+			Pawn pawn = this.pawn;
+			LocalTargetInfo target = this.Deliveree;
+			Job job = this.job;
+			if (!pawn.Reserve(target, job, 1, -1, null, errorOnFailed))
+			{
+				return false;
+			}
+			if (!(base.TargetThingA is Building_NutrientPasteDispenser) && (this.pawn.inventory == null || !this.pawn.inventory.Contains(base.TargetThingA)))
+			{
+				pawn = this.pawn;
+				target = this.Food;
+				job = this.job;
+				if (!pawn.Reserve(target, job, 1, -1, null, errorOnFailed))
+				{
+					return false;
+				}
+			}
+			return true;
 		}
 
 		[DebuggerHidden]

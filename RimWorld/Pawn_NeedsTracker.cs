@@ -20,7 +20,9 @@ namespace RimWorld
 
 		public Need_Beauty beauty;
 
-		public Need_Space space;
+		public Need_RoomSize roomsize;
+
+		public Need_Outdoors outdoors;
 
 		public Need_Comfort comfort;
 
@@ -48,7 +50,14 @@ namespace RimWorld
 			{
 				this.pawn
 			});
-			this.BindDirectNeedFields();
+			if (Scribe.mode == LoadSaveMode.LoadingVars || Scribe.mode == LoadSaveMode.PostLoadInit)
+			{
+				if (this.needs.RemoveAll((Need x) => x == null) != 0)
+				{
+					Log.Error("Pawn " + this.pawn.Label + " had some null needs after loading.", false);
+				}
+				this.BindDirectNeedFields();
+			}
 		}
 
 		private void BindDirectNeedFields()
@@ -59,7 +68,8 @@ namespace RimWorld
 			this.joy = this.TryGetNeed<Need_Joy>();
 			this.beauty = this.TryGetNeed<Need_Beauty>();
 			this.comfort = this.TryGetNeed<Need_Comfort>();
-			this.space = this.TryGetNeed<Need_Space>();
+			this.roomsize = this.TryGetNeed<Need_RoomSize>();
+			this.outdoors = this.TryGetNeed<Need_Outdoors>();
 		}
 
 		public void NeedsTrackerTick()

@@ -22,7 +22,7 @@ namespace RimWorld
 			}
 		}
 
-		public override bool ShouldSkip(Pawn pawn)
+		public override bool ShouldSkip(Pawn pawn, bool forced = false)
 		{
 			return !InteractionUtility.CanInitiateInteraction(pawn);
 		}

@@ -35,11 +35,28 @@ namespace RimWorld
 				{
 					return;
 				}
-				if (this.innerContainer.Count != 0)
+				if (value == null)
 				{
-					this.innerContainer.ClearAndDestroyContents(DestroyMode.Vanish);
+					this.innerContainer.Clear();
 				}
-				this.innerContainer.TryAdd(value, true);
+				else
+				{
+					if (this.innerContainer.Count != 0)
+					{
+						Log.Warning(string.Concat(new string[]
+						{
+							"Assigned 2 things to the same MinifiedThing ",
+							this.ToStringSafe<MinifiedThing>(),
+							" (first=",
+							this.innerContainer[0].ToStringSafe<Thing>(),
+							" second=",
+							value.ToStringSafe<Thing>(),
+							")"
+						}), false);
+						this.innerContainer.ClearAndDestroyContents(DestroyMode.Vanish);
+					}
+					this.innerContainer.TryAdd(value, true);
+				}
 			}
 		}
 
@@ -69,6 +86,22 @@ namespace RimWorld
 			}
 		}
 
+		public override string DescriptionDetailed
+		{
+			get
+			{
+				return this.InnerThing.DescriptionDetailed;
+			}
+		}
+
+		public override string DescriptionFlavor
+		{
+			get
+			{
+				return this.InnerThing.DescriptionFlavor;
+			}
+		}
+
 		public MinifiedThing()
 		{
 			this.innerContainer = new ThingOwner<Thing>(this, true, LookMode.Deep);
@@ -76,6 +109,12 @@ namespace RimWorld
 
 		public override void Tick()
 		{
+			if (this.InnerThing == null)
+			{
+				Log.Error("MinifiedThing with null InnerThing. Destroying.", false);
+				this.Destroy(DestroyMode.Vanish);
+				return;
+			}
 			base.Tick();
 			if (this.InnerThing is Building_Battery)
 			{
@@ -126,11 +165,6 @@ namespace RimWorld
 			});
 		}
 
-		public override string GetDescription()
-		{
-			return this.InnerThing.GetDescription();
-		}
-
 		public override void DrawExtraSelectionOverlays()
 		{
 			base.DrawExtraSelectionOverlays();
@@ -168,8 +202,8 @@ namespace RimWorld
 				InstallBlueprintUtility.CancelBlueprintsFor(this);
 				if (mode == DestroyMode.Deconstruct && spawned)
 				{
-					SoundDef.Named("BuildingDeconstructed").PlayOneShot(new TargetInfo(base.Position, map, false));
-					GenLeaving.DoLeavingsFor(this.InnerThing, map, mode, this.OccupiedRect());
+					SoundDefOf.Building_Deconstructed.PlayOneShot(new TargetInfo(base.Position, map, false));
+					GenLeaving.DoLeavingsFor(this.InnerThing, map, mode, this.OccupiedRect(), null);
 				}
 			}
 		}

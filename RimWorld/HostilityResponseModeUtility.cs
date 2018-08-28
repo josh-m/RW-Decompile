@@ -1,18 +1,19 @@
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using UnityEngine;
 using Verse;
-using Verse.Sound;
 
 namespace RimWorld
 {
 	[StaticConstructorOnStartup]
 	public static class HostilityResponseModeUtility
 	{
-		private static readonly Texture2D IgnoreIcon = Resources.Load<Texture2D>("Textures/UI/Icons/HostilityResponse/Ignore");
+		private static readonly Texture2D IgnoreIcon = ContentFinder<Texture2D>.Get("UI/Icons/HostilityResponse/Ignore", true);
 
-		private static readonly Texture2D AttackIcon = Resources.Load<Texture2D>("Textures/UI/Icons/HostilityResponse/Attack");
+		private static readonly Texture2D AttackIcon = ContentFinder<Texture2D>.Get("UI/Icons/HostilityResponse/Attack", true);
 
-		private static readonly Texture2D FleeIcon = Resources.Load<Texture2D>("Textures/UI/Icons/HostilityResponse/Flee");
+		private static readonly Texture2D FleeIcon = ContentFinder<Texture2D>.Get("UI/Icons/HostilityResponse/Flee", true);
 
 		public static Texture2D GetIcon(this HostilityResponseMode response)
 		{
@@ -53,16 +54,15 @@ namespace RimWorld
 			return ("HostilityResponseMode_" + response).Translate();
 		}
 
-		public static void DrawResponseButton(Vector2 pos, Pawn pawn)
+		public static void DrawResponseButton(Rect rect, Pawn pawn, bool paintable)
 		{
+			Func<Pawn, HostilityResponseMode> getPayload = new Func<Pawn, HostilityResponseMode>(HostilityResponseModeUtility.DrawResponseButton_GetResponse);
+			Func<Pawn, IEnumerable<Widgets.DropdownMenuElement<HostilityResponseMode>>> menuGenerator = new Func<Pawn, IEnumerable<Widgets.DropdownMenuElement<HostilityResponseMode>>>(HostilityResponseModeUtility.DrawResponseButton_GenerateMenu);
 			Texture2D icon = pawn.playerSettings.hostilityResponse.GetIcon();
-			Rect rect = new Rect(pos.x, pos.y, 24f, 24f);
-			if (Widgets.ButtonImage(rect, icon))
+			Widgets.Dropdown<Pawn, HostilityResponseMode>(rect, pawn, getPayload, menuGenerator, null, icon, null, null, delegate
 			{
-				pawn.playerSettings.hostilityResponse = HostilityResponseModeUtility.GetNextResponse(pawn);
-				SoundDefOf.TickHigh.PlayOneShotOnCamera(null);
 				PlayerKnowledgeDatabase.KnowledgeDemonstrated(ConceptDefOf.HostilityResponse, KnowledgeAmount.SpecificInteraction);
-			}
+			}, paintable);
 			UIHighlighter.HighlightOpportunity(rect, "HostilityResponse");
 			TooltipHandler.TipRegion(rect, string.Concat(new string[]
 			{
@@ -72,6 +72,27 @@ namespace RimWorld
 				": ",
 				pawn.playerSettings.hostilityResponse.GetLabel()
 			}));
+		}
+
+		private static HostilityResponseMode DrawResponseButton_GetResponse(Pawn pawn)
+		{
+			return pawn.playerSettings.hostilityResponse;
+		}
+
+		[DebuggerHidden]
+		private static IEnumerable<Widgets.DropdownMenuElement<HostilityResponseMode>> DrawResponseButton_GenerateMenu(Pawn p)
+		{
+			foreach (HostilityResponseMode response in Enum.GetValues(typeof(HostilityResponseMode)))
+			{
+				yield return new Widgets.DropdownMenuElement<HostilityResponseMode>
+				{
+					option = new FloatMenuOption(response.GetLabel(), delegate
+					{
+						p.playerSettings.hostilityResponse = response;
+					}, MenuOptionPriority.Default, null, null, 0f, null, null),
+					payload = response
+				};
+			}
 		}
 	}
 }

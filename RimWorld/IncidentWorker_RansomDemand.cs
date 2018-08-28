@@ -10,10 +10,10 @@ namespace RimWorld
 
 		private static List<Pawn> candidates = new List<Pawn>();
 
-		protected override bool CanFireNowSub(IIncidentTarget target)
+		protected override bool CanFireNowSub(IncidentParms parms)
 		{
-			Map map = (Map)target;
-			return CommsConsoleUtility.PlayerHasPoweredCommsConsole(map) && this.RandomKidnappedColonist() != null && base.CanFireNowSub(target);
+			Map map = (Map)parms.target;
+			return CommsConsoleUtility.PlayerHasPoweredCommsConsole(map) && this.RandomKidnappedColonist() != null && base.CanFireNowSub(parms);
 		}
 
 		protected override bool TryExecuteWorker(IncidentParms parms)
@@ -31,16 +31,17 @@ namespace RimWorld
 				pawn.LabelShort,
 				faction.Name,
 				num
-			}).AdjustedFor(pawn), this.def.letterDef);
+			}).AdjustedFor(pawn, "PAWN"), this.def.letterDef);
 			choiceLetter_RansomDemand.title = "RansomDemandTitle".Translate(new object[]
 			{
-				map.info.parent.Label
+				map.Parent.Label
 			});
 			choiceLetter_RansomDemand.radioMode = true;
 			choiceLetter_RansomDemand.kidnapped = pawn;
 			choiceLetter_RansomDemand.faction = faction;
 			choiceLetter_RansomDemand.map = map;
 			choiceLetter_RansomDemand.fee = num;
+			choiceLetter_RansomDemand.relatedFaction = faction;
 			choiceLetter_RansomDemand.StartTimeout(60000);
 			Find.LetterStack.ReceiveLetter(choiceLetter_RansomDemand, null);
 			return true;
@@ -86,7 +87,7 @@ namespace RimWorld
 
 		private int RandomFee(Pawn pawn)
 		{
-			return (int)(pawn.MarketValue * Rand.Range(1.2f, 3f));
+			return (int)(pawn.MarketValue * DiplomacyTuning.RansomFeeMarketValueFactorRange.RandomInRange);
 		}
 	}
 }

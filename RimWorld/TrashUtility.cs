@@ -4,7 +4,7 @@ using Verse.AI;
 
 namespace RimWorld
 {
-	internal static class TrashUtility
+	public static class TrashUtility
 	{
 		private const float ChanceHateInertBuilding = 0.008f;
 
@@ -35,16 +35,20 @@ namespace RimWorld
 			{
 				return false;
 			}
+			if (pawn.mindState.spawnedByInfestationThingComp && b.GetComp<CompCreatesInfestations>() != null)
+			{
+				return false;
+			}
 			if ((b.def.building.isInert && !attackAllInert) || b.def.building.isTrap)
 			{
 				int num = GenLocalDate.HourOfDay(pawn) / 3;
-				int specialSeed = b.GetHashCode() * 612361 ^ pawn.GetHashCode() * 391 ^ num * 734273247;
+				int specialSeed = b.GetHashCode() * 612361 ^ pawn.GetHashCode() * 391 ^ num * 73427324;
 				if (!Rand.ChanceSeeded(0.008f, specialSeed))
 				{
 					return false;
 				}
 			}
-			return (!b.def.building.isTrap || !((Building_Trap)b).Armed) && TrashUtility.CanTrash(pawn, b) && pawn.HostileTo(b);
+			return !b.def.building.isTrap && TrashUtility.CanTrash(pawn, b) && pawn.HostileTo(b);
 		}
 
 		private static bool CanTrash(Pawn pawn, Thing t)
@@ -52,7 +56,7 @@ namespace RimWorld
 			return pawn.CanReach(t, PathEndMode.Touch, Danger.Some, false, TraverseMode.ByPawn) && !t.IsBurning();
 		}
 
-		public static Job TrashJob(Pawn pawn, Thing t)
+		public static Job TrashJob(Pawn pawn, Thing t, bool allowPunchingInert = false)
 		{
 			Plant plant = t as Plant;
 			if (plant != null)
@@ -76,12 +80,18 @@ namespace RimWorld
 			}
 			float value = Rand.Value;
 			Job job3;
-			if (value < 0.35f && pawn.natives.IgniteVerb != null && t.FlammableNow && !t.IsBurning() && !(t is Building_Door))
+			if (value < 0.35f && pawn.natives.IgniteVerb != null && pawn.natives.IgniteVerb.IsStillUsableBy(pawn) && t.FlammableNow && !t.IsBurning() && !(t is Building_Door))
 			{
 				job3 = new Job(JobDefOf.Ignite, t);
 			}
 			else
 			{
+				Building building = t as Building;
+				bool flag = building != null && building.def.building.isInert;
+				if (flag && !allowPunchingInert)
+				{
+					return null;
+				}
 				job3 = new Job(JobDefOf.AttackMelee, t);
 			}
 			TrashUtility.FinalizeTrashJob(job3);

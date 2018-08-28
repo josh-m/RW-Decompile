@@ -1,11 +1,44 @@
 using RimWorld;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using UnityEngine;
 
 namespace Verse
 {
 	public static class VerbUtility
 	{
+		public struct VerbPropertiesWithSource
+		{
+			public VerbProperties verbProps;
+
+			public Tool tool;
+
+			public ManeuverDef maneuver;
+
+			public ToolCapacityDef ToolCapacity
+			{
+				get
+				{
+					return (this.maneuver == null) ? null : this.maneuver.requiredCapacity;
+				}
+			}
+
+			public VerbPropertiesWithSource(VerbProperties verbProps)
+			{
+				this.verbProps = verbProps;
+				this.tool = null;
+				this.maneuver = null;
+			}
+
+			public VerbPropertiesWithSource(VerbProperties verbProps, Tool tool, ManeuverDef maneuver)
+			{
+				this.verbProps = verbProps;
+				this.tool = tool;
+				this.maneuver = maneuver;
+			}
+		}
+
 		public static ThingDef GetProjectile(this Verb verb)
 		{
 			Verb_LaunchProjectile verb_LaunchProjectile = verb as Verb_LaunchProjectile;
@@ -49,19 +82,14 @@ namespace Verse
 			return verb.GetDamageDef() == DamageDefOf.EMP;
 		}
 
-		public static string GenerateBeatFireLoadId(Pawn pawn)
+		public static bool UsesExplosiveProjectiles(this Verb verb)
 		{
-			return string.Format("{0}_BeatFire", pawn.ThingID);
+			ThingDef projectile = verb.GetProjectile();
+			return projectile != null && projectile.projectile.explosionRadius > 0f;
 		}
 
-		public static string GenerateIgniteLoadId(Pawn pawn)
+		public static List<Verb> GetConcreteExampleVerbs(Def def, ThingDef stuff = null)
 		{
-			return string.Format("{0}_Ignite", pawn.ThingID);
-		}
-
-		public static List<Verb> GetConcreteExampleVerbs(Def def, out Thing owner, ThingDef stuff = null)
-		{
-			owner = null;
 			List<Verb> result = null;
 			ThingDef thingDef = def as ThingDef;
 			if (thingDef != null)
@@ -69,17 +97,16 @@ namespace Verse
 				Thing concreteExample = thingDef.GetConcreteExample(stuff);
 				if (concreteExample is Pawn)
 				{
-					result = (concreteExample as Pawn).VerbTracker.AllVerbs;
+					result = ((Pawn)concreteExample).VerbTracker.AllVerbs;
 				}
 				else if (concreteExample is ThingWithComps)
 				{
-					result = (concreteExample as ThingWithComps).GetComp<CompEquippable>().AllVerbs;
+					result = ((ThingWithComps)concreteExample).GetComp<CompEquippable>().AllVerbs;
 				}
 				else
 				{
 					result = null;
 				}
-				owner = concreteExample;
 			}
 			HediffDef hediffDef = def as HediffDef;
 			if (hediffDef != null)
@@ -88,6 +115,66 @@ namespace Verse
 				result = concreteExample2.TryGetComp<HediffComp_VerbGiver>().VerbTracker.AllVerbs;
 			}
 			return result;
+		}
+
+		public static float CalculateAdjustedForcedMiss(float forcedMiss, IntVec3 vector)
+		{
+			float num = (float)vector.LengthHorizontalSquared;
+			if (num < 9f)
+			{
+				return 0f;
+			}
+			if (num < 25f)
+			{
+				return forcedMiss * 0.5f;
+			}
+			if (num < 49f)
+			{
+				return forcedMiss * 0.8f;
+			}
+			return forcedMiss;
+		}
+
+		public static float InterceptChanceFactorFromDistance(Vector3 origin, IntVec3 c)
+		{
+			float num = (c.ToVector3Shifted() - origin).MagnitudeHorizontalSquared();
+			if (num <= 25f)
+			{
+				return 0f;
+			}
+			if (num >= 144f)
+			{
+				return 1f;
+			}
+			return Mathf.InverseLerp(25f, 144f, num);
+		}
+
+		[DebuggerHidden]
+		public static IEnumerable<VerbUtility.VerbPropertiesWithSource> GetAllVerbProperties(List<VerbProperties> verbProps, List<Tool> tools)
+		{
+			if (verbProps != null)
+			{
+				for (int i = 0; i < verbProps.Count; i++)
+				{
+					yield return new VerbUtility.VerbPropertiesWithSource(verbProps[i]);
+				}
+			}
+			if (tools != null)
+			{
+				for (int j = 0; j < tools.Count; j++)
+				{
+					foreach (ManeuverDef k in tools[j].Maneuvers)
+					{
+						yield return new VerbUtility.VerbPropertiesWithSource(k.verb, tools[j], k);
+					}
+				}
+			}
+		}
+
+		public static bool AllowAdjacentShot(LocalTargetInfo target, Thing caster)
+		{
+			Pawn pawn = target.Thing as Pawn;
+			return pawn == null || !pawn.HostileTo(caster) || pawn.Downed;
 		}
 	}
 }

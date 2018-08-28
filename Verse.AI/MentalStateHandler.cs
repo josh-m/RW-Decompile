@@ -77,7 +77,7 @@ namespace Verse.AI
 			{
 				if (this.pawn.Downed)
 				{
-					Log.Error("In mental state while downed: " + this.pawn);
+					Log.Error("In mental state while downed: " + this.pawn, false);
 					this.CurState.RecoverFromState();
 					return;
 				}
@@ -85,7 +85,7 @@ namespace Verse.AI
 			}
 		}
 
-		public bool TryStartMentalState(MentalStateDef stateDef, string reason = null, bool forceWake = false, bool causedByMood = false, Pawn otherPawn = null)
+		public bool TryStartMentalState(MentalStateDef stateDef, string reason = null, bool forceWake = false, bool causedByMood = false, Pawn otherPawn = null, bool transitionSilently = false)
 		{
 			if ((!this.pawn.Spawned && !this.pawn.IsCaravanMember()) || this.CurStateDef == stateDef || this.pawn.Downed || (!forceWake && !this.pawn.Awake()))
 			{
@@ -99,31 +99,35 @@ namespace Verse.AI
 			{
 				return false;
 			}
-			if ((this.pawn.IsColonist || this.pawn.HostFaction == Faction.OfPlayer) && stateDef.tale != null)
+			MentalState mentalState = (MentalState)Activator.CreateInstance(stateDef.stateClass);
+			mentalState.pawn = this.pawn;
+			mentalState.def = stateDef;
+			mentalState.causedByMood = causedByMood;
+			if (otherPawn != null)
 			{
-				TaleRecorder.RecordTale(stateDef.tale, new object[]
+				((MentalState_SocialFighting)mentalState).otherPawn = otherPawn;
+			}
+			mentalState.PreStart();
+			if (!transitionSilently)
+			{
+				if ((this.pawn.IsColonist || this.pawn.HostFaction == Faction.OfPlayer) && stateDef.tale != null)
 				{
-					this.pawn
-				});
+					TaleRecorder.RecordTale(stateDef.tale, new object[]
+					{
+						this.pawn
+					});
+				}
+				if (stateDef.IsExtreme && this.pawn.IsPlayerControlledCaravanMember())
+				{
+					Messages.Message("MessageCaravanMemberHasExtremeMentalBreak".Translate(), this.pawn.GetCaravan(), MessageTypeDefOf.ThreatSmall, true);
+				}
+				this.pawn.records.Increment(RecordDefOf.TimesInMentalState);
 			}
-			if (stateDef.IsExtreme && this.pawn.IsPlayerControlledCaravanMember())
-			{
-				Messages.Message("MessageCaravanMemberHasExtremeMentalBreak".Translate(), this.pawn.GetCaravan(), MessageTypeDefOf.ThreatSmall);
-			}
-			this.pawn.records.Increment(RecordDefOf.TimesInMentalState);
 			if (this.pawn.Drafted)
 			{
 				this.pawn.drafter.Drafted = false;
 			}
-			MentalState mentalState = (MentalState)Activator.CreateInstance(stateDef.stateClass);
 			this.curStateInt = mentalState;
-			this.curStateInt.pawn = this.pawn;
-			this.curStateInt.def = stateDef;
-			this.curStateInt.causedByMood = causedByMood;
-			if (otherPawn != null)
-			{
-				((MentalState_SocialFighting)this.curStateInt).otherPawn = otherPawn;
-			}
 			if (this.pawn.needs.mood != null)
 			{
 				this.pawn.needs.mood.thoughts.situational.Notify_SituationalThoughtsDirty();
@@ -138,7 +142,7 @@ namespace Verse.AI
 			}
 			if (this.pawn.CurJob != null)
 			{
-				this.pawn.jobs.EndCurrentJob(JobCondition.InterruptForced, true);
+				this.pawn.jobs.StopAll(false);
 			}
 			if (this.pawn.Spawned)
 			{
@@ -148,20 +152,20 @@ namespace Verse.AI
 			{
 				this.pawn.jobs.EndCurrentJob(JobCondition.InterruptForced, true);
 			}
-			if (PawnUtility.ShouldSendNotificationAbout(this.pawn))
+			if (!transitionSilently && PawnUtility.ShouldSendNotificationAbout(this.pawn))
 			{
 				string text = mentalState.GetBeginLetterText();
 				if (!text.NullOrEmpty())
 				{
-					string label = "MentalBreakLetterLabel".Translate() + ": " + stateDef.beginLetterLabel;
+					string label = (stateDef.beginLetterLabel ?? stateDef.LabelCap).CapitalizeFirst() + ": " + this.pawn.LabelShortCap;
 					if (reason != null)
 					{
 						text = text + "\n\n" + "FinalStraw".Translate(new object[]
 						{
-							reason
+							reason.CapitalizeFirst()
 						});
 					}
-					Find.LetterStack.ReceiveLetter(label, text, stateDef.beginLetterDef, this.pawn, null);
+					Find.LetterStack.ReceiveLetter(label, text, stateDef.beginLetterDef, this.pawn, null, null);
 				}
 			}
 			return true;
@@ -169,13 +173,13 @@ namespace Verse.AI
 
 		public void Notify_DamageTaken(DamageInfo dinfo)
 		{
-			if (!this.neverFleeIndividual && this.pawn.Spawned && this.pawn.MentalStateDef == null && !this.pawn.Downed && dinfo.Def.externalViolence && this.pawn.RaceProps.Humanlike && this.pawn.mindState.canFleeIndividual)
+			if (!this.neverFleeIndividual && this.pawn.Spawned && this.pawn.MentalStateDef == null && !this.pawn.Downed && dinfo.Def.ExternalViolenceFor(this.pawn) && this.pawn.RaceProps.Humanlike && this.pawn.mindState.canFleeIndividual)
 			{
 				float lerpPct = (float)(this.pawn.HashOffset() % 100) / 100f;
 				float num = this.pawn.kindDef.fleeHealthThresholdRange.LerpThroughRange(lerpPct);
 				if (this.pawn.health.summaryHealth.SummaryHealthPercent < num && this.pawn.Faction != Faction.OfPlayer && this.pawn.HostFaction == null)
 				{
-					this.TryStartMentalState(MentalStateDefOf.PanicFlee, null, false, false, null);
+					this.TryStartMentalState(MentalStateDefOf.PanicFlee, null, false, false, null, false);
 				}
 			}
 		}

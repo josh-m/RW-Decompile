@@ -16,7 +16,11 @@ namespace Verse
 
 		protected SoundDef soundSucceeded;
 
-		protected SoundDef soundFailed = SoundDefOf.DesignateFailed;
+		protected SoundDef soundFailed = SoundDefOf.Designate_Failed;
+
+		protected bool hasDesignateAllFloatMenuOption;
+
+		protected string designateAllLabel;
 
 		private string cachedTutorTagSelect;
 
@@ -24,11 +28,11 @@ namespace Verse
 
 		protected string cachedHighlightTag;
 
-		protected Map Map
+		public Map Map
 		{
 			get
 			{
-				return Find.VisibleMap;
+				return Find.CurrentMap;
 			}
 		}
 
@@ -53,6 +57,22 @@ namespace Verse
 			get
 			{
 				return false;
+			}
+		}
+
+		protected virtual DesignationDef Designation
+		{
+			get
+			{
+				return null;
+			}
+		}
+
+		public virtual float PanelReadoutTitleExtraRightMargin
+		{
+			get
+			{
+				return 0f;
 			}
 		}
 
@@ -100,9 +120,91 @@ namespace Verse
 			}
 		}
 
+		public override IEnumerable<FloatMenuOption> RightClickFloatMenuOptions
+		{
+			get
+			{
+				foreach (FloatMenuOption o in base.RightClickFloatMenuOptions)
+				{
+					yield return o;
+				}
+				if (this.hasDesignateAllFloatMenuOption)
+				{
+					int count = 0;
+					List<Thing> things = this.Map.listerThings.AllThings;
+					for (int i = 0; i < things.Count; i++)
+					{
+						Thing t = things[i];
+						if (!t.Fogged() && this.CanDesignateThing(t).Accepted)
+						{
+							count++;
+						}
+					}
+					if (count > 0)
+					{
+						yield return new FloatMenuOption(this.designateAllLabel + " (" + "CountToDesignate".Translate(new object[]
+						{
+							count
+						}) + ")", delegate
+						{
+							for (int k = 0; k < things.Count; k++)
+							{
+								Thing t2 = things[k];
+								if (!t2.Fogged() && this.$this.CanDesignateThing(t2).Accepted)
+								{
+									this.$this.DesignateThing(things[k]);
+								}
+							}
+						}, MenuOptionPriority.Default, null, null, 0f, null, null);
+					}
+					else
+					{
+						yield return new FloatMenuOption(this.designateAllLabel + " (" + "NoneLower".Translate() + ")", null, MenuOptionPriority.Default, null, null, 0f, null, null);
+					}
+				}
+				DesignationDef designation = this.Designation;
+				if (this.Designation != null)
+				{
+					int count2 = 0;
+					List<Designation> designations = this.Map.designationManager.allDesignations;
+					for (int j = 0; j < designations.Count; j++)
+					{
+						if (designations[j].def == designation && this.RemoveAllDesignationsAffects(designations[j].target))
+						{
+							count2++;
+						}
+					}
+					if (count2 > 0)
+					{
+						yield return new FloatMenuOption(string.Concat(new object[]
+						{
+							"RemoveAllDesignations".Translate(),
+							" (",
+							count2,
+							")"
+						}), delegate
+						{
+							for (int k = designations.Count - 1; k >= 0; k--)
+							{
+								if (designations[k].def == designation && this.$this.RemoveAllDesignationsAffects(designations[k].target))
+								{
+									this.$this.Map.designationManager.RemoveDesignation(designations[k]);
+								}
+							}
+						}, MenuOptionPriority.Default, null, null, 0f, null, null);
+					}
+					else
+					{
+						yield return new FloatMenuOption("RemoveAllDesignations".Translate() + " (" + "NoneLower".Translate() + ")", null, MenuOptionPriority.Default, null, null, 0f, null, null);
+					}
+				}
+			}
+		}
+
 		public Designator()
 		{
 			this.activateSound = SoundDefOf.SelectDesignator;
+			this.designateAllLabel = "DesignateAll".Translate();
 		}
 
 		protected bool CheckCanInteract()
@@ -122,7 +224,7 @@ namespace Verse
 
 		public virtual AcceptanceReport CanDesignateThing(Thing t)
 		{
-			throw new NotImplementedException();
+			return AcceptanceReport.WasRejected;
 		}
 
 		public virtual void DesignateThing(Thing t)
@@ -139,12 +241,17 @@ namespace Verse
 				return;
 			}
 			bool somethingSucceeded = false;
+			bool flag = false;
 			foreach (IntVec3 current in cells)
 			{
 				if (this.CanDesignateCell(current).Accepted)
 				{
 					this.DesignateSingleCell(current);
 					somethingSucceeded = true;
+					if (!flag)
+					{
+						flag = this.ShowWarningForCell(current);
+					}
 				}
 			}
 			this.Finalize(somethingSucceeded);
@@ -157,6 +264,11 @@ namespace Verse
 		public virtual void DesignateSingleCell(IntVec3 c)
 		{
 			throw new NotImplementedException();
+		}
+
+		public virtual bool ShowWarningForCell(IntVec3 c)
+		{
+			return false;
 		}
 
 		public void Finalize(bool somethingSucceeded)
@@ -187,7 +299,7 @@ namespace Verse
 			}
 			if (Find.DesignatorManager.Dragger.FailureReason != null)
 			{
-				Messages.Message(Find.DesignatorManager.Dragger.FailureReason, MessageTypeDefOf.RejectInput);
+				Messages.Message(Find.DesignatorManager.Dragger.FailureReason, MessageTypeDefOf.RejectInput, false);
 			}
 		}
 
@@ -201,17 +313,23 @@ namespace Verse
 			return this.Desc;
 		}
 
-		public virtual Texture2D IconReverseDesignating(Thing t, out float angle)
+		public virtual Texture2D IconReverseDesignating(Thing t, out float angle, out Vector2 offset)
 		{
 			angle = this.iconAngle;
+			offset = this.iconOffset;
 			return this.icon;
+		}
+
+		protected virtual bool RemoveAllDesignationsAffects(LocalTargetInfo target)
+		{
+			return true;
 		}
 
 		public virtual void DrawMouseAttachments()
 		{
 			if (this.useMouseIcon)
 			{
-				GenUI.DrawMouseAttachment(this.icon, string.Empty, this.iconAngle);
+				GenUI.DrawMouseAttachment(this.icon, string.Empty, this.iconAngle, this.iconOffset, null);
 			}
 		}
 
@@ -242,6 +360,11 @@ namespace Verse
 
 		public virtual void Selected()
 		{
+		}
+
+		public virtual void RenderHighlight(List<IntVec3> dragCells)
+		{
+			DesignatorUtility.RenderHighlightOverSelectableThings(this, dragCells);
 		}
 	}
 }

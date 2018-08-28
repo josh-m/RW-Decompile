@@ -5,7 +5,15 @@ namespace RimWorld
 {
 	public class GenStep_ScenParts : GenStep
 	{
-		public override void Generate(Map map)
+		public override int SeedPart
+		{
+			get
+			{
+				return 1561683158;
+			}
+		}
+
+		public override void Generate(Map map, GenStepParams parms)
 		{
 			Find.Scenario.GenerateIntoMap(map);
 		}

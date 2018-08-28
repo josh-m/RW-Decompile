@@ -22,6 +22,8 @@ namespace RimWorld
 
 		private Dictionary<string, string> truncatedModNamesCache = new Dictionary<string, string>();
 
+		protected string filter = string.Empty;
+
 		private const float ModListAreaWidth = 350f;
 
 		private const float ModsListButtonHeight = 30f;
@@ -87,6 +89,9 @@ namespace RimWorld
 			}
 			num += 30f;
 			num += 17f;
+			this.filter = Widgets.TextField(new Rect(0f, num, 350f, 30f), this.filter);
+			num += 30f;
+			num += 10f;
 			Rect rect4 = new Rect(0f, num, 350f, mainRect.height - num);
 			Widgets.DrawMenuSection(rect4);
 			float height = (float)ModLister.AllInstalledMods.Count<ModMetaData>() * 26f + 8f;
@@ -99,7 +104,7 @@ namespace RimWorld
 			int reorderableGroup = ReorderableWidget.NewGroup(delegate(int from, int to)
 			{
 				ModsConfig.Reorder(from, to);
-			});
+			}, ReorderableDirection.Vertical, -1f, null);
 			int num2 = 0;
 			foreach (ModMetaData current in this.ModsInListOrder())
 			{
@@ -208,16 +213,16 @@ namespace RimWorld
 							Messages.Message("MessageModNeedsWellFormattedTargetVersion".Translate(new object[]
 							{
 								VersionControl.CurrentVersionString
-							}), MessageTypeDefOf.RejectInput);
+							}), MessageTypeDefOf.RejectInput, false);
 						}
 						else
 						{
 							Find.WindowStack.Add(Dialog_MessageBox.CreateConfirmation("ConfirmSteamWorkshopUpload".Translate(), delegate
 							{
-								SoundDefOf.TickHigh.PlayOneShotOnCamera(null);
+								SoundDefOf.Tick_High.PlayOneShotOnCamera(null);
 								Dialog_MessageBox dialog_MessageBox = Dialog_MessageBox.CreateConfirmation("ConfirmContentAuthor".Translate(), delegate
 								{
-									SoundDefOf.TickHigh.PlayOneShotOnCamera(null);
+									SoundDefOf.Tick_High.PlayOneShotOnCamera(null);
 									Workshop.Upload(this.selectedMod);
 								}, true, null);
 								dialog_MessageBox.buttonAText = "Yes".Translate();
@@ -238,7 +243,7 @@ namespace RimWorld
 			Rect rect = listing.GetRect(26f);
 			if (mod.Active)
 			{
-				ReorderableWidget.Reorderable(reorderableGroup, rect);
+				ReorderableWidget.Reorderable(reorderableGroup, rect, false);
 			}
 			Action clickAction = null;
 			if (mod.Source == ContentSource.SteamWorkshop)
@@ -265,6 +270,7 @@ namespace RimWorld
 					GUI.color = Color.red;
 					text += "ModNotMadeForThisVersion".Translate();
 				}
+				GUI.color = this.FilteredColor(GUI.color, mod.Name);
 				if (!text.NullOrEmpty())
 				{
 					TooltipHandler.TipRegion(rect2, new TipSignal(text, mod.GetHashCode() * 3311));
@@ -299,7 +305,7 @@ namespace RimWorld
 			}
 			else
 			{
-				GUI.color = Color.gray;
+				GUI.color = this.FilteredColor(Color.gray, mod.Name);
 				Widgets.Label(rect2, mod.Name);
 			}
 			GUI.color = Color.white;
@@ -334,6 +340,19 @@ namespace RimWorld
 			{
 				ModsConfig.RestartFromChangedMods();
 			}
+		}
+
+		private Color FilteredColor(Color color, string label)
+		{
+			if (this.filter.NullOrEmpty())
+			{
+				return color;
+			}
+			if (label.IndexOf(this.filter, StringComparison.OrdinalIgnoreCase) >= 0)
+			{
+				return color;
+			}
+			return color * new Color(1f, 1f, 1f, 0.3f);
 		}
 	}
 }

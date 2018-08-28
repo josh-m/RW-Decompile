@@ -9,7 +9,7 @@ namespace RimWorld
 
 		private int growthSeasonUntilTick = -1;
 
-		private int noGrowUntilTick = -1;
+		private int noSowUntilTick = -1;
 
 		private const int TicksBuffer = 30000;
 
@@ -17,7 +17,15 @@ namespace RimWorld
 		{
 			get
 			{
-				return (this.noGrowUntilTick <= 0 || Find.TickManager.TicksGame >= this.noGrowUntilTick) && Find.TickManager.TicksGame < this.growthSeasonUntilTick;
+				return Find.TickManager.TicksGame < this.growthSeasonUntilTick;
+			}
+		}
+
+		public bool GrowthSeasonOutdoorsNowForSowing
+		{
+			get
+			{
+				return (this.noSowUntilTick <= 0 || Find.TickManager.TicksGame >= this.noSowUntilTick) && this.GrowthSeasonOutdoorsNow;
 			}
 		}
 
@@ -35,14 +43,14 @@ namespace RimWorld
 			else if (this.map.mapTemperature.OutdoorTemp < -2f)
 			{
 				this.growthSeasonUntilTick = -1;
-				this.noGrowUntilTick = Find.TickManager.TicksGame + 30000;
+				this.noSowUntilTick = Find.TickManager.TicksGame + 30000;
 			}
 		}
 
 		public void ExposeData()
 		{
 			Scribe_Values.Look<int>(ref this.growthSeasonUntilTick, "growthSeasonUntilTick", 0, true);
-			Scribe_Values.Look<int>(ref this.noGrowUntilTick, "noGrowUntilTick", 0, true);
+			Scribe_Values.Look<int>(ref this.noSowUntilTick, "noSowUntilTick", 0, true);
 		}
 	}
 }

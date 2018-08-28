@@ -107,7 +107,7 @@ namespace RimWorld
 			absorbed = false;
 			if (this.CanEverExplodeFromDamage)
 			{
-				if (dinfo.Def.externalViolence && dinfo.Amount >= this.parent.HitPoints)
+				if (dinfo.Def.ExternalViolenceFor(this.parent) && dinfo.Amount >= (float)this.parent.HitPoints && this.CanExplodeFromDamageType(dinfo.Def))
 				{
 					if (this.parent.MapHeld != null)
 					{
@@ -131,13 +131,17 @@ namespace RimWorld
 			{
 				return;
 			}
+			if (!this.CanExplodeFromDamageType(dinfo.Def))
+			{
+				return;
+			}
 			if (!this.parent.Destroyed)
 			{
 				if (this.wickStarted && dinfo.Def == DamageDefOf.Stun)
 				{
 					this.StopWick();
 				}
-				else if (!this.wickStarted && this.parent.HitPoints <= this.StartWickThreshold && dinfo.Def.externalViolence)
+				else if (!this.wickStarted && this.parent.HitPoints <= this.StartWickThreshold && dinfo.Def.ExternalViolenceFor(this.parent))
 				{
 					this.StartWick(dinfo.Instigator);
 				}
@@ -203,7 +207,7 @@ namespace RimWorld
 			this.wickStarted = false;
 			if (map == null)
 			{
-				Log.Warning("Tried to detonate CompExplosive in a null map.");
+				Log.Warning("Tried to detonate CompExplosive in a null map.", false);
 				return;
 			}
 			if (props.explosionEffect != null)
@@ -217,10 +221,17 @@ namespace RimWorld
 			DamageDef explosiveDamageType = props.explosiveDamageType;
 			Thing thing = this.instigator ?? this.parent;
 			int damageAmountBase = props.damageAmountBase;
+			float armorPenetrationBase = props.armorPenetrationBase;
 			SoundDef explosionSound = props.explosionSound;
 			ThingDef postExplosionSpawnThingDef = props.postExplosionSpawnThingDef;
 			float postExplosionSpawnChance = props.postExplosionSpawnChance;
-			GenExplosion.DoExplosion(positionHeld, map, radius, explosiveDamageType, thing, damageAmountBase, explosionSound, null, null, postExplosionSpawnThingDef, postExplosionSpawnChance, props.postExplosionSpawnThingCount, props.applyDamageToExplosionCellsNeighbors, props.preExplosionSpawnThingDef, props.preExplosionSpawnChance, props.preExplosionSpawnThingCount, props.chanceToStartFire, props.dealMoreDamageAtCenter);
+			int postExplosionSpawnThingCount = props.postExplosionSpawnThingCount;
+			GenExplosion.DoExplosion(positionHeld, map, radius, explosiveDamageType, thing, damageAmountBase, armorPenetrationBase, explosionSound, null, null, null, postExplosionSpawnThingDef, postExplosionSpawnChance, postExplosionSpawnThingCount, props.applyDamageToExplosionCellsNeighbors, props.preExplosionSpawnThingDef, props.preExplosionSpawnChance, props.preExplosionSpawnThingCount, props.chanceToStartFire, props.damageFalloff);
+		}
+
+		private bool CanExplodeFromDamageType(DamageDef damage)
+		{
+			return this.Props.requiredDamageTypeToExplode == null || this.Props.requiredDamageTypeToExplode == damage;
 		}
 	}
 }

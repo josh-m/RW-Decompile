@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using UnityEngine;
 using Verse;
 using Verse.Sound;
@@ -10,7 +11,7 @@ namespace RimWorld.Planet
 	[StaticConstructorOnStartup]
 	public class MapParent : WorldObject, IThingHolder
 	{
-		private bool anyCaravanEverFormed;
+		private HashSet<IncidentTargetTagDef> hibernatableIncidentTargets;
 
 		private static readonly Texture2D ShowMapCommand = ContentFinder<Texture2D>.Get("UI/Commands/ShowMap", true);
 
@@ -42,57 +43,60 @@ namespace RimWorld.Planet
 		{
 			get
 			{
-				return this.def.mapGenerator;
+				return (this.def.mapGenerator == null) ? MapGeneratorDefOf.Encounter : this.def.mapGenerator;
 			}
 		}
 
-		public virtual IEnumerable<GenStepDef> ExtraGenStepDefs
+		public virtual IEnumerable<GenStepWithParams> ExtraGenStepDefs
 		{
 			get
 			{
 			}
 		}
 
-		public virtual bool TransportPodsCanLandAndGenerateMap
+		public override bool ExpandMore
 		{
 			get
 			{
-				return false;
+				return base.ExpandMore || this.HasMap;
 			}
-		}
-
-		public virtual IntVec3 MapSizeGeneratedByTransportPodsArrival
-		{
-			get
-			{
-				return Find.World.info.initialMapSize;
-			}
-		}
-
-		public override void ExposeData()
-		{
-			base.ExposeData();
-			Scribe_Values.Look<bool>(ref this.anyCaravanEverFormed, "anyCaravanEverFormed", false, false);
 		}
 
 		public virtual void PostMapGenerate()
 		{
+			List<WorldObjectComp> allComps = base.AllComps;
+			for (int i = 0; i < allComps.Count; i++)
+			{
+				allComps[i].PostMapGenerate();
+			}
 		}
 
 		public virtual void Notify_MyMapRemoved(Map map)
 		{
+			List<WorldObjectComp> allComps = base.AllComps;
+			for (int i = 0; i < allComps.Count; i++)
+			{
+				allComps[i].PostMyMapRemoved();
+			}
 		}
 
 		public virtual void Notify_CaravanFormed(Caravan caravan)
 		{
-			if (!this.anyCaravanEverFormed)
+			List<WorldObjectComp> allComps = base.AllComps;
+			for (int i = 0; i < allComps.Count; i++)
 			{
-				this.anyCaravanEverFormed = true;
-				if (this.def.isTempIncidentMapOwner && this.HasMap)
-				{
-					this.Map.StoryState.CopyTo(caravan.StoryState);
-				}
+				allComps[i].PostCaravanFormed(caravan);
 			}
+		}
+
+		public virtual void Notify_HibernatableChanged()
+		{
+			this.RecalculateHibernatableIncidentTargets();
+		}
+
+		public virtual void FinalizeLoading()
+		{
+			this.RecalculateHibernatableIncidentTargets();
 		}
 
 		public virtual bool ShouldRemoveMapNow(out bool alsoRemoveWorldObject)
@@ -133,7 +137,7 @@ namespace RimWorld.Planet
 					hotKey = KeyBindingDefOf.Misc1,
 					action = delegate
 					{
-						Current.Game.VisibleMap = this.$this.Map;
+						Current.Game.CurrentMap = this.$this.Map;
 						if (!CameraJumper.TryHideWorld())
 						{
 							SoundDefOf.TabClose.PlayOneShotOnCamera(null);
@@ -144,32 +148,66 @@ namespace RimWorld.Planet
 		}
 
 		[DebuggerHidden]
+		public override IEnumerable<IncidentTargetTagDef> IncidentTargetTags()
+		{
+			foreach (IncidentTargetTagDef type in base.IncidentTargetTags())
+			{
+				yield return type;
+			}
+			if (this.hibernatableIncidentTargets != null && this.hibernatableIncidentTargets.Count > 0)
+			{
+				foreach (IncidentTargetTagDef type2 in this.hibernatableIncidentTargets)
+				{
+					yield return type2;
+				}
+			}
+		}
+
+		[DebuggerHidden]
 		public override IEnumerable<FloatMenuOption> GetFloatMenuOptions(Caravan caravan)
 		{
 			foreach (FloatMenuOption o in base.GetFloatMenuOptions(caravan))
 			{
 				yield return o;
 			}
-			if (this.HasMap && this.UseGenericEnterMapFloatMenuOption)
+			if (this.UseGenericEnterMapFloatMenuOption)
 			{
-				yield return new FloatMenuOption("EnterMap".Translate(new object[]
+				foreach (FloatMenuOption f in CaravanArrivalAction_Enter.GetFloatMenuOptions(caravan, this))
+				{
+					yield return f;
+				}
+			}
+		}
+
+		[DebuggerHidden]
+		public override IEnumerable<FloatMenuOption> GetTransportPodsFloatMenuOptions(IEnumerable<IThingHolder> pods, CompLaunchable representative)
+		{
+			foreach (FloatMenuOption o in base.GetTransportPodsFloatMenuOptions(pods, representative))
+			{
+				yield return o;
+			}
+			if (TransportPodsArrivalAction_LandInSpecificCell.CanLandInSpecificCell(pods, this))
+			{
+				yield return new FloatMenuOption("LandInExistingMap".Translate(new object[]
 				{
 					this.Label
 				}), delegate
 				{
-					caravan.pather.StartPath(this.$this.Tile, new CaravanArrivalAction_Enter(this.$this), true);
-				}, MenuOptionPriority.Default, null, null, 0f, null, this);
-				if (Prefs.DevMode)
-				{
-					yield return new FloatMenuOption("EnterMap".Translate(new object[]
+					Map myMap = representative.parent.Map;
+					Map map = this.$this.Map;
+					Current.Game.CurrentMap = map;
+					CameraJumper.TryHideWorld();
+					Find.Targeter.BeginTargeting(TargetingParameters.ForDropPodsDestination(), delegate(LocalTargetInfo x)
 					{
-						this.Label
-					}) + " (Dev: instantly)", delegate
+						representative.TryLaunch(this.$this.Tile, new TransportPodsArrivalAction_LandInSpecificCell(this.$this, x.Cell));
+					}, null, delegate
 					{
-						caravan.Tile = this.$this.Tile;
-						new CaravanArrivalAction_Enter(this.$this).Arrived(caravan);
-					}, MenuOptionPriority.Default, null, null, 0f, null, this);
-				}
+						if (Find.Maps.Contains(myMap))
+						{
+							Current.Game.CurrentMap = myMap;
+						}
+					}, CompLaunchable.TargeterMouseAttachment);
+				}, MenuOptionPriority.Default, null, null, 0f, null, null);
 			}
 		}
 
@@ -187,6 +225,23 @@ namespace RimWorld.Planet
 			}
 		}
 
+		public override string GetInspectString()
+		{
+			string text = base.GetInspectString();
+			if (this.EnterCooldownBlocksEntering())
+			{
+				if (!text.NullOrEmpty())
+				{
+					text += "\n";
+				}
+				text += "EnterCooldown".Translate(new object[]
+				{
+					this.EnterCooldownDaysLeft().ToString("0.#")
+				});
+			}
+			return text;
+		}
+
 		public ThingOwner GetDirectlyHeldThings()
 		{
 			return null;
@@ -198,6 +253,23 @@ namespace RimWorld.Planet
 			if (this.HasMap)
 			{
 				outChildren.Add(this.Map);
+			}
+		}
+
+		private void RecalculateHibernatableIncidentTargets()
+		{
+			this.hibernatableIncidentTargets = null;
+			foreach (ThingWithComps current in this.Map.listerThings.ThingsOfDef(ThingDefOf.Ship_Reactor).OfType<ThingWithComps>())
+			{
+				CompHibernatable compHibernatable = current.TryGetComp<CompHibernatable>();
+				if (compHibernatable != null && compHibernatable.State == HibernatableStateDefOf.Starting && compHibernatable.Props.incidentTargetWhileStarting != null)
+				{
+					if (this.hibernatableIncidentTargets == null)
+					{
+						this.hibernatableIncidentTargets = new HashSet<IncidentTargetTagDef>();
+					}
+					this.hibernatableIncidentTargets.Add(compHibernatable.Props.incidentTargetWhileStarting);
+				}
 			}
 		}
 	}

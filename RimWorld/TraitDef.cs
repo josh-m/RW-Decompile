@@ -20,7 +20,7 @@ namespace RimWorld
 
 		public WorkTags disabledWorkTags;
 
-		private float commonality;
+		private float commonality = 1f;
 
 		private float commonalityFemale = -1f;
 
@@ -46,7 +46,7 @@ namespace RimWorld
 				" found no data at degree ",
 				degree,
 				", returning first defined."
-			}));
+			}), false);
 			return this.degreeDatas[0];
 		}
 
@@ -92,9 +92,9 @@ namespace RimWorld
 			return false;
 		}
 
-		public float GetGenderSpecificCommonality(Pawn pawn)
+		public float GetGenderSpecificCommonality(Gender gender)
 		{
-			if (pawn.gender == Gender.Female && this.commonalityFemale >= 0f)
+			if (gender == Gender.Female && this.commonalityFemale >= 0f)
 			{
 				return this.commonalityFemale;
 			}

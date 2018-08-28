@@ -36,7 +36,7 @@ namespace RimWorld
 					}
 					catch (Exception ex)
 					{
-						Log.Error("Exception getting last played version data. Path: " + GenFilePaths.LastPlayedVersionFilePath + ". Exception: " + ex.ToString());
+						Log.Error("Exception getting last played version data. Path: " + GenFilePaths.LastPlayedVersionFilePath + ". Exception: " + ex.ToString(), false);
 					}
 				}
 				if (text != null)
@@ -47,7 +47,7 @@ namespace RimWorld
 					}
 					catch (Exception ex2)
 					{
-						Log.Error("Exception parsing last version from string '" + text + "': " + ex2.ToString());
+						Log.Error("Exception parsing last version from string '" + text + "': " + ex2.ToString(), false);
 					}
 				}
 				if (LastPlayedVersion.lastPlayedVersionInt != VersionControl.CurrentVersion)

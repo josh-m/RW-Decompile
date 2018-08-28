@@ -7,21 +7,21 @@ namespace Verse
 {
 	public static class GenSpawn
 	{
-		public static Thing Spawn(ThingDef def, IntVec3 loc, Map map)
+		public static Thing Spawn(ThingDef def, IntVec3 loc, Map map, WipeMode wipeMode = WipeMode.Vanish)
 		{
-			return GenSpawn.Spawn(ThingMaker.MakeThing(def, null), loc, map);
+			return GenSpawn.Spawn(ThingMaker.MakeThing(def, null), loc, map, wipeMode);
 		}
 
-		public static Thing Spawn(Thing newThing, IntVec3 loc, Map map)
+		public static Thing Spawn(Thing newThing, IntVec3 loc, Map map, WipeMode wipeMode = WipeMode.Vanish)
 		{
-			return GenSpawn.Spawn(newThing, loc, map, Rot4.North, false);
+			return GenSpawn.Spawn(newThing, loc, map, Rot4.North, wipeMode, false);
 		}
 
-		public static Thing Spawn(Thing newThing, IntVec3 loc, Map map, Rot4 rot, bool respawningAfterLoad = false)
+		public static Thing Spawn(Thing newThing, IntVec3 loc, Map map, Rot4 rot, WipeMode wipeMode = WipeMode.Vanish, bool respawningAfterLoad = false)
 		{
 			if (map == null)
 			{
-				Log.Error("Tried to spawn " + newThing + " in a null map.");
+				Log.Error("Tried to spawn " + newThing.ToStringSafe<Thing>() + " in a null map.", false);
 				return null;
 			}
 			if (!loc.InBounds(map))
@@ -29,27 +29,66 @@ namespace Verse
 				Log.Error(string.Concat(new object[]
 				{
 					"Tried to spawn ",
-					newThing,
+					newThing.ToStringSafe<Thing>(),
 					" out of bounds at ",
 					loc,
 					"."
-				}));
+				}), false);
+				return null;
+			}
+			if (newThing.def.randomizeRotationOnSpawn)
+			{
+				rot = Rot4.Random;
+			}
+			CellRect occupiedRect = GenAdj.OccupiedRect(loc, rot, newThing.def.Size);
+			if (!occupiedRect.InBounds(map))
+			{
+				Log.Error(string.Concat(new object[]
+				{
+					"Tried to spawn ",
+					newThing.ToStringSafe<Thing>(),
+					" out of bounds at ",
+					loc,
+					" (out of bounds because size is ",
+					newThing.def.Size,
+					")."
+				}), false);
 				return null;
 			}
 			if (newThing.Spawned)
 			{
-				Log.Error("Tried to spawn " + newThing + " but it's already spawned.");
+				Log.Error("Tried to spawn " + newThing + " but it's already spawned.", false);
 				return newThing;
 			}
-			GenSpawn.WipeExistingThings(loc, rot, newThing.def, map, DestroyMode.Vanish);
-			if (newThing.def.randomizeRotationOnSpawn)
+			if (wipeMode == WipeMode.Vanish)
 			{
-				newThing.Rotation = Rot4.Random;
+				GenSpawn.WipeExistingThings(loc, rot, newThing.def, map, DestroyMode.Vanish);
 			}
-			else
+			else if (wipeMode == WipeMode.FullRefund)
 			{
-				newThing.Rotation = rot;
+				GenSpawn.WipeAndRefundExistingThings(loc, rot, newThing.def, map);
 			}
+			if (newThing.def.category == ThingCategory.Item)
+			{
+				foreach (IntVec3 current in occupiedRect)
+				{
+					foreach (Thing current2 in current.GetThingList(map).ToList<Thing>())
+					{
+						if (current2 != newThing)
+						{
+							if (current2.def.category == ThingCategory.Item)
+							{
+								current2.DeSpawn(DestroyMode.Vanish);
+								if (!GenPlace.TryPlaceThing(current2, current, map, ThingPlaceMode.Near, null, (IntVec3 x) => !occupiedRect.Contains(x)))
+								{
+									current2.Destroy(DestroyMode.Vanish);
+								}
+							}
+						}
+					}
+				}
+			}
+			newThing.Rotation = rot;
 			newThing.Position = loc;
 			if (newThing.holdingOwner != null)
 			{
@@ -58,9 +97,26 @@ namespace Verse
 			newThing.SpawnSetup(map, respawningAfterLoad);
 			if (newThing.Spawned && newThing.stackCount == 0)
 			{
-				Log.Error("Spawned thing with 0 stackCount: " + newThing);
+				Log.Error("Spawned thing with 0 stackCount: " + newThing, false);
 				newThing.Destroy(DestroyMode.Vanish);
 				return null;
+			}
+			if (newThing.def.passability == Traversability.Impassable)
+			{
+				foreach (IntVec3 current3 in occupiedRect)
+				{
+					foreach (Thing current4 in current3.GetThingList(map).ToList<Thing>())
+					{
+						if (current4 != newThing)
+						{
+							Pawn pawn = current4 as Pawn;
+							if (pawn != null)
+							{
+								pawn.pather.TryRecoverFromUnwalkablePosition(false);
+							}
+						}
+					}
+				}
 			}
 			return newThing;
 		}
@@ -68,51 +124,64 @@ namespace Verse
 		public static void SpawnBuildingAsPossible(Building building, Map map, bool respawningAfterLoad = false)
 		{
 			bool flag = false;
-			foreach (IntVec3 current in building.OccupiedRect())
+			if (!building.OccupiedRect().InBounds(map))
 			{
-				List<Thing> thingList = current.GetThingList(map);
-				for (int i = 0; i < thingList.Count; i++)
+				flag = true;
+			}
+			else
+			{
+				foreach (IntVec3 current in building.OccupiedRect())
 				{
-					if (thingList[i] is Pawn && building.def.passability == Traversability.Impassable)
+					List<Thing> thingList = current.GetThingList(map);
+					for (int i = 0; i < thingList.Count; i++)
 					{
-						flag = true;
+						if (thingList[i] is Pawn && building.def.passability == Traversability.Impassable)
+						{
+							flag = true;
+							break;
+						}
+						if ((thingList[i].def.category == ThingCategory.Building || thingList[i].def.category == ThingCategory.Item) && GenSpawn.SpawningWipes(building.def, thingList[i].def))
+						{
+							flag = true;
+							break;
+						}
+					}
+					if (flag)
+					{
 						break;
 					}
-					if ((thingList[i].def.category == ThingCategory.Building || thingList[i].def.category == ThingCategory.Item) && GenSpawn.SpawningWipes(building.def, thingList[i].def))
-					{
-						flag = true;
-						break;
-					}
-				}
-				if (flag)
-				{
-					break;
 				}
 			}
 			if (flag)
 			{
-				bool flag2 = false;
-				if (building.def.Minifiable)
-				{
-					MinifiedThing minifiedThing = building.MakeMinified();
-					if (GenPlace.TryPlaceThing(minifiedThing, building.Position, map, ThingPlaceMode.Near, null))
-					{
-						flag2 = true;
-					}
-					else
-					{
-						minifiedThing.GetDirectlyHeldThings().Clear();
-						minifiedThing.Destroy(DestroyMode.Vanish);
-					}
-				}
-				if (!flag2)
-				{
-					GenLeaving.DoLeavingsFor(building, map, DestroyMode.Refund, building.OccupiedRect());
-				}
+				GenSpawn.Refund(building, map, CellRect.Empty);
 			}
 			else
 			{
-				GenSpawn.Spawn(building, building.Position, map, building.Rotation, respawningAfterLoad);
+				GenSpawn.Spawn(building, building.Position, map, building.Rotation, WipeMode.FullRefund, respawningAfterLoad);
+			}
+		}
+
+		public static void Refund(Thing thing, Map map, CellRect avoidThisRect)
+		{
+			bool flag = false;
+			if (thing.def.Minifiable)
+			{
+				MinifiedThing minifiedThing = thing.MakeMinified();
+				if (GenPlace.TryPlaceThing(minifiedThing, thing.Position, map, ThingPlaceMode.Near, null, (IntVec3 x) => !avoidThisRect.Contains(x)))
+				{
+					flag = true;
+				}
+				else
+				{
+					minifiedThing.GetDirectlyHeldThings().Clear();
+					minifiedThing.Destroy(DestroyMode.Vanish);
+				}
+			}
+			if (!flag)
+			{
+				GenLeaving.DoLeavingsFor(thing, map, DestroyMode.Refund, thing.OccupiedRect(), (IntVec3 x) => !avoidThisRect.Contains(x));
+				thing.Destroy(DestroyMode.Vanish);
 			}
 		}
 
@@ -125,6 +194,32 @@ namespace Verse
 					if (GenSpawn.SpawningWipes(thingDef, current2.def))
 					{
 						current2.Destroy(mode);
+					}
+				}
+			}
+		}
+
+		public static void WipeAndRefundExistingThings(IntVec3 thingPos, Rot4 thingRot, BuildableDef thingDef, Map map)
+		{
+			CellRect occupiedRect = GenAdj.OccupiedRect(thingPos, thingRot, thingDef.Size);
+			foreach (IntVec3 current in occupiedRect)
+			{
+				foreach (Thing current2 in current.GetThingList(map).ToList<Thing>())
+				{
+					if (GenSpawn.SpawningWipes(thingDef, current2.def))
+					{
+						if (current2.def.category == ThingCategory.Item)
+						{
+							current2.DeSpawn(DestroyMode.Vanish);
+							if (!GenPlace.TryPlaceThing(current2, current, map, ThingPlaceMode.Near, null, (IntVec3 x) => !occupiedRect.Contains(x)))
+							{
+								current2.Destroy(DestroyMode.Vanish);
+							}
+						}
+						else
+						{
+							GenSpawn.Refund(current2, map, occupiedRect);
+						}
 					}
 				}
 			}

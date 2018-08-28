@@ -30,7 +30,7 @@ namespace Verse
 		{
 			get
 			{
-				return Current.Root.uiRoot;
+				return (!(Current.Root != null)) ? null : Current.Root.uiRoot;
 			}
 		}
 
@@ -47,14 +47,6 @@ namespace Verse
 			get
 			{
 				return ((Root_Play)Current.Root).musicManagerPlay;
-			}
-		}
-
-		public static WindowStack WindowStack
-		{
-			get
-			{
-				return Find.UIRoot.windows;
 			}
 		}
 
@@ -119,6 +111,22 @@ namespace Verse
 			get
 			{
 				return WorldCameraManager.WorldCameraDriver;
+			}
+		}
+
+		public static WindowStack WindowStack
+		{
+			get
+			{
+				return (Find.UIRoot == null) ? null : Find.UIRoot.windows;
+			}
+		}
+
+		public static ScreenshotModeHandler ScreenshotModeHandler
+		{
+			get
+			{
+				return Find.UIRoot.screenshotMode;
 			}
 		}
 
@@ -238,11 +246,15 @@ namespace Verse
 		{
 			get
 			{
+				if (Current.Game == null)
+				{
+					return null;
+				}
 				return Current.Game.Maps;
 			}
 		}
 
-		public static Map VisibleMap
+		public static Map CurrentMap
 		{
 			get
 			{
@@ -250,7 +262,7 @@ namespace Verse
 				{
 					return null;
 				}
-				return Current.Game.VisibleMap;
+				return Current.Game.CurrentMap;
 			}
 		}
 
@@ -306,6 +318,14 @@ namespace Verse
 			}
 		}
 
+		public static Archive Archive
+		{
+			get
+			{
+				return (Find.History == null) ? null : Find.History.archive;
+			}
+		}
+
 		public static PlaySettings PlaySettings
 		{
 			get
@@ -318,7 +338,7 @@ namespace Verse
 		{
 			get
 			{
-				return Current.Game.history;
+				return (Current.Game == null) ? null : Current.Game.history;
 			}
 		}
 
@@ -410,6 +430,14 @@ namespace Verse
 			}
 		}
 
+		public static UniqueIDsManager UniqueIDsManager
+		{
+			get
+			{
+				return (Current.Game == null) ? null : Current.Game.uniqueIDsManager;
+			}
+		}
+
 		public static FactionManager FactionManager
 		{
 			get
@@ -423,14 +451,6 @@ namespace Verse
 			get
 			{
 				return Find.World.worldPawns;
-			}
-		}
-
-		public static UniqueIDsManager UniqueIDsManager
-		{
-			get
-			{
-				return Find.World.uniqueIDsManager;
 			}
 		}
 

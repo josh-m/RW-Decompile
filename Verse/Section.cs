@@ -71,7 +71,20 @@ namespace Verse
 			{
 				if (this.layers[i].Visible)
 				{
-					this.layers[i].Regenerate();
+					try
+					{
+						this.layers[i].Regenerate();
+					}
+					catch (Exception ex)
+					{
+						Log.Error(string.Concat(new object[]
+						{
+							"Could not regenerate layer ",
+							this.layers[i].ToStringSafe<SectionLayer>(),
+							": ",
+							ex
+						}), false);
+					}
 				}
 			}
 		}
@@ -83,7 +96,20 @@ namespace Verse
 				SectionLayer sectionLayer = this.layers[i];
 				if ((sectionLayer.relevantChangeTypes & changeType) != MapMeshFlag.None)
 				{
-					sectionLayer.Regenerate();
+					try
+					{
+						sectionLayer.Regenerate();
+					}
+					catch (Exception ex)
+					{
+						Log.Error(string.Concat(new object[]
+						{
+							"Could not regenerate layer ",
+							sectionLayer.ToStringSafe<SectionLayer>(),
+							": ",
+							ex
+						}), false);
+					}
 				}
 			}
 		}

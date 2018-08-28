@@ -26,7 +26,7 @@ namespace RimWorld
 				return null;
 			}
 			Verb primaryVerb = pawn.equipment.PrimaryEq.PrimaryVerb;
-			if (primaryVerb.verbProps.MeleeRange)
+			if (primaryVerb.verbProps.IsMeleeAttack)
 			{
 				return null;
 			}
@@ -34,7 +34,7 @@ namespace RimWorld
 			{
 				failStr = "IsNotDraftedLower".Translate(new object[]
 				{
-					pawn.NameStringShort
+					pawn.LabelShort
 				});
 			}
 			else if (!pawn.IsColonistPlayerControlled)
@@ -47,6 +47,11 @@ namespace RimWorld
 				{
 					failStr = "OutOfRange".Translate();
 				}
+				float num = primaryVerb.verbProps.EffectiveMinRange(target, pawn);
+				if ((float)pawn.Position.DistanceToSquared(target.Cell) < num * num)
+				{
+					failStr = "TooClose".Translate();
+				}
 				else
 				{
 					failStr = "CannotHitTarget".Translate();
@@ -56,7 +61,7 @@ namespace RimWorld
 			{
 				failStr = "IsIncapableOfViolenceLower".Translate(new object[]
 				{
-					pawn.NameStringShort
+					pawn.LabelShort
 				});
 			}
 			else
@@ -81,7 +86,7 @@ namespace RimWorld
 			{
 				failStr = "IsNotDraftedLower".Translate(new object[]
 				{
-					pawn.NameStringShort
+					pawn.LabelShort
 				});
 			}
 			else if (!pawn.IsColonistPlayerControlled)
@@ -96,10 +101,10 @@ namespace RimWorld
 			{
 				failStr = "IsIncapableOfViolenceLower".Translate(new object[]
 				{
-					pawn.NameStringShort
+					pawn.LabelShort
 				});
 			}
-			else if (pawn.meleeVerbs.TryGetMeleeVerb() == null)
+			else if (pawn.meleeVerbs.TryGetMeleeVerb(target.Thing) == null)
 			{
 				failStr = "Incapable".Translate();
 			}
@@ -125,7 +130,7 @@ namespace RimWorld
 
 		public static Action GetAttackAction(Pawn pawn, LocalTargetInfo target, out string failStr)
 		{
-			if (pawn.equipment.Primary != null && !pawn.equipment.PrimaryEq.PrimaryVerb.verbProps.MeleeRange)
+			if (pawn.equipment.Primary != null && !pawn.equipment.PrimaryEq.PrimaryVerb.verbProps.IsMeleeAttack)
 			{
 				return FloatMenuUtility.GetRangedAttackAction(pawn, target, out failStr);
 			}
@@ -153,6 +158,11 @@ namespace RimWorld
 					}) + ")";
 				}
 			}
+			if (option.revalidateClickTarget != null && option.revalidateClickTarget != target.Thing)
+			{
+				Log.ErrorOnce(string.Format("Click target mismatch; {0} vs {1} in {2}", option.revalidateClickTarget, target.Thing, option.Label), 52753118, false);
+			}
+			option.revalidateClickTarget = target.Thing;
 			return option;
 		}
 	}

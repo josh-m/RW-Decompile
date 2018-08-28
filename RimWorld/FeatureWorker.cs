@@ -33,7 +33,7 @@ namespace RimWorld
 			worldFeature.uniqueID = Find.UniqueIDsManager.GetNextWorldFeatureID();
 			worldFeature.def = this.def;
 			worldFeature.name = NameGenerator.GenerateName(this.def.nameMaker, from x in Find.WorldFeatures.features
-			select x.name, false, "name");
+			select x.name, false, "r_name");
 			WorldGrid worldGrid = Find.WorldGrid;
 			for (int i = 0; i < members.Count; i++)
 			{
@@ -105,9 +105,9 @@ namespace RimWorld
 					}
 				}
 			}
-			float num4 = (float)bestTileDist * 2f * 1.2f;
+			float maxDrawSizeInTiles = (float)bestTileDist * 2f * 1.2f;
 			newFeature.drawCenter = worldGrid.GetTileCenter(num2);
-			newFeature.maxDrawSizeInTiles = new Vector2(num4, num4);
+			newFeature.maxDrawSizeInTiles = maxDrawSizeInTiles;
 		}
 
 		protected static void ClearVisited()

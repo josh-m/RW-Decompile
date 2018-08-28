@@ -21,6 +21,8 @@ namespace RimWorld
 
 		public bool showMessageIfOwned;
 
+		public string saveKeysPrefix;
+
 		public CompProperties_Spawner()
 		{
 			this.compClass = typeof(CompSpawner);

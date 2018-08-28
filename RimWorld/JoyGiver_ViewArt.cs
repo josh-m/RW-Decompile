@@ -26,7 +26,7 @@ namespace RimWorld
 					CompArt compArt = thing.TryGetComp<CompArt>();
 					if (compArt == null)
 					{
-						Log.Error("No CompArt on thing being considered for viewing: " + thing);
+						Log.Error("No CompArt on thing being considered for viewing: " + thing, false);
 						return false;
 					}
 					if (!compArt.CanShowArt || !compArt.Props.canBeEnjoyedAsArt)

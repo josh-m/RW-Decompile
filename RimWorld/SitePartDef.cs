@@ -1,33 +1,32 @@
 using System;
-using Verse;
 
 namespace RimWorld
 {
-	public class SitePartDef : SiteDefBase
+	public class SitePartDef : SiteCoreOrPartDefBase
 	{
-		public Type workerClass = typeof(SitePartWorker);
+		public bool alwaysHidden;
 
-		public string descriptionDialogue;
-
-		[Unsaved]
-		private SitePartWorker workerInt;
-
-		public SitePartWorker Worker
+		public new SitePartWorker Worker
 		{
 			get
 			{
-				if (this.workerInt == null)
-				{
-					this.workerInt = (SitePartWorker)Activator.CreateInstance(this.workerClass);
-					this.workerInt.def = this;
-				}
-				return this.workerInt;
+				return (SitePartWorker)base.Worker;
 			}
+		}
+
+		public SitePartDef()
+		{
+			this.workerClass = typeof(SitePartWorker);
 		}
 
 		public override bool FactionCanOwn(Faction faction)
 		{
 			return base.FactionCanOwn(faction) && this.Worker.FactionCanOwn(faction);
+		}
+
+		protected override SiteCoreOrPartWorkerBase CreateWorker()
+		{
+			return (SitePartWorker)Activator.CreateInstance(this.workerClass);
 		}
 	}
 }

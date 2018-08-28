@@ -28,7 +28,7 @@ namespace RimWorld
 					current.ResolveReferences();
 					foreach (string current2 in current.ConfigErrors())
 					{
-						Log.Error(current2);
+						Log.Error(current2, false);
 					}
 					SolidBioDatabase.allBios.Add(current);
 					current.childhood.shuffleable = false;

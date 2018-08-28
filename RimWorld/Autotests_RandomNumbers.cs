@@ -10,12 +10,12 @@ namespace RimWorld
 	{
 		public static void Run()
 		{
-			Log.Message("Running random numbers tests.");
+			Log.Message("Running random numbers tests.", false);
 			Autotests_RandomNumbers.CheckSimpleFloats();
 			Autotests_RandomNumbers.CheckIntsRange();
 			Autotests_RandomNumbers.CheckIntsDistribution();
 			Autotests_RandomNumbers.CheckSeed();
-			Log.Message("Finished.");
+			Log.Message("Finished.", false);
 		}
 
 		private static void CheckSimpleFloats()
@@ -23,7 +23,7 @@ namespace RimWorld
 			List<float> list = Autotests_RandomNumbers.RandomFloats(500).ToList<float>();
 			if (list.Any((float x) => x < 0f || x > 1f))
 			{
-				Log.Error("Float out of range.");
+				Log.Error("Float out of range.", false);
 			}
 			if (list.Any((float x) => x < 0.1f))
 			{
@@ -31,17 +31,17 @@ namespace RimWorld
 				{
 					if (list.Any((float x) => (double)x > 0.9))
 					{
-						goto IL_C4;
+						goto IL_C6;
 					}
 				}
 			}
-			Log.Warning("Possibly uneven distribution.");
-			IL_C4:
+			Log.Warning("Possibly uneven distribution.", false);
+			IL_C6:
 			list = Autotests_RandomNumbers.RandomFloats(1300000).ToList<float>();
 			int num = list.Count((float x) => (double)x < 0.1);
-			Log.Message("< 0.1 count (should be ~10%): " + (float)num / (float)list.Count<float>() * 100f + "%");
+			Log.Message("< 0.1 count (should be ~10%): " + (float)num / (float)list.Count<float>() * 100f + "%", false);
 			num = list.Count((float x) => (double)x < 0.0001);
-			Log.Message("< 0.0001 count (should be ~0.01%): " + (float)num / (float)list.Count<float>() * 100f + "%");
+			Log.Message("< 0.0001 count (should be ~0.01%): " + (float)num / (float)list.Count<float>() * 100f + "%", false);
 		}
 
 		[DebuggerHidden]
@@ -82,7 +82,7 @@ namespace RimWorld
 				int num4 = Rand.RangeInclusive(num, num2);
 				if (num4 < num || num4 > num2)
 				{
-					Log.Error("Value out of range.");
+					Log.Error("Value out of range.", false);
 				}
 				if (dictionary.ContainsKey(num4))
 				{
@@ -102,14 +102,14 @@ namespace RimWorld
 				" and ",
 				num2,
 				" (value: number of occurrences):"
-			}));
+			}), false);
 			for (int j = num; j <= num2; j++)
 			{
-				Log.Message(j + ": " + dictionary[j]);
+				Log.Message(j + ": " + dictionary[j], false);
 			}
 			return;
 			Block_3:
-			Log.Error("Failed to find all numbers in a range.");
+			Log.Error("Failed to find all numbers in a range.", false);
 		}
 
 		private static void CheckIntsDistribution()
@@ -120,7 +120,7 @@ namespace RimWorld
 				int num = Rand.RangeInclusive(-2, 1);
 				list.Add(num + 2);
 			}
-			Log.Message("Ints distribution (should be even):");
+			Log.Message("Ints distribution (should be even):", false);
 			int i;
 			for (i = 0; i < 4; i++)
 			{
@@ -130,7 +130,7 @@ namespace RimWorld
 					": ",
 					(float)list.Count((int x) => x == i) / (float)list.Count<int>() * 100f,
 					"%"
-				}));
+				}), false);
 			}
 		}
 
@@ -145,7 +145,7 @@ namespace RimWorld
 			int int4 = Rand.Int;
 			if (@int != int3 || int2 != int4)
 			{
-				Log.Error("Same seed, different values.");
+				Log.Error("Same seed, different values.", false);
 			}
 			Autotests_RandomNumbers.TestPushSeed(15, 20);
 			Autotests_RandomNumbers.TestPushSeed(-2147483645, 20);
@@ -173,7 +173,7 @@ namespace RimWorld
 			int int6 = Rand.Int;
 			if (@int != int4 || int2 != int6 || int3 != int5)
 			{
-				Log.Error("PushSeed broken.");
+				Log.Error("PushSeed broken.", false);
 			}
 		}
 	}

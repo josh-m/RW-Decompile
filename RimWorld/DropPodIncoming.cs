@@ -27,6 +27,7 @@ namespace RimWorld
 				MoteMaker.ThrowDustPuff(loc, base.Map, 1.2f);
 			}
 			MoteMaker.ThrowLightningGlow(base.Position.ToVector3Shifted(), base.Map, 2f);
+			GenClamor.DoClamor(this, 15f, ClamorDefOf.Impact);
 			base.Impact();
 		}
 	}

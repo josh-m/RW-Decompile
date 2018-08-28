@@ -19,15 +19,23 @@ namespace RimWorld
 			}
 		}
 
+		protected override DesignationDef Designation
+		{
+			get
+			{
+				return DesignationDefOf.Slaughter;
+			}
+		}
+
 		public Designator_Slaughter()
 		{
 			this.defaultLabel = "DesignatorSlaughter".Translate();
 			this.defaultDesc = "DesignatorSlaughterDesc".Translate();
 			this.icon = ContentFinder<Texture2D>.Get("UI/Designators/Slaughter", true);
-			this.soundDragSustain = SoundDefOf.DesignateDragStandard;
-			this.soundDragChanged = SoundDefOf.DesignateDragStandardChanged;
+			this.soundDragSustain = SoundDefOf.Designate_DragStandard;
+			this.soundDragChanged = SoundDefOf.Designate_DragStandard_Changed;
 			this.useMouseIcon = true;
-			this.soundSucceeded = SoundDefOf.DesignateHunt;
+			this.soundSucceeded = SoundDefOf.Designate_Hunt;
 			this.hotKey = KeyBindingDefOf.Misc11;
 		}
 
@@ -55,7 +63,7 @@ namespace RimWorld
 		public override AcceptanceReport CanDesignateThing(Thing t)
 		{
 			Pawn pawn = t as Pawn;
-			if (pawn != null && pawn.def.race.Animal && pawn.Faction == Faction.OfPlayer && base.Map.designationManager.DesignationOn(pawn, DesignationDefOf.Slaughter) == null && !pawn.InAggroMentalState)
+			if (pawn != null && pawn.def.race.Animal && pawn.Faction == Faction.OfPlayer && base.Map.designationManager.DesignationOn(pawn, this.Designation) == null && !pawn.InAggroMentalState)
 			{
 				return true;
 			}
@@ -64,7 +72,7 @@ namespace RimWorld
 
 		public override void DesignateThing(Thing t)
 		{
-			base.Map.designationManager.AddDesignation(new Designation(t, DesignationDefOf.Slaughter));
+			base.Map.designationManager.AddDesignation(new Designation(t, this.Designation));
 			this.justDesignated.Add((Pawn)t);
 		}
 

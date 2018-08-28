@@ -4,11 +4,14 @@ namespace Verse
 {
 	public class SubEffecter
 	{
+		public Effecter parent;
+
 		public SubEffecterDef def;
 
-		public SubEffecter(SubEffecterDef subDef)
+		public SubEffecter(SubEffecterDef subDef, Effecter parent)
 		{
 			this.def = subDef;
+			this.parent = parent;
 		}
 
 		public virtual void SubEffectTick(TargetInfo A, TargetInfo B)

@@ -269,7 +269,7 @@ namespace Verse
 			}
 			catch (Exception ex)
 			{
-				Log.Error("Exception from long event: " + ex);
+				Log.Error("Exception from long event: " + ex, false);
 				if (LongEventHandler.currentEvent != null)
 				{
 					IDisposable disposable2 = LongEventHandler.currentEvent.eventActionEnumerator as IDisposable;
@@ -351,7 +351,7 @@ namespace Verse
 			}
 			catch (Exception ex)
 			{
-				Log.Error("Exception from long event: " + ex);
+				Log.Error("Exception from long event: " + ex, false);
 				if (LongEventHandler.currentEvent != null && LongEventHandler.currentEvent.exceptionHandler != null)
 				{
 					LongEventHandler.currentEvent.exceptionHandler(ex);
@@ -364,6 +364,7 @@ namespace Verse
 
 		private static void RunEventFromAnotherThread(Action action)
 		{
+			CultureInfoUtility.EnsureEnglish();
 			try
 			{
 				if (action != null)
@@ -373,7 +374,7 @@ namespace Verse
 			}
 			catch (Exception ex)
 			{
-				Log.Error("Exception from asynchronous event: " + ex);
+				Log.Error("Exception from asynchronous event: " + ex, false);
 				try
 				{
 					if (LongEventHandler.currentEvent != null && LongEventHandler.currentEvent.exceptionHandler != null)
@@ -383,7 +384,7 @@ namespace Verse
 				}
 				catch (Exception arg)
 				{
-					Log.Error("Exception was thrown while trying to handle exception. Exception: " + arg);
+					Log.Error("Exception was thrown while trying to handle exception. Exception: " + arg, false);
 				}
 			}
 		}
@@ -392,7 +393,7 @@ namespace Verse
 		{
 			if (LongEventHandler.executingToExecuteWhenFinished)
 			{
-				Log.Warning("Already executing.");
+				Log.Warning("Already executing.", false);
 				return;
 			}
 			LongEventHandler.executingToExecuteWhenFinished = true;
@@ -404,7 +405,7 @@ namespace Verse
 				}
 				catch (Exception arg)
 				{
-					Log.Error("Could not execute post-long-event action. Exception: " + arg);
+					Log.Error("Could not execute post-long-event action. Exception: " + arg, false);
 				}
 			}
 			LongEventHandler.toExecuteWhenFinished.Clear();

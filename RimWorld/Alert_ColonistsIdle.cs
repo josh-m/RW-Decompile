@@ -41,7 +41,7 @@ namespace RimWorld
 			StringBuilder stringBuilder = new StringBuilder();
 			foreach (Pawn current in this.IdleColonists)
 			{
-				stringBuilder.AppendLine("    " + current.NameStringShort);
+				stringBuilder.AppendLine("    " + current.LabelShort.CapitalizeFirst());
 			}
 			return string.Format("ColonistsIdleDesc".Translate(), stringBuilder.ToString());
 		}
@@ -50,9 +50,9 @@ namespace RimWorld
 		{
 			if (GenDate.DaysPassed < 1)
 			{
-				return AlertReport.Inactive;
+				return false;
 			}
-			return this.IdleColonists.FirstOrDefault<Pawn>();
+			return AlertReport.CulpritsAre(this.IdleColonists);
 		}
 	}
 }

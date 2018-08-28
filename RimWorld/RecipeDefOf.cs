@@ -8,10 +8,13 @@ namespace RimWorld
 	{
 		public static RecipeDef RemoveBodyPart;
 
-		public static RecipeDef RemoveMechanoidBodyPart;
-
 		public static RecipeDef CookMealSimple;
 
 		public static RecipeDef InstallPegLeg;
+
+		static RecipeDefOf()
+		{
+			DefOfHelper.EnsureInitializedInCtor(typeof(RecipeDefOf));
+		}
 	}
 }

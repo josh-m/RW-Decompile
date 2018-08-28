@@ -8,7 +8,7 @@ using Verse.Noise;
 
 namespace RimWorld
 {
-	internal class RiverMaker
+	public class RiverMaker
 	{
 		private ModuleBase generator;
 
@@ -53,7 +53,7 @@ namespace RimWorld
 			float num = this.surfaceLevel - Mathf.Abs(value);
 			if (num > 2f && this.shallowizer.GetValue(loc) > this.shallowFactor)
 			{
-				return TerrainDefOf.WaterMovingDeep;
+				return TerrainDefOf.WaterMovingChestDeep;
 			}
 			if (num > 0f)
 			{
@@ -88,20 +88,20 @@ namespace RimWorld
 			select loc).RandomElementWithFallback(IntVec3.Invalid);
 			if (intVec == IntVec3.Invalid || intVec2 == IntVec3.Invalid)
 			{
-				Log.Error("Failed to find river edges in order to verify passability");
+				Log.Error("Failed to find river edges in order to verify passability", false);
 				return;
 			}
 			while (!map.reachability.CanReach(intVec, intVec2, PathEndMode.OnCell, TraverseMode.PassAllDestroyableThings))
 			{
 				if (this.shallowFactor > 1f)
 				{
-					Log.Error("Failed to make river shallow enough for passability");
+					Log.Error("Failed to make river shallow enough for passability", false);
 					return;
 				}
 				this.shallowFactor += 0.1f;
 				foreach (IntVec3 current in map.AllCells)
 				{
-					if (current.GetTerrain(map) == TerrainDefOf.WaterMovingDeep && this.shallowizer.GetValue(current) <= this.shallowFactor)
+					if (current.GetTerrain(map) == TerrainDefOf.WaterMovingChestDeep && this.shallowizer.GetValue(current) <= this.shallowFactor)
 					{
 						map.terrainGrid.SetTerrain(current, TerrainDefOf.WaterMovingShallow);
 					}

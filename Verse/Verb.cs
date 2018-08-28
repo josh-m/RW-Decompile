@@ -11,23 +11,19 @@ namespace Verse
 	{
 		public VerbProperties verbProps;
 
-		public Thing caster;
+		public VerbTracker verbTracker;
 
-		public ThingWithComps ownerEquipment;
-
-		public HediffComp_VerbGiver ownerHediffComp;
-
-		public ImplementOwnerTypeDef implementOwnerType;
+		public ManeuverDef maneuver;
 
 		public Tool tool;
 
-		public ManeuverDef maneuver;
+		public Thing caster;
 
 		public string loadID;
 
 		public VerbState state;
 
-		protected LocalTargetInfo currentTarget = null;
+		protected LocalTargetInfo currentTarget;
 
 		protected int burstShotsLeft;
 
@@ -35,13 +31,77 @@ namespace Verse
 
 		protected bool surpriseAttack;
 
-		protected bool canFreeInterceptNow = true;
+		protected bool canHitNonTargetPawnsNow = true;
 
 		public Action castCompleteCallback;
 
 		private static List<IntVec3> tempLeanShootSources = new List<IntVec3>();
 
 		private static List<IntVec3> tempDestList = new List<IntVec3>();
+
+		public IVerbOwner DirectOwner
+		{
+			get
+			{
+				return this.verbTracker.directOwner;
+			}
+		}
+
+		public ImplementOwnerTypeDef ImplementOwnerType
+		{
+			get
+			{
+				return this.verbTracker.directOwner.ImplementOwnerTypeDef;
+			}
+		}
+
+		public CompEquippable EquipmentCompSource
+		{
+			get
+			{
+				return this.DirectOwner as CompEquippable;
+			}
+		}
+
+		public ThingWithComps EquipmentSource
+		{
+			get
+			{
+				return (this.EquipmentCompSource == null) ? null : this.EquipmentCompSource.parent;
+			}
+		}
+
+		public HediffComp_VerbGiver HediffCompSource
+		{
+			get
+			{
+				return this.DirectOwner as HediffComp_VerbGiver;
+			}
+		}
+
+		public Hediff HediffSource
+		{
+			get
+			{
+				return (this.HediffCompSource == null) ? null : this.HediffCompSource.parent;
+			}
+		}
+
+		public Pawn_MeleeVerbs_TerrainSource TerrainSource
+		{
+			get
+			{
+				return this.DirectOwner as Pawn_MeleeVerbs_TerrainSource;
+			}
+		}
+
+		public TerrainDef TerrainDefSource
+		{
+			get
+			{
+				return (this.TerrainSource == null) ? null : this.TerrainSource.def;
+			}
+		}
 
 		public Pawn CasterPawn
 		{
@@ -71,9 +131,9 @@ namespace Verse
 		{
 			get
 			{
-				if (this.ownerEquipment != null)
+				if (this.EquipmentSource != null)
 				{
-					return this.ownerEquipment.def.uiIcon;
+					return this.EquipmentSource.def.uiIcon;
 				}
 				return BaseContent.BadTex;
 			}
@@ -87,70 +147,30 @@ namespace Verse
 			}
 		}
 
-		public BodyPartGroupDef LinkedBodyPartsGroup
+		public bool IsMeleeAttack
 		{
 			get
 			{
-				if (this.tool != null)
-				{
-					return this.tool.linkedBodyPartsGroup;
-				}
-				if (this.verbProps == null)
-				{
-					return null;
-				}
-				return this.verbProps.linkedBodyPartsGroup;
+				return this.verbProps.IsMeleeAttack;
 			}
 		}
 
-		public virtual bool IsMeleeAttack
+		public bool BuggedAfterLoading
 		{
 			get
 			{
-				return false;
+				return this.verbProps == null;
 			}
-		}
-
-		public float GetDamageFactorFor(Pawn pawn)
-		{
-			if (pawn != null)
-			{
-				if (this.ownerHediffComp != null)
-				{
-					return PawnCapacityUtility.CalculatePartEfficiency(this.ownerHediffComp.Pawn.health.hediffSet, this.ownerHediffComp.parent.Part, true, null);
-				}
-				if (this.LinkedBodyPartsGroup != null)
-				{
-					return PawnCapacityUtility.CalculateNaturalPartsAverageEfficiency(pawn.health.hediffSet, this.LinkedBodyPartsGroup);
-				}
-			}
-			return 1f;
 		}
 
 		public bool IsStillUsableBy(Pawn pawn)
 		{
-			if (this.ownerEquipment != null && !pawn.equipment.AllEquipmentListForReading.Contains(this.ownerEquipment))
-			{
-				return false;
-			}
-			if (this.ownerHediffComp != null)
-			{
-				bool flag = false;
-				List<Hediff> hediffs = pawn.health.hediffSet.hediffs;
-				for (int i = 0; i < hediffs.Count; i++)
-				{
-					if (hediffs[i] == this.ownerHediffComp.parent)
-					{
-						flag = true;
-						break;
-					}
-				}
-				if (!flag)
-				{
-					return false;
-				}
-			}
-			return this.GetDamageFactorFor(pawn) != 0f;
+			return this.Available() && this.DirectOwner.VerbsStillUsableBy(pawn) && this.verbProps.GetDamageFactorFor(this, pawn) != 0f;
+		}
+
+		public virtual bool IsUsableOn(Thing target)
+		{
+			return true;
 		}
 
 		public virtual void ExposeData()
@@ -160,6 +180,8 @@ namespace Verse
 			Scribe_TargetInfo.Look(ref this.currentTarget, "currentTarget");
 			Scribe_Values.Look<int>(ref this.burstShotsLeft, "burstShotsLeft", 0, false);
 			Scribe_Values.Look<int>(ref this.ticksToNextBurstShot, "ticksToNextBurstShot", 0, false);
+			Scribe_Values.Look<bool>(ref this.surpriseAttack, "surpriseAttack", false, false);
+			Scribe_Values.Look<bool>(ref this.canHitNonTargetPawnsNow, "canHitNonTargetPawnsNow", false, false);
 		}
 
 		public string GetUniqueLoadID()
@@ -169,7 +191,7 @@ namespace Verse
 
 		public static string CalculateUniqueLoadID(IVerbOwner owner, Tool tool, ManeuverDef maneuver)
 		{
-			return string.Format("{0}_{1}_{2}", owner.UniqueVerbOwnerID(), (tool == null) ? "NT" : tool.Id, (maneuver == null) ? "NM" : maneuver.defName);
+			return string.Format("{0}_{1}_{2}", owner.UniqueVerbOwnerID(), (tool == null) ? "NT" : tool.id, (maneuver == null) ? "NM" : maneuver.defName);
 		}
 
 		public static string CalculateUniqueLoadID(IVerbOwner owner, int index)
@@ -177,11 +199,11 @@ namespace Verse
 			return string.Format("{0}_{1}", owner.UniqueVerbOwnerID(), index);
 		}
 
-		public bool TryStartCastOn(LocalTargetInfo castTarg, bool surpriseAttack = false, bool canFreeIntercept = true)
+		public bool TryStartCastOn(LocalTargetInfo castTarg, bool surpriseAttack = false, bool canHitNonTargetPawns = true)
 		{
 			if (this.caster == null)
 			{
-				Log.Error("Verb " + this.GetUniqueLoadID() + " needs caster to work (possibly lost during saving/loading).");
+				Log.Error("Verb " + this.GetUniqueLoadID() + " needs caster to work (possibly lost during saving/loading).", false);
 				return false;
 			}
 			if (!this.caster.Spawned)
@@ -192,12 +214,12 @@ namespace Verse
 			{
 				return false;
 			}
-			if (this.verbProps.CausesTimeSlowdown && castTarg.HasThing && (castTarg.Thing.def.category == ThingCategory.Pawn || (castTarg.Thing.def.building != null && castTarg.Thing.def.building.IsTurret)) && castTarg.Thing.Faction == Faction.OfPlayer && this.caster.HostileTo(Faction.OfPlayer))
+			if (this.CausesTimeSlowdown(castTarg))
 			{
 				Find.TickManager.slower.SignalForceNormalSpeed();
 			}
 			this.surpriseAttack = surpriseAttack;
-			this.canFreeInterceptNow = canFreeIntercept;
+			this.canHitNonTargetPawnsNow = canHitNonTargetPawns;
 			this.currentTarget = castTarg;
 			if (this.CasterIsPawn && this.verbProps.warmupTime > 0f)
 			{
@@ -252,10 +274,23 @@ namespace Verse
 			}
 		}
 
+		public virtual bool Available()
+		{
+			if (this.verbProps.consumeFuelPerShot > 0f)
+			{
+				CompRefuelable compRefuelable = this.caster.TryGetComp<CompRefuelable>();
+				if (compRefuelable != null && compRefuelable.Fuel < this.verbProps.consumeFuelPerShot)
+				{
+					return false;
+				}
+			}
+			return true;
+		}
+
 		protected void TryCastNextBurstShot()
 		{
 			LocalTargetInfo localTargetInfo = this.currentTarget;
-			if (this.TryCastShot())
+			if (this.Available() && this.TryCastShot())
 			{
 				if (this.verbProps.muzzleFlashScale > 0.01f)
 				{
@@ -283,9 +318,21 @@ namespace Verse
 					{
 						this.CasterPawn.MentalState.Notify_AttackedTarget(localTargetInfo);
 					}
+					if (this.TerrainDefSource != null)
+					{
+						this.CasterPawn.meleeVerbs.Notify_UsedTerrainBasedVerb();
+					}
 					if (!this.CasterPawn.Spawned)
 					{
 						return;
+					}
+				}
+				if (this.verbProps.consumeFuelPerShot > 0f)
+				{
+					CompRefuelable compRefuelable = this.caster.TryGetComp<CompRefuelable>();
+					if (compRefuelable != null)
+					{
+						compRefuelable.ConsumeFuel(this.verbProps.consumeFuelPerShot);
 					}
 				}
 				this.burstShotsLeft--;
@@ -307,7 +354,7 @@ namespace Verse
 				this.state = VerbState.Idle;
 				if (this.CasterIsPawn)
 				{
-					this.CasterPawn.stances.SetStance(new Stance_Cooldown(this.verbProps.AdjustedCooldownTicks(this, this.CasterPawn, this.ownerEquipment), this.currentTarget, this));
+					this.CasterPawn.stances.SetStance(new Stance_Cooldown(this.verbProps.AdjustedCooldownTicks(this, this.CasterPawn), this.currentTarget, this));
 				}
 				if (this.castCompleteCallback != null)
 				{
@@ -359,6 +406,20 @@ namespace Verse
 			return 0f;
 		}
 
+		private bool CausesTimeSlowdown(LocalTargetInfo castTarg)
+		{
+			if (!this.verbProps.CausesTimeSlowdown)
+			{
+				return false;
+			}
+			if (!castTarg.HasThing)
+			{
+				return false;
+			}
+			Thing thing = castTarg.Thing;
+			return (thing.def.category == ThingCategory.Pawn || (thing.def.building != null && thing.def.building.IsTurret)) && ((thing.Faction == Faction.OfPlayer && this.caster.HostileTo(Faction.OfPlayer)) || (this.caster.Faction == Faction.OfPlayer && thing.HostileTo(Faction.OfPlayer)));
+		}
+
 		public bool CanHitTarget(LocalTargetInfo targ)
 		{
 			return this.caster != null && this.caster.Spawned && this.CanHitTargetFrom(this.caster.Position, targ);
@@ -375,7 +436,7 @@ namespace Verse
 				List<Apparel> wornApparel = this.CasterPawn.apparel.WornApparel;
 				for (int i = 0; i < wornApparel.Count; i++)
 				{
-					if (!wornApparel[i].AllowVerbCast(root, this.caster.Map, targ))
+					if (!wornApparel[i].AllowVerbCast(root, this.caster.Map, targ, this))
 					{
 						return false;
 					}
@@ -392,14 +453,15 @@ namespace Verse
 				resultingLine = default(ShootLine);
 				return false;
 			}
-			if (this.verbProps.MeleeRange)
+			if (this.verbProps.IsMeleeAttack || this.verbProps.range <= 1.42f)
 			{
 				resultingLine = new ShootLine(root, targ.Cell);
 				return ReachabilityImmediate.CanReachImmediate(root, targ, this.caster.Map, PathEndMode.Touch, null);
 			}
 			CellRect cellRect = (!targ.HasThing) ? CellRect.SingleCell(targ.Cell) : targ.Thing.OccupiedRect();
-			float num = cellRect.ClosestDistSquaredTo(root);
-			if (num > this.verbProps.range * this.verbProps.range || num < this.verbProps.minRange * this.verbProps.minRange)
+			float num = this.verbProps.EffectiveMinRange(targ, this.caster);
+			float num2 = cellRect.ClosestDistSquaredTo(root);
+			if (num2 > this.verbProps.range * this.verbProps.range || num2 < num * num)
 			{
 				resultingLine = new ShootLine(root, targ.Cell);
 				return false;
@@ -509,17 +571,17 @@ namespace Verse
 			{
 				text = this.verbProps.label;
 			}
-			else if (this.ownerHediffComp != null)
+			else if (this.HediffCompSource != null)
 			{
-				text = this.ownerHediffComp.Def.label;
+				text = this.HediffCompSource.Def.label;
 			}
-			else if (this.ownerEquipment != null)
+			else if (this.EquipmentSource != null)
 			{
-				text = this.ownerEquipment.def.label;
+				text = this.EquipmentSource.def.label;
 			}
-			else if (this.LinkedBodyPartsGroup != null)
+			else if (this.verbProps.AdjustedLinkedBodyPartsGroup(this.tool) != null)
 			{
-				text = this.LinkedBodyPartsGroup.defName;
+				text = this.verbProps.AdjustedLinkedBodyPartsGroup(this.tool).defName;
 			}
 			else
 			{
@@ -527,7 +589,7 @@ namespace Verse
 			}
 			if (this.tool != null)
 			{
-				text = text + "/" + this.tool.Id;
+				text = text + "/" + this.loadID;
 			}
 			return base.GetType().ToString() + "(" + text + ")";
 		}

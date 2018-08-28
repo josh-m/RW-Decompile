@@ -26,7 +26,7 @@ namespace Verse
 		{
 			if (this.modSettings != null && this.modSettings.GetType() != typeof(T))
 			{
-				Log.Error(string.Format("Mod {0} attempted to read two different settings classes (was {1}, is now {2})", this.Content.Name, this.modSettings.GetType(), typeof(T)));
+				Log.Error(string.Format("Mod {0} attempted to read two different settings classes (was {1}, is now {2})", this.Content.Name, this.modSettings.GetType(), typeof(T)), false);
 				return (T)((object)null);
 			}
 			if (this.modSettings != null)

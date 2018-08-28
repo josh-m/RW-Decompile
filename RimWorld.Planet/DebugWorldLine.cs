@@ -4,7 +4,7 @@ using Verse;
 
 namespace RimWorld.Planet
 {
-	internal class DebugWorldLine
+	public class DebugWorldLine
 	{
 		public Vector3 a;
 

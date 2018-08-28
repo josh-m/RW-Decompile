@@ -8,31 +8,31 @@ namespace Verse
 	{
 		public override DamageWorker.DamageResult Apply(DamageInfo dinfo, Thing victim)
 		{
-			if (!dinfo.InstantOldInjury)
-			{
-				victim.TryAttachFire(Rand.Range(0.15f, 0.25f));
-			}
 			Pawn pawn = victim as Pawn;
 			if (pawn != null && pawn.Faction == Faction.OfPlayer)
 			{
 				Find.TickManager.slower.SignalForceNormalSpeedShort();
 			}
 			Map map = victim.Map;
-			DamageWorker.DamageResult result = base.Apply(dinfo, victim);
+			DamageWorker.DamageResult damageResult = base.Apply(dinfo, victim);
+			if (!damageResult.deflected && !dinfo.InstantPermanentInjury)
+			{
+				victim.TryAttachFire(Rand.Range(0.15f, 0.25f));
+			}
 			if (victim.Destroyed && map != null && pawn == null)
 			{
 				foreach (IntVec3 current in victim.OccupiedRect())
 				{
-					FilthMaker.MakeFilth(current, map, ThingDefOf.FilthAsh, 1);
+					FilthMaker.MakeFilth(current, map, ThingDefOf.Filth_Ash, 1);
 				}
 				Plant plant = victim as Plant;
 				if (plant != null && victim.def.plant.IsTree && plant.LifeStage != PlantLifeStage.Sowing && victim.def != ThingDefOf.BurnedTree)
 				{
-					DeadPlant deadPlant = (DeadPlant)GenSpawn.Spawn(ThingDefOf.BurnedTree, victim.Position, map);
+					DeadPlant deadPlant = (DeadPlant)GenSpawn.Spawn(ThingDefOf.BurnedTree, victim.Position, map, WipeMode.Vanish);
 					deadPlant.Growth = plant.Growth;
 				}
 			}
-			return result;
+			return damageResult;
 		}
 
 		public override void ExplosionAffectCell(Explosion explosion, IntVec3 c, List<Thing> damagedThings, bool canThrowMotes)

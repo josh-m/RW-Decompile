@@ -7,7 +7,7 @@ namespace Verse.Sound
 {
 	public class AudioGrain_Folder : AudioGrain
 	{
-		[LoadAlias("clipPath")]
+		[LoadAlias("clipPath"), NoTranslate]
 		public string clipFolderPath = string.Empty;
 
 		[DebuggerHidden]

@@ -5,15 +5,17 @@ using System.Linq;
 
 namespace Verse.Profile
 {
+	[HasDebugOutput]
 	public static class CollectionsTracker
 	{
 		private static Dictionary<WeakReference, int> collections = new Dictionary<WeakReference, int>();
 
-		public static void RememberCollections()
+		[DebugOutput]
+		private static void GrownCollectionsStart()
 		{
 			if (!MemoryTracker.AnythingTracked)
 			{
-				Log.Message("No objects tracked, memory tracker markup may not be applied.");
+				Log.Message("No objects tracked, memory tracker markup may not be applied.", false);
 				return;
 			}
 			CollectionsTracker.collections.Clear();
@@ -25,14 +27,15 @@ namespace Verse.Profile
 					CollectionsTracker.collections[current] = collection.Count;
 				}
 			}
-			Log.Message("Tracking " + CollectionsTracker.collections.Count + " collections.");
+			Log.Message("Tracking " + CollectionsTracker.collections.Count + " collections.", false);
 		}
 
-		public static void LogGrownCollections()
+		[DebugOutput]
+		private static void GrownCollectionsLog()
 		{
 			if (!MemoryTracker.AnythingTracked)
 			{
-				Log.Message("No objects tracked, memory tracker markup may not be applied.");
+				Log.Message("No objects tracked, memory tracker markup may not be applied.", false);
 				return;
 			}
 			CollectionsTracker.collections.RemoveAll((KeyValuePair<WeakReference, int> kvp) => !kvp.Key.IsAlive || ((ICollection)kvp.Key.Target).Count <= kvp.Value);

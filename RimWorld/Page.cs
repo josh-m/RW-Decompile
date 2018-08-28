@@ -40,6 +40,9 @@ namespace RimWorld
 		{
 			this.forcePause = true;
 			this.absorbInputAroundWindow = true;
+			this.closeOnAccept = false;
+			this.closeOnCancel = false;
+			this.forceCatchAcceptAndCancelEventEvenIfUnfocused = true;
 		}
 
 		protected void DrawPageTitle(Rect rect)
@@ -65,7 +68,7 @@ namespace RimWorld
 			Text.Font = GameFont.Small;
 			string label = "Back".Translate();
 			Rect rect2 = new Rect(rect.x, y, Page.BottomButSize.x, Page.BottomButSize.y);
-			if (Widgets.ButtonText(rect2, label, true, false, true) && this.CanDoBack())
+			if ((Widgets.ButtonText(rect2, label, true, false, true) || KeyBindingDefOf.Cancel.KeyDownEvent) && this.CanDoBack())
 			{
 				this.DoBack();
 			}
@@ -76,7 +79,7 @@ namespace RimWorld
 					nextLabel = "Next".Translate();
 				}
 				Rect rect3 = new Rect(rect.x + rect.width - Page.BottomButSize.x, y, Page.BottomButSize.x, Page.BottomButSize.y);
-				if (Widgets.ButtonText(rect3, nextLabel, true, false, true) && this.CanDoNext())
+				if ((Widgets.ButtonText(rect3, nextLabel, true, false, true) || KeyBindingDefOf.Accept.KeyDownEvent) && this.CanDoNext())
 				{
 					this.DoNext();
 				}
@@ -126,6 +129,37 @@ namespace RimWorld
 			TutorSystem.Notify_Event("PageClosed");
 			TutorSystem.Notify_Event("GoToPrevPage");
 			this.Close(true);
+		}
+
+		public override void OnCancelKeyPressed()
+		{
+			if (Find.World != null && Find.WorldRoutePlanner.Active)
+			{
+				return;
+			}
+			if (this.CanDoBack())
+			{
+				this.DoBack();
+			}
+			else
+			{
+				this.Close(true);
+			}
+			Event.current.Use();
+			base.OnCancelKeyPressed();
+		}
+
+		public override void OnAcceptKeyPressed()
+		{
+			if (Find.World != null && Find.WorldRoutePlanner.Active)
+			{
+				return;
+			}
+			if (this.CanDoNext())
+			{
+				this.DoNext();
+			}
+			Event.current.Use();
 		}
 	}
 }

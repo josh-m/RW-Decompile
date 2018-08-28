@@ -7,6 +7,8 @@ namespace RimWorld
 	{
 		public Gender gender = Gender.Male;
 
+		public PsychicDroneLevel level = PsychicDroneLevel.BadMedium;
+
 		public override string Label
 		{
 			get
@@ -15,10 +17,17 @@ namespace RimWorld
 			}
 		}
 
+		public override void PostMake()
+		{
+			base.PostMake();
+			this.level = this.def.defaultDroneLevel;
+		}
+
 		public override void ExposeData()
 		{
 			base.ExposeData();
 			Scribe_Values.Look<Gender>(ref this.gender, "gender", Gender.None, false);
+			Scribe_Values.Look<PsychicDroneLevel>(ref this.level, "level", PsychicDroneLevel.None, false);
 		}
 	}
 }

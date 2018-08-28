@@ -8,38 +8,40 @@ namespace Verse
 	{
 		private static HashSet<int> assignedKeys = new HashSet<int>();
 
-		internal static void Reset()
+		public static void Reset()
 		{
 			ThinkTreeKeyAssigner.assignedKeys.Clear();
 		}
 
 		public static void AssignKeys(ThinkNode rootNode, int startHash)
 		{
-			Rand.PushState();
-			Rand.Seed = startHash;
+			Rand.PushState(startHash);
 			foreach (ThinkNode current in rootNode.ThisAndChildrenRecursive)
 			{
-				current.SetUniqueSaveKey(ThinkTreeKeyAssigner.NextUnusedKey());
+				current.SetUniqueSaveKey(ThinkTreeKeyAssigner.NextUnusedKeyFor(current));
 			}
 			Rand.PopState();
 		}
 
 		public static void AssignSingleKey(ThinkNode node, int startHash)
 		{
-			Rand.PushState();
-			Rand.Seed = startHash;
-			node.SetUniqueSaveKey(ThinkTreeKeyAssigner.NextUnusedKey());
+			Rand.PushState(startHash);
+			node.SetUniqueSaveKey(ThinkTreeKeyAssigner.NextUnusedKeyFor(node));
 			Rand.PopState();
 		}
 
-		private static int NextUnusedKey()
+		private static int NextUnusedKeyFor(ThinkNode node)
 		{
-			int num;
-			do
+			int num = 0;
+			while (node != null)
 			{
-				num = Rand.Range(1, 2147483647);
+				num = Gen.HashCombineInt(num, GenText.StableStringHash(node.GetType().Name));
+				node = node.parent;
 			}
-			while (ThinkTreeKeyAssigner.assignedKeys.Contains(num));
+			while (ThinkTreeKeyAssigner.assignedKeys.Contains(num))
+			{
+				num ^= Rand.Int;
+			}
 			ThinkTreeKeyAssigner.assignedKeys.Add(num);
 			return num;
 		}

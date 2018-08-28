@@ -37,7 +37,7 @@ namespace RimWorld
 			{
 				yield return r;
 			}
-			foreach (Rule r2 in this.thingData.GetRules("thing"))
+			foreach (Rule r2 in this.thingData.GetRules("THING"))
 			{
 				yield return r2;
 			}

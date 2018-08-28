@@ -58,7 +58,7 @@ namespace RimWorld
 		{
 			if (ap.Destroyed)
 			{
-				Log.Error("Apparel was forced while Destroyed: " + ap);
+				Log.Error("Apparel was forced while Destroyed: " + ap, false);
 				if (this.forcedAps.Contains(ap))
 				{
 					this.forcedAps.Remove(ap);

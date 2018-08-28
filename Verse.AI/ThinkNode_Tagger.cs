@@ -23,7 +23,7 @@ namespace Verse.AI
 			{
 				return this.subNodes[0].GetPriority(pawn);
 			}
-			Log.ErrorOnce("ThinkNode_PrioritySorter has child node which didn't give a priority: " + this, this.GetHashCode());
+			Log.ErrorOnce("ThinkNode_PrioritySorter has child node which didn't give a priority: " + this, this.GetHashCode(), false);
 			return 0f;
 		}
 

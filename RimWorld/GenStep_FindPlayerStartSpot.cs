@@ -7,7 +7,15 @@ namespace RimWorld
 	{
 		private const int MinRoomCellCount = 10;
 
-		public override void Generate(Map map)
+		public override int SeedPart
+		{
+			get
+			{
+				return 1187186631;
+			}
+		}
+
+		public override void Generate(Map map, GenStepParams parms)
 		{
 			DeepProfiler.Start("RebuildAllRegions");
 			map.regionAndRoomUpdater.RebuildAllRegionsAndRooms();

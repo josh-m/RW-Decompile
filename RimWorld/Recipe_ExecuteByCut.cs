@@ -4,7 +4,7 @@ using Verse;
 
 namespace RimWorld
 {
-	internal class Recipe_ExecuteByCut : RecipeWorker
+	public class Recipe_ExecuteByCut : RecipeWorker
 	{
 		public override void ApplyOnPawn(Pawn pawn, BodyPartRecord part, Pawn billDoer, List<Thing> ingredients, Bill bill)
 		{

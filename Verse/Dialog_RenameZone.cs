@@ -20,7 +20,7 @@ namespace Verse
 			{
 				return result;
 			}
-			if (this.zone.Map.zoneManager.AllZones.Any((Zone z) => z.label == name))
+			if (this.zone.Map.zoneManager.AllZones.Any((Zone z) => z != this.zone && z.label == name))
 			{
 				return "NameIsInUse".Translate();
 			}
@@ -33,7 +33,7 @@ namespace Verse
 			Messages.Message("ZoneGainsName".Translate(new object[]
 			{
 				this.curName
-			}), MessageTypeDefOf.TaskCompletion);
+			}), MessageTypeDefOf.TaskCompletion, false);
 		}
 	}
 }

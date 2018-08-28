@@ -5,7 +5,7 @@ using Verse;
 
 namespace RimWorld
 {
-	public class Designator_AreaNoRoof : Designator
+	public class Designator_AreaNoRoof : Designator_Area
 	{
 		private static List<IntVec3> justAddedCells = new List<IntVec3>();
 
@@ -31,9 +31,9 @@ namespace RimWorld
 			this.defaultDesc = "DesignatorAreaNoRoofExpandDesc".Translate();
 			this.icon = ContentFinder<Texture2D>.Get("UI/Designators/NoRoofArea", true);
 			this.hotKey = KeyBindingDefOf.Misc5;
-			this.soundDragSustain = SoundDefOf.DesignateDragAreaAdd;
-			this.soundDragChanged = SoundDefOf.DesignateDragAreaAddChanged;
-			this.soundSucceeded = SoundDefOf.DesignateAreaAdd;
+			this.soundDragSustain = SoundDefOf.Designate_DragAreaAdd;
+			this.soundDragChanged = null;
+			this.soundSucceeded = SoundDefOf.Designate_AreaAdd;
 			this.useMouseIcon = true;
 		}
 

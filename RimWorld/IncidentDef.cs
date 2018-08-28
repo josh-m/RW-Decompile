@@ -10,9 +10,9 @@ namespace RimWorld
 	{
 		public Type workerClass;
 
-		public IncidentCategory category;
+		public IncidentCategoryDef category;
 
-		public List<IncidentTargetTypeDef> targetTypes;
+		public List<IncidentTargetTagDef> targetTags;
 
 		public float baseChance;
 
@@ -32,11 +32,17 @@ namespace RimWorld
 
 		public List<BiomeDef> allowedBiomes;
 
+		[NoTranslate]
 		public List<string> tags;
 
+		[NoTranslate]
 		public List<string> refireCheckTags;
 
 		public SimpleCurve chanceFactorByPopulationCurve;
+
+		public TaleDef tale;
+
+		public int minGreatestPopulation = -1;
 
 		[MustTranslate]
 		public string letterText;
@@ -45,6 +51,12 @@ namespace RimWorld
 		public string letterLabel;
 
 		public LetterDef letterDef;
+
+		public PawnKindDef pawnKind;
+
+		public bool pawnMustBeCapableOfViolence;
+
+		public Gender pawnFixedGender;
 
 		public GameConditionDef gameCondition;
 
@@ -64,19 +76,17 @@ namespace RimWorld
 
 		public List<MTBByBiome> mtbDaysByBiome;
 
-		public TaleDef tale;
-
 		[Unsaved]
 		private IncidentWorker workerInt;
 
 		[Unsaved]
 		private List<IncidentDef> cachedRefireCheckIncidents;
 
-		public bool NeedsParms
+		public bool NeedsParmsPoints
 		{
 			get
 			{
-				return this.category == IncidentCategory.ThreatSmall || this.category == IncidentCategory.ThreatBig || this.category == IncidentCategory.RaidBeacon;
+				return this.category.needsParmsPoints;
 			}
 		}
 
@@ -152,35 +162,35 @@ namespace RimWorld
 			{
 				yield return c;
 			}
-			if (this.category == IncidentCategory.Undefined)
+			if (this.category == null)
 			{
 				yield return "category is undefined.";
 			}
-			if (this.targetTypes == null || this.targetTypes.Count == 0)
+			if (this.targetTags == null || this.targetTags.Count == 0)
 			{
 				yield return "no target type";
 			}
-			if (this.TargetTypeAllowed(IncidentTargetTypeDefOf.World))
+			if (this.TargetTagAllowed(IncidentTargetTagDefOf.World))
 			{
-				if (this.targetTypes.Any((IncidentTargetTypeDef tt) => tt != IncidentTargetTypeDefOf.World))
+				if (this.targetTags.Any((IncidentTargetTagDef tt) => tt != IncidentTargetTagDefOf.World))
 				{
 					yield return "allows world target type along with other targets. World targeting incidents should only target the world.";
 				}
 			}
-			if (this.TargetTypeAllowed(IncidentTargetTypeDefOf.World) && this.allowedBiomes != null)
+			if (this.TargetTagAllowed(IncidentTargetTagDefOf.World) && this.allowedBiomes != null)
 			{
 				yield return "world-targeting incident has a biome restriction list";
 			}
 		}
 
-		public bool TargetTypeAllowed(IncidentTargetTypeDef target)
+		public bool TargetTagAllowed(IncidentTargetTagDef target)
 		{
-			return this.targetTypes.Contains(target);
+			return this.targetTags.Contains(target);
 		}
 
 		public bool TargetAllowed(IIncidentTarget target)
 		{
-			return this.targetTypes.Intersect(target.AcceptedTypes()).Any<IncidentTargetTypeDef>();
+			return this.targetTags.Intersect(target.IncidentTargetTags()).Any<IncidentTargetTagDef>();
 		}
 	}
 }

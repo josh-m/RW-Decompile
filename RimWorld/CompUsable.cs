@@ -28,9 +28,22 @@ namespace RimWorld
 		[DebuggerHidden]
 		public override IEnumerable<FloatMenuOption> CompFloatMenuOptions(Pawn myPawn)
 		{
-			if (!myPawn.CanReserve(this.parent, 1, -1, null, false))
+			string failReason;
+			if (!this.CanBeUsedBy(myPawn, out failReason))
+			{
+				yield return new FloatMenuOption(this.FloatMenuOptionLabel + ((failReason == null) ? string.Empty : (" (" + failReason + ")")), null, MenuOptionPriority.Default, null, null, 0f, null, null);
+			}
+			else if (!myPawn.CanReach(this.parent, PathEndMode.Touch, Danger.Deadly, false, TraverseMode.ByPawn))
+			{
+				yield return new FloatMenuOption(this.FloatMenuOptionLabel + " (" + "NoPath".Translate() + ")", null, MenuOptionPriority.Default, null, null, 0f, null, null);
+			}
+			else if (!myPawn.CanReserve(this.parent, 1, -1, null, false))
 			{
 				yield return new FloatMenuOption(this.FloatMenuOptionLabel + " (" + "Reserved".Translate() + ")", null, MenuOptionPriority.Default, null, null, 0f, null, null);
+			}
+			else if (!myPawn.health.capacities.CapableOf(PawnCapacityDefOf.Manipulation))
+			{
+				yield return new FloatMenuOption(this.FloatMenuOptionLabel + " (" + "Incapable".Translate() + ")", null, MenuOptionPriority.Default, null, null, 0f, null, null);
 			}
 			else
 			{
@@ -58,12 +71,22 @@ namespace RimWorld
 			{
 				return;
 			}
+			string text;
+			if (!this.CanBeUsedBy(user, out text))
+			{
+				return;
+			}
 			Job job = new Job(this.Props.useJob, this.parent);
 			user.jobs.TryTakeOrderedJob(job, JobTag.Misc);
 		}
 
 		public void UsedBy(Pawn p)
 		{
+			string text;
+			if (!this.CanBeUsedBy(p, out text))
+			{
+				return;
+			}
 			foreach (CompUseEffect current in from x in this.parent.GetComps<CompUseEffect>()
 			orderby x.OrderPriority descending
 			select x)
@@ -74,9 +97,24 @@ namespace RimWorld
 				}
 				catch (Exception arg)
 				{
-					Log.Error("Error in CompUseEffect: " + arg);
+					Log.Error("Error in CompUseEffect: " + arg, false);
 				}
 			}
+		}
+
+		private bool CanBeUsedBy(Pawn p, out string failReason)
+		{
+			List<ThingComp> allComps = this.parent.AllComps;
+			for (int i = 0; i < allComps.Count; i++)
+			{
+				CompUseEffect compUseEffect = allComps[i] as CompUseEffect;
+				if (compUseEffect != null && !compUseEffect.CanBeUsedBy(p, out failReason))
+				{
+					return false;
+				}
+			}
+			failReason = null;
+			return true;
 		}
 	}
 }

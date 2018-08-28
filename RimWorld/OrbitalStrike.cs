@@ -58,7 +58,7 @@ namespace RimWorld
 		{
 			if (!base.Spawned)
 			{
-				Log.Error("Called StartStrike() on unspawned thing.");
+				Log.Error("Called StartStrike() on unspawned thing.", false);
 				return;
 			}
 			this.angle = OrbitalStrike.AngleRange.RandomInRange;

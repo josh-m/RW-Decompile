@@ -73,12 +73,12 @@ namespace RimWorld
 			return null;
 		}
 
-		public virtual bool HasJobOnCell(Pawn pawn, IntVec3 c)
+		public virtual bool HasJobOnCell(Pawn pawn, IntVec3 c, bool forced = false)
 		{
-			return this.JobOnCell(pawn, c) != null;
+			return this.JobOnCell(pawn, c, forced) != null;
 		}
 
-		public virtual Job JobOnCell(Pawn pawn, IntVec3 cell)
+		public virtual Job JobOnCell(Pawn pawn, IntVec3 cell, bool forced = false)
 		{
 			return null;
 		}

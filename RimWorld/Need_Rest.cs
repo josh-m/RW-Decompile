@@ -131,7 +131,12 @@ namespace RimWorld
 			{
 				if (this.Resting)
 				{
-					this.CurLevel += 0.00571428565f * this.lastRestEffectiveness;
+					float num = this.lastRestEffectiveness;
+					num *= this.pawn.GetStatValue(StatDefOf.RestRateMultiplier, true);
+					if (num > 0f)
+					{
+						this.CurLevel += 0.00571428565f * num;
+					}
 				}
 				else
 				{
@@ -177,7 +182,7 @@ namespace RimWorld
 						Messages.Message("MessageInvoluntarySleep".Translate(new object[]
 						{
 							this.pawn.LabelShort
-						}), this.pawn, MessageTypeDefOf.NegativeEvent);
+						}), this.pawn, MessageTypeDefOf.NegativeEvent, true);
 					}
 					TaleRecorder.RecordTale(TaleDefOf.Exhausted, new object[]
 					{
@@ -189,6 +194,10 @@ namespace RimWorld
 
 		public void TickResting(float restEffectiveness)
 		{
+			if (restEffectiveness <= 0f)
+			{
+				return;
+			}
 			this.lastRestTick = Find.TickManager.TicksGame;
 			this.lastRestEffectiveness = restEffectiveness;
 		}

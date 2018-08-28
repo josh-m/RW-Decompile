@@ -12,9 +12,9 @@ namespace RimWorld
 			p.inventory.DestroyAll(DestroyMode.Vanish);
 			for (int i = 0; i < p.kindDef.fixedInventory.Count; i++)
 			{
-				ThingCountClass thingCountClass = p.kindDef.fixedInventory[i];
-				Thing thing = ThingMaker.MakeThing(thingCountClass.thingDef, null);
-				thing.stackCount = thingCountClass.count;
+				ThingDefCountClass thingDefCountClass = p.kindDef.fixedInventory[i];
+				Thing thing = ThingMaker.MakeThing(thingDefCountClass.thingDef, null);
+				thing.stackCount = thingDefCountClass.count;
 				p.inventory.innerContainer.TryAdd(thing, true);
 			}
 			if (p.kindDef.inventoryOptions != null)
@@ -36,29 +36,29 @@ namespace RimWorld
 		{
 			if (p.kindDef.invNutrition > 0.001f)
 			{
-				ThingDef thingDef;
+				ThingDef def;
 				if (p.kindDef.invFoodDef != null)
 				{
-					thingDef = p.kindDef.invFoodDef;
+					def = p.kindDef.invFoodDef;
 				}
 				else
 				{
 					float value = Rand.Value;
 					if (value < 0.5f)
 					{
-						thingDef = ThingDefOf.MealSimple;
+						def = ThingDefOf.MealSimple;
 					}
 					else if ((double)value < 0.75)
 					{
-						thingDef = ThingDefOf.MealFine;
+						def = ThingDefOf.MealFine;
 					}
 					else
 					{
-						thingDef = ThingDefOf.MealSurvivalPack;
+						def = ThingDefOf.MealSurvivalPack;
 					}
 				}
-				Thing thing = ThingMaker.MakeThing(thingDef, null);
-				thing.stackCount = GenMath.RoundRandom(p.kindDef.invNutrition / thingDef.ingestible.nutrition);
+				Thing thing = ThingMaker.MakeThing(def, null);
+				thing.stackCount = GenMath.RoundRandom(p.kindDef.invNutrition / thing.GetStatValue(StatDefOf.Nutrition, true));
 				p.inventory.TryAddItemNotForSale(thing);
 			}
 		}

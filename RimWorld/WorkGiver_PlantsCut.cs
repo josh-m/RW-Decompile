@@ -64,12 +64,12 @@ namespace RimWorld
 						result = null;
 						return result;
 					}
-					result = new Job(JobDefOf.Harvest, t);
+					result = new Job(JobDefOf.HarvestDesignated, t);
 					return result;
 				}
 				else if (current.def == DesignationDefOf.CutPlant)
 				{
-					Job result = new Job(JobDefOf.CutPlant, t);
+					Job result = new Job(JobDefOf.CutPlantDesignated, t);
 					return result;
 				}
 			}

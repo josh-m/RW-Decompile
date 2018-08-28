@@ -6,20 +6,42 @@ using Verse;
 
 namespace RimWorld.Planet
 {
-	[StaticConstructorOnStartup]
 	public class WorldFeatures : IExposable
 	{
 		public List<WorldFeature> features = new List<WorldFeature>();
 
 		public bool textsCreated;
 
-		private static List<TextMeshPro> texts = new List<TextMeshPro>();
+		private static List<WorldFeatureTextMesh> texts = new List<WorldFeatureTextMesh>();
 
 		private const float BaseAlpha = 0.3f;
 
 		private const float AlphaChangeSpeed = 5f;
 
-		private static readonly GameObject WorldTextPrefab = Resources.Load<GameObject>("Prefabs/WorldText");
+		[TweakValue("Interface", 0f, 300f)]
+		private static float TextWrapThreshold = 150f;
+
+		[TweakValue("Interface.World", 0f, 100f)]
+		protected static bool ForceLegacyText = false;
+
+		[TweakValue("Interface.World", 1f, 150f)]
+		protected static float AlphaScale = 30f;
+
+		[TweakValue("Interface.World", 0f, 1f)]
+		protected static float VisibleMinimumSize = 0.04f;
+
+		[TweakValue("Interface.World", 0f, 5f)]
+		protected static float VisibleMaximumSize = 1f;
+
+		private static void TextWrapThreshold_Changed()
+		{
+			Find.WorldFeatures.textsCreated = false;
+		}
+
+		protected static void ForceLegacyText_Changed()
+		{
+			Find.WorldFeatures.textsCreated = false;
+		}
 
 		public void ExposeData()
 		{
@@ -48,12 +70,12 @@ namespace RimWorld.Planet
 			bool showWorldFeatures = Find.PlaySettings.showWorldFeatures;
 			for (int i = 0; i < this.features.Count; i++)
 			{
-				Vector3 position = WorldFeatures.texts[i].transform.position;
+				Vector3 position = WorldFeatures.texts[i].Position;
 				bool flag = showWorldFeatures && !WorldRendererUtility.HiddenBehindTerrainNow(position);
-				if (flag != WorldFeatures.texts[i].gameObject.activeInHierarchy)
+				if (flag != WorldFeatures.texts[i].Active)
 				{
-					WorldFeatures.texts[i].gameObject.SetActive(flag);
-					this.WrapAroundPlanetSurface(WorldFeatures.texts[i]);
+					WorldFeatures.texts[i].SetActive(flag);
+					WorldFeatures.texts[i].WrapAroundPlanetSurface();
 				}
 				if (flag)
 				{
@@ -74,16 +96,16 @@ namespace RimWorld.Planet
 			return null;
 		}
 
-		private void UpdateAlpha(TextMeshPro text, WorldFeature feature)
+		private void UpdateAlpha(WorldFeatureTextMesh text, WorldFeature feature)
 		{
 			float num = 0.3f * feature.alpha;
-			if (text.color.a != num)
+			if (text.Color.a != num)
 			{
-				text.color = new Color(1f, 1f, 1f, num);
-				this.WrapAroundPlanetSurface(text);
+				text.Color = new Color(1f, 1f, 1f, num);
+				text.WrapAroundPlanetSurface();
 			}
 			float num2 = Time.deltaTime * 5f;
-			if (this.GoodCameraAltitudeFor(text))
+			if (this.GoodCameraAltitudeFor(feature))
 			{
 				feature.alpha += num2;
 			}
@@ -94,21 +116,21 @@ namespace RimWorld.Planet
 			feature.alpha = Mathf.Clamp01(feature.alpha);
 		}
 
-		private bool GoodCameraAltitudeFor(TextMeshPro text)
+		private bool GoodCameraAltitudeFor(WorldFeature feature)
 		{
-			float num = text.renderedHeight;
+			float num = feature.EffectiveDrawSize;
 			float altitude = Find.WorldCameraDriver.altitude;
-			float num2 = 1f / (altitude / 125f * (altitude / 125f));
+			float num2 = 1f / (altitude / WorldFeatures.AlphaScale * (altitude / WorldFeatures.AlphaScale));
 			num *= num2;
 			if (Find.WorldCameraDriver.CurrentZoom <= WorldCameraZoomRange.VeryClose && num >= 0.56f)
 			{
 				return false;
 			}
-			if (num < 0.038f)
+			if (num < WorldFeatures.VisibleMinimumSize)
 			{
 				return Find.WorldCameraDriver.AltitudePercent <= 0.07f;
 			}
-			return num <= 0.82f || Find.WorldCameraDriver.AltitudePercent >= 0.35f;
+			return num <= WorldFeatures.VisibleMaximumSize || Find.WorldCameraDriver.AltitudePercent >= 0.35f;
 		}
 
 		private void CreateTextsAndSetPosition()
@@ -118,86 +140,73 @@ namespace RimWorld.Planet
 			float averageTileSize = worldGrid.averageTileSize;
 			for (int i = 0; i < this.features.Count; i++)
 			{
-				WorldFeatures.texts[i].text = this.features[i].name;
-				WorldFeatures.texts[i].rectTransform.sizeDelta = new Vector2(this.features[i].maxDrawSizeInTiles.x * averageTileSize, this.features[i].maxDrawSizeInTiles.y * averageTileSize);
+				WorldFeatures.texts[i].Text = this.features[i].name.WordWrapAt(WorldFeatures.TextWrapThreshold);
+				WorldFeatures.texts[i].Size = this.features[i].EffectiveDrawSize * averageTileSize;
 				Vector3 normalized = this.features[i].drawCenter.normalized;
 				Quaternion quaternion = Quaternion.LookRotation(Vector3.Cross(normalized, Vector3.up), normalized);
 				quaternion *= Quaternion.Euler(Vector3.right * 90f);
 				quaternion *= Quaternion.Euler(Vector3.forward * (90f - this.features[i].drawAngle));
-				WorldFeatures.texts[i].transform.rotation = quaternion;
-				WorldFeatures.texts[i].transform.localPosition = this.features[i].drawCenter;
-				this.WrapAroundPlanetSurface(WorldFeatures.texts[i]);
-				WorldFeatures.texts[i].gameObject.SetActive(false);
+				WorldFeatures.texts[i].Rotation = quaternion;
+				WorldFeatures.texts[i].LocalPosition = this.features[i].drawCenter;
+				WorldFeatures.texts[i].WrapAroundPlanetSurface();
+				WorldFeatures.texts[i].SetActive(false);
 			}
 		}
 
 		private void CreateOrDestroyTexts()
 		{
-			while (WorldFeatures.texts.Count > this.features.Count)
+			for (int i = 0; i < WorldFeatures.texts.Count; i++)
 			{
-				UnityEngine.Object.Destroy(WorldFeatures.texts[WorldFeatures.texts.Count - 1]);
-				WorldFeatures.texts.RemoveLast<TextMeshPro>();
+				WorldFeatures.texts[i].Destroy();
 			}
-			while (WorldFeatures.texts.Count < this.features.Count)
+			WorldFeatures.texts.Clear();
+			bool flag = LanguageDatabase.activeLanguage == LanguageDatabase.defaultLanguage;
+			for (int j = 0; j < this.features.Count; j++)
 			{
-				GameObject gameObject = UnityEngine.Object.Instantiate<GameObject>(WorldFeatures.WorldTextPrefab);
-				UnityEngine.Object.DontDestroyOnLoad(gameObject);
-				TextMeshPro component = gameObject.GetComponent<TextMeshPro>();
-				component.color = new Color(1f, 1f, 1f, 0f);
-				Material[] sharedMaterials = component.GetComponent<MeshRenderer>().sharedMaterials;
-				for (int i = 0; i < sharedMaterials.Length; i++)
+				WorldFeatureTextMesh worldFeatureTextMesh;
+				if (WorldFeatures.ForceLegacyText || (!flag && this.HasCharactersUnsupportedByTextMeshPro(this.features[j].name)))
 				{
-					sharedMaterials[i].renderQueue = WorldMaterials.FeatureNameRenderQueue;
+					worldFeatureTextMesh = new WorldFeatureTextMesh_Legacy();
 				}
-				WorldFeatures.texts.Add(component);
+				else
+				{
+					worldFeatureTextMesh = new WorldFeatureTextMesh_TextMeshPro();
+				}
+				worldFeatureTextMesh.Init();
+				WorldFeatures.texts.Add(worldFeatureTextMesh);
 			}
 		}
 
-		private void WrapAroundPlanetSurface(TextMeshPro textMesh)
+		private bool HasCharactersUnsupportedByTextMeshPro(string str)
 		{
-			TMP_TextInfo textInfo = textMesh.textInfo;
-			int characterCount = textInfo.characterCount;
-			if (characterCount == 0)
+			TMP_FontAsset font = WorldFeatureTextMesh_TextMeshPro.WorldTextPrefab.GetComponent<TextMeshPro>().font;
+			for (int i = 0; i < str.Length; i++)
 			{
-				return;
-			}
-			textMesh.ForceMeshUpdate();
-			Vector3[] vertices = textMesh.mesh.vertices;
-			float num = textMesh.bounds.extents.x * 2f;
-			float num2 = Find.WorldGrid.DistOnSurfaceToAngle(num);
-			for (int i = 0; i < characterCount; i++)
-			{
-				TMP_CharacterInfo tMP_CharacterInfo = textInfo.characterInfo[i];
-				if (tMP_CharacterInfo.isVisible)
+				if (!this.HasCharacter(font, str[i]))
 				{
-					int vertexIndex = tMP_CharacterInfo.vertexIndex;
-					Vector3 vector = vertices[vertexIndex] + vertices[vertexIndex + 1] + vertices[vertexIndex + 2] + vertices[vertexIndex + 3];
-					vector /= 4f;
-					float num3 = vector.x / (num / 2f);
-					bool flag = num3 >= 0f;
-					num3 = Mathf.Abs(num3);
-					float num4 = num2 / 2f * num3;
-					float num5 = (180f - num4) / 2f;
-					float num6 = 200f * Mathf.Tan(num4 / 2f * 0.0174532924f);
-					Vector3 vector2 = new Vector3(Mathf.Sin(num5 * 0.0174532924f) * num6 * ((!flag) ? -1f : 1f), vector.y, Mathf.Cos(num5 * 0.0174532924f) * num6);
-					vector2 += new Vector3(Mathf.Sin(num4 * 0.0174532924f) * ((!flag) ? -1f : 1f), 0f, -Mathf.Cos(num4 * 0.0174532924f)) * 0.06f;
-					Vector3 b = vector2 - vector;
-					Vector3 vector3 = vertices[vertexIndex] + b;
-					Vector3 vector4 = vertices[vertexIndex + 1] + b;
-					Vector3 vector5 = vertices[vertexIndex + 2] + b;
-					Vector3 vector6 = vertices[vertexIndex + 3] + b;
-					Quaternion rotation = Quaternion.Euler(0f, num4 * ((!flag) ? 1f : -1f), 0f);
-					vector3 = rotation * (vector3 - vector2) + vector2;
-					vector4 = rotation * (vector4 - vector2) + vector2;
-					vector5 = rotation * (vector5 - vector2) + vector2;
-					vector6 = rotation * (vector6 - vector2) + vector2;
-					vertices[vertexIndex] = vector3;
-					vertices[vertexIndex + 1] = vector4;
-					vertices[vertexIndex + 2] = vector5;
-					vertices[vertexIndex + 3] = vector6;
+					return true;
 				}
 			}
-			textMesh.mesh.vertices = vertices;
+			return false;
+		}
+
+		private bool HasCharacter(TMP_FontAsset font, char character)
+		{
+			string characters = TMP_FontAsset.GetCharacters(font);
+			if (characters.IndexOf(character) >= 0)
+			{
+				return true;
+			}
+			List<TMP_FontAsset> fallbackFontAssets = font.fallbackFontAssets;
+			for (int i = 0; i < fallbackFontAssets.Count; i++)
+			{
+				characters = TMP_FontAsset.GetCharacters(fallbackFontAssets[i]);
+				if (characters.IndexOf(character) >= 0)
+				{
+					return true;
+				}
+			}
+			return false;
 		}
 	}
 }

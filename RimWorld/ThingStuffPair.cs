@@ -5,7 +5,7 @@ using Verse;
 
 namespace RimWorld
 {
-	public struct ThingStuffPair
+	public struct ThingStuffPair : IEquatable<ThingStuffPair>
 	{
 		public ThingDef thing;
 
@@ -66,6 +66,18 @@ namespace RimWorld
 			this.thing = thing;
 			this.stuff = stuff;
 			this.commonalityMultiplier = commonalityMultiplier;
+			if (stuff != null && !thing.MadeFromStuff)
+			{
+				Log.Warning(string.Concat(new object[]
+				{
+					"Created ThingStuffPairWithQuality with stuff ",
+					stuff,
+					" but ",
+					thing,
+					" is not made from stuff."
+				}), false);
+				stuff = null;
+			}
 			this.cachedPrice = thing.GetStatValueAbstract(StatDefOf.MarketValue, stuff);
 			this.cachedInsulationCold = thing.GetStatValueAbstract(StatDefOf.Insulation_Cold, stuff);
 			this.cachedInsulationHeat = thing.GetStatValueAbstract(StatDefOf.Insulation_Heat, stuff);
@@ -127,6 +139,39 @@ namespace RimWorld
 				" c=",
 				this.Commonality.ToString("F4")
 			});
+		}
+
+		public static bool operator ==(ThingStuffPair a, ThingStuffPair b)
+		{
+			return a.thing == b.thing && a.stuff == b.stuff && a.commonalityMultiplier == b.commonalityMultiplier;
+		}
+
+		public static bool operator !=(ThingStuffPair a, ThingStuffPair b)
+		{
+			return !(a == b);
+		}
+
+		public override bool Equals(object obj)
+		{
+			return obj is ThingStuffPair && this.Equals((ThingStuffPair)obj);
+		}
+
+		public bool Equals(ThingStuffPair other)
+		{
+			return this == other;
+		}
+
+		public override int GetHashCode()
+		{
+			int seed = 0;
+			seed = Gen.HashCombine<ThingDef>(seed, this.thing);
+			seed = Gen.HashCombine<ThingDef>(seed, this.stuff);
+			return Gen.HashCombineStruct<float>(seed, this.commonalityMultiplier);
+		}
+
+		public static explicit operator ThingStuffPair(ThingStuffPairWithQuality p)
+		{
+			return new ThingStuffPair(p.thing, p.stuff, 1f);
 		}
 	}
 }

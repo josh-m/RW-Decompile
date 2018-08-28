@@ -11,7 +11,12 @@ namespace Verse.AI
 
 		public virtual float CommonalityFor(Pawn pawn)
 		{
-			return this.def.baseCommonality;
+			float num = this.def.baseCommonality;
+			if (pawn.Faction == Faction.OfPlayer && this.def.commonalityFactorPerPopulationCurve != null)
+			{
+				num *= this.def.commonalityFactorPerPopulationCurve.Evaluate((float)PawnsFinder.AllMaps_FreeColonists.Count<Pawn>());
+			}
+			return num;
 		}
 
 		public virtual bool BreakCanOccur(Pawn pawn)
@@ -42,10 +47,10 @@ namespace Verse.AI
 		public virtual bool TryStart(Pawn pawn, Thought reason, bool causedByMood)
 		{
 			string text = (reason == null) ? null : reason.LabelCap;
-			MentalStateHandler arg_33_0 = pawn.mindState.mentalStateHandler;
+			MentalStateHandler arg_34_0 = pawn.mindState.mentalStateHandler;
 			MentalStateDef mentalState = this.def.mentalState;
 			string reason2 = text;
-			return arg_33_0.TryStartMentalState(mentalState, reason2, false, causedByMood, null);
+			return arg_34_0.TryStartMentalState(mentalState, reason2, false, causedByMood, null, false);
 		}
 
 		protected bool TrySendLetter(Pawn pawn, string textKey, Thought reason)
@@ -54,7 +59,7 @@ namespace Verse.AI
 			{
 				return false;
 			}
-			string label = "MentalBreakLetterLabel".Translate() + ": " + this.def.label;
+			string label = this.def.LabelCap + ": " + pawn.LabelShortCap;
 			string text = textKey.Translate(new object[]
 			{
 				pawn.Label
@@ -66,7 +71,8 @@ namespace Verse.AI
 					reason.LabelCap
 				});
 			}
-			Find.LetterStack.ReceiveLetter(label, text, LetterDefOf.NegativeEvent, pawn, null);
+			text = text.AdjustedFor(pawn, "PAWN");
+			Find.LetterStack.ReceiveLetter(label, text, LetterDefOf.NegativeEvent, pawn, null, null);
 			return true;
 		}
 	}

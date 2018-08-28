@@ -7,6 +7,7 @@ namespace RimWorld
 {
 	public abstract class ScenPart : IExposable
 	{
+		[TranslationHandle]
 		public ScenPartDef def;
 
 		public bool visible = true;
@@ -80,12 +81,16 @@ namespace RimWorld
 		{
 		}
 
-		public virtual bool AllowPlayerStartingPawn(Pawn pawn)
+		public virtual bool AllowPlayerStartingPawn(Pawn pawn, bool tryingToRedress, PawnGenerationRequest req)
 		{
 			return true;
 		}
 
-		public virtual void Notify_PawnGenerated(Pawn pawn, PawnGenerationContext context)
+		public virtual void Notify_NewPawnGenerating(Pawn pawn, PawnGenerationContext context)
+		{
+		}
+
+		public virtual void Notify_PawnGenerated(Pawn pawn, PawnGenerationContext context, bool redressed)
 		{
 		}
 

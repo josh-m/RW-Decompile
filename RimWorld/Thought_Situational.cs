@@ -1,5 +1,4 @@
 using System;
-using UnityEngine;
 using Verse;
 
 namespace RimWorld
@@ -41,9 +40,9 @@ namespace RimWorld
 		public void RecalculateState()
 		{
 			ThoughtState thoughtState = this.CurrentStateInternal();
-			if (thoughtState.Active)
+			if (thoughtState.ActiveFor(this.def))
 			{
-				this.curStageIndex = Mathf.Min(thoughtState.StageIndex, this.def.stages.Count - 1);
+				this.curStageIndex = thoughtState.StageIndexFor(this.def);
 				this.reason = thoughtState.Reason;
 			}
 			else

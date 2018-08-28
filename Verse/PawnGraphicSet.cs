@@ -59,7 +59,7 @@ namespace Verse
 				{
 					return MeshPool.humanlikeHairSetNarrow;
 				}
-				Log.Error("Unknown crown type: " + this.pawn.story.crownType);
+				Log.Error("Unknown crown type: " + this.pawn.story.crownType, false);
 				return MeshPool.humanlikeHairSetAverage;
 			}
 		}
@@ -91,7 +91,7 @@ namespace Verse
 				}
 				for (int i = 0; i < this.apparelGraphics.Count; i++)
 				{
-					if (this.apparelGraphics[i].sourceApparel.def.apparel.LastLayer != ApparelLayer.Shell && this.apparelGraphics[i].sourceApparel.def.apparel.LastLayer != ApparelLayer.Overhead)
+					if (this.apparelGraphics[i].sourceApparel.def.apparel.LastLayer != ApparelLayerDefOf.Shell && this.apparelGraphics[i].sourceApparel.def.apparel.LastLayer != ApparelLayerDefOf.Overhead)
 					{
 						this.cachedMatsBodyBase.Add(this.apparelGraphics[i].graphic.MatAt(facing, null));
 					}
@@ -152,9 +152,9 @@ namespace Verse
 			this.ClearCache();
 			if (this.pawn.RaceProps.Humanlike)
 			{
-				this.nakedGraphic = GraphicGetter_NakedHumanlike.GetNakedBodyGraphic(this.pawn.story.bodyType, ShaderDatabase.CutoutSkin, this.pawn.story.SkinColor);
-				this.rottingGraphic = GraphicGetter_NakedHumanlike.GetNakedBodyGraphic(this.pawn.story.bodyType, ShaderDatabase.CutoutSkin, PawnGraphicSet.RottingColor);
-				this.dessicatedGraphic = GraphicDatabase.Get<Graphic_Multi>("Things/Pawn/Humanlike/HumanoidDessicated", ShaderDatabase.Cutout);
+				this.nakedGraphic = GraphicDatabase.Get<Graphic_Multi>(this.pawn.story.bodyType.bodyNakedGraphicPath, ShaderDatabase.CutoutSkin, Vector2.one, this.pawn.story.SkinColor);
+				this.rottingGraphic = GraphicDatabase.Get<Graphic_Multi>(this.pawn.story.bodyType.bodyNakedGraphicPath, ShaderDatabase.CutoutSkin, Vector2.one, PawnGraphicSet.RottingColor);
+				this.dessicatedGraphic = GraphicDatabase.Get<Graphic_Multi>(this.pawn.story.bodyType.bodyDessicatedGraphicPath, ShaderDatabase.Cutout);
 				this.headGraphic = GraphicDatabaseHeadRecords.GetHeadNamed(this.pawn.story.HeadGraphicPath, this.pawn.story.SkinColor);
 				this.desiccatedHeadGraphic = GraphicDatabaseHeadRecords.GetHeadNamed(this.pawn.story.HeadGraphicPath, PawnGraphicSet.RottingColor);
 				this.skullGraphic = GraphicDatabaseHeadRecords.GetSkull();
@@ -181,7 +181,14 @@ namespace Verse
 				}
 				if (curKindLifeStage.dessicatedBodyGraphicData != null)
 				{
-					this.dessicatedGraphic = curKindLifeStage.dessicatedBodyGraphicData.GraphicColoredFor(this.pawn);
+					if (this.pawn.gender != Gender.Female || curKindLifeStage.femaleDessicatedBodyGraphicData == null)
+					{
+						this.dessicatedGraphic = curKindLifeStage.dessicatedBodyGraphicData.GraphicColoredFor(this.pawn);
+					}
+					else
+					{
+						this.dessicatedGraphic = curKindLifeStage.femaleDessicatedBodyGraphicData.GraphicColoredFor(this.pawn);
+					}
 				}
 			}
 		}
@@ -190,7 +197,7 @@ namespace Verse
 		{
 			this.ClearCache();
 			this.apparelGraphics.Clear();
-			foreach (Apparel current in this.pawn.apparel.WornApparelInDrawOrder)
+			foreach (Apparel current in this.pawn.apparel.WornApparel)
 			{
 				ApparelGraphicRecord item;
 				if (ApparelGraphicRecordGetter.TryGetGraphicApparel(current, this.pawn.story.bodyType, out item))

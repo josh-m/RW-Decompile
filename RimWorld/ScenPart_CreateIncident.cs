@@ -56,7 +56,7 @@ namespace RimWorld
 			Rect rect3 = new Rect(scenPartRect.x, scenPartRect.y + scenPartRect.height * 2f / 3f, scenPartRect.width, scenPartRect.height / 3f);
 			base.DoIncidentEditInterface(rect);
 			Widgets.TextFieldNumericLabeled<float>(rect2, "intervalDays".Translate(), ref this.intervalDays, ref this.intervalDaysBuffer, 0f, 1E+09f);
-			Widgets.CheckboxLabeled(rect3, "repeat".Translate(), ref this.repeat, false);
+			Widgets.CheckboxLabeled(rect3, "repeat".Translate(), ref this.repeat, false, null, null, false);
 		}
 
 		public override void Randomize()
@@ -97,13 +97,13 @@ namespace RimWorld
 			}
 			if (this.incident == null)
 			{
-				Log.Error("Trying to tick ScenPart_CreateIncident but the incident is null");
+				Log.Error("Trying to tick ScenPart_CreateIncident but the incident is null", false);
 				this.isFinished = true;
 				return;
 			}
 			if ((float)Find.TickManager.TicksGame >= this.occurTick)
 			{
-				IncidentParms parms = StorytellerUtility.DefaultParmsNow(Find.Storyteller.def, this.incident.category, (from x in Find.Maps
+				IncidentParms parms = StorytellerUtility.DefaultParmsNow(this.incident.category, (from x in Find.Maps
 				where x.IsPlayerHome
 				select x).RandomElement<Map>());
 				if (!this.incident.Worker.TryExecute(parms))

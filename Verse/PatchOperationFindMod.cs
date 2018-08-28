@@ -17,7 +17,7 @@ namespace Verse
 			bool flag = false;
 			for (int i = 0; i < this.mods.Count; i++)
 			{
-				if (ModLister.GetModWithIdentifier(this.mods[i]) != null)
+				if (ModLister.HasActiveModWithName(this.mods[i]))
 				{
 					flag = true;
 					break;
@@ -34,12 +34,12 @@ namespace Verse
 			{
 				return this.nomatch.Apply(xml);
 			}
-			return false;
+			return true;
 		}
 
 		public override string ToString()
 		{
-			return string.Format("{0}({1})", base.ToString(), GenText.ToCommaList(this.mods, false));
+			return string.Format("{0}({1})", base.ToString(), this.mods.ToCommaList(false));
 		}
 	}
 }

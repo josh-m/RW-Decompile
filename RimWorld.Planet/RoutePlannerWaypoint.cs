@@ -40,7 +40,7 @@ namespace RimWorld.Planet
 					{
 						stringBuilder.AppendLine();
 					}
-					stringBuilder.Append("EstimatedTimeToThisWaypoint".Translate(new object[]
+					stringBuilder.Append("EstimatedTimeToWaypoint".Translate(new object[]
 					{
 						ticksToWaypoint.ToStringTicksToDays("0.#")
 					}));
@@ -48,7 +48,7 @@ namespace RimWorld.Planet
 					{
 						int ticksToWaypoint2 = worldRoutePlanner.GetTicksToWaypoint(num - 1);
 						stringBuilder.AppendLine();
-						stringBuilder.Append("EstimatedTimeToThisWaypointFromPrevious".Translate(new object[]
+						stringBuilder.Append("EstimatedTimeToWaypointFromPrevious".Translate(new object[]
 						{
 							(ticksToWaypoint - ticksToWaypoint2).ToStringTicksToDays("0.#")
 						}));

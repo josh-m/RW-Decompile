@@ -7,6 +7,7 @@ using Verse;
 
 namespace RimWorld
 {
+	[HasDebugOutput]
 	public class MusicManagerPlay
 	{
 		private enum MusicManagerState
@@ -60,7 +61,7 @@ namespace RimWorld
 				List<Map> maps = Find.Maps;
 				for (int i = 0; i < maps.Count; i++)
 				{
-					if (maps[i].IsPlayerHome && maps[i].dangerWatcher.DangerRating == StoryDanger.High)
+					if (maps[i].dangerWatcher.DangerRating == StoryDanger.High)
 					{
 						return true;
 					}
@@ -228,8 +229,8 @@ namespace RimWorld
 			}
 			if (!source.Any<SongDef>())
 			{
-				Log.Error("Could not get any appropriate song. Getting random and logging song selection data.");
-				this.LogSongSelectionData();
+				Log.Error("Could not get any appropriate song. Getting random and logging song selection data.", false);
+				this.SongSelectionData();
 				return DefDatabase<SongDef>.GetRandom();
 			}
 			return source.RandomElementByWeight((SongDef s) => s.commonality);
@@ -252,7 +253,7 @@ namespace RimWorld
 			{
 				return false;
 			}
-			Map map = Find.AnyPlayerHomeMap ?? Find.VisibleMap;
+			Map map = Find.AnyPlayerHomeMap ?? Find.CurrentMap;
 			if (!song.allowedSeasons.NullOrEmpty<Season>())
 			{
 				if (map == null)
@@ -292,13 +293,14 @@ namespace RimWorld
 			stringBuilder.AppendLine("fadeoutFactor: " + this.fadeoutFactor);
 			stringBuilder.AppendLine("nextSongStartTime: " + this.nextSongStartTime);
 			stringBuilder.AppendLine("CurTime: " + this.CurTime);
-			stringBuilder.AppendLine("recentSongs: " + GenText.ToCommaList(from s in this.recentSongs
-			select s.defName, true));
+			stringBuilder.AppendLine("recentSongs: " + (from s in this.recentSongs
+			select s.defName).ToCommaList(true));
 			stringBuilder.AppendLine("disabled: " + this.disabled);
 			return stringBuilder.ToString();
 		}
 
-		public void LogSongSelectionData()
+		[DebugOutput]
+		public void SongSelectionData()
 		{
 			StringBuilder stringBuilder = new StringBuilder();
 			stringBuilder.AppendLine("Most recent song: " + ((this.lastStartedSong == null) ? "None" : this.lastStartedSong.defName));
@@ -316,7 +318,7 @@ namespace RimWorld
 			{
 				stringBuilder.AppendLine("   " + current2.defName);
 			}
-			Log.Message(stringBuilder.ToString());
+			Log.Message(stringBuilder.ToString(), false);
 		}
 	}
 }

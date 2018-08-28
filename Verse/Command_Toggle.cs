@@ -10,9 +10,9 @@ namespace Verse
 
 		public Action toggleAction;
 
-		public SoundDef turnOnSound = SoundDefOf.CheckboxTurnedOn;
+		public SoundDef turnOnSound = SoundDefOf.Checkbox_TurnedOn;
 
-		public SoundDef turnOffSound = SoundDefOf.CheckboxTurnedOff;
+		public SoundDef turnOffSound = SoundDefOf.Checkbox_TurnedOff;
 
 		public override SoundDef CurActivateSound
 		{
@@ -32,10 +32,10 @@ namespace Verse
 			this.toggleAction();
 		}
 
-		public override GizmoResult GizmoOnGUI(Vector2 loc)
+		public override GizmoResult GizmoOnGUI(Vector2 loc, float maxWidth)
 		{
-			GizmoResult result = base.GizmoOnGUI(loc);
-			Rect rect = new Rect(loc.x, loc.y, this.Width, 75f);
+			GizmoResult result = base.GizmoOnGUI(loc, maxWidth);
+			Rect rect = new Rect(loc.x, loc.y, this.GetWidth(maxWidth), 75f);
 			Rect position = new Rect(rect.x + rect.width - 24f, rect.y, 24f, 24f);
 			Texture2D image = (!this.isActive()) ? Widgets.CheckboxOffTex : Widgets.CheckboxOnTex;
 			GUI.DrawTexture(position, image);

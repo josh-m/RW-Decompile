@@ -11,7 +11,7 @@ namespace Verse.Sound
 			{
 				return;
 			}
-			if (onlyThisMap != null && (Find.VisibleMap != onlyThisMap || WorldRendererUtility.WorldRenderedNow))
+			if (onlyThisMap != null && (Find.CurrentMap != onlyThisMap || WorldRendererUtility.WorldRenderedNow))
 			{
 				return;
 			}
@@ -32,7 +32,7 @@ namespace Verse.Sound
 				}
 				if (!flag)
 				{
-					Log.Error("Tried to play " + soundDef + " on camera but it has no on-camera subSounds.");
+					Log.Error("Tried to play " + soundDef + " on camera but it has no on-camera subSounds.", false);
 				}
 			}
 			soundDef.PlayOneShot(SoundInfo.OnCamera(MaintenanceType.None));
@@ -46,7 +46,7 @@ namespace Verse.Sound
 			}
 			if (soundDef == null)
 			{
-				Log.Error("Tried to PlayOneShot with null SoundDef. Info=" + info);
+				Log.Error("Tried to PlayOneShot with null SoundDef. Info=" + info, false);
 				return;
 			}
 			DebugSoundEventsLog.Notify_SoundEvent(soundDef, info);
@@ -70,7 +70,7 @@ namespace Verse.Sound
 			}
 			if (soundDef.sustain)
 			{
-				Log.Error("Tried to play sustainer SoundDef " + soundDef + " as a one-shot sound.");
+				Log.Error("Tried to play sustainer SoundDef " + soundDef + " as a one-shot sound.", false);
 				return;
 			}
 			if (!SoundSlotManager.CanPlayNow(soundDef.slot))
@@ -106,16 +106,16 @@ namespace Verse.Sound
 			}
 			if (!soundDef.sustain)
 			{
-				Log.Error("Tried to spawn a sustainer from non-sustainer sound " + soundDef + ".");
+				Log.Error("Tried to spawn a sustainer from non-sustainer sound " + soundDef + ".", false);
 				return null;
 			}
 			if (!info.IsOnCamera && info.Maker.Thing != null && info.Maker.Thing.Destroyed)
 			{
 				return null;
 			}
-			if (!soundDef.sustainStartSound.NullOrEmpty())
+			if (soundDef.sustainStartSound != null)
 			{
-				SoundDef.Named(soundDef.sustainStartSound).PlayOneShot(info);
+				soundDef.sustainStartSound.PlayOneShot(info);
 			}
 			return new Sustainer(soundDef, info);
 		}

@@ -2,6 +2,7 @@ using RimWorld;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Verse.Sound;
 
 namespace Verse
 {
@@ -19,7 +20,7 @@ namespace Verse
 
 		private const float SliderTab = 20f;
 
-		public static void DoThingFilterConfigWindow(Rect rect, ref Vector2 scrollPosition, ThingFilter filter, ThingFilter parentFilter = null, int openMask = 1, IEnumerable<ThingDef> forceHiddenDefs = null, IEnumerable<SpecialThingFilterDef> forceHiddenFilters = null, List<ThingDef> suppressSmallVolumeTags = null)
+		public static void DoThingFilterConfigWindow(Rect rect, ref Vector2 scrollPosition, ThingFilter filter, ThingFilter parentFilter = null, int openMask = 1, IEnumerable<ThingDef> forceHiddenDefs = null, IEnumerable<SpecialThingFilterDef> forceHiddenFilters = null, List<ThingDef> suppressSmallVolumeTags = null, Map map = null)
 		{
 			Widgets.DrawMenuSection(rect);
 			Text.Font = GameFont.Tiny;
@@ -28,11 +29,13 @@ namespace Verse
 			if (Widgets.ButtonText(rect2, "ClearAll".Translate(), true, false, true))
 			{
 				filter.SetDisallowAll(forceHiddenDefs, forceHiddenFilters);
+				SoundDefOf.Checkbox_TurnedOff.PlayOneShotOnCamera(null);
 			}
 			Rect rect3 = new Rect(rect2.xMax + 1f, rect2.y, rect.xMax - 1f - (rect2.xMax + 1f), 24f);
 			if (Widgets.ButtonText(rect3, "AllowAll".Translate(), true, false, true))
 			{
 				filter.SetAllowAll(parentFilter);
+				SoundDefOf.Checkbox_TurnedOn.PlayOneShotOnCamera(null);
 			}
 			Text.Font = GameFont.Small;
 			rect.yMin = rect2.yMax;
@@ -60,7 +63,7 @@ namespace Verse
 			Rect rect4 = new Rect(0f, num2, viewRect.width, 9999f);
 			Listing_TreeThingFilter listing_TreeThingFilter = new Listing_TreeThingFilter(filter, parentFilter, forceHiddenDefs, forceHiddenFilters, suppressSmallVolumeTags);
 			listing_TreeThingFilter.Begin(rect4);
-			listing_TreeThingFilter.DoCategoryChildren(node, 0, openMask, true);
+			listing_TreeThingFilter.DoCategoryChildren(node, 0, openMask, map, true);
 			listing_TreeThingFilter.End();
 			if (Event.current.type == EventType.Layout)
 			{

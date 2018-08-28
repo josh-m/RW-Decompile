@@ -11,9 +11,9 @@ namespace RimWorld
 			this.defaultLabel = "DesignatorAreaHomeClear".Translate();
 			this.defaultDesc = "DesignatorAreaHomeClearDesc".Translate();
 			this.icon = ContentFinder<Texture2D>.Get("UI/Designators/HomeAreaOff", true);
-			this.soundDragSustain = SoundDefOf.DesignateDragAreaDelete;
-			this.soundDragChanged = SoundDefOf.DesignateDragAreaDeleteChanged;
-			this.soundSucceeded = SoundDefOf.DesignateAreaDelete;
+			this.soundDragSustain = SoundDefOf.Designate_DragAreaDelete;
+			this.soundDragChanged = null;
+			this.soundSucceeded = SoundDefOf.Designate_AreaDelete;
 		}
 	}
 }

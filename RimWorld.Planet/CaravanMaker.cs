@@ -12,7 +12,7 @@ namespace RimWorld.Planet
 		{
 			if (startingTile < 0 && addToWorldPawnsIfNotAlready)
 			{
-				Log.Warning("Tried to create a caravan but chose not to spawn a caravan but pass pawns to world. This can cause bugs because pawns can be discarded.");
+				Log.Warning("Tried to create a caravan but chose not to spawn a caravan but pass pawns to world. This can cause bugs because pawns can be discarded.", false);
 			}
 			CaravanMaker.tmpPawns.Clear();
 			CaravanMaker.tmpPawns.AddRange(pawns);
@@ -22,7 +22,6 @@ namespace RimWorld.Planet
 				caravan.Tile = startingTile;
 			}
 			caravan.SetFaction(faction);
-			caravan.Name = CaravanNameGenerator.GenerateCaravanName(caravan);
 			if (startingTile >= 0)
 			{
 				Find.WorldObjects.Add(caravan);
@@ -30,10 +29,9 @@ namespace RimWorld.Planet
 			for (int i = 0; i < CaravanMaker.tmpPawns.Count; i++)
 			{
 				Pawn pawn = CaravanMaker.tmpPawns[i];
-				CaravanExitMapUtility.GenerateCaravanExitTale(pawn);
 				if (pawn.Dead)
 				{
-					Log.Warning("Tried to form a caravan with a dead pawn " + pawn);
+					Log.Warning("Tried to form a caravan with a dead pawn " + pawn, false);
 				}
 				else
 				{
@@ -44,6 +42,9 @@ namespace RimWorld.Planet
 					}
 				}
 			}
+			caravan.Name = CaravanNameGenerator.GenerateCaravanName(caravan);
+			CaravanMaker.tmpPawns.Clear();
+			caravan.SetUniqueId(Find.UniqueIDsManager.GetNextCaravanID());
 			return caravan;
 		}
 	}

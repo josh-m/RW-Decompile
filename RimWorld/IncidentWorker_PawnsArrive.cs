@@ -20,10 +20,10 @@ namespace RimWorld
 			return !f.IsPlayer && !f.defeated && (desperate || (f.def.allowedArrivalTemperatureRange.Includes(map.mapTemperature.OutdoorTemp) && f.def.allowedArrivalTemperatureRange.Includes(map.mapTemperature.SeasonalTemp)));
 		}
 
-		protected override bool CanFireNowSub(IIncidentTarget target)
+		protected override bool CanFireNowSub(IncidentParms parms)
 		{
-			Map map = (Map)target;
-			return this.CandidateFactions(map, false).Any<Faction>();
+			Map map = (Map)parms.target;
+			return parms.faction != null || this.CandidateFactions(map, false).Any<Faction>();
 		}
 
 		public string DebugListingOfGroupSources()
@@ -32,11 +32,11 @@ namespace RimWorld
 			foreach (Faction current in Find.FactionManager.AllFactions)
 			{
 				stringBuilder.Append(current.Name);
-				if (this.FactionCanBeGroupSource(current, Find.VisibleMap, false))
+				if (this.FactionCanBeGroupSource(current, Find.CurrentMap, false))
 				{
 					stringBuilder.Append("    YES");
 				}
-				else if (this.FactionCanBeGroupSource(current, Find.VisibleMap, true))
+				else if (this.FactionCanBeGroupSource(current, Find.CurrentMap, true))
 				{
 					stringBuilder.Append("    YES-DESPERATE");
 				}

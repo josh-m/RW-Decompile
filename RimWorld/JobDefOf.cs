@@ -10,19 +10,19 @@ namespace RimWorld
 
 		public static JobDef Wait;
 
-		public static JobDef WaitMaintainPosture;
+		public static JobDef Wait_MaintainPosture;
 
-		public static JobDef WaitDowned;
+		public static JobDef Wait_Downed;
 
 		public static JobDef GotoWander;
 
-		public static JobDef WaitWander;
+		public static JobDef Wait_Wander;
 
 		public static JobDef GotoSafeTemperature;
 
-		public static JobDef WaitSafeTemperature;
+		public static JobDef Wait_SafeTemperature;
 
-		public static JobDef WaitCombat;
+		public static JobDef Wait_Combat;
 
 		public static JobDef Equip;
 
@@ -33,6 +33,10 @@ namespace RimWorld
 		public static JobDef UseVerbOnThing;
 
 		public static JobDef TakeInventory;
+
+		public static JobDef Follow;
+
+		public static JobDef FollowClose;
 
 		public static JobDef Wear;
 
@@ -62,8 +66,6 @@ namespace RimWorld
 
 		public static JobDef Flick;
 
-		public static JobDef RearmTrap;
-
 		public static JobDef DoBill;
 
 		public static JobDef Research;
@@ -72,6 +74,8 @@ namespace RimWorld
 
 		public static JobDef OperateDeepDrill;
 
+		public static JobDef OperateScanner;
+
 		public static JobDef Repair;
 
 		public static JobDef FixBrokenDownBuilding;
@@ -79,8 +83,6 @@ namespace RimWorld
 		public static JobDef UseCommsConsole;
 
 		public static JobDef Clean;
-
-		public static JobDef BuryCorpse;
 
 		public static JobDef TradeWithPawn;
 
@@ -136,6 +138,12 @@ namespace RimWorld
 
 		public static JobDef Refuel;
 
+		public static JobDef RefuelAtomic;
+
+		public static JobDef RearmTurret;
+
+		public static JobDef RearmTurretAtomic;
+
 		public static JobDef FillFermentingBarrel;
 
 		public static JobDef TakeBeerOutOfFermentingBarrel;
@@ -143,6 +151,8 @@ namespace RimWorld
 		public static JobDef UnloadInventory;
 
 		public static JobDef UnloadYourInventory;
+
+		public static JobDef HaulToTransporter;
 
 		public static JobDef Rescue;
 
@@ -180,9 +190,9 @@ namespace RimWorld
 
 		public static JobDef RemoveRoof;
 
-		public static JobDef PrisonerAttemptRecruit;
+		public static JobDef SmoothWall;
 
-		public static JobDef PrisonerFriendlyChat;
+		public static JobDef PrisonerAttemptRecruit;
 
 		public static JobDef PrisonerExecution;
 
@@ -199,6 +209,10 @@ namespace RimWorld
 		public static JobDef Harvest;
 
 		public static JobDef CutPlant;
+
+		public static JobDef HarvestDesignated;
+
+		public static JobDef CutPlantDesignated;
 
 		public static JobDef Slaughter;
 
@@ -217,5 +231,10 @@ namespace RimWorld
 		public static JobDef LayEgg;
 
 		public static JobDef PredatorHunt;
+
+		static JobDefOf()
+		{
+			DefOfHelper.EnsureInitializedInCtor(typeof(JobDefOf));
+		}
 	}
 }

@@ -11,9 +11,9 @@ namespace RimWorld
 			this.defaultLabel = "DesignatorAreaSnowClearExpand".Translate();
 			this.defaultDesc = "DesignatorAreaSnowClearExpandDesc".Translate();
 			this.icon = ContentFinder<Texture2D>.Get("UI/Designators/SnowClearAreaOn", true);
-			this.soundDragSustain = SoundDefOf.DesignateDragAreaAdd;
-			this.soundDragChanged = SoundDefOf.DesignateDragAreaAddChanged;
-			this.soundSucceeded = SoundDefOf.DesignateAreaAdd;
+			this.soundDragSustain = SoundDefOf.Designate_DragAreaAdd;
+			this.soundDragChanged = null;
+			this.soundSucceeded = SoundDefOf.Designate_AreaAdd;
 		}
 	}
 }

@@ -5,12 +5,14 @@ namespace Verse
 {
 	public class SubcameraDef : Def
 	{
+		[NoTranslate]
 		public string layer;
 
 		public int depth;
 
 		public RenderTextureFormat format;
 
+		[Unsaved]
 		private int layerCached = -1;
 
 		public int LayerId

@@ -1,3 +1,4 @@
+using RimWorld;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -27,6 +28,8 @@ namespace Verse
 		public float accuracyMultiplier = 1f;
 
 		public float perceivePriority;
+
+		public ThoughtDef exposedThought;
 
 		public List<SoundDef> ambientSounds = new List<SoundDef>();
 

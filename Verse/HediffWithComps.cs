@@ -251,7 +251,7 @@ namespace Verse
 					string text = this.comps[i].CompDebugString();
 					if (!text.NullOrEmpty())
 					{
-						stringBuilder.AppendLine(text.TrimEnd(new char[0]).Indented());
+						stringBuilder.AppendLine(text.TrimEnd(new char[0]).Indented("    "));
 					}
 				}
 			}

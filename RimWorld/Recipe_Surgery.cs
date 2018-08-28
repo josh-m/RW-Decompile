@@ -1,16 +1,19 @@
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 using Verse;
 
 namespace RimWorld
 {
 	public class Recipe_Surgery : RecipeWorker
 	{
+		private const float MaxSuccessChance = 0.98f;
+
 		private const float CatastrophicFailChance = 0.5f;
 
 		private const float RidiculousFailChanceFromCatastrophic = 0.1f;
 
-		private const float InspiredSurgeryFailChanceFactor = 0.1f;
+		private const float InspiredSurgerySuccessChanceFactor = 2f;
 
 		private static readonly SimpleCurve MedicineMedicalPotencyToSurgeryChanceFactor = new SimpleCurve
 		{
@@ -31,21 +34,22 @@ namespace RimWorld
 		protected bool CheckSurgeryFail(Pawn surgeon, Pawn patient, List<Thing> ingredients, BodyPartRecord part, Bill bill)
 		{
 			float num = 1f;
-			num *= surgeon.GetStatValue((!patient.RaceProps.IsMechanoid) ? StatDefOf.MedicalSurgerySuccessChance : StatDefOf.MechanoidOperationSuccessChance, true);
+			if (!patient.RaceProps.IsMechanoid)
+			{
+				num *= surgeon.GetStatValue(StatDefOf.MedicalSurgerySuccessChance, true);
+			}
 			if (patient.InBed())
 			{
 				num *= patient.CurrentBed().GetStatValue(StatDefOf.SurgerySuccessChanceFactor, true);
 			}
 			num *= Recipe_Surgery.MedicineMedicalPotencyToSurgeryChanceFactor.Evaluate(this.GetAverageMedicalPotency(ingredients, bill));
 			num *= this.recipe.surgerySuccessChanceFactor;
-			if (surgeon.InspirationDef == InspirationDefOf.InspiredSurgery && !patient.RaceProps.IsMechanoid)
+			if (surgeon.InspirationDef == InspirationDefOf.Inspired_Surgery && !patient.RaceProps.IsMechanoid)
 			{
-				if (num < 1f)
-				{
-					num = 1f - (1f - num) * 0.1f;
-				}
-				surgeon.mindState.inspirationHandler.EndInspiration(InspirationDefOf.InspiredSurgery);
+				num *= 2f;
+				surgeon.mindState.inspirationHandler.EndInspiration(InspirationDefOf.Inspired_Surgery);
 			}
+			num = Mathf.Min(num, 0.98f);
 			if (!Rand.Chance(num))
 			{
 				if (Rand.Chance(this.recipe.deathOnFailedSurgeryChance))
@@ -59,8 +63,8 @@ namespace RimWorld
 					{
 						surgeon.LabelShort,
 						patient.LabelShort,
-						this.recipe.label
-					}), patient, MessageTypeDefOf.NegativeHealthEvent);
+						this.recipe.LabelCap
+					}), patient, MessageTypeDefOf.NegativeHealthEvent, true);
 				}
 				else if (Rand.Chance(0.5f))
 				{
@@ -70,7 +74,7 @@ namespace RimWorld
 						{
 							surgeon.LabelShort,
 							patient.LabelShort
-						}), patient, MessageTypeDefOf.NegativeHealthEvent);
+						}), patient, MessageTypeDefOf.NegativeHealthEvent, true);
 						HealthUtility.GiveInjuriesOperationFailureRidiculous(patient);
 					}
 					else
@@ -79,7 +83,7 @@ namespace RimWorld
 						{
 							surgeon.LabelShort,
 							patient.LabelShort
-						}), patient, MessageTypeDefOf.NegativeHealthEvent);
+						}), patient, MessageTypeDefOf.NegativeHealthEvent, true);
 						HealthUtility.GiveInjuriesOperationFailureCatastrophic(patient, part);
 					}
 				}
@@ -89,7 +93,7 @@ namespace RimWorld
 					{
 						surgeon.LabelShort,
 						patient.LabelShort
-					}), patient, MessageTypeDefOf.NegativeHealthEvent);
+					}), patient, MessageTypeDefOf.NegativeHealthEvent, true);
 					HealthUtility.GiveInjuriesOperationFailureMinor(patient, part);
 				}
 				if (!patient.Dead)

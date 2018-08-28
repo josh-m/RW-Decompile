@@ -8,6 +8,14 @@ namespace RimWorld.Planet
 	{
 		private const int LakeMaxSize = 15;
 
+		public override int SeedPart
+		{
+			get
+			{
+				return 401463656;
+			}
+		}
+
 		public override void GenerateFresh(string seed)
 		{
 			this.GenerateLakes();

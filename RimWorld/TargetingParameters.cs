@@ -208,5 +208,19 @@ namespace RimWorld
 			targetingParameters.validator = ((TargetInfo x) => DropCellFinder.IsGoodDropSpot(x.Cell, x.Map, false, true));
 			return targetingParameters;
 		}
+
+		public static TargetingParameters ForQuestPawnsWhoWillJoinColony(Pawn p)
+		{
+			TargetingParameters targetingParameters = new TargetingParameters();
+			targetingParameters.canTargetPawns = true;
+			targetingParameters.canTargetBuildings = false;
+			targetingParameters.mapObjectTargetsMustBeAutoAttackable = false;
+			targetingParameters.validator = delegate(TargetInfo x)
+			{
+				Pawn pawn = x.Thing as Pawn;
+				return pawn != null && !pawn.Dead && pawn.mindState.WillJoinColonyIfRescued;
+			};
+			return targetingParameters;
+		}
 	}
 }

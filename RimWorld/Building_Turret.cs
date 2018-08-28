@@ -82,6 +82,10 @@ namespace RimWorld
 		public override void Tick()
 		{
 			base.Tick();
+			if (this.forcedTarget.HasThing && (!this.forcedTarget.Thing.Spawned || !base.Spawned || this.forcedTarget.Thing.Map != base.Map))
+			{
+				this.forcedTarget = LocalTargetInfo.Invalid;
+			}
 			this.stunner.StunHandlerTick();
 		}
 
@@ -97,9 +101,9 @@ namespace RimWorld
 			Scribe_Values.Look<int>(ref this.lastAttackTargetTick, "lastAttackTargetTick", 0, false);
 		}
 
-		public override void PreApplyDamage(DamageInfo dinfo, out bool absorbed)
+		public override void PreApplyDamage(ref DamageInfo dinfo, out bool absorbed)
 		{
-			base.PreApplyDamage(dinfo, out absorbed);
+			base.PreApplyDamage(ref dinfo, out absorbed);
 			if (absorbed)
 			{
 				return;
@@ -110,7 +114,7 @@ namespace RimWorld
 
 		public abstract void OrderAttack(LocalTargetInfo targ);
 
-		public bool ThreatDisabled()
+		public bool ThreatDisabled(IAttackTargetSearcher disabledFor)
 		{
 			CompPowerTrader comp = base.GetComp<CompPowerTrader>();
 			if (comp != null && !comp.PowerOn)

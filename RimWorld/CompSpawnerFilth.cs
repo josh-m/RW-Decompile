@@ -46,11 +46,12 @@ namespace RimWorld
 			}
 		}
 
-		public override void CompTickRare()
+		public override void CompTick()
 		{
+			base.CompTick();
 			if (this.CanSpawnFilth)
 			{
-				if (this.Props.spawnMtbHours > 0f && Rand.MTBEventOccurs(this.Props.spawnMtbHours, 2500f, 250f))
+				if (this.Props.spawnMtbHours > 0f && Rand.MTBEventOccurs(this.Props.spawnMtbHours, 2500f, 1f))
 				{
 					this.TrySpawnFilth();
 				}

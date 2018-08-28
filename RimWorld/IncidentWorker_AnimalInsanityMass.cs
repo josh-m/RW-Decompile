@@ -15,7 +15,7 @@ namespace RimWorld
 
 		public static void DriveInsane(Pawn p)
 		{
-			p.mindState.mentalStateHandler.TryStartMentalState(MentalStateDefOf.Manhunter, null, true, false, null);
+			p.mindState.mentalStateHandler.TryStartMentalState(MentalStateDefOf.Manhunter, null, true, false, null, false);
 		}
 
 		protected override bool TryExecuteWorker(IncidentParms parms)
@@ -23,7 +23,7 @@ namespace RimWorld
 			Map map = (Map)parms.target;
 			if (parms.points <= 0f)
 			{
-				Log.Error("AnimalInsanity running without points.");
+				Log.Error("AnimalInsanity running without points.", false);
 				parms.points = (float)((int)(map.strengthWatcher.StrengthRating * 50f));
 			}
 			float adjustedPoints = parms.points;
@@ -71,7 +71,10 @@ namespace RimWorld
 			LetterDef textLetterDef;
 			if (num2 == 1)
 			{
-				label = "LetterLabelAnimalInsanitySingle".Translate() + ": " + pawn.LabelCap;
+				label = "LetterLabelAnimalInsanitySingle".Translate(new object[]
+				{
+					pawn.LabelShort
+				});
 				text = "AnimalInsanitySingle".Translate(new object[]
 				{
 					pawn.LabelShort
@@ -80,16 +83,19 @@ namespace RimWorld
 			}
 			else
 			{
-				label = "LetterLabelAnimalInsanityMultiple".Translate() + ": " + animalDef.LabelCap;
+				label = "LetterLabelAnimalInsanityMultiple".Translate(new object[]
+				{
+					animalDef.GetLabelPlural(-1)
+				});
 				text = "AnimalInsanityMultiple".Translate(new object[]
 				{
 					animalDef.GetLabelPlural(-1)
 				});
 				textLetterDef = LetterDefOf.ThreatBig;
 			}
-			Find.LetterStack.ReceiveLetter(label, text, textLetterDef, pawn, null);
+			Find.LetterStack.ReceiveLetter(label, text, textLetterDef, pawn, null, null);
 			SoundDefOf.PsychicPulseGlobal.PlayOneShotOnCamera(map);
-			if (map == Find.VisibleMap)
+			if (map == Find.CurrentMap)
 			{
 				Find.CameraDriver.shaker.DoShake(1f);
 			}

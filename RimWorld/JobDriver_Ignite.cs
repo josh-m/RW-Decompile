@@ -7,7 +7,7 @@ namespace RimWorld
 {
 	public class JobDriver_Ignite : JobDriver
 	{
-		public override bool TryMakePreToilReservations()
+		public override bool TryMakePreToilReservations(bool errorOnFailed)
 		{
 			return true;
 		}

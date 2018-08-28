@@ -33,9 +33,12 @@ namespace RimWorld
 
 		private static readonly Texture2D TileTex = ContentFinder<Texture2D>.Get("Things/Building/BuildingFrame/Tile", true);
 
-		private List<ThingCountClass> cachedMaterialsNeeded = new List<ThingCountClass>();
+		[TweakValue("Pathfinding", 0f, 1000f)]
+		public static ushort AvoidUnderConstructionPathFindCost = 800;
 
-		public float WorkToMake
+		private List<ThingDefCountClass> cachedMaterialsNeeded = new List<ThingDefCountClass>();
+
+		public float WorkToBuild
 		{
 			get
 			{
@@ -47,7 +50,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return this.WorkToMake - this.workDone;
+				return this.WorkToBuild - this.workDone;
 			}
 		}
 
@@ -55,7 +58,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return this.workDone / this.WorkToMake;
+				return this.workDone / this.WorkToBuild;
 			}
 		}
 
@@ -63,12 +66,20 @@ namespace RimWorld
 		{
 			get
 			{
-				string text = this.def.entityDefToBuild.label + "FrameLabelExtra".Translate();
+				return this.LabelEntityToBuild + "FrameLabelExtra".Translate();
+			}
+		}
+
+		public string LabelEntityToBuild
+		{
+			get
+			{
+				string label = this.def.entityDefToBuild.label;
 				if (base.Stuff != null)
 				{
-					return base.Stuff.label + " " + text;
+					return base.Stuff.label + " " + label;
 				}
-				return text;
+				return label;
 			}
 		}
 
@@ -78,7 +89,7 @@ namespace RimWorld
 			{
 				if (!this.def.MadeFromStuff)
 				{
-					List<ThingCountClass> costList = this.def.entityDefToBuild.costList;
+					List<ThingDefCountClass> costList = this.def.entityDefToBuild.costList;
 					if (costList != null)
 					{
 						for (int i = 0; i < costList.Count; i++)
@@ -166,18 +177,18 @@ namespace RimWorld
 			return base.Stuff;
 		}
 
-		public List<ThingCountClass> MaterialsNeeded()
+		public List<ThingDefCountClass> MaterialsNeeded()
 		{
 			this.cachedMaterialsNeeded.Clear();
-			List<ThingCountClass> list = this.def.entityDefToBuild.CostListAdjusted(base.Stuff, true);
+			List<ThingDefCountClass> list = this.def.entityDefToBuild.CostListAdjusted(base.Stuff, true);
 			for (int i = 0; i < list.Count; i++)
 			{
-				ThingCountClass thingCountClass = list[i];
-				int num = this.resourceContainer.TotalStackCountOfDef(thingCountClass.thingDef);
-				int num2 = thingCountClass.count - num;
+				ThingDefCountClass thingDefCountClass = list[i];
+				int num = this.resourceContainer.TotalStackCountOfDef(thingDefCountClass.thingDef);
+				int num2 = thingDefCountClass.count - num;
 				if (num2 > 0)
 				{
-					this.cachedMaterialsNeeded.Add(new ThingCountClass(thingCountClass.thingDef, num2));
+					this.cachedMaterialsNeeded.Add(new ThingDefCountClass(thingDefCountClass.thingDef, num2));
 				}
 			}
 			return this.cachedMaterialsNeeded;
@@ -190,7 +201,7 @@ namespace RimWorld
 			this.Destroy(DestroyMode.Vanish);
 			if (this.GetStatValue(StatDefOf.WorkToBuild, true) > 150f && this.def.entityDefToBuild is ThingDef && ((ThingDef)this.def.entityDefToBuild).category == ThingCategory.Building)
 			{
-				SoundDefOf.BuildingComplete.PlayOneShot(new TargetInfo(base.Position, map, false));
+				SoundDefOf.Building_Complete.PlayOneShot(new TargetInfo(base.Position, map, false));
 			}
 			ThingDef thingDef = this.def.entityDefToBuild as ThingDef;
 			Thing thing = null;
@@ -201,8 +212,9 @@ namespace RimWorld
 				CompQuality compQuality = thing.TryGetComp<CompQuality>();
 				if (compQuality != null)
 				{
-					int level = worker.skills.GetSkill(SkillDefOf.Construction).Level;
-					compQuality.SetQuality(QualityUtility.RandomCreationQuality(level), ArtGenerationContext.Colony);
+					QualityCategory q = QualityUtility.GenerateQualityCreatedByPawn(worker, SkillDefOf.Construction);
+					compQuality.SetQuality(q, ArtGenerationContext.Colony);
+					QualityUtility.SendCraftNotification(thing, worker);
 				}
 				CompArt compArt = thing.TryGetComp<CompArt>();
 				if (compArt != null)
@@ -214,29 +226,12 @@ namespace RimWorld
 					compArt.JustCreatedBy(worker);
 				}
 				thing.HitPoints = Mathf.CeilToInt((float)this.HitPoints / (float)base.MaxHitPoints * (float)thing.MaxHitPoints);
-				GenSpawn.Spawn(thing, base.Position, map, base.Rotation, false);
+				GenSpawn.Spawn(thing, base.Position, map, base.Rotation, WipeMode.FullRefund, false);
 			}
 			else
 			{
 				map.terrainGrid.SetTerrain(base.Position, (TerrainDef)this.def.entityDefToBuild);
 				FilthMaker.RemoveAllFilth(base.Position, map);
-			}
-			if (thingDef != null && (thingDef.passability == Traversability.Impassable || thingDef.Fillage == FillCategory.Full) && (thing == null || !(thing is Building_Door)))
-			{
-				foreach (IntVec3 current in GenAdj.CellsOccupiedBy(base.Position, base.Rotation, this.def.Size))
-				{
-					foreach (Thing current2 in map.thingGrid.ThingsAt(current).ToList<Thing>())
-					{
-						if (current2 is Plant)
-						{
-							current2.Destroy(DestroyMode.KillFinalize);
-						}
-						else if (current2.def.category == ThingCategory.Item || current2 is Pawn)
-						{
-							GenPlace.TryMoveThing(current2, current2.Position, current2.Map);
-						}
-					}
-				}
 			}
 			worker.records.Increment(RecordDefOf.ThingsConstructed);
 			if (thing != null && thing.GetStatValue(StatDefOf.WorkToBuild, true) >= 10000f)
@@ -259,7 +254,7 @@ namespace RimWorld
 				blueprint_Build = (Blueprint_Build)ThingMaker.MakeThing(this.def.entityDefToBuild.blueprintDef, null);
 				blueprint_Build.stuffToUse = base.Stuff;
 				blueprint_Build.SetFactionDirect(base.Faction);
-				GenSpawn.Spawn(blueprint_Build, base.Position, map, base.Rotation, false);
+				GenSpawn.Spawn(blueprint_Build, base.Position, map, base.Rotation, WipeMode.FullRefund, false);
 			}
 			Lord lord = worker.GetLord();
 			if (lord != null)
@@ -267,13 +262,13 @@ namespace RimWorld
 				lord.Notify_ConstructionFailed(worker, this, blueprint_Build);
 			}
 			MoteMaker.ThrowText(this.DrawPos, map, "TextMote_ConstructionFail".Translate(), 6f);
-			if (base.Faction == Faction.OfPlayer && this.WorkToMake > 1400f)
+			if (base.Faction == Faction.OfPlayer && this.WorkToBuild > 1400f)
 			{
 				Messages.Message("MessageConstructionFailed".Translate(new object[]
 				{
-					this.Label,
+					this.LabelEntityToBuild,
 					worker.LabelShort
-				}), new TargetInfo(base.Position, map, false), MessageTypeDefOf.NegativeEvent);
+				}), new TargetInfo(base.Position, map, false), MessageTypeDefOf.NegativeEvent, true);
 			}
 		}
 
@@ -349,6 +344,13 @@ namespace RimWorld
 			{
 				yield return buildCopy;
 			}
+			if (base.Faction == Faction.OfPlayer)
+			{
+				foreach (Command facility in BuildFacilityCommandUtility.BuildFacilityCommands(this.def.entityDefToBuild))
+				{
+					yield return facility;
+				}
+			}
 		}
 
 		public override string GetInspectString()
@@ -356,12 +358,12 @@ namespace RimWorld
 			StringBuilder stringBuilder = new StringBuilder();
 			stringBuilder.Append(base.GetInspectString());
 			stringBuilder.AppendLine("ContainedResources".Translate() + ":");
-			List<ThingCountClass> list = this.def.entityDefToBuild.CostListAdjusted(base.Stuff, true);
+			List<ThingDefCountClass> list = this.def.entityDefToBuild.CostListAdjusted(base.Stuff, true);
 			for (int i = 0; i < list.Count; i++)
 			{
-				ThingCountClass need = list[i];
+				ThingDefCountClass need = list[i];
 				int num = need.count;
-				foreach (ThingCountClass current in from needed in this.MaterialsNeeded()
+				foreach (ThingDefCountClass current in from needed in this.MaterialsNeeded()
 				where needed.thingDef == need.thingDef
 				select needed)
 				{
@@ -378,6 +380,23 @@ namespace RimWorld
 			}
 			stringBuilder.Append("WorkLeft".Translate() + ": " + this.WorkLeft.ToStringWorkAmount());
 			return stringBuilder.ToString();
+		}
+
+		public override ushort PathFindCostFor(Pawn p)
+		{
+			if (base.Faction == null)
+			{
+				return 0;
+			}
+			if (this.def.entityDefToBuild is TerrainDef)
+			{
+				return 0;
+			}
+			if (p.Faction == base.Faction || p.HostFaction == base.Faction)
+			{
+				return Frame.AvoidUnderConstructionPathFindCost;
+			}
+			return 0;
 		}
 	}
 }

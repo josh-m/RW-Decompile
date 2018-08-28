@@ -173,7 +173,7 @@ namespace RimWorld
 				{
 					action = delegate
 					{
-						SoundDefOf.TickTiny.PlayOneShotOnCamera(null);
+						SoundDefOf.Tick_Tiny.PlayOneShotOnCamera(null);
 						this.$this.TryManualReconnect();
 					},
 					hotKey = KeyBindingDefOf.Misc1,
@@ -227,7 +227,7 @@ namespace RimWorld
 					" but it's already connected to ",
 					this.connectParent,
 					"."
-				}));
+				}), false);
 				return;
 			}
 			this.connectParent = transmitter;

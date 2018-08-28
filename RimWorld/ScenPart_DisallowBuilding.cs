@@ -72,7 +72,7 @@ namespace RimWorld
 		protected virtual IEnumerable<ThingDef> PossibleBuildingDefs()
 		{
 			return from d in DefDatabase<ThingDef>.AllDefs
-			where d.category == ThingCategory.Building && d.designationCategory != null
+			where d.category == ThingCategory.Building && d.BuildableByPlayer
 			select d;
 		}
 
@@ -80,10 +80,10 @@ namespace RimWorld
 		private IEnumerable<ThingDef> RandomizableBuildingDefs()
 		{
 			yield return ThingDefOf.Wall;
-			yield return ThingDefOf.TurretGun;
+			yield return ThingDefOf.Turret_MiniTurret;
 			yield return ThingDefOf.OrbitalTradeBeacon;
 			yield return ThingDefOf.Battery;
-			yield return ThingDefOf.TrapDeadfall;
+			yield return ThingDefOf.TrapSpike;
 			yield return ThingDefOf.Cooler;
 			yield return ThingDefOf.Heater;
 		}

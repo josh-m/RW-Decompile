@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using UnityEngine;
 using Verse;
@@ -37,6 +38,8 @@ namespace RimWorld
 
 		private static Texture2D SkillBarFillTex = SolidColorMaterials.NewSolidColorTexture(new Color(1f, 1f, 1f, 0.1f));
 
+		private static List<SkillDef> skillDefsInListOrderCached = null;
+
 		public static void DrawSkillsOf(Pawn p, Vector2 offset, SkillUI.SkillDrawMode mode)
 		{
 			Text.Font = GameFont.Small;
@@ -49,10 +52,17 @@ namespace RimWorld
 					SkillUI.levelLabelWidth = x;
 				}
 			}
-			for (int j = 0; j < p.skills.skills.Count; j++)
+			if (SkillUI.skillDefsInListOrderCached == null)
 			{
+				SkillUI.skillDefsInListOrderCached = (from sd in DefDatabase<SkillDef>.AllDefs
+				orderby sd.listOrder descending
+				select sd).ToList<SkillDef>();
+			}
+			for (int j = 0; j < SkillUI.skillDefsInListOrderCached.Count; j++)
+			{
+				SkillDef skillDef = SkillUI.skillDefsInListOrderCached[j];
 				float y = (float)j * 27f + offset.y;
-				SkillUI.DrawSkill(p.skills.skills[j], new Vector2(offset.x, y), mode, string.Empty);
+				SkillUI.DrawSkill(p.skills.GetSkill(skillDef), new Vector2(offset.x, y), mode, string.Empty);
 			}
 		}
 
@@ -171,7 +181,7 @@ namespace RimWorld
 					stringBuilder.AppendLine();
 					stringBuilder.Append("LearnedMaxToday".Translate(new object[]
 					{
-						sk.xpSinceMidnight,
+						sk.xpSinceMidnight.ToString("F0"),
 						4000,
 						0.2f.ToStringPercent("F0")
 					}));

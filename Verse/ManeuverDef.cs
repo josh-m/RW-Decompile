@@ -8,6 +8,14 @@ namespace Verse
 
 		public VerbProperties verb;
 
-		public RulePackDef combatLogRules;
+		public RulePackDef combatLogRulesHit;
+
+		public RulePackDef combatLogRulesDeflect;
+
+		public RulePackDef combatLogRulesMiss;
+
+		public RulePackDef combatLogRulesDodge;
+
+		public LogEntryDef logEntryDef;
 	}
 }

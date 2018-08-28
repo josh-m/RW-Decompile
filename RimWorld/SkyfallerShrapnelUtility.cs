@@ -81,7 +81,7 @@ namespace RimWorld
 		{
 			angle -= 90f;
 			SkyfallerShrapnelUtility.SpawnShrapnel(ThingDefOf.ChunkSlagSteel, metalShrapnelCount, center, map, angle, distanceFactor);
-			SkyfallerShrapnelUtility.SpawnShrapnel(ThingDefOf.SlagRubble, rubbleShrapnelCount, center, map, angle, distanceFactor);
+			SkyfallerShrapnelUtility.SpawnShrapnel(ThingDefOf.Filth_RubbleBuilding, rubbleShrapnelCount, center, map, angle, distanceFactor);
 			if (spawnMotes)
 			{
 				SkyfallerShrapnelUtility.ThrowShrapnelMotes((metalShrapnelCount + rubbleShrapnelCount) * 2, center, map, angle, distanceFactor);
@@ -95,9 +95,12 @@ namespace RimWorld
 				IntVec3 intVec = SkyfallerShrapnelUtility.GenerateShrapnelLocation(center, angle, distanceFactor);
 				if (SkyfallerShrapnelUtility.IsGoodShrapnelCell(intVec, map))
 				{
-					if (intVec.GetFirstThing(map, def) == null)
+					if (def.category != ThingCategory.Item || intVec.GetFirstItem(map) == null)
 					{
-						GenSpawn.Spawn(def, intVec, map);
+						if (intVec.GetFirstThing(map, def) == null)
+						{
+							GenSpawn.Spawn(def, intVec, map, WipeMode.Vanish);
+						}
 					}
 				}
 			}

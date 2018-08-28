@@ -31,11 +31,7 @@ namespace RimWorld
 				return;
 			}
 			Rect rect2 = rect.ContractedBy(2f);
-			string label = TrainableUtility.MasterString(pawn).Truncate(rect2.width, null);
-			if (Widgets.ButtonText(rect2, label, true, false, true))
-			{
-				TrainableUtility.OpenMasterSelectMenu(pawn);
-			}
+			TrainableUtility.MasterSelectButton(rect2, pawn, true);
 		}
 
 		public override int Compare(Pawn a, Pawn b)
@@ -51,7 +47,7 @@ namespace RimWorld
 
 		private bool CanAssignMaster(Pawn pawn)
 		{
-			return pawn.RaceProps.Animal && pawn.Faction == Faction.OfPlayer && pawn.training.IsCompleted(TrainableDefOf.Obedience);
+			return pawn.RaceProps.Animal && pawn.Faction == Faction.OfPlayer && pawn.training.HasLearned(TrainableDefOf.Obedience);
 		}
 
 		private int GetValueToCompare1(Pawn pawn)
@@ -60,7 +56,7 @@ namespace RimWorld
 			{
 				return 0;
 			}
-			if (pawn.playerSettings.master == null)
+			if (pawn.playerSettings.Master == null)
 			{
 				return 1;
 			}
@@ -69,9 +65,9 @@ namespace RimWorld
 
 		private string GetValueToCompare2(Pawn pawn)
 		{
-			if (pawn.playerSettings != null && pawn.playerSettings.master != null)
+			if (pawn.playerSettings != null && pawn.playerSettings.Master != null)
 			{
-				return pawn.playerSettings.master.Label;
+				return pawn.playerSettings.Master.Label;
 			}
 			return string.Empty;
 		}

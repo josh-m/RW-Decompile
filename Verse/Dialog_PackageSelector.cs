@@ -34,7 +34,6 @@ namespace Verse
 			this.mod = mod;
 			this.relFolder = relFolder;
 			this.doCloseX = true;
-			this.closeOnEscapeKey = true;
 			this.onlyOneOfTypeAllowed = true;
 			this.draggable = true;
 		}

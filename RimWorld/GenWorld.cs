@@ -8,9 +8,13 @@ namespace RimWorld
 {
 	public static class GenWorld
 	{
-		private static int cachedTile = -1;
+		private static int cachedTile_noSnap = -1;
 
-		private static int cachedFrame = -1;
+		private static int cachedFrame_noSnap = -1;
+
+		private static int cachedTile_snap = -1;
+
+		private static int cachedFrame_snap = -1;
 
 		public const float MaxRayLength = 1500f;
 
@@ -18,13 +22,26 @@ namespace RimWorld
 
 		public static int MouseTile(bool snapToExpandableWorldObjects = false)
 		{
-			if (GenWorld.cachedFrame == Time.frameCount)
+			if (snapToExpandableWorldObjects)
 			{
-				return GenWorld.cachedTile;
+				if (GenWorld.cachedFrame_snap == Time.frameCount)
+				{
+					return GenWorld.cachedTile_snap;
+				}
+				GenWorld.cachedTile_snap = GenWorld.TileAt(UI.MousePositionOnUI, true);
+				GenWorld.cachedFrame_snap = Time.frameCount;
+				return GenWorld.cachedTile_snap;
 			}
-			GenWorld.cachedTile = GenWorld.TileAt(UI.MousePositionOnUI, snapToExpandableWorldObjects);
-			GenWorld.cachedFrame = Time.frameCount;
-			return GenWorld.cachedTile;
+			else
+			{
+				if (GenWorld.cachedFrame_noSnap == Time.frameCount)
+				{
+					return GenWorld.cachedTile_noSnap;
+				}
+				GenWorld.cachedTile_noSnap = GenWorld.TileAt(UI.MousePositionOnUI, false);
+				GenWorld.cachedFrame_noSnap = Time.frameCount;
+				return GenWorld.cachedTile_noSnap;
+			}
 		}
 
 		public static int TileAt(Vector2 clickPos, bool snapToExpandableWorldObjects = false)

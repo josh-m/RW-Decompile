@@ -16,7 +16,23 @@ namespace RimWorld
 		public static IntVec3 BestOrderedGotoDestNear(IntVec3 root, Pawn searcher)
 		{
 			Map map = searcher.Map;
-			Predicate<IntVec3> predicate = (IntVec3 c) => map.pawnDestinationReservationManager.CanReserve(c, searcher) && c.Standable(map) && searcher.CanReach(c, PathEndMode.OnCell, Danger.Deadly, false, TraverseMode.ByPawn);
+			Predicate<IntVec3> predicate = delegate(IntVec3 c)
+			{
+				if (!map.pawnDestinationReservationManager.CanReserve(c, searcher, true) || !c.Standable(map) || !searcher.CanReach(c, PathEndMode.OnCell, Danger.Deadly, false, TraverseMode.ByPawn))
+				{
+					return false;
+				}
+				List<Thing> thingList = c.GetThingList(map);
+				for (int i = 0; i < thingList.Count; i++)
+				{
+					Pawn pawn = thingList[i] as Pawn;
+					if (pawn != null && pawn != searcher && pawn.RaceProps.Humanlike)
+					{
+						return false;
+					}
+				}
+				return true;
+			};
 			if (predicate(root))
 			{
 				return root;
@@ -25,15 +41,16 @@ namespace RimWorld
 			IntVec3 result = default(IntVec3);
 			float num2 = -1000f;
 			bool flag = false;
+			int num3 = GenRadial.NumCellsInRadius(30f);
 			while (true)
 			{
 				IntVec3 intVec = root + GenRadial.RadialPattern[num];
 				if (predicate(intVec))
 				{
-					float num3 = CoverUtility.TotalSurroundingCoverScore(intVec, map);
-					if (num3 > num2)
+					float num4 = CoverUtility.TotalSurroundingCoverScore(intVec, map);
+					if (num4 > num2)
 					{
-						num2 = num3;
+						num2 = num4;
 						result = intVec;
 						flag = true;
 					}
@@ -43,8 +60,14 @@ namespace RimWorld
 					break;
 				}
 				num++;
+				if (num >= num3)
+				{
+					goto Block_6;
+				}
 			}
 			return result;
+			Block_6:
+			return searcher.Position;
 		}
 
 		public static bool TryFindBestExitSpot(Pawn pawn, out IntVec3 spot, TraverseMode mode = TraverseMode.ByPawn)
@@ -72,7 +95,7 @@ namespace RimWorld
 					break;
 				}
 				IntVec3 intVec;
-				bool flag = CellFinder.TryFindRandomCellNear(pawn.Position, pawn.Map, num, null, out intVec);
+				bool flag = CellFinder.TryFindRandomCellNear(pawn.Position, pawn.Map, num, null, out intVec, -1);
 				num += 4;
 				if (flag)
 				{
@@ -170,7 +193,7 @@ namespace RimWorld
 			}, out spot);
 		}
 
-		public static IntVec3 RandomWanderDestFor(Pawn pawn, IntVec3 root, float radius, Func<Pawn, IntVec3, bool> validator, Danger maxDanger)
+		public static IntVec3 RandomWanderDestFor(Pawn pawn, IntVec3 root, float radius, Func<Pawn, IntVec3, IntVec3, bool> validator, Danger maxDanger)
 		{
 			if (radius > 12f)
 			{
@@ -181,7 +204,7 @@ namespace RimWorld
 					" is greater than Region.GridSize of ",
 					12,
 					" and will break."
-				}));
+				}), false);
 			}
 			bool flag = UnityData.isDebugBuild && DebugViewSettings.drawDestSearch;
 			if (root.GetRegion(pawn.Map, RegionType.Set_Passable) != null)
@@ -196,34 +219,45 @@ namespace RimWorld
 				{
 					for (int i = 0; i < 35; i++)
 					{
-						IntVec3 randomCell = RCellFinder.regions.RandomElementByWeight((Region reg) => (float)reg.CellCount).RandomCell;
-						if ((float)randomCell.DistanceToSquared(root) > radius * radius)
+						IntVec3 intVec = IntVec3.Invalid;
+						for (int j = 0; j < 5; j++)
+						{
+							IntVec3 randomCell = RCellFinder.regions.RandomElementByWeight((Region reg) => (float)reg.CellCount).RandomCell;
+							if ((float)randomCell.DistanceToSquared(root) <= radius * radius)
+							{
+								intVec = randomCell;
+								break;
+							}
+						}
+						if (!intVec.IsValid)
 						{
 							if (flag)
 							{
-								pawn.Map.debugDrawer.FlashCell(randomCell, 0.32f, "distance", 50);
+								pawn.Map.debugDrawer.FlashCell(intVec, 0.32f, "distance", 50);
 							}
 						}
 						else
 						{
-							if (RCellFinder.CanWanderToCell(randomCell, pawn, root, validator, i, maxDanger))
+							if (RCellFinder.CanWanderToCell(intVec, pawn, root, validator, i, maxDanger))
 							{
 								if (flag)
 								{
-									pawn.Map.debugDrawer.FlashCell(randomCell, 0.9f, "go!", 50);
+									pawn.Map.debugDrawer.FlashCell(intVec, 0.9f, "go!", 50);
 								}
-								return randomCell;
+								RCellFinder.regions.Clear();
+								return intVec;
 							}
 							if (flag)
 							{
-								pawn.Map.debugDrawer.FlashCell(randomCell, 0.6f, "validation", 50);
+								pawn.Map.debugDrawer.FlashCell(intVec, 0.6f, "validation", 50);
 							}
 						}
 					}
 				}
+				RCellFinder.regions.Clear();
 			}
 			IntVec3 position;
-			if (!CellFinder.TryFindRandomCellNear(root, pawn.Map, Mathf.FloorToInt(radius), (IntVec3 c) => c.InBounds(pawn.Map) && pawn.CanReach(c, PathEndMode.OnCell, Danger.None, false, TraverseMode.ByPawn) && !c.IsForbidden(pawn), out position) && !CellFinder.TryFindRandomCellNear(root, pawn.Map, Mathf.FloorToInt(radius), (IntVec3 c) => c.InBounds(pawn.Map) && pawn.CanReach(c, PathEndMode.OnCell, Danger.Deadly, false, TraverseMode.ByPawn), out position) && !CellFinder.TryFindRandomCellNear(root, pawn.Map, 20, (IntVec3 c) => c.InBounds(pawn.Map) && pawn.CanReach(c, PathEndMode.OnCell, Danger.None, false, TraverseMode.ByPawn) && !c.IsForbidden(pawn), out position) && !CellFinder.TryFindRandomCellNear(root, pawn.Map, 30, (IntVec3 c) => c.InBounds(pawn.Map) && pawn.CanReach(c, PathEndMode.OnCell, Danger.Deadly, false, TraverseMode.ByPawn), out position) && !CellFinder.TryFindRandomCellNear(pawn.Position, pawn.Map, 5, (IntVec3 c) => c.InBounds(pawn.Map) && pawn.CanReach(c, PathEndMode.OnCell, Danger.Deadly, false, TraverseMode.ByPawn), out position))
+			if (!CellFinder.TryFindRandomCellNear(root, pawn.Map, Mathf.FloorToInt(radius), (IntVec3 c) => c.InBounds(pawn.Map) && pawn.CanReach(c, PathEndMode.OnCell, Danger.None, false, TraverseMode.ByPawn) && !c.IsForbidden(pawn) && (validator == null || validator(pawn, c, root)), out position, -1) && !CellFinder.TryFindRandomCellNear(root, pawn.Map, Mathf.FloorToInt(radius), (IntVec3 c) => c.InBounds(pawn.Map) && pawn.CanReach(c, PathEndMode.OnCell, Danger.None, false, TraverseMode.ByPawn) && !c.IsForbidden(pawn), out position, -1) && !CellFinder.TryFindRandomCellNear(root, pawn.Map, Mathf.FloorToInt(radius), (IntVec3 c) => c.InBounds(pawn.Map) && pawn.CanReach(c, PathEndMode.OnCell, Danger.Deadly, false, TraverseMode.ByPawn), out position, -1) && !CellFinder.TryFindRandomCellNear(root, pawn.Map, 20, (IntVec3 c) => c.InBounds(pawn.Map) && pawn.CanReach(c, PathEndMode.OnCell, Danger.None, false, TraverseMode.ByPawn) && !c.IsForbidden(pawn), out position, -1) && !CellFinder.TryFindRandomCellNear(root, pawn.Map, 30, (IntVec3 c) => c.InBounds(pawn.Map) && pawn.CanReach(c, PathEndMode.OnCell, Danger.Deadly, false, TraverseMode.ByPawn), out position, -1) && !CellFinder.TryFindRandomCellNear(pawn.Position, pawn.Map, 5, (IntVec3 c) => c.InBounds(pawn.Map) && pawn.CanReach(c, PathEndMode.OnCell, Danger.Deadly, false, TraverseMode.ByPawn), out position, -1))
 			{
 				position = pawn.Position;
 			}
@@ -234,7 +268,7 @@ namespace RimWorld
 			return position;
 		}
 
-		private static bool CanWanderToCell(IntVec3 c, Pawn pawn, IntVec3 root, Func<Pawn, IntVec3, bool> validator, int tryIndex, Danger maxDanger)
+		private static bool CanWanderToCell(IntVec3 c, Pawn pawn, IntVec3 root, Func<Pawn, IntVec3, IntVec3, bool> validator, int tryIndex, Danger maxDanger)
 		{
 			bool flag = UnityData.isDebugBuild && DebugViewSettings.drawDestSearch;
 			if (!c.Walkable(pawn.Map))
@@ -269,7 +303,7 @@ namespace RimWorld
 				}
 				return false;
 			}
-			if (RCellFinder.ContainsKnownTrap(c, pawn.Map, pawn))
+			if (PawnUtility.KnownDangerAt(c, pawn.Map, pawn))
 			{
 				if (flag)
 				{
@@ -312,7 +346,7 @@ namespace RimWorld
 				}
 				return false;
 			}
-			if (!pawn.Map.pawnDestinationReservationManager.CanReserve(c, pawn))
+			if (!pawn.Map.pawnDestinationReservationManager.CanReserve(c, pawn, false))
 			{
 				if (flag)
 				{
@@ -320,7 +354,7 @@ namespace RimWorld
 				}
 				return false;
 			}
-			if (validator != null && !validator(pawn, c))
+			if (validator != null && !validator(pawn, c, root))
 			{
 				if (flag)
 				{
@@ -347,25 +381,11 @@ namespace RimWorld
 			return true;
 		}
 
-		private static bool ContainsKnownTrap(IntVec3 c, Map map, Pawn pawn)
-		{
-			Building edifice = c.GetEdifice(map);
-			if (edifice != null)
-			{
-				Building_Trap building_Trap = edifice as Building_Trap;
-				if (building_Trap != null && building_Trap.Armed && building_Trap.KnowsOfTrap(pawn))
-				{
-					return true;
-				}
-			}
-			return false;
-		}
-
 		public static bool TryFindGoodAdjacentSpotToTouch(Pawn toucher, Thing touchee, out IntVec3 result)
 		{
 			foreach (IntVec3 current in GenAdj.CellsAdjacent8Way(touchee).InRandomOrder(null))
 			{
-				if (current.Standable(toucher.Map) && !RCellFinder.ContainsKnownTrap(current, toucher.Map, toucher))
+				if (current.Standable(toucher.Map) && !PawnUtility.KnownDangerAt(current, toucher.Map, toucher))
 				{
 					result = current;
 					bool result2 = true;
@@ -432,24 +452,6 @@ namespace RimWorld
 			return false;
 		}
 
-		public static bool TryFindRandomCellToPlantInFromOffMap(ThingDef plantDef, Map map, out IntVec3 plantCell)
-		{
-			Predicate<IntVec3> validator = delegate(IntVec3 c)
-			{
-				if (c.Roofed(map))
-				{
-					return false;
-				}
-				if (!plantDef.CanEverPlantAt(c, map))
-				{
-					return false;
-				}
-				Room room = c.GetRoom(map, RegionType.Set_Passable);
-				return room != null && room.TouchesMapEdge;
-			};
-			return CellFinder.TryFindRandomEdgeCellWith(validator, map, CellFinder.EdgeRoadChance_Animal, out plantCell);
-		}
-
 		public static IntVec3 RandomAnimalSpawnCell_MapGen(Map map)
 		{
 			int numStand = 0;
@@ -495,7 +497,7 @@ namespace RimWorld
 					MapGenerator.PlayerStartSpot,
 					". Returning ",
 					intVec
-				}));
+				}), false);
 			}
 			return intVec;
 		}
@@ -562,6 +564,8 @@ namespace RimWorld
 		{
 			bool desperate = false;
 			int minColonyBuildingsLOS = 0;
+			int walkRadius = 0;
+			int walkRadiusMaxImpassable = 0;
 			Predicate<IntVec3> validator = delegate(IntVec3 c)
 			{
 				if (!c.Standable(map))
@@ -573,9 +577,17 @@ namespace RimWorld
 				{
 					return false;
 				}
-				if (room == null || room.CellCount < 25)
+				if (room == null || room.CellCount < 60)
 				{
 					return false;
+				}
+				if (root.IsValid)
+				{
+					TraverseParms traverseParams = (searcher == null) ? TraverseMode.PassDoors : TraverseParms.For(searcher, Danger.Deadly, TraverseMode.ByPawn, false);
+					if (!map.reachability.CanReach(root, c, PathEndMode.Touch, traverseParams))
+					{
+						return false;
+					}
 				}
 				if (!desperate && !map.reachability.CanReachColony(c))
 				{
@@ -584,6 +596,25 @@ namespace RimWorld
 				if (extraValidator != null && !extraValidator(c))
 				{
 					return false;
+				}
+				int num = 0;
+				CellRect.CellRectIterator iterator = CellRect.CenteredOn(c, walkRadius).GetIterator();
+				while (!iterator.Done())
+				{
+					Room room2 = iterator.Current.GetRoom(map, RegionType.Set_Passable);
+					if (room2 != room)
+					{
+						num++;
+						if (!desperate && room2 != null && room2.IsDoorway)
+						{
+							return false;
+						}
+					}
+					if (num > walkRadiusMaxImpassable)
+					{
+						return false;
+					}
+					iterator.MoveNext();
 				}
 				if (minColonyBuildingsLOS > 0)
 				{
@@ -614,92 +645,63 @@ namespace RimWorld
 						return false;
 					}
 				}
-				if (root.IsValid)
-				{
-					TraverseParms traverseParams = (searcher == null) ? TraverseMode.PassDoors : TraverseParms.For(searcher, Danger.Deadly, TraverseMode.ByPawn, false);
-					if (!map.reachability.CanReach(root, c, PathEndMode.Touch, traverseParams))
-					{
-						return false;
-					}
-				}
 				return true;
 			};
-			for (int i = 0; i < 100; i++)
+			IEnumerable<Building> source = from b in map.listerBuildings.allBuildingsColonist
+			where b.def.building.ai_chillDestination
+			select b;
+			for (int i = 0; i < 120; i++)
 			{
 				Building building = null;
-				if (!(from b in map.listerBuildings.allBuildingsColonist
-				where b.def.designationCategory != DesignationCategoryDefOf.Structure && b.def.building.ai_chillDestination
-				select b).TryRandomElement(out building))
+				if (!source.TryRandomElement(out building))
 				{
 					break;
 				}
-				if (i < 10)
-				{
-					minColonyBuildingsLOS = 4;
-				}
-				else if (i < 25)
-				{
-					minColonyBuildingsLOS = 3;
-				}
-				else if (i < 40)
-				{
-					minColonyBuildingsLOS = 2;
-				}
-				else
-				{
-					minColonyBuildingsLOS = 1;
-				}
-				int squareRadius = 10 + i / 5;
 				desperate = (i > 60);
-				if (CellFinder.TryFindRandomCellNear(building.Position, map, squareRadius, validator, out result))
+				walkRadius = 6 - i / 20;
+				walkRadiusMaxImpassable = 6 - i / 20;
+				minColonyBuildingsLOS = 5 - i / 30;
+				if (CellFinder.TryFindRandomCellNear(building.Position, map, 10, validator, out result, 50))
 				{
 					return true;
 				}
 			}
-			for (int j = 0; j < 50; j++)
+			List<Building> allBuildingsColonist = map.listerBuildings.allBuildingsColonist;
+			for (int j = 0; j < 120; j++)
 			{
 				Building building2 = null;
-				if (!map.listerBuildings.allBuildingsColonist.TryRandomElement(out building2))
+				if (!allBuildingsColonist.TryRandomElement(out building2))
 				{
 					break;
 				}
-				if (j < 10)
-				{
-					minColonyBuildingsLOS = 3;
-				}
-				else if (j < 20)
-				{
-					minColonyBuildingsLOS = 2;
-				}
-				else if (j < 30)
-				{
-					minColonyBuildingsLOS = 1;
-				}
-				else
-				{
-					minColonyBuildingsLOS = 0;
-				}
-				desperate = (j > 20);
-				if (CellFinder.TryFindRandomCellNear(building2.Position, map, 14, validator, out result))
+				desperate = (j > 60);
+				walkRadius = 6 - j / 20;
+				walkRadiusMaxImpassable = 6 - j / 20;
+				minColonyBuildingsLOS = 4 - j / 30;
+				if (CellFinder.TryFindRandomCellNear(building2.Position, map, 15, validator, out result, 50))
 				{
 					return true;
 				}
 			}
-			for (int k = 0; k < 100; k++)
+			for (int k = 0; k < 50; k++)
 			{
 				Pawn pawn = null;
 				if (!map.mapPawns.FreeColonistsAndPrisonersSpawned.TryRandomElement(out pawn))
 				{
 					break;
 				}
+				desperate = (k > 25);
+				walkRadius = 3;
+				walkRadiusMaxImpassable = 6;
 				minColonyBuildingsLOS = 0;
-				desperate = (k > 50);
-				if (CellFinder.TryFindRandomCellNear(pawn.Position, map, 14, validator, out result))
+				if (CellFinder.TryFindRandomCellNear(pawn.Position, map, 15, validator, out result, 50))
 				{
 					return true;
 				}
 			}
 			desperate = true;
+			walkRadius = 3;
+			walkRadiusMaxImpassable = 6;
 			minColonyBuildingsLOS = 0;
 			return CellFinderLoose.TryGetRandomCellWith(validator, map, 1000, out result);
 		}
@@ -883,7 +885,7 @@ namespace RimWorld
 					}
 				}
 				IntVec3 intVec2;
-				return (ignoreDanger || c.GetDangerFor(pawn, pawn.Map) == Danger.None) && !c.ContainsStaticFire(pawn.Map) && !c.ContainsTrap(pawn.Map) && pawn.Map.pawnDestinationReservationManager.CanReserve(c, pawn) && Toils_Ingest.TryFindAdjacentIngestionPlaceSpot(c, ingestible.def, pawn, out intVec2);
+				return (ignoreDanger || c.GetDangerFor(pawn, pawn.Map) == Danger.None) && !c.ContainsStaticFire(pawn.Map) && !c.ContainsTrap(pawn.Map) && pawn.Map.pawnDestinationReservationManager.CanReserve(c, pawn, false) && Toils_Ingest.TryFindAdjacentIngestionPlaceSpot(c, ingestible.def, pawn, out intVec2);
 			};
 			int maxRegions = 1;
 			Region region = pawn.GetRegion(RegionType.Set_Passable);
@@ -991,7 +993,7 @@ namespace RimWorld
 					}
 				}
 			}
-			if (CellFinder.TryFindRandomCellNear(firstFiance.Position, firstFiance.Map, 25, (IntVec3 cell) => MarriageSpotUtility.IsValidMarriageSpotFor(cell, firstFiance, secondFiance, null) && noMarriageSpotValidator(cell), out result))
+			if (CellFinder.TryFindRandomCellNear(firstFiance.Position, firstFiance.Map, 25, (IntVec3 cell) => MarriageSpotUtility.IsValidMarriageSpotFor(cell, firstFiance, secondFiance, null) && noMarriageSpotValidator(cell), out result, -1))
 			{
 				return true;
 			}
@@ -1053,7 +1055,7 @@ namespace RimWorld
 					}
 				}
 			}
-			if (CellFinder.TryFindRandomCellNear(organizer.Position, organizer.Map, 25, (IntVec3 cell) => baseValidator(cell) && noPartySpotValidator(cell), out result))
+			if (CellFinder.TryFindRandomCellNear(organizer.Position, organizer.Map, 25, (IntVec3 cell) => baseValidator(cell) && noPartySpotValidator(cell), out result, -1))
 			{
 				return true;
 			}
@@ -1061,15 +1063,29 @@ namespace RimWorld
 			return false;
 		}
 
-		internal static IntVec3 FindSiegePositionFrom(IntVec3 entrySpot, Map map)
+		public static IntVec3 FindSiegePositionFrom(IntVec3 entrySpot, Map map)
 		{
+			if (!entrySpot.IsValid)
+			{
+				IntVec3 intVec;
+				if (!CellFinder.TryFindRandomEdgeCellWith((IntVec3 x) => x.Standable(map) && !x.Fogged(map), map, CellFinder.EdgeRoadChance_Ignore, out intVec))
+				{
+					intVec = CellFinder.RandomCell(map);
+				}
+				Log.Error("Tried to find a siege position from an invalid cell. Using " + intVec, false);
+				return intVec;
+			}
+			IntVec3 result;
 			for (int i = 70; i >= 20; i -= 10)
 			{
-				IntVec3 result;
 				if (RCellFinder.TryFindSiegePosition(entrySpot, (float)i, map, out result))
 				{
 					return result;
 				}
+			}
+			if (RCellFinder.TryFindSiegePosition(entrySpot, 100f, map, out result))
+			{
+				return result;
 			}
 			Log.Error(string.Concat(new object[]
 			{
@@ -1077,7 +1093,7 @@ namespace RimWorld
 				entrySpot,
 				", using ",
 				entrySpot
-			}));
+			}), false);
 			return entrySpot;
 		}
 
@@ -1108,7 +1124,7 @@ namespace RimWorld
 				randomCell = cellRect.RandomCell;
 				if (randomCell.Standable(map))
 				{
-					if (randomCell.SupportsStructureType(map, TerrainAffordance.Heavy) && randomCell.SupportsStructureType(map, TerrainAffordance.Light))
+					if (randomCell.SupportsStructureType(map, TerrainAffordanceDefOf.Heavy) && randomCell.SupportsStructureType(map, TerrainAffordanceDefOf.Light))
 					{
 						if (map.reachability.CanReach(randomCell, entrySpot, PathEndMode.OnCell, TraverseMode.NoPassClosedDoors, Danger.Some))
 						{
@@ -1127,7 +1143,20 @@ namespace RimWorld
 								{
 									if (!randomCell.Roofed(map))
 									{
-										goto IL_1AA;
+										int num3 = 0;
+										CellRect.CellRectIterator iterator = CellRect.CenteredOn(randomCell, 10).ClipInsideMap(map).GetIterator();
+										while (!iterator.Done())
+										{
+											if (randomCell.SupportsStructureType(map, TerrainAffordanceDefOf.Heavy) && randomCell.SupportsStructureType(map, TerrainAffordanceDefOf.Light))
+											{
+												num3++;
+											}
+											iterator.MoveNext();
+										}
+										if (num3 >= 35)
+										{
+											goto IL_223;
+										}
 									}
 								}
 							}
@@ -1137,7 +1166,7 @@ namespace RimWorld
 			}
 			result = IntVec3.Invalid;
 			return false;
-			IL_1AA:
+			IL_223:
 			result = randomCell;
 			return true;
 		}

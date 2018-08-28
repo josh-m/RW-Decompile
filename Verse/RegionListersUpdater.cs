@@ -43,6 +43,7 @@ namespace Verse
 					listerThings.Add(thing);
 				}
 			}
+			RegionListersUpdater.tmpRegions.Clear();
 		}
 
 		public static void RegisterAllAt(IntVec3 c, Map map, HashSet<Thing> processedThings = null)

@@ -70,7 +70,7 @@ namespace RimWorld
 			}
 			if (num4 % 2 != 0)
 			{
-				Log.ErrorOnce("partneredCols % 2 != 0", 743211);
+				Log.ErrorOnce("partneredCols % 2 != 0", 743211, false);
 			}
 			for (int j = 0; j < num4 / 2; j++)
 			{

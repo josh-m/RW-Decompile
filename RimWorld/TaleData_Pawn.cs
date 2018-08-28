@@ -17,6 +17,8 @@ namespace RimWorld
 
 		public Name name;
 
+		public string title;
+
 		public ThingDef primaryEquipment;
 
 		public ThingDef notableApparel;
@@ -28,13 +30,14 @@ namespace RimWorld
 			Scribe_References.Look<Faction>(ref this.faction, "faction", false);
 			Scribe_Values.Look<Gender>(ref this.gender, "gender", Gender.None, false);
 			Scribe_Deep.Look<Name>(ref this.name, "name", new object[0]);
+			Scribe_Values.Look<Gender>(ref this.gender, "title", Gender.None, false);
 			Scribe_Defs.Look<ThingDef>(ref this.primaryEquipment, "peq");
 			Scribe_Defs.Look<ThingDef>(ref this.notableApparel, "app");
 		}
 
 		public override IEnumerable<Rule> GetRules(string prefix)
 		{
-			return GrammarUtility.RulesForPawn(prefix, this.name, this.kind, this.gender, this.faction, null);
+			return GrammarUtility.RulesForPawn(prefix, this.name, this.title, this.kind, this.gender, this.faction, null);
 		}
 
 		public static TaleData_Pawn GenerateFrom(Pawn pawn)
@@ -44,6 +47,10 @@ namespace RimWorld
 			taleData_Pawn.kind = pawn.kindDef;
 			taleData_Pawn.faction = pawn.Faction;
 			taleData_Pawn.gender = ((!pawn.RaceProps.hasGenders) ? Gender.None : pawn.gender);
+			if (pawn.story != null)
+			{
+				taleData_Pawn.title = pawn.story.title;
+			}
 			if (pawn.RaceProps.Humanlike)
 			{
 				taleData_Pawn.name = pawn.Name;

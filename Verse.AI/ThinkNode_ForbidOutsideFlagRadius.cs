@@ -22,7 +22,7 @@ namespace Verse.AI
 				{
 					if (pawn.mindState.maxDistToSquadFlag > 0f)
 					{
-						Log.Error("Squad flag was not reset properly; raiders may behave strangely");
+						Log.Error("Squad flag was not reset properly; raiders may behave strangely", false);
 					}
 					pawn.mindState.maxDistToSquadFlag = this.maxDistToSquadFlag;
 				}

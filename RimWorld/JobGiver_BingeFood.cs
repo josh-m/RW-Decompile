@@ -16,7 +16,7 @@ namespace RimWorld
 		{
 			Thing result;
 			ThingDef thingDef;
-			if (FoodUtility.TryFindBestFoodSourceFor(pawn, pawn, true, out result, out thingDef, false, true, true, true, true, false))
+			if (FoodUtility.TryFindBestFoodSourceFor(pawn, pawn, true, out result, out thingDef, false, true, true, true, true, false, false))
 			{
 				return result;
 			}

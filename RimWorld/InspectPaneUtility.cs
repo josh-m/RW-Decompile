@@ -65,10 +65,10 @@ namespace RimWorld
 		public static string AdjustedLabelFor(IEnumerable<object> selected, Rect rect)
 		{
 			Zone zone = selected.First<object>() as Zone;
-			string str;
+			string text;
 			if (zone != null)
 			{
-				str = zone.label;
+				text = zone.label;
 			}
 			else
 			{
@@ -83,7 +83,7 @@ namespace RimWorld
 				}
 				if (InspectPaneUtility.selectedThings.Count == 1)
 				{
-					str = InspectPaneUtility.selectedThings[0].LabelCap;
+					text = InspectPaneUtility.selectedThings[0].LabelCap;
 				}
 				else
 				{
@@ -92,21 +92,23 @@ namespace RimWorld
 					select g;
 					if (source.Count<IGrouping<string, Thing>>() > 1)
 					{
-						str = "VariousLabel".Translate();
+						text = "VariousLabel".Translate();
 					}
 					else
 					{
-						int num = 0;
-						for (int i = 0; i < InspectPaneUtility.selectedThings.Count; i++)
-						{
-							num += InspectPaneUtility.selectedThings[i].stackCount;
-						}
-						str = InspectPaneUtility.selectedThings[0].LabelCapNoCount + " x" + num;
+						text = InspectPaneUtility.selectedThings[0].LabelCapNoCount;
 					}
+					int num = 0;
+					for (int i = 0; i < InspectPaneUtility.selectedThings.Count; i++)
+					{
+						num += InspectPaneUtility.selectedThings[i].stackCount;
+					}
+					text = text + " x" + num;
 				}
+				InspectPaneUtility.selectedThings.Clear();
 			}
 			Text.Font = GameFont.Medium;
-			return str.Truncate(rect.width, InspectPaneUtility.truncatedLabelsCached);
+			return text.Truncate(rect.width, InspectPaneUtility.truncatedLabelsCached);
 		}
 
 		public static void ExtraOnGUI(IInspectPane pane)
@@ -117,7 +119,10 @@ namespace RimWorld
 				{
 					pane.SelectNextInCell();
 				}
-				pane.DrawInspectGizmos();
+				if (Current.ProgramState == ProgramState.Playing)
+				{
+					pane.DrawInspectGizmos();
+				}
 				InspectPaneUtility.DoTabs(pane);
 			}
 		}
@@ -183,7 +188,7 @@ namespace RimWorld
 				}
 				catch (Exception ex)
 				{
-					Log.Error("Exception doing inspect pane: " + ex.ToString());
+					Log.Error("Exception doing inspect pane: " + ex.ToString(), false);
 				}
 				finally
 				{
@@ -232,7 +237,7 @@ namespace RimWorld
 			}
 			catch (Exception ex)
 			{
-				Log.ErrorOnce(ex.ToString(), 742783);
+				Log.ErrorOnce(ex.ToString(), 742783, false);
 			}
 		}
 
@@ -254,6 +259,26 @@ namespace RimWorld
 				pane.OpenTabType = tab.GetType();
 				SoundDefOf.TabOpen.PlayOneShotOnCamera(null);
 			}
+		}
+
+		public static InspectTabBase OpenTab(Type inspectTabType)
+		{
+			MainTabWindow_Inspect mainTabWindow_Inspect = (MainTabWindow_Inspect)MainButtonDefOf.Inspect.TabWindow;
+			InspectTabBase inspectTabBase = (from t in mainTabWindow_Inspect.CurTabs
+			where inspectTabType.IsAssignableFrom(t.GetType())
+			select t).FirstOrDefault<InspectTabBase>();
+			if (inspectTabBase != null)
+			{
+				if (Find.MainTabsRoot.OpenTab != MainButtonDefOf.Inspect)
+				{
+					Find.MainTabsRoot.SetCurrentTab(MainButtonDefOf.Inspect, true);
+				}
+				if (!InspectPaneUtility.IsOpen(inspectTabBase, mainTabWindow_Inspect))
+				{
+					InspectPaneUtility.ToggleTab(inspectTabBase, mainTabWindow_Inspect);
+				}
+			}
+			return inspectTabBase;
 		}
 
 		private static void InterfaceToggleTab(InspectTabBase tab, IInspectPane pane)

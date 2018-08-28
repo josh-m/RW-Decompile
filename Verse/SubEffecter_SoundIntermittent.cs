@@ -7,7 +7,7 @@ namespace Verse
 	{
 		protected int ticksUntilSound;
 
-		public SubEffecter_SoundIntermittent(SubEffecterDef def) : base(def)
+		public SubEffecter_SoundIntermittent(SubEffecterDef def, Effecter parent) : base(def, parent)
 		{
 			this.ticksUntilSound = def.intermittentSoundInterval.RandomInRange;
 		}

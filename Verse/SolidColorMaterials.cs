@@ -41,20 +41,19 @@ namespace Verse
 		{
 			if (!UnityData.IsInMainThread)
 			{
-				Log.Error("Tried to create a material from a different thread.");
+				Log.Error("Tried to create a material from a different thread.", false);
 				return null;
 			}
-			return new Material(shader)
+			Material material = MaterialAllocator.Create(shader);
+			material.color = col;
+			material.name = string.Concat(new object[]
 			{
-				color = col,
-				name = string.Concat(new object[]
-				{
-					"SolidColorMat-",
-					shader.name,
-					"-",
-					col
-				})
-			};
+				"SolidColorMat-",
+				shader.name,
+				"-",
+				col
+			});
+			return material;
 		}
 
 		public static Texture2D NewSolidColorTexture(float r, float g, float b, float a)
@@ -66,7 +65,7 @@ namespace Verse
 		{
 			if (!UnityData.IsInMainThread)
 			{
-				Log.Error("Tried to create a texture from a different thread.");
+				Log.Error("Tried to create a texture from a different thread.", false);
 				return null;
 			}
 			Texture2D texture2D = new Texture2D(1, 1);

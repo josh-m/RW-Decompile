@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Verse;
+using Verse.AI;
 
 namespace RimWorld
 {
@@ -10,37 +11,87 @@ namespace RimWorld
 
 		private Verb curMeleeVerb;
 
+		private Thing curMeleeVerbTarget;
+
 		private int curMeleeVerbUpdateTick;
+
+		private Pawn_MeleeVerbs_TerrainSource terrainVerbs;
+
+		public int lastTerrainBasedVerbUseTick = -99999;
 
 		private static List<VerbEntry> meleeVerbs = new List<VerbEntry>();
 
 		private const int BestMeleeVerbUpdateInterval = 60;
+
+		public const int TerrainBasedVerbUseDelay = 1200;
+
+		private const float TerrainBasedVerbChooseChance = 0.04f;
+
+		public Pawn Pawn
+		{
+			get
+			{
+				return this.pawn;
+			}
+		}
 
 		public Pawn_MeleeVerbs(Pawn pawn)
 		{
 			this.pawn = pawn;
 		}
 
-		public Verb TryGetMeleeVerb()
+		public static void PawnMeleeVerbsStaticUpdate()
 		{
-			if (this.curMeleeVerb == null || Find.TickManager.TicksGame >= this.curMeleeVerbUpdateTick + 60 || !this.curMeleeVerb.IsStillUsableBy(this.pawn))
+			Pawn_MeleeVerbs.meleeVerbs.Clear();
+		}
+
+		public Verb TryGetMeleeVerb(Thing target)
+		{
+			if (this.curMeleeVerb == null || this.curMeleeVerbTarget != target || Find.TickManager.TicksGame >= this.curMeleeVerbUpdateTick + 60 || !this.curMeleeVerb.IsStillUsableBy(this.pawn) || !this.curMeleeVerb.IsUsableOn(target))
 			{
-				this.ChooseMeleeVerb();
+				this.ChooseMeleeVerb(target);
 			}
 			return this.curMeleeVerb;
 		}
 
-		private void ChooseMeleeVerb()
+		private void ChooseMeleeVerb(Thing target)
 		{
-			List<VerbEntry> updatedAvailableVerbsList = this.GetUpdatedAvailableVerbsList();
-			if (updatedAvailableVerbsList.Count == 0)
+			bool flag = Rand.Chance(0.04f);
+			List<VerbEntry> updatedAvailableVerbsList = this.GetUpdatedAvailableVerbsList(flag);
+			bool flag2 = false;
+			VerbEntry verbEntry;
+			if (updatedAvailableVerbsList.TryRandomElementByWeight((VerbEntry ve) => ve.GetSelectionWeight(target), out verbEntry))
 			{
-				Log.ErrorOnce(string.Format("{0} has no available melee attack", this.pawn), 1664289);
-				this.SetCurMeleeVerb(null);
+				flag2 = true;
+			}
+			else if (flag)
+			{
+				updatedAvailableVerbsList = this.GetUpdatedAvailableVerbsList(false);
+				flag2 = updatedAvailableVerbsList.TryRandomElementByWeight((VerbEntry ve) => ve.GetSelectionWeight(target), out verbEntry);
+			}
+			if (flag2)
+			{
+				this.SetCurMeleeVerb(verbEntry.verb, target);
 			}
 			else
 			{
-				this.SetCurMeleeVerb(updatedAvailableVerbsList.RandomElementByWeight((VerbEntry ve) => ve.SelectionWeight).verb);
+				Log.ErrorOnce(string.Concat(new object[]
+				{
+					this.pawn.ToStringSafe<Pawn>(),
+					" has no available melee attack, spawned=",
+					this.pawn.Spawned,
+					" dead=",
+					this.pawn.Dead,
+					" downed=",
+					this.pawn.Downed,
+					" curJob=",
+					this.pawn.CurJob.ToStringSafe<Job>(),
+					" verbList=",
+					updatedAvailableVerbsList.ToStringSafeEnumerable(),
+					" bodyVerbs=",
+					this.pawn.verbTracker.AllVerbs.ToStringSafeEnumerable()
+				}), this.pawn.thingIDNumber ^ 195867354, false);
+				this.SetCurMeleeVerb(null, null);
 			}
 		}
 
@@ -56,7 +107,7 @@ namespace RimWorld
 				{
 					return false;
 				}
-				if (!(verbToUse is Verb_MeleeAttack))
+				if (!verbToUse.IsMeleeAttack)
 				{
 					Log.Warning(string.Concat(new object[]
 					{
@@ -67,7 +118,7 @@ namespace RimWorld
 						" with non melee-attack verb ",
 						verbToUse,
 						"."
-					}));
+					}), false);
 					return false;
 				}
 			}
@@ -78,7 +129,7 @@ namespace RimWorld
 			}
 			else
 			{
-				verb = this.TryGetMeleeVerb();
+				verb = this.TryGetMeleeVerb(target);
 			}
 			if (verb == null)
 			{
@@ -88,62 +139,88 @@ namespace RimWorld
 			return true;
 		}
 
-		public List<VerbEntry> GetUpdatedAvailableVerbsList()
+		public List<VerbEntry> GetUpdatedAvailableVerbsList(bool terrainTools)
 		{
 			Pawn_MeleeVerbs.meleeVerbs.Clear();
-			List<Verb> allVerbs = this.pawn.verbTracker.AllVerbs;
-			for (int i = 0; i < allVerbs.Count; i++)
+			if (!terrainTools)
 			{
-				if (allVerbs[i].IsStillUsableBy(this.pawn))
+				List<Verb> allVerbs = this.pawn.verbTracker.AllVerbs;
+				for (int i = 0; i < allVerbs.Count; i++)
 				{
-					Pawn_MeleeVerbs.meleeVerbs.Add(new VerbEntry(allVerbs[i], this.pawn, null));
-				}
-			}
-			if (this.pawn.equipment != null)
-			{
-				List<ThingWithComps> allEquipmentListForReading = this.pawn.equipment.AllEquipmentListForReading;
-				for (int j = 0; j < allEquipmentListForReading.Count; j++)
-				{
-					ThingWithComps thingWithComps = allEquipmentListForReading[j];
-					CompEquippable comp = thingWithComps.GetComp<CompEquippable>();
-					if (comp != null)
+					if (allVerbs[i].IsStillUsableBy(this.pawn))
 					{
-						List<Verb> allVerbs2 = comp.AllVerbs;
-						if (allVerbs2 != null)
+						Pawn_MeleeVerbs.meleeVerbs.Add(new VerbEntry(allVerbs[i], this.pawn));
+					}
+				}
+				if (this.pawn.equipment != null)
+				{
+					List<ThingWithComps> allEquipmentListForReading = this.pawn.equipment.AllEquipmentListForReading;
+					for (int j = 0; j < allEquipmentListForReading.Count; j++)
+					{
+						ThingWithComps thingWithComps = allEquipmentListForReading[j];
+						CompEquippable comp = thingWithComps.GetComp<CompEquippable>();
+						if (comp != null)
 						{
-							for (int k = 0; k < allVerbs2.Count; k++)
+							List<Verb> allVerbs2 = comp.AllVerbs;
+							if (allVerbs2 != null)
 							{
-								Pawn_MeleeVerbs.meleeVerbs.Add(new VerbEntry(allVerbs2[k], this.pawn, thingWithComps));
+								for (int k = 0; k < allVerbs2.Count; k++)
+								{
+									if (allVerbs2[k].IsStillUsableBy(this.pawn))
+									{
+										Pawn_MeleeVerbs.meleeVerbs.Add(new VerbEntry(allVerbs2[k], this.pawn));
+									}
+								}
 							}
 						}
 					}
 				}
-			}
-			if (this.pawn.apparel != null)
-			{
-				List<Apparel> wornApparel = this.pawn.apparel.WornApparel;
-				for (int l = 0; l < wornApparel.Count; l++)
+				if (this.pawn.apparel != null)
 				{
-					Apparel apparel = wornApparel[l];
-					CompEquippable comp2 = apparel.GetComp<CompEquippable>();
-					if (comp2 != null)
+					List<Apparel> wornApparel = this.pawn.apparel.WornApparel;
+					for (int l = 0; l < wornApparel.Count; l++)
 					{
-						List<Verb> allVerbs3 = comp2.AllVerbs;
-						if (allVerbs3 != null)
+						Apparel apparel = wornApparel[l];
+						CompEquippable comp2 = apparel.GetComp<CompEquippable>();
+						if (comp2 != null)
 						{
-							for (int m = 0; m < allVerbs3.Count; m++)
+							List<Verb> allVerbs3 = comp2.AllVerbs;
+							if (allVerbs3 != null)
 							{
-								Pawn_MeleeVerbs.meleeVerbs.Add(new VerbEntry(allVerbs3[m], this.pawn, apparel));
+								for (int m = 0; m < allVerbs3.Count; m++)
+								{
+									if (allVerbs3[m].IsStillUsableBy(this.pawn))
+									{
+										Pawn_MeleeVerbs.meleeVerbs.Add(new VerbEntry(allVerbs3[m], this.pawn));
+									}
+								}
 							}
 						}
 					}
 				}
-			}
-			foreach (Verb current in this.pawn.health.hediffSet.GetHediffsVerbs())
-			{
-				if (current.IsStillUsableBy(this.pawn))
+				foreach (Verb current in this.pawn.health.hediffSet.GetHediffsVerbs())
 				{
-					Pawn_MeleeVerbs.meleeVerbs.Add(new VerbEntry(current, this.pawn, null));
+					if (current.IsStillUsableBy(this.pawn))
+					{
+						Pawn_MeleeVerbs.meleeVerbs.Add(new VerbEntry(current, this.pawn));
+					}
+				}
+			}
+			else if (this.pawn.Spawned)
+			{
+				TerrainDef terrain = this.pawn.Position.GetTerrain(this.pawn.Map);
+				if (this.terrainVerbs == null || this.terrainVerbs.def != terrain)
+				{
+					this.terrainVerbs = Pawn_MeleeVerbs_TerrainSource.Create(this, terrain);
+				}
+				List<Verb> allVerbs4 = this.terrainVerbs.tracker.AllVerbs;
+				for (int n = 0; n < allVerbs4.Count; n++)
+				{
+					Verb verb = allVerbs4[n];
+					if (verb.IsStillUsableBy(this.pawn))
+					{
+						Pawn_MeleeVerbs.meleeVerbs.Add(new VerbEntry(verb, this.pawn));
+					}
 				}
 			}
 			return Pawn_MeleeVerbs.meleeVerbs;
@@ -151,12 +228,23 @@ namespace RimWorld
 
 		public void Notify_PawnKilled()
 		{
-			this.SetCurMeleeVerb(null);
+			this.SetCurMeleeVerb(null, null);
 		}
 
-		private void SetCurMeleeVerb(Verb v)
+		public void Notify_PawnDespawned()
+		{
+			this.SetCurMeleeVerb(null, null);
+		}
+
+		public void Notify_UsedTerrainBasedVerb()
+		{
+			this.lastTerrainBasedVerbUseTick = Find.TickManager.TicksGame;
+		}
+
+		private void SetCurMeleeVerb(Verb v, Thing target)
 		{
 			this.curMeleeVerb = v;
+			this.curMeleeVerbTarget = target;
 			if (Current.ProgramState != ProgramState.Playing)
 			{
 				this.curMeleeVerbUpdateTick = 0;
@@ -175,6 +263,17 @@ namespace RimWorld
 			}
 			Scribe_References.Look<Verb>(ref this.curMeleeVerb, "curMeleeVerb", false);
 			Scribe_Values.Look<int>(ref this.curMeleeVerbUpdateTick, "curMeleeVerbUpdateTick", 0, false);
+			Scribe_Deep.Look<Pawn_MeleeVerbs_TerrainSource>(ref this.terrainVerbs, "terrainVerbs", new object[0]);
+			Scribe_Values.Look<int>(ref this.lastTerrainBasedVerbUseTick, "lastTerrainBasedVerbUseTick", -99999, false);
+			if (Scribe.mode == LoadSaveMode.LoadingVars && this.terrainVerbs != null)
+			{
+				this.terrainVerbs.parent = this;
+			}
+			if (Scribe.mode == LoadSaveMode.PostLoadInit && this.curMeleeVerb != null && this.curMeleeVerb.BuggedAfterLoading)
+			{
+				this.curMeleeVerb = null;
+				Log.Warning(this.pawn.ToStringSafe<Pawn>() + " had a bugged melee verb after loading.", false);
+			}
 		}
 	}
 }

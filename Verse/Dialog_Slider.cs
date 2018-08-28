@@ -34,7 +34,6 @@ namespace Verse
 			this.to = to;
 			this.confirmAction = confirmAction;
 			this.forcePause = true;
-			this.closeOnEscapeKey = true;
 			this.closeOnClickedOutside = true;
 			if (startingValue == -2147483648)
 			{

@@ -30,8 +30,10 @@ namespace RimWorld
 			Dialog_NodeTree dialog_NodeTree = new Dialog_NodeTree(diaNode, true, false, null);
 			dialog_NodeTree.screenFillColor = screenFillColor;
 			dialog_NodeTree.silenceAmbientSound = !allowKeepPlaying;
-			dialog_NodeTree.closeOnEscapeKey = allowKeepPlaying;
+			dialog_NodeTree.closeOnAccept = allowKeepPlaying;
+			dialog_NodeTree.closeOnCancel = allowKeepPlaying;
 			Find.WindowStack.Add(dialog_NodeTree);
+			Find.Archive.Add(new ArchivedDialog(diaNode.text, null, null));
 		}
 	}
 }

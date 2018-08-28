@@ -10,16 +10,16 @@ namespace RimWorld
 		{
 			if (!thing.def.Minifiable)
 			{
-				Log.Warning("Tried to minify " + thing + " which is not minifiable.");
+				Log.Warning("Tried to minify " + thing + " which is not minifiable.", false);
 				return null;
 			}
 			if (thing.Spawned)
 			{
-				thing.DeSpawn();
+				thing.DeSpawn(DestroyMode.Vanish);
 			}
 			if (thing.holdingOwner != null)
 			{
-				Log.Warning("Can't minify thing which is in a ThingOwner because we don't know how to handle it. Remove it from the container first. holder=" + thing.ParentHolder);
+				Log.Warning("Can't minify thing which is in a ThingOwner because we don't know how to handle it. Remove it from the container first. holder=" + thing.ParentHolder, false);
 				return null;
 			}
 			Blueprint_Install blueprint_Install = InstallBlueprintUtility.ExistingBlueprintFor(thing);
@@ -38,10 +38,19 @@ namespace RimWorld
 					" with stack count ",
 					minifiedThing.InnerThing.stackCount,
 					". Clamped stack count to 1."
-				}));
+				}), false);
 				minifiedThing.InnerThing.stackCount = 1;
 			}
 			return minifiedThing;
+		}
+
+		public static Thing TryMakeMinified(this Thing thing)
+		{
+			if (thing.def.Minifiable)
+			{
+				return thing.MakeMinified();
+			}
+			return thing;
 		}
 
 		public static Thing GetInnerIfMinified(this Thing outerThing)
@@ -58,13 +67,13 @@ namespace RimWorld
 		{
 			if (!th.Spawned)
 			{
-				Log.Warning("Can't uninstall unspawned thing " + th);
+				Log.Warning("Can't uninstall unspawned thing " + th, false);
 				return null;
 			}
 			Map map = th.Map;
 			MinifiedThing minifiedThing = th.MakeMinified();
-			GenPlace.TryPlaceThing(minifiedThing, th.Position, map, ThingPlaceMode.Near, null);
-			SoundDef.Named("ThingUninstalled").PlayOneShot(new TargetInfo(th.Position, map, false));
+			GenPlace.TryPlaceThing(minifiedThing, th.Position, map, ThingPlaceMode.Near, null, null);
+			SoundDefOf.ThingUninstalled.PlayOneShot(new TargetInfo(th.Position, map, false));
 			return minifiedThing;
 		}
 	}

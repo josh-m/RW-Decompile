@@ -28,7 +28,7 @@ namespace Verse
 			node.DoSpecialPreElements(this);
 			if (node.children == null)
 			{
-				Log.Error(node + " children is null.");
+				Log.Error(node + " children is null.", false);
 				return;
 			}
 			for (int i = 0; i < node.children.Count; i++)
@@ -70,7 +70,7 @@ namespace Verse
 
 		private void ControlButtonsRight(TreeNode_Editor node, WidgetRow widgetRow)
 		{
-			if (node.HasNewButton && widgetRow.ButtonIcon(TexButton.NewItem, null))
+			if (node.HasNewButton && widgetRow.ButtonIcon(TexButton.NewItem, null, null))
 			{
 				Action<object> addAction = delegate(object o)
 				{
@@ -79,7 +79,7 @@ namespace Verse
 				};
 				this.MakeCreateNewObjectMenu(node, node.owningField, node.owningField.FieldType, addAction);
 			}
-			if (node.nodeType == EditTreeNodeType.ListRoot && widgetRow.ButtonIcon(TexButton.Add, null))
+			if (node.nodeType == EditTreeNodeType.ListRoot && widgetRow.ButtonIcon(TexButton.Add, null, null))
 			{
 				Type baseType = node.obj.GetType().GetGenericArguments()[0];
 				Action<object> addAction2 = delegate(object o)
@@ -91,9 +91,14 @@ namespace Verse
 				};
 				this.MakeCreateNewObjectMenu(node, node.owningField, baseType, addAction2);
 			}
-			if (node.HasDeleteButton && widgetRow.ButtonIcon(TexButton.DeleteX, null))
+			if (node.HasDeleteButton)
 			{
-				node.Delete();
+				Texture2D deleteX = TexButton.DeleteX;
+				Color? mouseoverColor = new Color?(GenUI.SubtleMouseoverColor);
+				if (widgetRow.ButtonIcon(deleteX, null, mouseoverColor))
+				{
+					node.Delete();
+				}
 			}
 		}
 
@@ -126,7 +131,7 @@ namespace Verse
 					tipText = array[0].description;
 				}
 			}
-			base.LabelLeft(node.LabelText, tipText, indentLevel);
+			base.LabelLeft(node.LabelText, tipText, indentLevel, 0f);
 		}
 
 		protected void MakeCreateNewObjectMenu(TreeNode_Editor owningNode, FieldInfo owningField, Type baseType, Action<object> addAction)
@@ -187,7 +192,7 @@ namespace Verse
 			else if (objectType == typeof(bool))
 			{
 				bool flag = (bool)obj;
-				Widgets.Checkbox(new Vector2(rect.x, rect.y), ref flag, this.lineHeight, false);
+				Widgets.Checkbox(new Vector2(rect.x, rect.y), ref flag, this.lineHeight, false, false, null, null);
 				obj = flag;
 			}
 			else if (objectType == typeof(int))

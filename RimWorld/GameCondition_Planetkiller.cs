@@ -17,6 +17,15 @@ namespace RimWorld
 		{
 			get
 			{
+				Vector2 location;
+				if (Find.CurrentMap != null)
+				{
+					location = Find.WorldGrid.LongLatOf(Find.CurrentMap.Tile);
+				}
+				else
+				{
+					location = default(Vector2);
+				}
 				string text = this.def.LabelCap;
 				text += "\n";
 				text = text + "\n" + this.def.description;
@@ -27,7 +36,7 @@ namespace RimWorld
 					"\n",
 					"ImpactDate".Translate().CapitalizeFirst(),
 					": ",
-					GenDate.DateFullStringAt((long)GenDate.TickGameToAbs(this.startTick + base.Duration), Find.WorldGrid.LongLatOf(base.Map.Tile))
+					GenDate.DateFullStringAt((long)GenDate.TickGameToAbs(this.startTick + base.Duration), location)
 				});
 				text2 = text;
 				return string.Concat(new string[]
@@ -36,7 +45,7 @@ namespace RimWorld
 					"\n",
 					"TimeLeft".Translate().CapitalizeFirst(),
 					": ",
-					base.TicksLeft.ToStringTicksToPeriod(true, false, true)
+					base.TicksLeft.ToStringTicksToPeriod()
 				});
 			}
 		}

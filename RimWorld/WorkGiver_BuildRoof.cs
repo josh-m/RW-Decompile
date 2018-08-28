@@ -28,7 +28,7 @@ namespace RimWorld
 			return pawn.Map.areaManager.BuildRoof.ActiveCells;
 		}
 
-		public override bool HasJobOnCell(Pawn pawn, IntVec3 c)
+		public override bool HasJobOnCell(Pawn pawn, IntVec3 c, bool forced = false)
 		{
 			if (!pawn.Map.areaManager.BuildRoof[c])
 			{
@@ -44,7 +44,24 @@ namespace RimWorld
 			}
 			LocalTargetInfo target = c;
 			ReservationLayerDef ceiling = ReservationLayerDefOf.Ceiling;
-			return pawn.CanReserve(target, 1, -1, ceiling, false) && (pawn.CanReach(c, PathEndMode.Touch, pawn.NormalMaxDanger(), false, TraverseMode.ByPawn) || this.BuildingToTouchToBeAbleToBuildRoof(c, pawn) != null) && RoofCollapseUtility.WithinRangeOfRoofHolder(c, pawn.Map) && RoofCollapseUtility.ConnectedToRoofHolder(c, pawn.Map, true);
+			if (!pawn.CanReserve(target, 1, -1, ceiling, forced))
+			{
+				return false;
+			}
+			if (!pawn.CanReach(c, PathEndMode.Touch, pawn.NormalMaxDanger(), false, TraverseMode.ByPawn) && this.BuildingToTouchToBeAbleToBuildRoof(c, pawn) == null)
+			{
+				return false;
+			}
+			if (!RoofCollapseUtility.WithinRangeOfRoofHolder(c, pawn.Map, false))
+			{
+				return false;
+			}
+			if (!RoofCollapseUtility.ConnectedToRoofHolder(c, pawn.Map, true))
+			{
+				return false;
+			}
+			Thing thing = RoofUtility.FirstBlockingThing(c, pawn.Map);
+			return thing == null || RoofUtility.CanHandleBlockingThing(thing, pawn, forced);
 		}
 
 		private Building BuildingToTouchToBeAbleToBuildRoof(IntVec3 c, Pawn pawn)
@@ -65,9 +82,14 @@ namespace RimWorld
 			return edifice;
 		}
 
-		public override Job JobOnCell(Pawn pawn, IntVec3 c)
+		public override Job JobOnCell(Pawn pawn, IntVec3 c, bool forced = false)
 		{
 			LocalTargetInfo targetB = c;
+			Thing thing = RoofUtility.FirstBlockingThing(c, pawn.Map);
+			if (thing != null)
+			{
+				return RoofUtility.HandleBlockingThingJob(thing, pawn, forced);
+			}
 			if (!pawn.CanReach(c, PathEndMode.Touch, pawn.NormalMaxDanger(), false, TraverseMode.ByPawn))
 			{
 				targetB = this.BuildingToTouchToBeAbleToBuildRoof(c, pawn);

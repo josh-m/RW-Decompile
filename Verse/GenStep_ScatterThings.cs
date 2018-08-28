@@ -32,6 +32,14 @@ namespace Verse
 
 		private static List<Rot4> tmpRotations = new List<Rot4>();
 
+		public override int SeedPart
+		{
+			get
+			{
+				return 1158116095;
+			}
+		}
+
 		private List<Rot4> PossibleRotations
 		{
 			get
@@ -55,9 +63,9 @@ namespace Verse
 			}
 		}
 
-		public override void Generate(Map map)
+		public override void Generate(Map map, GenStepParams parms)
 		{
-			if (!this.allowOnWater && map.TileInfo.WaterCovered)
+			if (!this.allowInWaterBiome && map.TileInfo.WaterCovered)
 			{
 				return;
 			}
@@ -99,7 +107,7 @@ namespace Verse
 				{
 					if (!base.TryFindScatterCell(map, out this.clusterCenter))
 					{
-						Log.Error("Could not find cluster center to scatter " + this.thingDef);
+						Log.Error("Could not find cluster center to scatter " + this.thingDef, false);
 					}
 					this.leftInCluster = this.clusterSize;
 				}
@@ -119,7 +127,7 @@ namespace Verse
 			Rot4 rot;
 			if (!this.TryGetRandomValidRotation(loc, map, out rot))
 			{
-				Log.Warning("Could not find any valid rotation for " + this.thingDef);
+				Log.Warning("Could not find any valid rotation for " + this.thingDef, false);
 				return;
 			}
 			if (this.clearSpaceSize > 0)
@@ -143,7 +151,7 @@ namespace Verse
 				thing.stackCount = stackCount;
 				thing.SetForbidden(true, false);
 				Thing thing2;
-				GenPlace.TryPlaceThing(thing, loc, map, ThingPlaceMode.Near, out thing2, null);
+				GenPlace.TryPlaceThing(thing, loc, map, ThingPlaceMode.Near, out thing2, null, null);
 				if (this.nearPlayerStart && thing2 != null && thing2.def.category == ThingCategory.Item && TutorSystem.TutorialMode)
 				{
 					Find.TutorialState.AddStartingItem(thing2);
@@ -151,7 +159,7 @@ namespace Verse
 			}
 			else
 			{
-				GenSpawn.Spawn(thing, loc, map, rot, false);
+				GenSpawn.Spawn(thing, loc, map, rot, WipeMode.Vanish, false);
 			}
 		}
 

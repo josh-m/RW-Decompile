@@ -1,11 +1,13 @@
 using RimWorld;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using UnityEngine;
 using Verse.Grammar;
 
 namespace Verse
 {
-	public class BattleLogEntry_ExplosionImpact : LogEntry, IDamageResultLog
+	public class BattleLogEntry_ExplosionImpact : LogEntry_DamageResult
 	{
 		private Pawn initiatorPawn;
 
@@ -21,17 +23,13 @@ namespace Verse
 
 		private DamageDef damageDef;
 
-		private List<BodyPartDef> damagedParts;
-
-		private List<bool> damagedPartsDestroyed;
-
 		private string InitiatorName
 		{
 			get
 			{
 				if (this.initiatorPawn != null)
 				{
-					return this.initiatorPawn.NameStringShort;
+					return this.initiatorPawn.LabelShort;
 				}
 				if (this.initiatorThing != null)
 				{
@@ -47,7 +45,7 @@ namespace Verse
 			{
 				if (this.recipientPawn != null)
 				{
-					return this.recipientPawn.NameStringShort;
+					return this.recipientPawn.LabelShort;
 				}
 				if (this.recipientThing != null)
 				{
@@ -57,11 +55,11 @@ namespace Verse
 			}
 		}
 
-		public BattleLogEntry_ExplosionImpact()
+		public BattleLogEntry_ExplosionImpact() : base(null)
 		{
 		}
 
-		public BattleLogEntry_ExplosionImpact(Thing initiator, Thing recipient, ThingDef weaponDef, ThingDef projectileDef, DamageDef damageDef)
+		public BattleLogEntry_ExplosionImpact(Thing initiator, Thing recipient, ThingDef weaponDef, ThingDef projectileDef, DamageDef damageDef) : base(null)
 		{
 			if (initiator is Pawn)
 			{
@@ -84,15 +82,22 @@ namespace Verse
 			this.damageDef = damageDef;
 		}
 
-		public void FillTargets(List<BodyPartDef> recipientParts, List<bool> recipientPartsDestroyed)
-		{
-			this.damagedParts = recipientParts;
-			this.damagedPartsDestroyed = recipientPartsDestroyed;
-		}
-
 		public override bool Concerns(Thing t)
 		{
 			return t == this.initiatorPawn || t == this.recipientPawn;
+		}
+
+		[DebuggerHidden]
+		public override IEnumerable<Thing> GetConcerns()
+		{
+			if (this.initiatorPawn != null)
+			{
+				yield return this.initiatorPawn;
+			}
+			if (this.recipientPawn != null)
+			{
+				yield return this.recipientPawn;
+			}
 		}
 
 		public override void ClickedFromPOV(Thing pov)
@@ -115,48 +120,65 @@ namespace Verse
 			}
 		}
 
-		public override string ToGameStringFromPOV(Thing pov)
+		public override Texture2D IconFromPOV(Thing pov)
 		{
-			Rand.PushState();
-			Rand.Seed = this.randSeed;
-			GrammarRequest request = default(GrammarRequest);
-			request.Includes.Add(RulePackDefOf.Combat_ExplosionImpact);
+			if (this.damagedParts.NullOrEmpty<BodyPartRecord>())
+			{
+				return null;
+			}
+			if (pov == null || pov == this.recipientPawn)
+			{
+				return LogEntry.Blood;
+			}
+			if (pov == this.initiatorPawn)
+			{
+				return LogEntry.BloodTarget;
+			}
+			return null;
+		}
+
+		protected override BodyDef DamagedBody()
+		{
+			return (this.recipientPawn == null) ? null : this.recipientPawn.RaceProps.body;
+		}
+
+		protected override GrammarRequest GenerateGrammarRequest()
+		{
+			GrammarRequest result = base.GenerateGrammarRequest();
+			result.Includes.Add(RulePackDefOf.Combat_ExplosionImpact);
 			if (this.initiatorPawn != null)
 			{
-				request.Rules.AddRange(GrammarUtility.RulesForPawn("initiator", this.initiatorPawn, request.Constants));
+				result.Rules.AddRange(GrammarUtility.RulesForPawn("INITIATOR", this.initiatorPawn, result.Constants));
 			}
 			else if (this.initiatorThing != null)
 			{
-				request.Rules.AddRange(GrammarUtility.RulesForDef("initiator", this.initiatorThing));
+				result.Rules.AddRange(GrammarUtility.RulesForDef("INITIATOR", this.initiatorThing));
 			}
 			else
 			{
-				request.Constants["initiator_missing"] = "True";
+				result.Constants["INITIATOR_missing"] = "True";
 			}
 			if (this.recipientPawn != null)
 			{
-				request.Rules.AddRange(GrammarUtility.RulesForPawn("recipient", this.recipientPawn, request.Constants));
+				result.Rules.AddRange(GrammarUtility.RulesForPawn("RECIPIENT", this.recipientPawn, result.Constants));
 			}
 			else if (this.recipientThing != null)
 			{
-				request.Rules.AddRange(GrammarUtility.RulesForDef("recipient", this.recipientThing));
+				result.Rules.AddRange(GrammarUtility.RulesForDef("RECIPIENT", this.recipientThing));
 			}
 			else
 			{
-				request.Constants["recipient_missing"] = "True";
+				result.Constants["RECIPIENT_missing"] = "True";
 			}
-			request.Rules.AddRange(PlayLogEntryUtility.RulesForOptionalWeapon("weapon", this.weaponDef, this.projectileDef));
+			result.Rules.AddRange(PlayLogEntryUtility.RulesForOptionalWeapon("WEAPON", this.weaponDef, this.projectileDef));
 			if (this.projectileDef != null)
 			{
-				request.Rules.AddRange(GrammarUtility.RulesForDef("projectile", this.projectileDef));
+				result.Rules.AddRange(GrammarUtility.RulesForDef("PROJECTILE", this.projectileDef));
 			}
 			if (this.damageDef != null && this.damageDef.combatLogRules != null)
 			{
-				request.Includes.Add(this.damageDef.combatLogRules);
+				result.Includes.Add(this.damageDef.combatLogRules);
 			}
-			request.Rules.AddRange(PlayLogEntryUtility.RulesForDamagedParts("recipient_part", this.damagedParts, this.damagedPartsDestroyed, request.Constants));
-			string result = GrammarResolver.Resolve("logentry", request, "ranged explosion", false);
-			Rand.PopState();
 			return result;
 		}
 
@@ -170,8 +192,6 @@ namespace Verse
 			Scribe_Defs.Look<ThingDef>(ref this.weaponDef, "weaponDef");
 			Scribe_Defs.Look<ThingDef>(ref this.projectileDef, "projectileDef");
 			Scribe_Defs.Look<DamageDef>(ref this.damageDef, "damageDef");
-			Scribe_Collections.Look<BodyPartDef>(ref this.damagedParts, "damagedParts", LookMode.Def, new object[0]);
-			Scribe_Collections.Look<bool>(ref this.damagedPartsDestroyed, "damagedPartsDestroyed", LookMode.Value, new object[0]);
 		}
 
 		public override string ToString()

@@ -35,7 +35,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return !WorldRendererUtility.WorldRenderedNow && Find.VisibleMap != null;
+				return !WorldRendererUtility.WorldRenderedNow && Find.CurrentMap != null;
 			}
 		}
 
@@ -76,11 +76,11 @@ namespace RimWorld
 			}
 			else
 			{
-				if (Find.VisibleMap == null)
+				if (Find.CurrentMap == null)
 				{
 					return;
 				}
-				location = Find.WorldGrid.LongLatOf(Find.VisibleMap.Tile);
+				location = Find.WorldGrid.LongLatOf(Find.CurrentMap.Tile);
 			}
 			int index = GenDate.HourInteger((long)Find.TickManager.TicksAbs, location.x);
 			int num = GenDate.DayOfTwelfth((long)Find.TickManager.TicksAbs, location.x);

@@ -58,7 +58,7 @@ namespace Verse
 		{
 			if (newColorTwo != Color.white)
 			{
-				Log.ErrorOnce("Cannot use Graphic_Appearances.GetColoredVersion with a non-white colorTwo.", 9910251);
+				Log.ErrorOnce("Cannot use Graphic_Appearances.GetColoredVersion with a non-white colorTwo.", 9910251, false);
 			}
 			return GraphicDatabase.Get<Graphic_Appearances>(this.path, newShader, this.drawSize, newColor, Color.white, this.data);
 		}
@@ -77,7 +77,7 @@ namespace Verse
 		public override void DrawWorker(Vector3 loc, Rot4 rot, ThingDef thingDef, Thing thing, float extraRotation)
 		{
 			StuffAppearanceDef stuffAppearanceDef = StuffAppearanceDefOf.Smooth;
-			if (thing != null && thing.Stuff != null)
+			if (thing != null && thing.Stuff != null && thing.Stuff.stuffProps.appearance != null)
 			{
 				stuffAppearanceDef = thing.Stuff.stuffProps.appearance;
 			}

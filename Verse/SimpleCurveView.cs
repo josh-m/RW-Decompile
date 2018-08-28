@@ -44,18 +44,18 @@ namespace Verse
 
 		public void SetViewRectAround(SimpleCurve curve)
 		{
-			if (!curve.AllPoints.Any<CurvePoint>())
+			if (curve.PointsCount == 0)
 			{
 				this.rect = SimpleCurveView.identityRect;
 				return;
 			}
-			this.rect.xMin = (from pt in curve.AllPoints
+			this.rect.xMin = (from pt in curve.Points
 			select pt.Loc.x).Min();
-			this.rect.xMax = (from pt in curve.AllPoints
+			this.rect.xMax = (from pt in curve.Points
 			select pt.Loc.x).Max();
-			this.rect.yMin = (from pt in curve.AllPoints
+			this.rect.yMin = (from pt in curve.Points
 			select pt.Loc.y).Min();
-			this.rect.yMax = (from pt in curve.AllPoints
+			this.rect.yMax = (from pt in curve.Points
 			select pt.Loc.y).Max();
 			if (Mathf.Approximately(this.rect.width, 0f))
 			{

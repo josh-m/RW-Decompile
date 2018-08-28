@@ -8,14 +8,12 @@ namespace RimWorld
 {
 	public class IncidentWorker_QuestBanditCamp : IncidentWorker
 	{
-		private const float RelationsImprovement = 8f;
-
-		protected override bool CanFireNowSub(IIncidentTarget target)
+		protected override bool CanFireNowSub(IncidentParms parms)
 		{
 			Faction faction;
 			Faction faction2;
 			int num;
-			return base.CanFireNowSub(target) && this.TryFindFactions(out faction, out faction2) && TileFinder.TryFindNewSiteTile(out num, 8, 30, false, true, -1);
+			return base.CanFireNowSub(parms) && this.TryFindFactions(out faction, out faction2) && this.TryFindTile(out num);
 		}
 
 		protected override bool TryExecuteWorker(IncidentParms parms)
@@ -27,30 +25,43 @@ namespace RimWorld
 				return false;
 			}
 			int tile;
-			if (!TileFinder.TryFindNewSiteTile(out tile, 8, 30, false, true, -1))
+			if (!this.TryFindTile(out tile))
 			{
 				return false;
 			}
-			Site site = SiteMaker.MakeSite(SiteCoreDefOf.Nothing, SitePartDefOf.Outpost, faction2);
-			site.Tile = tile;
-			List<Thing> list = this.GenerateRewards(faction);
-			site.GetComponent<DefeatAllEnemiesQuestComp>().StartQuest(faction, 8f, list);
+			Site site = SiteMaker.MakeSite(SiteCoreDefOf.Nothing, SitePartDefOf.Outpost, tile, faction2, true, null);
+			site.sitePartsKnown = true;
+			List<Thing> list = this.GenerateRewards(faction, site.desiredThreatPoints);
+			site.GetComponent<DefeatAllEnemiesQuestComp>().StartQuest(faction, 18, list);
+			int randomInRange = SiteTuning.QuestSiteTimeoutDaysRange.RandomInRange;
+			site.GetComponent<TimeoutComp>().StartTimeout(randomInRange * 60000);
 			Find.WorldObjects.Add(site);
-			base.SendStandardLetter(site, new string[]
+			string text = string.Format(this.def.letterText, new object[]
 			{
 				faction.leader.LabelShort,
 				faction.def.leaderTitle,
 				faction.Name,
-				list[0].LabelCap
-			});
+				GenLabel.ThingsLabel(list, string.Empty),
+				randomInRange.ToString(),
+				SitePartUtility.GetDescriptionDialogue(site, site.parts.FirstOrDefault<SitePart>()),
+				GenThing.GetMarketValue(list).ToStringMoney(null)
+			}).CapitalizeFirst();
+			GenThing.TryAppendSingleRewardInfo(ref text, list);
+			Find.LetterStack.ReceiveLetter(this.def.letterLabel, text, this.def.letterDef, site, faction, null);
 			return true;
 		}
 
-		private List<Thing> GenerateRewards(Faction alliedFaction)
+		private bool TryFindTile(out int tile)
 		{
-			ItemCollectionGeneratorParams parms = default(ItemCollectionGeneratorParams);
-			parms.techLevel = new TechLevel?(alliedFaction.def.techLevel);
-			return ItemCollectionGeneratorDefOf.BanditCampQuestRewards.Worker.Generate(parms);
+			IntRange banditCampQuestSiteDistanceRange = SiteTuning.BanditCampQuestSiteDistanceRange;
+			return TileFinder.TryFindNewSiteTile(out tile, banditCampQuestSiteDistanceRange.min, banditCampQuestSiteDistanceRange.max, false, true, -1);
+		}
+
+		private List<Thing> GenerateRewards(Faction alliedFaction, float siteThreatPoints)
+		{
+			ThingSetMakerParams parms = default(ThingSetMakerParams);
+			parms.totalMarketValueRange = new FloatRange?(SiteTuning.BanditCampQuestRewardMarketValueRange * SiteTuning.QuestRewardMarketValueThreatPointsFactor.Evaluate(siteThreatPoints));
+			return ThingSetMakerDefOf.Reward_StandardByDropPod.root.Generate(parms);
 		}
 
 		private bool TryFindFactions(out Faction alliedFaction, out Faction enemyFaction)

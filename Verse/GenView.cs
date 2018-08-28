@@ -16,7 +16,7 @@ namespace Verse
 
 		public static bool ShouldSpawnMotesAt(this IntVec3 loc, Map map)
 		{
-			if (map != Find.VisibleMap)
+			if (map != Find.CurrentMap)
 			{
 				return false;
 			}
@@ -33,7 +33,7 @@ namespace Verse
 		{
 			GenView.viewRect = Find.CameraDriver.CurrentViewRect;
 			GenView.viewRect = GenView.viewRect.ExpandedBy(5);
-			GenView.viewRect.ClipInsideMap(Find.VisibleMap);
+			GenView.viewRect.ClipInsideMap(Find.CurrentMap);
 			return GenView.viewRect.RandomVector3;
 		}
 	}

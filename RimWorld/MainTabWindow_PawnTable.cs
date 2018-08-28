@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 using Verse;
 
@@ -55,9 +54,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return from x in Find.VisibleMap.mapPawns.FreeColonists
-				orderby x.Label
-				select x;
+				return Find.CurrentMap.mapPawns.FreeColonists;
 			}
 		}
 
@@ -89,7 +86,13 @@ namespace RimWorld
 
 		private PawnTable CreateTable()
 		{
-			return new PawnTable(this.PawnTableDef, new Func<IEnumerable<Pawn>>(this.get_Pawns), 998, UI.screenWidth - (int)(this.Margin * 2f), 0, (int)((float)(UI.screenHeight - 35) - this.ExtraBottomSpace - this.ExtraTopSpace - this.Margin * 2f));
+			return (PawnTable)Activator.CreateInstance(this.PawnTableDef.workerClass, new object[]
+			{
+				this.PawnTableDef,
+				new Func<IEnumerable<Pawn>>(this.get_Pawns),
+				UI.screenWidth - (int)(this.Margin * 2f),
+				(int)((float)(UI.screenHeight - 35) - this.ExtraBottomSpace - this.ExtraTopSpace - this.Margin * 2f)
+			});
 		}
 
 		protected void SetDirty()

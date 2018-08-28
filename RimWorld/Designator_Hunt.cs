@@ -19,15 +19,23 @@ namespace RimWorld
 			}
 		}
 
+		protected override DesignationDef Designation
+		{
+			get
+			{
+				return DesignationDefOf.Hunt;
+			}
+		}
+
 		public Designator_Hunt()
 		{
 			this.defaultLabel = "DesignatorHunt".Translate();
 			this.defaultDesc = "DesignatorHuntDesc".Translate();
 			this.icon = ContentFinder<Texture2D>.Get("UI/Designators/Hunt", true);
-			this.soundDragSustain = SoundDefOf.DesignateDragStandard;
-			this.soundDragChanged = SoundDefOf.DesignateDragStandardChanged;
+			this.soundDragSustain = SoundDefOf.Designate_DragStandard;
+			this.soundDragChanged = SoundDefOf.Designate_DragStandard_Changed;
 			this.useMouseIcon = true;
-			this.soundSucceeded = SoundDefOf.DesignateHunt;
+			this.soundSucceeded = SoundDefOf.Designate_Hunt;
 			this.hotKey = KeyBindingDefOf.Misc11;
 		}
 
@@ -55,7 +63,7 @@ namespace RimWorld
 		public override AcceptanceReport CanDesignateThing(Thing t)
 		{
 			Pawn pawn = t as Pawn;
-			if (pawn != null && pawn.AnimalOrWildMan() && pawn.Faction == null && base.Map.designationManager.DesignationOn(pawn, DesignationDefOf.Hunt) == null)
+			if (pawn != null && pawn.AnimalOrWildMan() && pawn.Faction == null && base.Map.designationManager.DesignationOn(pawn, this.Designation) == null)
 			{
 				return true;
 			}
@@ -65,7 +73,7 @@ namespace RimWorld
 		public override void DesignateThing(Thing t)
 		{
 			base.Map.designationManager.RemoveAllDesignationsOn(t, false);
-			base.Map.designationManager.AddDesignation(new Designation(t, DesignationDefOf.Hunt));
+			base.Map.designationManager.AddDesignation(new Designation(t, this.Designation));
 			this.justDesignated.Add((Pawn)t);
 		}
 
@@ -75,14 +83,7 @@ namespace RimWorld
 			foreach (PawnKindDef kind in (from p in this.justDesignated
 			select p.kindDef).Distinct<PawnKindDef>())
 			{
-				float num = (kind != PawnKindDefOf.WildMan) ? kind.RaceProps.manhunterOnDamageChance : 0.5f;
-				if (num > 0.2f)
-				{
-					Messages.Message("MessageAnimalsGoPsychoHunted".Translate(new object[]
-					{
-						kind.GetLabelPlural(-1)
-					}), this.justDesignated.First((Pawn x) => x.kindDef == kind), MessageTypeDefOf.CautionInput);
-				}
+				this.ShowDesignationWarnings(this.justDesignated.First((Pawn x) => x.kindDef == kind));
 			}
 			this.justDesignated.Clear();
 		}
@@ -100,6 +101,21 @@ namespace RimWorld
 						yield return (Pawn)thingList[i];
 					}
 				}
+			}
+		}
+
+		private void ShowDesignationWarnings(Pawn pawn)
+		{
+			float manhunterOnDamageChance = pawn.RaceProps.manhunterOnDamageChance;
+			float manhunterOnDamageChance2 = PawnUtility.GetManhunterOnDamageChance(pawn.kindDef);
+			if (manhunterOnDamageChance >= 0.015f)
+			{
+				string text = "MessageAnimalsGoPsychoHunted".Translate(new object[]
+				{
+					pawn.kindDef.GetLabelPlural(-1).CapitalizeFirst(),
+					manhunterOnDamageChance2.ToStringPercent()
+				}).CapitalizeFirst();
+				Messages.Message(text, pawn, MessageTypeDefOf.CautionInput, false);
 			}
 		}
 	}

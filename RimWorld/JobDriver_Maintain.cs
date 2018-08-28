@@ -10,9 +10,12 @@ namespace RimWorld
 	{
 		private const int MaintainTicks = 180;
 
-		public override bool TryMakePreToilReservations()
+		public override bool TryMakePreToilReservations(bool errorOnFailed)
 		{
-			return this.pawn.Reserve(this.job.targetA, this.job, 1, -1, null);
+			Pawn pawn = this.pawn;
+			LocalTargetInfo targetA = this.job.targetA;
+			Job job = this.job;
+			return pawn.Reserve(targetA, job, 1, -1, null, errorOnFailed);
 		}
 
 		[DebuggerHidden]
@@ -20,7 +23,7 @@ namespace RimWorld
 		{
 			this.FailOnDespawnedOrNull(TargetIndex.A);
 			yield return Toils_Goto.GotoThing(TargetIndex.A, PathEndMode.Touch);
-			Toil prepare = Toils_General.Wait(180);
+			Toil prepare = Toils_General.Wait(180, TargetIndex.None);
 			prepare.WithProgressBarToilDelay(TargetIndex.A, false, -0.5f);
 			prepare.FailOnDespawnedNullOrForbidden(TargetIndex.A);
 			prepare.FailOnCannotTouch(TargetIndex.A, PathEndMode.Touch);

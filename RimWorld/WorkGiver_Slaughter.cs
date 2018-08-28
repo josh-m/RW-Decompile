@@ -51,7 +51,7 @@ namespace RimWorld
 			}
 			if (pawn.story != null && pawn.story.WorkTagIsDisabled(WorkTags.Violent))
 			{
-				JobFailReason.Is("IsIncapableOfViolenceShort".Translate());
+				JobFailReason.Is("IsIncapableOfViolenceShort".Translate(), null);
 				return false;
 			}
 			return true;

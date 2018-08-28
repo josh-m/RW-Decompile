@@ -47,21 +47,21 @@ namespace RimWorld
 		[DebuggerHidden]
 		public override IEnumerable<Rule> GetRules()
 		{
-			yield return new Rule_String("biome", Find.WorldGrid[this.tile].biome.label);
+			yield return new Rule_String("BIOME", Find.WorldGrid[this.tile].biome.label);
 			if (this.roomRole != null && this.roomRole != RoomRoleDefOf.None)
 			{
-				yield return new Rule_String("room_role", this.roomRole.label);
-				yield return new Rule_String("room_roleDefinite", Find.ActiveLanguageWorker.WithDefiniteArticle(this.roomRole.label));
-				yield return new Rule_String("room_roleIndefinite", Find.ActiveLanguageWorker.WithIndefiniteArticle(this.roomRole.label));
+				yield return new Rule_String("ROOM_role", this.roomRole.label);
+				yield return new Rule_String("ROOM_roleDefinite", Find.ActiveLanguageWorker.WithDefiniteArticle(this.roomRole.label));
+				yield return new Rule_String("ROOM_roleIndefinite", Find.ActiveLanguageWorker.WithIndefiniteArticle(this.roomRole.label));
 				RoomStatScoreStage impressiveness = RoomStatDefOf.Impressiveness.GetScoreStage(this.roomImpressiveness);
 				RoomStatScoreStage beauty = RoomStatDefOf.Beauty.GetScoreStage(this.roomBeauty);
 				RoomStatScoreStage cleanliness = RoomStatDefOf.Cleanliness.GetScoreStage(this.roomCleanliness);
-				yield return new Rule_String("room_impressiveness", impressiveness.label);
-				yield return new Rule_String("room_impressivenessIndefinite", Find.ActiveLanguageWorker.WithIndefiniteArticle(impressiveness.label));
-				yield return new Rule_String("room_beauty", beauty.label);
-				yield return new Rule_String("room_beautyIndefinite", Find.ActiveLanguageWorker.WithIndefiniteArticle(beauty.label));
-				yield return new Rule_String("room_cleanliness", cleanliness.label);
-				yield return new Rule_String("room_cleanlinessIndefinite", Find.ActiveLanguageWorker.WithIndefiniteArticle(cleanliness.label));
+				yield return new Rule_String("ROOM_impressiveness", impressiveness.label);
+				yield return new Rule_String("ROOM_impressivenessIndefinite", Find.ActiveLanguageWorker.WithIndefiniteArticle(impressiveness.label));
+				yield return new Rule_String("ROOM_beauty", beauty.label);
+				yield return new Rule_String("ROOM_beautyIndefinite", Find.ActiveLanguageWorker.WithIndefiniteArticle(beauty.label));
+				yield return new Rule_String("ROOM_cleanliness", cleanliness.label);
+				yield return new Rule_String("ROOM_cleanlinessIndefinite", Find.ActiveLanguageWorker.WithIndefiniteArticle(cleanliness.label));
 			}
 		}
 
@@ -74,7 +74,7 @@ namespace RimWorld
 			{
 				if (roomOrAdjacent.PsychologicallyOutdoors)
 				{
-					taleData_Surroundings.weather = map.weatherManager.CurPerceivedWeather;
+					taleData_Surroundings.weather = map.weatherManager.CurWeatherPerceived;
 				}
 				taleData_Surroundings.roomRole = roomOrAdjacent.Role;
 				taleData_Surroundings.roomImpressiveness = roomOrAdjacent.GetStat(RoomStatDefOf.Impressiveness);

@@ -7,7 +7,7 @@ namespace Verse.AI
 {
 	public class JobDriver_Goto : JobDriver
 	{
-		public override bool TryMakePreToilReservations()
+		public override bool TryMakePreToilReservations(bool errorOnFailed)
 		{
 			this.pawn.Map.pawnDestinationReservationManager.Reserve(this.pawn, this.job, this.job.targetA.Cell);
 			return true;
@@ -49,7 +49,7 @@ namespace Verse.AI
 			{
 				return;
 			}
-			this.pawn.ExitMap(true);
+			this.pawn.ExitMap(true, CellRect.WholeMap(base.Map).GetClosestEdge(this.pawn.Position));
 		}
 	}
 }

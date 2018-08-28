@@ -78,8 +78,28 @@ namespace Verse
 				case 3:
 					return Quaternion.LookRotation(Vector3.left);
 				default:
-					Log.Error("ToQuat with Rot = " + this.AsInt);
+					Log.Error("ToQuat with Rot = " + this.AsInt, false);
 					return Quaternion.identity;
+				}
+			}
+		}
+
+		public Vector2 AsVector2
+		{
+			get
+			{
+				switch (this.rotInt)
+				{
+				case 0:
+					return Vector2.up;
+				case 1:
+					return Vector2.right;
+				case 2:
+					return Vector2.down;
+				case 3:
+					return Vector2.left;
+				default:
+					throw new Exception("rotInt's value cannot be >3 but it is:" + this.rotInt);
 				}
 			}
 		}
@@ -163,6 +183,26 @@ namespace Verse
 			}
 		}
 
+		public IntVec3 RighthandCell
+		{
+			get
+			{
+				switch (this.AsInt)
+				{
+				case 0:
+					return new IntVec3(1, 0, 0);
+				case 1:
+					return new IntVec3(0, 0, -1);
+				case 2:
+					return new IntVec3(-1, 0, 0);
+				case 3:
+					return new IntVec3(0, 0, 1);
+				default:
+					return default(IntVec3);
+				}
+			}
+		}
+
 		public Rot4 Opposite
 		{
 			get
@@ -205,6 +245,13 @@ namespace Verse
 			}
 		}
 
+		public Rot4 Rotated(RotationDirection RotDir)
+		{
+			Rot4 result = this;
+			result.Rotate(RotDir);
+			return result;
+		}
+
 		public static Rot4 FromAngleFlat(float angle)
 		{
 			angle = GenMath.PositiveMod(angle, 360f);
@@ -245,7 +292,7 @@ namespace Verse
 			{
 				return Rot4.South;
 			}
-			Log.Error("FromIntVec3 with bad offset " + offset);
+			Log.Error("FromIntVec3 with bad offset " + offset, false);
 			return Rot4.North;
 		}
 
@@ -277,7 +324,7 @@ namespace Verse
 			case 3:
 				return 9231792;
 			default:
-				throw new InvalidOperationException("IntRot out of range.");
+				return (int)this.rotInt;
 			}
 		}
 
@@ -318,28 +365,28 @@ namespace Verse
 					if (str == "North")
 					{
 						newRot = 0;
-						goto IL_93;
+						goto IL_94;
 					}
 					if (str == "East")
 					{
 						newRot = 1;
-						goto IL_93;
+						goto IL_94;
 					}
 					if (str == "South")
 					{
 						newRot = 2;
-						goto IL_93;
+						goto IL_94;
 					}
 					if (str == "West")
 					{
 						newRot = 3;
-						goto IL_93;
+						goto IL_94;
 					}
 				}
 				newRot = 0;
-				Log.Error("Invalid rotation: " + str);
+				Log.Error("Invalid rotation: " + str, false);
 			}
-			IL_93:
+			IL_94:
 			return new Rot4(newRot);
 		}
 

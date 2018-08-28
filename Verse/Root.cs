@@ -1,10 +1,10 @@
 using RimWorld;
+using RimWorld.Planet;
 using System;
-using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Threading;
 using UnityEngine;
+using Verse.AI;
 using Verse.Profile;
 using Verse.Sound;
 using Verse.Steam;
@@ -17,6 +17,8 @@ namespace Verse
 
 		private static bool prefsApplied;
 
+		protected static bool checkedAutostartSaveFile;
+
 		protected bool destroyed;
 
 		public SoundRoot soundRoot;
@@ -25,37 +27,45 @@ namespace Verse
 
 		public virtual void Start()
 		{
-			Current.Notify_LoadedSceneChanged();
-			Root.CheckGlobalInit();
-			Action action = delegate
+			try
 			{
-				this.soundRoot = new SoundRoot();
-				if (GenScene.InPlayScene)
+				CultureInfoUtility.EnsureEnglish();
+				Current.Notify_LoadedSceneChanged();
+				Root.CheckGlobalInit();
+				Action action = delegate
 				{
-					this.uiRoot = new UIRoot_Play();
+					this.soundRoot = new SoundRoot();
+					if (GenScene.InPlayScene)
+					{
+						this.uiRoot = new UIRoot_Play();
+					}
+					else if (GenScene.InEntryScene)
+					{
+						this.uiRoot = new UIRoot_Entry();
+					}
+					this.uiRoot.Init();
+					Messages.Notify_LoadedLevelChanged();
+					if (Current.SubcameraDriver != null)
+					{
+						Current.SubcameraDriver.Init();
+					}
+				};
+				if (!PlayDataLoader.Loaded)
+				{
+					LongEventHandler.QueueLongEvent(delegate
+					{
+						PlayDataLoader.LoadAllPlayData(false);
+					}, null, true, null);
+					LongEventHandler.QueueLongEvent(action, "InitializingInterface", false, null);
 				}
-				else if (GenScene.InEntryScene)
+				else
 				{
-					this.uiRoot = new UIRoot_Entry();
+					action();
 				}
-				this.uiRoot.Init();
-				Messages.Notify_LoadedLevelChanged();
-				if (Current.SubcameraDriver != null)
-				{
-					Current.SubcameraDriver.Init();
-				}
-			};
-			if (!PlayDataLoader.Loaded)
-			{
-				LongEventHandler.QueueLongEvent(delegate
-				{
-					PlayDataLoader.LoadAllPlayData(false);
-				}, null, true, null);
-				LongEventHandler.QueueLongEvent(action, "InitializingInterface", false, null);
 			}
-			else
+			catch (Exception arg)
 			{
-				action();
+				Log.Error("Critical error in root Start(): " + arg, false);
 			}
 		}
 
@@ -65,19 +75,13 @@ namespace Verse
 			{
 				return;
 			}
-			CultureInfo currentCulture = Thread.CurrentThread.CurrentCulture;
-			if (currentCulture.Name != "en-US")
-			{
-				Log.Warning("Unexpected culture: " + currentCulture + ". Resetting to en-US.");
-				Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
-			}
+			UnityDataInitializer.CopyUnityData();
 			SteamManager.InitIfNeeded();
 			string[] commandLineArgs = Environment.GetCommandLineArgs();
 			if (commandLineArgs != null && commandLineArgs.Length > 1)
 			{
-				Log.Message("Command line arguments: " + GenText.ToSpaceList(commandLineArgs.Skip(1)));
+				Log.Message("Command line arguments: " + GenText.ToSpaceList(commandLineArgs.Skip(1)), false);
 			}
-			UnityData.CopyUnityData();
 			VersionControl.LogVersionNumber();
 			Application.targetFrameRate = 60;
 			Prefs.Init();
@@ -103,8 +107,13 @@ namespace Verse
 				else if (!LongEventHandler.ShouldWaitForEvent)
 				{
 					Rand.EnsureStateStackEmpty();
+					Widgets.EnsureMousePositionStackEmpty();
 					SteamManager.Update();
 					PortraitsCache.PortraitsCacheUpdate();
+					AttackTargetsCache.AttackTargetsCacheStaticUpdate();
+					Pawn_MeleeVerbs.PawnMeleeVerbsStaticUpdate();
+					Storyteller.StorytellerStaticUpdate();
+					CaravanInventoryUtility.CaravanInventoryUtilityStaticUpdate();
 					this.uiRoot.UIRootUpdate();
 					if (Time.frameCount > 3 && !Root.prefsApplied)
 					{
@@ -112,13 +121,27 @@ namespace Verse
 						Prefs.Apply();
 					}
 					this.soundRoot.Update();
-					MemoryTracker.Update();
+					try
+					{
+						MemoryTracker.Update();
+					}
+					catch (Exception arg)
+					{
+						Log.Error("Error in MemoryTracker: " + arg, false);
+					}
+					try
+					{
+						MapLeakTracker.Update();
+					}
+					catch (Exception arg2)
+					{
+						Log.Error("Error in MapLeakTracker: " + arg2, false);
+					}
 				}
 			}
-			catch (Exception e)
+			catch (Exception arg3)
 			{
-				Log.Notify_Exception(e);
-				throw;
+				Log.Error("Root level exception in Update(): " + arg3, false);
 			}
 		}
 
@@ -142,10 +165,9 @@ namespace Verse
 					}
 				}
 			}
-			catch (Exception e)
+			catch (Exception arg)
 			{
-				Log.Notify_Exception(e);
-				throw;
+				Log.Error("Root level exception in OnGUI(): " + arg, false);
 			}
 		}
 

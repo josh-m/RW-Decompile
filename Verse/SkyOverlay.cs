@@ -64,7 +64,7 @@ namespace Verse
 				float num = Find.Camera.orthographicSize * 2f;
 				Vector3 s = new Vector3(num * Find.Camera.aspect, 1f, num);
 				Vector3 position2 = Find.Camera.transform.position;
-				position2.y = Altitudes.AltitudeFor(AltitudeLayer.Weather) + 0.046875f;
+				position2.y = AltitudeLayer.Weather.AltitudeFor() + 0.046875f;
 				Matrix4x4 matrix = default(Matrix4x4);
 				matrix.SetTRS(position2, Quaternion.identity, s);
 				Graphics.DrawMesh(MeshPool.plane10, matrix, this.screenOverlayMat, 0);

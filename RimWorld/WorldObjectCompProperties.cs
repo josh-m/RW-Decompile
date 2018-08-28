@@ -2,11 +2,13 @@ using RimWorld.Planet;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using Verse;
 
 namespace RimWorld
 {
 	public class WorldObjectCompProperties
 	{
+		[TranslationHandle]
 		public Type compClass = typeof(WorldObjectComp);
 
 		[DebuggerHidden]

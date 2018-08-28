@@ -18,7 +18,7 @@ namespace RimWorld
 
 		public const int MaxCapacity = 25;
 
-		private const int BaseFermentationDuration = 600000;
+		private const int BaseFermentationDuration = 360000;
 
 		public const float MinIdealTemperature = 7f;
 
@@ -109,7 +109,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return 1.66666666E-06f * this.CurrentTempProgressSpeedFactor;
+				return 2.77777781E-06f * this.CurrentTempProgressSpeedFactor;
 			}
 		}
 
@@ -142,7 +142,7 @@ namespace RimWorld
 			base.GetComp<CompTemperatureRuinable>().Reset();
 			if (this.Fermented)
 			{
-				Log.Warning("Tried to add wort to a barrel full of beer. Colonists should take the beer first.");
+				Log.Warning("Tried to add wort to a barrel full of beer. Colonists should take the beer first.", false);
 				return;
 			}
 			int num = Mathf.Min(count, 25 - this.wortCount);
@@ -217,7 +217,7 @@ namespace RimWorld
 					stringBuilder.AppendLine("FermentationProgress".Translate(new object[]
 					{
 						this.Progress.ToStringPercent(),
-						this.EstimatedTicksLeft.ToStringTicksToPeriod(true, false, true)
+						this.EstimatedTicksLeft.ToStringTicksToPeriod()
 					}));
 					if (this.CurrentTempProgressSpeedFactor != 1f)
 					{
@@ -244,7 +244,7 @@ namespace RimWorld
 		{
 			if (!this.Fermented)
 			{
-				Log.Warning("Tried to get beer but it's not yet fermented.");
+				Log.Warning("Tried to get beer but it's not yet fermented.", false);
 				return null;
 			}
 			Thing thing = ThingMaker.MakeThing(ThingDefOf.Beer, null);

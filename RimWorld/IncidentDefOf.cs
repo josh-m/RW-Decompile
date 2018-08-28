@@ -5,14 +5,6 @@ namespace RimWorld
 	[DefOf]
 	public static class IncidentDefOf
 	{
-		public static IncidentDef ShipChunkDrop;
-
-		public static IncidentDef OrbitalTraderArrival;
-
-		public static IncidentDef WandererJoin;
-
-		public static IncidentDef JourneyOffer;
-
 		public static IncidentDef RaidEnemy;
 
 		public static IncidentDef RaidFriendly;
@@ -31,6 +23,21 @@ namespace RimWorld
 
 		public static IncidentDef ManhunterPack;
 
-		public static IncidentDef CaravanRequest;
+		public static IncidentDef ShipChunkDrop;
+
+		public static IncidentDef OrbitalTraderArrival;
+
+		public static IncidentDef WandererJoin;
+
+		public static IncidentDef Quest_TradeRequest;
+
+		public static IncidentDef Quest_ItemStashAICore;
+
+		public static IncidentDef Quest_JourneyOffer;
+
+		static IncidentDefOf()
+		{
+			DefOfHelper.EnsureInitializedInCtor(typeof(IncidentDefOf));
+		}
 	}
 }

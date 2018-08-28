@@ -23,5 +23,12 @@ namespace RimWorld
 		public static WorkTypeDef Handling;
 
 		public static WorkTypeDef Crafting;
+
+		public static WorkTypeDef Hauling;
+
+		static WorkTypeDefOf()
+		{
+			DefOfHelper.EnsureInitializedInCtor(typeof(WorkTypeDefOf));
+		}
 	}
 }

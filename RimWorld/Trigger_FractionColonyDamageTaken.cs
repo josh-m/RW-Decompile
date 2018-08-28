@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using Verse;
 using Verse.AI.Group;
 
 namespace RimWorld
@@ -37,6 +38,10 @@ namespace RimWorld
 		{
 			if (signal.type == TriggerSignalType.Tick)
 			{
+				if (this.data == null || !(this.data is TriggerData_FractionColonyDamageTaken))
+				{
+					BackCompatibility.TriggerDataFractionColonyDamageTakenNull(this, lord.Map);
+				}
 				float num = Mathf.Max((float)lord.initialColonyHealthTotal * this.desiredColonyDamageFraction, this.minDamage);
 				return lord.Map.damageWatcher.DamageTakenEver > this.Data.startColonyDamage + num;
 			}

@@ -28,9 +28,26 @@ namespace RimWorld
 			}
 		}
 
-		public override bool TryMakePreToilReservations()
+		public override bool TryMakePreToilReservations(bool errorOnFailed)
 		{
-			return this.pawn.Reserve(this.Patient, this.job, 1, -1, null) && (this.Chair == null || this.pawn.Reserve(this.Chair, this.job, 1, -1, null));
+			Pawn pawn = this.pawn;
+			LocalTargetInfo target = this.Patient;
+			Job job = this.job;
+			if (!pawn.Reserve(target, job, 1, -1, null, errorOnFailed))
+			{
+				return false;
+			}
+			if (this.Chair != null)
+			{
+				pawn = this.pawn;
+				target = this.Chair;
+				job = this.job;
+				if (!pawn.Reserve(target, job, 1, -1, null, errorOnFailed))
+				{
+					return false;
+				}
+			}
+			return true;
 		}
 
 		[DebuggerHidden]
@@ -63,7 +80,7 @@ namespace RimWorld
 					}
 					this.$this.pawn.rotationTracker.FaceCell(this.$this.Patient.Position);
 					this.$this.pawn.GainComfortFromCellIfPossible();
-					JoyUtility.JoyTickCheckEnd(this.$this.pawn, JoyTickFullJoyAction.None, 1f);
+					JoyUtility.JoyTickCheckEnd(this.$this.pawn, JoyTickFullJoyAction.None, 1f, null);
 					if (this.$this.pawn.needs.joy.CurLevelPercentage > 0.9999f && this.$this.Patient.needs.joy.CurLevelPercentage > 0.9999f)
 					{
 						this.$this.pawn.jobs.EndCurrentJob(JobCondition.Succeeded, true);

@@ -32,7 +32,7 @@ namespace RimWorld
 		public static void DrawLinesToPotentialThingsToLinkTo(ThingDef myDef, IntVec3 myPos, Rot4 myRot, Map map)
 		{
 			CompProperties_Facility compProperties = myDef.GetCompProperties<CompProperties_Facility>();
-			Vector3 a = Gen.TrueCenter(myPos, myRot, myDef.size, myDef.Altitude);
+			Vector3 a = GenThing.TrueCenter(myPos, myRot, myDef.size, myDef.Altitude);
 			for (int i = 0; i < compProperties.linkableBuildings.Count; i++)
 			{
 				foreach (Thing current in map.listerThings.ThingsOfDef(compProperties.linkableBuildings[i]))
@@ -53,7 +53,7 @@ namespace RimWorld
 			{
 				if (this.linkedBuildings[i] == thing)
 				{
-					Log.Error("Notify_NewLink was called but the link is already here.");
+					Log.Error("Notify_NewLink was called but the link is already here.", false);
 					return;
 				}
 			}
@@ -70,7 +70,7 @@ namespace RimWorld
 					return;
 				}
 			}
-			Log.Error("Notify_LinkRemoved was called but there is no such link here.");
+			Log.Error("Notify_LinkRemoved was called but there is no such link here.", false);
 		}
 
 		public void Notify_LOSBlockerSpawnedOrDespawned()

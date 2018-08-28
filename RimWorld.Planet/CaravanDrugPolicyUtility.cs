@@ -6,6 +6,16 @@ namespace RimWorld.Planet
 {
 	public static class CaravanDrugPolicyUtility
 	{
+		private const int TryTakeScheduledDrugsIntervalTicks = 120;
+
+		public static void CheckTakeScheduledDrugs(Caravan caravan)
+		{
+			if (caravan.IsHashIntervalTick(120))
+			{
+				CaravanDrugPolicyUtility.TryTakeScheduledDrugs(caravan);
+			}
+		}
+
 		public static void TryTakeScheduledDrugs(Caravan caravan)
 		{
 			List<Pawn> pawnsListForReading = caravan.PawnsListForReading;
@@ -30,7 +40,7 @@ namespace RimWorld.Planet
 					Pawn drugOwner;
 					if (CaravanInventoryUtility.TryGetThingOfDef(caravan, currentPolicy[i].drug, out drug, out drugOwner))
 					{
-						CaravanPawnsNeedsUtility.IngestDrug(pawn, drug, drugOwner, caravan);
+						caravan.needs.IngestDrug(pawn, drug, drugOwner);
 					}
 				}
 			}

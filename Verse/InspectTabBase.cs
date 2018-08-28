@@ -82,7 +82,7 @@ namespace Verse
 						this.GetType(),
 						": ",
 						ex
-					}), 49827);
+					}), 49827, false);
 				}
 			}, true, false, 1f);
 			this.ExtraOnGUI();
@@ -109,6 +109,10 @@ namespace Verse
 		}
 
 		public virtual void TabUpdate()
+		{
+		}
+
+		public virtual void Notify_ClearingAllMapsMemory()
 		{
 		}
 	}

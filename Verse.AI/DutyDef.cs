@@ -14,5 +14,7 @@ namespace Verse.AI
 		public ThinkTreeDutyHook hook = ThinkTreeDutyHook.HighPriority;
 
 		public RandomSocialMode socialModeMax = RandomSocialMode.SuperActive;
+
+		public bool threatDisabled;
 	}
 }

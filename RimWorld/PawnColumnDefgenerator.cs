@@ -23,6 +23,8 @@ namespace RimWorld
 				d3.workerClass = typeof(PawnColumnWorker_Trainable);
 				d3.sortable = true;
 				d3.headerTip = sourceDef.LabelCap;
+				d3.paintable = true;
+				d3.modContentPack = sourceDef.modContentPack;
 				animalsTable.columns.Insert(animalsTable.columns.FindIndex((PawnColumnDef x) => x.Worker is PawnColumnWorker_Checkbox) - 1, d3);
 				yield return d3;
 			}
@@ -39,6 +41,7 @@ namespace RimWorld
 				d2.moveWorkTypeLabelDown = moveWorkTypeLabelDown;
 				d2.workerClass = typeof(PawnColumnWorker_WorkPriority);
 				d2.sortable = true;
+				d2.modContentPack = def.modContentPack;
 				workTable.columns.Insert(workTable.columns.FindIndex((PawnColumnDef x) => x.Worker is PawnColumnWorker_CopyPasteWorkPriorities) + 1, d2);
 				yield return d2;
 			}

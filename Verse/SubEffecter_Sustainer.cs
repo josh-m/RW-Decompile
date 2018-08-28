@@ -9,7 +9,7 @@ namespace Verse
 
 		private Sustainer sustainer;
 
-		public SubEffecter_Sustainer(SubEffecterDef def) : base(def)
+		public SubEffecter_Sustainer(SubEffecterDef def, Effecter parent) : base(def, parent)
 		{
 		}
 

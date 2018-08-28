@@ -53,7 +53,7 @@ namespace Verse
 			}
 			set
 			{
-				this.temperatureInt = Mathf.Clamp(value, -270f, 2000f);
+				this.temperatureInt = Mathf.Clamp(value, -273.15f, 2000f);
 			}
 		}
 
@@ -128,12 +128,12 @@ namespace Verse
 							{
 								Region regionA = region.links[j].RegionA;
 								Region regionB = region.links[j].RegionB;
-								if (regionA.Room.Group != this.roomGroup && regionA.portal == null)
+								if (regionA.Room.Group != this.roomGroup && !regionA.IsDoorway)
 								{
 									flag = true;
 									break;
 								}
-								if (regionB.Room.Group != this.roomGroup && regionB.portal == null)
+								if (regionB.Room.Group != this.roomGroup && !regionB.IsDoorway)
 								{
 									flag = true;
 									break;

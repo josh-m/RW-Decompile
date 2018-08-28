@@ -91,7 +91,7 @@ namespace Verse
 					num4 *= Rand.Range(0.85f, 1f);
 				}
 				Vector3 center = new Vector3(rect.xMin + x, damageTexturesAltitude, rect.yMin + y);
-				Printer_Plane.PrintPlane(this, center, new Vector2(num4, num4), scratchMats.RandomElement<Material>(), rot, false, null, null, 0f);
+				Printer_Plane.PrintPlane(this, center, new Vector2(num4, num4), scratchMats.RandomElement<Material>(), rot, false, null, null, 0f, 0f);
 			}
 			Rand.PopState();
 		}
@@ -176,28 +176,28 @@ namespace Verse
 				switch (overlays[i])
 				{
 				case DamageOverlay.TopLeftCorner:
-					Printer_Plane.PrintPlane(this, vector, Vector2.one, damageData.cornerTLMat, 0f, false, null, null, 0f);
+					Printer_Plane.PrintPlane(this, vector, Vector2.one, damageData.cornerTLMat, 0f, false, null, null, 0f, 0f);
 					break;
 				case DamageOverlay.TopRightCorner:
-					Printer_Plane.PrintPlane(this, vector, Vector2.one, damageData.cornerTRMat, 90f, false, null, null, 0f);
+					Printer_Plane.PrintPlane(this, vector, Vector2.one, damageData.cornerTRMat, 90f, false, null, null, 0f, 0f);
 					break;
 				case DamageOverlay.BotLeftCorner:
-					Printer_Plane.PrintPlane(this, vector, Vector2.one, damageData.cornerBLMat, 270f, false, null, null, 0f);
+					Printer_Plane.PrintPlane(this, vector, Vector2.one, damageData.cornerBLMat, 270f, false, null, null, 0f, 0f);
 					break;
 				case DamageOverlay.BotRightCorner:
-					Printer_Plane.PrintPlane(this, vector, Vector2.one, damageData.cornerBRMat, 180f, false, null, null, 0f);
+					Printer_Plane.PrintPlane(this, vector, Vector2.one, damageData.cornerBRMat, 180f, false, null, null, 0f, 0f);
 					break;
 				case DamageOverlay.LeftEdge:
-					Printer_Plane.PrintPlane(this, vector + new Vector3(0f, 0f, z2), Vector2.one, damageData.edgeLeftMat, 270f, false, null, null, 0f);
+					Printer_Plane.PrintPlane(this, vector + new Vector3(0f, 0f, z2), Vector2.one, damageData.edgeLeftMat, 270f, false, null, null, 0f, 0f);
 					break;
 				case DamageOverlay.RightEdge:
-					Printer_Plane.PrintPlane(this, vector + new Vector3(0f, 0f, z), Vector2.one, damageData.edgeRightMat, 90f, false, null, null, 0f);
+					Printer_Plane.PrintPlane(this, vector + new Vector3(0f, 0f, z), Vector2.one, damageData.edgeRightMat, 90f, false, null, null, 0f, 0f);
 					break;
 				case DamageOverlay.TopEdge:
-					Printer_Plane.PrintPlane(this, vector + new Vector3(x, 0f, 0f), Vector2.one, damageData.edgeTopMat, 0f, false, null, null, 0f);
+					Printer_Plane.PrintPlane(this, vector + new Vector3(x, 0f, 0f), Vector2.one, damageData.edgeTopMat, 0f, false, null, null, 0f, 0f);
 					break;
 				case DamageOverlay.BotEdge:
-					Printer_Plane.PrintPlane(this, vector + new Vector3(x2, 0f, 0f), Vector2.one, damageData.edgeBotMat, 180f, false, null, null, 0f);
+					Printer_Plane.PrintPlane(this, vector + new Vector3(x2, 0f, 0f), Vector2.one, damageData.edgeBotMat, 180f, false, null, null, 0f, 0f);
 					break;
 				}
 			}
@@ -233,25 +233,25 @@ namespace Verse
 				case DamageOverlay.TopLeftCorner:
 				{
 					Rect rect = new Rect(damageRect.xMin, damageRect.yMax - num2, num2, num2);
-					Printer_Plane.PrintPlane(this, new Vector3(rect.center.x, damageTexturesAltitude, rect.center.y), rect.size, mat, 0f, false, null, null, 0f);
+					Printer_Plane.PrintPlane(this, new Vector3(rect.center.x, damageTexturesAltitude, rect.center.y), rect.size, mat, 0f, false, null, null, 0f, 0f);
 					break;
 				}
 				case DamageOverlay.TopRightCorner:
 				{
 					Rect rect2 = new Rect(damageRect.xMax - num3, damageRect.yMax - num3, num3, num3);
-					Printer_Plane.PrintPlane(this, new Vector3(rect2.center.x, damageTexturesAltitude, rect2.center.y), rect2.size, mat2, 90f, false, null, null, 0f);
+					Printer_Plane.PrintPlane(this, new Vector3(rect2.center.x, damageTexturesAltitude, rect2.center.y), rect2.size, mat2, 90f, false, null, null, 0f, 0f);
 					break;
 				}
 				case DamageOverlay.BotLeftCorner:
 				{
 					Rect rect3 = new Rect(damageRect.xMin, damageRect.yMin, num5, num5);
-					Printer_Plane.PrintPlane(this, new Vector3(rect3.center.x, damageTexturesAltitude, rect3.center.y), rect3.size, mat4, 270f, false, null, null, 0f);
+					Printer_Plane.PrintPlane(this, new Vector3(rect3.center.x, damageTexturesAltitude, rect3.center.y), rect3.size, mat4, 270f, false, null, null, 0f, 0f);
 					break;
 				}
 				case DamageOverlay.BotRightCorner:
 				{
 					Rect rect4 = new Rect(damageRect.xMax - num4, damageRect.yMin, num4, num4);
-					Printer_Plane.PrintPlane(this, new Vector3(rect4.center.x, damageTexturesAltitude, rect4.center.y), rect4.size, mat3, 180f, false, null, null, 0f);
+					Printer_Plane.PrintPlane(this, new Vector3(rect4.center.x, damageTexturesAltitude, rect4.center.y), rect4.size, mat3, 180f, false, null, null, 0f, 0f);
 					break;
 				}
 				}

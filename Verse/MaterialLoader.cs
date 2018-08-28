@@ -20,7 +20,7 @@ namespace Verse
 			select mat).FirstOrDefault<Material>();
 			if (material == null)
 			{
-				Log.Warning("MatWithEnding: Dir " + dirPath + " lacks texture ending in " + ending);
+				Log.Warning("MatWithEnding: Dir " + dirPath + " lacks texture ending in " + ending, false);
 				return BaseContent.BadMat;
 			}
 			return material;

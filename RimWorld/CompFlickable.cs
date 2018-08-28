@@ -81,7 +81,7 @@ namespace RimWorld
 				}
 				if (this.offGraphic == null)
 				{
-					this.offGraphic = GraphicDatabase.Get(this.parent.def.graphicData.graphicClass, this.parent.def.graphicData.texPath + "_Off", ShaderDatabase.ShaderFromType(this.parent.def.graphicData.shaderType), this.parent.def.graphicData.drawSize, this.parent.DrawColor, this.parent.DrawColorTwo);
+					this.offGraphic = GraphicDatabase.Get(this.parent.def.graphicData.graphicClass, this.parent.def.graphicData.texPath + "_Off", this.parent.def.graphicData.shaderType.Shader, this.parent.def.graphicData.drawSize, this.parent.DrawColor, this.parent.DrawColorTwo);
 				}
 				return this.offGraphic;
 			}
@@ -122,7 +122,7 @@ namespace RimWorld
 			{
 				yield return new Command_Toggle
 				{
-					hotKey = KeyBindingDefOf.CommandTogglePower,
+					hotKey = KeyBindingDefOf.Command_TogglePower,
 					icon = this.CommandTex,
 					defaultLabel = this.Props.commandLabelKey.Translate(),
 					defaultDesc = this.Props.commandDescKey.Translate(),

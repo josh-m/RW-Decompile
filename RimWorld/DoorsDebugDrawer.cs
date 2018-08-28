@@ -14,7 +14,7 @@ namespace RimWorld
 				return;
 			}
 			CellRect currentViewRect = Find.CameraDriver.CurrentViewRect;
-			List<Thing> list = Find.VisibleMap.listerThings.ThingsInGroup(ThingRequestGroup.BuildingArtificial);
+			List<Thing> list = Find.CurrentMap.listerThings.ThingsInGroup(ThingRequestGroup.BuildingArtificial);
 			for (int i = 0; i < list.Count; i++)
 			{
 				if (currentViewRect.Contains(list[i].Position))

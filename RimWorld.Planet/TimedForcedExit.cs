@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using Verse;
 
 namespace RimWorld.Planet
@@ -9,8 +8,6 @@ namespace RimWorld.Planet
 	public class TimedForcedExit : WorldObjectComp
 	{
 		private int ticksLeftToForceExitAndRemoveMap = -1;
-
-		public const int DefaultForceExitAndRemoveMapCountdownHours = 24;
 
 		private static List<Pawn> tmpPawns = new List<Pawn>();
 
@@ -64,58 +61,15 @@ namespace RimWorld.Planet
 
 		public override void CompTick()
 		{
-			MapParent mapParent = this.parent as MapParent;
+			MapParent mapParent = (MapParent)this.parent;
 			if (this.ForceExitAndRemoveMapCountdownActive)
 			{
 				if (mapParent.HasMap)
 				{
 					this.ticksLeftToForceExitAndRemoveMap--;
-					if (this.ticksLeftToForceExitAndRemoveMap == 0)
+					if (this.ticksLeftToForceExitAndRemoveMap <= 0)
 					{
-						if (Dialog_FormCaravan.AllSendablePawns(mapParent.Map, true).Any((Pawn x) => x.IsColonist))
-						{
-							Messages.Message("MessageYouHaveToReformCaravanNow".Translate(), new GlobalTargetInfo(mapParent.Tile), MessageTypeDefOf.NeutralEvent);
-							Current.Game.VisibleMap = mapParent.Map;
-							Dialog_FormCaravan window = new Dialog_FormCaravan(mapParent.Map, true, delegate
-							{
-								if (mapParent.HasMap)
-								{
-									this.ShowWorldViewIfVisibleMapAboutToBeRemoved(mapParent.Map);
-									Find.WorldObjects.Remove(mapParent);
-								}
-							}, false, true);
-							Find.WindowStack.Add(window);
-						}
-						else
-						{
-							TimedForcedExit.tmpPawns.Clear();
-							TimedForcedExit.tmpPawns.AddRange(from x in mapParent.Map.mapPawns.AllPawns
-							where x.Faction == Faction.OfPlayer || x.HostFaction == Faction.OfPlayer
-							select x);
-							if (TimedForcedExit.tmpPawns.Any<Pawn>())
-							{
-								if (TimedForcedExit.tmpPawns.Any((Pawn x) => CaravanUtility.IsOwner(x, Faction.OfPlayer)))
-								{
-									Caravan o = CaravanExitMapUtility.ExitMapAndCreateCaravan(TimedForcedExit.tmpPawns, Faction.OfPlayer, mapParent.Tile);
-									Messages.Message("MessageAutomaticallyReformedCaravan".Translate(), o, MessageTypeDefOf.NeutralEvent);
-								}
-								else
-								{
-									StringBuilder stringBuilder = new StringBuilder();
-									for (int i = 0; i < TimedForcedExit.tmpPawns.Count; i++)
-									{
-										stringBuilder.AppendLine("    " + TimedForcedExit.tmpPawns[i].LabelCap);
-									}
-									Find.LetterStack.ReceiveLetter("LetterLabelPawnsLostDueToMapCountdown".Translate(), "LetterPawnsLostDueToMapCountdown".Translate(new object[]
-									{
-										stringBuilder.ToString().TrimEndNewlines()
-									}), LetterDefOf.NegativeEvent, new GlobalTargetInfo(mapParent.Tile), null);
-								}
-								TimedForcedExit.tmpPawns.Clear();
-							}
-							this.ShowWorldViewIfVisibleMapAboutToBeRemoved(mapParent.Map);
-							Find.WorldObjects.Remove(mapParent);
-						}
+						TimedForcedExit.ForceReform(mapParent);
 					}
 				}
 				else
@@ -131,14 +85,36 @@ namespace RimWorld.Planet
 			{
 				return string.Empty;
 			}
-			return ticksLeft.ToStringTicksToPeriod(true, true, true);
+			return ticksLeft.ToStringTicksToPeriod();
 		}
 
-		private void ShowWorldViewIfVisibleMapAboutToBeRemoved(Map map)
+		public static void ForceReform(MapParent mapParent)
 		{
-			if (map == Find.VisibleMap)
+			if (Dialog_FormCaravan.AllSendablePawns(mapParent.Map, true).Any((Pawn x) => x.IsColonist))
 			{
-				Find.World.renderer.wantedMode = WorldRenderMode.Planet;
+				Messages.Message("MessageYouHaveToReformCaravanNow".Translate(), new GlobalTargetInfo(mapParent.Tile), MessageTypeDefOf.NeutralEvent, true);
+				Current.Game.CurrentMap = mapParent.Map;
+				Dialog_FormCaravan window = new Dialog_FormCaravan(mapParent.Map, true, delegate
+				{
+					if (mapParent.HasMap)
+					{
+						Find.WorldObjects.Remove(mapParent);
+					}
+				}, true);
+				Find.WindowStack.Add(window);
+			}
+			else
+			{
+				TimedForcedExit.tmpPawns.Clear();
+				TimedForcedExit.tmpPawns.AddRange(from x in mapParent.Map.mapPawns.AllPawns
+				where x.Faction == Faction.OfPlayer || x.HostFaction == Faction.OfPlayer
+				select x);
+				if (TimedForcedExit.tmpPawns.Any((Pawn x) => CaravanUtility.IsOwner(x, Faction.OfPlayer)))
+				{
+					CaravanExitMapUtility.ExitMapAndCreateCaravan(TimedForcedExit.tmpPawns, Faction.OfPlayer, mapParent.Tile, mapParent.Tile, -1, true);
+				}
+				TimedForcedExit.tmpPawns.Clear();
+				Find.WorldObjects.Remove(mapParent);
 			}
 		}
 	}

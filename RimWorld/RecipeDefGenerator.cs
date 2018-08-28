@@ -6,7 +6,7 @@ using Verse;
 
 namespace RimWorld
 {
-	internal static class RecipeDefGenerator
+	public static class RecipeDefGenerator
 	{
 		[DebuggerHidden]
 		public static IEnumerable<RecipeDef> ImpliedRecipeDefs()
@@ -35,6 +35,7 @@ namespace RimWorld
 				{
 					def.label
 				});
+				r.modContentPack = def.modContentPack;
 				r.workAmount = (float)rm.workAmount;
 				r.workSpeedStat = rm.workSpeedStat;
 				r.efficiencyStat = rm.efficiencyStat;
@@ -49,7 +50,7 @@ namespace RimWorld
 				}
 				if (def.costList != null)
 				{
-					foreach (ThingCountClass current in def.costList)
+					foreach (ThingDefCountClass current in def.costList)
 					{
 						IngredientCount ingredientCount2 = new IngredientCount();
 						ingredientCount2.SetBaseCount((float)current.count);
@@ -58,7 +59,7 @@ namespace RimWorld
 					}
 				}
 				r.defaultIngredientFilter = rm.defaultIngredientFilter;
-				r.products.Add(new ThingCountClass(def, rm.productCount));
+				r.products.Add(new ThingDefCountClass(def, rm.productCount));
 				r.targetCountAdjustment = rm.targetCountAdjustment;
 				r.skillRequirements = rm.skillRequirements.ListFullCopyOrNull<SkillRequirement>();
 				r.workSkill = rm.workSkill;
@@ -94,6 +95,7 @@ namespace RimWorld
 				r.targetsBodyPart = false;
 				r.anesthetize = false;
 				r.surgerySuccessChanceFactor = 99999f;
+				r.modContentPack = def.modContentPack;
 				r.workAmount = (float)def.ingestible.baseIngestTicks;
 				IngredientCount ic = new IngredientCount();
 				ic.SetBaseCount(1f);

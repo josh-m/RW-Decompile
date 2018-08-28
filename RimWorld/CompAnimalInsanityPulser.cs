@@ -55,7 +55,7 @@ namespace RimWorld
 			bool flag = false;
 			foreach (Pawn current in enumerable)
 			{
-				bool flag2 = current.mindState.mentalStateHandler.TryStartMentalState(MentalStateDefOf.Manhunter, null, false, false, null);
+				bool flag2 = current.mindState.mentalStateHandler.TryStartMentalState(MentalStateDefOf.Manhunter, null, false, false, null, false);
 				if (flag2)
 				{
 					flag = true;
@@ -63,9 +63,9 @@ namespace RimWorld
 			}
 			if (flag)
 			{
-				Messages.Message("MessageAnimalInsanityPulse".Translate(), this.parent, MessageTypeDefOf.ThreatSmall);
+				Messages.Message("MessageAnimalInsanityPulse".Translate(), this.parent, MessageTypeDefOf.ThreatSmall, true);
 				SoundDefOf.PsychicPulseGlobal.PlayOneShotOnCamera(this.parent.Map);
-				if (this.parent.Map == Find.VisibleMap)
+				if (this.parent.Map == Find.CurrentMap)
 				{
 					Find.CameraDriver.shaker.DoShake(4f);
 				}

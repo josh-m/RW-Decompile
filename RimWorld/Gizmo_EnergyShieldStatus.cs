@@ -5,7 +5,7 @@ using Verse;
 namespace RimWorld
 {
 	[StaticConstructorOnStartup]
-	internal class Gizmo_EnergyShieldStatus : Gizmo
+	public class Gizmo_EnergyShieldStatus : Gizmo
 	{
 		public ShieldBelt shield;
 
@@ -13,17 +13,19 @@ namespace RimWorld
 
 		private static readonly Texture2D EmptyShieldBarTex = SolidColorMaterials.NewSolidColorTexture(Color.clear);
 
-		public override float Width
+		public Gizmo_EnergyShieldStatus()
 		{
-			get
-			{
-				return 140f;
-			}
+			this.order = -100f;
 		}
 
-		public override GizmoResult GizmoOnGUI(Vector2 topLeft)
+		public override float GetWidth(float maxWidth)
 		{
-			Rect overRect = new Rect(topLeft.x, topLeft.y, this.Width, 75f);
+			return 140f;
+		}
+
+		public override GizmoResult GizmoOnGUI(Vector2 topLeft, float maxWidth)
+		{
+			Rect overRect = new Rect(topLeft.x, topLeft.y, this.GetWidth(maxWidth), 75f);
 			Find.WindowStack.ImmediateWindow(984688, overRect, WindowLayer.GameUI, delegate
 			{
 				Rect rect = overRect.AtZero().ContractedBy(6f);

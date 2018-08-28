@@ -1,82 +1,19 @@
+using RimWorld;
 using RimWorld.Planet;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Reflection;
+using System.Text;
 using UnityEngine;
 
 namespace Verse
 {
 	public static class Gen
 	{
-		public static Vector3 TrueCenter(this Thing t)
-		{
-			Pawn pawn = t as Pawn;
-			if (pawn != null)
-			{
-				return pawn.Drawer.DrawPos;
-			}
-			return Gen.TrueCenter(t.Position, t.Rotation, t.def.size, t.def.Altitude);
-		}
-
-		public static Vector3 TrueCenter(IntVec3 loc, Rot4 rotation, IntVec2 thingSize, float altitude)
-		{
-			Vector3 result = loc.ToVector3ShiftedWithAltitude(altitude);
-			if (thingSize.x != 1 || thingSize.z != 1)
-			{
-				if (rotation.IsHorizontal)
-				{
-					int x = thingSize.x;
-					thingSize.x = thingSize.z;
-					thingSize.z = x;
-				}
-				switch (rotation.AsInt)
-				{
-				case 0:
-					if (thingSize.x % 2 == 0)
-					{
-						result.x += 0.5f;
-					}
-					if (thingSize.z % 2 == 0)
-					{
-						result.z += 0.5f;
-					}
-					break;
-				case 1:
-					if (thingSize.x % 2 == 0)
-					{
-						result.x += 0.5f;
-					}
-					if (thingSize.z % 2 == 0)
-					{
-						result.z -= 0.5f;
-					}
-					break;
-				case 2:
-					if (thingSize.x % 2 == 0)
-					{
-						result.x -= 0.5f;
-					}
-					if (thingSize.z % 2 == 0)
-					{
-						result.z -= 0.5f;
-					}
-					break;
-				case 3:
-					if (thingSize.x % 2 == 0)
-					{
-						result.x -= 0.5f;
-					}
-					if (thingSize.z % 2 == 0)
-					{
-						result.z += 0.5f;
-					}
-					break;
-				}
-			}
-			return result;
-		}
+		private static MethodInfo s_memberwiseClone;
 
 		public static Vector3 AveragePosition(List<IntVec3> cells)
 		{
@@ -151,11 +88,11 @@ namespace Verse
 				}
 				if (flag)
 				{
-					Log.ErrorOnce("Exception in ToString(): " + arg, num ^ 1857461521);
+					Log.ErrorOnce("Exception in ToString(): " + arg, num ^ 1857461521, false);
 				}
 				else
 				{
-					Log.Error("Exception in ToString(): " + arg);
+					Log.Error("Exception in ToString(): " + arg, false);
 				}
 				result = "error";
 			}
@@ -196,11 +133,11 @@ namespace Verse
 				}
 				if (flag)
 				{
-					Log.ErrorOnce("Exception while enumerating: " + arg, num ^ 581736153);
+					Log.ErrorOnce("Exception while enumerating: " + arg, num ^ 581736153, false);
 				}
 				else
 				{
-					Log.Error("Exception while enumerating: " + arg);
+					Log.Error("Exception while enumerating: " + arg, false);
 				}
 				result = "error";
 			}
@@ -212,6 +149,24 @@ namespace Verse
 			T t = y;
 			y = x;
 			x = t;
+		}
+
+		public static T MemberwiseClone<T>(T obj)
+		{
+			if (Gen.s_memberwiseClone == null)
+			{
+				Gen.s_memberwiseClone = typeof(object).GetMethod("MemberwiseClone", BindingFlags.Instance | BindingFlags.NonPublic);
+			}
+			return (T)((object)Gen.s_memberwiseClone.Invoke(obj, null));
+		}
+
+		public static int FixedTimeStepUpdate(ref float timeBuffer, float fps)
+		{
+			timeBuffer += Mathf.Min(Time.deltaTime, 1f);
+			float num = 1f / fps;
+			int num2 = Mathf.FloorToInt(timeBuffer / num);
+			timeBuffer -= (float)num2 * num;
+			return num2;
 		}
 
 		public static int HashCombine<T>(int seed, T obj)
@@ -228,6 +183,17 @@ namespace Verse
 		public static int HashCombineInt(int seed, int value)
 		{
 			return (int)((long)seed ^ (long)value + (long)((ulong)-1640531527) + (long)((long)seed << 6) + (long)(seed >> 2));
+		}
+
+		public static int HashCombineInt(int v1, int v2, int v3, int v4)
+		{
+			int num = 352654597;
+			int num2 = num;
+			num = ((num << 5) + num + (num >> 27) ^ v1);
+			num2 = ((num2 << 5) + num2 + (num2 >> 27) ^ v2);
+			num = ((num << 5) + num + (num >> 27) ^ v3);
+			num2 = ((num2 << 5) + num2 + (num2 >> 27) ^ v4);
+			return num + num2 * 1566083941;
 		}
 
 		public static int HashOffset(this int baseInt)
@@ -265,10 +231,91 @@ namespace Verse
 			return Find.TickManager.TicksGame + o.ID.HashOffset();
 		}
 
+		public static bool IsHashIntervalTick(this Faction f, int interval)
+		{
+			return f.HashOffsetTicks() % interval == 0;
+		}
+
+		public static int HashOffsetTicks(this Faction f)
+		{
+			return Find.TickManager.TicksGame + f.randomKey.HashOffset();
+		}
+
 		public static bool IsNestedHashIntervalTick(this Thing t, int outerInterval, int approxInnerInterval)
 		{
 			int num = Mathf.Max(Mathf.RoundToInt((float)approxInnerInterval / (float)outerInterval), 1);
 			return t.HashOffsetTicks() / outerInterval % num == 0;
+		}
+
+		public static void ReplaceNullFields<T>(ref T replaceIn, T replaceWith)
+		{
+			if (replaceIn == null || replaceWith == null)
+			{
+				return;
+			}
+			FieldInfo[] fields = typeof(T).GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+			for (int i = 0; i < fields.Length; i++)
+			{
+				FieldInfo fieldInfo = fields[i];
+				if (fieldInfo.GetValue(replaceIn) == null)
+				{
+					object value = fieldInfo.GetValue(replaceWith);
+					if (value != null)
+					{
+						object obj = replaceIn;
+						fieldInfo.SetValue(obj, value);
+						replaceIn = (T)((object)obj);
+					}
+				}
+			}
+		}
+
+		public static void EnsureAllFieldsNullable(Type type)
+		{
+			FieldInfo[] fields = type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+			for (int i = 0; i < fields.Length; i++)
+			{
+				FieldInfo fieldInfo = fields[i];
+				Type fieldType = fieldInfo.FieldType;
+				if (fieldType.IsValueType)
+				{
+					if (Nullable.GetUnderlyingType(fieldType) == null)
+					{
+						Log.Warning(string.Concat(new string[]
+						{
+							"Field ",
+							type.Name,
+							".",
+							fieldInfo.Name,
+							" is not nullable."
+						}), false);
+					}
+				}
+			}
+		}
+
+		public static string GetNonNullFieldsDebugInfo(object obj)
+		{
+			if (obj == null)
+			{
+				return string.Empty;
+			}
+			StringBuilder stringBuilder = new StringBuilder();
+			FieldInfo[] fields = obj.GetType().GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+			for (int i = 0; i < fields.Length; i++)
+			{
+				FieldInfo fieldInfo = fields[i];
+				object value = fieldInfo.GetValue(obj);
+				if (value != null)
+				{
+					if (stringBuilder.Length > 0)
+					{
+						stringBuilder.Append(", ");
+					}
+					stringBuilder.Append(fieldInfo.Name + "=" + value.ToStringSafe<object>());
+				}
+			}
+			return stringBuilder.ToString();
 		}
 	}
 }

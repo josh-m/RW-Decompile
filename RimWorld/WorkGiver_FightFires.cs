@@ -64,7 +64,7 @@ namespace RimWorld
 				}
 				if (!pawn.Map.areaManager.Home[fire.Position])
 				{
-					JobFailReason.Is(WorkGiver_FixBrokenDownBuilding.NotInHomeAreaTrans);
+					JobFailReason.Is(WorkGiver_FixBrokenDownBuilding.NotInHomeAreaTrans, null);
 					return false;
 				}
 			}

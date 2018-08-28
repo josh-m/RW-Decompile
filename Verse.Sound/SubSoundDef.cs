@@ -8,7 +8,7 @@ namespace Verse.Sound
 {
 	public class SubSoundDef : Editable
 	{
-		[DefaultValue("UnnamedSubSoundDef"), Description("A name to help you identify the sound.")]
+		[DefaultValue("UnnamedSubSoundDef"), Description("A name to help you identify the sound."), MayTranslate]
 		public string name = "UnnamedSubSoundDef";
 
 		[DefaultValue(false), Description("Whether this sound plays on the camera or in the world.\n\nThis must match what the game expects from the sound Def with this name.")]
@@ -91,7 +91,7 @@ namespace Verse.Sound
 					" (subSound ",
 					this,
 					"_: No resolved grains."
-				}));
+				}), false);
 				return;
 			}
 			if (!Find.SoundRoot.oneShotManager.CanAddPlayingOneShot(this.parentDef, info))

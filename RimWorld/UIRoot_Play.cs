@@ -34,8 +34,10 @@ namespace RimWorld
 			{
 				Find.Tutor.TutorOnGUI();
 			}
+			ReorderableWidget.ReorderableWidgetOnGUI_BeforeWindowStack();
 			this.windows.WindowStackOnGUI();
-			ReorderableWidget.ReorderableWidgetOnGUI();
+			ReorderableWidget.ReorderableWidgetOnGUI_AfterWindowStack();
+			Widgets.WidgetsOnGUI();
 			this.mapUI.HandleMapClicks();
 			if (Find.DesignatorManager.SelectedDesignator != null)
 			{
@@ -61,13 +63,13 @@ namespace RimWorld
 			}
 			catch (Exception ex)
 			{
-				Log.Error("Exception in UIRootUpdate: " + ex.ToString());
+				Log.Error("Exception in UIRootUpdate: " + ex.ToString(), false);
 			}
 		}
 
 		private void OpenMainMenuShortcut()
 		{
-			if (Event.current.type == EventType.KeyDown && Event.current.keyCode == KeyCode.Escape)
+			if ((Event.current.type == EventType.KeyDown && Event.current.keyCode == KeyCode.Escape) || KeyBindingDefOf.Cancel.KeyDownEvent)
 			{
 				Event.current.Use();
 				Find.MainTabsRoot.SetCurrentTab(MainButtonDefOf.Menu, true);

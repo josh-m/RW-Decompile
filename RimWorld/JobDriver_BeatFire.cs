@@ -16,7 +16,7 @@ namespace RimWorld
 			}
 		}
 
-		public override bool TryMakePreToilReservations()
+		public override bool TryMakePreToilReservations(bool errorOnFailed)
 		{
 			return true;
 		}
@@ -31,7 +31,7 @@ namespace RimWorld
 			{
 				if (this.$this.Map.reservationManager.CanReserve(this.$this.pawn, this.$this.TargetFire, 1, -1, null, false))
 				{
-					this.$this.pawn.Reserve(this.$this.TargetFire, this.$this.job, 1, -1, null);
+					this.$this.pawn.Reserve(this.$this.TargetFire, this.$this.job, 1, -1, null, true);
 				}
 				this.$this.pawn.pather.StartPath(this.$this.TargetFire, PathEndMode.Touch);
 			};

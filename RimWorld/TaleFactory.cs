@@ -19,7 +19,7 @@ namespace RimWorld
 			}
 			catch (Exception arg)
 			{
-				Log.Error(string.Format("Failed to create tale object {0} with parameters {1}: {2}", def, GenText.ToCommaList(args.Select(new Func<object, string>(Gen.ToStringSafe<object>)), true), arg));
+				Log.Error(string.Format("Failed to create tale object {0} with parameters {1}: {2}", def, args.Select(new Func<object, string>(Gen.ToStringSafe<object>)).ToCommaList(false), arg), false);
 				result = null;
 			}
 			return result;

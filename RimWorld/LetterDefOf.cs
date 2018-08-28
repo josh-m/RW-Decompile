@@ -16,6 +16,11 @@ namespace RimWorld
 
 		public static LetterDef PositiveEvent;
 
-		public static LetterDef ItemStashFeeDemand;
+		public static LetterDef Death;
+
+		static LetterDefOf()
+		{
+			DefOfHelper.EnsureInitializedInCtor(typeof(LetterDefOf));
+		}
 	}
 }

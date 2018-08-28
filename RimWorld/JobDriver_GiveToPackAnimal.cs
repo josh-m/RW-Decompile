@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using UnityEngine;
 using Verse;
 using Verse.AI;
@@ -29,9 +30,12 @@ namespace RimWorld
 			}
 		}
 
-		public override bool TryMakePreToilReservations()
+		public override bool TryMakePreToilReservations(bool errorOnFailed)
 		{
-			return this.pawn.Reserve(this.Item, this.job, 1, -1, null);
+			Pawn pawn = this.pawn;
+			LocalTargetInfo target = this.Item;
+			Job job = this.job;
+			return pawn.Reserve(target, job, 1, -1, null, errorOnFailed);
 		}
 
 		[DebuggerHidden]
@@ -39,20 +43,20 @@ namespace RimWorld
 		{
 			yield return Toils_Goto.GotoThing(TargetIndex.A, PathEndMode.ClosestTouch);
 			yield return Toils_Haul.StartCarryThing(TargetIndex.A, false, false, false);
-			Toil findNearestCarrier = this.FindNearestCarrierToil();
+			Toil findNearestCarrier = this.FindCarrierToil();
 			yield return findNearestCarrier;
 			yield return Toils_Goto.GotoThing(TargetIndex.B, PathEndMode.Touch).FailOnDespawnedNullOrForbidden(TargetIndex.B).JumpIf(() => !this.$this.CanCarryAtLeastOne(this.$this.Animal), findNearestCarrier);
 			yield return this.GiveToCarrierAsMuchAsPossibleToil();
 			yield return Toils_Jump.JumpIf(findNearestCarrier, () => this.$this.pawn.carryTracker.CarriedThing != null);
 		}
 
-		private Toil FindNearestCarrierToil()
+		private Toil FindCarrierToil()
 		{
 			return new Toil
 			{
 				initAction = delegate
 				{
-					Pawn pawn = this.FindNearestCarrier();
+					Pawn pawn = this.FindCarrier();
 					if (pawn == null)
 					{
 						this.pawn.jobs.EndCurrentJob(JobCondition.Incompletable, true);
@@ -65,19 +69,24 @@ namespace RimWorld
 			};
 		}
 
-		private Pawn FindNearestCarrier()
+		private Pawn FindCarrier()
 		{
-			List<Pawn> list = base.Map.mapPawns.SpawnedPawnsInFaction(this.pawn.Faction);
+			IEnumerable<Pawn> enumerable = GiveToPackAnimalUtility.CarrierCandidatesFor(this.pawn);
+			Pawn animal = this.Animal;
+			if (animal != null && enumerable.Contains(animal) && animal.RaceProps.packAnimal && this.CanCarryAtLeastOne(animal))
+			{
+				return animal;
+			}
 			Pawn pawn = null;
 			float num = -1f;
-			for (int i = 0; i < list.Count; i++)
+			foreach (Pawn current in enumerable)
 			{
-				if (list[i].RaceProps.packAnimal && this.CanCarryAtLeastOne(list[i]))
+				if (current.RaceProps.packAnimal && this.CanCarryAtLeastOne(current))
 				{
-					float num2 = (float)list[i].Position.DistanceToSquared(this.pawn.Position);
+					float num2 = (float)current.Position.DistanceToSquared(this.pawn.Position);
 					if (pawn == null || num2 < num)
 					{
-						pawn = list[i];
+						pawn = current;
 						num = num2;
 					}
 				}

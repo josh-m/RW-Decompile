@@ -6,9 +6,16 @@ namespace RimWorld.Planet
 {
 	public class WorldGenStep_Features : WorldGenStep
 	{
+		public override int SeedPart
+		{
+			get
+			{
+				return 711240483;
+			}
+		}
+
 		public override void GenerateFresh(string seed)
 		{
-			Rand.Seed = GenText.StableStringHash(seed);
 			Find.World.features = new WorldFeatures();
 			IOrderedEnumerable<FeatureDef> orderedEnumerable = from x in DefDatabase<FeatureDef>.AllDefsListForReading
 			orderby x.order, x.index
@@ -27,10 +34,9 @@ namespace RimWorld.Planet
 						current,
 						": ",
 						ex
-					}));
+					}), false);
 				}
 			}
-			Rand.RandomizeStateFromTime();
 		}
 	}
 }

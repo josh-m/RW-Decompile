@@ -2,6 +2,7 @@ using RimWorld.Planet;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using Verse;
 
 namespace RimWorld
@@ -34,32 +35,41 @@ namespace RimWorld
 							if (entry != null)
 							{
 								float mtb = entry.mtbDays;
-								if (this.Props.applyCaravanStealthFactor)
+								if (this.Props.applyCaravanVisibility)
 								{
 									Caravan caravan = target as Caravan;
 									if (caravan != null)
 									{
-										mtb *= CaravanIncidentUtility.CalculateCaravanStealthFactor(caravan.PawnsListForReading.Count);
+										mtb /= caravan.Visibility;
 									}
 									else
 									{
 										Map map = target as Map;
-										if (map != null && map.info.parent.def.isTempIncidentMapOwner)
+										if (map != null && map.Parent.def.isTempIncidentMapOwner)
 										{
-											int pawnCount = map.mapPawns.SpawnedPawnsInFaction(Faction.OfPlayer).Count + map.mapPawns.PrisonersOfColonySpawnedCount;
-											mtb *= CaravanIncidentUtility.CalculateCaravanStealthFactor(pawnCount);
+											IEnumerable<Pawn> pawns = map.mapPawns.SpawnedPawnsInFaction(Faction.OfPlayer).Concat(map.mapPawns.PrisonersOfColonySpawned);
+											mtb /= CaravanVisibilityCalculator.Visibility(pawns, false, null);
 										}
 									}
 								}
-								if (Rand.MTBEventOccurs(mtb, 60000f, 1000f) && inc.Worker.CanFireNow(target))
+								if (Rand.MTBEventOccurs(mtb, 60000f, 1000f))
 								{
-									yield return new FiringIncident(inc, this, this.GenerateParms(inc.category, target));
+									IncidentParms parms = this.GenerateParms(inc.category, target);
+									if (inc.Worker.CanFireNow(parms, false))
+									{
+										yield return new FiringIncident(inc, this, parms);
+									}
 								}
 							}
 						}
 					}
 				}
 			}
+		}
+
+		public override string ToString()
+		{
+			return base.ToString() + " " + this.Props.category;
 		}
 	}
 }

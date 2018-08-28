@@ -4,7 +4,7 @@ using Verse.Noise;
 
 namespace RimWorld
 {
-	internal static class BeachMaker
+	public static class BeachMaker
 	{
 		private static ModuleBase beachNoise;
 

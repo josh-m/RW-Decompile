@@ -1,6 +1,7 @@
 using RimWorld;
 using RimWorld.Planet;
 using System;
+using System.IO;
 using UnityEngine;
 
 namespace Verse
@@ -11,31 +12,48 @@ namespace Verse
 
 		public override void Start()
 		{
+			Log.ResetMessageCount();
 			base.Start();
-			this.musicManagerPlay = new MusicManagerPlay();
-			if (Find.GameInitData != null && !Find.GameInitData.gameToLoad.NullOrEmpty())
+			try
 			{
-				LongEventHandler.QueueLongEvent(delegate
+				this.musicManagerPlay = new MusicManagerPlay();
+				FileInfo autostart = (!Root.checkedAutostartSaveFile) ? SaveGameFilesUtility.GetAutostartSaveFile() : null;
+				Root.checkedAutostartSaveFile = true;
+				if (autostart != null)
 				{
-					SavedGameLoader.LoadGameFromSaveFile(Find.GameInitData.gameToLoad);
-				}, "LoadingLongEvent", true, new Action<Exception>(GameAndMapInitExceptionHandlers.ErrorWhileLoadingGame));
-			}
-			else
-			{
-				LongEventHandler.QueueLongEvent(delegate
-				{
-					if (Current.Game == null)
+					LongEventHandler.QueueLongEvent(delegate
 					{
-						Root_Play.SetupForQuickTestPlay();
-					}
-					Current.Game.InitNewGame();
-				}, "GeneratingMap", true, new Action<Exception>(GameAndMapInitExceptionHandlers.ErrorWhileGeneratingMap));
+						SavedGameLoaderNow.LoadGameFromSaveFileNow(Path.GetFileNameWithoutExtension(autostart.Name));
+					}, "LoadingLongEvent", true, new Action<Exception>(GameAndMapInitExceptionHandlers.ErrorWhileLoadingGame));
+				}
+				else if (Find.GameInitData != null && !Find.GameInitData.gameToLoad.NullOrEmpty())
+				{
+					LongEventHandler.QueueLongEvent(delegate
+					{
+						SavedGameLoaderNow.LoadGameFromSaveFileNow(Find.GameInitData.gameToLoad);
+					}, "LoadingLongEvent", true, new Action<Exception>(GameAndMapInitExceptionHandlers.ErrorWhileLoadingGame));
+				}
+				else
+				{
+					LongEventHandler.QueueLongEvent(delegate
+					{
+						if (Current.Game == null)
+						{
+							Root_Play.SetupForQuickTestPlay();
+						}
+						Current.Game.InitNewGame();
+					}, "GeneratingMap", true, new Action<Exception>(GameAndMapInitExceptionHandlers.ErrorWhileGeneratingMap));
+				}
+				LongEventHandler.QueueLongEvent(delegate
+				{
+					ScreenFader.SetColor(Color.black);
+					ScreenFader.StartFade(Color.clear, 0.5f);
+				}, null, false, null);
 			}
-			LongEventHandler.QueueLongEvent(delegate
+			catch (Exception arg)
 			{
-				ScreenFader.SetColor(Color.black);
-				ScreenFader.StartFade(Color.clear, 0.5f);
-			}, null, false, null);
+				Log.Error("Critical error in root Start(): " + arg, false);
+			}
 		}
 
 		public override void Update()
@@ -48,13 +66,13 @@ namespace Verse
 			try
 			{
 				ShipCountdown.ShipCountdownUpdate();
+				TargetHighlighter.TargetHighlighterUpdate();
 				Current.Game.UpdatePlay();
 				this.musicManagerPlay.MusicUpdate();
 			}
-			catch (Exception e)
+			catch (Exception arg)
 			{
-				Log.Notify_Exception(e);
-				throw;
+				Log.Error("Root level exception in Update(): " + arg, false);
 			}
 		}
 
@@ -65,9 +83,8 @@ namespace Verse
 			Current.Game.InitData = new GameInitData();
 			Current.Game.Scenario = ScenarioDefOf.Crashlanded.scenario;
 			Find.Scenario.PreConfigure();
-			Current.Game.storyteller = new Storyteller(StorytellerDefOf.Cassandra, DifficultyDefOf.Hard);
+			Current.Game.storyteller = new Storyteller(StorytellerDefOf.Cassandra, DifficultyDefOf.Rough);
 			Current.Game.World = WorldGenerator.GenerateWorld(0.05f, GenText.RandomSeedString(), OverallRainfall.Normal, OverallTemperature.Normal);
-			Rand.RandomizeStateFromTime();
 			Find.GameInitData.ChooseRandomStartingTile();
 			Find.GameInitData.mapSize = 150;
 			Find.GameInitData.PrepForMapGen();

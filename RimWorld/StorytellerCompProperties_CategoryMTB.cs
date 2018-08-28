@@ -1,12 +1,15 @@
 using System;
+using Verse;
 
 namespace RimWorld
 {
 	public class StorytellerCompProperties_CategoryMTB : StorytellerCompProperties
 	{
-		public float mtbDays;
+		public float mtbDays = -1f;
 
-		public IncidentCategory category;
+		public SimpleCurve mtbDaysFactorByDaysPassedCurve;
+
+		public IncidentCategoryDef category;
 
 		public StorytellerCompProperties_CategoryMTB()
 		{

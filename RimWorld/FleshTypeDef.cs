@@ -10,6 +10,7 @@ namespace RimWorld
 	{
 		public class Wound
 		{
+			[NoTranslate]
 			public string texture;
 
 			public Color color = Color.white;
@@ -25,8 +26,6 @@ namespace RimWorld
 		public ThoughtDef ateAsIngredient;
 
 		public ThingCategoryDef corpseCategory;
-
-		public bool requiresBedForSurgery = true;
 
 		public List<FleshTypeDef.Wound> wounds;
 

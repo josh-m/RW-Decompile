@@ -35,7 +35,7 @@ namespace RimWorld
 				{
 					return true;
 				}
-				return !d.tags.Any((string tag) => Find.Scenario.playerFaction.factionDef.startingResearchTags.Contains(tag));
+				return !d.tags.Any((ResearchProjectTagDef tag) => Find.Scenario.playerFaction.factionDef.startingResearchTags.Contains(tag));
 			});
 		}
 
@@ -55,7 +55,7 @@ namespace RimWorld
 
 		public override void PostGameStart()
 		{
-			Find.ResearchManager.InstantFinish(this.project, false);
+			Find.ResearchManager.FinishProject(this.project, false, null);
 		}
 	}
 }

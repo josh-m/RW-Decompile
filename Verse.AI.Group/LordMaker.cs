@@ -10,7 +10,7 @@ namespace Verse.AI.Group
 		{
 			if (map == null)
 			{
-				Log.Warning("Tried to create a lord with null map.");
+				Log.Warning("Tried to create a lord with null map.", false);
 				return null;
 			}
 			Lord lord = new Lord();

@@ -35,28 +35,45 @@ namespace RimWorld
 			{
 				num = 999999f;
 			}
-			return PawnGroupMakerUtility.TryGetRandomFactionForNormalPawnGroup(num, out parms.faction, (Faction f) => this.FactionCanBeGroupSource(f, map, false), true, true, true, true) || PawnGroupMakerUtility.TryGetRandomFactionForNormalPawnGroup(num, out parms.faction, (Faction f) => this.FactionCanBeGroupSource(f, map, true), true, true, true, true);
+			return PawnGroupMakerUtility.TryGetRandomFactionForCombatPawnGroup(num, out parms.faction, (Faction f) => this.FactionCanBeGroupSource(f, map, false), true, true, true, true) || PawnGroupMakerUtility.TryGetRandomFactionForCombatPawnGroup(num, out parms.faction, (Faction f) => this.FactionCanBeGroupSource(f, map, true), true, true, true, true);
 		}
 
 		protected override void ResolveRaidPoints(IncidentParms parms)
 		{
 			if (parms.points <= 0f)
 			{
-				Log.Error("RaidEnemy is resolving raid points. They should always be set before initiating the incident.");
-				parms.points = (float)Rand.Range(50, 300);
+				Log.Error("RaidEnemy is resolving raid points. They should always be set before initiating the incident.", false);
+				parms.points = StorytellerUtility.DefaultThreatPointsNow(parms.target);
 			}
 		}
 
-		protected override void ResolveRaidStrategy(IncidentParms parms)
+		protected override void ResolveRaidStrategy(IncidentParms parms, PawnGroupKindDef groupKind)
 		{
 			if (parms.raidStrategy != null)
 			{
 				return;
 			}
 			Map map = (Map)parms.target;
-			parms.raidStrategy = (from d in DefDatabase<RaidStrategyDef>.AllDefs
-			where d.Worker.CanUseWith(parms)
-			select d).RandomElementByWeight((RaidStrategyDef d) => d.Worker.SelectionChance(map));
+			if (!(from d in DefDatabase<RaidStrategyDef>.AllDefs
+			where d.Worker.CanUseWith(parms, groupKind) && (parms.raidArrivalMode != null || (d.arriveModes != null && d.arriveModes.Any((PawnsArrivalModeDef x) => x.Worker.CanUseWith(parms))))
+			select d).TryRandomElementByWeight((RaidStrategyDef d) => d.Worker.SelectionWeight(map, parms.points), out parms.raidStrategy))
+			{
+				Log.Error(string.Concat(new object[]
+				{
+					"No raid stategy for ",
+					parms.faction,
+					" with points ",
+					parms.points,
+					", groupKind=",
+					groupKind,
+					"\nparms=",
+					parms
+				}), false);
+				if (!Prefs.DevMode)
+				{
+					parms.raidStrategy = RaidStrategyDefOf.ImmediateAttack;
+				}
+			}
 		}
 
 		protected override string GetLetterLabel(IncidentParms parms)
@@ -66,38 +83,7 @@ namespace RimWorld
 
 		protected override string GetLetterText(IncidentParms parms, List<Pawn> pawns)
 		{
-			string text = null;
-			PawnsArriveMode raidArrivalMode = parms.raidArrivalMode;
-			if (raidArrivalMode != PawnsArriveMode.EdgeWalkIn)
-			{
-				if (raidArrivalMode != PawnsArriveMode.EdgeDrop)
-				{
-					if (raidArrivalMode == PawnsArriveMode.CenterDrop)
-					{
-						text = "EnemyRaidCenterDrop".Translate(new object[]
-						{
-							parms.faction.def.pawnsPlural,
-							parms.faction.Name
-						});
-					}
-				}
-				else
-				{
-					text = "EnemyRaidEdgeDrop".Translate(new object[]
-					{
-						parms.faction.def.pawnsPlural,
-						parms.faction.Name
-					});
-				}
-			}
-			else
-			{
-				text = "EnemyRaidWalkIn".Translate(new object[]
-				{
-					parms.faction.def.pawnsPlural,
-					parms.faction.Name
-				});
-			}
+			string text = string.Format(parms.raidArrivalMode.textEnemy, parms.faction.def.pawnsPlural, parms.faction.Name);
 			text += "\n\n";
 			text += parms.raidStrategy.arrivalTextEnemy;
 			Pawn pawn = pawns.Find((Pawn x) => x.Faction.leader == x);
@@ -122,6 +108,7 @@ namespace RimWorld
 		{
 			return "LetterRelatedPawnsRaidEnemy".Translate(new object[]
 			{
+				Faction.OfPlayer.def.pawnsPlural,
 				parms.faction.def.pawnsPlural
 			});
 		}

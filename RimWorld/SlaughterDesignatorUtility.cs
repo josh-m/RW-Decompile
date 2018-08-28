@@ -18,7 +18,7 @@ namespace RimWorld
 				{
 					designated.LabelShort,
 					firstDirectRelationPawn.LabelShort
-				}), designated, MessageTypeDefOf.CautionInput);
+				}), designated, MessageTypeDefOf.CautionInput, false);
 			}
 		}
 	}

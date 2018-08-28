@@ -9,5 +9,10 @@ namespace RimWorld
 		public static SongDef EntrySong;
 
 		public static SongDef EndCreditsSong;
+
+		static SongDefOf()
+		{
+			DefOfHelper.EnsureInitializedInCtor(typeof(SongDefOf));
+		}
 	}
 }

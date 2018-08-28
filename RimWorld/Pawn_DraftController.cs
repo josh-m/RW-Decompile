@@ -36,26 +36,27 @@ namespace RimWorld
 				{
 					this.pawn.Map.pawnDestinationReservationManager.ReleaseAllClaimedBy(this.pawn);
 				}
+				this.pawn.jobs.ClearQueuedJobs();
 				if (this.pawn.jobs.curJob != null && this.pawn.jobs.IsCurrentJobPlayerInterruptible())
 				{
 					this.pawn.jobs.EndCurrentJob(JobCondition.InterruptForced, true);
 				}
 				if (this.draftedInt)
 				{
-					foreach (Pawn current in PawnUtility.SpawnedMasteredPawns(this.pawn))
-					{
-						current.jobs.Notify_MasterDrafted();
-					}
 					Lord lord = this.pawn.GetLord();
 					if (lord != null && lord.LordJob is LordJob_VoluntarilyJoinable)
 					{
-						lord.Notify_PawnLost(this.pawn, PawnLostCondition.Drafted);
+						lord.Notify_PawnLost(this.pawn, PawnLostCondition.Drafted, null);
 					}
 					this.autoUndrafter.Notify_Drafted();
 				}
 				else if (this.pawn.playerSettings != null)
 				{
 					this.pawn.playerSettings.animalsReleased = false;
+				}
+				foreach (Pawn current in PawnUtility.SpawnedMasteredPawns(this.pawn))
+				{
+					current.jobs.Notify_MasterDraftedOrUndrafted();
 				}
 			}
 		}
@@ -101,12 +102,16 @@ namespace RimWorld
 		internal IEnumerable<Gizmo> GetGizmos()
 		{
 			Command_Toggle draft = new Command_Toggle();
-			draft.hotKey = KeyBindingDefOf.CommandColonistDraft;
+			draft.hotKey = KeyBindingDefOf.Command_ColonistDraft;
 			draft.isActive = new Func<bool>(this.get_Drafted);
 			draft.toggleAction = delegate
 			{
 				this.$this.Drafted = !this.$this.Drafted;
 				PlayerKnowledgeDatabase.KnowledgeDemonstrated(ConceptDefOf.Drafting, KnowledgeAmount.SpecificInteraction);
+				if (this.$this.Drafted)
+				{
+					LessonAutoActivator.TeachOpportunity(ConceptDefOf.QueueOrders, OpportunityType.GoodToKnow);
+				}
 			};
 			draft.defaultDesc = "CommandToggleDraftDesc".Translate();
 			draft.icon = TexCommand.Draft;
@@ -120,7 +125,7 @@ namespace RimWorld
 			{
 				draft.Disable("IsIncapped".Translate(new object[]
 				{
-					this.pawn.NameStringShort
+					this.pawn.LabelShort
 				}));
 			}
 			if (!this.Drafted)

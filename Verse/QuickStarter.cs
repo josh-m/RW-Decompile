@@ -3,7 +3,7 @@ using UnityEngine.SceneManagement;
 
 namespace Verse
 {
-	internal static class QuickStarter
+	public static class QuickStarter
 	{
 		private static bool quickStarted;
 

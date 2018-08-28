@@ -41,14 +41,14 @@ namespace RimWorld
 			StringBuilder stringBuilder = new StringBuilder();
 			foreach (Pawn current in this.ColonistsNeedingRescue)
 			{
-				stringBuilder.AppendLine("    " + current.NameStringShort);
+				stringBuilder.AppendLine("    " + current.LabelShort);
 			}
 			return string.Format("ColonistsNeedRescueDesc".Translate(), stringBuilder.ToString());
 		}
 
 		public override AlertReport GetReport()
 		{
-			return AlertReport.CulpritIs(this.ColonistsNeedingRescue.FirstOrDefault<Pawn>());
+			return AlertReport.CulpritsAre(this.ColonistsNeedingRescue);
 		}
 	}
 }

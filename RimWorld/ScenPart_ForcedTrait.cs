@@ -68,12 +68,8 @@ namespace RimWorld
 			return scenPart_ForcedTrait == null || this.trait != scenPart_ForcedTrait.trait || !this.context.OverlapsWith(scenPart_ForcedTrait.context);
 		}
 
-		protected override void ModifyPawn(Pawn pawn)
+		protected override void ModifyPawnPostGenerate(Pawn pawn, bool redressed)
 		{
-			if (Rand.Value > this.chance)
-			{
-				return;
-			}
 			if (pawn.story == null || pawn.story.traits == null)
 			{
 				return;

@@ -10,5 +10,10 @@ namespace RimWorld
 		public static HibernatableStateDef Starting;
 
 		public static HibernatableStateDef Hibernating;
+
+		static HibernatableStateDefOf()
+		{
+			DefOfHelper.EnsureInitializedInCtor(typeof(HibernatableStateDefOf));
+		}
 	}
 }

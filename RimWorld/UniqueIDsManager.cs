@@ -21,6 +21,8 @@ namespace RimWorld
 
 		private int nextMapID;
 
+		private int nextCaravanID;
+
 		private int nextAreaID;
 
 		private int nextTransporterGroupID;
@@ -36,6 +38,16 @@ namespace RimWorld
 		private int nextHediffID;
 
 		private int nextBattleID;
+
+		private int nextLogID;
+
+		private int nextLetterID;
+
+		private int nextArchivedDialogID;
+
+		private int nextMessageID;
+
+		private int nextZoneID;
 
 		public UniqueIDsManager()
 		{
@@ -82,6 +94,11 @@ namespace RimWorld
 			return UniqueIDsManager.GetNextID(ref this.nextMapID);
 		}
 
+		public int GetNextCaravanID()
+		{
+			return UniqueIDsManager.GetNextID(ref this.nextCaravanID);
+		}
+
 		public int GetNextAreaID()
 		{
 			return UniqueIDsManager.GetNextID(ref this.nextAreaID);
@@ -122,17 +139,42 @@ namespace RimWorld
 			return UniqueIDsManager.GetNextID(ref this.nextBattleID);
 		}
 
+		public int GetNextLogID()
+		{
+			return UniqueIDsManager.GetNextID(ref this.nextLogID);
+		}
+
+		public int GetNextLetterID()
+		{
+			return UniqueIDsManager.GetNextID(ref this.nextLetterID);
+		}
+
+		public int GetNextArchivedDialogID()
+		{
+			return UniqueIDsManager.GetNextID(ref this.nextArchivedDialogID);
+		}
+
+		public int GetNextMessageID()
+		{
+			return UniqueIDsManager.GetNextID(ref this.nextMessageID);
+		}
+
+		public int GetNextZoneID()
+		{
+			return UniqueIDsManager.GetNextID(ref this.nextZoneID);
+		}
+
 		private static int GetNextID(ref int nextID)
 		{
 			if (Scribe.mode == LoadSaveMode.Saving || Scribe.mode == LoadSaveMode.LoadingVars)
 			{
-				Log.Warning("Getting next unique ID during saving or loading. This may cause bugs.");
+				Log.Warning("Getting next unique ID during saving or loading. This may cause bugs.", false);
 			}
 			int result = nextID;
 			nextID++;
 			if (nextID == 2147483647)
 			{
-				Log.Warning("Next ID is at max value. Resetting to 0. This may cause bugs.");
+				Log.Warning("Next ID is at max value. Resetting to 0. This may cause bugs.", false);
 				nextID = 0;
 			}
 			return result;
@@ -148,6 +190,7 @@ namespace RimWorld
 			Scribe_Values.Look<int>(ref this.nextPassingShipID, "nextPassingShipID", 0, false);
 			Scribe_Values.Look<int>(ref this.nextWorldObjectID, "nextWorldObjectID", 0, false);
 			Scribe_Values.Look<int>(ref this.nextMapID, "nextMapID", 0, false);
+			Scribe_Values.Look<int>(ref this.nextCaravanID, "nextCaravanID", 0, false);
 			Scribe_Values.Look<int>(ref this.nextAreaID, "nextAreaID", 0, false);
 			Scribe_Values.Look<int>(ref this.nextTransporterGroupID, "nextTransporterGroupID", 0, false);
 			Scribe_Values.Look<int>(ref this.nextAncientCryptosleepCasketGroupID, "nextAncientCryptosleepCasketGroupID", 0, false);
@@ -156,6 +199,11 @@ namespace RimWorld
 			Scribe_Values.Look<int>(ref this.nextWorldFeatureID, "nextWorldFeatureID", 0, false);
 			Scribe_Values.Look<int>(ref this.nextHediffID, "nextHediffID", 0, false);
 			Scribe_Values.Look<int>(ref this.nextBattleID, "nextBattleID", 0, false);
+			Scribe_Values.Look<int>(ref this.nextLogID, "nextLogID", 0, false);
+			Scribe_Values.Look<int>(ref this.nextLetterID, "nextLetterID", 0, false);
+			Scribe_Values.Look<int>(ref this.nextArchivedDialogID, "nextArchivedDialogID", 0, false);
+			Scribe_Values.Look<int>(ref this.nextMessageID, "nextMessageID", 0, false);
+			Scribe_Values.Look<int>(ref this.nextZoneID, "nextZoneID", 0, false);
 		}
 	}
 }

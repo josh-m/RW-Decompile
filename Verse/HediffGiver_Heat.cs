@@ -75,8 +75,8 @@ namespace Verse
 				{
 					float num5 = ambientTemperature - num4;
 					num5 = HediffGiver_Heat.TemperatureOverageAdjustmentCurve.Evaluate(num5);
-					int amount = Mathf.Max(GenMath.RoundRandom(num5 * 0.06f), 3);
-					DamageInfo dinfo = new DamageInfo(DamageDefOf.Burn, amount, -1f, null, null, null, DamageInfo.SourceCategory.ThingOrUnknown);
+					int num6 = Mathf.Max(GenMath.RoundRandom(num5 * 0.06f), 3);
+					DamageInfo dinfo = new DamageInfo(DamageDefOf.Burn, (float)num6, 0f, -1f, null, null, null, DamageInfo.SourceCategory.ThingOrUnknown, null);
 					dinfo.SetBodyRegion(BodyPartHeight.Undefined, BodyPartDepth.Outside);
 					pawn.TakeDamage(dinfo);
 					if (pawn.Faction == Faction.OfPlayer)
@@ -87,7 +87,7 @@ namespace Verse
 							Messages.Message("MessagePawnBeingBurned".Translate(new object[]
 							{
 								pawn.LabelShort
-							}).CapitalizeFirst(), pawn, MessageTypeDefOf.ThreatSmall);
+							}).CapitalizeFirst(), pawn, MessageTypeDefOf.ThreatSmall, true);
 						}
 					}
 					Lord lord = pawn.GetLord();

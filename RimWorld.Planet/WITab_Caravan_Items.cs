@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using Verse;
 
@@ -11,9 +12,19 @@ namespace RimWorld.Planet
 
 		private float scrollViewHeight;
 
-		private List<Thing> items = new List<Thing>();
+		private TransferableSorterDef sorter1;
 
-		private const float MassCarriedLineHeight = 22f;
+		private TransferableSorterDef sorter2;
+
+		private List<TransferableImmutable> cachedItems = new List<TransferableImmutable>();
+
+		private int cachedItemsHash;
+
+		private int cachedItemsCount;
+
+		private const float SortersSpace = 25f;
+
+		private const float AssignDrugPoliciesButtonHeight = 27f;
 
 		public WITab_Caravan_Items()
 		{
@@ -22,49 +33,91 @@ namespace RimWorld.Planet
 
 		protected override void FillTab()
 		{
-			float num = 0f;
-			this.DrawMassUsage(ref num);
-			Rect position = new Rect(0f, num, this.size.x, this.size.y - num);
-			GUI.BeginGroup(position);
-			this.UpdateItemsList();
-			Pawn pawn = null;
-			CaravanPeopleAndItemsTabUtility.DoRows(position.size, this.items, base.SelCaravan, ref this.scrollPosition, ref this.scrollViewHeight, true, ref pawn, true);
-			this.items.Clear();
+			this.CheckCreateSorters();
+			Rect rect = new Rect(0f, 0f, this.size.x, this.size.y);
+			if (Widgets.ButtonText(new Rect(rect.x + 10f, rect.y + 10f, 200f, 27f), "AssignDrugPolicies".Translate(), true, false, true))
+			{
+				Find.WindowStack.Add(new Dialog_AssignCaravanDrugPolicies(base.SelCaravan));
+			}
+			rect.yMin += 37f;
+			GUI.BeginGroup(rect.ContractedBy(10f));
+			TransferableUIUtility.DoTransferableSorters(this.sorter1, this.sorter2, delegate(TransferableSorterDef x)
+			{
+				this.sorter1 = x;
+				this.CacheItems();
+			}, delegate(TransferableSorterDef x)
+			{
+				this.sorter2 = x;
+				this.CacheItems();
+			});
+			GUI.EndGroup();
+			rect.yMin += 25f;
+			GUI.BeginGroup(rect);
+			this.CheckCacheItems();
+			CaravanItemsTabUtility.DoRows(rect.size, this.cachedItems, base.SelCaravan, ref this.scrollPosition, ref this.scrollViewHeight);
 			GUI.EndGroup();
 		}
 
 		protected override void UpdateSize()
 		{
 			base.UpdateSize();
-			this.UpdateItemsList();
-			this.size = CaravanPeopleAndItemsTabUtility.GetSize(this.items, this.PaneTopY, true);
-			this.items.Clear();
+			this.CheckCacheItems();
+			this.size = CaravanItemsTabUtility.GetSize(this.cachedItems, this.PaneTopY, true);
 		}
 
-		private void DrawMassUsage(ref float curY)
+		private void CheckCacheItems()
 		{
-			curY += 10f;
-			Rect rect = new Rect(10f, curY, this.size.x - 10f, 100f);
-			float massUsage = base.SelCaravan.MassUsage;
-			float massCapacity = base.SelCaravan.MassCapacity;
-			if (massUsage > massCapacity)
+			List<Thing> list = CaravanInventoryUtility.AllInventoryItems(base.SelCaravan);
+			if (list.Count != this.cachedItemsCount)
 			{
-				GUI.color = Color.red;
+				this.CacheItems();
 			}
-			Text.Font = GameFont.Small;
-			Widgets.Label(rect, "MassCarried".Translate(new object[]
+			else
 			{
-				massUsage.ToString("0.##"),
-				massCapacity.ToString("0.##")
-			}));
-			GUI.color = Color.white;
-			curY += 22f;
+				int num = 0;
+				for (int i = 0; i < list.Count; i++)
+				{
+					num = Gen.HashCombineInt(num, list[i].GetHashCode());
+				}
+				if (num != this.cachedItemsHash)
+				{
+					this.CacheItems();
+				}
+			}
 		}
 
-		private void UpdateItemsList()
+		private void CacheItems()
 		{
-			this.items.Clear();
-			this.items.AddRange(CaravanInventoryUtility.AllInventoryItems(base.SelCaravan));
+			this.CheckCreateSorters();
+			this.cachedItems.Clear();
+			List<Thing> list = CaravanInventoryUtility.AllInventoryItems(base.SelCaravan);
+			int seed = 0;
+			for (int i = 0; i < list.Count; i++)
+			{
+				TransferableImmutable transferableImmutable = TransferableUtility.TransferableMatching<TransferableImmutable>(list[i], this.cachedItems, TransferAsOneMode.Normal);
+				if (transferableImmutable == null)
+				{
+					transferableImmutable = new TransferableImmutable();
+					this.cachedItems.Add(transferableImmutable);
+				}
+				transferableImmutable.things.Add(list[i]);
+				seed = Gen.HashCombineInt(seed, list[i].GetHashCode());
+			}
+			this.cachedItems = this.cachedItems.OrderBy((TransferableImmutable tr) => tr, this.sorter1.Comparer).ThenBy((TransferableImmutable tr) => tr, this.sorter2.Comparer).ThenBy(new Func<TransferableImmutable, float>(TransferableUIUtility.DefaultListOrderPriority)).ToList<TransferableImmutable>();
+			this.cachedItemsCount = list.Count;
+			this.cachedItemsHash = seed;
+		}
+
+		private void CheckCreateSorters()
+		{
+			if (this.sorter1 == null)
+			{
+				this.sorter1 = TransferableSorterDefOf.Category;
+			}
+			if (this.sorter2 == null)
+			{
+				this.sorter2 = TransferableSorterDefOf.MarketValue;
+			}
 		}
 	}
 }

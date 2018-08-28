@@ -15,7 +15,15 @@ namespace RimWorld
 
 		private const float RubbleProbability = 0.5f;
 
-		public override void Generate(Map map)
+		public override int SeedPart
+		{
+			get
+			{
+				return 1898758716;
+			}
+		}
+
+		public override void Generate(Map map, GenStepParams parms)
 		{
 			if (map.TileInfo.WaterCovered)
 			{
@@ -38,7 +46,7 @@ namespace RimWorld
 
 		private void GrowLowRockFormationFrom(IntVec3 root, Map map)
 		{
-			ThingDef rockRubble = ThingDefOf.RockRubble;
+			ThingDef filth_RubbleRock = ThingDefOf.Filth_RubbleRock;
 			ThingDef mineableThing = Find.World.NaturalRockTypesIn(map.Tile).RandomElement<ThingDef>().building.mineableThing;
 			Rot4 random = Rot4.Random;
 			MapGenFloatGrid elevation = MapGenerator.Elevation;
@@ -57,11 +65,11 @@ namespace RimWorld
 					{
 						return;
 					}
-					if (!map.terrainGrid.TerrainAt(intVec).affordances.Contains(TerrainAffordance.Heavy))
+					if (!map.terrainGrid.TerrainAt(intVec).affordances.Contains(TerrainAffordanceDefOf.Heavy))
 					{
 						return;
 					}
-					GenSpawn.Spawn(mineableThing, intVec, map);
+					GenSpawn.Spawn(mineableThing, intVec, map, WipeMode.Vanish);
 					IntVec3[] adjacentCellsAndInside = GenAdj.AdjacentCellsAndInside;
 					for (int i = 0; i < adjacentCellsAndInside.Length; i++)
 					{
@@ -84,7 +92,7 @@ namespace RimWorld
 								}
 								if (!flag)
 								{
-									FilthMaker.MakeFilth(c, map, rockRubble, 1);
+									FilthMaker.MakeFilth(c, map, filth_RubbleRock, 1);
 								}
 							}
 						}

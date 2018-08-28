@@ -43,8 +43,6 @@ namespace RimWorld
 
 		public static ThoughtDef SleepDisturbed;
 
-		public static ThoughtDef GreenThumbHappy;
-
 		public static ThoughtDef WasImprisoned;
 
 		public static ThoughtDef NewColonyOptimism;
@@ -115,6 +113,8 @@ namespace RimWorld
 
 		public static ThoughtDef RescuedRelative;
 
+		public static ThoughtDef Rescued;
+
 		public static ThoughtDef ApparelDamaged;
 
 		public static ThoughtDef Naked;
@@ -183,10 +183,13 @@ namespace RimWorld
 
 		public static ThoughtDef DefeatedHostileFactionLeader;
 
-		public static ThoughtDef DefeatedMajorEnemy;
-
 		public static ThoughtDef ForcedMeToTakeDrugs;
 
 		public static ThoughtDef ForcedMeToTakeLuciferium;
+
+		static ThoughtDefOf()
+		{
+			DefOfHelper.EnsureInitializedInCtor(typeof(ThoughtDefOf));
+		}
 	}
 }

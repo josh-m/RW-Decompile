@@ -12,9 +12,9 @@ namespace Verse
 	{
 		private ThingOwner<Pawn> innerContainer;
 
-		private int timeOfDeath = -1000;
+		public int timeOfDeath = -1;
 
-		private int vanishAfterTimestamp = -1000;
+		private int vanishAfterTimestamp = -1;
 
 		private BillStack operationsBillStack;
 
@@ -42,7 +42,7 @@ namespace Verse
 				{
 					if (this.innerContainer.Count > 0)
 					{
-						Log.Error("Setting InnerPawn in corpse that already has one.");
+						Log.Error("Setting InnerPawn in corpse that already has one.", false);
 						this.innerContainer.Clear();
 					}
 					this.innerContainer.TryAdd(value, true);
@@ -66,9 +66,14 @@ namespace Verse
 		{
 			get
 			{
+				if (this.Bugged)
+				{
+					Log.ErrorOnce("Corpse.Label while Bugged", 57361644, false);
+					return string.Empty;
+				}
 				return "DeadLabel".Translate(new object[]
 				{
-					this.InnerPawn.LabelCap
+					this.InnerPawn.Label
 				});
 			}
 		}
@@ -79,7 +84,7 @@ namespace Verse
 			{
 				if (this.Bugged)
 				{
-					Log.Error("IngestibleNow on Corpse while Bugged.");
+					Log.Error("IngestibleNow on Corpse while Bugged.", false);
 					return false;
 				}
 				return base.IngestibleNow && this.InnerPawn.RaceProps.IsFlesh && this.GetRotStage() == RotStage.Fresh;
@@ -114,25 +119,6 @@ namespace Verse
 			}
 		}
 
-		public override IEnumerable<StatDrawEntry> SpecialDisplayStats
-		{
-			get
-			{
-				foreach (StatDrawEntry s in base.SpecialDisplayStats)
-				{
-					yield return s;
-				}
-				if (this.GetRotStage() == RotStage.Fresh)
-				{
-					yield return new StatDrawEntry(StatCategoryDefOf.Basics, "Nutrition".Translate(), FoodUtility.GetBodyPartNutrition(this.InnerPawn, this.InnerPawn.RaceProps.body.corePart).ToString("0.##"), 0, string.Empty);
-					StatDef meatAmount = StatDefOf.MeatAmount;
-					yield return new StatDrawEntry(meatAmount.category, meatAmount, this.InnerPawn.GetStatValue(meatAmount, true), StatRequest.For(this.InnerPawn), ToStringNumberSense.Undefined);
-					StatDef leatherAmount = StatDefOf.LeatherAmount;
-					yield return new StatDrawEntry(leatherAmount.category, leatherAmount, this.InnerPawn.GetStatValue(leatherAmount, true), StatRequest.For(this.InnerPawn), ToStringNumberSense.Undefined);
-				}
-			}
-		}
-
 		public BillStack BillStack
 		{
 			get
@@ -153,7 +139,7 @@ namespace Verse
 		{
 			get
 			{
-				return this.innerContainer.Count == 0 || this.innerContainer[0] == null;
+				return this.innerContainer.Count == 0 || this.innerContainer[0] == null || this.innerContainer[0].def == null || this.innerContainer[0].kindDef == null;
 			}
 		}
 
@@ -166,6 +152,11 @@ namespace Verse
 		public bool CurrentlyUsableForBills()
 		{
 			return this.InteractionCell.IsValid;
+		}
+
+		public bool UsableForBillsAfterFueling()
+		{
+			return this.CurrentlyUsableForBills();
 		}
 
 		public bool AnythingToStrip()
@@ -183,25 +174,27 @@ namespace Verse
 			ThingOwnerUtility.AppendThingHoldersFromThings(outChildren, this.GetDirectlyHeldThings());
 		}
 
+		public override void PostMake()
+		{
+			base.PostMake();
+			this.timeOfDeath = Find.TickManager.TicksGame;
+		}
+
 		public override void SpawnSetup(Map map, bool respawningAfterLoad)
 		{
 			if (this.Bugged)
 			{
-				Log.Error(this + " spawned in bugged state.");
+				Log.Error(this + " spawned in bugged state.", false);
 				return;
 			}
 			base.SpawnSetup(map, respawningAfterLoad);
-			if (this.timeOfDeath < 0)
-			{
-				this.timeOfDeath = Find.TickManager.TicksGame;
-			}
 			this.InnerPawn.Rotation = Rot4.South;
 			this.NotifyColonistBar();
 		}
 
-		public override void DeSpawn()
+		public override void DeSpawn(DestroyMode mode = DestroyMode.Vanish)
 		{
-			base.DeSpawn();
+			base.DeSpawn(mode);
 			if (!this.Bugged)
 			{
 				this.NotifyColonistBar();
@@ -250,7 +243,7 @@ namespace Verse
 			}
 			if (this.Bugged)
 			{
-				Log.Error(this + " has null innerPawn. Destroying.");
+				Log.Error(this + " has null innerPawn. Destroying.", false);
 				this.Destroy(DestroyMode.Vanish);
 				return;
 			}
@@ -276,10 +269,10 @@ namespace Verse
 					" ate ",
 					this,
 					" but no body part was found. Replacing with core part."
-				}));
+				}), false);
 				bodyPartRecord = this.InnerPawn.RaceProps.body.corePart;
 			}
-			float bodyPartNutrition = FoodUtility.GetBodyPartNutrition(this.InnerPawn, bodyPartRecord);
+			float bodyPartNutrition = FoodUtility.GetBodyPartNutrition(this, bodyPartRecord);
 			if (bodyPartRecord == this.InnerPawn.RaceProps.body.corePart)
 			{
 				if (PawnUtility.ShouldSendNotificationAbout(this.InnerPawn) && this.InnerPawn.RaceProps.Humanlike)
@@ -288,7 +281,7 @@ namespace Verse
 					{
 						this.InnerPawn.LabelShort,
 						ingester.LabelIndefinite()
-					}).CapitalizeFirst(), ingester, MessageTypeDefOf.NegativeEvent);
+					}).CapitalizeFirst(), ingester, MessageTypeDefOf.NegativeEvent, true);
 				}
 				numTaken = 1;
 			}
@@ -297,12 +290,8 @@ namespace Verse
 				Hediff_MissingPart hediff_MissingPart = (Hediff_MissingPart)HediffMaker.MakeHediff(HediffDefOf.MissingBodyPart, this.InnerPawn, bodyPartRecord);
 				hediff_MissingPart.lastInjury = HediffDefOf.Bite;
 				hediff_MissingPart.IsFresh = true;
-				this.InnerPawn.health.AddHediff(hediff_MissingPart, null, null);
+				this.InnerPawn.health.AddHediff(hediff_MissingPart, null, null, null);
 				numTaken = 0;
-			}
-			if (ingester.RaceProps.Humanlike && Rand.Value < 0.05f)
-			{
-				FoodUtility.AddFoodPoisoningHediff(ingester, this);
 			}
 			nutritionIngested = bodyPartNutrition;
 		}
@@ -358,11 +347,6 @@ namespace Verse
 
 		public override void DrawAt(Vector3 drawLoc, bool flip = false)
 		{
-			Building building = this.StoringBuilding();
-			if (building != null && building.def == ThingDefOf.Grave)
-			{
-				return;
-			}
 			this.InnerPawn.Drawer.renderer.RenderPawnAt(drawLoc);
 		}
 
@@ -372,7 +356,7 @@ namespace Verse
 			{
 				return null;
 			}
-			if (this.StoringBuilding() == null)
+			if (this.StoringThing() == null)
 			{
 				Thought_MemoryObservation thought_MemoryObservation;
 				if (this.IsNotFresh())
@@ -398,7 +382,7 @@ namespace Verse
 			}
 			stringBuilder.AppendLine("DeadTime".Translate(new object[]
 			{
-				this.Age.ToStringTicksToPeriod(false, false, true)
+				this.Age.ToStringTicksToPeriodVague(true, false)
 			}));
 			float num = 1f - this.InnerPawn.health.hediffSet.GetCoverageOfNotMissingNaturalParts(this.InnerPawn.RaceProps.body.corePart);
 			if (num != 0f)
@@ -409,6 +393,22 @@ namespace Verse
 			return stringBuilder.ToString().TrimEndNewlines();
 		}
 
+		[DebuggerHidden]
+		public override IEnumerable<StatDrawEntry> SpecialDisplayStats()
+		{
+			foreach (StatDrawEntry s in base.SpecialDisplayStats())
+			{
+				yield return s;
+			}
+			if (this.GetRotStage() == RotStage.Fresh)
+			{
+				StatDef meatAmount = StatDefOf.MeatAmount;
+				yield return new StatDrawEntry(meatAmount.category, meatAmount, this.InnerPawn.GetStatValue(meatAmount, true), StatRequest.For(this.InnerPawn), ToStringNumberSense.Undefined);
+				StatDef leatherAmount = StatDefOf.LeatherAmount;
+				yield return new StatDrawEntry(leatherAmount.category, leatherAmount, this.InnerPawn.GetStatValue(leatherAmount, true), StatRequest.For(this.InnerPawn), ToStringNumberSense.Undefined);
+			}
+		}
+
 		public void RotStageChanged()
 		{
 			PortraitsCache.SetDirty(this.InnerPawn);
@@ -417,14 +417,14 @@ namespace Verse
 
 		private BodyPartRecord GetBestBodyPartToEat(Pawn ingester, float nutritionWanted)
 		{
-			IEnumerable<BodyPartRecord> source = from x in this.InnerPawn.health.hediffSet.GetNotMissingParts(BodyPartHeight.Undefined, BodyPartDepth.Undefined)
-			where x.depth == BodyPartDepth.Outside && FoodUtility.GetBodyPartNutrition(this.InnerPawn, x) > 0.001f
+			IEnumerable<BodyPartRecord> source = from x in this.InnerPawn.health.hediffSet.GetNotMissingParts(BodyPartHeight.Undefined, BodyPartDepth.Undefined, null, null)
+			where x.depth == BodyPartDepth.Outside && FoodUtility.GetBodyPartNutrition(this, x) > 0.001f
 			select x;
 			if (!source.Any<BodyPartRecord>())
 			{
 				return null;
 			}
-			return source.MinBy((BodyPartRecord x) => Mathf.Abs(FoodUtility.GetBodyPartNutrition(this.InnerPawn, x) - nutritionWanted));
+			return source.MinBy((BodyPartRecord x) => Mathf.Abs(FoodUtility.GetBodyPartNutrition(this, x) - nutritionWanted));
 		}
 
 		private void NotifyColonistBar()

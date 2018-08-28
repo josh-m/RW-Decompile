@@ -38,23 +38,18 @@ namespace Verse.AI
 			{
 				if (!t.Position.InAllowedArea(p))
 				{
-					JobFailReason.Is(HaulAIUtility.ForbiddenOutsideAllowedAreaLowerTrans);
+					JobFailReason.Is(HaulAIUtility.ForbiddenOutsideAllowedAreaLowerTrans, null);
 				}
 				else
 				{
-					JobFailReason.Is(HaulAIUtility.ForbiddenLowerTrans);
+					JobFailReason.Is(HaulAIUtility.ForbiddenLowerTrans, null);
 				}
 				return false;
 			}
-			return (t.def.alwaysHaulable || t.Map.designationManager.DesignationOn(t, DesignationDefOf.Haul) != null || t.IsInValidStorage()) && HaulAIUtility.PawnCanAutomaticallyHaulBasicChecks(p, t, forced);
+			return (t.def.alwaysHaulable || t.Map.designationManager.DesignationOn(t, DesignationDefOf.Haul) != null || t.IsInValidStorage()) && HaulAIUtility.PawnCanAutomaticallyHaulFast(p, t, forced);
 		}
 
 		public static bool PawnCanAutomaticallyHaulFast(Pawn p, Thing t, bool forced)
-		{
-			return HaulAIUtility.PawnCanAutomaticallyHaulBasicChecks(p, t, forced);
-		}
-
-		private static bool PawnCanAutomaticallyHaulBasicChecks(Pawn p, Thing t, bool forced)
 		{
 			UnfinishedThing unfinishedThing = t as UnfinishedThing;
 			if (unfinishedThing != null && unfinishedThing.BoundBill != null)
@@ -72,12 +67,12 @@ namespace Verse.AI
 			}
 			if (t.def.IsNutritionGivingIngestible && t.def.ingestible.HumanEdible && !t.IsSociallyProper(p, false, true))
 			{
-				JobFailReason.Is(HaulAIUtility.ReservedForPrisonersTrans);
+				JobFailReason.Is(HaulAIUtility.ReservedForPrisonersTrans, null);
 				return false;
 			}
 			if (t.IsBurning())
 			{
-				JobFailReason.Is(HaulAIUtility.BurningLowerTrans);
+				JobFailReason.Is(HaulAIUtility.BurningLowerTrans, null);
 				return false;
 			}
 			return true;
@@ -85,20 +80,31 @@ namespace Verse.AI
 
 		public static Job HaulToStorageJob(Pawn p, Thing t)
 		{
-			StoragePriority currentPriority = HaulAIUtility.StoragePriorityAtFor(t.Position, t);
+			StoragePriority currentPriority = StoreUtility.CurrentStoragePriorityOf(t);
 			IntVec3 storeCell;
-			if (!StoreUtility.TryFindBestBetterStoreCellFor(t, p, p.Map, currentPriority, p.Faction, out storeCell, true))
+			IHaulDestination haulDestination;
+			if (!StoreUtility.TryFindBestBetterStorageFor(t, p, p.Map, currentPriority, p.Faction, out storeCell, out haulDestination, true))
 			{
-				JobFailReason.Is(HaulAIUtility.NoEmptyPlaceLowerTrans);
+				JobFailReason.Is(HaulAIUtility.NoEmptyPlaceLowerTrans, null);
 				return null;
 			}
-			return HaulAIUtility.HaulMaxNumToCellJob(p, t, storeCell, false);
+			if (haulDestination is ISlotGroupParent)
+			{
+				return HaulAIUtility.HaulToCellStorageJob(p, t, storeCell, false);
+			}
+			Thing thing = haulDestination as Thing;
+			if (thing != null && thing.TryGetInnerInteractableThingOwner() != null)
+			{
+				return HaulAIUtility.HaulToContainerJob(p, t, thing);
+			}
+			Log.Error("Don't know how to handle HaulToStorageJob for storage " + haulDestination.ToStringSafe<IHaulDestination>() + ". thing=" + t.ToStringSafe<Thing>(), false);
+			return null;
 		}
 
-		public static Job HaulMaxNumToCellJob(Pawn p, Thing t, IntVec3 storeCell, bool fitInStoreCell)
+		public static Job HaulToCellStorageJob(Pawn p, Thing t, IntVec3 storeCell, bool fitInStoreCell)
 		{
 			Job job = new Job(JobDefOf.HaulToCell, t, storeCell);
-			SlotGroup slotGroup = p.Map.slotGroupManager.SlotGroupAt(storeCell);
+			SlotGroup slotGroup = p.Map.haulDestinationManager.SlotGroupAt(storeCell);
 			if (slotGroup != null)
 			{
 				Thing thing = p.Map.thingGrid.ThingAt(storeCell, t.def);
@@ -147,18 +153,19 @@ namespace Verse.AI
 			return job;
 		}
 
-		public static StoragePriority StoragePriorityAtFor(IntVec3 c, Thing t)
+		public static Job HaulToContainerJob(Pawn p, Thing t, Thing container)
 		{
-			if (!t.Spawned)
+			ThingOwner thingOwner = container.TryGetInnerInteractableThingOwner();
+			if (thingOwner == null)
 			{
-				return StoragePriority.Unstored;
+				Log.Error(container.ToStringSafe<Thing>() + " gave null ThingOwner.", false);
+				return null;
 			}
-			SlotGroup slotGroup = t.Map.slotGroupManager.SlotGroupAt(c);
-			if (slotGroup == null || !slotGroup.Settings.AllowedToAccept(t))
+			return new Job(JobDefOf.HaulToContainer, t, container)
 			{
-				return StoragePriority.Unstored;
-			}
-			return slotGroup.Settings.Priority;
+				count = Mathf.Min(t.stackCount, thingOwner.GetCountCanAccept(t, true)),
+				haulMode = HaulMode.ToContainer
+			};
 		}
 
 		public static bool CanHaulAside(Pawn p, Thing t, out IntVec3 storeCell)

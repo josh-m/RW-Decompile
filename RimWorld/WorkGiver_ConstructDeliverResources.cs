@@ -16,20 +16,23 @@ namespace RimWorld
 
 		private static string MissingMaterialsTranslated;
 
-		public WorkGiver_ConstructDeliverResources()
-		{
-			if (WorkGiver_ConstructDeliverResources.MissingMaterialsTranslated == null)
-			{
-				WorkGiver_ConstructDeliverResources.MissingMaterialsTranslated = "MissingMaterials".Translate();
-			}
-		}
+		private static string ForbiddenLowerTranslated;
+
+		private static string NoPathTranslated;
 
 		public override Danger MaxPathDanger(Pawn pawn)
 		{
 			return Danger.Deadly;
 		}
 
-		private static bool ResourceValidator(Pawn pawn, ThingCountClass need, Thing th)
+		public static void ResetStaticData()
+		{
+			WorkGiver_ConstructDeliverResources.MissingMaterialsTranslated = "MissingMaterials".Translate();
+			WorkGiver_ConstructDeliverResources.ForbiddenLowerTranslated = "ForbiddenLower".Translate();
+			WorkGiver_ConstructDeliverResources.NoPathTranslated = "NoPath".Translate();
+		}
+
+		private static bool ResourceValidator(Pawn pawn, ThingDefCountClass need, Thing th)
 		{
 			return th.def == need.thingDef && !th.IsForbidden(pawn) && pawn.CanReserve(th, 1, -1, null, false);
 		}
@@ -42,17 +45,17 @@ namespace RimWorld
 				return this.InstallJob(pawn, blueprint_Install);
 			}
 			bool flag = false;
-			ThingCountClass thingCountClass = null;
-			List<ThingCountClass> list = c.MaterialsNeeded();
+			ThingDefCountClass thingDefCountClass = null;
+			List<ThingDefCountClass> list = c.MaterialsNeeded();
 			int count = list.Count;
 			int i = 0;
 			while (i < count)
 			{
-				ThingCountClass need = list[i];
+				ThingDefCountClass need = list[i];
 				if (!pawn.Map.itemAvailability.ThingsAvailableAnywhere(need, pawn))
 				{
 					flag = true;
-					thingCountClass = need;
+					thingDefCountClass = need;
 					break;
 				}
 				Thing foundRes = GenClosest.ClosestThingReachable(pawn.Position, pawn.Map, ThingRequest.ForDef(need.thingDef), PathEndMode.ClosestTouch, TraverseParms.For(pawn, Danger.Deadly, TraverseMode.ByPawn, false), 9999f, (Thing r) => WorkGiver_ConstructDeliverResources.ResourceValidator(pawn, need, r), null, 0, -1, false, RegionType.Set_Passable, false);
@@ -104,13 +107,13 @@ namespace RimWorld
 				else
 				{
 					flag = true;
-					thingCountClass = need;
+					thingDefCountClass = need;
 					i++;
 				}
 			}
 			if (flag)
 			{
-				JobFailReason.Is(string.Format("{0}: {1}", WorkGiver_ConstructDeliverResources.MissingMaterialsTranslated, thingCountClass.thingDef.label));
+				JobFailReason.Is(string.Format("{0}: {1}", WorkGiver_ConstructDeliverResources.MissingMaterialsTranslated, thingDefCountClass.thingDef.label), null);
 			}
 			return null;
 		}
@@ -142,7 +145,7 @@ namespace RimWorld
 			}
 		}
 
-		private HashSet<Thing> FindNearbyNeeders(Pawn pawn, ThingCountClass need, IConstructible c, int resTotalAvailable, bool canRemoveExistingFloorUnderNearbyNeeders, out int neededTotal, out Job jobToMakeNeederAvailable)
+		private HashSet<Thing> FindNearbyNeeders(Pawn pawn, ThingDefCountClass need, IConstructible c, int resTotalAvailable, bool canRemoveExistingFloorUnderNearbyNeeders, out int neededTotal, out Job jobToMakeNeederAvailable)
 		{
 			neededTotal = need.count;
 			HashSet<Thing> hashSet = new HashSet<Thing>();
@@ -193,10 +196,10 @@ namespace RimWorld
 
 		private bool IsNewValidNearbyNeeder(Thing t, HashSet<Thing> nearbyNeeders, IConstructible constructible, Pawn pawn)
 		{
-			return t is IConstructible && t != constructible && !(t is Blueprint_Install) && t.Faction == pawn.Faction && !t.IsForbidden(pawn) && !nearbyNeeders.Contains(t) && GenConstruct.CanConstruct(t, pawn, false);
+			return t is IConstructible && t != constructible && !(t is Blueprint_Install) && t.Faction == pawn.Faction && !t.IsForbidden(pawn) && !nearbyNeeders.Contains(t) && GenConstruct.CanConstruct(t, pawn, false, false);
 		}
 
-		private static bool ShouldRemoveExistingFloorFirst(Pawn pawn, Blueprint blue)
+		protected static bool ShouldRemoveExistingFloorFirst(Pawn pawn, Blueprint blue)
 		{
 			return blue.def.entityDefToBuild is TerrainDef && pawn.Map.terrainGrid.CanRemoveTopLayerAt(blue.Position);
 		}
@@ -222,8 +225,26 @@ namespace RimWorld
 		private Job InstallJob(Pawn pawn, Blueprint_Install install)
 		{
 			Thing miniToInstallOrBuildingToReinstall = install.MiniToInstallOrBuildingToReinstall;
-			if (miniToInstallOrBuildingToReinstall.IsForbidden(pawn) || !pawn.CanReserveAndReach(miniToInstallOrBuildingToReinstall, PathEndMode.ClosestTouch, pawn.NormalMaxDanger(), 1, -1, null, false))
+			if (miniToInstallOrBuildingToReinstall.IsForbidden(pawn))
 			{
+				JobFailReason.Is(WorkGiver_ConstructDeliverResources.ForbiddenLowerTranslated, null);
+				return null;
+			}
+			if (!pawn.CanReach(miniToInstallOrBuildingToReinstall, PathEndMode.ClosestTouch, pawn.NormalMaxDanger(), false, TraverseMode.ByPawn))
+			{
+				JobFailReason.Is(WorkGiver_ConstructDeliverResources.NoPathTranslated, null);
+				return null;
+			}
+			if (!pawn.CanReserve(miniToInstallOrBuildingToReinstall, 1, -1, null, false))
+			{
+				Pawn pawn2 = pawn.Map.reservationManager.FirstRespectedReserver(miniToInstallOrBuildingToReinstall, pawn);
+				if (pawn2 != null)
+				{
+					JobFailReason.Is("ReservedBy".Translate(new object[]
+					{
+						pawn2.LabelShort
+					}), null);
+				}
 				return null;
 			}
 			return new Job(JobDefOf.HaulToContainer)

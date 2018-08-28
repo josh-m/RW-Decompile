@@ -11,6 +11,14 @@ namespace RimWorld
 
 		private static readonly IntRange EscapeShipSizeHeight = new IntRange(34, 42);
 
+		public override int SeedPart
+		{
+			get
+			{
+				return 860042045;
+			}
+		}
+
 		protected override bool CanScatterAt(IntVec3 c, Map map)
 		{
 			if (!base.CanScatterAt(c, map))
@@ -37,7 +45,7 @@ namespace RimWorld
 			foreach (IntVec3 current in cellRect)
 			{
 				TerrainDef terrainDef = map.terrainGrid.TerrainAt(current);
-				if (!terrainDef.affordances.Contains(TerrainAffordance.Heavy) && (terrainDef.driesTo == null || !terrainDef.driesTo.affordances.Contains(TerrainAffordance.Heavy)))
+				if (!terrainDef.affordances.Contains(TerrainAffordanceDefOf.Heavy) && (terrainDef.driesTo == null || !terrainDef.driesTo.affordances.Contains(TerrainAffordanceDefOf.Heavy)))
 				{
 					return false;
 				}
@@ -53,13 +61,13 @@ namespace RimWorld
 			rect.ClipInsideMap(map);
 			foreach (IntVec3 current in rect)
 			{
-				if (!map.terrainGrid.TerrainAt(current).affordances.Contains(TerrainAffordance.Heavy))
+				if (!map.terrainGrid.TerrainAt(current).affordances.Contains(TerrainAffordanceDefOf.Heavy))
 				{
 					CompTerrainPumpDry.AffectCell(map, current);
 					for (int i = 0; i < 8; i++)
 					{
-						Vector2 vector = UnityEngine.Random.insideUnitCircle * 3f;
-						IntVec3 c2 = IntVec3.FromVector3(current.ToVector3Shifted() + new Vector3(vector.x, 0f, vector.y));
+						Vector3 b = Rand.InsideUnitCircleVec3 * 3f;
+						IntVec3 c2 = IntVec3.FromVector3(current.ToVector3Shifted() + b);
 						if (c2.InBounds(map))
 						{
 							CompTerrainPumpDry.AffectCell(map, c2);

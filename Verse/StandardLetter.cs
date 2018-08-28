@@ -5,14 +5,14 @@ namespace Verse
 {
 	public class StandardLetter : ChoiceLetter
 	{
-		protected override IEnumerable<DiaOption> Choices
+		public override IEnumerable<DiaOption> Choices
 		{
 			get
 			{
-				yield return base.OK;
-				if (this.lookTarget.IsValid)
+				yield return base.Option_Close;
+				if (this.lookTargets.IsValid())
 				{
-					yield return base.JumpToLocation;
+					yield return base.Option_JumpToLocation;
 				}
 			}
 		}

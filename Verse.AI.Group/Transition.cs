@@ -17,6 +17,8 @@ namespace Verse.AI.Group
 
 		public bool canMoveToSameState;
 
+		public bool updateDutiesIfMovedToSameState = true;
+
 		public Map Map
 		{
 			get
@@ -25,23 +27,25 @@ namespace Verse.AI.Group
 			}
 		}
 
-		public Transition(LordToil firstSource, LordToil target)
+		public Transition(LordToil firstSource, LordToil target, bool canMoveToSameState = false, bool updateDutiesIfMovedToSameState = true)
 		{
+			this.canMoveToSameState = canMoveToSameState;
+			this.updateDutiesIfMovedToSameState = updateDutiesIfMovedToSameState;
+			this.target = target;
 			this.sources = new List<LordToil>();
 			this.AddSource(firstSource);
-			this.target = target;
 		}
 
 		public void AddSource(LordToil source)
 		{
 			if (this.sources.Contains(source))
 			{
-				Log.Error("Double-added source to Transition: " + source);
+				Log.Error("Double-added source to Transition: " + source, false);
 				return;
 			}
 			if (!this.canMoveToSameState && this.target == source)
 			{
-				Log.Error("Transition canMoveToSameState and target is source: " + source);
+				Log.Error("Transition !canMoveToSameState and target is source: " + source, false);
 			}
 			this.sources.Add(source);
 		}
@@ -104,7 +108,7 @@ namespace Verse.AI.Group
 						}
 						if (!flag)
 						{
-							goto IL_100;
+							goto IL_101;
 						}
 					}
 					if (DebugViewSettings.logLordToilTransitions)
@@ -119,12 +123,12 @@ namespace Verse.AI.Group
 							this.triggers[i],
 							" on signal ",
 							signal
-						}));
+						}), false);
 					}
 					this.Execute(lord);
 					return true;
 				}
-				IL_100:;
+				IL_101:;
 			}
 			return false;
 		}
@@ -139,7 +143,10 @@ namespace Verse.AI.Group
 			{
 				this.preActions[i].DoAction(this);
 			}
-			lord.GotoToil(this.target);
+			if (this.target != lord.CurLordToil || this.updateDutiesIfMovedToSameState)
+			{
+				lord.GotoToil(this.target);
+			}
 			for (int j = 0; j < this.postActions.Count; j++)
 			{
 				this.postActions[j].DoAction(this);

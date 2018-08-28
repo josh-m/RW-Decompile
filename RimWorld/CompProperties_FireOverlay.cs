@@ -14,5 +14,11 @@ namespace RimWorld
 		{
 			this.compClass = typeof(CompFireOverlay);
 		}
+
+		public override void DrawGhost(IntVec3 center, Rot4 rot, ThingDef thingDef, Color ghostCol, AltitudeLayer drawAltitude)
+		{
+			Graphic graphic = GhostUtility.GhostGraphicFor(CompFireOverlay.FireGraphic, thingDef, ghostCol);
+			graphic.DrawFromDef(center.ToVector3ShiftedWithAltitude(drawAltitude), rot, thingDef, 0f);
+		}
 	}
 }

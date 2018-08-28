@@ -6,7 +6,12 @@ namespace Verse
 {
 	public class HediffCompProperties
 	{
+		[TranslationHandle]
 		public Type compClass;
+
+		public virtual void PostLoad()
+		{
+		}
 
 		[DebuggerHidden]
 		public virtual IEnumerable<string> ConfigErrors(HediffDef parentDef)

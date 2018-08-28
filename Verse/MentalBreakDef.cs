@@ -1,5 +1,7 @@
 using RimWorld;
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using Verse.AI;
 
 namespace Verse
@@ -11,6 +13,8 @@ namespace Verse
 		public MentalStateDef mentalState;
 
 		public float baseCommonality;
+
+		public SimpleCurve commonalityFactorPerPopulationCurve;
 
 		public MentalBreakIntensity intensity;
 
@@ -28,6 +32,19 @@ namespace Verse
 					this.workerInt.def = this;
 				}
 				return this.workerInt;
+			}
+		}
+
+		[DebuggerHidden]
+		public override IEnumerable<string> ConfigErrors()
+		{
+			foreach (string e in base.ConfigErrors())
+			{
+				yield return e;
+			}
+			if (this.intensity == MentalBreakIntensity.None)
+			{
+				yield return "intensity not set";
 			}
 		}
 	}

@@ -24,6 +24,10 @@ namespace Verse
 
 		public StatDef efficiencyStat;
 
+		public StatDef workTableEfficiencyStat;
+
+		public StatDef workTableSpeedStat;
+
 		public List<IngredientCount> ingredients = new List<IngredientCount>();
 
 		public ThingFilter fixedIngredientFilter = new ThingFilter();
@@ -36,7 +40,9 @@ namespace Verse
 
 		public List<SpecialThingFilterDef> forceHiddenSpecialFilters;
 
-		public List<ThingCountClass> products = new List<ThingCountClass>();
+		public bool autoStripCorpses = true;
+
+		public List<ThingDefCountClass> products = new List<ThingDefCountClass>();
 
 		public List<SpecialProductType> specialProducts;
 
@@ -78,8 +84,6 @@ namespace Verse
 		public bool targetsBodyPart = true;
 
 		public bool anesthetize = true;
-
-		public bool requireBed = true;
 
 		public ResearchProjectDef researchPrerequisite;
 
@@ -233,6 +237,22 @@ namespace Verse
 			}
 		}
 
+		public ThingDef ProducedThingDef
+		{
+			get
+			{
+				if (this.specialProducts != null)
+				{
+					return null;
+				}
+				if (this.products == null || this.products.Count != 1)
+				{
+					return null;
+				}
+				return this.products[0].thingDef;
+			}
+		}
+
 		public float WorkAmountTotal(ThingDef stuffDef)
 		{
 			if (this.workAmount >= 0f)
@@ -302,15 +322,19 @@ namespace Verse
 			{
 				yield return "workerClass is null.";
 			}
-			if (this.surgerySuccessChanceFactor < 99999f && !this.requireBed)
-			{
-				yield return "failable surgery does not require bed";
-			}
 		}
 
 		public override void ResolveReferences()
 		{
 			base.ResolveReferences();
+			if (this.workTableSpeedStat == null)
+			{
+				this.workTableSpeedStat = StatDefOf.WorkTableWorkSpeedFactor;
+			}
+			if (this.workTableEfficiencyStat == null)
+			{
+				this.workTableEfficiencyStat = StatDefOf.WorkTableEfficiencyFactor;
+			}
 			for (int i = 0; i < this.ingredients.Count; i++)
 			{
 				this.ingredients[i].ResolveReferences();
@@ -332,7 +356,23 @@ namespace Verse
 
 		public bool PawnSatisfiesSkillRequirements(Pawn pawn)
 		{
-			return this.skillRequirements == null || !this.skillRequirements.Any((SkillRequirement req) => !req.PawnSatisfies(pawn));
+			return this.FirstSkillRequirementPawnDoesntSatisfy(pawn) == null;
+		}
+
+		public SkillRequirement FirstSkillRequirementPawnDoesntSatisfy(Pawn pawn)
+		{
+			if (this.skillRequirements == null)
+			{
+				return null;
+			}
+			for (int i = 0; i < this.skillRequirements.Count; i++)
+			{
+				if (!this.skillRequirements[i].PawnSatisfies(pawn))
+				{
+					return this.skillRequirements[i];
+				}
+			}
+			return null;
 		}
 
 		public List<ThingDef> GetPremultipliedSmallIngredients()
@@ -364,7 +404,7 @@ namespace Verse
 		}
 
 		[DebuggerHidden]
-		public override IEnumerable<StatDrawEntry> SpecialDisplayStats()
+		public override IEnumerable<StatDrawEntry> SpecialDisplayStats(StatRequest req)
 		{
 			if (this.workSkill != null)
 			{
@@ -372,18 +412,18 @@ namespace Verse
 			}
 			if (this.ingredients != null && this.ingredients.Count > 0)
 			{
-				yield return new StatDrawEntry(StatCategoryDefOf.Basics, "Ingredients".Translate(), GenText.ToCommaList(from ic in this.ingredients
-				select ic.Summary, true), 0, string.Empty);
+				yield return new StatDrawEntry(StatCategoryDefOf.Basics, "Ingredients".Translate(), (from ic in this.ingredients
+				select ic.Summary).ToCommaList(true), 0, string.Empty);
 			}
 			if (this.skillRequirements != null && this.skillRequirements.Count > 0)
 			{
-				yield return new StatDrawEntry(StatCategoryDefOf.Basics, "SkillRequirements".Translate(), GenText.ToCommaList(from sr in this.skillRequirements
-				select sr.Summary, true), 0, string.Empty);
+				yield return new StatDrawEntry(StatCategoryDefOf.Basics, "SkillRequirements".Translate(), (from sr in this.skillRequirements
+				select sr.Summary).ToCommaList(true), 0, string.Empty);
 			}
 			if (this.products != null && this.products.Count > 0)
 			{
-				yield return new StatDrawEntry(StatCategoryDefOf.Basics, "Products".Translate(), GenText.ToCommaList(from pr in this.products
-				select pr.Summary, true), 0, string.Empty);
+				yield return new StatDrawEntry(StatCategoryDefOf.Basics, "Products".Translate(), (from pr in this.products
+				select pr.Summary).ToCommaList(true), 0, string.Empty);
 			}
 			if (this.workSpeedStat != null)
 			{
@@ -403,7 +443,6 @@ namespace Verse
 				{
 					yield return new StatDrawEntry(StatCategoryDefOf.Surgery, "SurgerySuccessChanceFactor".Translate(), this.surgerySuccessChanceFactor.ToStringPercent(), 0, string.Empty);
 				}
-				yield return new StatDrawEntry(StatCategoryDefOf.Surgery, "SurgeryRequireBed".Translate(), this.requireBed.ToStringYesNo(), 0, string.Empty);
 			}
 		}
 	}

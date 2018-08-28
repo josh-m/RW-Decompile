@@ -82,7 +82,7 @@ namespace Verse
 			{
 				return false;
 			}
-			if (!pawn.Map.pawnDestinationReservationManager.CanReserve(location, pawn))
+			if (!pawn.Map.pawnDestinationReservationManager.CanReserve(location, pawn, false))
 			{
 				return false;
 			}
@@ -103,7 +103,7 @@ namespace Verse
 				{
 					if (current.Standable(map))
 					{
-						if (reg.portal == null)
+						if (!reg.IsDoorway)
 						{
 							Thing thing = null;
 							float num = 0f;
@@ -128,7 +128,7 @@ namespace Verse
 							{
 								num4 *= 0.05f;
 							}
-							if (!map.pawnDestinationReservationManager.CanReserve(current, pawn))
+							if (!map.pawnDestinationReservationManager.CanReserve(current, pawn, false))
 							{
 								num4 *= 0.5f;
 							}
@@ -208,12 +208,13 @@ namespace Verse
 				debug_numRoomCellCount,
 				", numExtraValidator=",
 				debug_numExtraValidator
-			}));
+			}), false);
 			return CellFinderLoose.RandomCellWith((IntVec3 x) => x.Standable(map), map, 1000);
 		}
 
-		public static bool TryFindSkyfallerCell(ThingDef skyfaller, Map map, out IntVec3 cell, int minDistToEdge = 10, IntVec3 nearLoc = default(IntVec3), int nearLocMaxDist = -1, bool allowRoofedCells = true, bool allowCellsWithItems = false, bool allowCellsWithBuildings = false, bool colonyReachable = false, Predicate<IntVec3> extraValidator = null)
+		public static bool TryFindSkyfallerCell(ThingDef skyfaller, Map map, out IntVec3 cell, int minDistToEdge = 10, IntVec3 nearLoc = default(IntVec3), int nearLocMaxDist = -1, bool allowRoofedCells = true, bool allowCellsWithItems = false, bool allowCellsWithBuildings = false, bool colonyReachable = false, bool avoidColonistsIfExplosive = true, bool alwaysAvoidColonists = false, Predicate<IntVec3> extraValidator = null)
 		{
+			bool avoidColonists = (avoidColonistsIfExplosive && skyfaller.skyfaller.CausesExplosion) || alwaysAvoidColonists;
 			Predicate<IntVec3> validator = delegate(IntVec3 x)
 			{
 				CellRect.CellRectIterator iterator = GenAdj.OccupiedRect(x, Rot4.North, skyfaller.size).GetIterator();
@@ -242,11 +243,11 @@ namespace Verse
 					}
 					iterator.MoveNext();
 				}
-				return (minDistToEdge <= 0 || x.DistanceToEdge(map) >= minDistToEdge) && (!colonyReachable || map.reachability.CanReachColony(x)) && (extraValidator == null || extraValidator(x));
+				return (!avoidColonists || !SkyfallerUtility.CanPossiblyFallOnColonist(skyfaller, x, map)) && (minDistToEdge <= 0 || x.DistanceToEdge(map) >= minDistToEdge) && (!colonyReachable || map.reachability.CanReachColony(x)) && (extraValidator == null || extraValidator(x));
 			};
 			if (nearLocMaxDist > 0)
 			{
-				return CellFinder.TryFindRandomCellNear(nearLoc, map, nearLocMaxDist, validator, out cell);
+				return CellFinder.TryFindRandomCellNear(nearLoc, map, nearLocMaxDist, validator, out cell, -1);
 			}
 			return CellFinderLoose.TryFindRandomNotEdgeCellWith(minDistToEdge, validator, map, out cell);
 		}

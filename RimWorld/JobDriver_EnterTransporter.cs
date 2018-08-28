@@ -10,7 +10,7 @@ namespace RimWorld
 	{
 		private TargetIndex TransporterInd = TargetIndex.A;
 
-		private CompTransporter Transporter
+		public CompTransporter Transporter
 		{
 			get
 			{
@@ -23,9 +23,9 @@ namespace RimWorld
 			}
 		}
 
-		public override bool TryMakePreToilReservations()
+		public override bool TryMakePreToilReservations(bool errorOnFailed)
 		{
-			return this.pawn.Reserve(this.job.GetTarget(this.TransporterInd), this.job, 1, -1, null);
+			return true;
 		}
 
 		[DebuggerHidden]
@@ -39,7 +39,7 @@ namespace RimWorld
 				initAction = delegate
 				{
 					CompTransporter transporter = this.$this.Transporter;
-					this.$this.pawn.DeSpawn();
+					this.$this.pawn.DeSpawn(DestroyMode.Vanish);
 					transporter.GetDirectlyHeldThings().TryAdd(this.$this.pawn, true);
 				}
 			};

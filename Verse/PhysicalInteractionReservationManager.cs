@@ -54,7 +54,7 @@ namespace Verse
 				" tried to release reservation on target ",
 				target,
 				", but it's not reserved by him."
-			}));
+			}), false);
 		}
 
 		public bool IsReservedBy(Pawn claimant, LocalTargetInfo target)
@@ -134,7 +134,7 @@ namespace Verse
 			{
 				if (this.reservations.RemoveAll((PhysicalInteractionReservationManager.PhysicalInteractionReservation x) => x.claimant.DestroyedOrNull()) != 0)
 				{
-					Log.Warning("Some physical interaction reservations had null or destroyed claimant.");
+					Log.Warning("Some physical interaction reservations had null or destroyed claimant.", false);
 				}
 			}
 		}

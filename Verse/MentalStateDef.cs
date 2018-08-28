@@ -1,7 +1,6 @@
 using RimWorld;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using UnityEngine;
 using Verse.AI;
 
@@ -61,6 +60,8 @@ namespace Verse
 		[MustTranslate]
 		public string baseInspectLine;
 
+		public bool escapingPrisonersIgnore;
+
 		private MentalStateWorker workerInt;
 
 		public MentalStateWorker Worker
@@ -106,19 +107,6 @@ namespace Verse
 			if (this.beginLetterDef == null)
 			{
 				this.beginLetterDef = LetterDefOf.NegativeEvent;
-			}
-		}
-
-		[DebuggerHidden]
-		public override IEnumerable<string> ConfigErrors()
-		{
-			foreach (string e in base.ConfigErrors())
-			{
-				yield return e;
-			}
-			if (!this.beginLetter.NullOrEmpty() && this.beginLetterLabel.NullOrEmpty())
-			{
-				yield return "no beginLetter or beginLetterLabel";
 			}
 		}
 	}

@@ -188,7 +188,7 @@ namespace Verse
 			}
 			catch (Exception arg)
 			{
-				Log.Warning(str + " is not a valid IntVec3 format. Exception: " + arg);
+				Log.Warning(str + " is not a valid IntVec3 format. Exception: " + arg, false);
 				result = IntVec3.Invalid;
 			}
 			return result;
@@ -206,7 +206,7 @@ namespace Verse
 
 		public Vector3 ToVector3ShiftedWithAltitude(AltitudeLayer AltLayer)
 		{
-			return this.ToVector3ShiftedWithAltitude(Altitudes.AltitudeFor(AltLayer));
+			return this.ToVector3ShiftedWithAltitude(AltLayer.AltitudeFor());
 		}
 
 		public Vector3 ToVector3ShiftedWithAltitude(float AddedAltitude)
@@ -267,6 +267,19 @@ namespace Verse
 				}
 			}
 			return false;
+		}
+
+		public IntVec3 ClampInsideMap(Map map)
+		{
+			return this.ClampInsideRect(CellRect.WholeMap(map));
+		}
+
+		public IntVec3 ClampInsideRect(CellRect rect)
+		{
+			this.x = Mathf.Clamp(this.x, rect.minX, rect.maxX);
+			this.y = 0;
+			this.z = Mathf.Clamp(this.z, rect.minZ, rect.maxZ);
+			return this;
 		}
 
 		public static IntVec3 operator +(IntVec3 a, IntVec3 b)

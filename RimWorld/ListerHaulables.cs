@@ -62,11 +62,12 @@ namespace RimWorld
 
 		public void Notify_SlotGroupChanged(SlotGroup sg)
 		{
-			if (sg.CellsList != null)
+			List<IntVec3> cellsList = sg.CellsList;
+			if (cellsList != null)
 			{
-				for (int i = 0; i < sg.CellsList.Count; i++)
+				for (int i = 0; i < cellsList.Count; i++)
 				{
-					this.RecalcAllInCell(sg.CellsList[i]);
+					this.RecalcAllInCell(cellsList[i]);
 				}
 			}
 		}
@@ -78,34 +79,37 @@ namespace RimWorld
 			{
 				ListerHaulables.groupCycleIndex = 0;
 			}
-			List<SlotGroup> allGroupsListForReading = this.map.slotGroupManager.AllGroupsListForReading;
+			List<SlotGroup> allGroupsListForReading = this.map.haulDestinationManager.AllGroupsListForReading;
 			if (allGroupsListForReading.Count == 0)
 			{
 				return;
 			}
 			int num = ListerHaulables.groupCycleIndex % allGroupsListForReading.Count;
 			SlotGroup slotGroup = allGroupsListForReading[ListerHaulables.groupCycleIndex % allGroupsListForReading.Count];
-			while (this.cellCycleIndices.Count <= num)
+			if (slotGroup.CellsList.Count != 0)
 			{
-				this.cellCycleIndices.Add(0);
-			}
-			if (this.cellCycleIndices[num] >= 2147473647)
-			{
-				this.cellCycleIndices[num] = 0;
-			}
-			for (int i = 0; i < 4; i++)
-			{
-				List<int> list;
-				int index;
-				(list = this.cellCycleIndices)[index = num] = list[index] + 1;
-				IntVec3 c = slotGroup.CellsList[this.cellCycleIndices[num] % slotGroup.CellsList.Count];
-				List<Thing> thingList = c.GetThingList(this.map);
-				for (int j = 0; j < thingList.Count; j++)
+				while (this.cellCycleIndices.Count <= num)
 				{
-					if (thingList[j].def.EverHaulable)
+					this.cellCycleIndices.Add(0);
+				}
+				if (this.cellCycleIndices[num] >= 2147473647)
+				{
+					this.cellCycleIndices[num] = 0;
+				}
+				for (int i = 0; i < 4; i++)
+				{
+					List<int> list;
+					int index;
+					(list = this.cellCycleIndices)[index = num] = list[index] + 1;
+					IntVec3 c = slotGroup.CellsList[this.cellCycleIndices[num] % slotGroup.CellsList.Count];
+					List<Thing> thingList = c.GetThingList(this.map);
+					for (int j = 0; j < thingList.Count; j++)
 					{
-						this.Check(thingList[j]);
-						break;
+						if (thingList[j].def.EverHaulable)
+						{
+							this.Check(thingList[j]);
+							break;
+						}
 					}
 				}
 			}
@@ -117,6 +121,14 @@ namespace RimWorld
 			for (int i = 0; i < thingList.Count; i++)
 			{
 				this.Check(thingList[i]);
+			}
+		}
+
+		public void RecalcAllInCells(IEnumerable<IntVec3> cells)
+		{
+			foreach (IntVec3 current in cells)
+			{
+				this.RecalcAllInCell(current);
 			}
 		}
 

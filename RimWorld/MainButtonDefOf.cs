@@ -14,5 +14,10 @@ namespace RimWorld
 		public static MainButtonDef Menu;
 
 		public static MainButtonDef World;
+
+		static MainButtonDefOf()
+		{
+			DefOfHelper.EnsureInitializedInCtor(typeof(MainButtonDefOf));
+		}
 	}
 }

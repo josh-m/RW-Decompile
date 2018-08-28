@@ -121,7 +121,7 @@ namespace RimWorld.Planet
 				if (this.droppedDraggedItem)
 				{
 					this.MoveDraggedItemToInventory();
-					SoundDefOf.TickTiny.PlayOneShotOnCamera(null);
+					SoundDefOf.Tick_Tiny.PlayOneShotOnCamera(null);
 				}
 			}
 			float num = 0f;
@@ -201,7 +201,7 @@ namespace RimWorld.Planet
 		{
 			GUI.BeginGroup(rect);
 			Rect rect2 = rect.AtZero();
-			CaravanPeopleAndItemsTabUtility.DoAbandonButton(rect2, p, base.SelCaravan);
+			CaravanThingsTabUtility.DoAbandonButton(rect2, p, base.SelCaravan);
 			rect2.width -= 24f;
 			Widgets.InfoCardButton(rect2.width - 24f, (rect.height - 24f) / 2f, p);
 			rect2.width -= 24f;
@@ -213,7 +213,7 @@ namespace RimWorld.Planet
 			if (flag && this.droppedDraggedItem)
 			{
 				this.TryEquipDraggedItem(p);
-				SoundDefOf.TickTiny.PlayOneShotOnCamera(null);
+				SoundDefOf.Tick_Tiny.PlayOneShotOnCamera(null);
 			}
 			Rect rect3 = new Rect(4f, (rect.height - 27f) / 2f, 27f, 27f);
 			Widgets.ThingIcon(rect3, p, 1f);
@@ -232,7 +232,7 @@ namespace RimWorld.Planet
 			{
 				WITab_Caravan_Gear.tmpApparel.Clear();
 				WITab_Caravan_Gear.tmpApparel.AddRange(p.apparel.WornApparel);
-				WITab_Caravan_Gear.tmpApparel.SortBy((Apparel x) => (int)x.def.apparel.LastLayer, (Apparel x) => -x.def.apparel.HumanBodyCoverage);
+				WITab_Caravan_Gear.tmpApparel.SortBy((Apparel x) => x.def.apparel.LastLayer.drawOrder, (Apparel x) => -x.def.apparel.HumanBodyCoverage);
 				for (int j = 0; j < WITab_Caravan_Gear.tmpApparel.Count; j++)
 				{
 					this.DoEquippedGear(WITab_Caravan_Gear.tmpApparel[j], p, ref xMax);
@@ -279,12 +279,7 @@ namespace RimWorld.Planet
 			}
 			if (!flag && !flag2)
 			{
-				GUI.color = Color.gray;
-				Text.Anchor = TextAnchor.UpperCenter;
-				Widgets.Label(new Rect(0f, curY, scrollViewRect.width, 25f), "NoneBrackets".Translate());
-				Text.Anchor = TextAnchor.UpperLeft;
-				curY += 25f;
-				GUI.color = Color.white;
+				Widgets.NoneLabel(ref curY, scrollViewRect.width, null);
 			}
 		}
 
@@ -421,7 +416,7 @@ namespace RimWorld.Planet
 			}
 			else
 			{
-				Log.Warning("Could not find any pawn to move " + this.draggedItem + " to.");
+				Log.Warning("Could not find any pawn to move " + this.draggedItem + " to.", false);
 			}
 			this.draggedItem = null;
 		}
@@ -436,13 +431,13 @@ namespace RimWorld.Planet
 					Messages.Message("MessageCantEquipIncapableOfViolence".Translate(new object[]
 					{
 						p.LabelShort
-					}), p, MessageTypeDefOf.RejectInput);
+					}), p, MessageTypeDefOf.RejectInput, false);
 					this.draggedItem = null;
 					return;
 				}
 				if (!p.health.capacities.CapableOf(PawnCapacityDefOf.Manipulation))
 				{
-					Messages.Message("MessageCantEquipIncapableOfManipulation".Translate(), p, MessageTypeDefOf.RejectInput);
+					Messages.Message("MessageCantEquipIncapableOfManipulation".Translate(), p, MessageTypeDefOf.RejectInput, false);
 					this.draggedItem = null;
 					return;
 				}
@@ -465,7 +460,7 @@ namespace RimWorld.Planet
 						}
 						else
 						{
-							Log.Warning("Could not find any pawn to move " + WITab_Caravan_Gear.tmpExistingApparel[i] + " to.");
+							Log.Warning("Could not find any pawn to move " + WITab_Caravan_Gear.tmpExistingApparel[i] + " to.", false);
 							WITab_Caravan_Gear.tmpExistingApparel[i].Destroy(DestroyMode.Vanish);
 						}
 					}
@@ -490,7 +485,7 @@ namespace RimWorld.Planet
 					}
 					else
 					{
-						Log.Warning("Could not find any pawn to move " + WITab_Caravan_Gear.tmpExistingEquipment[j] + " to.");
+						Log.Warning("Could not find any pawn to move " + WITab_Caravan_Gear.tmpExistingEquipment[j] + " to.", false);
 						WITab_Caravan_Gear.tmpExistingEquipment[j].Destroy(DestroyMode.Vanish);
 					}
 				}
@@ -504,7 +499,7 @@ namespace RimWorld.Planet
 					p,
 					" equip or wear ",
 					this.draggedItem
-				}));
+				}), false);
 			}
 			this.draggedItem = null;
 		}

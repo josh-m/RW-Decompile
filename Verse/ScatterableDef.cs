@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace Verse
@@ -8,8 +7,6 @@ namespace Verse
 	{
 		[NoTranslate]
 		public string texturePath;
-
-		public List<string> relevantTerrains = new List<string>();
 
 		public float minSize;
 

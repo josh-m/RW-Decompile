@@ -84,7 +84,7 @@ namespace RimWorld.Planet
 			command_Action.action = delegate
 			{
 				CaravanMergeUtility.TryMergeSelectedCaravans();
-				SoundDefOf.TickHigh.PlayOneShotOnCamera(null);
+				SoundDefOf.Tick_High.PlayOneShotOnCamera(null);
 			};
 			if (!CaravanMergeUtility.CanMergeAnySelectedCaravans)
 			{
@@ -150,6 +150,7 @@ namespace RimWorld.Planet
 					Find.WorldObjects.Remove(caravan2);
 				}
 			}
+			caravan.Notify_Merged(caravans);
 		}
 	}
 }

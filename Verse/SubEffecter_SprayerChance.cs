@@ -4,7 +4,7 @@ namespace Verse
 {
 	public class SubEffecter_SprayerChance : SubEffecter_Sprayer
 	{
-		public SubEffecter_SprayerChance(SubEffecterDef def) : base(def)
+		public SubEffecter_SprayerChance(SubEffecterDef def, Effecter parent) : base(def, parent)
 		{
 		}
 

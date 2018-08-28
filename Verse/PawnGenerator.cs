@@ -2,12 +2,14 @@ using RimWorld;
 using RimWorld.Planet;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
 using UnityEngine;
 
 namespace Verse
 {
+	[HasDebugOutput]
 	public static class PawnGenerator
 	{
 		[StructLayout(LayoutKind.Sequential, Size = 1)]
@@ -34,6 +36,14 @@ namespace Verse
 		}
 
 		private static List<PawnGenerator.PawnGenerationStatus> pawnsBeingGenerated = new List<PawnGenerator.PawnGenerationStatus>();
+
+		private static PawnRelationDef[] relationsGeneratableBlood = (from rel in DefDatabase<PawnRelationDef>.AllDefsListForReading
+		where rel.familyByBloodRelation && rel.generationChanceFactor > 0f
+		select rel).ToArray<PawnRelationDef>();
+
+		private static PawnRelationDef[] relationsGeneratableNonblood = (from rel in DefDatabase<PawnRelationDef>.AllDefsListForReading
+		where !rel.familyByBloodRelation && rel.generationChanceFactor > 0f
+		select rel).ToArray<PawnRelationDef>();
 
 		public const float MaxStartMentalBreakThreshold = 0.4f;
 
@@ -72,6 +82,8 @@ namespace Verse
 				true
 			}
 		};
+
+		public const float MaxGeneratedMechanoidAge = 2500f;
 
 		private static readonly SimpleCurve AgeSkillMaxFactorCurve = new SimpleCurve
 		{
@@ -141,9 +153,19 @@ namespace Verse
 			}
 		};
 
+		public static void Reset()
+		{
+			PawnGenerator.relationsGeneratableBlood = (from rel in DefDatabase<PawnRelationDef>.AllDefsListForReading
+			where rel.familyByBloodRelation && rel.generationChanceFactor > 0f
+			select rel).ToArray<PawnRelationDef>();
+			PawnGenerator.relationsGeneratableNonblood = (from rel in DefDatabase<PawnRelationDef>.AllDefsListForReading
+			where !rel.familyByBloodRelation && rel.generationChanceFactor > 0f
+			select rel).ToArray<PawnRelationDef>();
+		}
+
 		public static Pawn GeneratePawn(PawnKindDef kindDef, Faction faction = null)
 		{
-			return PawnGenerator.GeneratePawn(new PawnGenerationRequest(kindDef, faction, PawnGenerationContext.NonPlayer, -1, false, false, false, false, true, false, 1f, false, true, true, false, false, false, false, null, null, null, null, null, null, null));
+			return PawnGenerator.GeneratePawn(new PawnGenerationRequest(kindDef, faction, PawnGenerationContext.NonPlayer, -1, false, false, false, false, true, false, 1f, false, true, true, false, false, false, false, null, null, null, null, null, null, null, null));
 		}
 
 		public static Pawn GeneratePawn(PawnGenerationRequest request)
@@ -151,7 +173,41 @@ namespace Verse
 			Pawn result;
 			try
 			{
-				result = PawnGenerator.GeneratePawnInternal(request);
+				Pawn pawn = PawnGenerator.GenerateOrRedressPawnInternal(request);
+				if (pawn != null && !request.AllowDead && pawn.health.hediffSet.hediffs.Any<Hediff>())
+				{
+					bool dead = pawn.Dead;
+					bool downed = pawn.Downed;
+					pawn.health.hediffSet.DirtyCache();
+					pawn.health.CheckForStateChange(null, null);
+					if (pawn.Dead)
+					{
+						Log.Error(string.Concat(new object[]
+						{
+							"Pawn was generated dead but the pawn generation request specified the pawn must be alive. This shouldn't ever happen even if we ran out of tries because null pawn should have been returned instead in this case. Resetting health...\npawn.Dead=",
+							pawn.Dead,
+							" pawn.Downed=",
+							pawn.Downed,
+							" deadBefore=",
+							dead,
+							" downedBefore=",
+							downed,
+							"\nrequest=",
+							request
+						}), false);
+						pawn.health.Reset();
+					}
+				}
+				if (pawn.Faction == Faction.OfPlayerSilentFail)
+				{
+					Find.StoryWatcher.watcherPopAdaptation.Notify_PawnEvent(pawn, PopAdaptationEvent.GainedColonist);
+				}
+				result = pawn;
+			}
+			catch (Exception arg)
+			{
+				Log.Error("Error while generating pawn. Rethrowing. Exception: " + arg, false);
+				throw;
 			}
 			finally
 			{
@@ -159,9 +215,8 @@ namespace Verse
 			return result;
 		}
 
-		private static Pawn GeneratePawnInternal(PawnGenerationRequest request)
+		private static Pawn GenerateOrRedressPawnInternal(PawnGenerationRequest request)
 		{
-			request.EnsureNonNullFaction();
 			Pawn pawn = null;
 			if (!request.Newborn && !request.ForceGenerateNewPawn)
 			{
@@ -176,7 +231,7 @@ namespace Verse
 				}
 				if (pawn == null && request.Inhabitant && request.Tile != -1)
 				{
-					Settlement settlement = Find.WorldObjects.WorldObjectAt<Settlement>(request.Tile);
+					SettlementBase settlement = Find.WorldObjects.WorldObjectAt<SettlementBase>(request.Tile);
 					if (settlement != null && settlement.previouslyGeneratedInhabitants.Any<Pawn>())
 					{
 						IEnumerable<Pawn> validCandidatesToRedress2 = PawnGenerator.GetValidCandidatesToRedress(request);
@@ -199,29 +254,31 @@ namespace Verse
 					}
 				}
 			}
+			bool redressed;
 			if (pawn == null)
 			{
-				pawn = PawnGenerator.GenerateNewNakedPawn(ref request);
+				redressed = false;
+				pawn = PawnGenerator.GenerateNewPawnInternal(ref request);
 				if (pawn == null)
 				{
 					return null;
 				}
-				if (!request.Newborn)
-				{
-					PawnGenerator.GenerateGearFor(pawn, request);
-				}
 				if (request.Inhabitant && request.Tile != -1)
 				{
-					Settlement settlement2 = Find.WorldObjects.WorldObjectAt<Settlement>(request.Tile);
-					if (settlement2 != null)
+					SettlementBase settlementBase = Find.WorldObjects.WorldObjectAt<SettlementBase>(request.Tile);
+					if (settlementBase != null)
 					{
-						settlement2.previouslyGeneratedInhabitants.Add(pawn);
+						settlementBase.previouslyGeneratedInhabitants.Add(pawn);
 					}
 				}
 			}
+			else
+			{
+				redressed = true;
+			}
 			if (Find.Scenario != null)
 			{
-				Find.Scenario.Notify_PawnGenerated(pawn, request.Context);
+				Find.Scenario.Notify_PawnGenerated(pawn, request.Context, redressed);
 			}
 			return pawn;
 		}
@@ -248,7 +305,14 @@ namespace Verse
 
 		public static bool IsBeingGenerated(Pawn pawn)
 		{
-			return PawnGenerator.pawnsBeingGenerated.Any((PawnGenerator.PawnGenerationStatus x) => x.Pawn == pawn);
+			for (int i = 0; i < PawnGenerator.pawnsBeingGenerated.Count; i++)
+			{
+				if (PawnGenerator.pawnsBeingGenerated[i].Pawn == pawn)
+				{
+					return true;
+				}
+			}
+			return false;
 		}
 
 		private static bool IsValidCandidateToRedress(Pawn pawn, PawnGenerationRequest request)
@@ -281,7 +345,11 @@ namespace Verse
 			{
 				return false;
 			}
-			if (request.Validator != null && !request.Validator(pawn))
+			if (request.ValidatorPreGear != null && !request.ValidatorPreGear(pawn))
+			{
+				return false;
+			}
+			if (request.ValidatorPostGear != null && !request.ValidatorPostGear(pawn))
 			{
 				return false;
 			}
@@ -305,6 +373,10 @@ namespace Verse
 			{
 				return false;
 			}
+			if (request.Context == PawnGenerationContext.PlayerStarter && Find.Scenario != null && !Find.Scenario.AllowPlayerStartingPawn(pawn, true, request))
+			{
+				return false;
+			}
 			if (request.MustBeCapableOfViolence)
 			{
 				if (pawn.story != null && pawn.story.WorkTagIsDisabled(WorkTags.Violent))
@@ -319,12 +391,13 @@ namespace Verse
 			return true;
 		}
 
-		private static Pawn GenerateNewNakedPawn(ref PawnGenerationRequest request)
+		private static Pawn GenerateNewPawnInternal(ref PawnGenerationRequest request)
 		{
 			Pawn pawn = null;
 			string text = null;
 			bool ignoreScenarioRequirements = false;
-			for (int i = 0; i < 100; i++)
+			bool ignoreValidator = false;
+			for (int i = 0; i < 120; i++)
 			{
 				if (i == 70)
 				{
@@ -335,11 +408,23 @@ namespace Verse
 						" tries. Last error: ",
 						text,
 						" Ignoring scenario requirements."
-					}));
+					}), false);
 					ignoreScenarioRequirements = true;
 				}
+				if (i == 100)
+				{
+					Log.Error(string.Concat(new object[]
+					{
+						"Could not generate a pawn after ",
+						100,
+						" tries. Last error: ",
+						text,
+						" Ignoring validator."
+					}), false);
+					ignoreValidator = true;
+				}
 				PawnGenerationRequest pawnGenerationRequest = request;
-				pawn = PawnGenerator.TryGenerateNewNakedPawn(ref pawnGenerationRequest, out text, ignoreScenarioRequirements);
+				pawn = PawnGenerator.TryGenerateNewPawnInternal(ref pawnGenerationRequest, out text, ignoreScenarioRequirements, ignoreValidator);
 				if (pawn != null)
 				{
 					request = pawnGenerationRequest;
@@ -353,16 +438,16 @@ namespace Verse
 					"Pawn generation error: ",
 					text,
 					" Too many tries (",
-					100,
+					120,
 					"), returning null. Generation request: ",
 					request
-				}));
+				}), false);
 				return null;
 			}
 			return pawn;
 		}
 
-		private static Pawn TryGenerateNewNakedPawn(ref PawnGenerationRequest request, out string error, bool ignoreScenarioRequirements)
+		private static Pawn TryGenerateNewPawnInternal(ref PawnGenerationRequest request, out string error, bool ignoreScenarioRequirements, bool ignoreValidator)
 		{
 			error = null;
 			Pawn pawn = (Pawn)ThingMaker.MakeThing(request.KindDef.race, null);
@@ -400,23 +485,46 @@ namespace Verse
 				}
 				if (pawn.RaceProps.Humanlike)
 				{
+					FactionDef def;
+					Faction faction;
+					if (request.Faction != null)
+					{
+						def = request.Faction.def;
+					}
+					else if (Find.FactionManager.TryGetRandomNonColonyHumanlikeFaction(out faction, false, true, TechLevel.Undefined))
+					{
+						def = faction.def;
+					}
+					else
+					{
+						def = Faction.OfAncients.def;
+					}
 					pawn.story.melanin = ((!request.FixedMelanin.HasValue) ? PawnSkinColors.RandomMelanin(request.Faction) : request.FixedMelanin.Value);
 					pawn.story.crownType = ((Rand.Value >= 0.5f) ? CrownType.Narrow : CrownType.Average);
 					pawn.story.hairColor = PawnHairColors.RandomHairColor(pawn.story.SkinColor, pawn.ageTracker.AgeBiologicalYears);
-					PawnBioAndNameGenerator.GiveAppropriateBioAndNameTo(pawn, request.FixedLastName);
-					pawn.story.hairDef = PawnHairChooser.RandomHairDefFor(pawn, request.Faction.def);
+					PawnBioAndNameGenerator.GiveAppropriateBioAndNameTo(pawn, request.FixedLastName, def);
+					pawn.story.hairDef = PawnHairChooser.RandomHairDefFor(pawn, def);
 					PawnGenerator.GenerateTraits(pawn, request);
 					PawnGenerator.GenerateBodyType(pawn);
 					PawnGenerator.GenerateSkills(pawn);
 				}
+				if (pawn.RaceProps.Animal && request.Faction != null && request.Faction.IsPlayer)
+				{
+					pawn.training.SetWantedRecursive(TrainableDefOf.Tameness, true);
+					pawn.training.Train(TrainableDefOf.Tameness, null, true);
+				}
 				PawnGenerator.GenerateInitialHediffs(pawn, request);
-				if (pawn.workSettings != null && request.Faction.IsPlayer)
+				if (pawn.workSettings != null && request.Faction != null && request.Faction.IsPlayer)
 				{
 					pawn.workSettings.EnableAndInitialize();
 				}
 				if (request.Faction != null && pawn.RaceProps.Animal)
 				{
 					pawn.GenerateNecessaryName();
+				}
+				if (Find.Scenario != null)
+				{
+					Find.Scenario.Notify_NewPawnGenerating(pawn, request.Context);
 				}
 				if (!request.AllowDead && (pawn.Dead || pawn.Destroyed))
 				{
@@ -430,35 +538,48 @@ namespace Verse
 					error = "Generated downed pawn.";
 					result = null;
 				}
-				else if (request.MustBeCapableOfViolence && ((pawn.story != null && pawn.story.WorkTagIsDisabled(WorkTags.Violent)) || !pawn.health.capacities.CapableOf(PawnCapacityDefOf.Manipulation)))
+				else if (request.MustBeCapableOfViolence && ((pawn.story != null && pawn.story.WorkTagIsDisabled(WorkTags.Violent)) || (pawn.RaceProps.ToolUser && !pawn.health.capacities.CapableOf(PawnCapacityDefOf.Manipulation))))
 				{
 					PawnGenerator.DiscardGeneratedPawn(pawn);
 					error = "Generated pawn incapable of violence.";
 					result = null;
 				}
-				else if (!ignoreScenarioRequirements && request.Context == PawnGenerationContext.PlayerStarter && !Find.Scenario.AllowPlayerStartingPawn(pawn))
+				else if (!ignoreScenarioRequirements && request.Context == PawnGenerationContext.PlayerStarter && Find.Scenario != null && !Find.Scenario.AllowPlayerStartingPawn(pawn, false, request))
 				{
 					PawnGenerator.DiscardGeneratedPawn(pawn);
 					error = "Generated pawn doesn't meet scenario requirements.";
 					result = null;
 				}
-				else if (request.Validator != null && !request.Validator(pawn))
+				else if (!ignoreValidator && request.ValidatorPreGear != null && !request.ValidatorPreGear(pawn))
 				{
 					PawnGenerator.DiscardGeneratedPawn(pawn);
-					error = "Generated pawn didn't pass validator check.";
+					error = "Generated pawn didn't pass validator check (pre-gear).";
 					result = null;
 				}
 				else
 				{
-					for (int i = 0; i < PawnGenerator.pawnsBeingGenerated.Count - 1; i++)
+					if (!request.Newborn)
 					{
-						if (PawnGenerator.pawnsBeingGenerated[i].PawnsGeneratedInTheMeantime == null)
-						{
-							PawnGenerator.pawnsBeingGenerated[i] = new PawnGenerator.PawnGenerationStatus(PawnGenerator.pawnsBeingGenerated[i].Pawn, new List<Pawn>());
-						}
-						PawnGenerator.pawnsBeingGenerated[i].PawnsGeneratedInTheMeantime.Add(pawn);
+						PawnGenerator.GenerateGearFor(pawn, request);
 					}
-					result = pawn;
+					if (!ignoreValidator && request.ValidatorPostGear != null && !request.ValidatorPostGear(pawn))
+					{
+						PawnGenerator.DiscardGeneratedPawn(pawn);
+						error = "Generated pawn didn't pass validator check (post-gear).";
+						result = null;
+					}
+					else
+					{
+						for (int i = 0; i < PawnGenerator.pawnsBeingGenerated.Count - 1; i++)
+						{
+							if (PawnGenerator.pawnsBeingGenerated[i].PawnsGeneratedInTheMeantime == null)
+							{
+								PawnGenerator.pawnsBeingGenerated[i] = new PawnGenerator.PawnGenerationStatus(PawnGenerator.pawnsBeingGenerated[i].Pawn, new List<Pawn>());
+							}
+							PawnGenerator.pawnsBeingGenerated[i].PawnsGeneratedInTheMeantime.Add(pawn);
+						}
+						result = pawn;
+					}
 				}
 			}
 			finally
@@ -539,7 +660,7 @@ namespace Verse
 			while (true)
 			{
 				AgeInjuryUtility.GenerateRandomOldAgeInjuries(pawn, !request.AllowDead);
-				PawnTechHediffsGenerator.GeneratePartsAndImplantsFor(pawn);
+				PawnTechHediffsGenerator.GenerateTechHediffsFor(pawn);
 				PawnAddictionHediffsGenerator.GenerateAddictionsAndTolerancesFor(pawn);
 				if (request.AllowDead && pawn.Dead)
 				{
@@ -547,7 +668,7 @@ namespace Verse
 				}
 				if (request.AllowDowned || !pawn.Downed)
 				{
-					return;
+					break;
 				}
 				pawn.health.Reset();
 				num++;
@@ -556,7 +677,7 @@ namespace Verse
 					goto Block_4;
 				}
 			}
-			return;
+			goto IL_D7;
 			Block_4:
 			Log.Warning(string.Concat(new object[]
 			{
@@ -568,7 +689,22 @@ namespace Verse
 				80,
 				" tries. request=",
 				request
-			}));
+			}), false);
+			IL_D7:
+			if (!pawn.Dead && (request.Faction == null || !request.Faction.IsPlayer))
+			{
+				int num2 = 0;
+				while (pawn.health.HasHediffsNeedingTend(false))
+				{
+					num2++;
+					if (num2 > 10000)
+					{
+						Log.Error("Too many iterations.", false);
+						break;
+					}
+					TendUtility.DoTend(null, pawn, null);
+				}
+			}
 		}
 
 		private static void GenerateRandomAge(Pawn pawn, PawnGenerationRequest request)
@@ -589,7 +725,7 @@ namespace Verse
 						") to be greater than chronological age (",
 						request.FixedChronologicalAge,
 						")."
-					}));
+					}), false);
 				}
 			}
 			if (request.Newborn)
@@ -608,15 +744,15 @@ namespace Verse
 				{
 					if (pawn.RaceProps.ageGenerationCurve != null)
 					{
-						num2 = (float)Mathf.RoundToInt(Rand.ByCurve(pawn.RaceProps.ageGenerationCurve, 200));
+						num2 = (float)Mathf.RoundToInt(Rand.ByCurve(pawn.RaceProps.ageGenerationCurve));
 					}
 					else if (pawn.RaceProps.IsMechanoid)
 					{
-						num2 = (float)Rand.Range(0, 2500);
+						num2 = Rand.Range(0f, 2500f);
 					}
 					else
 					{
-						num2 = Rand.ByCurve(PawnGenerator.DefaultAgeGenerationCurve, 200) * pawn.RaceProps.lifeExpectancy;
+						num2 = Rand.ByCurve(PawnGenerator.DefaultAgeGenerationCurve) * pawn.RaceProps.lifeExpectancy;
 					}
 					num++;
 					if (num > 300)
@@ -625,11 +761,11 @@ namespace Verse
 					}
 					if (num2 <= (float)pawn.kindDef.maxGenerationAge && num2 >= (float)pawn.kindDef.minGenerationAge)
 					{
-						goto IL_1D9;
+						goto IL_1D4;
 					}
 				}
-				Log.Error("Tried 300 times to generate age for " + pawn);
-				IL_1D9:
+				Log.Error("Tried 300 times to generate age for " + pawn, false);
+				IL_1D4:
 				pawn.ageTracker.AgeBiologicalTicks = (long)(num2 * 3600000f) + (long)Rand.Range(0, 3600000);
 			}
 			if (request.Newborn)
@@ -681,7 +817,7 @@ namespace Verse
 			{
 				return traitDef.degreeDatas[0].degree;
 			}
-			return traitDef.degreeDatas.RandomElementByWeight((TraitDegreeData dd) => dd.Commonality).degree;
+			return traitDef.degreeDatas.RandomElementByWeight((TraitDegreeData dd) => dd.commonality).degree;
 		}
 
 		private static void GenerateTraits(Pawn pawn, PawnGenerationRequest request)
@@ -698,7 +834,7 @@ namespace Verse
 					TraitEntry traitEntry = forcedTraits[i];
 					if (traitEntry.def == null)
 					{
-						Log.Error("Null forced trait def on " + pawn.story.childhood);
+						Log.Error("Null forced trait def on " + pawn.story.childhood, false);
 					}
 					else if (!pawn.story.traits.HasTrait(traitEntry.def))
 					{
@@ -714,7 +850,7 @@ namespace Verse
 					TraitEntry traitEntry2 = forcedTraits2[j];
 					if (traitEntry2.def == null)
 					{
-						Log.Error("Null forced trait def on " + pawn.story.adulthood);
+						Log.Error("Null forced trait def on " + pawn.story.adulthood, false);
 					}
 					else if (!pawn.story.traits.HasTrait(traitEntry2.def))
 					{
@@ -730,7 +866,7 @@ namespace Verse
 			}
 			while (pawn.story.traits.allTraits.Count < num)
 			{
-				TraitDef newTraitDef = DefDatabase<TraitDef>.AllDefsListForReading.RandomElementByWeight((TraitDef tr) => tr.GetGenderSpecificCommonality(pawn));
+				TraitDef newTraitDef = DefDatabase<TraitDef>.AllDefsListForReading.RandomElementByWeight((TraitDef tr) => tr.GetGenderSpecificCommonality(pawn.gender));
 				if (!pawn.story.traits.HasTrait(newTraitDef))
 				{
 					if (newTraitDef == TraitDefOf.Gay)
@@ -784,11 +920,11 @@ namespace Verse
 			}
 			else if (Rand.Value < 0.5f)
 			{
-				pawn.story.bodyType = BodyType.Thin;
+				pawn.story.bodyType = BodyTypeDefOf.Thin;
 			}
 			else
 			{
-				pawn.story.bodyType = ((pawn.gender != Gender.Female) ? BodyType.Male : BodyType.Female);
+				pawn.story.bodyType = ((pawn.gender != Gender.Female) ? BodyTypeDefOf.Male : BodyTypeDefOf.Female);
 			}
 		}
 
@@ -830,7 +966,7 @@ namespace Verse
 			}
 			else
 			{
-				num = Rand.ByCurve(PawnGenerator.LevelRandomCurve, 100);
+				num = Rand.ByCurve(PawnGenerator.LevelRandomCurve);
 			}
 			foreach (Backstory current in from bs in pawn.story.AllBackstories
 			where bs != null
@@ -863,7 +999,7 @@ namespace Verse
 			CompQuality compQuality = gear.TryGetComp<CompQuality>();
 			if (compQuality != null)
 			{
-				compQuality.SetQuality(QualityUtility.RandomGeneratedGearQuality(pawn.kindDef), ArtGenerationContext.Outsider);
+				compQuality.SetQuality(QualityUtility.GenerateQualityGeneratingPawn(pawn.kindDef), ArtGenerationContext.Outsider);
 			}
 			if (gear.def.useHitPoints)
 			{
@@ -883,64 +1019,72 @@ namespace Verse
 			{
 				return;
 			}
-			List<KeyValuePair<Pawn, PawnRelationDef>> list = new List<KeyValuePair<Pawn, PawnRelationDef>>();
-			List<PawnRelationDef> allDefsListForReading = DefDatabase<PawnRelationDef>.AllDefsListForReading;
-			IEnumerable<Pawn> enumerable = from x in PawnsFinder.AllMapsWorldAndTemporary_AliveOrDead
+			Pawn[] array = (from x in PawnsFinder.AllMapsWorldAndTemporary_AliveOrDead
 			where x.def == pawn.def
-			select x;
-			int num = 0;
-			foreach (Pawn current in enumerable)
+			select x).ToArray<Pawn>();
+			if (array.Length == 0)
 			{
-				if (current.Discarded)
+				return;
+			}
+			int num = 0;
+			Pawn[] array2 = array;
+			for (int i = 0; i < array2.Length; i++)
+			{
+				Pawn pawn2 = array2[i];
+				if (pawn2.Discarded)
 				{
 					Log.Warning(string.Concat(new object[]
 					{
 						"Warning during generating pawn relations for ",
 						pawn,
 						": Pawn ",
-						current,
+						pawn2,
 						" is discarded, yet he was yielded by PawnUtility. Discarding a pawn means that he is no longer managed by anything."
-					}));
+					}), false);
 				}
-				else
+				else if (pawn2.Faction != null && pawn2.Faction.IsPlayer)
 				{
 					num++;
-					for (int i = 0; i < allDefsListForReading.Count; i++)
-					{
-						if (allDefsListForReading[i].generationChanceFactor > 0f)
-						{
-							list.Add(new KeyValuePair<Pawn, PawnRelationDef>(current, allDefsListForReading[i]));
-						}
-					}
 				}
 			}
-			float num2 = 82f;
-			num2 += (float)num * 88f;
+			float num2 = 45f;
+			num2 += (float)num * 2.7f;
 			PawnGenerationRequest localReq = request;
-			KeyValuePair<Pawn, PawnRelationDef> keyValuePair = list.RandomElementByWeightWithDefault(delegate(KeyValuePair<Pawn, PawnRelationDef> x)
+			Pair<Pawn, PawnRelationDef> pair = PawnGenerator.GenerateSamples(array, PawnGenerator.relationsGeneratableBlood, 40).RandomElementByWeightWithDefault((Pair<Pawn, PawnRelationDef> x) => x.Second.generationChanceFactor * x.Second.Worker.GenerationChance(pawn, x.First, localReq), num2 * 40f / (float)(array.Length * PawnGenerator.relationsGeneratableBlood.Length));
+			if (pair.First != null)
 			{
-				if (!x.Value.familyByBloodRelation)
-				{
-					return 0f;
-				}
-				return x.Value.generationChanceFactor * x.Value.Worker.GenerationChance(pawn, x.Key, localReq);
-			}, num2);
-			if (keyValuePair.Key != null)
-			{
-				keyValuePair.Value.Worker.CreateRelation(pawn, keyValuePair.Key, ref request);
+				pair.Second.Worker.CreateRelation(pawn, pair.First, ref request);
 			}
-			KeyValuePair<Pawn, PawnRelationDef> keyValuePair2 = list.RandomElementByWeightWithDefault(delegate(KeyValuePair<Pawn, PawnRelationDef> x)
+			Pair<Pawn, PawnRelationDef> pair2 = PawnGenerator.GenerateSamples(array, PawnGenerator.relationsGeneratableNonblood, 40).RandomElementByWeightWithDefault((Pair<Pawn, PawnRelationDef> x) => x.Second.generationChanceFactor * x.Second.Worker.GenerationChance(pawn, x.First, localReq), num2 * 40f / (float)(array.Length * PawnGenerator.relationsGeneratableNonblood.Length));
+			if (pair2.First != null)
 			{
-				if (x.Value.familyByBloodRelation)
-				{
-					return 0f;
-				}
-				return x.Value.generationChanceFactor * x.Value.Worker.GenerationChance(pawn, x.Key, localReq);
-			}, num2);
-			if (keyValuePair2.Key != null)
-			{
-				keyValuePair2.Value.Worker.CreateRelation(pawn, keyValuePair2.Key, ref request);
+				pair2.Second.Worker.CreateRelation(pawn, pair2.First, ref request);
 			}
+		}
+
+		private static Pair<Pawn, PawnRelationDef>[] GenerateSamples(Pawn[] pawns, PawnRelationDef[] relations, int count)
+		{
+			Pair<Pawn, PawnRelationDef>[] array = new Pair<Pawn, PawnRelationDef>[count];
+			for (int i = 0; i < count; i++)
+			{
+				array[i] = new Pair<Pawn, PawnRelationDef>(pawns[Rand.Range(0, pawns.Length)], relations[Rand.Range(0, relations.Length)]);
+			}
+			return array;
+		}
+
+		[Category("Performance"), DebugOutput]
+		public static void PawnGenerationHistogram()
+		{
+			DebugHistogram debugHistogram = new DebugHistogram((from x in Enumerable.Range(1, 20)
+			select (float)x * 10f).ToArray<float>());
+			for (int i = 0; i < 100; i++)
+			{
+				long timestamp = Stopwatch.GetTimestamp();
+				Pawn pawn = PawnGenerator.GeneratePawn(new PawnGenerationRequest(PawnKindDefOf.Colonist, null, PawnGenerationContext.NonPlayer, -1, true, false, false, false, true, false, 1f, false, true, true, false, false, false, false, null, null, null, null, null, null, null, null));
+				debugHistogram.Add((float)((Stopwatch.GetTimestamp() - timestamp) * 1000L / Stopwatch.Frequency));
+				pawn.Destroy(DestroyMode.Vanish);
+			}
+			debugHistogram.Display();
 		}
 	}
 }

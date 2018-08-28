@@ -24,9 +24,12 @@ namespace RimWorld
 			}
 		}
 
-		public override bool TryMakePreToilReservations()
+		public override bool TryMakePreToilReservations(bool errorOnFailed)
 		{
-			return this.pawn.Reserve(this.OtherPawn, this.job, 1, -1, null);
+			Pawn pawn = this.pawn;
+			LocalTargetInfo target = this.OtherPawn;
+			Job job = this.job;
+			return pawn.Reserve(target, job, 1, -1, null, errorOnFailed);
 		}
 
 		[DebuggerHidden]
@@ -34,7 +37,7 @@ namespace RimWorld
 		{
 			this.FailOnDespawnedOrNull(TargetIndex.A);
 			yield return Toils_Goto.GotoThing(TargetIndex.A, PathEndMode.Touch);
-			yield return Toils_General.Wait(10);
+			yield return Toils_General.Wait(10, TargetIndex.None);
 			yield return new Toil
 			{
 				initAction = delegate
@@ -46,12 +49,12 @@ namespace RimWorld
 					}
 					else
 					{
-						ThingStackPart firstUnloadableThing = otherPawn.inventory.FirstUnloadableThing;
+						ThingCount firstUnloadableThing = otherPawn.inventory.FirstUnloadableThing;
 						IntVec3 c;
-						if (!firstUnloadableThing.Thing.def.EverStoreable || !this.$this.pawn.health.capacities.CapableOf(PawnCapacityDefOf.Manipulation) || !StoreUtility.TryFindStoreCellNearColonyDesperate(firstUnloadableThing.Thing, this.$this.pawn, out c))
+						if (!firstUnloadableThing.Thing.def.EverStorable(false) || !this.$this.pawn.health.capacities.CapableOf(PawnCapacityDefOf.Manipulation) || !StoreUtility.TryFindStoreCellNearColonyDesperate(firstUnloadableThing.Thing, this.$this.pawn, out c))
 						{
 							Thing thing;
-							otherPawn.inventory.innerContainer.TryDrop(firstUnloadableThing.Thing, ThingPlaceMode.Near, firstUnloadableThing.Count, out thing, null);
+							otherPawn.inventory.innerContainer.TryDrop(firstUnloadableThing.Thing, ThingPlaceMode.Near, firstUnloadableThing.Count, out thing, null, null);
 							this.$this.EndJobWith(JobCondition.Succeeded);
 							if (thing != null)
 							{

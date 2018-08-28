@@ -44,7 +44,7 @@ namespace RimWorld
 			}
 			if (GameObject.Find("MusicAudioSourceDummy") != null)
 			{
-				Log.Error("MusicManagerEntry did StartPlaying but there is already a music source GameObject.");
+				Log.Error("MusicManagerEntry did StartPlaying but there is already a music source GameObject.", false);
 				return;
 			}
 			this.audioSource = new GameObject("MusicAudioSourceDummy")

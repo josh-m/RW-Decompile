@@ -9,8 +9,6 @@ namespace RimWorld
 
 		public static TraitDef Brawler;
 
-		public static TraitDef GreenThumb;
-
 		public static TraitDef Abrasive;
 
 		public static TraitDef DrugDesire;
@@ -47,10 +45,27 @@ namespace RimWorld
 
 		public static TraitDef TooSmart;
 
-		public static TraitDef Prosthophobe;
+		public static TraitDef Transhumanist;
+
+		public static TraitDef BodyPurist;
 
 		public static TraitDef NaturalMood;
 
 		public static TraitDef PsychicSensitivity;
+
+		public static TraitDef Undergrounder;
+
+		public static TraitDef GreatMemory;
+
+		public static TraitDef Tough;
+
+		public static TraitDef SpeedOffset;
+
+		public static TraitDef ShootingAccuracy;
+
+		static TraitDefOf()
+		{
+			DefOfHelper.EnsureInitializedInCtor(typeof(TraitDefOf));
+		}
 	}
 }

@@ -14,53 +14,60 @@ namespace RimWorld
 
 		public int fee;
 
-		protected override IEnumerable<DiaOption> Choices
+		public override IEnumerable<DiaOption> Choices
 		{
 			get
 			{
-				DiaOption accept = new DiaOption("RansomDemand_Accept".Translate());
-				accept.action = delegate
+				if (base.ArchivedOnly)
 				{
-					this.$this.faction.kidnapped.RemoveKidnappedPawn(this.$this.kidnapped);
-					Find.WorldPawns.RemovePawn(this.$this.kidnapped);
-					IntVec3 intVec;
-					if (this.$this.faction.def.techLevel < TechLevel.Spacer)
-					{
-						if (!CellFinder.TryFindRandomEdgeCellWith((IntVec3 c) => c.Standable(this.$this.map) && this.$this.map.reachability.CanReachColony(c), this.$this.map, CellFinder.EdgeRoadChance_Friendly, out intVec) && !CellFinder.TryFindRandomEdgeCellWith((IntVec3 c) => c.Standable(this.$this.map), this.$this.map, CellFinder.EdgeRoadChance_Friendly, out intVec))
-						{
-							Log.Warning("Could not find any edge cell.");
-							intVec = DropCellFinder.TradeDropSpot(this.$this.map);
-						}
-						GenSpawn.Spawn(this.$this.kidnapped, intVec, this.$this.map);
-					}
-					else
-					{
-						intVec = DropCellFinder.TradeDropSpot(this.$this.map);
-						TradeUtility.SpawnDropPod(intVec, this.$this.map, this.$this.kidnapped);
-					}
-					CameraJumper.TryJump(intVec, this.$this.map);
-					TradeUtility.LaunchSilver(this.$this.map, this.$this.fee);
-					Find.LetterStack.RemoveLetter(this.$this);
-				};
-				accept.resolveTree = true;
-				if (!TradeUtility.ColonyHasEnoughSilver(this.map, this.fee))
-				{
-					accept.Disable("NeedSilverLaunchable".Translate(new object[]
-					{
-						this.fee.ToString()
-					}));
+					yield return base.Option_Close;
 				}
-				yield return accept;
-				yield return base.Reject;
-				yield return base.Postpone;
+				else
+				{
+					DiaOption accept = new DiaOption("RansomDemand_Accept".Translate());
+					accept.action = delegate
+					{
+						this.$this.faction.kidnapped.RemoveKidnappedPawn(this.$this.kidnapped);
+						Find.WorldPawns.RemovePawn(this.$this.kidnapped);
+						IntVec3 intVec;
+						if (this.$this.faction.def.techLevel < TechLevel.Industrial)
+						{
+							if (!CellFinder.TryFindRandomEdgeCellWith((IntVec3 c) => c.Standable(this.$this.map) && this.$this.map.reachability.CanReachColony(c), this.$this.map, CellFinder.EdgeRoadChance_Friendly, out intVec) && !CellFinder.TryFindRandomEdgeCellWith((IntVec3 c) => c.Standable(this.$this.map), this.$this.map, CellFinder.EdgeRoadChance_Friendly, out intVec))
+							{
+								Log.Warning("Could not find any edge cell.", false);
+								intVec = DropCellFinder.TradeDropSpot(this.$this.map);
+							}
+							GenSpawn.Spawn(this.$this.kidnapped, intVec, this.$this.map, WipeMode.Vanish);
+						}
+						else
+						{
+							intVec = DropCellFinder.TradeDropSpot(this.$this.map);
+							TradeUtility.SpawnDropPod(intVec, this.$this.map, this.$this.kidnapped);
+						}
+						CameraJumper.TryJump(intVec, this.$this.map);
+						TradeUtility.LaunchSilver(this.$this.map, this.$this.fee);
+						Find.LetterStack.RemoveLetter(this.$this);
+					};
+					accept.resolveTree = true;
+					if (!TradeUtility.ColonyHasEnoughSilver(this.map, this.fee))
+					{
+						accept.Disable("NeedSilverLaunchable".Translate(new object[]
+						{
+							this.fee.ToString()
+						}));
+					}
+					yield return accept;
+					yield return base.Option_Reject;
+					yield return base.Option_Postpone;
+				}
 			}
 		}
 
-		public override bool StillValid
+		public override bool CanShowInLetterStack
 		{
 			get
 			{
-				return base.StillValid && Find.Maps.Contains(this.map) && this.faction.kidnapped.KidnappedPawnsListForReading.Contains(this.kidnapped);
+				return base.CanShowInLetterStack && Find.Maps.Contains(this.map) && this.faction.kidnapped.KidnappedPawnsListForReading.Contains(this.kidnapped);
 			}
 		}
 

@@ -18,9 +18,15 @@ namespace Verse
 
 		public Color screenFillColor = Color.clear;
 
+		protected float minOptionsAreaHeight;
+
 		private const float InteractivityDelay = 0.5f;
 
 		private const float TitleHeight = 36f;
+
+		protected const float OptHorMargin = 15f;
+
+		protected const float OptVerticalSpace = 7f;
 
 		private float optTotalHeight;
 
@@ -46,7 +52,8 @@ namespace Verse
 			this.GotoNode(nodeRoot);
 			this.forcePause = true;
 			this.absorbInputAroundWindow = true;
-			this.closeOnEscapeKey = false;
+			this.closeOnAccept = false;
+			this.closeOnCancel = false;
 			if (delayInteractivity)
 			{
 				this.makeInteractiveAtTime = Time.realtimeSinceStartup + 0.5f;
@@ -90,6 +97,7 @@ namespace Verse
 			Rect rect = inRect.AtZero();
 			if (this.title != null)
 			{
+				Text.Font = GameFont.Small;
 				Rect rect2 = rect;
 				rect2.height = 36f;
 				rect.yMin += 53f;
@@ -105,7 +113,7 @@ namespace Verse
 		{
 			GUI.BeginGroup(rect);
 			Text.Font = GameFont.Small;
-			Rect outRect = new Rect(0f, 0f, rect.width, rect.height - this.optTotalHeight);
+			Rect outRect = new Rect(0f, 0f, rect.width, rect.height - Mathf.Max(this.optTotalHeight, this.minOptionsAreaHeight));
 			float width = rect.width - 16f;
 			Rect rect2 = new Rect(0f, 0f, width, Text.CalcHeight(this.curNode.text, width));
 			Widgets.BeginScrollView(outRect, ref this.scrollPosition, rect2, true);

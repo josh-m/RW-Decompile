@@ -84,7 +84,7 @@ namespace Verse
 									Material mat = base.LinkedDrawMatFrom(thing, thing.Position);
 									float rot = 0f;
 									Vector2[] cornerFillUVs = Graphic_LinkedCornerFiller.CornerFillUVs;
-									Printer_Plane.PrintPlane(layer, center, size, mat, rot, false, cornerFillUVs, null, 0.01f);
+									Printer_Plane.PrintPlane(layer, center, size, mat, rot, false, cornerFillUVs, null, 0.01f, 0f);
 								}
 							}
 						}

@@ -36,7 +36,7 @@ namespace RimWorld
 			{
 				IAttackTarget attackTarget;
 				if (!(from x in pawn.Map.attackTargetsCache.GetPotentialTargetsFor(pawn)
-				where !x.ThreatDisabled() && x.Thing.Faction == Faction.OfPlayer && pawn.CanReach(x.Thing, PathEndMode.OnCell, Danger.Deadly, false, TraverseMode.PassAllDestroyableThings)
+				where !x.ThreatDisabled(pawn) && x.Thing.Faction == Faction.OfPlayer && pawn.CanReach(x.Thing, PathEndMode.OnCell, Danger.Deadly, false, TraverseMode.PassAllDestroyableThings)
 				select x).TryRandomElement(out attackTarget))
 				{
 					return null;

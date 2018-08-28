@@ -7,6 +7,7 @@ namespace Verse.Sound
 {
 	public class AudioGrain_Clip : AudioGrain
 	{
+		[NoTranslate]
 		public string clipPath = string.Empty;
 
 		[DebuggerHidden]
@@ -19,7 +20,7 @@ namespace Verse.Sound
 			}
 			else
 			{
-				Log.Error("Grain couldn't resolve: Clip not found at " + this.clipPath);
+				Log.Error("Grain couldn't resolve: Clip not found at " + this.clipPath, false);
 			}
 		}
 	}

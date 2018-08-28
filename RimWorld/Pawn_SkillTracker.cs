@@ -28,6 +28,35 @@ namespace RimWorld
 				this.pawn
 			});
 			Scribe_Values.Look<int>(ref this.lastXpSinceMidnightResetTimestamp, "lastXpSinceMidnightResetTimestamp", 0, false);
+			if (Scribe.mode == LoadSaveMode.PostLoadInit)
+			{
+				if (this.skills.RemoveAll((SkillRecord x) => x == null) != 0)
+				{
+					Log.Error("Some skills were null after loading for " + this.pawn.ToStringSafe<Pawn>(), false);
+				}
+				if (this.skills.RemoveAll((SkillRecord x) => x.def == null) != 0)
+				{
+					Log.Error("Some skills had null def after loading for " + this.pawn.ToStringSafe<Pawn>(), false);
+				}
+				List<SkillDef> allDefsListForReading = DefDatabase<SkillDef>.AllDefsListForReading;
+				for (int i = 0; i < allDefsListForReading.Count; i++)
+				{
+					bool flag = false;
+					for (int j = 0; j < this.skills.Count; j++)
+					{
+						if (this.skills[j].def == allDefsListForReading[i])
+						{
+							flag = true;
+							break;
+						}
+					}
+					if (!flag)
+					{
+						Log.Warning(this.pawn.ToStringSafe<Pawn>() + " had no " + allDefsListForReading[i].ToStringSafe<SkillDef>() + " skill. Adding.", false);
+						this.skills.Add(new SkillRecord(this.pawn, allDefsListForReading[i]));
+					}
+				}
+			}
 		}
 
 		public SkillRecord GetSkill(SkillDef skillDef)
@@ -45,7 +74,7 @@ namespace RimWorld
 				skillDef,
 				", returning ",
 				this.skills[0]
-			}));
+			}), false);
 			return this.skills[0];
 		}
 

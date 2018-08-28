@@ -54,7 +54,20 @@ namespace RimWorld
 			{
 				if (pawn.CanReserveAndReach(this.parent, PathEndMode.InteractionCell, Danger.Deadly, 1, -1, null, false))
 				{
-					if (this.Props.manWorkType == WorkTags.None || pawn.story == null || !pawn.story.WorkTagIsDisabled(this.Props.manWorkType))
+					if (this.Props.manWorkType != WorkTags.None && pawn.story != null && pawn.story.WorkTagIsDisabled(this.Props.manWorkType))
+					{
+						if (this.Props.manWorkType == WorkTags.Violent)
+						{
+							yield return new FloatMenuOption("CannotManThing".Translate(new object[]
+							{
+								this.parent.LabelShort
+							}) + " (" + "IsIncapableOfViolenceLower".Translate(new object[]
+							{
+								pawn.LabelShort
+							}) + ")", null, MenuOptionPriority.Default, null, null, 0f, null, null);
+						}
+					}
+					else
 					{
 						FloatMenuOption opt = new FloatMenuOption("OrderManThing".Translate(new object[]
 						{

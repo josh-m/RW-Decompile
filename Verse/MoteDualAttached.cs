@@ -47,7 +47,7 @@ namespace Verse
 					this.exactPosition = this.link1.LastDrawPos + this.def.mote.attachedDrawOffset;
 				}
 			}
-			this.exactPosition.y = Altitudes.AltitudeFor(this.def.altitudeLayer);
+			this.exactPosition.y = this.def.altitudeLayer.AltitudeFor();
 		}
 	}
 }

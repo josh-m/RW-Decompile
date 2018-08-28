@@ -94,9 +94,11 @@ namespace RimWorld
 
 		public void DrawTurret()
 		{
+			Vector3 b = new Vector3(this.parentTurret.def.building.turretTopOffset.x, 0f, this.parentTurret.def.building.turretTopOffset.y);
+			float turretTopDrawSize = this.parentTurret.def.building.turretTopDrawSize;
 			Matrix4x4 matrix = default(Matrix4x4);
-			matrix.SetTRS(this.parentTurret.DrawPos + Altitudes.AltIncVect, this.CurRotation.ToQuat(), Vector3.one);
-			Graphics.DrawMesh(MeshPool.plane20, matrix, this.parentTurret.def.building.turretTopMat, 0);
+			matrix.SetTRS(this.parentTurret.DrawPos + Altitudes.AltIncVect + b, this.CurRotation.ToQuat(), new Vector3(turretTopDrawSize, 1f, turretTopDrawSize));
+			Graphics.DrawMesh(MeshPool.plane10, matrix, this.parentTurret.def.building.turretTopMat, 0);
 		}
 	}
 }

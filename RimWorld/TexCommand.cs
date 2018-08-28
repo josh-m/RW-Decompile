@@ -31,6 +31,8 @@ namespace RimWorld
 
 		public static readonly Texture2D ToggleVent = ContentFinder<Texture2D>.Get("UI/Commands/Vent", true);
 
+		public static readonly Texture2D PauseCaravan = ContentFinder<Texture2D>.Get("UI/Commands/PauseCaravan", true);
+
 		public static readonly Texture2D RearmTrap = ContentFinder<Texture2D>.Get("UI/Designators/RearmTrap", true);
 
 		public static readonly Texture2D TreeChop = ContentFinder<Texture2D>.Get("UI/Designators/HarvestWood", true);

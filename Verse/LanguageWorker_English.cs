@@ -8,7 +8,7 @@ namespace Verse
 		{
 			if (str.NullOrEmpty())
 			{
-				throw new ArgumentException();
+				return string.Empty;
 			}
 			return "a " + str;
 		}
@@ -17,7 +17,7 @@ namespace Verse
 		{
 			if (str.NullOrEmpty())
 			{
-				throw new ArgumentException();
+				return string.Empty;
 			}
 			return "the " + str;
 		}
@@ -25,7 +25,7 @@ namespace Verse
 		public override string PostProcessed(string str)
 		{
 			str = base.PostProcessed(str);
-			if (str.StartsWith("a ", StringComparison.OrdinalIgnoreCase) && (str[2] == 'a' || str[2] == 'e' || str[2] == 'i' || str[2] == 'o' || str[2] == 'u'))
+			if (str.StartsWith("a ", StringComparison.OrdinalIgnoreCase) && str.Length >= 3 && (str.Substring(2) == "hour" || str[2] == 'a' || str[2] == 'e' || str[2] == 'i' || str[2] == 'o' || str[2] == 'u'))
 			{
 				str = str.Insert(1, "n");
 			}

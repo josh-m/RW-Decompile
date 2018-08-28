@@ -27,12 +27,7 @@ namespace RimWorld
 			{
 				return false;
 			}
-			Pawn pawn = BreakRiskAlertUtility.PawnsAtRiskMinor.FirstOrDefault<Pawn>();
-			if (pawn != null)
-			{
-				return pawn;
-			}
-			return false;
+			return AlertReport.CulpritsAre(BreakRiskAlertUtility.PawnsAtRiskMinor);
 		}
 	}
 }

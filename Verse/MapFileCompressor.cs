@@ -1,3 +1,4 @@
+using RimWorld;
 using System;
 using System.Collections.Generic;
 
@@ -43,7 +44,7 @@ namespace Verse
 							curSq,
 							". The last was ",
 							current
-						}));
+						}), false);
 					}
 					num = current.def.shortHash;
 				}
@@ -66,13 +67,15 @@ namespace Verse
 						thingDefsByShortHash[current.shortHash],
 						": both have short hash ",
 						current.shortHash
-					}));
+					}), false);
 				}
 				else
 				{
 					thingDefsByShortHash.Add(current.shortHash, current);
 				}
 			}
+			int major = VersionControl.MajorFromVersionString(ScribeMetaHeaderUtility.loadedGameVersion);
+			int minor = VersionControl.MinorFromVersionString(ScribeMetaHeaderUtility.loadedGameVersion);
 			List<Thing> loadables = new List<Thing>();
 			MapSerializeUtility.LoadUshort(this.compressedData, this.map, delegate(IntVec3 c, ushort val)
 			{
@@ -80,19 +83,41 @@ namespace Verse
 				{
 					return;
 				}
-				ThingDef def = null;
-				try
+				ThingDef thingDef = BackCompatibility.BackCompatibleThingDefWithShortHash_Force(val, major, minor);
+				if (thingDef == null)
 				{
-					def = thingDefsByShortHash[val];
+					try
+					{
+						thingDef = thingDefsByShortHash[val];
+					}
+					catch (KeyNotFoundException)
+					{
+						ThingDef thingDef2 = BackCompatibility.BackCompatibleThingDefWithShortHash(val);
+						if (thingDef2 != null)
+						{
+							thingDef = thingDef2;
+							thingDefsByShortHash.Add(val, thingDef2);
+						}
+						else
+						{
+							Log.Error("Map compressor decompression error: No thingDef with short hash " + val + ". Adding as null to dictionary.", false);
+							thingDefsByShortHash.Add(val, null);
+						}
+					}
 				}
-				catch (KeyNotFoundException)
+				if (thingDef != null)
 				{
-					Log.Error("Map compressor decompression error: No thingDef with short hash " + val + ". Adding as null to dictionary.");
-					thingDefsByShortHash.Add(val, null);
+					try
+					{
+						Thing thing = ThingMaker.MakeThing(thingDef, null);
+						thing.SetPositionDirect(c);
+						loadables.Add(thing);
+					}
+					catch (Exception arg)
+					{
+						Log.Error("Could not instantiate compressed thing: " + arg, false);
+					}
 				}
-				Thing thing = ThingMaker.MakeThing(def, null);
-				thing.SetPositionDirect(c);
-				loadables.Add(thing);
 			});
 			return loadables;
 		}

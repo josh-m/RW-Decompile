@@ -62,11 +62,11 @@ namespace RimWorld
 
 		public override void PreMapGenerate()
 		{
-			FactionBase factionBase = (FactionBase)WorldObjectMaker.MakeWorldObject(WorldObjectDefOf.FactionBase);
-			factionBase.SetFaction(Find.GameInitData.playerFaction);
-			factionBase.Tile = Find.GameInitData.startingTile;
-			factionBase.Name = FactionBaseNameGenerator.GenerateFactionBaseName(factionBase);
-			Find.WorldObjects.Add(factionBase);
+			Settlement settlement = (Settlement)WorldObjectMaker.MakeWorldObject(WorldObjectDefOf.Settlement);
+			settlement.SetFaction(Find.GameInitData.playerFaction);
+			settlement.Tile = Find.GameInitData.startingTile;
+			settlement.Name = SettlementNameGenerator.GenerateSettlementName(settlement, Find.GameInitData.playerFaction.def.playerInitialSettlementNameMaker);
+			Find.WorldObjects.Add(settlement);
 		}
 
 		public override void PostGameStart()

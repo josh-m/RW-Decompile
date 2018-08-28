@@ -28,6 +28,10 @@ namespace RimWorld
 		[DebuggerHidden]
 		protected override IEnumerable<Rule> SpecialTextGenerationRules()
 		{
+			if (this.def.defSymbol.NullOrEmpty())
+			{
+				Log.Error(this.def + " uses tale type with def but defSymbol is not set.", false);
+			}
 			foreach (Rule r in base.SpecialTextGenerationRules())
 			{
 				yield return r;

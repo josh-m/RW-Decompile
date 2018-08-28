@@ -138,8 +138,8 @@ namespace RimWorld
 			}
 			if (!compProperties.mustBePlacedAdjacent && !compProperties.mustBePlacedAdjacentCardinalToBedHead)
 			{
-				Vector3 a = Gen.TrueCenter(myPos, myRot, myDef.size, myDef.Altitude);
-				Vector3 b = Gen.TrueCenter(facilityPos, facilityRot, facilityDef.size, facilityDef.Altitude);
+				Vector3 a = GenThing.TrueCenter(myPos, myRot, myDef.size, myDef.Altitude);
+				Vector3 b = GenThing.TrueCenter(facilityPos, facilityRot, facilityDef.size, facilityDef.Altitude);
 				if (Vector3.Distance(a, b) > compProperties.maxDistance)
 				{
 					return false;
@@ -209,7 +209,7 @@ namespace RimWorld
 			{
 				if (this.linkedFacilities[i] == facility)
 				{
-					Log.Error("Notify_NewLink was called but the link is already here.");
+					Log.Error("Notify_NewLink was called but the link is already here.", false);
 					return;
 				}
 			}
@@ -232,7 +232,7 @@ namespace RimWorld
 					return;
 				}
 			}
-			Log.Error("Notify_LinkRemoved was called but there is no such link here.");
+			Log.Error("Notify_LinkRemoved was called but there is no such link here.", false);
 		}
 
 		public void Notify_FacilityDespawned()
@@ -279,10 +279,10 @@ namespace RimWorld
 		{
 			if (facilityDef != thanThisFacility.def)
 			{
-				Log.Error("Comparing two different facility defs.");
+				Log.Error("Comparing two different facility defs.", false);
 				return false;
 			}
-			Vector3 b = Gen.TrueCenter(facilityPos, facilityRot, facilityDef.size, facilityDef.Altitude);
+			Vector3 b = GenThing.TrueCenter(facilityPos, facilityRot, facilityDef.size, facilityDef.Altitude);
 			Vector3 a = this.parent.TrueCenter();
 			float num = Vector3.Distance(a, b);
 			float num2 = Vector3.Distance(a, thanThisFacility.TrueCenter());
@@ -309,7 +309,7 @@ namespace RimWorld
 				{
 					candidates = candidates.Concat(map.listerThings.ThingsOfDef(myProps.linkableFacilities[i]));
 				}
-				Vector3 myTrueCenter = Gen.TrueCenter(myPos, myRot, myDef.size, myDef.Altitude);
+				Vector3 myTrueCenter = GenThing.TrueCenter(myPos, myRot, myDef.size, myDef.Altitude);
 				IOrderedEnumerable<Thing> sortedCandidates = from x in candidates
 				orderby Vector3.Distance(myTrueCenter, x.TrueCenter()), x.Position.x, x.Position.z
 				select x;
@@ -340,7 +340,7 @@ namespace RimWorld
 
 		public static void DrawLinesToPotentialThingsToLinkTo(ThingDef myDef, IntVec3 myPos, Rot4 myRot, Map map)
 		{
-			Vector3 a = Gen.TrueCenter(myPos, myRot, myDef.size, myDef.Altitude);
+			Vector3 a = GenThing.TrueCenter(myPos, myRot, myDef.size, myDef.Altitude);
 			foreach (Thing current in CompAffectedByFacilities.PotentialThingsToLinkTo(myDef, myPos, myRot, map))
 			{
 				GenDraw.DrawLineBetween(a, current.TrueCenter());

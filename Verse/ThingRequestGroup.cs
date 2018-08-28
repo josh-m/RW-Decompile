@@ -41,6 +41,10 @@ namespace Verse
 		AffectsSky,
 		PsychicDroneEmanator,
 		WindSource,
-		AlwaysFlee
+		AlwaysFlee,
+		ResearchBench,
+		Facility,
+		AffectedByFacilities,
+		CreatesInfestations
 	}
 }

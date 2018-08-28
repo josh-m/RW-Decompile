@@ -110,6 +110,7 @@ namespace RimWorld
 		public override void ExposeData()
 		{
 			base.ExposeData();
+			Scribe_Values.Look<int>(ref this.ticksSinceSpawn, "ticksSinceSpawn", 0, false);
 			Scribe_Values.Look<float>(ref this.fireSize, "fireSize", 0f, false);
 		}
 
@@ -119,12 +120,6 @@ namespace RimWorld
 			this.RecalcPathsOnAndAroundMe(map);
 			LessonAutoActivator.TeachOpportunity(ConceptDefOf.HomeArea, this, OpportunityType.Important);
 			this.ticksSinceSpread = (int)(this.SpreadInterval * Rand.Value);
-			LongEventHandler.ExecuteWhenFinished(delegate
-			{
-				SoundDef def = SoundDef.Named("FireBurning");
-				SoundInfo info = SoundInfo.InMap(new TargetInfo(this.Position, map, false), MaintenanceType.PerTick);
-				this.sustainer = SustainerAggregatorUtility.AggregateOrSpawnSustainerFor(this, def, info);
-			});
 		}
 
 		public float CurrentSize()
@@ -132,15 +127,18 @@ namespace RimWorld
 			return this.fireSize;
 		}
 
-		public override void DeSpawn()
+		public override void DeSpawn(DestroyMode mode = DestroyMode.Vanish)
 		{
-			if (this.sustainer.externalParams.sizeAggregator == null)
+			if (this.sustainer != null)
 			{
-				this.sustainer.externalParams.sizeAggregator = new SoundSizeAggregator();
+				if (this.sustainer.externalParams.sizeAggregator == null)
+				{
+					this.sustainer.externalParams.sizeAggregator = new SoundSizeAggregator();
+				}
+				this.sustainer.externalParams.sizeAggregator.RemoveReporter(this);
 			}
-			this.sustainer.externalParams.sizeAggregator.RemoveReporter(this);
 			Map map = base.Map;
-			base.DeSpawn();
+			base.DeSpawn(mode);
 			this.RecalcPathsOnAndAroundMe(map);
 		}
 
@@ -182,9 +180,10 @@ namespace RimWorld
 			{
 				this.sustainer.Maintain();
 			}
-			else
+			else if (!base.Position.Fogged(base.Map))
 			{
-				Log.ErrorOnce("Fire sustainer was null at " + base.Position, 917321);
+				SoundInfo info = SoundInfo.InMap(new TargetInfo(base.Position, base.Map, false), MaintenanceType.PerTick);
+				this.sustainer = SustainerAggregatorUtility.AggregateOrSpawnSustainerFor(this, SoundDefOf.FireBurning, info);
 			}
 			this.ticksUntilSmoke--;
 			if (this.ticksUntilSmoke <= 0)
@@ -210,7 +209,7 @@ namespace RimWorld
 			}
 			if (this.ticksSinceSpawn >= 7500)
 			{
-				this.TryMakeFloorBurned();
+				this.TryBurnFloor();
 			}
 		}
 
@@ -317,24 +316,20 @@ namespace RimWorld
 				}
 				if (base.Map.weatherManager.RainRate > 0.01f && this.VulnerableToRain() && Rand.Value < 6f)
 				{
-					base.TakeDamage(new DamageInfo(DamageDefOf.Extinguish, 10, -1f, null, null, null, DamageInfo.SourceCategory.ThingOrUnknown));
+					base.TakeDamage(new DamageInfo(DamageDefOf.Extinguish, 10f, 0f, -1f, null, null, null, DamageInfo.SourceCategory.ThingOrUnknown, null));
 				}
 			}
 		}
 
-		private void TryMakeFloorBurned()
+		private void TryBurnFloor()
 		{
 			if (this.parent != null || !base.Spawned)
 			{
 				return;
 			}
-			Map map = base.Map;
-			TerrainGrid terrainGrid = map.terrainGrid;
-			TerrainDef terrain = base.Position.GetTerrain(map);
-			if (terrain.burnedDef != null && base.Position.TerrainFlammableNow(map))
+			if (base.Position.TerrainFlammableNow(base.Map))
 			{
-				terrainGrid.RemoveTopLayer(base.Position, false);
-				terrainGrid.SetTerrain(base.Position, terrain.burnedDef);
+				base.Map.terrainGrid.Notify_TerrainBurned(base.Position);
 			}
 		}
 
@@ -371,18 +366,18 @@ namespace RimWorld
 			{
 				BattleLogEntry_DamageTaken battleLogEntry_DamageTaken = new BattleLogEntry_DamageTaken(pawn, RulePackDefOf.DamageEvent_Fire, null);
 				Find.BattleLog.Add(battleLogEntry_DamageTaken);
-				DamageInfo dinfo = new DamageInfo(DamageDefOf.Flame, num2, -1f, this, null, null, DamageInfo.SourceCategory.ThingOrUnknown);
+				DamageInfo dinfo = new DamageInfo(DamageDefOf.Flame, (float)num2, 0f, -1f, this, null, null, DamageInfo.SourceCategory.ThingOrUnknown, null);
 				dinfo.SetBodyRegion(BodyPartHeight.Undefined, BodyPartDepth.Outside);
-				targ.TakeDamage(dinfo).InsertIntoLog(battleLogEntry_DamageTaken);
+				targ.TakeDamage(dinfo).AssociateWithLog(battleLogEntry_DamageTaken);
 				Apparel apparel;
 				if (pawn.apparel != null && pawn.apparel.WornApparel.TryRandomElement(out apparel))
 				{
-					apparel.TakeDamage(new DamageInfo(DamageDefOf.Flame, num2, -1f, this, null, null, DamageInfo.SourceCategory.ThingOrUnknown));
+					apparel.TakeDamage(new DamageInfo(DamageDefOf.Flame, (float)num2, 0f, -1f, this, null, null, DamageInfo.SourceCategory.ThingOrUnknown, null));
 				}
 			}
 			else
 			{
-				targ.TakeDamage(new DamageInfo(DamageDefOf.Flame, num2, -1f, this, null, null, DamageInfo.SourceCategory.ThingOrUnknown));
+				targ.TakeDamage(new DamageInfo(DamageDefOf.Flame, (float)num2, 0f, -1f, this, null, null, DamageInfo.SourceCategory.ThingOrUnknown, null));
 			}
 		}
 
@@ -414,8 +409,8 @@ namespace RimWorld
 					{
 						return;
 					}
-					Spark spark = (Spark)GenSpawn.Spawn(ThingDefOf.Spark, base.Position, base.Map);
-					spark.Launch(this, intVec, null);
+					Spark spark = (Spark)GenSpawn.Spawn(ThingDefOf.Spark, base.Position, base.Map, WipeMode.Vanish);
+					spark.Launch(this, intVec, intVec, ProjectileHitFlags.All, null);
 				}
 				else
 				{

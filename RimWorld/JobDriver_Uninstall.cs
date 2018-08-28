@@ -5,8 +5,6 @@ namespace RimWorld
 {
 	public class JobDriver_Uninstall : JobDriver_RemoveBuilding
 	{
-		public const int UninstallWork = 90;
-
 		protected override DesignationDef Designation
 		{
 			get
@@ -15,11 +13,11 @@ namespace RimWorld
 			}
 		}
 
-		protected override int TotalNeededWork
+		protected override float TotalNeededWork
 		{
 			get
 			{
-				return 90;
+				return base.TargetA.Thing.def.building.uninstallWork;
 			}
 		}
 

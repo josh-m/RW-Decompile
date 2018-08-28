@@ -46,7 +46,7 @@ namespace Verse
 			int num = this.Props.lifespanTicks - this.age;
 			if (num > 0)
 			{
-				result = "LifespanExpiry".Translate() + " " + num.ToStringTicksToPeriod(true, false, true);
+				result = "LifespanExpiry".Translate() + " " + num.ToStringTicksToPeriod();
 				if (!text.NullOrEmpty())
 				{
 					result = "\n" + text;

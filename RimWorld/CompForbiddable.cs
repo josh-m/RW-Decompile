@@ -27,10 +27,12 @@ namespace RimWorld
 					if (this.forbiddenInt)
 					{
 						this.parent.Map.listerHaulables.Notify_Forbidden(this.parent);
+						this.parent.Map.listerMergeables.Notify_Forbidden(this.parent);
 					}
 					else
 					{
 						this.parent.Map.listerHaulables.Notify_Unforbidden(this.parent);
+						this.parent.Map.listerMergeables.Notify_Unforbidden(this.parent);
 					}
 					if (this.parent is Building_Door)
 					{
@@ -82,7 +84,7 @@ namespace RimWorld
 			if (!(this.parent is Building) || this.parent.Faction == Faction.OfPlayer)
 			{
 				Command_Toggle com = new Command_Toggle();
-				com.hotKey = KeyBindingDefOf.CommandItemForbid;
+				com.hotKey = KeyBindingDefOf.Command_ItemForbid;
 				com.icon = TexCommand.Forbidden;
 				com.isActive = (() => !this.$this.forbiddenInt);
 				com.defaultLabel = "CommandForbid".Translate();

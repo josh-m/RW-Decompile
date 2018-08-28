@@ -11,7 +11,7 @@ namespace RimWorld.Planet
 		{
 			if (caravanFaction == null)
 			{
-				Log.Warning("Called IsOwner with null faction.");
+				Log.Warning("Called IsOwner with null faction.", false);
 				return false;
 			}
 			return !pawn.NonHumanlikeOrWildMan() && pawn.Faction == caravanFaction && pawn.HostFaction == null;
@@ -63,6 +63,11 @@ namespace RimWorld.Planet
 			return (from p in caravan.PawnsListForReading
 			where caravan.IsOwner(p)
 			select p).RandomElement<Pawn>();
+		}
+
+		public static bool ShouldAutoCapture(Pawn p, Faction caravanFaction)
+		{
+			return p.RaceProps.Humanlike && !p.Dead && p.Faction != caravanFaction && (!p.IsPrisoner || p.HostFaction != caravanFaction);
 		}
 	}
 }

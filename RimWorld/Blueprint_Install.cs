@@ -65,15 +65,21 @@ namespace RimWorld
 			return this.ThingToInstall.Stuff;
 		}
 
-		public override List<ThingCountClass> MaterialsNeeded()
+		public override List<ThingDefCountClass> MaterialsNeeded()
 		{
-			Log.Error("Called MaterialsNeeded on a Blueprint_Install.");
-			return new List<ThingCountClass>();
+			Log.Error("Called MaterialsNeeded on a Blueprint_Install.", false);
+			return new List<ThingDefCountClass>();
 		}
 
 		protected override Thing MakeSolidThing()
 		{
-			return this.ThingToInstall;
+			Thing thingToInstall = this.ThingToInstall;
+			if (this.miniToInstall != null)
+			{
+				this.miniToInstall.InnerThing = null;
+				this.miniToInstall.Destroy(DestroyMode.Vanish);
+			}
+			return thingToInstall;
 		}
 
 		public override bool TryReplaceWithSolidThing(Pawn workerPawn, out Thing createdThing, out bool jobEnded)
@@ -82,7 +88,7 @@ namespace RimWorld
 			bool flag = base.TryReplaceWithSolidThing(workerPawn, out createdThing, out jobEnded);
 			if (flag)
 			{
-				SoundDefOf.BuildingComplete.PlayOneShot(new TargetInfo(base.Position, map, false));
+				SoundDefOf.Building_Complete.PlayOneShot(new TargetInfo(base.Position, map, false));
 				workerPawn.records.Increment(RecordDefOf.ThingsInstalled);
 			}
 			return flag;
@@ -100,6 +106,22 @@ namespace RimWorld
 			{
 				yield return buildCopy;
 			}
+			if (base.Faction == Faction.OfPlayer)
+			{
+				foreach (Command facility in BuildFacilityCommandUtility.BuildFacilityCommands(this.ThingToInstall.def))
+				{
+					yield return facility;
+				}
+			}
+		}
+
+		public override void DrawExtraSelectionOverlays()
+		{
+			base.DrawExtraSelectionOverlays();
+			if (this.buildingToReinstall != null)
+			{
+				GenDraw.DrawLineBetween(this.buildingToReinstall.TrueCenter(), this.TrueCenter());
+			}
 		}
 
 		internal void SetThingToInstallFromMinified(MinifiedThing itemToInstall)
@@ -112,7 +134,7 @@ namespace RimWorld
 		{
 			if (!buildingToReinstall.def.Minifiable)
 			{
-				Log.Error("Tried to reinstall non-minifiable building.");
+				Log.Error("Tried to reinstall non-minifiable building.", false);
 				return;
 			}
 			this.miniToInstall = null;

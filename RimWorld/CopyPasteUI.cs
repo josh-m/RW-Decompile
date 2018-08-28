@@ -19,7 +19,7 @@ namespace RimWorld
 			if (Widgets.ButtonImage(rect2, TexButton.Copy))
 			{
 				copyAction();
-				SoundDefOf.TickHigh.PlayOneShotOnCamera(null);
+				SoundDefOf.Tick_High.PlayOneShotOnCamera(null);
 			}
 			TooltipHandler.TipRegion(rect2, "Copy".Translate());
 			if (pasteAction != null)
@@ -29,7 +29,7 @@ namespace RimWorld
 				if (Widgets.ButtonImage(rect3, TexButton.Paste))
 				{
 					pasteAction();
-					SoundDefOf.TickLow.PlayOneShotOnCamera(null);
+					SoundDefOf.Tick_Low.PlayOneShotOnCamera(null);
 				}
 				TooltipHandler.TipRegion(rect3, "Paste".Translate());
 			}

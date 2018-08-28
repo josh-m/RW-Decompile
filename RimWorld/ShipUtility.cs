@@ -1,7 +1,9 @@
+using RimWorld.Planet;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using UnityEngine;
 using Verse;
 
 namespace RimWorld
@@ -66,11 +68,11 @@ namespace RimWorld
 				CompHibernatable hibernatable = part.TryGetComp<CompHibernatable>();
 				if (hibernatable != null && hibernatable.State == HibernatableStateDefOf.Hibernating)
 				{
-					yield return string.Format("{0}: {1}", "ShipReportHibernating".Translate(), part.Label);
+					yield return string.Format("{0}: {1}", "ShipReportHibernating".Translate(), part.LabelCap);
 				}
 				if (hibernatable != null && !hibernatable.Running)
 				{
-					yield return string.Format("{0}: {1}", "ShipReportNotReady".Translate(), part.Label);
+					yield return string.Format("{0}: {1}", "ShipReportNotReady".Translate(), part.LabelCap);
 				}
 			}
 			if (!fullPodFound)
@@ -108,11 +110,11 @@ namespace RimWorld
 
 		public static List<Building> ShipBuildingsAttachedTo(Building root)
 		{
+			ShipUtility.closedSet.Clear();
 			if (root == null || root.Destroyed)
 			{
-				return new List<Building>();
+				return ShipUtility.closedSet;
 			}
-			ShipUtility.closedSet.Clear();
 			ShipUtility.openSet.Clear();
 			ShipUtility.openSet.Add(root);
 			while (ShipUtility.openSet.Count > 0)
@@ -130,6 +132,45 @@ namespace RimWorld
 				}
 			}
 			return ShipUtility.closedSet;
+		}
+
+		[DebuggerHidden]
+		public static IEnumerable<Gizmo> ShipStartupGizmos(Building building)
+		{
+			if (ShipUtility.HasHibernatingParts(building))
+			{
+				yield return new Command_Action
+				{
+					action = delegate
+					{
+						string text = "HibernateWarning";
+						if (building.Map.info.parent.GetComponent<EscapeShipComp>() == null)
+						{
+							text += "Standalone";
+						}
+						if (!Find.Storyteller.difficulty.allowBigThreats)
+						{
+							text += "Pacifist";
+						}
+						DiaNode diaNode = new DiaNode(text.Translate());
+						DiaOption diaOption = new DiaOption("Confirm".Translate());
+						diaOption.action = delegate
+						{
+							ShipUtility.StartupHibernatingParts(building);
+						};
+						diaOption.resolveTree = true;
+						diaNode.options.Add(diaOption);
+						DiaOption diaOption2 = new DiaOption("GoBack".Translate());
+						diaOption2.resolveTree = true;
+						diaNode.options.Add(diaOption2);
+						Find.WindowStack.Add(new Dialog_NodeTree(diaNode, true, false, null));
+					},
+					defaultLabel = "CommandShipStartup".Translate(),
+					defaultDesc = "CommandShipStartupDesc".Translate(),
+					hotKey = KeyBindingDefOf.Misc1,
+					icon = ContentFinder<Texture2D>.Get("UI/Commands/DesirePower", true)
+				};
+			}
 		}
 	}
 }

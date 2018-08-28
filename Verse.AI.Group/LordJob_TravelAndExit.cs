@@ -22,13 +22,13 @@ namespace Verse.AI.Group
 			stateGraph.StartingToil = startingToil;
 			LordToil_ExitMap lordToil_ExitMap = new LordToil_ExitMap(LocomotionUrgency.None, false);
 			stateGraph.AddToil(lordToil_ExitMap);
-			stateGraph.AddTransition(new Transition(startingToil, lordToil_ExitMap)
+			stateGraph.AddTransition(new Transition(startingToil, lordToil_ExitMap, false, true)
 			{
 				triggers = 
 				{
 					new Trigger_Memo("TravelArrived")
 				}
-			});
+			}, false);
 			return stateGraph;
 		}
 

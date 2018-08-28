@@ -10,10 +10,10 @@ namespace Verse
 			if (pawn != null)
 			{
 				Hediff hediff = HediffMaker.MakeHediff(dinfo.Def.hediff, pawn, null);
-				hediff.Severity = (float)dinfo.Amount;
-				pawn.health.AddHediff(hediff, null, new DamageInfo?(dinfo));
+				hediff.Severity = dinfo.Amount;
+				pawn.health.AddHediff(hediff, null, new DamageInfo?(dinfo), null);
 			}
-			return DamageWorker.DamageResult.MakeNew();
+			return new DamageWorker.DamageResult();
 		}
 	}
 }

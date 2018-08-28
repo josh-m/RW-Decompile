@@ -36,17 +36,6 @@ namespace RimWorld
 			}
 		}
 
-		public IEnumerable<Apparel> WornApparelInDrawOrder
-		{
-			get
-			{
-				for (int i = 0; i < this.wornApparel.Count; i++)
-				{
-					yield return this.wornApparel[i];
-				}
-			}
-		}
-
 		public int WornApparelCount
 		{
 			get
@@ -69,7 +58,7 @@ namespace RimWorld
 				if (!flag)
 				{
 					bool flag3 = false;
-					foreach (BodyPartRecord current in this.pawn.health.hediffSet.GetNotMissingParts(BodyPartHeight.Undefined, BodyPartDepth.Undefined))
+					foreach (BodyPartRecord current in this.pawn.health.hediffSet.GetNotMissingParts(BodyPartHeight.Undefined, BodyPartDepth.Undefined, null, null))
 					{
 						if (current.IsInGroup(BodyPartGroupDefOf.Legs))
 						{
@@ -143,7 +132,7 @@ namespace RimWorld
 			int num = GenMath.RoundRandom(ap.def.apparel.wearPerDay);
 			if (num > 0)
 			{
-				ap.TakeDamage(new DamageInfo(DamageDefOf.Deterioration, num, -1f, null, null, null, DamageInfo.SourceCategory.ThingOrUnknown));
+				ap.TakeDamage(new DamageInfo(DamageDefOf.Deterioration, (float)num, 0f, -1f, null, null, null, DamageInfo.SourceCategory.ThingOrUnknown, null));
 			}
 			if (ap.Destroyed && PawnUtility.ShouldSendNotificationAbout(this.pawn) && !this.pawn.Dead)
 			{
@@ -153,7 +142,7 @@ namespace RimWorld
 					this.pawn
 				});
 				text = text.CapitalizeFirst();
-				Messages.Message(text, this.pawn, MessageTypeDefOf.NegativeEvent);
+				Messages.Message(text, this.pawn, MessageTypeDefOf.NegativeEvent, true);
 			}
 		}
 
@@ -173,7 +162,7 @@ namespace RimWorld
 		{
 			if (newApparel.Spawned)
 			{
-				newApparel.DeSpawn();
+				newApparel.DeSpawn(DestroyMode.Vanish);
 			}
 			if (!ApparelUtility.HasPartsToWear(this.pawn, newApparel.def))
 			{
@@ -183,7 +172,7 @@ namespace RimWorld
 					" tried to wear ",
 					newApparel,
 					" but he has no body parts required to wear it."
-				}));
+				}), false);
 				return;
 			}
 			for (int i = this.wornApparel.Count - 1; i >= 0; i--)
@@ -193,11 +182,11 @@ namespace RimWorld
 				{
 					if (dropReplacedApparel)
 					{
-						bool forbid = this.pawn.Faction.HostileTo(Faction.OfPlayer);
+						bool forbid = this.pawn.Faction != null && this.pawn.Faction.HostileTo(Faction.OfPlayer);
 						Apparel apparel2;
-						if (!this.TryDrop(apparel, out apparel2, this.pawn.Position, forbid))
+						if (!this.TryDrop(apparel, out apparel2, this.pawn.PositionHeld, forbid))
 						{
-							Log.Error(this.pawn + " could not drop " + apparel);
+							Log.Error(this.pawn + " could not drop " + apparel, false);
 							return;
 						}
 					}
@@ -217,7 +206,7 @@ namespace RimWorld
 					" but this apparel already has a wearer (",
 					newApparel.Wearer,
 					"). This may or may not cause bugs."
-				}));
+				}), false);
 			}
 			this.wornApparel.TryAdd(newApparel, false);
 		}
@@ -227,14 +216,20 @@ namespace RimWorld
 			this.wornApparel.Remove(ap);
 		}
 
+		public bool TryDrop(Apparel ap)
+		{
+			Apparel apparel;
+			return this.TryDrop(ap, out apparel);
+		}
+
 		public bool TryDrop(Apparel ap, out Apparel resultingAp)
 		{
-			return this.TryDrop(ap, out resultingAp, this.pawn.Position, true);
+			return this.TryDrop(ap, out resultingAp, this.pawn.PositionHeld, true);
 		}
 
 		public bool TryDrop(Apparel ap, out Apparel resultingAp, IntVec3 pos, bool forbid = true)
 		{
-			if (this.wornApparel.TryDrop(ap, pos, this.pawn.MapHeld, ThingPlaceMode.Near, out resultingAp, null))
+			if (this.wornApparel.TryDrop(ap, pos, this.pawn.MapHeld, ThingPlaceMode.Near, out resultingAp, null, null))
 			{
 				if (resultingAp != null)
 				{
@@ -271,14 +266,14 @@ namespace RimWorld
 
 		public void Notify_PawnKilled(DamageInfo? dinfo)
 		{
-			if (dinfo.HasValue && dinfo.Value.Def.externalViolence)
+			if (dinfo.HasValue && dinfo.Value.Def.ExternalViolenceFor(this.pawn))
 			{
 				for (int i = 0; i < this.wornApparel.Count; i++)
 				{
 					if (this.wornApparel[i].def.useHitPoints)
 					{
-						int amount = Mathf.RoundToInt((float)this.wornApparel[i].HitPoints * Rand.Range(0.15f, 0.4f));
-						this.wornApparel[i].TakeDamage(new DamageInfo(dinfo.Value.Def, amount, -1f, null, null, null, DamageInfo.SourceCategory.ThingOrUnknown));
+						int num = Mathf.RoundToInt((float)this.wornApparel[i].HitPoints * Rand.Range(0.15f, 0.4f));
+						this.wornApparel[i].TakeDamage(new DamageInfo(dinfo.Value.Def, (float)num, 0f, -1f, null, null, null, DamageInfo.SourceCategory.ThingOrUnknown, null));
 					}
 				}
 			}
@@ -307,7 +302,7 @@ namespace RimWorld
 
 		private void SortWornApparelIntoDrawOrder()
 		{
-			this.wornApparel.InnerListForReading.Sort((Apparel a, Apparel b) => a.def.apparel.LastLayer.CompareTo(b.def.apparel.LastLayer));
+			this.wornApparel.InnerListForReading.Sort((Apparel a, Apparel b) => a.def.apparel.LastLayer.drawOrder.CompareTo(b.def.apparel.LastLayer.drawOrder));
 		}
 
 		public void HasBasicApparel(out bool hasPants, out bool hasShirt)

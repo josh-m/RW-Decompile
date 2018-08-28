@@ -96,7 +96,7 @@ namespace Verse
 					defaultLabel = "CommandClearPrioritizedWork".Translate(),
 					defaultDesc = "CommandClearPrioritizedWorkDesc".Translate(),
 					icon = TexCommand.ClearPrioritizedWork,
-					activateSound = SoundDefOf.TickLow,
+					activateSound = SoundDefOf.Tick_Low,
 					action = delegate
 					{
 						this.$this.ClearPrioritizedWorkAndJobQueue();
@@ -105,7 +105,7 @@ namespace Verse
 							this.$this.pawn.jobs.EndCurrentJob(JobCondition.InterruptForced, true);
 						}
 					},
-					hotKey = KeyBindingDefOf.DesignatorCancel,
+					hotKey = KeyBindingDefOf.Designator_Cancel,
 					groupKey = 6165612
 				};
 			}

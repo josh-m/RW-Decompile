@@ -113,6 +113,20 @@ namespace Verse.AI
 			return f;
 		}
 
+		public static T FailOnMobile<T>(this T f, TargetIndex ind) where T : IJobEndable
+		{
+			f.AddEndCondition(delegate
+			{
+				Thing thing = f.GetActor().jobs.curJob.GetTarget(ind).Thing;
+				if (((Pawn)thing).health.State == PawnHealthState.Mobile)
+				{
+					return JobCondition.Incompletable;
+				}
+				return JobCondition.Ongoing;
+			});
+			return f;
+		}
+
 		public static T FailOnNotDowned<T>(this T f, TargetIndex ind) where T : IJobEndable
 		{
 			f.AddEndCondition(delegate
@@ -318,6 +332,19 @@ namespace Verse.AI
 			return f;
 		}
 
+		public static T FailOnIncapable<T>(this T f, PawnCapacityDef pawnCapacity) where T : IJobEndable
+		{
+			f.AddEndCondition(delegate
+			{
+				if (!f.GetActor().health.capacities.CapableOf(pawnCapacity))
+				{
+					return JobCondition.Incompletable;
+				}
+				return JobCondition.Ongoing;
+			});
+			return f;
+		}
+
 		public static Toil FailOnDespawnedNullOrForbiddenPlacedThings(this Toil toil)
 		{
 			toil.AddFailCondition(delegate
@@ -328,8 +355,8 @@ namespace Verse.AI
 				}
 				for (int i = 0; i < toil.actor.jobs.curJob.placedThings.Count; i++)
 				{
-					ThingStackPartClass thingStackPartClass = toil.actor.jobs.curJob.placedThings[i];
-					if (thingStackPartClass.thing == null || !thingStackPartClass.thing.Spawned || thingStackPartClass.thing.Map != toil.actor.Map || (!toil.actor.CurJob.ignoreForbidden && thingStackPartClass.thing.IsForbidden(toil.actor)))
+					ThingCountClass thingCountClass = toil.actor.jobs.curJob.placedThings[i];
+					if (thingCountClass.thing == null || !thingCountClass.thing.Spawned || thingCountClass.thing.Map != toil.actor.Map || (!toil.actor.CurJob.ignoreForbidden && thingCountClass.thing.IsForbidden(toil.actor)))
 					{
 						return true;
 					}

@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using Verse;
 using Verse.AI.Group;
+using Verse.Sound;
 
 namespace RimWorld
 {
@@ -15,25 +16,27 @@ namespace RimWorld
 
 		private List<Pawn> spawnedPawns = new List<Pawn>();
 
-		private int ticksToSpawnInitialPawns = -1;
+		public bool caveColony;
 
 		public bool canSpawnPawns = true;
 
-		private const int InitialPawnSpawnDelay = 420;
-
-		private const int PawnSpawnRadius = 4;
+		public const int PawnSpawnRadius = 2;
 
 		public const float MaxSpawnedPawnsPoints = 500f;
 
 		public const float InitialPawnsPoints = 200f;
 
-		private static readonly FloatRange PawnSpawnIntervalDays = new FloatRange(0.85f, 1.1f);
+		private static readonly FloatRange PawnSpawnIntervalDays = new FloatRange(0.85f, 1.15f);
+
+		public static List<PawnKindDef> spawnablePawnKinds = new List<PawnKindDef>();
 
 		public static readonly string MemoAttackedByEnemy = "HiveAttacked";
 
-		public static readonly string MemoDestroyed = "HiveDestroyed";
+		public static readonly string MemoDeSpawned = "HiveDeSpawned";
 
 		public static readonly string MemoBurnedBadly = "HiveBurnedBadly";
+
+		public static readonly string MemoDestroyedNonRoofCollapse = "HiveDestroyedNonRoofCollapse";
 
 		private Lord Lord
 		{
@@ -92,6 +95,14 @@ namespace RimWorld
 			}
 		}
 
+		public static void ResetStaticData()
+		{
+			Hive.spawnablePawnKinds.Clear();
+			Hive.spawnablePawnKinds.Add(PawnKindDefOf.Megascarab);
+			Hive.spawnablePawnKinds.Add(PawnKindDefOf.Spelopede);
+			Hive.spawnablePawnKinds.Add(PawnKindDefOf.Megaspider);
+		}
+
 		public override void SpawnSetup(Map map, bool respawningAfterLoad)
 		{
 			base.SpawnSetup(map, respawningAfterLoad);
@@ -99,22 +110,29 @@ namespace RimWorld
 			{
 				this.SetFaction(Faction.OfInsects, null);
 			}
-			if (!respawningAfterLoad)
+			if (!respawningAfterLoad && this.active)
 			{
-				this.ticksToSpawnInitialPawns = 420;
+				this.SpawnInitialPawns();
 			}
 		}
 
-		private void SpawnInitialPawnsNow()
+		private void SpawnInitialPawns()
 		{
-			this.ticksToSpawnInitialPawns = -1;
 			this.SpawnPawnsUntilPoints(200f);
+			this.CalculateNextPawnSpawnTick();
 		}
 
 		public void SpawnPawnsUntilPoints(float points)
 		{
+			int num = 0;
 			while (this.SpawnedPawnsPoints < points)
 			{
+				num++;
+				if (num > 1000)
+				{
+					Log.Error("Too many iterations.", false);
+					break;
+				}
 				Pawn pawn;
 				if (!this.TrySpawnPawn(out pawn))
 				{
@@ -124,9 +142,9 @@ namespace RimWorld
 			this.CalculateNextPawnSpawnTick();
 		}
 
-		public override void TickRare()
+		public override void Tick()
 		{
-			base.TickRare();
+			base.Tick();
 			if (base.Spawned)
 			{
 				this.FilterOutUnspawnedPawns();
@@ -134,52 +152,37 @@ namespace RimWorld
 				{
 					this.Activate();
 				}
-				if (this.active)
+				if (this.active && Find.TickManager.TicksGame >= this.nextPawnSpawnTick)
 				{
-					if (this.ticksToSpawnInitialPawns > 0)
+					if (this.SpawnedPawnsPoints < 500f)
 					{
-						this.ticksToSpawnInitialPawns -= 250;
-						if (this.ticksToSpawnInitialPawns <= 0)
+						Pawn pawn;
+						bool flag = this.TrySpawnPawn(out pawn);
+						if (flag && pawn.caller != null)
 						{
-							this.SpawnInitialPawnsNow();
+							pawn.caller.DoCall();
 						}
 					}
-					if (Find.TickManager.TicksGame >= this.nextPawnSpawnTick)
-					{
-						if (this.SpawnedPawnsPoints < 500f)
-						{
-							Pawn pawn;
-							bool flag = this.TrySpawnPawn(out pawn);
-							if (flag && pawn.caller != null)
-							{
-								pawn.caller.DoCall();
-							}
-						}
-						this.CalculateNextPawnSpawnTick();
-					}
+					this.CalculateNextPawnSpawnTick();
 				}
 			}
 		}
 
-		public override void DeSpawn()
+		public override void DeSpawn(DestroyMode mode = DestroyMode.Vanish)
 		{
 			Map map = base.Map;
-			base.DeSpawn();
+			base.DeSpawn(mode);
 			List<Lord> lords = map.lordManager.lords;
 			for (int i = 0; i < lords.Count; i++)
 			{
-				lords[i].ReceiveMemo(Hive.MemoDestroyed);
+				lords[i].ReceiveMemo(Hive.MemoDeSpawned);
 			}
 		}
 
 		public override void PostApplyDamage(DamageInfo dinfo, float totalDamageDealt)
 		{
-			if (dinfo.Def.externalViolence && dinfo.Instigator != null && dinfo.Instigator.Faction != null)
+			if (dinfo.Def.ExternalViolenceFor(this) && dinfo.Instigator != null && dinfo.Instigator.Faction != null)
 			{
-				if (this.ticksToSpawnInitialPawns > 0)
-				{
-					this.SpawnInitialPawnsNow();
-				}
 				Lord lord = this.Lord;
 				if (lord != null)
 				{
@@ -197,13 +200,26 @@ namespace RimWorld
 			base.PostApplyDamage(dinfo, totalDamageDealt);
 		}
 
+		public override void Kill(DamageInfo? dinfo = null, Hediff exactCulprit = null)
+		{
+			if (base.Spawned && (!dinfo.HasValue || dinfo.Value.Category != DamageInfo.SourceCategory.Collapse))
+			{
+				List<Lord> lords = base.Map.lordManager.lords;
+				for (int i = 0; i < lords.Count; i++)
+				{
+					lords[i].ReceiveMemo(Hive.MemoDestroyedNonRoofCollapse);
+				}
+			}
+			base.Kill(dinfo, exactCulprit);
+		}
+
 		public override void ExposeData()
 		{
 			base.ExposeData();
 			Scribe_Values.Look<bool>(ref this.active, "active", false, false);
 			Scribe_Values.Look<int>(ref this.nextPawnSpawnTick, "nextPawnSpawnTick", 0, false);
 			Scribe_Collections.Look<Pawn>(ref this.spawnedPawns, "spawnedPawns", LookMode.Reference, new object[0]);
-			Scribe_Values.Look<int>(ref this.ticksToSpawnInitialPawns, "ticksToSpawnInitialPawns", 0, false);
+			Scribe_Values.Look<bool>(ref this.caveColony, "caveColony", false, false);
 			Scribe_Values.Look<bool>(ref this.canSpawnPawns, "canSpawnPawns", true, false);
 			if (Scribe.mode == LoadSaveMode.PostLoadInit)
 			{
@@ -214,7 +230,8 @@ namespace RimWorld
 		private void Activate()
 		{
 			this.active = true;
-			this.nextPawnSpawnTick = Find.TickManager.TicksGame + Rand.Range(200, 400);
+			this.SpawnInitialPawns();
+			this.CalculateNextPawnSpawnTick();
 			CompSpawnerHives comp = base.GetComp<CompSpawnerHives>();
 			if (comp != null)
 			{
@@ -246,12 +263,8 @@ namespace RimWorld
 				pawn = null;
 				return false;
 			}
-			List<PawnKindDef> list = new List<PawnKindDef>();
-			list.Add(PawnKindDefOf.Megascarab);
-			list.Add(PawnKindDefOf.Spelopede);
-			list.Add(PawnKindDefOf.Megaspider);
 			float curPoints = this.SpawnedPawnsPoints;
-			IEnumerable<PawnKindDef> source = from x in list
+			IEnumerable<PawnKindDef> source = from x in Hive.spawnablePawnKinds
 			where curPoints + x.combatPower <= 500f
 			select x;
 			PawnKindDef kindDef;
@@ -261,14 +274,15 @@ namespace RimWorld
 				return false;
 			}
 			pawn = PawnGenerator.GeneratePawn(kindDef, base.Faction);
-			GenSpawn.Spawn(pawn, CellFinder.RandomClosewalkCellNear(base.Position, base.Map, 4, null), base.Map);
 			this.spawnedPawns.Add(pawn);
+			GenSpawn.Spawn(pawn, CellFinder.RandomClosewalkCellNear(base.Position, base.Map, 2, null), base.Map, WipeMode.Vanish);
 			Lord lord = this.Lord;
 			if (lord == null)
 			{
 				lord = this.CreateNewLord();
 			}
 			lord.AddPawn(pawn);
+			SoundDefOf.Hive_Spawn.PlayOneShot(this);
 			return true;
 		}
 
@@ -310,7 +324,7 @@ namespace RimWorld
 
 		private Lord CreateNewLord()
 		{
-			return LordMaker.MakeNewLord(base.Faction, new LordJob_DefendAndExpandHive(), base.Map, null);
+			return LordMaker.MakeNewLord(base.Faction, new LordJob_DefendAndExpandHive(!this.caveColony), base.Map, null);
 		}
 	}
 }

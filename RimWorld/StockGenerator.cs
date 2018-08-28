@@ -13,11 +13,13 @@ namespace RimWorld
 
 		public IntRange countRange = IntRange.zero;
 
+		public List<ThingDefCountRangeClass> customCountRanges;
+
 		public FloatRange totalPriceRange = FloatRange.Zero;
 
-		public TechLevel maxTechLevelGenerate = TechLevel.Transcendent;
+		public TechLevel maxTechLevelGenerate = TechLevel.Archotech;
 
-		public TechLevel maxTechLevelBuy = TechLevel.Transcendent;
+		public TechLevel maxTechLevelBuy = TechLevel.Archotech;
 
 		public PriceType price = PriceType.Normal;
 
@@ -48,11 +50,27 @@ namespace RimWorld
 
 		protected int RandomCountOf(ThingDef def)
 		{
-			if (this.countRange.max > 0 && this.totalPriceRange.max <= 0f)
+			IntRange intRange = this.countRange;
+			if (this.customCountRanges != null)
 			{
-				return this.countRange.RandomInRange;
+				for (int i = 0; i < this.customCountRanges.Count; i++)
+				{
+					if (this.customCountRanges[i].thingDef == def)
+					{
+						intRange = this.customCountRanges[i].countRange;
+						break;
+					}
+				}
 			}
-			if (this.countRange.max <= 0 && this.totalPriceRange.max > 0f)
+			if (intRange.max <= 0 && this.totalPriceRange.max <= 0f)
+			{
+				return 0;
+			}
+			if (intRange.max > 0 && this.totalPriceRange.max <= 0f)
+			{
+				return intRange.RandomInRange;
+			}
+			if (intRange.max <= 0 && this.totalPriceRange.max > 0f)
 			{
 				return Mathf.RoundToInt(this.totalPriceRange.RandomInRange / def.BaseMarketValue);
 			}
@@ -60,7 +78,7 @@ namespace RimWorld
 			int randomInRange;
 			do
 			{
-				randomInRange = this.countRange.RandomInRange;
+				randomInRange = intRange.RandomInRange;
 				num++;
 				if (num > 100)
 				{

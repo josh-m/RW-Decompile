@@ -8,7 +8,7 @@ namespace RimWorld
 {
 	public class JobDriver_Slaughter : JobDriver
 	{
-		private const int SlaughterDuration = 180;
+		public const int SlaughterDuration = 180;
 
 		protected Pawn Victim
 		{
@@ -18,9 +18,12 @@ namespace RimWorld
 			}
 		}
 
-		public override bool TryMakePreToilReservations()
+		public override bool TryMakePreToilReservations(bool errorOnFailed)
 		{
-			return this.pawn.Reserve(this.Victim, this.job, 1, -1, null);
+			Pawn pawn = this.pawn;
+			LocalTargetInfo target = this.Victim;
+			Job job = this.job;
+			return pawn.Reserve(target, job, 1, -1, null, errorOnFailed);
 		}
 
 		[DebuggerHidden]

@@ -10,7 +10,7 @@ namespace Verse
 		{
 			if (spectrum.Count == 0)
 			{
-				Log.Warning("Color spectrum empty.");
+				Log.Warning("Color spectrum empty.", false);
 				return Color.white;
 			}
 			if (spectrum.Count == 1)

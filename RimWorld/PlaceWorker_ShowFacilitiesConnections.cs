@@ -1,20 +1,21 @@
 using System;
+using UnityEngine;
 using Verse;
 
 namespace RimWorld
 {
 	public class PlaceWorker_ShowFacilitiesConnections : PlaceWorker
 	{
-		public override void DrawGhost(ThingDef def, IntVec3 center, Rot4 rot)
+		public override void DrawGhost(ThingDef def, IntVec3 center, Rot4 rot, Color ghostCol)
 		{
-			Map visibleMap = Find.VisibleMap;
+			Map currentMap = Find.CurrentMap;
 			if (def.HasComp(typeof(CompAffectedByFacilities)))
 			{
-				CompAffectedByFacilities.DrawLinesToPotentialThingsToLinkTo(def, center, rot, visibleMap);
+				CompAffectedByFacilities.DrawLinesToPotentialThingsToLinkTo(def, center, rot, currentMap);
 			}
 			else
 			{
-				CompFacility.DrawLinesToPotentialThingsToLinkTo(def, center, rot, visibleMap);
+				CompFacility.DrawLinesToPotentialThingsToLinkTo(def, center, rot, currentMap);
 			}
 		}
 	}

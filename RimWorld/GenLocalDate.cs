@@ -58,6 +58,11 @@ namespace RimWorld
 			return GenLocalDate.DayOfQuadrum(map.Tile);
 		}
 
+		public static int DayTick(Map map)
+		{
+			return GenLocalDate.DayTick(map.Tile);
+		}
+
 		public static float DayPercent(Map map)
 		{
 			return GenLocalDate.DayPercent(map.Tile);
@@ -126,6 +131,11 @@ namespace RimWorld
 			return GenDate.DayOfQuadrum((long)GenLocalDate.TicksAbs, GenLocalDate.LongitudeForDate(thing));
 		}
 
+		public static int DayTick(Thing thing)
+		{
+			return GenDate.DayTick((long)GenLocalDate.TicksAbs, GenLocalDate.LongitudeForDate(thing));
+		}
+
 		public static float DayPercent(Thing thing)
 		{
 			return GenDate.DayPercent((long)GenLocalDate.TicksAbs, GenLocalDate.LongitudeForDate(thing));
@@ -192,6 +202,11 @@ namespace RimWorld
 		public static int DayOfQuadrum(int tile)
 		{
 			return GenDate.DayOfQuadrum((long)GenLocalDate.TicksAbs, Find.WorldGrid.LongLatOf(tile).x);
+		}
+
+		public static int DayTick(int tile)
+		{
+			return GenDate.DayTick((long)GenLocalDate.TicksAbs, Find.WorldGrid.LongLatOf(tile).x);
 		}
 
 		public static float DayPercent(int tile)

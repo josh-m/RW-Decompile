@@ -1,6 +1,8 @@
 using RimWorld.Planet;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
 using UnityEngine;
 using Verse;
 
@@ -26,19 +28,21 @@ namespace RimWorld
 
 		public float diseaseMtbDays = 60f;
 
-		public float factionBaseSelectionWeight = 1f;
+		public float settlementSelectionWeight = 1f;
 
 		public bool impassable;
 
 		public bool hasVirtualPlants = true;
 
-		public int pathCost_spring = 1650;
+		public float forageability;
 
-		public int pathCost_summer = 1650;
+		public ThingDef foragedFood;
 
-		public int pathCost_fall = 1650;
+		public bool wildPlantsCareAboutLocalFertility = true;
 
-		public int pathCost_winter = 27500;
+		public float wildPlantRegrowDays = 25f;
+
+		public float movementDifficulty = 1f;
 
 		public List<WeatherCommonalityRecord> baseWeatherCommonalities = new List<WeatherCommonalityRecord>();
 
@@ -56,6 +60,9 @@ namespace RimWorld
 
 		private List<ThingDef> allowedPackAnimals = new List<ThingDef>();
 
+		public bool hasBedrock = true;
+
+		[NoTranslate]
 		public string texture;
 
 		[Unsaved]
@@ -69,6 +76,18 @@ namespace RimWorld
 
 		[Unsaved]
 		private Material cachedMat;
+
+		[Unsaved]
+		private List<ThingDef> cachedWildPlants;
+
+		[Unsaved]
+		private int? cachedMaxWildPlantsClusterRadius;
+
+		[Unsaved]
+		private float cachedPlantCommonalitiesSum;
+
+		[Unsaved]
+		private float? cachedLowestWildPlantOrder;
 
 		[Unsaved]
 		private BiomeWorker workerInt;
@@ -97,15 +116,15 @@ namespace RimWorld
 					}
 					if (this == BiomeDefOf.Ocean || this == BiomeDefOf.Lake)
 					{
-						this.cachedMat = new Material(WorldMaterials.WorldOcean);
+						this.cachedMat = MaterialAllocator.Create(WorldMaterials.WorldOcean);
 					}
 					else if (!this.allowRoads && !this.allowRivers)
 					{
-						this.cachedMat = new Material(WorldMaterials.WorldIce);
+						this.cachedMat = MaterialAllocator.Create(WorldMaterials.WorldIce);
 					}
 					else
 					{
-						this.cachedMat = new Material(WorldMaterials.WorldTerrain);
+						this.cachedMat = MaterialAllocator.Create(WorldMaterials.WorldTerrain);
 					}
 					this.cachedMat.mainTexture = ContentFinder<Texture2D>.Get(this.texture, true);
 				}
@@ -113,17 +132,77 @@ namespace RimWorld
 			}
 		}
 
-		public IEnumerable<ThingDef> AllWildPlants
+		public List<ThingDef> AllWildPlants
 		{
 			get
 			{
-				foreach (ThingDef thingDef in DefDatabase<ThingDef>.AllDefs)
+				if (this.cachedWildPlants == null)
 				{
-					if (thingDef.category == ThingCategory.Plant && this.CommonalityOfPlant(thingDef) > 0f)
+					this.cachedWildPlants = new List<ThingDef>();
+					foreach (ThingDef current in DefDatabase<ThingDef>.AllDefsListForReading)
 					{
-						yield return thingDef;
+						if (current.category == ThingCategory.Plant && this.CommonalityOfPlant(current) > 0f)
+						{
+							this.cachedWildPlants.Add(current);
+						}
 					}
 				}
+				return this.cachedWildPlants;
+			}
+		}
+
+		public int MaxWildAndCavePlantsClusterRadius
+		{
+			get
+			{
+				int? num = this.cachedMaxWildPlantsClusterRadius;
+				if (!num.HasValue)
+				{
+					this.cachedMaxWildPlantsClusterRadius = new int?(0);
+					List<ThingDef> allWildPlants = this.AllWildPlants;
+					for (int i = 0; i < allWildPlants.Count; i++)
+					{
+						if (allWildPlants[i].plant.GrowsInClusters)
+						{
+							this.cachedMaxWildPlantsClusterRadius = new int?(Mathf.Max(this.cachedMaxWildPlantsClusterRadius.Value, allWildPlants[i].plant.wildClusterRadius));
+						}
+					}
+					List<ThingDef> allDefsListForReading = DefDatabase<ThingDef>.AllDefsListForReading;
+					for (int j = 0; j < allDefsListForReading.Count; j++)
+					{
+						if (allDefsListForReading[j].category == ThingCategory.Plant && allDefsListForReading[j].plant.cavePlant)
+						{
+							this.cachedMaxWildPlantsClusterRadius = new int?(Mathf.Max(this.cachedMaxWildPlantsClusterRadius.Value, allDefsListForReading[j].plant.wildClusterRadius));
+						}
+					}
+				}
+				return this.cachedMaxWildPlantsClusterRadius.Value;
+			}
+		}
+
+		public float LowestWildAndCavePlantOrder
+		{
+			get
+			{
+				float? num = this.cachedLowestWildPlantOrder;
+				if (!num.HasValue)
+				{
+					this.cachedLowestWildPlantOrder = new float?(2.14748365E+09f);
+					List<ThingDef> allWildPlants = this.AllWildPlants;
+					for (int i = 0; i < allWildPlants.Count; i++)
+					{
+						this.cachedLowestWildPlantOrder = new float?(Mathf.Min(this.cachedLowestWildPlantOrder.Value, allWildPlants[i].plant.wildOrder));
+					}
+					List<ThingDef> allDefsListForReading = DefDatabase<ThingDef>.AllDefsListForReading;
+					for (int j = 0; j < allDefsListForReading.Count; j++)
+					{
+						if (allDefsListForReading[j].category == ThingCategory.Plant && allDefsListForReading[j].plant.cavePlant)
+						{
+							this.cachedLowestWildPlantOrder = new float?(Mathf.Min(this.cachedLowestWildPlantOrder.Value, allDefsListForReading[j].plant.wildOrder));
+						}
+					}
+				}
+				return this.cachedLowestWildPlantOrder.Value;
 			}
 		}
 
@@ -138,6 +217,15 @@ namespace RimWorld
 						yield return kindDef;
 					}
 				}
+			}
+		}
+
+		public float PlantCommonalitiesSum
+		{
+			get
+			{
+				this.CachePlantCommonalitiesIfShould();
+				return this.cachedPlantCommonalitiesSum;
 			}
 		}
 
@@ -174,33 +262,18 @@ namespace RimWorld
 
 		public float CommonalityOfPlant(ThingDef plantDef)
 		{
-			if (this.cachedPlantCommonalities == null)
-			{
-				this.cachedPlantCommonalities = new Dictionary<ThingDef, float>();
-				for (int i = 0; i < this.wildPlants.Count; i++)
-				{
-					this.cachedPlantCommonalities.Add(this.wildPlants[i].plant, this.wildPlants[i].commonality);
-				}
-				foreach (ThingDef current in DefDatabase<ThingDef>.AllDefs)
-				{
-					if (current.plant != null && current.plant.wildBiomes != null)
-					{
-						for (int j = 0; j < current.plant.wildBiomes.Count; j++)
-						{
-							if (current.plant.wildBiomes[j].biome == this)
-							{
-								this.cachedPlantCommonalities.Add(current, current.plant.wildBiomes[j].commonality);
-							}
-						}
-					}
-				}
-			}
+			this.CachePlantCommonalitiesIfShould();
 			float result;
 			if (this.cachedPlantCommonalities.TryGetValue(plantDef, out result))
 			{
 				return result;
 			}
 			return 0f;
+		}
+
+		public float CommonalityPctOfPlant(ThingDef plantDef)
+		{
+			return this.CommonalityOfPlant(plantDef) / this.PlantCommonalitiesSum;
 		}
 
 		public float CommonalityOfDisease(IncidentDef diseaseInc)
@@ -242,6 +315,51 @@ namespace RimWorld
 		public static BiomeDef Named(string defName)
 		{
 			return DefDatabase<BiomeDef>.GetNamed(defName, true);
+		}
+
+		private void CachePlantCommonalitiesIfShould()
+		{
+			if (this.cachedPlantCommonalities == null)
+			{
+				this.cachedPlantCommonalities = new Dictionary<ThingDef, float>();
+				for (int i = 0; i < this.wildPlants.Count; i++)
+				{
+					this.cachedPlantCommonalities.Add(this.wildPlants[i].plant, this.wildPlants[i].commonality);
+				}
+				foreach (ThingDef current in DefDatabase<ThingDef>.AllDefs)
+				{
+					if (current.plant != null && current.plant.wildBiomes != null)
+					{
+						for (int j = 0; j < current.plant.wildBiomes.Count; j++)
+						{
+							if (current.plant.wildBiomes[j].biome == this)
+							{
+								this.cachedPlantCommonalities.Add(current, current.plant.wildBiomes[j].commonality);
+							}
+						}
+					}
+				}
+				this.cachedPlantCommonalitiesSum = this.cachedPlantCommonalities.Sum((KeyValuePair<ThingDef, float> x) => x.Value);
+			}
+		}
+
+		[DebuggerHidden]
+		public override IEnumerable<string> ConfigErrors()
+		{
+			foreach (string e in base.ConfigErrors())
+			{
+				yield return e;
+			}
+			if (Prefs.DevMode)
+			{
+				foreach (BiomeAnimalRecord wa in this.wildAnimals)
+				{
+					if (this.wildAnimals.Count((BiomeAnimalRecord a) => a.animal == wa.animal) > 1)
+					{
+						yield return "Duplicate animal record: " + wa.animal.defName;
+					}
+				}
+			}
 		}
 	}
 }

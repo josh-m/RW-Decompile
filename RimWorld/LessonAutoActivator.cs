@@ -72,7 +72,7 @@ namespace RimWorld
 				value = 100f;
 				break;
 			default:
-				Log.Error("Unknown need");
+				Log.Error("Unknown need", false);
 				break;
 			}
 			LessonAutoActivator.opportunities[conc] = value;

@@ -7,5 +7,10 @@ namespace RimWorld
 	public static class BodyDefOf
 	{
 		public static BodyDef Human;
+
+		static BodyDefOf()
+		{
+			DefOfHelper.EnsureInitializedInCtor(typeof(BodyDefOf));
+		}
 	}
 }

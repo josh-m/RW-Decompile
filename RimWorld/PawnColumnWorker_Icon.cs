@@ -38,6 +38,10 @@ namespace RimWorld
 				{
 					this.ClickedIcon(pawn);
 				}
+				if (Mouse.IsOver(rect2) && Input.GetMouseButton(0))
+				{
+					this.PaintedIcon(pawn);
+				}
 			}
 		}
 
@@ -80,6 +84,10 @@ namespace RimWorld
 		}
 
 		protected virtual void ClickedIcon(Pawn pawn)
+		{
+		}
+
+		protected virtual void PaintedIcon(Pawn pawn)
 		{
 		}
 

@@ -34,7 +34,7 @@ namespace Verse
 
 		public void MapTemperatureTick()
 		{
-			if (Find.TickManager.TicksGame % 120 == 7)
+			if (Find.TickManager.TicksGame % 120 == 7 || DebugSettings.fastEcology)
 			{
 				this.fastProcessedRoomGroups.Clear();
 				List<Room> allRooms = this.map.regionGrid.allRooms;
@@ -88,7 +88,7 @@ namespace Verse
 		public void DebugLogTemps()
 		{
 			StringBuilder stringBuilder = new StringBuilder();
-			float num = (Find.VisibleMap == null) ? 0f : Find.WorldGrid.LongLatOf(Find.VisibleMap.Tile).y;
+			float num = (Find.CurrentMap == null) ? 0f : Find.WorldGrid.LongLatOf(Find.CurrentMap.Tile).y;
 			stringBuilder.AppendLine("Latitude " + num);
 			stringBuilder.AppendLine("-----Temperature for each hour this day------");
 			stringBuilder.AppendLine("Hour    Temp    SunEffect");
@@ -136,7 +136,7 @@ namespace Verse
 				stringBuilder.Append(Find.World.tileTemperatures.OffsetFromDailyRandomVariation(this.map.Tile, absTick3).ToString("F2"));
 				stringBuilder.AppendLine();
 			}
-			Log.Message(stringBuilder.ToString());
+			Log.Message(stringBuilder.ToString(), false);
 		}
 	}
 }

@@ -12,12 +12,22 @@ namespace RimWorld
 		public static Pawn GenerateRefugee(int tile)
 		{
 			PawnKindDef spaceRefugee = PawnKindDefOf.SpaceRefugee;
-			Faction ofSpacer = Faction.OfSpacer;
-			PawnGenerationRequest request = new PawnGenerationRequest(spaceRefugee, ofSpacer, PawnGenerationContext.NonPlayer, tile, false, false, false, false, true, false, 20f, false, true, true, false, false, false, false, null, new float?(0.2f), null, null, null, null, null);
+			Faction randomFactionForRefugee = DownedRefugeeQuestUtility.GetRandomFactionForRefugee();
+			PawnGenerationRequest request = new PawnGenerationRequest(spaceRefugee, randomFactionForRefugee, PawnGenerationContext.NonPlayer, tile, false, false, false, false, true, false, 20f, true, true, true, false, false, false, false, null, null, new float?(0.2f), null, null, null, null, null);
 			Pawn pawn = PawnGenerator.GeneratePawn(request);
-			HealthUtility.DamageUntilDowned(pawn);
-			HealthUtility.DamageLegsUntilIncapableOfMoving(pawn);
+			HealthUtility.DamageUntilDowned(pawn, false);
+			HealthUtility.DamageLegsUntilIncapableOfMoving(pawn, false);
 			return pawn;
+		}
+
+		public static Faction GetRandomFactionForRefugee()
+		{
+			Faction result;
+			if (Rand.Chance(0.6f) && Find.FactionManager.TryGetRandomNonColonyHumanlikeFaction(out result, true, false, TechLevel.Undefined))
+			{
+				return result;
+			}
+			return null;
 		}
 	}
 }

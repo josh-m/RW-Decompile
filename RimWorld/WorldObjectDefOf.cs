@@ -7,17 +7,17 @@ namespace RimWorld
 	{
 		public static WorldObjectDef Caravan;
 
-		public static WorldObjectDef FactionBase;
+		public static WorldObjectDef Settlement;
 
-		public static WorldObjectDef AbandonedFactionBase;
+		public static WorldObjectDef AbandonedSettlement;
 
 		public static WorldObjectDef EscapeShip;
 
 		public static WorldObjectDef Ambush;
 
-		public static WorldObjectDef DestroyedFactionBase;
+		public static WorldObjectDef DestroyedSettlement;
 
-		public static WorldObjectDef AttackedCaravan;
+		public static WorldObjectDef AttackedNonPlayerCaravan;
 
 		public static WorldObjectDef TravelingTransportPods;
 
@@ -28,5 +28,10 @@ namespace RimWorld
 		public static WorldObjectDef PeaceTalks;
 
 		public static WorldObjectDef Debug_Arena;
+
+		static WorldObjectDefOf()
+		{
+			DefOfHelper.EnsureInitializedInCtor(typeof(WorldObjectDefOf));
+		}
 	}
 }

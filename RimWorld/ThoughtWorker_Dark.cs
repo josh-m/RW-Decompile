@@ -7,7 +7,7 @@ namespace RimWorld
 	{
 		protected override ThoughtState CurrentStateInternal(Pawn p)
 		{
-			return p.Awake() && p.needs.mood.recentMemory.TicksSinceLastLight > 4000;
+			return p.Awake() && p.needs.mood.recentMemory.TicksSinceLastLight > 240;
 		}
 	}
 }

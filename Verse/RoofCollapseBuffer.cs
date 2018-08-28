@@ -7,21 +7,11 @@ namespace Verse
 	{
 		private List<IntVec3> cellsToCollapse = new List<IntVec3>();
 
-		private List<Thing> crushedThingsToReport = new List<Thing>();
-
 		public List<IntVec3> CellsMarkedToCollapse
 		{
 			get
 			{
 				return this.cellsToCollapse;
-			}
-		}
-
-		public List<Thing> CrushedThingsForLetter
-		{
-			get
-			{
-				return this.crushedThingsToReport;
 			}
 		}
 
@@ -38,28 +28,9 @@ namespace Verse
 			}
 		}
 
-		public void Notify_Crushed(Thing t)
-		{
-			if (!this.crushedThingsToReport.Contains(t) && this.WorthMentioningInCrushLetter(t))
-			{
-				this.crushedThingsToReport.Add(t);
-			}
-		}
-
-		private bool WorthMentioningInCrushLetter(Thing t)
-		{
-			if (!t.def.destroyable)
-			{
-				return false;
-			}
-			ThingCategory category = t.def.category;
-			return category == ThingCategory.Building || category == ThingCategory.Pawn || (category == ThingCategory.Item && t.MarketValue > 0.01f);
-		}
-
 		public void Clear()
 		{
 			this.cellsToCollapse.Clear();
-			this.crushedThingsToReport.Clear();
 		}
 	}
 }

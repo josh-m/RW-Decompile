@@ -129,9 +129,28 @@ namespace Verse
 					}
 					catch (Exception ex)
 					{
+						string text = (!list2[m].Spawned) ? string.Empty : (" (at " + list2[m].Position + ")");
 						if (Prefs.DevMode)
 						{
-							Log.Error("Exception ticking " + list2[m].ToString() + ": " + ex.ToString());
+							Log.Error(string.Concat(new object[]
+							{
+								"Exception ticking ",
+								list2[m].ToStringSafe<Thing>(),
+								text,
+								": ",
+								ex
+							}), false);
+						}
+						else
+						{
+							Log.ErrorOnce(string.Concat(new object[]
+							{
+								"Exception ticking ",
+								list2[m].ToStringSafe<Thing>(),
+								text,
+								". Suppressing further errors. Exception: ",
+								ex
+							}), list2[m].thingIDNumber ^ 576876901, false);
 						}
 					}
 				}

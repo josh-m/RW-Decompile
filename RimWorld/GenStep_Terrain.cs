@@ -18,7 +18,15 @@ namespace RimWorld
 
 		private static bool debug_WarnedMissingTerrain;
 
-		public override void Generate(Map map)
+		public override int SeedPart
+		{
+			get
+			{
+				return 262606459;
+			}
+		}
+
+		public override void Generate(Map map, GenStepParams parms)
 		{
 			BeachMaker.Init(map);
 			RiverMaker riverMaker = this.GenerateRiver(map);
@@ -39,7 +47,7 @@ namespace RimWorld
 				{
 					terrainDef = this.TerrainFrom(current, map, elevation[current], fertility[current], riverMaker, false);
 				}
-				if ((terrainDef == TerrainDefOf.WaterMovingShallow || terrainDef == TerrainDefOf.WaterMovingDeep) && edifice != null)
+				if (terrainDef.IsRiver && edifice != null)
 				{
 					list.Add(edifice.Position);
 					edifice.Destroy(DestroyMode.Vanish);
@@ -67,14 +75,14 @@ namespace RimWorld
 			}
 			if (terrainDef == null && preferSolid)
 			{
-				return GenStep_RocksFromGrid.RockDefAt(c).naturalTerrain;
+				return GenStep_RocksFromGrid.RockDefAt(c).building.naturalTerrain;
 			}
 			TerrainDef terrainDef2 = BeachMaker.BeachTerrainAt(c, map.Biome);
 			if (terrainDef2 == TerrainDefOf.WaterOceanDeep)
 			{
 				return terrainDef2;
 			}
-			if (terrainDef == TerrainDefOf.WaterMovingShallow || terrainDef == TerrainDefOf.WaterMovingDeep)
+			if (terrainDef != null && terrainDef.IsRiver)
 			{
 				return terrainDef;
 			}
@@ -88,7 +96,7 @@ namespace RimWorld
 			}
 			for (int i = 0; i < map.Biome.terrainPatchMakers.Count; i++)
 			{
-				terrainDef2 = map.Biome.terrainPatchMakers[i].TerrainAt(c, map);
+				terrainDef2 = map.Biome.terrainPatchMakers[i].TerrainAt(c, map, fertility);
 				if (terrainDef2 != null)
 				{
 					return terrainDef2;
@@ -100,7 +108,7 @@ namespace RimWorld
 			}
 			if (elevation >= 0.61f)
 			{
-				return GenStep_RocksFromGrid.RockDefAt(c).naturalTerrain;
+				return GenStep_RocksFromGrid.RockDefAt(c).building.naturalTerrain;
 			}
 			terrainDef2 = TerrainThreshold.TerrainAtValue(map.Biome.terrainsByFertility, fertility);
 			if (terrainDef2 != null)
@@ -117,7 +125,7 @@ namespace RimWorld
 					elevation,
 					", fertility=",
 					fertility
-				}));
+				}), false);
 				GenStep_Terrain.debug_WarnedMissingTerrain = true;
 			}
 			return TerrainDefOf.Sand;
@@ -126,16 +134,21 @@ namespace RimWorld
 		private RiverMaker GenerateRiver(Map map)
 		{
 			Tile tile = Find.WorldGrid[map.Tile];
-			List<Tile.RiverLink> visibleRivers = tile.VisibleRivers;
-			if (visibleRivers == null || visibleRivers.Count == 0)
+			List<Tile.RiverLink> rivers = tile.Rivers;
+			if (rivers == null || rivers.Count == 0)
 			{
 				return null;
 			}
-			float headingFromTo = Find.WorldGrid.GetHeadingFromTo(map.Tile, (from rl in visibleRivers
+			float angle = Find.WorldGrid.GetHeadingFromTo(map.Tile, (from rl in rivers
 			orderby -rl.river.degradeThreshold
 			select rl).First<Tile.RiverLink>().neighbor);
+			Rot4 a = Find.World.CoastDirectionAt(map.Tile);
+			if (a != Rot4.Invalid)
+			{
+				angle = a.AsAngle + (float)Rand.RangeInclusive(-30, 30);
+			}
 			Vector3 center = new Vector3(Rand.Range(0.3f, 0.7f) * (float)map.Size.x, 0f, Rand.Range(0.3f, 0.7f) * (float)map.Size.z);
-			RiverMaker riverMaker = new RiverMaker(center, headingFromTo, (from rl in visibleRivers
+			RiverMaker riverMaker = new RiverMaker(center, angle, (from rl in rivers
 			orderby -rl.river.degradeThreshold
 			select rl).FirstOrDefault<Tile.RiverLink>().river);
 			this.GenerateRiverLookupTexture(map, riverMaker);
@@ -162,7 +175,7 @@ namespace RimWorld
 		private void GenerateRiverLookupTexture(Map map, RiverMaker riverMaker)
 		{
 			int num = Mathf.CeilToInt((from rd in DefDatabase<RiverDef>.AllDefs
-			select rd.widthOnMap / 2f + 5f).Max());
+			select rd.widthOnMap / 2f + 8f).Max());
 			int num2 = Mathf.Max(4, num) * 2;
 			Dictionary<int, GenStep_Terrain.GRLT_Entry> dictionary = new Dictionary<int, GenStep_Terrain.GRLT_Entry>();
 			Dictionary<int, GenStep_Terrain.GRLT_Entry> dictionary2 = new Dictionary<int, GenStep_Terrain.GRLT_Entry>();
@@ -267,7 +280,7 @@ namespace RimWorld
 						}
 						if (num6 == -2147483648)
 						{
-							Log.ErrorOnce("Failed to find all necessary river flow data", 5273133);
+							Log.ErrorOnce("Failed to find all necessary river flow data", 5273133, false);
 						}
 						array[num5] = zero.x;
 						array[num5 + 1] = zero.y;
@@ -303,10 +316,6 @@ namespace RimWorld
 						if (cellRect.Contains(c))
 						{
 							int num15 = num8 + (GenAdj.AdjacentCellsAndInside[num14].x + GenAdj.AdjacentCellsAndInside[num14].z * cellRect.Width) * 2;
-							if (array.Length <= num15 + 1 || num15 < 0)
-							{
-								Log.Message("you wut");
-							}
 							if (array[num15] != 0f || array[num15 + 1] != 0f)
 							{
 								num11 += array[num15] * array3[num14];
@@ -328,9 +337,9 @@ namespace RimWorld
 			{
 				if (array[num16] != 0f || array[num16 + 1] != 0f)
 				{
-					Vector3 vector4 = Rand.PointOnDisc * 0.4f;
+					Vector2 vector4 = Rand.InsideUnitCircle * 0.4f;
 					array[num16] += vector4.x;
-					array[num16 + 1] += vector4.z;
+					array[num16 + 1] += vector4.y;
 				}
 			}
 			byte[] array4 = new byte[array.Length * 4];

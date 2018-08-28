@@ -12,6 +12,7 @@ namespace Verse.AI.Group
 		ExitedMap,
 		LeftVoluntarily,
 		Drafted,
-		ForcedToJoinOtherLord
+		ForcedToJoinOtherLord,
+		ForcedByPlayerAction
 	}
 }

@@ -39,7 +39,7 @@ namespace Verse
 				{
 					if (this.list.RemoveAll((PawnDestinationReservationManager.PawnDestinationReservation x) => x.claimant.DestroyedOrNull()) != 0)
 					{
-						Log.Warning("Some destination reservations had null or destroyed claimant.");
+						Log.Warning("Some destination reservations had null or destroyed claimant.", false);
 					}
 				}
 			}
@@ -150,7 +150,7 @@ namespace Verse
 			return false;
 		}
 
-		public bool CanReserve(IntVec3 c, Pawn searcher)
+		public bool CanReserve(IntVec3 c, Pawn searcher, bool draftedOnly = false)
 		{
 			if (searcher.Faction == null)
 			{
@@ -159,7 +159,7 @@ namespace Verse
 			List<PawnDestinationReservationManager.PawnDestinationReservation> list = this.reservedDestinations[searcher.Faction].list;
 			for (int i = 0; i < list.Count; i++)
 			{
-				if (list[i].target == c && list[i].claimant != searcher)
+				if (list[i].target == c && list[i].claimant != searcher && (!draftedOnly || list[i].claimant.Drafted))
 				{
 					return false;
 				}

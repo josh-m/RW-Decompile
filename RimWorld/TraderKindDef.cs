@@ -13,6 +13,23 @@ namespace RimWorld
 
 		public bool orbital;
 
+		public bool requestable = true;
+
+		public SimpleCurve commonalityMultFromPopulationIntent;
+
+		public float CalculatedCommonality
+		{
+			get
+			{
+				float num = this.commonality;
+				if (this.commonalityMultFromPopulationIntent != null)
+				{
+					num *= this.commonalityMultFromPopulationIntent.Evaluate(StorytellerUtilityPopulation.PopulationIntent);
+				}
+				return num;
+			}
+		}
+
 		public override void ResolveReferences()
 		{
 			base.ResolveReferences();

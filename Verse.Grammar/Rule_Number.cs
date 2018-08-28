@@ -16,6 +16,14 @@ namespace Verse.Grammar
 			}
 		}
 
+		public override Rule DeepCopy()
+		{
+			Rule_Number rule_Number = (Rule_Number)base.DeepCopy();
+			rule_Number.range = this.range;
+			rule_Number.selectionWeight = this.selectionWeight;
+			return rule_Number;
+		}
+
 		public override string Generate()
 		{
 			return this.range.RandomInRange.ToString();

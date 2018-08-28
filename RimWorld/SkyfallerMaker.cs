@@ -22,7 +22,7 @@ namespace RimWorld
 			Skyfaller skyfaller2 = SkyfallerMaker.MakeSkyfaller(skyfaller);
 			if (innerThing != null && !skyfaller2.innerContainer.TryAdd(innerThing, true))
 			{
-				Log.Error("Could not add " + innerThing.ToStringSafe<Thing>() + " to a skyfaller.");
+				Log.Error("Could not add " + innerThing.ToStringSafe<Thing>() + " to a skyfaller.", false);
 				innerThing.Destroy(DestroyMode.Vanish);
 			}
 			return skyfaller2;
@@ -41,25 +41,25 @@ namespace RimWorld
 		public static Skyfaller SpawnSkyfaller(ThingDef skyfaller, IntVec3 pos, Map map)
 		{
 			Skyfaller newThing = SkyfallerMaker.MakeSkyfaller(skyfaller);
-			return (Skyfaller)GenSpawn.Spawn(newThing, pos, map);
+			return (Skyfaller)GenSpawn.Spawn(newThing, pos, map, WipeMode.Vanish);
 		}
 
 		public static Skyfaller SpawnSkyfaller(ThingDef skyfaller, ThingDef innerThing, IntVec3 pos, Map map)
 		{
 			Skyfaller newThing = SkyfallerMaker.MakeSkyfaller(skyfaller, innerThing);
-			return (Skyfaller)GenSpawn.Spawn(newThing, pos, map);
+			return (Skyfaller)GenSpawn.Spawn(newThing, pos, map, WipeMode.Vanish);
 		}
 
 		public static Skyfaller SpawnSkyfaller(ThingDef skyfaller, Thing innerThing, IntVec3 pos, Map map)
 		{
 			Skyfaller newThing = SkyfallerMaker.MakeSkyfaller(skyfaller, innerThing);
-			return (Skyfaller)GenSpawn.Spawn(newThing, pos, map);
+			return (Skyfaller)GenSpawn.Spawn(newThing, pos, map, WipeMode.Vanish);
 		}
 
 		public static Skyfaller SpawnSkyfaller(ThingDef skyfaller, IEnumerable<Thing> things, IntVec3 pos, Map map)
 		{
 			Skyfaller newThing = SkyfallerMaker.MakeSkyfaller(skyfaller, things);
-			return (Skyfaller)GenSpawn.Spawn(newThing, pos, map);
+			return (Skyfaller)GenSpawn.Spawn(newThing, pos, map, WipeMode.Vanish);
 		}
 	}
 }

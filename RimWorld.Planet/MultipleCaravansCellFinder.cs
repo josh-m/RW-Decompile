@@ -39,7 +39,7 @@ namespace RimWorld.Planet
 			}
 			if (!CellFinder.TryFindRandomEdgeCellWith((IntVec3 x) => x.Standable(map) && !x.Fogged(map), map, CellFinder.EdgeRoadChance_Neutral, out first))
 			{
-				Log.Error("Could not find any valid starting cell for a caravan.");
+				Log.Error("Could not find any valid starting cell for a caravan.", false);
 				first = CellFinder.RandomCell(map);
 				second = CellFinder.RandomCell(map);
 				return;
@@ -48,7 +48,7 @@ namespace RimWorld.Planet
 			float tryMinDistBetweenSpots = (float)Mathf.Max(map.Size.x, map.Size.z) * 0.6f;
 			if (!CellFinder.TryFindRandomEdgeCellWith((IntVec3 x) => x.Standable(map) && !x.Fogged(map) && !x.InHorDistOf(localFirst, tryMinDistBetweenSpots), map, CellFinder.EdgeRoadChance_Neutral, out second) && !CellFinder.TryFindRandomEdgeCellWith((IntVec3 x) => x.Standable(map) && !x.Fogged(map), map, 0.5f, out second))
 			{
-				Log.Error("Could not find any valid starting cell for a caravan.");
+				Log.Error("Could not find any valid starting cell for a caravan.", false);
 				second = CellFinder.RandomCell(map);
 				return;
 			}

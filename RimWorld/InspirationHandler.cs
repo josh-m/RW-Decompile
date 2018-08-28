@@ -108,7 +108,7 @@ namespace RimWorld
 			}
 			if (this.curState != inspiration)
 			{
-				Log.Error("Tried to end inspiration " + inspiration.ToStringSafe<Inspiration>() + " but current inspiration is " + this.curState.ToStringSafe<Inspiration>());
+				Log.Error("Tried to end inspiration " + inspiration.ToStringSafe<Inspiration>() + " but current inspiration is " + this.curState.ToStringSafe<Inspiration>(), false);
 				return;
 			}
 			this.curState = null;

@@ -35,7 +35,7 @@ namespace Verse.AI
 		{
 			if (target == null)
 			{
-				Log.Warning(claimant + " tried to reserve null attack target.");
+				Log.Warning(claimant + " tried to reserve null attack target.", false);
 				return;
 			}
 			if (this.IsReservedBy(claimant, target))
@@ -53,7 +53,7 @@ namespace Verse.AI
 		{
 			if (target == null)
 			{
-				Log.Warning(claimant + " tried to release reservation on null attack target.");
+				Log.Warning(claimant + " tried to release reservation on null attack target.", false);
 				return;
 			}
 			for (int i = 0; i < this.reservations.Count; i++)
@@ -73,7 +73,7 @@ namespace Verse.AI
 				" tried to release reservation on target ",
 				target,
 				", but it's not reserved by him."
-			}));
+			}), false);
 		}
 
 		public bool CanReserve(Pawn claimant, IAttackTarget target)
@@ -147,7 +147,7 @@ namespace Verse.AI
 				this.reservations.RemoveAll((AttackTargetReservationManager.AttackTargetReservation x) => x.target == null);
 				if (this.reservations.RemoveAll((AttackTargetReservationManager.AttackTargetReservation x) => x.claimant.DestroyedOrNull()) != 0)
 				{
-					Log.Warning("Some attack target reservations had null or destroyed claimant.");
+					Log.Warning("Some attack target reservations had null or destroyed claimant.", false);
 				}
 			}
 		}

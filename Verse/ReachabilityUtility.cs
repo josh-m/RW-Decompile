@@ -29,5 +29,14 @@ namespace Verse
 				maps[i].reachability.ClearCache();
 			}
 		}
+
+		public static void ClearCacheFor(Pawn p)
+		{
+			List<Map> maps = Find.Maps;
+			for (int i = 0; i < maps.Count; i++)
+			{
+				maps[i].reachability.ClearCacheFor(p);
+			}
+		}
 	}
 }

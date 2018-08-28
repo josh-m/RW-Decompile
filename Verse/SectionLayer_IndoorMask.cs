@@ -56,7 +56,7 @@ namespace Verse
 			cellRect.ClipInsideMap(base.Map);
 			subMesh.verts.Capacity = cellRect.Area * 2;
 			subMesh.tris.Capacity = cellRect.Area * 4;
-			float y = Altitudes.AltitudeFor(AltitudeLayer.MetaOverlays);
+			float y = AltitudeLayer.MetaOverlays.AltitudeFor();
 			CellIndices cellIndices = base.Map.cellIndices;
 			for (int i = cellRect.minX; i <= cellRect.maxX; i++)
 			{

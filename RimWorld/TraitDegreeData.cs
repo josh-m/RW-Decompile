@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using UnityEngine;
 using Verse;
 
 namespace RimWorld
@@ -10,10 +9,15 @@ namespace RimWorld
 		[MustTranslate]
 		public string label;
 
+		[TranslationHandle, Unsaved]
+		public string untranslatedLabel;
+
 		[MustTranslate]
 		public string description;
 
 		public int degree;
+
+		public float commonality = 1f;
 
 		public List<StatModifier> statOffsets;
 
@@ -21,13 +25,13 @@ namespace RimWorld
 
 		public ThinkTreeDef thinkTree;
 
-		private float commonality = -1f;
-
 		public MentalStateDef randomMentalState;
 
 		public SimpleCurve randomMentalStateMtbDaysMoodCurve;
 
 		public List<MentalStateDef> disallowedMentalStates;
+
+		public List<InspirationDef> disallowedInspirations;
 
 		public List<MentalBreakDef> theOnlyAllowedMentalBreaks;
 
@@ -37,30 +41,29 @@ namespace RimWorld
 
 		public float marketValueFactorOffset;
 
-		public float Commonality
+		public float randomDiseaseMtbDays;
+
+		public Type mentalStateGiverClass = typeof(TraitMentalStateGiver);
+
+		[Unsaved]
+		private TraitMentalStateGiver mentalStateGiverInt;
+
+		public TraitMentalStateGiver MentalStateGiver
 		{
 			get
 			{
-				if (this.commonality >= 0f)
+				if (this.mentalStateGiverInt == null)
 				{
-					return this.commonality;
+					this.mentalStateGiverInt = (TraitMentalStateGiver)Activator.CreateInstance(this.mentalStateGiverClass);
+					this.mentalStateGiverInt.traitDegreeData = this;
 				}
-				switch (Mathf.Abs(this.degree))
-				{
-				case 0:
-					return 1f;
-				case 1:
-					return 1f;
-				case 2:
-					return 0.4f;
-				case 3:
-					return 0.2f;
-				case 4:
-					return 0.1f;
-				default:
-					return 0.05f;
-				}
+				return this.mentalStateGiverInt;
 			}
+		}
+
+		public void PostLoad()
+		{
+			this.untranslatedLabel = this.label;
 		}
 	}
 }

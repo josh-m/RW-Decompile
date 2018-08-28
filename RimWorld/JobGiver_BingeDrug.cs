@@ -63,7 +63,7 @@ namespace RimWorld
 			DrugCategory drugCategory = this.GetDrugCategory(pawn);
 			if (chemical == null)
 			{
-				Log.ErrorOnce("Tried to binge on null chemical.", 1393746152);
+				Log.ErrorOnce("Tried to binge on null chemical.", 1393746152, false);
 				return null;
 			}
 			Hediff overdose = pawn.health.hediffSet.GetFirstHediffOfDef(HediffDefOf.DrugOverdose, false);

@@ -1,3 +1,4 @@
+using RimWorld;
 using RimWorld.Planet;
 using System;
 using System.Collections.Generic;
@@ -61,6 +62,8 @@ namespace Verse
 
 		public static readonly Material InteractionCellMaterial = MaterialPool.MatFrom("UI/Overlays/InteractionCell", ShaderDatabase.Transparent);
 
+		private static readonly Color InteractionCellIntensity = new Color(1f, 1f, 1f, 0.3f);
+
 		private static List<int> cachedEdgeTiles = new List<int>();
 
 		private static int cachedEdgeTilesForCenter = -1;
@@ -113,8 +116,8 @@ namespace Verse
 
 		private static void DrawMapEdgeLines(int edgeDist)
 		{
-			float y = Altitudes.AltitudeFor(AltitudeLayer.MetaOverlays);
-			IntVec3 size = Find.VisibleMap.Size;
+			float y = AltitudeLayer.MetaOverlays.AltitudeFor();
+			IntVec3 size = Find.CurrentMap.Size;
 			Vector3 vector = new Vector3((float)edgeDist, y, (float)edgeDist);
 			Vector3 vector2 = new Vector3((float)edgeDist, y, (float)(size.z - edgeDist));
 			Vector3 vector3 = new Vector3((float)(size.x - edgeDist), y, (float)(size.z - edgeDist));
@@ -137,35 +140,7 @@ namespace Verse
 
 		public static void DrawLineBetween(Vector3 A, Vector3 B, SimpleColor color)
 		{
-			Material mat;
-			switch (color)
-			{
-			case SimpleColor.White:
-				mat = GenDraw.LineMatWhite;
-				break;
-			case SimpleColor.Red:
-				mat = GenDraw.LineMatRed;
-				break;
-			case SimpleColor.Green:
-				mat = GenDraw.LineMatGreen;
-				break;
-			case SimpleColor.Blue:
-				mat = GenDraw.LineMatBlue;
-				break;
-			case SimpleColor.Magenta:
-				mat = GenDraw.LineMatMagenta;
-				break;
-			case SimpleColor.Yellow:
-				mat = GenDraw.LineMatYellow;
-				break;
-			case SimpleColor.Cyan:
-				mat = GenDraw.LineMatCyan;
-				break;
-			default:
-				mat = GenDraw.LineMatWhite;
-				break;
-			}
-			GenDraw.DrawLineBetween(A, B, mat);
+			GenDraw.DrawLineBetween(A, B, GenDraw.GetLineMat(color));
 		}
 
 		public static void DrawLineBetween(Vector3 A, Vector3 B, Material mat)
@@ -188,17 +163,66 @@ namespace Verse
 			Graphics.DrawMesh(MeshPool.plane10, matrix, mat, 0);
 		}
 
+		public static void DrawCircleOutline(Vector3 center, float radius)
+		{
+			GenDraw.DrawCircleOutline(center, radius, GenDraw.LineMatWhite);
+		}
+
+		public static void DrawCircleOutline(Vector3 center, float radius, SimpleColor color)
+		{
+			GenDraw.DrawCircleOutline(center, radius, GenDraw.GetLineMat(color));
+		}
+
+		public static void DrawCircleOutline(Vector3 center, float radius, Material material)
+		{
+			int num = Mathf.Clamp(Mathf.RoundToInt(24f * radius), 12, 48);
+			float num2 = 0f;
+			float num3 = 6.28318548f / (float)num;
+			Vector3 vector = center;
+			Vector3 a = center;
+			for (int i = 0; i < num + 2; i++)
+			{
+				if (i >= 2)
+				{
+					GenDraw.DrawLineBetween(a, vector, material);
+				}
+				a = vector;
+				vector = center;
+				vector.x += Mathf.Cos(num2) * radius;
+				vector.z += Mathf.Sin(num2) * radius;
+				num2 += num3;
+			}
+		}
+
+		private static Material GetLineMat(SimpleColor color)
+		{
+			switch (color)
+			{
+			case SimpleColor.White:
+				return GenDraw.LineMatWhite;
+			case SimpleColor.Red:
+				return GenDraw.LineMatRed;
+			case SimpleColor.Green:
+				return GenDraw.LineMatGreen;
+			case SimpleColor.Blue:
+				return GenDraw.LineMatBlue;
+			case SimpleColor.Magenta:
+				return GenDraw.LineMatMagenta;
+			case SimpleColor.Yellow:
+				return GenDraw.LineMatYellow;
+			case SimpleColor.Cyan:
+				return GenDraw.LineMatCyan;
+			default:
+				return GenDraw.LineMatWhite;
+			}
+		}
+
 		public static void DrawWorldLineBetween(Vector3 A, Vector3 B)
 		{
 			GenDraw.DrawWorldLineBetween(A, B, GenDraw.WorldLineMatWhite, 1f);
 		}
 
-		public static void DrawWorldLineBetween(Vector3 A, Vector3 B, Material material)
-		{
-			GenDraw.DrawWorldLineBetween(A, B, material, 1f);
-		}
-
-		public static void DrawWorldLineBetween(Vector3 A, Vector3 B, Material material, float widthFactor)
+		public static void DrawWorldLineBetween(Vector3 A, Vector3 B, Material material, float widthFactor = 1f)
 		{
 			if (Mathf.Abs(A.x - B.x) < 0.005f && Mathf.Abs(A.y - B.y) < 0.005f && Mathf.Abs(A.z - B.z) < 0.005f)
 			{
@@ -313,8 +337,34 @@ namespace Verse
 		{
 			if (tDef.hasInteractionCell)
 			{
-				Vector3 position = ThingUtility.InteractionCellWhenAt(tDef, center, placingRot, Find.VisibleMap).ToVector3ShiftedWithAltitude(AltitudeLayer.MetaOverlays);
-				Graphics.DrawMesh(MeshPool.plane10, position, Quaternion.identity, GenDraw.InteractionCellMaterial, 0);
+				IntVec3 c = ThingUtility.InteractionCellWhenAt(tDef, center, placingRot, Find.CurrentMap);
+				Vector3 vector = c.ToVector3ShiftedWithAltitude(AltitudeLayer.MetaOverlays);
+				if (c.InBounds(Find.CurrentMap))
+				{
+					Building edifice = c.GetEdifice(Find.CurrentMap);
+					if (edifice != null && edifice.def.building != null && edifice.def.building.isSittable)
+					{
+						return;
+					}
+				}
+				if (tDef.interactionCellGraphic == null && tDef.interactionCellIcon != null)
+				{
+					ThingDef thingDef = tDef.interactionCellIcon;
+					if (thingDef.blueprintDef != null)
+					{
+						thingDef = thingDef.blueprintDef;
+					}
+					tDef.interactionCellGraphic = thingDef.graphic.GetColoredVersion(ShaderTypeDefOf.EdgeDetect.Shader, GenDraw.InteractionCellIntensity, Color.white);
+				}
+				if (tDef.interactionCellGraphic != null)
+				{
+					Rot4 rot = (!tDef.interactionCellIconReverse) ? placingRot : placingRot.Opposite;
+					tDef.interactionCellGraphic.DrawFromDef(vector, rot, tDef.interactionCellIcon, 0f);
+				}
+				else
+				{
+					Graphics.DrawMesh(MeshPool.plane10, vector, Quaternion.identity, GenDraw.InteractionCellMaterial, 0);
+				}
 			}
 		}
 
@@ -324,7 +374,7 @@ namespace Verse
 			{
 				if (!GenDraw.maxRadiusMessaged)
 				{
-					Log.Error("Cannot draw radius ring of radius " + radius + ": not enough squares in the precalculated list.");
+					Log.Error("Cannot draw radius ring of radius " + radius + ": not enough squares in the precalculated list.", false);
 					GenDraw.maxRadiusMessaged = true;
 				}
 				return;
@@ -345,7 +395,7 @@ namespace Verse
 
 		public static void DrawFieldEdges(List<IntVec3> cells, Color color)
 		{
-			Map visibleMap = Find.VisibleMap;
+			Map currentMap = Find.CurrentMap;
 			Material material = MaterialPool.MatFrom(new MaterialRequest
 			{
 				shader = ShaderDatabase.Transparent,
@@ -355,18 +405,18 @@ namespace Verse
 			material.GetTexture("_MainTex").wrapMode = TextureWrapMode.Clamp;
 			if (GenDraw.fieldGrid == null)
 			{
-				GenDraw.fieldGrid = new BoolGrid(visibleMap);
+				GenDraw.fieldGrid = new BoolGrid(currentMap);
 			}
 			else
 			{
-				GenDraw.fieldGrid.ClearAndResizeTo(visibleMap);
+				GenDraw.fieldGrid.ClearAndResizeTo(currentMap);
 			}
-			int x = visibleMap.Size.x;
-			int z = visibleMap.Size.z;
+			int x = currentMap.Size.x;
+			int z = currentMap.Size.z;
 			int count = cells.Count;
 			for (int i = 0; i < count; i++)
 			{
-				if (cells[i].InBounds(visibleMap))
+				if (cells[i].InBounds(currentMap))
 				{
 					GenDraw.fieldGrid[cells[i].x, cells[i].z] = true;
 				}
@@ -374,7 +424,7 @@ namespace Verse
 			for (int j = 0; j < count; j++)
 			{
 				IntVec3 c = cells[j];
-				if (c.InBounds(visibleMap))
+				if (c.InBounds(currentMap))
 				{
 					GenDraw.rotNeeded[0] = (c.z < z - 1 && !GenDraw.fieldGrid[c.x, c.z + 1]);
 					GenDraw.rotNeeded[1] = (c.x < x - 1 && !GenDraw.fieldGrid[c.x + 1, c.z]);
@@ -490,7 +540,7 @@ namespace Verse
 				if (!offscreenOnly)
 				{
 					Vector3 position = mapTarget;
-					position.y = Altitudes.AltitudeFor(AltitudeLayer.MetaOverlays);
+					position.y = AltitudeLayer.MetaOverlays.AltitudeFor();
 					position.z -= 1.5f;
 					Graphics.DrawMesh(MeshPool.plane20, position, Quaternion.identity, GenDraw.ArrowMatWhite, 0);
 				}
@@ -499,7 +549,7 @@ namespace Verse
 			{
 				Vector3 vector2 = (mapTarget - vector).normalized * 7f;
 				Vector3 position2 = vector + vector2;
-				position2.y = Altitudes.AltitudeFor(AltitudeLayer.MetaOverlays);
+				position2.y = AltitudeLayer.MetaOverlays.AltitudeFor();
 				Quaternion rotation = Quaternion.LookRotation(vector2);
 				Graphics.DrawMesh(MeshPool.plane20, position2, rotation, GenDraw.ArrowMatWhite, 0);
 			}

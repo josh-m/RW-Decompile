@@ -20,7 +20,7 @@ namespace Verse.AI
 		public static bool MakesOccupiedCellsAlwaysReachableDiagonally(ThingDef def)
 		{
 			ThingDef thingDef = (!def.IsFrame) ? def : (def.entityDefToBuild as ThingDef);
-			return thingDef != null && thingDef.category == ThingCategory.Building && thingDef.holdsRoof && !thingDef.building.isNaturalRock;
+			return thingDef != null && thingDef.CanInteractThroughCorners;
 		}
 
 		public static bool IsAdjacentCornerAndNotAllowed(IntVec3 cell, IntVec3 BL, IntVec3 TL, IntVec3 TR, IntVec3 BR, Map map)

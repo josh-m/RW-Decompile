@@ -7,6 +7,8 @@ namespace RimWorld.BaseGen
 {
 	public static class BaseGenUtility
 	{
+		private static List<IntVec3> bridgeCells = new List<IntVec3>();
+
 		public static ThingDef RandomCheapWallStuff(Faction faction, bool notVeryFlammable = false)
 		{
 			TechLevel techLevel = (faction != null) ? faction.def.techLevel : TechLevel.Spacer;
@@ -122,6 +124,48 @@ namespace RimWorld.BaseGen
 				return edifice.Stuff;
 			}
 			return null;
+		}
+
+		public static void CheckSpawnBridgeUnder(ThingDef thingDef, IntVec3 c, Rot4 rot)
+		{
+			if (thingDef.category != ThingCategory.Building)
+			{
+				return;
+			}
+			Map map = BaseGen.globalSettings.map;
+			CellRect cellRect = GenAdj.OccupiedRect(c, rot, thingDef.size);
+			BaseGenUtility.bridgeCells.Clear();
+			CellRect.CellRectIterator iterator = cellRect.GetIterator();
+			while (!iterator.Done())
+			{
+				if (!iterator.Current.SupportsStructureType(map, thingDef.terrainAffordanceNeeded) && GenConstruct.CanBuildOnTerrain(TerrainDefOf.Bridge, iterator.Current, map, Rot4.North, null))
+				{
+					BaseGenUtility.bridgeCells.Add(iterator.Current);
+				}
+				iterator.MoveNext();
+			}
+			if (!BaseGenUtility.bridgeCells.Any<IntVec3>())
+			{
+				return;
+			}
+			if (thingDef.size.x != 1 || thingDef.size.z != 1)
+			{
+				for (int i = BaseGenUtility.bridgeCells.Count - 1; i >= 0; i--)
+				{
+					for (int j = 0; j < 8; j++)
+					{
+						IntVec3 intVec = BaseGenUtility.bridgeCells[i] + GenAdj.AdjacentCells[j];
+						if (!BaseGenUtility.bridgeCells.Contains(intVec) && intVec.InBounds(map) && !intVec.SupportsStructureType(map, thingDef.terrainAffordanceNeeded) && GenConstruct.CanBuildOnTerrain(TerrainDefOf.Bridge, intVec, map, Rot4.North, null))
+						{
+							BaseGenUtility.bridgeCells.Add(intVec);
+						}
+					}
+				}
+			}
+			for (int k = 0; k < BaseGenUtility.bridgeCells.Count; k++)
+			{
+				map.terrainGrid.SetTerrain(BaseGenUtility.bridgeCells[k], TerrainDefOf.Bridge);
+			}
 		}
 	}
 }

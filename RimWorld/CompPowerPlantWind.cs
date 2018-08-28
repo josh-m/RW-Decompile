@@ -25,7 +25,17 @@ namespace RimWorld
 
 		private const float MaxUsableWindIntensity = 1.5f;
 
-		private const float SpinRateFactor = 0.05f;
+		[TweakValue("Graphics", 0f, 0.1f)]
+		private static float SpinRateFactor = 0.035f;
+
+		[TweakValue("Graphics", -1f, 1f)]
+		private static float HorizontalBladeOffset = -0.02f;
+
+		[TweakValue("Graphics", 0f, 1f)]
+		private static float VerticalBladeOffset = 0.7f;
+
+		[TweakValue("Graphics", 4f, 8f)]
+		private static float BladeWidth = 6.6f;
 
 		private const float PowerReductionPercentPerObstacle = 0.2f;
 
@@ -103,7 +113,7 @@ namespace RimWorld
 			}
 			if (this.cachedPowerOutput > 0.01f)
 			{
-				this.spinPosition += this.PowerPercent * 0.05f;
+				this.spinPosition += this.PowerPercent * CompPowerPlantWind.SpinRateFactor;
 			}
 		}
 
@@ -124,9 +134,10 @@ namespace RimWorld
 			r.rotation = rotation;
 			GenDraw.DrawFillableBar(r);
 			Vector3 vector = this.parent.TrueCenter();
-			vector += this.parent.Rotation.FacingCell.ToVector3() * 0.7f;
+			vector += this.parent.Rotation.FacingCell.ToVector3() * CompPowerPlantWind.VerticalBladeOffset;
+			vector += this.parent.Rotation.RighthandCell.ToVector3() * CompPowerPlantWind.HorizontalBladeOffset;
 			vector.y += 0.046875f;
-			float num = 4f * Mathf.Sin(this.spinPosition);
+			float num = CompPowerPlantWind.BladeWidth * Mathf.Sin(this.spinPosition);
 			if (num < 0f)
 			{
 				num *= -1f;

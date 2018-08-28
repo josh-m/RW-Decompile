@@ -116,9 +116,10 @@ namespace RimWorld
 			{
 				VersionControl.versionString
 			});
-			if (UnityData.isDebugBuild)
+			string versionExtraInfo = VersionControl.GetVersionExtraInfo();
+			if (!versionExtraInfo.NullOrEmpty())
 			{
-				text = text + " (" + "DevelopmentBuildLower".Translate() + ")";
+				text = text + " (" + versionExtraInfo + ")";
 			}
 			text = text + "\n" + "CompiledOn".Translate(new object[]
 			{
@@ -139,9 +140,31 @@ namespace RimWorld
 			component.DrawAt(rect2);
 		}
 
+		private static string GetVersionExtraInfo()
+		{
+			string text = string.Empty;
+			if (UnityData.Is32BitBuild)
+			{
+				text += "32-bit";
+			}
+			else if (UnityData.Is64BitBuild)
+			{
+				text += "64-bit";
+			}
+			if (UnityData.isDebugBuild)
+			{
+				if (!text.NullOrEmpty())
+				{
+					text += ", ";
+				}
+				text += "DevelopmentBuildLower".Translate();
+			}
+			return text;
+		}
+
 		public static void LogVersionNumber()
 		{
-			Log.Message("RimWorld " + VersionControl.versionStringWithRev);
+			Log.Message("RimWorld " + VersionControl.versionStringWithRev, false);
 		}
 
 		public static bool IsWellFormattedVersionString(string str)
@@ -179,7 +202,7 @@ namespace RimWorld
 			});
 			if (array.Length < 3 || !int.TryParse(array[2], out result))
 			{
-				Log.Warning("Could not get build from version string " + str);
+				Log.Warning("Could not get build from version string " + str, false);
 			}
 			return result;
 		}
@@ -194,7 +217,7 @@ namespace RimWorld
 			});
 			if (array.Length < 2 || !int.TryParse(array[1], out result))
 			{
-				Log.Warning("Could not get minor version from version string " + str);
+				Log.Warning("Could not get minor version from version string " + str, false);
 			}
 			return result;
 		}
@@ -208,7 +231,7 @@ namespace RimWorld
 				'.'
 			})[0], out result))
 			{
-				Log.Warning("Could not get major version from version string " + str);
+				Log.Warning("Could not get major version from version string " + str, false);
 			}
 			return result;
 		}

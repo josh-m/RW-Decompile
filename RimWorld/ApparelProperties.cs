@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Text;
 using Verse;
 
 namespace RimWorld
@@ -11,12 +10,15 @@ namespace RimWorld
 	{
 		public List<BodyPartGroupDef> bodyPartGroups = new List<BodyPartGroupDef>();
 
-		public List<ApparelLayer> layers = new List<ApparelLayer>();
+		public List<ApparelLayerDef> layers = new List<ApparelLayerDef>();
 
+		[NoTranslate]
 		public string wornGraphicPath = string.Empty;
 
+		[NoTranslate]
 		public List<string> tags = new List<string>();
 
+		[NoTranslate]
 		public List<string> defaultOutfitTags;
 
 		public float wearPerDay = 0.4f;
@@ -24,6 +26,8 @@ namespace RimWorld
 		public bool careIfWornByCorpse = true;
 
 		public bool hatRenderedFrontOfFace;
+
+		public bool useDeflectMetalEffect;
 
 		[Unsaved]
 		private float cachedHumanBodyCoverage = -1f;
@@ -33,7 +37,7 @@ namespace RimWorld
 
 		private static BodyPartGroupDef[] apparelRelevantGroups;
 
-		public ApparelLayer LastLayer
+		public ApparelLayerDef LastLayer
 		{
 			get
 			{
@@ -41,8 +45,8 @@ namespace RimWorld
 				{
 					return this.layers[this.layers.Count - 1];
 				}
-				Log.ErrorOnce("Failed to get last layer on apparel item (see your config errors)", 31234937);
-				return ApparelLayer.Belt;
+				Log.ErrorOnce("Failed to get last layer on apparel item (see your config errors)", 31234937, false);
+				return ApparelLayerDefOf.Belt;
 			}
 		}
 
@@ -66,7 +70,7 @@ namespace RimWorld
 			}
 		}
 
-		public static void Reset()
+		public static void ResetStaticData()
 		{
 			ApparelProperties.apparelRelevantGroups = (from td in DefDatabase<ThingDef>.AllDefs
 			where td.IsApparel
@@ -76,7 +80,7 @@ namespace RimWorld
 		[DebuggerHidden]
 		public IEnumerable<string> ConfigErrors(ThingDef parentDef)
 		{
-			if (this.layers.NullOrEmpty<ApparelLayer>())
+			if (this.layers.NullOrEmpty<ApparelLayerDef>())
 			{
 				yield return parentDef.defName + " apparel has no layers.";
 			}
@@ -99,25 +103,21 @@ namespace RimWorld
 			IEnumerable<BodyPartRecord> source = from x in body.AllParts
 			where x.depth == BodyPartDepth.Outside && x.groups.Any((BodyPartGroupDef y) => this.bodyPartGroups.Contains(y))
 			select x;
-			StringBuilder stringBuilder = new StringBuilder();
-			bool flag = true;
-			foreach (BodyPartRecord current in source.Distinct<BodyPartRecord>())
-			{
-				if (!flag)
-				{
-					stringBuilder.Append(", ");
-				}
-				flag = false;
-				stringBuilder.Append(current.def.label);
-			}
-			return stringBuilder.ToString().CapitalizeFirst();
+			return (from part in source.Distinct<BodyPartRecord>()
+			select part.Label).ToCommaList(true).CapitalizeFirst();
+		}
+
+		public string GetLayersString()
+		{
+			return (from layer in this.layers
+			select layer.label).ToCommaList(true).CapitalizeFirst();
 		}
 
 		public BodyPartGroupDef[] GetInterferingBodyPartGroups(BodyDef body)
 		{
-			if (this.interferingBodyPartGroups == null)
+			if (this.interferingBodyPartGroups == null || this.interferingBodyPartGroups.Length != DefDatabase<BodyDef>.DefCount)
 			{
-				this.interferingBodyPartGroups = new BodyPartGroupDef[DefDatabase<BodyPartGroupDef>.DefCount][];
+				this.interferingBodyPartGroups = new BodyPartGroupDef[DefDatabase<BodyDef>.DefCount][];
 			}
 			if (this.interferingBodyPartGroups[(int)body.index] == null)
 			{

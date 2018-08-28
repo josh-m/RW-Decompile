@@ -33,7 +33,7 @@ namespace RimWorld
 			return pawn.Map.listerBuildingsRepairable.RepairableBuildings(pawn.Faction);
 		}
 
-		public override bool ShouldSkip(Pawn pawn)
+		public override bool ShouldSkip(Pawn pawn, bool forced = false)
 		{
 			return pawn.Map.listerBuildingsRepairable.RepairableBuildings(pawn.Faction).Count == 0;
 		}
@@ -59,7 +59,7 @@ namespace RimWorld
 			}
 			if (pawn.Faction == Faction.OfPlayer && !pawn.Map.areaManager.Home[t.Position])
 			{
-				JobFailReason.Is(WorkGiver_FixBrokenDownBuilding.NotInHomeAreaTrans);
+				JobFailReason.Is(WorkGiver_FixBrokenDownBuilding.NotInHomeAreaTrans, null);
 				return false;
 			}
 			if (!t.def.useHitPoints || t.HitPoints == t.MaxHitPoints)
@@ -67,7 +67,7 @@ namespace RimWorld
 				return false;
 			}
 			LocalTargetInfo target = building;
-			return pawn.CanReserve(target, 1, -1, null, forced) && building.Map.designationManager.DesignationOn(building, DesignationDefOf.Deconstruct) == null && !building.IsBurning();
+			return pawn.CanReserve(target, 1, -1, null, forced) && building.Map.designationManager.DesignationOn(building, DesignationDefOf.Deconstruct) == null && (!building.def.mineable || building.Map.designationManager.DesignationAt(building.Position, DesignationDefOf.Mine) == null) && !building.IsBurning();
 		}
 
 		public override Job JobOnThing(Pawn pawn, Thing t, bool forced = false)

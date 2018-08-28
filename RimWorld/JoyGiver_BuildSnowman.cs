@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Verse;
 using Verse.AI;
 
@@ -8,8 +9,14 @@ namespace RimWorld
 	{
 		private const float MinSnowmanDepth = 0.5f;
 
+		private const float MinDistBetweenSnowmen = 12f;
+
 		public override Job TryGiveJob(Pawn pawn)
 		{
+			if (pawn.story.WorkTypeIsDisabled(WorkTypeDefOf.Construction))
+			{
+				return null;
+			}
 			if (!JoyUtility.EnjoyableOutsideNow(pawn, null))
 			{
 				return null;
@@ -76,6 +83,14 @@ namespace RimWorld
 					return false;
 				}
 				if (pawn.Map.reservationManager.IsReservedAndRespected(c2, pawn))
+				{
+					return false;
+				}
+			}
+			List<Thing> list = pawn.Map.listerThings.ThingsOfDef(ThingDefOf.Snowman);
+			for (int j = 0; j < list.Count; j++)
+			{
+				if (list[j].Position.InHorDistOf(c, 12f))
 				{
 					return false;
 				}

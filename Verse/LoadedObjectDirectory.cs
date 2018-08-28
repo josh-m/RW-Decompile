@@ -48,7 +48,7 @@ namespace Verse
 						" ",
 						loadReferenceable.ToString(),
 						"."
-					}));
+					}), false);
 					return;
 				}
 			}
@@ -84,7 +84,7 @@ namespace Verse
 					text3,
 					": ",
 					ex
-				}));
+				}), false);
 			}
 		}
 
@@ -118,7 +118,7 @@ namespace Verse
 						loadReferenceable.ToStringSafe<ILoadReferenceable>(),
 						". Exception:\n",
 						ex
-					}));
+					}), false);
 					T result = default(T);
 					return result;
 				}
@@ -133,7 +133,7 @@ namespace Verse
 				Scribe.loader.curParent.ToStringSafe<IExposable>(),
 				" curPathRelToParent=",
 				Scribe.loader.curPathRelToParent
-			}));
+			}), false);
 			return default(T);
 		}
 	}

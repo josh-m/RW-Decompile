@@ -7,14 +7,9 @@ namespace Verse.AI
 {
 	public static class GenAI
 	{
-		public static bool CanInteractPawn(Pawn assister, Pawn assistee)
-		{
-			return assistee.Spawned && assister.CanReach(assistee, PathEndMode.OnCell, Danger.Deadly, false, TraverseMode.ByPawn);
-		}
-
 		public static bool MachinesLike(Faction machineFaction, Pawn p)
 		{
-			return p.Faction != null && (!p.IsPrisoner || p.HostFaction != machineFaction) && !p.Faction.HostileTo(machineFaction);
+			return (p.Faction != null || !p.NonHumanlikeOrWildMan() || (p.HostFaction == machineFaction && !p.IsPrisoner)) && (!p.IsPrisoner || p.HostFaction != machineFaction) && (p.Faction == null || !p.Faction.HostileTo(machineFaction));
 		}
 
 		public static bool CanUseItemForWork(Pawn p, Thing item)
@@ -24,7 +19,7 @@ namespace Verse.AI
 
 		public static bool CanBeArrestedBy(this Pawn pawn, Pawn arrester)
 		{
-			return !pawn.NonHumanlikeOrWildMan() && (!pawn.InAggroMentalState || !pawn.HostileTo(arrester)) && !pawn.HostileTo(Faction.OfPlayer) && (!pawn.IsPrisonerOfColony || !pawn.Position.IsInPrisonCell(pawn.Map));
+			return pawn.RaceProps.Humanlike && (!pawn.InAggroMentalState || !pawn.HostileTo(arrester)) && !pawn.HostileTo(Faction.OfPlayer) && (!pawn.IsPrisonerOfColony || !pawn.Position.IsInPrisonCell(pawn.Map));
 		}
 
 		public static bool InDangerousCombat(Pawn pawn)
@@ -104,7 +99,7 @@ namespace Verse.AI
 			for (int i = 0; i < potentialTargetsFor.Count; i++)
 			{
 				IAttackTarget attackTarget = potentialTargetsFor[i];
-				if (!attackTarget.ThreatDisabled())
+				if (!attackTarget.ThreatDisabled(p))
 				{
 					if (flag || !attackTarget.Thing.Position.Fogged(attackTarget.Thing.Map))
 					{

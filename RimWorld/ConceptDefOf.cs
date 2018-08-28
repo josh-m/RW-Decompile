@@ -97,12 +97,19 @@ namespace RimWorld
 
 		public static ConceptDef DoorOpenSpeed;
 
+		public static ConceptDef QueueOrders;
+
 		public static ConceptDef ArrestingCreatesEnemies;
 
 		public static ConceptDef TradeGoodsMustBeNearBeacon;
 
 		public static ConceptDef SwitchFlickingDesignation;
 
-		public static ConceptDef MaxNumberOfPlayerHomes;
+		public static ConceptDef MaxNumberOfPlayerSettlements;
+
+		static ConceptDefOf()
+		{
+			DefOfHelper.EnsureInitializedInCtor(typeof(ConceptDefOf));
+		}
 	}
 }

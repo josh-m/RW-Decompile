@@ -10,5 +10,10 @@ namespace RimWorld
 		public static NeedDef Rest;
 
 		public static NeedDef Joy;
+
+		static NeedDefOf()
+		{
+			DefOfHelper.EnsureInitializedInCtor(typeof(NeedDefOf));
+		}
 	}
 }

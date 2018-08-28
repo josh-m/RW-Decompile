@@ -27,7 +27,7 @@ namespace RimWorld
 			}
 		}
 
-		public static void CacheTranslations()
+		public static void ResetStaticData()
 		{
 			WorkGiver_FixBrokenDownBuilding.NotInHomeAreaTrans = "NotInHomeArea".Translate();
 			WorkGiver_FixBrokenDownBuilding.NoComponentsToRepairTrans = "NoComponentsToRepair".Translate();
@@ -38,7 +38,7 @@ namespace RimWorld
 			return pawn.Map.GetComponent<BreakdownManager>().brokenDownThings;
 		}
 
-		public override bool ShouldSkip(Pawn pawn)
+		public override bool ShouldSkip(Pawn pawn, bool forced = false)
 		{
 			return pawn.Map.GetComponent<BreakdownManager>().brokenDownThings.Count == 0;
 		}
@@ -73,7 +73,7 @@ namespace RimWorld
 			}
 			if (pawn.Faction == Faction.OfPlayer && !pawn.Map.areaManager.Home[t.Position])
 			{
-				JobFailReason.Is(WorkGiver_FixBrokenDownBuilding.NotInHomeAreaTrans);
+				JobFailReason.Is(WorkGiver_FixBrokenDownBuilding.NotInHomeAreaTrans, null);
 				return false;
 			}
 			LocalTargetInfo target = building;
@@ -91,7 +91,7 @@ namespace RimWorld
 			}
 			if (this.FindClosestComponent(pawn) == null)
 			{
-				JobFailReason.Is(WorkGiver_FixBrokenDownBuilding.NoComponentsToRepairTrans);
+				JobFailReason.Is(WorkGiver_FixBrokenDownBuilding.NoComponentsToRepairTrans, null);
 				return false;
 			}
 			return true;
@@ -108,7 +108,7 @@ namespace RimWorld
 
 		private Thing FindClosestComponent(Pawn pawn)
 		{
-			return GenClosest.ClosestThingReachable(pawn.Position, pawn.Map, ThingRequest.ForDef(ThingDefOf.Component), PathEndMode.InteractionCell, TraverseParms.For(pawn, pawn.NormalMaxDanger(), TraverseMode.ByPawn, false), 9999f, (Thing x) => !x.IsForbidden(pawn) && pawn.CanReserve(x, 1, -1, null, false), null, 0, -1, false, RegionType.Set_Passable, false);
+			return GenClosest.ClosestThingReachable(pawn.Position, pawn.Map, ThingRequest.ForDef(ThingDefOf.ComponentIndustrial), PathEndMode.InteractionCell, TraverseParms.For(pawn, pawn.NormalMaxDanger(), TraverseMode.ByPawn, false), 9999f, (Thing x) => !x.IsForbidden(pawn) && pawn.CanReserve(x, 1, -1, null, false), null, 0, -1, false, RegionType.Set_Passable, false);
 		}
 	}
 }

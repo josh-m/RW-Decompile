@@ -24,7 +24,7 @@ namespace Verse.AI
 			});
 		}
 
-		public override bool TryMakePreToilReservations()
+		public override bool TryMakePreToilReservations(bool errorOnFailed)
 		{
 			return true;
 		}
@@ -33,7 +33,7 @@ namespace Verse.AI
 		protected override IEnumerable<Toil> MakeNewToils()
 		{
 			this.FailOnDespawnedOrNull(TargetIndex.A);
-			yield return Toils_Combat.GotoCastPosition(TargetIndex.A, false);
+			yield return Toils_Combat.GotoCastPosition(TargetIndex.A, false, 1f);
 			yield return Toils_Combat.CastVerb(TargetIndex.A, true);
 		}
 	}

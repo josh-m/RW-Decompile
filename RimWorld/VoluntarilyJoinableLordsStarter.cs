@@ -33,7 +33,7 @@ namespace RimWorld
 			{
 				firstFiance.LabelShort,
 				secondFiance.LabelShort
-			}), new TargetInfo(intVec, this.map, false), MessageTypeDefOf.PositiveEvent);
+			}), new TargetInfo(intVec, this.map, false), MessageTypeDefOf.PositiveEvent, true);
 			this.lastLordStartTick = Find.TickManager.TicksGame;
 			return true;
 		}
@@ -54,7 +54,7 @@ namespace RimWorld
 			Find.LetterStack.ReceiveLetter("LetterLabelNewParty".Translate(), "LetterNewParty".Translate(new object[]
 			{
 				pawn.LabelShort
-			}), LetterDefOf.PositiveEvent, new TargetInfo(intVec, this.map, false), null);
+			}), LetterDefOf.PositiveEvent, new TargetInfo(intVec, this.map, false), null, null);
 			this.lastLordStartTick = Find.TickManager.TicksGame;
 			this.startPartyASAP = false;
 			return true;

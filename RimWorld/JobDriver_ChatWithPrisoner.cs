@@ -16,9 +16,12 @@ namespace RimWorld
 			}
 		}
 
-		public override bool TryMakePreToilReservations()
+		public override bool TryMakePreToilReservations(bool errorOnFailed)
 		{
-			return this.pawn.Reserve(this.job.targetA, this.job, 1, -1, null);
+			Pawn pawn = this.pawn;
+			LocalTargetInfo targetA = this.job.targetA;
+			Job job = this.job;
+			return pawn.Reserve(targetA, job, 1, -1, null, errorOnFailed);
 		}
 
 		[DebuggerHidden]
@@ -47,10 +50,7 @@ namespace RimWorld
 			yield return Toils_Interpersonal.GotoPrisoner(this.pawn, this.Talkee, this.Talkee.guest.interactionMode);
 			yield return Toils_Interpersonal.GotoInteractablePosition(TargetIndex.A);
 			yield return Toils_Interpersonal.SetLastInteractTime(TargetIndex.A);
-			if (this.job.def == JobDefOf.PrisonerAttemptRecruit)
-			{
-				yield return Toils_Interpersonal.TryRecruit(TargetIndex.A);
-			}
+			yield return Toils_Interpersonal.TryRecruit(TargetIndex.A);
 		}
 	}
 }

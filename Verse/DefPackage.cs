@@ -27,6 +27,7 @@ namespace Verse
 
 		public void AddDef(Def def)
 		{
+			def.defPackage = this;
 			this.defs.Add(def);
 		}
 
@@ -48,6 +49,10 @@ namespace Verse
 				}));
 			}
 			this.defs.Remove(def);
+			if (def.defPackage == this)
+			{
+				def.defPackage = null;
+			}
 		}
 
 		public void SaveIn(ModContentPack mod)
@@ -67,11 +72,11 @@ namespace Verse
 				DirectXmlSaveFormatter.AddWhitespaceFromRoot(xElement);
 				SaveOptions options = SaveOptions.DisableFormatting;
 				xDocument.Save(str, options);
-				Messages.Message("Saved in " + str, MessageTypeDefOf.PositiveEvent);
+				Messages.Message("Saved in " + str, MessageTypeDefOf.PositiveEvent, false);
 			}
 			catch (Exception ex)
 			{
-				Messages.Message("Exception saving XML: " + ex.ToString(), MessageTypeDefOf.NegativeEvent);
+				Messages.Message("Exception saving XML: " + ex.ToString(), MessageTypeDefOf.NegativeEvent, false);
 				throw;
 			}
 		}

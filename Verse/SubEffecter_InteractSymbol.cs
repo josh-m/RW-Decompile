@@ -7,7 +7,7 @@ namespace Verse
 	{
 		private Mote interactMote;
 
-		public SubEffecter_InteractSymbol(SubEffecterDef def) : base(def)
+		public SubEffecter_InteractSymbol(SubEffecterDef def, Effecter parent) : base(def, parent)
 		{
 		}
 

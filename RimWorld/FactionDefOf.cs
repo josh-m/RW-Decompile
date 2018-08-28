@@ -9,18 +9,17 @@ namespace RimWorld
 
 		public static FactionDef PlayerTribe;
 
-		public static FactionDef Spacer;
+		public static FactionDef Ancients;
 
-		public static FactionDef SpacerHostile;
-
-		public static FactionDef Outlander;
-
-		public static FactionDef Pirate;
-
-		public static FactionDef Tribe;
+		public static FactionDef AncientsHostile;
 
 		public static FactionDef Mechanoid;
 
 		public static FactionDef Insect;
+
+		static FactionDefOf()
+		{
+			DefOfHelper.EnsureInitializedInCtor(typeof(FactionDefOf));
+		}
 	}
 }

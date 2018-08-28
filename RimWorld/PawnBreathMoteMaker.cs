@@ -33,10 +33,10 @@ namespace RimWorld
 			{
 				return;
 			}
-			int num = (Find.TickManager.TicksGame + this.pawn.HashOffset()) % 320;
+			int num = Mathf.Abs(Find.TickManager.TicksGame + this.pawn.HashOffset()) % 320;
 			if (num == 0)
 			{
-				this.doThisBreath = (this.pawn.AmbientTemperature < 0f && this.pawn.GetPosture() != PawnPosture.Standing);
+				this.doThisBreath = (this.pawn.AmbientTemperature < 0f && this.pawn.GetPosture() == PawnPosture.Standing);
 			}
 			if (this.doThisBreath && num < 80 && num % 8 == 0)
 			{

@@ -76,7 +76,7 @@ namespace Verse
 					}
 					else
 					{
-						Messages.Message(acceptanceReport.Reason, MessageTypeDefOf.SilentInput);
+						Messages.Message(acceptanceReport.Reason, MessageTypeDefOf.SilentInput, false);
 						this.selectedDesignator.Finalize(false);
 					}
 				}
@@ -86,7 +86,7 @@ namespace Verse
 				}
 				Event.current.Use();
 			}
-			if ((Event.current.type == EventType.MouseDown && Event.current.button == 1) || (Event.current.type == EventType.KeyDown && Event.current.keyCode == KeyCode.Escape))
+			if ((Event.current.type == EventType.MouseDown && Event.current.button == 1) || KeyBindingDefOf.Cancel.KeyDownEvent)
 			{
 				SoundDefOf.CancelMode.PlayOneShotOnCamera(null);
 				this.Deselect();

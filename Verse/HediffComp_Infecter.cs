@@ -20,11 +20,23 @@ namespace Verse
 		private static readonly SimpleCurve InfectionChanceFactorFromTendQualityCurve = new SimpleCurve
 		{
 			{
-				new CurvePoint(0f, 0.85f),
+				new CurvePoint(0f, 0.7f),
 				true
 			},
 			{
-				new CurvePoint(1f, 0.05f),
+				new CurvePoint(1f, 0.4f),
+				true
+			}
+		};
+
+		private static readonly SimpleCurve InfectionChanceFactorFromSeverityCurve = new SimpleCurve
+		{
+			{
+				new CurvePoint(1f, 0.1f),
+				true
+			},
+			{
+				new CurvePoint(12f, 1f),
 				true
 			}
 		};
@@ -39,7 +51,7 @@ namespace Verse
 
 		public override void CompPostPostAdd(DamageInfo? dinfo)
 		{
-			if (this.parent.IsOld())
+			if (this.parent.IsPermanent())
 			{
 				this.ticksUntilInfect = -2;
 				return;
@@ -57,11 +69,11 @@ namespace Verse
 			float num = this.Props.infectionChance;
 			if (base.Pawn.RaceProps.Animal)
 			{
-				num *= 0.2f;
+				num *= 0.1f;
 			}
 			if (Rand.Value <= num)
 			{
-				this.ticksUntilInfect = HealthTunings.InfectionDelayRange.RandomInRange;
+				this.ticksUntilInfect = HealthTuning.InfectionDelayRange.RandomInRange;
 			}
 			else
 			{
@@ -113,6 +125,7 @@ namespace Verse
 				num *= this.infectionChanceFactorFromTendRoom;
 				num *= HediffComp_Infecter.InfectionChanceFactorFromTendQualityCurve.Evaluate(hediffComp_TendDuration.tendQuality);
 			}
+			num *= HediffComp_Infecter.InfectionChanceFactorFromSeverityCurve.Evaluate(this.parent.Severity);
 			if (base.Pawn.Faction == Faction.OfPlayer)
 			{
 				num *= Find.Storyteller.difficulty.playerPawnInfectionChanceFactor;
@@ -120,7 +133,7 @@ namespace Verse
 			if (Rand.Value < num)
 			{
 				this.ticksUntilInfect = -4;
-				base.Pawn.health.AddHediff(HediffDefOf.WoundInfection, this.parent.Part, null);
+				base.Pawn.health.AddHediff(HediffDefOf.WoundInfection, this.parent.Part, null, null);
 			}
 			else
 			{

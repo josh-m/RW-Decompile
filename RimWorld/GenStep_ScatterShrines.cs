@@ -15,6 +15,14 @@ namespace RimWorld
 
 		private const int MarginCells = 1;
 
+		public override int SeedPart
+		{
+			get
+			{
+				return 1801222485;
+			}
+		}
+
 		protected override bool CanScatterAt(IntVec3 c, Map map)
 		{
 			if (!base.CanScatterAt(c, map))
@@ -69,13 +77,13 @@ namespace RimWorld
 			string signalTag = "ancientTempleApproached-" + nextSignalTagID;
 			SignalAction_Letter signalAction_Letter = (SignalAction_Letter)ThingMaker.MakeThing(ThingDefOf.SignalAction_Letter, null);
 			signalAction_Letter.signalTag = signalTag;
-			signalAction_Letter.letter = LetterMaker.MakeLetter("LetterLabelAncientShrineWarning".Translate(), "AncientShrineWarning".Translate(), LetterDefOf.NeutralEvent, new TargetInfo(rect.CenterCell, map, false));
-			GenSpawn.Spawn(signalAction_Letter, rect.CenterCell, map);
+			signalAction_Letter.letter = LetterMaker.MakeLetter("LetterLabelAncientShrineWarning".Translate(), "AncientShrineWarning".Translate(), LetterDefOf.NeutralEvent, new TargetInfo(rect.CenterCell, map, false), null);
+			GenSpawn.Spawn(signalAction_Letter, rect.CenterCell, map, WipeMode.Vanish);
 			RectTrigger rectTrigger = (RectTrigger)ThingMaker.MakeThing(ThingDefOf.RectTrigger, null);
 			rectTrigger.signalTag = signalTag;
 			rectTrigger.Rect = rect.ExpandedBy(1).ClipInsideMap(map);
 			rectTrigger.destroyIfUnfogged = true;
-			GenSpawn.Spawn(rectTrigger, rect.CenterCell, map);
+			GenSpawn.Spawn(rectTrigger, rect.CenterCell, map, WipeMode.Vanish);
 		}
 	}
 }

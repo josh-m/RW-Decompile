@@ -5,7 +5,7 @@ using Verse;
 namespace RimWorld
 {
 	[StaticConstructorOnStartup]
-	internal class Gizmo_RefuelableFuelStatus : Gizmo
+	public class Gizmo_RefuelableFuelStatus : Gizmo
 	{
 		public CompRefuelable refuelable;
 
@@ -17,24 +17,26 @@ namespace RimWorld
 
 		private const float ArrowScale = 0.5f;
 
-		public override float Width
+		public Gizmo_RefuelableFuelStatus()
 		{
-			get
-			{
-				return 140f;
-			}
+			this.order = -100f;
 		}
 
-		public override GizmoResult GizmoOnGUI(Vector2 topLeft)
+		public override float GetWidth(float maxWidth)
 		{
-			Rect overRect = new Rect(topLeft.x, topLeft.y, this.Width, 75f);
+			return 140f;
+		}
+
+		public override GizmoResult GizmoOnGUI(Vector2 topLeft, float maxWidth)
+		{
+			Rect overRect = new Rect(topLeft.x, topLeft.y, this.GetWidth(maxWidth), 75f);
 			Find.WindowStack.ImmediateWindow(1523289473, overRect, WindowLayer.GameUI, delegate
 			{
 				Rect rect = overRect.AtZero().ContractedBy(6f);
 				Rect rect2 = rect;
 				rect2.height = overRect.height / 2f;
 				Text.Font = GameFont.Tiny;
-				Widgets.Label(rect2, "FuelLevelGizmoLabel".Translate());
+				Widgets.Label(rect2, this.refuelable.Props.FuelGizmoLabel);
 				Rect rect3 = rect;
 				rect3.yMin = overRect.height / 2f;
 				float fillPercent = this.refuelable.Fuel / this.refuelable.Props.fuelCapacity;

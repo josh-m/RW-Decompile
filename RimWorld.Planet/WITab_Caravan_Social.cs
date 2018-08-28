@@ -34,7 +34,8 @@ namespace RimWorld.Planet
 		{
 			get
 			{
-				if (this.specificSocialTabForPawn == null)
+				this.EnsureSpecificSocialTabForPawnValid();
+				if (this.specificSocialTabForPawn.DestroyedOrNull())
 				{
 					return 0f;
 				}
@@ -49,6 +50,7 @@ namespace RimWorld.Planet
 
 		protected override void FillTab()
 		{
+			this.EnsureSpecificSocialTabForPawnValid();
 			Text.Font = GameFont.Small;
 			Rect rect = new Rect(0f, 0f, this.size.x, this.size.y).ContractedBy(10f);
 			Rect rect2 = new Rect(0f, 0f, rect.width - 16f, this.scrollViewHeight);
@@ -64,6 +66,7 @@ namespace RimWorld.Planet
 
 		protected override void UpdateSize()
 		{
+			this.EnsureSpecificSocialTabForPawnValid();
 			base.UpdateSize();
 			this.size.x = 243f;
 			this.size.y = Mathf.Min(550f, this.PaneTopY - 30f);
@@ -71,6 +74,7 @@ namespace RimWorld.Planet
 
 		protected override void ExtraOnGUI()
 		{
+			this.EnsureSpecificSocialTabForPawnValid();
 			base.ExtraOnGUI();
 			Pawn localSpecificSocialTabForPawn = this.specificSocialTabForPawn;
 			if (localSpecificSocialTabForPawn != null)
@@ -108,7 +112,7 @@ namespace RimWorld.Planet
 			List<Pawn> pawns = this.Pawns;
 			Pawn pawn = BestCaravanPawnUtility.FindBestNegotiator(base.SelCaravan);
 			GUI.color = new Color(0.8f, 0.8f, 0.8f, 1f);
-			Widgets.Label(new Rect(0f, curY, scrollViewRect.width, 24f), string.Format("{0}: {1}", "Negotiator".Translate(), (pawn == null) ? "NoneCapable".Translate() : pawn.NameStringShort));
+			Widgets.Label(new Rect(0f, curY, scrollViewRect.width, 24f), string.Format("{0}: {1}", "Negotiator".Translate(), (pawn == null) ? "NoneCapable".Translate() : pawn.LabelShort));
 			curY += 24f;
 			if (this.specificSocialTabForPawn != null && !pawns.Contains(this.specificSocialTabForPawn))
 			{
@@ -165,11 +169,11 @@ namespace RimWorld.Planet
 		{
 			GUI.BeginGroup(rect);
 			Rect rect2 = rect.AtZero();
-			CaravanPeopleAndItemsTabUtility.DoAbandonButton(rect2, p, base.SelCaravan);
+			CaravanThingsTabUtility.DoAbandonButton(rect2, p, base.SelCaravan);
 			rect2.width -= 24f;
 			Widgets.InfoCardButton(rect2.width - 24f, (rect.height - 24f) / 2f, p);
 			rect2.width -= 24f;
-			CaravanPeopleAndItemsTabUtility.DoOpenSpecificTabButton(rect2, p, ref this.specificSocialTabForPawn);
+			CaravanThingsTabUtility.DoOpenSpecificTabButton(rect2, p, ref this.specificSocialTabForPawn);
 			rect2.width -= 24f;
 			if (Mouse.IsOver(rect2))
 			{
@@ -186,6 +190,20 @@ namespace RimWorld.Planet
 				GUI.color = Color.white;
 			}
 			GUI.EndGroup();
+		}
+
+		public override void Notify_ClearingAllMapsMemory()
+		{
+			base.Notify_ClearingAllMapsMemory();
+			this.specificSocialTabForPawn = null;
+		}
+
+		private void EnsureSpecificSocialTabForPawnValid()
+		{
+			if (this.specificSocialTabForPawn != null && (this.specificSocialTabForPawn.Destroyed || !base.SelCaravan.ContainsPawn(this.specificSocialTabForPawn)))
+			{
+				this.specificSocialTabForPawn = null;
+			}
 		}
 	}
 }

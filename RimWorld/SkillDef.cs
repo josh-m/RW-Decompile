@@ -7,6 +7,7 @@ namespace RimWorld
 {
 	public class SkillDef : Def
 	{
+		[MustTranslate]
 		public string skillLabel;
 
 		public bool usuallyDefinedInBackstories = true;
@@ -14,6 +15,8 @@ namespace RimWorld
 		public bool pawnCreatorSummaryVisible;
 
 		public WorkTags disablingWorkTags;
+
+		public float listOrder;
 
 		public override void PostLoad()
 		{

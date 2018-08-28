@@ -35,7 +35,7 @@ namespace Verse
 						xPathNavigator2.OuterXml,
 						":\n",
 						ex.InnerException
-					}));
+					}), false);
 				}
 			}
 			foreach (XPathNavigator xPathNavigator3 in xPathNavigator.Select("NodeList"))
@@ -55,7 +55,7 @@ namespace Verse
 						xPathNavigator3.OuterXml,
 						":\n",
 						ex2.InnerException
-					}));
+					}), false);
 				}
 			}
 		}

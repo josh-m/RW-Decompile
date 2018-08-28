@@ -15,15 +15,13 @@ namespace RimWorld
 
 		public const float TotalNumbersColumnsWidths = 590f;
 
-		public static readonly Texture2D TradeAlternativeBGTex = SolidColorMaterials.NewSolidColorTexture(new Color(1f, 1f, 1f, 0.04f));
-
 		public static readonly Color NoTradeColor = new Color(0.5f, 0.5f, 0.5f);
 
 		public static void DrawTradeableRow(Rect rect, Tradeable trad, int index)
 		{
 			if (index % 2 == 1)
 			{
-				GUI.DrawTexture(rect, TradeUI.TradeAlternativeBGTex);
+				Widgets.DrawLightHighlight(rect);
 			}
 			Text.Font = GameFont.Small;
 			GUI.BeginGroup(rect);
@@ -51,11 +49,11 @@ namespace RimWorld
 			if (trad.TraderWillTrade)
 			{
 				bool flash = Time.time - Dialog_Trade.lastCurrencyFlashTime < 1f && trad.IsCurrency;
-				TransferableUIUtility.DoCountAdjustInterface(rect5, trad, index, -trad.CountHeldBy(Transactor.Colony), trad.CountHeldBy(Transactor.Trader), flash, null);
+				TransferableUIUtility.DoCountAdjustInterface(rect5, trad, index, trad.GetMinimumToTransfer(), trad.GetMaximumToTransfer(), flash, null, false);
 			}
 			else
 			{
-				TradeUI.DrawWillNotTradeIndication(rect, trad);
+				TradeUI.DrawWillNotTradeIndication(rect5, trad);
 			}
 			num -= 240f;
 			int num3 = trad.CountHeldBy(Transactor.Colony);
@@ -138,7 +136,7 @@ namespace RimWorld
 				}
 			}
 			float priceFor = trad.GetPriceFor(action);
-			string label = priceFor.ToStringMoney();
+			string label = priceFor.ToStringMoney("F2");
 			Rect rect2 = new Rect(rect);
 			rect2.xMax -= 5f;
 			rect2.xMin += 5f;

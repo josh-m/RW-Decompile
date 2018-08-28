@@ -28,7 +28,7 @@ namespace RimWorld
 
 		public void MapInterfaceOnGUI_BeforeMainTabs()
 		{
-			if (Find.VisibleMap == null)
+			if (Find.CurrentMap == null)
 			{
 				return;
 			}
@@ -36,7 +36,8 @@ namespace RimWorld
 			{
 				ScreenshotModeHandler screenshotMode = Find.UIRoot.screenshotMode;
 				this.thingOverlays.ThingOverlaysOnGUI();
-				MapComponentUtility.MapComponentOnGUI(Find.VisibleMap);
+				MapComponentUtility.MapComponentOnGUI(Find.CurrentMap);
+				BeautyDrawer.BeautyDrawerOnGUI();
 				if (!screenshotMode.FiltersCurrentEvent)
 				{
 					this.colonistBar.ColonistBarOnGUI();
@@ -44,7 +45,7 @@ namespace RimWorld
 				this.selector.dragBox.DragBoxOnGUI();
 				this.designatorManager.DesignationManagerOnGUI();
 				this.targeter.TargeterOnGUI();
-				Find.VisibleMap.tooltipGiverList.DispenseAllThingTooltips();
+				Find.CurrentMap.tooltipGiverList.DispenseAllThingTooltips();
 				if (DebugViewSettings.drawFoodSearchFromMouse)
 				{
 					FoodUtility.DebugFoodSearchFromMouse_OnGUI();
@@ -67,7 +68,7 @@ namespace RimWorld
 
 		public void MapInterfaceOnGUI_AfterMainTabs()
 		{
-			if (Find.VisibleMap == null)
+			if (Find.CurrentMap == null)
 			{
 				return;
 			}
@@ -77,15 +78,15 @@ namespace RimWorld
 				if (!screenshotMode.FiltersCurrentEvent)
 				{
 					this.mouseoverReadout.MouseoverReadoutOnGUI();
-					EnvironmentInspectDrawer.EnvironmentInspectOnGUI();
-					Find.VisibleMap.debugDrawer.DebugDrawerOnGUI();
+					EnvironmentStatsDrawer.EnvironmentStatsOnGUI();
+					Find.CurrentMap.debugDrawer.DebugDrawerOnGUI();
 				}
 			}
 		}
 
 		public void HandleMapClicks()
 		{
-			if (Find.VisibleMap == null)
+			if (Find.CurrentMap == null)
 			{
 				return;
 			}
@@ -98,20 +99,20 @@ namespace RimWorld
 
 		public void HandleLowPriorityInput()
 		{
-			if (Find.VisibleMap == null)
+			if (Find.CurrentMap == null)
 			{
 				return;
 			}
 			if (!WorldRendererUtility.WorldRenderedNow)
 			{
 				this.selector.SelectorOnGUI();
-				Find.VisibleMap.lordManager.LordManagerOnGUI();
+				Find.CurrentMap.lordManager.LordManagerOnGUI();
 			}
 		}
 
 		public void MapInterfaceUpdate()
 		{
-			if (Find.VisibleMap == null)
+			if (Find.CurrentMap == null)
 			{
 				return;
 			}
@@ -119,15 +120,15 @@ namespace RimWorld
 			{
 				this.targeter.TargeterUpdate();
 				SelectionDrawer.DrawSelectionOverlays();
-				EnvironmentInspectDrawer.DrawRoomOverlays();
+				EnvironmentStatsDrawer.DrawRoomOverlays();
 				this.designatorManager.DesignatorManagerUpdate();
-				Find.VisibleMap.roofGrid.RoofGridUpdate();
-				Find.VisibleMap.exitMapGrid.ExitMapGridUpdate();
-				Find.VisibleMap.deepResourceGrid.DeepResourceGridUpdate();
+				Find.CurrentMap.roofGrid.RoofGridUpdate();
+				Find.CurrentMap.exitMapGrid.ExitMapGridUpdate();
+				Find.CurrentMap.deepResourceGrid.DeepResourceGridUpdate();
 				if (DebugViewSettings.drawPawnDebug)
 				{
-					Find.VisibleMap.pawnDestinationReservationManager.DebugDrawDestinations();
-					Find.VisibleMap.reservationManager.DebugDrawReservations();
+					Find.CurrentMap.pawnDestinationReservationManager.DebugDrawDestinations();
+					Find.CurrentMap.reservationManager.DebugDrawReservations();
 				}
 				if (DebugViewSettings.drawFoodSearchFromMouse)
 				{
@@ -142,13 +143,13 @@ namespace RimWorld
 					AttackTargetFinder.DebugDrawAttackTargetScores_Update();
 				}
 				MiscDebugDrawer.DebugDrawInteractionCells();
-				Find.VisibleMap.debugDrawer.DebugDrawerUpdate();
-				Find.VisibleMap.regionGrid.DebugDraw();
+				Find.CurrentMap.debugDrawer.DebugDrawerUpdate();
+				Find.CurrentMap.regionGrid.DebugDraw();
 				InfestationCellFinder.DebugDraw();
 				StealAIDebugDrawer.DebugDraw();
 				if (DebugViewSettings.drawRiverDebug)
 				{
-					Find.VisibleMap.waterInfo.DebugDrawRiver();
+					Find.CurrentMap.waterInfo.DebugDrawRiver();
 				}
 			}
 		}
@@ -170,9 +171,9 @@ namespace RimWorld
 			{
 				Find.MainTabsRoot.SetCurrentTab(openTab, false);
 			}
-			if (Find.VisibleMap != null)
+			if (Find.CurrentMap != null)
 			{
-				RememberedCameraPos rememberedCameraPos = Find.VisibleMap.rememberedCameraPos;
+				RememberedCameraPos rememberedCameraPos = Find.CurrentMap.rememberedCameraPos;
 				Find.CameraDriver.SetRootPosAndSize(rememberedCameraPos.rootPos, rememberedCameraPos.rootSize);
 			}
 		}

@@ -63,7 +63,7 @@ namespace RimWorld.BaseGen
 				},
 				new SymbolResolver_Ship_Pregen.SpawnDescriptor
 				{
-					offset = new IntVec3(3, 0, -7),
+					offset = new IntVec3(2, 0, -7),
 					def = ThingDefOf.Ship_ComputerCore,
 					rot = Rot4.North
 				},
@@ -218,7 +218,7 @@ namespace RimWorld.BaseGen
 				{
 					compHibernatable.State = HibernatableStateDefOf.Hibernating;
 				}
-				GenSpawn.Spawn(thing, centerCell + b + spawnDescriptor.offset, BaseGen.globalSettings.map, spawnDescriptor.rot, false);
+				GenSpawn.Spawn(thing, centerCell + b + spawnDescriptor.offset, BaseGen.globalSettings.map, spawnDescriptor.rot, WipeMode.Vanish, false);
 			}
 		}
 	}

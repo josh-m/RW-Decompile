@@ -76,19 +76,32 @@ namespace Verse
 						current,
 						".\n Exception: \n",
 						ex.ToString()
-					}));
+					}), false);
 				}
 				if (designator != null)
 				{
 					this.resolvedDesignators.Add(designator);
 				}
 			}
-			IEnumerable<BuildableDef> enumerable = from tDef in DefDatabase<ThingDef>.AllDefs.Cast<BuildableDef>().Concat(DefDatabase<TerrainDef>.AllDefs.Cast<BuildableDef>())
+			IEnumerable<BuildableDef> enumerable = from tDef in DefDatabase<TerrainDef>.AllDefs.Cast<BuildableDef>().Concat(DefDatabase<ThingDef>.AllDefs.Cast<BuildableDef>())
 			where tDef.designationCategory == this
 			select tDef;
+			Dictionary<DesignatorDropdownGroupDef, Designator_Dropdown> dictionary = new Dictionary<DesignatorDropdownGroupDef, Designator_Dropdown>();
 			foreach (BuildableDef current2 in enumerable)
 			{
-				this.resolvedDesignators.Add(new Designator_Build(current2));
+				if (current2.designatorDropdown != null)
+				{
+					if (!dictionary.ContainsKey(current2.designatorDropdown))
+					{
+						dictionary[current2.designatorDropdown] = new Designator_Dropdown();
+						this.resolvedDesignators.Add(dictionary[current2.designatorDropdown]);
+					}
+					dictionary[current2.designatorDropdown].Add(new Designator_Build(current2));
+				}
+				else
+				{
+					this.resolvedDesignators.Add(new Designator_Build(current2));
+				}
 			}
 		}
 	}

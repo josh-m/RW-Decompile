@@ -32,7 +32,7 @@ namespace RimWorld.BaseGen
 				}
 				else
 				{
-					podContentsType = new PodContentsType?(PodContentsType.SpacerHostile);
+					podContentsType = new PodContentsType?(PodContentsType.AncientHostile);
 				}
 			}
 			int? ancientCryptosleepCasketGroupID = rp.ancientCryptosleepCasketGroupID;

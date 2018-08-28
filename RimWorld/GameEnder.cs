@@ -34,19 +34,35 @@ namespace RimWorld
 					return;
 				}
 			}
-			List<Caravan> caravans = Find.WorldObjects.Caravans;
-			for (int j = 0; j < caravans.Count; j++)
+			for (int j = 0; j < maps.Count; j++)
 			{
-				if (this.IsPlayerControlledWithFreeColonist(caravans[j]))
+				List<Pawn> allPawnsSpawned = maps[j].mapPawns.AllPawnsSpawned;
+				for (int k = 0; k < allPawnsSpawned.Count; k++)
+				{
+					if (allPawnsSpawned[k].carryTracker != null)
+					{
+						Pawn pawn = allPawnsSpawned[k].carryTracker.CarriedThing as Pawn;
+						if (pawn != null && pawn.IsFreeColonist)
+						{
+							this.gameEnding = false;
+							return;
+						}
+					}
+				}
+			}
+			List<Caravan> caravans = Find.WorldObjects.Caravans;
+			for (int l = 0; l < caravans.Count; l++)
+			{
+				if (this.IsPlayerControlledWithFreeColonist(caravans[l]))
 				{
 					this.gameEnding = false;
 					return;
 				}
 			}
 			List<TravelingTransportPods> travelingTransportPods = Find.WorldObjects.TravelingTransportPods;
-			for (int k = 0; k < travelingTransportPods.Count; k++)
+			for (int m = 0; m < travelingTransportPods.Count; m++)
 			{
-				if (travelingTransportPods[k].PodsHaveAnyFreeColonist)
+				if (travelingTransportPods[m].PodsHaveAnyFreeColonist)
 				{
 					this.gameEnding = false;
 					return;

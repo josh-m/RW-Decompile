@@ -7,7 +7,7 @@ namespace Verse.AI
 	{
 		private static List<Pawn> tmpTargets = new List<Pawn>();
 
-		public static Pawn FindPawn(Pawn pawn)
+		public static Pawn FindPawnToKill(Pawn pawn)
 		{
 			if (!pawn.Spawned)
 			{

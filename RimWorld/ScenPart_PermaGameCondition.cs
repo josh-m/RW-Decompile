@@ -17,7 +17,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return "Permanent".Translate().CapitalizeFirst() + ": " + this.gameCondition.label;
+				return "Permanent".Translate().CapitalizeFirst() + ": " + this.gameCondition.label.CapitalizeFirst();
 			}
 		}
 
@@ -61,7 +61,7 @@ namespace RimWorld
 		{
 			if (tag == "PermaGameCondition")
 			{
-				yield return this.gameCondition.LabelCap + ": " + this.gameCondition.description;
+				yield return this.gameCondition.LabelCap + ": " + this.gameCondition.description.CapitalizeFirst();
 			}
 		}
 

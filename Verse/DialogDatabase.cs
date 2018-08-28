@@ -77,7 +77,7 @@ namespace Verse
 					return result;
 				}
 			}
-			Log.Error("Did not find node named '" + NodeName + "'.");
+			Log.Error("Did not find node named '" + NodeName + "'.", false);
 			return null;
 		}
 	}

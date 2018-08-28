@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Verse;
 
@@ -30,9 +31,11 @@ namespace RimWorld.BaseGen
 				pawnGroupMakerParms.faction = Find.FactionManager.RandomEnemyFaction(false, false, true, TechLevel.Undefined);
 				pawnGroupMakerParms.points = 250f;
 			}
-			PawnGroupKindDef groupKind = rp.pawnGroupKindDef ?? PawnGroupKindDefOf.Normal;
-			foreach (Pawn current in PawnGroupMakerUtility.GeneratePawns(groupKind, pawnGroupMakerParms, true))
+			pawnGroupMakerParms.groupKind = (rp.pawnGroupKindDef ?? PawnGroupKindDefOf.Combat);
+			List<PawnKindDef> list = new List<PawnKindDef>();
+			foreach (Pawn current in PawnGroupMakerUtility.GeneratePawns(pawnGroupMakerParms, true))
 			{
+				list.Add(current.kindDef);
 				ResolveParams resolveParams = rp;
 				resolveParams.singlePawnToSpawn = current;
 				BaseGen.symbolStack.Push("pawn", resolveParams);

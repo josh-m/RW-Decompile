@@ -4,13 +4,8 @@ using Verse;
 
 namespace RimWorld
 {
-	public interface ISlotGroupParent : IStoreSettingsParent
+	public interface ISlotGroupParent : IStoreSettingsParent, IHaulDestination
 	{
-		Map Map
-		{
-			get;
-		}
-
 		bool IgnoreStoredThingsBeauty
 		{
 			get;

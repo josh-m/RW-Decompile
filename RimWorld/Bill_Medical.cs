@@ -10,11 +10,19 @@ namespace RimWorld
 	{
 		private BodyPartRecord part;
 
-		private int partIndex = -1;
-
 		public ThingDef consumedInitialMedicineDef;
 
+		public int temp_partIndexToSetLater;
+
 		public override bool CheckIngredientsIfSociallyProper
+		{
+			get
+			{
+				return false;
+			}
+		}
+
+		protected override bool CanCopy
 		{
 			get
 			{
@@ -34,32 +42,25 @@ namespace RimWorld
 		{
 			get
 			{
-				if (this.part == null && this.partIndex >= 0)
-				{
-					this.part = this.GiverPawn.RaceProps.body.GetPartAtIndex(this.partIndex);
-				}
 				return this.part;
 			}
 			set
 			{
-				if (this.billStack == null)
+				if (this.billStack == null && this.part != null)
 				{
-					Log.Error("Can only set Bill_Medical.Part after the bill has been added to a pawn's bill stack.");
+					Log.Error("Can only set Bill_Medical.Part after the bill has been added to a pawn's bill stack.", false);
 					return;
 				}
-				if (value != null)
+				if (UnityData.isDebugBuild && this.part != null && !this.GiverPawn.RaceProps.body.AllParts.Contains(this.part))
 				{
-					this.partIndex = this.GiverPawn.RaceProps.body.GetIndexOfPart(value);
-				}
-				else
-				{
-					this.partIndex = -1;
+					Log.Error("Cannot set BodyPartRecord which doesn't belong to the pawn " + this.GiverPawn.ToStringSafe<Pawn>(), false);
+					return;
 				}
 				this.part = value;
 			}
 		}
 
-		private Pawn GiverPawn
+		public Pawn GiverPawn
 		{
 			get
 			{
@@ -85,7 +86,7 @@ namespace RimWorld
 				stringBuilder.Append(this.recipe.Worker.GetLabelWhenUsedOn(this.GiverPawn, this.part));
 				if (this.Part != null && !this.recipe.hideBodyPartNames)
 				{
-					stringBuilder.Append(" (" + this.Part.def.label + ")");
+					stringBuilder.Append(" (" + this.Part.Label + ")");
 				}
 				return stringBuilder.ToString();
 			}
@@ -126,7 +127,7 @@ namespace RimWorld
 			this.consumedInitialMedicineDef = null;
 			if (!this.GiverPawn.Dead && this.recipe.anesthetize && HealthUtility.TryAnesthetize(this.GiverPawn))
 			{
-				List<ThingStackPartClass> placedThings = billDoer.CurJob.placedThings;
+				List<ThingCountClass> placedThings = billDoer.CurJob.placedThings;
 				for (int i = 0; i < placedThings.Count; i++)
 				{
 					if (placedThings[i].thing is Medicine)
@@ -147,19 +148,24 @@ namespace RimWorld
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Values.Look<int>(ref this.partIndex, "partIndex", 0, false);
+			Scribe_BodyParts.Look(ref this.part, "part", null);
 			Scribe_Defs.Look<ThingDef>(ref this.consumedInitialMedicineDef, "consumedInitialMedicineDef");
+			if (Scribe.mode == LoadSaveMode.LoadingVars)
+			{
+				BackCompatibility.BillMedicalLoadingVars(this);
+			}
 			if (Scribe.mode == LoadSaveMode.ResolvingCrossRefs)
 			{
-				if (this.partIndex < 0)
-				{
-					this.part = null;
-				}
-				else
-				{
-					this.part = this.GiverPawn.RaceProps.body.GetPartAtIndex(this.partIndex);
-				}
+				BackCompatibility.BillMedicalResolvingCrossRefs(this);
 			}
+		}
+
+		public override Bill Clone()
+		{
+			Bill_Medical bill_Medical = (Bill_Medical)base.Clone();
+			bill_Medical.part = this.part;
+			bill_Medical.consumedInitialMedicineDef = this.consumedInitialMedicineDef;
+			return bill_Medical;
 		}
 	}
 }

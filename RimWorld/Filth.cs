@@ -52,7 +52,7 @@ namespace RimWorld
 				if (!this.sources.NullOrEmpty<string>())
 				{
 					stringBuilder.Append(" " + "OfLower".Translate() + " ");
-					stringBuilder.Append(GenText.ToCommaList(this.sources, true));
+					stringBuilder.Append(this.sources.ToCommaList(true));
 				}
 				stringBuilder.Append(" x" + this.thickness);
 				return stringBuilder.ToString();
@@ -87,10 +87,10 @@ namespace RimWorld
 			}
 		}
 
-		public override void DeSpawn()
+		public override void DeSpawn(DestroyMode mode = DestroyMode.Vanish)
 		{
 			Map map = base.Map;
-			base.DeSpawn();
+			base.DeSpawn(mode);
 			if (Current.ProgramState == ProgramState.Playing)
 			{
 				map.listerFilthInHomeArea.Notify_FilthDespawned(this);

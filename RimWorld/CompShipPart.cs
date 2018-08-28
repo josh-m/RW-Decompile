@@ -39,7 +39,7 @@ namespace RimWorld
 					stringBuilder.AppendLine(current);
 				}
 			}
-			Dialog_MessageBox window = new Dialog_MessageBox(stringBuilder.ToString(), null, null, null, null, null, false);
+			Dialog_MessageBox window = new Dialog_MessageBox(stringBuilder.ToString(), null, null, null, null, null, false, null, null);
 			Find.WindowStack.Add(window);
 		}
 	}

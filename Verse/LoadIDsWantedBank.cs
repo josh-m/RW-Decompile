@@ -85,7 +85,7 @@ namespace Verse
 						}));
 					}
 				}
-				Log.Warning(stringBuilder.ToString().TrimEndNewlines());
+				Log.Warning(stringBuilder.ToString().TrimEndNewlines(), false);
 			}
 			this.Clear();
 		}
@@ -110,7 +110,7 @@ namespace Verse
 						pathRelToParent,
 						", parent=",
 						parent.ToStringSafe<IExposable>()
-					}));
+					}), false);
 					return;
 				}
 			}
@@ -133,7 +133,7 @@ namespace Verse
 			{
 				if (this.idListsRead[i].parent == parent && this.idListsRead[i].pathRelToParent == pathRelToParent)
 				{
-					Log.Error("Tried to register the same list of load IDs twice. pathRelToParent=" + pathRelToParent + ", parent=" + parent.ToStringSafe<IExposable>());
+					Log.Error("Tried to register the same list of load IDs twice. pathRelToParent=" + pathRelToParent + ", parent=" + parent.ToStringSafe<IExposable>(), false);
 					return;
 				}
 			}
@@ -169,13 +169,13 @@ namespace Verse
 							pathRelToParent,
 							", parent=",
 							parent.ToStringSafe<IExposable>()
-						}));
+						}), false);
 					}
 					this.idsRead.RemoveAt(i);
 					return targetLoadID;
 				}
 			}
-			Log.Error("Could not get load ID. We're asking for something which was never added during LoadingVars. pathRelToParent=" + pathRelToParent + ", parent=" + parent.ToStringSafe<IExposable>());
+			Log.Error("Could not get load ID. We're asking for something which was never added during LoadingVars. pathRelToParent=" + pathRelToParent + ", parent=" + parent.ToStringSafe<IExposable>(), false);
 			return null;
 		}
 
@@ -190,7 +190,7 @@ namespace Verse
 					return targetLoadIDs;
 				}
 			}
-			Log.Error("Could not get load IDs list. We're asking for something which was never added during LoadingVars. pathRelToParent=" + pathRelToParent + ", parent=" + parent.ToStringSafe<IExposable>());
+			Log.Error("Could not get load IDs list. We're asking for something which was never added during LoadingVars. pathRelToParent=" + pathRelToParent + ", parent=" + parent.ToStringSafe<IExposable>(), false);
 			return new List<string>();
 		}
 	}

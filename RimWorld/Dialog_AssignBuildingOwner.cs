@@ -25,7 +25,6 @@ namespace RimWorld
 		public Dialog_AssignBuildingOwner(IAssignableBuilding assignable)
 		{
 			this.assignable = assignable;
-			this.closeOnEscapeKey = true;
 			this.doCloseButton = true;
 			this.doCloseX = true;
 			this.closeOnClickedOutside = true;
@@ -41,52 +40,59 @@ namespace RimWorld
 			outRect.width -= 16f;
 			Rect viewRect = new Rect(0f, 0f, outRect.width - 16f, (float)this.assignable.AssigningCandidates.Count<Pawn>() * 35f + 100f);
 			Widgets.BeginScrollView(outRect, ref this.scrollPosition, viewRect, true);
-			float num = 0f;
-			bool flag = false;
-			foreach (Pawn current in this.assignable.AssignedPawns)
+			try
 			{
-				flag = true;
-				Rect rect = new Rect(0f, num, viewRect.width * 0.6f, 32f);
-				Widgets.Label(rect, current.LabelCap);
-				rect.x = rect.xMax;
-				rect.width = viewRect.width * 0.4f;
-				if (Widgets.ButtonText(rect, "BuildingUnassign".Translate(), true, false, true))
+				float num = 0f;
+				bool flag = false;
+				foreach (Pawn current in this.assignable.AssignedPawns)
 				{
-					this.assignable.TryUnassignPawn(current);
-					SoundDefOf.Click.PlayOneShotOnCamera(null);
-					return;
-				}
-				num += 35f;
-			}
-			if (flag)
-			{
-				num += 15f;
-			}
-			foreach (Pawn current2 in this.assignable.AssigningCandidates)
-			{
-				if (!this.assignable.AssignedPawns.Contains(current2))
-				{
-					Rect rect2 = new Rect(0f, num, viewRect.width * 0.6f, 32f);
-					Widgets.Label(rect2, current2.LabelCap);
-					rect2.x = rect2.xMax;
-					rect2.width = viewRect.width * 0.4f;
-					if (Widgets.ButtonText(rect2, "BuildingAssign".Translate(), true, false, true))
+					flag = true;
+					Rect rect = new Rect(0f, num, viewRect.width * 0.6f, 32f);
+					Widgets.Label(rect, current.LabelCap);
+					rect.x = rect.xMax;
+					rect.width = viewRect.width * 0.4f;
+					if (Widgets.ButtonText(rect, "BuildingUnassign".Translate(), true, false, true))
 					{
-						this.assignable.TryAssignPawn(current2);
-						if (this.assignable.MaxAssignedPawnsCount == 1)
-						{
-							this.Close(true);
-						}
-						else
-						{
-							SoundDefOf.Click.PlayOneShotOnCamera(null);
-						}
+						this.assignable.TryUnassignPawn(current);
+						SoundDefOf.Click.PlayOneShotOnCamera(null);
 						return;
 					}
 					num += 35f;
 				}
+				if (flag)
+				{
+					num += 15f;
+				}
+				foreach (Pawn current2 in this.assignable.AssigningCandidates)
+				{
+					if (!this.assignable.AssignedPawns.Contains(current2))
+					{
+						Rect rect2 = new Rect(0f, num, viewRect.width * 0.6f, 32f);
+						Widgets.Label(rect2, current2.LabelCap);
+						rect2.x = rect2.xMax;
+						rect2.width = viewRect.width * 0.4f;
+						string label = (!this.assignable.AssignedAnything(current2)) ? "BuildingAssign".Translate() : "BuildingReassign".Translate();
+						if (Widgets.ButtonText(rect2, label, true, false, true))
+						{
+							this.assignable.TryAssignPawn(current2);
+							if (this.assignable.MaxAssignedPawnsCount == 1)
+							{
+								this.Close(true);
+							}
+							else
+							{
+								SoundDefOf.Click.PlayOneShotOnCamera(null);
+							}
+							break;
+						}
+						num += 35f;
+					}
+				}
 			}
-			Widgets.EndScrollView();
+			finally
+			{
+				Widgets.EndScrollView();
+			}
 		}
 	}
 }

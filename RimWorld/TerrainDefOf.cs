@@ -22,7 +22,7 @@ namespace RimWorld
 
 		public static TerrainDef WaterShallow;
 
-		public static TerrainDef WaterMovingDeep;
+		public static TerrainDef WaterMovingChestDeep;
 
 		public static TerrainDef WaterMovingShallow;
 
@@ -39,5 +39,12 @@ namespace RimWorld
 		public static TerrainDef Ice;
 
 		public static TerrainDef FlagstoneSandstone;
+
+		public static TerrainDef Bridge;
+
+		static TerrainDefOf()
+		{
+			DefOfHelper.EnsureInitializedInCtor(typeof(TerrainDefOf));
+		}
 	}
 }

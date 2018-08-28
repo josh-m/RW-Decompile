@@ -25,7 +25,7 @@ namespace Verse
 			}
 		}
 
-		public static float AltitudeFor(AltitudeLayer alt)
+		public static float AltitudeFor(this AltitudeLayer alt)
 		{
 			return Altitudes.Alts[(int)alt];
 		}

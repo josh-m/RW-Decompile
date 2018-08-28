@@ -11,7 +11,15 @@ namespace Verse
 
 		public FloatRange patchSizeRange;
 
-		public override void Generate(Map map)
+		public override int SeedPart
+		{
+			get
+			{
+				return 1370184742;
+			}
+		}
+
+		public override void Generate(Map map, GenStepParams parms)
 		{
 			int num = Mathf.RoundToInt((float)map.Area / 10000f * this.patchesPer10kCellsRange.RandomInRange);
 			for (int i = 0; i < num; i++)

@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using Verse;
 
@@ -30,7 +29,7 @@ namespace RimWorld
 						{
 							foreach (Pawn p in maps[i].mapPawns.FreeColonistsSpawned)
 							{
-								if ((p.Downed && p.needs.food.CurCategory < HungerCategory.Fed && p.InBed()) || HealthAIUtility.ShouldBeTendedNow(p))
+								if ((p.Downed && p.needs.food.CurCategory < HungerCategory.Fed && p.InBed()) || HealthAIUtility.ShouldBeTendedNowByPlayer(p))
 								{
 									yield return p;
 								}
@@ -52,7 +51,7 @@ namespace RimWorld
 			StringBuilder stringBuilder = new StringBuilder();
 			foreach (Pawn current in this.Patients)
 			{
-				stringBuilder.AppendLine("    " + current.NameStringShort);
+				stringBuilder.AppendLine("    " + current.LabelShort);
 			}
 			return string.Format("NeedDoctorDesc".Translate(), stringBuilder.ToString());
 		}
@@ -63,12 +62,7 @@ namespace RimWorld
 			{
 				return false;
 			}
-			Pawn pawn = this.Patients.FirstOrDefault<Pawn>();
-			if (pawn == null)
-			{
-				return false;
-			}
-			return AlertReport.CulpritIs(pawn);
+			return AlertReport.CulpritsAre(this.Patients);
 		}
 	}
 }

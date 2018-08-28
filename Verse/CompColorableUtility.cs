@@ -12,7 +12,7 @@ namespace Verse
 			{
 				if (reportFailure)
 				{
-					Log.Error("SetColor on non-ThingWithComps " + t);
+					Log.Error("SetColor on non-ThingWithComps " + t, false);
 				}
 				return;
 			}
@@ -21,7 +21,7 @@ namespace Verse
 			{
 				if (reportFailure)
 				{
-					Log.Error("SetColor on Thing without CompColorable " + t);
+					Log.Error("SetColor on Thing without CompColorable " + t, false);
 				}
 				return;
 			}

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 using Verse;
 
 namespace RimWorld
@@ -15,14 +16,14 @@ namespace RimWorld
 			return true;
 		}
 
-		public override void DrawGhost(ThingDef def, IntVec3 center, Rot4 rot)
+		public override void DrawGhost(ThingDef def, IntVec3 center, Rot4 rot, Color ghostCol)
 		{
-			Map visibleMap = Find.VisibleMap;
-			List<Building> allBuildingsColonist = visibleMap.listerBuildings.allBuildingsColonist;
+			Map currentMap = Find.CurrentMap;
+			List<Building> allBuildingsColonist = currentMap.listerBuildings.allBuildingsColonist;
 			for (int i = 0; i < allBuildingsColonist.Count; i++)
 			{
 				Building building = allBuildingsColonist[i];
-				if (building.def.building.hasFuelingPort && !Find.Selector.IsSelected(building) && FuelingPortUtility.GetFuelingPortCell(building).Standable(visibleMap))
+				if (building.def.building.hasFuelingPort && !Find.Selector.IsSelected(building) && FuelingPortUtility.GetFuelingPortCell(building).Standable(currentMap))
 				{
 					PlaceWorker_FuelingPort.DrawFuelingPortCell(building.Position, building.Rotation);
 				}

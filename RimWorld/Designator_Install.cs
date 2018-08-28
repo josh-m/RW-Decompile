@@ -92,6 +92,7 @@ namespace RimWorld
 		{
 			this.icon = TexCommand.Install;
 			this.iconProportions = new Vector2(1f, 1f);
+			this.order = -10f;
 		}
 
 		public override bool CanRemainSelected()
@@ -156,7 +157,7 @@ namespace RimWorld
 		public override void SelectedUpdate()
 		{
 			base.SelectedUpdate();
-			BuildDesignatorUtility.TryDrawPowerGridAndAnticipatedConnection(this.PlacingDef);
+			BuildDesignatorUtility.TryDrawPowerGridAndAnticipatedConnection(this.PlacingDef, this.placingRot);
 		}
 	}
 }

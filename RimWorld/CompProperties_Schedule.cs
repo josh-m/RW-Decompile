@@ -9,6 +9,7 @@ namespace RimWorld
 
 		public float endTime = 1f;
 
+		[MustTranslate]
 		public string offMessage;
 
 		public CompProperties_Schedule()

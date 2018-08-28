@@ -24,6 +24,8 @@ namespace Verse
 
 		public bool casualInterruptible = true;
 
+		public bool allowOpportunisticPrefix;
+
 		public bool collideWithPawns;
 
 		public bool isIdle;

@@ -8,6 +8,8 @@ namespace RimWorld
 {
 	public class Designator_Cancel : Designator
 	{
+		private static HashSet<Thing> seenThings = new HashSet<Thing>();
+
 		public override int DraggableDimensions
 		{
 			get
@@ -22,10 +24,10 @@ namespace RimWorld
 			this.defaultDesc = "DesignatorCancelDesc".Translate();
 			this.icon = ContentFinder<Texture2D>.Get("UI/Designators/Cancel", true);
 			this.useMouseIcon = true;
-			this.soundDragSustain = SoundDefOf.DesignateDragStandard;
-			this.soundDragChanged = SoundDefOf.DesignateDragStandardChanged;
-			this.soundSucceeded = SoundDefOf.DesignateCancel;
-			this.hotKey = KeyBindingDefOf.DesignatorCancel;
+			this.soundDragSustain = SoundDefOf.Designate_DragStandard;
+			this.soundDragChanged = SoundDefOf.Designate_DragStandard_Changed;
+			this.soundSucceeded = SoundDefOf.Designate_Cancel;
+			this.hotKey = KeyBindingDefOf.Designator_Cancel;
 			this.tutorTag = "Cancel";
 		}
 
@@ -118,6 +120,31 @@ namespace RimWorld
 			return from x in base.Map.designationManager.AllDesignationsAt(c)
 			where x.def != DesignationDefOf.Plan
 			select x;
+		}
+
+		public override void RenderHighlight(List<IntVec3> dragCells)
+		{
+			Designator_Cancel.seenThings.Clear();
+			for (int i = 0; i < dragCells.Count; i++)
+			{
+				if (base.Map.designationManager.HasMapDesignationAt(dragCells[i]))
+				{
+					Graphics.DrawMesh(MeshPool.plane10, dragCells[i].ToVector3ShiftedWithAltitude(AltitudeLayer.MetaOverlays.AltitudeFor()), Quaternion.identity, DesignatorUtility.DragHighlightCellMat, 0);
+				}
+				List<Thing> thingList = dragCells[i].GetThingList(base.Map);
+				for (int j = 0; j < thingList.Count; j++)
+				{
+					Thing thing = thingList[j];
+					if (!Designator_Cancel.seenThings.Contains(thing) && this.CanDesignateThing(thing).Accepted)
+					{
+						Vector3 drawPos = thing.DrawPos;
+						drawPos.y = AltitudeLayer.MetaOverlays.AltitudeFor();
+						Graphics.DrawMesh(MeshPool.plane10, drawPos, Quaternion.identity, DesignatorUtility.DragHighlightThingMat, 0);
+						Designator_Cancel.seenThings.Add(thing);
+					}
+				}
+			}
+			Designator_Cancel.seenThings.Clear();
 		}
 	}
 }

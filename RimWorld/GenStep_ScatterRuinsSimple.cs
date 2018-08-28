@@ -11,9 +11,17 @@ namespace RimWorld
 
 		public IntRange WallLengthRange = new IntRange(4, 14);
 
+		public override int SeedPart
+		{
+			get
+			{
+				return 1348417666;
+			}
+		}
+
 		protected override bool CanScatterAt(IntVec3 c, Map map)
 		{
-			return base.CanScatterAt(c, map) && c.SupportsStructureType(map, TerrainAffordance.Heavy);
+			return base.CanScatterAt(c, map) && c.SupportsStructureType(map, TerrainAffordanceDefOf.Heavy);
 		}
 
 		protected bool CanPlaceAncientBuildingInRange(CellRect rect, Map map)
@@ -74,7 +82,7 @@ namespace RimWorld
 			}
 			map.terrainGrid.SetTerrain(c, BaseGenUtility.CorrespondingTerrainDef(stuffDef, true));
 			Thing newThing = ThingMaker.MakeThing(ThingDefOf.Wall, stuffDef);
-			GenSpawn.Spawn(newThing, c, map);
+			GenSpawn.Spawn(newThing, c, map, WipeMode.Vanish);
 		}
 
 		private void MakeLongWall(IntVec3 start, Map map, int extendDist, bool horizontal, ThingDef stuffDef)

@@ -3,7 +3,7 @@ using Verse;
 
 namespace RimWorld
 {
-	internal static class PlantPosIndices
+	public static class PlantPosIndices
 	{
 		private static int[][][] rootList;
 

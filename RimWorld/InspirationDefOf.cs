@@ -5,12 +5,17 @@ namespace RimWorld
 	[DefOf]
 	public static class InspirationDefOf
 	{
-		public static InspirationDef InspiredTrade;
+		public static InspirationDef Inspired_Trade;
 
-		public static InspirationDef InspiredRecruitment;
+		public static InspirationDef Inspired_Recruitment;
 
-		public static InspirationDef InspiredSurgery;
+		public static InspirationDef Inspired_Surgery;
 
-		public static InspirationDef InspiredArt;
+		public static InspirationDef Inspired_Creativity;
+
+		static InspirationDefOf()
+		{
+			DefOfHelper.EnsureInitializedInCtor(typeof(InspirationDefOf));
+		}
 	}
 }

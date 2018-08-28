@@ -16,7 +16,7 @@ namespace RimWorld
 
 		public static PawnKindDef SpaceRefugee;
 
-		public static PawnKindDef SpaceSoldier;
+		public static PawnKindDef AncientSoldier;
 
 		public static PawnKindDef WildMan;
 
@@ -24,10 +24,17 @@ namespace RimWorld
 
 		public static PawnKindDef Alphabeaver;
 
+		public static PawnKindDef Muffalo;
+
 		public static PawnKindDef Megascarab;
 
 		public static PawnKindDef Spelopede;
 
 		public static PawnKindDef Megaspider;
+
+		static PawnKindDefOf()
+		{
+			DefOfHelper.EnsureInitializedInCtor(typeof(PawnKindDefOf));
+		}
 	}
 }

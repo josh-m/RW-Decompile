@@ -12,16 +12,29 @@ namespace RimWorld
 		protected override Job TryGiveJob(Pawn pawn)
 		{
 			int transportersGroup = pawn.mindState.duty.transportersGroup;
+			List<Pawn> allPawnsSpawned = pawn.Map.mapPawns.AllPawnsSpawned;
+			for (int i = 0; i < allPawnsSpawned.Count; i++)
+			{
+				if (allPawnsSpawned[i] != pawn && allPawnsSpawned[i].CurJobDef == JobDefOf.HaulToTransporter)
+				{
+					CompTransporter transporter = ((JobDriver_HaulToTransporter)allPawnsSpawned[i].jobs.curDriver).Transporter;
+					if (transporter != null && transporter.groupID == transportersGroup)
+					{
+						return null;
+					}
+				}
+			}
 			TransporterUtility.GetTransportersInGroup(transportersGroup, pawn.Map, JobGiver_EnterTransporter.tmpTransporters);
-			CompTransporter compTransporter = this.FindMyTransporter(JobGiver_EnterTransporter.tmpTransporters, pawn);
-			if (compTransporter == null || !pawn.CanReserveAndReach(compTransporter.parent, PathEndMode.Touch, Danger.Deadly, 1, -1, null, false))
+			CompTransporter compTransporter = JobGiver_EnterTransporter.FindMyTransporter(JobGiver_EnterTransporter.tmpTransporters, pawn);
+			JobGiver_EnterTransporter.tmpTransporters.Clear();
+			if (compTransporter == null || !pawn.CanReach(compTransporter.parent, PathEndMode.Touch, Danger.Deadly, false, TraverseMode.ByPawn))
 			{
 				return null;
 			}
 			return new Job(JobDefOf.EnterTransporter, compTransporter.parent);
 		}
 
-		private CompTransporter FindMyTransporter(List<CompTransporter> transporters, Pawn me)
+		public static CompTransporter FindMyTransporter(List<CompTransporter> transporters, Pawn me)
 		{
 			for (int i = 0; i < transporters.Count; i++)
 			{

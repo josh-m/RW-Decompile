@@ -17,17 +17,17 @@ namespace Verse
 					s,
 					" for post load init, but current mode is ",
 					Scribe.mode
-				}));
+				}), false);
 				return;
 			}
 			if (s == null)
 			{
-				Log.Warning("Trying to register null in RegisterforPostLoadInit.");
+				Log.Warning("Trying to register null in RegisterforPostLoadInit.", false);
 				return;
 			}
 			if (this.saveablesToPostLoad.Contains(s))
 			{
-				Log.Warning("Tried to register in RegisterforPostLoadInit when already registered: " + s);
+				Log.Warning("Tried to register in RegisterforPostLoadInit when already registered: " + s, false);
 				return;
 			}
 			this.saveablesToPostLoad.Add(s);
@@ -44,9 +44,15 @@ namespace Verse
 					Scribe.loader.curPathRelToParent = null;
 					current.ExposeData();
 				}
-				catch (Exception arg)
+				catch (Exception ex)
 				{
-					Log.Error("Could not do PostLoadInit: " + arg);
+					Log.Error(string.Concat(new object[]
+					{
+						"Could not do PostLoadInit on ",
+						current.ToStringSafe<IExposable>(),
+						": ",
+						ex
+					}), false);
 				}
 			}
 			this.Clear();

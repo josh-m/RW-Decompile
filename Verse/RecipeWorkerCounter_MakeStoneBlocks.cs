@@ -6,8 +6,6 @@ namespace Verse
 {
 	public class RecipeWorkerCounter_MakeStoneBlocks : RecipeWorkerCounter
 	{
-		private List<ThingDef> stoneBlocksDefs;
-
 		public override bool CanCountProducts(Bill_Production bill)
 		{
 			return true;
@@ -15,22 +13,11 @@ namespace Verse
 
 		public override int CountProducts(Bill_Production bill)
 		{
-			if (this.stoneBlocksDefs == null)
-			{
-				ThingCategoryDef stoneBlocks = ThingCategoryDefOf.StoneBlocks;
-				this.stoneBlocksDefs = new List<ThingDef>(16);
-				foreach (ThingDef current in DefDatabase<ThingDef>.AllDefsListForReading)
-				{
-					if (current.thingCategories != null && current.thingCategories.Contains(stoneBlocks))
-					{
-						this.stoneBlocksDefs.Add(current);
-					}
-				}
-			}
 			int num = 0;
-			for (int i = 0; i < this.stoneBlocksDefs.Count; i++)
+			List<ThingDef> childThingDefs = ThingCategoryDefOf.StoneBlocks.childThingDefs;
+			for (int i = 0; i < childThingDefs.Count; i++)
 			{
-				num += bill.Map.resourceCounter.GetCount(this.stoneBlocksDefs[i]);
+				num += bill.Map.resourceCounter.GetCount(childThingDefs[i]);
 			}
 			return num;
 		}
@@ -38,6 +25,22 @@ namespace Verse
 		public override string ProductsDescription(Bill_Production bill)
 		{
 			return ThingCategoryDefOf.StoneBlocks.label;
+		}
+
+		public override bool CanPossiblyStoreInStockpile(Bill_Production bill, Zone_Stockpile stockpile)
+		{
+			foreach (ThingDef current in bill.ingredientFilter.AllowedThingDefs)
+			{
+				if (!current.butcherProducts.NullOrEmpty<ThingDefCountClass>())
+				{
+					ThingDef thingDef = current.butcherProducts[0].thingDef;
+					if (!stockpile.GetStoreSettings().AllowedToAccept(thingDef))
+					{
+						return false;
+					}
+				}
+			}
+			return true;
 		}
 	}
 }

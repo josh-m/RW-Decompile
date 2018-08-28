@@ -36,7 +36,7 @@ namespace RimWorld
 			}
 			catch (Exception ex)
 			{
-				Log.Error("Could not get external history files: " + ex.Message);
+				Log.Error("Could not get external history files: " + ex.Message, false);
 			}
 		}
 
@@ -60,7 +60,7 @@ namespace RimWorld
 			}
 			catch (Exception ex)
 			{
-				Log.Error("Could not load external history (" + path + "): " + ex.Message);
+				Log.Error("Could not load external history (" + path + "): " + ex.Message, false);
 				return null;
 			}
 			return result;

@@ -37,7 +37,27 @@ namespace RimWorld
 		{
 			get
 			{
-				return (this.battleExitTick < Find.TickManager.TicksGame) ? null : this.battleActive;
+				if (this.battleExitTick < Find.TickManager.TicksGame)
+				{
+					return null;
+				}
+				if (this.battleActive == null)
+				{
+					return null;
+				}
+				while (this.battleActive.AbsorbedBy != null)
+				{
+					this.battleActive = this.battleActive.AbsorbedBy;
+				}
+				return this.battleActive;
+			}
+		}
+
+		public int LastBattleTick
+		{
+			get
+			{
+				return this.battleExitTick;
 			}
 		}
 
@@ -94,7 +114,7 @@ namespace RimWorld
 					"\" whose record type is \"",
 					def.type,
 					"\"."
-				}));
+				}), false);
 				return;
 			}
 			this.records[def] = Mathf.Round(this.records[def] + 1f);
@@ -117,7 +137,7 @@ namespace RimWorld
 						"\" whose record type is \"",
 						def.type,
 						"\"."
-					}));
+					}), false);
 					return;
 				}
 				DefMap<RecordDef, float> defMap;
@@ -149,7 +169,6 @@ namespace RimWorld
 		{
 			this.battleActive = battle;
 			this.battleExitTick = Find.TickManager.TicksGame + 5000;
-			Log.Message(string.Format("Pawn {0} entering battle {1}", this.pawn, battle));
 		}
 
 		public void ExposeData()

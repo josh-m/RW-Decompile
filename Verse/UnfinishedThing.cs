@@ -33,11 +33,11 @@ namespace Verse
 			{
 				if (value == null)
 				{
-					Log.Error("Cannot set creator to null.");
+					Log.Error("Cannot set creator to null.", false);
 					return;
 				}
 				this.creatorInt = value;
-				this.creatorName = value.NameStringShort;
+				this.creatorName = value.LabelShort;
 			}
 		}
 
@@ -123,6 +123,30 @@ namespace Verse
 			}
 		}
 
+		public override string DescriptionDetailed
+		{
+			get
+			{
+				if (this.Recipe == null)
+				{
+					return base.LabelNoCount;
+				}
+				return this.Recipe.ProducedThingDef.DescriptionDetailed;
+			}
+		}
+
+		public override string DescriptionFlavor
+		{
+			get
+			{
+				if (this.Recipe == null)
+				{
+					return base.LabelNoCount;
+				}
+				return this.Recipe.ProducedThingDef.description;
+			}
+		}
+
 		public bool Initialized
 		{
 			get
@@ -156,7 +180,7 @@ namespace Verse
 					if (num > 0)
 					{
 						this.ingredients[i].stackCount = num;
-						GenPlace.TryPlaceThing(this.ingredients[i], base.Position, base.Map, ThingPlaceMode.Near, null);
+						GenPlace.TryPlaceThing(this.ingredients[i], base.Position, base.Map, ThingPlaceMode.Near, null, null);
 					}
 				}
 				this.ingredients.Clear();
@@ -177,7 +201,7 @@ namespace Verse
 				defaultLabel = "CommandCancelConstructionLabel".Translate(),
 				defaultDesc = "CommandCancelConstructionDesc".Translate(),
 				icon = ContentFinder<Texture2D>.Get("UI/Designators/Cancel", true),
-				hotKey = KeyBindingDefOf.DesignatorCancel,
+				hotKey = KeyBindingDefOf.Designator_Cancel,
 				action = delegate
 				{
 					this.$this.Destroy(DestroyMode.Cancel);

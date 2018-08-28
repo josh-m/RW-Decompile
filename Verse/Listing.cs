@@ -17,6 +17,8 @@ namespace Verse
 
 		private bool hasCustomColumnWidth;
 
+		public bool maxOneColumn;
+
 		public const float ColumnSpacing = 17f;
 
 		private const float DefaultGap = 12f;
@@ -50,6 +52,10 @@ namespace Verse
 
 		protected void NewColumnIfNeeded(float neededHeight)
 		{
+			if (this.maxOneColumn)
+			{
+				return;
+			}
 			if (this.curY + neededHeight > this.listingRect.height)
 			{
 				this.NewColumn();
@@ -93,7 +99,7 @@ namespace Verse
 						" which is more than the whole listing rect width of ",
 						this.listingRect.width,
 						". Clamping."
-					}));
+					}), false);
 					this.columnWidthInt = this.listingRect.width;
 				}
 			}

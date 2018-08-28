@@ -21,14 +21,6 @@ namespace RimWorld
 			}
 		}
 
-		public int Metal
-		{
-			get
-			{
-				return this.GetCount(ThingDefOf.Steel);
-			}
-		}
-
 		public float TotalHumanEdibleNutrition
 		{
 			get
@@ -38,7 +30,7 @@ namespace RimWorld
 				{
 					if (current.Key.IsNutritionGivingIngestible && current.Key.ingestible.HumanEdible)
 					{
-						num += current.Key.ingestible.nutrition * (float)current.Value;
+						num += current.Key.GetStatValueAbstract(StatDefOf.Nutrition, null) * (float)current.Value;
 					}
 				}
 				return num;
@@ -88,7 +80,7 @@ namespace RimWorld
 			{
 				return result;
 			}
-			Log.Error("Looked for nonexistent key " + rDef + " in counted resources.");
+			Log.Error("Looked for nonexistent key " + rDef + " in counted resources.", false);
 			this.countedAmounts.Add(rDef, 0);
 			return 0;
 		}
@@ -134,17 +126,18 @@ namespace RimWorld
 		public void UpdateResourceCounts()
 		{
 			this.ResetResourceCounts();
-			List<SlotGroup> allGroupsListForReading = this.map.slotGroupManager.AllGroupsListForReading;
+			List<SlotGroup> allGroupsListForReading = this.map.haulDestinationManager.AllGroupsListForReading;
 			for (int i = 0; i < allGroupsListForReading.Count; i++)
 			{
 				SlotGroup slotGroup = allGroupsListForReading[i];
 				foreach (Thing current in slotGroup.HeldThings)
 				{
-					if (current.def.CountAsResource && this.ShouldCount(current))
+					Thing innerIfMinified = current.GetInnerIfMinified();
+					if (innerIfMinified.def.CountAsResource && this.ShouldCount(innerIfMinified))
 					{
 						Dictionary<ThingDef, int> dictionary;
 						ThingDef def;
-						(dictionary = this.countedAmounts)[def = current.def] = dictionary[def] + current.stackCount;
+						(dictionary = this.countedAmounts)[def = innerIfMinified.def] = dictionary[def] + innerIfMinified.stackCount;
 					}
 				}
 			}

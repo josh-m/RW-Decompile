@@ -7,7 +7,7 @@ namespace RimWorld
 	{
 		protected override bool AnimalMasterCheck(Pawn p, Pawn animal)
 		{
-			return animal.playerSettings.RespectedMaster != p;
+			return animal.playerSettings.RespectedMaster != p && TrainableUtility.MinimumHandlingSkill(animal) <= p.skills.GetSkill(SkillDefOf.Animals).Level;
 		}
 	}
 }

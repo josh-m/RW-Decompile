@@ -5,13 +5,13 @@ namespace RimWorld
 {
 	public class StatPart_Food : StatPart
 	{
-		private float factorStarving = 1f;
+		public float factorStarving = 1f;
 
-		private float factorUrgentlyHungry = 1f;
+		public float factorUrgentlyHungry = 1f;
 
-		private float factorHungry = 1f;
+		public float factorHungry = 1f;
 
-		private float factorFed = 1f;
+		public float factorFed = 1f;
 
 		public override void TransformValue(StatRequest req, ref float val)
 		{

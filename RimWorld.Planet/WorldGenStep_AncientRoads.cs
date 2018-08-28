@@ -13,16 +13,22 @@ namespace RimWorld.Planet
 
 		public float maximumSegmentCurviness;
 
+		public override int SeedPart
+		{
+			get
+			{
+				return 773428712;
+			}
+		}
+
 		public override void GenerateFresh(string seed)
 		{
-			Rand.Seed = GenText.StableStringHash(seed);
 			this.GenerateAncientRoads();
-			Rand.RandomizeStateFromTime();
 		}
 
 		private void GenerateAncientRoads()
 		{
-			Find.WorldPathGrid.RecalculateAllPerceivedPathCosts(Season.Spring.GetMiddleYearPct(0f));
+			Find.WorldPathGrid.RecalculateAllPerceivedPathCosts(new int?(0));
 			List<List<int>> list = this.GenerateProspectiveRoads();
 			list.Sort((List<int> lhs, List<int> rhs) => -lhs.Count.CompareTo(rhs.Count));
 			HashSet<int> used = new HashSet<int>();

@@ -13,7 +13,7 @@ namespace RimWorld
 
 		protected override string GetIconTip(Pawn pawn)
 		{
-			return pawn.gender.GetLabel().CapitalizeFirst();
+			return pawn.GetGenderLabel().CapitalizeFirst();
 		}
 
 		protected override Vector2 GetIconSize(Pawn pawn)

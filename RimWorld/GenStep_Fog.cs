@@ -6,7 +6,15 @@ namespace RimWorld
 {
 	public class GenStep_Fog : GenStep
 	{
-		public override void Generate(Map map)
+		public override int SeedPart
+		{
+			get
+			{
+				return 1568957891;
+			}
+		}
+
+		public override void Generate(Map map, GenStepParams parms)
 		{
 			DeepProfiler.Start("GenerateInitialFogGrid");
 			map.fogGrid.SetAllFogged();

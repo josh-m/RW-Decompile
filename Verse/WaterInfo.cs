@@ -25,7 +25,10 @@ namespace Verse
 
 		public override void MapRemoved()
 		{
-			UnityEngine.Object.Destroy(this.riverOffsetTexture);
+			LongEventHandler.ExecuteWhenFinished(delegate
+			{
+				UnityEngine.Object.Destroy(this.riverOffsetTexture);
+			});
 		}
 
 		public void SetTextures()

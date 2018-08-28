@@ -23,8 +23,8 @@ namespace RimWorld
 				return "TechLevel_Spacer".Translate();
 			case TechLevel.Ultra:
 				return "TechLevel_Ultra".Translate();
-			case TechLevel.Transcendent:
-				return "TechLevel_Transcendent".Translate();
+			case TechLevel.Archotech:
+				return "TechLevel_Archotech".Translate();
 			default:
 				throw new NotImplementedException();
 			}
@@ -50,8 +50,8 @@ namespace RimWorld
 				return gearLevel == TechLevel.Spacer || gearLevel == TechLevel.Industrial;
 			case TechLevel.Ultra:
 				return gearLevel == TechLevel.Ultra || gearLevel == TechLevel.Spacer;
-			case TechLevel.Transcendent:
-				return gearLevel == TechLevel.Transcendent;
+			case TechLevel.Archotech:
+				return gearLevel == TechLevel.Archotech;
 			}
 			Log.Error(string.Concat(new object[]
 			{
@@ -59,7 +59,7 @@ namespace RimWorld
 				pawnLevel,
 				", ",
 				gearLevel
-			}));
+			}), false);
 			return true;
 		}
 

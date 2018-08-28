@@ -22,12 +22,12 @@ namespace Verse.AI
 		public override string GetReport()
 		{
 			IntVec3 cell = this.job.targetB.Cell;
-			Thing thing;
+			Thing thing = null;
 			if (this.pawn.CurJob == this.job && this.pawn.carryTracker.CarriedThing != null)
 			{
 				thing = this.pawn.carryTracker.CarriedThing;
 			}
-			else
+			else if (base.TargetThingA != null && base.TargetThingA.Spawned)
 			{
 				thing = base.TargetThingA;
 			}
@@ -45,19 +45,34 @@ namespace Verse.AI
 			{
 				return "ReportHaulingTo".Translate(new object[]
 				{
-					thing.LabelCap,
+					thing.Label,
 					text
 				});
 			}
 			return "ReportHauling".Translate(new object[]
 			{
-				thing.LabelCap
+				thing.Label
 			});
 		}
 
-		public override bool TryMakePreToilReservations()
+		public override bool TryMakePreToilReservations(bool errorOnFailed)
 		{
-			return this.pawn.Reserve(this.job.GetTarget(TargetIndex.B), this.job, 1, -1, null) && this.pawn.Reserve(this.job.GetTarget(TargetIndex.A), this.job, 1, -1, null);
+			Pawn pawn = this.pawn;
+			LocalTargetInfo target = this.job.GetTarget(TargetIndex.B);
+			Job job = this.job;
+			bool arg_5A_0;
+			if (pawn.Reserve(target, job, 1, -1, null, errorOnFailed))
+			{
+				pawn = this.pawn;
+				target = this.job.GetTarget(TargetIndex.A);
+				job = this.job;
+				arg_5A_0 = pawn.Reserve(target, job, 1, -1, null, errorOnFailed);
+			}
+			else
+			{
+				arg_5A_0 = false;
+			}
+			return arg_5A_0;
 		}
 
 		public override void Notify_Starting()

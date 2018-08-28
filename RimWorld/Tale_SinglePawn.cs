@@ -53,11 +53,11 @@ namespace RimWorld
 		[DebuggerHidden]
 		protected override IEnumerable<Rule> SpecialTextGenerationRules()
 		{
-			foreach (Rule r in this.pawnData.GetRules("anyPawn"))
+			foreach (Rule r in this.pawnData.GetRules("ANYPAWN"))
 			{
 				yield return r;
 			}
-			foreach (Rule r2 in this.pawnData.GetRules("pawn"))
+			foreach (Rule r2 in this.pawnData.GetRules("PAWN"))
 			{
 				yield return r2;
 			}

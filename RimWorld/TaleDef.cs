@@ -26,13 +26,13 @@ namespace RimWorld
 		public RulePack rulePack;
 
 		[NoTranslate]
-		public string firstPawnSymbol = "firstPawn";
+		public string firstPawnSymbol;
 
 		[NoTranslate]
-		public string secondPawnSymbol = "secondPawn";
+		public string secondPawnSymbol;
 
 		[NoTranslate]
-		public string defSymbol = "def";
+		public string defSymbol;
 
 		public Type defType = typeof(ThingDef);
 
@@ -65,6 +65,10 @@ namespace RimWorld
 			if (this.baseInterest > 1E-06f && !this.usableForArt)
 			{
 				yield return "Non-zero baseInterest but not usable for art";
+			}
+			if (this.firstPawnSymbol == "pawn" || this.secondPawnSymbol == "pawn")
+			{
+				yield return "pawn symbols should not be 'pawn', this is the default and only choice for SinglePawn tales so using it here is confusing.";
 			}
 		}
 

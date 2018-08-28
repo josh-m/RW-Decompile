@@ -53,7 +53,7 @@ namespace RimWorld.BaseGen
 				{
 					if (!SymbolResolver_EnsureCanHoldRoof.roofsAboutToCollapse.Contains(current2))
 					{
-						if (!RoofCollapseUtility.WithinRangeOfRoofHolder(current2, map))
+						if (!RoofCollapseUtility.WithinRangeOfRoofHolder(current2, map, false))
 						{
 							SymbolResolver_EnsureCanHoldRoof.roofsAboutToCollapse.Add(current2);
 						}
@@ -107,7 +107,7 @@ namespace RimWorld.BaseGen
 			{
 				Thing thing = ThingMaker.MakeThing(ThingDefOf.Wall, wallStuff);
 				thing.SetFaction(faction, null);
-				GenSpawn.Spawn(thing, bestCell, map);
+				GenSpawn.Spawn(thing, bestCell, map, WipeMode.Vanish);
 				return true;
 			}
 			return false;

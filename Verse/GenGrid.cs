@@ -51,7 +51,7 @@ namespace Verse
 			{
 				return c.x == map.Size.x - 1;
 			}
-			Log.ErrorOnce("Invalid edge direction", 55370769);
+			Log.ErrorOnce("Invalid edge direction", 55370769, false);
 			return false;
 		}
 
@@ -102,7 +102,7 @@ namespace Verse
 			return false;
 		}
 
-		public static bool SupportsStructureType(this IntVec3 c, Map map, TerrainAffordance surfaceType)
+		public static bool SupportsStructureType(this IntVec3 c, Map map, TerrainAffordanceDef surfaceType)
 		{
 			return c.GetTerrain(map).affordances.Contains(surfaceType);
 		}

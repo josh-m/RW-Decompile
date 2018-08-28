@@ -1,3 +1,4 @@
+using RimWorld.Planet;
 using System;
 using Verse;
 
@@ -37,6 +38,10 @@ namespace RimWorld
 			if (pawn.InBed())
 			{
 				return pawn.CurrentBed().GetStatValue(this.stat, true);
+			}
+			if (pawn.InCaravanBed())
+			{
+				return pawn.CurrentCaravanBed().GetStatValue(this.stat, true);
 			}
 			return 1f;
 		}

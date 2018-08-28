@@ -1,3 +1,4 @@
+using RimWorld;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -45,6 +46,19 @@ namespace Verse
 			set
 			{
 				Prefs.data.volumeAmbient = value;
+				Prefs.Apply();
+			}
+		}
+
+		public static bool ExtremeDifficultyUnlocked
+		{
+			get
+			{
+				return Prefs.data.extremeDifficultyUnlocked;
+			}
+			set
+			{
+				Prefs.data.extremeDifficultyUnlocked = value;
 				Prefs.Apply();
 			}
 		}
@@ -259,15 +273,27 @@ namespace Verse
 			}
 		}
 
-		public static int MaxNumberOfPlayerHomes
+		public static bool TestMapSizes
 		{
 			get
 			{
-				return Prefs.data.maxNumberOfPlayerHomes;
+				return Prefs.data.testMapSizes;
 			}
 			set
 			{
-				Prefs.data.maxNumberOfPlayerHomes = value;
+				Prefs.data.testMapSizes = value;
+			}
+		}
+
+		public static int MaxNumberOfPlayerSettlements
+		{
+			get
+			{
+				return Prefs.data.maxNumberOfPlayerSettlements;
+			}
+			set
+			{
+				Prefs.data.maxNumberOfPlayerSettlements = value;
 			}
 		}
 
@@ -333,6 +359,14 @@ namespace Verse
 			if (flag)
 			{
 				Prefs.data.langFolderName = LanguageDatabase.SystemLanguageFolderName();
+				if (UnityData.isDebugBuild && !DevModePermanentlyDisabledUtility.Disabled)
+				{
+					Prefs.DevMode = true;
+				}
+			}
+			if (DevModePermanentlyDisabledUtility.Disabled)
+			{
+				Prefs.DevMode = false;
 			}
 		}
 
@@ -352,7 +386,7 @@ namespace Verse
 					GenFilePaths.PrefsFilePath,
 					ex.ToString()
 				}));
-				Log.Error("Exception saving prefs: " + ex);
+				Log.Error("Exception saving prefs: " + ex, false);
 			}
 		}
 

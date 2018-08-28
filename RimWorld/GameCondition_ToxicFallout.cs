@@ -46,36 +46,48 @@ namespace RimWorld
 
 		public override void GameConditionTick()
 		{
+			List<Map> affectedMaps = base.AffectedMaps;
 			if (Find.TickManager.TicksGame % 3451 == 0)
 			{
-				List<Pawn> allPawnsSpawned = base.Map.mapPawns.AllPawnsSpawned;
-				for (int i = 0; i < allPawnsSpawned.Count; i++)
+				for (int i = 0; i < affectedMaps.Count; i++)
 				{
-					Pawn pawn = allPawnsSpawned[i];
-					if (!pawn.Position.Roofed(base.Map) && pawn.def.race.IsFlesh)
-					{
-						float num = 0.028758334f;
-						num *= pawn.GetStatValue(StatDefOf.ToxicSensitivity, true);
-						if (num != 0f)
-						{
-							float num2 = Mathf.Lerp(0.85f, 1.15f, Rand.ValueSeeded(pawn.thingIDNumber ^ 74374237));
-							num *= num2;
-							HealthUtility.AdjustSeverity(pawn, HediffDefOf.ToxicBuildup, num);
-						}
-					}
+					this.DoPawnsToxicDamage(affectedMaps[i]);
 				}
 			}
 			for (int j = 0; j < this.overlays.Count; j++)
 			{
-				this.overlays[j].TickOverlay(base.Map);
+				for (int k = 0; k < affectedMaps.Count; k++)
+				{
+					this.overlays[j].TickOverlay(affectedMaps[k]);
+				}
 			}
 		}
 
-		public override void DoCellSteadyEffects(IntVec3 c)
+		private void DoPawnsToxicDamage(Map map)
 		{
-			if (!c.Roofed(base.Map))
+			List<Pawn> allPawnsSpawned = map.mapPawns.AllPawnsSpawned;
+			for (int i = 0; i < allPawnsSpawned.Count; i++)
 			{
-				List<Thing> thingList = c.GetThingList(base.Map);
+				Pawn pawn = allPawnsSpawned[i];
+				if (!pawn.Position.Roofed(map) && pawn.def.race.IsFlesh)
+				{
+					float num = 0.028758334f;
+					num *= pawn.GetStatValue(StatDefOf.ToxicSensitivity, true);
+					if (num != 0f)
+					{
+						float num2 = Mathf.Lerp(0.85f, 1.15f, Rand.ValueSeeded(pawn.thingIDNumber ^ 74374237));
+						num *= num2;
+						HealthUtility.AdjustSeverity(pawn, HediffDefOf.ToxicBuildup, num);
+					}
+				}
+			}
+		}
+
+		public override void DoCellSteadyEffects(IntVec3 c, Map map)
+		{
+			if (!c.Roofed(map))
+			{
+				List<Thing> thingList = c.GetThingList(map);
 				for (int i = 0; i < thingList.Count; i++)
 				{
 					Thing thing = thingList[i];
@@ -98,41 +110,40 @@ namespace RimWorld
 			}
 		}
 
-		public override void GameConditionDraw()
+		public override void GameConditionDraw(Map map)
 		{
-			Map map = base.Map;
 			for (int i = 0; i < this.overlays.Count; i++)
 			{
 				this.overlays[i].DrawOverlay(map);
 			}
 		}
 
-		public override float SkyTargetLerpFactor()
+		public override float SkyTargetLerpFactor(Map map)
 		{
 			return GameConditionUtility.LerpInOutValue(this, 5000f, 0.5f);
 		}
 
-		public override SkyTarget? SkyTarget()
+		public override SkyTarget? SkyTarget(Map map)
 		{
 			return new SkyTarget?(new SkyTarget(0.85f, this.ToxicFalloutColors, 1f, 1f));
 		}
 
-		public override float AnimalDensityFactor()
+		public override float AnimalDensityFactor(Map map)
 		{
 			return 0f;
 		}
 
-		public override float PlantDensityFactor()
+		public override float PlantDensityFactor(Map map)
 		{
 			return 0f;
 		}
 
-		public override bool AllowEnjoyableOutsideNow()
+		public override bool AllowEnjoyableOutsideNow(Map map)
 		{
 			return false;
 		}
 
-		public override List<SkyOverlay> SkyOverlays()
+		public override List<SkyOverlay> SkyOverlays(Map map)
 		{
 			return this.overlays;
 		}

@@ -1,7 +1,7 @@
+using RimWorld.Planet;
 using System;
 using Verse;
 using Verse.AI;
-using Verse.AI.Group;
 
 namespace RimWorld
 {
@@ -26,7 +26,7 @@ namespace RimWorld
 		protected bool ShouldTakeCareOfPrisoner(Pawn warden, Thing prisoner)
 		{
 			Pawn pawn = prisoner as Pawn;
-			return pawn != null && pawn.IsPrisonerOfColony && pawn.guest.PrisonerIsSecure && pawn.Spawned && !pawn.InAggroMentalState && !prisoner.IsForbidden(warden) && (pawn.GetLord() == null || !(pawn.GetLord().LordJob is LordJob_FormAndSendCaravan)) && warden.CanReserveAndReach(pawn, PathEndMode.OnCell, warden.NormalMaxDanger(), 1, -1, null, false);
+			return pawn != null && pawn.IsPrisonerOfColony && pawn.guest.PrisonerIsSecure && pawn.Spawned && !pawn.InAggroMentalState && !prisoner.IsForbidden(warden) && !pawn.IsFormingCaravan() && warden.CanReserveAndReach(pawn, PathEndMode.OnCell, warden.NormalMaxDanger(), 1, -1, null, false);
 		}
 	}
 }

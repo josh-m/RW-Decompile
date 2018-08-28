@@ -11,5 +11,10 @@ namespace RimWorld
 		public static RoofDef RoofRockThick;
 
 		public static RoofDef RoofRockThin;
+
+		static RoofDefOf()
+		{
+			DefOfHelper.EnsureInitializedInCtor(typeof(RoofDefOf));
+		}
 	}
 }

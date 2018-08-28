@@ -70,12 +70,12 @@ namespace RimWorld
 				{
 					if (!FlickUtility.WantsToBeOn(this.parent))
 					{
-						Log.Warning("Tried to power on " + this.parent + " which did not desire it.");
+						Log.Warning("Tried to power on " + this.parent + " which did not desire it.", false);
 						return;
 					}
 					if (this.parent.IsBrokenDown())
 					{
-						Log.Warning("Tried to power on " + this.parent + " which is broken down.");
+						Log.Warning("Tried to power on " + this.parent + " which is broken down.", false);
 						return;
 					}
 					if (this.powerStartedAction != null)
@@ -86,7 +86,7 @@ namespace RimWorld
 					SoundDef soundDef = ((CompProperties_Power)this.parent.def.CompDefForAssignableFrom<CompPowerTrader>()).soundPowerOn;
 					if (soundDef.NullOrUndefined())
 					{
-						soundDef = SoundDefOf.PowerOnSmall;
+						soundDef = SoundDefOf.Power_OnSmall;
 					}
 					soundDef.PlayOneShot(new TargetInfo(this.parent.Position, this.parent.Map, false));
 					this.StartSustainerPoweredIfInactive();
@@ -101,7 +101,7 @@ namespace RimWorld
 					SoundDef soundDef2 = ((CompProperties_Power)this.parent.def.CompDefForAssignableFrom<CompPowerTrader>()).soundPowerOff;
 					if (soundDef2.NullOrUndefined())
 					{
-						soundDef2 = SoundDefOf.PowerOffSmall;
+						soundDef2 = SoundDefOf.Power_OffSmall;
 					}
 					if (this.parent.Spawned)
 					{

@@ -59,9 +59,7 @@ namespace RimWorld
 			{
 				def = ThoughtDefOf.KnowGuestExecuted;
 			}
-			foreach (Pawn current in from x in PawnsFinder.AllMapsCaravansAndTravelingTransportPods
-			where x.IsColonist || x.IsPrisonerOfColony
-			select x)
+			foreach (Pawn current in PawnsFinder.AllMapsCaravansAndTravelingTransportPods_Alive_FreeColonistsAndPrisoners)
 			{
 				current.needs.mood.thoughts.memories.TryGainMemory(ThoughtMaker.MakeThought(def, forcedStage), null);
 			}
@@ -82,9 +80,7 @@ namespace RimWorld
 			{
 				thoughtDef = ThoughtDefOf.KnowGuestOrganHarvested;
 			}
-			foreach (Pawn current in from x in PawnsFinder.AllMapsCaravansAndTravelingTransportPods
-			where x.IsColonist || x.IsPrisonerOfColony
-			select x)
+			foreach (Pawn current in PawnsFinder.AllMapsCaravansAndTravelingTransportPods_Alive_FreeColonistsAndPrisoners)
 			{
 				if (current == victim)
 				{

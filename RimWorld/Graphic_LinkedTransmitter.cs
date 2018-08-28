@@ -27,7 +27,7 @@ namespace RimWorld
 					if (transmitter != null && !transmitter.def.graphicData.Linked)
 					{
 						Material mat = base.LinkedDrawMatFrom(thing, intVec);
-						Printer_Plane.PrintPlane(layer, intVec.ToVector3ShiftedWithAltitude(thing.def.Altitude), Vector2.one, mat, 0f, false, null, null, 0.01f);
+						Printer_Plane.PrintPlane(layer, intVec.ToVector3ShiftedWithAltitude(thing.def.Altitude), Vector2.one, mat, 0f, false, null, null, 0.01f, 0f);
 					}
 				}
 			}

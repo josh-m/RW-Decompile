@@ -24,7 +24,7 @@ namespace RimWorld
 		{
 			if (!firstFiance.Spawned || !secondFiance.Spawned)
 			{
-				Log.Warning("Can't check if a marriage spot is valid because one of the fiances isn't spawned.");
+				Log.Warning("Can't check if a marriage spot is valid because one of the fiances isn't spawned.", false);
 				return false;
 			}
 			if (firstFiance.Map != secondFiance.Map)

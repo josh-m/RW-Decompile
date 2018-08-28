@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using Verse;
 using Verse.Grammar;
 
@@ -9,19 +8,20 @@ namespace RimWorld
 	{
 		private const float TalelessChanceWithTales = 0.2f;
 
-		public static string GenerateTextFromTale(TextGenerationPurpose purpose, Tale tale, int seed, List<Rule> extraRules)
+		public static string GenerateTextFromTale(TextGenerationPurpose purpose, Tale tale, int seed, RulePackDef extraInclude)
 		{
 			Rand.PushState();
 			Rand.Seed = seed;
 			string rootKeyword = null;
 			GrammarRequest request = default(GrammarRequest);
-			request.Rules.AddRange(extraRules);
+			request.Includes.Add(extraInclude);
 			if (purpose == TextGenerationPurpose.ArtDescription)
 			{
-				rootKeyword = "art_description_root";
-				if (tale != null && Rand.Value > 0.2f)
+				rootKeyword = "r_art_description";
+				if (tale != null && !Rand.Chance(0.2f))
 				{
 					request.Includes.Add(RulePackDefOf.ArtDescriptionRoot_HasTale);
+					request.IncludesBare.AddRange(tale.GetTextGenerationIncludes());
 					request.Rules.AddRange(tale.GetTextGenerationRules());
 				}
 				else
@@ -33,13 +33,14 @@ namespace RimWorld
 			}
 			else if (purpose == TextGenerationPurpose.ArtName)
 			{
-				rootKeyword = "art_name";
+				rootKeyword = "r_art_name";
 				if (tale != null)
 				{
+					request.IncludesBare.AddRange(tale.GetTextGenerationIncludes());
 					request.Rules.AddRange(tale.GetTextGenerationRules());
 				}
 			}
-			string result = GrammarResolver.Resolve(rootKeyword, request, (tale == null) ? "null_tale" : tale.def.defName, false);
+			string result = GrammarResolver.Resolve(rootKeyword, request, (tale == null) ? "null_tale" : tale.def.defName, false, null);
 			Rand.PopState();
 			return result;
 		}

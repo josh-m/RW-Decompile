@@ -2,6 +2,7 @@ using RimWorld;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using UnityEngine;
 
 namespace Verse
@@ -12,6 +13,8 @@ namespace Verse
 		public const float Pad = 10f;
 
 		public const float GapTiny = 4f;
+
+		public const float GapSmall = 10f;
 
 		public const float Gap = 17f;
 
@@ -30,6 +33,8 @@ namespace Verse
 		public static readonly Vector2 TradeableDrawSize = new Vector2(150f, 45f);
 
 		public static readonly Color MouseoverColor = new Color(0.3f, 0.7f, 0.9f);
+
+		public static readonly Color SubtleMouseoverColor = new Color(0.7f, 0.7f, 0.7f);
 
 		public static readonly Vector2 MaxWinSize = new Vector2(1010f, 754f);
 
@@ -69,12 +74,12 @@ namespace Verse
 
 		public static float BackgroundDarkAlphaForText()
 		{
-			if (Find.VisibleMap == null)
+			if (Find.CurrentMap == null)
 			{
 				return 0f;
 			}
-			float num = GenCelestial.CurCelestialSunGlow(Find.VisibleMap);
-			float num2 = (Find.VisibleMap.Biome != BiomeDefOf.IceSheet) ? Mathf.Clamp01(Find.VisibleMap.snowGrid.TotalDepth / 1000f) : 1f;
+			float num = GenCelestial.CurCelestialSunGlow(Find.CurrentMap);
+			float num2 = (Find.CurrentMap.Biome != BiomeDefOf.IceSheet) ? Mathf.Clamp01(Find.CurrentMap.snowGrid.TotalDepth / 1000f) : 1f;
 			return num * num2 * 0.41f;
 		}
 
@@ -89,28 +94,45 @@ namespace Verse
 			}
 		}
 
+		public static void DrawTextureWithMaterial(Rect rect, Texture texture, Material material, Rect texCoords = default(Rect))
+		{
+			if (texCoords == default(Rect))
+			{
+				if (material == null)
+				{
+					GUI.DrawTexture(rect, texture);
+				}
+				else if (Event.current.type == EventType.Repaint)
+				{
+					Graphics.DrawTexture(rect, texture, new Rect(0f, 0f, 1f, 1f), 0, 0, 0, 0, new Color(GUI.color.r * 0.5f, GUI.color.g * 0.5f, GUI.color.b * 0.5f, 0.5f), material);
+				}
+			}
+			else if (material == null)
+			{
+				GUI.DrawTextureWithTexCoords(rect, texture, texCoords);
+			}
+			else if (Event.current.type == EventType.Repaint)
+			{
+				Graphics.DrawTexture(rect, texture, texCoords, 0, 0, 0, 0, new Color(GUI.color.r * 0.5f, GUI.color.g * 0.5f, GUI.color.b * 0.5f, 0.5f), material);
+			}
+		}
+
 		public static float IconDrawScale(ThingDef tDef)
 		{
-			if (tDef.graphicData == null)
+			float num = tDef.uiIconScale;
+			if (tDef.uiIconPath.NullOrEmpty() && tDef.graphicData != null)
 			{
-				return 1f;
+				IntVec2 intVec = tDef.defaultPlacingRot.IsHorizontal ? tDef.Size.Rotated() : tDef.Size;
+				num *= Mathf.Min(tDef.graphicData.drawSize.x / (float)intVec.x, tDef.graphicData.drawSize.y / (float)intVec.z);
 			}
-			if (tDef.iconDrawScale > 0f)
-			{
-				return tDef.iconDrawScale;
-			}
-			if (tDef.graphicData.drawSize.x > (float)tDef.Size.x && tDef.graphicData.drawSize.y > (float)tDef.Size.z)
-			{
-				return Mathf.Min(tDef.graphicData.drawSize.x / (float)tDef.Size.x, tDef.graphicData.drawSize.y / (float)tDef.Size.z);
-			}
-			return 1f;
+			return num;
 		}
 
 		public static void ErrorDialog(string message)
 		{
 			if (Find.WindowStack != null)
 			{
-				Find.WindowStack.Add(new Dialog_MessageBox(message, null, null, null, null, null, false));
+				Find.WindowStack.Add(new Dialog_MessageBox(message, null, null, null, null, null, false, null, null));
 			}
 		}
 
@@ -165,27 +187,47 @@ namespace Verse
 			return Mathf.Sqrt(num * num + num2 * num2);
 		}
 
-		public static void DrawMouseAttachment(Texture2D iconTex, string text, float angle = 0f)
+		public static void DrawMouseAttachment(Texture iconTex, string text = "", float angle = 0f, Vector2 offset = default(Vector2), Rect? customRect = null)
 		{
 			Vector2 mousePosition = Event.current.mousePosition;
 			float num = mousePosition.y + 12f;
 			if (iconTex != null)
 			{
-				Rect rect = new Rect(mousePosition.x + 12f, num, 32f, 32f);
-				Widgets.DrawTextureRotated(rect, iconTex, angle);
-				num += rect.height;
+				Rect mouseRect;
+				if (customRect.HasValue)
+				{
+					mouseRect = customRect.Value;
+				}
+				else
+				{
+					mouseRect = new Rect(mousePosition.x + 8f, num + 8f, 32f, 32f);
+				}
+				Find.WindowStack.ImmediateWindow(34003428, mouseRect, WindowLayer.Super, delegate
+				{
+					Rect rect = mouseRect.AtZero();
+					rect.position += new Vector2(offset.x * rect.size.x, offset.y * rect.size.y);
+					Widgets.DrawTextureRotated(rect, iconTex, angle);
+				}, false, false, 0f);
+				num += mouseRect.height;
 			}
 			if (text != string.Empty)
 			{
-				Rect rect2 = new Rect(mousePosition.x + 12f, num, 200f, 9999f);
-				Widgets.Label(rect2, text);
+				Rect textRect = new Rect(mousePosition.x + 12f, num, 200f, 9999f);
+				Find.WindowStack.ImmediateWindow(34003429, textRect, WindowLayer.Super, delegate
+				{
+					Widgets.Label(textRect.AtZero(), text);
+				}, false, false, 0f);
 			}
 		}
 
 		public static void DrawMouseAttachment(Texture2D icon)
 		{
 			Vector2 mousePosition = Event.current.mousePosition;
-			GUI.DrawTexture(new Rect(mousePosition.x + 8f, mousePosition.y + 8f, 32f, 32f), icon);
+			Rect mouseRect = new Rect(mousePosition.x + 8f, mousePosition.y + 8f, 32f, 32f);
+			Find.WindowStack.ImmediateWindow(34003428, mouseRect, WindowLayer.Super, delegate
+			{
+				GUI.DrawTexture(mouseRect.AtZero(), icon);
+			}, false, false, 0f);
 		}
 
 		public static void RenderMouseoverBracket()
@@ -226,7 +268,7 @@ namespace Verse
 			if (!thingsOnly)
 			{
 				IntVec3 cellTarg = UI.MouseCell();
-				if (cellTarg.InBounds(Find.VisibleMap) && clickParams.CanTarget(new TargetInfo(cellTarg, Find.VisibleMap, false)))
+				if (cellTarg.InBounds(Find.CurrentMap) && clickParams.CanTarget(new TargetInfo(cellTarg, Find.CurrentMap, false)))
 				{
 					yield return cellTarg;
 				}
@@ -238,7 +280,7 @@ namespace Verse
 			IntVec3 c = IntVec3.FromVector3(clickPos);
 			List<Thing> list = new List<Thing>();
 			GenUI.clickedPawns.Clear();
-			List<Pawn> allPawnsSpawned = Find.VisibleMap.mapPawns.AllPawnsSpawned;
+			List<Pawn> allPawnsSpawned = Find.CurrentMap.mapPawns.AllPawnsSpawned;
 			for (int i = 0; i < allPawnsSpawned.Count; i++)
 			{
 				Pawn pawn = allPawnsSpawned[i];
@@ -253,7 +295,7 @@ namespace Verse
 				list.Add(GenUI.clickedPawns[j]);
 			}
 			List<Thing> list2 = new List<Thing>();
-			foreach (Thing current in Find.VisibleMap.thingGrid.ThingsAt(c))
+			foreach (Thing current in Find.CurrentMap.thingGrid.ThingsAt(c))
 			{
 				if (!list.Contains(current) && clickParams.CanTarget(current))
 				{
@@ -263,7 +305,7 @@ namespace Verse
 			list2.Sort(new Comparison<Thing>(GenUI.CompareThingsByDrawAltitude));
 			list.AddRange(list2);
 			GenUI.clickedPawns.Clear();
-			List<Pawn> allPawnsSpawned2 = Find.VisibleMap.mapPawns.AllPawnsSpawned;
+			List<Pawn> allPawnsSpawned2 = Find.CurrentMap.mapPawns.AllPawnsSpawned;
 			for (int k = 0; k < allPawnsSpawned2.Count; k++)
 			{
 				Pawn pawn2 = allPawnsSpawned2[k];
@@ -316,15 +358,15 @@ namespace Verse
 
 		public static int CurrentAdjustmentMultiplier()
 		{
-			if (KeyBindingDefOf.ModifierIncrement10x.IsDownEvent && KeyBindingDefOf.ModifierIncrement100x.IsDownEvent)
+			if (KeyBindingDefOf.ModifierIncrement_10x.IsDownEvent && KeyBindingDefOf.ModifierIncrement_100x.IsDownEvent)
 			{
 				return 1000;
 			}
-			if (KeyBindingDefOf.ModifierIncrement100x.IsDownEvent)
+			if (KeyBindingDefOf.ModifierIncrement_100x.IsDownEvent)
 			{
 				return 100;
 			}
-			if (KeyBindingDefOf.ModifierIncrement10x.IsDownEvent)
+			if (KeyBindingDefOf.ModifierIncrement_10x.IsDownEvent)
 			{
 				return 10;
 			}
@@ -436,6 +478,65 @@ namespace Verse
 		public static Rect BottomPartPixels(this Rect rect, float height)
 		{
 			return new Rect(rect.x, rect.y + rect.height - height, rect.width, height);
+		}
+
+		public static Color LerpColor(List<Pair<float, Color>> colors, float value)
+		{
+			if (colors.Count == 0)
+			{
+				return Color.white;
+			}
+			int i = 0;
+			while (i < colors.Count)
+			{
+				if (value < colors[i].First)
+				{
+					if (i == 0)
+					{
+						return colors[i].Second;
+					}
+					return Color.Lerp(colors[i - 1].Second, colors[i].Second, Mathf.InverseLerp(colors[i - 1].First, colors[i].First, value));
+				}
+				else
+				{
+					i++;
+				}
+			}
+			return colors.Last<Pair<float, Color>>().Second;
+		}
+
+		public static Vector2 GetMouseAttachedWindowPos(float width, float height)
+		{
+			Vector2 mousePosition = Event.current.mousePosition;
+			float y;
+			if (mousePosition.y + 14f + height < (float)UI.screenHeight)
+			{
+				y = mousePosition.y + 14f;
+			}
+			else if (mousePosition.y - 5f - height >= 0f)
+			{
+				y = mousePosition.y - 5f - height;
+			}
+			else
+			{
+				y = 0f;
+			}
+			float x;
+			if (mousePosition.x + 16f + width < (float)UI.screenWidth)
+			{
+				x = mousePosition.x + 16f;
+			}
+			else
+			{
+				x = mousePosition.x - 4f - width;
+			}
+			return new Vector2(x, y);
+		}
+
+		public static float GetCenteredButtonPos(int buttonIndex, int buttonsCount, float totalWidth, float buttonWidth, float pad = 10f)
+		{
+			float num = (float)buttonsCount * buttonWidth + (float)(buttonsCount - 1) * pad;
+			return Mathf.Floor((totalWidth - num) / 2f + (float)buttonIndex * (buttonWidth + pad));
 		}
 	}
 }

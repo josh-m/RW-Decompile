@@ -15,16 +15,21 @@ namespace RimWorld
 
 		private const int MinDistToOpenSpace = 10;
 
+		private const int MinDistFromFactionBase = 50;
+
 		private const float CaveCellsPerHive = 1000f;
 
-		public override void Generate(Map map)
+		public override int SeedPart
+		{
+			get
+			{
+				return 349641510;
+			}
+		}
+
+		public override void Generate(Map map, GenStepParams parms)
 		{
 			if (!Find.Storyteller.difficulty.allowCaveHives)
-			{
-				return;
-			}
-			CompProperties_TemperatureDamaged compProperties = ThingDefOf.Hive.GetCompProperties<CompProperties_TemperatureDamaged>();
-			if (!compProperties.safeTemperatureRange.Includes(map.mapTemperature.OutdoorTemp))
 			{
 				return;
 			}
@@ -44,12 +49,17 @@ namespace RimWorld
 					num2++;
 				}
 			}
+			List<IntVec3> list = (from c in map.AllCells
+			where map.thingGrid.ThingsAt(c).Any((Thing thing) => thing.Faction != null)
+			select c).ToList<IntVec3>();
+			GenMorphology.Dilate(list, 50, map, null);
+			HashSet<IntVec3> hashSet = new HashSet<IntVec3>(list);
 			int num3 = GenMath.RoundRandom((float)num2 / 1000f);
 			GenMorphology.Erode(this.rockCells, 10, map, null);
 			this.possibleSpawnCells.Clear();
 			for (int i = 0; i < this.rockCells.Count; i++)
 			{
-				if (caves[this.rockCells[i]] > 0f)
+				if (caves[this.rockCells[i]] > 0f && !hashSet.Contains(this.rockCells[i]))
 				{
 					this.possibleSpawnCells.Add(this.rockCells[i]);
 				}
@@ -70,8 +80,9 @@ namespace RimWorld
 				return;
 			}
 			this.possibleSpawnCells.Remove(intVec);
-			Hive hive = (Hive)GenSpawn.Spawn(ThingMaker.MakeThing(ThingDefOf.Hive, null), intVec, map);
+			Hive hive = (Hive)GenSpawn.Spawn(ThingMaker.MakeThing(ThingDefOf.Hive, null), intVec, map, WipeMode.Vanish);
 			hive.SetFaction(Faction.OfInsects, null);
+			hive.caveColony = true;
 			(from x in hive.GetComps<CompSpawner>()
 			where x.PropsSpawner.thingToSpawn == ThingDefOf.GlowPod
 			select x).First<CompSpawner>().TryDoSpawn();

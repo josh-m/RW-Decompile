@@ -35,7 +35,7 @@ namespace RimWorld.Planet
 			}
 			if (this.paths.Count > Find.WorldObjects.CaravansCount + 2 + (Find.WorldObjects.RoutePlannerWaypointsCount - 1))
 			{
-				Log.ErrorOnce("WorldPathPool leak: more paths than caravans. Force-recovering.", 664788);
+				Log.ErrorOnce("WorldPathPool leak: more paths than caravans. Force-recovering.", 664788, false);
 				this.paths.Clear();
 			}
 			WorldPath worldPath = new WorldPath();

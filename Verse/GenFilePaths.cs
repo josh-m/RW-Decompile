@@ -205,7 +205,7 @@ namespace Verse
 							text = string.Empty + Path.DirectorySeparatorChar;
 						}
 						GenFilePaths.saveDataPath = text;
-						Log.Message("Save data folder overridden to " + GenFilePaths.saveDataPath);
+						Log.Message("Save data folder overridden to " + GenFilePaths.saveDataPath, false);
 					}
 					else
 					{
@@ -245,13 +245,13 @@ namespace Verse
 			{
 				if (!UnityData.isEditor)
 				{
-					return Path.Combine(GenFilePaths.ExecutibleDir.FullName, "ScenarioPreview.jpg");
+					return Path.Combine(GenFilePaths.ExecutableDir.FullName, "ScenarioPreview.jpg");
 				}
-				return Path.Combine(Path.Combine(Path.Combine(GenFilePaths.ExecutibleDir.FullName, "PlatformSpecific"), "All"), "ScenarioPreview.jpg");
+				return Path.Combine(Path.Combine(Path.Combine(GenFilePaths.ExecutableDir.FullName, "PlatformSpecific"), "All"), "ScenarioPreview.jpg");
 			}
 		}
 
-		private static DirectoryInfo ExecutibleDir
+		private static DirectoryInfo ExecutableDir
 		{
 			get
 			{
@@ -382,6 +382,14 @@ namespace Verse
 			}
 		}
 
+		public static string DevModePermanentlyDisabledFilePath
+		{
+			get
+			{
+				return Path.Combine(GenFilePaths.ConfigFolderPath, "DevModeDisabled");
+			}
+		}
+
 		public static string BackstoryOutputFilePath
 		{
 			get
@@ -505,7 +513,7 @@ namespace Verse
 					"\" does not start with \"",
 					text,
 					"\"."
-				}));
+				}), false);
 				return null;
 			}
 			if (fullFolderPath == text)

@@ -18,7 +18,7 @@ namespace Verse
 			FileInfo fileInfo = new FileInfo(GenFilePaths.BackstoryOutputFilePath);
 			if (fileInfo.Exists)
 			{
-				Find.WindowStack.Add(new Dialog_MessageBox("Cannot write: File already exists at " + GenFilePaths.BackstoryOutputFilePath, null, null, null, null, null, false));
+				Find.WindowStack.Add(new Dialog_MessageBox("Cannot write: File already exists at " + GenFilePaths.BackstoryOutputFilePath, null, null, null, null, null, false, null, null));
 				return;
 			}
 			XmlWriterSettings xmlWriterSettings = new XmlWriterSettings();
@@ -32,15 +32,23 @@ namespace Verse
 				{
 					Backstory value = current.Value;
 					xmlWriter.WriteStartElement(value.identifier);
-					xmlWriter.WriteElementString("title", value.Title);
-					xmlWriter.WriteElementString("titleShort", value.TitleShort);
+					xmlWriter.WriteElementString("title", value.title);
+					if (!value.titleFemale.NullOrEmpty())
+					{
+						xmlWriter.WriteElementString("titleFemale", value.titleFemale);
+					}
+					xmlWriter.WriteElementString("titleShort", value.titleShort);
+					if (!value.titleShortFemale.NullOrEmpty())
+					{
+						xmlWriter.WriteElementString("titleShortFemale", value.titleShortFemale);
+					}
 					xmlWriter.WriteElementString("desc", value.baseDesc);
 					xmlWriter.WriteEndElement();
 				}
 				xmlWriter.WriteEndElement();
 				xmlWriter.WriteEndDocument();
 			}
-			Messages.Message("Fresh backstory translation file saved to " + GenFilePaths.BackstoryOutputFilePath, MessageTypeDefOf.NeutralEvent);
+			Messages.Message("Fresh backstory translation file saved to " + GenFilePaths.BackstoryOutputFilePath, MessageTypeDefOf.NeutralEvent, false);
 		}
 	}
 }

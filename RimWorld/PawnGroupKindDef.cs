@@ -5,7 +5,7 @@ namespace RimWorld
 {
 	public class PawnGroupKindDef : Def
 	{
-		public Type workerClass;
+		public Type workerClass = typeof(PawnGroupKindWorker);
 
 		[Unsaved]
 		private PawnGroupKindWorker workerInt;

@@ -25,7 +25,7 @@ namespace RimWorld
 				}
 				if (pawn == null)
 				{
-					Log.Error("Character tab found no selected pawn to display.");
+					Log.Error("Character tab found no selected pawn to display.", false);
 					return null;
 				}
 				return pawn;

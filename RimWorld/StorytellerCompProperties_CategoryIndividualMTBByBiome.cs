@@ -4,9 +4,9 @@ namespace RimWorld
 {
 	public class StorytellerCompProperties_CategoryIndividualMTBByBiome : StorytellerCompProperties
 	{
-		public IncidentCategory category;
+		public IncidentCategoryDef category;
 
-		public bool applyCaravanStealthFactor;
+		public bool applyCaravanVisibility;
 
 		public StorytellerCompProperties_CategoryIndividualMTBByBiome()
 		{

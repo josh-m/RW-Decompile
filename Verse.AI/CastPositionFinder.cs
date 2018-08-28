@@ -56,42 +56,39 @@ namespace Verse.AI
 			CastPositionFinder.avoidGrid = newReq.caster.GetAvoidGrid();
 			if (CastPositionFinder.verb == null)
 			{
-				Log.Error(CastPositionFinder.req.caster + " tried to find casting position without a verb.");
+				Log.Error(CastPositionFinder.req.caster + " tried to find casting position without a verb.", false);
 				dest = IntVec3.Invalid;
 				return false;
 			}
-			if (CastPositionFinder.req.maxRegionsRadius > 0)
+			if (CastPositionFinder.req.maxRegions > 0)
 			{
 				Region region = CastPositionFinder.casterLoc.GetRegion(CastPositionFinder.req.caster.Map, RegionType.Set_Passable);
 				if (region == null)
 				{
-					Log.Error("TryFindCastPosition requiring region traversal but root region is null.");
+					Log.Error("TryFindCastPosition requiring region traversal but root region is null.", false);
 					dest = IntVec3.Invalid;
 					return false;
 				}
 				CastPositionFinder.inRadiusMark = Rand.Int;
-				RegionTraverser.MarkRegionsBFS(region, null, newReq.maxRegionsRadius, CastPositionFinder.inRadiusMark, RegionType.Set_Passable);
+				RegionTraverser.MarkRegionsBFS(region, null, newReq.maxRegions, CastPositionFinder.inRadiusMark, RegionType.Set_Passable);
 				if (CastPositionFinder.req.maxRangeFromLocus > 0.01f)
 				{
-					Region region2 = CastPositionFinder.req.locus.GetRegion(CastPositionFinder.req.caster.Map, RegionType.Set_Passable);
-					if (region2 == null)
+					Region locusReg = CastPositionFinder.req.locus.GetRegion(CastPositionFinder.req.caster.Map, RegionType.Set_Passable);
+					if (locusReg == null)
 					{
-						Log.Error("locus " + CastPositionFinder.req.locus + " has no region");
+						Log.Error("locus " + CastPositionFinder.req.locus + " has no region", false);
 						dest = IntVec3.Invalid;
 						return false;
 					}
-					if (region2.mark != CastPositionFinder.inRadiusMark)
+					if (locusReg.mark != CastPositionFinder.inRadiusMark)
 					{
-						Log.Error(string.Concat(new object[]
+						CastPositionFinder.inRadiusMark = Rand.Int;
+						RegionTraverser.BreadthFirstTraverse(region, null, delegate(Region r)
 						{
-							CastPositionFinder.req.caster,
-							" can't possibly get to locus ",
-							CastPositionFinder.req.locus,
-							" as it's not in a maxRegionsRadius of ",
-							CastPositionFinder.req.maxRegionsRadius,
-							". Overriding maxRegionsRadius."
-						}));
-						CastPositionFinder.req.maxRegionsRadius = 0;
+							r.mark = CastPositionFinder.inRadiusMark;
+							CastPositionFinder.req.maxRegions = CastPositionFinder.req.maxRegions + 1;
+							return r == locusReg;
+						}, 999999, RegionType.Set_Passable);
 					}
 				}
 			}
@@ -196,7 +193,7 @@ namespace Verse.AI
 			{
 				return;
 			}
-			if (CastPositionFinder.req.maxRegionsRadius > 0 && c.GetRegion(CastPositionFinder.req.caster.Map, RegionType.Set_Passable).mark != CastPositionFinder.inRadiusMark)
+			if (CastPositionFinder.req.maxRegions > 0 && c.GetRegion(CastPositionFinder.req.caster.Map, RegionType.Set_Passable).mark != CastPositionFinder.inRadiusMark)
 			{
 				if (DebugViewSettings.drawCastPositionSearch)
 				{
@@ -234,7 +231,7 @@ namespace Verse.AI
 				}
 				return;
 			}
-			if (!CastPositionFinder.req.caster.Map.pawnDestinationReservationManager.CanReserve(c, CastPositionFinder.req.caster))
+			if (!CastPositionFinder.req.caster.Map.pawnDestinationReservationManager.CanReserve(c, CastPositionFinder.req.caster, false))
 			{
 				if (DebugViewSettings.drawCastPositionSearch)
 				{
@@ -242,7 +239,7 @@ namespace Verse.AI
 				}
 				return;
 			}
-			if (PawnUtility.KnownDangerAt(c, CastPositionFinder.req.caster))
+			if (PawnUtility.KnownDangerAt(c, CastPositionFinder.req.caster.Map, CastPositionFinder.req.caster))
 			{
 				if (DebugViewSettings.drawCastPositionSearch)
 				{

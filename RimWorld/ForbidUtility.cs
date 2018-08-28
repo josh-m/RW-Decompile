@@ -12,7 +12,7 @@ namespace RimWorld
 			{
 				if (warnOnFail)
 				{
-					Log.Error("Tried to SetForbidden on null Thing.");
+					Log.Error("Tried to SetForbidden on null Thing.", false);
 				}
 				return;
 			}
@@ -21,7 +21,7 @@ namespace RimWorld
 			{
 				if (warnOnFail)
 				{
-					Log.Error("Tried to SetForbidden on non-ThingWithComps Thing " + t);
+					Log.Error("Tried to SetForbidden on non-ThingWithComps Thing " + t, false);
 				}
 				return;
 			}
@@ -30,7 +30,7 @@ namespace RimWorld
 			{
 				if (warnOnFail)
 				{
-					Log.Error("Tried to SetForbidden on non-Forbiddable Thing " + t);
+					Log.Error("Tried to SetForbidden on non-Forbiddable Thing " + t, false);
 				}
 				return;
 			}
@@ -41,7 +41,7 @@ namespace RimWorld
 		{
 			if (!t.Spawned)
 			{
-				Log.Error("SetForbiddenIfOutsideHomeArea unspawned thing " + t);
+				Log.Error("SetForbiddenIfOutsideHomeArea unspawned thing " + t, false);
 			}
 			if (t.Position.InBounds(t.Map) && !t.Map.areaManager.Home[t.Position])
 			{
@@ -85,9 +85,9 @@ namespace RimWorld
 			return lord != null && lord.extraForbiddenThings.Contains(t);
 		}
 
-		public static bool IsForbiddenToPass(this Thing t, Pawn pawn)
+		public static bool IsForbiddenToPass(this Building_Door t, Pawn pawn)
 		{
-			return ForbidUtility.CaresAboutForbidden(pawn, false) && ((t.Spawned && t.Position.IsForbidden(pawn) && !(t is Building_Door)) || t.IsForbidden(pawn.Faction));
+			return ForbidUtility.CaresAboutForbidden(pawn, false) && t.IsForbidden(pawn.Faction);
 		}
 
 		public static bool IsForbidden(this IntVec3 c, Pawn pawn)

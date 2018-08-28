@@ -54,9 +54,12 @@ namespace RimWorld
 			return base.GetReport();
 		}
 
-		public override bool TryMakePreToilReservations()
+		public override bool TryMakePreToilReservations(bool errorOnFailed)
 		{
-			return this.pawn.Reserve(this.Victim, this.job, 1, -1, null);
+			Pawn pawn = this.pawn;
+			LocalTargetInfo target = this.Victim;
+			Job job = this.job;
+			return pawn.Reserve(target, job, 1, -1, null, errorOnFailed);
 		}
 
 		[DebuggerHidden]
@@ -81,17 +84,40 @@ namespace RimWorld
 					this.$this.jobStartTick = Find.TickManager.TicksGame;
 				}
 			};
-			yield return Toils_Combat.TrySetJobToUseAttackVerb();
-			Toil startCollectCorpse = this.StartCollectCorpseToil();
-			Toil gotoCastPos = Toils_Combat.GotoCastPosition(TargetIndex.A, true).JumpIfDespawnedOrNull(TargetIndex.A, startCollectCorpse).FailOn(() => Find.TickManager.TicksGame > this.$this.jobStartTick + 5000);
+			yield return Toils_Combat.TrySetJobToUseAttackVerb(TargetIndex.A);
+			Toil startCollectCorpseLabel = Toils_General.Label();
+			Toil slaughterLabel = Toils_General.Label();
+			Toil gotoCastPos = Toils_Combat.GotoCastPosition(TargetIndex.A, true, 0.95f).JumpIfDespawnedOrNull(TargetIndex.A, startCollectCorpseLabel).FailOn(() => Find.TickManager.TicksGame > this.$this.jobStartTick + 5000);
 			yield return gotoCastPos;
-			Toil moveIfCannotHit = Toils_Jump.JumpIfTargetNotHittable(TargetIndex.A, gotoCastPos);
-			yield return moveIfCannotHit;
-			yield return Toils_Jump.JumpIfTargetDownedDistant(TargetIndex.A, gotoCastPos);
-			yield return Toils_Combat.CastVerb(TargetIndex.A, false).JumpIfDespawnedOrNull(TargetIndex.A, startCollectCorpse).FailOn(() => Find.TickManager.TicksGame > this.$this.jobStartTick + 5000);
-			yield return Toils_Jump.JumpIfTargetDespawnedOrNull(TargetIndex.A, startCollectCorpse);
-			yield return Toils_Jump.Jump(moveIfCannotHit);
-			yield return startCollectCorpse;
+			Toil slaughterIfPossible = Toils_Jump.JumpIf(slaughterLabel, delegate
+			{
+				Pawn victim = this.$this.Victim;
+				return (victim.RaceProps.DeathActionWorker == null || !victim.RaceProps.DeathActionWorker.DangerousInMelee) && victim.Downed;
+			});
+			yield return slaughterIfPossible;
+			yield return Toils_Jump.JumpIfTargetNotHittable(TargetIndex.A, gotoCastPos);
+			yield return Toils_Combat.CastVerb(TargetIndex.A, false).JumpIfDespawnedOrNull(TargetIndex.A, startCollectCorpseLabel).FailOn(() => Find.TickManager.TicksGame > this.$this.jobStartTick + 5000);
+			yield return Toils_Jump.JumpIfTargetDespawnedOrNull(TargetIndex.A, startCollectCorpseLabel);
+			yield return Toils_Jump.Jump(slaughterIfPossible);
+			yield return slaughterLabel;
+			yield return Toils_Goto.GotoThing(TargetIndex.A, PathEndMode.Touch).FailOnMobile(TargetIndex.A);
+			yield return Toils_General.WaitWith(TargetIndex.A, 180, true, false).FailOnMobile(TargetIndex.A);
+			yield return Toils_General.Do(delegate
+			{
+				if (this.$this.Victim.Dead)
+				{
+					return;
+				}
+				ExecutionUtility.DoExecutionByCut(this.$this.pawn, this.$this.Victim);
+				this.$this.pawn.records.Increment(RecordDefOf.AnimalsSlaughtered);
+				if (this.$this.pawn.InMentalState)
+				{
+					this.$this.pawn.MentalState.Notify_SlaughteredAnimal();
+				}
+			});
+			yield return Toils_Jump.Jump(startCollectCorpseLabel);
+			yield return startCollectCorpseLabel;
+			yield return this.StartCollectCorpseToil();
 			yield return Toils_Goto.GotoCell(TargetIndex.A, PathEndMode.ClosestTouch).FailOnDespawnedNullOrForbidden(TargetIndex.A).FailOnSomeonePhysicallyInteracting(TargetIndex.A);
 			yield return Toils_Haul.StartCarryThing(TargetIndex.A, false, false, false);
 			Toil carryToCell = Toils_Haul.CarryHauledThingToCell(TargetIndex.B);
@@ -124,8 +150,8 @@ namespace RimWorld
 				IntVec3 c;
 				if (StoreUtility.TryFindBestBetterStoreCellFor(corpse, this.pawn, this.Map, StoragePriority.Unstored, this.pawn.Faction, out c, true))
 				{
-					this.pawn.Reserve(corpse, this.job, 1, -1, null);
-					this.pawn.Reserve(c, this.job, 1, -1, null);
+					this.pawn.Reserve(corpse, this.job, 1, -1, null, true);
+					this.pawn.Reserve(c, this.job, 1, -1, null, true);
 					this.job.SetTarget(TargetIndex.B, c);
 					this.job.SetTarget(TargetIndex.A, corpse);
 					this.job.count = 1;

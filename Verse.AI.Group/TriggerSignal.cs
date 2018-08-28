@@ -18,6 +18,8 @@ namespace Verse.AI.Group
 
 		public Faction faction;
 
+		public FactionRelationKind? previousRelationKind;
+
 		public Pawn Pawn
 		{
 			get
@@ -42,6 +44,7 @@ namespace Verse.AI.Group
 			this.dinfo = default(DamageInfo);
 			this.condition = PawnLostCondition.Undefined;
 			this.faction = null;
+			this.previousRelationKind = null;
 		}
 
 		public static TriggerSignal ForMemo(string memo)

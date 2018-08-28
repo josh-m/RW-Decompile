@@ -14,9 +14,7 @@ namespace RimWorld
 
 		private int EMPAdaptedTicksLeft;
 
-		private const float StunDurationFactor_Standard = 20f;
-
-		private const float StunDurationFactor_EMP = 15f;
+		public const float StunDurationTicksPerDamage = 30f;
 
 		public bool Stunned
 		{
@@ -77,15 +75,20 @@ namespace RimWorld
 
 		public void Notify_DamageApplied(DamageInfo dinfo, bool affectedByEMP)
 		{
+			Pawn pawn = this.parent as Pawn;
+			if (pawn != null && (pawn.Downed || pawn.Dead))
+			{
+				return;
+			}
 			if (dinfo.Def == DamageDefOf.Stun)
 			{
-				this.StunFor(Mathf.RoundToInt((float)dinfo.Amount * 20f));
+				this.StunFor(Mathf.RoundToInt(dinfo.Amount * 30f), dinfo.Instigator);
 			}
 			else if (dinfo.Def == DamageDefOf.EMP && affectedByEMP)
 			{
 				if (this.EMPAdaptedTicksLeft <= 0)
 				{
-					this.StunFor(Mathf.RoundToInt((float)dinfo.Amount * 15f));
+					this.StunFor(Mathf.RoundToInt(dinfo.Amount * 30f), dinfo.Instigator);
 					this.EMPAdaptedTicksLeft = this.EMPAdaptationTicksDuration;
 				}
 				else
@@ -96,9 +99,10 @@ namespace RimWorld
 			}
 		}
 
-		public void StunFor(int ticks)
+		public void StunFor(int ticks, Thing instigator)
 		{
 			this.stunTicksLeft = Mathf.Max(this.stunTicksLeft, ticks);
+			Find.BattleLog.Add(new BattleLogEntry_Event(this.parent, RulePackDefOf.Event_Stun, instigator));
 		}
 	}
 }

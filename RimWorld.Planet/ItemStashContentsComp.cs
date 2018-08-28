@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using UnityEngine;
 using Verse;
 
 namespace RimWorld.Planet
@@ -8,10 +7,6 @@ namespace RimWorld.Planet
 	public class ItemStashContentsComp : WorldObjectComp, IThingHolder
 	{
 		public ThingOwner contents;
-
-		private static List<Thing> tmpContents = new List<Thing>();
-
-		private static List<string> tmpContentsStr = new List<string>();
 
 		public ItemStashContentsComp()
 		{
@@ -45,33 +40,16 @@ namespace RimWorld.Planet
 
 		public override string CompInspectStringExtra()
 		{
-			if (!this.contents.Any)
+			if (this.contents.Any)
 			{
-				return null;
-			}
-			ItemStashContentsComp.tmpContents.Clear();
-			ItemStashContentsComp.tmpContents.AddRange(this.contents);
-			ItemStashContentsComp.tmpContents.SortByDescending((Thing x) => x.MarketValue * (float)x.stackCount);
-			ItemStashContentsComp.tmpContentsStr.Clear();
-			for (int i = 0; i < Mathf.Min(5, ItemStashContentsComp.tmpContents.Count); i++)
-			{
-				ItemStashContentsComp.tmpContentsStr.Add(ItemStashContentsComp.tmpContents[i].LabelShort);
-			}
-			string text = GenText.ToCommaList(ItemStashContentsComp.tmpContentsStr, true);
-			int count = ItemStashContentsComp.tmpContents.Count;
-			ItemStashContentsComp.tmpContents.Clear();
-			ItemStashContentsComp.tmpContentsStr.Clear();
-			if (count > 5)
-			{
-				return "SomeItemStashContents".Translate(new object[]
+				string text = GenThing.ThingsToCommaList(this.contents, true, true, 5).CapitalizeFirst();
+				return "ItemStashContents".Translate(new object[]
 				{
-					text
+					text,
+					GenThing.GetMarketValue(this.contents).ToStringMoney(null)
 				});
 			}
-			return "ItemStashContents".Translate(new object[]
-			{
-				text
-			});
+			return null;
 		}
 	}
 }

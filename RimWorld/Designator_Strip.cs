@@ -17,15 +17,23 @@ namespace RimWorld
 			}
 		}
 
+		protected override DesignationDef Designation
+		{
+			get
+			{
+				return DesignationDefOf.Strip;
+			}
+		}
+
 		public Designator_Strip()
 		{
 			this.defaultLabel = "DesignatorStrip".Translate();
 			this.defaultDesc = "DesignatorStripDesc".Translate();
 			this.icon = ContentFinder<Texture2D>.Get("UI/Designators/Strip", true);
-			this.soundDragSustain = SoundDefOf.DesignateDragStandard;
-			this.soundDragChanged = SoundDefOf.DesignateDragStandardChanged;
+			this.soundDragSustain = SoundDefOf.Designate_DragStandard;
+			this.soundDragChanged = SoundDefOf.Designate_DragStandard_Changed;
 			this.useMouseIcon = true;
-			this.soundSucceeded = SoundDefOf.DesignateClaim;
+			this.soundSucceeded = SoundDefOf.Designate_Claim;
 			this.hotKey = KeyBindingDefOf.Misc11;
 		}
 
@@ -52,7 +60,7 @@ namespace RimWorld
 
 		public override AcceptanceReport CanDesignateThing(Thing t)
 		{
-			if (base.Map.designationManager.DesignationOn(t, DesignationDefOf.Strip) != null)
+			if (base.Map.designationManager.DesignationOn(t, this.Designation) != null)
 			{
 				return false;
 			}
@@ -61,7 +69,7 @@ namespace RimWorld
 
 		public override void DesignateThing(Thing t)
 		{
-			base.Map.designationManager.AddDesignation(new Designation(t, DesignationDefOf.Strip));
+			base.Map.designationManager.AddDesignation(new Designation(t, this.Designation));
 		}
 
 		[DebuggerHidden]

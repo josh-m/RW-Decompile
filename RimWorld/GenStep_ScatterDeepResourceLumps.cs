@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using UnityEngine;
 using Verse;
 
@@ -7,9 +6,15 @@ namespace RimWorld
 {
 	public class GenStep_ScatterDeepResourceLumps : GenStep_Scatterer
 	{
-		private const float LumpSizeFactor = 1.6f;
+		public override int SeedPart
+		{
+			get
+			{
+				return 1712041303;
+			}
+		}
 
-		public override void Generate(Map map)
+		public override void Generate(Map map, GenStepParams parms)
 		{
 			if (map.TileInfo.WaterCovered)
 			{
@@ -42,24 +47,14 @@ namespace RimWorld
 		protected override void ScatterAt(IntVec3 c, Map map, int stackCount = 1)
 		{
 			ThingDef thingDef = this.ChooseThingDef();
-			int numCells = Mathf.CeilToInt((float)this.GetScatterLumpSizeRange(thingDef).RandomInRange * 1.6f);
+			int numCells = Mathf.CeilToInt((float)thingDef.deepLumpSizeRange.RandomInRange);
 			foreach (IntVec3 current in GridShapeMaker.IrregularLump(c, map, numCells))
 			{
-				map.deepResourceGrid.SetAt(current, thingDef, thingDef.deepCountPerCell);
-			}
-		}
-
-		private IntRange GetScatterLumpSizeRange(ThingDef def)
-		{
-			List<ThingDef> allDefsListForReading = DefDatabase<ThingDef>.AllDefsListForReading;
-			for (int i = 0; i < allDefsListForReading.Count; i++)
-			{
-				if (allDefsListForReading[i].building != null && allDefsListForReading[i].building.mineableThing == def)
+				if (!current.InNoBuildEdgeArea(map))
 				{
-					return allDefsListForReading[i].building.mineableScatterLumpSizeRange;
+					map.deepResourceGrid.SetAt(current, thingDef, thingDef.deepCountPerCell);
 				}
 			}
-			return new IntRange(2, 30);
 		}
 	}
 }

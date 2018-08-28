@@ -8,7 +8,7 @@ namespace RimWorld
 {
 	public class JobDriver_LayDown : JobDriver
 	{
-		private const TargetIndex BedOrRestSpotIndex = TargetIndex.A;
+		public const TargetIndex BedOrRestSpotIndex = TargetIndex.A;
 
 		public Building_Bed Bed
 		{
@@ -18,10 +18,22 @@ namespace RimWorld
 			}
 		}
 
-		public override bool TryMakePreToilReservations()
+		public override bool TryMakePreToilReservations(bool errorOnFailed)
 		{
 			bool hasThing = this.job.GetTarget(TargetIndex.A).HasThing;
-			return !hasThing || this.pawn.Reserve(this.Bed, this.job, this.Bed.SleepingSlotsCount, 0, null);
+			if (hasThing)
+			{
+				Pawn pawn = this.pawn;
+				LocalTargetInfo target = this.Bed;
+				Job job = this.job;
+				int sleepingSlotsCount = this.Bed.SleepingSlotsCount;
+				int stackCount = 0;
+				if (!pawn.Reserve(target, job, sleepingSlotsCount, stackCount, null, errorOnFailed))
+				{
+					return false;
+				}
+			}
+			return true;
 		}
 
 		public override bool CanBeginNowWhileLyingDown()

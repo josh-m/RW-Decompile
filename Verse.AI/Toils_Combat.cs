@@ -5,7 +5,7 @@ namespace Verse.AI
 {
 	public static class Toils_Combat
 	{
-		public static Toil TrySetJobToUseAttackVerb()
+		public static Toil TrySetJobToUseAttackVerb(TargetIndex targetInd)
 		{
 			Toil toil = new Toil();
 			toil.initAction = delegate
@@ -13,7 +13,7 @@ namespace Verse.AI
 				Pawn actor = toil.actor;
 				Job curJob = actor.jobs.curJob;
 				bool allowManualCastWeapons = !actor.IsColonist;
-				Verb verb = actor.TryGetAttackVerb(allowManualCastWeapons);
+				Verb verb = actor.TryGetAttackVerb(curJob.GetTarget(targetInd).Thing, allowManualCastWeapons);
 				if (verb == null)
 				{
 					actor.jobs.EndCurrentJob(JobCondition.Incompletable, true);
@@ -24,7 +24,7 @@ namespace Verse.AI
 			return toil;
 		}
 
-		public static Toil GotoCastPosition(TargetIndex targetInd, bool closeIfDowned = false)
+		public static Toil GotoCastPosition(TargetIndex targetInd, bool closeIfDowned = false, float maxRangeFactor = 1f)
 		{
 			Toil toil = new Toil();
 			toil.initAction = delegate
@@ -39,7 +39,7 @@ namespace Verse.AI
 					caster = toil.actor,
 					target = thing,
 					verb = curJob.verbToUse,
-					maxRangeFromTarget = ((closeIfDowned && pawn != null && pawn.Downed) ? Mathf.Min(curJob.verbToUse.verbProps.range, (float)pawn.RaceProps.executionRange) : curJob.verbToUse.verbProps.range),
+					maxRangeFromTarget = ((closeIfDowned && pawn != null && pawn.Downed) ? Mathf.Min(curJob.verbToUse.verbProps.range, (float)pawn.RaceProps.executionRange) : Mathf.Max(curJob.verbToUse.verbProps.range * maxRangeFactor, 1.42f)),
 					wantCoverFromTarget = false
 				}, out intVec))
 				{
@@ -54,15 +54,15 @@ namespace Verse.AI
 			return toil;
 		}
 
-		public static Toil CastVerb(TargetIndex targetInd, bool canFreeIntercept = true)
+		public static Toil CastVerb(TargetIndex targetInd, bool canHitNonTargetPawns = true)
 		{
 			Toil toil = new Toil();
 			toil.initAction = delegate
 			{
 				Verb arg_45_0 = toil.actor.jobs.curJob.verbToUse;
 				LocalTargetInfo target = toil.actor.jobs.curJob.GetTarget(targetInd);
-				bool canFreeIntercept2 = canFreeIntercept;
-				arg_45_0.TryStartCastOn(target, false, canFreeIntercept2);
+				bool canHitNonTargetPawns2 = canHitNonTargetPawns;
+				arg_45_0.TryStartCastOn(target, false, canHitNonTargetPawns2);
 			};
 			toil.defaultCompleteMode = ToilCompleteMode.FinishedBusy;
 			return toil;

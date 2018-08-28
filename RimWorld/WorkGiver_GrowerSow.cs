@@ -19,7 +19,7 @@ namespace RimWorld
 			}
 		}
 
-		public static void Reset()
+		public static void ResetStaticData()
 		{
 			WorkGiver_GrowerSow.CantSowCavePlantBecauseOfLightTrans = "CantSowCavePlantBecauseOfLight".Translate();
 			WorkGiver_GrowerSow.CantSowCavePlantBecauseUnroofedTrans = "CantSowCavePlantBecauseUnroofed".Translate();
@@ -49,14 +49,14 @@ namespace RimWorld
 			return WorkGiver_Grower.wantedPlantDef != null;
 		}
 
-		public override Job JobOnCell(Pawn pawn, IntVec3 c)
+		public override Job JobOnCell(Pawn pawn, IntVec3 c, bool forced = false)
 		{
 			Map map = pawn.Map;
 			if (c.IsForbidden(pawn))
 			{
 				return null;
 			}
-			if (!GenPlant.GrowthSeasonNow(c, map))
+			if (!PlantUtility.GrowthSeasonNow(c, map, true))
 			{
 				return null;
 			}
@@ -94,19 +94,24 @@ namespace RimWorld
 			{
 				if (!c.Roofed(map))
 				{
-					JobFailReason.Is(WorkGiver_GrowerSow.CantSowCavePlantBecauseUnroofedTrans);
+					JobFailReason.Is(WorkGiver_GrowerSow.CantSowCavePlantBecauseUnroofedTrans, null);
 					return null;
 				}
 				if (map.glowGrid.GameGlowAt(c, true) > 0f)
 				{
-					JobFailReason.Is(WorkGiver_GrowerSow.CantSowCavePlantBecauseOfLightTrans);
+					JobFailReason.Is(WorkGiver_GrowerSow.CantSowCavePlantBecauseOfLightTrans, null);
 					return null;
 				}
+			}
+			if (WorkGiver_Grower.wantedPlantDef.plant.interferesWithRoof && c.Roofed(pawn.Map))
+			{
+				return null;
 			}
 			Plant plant = c.GetPlant(map);
 			if (plant != null && plant.def.plant.blockAdjacentSow)
 			{
-				if (!pawn.CanReserve(plant, 1, -1, null, false) || plant.IsForbidden(pawn))
+				LocalTargetInfo target = plant;
+				if (!pawn.CanReserve(target, 1, -1, null, forced) || plant.IsForbidden(pawn))
 				{
 					return null;
 				}
@@ -114,21 +119,25 @@ namespace RimWorld
 			}
 			else
 			{
-				Thing thing2 = GenPlant.AdjacentSowBlocker(WorkGiver_Grower.wantedPlantDef, c, map);
+				Thing thing2 = PlantUtility.AdjacentSowBlocker(WorkGiver_Grower.wantedPlantDef, c, map);
 				if (thing2 != null)
 				{
 					Plant plant2 = thing2 as Plant;
-					if (plant2 != null && pawn.CanReserve(plant2, 1, -1, null, false) && !plant2.IsForbidden(pawn))
+					if (plant2 != null)
 					{
-						IPlantToGrowSettable plantToGrowSettable = plant2.Position.GetPlantToGrowSettable(plant2.Map);
-						if (plantToGrowSettable == null || plantToGrowSettable.GetPlantDefToGrow() != plant2.def)
+						LocalTargetInfo target = plant2;
+						if (pawn.CanReserve(target, 1, -1, null, forced) && !plant2.IsForbidden(pawn))
 						{
-							return new Job(JobDefOf.CutPlant, plant2);
+							IPlantToGrowSettable plantToGrowSettable = plant2.Position.GetPlantToGrowSettable(plant2.Map);
+							if (plantToGrowSettable == null || plantToGrowSettable.GetPlantDefToGrow() != plant2.def)
+							{
+								return new Job(JobDefOf.CutPlant, plant2);
+							}
 						}
 					}
 					return null;
 				}
-				if (WorkGiver_Grower.wantedPlantDef.plant.sowMinSkill > 0 && pawn.skills != null && pawn.skills.GetSkill(SkillDefOf.Growing).Level < WorkGiver_Grower.wantedPlantDef.plant.sowMinSkill)
+				if (WorkGiver_Grower.wantedPlantDef.plant.sowMinSkill > 0 && pawn.skills != null && pawn.skills.GetSkill(SkillDefOf.Plants).Level < WorkGiver_Grower.wantedPlantDef.plant.sowMinSkill)
 				{
 					return null;
 				}
@@ -138,7 +147,8 @@ namespace RimWorld
 					Thing thing3 = thingList[j];
 					if (thing3.def.BlockPlanting)
 					{
-						if (!pawn.CanReserve(thing3, 1, -1, null, false))
+						LocalTargetInfo target = thing3;
+						if (!pawn.CanReserve(target, 1, -1, null, forced))
 						{
 							return null;
 						}
@@ -164,14 +174,18 @@ namespace RimWorld
 						j++;
 					}
 				}
-				if (!WorkGiver_Grower.wantedPlantDef.CanEverPlantAt(c, map) || !GenPlant.GrowthSeasonNow(c, map) || !pawn.CanReserve(c, 1, -1, null, false))
+				if (WorkGiver_Grower.wantedPlantDef.CanEverPlantAt(c, map) && PlantUtility.GrowthSeasonNow(c, map, true))
 				{
-					return null;
+					LocalTargetInfo target = c;
+					if (pawn.CanReserve(target, 1, -1, null, forced))
+					{
+						return new Job(JobDefOf.Sow, c)
+						{
+							plantDefToSow = WorkGiver_Grower.wantedPlantDef
+						};
+					}
 				}
-				return new Job(JobDefOf.Sow, c)
-				{
-					plantDefToSow = WorkGiver_Grower.wantedPlantDef
-				};
+				return null;
 			}
 		}
 	}

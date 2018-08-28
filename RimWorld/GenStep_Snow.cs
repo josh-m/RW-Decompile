@@ -5,7 +5,15 @@ namespace RimWorld
 {
 	public class GenStep_Snow : GenStep
 	{
-		public override void Generate(Map map)
+		public override int SeedPart
+		{
+			get
+			{
+				return 306693816;
+			}
+		}
+
+		public override void Generate(Map map, GenStepParams parms)
 		{
 			int num = 0;
 			for (int i = (int)(GenLocalDate.Twelfth(map) - Twelfth.Third); i <= (int)GenLocalDate.Twelfth(map); i++)
@@ -49,7 +57,7 @@ namespace RimWorld
 			{
 				if (!current.Roofed(map))
 				{
-					map.steadyAtmosphereEffects.AddFallenSnowAt(current, num4);
+					map.steadyEnvironmentEffects.AddFallenSnowAt(current, num4);
 				}
 			}
 		}

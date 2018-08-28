@@ -6,6 +6,7 @@ namespace Verse.AI
 {
 	public class ThinkNode_SubtreesByTag : ThinkNode
 	{
+		[NoTranslate]
 		public string insertTag;
 
 		[Unsaved]

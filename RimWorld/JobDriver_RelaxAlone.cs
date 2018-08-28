@@ -8,33 +8,84 @@ namespace RimWorld
 {
 	public class JobDriver_RelaxAlone : JobDriver
 	{
-		private Rot4 faceDir;
+		private Rot4 faceDir = Rot4.Invalid;
 
-		public override bool TryMakePreToilReservations()
+		private const TargetIndex SpotOrBedInd = TargetIndex.A;
+
+		private bool FromBed
 		{
-			return this.pawn.Reserve(this.job.targetA, this.job, 1, -1, null);
+			get
+			{
+				return this.job.GetTarget(TargetIndex.A).HasThing;
+			}
+		}
+
+		public override bool CanBeginNowWhileLyingDown()
+		{
+			return this.FromBed && JobInBedUtility.InBedOrRestSpotNow(this.pawn, this.job.GetTarget(TargetIndex.A));
+		}
+
+		public override bool TryMakePreToilReservations(bool errorOnFailed)
+		{
+			if (this.FromBed)
+			{
+				Pawn pawn = this.pawn;
+				LocalTargetInfo target = this.job.GetTarget(TargetIndex.A);
+				Job job = this.job;
+				int sleepingSlotsCount = ((Building_Bed)this.job.GetTarget(TargetIndex.A).Thing).SleepingSlotsCount;
+				int stackCount = 0;
+				if (!pawn.Reserve(target, job, sleepingSlotsCount, stackCount, null, errorOnFailed))
+				{
+					return false;
+				}
+			}
+			else
+			{
+				Pawn pawn = this.pawn;
+				LocalTargetInfo target = this.job.GetTarget(TargetIndex.A);
+				Job job = this.job;
+				if (!pawn.Reserve(target, job, 1, -1, null, errorOnFailed))
+				{
+					return false;
+				}
+			}
+			return true;
 		}
 
 		[DebuggerHidden]
 		protected override IEnumerable<Toil> MakeNewToils()
 		{
-			yield return Toils_Goto.GotoCell(TargetIndex.A, PathEndMode.OnCell);
-			yield return new Toil
+			Toil relax;
+			if (this.FromBed)
 			{
-				initAction = delegate
+				this.KeepLyingDown(TargetIndex.A);
+				yield return Toils_Bed.ClaimBedIfNonMedical(TargetIndex.A, TargetIndex.None);
+				yield return Toils_Bed.GotoBed(TargetIndex.A);
+				relax = Toils_LayDown.LayDown(TargetIndex.A, true, false, true, true);
+				relax.AddFailCondition(() => !this.$this.pawn.Awake());
+			}
+			else
+			{
+				yield return Toils_Goto.GotoCell(TargetIndex.A, PathEndMode.OnCell);
+				relax = new Toil();
+				relax.initAction = delegate
 				{
 					this.$this.faceDir = ((!this.$this.job.def.faceDir.IsValid) ? Rot4.Random : this.$this.job.def.faceDir);
-				},
-				tickAction = delegate
+				};
+				relax.handlingFacing = true;
+			}
+			relax.defaultCompleteMode = ToilCompleteMode.Delay;
+			relax.defaultDuration = this.job.def.joyDuration;
+			relax.AddPreTickAction(delegate
+			{
+				if (this.$this.faceDir.IsValid)
 				{
 					this.$this.pawn.rotationTracker.FaceCell(this.$this.pawn.Position + this.$this.faceDir.FacingCell);
-					this.$this.pawn.GainComfortFromCellIfPossible();
-					JoyUtility.JoyTickCheckEnd(this.$this.pawn, JoyTickFullJoyAction.EndJob, 1f);
-				},
-				handlingFacing = true,
-				defaultCompleteMode = ToilCompleteMode.Delay,
-				defaultDuration = this.job.def.joyDuration
-			};
+				}
+				this.$this.pawn.GainComfortFromCellIfPossible();
+				JoyUtility.JoyTickCheckEnd(this.$this.pawn, JoyTickFullJoyAction.EndJob, 1f, null);
+			});
+			yield return relax;
 		}
 
 		public override void ExposeData()

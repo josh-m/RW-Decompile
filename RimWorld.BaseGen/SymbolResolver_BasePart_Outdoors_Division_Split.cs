@@ -31,7 +31,7 @@ namespace RimWorld.BaseGen
 			{
 				if (!this.TryFindSplitPoint(!@bool, rp.rect, out num, out num2))
 				{
-					Log.Warning("Could not find split point.");
+					Log.Warning("Could not find split point.", false);
 					return;
 				}
 				flag = !@bool;

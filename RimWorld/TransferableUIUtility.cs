@@ -9,6 +9,45 @@ namespace RimWorld
 	[StaticConstructorOnStartup]
 	public static class TransferableUIUtility
 	{
+		public struct ExtraInfo
+		{
+			public string key;
+
+			public string value;
+
+			public string secondValue;
+
+			public string tip;
+
+			public float lastFlashTime;
+
+			public Color color;
+
+			public Color secondColor;
+
+			public ExtraInfo(string key, string value, Color color, string tip, float lastFlashTime = -9999f)
+			{
+				this.key = key;
+				this.value = value;
+				this.color = color;
+				this.tip = tip;
+				this.lastFlashTime = lastFlashTime;
+				this.secondValue = null;
+				this.secondColor = default(Color);
+			}
+
+			public ExtraInfo(string key, string value, Color color, string tip, string secondValue, Color secondColor, float lastFlashTime = -9999f)
+			{
+				this.key = key;
+				this.value = value;
+				this.color = color;
+				this.tip = tip;
+				this.lastFlashTime = lastFlashTime;
+				this.secondValue = secondValue;
+				this.secondColor = secondColor;
+			}
+		}
+
 		private static List<TransferableCountToTransferStoppingPoint> stoppingPoints = new List<TransferableCountToTransferStoppingPoint>();
 
 		private const float AmountAreaWidth = 90f;
@@ -21,13 +60,19 @@ namespace RimWorld
 
 		public const float SortersHeight = 27f;
 
+		public const float ExtraInfoHeight = 40f;
+
+		public const float ExtraInfoMargin = 12f;
+
 		public static readonly Color ZeroCountColor = new Color(0.5f, 0.5f, 0.5f);
 
 		public static readonly Texture2D FlashTex = SolidColorMaterials.NewSolidColorTexture(new Color(1f, 0f, 0f, 0.4f));
 
 		private static readonly Texture2D TradeArrow = ContentFinder<Texture2D>.Get("UI/Widgets/TradeArrow", true);
 
-		public static void DoCountAdjustInterface(Rect rect, Transferable trad, int index, int min, int max, bool flash = false, List<TransferableCountToTransferStoppingPoint> extraStoppingPoints = null)
+		private static readonly Texture2D DividerTex = ContentFinder<Texture2D>.Get("UI/Widgets/Divider", true);
+
+		public static void DoCountAdjustInterface(Rect rect, Transferable trad, int index, int min, int max, bool flash = false, List<TransferableCountToTransferStoppingPoint> extraStoppingPoints = null, bool readOnly = false)
 		{
 			TransferableUIUtility.stoppingPoints.Clear();
 			if (extraStoppingPoints != null)
@@ -54,10 +99,10 @@ namespace RimWorld
 			{
 				TransferableUIUtility.stoppingPoints.Add(new TransferableCountToTransferStoppingPoint(0, "0", "0"));
 			}
-			TransferableUIUtility.DoCountAdjustInterfaceInternal(rect, trad, index, min, max, flash);
+			TransferableUIUtility.DoCountAdjustInterfaceInternal(rect, trad, index, min, max, flash, readOnly);
 		}
 
-		private static void DoCountAdjustInterfaceInternal(Rect rect, Transferable trad, int index, int min, int max, bool flash)
+		private static void DoCountAdjustInterfaceInternal(Rect rect, Transferable trad, int index, int min, int max, bool flash, bool readOnly)
 		{
 			rect = rect.Rounded();
 			Rect rect2 = new Rect(rect.center.x - 45f, rect.center.y - 12.5f, 90f, 25f).Rounded();
@@ -67,26 +112,34 @@ namespace RimWorld
 			}
 			TransferableOneWay transferableOneWay = trad as TransferableOneWay;
 			bool flag = transferableOneWay != null && transferableOneWay.HasAnyThing && transferableOneWay.AnyThing is Pawn && transferableOneWay.MaxCount == 1;
-			if (!trad.Interactive)
+			if (!trad.Interactive || readOnly)
 			{
-				GUI.color = ((trad.CountToTransfer != 0) ? Color.white : TransferableUIUtility.ZeroCountColor);
-				Text.Anchor = TextAnchor.MiddleCenter;
-				Widgets.Label(rect2, trad.CountToTransfer.ToStringCached());
+				if (flag)
+				{
+					bool flag2 = trad.CountToTransfer != 0;
+					Widgets.Checkbox(rect2.position, ref flag2, 24f, true, false, null, null);
+				}
+				else
+				{
+					GUI.color = ((trad.CountToTransfer != 0) ? Color.white : TransferableUIUtility.ZeroCountColor);
+					Text.Anchor = TextAnchor.MiddleCenter;
+					Widgets.Label(rect2, trad.CountToTransfer.ToStringCached());
+				}
 			}
 			else if (flag)
 			{
-				bool flag2 = trad.CountToTransfer != 0;
-				bool flag3 = flag2;
-				Widgets.Checkbox(rect2.position, ref flag3, 24f, false);
-				if (flag3 != flag2)
+				bool flag3 = trad.CountToTransfer != 0;
+				bool flag4 = flag3;
+				Widgets.Checkbox(rect2.position, ref flag4, 24f, false, true, null, null);
+				if (flag4 != flag3)
 				{
-					if (flag3)
+					if (flag4)
 					{
-						trad.AdjustTo(trad.GetMaximum());
+						trad.AdjustTo(trad.GetMaximumToTransfer());
 					}
 					else
 					{
-						trad.AdjustTo(trad.GetMinimum());
+						trad.AdjustTo(trad.GetMinimumToTransfer());
 					}
 				}
 			}
@@ -108,11 +161,11 @@ namespace RimWorld
 				TransferablePositiveCountDirection positiveCountDirection = trad.PositiveCountDirection;
 				int num = (positiveCountDirection != TransferablePositiveCountDirection.Source) ? -1 : 1;
 				int num2 = GenUI.CurrentAdjustmentMultiplier();
-				bool flag4 = trad.GetRange() == 1;
+				bool flag5 = trad.GetRange() == 1;
 				if (trad.CanAdjustBy(num * num2).Accepted)
 				{
 					Rect rect4 = new Rect(rect2.x - 30f, rect.y, 30f, rect.height);
-					if (flag4)
+					if (flag5)
 					{
 						rect4.x -= rect4.width;
 						rect4.width += rect4.width;
@@ -120,9 +173,9 @@ namespace RimWorld
 					if (Widgets.ButtonText(rect4, "<", true, false, true))
 					{
 						trad.AdjustBy(num * num2);
-						SoundDefOf.TickHigh.PlayOneShotOnCamera(null);
+						SoundDefOf.Tick_High.PlayOneShotOnCamera(null);
 					}
-					if (!flag4)
+					if (!flag5)
 					{
 						string label = "<<";
 						int? num3 = null;
@@ -153,29 +206,29 @@ namespace RimWorld
 							}
 							else if (num == 1)
 							{
-								trad.AdjustTo(trad.GetMaximum());
+								trad.AdjustTo(trad.GetMaximumToTransfer());
 							}
 							else
 							{
-								trad.AdjustTo(trad.GetMinimum());
+								trad.AdjustTo(trad.GetMinimumToTransfer());
 							}
-							SoundDefOf.TickHigh.PlayOneShotOnCamera(null);
+							SoundDefOf.Tick_High.PlayOneShotOnCamera(null);
 						}
 					}
 				}
 				if (trad.CanAdjustBy(-num * num2).Accepted)
 				{
 					Rect rect5 = new Rect(rect2.xMax, rect.y, 30f, rect.height);
-					if (flag4)
+					if (flag5)
 					{
 						rect5.width += rect5.width;
 					}
 					if (Widgets.ButtonText(rect5, ">", true, false, true))
 					{
 						trad.AdjustBy(-num * num2);
-						SoundDefOf.TickLow.PlayOneShotOnCamera(null);
+						SoundDefOf.Tick_Low.PlayOneShotOnCamera(null);
 					}
-					if (!flag4)
+					if (!flag5)
 					{
 						string label2 = ">>";
 						int? num5 = null;
@@ -206,13 +259,13 @@ namespace RimWorld
 							}
 							else if (num == 1)
 							{
-								trad.AdjustTo(trad.GetMinimum());
+								trad.AdjustTo(trad.GetMinimumToTransfer());
 							}
 							else
 							{
-								trad.AdjustTo(trad.GetMaximum());
+								trad.AdjustTo(trad.GetMaximumToTransfer());
 							}
-							SoundDefOf.TickLow.PlayOneShotOnCamera(null);
+							SoundDefOf.Tick_Low.PlayOneShotOnCamera(null);
 						}
 					}
 				}
@@ -228,41 +281,6 @@ namespace RimWorld
 				}
 				GUI.DrawTexture(position, TransferableUIUtility.TradeArrow);
 			}
-		}
-
-		public static void DrawMassInfo(Rect rect, float usedMass, float availableMass, string tip, float lastMassFlashTime = -9999f, bool alignRight = false)
-		{
-			if (usedMass > availableMass)
-			{
-				GUI.color = Color.red;
-			}
-			else
-			{
-				GUI.color = Color.gray;
-			}
-			string text = "MassUsageInfo".Translate(new object[]
-			{
-				usedMass.ToString("0.##"),
-				availableMass.ToString("0.##")
-			});
-			Vector2 vector = Text.CalcSize(text);
-			Rect rect2;
-			if (alignRight)
-			{
-				rect2 = new Rect(rect.xMax - vector.x, rect.y, vector.x, vector.y);
-			}
-			else
-			{
-				rect2 = new Rect(rect.x, rect.y, vector.x, vector.y);
-			}
-			bool flag = Time.time - lastMassFlashTime < 1f;
-			if (flag)
-			{
-				GUI.DrawTexture(rect2, TransferableUIUtility.FlashTex);
-			}
-			Widgets.Label(rect2, text);
-			TooltipHandler.TipRegion(rect2, tip);
-			GUI.color = Color.white;
 		}
 
 		public static void DrawTransferableInfo(Transferable trad, Rect idRect, Color labelColor)
@@ -282,7 +300,7 @@ namespace RimWorld
 			Rect rect2 = new Rect(80f, 0f, idRect.width - 80f, idRect.height);
 			Text.WordWrap = false;
 			GUI.color = labelColor;
-			Widgets.Label(rect2, trad.Label);
+			Widgets.Label(rect2, trad.LabelCap);
 			GUI.color = Color.white;
 			Text.WordWrap = true;
 			Transferable localTrad = trad;
@@ -292,7 +310,7 @@ namespace RimWorld
 				{
 					return string.Empty;
 				}
-				string text = localTrad.Label;
+				string text = localTrad.LabelCap;
 				string tipDescription = localTrad.TipDescription;
 				if (!tipDescription.NullOrEmpty())
 				{
@@ -337,7 +355,7 @@ namespace RimWorld
 			{
 				return 60f;
 			}
-			if (def.isBodyPartOrImplant)
+			if (def.isTechHediff)
 			{
 				return 50f;
 			}
@@ -383,6 +401,68 @@ namespace RimWorld
 				}, MenuOptionPriority.Default, null, null, 0f, null, null));
 			}
 			Find.WindowStack.Add(new FloatMenu(list));
+		}
+
+		public static void DrawExtraInfo(List<TransferableUIUtility.ExtraInfo> info, Rect rect)
+		{
+			if (rect.width > (float)info.Count * 230f)
+			{
+				rect.x += Mathf.Floor((rect.width - (float)info.Count * 230f) / 2f);
+				rect.width = (float)info.Count * 230f;
+			}
+			GUI.BeginGroup(rect);
+			float num = Mathf.Floor(rect.width / (float)info.Count);
+			float num2 = 0f;
+			for (int i = 0; i < info.Count; i++)
+			{
+				float num3 = (i != info.Count - 1) ? num : (rect.width - num2);
+				Rect rect2 = new Rect(num2, 0f, num3, rect.height);
+				Rect rect3 = new Rect(num2, 0f, num3, rect.height / 2f);
+				Rect rect4 = new Rect(num2, rect.height / 2f, num3, rect.height / 2f);
+				bool flag = Time.time - info[i].lastFlashTime < 1f;
+				if (flag)
+				{
+					GUI.DrawTexture(rect2, TransferableUIUtility.FlashTex);
+				}
+				Text.Anchor = TextAnchor.LowerCenter;
+				Text.Font = GameFont.Tiny;
+				GUI.color = Color.gray;
+				Widgets.Label(new Rect(rect3.x, rect3.y - 2f, rect3.width, rect3.height - -3f), info[i].key);
+				Rect rect5 = new Rect(rect4.x, rect4.y + -3f + 2f, rect4.width, rect4.height - -3f);
+				Text.Font = GameFont.Small;
+				if (info[i].secondValue.NullOrEmpty())
+				{
+					Text.Anchor = TextAnchor.UpperCenter;
+					GUI.color = info[i].color;
+					Widgets.Label(rect5, info[i].value);
+				}
+				else
+				{
+					Rect rect6 = rect5;
+					rect6.width = Mathf.Floor(rect5.width / 2f - 15f);
+					Text.Anchor = TextAnchor.UpperRight;
+					GUI.color = info[i].color;
+					Widgets.Label(rect6, info[i].value);
+					Rect rect7 = rect5;
+					rect7.xMin += Mathf.Ceil(rect5.width / 2f + 15f);
+					Text.Anchor = TextAnchor.UpperLeft;
+					GUI.color = info[i].secondColor;
+					Widgets.Label(rect7, info[i].secondValue);
+					Rect position = rect5;
+					position.x = Mathf.Floor(rect5.x + rect5.width / 2f - 7.5f);
+					position.y += 3f;
+					position.width = 15f;
+					position.height = 15f;
+					GUI.color = Color.white;
+					GUI.DrawTexture(position, TransferableUIUtility.DividerTex);
+				}
+				GUI.color = Color.white;
+				Widgets.DrawHighlightIfMouseover(rect2);
+				TooltipHandler.TipRegion(rect2, info[i].tip);
+				num2 += num3;
+			}
+			GUI.EndGroup();
+			Text.Anchor = TextAnchor.UpperLeft;
 		}
 	}
 }

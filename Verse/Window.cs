@@ -15,7 +15,11 @@ namespace Verse
 
 		public bool doCloseButton;
 
-		public bool closeOnEscapeKey = true;
+		public bool closeOnAccept = true;
+
+		public bool closeOnCancel = true;
+
+		public bool forceCatchAcceptAndCancelEventEvenIfUnfocused;
 
 		public bool closeOnClickedOutside;
 
@@ -86,6 +90,14 @@ namespace Verse
 			get
 			{
 				return false;
+			}
+		}
+
+		public bool IsOpen
+		{
+			get
+			{
+				return Find.WindowStack.IsOpen(this);
 			}
 		}
 
@@ -171,9 +183,13 @@ namespace Verse
 				{
 					Widgets.DrawWindowBackground(winRect);
 				}
-				if (Event.current.type == EventType.KeyDown && Event.current.keyCode == KeyCode.Escape)
+				if (KeyBindingDefOf.Cancel.KeyDownEvent)
 				{
-					Find.WindowStack.Notify_PressedEscape();
+					Find.WindowStack.Notify_PressedCancel();
+				}
+				if (KeyBindingDefOf.Accept.KeyDownEvent)
+				{
+					Find.WindowStack.Notify_PressedAccept();
 				}
 				if (Event.current.type == EventType.MouseDown)
 				{
@@ -215,10 +231,10 @@ namespace Verse
 					Log.Error(string.Concat(new object[]
 					{
 						"Exception filling window for ",
-						this.GetType().ToString(),
+						this.GetType(),
 						": ",
 						ex
-					}));
+					}), false);
 				}
 				GUI.EndGroup();
 				if (this.resizeable && Event.current.type == EventType.Repaint)
@@ -234,10 +250,9 @@ namespace Verse
 						this.Close(true);
 					}
 				}
-				if (this.closeOnEscapeKey && Event.current.type == EventType.KeyDown && (Event.current.keyCode == KeyCode.Escape || Event.current.keyCode == KeyCode.Return))
+				if (KeyBindingDefOf.Cancel.KeyDownEvent && this.IsOpen)
 				{
-					this.Close(true);
-					Event.current.Use();
+					this.OnCancelKeyPressed();
 				}
 				if (this.draggable)
 				{
@@ -266,6 +281,24 @@ namespace Verse
 		{
 			this.windowRect = new Rect(((float)UI.screenWidth - this.InitialSize.x) / 2f, ((float)UI.screenHeight - this.InitialSize.y) / 2f, this.InitialSize.x, this.InitialSize.y);
 			this.windowRect = this.windowRect.Rounded();
+		}
+
+		public virtual void OnCancelKeyPressed()
+		{
+			if (this.closeOnCancel)
+			{
+				this.Close(true);
+				Event.current.Use();
+			}
+		}
+
+		public virtual void OnAcceptKeyPressed()
+		{
+			if (this.closeOnAccept)
+			{
+				this.Close(true);
+				Event.current.Use();
+			}
 		}
 
 		public virtual void Notify_ResolutionChanged()

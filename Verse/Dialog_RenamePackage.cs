@@ -31,7 +31,6 @@ namespace Verse
 		{
 			this.renamingPackage = renamingPackage;
 			this.proposedName = renamingPackage.fileName;
-			this.closeOnEscapeKey = true;
 			this.doCloseX = true;
 			this.forcePause = true;
 		}
@@ -50,12 +49,12 @@ namespace Verse
 		{
 			if (string.IsNullOrEmpty(this.proposedName) || this.proposedName.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
 			{
-				Messages.Message("Invalid filename.", MessageTypeDefOf.RejectInput);
+				Messages.Message("Invalid filename.", MessageTypeDefOf.RejectInput, false);
 				return false;
 			}
 			if (Path.GetExtension(this.proposedName) != ".xml")
 			{
-				Messages.Message("Data package file names must end with .xml", MessageTypeDefOf.RejectInput);
+				Messages.Message("Data package file names must end with .xml", MessageTypeDefOf.RejectInput, false);
 				return false;
 			}
 			this.renamingPackage.fileName = this.proposedName;

@@ -1,19 +1,19 @@
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 using Verse;
 
 namespace RimWorld
 {
-	internal static class InspectGizmoGrid
+	public static class InspectGizmoGrid
 	{
-		public static Gizmo mouseoverGizmo;
-
 		private static List<object> objList = new List<object>();
 
 		private static List<Gizmo> gizmoList = new List<Gizmo>();
 
-		public static void DrawInspectGizmoGridFor(IEnumerable<object> selectedObjects)
+		public static void DrawInspectGizmoGridFor(IEnumerable<object> selectedObjects, out Gizmo mouseoverGizmo)
 		{
+			mouseoverGizmo = null;
 			try
 			{
 				InspectGizmoGrid.objList.Clear();
@@ -24,10 +24,7 @@ namespace RimWorld
 					ISelectable selectable = InspectGizmoGrid.objList[i] as ISelectable;
 					if (selectable != null)
 					{
-						foreach (Gizmo current in selectable.GetGizmos())
-						{
-							InspectGizmoGrid.gizmoList.Add(current);
-						}
+						InspectGizmoGrid.gizmoList.AddRange(selectable.GetGizmos());
 					}
 				}
 				for (int j = 0; j < InspectGizmoGrid.objList.Count; j++)
@@ -44,9 +41,12 @@ namespace RimWorld
 								Command_Action command_Action = new Command_Action();
 								command_Action.defaultLabel = des.LabelCapReverseDesignating(t);
 								float iconAngle;
-								command_Action.icon = des.IconReverseDesignating(t, out iconAngle);
+								Vector2 iconOffset;
+								command_Action.icon = des.IconReverseDesignating(t, out iconAngle, out iconOffset);
 								command_Action.iconAngle = iconAngle;
+								command_Action.iconOffset = iconOffset;
 								command_Action.defaultDesc = des.DescReverseDesignating(t);
+								command_Action.order = ((!(des is Designator_Uninstall)) ? -20f : -11f);
 								command_Action.action = delegate
 								{
 									if (!TutorSystem.AllowAction(des.TutorTagDesignate))
@@ -63,11 +63,13 @@ namespace RimWorld
 						}
 					}
 				}
-				GizmoGridDrawer.DrawGizmoGrid(InspectGizmoGrid.gizmoList, InspectPaneUtility.PaneWidthFor(Find.WindowStack.WindowOfType<IInspectPane>()) + 20f, out InspectGizmoGrid.mouseoverGizmo);
+				InspectGizmoGrid.objList.Clear();
+				GizmoGridDrawer.DrawGizmoGrid(InspectGizmoGrid.gizmoList, InspectPaneUtility.PaneWidthFor(Find.WindowStack.WindowOfType<IInspectPane>()) + 20f, out mouseoverGizmo);
+				InspectGizmoGrid.gizmoList.Clear();
 			}
 			catch (Exception ex)
 			{
-				Log.ErrorOnce(ex.ToString(), 3427734);
+				Log.ErrorOnce(ex.ToString(), 3427734, false);
 			}
 		}
 	}

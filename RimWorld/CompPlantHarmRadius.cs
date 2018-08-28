@@ -1,5 +1,4 @@
 using System;
-using UnityEngine;
 using Verse;
 
 namespace RimWorld
@@ -9,6 +8,8 @@ namespace RimWorld
 		private int plantHarmAge;
 
 		private int ticksToPlantHarm;
+
+		private float LeaflessPlantKillChance = 0.09f;
 
 		protected CompProperties_PlantHarmRadius PropsPlantHarmRadius
 		{
@@ -42,7 +43,7 @@ namespace RimWorld
 				int num5;
 				if (num4 >= 1f)
 				{
-					this.ticksToPlantHarm = Mathf.RoundToInt(num4);
+					this.ticksToPlantHarm = GenMath.RoundRandom(num4);
 					num5 = 1;
 				}
 				else
@@ -59,7 +60,7 @@ namespace RimWorld
 
 		private void HarmRandomPlantInRadius(float radius)
 		{
-			IntVec3 c = this.parent.Position + (Rand.PointOnDisc * radius).ToIntVec3();
+			IntVec3 c = this.parent.Position + (Rand.InsideUnitCircleVec3 * radius).ToIntVec3();
 			if (!c.InBounds(this.parent.Map))
 			{
 				return;
@@ -69,7 +70,7 @@ namespace RimWorld
 			{
 				if (plant.LeaflessNow)
 				{
-					if (Rand.Value < 0.2f)
+					if (Rand.Value < this.LeaflessPlantKillChance)
 					{
 						plant.Kill(null, null);
 					}

@@ -12,11 +12,13 @@ namespace RimWorld
 
 		private Effecter effecter;
 
-		public const int BaseTicksBetweenPickHits = 120;
+		public const int BaseTicksBetweenPickHits = 100;
 
-		private const int BaseDamagePerPickHit = 80;
+		private const int BaseDamagePerPickHit_NaturalRock = 80;
 
-		private const float MinMiningSpeedForNPCs = 0.5f;
+		private const int BaseDamagePerPickHit_NotNaturalRock = 40;
+
+		private const float MinMiningSpeedFactorForNPCs = 0.6f;
 
 		private Thing MineTarget
 		{
@@ -26,9 +28,12 @@ namespace RimWorld
 			}
 		}
 
-		public override bool TryMakePreToilReservations()
+		public override bool TryMakePreToilReservations(bool errorOnFailed)
 		{
-			return this.pawn.Reserve(this.MineTarget, this.job, 1, -1, null);
+			Pawn pawn = this.pawn;
+			LocalTargetInfo target = this.MineTarget;
+			Job job = this.job;
+			return pawn.Reserve(target, job, 1, -1, null, errorOnFailed);
 		}
 
 		[DebuggerHidden]
@@ -46,9 +51,9 @@ namespace RimWorld
 				{
 					this.$this.ResetTicksToPickHit();
 				}
-				if (actor.skills != null)
+				if (actor.skills != null && (mineTarget.Faction != actor.Faction || actor.Faction == null))
 				{
-					actor.skills.Learn(SkillDefOf.Mining, 0.11f, false);
+					actor.skills.Learn(SkillDefOf.Mining, 0.07f, false);
 				}
 				this.$this.ticksToPickHit--;
 				if (this.$this.ticksToPickHit <= 0)
@@ -59,14 +64,14 @@ namespace RimWorld
 						this.$this.effecter = EffecterDefOf.Mine.Spawn();
 					}
 					this.$this.effecter.Trigger(actor, mineTarget);
-					int num = 80;
+					int num = (!mineTarget.def.building.isNaturalRock) ? 40 : 80;
 					Mineable mineable = mineTarget as Mineable;
 					if (mineable == null || mineTarget.HitPoints > num)
 					{
 						DamageDef mining = DamageDefOf.Mining;
-						int amount = num;
+						float amount = (float)num;
 						Pawn actor2 = mine.actor;
-						DamageInfo dinfo = new DamageInfo(mining, amount, -1f, actor2, null, null, DamageInfo.SourceCategory.ThingOrUnknown);
+						DamageInfo dinfo = new DamageInfo(mining, amount, 0f, -1f, actor2, null, null, DamageInfo.SourceCategory.ThingOrUnknown, null);
 						mineTarget.TakeDamage(dinfo);
 					}
 					else
@@ -112,17 +117,18 @@ namespace RimWorld
 			mine.defaultCompleteMode = ToilCompleteMode.Never;
 			mine.WithProgressBar(TargetIndex.A, () => 1f - (float)this.$this.MineTarget.HitPoints / (float)this.$this.MineTarget.MaxHitPoints, false, -0.5f);
 			mine.FailOnCannotTouch(TargetIndex.A, PathEndMode.Touch);
+			mine.activeSkill = (() => SkillDefOf.Mining);
 			yield return mine;
 		}
 
 		private void ResetTicksToPickHit()
 		{
 			float num = this.pawn.GetStatValue(StatDefOf.MiningSpeed, true);
-			if (num < 0.5f && this.pawn.Faction != Faction.OfPlayer)
+			if (num < 0.6f && this.pawn.Faction != Faction.OfPlayer)
 			{
-				num = 0.5f;
+				num = 0.6f;
 			}
-			this.ticksToPickHit = (int)Math.Round((double)(120f / num));
+			this.ticksToPickHit = (int)Math.Round((double)(100f / num));
 		}
 
 		public override void ExposeData()

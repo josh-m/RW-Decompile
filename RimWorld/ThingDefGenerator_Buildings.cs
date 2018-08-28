@@ -9,15 +9,15 @@ namespace RimWorld
 {
 	public static class ThingDefGenerator_Buildings
 	{
-		public static readonly string BlueprintDefNameSuffix = "_Blueprint";
+		public static readonly string BlueprintDefNamePrefix = "Blueprint_";
 
-		public static readonly string InstallBlueprintDefNameSuffix = "_Install";
+		public static readonly string InstallBlueprintDefNamePrefix = "Install_";
 
-		public static readonly string BuildingFrameDefNameSuffix = "_Frame";
+		public static readonly string BuildingFrameDefNamePrefix = "Frame_";
 
 		private static readonly string TerrainBlueprintGraphicPath = "Things/Special/TerrainBlueprint";
 
-		private static Color BlueprintColor = new Color(0.5f, 0.5f, 1f, 0.35f);
+		private static Color BlueprintColor = new Color(0.8235294f, 0.921568632f, 1f, 0.6f);
 
 		[DebuggerHidden]
 		public static IEnumerable<ThingDef> ImpliedBlueprintAndFrameDefs()
@@ -25,7 +25,7 @@ namespace RimWorld
 			foreach (ThingDef def in DefDatabase<ThingDef>.AllDefs.ToList<ThingDef>())
 			{
 				ThingDef blueprint = null;
-				if (def.designationCategory != null)
+				if (def.BuildableByPlayer)
 				{
 					blueprint = ThingDefGenerator_Buildings.NewBlueprintDef_Thing(def, false, null);
 					yield return blueprint;
@@ -37,7 +37,7 @@ namespace RimWorld
 			}
 			foreach (TerrainDef terrDef in DefDatabase<TerrainDef>.AllDefs)
 			{
-				if (terrDef.designationCategory != null)
+				if (terrDef.BuildableByPlayer)
 				{
 					yield return ThingDefGenerator_Buildings.NewBlueprintDef_Terrain(terrDef);
 				}
@@ -66,7 +66,7 @@ namespace RimWorld
 		{
 			return new ThingDef
 			{
-				isFrame = true,
+				isFrameInt = true,
 				category = ThingCategory.Building,
 				label = "Unspecified building frame",
 				thingClass = typeof(Frame),
@@ -86,10 +86,11 @@ namespace RimWorld
 		private static ThingDef NewBlueprintDef_Thing(ThingDef def, bool isInstallBlueprint, ThingDef normalBlueprint = null)
 		{
 			ThingDef thingDef = ThingDefGenerator_Buildings.BaseBlueprintDef();
-			thingDef.defName = def.defName + ThingDefGenerator_Buildings.BlueprintDefNameSuffix;
+			thingDef.defName = ThingDefGenerator_Buildings.BlueprintDefNamePrefix + def.defName;
 			thingDef.label = def.label + "BlueprintLabelExtra".Translate();
 			thingDef.size = def.size;
 			thingDef.clearBuildingArea = def.clearBuildingArea;
+			thingDef.modContentPack = def.modContentPack;
 			if (!isInstallBlueprint)
 			{
 				thingDef.constructionSkillPrerequisite = def.constructionSkillPrerequisite;
@@ -101,8 +102,7 @@ namespace RimWorld
 			}
 			if (isInstallBlueprint)
 			{
-				ThingDef expr_90 = thingDef;
-				expr_90.defName += ThingDefGenerator_Buildings.InstallBlueprintDefNameSuffix;
+				thingDef.defName = ThingDefGenerator_Buildings.BlueprintDefNamePrefix + ThingDefGenerator_Buildings.InstallBlueprintDefNamePrefix + def.defName;
 			}
 			if (isInstallBlueprint && normalBlueprint != null)
 			{
@@ -111,25 +111,26 @@ namespace RimWorld
 			else
 			{
 				thingDef.graphicData = new GraphicData();
-				if (def.blueprintGraphicData != null)
+				if (def.building.blueprintGraphicData != null)
 				{
-					thingDef.graphicData.CopyFrom(def.blueprintGraphicData);
+					thingDef.graphicData.CopyFrom(def.building.blueprintGraphicData);
 					if (thingDef.graphicData.graphicClass == null)
 					{
 						thingDef.graphicData.graphicClass = typeof(Graphic_Single);
 					}
-					if (thingDef.graphicData.shaderType == ShaderType.None)
+					if (thingDef.graphicData.shaderType == null)
 					{
-						thingDef.graphicData.shaderType = ShaderType.MetaOverlay;
+						thingDef.graphicData.shaderType = ShaderTypeDefOf.Transparent;
 					}
 					thingDef.graphicData.drawSize = def.graphicData.drawSize;
 					thingDef.graphicData.linkFlags = def.graphicData.linkFlags;
 					thingDef.graphicData.linkType = def.graphicData.linkType;
+					thingDef.graphicData.color = ThingDefGenerator_Buildings.BlueprintColor;
 				}
 				else
 				{
 					thingDef.graphicData.CopyFrom(def.graphicData);
-					thingDef.graphicData.shaderType = ShaderType.Transparent;
+					thingDef.graphicData.shaderType = ShaderTypeDefOf.EdgeDetect;
 					thingDef.graphicData.color = ThingDefGenerator_Buildings.BlueprintColor;
 					thingDef.graphicData.colorTwo = Color.white;
 					thingDef.graphicData.shadowData = null;
@@ -137,7 +138,7 @@ namespace RimWorld
 			}
 			if (thingDef.graphicData.shadowData != null)
 			{
-				Log.Error("Blueprint has shadow: " + def);
+				Log.Error("Blueprint has shadow: " + def, false);
 			}
 			if (isInstallBlueprint)
 			{
@@ -145,7 +146,7 @@ namespace RimWorld
 			}
 			else
 			{
-				thingDef.thingClass = def.blueprintClass;
+				thingDef.thingClass = def.building.blueprintClass;
 			}
 			if (def.thingClass == typeof(Building_Door))
 			{
@@ -170,11 +171,12 @@ namespace RimWorld
 		private static ThingDef NewFrameDef_Thing(ThingDef def)
 		{
 			ThingDef thingDef = ThingDefGenerator_Buildings.BaseFrameDef();
-			thingDef.defName = def.defName + ThingDefGenerator_Buildings.BuildingFrameDefNameSuffix;
+			thingDef.defName = ThingDefGenerator_Buildings.BuildingFrameDefNamePrefix + def.defName;
 			thingDef.label = def.label + "FrameLabelExtra".Translate();
 			thingDef.size = def.size;
 			thingDef.SetStatBaseValue(StatDefOf.MaxHitPoints, (float)def.BaseMaxHitPoints * 0.25f);
 			thingDef.SetStatBaseValue(StatDefOf.Beauty, -8f);
+			thingDef.SetStatBaseValue(StatDefOf.Flammability, def.BaseFlammability);
 			thingDef.fillPercent = 0.2f;
 			thingDef.pathCost = 10;
 			thingDef.description = def.description;
@@ -188,12 +190,13 @@ namespace RimWorld
 			thingDef.building.isEdifice = def.building.isEdifice;
 			thingDef.constructionSkillPrerequisite = def.constructionSkillPrerequisite;
 			thingDef.clearBuildingArea = def.clearBuildingArea;
+			thingDef.modContentPack = def.modContentPack;
 			thingDef.drawPlaceWorkersWhileSelected = def.drawPlaceWorkersWhileSelected;
 			if (def.placeWorkers != null)
 			{
 				thingDef.placeWorkers = new List<Type>(def.placeWorkers);
 			}
-			if (def.designationCategory != null)
+			if (def.BuildableByPlayer)
 			{
 				thingDef.stuffCategories = def.stuffCategories;
 			}
@@ -206,15 +209,16 @@ namespace RimWorld
 		{
 			ThingDef thingDef = ThingDefGenerator_Buildings.BaseBlueprintDef();
 			thingDef.thingClass = typeof(Blueprint_Build);
-			thingDef.defName = terrDef.defName + ThingDefGenerator_Buildings.BlueprintDefNameSuffix;
+			thingDef.defName = ThingDefGenerator_Buildings.BlueprintDefNamePrefix + terrDef.defName;
 			thingDef.label = terrDef.label + "BlueprintLabelExtra".Translate();
 			thingDef.entityDefToBuild = terrDef;
 			thingDef.graphicData = new GraphicData();
-			thingDef.graphicData.shaderType = ShaderType.MetaOverlay;
+			thingDef.graphicData.shaderType = ShaderTypeDefOf.MetaOverlay;
 			thingDef.graphicData.texPath = ThingDefGenerator_Buildings.TerrainBlueprintGraphicPath;
 			thingDef.graphicData.graphicClass = typeof(Graphic_Single);
 			thingDef.constructionSkillPrerequisite = terrDef.constructionSkillPrerequisite;
 			thingDef.clearBuildingArea = false;
+			thingDef.modContentPack = terrDef.modContentPack;
 			thingDef.entityDefToBuild = terrDef;
 			terrDef.blueprintDef = thingDef;
 			return thingDef;
@@ -223,7 +227,7 @@ namespace RimWorld
 		private static ThingDef NewFrameDef_Terrain(TerrainDef terrDef)
 		{
 			ThingDef thingDef = ThingDefGenerator_Buildings.BaseFrameDef();
-			thingDef.defName = terrDef.defName + ThingDefGenerator_Buildings.BuildingFrameDefNameSuffix;
+			thingDef.defName = ThingDefGenerator_Buildings.BuildingFrameDefNamePrefix + terrDef.defName;
 			thingDef.label = terrDef.label + "FrameLabelExtra".Translate();
 			thingDef.entityDefToBuild = terrDef;
 			thingDef.useHitPoints = false;
@@ -235,12 +239,13 @@ namespace RimWorld
 			thingDef.building.isEdifice = false;
 			thingDef.constructionSkillPrerequisite = terrDef.constructionSkillPrerequisite;
 			thingDef.clearBuildingArea = false;
+			thingDef.modContentPack = terrDef.modContentPack;
 			thingDef.category = ThingCategory.Ethereal;
 			thingDef.entityDefToBuild = terrDef;
 			terrDef.frameDef = thingDef;
 			if (!thingDef.IsFrame)
 			{
-				Log.Error("Framedef is not frame: " + thingDef);
+				Log.Error("Framedef is not frame: " + thingDef, false);
 			}
 			return thingDef;
 		}

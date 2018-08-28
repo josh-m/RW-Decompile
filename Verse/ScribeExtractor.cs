@@ -1,3 +1,4 @@
+using RimWorld;
 using RimWorld.Planet;
 using System;
 using System.Xml;
@@ -30,13 +31,13 @@ namespace Verse
 						typeof(T),
 						":\n",
 						ex.ToString()
-					}));
+					}), false);
 				}
 				result = default(T);
 			}
 			catch (Exception arg)
 			{
-				Log.Error("Exception loading XML: " + arg);
+				Log.Error("Exception loading XML: " + arg, false);
 				result = defaultValue;
 			}
 			return result;
@@ -48,17 +49,32 @@ namespace Verse
 			{
 				return (T)((object)null);
 			}
-			string defName = BackCompatibility.BackCompatibleDefName(typeof(T), subNode.InnerText);
-			T namedSilentFail = DefDatabase<T>.GetNamedSilentFail(defName);
+			string text = BackCompatibility.BackCompatibleDefName(typeof(T), subNode.InnerText, false);
+			T namedSilentFail = DefDatabase<T>.GetNamedSilentFail(text);
 			if (namedSilentFail == null)
 			{
-				Log.Error(string.Concat(new object[]
+				if (text == subNode.InnerText)
 				{
-					"Could not load reference to ",
-					typeof(T),
-					" named ",
-					subNode.InnerText
-				}));
+					Log.Error(string.Concat(new object[]
+					{
+						"Could not load reference to ",
+						typeof(T),
+						" named ",
+						subNode.InnerText
+					}), false);
+				}
+				else
+				{
+					Log.Error(string.Concat(new object[]
+					{
+						"Could not load reference to ",
+						typeof(T),
+						" named ",
+						subNode.InnerText,
+						" after compatibility-conversion to ",
+						text
+					}), false);
+				}
 			}
 			return namedSilentFail;
 		}
@@ -75,7 +91,7 @@ namespace Verse
 		{
 			if (Scribe.mode != LoadSaveMode.LoadingVars)
 			{
-				Log.Error("Called SaveableFromNode(), but mode is " + Scribe.mode);
+				Log.Error("Called SaveableFromNode(), but mode is " + Scribe.mode, false);
 				return default(T);
 			}
 			if (subNode == null)
@@ -84,7 +100,7 @@ namespace Verse
 			}
 			XmlAttribute xmlAttribute = subNode.Attributes["IsNull"];
 			T result;
-			if (xmlAttribute != null && xmlAttribute.Value == "True")
+			if (xmlAttribute != null && xmlAttribute.Value.ToLower() == "true")
 			{
 				result = default(T);
 			}
@@ -97,6 +113,7 @@ namespace Verse
 					Type type = BackCompatibility.GetBackCompatibleType(typeof(T), text, subNode);
 					if (type == null)
 					{
+						Type bestFallbackType = ScribeExtractor.GetBestFallbackType<T>(subNode);
 						Log.Error(string.Concat(new object[]
 						{
 							"Could not find class ",
@@ -104,11 +121,11 @@ namespace Verse
 							" while resolving node ",
 							subNode.Name,
 							". Trying to use ",
-							typeof(T),
+							bestFallbackType,
 							" instead. Full node: ",
 							subNode.OuterXml
-						}));
-						type = typeof(T);
+						}), false);
+						type = bestFallbackType;
 					}
 					if (type.IsAbstract)
 					{
@@ -151,10 +168,50 @@ namespace Verse
 						ex,
 						"\nSubnode:\n",
 						subNode.OuterXml
-					}));
+					}), false);
 				}
 			}
 			return result;
+		}
+
+		private static Type GetBestFallbackType<T>(XmlNode node)
+		{
+			if (typeof(Thing).IsAssignableFrom(typeof(T)))
+			{
+				ThingDef thingDef = ScribeExtractor.TryFindDef<ThingDef>(node, "def");
+				if (thingDef != null)
+				{
+					return thingDef.thingClass;
+				}
+			}
+			else if (typeof(Hediff).IsAssignableFrom(typeof(T)))
+			{
+				HediffDef hediffDef = ScribeExtractor.TryFindDef<HediffDef>(node, "def");
+				if (hediffDef != null)
+				{
+					return hediffDef.hediffClass;
+				}
+			}
+			else if (typeof(Thought).IsAssignableFrom(typeof(T)))
+			{
+				ThoughtDef thoughtDef = ScribeExtractor.TryFindDef<ThoughtDef>(node, "def");
+				if (thoughtDef != null)
+				{
+					return thoughtDef.thoughtClass;
+				}
+			}
+			return typeof(T);
+		}
+
+		private static TDef TryFindDef<TDef>(XmlNode node, string defNodeName) where TDef : Def, new()
+		{
+			XmlElement xmlElement = node[defNodeName];
+			if (xmlElement == null)
+			{
+				return (TDef)((object)null);
+			}
+			string defName = BackCompatibility.BackCompatibleDefName(typeof(TDef), xmlElement.InnerText, false);
+			return DefDatabase<TDef>.GetNamedSilentFail(defName);
 		}
 
 		public static LocalTargetInfo LocalTargetInfoFromNode(XmlNode node, string label, LocalTargetInfo defaultValue)
@@ -382,6 +439,39 @@ namespace Verse
 				return loaded;
 			}
 			return loaded;
+		}
+
+		public static BodyPartRecord BodyPartFromNode(XmlNode node, string label, BodyPartRecord defaultValue)
+		{
+			if (node != null && Scribe.EnterNode(label))
+			{
+				try
+				{
+					XmlAttribute xmlAttribute = node.Attributes["IsNull"];
+					BodyPartRecord result;
+					if (xmlAttribute != null && xmlAttribute.Value.ToLower() == "true")
+					{
+						result = null;
+						return result;
+					}
+					BodyDef bodyDef = ScribeExtractor.DefFromNode<BodyDef>(Scribe.loader.curXmlParent["body"]);
+					XmlElement xmlElement = Scribe.loader.curXmlParent["index"];
+					int index = (xmlElement == null) ? -1 : int.Parse(xmlElement.InnerText);
+					if (bodyDef == null)
+					{
+						result = null;
+						return result;
+					}
+					result = bodyDef.GetPartAtIndex(index);
+					return result;
+				}
+				finally
+				{
+					Scribe.ExitNode();
+				}
+				return defaultValue;
+			}
+			return defaultValue;
 		}
 
 		private static void ExtractCellAndMapPairFromTargetInfo(string str, out string cell, out string map)

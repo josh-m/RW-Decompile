@@ -28,32 +28,32 @@ namespace Verse
 			{
 				this.DrawButtons();
 			}, false, false, 0f);
-			if (KeyBindingDefOf.ToggleDebugLog.KeyDownEvent)
+			if (KeyBindingDefOf.Dev_ToggleDebugLog.KeyDownEvent)
 			{
 				this.ToggleLogWindow();
 				Event.current.Use();
 			}
-			if (KeyBindingDefOf.ToggleDebugActionsMenu.KeyDownEvent)
+			if (KeyBindingDefOf.Dev_ToggleDebugActionsMenu.KeyDownEvent)
 			{
 				this.ToggleDebugActionsMenu();
 				Event.current.Use();
 			}
-			if (KeyBindingDefOf.ToggleDebugLogMenu.KeyDownEvent)
+			if (KeyBindingDefOf.Dev_ToggleDebugLogMenu.KeyDownEvent)
 			{
 				this.ToggleDebugLogMenu();
 				Event.current.Use();
 			}
-			if (KeyBindingDefOf.ToggleDebugSettingsMenu.KeyDownEvent)
+			if (KeyBindingDefOf.Dev_ToggleDebugSettingsMenu.KeyDownEvent)
 			{
 				this.ToggleDebugSettingsMenu();
 				Event.current.Use();
 			}
-			if (KeyBindingDefOf.ToggleDebugInspector.KeyDownEvent)
+			if (KeyBindingDefOf.Dev_ToggleDebugInspector.KeyDownEvent)
 			{
 				this.ToggleDebugInspector();
 				Event.current.Use();
 			}
-			if (Current.ProgramState == ProgramState.Playing && KeyBindingDefOf.ToggleGodMode.KeyDownEvent)
+			if (Current.ProgramState == ProgramState.Playing && KeyBindingDefOf.Dev_ToggleGodMode.KeyDownEvent)
 			{
 				this.ToggleGodMode();
 				Event.current.Use();
@@ -63,33 +63,37 @@ namespace Verse
 		private void DrawButtons()
 		{
 			WidgetRow widgetRow = new WidgetRow();
-			if (widgetRow.ButtonIcon(TexButton.ToggleLog, "Open the debug log."))
+			if (widgetRow.ButtonIcon(TexButton.ToggleLog, "Open the debug log.", null))
 			{
 				this.ToggleLogWindow();
 			}
-			if (widgetRow.ButtonIcon(TexButton.OpenPackageEditor, "Open the package editor.\n\nThis lets you edit game data while the game is running."))
+			if (widgetRow.ButtonIcon(TexButton.ToggleTweak, "Open tweakvalues menu.\n\nThis lets you change internal values.", null))
+			{
+				this.ToggleTweakValuesMenu();
+			}
+			if (widgetRow.ButtonIcon(TexButton.OpenPackageEditor, "Open the package editor.\n\nThis lets you edit game data while the game is running.", null))
 			{
 				this.OpenPackageEditor();
 			}
-			if (widgetRow.ButtonIcon(TexButton.OpenInspectSettings, "Open the view settings.\n\nThis lets you see special debug visuals."))
+			if (widgetRow.ButtonIcon(TexButton.OpenInspectSettings, "Open the view settings.\n\nThis lets you see special debug visuals.", null))
 			{
 				this.ToggleDebugSettingsMenu();
 			}
-			if (widgetRow.ButtonIcon(TexButton.OpenDebugActionsMenu, "Open debug actions menu.\n\nThis lets you spawn items and force various events."))
+			if (widgetRow.ButtonIcon(TexButton.OpenDebugActionsMenu, "Open debug actions menu.\n\nThis lets you spawn items and force various events.", null))
 			{
 				this.ToggleDebugActionsMenu();
 			}
-			if (widgetRow.ButtonIcon(TexButton.OpenDebugActionsMenu, "Open debug logging menu."))
+			if (widgetRow.ButtonIcon(TexButton.OpenDebugActionsMenu, "Open debug logging menu.", null))
 			{
 				this.ToggleDebugLogMenu();
 			}
-			if (widgetRow.ButtonIcon(TexButton.OpenInspector, "Open the inspector.\n\nThis lets you inspect what's happening in the game, down to individual variables."))
+			if (widgetRow.ButtonIcon(TexButton.OpenInspector, "Open the inspector.\n\nThis lets you inspect what's happening in the game, down to individual variables.", null))
 			{
 				this.ToggleDebugInspector();
 			}
 			if (Current.ProgramState == ProgramState.Playing)
 			{
-				if (widgetRow.ButtonIcon(TexButton.ToggleGodMode, "Toggle god mode.\n\nWhen god mode is on, you can build stuff instantly, for free, and sell things that aren't yours."))
+				if (widgetRow.ButtonIcon(TexButton.ToggleGodMode, "Toggle god mode.\n\nWhen god mode is on, you can build stuff instantly, for free, and sell things that aren't yours.", null))
 				{
 					this.ToggleGodMode();
 				}
@@ -144,11 +148,19 @@ namespace Verse
 			}
 		}
 
+		private void ToggleTweakValuesMenu()
+		{
+			if (!Find.WindowStack.TryRemove(typeof(EditWindow_TweakValues), true))
+			{
+				Find.WindowStack.Add(new EditWindow_TweakValues());
+			}
+		}
+
 		private void ToggleDebugLogMenu()
 		{
-			if (!Find.WindowStack.TryRemove(typeof(Dialog_DebugLogMenu), true))
+			if (!Find.WindowStack.TryRemove(typeof(Dialog_DebugOutputMenu), true))
 			{
-				Find.WindowStack.Add(new Dialog_DebugLogMenu());
+				Find.WindowStack.Add(new Dialog_DebugOutputMenu());
 			}
 		}
 

@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Text;
 using Verse;
 
@@ -21,13 +20,13 @@ namespace RimWorld
 		[DebuggerHidden]
 		private IEnumerable<Pawn> AffectedPawns()
 		{
-			foreach (Pawn p in PawnsFinder.AllMaps_FreeColonists)
+			foreach (Pawn p in PawnsFinder.AllMapsCaravansAndTravelingTransportPods_Alive_FreeColonists_NoCryptosleep)
 			{
 				if (p.Dead)
 				{
-					Log.Error("Dead pawn in PawnsFinder.AllMaps_FreeColonists:" + p);
+					Log.Error("Dead pawn in PawnsFinder.AllMapsCaravansAndTravelingTransportPods_Alive_FreeColonists:" + p, false);
 				}
-				else if (!ThingOwnerUtility.ContentsFrozen(p.ParentHolder))
+				else
 				{
 					p.needs.mood.thoughts.GetAllMoodThoughts(Alert_Thought.tmpThoughts);
 					try
@@ -51,12 +50,7 @@ namespace RimWorld
 
 		public override AlertReport GetReport()
 		{
-			Pawn pawn = this.AffectedPawns().FirstOrDefault<Pawn>();
-			if (pawn != null)
-			{
-				return AlertReport.CulpritIs(pawn);
-			}
-			return AlertReport.Inactive;
+			return AlertReport.CulpritsAre(this.AffectedPawns());
 		}
 
 		public override string GetExplanation()
@@ -64,7 +58,7 @@ namespace RimWorld
 			StringBuilder stringBuilder = new StringBuilder();
 			foreach (Pawn current in this.AffectedPawns())
 			{
-				stringBuilder.AppendLine("    " + current.NameStringShort);
+				stringBuilder.AppendLine("    " + current.LabelShort);
 			}
 			return this.explanationKey.Translate(new object[]
 			{

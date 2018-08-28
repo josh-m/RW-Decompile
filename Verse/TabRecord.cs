@@ -12,17 +12,34 @@ namespace Verse
 
 		public bool selected;
 
+		public Func<bool> selectedGetter;
+
 		private const float TabEndWidth = 30f;
 
 		private const float TabMiddleGraphicWidth = 4f;
 
 		private static readonly Texture2D TabAtlas = ContentFinder<Texture2D>.Get("UI/Widgets/TabAtlas", true);
 
+		public bool Selected
+		{
+			get
+			{
+				return (this.selectedGetter == null) ? this.selected : this.selectedGetter();
+			}
+		}
+
 		public TabRecord(string label, Action clickedAction, bool selected)
 		{
 			this.label = label;
 			this.clickedAction = clickedAction;
 			this.selected = selected;
+		}
+
+		public TabRecord(string label, Action clickedAction, Func<bool> selected)
+		{
+			this.label = label;
+			this.clickedAction = clickedAction;
+			this.selectedGetter = selected;
 		}
 
 		public void Draw(Rect rect)
@@ -48,9 +65,11 @@ namespace Verse
 				rect2.x += 2f;
 				rect2.y -= 2f;
 			}
+			Text.WordWrap = false;
 			Widgets.Label(rect2, this.label);
+			Text.WordWrap = true;
 			GUI.color = Color.white;
-			if (!this.selected)
+			if (!this.Selected)
 			{
 				Rect drawRect4 = new Rect(rect);
 				drawRect4.y += rect.height;

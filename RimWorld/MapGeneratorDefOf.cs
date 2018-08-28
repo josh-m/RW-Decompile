@@ -6,10 +6,17 @@ namespace RimWorld
 	[DefOf]
 	public static class MapGeneratorDefOf
 	{
-		public static MapGeneratorDef MainMap;
+		public static MapGeneratorDef Encounter;
 
-		public static MapGeneratorDef FactionBase;
+		public static MapGeneratorDef Base_Player;
 
-		public static MapGeneratorDef EscapeShipMap;
+		public static MapGeneratorDef Base_Faction;
+
+		public static MapGeneratorDef EscapeShip;
+
+		static MapGeneratorDefOf()
+		{
+			DefOfHelper.EnsureInitializedInCtor(typeof(MapGeneratorDefOf));
+		}
 	}
 }

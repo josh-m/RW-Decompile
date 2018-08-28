@@ -31,22 +31,50 @@ namespace RimWorld
 			}
 		}
 
+		private bool Active
+		{
+			get
+			{
+				Hive hive = this.parent as Hive;
+				return hive == null || hive.active;
+			}
+		}
+
 		public override void PostExposeData()
 		{
 			Scribe_Values.Look<int>(ref this.ticksSinceMaintain, "ticksSinceMaintain", 0, false);
 		}
 
+		public override void CompTick()
+		{
+			base.CompTick();
+			if (!this.Active)
+			{
+				return;
+			}
+			this.ticksSinceMaintain++;
+			if (Find.TickManager.TicksGame % 250 == 0)
+			{
+				this.CheckTakeDamage();
+			}
+		}
+
 		public override void CompTickRare()
 		{
-			Hive hive = this.parent as Hive;
-			if (hive != null && !hive.active)
+			base.CompTickRare();
+			if (!this.Active)
 			{
 				return;
 			}
 			this.ticksSinceMaintain += 250;
+			this.CheckTakeDamage();
+		}
+
+		private void CheckTakeDamage()
+		{
 			if (this.CurStage == MaintainableStage.Damaging)
 			{
-				this.parent.TakeDamage(new DamageInfo(DamageDefOf.Deterioration, this.Props.damagePerTickRare, -1f, null, null, null, DamageInfo.SourceCategory.ThingOrUnknown));
+				this.parent.TakeDamage(new DamageInfo(DamageDefOf.Deterioration, (float)this.Props.damagePerTickRare, 0f, -1f, null, null, null, DamageInfo.SourceCategory.ThingOrUnknown, null));
 			}
 		}
 

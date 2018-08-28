@@ -58,7 +58,7 @@ namespace Verse
 							" at ",
 							intVec,
 							". Destroying old edifice."
-						}));
+						}), false);
 						this[intVec].Destroy(DestroyMode.Vanish);
 						return;
 					}

@@ -24,5 +24,10 @@ namespace RimWorld
 		public static BiomeDef Ocean;
 
 		public static BiomeDef Lake;
+
+		static BiomeDefOf()
+		{
+			DefOfHelper.EnsureInitializedInCtor(typeof(BiomeDefOf));
+		}
 	}
 }

@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using UnityEngine;
 using Verse;
 
 namespace RimWorld
@@ -11,15 +10,7 @@ namespace RimWorld
 
 		public List<Thing> thingsTrader = new List<Thing>();
 
-		public string editBuffer;
-
-		private const float MinimumBuyPrice = 0.5f;
-
-		private const float MinimumSellPrice = 0.01f;
-
-		public const float PriceFactorBuy_Global = 1.5f;
-
-		public const float PriceFactorSell_Global = 0.5f;
+		private int countToTransfer;
 
 		private float pricePlayerBuy = -1f;
 
@@ -33,7 +24,20 @@ namespace RimWorld
 
 		private float priceGain_PlayerNegotiator;
 
-		private float priceGain_FactionBase;
+		private float priceGain_Settlement;
+
+		public override int CountToTransfer
+		{
+			get
+			{
+				return this.countToTransfer;
+			}
+			protected set
+			{
+				this.countToTransfer = value;
+				base.EditBuffer = value.ToStringCached();
+			}
+		}
 
 		public Thing FirstThingColony
 		{
@@ -63,7 +67,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return this.AnyThing.LabelCapNoCount;
+				return this.AnyThing.LabelNoCount;
 			}
 		}
 
@@ -79,7 +83,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return !this.IsCurrency;
+				return !this.IsCurrency || (TradeSession.Active && TradeSession.giftMode);
 			}
 		}
 
@@ -87,7 +91,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return TradeSession.trader.TraderKind.WillTrade(this.AnyThing.def);
+				return TradeSession.trader.TraderKind.WillTrade(this.ThingDef);
 			}
 		}
 
@@ -111,7 +115,7 @@ namespace RimWorld
 				{
 					return this.FirstThingTrader.GetInnerIfMinified();
 				}
-				Log.Error(base.GetType() + " lacks AnyThing.");
+				Log.Error(base.GetType() + " lacks AnyThing.", false);
 				return null;
 			}
 		}
@@ -132,6 +136,10 @@ namespace RimWorld
 		{
 			get
 			{
+				if (!this.HasAnyThing)
+				{
+					return null;
+				}
 				return this.AnyThing.Stuff;
 			}
 		}
@@ -144,7 +152,7 @@ namespace RimWorld
 				{
 					return string.Empty;
 				}
-				return this.AnyThing.GetDescription();
+				return this.AnyThing.DescriptionDetailed;
 			}
 		}
 
@@ -152,15 +160,15 @@ namespace RimWorld
 		{
 			get
 			{
-				if (base.CountToTransfer == 0)
+				if (this.CountToTransfer == 0)
 				{
 					return TradeAction.None;
 				}
-				if (base.CountToTransfer > 0)
+				if (base.CountToTransferToDestination > 0)
 				{
-					return TradeAction.PlayerBuys;
+					return TradeAction.PlayerSells;
 				}
-				return TradeAction.PlayerSells;
+				return TradeAction.PlayerBuys;
 			}
 		}
 
@@ -176,11 +184,15 @@ namespace RimWorld
 		{
 			get
 			{
+				if (TradeSession.Active && TradeSession.giftMode)
+				{
+					return TransferablePositiveCountDirection.Destination;
+				}
 				return TransferablePositiveCountDirection.Source;
 			}
 		}
 
-		public float CurTotalSilverCost
+		public float CurTotalSilverCostForSource
 		{
 			get
 			{
@@ -188,7 +200,19 @@ namespace RimWorld
 				{
 					return 0f;
 				}
-				return (float)base.CountToTransfer * this.GetPriceFor(this.ActionToDo);
+				return (float)base.CountToTransferToSource * this.GetPriceFor(this.ActionToDo);
+			}
+		}
+
+		public float CurTotalSilverCostForDestination
+		{
+			get
+			{
+				if (this.ActionToDo == TradeAction.None)
+				{
+					return 0f;
+				}
+				return (float)base.CountToTransferToDestination * this.GetPriceFor(this.ActionToDo);
 			}
 		}
 
@@ -206,7 +230,7 @@ namespace RimWorld
 			{
 				if (!this.HasAnyThing)
 				{
-					Log.ErrorOnce(this.ToString() + " is bugged. There will be no more logs about this.", 162112);
+					Log.ErrorOnce(this.ToString() + " is bugged. There will be no more logs about this.", 162112, false);
 					return true;
 				}
 				return false;
@@ -246,28 +270,22 @@ namespace RimWorld
 			{
 				return;
 			}
+			if (this.IsCurrency)
+			{
+				this.pricePlayerBuy = this.BaseMarketValue;
+				this.pricePlayerSell = this.BaseMarketValue;
+				return;
+			}
 			this.priceFactorBuy_TraderPriceType = this.PriceTypeFor(TradeAction.PlayerBuys).PriceMultiplier();
 			this.priceFactorSell_TraderPriceType = this.PriceTypeFor(TradeAction.PlayerSells).PriceMultiplier();
 			this.priceGain_PlayerNegotiator = TradeSession.playerNegotiator.GetStatValue(StatDefOf.TradePriceImprovement, true);
-			this.priceGain_FactionBase = TradeSession.trader.TradePriceImprovementOffsetForPlayer;
-			this.pricePlayerBuy = this.BaseMarketValue * 1.5f * this.priceFactorBuy_TraderPriceType * (1f + Find.Storyteller.difficulty.tradePriceFactorLoss);
-			this.pricePlayerBuy *= 1f - this.priceGain_PlayerNegotiator - this.priceGain_FactionBase;
-			this.pricePlayerBuy = Mathf.Max(this.pricePlayerBuy, 0.5f);
-			if (this.pricePlayerBuy > 99.5f)
-			{
-				this.pricePlayerBuy = Mathf.Round(this.pricePlayerBuy);
-			}
+			this.priceGain_Settlement = TradeSession.trader.TradePriceImprovementOffsetForPlayer;
 			this.priceFactorSell_ItemSellPriceFactor = this.AnyThing.GetStatValue(StatDefOf.SellPriceFactor, true);
-			this.pricePlayerSell = this.BaseMarketValue * 0.5f * this.priceFactorSell_TraderPriceType * this.priceFactorSell_ItemSellPriceFactor * (1f - Find.Storyteller.difficulty.tradePriceFactorLoss);
-			this.pricePlayerSell *= 1f + this.priceGain_PlayerNegotiator + this.priceGain_FactionBase;
-			this.pricePlayerSell = Mathf.Max(this.pricePlayerSell, 0.01f);
-			if (this.pricePlayerSell > 99.5f)
-			{
-				this.pricePlayerSell = Mathf.Round(this.pricePlayerSell);
-			}
+			this.pricePlayerBuy = TradeUtility.GetPricePlayerBuy(this.AnyThing, this.priceFactorBuy_TraderPriceType, this.priceGain_PlayerNegotiator, this.priceGain_Settlement);
+			this.pricePlayerSell = TradeUtility.GetPricePlayerSell(this.AnyThing, this.priceFactorSell_TraderPriceType, this.priceGain_PlayerNegotiator, this.priceGain_Settlement);
 			if (this.pricePlayerSell >= this.pricePlayerBuy)
 			{
-				Log.ErrorOnce("Trying to put player-sells price above player-buys price for " + this.AnyThing, 65387);
+				Log.ErrorOnce("Trying to put player-sells price above player-buys price for " + this.AnyThing, 65387, false);
 				this.pricePlayerSell = this.pricePlayerBuy;
 			}
 		}
@@ -281,22 +299,15 @@ namespace RimWorld
 			this.InitPriceDataIfNeeded();
 			string text = (action != TradeAction.PlayerBuys) ? "SellPriceDesc".Translate() : "BuyPriceDesc".Translate();
 			text += "\n\n";
-			string text2 = text;
-			text = string.Concat(new object[]
-			{
-				text2,
-				StatDefOf.MarketValue.LabelCap,
-				": ",
-				this.BaseMarketValue
-			});
+			text = text + StatDefOf.MarketValue.LabelCap + ": " + this.BaseMarketValue.ToStringMoney("F2");
 			if (action == TradeAction.PlayerBuys)
 			{
-				text2 = text;
+				string text2 = text;
 				text = string.Concat(new string[]
 				{
 					text2,
 					"\n  x ",
-					1.5f.ToString("F2"),
+					1.4f.ToString("F2"),
 					" (",
 					"Buying".Translate(),
 					")"
@@ -337,7 +348,7 @@ namespace RimWorld
 					": -",
 					this.priceGain_PlayerNegotiator.ToStringPercent()
 				});
-				if (this.priceGain_FactionBase != 0f)
+				if (this.priceGain_Settlement != 0f)
 				{
 					text2 = text;
 					text = string.Concat(new string[]
@@ -346,18 +357,18 @@ namespace RimWorld
 						"\n",
 						"TradeWithFactionBaseBonus".Translate(),
 						": -",
-						this.priceGain_FactionBase.ToStringPercent()
+						this.priceGain_Settlement.ToStringPercent()
 					});
 				}
 			}
 			else
 			{
-				text2 = text;
+				string text2 = text;
 				text = string.Concat(new string[]
 				{
 					text2,
 					"\n  x ",
-					0.5f.ToString("F2"),
+					0.6f.ToString("F2"),
 					" (",
 					"Selling".Translate(),
 					")"
@@ -411,7 +422,7 @@ namespace RimWorld
 					": ",
 					this.priceGain_PlayerNegotiator.ToStringPercent()
 				});
-				if (this.priceGain_FactionBase != 0f)
+				if (this.priceGain_Settlement != 0f)
 				{
 					text2 = text;
 					text = string.Concat(new string[]
@@ -420,7 +431,7 @@ namespace RimWorld
 						"\n",
 						"TradeWithFactionBaseBonus".Translate(),
 						": ",
-						this.priceGain_FactionBase.ToStringPercent()
+						this.priceGain_Settlement.ToStringPercent()
 					});
 				}
 			}
@@ -444,23 +455,39 @@ namespace RimWorld
 			return this.pricePlayerSell;
 		}
 
-		public override int GetMinimum()
+		public override int GetMinimumToTransfer()
 		{
+			if (this.PositiveCountDirection == TransferablePositiveCountDirection.Destination)
+			{
+				return -this.CountHeldBy(Transactor.Trader);
+			}
 			return -this.CountHeldBy(Transactor.Colony);
 		}
 
-		public override int GetMaximum()
+		public override int GetMaximumToTransfer()
 		{
+			if (this.PositiveCountDirection == TransferablePositiveCountDirection.Destination)
+			{
+				return this.CountHeldBy(Transactor.Colony);
+			}
 			return this.CountHeldBy(Transactor.Trader);
 		}
 
 		public override AcceptanceReport UnderflowReport()
 		{
+			if (this.PositiveCountDirection == TransferablePositiveCountDirection.Destination)
+			{
+				return new AcceptanceReport("TraderHasNoMore".Translate());
+			}
 			return new AcceptanceReport("ColonyHasNoMore".Translate());
 		}
 
 		public override AcceptanceReport OverflowReport()
 		{
+			if (this.PositiveCountDirection == TransferablePositiveCountDirection.Destination)
+			{
+				return new AcceptanceReport("ColonyHasNoMore".Translate());
+			}
 			return new AcceptanceReport("TraderHasNoMore".Translate());
 		}
 
@@ -488,23 +515,23 @@ namespace RimWorld
 		{
 			if (trans == Transactor.Colony)
 			{
-				return this.CountHeldBy(trans) + base.CountToTransfer;
+				return this.CountHeldBy(trans) + base.CountToTransferToSource;
 			}
-			return this.CountHeldBy(trans) - base.CountToTransfer;
+			return this.CountHeldBy(trans) + base.CountToTransferToDestination;
 		}
 
 		public virtual void ResolveTrade()
 		{
 			if (this.ActionToDo == TradeAction.PlayerSells)
 			{
-				TransferableUtility.TransferNoSplit(this.thingsColony, -base.CountToTransfer, delegate(Thing thing, int countToTransfer)
+				TransferableUtility.TransferNoSplit(this.thingsColony, base.CountToTransferToDestination, delegate(Thing thing, int countToTransfer)
 				{
 					TradeSession.trader.GiveSoldThingToTrader(thing, countToTransfer, TradeSession.playerNegotiator);
 				}, true, true);
 			}
 			else if (this.ActionToDo == TradeAction.PlayerBuys)
 			{
-				TransferableUtility.TransferNoSplit(this.thingsTrader, base.CountToTransfer, delegate(Thing thing, int countToTransfer)
+				TransferableUtility.TransferNoSplit(this.thingsTrader, base.CountToTransferToSource, delegate(Thing thing, int countToTransfer)
 				{
 					this.CheckTeachOpportunity(thing, countToTransfer);
 					TradeSession.trader.GiveSoldThingToPlayer(thing, countToTransfer, TradeSession.playerNegotiator);
@@ -536,8 +563,8 @@ namespace RimWorld
 				base.GetType(),
 				"(",
 				this.ThingDef,
-				", countToDrop=",
-				base.CountToTransfer,
+				", countToTransfer=",
+				this.CountToTransfer,
 				")"
 			});
 		}
@@ -545,6 +572,34 @@ namespace RimWorld
 		public override int GetHashCode()
 		{
 			return this.AnyThing.GetHashCode();
+		}
+
+		public override void ExposeData()
+		{
+			base.ExposeData();
+			if (Scribe.mode == LoadSaveMode.Saving)
+			{
+				this.thingsColony.RemoveAll((Thing x) => x.Destroyed);
+				this.thingsTrader.RemoveAll((Thing x) => x.Destroyed);
+			}
+			Scribe_Values.Look<int>(ref this.countToTransfer, "countToTransfer", 0, false);
+			Scribe_Collections.Look<Thing>(ref this.thingsColony, "thingsColony", LookMode.Reference, new object[0]);
+			Scribe_Collections.Look<Thing>(ref this.thingsTrader, "thingsTrader", LookMode.Reference, new object[0]);
+			if (Scribe.mode == LoadSaveMode.LoadingVars)
+			{
+				base.EditBuffer = this.countToTransfer.ToStringCached();
+			}
+			if (Scribe.mode == LoadSaveMode.PostLoadInit)
+			{
+				if (this.thingsColony.RemoveAll((Thing x) => x == null) == 0)
+				{
+					if (this.thingsTrader.RemoveAll((Thing x) => x == null) == 0)
+					{
+						return;
+					}
+				}
+				Log.Warning("Some of the things were null after loading.", false);
+			}
 		}
 	}
 }

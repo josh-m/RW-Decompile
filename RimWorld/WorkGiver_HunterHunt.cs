@@ -30,7 +30,7 @@ namespace RimWorld
 			return Danger.Deadly;
 		}
 
-		public override bool ShouldSkip(Pawn pawn)
+		public override bool ShouldSkip(Pawn pawn, bool forced = false)
 		{
 			return !WorkGiver_HunterHunt.HasHuntingWeapon(pawn) || WorkGiver_HunterHunt.HasShieldAndRangedWeapon(pawn);
 		}
@@ -53,12 +53,12 @@ namespace RimWorld
 
 		public static bool HasHuntingWeapon(Pawn p)
 		{
-			return p.equipment.Primary != null && p.equipment.Primary.def.IsRangedWeapon && p.equipment.PrimaryEq.PrimaryVerb.HarmsHealth();
+			return p.equipment.Primary != null && p.equipment.Primary.def.IsRangedWeapon && p.equipment.PrimaryEq.PrimaryVerb.HarmsHealth() && !p.equipment.PrimaryEq.PrimaryVerb.UsesExplosiveProjectiles();
 		}
 
 		public static bool HasShieldAndRangedWeapon(Pawn p)
 		{
-			if (p.equipment.Primary != null && p.equipment.Primary.def.IsRangedWeapon)
+			if (p.equipment.Primary != null && p.equipment.Primary.def.IsWeaponUsingProjectiles)
 			{
 				List<Apparel> wornApparel = p.apparel.WornApparel;
 				for (int i = 0; i < wornApparel.Count; i++)

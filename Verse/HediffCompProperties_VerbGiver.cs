@@ -16,6 +16,18 @@ namespace Verse
 			this.compClass = typeof(HediffComp_VerbGiver);
 		}
 
+		public override void PostLoad()
+		{
+			base.PostLoad();
+			if (this.tools != null)
+			{
+				for (int i = 0; i < this.tools.Count; i++)
+				{
+					this.tools[i].id = i.ToString();
+				}
+			}
+		}
+
 		[DebuggerHidden]
 		public override IEnumerable<string> ConfigErrors(HediffDef parentDef)
 		{
@@ -29,12 +41,19 @@ namespace Verse
 				{
 					HediffCompProperties_VerbGiver $this = this.$this;
 					return from rhs in this.$this.tools
-					where lhs != rhs && lhs.label == rhs.label
+					where lhs != rhs && lhs.id == rhs.id
 					select rhs;
 				}).FirstOrDefault<Tool>();
 				if (dupeTool != null)
 				{
-					yield return string.Format("duplicate hediff tool id {0}", dupeTool.Id);
+					yield return string.Format("duplicate hediff tool id {0}", dupeTool.id);
+				}
+				foreach (Tool t in this.tools)
+				{
+					foreach (string e in t.ConfigErrors())
+					{
+						yield return e;
+					}
 				}
 			}
 		}

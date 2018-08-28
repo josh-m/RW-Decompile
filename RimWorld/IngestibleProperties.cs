@@ -7,13 +7,16 @@ namespace RimWorld
 {
 	public class IngestibleProperties
 	{
+		[Unsaved]
+		public ThingDef parent;
+
 		public int maxNumToIngestAtOnce = 20;
 
 		public List<IngestionOutcomeDoer> outcomeDoers;
 
 		public int baseIngestTicks = 500;
 
-		public float chairSearchRadius = 25f;
+		public float chairSearchRadius = 32f;
 
 		public bool useEatingSpeedStat = true;
 
@@ -29,10 +32,13 @@ namespace RimWorld
 
 		public SoundDef ingestSound;
 
+		[MustTranslate]
 		public string ingestCommandString;
 
+		[MustTranslate]
 		public string ingestReportString;
 
+		[MustTranslate]
 		public string ingestReportStringEat;
 
 		public HoldOffsetSet ingestHoldOffsetStanding;
@@ -40,8 +46,6 @@ namespace RimWorld
 		public bool ingestHoldUsesTable = true;
 
 		public FoodTypeFlags foodType;
-
-		public float nutrition;
 
 		public float joy;
 
@@ -58,6 +62,9 @@ namespace RimWorld
 		public float optimalityOffsetFeedingAnimals;
 
 		public DrugCategory drugCategory;
+
+		[Unsaved]
+		private float cachedNutrition = -1f;
 
 		public JoyKindDef JoyKind
 		{
@@ -83,8 +90,20 @@ namespace RimWorld
 			}
 		}
 
+		public float CachedNutrition
+		{
+			get
+			{
+				if (this.cachedNutrition == -1f)
+				{
+					this.cachedNutrition = this.parent.GetStatValueAbstract(StatDefOf.Nutrition, null);
+				}
+				return this.cachedNutrition;
+			}
+		}
+
 		[DebuggerHidden]
-		public IEnumerable<string> ConfigErrors(ThingDef parentDef)
+		public IEnumerable<string> ConfigErrors()
 		{
 			if (this.preferability == FoodPreferability.Undefined)
 			{
@@ -94,17 +113,17 @@ namespace RimWorld
 			{
 				yield return "no foodType";
 			}
-			if (this.nutrition == 0f && this.preferability != FoodPreferability.NeverForNutrition)
+			if (this.parent.GetStatValueAbstract(StatDefOf.Nutrition, null) == 0f && this.preferability != FoodPreferability.NeverForNutrition)
 			{
 				yield return string.Concat(new object[]
 				{
-					"nutrition == 0 but preferability is ",
+					"Nutrition == 0 but preferability is ",
 					this.preferability,
 					" instead of ",
 					FoodPreferability.NeverForNutrition
 				});
 			}
-			if (!parentDef.IsCorpse && this.preferability > FoodPreferability.DesperateOnlyForHumanlikes && !parentDef.socialPropernessMatters && parentDef.EverHaulable)
+			if (!this.parent.IsCorpse && this.preferability > FoodPreferability.DesperateOnlyForHumanlikes && !this.parent.socialPropernessMatters && this.parent.EverHaulable)
 			{
 				yield return "ingestible preferability > DesperateOnlyForHumanlikes but socialPropernessMatters=false. This will cause bugs wherein wardens will look in prison cells for food to give to prisoners and so will repeatedly pick up and drop food inside the cell.";
 			}
@@ -112,15 +131,15 @@ namespace RimWorld
 			{
 				yield return "joy > 0 with no joy kind";
 			}
+			if (this.joy == 0f && this.joyKind != null)
+			{
+				yield return "joy is 0 but joyKind is " + this.joyKind;
+			}
 		}
 
 		[DebuggerHidden]
-		internal IEnumerable<StatDrawEntry> SpecialDisplayStats(ThingDef parentDef)
+		internal IEnumerable<StatDrawEntry> SpecialDisplayStats()
 		{
-			if (!parentDef.IsCorpse)
-			{
-				yield return new StatDrawEntry(StatCategoryDefOf.Basics, "Nutrition".Translate(), this.nutrition.ToString("0.##"), 0, string.Empty);
-			}
 			if (this.joy > 0f)
 			{
 				yield return new StatDrawEntry(StatCategoryDefOf.Basics, "Joy".Translate(), this.joy.ToStringPercent("F2") + " (" + this.JoyKind.label + ")", 0, string.Empty);
@@ -129,7 +148,7 @@ namespace RimWorld
 			{
 				for (int i = 0; i < this.outcomeDoers.Count; i++)
 				{
-					foreach (StatDrawEntry s in this.outcomeDoers[i].SpecialDisplayStats(parentDef))
+					foreach (StatDrawEntry s in this.outcomeDoers[i].SpecialDisplayStats(this.parent))
 					{
 						yield return s;
 					}

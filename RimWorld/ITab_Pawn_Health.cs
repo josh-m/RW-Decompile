@@ -39,7 +39,7 @@ namespace RimWorld
 			Pawn pawnForHealth = this.PawnForHealth;
 			if (pawnForHealth == null)
 			{
-				Log.Error("Health tab found no selected pawn to display.");
+				Log.Error("Health tab found no selected pawn to display.", false);
 				return;
 			}
 			Corpse corpse = base.SelThing as Corpse;

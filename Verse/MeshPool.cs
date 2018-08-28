@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace Verse
 {
-	[StaticConstructorOnStartup]
+	[HasDebugOutput, StaticConstructorOnStartup]
 	public static class MeshPool
 	{
 		private const int MaxGridMeshSize = 15;
@@ -105,13 +105,14 @@ namespace Verse
 			return new Vector2((float)((int)(v.x * 100f)) / 100f, (float)((int)(v.y * 100f)) / 100f);
 		}
 
-		public static void LogStats()
+		[Category("System"), DebugOutput]
+		public static void MeshPoolStats()
 		{
 			StringBuilder stringBuilder = new StringBuilder();
 			stringBuilder.AppendLine("MeshPool stats:");
 			stringBuilder.AppendLine("Planes: " + MeshPool.planes.Count);
 			stringBuilder.AppendLine("PlanesFlip: " + MeshPool.planesFlip.Count);
-			Log.Message(stringBuilder.ToString());
+			Log.Message(stringBuilder.ToString(), false);
 		}
 	}
 }

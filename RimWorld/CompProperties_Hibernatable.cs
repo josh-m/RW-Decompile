@@ -9,6 +9,8 @@ namespace RimWorld
 	{
 		public float startupDays = 15f;
 
+		public IncidentTargetTagDef incidentTargetWhileStarting;
+
 		public CompProperties_Hibernatable()
 		{
 			this.compClass = typeof(CompHibernatable);
@@ -17,6 +19,10 @@ namespace RimWorld
 		[DebuggerHidden]
 		public override IEnumerable<string> ConfigErrors(ThingDef parentDef)
 		{
+			foreach (string err in base.ConfigErrors(parentDef))
+			{
+				yield return err;
+			}
 			if (parentDef.tickerType != TickerType.Normal)
 			{
 				yield return string.Concat(new object[]

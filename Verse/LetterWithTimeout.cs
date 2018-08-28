@@ -15,18 +15,26 @@ namespace Verse
 			}
 		}
 
-		public override bool StillValid
+		public bool TimeoutPassed
 		{
 			get
 			{
-				return base.StillValid && (!this.TimeoutActive || Find.TickManager.TicksGame < this.disappearAtTick);
+				return this.TimeoutActive && Find.TickManager.TicksGame >= this.disappearAtTick;
+			}
+		}
+
+		public override bool CanShowInLetterStack
+		{
+			get
+			{
+				return base.CanShowInLetterStack && !this.TimeoutPassed;
 			}
 		}
 
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Values.Look<int>(ref this.disappearAtTick, "disappearAtTick", 0, false);
+			Scribe_Values.Look<int>(ref this.disappearAtTick, "disappearAtTick", -1, false);
 		}
 
 		public void StartTimeout(int duration)

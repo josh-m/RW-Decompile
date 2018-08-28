@@ -9,9 +9,10 @@ using Verse;
 
 namespace RimWorld
 {
-	internal static class AgeInjuryUtility
+	[HasDebugOutput]
+	public static class AgeInjuryUtility
 	{
-		private const int MaxOldInjuryAge = 100;
+		private const int MaxPermanentInjuryAge = 100;
 
 		private static List<Thing> emptyIngredientsList = new List<Thing>();
 
@@ -47,52 +48,61 @@ namespace RimWorld
 
 		public static void GenerateRandomOldAgeInjuries(Pawn pawn, bool tryNotToKillPawn)
 		{
-			int num = 0;
-			for (int i = 10; i < Mathf.Min(pawn.ageTracker.AgeBiologicalYears, 120); i += 10)
+			float num = (!pawn.RaceProps.IsMechanoid) ? pawn.RaceProps.lifeExpectancy : 2500f;
+			float num2 = num / 8f;
+			float b = num * 1.5f;
+			float chance = (!pawn.RaceProps.Humanlike) ? 0.03f : 0.15f;
+			int num3 = 0;
+			for (float num4 = num2; num4 < Mathf.Min((float)pawn.ageTracker.AgeBiologicalYears, b); num4 += num2)
 			{
-				if (Rand.Value < 0.15f)
+				if (Rand.Chance(chance))
 				{
-					num++;
+					num3++;
 				}
 			}
-			for (int j = 0; j < num; j++)
+			for (int i = 0; i < num3; i++)
 			{
-				IEnumerable<BodyPartRecord> source = from x in pawn.health.hediffSet.GetNotMissingParts(BodyPartHeight.Undefined, BodyPartDepth.Undefined)
-				where x.depth == BodyPartDepth.Outside && !Mathf.Approximately(x.def.oldInjuryBaseChance, 0f) && !pawn.health.hediffSet.PartOrAnyAncestorHasDirectlyAddedParts(x)
+				IEnumerable<BodyPartRecord> source = from x in pawn.health.hediffSet.GetNotMissingParts(BodyPartHeight.Undefined, BodyPartDepth.Undefined, null, null)
+				where x.depth == BodyPartDepth.Outside && (x.def.permanentInjuryChanceFactor != 0f || x.def.pawnGeneratorCanAmputate) && !pawn.health.hediffSet.PartOrAnyAncestorHasDirectlyAddedParts(x)
 				select x;
 				if (source.Any<BodyPartRecord>())
 				{
 					BodyPartRecord bodyPartRecord = source.RandomElementByWeight((BodyPartRecord x) => x.coverageAbs);
-					DamageDef dam = AgeInjuryUtility.RandomOldInjuryDamageType(bodyPartRecord.def.frostbiteVulnerability > 0f && pawn.RaceProps.ToolUser);
+					DamageDef dam = AgeInjuryUtility.RandomPermanentInjuryDamageType(bodyPartRecord.def.frostbiteVulnerability > 0f && pawn.RaceProps.ToolUser);
 					HediffDef hediffDefFromDamage = HealthUtility.GetHediffDefFromDamage(dam, pawn, bodyPartRecord);
-					if (bodyPartRecord.def.oldInjuryBaseChance > 0f && hediffDefFromDamage.CompPropsFor(typeof(HediffComp_GetsOld)) != null)
+					if (bodyPartRecord.def.pawnGeneratorCanAmputate && Rand.Chance(0.3f))
 					{
-						if (Rand.Chance(bodyPartRecord.def.amputateIfGeneratedInjuredChance))
+						Hediff_MissingPart hediff_MissingPart = (Hediff_MissingPart)HediffMaker.MakeHediff(HediffDefOf.MissingBodyPart, pawn, null);
+						hediff_MissingPart.lastInjury = hediffDefFromDamage;
+						hediff_MissingPart.Part = bodyPartRecord;
+						hediff_MissingPart.IsFresh = false;
+						if (!tryNotToKillPawn || !pawn.health.WouldDieAfterAddingHediff(hediff_MissingPart))
 						{
-							Hediff_MissingPart hediff_MissingPart = (Hediff_MissingPart)HediffMaker.MakeHediff(HediffDefOf.MissingBodyPart, pawn, null);
-							hediff_MissingPart.lastInjury = hediffDefFromDamage;
-							hediff_MissingPart.TryGetComp<HediffComp_GetsOld>().IsOld = true;
-							pawn.health.AddHediff(hediff_MissingPart, bodyPartRecord, null);
-							if (pawn.RaceProps.Humanlike && (bodyPartRecord.def == BodyPartDefOf.LeftLeg || bodyPartRecord.def == BodyPartDefOf.RightLeg) && Rand.Chance(0.5f))
+							pawn.health.AddHediff(hediff_MissingPart, bodyPartRecord, null, null);
+							if (pawn.RaceProps.Humanlike && bodyPartRecord.def == BodyPartDefOf.Leg && Rand.Chance(0.5f))
 							{
 								RecipeDefOf.InstallPegLeg.Worker.ApplyOnPawn(pawn, bodyPartRecord, null, AgeInjuryUtility.emptyIngredientsList, null);
 							}
 						}
-						else
+					}
+					else if (bodyPartRecord.def.permanentInjuryChanceFactor > 0f && hediffDefFromDamage.HasComp(typeof(HediffComp_GetsPermanent)))
+					{
+						Hediff_Injury hediff_Injury = (Hediff_Injury)HediffMaker.MakeHediff(hediffDefFromDamage, pawn, null);
+						hediff_Injury.Severity = (float)Rand.RangeInclusive(2, 6);
+						hediff_Injury.TryGetComp<HediffComp_GetsPermanent>().IsPermanent = true;
+						hediff_Injury.Part = bodyPartRecord;
+						if (!tryNotToKillPawn || !pawn.health.WouldDieAfterAddingHediff(hediff_Injury))
 						{
-							Hediff_Injury hediff_Injury = (Hediff_Injury)HediffMaker.MakeHediff(hediffDefFromDamage, pawn, null);
-							hediff_Injury.Severity = (float)Rand.RangeInclusive(2, 6);
-							hediff_Injury.TryGetComp<HediffComp_GetsOld>().IsOld = true;
-							pawn.health.AddHediff(hediff_Injury, bodyPartRecord, null);
+							pawn.health.AddHediff(hediff_Injury, bodyPartRecord, null, null);
 						}
 					}
 				}
 			}
-			for (int k = 1; k < pawn.ageTracker.AgeBiologicalYears; k++)
+			for (int j = 1; j < pawn.ageTracker.AgeBiologicalYears; j++)
 			{
-				foreach (HediffGiver_Birthday current in AgeInjuryUtility.RandomHediffsToGainOnBirthday(pawn, k))
+				foreach (HediffGiver_Birthday current in AgeInjuryUtility.RandomHediffsToGainOnBirthday(pawn, j))
 				{
-					current.TryApplyAndSimulateSeverityChange(pawn, (float)k, tryNotToKillPawn);
+					current.TryApplyAndSimulateSeverityChange(pawn, (float)j, tryNotToKillPawn);
 					if (pawn.Dead)
 					{
 						break;
@@ -105,7 +115,7 @@ namespace RimWorld
 			}
 		}
 
-		private static DamageDef RandomOldInjuryDamageType(bool allowFrostbite)
+		private static DamageDef RandomPermanentInjuryDamageType(bool allowFrostbite)
 		{
 			switch (Rand.RangeInclusive(0, 3 + ((!allowFrostbite) ? 0 : 1)))
 			{
@@ -124,7 +134,8 @@ namespace RimWorld
 			}
 		}
 
-		public static void LogOldInjuryCalculations()
+		[DebugOutput]
+		public static void PermanentInjuryCalculations()
 		{
 			StringBuilder stringBuilder = new StringBuilder();
 			stringBuilder.AppendLine("=======Theoretical injuries=========");
@@ -150,7 +161,7 @@ namespace RimWorld
 					}
 				}
 			}
-			Log.Message(stringBuilder.ToString());
+			Log.Message(stringBuilder.ToString(), false);
 			stringBuilder = new StringBuilder();
 			stringBuilder.AppendLine("=======Actual injuries=========");
 			for (int k = 0; k < 200; k++)
@@ -166,7 +177,7 @@ namespace RimWorld
 				}
 				Find.WorldPawns.PassToWorld(pawn, PawnDiscardDecideMode.Discard);
 			}
-			Log.Message(stringBuilder.ToString());
+			Log.Message(stringBuilder.ToString(), false);
 		}
 	}
 }

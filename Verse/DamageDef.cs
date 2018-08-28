@@ -1,3 +1,4 @@
+using RimWorld;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -9,7 +10,9 @@ namespace Verse
 	{
 		public Type workerClass = typeof(DamageWorker);
 
-		public bool externalViolence;
+		private bool externalViolence;
+
+		private bool externalViolenceForMechanoids;
 
 		public bool hasForcefulImpact = true;
 
@@ -19,26 +22,50 @@ namespace Verse
 
 		public bool canInterruptJobs = true;
 
-		[MustTranslate]
-		public string deathMessage = "{0} has been killed.";
+		public bool isRanged;
 
-		public ImpactSoundTypeDef impactSoundType;
-
-		public DamageArmorCategoryDef armorCategory;
-
-		public bool spreadOut;
+		public bool makesAnimalsFlee;
 
 		public bool execution;
 
 		public RulePackDef combatLogRules;
 
-		public bool isExplosive;
+		public bool canUseDeflectMetalEffect = true;
 
-		public int explosionDamage = 10;
+		public ImpactSoundTypeDef impactSoundType;
+
+		[MustTranslate]
+		public string deathMessage = "{0} has been killed.";
+
+		public int defaultDamage = -1;
+
+		public float defaultArmorPenetration = -1f;
+
+		public float defaultStoppingPower;
+
+		public List<DamageDefAdditionalHediff> additionalHediffs;
+
+		public DamageArmorCategoryDef armorCategory;
+
+		public int minDamageToFragment = 99999;
+
+		public FloatRange overkillPctToDestroyPart = new FloatRange(0f, 0.7f);
+
+		public bool harmAllLayersUntilOutside;
+
+		public HediffDef hediff;
+
+		public HediffDef hediffSkin;
+
+		public HediffDef hediffSolid;
+
+		public bool isExplosive;
 
 		public float explosionSnowMeltAmount = 1f;
 
 		public float explosionBuildingDamageFactor = 1f;
+
+		public float explosionPlantDamageFactor = 1f;
 
 		public bool explosionAffectOutsidePartsOnly = true;
 
@@ -54,14 +81,6 @@ namespace Verse
 
 		public SoundDef soundExplosion;
 
-		public bool harmAllLayersUntilOutside;
-
-		public HediffDef hediff;
-
-		public HediffDef hediffSkin;
-
-		public HediffDef hediffSolid;
-
 		public float stabChanceOfForcedInternal;
 
 		public float stabPierceBonus;
@@ -70,17 +89,21 @@ namespace Verse
 
 		public float cutCleaveBonus;
 
-		public float bluntInnerHitFrequency;
+		public float bluntInnerHitChance;
 
-		public FloatRange bluntInnerHitConverted;
+		public FloatRange bluntInnerHitDamageFractionToConvert;
 
-		public FloatRange bluntInnerHitAdded;
+		public FloatRange bluntInnerHitDamageFractionToAdd;
+
+		public float bluntStunDuration = 1f;
+
+		public SimpleCurve bluntStunChancePerDamagePctOfCorePartToHeadCurve;
+
+		public SimpleCurve bluntStunChancePerDamagePctOfCorePartToBodyCurve;
 
 		public float scratchSplitPercentage = 0.5f;
 
 		public float biteDamageMultiplier = 1f;
-
-		public List<DamageDefAdditionalHediff> additionalHediffs;
 
 		[Unsaved]
 		private DamageWorker workerInt;
@@ -96,6 +119,28 @@ namespace Verse
 				}
 				return this.workerInt;
 			}
+		}
+
+		public bool ExternalViolenceFor(Thing thing)
+		{
+			if (this.externalViolence)
+			{
+				return true;
+			}
+			if (this.externalViolenceForMechanoids)
+			{
+				Pawn pawn = thing as Pawn;
+				if (pawn != null && pawn.RaceProps.IsMechanoid)
+				{
+					return true;
+				}
+				Building_Turret building_Turret = thing as Building_Turret;
+				if (building_Turret != null)
+				{
+					return true;
+				}
+			}
+			return false;
 		}
 	}
 }

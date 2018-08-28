@@ -72,8 +72,8 @@ namespace Verse
 			}
 			catch (Exception arg)
 			{
-				Log.Error("Error restarting: " + arg);
-				Find.WindowStack.Add(new Dialog_MessageBox("FailedToRestart".Translate(), null, null, null, null, null, false));
+				Log.Error("Error restarting: " + arg, false);
+				Find.WindowStack.Add(new Dialog_MessageBox("FailedToRestart".Translate(), null, null, null, null, null, false, null, null));
 			}
 		}
 	}

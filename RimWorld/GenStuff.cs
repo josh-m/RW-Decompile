@@ -8,38 +8,67 @@ namespace RimWorld
 {
 	public static class GenStuff
 	{
-		public static ThingDef DefaultStuffFor(ThingDef td)
+		public static ThingDef DefaultStuffFor(BuildableDef bd)
 		{
-			if (!td.MadeFromStuff)
+			if (!bd.MadeFromStuff)
 			{
 				return null;
 			}
-			if (ThingDefOf.WoodLog.stuffProps.CanMake(td))
+			ThingDef thingDef = bd as ThingDef;
+			if (thingDef != null)
+			{
+				if (thingDef.IsMeleeWeapon)
+				{
+					if (ThingDefOf.Steel.stuffProps.CanMake(bd))
+					{
+						return ThingDefOf.Steel;
+					}
+					if (ThingDefOf.Plasteel.stuffProps.CanMake(bd))
+					{
+						return ThingDefOf.Plasteel;
+					}
+				}
+				if (thingDef.IsApparel)
+				{
+					if (ThingDefOf.Cloth.stuffProps.CanMake(bd))
+					{
+						return ThingDefOf.Cloth;
+					}
+					if (ThingDefOf.Leather_Plain.stuffProps.CanMake(bd))
+					{
+						return ThingDefOf.Leather_Plain;
+					}
+					if (ThingDefOf.Steel.stuffProps.CanMake(bd))
+					{
+						return ThingDefOf.Steel;
+					}
+				}
+			}
+			if (ThingDefOf.WoodLog.stuffProps.CanMake(bd))
 			{
 				return ThingDefOf.WoodLog;
 			}
-			if (ThingDefOf.Steel.stuffProps.CanMake(td))
+			if (ThingDefOf.Steel.stuffProps.CanMake(bd))
 			{
 				return ThingDefOf.Steel;
 			}
-			if (ThingDefOf.Cloth.stuffProps.CanMake(td))
-			{
-				return ThingDefOf.Cloth;
-			}
-			ThingDef leatherDef = ThingDefOf.Cow.race.leatherDef;
-			if (leatherDef.stuffProps.CanMake(td))
-			{
-				return leatherDef;
-			}
-			if (ThingDefOf.BlocksGranite.stuffProps.CanMake(td))
-			{
-				return ThingDefOf.BlocksGranite;
-			}
-			if (ThingDefOf.Plasteel.stuffProps.CanMake(td))
+			if (ThingDefOf.Plasteel.stuffProps.CanMake(bd))
 			{
 				return ThingDefOf.Plasteel;
 			}
-			return GenStuff.RandomStuffFor(td);
+			if (ThingDefOf.BlocksGranite.stuffProps.CanMake(bd))
+			{
+				return ThingDefOf.BlocksGranite;
+			}
+			if (ThingDefOf.Cloth.stuffProps.CanMake(bd))
+			{
+				return ThingDefOf.Cloth;
+			}
+			if (ThingDefOf.Leather_Plain.stuffProps.CanMake(bd))
+			{
+				return ThingDefOf.Leather_Plain;
+			}
+			return GenStuff.AllowedStuffsFor(bd, TechLevel.Undefined).First<ThingDef>();
 		}
 
 		public static ThingDef RandomStuffFor(ThingDef td)
@@ -48,7 +77,7 @@ namespace RimWorld
 			{
 				return null;
 			}
-			return GenStuff.AllowedStuffsFor(td).RandomElement<ThingDef>();
+			return GenStuff.AllowedStuffsFor(td, TechLevel.Undefined).RandomElement<ThingDef>();
 		}
 
 		public static ThingDef RandomStuffByCommonalityFor(ThingDef td, TechLevel maxTechLevel = TechLevel.Undefined)
@@ -66,7 +95,7 @@ namespace RimWorld
 		}
 
 		[DebuggerHidden]
-		public static IEnumerable<ThingDef> AllowedStuffsFor(ThingDef td)
+		public static IEnumerable<ThingDef> AllowedStuffsFor(BuildableDef td, TechLevel maxTechLevel = TechLevel.Undefined)
 		{
 			if (td.MadeFromStuff)
 			{
@@ -74,7 +103,7 @@ namespace RimWorld
 				for (int i = 0; i < allDefs.Count; i++)
 				{
 					ThingDef d = allDefs[i];
-					if (d.IsStuff && d.stuffProps.CanMake(td))
+					if (d.IsStuff && (maxTechLevel == TechLevel.Undefined || d.techLevel <= maxTechLevel) && d.stuffProps.CanMake(td))
 					{
 						yield return d;
 					}
@@ -89,14 +118,51 @@ namespace RimWorld
 				stuff = null;
 				return true;
 			}
-			IEnumerable<ThingDef> source = GenStuff.AllowedStuffsFor(td);
-			if (maxTechLevel != TechLevel.Undefined)
-			{
-				source = from x in source
-				where x.techLevel <= maxTechLevel
-				select x;
-			}
+			IEnumerable<ThingDef> source = GenStuff.AllowedStuffsFor(td, maxTechLevel);
 			return source.TryRandomElementByWeight((ThingDef x) => x.stuffProps.commonality, out stuff);
+		}
+
+		public static bool TryRandomStuffFor(ThingDef td, out ThingDef stuff, TechLevel maxTechLevel = TechLevel.Undefined)
+		{
+			if (!td.MadeFromStuff)
+			{
+				stuff = null;
+				return true;
+			}
+			IEnumerable<ThingDef> source = GenStuff.AllowedStuffsFor(td, maxTechLevel);
+			return source.TryRandomElement(out stuff);
+		}
+
+		public static ThingDef RandomStuffInexpensiveFor(ThingDef thingDef, Faction faction)
+		{
+			return GenStuff.RandomStuffInexpensiveFor(thingDef, (faction == null) ? TechLevel.Undefined : faction.def.techLevel);
+		}
+
+		public static ThingDef RandomStuffInexpensiveFor(ThingDef thingDef, TechLevel maxTechLevel)
+		{
+			if (!thingDef.MadeFromStuff)
+			{
+				return null;
+			}
+			IEnumerable<ThingDef> enumerable = GenStuff.AllowedStuffsFor(thingDef, maxTechLevel);
+			float cheapestPrice = -1f;
+			foreach (ThingDef current in enumerable)
+			{
+				float num = current.BaseMarketValue / current.VolumePerUnit;
+				if (cheapestPrice == -1f || num < cheapestPrice)
+				{
+					cheapestPrice = num;
+				}
+			}
+			enumerable = from x in enumerable
+			where x.BaseMarketValue / x.VolumePerUnit <= cheapestPrice * 4f
+			select x;
+			ThingDef result;
+			if (enumerable.TryRandomElementByWeight((ThingDef x) => x.stuffProps.commonality, out result))
+			{
+				return result;
+			}
+			return null;
 		}
 	}
 }

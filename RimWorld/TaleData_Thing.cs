@@ -32,8 +32,8 @@ namespace RimWorld
 		public override IEnumerable<Rule> GetRules(string prefix)
 		{
 			yield return new Rule_String(prefix + "_label", this.thingDef.label);
-			yield return new Rule_String(prefix + "_labelDefinite", Find.ActiveLanguageWorker.WithDefiniteArticle(this.thingDef.label));
-			yield return new Rule_String(prefix + "_labelIndefinite", Find.ActiveLanguageWorker.WithIndefiniteArticle(this.thingDef.label));
+			yield return new Rule_String(prefix + "_definite", Find.ActiveLanguageWorker.WithDefiniteArticle(this.thingDef.label));
+			yield return new Rule_String(prefix + "_indefinite", Find.ActiveLanguageWorker.WithIndefiniteArticle(this.thingDef.label));
 			if (this.stuff != null)
 			{
 				yield return new Rule_String(prefix + "_stuffLabel", this.stuff.label);

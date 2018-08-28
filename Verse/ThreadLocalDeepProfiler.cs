@@ -95,7 +95,7 @@ namespace Verse
 			}
 			if (this.watchers.Count == 0)
 			{
-				Log.Error("Ended deep profiling while not profiling.");
+				Log.Error("Ended deep profiling while not profiling.", false);
 				return;
 			}
 			ThreadLocalDeepProfiler.Watcher watcher = this.watchers.Pop();
@@ -122,7 +122,7 @@ namespace Verse
 				stringBuilder.AppendLine("--- Thread " + Thread.CurrentThread.ManagedThreadId + " ---");
 			}
 			this.AppendStringRecursive(stringBuilder, root, 0);
-			Log.Message(stringBuilder.ToString());
+			Log.Message(stringBuilder.ToString(), false);
 		}
 
 		private void AppendStringRecursive(StringBuilder sb, ThreadLocalDeepProfiler.Watcher w, int depth)

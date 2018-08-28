@@ -180,7 +180,7 @@ namespace Verse
 					room,
 					", roomGroup=",
 					this
-				}));
+				}), false);
 				return;
 			}
 			this.rooms.Add(room);
@@ -196,7 +196,7 @@ namespace Verse
 					room,
 					", roomGroup=",
 					this
-				}));
+				}), false);
 				return;
 			}
 			this.rooms.Remove(room);

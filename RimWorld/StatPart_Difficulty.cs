@@ -1,19 +1,13 @@
 using System;
+using System.Collections.Generic;
+using UnityEngine;
 using Verse;
 
 namespace RimWorld
 {
 	public class StatPart_Difficulty : StatPart
 	{
-		private float factorRelax = 1f;
-
-		private float factorBasebuilder = 1f;
-
-		private float factorRough = 1f;
-
-		private float factorChallenge = 1f;
-
-		private float factorExtreme = 1f;
+		private List<float> factorsPerDifficulty = new List<float>();
 
 		public override void TransformValue(StatRequest req, ref float val)
 		{
@@ -27,21 +21,13 @@ namespace RimWorld
 
 		private float Multiplier(DifficultyDef d)
 		{
-			switch (d.index)
+			int num = d.difficulty;
+			if (num < 0 || num > this.factorsPerDifficulty.Count - 1)
 			{
-			case 0:
-				return this.factorRelax;
-			case 1:
-				return this.factorBasebuilder;
-			case 2:
-				return this.factorRough;
-			case 3:
-				return this.factorChallenge;
-			case 4:
-				return this.factorExtreme;
-			default:
-				throw new ArgumentOutOfRangeException();
+				Log.ErrorOnce("Not enough difficulty offsets defined for StatPart_Difficulty", 3598689, false);
+				num = Mathf.Clamp(num, 0, this.factorsPerDifficulty.Count - 1);
 			}
+			return this.factorsPerDifficulty[num];
 		}
 	}
 }

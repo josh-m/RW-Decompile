@@ -7,7 +7,7 @@ namespace RimWorld
 	{
 		public static SkillDef Construction;
 
-		public static SkillDef Growing;
+		public static SkillDef Plants;
 
 		public static SkillDef Intellectual;
 
@@ -28,5 +28,10 @@ namespace RimWorld
 		public static SkillDef Artistic;
 
 		public static SkillDef Crafting;
+
+		static SkillDefOf()
+		{
+			DefOfHelper.EnsureInitializedInCtor(typeof(SkillDefOf));
+		}
 	}
 }

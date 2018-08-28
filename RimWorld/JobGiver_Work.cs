@@ -156,7 +156,7 @@ namespace RimWorld
 									float num5 = 0f;
 									if (prioritized)
 									{
-										if (scanner.HasJobOnCell(pawn, current))
+										if (!current.IsForbidden(pawn) && scanner.HasJobOnCell(pawn, current, false))
 										{
 											if (!allowUnreachable && !pawn.CanReach(current, scanner.PathEndMode, maxDanger, false, TraverseMode.ByPawn))
 											{
@@ -169,7 +169,7 @@ namespace RimWorld
 											}
 										}
 									}
-									else if (num4 < num2 && scanner.HasJobOnCell(pawn, current))
+									else if (num4 < num2 && !current.IsForbidden(pawn) && scanner.HasJobOnCell(pawn, current, false))
 									{
 										if (!allowUnreachable && !pawn.CanReach(current, scanner.PathEndMode, maxDanger, false, TraverseMode.ByPawn))
 										{
@@ -197,7 +197,7 @@ namespace RimWorld
 							workGiver.def.defName,
 							": ",
 							ex.ToString()
-						}));
+						}), false);
 					}
 					finally
 					{
@@ -212,7 +212,7 @@ namespace RimWorld
 						}
 						else
 						{
-							job3 = workGiver_Scanner.JobOnCell(pawn, targetInfo.Cell);
+							job3 = workGiver_Scanner.JobOnCell(pawn, targetInfo.Cell, false);
 						}
 						if (job3 != null)
 						{
@@ -226,7 +226,7 @@ namespace RimWorld
 							" but yielded no actual job for pawn ",
 							pawn,
 							". The CanGiveJob and JobOnX methods may not be synchronized."
-						}), 6112651);
+						}), 6112651, false);
 					}
 					num = workGiver.def.priorityInType;
 				}
@@ -236,7 +236,7 @@ namespace RimWorld
 
 		private bool PawnCanUseWorkGiver(Pawn pawn, WorkGiver giver)
 		{
-			return !giver.ShouldSkip(pawn) && (giver.def.canBeDoneByNonColonists || pawn.IsColonist) && (pawn.story == null || !pawn.story.WorkTagIsDisabled(giver.def.workTags)) && giver.MissingRequiredCapacity(pawn) == null;
+			return (giver.def.nonColonistsCanDo || pawn.IsColonist) && (pawn.story == null || !pawn.story.WorkTagIsDisabled(giver.def.workTags)) && !giver.ShouldSkip(pawn, false) && giver.MissingRequiredCapacity(pawn) == null;
 		}
 
 		private Job GiverTryGiveJobPrioritized(Pawn pawn, WorkGiver giver, IntVec3 cell)
@@ -271,10 +271,10 @@ namespace RimWorld
 							}
 						}
 					}
-					if (giver.def.scanCells && !cell.IsForbidden(pawn) && scanner.HasJobOnCell(pawn, cell))
+					if (giver.def.scanCells && !cell.IsForbidden(pawn) && scanner.HasJobOnCell(pawn, cell, false))
 					{
 						pawn.mindState.lastGivenWorkType = giver.def.workType;
-						Job result = scanner.JobOnCell(pawn, cell);
+						Job result = scanner.JobOnCell(pawn, cell, false);
 						return result;
 					}
 				}
@@ -288,7 +288,7 @@ namespace RimWorld
 					giver.def.defName,
 					": ",
 					ex.ToString()
-				}));
+				}), false);
 			}
 			return null;
 		}

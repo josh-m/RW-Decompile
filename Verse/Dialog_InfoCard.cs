@@ -95,19 +95,13 @@ namespace Verse
 		private void Setup()
 		{
 			this.forcePause = true;
-			this.closeOnEscapeKey = true;
 			this.doCloseButton = true;
 			this.doCloseX = true;
 			this.absorbInputAroundWindow = true;
-			this.soundAppear = SoundDef.Named("InfoCard_Open");
-			this.soundClose = SoundDef.Named("InfoCard_Close");
+			this.soundAppear = SoundDefOf.InfoCard_Open;
+			this.soundClose = SoundDefOf.InfoCard_Close;
 			StatsReportUtility.Reset();
 			PlayerKnowledgeDatabase.KnowledgeDemonstrated(ConceptDefOf.InfoCard, KnowledgeAmount.Total);
-		}
-
-		public override void WindowUpdate()
-		{
-			base.WindowUpdate();
 		}
 
 		public override void DoWindowContents(Rect inRect)
@@ -149,7 +143,7 @@ namespace Verse
 				}, this.tab == Dialog_InfoCard.InfoCardTab.Records);
 				list.Add(item4);
 			}
-			TabDrawer.DrawTabs(rect3, list);
+			TabDrawer.DrawTabs(rect3, list, 200f);
 			this.FillCard(rect3.ContractedBy(18f));
 		}
 

@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using Verse;
 using Verse.AI;
 using Verse.AI.Group;
@@ -16,11 +15,11 @@ namespace RimWorld
 
 		public int joinTick = -1;
 
-		public Pawn master;
+		private Pawn master;
 
-		public bool followDrafted = true;
+		public bool followDrafted;
 
-		public bool followFieldwork = true;
+		public bool followFieldwork;
 
 		public bool animalsReleased;
 
@@ -29,6 +28,34 @@ namespace RimWorld
 		public HostilityResponseMode hostilityResponse = HostilityResponseMode.Flee;
 
 		public bool selfTend;
+
+		public int displayOrder;
+
+		public Pawn Master
+		{
+			get
+			{
+				return this.master;
+			}
+			set
+			{
+				if (this.master == value)
+				{
+					return;
+				}
+				if (value != null && !this.pawn.training.HasLearned(TrainableDefOf.Obedience))
+				{
+					Log.ErrorOnce("Attempted to set master for non-obedient pawn", 73908573, false);
+					return;
+				}
+				bool flag = ThinkNode_ConditionalShouldFollowMaster.ShouldFollowMaster(this.pawn);
+				this.master = value;
+				if (this.pawn.Spawned && (flag || ThinkNode_ConditionalShouldFollowMaster.ShouldFollowMaster(this.pawn)))
+				{
+					this.pawn.jobs.EndCurrentJob(JobCondition.InterruptForced, true);
+				}
+			}
+		}
 
 		public Area EffectiveAreaRestrictionInPawnCurrentMap
 		{
@@ -62,7 +89,15 @@ namespace RimWorld
 			}
 			set
 			{
+				if (this.areaAllowedInt == value)
+				{
+					return;
+				}
 				this.areaAllowedInt = value;
+				if (this.pawn.Spawned && value != null && value == this.EffectiveAreaRestrictionInPawnCurrentMap && value.TrueCount > 0 && !value[this.pawn.Position])
+				{
+					this.pawn.jobs.EndCurrentJob(JobCondition.InterruptForced, true);
+				}
 			}
 		}
 
@@ -78,7 +113,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return this.master != null && this.pawn.Faction == Faction.OfPlayer && this.master.Faction == this.pawn.Faction;
+				return this.Master != null && this.pawn.Faction == Faction.OfPlayer && this.Master.Faction == this.pawn.Faction;
 			}
 		}
 
@@ -86,7 +121,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return (!this.RespectsMaster) ? null : this.master;
+				return (!this.RespectsMaster) ? null : this.Master;
 			}
 		}
 
@@ -123,6 +158,7 @@ namespace RimWorld
 			Scribe_Values.Look<bool>(ref this.followFieldwork, "followFieldwork", false, false);
 			Scribe_Values.Look<HostilityResponseMode>(ref this.hostilityResponse, "hostilityResponse", HostilityResponseMode.Flee, false);
 			Scribe_Values.Look<bool>(ref this.selfTend, "selfTend", false, false);
+			Scribe_Values.Look<int>(ref this.displayOrder, "displayOrder", 0, false);
 		}
 
 		[DebuggerHidden]
@@ -130,31 +166,47 @@ namespace RimWorld
 		{
 			if (this.pawn.Drafted)
 			{
-				if (PawnUtility.SpawnedMasteredPawns(this.pawn).Any((Pawn p) => p.training.IsCompleted(TrainableDefOf.Release)))
+				int count = 0;
+				bool anyCanRelease = false;
+				foreach (Pawn current in PawnUtility.SpawnedMasteredPawns(this.pawn))
 				{
-					yield return new Command_Toggle
+					if (current.training.HasLearned(TrainableDefOf.Release))
 					{
-						defaultLabel = "CommandReleaseAnimalsLabel".Translate(),
-						defaultDesc = "CommandReleaseAnimalsDesc".Translate(),
-						icon = TexCommand.ReleaseAnimals,
-						hotKey = KeyBindingDefOf.Misc7,
-						isActive = (() => this.$this.animalsReleased),
-						toggleAction = delegate
+						anyCanRelease = true;
+						if (ThinkNode_ConditionalShouldFollowMaster.ShouldFollowMaster(current))
 						{
-							this.$this.animalsReleased = !this.$this.animalsReleased;
-							if (this.$this.animalsReleased)
+							count++;
+						}
+					}
+				}
+				if (anyCanRelease)
+				{
+					Command_Toggle c = new Command_Toggle();
+					c.defaultLabel = "CommandReleaseAnimalsLabel".Translate() + ((count == 0) ? string.Empty : (" (" + count + ")"));
+					c.defaultDesc = "CommandReleaseAnimalsDesc".Translate();
+					c.icon = TexCommand.ReleaseAnimals;
+					c.hotKey = KeyBindingDefOf.Misc7;
+					c.isActive = (() => this.$this.animalsReleased);
+					c.toggleAction = delegate
+					{
+						this.$this.animalsReleased = !this.$this.animalsReleased;
+						if (this.$this.animalsReleased)
+						{
+							foreach (Pawn current2 in PawnUtility.SpawnedMasteredPawns(this.$this.pawn))
 							{
-								foreach (Pawn current in PawnUtility.SpawnedMasteredPawns(this.$this.pawn))
+								if (current2.caller != null)
 								{
-									if (current.caller != null)
-									{
-										current.caller.Notify_Released();
-									}
-									current.jobs.EndCurrentJob(JobCondition.InterruptForced, true);
+									current2.caller.Notify_Released();
 								}
+								current2.jobs.EndCurrentJob(JobCondition.InterruptForced, true);
 							}
 						}
 					};
+					if (count == 0)
+					{
+						c.Disable("CommandReleaseAnimalsFail_NoAnimals".Translate());
+					}
+					yield return c;
 				}
 			}
 		}
@@ -162,6 +214,7 @@ namespace RimWorld
 		public void Notify_FactionChanged()
 		{
 			this.ResetMedicalCare();
+			this.areaAllowedInt = null;
 		}
 
 		public void Notify_MadePrisoner()
@@ -181,29 +234,29 @@ namespace RimWorld
 				{
 					if (!this.pawn.IsPrisoner)
 					{
-						this.medCare = Find.World.settings.defaultCareForColonyHumanlike;
+						this.medCare = Find.PlaySettings.defaultCareForColonyHumanlike;
 					}
 					else
 					{
-						this.medCare = Find.World.settings.defaultCareForColonyPrisoner;
+						this.medCare = Find.PlaySettings.defaultCareForColonyPrisoner;
 					}
 				}
 				else
 				{
-					this.medCare = Find.World.settings.defaultCareForColonyAnimal;
+					this.medCare = Find.PlaySettings.defaultCareForColonyAnimal;
 				}
 			}
 			else if (this.pawn.Faction == null && this.pawn.RaceProps.Animal)
 			{
-				this.medCare = Find.World.settings.defaultCareForNeutralAnimal;
+				this.medCare = Find.PlaySettings.defaultCareForNeutralAnimal;
 			}
 			else if (this.pawn.Faction == null || !this.pawn.Faction.HostileTo(Faction.OfPlayer))
 			{
-				this.medCare = Find.World.settings.defaultCareForNeutralFaction;
+				this.medCare = Find.PlaySettings.defaultCareForNeutralFaction;
 			}
 			else
 			{
-				this.medCare = Find.World.settings.defaultCareForHostileFaction;
+				this.medCare = Find.PlaySettings.defaultCareForHostileFaction;
 			}
 		}
 

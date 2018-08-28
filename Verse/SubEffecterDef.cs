@@ -40,11 +40,12 @@ namespace Verse
 
 		public int ticksBeforeSustainerStart;
 
-		public SubEffecter Spawn()
+		public SubEffecter Spawn(Effecter parent)
 		{
 			return (SubEffecter)Activator.CreateInstance(this.subEffecterClass, new object[]
 			{
-				this
+				this,
+				parent
 			});
 		}
 	}

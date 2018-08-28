@@ -55,11 +55,39 @@ namespace Verse
 			}
 		}
 
-		protected virtual float LifespanSecs
+		protected virtual bool EndOfLife
 		{
 			get
 			{
-				return this.def.mote.fadeInTime + this.def.mote.solidTime + this.def.mote.fadeOutTime;
+				return this.AgeSecs >= this.def.mote.Lifespan;
+			}
+		}
+
+		public virtual float Alpha
+		{
+			get
+			{
+				float ageSecs = this.AgeSecs;
+				if (ageSecs <= this.def.mote.fadeInTime)
+				{
+					if (this.def.mote.fadeInTime > 0f)
+					{
+						return ageSecs / this.def.mote.fadeInTime;
+					}
+					return 1f;
+				}
+				else
+				{
+					if (ageSecs <= this.def.mote.fadeInTime + this.def.mote.solidTime)
+					{
+						return 1f;
+					}
+					if (this.def.mote.fadeOutTime > 0f)
+					{
+						return 1f - Mathf.InverseLerp(this.def.mote.fadeInTime + this.def.mote.solidTime, this.def.mote.fadeInTime + this.def.mote.solidTime + this.def.mote.fadeOutTime, ageSecs);
+					}
+					return 1f;
+				}
 			}
 		}
 
@@ -70,13 +98,13 @@ namespace Verse
 			this.spawnRealTime = Time.realtimeSinceStartup;
 			RealTime.moteList.MoteSpawned(this);
 			base.Map.moteCounter.Notify_MoteSpawned();
-			this.exactPosition.y = Altitudes.AltitudeFor(this.def.altitudeLayer);
+			this.exactPosition.y = this.def.altitudeLayer.AltitudeFor();
 		}
 
-		public override void DeSpawn()
+		public override void DeSpawn(DestroyMode mode = DestroyMode.Vanish)
 		{
 			Map map = base.Map;
-			base.DeSpawn();
+			base.DeSpawn(mode);
 			RealTime.moteList.MoteDespawned(this);
 			map.moteCounter.Notify_MoteDespawned();
 		}
@@ -99,7 +127,7 @@ namespace Verse
 
 		protected virtual void TimeInterval(float deltaTime)
 		{
-			if (this.AgeSecs >= this.LifespanSecs && !base.Destroyed)
+			if (this.EndOfLife && !base.Destroyed)
 			{
 				this.Destroy(DestroyMode.Vanish);
 				return;
@@ -109,15 +137,22 @@ namespace Verse
 				this.Destroy(DestroyMode.Vanish);
 				return;
 			}
-			if (this.def.mote.growthRate > 0f)
+			if (this.def.mote.growthRate != 0f)
 			{
 				this.exactScale = new Vector3(this.exactScale.x + this.def.mote.growthRate * deltaTime, this.exactScale.y, this.exactScale.z + this.def.mote.growthRate * deltaTime);
+				this.exactScale.x = Mathf.Max(this.exactScale.x, 0.0001f);
+				this.exactScale.z = Mathf.Max(this.exactScale.z, 0.0001f);
 			}
 		}
 
 		public override void Draw()
 		{
-			this.exactPosition.y = Altitudes.AltitudeFor(this.def.altitudeLayer);
+			this.Draw(this.def.altitudeLayer.AltitudeFor());
+		}
+
+		public void Draw(float altitude)
+		{
+			this.exactPosition.y = altitude;
 			base.Draw();
 		}
 

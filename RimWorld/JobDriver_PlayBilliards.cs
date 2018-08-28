@@ -11,9 +11,14 @@ namespace RimWorld
 	{
 		private const int ShotDuration = 600;
 
-		public override bool TryMakePreToilReservations()
+		public override bool TryMakePreToilReservations(bool errorOnFailed)
 		{
-			return this.pawn.Reserve(this.job.targetA, this.job, this.job.def.joyMaxParticipants, 0, null);
+			Pawn pawn = this.pawn;
+			LocalTargetInfo targetA = this.job.targetA;
+			Job job = this.job;
+			int joyMaxParticipants = this.job.def.joyMaxParticipants;
+			int stackCount = 0;
+			return pawn.Reserve(targetA, job, joyMaxParticipants, stackCount, null, errorOnFailed);
 		}
 
 		[DebuggerHidden]
@@ -41,10 +46,9 @@ namespace RimWorld
 					this.$this.EndJobWith(JobCondition.Succeeded);
 					return;
 				}
-				float statValue = this.$this.TargetThingA.GetStatValue(StatDefOf.EntertainmentStrengthFactor, true);
 				Pawn pawn = this.$this.pawn;
-				float extraJoyGainFactor = statValue;
-				JoyUtility.JoyTickCheckEnd(pawn, JoyTickFullJoyAction.EndJob, extraJoyGainFactor);
+				Building joySource = (Building)this.$this.TargetThingA;
+				JoyUtility.JoyTickCheckEnd(pawn, JoyTickFullJoyAction.EndJob, 1f, joySource);
 			};
 			play.handlingFacing = true;
 			play.socialMode = RandomSocialMode.SuperActive;

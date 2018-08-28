@@ -13,19 +13,11 @@ namespace Verse
 
 		protected Listing_Standard listing;
 
-		protected static readonly Vector2 ButSize = new Vector2(230f, 27f);
-
-		protected const float ButSpacing = 0f;
-
-		protected readonly float ColumnSpacing = 20f;
-
-		protected readonly float SectSpacing = 8f;
-
 		public override Vector2 InitialSize
 		{
 			get
 			{
-				return new Vector2(1024f, 768f);
+				return new Vector2((float)UI.screenWidth, (float)UI.screenHeight);
 			}
 		}
 
@@ -39,7 +31,6 @@ namespace Verse
 
 		public Dialog_OptionLister()
 		{
-			this.closeOnEscapeKey = true;
 			this.doCloseX = true;
 			this.onlyOneOfTypeAllowed = true;
 			this.absorbInputAroundWindow = true;
@@ -54,15 +45,16 @@ namespace Verse
 			}
 			Rect outRect = new Rect(inRect);
 			outRect.yMin += 35f;
-			float num = (this.totalOptionsHeight + 72f) / 4f;
-			if (num < outRect.height)
+			int num = (int)(this.InitialSize.x / 200f);
+			float num2 = (this.totalOptionsHeight + 24f * (float)(num - 1)) / (float)num;
+			if (num2 < outRect.height)
 			{
-				num = outRect.height;
+				num2 = outRect.height;
 			}
-			Rect rect = new Rect(0f, 0f, outRect.width - 16f, num);
+			Rect rect = new Rect(0f, 0f, outRect.width - 16f, num2);
 			Widgets.BeginScrollView(outRect, ref this.scrollPosition, rect, true);
 			this.listing = new Listing_Standard();
-			this.listing.ColumnWidth = (rect.width - 51f) / 4f;
+			this.listing.ColumnWidth = (rect.width - 17f * (float)(num - 1)) / (float)num;
 			this.listing.Begin(rect);
 			this.DoListingItems();
 			this.listing.End();

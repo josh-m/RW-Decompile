@@ -11,7 +11,7 @@ namespace RimWorld.BaseGen
 		{
 			if (!rp.thrustAxis.HasValue)
 			{
-				Log.ErrorOnce("No thrust axis when generating ship parts", 50627817);
+				Log.ErrorOnce("No thrust axis when generating ship parts", 50627817, false);
 			}
 			foreach (KeyValuePair<ThingDef, int> current in ShipUtility.RequiredParts())
 			{
@@ -55,7 +55,7 @@ namespace RimWorld.BaseGen
 				{
 					compHibernatable.State = HibernatableStateDefOf.Hibernating;
 				}
-				GenSpawn.Spawn(thing, loc, BaseGen.globalSettings.map, rotation, false);
+				GenSpawn.Spawn(thing, loc, BaseGen.globalSettings.map, rotation, WipeMode.Vanish, false);
 			}
 		}
 	}

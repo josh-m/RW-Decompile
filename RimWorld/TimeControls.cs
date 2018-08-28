@@ -9,20 +9,33 @@ namespace RimWorld
 	{
 		public static readonly Vector2 TimeButSize = new Vector2(32f, 24f);
 
-		private static readonly string[] SpeedSounds = new string[]
-		{
-			"ClockStop",
-			"ClockNormal",
-			"ClockFast",
-			"ClockSuperfast",
-			"ClockSuperfast"
-		};
-
 		private static readonly TimeSpeed[] CachedTimeSpeedValues = (TimeSpeed[])Enum.GetValues(typeof(TimeSpeed));
 
 		private static void PlaySoundOf(TimeSpeed speed)
 		{
-			SoundDef.Named(TimeControls.SpeedSounds[(int)speed]).PlayOneShotOnCamera(null);
+			SoundDef soundDef = null;
+			switch (speed)
+			{
+			case TimeSpeed.Paused:
+				soundDef = SoundDefOf.Clock_Stop;
+				break;
+			case TimeSpeed.Normal:
+				soundDef = SoundDefOf.Clock_Normal;
+				break;
+			case TimeSpeed.Fast:
+				soundDef = SoundDefOf.Clock_Fast;
+				break;
+			case TimeSpeed.Superfast:
+				soundDef = SoundDefOf.Clock_Superfast;
+				break;
+			case TimeSpeed.Ultrafast:
+				soundDef = SoundDefOf.Clock_Superfast;
+				break;
+			}
+			if (soundDef != null)
+			{
+				soundDef.PlayOneShotOnCamera(null);
+			}
 		}
 
 		public static void DoTimeControlsGUI(Rect timerRect)
@@ -72,21 +85,21 @@ namespace RimWorld
 					PlayerKnowledgeDatabase.KnowledgeDemonstrated(ConceptDefOf.Pause, KnowledgeAmount.SpecificInteraction);
 					Event.current.Use();
 				}
-				if (KeyBindingDefOf.TimeSpeedNormal.KeyDownEvent)
+				if (KeyBindingDefOf.TimeSpeed_Normal.KeyDownEvent)
 				{
 					Find.TickManager.CurTimeSpeed = TimeSpeed.Normal;
 					TimeControls.PlaySoundOf(Find.TickManager.CurTimeSpeed);
 					PlayerKnowledgeDatabase.KnowledgeDemonstrated(ConceptDefOf.TimeControls, KnowledgeAmount.SpecificInteraction);
 					Event.current.Use();
 				}
-				if (KeyBindingDefOf.TimeSpeedFast.KeyDownEvent)
+				if (KeyBindingDefOf.TimeSpeed_Fast.KeyDownEvent)
 				{
 					Find.TickManager.CurTimeSpeed = TimeSpeed.Fast;
 					TimeControls.PlaySoundOf(Find.TickManager.CurTimeSpeed);
 					PlayerKnowledgeDatabase.KnowledgeDemonstrated(ConceptDefOf.TimeControls, KnowledgeAmount.SpecificInteraction);
 					Event.current.Use();
 				}
-				if (KeyBindingDefOf.TimeSpeedSuperfast.KeyDownEvent)
+				if (KeyBindingDefOf.TimeSpeed_Superfast.KeyDownEvent)
 				{
 					Find.TickManager.CurTimeSpeed = TimeSpeed.Superfast;
 					TimeControls.PlaySoundOf(Find.TickManager.CurTimeSpeed);
@@ -95,16 +108,16 @@ namespace RimWorld
 				}
 				if (Prefs.DevMode)
 				{
-					if (KeyBindingDefOf.TimeSpeedUltrafast.KeyDownEvent)
+					if (KeyBindingDefOf.TimeSpeed_Ultrafast.KeyDownEvent)
 					{
 						Find.TickManager.CurTimeSpeed = TimeSpeed.Ultrafast;
 						TimeControls.PlaySoundOf(Find.TickManager.CurTimeSpeed);
 						Event.current.Use();
 					}
-					if (KeyBindingDefOf.TickOnce.KeyDownEvent && tickManager.CurTimeSpeed == TimeSpeed.Paused)
+					if (KeyBindingDefOf.Dev_TickOnce.KeyDownEvent && tickManager.CurTimeSpeed == TimeSpeed.Paused)
 					{
 						tickManager.DoSingleTick();
-						SoundDef.Named(TimeControls.SpeedSounds[0]).PlayOneShotOnCamera(null);
+						SoundDefOf.Clock_Stop.PlayOneShotOnCamera(null);
 					}
 				}
 			}

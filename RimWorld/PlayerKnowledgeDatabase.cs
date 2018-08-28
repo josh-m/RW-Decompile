@@ -36,7 +36,7 @@ namespace RimWorld
 			{
 				if (!PlayerKnowledgeDatabase.data.knowledge.ContainsKey(current))
 				{
-					Log.Warning("Knowledge data was missing key " + current + ". Adding it...");
+					Log.Warning("Knowledge data was missing key " + current + ". Adding it...", false);
 					PlayerKnowledgeDatabase.data.knowledge.Add(current, 0f);
 				}
 			}
@@ -68,7 +68,7 @@ namespace RimWorld
 					GenFilePaths.ConceptKnowledgeFilePath,
 					ex.ToString()
 				}));
-				Log.Error("Exception saving knowledge database: " + ex);
+				Log.Error("Exception saving knowledge database: " + ex, false);
 			}
 		}
 
@@ -108,7 +108,7 @@ namespace RimWorld
 			switch (know)
 			{
 			case KnowledgeAmount.FrameDisplayed:
-				num = 0.002f;
+				num = ((Event.current.type != EventType.Repaint) ? 0f : 0.004f);
 				break;
 			case KnowledgeAmount.FrameInteraction:
 				num = 0.008f;
@@ -133,6 +133,10 @@ namespace RimWorld
 				break;
 			default:
 				throw new NotImplementedException();
+			}
+			if (num <= 0f)
+			{
+				return;
 			}
 			PlayerKnowledgeDatabase.SetKnowledge(conc, PlayerKnowledgeDatabase.GetKnowledge(conc) + num);
 			LessonAutoActivator.Notify_KnowledgeDemonstrated(conc);

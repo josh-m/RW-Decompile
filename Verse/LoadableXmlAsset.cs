@@ -12,6 +12,10 @@ namespace Verse
 
 		public XmlDocument xmlDoc;
 
+		public ModContentPack mod;
+
+		public DefPackage defPackage;
+
 		public string FullFilePath
 		{
 			get
@@ -37,7 +41,7 @@ namespace Verse
 					name,
 					" as XML: ",
 					ex
-				}));
+				}), false);
 				this.xmlDoc = null;
 			}
 		}

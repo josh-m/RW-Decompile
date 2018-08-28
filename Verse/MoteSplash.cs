@@ -21,11 +21,22 @@ namespace Verse
 
 		private float velocity;
 
-		protected override float LifespanSecs
+		protected override bool EndOfLife
 		{
 			get
 			{
-				return this.targetSize / this.velocity;
+				return base.AgeSecs >= this.targetSize / this.velocity;
+			}
+		}
+
+		public override float Alpha
+		{
+			get
+			{
+				float num = Mathf.Clamp01(base.AgeSecs * 10f);
+				num = 1f;
+				float num2 = Mathf.Clamp01(1f - base.AgeSecs / (this.targetSize / this.velocity));
+				return num * num2 * this.CalculatedIntensity();
 			}
 		}
 
@@ -52,14 +63,6 @@ namespace Verse
 		public float CalculatedIntensity()
 		{
 			return Mathf.Sqrt(this.targetSize) / 10f;
-		}
-
-		public float CalculatedAlpha()
-		{
-			float num = Mathf.Clamp01(base.AgeSecs * 10f);
-			num = 1f;
-			float num2 = Mathf.Clamp01(1f - base.AgeSecs / this.LifespanSecs);
-			return num * num2 * this.CalculatedIntensity();
 		}
 
 		public float CalculatedShockwaveSpan()

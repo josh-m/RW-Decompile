@@ -21,6 +21,14 @@ namespace Verse
 			Scribe_Collections.Look<Designation>(ref this.allDesignations, "allDesignations", LookMode.Deep, new object[0]);
 			if (Scribe.mode == LoadSaveMode.LoadingVars)
 			{
+				if (this.allDesignations.RemoveAll((Designation x) => x == null) != 0)
+				{
+					Log.Warning("Some designations were null after loading.", false);
+				}
+				if (this.allDesignations.RemoveAll((Designation x) => x.def == null) != 0)
+				{
+					Log.Warning("Some designations had null def after loading.", false);
+				}
 				for (int i = 0; i < this.allDesignations.Count; i++)
 				{
 					this.allDesignations[i].designationManager = this;
@@ -37,14 +45,14 @@ namespace Verse
 						{
 							if (!this.allDesignations[j].target.Cell.IsValid)
 							{
-								Log.Error("Cell-needing designation " + this.allDesignations[j] + " had no cell target. Removing...");
+								Log.Error("Cell-needing designation " + this.allDesignations[j] + " had no cell target. Removing...", false);
 								this.allDesignations.RemoveAt(j);
 							}
 						}
 					}
 					else if (!this.allDesignations[j].target.HasThing)
 					{
-						Log.Error("Thing-needing designation " + this.allDesignations[j] + " had no thing target. Removing...");
+						Log.Error("Thing-needing designation " + this.allDesignations[j] + " had no thing target. Removing...", false);
 						this.allDesignations.RemoveAt(j);
 					}
 				}
@@ -66,12 +74,12 @@ namespace Verse
 		{
 			if (newDes.def.targetType == TargetType.Cell && this.DesignationAt(newDes.target.Cell, newDes.def) != null)
 			{
-				Log.Error("Tried to double-add designation at location " + newDes.target);
+				Log.Error("Tried to double-add designation at location " + newDes.target, false);
 				return;
 			}
 			if (newDes.def.targetType == TargetType.Thing && this.DesignationOn(newDes.target.Thing, newDes.def) != null)
 			{
-				Log.Error("Tried to double-add designation on Thing " + newDes.target);
+				Log.Error("Tried to double-add designation on Thing " + newDes.target, false);
 				return;
 			}
 			if (newDes.def.targetType == TargetType.Thing)
@@ -105,7 +113,7 @@ namespace Verse
 		{
 			if (def.targetType == TargetType.Cell)
 			{
-				Log.Error("Designations of type " + def.defName + " are indexed by location only and you are trying to get one on a Thing.");
+				Log.Error("Designations of type " + def.defName + " are indexed by location only and you are trying to get one on a Thing.", false);
 				return null;
 			}
 			for (int i = 0; i < this.allDesignations.Count; i++)
@@ -123,7 +131,7 @@ namespace Verse
 		{
 			if (def.targetType == TargetType.Thing)
 			{
-				Log.Error("Designations of type " + def.defName + " are indexed by Thing only and you are trying to get one on a location.");
+				Log.Error("Designations of type " + def.defName + " are indexed by Thing only and you are trying to get one on a location.", false);
 				return null;
 			}
 			for (int i = 0; i < this.allDesignations.Count; i++)
@@ -164,6 +172,20 @@ namespace Verse
 			}
 		}
 
+		public bool HasMapDesignationAt(IntVec3 c)
+		{
+			int count = this.allDesignations.Count;
+			for (int i = 0; i < count; i++)
+			{
+				Designation designation = this.allDesignations[i];
+				if (!designation.target.HasThing && designation.target.Cell == c)
+				{
+					return true;
+				}
+			}
+			return false;
+		}
+
 		[DebuggerHidden]
 		public IEnumerable<Designation> SpawnedDesignationsOfDef(DesignationDef def)
 		{
@@ -184,6 +206,15 @@ namespace Verse
 			this.allDesignations.Remove(des);
 		}
 
+		public void TryRemoveDesignation(IntVec3 c, DesignationDef def)
+		{
+			Designation designation = this.DesignationAt(c, def);
+			if (designation != null)
+			{
+				this.RemoveDesignation(designation);
+			}
+		}
+
 		public void RemoveAllDesignationsOn(Thing t, bool standardCanceling = false)
 		{
 			for (int i = 0; i < this.allDesignations.Count; i++)
@@ -198,6 +229,27 @@ namespace Verse
 				}
 			}
 			this.allDesignations.RemoveAll((Designation d) => (!standardCanceling || d.def.designateCancelable) && d.target.Thing == t);
+		}
+
+		public void TryRemoveDesignationOn(Thing t, DesignationDef def)
+		{
+			Designation designation = this.DesignationOn(t, def);
+			if (designation != null)
+			{
+				this.RemoveDesignation(designation);
+			}
+		}
+
+		public void RemoveAllDesignationsOfDef(DesignationDef def)
+		{
+			for (int i = this.allDesignations.Count - 1; i >= 0; i--)
+			{
+				if (this.allDesignations[i].def == def)
+				{
+					this.allDesignations[i].Notify_Removing();
+					this.allDesignations.RemoveAt(i);
+				}
+			}
 		}
 
 		public void Notify_BuildingDespawned(Thing b)

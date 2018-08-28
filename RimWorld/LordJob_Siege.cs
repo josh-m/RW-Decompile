@@ -12,6 +12,14 @@ namespace RimWorld
 
 		private float blueprintPoints;
 
+		public override bool GuiltyOnDowned
+		{
+			get
+			{
+				return true;
+			}
+		}
+
 		public LordJob_Siege()
 		{
 		}
@@ -30,23 +38,23 @@ namespace RimWorld
 			LordToil_Siege lordToil_Siege = new LordToil_Siege(this.siegeSpot, this.blueprintPoints);
 			stateGraph.AddToil(lordToil_Siege);
 			LordToil startingToil2 = stateGraph.AttachSubgraph(new LordJob_AssaultColony(this.faction, true, true, false, false, true).CreateGraph()).StartingToil;
-			Transition transition = new Transition(startingToil, lordToil_Siege);
+			Transition transition = new Transition(startingToil, lordToil_Siege, false, true);
 			transition.AddTrigger(new Trigger_Memo("TravelArrived"));
 			transition.AddTrigger(new Trigger_TicksPassed(5000));
-			stateGraph.AddTransition(transition);
-			Transition transition2 = new Transition(lordToil_Siege, startingToil2);
+			stateGraph.AddTransition(transition, false);
+			Transition transition2 = new Transition(lordToil_Siege, startingToil2, false, true);
 			transition2.AddTrigger(new Trigger_Memo("NoBuilders"));
 			transition2.AddTrigger(new Trigger_Memo("NoArtillery"));
-			transition2.AddTrigger(new Trigger_PawnHarmed(0.08f, false));
+			transition2.AddTrigger(new Trigger_PawnHarmed(0.08f, false, null));
 			transition2.AddTrigger(new Trigger_FractionPawnsLost(0.3f));
 			transition2.AddTrigger(new Trigger_TicksPassed((int)(60000f * Rand.Range(1.5f, 3f))));
 			transition2.AddPreAction(new TransitionAction_Message("MessageSiegersAssaulting".Translate(new object[]
 			{
 				this.faction.def.pawnsPlural,
 				this.faction
-			}), MessageTypeDefOf.ThreatBig));
+			}), MessageTypeDefOf.ThreatBig, null, 1f));
 			transition2.AddPostAction(new TransitionAction_WakeAll());
-			stateGraph.AddTransition(transition2);
+			stateGraph.AddTransition(transition2, false);
 			return stateGraph;
 		}
 

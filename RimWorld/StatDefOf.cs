@@ -25,9 +25,19 @@ namespace RimWorld
 
 		public static StatDef Mass;
 
+		public static StatDef ConstructionSpeedFactor;
+
+		public static StatDef Nutrition;
+
+		public static StatDef FoodPoisonChanceFixedHuman;
+
 		public static StatDef MoveSpeed;
 
 		public static StatDef GlobalLearningFactor;
+
+		public static StatDef HungerRateMultiplier;
+
+		public static StatDef RestRateMultiplier;
 
 		public static StatDef PsychicSensitivity;
 
@@ -53,6 +63,8 @@ namespace RimWorld
 
 		public static StatDef PainShockThreshold;
 
+		public static StatDef ForagedNutritionPerDay;
+
 		public static StatDef WorkSpeedGlobal;
 
 		public static StatDef MiningSpeed;
@@ -63,9 +75,7 @@ namespace RimWorld
 
 		public static StatDef ConstructionSpeed;
 
-		public static StatDef DiplomacyPower;
-
-		public static StatDef TradePriceImprovement;
+		public static StatDef HuntingStealth;
 
 		public static StatDef PlantWorkSpeed;
 
@@ -75,13 +85,13 @@ namespace RimWorld
 
 		public static StatDef CarryingCapacity;
 
-		public static StatDef MechanoidOperationSuccessChance;
-
 		public static StatDef PlantHarvestYield;
 
 		public static StatDef FixBrokenDownBuildingSuccessChance;
 
 		public static StatDef ConstructSuccessChance;
+
+		public static StatDef UnskilledLaborSpeed;
 
 		public static StatDef MedicalTendSpeed;
 
@@ -89,9 +99,11 @@ namespace RimWorld
 
 		public static StatDef MedicalSurgerySuccessChance;
 
-		public static StatDef SocialImpact;
+		public static StatDef NegotiationAbility;
 
-		public static StatDef RecruitPrisonerChance;
+		public static StatDef TradePriceImprovement;
+
+		public static StatDef SocialImpact;
 
 		public static StatDef AnimalGatherSpeed;
 
@@ -101,15 +113,15 @@ namespace RimWorld
 
 		public static StatDef TrainAnimalChance;
 
-		public static StatDef ShootingAccuracy;
+		public static StatDef ShootingAccuracyPawn;
+
+		public static StatDef ShootingAccuracyTurret;
 
 		public static StatDef AimingDelayFactor;
 
 		public static StatDef MeleeHitChance;
 
 		public static StatDef MeleeDodgeChance;
-
-		public static StatDef Weapon_Bulk;
 
 		public static StatDef MeleeWeapon_AverageDPS;
 
@@ -121,7 +133,19 @@ namespace RimWorld
 
 		public static StatDef BluntDamageMultiplier;
 
+		public static StatDef StuffPower_Armor_Sharp;
+
+		public static StatDef StuffPower_Armor_Blunt;
+
+		public static StatDef StuffPower_Armor_Heat;
+
+		public static StatDef StuffPower_Insulation_Cold;
+
+		public static StatDef StuffPower_Insulation_Heat;
+
 		public static StatDef RangedWeapon_Cooldown;
+
+		public static StatDef RangedWeapon_DamageMultiplier;
 
 		public static StatDef AccuracyTouch;
 
@@ -131,13 +155,17 @@ namespace RimWorld
 
 		public static StatDef AccuracyLong;
 
-		public static StatDef ArmorRating_Blunt;
+		public static StatDef StuffEffectMultiplierArmor;
+
+		public static StatDef StuffEffectMultiplierInsulation_Cold;
+
+		public static StatDef StuffEffectMultiplierInsulation_Heat;
 
 		public static StatDef ArmorRating_Sharp;
 
-		public static StatDef ArmorRating_Heat;
+		public static StatDef ArmorRating_Blunt;
 
-		public static StatDef ArmorRating_Electric;
+		public static StatDef ArmorRating_Heat;
 
 		public static StatDef Insulation_Cold;
 
@@ -149,9 +177,15 @@ namespace RimWorld
 
 		public static StatDef SmokepopBeltRadius;
 
+		public static StatDef EquipDelay;
+
 		public static StatDef MedicalPotency;
 
+		public static StatDef MedicalQualityMax;
+
 		public static StatDef ImmunityGainSpeed;
+
+		public static StatDef ImmunityGainSpeedFactor;
 
 		public static StatDef DoorOpenSpeed;
 
@@ -167,8 +201,15 @@ namespace RimWorld
 
 		public static StatDef WorkTableWorkSpeedFactor;
 
-		public static StatDef EntertainmentStrengthFactor;
+		public static StatDef WorkTableEfficiencyFactor;
+
+		public static StatDef JoyGainFactor;
 
 		public static StatDef SurgerySuccessChanceFactor;
+
+		static StatDefOf()
+		{
+			DefOfHelper.EnsureInitializedInCtor(typeof(StatDefOf));
+		}
 	}
 }

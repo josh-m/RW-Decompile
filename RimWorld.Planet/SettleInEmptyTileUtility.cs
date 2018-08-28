@@ -16,10 +16,10 @@ namespace RimWorld.Planet
 			Faction faction = caravan.Faction;
 			if (faction != Faction.OfPlayer)
 			{
-				Log.Error("Cannot settle with non-player faction.");
+				Log.Error("Cannot settle with non-player faction.", false);
 				return;
 			}
-			FactionBase newHome = SettleUtility.AddNewHome(caravan.Tile, faction);
+			Settlement newHome = SettleUtility.AddNewHome(caravan.Tile, faction);
 			LongEventHandler.QueueLongEvent(delegate
 			{
 				GetOrGenerateMapUtility.GetOrGenerateMap(caravan.Tile, Find.World.info.initialMapSize, null);
@@ -41,17 +41,20 @@ namespace RimWorld.Planet
 			command_Settle.icon = SettleUtility.SettleCommandTex;
 			command_Settle.action = delegate
 			{
-				SoundDefOf.TickHigh.PlayOneShotOnCamera(null);
-				SettleInEmptyTileUtility.Settle(caravan);
+				SoundDefOf.Tick_High.PlayOneShotOnCamera(null);
+				SettlementProximityGoodwillUtility.CheckConfirmSettle(caravan.Tile, delegate
+				{
+					SettleInEmptyTileUtility.Settle(caravan);
+				});
 			};
 			SettleInEmptyTileUtility.tmpSettleFailReason.Length = 0;
 			if (!TileFinder.IsValidTileForNewSettlement(caravan.Tile, SettleInEmptyTileUtility.tmpSettleFailReason))
 			{
 				command_Settle.Disable(SettleInEmptyTileUtility.tmpSettleFailReason.ToString());
 			}
-			else if (SettleUtility.PlayerHomesCountLimitReached)
+			else if (SettleUtility.PlayerSettlementsCountLimitReached)
 			{
-				if (Prefs.MaxNumberOfPlayerHomes > 1)
+				if (Prefs.MaxNumberOfPlayerSettlements > 1)
 				{
 					command_Settle.Disable("CommandSettleFailReachedMaximumNumberOfBases".Translate());
 				}

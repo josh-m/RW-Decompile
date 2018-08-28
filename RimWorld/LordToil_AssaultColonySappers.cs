@@ -28,6 +28,14 @@ namespace RimWorld
 			}
 		}
 
+		public override bool ForceHighStoryDanger
+		{
+			get
+			{
+				return true;
+			}
+		}
+
 		public LordToil_AssaultColonySappers()
 		{
 			this.data = new LordToilData_AssaultColonySappers();
@@ -52,30 +60,44 @@ namespace RimWorld
 				for (int i = 0; i < this.lord.ownedPawns.Count; i++)
 				{
 					Pawn pawn = this.lord.ownedPawns[i];
-					if (pawn.equipment.Primary != null)
+					if (SappersUtility.IsGoodSapper(pawn))
 					{
-						if (pawn.equipment.Primary.GetComp<CompEquippable>().AllVerbs.Any((Verb verb) => verb.verbProps.ai_IsBuildingDestroyer))
-						{
-							list.Add(pawn);
-						}
+						list.Add(pawn);
 					}
 				}
 				if (list.Count == 0 && this.lord.ownedPawns.Count >= 2)
 				{
-					list.Add(this.lord.ownedPawns[0]);
+					Pawn pawn2 = null;
+					int num = 0;
+					for (int j = 0; j < this.lord.ownedPawns.Count; j++)
+					{
+						if (SappersUtility.IsGoodBackupSapper(this.lord.ownedPawns[j]))
+						{
+							int level = this.lord.ownedPawns[j].skills.GetSkill(SkillDefOf.Mining).Level;
+							if (pawn2 == null || level > num)
+							{
+								pawn2 = this.lord.ownedPawns[j];
+								num = level;
+							}
+						}
+					}
+					if (pawn2 != null)
+					{
+						list.Add(pawn2);
+					}
 				}
 			}
-			for (int j = 0; j < this.lord.ownedPawns.Count; j++)
+			for (int k = 0; k < this.lord.ownedPawns.Count; k++)
 			{
-				Pawn pawn2 = this.lord.ownedPawns[j];
-				if (list != null && list.Contains(pawn2))
+				Pawn pawn3 = this.lord.ownedPawns[k];
+				if (list != null && list.Contains(pawn3))
 				{
-					pawn2.mindState.duty = new PawnDuty(DutyDefOf.Sapper, this.Data.sapperDest, -1f);
+					pawn3.mindState.duty = new PawnDuty(DutyDefOf.Sapper, this.Data.sapperDest, -1f);
 				}
 				else if (!list.NullOrEmpty<Pawn>())
 				{
 					float randomInRange;
-					if (pawn2.equipment != null && pawn2.equipment.Primary != null && pawn2.equipment.Primary.def.IsRangedWeapon)
+					if (pawn3.equipment != null && pawn3.equipment.Primary != null && pawn3.equipment.Primary.def.IsRangedWeapon)
 					{
 						randomInRange = LordToil_AssaultColonySappers.EscortRadiusRanged.RandomInRange;
 					}
@@ -83,11 +105,11 @@ namespace RimWorld
 					{
 						randomInRange = LordToil_AssaultColonySappers.EscortRadiusMelee.RandomInRange;
 					}
-					pawn2.mindState.duty = new PawnDuty(DutyDefOf.Escort, list.RandomElement<Pawn>(), randomInRange);
+					pawn3.mindState.duty = new PawnDuty(DutyDefOf.Escort, list.RandomElement<Pawn>(), randomInRange);
 				}
 				else
 				{
-					pawn2.mindState.duty = new PawnDuty(DutyDefOf.AssaultColony);
+					pawn3.mindState.duty = new PawnDuty(DutyDefOf.AssaultColony);
 				}
 			}
 		}

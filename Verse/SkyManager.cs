@@ -37,7 +37,7 @@ namespace Verse
 		{
 			SkyTarget curSky = this.CurrentSkyTarget();
 			this.curSkyGlowInt = curSky.glow;
-			if (this.map == Find.VisibleMap)
+			if (this.map == Find.CurrentMap)
 			{
 				MatBases.LightOverlay.color = curSky.colors.sky;
 				Find.CameraColor.saturation = curSky.colors.saturation;
@@ -88,12 +88,12 @@ namespace Verse
 			for (int k = 0; k < this.map.gameConditionManager.ActiveConditions.Count; k++)
 			{
 				GameCondition gameCondition = this.map.gameConditionManager.ActiveConditions[k];
-				List<SkyOverlay> list = gameCondition.SkyOverlays();
+				List<SkyOverlay> list = gameCondition.SkyOverlays(this.map);
 				if (list != null)
 				{
 					for (int l = 0; l < list.Count; l++)
 					{
-						this.AddTempOverlay(new Pair<SkyOverlay, float>(list[l], gameCondition.SkyTargetLerpFactor()));
+						this.AddTempOverlay(new Pair<SkyOverlay, float>(list[l], gameCondition.SkyTargetLerpFactor(this.map)));
 					}
 				}
 			}
@@ -128,10 +128,10 @@ namespace Verse
 			SkyTarget b = this.map.weatherManager.curWeather.Worker.CurSkyTarget(this.map);
 			SkyTarget a = this.map.weatherManager.lastWeather.Worker.CurSkyTarget(this.map);
 			SkyTarget skyTarget = SkyTarget.Lerp(a, b, this.map.weatherManager.TransitionLerpFactor);
-			float num = this.map.gameConditionManager.AggregateSkyTargetLerpFactor();
+			float num = this.map.gameConditionManager.AggregateSkyTargetLerpFactor(this.map);
 			if (num > 0.0001f)
 			{
-				SkyTarget value = this.map.gameConditionManager.AggregateSkyTarget().Value;
+				SkyTarget value = this.map.gameConditionManager.AggregateSkyTarget(this.map).Value;
 				skyTarget = SkyTarget.LerpDarken(skyTarget, value, num);
 			}
 			List<WeatherEvent> liveEventsListForReading = this.map.weatherManager.eventHandler.LiveEventsListForReading;
@@ -188,7 +188,7 @@ namespace Verse
 		{
 			StringBuilder stringBuilder = new StringBuilder();
 			stringBuilder.AppendLine("SkyManager: ");
-			stringBuilder.AppendLine("CurCelestialSunGlow: " + GenCelestial.CurCelestialSunGlow(Find.VisibleMap));
+			stringBuilder.AppendLine("CurCelestialSunGlow: " + GenCelestial.CurCelestialSunGlow(Find.CurrentMap));
 			stringBuilder.AppendLine("CurSkyGlow: " + this.CurSkyGlow.ToStringPercent());
 			stringBuilder.AppendLine("CurrentSkyTarget: " + this.CurrentSkyTarget().ToString());
 			return stringBuilder.ToString();

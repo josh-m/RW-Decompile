@@ -13,6 +13,14 @@ namespace Verse.AI.Group
 			}
 		}
 
+		public override bool AllowSelfTend
+		{
+			get
+			{
+				return false;
+			}
+		}
+
 		protected LordToilData_ExitMap Data
 		{
 			get

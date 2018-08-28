@@ -14,14 +14,6 @@ namespace Verse
 
 		private const byte RoofedAreaMinSkyCover = 100;
 
-		private static readonly IntVec3[] CheckSquareOffsets = new IntVec3[]
-		{
-			new IntVec3(0, 0, -1),
-			new IntVec3(-1, 0, -1),
-			new IntVec3(-1, 0, 0),
-			new IntVec3(0, 0, 0)
-		};
-
 		public override bool Visible
 		{
 			get
@@ -63,105 +55,111 @@ namespace Verse
 			Color32[] array = new Color32[subMesh.verts.Count];
 			int maxX = this.sectRect.maxX;
 			int maxZ = this.sectRect.maxZ;
-			bool[] array2 = new bool[4];
-			Thing[] innerArray = base.Map.edificeGrid.InnerArray;
-			RoofGrid roofGrid = base.Map.roofGrid;
-			CellIndices cellIndices = base.Map.cellIndices;
-			for (int i = this.sectRect.minX; i <= maxX + 1; i++)
+			int width = this.sectRect.Width;
+			Map map = base.Map;
+			int x = map.Size.x;
+			Thing[] innerArray = map.edificeGrid.InnerArray;
+			int num = innerArray.Length;
+			RoofGrid roofGrid = map.roofGrid;
+			CellIndices cellIndices = map.cellIndices;
+			int num2;
+			int num3;
+			int num4;
+			int num5;
+			int num6;
+			this.CalculateVertexIndices(this.sectRect.minX, this.sectRect.minZ, out num2, out num3, out num4, out num5, out num6);
+			int num7 = cellIndices.CellToIndex(new IntVec3(this.sectRect.minX, 0, this.sectRect.minZ));
+			int[] expr_EA = new int[4];
+			expr_EA[0] = -map.Size.x - 1;
+			expr_EA[1] = -map.Size.x;
+			expr_EA[2] = -1;
+			int[] array2 = expr_EA;
+			int[] expr_120 = new int[4];
+			expr_120[0] = -1;
+			expr_120[1] = -1;
+			int[] array3 = expr_120;
+			for (int i = this.sectRect.minZ; i <= maxZ + 1; i++)
 			{
-				for (int j = this.sectRect.minZ; j <= maxZ + 1; j++)
+				int num8 = num7 / x;
+				int j = this.sectRect.minX;
+				while (j <= maxX + 1)
 				{
-					int num;
-					int num2;
-					int num3;
-					int num4;
-					int num5;
-					this.CalculateVertexIndices(i, j, out num, out num2, out num3, out num4, out num5);
-					IntVec3 a = new IntVec3(i, 0, j);
+					ColorInt colorInt = new ColorInt(0, 0, 0, 0);
+					int num9 = 0;
 					bool flag = false;
 					for (int k = 0; k < 4; k++)
 					{
-						IntVec3 c = a + SectionLayer_LightingOverlay.CheckSquareOffsets[k];
-						if (!c.InBounds(base.Map))
+						int num10 = num7 + array2[k];
+						if (num10 >= 0 && num10 < num && num10 / x == num8 + array3[k])
 						{
-							array2[k] = true;
-						}
-						else
-						{
-							Thing thing = innerArray[cellIndices.CellToIndex(c)];
-							RoofDef roofDef = roofGrid.RoofAt(c.x, c.z);
+							Thing thing = innerArray[num10];
+							RoofDef roofDef = roofGrid.RoofAt(num10);
 							if (roofDef != null && (roofDef.isThickRoof || thing == null || !thing.def.holdsRoof || thing.def.altitudeLayer == AltitudeLayer.DoorMoveable))
 							{
 								flag = true;
 							}
-							if (thing != null && thing.def.blockLight)
+							if (thing == null || !thing.def.blockLight)
 							{
-								array2[k] = true;
-							}
-							else
-							{
-								array2[k] = false;
+								colorInt += this.glowGrid[num10];
+								num9++;
 							}
 						}
 					}
-					ColorInt colorInt = new ColorInt(0, 0, 0, 0);
-					int num6 = 0;
-					if (!array2[0])
+					if (num9 > 0)
 					{
-						colorInt += this.glowGrid[cellIndices.CellToIndex(i, j - 1)].AsColorInt();
-						num6++;
-					}
-					if (!array2[1])
-					{
-						colorInt += this.glowGrid[cellIndices.CellToIndex(i - 1, j - 1)].AsColorInt();
-						num6++;
-					}
-					if (!array2[2])
-					{
-						colorInt += this.glowGrid[cellIndices.CellToIndex(i - 1, j)].AsColorInt();
-						num6++;
-					}
-					if (!array2[3])
-					{
-						colorInt += this.glowGrid[cellIndices.CellToIndex(i, j)].AsColorInt();
-						num6++;
-					}
-					if (num6 > 0)
-					{
-						colorInt /= (float)num6;
-						array[num] = colorInt.ToColor32;
+						array[num2] = (colorInt / num9).ToColor32;
 					}
 					else
 					{
-						array[num] = new Color32(0, 0, 0, 0);
+						array[num2] = new Color32(0, 0, 0, 0);
 					}
-					if (flag && array[num].a < 100)
+					if (flag && array[num2].a < 100)
 					{
-						array[num].a = 100;
+						array[num2].a = 100;
 					}
+					j++;
+					num2++;
+					num7++;
 				}
+				int num11 = maxX + 2 - this.sectRect.minX;
+				num2 -= num11;
+				num7 -= num11;
+				num2 += width + 1;
+				num7 += map.Size.x;
 			}
-			for (int l = this.sectRect.minX; l <= maxX; l++)
+			int num12;
+			int num13;
+			int num14;
+			int num15;
+			int num16;
+			this.CalculateVertexIndices(this.sectRect.minX, this.sectRect.minZ, out num12, out num13, out num14, out num15, out num16);
+			int num17 = cellIndices.CellToIndex(this.sectRect.minX, this.sectRect.minZ);
+			for (int l = this.sectRect.minZ; l <= maxZ; l++)
 			{
-				for (int m = this.sectRect.minZ; m <= maxZ; m++)
+				int m = this.sectRect.minX;
+				while (m <= maxX)
 				{
-					int num7;
-					int num8;
-					int num9;
-					int num10;
-					int num11;
-					this.CalculateVertexIndices(l, m, out num7, out num8, out num9, out num10, out num11);
-					ColorInt colorInt2 = default(ColorInt) + array[num7];
-					colorInt2 += array[num8];
-					colorInt2 += array[num9];
-					colorInt2 += array[num10];
-					array[num11] = (colorInt2 / 4f).ToColor32;
-					Thing thing = innerArray[cellIndices.CellToIndex(l, m)];
-					if (roofGrid.Roofed(l, m) && (thing == null || !thing.def.holdsRoof) && array[num11].a < 100)
+					ColorInt colA = default(ColorInt) + array[num12];
+					colA += array[num12 + 1];
+					colA += array[num12 + width + 1];
+					colA += array[num12 + width + 2];
+					array[num16] = new Color32((byte)(colA.r / 4), (byte)(colA.g / 4), (byte)(colA.b / 4), (byte)(colA.a / 4));
+					if (array[num16].a < 100 && roofGrid.Roofed(num17))
 					{
-						array[num11].a = 100;
+						Thing thing2 = innerArray[num17];
+						if (thing2 == null || !thing2.def.holdsRoof)
+						{
+							array[num16].a = 100;
+						}
 					}
+					m++;
+					num12++;
+					num16++;
+					num17++;
 				}
+				num12++;
+				num17 -= width;
+				num17 += map.Size.x;
 			}
 			subMesh.mesh.colors32 = array;
 		}
@@ -172,7 +170,7 @@ namespace Verse
 			this.sectRect = new CellRect(this.section.botLeft.x, this.section.botLeft.z, 17, 17);
 			this.sectRect.ClipInsideMap(base.Map);
 			int capacity = (this.sectRect.Width + 1) * (this.sectRect.Height + 1) + this.sectRect.Area;
-			float y = Altitudes.AltitudeFor(AltitudeLayer.LightingOverlay);
+			float y = AltitudeLayer.LightingOverlay.AltitudeFor();
 			sm.verts.Capacity = capacity;
 			for (int i = this.sectRect.minZ; i <= this.sectRect.maxZ + 1; i++)
 			{

@@ -15,6 +15,14 @@ namespace RimWorld
 			}
 		}
 
+		protected override DesignationDef Designation
+		{
+			get
+			{
+				return this.designationDef;
+			}
+		}
+
 		public Designator_Plants()
 		{
 		}

@@ -5,7 +5,7 @@ namespace RimWorld
 {
 	public class BiomeWorker_Tundra : BiomeWorker
 	{
-		public override float GetScore(Tile tile)
+		public override float GetScore(Tile tile, int tileID)
 		{
 			if (tile.WaterCovered)
 			{

@@ -33,13 +33,13 @@ namespace RimWorld
 			}
 		}
 
-		public override bool HasJobOnCell(Pawn pawn, IntVec3 c)
+		public override bool HasJobOnCell(Pawn pawn, IntVec3 c, bool forced = false)
 		{
 			if (!c.IsForbidden(pawn) && pawn.Map.designationManager.DesignationAt(c, this.DesDef) != null)
 			{
 				LocalTargetInfo target = c;
 				ReservationLayerDef floor = ReservationLayerDefOf.Floor;
-				if (pawn.CanReserve(target, 1, -1, floor, false))
+				if (pawn.CanReserve(target, 1, -1, floor, forced))
 				{
 					return true;
 				}

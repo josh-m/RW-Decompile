@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using Verse;
-using Verse.AI;
 
 namespace RimWorld
 {
@@ -92,10 +91,6 @@ namespace RimWorld
 
 		public static Pawn GetPartnerInMyBed(Pawn pawn)
 		{
-			if (pawn.CurJob == null || pawn.jobs.curDriver.layingDown == LayingDownState.NotLaying)
-			{
-				return null;
-			}
 			Building_Bed building_Bed = pawn.CurrentBed();
 			if (building_Bed == null)
 			{
@@ -320,7 +315,7 @@ namespace RimWorld
 			float num = p1.ageTracker.AgeChronologicalYearsFloat - 14f;
 			if (num < 0f)
 			{
-				Log.Warning("at < 0");
+				Log.Warning("at < 0", false);
 				return 0f;
 			}
 			float num2 = PawnRelationUtility.MaxPossibleBioAgeAt(p2.ageTracker.AgeBiologicalYearsFloat, p2.ageTracker.AgeChronologicalYearsFloat, num);

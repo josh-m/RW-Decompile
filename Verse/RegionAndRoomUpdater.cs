@@ -61,7 +61,7 @@ namespace Verse
 		{
 			if (!this.Enabled)
 			{
-				Log.Warning("Called RebuildAllRegionsAndRooms() but RegionAndRoomUpdater is disabled. Regions won't be rebuilt.");
+				Log.Warning("Called RebuildAllRegionsAndRooms() but RegionAndRoomUpdater is disabled. Regions won't be rebuilt.", false);
 			}
 			this.map.temperatureCache.ResetTemperatureCache();
 			this.map.regionDirtyer.SetAllDirty();
@@ -91,7 +91,7 @@ namespace Verse
 			}
 			catch (Exception arg)
 			{
-				Log.Error("Exception while rebuilding dirty regions: " + arg);
+				Log.Error("Exception while rebuilding dirty regions: " + arg, false);
 			}
 			this.newRegions.Clear();
 			this.map.regionDirtyer.SetAllClean();
@@ -168,7 +168,7 @@ namespace Verse
 				{
 					if (this.currentRegionGroup.Count != 1)
 					{
-						Log.Error("Region type doesn't allow multiple regions per room but there are >1 regions in this group.");
+						Log.Error("Region type doesn't allow multiple regions per room but there are >1 regions in this group.", false);
 					}
 					Room room = Room.MakeNew(this.map);
 					this.currentRegionGroup[0].Room = room;

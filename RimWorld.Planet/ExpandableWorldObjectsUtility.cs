@@ -9,9 +9,17 @@ namespace RimWorld.Planet
 	{
 		private static float transitionPct;
 
+		private static float expandMoreTransitionPct;
+
 		private static List<WorldObject> tmpWorldObjects = new List<WorldObject>();
 
-		private const float WorldObjectSize = 30f;
+		private const float WorldObjectIconSize = 30f;
+
+		private const float ExpandMoreWorldObjectIconSizeFactor = 1.35f;
+
+		private const float TransitionSpeed = 3f;
+
+		private const float ExpandMoreTransitionSpeed = 4f;
 
 		public static float TransitionPct
 		{
@@ -22,6 +30,18 @@ namespace RimWorld.Planet
 					return 0f;
 				}
 				return ExpandableWorldObjectsUtility.transitionPct;
+			}
+		}
+
+		public static float ExpandMoreTransitionPct
+		{
+			get
+			{
+				if (!Find.PlaySettings.showExpandingIcons)
+				{
+					return 0f;
+				}
+				return ExpandableWorldObjectsUtility.expandMoreTransitionPct;
 			}
 		}
 
@@ -37,6 +57,16 @@ namespace RimWorld.Planet
 				ExpandableWorldObjectsUtility.transitionPct += num;
 			}
 			ExpandableWorldObjectsUtility.transitionPct = Mathf.Clamp01(ExpandableWorldObjectsUtility.transitionPct);
+			float num2 = Time.deltaTime * 4f;
+			if (Find.WorldCameraDriver.CurrentZoom <= WorldCameraZoomRange.Far)
+			{
+				ExpandableWorldObjectsUtility.expandMoreTransitionPct -= num2;
+			}
+			else
+			{
+				ExpandableWorldObjectsUtility.expandMoreTransitionPct += num2;
+			}
+			ExpandableWorldObjectsUtility.expandMoreTransitionPct = Mathf.Clamp01(ExpandableWorldObjectsUtility.expandMoreTransitionPct);
 		}
 
 		public static void ExpandableWorldObjectsOnGUI()
@@ -82,7 +112,16 @@ namespace RimWorld.Planet
 		public static Rect ExpandedIconScreenRect(WorldObject o)
 		{
 			Vector2 vector = o.ScreenPos();
-			return new Rect(vector.x - 15f, vector.y - 15f, 30f, 30f);
+			float num;
+			if (o.ExpandMore)
+			{
+				num = Mathf.Lerp(30f, 40.5f, ExpandableWorldObjectsUtility.ExpandMoreTransitionPct);
+			}
+			else
+			{
+				num = 30f;
+			}
+			return new Rect(vector.x - num / 2f, vector.y - num / 2f, num, num);
 		}
 
 		public static bool IsExpanded(WorldObject o)

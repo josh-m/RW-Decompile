@@ -22,13 +22,13 @@ namespace Verse
 
 		protected override void DoListingItems()
 		{
-			if (KeyBindingDefOf.ToggleDebugSettingsMenu.KeyDownEvent)
+			if (KeyBindingDefOf.Dev_ToggleDebugSettingsMenu.KeyDownEvent)
 			{
 				Event.current.Use();
 				this.Close(true);
 			}
 			Text.Font = GameFont.Small;
-			this.listing.Label("Gameplay", -1f);
+			this.listing.Label("Gameplay", -1f, null);
 			FieldInfo[] fields = typeof(DebugSettings).GetFields();
 			for (int i = 0; i < fields.Length; i++)
 			{
@@ -37,7 +37,7 @@ namespace Verse
 			}
 			this.listing.Gap(36f);
 			Text.Font = GameFont.Small;
-			this.listing.Label("View", -1f);
+			this.listing.Label("View", -1f, null);
 			FieldInfo[] fields2 = typeof(DebugViewSettings).GetFields();
 			for (int j = 0; j < fields2.Length; j++)
 			{

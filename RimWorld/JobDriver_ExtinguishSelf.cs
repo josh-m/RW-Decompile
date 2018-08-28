@@ -28,7 +28,7 @@ namespace RimWorld
 			return "ReportExtinguishingFire".Translate();
 		}
 
-		public override bool TryMakePreToilReservations()
+		public override bool TryMakePreToilReservations(bool errorOnFailed)
 		{
 			return true;
 		}

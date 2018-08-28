@@ -5,11 +5,11 @@ namespace Verse
 {
 	public static class GenDrop
 	{
-		public static bool TryDropSpawn(Thing thing, IntVec3 dropCell, Map map, ThingPlaceMode mode, out Thing resultingThing, Action<Thing, int> placedAction = null)
+		public static bool TryDropSpawn(Thing thing, IntVec3 dropCell, Map map, ThingPlaceMode mode, out Thing resultingThing, Action<Thing, int> placedAction = null, Predicate<IntVec3> nearPlaceValidator = null)
 		{
 			if (map == null)
 			{
-				Log.Error("Dropped " + thing + " in a null map.");
+				Log.Error("Dropped " + thing + " in a null map.", false);
 				resultingThing = null;
 				return false;
 			}
@@ -21,7 +21,7 @@ namespace Verse
 					thing,
 					" out of bounds at ",
 					dropCell
-				}));
+				}), false);
 				resultingThing = null;
 				return false;
 			}
@@ -35,7 +35,7 @@ namespace Verse
 			{
 				thing.def.soundDrop.PlayOneShot(new TargetInfo(dropCell, map, false));
 			}
-			return GenPlace.TryPlaceThing(thing, dropCell, map, mode, out resultingThing, placedAction);
+			return GenPlace.TryPlaceThing(thing, dropCell, map, mode, out resultingThing, placedAction, nearPlaceValidator);
 		}
 	}
 }

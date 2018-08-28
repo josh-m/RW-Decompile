@@ -95,7 +95,7 @@ namespace RimWorld.Planet
 					startTile,
 					", caravan= ",
 					caravan
-				}));
+				}), false);
 				return WorldPath.NotFound;
 			}
 			if (destTile < 0)
@@ -106,7 +106,7 @@ namespace RimWorld.Planet
 					destTile,
 					", caravan= ",
 					caravan
-				}));
+				}), false);
 				return WorldPath.NotFound;
 			}
 			if (caravan != null)
@@ -125,9 +125,9 @@ namespace RimWorld.Planet
 			List<int> tileIDToNeighbors_offsets = grid.tileIDToNeighbors_offsets;
 			List<int> tileIDToNeighbors_values = grid.tileIDToNeighbors_values;
 			Vector3 normalized = grid.GetTileCenter(destTile).normalized;
-			int[] pathGrid = world.pathGrid.pathGrid;
+			float[] movementDifficulty = world.pathGrid.movementDifficulty;
 			int num = 0;
-			int num2 = (caravan == null) ? 2500 : caravan.TicksPerMove;
+			int num2 = (caravan == null) ? 3300 : caravan.TicksPerMove;
 			int num3 = this.CalculateHeuristicStrength(startTile, destTile);
 			this.statusOpenValue += 2;
 			this.statusClosedValue += 2;
@@ -170,7 +170,7 @@ namespace RimWorld.Planet
 								" hit search limit of ",
 								500000,
 								" tiles."
-							}));
+							}), false);
 							return WorldPath.NotFound;
 						}
 						int num4 = (tile + 1 >= tileIDToNeighbors_offsets.Count) ? tileIDToNeighbors_values.Count : tileIDToNeighbors_offsets[tile + 1];
@@ -181,9 +181,7 @@ namespace RimWorld.Planet
 							{
 								if (!world.Impassable(num5))
 								{
-									int num6 = num2;
-									num6 += pathGrid[num5];
-									num6 = (int)((float)num6 * grid.GetRoadMovementMultiplierFast(tile, num5));
+									int num6 = (int)((float)num2 * movementDifficulty[num5] * grid.GetRoadMovementDifficultyMultiplier(tile, num5, null));
 									int num7 = num6 + this.calcGrid[tile].knownCost;
 									ushort status = this.calcGrid[num5].status;
 									if ((status != this.statusClosedValue && status != this.statusOpenValue) || this.calcGrid[num5].knownCost > num7)
@@ -221,7 +219,7 @@ namespace RimWorld.Planet
 				" to ",
 				destTile,
 				" ran out of tiles to process."
-			}));
+			}), false);
 			return WorldPath.NotFound;
 		}
 
@@ -229,7 +227,7 @@ namespace RimWorld.Planet
 		{
 			if (startTiles.Count < 1 || startTiles.Contains(-1))
 			{
-				Log.Error("Tried to FindPath with invalid start tiles");
+				Log.Error("Tried to FindPath with invalid start tiles", false);
 				return;
 			}
 			World world = Find.World;
@@ -329,7 +327,7 @@ namespace RimWorld.Planet
 				WorldPathFinder.PathFinderNodeFast pathFinderNodeFast = this.calcGrid[num];
 				int parentTile = pathFinderNodeFast.parentTile;
 				int num2 = num;
-				emptyWorldPath.AddNode(num2);
+				emptyWorldPath.AddNodeAtStart(num2);
 				if (num2 == parentTile)
 				{
 					break;
@@ -355,13 +353,6 @@ namespace RimWorld.Planet
 		{
 			float x = Find.WorldGrid.ApproxDistanceInTiles(startTile, destTile);
 			return Mathf.RoundToInt(WorldPathFinder.HeuristicStrength_DistanceCurve.Evaluate(x));
-		}
-
-		public static int StandardPathCost(int curTile, int neigh, Caravan caravan)
-		{
-			int num = (caravan == null) ? 2500 : caravan.TicksPerMove;
-			num += Find.World.pathGrid.pathGrid[neigh];
-			return (int)((float)num * Find.WorldGrid.GetRoadMovementMultiplierFast(curTile, neigh));
 		}
 	}
 }

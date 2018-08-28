@@ -13,6 +13,12 @@ namespace Verse
 
 		public StunHandler stunner;
 
+		public const int StaggerMeleeAttackTicks = 95;
+
+		public const int StaggerBulletImpactTicks = 95;
+
+		public const int StaggerExplosionImpactTicks = 95;
+
 		public bool debugLog;
 
 		public bool FullBodyBusy
@@ -96,7 +102,7 @@ namespace Verse
 					this.curStance,
 					" -> ",
 					newStance
-				}));
+				}), false);
 			}
 			newStance.stanceTracker = this;
 			this.curStance = newStance;

@@ -57,7 +57,6 @@ namespace Verse
 			this.desList.Add(new Designator_PlantsHarvest());
 			this.desList.Add(new Designator_Mine());
 			this.desList.Add(new Designator_Strip());
-			this.desList.Add(new Designator_RearmTrap());
 			this.desList.Add(new Designator_Open());
 			this.desList.RemoveAll((Designator des) => !Current.Game.Rules.DesignatorAllowed(des));
 		}

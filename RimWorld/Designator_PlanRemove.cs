@@ -11,7 +11,7 @@ namespace RimWorld
 			this.defaultLabel = "DesignatorPlanRemove".Translate();
 			this.defaultDesc = "DesignatorPlanRemoveDesc".Translate();
 			this.icon = ContentFinder<Texture2D>.Get("UI/Designators/PlanOff", true);
-			this.soundSucceeded = SoundDefOf.DesignatePlanRemove;
+			this.soundSucceeded = SoundDefOf.Designate_PlanRemove;
 			this.hotKey = KeyBindingDefOf.Misc8;
 		}
 	}

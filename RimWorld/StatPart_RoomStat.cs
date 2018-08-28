@@ -7,7 +7,16 @@ namespace RimWorld
 	{
 		private RoomStatDef roomStat;
 
+		[MustTranslate]
 		private string customLabel;
+
+		[TranslationHandle(Priority = 100), Unsaved]
+		public string untranslatedCustomLabel;
+
+		public void PostLoad()
+		{
+			this.untranslatedCustomLabel = this.customLabel;
+		}
 
 		public override void TransformValue(StatRequest req, ref float val)
 		{

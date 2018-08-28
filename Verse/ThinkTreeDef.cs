@@ -108,7 +108,7 @@ namespace Verse
 						" already has a parent node (",
 						node.subNodes[i].parent,
 						"). This means that it's referenced by more than one think tree (should have been copied instead)."
-					}));
+					}), false);
 				}
 				else
 				{

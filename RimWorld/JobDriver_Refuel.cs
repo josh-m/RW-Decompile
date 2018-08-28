@@ -38,29 +38,32 @@ namespace RimWorld
 			}
 		}
 
-		public override bool TryMakePreToilReservations()
+		public override bool TryMakePreToilReservations(bool errorOnFailed)
 		{
-			return this.pawn.Reserve(this.Refuelable, this.job, 1, -1, null) && this.pawn.Reserve(this.Fuel, this.job, 1, -1, null);
+			Pawn pawn = this.pawn;
+			LocalTargetInfo target = this.Refuelable;
+			Job job = this.job;
+			bool arg_58_0;
+			if (pawn.Reserve(target, job, 1, -1, null, errorOnFailed))
+			{
+				pawn = this.pawn;
+				target = this.Fuel;
+				job = this.job;
+				arg_58_0 = pawn.Reserve(target, job, 1, -1, null, errorOnFailed);
+			}
+			else
+			{
+				arg_58_0 = false;
+			}
+			return arg_58_0;
 		}
 
 		[DebuggerHidden]
 		protected override IEnumerable<Toil> MakeNewToils()
 		{
 			this.FailOnDespawnedNullOrForbidden(TargetIndex.A);
-			this.FailOn(delegate
-			{
-				ThingWithComps thingWithComps = this.$this.job.GetTarget(TargetIndex.A).Thing as ThingWithComps;
-				if (thingWithComps != null)
-				{
-					CompFlickable comp = thingWithComps.GetComp<CompFlickable>();
-					if (comp != null && !comp.SwitchIsOn)
-					{
-						return true;
-					}
-				}
-				return false;
-			});
 			base.AddEndCondition(() => (!this.$this.RefuelableComp.IsFull) ? JobCondition.Ongoing : JobCondition.Succeeded);
+			base.AddFailCondition(() => !this.$this.job.playerForced && !this.$this.RefuelableComp.ShouldAutoRefuelNowIgnoringFuelPct);
 			yield return Toils_General.DoAtomic(delegate
 			{
 				this.$this.job.count = this.$this.RefuelableComp.GetFuelCountToFullyRefuel();
@@ -71,7 +74,7 @@ namespace RimWorld
 			yield return Toils_Haul.StartCarryThing(TargetIndex.B, false, true, false).FailOnDestroyedNullOrForbidden(TargetIndex.B);
 			yield return Toils_Haul.CheckForGetOpportunityDuplicate(reserveFuel, TargetIndex.B, TargetIndex.None, true, null);
 			yield return Toils_Goto.GotoThing(TargetIndex.A, PathEndMode.Touch);
-			yield return Toils_General.Wait(240).FailOnDestroyedNullOrForbidden(TargetIndex.B).FailOnDestroyedNullOrForbidden(TargetIndex.A).FailOnCannotTouch(TargetIndex.A, PathEndMode.Touch).WithProgressBarToilDelay(TargetIndex.A, false, -0.5f);
+			yield return Toils_General.Wait(240, TargetIndex.None).FailOnDestroyedNullOrForbidden(TargetIndex.B).FailOnDestroyedNullOrForbidden(TargetIndex.A).FailOnCannotTouch(TargetIndex.A, PathEndMode.Touch).WithProgressBarToilDelay(TargetIndex.A, false, -0.5f);
 			yield return Toils_Refuel.FinalizeRefueling(TargetIndex.A, TargetIndex.B);
 		}
 	}

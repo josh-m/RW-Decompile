@@ -7,6 +7,7 @@ namespace RimWorld
 	{
 		public JobDef useJob;
 
+		[MustTranslate]
 		public string useLabel;
 
 		public int useDuration = 100;

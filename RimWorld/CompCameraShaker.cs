@@ -16,7 +16,7 @@ namespace RimWorld
 		public override void CompTick()
 		{
 			base.CompTick();
-			if (this.parent.Spawned && this.parent.Map == Find.VisibleMap)
+			if (this.parent.Spawned && this.parent.Map == Find.CurrentMap)
 			{
 				Find.CameraDriver.shaker.SetMinShake(this.Props.mag);
 			}

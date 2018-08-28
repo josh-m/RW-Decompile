@@ -87,7 +87,7 @@ namespace RimWorld
 			float num = Vector3.Angle(viewCenter * radius, point) + -1E-05f;
 			if (Mathf.Abs(num - viewAngle) < 1E-06f)
 			{
-				Log.Warning(string.Format("Angle difference {0} is within epsilon; recommend adjusting visibility tweak", num - viewAngle));
+				Log.Warning(string.Format("Angle difference {0} is within epsilon; recommend adjusting visibility tweak", num - viewAngle), false);
 			}
 			return num <= viewAngle;
 		}

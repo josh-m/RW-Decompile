@@ -12,6 +12,8 @@ namespace RimWorld
 
 		public List<RaidStrategyDef> disallowedStrategies;
 
+		public float maxTotalPoints = 9999999f;
+
 		public List<PawnGenOption> options = new List<PawnGenOption>();
 
 		public List<PawnGenOption> traders = new List<PawnGenOption>();
@@ -33,9 +35,14 @@ namespace RimWorld
 			return this.kindDef.Worker.GeneratePawns(parms, this, errorOnZeroResults);
 		}
 
+		public IEnumerable<PawnKindDef> GeneratePawnKindsExample(PawnGroupMakerParms parms)
+		{
+			return this.kindDef.Worker.GeneratePawnKindsExample(parms, this);
+		}
+
 		public bool CanGenerateFrom(PawnGroupMakerParms parms)
 		{
-			return (this.disallowedStrategies == null || !this.disallowedStrategies.Contains(parms.raidStrategy)) && this.kindDef.Worker.CanGenerateFrom(parms, this);
+			return parms.points <= this.maxTotalPoints && (this.disallowedStrategies == null || !this.disallowedStrategies.Contains(parms.raidStrategy)) && this.kindDef.Worker.CanGenerateFrom(parms, this);
 		}
 	}
 }

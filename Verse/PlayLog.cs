@@ -17,6 +17,18 @@ namespace Verse
 			}
 		}
 
+		public int LastTick
+		{
+			get
+			{
+				if (this.entries.Count == 0)
+				{
+					return 0;
+				}
+				return this.entries[0].Tick;
+			}
+		}
+
 		public void Add(LogEntry entry)
 		{
 			this.entries.Insert(0, entry);
@@ -51,7 +63,7 @@ namespace Verse
 							", but he is referenced by a play log entry ",
 							this.entries[i],
 							"."
-						}));
+						}), false);
 					}
 					this.RemoveEntry(this.entries[i]);
 				}

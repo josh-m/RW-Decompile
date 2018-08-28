@@ -59,7 +59,7 @@ namespace RimWorld
 				hair,
 				" with ",
 				pawn
-			}));
+			}), false);
 			return 0f;
 		}
 	}

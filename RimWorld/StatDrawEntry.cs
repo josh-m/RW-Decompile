@@ -135,47 +135,45 @@ namespace RimWorld
 			stringBuilder.AppendLine();
 			if (!optionalReq.Empty)
 			{
-				if (this.stat.Worker.IsDisabledFor(optionalReq.Thing))
-				{
-					stringBuilder.AppendLine("StatsReport_PermanentlyDisabled".Translate());
-				}
-				else
-				{
-					stringBuilder.AppendLine(this.stat.Worker.GetExplanationUnfinalized(optionalReq, this.numberSense).TrimEndNewlines());
-					stringBuilder.AppendLine();
-					stringBuilder.AppendLine(this.stat.Worker.GetExplanationFinalizePart(optionalReq, this.numberSense, this.value));
-				}
+				stringBuilder.AppendLine(this.stat.Worker.GetExplanationFull(optionalReq, this.numberSense, this.value));
 			}
 			return stringBuilder.ToString().TrimEndNewlines();
 		}
 
-		public float Draw(float x, float y, float width, bool selected, Action clickedCallback)
+		public float Draw(float x, float y, float width, bool selected, Action clickedCallback, Action mousedOverCallback, Vector2 scrollPosition, Rect scrollOutRect)
 		{
 			float num = width * 0.45f;
 			Rect rect = new Rect(8f, y, width, Text.CalcHeight(this.ValueString, num));
-			if (selected)
+			if (y - scrollPosition.y + rect.height >= 0f && y - scrollPosition.y <= scrollOutRect.height)
 			{
-				Widgets.DrawHighlightSelected(rect);
-			}
-			else if (Mouse.IsOver(rect))
-			{
-				Widgets.DrawHighlight(rect);
-			}
-			Rect rect2 = rect;
-			rect2.width -= num;
-			Widgets.Label(rect2, this.LabelCap);
-			Rect rect3 = rect;
-			rect3.x = rect2.xMax;
-			rect3.width = num;
-			Widgets.Label(rect3, this.ValueString);
-			if (this.stat != null)
-			{
-				StatDef localStat = this.stat;
-				TooltipHandler.TipRegion(rect, new TipSignal(() => localStat.LabelCap + ": " + localStat.description, this.stat.GetHashCode()));
-			}
-			if (Widgets.ButtonInvisible(rect, false))
-			{
-				clickedCallback();
+				if (selected)
+				{
+					Widgets.DrawHighlightSelected(rect);
+				}
+				else if (Mouse.IsOver(rect))
+				{
+					Widgets.DrawHighlight(rect);
+				}
+				Rect rect2 = rect;
+				rect2.width -= num;
+				Widgets.Label(rect2, this.LabelCap);
+				Rect rect3 = rect;
+				rect3.x = rect2.xMax;
+				rect3.width = num;
+				Widgets.Label(rect3, this.ValueString);
+				if (this.stat != null)
+				{
+					StatDef localStat = this.stat;
+					TooltipHandler.TipRegion(rect, new TipSignal(() => localStat.LabelCap + ": " + localStat.description, this.stat.GetHashCode()));
+				}
+				if (Widgets.ButtonInvisible(rect, false))
+				{
+					clickedCallback();
+				}
+				if (Mouse.IsOver(rect))
+				{
+					mousedOverCallback();
+				}
 			}
 			return rect.height;
 		}

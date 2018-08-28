@@ -7,14 +7,13 @@ namespace Verse
 		None,
 		Pawn,
 		Item,
-		Plant,
 		Building,
-		Filth,
+		Plant,
 		Projectile,
-		Mote,
-		Ethereal,
+		Filth,
+		Gas,
 		Attachment,
-		Skyfaller,
-		Gas
+		Mote,
+		Ethereal
 	}
 }

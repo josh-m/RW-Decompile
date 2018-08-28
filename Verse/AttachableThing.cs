@@ -47,7 +47,7 @@ namespace Verse
 					" to ",
 					parent,
 					": parent has no CompAttachBase."
-				}));
+				}), false);
 				return;
 			}
 			compAttachBase.AddAttachment(this);

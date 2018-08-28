@@ -24,7 +24,7 @@ namespace RimWorld
 
 		public static ThingCategoryDef Items;
 
-		public static ThingCategoryDef Art;
+		public static ThingCategoryDef BuildingsArt;
 
 		public static ThingCategoryDef Weapons;
 
@@ -36,11 +36,15 @@ namespace RimWorld
 
 		public static ThingCategoryDef Chunks;
 
+		public static ThingCategoryDef StoneChunks;
+
 		public static ThingCategoryDef StoneBlocks;
 
 		public static ThingCategoryDef MeatRaw;
 
 		public static ThingCategoryDef Leathers;
+
+		public static ThingCategoryDef Buildings;
 
 		public static ThingCategoryDef Corpses;
 
@@ -51,5 +55,10 @@ namespace RimWorld
 		public static ThingCategoryDef CorpsesInsect;
 
 		public static ThingCategoryDef CorpsesAnimal;
+
+		static ThingCategoryDefOf()
+		{
+			DefOfHelper.EnsureInitializedInCtor(typeof(ThingCategoryDefOf));
+		}
 	}
 }

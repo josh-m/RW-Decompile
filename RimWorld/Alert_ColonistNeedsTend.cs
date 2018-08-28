@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using Verse;
 
@@ -14,7 +13,7 @@ namespace RimWorld
 			{
 				foreach (Pawn p in PawnsFinder.AllMaps_FreeColonistsSpawned)
 				{
-					if (p.health.HasHediffsNeedingTendByColony(true))
+					if (p.health.HasHediffsNeedingTendByPlayer(true))
 					{
 						Building_Bed curBed = p.CurrentBed();
 						if (curBed == null || !curBed.Medical)
@@ -40,19 +39,14 @@ namespace RimWorld
 			StringBuilder stringBuilder = new StringBuilder();
 			foreach (Pawn current in this.NeedingColonists)
 			{
-				stringBuilder.AppendLine("    " + current.NameStringShort);
+				stringBuilder.AppendLine("    " + current.LabelShort);
 			}
 			return string.Format("ColonistNeedsTreatmentDesc".Translate(), stringBuilder.ToString());
 		}
 
 		public override AlertReport GetReport()
 		{
-			Pawn pawn = this.NeedingColonists.FirstOrDefault<Pawn>();
-			if (pawn == null)
-			{
-				return false;
-			}
-			return AlertReport.CulpritIs(pawn);
+			return AlertReport.CulpritsAre(this.NeedingColonists);
 		}
 	}
 }

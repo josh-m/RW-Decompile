@@ -6,11 +6,18 @@ namespace Verse
 {
 	public class ImmunityHandler : IExposable
 	{
+		public struct ImmunityInfo
+		{
+			public HediffDef immunity;
+
+			public HediffDef source;
+		}
+
 		public Pawn pawn;
 
 		private List<ImmunityRecord> immunityList = new List<ImmunityRecord>();
 
-		private static List<HediffDef> tmpNeededImmunitiesNow = new List<HediffDef>();
+		private static List<ImmunityHandler.ImmunityInfo> tmpNeededImmunitiesNow = new List<ImmunityHandler.ImmunityInfo>();
 
 		public ImmunityHandler(Pawn pawn)
 		{
@@ -24,6 +31,13 @@ namespace Verse
 
 		public float DiseaseContractChanceFactor(HediffDef diseaseDef, BodyPartRecord part = null)
 		{
+			HediffDef hediffDef = null;
+			return this.DiseaseContractChanceFactor(diseaseDef, out hediffDef, part);
+		}
+
+		public float DiseaseContractChanceFactor(HediffDef diseaseDef, out HediffDef immunityCause, BodyPartRecord part = null)
+		{
+			immunityCause = null;
 			if (!this.pawn.RaceProps.IsFlesh)
 			{
 				return 0f;
@@ -40,6 +54,7 @@ namespace Verse
 			{
 				if (this.immunityList[j].hediffDef == diseaseDef)
 				{
+					immunityCause = this.immunityList[j].source;
 					return Mathf.Lerp(1f, 0f, this.immunityList[j].immunity / 0.6f);
 				}
 			}
@@ -61,10 +76,10 @@ namespace Verse
 
 		internal void ImmunityHandlerTick()
 		{
-			List<HediffDef> list = this.NeededImmunitiesNow();
+			List<ImmunityHandler.ImmunityInfo> list = this.NeededImmunitiesNow();
 			for (int i = 0; i < list.Count; i++)
 			{
-				this.TryAddImmunityRecord(list[i]);
+				this.TryAddImmunityRecord(list[i].immunity, list[i].source);
 			}
 			for (int j = 0; j < this.immunityList.Count; j++)
 			{
@@ -78,29 +93,50 @@ namespace Verse
 			}
 			for (int k = this.immunityList.Count - 1; k >= 0; k--)
 			{
-				if (this.immunityList[k].immunity <= 0f && !list.Contains(this.immunityList[k].hediffDef))
+				if (this.immunityList[k].immunity <= 0f)
 				{
-					this.immunityList.RemoveAt(k);
+					bool flag = false;
+					for (int l = 0; l < list.Count; l++)
+					{
+						if (list[l].immunity == this.immunityList[k].hediffDef)
+						{
+							flag = true;
+							break;
+						}
+					}
+					if (!flag)
+					{
+						this.immunityList.RemoveAt(k);
+					}
 				}
 			}
 		}
 
-		private List<HediffDef> NeededImmunitiesNow()
+		private List<ImmunityHandler.ImmunityInfo> NeededImmunitiesNow()
 		{
 			ImmunityHandler.tmpNeededImmunitiesNow.Clear();
 			List<Hediff> hediffs = this.pawn.health.hediffSet.hediffs;
 			for (int i = 0; i < hediffs.Count; i++)
 			{
-				if (hediffs[i].def.PossibleToDevelopImmunityNaturally())
+				Hediff hediff = hediffs[i];
+				if (hediff.def.PossibleToDevelopImmunityNaturally())
 				{
-					ImmunityHandler.tmpNeededImmunitiesNow.Add(hediffs[i].def);
+					ImmunityHandler.tmpNeededImmunitiesNow.Add(new ImmunityHandler.ImmunityInfo
+					{
+						immunity = hediff.def,
+						source = hediff.def
+					});
 				}
-				HediffStage curStage = hediffs[i].CurStage;
+				HediffStage curStage = hediff.CurStage;
 				if (curStage != null && curStage.makeImmuneTo != null)
 				{
 					for (int j = 0; j < curStage.makeImmuneTo.Count; j++)
 					{
-						ImmunityHandler.tmpNeededImmunitiesNow.Add(curStage.makeImmuneTo[j]);
+						ImmunityHandler.tmpNeededImmunitiesNow.Add(new ImmunityHandler.ImmunityInfo
+						{
+							immunity = curStage.makeImmuneTo[j],
+							source = hediff.def
+						});
 					}
 				}
 			}
@@ -127,7 +163,7 @@ namespace Verse
 			return false;
 		}
 
-		private void TryAddImmunityRecord(HediffDef def)
+		private void TryAddImmunityRecord(HediffDef def, HediffDef source)
 		{
 			if (def.CompProps<HediffCompProperties_Immunizable>() == null)
 			{
@@ -139,6 +175,7 @@ namespace Verse
 			}
 			ImmunityRecord immunityRecord = new ImmunityRecord();
 			immunityRecord.hediffDef = def;
+			immunityRecord.source = source;
 			this.immunityList.Add(immunityRecord);
 		}
 

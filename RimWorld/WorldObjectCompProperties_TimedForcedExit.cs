@@ -21,7 +21,7 @@ namespace RimWorld
 			}
 			if (!typeof(MapParent).IsAssignableFrom(parentDef.worldObjectClass))
 			{
-				yield return parentDef.defName + " has WorldObjectCompProperties_EscapeShip but it's not MapParent.";
+				yield return parentDef.defName + " has WorldObjectCompProperties_TimedForcedExit but it's not MapParent.";
 			}
 		}
 	}

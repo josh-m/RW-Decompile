@@ -1,18 +1,23 @@
 using RimWorld.BaseGen;
 using RimWorld.Planet;
 using System;
-using System.Collections.Generic;
 using Verse;
 
 namespace RimWorld
 {
 	public class GenStep_ItemStash : GenStep_Scatterer
 	{
-		public List<ItemCollectionGeneratorDef> itemCollectionGeneratorDefs;
-
-		public FloatRange totalValueRange = new FloatRange(1000f, 2000f);
+		public ThingSetMakerDef thingSetMakerDef;
 
 		private const int Size = 7;
+
+		public override int SeedPart
+		{
+			get
+			{
+				return 913432591;
+			}
+		}
 
 		protected override bool CanScatterAt(IntVec3 c, Map map)
 		{
@@ -20,7 +25,7 @@ namespace RimWorld
 			{
 				return false;
 			}
-			if (!c.SupportsStructureType(map, TerrainAffordance.Heavy))
+			if (!c.SupportsStructureType(map, TerrainAffordanceDefOf.Heavy))
 			{
 				return false;
 			}
@@ -46,18 +51,14 @@ namespace RimWorld
 			ResolveParams resolveParams = default(ResolveParams);
 			resolveParams.rect = cellRect;
 			resolveParams.faction = map.ParentFaction;
-			ItemStashContentsComp component = map.info.parent.GetComponent<ItemStashContentsComp>();
+			ItemStashContentsComp component = map.Parent.GetComponent<ItemStashContentsComp>();
 			if (component != null && component.contents.Any)
 			{
 				resolveParams.stockpileConcreteContents = component.contents;
 			}
 			else
 			{
-				resolveParams.stockpileMarketValue = new float?(this.totalValueRange.RandomInRange);
-				if (this.itemCollectionGeneratorDefs != null)
-				{
-					resolveParams.itemCollectionGeneratorDef = this.itemCollectionGeneratorDefs.RandomElement<ItemCollectionGeneratorDef>();
-				}
+				resolveParams.thingSetMakerDef = (this.thingSetMakerDef ?? ThingSetMakerDefOf.MapGen_DefaultStockpile);
 			}
 			BaseGen.globalSettings.map = map;
 			BaseGen.symbolStack.Push("storage", resolveParams);

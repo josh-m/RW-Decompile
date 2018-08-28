@@ -25,9 +25,12 @@ namespace RimWorld
 			Scribe_Values.Look<float>(ref this.gatherProgress, "gatherProgress", 0f, false);
 		}
 
-		public override bool TryMakePreToilReservations()
+		public override bool TryMakePreToilReservations(bool errorOnFailed)
 		{
-			return this.pawn.Reserve(this.job.GetTarget(TargetIndex.A), this.job, 1, -1, null);
+			Pawn pawn = this.pawn;
+			LocalTargetInfo target = this.job.GetTarget(TargetIndex.A);
+			Job job = this.job;
+			return pawn.Reserve(target, job, 1, -1, null, errorOnFailed);
 		}
 
 		[DebuggerHidden]
@@ -41,14 +44,14 @@ namespace RimWorld
 			wait.initAction = delegate
 			{
 				Pawn actor = wait.actor;
-				Pawn pawn = (Pawn)wait.actor.CurJob.GetTarget(TargetIndex.A).Thing;
+				Pawn pawn = (Pawn)this.$this.job.GetTarget(TargetIndex.A).Thing;
 				actor.pather.StopDead();
 				PawnUtility.ForceWait(pawn, 15000, null, true);
 			};
 			wait.tickAction = delegate
 			{
 				Pawn actor = wait.actor;
-				actor.skills.Learn(SkillDefOf.Animals, 0.142999992f, false);
+				actor.skills.Learn(SkillDefOf.Animals, 0.13f, false);
 				this.$this.gatherProgress += actor.GetStatValue(StatDefOf.AnimalGatherSpeed, true);
 				if (this.$this.gatherProgress >= this.$this.WorkTotal)
 				{
@@ -58,8 +61,8 @@ namespace RimWorld
 			};
 			wait.AddFinishAction(delegate
 			{
-				Pawn pawn = (Pawn)wait.actor.CurJob.GetTarget(TargetIndex.A).Thing;
-				if (pawn.jobs.curJob.def == JobDefOf.WaitMaintainPosture)
+				Pawn pawn = (Pawn)this.$this.job.GetTarget(TargetIndex.A).Thing;
+				if (pawn != null && pawn.CurJobDef == JobDefOf.Wait_MaintainPosture)
 				{
 					pawn.jobs.EndCurrentJob(JobCondition.InterruptForced, true);
 				}
@@ -76,6 +79,7 @@ namespace RimWorld
 			});
 			wait.defaultCompleteMode = ToilCompleteMode.Never;
 			wait.WithProgressBar(TargetIndex.A, () => this.$this.gatherProgress / this.$this.WorkTotal, false, -0.5f);
+			wait.activeSkill = (() => SkillDefOf.Animals);
 			yield return wait;
 		}
 	}

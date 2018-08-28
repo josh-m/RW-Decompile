@@ -169,7 +169,7 @@ namespace Verse
 					bool flag = true;
 					Vector2 start = default(Vector2);
 					Vector2 curvePoint = default(Vector2);
-					int num = curve.curve.AllPoints.Count((CurvePoint x) => x.x >= viewRect.xMin && x.x <= viewRect.xMax);
+					int num = curve.curve.Points.Count((CurvePoint x) => x.x >= viewRect.xMin && x.x <= viewRect.xMax);
 					int num2 = SimpleCurveDrawer.RemovePointsOptimizationFreq(num);
 					for (int i = 0; i < curve.curve.PointsCount; i++)
 					{
@@ -190,8 +190,8 @@ namespace Verse
 							start = vector;
 						}
 					}
-					Vector2 start2 = SimpleCurveDrawer.CurveToScreenCoordsInsideScreenRect(rect, viewRect, curve.curve.AllPoints.First<CurvePoint>());
-					Vector2 start3 = SimpleCurveDrawer.CurveToScreenCoordsInsideScreenRect(rect, viewRect, curve.curve.AllPoints.Last<CurvePoint>());
+					Vector2 start2 = SimpleCurveDrawer.CurveToScreenCoordsInsideScreenRect(rect, viewRect, curve.curve[0]);
+					Vector2 start3 = SimpleCurveDrawer.CurveToScreenCoordsInsideScreenRect(rect, viewRect, curve.curve[curve.curve.PointsCount - 1]);
 					Widgets.DrawLine(start2, new Vector2(0f, start2.y), curve.color, 1f);
 					Widgets.DrawLine(start3, new Vector2(rect.width, start3.y), curve.color, 1f);
 				}
@@ -315,6 +315,7 @@ namespace Verse
 		{
 			Text.Anchor = TextAnchor.UpperLeft;
 			Text.Font = GameFont.Small;
+			Text.WordWrap = false;
 			GUI.BeginGroup(rect);
 			float num = 0f;
 			float num2 = 0f;
@@ -328,7 +329,7 @@ namespace Verse
 				num += 20f;
 				if (current.label != null)
 				{
-					Widgets.Label(new Rect(num, num2, 140f, 20f), current.label);
+					Widgets.Label(new Rect(num, num2, 140f, 100f), current.label);
 				}
 				num4++;
 				if (num4 == num3)
@@ -344,6 +345,7 @@ namespace Verse
 			}
 			GUI.EndGroup();
 			GUI.color = Color.white;
+			Text.WordWrap = true;
 		}
 
 		public static void DrawCurveMousePoint(List<SimpleCurveDrawInfo> curves, Rect screenRect, Rect viewRect, string labelX)
@@ -364,7 +366,7 @@ namespace Verse
 			bool flag = false;
 			foreach (SimpleCurveDrawInfo current in curves)
 			{
-				if (current.curve.AllPoints.Any<CurvePoint>())
+				if (current.curve.PointsCount != 0)
 				{
 					Vector2 vector3 = SimpleCurveDrawer.ScreenToCurveCoords(screenRect, viewRect, mousePosition);
 					vector3.y = current.curve.Evaluate(vector3.x);

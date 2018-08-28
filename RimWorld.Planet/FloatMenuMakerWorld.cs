@@ -34,5 +34,19 @@ namespace RimWorld.Planet
 			}
 			return list;
 		}
+
+		public static List<FloatMenuOption> ChoicesAtFor(int tile, Caravan caravan)
+		{
+			List<FloatMenuOption> list = new List<FloatMenuOption>();
+			List<WorldObject> allWorldObjects = Find.WorldObjects.AllWorldObjects;
+			for (int i = 0; i < allWorldObjects.Count; i++)
+			{
+				if (allWorldObjects[i].Tile == tile)
+				{
+					list.AddRange(allWorldObjects[i].GetFloatMenuOptions(caravan));
+				}
+			}
+			return list;
+		}
 	}
 }

@@ -13,6 +13,8 @@ namespace RimWorld
 	{
 		private static bool anyMapFiles;
 
+		private static Vector2 translationInfoScrollbarPos;
+
 		private const float PlayRectWidth = 170f;
 
 		private const float WebRectWidth = 145f;
@@ -30,6 +32,8 @@ namespace RimWorld
 		private static readonly Vector2 LudeonLogoSize = new Vector2(200f, 58f);
 
 		private static readonly Texture2D TexLudeonLogo = ContentFinder<Texture2D>.Get("UI/HeroArt/LudeonLogoSmall", true);
+
+		private static readonly string TranslationsContributeURL = "https://rimworldgame.com/helptranslate";
 
 		public static void Init()
 		{
@@ -74,6 +78,13 @@ namespace RimWorld
 			GUI.color = Color.white;
 			rect.yMin += 17f;
 			MainMenuDrawer.DoMainMenuControls(rect, MainMenuDrawer.anyMapFiles);
+			if (Debug.isDebugBuild)
+			{
+				Rect outRect = new Rect(rect.x - 310f, rect.y, 295f, 400f);
+				MainMenuDrawer.DoDevBuildWarningRect(outRect);
+			}
+			Rect outRect2 = new Rect(8f, (float)(UI.screenHeight - 8 - 400), 240f, 400f);
+			MainMenuDrawer.DoTranslationInfoRect(outRect2);
 		}
 
 		public static void DoMainMenuControls(Rect rect, bool anyMapFiles)
@@ -125,10 +136,10 @@ namespace RimWorld
 			{
 				list.Add(new ListableOption("ReviewScenario".Translate(), delegate
 				{
-					WindowStack arg_27_0 = Find.WindowStack;
+					WindowStack arg_29_0 = Find.WindowStack;
 					string fullInformationText = Find.Scenario.GetFullInformationText();
 					string name = Find.Scenario.name;
-					arg_27_0.Add(new Dialog_MessageBox(fullInformationText, null, null, null, null, name, false));
+					arg_29_0.Add(new Dialog_MessageBox(fullInformationText, null, null, null, null, name, false, null, null));
 				}, null));
 			}
 			item = new ListableOption("Options".Translate(), delegate
@@ -144,6 +155,14 @@ namespace RimWorld
 					Find.WindowStack.Add(new Page_ModsConfig());
 				}, null);
 				list.Add(item);
+				if (Prefs.DevMode && LanguageDatabase.activeLanguage == LanguageDatabase.defaultLanguage && LanguageDatabase.activeLanguage.anyError)
+				{
+					item = new ListableOption("SaveTranslationReport".Translate(), delegate
+					{
+						LanguageReportGenerator.SaveTranslationReport();
+					}, null);
+					list.Add(item);
+				}
 				item = new ListableOption("Credits".Translate(), delegate
 				{
 					Find.WindowStack.Add(new Screen_Credits());
@@ -223,19 +242,19 @@ namespace RimWorld
 			OptionListingUtility.DrawOptionListing(rect2, list);
 			Text.Font = GameFont.Small;
 			List<ListableOption> list2 = new List<ListableOption>();
-			ListableOption item2 = new ListableOption_WebLink("FictionPrimer".Translate(), "http://rimworldgame.com/backstory", TexButton.IconBlog);
+			ListableOption item2 = new ListableOption_WebLink("FictionPrimer".Translate(), "https://rimworldgame.com/backstory", TexButton.IconBlog);
 			list2.Add(item2);
-			item2 = new ListableOption_WebLink("LudeonBlog".Translate(), "http://ludeon.com/blog", TexButton.IconBlog);
+			item2 = new ListableOption_WebLink("LudeonBlog".Translate(), "https://ludeon.com/blog", TexButton.IconBlog);
 			list2.Add(item2);
-			item2 = new ListableOption_WebLink("Forums".Translate(), "http://ludeon.com/forums", TexButton.IconForums);
+			item2 = new ListableOption_WebLink("Forums".Translate(), "https://ludeon.com/forums", TexButton.IconForums);
 			list2.Add(item2);
-			item2 = new ListableOption_WebLink("OfficialWiki".Translate(), "http://rimworldwiki.com", TexButton.IconBlog);
+			item2 = new ListableOption_WebLink("OfficialWiki".Translate(), "https://rimworldwiki.com", TexButton.IconBlog);
 			list2.Add(item2);
 			item2 = new ListableOption_WebLink("TynansTwitter".Translate(), "https://twitter.com/TynanSylvester", TexButton.IconTwitter);
 			list2.Add(item2);
-			item2 = new ListableOption_WebLink("TynansDesignBook".Translate(), "http://tynansylvester.com/book", TexButton.IconBook);
+			item2 = new ListableOption_WebLink("TynansDesignBook".Translate(), "https://tynansylvester.com/book", TexButton.IconBook);
 			list2.Add(item2);
-			item2 = new ListableOption_WebLink("HelpTranslate".Translate(), "http://ludeon.com/forums/index.php?topic=2933.0", TexButton.IconForums);
+			item2 = new ListableOption_WebLink("HelpTranslate".Translate(), MainMenuDrawer.TranslationsContributeURL, TexButton.IconForums);
 			list2.Add(item2);
 			item2 = new ListableOption_WebLink("BuySoundtrack".Translate(), "http://www.lasgameaudio.co.uk/#!store/t04fw", TexButton.IconSoundtrack);
 			list2.Add(item2);
@@ -259,13 +278,66 @@ namespace RimWorld
 			GUI.EndGroup();
 		}
 
+		public static void DoTranslationInfoRect(Rect outRect)
+		{
+			if (LanguageDatabase.activeLanguage == LanguageDatabase.defaultLanguage)
+			{
+				return;
+			}
+			Widgets.DrawWindowBackground(outRect);
+			Rect rect = outRect.ContractedBy(8f);
+			GUI.BeginGroup(rect);
+			rect = rect.AtZero();
+			Rect rect2 = new Rect(5f, rect.height - 25f, rect.width - 10f, 25f);
+			rect.height -= 29f;
+			Rect rect3 = new Rect(5f, rect.height - 25f, rect.width - 10f, 25f);
+			rect.height -= 29f;
+			Rect rect4 = new Rect(5f, rect.height - 25f, rect.width - 10f, 25f);
+			rect.height -= 29f;
+			string text = string.Empty;
+			foreach (CreditsEntry current in LanguageDatabase.activeLanguage.info.credits)
+			{
+				CreditRecord_Role creditRecord_Role = current as CreditRecord_Role;
+				if (creditRecord_Role != null)
+				{
+					text = text + creditRecord_Role.creditee + "\n";
+				}
+			}
+			text = text.TrimEndNewlines();
+			string label = "TranslationThanks".Translate(new object[]
+			{
+				text
+			}) + "\n\n" + "TranslationHowToContribute".Translate();
+			Widgets.LabelScrollable(rect, label, ref MainMenuDrawer.translationInfoScrollbarPos, false, false);
+			if (Widgets.ButtonText(rect4, "LearnMore".Translate(), true, false, true))
+			{
+				Application.OpenURL(MainMenuDrawer.TranslationsContributeURL);
+			}
+			if (Widgets.ButtonText(rect3, "SaveTranslationReport".Translate(), true, false, true))
+			{
+				LanguageReportGenerator.SaveTranslationReport();
+			}
+			if (Widgets.ButtonText(rect2, "CleanupTranslationFiles".Translate(), true, false, true))
+			{
+				TranslationFilesCleaner.CleanupTranslationFiles();
+			}
+			GUI.EndGroup();
+		}
+
+		private static void DoDevBuildWarningRect(Rect outRect)
+		{
+			Widgets.DrawWindowBackground(outRect);
+			Rect rect = outRect.ContractedBy(17f);
+			Widgets.Label(rect, "DevBuildWarning".Translate());
+		}
+
 		private static void InitLearnToPlay()
 		{
 			Current.Game = new Game();
 			Current.Game.InitData = new GameInitData();
 			Current.Game.Scenario = ScenarioDefOf.Crashlanded.scenario;
 			Find.Scenario.PreConfigure();
-			Current.Game.storyteller = new Storyteller(StorytellerDefOf.Tutor, DifficultyDefOf.VeryEasy);
+			Current.Game.storyteller = new Storyteller(StorytellerDefOf.Tutor, DifficultyDefOf.Easy);
 			Page firstConfigPage = Current.Game.Scenario.GetFirstConfigPage();
 			Page next = firstConfigPage.next;
 			next.prev = null;

@@ -39,7 +39,7 @@ namespace Verse
 		{
 			if (def.shortHash != 0)
 			{
-				Log.Error(def + " already has short hash.");
+				Log.Error(def + " already has short hash.", false);
 				return;
 			}
 			HashSet<ushort> hashSet;
@@ -56,7 +56,7 @@ namespace Verse
 				num2++;
 				if (num2 > 5000)
 				{
-					Log.Message("Short hashes are saturated. There are probably too many Defs.");
+					Log.Message("Short hashes are saturated. There are probably too many Defs.", false);
 				}
 			}
 			def.shortHash = num;

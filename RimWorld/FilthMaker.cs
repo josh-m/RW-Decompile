@@ -69,8 +69,9 @@ namespace RimWorld
 			{
 				Filth filth2 = (Filth)ThingMaker.MakeThing(filthDef, null);
 				filth2.AddSources(sources);
-				GenSpawn.Spawn(filth2, c, map);
+				GenSpawn.Spawn(filth2, c, map, WipeMode.Vanish);
 			}
+			FilthMonitor.Notify_FilthSpawned();
 			return true;
 		}
 

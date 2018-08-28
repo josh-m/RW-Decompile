@@ -19,9 +19,12 @@ namespace RimWorld
 			}
 		}
 
-		public override bool TryMakePreToilReservations()
+		public override bool TryMakePreToilReservations(bool errorOnFailed)
 		{
-			return this.pawn.Reserve(this.job.targetA, this.job, 1, -1, null);
+			Pawn pawn = this.pawn;
+			LocalTargetInfo targetA = this.job.targetA;
+			Job job = this.job;
+			return pawn.Reserve(targetA, job, 1, -1, null, errorOnFailed);
 		}
 
 		[DebuggerHidden]
@@ -31,7 +34,7 @@ namespace RimWorld
 			Toil build = new Toil();
 			build.initAction = delegate
 			{
-				GenClamor.DoClamor(build.actor, 15f, ClamorType.Construction);
+				GenClamor.DoClamor(build.actor, 15f, ClamorDefOf.Construction);
 			};
 			build.tickAction = delegate
 			{
@@ -39,14 +42,18 @@ namespace RimWorld
 				Frame frame = this.$this.Frame;
 				if (frame.resourceContainer.Count > 0)
 				{
-					actor.skills.Learn(SkillDefOf.Construction, 0.275f, false);
+					actor.skills.Learn(SkillDefOf.Construction, 0.25f, false);
 				}
-				float statValue = actor.GetStatValue(StatDefOf.ConstructionSpeed, true);
-				float workToMake = frame.WorkToMake;
+				float num = actor.GetStatValue(StatDefOf.ConstructionSpeed, true);
+				if (frame.Stuff != null)
+				{
+					num *= frame.Stuff.GetStatValueAbstract(StatDefOf.ConstructionSpeedFactor, null);
+				}
+				float workToBuild = frame.WorkToBuild;
 				if (actor.Faction == Faction.OfPlayer)
 				{
-					float statValue2 = actor.GetStatValue(StatDefOf.ConstructSuccessChance, true);
-					if (Rand.Value < 1f - Mathf.Pow(statValue2, statValue / workToMake))
+					float statValue = actor.GetStatValue(StatDefOf.ConstructSuccessChance, true);
+					if (Rand.Value < 1f - Mathf.Pow(statValue, num / workToBuild))
 					{
 						frame.FailConstruction(actor);
 						this.$this.ReadyForNextToil();
@@ -57,8 +64,8 @@ namespace RimWorld
 				{
 					this.$this.Map.snowGrid.SetDepth(frame.Position, 0f);
 				}
-				frame.workDone += statValue;
-				if (frame.workDone >= workToMake)
+				frame.workDone += num;
+				if (frame.workDone >= workToBuild)
 				{
 					frame.CompleteConstruction(actor);
 					this.$this.ReadyForNextToil();
@@ -68,9 +75,10 @@ namespace RimWorld
 			build.WithEffect(() => ((Frame)build.actor.jobs.curJob.GetTarget(TargetIndex.A).Thing).ConstructionEffect, TargetIndex.A);
 			build.FailOnDespawnedNullOrForbidden(TargetIndex.A);
 			build.FailOnCannotTouch(TargetIndex.A, PathEndMode.Touch);
-			build.FailOn(() => !GenConstruct.CanConstruct(this.$this.Frame, this.$this.pawn, false));
+			build.FailOn(() => !GenConstruct.CanConstruct(this.$this.Frame, this.$this.pawn, true, false));
 			build.defaultCompleteMode = ToilCompleteMode.Delay;
 			build.defaultDuration = 5000;
+			build.activeSkill = (() => SkillDefOf.Construction);
 			yield return build;
 		}
 	}

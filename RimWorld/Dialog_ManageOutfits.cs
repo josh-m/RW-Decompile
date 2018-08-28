@@ -45,7 +45,6 @@ namespace RimWorld
 		{
 			this.forcePause = true;
 			this.doCloseX = true;
-			this.closeOnEscapeKey = true;
 			this.doCloseButton = true;
 			this.closeOnClickedOutside = true;
 			this.absorbInputAroundWindow = true;
@@ -104,7 +103,7 @@ namespace RimWorld
 						AcceptanceReport acceptanceReport = Current.Game.outfitDatabase.TryDelete(localOut);
 						if (!acceptanceReport.Accepted)
 						{
-							Messages.Message(acceptanceReport.Reason, MessageTypeDefOf.RejectInput);
+							Messages.Message(acceptanceReport.Reason, MessageTypeDefOf.RejectInput, false);
 						}
 						else if (localOut == this.SelectedOutfit)
 						{
@@ -133,7 +132,7 @@ namespace RimWorld
 			ThingFilter parentFilter = Dialog_ManageOutfits.apparelGlobalFilter;
 			int openMask = 16;
 			IEnumerable<SpecialThingFilterDef> forceHiddenFilters = this.HiddenSpecialThingFilters();
-			ThingFilterUI.DoThingFilterConfigWindow(rect7, ref this.scrollPosition, filter, parentFilter, openMask, null, forceHiddenFilters, null);
+			ThingFilterUI.DoThingFilterConfigWindow(rect7, ref this.scrollPosition, filter, parentFilter, openMask, null, forceHiddenFilters, null, null);
 			GUI.EndGroup();
 		}
 

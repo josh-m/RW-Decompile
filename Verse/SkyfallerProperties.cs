@@ -50,5 +50,13 @@ namespace Verse
 				return this.metalShrapnelCountRange.max > 0 || this.rubbleShrapnelCountRange.max > 0;
 			}
 		}
+
+		public bool CausesExplosion
+		{
+			get
+			{
+				return this.explosionDamage != null && this.explosionRadius > 0f;
+			}
+		}
 	}
 }

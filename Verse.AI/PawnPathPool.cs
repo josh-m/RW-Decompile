@@ -41,7 +41,7 @@ namespace Verse.AI
 			}
 			if (this.paths.Count > this.map.mapPawns.AllPawnsSpawnedCount + 2)
 			{
-				Log.ErrorOnce("PawnPathPool leak: more paths than spawned pawns. Force-recovering.", 664788);
+				Log.ErrorOnce("PawnPathPool leak: more paths than spawned pawns. Force-recovering.", 664788, false);
 				this.paths.Clear();
 			}
 			PawnPath pawnPath = new PawnPath();

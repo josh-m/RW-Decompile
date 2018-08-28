@@ -6,7 +6,7 @@ namespace Verse
 	{
 		private int ticksUntilMote;
 
-		public SubEffecter_DrifterEmoteContinuous(SubEffecterDef def) : base(def)
+		public SubEffecter_DrifterEmoteContinuous(SubEffecterDef def, Effecter parent) : base(def, parent)
 		{
 		}
 

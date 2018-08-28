@@ -38,7 +38,7 @@ namespace RimWorld
 				}
 				if (this.IntervalsPassed == 204)
 				{
-					IncidentCategory threatCategory = (!Find.Storyteller.difficulty.allowIntroThreats) ? IncidentCategory.Misc : IncidentCategory.ThreatSmall;
+					IncidentCategoryDef threatCategory = (!Find.Storyteller.difficulty.allowIntroThreats) ? IncidentCategoryDefOf.Misc : IncidentCategoryDefOf.ThreatSmall;
 					IncidentDef incDef;
 					if ((from def in DefDatabase<IncidentDef>.AllDefs
 					where def.TargetAllowed(target) && def.category == threatCategory
@@ -46,18 +46,18 @@ namespace RimWorld
 					{
 						yield return new FiringIncident(incDef, this, null)
 						{
-							parms = StorytellerUtility.DefaultParmsNow(Find.Storyteller.def, incDef.category, target)
+							parms = StorytellerUtility.DefaultParmsNow(incDef.category, target)
 						};
 					}
 				}
 				IncidentDef incDef2;
 				if (this.IntervalsPassed == 264 && (from def in DefDatabase<IncidentDef>.AllDefs
-				where def.TargetAllowed(target) && def.category == IncidentCategory.Misc
+				where def.TargetAllowed(target) && def.category == IncidentCategoryDefOf.Misc
 				select def).TryRandomElementByWeight(new Func<IncidentDef, float>(base.IncidentChanceFinal), out incDef2))
 				{
 					yield return new FiringIncident(incDef2, this, null)
 					{
-						parms = StorytellerUtility.DefaultParmsNow(Find.Storyteller.def, incDef2.category, target)
+						parms = StorytellerUtility.DefaultParmsNow(incDef2.category, target)
 					};
 				}
 				if (this.IntervalsPassed == 324)
@@ -66,14 +66,20 @@ namespace RimWorld
 					if (!Find.Storyteller.difficulty.allowIntroThreats)
 					{
 						inc2 = (from def in DefDatabase<IncidentDef>.AllDefs
-						where def.TargetAllowed(target) && def.category == IncidentCategory.Misc
+						where def.TargetAllowed(target) && def.category == IncidentCategoryDefOf.Misc
 						select def).RandomElementByWeightWithFallback(new Func<IncidentDef, float>(base.IncidentChanceFinal), null);
 					}
 					if (inc2 != null && inc2.TargetAllowed(target))
 					{
 						yield return new FiringIncident(inc2, this, null)
 						{
-							parms = this.GenerateParms(inc2.category, target)
+							parms = this.GenerateParms(inc2.category, target),
+							parms = 
+							{
+								points = 40f,
+								raidForceOneIncap = true,
+								raidNeverFleeIndividual = true
+							}
 						};
 					}
 				}

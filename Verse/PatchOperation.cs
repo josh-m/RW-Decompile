@@ -43,7 +43,7 @@ namespace Verse
 
 		protected virtual bool ApplyWorker(XmlDocument xml)
 		{
-			Log.Error("Attempted to use PatchOperation directly; patch will always fail");
+			Log.Error("Attempted to use PatchOperation directly; patch will always fail", false);
 			return false;
 		}
 
@@ -56,7 +56,7 @@ namespace Verse
 				{
 					text = text + "\nfile: " + this.sourceFile;
 				}
-				Log.Error(text);
+				Log.Error(text, false);
 			}
 		}
 	}

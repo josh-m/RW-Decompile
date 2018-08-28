@@ -9,119 +9,262 @@ namespace RimWorld.Planet
 	{
 		private static List<Pawn> tmpPawns = new List<Pawn>();
 
+		private static List<ThingDefCount> tmpThingDefCounts = new List<ThingDefCount>();
+
 		private static List<ThingCount> tmpThingCounts = new List<ThingCount>();
 
-		private static List<ThingStackPart> tmpThingStackParts = new List<ThingStackPart>();
+		public const float InfiniteDaysWorthOfFood = 600f;
 
-		public const float InfiniteDaysWorthOfFood = 1000f;
+		private static List<float> tmpDaysWorthOfFoodForPawn = new List<float>();
 
-		private static List<float> tmpDaysWorthOfFoodPerPawn = new List<float>();
+		private static List<ThingDefCount> tmpFood = new List<ThingDefCount>();
 
-		private static List<bool> tmpAnyFoodLeftIngestibleByPawn = new List<bool>();
+		private static List<ThingDefCount> tmpFood2 = new List<ThingDefCount>();
 
-		private static List<ThingCount> tmpFood = new List<ThingCount>();
+		private static List<Pair<int, int>> tmpTicksToArrive = new List<Pair<int, int>>();
 
-		private static float ApproxDaysWorthOfFood(List<Pawn> pawns, List<ThingCount> extraFood, bool assumeCanEatLocalPlants, IgnorePawnsInventoryMode ignoreInventory)
+		private static List<float> cachedNutritionBetweenHungryAndFed = new List<float>();
+
+		private static List<int> cachedTicksUntilHungryWhenFed = new List<int>();
+
+		private static List<float> cachedMaxFoodLevel = new List<float>();
+
+		private static float ApproxDaysWorthOfFood(List<Pawn> pawns, List<ThingDefCount> extraFood, int tile, IgnorePawnsInventoryMode ignoreInventory, Faction faction, WorldPath path = null, float nextTileCostLeft = 0f, int caravanTicksPerMove = 3300, bool assumeCaravanMoving = true)
 		{
-			if (!DaysWorthOfFoodCalculator.AnyNonLocalPlantsEatingPawn(pawns, assumeCanEatLocalPlants))
+			if (!DaysWorthOfFoodCalculator.AnyFoodEatingPawn(pawns))
 			{
-				return 1000f;
+				return 600f;
+			}
+			if (!assumeCaravanMoving)
+			{
+				path = null;
 			}
 			DaysWorthOfFoodCalculator.tmpFood.Clear();
 			if (extraFood != null)
 			{
-				for (int i = 0; i < extraFood.Count; i++)
+				int i = 0;
+				int count = extraFood.Count;
+				while (i < count)
 				{
-					if (extraFood[i].ThingDef.IsNutritionGivingIngestible && extraFood[i].Count > 0)
+					ThingDefCount item = extraFood[i];
+					if (item.ThingDef.IsNutritionGivingIngestible && item.Count > 0)
 					{
-						DaysWorthOfFoodCalculator.tmpFood.Add(extraFood[i]);
+						DaysWorthOfFoodCalculator.tmpFood.Add(item);
 					}
+					i++;
 				}
 			}
-			for (int j = 0; j < pawns.Count; j++)
+			int j = 0;
+			int count2 = pawns.Count;
+			while (j < count2)
 			{
-				if (!InventoryCalculatorsUtility.ShouldIgnoreInventoryOf(pawns[j], ignoreInventory))
+				Pawn pawn = pawns[j];
+				if (!InventoryCalculatorsUtility.ShouldIgnoreInventoryOf(pawn, ignoreInventory))
 				{
-					ThingOwner<Thing> innerContainer = pawns[j].inventory.innerContainer;
-					for (int k = 0; k < innerContainer.Count; k++)
+					ThingOwner<Thing> innerContainer = pawn.inventory.innerContainer;
+					int k = 0;
+					int count3 = innerContainer.Count;
+					while (k < count3)
 					{
-						if (innerContainer[k].def.IsNutritionGivingIngestible)
+						Thing thing = innerContainer[k];
+						if (thing.def.IsNutritionGivingIngestible)
 						{
-							DaysWorthOfFoodCalculator.tmpFood.Add(new ThingCount(innerContainer[k].def, innerContainer[k].stackCount));
+							DaysWorthOfFoodCalculator.tmpFood.Add(new ThingDefCount(thing.def, thing.stackCount));
 						}
+						k++;
 					}
 				}
+				j++;
 			}
-			if (!DaysWorthOfFoodCalculator.tmpFood.Any<ThingCount>())
+			DaysWorthOfFoodCalculator.tmpFood2.Clear();
+			DaysWorthOfFoodCalculator.tmpFood2.AddRange(DaysWorthOfFoodCalculator.tmpFood);
+			DaysWorthOfFoodCalculator.tmpFood.Clear();
+			int l = 0;
+			int count4 = DaysWorthOfFoodCalculator.tmpFood2.Count;
+			while (l < count4)
 			{
-				return 0f;
+				ThingDefCount item2 = DaysWorthOfFoodCalculator.tmpFood2[l];
+				bool flag = false;
+				int m = 0;
+				int count5 = DaysWorthOfFoodCalculator.tmpFood.Count;
+				while (m < count5)
+				{
+					ThingDefCount thingDefCount = DaysWorthOfFoodCalculator.tmpFood[m];
+					if (thingDefCount.ThingDef == item2.ThingDef)
+					{
+						DaysWorthOfFoodCalculator.tmpFood[m] = thingDefCount.WithCount(thingDefCount.Count + item2.Count);
+						flag = true;
+						break;
+					}
+					m++;
+				}
+				if (!flag)
+				{
+					DaysWorthOfFoodCalculator.tmpFood.Add(item2);
+				}
+				l++;
 			}
-			DaysWorthOfFoodCalculator.tmpDaysWorthOfFoodPerPawn.Clear();
-			DaysWorthOfFoodCalculator.tmpAnyFoodLeftIngestibleByPawn.Clear();
-			for (int l = 0; l < pawns.Count; l++)
+			DaysWorthOfFoodCalculator.tmpDaysWorthOfFoodForPawn.Clear();
+			int n = 0;
+			int count6 = pawns.Count;
+			while (n < count6)
 			{
-				DaysWorthOfFoodCalculator.tmpDaysWorthOfFoodPerPawn.Add(0f);
-				DaysWorthOfFoodCalculator.tmpAnyFoodLeftIngestibleByPawn.Add(true);
+				DaysWorthOfFoodCalculator.tmpDaysWorthOfFoodForPawn.Add(0f);
+				n++;
 			}
-			float num = 0f;
-			bool flag;
+			int ticksAbs = Find.TickManager.TicksAbs;
+			DaysWorthOfFoodCalculator.tmpTicksToArrive.Clear();
+			if (path != null && path.Found)
+			{
+				CaravanArrivalTimeEstimator.EstimatedTicksToArriveToEvery(tile, path.LastNode, path, nextTileCostLeft, caravanTicksPerMove, ticksAbs, DaysWorthOfFoodCalculator.tmpTicksToArrive);
+			}
+			DaysWorthOfFoodCalculator.cachedNutritionBetweenHungryAndFed.Clear();
+			DaysWorthOfFoodCalculator.cachedTicksUntilHungryWhenFed.Clear();
+			DaysWorthOfFoodCalculator.cachedMaxFoodLevel.Clear();
+			int num = 0;
+			int count7 = pawns.Count;
+			while (num < count7)
+			{
+				Pawn pawn2 = pawns[num];
+				Need_Food food = pawn2.needs.food;
+				DaysWorthOfFoodCalculator.cachedNutritionBetweenHungryAndFed.Add(food.NutritionBetweenHungryAndFed);
+				DaysWorthOfFoodCalculator.cachedTicksUntilHungryWhenFed.Add(food.TicksUntilHungryWhenFed);
+				DaysWorthOfFoodCalculator.cachedMaxFoodLevel.Add(food.MaxLevel);
+				num++;
+			}
+			float num2 = 0f;
+			float num3 = 0f;
+			float num4 = 0f;
+			bool flag2 = false;
+			WorldGrid worldGrid = Find.WorldGrid;
+			bool flag3;
 			do
 			{
-				flag = false;
-				for (int m = 0; m < pawns.Count; m++)
+				flag3 = false;
+				int num5 = ticksAbs + (int)(num3 * 60000f);
+				int num6 = (path == null) ? tile : CaravanArrivalTimeEstimator.TileIllBeInAt(num5, DaysWorthOfFoodCalculator.tmpTicksToArrive, ticksAbs);
+				bool flag4 = CaravanNightRestUtility.WouldBeRestingAt(num6, (long)num5);
+				float progressPerTick = ForagedFoodPerDayCalculator.GetProgressPerTick(assumeCaravanMoving && !flag4, flag4, null);
+				float num7 = 1f / progressPerTick;
+				bool flag5 = VirtualPlantsUtility.EnvironmentAllowsEatingVirtualPlantsAt(num6, num5);
+				float num8 = num3 - num2;
+				if (num8 > 0f)
 				{
-					Pawn pawn = pawns[m];
-					if (DaysWorthOfFoodCalculator.tmpAnyFoodLeftIngestibleByPawn[m])
+					num4 += num8 * 60000f;
+					if (num4 >= num7)
 					{
-						if (pawn.RaceProps.EatsFood && (!assumeCanEatLocalPlants || !VirtualPlantsUtility.CanEverEatVirtualPlants(pawn)))
+						BiomeDef biome = worldGrid[num6].biome;
+						int num9 = Mathf.RoundToInt(ForagedFoodPerDayCalculator.GetForagedFoodCountPerInterval(pawns, biome, faction, null));
+						ThingDef foragedFood = biome.foragedFood;
+						while (num4 >= num7)
 						{
-							do
+							num4 -= num7;
+							if (num9 > 0)
 							{
-								int num2 = DaysWorthOfFoodCalculator.BestEverEdibleFoodIndexFor(pawns[m], DaysWorthOfFoodCalculator.tmpFood);
-								if (num2 < 0)
+								bool flag6 = false;
+								for (int num10 = DaysWorthOfFoodCalculator.tmpFood.Count - 1; num10 >= 0; num10--)
 								{
-									goto Block_13;
+									ThingDefCount thingDefCount2 = DaysWorthOfFoodCalculator.tmpFood[num10];
+									if (thingDefCount2.ThingDef == foragedFood)
+									{
+										DaysWorthOfFoodCalculator.tmpFood[num10] = thingDefCount2.WithCount(thingDefCount2.Count + num9);
+										flag6 = true;
+										break;
+									}
 								}
-								float num3 = Mathf.Min(DaysWorthOfFoodCalculator.tmpFood[num2].ThingDef.ingestible.nutrition, pawn.needs.food.NutritionBetweenHungryAndFed);
-								float num4 = num3 / pawn.needs.food.NutritionBetweenHungryAndFed * (float)pawn.needs.food.TicksUntilHungryWhenFed / 60000f;
-								List<float> list;
-								int index;
-								(list = DaysWorthOfFoodCalculator.tmpDaysWorthOfFoodPerPawn)[index = m] = list[index] + num4;
-								DaysWorthOfFoodCalculator.tmpFood[num2] = DaysWorthOfFoodCalculator.tmpFood[num2].WithCount(DaysWorthOfFoodCalculator.tmpFood[num2].Count - 1);
-								flag = true;
+								if (!flag6)
+								{
+									DaysWorthOfFoodCalculator.tmpFood.Add(new ThingDefCount(foragedFood, num9));
+								}
 							}
-							while (DaysWorthOfFoodCalculator.tmpDaysWorthOfFoodPerPawn[m] < num);
-							IL_2CB:
-							num = Mathf.Max(num, DaysWorthOfFoodCalculator.tmpDaysWorthOfFoodPerPawn[m]);
-							goto IL_2E0;
-							Block_13:
-							DaysWorthOfFoodCalculator.tmpAnyFoodLeftIngestibleByPawn[m] = false;
-							goto IL_2CB;
 						}
 					}
-					IL_2E0:;
 				}
-			}
-			while (flag);
-			float num5 = 1000f;
-			for (int n = 0; n < pawns.Count; n++)
-			{
-				if (pawns[n].RaceProps.EatsFood && (!assumeCanEatLocalPlants || !VirtualPlantsUtility.CanEverEatVirtualPlants(pawns[n])))
+				num2 = num3;
+				int num11 = 0;
+				int count8 = pawns.Count;
+				while (num11 < count8)
 				{
-					num5 = Mathf.Min(num5, DaysWorthOfFoodCalculator.tmpDaysWorthOfFoodPerPawn[n]);
+					Pawn pawn3 = pawns[num11];
+					if (pawn3.RaceProps.EatsFood)
+					{
+						if (flag5 && VirtualPlantsUtility.CanEverEatVirtualPlants(pawn3))
+						{
+							if (DaysWorthOfFoodCalculator.tmpDaysWorthOfFoodForPawn[num11] < num3)
+							{
+								DaysWorthOfFoodCalculator.tmpDaysWorthOfFoodForPawn[num11] = num3;
+							}
+							else
+							{
+								List<float> list;
+								int index;
+								(list = DaysWorthOfFoodCalculator.tmpDaysWorthOfFoodForPawn)[index = num11] = list[index] + 0.45f;
+							}
+							flag3 = true;
+						}
+						else
+						{
+							float num12 = DaysWorthOfFoodCalculator.cachedNutritionBetweenHungryAndFed[num11];
+							int num13 = DaysWorthOfFoodCalculator.cachedTicksUntilHungryWhenFed[num11];
+							while (true)
+							{
+								int num14 = DaysWorthOfFoodCalculator.BestEverEdibleFoodIndexFor(pawn3, DaysWorthOfFoodCalculator.tmpFood);
+								if (num14 < 0)
+								{
+									break;
+								}
+								ThingDefCount thingDefCount3 = DaysWorthOfFoodCalculator.tmpFood[num14];
+								float num15 = Mathf.Min(thingDefCount3.ThingDef.ingestible.CachedNutrition, num12);
+								float num16 = num15 / num12 * (float)num13 / 60000f;
+								int num17 = Mathf.Min(Mathf.CeilToInt(Mathf.Min(0.2f, DaysWorthOfFoodCalculator.cachedMaxFoodLevel[num11]) / num15), thingDefCount3.Count);
+								List<float> list;
+								int index2;
+								(list = DaysWorthOfFoodCalculator.tmpDaysWorthOfFoodForPawn)[index2 = num11] = list[index2] + num16 * (float)num17;
+								DaysWorthOfFoodCalculator.tmpFood[num14] = thingDefCount3.WithCount(thingDefCount3.Count - num17);
+								flag3 = true;
+								if (DaysWorthOfFoodCalculator.tmpDaysWorthOfFoodForPawn[num11] >= num3)
+								{
+									goto IL_5FC;
+								}
+							}
+							if (DaysWorthOfFoodCalculator.tmpDaysWorthOfFoodForPawn[num11] < num3)
+							{
+								flag2 = true;
+							}
+						}
+						IL_5FC:
+						if (flag2)
+						{
+							break;
+						}
+						num3 = Mathf.Max(num3, DaysWorthOfFoodCalculator.tmpDaysWorthOfFoodForPawn[num11]);
+					}
+					num11++;
 				}
 			}
-			return num5;
+			while (flag3 && !flag2 && num3 <= 601f);
+			float num18 = 600f;
+			int num19 = 0;
+			int count9 = pawns.Count;
+			while (num19 < count9)
+			{
+				if (pawns[num19].RaceProps.EatsFood)
+				{
+					num18 = Mathf.Min(num18, DaysWorthOfFoodCalculator.tmpDaysWorthOfFoodForPawn[num19]);
+				}
+				num19++;
+			}
+			return num18;
 		}
 
 		public static float ApproxDaysWorthOfFood(Caravan caravan)
 		{
-			return DaysWorthOfFoodCalculator.ApproxDaysWorthOfFood(caravan.PawnsListForReading, null, VirtualPlantsUtility.EnvironmentAllowsEatingVirtualPlantsNowAt(caravan.Tile), IgnorePawnsInventoryMode.DontIgnore);
+			return DaysWorthOfFoodCalculator.ApproxDaysWorthOfFood(caravan.PawnsListForReading, null, caravan.Tile, IgnorePawnsInventoryMode.DontIgnore, caravan.Faction, caravan.pather.curPath, caravan.pather.nextTileCostLeft, caravan.TicksPerMove, caravan.pather.Moving && !caravan.pather.Paused);
 		}
 
-		public static float ApproxDaysWorthOfFood(List<TransferableOneWay> transferables, bool assumeCanEatLocalPlants, IgnorePawnsInventoryMode ignoreInventory)
+		public static float ApproxDaysWorthOfFood(List<TransferableOneWay> transferables, int tile, IgnorePawnsInventoryMode ignoreInventory, Faction faction, WorldPath path = null, float nextTileCostLeft = 0f, int caravanTicksPerMove = 3300)
 		{
-			DaysWorthOfFoodCalculator.tmpThingCounts.Clear();
+			DaysWorthOfFoodCalculator.tmpThingDefCounts.Clear();
 			DaysWorthOfFoodCalculator.tmpPawns.Clear();
 			for (int i = 0; i < transferables.Count; i++)
 			{
@@ -133,7 +276,7 @@ namespace RimWorld.Planet
 						for (int j = 0; j < transferableOneWay.CountToTransfer; j++)
 						{
 							Pawn pawn = (Pawn)transferableOneWay.things[j];
-							if (pawn.RaceProps.EatsFood && (!assumeCanEatLocalPlants || !VirtualPlantsUtility.CanEverEatVirtualPlants(pawn)))
+							if (pawn.RaceProps.EatsFood)
 							{
 								DaysWorthOfFoodCalculator.tmpPawns.Add(pawn);
 							}
@@ -141,19 +284,19 @@ namespace RimWorld.Planet
 					}
 					else
 					{
-						DaysWorthOfFoodCalculator.tmpThingCounts.Add(new ThingCount(transferableOneWay.ThingDef, transferableOneWay.CountToTransfer));
+						DaysWorthOfFoodCalculator.tmpThingDefCounts.Add(new ThingDefCount(transferableOneWay.ThingDef, transferableOneWay.CountToTransfer));
 					}
 				}
 			}
-			float result = DaysWorthOfFoodCalculator.ApproxDaysWorthOfFood(DaysWorthOfFoodCalculator.tmpPawns, DaysWorthOfFoodCalculator.tmpThingCounts, assumeCanEatLocalPlants, ignoreInventory);
-			DaysWorthOfFoodCalculator.tmpThingCounts.Clear();
+			float result = DaysWorthOfFoodCalculator.ApproxDaysWorthOfFood(DaysWorthOfFoodCalculator.tmpPawns, DaysWorthOfFoodCalculator.tmpThingDefCounts, tile, ignoreInventory, faction, path, nextTileCostLeft, caravanTicksPerMove, true);
+			DaysWorthOfFoodCalculator.tmpThingDefCounts.Clear();
 			DaysWorthOfFoodCalculator.tmpPawns.Clear();
 			return result;
 		}
 
-		public static float ApproxDaysWorthOfFoodLeftAfterTransfer(List<TransferableOneWay> transferables, bool assumeCanEatLocalPlants, IgnorePawnsInventoryMode ignoreInventory)
+		public static float ApproxDaysWorthOfFoodLeftAfterTransfer(List<TransferableOneWay> transferables, int tile, IgnorePawnsInventoryMode ignoreInventory, Faction faction, WorldPath path = null, float nextTileCostLeft = 0f, int caravanTicksPerMove = 3300)
 		{
-			DaysWorthOfFoodCalculator.tmpThingCounts.Clear();
+			DaysWorthOfFoodCalculator.tmpThingDefCounts.Clear();
 			DaysWorthOfFoodCalculator.tmpPawns.Clear();
 			for (int i = 0; i < transferables.Count; i++)
 			{
@@ -165,7 +308,7 @@ namespace RimWorld.Planet
 						for (int j = transferableOneWay.things.Count - 1; j >= transferableOneWay.CountToTransfer; j--)
 						{
 							Pawn pawn = (Pawn)transferableOneWay.things[j];
-							if (pawn.RaceProps.EatsFood && (!assumeCanEatLocalPlants || !VirtualPlantsUtility.CanEverEatVirtualPlants(pawn)))
+							if (pawn.RaceProps.EatsFood)
 							{
 								DaysWorthOfFoodCalculator.tmpPawns.Add(pawn);
 							}
@@ -173,101 +316,113 @@ namespace RimWorld.Planet
 					}
 					else
 					{
-						DaysWorthOfFoodCalculator.tmpThingCounts.Add(new ThingCount(transferableOneWay.ThingDef, transferableOneWay.MaxCount - transferableOneWay.CountToTransfer));
+						DaysWorthOfFoodCalculator.tmpThingDefCounts.Add(new ThingDefCount(transferableOneWay.ThingDef, transferableOneWay.MaxCount - transferableOneWay.CountToTransfer));
 					}
 				}
 			}
-			float result = DaysWorthOfFoodCalculator.ApproxDaysWorthOfFood(DaysWorthOfFoodCalculator.tmpPawns, DaysWorthOfFoodCalculator.tmpThingCounts, assumeCanEatLocalPlants, ignoreInventory);
-			DaysWorthOfFoodCalculator.tmpThingCounts.Clear();
+			float result = DaysWorthOfFoodCalculator.ApproxDaysWorthOfFood(DaysWorthOfFoodCalculator.tmpPawns, DaysWorthOfFoodCalculator.tmpThingDefCounts, tile, ignoreInventory, faction, path, nextTileCostLeft, caravanTicksPerMove, true);
+			DaysWorthOfFoodCalculator.tmpThingDefCounts.Clear();
 			DaysWorthOfFoodCalculator.tmpPawns.Clear();
 			return result;
 		}
 
-		public static float ApproxDaysWorthOfFood(List<Pawn> pawns, List<Thing> potentiallyFood, bool assumeCanEatLocalPlants, IgnorePawnsInventoryMode ignoreInventory)
+		public static float ApproxDaysWorthOfFood(List<Pawn> pawns, List<Thing> potentiallyFood, int tile, IgnorePawnsInventoryMode ignoreInventory, Faction faction)
 		{
-			DaysWorthOfFoodCalculator.tmpThingCounts.Clear();
+			DaysWorthOfFoodCalculator.tmpThingDefCounts.Clear();
 			DaysWorthOfFoodCalculator.tmpPawns.Clear();
 			for (int i = 0; i < pawns.Count; i++)
 			{
 				Pawn pawn = pawns[i];
-				if (pawn.RaceProps.EatsFood && (!assumeCanEatLocalPlants || !VirtualPlantsUtility.CanEverEatVirtualPlants(pawn)))
+				if (pawn.RaceProps.EatsFood)
 				{
 					DaysWorthOfFoodCalculator.tmpPawns.Add(pawn);
 				}
 			}
 			for (int j = 0; j < potentiallyFood.Count; j++)
 			{
-				DaysWorthOfFoodCalculator.tmpThingCounts.Add(new ThingCount(potentiallyFood[j].def, potentiallyFood[j].stackCount));
+				DaysWorthOfFoodCalculator.tmpThingDefCounts.Add(new ThingDefCount(potentiallyFood[j].def, potentiallyFood[j].stackCount));
 			}
-			float result = DaysWorthOfFoodCalculator.ApproxDaysWorthOfFood(DaysWorthOfFoodCalculator.tmpPawns, DaysWorthOfFoodCalculator.tmpThingCounts, assumeCanEatLocalPlants, ignoreInventory);
-			DaysWorthOfFoodCalculator.tmpThingCounts.Clear();
+			float result = DaysWorthOfFoodCalculator.ApproxDaysWorthOfFood(DaysWorthOfFoodCalculator.tmpPawns, DaysWorthOfFoodCalculator.tmpThingDefCounts, tile, ignoreInventory, faction, null, 0f, 3300, true);
+			DaysWorthOfFoodCalculator.tmpThingDefCounts.Clear();
 			DaysWorthOfFoodCalculator.tmpPawns.Clear();
 			return result;
 		}
 
-		public static float ApproxDaysWorthOfFood(List<Pawn> pawns, List<ThingStackPart> potentiallyFood, bool assumeCanEatLocalPlants, IgnorePawnsInventoryMode ignoreInventory)
+		public static float ApproxDaysWorthOfFood(List<Pawn> pawns, List<ThingCount> potentiallyFood, int tile, IgnorePawnsInventoryMode ignoreInventory, Faction faction)
 		{
-			DaysWorthOfFoodCalculator.tmpThingCounts.Clear();
+			DaysWorthOfFoodCalculator.tmpThingDefCounts.Clear();
 			for (int i = 0; i < potentiallyFood.Count; i++)
 			{
-				DaysWorthOfFoodCalculator.tmpThingCounts.Add(new ThingCount(potentiallyFood[i].Thing.def, potentiallyFood[i].Count));
+				if (potentiallyFood[i].Count > 0)
+				{
+					DaysWorthOfFoodCalculator.tmpThingDefCounts.Add(new ThingDefCount(potentiallyFood[i].Thing.def, potentiallyFood[i].Count));
+				}
 			}
-			float result = DaysWorthOfFoodCalculator.ApproxDaysWorthOfFood(pawns, DaysWorthOfFoodCalculator.tmpThingCounts, assumeCanEatLocalPlants, ignoreInventory);
-			DaysWorthOfFoodCalculator.tmpThingCounts.Clear();
+			float result = DaysWorthOfFoodCalculator.ApproxDaysWorthOfFood(pawns, DaysWorthOfFoodCalculator.tmpThingDefCounts, tile, ignoreInventory, faction, null, 0f, 3300, true);
+			DaysWorthOfFoodCalculator.tmpThingDefCounts.Clear();
 			return result;
 		}
 
-		public static float ApproxDaysWorthOfFoodLeftAfterTradeableTransfer(List<Thing> allCurrentThings, List<Tradeable> tradeables, bool assumeCanEatLocalPlants, IgnorePawnsInventoryMode ignoreInventory)
+		public static float ApproxDaysWorthOfFoodLeftAfterTradeableTransfer(List<Thing> allCurrentThings, List<Tradeable> tradeables, int tile, IgnorePawnsInventoryMode ignoreInventory, Faction faction)
 		{
-			TransferableUtility.SimulateTradeableTransfer(allCurrentThings, tradeables, DaysWorthOfFoodCalculator.tmpThingStackParts);
-			DaysWorthOfFoodCalculator.tmpPawns.Clear();
 			DaysWorthOfFoodCalculator.tmpThingCounts.Clear();
-			for (int i = DaysWorthOfFoodCalculator.tmpThingStackParts.Count - 1; i >= 0; i--)
+			TransferableUtility.SimulateTradeableTransfer(allCurrentThings, tradeables, DaysWorthOfFoodCalculator.tmpThingCounts);
+			DaysWorthOfFoodCalculator.tmpPawns.Clear();
+			DaysWorthOfFoodCalculator.tmpThingDefCounts.Clear();
+			for (int i = DaysWorthOfFoodCalculator.tmpThingCounts.Count - 1; i >= 0; i--)
 			{
-				Pawn pawn = DaysWorthOfFoodCalculator.tmpThingStackParts[i].Thing as Pawn;
-				if (pawn != null)
+				if (DaysWorthOfFoodCalculator.tmpThingCounts[i].Count > 0)
 				{
-					if (pawn.RaceProps.EatsFood && (!assumeCanEatLocalPlants || !VirtualPlantsUtility.CanEverEatVirtualPlants(pawn)))
+					Pawn pawn = DaysWorthOfFoodCalculator.tmpThingCounts[i].Thing as Pawn;
+					if (pawn != null)
 					{
-						DaysWorthOfFoodCalculator.tmpPawns.Add(pawn);
+						if (pawn.RaceProps.EatsFood)
+						{
+							DaysWorthOfFoodCalculator.tmpPawns.Add(pawn);
+						}
+					}
+					else
+					{
+						DaysWorthOfFoodCalculator.tmpThingDefCounts.Add(new ThingDefCount(DaysWorthOfFoodCalculator.tmpThingCounts[i].Thing.def, DaysWorthOfFoodCalculator.tmpThingCounts[i].Count));
 					}
 				}
-				else
-				{
-					DaysWorthOfFoodCalculator.tmpThingCounts.Add(new ThingCount(DaysWorthOfFoodCalculator.tmpThingStackParts[i].Thing.def, DaysWorthOfFoodCalculator.tmpThingStackParts[i].Count));
-				}
 			}
-			DaysWorthOfFoodCalculator.tmpThingStackParts.Clear();
-			float result = DaysWorthOfFoodCalculator.ApproxDaysWorthOfFood(DaysWorthOfFoodCalculator.tmpPawns, DaysWorthOfFoodCalculator.tmpThingCounts, assumeCanEatLocalPlants, ignoreInventory);
-			DaysWorthOfFoodCalculator.tmpPawns.Clear();
 			DaysWorthOfFoodCalculator.tmpThingCounts.Clear();
+			float result = DaysWorthOfFoodCalculator.ApproxDaysWorthOfFood(DaysWorthOfFoodCalculator.tmpPawns, DaysWorthOfFoodCalculator.tmpThingDefCounts, tile, ignoreInventory, faction, null, 0f, 3300, true);
+			DaysWorthOfFoodCalculator.tmpPawns.Clear();
+			DaysWorthOfFoodCalculator.tmpThingDefCounts.Clear();
 			return result;
 		}
 
-		private static bool AnyNonLocalPlantsEatingPawn(List<Pawn> pawns, bool assumeCanEatLocalPlants)
+		private static bool AnyFoodEatingPawn(List<Pawn> pawns)
 		{
-			for (int i = 0; i < pawns.Count; i++)
+			int i = 0;
+			int count = pawns.Count;
+			while (i < count)
 			{
-				if (pawns[i].RaceProps.EatsFood && (!assumeCanEatLocalPlants || !VirtualPlantsUtility.CanEverEatVirtualPlants(pawns[i])))
+				if (pawns[i].RaceProps.EatsFood)
 				{
 					return true;
 				}
+				i++;
 			}
 			return false;
 		}
 
-		private static int BestEverEdibleFoodIndexFor(Pawn pawn, List<ThingCount> food)
+		private static int BestEverEdibleFoodIndexFor(Pawn pawn, List<ThingDefCount> food)
 		{
 			int num = -1;
 			float num2 = 0f;
-			for (int i = 0; i < food.Count; i++)
+			int i = 0;
+			int count = food.Count;
+			while (i < count)
 			{
 				if (food[i].Count > 0)
 				{
 					ThingDef thingDef = food[i].ThingDef;
-					if (CaravanPawnsNeedsUtility.CanEverEatForNutrition(thingDef, pawn))
+					if (CaravanPawnsNeedsUtility.CanEatForNutritionEver(thingDef, pawn))
 					{
-						float foodScore = CaravanPawnsNeedsUtility.GetFoodScore(thingDef, pawn);
+						float foodScore = CaravanPawnsNeedsUtility.GetFoodScore(thingDef, pawn, thingDef.ingestible.CachedNutrition);
 						if (num < 0 || foodScore > num2)
 						{
 							num = i;
@@ -275,6 +430,7 @@ namespace RimWorld.Planet
 						}
 					}
 				}
+				i++;
 			}
 			return num;
 		}

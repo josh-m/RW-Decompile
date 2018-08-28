@@ -12,12 +12,12 @@ namespace RimWorld
 		{
 			if (receiver == null)
 			{
-				Log.Error("Tried to register a null reciever.");
+				Log.Error("Tried to register a null reciever.", false);
 				return;
 			}
 			if (this.receivers.Contains(receiver))
 			{
-				Log.Error("Tried to register the same receiver twice: " + receiver.ToStringSafe<ISignalReceiver>());
+				Log.Error("Tried to register the same receiver twice: " + receiver.ToStringSafe<ISignalReceiver>(), false);
 				return;
 			}
 			this.receivers.Add(receiver);
@@ -32,7 +32,7 @@ namespace RimWorld
 		{
 			if (DebugViewSettings.logSignals)
 			{
-				Log.Message("Signal: tag=" + signal.tag.ToStringSafe<string>() + " args=" + signal.args.ToStringSafeEnumerable());
+				Log.Message("Signal: tag=" + signal.tag.ToStringSafe<string>() + " args=" + signal.args.ToStringSafeEnumerable(), false);
 			}
 			for (int i = 0; i < this.receivers.Count; i++)
 			{
@@ -48,7 +48,7 @@ namespace RimWorld
 						this.receivers[i].ToStringSafe<ISignalReceiver>(),
 						": ",
 						ex
-					}));
+					}), false);
 				}
 			}
 		}

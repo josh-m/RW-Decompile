@@ -18,7 +18,7 @@ namespace Verse
 		{
 			foreach (T current in list)
 			{
-				Log.Message("    " + current.ToString());
+				Log.Message("    " + current.ToString(), false);
 			}
 		}
 

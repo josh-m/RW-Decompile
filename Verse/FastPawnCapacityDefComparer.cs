@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Verse
 {
-	internal class FastPawnCapacityDefComparer : IEqualityComparer<PawnCapacityDef>
+	public class FastPawnCapacityDefComparer : IEqualityComparer<PawnCapacityDef>
 	{
 		public static readonly FastPawnCapacityDefComparer Instance = new FastPawnCapacityDefComparer();
 

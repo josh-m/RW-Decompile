@@ -48,7 +48,7 @@ namespace RimWorld
 			}
 		}
 
-		private void DoAutosave()
+		public void DoAutosave()
 		{
 			string fileName;
 			if (Current.Game.Info.permadeathMode)

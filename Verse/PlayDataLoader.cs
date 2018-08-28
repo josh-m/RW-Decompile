@@ -23,7 +23,7 @@ namespace Verse
 		{
 			if (PlayDataLoader.loadedInt)
 			{
-				Log.Error("Loading play data when already loaded. Call ClearAllPlayData first.");
+				Log.Error("Loading play data when already loaded. Call ClearAllPlayData first.", false);
 				return;
 			}
 			DeepProfiler.Start("LoadAllPlayData");
@@ -39,7 +39,7 @@ namespace Verse
 				}
 				if (recovering)
 				{
-					Log.Warning("Could not recover from errors loading play data. Giving up.");
+					Log.Warning("Could not recover from errors loading play data. Giving up.", false);
 					throw;
 				}
 				IEnumerable<ModMetaData> activeModsInLoadOrder = ModsConfig.ActiveModsInLoadOrder;
@@ -47,14 +47,14 @@ namespace Verse
 				{
 					throw;
 				}
-				Log.Warning("Caught exception while loading play data but there are active mods other than Core. Resetting mods config and trying again.\nThe exception was: " + arg);
+				Log.Warning("Caught exception while loading play data but there are active mods other than Core. Resetting mods config and trying again.\nThe exception was: " + arg, false);
 				try
 				{
 					PlayDataLoader.ClearAllPlayData();
 				}
 				catch
 				{
-					Log.Warning("Caught exception while recovering from errors and trying to clear all play data. Ignoring it.\nThe exception was: " + arg);
+					Log.Warning("Caught exception while recovering from errors and trying to clear all play data. Ignoring it.\nThe exception was: " + arg, false);
 				}
 				ModsConfig.Reset();
 				DirectXmlCrossRefLoader.Clear();
@@ -68,7 +68,7 @@ namespace Verse
 			PlayDataLoader.loadedInt = true;
 			if (recovering)
 			{
-				Log.Message("Successfully recovered from errors and loaded play data.");
+				Log.Message("Successfully recovered from errors and loaded play data.", false);
 				DelayedErrorWindowRequest.Add("RecoveredFromErrorsText".Translate(), "RecoveredFromErrorsDialogTitle".Translate());
 			}
 		}
@@ -125,6 +125,15 @@ namespace Verse
 			{
 				DeepProfiler.End();
 			}
+			DeepProfiler.Start("Inject selected language data into game data (early pass).");
+			try
+			{
+				LanguageDatabase.activeLanguage.InjectIntoData_BeforeImpliedDefs();
+			}
+			finally
+			{
+				DeepProfiler.End();
+			}
 			DeepProfiler.Start("Generate implied Defs (pre-resolve).");
 			try
 			{
@@ -152,12 +161,13 @@ namespace Verse
 			{
 				DeepProfiler.End();
 			}
-			DeepProfiler.Start("Other def binding, resetting and global operations.");
+			DeepProfiler.Start("Other def binding, resetting and global operations (pre-resolve).");
 			try
 			{
 				PlayerKnowledgeDatabase.ReloadAndRebind();
 				LessonAutoActivator.Reset();
 				CostListCalculator.Reset();
+				Pawn.ResetStaticData();
 				PawnApparelGenerator.Reset();
 				RestUtility.Reset();
 				ThoughtUtility.Reset();
@@ -167,25 +177,28 @@ namespace Verse
 				TrainableUtility.Reset();
 				HaulAIUtility.Reset();
 				GenConstruct.Reset();
-				WorkGiver_FillFermentingBarrel.Reset();
-				WorkGiver_DoBill.Reset();
-				Pawn.Reset();
-				WorkGiver_InteractAnimal.Reset();
-				WorkGiver_Warden_DoExecution.Reset();
-				WorkGiver_GrowerSow.Reset();
-				WorkGiver_Miner.Reset();
 				MedicalCareUtility.Reset();
 				InspectPaneUtility.Reset();
 				GraphicDatabaseHeadRecords.Reset();
 				DateReadout.Reset();
 				ResearchProjectDef.GenerateNonOverlappingCoordinates();
-				WorkGiver_FixBrokenDownBuilding.CacheTranslations();
-				ItemCollectionGeneratorUtility.Reset();
 				BaseGen.Reset();
-				HealthUtility.Reset();
 				ResourceCounter.ResetDefs();
-				WildSpawner.Reset();
-				ApparelProperties.Reset();
+				ApparelProperties.ResetStaticData();
+				WildPlantSpawner.ResetStaticData();
+				PawnGenerator.Reset();
+				TunnelHiveSpawner.ResetStaticData();
+				Hive.ResetStaticData();
+				ExpectationsUtility.Reset();
+				WealthWatcher.ResetStaticData();
+				WorkGiver_FillFermentingBarrel.ResetStaticData();
+				WorkGiver_DoBill.ResetStaticData();
+				WorkGiver_InteractAnimal.ResetStaticData();
+				WorkGiver_Warden_DoExecution.ResetStaticData();
+				WorkGiver_GrowerSow.ResetStaticData();
+				WorkGiver_Miner.ResetStaticData();
+				WorkGiver_FixBrokenDownBuilding.ResetStaticData();
+				WorkGiver_ConstructDeliverResources.ResetStaticData();
 			}
 			finally
 			{
@@ -214,6 +227,16 @@ namespace Verse
 			try
 			{
 				DefGenerator.GenerateImpliedDefs_PostResolve();
+			}
+			finally
+			{
+				DeepProfiler.End();
+			}
+			DeepProfiler.Start("Other def binding, resetting and global operations (post-resolve).");
+			try
+			{
+				BuildingProperties.FinalizeInit();
+				ThingSetMakerUtility.Reset();
 			}
 			finally
 			{
@@ -270,7 +293,7 @@ namespace Verse
 				DeepProfiler.Start("Inject selected language data into game data.");
 				try
 				{
-					LanguageDatabase.activeLanguage.InjectIntoData();
+					LanguageDatabase.activeLanguage.InjectIntoData_AfterImpliedDefs();
 					GenLabel.ClearCache();
 				}
 				finally

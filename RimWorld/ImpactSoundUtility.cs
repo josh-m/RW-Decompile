@@ -18,7 +18,7 @@ namespace RimWorld
 			}
 			if (map == null)
 			{
-				Log.Warning("Can't play impact sound because map is null.");
+				Log.Warning("Can't play impact sound because map is null.", false);
 				return;
 			}
 			SoundDef soundDef;
@@ -32,7 +32,7 @@ namespace RimWorld
 			}
 			if (soundDef.NullOrUndefined())
 			{
-				soundDef = SoundDefOf.BulletImpactGround;
+				soundDef = SoundDefOf.BulletImpact_Ground;
 			}
 			soundDef.PlayOneShot(new TargetInfo(hitThing.PositionHeld, map, false));
 		}

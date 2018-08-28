@@ -21,7 +21,7 @@ namespace RimWorld
 			select v).FirstOrDefault<VerbProperties>();
 			if (verbProperties == null)
 			{
-				Log.Error("Failed to find Verb with id " + id);
+				Log.Error("Failed to find Verb with id " + id, false);
 			}
 			return verbProperties;
 		}

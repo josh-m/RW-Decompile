@@ -8,6 +8,14 @@ namespace Verse
 	{
 		private bool active;
 
+		public bool Active
+		{
+			get
+			{
+				return this.active;
+			}
+		}
+
 		public bool FiltersCurrentEvent
 		{
 			get

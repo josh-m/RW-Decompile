@@ -25,6 +25,7 @@ namespace RimWorld
 
 		public int recipientXpGainAmount;
 
+		[NoTranslate]
 		private string symbol;
 
 		public RulePack logRulesInitiator;
@@ -44,6 +45,7 @@ namespace RimWorld
 				if (this.workerInt == null)
 				{
 					this.workerInt = (InteractionWorker)Activator.CreateInstance(this.workerClass);
+					this.workerInt.interaction = this;
 				}
 				return this.workerInt;
 			}

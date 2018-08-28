@@ -58,7 +58,7 @@ namespace RimWorld
 			}
 		}
 
-		public override bool AllowPlayerStartingPawn(Pawn pawn)
+		public override bool AllowPlayerStartingPawn(Pawn pawn, bool tryingToRedress, PawnGenerationRequest req)
 		{
 			return this.allowedAgeRange.Includes(pawn.ageTracker.AgeBiologicalYears);
 		}

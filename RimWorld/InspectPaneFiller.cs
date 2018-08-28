@@ -5,7 +5,7 @@ using Verse;
 namespace RimWorld
 {
 	[StaticConstructorOnStartup]
-	internal class InspectPaneFiller
+	public class InspectPaneFiller
 	{
 		private const float BarHeight = 16f;
 
@@ -59,7 +59,7 @@ namespace RimWorld
 					Find.Selector.FirstSelectedObject,
 					": ",
 					ex.ToString()
-				}), 754672);
+				}), 754672, false);
 			}
 			finally
 			{
@@ -130,11 +130,11 @@ namespace RimWorld
 				return;
 			}
 			row.Gap(6f);
-			bool flag = pawn.playerSettings != null && pawn.playerSettings.AreaRestriction != null;
+			bool flag = pawn.playerSettings != null && pawn.playerSettings.EffectiveAreaRestriction != null;
 			Texture2D fillTex;
 			if (flag)
 			{
-				fillTex = pawn.playerSettings.AreaRestriction.ColorTexture;
+				fillTex = pawn.playerSettings.EffectiveAreaRestriction.ColorTexture;
 			}
 			else
 			{
@@ -145,18 +145,17 @@ namespace RimWorld
 			{
 				if (flag)
 				{
-					pawn.playerSettings.AreaRestriction.MarkForDraw();
+					pawn.playerSettings.EffectiveAreaRestriction.MarkForDraw();
 				}
 				Rect rect2 = rect.ContractedBy(-1f);
 				Widgets.DrawBox(rect2, 1);
 			}
 			if (Widgets.ButtonInvisible(rect, false))
 			{
-				AllowedAreaMode mode = (!pawn.RaceProps.Humanlike) ? AllowedAreaMode.Animal : AllowedAreaMode.Humanlike;
 				AreaUtility.MakeAllowedAreaListFloatMenu(delegate(Area a)
 				{
 					pawn.playerSettings.AreaRestriction = a;
-				}, mode, true, true, pawn.Map);
+				}, true, true, pawn.Map);
 			}
 		}
 
@@ -185,13 +184,13 @@ namespace RimWorld
 				text = "GetInspectString exception on " + sel.ToString() + ":\n" + ex.ToString();
 				if (!InspectPaneFiller.debug_inspectStringExceptionErrored)
 				{
-					Log.Error(text);
+					Log.Error(text, false);
 					InspectPaneFiller.debug_inspectStringExceptionErrored = true;
 				}
 			}
 			if (!text.NullOrEmpty() && GenText.ContainsEmptyLines(text))
 			{
-				Log.ErrorOnce(string.Format("Inspect string for {0} contains empty lines.\n\nSTART\n{1}\nEND", sel, text), 837163521);
+				Log.ErrorOnce(string.Format("Inspect string for {0} contains empty lines.\n\nSTART\n{1}\nEND", sel, text), 837163521, false);
 			}
 			InspectPaneFiller.DrawInspectString(text, rect);
 		}
@@ -199,7 +198,7 @@ namespace RimWorld
 		public static void DrawInspectString(string str, Rect rect)
 		{
 			Text.Font = GameFont.Small;
-			Widgets.LabelScrollable(rect, str, ref InspectPaneFiller.inspectStringScrollPos, true);
+			Widgets.LabelScrollable(rect, str, ref InspectPaneFiller.inspectStringScrollPos, true, true);
 		}
 
 		static InspectPaneFiller()

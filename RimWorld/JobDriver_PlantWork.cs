@@ -24,12 +24,26 @@ namespace RimWorld
 			}
 		}
 
-		public override bool TryMakePreToilReservations()
+		protected virtual DesignationDef RequiredDesignation
+		{
+			get
+			{
+				return null;
+			}
+		}
+
+		public override bool TryMakePreToilReservations(bool errorOnFailed)
 		{
 			LocalTargetInfo target = this.job.GetTarget(TargetIndex.A);
-			if (target.IsValid && !this.pawn.Reserve(target, this.job, 1, -1, null))
+			if (target.IsValid)
 			{
-				return false;
+				Pawn pawn = this.pawn;
+				LocalTargetInfo target2 = target;
+				Job job = this.job;
+				if (!pawn.Reserve(target2, job, 1, -1, null, errorOnFailed))
+				{
+					return false;
+				}
 			}
 			this.pawn.ReserveAsManyAsPossible(this.job.GetTargetQueue(TargetIndex.A), this.job, 1, -1, null);
 			return true;
@@ -40,22 +54,28 @@ namespace RimWorld
 		{
 			this.Init();
 			yield return Toils_JobTransforms.MoveCurrentTargetIntoQueue(TargetIndex.A);
-			Toil initExtractTargetFromQueue = Toils_JobTransforms.ClearDespawnedNullOrForbiddenQueuedTargets(TargetIndex.A);
+			Toil initExtractTargetFromQueue = Toils_JobTransforms.ClearDespawnedNullOrForbiddenQueuedTargets(TargetIndex.A, (this.RequiredDesignation == null) ? null : new Func<Thing, bool>((Thing t) => this.$this.Map.designationManager.DesignationOn(t, this.$this.RequiredDesignation) != null));
 			yield return initExtractTargetFromQueue;
 			yield return Toils_JobTransforms.SucceedOnNoTargetInQueue(TargetIndex.A);
 			yield return Toils_JobTransforms.ExtractNextTargetFromQueue(TargetIndex.A, true);
-			yield return Toils_Goto.GotoThing(TargetIndex.A, PathEndMode.Touch).JumpIfDespawnedOrNullOrForbidden(TargetIndex.A, initExtractTargetFromQueue);
+			Toil gotoThing = Toils_Goto.GotoThing(TargetIndex.A, PathEndMode.Touch).JumpIfDespawnedOrNullOrForbidden(TargetIndex.A, initExtractTargetFromQueue);
+			if (this.RequiredDesignation != null)
+			{
+				gotoThing.FailOnThingMissingDesignation(TargetIndex.A, this.RequiredDesignation);
+			}
+			yield return gotoThing;
 			Toil cut = new Toil();
 			cut.tickAction = delegate
 			{
 				Pawn actor = cut.actor;
 				if (actor.skills != null)
 				{
-					actor.skills.Learn(SkillDefOf.Growing, this.$this.xpPerTick, false);
+					actor.skills.Learn(SkillDefOf.Plants, this.$this.xpPerTick, false);
 				}
 				float statValue = actor.GetStatValue(StatDefOf.PlantWorkSpeed, true);
 				float num = statValue;
 				Plant plant = this.$this.Plant;
+				num *= Mathf.Lerp(3.3f, 1f, plant.Growth);
 				this.$this.workDone += num;
 				if (this.$this.workDone >= plant.def.plant.harvestWork)
 				{
@@ -77,7 +97,7 @@ namespace RimWorld
 								{
 									thing.SetForbidden(true, true);
 								}
-								GenPlace.TryPlaceThing(thing, actor.Position, this.$this.Map, ThingPlaceMode.Near, null);
+								GenPlace.TryPlaceThing(thing, actor.Position, this.$this.Map, ThingPlaceMode.Near, null, null);
 								actor.records.Increment(RecordDefOf.PlantsHarvested);
 							}
 						}
@@ -90,11 +110,16 @@ namespace RimWorld
 				}
 			};
 			cut.FailOnDespawnedNullOrForbidden(TargetIndex.A);
+			if (this.RequiredDesignation != null)
+			{
+				cut.FailOnThingMissingDesignation(TargetIndex.A, this.RequiredDesignation);
+			}
 			cut.FailOnCannotTouch(TargetIndex.A, PathEndMode.Touch);
 			cut.defaultCompleteMode = ToilCompleteMode.Never;
 			cut.WithEffect(EffecterDefOf.Harvest, TargetIndex.A);
 			cut.WithProgressBar(TargetIndex.A, () => this.$this.workDone / this.$this.Plant.def.plant.harvestWork, true, -0.5f);
 			cut.PlaySustainerOrSound(() => this.$this.Plant.def.plant.soundHarvesting);
+			cut.activeSkill = (() => SkillDefOf.Plants);
 			yield return cut;
 			Toil plantWorkDoneToil = this.PlantWorkDoneToil();
 			if (plantWorkDoneToil != null)

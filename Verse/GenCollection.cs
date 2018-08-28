@@ -8,6 +8,13 @@ namespace Verse
 {
 	public static class GenCollection
 	{
+		private static class SortStableTempList<T>
+		{
+			public static List<Pair<T, int>> list = new List<Pair<T, int>>();
+
+			public static bool working;
+		}
+
 		public static bool SharesElementWith<T>(this IEnumerable<T> source, IEnumerable<T> other)
 		{
 			return source.Any((T item) => other.Contains(item));
@@ -58,7 +65,7 @@ namespace Verse
 			}
 			if (list.Count == 0)
 			{
-				Log.Warning("Getting random element from empty collection.");
+				Log.Warning("Getting random element from empty collection.", false);
 				return default(T);
 			}
 			return list[Rand.Range(0, list.Count)];
@@ -119,7 +126,7 @@ namespace Verse
 							num2,
 							" from ",
 							list[i]
-						}));
+						}), false);
 						num2 = 0f;
 					}
 					num += num2;
@@ -144,7 +151,7 @@ namespace Verse
 							num4,
 							" from ",
 							current
-						}));
+						}), false);
 						num4 = 0f;
 					}
 					num += num4;
@@ -156,7 +163,7 @@ namespace Verse
 			}
 			if (num <= 0f)
 			{
-				Log.Error("RandomElementByWeight with totalWeight=" + num + " - use TryRandomElementByWeight.");
+				Log.Error("RandomElementByWeight with totalWeight=" + num + " - use TryRandomElementByWeight.", false);
 				return default(T);
 			}
 			float num5 = Rand.Value * num;
@@ -221,7 +228,7 @@ namespace Verse
 							num2,
 							" from ",
 							list[i]
-						}));
+						}), false);
 						num2 = 0f;
 					}
 					num += num2;
@@ -266,7 +273,7 @@ namespace Verse
 						num4,
 						" from ",
 						result
-					}));
+					}), false);
 					num4 = 0f;
 				}
 			}
@@ -287,7 +294,7 @@ namespace Verse
 						num5,
 						" from ",
 						current
-					}));
+					}), false);
 					num5 = 0f;
 				}
 				if (Rand.Range(0f, num4 + num5) >= num4)
@@ -303,7 +310,7 @@ namespace Verse
 		{
 			if (defaultValueWeight < 0f)
 			{
-				Log.Error("Negative default value weight.");
+				Log.Error("Negative default value weight.", false);
 				defaultValueWeight = 0f;
 			}
 			float num = 0f;
@@ -318,7 +325,7 @@ namespace Verse
 						num2,
 						" from ",
 						current
-					}));
+					}), false);
 					num2 = 0f;
 				}
 				num += num2;
@@ -326,7 +333,7 @@ namespace Verse
 			float num3 = defaultValueWeight + num;
 			if (num3 <= 0f)
 			{
-				Log.Error("RandomElementByWeightWithDefault with totalWeight=" + num3);
+				Log.Error("RandomElementByWeightWithDefault with totalWeight=" + num3, false);
 				return default(T);
 			}
 			if (Rand.Value < defaultValueWeight / num3 || num == 0f)
@@ -346,6 +353,11 @@ namespace Verse
 				}
 			}
 			return fallback;
+		}
+
+		public static T FirstOrFallback<T>(this IEnumerable<T> source, Func<T, bool> predicate, T fallback = null)
+		{
+			return source.Where(predicate).FirstOrFallback(fallback);
 		}
 
 		public static TSource MaxBy<TSource, TKey>(this IEnumerable<TSource> source, Func<TSource, TKey> selector)
@@ -437,6 +449,54 @@ namespace Verse
 			return result;
 		}
 
+		public static bool TryMaxBy<TSource, TKey>(this IEnumerable<TSource> source, Func<TSource, TKey> selector, out TSource value)
+		{
+			return source.TryMaxBy(selector, Comparer<TKey>.Default, out value);
+		}
+
+		public static bool TryMaxBy<TSource, TKey>(this IEnumerable<TSource> source, Func<TSource, TKey> selector, IComparer<TKey> comparer, out TSource value)
+		{
+			if (source == null)
+			{
+				throw new ArgumentNullException("source");
+			}
+			if (selector == null)
+			{
+				throw new ArgumentNullException("selector");
+			}
+			if (comparer == null)
+			{
+				throw new ArgumentNullException("comparer");
+			}
+			bool result;
+			using (IEnumerator<TSource> enumerator = source.GetEnumerator())
+			{
+				if (!enumerator.MoveNext())
+				{
+					value = default(TSource);
+					result = false;
+				}
+				else
+				{
+					TSource tSource = enumerator.Current;
+					TKey y = selector(tSource);
+					while (enumerator.MoveNext())
+					{
+						TSource current = enumerator.Current;
+						TKey tKey = selector(current);
+						if (comparer.Compare(tKey, y) > 0)
+						{
+							tSource = current;
+							y = tKey;
+						}
+					}
+					value = tSource;
+					result = true;
+				}
+			}
+			return result;
+		}
+
 		public static TSource MinBy<TSource, TKey>(this IEnumerable<TSource> source, Func<TSource, TKey> selector)
 		{
 			return source.MinBy(selector, Comparer<TKey>.Default);
@@ -476,6 +536,54 @@ namespace Verse
 					}
 				}
 				result = tSource;
+			}
+			return result;
+		}
+
+		public static bool TryMinBy<TSource, TKey>(this IEnumerable<TSource> source, Func<TSource, TKey> selector, out TSource value)
+		{
+			return source.TryMinBy(selector, Comparer<TKey>.Default, out value);
+		}
+
+		public static bool TryMinBy<TSource, TKey>(this IEnumerable<TSource> source, Func<TSource, TKey> selector, IComparer<TKey> comparer, out TSource value)
+		{
+			if (source == null)
+			{
+				throw new ArgumentNullException("source");
+			}
+			if (selector == null)
+			{
+				throw new ArgumentNullException("selector");
+			}
+			if (comparer == null)
+			{
+				throw new ArgumentNullException("comparer");
+			}
+			bool result;
+			using (IEnumerator<TSource> enumerator = source.GetEnumerator())
+			{
+				if (!enumerator.MoveNext())
+				{
+					value = default(TSource);
+					result = false;
+				}
+				else
+				{
+					TSource tSource = enumerator.Current;
+					TKey y = selector(tSource);
+					while (enumerator.MoveNext())
+					{
+						TSource current = enumerator.Current;
+						TKey tKey = selector(current);
+						if (comparer.Compare(tKey, y) < 0)
+						{
+							tSource = current;
+							y = tKey;
+						}
+					}
+					value = tSource;
+					result = true;
+				}
 			}
 			return result;
 		}
@@ -542,6 +650,57 @@ namespace Verse
 				TThenByDescending tThenByDescending = thenByDescendingSelector(b);
 				return tThenByDescending.CompareTo(thenByDescendingSelector(a));
 			});
+		}
+
+		public static void SortStable<T>(this IList<T> list, Func<T, T, int> comparator)
+		{
+			if (list.Count <= 1)
+			{
+				return;
+			}
+			List<Pair<T, int>> list2;
+			bool flag;
+			if (GenCollection.SortStableTempList<T>.working)
+			{
+				list2 = new List<Pair<T, int>>();
+				flag = false;
+			}
+			else
+			{
+				list2 = GenCollection.SortStableTempList<T>.list;
+				GenCollection.SortStableTempList<T>.working = true;
+				flag = true;
+			}
+			try
+			{
+				list2.Clear();
+				for (int i = 0; i < list.Count; i++)
+				{
+					list2.Add(new Pair<T, int>(list[i], i));
+				}
+				list2.Sort(delegate(Pair<T, int> lhs, Pair<T, int> rhs)
+				{
+					int num = comparator(lhs.First, rhs.First);
+					if (num != 0)
+					{
+						return num;
+					}
+					return lhs.Second.CompareTo(rhs.Second);
+				});
+				list.Clear();
+				for (int j = 0; j < list2.Count; j++)
+				{
+					list.Add(list2[j].First);
+				}
+				list2.Clear();
+			}
+			finally
+			{
+				if (flag)
+				{
+					GenCollection.SortStableTempList<T>.working = false;
+				}
+			}
 		}
 
 		public static int RemoveAll<TKey, TValue>(this Dictionary<TKey, TValue> dictionary, Predicate<KeyValuePair<TKey, TValue>> predicate)
@@ -619,6 +778,13 @@ namespace Verse
 			list.RemoveAt(list.Count - 1);
 		}
 
+		public static T Pop<T>(this List<T> list)
+		{
+			T result = list[list.Count - 1];
+			list.RemoveAt(list.Count - 1);
+			return result;
+		}
+
 		public static bool Any<T>(this List<T> list, Predicate<T> predicate)
 		{
 			return list.FindIndex(predicate) != -1;
@@ -679,10 +845,13 @@ namespace Verse
 			return num;
 		}
 
-		public static V TryGetValue<T, V>(this IDictionary<T, V> dict, T key)
+		public static V TryGetValue<T, V>(this IDictionary<T, V> dict, T key, V fallback = null)
 		{
 			V result;
-			dict.TryGetValue(key, out result);
+			if (!dict.TryGetValue(key, out result))
+			{
+				result = fallback;
+			}
 			return result;
 		}
 
@@ -736,6 +905,59 @@ namespace Verse
 					yield return t;
 				}
 			}
+		}
+
+		public static bool ListsEqual<T>(List<T> a, List<T> b) where T : class
+		{
+			if (a == b)
+			{
+				return true;
+			}
+			if (a.NullOrEmpty<T>() && b.NullOrEmpty<T>())
+			{
+				return true;
+			}
+			if (a.NullOrEmpty<T>() || b.NullOrEmpty<T>())
+			{
+				return false;
+			}
+			if (a.Count != b.Count)
+			{
+				return false;
+			}
+			EqualityComparer<T> @default = EqualityComparer<T>.Default;
+			for (int i = 0; i < a.Count; i++)
+			{
+				if (!@default.Equals(a[i], b[i]))
+				{
+					return false;
+				}
+			}
+			return true;
+		}
+
+		[DebuggerHidden]
+		public static IEnumerable<T> TakeRandom<T>(this List<T> list, int count)
+		{
+			if (!list.NullOrEmpty<T>())
+			{
+				for (int i = 0; i < count; i++)
+				{
+					yield return list[Rand.Range(0, list.Count)];
+				}
+			}
+		}
+
+		public static void AddDistinct<T>(this List<T> list, T element) where T : class
+		{
+			for (int i = 0; i < list.Count; i++)
+			{
+				if (list[i] == element)
+				{
+					return;
+				}
+			}
+			list.Add(element);
 		}
 	}
 }

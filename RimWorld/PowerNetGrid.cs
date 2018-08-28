@@ -27,7 +27,7 @@ namespace RimWorld
 		{
 			if (this.powerNetCells.ContainsKey(newNet))
 			{
-				Log.Warning("Net " + newNet + " is already registered in PowerNetGrid.");
+				Log.Warning("Net " + newNet + " is already registered in PowerNetGrid.", false);
 				this.powerNetCells.Remove(newNet);
 			}
 			List<IntVec3> list = new List<IntVec3>();
@@ -53,7 +53,7 @@ namespace RimWorld
 								" and ",
 								(!this.netGrid[num].transmitters.NullOrEmpty<CompPower>()) ? this.netGrid[num].transmitters[0].parent.LabelCap : "[none]",
 								"."
-							}));
+							}), false);
 						}
 						this.netGrid[num] = newNet;
 						list.Add(new IntVec3(k, 0, j));
@@ -67,7 +67,7 @@ namespace RimWorld
 			List<IntVec3> list;
 			if (!this.powerNetCells.TryGetValue(deadNet, out list))
 			{
-				Log.Warning("Net " + deadNet + " does not exist in PowerNetGrid's dictionary.");
+				Log.Warning("Net " + deadNet + " does not exist in PowerNetGrid's dictionary.", false);
 				return;
 			}
 			for (int i = 0; i < list.Count; i++)
@@ -79,7 +79,7 @@ namespace RimWorld
 				}
 				else
 				{
-					Log.Warning("Multiple nets on the same cell " + list[i] + ". This is probably a result of an earlier error.");
+					Log.Warning("Multiple nets on the same cell " + list[i] + ". This is probably a result of an earlier error.", false);
 				}
 			}
 			this.powerNetCells.Remove(deadNet);
@@ -95,7 +95,7 @@ namespace RimWorld
 			{
 				return;
 			}
-			if (this.map != Find.VisibleMap)
+			if (this.map != Find.CurrentMap)
 			{
 				return;
 			}

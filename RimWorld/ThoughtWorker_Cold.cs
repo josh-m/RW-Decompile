@@ -22,7 +22,11 @@ namespace RimWorld
 			{
 				return ThoughtState.ActiveAtStage(1);
 			}
-			return ThoughtState.ActiveAtStage(2);
+			if (num < 30f)
+			{
+				return ThoughtState.ActiveAtStage(2);
+			}
+			return ThoughtState.ActiveAtStage(3);
 		}
 	}
 }

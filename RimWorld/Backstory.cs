@@ -14,14 +14,19 @@ namespace RimWorld
 
 		public BackstorySlot slot;
 
-		private string title;
+		public string title;
 
-		private string titleShort;
+		public string titleFemale;
+
+		public string titleShort;
+
+		public string titleShortFemale;
 
 		public string baseDesc;
 
-		public Dictionary<string, int> skillGains = new Dictionary<string, int>();
+		private Dictionary<string, int> skillGains = new Dictionary<string, int>();
 
+		[Unsaved]
 		public Dictionary<SkillDef, int> skillGainsResolved = new Dictionary<SkillDef, int>();
 
 		public WorkTags workDisables;
@@ -31,19 +36,58 @@ namespace RimWorld
 		public List<string> spawnCategories = new List<string>();
 
 		[LoadAlias("bodyNameGlobal")]
-		public BodyType bodyTypeGlobal;
+		private string bodyTypeGlobal;
 
 		[LoadAlias("bodyNameFemale")]
-		public BodyType bodyTypeFemale;
+		private string bodyTypeFemale;
 
 		[LoadAlias("bodyNameMale")]
-		public BodyType bodyTypeMale;
+		private string bodyTypeMale;
+
+		[Unsaved]
+		private BodyTypeDef bodyTypeGlobalResolved;
+
+		[Unsaved]
+		private BodyTypeDef bodyTypeFemaleResolved;
+
+		[Unsaved]
+		private BodyTypeDef bodyTypeMaleResolved;
 
 		public List<TraitEntry> forcedTraits;
 
 		public List<TraitEntry> disallowedTraits;
 
 		public bool shuffleable = true;
+
+		[Unsaved]
+		public string untranslatedTitle;
+
+		[Unsaved]
+		public string untranslatedTitleFemale;
+
+		[Unsaved]
+		public string untranslatedTitleShort;
+
+		[Unsaved]
+		public string untranslatedTitleShortFemale;
+
+		[Unsaved]
+		public string untranslatedDesc;
+
+		[Unsaved]
+		public bool titleTranslated;
+
+		[Unsaved]
+		public bool titleFemaleTranslated;
+
+		[Unsaved]
+		public bool titleShortTranslated;
+
+		[Unsaved]
+		public bool titleShortFemaleTranslated;
+
+		[Unsaved]
+		public bool descTranslated;
 
 		public IEnumerable<WorkTypeDef> DisabledWorkTypes
 		{
@@ -75,26 +119,6 @@ namespace RimWorld
 			}
 		}
 
-		public string Title
-		{
-			get
-			{
-				return this.title;
-			}
-		}
-
-		public string TitleShort
-		{
-			get
-			{
-				if (!this.titleShort.NullOrEmpty())
-				{
-					return this.titleShort;
-				}
-				return this.title;
-			}
-		}
-
 		public bool DisallowsTrait(TraitDef def, int degree)
 		{
 			if (this.disallowedTraits == null)
@@ -111,23 +135,55 @@ namespace RimWorld
 			return false;
 		}
 
-		public BodyType BodyTypeFor(Gender g)
+		public string TitleFor(Gender g)
 		{
-			if (this.bodyTypeGlobal != BodyType.Undefined || g == Gender.None)
+			if (g != Gender.Female || this.titleFemale.NullOrEmpty())
 			{
-				return this.bodyTypeGlobal;
+				return this.title;
+			}
+			return this.titleFemale;
+		}
+
+		public string TitleCapFor(Gender g)
+		{
+			return this.TitleFor(g).CapitalizeFirst();
+		}
+
+		public string TitleShortFor(Gender g)
+		{
+			if (g == Gender.Female && !this.titleShortFemale.NullOrEmpty())
+			{
+				return this.titleShortFemale;
+			}
+			if (!this.titleShort.NullOrEmpty())
+			{
+				return this.titleShort;
+			}
+			return this.TitleFor(g);
+		}
+
+		public string TitleShortCapFor(Gender g)
+		{
+			return this.TitleShortFor(g).CapitalizeFirst();
+		}
+
+		public BodyTypeDef BodyTypeFor(Gender g)
+		{
+			if (this.bodyTypeGlobalResolved != null || g == Gender.None)
+			{
+				return this.bodyTypeGlobalResolved;
 			}
 			if (g == Gender.Female)
 			{
-				return this.bodyTypeFemale;
+				return this.bodyTypeFemaleResolved;
 			}
-			return this.bodyTypeMale;
+			return this.bodyTypeMaleResolved;
 		}
 
 		public string FullDescriptionFor(Pawn p)
 		{
 			StringBuilder stringBuilder = new StringBuilder();
-			stringBuilder.Append(this.baseDesc.AdjustedFor(p));
+			stringBuilder.Append(this.baseDesc.AdjustedFor(p, "PAWN"));
 			stringBuilder.AppendLine();
 			stringBuilder.AppendLine();
 			List<SkillDef> allDefsListForReading = DefDatabase<SkillDef>.AllDefsListForReading;
@@ -149,13 +205,14 @@ namespace RimWorld
 				stringBuilder.AppendLine(string.Concat(new string[]
 				{
 					current2.workType.gerundLabel.CapitalizeFirst(),
-					" -> ",
-					current2.label,
+					": ",
+					current2.LabelCap,
 					" ",
 					"DisabledLower".Translate()
 				}));
 			}
-			return stringBuilder.ToString().TrimEndNewlines();
+			string desc = stringBuilder.ToString().TrimEndNewlines();
+			return Find.ActiveLanguageWorker.PostProcessedBackstoryDescription(desc);
 		}
 
 		private bool AllowsWorkType(WorkTypeDef workType)
@@ -188,25 +245,13 @@ namespace RimWorld
 
 		public void PostLoad()
 		{
-			if (!this.title.Equals(GenText.ToNewsCase(this.title)))
-			{
-				Log.Warning("Bad capitalization on backstory title: " + this.title);
-				this.title = GenText.ToNewsCase(this.title);
-			}
-			if (this.slot == BackstorySlot.Adulthood && this.bodyTypeGlobal == BodyType.Undefined)
-			{
-				if (this.bodyTypeMale == BodyType.Undefined)
-				{
-					Log.Error("Adulthood backstory " + this.title + " is missing male body type. Defaulting...");
-					this.bodyTypeMale = BodyType.Male;
-				}
-				if (this.bodyTypeFemale == BodyType.Undefined)
-				{
-					Log.Error("Adulthood backstory " + this.title + " is missing female body type. Defaulting...");
-					this.bodyTypeFemale = BodyType.Female;
-				}
-			}
+			this.untranslatedTitle = this.title;
+			this.untranslatedTitleFemale = this.titleFemale;
+			this.untranslatedTitleShort = this.titleShort;
+			this.untranslatedTitleShortFemale = this.titleShortFemale;
+			this.untranslatedDesc = this.baseDesc;
 			this.baseDesc = this.baseDesc.TrimEnd(new char[0]);
+			this.baseDesc = this.baseDesc.Replace("\r", string.Empty);
 		}
 
 		public void ResolveReferences()
@@ -220,6 +265,31 @@ namespace RimWorld
 				this.skillGainsResolved.Add(DefDatabase<SkillDef>.GetNamed(current.Key, true), current.Value);
 			}
 			this.skillGains = null;
+			if (!this.bodyTypeGlobal.NullOrEmpty())
+			{
+				this.bodyTypeGlobalResolved = DefDatabase<BodyTypeDef>.GetNamed(this.bodyTypeGlobal, true);
+			}
+			if (!this.bodyTypeFemale.NullOrEmpty())
+			{
+				this.bodyTypeFemaleResolved = DefDatabase<BodyTypeDef>.GetNamed(this.bodyTypeFemale, true);
+			}
+			if (!this.bodyTypeMale.NullOrEmpty())
+			{
+				this.bodyTypeMaleResolved = DefDatabase<BodyTypeDef>.GetNamed(this.bodyTypeMale, true);
+			}
+			if (this.slot == BackstorySlot.Adulthood && this.bodyTypeGlobalResolved == null)
+			{
+				if (this.bodyTypeMaleResolved == null)
+				{
+					Log.Error("Adulthood backstory " + this.title + " is missing male body type. Defaulting...", false);
+					this.bodyTypeMaleResolved = BodyTypeDefOf.Male;
+				}
+				if (this.bodyTypeFemaleResolved == null)
+				{
+					Log.Error("Adulthood backstory " + this.title + " is missing female body type. Defaulting...", false);
+					this.bodyTypeFemaleResolved = BodyTypeDefOf.Female;
+				}
+			}
 		}
 
 		[DebuggerHidden]
@@ -275,14 +345,16 @@ namespace RimWorld
 			}
 		}
 
-		public void SetTitle(string newTitle)
+		public void SetTitle(string newTitle, string newTitleFemale)
 		{
 			this.title = newTitle;
+			this.titleFemale = newTitleFemale;
 		}
 
-		public void SetTitleShort(string newTitleShort)
+		public void SetTitleShort(string newTitleShort, string newTitleShortFemale)
 		{
 			this.titleShort = newTitleShort;
+			this.titleShortFemale = newTitleShortFemale;
 		}
 
 		public override string ToString()

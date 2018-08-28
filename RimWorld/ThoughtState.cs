@@ -1,4 +1,5 @@
 using System;
+using UnityEngine;
 
 namespace RimWorld
 {
@@ -84,6 +85,21 @@ namespace RimWorld
 				return ThoughtState.ActiveDefault;
 			}
 			return ThoughtState.Inactive;
+		}
+
+		public bool ActiveFor(ThoughtDef thoughtDef)
+		{
+			if (!this.Active)
+			{
+				return false;
+			}
+			int num = this.StageIndexFor(thoughtDef);
+			return num >= 0 && thoughtDef.stages[num] != null;
+		}
+
+		public int StageIndexFor(ThoughtDef thoughtDef)
+		{
+			return Mathf.Min(this.StageIndex, thoughtDef.stages.Count - 1);
 		}
 	}
 }

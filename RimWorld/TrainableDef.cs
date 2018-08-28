@@ -19,12 +19,13 @@ namespace RimWorld
 
 		public bool defaultTrainable;
 
-		public TrainableIntelligenceDef requiredTrainableIntelligence;
+		public TrainabilityDef requiredTrainability;
 
 		public int steps = 1;
 
 		public float listPriority;
 
+		[NoTranslate]
 		public string icon;
 
 		[Unsaved]

@@ -114,11 +114,11 @@ namespace Verse
 			}
 		}
 
-		public bool ButtonIcon(Texture2D tex, string tooltip = null)
+		public bool ButtonIcon(Texture2D tex, string tooltip = null, Color? mouseoverColor = null)
 		{
 			this.IncrementYIfWillExceedMaxWidth(24f);
 			Rect rect = new Rect(this.LeftX(24f), this.curY, 24f, 24f);
-			bool result = Widgets.ButtonImage(rect, tex);
+			bool result = Widgets.ButtonImage(rect, tex, Color.white, (!mouseoverColor.HasValue) ? GenUI.MouseoverColor : mouseoverColor.Value);
 			this.IncrementPosition(24f + this.gap);
 			if (!tooltip.NullOrEmpty())
 			{
@@ -157,11 +157,11 @@ namespace Verse
 				toggleable = !toggleable;
 				if (toggleable)
 				{
-					SoundDefOf.TickHigh.PlayOneShotOnCamera(null);
+					SoundDefOf.Tick_High.PlayOneShotOnCamera(null);
 				}
 				else
 				{
-					SoundDefOf.TickLow.PlayOneShotOnCamera(null);
+					SoundDefOf.Tick_Low.PlayOneShotOnCamera(null);
 				}
 			}
 			if (tutorTag != null)

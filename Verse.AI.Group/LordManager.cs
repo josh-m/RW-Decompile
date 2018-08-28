@@ -157,7 +157,7 @@ namespace Verse.AI.Group
 					}));
 				}
 			}
-			Log.Message(stringBuilder.ToString());
+			Log.Message(stringBuilder.ToString(), false);
 		}
 	}
 }

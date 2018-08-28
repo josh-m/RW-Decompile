@@ -13,7 +13,7 @@ namespace RimWorld
 
 		public static bool ShouldFollowMaster(Pawn pawn)
 		{
-			if (pawn.playerSettings == null)
+			if (!pawn.Spawned || pawn.playerSettings == null)
 			{
 				return false;
 			}
@@ -22,8 +22,26 @@ namespace RimWorld
 			{
 				return false;
 			}
-			Pawn carriedBy = respectedMaster.CarriedBy;
-			return (respectedMaster.Spawned || carriedBy != null) && ((carriedBy != null && carriedBy.HostileTo(respectedMaster)) || (pawn.playerSettings.followDrafted && respectedMaster.Drafted) || (pawn.playerSettings.followFieldwork && respectedMaster.mindState.lastJobTag == JobTag.Fieldwork));
+			if (respectedMaster.Spawned)
+			{
+				if (pawn.playerSettings.followDrafted && respectedMaster.Drafted && pawn.CanReach(respectedMaster, PathEndMode.OnCell, Danger.Deadly, false, TraverseMode.ByPawn))
+				{
+					return true;
+				}
+				if (pawn.playerSettings.followFieldwork && respectedMaster.mindState.lastJobTag == JobTag.Fieldwork && pawn.CanReach(respectedMaster, PathEndMode.OnCell, Danger.Deadly, false, TraverseMode.ByPawn))
+				{
+					return true;
+				}
+			}
+			else
+			{
+				Pawn carriedBy = respectedMaster.CarriedBy;
+				if (carriedBy != null && carriedBy.HostileTo(respectedMaster) && pawn.CanReach(carriedBy, PathEndMode.OnCell, Danger.Deadly, false, TraverseMode.ByPawn))
+				{
+					return true;
+				}
+			}
+			return false;
 		}
 	}
 }

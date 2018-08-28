@@ -11,6 +11,10 @@ namespace Verse
 
 		private static List<IThingHolder> tmpHolders = new List<IThingHolder>();
 
+		private static List<Thing> tmpThings = new List<Thing>();
+
+		private static List<IThingHolder> tmpMapChildHolders = new List<IThingHolder>();
+
 		public static bool ThisOrAnyCompIsThingHolder(this ThingDef thingDef)
 		{
 			if (typeof(IThingHolder).IsAssignableFrom(thingDef.thingClass))
@@ -64,6 +68,7 @@ namespace Verse
 					ThingOwner directlyHeldThings3 = ThingOwnerUtility.tmpHolders[0].GetDirectlyHeldThings();
 					if (directlyHeldThings3 != null)
 					{
+						ThingOwnerUtility.tmpHolders.Clear();
 						return directlyHeldThings3;
 					}
 				}
@@ -82,6 +87,7 @@ namespace Verse
 							ThingOwner directlyHeldThings4 = ThingOwnerUtility.tmpHolders[0].GetDirectlyHeldThings();
 							if (directlyHeldThings4 != null)
 							{
+								ThingOwnerUtility.tmpHolders.Clear();
 								return directlyHeldThings4;
 							}
 						}
@@ -94,21 +100,26 @@ namespace Verse
 
 		public static bool SpawnedOrAnyParentSpawned(IThingHolder holder)
 		{
+			return ThingOwnerUtility.SpawnedParentOrMe(holder) != null;
+		}
+
+		public static Thing SpawnedParentOrMe(IThingHolder holder)
+		{
 			while (holder != null)
 			{
 				Thing thing = holder as Thing;
 				if (thing != null && thing.Spawned)
 				{
-					return true;
+					return thing;
 				}
 				ThingComp thingComp = holder as ThingComp;
 				if (thingComp != null && thingComp.parent.Spawned)
 				{
-					return true;
+					return thingComp.parent;
 				}
 				holder = holder.ParentHolder;
 			}
-			return false;
+			return null;
 		}
 
 		public static IntVec3 GetRootPosition(IThingHolder holder)
@@ -162,9 +173,22 @@ namespace Verse
 			return -1;
 		}
 
+		public static bool ContentsSuspended(IThingHolder holder)
+		{
+			while (holder != null)
+			{
+				if (holder is Building_CryptosleepCasket || holder is ImportantPawnComp)
+				{
+					return true;
+				}
+				holder = holder.ParentHolder;
+			}
+			return false;
+		}
+
 		public static bool IsEnclosingContainer(this IThingHolder holder)
 		{
-			return holder != null && !(holder is Pawn_CarryTracker) && !(holder is Corpse) && !(holder is Map) && !(holder is Caravan) && !(holder is Settlement_TraderTracker) && !(holder is TradeShip);
+			return holder != null && !(holder is Pawn_CarryTracker) && !(holder is Corpse) && !(holder is Map) && !(holder is Caravan) && !(holder is SettlementBase_TraderTracker) && !(holder is TradeShip);
 		}
 
 		public static bool ShouldAutoRemoveDestroyedThings(IThingHolder holder)
@@ -182,7 +206,7 @@ namespace Verse
 			return holder.IsEnclosingContainer();
 		}
 
-		public static void AppendThingHoldersFromThings(List<IThingHolder> outThingsHolders, ThingOwner container)
+		public static void AppendThingHoldersFromThings(List<IThingHolder> outThingsHolders, IList<Thing> container)
 		{
 			if (container == null)
 			{
@@ -214,25 +238,58 @@ namespace Verse
 			}
 		}
 
-		public static bool AnyParentIs<T>(Thing thing) where T : IThingHolder
+		public static bool AnyParentIs<T>(Thing thing) where T : class, IThingHolder
 		{
-			if (thing is T)
+			return ThingOwnerUtility.GetAnyParent<T>(thing) != null;
+		}
+
+		public static T GetAnyParent<T>(Thing thing) where T : class, IThingHolder
+		{
+			T t = thing as T;
+			if (t != null)
 			{
-				return true;
+				return t;
 			}
 			for (IThingHolder parentHolder = thing.ParentHolder; parentHolder != null; parentHolder = parentHolder.ParentHolder)
 			{
-				if (parentHolder is T)
+				T t2 = parentHolder as T;
+				if (t2 != null)
 				{
-					return true;
+					return t2;
 				}
 			}
-			return false;
+			return (T)((object)null);
 		}
 
-		public static void GetAllThingsRecursively(IThingHolder holder, List<Thing> outThings, bool allowUnreal = true)
+		public static Thing GetFirstSpawnedParentThing(Thing thing)
+		{
+			if (thing.Spawned)
+			{
+				return thing;
+			}
+			for (IThingHolder parentHolder = thing.ParentHolder; parentHolder != null; parentHolder = parentHolder.ParentHolder)
+			{
+				Thing thing2 = parentHolder as Thing;
+				if (thing2 != null && thing2.Spawned)
+				{
+					return thing2;
+				}
+				ThingComp thingComp = parentHolder as ThingComp;
+				if (thingComp != null && thingComp.parent.Spawned)
+				{
+					return thingComp.parent;
+				}
+			}
+			return null;
+		}
+
+		public static void GetAllThingsRecursively(IThingHolder holder, List<Thing> outThings, bool allowUnreal = true, Predicate<IThingHolder> passCheck = null)
 		{
 			outThings.Clear();
+			if (passCheck != null && !passCheck(holder))
+			{
+				return;
+			}
 			ThingOwnerUtility.tmpStack.Clear();
 			ThingOwnerUtility.tmpStack.Push(holder);
 			while (ThingOwnerUtility.tmpStack.Count != 0)
@@ -250,17 +307,57 @@ namespace Verse
 				thingHolder.GetChildHolders(ThingOwnerUtility.tmpHolders);
 				for (int i = 0; i < ThingOwnerUtility.tmpHolders.Count; i++)
 				{
-					ThingOwnerUtility.tmpStack.Push(ThingOwnerUtility.tmpHolders[i]);
+					if (passCheck == null || passCheck(ThingOwnerUtility.tmpHolders[i]))
+					{
+						ThingOwnerUtility.tmpStack.Push(ThingOwnerUtility.tmpHolders[i]);
+					}
 				}
 			}
 			ThingOwnerUtility.tmpStack.Clear();
 			ThingOwnerUtility.tmpHolders.Clear();
 		}
 
+		public static void GetAllThingsRecursively<T>(Map map, ThingRequest request, List<T> outThings, bool allowUnreal = true, Predicate<IThingHolder> passCheck = null, bool alsoGetSpawnedThings = true) where T : Thing
+		{
+			outThings.Clear();
+			if (alsoGetSpawnedThings)
+			{
+				List<Thing> list = map.listerThings.ThingsMatching(request);
+				for (int i = 0; i < list.Count; i++)
+				{
+					T t = list[i] as T;
+					if (t != null)
+					{
+						outThings.Add(t);
+					}
+				}
+			}
+			ThingOwnerUtility.tmpMapChildHolders.Clear();
+			map.GetChildHolders(ThingOwnerUtility.tmpMapChildHolders);
+			for (int j = 0; j < ThingOwnerUtility.tmpMapChildHolders.Count; j++)
+			{
+				ThingOwnerUtility.tmpThings.Clear();
+				ThingOwnerUtility.GetAllThingsRecursively(ThingOwnerUtility.tmpMapChildHolders[j], ThingOwnerUtility.tmpThings, allowUnreal, passCheck);
+				for (int k = 0; k < ThingOwnerUtility.tmpThings.Count; k++)
+				{
+					T t2 = ThingOwnerUtility.tmpThings[k] as T;
+					if (t2 != null)
+					{
+						if (request.Accepts(t2))
+						{
+							outThings.Add(t2);
+						}
+					}
+				}
+			}
+			ThingOwnerUtility.tmpThings.Clear();
+			ThingOwnerUtility.tmpMapChildHolders.Clear();
+		}
+
 		public static List<Thing> GetAllThingsRecursively(IThingHolder holder, bool allowUnreal = true)
 		{
 			List<Thing> list = new List<Thing>();
-			ThingOwnerUtility.GetAllThingsRecursively(holder, list, allowUnreal);
+			ThingOwnerUtility.GetAllThingsRecursively(holder, list, allowUnreal, null);
 			return list;
 		}
 
@@ -269,14 +366,9 @@ namespace Verse
 			return !(holder is Corpse) && !(holder is MinifiedThing);
 		}
 
-		public static bool ContentsFrozen(IThingHolder holder)
+		public static bool TryGetFixedTemperature(IThingHolder holder, Thing forThing, out float temperature)
 		{
-			return holder is Building_CryptosleepCasket || holder is ImportantPawnComp;
-		}
-
-		public static bool TryGetFixedTemperature(IThingHolder holder, out float temperature)
-		{
-			if (holder is Pawn_InventoryTracker)
+			if (holder is Pawn_InventoryTracker && forThing.TryGetComp<CompHatcher>() != null)
 			{
 				temperature = 14f;
 				return true;
@@ -286,7 +378,7 @@ namespace Verse
 				temperature = 14f;
 				return true;
 			}
-			if (holder is Settlement_TraderTracker || holder is TradeShip)
+			if (holder is SettlementBase_TraderTracker || holder is TradeShip)
 			{
 				temperature = 14f;
 				return true;

@@ -28,7 +28,7 @@ namespace Verse
 				}
 				num3++;
 			}
-			Find.WindowStack.Add(new Dialog_DebugTables(array));
+			Find.WindowStack.Add(new Window_DebugTable(array));
 		}
 
 		public static void MakeTablesDialog<TColumn, TRow>(IEnumerable<TColumn> colValues, Func<TColumn, string> colLabelFormatter, IEnumerable<TRow> rowValues, Func<TRow, string> rowLabelFormatter, Func<TColumn, TRow, string> func, string tlLabel = "")
@@ -60,7 +60,7 @@ namespace Verse
 				}
 				num5++;
 			}
-			Find.WindowStack.Add(new Dialog_DebugTables(array));
+			Find.WindowStack.Add(new Window_DebugTable(array));
 		}
 	}
 }

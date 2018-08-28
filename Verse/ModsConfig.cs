@@ -42,7 +42,7 @@ namespace Verse
 					" while we are at build ",
 					VersionControl.CurrentBuild,
 					". Resetting."
-				}));
+				}), false);
 				ModsConfig.data = new ModsConfig.ModsConfigData();
 				flag = true;
 			}
@@ -78,15 +78,14 @@ namespace Verse
 			ModsConfig.Save();
 		}
 
-		internal static void Reorder(int modIndex, int newIndex)
+		public static void Reorder(int modIndex, int newIndex)
 		{
 			if (modIndex == newIndex)
 			{
 				return;
 			}
-			string item = ModsConfig.data.activeMods[modIndex];
-			ModsConfig.data.activeMods.RemoveAt(modIndex);
-			ModsConfig.data.activeMods.Insert(newIndex, item);
+			ModsConfig.data.activeMods.Insert(newIndex, ModsConfig.data.activeMods[modIndex]);
+			ModsConfig.data.activeMods.RemoveAt((modIndex >= newIndex) ? (modIndex + 1) : modIndex);
 		}
 
 		public static bool IsActive(ModMetaData mod)
@@ -131,7 +130,7 @@ namespace Verse
 			Find.WindowStack.Add(new Dialog_MessageBox("ModsChanged".Translate(), null, delegate
 			{
 				GenCommandLine.Restart();
-			}, null, null, null, false));
+			}, null, null, null, false, null, null));
 		}
 	}
 }

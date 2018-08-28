@@ -14,21 +14,18 @@ namespace RimWorld
 			}
 		}
 
-		protected override Action GetWaitTickAction()
+		protected override void WaitTickAction()
 		{
-			return delegate
+			float num = 1f;
+			Room room = this.pawn.GetRoom(RegionType.Set_Passable);
+			if (room != null)
 			{
-				float num = this.Grave.GetStatValue(StatDefOf.EntertainmentStrengthFactor, true);
-				Room room = this.pawn.GetRoom(RegionType.Set_Passable);
-				if (room != null)
-				{
-					num *= room.GetStat(RoomStatDefOf.GraveVisitingJoyGainFactor);
-				}
-				this.pawn.GainComfortFromCellIfPossible();
-				Pawn pawn = this.pawn;
-				float extraJoyGainFactor = num;
-				JoyUtility.JoyTickCheckEnd(pawn, JoyTickFullJoyAction.EndJob, extraJoyGainFactor);
-			};
+				num *= room.GetStat(RoomStatDefOf.GraveVisitingJoyGainFactor);
+			}
+			this.pawn.GainComfortFromCellIfPossible();
+			Pawn pawn = this.pawn;
+			float extraJoyGainFactor = num;
+			JoyUtility.JoyTickCheckEnd(pawn, JoyTickFullJoyAction.EndJob, extraJoyGainFactor, this.Grave);
 		}
 
 		public override object[] TaleParameters()

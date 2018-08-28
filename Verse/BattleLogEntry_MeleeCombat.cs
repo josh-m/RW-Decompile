@@ -1,15 +1,14 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using UnityEngine;
 using Verse.Grammar;
 
 namespace Verse
 {
-	public class BattleLogEntry_MeleeCombat : LogEntry, IDamageResultLog
+	public class BattleLogEntry_MeleeCombat : LogEntry_DamageResult
 	{
-		private RulePackDef outcomeRuleDef;
-
-		private RulePackDef maneuverRuleDef;
+		private RulePackDef ruleDef;
 
 		private Pawn initiator;
 
@@ -25,15 +24,16 @@ namespace Verse
 
 		private string toolLabel;
 
-		private List<BodyPartDef> damagedParts;
+		public bool alwaysShowInCompact;
 
-		private List<bool> damagedPartsDestroyed;
+		[TweakValue("LogFilter", 0f, 1f)]
+		private static float DisplayChanceOnMiss = 0.5f;
 
 		private string InitiatorName
 		{
 			get
 			{
-				return (this.initiator == null) ? "null" : this.initiator.NameStringShort;
+				return (this.initiator == null) ? "null" : this.initiator.LabelShort;
 			}
 		}
 
@@ -41,18 +41,31 @@ namespace Verse
 		{
 			get
 			{
-				return (this.recipientPawn == null) ? "null" : this.recipientPawn.NameStringShort;
+				return (this.recipientPawn == null) ? "null" : this.recipientPawn.LabelShort;
 			}
 		}
 
-		public BattleLogEntry_MeleeCombat()
+		public RulePackDef RuleDef
+		{
+			get
+			{
+				return this.ruleDef;
+			}
+			set
+			{
+				this.ruleDef = value;
+				base.ResetCache();
+			}
+		}
+
+		public BattleLogEntry_MeleeCombat() : base(null)
 		{
 		}
 
-		public BattleLogEntry_MeleeCombat(RulePackDef outcomeRuleDef, RulePackDef maneuverRuleDef, Pawn initiator, Thing recipient, ImplementOwnerTypeDef implementType, string toolLabel, ThingDef ownerEquipmentDef = null, HediffDef ownerHediffDef = null)
+		public BattleLogEntry_MeleeCombat(RulePackDef ruleDef, bool alwaysShowInCompact, Pawn initiator, Thing recipient, ImplementOwnerTypeDef implementType, string toolLabel, ThingDef ownerEquipmentDef = null, HediffDef ownerHediffDef = null, LogEntryDef def = null) : base(def)
 		{
-			this.outcomeRuleDef = outcomeRuleDef;
-			this.maneuverRuleDef = maneuverRuleDef;
+			this.ruleDef = ruleDef;
+			this.alwaysShowInCompact = alwaysShowInCompact;
 			this.initiator = initiator;
 			this.implementType = implementType;
 			this.ownerEquipmentDef = ownerEquipmentDef;
@@ -68,19 +81,26 @@ namespace Verse
 			}
 			if (ownerEquipmentDef != null && ownerHediffDef != null)
 			{
-				Log.ErrorOnce(string.Format("Combat log owned by both equipment {0} and hediff {1}, may produce unexpected results", ownerEquipmentDef.label, ownerHediffDef.label), 96474669);
+				Log.ErrorOnce(string.Format("Combat log owned by both equipment {0} and hediff {1}, may produce unexpected results", ownerEquipmentDef.label, ownerHediffDef.label), 96474669, false);
 			}
-		}
-
-		public void FillTargets(List<BodyPartDef> damagedParts, List<bool> damagedPartsDestroyed)
-		{
-			this.damagedParts = damagedParts;
-			this.damagedPartsDestroyed = damagedPartsDestroyed;
 		}
 
 		public override bool Concerns(Thing t)
 		{
 			return t == this.initiator || t == this.recipientPawn;
+		}
+
+		[DebuggerHidden]
+		public override IEnumerable<Thing> GetConcerns()
+		{
+			if (this.initiator != null)
+			{
+				yield return this.initiator;
+			}
+			if (this.recipientPawn != null)
+			{
+				yield return this.recipientPawn;
+			}
 		}
 
 		public override void ClickedFromPOV(Thing pov)
@@ -101,81 +121,92 @@ namespace Verse
 
 		public override Texture2D IconFromPOV(Thing pov)
 		{
-			if (this.damagedParts.NullOrEmpty<BodyPartDef>())
+			if (this.damagedParts.NullOrEmpty<BodyPartRecord>())
 			{
-				return null;
+				return this.def.iconMissTex;
+			}
+			if (this.deflected)
+			{
+				return this.def.iconMissTex;
 			}
 			if (pov == null || pov == this.recipientPawn)
 			{
-				return LogEntry.Blood;
+				return this.def.iconDamagedTex;
 			}
 			if (pov == this.initiator)
 			{
-				return LogEntry.BloodTarget;
+				return this.def.iconDamagedFromInstigatorTex;
 			}
-			return null;
+			return this.def.iconDamagedTex;
 		}
 
-		public override string ToGameStringFromPOV(Thing pov)
+		protected override BodyDef DamagedBody()
 		{
-			Rand.PushState();
-			Rand.Seed = this.randSeed;
-			GrammarRequest request = default(GrammarRequest);
-			request.Rules.AddRange(GrammarUtility.RulesForPawn("initiator", this.initiator, request.Constants));
+			return (this.recipientPawn == null) ? null : this.recipientPawn.RaceProps.body;
+		}
+
+		protected override GrammarRequest GenerateGrammarRequest()
+		{
+			GrammarRequest result = base.GenerateGrammarRequest();
+			result.Rules.AddRange(GrammarUtility.RulesForPawn("INITIATOR", this.initiator, result.Constants));
 			if (this.recipientPawn != null)
 			{
-				request.Rules.AddRange(GrammarUtility.RulesForPawn("recipient", this.recipientPawn, request.Constants));
+				result.Rules.AddRange(GrammarUtility.RulesForPawn("RECIPIENT", this.recipientPawn, result.Constants));
 			}
 			else if (this.recipientThing != null)
 			{
-				request.Rules.AddRange(GrammarUtility.RulesForDef("recipient", this.recipientThing));
+				result.Rules.AddRange(GrammarUtility.RulesForDef("RECIPIENT", this.recipientThing));
 			}
-			request.Includes.Add(this.outcomeRuleDef);
-			request.Includes.Add(this.maneuverRuleDef);
+			result.Includes.Add(this.ruleDef);
 			if (!this.toolLabel.NullOrEmpty())
 			{
-				request.Rules.Add(new Rule_String("tool_label", this.toolLabel));
+				result.Rules.Add(new Rule_String("TOOL_label", this.toolLabel));
 			}
 			if (this.implementType != null && !this.implementType.implementOwnerRuleName.NullOrEmpty())
 			{
 				if (this.ownerEquipmentDef != null)
 				{
-					request.Rules.AddRange(GrammarUtility.RulesForDef(this.implementType.implementOwnerRuleName, this.ownerEquipmentDef));
+					result.Rules.AddRange(GrammarUtility.RulesForDef(this.implementType.implementOwnerRuleName, this.ownerEquipmentDef));
 				}
 				else if (this.ownerHediffDef != null)
 				{
-					request.Rules.AddRange(GrammarUtility.RulesForDef(this.implementType.implementOwnerRuleName, this.ownerHediffDef));
+					result.Rules.AddRange(GrammarUtility.RulesForDef(this.implementType.implementOwnerRuleName, this.ownerHediffDef));
 				}
 			}
 			if (this.implementType != null && !this.implementType.implementOwnerTypeValue.NullOrEmpty())
 			{
-				request.Constants["implementOwnerType"] = this.implementType.implementOwnerTypeValue;
+				result.Constants["IMPLEMENTOWNER_type"] = this.implementType.implementOwnerTypeValue;
 			}
-			request.Rules.AddRange(PlayLogEntryUtility.RulesForDamagedParts("recipient_part", this.damagedParts, this.damagedPartsDestroyed, request.Constants));
-			string result = GrammarResolver.Resolve("logentry", request, "combat interaction", false);
-			Rand.PopState();
 			return result;
+		}
+
+		public override bool ShowInCompactView()
+		{
+			return this.alwaysShowInCompact || Rand.ChanceSeeded(BattleLogEntry_MeleeCombat.DisplayChanceOnMiss, this.logID);
 		}
 
 		public override void ExposeData()
 		{
 			base.ExposeData();
-			Scribe_Defs.Look<RulePackDef>(ref this.outcomeRuleDef, "outcomeRuleDef");
-			Scribe_Defs.Look<RulePackDef>(ref this.maneuverRuleDef, "maneuverRuleDef");
+			Scribe_Defs.Look<RulePackDef>(ref this.ruleDef, "ruleDef");
+			Scribe_Values.Look<bool>(ref this.alwaysShowInCompact, "alwaysShowInCompact", false, false);
 			Scribe_References.Look<Pawn>(ref this.initiator, "initiator", true);
 			Scribe_References.Look<Pawn>(ref this.recipientPawn, "recipientPawn", true);
 			Scribe_Defs.Look<ThingDef>(ref this.recipientThing, "recipientThing");
 			Scribe_Defs.Look<ImplementOwnerTypeDef>(ref this.implementType, "implementType");
 			Scribe_Defs.Look<ThingDef>(ref this.ownerEquipmentDef, "ownerDef");
-			Scribe_Collections.Look<BodyPartDef>(ref this.damagedParts, "damagedParts", LookMode.Def, new object[0]);
-			Scribe_Collections.Look<bool>(ref this.damagedPartsDestroyed, "damagedPartsDestroyed", LookMode.Value, new object[0]);
+			Scribe_Values.Look<string>(ref this.toolLabel, "toolLabel", null, false);
+			if (Scribe.mode == LoadSaveMode.LoadingVars)
+			{
+				BackCompatibility.BattleLogEntry_MeleeCombat_LoadingVars(this);
+			}
 		}
 
 		public override string ToString()
 		{
 			return string.Concat(new string[]
 			{
-				this.outcomeRuleDef.defName,
+				this.ruleDef.defName,
 				": ",
 				this.InitiatorName,
 				"->",

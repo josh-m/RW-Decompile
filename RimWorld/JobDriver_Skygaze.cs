@@ -8,17 +8,7 @@ namespace RimWorld
 {
 	public class JobDriver_Skygaze : JobDriver
 	{
-		private Toil gaze;
-
-		public override PawnPosture Posture
-		{
-			get
-			{
-				return (base.CurToil != this.gaze) ? PawnPosture.Standing : PawnPosture.LayingFaceUp;
-			}
-		}
-
-		public override bool TryMakePreToilReservations()
+		public override bool TryMakePreToilReservations(bool errorOnFailed)
 		{
 			return true;
 		}
@@ -27,29 +17,23 @@ namespace RimWorld
 		protected override IEnumerable<Toil> MakeNewToils()
 		{
 			yield return Toils_Goto.GotoCell(TargetIndex.A, PathEndMode.OnCell);
-			this.gaze = new Toil();
-			this.gaze.tickAction = delegate
+			Toil gaze = new Toil();
+			gaze.initAction = delegate
 			{
-				float num = 1f;
-				List<GameCondition> activeConditions = this.$this.pawn.Map.gameConditionManager.ActiveConditions;
-				for (int i = 0; i < activeConditions.Count; i++)
-				{
-					num *= activeConditions[i].SkyGazeJoyGainFactor;
-				}
-				activeConditions = Find.World.gameConditionManager.ActiveConditions;
-				for (int j = 0; j < activeConditions.Count; j++)
-				{
-					num *= activeConditions[j].SkyGazeJoyGainFactor;
-				}
+				this.$this.pawn.jobs.posture = PawnPosture.LayingOnGroundFaceUp;
+			};
+			gaze.tickAction = delegate
+			{
+				float num = this.$this.pawn.Map.gameConditionManager.AggregateSkyGazeJoyGainFactor(this.$this.pawn.Map);
 				Pawn pawn = this.$this.pawn;
 				float extraJoyGainFactor = num;
-				JoyUtility.JoyTickCheckEnd(pawn, JoyTickFullJoyAction.EndJob, extraJoyGainFactor);
+				JoyUtility.JoyTickCheckEnd(pawn, JoyTickFullJoyAction.EndJob, extraJoyGainFactor, null);
 			};
-			this.gaze.defaultCompleteMode = ToilCompleteMode.Delay;
-			this.gaze.defaultDuration = this.job.def.joyDuration;
-			this.gaze.FailOn(() => this.$this.pawn.Position.Roofed(this.$this.pawn.Map));
-			this.gaze.FailOn(() => !JoyUtility.EnjoyableOutsideNow(this.$this.pawn, null));
-			yield return this.gaze;
+			gaze.defaultCompleteMode = ToilCompleteMode.Delay;
+			gaze.defaultDuration = this.job.def.joyDuration;
+			gaze.FailOn(() => this.$this.pawn.Position.Roofed(this.$this.pawn.Map));
+			gaze.FailOn(() => !JoyUtility.EnjoyableOutsideNow(this.$this.pawn, null));
+			yield return gaze;
 		}
 
 		public override string GetReport()

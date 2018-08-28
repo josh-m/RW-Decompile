@@ -412,7 +412,7 @@ namespace Verse
 
 		public static CellRect ViewRect(Map map)
 		{
-			if (Current.ProgramState != ProgramState.Playing || Find.VisibleMap != map || WorldRendererUtility.WorldRenderedNow)
+			if (Current.ProgramState != ProgramState.Playing || Find.CurrentMap != map || WorldRendererUtility.WorldRenderedNow)
 			{
 				return CellRect.Empty;
 			}
@@ -446,9 +446,23 @@ namespace Verse
 			return (c.x == this.minX && c.z >= this.minZ && c.z <= this.maxZ) || (c.x == this.maxX && c.z >= this.minZ && c.z <= this.maxZ) || (c.z == this.minZ && c.x >= this.minX && c.x <= this.maxX) || (c.z == this.maxZ && c.x >= this.minX && c.x <= this.maxX);
 		}
 
+		public bool IsOnEdge(IntVec3 c, int edgeWidth)
+		{
+			return this.Contains(c) && (c.x < this.minX + edgeWidth || c.z < this.minZ + edgeWidth || c.x >= this.maxX + 1 - edgeWidth || c.z >= this.maxZ + 1 - edgeWidth);
+		}
+
 		public bool IsCorner(IntVec3 c)
 		{
 			return (c.x == this.minX && c.z == this.minZ) || (c.x == this.maxX && c.z == this.minZ) || (c.x == this.minX && c.z == this.maxZ) || (c.x == this.maxX && c.z == this.maxZ);
+		}
+
+		public Rot4 GetClosestEdge(IntVec3 c)
+		{
+			int num = Mathf.Abs(c.x - this.minX);
+			int num2 = Mathf.Abs(c.x - this.maxX);
+			int num3 = Mathf.Abs(c.z - this.maxZ);
+			int num4 = Mathf.Abs(c.z - this.minZ);
+			return GenMath.MinBy<Rot4>(Rot4.West, (float)num, Rot4.East, (float)num2, Rot4.North, (float)num3, Rot4.South, (float)num4);
 		}
 
 		public CellRect ClipInsideMap(Map map)
@@ -699,7 +713,7 @@ namespace Verse
 
 		public void DebugDraw()
 		{
-			float y = Altitudes.AltitudeFor(AltitudeLayer.MetaOverlays);
+			float y = AltitudeLayer.MetaOverlays.AltitudeFor();
 			Vector3 vector = new Vector3((float)this.minX, y, (float)this.minZ);
 			Vector3 vector2 = new Vector3((float)this.minX, y, (float)(this.maxZ + 1));
 			Vector3 vector3 = new Vector3((float)(this.maxX + 1), y, (float)(this.maxZ + 1));

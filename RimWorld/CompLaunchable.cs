@@ -2,6 +2,7 @@ using RimWorld.Planet;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using UnityEngine;
 using Verse;
 
@@ -12,7 +13,7 @@ namespace RimWorld
 	{
 		private CompTransporter cachedCompTransporter;
 
-		private static readonly Texture2D TargeterMouseAttachment = ContentFinder<Texture2D>.Get("UI/Overlays/LaunchableMouseAttachment", true);
+		public static readonly Texture2D TargeterMouseAttachment = ContentFinder<Texture2D>.Get("UI/Overlays/LaunchableMouseAttachment", true);
 
 		private static readonly Texture2D LaunchCommandTex = ContentFinder<Texture2D>.Get("UI/Commands/LaunchShip", true);
 
@@ -220,6 +221,27 @@ namespace RimWorld
 			}
 		}
 
+		private bool PodsHaveAnyPotentialCaravanOwner
+		{
+			get
+			{
+				List<CompTransporter> transportersInGroup = this.TransportersInGroup;
+				for (int i = 0; i < transportersInGroup.Count; i++)
+				{
+					ThingOwner innerContainer = transportersInGroup[i].innerContainer;
+					for (int j = 0; j < innerContainer.Count; j++)
+					{
+						Pawn pawn = innerContainer[j] as Pawn;
+						if (pawn != null && CaravanUtility.IsOwner(pawn, Faction.OfPlayer))
+						{
+							return true;
+						}
+					}
+				}
+				return false;
+			}
+		}
+
 		[DebuggerHidden]
 		public override IEnumerable<Gizmo> CompGetGizmosExtra()
 		{
@@ -299,16 +321,41 @@ namespace RimWorld
 				{
 					return null;
 				}
-				int num = Find.WorldGrid.TraversalDistanceBetween(tile, target.Tile);
-				if (num <= this.MaxLaunchDistance)
+				int num = Find.WorldGrid.TraversalDistanceBetween(tile, target.Tile, true, 2147483647);
+				if (num > this.MaxLaunchDistance)
 				{
-					return null;
+					GUI.color = Color.red;
+					if (num > this.MaxLaunchDistanceEverPossible)
+					{
+						return "TransportPodDestinationBeyondMaximumRange".Translate();
+					}
+					return "TransportPodNotEnoughFuel".Translate();
 				}
-				if (num > this.MaxLaunchDistanceEverPossible)
+				else
 				{
-					return "TransportPodDestinationBeyondMaximumRange".Translate();
+					IEnumerable<FloatMenuOption> transportPodsFloatMenuOptionsAt = this.GetTransportPodsFloatMenuOptionsAt(target.Tile);
+					if (!transportPodsFloatMenuOptionsAt.Any<FloatMenuOption>())
+					{
+						return string.Empty;
+					}
+					if (transportPodsFloatMenuOptionsAt.Count<FloatMenuOption>() == 1)
+					{
+						if (transportPodsFloatMenuOptionsAt.First<FloatMenuOption>().Disabled)
+						{
+							GUI.color = Color.red;
+						}
+						return transportPodsFloatMenuOptionsAt.First<FloatMenuOption>().Label;
+					}
+					MapParent mapParent = target.WorldObject as MapParent;
+					if (mapParent != null)
+					{
+						return "ClickToSeeAvailableOrders_WorldObject".Translate(new object[]
+						{
+							mapParent.LabelCap
+						});
+					}
+					return "ClickToSeeAvailableOrders_Empty".Translate();
 				}
-				return "TransportPodNotEnoughFuel".Translate();
 			});
 		}
 
@@ -320,117 +367,55 @@ namespace RimWorld
 			}
 			if (!target.IsValid)
 			{
-				Messages.Message("MessageTransportPodsDestinationIsInvalid".Translate(), MessageTypeDefOf.RejectInput);
+				Messages.Message("MessageTransportPodsDestinationIsInvalid".Translate(), MessageTypeDefOf.RejectInput, false);
 				return false;
 			}
-			int num = Find.WorldGrid.TraversalDistanceBetween(this.parent.Map.Tile, target.Tile);
+			int num = Find.WorldGrid.TraversalDistanceBetween(this.parent.Map.Tile, target.Tile, true, 2147483647);
 			if (num > this.MaxLaunchDistance)
 			{
 				Messages.Message("MessageTransportPodsDestinationIsTooFar".Translate(new object[]
 				{
 					CompLaunchable.FuelNeededToLaunchAtDist((float)num).ToString("0.#")
-				}), MessageTypeDefOf.RejectInput);
+				}), MessageTypeDefOf.RejectInput, false);
 				return false;
 			}
-			MapParent mapParent = target.WorldObject as MapParent;
-			if (mapParent != null && mapParent.HasMap)
+			IEnumerable<FloatMenuOption> transportPodsFloatMenuOptionsAt = this.GetTransportPodsFloatMenuOptionsAt(target.Tile);
+			if (!transportPodsFloatMenuOptionsAt.Any<FloatMenuOption>())
 			{
-				Map myMap = this.parent.Map;
-				Map map = mapParent.Map;
-				Current.Game.VisibleMap = map;
-				Find.Targeter.BeginTargeting(TargetingParameters.ForDropPodsDestination(), delegate(LocalTargetInfo x)
+				if (Find.World.Impassable(target.Tile))
 				{
-					if (!this.LoadingInProgressOrReadyToLaunch)
-					{
-						return;
-					}
-					this.TryLaunch(x.ToGlobalTargetInfo(map), PawnsArriveMode.Undecided, false);
-				}, null, delegate
-				{
-					if (Find.Maps.Contains(myMap))
-					{
-						Current.Game.VisibleMap = myMap;
-					}
-				}, CompLaunchable.TargeterMouseAttachment);
+					Messages.Message("MessageTransportPodsDestinationIsInvalid".Translate(), MessageTypeDefOf.RejectInput, false);
+					return false;
+				}
+				this.TryLaunch(target.Tile, null);
 				return true;
-			}
-			bool flag;
-			if (mapParent != null)
-			{
-				Settlement settlement = mapParent as Settlement;
-				List<FloatMenuOption> list = new List<FloatMenuOption>();
-				if (settlement != null && settlement.Visitable)
-				{
-					list.Add(new FloatMenuOption("VisitSettlement".Translate(new object[]
-					{
-						target.WorldObject.Label
-					}), delegate
-					{
-						if (!this.LoadingInProgressOrReadyToLaunch)
-						{
-							return;
-						}
-						this.TryLaunch(target, PawnsArriveMode.Undecided, false);
-						CameraJumper.TryHideWorld();
-					}, MenuOptionPriority.Default, null, null, 0f, null, null));
-				}
-				if (mapParent.TransportPodsCanLandAndGenerateMap)
-				{
-					list.Add(new FloatMenuOption("DropAtEdge".Translate(), delegate
-					{
-						if (!this.LoadingInProgressOrReadyToLaunch)
-						{
-							return;
-						}
-						this.TryLaunch(target, PawnsArriveMode.EdgeDrop, true);
-						CameraJumper.TryHideWorld();
-					}, MenuOptionPriority.Default, null, null, 0f, null, null));
-					list.Add(new FloatMenuOption("DropInCenter".Translate(), delegate
-					{
-						if (!this.LoadingInProgressOrReadyToLaunch)
-						{
-							return;
-						}
-						this.TryLaunch(target, PawnsArriveMode.CenterDrop, true);
-						CameraJumper.TryHideWorld();
-					}, MenuOptionPriority.Default, null, null, 0f, null, null));
-				}
-				if (list.Any<FloatMenuOption>())
-				{
-					Find.WorldTargeter.closeWorldTabWhenFinished = false;
-					Find.WindowStack.Add(new FloatMenu(list));
-					return true;
-				}
-				flag = true;
 			}
 			else
 			{
-				flag = true;
-			}
-			if (!flag)
-			{
+				if (transportPodsFloatMenuOptionsAt.Count<FloatMenuOption>() == 1)
+				{
+					if (!transportPodsFloatMenuOptionsAt.First<FloatMenuOption>().Disabled)
+					{
+						transportPodsFloatMenuOptionsAt.First<FloatMenuOption>().action();
+					}
+					return false;
+				}
+				Find.WindowStack.Add(new FloatMenu(transportPodsFloatMenuOptionsAt.ToList<FloatMenuOption>()));
 				return false;
 			}
-			if (Find.World.Impassable(target.Tile))
-			{
-				Messages.Message("MessageTransportPodsDestinationIsInvalid".Translate(), MessageTypeDefOf.RejectInput);
-				return false;
-			}
-			this.TryLaunch(target, PawnsArriveMode.Undecided, false);
-			return true;
 		}
 
-		private void TryLaunch(GlobalTargetInfo target, PawnsArriveMode arriveMode, bool attackOnArrival)
+		public void TryLaunch(int destinationTile, TransportPodsArrivalAction arrivalAction)
 		{
 			if (!this.parent.Spawned)
 			{
-				Log.Error("Tried to launch " + this.parent + ", but it's unspawned.");
+				Log.Error("Tried to launch " + this.parent + ", but it's unspawned.", false);
 				return;
 			}
 			List<CompTransporter> transportersInGroup = this.TransportersInGroup;
 			if (transportersInGroup == null)
 			{
-				Log.Error("Tried to launch " + this.parent + ", but it's not in any group.");
+				Log.Error("Tried to launch " + this.parent + ", but it's not in any group.", false);
 				return;
 			}
 			if (!this.LoadingInProgressOrReadyToLaunch || !this.AllInGroupConnectedToFuelingPort || !this.AllFuelingPortSourcesInGroupHaveAnyFuel)
@@ -438,7 +423,7 @@ namespace RimWorld
 				return;
 			}
 			Map map = this.parent.Map;
-			int num = Find.WorldGrid.TraversalDistanceBetween(map.Tile, target.Tile);
+			int num = Find.WorldGrid.TraversalDistanceBetween(map.Tile, destinationTile, true, 2147483647);
 			if (num > this.MaxLaunchDistance)
 			{
 				return;
@@ -460,21 +445,20 @@ namespace RimWorld
 				activeDropPod.Contents.innerContainer.TryAddRangeOrTransfer(directlyHeldThings, true, true);
 				DropPodLeaving dropPodLeaving = (DropPodLeaving)SkyfallerMaker.MakeSkyfaller(ThingDefOf.DropPodLeaving, activeDropPod);
 				dropPodLeaving.groupID = groupID;
-				dropPodLeaving.destinationTile = target.Tile;
-				dropPodLeaving.destinationCell = target.Cell;
-				dropPodLeaving.arriveMode = arriveMode;
-				dropPodLeaving.attackOnArrival = attackOnArrival;
+				dropPodLeaving.destinationTile = destinationTile;
+				dropPodLeaving.arrivalAction = arrivalAction;
 				compTransporter.CleanUpLoadingVars(map);
 				compTransporter.parent.Destroy(DestroyMode.Vanish);
-				GenSpawn.Spawn(dropPodLeaving, compTransporter.parent.Position, map);
+				GenSpawn.Spawn(dropPodLeaving, compTransporter.parent.Position, map, WipeMode.Vanish);
 			}
+			CameraJumper.TryHideWorld();
 		}
 
 		public void Notify_FuelingPortSourceDeSpawned()
 		{
 			if (this.Transporter.CancelLoad())
 			{
-				Messages.Message("MessageTransportersLoadCanceled_FuelingPortGiverDeSpawned".Translate(), this.parent, MessageTypeDefOf.NegativeEvent);
+				Messages.Message("MessageTransportersLoadCanceled_FuelingPortGiverDeSpawned".Translate(), this.parent, MessageTypeDefOf.NegativeEvent, true);
 			}
 		}
 
@@ -486,6 +470,39 @@ namespace RimWorld
 		public static float FuelNeededToLaunchAtDist(float dist)
 		{
 			return 2.25f * dist;
+		}
+
+		[DebuggerHidden]
+		public IEnumerable<FloatMenuOption> GetTransportPodsFloatMenuOptionsAt(int tile)
+		{
+			bool anything = false;
+			if (TransportPodsArrivalAction_FormCaravan.CanFormCaravanAt(this.TransportersInGroup.Cast<IThingHolder>(), tile) && !Find.WorldObjects.AnySettlementBaseAt(tile) && !Find.WorldObjects.AnySiteAt(tile))
+			{
+				anything = true;
+				yield return new FloatMenuOption("FormCaravanHere".Translate(), delegate
+				{
+					this.$this.TryLaunch(tile, new TransportPodsArrivalAction_FormCaravan());
+				}, MenuOptionPriority.Default, null, null, 0f, null, null);
+			}
+			List<WorldObject> worldObjects = Find.WorldObjects.AllWorldObjects;
+			for (int i = 0; i < worldObjects.Count; i++)
+			{
+				if (worldObjects[i].Tile == tile)
+				{
+					foreach (FloatMenuOption o in worldObjects[i].GetTransportPodsFloatMenuOptions(this.TransportersInGroup.Cast<IThingHolder>(), this))
+					{
+						anything = true;
+						yield return o;
+					}
+				}
+			}
+			if (!anything && !Find.World.Impassable(tile))
+			{
+				yield return new FloatMenuOption("TransportPodsContentsWillBeLost".Translate(), delegate
+				{
+					this.$this.TryLaunch(tile, null);
+				}, MenuOptionPriority.Default, null, null, 0f, null, null);
+			}
 		}
 	}
 }

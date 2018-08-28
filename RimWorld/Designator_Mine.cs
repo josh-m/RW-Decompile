@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using Verse;
 
@@ -22,15 +23,23 @@ namespace RimWorld
 			}
 		}
 
+		protected override DesignationDef Designation
+		{
+			get
+			{
+				return DesignationDefOf.Mine;
+			}
+		}
+
 		public Designator_Mine()
 		{
 			this.defaultLabel = "DesignatorMine".Translate();
 			this.icon = ContentFinder<Texture2D>.Get("UI/Designators/Mine", true);
 			this.defaultDesc = "DesignatorMineDesc".Translate();
 			this.useMouseIcon = true;
-			this.soundDragSustain = SoundDefOf.DesignateDragStandard;
-			this.soundDragChanged = SoundDefOf.DesignateDragStandardChanged;
-			this.soundSucceeded = SoundDefOf.DesignateMine;
+			this.soundDragSustain = SoundDefOf.Designate_DragStandard;
+			this.soundDragChanged = SoundDefOf.Designate_DragStandard_Changed;
+			this.soundSucceeded = SoundDefOf.Designate_Mine;
 			this.hotKey = KeyBindingDefOf.Misc10;
 			this.tutorTag = "Mine";
 		}
@@ -41,7 +50,7 @@ namespace RimWorld
 			{
 				return false;
 			}
-			if (base.Map.designationManager.DesignationAt(c, DesignationDefOf.Mine) != null)
+			if (base.Map.designationManager.DesignationAt(c, this.Designation) != null)
 			{
 				return AcceptanceReport.WasRejected;
 			}
@@ -68,7 +77,7 @@ namespace RimWorld
 			{
 				return false;
 			}
-			if (base.Map.designationManager.DesignationAt(t.Position, DesignationDefOf.Mine) != null)
+			if (base.Map.designationManager.DesignationAt(t.Position, this.Designation) != null)
 			{
 				return AcceptanceReport.WasRejected;
 			}
@@ -77,7 +86,16 @@ namespace RimWorld
 
 		public override void DesignateSingleCell(IntVec3 loc)
 		{
-			base.Map.designationManager.AddDesignation(new Designation(loc, DesignationDefOf.Mine));
+			base.Map.designationManager.AddDesignation(new Designation(loc, this.Designation));
+			base.Map.designationManager.TryRemoveDesignation(loc, DesignationDefOf.SmoothWall);
+			if (DebugSettings.godMode)
+			{
+				Mineable firstMineable = loc.GetFirstMineable(base.Map);
+				if (firstMineable != null)
+				{
+					firstMineable.DestroyMined(null);
+				}
+			}
 		}
 
 		public override void DesignateThing(Thing t)
@@ -94,6 +112,11 @@ namespace RimWorld
 		public override void SelectedUpdate()
 		{
 			GenUI.RenderMouseoverBracket();
+		}
+
+		public override void RenderHighlight(List<IntVec3> dragCells)
+		{
+			DesignatorUtility.RenderHighlightOverSelectableCells(this, dragCells);
 		}
 	}
 }

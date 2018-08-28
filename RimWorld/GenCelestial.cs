@@ -81,7 +81,7 @@ namespace RimWorld
 			}
 			else
 			{
-				Log.ErrorOnce("Invalid light type requested", 64275614);
+				Log.ErrorOnce("Invalid light type requested", 64275614, false);
 				flag = true;
 				intensity = 0f;
 			}
@@ -161,6 +161,16 @@ namespace RimWorld
 			return Mathf.Clamp01(value2);
 		}
 
+		public static float AverageGlow(float latitude, int dayOfYear)
+		{
+			float num = 0f;
+			for (int i = 0; i < 24; i++)
+			{
+				num += GenCelestial.CelestialSunGlowPercent(latitude, dayOfYear, (float)i / 24f);
+			}
+			return num / 24f;
+		}
+
 		private static Vector3 SurfaceNormal(float latitude)
 		{
 			Vector3 vector = new Vector3(1f, 0f, 0f);
@@ -190,7 +200,7 @@ namespace RimWorld
 					}
 					stringBuilder.AppendLine();
 				}
-				Log.Message(stringBuilder.ToString());
+				Log.Message(stringBuilder.ToString(), false);
 			}
 		}
 	}

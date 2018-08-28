@@ -56,7 +56,7 @@ namespace RimWorld.BaseGen
 				ThingDef arg_9B_0;
 				if ((arg_9B_0 = rp.singleThingDef) == null)
 				{
-					arg_9B_0 = (from x in ItemCollectionGeneratorUtility.allGeneratableItems
+					arg_9B_0 = (from x in ThingSetMakerUtility.allGeneratableItems
 					where x.IsWeapon || x.IsMedicine || x.IsDrug
 					select x).RandomElement<ThingDef>();
 				}
@@ -67,11 +67,11 @@ namespace RimWorld.BaseGen
 				thingDef = rp.singleThingToSpawn.def;
 			}
 			Rot4? rot = rp.thingRot;
-			IntVec3 loc;
+			IntVec3 intVec;
 			if (thingDef.category == ThingCategory.Item)
 			{
 				rot = new Rot4?(Rot4.North);
-				if (!this.TryFindSpawnCellForItem(rp.rect, out loc))
+				if (!this.TryFindSpawnCellForItem(rp.rect, out intVec))
 				{
 					if (rp.singleThingToSpawn != null)
 					{
@@ -84,7 +84,7 @@ namespace RimWorld.BaseGen
 			{
 				bool flag;
 				bool flag2;
-				loc = this.FindBestSpawnCellForNonItem(rp.rect, thingDef, ref rot, out flag, out flag2);
+				intVec = this.FindBestSpawnCellForNonItem(rp.rect, thingDef, ref rot, out flag, out flag2);
 				if ((flag || flag2) && rp.skipSingleThingIfHasToWipeBuildingOrDoesntFit.HasValue && rp.skipSingleThingIfHasToWipeBuildingOrDoesntFit.Value)
 				{
 					return;
@@ -92,7 +92,7 @@ namespace RimWorld.BaseGen
 			}
 			if (!rot.HasValue)
 			{
-				Log.Error("Could not resolve rotation. Bug.");
+				Log.Error("Could not resolve rotation. Bug.", false);
 			}
 			Thing thing;
 			if (rp.singleThingToSpawn == null)
@@ -104,12 +104,12 @@ namespace RimWorld.BaseGen
 				}
 				else
 				{
-					stuff = GenStuff.RandomStuffByCommonalityFor(thingDef, (rp.faction == null) ? TechLevel.Undefined : rp.faction.def.techLevel);
+					stuff = GenStuff.RandomStuffInexpensiveFor(thingDef, rp.faction);
 				}
 				thing = ThingMaker.MakeThing(thingDef, stuff);
-				Thing arg_1F2_0 = thing;
+				Thing arg_1D7_0 = thing;
 				int? singleThingStackCount = rp.singleThingStackCount;
-				arg_1F2_0.stackCount = ((!singleThingStackCount.HasValue) ? 1 : singleThingStackCount.Value);
+				arg_1D7_0.stackCount = ((!singleThingStackCount.HasValue) ? 1 : singleThingStackCount.Value);
 				if (thing.stackCount <= 0)
 				{
 					thing.stackCount = 1;
@@ -121,7 +121,7 @@ namespace RimWorld.BaseGen
 				CompQuality compQuality = thing.TryGetComp<CompQuality>();
 				if (compQuality != null)
 				{
-					compQuality.SetQuality(QualityUtility.RandomBaseGenItemQuality(), ArtGenerationContext.Outsider);
+					compQuality.SetQuality(QualityUtility.GenerateQualityBaseGen(), ArtGenerationContext.Outsider);
 				}
 				if (rp.postThingGenerate != null)
 				{
@@ -132,7 +132,11 @@ namespace RimWorld.BaseGen
 			{
 				thing = rp.singleThingToSpawn;
 			}
-			thing = GenSpawn.Spawn(thing, loc, BaseGen.globalSettings.map, rot.Value, false);
+			if (!rp.spawnBridgeIfTerrainCantSupportThing.HasValue || rp.spawnBridgeIfTerrainCantSupportThing.Value)
+			{
+				BaseGenUtility.CheckSpawnBridgeUnder(thing.def, intVec, rot.Value);
+			}
+			thing = GenSpawn.Spawn(thing, intVec, BaseGen.globalSettings.map, rot.Value, WipeMode.Vanish, false);
 			if (thing != null && thing.def.category == ThingCategory.Item)
 			{
 				thing.SetForbidden(true, false);

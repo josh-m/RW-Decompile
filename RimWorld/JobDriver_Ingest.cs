@@ -77,15 +77,21 @@ namespace RimWorld
 			this.eatingFromInventory = (this.pawn.inventory != null && this.pawn.inventory.Contains(this.IngestibleSource));
 		}
 
-		public override bool TryMakePreToilReservations()
+		public override bool TryMakePreToilReservations(bool errorOnFailed)
 		{
 			if (this.pawn.Faction != null && !(this.IngestibleSource is Building_NutrientPasteDispenser))
 			{
 				Thing ingestibleSource = this.IngestibleSource;
-				int num = FoodUtility.WillIngestStackCountOf(this.pawn, ingestibleSource.def);
-				if (num >= ingestibleSource.stackCount && ingestibleSource.Spawned && !this.pawn.Reserve(ingestibleSource, this.job, 1, -1, null))
+				int num = FoodUtility.WillIngestStackCountOf(this.pawn, ingestibleSource.def, ingestibleSource.GetStatValue(StatDefOf.Nutrition, true));
+				if (num >= ingestibleSource.stackCount && ingestibleSource.Spawned)
 				{
-					return false;
+					Pawn pawn = this.pawn;
+					LocalTargetInfo target = ingestibleSource;
+					Job job = this.job;
+					if (!pawn.Reserve(target, job, 1, -1, null, errorOnFailed))
+					{
+						return false;
+					}
 				}
 			}
 			return true;
@@ -193,7 +199,7 @@ namespace RimWorld
 					{
 						return;
 					}
-					int num = FoodUtility.WillIngestStackCountOf(this.pawn, thing.def);
+					int num = FoodUtility.WillIngestStackCountOf(this.pawn, thing.def, thing.GetStatValue(StatDefOf.Nutrition, true));
 					if (num >= thing.stackCount)
 					{
 						if (!thing.Spawned)
@@ -201,7 +207,7 @@ namespace RimWorld
 							this.pawn.jobs.EndCurrentJob(JobCondition.Incompletable, true);
 							return;
 						}
-						this.pawn.Reserve(thing, this.job, 1, -1, null);
+						this.pawn.Reserve(thing, this.job, 1, -1, null, true);
 					}
 				},
 				defaultCompleteMode = ToilCompleteMode.Instant,

@@ -22,7 +22,7 @@ namespace Verse
 			{
 				if (this.drawingNow)
 				{
-					Log.Warning("Cannot register drawable " + t + " while drawing is in progress. Things shouldn't be spawned in Draw methods.");
+					Log.Warning("Cannot register drawable " + t + " while drawing is in progress. Things shouldn't be spawned in Draw methods.", false);
 				}
 				this.drawThings.Add(t);
 			}
@@ -34,7 +34,7 @@ namespace Verse
 			{
 				if (this.drawingNow)
 				{
-					Log.Warning("Cannot deregister drawable " + t + " while drawing is in progress. Things shouldn't be despawned in Draw methods.");
+					Log.Warning("Cannot deregister drawable " + t + " while drawing is in progress. Things shouldn't be despawned in Draw methods.", false);
 				}
 				this.drawThings.Remove(t);
 			}
@@ -75,7 +75,7 @@ namespace Verse
 										current,
 										": ",
 										ex.ToString()
-									}));
+									}), false);
 								}
 							}
 						}
@@ -84,14 +84,14 @@ namespace Verse
 			}
 			catch (Exception arg)
 			{
-				Log.Error("Exception drawing dynamic things: " + arg);
+				Log.Error("Exception drawing dynamic things: " + arg, false);
 			}
 			this.drawingNow = false;
 		}
 
 		public void LogDynamicDrawThings()
 		{
-			Log.Message(DebugLogsUtility.ThingListToUniqueCountString(this.drawThings));
+			Log.Message(DebugLogsUtility.ThingListToUniqueCountString(this.drawThings), false);
 		}
 	}
 }

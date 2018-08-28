@@ -8,12 +8,7 @@ namespace RimWorld
 	{
 		public HistoryAutoRecorderDef def;
 
-		public List<float> records;
-
-		public HistoryAutoRecorder()
-		{
-			this.records = new List<float>();
-		}
+		public List<float> records = new List<float>();
 
 		public void Tick()
 		{
@@ -28,29 +23,40 @@ namespace RimWorld
 		public void ExposeData()
 		{
 			Scribe_Defs.Look<HistoryAutoRecorderDef>(ref this.def, "def");
-			byte[] array = null;
+			byte[] recordsFromBytes = null;
 			if (Scribe.mode == LoadSaveMode.Saving)
 			{
-				array = new byte[this.records.Count * 4];
-				for (int i = 0; i < this.records.Count; i++)
-				{
-					byte[] bytes = BitConverter.GetBytes(this.records[i]);
-					for (int j = 0; j < 4; j++)
-					{
-						array[i * 4 + j] = bytes[j];
-					}
-				}
+				recordsFromBytes = this.RecordsToBytes();
 			}
-			DataExposeUtility.ByteArray(ref array, "records");
+			DataExposeUtility.ByteArray(ref recordsFromBytes, "records");
 			if (Scribe.mode == LoadSaveMode.LoadingVars)
 			{
-				int num = array.Length / 4;
-				this.records.Clear();
-				for (int k = 0; k < num; k++)
+				this.SetRecordsFromBytes(recordsFromBytes);
+			}
+		}
+
+		private byte[] RecordsToBytes()
+		{
+			byte[] array = new byte[this.records.Count * 4];
+			for (int i = 0; i < this.records.Count; i++)
+			{
+				byte[] bytes = BitConverter.GetBytes(this.records[i]);
+				for (int j = 0; j < 4; j++)
 				{
-					float item = BitConverter.ToSingle(array, k * 4);
-					this.records.Add(item);
+					array[i * 4 + j] = bytes[j];
 				}
+			}
+			return array;
+		}
+
+		private void SetRecordsFromBytes(byte[] bytes)
+		{
+			int num = bytes.Length / 4;
+			this.records.Clear();
+			for (int i = 0; i < num; i++)
+			{
+				float item = BitConverter.ToSingle(bytes, i * 4);
+				this.records.Add(item);
 			}
 		}
 	}

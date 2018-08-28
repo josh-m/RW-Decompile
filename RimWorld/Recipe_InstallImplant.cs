@@ -20,7 +20,7 @@ namespace RimWorld
 					BodyPartRecord record = bpList[j];
 					if (record.def == part)
 					{
-						if (pawn.health.hediffSet.GetNotMissingParts(BodyPartHeight.Undefined, BodyPartDepth.Undefined).Contains(record))
+						if (pawn.health.hediffSet.GetNotMissingParts(BodyPartHeight.Undefined, BodyPartDepth.Undefined, null, null).Contains(record))
 						{
 							if (!pawn.health.hediffSet.PartOrAnyAncestorHasDirectlyAddedParts(record))
 							{
@@ -49,7 +49,7 @@ namespace RimWorld
 					pawn
 				});
 			}
-			pawn.health.AddHediff(this.recipe.addsHediff, part, null);
+			pawn.health.AddHediff(this.recipe.addsHediff, part, null, null);
 		}
 	}
 }

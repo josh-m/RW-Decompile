@@ -10,5 +10,10 @@ namespace RimWorld
 		public static BillRepeatModeDef TargetCount;
 
 		public static BillRepeatModeDef Forever;
+
+		static BillRepeatModeDefOf()
+		{
+			DefOfHelper.EnsureInitializedInCtor(typeof(BillRepeatModeDefOf));
+		}
 	}
 }

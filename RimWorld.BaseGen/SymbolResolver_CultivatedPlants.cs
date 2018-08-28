@@ -35,7 +35,7 @@ namespace RimWorld.BaseGen
 				{
 					if (this.TryDestroyBlockingThingsAt(iterator.Current))
 					{
-						Plant plant = (Plant)GenSpawn.Spawn(thingDef, iterator.Current, map);
+						Plant plant = (Plant)GenSpawn.Spawn(thingDef, iterator.Current, map, WipeMode.Vanish);
 						plant.Growth = growth;
 						if (plant.def.plant.LimitedLifespan)
 						{

@@ -7,6 +7,8 @@ namespace RimWorld
 {
 	public abstract class JoyGiver_InteractBuilding : JoyGiver
 	{
+		private static List<Thing> tmpCandidates = new List<Thing>();
+
 		protected virtual bool CanDoDuringParty
 		{
 			get
@@ -51,7 +53,12 @@ namespace RimWorld
 
 		private Thing FindBestGame(Pawn pawn, bool inBed, IntVec3 partySpot)
 		{
-			List<Thing> searchSet = this.GetSearchSet(pawn);
+			JoyGiver_InteractBuilding.tmpCandidates.Clear();
+			this.GetSearchSet(pawn, JoyGiver_InteractBuilding.tmpCandidates);
+			if (JoyGiver_InteractBuilding.tmpCandidates.Count == 0)
+			{
+				return null;
+			}
 			Predicate<Thing> predicate = (Thing t) => this.CanInteractWith(pawn, t, inBed);
 			if (partySpot.IsValid)
 			{
@@ -60,11 +67,13 @@ namespace RimWorld
 			}
 			IntVec3 position = pawn.Position;
 			Map map = pawn.Map;
-			List<Thing> searchSet2 = searchSet;
+			List<Thing> searchSet = JoyGiver_InteractBuilding.tmpCandidates;
 			PathEndMode peMode = PathEndMode.OnCell;
 			TraverseParms traverseParams = TraverseParms.For(pawn, Danger.Deadly, TraverseMode.ByPawn, false);
 			Predicate<Thing> validator = predicate;
-			return GenClosest.ClosestThing_Global_Reachable(position, map, searchSet2, peMode, traverseParams, 9999f, validator, null);
+			Thing result = GenClosest.ClosestThing_Global_Reachable(position, map, searchSet, peMode, traverseParams, 9999f, validator, null);
+			JoyGiver_InteractBuilding.tmpCandidates.Clear();
+			return result;
 		}
 
 		protected virtual bool CanInteractWith(Pawn pawn, Thing t, bool inBed)

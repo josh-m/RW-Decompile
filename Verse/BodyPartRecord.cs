@@ -7,7 +7,16 @@ namespace Verse
 {
 	public class BodyPartRecord
 	{
+		public BodyDef body;
+
+		[TranslationHandle]
 		public BodyPartDef def;
+
+		[MustTranslate]
+		public string customLabel;
+
+		[TranslationHandle(Priority = 100), Unsaved]
+		public string untranslatedCustomLabel;
 
 		public List<BodyPartRecord> parts = new List<BodyPartRecord>();
 
@@ -36,6 +45,46 @@ namespace Verse
 			}
 		}
 
+		public string Label
+		{
+			get
+			{
+				return (!this.customLabel.NullOrEmpty()) ? this.customLabel : this.def.label;
+			}
+		}
+
+		public string LabelCap
+		{
+			get
+			{
+				return this.Label.CapitalizeFirst();
+			}
+		}
+
+		public string LabelShort
+		{
+			get
+			{
+				return this.def.LabelShort;
+			}
+		}
+
+		public string LabelShortCap
+		{
+			get
+			{
+				return this.def.LabelShortCap;
+			}
+		}
+
+		public int Index
+		{
+			get
+			{
+				return this.body.GetIndexOfPart(this);
+			}
+		}
+
 		public override string ToString()
 		{
 			return string.Concat(new object[]
@@ -46,6 +95,11 @@ namespace Verse
 				this.parts.Count,
 				")"
 			});
+		}
+
+		public void PostLoad()
+		{
+			this.untranslatedCustomLabel = this.customLabel;
 		}
 
 		public bool IsInGroup(BodyPartGroupDef group)
@@ -61,7 +115,7 @@ namespace Verse
 		}
 
 		[DebuggerHidden]
-		public IEnumerable<BodyPartRecord> GetChildParts(string tag)
+		public IEnumerable<BodyPartRecord> GetChildParts(BodyPartTagDef tag)
 		{
 			if (this.def.tags.Contains(tag))
 			{
@@ -85,13 +139,13 @@ namespace Verse
 			}
 		}
 
-		public bool HasChildParts(string tag)
+		public bool HasChildParts(BodyPartTagDef tag)
 		{
 			return this.GetChildParts(tag).Any<BodyPartRecord>();
 		}
 
 		[DebuggerHidden]
-		public IEnumerable<BodyPartRecord> GetConnectedParts(string tag)
+		public IEnumerable<BodyPartRecord> GetConnectedParts(BodyPartTagDef tag)
 		{
 			BodyPartRecord ancestor = this;
 			while (ancestor.parent != null && ancestor.parent.def.tags.Contains(tag))

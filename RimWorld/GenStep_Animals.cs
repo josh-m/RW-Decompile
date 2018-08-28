@@ -5,19 +5,27 @@ namespace RimWorld
 {
 	public class GenStep_Animals : GenStep
 	{
-		public override void Generate(Map map)
+		public override int SeedPart
+		{
+			get
+			{
+				return 1298760307;
+			}
+		}
+
+		public override void Generate(Map map, GenStepParams parms)
 		{
 			int num = 0;
-			while (!map.wildSpawner.AnimalEcosystemFull)
+			while (!map.wildAnimalSpawner.AnimalEcosystemFull)
 			{
 				num++;
 				if (num >= 10000)
 				{
-					Log.Error("Too many iterations.");
+					Log.Error("Too many iterations.", false);
 					break;
 				}
 				IntVec3 loc = RCellFinder.RandomAnimalSpawnCell_MapGen(map);
-				if (!map.wildSpawner.SpawnRandomWildAnimalAt(loc))
+				if (!map.wildAnimalSpawner.SpawnRandomWildAnimalAt(loc))
 				{
 					break;
 				}

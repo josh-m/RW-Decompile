@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using Verse;
 
@@ -9,7 +10,9 @@ namespace RimWorld
 	{
 		public override float MinPointsToGenerateAnything(PawnGroupMaker groupMaker)
 		{
-			return groupMaker.options.Min((PawnGenOption g) => g.Cost);
+			return (from x in groupMaker.options
+			where x.kind.isFighter
+			select x).Min((PawnGenOption g) => g.Cost);
 		}
 
 		public override bool CanGenerateFrom(PawnGroupMakerParms parms, PawnGroupMaker groupMaker)
@@ -30,11 +33,12 @@ namespace RimWorld
 						" with ",
 						parms.points,
 						". Defaulting to a single random cheap group."
-					}));
+					}), false);
 				}
 				return;
 			}
 			bool flag = parms.raidStrategy == null || parms.raidStrategy.pawnsCanBringFood || (parms.faction != null && !parms.faction.HostileTo(Faction.OfPlayer));
+			Predicate<Pawn> predicate = (parms.raidStrategy == null) ? null : new Predicate<Pawn>((Pawn p) => parms.raidStrategy.Worker.CanUsePawn(p, outPawns));
 			bool flag2 = false;
 			foreach (PawnGenOption current in PawnGroupMakerUtility.ChoosePawnGenOptionsByPoints(parms.points, groupMaker.options, parms))
 			{
@@ -43,7 +47,8 @@ namespace RimWorld
 				int tile = parms.tile;
 				bool allowFood = flag;
 				bool inhabitants = parms.inhabitants;
-				PawnGenerationRequest request = new PawnGenerationRequest(kind, faction, PawnGenerationContext.NonPlayer, tile, false, false, false, false, true, true, 1f, false, true, allowFood, inhabitants, false, false, false, null, null, null, null, null, null, null);
+				Predicate<Pawn> validatorPostGear = predicate;
+				PawnGenerationRequest request = new PawnGenerationRequest(kind, faction, PawnGenerationContext.NonPlayer, tile, false, false, false, false, true, true, 1f, false, true, allowFood, inhabitants, false, false, false, null, validatorPostGear, null, null, null, null, null, null);
 				Pawn pawn = PawnGenerator.GeneratePawn(request);
 				if (parms.forceOneIncap && !flag2)
 				{
@@ -52,6 +57,15 @@ namespace RimWorld
 					flag2 = true;
 				}
 				outPawns.Add(pawn);
+			}
+		}
+
+		[DebuggerHidden]
+		public override IEnumerable<PawnKindDef> GeneratePawnKindsExample(PawnGroupMakerParms parms, PawnGroupMaker groupMaker)
+		{
+			foreach (PawnGenOption p in PawnGroupMakerUtility.ChoosePawnGenOptionsByPoints(parms.points, groupMaker.options, parms))
+			{
+				yield return p.kind;
 			}
 		}
 	}

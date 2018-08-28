@@ -213,5 +213,10 @@ namespace RimWorld
 				pawn.needs.AddOrRemoveNeedsAsAppropriate();
 			}
 		}
+
+		public static bool HasSpawnedComponents(Pawn p)
+		{
+			return p.pather != null;
+		}
 	}
 }

@@ -16,6 +16,10 @@ namespace Verse
 {
 	public class Dialog_DebugActionsMenu : Dialog_DebugOptionLister
 	{
+		private static List<PawnKindDef> pawnKindsForDamageTypeBattleRoyale;
+
+		private static Map mapLeak;
+
 		public override bool IsDebug
 		{
 			get
@@ -31,7 +35,7 @@ namespace Verse
 
 		protected override void DoListingItems()
 		{
-			if (KeyBindingDefOf.ToggleDebugActionsMenu.KeyDownEvent)
+			if (KeyBindingDefOf.Dev_ToggleDebugActionsMenu.KeyDownEvent)
 			{
 				Event.current.Use();
 				this.Close(true);
@@ -42,7 +46,7 @@ namespace Verse
 				{
 					this.DoListingItems_World();
 				}
-				else if (Find.VisibleMap != null)
+				else if (Find.CurrentMap != null)
 				{
 					this.DoListingItems_MapActions();
 					this.DoListingItems_MapTools();
@@ -62,9 +66,9 @@ namespace Verse
 			{
 				LanguageDataWriter.WriteBackstoryFile();
 			});
-			base.DebugAction("Output translation report", delegate
+			base.DebugAction("Save translation report", delegate
 			{
-				LanguageReportGenerator.OutputTranslationReport();
+				LanguageReportGenerator.SaveTranslationReport();
 			});
 		}
 
@@ -74,7 +78,7 @@ namespace Verse
 			base.DoLabel("Actions - Map management");
 			base.DebugAction("Generate map", delegate
 			{
-				MapParent mapParent = (MapParent)WorldObjectMaker.MakeWorldObject(WorldObjectDefOf.FactionBase);
+				MapParent mapParent = (MapParent)WorldObjectMaker.MakeWorldObject(WorldObjectDefOf.Settlement);
 				mapParent.Tile = TileFinder.RandomStartingTile();
 				mapParent.SetFaction(Faction.OfPlayer);
 				Find.WorldObjects.Add(mapParent);
@@ -94,9 +98,27 @@ namespace Verse
 				}
 				Find.WindowStack.Add(new Dialog_DebugOptionListLister(list));
 			});
+			base.DebugAction("Leak map", delegate
+			{
+				List<DebugMenuOption> list = new List<DebugMenuOption>();
+				List<Map> maps = Find.Maps;
+				for (int i = 0; i < maps.Count; i++)
+				{
+					Map map = maps[i];
+					list.Add(new DebugMenuOption(map.ToString(), DebugMenuOptionMode.Action, delegate
+					{
+						Dialog_DebugActionsMenu.mapLeak = map;
+					}));
+				}
+				Find.WindowStack.Add(new Dialog_DebugOptionListLister(list));
+			});
+			base.DebugAction("Print leaked map", delegate
+			{
+				Log.Message(string.Format("Leaked map {0}", Dialog_DebugActionsMenu.mapLeak), false);
+			});
 			base.DebugToolMap("Transfer", delegate
 			{
-				List<Thing> toTransfer = Find.VisibleMap.thingGrid.ThingsAt(UI.MouseCell()).ToList<Thing>();
+				List<Thing> toTransfer = Find.CurrentMap.thingGrid.ThingsAt(UI.MouseCell()).ToList<Thing>();
 				if (!toTransfer.Any<Thing>())
 				{
 					return;
@@ -106,21 +128,21 @@ namespace Verse
 				for (int i = 0; i < maps.Count; i++)
 				{
 					Map map = maps[i];
-					if (map != Find.VisibleMap)
+					if (map != Find.CurrentMap)
 					{
 						list.Add(new DebugMenuOption(map.ToString(), DebugMenuOptionMode.Action, delegate
 						{
 							for (int j = 0; j < toTransfer.Count; j++)
 							{
 								IntVec3 center;
-								if (CellFinder.TryFindRandomCellNear(map.Center, map, Mathf.Max(map.Size.x, map.Size.z), (IntVec3 x) => !x.Fogged(map) && x.Standable(map), out center))
+								if (CellFinder.TryFindRandomCellNear(map.Center, map, Mathf.Max(map.Size.x, map.Size.z), (IntVec3 x) => !x.Fogged(map) && x.Standable(map), out center, -1))
 								{
-									toTransfer[j].DeSpawn();
-									GenPlace.TryPlaceThing(toTransfer[j], center, map, ThingPlaceMode.Near, null);
+									toTransfer[j].DeSpawn(DestroyMode.Vanish);
+									GenPlace.TryPlaceThing(toTransfer[j], center, map, ThingPlaceMode.Near, null, null);
 								}
 								else
 								{
-									Log.Error("Could not find spawn cell.");
+									Log.Error("Could not find spawn cell.", false);
 								}
 							}
 						}));
@@ -135,41 +157,41 @@ namespace Verse
 				for (int i = 0; i < maps.Count; i++)
 				{
 					Map map = maps[i];
-					if (map != Find.VisibleMap)
+					if (map != Find.CurrentMap)
 					{
 						list.Add(new DebugMenuOption(map.ToString(), DebugMenuOptionMode.Action, delegate
 						{
-							Current.Game.VisibleMap = map;
+							Current.Game.CurrentMap = map;
 						}));
 					}
 				}
 				Find.WindowStack.Add(new Dialog_DebugOptionListLister(list));
 			});
-			base.DebugAction("Regenerate visible map", delegate
+			base.DebugAction("Regenerate current map", delegate
 			{
-				RememberedCameraPos rememberedCameraPos = Find.VisibleMap.rememberedCameraPos;
-				int tile = Find.VisibleMap.Tile;
-				MapParent parent = Find.VisibleMap.info.parent;
-				IntVec3 size = Find.VisibleMap.Size;
-				Current.Game.DeinitAndRemoveMap(Find.VisibleMap);
+				RememberedCameraPos rememberedCameraPos = Find.CurrentMap.rememberedCameraPos;
+				int tile = Find.CurrentMap.Tile;
+				MapParent parent = Find.CurrentMap.Parent;
+				IntVec3 size = Find.CurrentMap.Size;
+				Current.Game.DeinitAndRemoveMap(Find.CurrentMap);
 				Map orGenerateMap = GetOrGenerateMapUtility.GetOrGenerateMap(tile, size, parent.def);
-				Current.Game.VisibleMap = orGenerateMap;
+				Current.Game.CurrentMap = orGenerateMap;
 				Find.World.renderer.wantedMode = WorldRenderMode.None;
 				Find.CameraDriver.SetRootPosAndSize(rememberedCameraPos.rootPos, rememberedCameraPos.rootSize);
 			});
 			base.DebugAction("Generate map with caves", delegate
 			{
-				int tile = TileFinder.RandomFactionBaseTileFor(Faction.OfPlayer, false, (int x) => Find.World.HasCaves(x));
-				if (Find.VisibleMap != null)
+				int tile = TileFinder.RandomSettlementTileFor(Faction.OfPlayer, false, (int x) => Find.World.HasCaves(x));
+				if (Find.CurrentMap != null)
 				{
-					Find.WorldObjects.Remove(Find.VisibleMap.info.parent);
+					Find.WorldObjects.Remove(Find.CurrentMap.Parent);
 				}
-				MapParent mapParent = (MapParent)WorldObjectMaker.MakeWorldObject(WorldObjectDefOf.FactionBase);
+				MapParent mapParent = (MapParent)WorldObjectMaker.MakeWorldObject(WorldObjectDefOf.Settlement);
 				mapParent.Tile = tile;
 				mapParent.SetFaction(Faction.OfPlayer);
 				Find.WorldObjects.Add(mapParent);
 				Map orGenerateMap = GetOrGenerateMapUtility.GetOrGenerateMap(tile, Find.World.info.initialMapSize, null);
-				Current.Game.VisibleMap = orGenerateMap;
+				Current.Game.CurrentMap = orGenerateMap;
 				Find.World.renderer.wantedMode = WorldRenderMode.None;
 			});
 			base.DebugAction("Run MapGenerator", delegate
@@ -179,17 +201,24 @@ namespace Verse
 				{
 					list.Add(new DebugMenuOption(mapgen.defName, DebugMenuOptionMode.Action, delegate
 					{
-						MapParent mapParent = (MapParent)WorldObjectMaker.MakeWorldObject(WorldObjectDefOf.FactionBase);
+						MapParent mapParent = (MapParent)WorldObjectMaker.MakeWorldObject(WorldObjectDefOf.Settlement);
 						mapParent.Tile = (from tile in Enumerable.Range(0, Find.WorldGrid.TilesCount)
 						where Find.WorldGrid[tile].biome.canBuildBase
 						select tile).RandomElement<int>();
 						mapParent.SetFaction(Faction.OfPlayer);
 						Find.WorldObjects.Add(mapParent);
-						Map visibleMap = MapGenerator.GenerateMap(Find.World.info.initialMapSize, mapParent, mapgen, null, null);
-						Current.Game.VisibleMap = visibleMap;
+						Map currentMap = MapGenerator.GenerateMap(Find.World.info.initialMapSize, mapParent, mapgen, null, null);
+						Current.Game.CurrentMap = currentMap;
 					}));
 				}
 				Find.WindowStack.Add(new Dialog_DebugOptionListLister(list));
+			});
+			base.DebugAction("Force reform in current map", delegate
+			{
+				if (Find.CurrentMap != null)
+				{
+					TimedForcedExit.ForceReform(Find.CurrentMap.Parent);
+				}
 			});
 		}
 
@@ -197,12 +226,33 @@ namespace Verse
 		{
 			Text.Font = GameFont.Tiny;
 			base.DoLabel("Incidents");
-			this.DoExecuteIncidentDebugAction(Find.VisibleMap, null);
-			this.DoExecuteIncidentWithDebugAction(Find.VisibleMap, null);
-			base.DebugAction("Execute raid with...", delegate
+			if (Find.CurrentMap != null)
 			{
-				StorytellerComp storytellerComp = Find.Storyteller.storytellerComps.First((StorytellerComp x) => x is StorytellerComp_ThreatCycle || x is StorytellerComp_RandomMain);
-				IncidentParms parms = storytellerComp.GenerateParms(IncidentCategory.ThreatBig, Find.VisibleMap);
+				this.DoIncidentDebugAction(Find.CurrentMap);
+				this.DoIncidentWithPointsAction(Find.CurrentMap);
+			}
+			this.DoIncidentDebugAction(Find.World);
+			base.DebugAction("Execute raid with points...", delegate
+			{
+				this.Close(true);
+				List<FloatMenuOption> list = new List<FloatMenuOption>();
+				foreach (float current in Dialog_DebugActionsMenu.PointsOptions(true))
+				{
+					float localP = current;
+					list.Add(new FloatMenuOption(localP.ToString() + " points", delegate
+					{
+						IncidentParms incidentParms = new IncidentParms();
+						incidentParms.target = Find.CurrentMap;
+						incidentParms.points = localP;
+						IncidentDefOf.RaidEnemy.Worker.TryExecute(incidentParms);
+					}, MenuOptionPriority.Default, null, null, 0f, null, null));
+				}
+				Find.WindowStack.Add(new FloatMenu(list));
+			});
+			base.DebugAction("Execute raid with specifics...", delegate
+			{
+				StorytellerComp storytellerComp = Find.Storyteller.storytellerComps.First((StorytellerComp x) => x is StorytellerComp_OnOffCycle || x is StorytellerComp_RandomMain);
+				IncidentParms parms = storytellerComp.GenerateParms(IncidentCategoryDefOf.ThreatBig, Find.CurrentMap);
 				List<DebugMenuOption> list = new List<DebugMenuOption>();
 				foreach (Faction current in Find.FactionManager.AllFactions)
 				{
@@ -211,7 +261,7 @@ namespace Verse
 					{
 						parms.faction = localFac;
 						List<DebugMenuOption> list2 = new List<DebugMenuOption>();
-						foreach (float current2 in Dialog_DebugActionsMenu.PointsOptions())
+						foreach (float current2 in Dialog_DebugActionsMenu.PointsOptions(true))
 						{
 							float localPoints = current2;
 							list2.Add(new DebugMenuOption(current2 + " points", DebugMenuOptionMode.Action, delegate
@@ -222,14 +272,33 @@ namespace Verse
 								{
 									RaidStrategyDef localStrat = current3;
 									string text = localStrat.defName;
-									if (!localStrat.Worker.CanUseWith(parms))
+									if (!localStrat.Worker.CanUseWith(parms, PawnGroupKindDefOf.Combat))
 									{
 										text += " [NO]";
 									}
 									list3.Add(new DebugMenuOption(text, DebugMenuOptionMode.Action, delegate
 									{
 										parms.raidStrategy = localStrat;
-										this.DoRaid(parms);
+										List<DebugMenuOption> list4 = new List<DebugMenuOption>();
+										list4.Add(new DebugMenuOption("-Random-", DebugMenuOptionMode.Action, delegate
+										{
+											this.DoRaid(parms);
+										}));
+										foreach (PawnsArrivalModeDef current4 in DefDatabase<PawnsArrivalModeDef>.AllDefs)
+										{
+											PawnsArrivalModeDef localArrival = current4;
+											string text2 = localArrival.defName;
+											if (!localArrival.Worker.CanUseWith(parms) || !localStrat.arriveModes.Contains(localArrival))
+											{
+												text2 += " [NO]";
+											}
+											list4.Add(new DebugMenuOption(text2, DebugMenuOptionMode.Action, delegate
+											{
+												parms.raidArrivalMode = localArrival;
+												this.DoRaid(parms);
+											}));
+										}
+										Find.WindowStack.Add(new Dialog_DebugOptionListLister(list4));
 									}));
 								}
 								Find.WindowStack.Add(new Dialog_DebugOptionListLister(list3));
@@ -240,40 +309,40 @@ namespace Verse
 				}
 				Find.WindowStack.Add(new Dialog_DebugOptionListLister(list));
 			});
-			Action<int> DoRandomEnemyRaid = delegate(int pts)
-			{
-				this.Close(true);
-				IncidentParms incidentParms = new IncidentParms();
-				incidentParms.target = Find.VisibleMap;
-				incidentParms.points = (float)pts;
-				IncidentDefOf.RaidEnemy.Worker.TryExecute(incidentParms);
-			};
-			base.DebugAction("Raid (35 pts)", delegate
-			{
-				DoRandomEnemyRaid(35);
-			});
-			base.DebugAction("Raid (75 pts)", delegate
-			{
-				DoRandomEnemyRaid(75);
-			});
-			base.DebugAction("Raid (300 pts)", delegate
-			{
-				DoRandomEnemyRaid(300);
-			});
-			base.DebugAction("Raid (400 pts)", delegate
-			{
-				DoRandomEnemyRaid(400);
-			});
-			base.DebugAction("Raid  (1000 pts)", delegate
-			{
-				DoRandomEnemyRaid(1000);
-			});
-			base.DebugAction("Raid  (3000 pts)", delegate
-			{
-				DoRandomEnemyRaid(3000);
-			});
 			base.DoGap();
 			base.DoLabel("Actions - Misc");
+			base.DebugAction("Destroy all plants", delegate
+			{
+				foreach (Thing current in Find.CurrentMap.listerThings.AllThings.ToList<Thing>())
+				{
+					if (current is Plant)
+					{
+						current.Destroy(DestroyMode.Vanish);
+					}
+				}
+			});
+			base.DebugAction("Destroy all things", delegate
+			{
+				foreach (Thing current in Find.CurrentMap.listerThings.AllThings.ToList<Thing>())
+				{
+					current.Destroy(DestroyMode.Vanish);
+				}
+			});
+			base.DebugAction("Finish all research", delegate
+			{
+				Find.ResearchManager.DebugSetAllProjectsFinished();
+				Messages.Message("All research finished.", MessageTypeDefOf.TaskCompletion, false);
+			});
+			base.DebugAction("Replace all trade ships", delegate
+			{
+				Find.CurrentMap.passingShipManager.DebugSendAllShipsAway();
+				for (int i = 0; i < 5; i++)
+				{
+					IncidentParms incidentParms = new IncidentParms();
+					incidentParms.target = Find.CurrentMap;
+					IncidentDefOf.OrbitalTraderArrival.Worker.TryExecute(incidentParms);
+				}
+			});
 			base.DebugAction("Change weather...", delegate
 			{
 				List<DebugMenuOption> list = new List<DebugMenuOption>();
@@ -282,7 +351,7 @@ namespace Verse
 					WeatherDef localWeather = current;
 					list.Add(new DebugMenuOption(localWeather.LabelCap, DebugMenuOptionMode.Action, delegate
 					{
-						Find.VisibleMap.weatherManager.TransitionTo(localWeather);
+						Find.CurrentMap.weatherManager.TransitionTo(localWeather);
 					}));
 				}
 				Find.WindowStack.Add(new Dialog_DebugOptionListLister(list));
@@ -310,17 +379,24 @@ namespace Verse
 					SoundDef localSd = current;
 					list.Add(new DebugMenuOption(localSd.defName, DebugMenuOptionMode.Action, delegate
 					{
-						localSd.PlayOneShotOnCamera(null);
+						if (localSd.subSounds.Any((SubSoundDef sub) => sub.onCamera))
+						{
+							localSd.PlayOneShotOnCamera(null);
+						}
+						else
+						{
+							localSd.PlayOneShot(SoundInfo.InMap(new TargetInfo(Find.CameraDriver.MapPosition, Find.CurrentMap, false), MaintenanceType.None));
+						}
 					}));
 				}
 				Find.WindowStack.Add(new Dialog_DebugOptionListLister(list));
 			});
-			if (Find.VisibleMap.gameConditionManager.ActiveConditions.Count > 0)
+			if (Find.CurrentMap.gameConditionManager.ActiveConditions.Count > 0)
 			{
 				base.DebugAction("End game condition ...", delegate
 				{
 					List<DebugMenuOption> list = new List<DebugMenuOption>();
-					foreach (GameCondition current in Find.VisibleMap.gameConditionManager.ActiveConditions)
+					foreach (GameCondition current in Find.CurrentMap.gameConditionManager.ActiveConditions)
 					{
 						GameCondition localMc = current;
 						list.Add(new DebugMenuOption(localMc.LabelCap, DebugMenuOptionMode.Action, delegate
@@ -341,7 +417,7 @@ namespace Verse
 			});
 			base.DebugAction("Force enemy assault", delegate
 			{
-				foreach (Lord current in Find.VisibleMap.lordManager.lords)
+				foreach (Lord current in Find.CurrentMap.lordManager.lords)
 				{
 					LordToil_Stage lordToil_Stage = current.CurLordToil as LordToil_Stage;
 					if (lordToil_Stage != null)
@@ -350,7 +426,7 @@ namespace Verse
 						{
 							if (current2.sources.Contains(lordToil_Stage) && current2.target is LordToil_AssaultColony)
 							{
-								Messages.Message("Debug forcing to assault toil: " + current.faction, MessageTypeDefOf.TaskCompletion);
+								Messages.Message("Debug forcing to assault toil: " + current.faction, MessageTypeDefOf.TaskCompletion, false);
 								current.GotoToil(current2.target);
 								return;
 							}
@@ -360,7 +436,7 @@ namespace Verse
 			});
 			base.DebugAction("Force enemy flee", delegate
 			{
-				foreach (Lord current in Find.VisibleMap.lordManager.lords)
+				foreach (Lord current in Find.CurrentMap.lordManager.lords)
 				{
 					if (current.faction != null && current.faction.HostileTo(Faction.OfPlayer) && current.faction.def.autoFlee)
 					{
@@ -372,44 +448,31 @@ namespace Verse
 					}
 				}
 			});
-			base.DebugAction("Destroy all things", delegate
+			base.DebugAction("Adaptation progress 10 days", delegate
 			{
-				foreach (Thing current in Find.VisibleMap.listerThings.AllThings.ToList<Thing>())
-				{
-					current.Destroy(DestroyMode.Vanish);
-				}
-			});
-			base.DebugAction("Destroy all plants", delegate
-			{
-				foreach (Thing current in Find.VisibleMap.listerThings.AllThings.ToList<Thing>())
-				{
-					if (current is Plant)
-					{
-						current.Destroy(DestroyMode.Vanish);
-					}
-				}
+				Find.StoryWatcher.watcherAdaptation.Debug_OffsetAdaptDays(10f);
 			});
 			base.DebugAction("Unload unused assets", delegate
 			{
 				MemoryUtility.UnloadUnusedUnityAssets();
 			});
-			base.DebugAction("Name colony...", delegate
+			base.DebugAction("Name settlement...", delegate
 			{
 				List<DebugMenuOption> list = new List<DebugMenuOption>();
 				list.Add(new DebugMenuOption("Faction", DebugMenuOptionMode.Action, delegate
 				{
 					Find.WindowStack.Add(new Dialog_NamePlayerFaction());
 				}));
-				if (Find.VisibleMap != null && Find.VisibleMap.IsPlayerHome)
+				if (Find.CurrentMap != null && Find.CurrentMap.IsPlayerHome && Find.CurrentMap.Parent is Settlement)
 				{
-					FactionBase factionBase = (FactionBase)Find.VisibleMap.info.parent;
+					Settlement factionBase = (Settlement)Find.CurrentMap.Parent;
 					list.Add(new DebugMenuOption("Faction base", DebugMenuOptionMode.Action, delegate
 					{
-						Find.WindowStack.Add(new Dialog_NamePlayerFactionBase(factionBase));
+						Find.WindowStack.Add(new Dialog_NamePlayerSettlement(factionBase));
 					}));
 					list.Add(new DebugMenuOption("Faction and faction base", DebugMenuOptionMode.Action, delegate
 					{
-						Find.WindowStack.Add(new Dialog_NamePlayerFactionAndBase(factionBase));
+						Find.WindowStack.Add(new Dialog_NamePlayerFactionAndSettlement(factionBase));
 					}));
 				}
 				Find.WindowStack.Add(new Dialog_DebugOptionListLister(list));
@@ -420,22 +483,7 @@ namespace Verse
 			});
 			base.DebugAction("Regen all map mesh sections", delegate
 			{
-				Find.VisibleMap.mapDrawer.RegenerateEverythingNow();
-			});
-			base.DebugAction("Finish all research", delegate
-			{
-				Find.ResearchManager.DebugSetAllProjectsFinished();
-				Messages.Message("All research finished.", MessageTypeDefOf.TaskCompletion);
-			});
-			base.DebugAction("Replace all trade ships", delegate
-			{
-				Find.VisibleMap.passingShipManager.DebugSendAllShipsAway();
-				for (int i = 0; i < 5; i++)
-				{
-					IncidentParms incidentParms = new IncidentParms();
-					incidentParms.target = Find.VisibleMap;
-					IncidentDefOf.OrbitalTraderArrival.Worker.TryExecute(incidentParms);
-				}
+				Find.CurrentMap.mapDrawer.RegenerateEverythingNow();
 			});
 			base.DebugAction("Change camera config...", delegate
 			{
@@ -443,7 +491,12 @@ namespace Verse
 				foreach (Type current in typeof(CameraMapConfig).AllSubclasses())
 				{
 					Type localType = current;
-					list.Add(new DebugMenuOption(localType.Name, DebugMenuOptionMode.Action, delegate
+					string text = localType.Name;
+					if (text.StartsWith("CameraMapConfig_"))
+					{
+						text = text.Substring("CameraMapConfig_".Length);
+					}
+					list.Add(new DebugMenuOption(text, DebugMenuOptionMode.Action, delegate
 					{
 						Find.CameraDriver.config = (CameraMapConfig)Activator.CreateInstance(localType);
 					}));
@@ -456,9 +509,9 @@ namespace Verse
 			});
 			base.DebugAction("Flash trade drop spot", delegate
 			{
-				IntVec3 intVec = DropCellFinder.TradeDropSpot(Find.VisibleMap);
-				Find.VisibleMap.debugDrawer.FlashCell(intVec, 0f, null, 50);
-				Log.Message("trade drop spot: " + intVec);
+				IntVec3 intVec = DropCellFinder.TradeDropSpot(Find.CurrentMap);
+				Find.CurrentMap.debugDrawer.FlashCell(intVec, 0f, null, 50);
+				Log.Message("trade drop spot: " + intVec, false);
 			});
 			base.DebugAction("Kill faction leader", delegate
 			{
@@ -470,15 +523,46 @@ namespace Verse
 				{
 					if (++num > 1000)
 					{
-						Log.Warning("Could not kill faction leader.");
+						Log.Warning("Could not kill faction leader.", false);
 						break;
 					}
-					leader.TakeDamage(new DamageInfo(DamageDefOf.Bullet, 30, -1f, null, null, null, DamageInfo.SourceCategory.ThingOrUnknown));
+					leader.TakeDamage(new DamageInfo(DamageDefOf.Bullet, 30f, 999f, -1f, null, null, null, DamageInfo.SourceCategory.ThingOrUnknown, null));
 				}
+			});
+			base.DebugAction("Set faction relations", delegate
+			{
+				List<FloatMenuOption> list = new List<FloatMenuOption>();
+				foreach (Faction current in Find.FactionManager.AllFactionsVisibleInViewOrder)
+				{
+					Faction localFac = current;
+					foreach (FactionRelationKind localRk2 in Enum.GetValues(typeof(FactionRelationKind)))
+					{
+						FactionRelationKind localRk = localRk2;
+						FloatMenuOption item = new FloatMenuOption(localFac + " - " + localRk, delegate
+						{
+							localFac.TrySetRelationKind(Faction.OfPlayer, localRk, true, null, null);
+						}, MenuOptionPriority.Default, null, null, 0f, null, null);
+						list.Add(item);
+					}
+				}
+				Find.WindowStack.Add(new FloatMenu(list));
+			});
+			base.DebugAction("Visitor gift", delegate
+			{
+				List<Pawn> list = new List<Pawn>();
+				foreach (Pawn current in Find.CurrentMap.mapPawns.AllPawnsSpawned)
+				{
+					if (current.Faction != null && !current.Faction.IsPlayer && !current.Faction.HostileTo(Faction.OfPlayer))
+					{
+						list.Add(current);
+						break;
+					}
+				}
+				VisitorGiftForPlayerUtility.GiveGift(list, list[0].Faction);
 			});
 			base.DebugAction("Refog map", delegate
 			{
-				FloodFillerFog.DebugRefogMap(Find.VisibleMap);
+				FloodFillerFog.DebugRefogMap(Find.CurrentMap);
 			});
 			base.DebugAction("Use GenStep", delegate
 			{
@@ -489,10 +573,18 @@ namespace Verse
 					list.Add(new DebugMenuOption(localGenStep.Name, DebugMenuOptionMode.Action, delegate
 					{
 						GenStep genStep = (GenStep)Activator.CreateInstance(localGenStep);
-						genStep.Generate(Find.VisibleMap);
+						genStep.Generate(Find.CurrentMap, default(GenStepParams));
 					}));
 				}
 				Find.WindowStack.Add(new Dialog_DebugOptionListLister(list));
+			});
+			base.DebugAction("Increment time 1 hour", delegate
+			{
+				Find.TickManager.DebugSetTicksGame(Find.TickManager.TicksGame + 2500);
+			});
+			base.DebugAction("Increment time 6 hours", delegate
+			{
+				Find.TickManager.DebugSetTicksGame(Find.TickManager.TicksGame + 15000);
 			});
 			base.DebugAction("Increment time 1 day", delegate
 			{
@@ -502,135 +594,158 @@ namespace Verse
 			{
 				Find.TickManager.DebugSetTicksGame(Find.TickManager.TicksGame + 900000);
 			});
+			base.DebugAction("StoryWatcher tick 1 day", delegate
+			{
+				for (int i = 0; i < 60000; i++)
+				{
+					Find.StoryWatcher.StoryWatcherTick();
+					Find.TickManager.DebugSetTicksGame(Find.TickManager.TicksGame + 1);
+				}
+			});
 		}
 
 		private void DoListingItems_MapTools()
 		{
 			base.DoGap();
 			base.DoLabel("Tools - General");
-			base.DebugToolMap("Tool: Destroy", delegate
+			base.DebugToolMap("T: Destroy", delegate
 			{
-				foreach (Thing current in Find.VisibleMap.thingGrid.ThingsAt(UI.MouseCell()).ToList<Thing>())
+				foreach (Thing current in Find.CurrentMap.thingGrid.ThingsAt(UI.MouseCell()).ToList<Thing>())
 				{
 					current.Destroy(DestroyMode.Vanish);
 				}
 			});
-			base.DebugToolMap("Tool: Kill", delegate
+			base.DebugToolMap("T: Kill", delegate
 			{
-				foreach (Thing current in Find.VisibleMap.thingGrid.ThingsAt(UI.MouseCell()).ToList<Thing>())
+				foreach (Thing current in Find.CurrentMap.thingGrid.ThingsAt(UI.MouseCell()).ToList<Thing>())
 				{
 					current.Kill(null, null);
 				}
 			});
-			base.DebugToolMap("Tool: 10 damage", delegate
+			base.DebugToolMap("T: 10 damage", delegate
 			{
-				foreach (Thing current in Find.VisibleMap.thingGrid.ThingsAt(UI.MouseCell()).ToList<Thing>())
+				foreach (Thing current in Find.CurrentMap.thingGrid.ThingsAt(UI.MouseCell()).ToList<Thing>())
 				{
-					current.TakeDamage(new DamageInfo(DamageDefOf.Crush, 10, -1f, null, null, null, DamageInfo.SourceCategory.ThingOrUnknown));
+					current.TakeDamage(new DamageInfo(DamageDefOf.Crush, 10f, 0f, -1f, null, null, null, DamageInfo.SourceCategory.ThingOrUnknown, null));
 				}
 			});
-			base.DebugToolMap("Tool: 5000 damage", delegate
+			base.DebugToolMap("T: 5000 damage", delegate
 			{
-				foreach (Thing current in Find.VisibleMap.thingGrid.ThingsAt(UI.MouseCell()).ToList<Thing>())
+				foreach (Thing current in Find.CurrentMap.thingGrid.ThingsAt(UI.MouseCell()).ToList<Thing>())
 				{
-					current.TakeDamage(new DamageInfo(DamageDefOf.Crush, 5000, -1f, null, null, null, DamageInfo.SourceCategory.ThingOrUnknown));
+					current.TakeDamage(new DamageInfo(DamageDefOf.Crush, 5000f, 0f, -1f, null, null, null, DamageInfo.SourceCategory.ThingOrUnknown, null));
 				}
 			});
-			base.DebugToolMap("Tool: 5000 flame damage", delegate
+			base.DebugToolMap("T: 5000 flame damage", delegate
 			{
-				foreach (Thing current in Find.VisibleMap.thingGrid.ThingsAt(UI.MouseCell()).ToList<Thing>())
+				foreach (Thing current in Find.CurrentMap.thingGrid.ThingsAt(UI.MouseCell()).ToList<Thing>())
 				{
-					current.TakeDamage(new DamageInfo(DamageDefOf.Flame, 5000, -1f, null, null, null, DamageInfo.SourceCategory.ThingOrUnknown));
+					current.TakeDamage(new DamageInfo(DamageDefOf.Flame, 5000f, 0f, -1f, null, null, null, DamageInfo.SourceCategory.ThingOrUnknown, null));
 				}
 			});
-			base.DebugToolMap("Tool: Clear area 21x21", delegate
+			base.DebugToolMap("T: Clear area 21x21", delegate
 			{
 				CellRect r = CellRect.CenteredOn(UI.MouseCell(), 10);
-				GenDebug.ClearArea(r, Find.VisibleMap);
+				GenDebug.ClearArea(r, Find.CurrentMap);
 			});
-			base.DebugToolMap("Tool: Rock 21x21", delegate
+			base.DebugToolMap("T: Rock 21x21", delegate
 			{
 				CellRect cellRect = CellRect.CenteredOn(UI.MouseCell(), 10);
-				cellRect.ClipInsideMap(Find.VisibleMap);
-				ThingDef granite = ThingDefOf.Granite;
+				cellRect.ClipInsideMap(Find.CurrentMap);
 				foreach (IntVec3 current in cellRect)
 				{
-					GenSpawn.Spawn(granite, current, Find.VisibleMap);
+					GenSpawn.Spawn(ThingDefOf.Granite, current, Find.CurrentMap, WipeMode.Vanish);
+				}
+			});
+			base.DebugToolMap("T: Destroy trees 21x21", delegate
+			{
+				CellRect cellRect = CellRect.CenteredOn(UI.MouseCell(), 10);
+				cellRect.ClipInsideMap(Find.CurrentMap);
+				foreach (IntVec3 current in cellRect)
+				{
+					List<Thing> thingList = current.GetThingList(Find.CurrentMap);
+					for (int i = thingList.Count - 1; i >= 0; i--)
+					{
+						if (thingList[i].def.category == ThingCategory.Plant && thingList[i].def.plant.IsTree)
+						{
+							thingList[i].Destroy(DestroyMode.Vanish);
+						}
+					}
 				}
 			});
 			base.DoGap();
-			base.DebugToolMap("Tool: Explosion (bomb)", delegate
+			base.DebugToolMap("T: Explosion (bomb)", delegate
 			{
-				GenExplosion.DoExplosion(UI.MouseCell(), Find.VisibleMap, 3.9f, DamageDefOf.Bomb, null, -1, null, null, null, null, 0f, 1, false, null, 0f, 1, 0f, false);
+				GenExplosion.DoExplosion(UI.MouseCell(), Find.CurrentMap, 3.9f, DamageDefOf.Bomb, null, -1, -1f, null, null, null, null, null, 0f, 1, false, null, 0f, 1, 0f, false);
 			});
-			base.DebugToolMap("Tool: Explosion (flame)", delegate
+			base.DebugToolMap("T: Explosion (flame)", delegate
 			{
-				GenExplosion.DoExplosion(UI.MouseCell(), Find.VisibleMap, 3.9f, DamageDefOf.Flame, null, -1, null, null, null, null, 0f, 1, false, null, 0f, 1, 0f, false);
+				GenExplosion.DoExplosion(UI.MouseCell(), Find.CurrentMap, 3.9f, DamageDefOf.Flame, null, -1, -1f, null, null, null, null, null, 0f, 1, false, null, 0f, 1, 0f, false);
 			});
-			base.DebugToolMap("Tool: Explosion (stun)", delegate
+			base.DebugToolMap("T: Explosion (stun)", delegate
 			{
-				GenExplosion.DoExplosion(UI.MouseCell(), Find.VisibleMap, 3.9f, DamageDefOf.Stun, null, -1, null, null, null, null, 0f, 1, false, null, 0f, 1, 0f, false);
+				GenExplosion.DoExplosion(UI.MouseCell(), Find.CurrentMap, 3.9f, DamageDefOf.Stun, null, -1, -1f, null, null, null, null, null, 0f, 1, false, null, 0f, 1, 0f, false);
 			});
-			base.DebugToolMap("Tool: Explosion (EMP)", delegate
+			base.DebugToolMap("T: Explosion (EMP)", delegate
 			{
-				GenExplosion.DoExplosion(UI.MouseCell(), Find.VisibleMap, 3.9f, DamageDefOf.EMP, null, -1, null, null, null, null, 0f, 1, false, null, 0f, 1, 0f, false);
+				GenExplosion.DoExplosion(UI.MouseCell(), Find.CurrentMap, 3.9f, DamageDefOf.EMP, null, -1, -1f, null, null, null, null, null, 0f, 1, false, null, 0f, 1, 0f, false);
 			});
-			base.DebugToolMap("Tool: Explosion (extinguisher)", delegate
+			base.DebugToolMap("T: Explosion (extinguisher)", delegate
 			{
 				IntVec3 center = UI.MouseCell();
-				Map visibleMap = Find.VisibleMap;
+				Map currentMap = Find.CurrentMap;
 				float radius = 10f;
 				DamageDef extinguish = DamageDefOf.Extinguish;
 				Thing instigator = null;
-				ThingDef filthFireFoam = ThingDefOf.FilthFireFoam;
-				GenExplosion.DoExplosion(center, visibleMap, radius, extinguish, instigator, -1, null, null, null, filthFireFoam, 1f, 3, true, null, 0f, 1, 0f, false);
+				ThingDef filth_FireFoam = ThingDefOf.Filth_FireFoam;
+				GenExplosion.DoExplosion(center, currentMap, radius, extinguish, instigator, -1, -1f, null, null, null, null, filth_FireFoam, 1f, 3, true, null, 0f, 1, 0f, false);
 			});
-			base.DebugToolMap("Tool: Explosion (smoke)", delegate
+			base.DebugToolMap("T: Explosion (smoke)", delegate
 			{
 				IntVec3 center = UI.MouseCell();
-				Map visibleMap = Find.VisibleMap;
+				Map currentMap = Find.CurrentMap;
 				float radius = 10f;
 				DamageDef smoke = DamageDefOf.Smoke;
 				Thing instigator = null;
 				ThingDef gas_Smoke = ThingDefOf.Gas_Smoke;
-				GenExplosion.DoExplosion(center, visibleMap, radius, smoke, instigator, -1, null, null, null, gas_Smoke, 1f, 1, false, null, 0f, 1, 0f, false);
+				GenExplosion.DoExplosion(center, currentMap, radius, smoke, instigator, -1, -1f, null, null, null, null, gas_Smoke, 1f, 1, false, null, 0f, 1, 0f, false);
 			});
-			base.DebugToolMap("Tool: Lightning strike", delegate
+			base.DebugToolMap("T: Lightning strike", delegate
 			{
-				Find.VisibleMap.weatherManager.eventHandler.AddEvent(new WeatherEvent_LightningStrike(Find.VisibleMap, UI.MouseCell()));
+				Find.CurrentMap.weatherManager.eventHandler.AddEvent(new WeatherEvent_LightningStrike(Find.CurrentMap, UI.MouseCell()));
 			});
 			base.DoGap();
-			base.DebugToolMap("Tool: Add snow", delegate
+			base.DebugToolMap("T: Add snow", delegate
 			{
-				SnowUtility.AddSnowRadial(UI.MouseCell(), Find.VisibleMap, 5f, 1f);
+				SnowUtility.AddSnowRadial(UI.MouseCell(), Find.CurrentMap, 5f, 1f);
 			});
-			base.DebugToolMap("Tool: Remove snow", delegate
+			base.DebugToolMap("T: Remove snow", delegate
 			{
-				SnowUtility.AddSnowRadial(UI.MouseCell(), Find.VisibleMap, 5f, -1f);
+				SnowUtility.AddSnowRadial(UI.MouseCell(), Find.CurrentMap, 5f, -1f);
 			});
 			base.DebugAction("Clear all snow", delegate
 			{
-				foreach (IntVec3 current in Find.VisibleMap.AllCells)
+				foreach (IntVec3 current in Find.CurrentMap.AllCells)
 				{
-					Find.VisibleMap.snowGrid.SetDepth(current, 0f);
+					Find.CurrentMap.snowGrid.SetDepth(current, 0f);
 				}
 			});
-			base.DebugToolMap("Tool: Push heat (10)", delegate
+			base.DebugToolMap("T: Push heat (10)", delegate
 			{
-				GenTemperature.PushHeat(UI.MouseCell(), Find.VisibleMap, 10f);
+				GenTemperature.PushHeat(UI.MouseCell(), Find.CurrentMap, 10f);
 			});
-			base.DebugToolMap("Tool: Push heat (10000)", delegate
+			base.DebugToolMap("T: Push heat (10000)", delegate
 			{
-				GenTemperature.PushHeat(UI.MouseCell(), Find.VisibleMap, 10000f);
+				GenTemperature.PushHeat(UI.MouseCell(), Find.CurrentMap, 10000f);
 			});
-			base.DebugToolMap("Tool: Push heat (-1000)", delegate
+			base.DebugToolMap("T: Push heat (-1000)", delegate
 			{
-				GenTemperature.PushHeat(UI.MouseCell(), Find.VisibleMap, -1000f);
+				GenTemperature.PushHeat(UI.MouseCell(), Find.CurrentMap, -1000f);
 			});
 			base.DoGap();
-			base.DebugToolMap("Tool: Finish plant growth", delegate
+			base.DebugToolMap("T: Finish plant growth", delegate
 			{
-				foreach (Thing current in Find.VisibleMap.thingGrid.ThingsAt(UI.MouseCell()))
+				foreach (Thing current in Find.CurrentMap.thingGrid.ThingsAt(UI.MouseCell()))
 				{
 					Plant plant = current as Plant;
 					if (plant != null)
@@ -639,10 +754,10 @@ namespace Verse
 					}
 				}
 			});
-			base.DebugToolMap("Tool: Grow 1 day", delegate
+			base.DebugToolMap("T: Grow 1 day", delegate
 			{
 				IntVec3 intVec = UI.MouseCell();
-				Plant plant = intVec.GetPlant(Find.VisibleMap);
+				Plant plant = intVec.GetPlant(Find.CurrentMap);
 				if (plant != null && plant.def.plant != null)
 				{
 					int num = (int)((1f - plant.Growth) * plant.def.plant.growDays);
@@ -659,71 +774,29 @@ namespace Verse
 					{
 						plant.Growth = 1f;
 					}
-					Find.VisibleMap.mapDrawer.SectionAt(intVec).RegenerateAllLayers();
+					Find.CurrentMap.mapDrawer.SectionAt(intVec).RegenerateAllLayers();
 				}
 			});
-			base.DebugToolMap("Tool: Grow to maturity", delegate
+			base.DebugToolMap("T: Grow to maturity", delegate
 			{
 				IntVec3 intVec = UI.MouseCell();
-				Plant plant = intVec.GetPlant(Find.VisibleMap);
+				Plant plant = intVec.GetPlant(Find.CurrentMap);
 				if (plant != null && plant.def.plant != null)
 				{
 					int num = (int)((1f - plant.Growth) * plant.def.plant.growDays);
 					plant.Age += num;
 					plant.Growth = 1f;
-					Find.VisibleMap.mapDrawer.SectionAt(intVec).RegenerateAllLayers();
+					Find.CurrentMap.mapDrawer.SectionAt(intVec).RegenerateAllLayers();
 				}
-			});
-			base.DebugToolMap("Tool: Reproduce present plant", delegate
-			{
-				IntVec3 c = UI.MouseCell();
-				Plant plant = c.GetPlant(Find.VisibleMap);
-				if (plant != null && plant.def.plant != null)
-				{
-					Plant plant2 = GenPlantReproduction.TryReproduceFrom(plant.Position, plant.def, SeedTargFindMode.Reproduce, plant.Map);
-					if (plant2 != null)
-					{
-						Find.VisibleMap.debugDrawer.FlashCell(plant2.Position, 0f, null, 50);
-						Find.VisibleMap.debugDrawer.FlashLine(plant.Position, plant2.Position, 50);
-					}
-					else
-					{
-						Find.VisibleMap.debugDrawer.FlashCell(plant.Position, 0f, null, 50);
-					}
-				}
-			});
-			base.DebugToolMap("Tool: Reproduce plant...", delegate
-			{
-				List<FloatMenuOption> list = new List<FloatMenuOption>();
-				foreach (ThingDef current in from d in DefDatabase<ThingDef>.AllDefs
-				where d.category == ThingCategory.Plant && d.plant.reproduces
-				select d)
-				{
-					ThingDef localDef = current;
-					list.Add(new FloatMenuOption(localDef.LabelCap, delegate
-					{
-						Plant plant = GenPlantReproduction.TryReproduceFrom(UI.MouseCell(), localDef, SeedTargFindMode.Reproduce, Find.VisibleMap);
-						if (plant != null)
-						{
-							Find.VisibleMap.debugDrawer.FlashCell(plant.Position, 0f, null, 50);
-							Find.VisibleMap.debugDrawer.FlashLine(UI.MouseCell(), plant.Position, 50);
-						}
-						else
-						{
-							Find.VisibleMap.debugDrawer.FlashCell(UI.MouseCell(), 0f, null, 50);
-						}
-					}, MenuOptionPriority.Default, null, null, 0f, null, null));
-				}
-				Find.WindowStack.Add(new FloatMenu(list));
 			});
 			base.DoGap();
-			base.DebugToolMap("Tool: Regen section", delegate
+			base.DebugToolMap("T: Regen section", delegate
 			{
-				Find.VisibleMap.mapDrawer.SectionAt(UI.MouseCell()).RegenerateAllLayers();
+				Find.CurrentMap.mapDrawer.SectionAt(UI.MouseCell()).RegenerateAllLayers();
 			});
-			base.DebugToolMap("Tool: Randomize color", delegate
+			base.DebugToolMap("T: Randomize color", delegate
 			{
-				foreach (Thing current in Find.VisibleMap.thingGrid.ThingsAt(UI.MouseCell()))
+				foreach (Thing current in Find.CurrentMap.thingGrid.ThingsAt(UI.MouseCell()))
 				{
 					CompColorable compColorable = current.TryGetComp<CompColorable>();
 					if (compColorable != null)
@@ -732,9 +805,9 @@ namespace Verse
 					}
 				}
 			});
-			base.DebugToolMap("Tool: Rot 1 day", delegate
+			base.DebugToolMap("T: Rot 1 day", delegate
 			{
-				foreach (Thing current in Find.VisibleMap.thingGrid.ThingsAt(UI.MouseCell()))
+				foreach (Thing current in Find.CurrentMap.thingGrid.ThingsAt(UI.MouseCell()))
 				{
 					CompRottable compRottable = current.TryGetComp<CompRottable>();
 					if (compRottable != null)
@@ -743,9 +816,9 @@ namespace Verse
 					}
 				}
 			});
-			base.DebugToolMap("Tool: Fuel -20%", delegate
+			base.DebugToolMap("T: Fuel -20%", delegate
 			{
-				foreach (Thing current in Find.VisibleMap.thingGrid.ThingsAt(UI.MouseCell()))
+				foreach (Thing current in Find.CurrentMap.thingGrid.ThingsAt(UI.MouseCell()))
 				{
 					CompRefuelable compRefuelable = current.TryGetComp<CompRefuelable>();
 					if (compRefuelable != null)
@@ -754,9 +827,9 @@ namespace Verse
 					}
 				}
 			});
-			base.DebugToolMap("Tool: Break down...", delegate
+			base.DebugToolMap("T: Break down...", delegate
 			{
-				foreach (Thing current in Find.VisibleMap.thingGrid.ThingsAt(UI.MouseCell()))
+				foreach (Thing current in Find.CurrentMap.thingGrid.ThingsAt(UI.MouseCell()))
 				{
 					CompBreakdownable compBreakdownable = current.TryGetComp<CompBreakdownable>();
 					if (compBreakdownable != null && !compBreakdownable.BrokenDown)
@@ -765,11 +838,11 @@ namespace Verse
 					}
 				}
 			});
-			base.DebugAction("Tool: Use scatterer", delegate
+			base.DebugAction("T: Use scatterer", delegate
 			{
 				Find.WindowStack.Add(new Dialog_DebugOptionListLister(DebugTools_MapGen.Options_Scatterers()));
 			});
-			base.DebugAction("Tool: BaseGen", delegate
+			base.DebugAction("T: BaseGen", delegate
 			{
 				List<DebugMenuOption> list = new List<DebugMenuOption>();
 				foreach (string current in (from x in DefDatabase<RuleDef>.AllDefs
@@ -786,8 +859,8 @@ namespace Verse
 							DebugTools.curTool = new DebugTool("second corner...", delegate
 							{
 								IntVec3 second = UI.MouseCell();
-								CellRect rect = CellRect.FromLimits(firstCorner, second).ClipInsideMap(Find.VisibleMap);
-								BaseGen.globalSettings.map = Find.VisibleMap;
+								CellRect rect = CellRect.FromLimits(firstCorner, second).ClipInsideMap(Find.CurrentMap);
+								BaseGen.globalSettings.map = Find.CurrentMap;
 								BaseGen.symbolStack.Push(localSymbol, rect);
 								BaseGen.Generate();
 								DebugTools.curTool = tool;
@@ -798,93 +871,63 @@ namespace Verse
 				}
 				Find.WindowStack.Add(new Dialog_DebugOptionListLister(list));
 			});
-			base.DebugToolMap("Tool: Make roof", delegate
+			base.DebugToolMap("T: Make roof", delegate
 			{
 				CellRect.CellRectIterator iterator = CellRect.CenteredOn(UI.MouseCell(), 1).GetIterator();
 				while (!iterator.Done())
 				{
-					Find.VisibleMap.roofGrid.SetRoof(iterator.Current, RoofDefOf.RoofConstructed);
+					Find.CurrentMap.roofGrid.SetRoof(iterator.Current, RoofDefOf.RoofConstructed);
 					iterator.MoveNext();
 				}
 			});
-			base.DebugToolMap("Tool: Delete roof", delegate
+			base.DebugToolMap("T: Delete roof", delegate
 			{
 				CellRect.CellRectIterator iterator = CellRect.CenteredOn(UI.MouseCell(), 1).GetIterator();
 				while (!iterator.Done())
 				{
-					Find.VisibleMap.roofGrid.SetRoof(iterator.Current, null);
+					Find.CurrentMap.roofGrid.SetRoof(iterator.Current, null);
 					iterator.MoveNext();
 				}
 			});
-			base.DebugToolMap("Tool: Toggle trap status", delegate
+			base.DebugToolMap("T: Test flood unfog", delegate
 			{
-				foreach (Thing current in Find.VisibleMap.thingGrid.ThingsAt(UI.MouseCell()).ToList<Thing>())
-				{
-					Building_Trap building_Trap = current as Building_Trap;
-					if (building_Trap != null)
-					{
-						if (building_Trap.Armed)
-						{
-							building_Trap.Spring(null);
-						}
-						else
-						{
-							Building_TrapRearmable building_TrapRearmable = building_Trap as Building_TrapRearmable;
-							if (building_TrapRearmable != null)
-							{
-								building_TrapRearmable.Rearm();
-							}
-						}
-					}
-				}
+				FloodFillerFog.DebugFloodUnfog(UI.MouseCell(), Find.CurrentMap);
 			});
-			base.DebugToolMap("Tool: Add trap memory", delegate
+			base.DebugToolMap("T: Flash closewalk cell 30", delegate
 			{
-				foreach (Faction current in Find.World.factionManager.AllFactions)
-				{
-					current.TacticalMemory.TrapRevealed(UI.MouseCell(), Find.VisibleMap);
-				}
-				Find.VisibleMap.debugDrawer.FlashCell(UI.MouseCell(), 0f, "added", 50);
+				IntVec3 c = CellFinder.RandomClosewalkCellNear(UI.MouseCell(), Find.CurrentMap, 30, null);
+				Find.CurrentMap.debugDrawer.FlashCell(c, 0f, null, 50);
 			});
-			base.DebugToolMap("Tool: Test flood unfog", delegate
-			{
-				FloodFillerFog.DebugFloodUnfog(UI.MouseCell(), Find.VisibleMap);
-			});
-			base.DebugToolMap("Tool: Flash closewalk cell 30", delegate
-			{
-				IntVec3 c = CellFinder.RandomClosewalkCellNear(UI.MouseCell(), Find.VisibleMap, 30, null);
-				Find.VisibleMap.debugDrawer.FlashCell(c, 0f, null, 50);
-			});
-			base.DebugToolMap("Tool: Flash walk path", delegate
+			base.DebugToolMap("T: Flash walk path", delegate
 			{
 				WalkPathFinder.DebugFlashWalkPath(UI.MouseCell(), 8);
 			});
-			base.DebugToolMap("Tool: Flash skygaze cell", delegate
+			base.DebugToolMap("T: Flash skygaze cell", delegate
 			{
-				Pawn pawn = Find.VisibleMap.mapPawns.FreeColonists.First<Pawn>();
+				Pawn pawn = Find.CurrentMap.mapPawns.FreeColonists.First<Pawn>();
 				IntVec3 c;
 				RCellFinder.TryFindSkygazeCell(UI.MouseCell(), pawn, out c);
-				Find.VisibleMap.debugDrawer.FlashCell(c, 0f, null, 50);
-				MoteMaker.ThrowText(c.ToVector3Shifted(), Find.VisibleMap, "for " + pawn.Label, Color.white, -1f);
+				Find.CurrentMap.debugDrawer.FlashCell(c, 0f, null, 50);
+				MoteMaker.ThrowText(c.ToVector3Shifted(), Find.CurrentMap, "for " + pawn.Label, Color.white, -1f);
 			});
-			base.DebugToolMap("Tool: Flash direct flee dest", delegate
+			base.DebugToolMap("T: Flash direct flee dest", delegate
 			{
 				Pawn pawn = Find.Selector.SingleSelectedThing as Pawn;
 				IntVec3 c;
 				if (pawn == null)
 				{
-					Find.VisibleMap.debugDrawer.FlashCell(UI.MouseCell(), 0f, "select a pawn", 50);
+					Find.CurrentMap.debugDrawer.FlashCell(UI.MouseCell(), 0f, "select a pawn", 50);
 				}
 				else if (RCellFinder.TryFindDirectFleeDestination(UI.MouseCell(), 9f, pawn, out c))
 				{
-					Find.VisibleMap.debugDrawer.FlashCell(c, 0.5f, null, 50);
+					Find.CurrentMap.debugDrawer.FlashCell(c, 0.5f, null, 50);
 				}
 				else
 				{
-					Find.VisibleMap.debugDrawer.FlashCell(UI.MouseCell(), 0.8f, "not found", 50);
+					Find.CurrentMap.debugDrawer.FlashCell(UI.MouseCell(), 0.8f, "not found", 50);
 				}
 			});
-			base.DebugAction("Tool: Flash spectators cells", delegate
+			base.DebugAction("T: Flash spectators cells", delegate
 			{
 				Action<bool> act = delegate(bool bestSideOnly)
 				{
@@ -896,13 +939,13 @@ namespace Verse
 						DebugTools.curTool = new DebugTool("second watch rect corner...", delegate
 						{
 							IntVec3 second = UI.MouseCell();
-							CellRect spectateRect = CellRect.FromLimits(firstCorner, second).ClipInsideMap(Find.VisibleMap);
+							CellRect spectateRect = CellRect.FromLimits(firstCorner, second).ClipInsideMap(Find.CurrentMap);
 							SpectateRectSide allowedSides = SpectateRectSide.All;
 							if (bestSideOnly)
 							{
-								allowedSides = SpectatorCellFinder.FindSingleBestSide(spectateRect, Find.VisibleMap, SpectateRectSide.All, 1);
+								allowedSides = SpectatorCellFinder.FindSingleBestSide(spectateRect, Find.CurrentMap, SpectateRectSide.All, 1);
 							}
-							SpectatorCellFinder.DebugFlashPotentialSpectatorCells(spectateRect, Find.VisibleMap, allowedSides, 1);
+							SpectatorCellFinder.DebugFlashPotentialSpectatorCells(spectateRect, Find.CurrentMap, allowedSides, 1);
 							DebugTools.curTool = tool;
 						}, firstCorner);
 					}, null);
@@ -919,7 +962,7 @@ namespace Verse
 				}));
 				Find.WindowStack.Add(new Dialog_DebugOptionListLister(list));
 			});
-			base.DebugAction("Tool: Check reachability", delegate
+			base.DebugAction("T: Check reachability", delegate
 			{
 				List<DebugMenuOption> list = new List<DebugMenuOption>();
 				TraverseMode[] array = (TraverseMode[])Enum.GetValues(typeof(TraverseMode));
@@ -935,7 +978,7 @@ namespace Verse
 						tool = new DebugTool("from...", delegate
 						{
 							from = UI.MouseCell();
-							fromPawn = from.GetFirstPawn(Find.VisibleMap);
+							fromPawn = from.GetFirstPawn(Find.CurrentMap);
 							string text = "to...";
 							if (fromPawn != null)
 							{
@@ -962,7 +1005,7 @@ namespace Verse
 								}
 								else
 								{
-									flag = Find.VisibleMap.reachability.CanReach(from, c, PathEndMode.OnCell, traverseMode, Danger.Deadly);
+									flag = Find.CurrentMap.reachability.CanReach(from, c, PathEndMode.OnCell, traverseMode, Danger.Deadly);
 									intVec = from;
 								}
 								Color color = (!flag) ? Color.red : Color.green;
@@ -974,26 +1017,26 @@ namespace Verse
 				}
 				Find.WindowStack.Add(new Dialog_DebugOptionListLister(list));
 			});
-			base.DebugToolMapForPawns("Tool: Flash TryFindRandomPawnExitCell", delegate(Pawn p)
+			base.DebugToolMapForPawns("T: Flash TryFindRandomPawnExitCell", delegate(Pawn p)
 			{
 				IntVec3 intVec;
 				if (CellFinder.TryFindRandomPawnExitCell(p, out intVec))
 				{
 					p.Map.debugDrawer.FlashCell(intVec, 0.5f, null, 50);
-					p.Map.debugDrawer.FlashLine(p.Position, intVec, 50);
+					p.Map.debugDrawer.FlashLine(p.Position, intVec, 50, SimpleColor.White);
 				}
 				else
 				{
 					p.Map.debugDrawer.FlashCell(p.Position, 0.2f, "no exit cell", 50);
 				}
 			});
-			base.DebugToolMapForPawns("Tool: RandomSpotJustOutsideColony", delegate(Pawn p)
+			base.DebugToolMapForPawns("T: RandomSpotJustOutsideColony", delegate(Pawn p)
 			{
 				IntVec3 intVec;
 				if (RCellFinder.TryFindRandomSpotJustOutsideColony(p, out intVec))
 				{
 					p.Map.debugDrawer.FlashCell(intVec, 0.5f, null, 50);
-					p.Map.debugDrawer.FlashLine(p.Position, intVec, 50);
+					p.Map.debugDrawer.FlashLine(p.Position, intVec, 50, SimpleColor.White);
 				}
 				else
 				{
@@ -1002,9 +1045,9 @@ namespace Verse
 			});
 			base.DoGap();
 			base.DoLabel("Tools - Pawns");
-			base.DebugToolMap("Tool: Resurrect", delegate
+			base.DebugToolMap("T: Resurrect", delegate
 			{
-				foreach (Thing current in UI.MouseCell().GetThingList(Find.VisibleMap).ToList<Thing>())
+				foreach (Thing current in UI.MouseCell().GetThingList(Find.CurrentMap).ToList<Thing>())
 				{
 					Corpse corpse = current as Corpse;
 					if (corpse != null)
@@ -1013,21 +1056,57 @@ namespace Verse
 					}
 				}
 			});
-			base.DebugToolMapForPawns("Tool: Damage to down", delegate(Pawn p)
+			base.DebugToolMapForPawns("T: Damage to down", delegate(Pawn p)
 			{
-				HealthUtility.DamageUntilDowned(p);
+				HealthUtility.DamageUntilDowned(p, true);
 			});
-			base.DebugToolMapForPawns("Tool: Damage legs", delegate(Pawn p)
+			base.DebugToolMapForPawns("T: Damage legs", delegate(Pawn p)
 			{
-				HealthUtility.DamageLegsUntilIncapableOfMoving(p);
+				HealthUtility.DamageLegsUntilIncapableOfMoving(p, true);
 			});
-			base.DebugToolMapForPawns("Tool: Damage to death", delegate(Pawn p)
+			base.DebugToolMapForPawns("T: Damage to death", delegate(Pawn p)
 			{
 				HealthUtility.DamageUntilDead(p);
 			});
-			base.DebugToolMap("Tool: Damage held pawn to death", delegate
+			base.DebugToolMap("T: 10 damage until dead", delegate
 			{
-				foreach (Thing current in Find.VisibleMap.thingGrid.ThingsAt(UI.MouseCell()).ToList<Thing>())
+				foreach (Thing current in Find.CurrentMap.thingGrid.ThingsAt(UI.MouseCell()).ToList<Thing>())
+				{
+					for (int i = 0; i < 1000; i++)
+					{
+						current.TakeDamage(new DamageInfo(DamageDefOf.Crush, 10f, 0f, -1f, null, null, null, DamageInfo.SourceCategory.ThingOrUnknown, null));
+						if (current.Destroyed)
+						{
+							string str = "Took " + (i + 1) + " hits";
+							Pawn pawn = current as Pawn;
+							if (pawn != null)
+							{
+								if (pawn.health.ShouldBeDeadFromLethalDamageThreshold())
+								{
+									str = str + " (reached lethal damage threshold of " + pawn.health.LethalDamageThreshold.ToString("0.#") + ")";
+								}
+								else if (PawnCapacityUtility.CalculatePartEfficiency(pawn.health.hediffSet, pawn.RaceProps.body.corePart, false, null) <= 0.0001f)
+								{
+									str += " (core part hp reached 0)";
+								}
+								else
+								{
+									PawnCapacityDef pawnCapacityDef = pawn.health.ShouldBeDeadFromRequiredCapacity();
+									if (pawnCapacityDef != null)
+									{
+										str = str + " (incapable of " + pawnCapacityDef.defName + ")";
+									}
+								}
+							}
+							Log.Message(str + ".", false);
+							break;
+						}
+					}
+				}
+			});
+			base.DebugToolMap("T: Damage held pawn to death", delegate
+			{
+				foreach (Thing current in Find.CurrentMap.thingGrid.ThingsAt(UI.MouseCell()).ToList<Thing>())
 				{
 					Pawn pawn = current as Pawn;
 					if (pawn != null && pawn.carryTracker.CarriedThing != null && pawn.carryTracker.CarriedThing is Pawn)
@@ -1036,43 +1115,43 @@ namespace Verse
 					}
 				}
 			});
-			base.DebugToolMapForPawns("Tool: Surgery fail minor", delegate(Pawn p)
+			base.DebugToolMapForPawns("T: Surgery fail minor", delegate(Pawn p)
 			{
-				BodyPartRecord bodyPartRecord = (from x in p.health.hediffSet.GetNotMissingParts(BodyPartHeight.Undefined, BodyPartDepth.Undefined)
-				where !x.def.isConceptual
+				BodyPartRecord bodyPartRecord = (from x in p.health.hediffSet.GetNotMissingParts(BodyPartHeight.Undefined, BodyPartDepth.Undefined, null, null)
+				where !x.def.conceptual
 				select x).RandomElement<BodyPartRecord>();
-				Log.Message("part is " + bodyPartRecord);
+				Log.Message("part is " + bodyPartRecord, false);
 				HealthUtility.GiveInjuriesOperationFailureMinor(p, bodyPartRecord);
 			});
-			base.DebugToolMapForPawns("Tool: Surgery fail catastrophic", delegate(Pawn p)
+			base.DebugToolMapForPawns("T: Surgery fail catastrophic", delegate(Pawn p)
 			{
-				BodyPartRecord bodyPartRecord = (from x in p.health.hediffSet.GetNotMissingParts(BodyPartHeight.Undefined, BodyPartDepth.Undefined)
-				where !x.def.isConceptual
+				BodyPartRecord bodyPartRecord = (from x in p.health.hediffSet.GetNotMissingParts(BodyPartHeight.Undefined, BodyPartDepth.Undefined, null, null)
+				where !x.def.conceptual
 				select x).RandomElement<BodyPartRecord>();
-				Log.Message("part is " + bodyPartRecord);
+				Log.Message("part is " + bodyPartRecord, false);
 				HealthUtility.GiveInjuriesOperationFailureCatastrophic(p, bodyPartRecord);
 			});
-			base.DebugToolMapForPawns("Tool: Surgery fail ridiculous", delegate(Pawn p)
+			base.DebugToolMapForPawns("T: Surgery fail ridiculous", delegate(Pawn p)
 			{
 				HealthUtility.GiveInjuriesOperationFailureRidiculous(p);
 			});
-			base.DebugToolMapForPawns("Tool: Restore body part...", delegate(Pawn p)
+			base.DebugToolMapForPawns("T: Restore body part...", delegate(Pawn p)
 			{
 				Find.WindowStack.Add(new Dialog_DebugOptionListLister(DebugTools_Health.Options_RestorePart(p)));
 			});
-			base.DebugAction("Tool: Apply damage...", delegate
+			base.DebugAction("T: Apply damage...", delegate
 			{
 				Find.WindowStack.Add(new Dialog_DebugOptionListLister(DebugTools_Health.Options_ApplyDamage()));
 			});
-			base.DebugAction("Tool: Add Hediff...", delegate
+			base.DebugAction("T: Add Hediff...", delegate
 			{
 				Find.WindowStack.Add(new Dialog_DebugOptionListLister(DebugTools_Health.Options_AddHediff()));
 			});
-			base.DebugToolMapForPawns("Tool: Remove Hediff...", delegate(Pawn p)
+			base.DebugToolMapForPawns("T: Remove Hediff...", delegate(Pawn p)
 			{
 				Find.WindowStack.Add(new Dialog_DebugOptionListLister(DebugTools_Health.Options_RemoveHediff(p)));
 			});
-			base.DebugToolMapForPawns("Tool: Heal random injury (10)", delegate(Pawn p)
+			base.DebugToolMapForPawns("T: Heal random injury (10)", delegate(Pawn p)
 			{
 				Hediff_Injury hediff_Injury;
 				if ((from x in p.health.hediffSet.GetHediffs<Hediff_Injury>()
@@ -1082,7 +1161,7 @@ namespace Verse
 					hediff_Injury.Heal(10f);
 				}
 			});
-			base.DebugToolMapForPawns("Tool: Activate HediffGiver", delegate(Pawn p)
+			base.DebugToolMapForPawns("T: Activate HediffGiver", delegate(Pawn p)
 			{
 				List<FloatMenuOption> list = new List<FloatMenuOption>();
 				if (p.RaceProps.hediffGiverSets != null)
@@ -1102,7 +1181,17 @@ namespace Verse
 					this.DustPuffFrom(p);
 				}
 			});
-			base.DebugToolMapForPawns("Tool: Grant immunities", delegate(Pawn p)
+			base.DebugToolMapForPawns("T: Discover Hediffs", delegate(Pawn p)
+			{
+				foreach (Hediff current in p.health.hediffSet.hediffs)
+				{
+					if (!current.Visible)
+					{
+						current.Severity = Mathf.Max(current.Severity, current.def.stages.First((HediffStage s) => s.becomeVisible).minSeverity);
+					}
+				}
+			});
+			base.DebugToolMapForPawns("T: Grant immunities", delegate(Pawn p)
 			{
 				foreach (Hediff current in p.health.hediffSet.hediffs)
 				{
@@ -1113,17 +1202,26 @@ namespace Verse
 					}
 				}
 			});
-			base.DebugToolMapForPawns("Tool: Give birth", delegate(Pawn p)
+			base.DebugToolMapForPawns("T: Give birth", delegate(Pawn p)
 			{
 				Hediff_Pregnant.DoBirthSpawn(p, null);
 				this.DustPuffFrom(p);
 			});
-			base.DebugToolMapForPawns("Tool: List melee verbs", delegate(Pawn p)
+			base.DebugToolMapForPawns("T: Resistance -1", delegate(Pawn p)
 			{
-				Log.Message(string.Format("Verb list:\n  {0}", GenText.ToTextList(from verb in p.meleeVerbs.GetUpdatedAvailableVerbsList()
-				select verb.ToString(), "\n  ")));
+				if (p.guest != null && p.guest.resistance > 0f)
+				{
+					p.guest.resistance = Mathf.Max(0f, p.guest.resistance - 1f);
+					this.DustPuffFrom(p);
+				}
 			});
-			base.DebugToolMapForPawns("Tool: Add/remove pawn relation", delegate(Pawn p)
+			base.DebugToolMapForPawns("T: List melee verbs", delegate(Pawn p)
+			{
+				Log.Message(string.Format("Verb list (currently usable):\nNormal\n  {0}\nTerrain\n  {1}", (from verb in p.meleeVerbs.GetUpdatedAvailableVerbsList(false)
+				select verb.ToString()).ToLineList("  "), (from verb in p.meleeVerbs.GetUpdatedAvailableVerbsList(true)
+				select verb.ToString()).ToLineList("  ")), false);
+			});
+			base.DebugToolMapForPawns("T: Add/remove pawn relation", delegate(Pawn p)
 			{
 				if (!p.RaceProps.IsFlesh)
 				{
@@ -1195,7 +1293,7 @@ namespace Verse
 				}));
 				Find.WindowStack.Add(new Dialog_DebugOptionListLister(list));
 			});
-			base.DebugToolMapForPawns("Tool: Add opinion thoughts about", delegate(Pawn p)
+			base.DebugToolMapForPawns("T: Add opinion thoughts about", delegate(Pawn p)
 			{
 				if (!p.RaceProps.Humanlike)
 				{
@@ -1233,23 +1331,23 @@ namespace Verse
 				}));
 				Find.WindowStack.Add(new Dialog_DebugOptionListLister(list));
 			});
-			base.DebugToolMapForPawns("Tool: Force vomit...", delegate(Pawn p)
+			base.DebugToolMapForPawns("T: Force vomit...", delegate(Pawn p)
 			{
 				p.jobs.StartJob(new Job(JobDefOf.Vomit), JobCondition.InterruptForced, null, true, true, null, null, false);
 			});
-			base.DebugToolMap("Tool: Food -20%", delegate
+			base.DebugToolMap("T: Food -20%", delegate
 			{
 				this.OffsetNeed(NeedDefOf.Food, -0.2f);
 			});
-			base.DebugToolMap("Tool: Rest -20%", delegate
+			base.DebugToolMap("T: Rest -20%", delegate
 			{
 				this.OffsetNeed(NeedDefOf.Rest, -0.2f);
 			});
-			base.DebugToolMap("Tool: Joy -20%", delegate
+			base.DebugToolMap("T: Joy -20%", delegate
 			{
 				this.OffsetNeed(NeedDefOf.Joy, -0.2f);
 			});
-			base.DebugToolMap("Tool: Chemical -20%", delegate
+			base.DebugToolMap("T: Chemical -20%", delegate
 			{
 				List<NeedDef> allDefsListForReading = DefDatabase<NeedDef>.AllDefsListForReading;
 				for (int i = 0; i < allDefsListForReading.Count; i++)
@@ -1260,12 +1358,8 @@ namespace Verse
 					}
 				}
 			});
-			base.DebugToolMapForPawns("Tool: Set skill", delegate(Pawn p)
+			base.DebugAction("T: Set skill", delegate
 			{
-				if (p.skills == null)
-				{
-					return;
-				}
 				List<DebugMenuOption> list = new List<DebugMenuOption>();
 				foreach (SkillDef current in DefDatabase<SkillDef>.AllDefs)
 				{
@@ -1276,11 +1370,19 @@ namespace Verse
 						for (int i = 0; i <= 20; i++)
 						{
 							int level = i;
-							list2.Add(new DebugMenuOption(level.ToString(), DebugMenuOptionMode.Action, delegate
+							list2.Add(new DebugMenuOption(level.ToString(), DebugMenuOptionMode.Tool, delegate
 							{
-								SkillRecord skill = p.skills.GetSkill(localDef);
+								Pawn pawn = (from t in Find.CurrentMap.thingGrid.ThingsAt(UI.MouseCell())
+								where t is Pawn
+								select t).Cast<Pawn>().FirstOrDefault<Pawn>();
+								if (pawn == null)
+								{
+									return;
+								}
+								SkillRecord skill = pawn.skills.GetSkill(localDef);
 								skill.Level = level;
 								skill.xpSinceLastLevel = skill.XpRequiredForLevelUp / 2f;
+								this.DustPuffFrom(pawn);
 							}));
 						}
 						Find.WindowStack.Add(new Dialog_DebugOptionListLister(list2));
@@ -1288,7 +1390,7 @@ namespace Verse
 				}
 				Find.WindowStack.Add(new Dialog_DebugOptionListLister(list));
 			});
-			base.DebugToolMapForPawns("Tool: Max skills", delegate(Pawn p)
+			base.DebugToolMapForPawns("T: Max skills", delegate(Pawn p)
 			{
 				if (p.skills != null)
 				{
@@ -1306,17 +1408,17 @@ namespace Verse
 						bool flag;
 						if (p.training.CanAssignToTrain(current2, out flag).Accepted)
 						{
-							p.training.Train(current2, trainer);
+							p.training.Train(current2, trainer, false);
 						}
 					}
 				}
 			});
-			base.DebugAction("Tool: Mental break...", delegate
+			base.DebugAction("T: Mental break...", delegate
 			{
 				List<DebugMenuOption> list = new List<DebugMenuOption>();
 				list.Add(new DebugMenuOption("(log possibles)", DebugMenuOptionMode.Tool, delegate
 				{
-					foreach (Pawn current2 in (from t in Find.VisibleMap.thingGrid.ThingsAt(UI.MouseCell())
+					foreach (Pawn current2 in (from t in Find.CurrentMap.thingGrid.ThingsAt(UI.MouseCell())
 					where t is Pawn
 					select t).Cast<Pawn>())
 					{
@@ -1326,7 +1428,7 @@ namespace Verse
 				}));
 				list.Add(new DebugMenuOption("(natural mood break)", DebugMenuOptionMode.Tool, delegate
 				{
-					foreach (Pawn current2 in (from t in Find.VisibleMap.thingGrid.ThingsAt(UI.MouseCell())
+					foreach (Pawn current2 in (from t in Find.CurrentMap.thingGrid.ThingsAt(UI.MouseCell())
 					where t is Pawn
 					select t).Cast<Pawn>())
 					{
@@ -1340,13 +1442,13 @@ namespace Verse
 				{
 					MentalBreakDef locBrDef = current;
 					string text = locBrDef.defName;
-					if (!Find.VisibleMap.mapPawns.FreeColonists.Any((Pawn x) => locBrDef.Worker.BreakCanOccur(x)))
+					if (!Find.CurrentMap.mapPawns.FreeColonists.Any((Pawn x) => locBrDef.Worker.BreakCanOccur(x)))
 					{
 						text += " [NO]";
 					}
 					list.Add(new DebugMenuOption(text, DebugMenuOptionMode.Tool, delegate
 					{
-						foreach (Pawn current2 in Find.VisibleMap.thingGrid.ThingsAt(UI.MouseCell()).Where((Thing t) => t is Pawn).Cast<Pawn>())
+						foreach (Pawn current2 in Find.CurrentMap.thingGrid.ThingsAt(UI.MouseCell()).Where((Thing t) => t is Pawn).Cast<Pawn>())
 						{
 							locBrDef.Worker.TryStart(current2, null, false);
 							this.DustPuffFrom(current2);
@@ -1355,43 +1457,38 @@ namespace Verse
 				}
 				Find.WindowStack.Add(new Dialog_DebugOptionListLister(list));
 			});
-			base.DebugAction("Tool: Mental state...", delegate
+			base.DebugAction("T: Mental state...", delegate
 			{
 				List<DebugMenuOption> list = new List<DebugMenuOption>();
 				foreach (MentalStateDef current in DefDatabase<MentalStateDef>.AllDefs)
 				{
 					MentalStateDef locBrDef = current;
 					string text = locBrDef.defName;
-					if (!Find.VisibleMap.mapPawns.FreeColonists.Any((Pawn x) => locBrDef.Worker.StateCanOccur(x)))
+					if (!Find.CurrentMap.mapPawns.FreeColonists.Any((Pawn x) => locBrDef.Worker.StateCanOccur(x)))
 					{
 						text += " [NO]";
 					}
 					list.Add(new DebugMenuOption(text, DebugMenuOptionMode.Tool, delegate
 					{
-						foreach (Pawn current2 in (from t in Find.VisibleMap.thingGrid.ThingsAt(UI.MouseCell())
+						foreach (Pawn current2 in (from t in Find.CurrentMap.thingGrid.ThingsAt(UI.MouseCell())
 						where t is Pawn
 						select t).Cast<Pawn>())
 						{
 							Pawn locP = current2;
 							if (locBrDef != MentalStateDefOf.SocialFighting)
 							{
-								locP.mindState.mentalStateHandler.TryStartMentalState(locBrDef, null, true, false, null);
+								locP.mindState.mentalStateHandler.TryStartMentalState(locBrDef, null, true, false, null, false);
 								this.DustPuffFrom(locP);
 							}
 							else
 							{
 								DebugTools.curTool = new DebugTool("...with", delegate
 								{
-									Pawn pawn = (Pawn)(from t in Find.VisibleMap.thingGrid.ThingsAt(UI.MouseCell())
+									Pawn pawn = (Pawn)(from t in Find.CurrentMap.thingGrid.ThingsAt(UI.MouseCell())
 									where t is Pawn
 									select t).FirstOrDefault<Thing>();
 									if (pawn != null)
 									{
-										if (!InteractionUtility.HasAnySocialFightProvokingThought(locP, pawn))
-										{
-											locP.needs.mood.thoughts.memories.TryGainMemory(ThoughtDefOf.Insulted, pawn);
-											Messages.Message("Dev: auto added negative thought.", locP, MessageTypeDefOf.TaskCompletion);
-										}
 										locP.interactions.StartSocialFight(pawn);
 										DebugTools.curTool = null;
 									}
@@ -1402,20 +1499,20 @@ namespace Verse
 				}
 				Find.WindowStack.Add(new Dialog_DebugOptionListLister(list));
 			});
-			base.DebugAction("Tool: Inspiration...", delegate
+			base.DebugAction("T: Inspiration...", delegate
 			{
 				List<DebugMenuOption> list = new List<DebugMenuOption>();
 				foreach (InspirationDef current in DefDatabase<InspirationDef>.AllDefs)
 				{
 					InspirationDef localDef = current;
 					string text = localDef.defName;
-					if (!Find.VisibleMap.mapPawns.FreeColonists.Any((Pawn x) => localDef.Worker.InspirationCanOccur(x)))
+					if (!Find.CurrentMap.mapPawns.FreeColonists.Any((Pawn x) => localDef.Worker.InspirationCanOccur(x)))
 					{
 						text += " [NO]";
 					}
 					list.Add(new DebugMenuOption(text, DebugMenuOptionMode.Tool, delegate
 					{
-						foreach (Pawn current2 in Find.VisibleMap.thingGrid.ThingsAt(UI.MouseCell()).OfType<Pawn>())
+						foreach (Pawn current2 in Find.CurrentMap.thingGrid.ThingsAt(UI.MouseCell()).OfType<Pawn>())
 						{
 							current2.mindState.inspirationHandler.TryStartInspiration(localDef);
 							this.DustPuffFrom(current2);
@@ -1424,7 +1521,7 @@ namespace Verse
 				}
 				Find.WindowStack.Add(new Dialog_DebugOptionListLister(list));
 			});
-			base.DebugAction("Tool: Give trait...", delegate
+			base.DebugAction("T: Give trait...", delegate
 			{
 				List<DebugMenuOption> list = new List<DebugMenuOption>();
 				foreach (TraitDef current in DefDatabase<TraitDef>.AllDefs)
@@ -1441,7 +1538,7 @@ namespace Verse
 							")"
 						}), DebugMenuOptionMode.Tool, delegate
 						{
-							foreach (Pawn current2 in (from t in Find.VisibleMap.thingGrid.ThingsAt(UI.MouseCell())
+							foreach (Pawn current2 in (from t in Find.CurrentMap.thingGrid.ThingsAt(UI.MouseCell())
 							where t is Pawn
 							select t).Cast<Pawn>())
 							{
@@ -1457,39 +1554,23 @@ namespace Verse
 				}
 				Find.WindowStack.Add(new Dialog_DebugOptionListLister(list));
 			});
-			base.DebugToolMapForPawns("Tool: Give good thought", delegate(Pawn p)
+			base.DebugToolMapForPawns("T: Give good thought", delegate(Pawn p)
 			{
 				if (p.needs.mood != null)
 				{
 					p.needs.mood.thoughts.memories.TryGainMemory(ThoughtDefOf.DebugGood, null);
 				}
 			});
-			base.DebugToolMapForPawns("Tool: Give bad thought", delegate(Pawn p)
+			base.DebugToolMapForPawns("T: Give bad thought", delegate(Pawn p)
 			{
 				if (p.needs.mood != null)
 				{
 					p.needs.mood.thoughts.memories.TryGainMemory(ThoughtDefOf.DebugBad, null);
 				}
 			});
-			base.DebugToolMapForPawns("Tool: Make faction hostile", delegate(Pawn p)
+			base.DebugToolMap("T: Clear bound unfinished things", delegate
 			{
-				if (p.Faction != null && !p.Faction.HostileTo(Faction.OfPlayer))
-				{
-					p.Faction.SetHostileTo(Faction.OfPlayer, true);
-					this.DustPuffFrom(p);
-				}
-			});
-			base.DebugToolMapForPawns("Tool: Make faction neutral", delegate(Pawn p)
-			{
-				if (p.Faction != null && p.Faction.HostileTo(Faction.OfPlayer))
-				{
-					p.Faction.SetHostileTo(Faction.OfPlayer, false);
-					this.DustPuffFrom(p);
-				}
-			});
-			base.DebugToolMap("Tool: Clear bound unfinished things", delegate
-			{
-				foreach (Building_WorkTable current in (from t in Find.VisibleMap.thingGrid.ThingsAt(UI.MouseCell())
+				foreach (Building_WorkTable current in (from t in Find.CurrentMap.thingGrid.ThingsAt(UI.MouseCell())
 				where t is Building_WorkTable
 				select t).Cast<Building_WorkTable>())
 				{
@@ -1503,12 +1584,12 @@ namespace Verse
 					}
 				}
 			});
-			base.DebugToolMapForPawns("Tool: Force birthday", delegate(Pawn p)
+			base.DebugToolMapForPawns("T: Force birthday", delegate(Pawn p)
 			{
 				p.ageTracker.AgeBiologicalTicks = (long)((p.ageTracker.AgeBiologicalYears + 1) * 3600000 + 1);
 				p.ageTracker.DebugForceBirthdayBiological();
 			});
-			base.DebugToolMapForPawns("Tool: Recruit", delegate(Pawn p)
+			base.DebugToolMapForPawns("T: Recruit", delegate(Pawn p)
 			{
 				if (p.Faction != Faction.OfPlayer && p.RaceProps.Humanlike)
 				{
@@ -1516,15 +1597,15 @@ namespace Verse
 					this.DustPuffFrom(p);
 				}
 			});
-			base.DebugToolMapForPawns("Tool: Damage apparel", delegate(Pawn p)
+			base.DebugToolMapForPawns("T: Damage apparel", delegate(Pawn p)
 			{
 				if (p.apparel != null && p.apparel.WornApparelCount > 0)
 				{
-					p.apparel.WornApparel.RandomElement<Apparel>().TakeDamage(new DamageInfo(DamageDefOf.Deterioration, 30, -1f, null, null, null, DamageInfo.SourceCategory.ThingOrUnknown));
+					p.apparel.WornApparel.RandomElement<Apparel>().TakeDamage(new DamageInfo(DamageDefOf.Deterioration, 30f, 0f, -1f, null, null, null, DamageInfo.SourceCategory.ThingOrUnknown, null));
 					this.DustPuffFrom(p);
 				}
 			});
-			base.DebugToolMapForPawns("Tool: Tame animal", delegate(Pawn p)
+			base.DebugToolMapForPawns("T: Tame animal", delegate(Pawn p)
 			{
 				if (p.AnimalOrWildMan() && p.Faction != Faction.OfPlayer)
 				{
@@ -1532,21 +1613,33 @@ namespace Verse
 					this.DustPuffFrom(p);
 				}
 			});
-			base.DebugToolMapForPawns("Tool: Train animal", delegate(Pawn p)
+			base.DebugToolMapForPawns("T: Train animal", delegate(Pawn p)
 			{
 				if (p.RaceProps.Animal && p.Faction == Faction.OfPlayer && p.training != null)
 				{
+					this.DustPuffFrom(p);
+					bool flag = false;
 					foreach (TrainableDef current in DefDatabase<TrainableDef>.AllDefs)
 					{
-						while (!p.training.IsCompleted(current))
+						if (p.training.GetWanted(current))
 						{
-							p.training.Train(current, null);
+							p.training.Train(current, null, true);
+							flag = true;
 						}
 					}
-					this.DustPuffFrom(p);
+					if (!flag)
+					{
+						foreach (TrainableDef current2 in DefDatabase<TrainableDef>.AllDefs)
+						{
+							if (p.training.CanAssignToTrain(current2).Accepted)
+							{
+								p.training.Train(current2, null, true);
+							}
+						}
+					}
 				}
 			});
-			base.DebugToolMapForPawns("Tool: Name animal by nuzzling", delegate(Pawn p)
+			base.DebugToolMapForPawns("T: Name animal by nuzzling", delegate(Pawn p)
 			{
 				if ((p.Name == null || p.Name.Numerical) && p.RaceProps.Animal)
 				{
@@ -1554,7 +1647,7 @@ namespace Verse
 					this.DustPuffFrom(p);
 				}
 			});
-			base.DebugToolMapForPawns("Tool: Try develop bond relation", delegate(Pawn p)
+			base.DebugToolMapForPawns("T: Try develop bond relation", delegate(Pawn p)
 			{
 				if (p.Faction == null)
 				{
@@ -1581,7 +1674,15 @@ namespace Verse
 					}
 				}
 			});
-			base.DebugToolMapForPawns("Tool: Start marriage ceremony", delegate(Pawn p)
+			base.DebugToolMapForPawns("T: Queue training decay", delegate(Pawn p)
+			{
+				if (p.RaceProps.Animal && p.Faction == Faction.OfPlayer && p.training != null)
+				{
+					p.training.Debug_MakeDegradeHappenSoon();
+					this.DustPuffFrom(p);
+				}
+			});
+			base.DebugToolMapForPawns("T: Start marriage ceremony", delegate(Pawn p)
 			{
 				if (!p.RaceProps.Humanlike)
 				{
@@ -1602,18 +1703,18 @@ namespace Verse
 								p.relations.TryRemoveDirectRelation(PawnRelationDefOf.Lover, otherLocal);
 								p.relations.TryRemoveDirectRelation(PawnRelationDefOf.Spouse, otherLocal);
 								p.relations.AddDirectRelation(PawnRelationDefOf.Fiance, otherLocal);
-								Messages.Message("Dev: auto added fiance relation.", p, MessageTypeDefOf.TaskCompletion);
+								Messages.Message("Dev: Auto added fiance relation.", p, MessageTypeDefOf.TaskCompletion, false);
 							}
 							if (!p.Map.lordsStarter.TryStartMarriageCeremony(p, otherLocal))
 							{
-								Messages.Message("Could not find any valid marriage site.", MessageTypeDefOf.RejectInput);
+								Messages.Message("Could not find any valid marriage site.", MessageTypeDefOf.RejectInput, false);
 							}
 						}));
 					}
 				}
 				Find.WindowStack.Add(new Dialog_DebugOptionListLister(list));
 			});
-			base.DebugToolMapForPawns("Tool: Force interaction", delegate(Pawn p)
+			base.DebugToolMapForPawns("T: Force interaction", delegate(Pawn p)
 			{
 				if (p.Faction == null)
 				{
@@ -1642,14 +1743,14 @@ namespace Verse
 				}
 				Find.WindowStack.Add(new Dialog_DebugOptionListLister(list));
 			});
-			base.DebugAction("Tool: Start party", delegate
+			base.DebugAction("T: Start party", delegate
 			{
-				if (!Find.VisibleMap.lordsStarter.TryStartParty())
+				if (!Find.CurrentMap.lordsStarter.TryStartParty())
 				{
-					Messages.Message("Could not find any valid party spot or organizer.", MessageTypeDefOf.RejectInput);
+					Messages.Message("Could not find any valid party spot or organizer.", MessageTypeDefOf.RejectInput, false);
 				}
 			});
-			base.DebugToolMapForPawns("Tool: Start prison break", delegate(Pawn p)
+			base.DebugToolMapForPawns("T: Start prison break", delegate(Pawn p)
 			{
 				if (!p.IsPrisoner)
 				{
@@ -1657,17 +1758,17 @@ namespace Verse
 				}
 				PrisonBreakUtility.StartPrisonBreak(p);
 			});
-			base.DebugToolMapForPawns("Tool: Pass to world", delegate(Pawn p)
+			base.DebugToolMapForPawns("T: Pass to world", delegate(Pawn p)
 			{
-				p.DeSpawn();
+				p.DeSpawn(DestroyMode.Vanish);
 				Find.WorldPawns.PassToWorld(p, PawnDiscardDecideMode.KeepForever);
 			});
-			base.DebugToolMapForPawns("Tool: Make 1 year older", delegate(Pawn p)
+			base.DebugToolMapForPawns("T: Make 1 year older", delegate(Pawn p)
 			{
 				p.ageTracker.DebugMake1YearOlder();
 			});
 			base.DoGap();
-			base.DebugToolMapForPawns("Tool: Try job giver", delegate(Pawn p)
+			base.DebugToolMapForPawns("T: Try job giver", delegate(Pawn p)
 			{
 				List<DebugMenuOption> list = new List<DebugMenuOption>();
 				foreach (Type current in typeof(ThinkNode_JobGiver).AllSubclasses())
@@ -1684,13 +1785,13 @@ namespace Verse
 						}
 						else
 						{
-							Messages.Message("Failed to give job", MessageTypeDefOf.RejectInput);
+							Messages.Message("Failed to give job", MessageTypeDefOf.RejectInput, false);
 						}
 					}));
 				}
 				Find.WindowStack.Add(new Dialog_DebugOptionListLister(list));
 			});
-			base.DebugToolMapForPawns("Tool: Try joy giver", delegate(Pawn p)
+			base.DebugToolMapForPawns("T: Try joy giver", delegate(Pawn p)
 			{
 				List<DebugMenuOption> list = new List<DebugMenuOption>();
 				foreach (JoyGiverDef def in DefDatabase<JoyGiverDef>.AllDefsListForReading)
@@ -1704,36 +1805,36 @@ namespace Verse
 						}
 						else
 						{
-							Messages.Message("Failed to give job", MessageTypeDefOf.RejectInput);
+							Messages.Message("Failed to give job", MessageTypeDefOf.RejectInput, false);
 						}
 					}));
 				}
 				Find.WindowStack.Add(new Dialog_DebugOptionListLister(list));
 			});
-			base.DebugToolMapForPawns("Tool: EndCurrentJob(" + JobCondition.InterruptForced.ToString() + ")", delegate(Pawn p)
+			base.DebugToolMapForPawns("T: EndCurrentJob(" + JobCondition.InterruptForced.ToString() + ")", delegate(Pawn p)
 			{
 				p.jobs.EndCurrentJob(JobCondition.InterruptForced, true);
 				this.DustPuffFrom(p);
 			});
-			base.DebugToolMapForPawns("Tool: CheckForJobOverride", delegate(Pawn p)
+			base.DebugToolMapForPawns("T: CheckForJobOverride", delegate(Pawn p)
 			{
 				p.jobs.CheckForJobOverride();
 				this.DustPuffFrom(p);
 			});
-			base.DebugToolMapForPawns("Tool: Toggle job logging", delegate(Pawn p)
+			base.DebugToolMapForPawns("T: Toggle job logging", delegate(Pawn p)
 			{
 				p.jobs.debugLog = !p.jobs.debugLog;
 				this.DustPuffFrom(p);
 				MoteMaker.ThrowText(p.DrawPos, p.Map, p.LabelShort + "\n" + ((!p.jobs.debugLog) ? "OFF" : "ON"), -1f);
 			});
-			base.DebugToolMapForPawns("Tool: Toggle stance logging", delegate(Pawn p)
+			base.DebugToolMapForPawns("T: Toggle stance logging", delegate(Pawn p)
 			{
 				p.stances.debugLog = !p.stances.debugLog;
 				this.DustPuffFrom(p);
 			});
 			base.DoGap();
 			base.DoLabel("Tools - Spawning");
-			base.DebugAction("Tool: Spawn pawn", delegate
+			base.DebugAction("T: Spawn pawn", delegate
 			{
 				List<DebugMenuOption> list = new List<DebugMenuOption>();
 				foreach (PawnKindDef current in from kd in DefDatabase<PawnKindDef>.AllDefs
@@ -1745,7 +1846,7 @@ namespace Verse
 					{
 						Faction faction = FactionUtility.DefaultFactionFrom(localKindDef.defaultFactionType);
 						Pawn newPawn = PawnGenerator.GeneratePawn(localKindDef, faction);
-						GenSpawn.Spawn(newPawn, UI.MouseCell(), Find.VisibleMap);
+						GenSpawn.Spawn(newPawn, UI.MouseCell(), Find.CurrentMap, WipeMode.Vanish);
 						if (faction != null && faction != Faction.OfPlayer)
 						{
 							Lord lord = null;
@@ -1757,7 +1858,7 @@ namespace Verse
 							if (lord == null)
 							{
 								LordJob_DefendPoint lordJob = new LordJob_DefendPoint(newPawn.Position);
-								lord = LordMaker.MakeNewLord(faction, lordJob, Find.VisibleMap, null);
+								lord = LordMaker.MakeNewLord(faction, lordJob, Find.CurrentMap, null);
 							}
 							lord.AddPawn(newPawn);
 						}
@@ -1765,42 +1866,76 @@ namespace Verse
 				}
 				Find.WindowStack.Add(new Dialog_DebugOptionListLister(list));
 			});
-			base.DebugAction("Tool: Spawn weapon...", delegate
+			base.DebugAction("T: Spawn weapon...", delegate
 			{
 				List<DebugMenuOption> list = new List<DebugMenuOption>();
 				foreach (ThingDef current in from def in DefDatabase<ThingDef>.AllDefs
 				where def.equipmentType == EquipmentType.Primary
-				select def)
+				select def into d
+				orderby d.defName
+				select d)
 				{
 					ThingDef localDef = current;
-					list.Add(new DebugMenuOption(localDef.LabelCap, DebugMenuOptionMode.Tool, delegate
+					list.Add(new DebugMenuOption(localDef.defName, DebugMenuOptionMode.Tool, delegate
 					{
 						DebugThingPlaceHelper.DebugSpawn(localDef, UI.MouseCell(), -1, false);
 					}));
 				}
 				Find.WindowStack.Add(new Dialog_DebugOptionListLister(list));
 			});
-			base.DebugAction("Tool: Try place near thing...", delegate
+			base.DebugAction("T: Spawn apparel...", delegate
+			{
+				List<DebugMenuOption> list = new List<DebugMenuOption>();
+				foreach (ThingDef current in from def in DefDatabase<ThingDef>.AllDefs
+				where def.IsApparel
+				select def into d
+				orderby d.defName
+				select d)
+				{
+					ThingDef localDef = current;
+					list.Add(new DebugMenuOption(localDef.defName, DebugMenuOptionMode.Tool, delegate
+					{
+						DebugThingPlaceHelper.DebugSpawn(localDef, UI.MouseCell(), -1, false);
+					}));
+				}
+				Find.WindowStack.Add(new Dialog_DebugOptionListLister(list));
+			});
+			base.DebugAction("T: Try place near thing...", delegate
 			{
 				Find.WindowStack.Add(new Dialog_DebugOptionListLister(DebugThingPlaceHelper.TryPlaceOptionsForStackCount(1, false)));
 			});
-			base.DebugAction("Tool: Try place near stacks of 25...", delegate
+			base.DebugAction("T: Try place near stacks of 25...", delegate
 			{
 				Find.WindowStack.Add(new Dialog_DebugOptionListLister(DebugThingPlaceHelper.TryPlaceOptionsForStackCount(25, false)));
 			});
-			base.DebugAction("Tool: Try place near stacks of 75...", delegate
+			base.DebugAction("T: Try place near stacks of 75...", delegate
 			{
 				Find.WindowStack.Add(new Dialog_DebugOptionListLister(DebugThingPlaceHelper.TryPlaceOptionsForStackCount(75, false)));
 			});
-			base.DebugAction("Tool: Try place direct thing...", delegate
+			base.DebugAction("T: Try place direct thing...", delegate
 			{
 				Find.WindowStack.Add(new Dialog_DebugOptionListLister(DebugThingPlaceHelper.TryPlaceOptionsForStackCount(1, true)));
 			});
-			base.DebugAction("Tool: Try place direct stacks of 25...", delegate
+			base.DebugAction("T: Try place direct stacks of 25...", delegate
 			{
 				Find.WindowStack.Add(new Dialog_DebugOptionListLister(DebugThingPlaceHelper.TryPlaceOptionsForStackCount(25, true)));
 			});
-			base.DebugAction("Tool: Set terrain...", delegate
+			base.DebugAction("T: Spawn thing with wipe mode...", delegate
+			{
+				List<DebugMenuOption> list = new List<DebugMenuOption>();
+				WipeMode[] array = (WipeMode[])Enum.GetValues(typeof(WipeMode));
+				for (int i = 0; i < array.Length; i++)
+				{
+					WipeMode localWipeMode2 = array[i];
+					WipeMode localWipeMode = localWipeMode2;
+					list.Add(new DebugMenuOption(localWipeMode2.ToString(), DebugMenuOptionMode.Action, delegate
+					{
+						Find.WindowStack.Add(new Dialog_DebugOptionListLister(DebugThingPlaceHelper.SpawnOptions(localWipeMode)));
+					}));
+				}
+				Find.WindowStack.Add(new Dialog_DebugOptionListLister(list));
+			});
+			base.DebugAction("T: Set terrain...", delegate
 			{
 				List<DebugMenuOption> list = new List<DebugMenuOption>();
 				foreach (TerrainDef current in DefDatabase<TerrainDef>.AllDefs)
@@ -1808,27 +1943,27 @@ namespace Verse
 					TerrainDef localDef = current;
 					list.Add(new DebugMenuOption(localDef.LabelCap, DebugMenuOptionMode.Tool, delegate
 					{
-						if (UI.MouseCell().InBounds(Find.VisibleMap))
+						if (UI.MouseCell().InBounds(Find.CurrentMap))
 						{
-							Find.VisibleMap.terrainGrid.SetTerrain(UI.MouseCell(), localDef);
+							Find.CurrentMap.terrainGrid.SetTerrain(UI.MouseCell(), localDef);
 						}
 					}));
 				}
 				Find.WindowStack.Add(new Dialog_DebugOptionListLister(list));
 			});
-			base.DebugToolMap("Tool: Make filth x100", delegate
+			base.DebugToolMap("T: Make filth x100", delegate
 			{
 				for (int i = 0; i < 100; i++)
 				{
 					IntVec3 c = UI.MouseCell() + GenRadial.RadialPattern[i];
-					if (c.InBounds(Find.VisibleMap) && c.Walkable(Find.VisibleMap))
+					if (c.InBounds(Find.CurrentMap) && c.Walkable(Find.CurrentMap))
 					{
-						FilthMaker.MakeFilth(c, Find.VisibleMap, ThingDefOf.FilthDirt, 2);
-						MoteMaker.ThrowMetaPuff(c.ToVector3Shifted(), Find.VisibleMap);
+						FilthMaker.MakeFilth(c, Find.CurrentMap, ThingDefOf.Filth_Dirt, 2);
+						MoteMaker.ThrowMetaPuff(c.ToVector3Shifted(), Find.CurrentMap);
 					}
 				}
 			});
-			base.DebugToolMap("Tool: Spawn faction leader", delegate
+			base.DebugToolMap("T: Spawn faction leader", delegate
 			{
 				List<FloatMenuOption> list = new List<FloatMenuOption>();
 				foreach (Faction current in Find.FactionManager.AllFactions)
@@ -1838,13 +1973,13 @@ namespace Verse
 					{
 						list.Add(new FloatMenuOption(localFac.Name + " - " + localFac.leader.Name.ToStringFull, delegate
 						{
-							GenSpawn.Spawn(localFac.leader, UI.MouseCell(), Find.VisibleMap);
+							GenSpawn.Spawn(localFac.leader, UI.MouseCell(), Find.CurrentMap, WipeMode.Vanish);
 						}, MenuOptionPriority.Default, null, null, 0f, null, null));
 					}
 				}
 				Find.WindowStack.Add(new FloatMenu(list));
 			});
-			base.DebugAction("Spawn world pawn...", delegate
+			base.DebugAction("T: Spawn world pawn...", delegate
 			{
 				List<DebugMenuOption> list = new List<DebugMenuOption>();
 				Action<Pawn> act = delegate(Pawn p)
@@ -1857,9 +1992,9 @@ namespace Verse
 						PawnKindDef kLocal = current2;
 						list2.Add(new DebugMenuOption(kLocal.defName, DebugMenuOptionMode.Tool, delegate
 						{
-							PawnGenerationRequest request = new PawnGenerationRequest(kLocal, p.Faction, PawnGenerationContext.NonPlayer, -1, false, false, false, false, true, false, 1f, false, true, true, false, false, false, false, null, null, null, null, null, null, null);
+							PawnGenerationRequest request = new PawnGenerationRequest(kLocal, p.Faction, PawnGenerationContext.NonPlayer, -1, false, false, false, false, true, false, 1f, false, true, true, false, false, false, false, null, null, null, null, null, null, null, null);
 							PawnGenerator.RedressPawn(p, request);
-							GenSpawn.Spawn(p, UI.MouseCell(), Find.VisibleMap);
+							GenSpawn.Spawn(p, UI.MouseCell(), Find.CurrentMap, WipeMode.Vanish);
 							DebugTools.curTool = null;
 						}));
 					}
@@ -1875,45 +2010,57 @@ namespace Verse
 				}
 				Find.WindowStack.Add(new Dialog_DebugOptionListLister(list));
 			});
-			base.DebugAction("Spawn item collection...", delegate
+			base.DebugAction("T: Spawn thing set...", delegate
 			{
 				List<DebugMenuOption> list = new List<DebugMenuOption>();
-				List<ItemCollectionGeneratorDef> allDefsListForReading = DefDatabase<ItemCollectionGeneratorDef>.AllDefsListForReading;
+				List<ThingSetMakerDef> allDefsListForReading = DefDatabase<ThingSetMakerDef>.AllDefsListForReading;
 				for (int i = 0; i < allDefsListForReading.Count; i++)
 				{
-					ItemCollectionGeneratorDef localGenerator = allDefsListForReading[i];
+					ThingSetMakerDef localGenerator = allDefsListForReading[i];
 					list.Add(new DebugMenuOption(localGenerator.defName, DebugMenuOptionMode.Tool, delegate
 					{
-						if (!UI.MouseCell().InBounds(Find.VisibleMap))
+						if (!UI.MouseCell().InBounds(Find.CurrentMap))
 						{
 							return;
 						}
 						StringBuilder stringBuilder = new StringBuilder();
-						List<Thing> list2 = localGenerator.Worker.Generate(default(ItemCollectionGeneratorParams));
-						stringBuilder.AppendLine(string.Concat(new object[]
+						string nonNullFieldsDebugInfo = Gen.GetNonNullFieldsDebugInfo(localGenerator.debugParams);
+						List<Thing> list2 = localGenerator.root.Generate(localGenerator.debugParams);
+						stringBuilder.Append(string.Concat(new object[]
 						{
-							localGenerator.Worker.GetType().Name,
+							localGenerator.defName,
 							" generated ",
 							list2.Count,
-							" things:"
+							" things"
 						}));
+						if (!nonNullFieldsDebugInfo.NullOrEmpty())
+						{
+							stringBuilder.Append(" (used custom debug params: " + nonNullFieldsDebugInfo + ")");
+						}
+						stringBuilder.AppendLine(":");
 						float num = 0f;
+						float num2 = 0f;
 						for (int j = 0; j < list2.Count; j++)
 						{
 							stringBuilder.AppendLine("   - " + list2[j].LabelCap);
 							num += list2[j].MarketValue * (float)list2[j].stackCount;
-							if (!GenPlace.TryPlaceThing(list2[j], UI.MouseCell(), Find.VisibleMap, ThingPlaceMode.Near, null))
+							if (!(list2[j] is Pawn))
+							{
+								num2 += list2[j].GetStatValue(StatDefOf.Mass, true) * (float)list2[j].stackCount;
+							}
+							if (!GenPlace.TryPlaceThing(list2[j], UI.MouseCell(), Find.CurrentMap, ThingPlaceMode.Near, null, null))
 							{
 								list2[j].Destroy(DestroyMode.Vanish);
 							}
 						}
 						stringBuilder.AppendLine("Total market value: " + num.ToString("0.##"));
-						Log.Message(stringBuilder.ToString());
+						stringBuilder.AppendLine("Total mass: " + num2.ToStringMass());
+						Log.Message(stringBuilder.ToString(), false);
 					}));
 				}
 				Find.WindowStack.Add(new Dialog_DebugOptionListLister(list));
 			});
-			base.DebugAction("Tool: Trigger effecter...", delegate
+			base.DebugAction("T: Trigger effecter...", delegate
 			{
 				List<DebugMenuOption> list = new List<DebugMenuOption>();
 				List<EffecterDef> allDefsListForReading = DefDatabase<EffecterDef>.AllDefsListForReading;
@@ -1923,7 +2070,7 @@ namespace Verse
 					list.Add(new DebugMenuOption(localDef.defName, DebugMenuOptionMode.Tool, delegate
 					{
 						Effecter effecter = localDef.Spawn();
-						effecter.Trigger(new TargetInfo(UI.MouseCell(), Find.VisibleMap, false), new TargetInfo(UI.MouseCell(), Find.VisibleMap, false));
+						effecter.Trigger(new TargetInfo(UI.MouseCell(), Find.CurrentMap, false), new TargetInfo(UI.MouseCell(), Find.CurrentMap, false));
 						effecter.Cleanup();
 					}));
 				}
@@ -1945,8 +2092,8 @@ namespace Verse
 				{
 					PawnKindDef random = DefDatabase<PawnKindDef>.GetRandom();
 					Pawn pawn = PawnGenerator.GeneratePawn(random, FactionUtility.DefaultFactionFrom(random.defaultFactionType));
-					GenSpawn.Spawn(pawn, CellFinderLoose.RandomCellWith((IntVec3 c) => c.Standable(Find.VisibleMap), Find.VisibleMap, 1000), Find.VisibleMap);
-					HealthUtility.DamageUntilDowned(pawn);
+					GenSpawn.Spawn(pawn, CellFinderLoose.RandomCellWith((IntVec3 c) => c.Standable(Find.CurrentMap), Find.CurrentMap, 1000), Find.CurrentMap, WipeMode.Vanish);
+					HealthUtility.DamageUntilDowned(pawn, true);
 					if (pawn.Dead)
 					{
 						Log.Error(string.Concat(new object[]
@@ -1955,7 +2102,7 @@ namespace Verse
 							pawn,
 							" at ",
 							pawn.Position
-						}));
+						}), false);
 						return;
 					}
 				}
@@ -1966,7 +2113,7 @@ namespace Verse
 				{
 					PawnKindDef random = DefDatabase<PawnKindDef>.GetRandom();
 					Pawn pawn = PawnGenerator.GeneratePawn(random, FactionUtility.DefaultFactionFrom(random.defaultFactionType));
-					GenSpawn.Spawn(pawn, CellFinderLoose.RandomCellWith((IntVec3 c) => c.Standable(Find.VisibleMap), Find.VisibleMap, 1000), Find.VisibleMap);
+					GenSpawn.Spawn(pawn, CellFinderLoose.RandomCellWith((IntVec3 c) => c.Standable(Find.CurrentMap), Find.CurrentMap, 1000), Find.CurrentMap, WipeMode.Vanish);
 					HealthUtility.DamageUntilDead(pawn);
 					if (!pawn.Dead)
 					{
@@ -1976,7 +2123,7 @@ namespace Verse
 							pawn,
 							" at ",
 							pawn.Position
-						}));
+						}), false);
 						return;
 					}
 				}
@@ -1987,9 +2134,9 @@ namespace Verse
 				{
 					PawnKindDef random = DefDatabase<PawnKindDef>.GetRandom();
 					Pawn pawn = PawnGenerator.GeneratePawn(random, FactionUtility.DefaultFactionFrom(random.defaultFactionType));
-					GenSpawn.Spawn(pawn, CellFinderLoose.RandomCellWith((IntVec3 c) => c.Standable(Find.VisibleMap), Find.VisibleMap, 1000), Find.VisibleMap);
+					GenSpawn.Spawn(pawn, CellFinderLoose.RandomCellWith((IntVec3 c) => c.Standable(Find.CurrentMap), Find.CurrentMap, 1000), Find.CurrentMap, WipeMode.Vanish);
 					pawn.health.forceIncap = true;
-					BodyPartRecord part = pawn.health.hediffSet.GetNotMissingParts(BodyPartHeight.Undefined, BodyPartDepth.Undefined).RandomElement<BodyPartRecord>();
+					BodyPartRecord part = pawn.health.hediffSet.GetNotMissingParts(BodyPartHeight.Undefined, BodyPartDepth.Undefined, null, null).RandomElement<BodyPartRecord>();
 					HealthUtility.GiveInjuriesOperationFailureCatastrophic(pawn, part);
 					pawn.health.forceIncap = false;
 					if (pawn.Dead)
@@ -2000,7 +2147,7 @@ namespace Verse
 							pawn,
 							" at ",
 							pawn.Position
-						}));
+						}), false);
 					}
 				}
 			});
@@ -2010,7 +2157,7 @@ namespace Verse
 				{
 					PawnKindDef random = DefDatabase<PawnKindDef>.GetRandom();
 					Pawn pawn = PawnGenerator.GeneratePawn(random, FactionUtility.DefaultFactionFrom(random.defaultFactionType));
-					GenSpawn.Spawn(pawn, CellFinderLoose.RandomCellWith((IntVec3 c) => c.Standable(Find.VisibleMap), Find.VisibleMap, 1000), Find.VisibleMap);
+					GenSpawn.Spawn(pawn, CellFinderLoose.RandomCellWith((IntVec3 c) => c.Standable(Find.CurrentMap), Find.CurrentMap, 1000), Find.CurrentMap, WipeMode.Vanish);
 					pawn.health.forceIncap = true;
 					HealthUtility.GiveInjuriesOperationFailureRidiculous(pawn);
 					pawn.health.forceIncap = false;
@@ -2022,7 +2169,7 @@ namespace Verse
 							pawn,
 							" at ",
 							pawn.Position
-						}));
+						}), false);
 					}
 				}
 			});
@@ -2051,7 +2198,7 @@ namespace Verse
 					array2[array.FirstIndexOf((float time) => ms <= time)]++;
 					if (pawn.Dead)
 					{
-						Log.Error("Pawn is dead");
+						Log.Error("Pawn is dead", false);
 					}
 					Find.WorldPawns.PassToWorld(pawn, PawnDiscardDecideMode.Discard);
 				}
@@ -2061,19 +2208,14 @@ namespace Verse
 				{
 					stringBuilder.AppendLine(string.Format("<{0}ms: {1}", array[j], array2[j]));
 				}
-				Log.Message(stringBuilder.ToString());
+				Log.Message(stringBuilder.ToString(), false);
 			});
 			base.DebugAction("Check region listers", delegate
 			{
-				Autotests_RegionListers.CheckBugs(Find.VisibleMap);
+				Autotests_RegionListers.CheckBugs(Find.CurrentMap);
 			});
 			base.DebugAction("Test time-to-down", delegate
 			{
-				if (Find.World.info.planetCoverage < 0.25f)
-				{
-					Log.Error("Planet coverage must be 0.3+");
-					return;
-				}
 				List<DebugMenuOption> list = new List<DebugMenuOption>();
 				foreach (PawnKindDef kindDef in from kd in DefDatabase<PawnKindDef>.AllDefs
 				orderby kd.defName
@@ -2083,7 +2225,7 @@ namespace Verse
 					{
 						if (kindDef == PawnKindDefOf.Colonist)
 						{
-							Log.Message("Current colonist TTD reference point: 22.3 seconds, stddev 8.35 seconds");
+							Log.Message("Current colonist TTD reference point: 22.3 seconds, stddev 8.35 seconds", false);
 						}
 						List<float> results = new List<float>();
 						List<PawnKindDef> list2 = new List<PawnKindDef>();
@@ -2098,79 +2240,68 @@ namespace Verse
 							}
 						}, delegate
 						{
-							string arg_79_0 = "Finished {0} tests; time-to-down {1}, stddev {2}\n\nraw: {3}";
+							string arg_75_0 = "Finished {0} tests; time-to-down {1}, stddev {2}\n\nraw: {3}";
 							object[] expr_0B = new object[4];
 							expr_0B[0] = results.Count;
 							expr_0B[1] = results.Average();
 							expr_0B[2] = GenMath.Stddev(results);
-							expr_0B[3] = GenText.ToLineList(results.Select((float res) => res.ToString()), string.Empty);
-							Log.Message(string.Format(arg_79_0, expr_0B));
+							expr_0B[3] = results.Select((float res) => res.ToString()).ToLineList(null);
+							Log.Message(string.Format(arg_75_0, expr_0B), false);
 						});
 					}));
 				}
 				Find.WindowStack.Add(new Dialog_DebugOptionListLister(list));
 			});
-			base.DebugAction("Battle Royale", delegate
+			base.DebugAction("Battle Royale All PawnKinds", delegate
 			{
-				if (Find.World.info.planetCoverage < 0.25f)
+				ArenaUtility.PerformBattleRoyale(DefDatabase<PawnKindDef>.AllDefs);
+			});
+			base.DebugAction("Battle Royale Humanlikes", delegate
+			{
+				ArenaUtility.PerformBattleRoyale(from k in DefDatabase<PawnKindDef>.AllDefs
+				where k.RaceProps.Humanlike
+				select k);
+			});
+			base.DebugAction("Battle Royale by Damagetype", delegate
+			{
+				PawnKindDef[] array = new PawnKindDef[]
 				{
-					Log.Error("Planet coverage must be 0.3+");
-					return;
-				}
-				Dictionary<PawnKindDef, float> ratings = new Dictionary<PawnKindDef, float>();
-				foreach (PawnKindDef current in DefDatabase<PawnKindDef>.AllDefs)
+					PawnKindDefOf.Colonist,
+					PawnKindDefOf.Muffalo
+				};
+				IEnumerable<ToolCapacityDef> enumerable = from tc in DefDatabase<ToolCapacityDef>.AllDefsListForReading
+				where tc != ToolCapacityDefOf.KickMaterialInEyes
+				select tc;
+				Func<PawnKindDef, ToolCapacityDef, string> func = (PawnKindDef pkd, ToolCapacityDef dd) => string.Format("{0}_{1}", pkd.label, dd.defName);
+				if (Dialog_DebugActionsMenu.pawnKindsForDamageTypeBattleRoyale == null)
 				{
-					ratings[current] = EloUtility.CalculateRating(current.combatPower, 1500f, 60f);
-				}
-				int currentFights = 0;
-				Current.Game.GetComponent<GameComponent_DebugTools>().AddPerFrameCallback(delegate
-				{
-					if (currentFights >= 15)
+					Dialog_DebugActionsMenu.pawnKindsForDamageTypeBattleRoyale = new List<PawnKindDef>();
+					PawnKindDef[] array2 = array;
+					for (int i = 0; i < array2.Length; i++)
 					{
-						return false;
-					}
-					PawnKindDef lhsDef = DefDatabase<PawnKindDef>.AllDefs.RandomElement<PawnKindDef>();
-					PawnKindDef rhsDef = DefDatabase<PawnKindDef>.AllDefs.RandomElement<PawnKindDef>();
-					float num = EloUtility.CalculateExpectation(ratings[lhsDef], ratings[rhsDef]);
-					float num2 = 1f - num;
-					float num3 = num;
-					float num4 = Mathf.Min(num2, num3);
-					num2 /= num4;
-					num3 /= num4;
-					float num5 = Mathf.Max(num2, num3);
-					if (num5 > 40f)
-					{
-						return false;
-					}
-					float num6 = Rand.Range(1f, 40f / num5);
-					num2 *= num6;
-					num3 *= num6;
-					List<PawnKindDef> lhs = Enumerable.Repeat<PawnKindDef>(lhsDef, GenMath.RoundRandom(num2)).ToList<PawnKindDef>();
-					List<PawnKindDef> rhs = Enumerable.Repeat<PawnKindDef>(rhsDef, GenMath.RoundRandom(num3)).ToList<PawnKindDef>();
-					currentFights++;
-					ArenaUtility.BeginArenaFight(lhs, rhs, delegate(ArenaUtility.ArenaResult result)
-					{
-						currentFights--;
-						if (result.winner != ArenaUtility.ArenaResult.Winner.Other)
+						PawnKindDef pawnKindDef = array2[i];
+						foreach (ToolCapacityDef toolType in enumerable)
 						{
-							float value = ratings[lhsDef];
-							float value2 = ratings[rhsDef];
-							EloUtility.Update(ref value, ref value2, 0.5f, (float)((result.winner != ArenaUtility.ArenaResult.Winner.Lhs) ? 0 : 1), 32f);
-							ratings[lhsDef] = value;
-							ratings[rhsDef] = value2;
-							Log.Message(string.Format("Current scores:\n\n{0}", GenText.ToLineList(from v in ratings
-							orderby v.Value
-							select string.Format("{0}: {1}->{2} (rating {2})", new object[]
+							string text = func(pawnKindDef, toolType);
+							ThingDef thingDef = Gen.MemberwiseClone<ThingDef>(pawnKindDef.race);
+							thingDef.defName = text;
+							thingDef.label = text;
+							thingDef.tools = new List<Tool>(pawnKindDef.race.tools.Select(delegate(Tool tool)
 							{
-								v.Key.label,
-								v.Key.combatPower,
-								EloUtility.CalculateLinearScore(v.Value, 1500f, 60f),
-								v.Value
-							}), string.Empty)));
+								Tool tool2 = Gen.MemberwiseClone<Tool>(tool);
+								tool2.capacities = new List<ToolCapacityDef>();
+								tool2.capacities.Add(toolType);
+								return tool2;
+							}));
+							PawnKindDef pawnKindDef2 = Gen.MemberwiseClone<PawnKindDef>(pawnKindDef);
+							pawnKindDef2.defName = text;
+							pawnKindDef2.label = text;
+							pawnKindDef2.race = thingDef;
+							Dialog_DebugActionsMenu.pawnKindsForDamageTypeBattleRoyale.Add(pawnKindDef2);
 						}
-					});
-					return false;
-				});
+					}
+				}
+				ArenaUtility.PerformBattleRoyale(Dialog_DebugActionsMenu.pawnKindsForDamageTypeBattleRoyale);
 			});
 		}
 
@@ -2179,9 +2310,18 @@ namespace Verse
 			base.DoLabel("Tools - World");
 			Text.Font = GameFont.Tiny;
 			base.DoLabel("Incidents");
-			IIncidentTarget altTarget = Find.WorldSelector.SingleSelectedObject as IIncidentTarget;
-			this.DoExecuteIncidentDebugAction(Find.World, altTarget);
-			this.DoExecuteIncidentWithDebugAction(Find.World, altTarget);
+			IIncidentTarget incidentTarget = Find.WorldSelector.SingleSelectedObject as IIncidentTarget;
+			if (incidentTarget == null)
+			{
+				incidentTarget = Find.CurrentMap;
+			}
+			if (incidentTarget != null)
+			{
+				this.DoIncidentDebugAction(incidentTarget);
+				this.DoIncidentWithPointsAction(incidentTarget);
+			}
+			this.DoIncidentDebugAction(Find.World);
+			this.DoIncidentWithPointsAction(Find.World);
 			base.DoLabel("Tools - Spawning");
 			base.DebugToolWorld("Spawn random caravan", delegate
 			{
@@ -2191,17 +2331,13 @@ namespace Verse
 				{
 					return;
 				}
-				Caravan caravan = (Caravan)WorldObjectMaker.MakeWorldObject(WorldObjectDefOf.Caravan);
-				caravan.Tile = num;
-				caravan.SetFaction(Faction.OfPlayer);
-				Find.WorldObjects.Add(caravan);
+				List<Pawn> list = new List<Pawn>();
 				int num2 = Rand.RangeInclusive(1, 10);
 				for (int i = 0; i < num2; i++)
 				{
 					Pawn pawn = PawnGenerator.GeneratePawn(Faction.OfPlayer.def.basicMemberKind, Faction.OfPlayer);
-					caravan.AddPawn(pawn, true);
-					Find.WorldPawns.PassToWorld(pawn, PawnDiscardDecideMode.Decide);
-					if (Rand.Value < 0.5f)
+					list.Add(pawn);
+					if (!pawn.story.WorkTagIsDisabled(WorkTags.Violent) && Rand.Value < 0.9f)
 					{
 						ThingDef thingDef = (from def in DefDatabase<ThingDef>.AllDefs
 						where def.IsWeapon && def.PlayerAcquirable
@@ -2209,10 +2345,25 @@ namespace Verse
 						pawn.equipment.AddEquipment((ThingWithComps)ThingMaker.MakeThing(thingDef, GenStuff.RandomStuffFor(thingDef)));
 					}
 				}
-				List<Thing> list = ItemCollectionGeneratorDefOf.DebugCaravanInventory.Worker.Generate(default(ItemCollectionGeneratorParams));
-				for (int j = 0; j < list.Count; j++)
+				int num3 = Rand.RangeInclusive(-4, 10);
+				for (int j = 0; j < num3; j++)
 				{
-					CaravanInventoryUtility.GiveThing(caravan, list[j]);
+					PawnKindDef kindDef = (from d in DefDatabase<PawnKindDef>.AllDefs
+					where d.RaceProps.Animal && d.RaceProps.wildness < 1f
+					select d).RandomElement<PawnKindDef>();
+					Pawn item = PawnGenerator.GeneratePawn(kindDef, Faction.OfPlayer);
+					list.Add(item);
+				}
+				Caravan caravan = CaravanMaker.MakeCaravan(list, Faction.OfPlayer, num, true);
+				List<Thing> list2 = ThingSetMakerDefOf.DebugCaravanInventory.root.Generate();
+				for (int k = 0; k < list2.Count; k++)
+				{
+					Thing thing = list2[k];
+					if (thing.GetStatValue(StatDefOf.Mass, true) * (float)thing.stackCount > caravan.MassCapacity - caravan.MassUsage)
+					{
+						break;
+					}
+					CaravanInventoryUtility.GiveThing(caravan, thing);
 				}
 			});
 			base.DebugToolWorld("Spawn random faction base", delegate
@@ -2228,11 +2379,11 @@ namespace Verse
 					{
 						return;
 					}
-					FactionBase factionBase = (FactionBase)WorldObjectMaker.MakeWorldObject(WorldObjectDefOf.FactionBase);
-					factionBase.SetFaction(faction);
-					factionBase.Tile = num;
-					factionBase.Name = FactionBaseNameGenerator.GenerateFactionBaseName(factionBase);
-					Find.WorldObjects.Add(factionBase);
+					Settlement settlement = (Settlement)WorldObjectMaker.MakeWorldObject(WorldObjectDefOf.Settlement);
+					settlement.SetFaction(faction);
+					settlement.Tile = num;
+					settlement.Name = SettlementNameGenerator.GenerateSettlementName(settlement, null);
+					Find.WorldObjects.Add(settlement);
 				}
 			});
 			base.DebugToolWorld("Spawn site", delegate
@@ -2240,7 +2391,7 @@ namespace Verse
 				int tile = GenWorld.MouseTile(false);
 				if (tile < 0 || Find.World.Impassable(tile))
 				{
-					Messages.Message("Impassable", MessageTypeDefOf.RejectInput);
+					Messages.Message("Impassable", MessageTypeDefOf.RejectInput, false);
 				}
 				else
 				{
@@ -2255,14 +2406,13 @@ namespace Verse
 							List<DebugMenuOption> list2 = new List<DebugMenuOption>();
 							list2.Add(new DebugMenuOption("-Done (" + parts.Count + " parts)-", DebugMenuOptionMode.Action, delegate
 							{
-								Site site = SiteMaker.TryMakeSite(localDef, parts, true, null);
+								Site site = SiteMaker.TryMakeSite(localDef, parts, tile, true, null, true, null);
 								if (site == null)
 								{
-									Messages.Message("Could not find any valid faction for this site.", MessageTypeDefOf.RejectInput);
+									Messages.Message("Could not find any valid faction for this site.", MessageTypeDefOf.RejectInput, false);
 								}
 								else
 								{
-									site.Tile = tile;
 									Find.WorldObjects.Add(site);
 								}
 							}));
@@ -2282,6 +2432,108 @@ namespace Verse
 					Find.WindowStack.Add(new Dialog_DebugOptionListLister(list));
 				}
 			});
+			base.DebugToolWorld("Spawn site with points", delegate
+			{
+				int tile = GenWorld.MouseTile(false);
+				if (tile < 0 || Find.World.Impassable(tile))
+				{
+					Messages.Message("Impassable", MessageTypeDefOf.RejectInput, false);
+				}
+				else
+				{
+					List<DebugMenuOption> list = new List<DebugMenuOption>();
+					List<SitePartDef> parts = new List<SitePartDef>();
+					foreach (SiteCoreDef current in DefDatabase<SiteCoreDef>.AllDefs)
+					{
+						SiteCoreDef localDef = current;
+						Action addPart = null;
+						addPart = delegate
+						{
+							List<DebugMenuOption> list2 = new List<DebugMenuOption>();
+							list2.Add(new DebugMenuOption("-Done (" + parts.Count + " parts)-", DebugMenuOptionMode.Action, delegate
+							{
+								List<DebugMenuOption> list3 = new List<DebugMenuOption>();
+								foreach (float current3 in Dialog_DebugActionsMenu.PointsOptions(true))
+								{
+									float localPoints = current3;
+									list3.Add(new DebugMenuOption(current3.ToString("F0"), DebugMenuOptionMode.Action, delegate
+									{
+										SiteCoreDef localDef = localDef;
+										List<SitePartDef> parts = parts;
+										int tile = tile;
+										float? threatPoints = new float?(localPoints);
+										Site site = SiteMaker.TryMakeSite(localDef, parts, tile, true, null, true, threatPoints);
+										if (site == null)
+										{
+											Messages.Message("Could not find any valid faction for this site.", MessageTypeDefOf.RejectInput, false);
+										}
+										else
+										{
+											Find.WorldObjects.Add(site);
+										}
+									}));
+								}
+								Find.WindowStack.Add(new Dialog_DebugOptionListLister(list3));
+							}));
+							foreach (SitePartDef current2 in DefDatabase<SitePartDef>.AllDefs)
+							{
+								SitePartDef localPart = current2;
+								list2.Add(new DebugMenuOption(current2.defName, DebugMenuOptionMode.Action, delegate
+								{
+									parts.Add(localPart);
+									addPart();
+								}));
+							}
+							Find.WindowStack.Add(new Dialog_DebugOptionListLister(list2));
+						};
+						list.Add(new DebugMenuOption(localDef.defName, DebugMenuOptionMode.Action, addPart));
+					}
+					Find.WindowStack.Add(new Dialog_DebugOptionListLister(list));
+				}
+			});
+			base.DebugToolWorld("Spawn world object", delegate
+			{
+				int tile = GenWorld.MouseTile(false);
+				if (tile < 0 || Find.World.Impassable(tile))
+				{
+					Messages.Message("Impassable", MessageTypeDefOf.RejectInput, false);
+				}
+				else
+				{
+					List<DebugMenuOption> list = new List<DebugMenuOption>();
+					foreach (WorldObjectDef current in DefDatabase<WorldObjectDef>.AllDefs)
+					{
+						WorldObjectDef localDef = current;
+						Action method = delegate
+						{
+							WorldObject worldObject = WorldObjectMaker.MakeWorldObject(localDef);
+							worldObject.Tile = tile;
+							Find.WorldObjects.Add(worldObject);
+						};
+						list.Add(new DebugMenuOption(localDef.defName, DebugMenuOptionMode.Action, method));
+					}
+					Find.WindowStack.Add(new Dialog_DebugOptionListLister(list));
+				}
+			});
+			base.DoLabel("Tools - Misc");
+			base.DebugAction("Change camera config...", delegate
+			{
+				List<DebugMenuOption> list = new List<DebugMenuOption>();
+				foreach (Type current in typeof(WorldCameraConfig).AllSubclasses())
+				{
+					Type localType = current;
+					string text = localType.Name;
+					if (text.StartsWith("WorldCameraConfig_"))
+					{
+						text = text.Substring("WorldCameraConfig_".Length);
+					}
+					list.Add(new DebugMenuOption(text, DebugMenuOptionMode.Action, delegate
+					{
+						Find.WorldCameraDriver.config = (WorldCameraConfig)Activator.CreateInstance(localType);
+					}));
+				}
+				Find.WindowStack.Add(new Dialog_DebugOptionListLister(list));
+			});
 		}
 
 		private void DoRaid(IncidentParms parms)
@@ -2298,68 +2550,58 @@ namespace Verse
 			incidentDef.Worker.TryExecute(parms);
 		}
 
-		private void DoExecuteIncidentDebugAction(IIncidentTarget target, IIncidentTarget altTarget)
+		private void DoIncidentDebugAction(IIncidentTarget target)
 		{
-			base.DebugAction("Execute incident...", delegate
+			base.DebugAction("Do incident (" + this.GetIncidentTargetLabel(target) + ")...", delegate
 			{
 				List<DebugMenuOption> list = new List<DebugMenuOption>();
 				foreach (IncidentDef current in from d in DefDatabase<IncidentDef>.AllDefs
-				where d.TargetAllowed(target) || (altTarget != null && d.TargetAllowed(altTarget))
-				orderby !d.TargetAllowed(target), d.defName
+				where d.TargetAllowed(target)
+				orderby d.defName
 				select d)
 				{
-					IIncidentTarget thisIncidentTarget = (!current.TargetAllowed(target)) ? altTarget : target;
 					IncidentDef localDef = current;
 					string text = localDef.defName;
-					if (!localDef.Worker.CanFireNow(thisIncidentTarget))
+					IncidentParms parms = StorytellerUtility.DefaultParmsNow(localDef.category, target);
+					if (!localDef.Worker.CanFireNow(parms, false))
 					{
 						text += " [NO]";
 					}
-					if (thisIncidentTarget == altTarget)
-					{
-						text = text + " (" + altTarget.GetType().Name.Truncate(52f, null) + ")";
-					}
 					list.Add(new DebugMenuOption(text, DebugMenuOptionMode.Action, delegate
 					{
-						IncidentParms incidentParms = StorytellerUtility.DefaultParmsNow(Find.Storyteller.def, localDef.category, thisIncidentTarget);
 						if (localDef.pointsScaleable)
 						{
-							StorytellerComp storytellerComp = Find.Storyteller.storytellerComps.First((StorytellerComp x) => x is StorytellerComp_ThreatCycle || x is StorytellerComp_RandomMain);
-							incidentParms = storytellerComp.GenerateParms(localDef.category, incidentParms.target);
+							StorytellerComp storytellerComp = Find.Storyteller.storytellerComps.First((StorytellerComp x) => x is StorytellerComp_OnOffCycle || x is StorytellerComp_RandomMain);
+							parms = storytellerComp.GenerateParms(localDef.category, parms.target);
 						}
-						localDef.Worker.TryExecute(incidentParms);
+						localDef.Worker.TryExecute(parms);
 					}));
 				}
 				Find.WindowStack.Add(new Dialog_DebugOptionListLister(list));
 			});
 		}
 
-		private void DoExecuteIncidentWithDebugAction(IIncidentTarget target, IIncidentTarget altTarget)
+		private void DoIncidentWithPointsAction(IIncidentTarget target)
 		{
-			base.DebugAction("Execute incident with...", delegate
+			base.DebugAction("Do incident w/ points (" + this.GetIncidentTargetLabel(target) + ")...", delegate
 			{
 				List<DebugMenuOption> list = new List<DebugMenuOption>();
 				foreach (IncidentDef current in from d in DefDatabase<IncidentDef>.AllDefs
-				where (d.TargetAllowed(target) || (altTarget != null && d.TargetAllowed(altTarget))) && d.pointsScaleable
-				orderby !d.TargetAllowed(target), d.defName
+				where d.TargetAllowed(target) && d.pointsScaleable
+				orderby d.defName
 				select d)
 				{
-					IIncidentTarget thisIncidentTarget = (!current.TargetAllowed(target)) ? altTarget : target;
 					IncidentDef localDef = current;
 					string text = localDef.defName;
-					if (!localDef.Worker.CanFireNow(thisIncidentTarget))
+					IncidentParms parms = StorytellerUtility.DefaultParmsNow(localDef.category, target);
+					if (!localDef.Worker.CanFireNow(parms, false))
 					{
 						text += " [NO]";
 					}
-					if (thisIncidentTarget == altTarget)
-					{
-						text = text + " (" + altTarget.GetType().Name.Truncate(52f, null) + ")";
-					}
 					list.Add(new DebugMenuOption(text, DebugMenuOptionMode.Action, delegate
 					{
-						IncidentParms parms = StorytellerUtility.DefaultParmsNow(Find.Storyteller.def, localDef.category, thisIncidentTarget);
 						List<DebugMenuOption> list2 = new List<DebugMenuOption>();
-						foreach (float current2 in Dialog_DebugActionsMenu.PointsOptions())
+						foreach (float current2 in Dialog_DebugActionsMenu.PointsOptions(true))
 						{
 							float localPoints = current2;
 							list2.Add(new DebugMenuOption(current2 + " points", DebugMenuOptionMode.Action, delegate
@@ -2375,9 +2617,30 @@ namespace Verse
 			});
 		}
 
+		private string GetIncidentTargetLabel(IIncidentTarget target)
+		{
+			if (target == null)
+			{
+				return "null target";
+			}
+			if (target is Map)
+			{
+				return "Map";
+			}
+			if (target is World)
+			{
+				return "World";
+			}
+			if (target is Caravan)
+			{
+				return ((Caravan)target).LabelCap;
+			}
+			return target.ToString();
+		}
+
 		private void DebugGiveResource(ThingDef resDef, int count)
 		{
-			Pawn pawn = Find.VisibleMap.mapPawns.FreeColonistsSpawned.RandomElement<Pawn>();
+			Pawn pawn = Find.CurrentMap.mapPawns.FreeColonistsSpawned.RandomElement<Pawn>();
 			int i = count;
 			int num = 0;
 			while (i > 0)
@@ -2386,7 +2649,7 @@ namespace Verse
 				i -= num2;
 				Thing thing = ThingMaker.MakeThing(resDef, null);
 				thing.stackCount = num2;
-				if (!GenPlace.TryPlaceThing(thing, pawn.Position, pawn.Map, ThingPlaceMode.Near, null))
+				if (!GenPlace.TryPlaceThing(thing, pawn.Position, pawn.Map, ThingPlaceMode.Near, null, null))
 				{
 					break;
 				}
@@ -2401,12 +2664,12 @@ namespace Verse
 				" near ",
 				pawn,
 				"."
-			}), MessageTypeDefOf.TaskCompletion);
+			}), MessageTypeDefOf.TaskCompletion, false);
 		}
 
 		private void OffsetNeed(NeedDef nd, float offsetPct)
 		{
-			foreach (Pawn current in (from t in Find.VisibleMap.thingGrid.ThingsAt(UI.MouseCell())
+			foreach (Pawn current in (from t in Find.CurrentMap.thingGrid.ThingsAt(UI.MouseCell())
 			where t is Pawn
 			select t).Cast<Pawn>())
 			{
@@ -2430,7 +2693,7 @@ namespace Verse
 
 		private void AddGuest(bool prisoner)
 		{
-			foreach (Building_Bed current in Find.VisibleMap.listerBuildings.AllBuildingsColonistOfClass<Building_Bed>())
+			foreach (Building_Bed current in Find.CurrentMap.listerBuildings.AllBuildingsColonistOfClass<Building_Bed>())
 			{
 				if (current.ForPrisoners == prisoner && (!current.owners.Any<Pawn>() || (prisoner && current.AnyUnownedSleepingSlot)))
 				{
@@ -2447,7 +2710,7 @@ namespace Verse
 					}
 					Faction faction = FactionUtility.DefaultFactionFrom(pawnKindDef.defaultFactionType);
 					Pawn pawn = PawnGenerator.GeneratePawn(pawnKindDef, faction);
-					GenSpawn.Spawn(pawn, current.Position, Find.VisibleMap);
+					GenSpawn.Spawn(pawn, current.Position, Find.CurrentMap, WipeMode.Vanish);
 					foreach (ThingWithComps current2 in pawn.equipment.AllEquipmentListForReading.ToList<ThingWithComps>())
 					{
 						ThingWithComps thingWithComps;
@@ -2465,19 +2728,43 @@ namespace Verse
 		}
 
 		[DebuggerHidden]
-		public static IEnumerable<float> PointsOptions()
+		public static IEnumerable<float> PointsOptions(bool extended)
 		{
-			yield return 35f;
-			yield return 70f;
-			yield return 135f;
-			yield return 200f;
-			yield return 300f;
-			yield return 500f;
-			yield return 800f;
-			yield return 1200f;
-			yield return 2000f;
-			yield return 3000f;
-			yield return 4000f;
+			if (!extended)
+			{
+				yield return 35f;
+				yield return 70f;
+				yield return 100f;
+				yield return 150f;
+				yield return 200f;
+				yield return 350f;
+				yield return 500f;
+				yield return 750f;
+				yield return 1000f;
+				yield return 1500f;
+				yield return 2000f;
+				yield return 3000f;
+				yield return 4000f;
+			}
+			else
+			{
+				for (int i = 20; i < 100; i += 10)
+				{
+					yield return (float)i;
+				}
+				for (int j = 100; j < 500; j += 25)
+				{
+					yield return (float)j;
+				}
+				for (int k = 500; k < 1500; k += 50)
+				{
+					yield return (float)k;
+				}
+				for (int l = 1500; l <= 5000; l += 100)
+				{
+					yield return (float)l;
+				}
+			}
 		}
 	}
 }

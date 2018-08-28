@@ -62,7 +62,7 @@ namespace RimWorld
 			}
 			if (num > 25)
 			{
-				JobFailReason.Is("AlreadyFilledLower".Translate());
+				JobFailReason.Is("AlreadyFilledLower".Translate(), null);
 				return null;
 			}
 			return WorkGiver_CookFillHopper.HopperFillFoodJob(pawn, slotGroupParent);
@@ -70,7 +70,7 @@ namespace RimWorld
 
 		public static Job HopperFillFoodJob(Pawn pawn, ISlotGroupParent hopperSgp)
 		{
-			Building building = hopperSgp as Building;
+			Building building = (Building)hopperSgp;
 			if (!pawn.CanReserveAndReach(building.Position, PathEndMode.Touch, pawn.NormalMaxDanger(), 1, -1, null, false))
 			{
 				return null;
@@ -111,17 +111,17 @@ namespace RimWorld
 					{
 						if (HaulAIUtility.PawnCanAutomaticallyHaul(pawn, thing, false))
 						{
-							if (pawn.Map.slotGroupManager.SlotGroupAt(building.Position).Settings.AllowedToAccept(thing))
+							if (pawn.Map.haulDestinationManager.SlotGroupAt(building.Position).Settings.AllowedToAccept(thing))
 							{
-								StoragePriority storagePriority = HaulAIUtility.StoragePriorityAtFor(thing.Position, thing);
+								StoragePriority storagePriority = StoreUtility.CurrentStoragePriorityOf(thing);
 								if (storagePriority >= hopperSgp.GetSlotGroup().Settings.Priority)
 								{
 									flag = true;
-									JobFailReason.Is(WorkGiver_CookFillHopper.TheOnlyAvailableFoodIsInStorageOfHigherPriorityTrans);
+									JobFailReason.Is(WorkGiver_CookFillHopper.TheOnlyAvailableFoodIsInStorageOfHigherPriorityTrans, null);
 								}
 								else
 								{
-									Job job = HaulAIUtility.HaulMaxNumToCellJob(pawn, thing, building.Position, true);
+									Job job = HaulAIUtility.HaulToCellStorageJob(pawn, thing, building.Position, true);
 									if (job != null)
 									{
 										return job;
@@ -134,7 +134,7 @@ namespace RimWorld
 			}
 			if (!flag)
 			{
-				JobFailReason.Is(WorkGiver_CookFillHopper.NoFoodToFillHopperTrans);
+				JobFailReason.Is(WorkGiver_CookFillHopper.NoFoodToFillHopperTrans, null);
 			}
 			return null;
 		}

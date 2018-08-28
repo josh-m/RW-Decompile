@@ -14,7 +14,7 @@ namespace Verse
 
 		private List<Thing> itemsNotForSale = new List<Thing>();
 
-		private static List<ThingCount> tmpDrugsToKeep = new List<ThingCount>();
+		private static List<ThingDefCount> tmpDrugsToKeep = new List<ThingDefCount>();
 
 		private static List<Thing> tmpThingList = new List<Thing>();
 
@@ -41,17 +41,17 @@ namespace Verse
 		{
 			get
 			{
-				return this.FirstUnloadableThing != default(ThingStackPart);
+				return this.FirstUnloadableThing != default(ThingCount);
 			}
 		}
 
-		public ThingStackPart FirstUnloadableThing
+		public ThingCount FirstUnloadableThing
 		{
 			get
 			{
 				if (this.innerContainer.Count == 0)
 				{
-					return default(ThingStackPart);
+					return default(ThingCount);
 				}
 				if (this.pawn.drugs != null && this.pawn.drugs.CurrentPolicy != null)
 				{
@@ -61,14 +61,14 @@ namespace Verse
 					{
 						if (currentPolicy[i].takeToInventory > 0)
 						{
-							Pawn_InventoryTracker.tmpDrugsToKeep.Add(new ThingCount(currentPolicy[i].drug, currentPolicy[i].takeToInventory));
+							Pawn_InventoryTracker.tmpDrugsToKeep.Add(new ThingDefCount(currentPolicy[i].drug, currentPolicy[i].takeToInventory));
 						}
 					}
 					for (int j = 0; j < this.innerContainer.Count; j++)
 					{
 						if (!this.innerContainer[j].def.IsDrug)
 						{
-							return new ThingStackPart(this.innerContainer[j], this.innerContainer[j].stackCount);
+							return new ThingCount(this.innerContainer[j], this.innerContainer[j].stackCount);
 						}
 						int num = -1;
 						for (int k = 0; k < Pawn_InventoryTracker.tmpDrugsToKeep.Count; k++)
@@ -81,17 +81,17 @@ namespace Verse
 						}
 						if (num < 0)
 						{
-							return new ThingStackPart(this.innerContainer[j], this.innerContainer[j].stackCount);
+							return new ThingCount(this.innerContainer[j], this.innerContainer[j].stackCount);
 						}
 						if (this.innerContainer[j].stackCount > Pawn_InventoryTracker.tmpDrugsToKeep[num].Count)
 						{
-							return new ThingStackPart(this.innerContainer[j], this.innerContainer[j].stackCount - Pawn_InventoryTracker.tmpDrugsToKeep[num].Count);
+							return new ThingCount(this.innerContainer[j], this.innerContainer[j].stackCount - Pawn_InventoryTracker.tmpDrugsToKeep[num].Count);
 						}
-						Pawn_InventoryTracker.tmpDrugsToKeep[num] = new ThingCount(Pawn_InventoryTracker.tmpDrugsToKeep[num].ThingDef, Pawn_InventoryTracker.tmpDrugsToKeep[num].Count - this.innerContainer[j].stackCount);
+						Pawn_InventoryTracker.tmpDrugsToKeep[num] = new ThingDefCount(Pawn_InventoryTracker.tmpDrugsToKeep[num].ThingDef, Pawn_InventoryTracker.tmpDrugsToKeep[num].Count - this.innerContainer[j].stackCount);
 					}
-					return default(ThingStackPart);
+					return default(ThingCount);
 				}
-				return new ThingStackPart(this.innerContainer[0], this.innerContainer[0].stackCount);
+				return new ThingCount(this.innerContainer[0], this.innerContainer[0].stackCount);
 			}
 		}
 
@@ -137,7 +137,7 @@ namespace Verse
 		{
 			if (this.pawn.MapHeld == null)
 			{
-				Log.Error("Tried to drop all inventory near pawn but the pawn is unspawned. pawn=" + this.pawn);
+				Log.Error("Tried to drop all inventory near pawn but the pawn is unspawned. pawn=" + this.pawn, false);
 				return;
 			}
 			Pawn_InventoryTracker.tmpThingList.Clear();
@@ -159,7 +159,7 @@ namespace Verse
 					{
 						LessonAutoActivator.TeachOpportunity(ConceptDefOf.DrugBurning, OpportunityType.Important);
 					}
-				});
+				}, null);
 			}
 		}
 

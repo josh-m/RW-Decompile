@@ -20,17 +20,17 @@ namespace Verse
 
 		private static readonly int PlaceNearMiddleRadialCells = GenRadial.NumCellsInRadius(3f);
 
-		public static bool TryPlaceThing(Thing thing, IntVec3 center, Map map, ThingPlaceMode mode, Action<Thing, int> placedAction = null)
+		public static bool TryPlaceThing(Thing thing, IntVec3 center, Map map, ThingPlaceMode mode, Action<Thing, int> placedAction = null, Predicate<IntVec3> nearPlaceValidator = null)
 		{
 			Thing thing2;
-			return GenPlace.TryPlaceThing(thing, center, map, mode, out thing2, placedAction);
+			return GenPlace.TryPlaceThing(thing, center, map, mode, out thing2, placedAction, nearPlaceValidator);
 		}
 
-		public static bool TryPlaceThing(Thing thing, IntVec3 center, Map map, ThingPlaceMode mode, out Thing lastResultingThing, Action<Thing, int> placedAction = null)
+		public static bool TryPlaceThing(Thing thing, IntVec3 center, Map map, ThingPlaceMode mode, out Thing lastResultingThing, Action<Thing, int> placedAction = null, Predicate<IntVec3> nearPlaceValidator = null)
 		{
 			if (map == null)
 			{
-				Log.Error("Tried to place thing " + thing + " in a null map.");
+				Log.Error("Tried to place thing " + thing + " in a null map.", false);
 				lastResultingThing = null;
 				return false;
 			}
@@ -49,7 +49,7 @@ namespace Verse
 				{
 					int stackCount = thing.stackCount;
 					IntVec3 loc;
-					if (!GenPlace.TryFindPlaceSpotNear(center, map, thing, true, out loc))
+					if (!GenPlace.TryFindPlaceSpotNear(center, map, thing, true, out loc, nearPlaceValidator))
 					{
 						break;
 					}
@@ -73,32 +73,21 @@ namespace Verse
 					" in mode ",
 					mode,
 					"."
-				}));
+				}), false);
 				lastResultingThing = null;
 				return false;
 			}
 			throw new InvalidOperationException();
 		}
 
-		public static bool TryMoveThing(Thing thing, IntVec3 loc, Map map)
-		{
-			IntVec3 position;
-			if (!GenPlace.TryFindPlaceSpotNear(loc, map, thing, false, out position))
-			{
-				return false;
-			}
-			thing.Position = position;
-			return true;
-		}
-
-		private static bool TryFindPlaceSpotNear(IntVec3 center, Map map, Thing thing, bool allowStacking, out IntVec3 bestSpot)
+		private static bool TryFindPlaceSpotNear(IntVec3 center, Map map, Thing thing, bool allowStacking, out IntVec3 bestSpot, Predicate<IntVec3> extraValidator = null)
 		{
 			GenPlace.PlaceSpotQuality placeSpotQuality = GenPlace.PlaceSpotQuality.Unusable;
 			bestSpot = center;
 			for (int i = 0; i < 9; i++)
 			{
 				IntVec3 intVec = center + GenRadial.RadialPattern[i];
-				GenPlace.PlaceSpotQuality placeSpotQuality2 = GenPlace.PlaceSpotQualityAt(intVec, map, thing, center, allowStacking);
+				GenPlace.PlaceSpotQuality placeSpotQuality2 = GenPlace.PlaceSpotQualityAt(intVec, map, thing, center, allowStacking, extraValidator);
 				if (placeSpotQuality2 > placeSpotQuality)
 				{
 					bestSpot = intVec;
@@ -116,7 +105,7 @@ namespace Verse
 			for (int j = 0; j < GenPlace.PlaceNearMiddleRadialCells; j++)
 			{
 				IntVec3 intVec = center + GenRadial.RadialPattern[j];
-				GenPlace.PlaceSpotQuality placeSpotQuality2 = GenPlace.PlaceSpotQualityAt(intVec, map, thing, center, allowStacking);
+				GenPlace.PlaceSpotQuality placeSpotQuality2 = GenPlace.PlaceSpotQualityAt(intVec, map, thing, center, allowStacking, extraValidator);
 				if (placeSpotQuality2 > placeSpotQuality)
 				{
 					bestSpot = intVec;
@@ -134,7 +123,7 @@ namespace Verse
 			for (int k = 0; k < GenPlace.PlaceNearMaxRadialCells; k++)
 			{
 				IntVec3 intVec = center + GenRadial.RadialPattern[k];
-				GenPlace.PlaceSpotQuality placeSpotQuality2 = GenPlace.PlaceSpotQualityAt(intVec, map, thing, center, allowStacking);
+				GenPlace.PlaceSpotQuality placeSpotQuality2 = GenPlace.PlaceSpotQualityAt(intVec, map, thing, center, allowStacking, extraValidator);
 				if (placeSpotQuality2 > placeSpotQuality)
 				{
 					bestSpot = intVec;
@@ -153,9 +142,13 @@ namespace Verse
 			return false;
 		}
 
-		private static GenPlace.PlaceSpotQuality PlaceSpotQualityAt(IntVec3 c, Map map, Thing thing, IntVec3 center, bool allowStacking)
+		private static GenPlace.PlaceSpotQuality PlaceSpotQualityAt(IntVec3 c, Map map, Thing thing, IntVec3 center, bool allowStacking, Predicate<IntVec3> extraValidator = null)
 		{
 			if (!c.InBounds(map) || !c.Walkable(map))
+			{
+				return GenPlace.PlaceSpotQuality.Unusable;
+			}
+			if (extraValidator != null && !extraValidator(c))
 			{
 				return GenPlace.PlaceSpotQuality.Unusable;
 			}
@@ -270,7 +263,7 @@ namespace Verse
 					}
 				}
 			}
-			resultingThing = GenSpawn.Spawn(thing, loc, map);
+			resultingThing = GenSpawn.Spawn(thing, loc, map, WipeMode.Vanish);
 			if (placedAction != null)
 			{
 				placedAction(thing, thing.stackCount);

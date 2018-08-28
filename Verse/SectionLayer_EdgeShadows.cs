@@ -29,7 +29,7 @@ namespace Verse
 		public override void Regenerate()
 		{
 			Building[] innerArray = base.Map.edificeGrid.InnerArray;
-			float y = Altitudes.AltitudeFor(AltitudeLayer.Shadows);
+			float y = AltitudeLayer.Shadows.AltitudeFor();
 			CellRect cellRect = new CellRect(this.section.botLeft.x, this.section.botLeft.z, 17, 17);
 			cellRect.ClipInsideMap(base.Map);
 			LayerSubMesh sm = base.GetSubMesh(MatBases.EdgeShadow);

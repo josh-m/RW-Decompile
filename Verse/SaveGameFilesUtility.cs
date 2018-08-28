@@ -36,5 +36,14 @@ namespace Verse
 			while (SaveGameFilesUtility.SavedGameNamedExists(text));
 			return text;
 		}
+
+		public static FileInfo GetAutostartSaveFile()
+		{
+			if (!Prefs.DevMode)
+			{
+				return null;
+			}
+			return GenFilePaths.AllSavedGameFiles.FirstOrDefault((FileInfo x) => Path.GetFileNameWithoutExtension(x.Name).ToLower() == "autostart".ToLower());
+		}
 	}
 }

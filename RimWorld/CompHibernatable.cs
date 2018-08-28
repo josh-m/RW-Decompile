@@ -7,15 +7,11 @@ namespace RimWorld
 {
 	public class CompHibernatable : ThingComp
 	{
-		private HibernatableStateDef state = HibernatableStateDefOf.Running;
+		private HibernatableStateDef state = HibernatableStateDefOf.Hibernating;
 
 		private int endStartupTick;
 
-		public const string HibernateStartingSignal = "HibernateStarting";
-
-		public const string HibernateRunningSignal = "HibernateRunning";
-
-		private CompProperties_Hibernatable Props
+		public CompProperties_Hibernatable Props
 		{
 			get
 			{
@@ -36,14 +32,7 @@ namespace RimWorld
 					return;
 				}
 				this.state = value;
-				if (this.state == HibernatableStateDefOf.Starting)
-				{
-					this.parent.BroadcastCompSignal("HibernateStarting");
-				}
-				if (this.state == HibernatableStateDefOf.Running)
-				{
-					this.parent.BroadcastCompSignal("HibernateRunning");
-				}
+				this.parent.Map.info.parent.Notify_HibernatableChanged();
 			}
 		}
 
@@ -55,20 +44,30 @@ namespace RimWorld
 			}
 		}
 
+		public override void PostSpawnSetup(bool respawningAfterLoad)
+		{
+			base.PostSpawnSetup(respawningAfterLoad);
+			if (!respawningAfterLoad)
+			{
+				this.parent.Map.info.parent.Notify_HibernatableChanged();
+			}
+		}
+
+		public override void PostDeSpawn(Map map)
+		{
+			base.PostDeSpawn(map);
+			map.info.parent.Notify_HibernatableChanged();
+		}
+
 		public void Startup()
 		{
 			if (this.State != HibernatableStateDefOf.Hibernating)
 			{
-				Log.ErrorOnce("Attempted to start a non-hibernating object", 34361223);
+				Log.ErrorOnce("Attempted to start a non-hibernating object", 34361223, false);
 				return;
 			}
 			this.State = HibernatableStateDefOf.Starting;
 			this.endStartupTick = Mathf.RoundToInt((float)Find.TickManager.TicksGame + this.Props.startupDays * 60000f);
-			EscapeShipComp component = this.parent.Map.info.parent.GetComponent<EscapeShipComp>();
-			if (component != null)
-			{
-				component.raidBeaconEnabled = true;
-			}
 		}
 
 		public override string CompInspectStringExtra()
@@ -79,7 +78,7 @@ namespace RimWorld
 			}
 			if (this.State == HibernatableStateDefOf.Starting)
 			{
-				return string.Format("{0}: {1}", "HibernatableStartingUp".Translate(), (this.endStartupTick - Find.TickManager.TicksGame).ToStringTicksToPeriod(true, false, true));
+				return string.Format("{0}: {1}", "HibernatableStartingUp".Translate(), (this.endStartupTick - Find.TickManager.TicksGame).ToStringTicksToPeriod());
 			}
 			return null;
 		}
@@ -90,7 +89,16 @@ namespace RimWorld
 			{
 				this.State = HibernatableStateDefOf.Running;
 				this.endStartupTick = 0;
-				Find.LetterStack.ReceiveLetter("HibernateCompleteLabel".Translate(), "HibernateComplete".Translate(), LetterDefOf.PositiveEvent, new GlobalTargetInfo(this.parent), null);
+				string text;
+				if (this.parent.Map.Parent.GetComponent<EscapeShipComp>() != null)
+				{
+					text = "LetterHibernateComplete".Translate();
+				}
+				else
+				{
+					text = "LetterHibernateCompleteStandalone".Translate();
+				}
+				Find.LetterStack.ReceiveLetter("LetterLabelHibernateComplete".Translate(), text, LetterDefOf.PositiveEvent, new GlobalTargetInfo(this.parent), null, null);
 			}
 		}
 

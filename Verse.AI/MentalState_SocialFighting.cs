@@ -53,9 +53,9 @@ namespace Verse.AI
 			{
 				Messages.Message("MessageNoLongerSocialFighting".Translate(new object[]
 				{
-					this.pawn.NameStringShort,
+					this.pawn.LabelShort,
 					this.otherPawn.LabelShort
-				}), this.pawn, MessageTypeDefOf.SituationResolved);
+				}), this.pawn, MessageTypeDefOf.SituationResolved, true);
 			}
 			if (!this.pawn.Dead && this.pawn.needs.mood != null && !this.otherPawn.Dead)
 			{

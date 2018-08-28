@@ -5,7 +5,7 @@ namespace Verse
 {
 	public abstract class SubEffecter_DrifterEmote : SubEffecter
 	{
-		public SubEffecter_DrifterEmote(SubEffecterDef def) : base(def)
+		public SubEffecter_DrifterEmote(SubEffecterDef def, Effecter parent) : base(def, parent)
 		{
 		}
 
@@ -32,7 +32,7 @@ namespace Verse
 					{
 						mote.Attach(A);
 					}
-					GenSpawn.Spawn(mote, vector.ToIntVec3(), A.Map);
+					GenSpawn.Spawn(mote, vector.ToIntVec3(), A.Map, WipeMode.Vanish);
 				}
 			}
 		}

@@ -30,15 +30,25 @@ namespace RimWorld
 
 		public List<StorytellerCompProperties> comps = new List<StorytellerCompProperties>();
 
-		public float desiredPopulationMin = 3f;
+		public SimpleCurve populationIntentFactorFromPopCurve;
 
-		public float desiredPopulationMax = 10f;
+		public SimpleCurve populationIntentFactorFromPopAdaptDaysCurve;
 
-		public float desiredPopulationCritical = 13f;
+		public SimpleCurve pointsFactorFromDaysPassed;
 
-		public SimpleCurve populationIntentFromPopCurve;
+		public float adaptDaysMin;
 
-		public SimpleCurve populationIntentFromTimeCurve;
+		public float adaptDaysMax = 100f;
+
+		public float adaptDaysGameStartGraceDays;
+
+		public SimpleCurve pointsFactorFromAdaptDays;
+
+		public SimpleCurve adaptDaysLossFromColonistLostByPostPopulation;
+
+		public SimpleCurve adaptDaysLossFromColonistViolentlyDownedByPopulation;
+
+		public SimpleCurve adaptDaysGrowthRateCurve;
 
 		[Unsaved]
 		public Texture2D portraitLargeTex;
@@ -66,6 +76,26 @@ namespace RimWorld
 		[DebuggerHidden]
 		public override IEnumerable<string> ConfigErrors()
 		{
+			if (this.pointsFactorFromAdaptDays == null)
+			{
+				yield return "pointsFactorFromAdaptDays is null";
+			}
+			if (this.adaptDaysLossFromColonistLostByPostPopulation == null)
+			{
+				yield return "adaptDaysLossFromColonistLostByPostPopulation is null";
+			}
+			if (this.adaptDaysLossFromColonistViolentlyDownedByPopulation == null)
+			{
+				yield return "adaptDaysLossFromColonistViolentlyDownedByPopulation is null";
+			}
+			if (this.adaptDaysGrowthRateCurve == null)
+			{
+				yield return "adaptDaysGrowthRateCurve is null";
+			}
+			if (this.pointsFactorFromDaysPassed == null)
+			{
+				yield return "pointsFactorFromDaysPassed is null";
+			}
 			foreach (string e in base.ConfigErrors())
 			{
 				yield return e;

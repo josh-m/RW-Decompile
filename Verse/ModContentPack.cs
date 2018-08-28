@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Xml;
@@ -26,6 +27,8 @@ namespace Verse
 		private List<PatchOperation> patches;
 
 		private List<DefPackage> defPackages = new List<DefPackage>();
+
+		private DefPackage impliedDefPackage;
 
 		public static readonly string CoreModIdentifier = "Core";
 
@@ -128,7 +131,7 @@ namespace Verse
 			{
 				return (ModContentHolder<T>)this.strings;
 			}
-			Log.Error("Mod lacks manager for asset type " + this.strings);
+			Log.Error("Mod lacks manager for asset type " + this.strings, false);
 			return null;
 		}
 
@@ -143,41 +146,20 @@ namespace Verse
 			this.assemblies.ReloadAll();
 		}
 
-		public void LoadDefs(IEnumerable<PatchOperation> patches)
+		[DebuggerHidden]
+		public IEnumerable<LoadableXmlAsset> LoadDefs()
 		{
-			DeepProfiler.Start("Loading all defs");
-			List<LoadableXmlAsset> list = DirectXmlLoader.XmlAssetsInModFolder(this, "Defs/").ToList<LoadableXmlAsset>();
-			foreach (LoadableXmlAsset current in list)
+			if (this.defPackages.Count != 0)
 			{
-				foreach (PatchOperation current2 in patches)
-				{
-					current2.Apply(current.xmlDoc);
-				}
+				Log.ErrorOnce("LoadDefs called with already existing def packages", 39029405, false);
 			}
-			for (int i = 0; i < list.Count; i++)
+			foreach (LoadableXmlAsset asset in DirectXmlLoader.XmlAssetsInModFolder(this, "Defs/"))
 			{
-				if (list[i] == null || list[i].xmlDoc == null || list[i].xmlDoc.DocumentElement == null)
-				{
-					Log.Error(string.Format("{0}: unknown parse failure", list[i].fullFolderPath + "/" + list[i].name));
-				}
-				else if (list[i].xmlDoc.DocumentElement.Name != "Defs")
-				{
-					Log.Error(string.Format("{0}: root element named {1}; should be named Defs", list[i].fullFolderPath + "/" + list[i].name, list[i].xmlDoc.DocumentElement.Name));
-				}
-				XmlInheritance.TryRegisterAllFrom(list[i], this);
+				DefPackage defPackage = new DefPackage(asset.name, GenFilePaths.FolderPathRelativeToDefsFolder(asset.fullFolderPath, this));
+				this.AddDefPackage(defPackage);
+				asset.defPackage = defPackage;
+				yield return asset;
 			}
-			XmlInheritance.Resolve();
-			for (int j = 0; j < list.Count; j++)
-			{
-				string relFolder = GenFilePaths.FolderPathRelativeToDefsFolder(list[j].fullFolderPath, this);
-				DefPackage defPackage = new DefPackage(list[j].name, relFolder);
-				foreach (Def current3 in DirectXmlLoader.AllDefsFromAsset(list[j]))
-				{
-					defPackage.defs.Add(current3);
-				}
-				this.defPackages.Add(defPackage);
-			}
-			DeepProfiler.End();
 		}
 
 		public IEnumerable<DefPackage> GetDefPackagesInFolder(string relFolder)
@@ -208,7 +190,7 @@ namespace Verse
 				XmlElement documentElement = list[i].xmlDoc.DocumentElement;
 				if (documentElement.Name != "Patch")
 				{
-					Log.Error(string.Format("Unexpected document element in patch XML; got {0}, expected 'Patch'", documentElement.Name));
+					Log.Error(string.Format("Unexpected document element in patch XML; got {0}, expected 'Patch'", documentElement.Name), false);
 				}
 				else
 				{
@@ -219,7 +201,7 @@ namespace Verse
 						{
 							if (xmlNode.Name != "Operation")
 							{
-								Log.Error(string.Format("Unexpected element in patch XML; got {0}, expected 'Operation'", documentElement.ChildNodes[j].Name));
+								Log.Error(string.Format("Unexpected element in patch XML; got {0}, expected 'Operation'", documentElement.ChildNodes[j].Name), false);
 							}
 							else
 							{
@@ -237,6 +219,16 @@ namespace Verse
 		public void ClearPatchesCache()
 		{
 			this.patches = null;
+		}
+
+		public void AddImpliedDef(Def def)
+		{
+			if (this.impliedDefPackage == null)
+			{
+				this.impliedDefPackage = new DefPackage("ImpliedDefs", string.Empty);
+				this.defPackages.Add(this.impliedDefPackage);
+			}
+			this.impliedDefPackage.AddDef(def);
 		}
 
 		public override string ToString()

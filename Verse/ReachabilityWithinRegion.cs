@@ -42,7 +42,7 @@ namespace Verse
 			case PathEndMode.InteractionCell:
 				return thing.InteractionCell.GetRegion(map, RegionType.Set_Passable) == region;
 			}
-			Log.Error("Unsupported PathEndMode: " + peMode);
+			Log.Error("Unsupported PathEndMode: " + peMode, false);
 			return false;
 		}
 	}

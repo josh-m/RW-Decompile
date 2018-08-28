@@ -34,8 +34,8 @@ namespace RimWorld
 			{
 				Messages.Message("MessageCriticalAlert".Translate(new object[]
 				{
-					this.GetLabel()
-				}), this.GetReport().culprit, MessageTypeDefOf.ThreatBig);
+					this.GetLabel().CapitalizeFirst()
+				}), new LookTargets(this.GetReport().culprits), MessageTypeDefOf.ThreatBig, true);
 			}
 			this.lastActiveFrame = Time.frameCount;
 		}

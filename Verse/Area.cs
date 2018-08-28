@@ -1,4 +1,3 @@
-using RimWorld;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -139,7 +138,7 @@ namespace Verse
 			return Color.white;
 		}
 
-		public virtual bool AssignableAsAllowed(AllowedAreaMode mode)
+		public virtual bool AssignableAsAllowed()
 		{
 			return false;
 		}
@@ -177,7 +176,7 @@ namespace Verse
 
 		public void MarkForDraw()
 		{
-			if (this.Map == Find.VisibleMap)
+			if (this.Map == Find.CurrentMap)
 			{
 				this.Drawer.MarkForDraw();
 			}

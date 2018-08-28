@@ -25,7 +25,7 @@ namespace Verse
 
 		public virtual string GetLabelWhenUsedOn(Pawn pawn, BodyPartRecord part)
 		{
-			return this.recipe.LabelCap;
+			return this.recipe.label;
 		}
 
 		public virtual void ConsumeIngredient(Thing ingredient, RecipeDef recipe, Map map)

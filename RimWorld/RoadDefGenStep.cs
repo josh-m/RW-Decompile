@@ -11,6 +11,6 @@ namespace RimWorld
 
 		public int periodicSpacing;
 
-		public abstract void Place(Map map, IntVec3 position, TerrainDef rockDef);
+		public abstract void Place(Map map, IntVec3 position, TerrainDef rockDef, IntVec3 origin, GenStep_Roads.DistanceElement[,] distance);
 	}
 }

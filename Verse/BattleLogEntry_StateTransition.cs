@@ -1,5 +1,7 @@
 using RimWorld;
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using UnityEngine;
 using Verse.Grammar;
 
@@ -17,23 +19,23 @@ namespace Verse
 
 		private HediffDef culpritHediffDef;
 
-		private BodyPartDef culpritHediffTargetDef;
+		private BodyPartRecord culpritHediffTargetPart;
 
-		private BodyPartDef culpritTargetDef;
+		private BodyPartRecord culpritTargetPart;
 
 		private string SubjectName
 		{
 			get
 			{
-				return (this.subjectPawn == null) ? "null" : this.subjectPawn.NameStringShort;
+				return (this.subjectPawn == null) ? "null" : this.subjectPawn.LabelShort;
 			}
 		}
 
-		public BattleLogEntry_StateTransition()
+		public BattleLogEntry_StateTransition() : base(null)
 		{
 		}
 
-		public BattleLogEntry_StateTransition(Thing subject, RulePackDef transitionDef, Pawn initiator, Hediff culpritHediff, BodyPartDef culpritTargetDef)
+		public BattleLogEntry_StateTransition(Thing subject, RulePackDef transitionDef, Pawn initiator, Hediff culpritHediff, BodyPartRecord culpritTargetDef) : base(null)
 		{
 			if (subject is Pawn)
 			{
@@ -50,15 +52,28 @@ namespace Verse
 				this.culpritHediffDef = culpritHediff.def;
 				if (culpritHediff.Part != null)
 				{
-					this.culpritHediffTargetDef = culpritHediff.Part.def;
+					this.culpritHediffTargetPart = culpritHediff.Part;
 				}
 			}
-			this.culpritTargetDef = culpritTargetDef;
+			this.culpritTargetPart = culpritTargetDef;
 		}
 
 		public override bool Concerns(Thing t)
 		{
 			return t == this.subjectPawn || t == this.initiator;
+		}
+
+		[DebuggerHidden]
+		public override IEnumerable<Thing> GetConcerns()
+		{
+			if (this.initiator != null)
+			{
+				yield return this.initiator;
+			}
+			if (this.subjectPawn != null)
+			{
+				yield return this.subjectPawn;
+			}
 		}
 
 		public override void ClickedFromPOV(Thing pov)
@@ -90,38 +105,34 @@ namespace Verse
 			return null;
 		}
 
-		public override string ToGameStringFromPOV(Thing pov)
+		protected override GrammarRequest GenerateGrammarRequest()
 		{
-			Rand.PushState();
-			Rand.Seed = this.randSeed;
-			GrammarRequest request = default(GrammarRequest);
+			GrammarRequest result = base.GenerateGrammarRequest();
 			if (this.subjectPawn != null)
 			{
-				request.Rules.AddRange(GrammarUtility.RulesForPawn("subject", this.subjectPawn, request.Constants));
+				result.Rules.AddRange(GrammarUtility.RulesForPawn("SUBJECT", this.subjectPawn, result.Constants));
 			}
 			else if (this.subjectThing != null)
 			{
-				request.Rules.AddRange(GrammarUtility.RulesForDef("subject", this.subjectThing));
+				result.Rules.AddRange(GrammarUtility.RulesForDef("SUBJECT", this.subjectThing));
 			}
-			request.Includes.Add(this.transitionDef);
+			result.Includes.Add(this.transitionDef);
 			if (this.initiator != null)
 			{
-				request.Rules.AddRange(GrammarUtility.RulesForPawn("initiator", this.initiator, request.Constants));
+				result.Rules.AddRange(GrammarUtility.RulesForPawn("INITIATOR", this.initiator, result.Constants));
 			}
 			if (this.culpritHediffDef != null)
 			{
-				request.Rules.AddRange(GrammarUtility.RulesForDef("culpritHediff", this.culpritHediffDef));
+				result.Rules.AddRange(GrammarUtility.RulesForHediffDef("CULPRITHEDIFF", this.culpritHediffDef, this.culpritHediffTargetPart));
 			}
-			if (this.culpritHediffTargetDef != null)
+			if (this.culpritHediffTargetPart != null)
 			{
-				request.Rules.AddRange(GrammarUtility.RulesForDef("culpritHediff_target", this.culpritHediffTargetDef));
+				result.Rules.AddRange(GrammarUtility.RulesForBodyPartRecord("CULPRITHEDIFF_target", this.culpritHediffTargetPart));
 			}
-			if (this.culpritTargetDef != null)
+			if (this.culpritTargetPart != null)
 			{
-				request.Rules.AddRange(GrammarUtility.RulesForDef("culpritHediff_originaltarget", this.culpritTargetDef));
+				result.Rules.AddRange(GrammarUtility.RulesForBodyPartRecord("CULPRITHEDIFF_originaltarget", this.culpritTargetPart));
 			}
-			string result = GrammarResolver.Resolve("logentry", request, "state transition", false);
-			Rand.PopState();
 			return result;
 		}
 
@@ -133,8 +144,8 @@ namespace Verse
 			Scribe_Defs.Look<ThingDef>(ref this.subjectThing, "subjectThing");
 			Scribe_References.Look<Pawn>(ref this.initiator, "initiator", true);
 			Scribe_Defs.Look<HediffDef>(ref this.culpritHediffDef, "culpritHediffDef");
-			Scribe_Defs.Look<BodyPartDef>(ref this.culpritHediffTargetDef, "culpritHediffTargetDef");
-			Scribe_Defs.Look<BodyPartDef>(ref this.culpritTargetDef, "culpritTargetDef");
+			Scribe_BodyParts.Look(ref this.culpritHediffTargetPart, "culpritHediffTargetPart", null);
+			Scribe_BodyParts.Look(ref this.culpritTargetPart, "culpritTargetPart", null);
 		}
 
 		public override string ToString()

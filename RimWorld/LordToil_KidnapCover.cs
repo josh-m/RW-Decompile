@@ -15,6 +15,22 @@ namespace RimWorld
 			}
 		}
 
+		public override bool ForceHighStoryDanger
+		{
+			get
+			{
+				return this.cover;
+			}
+		}
+
+		public override bool AllowSelfTend
+		{
+			get
+			{
+				return false;
+			}
+		}
+
 		protected override bool TryFindGoodOpportunisticTaskTarget(Pawn pawn, out Thing target, List<Thing> alreadyTakenTargets)
 		{
 			if (pawn.mindState.duty != null && pawn.mindState.duty.def == this.DutyDef && pawn.carryTracker.CarriedThing is Pawn)

@@ -38,7 +38,7 @@ namespace RimWorld
 
 		public AcceptanceReport TryDelete(DrugPolicy policy)
 		{
-			foreach (Pawn current in PawnsFinder.AllMapsCaravansAndTravelingTransportPods)
+			foreach (Pawn current in PawnsFinder.AllMapsCaravansAndTravelingTransportPods_Alive)
 			{
 				if (current.drugs != null && current.drugs.CurrentPolicy == policy)
 				{

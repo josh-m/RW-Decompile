@@ -18,7 +18,7 @@ namespace RimWorld
 			List<Hediff> hediffs = pawn.health.hediffSet.hediffs;
 			for (int i = 0; i < hediffs.Count; i++)
 			{
-				if (hediffs[i].TendableNow)
+				if (hediffs[i].TendableNow(false))
 				{
 					Medicine.tendableHediffsInTendPriorityOrder.Add(hediffs[i]);
 				}
@@ -35,7 +35,7 @@ namespace RimWorld
 				TendUtility.GetOptimalHediffsToTendWithSingleTreatment(pawn, true, Medicine.tmpHediffs, Medicine.tendableHediffsInTendPriorityOrder);
 				if (!Medicine.tmpHediffs.Any<Hediff>())
 				{
-					goto IL_F6;
+					goto IL_F8;
 				}
 				num3++;
 				for (int j = 0; j < Medicine.tmpHediffs.Count; j++)
@@ -43,8 +43,8 @@ namespace RimWorld
 					Medicine.tendableHediffsInTendPriorityOrder.Remove(Medicine.tmpHediffs[j]);
 				}
 			}
-			Log.Error("Too many iterations.");
-			IL_F6:
+			Log.Error("Too many iterations.", false);
+			IL_F8:
 			Medicine.tmpHediffs.Clear();
 			Medicine.tendableHediffsInTendPriorityOrder.Clear();
 			return num3;

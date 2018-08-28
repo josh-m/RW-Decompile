@@ -81,6 +81,18 @@ namespace RimWorld
 
 		public static void StartPrisonBreak(Pawn initiator)
 		{
+			string text;
+			string label;
+			LetterDef textLetterDef;
+			PrisonBreakUtility.StartPrisonBreak(initiator, out text, out label, out textLetterDef);
+			if (!text.NullOrEmpty())
+			{
+				Find.LetterStack.ReceiveLetter(label, text, textLetterDef, initiator, null, null);
+			}
+		}
+
+		public static void StartPrisonBreak(Pawn initiator, out string letterText, out string letterLabel, out LetterDef letterDef)
+		{
 			PrisonBreakUtility.participatingRooms.Clear();
 			foreach (IntVec3 current in GenRadial.RadialCellsAround(initiator.Position, 20f, true))
 			{
@@ -107,9 +119,26 @@ namespace RimWorld
 			PrisonBreakUtility.participatingRooms.Clear();
 			if (PrisonBreakUtility.allEscapingPrisoners.Any<Pawn>())
 			{
-				PrisonBreakUtility.SendPrisonBreakLetter(PrisonBreakUtility.allEscapingPrisoners);
+				StringBuilder stringBuilder = new StringBuilder();
+				for (int i = 0; i < PrisonBreakUtility.allEscapingPrisoners.Count; i++)
+				{
+					stringBuilder.AppendLine("    " + PrisonBreakUtility.allEscapingPrisoners[i].LabelShort);
+				}
+				letterText = "LetterPrisonBreak".Translate(new object[]
+				{
+					stringBuilder.ToString().TrimEndNewlines()
+				});
+				letterLabel = "LetterLabelPrisonBreak".Translate();
+				letterDef = LetterDefOf.ThreatBig;
+				PrisonBreakUtility.allEscapingPrisoners.Clear();
 			}
-			PrisonBreakUtility.allEscapingPrisoners.Clear();
+			else
+			{
+				letterText = null;
+				letterLabel = null;
+				letterDef = null;
+			}
+			Find.TickManager.slower.SignalForceNormalSpeed();
 		}
 
 		private static void RemoveRandomRooms(HashSet<Room> participatingRooms, Pawn initiator)
@@ -165,7 +194,7 @@ namespace RimWorld
 			for (int i = 0; i < PrisonBreakUtility.escapingPrisonersGroup.Count; i++)
 			{
 				Pawn pawn = PrisonBreakUtility.escapingPrisonersGroup[i];
-				if (pawn.CurJob != null && pawn.jobs.curDriver.layingDown != LayingDownState.NotLaying)
+				if (pawn.CurJob != null && pawn.GetPosture().Laying())
 				{
 					pawn.jobs.EndCurrentJob(JobCondition.InterruptForced, true);
 				}
@@ -200,7 +229,7 @@ namespace RimWorld
 			{
 				if (!pawnPath.Found)
 				{
-					Log.Warning("Prison break: could not find path for prisoner " + escapingPrisoners[0] + " to the exit point.");
+					Log.Warning("Prison break: could not find path for prisoner " + escapingPrisoners[0] + " to the exit point.", false);
 					return false;
 				}
 				for (int i = 0; i < pawnPath.NodesLeftCount; i++)
@@ -251,19 +280,6 @@ namespace RimWorld
 				}
 			}
 			return result;
-		}
-
-		private static void SendPrisonBreakLetter(List<Pawn> escapingPrisoners)
-		{
-			StringBuilder stringBuilder = new StringBuilder();
-			for (int i = 0; i < escapingPrisoners.Count; i++)
-			{
-				stringBuilder.AppendLine("    " + escapingPrisoners[i].LabelShort);
-			}
-			Find.LetterStack.ReceiveLetter("LetterLabelPrisonBreak".Translate(), "LetterPrisonBreak".Translate(new object[]
-			{
-				stringBuilder.ToString().TrimEndNewlines()
-			}), LetterDefOf.ThreatBig, PrisonBreakUtility.allEscapingPrisoners[0], null);
 		}
 	}
 }

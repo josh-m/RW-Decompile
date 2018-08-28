@@ -85,14 +85,41 @@ namespace RimWorld
 			return false;
 		}
 
-		protected override void ModifyPawn(Pawn p)
+		public override bool AllowPlayerStartingPawn(Pawn pawn, bool tryingToRedress, PawnGenerationRequest req)
 		{
-			if (Rand.Value < this.chance)
+			if (!base.AllowPlayerStartingPawn(pawn, tryingToRedress, req))
 			{
-				Hediff hediff = HediffMaker.MakeHediff(this.hediff, p, null);
-				hediff.Severity = this.severityRange.RandomInRange;
-				p.health.AddHediff(hediff, null, null);
+				return false;
 			}
+			if (this.hideOffMap)
+			{
+				if (!req.AllowDead && pawn.health.WouldDieAfterAddingHediff(this.hediff, null, this.severityRange.max))
+				{
+					return false;
+				}
+				if (!req.AllowDowned && pawn.health.WouldBeDownedAfterAddingHediff(this.hediff, null, this.severityRange.max))
+				{
+					return false;
+				}
+			}
+			return true;
+		}
+
+		protected override void ModifyNewPawn(Pawn p)
+		{
+			this.AddHediff(p);
+		}
+
+		protected override void ModifyHideOffMapStartingPawnPostMapGenerate(Pawn p)
+		{
+			this.AddHediff(p);
+		}
+
+		private void AddHediff(Pawn p)
+		{
+			Hediff hediff = HediffMaker.MakeHediff(this.hediff, p, null);
+			hediff.Severity = this.severityRange.RandomInRange;
+			p.health.AddHediff(hediff, null, null, null);
 		}
 	}
 }

@@ -11,5 +11,14 @@ namespace RimWorld
 		public static ImplementOwnerTypeDef Bodypart;
 
 		public static ImplementOwnerTypeDef Hediff;
+
+		public static ImplementOwnerTypeDef Terrain;
+
+		public static ImplementOwnerTypeDef NativeVerb;
+
+		static ImplementOwnerTypeDefOf()
+		{
+			DefOfHelper.EnsureInitializedInCtor(typeof(ImplementOwnerTypeDefOf));
+		}
 	}
 }

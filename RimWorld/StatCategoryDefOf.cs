@@ -34,5 +34,10 @@ namespace RimWorld
 		public static StatCategoryDef StuffOfEquipmentStatFactors;
 
 		public static StatCategoryDef Surgery;
+
+		static StatCategoryDefOf()
+		{
+			DefOfHelper.EnsureInitializedInCtor(typeof(StatCategoryDefOf));
+		}
 	}
 }

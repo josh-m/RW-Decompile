@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Verse;
 
 namespace RimWorld.Planet
@@ -6,6 +7,17 @@ namespace RimWorld.Planet
 	public class CaravanArrivalAction_VisitPeaceTalks : CaravanArrivalAction
 	{
 		private PeaceTalks peaceTalks;
+
+		public override string Label
+		{
+			get
+			{
+				return "VisitPeaceTalks".Translate(new object[]
+				{
+					this.peaceTalks.Label
+				});
+			}
+		}
 
 		public override string ReportString
 		{
@@ -18,14 +30,6 @@ namespace RimWorld.Planet
 			}
 		}
 
-		public override bool ShouldFail
-		{
-			get
-			{
-				return base.ShouldFail || this.peaceTalks == null || !this.peaceTalks.Spawned;
-			}
-		}
-
 		public CaravanArrivalAction_VisitPeaceTalks()
 		{
 		}
@@ -33,6 +37,20 @@ namespace RimWorld.Planet
 		public CaravanArrivalAction_VisitPeaceTalks(PeaceTalks peaceTalks)
 		{
 			this.peaceTalks = peaceTalks;
+		}
+
+		public override FloatMenuAcceptanceReport StillValid(Caravan caravan, int destinationTile)
+		{
+			FloatMenuAcceptanceReport floatMenuAcceptanceReport = base.StillValid(caravan, destinationTile);
+			if (!floatMenuAcceptanceReport)
+			{
+				return floatMenuAcceptanceReport;
+			}
+			if (this.peaceTalks != null && this.peaceTalks.Tile != destinationTile)
+			{
+				return false;
+			}
+			return CaravanArrivalAction_VisitPeaceTalks.CanVisit(caravan, this.peaceTalks);
 		}
 
 		public override void Arrived(Caravan caravan)
@@ -44,6 +62,19 @@ namespace RimWorld.Planet
 		{
 			base.ExposeData();
 			Scribe_References.Look<PeaceTalks>(ref this.peaceTalks, "peaceTalks", false);
+		}
+
+		public static FloatMenuAcceptanceReport CanVisit(Caravan caravan, PeaceTalks peaceTalks)
+		{
+			return peaceTalks != null && peaceTalks.Spawned;
+		}
+
+		public static IEnumerable<FloatMenuOption> GetFloatMenuOptions(Caravan caravan, PeaceTalks peaceTalks)
+		{
+			return CaravanArrivalActionUtility.GetFloatMenuOptions<CaravanArrivalAction_VisitPeaceTalks>(() => CaravanArrivalAction_VisitPeaceTalks.CanVisit(caravan, peaceTalks), () => new CaravanArrivalAction_VisitPeaceTalks(peaceTalks), "VisitPeaceTalks".Translate(new object[]
+			{
+				peaceTalks.Label
+			}), caravan, peaceTalks.Tile, peaceTalks);
 		}
 	}
 }

@@ -44,7 +44,7 @@ namespace Verse
 						typeof(T),
 						" with path: ",
 						current.internalPath
-					}));
+					}), false);
 				}
 				else
 				{

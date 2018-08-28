@@ -19,13 +19,16 @@ namespace RimWorld
 				for (int j = 0; j < 4; j++)
 				{
 					IntVec3 c = randomCell + GenAdj.CardinalDirections[j];
-					Building edifice = c.GetEdifice(pawn.Map);
-					if (edifice != null && (edifice.def.passability == Traversability.Impassable || edifice.def.IsDoor) && edifice.def.size == IntVec2.One && edifice.def != ThingDefOf.CollapsedRocks && pawn.CanReserve(edifice, 1, -1, null, false))
+					if (c.InBounds(pawn.Map))
 					{
-						return new Job(JobDefOf.Mine, edifice)
+						Building edifice = c.GetEdifice(pawn.Map);
+						if (edifice != null && (edifice.def.passability == Traversability.Impassable || edifice.def.IsDoor) && edifice.def.size == IntVec2.One && edifice.def != ThingDefOf.CollapsedRocks && pawn.CanReserve(edifice, 1, -1, null, false))
 						{
-							ignoreDesignations = true
-						};
+							return new Job(JobDefOf.Mine, edifice)
+							{
+								ignoreDesignations = true
+							};
+						}
 					}
 				}
 			}

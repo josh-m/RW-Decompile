@@ -8,13 +8,13 @@ namespace RimWorld
 {
 	public class Blight : Thing
 	{
-		private float severity = 0.1f;
+		private float severity = 0.2f;
 
 		private int lastPlantHarmTick;
 
 		private float lastMapMeshUpdateSeverity;
 
-		private const float InitialSeverity = 0.1f;
+		private const float InitialSeverity = 0.2f;
 
 		private const float SeverityPerDay = 1f;
 
@@ -22,9 +22,9 @@ namespace RimWorld
 
 		private const float MinSeverityToReproduce = 0.28f;
 
-		private const float ReproduceMTBHoursAtMinSeverity = 24f;
+		private const float ReproduceMTBHoursAtMinSeverity = 16.8f;
 
-		private const float ReproduceMTBHoursAtMaxSeverity = 3f;
+		private const float ReproduceMTBHoursAtMaxSeverity = 2.1f;
 
 		private const float ReproductionRadius = 4f;
 
@@ -64,7 +64,7 @@ namespace RimWorld
 				{
 					return -1f;
 				}
-				return GenMath.LerpDouble(0.28f, 1f, 24f, 3f, this.severity);
+				return GenMath.LerpDouble(0.28f, 1f, 16.8f, 2.1f, this.severity);
 			}
 		}
 
@@ -147,13 +147,13 @@ namespace RimWorld
 			bool isCrop = plant.IsCrop;
 			IntVec3 position = base.Position;
 			Map map = base.Map;
-			plant.TakeDamage(new DamageInfo(DamageDefOf.Rotting, 5, -1f, null, null, null, DamageInfo.SourceCategory.ThingOrUnknown));
+			plant.TakeDamage(new DamageInfo(DamageDefOf.Rotting, 5f, 0f, -1f, null, null, null, DamageInfo.SourceCategory.ThingOrUnknown, null));
 			if (plant.Destroyed && isCrop && MessagesRepeatAvoider.MessageShowAllowed("MessagePlantDiedOfBlight-" + plant.def.defName, 240f))
 			{
 				Messages.Message("MessagePlantDiedOfBlight".Translate(new object[]
 				{
 					plant.Label
-				}).CapitalizeFirst(), new TargetInfo(position, map, false), MessageTypeDefOf.NegativeEvent);
+				}).CapitalizeFirst(), new TargetInfo(position, map, false), MessageTypeDefOf.NegativeEvent, true);
 			}
 		}
 
@@ -178,7 +178,7 @@ namespace RimWorld
 			Plant plant = this.Plant;
 			if (plant != null)
 			{
-				GenPlant.SetWindExposureColors(Blight.workingColors, plant);
+				PlantUtility.SetWindExposureColors(Blight.workingColors, plant);
 			}
 			else
 			{
@@ -195,7 +195,7 @@ namespace RimWorld
 			Vector2 size = this.def.graphic.drawSize * num;
 			Material mat = this.Graphic.MatAt(base.Rotation, this);
 			Color32[] colors = Blight.workingColors;
-			Printer_Plane.PrintPlane(layer, center, size, mat, 0f, false, null, colors, 0.1f);
+			Printer_Plane.PrintPlane(layer, center, size, mat, 0f, false, null, colors, 0.1f, 0f);
 		}
 	}
 }

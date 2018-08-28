@@ -44,6 +44,8 @@ namespace RimWorld
 
 		private const float MaxDistanceToColonyBuilding = 30f;
 
+		private static List<Pair<IntVec3, float>> tmpCachedInfestationChanceCellColors;
+
 		private static HashSet<Region> tempUnroofedRegions = new HashSet<Region>();
 
 		private static List<IntVec3> tmpColonyBuildingsLocs = new List<IntVec3>();
@@ -59,7 +61,7 @@ namespace RimWorld
 				cell = IntVec3.Invalid;
 				return false;
 			}
-			cell = locationCandidate.cell;
+			cell = CellFinder.FindNoWipeSpawnLocNear(locationCandidate.cell, map, ThingDefOf.Hive, Rot4.North, 2, (IntVec3 x) => InfestationCellFinder.GetScoreAt(x, map) > 0f && x.GetFirstThing(map, ThingDefOf.Hive) == null && x.GetFirstThing(map, ThingDefOf.TunnelHiveSpawner) == null);
 			return true;
 		}
 
@@ -69,7 +71,7 @@ namespace RimWorld
 			{
 				return 0f;
 			}
-			if (!cell.Standable(map))
+			if (!cell.Walkable(map))
 			{
 				return 0f;
 			}
@@ -90,7 +92,7 @@ namespace RimWorld
 			{
 				return 0f;
 			}
-			if (InfestationCellFinder.closedAreaSize[cell] < 16)
+			if (InfestationCellFinder.closedAreaSize[cell] < 2)
 			{
 				return 0f;
 			}
@@ -132,42 +134,60 @@ namespace RimWorld
 		{
 			if (DebugViewSettings.drawInfestationChance)
 			{
-				Map visibleMap = Find.VisibleMap;
-				CellRect cellRect = Find.CameraDriver.CurrentViewRect;
-				cellRect.ClipInsideMap(visibleMap);
-				cellRect = cellRect.ExpandedBy(1);
-				InfestationCellFinder.CalculateTraversalDistancesToUnroofed(visibleMap);
-				InfestationCellFinder.CalculateClosedAreaSizeGrid(visibleMap);
-				InfestationCellFinder.CalculateDistanceToColonyBuildingGrid(visibleMap);
-				float num = 0.001f;
-				for (int i = 0; i < visibleMap.Size.z; i++)
+				if (InfestationCellFinder.tmpCachedInfestationChanceCellColors == null)
 				{
-					for (int j = 0; j < visibleMap.Size.x; j++)
+					InfestationCellFinder.tmpCachedInfestationChanceCellColors = new List<Pair<IntVec3, float>>();
+				}
+				if (Time.frameCount % 8 == 0)
+				{
+					InfestationCellFinder.tmpCachedInfestationChanceCellColors.Clear();
+					Map currentMap = Find.CurrentMap;
+					CellRect cellRect = Find.CameraDriver.CurrentViewRect;
+					cellRect.ClipInsideMap(currentMap);
+					cellRect = cellRect.ExpandedBy(1);
+					InfestationCellFinder.CalculateTraversalDistancesToUnroofed(currentMap);
+					InfestationCellFinder.CalculateClosedAreaSizeGrid(currentMap);
+					InfestationCellFinder.CalculateDistanceToColonyBuildingGrid(currentMap);
+					float num = 0.001f;
+					for (int i = 0; i < currentMap.Size.z; i++)
 					{
-						IntVec3 cell = new IntVec3(j, 0, i);
-						float scoreAt = InfestationCellFinder.GetScoreAt(cell, visibleMap);
-						if (scoreAt > num)
+						for (int j = 0; j < currentMap.Size.x; j++)
 						{
-							num = scoreAt;
+							IntVec3 cell = new IntVec3(j, 0, i);
+							float scoreAt = InfestationCellFinder.GetScoreAt(cell, currentMap);
+							if (scoreAt > num)
+							{
+								num = scoreAt;
+							}
 						}
 					}
-				}
-				for (int k = 0; k < visibleMap.Size.z; k++)
-				{
-					for (int l = 0; l < visibleMap.Size.x; l++)
+					for (int k = 0; k < currentMap.Size.z; k++)
 					{
-						IntVec3 intVec = new IntVec3(l, 0, k);
-						if (cellRect.Contains(intVec))
+						for (int l = 0; l < currentMap.Size.x; l++)
 						{
-							float scoreAt2 = InfestationCellFinder.GetScoreAt(intVec, visibleMap);
-							if (scoreAt2 > 0f)
+							IntVec3 intVec = new IntVec3(l, 0, k);
+							if (cellRect.Contains(intVec))
 							{
-								float a = GenMath.LerpDouble(7.5f, num, 0f, 1f, scoreAt2);
-								CellRenderer.RenderCell(intVec, SolidColorMaterials.SimpleSolidColorMaterial(new Color(0f, 0f, 1f, a), false));
+								float scoreAt2 = InfestationCellFinder.GetScoreAt(intVec, currentMap);
+								if (scoreAt2 > 7.5f)
+								{
+									float second = GenMath.LerpDouble(7.5f, num, 0f, 1f, scoreAt2);
+									InfestationCellFinder.tmpCachedInfestationChanceCellColors.Add(new Pair<IntVec3, float>(intVec, second));
+								}
 							}
 						}
 					}
 				}
+				for (int m = 0; m < InfestationCellFinder.tmpCachedInfestationChanceCellColors.Count; m++)
+				{
+					IntVec3 first = InfestationCellFinder.tmpCachedInfestationChanceCellColors[m].First;
+					float second2 = InfestationCellFinder.tmpCachedInfestationChanceCellColors[m].Second;
+					CellRenderer.RenderCell(first, SolidColorMaterials.SimpleSolidColorMaterial(new Color(0f, 0f, 1f, second2), false));
+				}
+			}
+			else
+			{
+				InfestationCellFinder.tmpCachedInfestationChanceCellColors = null;
 			}
 		}
 
@@ -196,11 +216,12 @@ namespace RimWorld
 			List<Thing> thingList = cell.GetThingList(map);
 			for (int i = 0; i < thingList.Count; i++)
 			{
-				if (thingList[i] is Pawn)
+				if (thingList[i] is Pawn || thingList[i] is Hive || thingList[i] is TunnelHiveSpawner)
 				{
 					return true;
 				}
-				if ((thingList[i].def.category == ThingCategory.Building || thingList[i].def.category == ThingCategory.Item) && GenSpawn.SpawningWipes(ThingDefOf.Hive, thingList[i].def))
+				bool flag = thingList[i].def.category == ThingCategory.Building && thingList[i].def.passability == Traversability.Impassable;
+				if (flag && GenSpawn.SpawningWipes(ThingDefOf.Hive, thingList[i].def))
 				{
 					return true;
 				}

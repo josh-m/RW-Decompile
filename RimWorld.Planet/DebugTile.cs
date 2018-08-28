@@ -5,7 +5,7 @@ using Verse;
 
 namespace RimWorld.Planet
 {
-	internal class DebugTile
+	public class DebugTile
 	{
 		public int tile;
 

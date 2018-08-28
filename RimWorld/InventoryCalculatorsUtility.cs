@@ -13,6 +13,8 @@ namespace RimWorld
 				return true;
 			case IgnorePawnsInventoryMode.IgnoreIfAssignedToUnload:
 				return pawn.Spawned && pawn.inventory.UnloadEverything;
+			case IgnorePawnsInventoryMode.IgnoreIfAssignedToUnloadOrPlayerPawn:
+				return (pawn.Spawned && pawn.inventory.UnloadEverything) || Dialog_FormCaravan.CanListInventorySeparately(pawn);
 			case IgnorePawnsInventoryMode.DontIgnore:
 				return false;
 			default:

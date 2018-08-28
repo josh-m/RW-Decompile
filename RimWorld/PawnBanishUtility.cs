@@ -16,7 +16,7 @@ namespace RimWorld
 		{
 			if (pawn.Faction != Faction.OfPlayer && pawn.HostFaction != Faction.OfPlayer)
 			{
-				Log.Warning("Tried to banish " + pawn + " but he's neither a colonist, tame animal, nor prisoner.");
+				Log.Warning("Tried to banish " + pawn + " but he's neither a colonist, tame animal, nor prisoner.", false);
 				return;
 			}
 			if (tile == -1)
@@ -41,32 +41,24 @@ namespace RimWorld
 						PawnBanishUtility.HealIfPossible(pawn);
 					}
 				}
-				if (pawn.guest != null)
-				{
-					pawn.guest.SetGuestStatus(null, false);
-				}
-				if (pawn.Faction == Faction.OfPlayer)
-				{
-					Faction newFaction;
-					if (Find.FactionManager.TryGetRandomNonColonyHumanlikeFaction(out newFaction, pawn.Faction != null && pawn.Faction.def.techLevel >= TechLevel.Medieval, false, TechLevel.Undefined))
-					{
-						pawn.SetFaction(newFaction, null);
-					}
-					else
-					{
-						pawn.SetFaction(Faction.OfSpacer, null);
-					}
-				}
 			}
-			else
+			if (pawn.guest != null)
 			{
-				if (pawn.guest != null)
+				pawn.guest.SetGuestStatus(null, false);
+			}
+			if (pawn.Faction == Faction.OfPlayer)
+			{
+				Faction faction;
+				if (!pawn.Spawned && Find.FactionManager.TryGetRandomNonColonyHumanlikeFaction(out faction, pawn.Faction != null && pawn.Faction.def.techLevel >= TechLevel.Medieval, false, TechLevel.Undefined))
 				{
-					pawn.guest.SetGuestStatus(null, false);
+					if (pawn.Faction != faction)
+					{
+						pawn.SetFaction(faction, null);
+					}
 				}
-				if (pawn.Faction == Faction.OfPlayer)
+				else if (pawn.Faction != null)
 				{
-					pawn.SetFaction(Faction.OfSpacer, null);
+					pawn.SetFaction(null, null);
 				}
 			}
 		}
@@ -128,7 +120,7 @@ namespace RimWorld
 				stringBuilder.Append("ConfirmBanishPawnDialog_Items".Translate(new object[]
 				{
 					banishedPawn.LabelShort
-				}).CapitalizeFirst().AdjustedFor(banishedPawn));
+				}).CapitalizeFirst().AdjustedFor(banishedPawn, "PAWN"));
 				stringBuilder.AppendLine();
 				if (list != null)
 				{
@@ -190,7 +182,7 @@ namespace RimWorld
 			for (int i = 0; i < PawnBanishUtility.tmpHediffs.Count; i++)
 			{
 				Hediff_Injury hediff_Injury = PawnBanishUtility.tmpHediffs[i] as Hediff_Injury;
-				if (hediff_Injury != null && !hediff_Injury.IsOld())
+				if (hediff_Injury != null && !hediff_Injury.IsPermanent())
 				{
 					p.health.RemoveHediff(hediff_Injury);
 				}

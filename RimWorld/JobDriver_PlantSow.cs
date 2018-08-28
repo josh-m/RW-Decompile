@@ -24,20 +24,23 @@ namespace RimWorld
 			Scribe_Values.Look<float>(ref this.sowWorkDone, "sowWorkDone", 0f, false);
 		}
 
-		public override bool TryMakePreToilReservations()
+		public override bool TryMakePreToilReservations(bool errorOnFailed)
 		{
-			return this.pawn.Reserve(this.job.targetA, this.job, 1, -1, null);
+			Pawn pawn = this.pawn;
+			LocalTargetInfo targetA = this.job.targetA;
+			Job job = this.job;
+			return pawn.Reserve(targetA, job, 1, -1, null, errorOnFailed);
 		}
 
 		[DebuggerHidden]
 		protected override IEnumerable<Toil> MakeNewToils()
 		{
-			yield return Toils_Goto.GotoCell(TargetIndex.A, PathEndMode.Touch).FailOn(() => GenPlant.AdjacentSowBlocker(this.$this.job.plantDefToSow, this.$this.TargetA.Cell, this.$this.Map) != null).FailOn(() => !this.$this.job.plantDefToSow.CanEverPlantAt(this.$this.TargetLocA, this.$this.Map));
+			yield return Toils_Goto.GotoCell(TargetIndex.A, PathEndMode.Touch).FailOn(() => PlantUtility.AdjacentSowBlocker(this.$this.job.plantDefToSow, this.$this.TargetA.Cell, this.$this.Map) != null).FailOn(() => !this.$this.job.plantDefToSow.CanEverPlantAt(this.$this.TargetLocA, this.$this.Map));
 			Toil sowToil = new Toil();
 			sowToil.initAction = delegate
 			{
-				this.$this.TargetThingA = GenSpawn.Spawn(this.$this.job.plantDefToSow, this.$this.TargetLocA, this.$this.Map);
-				this.$this.pawn.Reserve(this.$this.TargetThingA, sowToil.actor.CurJob, 1, -1, null);
+				this.$this.TargetThingA = GenSpawn.Spawn(this.$this.job.plantDefToSow, this.$this.TargetLocA, this.$this.Map, WipeMode.Vanish);
+				this.$this.pawn.Reserve(this.$this.TargetThingA, sowToil.actor.CurJob, 1, -1, null, true);
 				Plant plant = (Plant)this.$this.TargetThingA;
 				plant.Growth = 0f;
 				plant.sown = true;
@@ -47,14 +50,14 @@ namespace RimWorld
 				Pawn actor = sowToil.actor;
 				if (actor.skills != null)
 				{
-					actor.skills.Learn(SkillDefOf.Growing, 0.11f, false);
+					actor.skills.Learn(SkillDefOf.Plants, 0.085f, false);
 				}
 				float statValue = actor.GetStatValue(StatDefOf.PlantWorkSpeed, true);
 				float num = statValue;
 				Plant plant = this.$this.Plant;
 				if (plant.LifeStage != PlantLifeStage.Sowing)
 				{
-					Log.Error(this.$this + " getting sowing work while not in Sowing life stage.");
+					Log.Error(this.$this + " getting sowing work while not in Sowing life stage.", false);
 				}
 				this.$this.sowWorkDone += num;
 				if (this.$this.sowWorkDone >= plant.def.plant.sowWork)
@@ -83,17 +86,8 @@ namespace RimWorld
 					}
 				}
 			});
+			sowToil.activeSkill = (() => SkillDefOf.Plants);
 			yield return sowToil;
-			if (this.pawn.story.traits.HasTrait(TraitDefOf.GreenThumb))
-			{
-				yield return new Toil
-				{
-					initAction = delegate
-					{
-						this.$this.pawn.needs.mood.thoughts.memories.TryGainMemory(ThoughtDefOf.GreenThumbHappy, null);
-					}
-				};
-			}
 		}
 	}
 }

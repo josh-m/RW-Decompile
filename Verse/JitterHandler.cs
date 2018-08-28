@@ -9,6 +9,8 @@ namespace Verse
 
 		private float DamageJitterDistance = 0.17f;
 
+		private float DeflectJitterDistance = 0.1f;
+
 		private float JitterDropPerTick = 0.018f;
 
 		private float JitterMax = 0.35f;
@@ -38,6 +40,14 @@ namespace Verse
 			if (dinfo.Def.hasForcefulImpact)
 			{
 				this.AddOffset(this.DamageJitterDistance, dinfo.Angle);
+			}
+		}
+
+		public void Notify_DamageDeflected(DamageInfo dinfo)
+		{
+			if (dinfo.Def.hasForcefulImpact)
+			{
+				this.AddOffset(this.DeflectJitterDistance, dinfo.Angle);
 			}
 		}
 

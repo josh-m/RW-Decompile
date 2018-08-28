@@ -17,11 +17,17 @@ namespace RimWorld
 
 		private bool permanent;
 
-		protected Map Map
+		private List<Map> cachedAffectedMaps = new List<Map>();
+
+		private List<Map> cachedAffectedMapsForMaps = new List<Map>();
+
+		private static List<GameConditionManager> tmpGameConditionManagers = new List<GameConditionManager>();
+
+		protected Map SingleMap
 		{
 			get
 			{
-				return this.gameConditionManager.map;
+				return this.gameConditionManager.ownerMap;
 			}
 		}
 
@@ -38,22 +44,6 @@ namespace RimWorld
 			get
 			{
 				return this.Label.CapitalizeFirst();
-			}
-		}
-
-		public virtual float SkyGazeChanceFactor
-		{
-			get
-			{
-				return 1f;
-			}
-		}
-
-		public virtual float SkyGazeJoyGainFactor
-		{
-			get
-			{
-				return 1f;
 			}
 		}
 
@@ -79,7 +69,7 @@ namespace RimWorld
 			{
 				if (this.Permanent)
 				{
-					Log.ErrorOnce("Trying to get ticks left of a permanent condition.", 384767654);
+					Log.ErrorOnce("Trying to get ticks left of a permanent condition.", 384767654, false);
 					return 360000000;
 				}
 				return this.Duration - this.TicksPassed;
@@ -112,7 +102,7 @@ namespace RimWorld
 			{
 				if (this.Permanent)
 				{
-					Log.ErrorOnce("Trying to get duration of a permanent condition.", 100394867);
+					Log.ErrorOnce("Trying to get duration of a permanent condition.", 100394867, false);
 					return 360000000;
 				}
 				return this.duration;
@@ -136,13 +126,13 @@ namespace RimWorld
 				else
 				{
 					Vector2 location;
-					if (this.Map != null)
+					if (this.SingleMap != null)
 					{
-						location = Find.WorldGrid.LongLatOf(this.Map.Tile);
+						location = Find.WorldGrid.LongLatOf(this.SingleMap.Tile);
 					}
-					else if (Find.VisibleMap != null)
+					else if (Find.CurrentMap != null)
 					{
-						location = Find.WorldGrid.LongLatOf(Find.VisibleMap.Tile);
+						location = Find.WorldGrid.LongLatOf(Find.CurrentMap.Tile);
 					}
 					else if (Find.AnyPlayerHomeMap != null)
 					{
@@ -168,11 +158,39 @@ namespace RimWorld
 						"\n",
 						"Lasted".Translate(),
 						": ",
-						this.TicksPassed.ToStringTicksToPeriod(true, false, true)
+						this.TicksPassed.ToStringTicksToPeriod()
 					});
 				}
 				text += "\n";
 				return text + "\n" + this.def.description;
+			}
+		}
+
+		public List<Map> AffectedMaps
+		{
+			get
+			{
+				if (!GenCollection.ListsEqual<Map>(this.cachedAffectedMapsForMaps, Find.Maps))
+				{
+					this.cachedAffectedMapsForMaps.Clear();
+					this.cachedAffectedMapsForMaps.AddRange(Find.Maps);
+					this.cachedAffectedMaps.Clear();
+					if (this.gameConditionManager.ownerMap != null)
+					{
+						this.cachedAffectedMaps.Add(this.gameConditionManager.ownerMap);
+					}
+					GameCondition.tmpGameConditionManagers.Clear();
+					this.gameConditionManager.GetChildren(GameCondition.tmpGameConditionManagers);
+					for (int i = 0; i < GameCondition.tmpGameConditionManagers.Count; i++)
+					{
+						if (GameCondition.tmpGameConditionManagers[i].ownerMap != null)
+						{
+							this.cachedAffectedMaps.Add(GameCondition.tmpGameConditionManagers[i].ownerMap);
+						}
+					}
+					GameCondition.tmpGameConditionManagers.Clear();
+				}
+				return this.cachedAffectedMaps;
 			}
 		}
 
@@ -192,7 +210,7 @@ namespace RimWorld
 		{
 		}
 
-		public virtual void GameConditionDraw()
+		public virtual void GameConditionDraw(Map map)
 		{
 		}
 
@@ -204,9 +222,19 @@ namespace RimWorld
 		{
 			if (this.def.endMessage != null)
 			{
-				Messages.Message(this.def.endMessage, MessageTypeDefOf.NeutralEvent);
+				Messages.Message(this.def.endMessage, MessageTypeDefOf.NeutralEvent, true);
 			}
 			this.gameConditionManager.ActiveConditions.Remove(this);
+		}
+
+		public virtual float SkyGazeChanceFactor(Map map)
+		{
+			return 1f;
+		}
+
+		public virtual float SkyGazeJoyGainFactor(Map map)
+		{
+			return 1f;
 		}
 
 		public virtual float TemperatureOffset()
@@ -214,37 +242,41 @@ namespace RimWorld
 			return 0f;
 		}
 
-		public virtual float SkyTargetLerpFactor()
+		public virtual float SkyTargetLerpFactor(Map map)
 		{
 			return 0f;
 		}
 
-		public virtual SkyTarget? SkyTarget()
+		public virtual SkyTarget? SkyTarget(Map map)
 		{
 			return null;
 		}
 
-		public virtual float AnimalDensityFactor()
+		public virtual float AnimalDensityFactor(Map map)
 		{
 			return 1f;
 		}
 
-		public virtual float PlantDensityFactor()
+		public virtual float PlantDensityFactor(Map map)
 		{
 			return 1f;
 		}
 
-		public virtual bool AllowEnjoyableOutsideNow()
+		public virtual bool AllowEnjoyableOutsideNow(Map map)
 		{
 			return true;
 		}
 
-		public virtual List<SkyOverlay> SkyOverlays()
+		public virtual List<SkyOverlay> SkyOverlays(Map map)
 		{
 			return null;
 		}
 
-		public virtual void DoCellSteadyEffects(IntVec3 c)
+		public virtual void DoCellSteadyEffects(IntVec3 c, Map map)
+		{
+		}
+
+		public virtual void PostMake()
 		{
 		}
 	}

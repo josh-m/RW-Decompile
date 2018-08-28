@@ -70,7 +70,14 @@ namespace RimWorld.Planet
 			WorldPawns.tmpPawnsToTick.AddRange(this.pawnsAlive);
 			for (int i = 0; i < WorldPawns.tmpPawnsToTick.Count; i++)
 			{
-				WorldPawns.tmpPawnsToTick[i].Tick();
+				try
+				{
+					WorldPawns.tmpPawnsToTick[i].Tick();
+				}
+				catch (Exception arg)
+				{
+					Log.ErrorOnce("Exception ticking world pawn: " + arg, WorldPawns.tmpPawnsToTick[i].thingIDNumber ^ 1148571423, false);
+				}
 				if (this.ShouldAutoTendTo(WorldPawns.tmpPawnsToTick[i]))
 				{
 					TendUtility.DoTend(null, WorldPawns.tmpPawnsToTick[i], null);
@@ -84,9 +91,14 @@ namespace RimWorld.Planet
 			WorldPawns.tmpPawnsToRemove.Clear();
 			foreach (Pawn current in this.pawnsDead)
 			{
-				if (current.Discarded)
+				if (current == null)
 				{
-					Log.Error("World pawn " + current + " has been discarded while still being a world pawn. This should never happen, because discard destroy mode means that the pawn is no longer managed by anything. Pawn should have been removed from the world first.");
+					Log.ErrorOnce("Dead null world pawn detected, discarding.", 94424128, false);
+					WorldPawns.tmpPawnsToRemove.Add(current);
+				}
+				else if (current.Discarded)
+				{
+					Log.Error("World pawn " + current + " has been discarded while still being a world pawn. This should never happen, because discard destroy mode means that the pawn is no longer managed by anything. Pawn should have been removed from the world first.", false);
 					WorldPawns.tmpPawnsToRemove.Add(current);
 				}
 			}
@@ -99,9 +111,9 @@ namespace RimWorld.Planet
 			{
 				this.gc.WorldPawnGCTick();
 			}
-			catch (Exception arg)
+			catch (Exception arg2)
 			{
-				Log.Error("Error in WorldPawnGCTick(): " + arg);
+				Log.Error("Error in WorldPawnGCTick(): " + arg2, false);
 			}
 		}
 
@@ -112,13 +124,37 @@ namespace RimWorld.Planet
 			Scribe_Collections.Look<Pawn>(ref this.pawnsMothballed, "pawnsMothballed", LookMode.Deep);
 			Scribe_Collections.Look<Pawn>(ref this.pawnsDead, true, "pawnsDead", LookMode.Deep);
 			Scribe_Deep.Look<WorldPawnGC>(ref this.gc, "gc", new object[0]);
-			if (this.pawnsMothballed == null)
-			{
-				this.pawnsMothballed = new HashSet<Pawn>();
-			}
 			if (Scribe.mode == LoadSaveMode.PostLoadInit)
 			{
-				BackCompatibility.WorldPawnPostLoadInit(this);
+				BackCompatibility.WorldPawnPostLoadInit(this, ref this.pawnsMothballed);
+				if (this.pawnsForcefullyKeptAsWorldPawns.RemoveWhere((Pawn x) => x == null) != 0)
+				{
+					Log.Error("Some pawnsForcefullyKeptAsWorldPawns were null after loading.", false);
+				}
+				if (this.pawnsAlive.RemoveWhere((Pawn x) => x == null) != 0)
+				{
+					Log.Error("Some pawnsAlive were null after loading.", false);
+				}
+				if (this.pawnsMothballed.RemoveWhere((Pawn x) => x == null) != 0)
+				{
+					Log.Error("Some pawnsMothballed were null after loading.", false);
+				}
+				if (this.pawnsDead.RemoveWhere((Pawn x) => x == null) != 0)
+				{
+					Log.Error("Some pawnsDead were null after loading.", false);
+				}
+				if (this.pawnsAlive.RemoveWhere((Pawn x) => x.def == null || x.kindDef == null) != 0)
+				{
+					Log.Error("Some pawnsAlive had null def after loading.", false);
+				}
+				if (this.pawnsMothballed.RemoveWhere((Pawn x) => x.def == null || x.kindDef == null) != 0)
+				{
+					Log.Error("Some pawnsMothballed had null def after loading.", false);
+				}
+				if (this.pawnsDead.RemoveWhere((Pawn x) => x.def == null || x.kindDef == null) != 0)
+				{
+					Log.Error("Some pawnsDead had null def after loading.", false);
+				}
 			}
 		}
 
@@ -131,20 +167,20 @@ namespace RimWorld.Planet
 		{
 			if (pawn.Spawned)
 			{
-				Log.Error("Tried to call PassToWorld with spawned pawn: " + pawn + ". Despawn him first.");
+				Log.Error("Tried to call PassToWorld with spawned pawn: " + pawn + ". Despawn him first.", false);
 				return;
 			}
 			if (this.Contains(pawn))
 			{
-				Log.Error("Tried to pass pawn " + pawn + " to world, but it's already here.");
+				Log.Error("Tried to pass pawn " + pawn + " to world, but it's already here.", false);
 				return;
 			}
 			if (discardMode == PawnDiscardDecideMode.KeepForever && pawn.Discarded)
 			{
-				Log.Error("Tried to pass a discarded pawn " + pawn + " to world with discardMode=Keep. Discarded pawns should never be stored in WorldPawns.");
+				Log.Error("Tried to pass a discarded pawn " + pawn + " to world with discardMode=Keep. Discarded pawns should never be stored in WorldPawns.", false);
 				discardMode = PawnDiscardDecideMode.Decide;
 			}
-			if (pawn.pather != null)
+			if (PawnComponentsUtility.HasSpawnedComponents(pawn))
 			{
 				PawnComponentsUtility.RemoveComponentsOnDespawned(pawn);
 			}
@@ -180,12 +216,23 @@ namespace RimWorld.Planet
 					" from ",
 					base.GetType(),
 					", but it's not here."
-				}));
+				}), false);
 			}
 			this.gc.CancelGCPass();
 			if (this.pawnsMothballed.Contains(p))
 			{
-				p.TickMothballed(Find.TickManager.TicksGame % 15000);
+				int num = Find.TickManager.TicksGame % 15000;
+				if (num != 0)
+				{
+					try
+					{
+						p.TickMothballed(Find.TickManager.TicksGame % 15000);
+					}
+					catch (Exception arg)
+					{
+						Log.Error("Exception ticking mothballed world pawn (just before removing): " + arg, false);
+					}
+				}
 			}
 			this.pawnsAlive.Remove(p);
 			this.pawnsMothballed.Remove(p);
@@ -291,7 +338,7 @@ namespace RimWorld.Planet
 			{
 				if (!hediffs[i].def.AlwaysAllowMothball)
 				{
-					if (!hediffs[i].IsOld())
+					if (!hediffs[i].IsPermanent())
 					{
 						return hediffs[i].def;
 					}
@@ -339,7 +386,14 @@ namespace RimWorld.Planet
 			WorldPawns.tmpPawnsToTick.AddRange(this.pawnsMothballed);
 			for (int i = 0; i < WorldPawns.tmpPawnsToTick.Count; i++)
 			{
-				WorldPawns.tmpPawnsToTick[i].TickMothballed(15000);
+				try
+				{
+					WorldPawns.tmpPawnsToTick[i].TickMothballed(15000);
+				}
+				catch (Exception arg)
+				{
+					Log.ErrorOnce("Exception ticking mothballed world pawn: " + arg, WorldPawns.tmpPawnsToTick[i].thingIDNumber ^ 1535437893, false);
+				}
 			}
 			WorldPawns.tmpPawnsToTick.Clear();
 			WorldPawns.tmpPawnsToTick.AddRange(this.pawnsAlive);
@@ -358,7 +412,7 @@ namespace RimWorld.Planet
 		public void DebugRunMothballProcessing()
 		{
 			this.DoMothballProcessing();
-			Log.Message(string.Format("World pawn mothball run complete", new object[0]));
+			Log.Message(string.Format("World pawn mothball run complete", new object[0]), false);
 		}
 
 		public void UnpinAllForcefullyKeptPawns()
@@ -403,7 +457,7 @@ namespace RimWorld.Planet
 				}
 			}
 			stringBuilder.AppendLine("===========================");
-			Log.Message(stringBuilder.ToString());
+			Log.Message(stringBuilder.ToString(), false);
 		}
 
 		public void LogWorldPawnMothballPrevention()
@@ -440,7 +494,7 @@ namespace RimWorld.Planet
 			{
 				stringBuilder.AppendLine(string.Format("{0}: {1}", current2.Value, current2.Key));
 			}
-			Log.Message(stringBuilder.ToString());
+			Log.Message(stringBuilder.ToString(), false);
 		}
 	}
 }

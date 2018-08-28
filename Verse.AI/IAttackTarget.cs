@@ -14,6 +14,6 @@ namespace Verse.AI
 			get;
 		}
 
-		bool ThreatDisabled();
+		bool ThreatDisabled(IAttackTargetSearcher disabledFor);
 	}
 }

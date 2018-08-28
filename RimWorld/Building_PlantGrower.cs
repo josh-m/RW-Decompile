@@ -79,19 +79,19 @@ namespace RimWorld
 			{
 				foreach (Plant current in this.PlantsOnMe)
 				{
-					DamageInfo dinfo = new DamageInfo(DamageDefOf.Rotting, 4, -1f, null, null, null, DamageInfo.SourceCategory.ThingOrUnknown);
+					DamageInfo dinfo = new DamageInfo(DamageDefOf.Rotting, 1f, 0f, -1f, null, null, null, DamageInfo.SourceCategory.ThingOrUnknown, null);
 					current.TakeDamage(dinfo);
 				}
 			}
 		}
 
-		public override void DeSpawn()
+		public override void DeSpawn(DestroyMode mode = DestroyMode.Vanish)
 		{
 			foreach (Plant current in this.PlantsOnMe.ToList<Plant>())
 			{
 				current.Destroy(DestroyMode.Vanish);
 			}
-			base.DeSpawn();
+			base.DeSpawn(mode);
 		}
 
 		public override string GetInspectString()
@@ -99,7 +99,7 @@ namespace RimWorld
 			string text = base.GetInspectString();
 			if (base.Spawned)
 			{
-				if (GenPlant.GrowthSeasonNow(base.Position, base.Map))
+				if (PlantUtility.GrowthSeasonNow(base.Position, base.Map, true))
 				{
 					text = text + "\n" + "GrowSeasonHereNow".Translate();
 				}

@@ -24,7 +24,7 @@ namespace Verse
 			this.ticksSinceHeal++;
 			if (this.ticksSinceHeal > this.Props.healIntervalTicksStanding)
 			{
-				severityAdjustment -= 1f;
+				severityAdjustment -= this.Props.healAmount;
 				this.ticksSinceHeal = 0;
 			}
 		}

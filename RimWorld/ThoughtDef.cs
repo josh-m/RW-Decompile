@@ -49,11 +49,9 @@ namespace RimWorld
 
 		public bool showBubble;
 
-		public int stackLimitPerPawn = -1;
+		public int stackLimitForSameOtherPawn = -1;
 
 		public float lerpOpinionToZeroAfterDurationPct = 0.7f;
-
-		public bool socialThoughtAffectingMood;
 
 		public float maxCumulatedOpinionOffset = 3.40282347E+38f;
 
@@ -61,6 +59,9 @@ namespace RimWorld
 
 		[Unsaved]
 		private ThoughtWorker workerInt;
+
+		[Unsaved]
+		private BoolUnknown isMemoryCached = BoolUnknown.Unknown;
 
 		private Texture2D iconInt;
 
@@ -83,7 +84,7 @@ namespace RimWorld
 						return this.stages[0].labelSocial;
 					}
 				}
-				Log.Error("Cannot get good label for ThoughtDef " + this.defName);
+				Log.Error("Cannot get good label for ThoughtDef " + this.defName, false);
 				return this.defName;
 			}
 		}
@@ -100,7 +101,11 @@ namespace RimWorld
 		{
 			get
 			{
-				return this.durationDays > 0f || typeof(Thought_Memory).IsAssignableFrom(this.thoughtClass);
+				if (this.isMemoryCached == BoolUnknown.Unknown)
+				{
+					this.isMemoryCached = ((this.durationDays <= 0f && !typeof(Thought_Memory).IsAssignableFrom(this.thoughtClass)) ? BoolUnknown.False : BoolUnknown.True);
+				}
+				return this.isMemoryCached == BoolUnknown.True;
 			}
 		}
 
@@ -195,6 +200,16 @@ namespace RimWorld
 			if (!this.IsMemory && this.workerClass == null && this.IsSituational)
 			{
 				yield return "is a situational thought but has no workerClass. Situational thoughts require workerClasses to analyze the situation";
+			}
+			for (int i = 0; i < this.stages.Count; i++)
+			{
+				if (this.stages[i] != null)
+				{
+					foreach (string e in this.stages[i].ConfigErrors())
+					{
+						yield return e;
+					}
+				}
 			}
 		}
 

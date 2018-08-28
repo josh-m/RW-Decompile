@@ -7,9 +7,11 @@ using Verse.Sound;
 
 namespace Verse
 {
-	public abstract class Zone : IExposable, ISelectable
+	public abstract class Zone : IExposable, ISelectable, ILoadReferenceable
 	{
 		public ZoneManager zoneManager;
+
+		public int ID = -1;
 
 		public string label;
 
@@ -38,6 +40,14 @@ namespace Verse
 			get
 			{
 				return this.zoneManager.map;
+			}
+		}
+
+		public IntVec3 Position
+		{
+			get
+			{
+				return (this.cells.Count == 0) ? IntVec3.Invalid : this.cells[0];
 			}
 		}
 
@@ -124,8 +134,8 @@ namespace Verse
 		{
 			this.label = zoneManager.NewZoneName(baseName);
 			this.zoneManager = zoneManager;
+			this.ID = Find.UniqueIDsManager.GetNextZoneID();
 			this.color = this.NextZoneColor;
-			zoneManager.RegisterZone(this);
 		}
 
 		[DebuggerHidden]
@@ -139,10 +149,16 @@ namespace Verse
 
 		public virtual void ExposeData()
 		{
+			Scribe_Values.Look<int>(ref this.ID, "ID", -1, false);
 			Scribe_Values.Look<string>(ref this.label, "label", null, false);
 			Scribe_Values.Look<Color>(ref this.color, "color", default(Color), false);
 			Scribe_Values.Look<bool>(ref this.hidden, "hidden", false, false);
 			Scribe_Collections.Look<IntVec3>(ref this.cells, "cells", LookMode.Undefined, new object[0]);
+			if (Scribe.mode == LoadSaveMode.PostLoadInit)
+			{
+				BackCompatibility.ZonePostLoadInit(this);
+				this.CheckAddHaulDestination();
+			}
 		}
 
 		public virtual void AddCell(IntVec3 c)
@@ -155,7 +171,7 @@ namespace Verse
 					c,
 					", zone=",
 					this
-				}));
+				}), false);
 				return;
 			}
 			List<Thing> list = this.Map.thingGrid.ThingsListAt(c);
@@ -164,7 +180,7 @@ namespace Verse
 				Thing thing = list[i];
 				if (!thing.def.CanOverlapZones)
 				{
-					Log.Error("Added zone over zone-incompatible thing " + thing);
+					Log.Error("Added zone over zone-incompatible thing " + thing, false);
 					return;
 				}
 			}
@@ -185,7 +201,7 @@ namespace Verse
 					c,
 					", zone=",
 					this
-				}));
+				}), false);
 				return;
 			}
 			this.cells.Remove(c);
@@ -200,7 +216,7 @@ namespace Verse
 
 		public virtual void Delete()
 		{
-			SoundDefOf.DesignateZoneDelete.PlayOneShotOnCamera(this.Map);
+			SoundDefOf.Designate_ZoneDelete.PlayOneShotOnCamera(this.Map);
 			if (this.cells.Count == 0)
 			{
 				this.Deregister();
@@ -215,9 +231,23 @@ namespace Verse
 			Find.Selector.Deselect(this);
 		}
 
-		public virtual void Deregister()
+		public void Deregister()
 		{
 			this.zoneManager.DeregisterZone(this);
+		}
+
+		public virtual void PostRegister()
+		{
+			this.CheckAddHaulDestination();
+		}
+
+		public virtual void PostDeregister()
+		{
+			IHaulDestination haulDestination = this as IHaulDestination;
+			if (haulDestination != null)
+			{
+				this.Map.haulDestinationManager.RemoveHaulDestination(haulDestination);
+			}
 		}
 
 		public bool ContainsCell(IntVec3 c)
@@ -272,6 +302,15 @@ namespace Verse
 				},
 				hotKey = KeyBindingDefOf.Misc2
 			};
+			foreach (Gizmo gizmo in this.GetZoneAddGizmos())
+			{
+				yield return gizmo;
+			}
+			Designator delete = DesignatorUtility.FindAllowedDesignator<Designator_ZoneDelete_Shrink>();
+			if (delete != null)
+			{
+				yield return delete;
+			}
 			yield return new Command_Action
 			{
 				icon = ContentFinder<Texture2D>.Get("UI/Buttons/Delete", true),
@@ -280,6 +319,11 @@ namespace Verse
 				action = new Action(this.Delete),
 				hotKey = KeyBindingDefOf.Misc3
 			};
+		}
+
+		[DebuggerHidden]
+		public virtual IEnumerable<Gizmo> GetZoneAddGizmos()
+		{
 		}
 
 		public void CheckContiguous()
@@ -328,9 +372,23 @@ namespace Verse
 			}
 		}
 
+		private void CheckAddHaulDestination()
+		{
+			IHaulDestination haulDestination = this as IHaulDestination;
+			if (haulDestination != null)
+			{
+				this.Map.haulDestinationManager.AddHaulDestination(haulDestination);
+			}
+		}
+
 		public override string ToString()
 		{
 			return this.label;
+		}
+
+		public string GetUniqueLoadID()
+		{
+			return "Zone_" + this.ID;
 		}
 	}
 }

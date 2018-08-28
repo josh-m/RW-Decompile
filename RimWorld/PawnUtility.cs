@@ -12,19 +12,23 @@ namespace RimWorld
 {
 	public static class PawnUtility
 	{
+		private const float HumanFilthFactor = 4f;
+
 		private static List<Pawn> tmpPawns = new List<Pawn>();
 
-		private static List<string> tmpPawnKinds = new List<string>();
+		private static List<string> tmpPawnKindsStr = new List<string>();
 
 		private static HashSet<PawnKindDef> tmpAddedPawnKinds = new HashSet<PawnKindDef>();
 
-		private const float RecruitDifficultyMin = 0.33f;
+		private static List<PawnKindDef> tmpPawnKinds = new List<PawnKindDef>();
+
+		private const float RecruitDifficultyMin = 0.1f;
 
 		private const float RecruitDifficultyMax = 0.99f;
 
-		private const float RecruitDifficultyRandomOffset = 0.2f;
+		private const float RecruitDifficultyGaussianWidthFactor = 0.15f;
 
-		private const float RecruitDifficultyOffsetPerTechDiff = 0.15f;
+		private const float RecruitDifficultyOffsetPerTechDiff = 0.16f;
 
 		private static List<Thing> tmpThings = new List<Thing>();
 
@@ -56,17 +60,17 @@ namespace RimWorld
 
 		public static bool IsTravelingInTransportPodWorldObject(Pawn pawn)
 		{
-			return ThingOwnerUtility.AnyParentIs<TravelingTransportPods>(pawn);
+			return pawn.IsWorldPawn() && ThingOwnerUtility.AnyParentIs<ActiveDropPodInfo>(pawn);
 		}
 
 		public static bool ForSaleBySettlement(Pawn pawn)
 		{
-			return pawn.ParentHolder is Settlement_TraderTracker;
+			return pawn.ParentHolder is SettlementBase_TraderTracker;
 		}
 
 		public static void TryDestroyStartingColonistFamily(Pawn pawn)
 		{
-			if (!pawn.relations.RelatedPawns.Any((Pawn x) => Find.GameInitData.startingPawns.Contains(x)))
+			if (!pawn.relations.RelatedPawns.Any((Pawn x) => Find.GameInitData.startingAndOptionalPawns.Contains(x)))
 			{
 				PawnUtility.DestroyStartingColonistFamily(pawn);
 			}
@@ -76,7 +80,7 @@ namespace RimWorld
 		{
 			foreach (Pawn current in pawn.relations.RelatedPawns.ToList<Pawn>())
 			{
-				if (!Find.GameInitData.startingPawns.Contains(current))
+				if (!Find.GameInitData.startingAndOptionalPawns.Contains(current))
 				{
 					WorldPawnSituation situation = Find.WorldPawns.GetSituation(current);
 					if (situation == WorldPawnSituation.Free || situation == WorldPawnSituation.Dead)
@@ -119,6 +123,12 @@ namespace RimWorld
 			return num * (1f - def.race.petness);
 		}
 
+		public static float HumanFilthChancePerCell(ThingDef def, float bodySize)
+		{
+			float num = bodySize * 0.00125f;
+			return num * 4f;
+		}
+
 		public static bool CanCasuallyInteractNow(this Pawn p, bool twoWayInteraction = false)
 		{
 			if (p.Drafted)
@@ -137,6 +147,10 @@ namespace RimWorld
 			{
 				return false;
 			}
+			if (p.IsFormingCaravan())
+			{
+				return false;
+			}
 			Job curJob = p.CurJob;
 			return curJob == null || !twoWayInteraction || (curJob.def.casualInterruptible && curJob.playerForced);
 		}
@@ -151,7 +165,7 @@ namespace RimWorld
 					List<Pawn> pawns = master.Map.mapPawns.SpawnedPawnsInFaction(master.Faction);
 					for (int i = 0; i < pawns.Count; i++)
 					{
-						if (pawns[i].playerSettings != null && pawns[i].playerSettings.master == master)
+						if (pawns[i].playerSettings != null && pawns[i].playerSettings.Master == master)
 						{
 							yield return pawns[i];
 						}
@@ -167,28 +181,35 @@ namespace RimWorld
 
 		public static PawnPosture GetPosture(this Pawn p)
 		{
-			if (p.Downed || p.Dead)
+			if (p.Dead)
 			{
-				return PawnPosture.LayingAny;
+				return PawnPosture.LayingOnGroundNormal;
 			}
-			if (p.jobs == null)
+			if (p.Downed)
 			{
-				return PawnPosture.Standing;
+				if (p.jobs != null && p.jobs.posture.Laying())
+				{
+					return p.jobs.posture;
+				}
+				return PawnPosture.LayingOnGroundNormal;
 			}
-			if (p.jobs.curJob == null)
+			else
 			{
-				return PawnPosture.Standing;
+				if (p.jobs == null)
+				{
+					return PawnPosture.Standing;
+				}
+				return p.jobs.posture;
 			}
-			return p.jobs.curDriver.Posture;
 		}
 
 		public static void ForceWait(Pawn pawn, int ticks, Thing faceTarget = null, bool maintainPosture = false)
 		{
 			if (ticks <= 0)
 			{
-				Log.ErrorOnce("Forcing a wait for zero ticks", 47045639);
+				Log.ErrorOnce("Forcing a wait for zero ticks", 47045639, false);
 			}
-			Job job = new Job((!maintainPosture) ? JobDefOf.Wait : JobDefOf.WaitMaintainPosture, faceTarget);
+			Job job = new Job((!maintainPosture) ? JobDefOf.Wait : JobDefOf.Wait_MaintainPosture, faceTarget);
 			job.expiryInterval = ticks;
 			pawn.jobs.StartJob(job, JobCondition.InterruptForced, null, true, true, null, null, false);
 		}
@@ -204,7 +225,7 @@ namespace RimWorld
 					namer,
 					text,
 					namee.Name.ToStringFull
-				}), namee, MessageTypeDefOf.NeutralEvent);
+				}), namee, MessageTypeDefOf.NeutralEvent, true);
 			}
 		}
 
@@ -215,11 +236,19 @@ namespace RimWorld
 				Building edifice = p.Position.GetEdifice(p.Map);
 				if (edifice != null)
 				{
-					float statValue = edifice.GetStatValue(StatDefOf.Comfort, true);
-					if (statValue >= 0f && p.needs != null && p.needs.comfort != null)
-					{
-						p.needs.comfort.ComfortUsed(statValue);
-					}
+					PawnUtility.GainComfortFromThingIfPossible(p, edifice);
+				}
+			}
+		}
+
+		public static void GainComfortFromThingIfPossible(Pawn p, Thing from)
+		{
+			if (Find.TickManager.TicksGame % 10 == 0)
+			{
+				float statValue = from.GetStatValue(StatDefOf.Comfort, true);
+				if (statValue >= 0f && p.needs != null && p.needs.comfort != null)
+				{
+					p.needs.comfort.ComfortUsed(statValue);
 				}
 			}
 		}
@@ -272,7 +301,7 @@ namespace RimWorld
 			{
 				Hediff_Pregnant hediff_Pregnant = (Hediff_Pregnant)HediffMaker.MakeHediff(HediffDefOf.Pregnant, female, null);
 				hediff_Pregnant.father = male;
-				female.health.AddHediff(hediff_Pregnant, null, null);
+				female.health.AddHediff(hediff_Pregnant, null, null, null);
 			}
 		}
 
@@ -294,7 +323,7 @@ namespace RimWorld
 		{
 			if (motherOrEgg.SpawnedOrAnyParentSpawned)
 			{
-				return GenSpawn.Spawn(pawn, motherOrEgg.PositionHeld, motherOrEgg.MapHeld) != null;
+				return GenSpawn.Spawn(pawn, motherOrEgg.PositionHeld, motherOrEgg.MapHeld, WipeMode.Vanish) != null;
 			}
 			Pawn pawn2 = motherOrEgg as Pawn;
 			if (pawn2 != null)
@@ -342,7 +371,7 @@ namespace RimWorld
 			{
 				return null;
 			}
-			if (p.Faction == Faction.OfPlayer || !p.Faction.RelationWith(Faction.OfPlayer, false).hostile)
+			if (p.Faction == Faction.OfPlayer || !p.Faction.HostileTo(Faction.OfPlayer))
 			{
 				return null;
 			}
@@ -353,16 +382,12 @@ namespace RimWorld
 				{
 					return null;
 				}
-				if (lord.CurLordToil.avoidGridMode == AvoidGridMode.Basic)
-				{
-					return p.Faction.GetAvoidGridBasic(p.Map);
-				}
 				if (lord.CurLordToil.avoidGridMode == AvoidGridMode.Smart)
 				{
 					return p.Faction.GetAvoidGridSmart(p.Map);
 				}
 			}
-			return p.Faction.GetAvoidGridBasic(p.Map);
+			return null;
 		}
 
 		public static bool ShouldCollideWithPawns(Pawn p)
@@ -370,12 +395,12 @@ namespace RimWorld
 			return !p.Downed && !p.Dead && p.mindState.anyCloseHostilesRecently;
 		}
 
-		public static bool AnyPawnBlockingPathAt(IntVec3 c, Pawn forPawn, bool actAsIfHadCollideWithPawnsJob = false, bool collideOnlyWithStandingPawns = false)
+		public static bool AnyPawnBlockingPathAt(IntVec3 c, Pawn forPawn, bool actAsIfHadCollideWithPawnsJob = false, bool collideOnlyWithStandingPawns = false, bool forPathFinder = false)
 		{
-			return PawnUtility.PawnBlockingPathAt(c, forPawn, actAsIfHadCollideWithPawnsJob, collideOnlyWithStandingPawns) != null;
+			return PawnUtility.PawnBlockingPathAt(c, forPawn, actAsIfHadCollideWithPawnsJob, collideOnlyWithStandingPawns, forPathFinder) != null;
 		}
 
-		public static Pawn PawnBlockingPathAt(IntVec3 c, Pawn forPawn, bool actAsIfHadCollideWithPawnsJob = false, bool collideOnlyWithStandingPawns = false)
+		public static Pawn PawnBlockingPathAt(IntVec3 c, Pawn forPawn, bool actAsIfHadCollideWithPawnsJob = false, bool collideOnlyWithStandingPawns = false, bool forPathFinder = false)
 		{
 			List<Thing> thingList = c.GetThingList(forPawn.Map);
 			if (thingList.Count == 0)
@@ -390,13 +415,12 @@ namespace RimWorld
 			else
 			{
 				Job curJob = forPawn.CurJob;
-				if (curJob != null && (curJob.collideWithPawns || curJob.def.collideWithPawns))
+				if (curJob != null && (curJob.collideWithPawns || curJob.def.collideWithPawns || forPawn.jobs.curDriver.collideWithPawns))
 				{
 					flag = true;
 				}
-				else if (forPawn.Drafted && forPawn.pather.Moving)
+				else if (!forPawn.Drafted || forPawn.pather.Moving)
 				{
-					flag = true;
 				}
 			}
 			for (int i = 0; i < thingList.Count; i++)
@@ -408,11 +432,11 @@ namespace RimWorld
 					{
 						if (pawn.pather.MovingNow)
 						{
-							goto IL_14C;
+							goto IL_19D;
 						}
 						if (pawn.pather.Moving && pawn.pather.MovedRecently(60))
 						{
-							goto IL_14C;
+							goto IL_19D;
 						}
 					}
 					if (!PawnUtility.PawnsCanShareCellBecauseOfBodySize(pawn, forPawn))
@@ -423,15 +447,18 @@ namespace RimWorld
 						}
 						if (flag)
 						{
-							Job curJob2 = pawn.CurJob;
-							if (curJob2 != null && (curJob2.collideWithPawns || curJob2.def.collideWithPawns))
+							if (forPathFinder || !forPawn.Drafted || !pawn.RaceProps.Animal)
 							{
-								return pawn;
+								Job curJob2 = pawn.CurJob;
+								if (curJob2 != null && (curJob2.collideWithPawns || curJob2.def.collideWithPawns || pawn.jobs.curDriver.collideWithPawns))
+								{
+									return pawn;
+								}
 							}
 						}
 					}
 				}
-				IL_14C:;
+				IL_19D:;
 			}
 			return null;
 		}
@@ -450,9 +477,9 @@ namespace RimWorld
 			return num > 3.57f;
 		}
 
-		public static bool KnownDangerAt(IntVec3 c, Pawn forPawn)
+		public static bool KnownDangerAt(IntVec3 c, Map map, Pawn forPawn)
 		{
-			Building edifice = c.GetEdifice(forPawn.Map);
+			Building edifice = c.GetEdifice(map);
 			return edifice != null && edifice.IsDangerousFor(forPawn);
 		}
 
@@ -500,16 +527,24 @@ namespace RimWorld
 
 		public static bool IsProsthophobe(this Pawn pawn)
 		{
-			return pawn.story != null && pawn.story.traits.HasTrait(TraitDefOf.Prosthophobe);
+			return pawn.story != null && pawn.story.traits.HasTrait(TraitDefOf.BodyPurist);
 		}
 
-		public static string PawnKindsToCommaList(List<Pawn> pawns)
+		public static bool IsPrisonerInPrisonCell(this Pawn pawn)
+		{
+			return pawn.IsPrisoner && pawn.Spawned && pawn.Position.IsInPrisonCell(pawn.Map);
+		}
+
+		public static string PawnKindsToCommaList(IEnumerable<Pawn> pawns, bool useAnd = false)
 		{
 			PawnUtility.tmpPawns.Clear();
 			PawnUtility.tmpPawns.AddRange(pawns);
-			PawnUtility.tmpPawns.SortBy((Pawn x) => !x.RaceProps.Humanlike, (Pawn x) => x.GetKindLabelPlural(-1));
+			if (PawnUtility.tmpPawns.Count >= 2)
+			{
+				PawnUtility.tmpPawns.SortBy((Pawn x) => !x.RaceProps.Humanlike, (Pawn x) => x.GetKindLabelPlural(-1));
+			}
 			PawnUtility.tmpAddedPawnKinds.Clear();
-			PawnUtility.tmpPawnKinds.Clear();
+			PawnUtility.tmpPawnKindsStr.Clear();
 			for (int i = 0; i < PawnUtility.tmpPawns.Count; i++)
 			{
 				if (!PawnUtility.tmpAddedPawnKinds.Contains(PawnUtility.tmpPawns[i].kindDef))
@@ -525,15 +560,51 @@ namespace RimWorld
 					}
 					if (num == 1)
 					{
-						PawnUtility.tmpPawnKinds.Add("1 " + PawnUtility.tmpPawns[i].KindLabel);
+						PawnUtility.tmpPawnKindsStr.Add("1 " + PawnUtility.tmpPawns[i].KindLabel);
 					}
 					else
 					{
-						PawnUtility.tmpPawnKinds.Add(num + " " + PawnUtility.tmpPawns[i].GetKindLabelPlural(num));
+						PawnUtility.tmpPawnKindsStr.Add(num + " " + PawnUtility.tmpPawns[i].GetKindLabelPlural(num));
 					}
 				}
 			}
-			return GenText.ToCommaList(PawnUtility.tmpPawnKinds, true);
+			return PawnUtility.tmpPawnKindsStr.ToCommaList(useAnd);
+		}
+
+		public static string PawnKindsToCommaList(IEnumerable<PawnKindDef> pawnKinds, bool useAnd = false)
+		{
+			PawnUtility.tmpPawnKinds.Clear();
+			PawnUtility.tmpPawnKinds.AddRange(pawnKinds);
+			if (PawnUtility.tmpPawnKinds.Count >= 2)
+			{
+				PawnUtility.tmpPawnKinds.SortBy((PawnKindDef x) => !x.RaceProps.Humanlike, (PawnKindDef x) => GenLabel.BestKindLabel(x, Gender.None, true, -1));
+			}
+			PawnUtility.tmpAddedPawnKinds.Clear();
+			PawnUtility.tmpPawnKindsStr.Clear();
+			for (int i = 0; i < PawnUtility.tmpPawnKinds.Count; i++)
+			{
+				if (!PawnUtility.tmpAddedPawnKinds.Contains(PawnUtility.tmpPawnKinds[i]))
+				{
+					PawnUtility.tmpAddedPawnKinds.Add(PawnUtility.tmpPawnKinds[i]);
+					int num = 0;
+					for (int j = 0; j < PawnUtility.tmpPawnKinds.Count; j++)
+					{
+						if (PawnUtility.tmpPawnKinds[j] == PawnUtility.tmpPawnKinds[i])
+						{
+							num++;
+						}
+					}
+					if (num == 1)
+					{
+						PawnUtility.tmpPawnKindsStr.Add("1 " + GenLabel.BestKindLabel(PawnUtility.tmpPawnKinds[i], Gender.None, false, -1));
+					}
+					else
+					{
+						PawnUtility.tmpPawnKindsStr.Add(num + " " + GenLabel.BestKindLabel(PawnUtility.tmpPawnKinds[i], Gender.None, true, num));
+					}
+				}
+			}
+			return PawnUtility.tmpPawnKindsStr.ToCommaList(useAnd);
 		}
 
 		public static LocomotionUrgency ResolveLocomotion(Pawn pawn, LocomotionUrgency secondPriority)
@@ -576,66 +647,33 @@ namespace RimWorld
 
 		public static bool IsFighting(this Pawn pawn)
 		{
-			return pawn.CurJob != null && (pawn.CurJob.def == JobDefOf.AttackMelee || pawn.CurJob.def == JobDefOf.AttackStatic || pawn.CurJob.def == JobDefOf.WaitCombat || pawn.CurJob.def == JobDefOf.PredatorHunt);
+			return pawn.CurJob != null && (pawn.CurJob.def == JobDefOf.AttackMelee || pawn.CurJob.def == JobDefOf.AttackStatic || pawn.CurJob.def == JobDefOf.Wait_Combat || pawn.CurJob.def == JobDefOf.PredatorHunt);
 		}
 
-		public static float RecruitDifficulty(this Pawn pawn, Faction recruiterFaction, bool withPopIntent)
+		public static float RecruitDifficulty(this Pawn pawn, Faction recruiterFaction)
 		{
 			float num = pawn.kindDef.baseRecruitDifficulty;
 			Rand.PushState();
 			Rand.Seed = pawn.HashOffset();
-			num += Rand.Range(-0.2f, 0.2f);
+			num += Rand.Gaussian(0f, 0.15f);
 			Rand.PopState();
 			if (pawn.Faction != null)
 			{
-				int num2 = Mathf.Abs((int)(pawn.Faction.def.techLevel - recruiterFaction.def.techLevel));
-				num += (float)num2 * 0.15f;
+				int num2 = Mathf.Min((int)pawn.Faction.def.techLevel, 4);
+				int num3 = Mathf.Min((int)recruiterFaction.def.techLevel, 4);
+				int num4 = Mathf.Abs(num2 - num3);
+				num += (float)num4 * 0.16f;
 			}
-			if (withPopIntent)
-			{
-				float popIntent = (Current.ProgramState != ProgramState.Playing) ? 1f : Find.Storyteller.intenderPopulation.PopulationIntent;
-				num = PawnUtility.PopIntentAdjustedRecruitDifficulty(num, popIntent);
-			}
-			return Mathf.Clamp(num, 0.33f, 0.99f);
-		}
-
-		private static float PopIntentAdjustedRecruitDifficulty(float baseDifficulty, float popIntent)
-		{
-			float num = Mathf.Clamp(popIntent, 0.25f, 3f);
-			return 1f - (1f - baseDifficulty) * num;
-		}
-
-		public static void DoTable_PopIntentRecruitDifficulty()
-		{
-			List<float> list = new List<float>();
-			for (float num = -1f; num < 3f; num += 0.1f)
-			{
-				list.Add(num);
-			}
-			List<float> colValues = new List<float>
-			{
-				0.1f,
-				0.2f,
-				0.3f,
-				0.4f,
-				0.5f,
-				0.6f,
-				0.7f,
-				0.8f,
-				0.9f,
-				0.95f,
-				0.99f
-			};
-			DebugTables.MakeTablesDialog<float, float>(colValues, (float d) => "d=" + d.ToString("F0"), list, (float rv) => rv.ToString("F1"), (float d, float pi) => PawnUtility.PopIntentAdjustedRecruitDifficulty(d, pi).ToStringPercent(), "intents");
+			return Mathf.Clamp(num, 0.1f, 0.99f);
 		}
 
 		public static void GiveAllStartingPlayerPawnsThought(ThoughtDef thought)
 		{
-			foreach (Pawn current in Find.GameInitData.startingPawns)
+			foreach (Pawn current in Find.GameInitData.startingAndOptionalPawns)
 			{
 				if (thought.IsSocial)
 				{
-					foreach (Pawn current2 in Find.GameInitData.startingPawns)
+					foreach (Pawn current2 in Find.GameInitData.startingAndOptionalPawns)
 					{
 						if (current2 != current)
 						{
@@ -686,14 +724,15 @@ namespace RimWorld
 					if (CellFinder.TryFindBestPawnStandCell(pawn, out position, false))
 					{
 						pawn.Position = position;
-						pawn.Notify_Teleported(true);
+						pawn.Notify_Teleported(true, false);
 					}
 					else
 					{
 						DamageDef crush = DamageDefOf.Crush;
-						int amount = 99999;
+						float amount = 99999f;
+						float armorPenetration = 999f;
 						BodyPartRecord brain = pawn.health.hediffSet.GetBrain();
-						DamageInfo damageInfo = new DamageInfo(crush, amount, -1f, null, brain, null, DamageInfo.SourceCategory.Collapse);
+						DamageInfo damageInfo = new DamageInfo(crush, amount, armorPenetration, -1f, null, brain, null, DamageInfo.SourceCategory.Collapse, null);
 						pawn.TakeDamage(damageInfo);
 						if (!pawn.Dead)
 						{
@@ -702,6 +741,36 @@ namespace RimWorld
 					}
 				}
 			}
+		}
+
+		public static float GetManhunterOnDamageChance(Pawn pawn, float distance, Thing instigator)
+		{
+			float num = PawnUtility.GetManhunterOnDamageChance(pawn.kindDef);
+			num *= GenMath.LerpDoubleClamped(1f, 30f, 3f, 1f, distance);
+			if (instigator != null)
+			{
+				num *= 1f - instigator.GetStatValue(StatDefOf.HuntingStealth, true);
+			}
+			return num;
+		}
+
+		public static float GetManhunterOnDamageChance(Pawn pawn, Thing instigator = null)
+		{
+			if (instigator != null)
+			{
+				return PawnUtility.GetManhunterOnDamageChance(pawn, pawn.Position.DistanceTo(instigator.Position), instigator);
+			}
+			return PawnUtility.GetManhunterOnDamageChance(pawn.kindDef);
+		}
+
+		public static float GetManhunterOnDamageChance(PawnKindDef kind)
+		{
+			return kind.RaceProps.manhunterOnDamageChance * Find.Storyteller.difficulty.manhunterChanceOnDamageFactor;
+		}
+
+		public static float GetManhunterOnDamageChance(RaceProperties race)
+		{
+			return race.manhunterOnDamageChance * Find.Storyteller.difficulty.manhunterChanceOnDamageFactor;
 		}
 	}
 }

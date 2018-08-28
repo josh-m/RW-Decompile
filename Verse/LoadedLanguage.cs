@@ -8,6 +8,21 @@ namespace Verse
 {
 	public class LoadedLanguage
 	{
+		public class KeyedReplacement
+		{
+			public string key;
+
+			public string value;
+
+			public string fileSource;
+
+			public int fileSourceLine;
+
+			public string fileSourceFullPath;
+
+			public bool isPlaceholder;
+		}
+
 		public string folderName;
 
 		public LanguageInfo info;
@@ -16,13 +31,39 @@ namespace Verse
 
 		private bool dataIsLoaded;
 
+		public List<string> loadErrors = new List<string>();
+
+		public List<string> backstoriesLoadErrors = new List<string>();
+
+		public bool anyKeyedReplacementsXmlParseError;
+
+		public string lastKeyedReplacementsXmlParseErrorInFile;
+
+		public bool anyDefInjectionsXmlParseError;
+
+		public string lastDefInjectionsXmlParseErrorInFile;
+
+		public bool anyError;
+
 		public Texture2D icon = BaseContent.BadTex;
 
-		public Dictionary<string, string> keyedReplacements = new Dictionary<string, string>();
+		public Dictionary<string, LoadedLanguage.KeyedReplacement> keyedReplacements = new Dictionary<string, LoadedLanguage.KeyedReplacement>();
 
 		public List<DefInjectionPackage> defInjections = new List<DefInjectionPackage>();
 
 		public Dictionary<string, List<string>> stringFiles = new Dictionary<string, List<string>>();
+
+		public const string OldKeyedTranslationsFolderName = "CodeLinked";
+
+		public const string KeyedTranslationsFolderName = "Keyed";
+
+		public const string OldDefInjectionsFolderName = "DefLinked";
+
+		public const string DefInjectionsFolderName = "DefInjected";
+
+		public const string LanguagesFolderName = "Languages";
+
+		public const string PlaceholderText = "TODO";
 
 		public string FriendlyNameNative
 		{
@@ -133,7 +174,7 @@ namespace Verse
 				DirectoryInfo directoryInfo = new DirectoryInfo(Path.Combine(current.ToString(), "CodeLinked"));
 				if (directoryInfo.Exists)
 				{
-					Log.Warning("Translations aren't called CodeLinked any more. Please rename to Keyed: " + directoryInfo);
+					this.loadErrors.Add("Translations aren't called CodeLinked any more. Please rename to Keyed: " + directoryInfo);
 				}
 				else
 				{
@@ -151,7 +192,7 @@ namespace Verse
 				DirectoryInfo directoryInfo2 = new DirectoryInfo(Path.Combine(current.ToString(), "DefLinked"));
 				if (directoryInfo2.Exists)
 				{
-					Log.Warning("Translations aren't called DefLinked any more. Please rename to DefInjected: " + directoryInfo2);
+					this.loadErrors.Add("Translations aren't called DefLinked any more. Please rename to DefInjected: " + directoryInfo2);
 				}
 				else
 				{
@@ -171,7 +212,7 @@ namespace Verse
 						}
 						if (typeInAnyAssembly == null)
 						{
-							Log.Warning(string.Concat(new string[]
+							this.loadErrors.Add(string.Concat(new string[]
 							{
 								"Error loading language from ",
 								current,
@@ -191,6 +232,7 @@ namespace Verse
 						}
 					}
 				}
+				this.EnsureAllDefTypesHaveDefInjectionPackage();
 				DirectoryInfo directoryInfo4 = new DirectoryInfo(Path.Combine(current.ToString(), "Strings"));
 				if (directoryInfo4.Exists)
 				{
@@ -219,7 +261,7 @@ namespace Verse
 			}
 			catch (Exception ex)
 			{
-				Log.Warning(string.Concat(new object[]
+				this.loadErrors.Add(string.Concat(new object[]
 				{
 					"Exception loading from strings file ",
 					file,
@@ -257,23 +299,25 @@ namespace Verse
 		private void LoadFromFile_Keyed(FileInfo file)
 		{
 			Dictionary<string, string> dictionary = new Dictionary<string, string>();
+			Dictionary<string, int> dictionary2 = new Dictionary<string, int>();
 			try
 			{
-				foreach (KeyValuePair<string, string> current in DirectXmlLoaderSimple.ValuesFromXmlFile(file))
+				foreach (DirectXmlLoaderSimple.XmlKeyValuePair current in DirectXmlLoaderSimple.ValuesFromXmlFile(file))
 				{
-					if (this.keyedReplacements.ContainsKey(current.Key) || dictionary.ContainsKey(current.Key))
+					if (this.keyedReplacements.ContainsKey(current.key) || dictionary.ContainsKey(current.key))
 					{
-						Log.Warning("Duplicate code-linked translation key: " + current.Key + " in language " + this.folderName);
+						this.loadErrors.Add("Duplicate keyed translation key: " + current.key + " in language " + this.folderName);
 					}
 					else
 					{
-						dictionary.Add(current.Key, current.Value);
+						dictionary.Add(current.key, current.value);
+						dictionary2.Add(current.key, current.lineNumber);
 					}
 				}
 			}
 			catch (Exception ex)
 			{
-				Log.Warning(string.Concat(new object[]
+				this.loadErrors.Add(string.Concat(new object[]
 				{
 					"Exception loading from translation file ",
 					file,
@@ -281,10 +325,25 @@ namespace Verse
 					ex
 				}));
 				dictionary.Clear();
+				dictionary2.Clear();
+				this.anyKeyedReplacementsXmlParseError = true;
+				this.lastKeyedReplacementsXmlParseErrorInFile = file.Name;
 			}
 			foreach (KeyValuePair<string, string> current2 in dictionary)
 			{
-				this.keyedReplacements.Add(current2.Key, current2.Value);
+				string text = current2.Value;
+				LoadedLanguage.KeyedReplacement keyedReplacement = new LoadedLanguage.KeyedReplacement();
+				if (text == "TODO")
+				{
+					keyedReplacement.isPlaceholder = true;
+					text = string.Empty;
+				}
+				keyedReplacement.key = current2.Key;
+				keyedReplacement.value = text;
+				keyedReplacement.fileSource = file.Name;
+				keyedReplacement.fileSourceLine = dictionary2[current2.Key];
+				keyedReplacement.fileSourceFullPath = file.FullName;
+				this.keyedReplacements.Add(current2.Key, keyedReplacement);
 			}
 		}
 
@@ -298,16 +357,34 @@ namespace Verse
 				defInjectionPackage = new DefInjectionPackage(defType);
 				this.defInjections.Add(defInjectionPackage);
 			}
-			defInjectionPackage.AddDataFromFile(file);
+			bool flag;
+			defInjectionPackage.AddDataFromFile(file, out flag);
+			if (flag)
+			{
+				this.anyDefInjectionsXmlParseError = true;
+				this.lastDefInjectionsXmlParseErrorInFile = file.Name;
+			}
 		}
 
-		public bool HaveTextForKey(string key)
+		private void EnsureAllDefTypesHaveDefInjectionPackage()
+		{
+			foreach (Type defType in GenDefDatabase.AllDefTypesWithDatabases())
+			{
+				if (!this.defInjections.Any((DefInjectionPackage x) => x.defType == defType))
+				{
+					this.defInjections.Add(new DefInjectionPackage(defType));
+				}
+			}
+		}
+
+		public bool HaveTextForKey(string key, bool allowPlaceholders = false)
 		{
 			if (!this.dataIsLoaded)
 			{
 				this.LoadData();
 			}
-			return this.keyedReplacements.ContainsKey(key);
+			LoadedLanguage.KeyedReplacement keyedReplacement;
+			return key != null && this.keyedReplacements.TryGetValue(key, out keyedReplacement) && (allowPlaceholders || !keyedReplacement.isPlaceholder);
 		}
 
 		public bool TryGetTextFromKey(string key, out string translated)
@@ -316,11 +393,18 @@ namespace Verse
 			{
 				this.LoadData();
 			}
-			if (!this.keyedReplacements.TryGetValue(key, out translated))
+			if (key == null)
 			{
 				translated = key;
 				return false;
 			}
+			LoadedLanguage.KeyedReplacement keyedReplacement;
+			if (!this.keyedReplacements.TryGetValue(key, out keyedReplacement) || keyedReplacement.isPlaceholder)
+			{
+				translated = key;
+				return false;
+			}
+			translated = keyedReplacement.value;
 			return true;
 		}
 
@@ -338,7 +422,17 @@ namespace Verse
 			return true;
 		}
 
-		public void InjectIntoData()
+		public string GetKeySourceFileAndLine(string key)
+		{
+			LoadedLanguage.KeyedReplacement keyedReplacement;
+			if (!this.keyedReplacements.TryGetValue(key, out keyedReplacement))
+			{
+				return "unknown";
+			}
+			return keyedReplacement.fileSource + ":" + keyedReplacement.fileSourceLine;
+		}
+
+		public void InjectIntoData_BeforeImpliedDefs()
 		{
 			if (!this.dataIsLoaded)
 			{
@@ -346,9 +440,50 @@ namespace Verse
 			}
 			foreach (DefInjectionPackage current in this.defInjections)
 			{
-				current.InjectIntoDefs();
+				try
+				{
+					current.InjectIntoDefs(false);
+				}
+				catch (Exception arg)
+				{
+					Log.Error("Critical error while injecting translations into defs: " + arg, false);
+				}
 			}
-			BackstoryTranslationUtility.LoadAndInjectBackstoryData(this);
+		}
+
+		public void InjectIntoData_AfterImpliedDefs()
+		{
+			if (!this.dataIsLoaded)
+			{
+				this.LoadData();
+			}
+			int num = this.loadErrors.Count;
+			foreach (DefInjectionPackage current in this.defInjections)
+			{
+				try
+				{
+					current.InjectIntoDefs(true);
+					num += current.loadErrors.Count;
+				}
+				catch (Exception arg)
+				{
+					Log.Error("Critical error while injecting translations into defs: " + arg, false);
+				}
+			}
+			BackstoryTranslationUtility.LoadAndInjectBackstoryData(this.FolderPaths, this.backstoriesLoadErrors);
+			num += this.backstoriesLoadErrors.Count;
+			if (num != 0)
+			{
+				this.anyError = true;
+				Log.Warning(string.Concat(new object[]
+				{
+					"Translation data for language ",
+					LanguageDatabase.activeLanguage.FriendlyNameEnglish,
+					" has ",
+					num,
+					" errors. Generate translation report for more info."
+				}), false);
+			}
 		}
 
 		public override string ToString()

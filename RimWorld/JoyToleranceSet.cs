@@ -10,9 +10,7 @@ namespace RimWorld
 	{
 		private DefMap<JoyKindDef, float> tolerances = new DefMap<JoyKindDef, float>();
 
-		private const float ToleranceGainRate = 0.4f;
-
-		private const float ToleranceDropPerDay = 0.0833333358f;
+		private DefMap<JoyKindDef, bool> bored = new DefMap<JoyKindDef, bool>();
 
 		public float this[JoyKindDef d]
 		{
@@ -25,11 +23,26 @@ namespace RimWorld
 		public void ExposeData()
 		{
 			Scribe_Deep.Look<DefMap<JoyKindDef, float>>(ref this.tolerances, "tolerances", new object[0]);
+			Scribe_Deep.Look<DefMap<JoyKindDef, bool>>(ref this.bored, "bored", new object[0]);
+			if (this.bored == null)
+			{
+				this.bored = new DefMap<JoyKindDef, bool>();
+			}
+		}
+
+		public bool BoredOf(JoyKindDef def)
+		{
+			return this.bored[def];
 		}
 
 		public void Notify_JoyGained(float amount, JoyKindDef joyKind)
 		{
-			this.tolerances[joyKind] = Mathf.Min(this.tolerances[joyKind] + amount * 0.4f, 1f);
+			float num = Mathf.Min(this.tolerances[joyKind] + amount * 0.65f, 1f);
+			this.tolerances[joyKind] = num;
+			if (num > 0.5f)
+			{
+				this.bored[joyKind] = true;
+			}
 		}
 
 		public float JoyFactorFromTolerance(JoyKindDef joyKind)
@@ -37,24 +50,28 @@ namespace RimWorld
 			return 1f - this.tolerances[joyKind];
 		}
 
-		public void NeedInterval()
+		public void NeedInterval(Pawn pawn)
 		{
+			float num = ExpectationsUtility.CurrentExpectationFor(pawn).joyToleranceDropPerDay * 150f / 60000f;
 			for (int i = 0; i < this.tolerances.Count; i++)
 			{
-				float num = this.tolerances[i];
-				num -= 0.000208333338f;
-				if (num < 0f)
+				float num2 = this.tolerances[i];
+				num2 -= num;
+				if (num2 < 0f)
 				{
-					num = 0f;
+					num2 = 0f;
 				}
-				this.tolerances[i] = num;
+				this.tolerances[i] = num2;
+				if (this.bored[i] && num2 < 0.3f)
+				{
+					this.bored[i] = false;
+				}
 			}
 		}
 
 		public string TolerancesString()
 		{
 			StringBuilder stringBuilder = new StringBuilder();
-			stringBuilder.AppendLine("\n" + "JoyTolerances".Translate() + ":");
 			List<JoyKindDef> allDefsListForReading = DefDatabase<JoyKindDef>.AllDefsListForReading;
 			for (int i = 0; i < allDefsListForReading.Count; i++)
 			{
@@ -62,10 +79,35 @@ namespace RimWorld
 				float num = this.tolerances[joyKindDef];
 				if (num > 0.01f)
 				{
-					stringBuilder.AppendLine("   -" + joyKindDef.label + ": " + num.ToStringPercent());
+					if (stringBuilder.Length == 0)
+					{
+						stringBuilder.AppendLine("JoyTolerances".Translate() + ":");
+					}
+					string text = "   " + joyKindDef.LabelCap + ": " + num.ToStringPercent();
+					if (this.bored[joyKindDef])
+					{
+						text = text + " (" + "bored".Translate() + ")";
+					}
+					stringBuilder.AppendLine(text);
 				}
 			}
-			return stringBuilder.ToString();
+			return stringBuilder.ToString().TrimEndNewlines();
+		}
+
+		public bool BoredOfAllAvailableJoyKinds(Pawn pawn)
+		{
+			List<JoyKindDef> list = JoyUtility.JoyKindsOnMapTempList(pawn.MapHeld);
+			bool result = true;
+			for (int i = 0; i < list.Count; i++)
+			{
+				if (!this.bored[list[i]])
+				{
+					result = false;
+					break;
+				}
+			}
+			list.Clear();
+			return result;
 		}
 	}
 }

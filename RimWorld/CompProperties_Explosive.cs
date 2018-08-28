@@ -9,9 +9,11 @@ namespace RimWorld
 	{
 		public float explosiveRadius = 1.9f;
 
-		public DamageDef explosiveDamageType = DamageDefOf.Bomb;
+		public DamageDef explosiveDamageType;
 
 		public int damageAmountBase = -1;
+
+		public float armorPenetrationBase = -1f;
 
 		public ThingDef postExplosionSpawnThingDef;
 
@@ -29,7 +31,7 @@ namespace RimWorld
 
 		public float chanceToStartFire;
 
-		public bool dealMoreDamageAtCenter;
+		public bool damageFalloff;
 
 		public float explosiveExpandPerStackcount;
 
@@ -51,9 +53,20 @@ namespace RimWorld
 
 		public float destroyThingOnExplosionSize;
 
+		public DamageDef requiredDamageTypeToExplode;
+
 		public CompProperties_Explosive()
 		{
 			this.compClass = typeof(CompExplosive);
+		}
+
+		public override void ResolveReferences(ThingDef parentDef)
+		{
+			base.ResolveReferences(parentDef);
+			if (this.explosiveDamageType == null)
+			{
+				this.explosiveDamageType = DamageDefOf.Bomb;
+			}
 		}
 
 		[DebuggerHidden]

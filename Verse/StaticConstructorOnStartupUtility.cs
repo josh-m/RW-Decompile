@@ -48,7 +48,7 @@ namespace Verse
 							" of type ",
 							fieldInfo.FieldType.Name,
 							". All assets must be loaded in the main thread."
-						}));
+						}), false);
 					}
 				}
 			}

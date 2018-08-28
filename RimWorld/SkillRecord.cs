@@ -66,7 +66,7 @@ namespace RimWorld
 			}
 			set
 			{
-				this.levelInt = value;
+				this.levelInt = Mathf.Clamp(value, 0, 20);
 			}
 		}
 
@@ -199,40 +199,41 @@ namespace RimWorld
 
 		public void Interval()
 		{
+			float num = (!this.pawn.story.traits.HasTrait(TraitDefOf.GreatMemory)) ? 1f : 0.5f;
 			switch (this.levelInt)
 			{
 			case 10:
-				this.Learn(-0.1f, false);
+				this.Learn(-0.1f * num, false);
 				break;
 			case 11:
-				this.Learn(-0.2f, false);
+				this.Learn(-0.2f * num, false);
 				break;
 			case 12:
-				this.Learn(-0.4f, false);
+				this.Learn(-0.4f * num, false);
 				break;
 			case 13:
-				this.Learn(-0.6f, false);
+				this.Learn(-0.6f * num, false);
 				break;
 			case 14:
-				this.Learn(-1f, false);
+				this.Learn(-1f * num, false);
 				break;
 			case 15:
-				this.Learn(-1.8f, false);
+				this.Learn(-1.8f * num, false);
 				break;
 			case 16:
-				this.Learn(-2.8f, false);
+				this.Learn(-2.8f * num, false);
 				break;
 			case 17:
-				this.Learn(-4f, false);
+				this.Learn(-4f * num, false);
 				break;
 			case 18:
-				this.Learn(-6f, false);
+				this.Learn(-6f * num, false);
 				break;
 			case 19:
-				this.Learn(-8f, false);
+				this.Learn(-8f * num, false);
 				break;
 			case 20:
-				this.Learn(-12f, false);
+				this.Learn(-12f * num, false);
 				break;
 			}
 		}
@@ -254,30 +255,6 @@ namespace RimWorld
 			}
 			if (xp > 0f)
 			{
-				if (this.pawn.needs.joy != null)
-				{
-					float amount = 0f;
-					Passion passion = this.passion;
-					if (passion != Passion.Minor)
-					{
-						if (passion != Passion.Major)
-						{
-							if (passion == Passion.None)
-							{
-								amount = 0f * xp;
-							}
-						}
-						else
-						{
-							amount = 4E-05f * xp;
-						}
-					}
-					else
-					{
-						amount = 2E-05f * xp;
-					}
-					this.pawn.needs.joy.GainJoy(amount, JoyKindDefOf.Work);
-				}
 				xp *= this.LearnRateFactor(direct);
 			}
 			this.xpSinceLastLevel += xp;
@@ -362,6 +339,19 @@ namespace RimWorld
 				}
 			}
 			return num;
+		}
+
+		public void EnsureMinLevelWithMargin(int minLevel)
+		{
+			if (this.TotallyDisabled)
+			{
+				return;
+			}
+			if (this.Level < minLevel || (this.Level == minLevel && this.xpSinceLastLevel < this.XpRequiredForLevelUp / 2f))
+			{
+				this.Level = minLevel;
+				this.xpSinceLastLevel = this.XpRequiredForLevelUp / 2f;
+			}
 		}
 
 		public void Notify_SkillDisablesChanged()

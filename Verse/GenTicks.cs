@@ -90,12 +90,12 @@ namespace Verse
 			return Mathf.RoundToInt(60f * numSeconds);
 		}
 
-		public static string TicksToSecondsString(this int numTicks)
+		public static string ToStringSecondsFromTicks(this int numTicks)
 		{
 			return numTicks.TicksToSeconds().ToString("F1") + " " + "SecondsLower".Translate();
 		}
 
-		public static string SecondsToTicksString(this float numSeconds)
+		public static string ToStringTicksFromSeconds(this float numSeconds)
 		{
 			return numSeconds.SecondsToTicks().ToString();
 		}

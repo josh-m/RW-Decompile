@@ -79,8 +79,6 @@ namespace RimWorld
 
 		public static RecordDef NutritionEaten;
 
-		public static RecordDef TrapsRearmed;
-
 		public static RecordDef BodiesStripped;
 
 		public static RecordDef ThingsUninstalled;
@@ -96,5 +94,10 @@ namespace RimWorld
 		public static RecordDef TimeAsColonistOrColonyAnimal;
 
 		public static RecordDef TimeAsPrisoner;
+
+		static RecordDefOf()
+		{
+			DefOfHelper.EnsureInitializedInCtor(typeof(RecordDefOf));
+		}
 	}
 }

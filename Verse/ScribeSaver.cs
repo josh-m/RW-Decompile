@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Xml;
 
@@ -14,12 +15,25 @@ namespace Verse
 
 		private XmlWriter writer;
 
+		private string curPath;
+
+		private HashSet<string> savedNodes = new HashSet<string>();
+
+		private int nextListElementTemporaryId;
+
 		public void InitSaving(string filePath, string documentElementName)
 		{
 			if (Scribe.mode != LoadSaveMode.Inactive)
 			{
-				Log.Error("Called InitSaving() but current mode is " + Scribe.mode);
+				Log.Error("Called InitSaving() but current mode is " + Scribe.mode, false);
 				Scribe.ForceStop();
+			}
+			if (this.curPath != null)
+			{
+				Log.Error("Current path is not null in InitSaving", false);
+				this.curPath = null;
+				this.savedNodes.Clear();
+				this.nextListElementTemporaryId = 0;
 			}
 			try
 			{
@@ -40,7 +54,7 @@ namespace Verse
 					filePath,
 					"\n",
 					ex
-				}));
+				}), false);
 				this.ForceStop();
 				throw;
 			}
@@ -50,7 +64,7 @@ namespace Verse
 		{
 			if (Scribe.mode != LoadSaveMode.Saving)
 			{
-				Log.Error("Called FinalizeSaving() but current mode is " + Scribe.mode);
+				Log.Error("Called FinalizeSaving() but current mode is " + Scribe.mode, false);
 				return;
 			}
 			try
@@ -72,10 +86,13 @@ namespace Verse
 				Scribe.mode = LoadSaveMode.Inactive;
 				this.savingForDebug = false;
 				this.loadIDsErrorsChecker.CheckForErrorsAndClear();
+				this.curPath = null;
+				this.savedNodes.Clear();
+				this.nextListElementTemporaryId = 0;
 			}
 			catch (Exception arg)
 			{
-				Log.Error("Exception in FinalizeLoading(): " + arg);
+				Log.Error("Exception in FinalizeLoading(): " + arg, false);
 				this.ForceStop();
 				throw;
 			}
@@ -85,8 +102,23 @@ namespace Verse
 		{
 			if (this.writer == null)
 			{
-				Log.Error("Called WriteElemenet(), but writer is null.");
+				Log.Error("Called WriteElemenet(), but writer is null.", false);
 				return;
+			}
+			if (UnityData.isDebugBuild && elementName != "li")
+			{
+				string text = this.curPath + "/" + elementName;
+				if (!this.savedNodes.Add(text))
+				{
+					Log.Warning(string.Concat(new string[]
+					{
+						"Trying to save 2 XML nodes with the same name \"",
+						elementName,
+						"\" path=\"",
+						text,
+						"\""
+					}), false);
+				}
 			}
 			this.writer.WriteElementString(elementName, value);
 		}
@@ -95,7 +127,7 @@ namespace Verse
 		{
 			if (this.writer == null)
 			{
-				Log.Error("Called WriteAttribute(), but writer is null.");
+				Log.Error("Called WriteAttribute(), but writer is null.", false);
 				return;
 			}
 			this.writer.WriteAttributeString(attributeName, value);
@@ -105,7 +137,7 @@ namespace Verse
 		{
 			if (Scribe.mode != LoadSaveMode.Inactive)
 			{
-				Log.Error("DebugOutput needs current mode to be Inactive");
+				Log.Error("DebugOutput needs current mode to be Inactive", false);
 				return string.Empty;
 			}
 			string result;
@@ -135,7 +167,7 @@ namespace Verse
 			}
 			catch (Exception arg)
 			{
-				Log.Error("Exception while getting debug output: " + arg);
+				Log.Error("Exception while getting debug output: " + arg, false);
 				this.ForceStop();
 				result = string.Empty;
 			}
@@ -149,6 +181,15 @@ namespace Verse
 				return false;
 			}
 			this.writer.WriteStartElement(nodeName);
+			if (UnityData.isDebugBuild)
+			{
+				this.curPath = this.curPath + "/" + nodeName;
+				if (nodeName == "li" || nodeName == "thing")
+				{
+					this.curPath = this.curPath + "_" + this.nextListElementTemporaryId;
+					this.nextListElementTemporaryId++;
+				}
+			}
 			return true;
 		}
 
@@ -159,6 +200,11 @@ namespace Verse
 				return;
 			}
 			this.writer.WriteEndElement();
+			if (UnityData.isDebugBuild && this.curPath != null)
+			{
+				int num = this.curPath.LastIndexOf('/');
+				this.curPath = ((num <= 0) ? null : this.curPath.Substring(0, num));
+			}
 		}
 
 		public void ForceStop()
@@ -175,6 +221,9 @@ namespace Verse
 			}
 			this.savingForDebug = false;
 			this.loadIDsErrorsChecker.Clear();
+			this.curPath = null;
+			this.savedNodes.Clear();
+			this.nextListElementTemporaryId = 0;
 			if (Scribe.mode == LoadSaveMode.Saving)
 			{
 				Scribe.mode = LoadSaveMode.Inactive;

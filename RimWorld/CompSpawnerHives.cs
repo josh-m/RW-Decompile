@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using UnityEngine;
 using Verse;
 
 namespace RimWorld
@@ -38,16 +37,16 @@ namespace RimWorld
 			}
 		}
 
-		public override void CompTickRare()
+		public override void CompTick()
 		{
+			base.CompTick();
 			Hive hive = this.parent as Hive;
 			if ((hive == null || hive.active) && Find.TickManager.TicksGame >= this.nextHiveSpawnTick)
 			{
-				Hive hive2;
-				if (this.TrySpawnChildHive(false, out hive2))
+				Hive t;
+				if (this.TrySpawnChildHive(false, out t))
 				{
-					hive2.nextPawnSpawnTick = Find.TickManager.TicksGame + Rand.Range(150, 350);
-					Messages.Message("MessageHiveReproduced".Translate(), hive2, MessageTypeDefOf.NegativeEvent);
+					Messages.Message("MessageHiveReproduced".Translate(), t, MessageTypeDefOf.NegativeEvent, true);
 				}
 				else
 				{
@@ -64,7 +63,7 @@ namespace RimWorld
 			}
 			if (this.CanSpawnChildHive)
 			{
-				return "HiveReproducesIn".Translate() + ": " + (this.nextHiveSpawnTick - Find.TickManager.TicksGame).ToStringTicksToPeriod(true, false, true);
+				return "HiveReproducesIn".Translate() + ": " + (this.nextHiveSpawnTick - Find.TickManager.TicksGame).ToStringTicksToPeriod();
 			}
 			return null;
 		}
@@ -88,7 +87,7 @@ namespace RimWorld
 					}
 				}
 			}
-			float num3 = GenMath.LerpDouble(0f, 7f, 1f, 0.35f, (float)Mathf.Clamp(num, 0, 7));
+			float num3 = this.Props.ReproduceRateFactorFromNearbyHiveCountCurve.Evaluate((float)num);
 			this.nextHiveSpawnTick = Find.TickManager.TicksGame + (int)(this.Props.HiveSpawnIntervalDays.RandomInRange * 60000f / (num3 * Find.Storyteller.difficulty.enemyReproductionRateFactor));
 		}
 
@@ -99,25 +98,13 @@ namespace RimWorld
 				newHive = null;
 				return false;
 			}
-			IntVec3 invalid = IntVec3.Invalid;
-			for (int i = 0; i < 3; i++)
+			IntVec3 loc = CompSpawnerHives.FindChildHiveLocation(this.parent.Position, this.parent.Map, this.parent.def, this.Props, ignoreRoofedRequirement, false);
+			if (!loc.IsValid)
 			{
-				float minDist = this.Props.HiveSpawnPreferredMinDist;
-				if (i == 1)
-				{
-					minDist = 0f;
-				}
-				else if (i == 2)
-				{
-					newHive = null;
-					return false;
-				}
-				if (CellFinder.TryFindRandomReachableCellNear(this.parent.Position, this.parent.Map, this.Props.HiveSpawnRadius, TraverseParms.For(TraverseMode.NoPassClosedDoors, Danger.Deadly, false), (IntVec3 c) => this.CanSpawnHiveAt(c, minDist, ignoreRoofedRequirement), null, out invalid, 999999))
-				{
-					break;
-				}
+				newHive = null;
+				return false;
 			}
-			newHive = (Hive)GenSpawn.Spawn(this.parent.def, invalid, this.parent.Map);
+			newHive = (Hive)ThingMaker.MakeThing(this.parent.def, null);
 			if (newHive.Faction != this.parent.Faction)
 			{
 				newHive.SetFaction(this.parent.Faction, null);
@@ -127,38 +114,68 @@ namespace RimWorld
 			{
 				newHive.active = hive.active;
 			}
+			GenSpawn.Spawn(newHive, loc, this.parent.Map, WipeMode.FullRefund);
 			this.CalculateNextHiveSpawnTick();
 			return true;
 		}
 
-		private bool CanSpawnHiveAt(IntVec3 c, float minDist, bool ignoreRoofedRequirement)
+		public static IntVec3 FindChildHiveLocation(IntVec3 pos, Map map, ThingDef parentDef, CompProperties_SpawnerHives props, bool ignoreRoofedRequirement, bool allowUnreachable)
 		{
-			if ((!ignoreRoofedRequirement && !c.Roofed(this.parent.Map)) || !c.Standable(this.parent.Map) || (minDist != 0f && (float)c.DistanceToSquared(this.parent.Position) < minDist * minDist))
+			IntVec3 intVec = IntVec3.Invalid;
+			for (int i = 0; i < 3; i++)
+			{
+				float minDist = props.HiveSpawnPreferredMinDist;
+				bool flag;
+				if (i < 2)
+				{
+					if (i == 1)
+					{
+						minDist = 0f;
+					}
+					flag = CellFinder.TryFindRandomReachableCellNear(pos, map, props.HiveSpawnRadius, TraverseParms.For(TraverseMode.NoPassClosedDoors, Danger.Deadly, false), (IntVec3 c) => CompSpawnerHives.CanSpawnHiveAt(c, map, pos, parentDef, minDist, ignoreRoofedRequirement), null, out intVec, 999999);
+				}
+				else
+				{
+					flag = (allowUnreachable && CellFinder.TryFindRandomCellNear(pos, map, (int)props.HiveSpawnRadius, (IntVec3 c) => CompSpawnerHives.CanSpawnHiveAt(c, map, pos, parentDef, minDist, ignoreRoofedRequirement), out intVec, -1));
+				}
+				if (flag)
+				{
+					intVec = CellFinder.FindNoWipeSpawnLocNear(intVec, map, parentDef, Rot4.North, 2, (IntVec3 c) => CompSpawnerHives.CanSpawnHiveAt(c, map, pos, parentDef, minDist, ignoreRoofedRequirement));
+					break;
+				}
+			}
+			return intVec;
+		}
+
+		private static bool CanSpawnHiveAt(IntVec3 c, Map map, IntVec3 parentPos, ThingDef parentDef, float minDist, bool ignoreRoofedRequirement)
+		{
+			if ((!ignoreRoofedRequirement && !c.Roofed(map)) || (!c.Walkable(map) || (minDist != 0f && (float)c.DistanceToSquared(parentPos) < minDist * minDist)) || c.GetFirstThing(map, ThingDefOf.InsectJelly) != null || c.GetFirstThing(map, ThingDefOf.GlowPod) != null)
 			{
 				return false;
 			}
-			for (int i = 0; i < 8; i++)
+			for (int i = 0; i < 9; i++)
 			{
-				IntVec3 c2 = c + GenAdj.AdjacentCells[i];
-				if (c2.InBounds(this.parent.Map))
+				IntVec3 c2 = c + GenAdj.AdjacentCellsAndInside[i];
+				if (c2.InBounds(map))
 				{
-					List<Thing> thingList = c2.GetThingList(this.parent.Map);
+					List<Thing> thingList = c2.GetThingList(map);
 					for (int j = 0; j < thingList.Count; j++)
 					{
-						if (thingList[j] is Hive)
+						if (thingList[j] is Hive || thingList[j] is TunnelHiveSpawner)
 						{
 							return false;
 						}
 					}
 				}
 			}
-			List<Thing> thingList2 = c.GetThingList(this.parent.Map);
+			List<Thing> thingList2 = c.GetThingList(map);
 			for (int k = 0; k < thingList2.Count; k++)
 			{
 				Thing thing = thingList2[k];
-				if ((thing.def.category == ThingCategory.Item || thing.def.category == ThingCategory.Building) && GenSpawn.SpawningWipes(this.parent.def, thing.def))
+				bool flag = thing.def.category == ThingCategory.Building && thing.def.passability == Traversability.Impassable;
+				if (flag && GenSpawn.SpawningWipes(parentDef, thing.def))
 				{
-					return false;
+					return true;
 				}
 			}
 			return true;
@@ -171,7 +188,7 @@ namespace RimWorld
 			{
 				yield return new Command_Action
 				{
-					defaultLabel = "DEBUG: Reproduce",
+					defaultLabel = "Dev: Reproduce",
 					icon = TexCommand.GatherSpotActive,
 					action = delegate
 					{

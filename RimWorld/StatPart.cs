@@ -7,6 +7,8 @@ namespace RimWorld
 {
 	public abstract class StatPart
 	{
+		public float priority;
+
 		[Unsaved]
 		public StatDef parentStat;
 

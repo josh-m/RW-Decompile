@@ -6,7 +6,10 @@ namespace RimWorld
 {
 	public class WorkGiver_PatientGoToBedRecuperate : WorkGiver
 	{
-		private static JobGiver_PatientGoToBed jgp = new JobGiver_PatientGoToBed();
+		private static JobGiver_PatientGoToBed jgp = new JobGiver_PatientGoToBed
+		{
+			respectTimetable = false
+		};
 
 		public override Job NonScanJob(Pawn pawn)
 		{

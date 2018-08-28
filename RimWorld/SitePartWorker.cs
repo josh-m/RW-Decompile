@@ -1,24 +1,20 @@
 using RimWorld.Planet;
 using System;
-using Verse;
 
 namespace RimWorld
 {
-	public class SitePartWorker
+	public class SitePartWorker : SiteCoreOrPartWorkerBase
 	{
-		public SitePartDef def;
+		public SitePartDef Def
+		{
+			get
+			{
+				return (SitePartDef)this.def;
+			}
+		}
 
 		public virtual void SitePartWorkerTick(Site site)
 		{
-		}
-
-		public virtual void PostMapGenerate(Map map)
-		{
-		}
-
-		public virtual bool FactionCanOwn(Faction faction)
-		{
-			return true;
 		}
 	}
 }

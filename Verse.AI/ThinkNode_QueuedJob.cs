@@ -16,16 +16,20 @@ namespace Verse.AI
 		public override ThinkResult TryIssueJobPackage(Pawn pawn, JobIssueParams jobParams)
 		{
 			JobQueue jobQueue = pawn.jobs.jobQueue;
-			while (jobQueue.Count > 0 && !jobQueue.Peek().job.CanBeginNow(pawn, this.inBedOnly))
+			bool flag = pawn.Downed || jobQueue.AnyCanBeginNow(pawn, this.inBedOnly);
+			if (flag)
 			{
-				QueuedJob queuedJob = jobQueue.Dequeue();
-				pawn.ClearReservationsForJob(queuedJob.job);
-				if (pawn.jobs.debugLog)
+				while (jobQueue.Count > 0 && !jobQueue.Peek().job.CanBeginNow(pawn, this.inBedOnly))
 				{
-					pawn.jobs.DebugLogEvent("   Throwing away queued job that I cannot begin now: " + queuedJob.job);
+					QueuedJob queuedJob = jobQueue.Dequeue();
+					pawn.ClearReservationsForJob(queuedJob.job);
+					if (pawn.jobs.debugLog)
+					{
+						pawn.jobs.DebugLogEvent("   Throwing away queued job that I cannot begin now: " + queuedJob.job);
+					}
 				}
 			}
-			if (jobQueue.Count > 0)
+			if (jobQueue.Count > 0 && jobQueue.Peek().job.CanBeginNow(pawn, this.inBedOnly))
 			{
 				QueuedJob queuedJob2 = jobQueue.Dequeue();
 				if (pawn.jobs.debugLog)

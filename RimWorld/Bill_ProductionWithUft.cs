@@ -18,7 +18,7 @@ namespace RimWorld
 				}
 				return ("BoundWorkerIs".Translate(new object[]
 				{
-					this.BoundWorker.NameStringShort
+					this.BoundWorker.LabelShort
 				}) + base.StatusString).Trim();
 			}
 		}
@@ -112,6 +112,11 @@ namespace RimWorld
 		public void ClearBoundUft()
 		{
 			this.boundUftInt = null;
+		}
+
+		public override Bill Clone()
+		{
+			return (Bill_Production)base.Clone();
 		}
 	}
 }

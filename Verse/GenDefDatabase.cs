@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -16,9 +17,9 @@ namespace Verse
 			});
 		}
 
-		public static Def GetDefSilentFail(Type type, string targetDefName)
+		public static Def GetDefSilentFail(Type type, string targetDefName, bool specialCaseForSoundDefs = true)
 		{
-			if (type == typeof(SoundDef))
+			if (specialCaseForSoundDefs && type == typeof(SoundDef))
 			{
 				return SoundDef.Named(targetDefName);
 			}
@@ -26,6 +27,11 @@ namespace Verse
 			{
 				targetDefName
 			});
+		}
+
+		public static IEnumerable<Def> GetAllDefsInDatabaseForDef(Type defType)
+		{
+			return ((IEnumerable)GenGeneric.GetStaticPropertyOnGenericType(typeof(DefDatabase<>), defType, "AllDefs")).Cast<Def>();
 		}
 
 		[DebuggerHidden]

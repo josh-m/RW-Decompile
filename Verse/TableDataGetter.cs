@@ -13,5 +13,37 @@ namespace Verse
 			this.label = label;
 			this.getter = getter;
 		}
+
+		public TableDataGetter(string label, Func<T, float> getter)
+		{
+			this.label = label;
+			this.getter = ((T t) => getter(t).ToString("F0"));
+		}
+
+		public TableDataGetter(string label, Func<T, int> getter)
+		{
+			this.label = label;
+			this.getter = ((T t) => getter(t).ToString("F0"));
+		}
+
+		public TableDataGetter(string label, Func<T, ThingDef> getter)
+		{
+			this.label = label;
+			this.getter = delegate(T t)
+			{
+				ThingDef thingDef = getter(t);
+				if (thingDef == null)
+				{
+					return string.Empty;
+				}
+				return thingDef.defName;
+			};
+		}
+
+		public TableDataGetter(string label, Func<T, object> getter)
+		{
+			this.label = label;
+			this.getter = ((T t) => getter(t).ToString());
+		}
 	}
 }

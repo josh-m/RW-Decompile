@@ -33,7 +33,7 @@ namespace RimWorld
 			JobDriver_RemoveRoof.removedRoofs.Clear();
 			base.Map.roofGrid.SetRoof(base.Cell, null);
 			JobDriver_RemoveRoof.removedRoofs.Add(base.Cell);
-			RoofCollapseCellsFinder.CheckCollapseFlyingRoofs(JobDriver_RemoveRoof.removedRoofs, base.Map, true);
+			RoofCollapseCellsFinder.CheckCollapseFlyingRoofs(JobDriver_RemoveRoof.removedRoofs, base.Map, true, false);
 			JobDriver_RemoveRoof.removedRoofs.Clear();
 		}
 

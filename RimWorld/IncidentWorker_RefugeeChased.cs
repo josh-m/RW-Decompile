@@ -1,68 +1,86 @@
 using RimWorld.Planet;
 using System;
+using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
 using Verse;
 
 namespace RimWorld
 {
 	public class IncidentWorker_RefugeeChased : IncidentWorker
 	{
-		private static readonly IntRange RaidDelay = new IntRange(1000, 2500);
+		private static readonly IntRange RaidDelay = new IntRange(1000, 4000);
 
-		private const float RaidPointsFactor = 1.35f;
+		private static readonly FloatRange RaidPointsFactorRange = new FloatRange(1f, 1.6f);
 
 		private const float RelationWithColonistWeight = 20f;
+
+		protected override bool CanFireNowSub(IncidentParms parms)
+		{
+			if (!base.CanFireNowSub(parms))
+			{
+				return false;
+			}
+			Map map = (Map)parms.target;
+			IntVec3 intVec;
+			Faction faction;
+			return this.TryFindSpawnSpot(map, out intVec) && this.TryFindEnemyFaction(out faction);
+		}
 
 		protected override bool TryExecuteWorker(IncidentParms parms)
 		{
 			Map map = (Map)parms.target;
 			IntVec3 spawnSpot;
-			if (!CellFinder.TryFindRandomEdgeCellWith((IntVec3 c) => map.reachability.CanReachColony(c), map, CellFinder.EdgeRoadChance_Neutral, out spawnSpot))
+			if (!this.TryFindSpawnSpot(map, out spawnSpot))
 			{
 				return false;
 			}
-			PawnGenerationRequest request = new PawnGenerationRequest(PawnKindDefOf.SpaceRefugee, Faction.OfSpacer, PawnGenerationContext.NonPlayer, -1, false, false, false, false, true, false, 20f, false, true, true, false, false, false, false, null, null, null, null, null, null, null);
+			Faction faction;
+			if (!this.TryFindEnemyFaction(out faction))
+			{
+				return false;
+			}
+			int @int = Rand.Int;
+			IncidentParms raidParms = StorytellerUtility.DefaultParmsNow(IncidentCategoryDefOf.ThreatBig, map);
+			raidParms.forced = true;
+			raidParms.faction = faction;
+			raidParms.raidStrategy = RaidStrategyDefOf.ImmediateAttack;
+			raidParms.raidArrivalMode = PawnsArrivalModeDefOf.EdgeWalkIn;
+			raidParms.spawnCenter = spawnSpot;
+			raidParms.points = Mathf.Max(raidParms.points * IncidentWorker_RefugeeChased.RaidPointsFactorRange.RandomInRange, faction.def.MinPointsToGeneratePawnGroup(PawnGroupKindDefOf.Combat));
+			raidParms.pawnGroupMakerSeed = new int?(@int);
+			PawnGroupMakerParms defaultPawnGroupMakerParms = IncidentParmsUtility.GetDefaultPawnGroupMakerParms(PawnGroupKindDefOf.Combat, raidParms, false);
+			defaultPawnGroupMakerParms.points = IncidentWorker_Raid.AdjustedRaidPoints(defaultPawnGroupMakerParms.points, raidParms.raidArrivalMode, raidParms.raidStrategy, defaultPawnGroupMakerParms.faction, PawnGroupKindDefOf.Combat);
+			IEnumerable<PawnKindDef> pawnKinds = PawnGroupMakerUtility.GeneratePawnKindsExample(defaultPawnGroupMakerParms);
+			PawnGenerationRequest request = new PawnGenerationRequest(PawnKindDefOf.SpaceRefugee, null, PawnGenerationContext.NonPlayer, -1, false, false, false, false, true, false, 20f, false, true, true, false, false, false, false, null, null, null, null, null, null, null, null);
 			Pawn refugee = PawnGenerator.GeneratePawn(request);
 			refugee.relations.everSeenByPlayer = true;
-			Faction enemyFac;
-			if (!(from f in Find.FactionManager.AllFactions
-			where !f.def.hidden && f.HostileTo(Faction.OfPlayer)
-			select f).TryRandomElement(out enemyFac))
-			{
-				return false;
-			}
 			string text = "RefugeeChasedInitial".Translate(new object[]
 			{
 				refugee.Name.ToStringFull,
-				refugee.story.Title.ToLower(),
-				enemyFac.def.pawnsPlural,
-				enemyFac.Name,
-				refugee.ageTracker.AgeBiologicalYears
+				refugee.story.Title,
+				faction.def.pawnsPlural,
+				faction.Name,
+				refugee.ageTracker.AgeBiologicalYears,
+				PawnUtility.PawnKindsToCommaList(pawnKinds, true)
 			});
-			text = text.AdjustedFor(refugee);
+			text = text.AdjustedFor(refugee, "PAWN");
 			PawnRelationUtility.TryAppendRelationsWithColonistsInfo(ref text, refugee);
 			DiaNode diaNode = new DiaNode(text);
 			DiaOption diaOption = new DiaOption("RefugeeChasedInitial_Accept".Translate());
 			diaOption.action = delegate
 			{
-				GenSpawn.Spawn(refugee, spawnSpot, map);
+				GenSpawn.Spawn(refugee, spawnSpot, map, WipeMode.Vanish);
 				refugee.SetFaction(Faction.OfPlayer, null);
 				CameraJumper.TryJump(refugee);
-				IncidentParms incidentParms = StorytellerUtility.DefaultParmsNow(Find.Storyteller.def, IncidentCategory.ThreatBig, map);
-				incidentParms.forced = true;
-				incidentParms.faction = enemyFac;
-				incidentParms.raidStrategy = RaidStrategyDefOf.ImmediateAttack;
-				incidentParms.raidArrivalMode = PawnsArriveMode.EdgeWalkIn;
-				incidentParms.spawnCenter = spawnSpot;
-				incidentParms.points *= 1.35f;
-				QueuedIncident qi = new QueuedIncident(new FiringIncident(IncidentDefOf.RaidEnemy, null, incidentParms), Find.TickManager.TicksGame + IncidentWorker_RefugeeChased.RaidDelay.RandomInRange);
+				QueuedIncident qi = new QueuedIncident(new FiringIncident(IncidentDefOf.RaidEnemy, null, raidParms), Find.TickManager.TicksGame + IncidentWorker_RefugeeChased.RaidDelay.RandomInRange, 0);
 				Find.Storyteller.incidentQueue.Add(qi);
 			};
 			diaOption.resolveTree = true;
 			diaNode.options.Add(diaOption);
 			string text2 = "RefugeeChasedRejected".Translate(new object[]
 			{
-				refugee.NameStringShort
+				refugee.LabelShort
 			});
 			DiaNode diaNode2 = new DiaNode(text2);
 			DiaOption diaOption2 = new DiaOption("OK".Translate());
@@ -77,10 +95,23 @@ namespace RimWorld
 			diaNode.options.Add(diaOption3);
 			string title = "RefugeeChasedTitle".Translate(new object[]
 			{
-				map.info.parent.Label
+				map.Parent.Label
 			});
-			Find.WindowStack.Add(new Dialog_NodeTree(diaNode, true, true, title));
+			Find.WindowStack.Add(new Dialog_NodeTreeWithFactionInfo(diaNode, faction, true, true, title));
+			Find.Archive.Add(new ArchivedDialog(diaNode.text, title, faction));
 			return true;
+		}
+
+		private bool TryFindSpawnSpot(Map map, out IntVec3 spawnSpot)
+		{
+			return CellFinder.TryFindRandomEdgeCellWith((IntVec3 c) => map.reachability.CanReachColony(c), map, CellFinder.EdgeRoadChance_Neutral, out spawnSpot);
+		}
+
+		private bool TryFindEnemyFaction(out Faction enemyFac)
+		{
+			return (from f in Find.FactionManager.AllFactions
+			where !f.def.hidden && !f.defeated && f.HostileTo(Faction.OfPlayer)
+			select f).TryRandomElement(out enemyFac);
 		}
 	}
 }

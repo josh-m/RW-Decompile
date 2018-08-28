@@ -8,14 +8,11 @@ namespace Verse
 {
 	public class ResearchProjectDef : Def
 	{
-		public TechLevel techLevel;
-
-		[MustTranslate]
-		private string descriptionDiscovered;
-
 		public float baseCost = 100f;
 
 		public List<ResearchProjectDef> prerequisites;
+
+		public TechLevel techLevel;
 
 		public List<ResearchProjectDef> requiredByThis;
 
@@ -25,8 +22,7 @@ namespace Verse
 
 		public List<ThingDef> requiredResearchFacilities;
 
-		[NoTranslate]
-		public List<string> tags;
+		public List<ResearchProjectTagDef> tags;
 
 		public ResearchTabDef tab;
 
@@ -34,9 +30,28 @@ namespace Verse
 
 		public float researchViewY = 1f;
 
+		[MustTranslate]
+		public string discoveredLetterTitle;
+
+		[MustTranslate]
+		public string discoveredLetterText;
+
+		public int discoveredLetterMinDifficulty;
+
+		public bool unlockExtremeDifficulty;
+
+		[Unsaved]
 		private float x = 1f;
 
+		[Unsaved]
 		private float y = 1f;
+
+		[Unsaved]
+		private bool positionModified;
+
+		public const TechLevel MaxEffectiveTechLevel = TechLevel.Industrial;
+
+		private const float ResearchCostFactorPerTechLevelDiff = 0.5f;
 
 		public float ResearchViewX
 		{
@@ -120,18 +135,6 @@ namespace Verse
 			}
 		}
 
-		public string DescriptionDiscovered
-		{
-			get
-			{
-				if (this.descriptionDiscovered != null)
-				{
-					return this.descriptionDiscovered;
-				}
-				return this.description;
-			}
-		}
-
 		private bool PlayerHasAnyAppropriateResearchBench
 		{
 			get
@@ -199,15 +202,16 @@ namespace Verse
 
 		public float CostFactor(TechLevel researcherTechLevel)
 		{
-			if (researcherTechLevel >= this.techLevel)
+			TechLevel techLevel = (TechLevel)Mathf.Min((int)this.techLevel, 4);
+			if (researcherTechLevel >= techLevel)
 			{
 				return 1f;
 			}
-			int num = (int)(this.techLevel - researcherTechLevel);
-			return 1f + (float)num;
+			int num = (int)(techLevel - researcherTechLevel);
+			return 1f + (float)num * 0.5f;
 		}
 
-		public bool HasTag(string tag)
+		public bool HasTag(ResearchProjectTagDef tag)
 		{
 			return this.tags != null && this.tags.Contains(tag);
 		}
@@ -264,7 +268,7 @@ namespace Verse
 							this,
 							": ",
 							ex.ToString()
-						}));
+						}), false);
 					}
 				}
 			}
@@ -339,7 +343,7 @@ namespace Verse
 			}
 			return;
 			Block_4:
-			Log.Error("Couldn't relax research project coordinates apart after " + 200 + " passes.");
+			Log.Error("Couldn't relax research project coordinates apart after " + 200 + " passes.", false);
 		}
 
 		private static void ClampInCoordinateLimits(ResearchProjectDef rp)
@@ -356,6 +360,18 @@ namespace Verse
 			{
 				rp.y = 6.5f;
 			}
+		}
+
+		public void Debug_ApplyPositionDelta(Vector2 delta)
+		{
+			this.x += delta.x;
+			this.y += delta.y;
+			this.positionModified = true;
+		}
+
+		public bool Debug_IsPositionModified()
+		{
+			return this.positionModified;
 		}
 	}
 }

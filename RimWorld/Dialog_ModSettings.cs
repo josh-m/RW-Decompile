@@ -28,7 +28,6 @@ namespace RimWorld
 		{
 			this.forcePause = true;
 			this.doCloseX = true;
-			this.closeOnEscapeKey = true;
 			this.doCloseButton = true;
 			this.closeOnClickedOutside = true;
 			this.absorbInputAroundWindow = true;

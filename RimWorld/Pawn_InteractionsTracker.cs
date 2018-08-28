@@ -139,7 +139,7 @@ namespace RimWorld
 			}
 			if (this.pawn == recipient)
 			{
-				Log.Warning(this.pawn + " tried to interact with self, interaction=" + intDef.defName);
+				Log.Warning(this.pawn + " tried to interact with self, interaction=" + intDef.defName, false);
 				return false;
 			}
 			if (!this.CanInteractNowWith(recipient))
@@ -160,7 +160,7 @@ namespace RimWorld
 					" ticks since last interaction (min is ",
 					120,
 					")."
-				}));
+				}), false);
 				return false;
 			}
 			List<RulePackDef> list = new List<RulePackDef>();
@@ -185,9 +185,18 @@ namespace RimWorld
 			{
 				flag = recipient.interactions.CheckSocialFightStart(intDef, this.pawn);
 			}
+			string text;
+			string label;
+			LetterDef letterDef;
 			if (!flag)
 			{
-				intDef.Worker.Interacted(this.pawn, recipient, list);
+				intDef.Worker.Interacted(this.pawn, recipient, list, out text, out label, out letterDef);
+			}
+			else
+			{
+				text = null;
+				label = null;
+				letterDef = null;
 			}
 			MoteMaker.MakeInteractionBubble(this.pawn, recipient, intDef.interactionMote, intDef.Symbol);
 			this.lastInteractionTime = Find.TickManager.TicksGame;
@@ -195,7 +204,17 @@ namespace RimWorld
 			{
 				list.Add(RulePackDefOf.Sentence_SocialFightStarted);
 			}
-			Find.PlayLog.Add(new PlayLogEntry_Interaction(intDef, this.pawn, recipient, list));
+			PlayLogEntry_Interaction playLogEntry_Interaction = new PlayLogEntry_Interaction(intDef, this.pawn, recipient, list);
+			Find.PlayLog.Add(playLogEntry_Interaction);
+			if (letterDef != null)
+			{
+				string text2 = playLogEntry_Interaction.ToGameStringFromPOV(this.pawn, false);
+				if (!text.NullOrEmpty())
+				{
+					text2 = text2 + "\n\n" + text;
+				}
+				Find.LetterStack.ReceiveLetter(label, text2, letterDef, this.pawn, null, null);
+			}
 			return true;
 		}
 
@@ -237,22 +256,24 @@ namespace RimWorld
 					{
 						if (this.TryInteractWith(p, intDef))
 						{
+							Pawn_InteractionsTracker.workingList.Clear();
 							return true;
 						}
-						Log.Error(this.pawn + " failed to interact with " + p);
+						Log.Error(this.pawn + " failed to interact with " + p, false);
 					}
 				}
 			}
+			Pawn_InteractionsTracker.workingList.Clear();
 			return false;
 		}
 
 		public bool CheckSocialFightStart(InteractionDef interaction, Pawn initiator)
 		{
-			if (this.pawn.needs.mood == null || TutorSystem.TutorialMode)
+			if (!DebugSettings.enableRandomMentalStates)
 			{
 				return false;
 			}
-			if (!InteractionUtility.HasAnySocialFightProvokingThought(this.pawn, initiator))
+			if (this.pawn.needs.mood == null || TutorSystem.TutorialMode)
 			{
 				return false;
 			}
@@ -268,37 +289,19 @@ namespace RimWorld
 		{
 			if (PawnUtility.ShouldSendNotificationAbout(this.pawn) || PawnUtility.ShouldSendNotificationAbout(otherPawn))
 			{
-				Thought thought;
-				if (!InteractionUtility.TryGetRandomSocialFightProvokingThought(this.pawn, otherPawn, out thought))
+				Messages.Message("MessageSocialFight".Translate(new object[]
 				{
-					Log.Warning(string.Concat(new object[]
-					{
-						"Pawn ",
-						this.pawn,
-						" started a social fight with ",
-						otherPawn,
-						", but he has no negative opinion thoughts towards ",
-						otherPawn,
-						"."
-					}));
-				}
-				else
-				{
-					Messages.Message("MessageSocialFight".Translate(new object[]
-					{
-						this.pawn.LabelShort,
-						otherPawn.LabelShort,
-						thought.LabelCapSocial
-					}), this.pawn, MessageTypeDefOf.ThreatSmall);
-				}
+					this.pawn.LabelShort,
+					otherPawn.LabelShort
+				}), this.pawn, MessageTypeDefOf.ThreatSmall, true);
 			}
-			MentalStateHandler arg_D6_0 = this.pawn.mindState.mentalStateHandler;
+			MentalStateHandler arg_76_0 = this.pawn.mindState.mentalStateHandler;
 			MentalStateDef socialFighting = MentalStateDefOf.SocialFighting;
-			arg_D6_0.TryStartMentalState(socialFighting, null, false, false, otherPawn);
-			MentalStateHandler arg_F9_0 = otherPawn.mindState.mentalStateHandler;
+			arg_76_0.TryStartMentalState(socialFighting, null, false, false, otherPawn, false);
+			MentalStateHandler arg_9A_0 = otherPawn.mindState.mentalStateHandler;
 			socialFighting = MentalStateDefOf.SocialFighting;
 			Pawn otherPawn2 = this.pawn;
-			arg_F9_0.TryStartMentalState(socialFighting, null, false, false, otherPawn2);
+			arg_9A_0.TryStartMentalState(socialFighting, null, false, false, otherPawn2, false);
 			TaleRecorder.RecordTale(TaleDefOf.SocialFight, new object[]
 			{
 				this.pawn,

@@ -18,11 +18,11 @@ namespace Verse.Sound
 			{
 				return 0f;
 			}
-			if (Find.VisibleMap == null)
+			if (Find.CurrentMap == null)
 			{
 				return 0f;
 			}
-			return Find.VisibleMap.mapTemperature.OutdoorTemp;
+			return Find.CurrentMap.mapTemperature.OutdoorTemp;
 		}
 	}
 }

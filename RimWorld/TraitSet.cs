@@ -42,7 +42,7 @@ namespace RimWorld
 		{
 			if (this.HasTrait(trait.def))
 			{
-				Log.Warning(this.pawn + " already has trait " + trait.def);
+				Log.Warning(this.pawn + " already has trait " + trait.def, false);
 				return;
 			}
 			this.allTraits.Add(trait);

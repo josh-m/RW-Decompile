@@ -29,7 +29,7 @@ namespace RimWorld.Planet
 			{
 				num2 -= 4f;
 				GlobalControlsUtility.DoTimespeedControls(num, 200f, ref num2);
-				if (Find.VisibleMap != null || Find.WorldSelector.AnyObjectOrTileSelected)
+				if (Find.CurrentMap != null || Find.WorldSelector.AnyObjectOrTileSelected)
 				{
 					num2 -= 4f;
 					GlobalControlsUtility.DoDate(num, 200f, ref num2);

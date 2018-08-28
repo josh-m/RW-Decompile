@@ -43,7 +43,7 @@ namespace Verse.AI
 							base.GetType(),
 							" GetPriority: ",
 							ex.ToString()
-						}));
+						}), false);
 					}
 					if (num3 > 0f && num3 >= this.minPriority)
 					{
@@ -71,7 +71,7 @@ namespace Verse.AI
 						base.GetType(),
 						" TryIssueJobPackage: ",
 						ex2.ToString()
-					}));
+					}), false);
 				}
 				if (result.IsValid)
 				{

@@ -9,6 +9,7 @@ using UnityEngine;
 
 namespace Verse.Profile
 {
+	[HasDebugOutput]
 	public static class MemoryTracker
 	{
 		private class ReferenceData
@@ -137,11 +138,12 @@ namespace Verse.Profile
 			MemoryTracker.trackedTypeQueue.Clear();
 		}
 
-		public static void LogObjectsLoaded()
+		[Category("System"), DebugOutput]
+		private static void ObjectsLoaded()
 		{
 			if (MemoryTracker.tracked.Count == 0)
 			{
-				Log.Message("No objects tracked, memory tracker markup may not be applied.");
+				Log.Message("No objects tracked, memory tracker markup may not be applied.", false);
 				return;
 			}
 			GC.Collect();
@@ -159,7 +161,7 @@ namespace Verse.Profile
 				{
 					stringBuilder.AppendLine(string.Format("{0,6} {1}", current2.Value.Count, current2.Key));
 				}
-				Log.Message(stringBuilder.ToString());
+				Log.Message(stringBuilder.ToString(), false);
 			}
 			finally
 			{
@@ -167,11 +169,12 @@ namespace Verse.Profile
 			}
 		}
 
-		public static void LogObjectHoldPaths()
+		[Category("System"), DebugOutput]
+		private static void ObjectHoldPaths()
 		{
 			if (MemoryTracker.tracked.Count == 0)
 			{
-				Log.Message("No objects tracked, memory tracker markup may not be applied.");
+				Log.Message("No objects tracked, memory tracker markup may not be applied.", false);
 				return;
 			}
 			GC.Collect();
@@ -182,22 +185,29 @@ namespace Verse.Profile
 				{
 					MemoryTracker.CullNulls(current);
 				}
-				List<FloatMenuOption> list = new List<FloatMenuOption>();
-				foreach (KeyValuePair<Type, HashSet<WeakReference>> current2 in from kvp in MemoryTracker.tracked
+				List<Type> list = new List<Type>();
+				list.Add(typeof(Map));
+				List<FloatMenuOption> list2 = new List<FloatMenuOption>();
+				foreach (Type current2 in list.Concat(from kvp in MemoryTracker.tracked
 				orderby -kvp.Value.Count
-				select kvp)
+				select kvp.Key).Take(30))
 				{
-					KeyValuePair<Type, HashSet<WeakReference>> elementLocal = current2;
-					list.Add(new FloatMenuOption(string.Format("{0} ({1})", current2.Key, current2.Value.Count), delegate
+					Type type = current2;
+					HashSet<WeakReference> trackedBatch = MemoryTracker.tracked.TryGetValue(type, null);
+					if (trackedBatch == null)
 					{
-						MemoryTracker.LogObjectHoldPathsFor(elementLocal.Value, (WeakReference _) => 1);
+						trackedBatch = new HashSet<WeakReference>();
+					}
+					list2.Add(new FloatMenuOption(string.Format("{0} ({1})", type, trackedBatch.Count), delegate
+					{
+						MemoryTracker.LogObjectHoldPathsFor(trackedBatch, (WeakReference _) => 1);
 					}, MenuOptionPriority.Default, null, null, 0f, null, null));
-					if (list.Count == 30)
+					if (list2.Count == 30)
 					{
 						break;
 					}
 				}
-				Find.WindowStack.Add(new FloatMenu(list));
+				Find.WindowStack.Add(new FloatMenu(list2));
 			}
 			finally
 			{
@@ -273,9 +283,10 @@ namespace Verse.Profile
 					Dictionary<string, int> dictionary2 = new Dictionary<string, int>();
 					foreach (WeakReference current4 in elements)
 					{
-						if (current4.IsAlive)
+						object target = current4.Target;
+						if (target != null)
 						{
-							string path = dictionary[current4.Target].path;
+							string path = dictionary[target].path;
 							if (!dictionary2.ContainsKey(path))
 							{
 								dictionary2[path] = 0;
@@ -292,7 +303,7 @@ namespace Verse.Profile
 					{
 						stringBuilder.AppendLine(string.Format("{0}: {1}", current5.Value, current5.Key));
 					}
-					Log.Message(stringBuilder.ToString());
+					Log.Message(stringBuilder.ToString(), false);
 				}
 			}
 			finally
@@ -498,14 +509,14 @@ namespace Verse.Profile
 			if (MemoryTracker.updatesSinceLastCull++ >= 10)
 			{
 				MemoryTracker.updatesSinceLastCull = 0;
-				KeyValuePair<Type, HashSet<WeakReference>> keyValuePair = MemoryTracker.tracked.ElementAtOrDefault(MemoryTracker.cullTargetIndex++);
-				if (keyValuePair.Value == null)
+				HashSet<WeakReference> value = MemoryTracker.tracked.ElementAtOrDefault(MemoryTracker.cullTargetIndex++).Value;
+				if (value == null)
 				{
 					MemoryTracker.cullTargetIndex = 0;
 				}
 				else
 				{
-					MemoryTracker.CullNulls(keyValuePair.Value);
+					MemoryTracker.CullNulls(value);
 				}
 			}
 		}

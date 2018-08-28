@@ -42,5 +42,10 @@ namespace RimWorld
 		public static PawnRelationDef Fiance;
 
 		public static PawnRelationDef Bond;
+
+		static PawnRelationDefOf()
+		{
+			DefOfHelper.EnsureInitializedInCtor(typeof(PawnRelationDefOf));
+		}
 	}
 }

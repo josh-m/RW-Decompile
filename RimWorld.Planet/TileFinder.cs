@@ -14,10 +14,10 @@ namespace RimWorld.Planet
 
 		public static int RandomStartingTile()
 		{
-			return TileFinder.RandomFactionBaseTileFor(Faction.OfPlayer, true, null);
+			return TileFinder.RandomSettlementTileFor(Faction.OfPlayer, true, null);
 		}
 
-		public static int RandomFactionBaseTileFor(Faction faction, bool mustBeAutoChoosable = false, Predicate<int> extraValidator = null)
+		public static int RandomSettlementTileFor(Faction faction, bool mustBeAutoChoosable = false, Predicate<int> extraValidator = null)
 		{
 			for (int i = 0; i < 500; i++)
 			{
@@ -38,7 +38,7 @@ namespace RimWorld.Planet
 					{
 						return 0f;
 					}
-					return tile.biome.factionBaseSelectionWeight;
+					return tile.biome.settlementSelectionWeight;
 				}, out num))
 				{
 					if (TileFinder.IsValidTileForNewSettlement(num, null))
@@ -47,7 +47,7 @@ namespace RimWorld.Planet
 					}
 				}
 			}
-			Log.Error("Failed to find faction base tile for " + faction);
+			Log.Error("Failed to find faction base tile for " + faction, false);
 			return 0;
 		}
 
@@ -60,7 +60,7 @@ namespace RimWorld.Planet
 				{
 					reason.Append("CannotLandBiome".Translate(new object[]
 					{
-						tile2.biome.label
+						tile2.biome.LabelCap
 					}));
 				}
 				return false;
@@ -69,7 +69,7 @@ namespace RimWorld.Planet
 			{
 				if (reason != null)
 				{
-					reason.Append("BiomeNotImplemented".Translate() + ": " + tile2.biome.label);
+					reason.Append("BiomeNotImplemented".Translate() + ": " + tile2.biome.LabelCap);
 				}
 				return false;
 			}
@@ -81,16 +81,16 @@ namespace RimWorld.Planet
 				}
 				return false;
 			}
-			Settlement settlement = Find.WorldObjects.SettlementAt(tile);
-			if (settlement != null)
+			SettlementBase settlementBase = Find.WorldObjects.SettlementBaseAt(tile);
+			if (settlementBase != null)
 			{
 				if (reason != null)
 				{
-					if (settlement.Faction == null)
+					if (settlementBase.Faction == null)
 					{
 						reason.Append("TileOccupied".Translate());
 					}
-					else if (settlement.Faction == Faction.OfPlayer)
+					else if (settlementBase.Faction == Faction.OfPlayer)
 					{
 						reason.Append("YourBaseAlreadyThere".Translate());
 					}
@@ -98,13 +98,13 @@ namespace RimWorld.Planet
 					{
 						reason.Append("BaseAlreadyThere".Translate(new object[]
 						{
-							settlement.Faction.Name
+							settlementBase.Faction.Name
 						}));
 					}
 				}
 				return false;
 			}
-			if (Find.WorldObjects.AnySettlementAtOrAdjacent(tile))
+			if (Find.WorldObjects.AnySettlementBaseAtOrAdjacent(tile))
 			{
 				if (reason != null)
 				{
@@ -112,7 +112,7 @@ namespace RimWorld.Planet
 				}
 				return false;
 			}
-			if (Find.WorldObjects.AnyMapParentAt(tile) || Current.Game.FindMap(tile) != null || Find.WorldObjects.AnyWorldObjectOfDefAt(WorldObjectDefOf.AbandonedFactionBase, tile))
+			if (Find.WorldObjects.AnyMapParentAt(tile) || Current.Game.FindMap(tile) != null || Find.WorldObjects.AnyWorldObjectOfDefAt(WorldObjectDefOf.AbandonedSettlement, tile))
 			{
 				if (reason != null)
 				{
@@ -216,7 +216,7 @@ namespace RimWorld.Planet
 			return false;
 		}
 
-		public static bool TryFindNewSiteTile(out int tile, int minDist = 8, int maxDist = 30, bool allowCaravans = false, bool preferCloserTiles = true, int nearThisTile = -1)
+		public static bool TryFindNewSiteTile(out int tile, int minDist = 7, int maxDist = 27, bool allowCaravans = false, bool preferCloserTiles = true, int nearThisTile = -1)
 		{
 			Func<int, int> findTile = delegate(int root)
 			{

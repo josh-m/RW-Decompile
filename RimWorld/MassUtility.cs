@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Text;
 using UnityEngine;
 using Verse;
 
@@ -16,7 +17,7 @@ namespace RimWorld
 
 		public static float UnboundedEncumbrancePercent(Pawn pawn)
 		{
-			return MassUtility.GearAndInventoryMass(pawn) / MassUtility.Capacity(pawn);
+			return MassUtility.GearAndInventoryMass(pawn) / MassUtility.Capacity(pawn, null);
 		}
 
 		public static bool IsOverEncumbered(Pawn pawn)
@@ -36,7 +37,7 @@ namespace RimWorld
 
 		public static float FreeSpace(Pawn pawn)
 		{
-			return Mathf.Max(MassUtility.Capacity(pawn) - MassUtility.GearAndInventoryMass(pawn), 0f);
+			return Mathf.Max(MassUtility.Capacity(pawn, null) - MassUtility.GearAndInventoryMass(pawn), 0f);
 		}
 
 		public static float GearAndInventoryMass(Pawn pawn)
@@ -76,13 +77,22 @@ namespace RimWorld
 			return num;
 		}
 
-		public static float Capacity(Pawn p)
+		public static float Capacity(Pawn p, StringBuilder explanation = null)
 		{
 			if (!MassUtility.CanEverCarryAnything(p))
 			{
 				return 0f;
 			}
-			return p.BodySize * 35f;
+			float num = p.BodySize * 35f;
+			if (explanation != null)
+			{
+				if (explanation.Length > 0)
+				{
+					explanation.AppendLine();
+				}
+				explanation.Append("  - " + p.LabelShortCap + ": " + num.ToStringMassOffset());
+			}
+			return num;
 		}
 
 		public static bool CanEverCarryAnything(Pawn p)

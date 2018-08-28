@@ -10,9 +10,9 @@ namespace RimWorld
 	{
 		public const float Radius = 15f;
 
-		private const int FiresStartedPerTick = 3;
+		private const int FiresStartedPerTick = 4;
 
-		private static readonly IntRange FlameDamageAmountRange = new IntRange(43, 95);
+		private static readonly IntRange FlameDamageAmountRange = new IntRange(65, 100);
 
 		private static readonly IntRange CorpseFlameDamageAmountRange = new IntRange(5, 10);
 
@@ -31,7 +31,7 @@ namespace RimWorld
 			{
 				return;
 			}
-			for (int i = 0; i < 3; i++)
+			for (int i = 0; i < 4; i++)
 			{
 				this.StartRandomFireAndDoFlameDamage();
 			}
@@ -55,11 +55,12 @@ namespace RimWorld
 					battleLogEntry_DamageTaken = new BattleLogEntry_DamageTaken(pawn, RulePackDefOf.DamageEvent_PowerBeam, this.instigator as Pawn);
 					Find.BattleLog.Add(battleLogEntry_DamageTaken);
 				}
-				Thing arg_123_0 = PowerBeam.tmpThings[i];
+				Thing arg_12E_0 = PowerBeam.tmpThings[i];
 				DamageDef flame = DamageDefOf.Flame;
-				int amount = num;
+				float amount = (float)num;
 				Thing instigator = this.instigator;
-				arg_123_0.TakeDamage(new DamageInfo(flame, amount, -1f, instigator, null, this.weaponDef, DamageInfo.SourceCategory.ThingOrUnknown)).InsertIntoLog(battleLogEntry_DamageTaken);
+				ThingDef weaponDef = this.weaponDef;
+				arg_12E_0.TakeDamage(new DamageInfo(flame, amount, 0f, -1f, instigator, null, weaponDef, DamageInfo.SourceCategory.ThingOrUnknown, null)).AssociateWithLog(battleLogEntry_DamageTaken);
 			}
 			PowerBeam.tmpThings.Clear();
 		}

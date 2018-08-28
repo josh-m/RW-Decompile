@@ -23,5 +23,10 @@ namespace RimWorld
 		public static RoomRoleDef Hospital;
 
 		public static RoomRoleDef Laboratory;
+
+		static RoomRoleDefOf()
+		{
+			DefOfHelper.EnsureInitializedInCtor(typeof(RoomRoleDefOf));
+		}
 	}
 }

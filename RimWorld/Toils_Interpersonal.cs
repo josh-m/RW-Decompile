@@ -123,6 +123,7 @@ namespace RimWorld
 			{
 				Pawn pawn = (Pawn)toil.actor.jobs.curJob.GetTarget(targetInd).Thing;
 				pawn.mindState.lastAssignedInteractTime = Find.TickManager.TicksGame;
+				pawn.mindState.interactionsToday++;
 			};
 			toil.defaultCompleteMode = ToilCompleteMode.Instant;
 			return toil;
@@ -158,17 +159,22 @@ namespace RimWorld
 				if (pawn.Spawned && pawn.Awake() && actor.interactions.TryInteractWith(pawn, InteractionDefOf.TrainAttempt))
 				{
 					float num = actor.GetStatValue(StatDefOf.TrainAnimalChance, true);
-					num *= Mathf.Max(0.05f, GenMath.LerpDouble(0f, 1f, 2f, 0f, pawn.RaceProps.wildness));
+					num *= GenMath.LerpDouble(0f, 1f, 1.5f, 0.5f, pawn.RaceProps.wildness);
 					if (actor.relations.DirectRelationExists(PawnRelationDefOf.Bond, pawn))
 					{
-						num *= 1.5f;
+						num *= 5f;
 					}
 					num = Mathf.Clamp01(num);
 					TrainableDef trainableDef = pawn.training.NextTrainableToTrain();
+					if (trainableDef == null)
+					{
+						Log.ErrorOnce("Attempted to train untrainable animal", 7842936, false);
+						return;
+					}
 					string text;
 					if (Rand.Value < num)
 					{
-						pawn.training.Train(trainableDef, actor);
+						pawn.training.Train(trainableDef, actor, false);
 						if (pawn.caller != null)
 						{
 							pawn.caller.DoCall();

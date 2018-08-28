@@ -60,11 +60,11 @@ namespace RimWorld
 
 		public Dialog_FileList()
 		{
-			this.closeOnEscapeKey = true;
 			this.doCloseButton = true;
 			this.doCloseX = true;
 			this.forcePause = true;
 			this.absorbInputAroundWindow = true;
+			this.closeOnAccept = false;
 			this.ReloadFiles();
 		}
 
@@ -83,46 +83,49 @@ namespace RimWorld
 			int num3 = 0;
 			foreach (SaveFileInfo current in this.files)
 			{
-				Rect rect = new Rect(0f, num2, vector.x, vector.y);
-				if (num3 % 2 == 0)
+				if (num2 + vector.y >= this.scrollPosition.y && num2 <= this.scrollPosition.y + outRect.height)
 				{
-					Widgets.DrawAltRect(rect);
-				}
-				Rect position = rect.ContractedBy(1f);
-				GUI.BeginGroup(position);
-				string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(current.FileInfo.Name);
-				GUI.color = this.FileNameColor(current);
-				Rect rect2 = new Rect(15f, 0f, position.width, position.height);
-				Text.Anchor = TextAnchor.MiddleLeft;
-				Text.Font = GameFont.Small;
-				Widgets.Label(rect2, fileNameWithoutExtension);
-				GUI.color = Color.white;
-				Rect rect3 = new Rect(270f, 0f, 200f, position.height);
-				Dialog_FileList.DrawDateAndVersion(current, rect3);
-				GUI.color = Color.white;
-				Text.Anchor = TextAnchor.UpperLeft;
-				Text.Font = GameFont.Small;
-				float num4 = vector.x - 2f - vector2.x - vector2.y;
-				Rect rect4 = new Rect(num4, 0f, vector2.x, vector2.y);
-				if (Widgets.ButtonText(rect4, this.interactButLabel, true, false, true))
-				{
-					this.DoFileInteraction(Path.GetFileNameWithoutExtension(current.FileInfo.Name));
-				}
-				Rect rect5 = new Rect(num4 + vector2.x + 5f, 0f, vector2.y, vector2.y);
-				if (Widgets.ButtonImage(rect5, TexButton.DeleteX))
-				{
-					FileInfo localFile = current.FileInfo;
-					Find.WindowStack.Add(Dialog_MessageBox.CreateConfirmation("ConfirmDelete".Translate(new object[]
+					Rect rect = new Rect(0f, num2, vector.x, vector.y);
+					if (num3 % 2 == 0)
 					{
-						localFile.Name
-					}), delegate
+						Widgets.DrawAltRect(rect);
+					}
+					Rect position = rect.ContractedBy(1f);
+					GUI.BeginGroup(position);
+					string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(current.FileInfo.Name);
+					GUI.color = this.FileNameColor(current);
+					Rect rect2 = new Rect(15f, 0f, 255f, position.height);
+					Text.Anchor = TextAnchor.MiddleLeft;
+					Text.Font = GameFont.Small;
+					Widgets.Label(rect2, fileNameWithoutExtension);
+					GUI.color = Color.white;
+					Rect rect3 = new Rect(270f, 0f, 200f, position.height);
+					Dialog_FileList.DrawDateAndVersion(current, rect3);
+					GUI.color = Color.white;
+					Text.Anchor = TextAnchor.UpperLeft;
+					Text.Font = GameFont.Small;
+					float num4 = vector.x - 2f - vector2.x - vector2.y;
+					Rect rect4 = new Rect(num4, 0f, vector2.x, vector2.y);
+					if (Widgets.ButtonText(rect4, this.interactButLabel, true, false, true))
 					{
-						localFile.Delete();
-						this.ReloadFiles();
-					}, true, null));
+						this.DoFileInteraction(Path.GetFileNameWithoutExtension(current.FileInfo.Name));
+					}
+					Rect rect5 = new Rect(num4 + vector2.x + 5f, 0f, vector2.y, vector2.y);
+					if (Widgets.ButtonImage(rect5, TexButton.DeleteX, Color.white, GenUI.SubtleMouseoverColor))
+					{
+						FileInfo localFile = current.FileInfo;
+						Find.WindowStack.Add(Dialog_MessageBox.CreateConfirmation("ConfirmDelete".Translate(new object[]
+						{
+							localFile.Name
+						}), delegate
+						{
+							localFile.Delete();
+							this.ReloadFiles();
+						}, true, null));
+					}
+					TooltipHandler.TipRegion(rect5, "DeleteThisSavegame".Translate());
+					GUI.EndGroup();
 				}
-				TooltipHandler.TipRegion(rect5, "DeleteThisSavegame".Translate());
-				GUI.EndGroup();
 				num2 += vector.y + 3f;
 				num3++;
 			}
@@ -161,7 +164,7 @@ namespace RimWorld
 			{
 				if (this.typingName.NullOrEmpty())
 				{
-					Messages.Message("NeedAName".Translate(), MessageTypeDefOf.RejectInput);
+					Messages.Message("NeedAName".Translate(), MessageTypeDefOf.RejectInput, false);
 				}
 				else
 				{

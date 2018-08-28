@@ -90,7 +90,7 @@ namespace RimWorld
 				{
 					rect.width += 1f;
 				}
-				if (Widgets.ButtonTextSubtle(rect, this.desPanelsCached[i].def.LabelCap, 0f, 8f, SoundDefOf.MouseoverCategory, new Vector2(-1f, -1f)))
+				if (Widgets.ButtonTextSubtle(rect, this.desPanelsCached[i].def.LabelCap, 0f, 8f, SoundDefOf.Mouseover_Category, new Vector2(-1f, -1f)))
 				{
 					this.ClickedCategory(this.desPanelsCached[i]);
 				}

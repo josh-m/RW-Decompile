@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Verse
@@ -17,6 +18,8 @@ namespace Verse
 
 		public int renderQueue;
 
+		public List<ShaderParameter> shaderParameters;
+
 		public string BaseTexPath
 		{
 			set
@@ -33,6 +36,7 @@ namespace Verse
 			this.colorTwo = Color.white;
 			this.maskTex = null;
 			this.renderQueue = 0;
+			this.shaderParameters = null;
 		}
 
 		public MaterialRequest(Texture2D tex, Shader shader)
@@ -43,6 +47,7 @@ namespace Verse
 			this.colorTwo = Color.white;
 			this.maskTex = null;
 			this.renderQueue = 0;
+			this.shaderParameters = null;
 		}
 
 		public MaterialRequest(Texture2D tex, Shader shader, Color color)
@@ -53,6 +58,7 @@ namespace Verse
 			this.colorTwo = Color.white;
 			this.maskTex = null;
 			this.renderQueue = 0;
+			this.shaderParameters = null;
 		}
 
 		public override int GetHashCode()
@@ -63,7 +69,8 @@ namespace Verse
 			seed = Gen.HashCombineStruct<Color>(seed, this.colorTwo);
 			seed = Gen.HashCombine<Texture2D>(seed, this.mainTex);
 			seed = Gen.HashCombine<Texture2D>(seed, this.maskTex);
-			return Gen.HashCombineInt(seed, this.renderQueue);
+			seed = Gen.HashCombineInt(seed, this.renderQueue);
+			return Gen.HashCombine<List<ShaderParameter>>(seed, this.shaderParameters);
 		}
 
 		public override bool Equals(object obj)
@@ -73,7 +80,7 @@ namespace Verse
 
 		public bool Equals(MaterialRequest other)
 		{
-			return other.shader == this.shader && other.mainTex == this.mainTex && other.color == this.color && other.colorTwo == this.colorTwo && other.maskTex == this.maskTex && other.renderQueue == this.renderQueue;
+			return other.shader == this.shader && other.mainTex == this.mainTex && other.color == this.color && other.colorTwo == this.colorTwo && other.maskTex == this.maskTex && other.renderQueue == this.renderQueue && other.shaderParameters == this.shaderParameters;
 		}
 
 		public static bool operator ==(MaterialRequest lhs, MaterialRequest rhs)

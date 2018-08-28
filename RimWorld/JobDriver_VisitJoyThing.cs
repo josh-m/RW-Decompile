@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using Verse;
 using Verse.AI;
 
 namespace RimWorld
@@ -9,9 +10,12 @@ namespace RimWorld
 	{
 		protected const TargetIndex TargetThingIndex = TargetIndex.A;
 
-		public override bool TryMakePreToilReservations()
+		public override bool TryMakePreToilReservations(bool errorOnFailed)
 		{
-			return this.pawn.Reserve(this.job.GetTarget(TargetIndex.A), this.job, 1, -1, null);
+			Pawn pawn = this.pawn;
+			LocalTargetInfo target = this.job.GetTarget(TargetIndex.A);
+			Job job = this.job;
+			return pawn.Reserve(target, job, 1, -1, null, errorOnFailed);
 		}
 
 		[DebuggerHidden]
@@ -19,12 +23,19 @@ namespace RimWorld
 		{
 			this.FailOnDestroyedNullOrForbidden(TargetIndex.A);
 			yield return Toils_Goto.GotoThing(TargetIndex.A, PathEndMode.Touch);
-			Toil wait = Toils_General.Wait(this.job.def.joyDuration);
+			Toil wait = Toils_General.Wait(this.job.def.joyDuration, TargetIndex.None);
 			wait.FailOnCannotTouch(TargetIndex.A, PathEndMode.Touch);
-			wait.tickAction = this.GetWaitTickAction();
+			wait.tickAction = delegate
+			{
+				this.$this.WaitTickAction();
+			};
+			wait.AddFinishAction(delegate
+			{
+				JoyUtility.TryGainRecRoomThought(this.$this.pawn);
+			});
 			yield return wait;
 		}
 
-		protected abstract Action GetWaitTickAction();
+		protected abstract void WaitTickAction();
 	}
 }

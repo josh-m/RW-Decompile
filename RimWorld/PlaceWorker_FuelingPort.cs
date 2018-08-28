@@ -9,14 +9,14 @@ namespace RimWorld
 	{
 		private static readonly Material FuelingPortCellMaterial = MaterialPool.MatFrom("UI/Overlays/FuelingPort", ShaderDatabase.Transparent);
 
-		public override void DrawGhost(ThingDef def, IntVec3 center, Rot4 rot)
+		public override void DrawGhost(ThingDef def, IntVec3 center, Rot4 rot, Color ghostCol)
 		{
-			Map visibleMap = Find.VisibleMap;
+			Map currentMap = Find.CurrentMap;
 			if (def.building == null || !def.building.hasFuelingPort)
 			{
 				return;
 			}
-			if (!FuelingPortUtility.GetFuelingPortCell(center, rot).Standable(visibleMap))
+			if (!FuelingPortUtility.GetFuelingPortCell(center, rot).Standable(currentMap))
 			{
 				return;
 			}

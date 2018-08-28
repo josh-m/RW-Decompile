@@ -27,5 +27,10 @@ namespace RimWorld
 		public static PawnCapacityDef BloodPumping;
 
 		public static PawnCapacityDef Metabolism;
+
+		static PawnCapacityDefOf()
+		{
+			DefOfHelper.EnsureInitializedInCtor(typeof(PawnCapacityDefOf));
+		}
 	}
 }

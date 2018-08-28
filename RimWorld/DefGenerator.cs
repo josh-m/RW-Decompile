@@ -9,27 +9,23 @@ namespace RimWorld
 	{
 		public static void GenerateImpliedDefs_PreResolve()
 		{
-			IEnumerable<ThingDef> enumerable = ThingDefGenerator_Buildings.ImpliedBlueprintAndFrameDefs().Concat(ThingDefGenerator_Meat.ImpliedMeatDefs()).Concat(ThingDefGenerator_Corpses.ImpliedCorpseDefs()).Concat(ThingDefGenerator_Leather.ImpliedLeatherDefs());
+			IEnumerable<ThingDef> enumerable = ThingDefGenerator_Buildings.ImpliedBlueprintAndFrameDefs().Concat(ThingDefGenerator_Meat.ImpliedMeatDefs()).Concat(ThingDefGenerator_Corpses.ImpliedCorpseDefs());
 			foreach (ThingDef current in enumerable)
 			{
-				current.PostLoad();
-				DefDatabase<ThingDef>.Add(current);
+				DefGenerator.AddImpliedDef<ThingDef>(current);
 			}
 			DirectXmlCrossRefLoader.ResolveAllWantedCrossReferences(FailMode.Silent);
 			foreach (TerrainDef current2 in TerrainDefGenerator_Stone.ImpliedTerrainDefs())
 			{
-				current2.PostLoad();
-				DefDatabase<TerrainDef>.Add(current2);
+				DefGenerator.AddImpliedDef<TerrainDef>(current2);
 			}
 			foreach (RecipeDef current3 in RecipeDefGenerator.ImpliedRecipeDefs())
 			{
-				current3.PostLoad();
-				DefDatabase<RecipeDef>.Add(current3);
+				DefGenerator.AddImpliedDef<RecipeDef>(current3);
 			}
 			foreach (PawnColumnDef current4 in PawnColumnDefgenerator.ImpliedPawnColumnDefs())
 			{
-				current4.PostLoad();
-				DefDatabase<PawnColumnDef>.Add(current4);
+				DefGenerator.AddImpliedDef<PawnColumnDef>(current4);
 			}
 		}
 
@@ -37,14 +33,27 @@ namespace RimWorld
 		{
 			foreach (KeyBindingCategoryDef current in KeyBindingDefGenerator.ImpliedKeyBindingCategoryDefs())
 			{
-				current.PostLoad();
-				DefDatabase<KeyBindingCategoryDef>.Add(current);
+				DefGenerator.AddImpliedDef<KeyBindingCategoryDef>(current);
 			}
 			foreach (KeyBindingDef current2 in KeyBindingDefGenerator.ImpliedKeyBindingDefs())
 			{
-				current2.PostLoad();
-				DefDatabase<KeyBindingDef>.Add(current2);
+				DefGenerator.AddImpliedDef<KeyBindingDef>(current2);
 			}
+		}
+
+		public static void AddImpliedDef<T>(T def) where T : Def, new()
+		{
+			def.generated = true;
+			if (def.modContentPack == null)
+			{
+				Log.Error(string.Format("Added def {0}:{1} without an associated modContentPack", def.GetType(), def.defName), false);
+			}
+			else
+			{
+				def.modContentPack.AddImpliedDef(def);
+			}
+			def.PostLoad();
+			DefDatabase<T>.Add(def);
 		}
 	}
 }

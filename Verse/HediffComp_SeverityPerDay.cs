@@ -37,9 +37,9 @@ namespace Verse
 			stringBuilder.Append(base.CompDebugString());
 			if (!base.Pawn.Dead)
 			{
-				stringBuilder.AppendLine("severity change per day: " + this.SeverityChangePerDay().ToString("F3"));
+				stringBuilder.AppendLine("severity/day: " + this.SeverityChangePerDay().ToString("F3"));
 			}
-			return stringBuilder.ToString();
+			return stringBuilder.ToString().TrimEndNewlines();
 		}
 	}
 }

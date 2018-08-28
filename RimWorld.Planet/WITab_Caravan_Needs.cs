@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using UnityEngine;
 using Verse;
 using Verse.Sound;
@@ -12,8 +11,6 @@ namespace RimWorld.Planet
 
 		private float scrollViewHeight;
 
-		private static List<Thing> tmpThings = new List<Thing>();
-
 		private Pawn specificNeedsTabForPawn;
 
 		private Vector2 thoughtScrollPosition;
@@ -24,7 +21,7 @@ namespace RimWorld.Planet
 		{
 			get
 			{
-				if (this.specificNeedsTabForPawn == null || this.specificNeedsTabForPawn.Destroyed)
+				if (this.specificNeedsTabForPawn.DestroyedOrNull())
 				{
 					return 0f;
 				}
@@ -39,31 +36,30 @@ namespace RimWorld.Planet
 
 		protected override void FillTab()
 		{
-			this.AddPawnsToTmpThings();
-			CaravanPeopleAndItemsTabUtility.DoRows(this.size, WITab_Caravan_Needs.tmpThings, base.SelCaravan, ref this.scrollPosition, ref this.scrollViewHeight, false, ref this.specificNeedsTabForPawn, this.doNeeds);
-			WITab_Caravan_Needs.tmpThings.Clear();
+			this.EnsureSpecificNeedsTabForPawnValid();
+			CaravanNeedsTabUtility.DoRows(this.size, base.SelCaravan.PawnsListForReading, base.SelCaravan, ref this.scrollPosition, ref this.scrollViewHeight, ref this.specificNeedsTabForPawn, this.doNeeds);
 		}
 
 		protected override void UpdateSize()
 		{
+			this.EnsureSpecificNeedsTabForPawnValid();
 			base.UpdateSize();
-			this.AddPawnsToTmpThings();
-			this.size = CaravanPeopleAndItemsTabUtility.GetSize(WITab_Caravan_Needs.tmpThings, this.PaneTopY, true);
+			this.size = CaravanNeedsTabUtility.GetSize(base.SelCaravan.PawnsListForReading, this.PaneTopY, true);
 			if (this.size.x + this.SpecificNeedsTabWidth > (float)UI.screenWidth)
 			{
 				this.doNeeds = false;
-				this.size = CaravanPeopleAndItemsTabUtility.GetSize(WITab_Caravan_Needs.tmpThings, this.PaneTopY, false);
+				this.size = CaravanNeedsTabUtility.GetSize(base.SelCaravan.PawnsListForReading, this.PaneTopY, false);
 			}
 			else
 			{
 				this.doNeeds = true;
 			}
 			this.size.y = Mathf.Max(this.size.y, NeedsCardUtility.FullSize.y);
-			WITab_Caravan_Needs.tmpThings.Clear();
 		}
 
 		protected override void ExtraOnGUI()
 		{
+			this.EnsureSpecificNeedsTabForPawnValid();
 			base.ExtraOnGUI();
 			Pawn localSpecificNeedsTabForPawn = this.specificNeedsTabForPawn;
 			if (localSpecificNeedsTabForPawn != null)
@@ -87,14 +83,17 @@ namespace RimWorld.Planet
 			}
 		}
 
-		private void AddPawnsToTmpThings()
+		public override void Notify_ClearingAllMapsMemory()
 		{
-			WITab_Caravan_Needs.tmpThings.Clear();
-			Caravan selCaravan = base.SelCaravan;
-			List<Pawn> pawnsListForReading = selCaravan.PawnsListForReading;
-			for (int i = 0; i < pawnsListForReading.Count; i++)
+			base.Notify_ClearingAllMapsMemory();
+			this.specificNeedsTabForPawn = null;
+		}
+
+		private void EnsureSpecificNeedsTabForPawnValid()
+		{
+			if (this.specificNeedsTabForPawn != null && (this.specificNeedsTabForPawn.Destroyed || !base.SelCaravan.ContainsPawn(this.specificNeedsTabForPawn)))
 			{
-				WITab_Caravan_Needs.tmpThings.Add(pawnsListForReading[i]);
+				this.specificNeedsTabForPawn = null;
 			}
 		}
 	}

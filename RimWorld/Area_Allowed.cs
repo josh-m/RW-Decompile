@@ -10,8 +10,6 @@ namespace RimWorld
 
 		private Color colorInt = Color.red;
 
-		public AllowedAreaMode mode = AllowedAreaMode.Humanlike;
-
 		public override string Label
 		{
 			get
@@ -40,18 +38,6 @@ namespace RimWorld
 		{
 			get
 			{
-				if (this.mode == AllowedAreaMode.Any)
-				{
-					return 1000;
-				}
-				if (this.mode == AllowedAreaMode.Humanlike)
-				{
-					return 900;
-				}
-				if (this.mode == AllowedAreaMode.Animal)
-				{
-					return 800;
-				}
 				return 500;
 			}
 		}
@@ -60,10 +46,9 @@ namespace RimWorld
 		{
 		}
 
-		public Area_Allowed(AreaManager areaManager, AllowedAreaMode mode, string label = null) : base(areaManager)
+		public Area_Allowed(AreaManager areaManager, string label = null) : base(areaManager)
 		{
 			this.areaManager = areaManager;
-			this.mode = mode;
 			if (!label.NullOrEmpty())
 			{
 				this.labelInt = label;
@@ -73,20 +58,10 @@ namespace RimWorld
 				int num = 1;
 				while (true)
 				{
-					if (mode == AllowedAreaMode.Animal)
+					this.labelInt = "AreaDefaultLabel".Translate(new object[]
 					{
-						this.labelInt = "AreaAnimalDefaultLabel".Translate(new object[]
-						{
-							num
-						});
-					}
-					else
-					{
-						this.labelInt = "AreaDefaultLabel".Translate(new object[]
-						{
-							num
-						});
-					}
+						num
+					});
 					if (areaManager.GetLabeled(this.labelInt) == null)
 					{
 						break;
@@ -103,12 +78,11 @@ namespace RimWorld
 			base.ExposeData();
 			Scribe_Values.Look<string>(ref this.labelInt, "label", null, false);
 			Scribe_Values.Look<Color>(ref this.colorInt, "color", default(Color), false);
-			Scribe_Values.Look<AllowedAreaMode>(ref this.mode, "mode", (AllowedAreaMode)0, false);
 		}
 
-		public override bool AssignableAsAllowed(AllowedAreaMode mode)
+		public override bool AssignableAsAllowed()
 		{
-			return (byte)(mode & this.mode) != 0;
+			return true;
 		}
 
 		public override void SetLabel(string label)

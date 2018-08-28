@@ -7,16 +7,24 @@ namespace Verse
 	{
 		public List<RandomGenStepSelectorOption> options;
 
-		public override void Generate(Map map)
+		public override int SeedPart
+		{
+			get
+			{
+				return 174742427;
+			}
+		}
+
+		public override void Generate(Map map, GenStepParams parms)
 		{
 			RandomGenStepSelectorOption randomGenStepSelectorOption = this.options.RandomElementByWeight((RandomGenStepSelectorOption opt) => opt.weight);
 			if (randomGenStepSelectorOption.genStep != null)
 			{
-				randomGenStepSelectorOption.genStep.Generate(map);
+				randomGenStepSelectorOption.genStep.Generate(map, parms);
 			}
 			if (randomGenStepSelectorOption.def != null)
 			{
-				randomGenStepSelectorOption.def.genStep.Generate(map);
+				randomGenStepSelectorOption.def.genStep.Generate(map, parms);
 			}
 		}
 	}

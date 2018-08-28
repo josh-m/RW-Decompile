@@ -1,3 +1,4 @@
+using RimWorld;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -7,6 +8,22 @@ namespace Verse
 	public class CompEquippable : ThingComp, IVerbOwner
 	{
 		public VerbTracker verbTracker;
+
+		Thing IVerbOwner.ConstantCaster
+		{
+			get
+			{
+				return null;
+			}
+		}
+
+		ImplementOwnerTypeDef IVerbOwner.ImplementOwnerTypeDef
+		{
+			get
+			{
+				return ImplementOwnerTypeDefOf.Weapon;
+			}
+		}
 
 		private Pawn Holder
 		{
@@ -99,9 +116,19 @@ namespace Verse
 			}
 		}
 
-		public string UniqueVerbOwnerID()
+		string IVerbOwner.UniqueVerbOwnerID()
 		{
-			return this.parent.ThingID;
+			return "CompEquippable_" + this.parent.ThingID;
+		}
+
+		bool IVerbOwner.VerbsStillUsableBy(Pawn p)
+		{
+			Apparel apparel = this.parent as Apparel;
+			if (apparel != null)
+			{
+				return p.apparel.WornApparel.Contains(apparel);
+			}
+			return p.equipment.AllEquipmentListForReading.Contains(this.parent);
 		}
 	}
 }

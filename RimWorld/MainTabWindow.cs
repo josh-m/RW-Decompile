@@ -48,7 +48,6 @@ namespace RimWorld
 			this.soundClose = null;
 			this.doCloseButton = false;
 			this.doCloseX = false;
-			this.closeOnEscapeKey = true;
 			this.preventCameraMotion = false;
 		}
 

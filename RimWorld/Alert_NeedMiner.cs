@@ -43,7 +43,7 @@ namespace RimWorld
 					}
 				}
 			}
-			return AlertReport.Inactive;
+			return false;
 		}
 	}
 }

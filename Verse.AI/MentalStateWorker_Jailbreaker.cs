@@ -1,3 +1,4 @@
+using RimWorld;
 using System;
 
 namespace Verse.AI
@@ -6,7 +7,7 @@ namespace Verse.AI
 	{
 		public override bool StateCanOccur(Pawn pawn)
 		{
-			return base.StateCanOccur(pawn) && JailbreakerMentalStateUtility.FindPrisoner(pawn) != null;
+			return base.StateCanOccur(pawn) && pawn.health.capacities.CapableOf(PawnCapacityDefOf.Talking) && JailbreakerMentalStateUtility.FindPrisoner(pawn) != null;
 		}
 	}
 }

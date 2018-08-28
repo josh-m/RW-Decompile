@@ -5,8 +5,6 @@ namespace Verse
 {
 	internal class SectionLayer_SunShadows : SectionLayer
 	{
-		private static Building[] edificeGrid;
-
 		private static readonly Color32 LowVertexColor = new Color32(0, 0, 0, 0);
 
 		public override bool Visible
@@ -28,8 +26,8 @@ namespace Verse
 			{
 				return;
 			}
-			SectionLayer_SunShadows.edificeGrid = base.Map.edificeGrid.InnerArray;
-			float y = Altitudes.AltitudeFor(AltitudeLayer.Shadows);
+			Building[] innerArray = base.Map.edificeGrid.InnerArray;
+			float y = AltitudeLayer.Shadows.AltitudeFor();
 			CellRect cellRect = new CellRect(this.section.botLeft.x, this.section.botLeft.z, 17, 17);
 			cellRect.ClipInsideMap(base.Map);
 			LayerSubMesh subMesh = base.GetSubMesh(MatBases.SunShadow);
@@ -42,7 +40,7 @@ namespace Verse
 			{
 				for (int j = cellRect.minZ; j <= cellRect.maxZ; j++)
 				{
-					Thing thing = SectionLayer_SunShadows.edificeGrid[cellIndices.CellToIndex(i, j)];
+					Thing thing = innerArray[cellIndices.CellToIndex(i, j)];
 					if (thing != null && thing.def.staticSunShadowHeight > 0f)
 					{
 						float staticSunShadowHeight = thing.def.staticSunShadowHeight;
@@ -65,7 +63,7 @@ namespace Verse
 						subMesh.tris.Add(count2 - 1);
 						if (i > 0)
 						{
-							thing = SectionLayer_SunShadows.edificeGrid[cellIndices.CellToIndex(i - 1, j)];
+							thing = innerArray[cellIndices.CellToIndex(i - 1, j)];
 							if (thing == null || thing.def.staticSunShadowHeight < staticSunShadowHeight)
 							{
 								int count3 = subMesh.verts.Count;
@@ -83,7 +81,7 @@ namespace Verse
 						}
 						if (i < base.Map.Size.x - 1)
 						{
-							thing = SectionLayer_SunShadows.edificeGrid[cellIndices.CellToIndex(i + 1, j)];
+							thing = innerArray[cellIndices.CellToIndex(i + 1, j)];
 							if (thing == null || thing.def.staticSunShadowHeight < staticSunShadowHeight)
 							{
 								int count4 = subMesh.verts.Count;
@@ -101,7 +99,7 @@ namespace Verse
 						}
 						if (j > 0)
 						{
-							thing = SectionLayer_SunShadows.edificeGrid[cellIndices.CellToIndex(i, j - 1)];
+							thing = innerArray[cellIndices.CellToIndex(i, j - 1)];
 							if (thing == null || thing.def.staticSunShadowHeight < staticSunShadowHeight)
 							{
 								int count5 = subMesh.verts.Count;

@@ -29,7 +29,7 @@ namespace RimWorld.BaseGen
 			{
 				hive.active = false;
 			}
-			hive = (Hive)GenSpawn.Spawn(hive, loc, BaseGen.globalSettings.map);
+			hive = (Hive)GenSpawn.Spawn(hive, loc, BaseGen.globalSettings.map, WipeMode.Vanish);
 			for (int i = 0; i < num - 1; i++)
 			{
 				Hive hive2;

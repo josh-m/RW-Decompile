@@ -10,19 +10,22 @@ namespace RimWorld
 	{
 		private float workDone;
 
-		private const float ClearWorkPerSnowDepth = 100f;
+		private const float ClearWorkPerSnowDepth = 50f;
 
 		private float TotalNeededWork
 		{
 			get
 			{
-				return 100f * base.Map.snowGrid.GetDepth(base.TargetLocA);
+				return 50f * base.Map.snowGrid.GetDepth(base.TargetLocA);
 			}
 		}
 
-		public override bool TryMakePreToilReservations()
+		public override bool TryMakePreToilReservations(bool errorOnFailed)
 		{
-			return this.pawn.Reserve(this.job.targetA, this.job, 1, -1, null);
+			Pawn pawn = this.pawn;
+			LocalTargetInfo targetA = this.job.targetA;
+			Job job = this.job;
+			return pawn.Reserve(targetA, job, 1, -1, null, errorOnFailed);
 		}
 
 		[DebuggerHidden]
@@ -33,7 +36,7 @@ namespace RimWorld
 			clearToil.tickAction = delegate
 			{
 				Pawn actor = clearToil.actor;
-				float statValue = actor.GetStatValue(StatDefOf.WorkSpeedGlobal, true);
+				float statValue = actor.GetStatValue(StatDefOf.UnskilledLaborSpeed, true);
 				float num = statValue;
 				this.$this.workDone += num;
 				if (this.$this.workDone >= this.$this.TotalNeededWork)
@@ -45,7 +48,7 @@ namespace RimWorld
 			};
 			clearToil.defaultCompleteMode = ToilCompleteMode.Never;
 			clearToil.WithEffect(EffecterDefOf.ClearSnow, TargetIndex.A);
-			clearToil.PlaySustainerOrSound(() => SoundDefOf.Interact_ClearSnow);
+			clearToil.PlaySustainerOrSound(() => SoundDefOf.Interact_CleanFilth);
 			clearToil.WithProgressBar(TargetIndex.A, () => this.$this.workDone / this.$this.TotalNeededWork, true, -0.5f);
 			clearToil.FailOnCannotTouch(TargetIndex.A, PathEndMode.Touch);
 			yield return clearToil;

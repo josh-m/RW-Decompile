@@ -65,40 +65,6 @@ namespace Verse
 			}
 		}
 
-		public static Shader ShaderFromType(ShaderType sType)
-		{
-			switch (sType)
-			{
-			case ShaderType.Cutout:
-				return ShaderDatabase.Cutout;
-			case ShaderType.CutoutFlying:
-				return ShaderDatabase.CutoutFlying;
-			case ShaderType.CutoutPlant:
-				return ShaderDatabase.CutoutPlant;
-			case ShaderType.CutoutComplex:
-				return ShaderDatabase.CutoutComplex;
-			case ShaderType.CutoutSkin:
-				return ShaderDatabase.CutoutSkin;
-			case ShaderType.Transparent:
-				return ShaderDatabase.Transparent;
-			case ShaderType.TransparentPostLight:
-				return ShaderDatabase.TransparentPostLight;
-			case ShaderType.TransparentPlant:
-				return ShaderDatabase.TransparentPlant;
-			case ShaderType.MetaOverlay:
-				return ShaderDatabase.MetaOverlay;
-			case ShaderType.Mote:
-				return ShaderDatabase.Mote;
-			case ShaderType.MoteGlow:
-				return ShaderDatabase.MoteGlow;
-			case ShaderType.MoteWater:
-				return ShaderDatabase.MoteWater;
-			default:
-				Log.ErrorOnce("Unknown ShaderType " + sType, 2766893);
-				return ShaderDatabase.DefaultShader;
-			}
-		}
-
 		public static Shader LoadShader(string shaderPath)
 		{
 			if (ShaderDatabase.lookup == null)
@@ -112,7 +78,7 @@ namespace Verse
 			Shader shader = ShaderDatabase.lookup[shaderPath];
 			if (shader == null)
 			{
-				Log.Warning("Could not load shader " + shaderPath);
+				Log.Warning("Could not load shader " + shaderPath, false);
 				return ShaderDatabase.DefaultShader;
 			}
 			return shader;

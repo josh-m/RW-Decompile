@@ -37,17 +37,6 @@ namespace RimWorld
 
 		public override bool HasJobOnThing(Pawn pawn, Thing t, bool forced = false)
 		{
-			if (t.def.Claimable)
-			{
-				if (t.Faction != pawn.Faction)
-				{
-					return false;
-				}
-			}
-			else if (pawn.Faction != Faction.OfPlayer)
-			{
-				return false;
-			}
 			LocalTargetInfo target = t;
 			return pawn.CanReserve(target, 1, -1, null, forced) && pawn.Map.designationManager.DesignationOn(t, this.Designation) != null;
 		}

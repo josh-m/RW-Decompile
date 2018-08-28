@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Text;
 using UnityEngine;
 
@@ -13,15 +14,15 @@ namespace Verse
 
 		private static Vector2 detailsScrollPosition;
 
-		private float listingViewHeight;
-
 		private static float detailsPaneHeight = 100f;
-
-		private bool borderDragging;
 
 		private static bool canAutoOpen = true;
 
 		public static bool wantsToOpen = false;
+
+		private float listingViewHeight;
+
+		private bool borderDragging;
 
 		private const float CountWidth = 28f;
 
@@ -29,7 +30,7 @@ namespace Verse
 
 		private const float DetailsPaneBorderHeight = 7f;
 
-		private const float DetailsPaneMinHeight = 20f;
+		private const float DetailsPaneMinHeight = 10f;
 
 		private const float ListingMinHeight = 80f;
 
@@ -102,6 +103,17 @@ namespace Verse
 			EditWindow_Log.detailsScrollPosition = Vector2.zero;
 		}
 
+		public static void SelectLastMessage(bool expandDetailsPane = false)
+		{
+			EditWindow_Log.ClearSelectedMessage();
+			EditWindow_Log.SelectedMessage = Log.Messages.LastOrDefault<LogMessage>();
+			EditWindow_Log.messagesScrollPosition.y = (float)Log.Messages.Count<LogMessage>() * 30f;
+			if (expandDetailsPane)
+			{
+				EditWindow_Log.detailsPaneHeight = 9999f;
+			}
+		}
+
 		public static void ClearAll()
 		{
 			EditWindow_Log.ClearSelectedMessage();
@@ -166,7 +178,7 @@ namespace Verse
 			{
 				EditWindow_Log.ClearSelectedMessage();
 			}
-			EditWindow_Log.detailsPaneHeight = Mathf.Max(EditWindow_Log.detailsPaneHeight, 20f);
+			EditWindow_Log.detailsPaneHeight = Mathf.Max(EditWindow_Log.detailsPaneHeight, 10f);
 			EditWindow_Log.detailsPaneHeight = Mathf.Min(EditWindow_Log.detailsPaneHeight, inRect.height - 80f);
 		}
 

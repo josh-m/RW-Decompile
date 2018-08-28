@@ -1,25 +1,38 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using UnityEngine;
 using Verse;
 
 namespace RimWorld
 {
 	public class StorytellerComp_ShipChunkDrop : StorytellerComp
 	{
-		private const float BaseShipChunkDropMTBDays = 20f;
+		private static readonly SimpleCurve ShipChunkDropMTBDaysCurve = new SimpleCurve
+		{
+			{
+				new CurvePoint(0f, 20f),
+				true
+			},
+			{
+				new CurvePoint(1f, 40f),
+				true
+			},
+			{
+				new CurvePoint(2f, 80f),
+				true
+			},
+			{
+				new CurvePoint(2.75f, 135f),
+				true
+			}
+		};
 
 		private float ShipChunkDropMTBDays
 		{
 			get
 			{
-				float num = (float)Find.TickManager.TicksGame / 3600000f;
-				if (num > 10f)
-				{
-					num = 2.75f;
-				}
-				return 20f * Mathf.Pow(2f, num);
+				float x = (float)Find.TickManager.TicksGame / 3600000f;
+				return StorytellerComp_ShipChunkDrop.ShipChunkDropMTBDaysCurve.Evaluate(x);
 			}
 		}
 
@@ -29,9 +42,10 @@ namespace RimWorld
 			if (Rand.MTBEventOccurs(this.ShipChunkDropMTBDays, 60000f, 1000f))
 			{
 				IncidentDef def = IncidentDefOf.ShipChunkDrop;
-				if (def.Worker.CanFireNow(target))
+				IncidentParms parms = this.GenerateParms(def.category, target);
+				if (def.Worker.CanFireNow(parms, false))
 				{
-					yield return new FiringIncident(def, this, this.GenerateParms(def.category, target));
+					yield return new FiringIncident(def, this, parms);
 				}
 			}
 		}

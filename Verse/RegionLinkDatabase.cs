@@ -33,7 +33,7 @@ namespace Verse
 			{
 				stringBuilder.AppendLine(current.ToString());
 			}
-			Log.Message(stringBuilder.ToString());
+			Log.Message(stringBuilder.ToString(), false);
 		}
 	}
 }

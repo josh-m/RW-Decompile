@@ -6,17 +6,21 @@ namespace RimWorld
 	[DefOf]
 	public static class KeyBindingDefOf
 	{
-		public static KeyBindingDef MapDollyUp;
+		public static KeyBindingDef MapDolly_Up;
 
-		public static KeyBindingDef MapDollyDown;
+		public static KeyBindingDef MapDolly_Down;
 
-		public static KeyBindingDef MapDollyLeft;
+		public static KeyBindingDef MapDolly_Left;
 
-		public static KeyBindingDef MapDollyRight;
+		public static KeyBindingDef MapDolly_Right;
 
-		public static KeyBindingDef MapZoomIn;
+		public static KeyBindingDef MapZoom_In;
 
-		public static KeyBindingDef MapZoomOut;
+		public static KeyBindingDef MapZoom_Out;
+
+		public static KeyBindingDef Accept;
+
+		public static KeyBindingDef Cancel;
 
 		public static KeyBindingDef ToggleScreenshotMode;
 
@@ -26,17 +30,21 @@ namespace RimWorld
 
 		public static KeyBindingDef TogglePause;
 
-		public static KeyBindingDef TimeSpeedNormal;
+		public static KeyBindingDef TimeSpeed_Normal;
 
-		public static KeyBindingDef TimeSpeedFast;
+		public static KeyBindingDef TimeSpeed_Fast;
 
-		public static KeyBindingDef TimeSpeedSuperfast;
+		public static KeyBindingDef TimeSpeed_Superfast;
 
-		public static KeyBindingDef TimeSpeedUltrafast;
+		public static KeyBindingDef TimeSpeed_Ultrafast;
 
 		public static KeyBindingDef PreviousColonist;
 
 		public static KeyBindingDef NextColonist;
+
+		public static KeyBindingDef ToggleBeautyDisplay;
+
+		public static KeyBindingDef ToggleRoomStatsDisplay;
 
 		public static KeyBindingDef QueueOrder;
 
@@ -64,36 +72,41 @@ namespace RimWorld
 
 		public static KeyBindingDef Misc12;
 
-		public static KeyBindingDef CommandTogglePower;
+		public static KeyBindingDef Command_TogglePower;
 
-		public static KeyBindingDef CommandItemForbid;
+		public static KeyBindingDef Command_ItemForbid;
 
-		public static KeyBindingDef CommandColonistDraft;
+		public static KeyBindingDef Command_ColonistDraft;
 
-		public static KeyBindingDef ModifierIncrement10x;
+		public static KeyBindingDef ModifierIncrement_10x;
 
-		public static KeyBindingDef ModifierIncrement100x;
+		public static KeyBindingDef ModifierIncrement_100x;
 
-		public static KeyBindingDef DesignatorCancel;
+		public static KeyBindingDef Designator_Cancel;
 
-		public static KeyBindingDef DesignatorDeconstruct;
+		public static KeyBindingDef Designator_Deconstruct;
 
-		public static KeyBindingDef DesignatorRotateLeft;
+		public static KeyBindingDef Designator_RotateLeft;
 
-		public static KeyBindingDef DesignatorRotateRight;
+		public static KeyBindingDef Designator_RotateRight;
 
-		public static KeyBindingDef TickOnce;
+		public static KeyBindingDef Dev_TickOnce;
 
-		public static KeyBindingDef ToggleGodMode;
+		public static KeyBindingDef Dev_ToggleGodMode;
 
-		public static KeyBindingDef ToggleDebugLog;
+		public static KeyBindingDef Dev_ToggleDebugLog;
 
-		public static KeyBindingDef ToggleDebugActionsMenu;
+		public static KeyBindingDef Dev_ToggleDebugActionsMenu;
 
-		public static KeyBindingDef ToggleDebugLogMenu;
+		public static KeyBindingDef Dev_ToggleDebugLogMenu;
 
-		public static KeyBindingDef ToggleDebugInspector;
+		public static KeyBindingDef Dev_ToggleDebugInspector;
 
-		public static KeyBindingDef ToggleDebugSettingsMenu;
+		public static KeyBindingDef Dev_ToggleDebugSettingsMenu;
+
+		static KeyBindingDefOf()
+		{
+			DefOfHelper.EnsureInitializedInCtor(typeof(KeyBindingDefOf));
+		}
 	}
 }

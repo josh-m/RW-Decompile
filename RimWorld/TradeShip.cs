@@ -128,7 +128,7 @@ namespace RimWorld
 		[DebuggerHidden]
 		public IEnumerable<Thing> ColonyThingsWillingToBuy(Pawn playerNegotiator)
 		{
-			foreach (Thing t in TradeUtility.AllLaunchableThings(base.Map))
+			foreach (Thing t in TradeUtility.AllLaunchableThingsForTrade(base.Map))
 			{
 				yield return t;
 			}
@@ -140,10 +140,10 @@ namespace RimWorld
 
 		public void GenerateThings()
 		{
-			ItemCollectionGeneratorParams parms = default(ItemCollectionGeneratorParams);
+			ThingSetMakerParams parms = default(ThingSetMakerParams);
 			parms.traderDef = this.def;
 			parms.tile = new int?(base.Map.Tile);
-			this.things.TryAddRangeOrTransfer(ItemCollectionGeneratorDefOf.TraderStock.Worker.Generate(parms), true, false);
+			this.things.TryAddRangeOrTransfer(ThingSetMakerDefOf.TraderStock.root.Generate(parms), true, false);
 		}
 
 		public override void PassingShipTick()
@@ -185,15 +185,12 @@ namespace RimWorld
 			{
 				return;
 			}
-			Find.WindowStack.Add(new Dialog_Trade(negotiator, this));
+			Find.WindowStack.Add(new Dialog_Trade(negotiator, this, false));
 			LessonAutoActivator.TeachOpportunity(ConceptDefOf.BuildOrbitalTradeBeacon, OpportunityType.Critical);
-			string empty = string.Empty;
-			string empty2 = string.Empty;
-			PawnRelationUtility.Notify_PawnsSeenByPlayer_Letter(this.Goods.OfType<Pawn>(), ref empty, ref empty2, "LetterRelatedPawnsTradeShip".Translate(), false, true);
-			if (!empty2.NullOrEmpty())
+			PawnRelationUtility.Notify_PawnsSeenByPlayer_Letter_Send(this.Goods.OfType<Pawn>(), "LetterRelatedPawnsTradeShip".Translate(new object[]
 			{
-				Find.LetterStack.ReceiveLetter(empty, empty2, LetterDefOf.PositiveEvent, null);
-			}
+				Faction.OfPlayer.def.pawnsPlural
+			}), LetterDefOf.NeutralEvent, false, true);
 			TutorUtility.DoModalDialogIfNotKnown(ConceptDefOf.TradeGoodsMustBeNearBeacon);
 		}
 
@@ -271,7 +268,7 @@ namespace RimWorld
 			Thing thing = this.HeldThingMatching(thingDef, stuffDef);
 			if (thing == null)
 			{
-				Log.Error("Changing count of thing trader doesn't have: " + thingDef);
+				Log.Error("Changing count of thing trader doesn't have: " + thingDef, false);
 			}
 			thing.stackCount += count;
 		}

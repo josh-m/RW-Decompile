@@ -21,6 +21,7 @@ namespace Verse
 				catDef.defName = "Architect_" + def.defName;
 				catDef.label = def.label + " tab";
 				catDef.description = "Key bindings for the \"" + def.LabelCap + "\" section of the Architect menu";
+				catDef.modContentPack = def.modContentPack;
 				catDef.checkForConflicts.AddRange(gameUniversalCats);
 				for (int i = 0; i < gameUniversalCats.Count; i++)
 				{
@@ -45,6 +46,7 @@ namespace Verse
 					keyDef.defName = "MainTab_" + mainTab.defName;
 					keyDef.category = KeyBindingCategoryDefOf.MainTabs;
 					keyDef.defaultKeyCodeA = mainTab.defaultHotKey;
+					keyDef.modContentPack = mainTab.modContentPack;
 					mainTab.hotKey = keyDef;
 					yield return keyDef;
 				}

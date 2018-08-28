@@ -23,13 +23,13 @@ namespace Verse
 				{
 					if (!thing.def.HasThingIDNumber)
 					{
-						Log.Error("Trying to cross-reference save Thing which lacks ID number: " + refee);
+						Log.Error("Trying to cross-reference save Thing which lacks ID number: " + refee, false);
 						Scribe.saver.WriteElement(label, "null");
 						return;
 					}
 					if (thing.IsSaveCompressible())
 					{
-						Log.Error("Trying to save a reference to a thing that will be compressed away: " + refee);
+						Log.Error("Trying to save a reference to a thing that will be compressed away: " + refee, false);
 						Scribe.saver.WriteElement(label, "null");
 						return;
 					}
@@ -50,7 +50,7 @@ namespace Verse
 						label,
 						", but our current node is a value type. The reference won't be loaded properly. curParent=",
 						Scribe.loader.curParent
-					}));
+					}), false);
 				}
 				XmlNode xmlNode = Scribe.loader.curXmlParent[label];
 				string targetLoadID;
@@ -67,6 +67,29 @@ namespace Verse
 			else if (Scribe.mode == LoadSaveMode.ResolvingCrossRefs)
 			{
 				refee = Scribe.loader.crossRefs.TakeResolvedRef<T>(label);
+			}
+		}
+
+		public static void Look<T>(ref WeakReference<T> refee, string label, bool saveDestroyedThings = false) where T : class, ILoadReferenceable
+		{
+			if (Scribe.mode == LoadSaveMode.Saving)
+			{
+				T t = (refee == null) ? ((T)((object)null)) : refee.Target;
+				Scribe_References.Look<T>(ref t, label, saveDestroyedThings);
+			}
+			else if (Scribe.mode == LoadSaveMode.LoadingVars)
+			{
+				T t2 = (T)((object)null);
+				Scribe_References.Look<T>(ref t2, label, saveDestroyedThings);
+			}
+			else if (Scribe.mode == LoadSaveMode.ResolvingCrossRefs)
+			{
+				T t3 = (T)((object)null);
+				Scribe_References.Look<T>(ref t3, label, saveDestroyedThings);
+				if (t3 != null)
+				{
+					refee = new WeakReference<T>(t3);
+				}
 			}
 		}
 
@@ -89,7 +112,7 @@ namespace Verse
 					th,
 					" with saveDestroyedThings=true. This means that it's not deep-saved anywhere and is no longer managed by anything in the code, so saving its reference will always fail. , label=",
 					label
-				}));
+				}), false);
 				Scribe.saver.WriteElement(label, "null");
 				return true;
 			}

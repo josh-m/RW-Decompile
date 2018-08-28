@@ -13,9 +13,9 @@ namespace RimWorld
 		{
 			this.defaultLabel = "DesignatorZoneDelete".Translate();
 			this.defaultDesc = "DesignatorZoneDeleteDesc".Translate();
-			this.soundDragSustain = SoundDefOf.DesignateDragAreaDelete;
-			this.soundDragChanged = SoundDefOf.DesignateDragAreaDeleteChanged;
-			this.soundSucceeded = SoundDefOf.DesignateZoneDelete;
+			this.soundDragSustain = SoundDefOf.Designate_DragAreaDelete;
+			this.soundDragChanged = null;
+			this.soundSucceeded = SoundDefOf.Designate_ZoneDelete;
 			this.useMouseIcon = true;
 			this.icon = ContentFinder<Texture2D>.Get("UI/Designators/ZoneDelete", true);
 			this.hotKey = KeyBindingDefOf.Misc4;

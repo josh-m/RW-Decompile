@@ -35,7 +35,7 @@ namespace RimWorld
 			LordToil target = stateGraph2.lordToils[1];
 			LordToil_ExitMap lordToil_ExitMap = new LordToil_ExitMap(LocomotionUrgency.Walk, true);
 			stateGraph.AddToil(lordToil_ExitMap);
-			Transition transition = new Transition(startingToil, startingToil2);
+			Transition transition = new Transition(startingToil, startingToil2, false, true);
 			transition.AddSources(new LordToil[]
 			{
 				lordToil_DefendPoint
@@ -45,11 +45,11 @@ namespace RimWorld
 			{
 				this.faction.def.pawnsPlural.CapitalizeFirst(),
 				this.faction.Name
-			})));
+			}), null, 1f));
 			transition.AddPreAction(new TransitionAction_EnsureHaveExitDestination());
-			transition.AddPostAction(new TransitionAction_WakeAll());
-			stateGraph.AddTransition(transition);
-			Transition transition2 = new Transition(startingToil, lordToil_ExitMap);
+			transition.AddPostAction(new TransitionAction_EndAllJobs());
+			stateGraph.AddTransition(transition, false);
+			Transition transition2 = new Transition(startingToil, lordToil_ExitMap, false, true);
 			transition2.AddSources(new LordToil[]
 			{
 				lordToil_DefendPoint,
@@ -61,44 +61,45 @@ namespace RimWorld
 			{
 				this.faction.def.pawnsPlural.CapitalizeFirst(),
 				this.faction.Name
-			})));
-			stateGraph.AddTransition(transition2);
-			Transition transition3 = new Transition(lordToil_ExitMap, startingToil2);
+			}), null, 1f));
+			stateGraph.AddTransition(transition2, false);
+			Transition transition3 = new Transition(lordToil_ExitMap, startingToil2, false, true);
 			transition3.AddTrigger(new Trigger_PawnCanReachMapEdge());
 			transition3.AddPreAction(new TransitionAction_EnsureHaveExitDestination());
 			transition3.AddPostAction(new TransitionAction_EndAllJobs());
-			stateGraph.AddTransition(transition3);
-			Transition transition4 = new Transition(startingToil, lordToil_DefendPoint);
+			stateGraph.AddTransition(transition3, false);
+			Transition transition4 = new Transition(startingToil, lordToil_DefendPoint, false, true);
 			transition4.AddTrigger(new Trigger_Memo("TravelArrived"));
-			stateGraph.AddTransition(transition4);
-			Transition transition5 = new Transition(lordToil_DefendPoint, lordToil_TakeWoundedGuest);
+			stateGraph.AddTransition(transition4, false);
+			Transition transition5 = new Transition(lordToil_DefendPoint, lordToil_TakeWoundedGuest, false, true);
 			transition5.AddTrigger(new Trigger_WoundedGuestPresent());
 			transition5.AddPreAction(new TransitionAction_Message("MessageVisitorsTakingWounded".Translate(new object[]
 			{
 				this.faction.def.pawnsPlural.CapitalizeFirst(),
 				this.faction.Name
-			})));
-			stateGraph.AddTransition(transition5);
-			Transition transition6 = new Transition(lordToil_DefendPoint, target);
+			}), null, 1f));
+			stateGraph.AddTransition(transition5, false);
+			Transition transition6 = new Transition(lordToil_DefendPoint, target, false, true);
 			transition6.AddSources(new LordToil[]
 			{
 				lordToil_TakeWoundedGuest,
 				startingToil
 			});
-			transition6.AddTrigger(new Trigger_BecameColonyEnemy());
+			transition6.AddTrigger(new Trigger_BecamePlayerEnemy());
 			transition6.AddPreAction(new TransitionAction_SetDefendLocalGroup());
 			transition6.AddPostAction(new TransitionAction_WakeAll());
 			transition6.AddPostAction(new TransitionAction_EndAllJobs());
-			stateGraph.AddTransition(transition6);
-			Transition transition7 = new Transition(lordToil_DefendPoint, startingToil2);
-			transition7.AddTrigger(new Trigger_TicksPassed(Rand.Range(8000, 22000)));
+			stateGraph.AddTransition(transition6, false);
+			Transition transition7 = new Transition(lordToil_DefendPoint, startingToil2, false, true);
+			transition7.AddTrigger(new Trigger_TicksPassed((!DebugSettings.instantVisitorsGift) ? Rand.Range(8000, 22000) : 0));
 			transition7.AddPreAction(new TransitionAction_Message("VisitorsLeaving".Translate(new object[]
 			{
 				this.faction.Name
-			})));
+			}), null, 1f));
+			transition7.AddPreAction(new TransitionAction_CheckGiveGift());
 			transition7.AddPostAction(new TransitionAction_WakeAll());
 			transition7.AddPreAction(new TransitionAction_EnsureHaveExitDestination());
-			stateGraph.AddTransition(transition7);
+			stateGraph.AddTransition(transition7, false);
 			return stateGraph;
 		}
 

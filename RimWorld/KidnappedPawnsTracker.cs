@@ -42,18 +42,18 @@ namespace RimWorld
 		{
 			if (this.kidnappedPawns.Contains(pawn))
 			{
-				Log.Error("Tried to kidnap already kidnapped pawn " + pawn);
+				Log.Error("Tried to kidnap already kidnapped pawn " + pawn, false);
 				return;
 			}
 			if (pawn.Faction == this.faction)
 			{
-				Log.Error("Tried to kidnap pawn with the same faction: " + pawn);
+				Log.Error("Tried to kidnap pawn with the same faction: " + pawn, false);
 				return;
 			}
 			pawn.PreKidnapped(kidnapper);
 			if (pawn.Spawned)
 			{
-				pawn.DeSpawn();
+				pawn.DeSpawn(DestroyMode.Vanish);
 			}
 			this.kidnappedPawns.Add(pawn);
 			if (!Find.WorldPawns.Contains(pawn))
@@ -61,9 +61,13 @@ namespace RimWorld
 				Find.WorldPawns.PassToWorld(pawn, PawnDiscardDecideMode.Decide);
 				if (!Find.WorldPawns.Contains(pawn))
 				{
-					Log.Error("WorldPawns discarded kidnapped pawn.");
+					Log.Error("WorldPawns discarded kidnapped pawn.", false);
 					this.kidnappedPawns.Remove(pawn);
 				}
+			}
+			if (pawn.Faction == Faction.OfPlayer)
+			{
+				BillUtility.Notify_ColonistUnavailable(pawn);
 			}
 		}
 
@@ -71,7 +75,7 @@ namespace RimWorld
 		{
 			if (!this.kidnappedPawns.Remove(pawn))
 			{
-				Log.Warning("Tried to remove kidnapped pawn " + pawn + " but he's not here.");
+				Log.Warning("Tried to remove kidnapped pawn " + pawn + " but he's not here.", false);
 			}
 		}
 
@@ -83,20 +87,26 @@ namespace RimWorld
 			{
 				stringBuilder.AppendLine(this.kidnappedPawns[i].Name.ToStringFull);
 			}
-			Log.Message(stringBuilder.ToString());
+			Log.Message(stringBuilder.ToString(), false);
 		}
 
 		public void KidnappedPawnsTrackerTick()
 		{
-			this.kidnappedPawns.RemoveAll(new Predicate<Pawn>(ThingUtility.DestroyedOrNull));
+			for (int i = this.kidnappedPawns.Count - 1; i >= 0; i--)
+			{
+				if (this.kidnappedPawns[i].DestroyedOrNull())
+				{
+					this.kidnappedPawns.RemoveAt(i);
+				}
+			}
 			if (Find.TickManager.TicksGame % 15051 == 0)
 			{
-				for (int i = this.kidnappedPawns.Count - 1; i >= 0; i--)
+				for (int j = this.kidnappedPawns.Count - 1; j >= 0; j--)
 				{
 					if (Rand.MTBEventOccurs(30f, 60000f, 15051f))
 					{
-						this.kidnappedPawns[i].SetFaction(this.faction, null);
-						this.kidnappedPawns.RemoveAt(i);
+						this.kidnappedPawns[j].SetFaction(this.faction, null);
+						this.kidnappedPawns.RemoveAt(j);
 					}
 				}
 			}

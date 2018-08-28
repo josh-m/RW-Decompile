@@ -11,6 +11,6 @@ namespace RimWorld
 		Industrial,
 		Spacer,
 		Ultra,
-		Transcendent
+		Archotech
 	}
 }

@@ -71,6 +71,14 @@ namespace RimWorld
 			}
 		}
 
+		public override bool ForceHighStoryDanger
+		{
+			get
+			{
+				return true;
+			}
+		}
+
 		public LordToil_Siege(IntVec3 siegeCenter, float blueprintPoints)
 		{
 			this.data = new LordToilData_Siege();
@@ -88,7 +96,7 @@ namespace RimWorld
 			foreach (Blueprint_Build current in SiegeBlueprintPlacer.PlaceBlueprints(data.siegeCenter, base.Map, this.lord.faction, data.blueprintPoints))
 			{
 				data.blueprints.Add(current);
-				foreach (ThingCountClass cost in current.MaterialsNeeded())
+				foreach (ThingDefCountClass cost in current.MaterialsNeeded())
 				{
 					Thing thing = list.FirstOrDefault((Thing t) => t.def == cost.thingDef);
 					if (thing != null)
@@ -151,7 +159,7 @@ namespace RimWorld
 				list4.Add(item);
 			}
 			list2.Add(list4);
-			DropPodUtility.DropThingGroupsNear(data.siegeCenter, base.Map, list2, 110, false, false, true, false);
+			DropPodUtility.DropThingGroupsNear(data.siegeCenter, base.Map, list2, 110, false, false, true);
 			data.desiredBuilderFraction = LordToil_Siege.BuilderCountFraction.RandomInRange;
 		}
 
@@ -246,6 +254,8 @@ namespace RimWorld
 			LordToilData_Siege data = this.Data;
 			p.mindState.duty = new PawnDuty(DutyDefOf.Build, data.siegeCenter, -1f);
 			p.mindState.duty.radius = data.baseRadius;
+			int minLevel = Mathf.Max(ThingDefOf.Sandbags.constructionSkillPrerequisite, ThingDefOf.Turret_Mortar.constructionSkillPrerequisite);
+			p.skills.GetSkill(SkillDefOf.Construction).EnsureMinLevelWithMargin(minLevel);
 			p.workSettings.EnableAndInitialize();
 			List<WorkTypeDef> allDefsListForReading = DefDatabase<WorkTypeDef>.AllDefsListForReading;
 			for (int i = 0; i < allDefsListForReading.Count; i++)
@@ -341,7 +351,7 @@ namespace RimWorld
 			Thing thing = ThingMaker.MakeThing(thingDef, null);
 			thing.stackCount = count;
 			list.Add(thing);
-			DropPodUtility.DropThingsNear(this.Data.siegeCenter, base.Map, list, 110, false, false, true, false);
+			DropPodUtility.DropThingsNear(this.Data.siegeCenter, base.Map, list, 110, false, false, true);
 		}
 
 		public override void Cleanup()

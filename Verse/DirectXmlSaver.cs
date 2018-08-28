@@ -11,7 +11,7 @@ namespace Verse
 	{
 		public static bool IsSimpleTextType(Type type)
 		{
-			return type == typeof(float) || type == typeof(int) || type == typeof(bool) || type == typeof(string) || type.IsEnum;
+			return type == typeof(float) || type == typeof(double) || type == typeof(long) || type == typeof(ulong) || type == typeof(char) || type == typeof(byte) || type == typeof(sbyte) || type == typeof(int) || type == typeof(uint) || type == typeof(bool) || type == typeof(short) || type == typeof(ushort) || type == typeof(string) || type.IsEnum;
 		}
 
 		public static void SaveDataObject(object obj, string filePath)
@@ -25,17 +25,17 @@ namespace Verse
 			}
 			catch (Exception ex)
 			{
+				Log.Error(string.Concat(new object[]
+				{
+					"Exception saving data object ",
+					obj.ToStringSafe<object>(),
+					": ",
+					ex
+				}), false);
 				GenUI.ErrorDialog("ProblemSavingFile".Translate(new object[]
 				{
 					filePath,
 					ex.ToString()
-				}));
-				Log.Error(string.Concat(new object[]
-				{
-					"Exception saving data object ",
-					obj,
-					": ",
-					ex
 				}));
 			}
 		}

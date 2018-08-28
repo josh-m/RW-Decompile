@@ -16,7 +16,7 @@ namespace Verse
 				}
 				catch (Exception ex)
 				{
-					Log.Error(ex.ToString());
+					Log.Error(ex.ToString(), false);
 				}
 			}
 		}
@@ -32,7 +32,7 @@ namespace Verse
 				}
 				catch (Exception ex)
 				{
-					Log.Error(ex.ToString());
+					Log.Error(ex.ToString(), false);
 				}
 			}
 		}
@@ -48,7 +48,7 @@ namespace Verse
 				}
 				catch (Exception ex)
 				{
-					Log.Error(ex.ToString());
+					Log.Error(ex.ToString(), false);
 				}
 			}
 		}
@@ -64,7 +64,7 @@ namespace Verse
 				}
 				catch (Exception ex)
 				{
-					Log.Error(ex.ToString());
+					Log.Error(ex.ToString(), false);
 				}
 			}
 		}
@@ -80,7 +80,7 @@ namespace Verse
 				}
 				catch (Exception ex)
 				{
-					Log.Error(ex.ToString());
+					Log.Error(ex.ToString(), false);
 				}
 			}
 		}
@@ -96,7 +96,7 @@ namespace Verse
 				}
 				catch (Exception ex)
 				{
-					Log.Error(ex.ToString());
+					Log.Error(ex.ToString(), false);
 				}
 			}
 		}

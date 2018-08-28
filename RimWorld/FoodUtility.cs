@@ -38,9 +38,11 @@ namespace RimWorld
 			}
 		};
 
+		private static List<Pawn> tmpPredatorCandidates = new List<Pawn>();
+
 		private static List<ThoughtDef> ingestThoughts = new List<ThoughtDef>();
 
-		public static bool TryFindBestFoodSourceFor(Pawn getter, Pawn eater, bool desperate, out Thing foodSource, out ThingDef foodDef, bool canRefillDispenser = true, bool canUseInventory = true, bool allowForbidden = false, bool allowCorpse = true, bool allowSociallyImproper = false, bool allowHarvest = false)
+		public static bool TryFindBestFoodSourceFor(Pawn getter, Pawn eater, bool desperate, out Thing foodSource, out ThingDef foodDef, bool canRefillDispenser = true, bool canUseInventory = true, bool allowForbidden = false, bool allowCorpse = true, bool allowSociallyImproper = false, bool allowHarvest = false, bool forceScanWholeMap = false)
 		{
 			bool flag = getter.RaceProps.ToolUser && getter.health.capacities.CapableOf(PawnCapacityDefOf.Manipulation);
 			bool allowDrug = !eater.IsTeetotaler();
@@ -70,7 +72,7 @@ namespace RimWorld
 			}
 			bool allowPlant = getter == eater;
 			ThingDef thingDef;
-			Thing thing2 = FoodUtility.BestFoodSourceOnMap(getter, eater, desperate, out thingDef, FoodPreferability.MealLavish, allowPlant, allowDrug, allowCorpse, true, canRefillDispenser, allowForbidden, allowSociallyImproper, allowHarvest);
+			Thing thing2 = FoodUtility.BestFoodSourceOnMap(getter, eater, desperate, out thingDef, FoodPreferability.MealLavish, allowPlant, allowDrug, allowCorpse, true, canRefillDispenser, allowForbidden, allowSociallyImproper, allowHarvest, forceScanWholeMap);
 			if (thing == null && thing2 == null)
 			{
 				if (canUseInventory && flag)
@@ -83,9 +85,9 @@ namespace RimWorld
 						return true;
 					}
 				}
-				if (thing2 == null && getter == eater && (getter.RaceProps.predator || getter.IsWildMan()))
+				if (thing2 == null && getter == eater && (getter.RaceProps.predator || (getter.IsWildMan() && !getter.IsPrisoner)))
 				{
-					Pawn pawn = FoodUtility.BestPawnToHuntForPredator(getter);
+					Pawn pawn = FoodUtility.BestPawnToHuntForPredator(getter, forceScanWholeMap);
 					if (pawn != null)
 					{
 						foodSource = pawn;
@@ -163,7 +165,7 @@ namespace RimWorld
 				Thing thing = innerContainer[i];
 				if (thing.def.IsNutritionGivingIngestible && thing.IngestibleNow && eater.RaceProps.CanEverEat(thing) && thing.def.ingestible.preferability >= minFoodPref && thing.def.ingestible.preferability <= maxFoodPref && (allowDrug || !thing.def.IsDrug))
 				{
-					float num = thing.def.ingestible.nutrition * (float)thing.stackCount;
+					float num = thing.GetStatValue(StatDefOf.Nutrition, true) * (float)thing.stackCount;
 					if (num >= minStackNutrition)
 					{
 						return thing;
@@ -173,19 +175,20 @@ namespace RimWorld
 			return null;
 		}
 
-		public static Thing BestFoodSourceOnMap(Pawn getter, Pawn eater, bool desperate, out ThingDef foodDef, FoodPreferability maxPref = FoodPreferability.MealLavish, bool allowPlant = true, bool allowDrug = true, bool allowCorpse = true, bool allowDispenserFull = true, bool allowDispenserEmpty = true, bool allowForbidden = false, bool allowSociallyImproper = false, bool allowHarvest = false)
+		public static Thing BestFoodSourceOnMap(Pawn getter, Pawn eater, bool desperate, out ThingDef foodDef, FoodPreferability maxPref = FoodPreferability.MealLavish, bool allowPlant = true, bool allowDrug = true, bool allowCorpse = true, bool allowDispenserFull = true, bool allowDispenserEmpty = true, bool allowForbidden = false, bool allowSociallyImproper = false, bool allowHarvest = false, bool forceScanWholeMap = false)
 		{
 			FoodUtility.<BestFoodSourceOnMap>c__AnonStorey0 <BestFoodSourceOnMap>c__AnonStorey = new FoodUtility.<BestFoodSourceOnMap>c__AnonStorey0();
-			<BestFoodSourceOnMap>c__AnonStorey.allowForbidden = allowForbidden;
-			<BestFoodSourceOnMap>c__AnonStorey.getter = getter;
 			<BestFoodSourceOnMap>c__AnonStorey.allowDispenserFull = allowDispenserFull;
 			<BestFoodSourceOnMap>c__AnonStorey.maxPref = maxPref;
-			<BestFoodSourceOnMap>c__AnonStorey.allowDispenserEmpty = allowDispenserEmpty;
 			<BestFoodSourceOnMap>c__AnonStorey.eater = eater;
+			<BestFoodSourceOnMap>c__AnonStorey.getter = getter;
+			<BestFoodSourceOnMap>c__AnonStorey.allowForbidden = allowForbidden;
+			<BestFoodSourceOnMap>c__AnonStorey.allowDispenserEmpty = allowDispenserEmpty;
 			<BestFoodSourceOnMap>c__AnonStorey.allowSociallyImproper = allowSociallyImproper;
 			<BestFoodSourceOnMap>c__AnonStorey.allowCorpse = allowCorpse;
 			<BestFoodSourceOnMap>c__AnonStorey.allowDrug = allowDrug;
 			<BestFoodSourceOnMap>c__AnonStorey.desperate = desperate;
+			<BestFoodSourceOnMap>c__AnonStorey.forceScanWholeMap = forceScanWholeMap;
 			foodDef = null;
 			<BestFoodSourceOnMap>c__AnonStorey.getterCanManipulate = (<BestFoodSourceOnMap>c__AnonStorey.getter.RaceProps.ToolUser && <BestFoodSourceOnMap>c__AnonStorey.getter.health.capacities.CapableOf(PawnCapacityDefOf.Manipulation));
 			if (!<BestFoodSourceOnMap>c__AnonStorey.getterCanManipulate && <BestFoodSourceOnMap>c__AnonStorey.getter != <BestFoodSourceOnMap>c__AnonStorey.eater)
@@ -198,7 +201,7 @@ namespace RimWorld
 					" but ",
 					<BestFoodSourceOnMap>c__AnonStorey.getter,
 					" is incapable of Manipulation."
-				}));
+				}), false);
 				return null;
 			}
 			if (<BestFoodSourceOnMap>c__AnonStorey.eater.NonHumanlikeOrWildMan())
@@ -211,36 +214,21 @@ namespace RimWorld
 			}
 			else
 			{
-				<BestFoodSourceOnMap>c__AnonStorey.minPref = ((<BestFoodSourceOnMap>c__AnonStorey.eater.needs.food.CurCategory <= HungerCategory.UrgentlyHungry) ? FoodPreferability.RawBad : FoodPreferability.MealAwful);
+				<BestFoodSourceOnMap>c__AnonStorey.minPref = ((<BestFoodSourceOnMap>c__AnonStorey.eater.needs.food.CurCategory < HungerCategory.UrgentlyHungry) ? FoodPreferability.MealAwful : FoodPreferability.RawBad);
 			}
 			<BestFoodSourceOnMap>c__AnonStorey.foodValidator = delegate(Thing t)
 			{
-				if (!<BestFoodSourceOnMap>c__AnonStorey.allowForbidden && t.IsForbidden(<BestFoodSourceOnMap>c__AnonStorey.getter))
-				{
-					return false;
-				}
 				Building_NutrientPasteDispenser building_NutrientPasteDispenser = t as Building_NutrientPasteDispenser;
 				if (building_NutrientPasteDispenser != null)
 				{
-					if (!<BestFoodSourceOnMap>c__AnonStorey.allowDispenserFull || ThingDefOf.MealNutrientPaste.ingestible.preferability < <BestFoodSourceOnMap>c__AnonStorey.minPref || ThingDefOf.MealNutrientPaste.ingestible.preferability > <BestFoodSourceOnMap>c__AnonStorey.maxPref || !<BestFoodSourceOnMap>c__AnonStorey.getterCanManipulate || <BestFoodSourceOnMap>c__AnonStorey.getter.IsWildMan() || (t.Faction != <BestFoodSourceOnMap>c__AnonStorey.getter.Faction && t.Faction != <BestFoodSourceOnMap>c__AnonStorey.getter.HostFaction) || (!building_NutrientPasteDispenser.powerComp.PowerOn || (!<BestFoodSourceOnMap>c__AnonStorey.allowDispenserEmpty && !building_NutrientPasteDispenser.HasEnoughFeedstockInHoppers())) || !FoodUtility.IsFoodSourceOnMapSociallyProper(t, <BestFoodSourceOnMap>c__AnonStorey.getter, <BestFoodSourceOnMap>c__AnonStorey.eater, <BestFoodSourceOnMap>c__AnonStorey.allowSociallyImproper) || !t.InteractionCell.Standable(t.Map) || !<BestFoodSourceOnMap>c__AnonStorey.getter.Map.reachability.CanReachNonLocal(<BestFoodSourceOnMap>c__AnonStorey.getter.Position, new TargetInfo(t.InteractionCell, t.Map, false), PathEndMode.OnCell, TraverseParms.For(<BestFoodSourceOnMap>c__AnonStorey.getter, Danger.Some, TraverseMode.ByPawn, false)))
+					if (!<BestFoodSourceOnMap>c__AnonStorey.allowDispenserFull || !<BestFoodSourceOnMap>c__AnonStorey.getterCanManipulate || ThingDefOf.MealNutrientPaste.ingestible.preferability < <BestFoodSourceOnMap>c__AnonStorey.minPref || ThingDefOf.MealNutrientPaste.ingestible.preferability > <BestFoodSourceOnMap>c__AnonStorey.maxPref || !<BestFoodSourceOnMap>c__AnonStorey.eater.RaceProps.CanEverEat(ThingDefOf.MealNutrientPaste) || (t.Faction != <BestFoodSourceOnMap>c__AnonStorey.getter.Faction && t.Faction != <BestFoodSourceOnMap>c__AnonStorey.getter.HostFaction) || (!<BestFoodSourceOnMap>c__AnonStorey.allowForbidden && t.IsForbidden(<BestFoodSourceOnMap>c__AnonStorey.getter)) || (!building_NutrientPasteDispenser.powerComp.PowerOn || (!<BestFoodSourceOnMap>c__AnonStorey.allowDispenserEmpty && !building_NutrientPasteDispenser.HasEnoughFeedstockInHoppers())) || !t.InteractionCell.Standable(t.Map) || !FoodUtility.IsFoodSourceOnMapSociallyProper(t, <BestFoodSourceOnMap>c__AnonStorey.getter, <BestFoodSourceOnMap>c__AnonStorey.eater, <BestFoodSourceOnMap>c__AnonStorey.allowSociallyImproper) || <BestFoodSourceOnMap>c__AnonStorey.getter.IsWildMan() || !<BestFoodSourceOnMap>c__AnonStorey.getter.Map.reachability.CanReachNonLocal(<BestFoodSourceOnMap>c__AnonStorey.getter.Position, new TargetInfo(t.InteractionCell, t.Map, false), PathEndMode.OnCell, TraverseParms.For(<BestFoodSourceOnMap>c__AnonStorey.getter, Danger.Some, TraverseMode.ByPawn, false)))
 					{
 						return false;
 					}
 				}
-				else
+				else if (t.def.ingestible.preferability < <BestFoodSourceOnMap>c__AnonStorey.minPref || t.def.ingestible.preferability > <BestFoodSourceOnMap>c__AnonStorey.maxPref || !<BestFoodSourceOnMap>c__AnonStorey.eater.RaceProps.WillAutomaticallyEat(t) || !t.def.IsNutritionGivingIngestible || !t.IngestibleNow || (!<BestFoodSourceOnMap>c__AnonStorey.allowCorpse && t is Corpse) || (!<BestFoodSourceOnMap>c__AnonStorey.allowDrug && t.def.IsDrug) || (!<BestFoodSourceOnMap>c__AnonStorey.allowForbidden && t.IsForbidden(<BestFoodSourceOnMap>c__AnonStorey.getter)) || (!<BestFoodSourceOnMap>c__AnonStorey.desperate && t.IsNotFresh()) || (t.IsDessicated() || !FoodUtility.IsFoodSourceOnMapSociallyProper(t, <BestFoodSourceOnMap>c__AnonStorey.getter, <BestFoodSourceOnMap>c__AnonStorey.eater, <BestFoodSourceOnMap>c__AnonStorey.allowSociallyImproper) || (!<BestFoodSourceOnMap>c__AnonStorey.getter.AnimalAwareOf(t) && !<BestFoodSourceOnMap>c__AnonStorey.forceScanWholeMap)) || !<BestFoodSourceOnMap>c__AnonStorey.getter.CanReserve(t, 1, -1, null, false))
 				{
-					if (t.def.ingestible.preferability < <BestFoodSourceOnMap>c__AnonStorey.minPref)
-					{
-						return false;
-					}
-					if (t.def.ingestible.preferability > <BestFoodSourceOnMap>c__AnonStorey.maxPref)
-					{
-						return false;
-					}
-					if (!t.IngestibleNow || !t.def.IsNutritionGivingIngestible || (!<BestFoodSourceOnMap>c__AnonStorey.allowCorpse && t is Corpse) || (!<BestFoodSourceOnMap>c__AnonStorey.allowDrug && t.def.IsDrug) || (!<BestFoodSourceOnMap>c__AnonStorey.desperate && t.IsNotFresh()) || t.IsDessicated() || !<BestFoodSourceOnMap>c__AnonStorey.eater.RaceProps.WillAutomaticallyEat(t) || !FoodUtility.IsFoodSourceOnMapSociallyProper(t, <BestFoodSourceOnMap>c__AnonStorey.getter, <BestFoodSourceOnMap>c__AnonStorey.eater, <BestFoodSourceOnMap>c__AnonStorey.allowSociallyImproper) || !<BestFoodSourceOnMap>c__AnonStorey.getter.AnimalAwareOf(t) || !<BestFoodSourceOnMap>c__AnonStorey.getter.CanReserve(t, 1, -1, null, false))
-					{
-						return false;
-					}
+					return false;
 				}
 				return true;
 			};
@@ -255,16 +243,25 @@ namespace RimWorld
 			}
 			if (<BestFoodSourceOnMap>c__AnonStorey.getter.RaceProps.Humanlike)
 			{
-				FoodUtility.<BestFoodSourceOnMap>c__AnonStorey0 arg_201_0 = <BestFoodSourceOnMap>c__AnonStorey;
+				FoodUtility.<BestFoodSourceOnMap>c__AnonStorey0 arg_20A_0 = <BestFoodSourceOnMap>c__AnonStorey;
 				Pawn eater2 = <BestFoodSourceOnMap>c__AnonStorey.eater;
 				IntVec3 position = <BestFoodSourceOnMap>c__AnonStorey.getter.Position;
 				List<Thing> searchSet = <BestFoodSourceOnMap>c__AnonStorey.getter.Map.listerThings.ThingsMatching(thingRequest);
 				PathEndMode peMode = PathEndMode.ClosestTouch;
 				TraverseParms traverseParams = TraverseParms.For(<BestFoodSourceOnMap>c__AnonStorey.getter, Danger.Deadly, TraverseMode.ByPawn, false);
 				Predicate<Thing> validator = <BestFoodSourceOnMap>c__AnonStorey.foodValidator;
-				arg_201_0.bestThing = FoodUtility.SpawnedFoodSearchInnerScan(eater2, position, searchSet, peMode, traverseParams, 9999f, validator);
+				arg_20A_0.bestThing = FoodUtility.SpawnedFoodSearchInnerScan(eater2, position, searchSet, peMode, traverseParams, 9999f, validator);
 				if (allowHarvest && <BestFoodSourceOnMap>c__AnonStorey.getterCanManipulate)
 				{
+					int searchRegionsMax;
+					if (<BestFoodSourceOnMap>c__AnonStorey.forceScanWholeMap && <BestFoodSourceOnMap>c__AnonStorey.bestThing == null)
+					{
+						searchRegionsMax = -1;
+					}
+					else
+					{
+						searchRegionsMax = 30;
+					}
 					Thing thing = GenClosest.ClosestThingReachable(<BestFoodSourceOnMap>c__AnonStorey.getter.Position, <BestFoodSourceOnMap>c__AnonStorey.getter.Map, ThingRequest.ForGroup(ThingRequestGroup.HarvestablePlant), PathEndMode.Touch, TraverseParms.For(<BestFoodSourceOnMap>c__AnonStorey.getter, Danger.Deadly, TraverseMode.ByPawn, false), 9999f, delegate(Thing x)
 					{
 						Plant plant = (Plant)x;
@@ -273,8 +270,8 @@ namespace RimWorld
 							return false;
 						}
 						ThingDef harvestedThingDef = plant.def.plant.harvestedThingDef;
-						return harvestedThingDef.IsNutritionGivingIngestible && <BestFoodSourceOnMap>c__AnonStorey.getter.CanReserve(plant, 1, -1, null, false) && (<BestFoodSourceOnMap>c__AnonStorey.allowForbidden || !plant.IsForbidden(<BestFoodSourceOnMap>c__AnonStorey.getter)) && (<BestFoodSourceOnMap>c__AnonStorey.bestThing == null || FoodUtility.GetFinalIngestibleDef(<BestFoodSourceOnMap>c__AnonStorey.bestThing, false).ingestible.preferability < harvestedThingDef.ingestible.preferability);
-					}, null, 0, 30, false, RegionType.Set_Passable, false);
+						return harvestedThingDef.IsNutritionGivingIngestible && <BestFoodSourceOnMap>c__AnonStorey.eater.RaceProps.CanEverEat(harvestedThingDef) && <BestFoodSourceOnMap>c__AnonStorey.getter.CanReserve(plant, 1, -1, null, false) && (<BestFoodSourceOnMap>c__AnonStorey.allowForbidden || !plant.IsForbidden(<BestFoodSourceOnMap>c__AnonStorey.getter)) && (<BestFoodSourceOnMap>c__AnonStorey.bestThing == null || FoodUtility.GetFinalIngestibleDef(<BestFoodSourceOnMap>c__AnonStorey.bestThing, false).ingestible.preferability < harvestedThingDef.ingestible.preferability);
+					}, null, 0, searchRegionsMax, false, RegionType.Set_Passable, false);
 					if (thing != null)
 					{
 						<BestFoodSourceOnMap>c__AnonStorey.bestThing = thing;
@@ -288,11 +285,7 @@ namespace RimWorld
 			}
 			else
 			{
-				int searchRegionsMax = 30;
-				if (<BestFoodSourceOnMap>c__AnonStorey.getter.Faction == Faction.OfPlayer)
-				{
-					searchRegionsMax = 100;
-				}
+				int maxRegionsToScan = FoodUtility.GetMaxRegionsToScan(<BestFoodSourceOnMap>c__AnonStorey.getter, <BestFoodSourceOnMap>c__AnonStorey.forceScanWholeMap);
 				FoodUtility.filtered.Clear();
 				foreach (Thing current in GenRadial.RadialDistinctThingsAround(<BestFoodSourceOnMap>c__AnonStorey.getter.Position, <BestFoodSourceOnMap>c__AnonStorey.getter.Map, 2f, true))
 				{
@@ -304,7 +297,7 @@ namespace RimWorld
 				}
 				bool flag = !<BestFoodSourceOnMap>c__AnonStorey.allowForbidden && ForbidUtility.CaresAboutForbidden(<BestFoodSourceOnMap>c__AnonStorey.getter, true) && <BestFoodSourceOnMap>c__AnonStorey.getter.playerSettings != null && <BestFoodSourceOnMap>c__AnonStorey.getter.playerSettings.EffectiveAreaRestrictionInPawnCurrentMap != null;
 				Predicate<Thing> predicate = (Thing t) => <BestFoodSourceOnMap>c__AnonStorey.foodValidator(t) && !FoodUtility.filtered.Contains(t) && (t is Building_NutrientPasteDispenser || t.def.ingestible.preferability > FoodPreferability.DesperateOnly) && !t.IsNotFresh();
-				FoodUtility.<BestFoodSourceOnMap>c__AnonStorey0 arg_454_0 = <BestFoodSourceOnMap>c__AnonStorey;
+				FoodUtility.<BestFoodSourceOnMap>c__AnonStorey0 arg_475_0 = <BestFoodSourceOnMap>c__AnonStorey;
 				IntVec3 position = <BestFoodSourceOnMap>c__AnonStorey.getter.Position;
 				Map map = <BestFoodSourceOnMap>c__AnonStorey.getter.Map;
 				ThingRequest thingReq = thingRequest;
@@ -312,12 +305,12 @@ namespace RimWorld
 				TraverseParms traverseParams = TraverseParms.For(<BestFoodSourceOnMap>c__AnonStorey.getter, Danger.Deadly, TraverseMode.ByPawn, false);
 				Predicate<Thing> validator = predicate;
 				bool ignoreEntirelyForbiddenRegions = flag;
-				arg_454_0.bestThing = GenClosest.ClosestThingReachable(position, map, thingReq, peMode, traverseParams, 9999f, validator, null, 0, searchRegionsMax, false, RegionType.Set_Passable, ignoreEntirelyForbiddenRegions);
+				arg_475_0.bestThing = GenClosest.ClosestThingReachable(position, map, thingReq, peMode, traverseParams, 9999f, validator, null, 0, maxRegionsToScan, false, RegionType.Set_Passable, ignoreEntirelyForbiddenRegions);
 				FoodUtility.filtered.Clear();
 				if (<BestFoodSourceOnMap>c__AnonStorey.bestThing == null)
 				{
 					<BestFoodSourceOnMap>c__AnonStorey.desperate = true;
-					FoodUtility.<BestFoodSourceOnMap>c__AnonStorey0 arg_4CE_0 = <BestFoodSourceOnMap>c__AnonStorey;
+					FoodUtility.<BestFoodSourceOnMap>c__AnonStorey0 arg_4EF_0 = <BestFoodSourceOnMap>c__AnonStorey;
 					position = <BestFoodSourceOnMap>c__AnonStorey.getter.Position;
 					map = <BestFoodSourceOnMap>c__AnonStorey.getter.Map;
 					thingReq = thingRequest;
@@ -325,7 +318,7 @@ namespace RimWorld
 					traverseParams = TraverseParms.For(<BestFoodSourceOnMap>c__AnonStorey.getter, Danger.Deadly, TraverseMode.ByPawn, false);
 					validator = <BestFoodSourceOnMap>c__AnonStorey.foodValidator;
 					ignoreEntirelyForbiddenRegions = flag;
-					arg_4CE_0.bestThing = GenClosest.ClosestThingReachable(position, map, thingReq, peMode, traverseParams, 9999f, validator, null, 0, searchRegionsMax, false, RegionType.Set_Passable, ignoreEntirelyForbiddenRegions);
+					arg_4EF_0.bestThing = GenClosest.ClosestThingReachable(position, map, thingReq, peMode, traverseParams, 9999f, validator, null, 0, maxRegionsToScan, false, RegionType.Set_Passable, ignoreEntirelyForbiddenRegions);
 				}
 				if (<BestFoodSourceOnMap>c__AnonStorey.bestThing != null)
 				{
@@ -333,6 +326,23 @@ namespace RimWorld
 				}
 			}
 			return <BestFoodSourceOnMap>c__AnonStorey.bestThing;
+		}
+
+		private static int GetMaxRegionsToScan(Pawn getter, bool forceScanWholeMap)
+		{
+			if (getter.RaceProps.Humanlike)
+			{
+				return -1;
+			}
+			if (forceScanWholeMap)
+			{
+				return -1;
+			}
+			if (getter.Faction == Faction.OfPlayer)
+			{
+				return 100;
+			}
+			return 30;
 		}
 
 		private static bool IsFoodSourceOnMapSociallyProper(Thing t, Pawn getter, Pawn eater, bool allowSociallyImproper)
@@ -452,11 +462,11 @@ namespace RimWorld
 			{
 				return;
 			}
-			if (pawn.Map != Find.VisibleMap)
+			if (pawn.Map != Find.CurrentMap)
 			{
 				return;
 			}
-			Thing thing = FoodUtility.SpawnedFoodSearchInnerScan(pawn, root, Find.VisibleMap.listerThings.ThingsInGroup(ThingRequestGroup.FoodSourceNotPlantOrTree), PathEndMode.ClosestTouch, TraverseParms.For(TraverseMode.PassDoors, Danger.Deadly, false), 9999f, null);
+			Thing thing = FoodUtility.SpawnedFoodSearchInnerScan(pawn, root, Find.CurrentMap.listerThings.ThingsInGroup(ThingRequestGroup.FoodSourceNotPlantOrTree), PathEndMode.ClosestTouch, TraverseParms.For(TraverseMode.PassDoors, Danger.Deadly, false), 9999f, null);
 			if (thing != null)
 			{
 				GenDraw.DrawLineBetween(root.ToVector3Shifted(), thing.Position.ToVector3Shifted());
@@ -471,13 +481,13 @@ namespace RimWorld
 			{
 				return;
 			}
-			if (pawn.Map != Find.VisibleMap)
+			if (pawn.Map != Find.CurrentMap)
 			{
 				return;
 			}
 			Text.Anchor = TextAnchor.MiddleCenter;
 			Text.Font = GameFont.Tiny;
-			foreach (Thing current in Find.VisibleMap.listerThings.ThingsInGroup(ThingRequestGroup.FoodSourceNotPlantOrTree))
+			foreach (Thing current in Find.CurrentMap.listerThings.ThingsInGroup(ThingRequestGroup.FoodSourceNotPlantOrTree))
 			{
 				ThingDef finalIngestibleDef = FoodUtility.GetFinalIngestibleDef(current, false);
 				float num = FoodUtility.FoodOptimality(pawn, current, finalIngestibleDef, (a - current.Position).LengthHorizontal, false);
@@ -503,9 +513,9 @@ namespace RimWorld
 			Text.Anchor = TextAnchor.UpperLeft;
 		}
 
-		private static Pawn BestPawnToHuntForPredator(Pawn predator)
+		private static Pawn BestPawnToHuntForPredator(Pawn predator, bool forceScanWholeMap)
 		{
-			if (predator.meleeVerbs.TryGetMeleeVerb() == null)
+			if (predator.meleeVerbs.TryGetMeleeVerb(null) == null)
 			{
 				return null;
 			}
@@ -515,13 +525,31 @@ namespace RimWorld
 			{
 				flag = true;
 			}
-			List<Pawn> allPawnsSpawned = predator.Map.mapPawns.AllPawnsSpawned;
+			FoodUtility.tmpPredatorCandidates.Clear();
+			int maxRegionsToScan = FoodUtility.GetMaxRegionsToScan(predator, forceScanWholeMap);
+			if (maxRegionsToScan < 0)
+			{
+				FoodUtility.tmpPredatorCandidates.AddRange(predator.Map.mapPawns.AllPawnsSpawned);
+			}
+			else
+			{
+				TraverseParms traverseParms = TraverseParms.For(predator, Danger.Deadly, TraverseMode.ByPawn, false);
+				RegionTraverser.BreadthFirstTraverse(predator.Position, predator.Map, (Region from, Region to) => to.Allows(traverseParms, true), delegate(Region x)
+				{
+					List<Thing> list = x.ListerThings.ThingsInGroup(ThingRequestGroup.Pawn);
+					for (int j = 0; j < list.Count; j++)
+					{
+						FoodUtility.tmpPredatorCandidates.Add((Pawn)list[j]);
+					}
+					return false;
+				}, 999999, RegionType.Set_Passable);
+			}
 			Pawn pawn = null;
 			float num = 0f;
 			bool tutorialMode = TutorSystem.TutorialMode;
-			for (int i = 0; i < allPawnsSpawned.Count; i++)
+			for (int i = 0; i < FoodUtility.tmpPredatorCandidates.Count; i++)
 			{
-				Pawn pawn2 = allPawnsSpawned[i];
+				Pawn pawn2 = FoodUtility.tmpPredatorCandidates[i];
 				if (predator.GetRoom(RegionType.Set_Passable) == pawn2.GetRoom(RegionType.Set_Passable))
 				{
 					if (predator != pawn2)
@@ -550,6 +578,7 @@ namespace RimWorld
 					}
 				}
 			}
+			FoodUtility.tmpPredatorCandidates.Clear();
 			return pawn;
 		}
 
@@ -560,6 +589,10 @@ namespace RimWorld
 				return false;
 			}
 			if (!prey.RaceProps.IsFlesh)
+			{
+				return false;
+			}
+			if (!Find.Storyteller.difficulty.predatorsHuntHumanlikes && prey.RaceProps.Humanlike)
 			{
 				return false;
 			}
@@ -580,7 +613,7 @@ namespace RimWorld
 					return false;
 				}
 			}
-			return (predator.Faction == null || prey.Faction == null || predator.HostileTo(prey)) && (predator.Faction != Faction.OfPlayer || prey.Faction != Faction.OfPlayer) && (!predator.RaceProps.herdAnimal || predator.def != prey.def);
+			return (predator.Faction == null || prey.Faction == null || predator.HostileTo(prey)) && (predator.Faction == null || prey.HostFaction == null || predator.HostileTo(prey)) && (predator.Faction != Faction.OfPlayer || prey.Faction != Faction.OfPlayer) && (!predator.RaceProps.herdAnimal || predator.def != prey.def);
 		}
 
 		public static float GetPreyScoreFor(Pawn predator, Pawn prey)
@@ -610,12 +643,12 @@ namespace RimWorld
 			}
 			Thing thing;
 			ThingDef thingDef;
-			if (FoodUtility.TryFindBestFoodSourceFor(pawn, pawn, true, out thing, out thingDef, false, false, false, true, false, false))
+			if (FoodUtility.TryFindBestFoodSourceFor(pawn, pawn, true, out thing, out thingDef, false, false, false, true, false, false, false))
 			{
 				GenDraw.DrawLineBetween(pawn.Position.ToVector3Shifted(), thing.Position.ToVector3Shifted());
 				if (!(thing is Pawn))
 				{
-					Pawn pawn2 = FoodUtility.BestPawnToHuntForPredator(pawn);
+					Pawn pawn2 = FoodUtility.BestPawnToHuntForPredator(pawn, true);
 					if (pawn2 != null)
 					{
 						GenDraw.DrawLineBetween(pawn.Position.ToVector3Shifted(), pawn2.Position.ToVector3Shifted());
@@ -698,9 +731,9 @@ namespace RimWorld
 			return corpse != null && corpse.InnerPawn.RaceProps.Humanlike;
 		}
 
-		public static int WillIngestStackCountOf(Pawn ingester, ThingDef def)
+		public static int WillIngestStackCountOf(Pawn ingester, ThingDef def, float singleFoodNutrition)
 		{
-			int num = Mathf.Min(def.ingestible.maxNumToIngestAtOnce, FoodUtility.StackCountForNutrition(def, ingester.needs.food.NutritionWanted));
+			int num = Mathf.Min(def.ingestible.maxNumToIngestAtOnce, FoodUtility.StackCountForNutrition(ingester.needs.food.NutritionWanted, singleFoodNutrition));
 			if (num < 1)
 			{
 				num = 1;
@@ -708,22 +741,31 @@ namespace RimWorld
 			return num;
 		}
 
-		public static float GetBodyPartNutrition(Pawn pawn, BodyPartRecord part)
+		public static float GetBodyPartNutrition(Corpse corpse, BodyPartRecord part)
 		{
-			if (!pawn.RaceProps.IsFlesh)
+			return FoodUtility.GetBodyPartNutrition(corpse.GetStatValue(StatDefOf.Nutrition, true), corpse.InnerPawn, part);
+		}
+
+		public static float GetBodyPartNutrition(float currentCorpseNutrition, Pawn pawn, BodyPartRecord part)
+		{
+			HediffSet hediffSet = pawn.health.hediffSet;
+			float coverageOfNotMissingNaturalParts = hediffSet.GetCoverageOfNotMissingNaturalParts(pawn.RaceProps.body.corePart);
+			if (coverageOfNotMissingNaturalParts <= 0f)
 			{
 				return 0f;
 			}
-			return 5.2f * pawn.BodySize * pawn.health.hediffSet.GetCoverageOfNotMissingNaturalParts(part);
+			float coverageOfNotMissingNaturalParts2 = hediffSet.GetCoverageOfNotMissingNaturalParts(part);
+			float num = coverageOfNotMissingNaturalParts2 / coverageOfNotMissingNaturalParts;
+			return currentCorpseNutrition * num;
 		}
 
-		public static int StackCountForNutrition(ThingDef def, float nutrition)
+		public static int StackCountForNutrition(float wantedNutrition, float singleFoodNutrition)
 		{
-			if (nutrition <= 0.0001f)
+			if (wantedNutrition <= 0.0001f)
 			{
 				return 0;
 			}
-			return Mathf.Max(Mathf.RoundToInt(nutrition / def.ingestible.nutrition), 1);
+			return Mathf.Max(Mathf.RoundToInt(wantedNutrition / singleFoodNutrition), 1);
 		}
 
 		public static bool ShouldBeFedBySomeone(Pawn pawn)
@@ -731,17 +773,37 @@ namespace RimWorld
 			return FeedPatientUtility.ShouldBeFed(pawn) || WardenFeedUtility.ShouldBeFed(pawn);
 		}
 
-		public static void AddFoodPoisoningHediff(Pawn pawn, Thing ingestible)
+		public static void AddFoodPoisoningHediff(Pawn pawn, Thing ingestible, FoodPoisonCause cause)
 		{
-			pawn.health.AddHediff(HediffMaker.MakeHediff(HediffDefOf.FoodPoisoning, pawn, null), null, null);
-			if (PawnUtility.ShouldSendNotificationAbout(pawn))
+			pawn.health.AddHediff(HediffMaker.MakeHediff(HediffDefOf.FoodPoisoning, pawn, null), null, null, null);
+			if (PawnUtility.ShouldSendNotificationAbout(pawn) && MessagesRepeatAvoider.MessageShowAllowed("MessageFoodPoisoning-" + pawn.thingIDNumber, 0.1f))
 			{
-				Messages.Message("MessageFoodPoisoning".Translate(new object[]
+				string text = "MessageFoodPoisoning".Translate(new object[]
 				{
 					pawn.LabelShort,
-					ingestible.LabelCapNoCount
-				}).CapitalizeFirst(), pawn, MessageTypeDefOf.NegativeEvent);
+					ingestible.LabelCapNoCount,
+					cause.ToStringHuman().CapitalizeFirst()
+				}).CapitalizeFirst();
+				Messages.Message(text, pawn, MessageTypeDefOf.NegativeEvent, true);
 			}
+		}
+
+		public static bool Starving(this Pawn p)
+		{
+			return p.needs != null && p.needs.food != null && p.needs.food.Starving;
+		}
+
+		public static float GetNutrition(Thing foodSource, ThingDef foodDef)
+		{
+			if (foodSource == null || foodDef == null)
+			{
+				return 0f;
+			}
+			if (foodSource.def == foodDef)
+			{
+				return foodSource.GetStatValue(StatDefOf.Nutrition, true);
+			}
+			return foodDef.GetStatValueAbstract(StatDefOf.Nutrition, null);
 		}
 	}
 }

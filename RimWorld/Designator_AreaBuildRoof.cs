@@ -4,7 +4,7 @@ using Verse;
 
 namespace RimWorld
 {
-	public class Designator_AreaBuildRoof : Designator
+	public class Designator_AreaBuildRoof : Designator_Area
 	{
 		public override int DraggableDimensions
 		{
@@ -28,9 +28,9 @@ namespace RimWorld
 			this.defaultDesc = "DesignatorAreaBuildRoofExpandDesc".Translate();
 			this.icon = ContentFinder<Texture2D>.Get("UI/Designators/BuildRoofArea", true);
 			this.hotKey = KeyBindingDefOf.Misc10;
-			this.soundDragSustain = SoundDefOf.DesignateDragAreaAdd;
-			this.soundDragChanged = SoundDefOf.DesignateDragAreaAddChanged;
-			this.soundSucceeded = SoundDefOf.DesignateAreaAdd;
+			this.soundDragSustain = SoundDefOf.Designate_DragAreaAdd;
+			this.soundDragChanged = null;
+			this.soundSucceeded = SoundDefOf.Designate_AreaAdd;
 			this.useMouseIcon = true;
 			this.tutorTag = "AreaBuildRoofExpand";
 		}
@@ -53,6 +53,22 @@ namespace RimWorld
 		{
 			base.Map.areaManager.BuildRoof[c] = true;
 			base.Map.areaManager.NoRoof[c] = false;
+		}
+
+		public override bool ShowWarningForCell(IntVec3 c)
+		{
+			foreach (Thing current in base.Map.thingGrid.ThingsAt(c))
+			{
+				if (current.def.plant != null && current.def.plant.interferesWithRoof)
+				{
+					Messages.Message("MessageRoofIncompatibleWithPlant".Translate(new object[]
+					{
+						Find.ActiveLanguageWorker.WithIndefiniteArticlePostProcessed(current.def.label)
+					}), MessageTypeDefOf.CautionInput, false);
+					return true;
+				}
+			}
+			return false;
 		}
 
 		public override void SelectedUpdate()

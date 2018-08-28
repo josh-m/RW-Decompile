@@ -7,6 +7,8 @@ namespace RimWorld
 	{
 		public float massCapacity = 150f;
 
+		public float restEffectiveness;
+
 		public CompProperties_Transporter()
 		{
 			this.compClass = typeof(CompTransporter);

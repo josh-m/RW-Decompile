@@ -19,6 +19,10 @@ namespace RimWorld.Planet
 				{
 					return -1;
 				}
+				if (Find.ScreenshotModeHandler.Active)
+				{
+					return -1;
+				}
 				return GenWorld.MouseTile(false);
 			}
 		}

@@ -42,17 +42,17 @@ namespace Verse
 
 		public List<HediffGiverSetDef> hediffGiverSets;
 
-		public float petness;
+		public bool herdAnimal;
 
 		public bool packAnimal;
-
-		public bool herdAnimal;
 
 		public bool predator;
 
 		public float maxPreyBodySize = 99999f;
 
-		public float wildness = -1f;
+		public float wildness;
+
+		public float petness;
 
 		public float nuzzleMtbHours = -1f;
 
@@ -70,11 +70,13 @@ namespace Verse
 
 		public float mateMtbHours = 12f;
 
+		[NoTranslate]
 		public List<string> untrainableTags;
 
+		[NoTranslate]
 		public List<string> trainableTags;
 
-		private TrainableIntelligenceDef trainableIntelligence;
+		public TrainabilityDef trainability;
 
 		private RulePackDef nameGenerator;
 
@@ -92,29 +94,22 @@ namespace Verse
 
 		public List<LifeStageAge> lifeStageAges = new List<LifeStageAge>();
 
-		public Color leatherColor = ColorLibrary.Leather;
-
-		public string leatherLabel;
-
-		public float leatherCommonalityFactor = 1f;
-
-		public float leatherInsulation = 1.1f;
-
-		public List<StatModifier> leatherStatFactors;
-
-		public float leatherMarketValueFactor = 1f;
-
+		[MustTranslate]
 		public string meatLabel;
 
-		public Color meatColor;
+		public Color meatColor = Color.white;
+
+		public float meatMarketValue = 2f;
 
 		public ThingDef useMeatFrom;
 
 		public ThingDef useLeatherFrom;
 
+		public ThingDef leatherDef;
+
 		public ShadowData specialShadowData;
 
-		public IntRange soundCallIntervalRange;
+		public IntRange soundCallIntervalRange = new IntRange(2000, 4000);
 
 		public SoundDef soundMeleeHitPawn;
 
@@ -129,10 +124,10 @@ namespace Verse
 		public ThingDef meatDef;
 
 		[Unsaved]
-		public ThingDef leatherDef;
+		public ThingDef corpseDef;
 
 		[Unsaved]
-		public ThingDef corpseDef;
+		private PawnKindDef cachedAnyPawnKind;
 
 		public bool Humanlike
 		{
@@ -278,21 +273,9 @@ namespace Verse
 				}
 				if (this.IsFlesh)
 				{
-					return ThingDefOf.FilthBlood;
+					return ThingDefOf.Filth_Blood;
 				}
 				return null;
-			}
-		}
-
-		public TrainableIntelligenceDef TrainableIntelligence
-		{
-			get
-			{
-				if (this.trainableIntelligence == null)
-				{
-					return TrainableIntelligenceDefOf.Intermediate;
-				}
-				return this.trainableIntelligence;
 			}
 		}
 
@@ -300,16 +283,28 @@ namespace Verse
 		{
 			get
 			{
-				return this.Animal && this.herdAnimal && this.herdMigrationAllowed;
+				return this.Animal && this.herdMigrationAllowed;
 			}
 		}
 
-		public RaceProperties()
+		public PawnKindDef AnyPawnKind
 		{
-			ColorInt colorInt = new ColorInt(141, 56, 52);
-			this.meatColor = colorInt.ToColor;
-			this.soundCallIntervalRange = new IntRange(2000, 4000);
-			base..ctor();
+			get
+			{
+				if (this.cachedAnyPawnKind == null)
+				{
+					List<PawnKindDef> allDefsListForReading = DefDatabase<PawnKindDef>.AllDefsListForReading;
+					for (int i = 0; i < allDefsListForReading.Count; i++)
+					{
+						if (allDefsListForReading[i].race.race == this)
+						{
+							this.cachedAnyPawnKind = allDefsListForReading[i];
+							break;
+						}
+					}
+				}
+				return this.cachedAnyPawnKind;
+			}
 		}
 
 		public RulePackDef GetNameGenerator(Gender gender)
@@ -425,23 +420,36 @@ namespace Verse
 					this.useLeatherFrom.race.useLeatherFrom
 				});
 			}
+			if (this.Animal && this.trainability == null)
+			{
+				yield return "animal has trainability = null";
+			}
 		}
 
 		[DebuggerHidden]
-		internal IEnumerable<StatDrawEntry> SpecialDisplayStats(ThingDef parentDef)
+		public IEnumerable<StatDrawEntry> SpecialDisplayStats(ThingDef parentDef)
 		{
 			yield return new StatDrawEntry(StatCategoryDefOf.Basics, "Race".Translate(), parentDef.LabelCap, 2000, string.Empty);
 			yield return new StatDrawEntry(StatCategoryDefOf.Basics, "Diet".Translate(), this.foodType.ToHumanString().CapitalizeFirst(), 0, string.Empty);
-			if (this.wildness >= 0f)
+			if (parentDef.race.leatherDef != null)
+			{
+				yield return new StatDrawEntry(StatCategoryDefOf.Basics, "LeatherType".Translate(), parentDef.race.leatherDef.LabelCap, 0, string.Empty);
+			}
+			if (parentDef.race.Animal || this.wildness > 0f)
 			{
 				yield return new StatDrawEntry(StatCategoryDefOf.Basics, "Wildness".Translate(), this.wildness.ToStringPercent(), 0, string.Empty)
 				{
-					overrideReportText = "WildnessExplanation".Translate()
+					overrideReportText = TrainableUtility.GetWildnessExplanation(parentDef)
 				};
 			}
-			if (this.intelligence < Intelligence.Humanlike)
+			yield return new StatDrawEntry(StatCategoryDefOf.Basics, "HarmedRevengeChance".Translate(), PawnUtility.GetManhunterOnDamageChance(parentDef.race).ToStringPercent(), 0, string.Empty)
 			{
-				yield return new StatDrawEntry(StatCategoryDefOf.Basics, "TrainableIntelligence".Translate(), this.TrainableIntelligence.LabelCap, 0, string.Empty);
+				overrideReportText = "HarmedRevengeChanceExplanation".Translate()
+			};
+			yield return new StatDrawEntry(StatCategoryDefOf.Basics, "TameFailedRevengeChance".Translate(), parentDef.race.manhunterOnTameFailChance.ToStringPercent(), 0, string.Empty);
+			if (this.intelligence < Intelligence.Humanlike && this.trainability != null)
+			{
+				yield return new StatDrawEntry(StatCategoryDefOf.Basics, "Trainability".Translate(), this.trainability.LabelCap, 0, string.Empty);
 			}
 			yield return new StatDrawEntry(StatCategoryDefOf.Basics, "StatsReport_LifeExpectancy".Translate(), this.lifeExpectancy.ToStringByStyle(ToStringStyle.Integer, ToStringNumberSense.Absolute), 0, string.Empty);
 			if (this.intelligence < Intelligence.Humanlike)
@@ -454,11 +462,15 @@ namespace Verse
 					})
 				};
 			}
-			if (this.packAnimal)
+			yield return new StatDrawEntry(StatCategoryDefOf.Basics, "PackAnimal".Translate(), (!this.packAnimal) ? "No".Translate() : "Yes".Translate(), 0, string.Empty)
 			{
-				yield return new StatDrawEntry(StatCategoryDefOf.Basics, "PackAnimal".Translate(), "Yes".Translate(), 0, string.Empty)
+				overrideReportText = "PackAnimalExplanation".Translate()
+			};
+			if (parentDef.race.nuzzleMtbHours > 0f)
+			{
+				yield return new StatDrawEntry(StatCategoryDefOf.PawnSocial, "NuzzleInterval".Translate(), Mathf.RoundToInt(parentDef.race.nuzzleMtbHours * 2500f).ToStringTicksToPeriod(), 0, string.Empty)
 				{
-					overrideReportText = "PackAnimalExplanation".Translate()
+					overrideReportText = "NuzzleIntervalExplanation".Translate()
 				};
 			}
 		}

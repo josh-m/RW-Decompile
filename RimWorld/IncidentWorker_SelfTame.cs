@@ -14,9 +14,9 @@ namespace RimWorld
 			select x;
 		}
 
-		protected override bool CanFireNowSub(IIncidentTarget target)
+		protected override bool CanFireNowSub(IncidentParms parms)
 		{
-			Map map = (Map)target;
+			Map map = (Map)parms.target;
 			return this.Candidates(map).Any<Pawn>();
 		}
 
@@ -24,7 +24,7 @@ namespace RimWorld
 		{
 			Map map = (Map)parms.target;
 			Pawn pawn = null;
-			if (!this.Candidates(map).TryRandomElementByWeight((Pawn x) => x.RaceProps.wildness, out pawn))
+			if (!this.Candidates(map).TryRandomElement(out pawn))
 			{
 				return false;
 			}
@@ -65,7 +65,7 @@ namespace RimWorld
 			Find.LetterStack.ReceiveLetter("LetterLabelAnimalSelfTame".Translate(new object[]
 			{
 				pawn.KindLabel
-			}).CapitalizeFirst(), text2, LetterDefOf.PositiveEvent, pawn, null);
+			}).CapitalizeFirst(), text2, LetterDefOf.PositiveEvent, pawn, null, null);
 			return true;
 		}
 	}

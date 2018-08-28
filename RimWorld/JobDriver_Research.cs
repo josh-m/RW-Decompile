@@ -10,8 +10,6 @@ namespace RimWorld
 	{
 		private const int JobEndInterval = 4000;
 
-		private const float BaseResearchSpeed = 1.1f;
-
 		private ResearchProjectDef Project
 		{
 			get
@@ -28,9 +26,12 @@ namespace RimWorld
 			}
 		}
 
-		public override bool TryMakePreToilReservations()
+		public override bool TryMakePreToilReservations(bool errorOnFailed)
 		{
-			return this.pawn.Reserve(this.ResearchBench, this.job, 1, -1, null);
+			Pawn pawn = this.pawn;
+			LocalTargetInfo target = this.ResearchBench;
+			Job job = this.job;
+			return pawn.Reserve(target, job, 1, -1, null, errorOnFailed);
 		}
 
 		[DebuggerHidden]
@@ -42,10 +43,10 @@ namespace RimWorld
 			research.tickAction = delegate
 			{
 				Pawn actor = research.actor;
-				float num = 1.1f * actor.GetStatValue(StatDefOf.ResearchSpeed, true);
+				float num = actor.GetStatValue(StatDefOf.ResearchSpeed, true);
 				num *= this.$this.TargetThingA.GetStatValue(StatDefOf.ResearchSpeedFactor, true);
 				Find.ResearchManager.ResearchPerformed(num, actor);
-				actor.skills.Learn(SkillDefOf.Intellectual, 0.11f, false);
+				actor.skills.Learn(SkillDefOf.Intellectual, 0.1f, false);
 				actor.GainComfortFromCellIfPossible();
 			};
 			research.FailOn(() => this.$this.Project == null);
@@ -63,8 +64,9 @@ namespace RimWorld
 			}, false, -0.5f);
 			research.defaultCompleteMode = ToilCompleteMode.Delay;
 			research.defaultDuration = 4000;
+			research.activeSkill = (() => SkillDefOf.Intellectual);
 			yield return research;
-			yield return Toils_General.Wait(2);
+			yield return Toils_General.Wait(2, TargetIndex.None);
 		}
 	}
 }

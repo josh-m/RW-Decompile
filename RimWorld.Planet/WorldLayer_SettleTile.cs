@@ -10,7 +10,7 @@ namespace RimWorld.Planet
 		{
 			get
 			{
-				if (!(InspectGizmoGrid.mouseoverGizmo is Command_Settle))
+				if (!(Find.WorldInterface.inspectPane.mouseoverGizmo is Command_Settle))
 				{
 					return -1;
 				}

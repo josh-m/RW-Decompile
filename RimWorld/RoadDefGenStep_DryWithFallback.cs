@@ -7,7 +7,7 @@ namespace RimWorld
 	{
 		public TerrainDef fallback;
 
-		public override void Place(Map map, IntVec3 position, TerrainDef rockDef)
+		public override void Place(Map map, IntVec3 position, TerrainDef rockDef, IntVec3 origin, GenStep_Roads.DistanceElement[,] distance)
 		{
 			RoadDefGenStep_DryWithFallback.PlaceWorker(map, position, this.fallback);
 		}
@@ -19,7 +19,7 @@ namespace RimWorld
 				map.terrainGrid.SetTerrain(position, map.terrainGrid.TerrainAt(position).driesTo);
 			}
 			TerrainDef terrainDef = map.terrainGrid.TerrainAt(position);
-			if (terrainDef.passability == Traversability.Impassable || terrainDef == TerrainDefOf.WaterDeep || terrainDef == TerrainDefOf.WaterMovingShallow || terrainDef == TerrainDefOf.WaterMovingDeep)
+			if (terrainDef.passability == Traversability.Impassable || terrainDef.IsRiver)
 			{
 				map.terrainGrid.SetTerrain(position, fallback);
 			}

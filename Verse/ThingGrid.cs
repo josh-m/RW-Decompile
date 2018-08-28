@@ -52,7 +52,7 @@ namespace Verse
 					" tried to register out of bounds at ",
 					c,
 					". Destroying."
-				}));
+				}), false);
 				t.Destroy(DestroyMode.Vanish);
 				return;
 			}
@@ -86,7 +86,7 @@ namespace Verse
 		{
 			if (!c.InBounds(this.map))
 			{
-				Log.Error(t + " tried to de-register out of bounds at " + c);
+				Log.Error(t + " tried to de-register out of bounds at " + c, false);
 				return;
 			}
 			int num = this.map.cellIndices.CellToIndex(c);
@@ -113,7 +113,7 @@ namespace Verse
 		{
 			if (!c.InBounds(this.map))
 			{
-				Log.ErrorOnce("Got ThingsListAt out of bounds: " + c, 495287);
+				Log.ErrorOnce("Got ThingsListAt out of bounds: " + c, 495287, false);
 				return ThingGrid.EmptyThingList;
 			}
 			return this.thingGrid[this.map.cellIndices.CellToIndex(c)];

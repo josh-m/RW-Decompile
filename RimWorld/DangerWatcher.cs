@@ -1,6 +1,5 @@
 using System;
 using System.Linq;
-using UnityEngine;
 using Verse;
 using Verse.AI;
 using Verse.AI.Group;
@@ -19,42 +18,13 @@ namespace RimWorld
 
 		private const int UpdateInterval = 101;
 
-		private const int ColonistHarmedDangerSeconds = 15;
-
 		public StoryDanger DangerRating
 		{
 			get
 			{
 				if (Find.TickManager.TicksGame > this.lastUpdateTick + 101)
 				{
-					int num = this.map.attackTargetsCache.TargetsHostileToColony.Count(new Func<IAttackTarget, bool>(GenHostility.IsActiveThreatToPlayer));
-					if (num == 0)
-					{
-						this.dangerRatingInt = StoryDanger.None;
-					}
-					else if (num <= Mathf.CeilToInt((float)this.map.mapPawns.FreeColonistsSpawnedCount * 0.5f))
-					{
-						this.dangerRatingInt = StoryDanger.Low;
-					}
-					else
-					{
-						this.dangerRatingInt = StoryDanger.Low;
-						if (this.lastColonistHarmedTick > Find.TickManager.TicksGame - 900)
-						{
-							this.dangerRatingInt = StoryDanger.High;
-						}
-						else
-						{
-							foreach (Lord current in this.map.lordManager.lords)
-							{
-								if (current.CurLordToil is LordToil_AssaultColony)
-								{
-									this.dangerRatingInt = StoryDanger.High;
-									break;
-								}
-							}
-						}
-					}
+					this.dangerRatingInt = this.CalculateDangerRating();
 					this.lastUpdateTick = Find.TickManager.TicksGame;
 				}
 				return this.dangerRatingInt;
@@ -64,6 +34,38 @@ namespace RimWorld
 		public DangerWatcher(Map map)
 		{
 			this.map = map;
+		}
+
+		private StoryDanger CalculateDangerRating()
+		{
+			float num = this.map.attackTargetsCache.TargetsHostileToColony.Where(new Func<IAttackTarget, bool>(GenHostility.IsActiveThreatToPlayer)).Sum((IAttackTarget t) => (!(t is Pawn)) ? 0f : ((Pawn)t).kindDef.combatPower);
+			if (num == 0f)
+			{
+				return StoryDanger.None;
+			}
+			int num2 = (from p in this.map.mapPawns.FreeColonistsSpawned
+			where !p.Downed
+			select p).Count<Pawn>();
+			if (num < 150f && num <= (float)num2 * 18f)
+			{
+				return StoryDanger.Low;
+			}
+			if (num > 400f)
+			{
+				return StoryDanger.High;
+			}
+			if (this.lastColonistHarmedTick > Find.TickManager.TicksGame - 900)
+			{
+				return StoryDanger.High;
+			}
+			foreach (Lord current in this.map.lordManager.lords)
+			{
+				if (current.faction.HostileTo(Faction.OfPlayer) && current.CurLordToil.ForceHighStoryDanger && current.AnyActivePawn)
+				{
+					return StoryDanger.High;
+				}
+			}
+			return StoryDanger.Low;
 		}
 
 		public void Notify_ColonistHarmedExternally()

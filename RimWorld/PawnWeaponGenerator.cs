@@ -13,7 +13,7 @@ namespace RimWorld
 
 		public static void Reset()
 		{
-			Predicate<ThingDef> isWeapon = (ThingDef td) => td.equipmentType == EquipmentType.Primary && td.canBeSpawningInventory && !td.weaponTags.NullOrEmpty<string>();
+			Predicate<ThingDef> isWeapon = (ThingDef td) => td.equipmentType == EquipmentType.Primary && !td.weaponTags.NullOrEmpty<string>();
 			PawnWeaponGenerator.allWeaponPairs = ThingStuffPair.AllWith(isWeapon);
 			foreach (ThingDef thingDef in from td in DefDatabase<ThingDef>.AllDefs
 			where isWeapon(td)
@@ -60,9 +60,9 @@ namespace RimWorld
 				ThingStuffPair w = PawnWeaponGenerator.allWeaponPairs[i];
 				if (w.Price <= randomInRange)
 				{
-					if (pawn.kindDef.weaponTags.Any((string tag) => w.thing.weaponTags.Contains(tag)))
+					if (pawn.kindDef.weaponTags == null || pawn.kindDef.weaponTags.Any((string tag) => w.thing.weaponTags.Contains(tag)))
 					{
-						if (w.thing.generateAllowChance >= 1f || Rand.ValueSeeded(pawn.thingIDNumber ^ 28554824) <= w.thing.generateAllowChance)
+						if (w.thing.generateAllowChance >= 1f || Rand.ChanceSeeded(w.thing.generateAllowChance, pawn.thingIDNumber ^ (int)w.thing.shortHash ^ 28554824))
 						{
 							PawnWeaponGenerator.workingWeapons.Add(w);
 						}
@@ -124,7 +124,8 @@ namespace RimWorld
 			return num;
 		}
 
-		internal static void MakeTableWeaponPairs()
+		[DebugOutput]
+		private static void WeaponPairs()
 		{
 			IEnumerable<ThingStuffPair> arg_153_0 = from p in PawnWeaponGenerator.allWeaponPairs
 			orderby p.thing.defName descending
@@ -135,14 +136,15 @@ namespace RimWorld
 			expr_2D[2] = new TableDataGetter<ThingStuffPair>("price", (ThingStuffPair p) => p.Price.ToString());
 			expr_2D[3] = new TableDataGetter<ThingStuffPair>("commonality", (ThingStuffPair p) => p.Commonality.ToString("F5"));
 			expr_2D[4] = new TableDataGetter<ThingStuffPair>("commMult", (ThingStuffPair p) => p.commonalityMultiplier.ToString("F5"));
-			expr_2D[5] = new TableDataGetter<ThingStuffPair>("def-commonality", (ThingStuffPair p) => p.thing.generateCommonality.ToString("F2"));
+			expr_2D[5] = new TableDataGetter<ThingStuffPair>("generateCommonality", (ThingStuffPair p) => p.thing.generateCommonality.ToString("F2"));
 			expr_2D[6] = new TableDataGetter<ThingStuffPair>("derp", (ThingStuffPair p) => (!PawnWeaponGenerator.IsDerpWeapon(p.thing, p.stuff)) ? string.Empty : "D");
 			DebugTables.MakeTablesDialog<ThingStuffPair>(arg_153_0, expr_2D);
 		}
 
-		internal static void MakeTableWeaponPairsByThing()
+		[DebugOutput]
+		private static void WeaponPairsByThing()
 		{
-			PawnApparelGenerator.MakeTablePairsByThing(PawnWeaponGenerator.allWeaponPairs);
+			DebugOutputsGeneral.MakeTablePairsByThing(PawnWeaponGenerator.allWeaponPairs);
 		}
 	}
 }

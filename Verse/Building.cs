@@ -12,6 +12,8 @@ namespace Verse
 	{
 		private Sustainer sustainerAmbient;
 
+		public bool canChangeTerrainOnDestroyed = true;
+
 		public CompPower PowerComp
 		{
 			get
@@ -37,6 +39,12 @@ namespace Verse
 				base.HitPoints = value;
 				BuildingsDamageSectionLayerUtility.Notify_BuildingHitPointsChanged(this, hitPoints);
 			}
+		}
+
+		public override void ExposeData()
+		{
+			base.ExposeData();
+			Scribe_Values.Look<bool>(ref this.canChangeTerrainOnDestroyed, "canChangeTerrainOnDestroyed", true, false);
 		}
 
 		public override void SpawnSetup(Map map, bool respawningAfterLoad)
@@ -83,24 +91,31 @@ namespace Verse
 			{
 				base.Map.exitMapGrid.Notify_LOSBlockerSpawned();
 			}
-			SmoothFloorDesignatorUtility.Notify_BuildingSpawned(this);
+			SmoothSurfaceDesignatorUtility.Notify_BuildingSpawned(this);
 		}
 
-		public override void DeSpawn()
+		public override void DeSpawn(DestroyMode mode = DestroyMode.Vanish)
 		{
 			Map map = base.Map;
-			base.DeSpawn();
+			base.DeSpawn(mode);
 			if (this.def.IsEdifice())
 			{
 				map.edificeGrid.DeRegister(this);
 			}
-			if (this.def.MakeFog)
+			if (mode != DestroyMode.WillReplace)
 			{
-				map.fogGrid.Notify_FogBlockerRemoved(base.Position);
-			}
-			if (this.def.holdsRoof)
-			{
-				RoofCollapseCellsFinder.Notify_RoofHolderDespawned(this, map);
+				if (this.def.MakeFog)
+				{
+					map.fogGrid.Notify_FogBlockerRemoved(base.Position);
+				}
+				if (this.def.holdsRoof)
+				{
+					RoofCollapseCellsFinder.Notify_RoofHolderDespawned(this, map);
+				}
+				if (this.def.IsSmoothable)
+				{
+					SmoothSurfaceDesignatorUtility.Notify_BuildingDespawned(this, map);
+				}
 			}
 			if (this.sustainerAmbient != null)
 			{
@@ -128,12 +143,12 @@ namespace Verse
 			}
 			map.listerBuildings.Remove(this);
 			map.listerBuildingsRepairable.Notify_BuildingDeSpawned(this);
-			if (this.def.leaveTerrain != null && Current.ProgramState == ProgramState.Playing)
+			if (this.def.building.leaveTerrain != null && Current.ProgramState == ProgramState.Playing && this.canChangeTerrainOnDestroyed)
 			{
 				CellRect.CellRectIterator iterator = this.OccupiedRect().GetIterator();
 				while (!iterator.Done())
 				{
-					map.terrainGrid.SetTerrain(iterator.Current, this.def.leaveTerrain);
+					map.terrainGrid.SetTerrain(iterator.Current, this.def.building.leaveTerrain);
 					iterator.MoveNext();
 				}
 			}
@@ -159,12 +174,18 @@ namespace Verse
 
 		public override void Destroy(DestroyMode mode = DestroyMode.Vanish)
 		{
+			bool spawned = base.Spawned;
 			Map map = base.Map;
+			SmoothableWallUtility.Notify_BuildingDestroying(this, mode);
 			base.Destroy(mode);
 			InstallBlueprintUtility.CancelBlueprintsFor(this);
-			if (mode == DestroyMode.Deconstruct)
+			if (mode == DestroyMode.Deconstruct && spawned)
 			{
-				SoundDef.Named("BuildingDeconstructed").PlayOneShot(new TargetInfo(base.Position, map, false));
+				SoundDefOf.Building_Deconstructed.PlayOneShot(new TargetInfo(base.Position, map, false));
+			}
+			if (Find.PlaySettings.autoRebuild && mode == DestroyMode.KillFinalize && base.Faction == Faction.OfPlayer && spawned && this.def.blueprintDef != null && this.def.IsResearchFinished && map.areaManager.Home[base.Position] && GenConstruct.CanPlaceBlueprintAt(this.def, base.Position, base.Rotation, map, false, null).Accepted)
+			{
+				GenConstruct.PlaceBlueprintForBuild(this.def, base.Position, map, base.Rotation, Faction.OfPlayer, base.Stuff);
 			}
 		}
 
@@ -193,10 +214,14 @@ namespace Verse
 				base.Map.listerBuildingsRepairable.Notify_BuildingSpawned(this);
 				base.Map.listerBuildings.Add(this);
 				base.Map.mapDrawer.MapMeshDirty(base.Position, MapMeshFlag.PowerGrid, true, false);
+				if (newFaction == Faction.OfPlayer)
+				{
+					AutoHomeAreaMaker.Notify_BuildingClaimed(this);
+				}
 			}
 		}
 
-		public override void PreApplyDamage(DamageInfo dinfo, out bool absorbed)
+		public override void PreApplyDamage(ref DamageInfo dinfo, out bool absorbed)
 		{
 			if (base.Faction != null && base.Spawned && base.Faction != Faction.OfPlayer)
 			{
@@ -209,7 +234,7 @@ namespace Verse
 					}
 				}
 			}
-			base.PreApplyDamage(dinfo, out absorbed);
+			base.PreApplyDamage(ref dinfo, out absorbed);
 		}
 
 		public override void PostApplyDamage(DamageInfo dinfo, float totalDamageDealt)
@@ -247,11 +272,18 @@ namespace Verse
 			{
 				yield return buildCopy;
 			}
+			if (base.Faction == Faction.OfPlayer)
+			{
+				foreach (Command facility in BuildFacilityCommandUtility.BuildFacilityCommands(this.def))
+				{
+					yield return facility;
+				}
+			}
 		}
 
 		public virtual bool ClaimableBy(Faction by)
 		{
-			if (this.def.building.isNaturalRock || !this.def.Claimable)
+			if (!this.def.Claimable)
 			{
 				return false;
 			}
@@ -261,7 +293,7 @@ namespace Verse
 				{
 					return false;
 				}
-				if (by == Faction.OfPlayer)
+				if (by == Faction.OfPlayer && base.Spawned)
 				{
 					List<Pawn> list = base.Map.mapPawns.SpawnedPawnsInFaction(base.Faction);
 					for (int i = 0; i < list.Count; i++)
@@ -276,9 +308,9 @@ namespace Verse
 			return true;
 		}
 
-		public virtual ushort PathFindCostFor(Pawn p)
+		public virtual bool DeconstructibleBy(Faction faction)
 		{
-			return 0;
+			return DebugSettings.godMode || (this.def.building.IsDeconstructible && (base.Faction == faction || this.ClaimableBy(faction) || this.def.building.alwaysDeconstructible));
 		}
 
 		public virtual ushort PathWalkCostFor(Pawn p)

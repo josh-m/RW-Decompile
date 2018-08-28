@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using Verse;
 
 namespace RimWorld
@@ -37,15 +38,20 @@ namespace RimWorld
 			{
 				return null;
 			}
-			if (thingDef.tradeability != Tradeability.Stockable)
+			if (!thingDef.tradeability.TraderCanSell())
 			{
-				Log.Error("Tried to make non-Stockable thing for trader stock: " + thingDef);
+				Log.Error("Tried to make non-trader-sellable thing for trader stock: " + thingDef, false);
 				return null;
 			}
 			ThingDef stuff = null;
 			if (thingDef.MadeFromStuff)
 			{
-				stuff = GenStuff.RandomStuffByCommonalityFor(thingDef, TechLevel.Undefined);
+				if (!(from x in GenStuff.AllowedStuffsFor(thingDef, TechLevel.Undefined)
+				where !PawnWeaponGenerator.IsDerpWeapon(thingDef, x)
+				select x).TryRandomElementByWeight((ThingDef x) => x.stuffProps.commonality, out stuff))
+				{
+					stuff = GenStuff.RandomStuffByCommonalityFor(thingDef, TechLevel.Undefined);
+				}
 			}
 			Thing thing = ThingMaker.MakeThing(thingDef, stuff);
 			thing.stackCount = stackCount;

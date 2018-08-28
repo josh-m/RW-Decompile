@@ -20,7 +20,7 @@ namespace RimWorld
 			this.cachedResults.Clear();
 		}
 
-		public bool ThingsAvailableAnywhere(ThingCountClass need, Pawn pawn)
+		public bool ThingsAvailableAnywhere(ThingDefCountClass need, Pawn pawn)
 		{
 			int key = Gen.HashCombine<Faction>(need.GetHashCode(), pawn.Faction);
 			bool flag;

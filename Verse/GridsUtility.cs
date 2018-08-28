@@ -42,6 +42,11 @@ namespace Verse
 			return map.snowGrid.GetDepth(c);
 		}
 
+		public static bool Fogged(this Thing t)
+		{
+			return t.Map.fogGrid.IsFogged(t.Position);
+		}
+
 		public static bool Fogged(this IntVec3 c, Map map)
 		{
 			return map.fogGrid.IsFogged(c);
@@ -107,6 +112,19 @@ namespace Verse
 				if (thingList[i].def == def)
 				{
 					return thingList[i];
+				}
+			}
+			return null;
+		}
+
+		public static ThingWithComps GetFirstThing<TComp>(this IntVec3 c, Map map) where TComp : ThingComp
+		{
+			List<Thing> thingList = c.GetThingList(map);
+			for (int i = 0; i < thingList.Count; i++)
+			{
+				if (thingList[i].TryGetComp<TComp>() != null)
+				{
+					return (ThingWithComps)thingList[i];
 				}
 			}
 			return null;
@@ -275,7 +293,7 @@ namespace Verse
 			{
 				return roomOrAdjacent.isPrisonCell;
 			}
-			Log.Error("Checking prison cell status of " + c + " which is not in or adjacent to a room.");
+			Log.Error("Checking prison cell status of " + c + " which is not in or adjacent to a room.", false);
 			return false;
 		}
 

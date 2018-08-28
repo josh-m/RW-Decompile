@@ -82,6 +82,18 @@ namespace Verse.AI
 			return this.jobs[0];
 		}
 
+		public bool AnyCanBeginNow(Pawn pawn, bool whileLyingDown)
+		{
+			for (int i = 0; i < this.jobs.Count; i++)
+			{
+				if (this.jobs[i].job.CanBeginNow(pawn, whileLyingDown))
+				{
+					return true;
+				}
+			}
+			return false;
+		}
+
 		public IEnumerator<QueuedJob> GetEnumerator()
 		{
 			return this.jobs.GetEnumerator();

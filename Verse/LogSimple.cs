@@ -58,7 +58,7 @@ namespace Verse
 				return;
 			}
 			string text = LogSimple.CompiledLog();
-			Log.Message(text);
+			Log.Message(text, false);
 			LogSimple.messages.Clear();
 		}
 

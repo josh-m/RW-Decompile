@@ -98,7 +98,7 @@ namespace Verse
 			}
 			if (LanguageDatabase.activeLanguage == null || LanguageDatabase.defaultLanguage == null)
 			{
-				Log.Error("No default language found!");
+				Log.Error("No default language found!", false);
 				LanguageDatabase.defaultLanguage = LanguageDatabase.languages[0];
 				LanguageDatabase.activeLanguage = LanguageDatabase.languages[0];
 			}

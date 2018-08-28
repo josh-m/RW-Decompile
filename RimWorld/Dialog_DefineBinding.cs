@@ -35,6 +35,8 @@ namespace RimWorld
 			this.keyDef = keyDef;
 			this.slot = slot;
 			this.keyPrefsData = keyPrefsData;
+			this.closeOnAccept = false;
+			this.closeOnCancel = false;
 			this.forcePause = true;
 			this.onlyOneOfTypeAllowed = true;
 			this.absorbInputAroundWindow = true;
@@ -53,8 +55,8 @@ namespace RimWorld
 					{
 						Messages.Message("KeyBindingOverwritten".Translate(new object[]
 						{
-							oldDef.label
-						}), MessageTypeDefOf.TaskCompletion);
+							oldDef.LabelCap
+						}), MessageTypeDefOf.TaskCompletion, false);
 					});
 					this.keyPrefsData.SetBinding(this.keyDef, this.slot, Event.current.keyCode);
 				}

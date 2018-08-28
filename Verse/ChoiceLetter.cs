@@ -1,3 +1,5 @@
+using RimWorld;
+using RimWorld.Planet;
 using System;
 using System.Collections.Generic;
 
@@ -11,12 +13,47 @@ namespace Verse
 
 		public bool radioMode;
 
-		protected abstract IEnumerable<DiaOption> Choices
+		public abstract IEnumerable<DiaOption> Choices
 		{
 			get;
 		}
 
-		protected DiaOption Reject
+		protected DiaOption Option_Close
+		{
+			get
+			{
+				return new DiaOption("Close".Translate())
+				{
+					action = delegate
+					{
+						Find.LetterStack.RemoveLetter(this);
+					},
+					resolveTree = true
+				};
+			}
+		}
+
+		protected DiaOption Option_JumpToLocation
+		{
+			get
+			{
+				GlobalTargetInfo target = this.lookTargets.TryGetPrimaryTarget();
+				DiaOption diaOption = new DiaOption("JumpToLocation".Translate());
+				diaOption.action = delegate
+				{
+					CameraJumper.TryJumpAndSelect(target);
+					Find.LetterStack.RemoveLetter(this);
+				};
+				diaOption.resolveTree = true;
+				if (!CameraJumper.CanJump(target))
+				{
+					diaOption.Disable(null);
+				}
+				return diaOption;
+			}
+		}
+
+		protected DiaOption Option_Reject
 		{
 			get
 			{
@@ -31,47 +68,13 @@ namespace Verse
 			}
 		}
 
-		protected DiaOption Postpone
+		protected DiaOption Option_Postpone
 		{
 			get
 			{
 				DiaOption diaOption = new DiaOption("PostponeLetter".Translate());
 				diaOption.resolveTree = true;
 				if (base.TimeoutActive && this.disappearAtTick <= Find.TickManager.TicksGame + 1)
-				{
-					diaOption.Disable(null);
-				}
-				return diaOption;
-			}
-		}
-
-		protected DiaOption OK
-		{
-			get
-			{
-				return new DiaOption("OK".Translate())
-				{
-					action = delegate
-					{
-						Find.LetterStack.RemoveLetter(this);
-					},
-					resolveTree = true
-				};
-			}
-		}
-
-		protected DiaOption JumpToLocation
-		{
-			get
-			{
-				DiaOption diaOption = new DiaOption("JumpToLocation".Translate());
-				diaOption.action = delegate
-				{
-					CameraJumper.TryJumpAndSelect(this.lookTarget);
-					Find.LetterStack.RemoveLetter(this);
-				};
-				diaOption.resolveTree = true;
-				if (!this.lookTarget.IsValid)
 				{
 					diaOption.Disable(null);
 				}
@@ -96,10 +99,11 @@ namespace Verse
 		{
 			DiaNode diaNode = new DiaNode(this.text);
 			diaNode.options.AddRange(this.Choices);
-			WindowStack arg_39_0 = Find.WindowStack;
 			DiaNode nodeRoot = diaNode;
+			Faction relatedFaction = this.relatedFaction;
 			bool flag = this.radioMode;
-			arg_39_0.Add(new Dialog_NodeTree(nodeRoot, false, flag, this.title));
+			Dialog_NodeTreeWithFactionInfo window = new Dialog_NodeTreeWithFactionInfo(nodeRoot, relatedFaction, false, flag, this.title);
+			Find.WindowStack.Add(window);
 		}
 	}
 }

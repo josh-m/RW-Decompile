@@ -1,14 +1,18 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Verse.Grammar
 {
 	public class Rule_File : Rule
 	{
-		private string path;
+		[MayTranslate]
+		public string path;
 
-		private List<string> pathList = new List<string>();
+		[MayTranslate, TranslationCanChangeCount]
+		public List<string> pathList = new List<string>();
 
+		[Unsaved]
 		private List<string> cachedStrings = new List<string>();
 
 		public override float BaseSelectionWeight
@@ -17,6 +21,21 @@ namespace Verse.Grammar
 			{
 				return (float)this.cachedStrings.Count;
 			}
+		}
+
+		public override Rule DeepCopy()
+		{
+			Rule_File rule_File = (Rule_File)base.DeepCopy();
+			rule_File.path = this.path;
+			if (this.pathList != null)
+			{
+				rule_File.pathList = this.pathList.ToList<string>();
+			}
+			if (this.cachedStrings != null)
+			{
+				rule_File.cachedStrings = this.cachedStrings.ToList<string>();
+			}
+			return rule_File;
 		}
 
 		public override string Generate()

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using UnityEngine;
 
 namespace Verse
 {
@@ -31,7 +32,7 @@ namespace Verse
 		}
 
 		[DebuggerHidden]
-		public IEnumerable<BodyPartRecord> GetPartsWithTag(string tag)
+		public IEnumerable<BodyPartRecord> GetPartsWithTag(BodyPartTagDef tag)
 		{
 			for (int i = 0; i < this.AllParts.Count; i++)
 			{
@@ -43,7 +44,20 @@ namespace Verse
 			}
 		}
 
-		public bool HasPartWithTag(string tag)
+		[DebuggerHidden]
+		public IEnumerable<BodyPartRecord> GetPartsWithDef(BodyPartDef def)
+		{
+			for (int i = 0; i < this.AllParts.Count; i++)
+			{
+				BodyPartRecord part = this.AllParts[i];
+				if (part.def == def)
+				{
+					yield return part;
+				}
+			}
+		}
+
+		public bool HasPartWithTag(BodyPartTagDef tag)
 		{
 			for (int i = 0; i < this.AllParts.Count; i++)
 			{
@@ -58,6 +72,10 @@ namespace Verse
 
 		public BodyPartRecord GetPartAtIndex(int index)
 		{
+			if (index < 0 || index >= this.cachedAllParts.Count)
+			{
+				return null;
+			}
 			return this.cachedAllParts[index];
 		}
 
@@ -70,7 +88,7 @@ namespace Verse
 					return i;
 				}
 			}
-			throw new ArgumentException("Cannot get index of BodyPartRecord that is not in this BodyDef.");
+			return -1;
 		}
 
 		[DebuggerHidden]
@@ -86,7 +104,7 @@ namespace Verse
 			}
 			foreach (BodyPartRecord part in this.AllParts)
 			{
-				if (part.def.isConceptual && part.coverageAbs != 0f)
+				if (part.def.conceptual && part.coverageAbs != 0f)
 				{
 					yield return string.Format("part {0} is tagged conceptual, but has nonzero coverage", part);
 				}
@@ -112,6 +130,12 @@ namespace Verse
 
 		private void CacheDataRecursive(BodyPartRecord node)
 		{
+			if (node.def == null)
+			{
+				Log.Error("BodyPartRecord with null def. body=" + this, false);
+				return;
+			}
+			node.body = this;
 			for (int i = 0; i < node.parts.Count; i++)
 			{
 				node.parts[i].parent = node;
@@ -129,7 +153,11 @@ namespace Verse
 			{
 				num -= node.parts[j].coverage;
 			}
-			if (num <= 0f)
+			if (Mathf.Abs(num) < 1E-05f)
+			{
+				num = 0f;
+			}
+			if (num < 0f)
 			{
 				num = 0f;
 				Log.Warning(string.Concat(new string[]
@@ -138,8 +166,8 @@ namespace Verse
 					this.defName,
 					" has BodyPartRecord of ",
 					node.def.defName,
-					" whose children have more or equal total coverage than 1. This means parent can't be hit independently at all."
-				}));
+					" whose children have more coverage than 1."
+				}), false);
 			}
 			node.coverageAbs = node.coverageAbsWithChildren * num;
 			if (node.height == BodyPartHeight.Undefined)

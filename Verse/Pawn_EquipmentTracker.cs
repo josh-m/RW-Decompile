@@ -7,7 +7,7 @@ namespace Verse
 {
 	public class Pawn_EquipmentTracker : IThingHolder, IExposable
 	{
-		private Pawn pawn;
+		public Pawn pawn;
 
 		private ThingOwner<ThingWithComps> equipment;
 
@@ -32,7 +32,7 @@ namespace Verse
 				}
 				if (value != null && value.def.equipmentType != EquipmentType.Primary)
 				{
-					Log.Error("Tried to set non-primary equipment as primary.");
+					Log.Error("Tried to set non-primary equipment as primary.", false);
 					return;
 				}
 				if (this.Primary != null)
@@ -112,7 +112,6 @@ namespace Verse
 					foreach (Verb current in thingWithComps.GetComp<CompEquippable>().AllVerbs)
 					{
 						current.caster = this.pawn;
-						current.ownerEquipment = thingWithComps;
 					}
 				}
 			}
@@ -147,7 +146,7 @@ namespace Verse
 				}
 				else
 				{
-					Log.Error(this.pawn + " couldn't make room for equipment " + eq);
+					Log.Error(this.pawn + " couldn't make room for equipment " + eq, false);
 				}
 			}
 		}
@@ -167,11 +166,11 @@ namespace Verse
 					" tried to drop ",
 					eq,
 					" at invalid cell."
-				}));
+				}), false);
 				resultingEq = null;
 				return false;
 			}
-			if (this.equipment.TryDrop(eq, pos, this.pawn.MapHeld, ThingPlaceMode.Near, out resultingEq, null))
+			if (this.equipment.TryDrop(eq, pos, this.pawn.MapHeld, ThingPlaceMode.Near, out resultingEq, null, null))
 			{
 				if (resultingEq != null)
 				{
@@ -200,7 +199,7 @@ namespace Verse
 		{
 			if (!this.equipment.Contains(eq))
 			{
-				Log.Warning("Tried to destroy equipment " + eq + " but it's not here.");
+				Log.Warning("Tried to destroy equipment " + eq + " but it's not here.", false);
 				return;
 			}
 			this.Remove(eq);
@@ -241,7 +240,7 @@ namespace Verse
 					newEq,
 					" while already having primaryInt equipment ",
 					this.Primary
-				}));
+				}), false);
 				return;
 			}
 			this.equipment.TryAdd(newEq, true);

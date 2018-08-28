@@ -49,5 +49,10 @@ namespace RimWorld
 		public static DamageDef Mining;
 
 		public static DamageDef Rotting;
+
+		static DamageDefOf()
+		{
+			DefOfHelper.EnsureInitializedInCtor(typeof(DamageDefOf));
+		}
 	}
 }

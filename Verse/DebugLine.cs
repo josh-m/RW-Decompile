@@ -9,37 +9,29 @@ namespace Verse
 
 		public Vector3 b;
 
-		private int ticksLeft;
+		private int deathTick;
 
-		public int TicksLeft
+		private SimpleColor color;
+
+		public bool Done
 		{
 			get
 			{
-				return this.ticksLeft;
-			}
-			set
-			{
-				this.ticksLeft = value;
+				return this.deathTick <= Find.TickManager.TicksGame;
 			}
 		}
 
-		public DebugLine(Vector3 a, Vector3 b)
+		public DebugLine(Vector3 a, Vector3 b, int ticksLeft = 100, SimpleColor color = SimpleColor.White)
 		{
 			this.a = a;
 			this.b = b;
-			this.ticksLeft = 100;
-		}
-
-		public DebugLine(Vector3 a, Vector3 b, int ticksLeft)
-		{
-			this.a = a;
-			this.b = b;
-			this.ticksLeft = ticksLeft;
+			this.deathTick = Find.TickManager.TicksGame + ticksLeft;
+			this.color = color;
 		}
 
 		public void Draw()
 		{
-			GenDraw.DrawLineBetween(this.a, this.b);
+			GenDraw.DrawLineBetween(this.a, this.b, this.color);
 		}
 	}
 }

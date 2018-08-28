@@ -32,11 +32,17 @@ namespace Verse
 
 		public static bool detectRegionListersBugs;
 
+		public static bool instantVisitorsGift;
+
+		public static bool lowFPS;
+
 		public static bool fastResearch;
 
 		public static bool fastLearning;
 
 		public static bool fastEcology;
+
+		public static bool fastEcologyRegrowRateOnly;
 
 		public static bool fastCrafting;
 

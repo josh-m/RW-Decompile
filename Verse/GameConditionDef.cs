@@ -16,7 +16,7 @@ namespace Verse
 
 		public bool canBePermanent;
 
-		public PsychicDroneLevel droneLevel = PsychicDroneLevel.BadMedium;
+		public PsychicDroneLevel defaultDroneLevel = PsychicDroneLevel.BadMedium;
 
 		public bool preventRain;
 

@@ -9,9 +9,15 @@ namespace RimWorld
 	{
 		private static string ConstructionSkillTooLowTrans;
 
+		private static string IncapableOfDeconstruction;
+
+		private static string IncapableOfMining;
+
 		public static void Reset()
 		{
 			GenConstruct.ConstructionSkillTooLowTrans = "ConstructionSkillTooLow".Translate();
+			GenConstruct.IncapableOfDeconstruction = "IncapableOfDeconstruction".Translate();
+			GenConstruct.IncapableOfMining = "IncapableOfMining".Translate();
 		}
 
 		public static Blueprint_Build PlaceBlueprintForBuild(BuildableDef sourceDef, IntVec3 center, Map map, Rot4 rotation, Faction faction, ThingDef stuff)
@@ -19,7 +25,7 @@ namespace RimWorld
 			Blueprint_Build blueprint_Build = (Blueprint_Build)ThingMaker.MakeThing(sourceDef.blueprintDef, null);
 			blueprint_Build.SetFactionDirect(faction);
 			blueprint_Build.stuffToUse = stuff;
-			GenSpawn.Spawn(blueprint_Build, center, map, rotation, false);
+			GenSpawn.Spawn(blueprint_Build, center, map, rotation, WipeMode.Vanish, false);
 			return blueprint_Build;
 		}
 
@@ -28,7 +34,7 @@ namespace RimWorld
 			Blueprint_Install blueprint_Install = (Blueprint_Install)ThingMaker.MakeThing(itemToInstall.InnerThing.def.installBlueprintDef, null);
 			blueprint_Install.SetThingToInstallFromMinified(itemToInstall);
 			blueprint_Install.SetFactionDirect(faction);
-			GenSpawn.Spawn(blueprint_Install, center, map, rotation, false);
+			GenSpawn.Spawn(blueprint_Install, center, map, rotation, WipeMode.Vanish, false);
 			return blueprint_Install;
 		}
 
@@ -37,7 +43,7 @@ namespace RimWorld
 			Blueprint_Install blueprint_Install = (Blueprint_Install)ThingMaker.MakeThing(buildingToReinstall.def.installBlueprintDef, null);
 			blueprint_Install.SetBuildingToReinstall(buildingToReinstall);
 			blueprint_Install.SetFactionDirect(faction);
-			GenSpawn.Spawn(blueprint_Install, center, map, rotation, false);
+			GenSpawn.Spawn(blueprint_Install, center, map, rotation, WipeMode.Vanish, false);
 			return blueprint_Install;
 		}
 
@@ -54,7 +60,7 @@ namespace RimWorld
 			while (!iterator.Done())
 			{
 				TerrainDef terrainDef2 = map.terrainGrid.TerrainAt(iterator.Current);
-				if (!terrainDef2.affordances.Contains(entDef.terrainAffordanceNeeded))
+				if (entDef.terrainAffordanceNeeded != null && !terrainDef2.affordances.Contains(entDef.terrainAffordanceNeeded))
 				{
 					return false;
 				}
@@ -85,7 +91,7 @@ namespace RimWorld
 			return null;
 		}
 
-		public static bool CanConstruct(Thing t, Pawn p, bool forced = false)
+		public static bool CanConstruct(Thing t, Pawn p, bool checkConstructionSkill = true, bool forced = false)
 		{
 			if (GenConstruct.FirstBlockingThing(t, p) != null)
 			{
@@ -102,9 +108,9 @@ namespace RimWorld
 			{
 				return false;
 			}
-			if (p.skills.GetSkill(SkillDefOf.Construction).Level < t.def.constructionSkillPrerequisite)
+			if (checkConstructionSkill && p.skills.GetSkill(SkillDefOf.Construction).Level < t.def.constructionSkillPrerequisite)
 			{
-				JobFailReason.Is(GenConstruct.ConstructionSkillTooLowTrans);
+				JobFailReason.Is(GenConstruct.ConstructionSkillTooLowTrans, null);
 				return false;
 			}
 			return true;
@@ -112,7 +118,7 @@ namespace RimWorld
 
 		public static int AmountNeededByOf(IConstructible c, ThingDef resDef)
 		{
-			foreach (ThingCountClass current in c.MaterialsNeeded())
+			foreach (ThingDefCountClass current in c.MaterialsNeeded())
 			{
 				if (current.thingDef == resDef)
 				{
@@ -197,7 +203,7 @@ namespace RimWorld
 					}
 				}
 			}
-			if (entDef.passability != Traversability.Standable)
+			if (entDef.passability == Traversability.Impassable)
 			{
 				foreach (IntVec3 current2 in GenAdj.CellsAdjacentCardinal(center, rot, entDef.Size))
 				{
@@ -216,7 +222,7 @@ namespace RimWorld
 									ThingDef thingDef2 = blueprint2.def.entityDefToBuild as ThingDef;
 									if (thingDef2 == null)
 									{
-										goto IL_37E;
+										goto IL_37F;
 									}
 									thingDef3 = thingDef2;
 								}
@@ -233,7 +239,7 @@ namespace RimWorld
 									}).CapitalizeFirst());
 								}
 							}
-							IL_37E:;
+							IL_37F:;
 						}
 					}
 				}
@@ -337,7 +343,7 @@ namespace RimWorld
 					{
 						return thingDef.building == null || thingDef.building.canBuildNonEdificesUnder;
 					}
-					if (thingDef2 != null && thingDef2 == ThingDefOf.Wall && thingDef.building != null && thingDef.building.canPlaceOverWall)
+					if (thingDef2 != null && (thingDef2 == ThingDefOf.Wall || thingDef2.IsSmoothed) && thingDef.building != null && thingDef.building.canPlaceOverWall)
 					{
 						return true;
 					}
@@ -411,19 +417,45 @@ namespace RimWorld
 					constructible.ToStringSafe<Thing>(),
 					" at ",
 					constructible.Position
-				}), 6429262);
+				}), 6429262, false);
 			}
 			else if (thing.def.category == ThingCategory.Building)
 			{
-				LocalTargetInfo target = thing;
-				PathEndMode peMode = PathEndMode.Touch;
-				Danger maxDanger = worker.NormalMaxDanger();
-				if (worker.CanReserveAndReach(target, peMode, maxDanger, 1, -1, null, forced))
+				if (((Building)thing).DeconstructibleBy(worker.Faction))
 				{
-					return new Job(JobDefOf.Deconstruct, thing)
+					if (worker.story != null && worker.story.WorkTypeIsDisabled(WorkTypeDefOf.Construction))
 					{
-						ignoreDesignations = true
-					};
+						JobFailReason.Is(GenConstruct.IncapableOfDeconstruction, null);
+						return null;
+					}
+					LocalTargetInfo target = thing;
+					PathEndMode peMode = PathEndMode.Touch;
+					Danger maxDanger = worker.NormalMaxDanger();
+					if (worker.CanReserveAndReach(target, peMode, maxDanger, 1, -1, null, forced))
+					{
+						return new Job(JobDefOf.Deconstruct, thing)
+						{
+							ignoreDesignations = true
+						};
+					}
+				}
+				if (thing.def.mineable)
+				{
+					if (worker.story != null && worker.story.WorkTypeIsDisabled(WorkTypeDefOf.Mining))
+					{
+						JobFailReason.Is(GenConstruct.IncapableOfMining, null);
+						return null;
+					}
+					LocalTargetInfo target = thing;
+					PathEndMode peMode = PathEndMode.Touch;
+					Danger maxDanger = worker.NormalMaxDanger();
+					if (worker.CanReserveAndReach(target, peMode, maxDanger, 1, -1, null, forced))
+					{
+						return new Job(JobDefOf.Mine, thing)
+						{
+							ignoreDesignations = true
+						};
+					}
 				}
 			}
 			return null;
@@ -454,29 +486,37 @@ namespace RimWorld
 			}
 			if (t.def.category == ThingCategory.Plant)
 			{
-				return t.def.plant.harvestWork >= 200f;
-			}
-			if (!thingDef.clearBuildingArea)
-			{
+				if (t.def.plant.harvestWork > ThingDefOf.Plant_Dandelion.plant.harvestWork)
+				{
+					bool flag = thingDef.entityDefToBuild is TerrainDef && t.Spawned && t.Position.GetEdifice(t.Map) is IPlantToGrowSettable;
+					return !flag;
+				}
 				return false;
 			}
-			if (t.def == ThingDefOf.SteamGeyser && thingDef.entityDefToBuild.ForceAllowPlaceOver(t.def))
+			else
 			{
-				return false;
-			}
-			ThingDef thingDef2 = thingDef.entityDefToBuild as ThingDef;
-			if (thingDef2 != null)
-			{
-				if (thingDef2.EverTransmitsPower && t.def == ThingDefOf.PowerConduit && thingDef2 != ThingDefOf.PowerConduit)
+				if (!thingDef.clearBuildingArea)
 				{
 					return false;
 				}
-				if (t.def == ThingDefOf.Wall && thingDef2.building != null && thingDef2.building.canPlaceOverWall)
+				if (t.def == ThingDefOf.SteamGeyser && thingDef.entityDefToBuild.ForceAllowPlaceOver(t.def))
 				{
 					return false;
 				}
+				ThingDef thingDef2 = thingDef.entityDefToBuild as ThingDef;
+				if (thingDef2 != null)
+				{
+					if (thingDef2.EverTransmitsPower && t.def == ThingDefOf.PowerConduit && thingDef2 != ThingDefOf.PowerConduit)
+					{
+						return false;
+					}
+					if (t.def == ThingDefOf.Wall && thingDef2.building != null && thingDef2.building.canPlaceOverWall)
+					{
+						return false;
+					}
+				}
+				return (t.def.IsEdifice() && thingDef2.IsEdifice()) || (t.def.category == ThingCategory.Pawn || (t.def.category == ThingCategory.Item && thingDef.entityDefToBuild.passability == Traversability.Impassable)) || t.def.Fillage >= FillCategory.Partial;
 			}
-			return (t.def.IsEdifice() && thingDef2.IsEdifice()) || (t.def.category == ThingCategory.Pawn || (t.def.category == ThingCategory.Item && thingDef.entityDefToBuild.passability == Traversability.Impassable)) || t.def.Fillage >= FillCategory.Partial;
 		}
 
 		public static bool TerrainCanSupport(CellRect rect, Map map, ThingDef thing)

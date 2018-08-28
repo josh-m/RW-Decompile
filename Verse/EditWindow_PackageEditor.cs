@@ -50,7 +50,7 @@ namespace Verse
 			string str = this.curMod.ToString();
 			if (Widgets.ButtonText(rect, "Editing: " + str, true, false, true))
 			{
-				Messages.Message("Mod changing not implemented - it's always Core for now.", MessageTypeDefOf.RejectInput);
+				Messages.Message("Mod changing not implemented - it's always Core for now.", MessageTypeDefOf.RejectInput, false);
 			}
 			TooltipHandler.TipRegion(rect, "Change the mod being edited.");
 			Rect rect2 = new Rect(rect.xMax + 4f, 0f, width, 24f);
@@ -71,7 +71,7 @@ namespace Verse
 			}
 			TooltipHandler.TipRegion(rect2, "Open a Def package for editing.");
 			WidgetRow widgetRow = new WidgetRow(0f, 28f, UIDirection.RightThenUp, 99999f, 4f);
-			if (widgetRow.ButtonIcon(TexButton.NewFile, "Create a new Def package."))
+			if (widgetRow.ButtonIcon(TexButton.NewFile, "Create a new Def package.", null))
 			{
 				string name = DefPackage.UnusedPackageName(this.relFolder, this.curMod);
 				DefPackage defPackage = new DefPackage(name, this.relFolder);
@@ -80,11 +80,11 @@ namespace Verse
 			}
 			if (this.curPackage != null)
 			{
-				if (widgetRow.ButtonIcon(TexButton.Save, "Save the current Def package."))
+				if (widgetRow.ButtonIcon(TexButton.Save, "Save the current Def package.", null))
 				{
 					this.curPackage.SaveIn(this.curMod);
 				}
-				if (widgetRow.ButtonIcon(TexButton.RenameDev, "Rename the current Def package."))
+				if (widgetRow.ButtonIcon(TexButton.RenameDev, "Rename the current Def package.", null))
 				{
 					Find.WindowStack.Add(new Dialog_RenamePackage(this.curPackage));
 				}
@@ -101,13 +101,13 @@ namespace Verse
 			Text.Font = GameFont.Tiny;
 			if (this.curPackage == null)
 			{
-				listing_Standard.Label("(no package open)", -1f);
+				listing_Standard.Label("(no package open)", -1f, null);
 			}
 			else
 			{
 				if (this.curPackage.defs.Count == 0)
 				{
-					listing_Standard.Label("(package is empty)", -1f);
+					listing_Standard.Label("(package is empty)", -1f, null);
 				}
 				else
 				{

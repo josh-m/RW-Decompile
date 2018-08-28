@@ -27,7 +27,7 @@ namespace Verse
 
 		public List<ScattererValidator> validators = new List<ScattererValidator>();
 
-		public bool allowOnWater = true;
+		public bool allowInWaterBiome = true;
 
 		public bool warnOnFail = true;
 
@@ -36,9 +36,9 @@ namespace Verse
 
 		private const int ScatterNearPlayerRadius = 20;
 
-		public override void Generate(Map map)
+		public override void Generate(Map map, GenStepParams parms)
 		{
-			if (!this.allowOnWater && map.TileInfo.WaterCovered)
+			if (!this.allowInWaterBiome && map.TileInfo.WaterCovered)
 			{
 				return;
 			}
@@ -79,7 +79,7 @@ namespace Verse
 			}
 			if (this.warnOnFail)
 			{
-				Log.Warning("Scatterer " + this.ToString() + " could not find cell to generate at.");
+				Log.Warning("Scatterer " + this.ToString() + " could not find cell to generate at.", false);
 			}
 			return false;
 		}

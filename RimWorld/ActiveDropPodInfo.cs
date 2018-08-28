@@ -32,7 +32,7 @@ namespace RimWorld
 				}
 				if (this.innerContainer.Count > 1)
 				{
-					Log.Error("ContainedThing used on a DropPodInfo holding > 1 thing.");
+					Log.Error("ContainedThing used on a DropPodInfo holding > 1 thing.", false);
 				}
 				return this.innerContainer[0];
 			}

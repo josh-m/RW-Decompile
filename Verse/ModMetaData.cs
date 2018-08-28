@@ -80,7 +80,7 @@ namespace Verse
 		{
 			get
 			{
-				return this.IsCoreMod || (VersionControl.IsWellFormattedVersionString(this.TargetVersion) && VersionControl.MinorFromVersionString(this.TargetVersion) == VersionControl.CurrentMinor);
+				return this.IsCoreMod || (VersionControl.IsWellFormattedVersionString(this.TargetVersion) && VersionControl.MinorFromVersionString(this.TargetVersion) == VersionControl.CurrentMinor && VersionControl.MajorFromVersionString(this.TargetVersion) == VersionControl.CurrentMajor);
 			}
 		}
 
@@ -220,7 +220,7 @@ namespace Verse
 					"'. For the current version, write: <targetVersion>",
 					VersionControl.CurrentVersionString,
 					"</targetVersion>"
-				}), this.Identifier.GetHashCode());
+				}), this.Identifier.GetHashCode(), false);
 			}
 			LongEventHandler.ExecuteWhenFinished(delegate
 			{

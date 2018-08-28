@@ -29,6 +29,10 @@ namespace RimWorld
 				MinifiedThing minifiedThing = req.Thing as MinifiedThing;
 				if (minifiedThing != null)
 				{
+					if (minifiedThing.InnerThing == null)
+					{
+						Log.Error("MinifiedThing's inner thing is null.", false);
+					}
 					return minifiedThing.InnerThing.GetStatValue(this.stat, applyPostProcess);
 				}
 			}
@@ -46,7 +50,7 @@ namespace RimWorld
 		{
 			if (Prefs.DevMode && this.IsDisabledFor(req.Thing))
 			{
-				Log.ErrorOnce(string.Format("Attempted to calculate value for disabled stat {0}; this is meant as a consistency check, either set the stat to neverDisabled or ensure this pawn cannot accidentally use this stat (thing={1})", this.stat, req.Thing.ToStringSafe<Thing>()), 75193282 + (int)this.stat.index);
+				Log.ErrorOnce(string.Format("Attempted to calculate value for disabled stat {0}; this is meant as a consistency check, either set the stat to neverDisabled or ensure this pawn cannot accidentally use this stat (thing={1})", this.stat, req.Thing.ToStringSafe<Thing>()), 75193282 + (int)this.stat.index, false);
 			}
 			float num = this.GetBaseValueFor(req.Def);
 			Pawn pawn = req.Thing as Pawn;
@@ -110,10 +114,13 @@ namespace RimWorld
 				}
 				num *= pawn.ageTracker.CurLifeStage.statFactors.GetStatFactorFromList(this.stat);
 			}
-			if (req.StuffDef != null && (num > 0f || this.stat.applyFactorsIfNegative))
+			if (req.StuffDef != null)
 			{
+				if (num > 0f || this.stat.applyFactorsIfNegative)
+				{
+					num *= req.StuffDef.stuffProps.statFactors.GetStatFactorFromList(this.stat);
+				}
 				num += req.StuffDef.stuffProps.statOffsets.GetStatOffsetFromList(this.stat);
-				num *= req.StuffDef.stuffProps.statFactors.GetStatFactorFromList(this.stat);
 			}
 			if (req.HasThing)
 			{
@@ -170,8 +177,7 @@ namespace RimWorld
 			float baseValueFor = this.GetBaseValueFor(req.Def);
 			if (baseValueFor != 0f)
 			{
-				stringBuilder.AppendLine("StatsReport_BaseValue".Translate());
-				stringBuilder.AppendLine("    " + this.stat.ValueToString(baseValueFor, numberSense));
+				stringBuilder.AppendLine("StatsReport_BaseValue".Translate() + ": " + this.stat.ValueToString(baseValueFor, numberSense));
 				stringBuilder.AppendLine();
 			}
 			Pawn pawn = req.Thing as Pawn;
@@ -330,8 +336,24 @@ namespace RimWorld
 					stringBuilder.AppendLine();
 				}
 			}
-			if (req.StuffDef != null && (baseValueFor > 0f || this.stat.applyFactorsIfNegative))
+			if (req.StuffDef != null)
 			{
+				if (baseValueFor > 0f || this.stat.applyFactorsIfNegative)
+				{
+					float statFactorFromList2 = req.StuffDef.stuffProps.statFactors.GetStatFactorFromList(this.stat);
+					if (statFactorFromList2 != 1f)
+					{
+						stringBuilder.AppendLine(string.Concat(new string[]
+						{
+							"StatsReport_Material".Translate(),
+							" (",
+							req.StuffDef.LabelCap,
+							"): ",
+							statFactorFromList2.ToStringByStyle(ToStringStyle.PercentZero, ToStringNumberSense.Factor)
+						}));
+						stringBuilder.AppendLine();
+					}
+				}
 				float statOffsetFromList2 = req.StuffDef.stuffProps.statOffsets.GetStatOffsetFromList(this.stat);
 				if (statOffsetFromList2 != 0f)
 				{
@@ -342,19 +364,6 @@ namespace RimWorld
 						req.StuffDef.LabelCap,
 						"): ",
 						statOffsetFromList2.ToStringByStyle(this.stat.toStringStyle, ToStringNumberSense.Offset)
-					}));
-					stringBuilder.AppendLine();
-				}
-				float statFactorFromList2 = req.StuffDef.stuffProps.statFactors.GetStatFactorFromList(this.stat);
-				if (statFactorFromList2 != 1f)
-				{
-					stringBuilder.AppendLine(string.Concat(new string[]
-					{
-						"StatsReport_Material".Translate(),
-						" (",
-						req.StuffDef.LabelCap,
-						"): ",
-						statFactorFromList2.ToStringByStyle(ToStringStyle.PercentZero, ToStringNumberSense.Factor)
 					}));
 					stringBuilder.AppendLine();
 				}
@@ -494,11 +503,11 @@ namespace RimWorld
 			{
 				val = Mathf.Round(val / 5f) * 5f;
 			}
-			val = Mathf.Clamp(val, this.stat.minValue, this.stat.maxValue);
 			if (this.stat.roundValue)
 			{
 				val = (float)Mathf.RoundToInt(val);
 			}
+			val = Mathf.Clamp(val, this.stat.minValue, this.stat.maxValue);
 		}
 
 		public virtual string GetExplanationFinalizePart(StatRequest req, ToStringNumberSense numberSense, float finalVal)
@@ -545,13 +554,32 @@ namespace RimWorld
 			return stringBuilder.ToString();
 		}
 
-		public virtual bool ShouldShowFor(BuildableDef eDef)
+		public string GetExplanationFull(StatRequest req, ToStringNumberSense numberSense, float value)
 		{
-			if (!this.stat.showIfUndefined && !eDef.statBases.StatListContains(this.stat))
+			if (this.IsDisabledFor(req.Thing))
+			{
+				return "StatsReport_PermanentlyDisabled".Translate();
+			}
+			string text = this.stat.Worker.GetExplanationUnfinalized(req, numberSense).TrimEndNewlines();
+			if (!text.NullOrEmpty())
+			{
+				text += "\n\n";
+			}
+			return text + this.stat.Worker.GetExplanationFinalizePart(req, numberSense, value);
+		}
+
+		public virtual bool ShouldShowFor(StatRequest req)
+		{
+			if (this.stat.alwaysHide)
 			{
 				return false;
 			}
-			ThingDef thingDef = eDef as ThingDef;
+			BuildableDef def = req.Def;
+			if (!this.stat.showIfUndefined && !def.statBases.StatListContains(this.stat))
+			{
+				return false;
+			}
+			ThingDef thingDef = def as ThingDef;
 			if (thingDef != null && thingDef.category == ThingCategory.Pawn)
 			{
 				if (!this.stat.showOnPawns)
@@ -561,6 +589,14 @@ namespace RimWorld
 				if (!this.stat.showOnHumanlikes && thingDef.race.Humanlike)
 				{
 					return false;
+				}
+				if (!this.stat.showOnNonWildManHumanlikes && thingDef.race.Humanlike)
+				{
+					Pawn pawn = req.Thing as Pawn;
+					if (pawn == null || !pawn.IsWildMan())
+					{
+						return false;
+					}
 				}
 				if (!this.stat.showOnAnimals && thingDef.race.Animal)
 				{
@@ -614,8 +650,8 @@ namespace RimWorld
 					"Unhandled case: ",
 					this.stat,
 					", ",
-					eDef
-				}));
+					def
+				}), false);
 				return false;
 			}
 		}
@@ -709,7 +745,7 @@ namespace RimWorld
 			return false;
 		}
 
-		private float GetBaseValueFor(BuildableDef def)
+		protected float GetBaseValueFor(BuildableDef def)
 		{
 			float result = this.stat.defaultBaseValue;
 			if (def.statBases != null)

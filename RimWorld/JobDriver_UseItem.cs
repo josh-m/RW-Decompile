@@ -22,16 +22,20 @@ namespace RimWorld
 			this.useDuration = this.job.GetTarget(TargetIndex.A).Thing.TryGetComp<CompUsable>().Props.useDuration;
 		}
 
-		public override bool TryMakePreToilReservations()
+		public override bool TryMakePreToilReservations(bool errorOnFailed)
 		{
-			return this.pawn.Reserve(this.job.targetA, this.job, 1, -1, null);
+			Pawn pawn = this.pawn;
+			LocalTargetInfo targetA = this.job.targetA;
+			Job job = this.job;
+			return pawn.Reserve(targetA, job, 1, -1, null, errorOnFailed);
 		}
 
 		[DebuggerHidden]
 		protected override IEnumerable<Toil> MakeNewToils()
 		{
+			this.FailOnIncapable(PawnCapacityDefOf.Manipulation);
 			yield return Toils_Goto.GotoThing(TargetIndex.A, PathEndMode.Touch);
-			Toil prepare = Toils_General.Wait(this.useDuration);
+			Toil prepare = Toils_General.Wait(this.useDuration, TargetIndex.None);
 			prepare.WithProgressBarToilDelay(TargetIndex.A, false, -0.5f);
 			prepare.FailOnDespawnedNullOrForbidden(TargetIndex.A);
 			prepare.FailOnCannotTouch(TargetIndex.A, PathEndMode.Touch);

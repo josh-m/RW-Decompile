@@ -43,7 +43,7 @@ namespace Verse
 					reg.ToString(),
 					" in ",
 					this
-				}));
+				}), false);
 				return;
 			}
 			if (this.RegionA == null || !this.RegionA.valid)
@@ -66,7 +66,7 @@ namespace Verse
 					this.RegionA.DebugString,
 					"\nRegionB: ",
 					this.RegionB.DebugString
-				}));
+				}), false);
 			}
 		}
 
@@ -102,9 +102,9 @@ namespace Verse
 
 		public override string ToString()
 		{
-			string text = GenText.ToCommaList(from r in this.regions
+			string text = (from r in this.regions
 			where r != null
-			select r.id.ToString(), true);
+			select r.id.ToString()).ToCommaList(false);
 			string text2 = string.Concat(new object[]
 			{
 				"span=",

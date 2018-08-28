@@ -8,64 +8,77 @@ namespace RimWorld
 {
 	public class StatWorker_MeleeAverageDPS : StatWorker
 	{
-		public override bool ShouldShowFor(BuildableDef def)
+		public override bool ShouldShowFor(StatRequest req)
 		{
-			ThingDef thingDef = def as ThingDef;
+			ThingDef thingDef = req.Def as ThingDef;
 			return thingDef != null && thingDef.IsWeapon && !thingDef.tools.NullOrEmpty<Tool>();
 		}
 
 		public override float GetValueUnfinalized(StatRequest req, bool applyPostProcess = true)
 		{
-			Thing thing = req.Thing;
-			IThingHolder thingHolder = (thing != null) ? thing.ParentHolder : null;
-			List<Verb_MeleeAttack> list = null;
-			if (req.HasThing && req.Thing.TryGetComp<CompEquippable>() != null)
+			ThingDef thingDef = req.Def as ThingDef;
+			if (thingDef == null)
 			{
-				list = req.Thing.TryGetComp<CompEquippable>().AllVerbs.OfType<Verb_MeleeAttack>().ToList<Verb_MeleeAttack>();
+				return 0f;
 			}
-			if (list == null && req.Def is ThingDef)
-			{
-				list = (req.Def as ThingDef).GetConcreteExample(req.StuffDef).TryGetComp<CompEquippable>().AllVerbs.OfType<Verb_MeleeAttack>().ToList<Verb_MeleeAttack>();
-			}
-			float num = list.AverageWeighted((Verb_MeleeAttack verb) => verb.verbProps.AdjustedMeleeSelectionWeight(verb, thingHolder as Pawn, thing), (Verb_MeleeAttack verb) => verb.verbProps.AdjustedMeleeDamageAmount(verb, thingHolder as Pawn, thing));
-			float num2 = list.AverageWeighted((Verb_MeleeAttack verb) => verb.verbProps.AdjustedMeleeSelectionWeight(verb, thingHolder as Pawn, thing), (Verb_MeleeAttack verb) => verb.verbProps.AdjustedCooldown(verb, thingHolder as Pawn, thing));
+			Pawn attacker = StatWorker_MeleeAverageDPS.GetCurrentWeaponUser(req.Thing);
+			float num = (from x in VerbUtility.GetAllVerbProperties(thingDef.Verbs, thingDef.tools)
+			where x.verbProps.IsMeleeAttack
+			select x).AverageWeighted((VerbUtility.VerbPropertiesWithSource x) => x.verbProps.AdjustedMeleeSelectionWeight(x.tool, attacker, req.Thing, null, false), (VerbUtility.VerbPropertiesWithSource x) => x.verbProps.AdjustedMeleeDamageAmount(x.tool, attacker, req.Thing, null));
+			float num2 = (from x in VerbUtility.GetAllVerbProperties(thingDef.Verbs, thingDef.tools)
+			where x.verbProps.IsMeleeAttack
+			select x).AverageWeighted((VerbUtility.VerbPropertiesWithSource x) => x.verbProps.AdjustedMeleeSelectionWeight(x.tool, attacker, req.Thing, null, false), (VerbUtility.VerbPropertiesWithSource x) => x.verbProps.AdjustedCooldown(x.tool, attacker, req.Thing));
 			return num / num2;
 		}
 
 		public override string GetExplanationUnfinalized(StatRequest req, ToStringNumberSense numberSense)
 		{
-			StringBuilder stringBuilder = new StringBuilder();
 			ThingDef thingDef = req.Def as ThingDef;
-			for (int i = 0; i < thingDef.tools.Count; i++)
+			if (thingDef == null)
 			{
-				Tool tool = thingDef.tools[i];
-				for (int j = 0; j < tool.capacities.Count; j++)
+				return null;
+			}
+			Pawn currentWeaponUser = StatWorker_MeleeAverageDPS.GetCurrentWeaponUser(req.Thing);
+			IEnumerable<VerbUtility.VerbPropertiesWithSource> enumerable = from x in VerbUtility.GetAllVerbProperties(thingDef.Verbs, thingDef.tools)
+			where x.verbProps.IsMeleeAttack
+			select x;
+			StringBuilder stringBuilder = new StringBuilder();
+			foreach (VerbUtility.VerbPropertiesWithSource current in enumerable)
+			{
+				float num = current.verbProps.AdjustedMeleeDamageAmount(current.tool, currentWeaponUser, req.Thing, null);
+				float num2 = current.verbProps.AdjustedCooldown(current.tool, currentWeaponUser, req.Thing);
+				if (current.tool != null)
 				{
-					ToolCapacityDef capacity = tool.capacities[j];
-					IEnumerable<ManeuverDef> source = from maneuver in DefDatabase<ManeuverDef>.AllDefsListForReading
-					where maneuver.requiredCapacity == capacity
-					select maneuver;
-					if (source.Count<ManeuverDef>() != 1)
-					{
-						Log.ErrorOnce(string.Format("{0} maneuvers when trying to get dps for weapon {1} tool {2} capacity {3}; average DPS explanation may be incorrect", new object[]
-						{
-							source.Count<ManeuverDef>(),
-							thingDef.label,
-							tool.Id,
-							capacity.label
-						}), 40417826);
-					}
-					ManeuverDef maneuverDef = source.FirstOrDefault<ManeuverDef>();
-					if (maneuverDef != null)
-					{
-						stringBuilder.AppendLine(string.Format("  Tool: {0} ({1})", tool.Id, capacity.label));
-						stringBuilder.AppendLine(string.Format("    {0} damage", tool.AdjustedMeleeDamageAmount(req.Thing, maneuverDef.verb.meleeDamageDef).ToString("F1")));
-						stringBuilder.AppendLine(string.Format("    {0} seconds per attack", tool.AdjustedCooldown(req.Thing).ToString("F2")));
-						stringBuilder.AppendLine();
-					}
+					stringBuilder.AppendLine(string.Format("  {0}: {1} ({2})", "Tool".Translate(), current.tool.LabelCap, current.ToolCapacity.defName));
 				}
+				else
+				{
+					stringBuilder.AppendLine(string.Format("  {0}:", "StatsReport_NonToolAttack".Translate()));
+				}
+				stringBuilder.AppendLine(string.Format("    {0} {1}", num.ToString("F1"), "DamageLower".Translate()));
+				stringBuilder.AppendLine(string.Format("    {0} {1}", num2.ToString("F2"), "SecondsPerAttackLower".Translate()));
+				stringBuilder.AppendLine();
 			}
 			return stringBuilder.ToString();
+		}
+
+		public static Pawn GetCurrentWeaponUser(Thing weapon)
+		{
+			if (weapon == null)
+			{
+				return null;
+			}
+			Pawn_EquipmentTracker pawn_EquipmentTracker = weapon.ParentHolder as Pawn_EquipmentTracker;
+			if (pawn_EquipmentTracker != null)
+			{
+				return pawn_EquipmentTracker.pawn;
+			}
+			Pawn_ApparelTracker pawn_ApparelTracker = weapon.ParentHolder as Pawn_ApparelTracker;
+			if (pawn_ApparelTracker != null)
+			{
+				return pawn_ApparelTracker.pawn;
+			}
+			return null;
 		}
 	}
 }

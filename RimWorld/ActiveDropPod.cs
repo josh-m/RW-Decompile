@@ -85,7 +85,7 @@ namespace RimWorld
 				for (int i = 0; i < 1; i++)
 				{
 					Thing thing = ThingMaker.MakeThing(ThingDefOf.ChunkSlagSteel, null);
-					GenPlace.TryPlaceThing(thing, base.Position, map, ThingPlaceMode.Near, null);
+					GenPlace.TryPlaceThing(thing, base.Position, map, ThingPlaceMode.Near, null, null);
 				}
 			}
 		}
@@ -102,7 +102,7 @@ namespace RimWorld
 					{
 						Find.TutorialState.AddStartingItem(placedThing);
 					}
-				});
+				}, null);
 				Pawn pawn = thing2 as Pawn;
 				if (pawn != null)
 				{
@@ -125,10 +125,10 @@ namespace RimWorld
 				for (int j = 0; j < 1; j++)
 				{
 					Thing thing3 = ThingMaker.MakeThing(ThingDefOf.ChunkSlagSteel, null);
-					GenPlace.TryPlaceThing(thing3, base.Position, base.Map, ThingPlaceMode.Near, null);
+					GenPlace.TryPlaceThing(thing3, base.Position, base.Map, ThingPlaceMode.Near, null, null);
 				}
 			}
-			SoundDef.Named("DropPodOpen").PlayOneShot(new TargetInfo(base.Position, base.Map, false));
+			SoundDefOf.DropPod_Open.PlayOneShot(new TargetInfo(base.Position, base.Map, false));
 			this.Destroy(DestroyMode.Vanish);
 		}
 	}

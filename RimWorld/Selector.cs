@@ -115,7 +115,7 @@ namespace RimWorld
 		public void SelectorOnGUI()
 		{
 			this.HandleMapClicks();
-			if (Event.current.type == EventType.KeyDown && Event.current.keyCode == KeyCode.Escape && this.selected.Count > 0)
+			if (KeyBindingDefOf.Cancel.KeyDownEvent && this.selected.Count > 0)
 			{
 				this.ClearSelection();
 				Event.current.Use();
@@ -156,7 +156,7 @@ namespace RimWorld
 							Pawn pawn = this.selected[i] as Pawn;
 							if (pawn != null)
 							{
-								Selector.AutoOrderToCell(pawn, UI.MouseCell());
+								Selector.MassTakeFirstAutoTakeableOption(pawn, UI.MouseCell());
 							}
 						}
 					}
@@ -204,24 +204,24 @@ namespace RimWorld
 		{
 			if (obj == null)
 			{
-				Log.Error("Cannot select null.");
+				Log.Error("Cannot select null.", false);
 				return;
 			}
 			Thing thing = obj as Thing;
 			if (thing == null && !(obj is Zone))
 			{
-				Log.Error("Tried to select " + obj + " which is neither a Thing nor a Zone.");
+				Log.Error("Tried to select " + obj + " which is neither a Thing nor a Zone.", false);
 				return;
 			}
 			if (thing != null && thing.Destroyed)
 			{
-				Log.Error("Cannot select destroyed thing.");
+				Log.Error("Cannot select destroyed thing.", false);
 				return;
 			}
 			Pawn pawn = obj as Pawn;
 			if (pawn != null && pawn.IsWorldPawn())
 			{
-				Log.Error("Cannot select world pawns.");
+				Log.Error("Cannot select world pawns.", false);
 				return;
 			}
 			if (forceDesignatorDeselect)
@@ -252,12 +252,12 @@ namespace RimWorld
 			}
 			if (!this.IsSelected(obj))
 			{
-				if (map != Current.Game.VisibleMap)
+				if (map != Find.CurrentMap)
 				{
-					Current.Game.VisibleMap = map;
+					Current.Game.CurrentMap = map;
 					SoundDefOf.MapSelected.PlayOneShotOnCamera(null);
 					IntVec3 cell = (thing == null) ? ((Zone)obj).Cells[0] : thing.Position;
-					Find.CameraDriver.JumpToVisibleMapLoc(cell);
+					Find.CameraDriver.JumpToCurrentMapLoc(cell);
 				}
 				if (playSound)
 				{
@@ -289,7 +289,7 @@ namespace RimWorld
 			}
 			else
 			{
-				Log.Warning("Can't determine selection sound for " + obj);
+				Log.Warning("Can't determine selection sound for " + obj, false);
 			}
 		}
 
@@ -385,7 +385,7 @@ namespace RimWorld
 			{
 				yield return colonistOrCorpse;
 			}
-			else if (UI.MouseCell().InBounds(Find.VisibleMap))
+			else if (UI.MouseCell().InBounds(Find.CurrentMap))
 			{
 				TargetingParameters selectParams = new TargetingParameters();
 				selectParams.mustBeSelectable = true;
@@ -409,7 +409,7 @@ namespace RimWorld
 				{
 					yield return selectableList[i];
 				}
-				Zone z = Find.VisibleMap.zoneManager.ZoneAt(UI.MouseCell());
+				Zone z = Find.CurrentMap.zoneManager.ZoneAt(UI.MouseCell());
 				if (z != null)
 				{
 					yield return z;
@@ -518,7 +518,7 @@ namespace RimWorld
 		{
 			if (this.SelectedObjects.Count<object>() != 1)
 			{
-				Log.Error("Cannot select next at with < or > 1 selected.");
+				Log.Error("Cannot select next at with < or > 1 selected.", false);
 				return;
 			}
 			List<object> list = Selector.SelectableObjectsAt(c, map).ToList<object>();
@@ -594,15 +594,22 @@ namespace RimWorld
 			}
 		}
 
-		private static void AutoOrderToCell(Pawn pawn, IntVec3 dest)
+		private static void MassTakeFirstAutoTakeableOption(Pawn pawn, IntVec3 dest)
 		{
+			FloatMenuOption floatMenuOption = null;
 			foreach (FloatMenuOption current in FloatMenuMakerMap.ChoicesAtFor(dest.ToVector3Shifted(), pawn))
 			{
-				if (current.autoTakeable)
+				if (!current.Disabled && current.autoTakeable)
 				{
-					current.Chosen(true);
-					break;
+					if (floatMenuOption == null || current.autoTakeablePriority > floatMenuOption.autoTakeablePriority)
+					{
+						floatMenuOption = current;
+					}
 				}
+			}
+			if (floatMenuOption != null)
+			{
+				floatMenuOption.Chosen(true, null);
 			}
 		}
 	}

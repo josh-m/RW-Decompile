@@ -22,7 +22,7 @@ namespace RimWorld
 			Scribe_Values.Look<int>(ref this.countToDrop, "countToDrop", -1, false);
 		}
 
-		public override bool TryMakePreToilReservations()
+		public override bool TryMakePreToilReservations(bool errorOnFailed)
 		{
 			return true;
 		}
@@ -30,7 +30,7 @@ namespace RimWorld
 		[DebuggerHidden]
 		protected override IEnumerable<Toil> MakeNewToils()
 		{
-			yield return Toils_General.Wait(10);
+			yield return Toils_General.Wait(10, TargetIndex.None);
 			yield return new Toil
 			{
 				initAction = delegate
@@ -41,12 +41,12 @@ namespace RimWorld
 					}
 					else
 					{
-						ThingStackPart firstUnloadableThing = this.$this.pawn.inventory.FirstUnloadableThing;
+						ThingCount firstUnloadableThing = this.$this.pawn.inventory.FirstUnloadableThing;
 						IntVec3 c;
 						if (!StoreUtility.TryFindStoreCellNearColonyDesperate(firstUnloadableThing.Thing, this.$this.pawn, out c))
 						{
 							Thing thing;
-							this.$this.pawn.inventory.innerContainer.TryDrop(firstUnloadableThing.Thing, ThingPlaceMode.Near, firstUnloadableThing.Count, out thing, null);
+							this.$this.pawn.inventory.innerContainer.TryDrop(firstUnloadableThing.Thing, ThingPlaceMode.Near, firstUnloadableThing.Count, out thing, null, null);
 							this.$this.EndJobWith(JobCondition.Succeeded);
 						}
 						else
@@ -70,9 +70,9 @@ namespace RimWorld
 						this.$this.EndJobWith(JobCondition.Incompletable);
 						return;
 					}
-					if (!this.$this.pawn.health.capacities.CapableOf(PawnCapacityDefOf.Manipulation) || !thing.def.EverStoreable)
+					if (!this.$this.pawn.health.capacities.CapableOf(PawnCapacityDefOf.Manipulation) || !thing.def.EverStorable(false))
 					{
-						this.$this.pawn.inventory.innerContainer.TryDrop(thing, ThingPlaceMode.Near, this.$this.countToDrop, out thing, null);
+						this.$this.pawn.inventory.innerContainer.TryDrop(thing, ThingPlaceMode.Near, this.$this.countToDrop, out thing, null, null);
 						this.$this.EndJobWith(JobCondition.Succeeded);
 					}
 					else

@@ -17,9 +17,9 @@ namespace RimWorld
 			Scribe_Values.Look<int>(ref this.groupID, "groupID", 0, false);
 		}
 
-		public override void PreApplyDamage(DamageInfo dinfo, out bool absorbed)
+		public override void PreApplyDamage(ref DamageInfo dinfo, out bool absorbed)
 		{
-			base.PreApplyDamage(dinfo, out absorbed);
+			base.PreApplyDamage(ref dinfo, out absorbed);
 			if (absorbed)
 			{
 				return;
@@ -56,22 +56,20 @@ namespace RimWorld
 			base.EjectContents();
 			if (!contentsKnown)
 			{
-				ThingDef filthSlime = ThingDefOf.FilthSlime;
-				FilthMaker.MakeFilth(base.Position, base.Map, filthSlime, Rand.Range(8, 12));
+				ThingDef filth_Slime = ThingDefOf.Filth_Slime;
+				FilthMaker.MakeFilth(base.Position, base.Map, filth_Slime, Rand.Range(8, 12));
 				this.SetFaction(null, null);
 				foreach (Building_AncientCryptosleepCasket current in this.UnopenedCasketsInGroup())
 				{
 					current.EjectContents();
 				}
-				List<Pawn> source = (from t in list
-				where t is Pawn
-				select t).Cast<Pawn>().ToList<Pawn>();
+				List<Pawn> source = list.OfType<Pawn>().ToList<Pawn>();
 				IEnumerable<Pawn> enumerable = from p in source
-				where p.RaceProps.Humanlike && p.GetLord() == null && p.Faction == Faction.OfSpacerHostile
+				where p.RaceProps.Humanlike && p.GetLord() == null && p.Faction == Faction.OfAncientsHostile
 				select p;
 				if (enumerable.Any<Pawn>())
 				{
-					LordMaker.MakeNewLord(Faction.OfSpacerHostile, new LordJob_AssaultColony(Faction.OfSpacerHostile, false, false, false, false, false), base.Map, enumerable);
+					LordMaker.MakeNewLord(Faction.OfAncientsHostile, new LordJob_AssaultColony(Faction.OfAncientsHostile, false, false, false, false, false), base.Map, enumerable);
 				}
 			}
 		}

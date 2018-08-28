@@ -6,17 +6,19 @@ using Verse;
 
 namespace RimWorld
 {
-	public class SiteCoreWorker
+	public class SiteCoreWorker : SiteCoreOrPartWorkerBase
 	{
-		public SiteCoreDef def;
-
 		public static readonly IntVec3 MapSize = new IntVec3(120, 1, 120);
 
-		public virtual void SiteCoreWorkerTick(Site site)
+		public SiteCoreDef Def
 		{
+			get
+			{
+				return (SiteCoreDef)this.def;
+			}
 		}
 
-		public virtual void PostMapGenerate(Map map)
+		public virtual void SiteCoreWorkerTick(Site site)
 		{
 		}
 
@@ -25,42 +27,24 @@ namespace RimWorld
 			this.Enter(caravan, site);
 		}
 
-		public virtual bool FactionCanOwn(Faction faction)
-		{
-			return true;
-		}
-
 		[DebuggerHidden]
 		public IEnumerable<FloatMenuOption> GetFloatMenuOptions(Caravan caravan, Site site)
 		{
 			if (!site.HasMap)
 			{
-				string label = (!site.KnownDanger) ? "VisitSite".Translate(new object[]
+				foreach (FloatMenuOption f in CaravanArrivalAction_VisitSite.GetFloatMenuOptions(caravan, site))
 				{
-					site.Label
-				}) : "AttackSite".Translate(new object[]
-				{
-					site.Label
-				});
-				string label2 = label;
-				Action action = delegate
-				{
-					caravan.pather.StartPath(site.Tile, new CaravanArrivalAction_VisitSite(site), true);
-				};
-				Site site2 = site;
-				yield return new FloatMenuOption(label2, action, MenuOptionPriority.Default, null, null, 0f, null, site2);
-				if (Prefs.DevMode)
-				{
-					label2 = label + " (Dev: instantly)";
-					action = delegate
-					{
-						caravan.Tile = site.Tile;
-						caravan.pather.StopDead();
-						new CaravanArrivalAction_VisitSite(site).Arrived(caravan);
-					};
-					site2 = site;
-					yield return new FloatMenuOption(label2, action, MenuOptionPriority.Default, null, null, 0f, null, site2);
+					yield return f;
 				}
+			}
+		}
+
+		[DebuggerHidden]
+		public virtual IEnumerable<FloatMenuOption> GetTransportPodsFloatMenuOptions(IEnumerable<IThingHolder> pods, CompLaunchable representative, Site site)
+		{
+			foreach (FloatMenuOption f in TransportPodsArrivalAction_VisitSite.GetFloatMenuOptions(representative, pods, site))
+			{
+				yield return f;
 			}
 		}
 
@@ -83,19 +67,24 @@ namespace RimWorld
 		{
 			Pawn t = caravan.PawnsListForReading[0];
 			bool flag = site.Faction == null || site.Faction.HostileTo(Faction.OfPlayer);
+			bool flag2 = !site.HasMap;
 			Map orGenerateMap = GetOrGenerateMapUtility.GetOrGenerateMap(site.Tile, SiteCoreWorker.MapSize, null);
+			Messages.Message("MessageCaravanArrivedAtDestination".Translate(new object[]
+			{
+				caravan.Label
+			}).CapitalizeFirst(), t, MessageTypeDefOf.TaskCompletion, true);
+			if (flag2)
+			{
+				Find.TickManager.Notify_GeneratedPotentiallyHostileMap();
+				PawnRelationUtility.Notify_PawnsSeenByPlayer_Letter_Send(orGenerateMap.mapPawns.AllPawns, "LetterRelatedPawnsSite".Translate(new object[]
+				{
+					Faction.OfPlayer.def.pawnsPlural
+				}), LetterDefOf.NeutralEvent, true, true);
+			}
 			Map map = orGenerateMap;
 			CaravanEnterMode enterMode = CaravanEnterMode.Edge;
 			bool draftColonists = flag;
 			CaravanEnterMapUtility.Enter(caravan, map, enterMode, CaravanDropInventoryMode.DoNotDrop, draftColonists, null);
-			if (flag)
-			{
-				Find.TickManager.CurTimeSpeed = TimeSpeed.Paused;
-			}
-			Messages.Message("MessageCaravanArrivedAtDestination".Translate(new object[]
-			{
-				caravan.Label
-			}).CapitalizeFirst(), t, MessageTypeDefOf.TaskCompletion);
 		}
 	}
 }

@@ -21,7 +21,7 @@ namespace Verse
 				{
 					hediff = HediffMaker.MakeHediff(HediffDefOf.Hangover, this.pawn, null);
 					hediff.Severity = 1f;
-					this.pawn.health.AddHediff(hediff, null, null);
+					this.pawn.health.AddHediff(hediff, null, null, null);
 				}
 			}
 		}

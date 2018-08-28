@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Verse
@@ -11,12 +12,9 @@ namespace Verse
 
 		public bool alsoClickIfOtherInGroupClicked = true;
 
-		public const float Height = 75f;
+		public float order;
 
-		public abstract float Width
-		{
-			get;
-		}
+		public const float Height = 75f;
 
 		public virtual bool Visible
 		{
@@ -26,7 +24,20 @@ namespace Verse
 			}
 		}
 
-		public abstract GizmoResult GizmoOnGUI(Vector2 topLeft);
+		public virtual IEnumerable<FloatMenuOption> RightClickFloatMenuOptions
+		{
+			get
+			{
+			}
+		}
+
+		public abstract GizmoResult GizmoOnGUI(Vector2 topLeft, float maxWidth);
+
+		public virtual void GizmoUpdateOnMouseover()
+		{
+		}
+
+		public abstract float GetWidth(float maxWidth);
 
 		public virtual void ProcessInput(Event ev)
 		{
@@ -37,9 +48,18 @@ namespace Verse
 			return false;
 		}
 
+		public virtual void MergeWith(Gizmo other)
+		{
+		}
+
 		public virtual bool InheritInteractionsFrom(Gizmo other)
 		{
 			return this.alsoClickIfOtherInGroupClicked;
+		}
+
+		public virtual bool InheritFloatMenuInteractionsFrom(Gizmo other)
+		{
+			return this.InheritInteractionsFrom(other);
 		}
 
 		public void Disable(string reason = null)

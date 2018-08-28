@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Verse;
 
 namespace RimWorld
@@ -31,6 +32,11 @@ namespace RimWorld
 				GenDraw.DrawFieldEdges(Find.Selector.SelectedZone.Cells);
 			}
 			GenDraw.DrawNoZoneEdgeLines();
+		}
+
+		public override void RenderHighlight(List<IntVec3> dragCells)
+		{
+			DesignatorUtility.RenderHighlightOverSelectableCells(this, dragCells);
 		}
 	}
 }

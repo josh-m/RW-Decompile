@@ -16,6 +16,7 @@ namespace RimWorld
 		private static IEnumerable<CompPower> ContiguousPowerBuildings(Building root)
 		{
 			PowerNetMaker.closedSet.Clear();
+			PowerNetMaker.openSet.Clear();
 			PowerNetMaker.currentSet.Clear();
 			PowerNetMaker.openSet.Add(root);
 			do
@@ -55,8 +56,12 @@ namespace RimWorld
 				}
 			}
 			while (PowerNetMaker.openSet.Count > 0);
-			return from b in PowerNetMaker.closedSet
-			select b.PowerComp;
+			CompPower[] result = (from b in PowerNetMaker.closedSet
+			select b.PowerComp).ToArray<CompPower>();
+			PowerNetMaker.closedSet.Clear();
+			PowerNetMaker.openSet.Clear();
+			PowerNetMaker.currentSet.Clear();
+			return result;
 		}
 
 		public static PowerNet NewPowerNetStartingFrom(Building root)

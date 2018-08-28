@@ -86,7 +86,7 @@ namespace Verse
 		{
 			if (this.pawn.Dead || this.pawn.Downed)
 			{
-				Log.Error("Dead/downed pawn " + this.pawn + " tried to start carry item.");
+				Log.Error("Dead/downed pawn " + this.pawn + " tried to start carry item.", false);
 				return false;
 			}
 			if (this.innerContainer.TryAdd(item, true))
@@ -101,7 +101,13 @@ namespace Verse
 		{
 			if (this.pawn.Dead || this.pawn.Downed)
 			{
-				Log.Error("Dead/downed pawn " + this.pawn + " tried to start carry item.");
+				Log.Error(string.Concat(new object[]
+				{
+					"Dead/downed pawn ",
+					this.pawn,
+					" tried to start carry ",
+					item.ToStringSafe<Thing>()
+				}), false);
 				return 0;
 			}
 			count = Mathf.Min(count, this.AvailableStackSpace(item.def));
@@ -112,7 +118,7 @@ namespace Verse
 				item.def.soundPickup.PlayOneShot(new TargetInfo(item.Position, this.pawn.Map, false));
 				if (reserve)
 				{
-					this.pawn.Reserve(this.CarriedThing, this.pawn.CurJob, 1, -1, null);
+					this.pawn.Reserve(this.CarriedThing, this.pawn.CurJob, 1, -1, null, true);
 				}
 			}
 			return num;
@@ -120,7 +126,7 @@ namespace Verse
 
 		public bool TryDropCarriedThing(IntVec3 dropLoc, ThingPlaceMode mode, out Thing resultingThing, Action<Thing, int> placedAction = null)
 		{
-			if (this.innerContainer.TryDrop(this.CarriedThing, dropLoc, this.pawn.MapHeld, mode, out resultingThing, placedAction))
+			if (this.innerContainer.TryDrop(this.CarriedThing, dropLoc, this.pawn.MapHeld, mode, out resultingThing, placedAction, null))
 			{
 				if (resultingThing != null && this.pawn.Faction.HostileTo(Faction.OfPlayer))
 				{
@@ -133,7 +139,7 @@ namespace Verse
 
 		public bool TryDropCarriedThing(IntVec3 dropLoc, int count, ThingPlaceMode mode, out Thing resultingThing, Action<Thing, int> placedAction = null)
 		{
-			if (this.innerContainer.TryDrop(this.CarriedThing, dropLoc, this.pawn.MapHeld, mode, count, out resultingThing, placedAction))
+			if (this.innerContainer.TryDrop(this.CarriedThing, dropLoc, this.pawn.MapHeld, mode, count, out resultingThing, placedAction, null))
 			{
 				if (resultingThing != null && this.pawn.Faction.HostileTo(Faction.OfPlayer))
 				{

@@ -18,6 +18,7 @@ namespace RimWorld
 			portraitCamera.orthographicSize = 1f / cameraZoom;
 			this.pawn = pawn;
 			portraitCamera.Render();
+			this.pawn = null;
 			portraitCamera.transform.position = position;
 			portraitCamera.orthographicSize = orthographicSize;
 			portraitCamera.targetTexture = null;
@@ -25,7 +26,7 @@ namespace RimWorld
 
 		public void OnPostRender()
 		{
-			this.pawn.Drawer.renderer.RenderPortait();
+			this.pawn.Drawer.renderer.RenderPortrait();
 		}
 	}
 }

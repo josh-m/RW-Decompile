@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using UnityEngine;
 using Verse;
 using Verse.AI;
@@ -46,6 +47,18 @@ namespace RimWorld
 			}
 		}
 
+		public override Color DrawColor
+		{
+			get
+			{
+				if (!this.IsSociallyProper(null, false, false))
+				{
+					return Building_Bed.SheetColorForPrisoner;
+				}
+				return base.DrawColor;
+			}
+		}
+
 		public override void SpawnSetup(Map map, bool respawningAfterLoad)
 		{
 			base.SpawnSetup(map, respawningAfterLoad);
@@ -60,7 +73,7 @@ namespace RimWorld
 				Building edifice = c.GetEdifice(base.Map);
 				if (edifice != null && edifice.def == ThingDefOf.Hopper && reacher.CanReach(edifice, PathEndMode.Touch, Danger.Deadly, false, TraverseMode.ByPawn))
 				{
-					return (Building_Storage)edifice;
+					return edifice;
 				}
 			}
 			return null;
@@ -81,8 +94,8 @@ namespace RimWorld
 				{
 					break;
 				}
-				int num2 = Mathf.Min(thing.stackCount, Mathf.CeilToInt(num / thing.def.ingestible.nutrition));
-				num -= (float)num2 * thing.def.ingestible.nutrition;
+				int num2 = Mathf.Min(thing.stackCount, Mathf.CeilToInt(num / thing.GetStatValue(StatDefOf.Nutrition, true)));
+				num -= (float)num2 * thing.GetStatValue(StatDefOf.Nutrition, true);
 				list.Add(thing.def);
 				thing.SplitOff(num2);
 				if (num <= 0f)
@@ -90,7 +103,7 @@ namespace RimWorld
 					goto Block_3;
 				}
 			}
-			Log.Error("Did not find enough food in hoppers while trying to dispense.");
+			Log.Error("Did not find enough food in hoppers while trying to dispense.", false);
 			return null;
 			Block_3:
 			this.def.building.soundDispense.PlayOneShot(new TargetInfo(base.Position, base.Map, false));
@@ -153,7 +166,7 @@ namespace RimWorld
 				}
 				if (thing != null && thing2 != null)
 				{
-					num += (float)thing.stackCount * thing.def.ingestible.nutrition;
+					num += (float)thing.stackCount * thing.GetStatValue(StatDefOf.Nutrition, true);
 				}
 				if (num >= this.def.building.nutritionCostPerDispense)
 				{
@@ -166,6 +179,17 @@ namespace RimWorld
 		public static bool IsAcceptableFeedstock(ThingDef def)
 		{
 			return def.IsNutritionGivingIngestible && def.ingestible.preferability != FoodPreferability.Undefined && (def.ingestible.foodType & FoodTypeFlags.Plant) != FoodTypeFlags.Plant && (def.ingestible.foodType & FoodTypeFlags.Tree) != FoodTypeFlags.Tree;
+		}
+
+		public override string GetInspectString()
+		{
+			StringBuilder stringBuilder = new StringBuilder();
+			stringBuilder.AppendLine(base.GetInspectString());
+			if (!this.IsSociallyProper(null, false, false))
+			{
+				stringBuilder.AppendLine("InPrisonCell".Translate());
+			}
+			return stringBuilder.ToString().Trim();
 		}
 	}
 }

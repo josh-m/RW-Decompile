@@ -7,7 +7,9 @@ namespace RimWorld
 	[StaticConstructorOnStartup]
 	public class CompFireOverlay : ThingComp
 	{
-		private static readonly Graphic FireGraphic = GraphicDatabase.Get<Graphic_Flicker>("Things/Special/Fire", ShaderDatabase.TransparentPostLight, Vector2.one, Color.white);
+		protected CompRefuelable refuelableComp;
+
+		public static readonly Graphic FireGraphic = GraphicDatabase.Get<Graphic_Flicker>("Things/Special/Fire", ShaderDatabase.TransparentPostLight, Vector2.one, Color.white);
 
 		public CompProperties_FireOverlay Props
 		{
@@ -20,9 +22,19 @@ namespace RimWorld
 		public override void PostDraw()
 		{
 			base.PostDraw();
+			if (this.refuelableComp != null && !this.refuelableComp.HasFuel)
+			{
+				return;
+			}
 			Vector3 drawPos = this.parent.DrawPos;
 			drawPos.y += 0.046875f;
 			CompFireOverlay.FireGraphic.Draw(drawPos, Rot4.North, this.parent, 0f);
+		}
+
+		public override void PostSpawnSetup(bool respawningAfterLoad)
+		{
+			base.PostSpawnSetup(respawningAfterLoad);
+			this.refuelableComp = this.parent.GetComp<CompRefuelable>();
 		}
 	}
 }

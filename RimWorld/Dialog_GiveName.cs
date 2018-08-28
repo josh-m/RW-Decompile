@@ -10,6 +10,8 @@ namespace RimWorld
 
 		protected string curName;
 
+		protected Func<string> nameGenerator;
+
 		protected string nameMessageKey;
 
 		protected string gainedNameMessageKey;
@@ -19,6 +21,8 @@ namespace RimWorld
 		protected bool useSecondName;
 
 		protected string curSecondName;
+
+		protected Func<string> secondNameGenerator;
 
 		protected string secondNameMessageKey;
 
@@ -55,10 +59,11 @@ namespace RimWorld
 			}
 			else
 			{
-				this.suggestingPawn = PawnsFinder.AllMapsCaravansAndTravelingTransportPods_FreeColonists.RandomElement<Pawn>();
+				this.suggestingPawn = PawnsFinder.AllMapsCaravansAndTravelingTransportPods_Alive_FreeColonists_NoCryptosleep.RandomElement<Pawn>();
 			}
 			this.forcePause = true;
-			this.closeOnEscapeKey = false;
+			this.closeOnAccept = false;
+			this.closeOnCancel = false;
 			this.absorbInputAroundWindow = true;
 		}
 
@@ -76,9 +81,13 @@ namespace RimWorld
 			{
 				Widgets.Label(new Rect(0f, 0f, rect.width, rect.height), this.nameMessageKey.Translate(new object[]
 				{
-					this.suggestingPawn.NameStringShort
-				}));
-				this.curName = Widgets.TextField(new Rect(0f, rect.height - 35f, rect.width / 2f - 20f, 35f), this.curName);
+					this.suggestingPawn.LabelShort
+				}).CapitalizeFirst());
+				if (this.nameGenerator != null && Widgets.ButtonText(new Rect(rect.width / 2f + 20f, 80f, rect.width / 2f - 20f, 35f), "Randomize".Translate(), true, false, true))
+				{
+					this.curName = this.nameGenerator();
+				}
+				this.curName = Widgets.TextField(new Rect(0f, 80f, rect.width / 2f - 20f, 35f), this.curName);
 				rect2 = new Rect(rect.width / 2f + 20f, rect.height - 35f, rect.width / 2f - 20f, 35f);
 			}
 			else
@@ -86,25 +95,33 @@ namespace RimWorld
 				float num = 0f;
 				string text = this.nameMessageKey.Translate(new object[]
 				{
-					this.suggestingPawn.NameStringShort
-				});
+					this.suggestingPawn.LabelShort
+				}).CapitalizeFirst();
 				Widgets.Label(new Rect(0f, num, rect.width, rect.height), text);
 				num += Text.CalcHeight(text, rect.width) + 10f;
+				if (this.nameGenerator != null && Widgets.ButtonText(new Rect(rect.width / 2f, num, rect.width / 2f - 20f, 35f), "Randomize".Translate(), true, false, true))
+				{
+					this.curName = this.nameGenerator();
+				}
 				this.curName = Widgets.TextField(new Rect(0f, num, rect.width / 2f - 20f, 35f), this.curName);
 				num += 60f;
 				text = this.secondNameMessageKey.Translate(new object[]
 				{
-					this.suggestingPawn.NameStringShort
+					this.suggestingPawn.LabelShort
 				});
 				Widgets.Label(new Rect(0f, num, rect.width, rect.height), text);
 				num += Text.CalcHeight(text, rect.width) + 10f;
+				if (this.secondNameGenerator != null && Widgets.ButtonText(new Rect(rect.width / 2f, num, rect.width / 2f - 20f, 35f), "Randomize".Translate(), true, false, true))
+				{
+					this.curSecondName = this.secondNameGenerator();
+				}
 				this.curSecondName = Widgets.TextField(new Rect(0f, num, rect.width / 2f - 20f, 35f), this.curSecondName);
 				num += 45f;
 				rect2 = new Rect(0f, rect.height - 35f, rect.width / 2f - 20f, 35f);
 			}
 			if (Widgets.ButtonText(rect2, "OK".Translate(), true, false, true) || flag)
 			{
-				if (this.IsValidName(this.curName) && (!this.useSecondName || this.IsValidName(this.curSecondName)))
+				if (this.IsValidName(this.curName) && (!this.useSecondName || this.IsValidSecondName(this.curSecondName)))
 				{
 					if (this.useSecondName)
 					{
@@ -114,7 +131,7 @@ namespace RimWorld
 						{
 							this.curName,
 							this.curSecondName
-						}), MessageTypeDefOf.TaskCompletion);
+						}), MessageTypeDefOf.TaskCompletion, false);
 					}
 					else
 					{
@@ -122,13 +139,13 @@ namespace RimWorld
 						Messages.Message(this.gainedNameMessageKey.Translate(new object[]
 						{
 							this.curName
-						}), MessageTypeDefOf.TaskCompletion);
+						}), MessageTypeDefOf.TaskCompletion, false);
 					}
 					Find.WindowStack.TryRemove(this, true);
 				}
 				else
 				{
-					Messages.Message(this.invalidNameMessageKey.Translate(), MessageTypeDefOf.RejectInput);
+					Messages.Message(this.invalidNameMessageKey.Translate(), MessageTypeDefOf.RejectInput, false);
 				}
 				Event.current.Use();
 			}

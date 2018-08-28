@@ -27,6 +27,8 @@ namespace Verse.AI
 
 		public int transportersGroup = -1;
 
+		public bool attackDownedIfStarving;
+
 		public PawnDuty()
 		{
 		}
@@ -60,6 +62,7 @@ namespace Verse.AI
 			Scribe_Values.Look<bool>(ref this.canDig, "canDig", false, false);
 			Scribe_Values.Look<PawnsToGather>(ref this.pawnsToGather, "pawnsToGather", PawnsToGather.None, false);
 			Scribe_Values.Look<int>(ref this.transportersGroup, "transportersGroup", -1, false);
+			Scribe_Values.Look<bool>(ref this.attackDownedIfStarving, "attackDownedIfStarving", false, false);
 		}
 
 		public override string ToString()

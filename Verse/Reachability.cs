@@ -40,16 +40,26 @@ namespace Verse
 			}
 		}
 
+		public void ClearCacheFor(Pawn pawn)
+		{
+			this.cache.ClearFor(pawn);
+		}
+
+		public void ClearCacheForHostile(Thing hostileTo)
+		{
+			this.cache.ClearForHostile(hostileTo);
+		}
+
 		private void QueueNewOpenRegion(Region region)
 		{
 			if (region == null)
 			{
-				Log.ErrorOnce("Tried to queue null region.", 881121);
+				Log.ErrorOnce("Tried to queue null region.", 881121, false);
 				return;
 			}
 			if (region.reachedIndex == this.reachedIndex)
 			{
-				Log.ErrorOnce("Region is already reached; you can't open it. Region: " + region.ToString(), 719991);
+				Log.ErrorOnce("Region is already reached; you can't open it. Region: " + region.ToString(), 719991, false);
 				return;
 			}
 			this.openQueue.Enqueue(region);
@@ -86,7 +96,7 @@ namespace Verse
 		{
 			if (this.working)
 			{
-				Log.ErrorOnce("Called ReachableBetween while working. This should never happen. Suppressing further errors.", 7312233);
+				Log.ErrorOnce("Called CanReach() while working. This should never happen. Suppressing further errors.", 7312233, false);
 				return false;
 			}
 			if (traverseParams.pawn != null)
@@ -105,7 +115,7 @@ namespace Verse
 						traverseParams.pawn.Map,
 						" map=",
 						this.map
-					}));
+					}), false);
 					return false;
 				}
 			}
@@ -125,7 +135,7 @@ namespace Verse
 			{
 				return false;
 			}
-			if (peMode == PathEndMode.OnCell || peMode == PathEndMode.Touch || peMode == PathEndMode.ClosestTouch)
+			if ((peMode == PathEndMode.OnCell || peMode == PathEndMode.Touch || peMode == PathEndMode.ClosestTouch) && traverseParams.mode != TraverseMode.NoPassClosedDoorsOrWater && traverseParams.mode != TraverseMode.PassAllDestroyableThingsNotWater)
 			{
 				Room room = RegionAndRoomQuery.RoomAtFast(start, this.map, RegionType.Set_Passable);
 				if (room != null && room == RegionAndRoomQuery.RoomAtFast(dest.Cell, this.map, RegionType.Set_Passable))
@@ -163,7 +173,7 @@ namespace Verse
 				{
 					TouchPathEndModeUtility.AddAllowedAdjacentRegions(dest, traverseParams, this.map, this.destRegions);
 				}
-				if (this.destRegions.Count == 0 && traverseParams.mode != TraverseMode.PassAllDestroyableThings)
+				if (this.destRegions.Count == 0 && traverseParams.mode != TraverseMode.PassAllDestroyableThings && traverseParams.mode != TraverseMode.PassAllDestroyableThingsNotWater)
 				{
 					this.FinalizeCheck();
 					result = false;
@@ -174,14 +184,14 @@ namespace Verse
 					this.openQueue.Clear();
 					this.numRegionsOpened = 0;
 					this.DetermineStartRegions(start);
-					if (this.openQueue.Count == 0 && traverseParams.mode != TraverseMode.PassAllDestroyableThings)
+					if (this.openQueue.Count == 0 && traverseParams.mode != TraverseMode.PassAllDestroyableThings && traverseParams.mode != TraverseMode.PassAllDestroyableThingsNotWater)
 					{
 						this.FinalizeCheck();
 						result = false;
 					}
 					else
 					{
-						if (this.startingRegions.Any<Region>() && this.destRegions.Any<Region>())
+						if (this.startingRegions.Any<Region>() && this.destRegions.Any<Region>() && this.CanUseCache(traverseParams.mode))
 						{
 							BoolUnknown cachedResult = this.GetCachedResult(traverseParams);
 							if (cachedResult == BoolUnknown.True)
@@ -200,7 +210,7 @@ namespace Verse
 							{
 							}
 						}
-						if (traverseParams.mode == TraverseMode.PassAllDestroyableThings)
+						if (traverseParams.mode == TraverseMode.PassAllDestroyableThings || traverseParams.mode == TraverseMode.PassAllDestroyableThingsNotWater || traverseParams.mode == TraverseMode.NoPassClosedDoorsOrWater)
 						{
 							bool flag = this.CheckCellBasedReachability(start, dest, peMode, traverseParams);
 							this.FinalizeCheck();
@@ -329,7 +339,11 @@ namespace Verse
 			this.map.floodFiller.FloodFill(start, delegate(IntVec3 c)
 			{
 				int num = cellIndices.CellToIndex(c);
-				if (traverseParams.mode == TraverseMode.PassAllDestroyableThings)
+				if ((traverseParams.mode == TraverseMode.PassAllDestroyableThingsNotWater || traverseParams.mode == TraverseMode.NoPassClosedDoorsOrWater) && c.GetTerrain(this.map).IsWater)
+				{
+					return false;
+				}
+				if (traverseParams.mode == TraverseMode.PassAllDestroyableThings || traverseParams.mode == TraverseMode.PassAllDestroyableThingsNotWater)
 				{
 					if (!pathGrid.WalkableFast(num))
 					{
@@ -340,9 +354,9 @@ namespace Verse
 						}
 					}
 				}
-				else
+				else if (traverseParams.mode != TraverseMode.NoPassClosedDoorsOrWater)
 				{
-					Log.ErrorOnce("Do not use this method for other modes than PassAllDestroyableThings!", 938476762);
+					Log.ErrorOnce("Do not use this method for non-cell based modes!", 938476762, false);
 					if (!pathGrid.WalkableFast(num))
 					{
 						return false;
@@ -361,21 +375,27 @@ namespace Verse
 			}, 2147483647, false, null);
 			if (foundCell.IsValid)
 			{
-				Region validRegionAt = this.regionGrid.GetValidRegionAt(foundCell);
-				if (validRegionAt != null)
+				if (this.CanUseCache(traverseParams.mode))
 				{
-					for (int i = 0; i < this.startingRegions.Count; i++)
+					Region validRegionAt = this.regionGrid.GetValidRegionAt(foundCell);
+					if (validRegionAt != null)
 					{
-						this.cache.AddCachedResult(this.startingRegions[i].Room, validRegionAt.Room, traverseParams, true);
+						for (int i = 0; i < this.startingRegions.Count; i++)
+						{
+							this.cache.AddCachedResult(this.startingRegions[i].Room, validRegionAt.Room, traverseParams, true);
+						}
 					}
 				}
 				return true;
 			}
-			for (int j = 0; j < this.startingRegions.Count; j++)
+			if (this.CanUseCache(traverseParams.mode))
 			{
-				for (int k = 0; k < this.destRegions.Count; k++)
+				for (int j = 0; j < this.startingRegions.Count; j++)
 				{
-					this.cache.AddCachedResult(this.startingRegions[j].Room, this.destRegions[k].Room, traverseParams, false);
+					for (int k = 0; k < this.destRegions.Count; k++)
+					{
+						this.cache.AddCachedResult(this.startingRegions[j].Room, this.destRegions[k].Room, traverseParams, false);
+					}
 				}
 			}
 			return false;
@@ -466,7 +486,7 @@ namespace Verse
 						traverseParms.pawn.Map,
 						" map=",
 						this.map
-					}));
+					}), false);
 					return false;
 				}
 			}
@@ -512,7 +532,7 @@ namespace Verse
 						traverseParms.pawn.Map,
 						" map=",
 						this.map
-					}));
+					}), false);
 					return false;
 				}
 			}
@@ -542,6 +562,11 @@ namespace Verse
 			};
 			RegionTraverser.BreadthFirstTraverse(region, entryCondition, regionProcessor, 9999, RegionType.Set_Passable);
 			return foundReg;
+		}
+
+		private bool CanUseCache(TraverseMode mode)
+		{
+			return mode != TraverseMode.PassAllDestroyableThingsNotWater && mode != TraverseMode.NoPassClosedDoorsOrWater;
 		}
 	}
 }

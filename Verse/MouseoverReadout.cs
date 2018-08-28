@@ -44,13 +44,13 @@ namespace Verse
 			Text.Font = GameFont.Small;
 			GUI.color = new Color(1f, 1f, 1f, 0.8f);
 			IntVec3 c = UI.MouseCell();
-			if (!c.InBounds(Find.VisibleMap))
+			if (!c.InBounds(Find.CurrentMap))
 			{
 				return;
 			}
 			float num = 0f;
 			Rect rect;
-			if (c.Fogged(Find.VisibleMap))
+			if (c.Fogged(Find.CurrentMap))
 			{
 				rect = new Rect(MouseoverReadout.BotLeft.x, (float)UI.screenHeight - MouseoverReadout.BotLeft.y - num, 999f, 999f);
 				Widgets.Label(rect, "Undiscovered".Translate());
@@ -58,11 +58,11 @@ namespace Verse
 				return;
 			}
 			rect = new Rect(MouseoverReadout.BotLeft.x, (float)UI.screenHeight - MouseoverReadout.BotLeft.y - num, 999f, 999f);
-			int num2 = Mathf.RoundToInt(Find.VisibleMap.glowGrid.GameGlowAt(c, false) * 100f);
+			int num2 = Mathf.RoundToInt(Find.CurrentMap.glowGrid.GameGlowAt(c, false) * 100f);
 			Widgets.Label(rect, this.glowStrings[num2]);
 			num += 19f;
 			rect = new Rect(MouseoverReadout.BotLeft.x, (float)UI.screenHeight - MouseoverReadout.BotLeft.y - num, 999f, 999f);
-			TerrainDef terrain = c.GetTerrain(Find.VisibleMap);
+			TerrainDef terrain = c.GetTerrain(Find.CurrentMap);
 			if (terrain != this.cachedTerrain)
 			{
 				string str = ((double)terrain.fertility <= 0.0001) ? string.Empty : (" " + "FertShort".Translate() + " " + terrain.fertility.ToStringPercent());
@@ -74,7 +74,7 @@ namespace Verse
 			}
 			Widgets.Label(rect, this.cachedTerrainString);
 			num += 19f;
-			Zone zone = c.GetZone(Find.VisibleMap);
+			Zone zone = c.GetZone(Find.CurrentMap);
 			if (zone != null)
 			{
 				rect = new Rect(MouseoverReadout.BotLeft.x, (float)UI.screenHeight - MouseoverReadout.BotLeft.y - num, 999f, 999f);
@@ -82,7 +82,7 @@ namespace Verse
 				Widgets.Label(rect, label);
 				num += 19f;
 			}
-			float depth = Find.VisibleMap.snowGrid.GetDepth(c);
+			float depth = Find.CurrentMap.snowGrid.GetDepth(c);
 			if (depth > 0.03f)
 			{
 				rect = new Rect(MouseoverReadout.BotLeft.x, (float)UI.screenHeight - MouseoverReadout.BotLeft.y - num, 999f, 999f);
@@ -94,7 +94,7 @@ namespace Verse
 				Widgets.Label(rect, label2);
 				num += 19f;
 			}
-			List<Thing> thingList = c.GetThingList(Find.VisibleMap);
+			List<Thing> thingList = c.GetThingList(Find.CurrentMap);
 			for (int i = 0; i < thingList.Count; i++)
 			{
 				Thing thing = thingList[i];
@@ -106,7 +106,7 @@ namespace Verse
 					num += 19f;
 				}
 			}
-			RoofDef roof = c.GetRoof(Find.VisibleMap);
+			RoofDef roof = c.GetRoof(Find.CurrentMap);
 			if (roof != null)
 			{
 				rect = new Rect(MouseoverReadout.BotLeft.x, (float)UI.screenHeight - MouseoverReadout.BotLeft.y - num, 999f, 999f);

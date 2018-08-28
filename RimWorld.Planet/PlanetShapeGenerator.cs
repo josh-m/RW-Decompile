@@ -212,7 +212,7 @@ namespace RimWorld.Planet
 		{
 			if ((generatedTileVerts.Count != 5 && generatedTileVerts.Count != 6) || generatedTileVerts.Count > 6)
 			{
-				Log.Error("Planet shape generation internal error: generated a tile with " + generatedTileVerts.Count + " vertices. Only 5 and 6 are allowed.");
+				Log.Error("Planet shape generation internal error: generated a tile with " + generatedTileVerts.Count + " vertices. Only 5 and 6 are allowed.", false);
 				return;
 			}
 			if (PlanetShapeGenerator.ShouldDiscardGeneratedTile(generatedTileVerts))
@@ -301,7 +301,7 @@ namespace RimWorld.Planet
 				}
 				i++;
 			}
-			Log.Error("Planet shape generation internal error: could not find next adjacent triangle.");
+			Log.Error("Planet shape generation internal error: could not find next adjacent triangle.", false);
 			return -1;
 		}
 	}

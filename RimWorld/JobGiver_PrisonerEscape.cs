@@ -17,8 +17,9 @@ namespace RimWorld
 				{
 					Messages.Message("MessagePrisonerIsEscaping".Translate(new object[]
 					{
-						pawn.NameStringShort
-					}), pawn, MessageTypeDefOf.ThreatSmall);
+						pawn.LabelShort
+					}), pawn, MessageTypeDefOf.ThreatSmall, true);
+					Find.TickManager.slower.SignalForceNormalSpeed();
 				}
 				return new Job(JobDefOf.Goto, c)
 				{
@@ -40,7 +41,7 @@ namespace RimWorld
 				return true;
 			}
 			bool found = false;
-			RegionTraverser.BreadthFirstTraverse(room.Regions[0], (Region from, Region reg) => reg.portal == null || reg.portal.FreePassage, delegate(Region reg)
+			RegionTraverser.BreadthFirstTraverse(room.Regions[0], (Region from, Region reg) => reg.door == null || reg.door.FreePassage, delegate(Region reg)
 			{
 				if (reg.Room.TouchesMapEdge)
 				{

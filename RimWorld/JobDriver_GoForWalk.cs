@@ -8,7 +8,7 @@ namespace RimWorld
 {
 	public class JobDriver_GoForWalk : JobDriver
 	{
-		public override bool TryMakePreToilReservations()
+		public override bool TryMakePreToilReservations(bool errorOnFailed)
 		{
 			return true;
 		}
@@ -25,7 +25,7 @@ namespace RimWorld
 					this.$this.EndJobWith(JobCondition.Succeeded);
 					return;
 				}
-				JoyUtility.JoyTickCheckEnd(this.$this.pawn, JoyTickFullJoyAction.EndJob, 1f);
+				JoyUtility.JoyTickCheckEnd(this.$this.pawn, JoyTickFullJoyAction.EndJob, 1f, null);
 			};
 			yield return goToil;
 			yield return new Toil

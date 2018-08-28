@@ -23,7 +23,7 @@ namespace RimWorld
 
 		protected override Zone MakeNewZone()
 		{
-			return new Zone_Stockpile(this.preset, Find.VisibleMap.zoneManager);
+			return new Zone_Stockpile(this.preset, Find.CurrentMap.zoneManager);
 		}
 
 		public override AcceptanceReport CanDesignateCell(IntVec3 c)

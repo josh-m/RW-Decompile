@@ -1,3 +1,4 @@
+using RimWorld.Planet;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -7,12 +8,10 @@ namespace RimWorld
 {
 	internal class Recipe_RemoveBodyPart : Recipe_Surgery
 	{
-		private const float ViolationGoodwillImpact = 20f;
-
 		[DebuggerHidden]
 		public override IEnumerable<BodyPartRecord> GetPartsToApplyOn(Pawn pawn, RecipeDef recipe)
 		{
-			IEnumerable<BodyPartRecord> parts = pawn.health.hediffSet.GetNotMissingParts(BodyPartHeight.Undefined, BodyPartDepth.Undefined);
+			IEnumerable<BodyPartRecord> parts = pawn.health.hediffSet.GetNotMissingParts(BodyPartHeight.Undefined, BodyPartDepth.Undefined, null, null);
 			foreach (BodyPartRecord part in parts)
 			{
 				if (pawn.health.hediffSet.HasDirectlyAddedPartFor(part))
@@ -23,7 +22,7 @@ namespace RimWorld
 				{
 					yield return part;
 				}
-				if (part != pawn.RaceProps.body.corePart && !part.def.dontSuggestAmputation && pawn.health.hediffSet.hediffs.Any((Hediff d) => !(d is Hediff_Injury) && d.def.isBad && d.Visible && d.Part == part))
+				if (part != pawn.RaceProps.body.corePart && part.def.canSuggestAmputation && pawn.health.hediffSet.hediffs.Any((Hediff d) => !(d is Hediff_Injury) && d.def.isBad && d.Visible && d.Part == part))
 				{
 					yield return part;
 				}
@@ -32,7 +31,7 @@ namespace RimWorld
 
 		public override bool IsViolationOnPawn(Pawn pawn, BodyPartRecord part, Faction billDoerFaction)
 		{
-			return pawn.Faction != billDoerFaction && HealthUtility.PartRemovalIntent(pawn, part) == BodyPartRemovalIntent.Harvest;
+			return pawn.Faction != billDoerFaction && pawn.Faction != null && HealthUtility.PartRemovalIntent(pawn, part) == BodyPartRemovalIntent.Harvest;
 		}
 
 		public override void ApplyOnPawn(Pawn pawn, BodyPartRecord part, Pawn billDoer, List<Thing> ingredients, Bill bill)
@@ -54,22 +53,28 @@ namespace RimWorld
 				MedicalRecipesUtility.SpawnThingsFromHediffs(pawn, part, billDoer.Position, billDoer.Map);
 			}
 			DamageDef surgicalCut = DamageDefOf.SurgicalCut;
-			int amount = 99999;
-			pawn.TakeDamage(new DamageInfo(surgicalCut, amount, -1f, null, part, null, DamageInfo.SourceCategory.ThingOrUnknown));
+			float amount = 99999f;
+			float armorPenetration = 999f;
+			pawn.TakeDamage(new DamageInfo(surgicalCut, amount, armorPenetration, -1f, null, part, null, DamageInfo.SourceCategory.ThingOrUnknown, null));
 			if (flag)
 			{
 				if (pawn.Dead)
 				{
 					ThoughtUtility.GiveThoughtsForPawnExecuted(pawn, PawnExecutionKind.OrganHarvesting);
 				}
-				else
-				{
-					ThoughtUtility.GiveThoughtsForPawnOrganHarvested(pawn);
-				}
+				ThoughtUtility.GiveThoughtsForPawnOrganHarvested(pawn);
 			}
-			if (flag2)
+			if (flag2 && pawn.Faction != null && billDoer != null && billDoer.Faction != null)
 			{
-				pawn.Faction.AffectGoodwillWith(billDoer.Faction, -20f);
+				Faction arg_124_0 = pawn.Faction;
+				Faction faction = billDoer.Faction;
+				int goodwillChange = -15;
+				string reason = "GoodwillChangedReason_RemovedBodyPart".Translate(new object[]
+				{
+					part.LabelShort
+				});
+				GlobalTargetInfo? lookTarget = new GlobalTargetInfo?(pawn);
+				arg_124_0.TryAffectGoodwillWith(faction, goodwillChange, true, true, reason, lookTarget);
 			}
 		}
 
@@ -77,7 +82,7 @@ namespace RimWorld
 		{
 			if (pawn.RaceProps.IsMechanoid || pawn.health.hediffSet.PartOrAnyAncestorHasDirectlyAddedParts(part))
 			{
-				return RecipeDefOf.RemoveBodyPart.LabelCap;
+				return RecipeDefOf.RemoveBodyPart.label;
 			}
 			BodyPartRemovalIntent bodyPartRemovalIntent = HealthUtility.PartRemovalIntent(pawn, part);
 			if (bodyPartRemovalIntent != BodyPartRemovalIntent.Amputate)
@@ -86,11 +91,11 @@ namespace RimWorld
 				{
 					throw new InvalidOperationException();
 				}
-				return "Harvest".Translate();
+				return "HarvestOrgan".Translate();
 			}
 			else
 			{
-				if (part.depth == BodyPartDepth.Inside || part.def.useDestroyedOutLabel)
+				if (part.depth == BodyPartDepth.Inside || part.def.socketed)
 				{
 					return "RemoveOrgan".Translate();
 				}

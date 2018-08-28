@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using Verse;
 
@@ -28,8 +29,30 @@ namespace RimWorld
 				r.filledMat = MoteProgressBar.FilledMat;
 				r.unfilledMat = MoteProgressBar.UnfilledMat;
 				r.margin = 0.12f;
+				if (this.offsetZ >= -0.8f && this.offsetZ <= -0.3f && this.AnyThingWithQualityHere())
+				{
+					r.center.z = r.center.z + 0.25f;
+				}
 				GenDraw.DrawFillableBar(r);
 			}
+		}
+
+		private bool AnyThingWithQualityHere()
+		{
+			IntVec3 c = this.exactPosition.ToIntVec3();
+			if (!c.InBounds(base.Map))
+			{
+				return false;
+			}
+			List<Thing> thingList = c.GetThingList(base.Map);
+			for (int i = 0; i < thingList.Count; i++)
+			{
+				if (thingList[i].TryGetComp<CompQuality>() != null && (thingList[i].DrawPos - this.exactPosition).MagnitudeHorizontalSquared() < 0.0001f)
+				{
+					return true;
+				}
+			}
+			return false;
 		}
 	}
 }

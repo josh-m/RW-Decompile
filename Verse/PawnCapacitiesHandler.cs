@@ -54,14 +54,20 @@ namespace Verse
 			PawnCapacitiesHandler.CacheElement cacheElement = this.cachedCapacityLevels[capacity];
 			if (cacheElement.status == PawnCapacitiesHandler.CacheStatus.Caching)
 			{
-				Log.Error(string.Format("Detected infinite stat recursion when evaluating {0}", capacity));
+				Log.Error(string.Format("Detected infinite stat recursion when evaluating {0}", capacity), false);
 				return 0f;
 			}
 			if (cacheElement.status == PawnCapacitiesHandler.CacheStatus.Uncached)
 			{
 				cacheElement.status = PawnCapacitiesHandler.CacheStatus.Caching;
-				cacheElement.value = PawnCapacityUtility.CalculateCapacityLevel(this.pawn.health.hediffSet, capacity, null);
-				cacheElement.status = PawnCapacitiesHandler.CacheStatus.Cached;
+				try
+				{
+					cacheElement.value = PawnCapacityUtility.CalculateCapacityLevel(this.pawn.health.hediffSet, capacity, null);
+				}
+				finally
+				{
+					cacheElement.status = PawnCapacitiesHandler.CacheStatus.Cached;
+				}
 			}
 			return cacheElement.value;
 		}

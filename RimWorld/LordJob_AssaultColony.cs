@@ -23,6 +23,14 @@ namespace RimWorld
 
 		private static readonly IntRange SapTimeBeforeGiveUp = new IntRange(33000, 38000);
 
+		public override bool GuiltyOnDowned
+		{
+			get
+			{
+				return true;
+			}
+		}
+
 		public LordJob_AssaultColony()
 		{
 		}
@@ -41,7 +49,6 @@ namespace RimWorld
 		{
 			StateGraph stateGraph = new StateGraph();
 			LordToil lordToil = null;
-			LordToil lordToil2 = null;
 			if (this.sappers)
 			{
 				lordToil = new LordToil_AssaultColonySappers();
@@ -50,37 +57,34 @@ namespace RimWorld
 					lordToil.avoidGridMode = AvoidGridMode.Smart;
 				}
 				stateGraph.AddToil(lordToil);
-				lordToil2 = new LordToil_DefendPoint(false);
-				stateGraph.AddToil(lordToil2);
-				Transition transition = new Transition(lordToil, lordToil2);
-				transition.AddTrigger(new Trigger_PawnHarmed(1f, false).WithFilter(new TriggerFilter_NoSapperSapping()));
-				transition.AddPreAction(new TransitionAction_SetDefendLocalGroup());
-				stateGraph.AddTransition(transition);
-				Transition transition2 = new Transition(lordToil2, lordToil);
-				transition2.AddTrigger(new Trigger_TicksPassedWithoutHarm(900));
-				stateGraph.AddTransition(transition2);
+				Transition transition = new Transition(lordToil, lordToil, true, true);
+				transition.AddTrigger(new Trigger_PawnLost());
+				stateGraph.AddTransition(transition, false);
+				Transition transition2 = new Transition(lordToil, lordToil, true, false);
+				transition2.AddTrigger(new Trigger_PawnHarmed(1f, false, null));
+				transition2.AddPostAction(new TransitionAction_CheckForJobOverride());
+				stateGraph.AddTransition(transition2, false);
 			}
-			LordToil lordToil3 = new LordToil_AssaultColony();
+			LordToil lordToil2 = new LordToil_AssaultColony(false);
 			if (this.useAvoidGridSmart)
 			{
-				lordToil3.avoidGridMode = AvoidGridMode.Smart;
+				lordToil2.avoidGridMode = AvoidGridMode.Smart;
 			}
-			stateGraph.AddToil(lordToil3);
+			stateGraph.AddToil(lordToil2);
 			LordToil_ExitMap lordToil_ExitMap = new LordToil_ExitMap(LocomotionUrgency.Jog, false);
 			lordToil_ExitMap.avoidGridMode = AvoidGridMode.Smart;
 			stateGraph.AddToil(lordToil_ExitMap);
 			if (this.sappers)
 			{
-				Transition transition3 = new Transition(lordToil, lordToil3);
-				transition3.AddSource(lordToil2);
+				Transition transition3 = new Transition(lordToil, lordToil2, false, true);
 				transition3.AddTrigger(new Trigger_NoFightingSappers());
-				stateGraph.AddTransition(transition3);
+				stateGraph.AddTransition(transition3, false);
 			}
 			if (this.assaulterFaction.def.humanlikeFaction)
 			{
 				if (this.canTimeoutOrFlee)
 				{
-					Transition transition4 = new Transition(lordToil3, lordToil_ExitMap);
+					Transition transition4 = new Transition(lordToil2, lordToil_ExitMap, false, true);
 					if (lordToil != null)
 					{
 						transition4.AddSource(lordToil);
@@ -90,9 +94,9 @@ namespace RimWorld
 					{
 						this.assaulterFaction.def.pawnsPlural.CapitalizeFirst(),
 						this.assaulterFaction.Name
-					})));
-					stateGraph.AddTransition(transition4);
-					Transition transition5 = new Transition(lordToil3, lordToil_ExitMap);
+					}), null, 1f));
+					stateGraph.AddTransition(transition4, false);
+					Transition transition5 = new Transition(lordToil2, lordToil_ExitMap, false, true);
 					if (lordToil != null)
 					{
 						transition5.AddSource(lordToil);
@@ -104,13 +108,13 @@ namespace RimWorld
 					{
 						this.assaulterFaction.def.pawnsPlural.CapitalizeFirst(),
 						this.assaulterFaction.Name
-					})));
-					stateGraph.AddTransition(transition5);
+					}), null, 1f));
+					stateGraph.AddTransition(transition5, false);
 				}
 				if (this.canKidnap)
 				{
 					LordToil startingToil = stateGraph.AttachSubgraph(new LordJob_Kidnap().CreateGraph()).StartingToil;
-					Transition transition6 = new Transition(lordToil3, startingToil);
+					Transition transition6 = new Transition(lordToil2, startingToil, false, true);
 					if (lordToil != null)
 					{
 						transition6.AddSource(lordToil);
@@ -119,14 +123,14 @@ namespace RimWorld
 					{
 						this.assaulterFaction.def.pawnsPlural.CapitalizeFirst(),
 						this.assaulterFaction.Name
-					})));
+					}), null, 1f));
 					transition6.AddTrigger(new Trigger_KidnapVictimPresent());
-					stateGraph.AddTransition(transition6);
+					stateGraph.AddTransition(transition6, false);
 				}
 				if (this.canSteal)
 				{
 					LordToil startingToil2 = stateGraph.AttachSubgraph(new LordJob_Steal().CreateGraph()).StartingToil;
-					Transition transition7 = new Transition(lordToil3, startingToil2);
+					Transition transition7 = new Transition(lordToil2, startingToil2, false, true);
 					if (lordToil != null)
 					{
 						transition7.AddSource(lordToil);
@@ -135,23 +139,23 @@ namespace RimWorld
 					{
 						this.assaulterFaction.def.pawnsPlural.CapitalizeFirst(),
 						this.assaulterFaction.Name
-					})));
+					}), null, 1f));
 					transition7.AddTrigger(new Trigger_HighValueThingsAround());
-					stateGraph.AddTransition(transition7);
+					stateGraph.AddTransition(transition7, false);
 				}
 			}
-			Transition transition8 = new Transition(lordToil3, lordToil_ExitMap);
+			Transition transition8 = new Transition(lordToil2, lordToil_ExitMap, false, true);
 			if (lordToil != null)
 			{
 				transition8.AddSource(lordToil);
 			}
-			transition8.AddTrigger(new Trigger_BecameColonyAlly());
+			transition8.AddTrigger(new Trigger_BecameNonHostileToPlayer());
 			transition8.AddPreAction(new TransitionAction_Message("MessageRaidersLeaving".Translate(new object[]
 			{
 				this.assaulterFaction.def.pawnsPlural.CapitalizeFirst(),
 				this.assaulterFaction.Name
-			})));
-			stateGraph.AddTransition(transition8);
+			}), null, 1f));
+			stateGraph.AddTransition(transition8, false);
 			return stateGraph;
 		}
 

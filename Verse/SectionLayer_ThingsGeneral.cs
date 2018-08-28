@@ -26,7 +26,7 @@ namespace Verse
 					t.Position,
 					": ",
 					ex.ToString()
-				}));
+				}), false);
 			}
 		}
 	}

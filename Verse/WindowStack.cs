@@ -1,3 +1,4 @@
+using RimWorld;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -130,16 +131,7 @@ namespace Verse
 		{
 			get
 			{
-				Vector3 v;
-				if (Event.current != null)
-				{
-					v = UI.GUIToScreenPoint(Event.current.mousePosition);
-				}
-				else
-				{
-					v = UI.MousePositionOnUIInverted;
-				}
-				return this.GetWindowAt(v) != this.currentlyDrawnWindow;
+				return this.GetWindowAt(UI.MousePosUIInvertedUseEventIfCan) != this.currentlyDrawnWindow;
 			}
 		}
 
@@ -185,9 +177,13 @@ namespace Verse
 					Event.current.Use();
 				}
 			}
-			if (Event.current.type == EventType.KeyDown && Event.current.keyCode == KeyCode.Escape)
+			if (KeyBindingDefOf.Cancel.KeyDownEvent)
 			{
-				this.Notify_PressedEscape();
+				this.Notify_PressedCancel();
+			}
+			if (KeyBindingDefOf.Accept.KeyDownEvent)
+			{
+				this.Notify_PressedAccept();
 			}
 			if ((Event.current.type == EventType.MouseDown || Event.current.type == EventType.KeyDown) && !this.GetsInput(null))
 			{
@@ -245,14 +241,25 @@ namespace Verse
 			this.updateInternalWindowsOrderLater = true;
 		}
 
-		public void Notify_PressedEscape()
+		public void Notify_PressedCancel()
 		{
 			for (int i = this.windows.Count - 1; i >= 0; i--)
 			{
-				if (this.windows[i].closeOnEscapeKey && this.GetsInput(this.windows[i]))
+				if ((this.windows[i].closeOnCancel || this.windows[i].forceCatchAcceptAndCancelEventEvenIfUnfocused) && this.GetsInput(this.windows[i]))
 				{
-					Event.current.Use();
-					this.TryRemove(this.windows[i], true);
+					this.windows[i].OnCancelKeyPressed();
+					break;
+				}
+			}
+		}
+
+		public void Notify_PressedAccept()
+		{
+			for (int i = this.windows.Count - 1; i >= 0; i--)
+			{
+				if ((this.windows[i].closeOnAccept || this.windows[i].forceCatchAcceptAndCancelEventEvenIfUnfocused) && this.GetsInput(this.windows[i]))
+				{
+					this.windows[i].OnAcceptKeyPressed();
 					break;
 				}
 			}
@@ -291,6 +298,11 @@ namespace Verse
 				}
 			}
 			return false;
+		}
+
+		public bool IsOpen(Window window)
+		{
+			return this.windows.Contains(window);
 		}
 
 		public WindowType WindowOfType<WindowType>() where WindowType : class
@@ -340,7 +352,7 @@ namespace Verse
 			}
 			if (ID == 0)
 			{
-				Log.Warning("Used 0 as immediate window ID.");
+				Log.Warning("Used 0 as immediate window ID.", false);
 				return;
 			}
 			ID = -Math.Abs(ID);
@@ -444,7 +456,7 @@ namespace Verse
 		{
 			if (ID >= 0)
 			{
-				Log.Error("Invalid immediate window ID.");
+				Log.Error("Invalid immediate window ID.", false);
 				return;
 			}
 			ImmediateWindow immediateWindow = new ImmediateWindow();

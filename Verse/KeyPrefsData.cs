@@ -35,7 +35,7 @@ namespace Verse
 				{
 					if (slot != KeyPrefs.BindingSlot.B)
 					{
-						Log.Error("Tried to set a key binding for \"" + keyDef.LabelCap + "\" on a nonexistent slot: " + slot.ToString());
+						Log.Error("Tried to set a key binding for \"" + keyDef.LabelCap + "\" on a nonexistent slot: " + slot.ToString(), false);
 						return false;
 					}
 					keyBindingData.keyBindingB = keyCode;
@@ -46,7 +46,7 @@ namespace Verse
 				}
 				return true;
 			}
-			Log.Error("Key not found in keyprefs: \"" + keyDef.LabelCap + "\"");
+			Log.Error("Key not found in keyprefs: \"" + keyDef.LabelCap + "\"", false);
 			return false;
 		}
 
@@ -55,7 +55,7 @@ namespace Verse
 			KeyBindingData keyBindingData;
 			if (!this.keyPrefs.TryGetValue(keyDef, out keyBindingData))
 			{
-				Log.Error("Key not found in keyprefs: \"" + keyDef.LabelCap + "\"");
+				Log.Error("Key not found in keyprefs: \"" + keyDef.LabelCap + "\"", false);
 				return KeyCode.None;
 			}
 			if (slot == KeyPrefs.BindingSlot.A)
@@ -149,7 +149,7 @@ namespace Verse
 						boundKeyCode,
 						".",
 						(!flag) ? string.Empty : " Fixed automatically."
-					}));
+					}), false);
 					if (flag)
 					{
 						if (slot == KeyPrefs.BindingSlot.A)

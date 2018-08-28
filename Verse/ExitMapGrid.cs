@@ -24,8 +24,13 @@ namespace Verse
 				{
 					return false;
 				}
-				CaravansBattlefield caravansBattlefield = this.map.info.parent as CaravansBattlefield;
-				return caravansBattlefield == null || !caravansBattlefield.def.blockExitGridUntilBattleIsWon || caravansBattlefield.WonBattle;
+				CaravansBattlefield caravansBattlefield = this.map.Parent as CaravansBattlefield;
+				if (caravansBattlefield != null && caravansBattlefield.def.blockExitGridUntilBattleIsWon && !caravansBattlefield.WonBattle)
+				{
+					return false;
+				}
+				FormCaravanComp component = this.map.Parent.GetComponent<FormCaravanComp>();
+				return component == null || !component.CanFormOrReformCaravanNow;
 			}
 		}
 

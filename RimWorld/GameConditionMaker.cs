@@ -18,6 +18,7 @@ namespace RimWorld
 			gameCondition.startTick = Find.TickManager.TicksGame + startTickOffset;
 			gameCondition.def = def;
 			gameCondition.Duration = duration;
+			gameCondition.PostMake();
 			return gameCondition;
 		}
 	}

@@ -29,7 +29,16 @@ namespace RimWorld.Planet
 				{
 					num = 1f - caravan.pather.nextTileCostLeft / caravan.pather.nextTileCostTotal;
 				}
-				return worldGrid.GetTileCenter(caravan.pather.nextTile) * num + worldGrid.GetTileCenter(caravan.Tile) * (1f - num);
+				int tileID;
+				if (caravan.pather.nextTile == caravan.Tile && caravan.pather.previousTileForDrawingIfInDoubt != -1)
+				{
+					tileID = caravan.pather.previousTileForDrawingIfInDoubt;
+				}
+				else
+				{
+					tileID = caravan.Tile;
+				}
+				return worldGrid.GetTileCenter(caravan.pather.nextTile) * num + worldGrid.GetTileCenter(tileID) * (1f - num);
 			}
 			return worldGrid.GetTileCenter(caravan.Tile);
 		}

@@ -25,13 +25,17 @@ namespace RimWorld
 
 		private bool freePassageWhenClearedReachabilityCache;
 
-		private const float BaseDoorOpenTicks = 45f;
+		private const float OpenTicks = 45f;
 
-		private const int AutomaticCloseDelayTicks = 60;
+		private const int CloseDelayTicks = 110;
+
+		private const int WillCloseSoonThreshold = 111;
 
 		private const int ApproachCloseDelayTicks = 300;
 
-		private const int MaxTicksSinceFriendlyTouchToAutoClose = 301;
+		private const int MaxTicksSinceFriendlyTouchToAutoClose = 120;
+
+		private const float PowerOffDoorOpenSpeedFactor = 0.25f;
 
 		private const float VisualDoorOffsetStart = 0f;
 
@@ -77,7 +81,11 @@ namespace RimWorld
 				{
 					return false;
 				}
-				if (this.ticksUntilClose > 0 && this.ticksUntilClose <= 60 && this.CanCloseAutomatically)
+				if (this.ticksUntilClose > 0 && this.ticksUntilClose <= 111 && !this.BlockedOpenMomentary)
+				{
+					return true;
+				}
+				if (this.CanTryCloseAutomatically && !this.BlockedOpenMomentary)
 				{
 					return true;
 				}
@@ -92,7 +100,7 @@ namespace RimWorld
 							Pawn pawn = thingList[j] as Pawn;
 							if (pawn != null && !pawn.HostileTo(this) && !pawn.Downed)
 							{
-								if (pawn.Position == base.Position || (pawn.pather.MovingNow && pawn.pather.nextCell == base.Position))
+								if (pawn.Position == base.Position || (pawn.pather.Moving && pawn.pather.nextCell == base.Position))
 								{
 									return true;
 								}
@@ -150,11 +158,11 @@ namespace RimWorld
 			}
 		}
 
-		private bool CanCloseAutomatically
+		private bool CanTryCloseAutomatically
 		{
 			get
 			{
-				return this.DoorPowerOn && this.FriendlyTouchedRecently;
+				return this.FriendlyTouchedRecently && !this.HoldOpen;
 			}
 		}
 
@@ -162,7 +170,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return Find.TickManager.TicksGame < this.lastFriendlyTouchTick + 301;
+				return Find.TickManager.TicksGame < this.lastFriendlyTouchTick + 120;
 			}
 		}
 
@@ -195,14 +203,14 @@ namespace RimWorld
 			this.ClearReachabilityCache(map);
 			if (this.BlockedOpenMomentary)
 			{
-				this.DoorOpen(60);
+				this.DoorOpen(110);
 			}
 		}
 
-		public override void DeSpawn()
+		public override void DeSpawn(DestroyMode mode = DestroyMode.Vanish)
 		{
 			Map map = base.Map;
-			base.DeSpawn();
+			base.DeSpawn(mode);
 			this.ClearReachabilityCache(map);
 		}
 
@@ -251,58 +259,69 @@ namespace RimWorld
 				{
 					this.visualTicksOpen++;
 				}
-				if (!this.holdOpenInt)
+				List<Thing> thingList = base.Position.GetThingList(base.Map);
+				for (int i = 0; i < thingList.Count; i++)
+				{
+					Pawn pawn = thingList[i] as Pawn;
+					if (pawn != null)
+					{
+						this.CheckFriendlyTouched(pawn);
+					}
+				}
+				if (this.ticksUntilClose > 0)
 				{
 					if (base.Map.thingGrid.CellContains(base.Position, ThingCategory.Pawn))
 					{
-						this.ticksUntilClose = 60;
+						this.ticksUntilClose = 110;
 					}
-					else
+					this.ticksUntilClose--;
+					if (this.ticksUntilClose <= 0 && !this.holdOpenInt && !this.DoorTryClose())
 					{
-						this.ticksUntilClose--;
-						if (this.ticksUntilClose <= 0 && this.CanCloseAutomatically)
-						{
-							this.DoorTryClose();
-						}
+						this.ticksUntilClose = 1;
 					}
 				}
-				if ((Find.TickManager.TicksGame + this.thingIDNumber.HashOffset()) % 22 == 0)
+				else if (this.CanTryCloseAutomatically)
+				{
+					this.ticksUntilClose = 110;
+				}
+				if ((Find.TickManager.TicksGame + this.thingIDNumber.HashOffset()) % 34 == 0)
 				{
 					GenTemperature.EqualizeTemperaturesThroughBuilding(this, 1f, false);
 				}
 			}
 		}
 
-		public void FriendlyTouched()
+		public void CheckFriendlyTouched(Pawn p)
 		{
-			this.lastFriendlyTouchTick = Find.TickManager.TicksGame;
+			if (!p.HostileTo(this) && this.PawnCanOpen(p))
+			{
+				this.lastFriendlyTouchTick = Find.TickManager.TicksGame;
+			}
 		}
 
-		public void Notify_PawnApproaching(Pawn p)
+		public void Notify_PawnApproaching(Pawn p, int moveCost)
 		{
-			if (!p.HostileTo(this))
-			{
-				this.FriendlyTouched();
-			}
+			this.CheckFriendlyTouched(p);
 			if (this.PawnCanOpen(p))
 			{
 				base.Map.fogGrid.Notify_PawnEnteringDoor(this, p);
 				if (!this.SlowsPawns)
 				{
-					this.DoorOpen(300);
+					int ticksToClose = Mathf.Max(300, moveCost + 1);
+					this.DoorOpen(ticksToClose);
 				}
 			}
 		}
 
 		public bool CanPhysicallyPass(Pawn p)
 		{
-			return this.FreePassage || this.PawnCanOpen(p);
+			return this.FreePassage || this.PawnCanOpen(p) || (this.Open && p.HostileTo(this));
 		}
 
 		public virtual bool PawnCanOpen(Pawn p)
 		{
 			Lord lord = p.GetLord();
-			return (lord != null && lord.LordJob != null && lord.LordJob.CanOpenAnyDoor(p)) || (p.IsWildMan() && !p.mindState.wildManEverReachedOutside) || base.Faction == null || (p.guest != null && p.guest.Released) || GenAI.MachinesLike(base.Faction, p);
+			return (lord != null && lord.LordJob != null && lord.LordJob.CanOpenAnyDoor(p)) || WildManUtility.WildManShouldReachOutsideNow(p) || base.Faction == null || (p.guest != null && p.guest.Released) || GenAI.MachinesLike(base.Faction, p);
 		}
 
 		public override bool BlocksPawn(Pawn p)
@@ -310,12 +329,20 @@ namespace RimWorld
 			return !this.openInt && !this.PawnCanOpen(p);
 		}
 
-		protected void DoorOpen(int ticksToClose = 60)
+		protected void DoorOpen(int ticksToClose = 110)
 		{
-			this.ticksUntilClose = ticksToClose;
+			if (this.openInt)
+			{
+				this.ticksUntilClose = ticksToClose;
+			}
+			else
+			{
+				this.ticksUntilClose = this.TicksToOpenNow + ticksToClose;
+			}
 			if (!this.openInt)
 			{
 				this.openInt = true;
+				this.CheckClearReachabilityCacheBecauseOpenedOrClosed();
 				if (this.DoorPowerOn)
 				{
 					this.def.building.soundDoorOpenPowered.PlayOneShot(new TargetInfo(base.Position, base.Map, false));
@@ -327,13 +354,14 @@ namespace RimWorld
 			}
 		}
 
-		protected void DoorTryClose()
+		protected bool DoorTryClose()
 		{
 			if (this.holdOpenInt || this.BlockedOpenMomentary)
 			{
-				return;
+				return false;
 			}
 			this.openInt = false;
+			this.CheckClearReachabilityCacheBecauseOpenedOrClosed();
 			if (this.DoorPowerOn)
 			{
 				this.def.building.soundDoorClosePowered.PlayOneShot(new TargetInfo(base.Position, base.Map, false));
@@ -342,16 +370,17 @@ namespace RimWorld
 			{
 				this.def.building.soundDoorCloseManual.PlayOneShot(new TargetInfo(base.Position, base.Map, false));
 			}
+			return true;
 		}
 
 		public void StartManualOpenBy(Pawn opener)
 		{
-			this.DoorOpen(60);
+			this.DoorOpen(110);
 		}
 
 		public void StartManualCloseBy(Pawn closer)
 		{
-			this.DoorTryClose();
+			this.ticksUntilClose = 110;
 		}
 
 		public override void Draw()
@@ -377,7 +406,7 @@ namespace RimWorld
 				rotation.Rotate(RotationDirection.Clockwise);
 				vector = rotation.AsQuat * vector;
 				Vector3 vector2 = this.DrawPos;
-				vector2.y = Altitudes.AltitudeFor(AltitudeLayer.DoorMoveable);
+				vector2.y = AltitudeLayer.DoorMoveable.AltitudeFor();
 				vector2 += vector * d;
 				Graphics.DrawMesh(mesh, vector2, base.Rotation.AsQuat, this.Graphic.MatAt(base.Rotation, null), 0);
 			}
@@ -461,6 +490,14 @@ namespace RimWorld
 		{
 			map.reachability.ClearCache();
 			this.freePassageWhenClearedReachabilityCache = this.FreePassage;
+		}
+
+		private void CheckClearReachabilityCacheBecauseOpenedOrClosed()
+		{
+			if (base.Spawned)
+			{
+				base.Map.reachability.ClearCacheForHostile(this);
+			}
 		}
 	}
 }

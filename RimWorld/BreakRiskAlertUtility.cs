@@ -12,7 +12,7 @@ namespace RimWorld
 		{
 			get
 			{
-				foreach (Pawn p in PawnsFinder.AllMaps_FreeColonistsSpawned)
+				foreach (Pawn p in PawnsFinder.AllMapsCaravansAndTravelingTransportPods_Alive_FreeColonists_NoCryptosleep)
 				{
 					if (!p.Downed && p.mindState.mentalBreaker.BreakExtremeIsImminent)
 					{
@@ -26,7 +26,7 @@ namespace RimWorld
 		{
 			get
 			{
-				foreach (Pawn p in PawnsFinder.AllMaps_FreeColonistsSpawned)
+				foreach (Pawn p in PawnsFinder.AllMapsCaravansAndTravelingTransportPods_Alive_FreeColonists_NoCryptosleep)
 				{
 					if (!p.Downed && p.mindState.mentalBreaker.BreakMajorIsImminent)
 					{
@@ -40,7 +40,7 @@ namespace RimWorld
 		{
 			get
 			{
-				foreach (Pawn p in PawnsFinder.AllMaps_FreeColonistsSpawned)
+				foreach (Pawn p in PawnsFinder.AllMapsCaravansAndTravelingTransportPods_Alive_FreeColonists_NoCryptosleep)
 				{
 					if (!p.Downed && p.mindState.mentalBreaker.BreakMinorIsImminent)
 					{
@@ -91,7 +91,7 @@ namespace RimWorld
 					StringBuilder stringBuilder2 = new StringBuilder();
 					foreach (Pawn current in BreakRiskAlertUtility.PawnsAtRiskExtreme)
 					{
-						stringBuilder2.AppendLine("    " + current.NameStringShort);
+						stringBuilder2.AppendLine("    " + current.LabelShort);
 					}
 					stringBuilder.Append("BreakRiskExtremeDesc".Translate(new object[]
 					{
@@ -107,7 +107,7 @@ namespace RimWorld
 					StringBuilder stringBuilder3 = new StringBuilder();
 					foreach (Pawn current2 in BreakRiskAlertUtility.PawnsAtRiskMajor)
 					{
-						stringBuilder3.AppendLine("    " + current2.NameStringShort);
+						stringBuilder3.AppendLine("    " + current2.LabelShort);
 					}
 					stringBuilder.Append("BreakRiskMajorDesc".Translate(new object[]
 					{
@@ -123,7 +123,7 @@ namespace RimWorld
 					StringBuilder stringBuilder4 = new StringBuilder();
 					foreach (Pawn current3 in BreakRiskAlertUtility.PawnsAtRiskMinor)
 					{
-						stringBuilder4.AppendLine("    " + current3.NameStringShort);
+						stringBuilder4.AppendLine("    " + current3.LabelShort);
 					}
 					stringBuilder.Append("BreakRiskMinorDesc".Translate(new object[]
 					{

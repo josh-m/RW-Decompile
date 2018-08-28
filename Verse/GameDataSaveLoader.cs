@@ -1,6 +1,7 @@
 using RimWorld;
 using System;
 using System.IO;
+using Verse.Profile;
 
 namespace Verse
 {
@@ -19,6 +20,10 @@ namespace Verse
 		public const string WorldNodeName = "world";
 
 		public const string ScenarioNodeName = "scenario";
+
+		public const string AutosavePrefix = "Autosave";
+
+		public const string AutostartSaveName = "autostart";
 
 		public static bool CurrentGameStateIsValuable
 		{
@@ -41,7 +46,7 @@ namespace Verse
 			}
 			catch (Exception ex)
 			{
-				Log.Error("Exception while saving world: " + ex.ToString());
+				Log.Error("Exception while saving world: " + ex.ToString(), false);
 			}
 		}
 
@@ -67,7 +72,7 @@ namespace Verse
 			}
 			catch (Exception ex)
 			{
-				Log.Error("Exception loading scenario: " + ex.ToString());
+				Log.Error("Exception loading scenario: " + ex.ToString(), false);
 				scen = null;
 				Scribe.ForceStop();
 			}
@@ -89,8 +94,33 @@ namespace Verse
 			}
 			catch (Exception arg)
 			{
-				Log.Error("Exception while saving game: " + arg);
+				Log.Error("Exception while saving game: " + arg, false);
 			}
+		}
+
+		public static void CheckVersionAndLoadGame(string saveFileName)
+		{
+			PreLoadUtility.CheckVersionAndLoad(GenFilePaths.FilePathForSavedGame(saveFileName), ScribeMetaHeaderUtility.ScribeHeaderMode.Map, delegate
+			{
+				GameDataSaveLoader.LoadGame(saveFileName);
+			});
+		}
+
+		public static void LoadGame(string saveFileName)
+		{
+			Action preLoadLevelAction = delegate
+			{
+				MemoryUtility.ClearAllMapsAndWorld();
+				Current.Game = new Game();
+				Current.Game.InitData = new GameInitData();
+				Current.Game.InitData.gameToLoad = saveFileName;
+			};
+			LongEventHandler.QueueLongEvent(preLoadLevelAction, "Play", "LoadingLongEvent", true, null);
+		}
+
+		public static void LoadGame(FileInfo saveFile)
+		{
+			GameDataSaveLoader.LoadGame(Path.GetFileNameWithoutExtension(saveFile.Name));
 		}
 	}
 }

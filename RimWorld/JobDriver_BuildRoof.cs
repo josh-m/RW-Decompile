@@ -22,7 +22,7 @@ namespace RimWorld
 		protected override IEnumerable<Toil> MakeNewToils()
 		{
 			this.FailOn(() => !this.$this.Map.areaManager.BuildRoof[this.$this.Cell]);
-			this.FailOn(() => !RoofCollapseUtility.WithinRangeOfRoofHolder(this.$this.Cell, this.$this.Map));
+			this.FailOn(() => !RoofCollapseUtility.WithinRangeOfRoofHolder(this.$this.Cell, this.$this.Map, false));
 			this.FailOn(() => !RoofCollapseUtility.ConnectedToRoofHolder(this.$this.Cell, this.$this.Map, true));
 			foreach (Toil t in base.MakeNewToils())
 			{
@@ -38,7 +38,7 @@ namespace RimWorld
 				IntVec3 intVec = base.Cell + GenAdj.AdjacentCellsAndInside[i];
 				if (intVec.InBounds(base.Map))
 				{
-					if (base.Map.areaManager.BuildRoof[intVec] && !intVec.Roofed(base.Map) && RoofCollapseUtility.WithinRangeOfRoofHolder(intVec, base.Map))
+					if (base.Map.areaManager.BuildRoof[intVec] && !intVec.Roofed(base.Map) && RoofCollapseUtility.WithinRangeOfRoofHolder(intVec, base.Map, false) && RoofUtility.FirstBlockingThing(intVec, base.Map) == null)
 					{
 						base.Map.roofGrid.SetRoof(intVec, RoofDefOf.RoofConstructed);
 						MoteMaker.PlaceTempRoof(intVec, base.Map);

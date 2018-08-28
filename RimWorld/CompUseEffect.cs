@@ -25,7 +25,7 @@ namespace RimWorld
 
 		public virtual void DoEffect(Pawn usedBy)
 		{
-			if (this.Props.doCameraShake && usedBy.Spawned && usedBy.Map == Find.VisibleMap)
+			if (this.Props.doCameraShake && usedBy.Spawned && usedBy.Map == Find.CurrentMap)
 			{
 				Find.CameraDriver.shaker.DoShake(1f);
 			}
@@ -34,6 +34,12 @@ namespace RimWorld
 		public virtual bool SelectedUseOption(Pawn p)
 		{
 			return false;
+		}
+
+		public virtual bool CanBeUsedBy(Pawn p, out string failReason)
+		{
+			failReason = null;
+			return true;
 		}
 	}
 }

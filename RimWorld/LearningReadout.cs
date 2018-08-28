@@ -73,7 +73,7 @@ namespace RimWorld
 				return false;
 			}
 			this.activeConcepts.Add(conc);
-			SoundDefOf.LessonActivated.PlayOneShotOnCamera(null);
+			SoundDefOf.Lesson_Activated.PlayOneShotOnCamera(null);
 			this.lastConceptActivateRealTime = RealTime.LastRealTime;
 			return true;
 		}
@@ -91,7 +91,7 @@ namespace RimWorld
 		{
 			if (this.activeConcepts.Contains(conc) || this.selectedConcept == conc)
 			{
-				SoundDefOf.LessonDeactivated.PlayOneShotOnCamera(null);
+				SoundDefOf.Lesson_Deactivated.PlayOneShotOnCamera(null);
 				SoundDefOf.CommsWindow_Close.PlayOneShotOnCamera(null);
 			}
 			if (this.activeConcepts.Contains(conc))
@@ -163,11 +163,11 @@ namespace RimWorld
 					this.showAllMode = !this.showAllMode;
 					if (this.showAllMode)
 					{
-						SoundDefOf.TickHigh.PlayOneShotOnCamera(null);
+						SoundDefOf.Tick_High.PlayOneShotOnCamera(null);
 					}
 					else
 					{
-						SoundDefOf.TickLow.PlayOneShotOnCamera(null);
+						SoundDefOf.Tick_Low.PlayOneShotOnCamera(null);
 					}
 				}
 				if (this.showAllMode)
@@ -188,7 +188,7 @@ namespace RimWorld
 					if (Widgets.ButtonImage(butRect2, TexButton.CloseXSmall))
 					{
 						this.searchString = string.Empty;
-						SoundDefOf.TickTiny.PlayOneShotOnCamera(null);
+						SoundDefOf.Tick_Tiny.PlayOneShotOnCamera(null);
 					}
 					num2 = rect3.yMax + 4f;
 				}

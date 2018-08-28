@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using Verse;
 
 namespace RimWorld
@@ -13,6 +14,8 @@ namespace RimWorld
 
 		public float hideAtValue = -2.14748365E+09f;
 
+		public bool alwaysHide;
+
 		public bool showNonAbstract = true;
 
 		public bool showIfUndefined = true;
@@ -20,6 +23,8 @@ namespace RimWorld
 		public bool showOnPawns = true;
 
 		public bool showOnHumanlikes = true;
+
+		public bool showOnNonWildManHumanlikes = true;
 
 		public bool showOnAnimals = true;
 
@@ -35,8 +40,9 @@ namespace RimWorld
 
 		public ToStringStyle toStringStyle;
 
-		public ToStringStyle? toStringStyleUnfinalized;
+		private ToStringStyle? toStringStyleUnfinalized;
 
+		[MustTranslate]
 		public string formatString;
 
 		public float defaultBaseValue = 1f;
@@ -73,6 +79,7 @@ namespace RimWorld
 
 		public List<StatPart> parts;
 
+		[Unsaved]
 		private StatWorker workerInt;
 
 		public StatWorker Worker
@@ -148,6 +155,21 @@ namespace RimWorld
 		public static StatDef Named(string defName)
 		{
 			return DefDatabase<StatDef>.GetNamed(defName, true);
+		}
+
+		public override void PostLoad()
+		{
+			base.PostLoad();
+			if (this.parts != null)
+			{
+				List<StatPart> partsCopy = this.parts.ToList<StatPart>();
+				this.parts.SortBy((StatPart x) => -x.priority, (StatPart x) => partsCopy.IndexOf(x));
+			}
+		}
+
+		public T GetStatPart<T>() where T : StatPart
+		{
+			return this.parts.OfType<T>().FirstOrDefault<T>();
 		}
 	}
 }

@@ -110,7 +110,7 @@ namespace RimWorld.Planet
 		{
 			if (this.Goods.Contains(toGive))
 			{
-				Log.Error("Tried to add " + toGive + " to stock (pawn's trader tracker), but it's already here.");
+				Log.Error("Tried to add " + toGive + " to stock (pawn's trader tracker), but it's already here.", false);
 				return;
 			}
 			Caravan caravan = playerNegotiator.GetCaravan();
@@ -135,12 +135,12 @@ namespace RimWorld.Planet
 				Pawn pawn2 = CaravanInventoryUtility.FindPawnToMoveInventoryTo(thing, this.caravan.PawnsListForReading, null, null);
 				if (pawn2 == null)
 				{
-					Log.Error("Could not find pawn to move sold thing to (sold by player). thing=" + thing);
+					Log.Error("Could not find pawn to move sold thing to (sold by player). thing=" + thing, false);
 					thing.Destroy(DestroyMode.Vanish);
 				}
 				else if (!pawn2.inventory.innerContainer.TryAdd(thing, true))
 				{
-					Log.Error("Could not add item to inventory.");
+					Log.Error("Could not add item to inventory.", false);
 					thing.Destroy(DestroyMode.Vanish);
 				}
 			}
@@ -167,12 +167,12 @@ namespace RimWorld.Planet
 				Pawn pawn2 = CaravanInventoryUtility.FindPawnToMoveInventoryTo(thing, caravan.PawnsListForReading, null, null);
 				if (pawn2 == null)
 				{
-					Log.Error("Could not find pawn to move bought thing to (bought by player). thing=" + thing);
+					Log.Error("Could not find pawn to move bought thing to (bought by player). thing=" + thing, false);
 					thing.Destroy(DestroyMode.Vanish);
 				}
 				else if (!pawn2.inventory.innerContainer.TryAdd(thing, true))
 				{
-					Log.Error("Could not add item to inventory.");
+					Log.Error("Could not add item to inventory.", false);
 					thing.Destroy(DestroyMode.Vanish);
 				}
 			}

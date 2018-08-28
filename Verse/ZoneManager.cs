@@ -59,11 +59,13 @@ namespace Verse
 		public void RegisterZone(Zone newZone)
 		{
 			this.allZones.Add(newZone);
+			newZone.PostRegister();
 		}
 
 		public void DeregisterZone(Zone oldZone)
 		{
 			this.allZones.Remove(oldZone);
+			oldZone.PostDeregister();
 		}
 
 		internal void AddZoneGridCell(Zone zone, IntVec3 c)
@@ -91,7 +93,7 @@ namespace Verse
 					return cand;
 				}
 			}
-			Log.Error("Ran out of zone names.");
+			Log.Error("Ran out of zone names.", false);
 			return "Zone X";
 		}
 

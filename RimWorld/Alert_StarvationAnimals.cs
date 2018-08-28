@@ -12,7 +12,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return from p in PawnsFinder.AllMaps_SpawnedPawnsInFaction(Faction.OfPlayer)
+				return from p in PawnsFinder.AllMapsCaravansAndTravelingTransportPods_Alive_OfPlayerFaction_NoCryptosleep
 				where p.HostFaction == null && !p.RaceProps.Humanlike
 				where p.needs.food != null && (p.needs.food.TicksStarving > 30000 || (p.health.hediffSet.HasHediff(HediffDefOf.Pregnant, true) && p.needs.food.TicksStarving > 5000))
 				select p;
@@ -31,7 +31,7 @@ namespace RimWorld
 			orderby a.def.label
 			select a)
 			{
-				stringBuilder.Append("    " + current.NameStringShort);
+				stringBuilder.Append("    " + current.LabelShort.CapitalizeFirst());
 				if (current.Name.IsValid && !current.Name.Numerical)
 				{
 					stringBuilder.Append(" (" + current.def.label + ")");
@@ -43,7 +43,7 @@ namespace RimWorld
 
 		public override AlertReport GetReport()
 		{
-			return AlertReport.CulpritIs(this.StarvingAnimals.FirstOrDefault<Pawn>());
+			return AlertReport.CulpritsAre(this.StarvingAnimals);
 		}
 	}
 }

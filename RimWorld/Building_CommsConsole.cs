@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using Verse;
 using Verse.AI;
@@ -34,121 +35,77 @@ namespace RimWorld
 			PlayerKnowledgeDatabase.KnowledgeDemonstrated(ConceptDefOf.OpeningComms, KnowledgeAmount.Total);
 		}
 
-		public override IEnumerable<FloatMenuOption> GetFloatMenuOptions(Pawn myPawn)
+		private FloatMenuOption GetFailureReason(Pawn myPawn)
 		{
 			if (!myPawn.CanReach(this, PathEndMode.InteractionCell, Danger.Some, false, TraverseMode.ByPawn))
 			{
-				FloatMenuOption item = new FloatMenuOption("CannotUseNoPath".Translate(), null, MenuOptionPriority.Default, null, null, 0f, null, null);
-				return new List<FloatMenuOption>
-				{
-					item
-				};
+				return new FloatMenuOption("CannotUseNoPath".Translate(), null, MenuOptionPriority.Default, null, null, 0f, null, null);
 			}
 			if (base.Spawned && base.Map.gameConditionManager.ConditionIsActive(GameConditionDefOf.SolarFlare))
 			{
-				FloatMenuOption item2 = new FloatMenuOption("CannotUseSolarFlare".Translate(), null, MenuOptionPriority.Default, null, null, 0f, null, null);
-				return new List<FloatMenuOption>
-				{
-					item2
-				};
+				return new FloatMenuOption("CannotUseSolarFlare".Translate(), null, MenuOptionPriority.Default, null, null, 0f, null, null);
 			}
 			if (!this.powerComp.PowerOn)
 			{
-				FloatMenuOption item3 = new FloatMenuOption("CannotUseNoPower".Translate(), null, MenuOptionPriority.Default, null, null, 0f, null, null);
-				return new List<FloatMenuOption>
-				{
-					item3
-				};
+				return new FloatMenuOption("CannotUseNoPower".Translate(), null, MenuOptionPriority.Default, null, null, 0f, null, null);
 			}
 			if (!myPawn.health.capacities.CapableOf(PawnCapacityDefOf.Talking))
 			{
-				FloatMenuOption item4 = new FloatMenuOption("CannotUseReason".Translate(new object[]
+				return new FloatMenuOption("CannotUseReason".Translate(new object[]
 				{
 					"IncapableOfCapacity".Translate(new object[]
 					{
 						PawnCapacityDefOf.Talking.label
 					})
 				}), null, MenuOptionPriority.Default, null, null, 0f, null, null);
-				return new List<FloatMenuOption>
-				{
-					item4
-				};
 			}
 			if (myPawn.skills.GetSkill(SkillDefOf.Social).TotallyDisabled)
 			{
-				FloatMenuOption item5 = new FloatMenuOption("CannotPrioritizeWorkTypeDisabled".Translate(new object[]
+				return new FloatMenuOption("CannotPrioritizeWorkTypeDisabled".Translate(new object[]
 				{
 					SkillDefOf.Social.LabelCap
 				}), null, MenuOptionPriority.Default, null, null, 0f, null, null);
-				return new List<FloatMenuOption>
-				{
-					item5
-				};
 			}
 			if (!this.CanUseCommsNow)
 			{
-				Log.Error(myPawn + " could not use comm console for unknown reason.");
-				FloatMenuOption item6 = new FloatMenuOption("Cannot use now", null, MenuOptionPriority.Default, null, null, 0f, null, null);
-				return new List<FloatMenuOption>
-				{
-					item6
-				};
+				Log.Error(myPawn + " could not use comm console for unknown reason.", false);
+				return new FloatMenuOption("Cannot use now", null, MenuOptionPriority.Default, null, null, 0f, null, null);
 			}
-			List<FloatMenuOption> list = new List<FloatMenuOption>();
-			IEnumerable<ICommunicable> enumerable = myPawn.Map.passingShipManager.passingShips.Cast<ICommunicable>().Concat(Find.FactionManager.AllFactionsInViewOrder.Cast<ICommunicable>());
-			foreach (ICommunicable commTarget in enumerable)
-			{
-				ICommunicable localCommTarget = commTarget;
-				string text = "CallOnRadio".Translate(new object[]
-				{
-					localCommTarget.GetCallLabel()
-				});
-				Faction faction = localCommTarget as Faction;
-				if (faction != null)
-				{
-					if (faction.IsPlayer)
-					{
-						continue;
-					}
-					if (!Building_CommsConsole.LeaderIsAvailableToTalk(faction))
-					{
-						string str;
-						if (faction.leader != null)
-						{
-							str = "LeaderUnavailable".Translate(new object[]
-							{
-								faction.leader.LabelShort
-							});
-						}
-						else
-						{
-							str = "LeaderUnavailableNoLeader".Translate();
-						}
-						list.Add(new FloatMenuOption(text + " (" + str + ")", null, MenuOptionPriority.Default, null, null, 0f, null, null));
-						continue;
-					}
-				}
-				Action action = delegate
-				{
-					ICommunicable localCommTarget = localCommTarget;
-					if (commTarget is TradeShip && !Building_OrbitalTradeBeacon.AllPowered(this.Map).Any<Building_OrbitalTradeBeacon>())
-					{
-						Messages.Message("MessageNeedBeaconToTradeWithShip".Translate(), this, MessageTypeDefOf.RejectInput);
-						return;
-					}
-					Job job = new Job(JobDefOf.UseCommsConsole, this);
-					job.commTarget = localCommTarget;
-					myPawn.jobs.TryTakeOrderedJob(job, JobTag.Misc);
-					PlayerKnowledgeDatabase.KnowledgeDemonstrated(ConceptDefOf.OpeningComms, KnowledgeAmount.Total);
-				};
-				list.Add(FloatMenuUtility.DecoratePrioritizedTask(new FloatMenuOption(text, action, MenuOptionPriority.InitiateSocial, null, null, 0f, null, null), myPawn, this, "ReservedBy"));
-			}
-			return list;
+			return null;
 		}
 
-		public static bool LeaderIsAvailableToTalk(Faction fac)
+		public IEnumerable<ICommunicable> GetCommTargets(Pawn myPawn)
 		{
-			return fac.leader != null && (!fac.leader.Spawned || (!fac.leader.Downed && !fac.leader.IsPrisoner && fac.leader.Awake() && !fac.leader.InMentalState));
+			return myPawn.Map.passingShipManager.passingShips.Cast<ICommunicable>().Concat(Find.FactionManager.AllFactionsVisibleInViewOrder.Cast<ICommunicable>());
+		}
+
+		[DebuggerHidden]
+		public override IEnumerable<FloatMenuOption> GetFloatMenuOptions(Pawn myPawn)
+		{
+			FloatMenuOption failureReason = this.GetFailureReason(myPawn);
+			if (failureReason != null)
+			{
+				yield return failureReason;
+			}
+			else
+			{
+				foreach (ICommunicable commTarget in this.GetCommTargets(myPawn))
+				{
+					FloatMenuOption option = commTarget.CommFloatMenuOption(this, myPawn);
+					if (option != null)
+					{
+						yield return option;
+					}
+				}
+			}
+		}
+
+		public void GiveUseCommsJob(Pawn negotiator, ICommunicable target)
+		{
+			Job job = new Job(JobDefOf.UseCommsConsole, this);
+			job.commTarget = target;
+			negotiator.jobs.TryTakeOrderedJob(job, JobTag.Misc);
+			PlayerKnowledgeDatabase.KnowledgeDemonstrated(ConceptDefOf.OpeningComms, KnowledgeAmount.Total);
 		}
 	}
 }

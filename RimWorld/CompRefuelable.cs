@@ -92,7 +92,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return this.fuel > 0f;
+				return this.fuel > 0f && this.fuel >= this.Props.minimumFueledThreshold;
 			}
 		}
 
@@ -108,17 +108,22 @@ namespace RimWorld
 		{
 			get
 			{
-				return this.FuelPercentOfTarget <= this.Props.autoRefuelPercent && !this.IsFull && this.TargetFuelLevel > 0f && !this.parent.IsBurning() && (this.flickComp == null || this.flickComp.SwitchIsOn) && this.parent.Map.designationManager.DesignationOn(this.parent, DesignationDefOf.Flick) == null && this.parent.Map.designationManager.DesignationOn(this.parent, DesignationDefOf.Deconstruct) == null;
+				return this.FuelPercentOfTarget <= this.Props.autoRefuelPercent && !this.IsFull && this.TargetFuelLevel > 0f && this.ShouldAutoRefuelNowIgnoringFuelPct;
+			}
+		}
+
+		public bool ShouldAutoRefuelNowIgnoringFuelPct
+		{
+			get
+			{
+				return !this.parent.IsBurning() && (this.flickComp == null || this.flickComp.SwitchIsOn) && this.parent.Map.designationManager.DesignationOn(this.parent, DesignationDefOf.Flick) == null && this.parent.Map.designationManager.DesignationOn(this.parent, DesignationDefOf.Deconstruct) == null;
 			}
 		}
 
 		public override void Initialize(CompProperties props)
 		{
 			base.Initialize(props);
-			if (this.Props.destroyOnNoFuel)
-			{
-				this.fuel = this.Props.fuelCapacity;
-			}
+			this.fuel = this.Props.fuelCapacity * this.Props.initialFuelPercent;
 			this.flickComp = this.parent.GetComp<CompFlickable>();
 		}
 
@@ -155,7 +160,7 @@ namespace RimWorld
 		public override void PostDestroy(DestroyMode mode, Map previousMap)
 		{
 			base.PostDestroy(mode, previousMap);
-			if (previousMap != null && this.Props.fuelFilter.AllowedDefCount == 1)
+			if (previousMap != null && this.Props.fuelFilter.AllowedDefCount == 1 && this.Props.initialFuelPercent == 0f)
 			{
 				ThingDef thingDef = this.Props.fuelFilter.AllowedThingDefs.First<ThingDef>();
 				float num = 1f;
@@ -165,7 +170,7 @@ namespace RimWorld
 					Thing thing = ThingMaker.MakeThing(thingDef, null);
 					thing.stackCount = Mathf.Min(i, thingDef.stackLimit);
 					i -= thing.stackCount;
-					GenPlace.TryPlaceThing(thing, this.parent.Position, previousMap, ThingPlaceMode.Near, null);
+					GenPlace.TryPlaceThing(thing, this.parent.Position, previousMap, ThingPlaceMode.Near, null, null);
 				}
 			}
 		}
@@ -174,7 +179,7 @@ namespace RimWorld
 		{
 			string text = string.Concat(new string[]
 			{
-				"Fuel".Translate(),
+				this.Props.FuelLabel,
 				": ",
 				this.fuel.ToStringDecimalIfSmall(),
 				" / ",
@@ -183,7 +188,11 @@ namespace RimWorld
 			if (!this.Props.consumeFuelOnlyWhenUsed && this.HasFuel)
 			{
 				int numTicks = (int)(this.fuel / this.Props.fuelConsumptionRate * 60000f);
-				text = text + " (" + numTicks.ToStringTicksToPeriod(true, false, true) + ")";
+				text = text + " (" + numTicks.ToStringTicksToPeriod() + ")";
+			}
+			if (!this.HasFuel && !this.Props.outOfFuelMessage.NullOrEmpty())
+			{
+				text += string.Format("\n{0} ({1}x {2})", this.Props.outOfFuelMessage, this.GetFuelCountToFullyRefuel(), this.Props.fuelFilter.AnyAllowedDef.label);
 			}
 			if (this.Props.targetFuelLevelConfigurable)
 			{
@@ -226,19 +235,30 @@ namespace RimWorld
 			}
 		}
 
-		public void Refuel(Thing fuelThing)
+		public void Refuel(List<Thing> fuelThings)
 		{
-			int num = Mathf.Min(fuelThing.stackCount, Mathf.CeilToInt(this.Props.fuelCapacity - this.fuel));
-			if (num > 0)
+			if (this.Props.atomicFueling)
 			{
-				this.Refuel((float)num);
-				fuelThing.SplitOff(num).Destroy(DestroyMode.Vanish);
+				if (fuelThings.Sum((Thing t) => t.stackCount) < this.GetFuelCountToFullyRefuel())
+				{
+					Log.ErrorOnce("Error refueling; not enough fuel available for proper atomic refuel", 19586442, false);
+					return;
+				}
+			}
+			int num = this.GetFuelCountToFullyRefuel();
+			while (num > 0 && fuelThings.Count > 0)
+			{
+				Thing thing = fuelThings.Pop<Thing>();
+				int num2 = Mathf.Min(num, thing.stackCount);
+				this.Refuel((float)num2);
+				thing.SplitOff(num2).Destroy(DestroyMode.Vanish);
+				num -= num2;
 			}
 		}
 
 		public void Refuel(float amount)
 		{
-			this.fuel += amount;
+			this.fuel += amount * this.Props.FuelMultiplierCurrentDifficulty;
 			if (this.fuel > this.Props.fuelCapacity)
 			{
 				this.fuel = this.Props.fuelCapacity;
@@ -253,7 +273,11 @@ namespace RimWorld
 
 		public int GetFuelCountToFullyRefuel()
 		{
-			float f = this.TargetFuelLevel - this.fuel;
+			if (this.Props.atomicFueling)
+			{
+				return Mathf.CeilToInt(this.Props.fuelCapacity / this.Props.FuelMultiplierCurrentDifficulty);
+			}
+			float f = (this.TargetFuelLevel - this.fuel) / this.Props.FuelMultiplierCurrentDifficulty;
 			return Mathf.Max(Mathf.CeilToInt(f), 1);
 		}
 
@@ -279,6 +303,15 @@ namespace RimWorld
 			}
 			if (Prefs.DevMode)
 			{
+				yield return new Command_Action
+				{
+					defaultLabel = "Debug: Set fuel to 0",
+					action = delegate
+					{
+						this.$this.fuel = 0f;
+						this.$this.parent.BroadcastCompSignal("Refueled");
+					}
+				};
 				yield return new Command_Action
 				{
 					defaultLabel = "Debug: Set fuel to 0.1",

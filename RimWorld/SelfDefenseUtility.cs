@@ -25,7 +25,7 @@ namespace RimWorld
 			{
 				return false;
 			}
-			RegionTraverser.BreadthFirstTraverse(region, (Region from, Region reg) => reg.portal == null || reg.portal.Open, delegate(Region reg)
+			RegionTraverser.BreadthFirstTraverse(region, (Region from, Region reg) => reg.door == null || reg.door.Open, delegate(Region reg)
 			{
 				List<Thing> list2 = reg.ListerThings.ThingsInGroup(ThingRequestGroup.AttackTarget);
 				for (int j = 0; j < list2.Count; j++)
@@ -56,7 +56,7 @@ namespace RimWorld
 				return false;
 			}
 			IAttackTarget attackTarget = t as IAttackTarget;
-			return attackTarget != null && !attackTarget.ThreatDisabled() && t is IAttackTargetSearcher && (!checkLOS || GenSight.LineOfSight(pawn.Position, t.Position, pawn.Map, false, null, 0, 0));
+			return attackTarget != null && !attackTarget.ThreatDisabled(pawn) && t is IAttackTargetSearcher && (!checkLOS || GenSight.LineOfSight(pawn.Position, t.Position, pawn.Map, false, null, 0, 0));
 		}
 	}
 }

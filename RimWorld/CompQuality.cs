@@ -33,7 +33,7 @@ namespace RimWorld
 
 		public override void PostPostGeneratedForTrader(TraderKindDef trader, int forTile, Faction forFaction)
 		{
-			this.SetQuality(QualityUtility.RandomTraderItemQuality(), ArtGenerationContext.Outsider);
+			this.SetQuality(QualityUtility.GenerateQualityTraderItem(), ArtGenerationContext.Outsider);
 		}
 
 		public override bool AllowStackWith(Thing other)

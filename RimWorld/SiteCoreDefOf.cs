@@ -14,5 +14,10 @@ namespace RimWorld
 		public static SiteCoreDef DownedRefugee;
 
 		public static SiteCoreDef PrisonerWillingToJoin;
+
+		static SiteCoreDefOf()
+		{
+			DefOfHelper.EnsureInitializedInCtor(typeof(SiteCoreDefOf));
+		}
 	}
 }

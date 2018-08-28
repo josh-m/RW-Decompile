@@ -7,7 +7,7 @@ namespace Verse.AI
 {
 	public static class Toils_Recipe
 	{
-		private const int LongCraftingProjectThreshold = 20000;
+		private const int LongCraftingProjectThreshold = 10000;
 
 		public static Toil MakeUnfinishedThingIfNeeded()
 		{
@@ -32,7 +32,7 @@ namespace Verse.AI
 					actor.Map.designationManager.RemoveAllDesignationsOn(thing2, false);
 					if (thing2.Spawned)
 					{
-						thing2.DeSpawn();
+						thing2.DeSpawn(DestroyMode.Vanish);
 					}
 				}
 				ThingDef stuff = (!curJob.RecipeDef.unfinishedThingDef.MadeFromStuff) ? null : thing.def;
@@ -45,9 +45,9 @@ namespace Verse.AI
 				{
 					compColorable.Color = thing.DrawColor;
 				}
-				GenSpawn.Spawn(unfinishedThing, curJob.GetTarget(TargetIndex.A).Cell, actor.Map);
+				GenSpawn.Spawn(unfinishedThing, curJob.GetTarget(TargetIndex.A).Cell, actor.Map, WipeMode.Vanish);
 				curJob.SetTarget(TargetIndex.B, unfinishedThing);
-				actor.Reserve(unfinishedThing, curJob, 1, -1, null);
+				actor.Reserve(unfinishedThing, curJob, 1, -1, null, true);
 			};
 			return toil;
 		}
@@ -97,13 +97,16 @@ namespace Verse.AI
 				}
 				if (curJob.RecipeDef.workSkill != null && curJob.RecipeDef.UsesUnfinishedThing)
 				{
-					actor.skills.GetSkill(curJob.RecipeDef.workSkill).Learn(0.11f * curJob.RecipeDef.workSkillLearnFactor, false);
+					actor.skills.Learn(curJob.RecipeDef.workSkill, 0.1f * curJob.RecipeDef.workSkillLearnFactor, false);
 				}
 				float num = (curJob.RecipeDef.workSpeedStat != null) ? actor.GetStatValue(curJob.RecipeDef.workSpeedStat, true) : 1f;
-				Building_WorkTable building_WorkTable = jobDriver_DoBill.BillGiver as Building_WorkTable;
-				if (building_WorkTable != null)
+				if (curJob.RecipeDef.workTableSpeedStat != null)
 				{
-					num *= building_WorkTable.GetStatValue(StatDefOf.WorkTableWorkSpeedFactor, true);
+					Building_WorkTable building_WorkTable = jobDriver_DoBill.BillGiver as Building_WorkTable;
+					if (building_WorkTable != null)
+					{
+						num *= building_WorkTable.GetStatValue(curJob.RecipeDef.workTableSpeedStat, true);
+					}
 				}
 				if (DebugSettings.fastCrafting)
 				{
@@ -139,6 +142,7 @@ namespace Verse.AI
 				return 1f - ((JobDriver_DoBill)actor.jobs.curDriver).workLeft / curJob.bill.recipe.WorkAmountTotal((unfinishedThing == null) ? null : unfinishedThing.Stuff);
 			}, false, -0.5f);
 			toil.FailOn(() => toil.actor.CurJob.bill.suspended);
+			toil.activeSkill = (() => toil.actor.CurJob.bill.recipe.workSkill);
 			return toil;
 		}
 
@@ -152,17 +156,17 @@ namespace Verse.AI
 				JobDriver_DoBill jobDriver_DoBill = (JobDriver_DoBill)actor.jobs.curDriver;
 				if (curJob.RecipeDef.workSkill != null && !curJob.RecipeDef.UsesUnfinishedThing)
 				{
-					float xp = (float)jobDriver_DoBill.ticksSpentDoingRecipeWork * 0.11f * curJob.RecipeDef.workSkillLearnFactor;
+					float xp = (float)jobDriver_DoBill.ticksSpentDoingRecipeWork * 0.1f * curJob.RecipeDef.workSkillLearnFactor;
 					actor.skills.GetSkill(curJob.RecipeDef.workSkill).Learn(xp, false);
 				}
 				List<Thing> ingredients = Toils_Recipe.CalculateIngredients(curJob, actor);
 				Thing dominantIngredient = Toils_Recipe.CalculateDominantIngredient(curJob, ingredients);
-				List<Thing> list = GenRecipe.MakeRecipeProducts(curJob.RecipeDef, actor, ingredients, dominantIngredient).ToList<Thing>();
+				List<Thing> list = GenRecipe.MakeRecipeProducts(curJob.RecipeDef, actor, ingredients, dominantIngredient, jobDriver_DoBill.BillGiver).ToList<Thing>();
 				Toils_Recipe.ConsumeIngredients(ingredients, curJob.RecipeDef, actor.Map);
 				curJob.bill.Notify_IterationCompleted(actor, ingredients);
 				RecordsUtility.Notify_BillDone(actor, list);
 				UnfinishedThing unfinishedThing = curJob.GetTarget(TargetIndex.B).Thing as UnfinishedThing;
-				if (curJob.bill.recipe.WorkAmountTotal((unfinishedThing == null) ? null : unfinishedThing.Stuff) >= 20000f && list.Count > 0)
+				if (curJob.bill.recipe.WorkAmountTotal((unfinishedThing == null) ? null : unfinishedThing.Stuff) >= 10000f && list.Count > 0)
 				{
 					TaleRecorder.RecordTale(TaleDefOf.CompletedLongCraftingProject, new object[]
 					{
@@ -179,7 +183,7 @@ namespace Verse.AI
 				{
 					for (int i = 0; i < list.Count; i++)
 					{
-						if (!GenPlace.TryPlaceThing(list[i], actor.Position, actor.Map, ThingPlaceMode.Near, null))
+						if (!GenPlace.TryPlaceThing(list[i], actor.Position, actor.Map, ThingPlaceMode.Near, null, null))
 						{
 							Log.Error(string.Concat(new object[]
 							{
@@ -188,7 +192,7 @@ namespace Verse.AI
 								list[i],
 								" near ",
 								actor.Position
-							}));
+							}), false);
 						}
 					}
 					actor.jobs.EndCurrentJob(JobCondition.Succeeded, true);
@@ -198,7 +202,7 @@ namespace Verse.AI
 				{
 					for (int j = 1; j < list.Count; j++)
 					{
-						if (!GenPlace.TryPlaceThing(list[j], actor.Position, actor.Map, ThingPlaceMode.Near, null))
+						if (!GenPlace.TryPlaceThing(list[j], actor.Position, actor.Map, ThingPlaceMode.Near, null, null))
 						{
 							Log.Error(string.Concat(new object[]
 							{
@@ -207,21 +211,32 @@ namespace Verse.AI
 								list[j],
 								" near ",
 								actor.Position
-							}));
+							}), false);
 						}
 					}
 				}
-				list[0].SetPositionDirect(actor.Position);
-				IntVec3 c;
-				if (StoreUtility.TryFindBestBetterStoreCellFor(list[0], actor, actor.Map, StoragePriority.Unstored, actor.Faction, out c, true))
+				IntVec3 invalid = IntVec3.Invalid;
+				if (curJob.bill.GetStoreMode() == BillStoreModeDefOf.BestStockpile)
+				{
+					StoreUtility.TryFindBestBetterStoreCellFor(list[0], actor, actor.Map, StoragePriority.Unstored, actor.Faction, out invalid, true);
+				}
+				else if (curJob.bill.GetStoreMode() == BillStoreModeDefOf.SpecificStockpile)
+				{
+					StoreUtility.TryFindBestBetterStoreCellForIn(list[0], actor, actor.Map, StoragePriority.Unstored, actor.Faction, curJob.bill.GetStoreZone().slotGroup, out invalid, true);
+				}
+				else
+				{
+					Log.ErrorOnce("Unknown store mode", 9158246, false);
+				}
+				if (invalid.IsValid)
 				{
 					actor.carryTracker.TryStartCarry(list[0]);
-					curJob.targetB = c;
+					curJob.targetB = invalid;
 					curJob.targetA = list[0];
 					curJob.count = 99999;
 					return;
 				}
-				if (!GenPlace.TryPlaceThing(list[0], actor.Position, actor.Map, ThingPlaceMode.Near, null))
+				if (!GenPlace.TryPlaceThing(list[0], actor.Position, actor.Map, ThingPlaceMode.Near, null, null))
 				{
 					Log.Error(string.Concat(new object[]
 					{
@@ -229,7 +244,7 @@ namespace Verse.AI
 						list[0],
 						" near ",
 						actor.Position
-					}));
+					}), false);
 				}
 				actor.jobs.EndCurrentJob(JobCondition.Succeeded, true);
 			};
@@ -261,7 +276,7 @@ namespace Verse.AI
 							job.placedThings[i].Count,
 							" for job ",
 							job
-						}));
+						}), false);
 					}
 					else
 					{
@@ -277,15 +292,18 @@ namespace Verse.AI
 						job.placedThings[i].Count = 0;
 						if (list.Contains(thing))
 						{
-							Log.Error("Tried to add ingredient from job placed targets twice: " + thing);
+							Log.Error("Tried to add ingredient from job placed targets twice: " + thing, false);
 						}
 						else
 						{
 							list.Add(thing);
-							IStrippable strippable = thing as IStrippable;
-							if (strippable != null)
+							if (job.RecipeDef.autoStripCorpses)
 							{
-								strippable.Strip();
+								IStrippable strippable = thing as IStrippable;
+								if (strippable != null)
+								{
+									strippable.Strip();
+								}
 							}
 						}
 					}
@@ -310,7 +328,7 @@ namespace Verse.AI
 			{
 				return ingredients[0];
 			}
-			if (job.RecipeDef.products.Any((ThingCountClass x) => x.thingDef.MadeFromStuff))
+			if (job.RecipeDef.products.Any((ThingDefCountClass x) => x.thingDef.MadeFromStuff))
 			{
 				return (from x in ingredients
 				where x.def.IsStuff

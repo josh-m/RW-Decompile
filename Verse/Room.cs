@@ -22,6 +22,8 @@ namespace Verse
 
 		private int cachedOpenRoofCount = -1;
 
+		private IEnumerator<IntVec3> cachedOpenRoofState;
+
 		public bool isPrisonCell;
 
 		private int cachedCellCount = -1;
@@ -170,22 +172,7 @@ namespace Verse
 		{
 			get
 			{
-				if (this.cachedOpenRoofCount == -1)
-				{
-					this.cachedOpenRoofCount = 0;
-					if (this.Map != null)
-					{
-						RoofGrid roofGrid = this.Map.roofGrid;
-						foreach (IntVec3 current in this.Cells)
-						{
-							if (!roofGrid.Roofed(current))
-							{
-								this.cachedOpenRoofCount++;
-							}
-						}
-					}
-				}
-				return this.cachedOpenRoofCount;
+				return this.OpenRoofCountStopAt(2147483647);
 			}
 		}
 
@@ -193,7 +180,7 @@ namespace Verse
 		{
 			get
 			{
-				return this.OpenRoofCount > 300 || (this.Group.AnyRoomTouchesMapEdge && (float)this.OpenRoofCount / (float)this.CellCount >= 0.5f);
+				return this.OpenRoofCountStopAt(300) >= 300 || (this.Group.AnyRoomTouchesMapEdge && (float)this.OpenRoofCount / (float)this.CellCount >= 0.5f);
 			}
 		}
 
@@ -201,7 +188,7 @@ namespace Verse
 		{
 			get
 			{
-				return this.OpenRoofCount > 100 || (float)this.OpenRoofCount > (float)this.CellCount * 0.25f;
+				return this.OpenRoofCountStopAt(101) > 100 || (float)this.OpenRoofCount > (float)this.CellCount * 0.25f;
 			}
 		}
 
@@ -334,6 +321,14 @@ namespace Verse
 			}
 		}
 
+		public bool IsDoorway
+		{
+			get
+			{
+				return this.regions.Count == 1 && this.regions[0].IsDoorway;
+			}
+		}
+
 		public List<Thing> ContainedAndAdjacentThings
 		{
 			get
@@ -391,7 +386,7 @@ namespace Verse
 					r,
 					", room=",
 					this
-				}));
+				}), false);
 				return;
 			}
 			this.regions.Add(r);
@@ -415,7 +410,7 @@ namespace Verse
 					r,
 					", room=",
 					this
-				}));
+				}), false);
 				return;
 			}
 			this.regions.Remove(r);
@@ -427,7 +422,7 @@ namespace Verse
 			{
 				this.Group = null;
 				this.cachedOpenRoofCount = -1;
-				this.cachedOpenRoofCount = -1;
+				this.cachedOpenRoofState = null;
 				this.statsAndRoleDirty = true;
 				this.Map.regionGrid.allRooms.Remove(this);
 			}
@@ -440,7 +435,7 @@ namespace Verse
 
 		public void Notify_ContainedThingSpawnedOrDespawned(Thing th)
 		{
-			if (th.def.category != ThingCategory.Mote && th.def.category != ThingCategory.Projectile && th.def.category != ThingCategory.Skyfaller && th.def.category != ThingCategory.Pawn)
+			if (th.def.category != ThingCategory.Mote && th.def.category != ThingCategory.Projectile && th.def.category != ThingCategory.Ethereal && th.def.category != ThingCategory.Pawn)
 			{
 				this.statsAndRoleDirty = true;
 			}
@@ -459,6 +454,7 @@ namespace Verse
 		public void Notify_RoofChanged()
 		{
 			this.cachedOpenRoofCount = -1;
+			this.cachedOpenRoofState = null;
 			this.Group.Notify_RoofChanged();
 		}
 
@@ -466,6 +462,7 @@ namespace Verse
 		{
 			this.cachedCellCount = -1;
 			this.cachedOpenRoofCount = -1;
+			this.cachedOpenRoofState = null;
 			if (Current.ProgramState == ProgramState.Playing && !this.Fogged)
 			{
 				this.Map.autoBuildRoofAreaSetter.TryGenerateAreaFor(this);
@@ -483,6 +480,11 @@ namespace Verse
 						break;
 					}
 				}
+			}
+			List<Thing> list = this.Map.listerThings.ThingsOfDef(ThingDefOf.NutrientPasteDispenser);
+			for (int j = 0; j < list.Count; j++)
+			{
+				list[j].Notify_ColorChanged();
 			}
 			if (Current.ProgramState == ProgramState.Playing && this.isPrisonCell)
 			{
@@ -506,7 +508,7 @@ namespace Verse
 					this.ID,
 					", but mapIndex=",
 					this.mapIndex
-				}));
+				}), false);
 				return;
 			}
 			this.mapIndex = (sbyte)((int)this.mapIndex - 1);
@@ -520,7 +522,7 @@ namespace Verse
 			}
 			if (this.stats == null)
 			{
-				return roomStat.defaultScore;
+				return roomStat.roomlessScore;
 			}
 			return this.stats[roomStat];
 		}
@@ -538,6 +540,31 @@ namespace Verse
 			color.a = Pulser.PulseBrightness(1f, 0.6f);
 			GenDraw.DrawFieldEdges(Room.fields, color);
 			Room.fields.Clear();
+		}
+
+		public int OpenRoofCountStopAt(int threshold)
+		{
+			if (this.cachedOpenRoofCount == -1 && this.cachedOpenRoofState == null)
+			{
+				this.cachedOpenRoofCount = 0;
+				this.cachedOpenRoofState = this.Cells.GetEnumerator();
+			}
+			if (this.cachedOpenRoofCount < threshold && this.cachedOpenRoofState != null)
+			{
+				RoofGrid roofGrid = this.Map.roofGrid;
+				while (this.cachedOpenRoofCount < threshold && this.cachedOpenRoofState.MoveNext())
+				{
+					if (!roofGrid.Roofed(this.cachedOpenRoofState.Current))
+					{
+						this.cachedOpenRoofCount++;
+					}
+				}
+				if (this.cachedOpenRoofCount < threshold)
+				{
+					this.cachedOpenRoofState = null;
+				}
+			}
+			return this.cachedOpenRoofCount;
 		}
 
 		private void UpdateRoomStatsAndRole()

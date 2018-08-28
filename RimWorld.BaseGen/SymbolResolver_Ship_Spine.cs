@@ -70,7 +70,7 @@ namespace RimWorld.BaseGen
 			{
 				Thing thing2 = ThingMaker.MakeThing(ship_Beam, null);
 				thing2.SetFaction(rp.faction, null);
-				t = GenSpawn.Spawn(thing2, a.ToIntVec3, map, rp.thingRot.Value, false);
+				t = GenSpawn.Spawn(thing2, a.ToIntVec3, map, rp.thingRot.Value, WipeMode.Vanish, false);
 				a += toIntVec * ship_Beam.Size.z;
 			}
 			bool? allowPlacementOffEdge3 = rp.allowPlacementOffEdge;

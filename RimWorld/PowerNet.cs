@@ -120,7 +120,7 @@ namespace RimWorld
 		{
 			if (this.connectors.Contains(b))
 			{
-				Log.Error("PowerNet registered connector it already had: " + b);
+				Log.Error("PowerNet registered connector it already had: " + b, false);
 				return;
 			}
 			this.connectors.Add(b);
@@ -140,7 +140,7 @@ namespace RimWorld
 			{
 				if (this.powerComps.Contains(comp))
 				{
-					Log.Error("PowerNet adding powerComp " + comp + " which it already has.");
+					Log.Error("PowerNet adding powerComp " + comp + " which it already has.", false);
 				}
 				else
 				{
@@ -152,7 +152,7 @@ namespace RimWorld
 			{
 				if (this.batteryComps.Contains(comp2))
 				{
-					Log.Error("PowerNet adding batteryComp " + comp2 + " which it already has.");
+					Log.Error("PowerNet adding batteryComp " + comp2 + " which it already has.", false);
 				}
 				else
 				{
@@ -320,7 +320,7 @@ namespace RimWorld
 				}
 				if (num > 1E-07f)
 				{
-					Log.Warning("Drew energy from a PowerNet that didn't have it.");
+					Log.Warning("Drew energy from a PowerNet that didn't have it.", false);
 				}
 			}
 		}
@@ -349,7 +349,7 @@ namespace RimWorld
 				}
 				if (energy < num2 * (float)PowerNet.batteriesShuffled.Count)
 				{
-					goto IL_128;
+					goto IL_129;
 				}
 				for (int j = PowerNet.batteriesShuffled.Count - 1; j >= 0; j--)
 				{
@@ -367,20 +367,20 @@ namespace RimWorld
 				}
 				if (energy < 0.0005f || !PowerNet.batteriesShuffled.Any<CompPowerBattery>())
 				{
-					goto IL_18F;
+					goto IL_190;
 				}
 			}
-			Log.Error("Too many iterations.");
-			goto IL_199;
-			IL_128:
+			Log.Error("Too many iterations.", false);
+			goto IL_19A;
+			IL_129:
 			float amount = energy / (float)PowerNet.batteriesShuffled.Count;
 			for (int k = 0; k < PowerNet.batteriesShuffled.Count; k++)
 			{
 				PowerNet.batteriesShuffled[k].AddEnergy(amount);
 			}
 			energy = 0f;
-			IL_18F:
-			IL_199:
+			IL_190:
+			IL_19A:
 			PowerNet.batteriesShuffled.Clear();
 		}
 

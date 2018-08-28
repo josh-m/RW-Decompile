@@ -20,6 +20,18 @@ namespace Verse
 			get;
 		}
 
+		ImplementOwnerTypeDef ImplementOwnerTypeDef
+		{
+			get;
+		}
+
+		Thing ConstantCaster
+		{
+			get;
+		}
+
 		string UniqueVerbOwnerID();
+
+		bool VerbsStillUsableBy(Pawn p);
 	}
 }

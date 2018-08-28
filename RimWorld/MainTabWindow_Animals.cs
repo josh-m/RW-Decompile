@@ -20,9 +20,8 @@ namespace RimWorld
 		{
 			get
 			{
-				return from p in Find.VisibleMap.mapPawns.PawnsInFaction(Faction.OfPlayer)
+				return from p in Find.CurrentMap.mapPawns.PawnsInFaction(Faction.OfPlayer)
 				where p.RaceProps.Animal
-				orderby p.RaceProps.petness descending, p.RaceProps.baseBodySize, p.def.label
 				select p;
 			}
 		}

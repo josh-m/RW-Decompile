@@ -11,7 +11,7 @@ namespace RimWorld.Planet
 		{
 			private int tile;
 
-			private int tickCachesNeedReset;
+			private int tickCachesNeedReset = -2147483648;
 
 			private float cachedOutdoorTemp = -3.40282347E+38f;
 

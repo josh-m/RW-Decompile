@@ -57,7 +57,7 @@ namespace RimWorld
 				return false;
 			}
 			Hediff firstHediffOfDef = pawn.health.hediffSet.GetFirstHediffOfDef(HediffDefOf.BloodLoss, false);
-			return (firstHediffOfDef == null || firstHediffOfDef.Severity <= 0.2f) && (pawn.Spawned && !pawn.Downed) && !pawn.InAggroMentalState;
+			return (firstHediffOfDef == null || firstHediffOfDef.Severity <= 0.2f) && (pawn.Spawned && !pawn.Downed) && !pawn.InMentalState;
 		}
 
 		public static bool ShouldGuestKeepAttendingCeremony(Pawn p)

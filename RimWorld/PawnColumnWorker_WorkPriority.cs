@@ -229,11 +229,11 @@ namespace RimWorld
 				}
 				else if (Event.current.button == 0)
 				{
-					SoundDefOf.CheckboxTurnedOn.PlayOneShotOnCamera(null);
+					SoundDefOf.Checkbox_TurnedOn.PlayOneShotOnCamera(null);
 				}
 				else if (Event.current.button == 1)
 				{
-					SoundDefOf.CheckboxTurnedOff.PlayOneShotOnCamera(null);
+					SoundDefOf.Checkbox_TurnedOff.PlayOneShotOnCamera(null);
 				}
 			}
 		}

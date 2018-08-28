@@ -15,7 +15,7 @@ namespace RimWorld
 			for (int i = 0; i < potentialTargetsFor.Count; i++)
 			{
 				IAttackTarget attackTarget = potentialTargetsFor[i];
-				if (!attackTarget.ThreatDisabled())
+				if (!attackTarget.ThreatDisabled(pawn))
 				{
 					Thing thing2 = (Thing)attackTarget;
 					int num2 = thing2.Position.DistanceToSquared(pawn.Position);

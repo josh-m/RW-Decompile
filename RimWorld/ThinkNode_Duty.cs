@@ -11,12 +11,12 @@ namespace RimWorld
 		{
 			if (pawn.GetLord() == null)
 			{
-				Log.Error(pawn + " doing ThinkNode_Duty with no Lord.");
+				Log.Error(pawn + " doing ThinkNode_Duty with no Lord.", false);
 				return ThinkResult.NoJob;
 			}
 			if (pawn.mindState.duty == null)
 			{
-				Log.Error(pawn + " doing ThinkNode_Duty with no duty.");
+				Log.Error(pawn + " doing ThinkNode_Duty with no duty.", false);
 				return ThinkResult.NoJob;
 			}
 			return this.subNodes[(int)pawn.mindState.duty.def.index].TryIssueJobPackage(pawn, jobParams);

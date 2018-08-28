@@ -68,9 +68,24 @@ namespace Verse
 			{
 				if (this.thingInt != null)
 				{
-					return this.thingInt.DrawPos;
+					if (this.thingInt.Spawned)
+					{
+						return this.thingInt.DrawPos;
+					}
+					if (this.thingInt.SpawnedOrAnyParentSpawned)
+					{
+						return this.thingInt.PositionHeld.ToVector3Shifted();
+					}
+					return this.thingInt.Position.ToVector3Shifted();
 				}
-				return this.cellInt.ToVector3Shifted();
+				else
+				{
+					if (this.cellInt.IsValid)
+					{
+						return this.cellInt.ToVector3Shifted();
+					}
+					return default(Vector3);
+				}
 			}
 		}
 
@@ -100,7 +115,7 @@ namespace Verse
 		{
 			if (targ.thingInt != null)
 			{
-				Log.ErrorOnce("Casted LocalTargetInfo to IntVec3 but it had Thing " + targ.thingInt, 6324165);
+				Log.ErrorOnce("Casted LocalTargetInfo to IntVec3 but it had Thing " + targ.thingInt, 6324165, false);
 			}
 			return targ.Cell;
 		}
@@ -109,7 +124,7 @@ namespace Verse
 		{
 			if (targ.cellInt.IsValid)
 			{
-				Log.ErrorOnce("Casted LocalTargetInfo to Thing but it had cell " + targ.cellInt, 631672);
+				Log.ErrorOnce("Casted LocalTargetInfo to Thing but it had cell " + targ.cellInt, 631672, false);
 			}
 			return targ.thingInt;
 		}

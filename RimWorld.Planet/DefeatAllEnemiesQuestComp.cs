@@ -10,7 +10,7 @@ namespace RimWorld.Planet
 
 		public Faction requestingFaction;
 
-		public float relationsImprovement;
+		public int relationsImprovement;
 
 		public ThingOwner rewards;
 
@@ -29,7 +29,7 @@ namespace RimWorld.Planet
 			this.rewards = new ThingOwner<Thing>(this);
 		}
 
-		public void StartQuest(Faction requestingFaction, float relationsImprovement, List<Thing> rewards)
+		public void StartQuest(Faction requestingFaction, int relationsImprovement, List<Thing> rewards)
 		{
 			this.StopQuest();
 			this.active = true;
@@ -77,7 +77,7 @@ namespace RimWorld.Planet
 		{
 			base.PostExposeData();
 			Scribe_Values.Look<bool>(ref this.active, "active", false, false);
-			Scribe_Values.Look<float>(ref this.relationsImprovement, "relationsImprovement", 0f, false);
+			Scribe_Values.Look<int>(ref this.relationsImprovement, "relationsImprovement", 0, false);
 			Scribe_References.Look<Faction>(ref this.requestingFaction, "requestingFaction", false);
 			Scribe_Deep.Look<ThingOwner>(ref this.rewards, "rewards", new object[]
 			{
@@ -91,13 +91,17 @@ namespace RimWorld.Planet
 			DefeatAllEnemiesQuestComp.tmpRewards.AddRange(this.rewards);
 			this.rewards.Clear();
 			IntVec3 intVec = DropCellFinder.TradeDropSpot(map);
-			DropPodUtility.DropThingsNear(intVec, map, DefeatAllEnemiesQuestComp.tmpRewards, 110, false, false, true, false);
+			DropPodUtility.DropThingsNear(intVec, map, DefeatAllEnemiesQuestComp.tmpRewards, 110, false, false, false);
 			DefeatAllEnemiesQuestComp.tmpRewards.Clear();
-			Find.LetterStack.ReceiveLetter("LetterLabelDefeatAllEnemiesQuestCompleted".Translate(), "LetterDefeatAllEnemiesQuestCompleted".Translate(new object[]
+			FactionRelationKind playerRelationKind = this.requestingFaction.PlayerRelationKind;
+			string text = "LetterDefeatAllEnemiesQuestCompleted".Translate(new object[]
 			{
 				this.requestingFaction.Name,
-				this.relationsImprovement.ToString("F0")
-			}), LetterDefOf.PositiveEvent, new GlobalTargetInfo(intVec, map, false), null);
+				this.relationsImprovement.ToString()
+			});
+			this.requestingFaction.TryAffectGoodwillWith(Faction.OfPlayer, this.relationsImprovement, false, false, null, null);
+			this.requestingFaction.TryAppendRelationKindChangedInfo(ref text, playerRelationKind, this.requestingFaction.PlayerRelationKind, null);
+			Find.LetterStack.ReceiveLetter("LetterLabelDefeatAllEnemiesQuestCompleted".Translate(), text, LetterDefOf.PositiveEvent, new GlobalTargetInfo(intVec, map, false), this.requestingFaction, null);
 		}
 
 		public void GetChildHolders(List<IThingHolder> outChildren)
@@ -120,10 +124,12 @@ namespace RimWorld.Planet
 		{
 			if (this.active)
 			{
+				string text = GenThing.ThingsToCommaList(this.rewards, true, true, 5).CapitalizeFirst();
 				return "QuestTargetDestroyInspectString".Translate(new object[]
 				{
 					this.requestingFaction.Name,
-					this.rewards[0].LabelCap
+					text,
+					GenThing.GetMarketValue(this.rewards).ToStringMoney(null)
 				}).CapitalizeFirst();
 			}
 			return null;

@@ -44,9 +44,9 @@ namespace Verse
 			{
 				bool flag = CameraJumper.TryHideWorld();
 				bool flag2 = false;
-				if (thing.Map != Current.Game.VisibleMap)
+				if (thing.Map != Find.CurrentMap)
 				{
-					Current.Game.VisibleMap = thing.Map;
+					Current.Game.CurrentMap = thing.Map;
 					flag2 = true;
 					if (!flag)
 					{
@@ -55,7 +55,7 @@ namespace Verse
 				}
 				if (flag || flag2)
 				{
-					Find.CameraDriver.JumpToVisibleMapLoc(thing.Position);
+					Find.CameraDriver.JumpToCurrentMapLoc(thing.Position);
 				}
 				Find.Selector.ClearSelection();
 				Find.Selector.Select(thing, true, true);
@@ -118,18 +118,18 @@ namespace Verse
 				return;
 			}
 			Map mapHeld = thing.MapHeld;
-			if (mapHeld != null && thing.PositionHeld.IsValid && thing.PositionHeld.InBounds(mapHeld))
+			if (mapHeld != null && Find.Maps.Contains(mapHeld) && thing.PositionHeld.IsValid && thing.PositionHeld.InBounds(mapHeld))
 			{
 				bool flag = CameraJumper.TryHideWorld();
-				if (Current.Game.VisibleMap != mapHeld)
+				if (Find.CurrentMap != mapHeld)
 				{
-					Current.Game.VisibleMap = mapHeld;
+					Current.Game.CurrentMap = mapHeld;
 					if (!flag)
 					{
 						SoundDefOf.MapSelected.PlayOneShotOnCamera(null);
 					}
 				}
-				Find.CameraDriver.JumpToVisibleMapLoc(thing.PositionHeld);
+				Find.CameraDriver.JumpToCurrentMapLoc(thing.PositionHeld);
 			}
 		}
 
@@ -147,16 +147,20 @@ namespace Verse
 			{
 				return;
 			}
-			bool flag = CameraJumper.TryHideWorld();
-			if (Current.Game.VisibleMap != map)
+			if (!cell.InBounds(map))
 			{
-				Current.Game.VisibleMap = map;
+				return;
+			}
+			bool flag = CameraJumper.TryHideWorld();
+			if (Find.CurrentMap != map)
+			{
+				Current.Game.CurrentMap = map;
 				if (!flag)
 				{
 					SoundDefOf.MapSelected.PlayOneShotOnCamera(null);
 				}
 			}
-			Find.CameraDriver.JumpToVisibleMapLoc(cell);
+			Find.CameraDriver.JumpToCurrentMapLoc(cell);
 		}
 
 		private static void TryJumpInternal(WorldObject worldObject)
@@ -185,6 +189,28 @@ namespace Verse
 			}
 			CameraJumper.TryShowWorld();
 			Find.WorldCameraDriver.JumpTo(tile);
+		}
+
+		public static bool CanJump(GlobalTargetInfo target)
+		{
+			if (!target.IsValid)
+			{
+				return false;
+			}
+			target = CameraJumper.GetAdjustedTarget(target);
+			if (target.HasThing)
+			{
+				return target.Thing.MapHeld != null && Find.Maps.Contains(target.Thing.MapHeld) && target.Thing.PositionHeld.IsValid && target.Thing.PositionHeld.InBounds(target.Thing.MapHeld);
+			}
+			if (target.HasWorldObject)
+			{
+				return target.WorldObject.Tile >= 0;
+			}
+			if (target.Cell.IsValid)
+			{
+				return target.Map != null && Find.Maps.Contains(target.Map) && target.Cell.IsValid && target.Cell.InBounds(target.Map);
+			}
+			return target.Tile >= 0;
 		}
 
 		public static GlobalTargetInfo GetAdjustedTarget(GlobalTargetInfo target)
@@ -229,7 +255,7 @@ namespace Verse
 			}
 			else if (target.Cell.IsValid && target.Tile >= 0 && target.Map != null && !Find.Maps.Contains(target.Map))
 			{
-				MapParent parent = target.Map.info.parent;
+				MapParent parent = target.Map.Parent;
 				if (parent != null && parent.Spawned)
 				{
 					return parent;
@@ -267,11 +293,11 @@ namespace Verse
 			{
 				return GlobalTargetInfo.Invalid;
 			}
-			if (map.info.parent != null && map.info.parent.Spawned)
+			if (map.Parent != null && map.Parent.Spawned)
 			{
-				return map.info.parent;
+				return map.Parent;
 			}
-			if (map.info.parent != null && map.info.parent.Tile >= 0)
+			if (map.Parent != null && map.Parent.Tile >= 0)
 			{
 				return new GlobalTargetInfo(map.Tile);
 			}

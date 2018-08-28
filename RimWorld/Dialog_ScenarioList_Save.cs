@@ -32,7 +32,7 @@ namespace RimWorld
 			Messages.Message("SavedAs".Translate(new object[]
 			{
 				fileName
-			}), MessageTypeDefOf.SilentInput);
+			}), MessageTypeDefOf.SilentInput, false);
 			this.Close(true);
 		}
 	}

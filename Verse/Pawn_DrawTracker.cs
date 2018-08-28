@@ -91,6 +91,15 @@ namespace Verse
 			this.renderer.Notify_DamageApplied(dinfo);
 		}
 
+		public void Notify_DamageDeflected(DamageInfo dinfo)
+		{
+			if (this.pawn.Destroyed)
+			{
+				return;
+			}
+			this.jitterer.Notify_DamageDeflected(dinfo);
+		}
+
 		public void Notify_MeleeAttackOn(Thing Target)
 		{
 			if (Target.Position != this.pawn.Position)

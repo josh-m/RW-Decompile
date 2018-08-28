@@ -140,7 +140,7 @@ namespace Verse
 			{
 				return 37;
 			}
-			Log.Error("NumSquares radius error");
+			Log.Error("NumSquares radius error", false);
 			return 0;
 		}
 
@@ -154,7 +154,7 @@ namespace Verse
 					radius,
 					". Max is ",
 					GenRadial.MaxRadialPatternRadius
-				}));
+				}), false);
 				return 10000;
 			}
 			float num = radius + 1.401298E-45f;
@@ -236,7 +236,7 @@ namespace Verse
 		{
 			if (GenRadial.working)
 			{
-				Log.Error("Nested calls to ProcessEquidistantCells() are not allowed.");
+				Log.Error("Nested calls to ProcessEquidistantCells() are not allowed.", false);
 				return;
 			}
 			GenRadial.tmpCells.Clear();

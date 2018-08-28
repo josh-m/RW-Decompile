@@ -2,17 +2,17 @@ using System;
 
 namespace Verse
 {
-	public struct ThingCount : IEquatable<ThingCount>
+	public struct ThingCount : IEquatable<ThingCount>, IExposable
 	{
-		private ThingDef thingDef;
+		private Thing thing;
 
 		private int count;
 
-		public ThingDef ThingDef
+		public Thing Thing
 		{
 			get
 			{
-				return this.thingDef;
+				return this.thing;
 			}
 		}
 
@@ -24,26 +24,45 @@ namespace Verse
 			}
 		}
 
-		public ThingCount(ThingDef thingDef, int count)
+		public ThingCount(Thing thing, int count)
 		{
 			if (count < 0)
 			{
 				Log.Warning(string.Concat(new object[]
 				{
-					"Tried to set ThingCount count to ",
+					"Tried to set ThingCount stack count to ",
 					count,
-					". thingDef=",
-					thingDef
-				}));
+					". thing=",
+					thing
+				}), false);
 				count = 0;
 			}
-			this.thingDef = thingDef;
+			if (count > thing.stackCount)
+			{
+				Log.Warning(string.Concat(new object[]
+				{
+					"Tried to set ThingCount stack count to ",
+					count,
+					", but thing's stack count is only ",
+					thing.stackCount,
+					". thing=",
+					thing
+				}), false);
+				count = thing.stackCount;
+			}
+			this.thing = thing;
 			this.count = count;
+		}
+
+		public void ExposeData()
+		{
+			Scribe_References.Look<Thing>(ref this.thing, "thing", false);
+			Scribe_Values.Look<int>(ref this.count, "count", 1, false);
 		}
 
 		public ThingCount WithCount(int newCount)
 		{
-			return new ThingCount(this.thingDef, newCount);
+			return new ThingCount(this.thing, newCount);
 		}
 
 		public override bool Equals(object obj)
@@ -58,7 +77,7 @@ namespace Verse
 
 		public static bool operator ==(ThingCount a, ThingCount b)
 		{
-			return a.thingDef == b.thingDef && a.count == b.count;
+			return a.thing == b.thing && a.count == b.count;
 		}
 
 		public static bool operator !=(ThingCount a, ThingCount b)
@@ -68,12 +87,28 @@ namespace Verse
 
 		public override int GetHashCode()
 		{
-			return Gen.HashCombine<ThingDef>(this.count, this.thingDef);
+			return Gen.HashCombine<Thing>(this.count, this.thing);
+		}
+
+		public override string ToString()
+		{
+			return string.Concat(new object[]
+			{
+				"(",
+				this.count,
+				"x ",
+				(this.thing == null) ? "null" : this.thing.LabelShort,
+				")"
+			});
 		}
 
 		public static implicit operator ThingCount(ThingCountClass t)
 		{
-			return new ThingCount(t.thingDef, t.count);
+			if (t == null)
+			{
+				return new ThingCount(null, 0);
+			}
+			return new ThingCount(t.thing, t.Count);
 		}
 	}
 }

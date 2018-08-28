@@ -25,12 +25,12 @@ namespace RimWorld
 			base..ctor();
 		}
 
-		public override float SkyTargetLerpFactor()
+		public override float SkyTargetLerpFactor(Map map)
 		{
 			return GameConditionUtility.LerpInOutValue(this, (float)this.LerpTicks, 0.3f);
 		}
 
-		public override SkyTarget? SkyTarget()
+		public override SkyTarget? SkyTarget(Map map)
 		{
 			return new SkyTarget?(new SkyTarget(0.55f, this.VolcanicWinterColors, 1f, 1f));
 		}
@@ -40,12 +40,12 @@ namespace RimWorld
 			return GameConditionUtility.LerpInOutValue(this, (float)this.LerpTicks, this.MaxTempOffset);
 		}
 
-		public override float AnimalDensityFactor()
+		public override float AnimalDensityFactor(Map map)
 		{
 			return 1f - GameConditionUtility.LerpInOutValue(this, (float)this.LerpTicks, 0.5f);
 		}
 
-		public override bool AllowEnjoyableOutsideNow()
+		public override bool AllowEnjoyableOutsideNow(Map map)
 		{
 			return false;
 		}

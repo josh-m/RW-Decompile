@@ -65,7 +65,7 @@ namespace RimWorld
 					GlobalTargetInfo arg = this.CurrentTargetUnderMouse();
 					if (this.action(arg))
 					{
-						SoundDefOf.TickHigh.PlayOneShotOnCamera(null);
+						SoundDefOf.Tick_High.PlayOneShotOnCamera(null);
 						this.StopTargeting();
 					}
 					Event.current.Use();
@@ -77,7 +77,7 @@ namespace RimWorld
 					Event.current.Use();
 				}
 			}
-			if (Event.current.type == EventType.KeyDown && Event.current.keyCode == KeyCode.Escape && this.IsTargeting)
+			if (KeyBindingDefOf.Cancel.KeyDownEvent && this.IsTargeting)
 			{
 				SoundDefOf.CancelMode.PlayOneShotOnCamera(null);
 				this.StopTargeting();
@@ -87,7 +87,7 @@ namespace RimWorld
 
 		public void TargeterOnGUI()
 		{
-			if (this.IsTargeting)
+			if (this.IsTargeting && !Mouse.IsInputBlockedNow)
 			{
 				Vector2 mousePosition = Event.current.mousePosition;
 				Texture2D image = this.mouseAttachment ?? TexCommand.Attack;
@@ -95,13 +95,19 @@ namespace RimWorld
 				GUI.DrawTexture(position, image);
 				if (this.extraLabelGetter != null)
 				{
+					GUI.color = Color.white;
 					string text = this.extraLabelGetter(this.CurrentTargetUnderMouse());
 					if (!text.NullOrEmpty())
 					{
-						GUI.color = Color.red;
-						Widgets.Label(new Rect(position.xMax, position.y, 250f, 100f), text);
+						Color color = GUI.color;
 						GUI.color = Color.white;
+						Rect rect = new Rect(position.xMax, position.y, 9999f, 100f);
+						Vector2 vector = Text.CalcSize(text);
+						GUI.DrawTexture(new Rect(rect.x - vector.x * 0.1f, rect.y, vector.x * 1.2f, vector.y), TexUI.GrayTextBG);
+						GUI.color = color;
+						Widgets.Label(rect, text);
 					}
+					GUI.color = Color.white;
 				}
 			}
 		}
@@ -120,7 +126,7 @@ namespace RimWorld
 				{
 					pos = Find.WorldGrid.GetTileCenter(globalTargetInfo.Tile);
 				}
-				if (globalTargetInfo.IsValid)
+				if (globalTargetInfo.IsValid && !Mouse.IsInputBlockedNow)
 				{
 					WorldRendererUtility.DrawQuadTangentialToPlanet(pos, 0.8f * Find.WorldGrid.averageTileSize, 0.018f, WorldMaterials.CurTargetingMat, false, false, null);
 				}

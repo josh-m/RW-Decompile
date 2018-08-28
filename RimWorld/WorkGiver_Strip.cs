@@ -23,7 +23,7 @@ namespace RimWorld
 			{
 				if (!des.target.HasThing)
 				{
-					Log.ErrorOnce("Strip designation has no target.", 63126);
+					Log.ErrorOnce("Strip designation has no target.", 63126, false);
 				}
 				else
 				{

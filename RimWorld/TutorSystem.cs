@@ -35,7 +35,7 @@ namespace RimWorld
 			}
 			if (DebugViewSettings.logTutor)
 			{
-				Log.Message("Notify_Event: " + ep);
+				Log.Message("Notify_Event: " + ep, false);
 			}
 			if (Current.Game == null)
 			{
@@ -64,7 +64,7 @@ namespace RimWorld
 			}
 			if (DebugViewSettings.logTutor)
 			{
-				Log.Message("AllowAction: " + ep);
+				Log.Message("AllowAction: " + ep, false);
 			}
 			if (ep.Cells != null && ep.Cells.Count<IntVec3>() == 1)
 			{
@@ -76,7 +76,7 @@ namespace RimWorld
 				if (!acceptanceReport.Accepted)
 				{
 					string text = acceptanceReport.Reason.NullOrEmpty() ? Find.ActiveLesson.Current.DefaultRejectInputMessage : acceptanceReport.Reason;
-					Messages.Message(text, MessageTypeDefOf.RejectInput);
+					Messages.Message(text, MessageTypeDefOf.RejectInput, false);
 					return false;
 				}
 			}

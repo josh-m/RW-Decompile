@@ -11,7 +11,7 @@ namespace RimWorld.Planet
 	{
 		public static readonly Texture2D FormCaravanCommand = ContentFinder<Texture2D>.Get("UI/Commands/FormCaravan", true);
 
-		private WorldObjectCompProperties_FormCaravan Props
+		public WorldObjectCompProperties_FormCaravan Props
 		{
 			get
 			{
@@ -19,13 +19,38 @@ namespace RimWorld.Planet
 			}
 		}
 
+		private MapParent MapParent
+		{
+			get
+			{
+				return (MapParent)this.parent;
+			}
+		}
+
+		public bool Reform
+		{
+			get
+			{
+				return !this.MapParent.HasMap || !this.MapParent.Map.IsPlayerHome;
+			}
+		}
+
+		public bool CanFormOrReformCaravanNow
+		{
+			get
+			{
+				MapParent mapParent = this.MapParent;
+				return mapParent.HasMap && (!this.Reform || (!GenHostility.AnyHostileActiveThreatToPlayer(mapParent.Map) && mapParent.Map.mapPawns.FreeColonistsSpawnedCount != 0));
+			}
+		}
+
 		[DebuggerHidden]
 		public override IEnumerable<Gizmo> GetGizmos()
 		{
-			MapParent mapParent = this.parent as MapParent;
+			MapParent mapParent = (MapParent)this.parent;
 			if (mapParent.HasMap)
 			{
-				if (!this.Props.reformCaravan)
+				if (!this.Reform)
 				{
 					yield return new Command_Action
 					{
@@ -36,7 +61,7 @@ namespace RimWorld.Planet
 						tutorTag = "FormCaravan",
 						action = delegate
 						{
-							Find.WindowStack.Add(new Dialog_FormCaravan(mapParent.Map, false, null, true, false));
+							Find.WindowStack.Add(new Dialog_FormCaravan(mapParent.Map, false, null, false));
 						}
 					};
 				}
@@ -50,7 +75,7 @@ namespace RimWorld.Planet
 					reformCaravan.tutorTag = "ReformCaravan";
 					reformCaravan.action = delegate
 					{
-						Find.WindowStack.Add(new Dialog_FormCaravan(mapParent.Map, true, null, true, false));
+						Find.WindowStack.Add(new Dialog_FormCaravan(mapParent.Map, true, null, false));
 					};
 					if (GenHostility.AnyHostileActiveThreatToPlayer(mapParent.Map))
 					{

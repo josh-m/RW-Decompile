@@ -8,18 +8,25 @@ namespace RimWorld.Planet
 {
 	public class WorldGenStep_Terrain : WorldGenStep
 	{
+		[Unsaved]
 		private ModuleBase noiseElevation;
 
+		[Unsaved]
 		private ModuleBase noiseTemperatureOffset;
 
+		[Unsaved]
 		private ModuleBase noiseRainfall;
 
+		[Unsaved]
 		private ModuleBase noiseSwampiness;
 
+		[Unsaved]
 		private ModuleBase noiseMountainLines;
 
+		[Unsaved]
 		private ModuleBase noiseHillsPatchesMicro;
 
+		[Unsaved]
 		private ModuleBase noiseHillsPatchesMacro;
 
 		private const float ElevationFrequencyMicro = 0.035f;
@@ -94,6 +101,14 @@ namespace RimWorld.Planet
 
 		private const float FertilityTempMaximum = 50f;
 
+		public override int SeedPart
+		{
+			get
+			{
+				return 83469557;
+			}
+		}
+
 		private static float FreqMultiplier
 		{
 			get
@@ -104,9 +119,7 @@ namespace RimWorld.Planet
 
 		public override void GenerateFresh(string seed)
 		{
-			Rand.Seed = GenText.StableStringHash(seed);
 			this.GenerateGridIntoWorld();
-			Rand.RandomizeStateFromTime();
 		}
 
 		public override void GenerateFromScribe(string seed)
@@ -346,17 +359,17 @@ namespace RimWorld.Planet
 			if (float.IsNaN(tile.rainfall))
 			{
 				float value2 = this.noiseRainfall.GetValue(tileCenter);
-				Log.ErrorOnce(value2 + " rain bad at " + tileID, 694822);
+				Log.ErrorOnce(value2 + " rain bad at " + tileID, 694822, false);
 			}
 			if (tile.hilliness == Hilliness.Flat || tile.hilliness == Hilliness.SmallHills)
 			{
 				tile.swampiness = this.noiseSwampiness.GetValue(tileCenter);
 			}
-			tile.biome = this.BiomeFrom(tile);
+			tile.biome = this.BiomeFrom(tile, tileID);
 			return tile;
 		}
 
-		private BiomeDef BiomeFrom(Tile ws)
+		private BiomeDef BiomeFrom(Tile ws, int tileID)
 		{
 			List<BiomeDef> allDefsListForReading = DefDatabase<BiomeDef>.AllDefsListForReading;
 			BiomeDef biomeDef = null;
@@ -366,7 +379,7 @@ namespace RimWorld.Planet
 				BiomeDef biomeDef2 = allDefsListForReading[i];
 				if (biomeDef2.implemented)
 				{
-					float score = biomeDef2.Worker.GetScore(ws);
+					float score = biomeDef2.Worker.GetScore(ws, tileID);
 					if (score > num || biomeDef == null)
 					{
 						biomeDef = biomeDef2;

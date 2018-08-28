@@ -64,7 +64,6 @@ namespace RimWorld
 		{
 			this.forcePause = true;
 			this.doCloseX = true;
-			this.closeOnEscapeKey = true;
 			this.doCloseButton = true;
 			this.closeOnClickedOutside = true;
 			this.absorbInputAroundWindow = true;
@@ -118,7 +117,7 @@ namespace RimWorld
 						AcceptanceReport acceptanceReport = Current.Game.drugPolicyDatabase.TryDelete(localAssignedDrugs);
 						if (!acceptanceReport.Accepted)
 						{
-							Messages.Message(acceptanceReport.Reason, MessageTypeDefOf.RejectInput);
+							Messages.Message(acceptanceReport.Reason, MessageTypeDefOf.RejectInput, false);
 						}
 						else if (localAssignedDrugs == this.SelectedPolicy)
 						{
@@ -144,6 +143,12 @@ namespace RimWorld
 			Rect rect6 = new Rect(0f, 40f, rect4.width, rect4.height - 45f - 10f);
 			this.DoPolicyConfigArea(rect6);
 			GUI.EndGroup();
+		}
+
+		public override void PostOpen()
+		{
+			base.PostOpen();
+			PlayerKnowledgeDatabase.KnowledgeDemonstrated(ConceptDefOf.DrugPolicies, KnowledgeAmount.Total);
 		}
 
 		public override void PreClose()
@@ -276,15 +281,15 @@ namespace RimWorld
 			num9 += num4;
 			if (entry.drug.IsAddictiveDrug)
 			{
-				Widgets.Checkbox(num9, rect.y, ref entry.allowedForAddiction, 24f, false);
+				Widgets.Checkbox(num9, rect.y, ref entry.allowedForAddiction, 24f, false, true, null, null);
 			}
 			num9 += num;
 			if (entry.drug.IsPleasureDrug)
 			{
-				Widgets.Checkbox(num9, rect.y, ref entry.allowedForJoy, 24f, false);
+				Widgets.Checkbox(num9, rect.y, ref entry.allowedForJoy, 24f, false, true, null, null);
 			}
 			num9 += num2;
-			Widgets.Checkbox(num9, rect.y, ref entry.allowScheduled, 24f, false);
+			Widgets.Checkbox(num9, rect.y, ref entry.allowScheduled, 24f, false, true, null, null);
 			num9 += num3;
 			if (entry.allowScheduled)
 			{

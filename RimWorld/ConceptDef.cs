@@ -17,9 +17,13 @@ namespace RimWorld
 
 		public ProgramState gameMode = ProgramState.Playing;
 
+		[MustTranslate]
 		private string helpText;
 
+		[NoTranslate]
 		public List<string> highlightTags;
+
+		private static List<string> tmpParseErrors = new List<string>();
 
 		public bool TriggeredDirect
 		{
@@ -33,7 +37,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return this.helpText.AdjustedForKeys();
+				return this.helpText.AdjustedForKeys(null, true);
 			}
 		}
 
@@ -64,6 +68,12 @@ namespace RimWorld
 			if (this.TriggeredDirect && this.label.NullOrEmpty())
 			{
 				yield return "no label";
+			}
+			ConceptDef.tmpParseErrors.Clear();
+			this.helpText.AdjustedForKeys(ConceptDef.tmpParseErrors, false);
+			for (int i = 0; i < ConceptDef.tmpParseErrors.Count; i++)
+			{
+				yield return "helpText error: " + ConceptDef.tmpParseErrors[i];
 			}
 		}
 

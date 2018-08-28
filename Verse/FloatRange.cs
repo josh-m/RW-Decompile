@@ -114,6 +114,11 @@ namespace Verse
 			return a.min != b.min || a.max != b.max;
 		}
 
+		public static FloatRange operator *(FloatRange r, float val)
+		{
+			return new FloatRange(r.min * val, r.max * val);
+		}
+
 		public static FloatRange FromString(string s)
 		{
 			string[] array = s.Split(new char[]

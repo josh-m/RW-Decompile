@@ -18,5 +18,10 @@ namespace RimWorld
 		public static StoryEventDef Seen;
 
 		public static StoryEventDef TaleCreated;
+
+		static StoryEventDefOf()
+		{
+			DefOfHelper.EnsureInitializedInCtor(typeof(StoryEventDefOf));
+		}
 	}
 }

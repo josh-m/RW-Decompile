@@ -8,7 +8,7 @@ namespace RimWorld
 	{
 		protected override bool Satisfied(Pawn pawn)
 		{
-			return pawn.CurJob != null && pawn.jobs.curDriver.layingDown != LayingDownState.NotLaying;
+			return pawn.GetPosture().Laying();
 		}
 	}
 }

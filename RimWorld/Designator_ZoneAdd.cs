@@ -33,9 +33,9 @@ namespace RimWorld
 
 		public Designator_ZoneAdd()
 		{
-			this.soundDragSustain = SoundDefOf.DesignateDragAreaAdd;
-			this.soundDragChanged = SoundDefOf.DesignateDragAreaAddChanged;
-			this.soundSucceeded = SoundDefOf.DesignateZoneAdd;
+			this.soundDragSustain = SoundDefOf.Designate_DragAreaAdd;
+			this.soundDragChanged = null;
+			this.soundSucceeded = SoundDefOf.Designate_ZoneAdd;
 			this.useMouseIcon = true;
 		}
 
@@ -74,7 +74,7 @@ namespace RimWorld
 						});
 					}
 				}
-				GenUI.DrawMouseAttachment(this.icon, text, 0f);
+				GenUI.DrawMouseAttachment(this.icon, text, 0f, default(Vector2), null);
 			}
 		}
 
@@ -155,6 +155,7 @@ namespace RimWorld
 			if (this.SelectedZone == null)
 			{
 				this.SelectedZone = this.MakeNewZone();
+				base.Map.zoneManager.RegisterZone(this.SelectedZone);
 				this.SelectedZone.AddCell(list[0]);
 				list.RemoveAt(0);
 			}
@@ -191,6 +192,7 @@ namespace RimWorld
 				if (list.Count == count)
 				{
 					this.SelectedZone = this.MakeNewZone();
+					base.Map.zoneManager.RegisterZone(this.SelectedZone);
 					this.SelectedZone.AddCell(list[0]);
 					list.RemoveAt(0);
 				}

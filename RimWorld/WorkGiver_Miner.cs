@@ -10,6 +10,8 @@ namespace RimWorld
 	{
 		private static string NoPathTrans;
 
+		private const int MiningJobTicks = 20000;
+
 		public override PathEndMode PathEndMode
 		{
 			get
@@ -23,7 +25,7 @@ namespace RimWorld
 			return Danger.Deadly;
 		}
 
-		public static void Reset()
+		public static void ResetStaticData()
 		{
 			WorkGiver_Miner.NoPathTrans = "NoPath".Translate();
 		}
@@ -64,7 +66,8 @@ namespace RimWorld
 			{
 				return null;
 			}
-			if (!pawn.CanReserve(t, 1, -1, null, false))
+			LocalTargetInfo target = t;
+			if (!pawn.CanReserve(target, 1, -1, null, forced))
 			{
 				return null;
 			}
@@ -106,17 +109,17 @@ namespace RimWorld
 									{
 										return job;
 									}
-									JobFailReason.Is(WorkGiver_Miner.NoPathTrans);
+									JobFailReason.Is(WorkGiver_Miner.NoPathTrans, null);
 									return null;
 								}
 							}
 						}
 					}
 				}
-				JobFailReason.Is(WorkGiver_Miner.NoPathTrans);
+				JobFailReason.Is(WorkGiver_Miner.NoPathTrans, null);
 				return null;
 			}
-			return new Job(JobDefOf.Mine, t, 1500, true);
+			return new Job(JobDefOf.Mine, t, 20000, true);
 		}
 	}
 }

@@ -9,8 +9,8 @@ namespace RimWorld
 	{
 		public override float CalculateCapacityLevel(HediffSet diffSet, List<PawnCapacityUtility.CapacityImpactor> impactors = null)
 		{
-			string tag = "ConsciousnessSource";
-			float num = PawnCapacityUtility.CalculateTagEfficiency(diffSet, tag, 3.40282347E+38f, impactors);
+			BodyPartTagDef consciousnessSource = BodyPartTagDefOf.ConsciousnessSource;
+			float num = PawnCapacityUtility.CalculateTagEfficiency(diffSet, consciousnessSource, 3.40282347E+38f, default(FloatRange), impactors, -1f);
 			float num2 = Mathf.Clamp(GenMath.LerpDouble(0.1f, 1f, 0f, 0.4f, diffSet.PainTotal), 0f, 0.4f);
 			if ((double)num2 >= 0.01)
 			{
@@ -27,7 +27,7 @@ namespace RimWorld
 
 		public override bool CanHaveCapacity(BodyDef body)
 		{
-			return body.HasPartWithTag("ConsciousnessSource");
+			return body.HasPartWithTag(BodyPartTagDefOf.ConsciousnessSource);
 		}
 	}
 }

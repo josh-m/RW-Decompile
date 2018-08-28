@@ -36,9 +36,9 @@ namespace RimWorld.Planet
 
 		public WorldFeature feature;
 
-		public List<Tile.RoadLink> roads;
+		public List<Tile.RoadLink> potentialRoads;
 
-		public List<Tile.RiverLink> rivers;
+		public List<Tile.RiverLink> potentialRivers;
 
 		public bool WaterCovered
 		{
@@ -48,19 +48,19 @@ namespace RimWorld.Planet
 			}
 		}
 
-		public List<Tile.RoadLink> VisibleRoads
+		public List<Tile.RoadLink> Roads
 		{
 			get
 			{
-				return (!this.biome.allowRoads) ? null : this.roads;
+				return (!this.biome.allowRoads) ? null : this.potentialRoads;
 			}
 		}
 
-		public List<Tile.RiverLink> VisibleRivers
+		public List<Tile.RiverLink> Rivers
 		{
 			get
 			{
-				return (!this.biome.allowRivers) ? null : this.rivers;
+				return (!this.biome.allowRivers) ? null : this.potentialRivers;
 			}
 		}
 
@@ -80,11 +80,15 @@ namespace RimWorld.Planet
 				this.rainfall,
 				"mm swampiness=",
 				this.swampiness.ToStringPercent(),
-				" roads=",
-				(this.roads != null) ? this.roads.Count : 0,
-				" rivers=",
-				(this.rivers != null) ? this.rivers.Count : 0,
-				")"
+				" potentialRoads=",
+				(this.potentialRoads != null) ? this.potentialRoads.Count : 0,
+				" (allowed=",
+				this.biome.allowRoads,
+				") potentialRivers=",
+				(this.potentialRivers != null) ? this.potentialRivers.Count : 0,
+				" (allowed=",
+				this.biome.allowRivers,
+				"))"
 			});
 		}
 	}

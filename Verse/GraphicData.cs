@@ -1,3 +1,4 @@
+using RimWorld;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -7,11 +8,14 @@ namespace Verse
 {
 	public class GraphicData
 	{
+		[NoTranslate]
 		public string texPath;
 
 		public Type graphicClass;
 
-		public ShaderType shaderType;
+		public ShaderTypeDef shaderType;
+
+		public List<ShaderParameter> shaderParameters;
 
 		public Color color = Color.white;
 
@@ -83,13 +87,13 @@ namespace Verse
 				this.cachedGraphic = null;
 				return;
 			}
-			ShaderType sType = this.shaderType;
-			if (this.shaderType == ShaderType.None)
+			ShaderTypeDef cutout = this.shaderType;
+			if (cutout == null)
 			{
-				sType = ShaderType.Cutout;
+				cutout = ShaderTypeDefOf.Cutout;
 			}
-			Shader shader = ShaderDatabase.ShaderFromType(sType);
-			this.cachedGraphic = GraphicDatabase.Get(this.graphicClass, this.texPath, shader, this.drawSize, this.color, this.colorTwo, this);
+			Shader shader = cutout.Shader;
+			this.cachedGraphic = GraphicDatabase.Get(this.graphicClass, this.texPath, shader, this.drawSize, this.color, this.colorTwo, this, this.shaderParameters);
 			if (this.onGroundRandomRotateAngle > 0.01f)
 			{
 				this.cachedGraphic = new Graphic_RandomRotated(this.cachedGraphic, this.onGroundRandomRotateAngle);
@@ -132,7 +136,7 @@ namespace Verse
 			{
 				yield return "does not add to map mesh but has a link drawer. Link drawers can only work on the map mesh.";
 			}
-			if ((this.shaderType == ShaderType.Cutout || this.shaderType == ShaderType.CutoutComplex) && thingDef.mote != null && (thingDef.mote.fadeInTime > 0f || thingDef.mote.fadeOutTime > 0f))
+			if ((this.shaderType == ShaderTypeDefOf.Cutout || this.shaderType == ShaderTypeDefOf.CutoutComplex) && thingDef.mote != null && (thingDef.mote.fadeInTime > 0f || thingDef.mote.fadeOutTime > 0f))
 			{
 				yield return "mote fades but uses cutout shader type. It will abruptly disappear when opacity falls under the cutout threshold.";
 			}

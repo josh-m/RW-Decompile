@@ -5,13 +5,13 @@ namespace RimWorld
 {
 	public class StatPart_WorkTableOutdoors : StatPart
 	{
-		public const float WorkRateFactor = 0.8f;
+		public const float WorkRateFactor = 0.9f;
 
 		public override void TransformValue(StatRequest req, ref float val)
 		{
 			if (req.HasThing && StatPart_WorkTableOutdoors.Applies(req.Thing))
 			{
-				val *= 0.8f;
+				val *= 0.9f;
 			}
 		}
 
@@ -19,7 +19,7 @@ namespace RimWorld
 		{
 			if (req.HasThing && StatPart_WorkTableOutdoors.Applies(req.Thing))
 			{
-				return "Outdoors".Translate() + ": x" + 0.8f.ToStringPercent();
+				return "Outdoors".Translate() + ": x" + 0.9f.ToStringPercent();
 			}
 			return null;
 		}

@@ -18,11 +18,29 @@ namespace RimWorld
 			{
 				return;
 			}
-			CellRect cellRect = new CellRect(b.Position.x - b.RotatedSize.x / 2 - 4, b.Position.z - b.RotatedSize.z / 2 - 4, b.RotatedSize.x + 8, b.RotatedSize.z + 8);
-			cellRect.ClipInsideMap(b.Map);
+			AutoHomeAreaMaker.MarkHomeAroundThing(b);
+		}
+
+		public static void Notify_BuildingClaimed(Thing b)
+		{
+			if (!AutoHomeAreaMaker.ShouldAdd() || !b.def.building.expandHomeArea || b.Faction != Faction.OfPlayer)
+			{
+				return;
+			}
+			AutoHomeAreaMaker.MarkHomeAroundThing(b);
+		}
+
+		public static void MarkHomeAroundThing(Thing t)
+		{
+			if (!AutoHomeAreaMaker.ShouldAdd())
+			{
+				return;
+			}
+			CellRect cellRect = new CellRect(t.Position.x - t.RotatedSize.x / 2 - 4, t.Position.z - t.RotatedSize.z / 2 - 4, t.RotatedSize.x + 8, t.RotatedSize.z + 8);
+			cellRect.ClipInsideMap(t.Map);
 			foreach (IntVec3 current in cellRect)
 			{
-				b.Map.areaManager.Home[current] = true;
+				t.Map.areaManager.Home[current] = true;
 			}
 		}
 

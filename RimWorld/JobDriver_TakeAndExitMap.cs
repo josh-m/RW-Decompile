@@ -20,9 +20,12 @@ namespace RimWorld
 			}
 		}
 
-		public override bool TryMakePreToilReservations()
+		public override bool TryMakePreToilReservations(bool errorOnFailed)
 		{
-			return this.pawn.Reserve(this.Item, this.job, 1, -1, null);
+			Pawn pawn = this.pawn;
+			LocalTargetInfo target = this.Item;
+			Job job = this.job;
+			return pawn.Reserve(target, job, 1, -1, null, errorOnFailed);
 		}
 
 		[DebuggerHidden]
@@ -37,7 +40,7 @@ namespace RimWorld
 			{
 				if (this.$this.Map.exitMapGrid.IsExitCell(this.$this.pawn.Position))
 				{
-					this.$this.pawn.ExitMap(true);
+					this.$this.pawn.ExitMap(true, CellRect.WholeMap(this.$this.Map).GetClosestEdge(this.$this.pawn.Position));
 				}
 			});
 			yield return gotoCell;
@@ -47,7 +50,7 @@ namespace RimWorld
 				{
 					if (this.$this.pawn.Position.OnEdge(this.$this.pawn.Map) || this.$this.pawn.Map.exitMapGrid.IsExitCell(this.$this.pawn.Position))
 					{
-						this.$this.pawn.ExitMap(true);
+						this.$this.pawn.ExitMap(true, CellRect.WholeMap(this.$this.Map).GetClosestEdge(this.$this.pawn.Position));
 					}
 				},
 				defaultCompleteMode = ToilCompleteMode.Instant

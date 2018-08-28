@@ -10,6 +10,7 @@ namespace RimWorld
 	{
 		public bool isEdifice = true;
 
+		[NoTranslate]
 		public List<string> buildingTags = new List<string>();
 
 		public bool isInert;
@@ -29,6 +30,12 @@ namespace RimWorld
 		public ConceptDef boughtConceptLearnOpportunity;
 
 		public bool expandHomeArea = true;
+
+		public Type blueprintClass = typeof(Blueprint_Build);
+
+		public GraphicData blueprintGraphicData;
+
+		public float uninstallWork = 200f;
 
 		public bool wantsHopperAdjacent;
 
@@ -52,8 +59,6 @@ namespace RimWorld
 
 		public bool isMealSource;
 
-		public bool isJoySource;
-
 		public bool isNaturalRock;
 
 		public bool isResourceRock;
@@ -63,6 +68,15 @@ namespace RimWorld
 		public float roofCollapseDamageMultiplier = 1f;
 
 		public bool hasFuelingPort;
+
+		public ThingDef smoothedThing;
+
+		[Unsaved]
+		public ThingDef unsmoothedThing;
+
+		public TerrainDef naturalTerrain;
+
+		public TerrainDef leaveTerrain;
 
 		public bool isPlayerEjectable;
 
@@ -78,6 +92,8 @@ namespace RimWorld
 
 		public float bed_maxBodySize = 9999f;
 
+		public bool bed_caravansCanUse;
+
 		public float nutritionCostPerDispense;
 
 		public SoundDef soundDispense;
@@ -88,23 +104,29 @@ namespace RimWorld
 
 		public float turretBurstCooldownTime = -1f;
 
+		[NoTranslate]
 		public string turretTopGraphicPath;
 
 		[Unsaved]
 		public Material turretTopMat;
 
+		public float turretTopDrawSize = 2f;
+
+		public Vector2 turretTopOffset;
+
 		public bool ai_combatDangerous;
 
 		public bool ai_chillDestination = true;
 
-		public SoundDef soundDoorOpenPowered = SoundDefOf.DoorOpen;
+		public SoundDef soundDoorOpenPowered;
 
-		public SoundDef soundDoorClosePowered = SoundDefOf.DoorClose;
+		public SoundDef soundDoorClosePowered;
 
-		public SoundDef soundDoorOpenManual = SoundDefOf.DoorOpenManual;
+		public SoundDef soundDoorOpenManual;
 
-		public SoundDef soundDoorCloseManual = SoundDefOf.DoorCloseManual;
+		public SoundDef soundDoorCloseManual;
 
+		[NoTranslate]
 		public string sowTag;
 
 		public ThingDef defaultPlantToGrow;
@@ -131,6 +153,10 @@ namespace RimWorld
 
 		public bool isTrap;
 
+		public bool trapDestroyOnSpring;
+
+		public float trapPeacefulWildAnimalsSpringChanceFactor = 1f;
+
 		public DamageArmorCategoryDef trapDamageCategory;
 
 		public GraphicData trapUnarmedGraphicData;
@@ -147,6 +173,10 @@ namespace RimWorld
 		public IntRange watchBuildingStandDistanceRange = IntRange.one;
 
 		public int watchBuildingStandRectWidth = 3;
+
+		public JoyKindDef joyKind;
+
+		public int haulToContainerDuration;
 
 		public bool SupportsPlants
 		{
@@ -176,7 +206,34 @@ namespace RimWorld
 		{
 			get
 			{
-				return this.IsTurret && this.turretGunDef.HasComp(typeof(CompChangeableProjectile)) && this.turretGunDef.building.fixedStorageSettings.filter.Allows(ThingDefOf.Shell_HighExplosive);
+				if (!this.IsTurret)
+				{
+					return false;
+				}
+				List<VerbProperties> verbs = this.turretGunDef.Verbs;
+				for (int i = 0; i < verbs.Count; i++)
+				{
+					if (verbs[i].isPrimary && verbs[i].defaultProjectile != null && verbs[i].defaultProjectile.projectile.flyOverhead)
+					{
+						return true;
+					}
+				}
+				if (this.turretGunDef.HasComp(typeof(CompChangeableProjectile)))
+				{
+					if (this.turretGunDef.building.fixedStorageSettings.filter.Allows(ThingDefOf.Shell_HighExplosive))
+					{
+						return true;
+					}
+					foreach (ThingDef current in this.turretGunDef.building.fixedStorageSettings.filter.AllowedThingDefs)
+					{
+						if (current.projectileWhenLoaded != null && current.projectileWhenLoaded.projectile.flyOverhead)
+						{
+							return true;
+						}
+					}
+					return false;
+				}
+				return false;
 			}
 		}
 
@@ -203,6 +260,22 @@ namespace RimWorld
 
 		public void ResolveReferencesSpecial()
 		{
+			if (this.soundDoorOpenPowered == null)
+			{
+				this.soundDoorOpenPowered = SoundDefOf.Door_OpenPowered;
+			}
+			if (this.soundDoorClosePowered == null)
+			{
+				this.soundDoorClosePowered = SoundDefOf.Door_ClosePowered;
+			}
+			if (this.soundDoorOpenManual == null)
+			{
+				this.soundDoorOpenManual = SoundDefOf.Door_OpenManual;
+			}
+			if (this.soundDoorCloseManual == null)
+			{
+				this.soundDoorCloseManual = SoundDefOf.Door_CloseManual;
+			}
 			if (!this.turretTopGraphicPath.NullOrEmpty())
 			{
 				LongEventHandler.ExecuteWhenFinished(delegate
@@ -222,6 +295,47 @@ namespace RimWorld
 			if (this.defaultStorageSettings != null)
 			{
 				this.defaultStorageSettings.filter.ResolveReferences();
+			}
+		}
+
+		public static void FinalizeInit()
+		{
+			List<ThingDef> allDefsListForReading = DefDatabase<ThingDef>.AllDefsListForReading;
+			for (int i = 0; i < allDefsListForReading.Count; i++)
+			{
+				ThingDef thingDef = allDefsListForReading[i];
+				if (thingDef.building != null)
+				{
+					if (thingDef.building.smoothedThing != null)
+					{
+						ThingDef thingDef2 = thingDef.building.smoothedThing;
+						if (thingDef2.building == null)
+						{
+							Log.Error(string.Format("{0} is smoothable to non-building {1}", thingDef, thingDef2), false);
+						}
+						else if (thingDef2.building.unsmoothedThing == null || thingDef2.building.unsmoothedThing == thingDef)
+						{
+							thingDef2.building.unsmoothedThing = thingDef;
+						}
+						else
+						{
+							Log.Error(string.Format("{0} and {1} both smooth to {2}", thingDef, thingDef2.building.unsmoothedThing, thingDef2), false);
+						}
+					}
+				}
+			}
+		}
+
+		[DebuggerHidden]
+		public IEnumerable<StatDrawEntry> SpecialDisplayStats(ThingDef parentDef)
+		{
+			if (this.joyKind != null)
+			{
+				yield return new StatDrawEntry(StatCategoryDefOf.Building, "StatsReport_JoyKind".Translate(), this.joyKind.LabelCap, 0, string.Empty);
+			}
+			if (parentDef.Minifiable)
+			{
+				yield return new StatDrawEntry(StatCategoryDefOf.Building, "StatsReport_WorkToUninstall".Translate(), this.uninstallWork.ToStringWorkAmount(), 0, string.Empty);
 			}
 		}
 	}

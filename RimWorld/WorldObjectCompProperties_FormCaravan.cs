@@ -7,8 +7,6 @@ namespace RimWorld
 {
 	public class WorldObjectCompProperties_FormCaravan : WorldObjectCompProperties
 	{
-		public bool reformCaravan;
-
 		public WorldObjectCompProperties_FormCaravan()
 		{
 			this.compClass = typeof(FormCaravanComp);

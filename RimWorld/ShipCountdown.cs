@@ -14,8 +14,6 @@ namespace RimWorld
 
 		private static Building shipRoot;
 
-		private static int journeyDestinationTile;
-
 		private const float InitialTime = 7.2f;
 
 		public static bool CountingDown
@@ -28,7 +26,7 @@ namespace RimWorld
 
 		public static void InitiateCountdown(Building launchingShipRoot)
 		{
-			SoundDef.Named("ShipTakeoff").PlayOneShotOnCamera(null);
+			SoundDefOf.ShipTakeoff.PlayOneShotOnCamera(null);
 			ShipCountdown.shipRoot = launchingShipRoot;
 			ShipCountdown.timeLeft = 7.2f;
 			ScreenFader.StartFade(Color.white, 7.2f);

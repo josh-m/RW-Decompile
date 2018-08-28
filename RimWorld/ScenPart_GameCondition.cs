@@ -50,12 +50,23 @@ namespace RimWorld
 
 		public override void GenerateIntoMap(Map map)
 		{
-			if (Find.GameInitData == null)
+			if (!this.def.gameConditionTargetsWorld)
 			{
-				return;
+				map.gameConditionManager.RegisterCondition(this.MakeCondition());
 			}
-			GameCondition cond = GameConditionMaker.MakeCondition(this.def.gameCondition, (int)(this.durationDays * 60000f), 0);
-			map.gameConditionManager.RegisterCondition(cond);
+		}
+
+		public override void PostWorldGenerate()
+		{
+			if (this.def.gameConditionTargetsWorld)
+			{
+				Find.World.gameConditionManager.RegisterCondition(this.MakeCondition());
+			}
+		}
+
+		private GameCondition MakeCondition()
+		{
+			return GameConditionMaker.MakeCondition(this.def.gameCondition, (int)(this.durationDays * 60000f), 0);
 		}
 
 		public override bool CanCoexistWith(ScenPart other)

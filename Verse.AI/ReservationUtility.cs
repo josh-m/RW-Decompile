@@ -15,9 +15,9 @@ namespace Verse.AI
 			return p.Spawned && p.CanReach(target, peMode, maxDanger, false, TraverseMode.ByPawn) && p.Map.reservationManager.CanReserve(p, target, maxPawns, stackCount, layer, ignoreOtherReservations);
 		}
 
-		public static bool Reserve(this Pawn p, LocalTargetInfo target, Job job, int maxPawns = 1, int stackCount = -1, ReservationLayerDef layer = null)
+		public static bool Reserve(this Pawn p, LocalTargetInfo target, Job job, int maxPawns = 1, int stackCount = -1, ReservationLayerDef layer = null, bool errorOnFailed = true)
 		{
-			return p.Spawned && p.Map.reservationManager.Reserve(p, job, target, maxPawns, stackCount, layer);
+			return p.Spawned && p.Map.reservationManager.Reserve(p, job, target, maxPawns, stackCount, layer, errorOnFailed);
 		}
 
 		public static void ReserveAsManyAsPossible(this Pawn p, List<LocalTargetInfo> target, Job job, int maxPawns = 1, int stackCount = -1, ReservationLayerDef layer = null)
@@ -28,13 +28,18 @@ namespace Verse.AI
 			}
 			for (int i = 0; i < target.Count; i++)
 			{
-				p.Map.reservationManager.Reserve(p, job, target[i], maxPawns, stackCount, layer);
+				p.Map.reservationManager.Reserve(p, job, target[i], maxPawns, stackCount, layer, false);
 			}
 		}
 
 		public static bool HasReserved(this Pawn p, LocalTargetInfo target, Job job = null)
 		{
 			return p.Spawned && p.Map.reservationManager.ReservedBy(target, p, job);
+		}
+
+		public static bool HasReserved<TDriver>(this Pawn p, LocalTargetInfo target, LocalTargetInfo? targetAIsNot = null, LocalTargetInfo? targetBIsNot = null, LocalTargetInfo? targetCIsNot = null)
+		{
+			return p.Spawned && p.Map.reservationManager.ReservedBy<TDriver>(target, p, targetAIsNot, targetBIsNot, targetCIsNot);
 		}
 
 		public static bool CanReserveNew(this Pawn p, LocalTargetInfo target)

@@ -35,6 +35,11 @@ namespace Verse.AI
 			this.map = map;
 		}
 
+		public static void AttackTargetsCacheStaticUpdate()
+		{
+			AttackTargetsCache.targets.Clear();
+		}
+
 		public void UpdateTarget(IAttackTarget t)
 		{
 			if (!this.allTargets.Contains(t))
@@ -95,7 +100,7 @@ namespace Verse.AI
 		{
 			if (f == null)
 			{
-				Log.Warning("Called TargetsHostileToFaction with null faction.");
+				Log.Warning("Called TargetsHostileToFaction with null faction.", false);
 				return AttackTargetsCache.emptySet;
 			}
 			if (this.targetsHostileToFaction.ContainsKey(f))
@@ -129,7 +134,8 @@ namespace Verse.AI
 			foreach (IAttackTarget current in this.allTargets)
 			{
 				Thing thing = current.Thing;
-				if (thing.Faction == f1 || thing.Faction == f2)
+				Pawn pawn = thing as Pawn;
+				if (thing.Faction == f1 || thing.Faction == f2 || (pawn != null && pawn.HostFaction == f1) || (pawn != null && pawn.HostFaction == f2))
 				{
 					AttackTargetsCache.tmpTargets.Add(current);
 				}
@@ -148,10 +154,10 @@ namespace Verse.AI
 				Log.Warning(string.Concat(new object[]
 				{
 					"Tried to register the same target twice ",
-					target,
+					target.ToStringSafe<IAttackTarget>(),
 					" in ",
 					base.GetType()
-				}));
+				}), false);
 				return;
 			}
 			Thing thing = target.Thing;
@@ -160,15 +166,15 @@ namespace Verse.AI
 				Log.Warning(string.Concat(new object[]
 				{
 					"Tried to register unspawned thing ",
-					thing,
+					thing.ToStringSafe<Thing>(),
 					" in ",
 					base.GetType()
-				}));
+				}), false);
 				return;
 			}
 			if (thing.Map != this.map)
 			{
-				Log.Warning("Tried to register attack target " + thing + " but its Map is not this one.");
+				Log.Warning("Tried to register attack target " + thing.ToStringSafe<Thing>() + " but its Map is not this one.", false);
 				return;
 			}
 			this.allTargets.Add(target);
@@ -201,7 +207,7 @@ namespace Verse.AI
 					target,
 					" but it's not in ",
 					base.GetType()
-				}));
+				}), false);
 				return;
 			}
 			this.allTargets.Remove(target);
@@ -228,13 +234,13 @@ namespace Verse.AI
 					Log.Error(string.Concat(new string[]
 					{
 						"Target ",
-						(current == null) ? "null" : current.ToString(),
+						current.ToStringSafe<IAttackTarget>(),
 						" is not hostile to ",
-						(f == null) ? "null" : f.ToString(),
+						f.ToStringSafe<Faction>(),
 						" (in ",
 						base.GetType().Name,
 						") but it's in the list (forgot to update the target somewhere?). Trying to update the target..."
-					}));
+					}), false);
 				}
 			}
 			for (int i = 0; i < AttackTargetsCache.tmpToUpdate.Count; i++)
@@ -242,6 +248,16 @@ namespace Verse.AI
 				this.UpdateTarget(AttackTargetsCache.tmpToUpdate[i]);
 			}
 			AttackTargetsCache.tmpToUpdate.Clear();
+		}
+
+		public bool Debug_CheckIfInAllTargets(IAttackTarget t)
+		{
+			return t != null && this.allTargets.Contains(t);
+		}
+
+		public bool Debug_CheckIfHostileToFaction(Faction f, IAttackTarget t)
+		{
+			return f != null && t != null && this.targetsHostileToFaction[f].Contains(t);
 		}
 	}
 }

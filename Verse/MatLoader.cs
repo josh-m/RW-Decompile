@@ -59,7 +59,7 @@ namespace Verse
 			Material material = (Material)Resources.Load("Materials/" + matPath, typeof(Material));
 			if (material == null)
 			{
-				Log.Warning("Could not load material " + matPath);
+				Log.Warning("Could not load material " + matPath, false);
 			}
 			MatLoader.Request key = new MatLoader.Request
 			{
@@ -69,7 +69,7 @@ namespace Verse
 			Material material2;
 			if (!MatLoader.dict.TryGetValue(key, out material2))
 			{
-				material2 = new Material(material);
+				material2 = MaterialAllocator.Create(material);
 				if (renderQueue != -1)
 				{
 					material2.renderQueue = renderQueue;

@@ -73,7 +73,7 @@ namespace RimWorld
 						" could not find standable cell adjacent to ",
 						target,
 						" because this thing is either unspawned or spawned somewhere else."
-					}));
+					}), false);
 					actor.jobs.curDriver.EndJobWith(JobCondition.Errored);
 					return;
 				}
@@ -99,7 +99,7 @@ namespace RimWorld
 						goto Block_7;
 					}
 				}
-				Log.Error(actor + " could not find standable cell adjacent to " + target);
+				Log.Error(actor + " could not find standable cell adjacent to " + target, false);
 				actor.jobs.curDriver.EndJobWith(JobCondition.Errored);
 				return;
 				Block_7:

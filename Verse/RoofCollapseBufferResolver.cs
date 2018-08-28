@@ -9,6 +9,10 @@ namespace Verse
 	{
 		private Map map;
 
+		private List<Thing> tmpCrushedThings = new List<Thing>();
+
+		private HashSet<string> tmpCrushedNames = new HashSet<string>();
+
 		public RoofCollapseBufferResolver(Map map)
 		{
 			this.map = map;
@@ -17,39 +21,42 @@ namespace Verse
 		public void CollapseRoofsMarkedToCollapse()
 		{
 			RoofCollapseBuffer roofCollapseBuffer = this.map.roofCollapseBuffer;
-			if (roofCollapseBuffer.CellsMarkedToCollapse.Count > 0)
+			if (roofCollapseBuffer.CellsMarkedToCollapse.Any<IntVec3>())
 			{
-				RoofCollapserImmediate.DropRoofInCells(roofCollapseBuffer.CellsMarkedToCollapse, this.map);
-				if (roofCollapseBuffer.CrushedThingsForLetter.Count > 0)
+				this.tmpCrushedThings.Clear();
+				RoofCollapserImmediate.DropRoofInCells(roofCollapseBuffer.CellsMarkedToCollapse, this.map, this.tmpCrushedThings);
+				if (this.tmpCrushedThings.Any<Thing>())
 				{
 					StringBuilder stringBuilder = new StringBuilder();
 					stringBuilder.AppendLine("RoofCollapsed".Translate());
 					stringBuilder.AppendLine();
 					stringBuilder.AppendLine("TheseThingsCrushed".Translate());
-					HashSet<string> hashSet = new HashSet<string>();
-					foreach (Thing current in roofCollapseBuffer.CrushedThingsForLetter)
+					this.tmpCrushedNames.Clear();
+					for (int i = 0; i < this.tmpCrushedThings.Count; i++)
 					{
-						string item = current.LabelShort.CapitalizeFirst();
-						if (current.def.category == ThingCategory.Pawn)
+						Thing thing = this.tmpCrushedThings[i];
+						string item = thing.LabelShort.CapitalizeFirst();
+						if (thing.def.category == ThingCategory.Pawn)
 						{
-							item = current.LabelCap;
+							item = thing.LabelCap;
 						}
-						if (!hashSet.Contains(item))
+						if (!this.tmpCrushedNames.Contains(item))
 						{
-							hashSet.Add(item);
+							this.tmpCrushedNames.Add(item);
 						}
 					}
-					foreach (string current2 in hashSet)
+					foreach (string current in this.tmpCrushedNames)
 					{
-						stringBuilder.AppendLine("    -" + current2);
+						stringBuilder.AppendLine("    -" + current);
 					}
-					Find.LetterStack.ReceiveLetter("LetterLabelRoofCollapsed".Translate(), stringBuilder.ToString(), LetterDefOf.NegativeEvent, new TargetInfo(roofCollapseBuffer.CellsMarkedToCollapse[0], this.map, false), null);
+					Find.LetterStack.ReceiveLetter("LetterLabelRoofCollapsed".Translate(), stringBuilder.ToString().TrimEndNewlines(), LetterDefOf.NegativeEvent, new TargetInfo(roofCollapseBuffer.CellsMarkedToCollapse[0], this.map, false), null, null);
 				}
 				else
 				{
 					string text = "RoofCollapsed".Translate();
-					Messages.Message(text, new TargetInfo(roofCollapseBuffer.CellsMarkedToCollapse[0], this.map, false), MessageTypeDefOf.NegativeHealthEvent);
+					Messages.Message(text, new TargetInfo(roofCollapseBuffer.CellsMarkedToCollapse[0], this.map, false), MessageTypeDefOf.SilentInput, true);
 				}
+				this.tmpCrushedThings.Clear();
 				roofCollapseBuffer.Clear();
 			}
 		}

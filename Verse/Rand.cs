@@ -6,20 +6,25 @@ using UnityEngine;
 
 namespace Verse
 {
+	[HasDebugOutput]
 	public static class Rand
 	{
-		private static Stack<ulong> stateStack = new Stack<ulong>();
+		private static Stack<ulong> stateStack;
 
-		private static RandomNumberGenerator random = new RandomNumberGenerator_BasicHash();
+		private static RandomNumberGenerator random;
 
-		private static uint iterations = 0u;
+		private static uint iterations;
 
-		private static List<int> tmpRange = new List<int>();
+		private static List<int> tmpRange;
 
 		public static int Seed
 		{
 			set
 			{
+				if (Rand.stateStack.Count == 0)
+				{
+					Log.ErrorOnce("Modifying the initial rand seed. Call PushState() first. The initial rand seed should always be based on the startup time and set only once.", 825343540, false);
+				}
 				Rand.random.seed = (uint)value;
 				Rand.iterations = 0u;
 			}
@@ -38,6 +43,14 @@ namespace Verse
 			get
 			{
 				return Rand.Value < 0.5f;
+			}
+		}
+
+		public static int Sign
+		{
+			get
+			{
+				return (!Rand.Bool) ? -1 : 1;
 			}
 		}
 
@@ -67,17 +80,26 @@ namespace Verse
 			}
 		}
 
-		public static Vector3 PointOnDisc
+		public static Vector2 InsideUnitCircle
 		{
 			get
 			{
-				Vector3 result;
+				Vector2 result;
 				do
 				{
-					result = new Vector3(Rand.Value - 0.5f, 0f, Rand.Value - 0.5f) * 2f;
+					result = new Vector2(Rand.Value - 0.5f, Rand.Value - 0.5f) * 2f;
 				}
 				while (result.sqrMagnitude > 1f);
 				return result;
+			}
+		}
+
+		public static Vector3 InsideUnitCircleVec3
+		{
+			get
+			{
+				Vector2 insideUnitCircle = Rand.InsideUnitCircle;
+				return new Vector3(insideUnitCircle.x, 0f, insideUnitCircle.y);
 			}
 		}
 
@@ -94,12 +116,24 @@ namespace Verse
 			}
 		}
 
+		static Rand()
+		{
+			Rand.stateStack = new Stack<ulong>();
+			Rand.random = new RandomNumberGenerator_BasicHash();
+			Rand.iterations = 0u;
+			Rand.tmpRange = new List<int>();
+			Rand.random.seed = (uint)DateTime.Now.GetHashCode();
+		}
+
 		public static void EnsureStateStackEmpty()
 		{
-			if (Rand.stateStack.Any<ulong>())
+			if (Rand.stateStack.Count > 0)
 			{
-				Log.Warning("Random state stack is not empty. There were more calls to PushState than PopState. Fixing.");
-				Rand.stateStack.Clear();
+				Log.Warning("Random state stack is not empty. There were more calls to PushState than PopState. Fixing.", false);
+				while (Rand.stateStack.Any<ulong>())
+				{
+					Rand.PopState();
+				}
 			}
 		}
 
@@ -123,18 +157,13 @@ namespace Verse
 			return num * upperWidthFactor + centerX;
 		}
 
-		public static void RandomizeStateFromTime()
-		{
-			Rand.Seed = DateTime.Now.GetHashCode();
-		}
-
 		public static int Range(int min, int max)
 		{
 			if (max <= min)
 			{
 				return min;
 			}
-			return min + Mathf.Abs(Rand.random.GetInt(Rand.iterations++) % (max - min));
+			return min + Mathf.Abs(Rand.Int % (max - min));
 		}
 
 		public static int RangeInclusive(int min, int max)
@@ -162,20 +191,42 @@ namespace Verse
 
 		public static bool ChanceSeeded(float chance, int specialSeed)
 		{
-			ulong stateCompressed = Rand.StateCompressed;
-			Rand.Seed = specialSeed;
+			Rand.PushState(specialSeed);
 			bool result = Rand.Chance(chance);
-			Rand.StateCompressed = stateCompressed;
+			Rand.PopState();
 			return result;
 		}
 
 		public static float ValueSeeded(int specialSeed)
 		{
-			ulong stateCompressed = Rand.StateCompressed;
-			Rand.Seed = specialSeed;
+			Rand.PushState(specialSeed);
 			float value = Rand.Value;
-			Rand.StateCompressed = stateCompressed;
+			Rand.PopState();
 			return value;
+		}
+
+		public static float RangeSeeded(float min, float max, int specialSeed)
+		{
+			Rand.PushState(specialSeed);
+			float result = Rand.Range(min, max);
+			Rand.PopState();
+			return result;
+		}
+
+		public static int RangeSeeded(int min, int max, int specialSeed)
+		{
+			Rand.PushState(specialSeed);
+			int result = Rand.Range(min, max);
+			Rand.PopState();
+			return result;
+		}
+
+		public static int RangeInclusiveSeeded(int min, int max, int specialSeed)
+		{
+			Rand.PushState(specialSeed);
+			int result = Rand.RangeInclusive(min, max);
+			Rand.PopState();
+			return result;
 		}
 
 		public static T Element<T>(T a, T b)
@@ -279,39 +330,57 @@ namespace Verse
 			Rand.StateCompressed = Rand.stateStack.Pop();
 		}
 
-		public static float ByCurve(SimpleCurve curve, int sampleCount = 100)
+		public static float ByCurve(SimpleCurve curve)
 		{
 			if (curve.PointsCount < 3)
 			{
 				throw new ArgumentException("curve has < 3 points");
 			}
-			if (curve[0].y > 0f || curve[curve.PointsCount - 1].y > 0f)
+			if (curve[0].y != 0f || curve[curve.PointsCount - 1].y != 0f)
 			{
-				throw new ArgumentException("curve has start/end point with y > 0");
+				throw new ArgumentException("curve has start/end point with y != 0");
 			}
-			float x = curve[0].x;
-			float x2 = curve[curve.PointsCount - 1].x;
-			float num = (x2 - x) / (float)sampleCount;
-			float num2 = 0f;
-			for (int i = 0; i < sampleCount; i++)
+			float num = 0f;
+			for (int i = 0; i < curve.PointsCount - 1; i++)
 			{
-				float x3 = x + ((float)i + 0.5f) * num;
-				float num3 = curve.Evaluate(x3);
-				num2 += num3;
-			}
-			float num4 = Rand.Range(0f, num2);
-			num2 = 0f;
-			for (int j = 0; j < sampleCount; j++)
-			{
-				float num5 = x + ((float)j + 0.5f) * num;
-				float num6 = curve.Evaluate(num5);
-				num2 += num6;
-				if (num2 > num4)
+				if (curve[i].y < 0f)
 				{
-					return num5 + Rand.Range(-num / 2f, num / 2f);
+					throw new ArgumentException("curve has point with y < 0");
 				}
+				num += (curve[i + 1].x - curve[i].x) * (curve[i].y + curve[i + 1].y);
+			}
+			float num2 = Rand.Range(0f, num);
+			for (int j = 0; j < curve.PointsCount - 1; j++)
+			{
+				float num3 = (curve[j + 1].x - curve[j].x) * (curve[j].y + curve[j + 1].y);
+				if (num3 >= num2)
+				{
+					float num4 = curve[j + 1].x - curve[j].x;
+					float y = curve[j].y;
+					float y2 = curve[j + 1].y;
+					float num5 = num2 / (y + y2);
+					float num6 = Rand.Range(0f, (y + y2) / 2f);
+					if (num6 > Mathf.Lerp(y, y2, num5 / num4))
+					{
+						num5 = num4 - num5;
+					}
+					return num5 + curve[j].x;
+				}
+				num2 -= num3;
 			}
 			throw new Exception("Reached end of Rand.ByCurve without choosing a point.");
+		}
+
+		public static float ByCurveAverage(SimpleCurve curve)
+		{
+			float num = 0f;
+			float num2 = 0f;
+			for (int i = 0; i < curve.PointsCount - 1; i++)
+			{
+				num += (curve[i + 1].x - curve[i].x) * (curve[i].y + curve[i + 1].y);
+				num2 += (curve[i + 1].x - curve[i].x) * (curve[i].x * (2f * curve[i].y + curve[i + 1].y) + curve[i + 1].x * (curve[i].y + 2f * curve[i + 1].y));
+			}
+			return num2 / num / 3f;
 		}
 
 		public static bool MTBEventOccurs(float mtb, float mtbUnit, float checkDuration)
@@ -322,17 +391,17 @@ namespace Verse
 			}
 			if (mtb <= 0f)
 			{
-				Log.Error("MTBEventOccurs with mtb=" + mtb);
+				Log.Error("MTBEventOccurs with mtb=" + mtb, false);
 				return true;
 			}
 			if (mtbUnit <= 0f)
 			{
-				Log.Error("MTBEventOccurs with mtbUnit=" + mtbUnit);
+				Log.Error("MTBEventOccurs with mtbUnit=" + mtbUnit, false);
 				return false;
 			}
 			if (checkDuration <= 0f)
 			{
-				Log.Error("MTBEventOccurs with checkDuration=" + checkDuration);
+				Log.Error("MTBEventOccurs with checkDuration=" + checkDuration, false);
 				return false;
 			}
 			double num = (double)checkDuration / ((double)mtb * (double)mtbUnit);
@@ -348,7 +417,7 @@ namespace Verse
 					mtbUnit,
 					", checkDuration=",
 					checkDuration
-				}));
+				}), false);
 				return false;
 			}
 			double num2 = 1.0;
@@ -367,7 +436,8 @@ namespace Verse
 			return (double)Rand.Value < num;
 		}
 
-		internal static void LogRandTests()
+		[Category("System"), DebugOutput]
+		internal static void RandTests()
 		{
 			StringBuilder stringBuilder = new StringBuilder();
 			int @int = Rand.Int;
@@ -460,7 +530,31 @@ namespace Verse
 				});
 				stringBuilder.AppendLine(value3);
 			}
-			Log.Message(stringBuilder.ToString());
+			stringBuilder.AppendLine();
+			stringBuilder.AppendLine("Near seed tests");
+			DebugHistogram debugHistogram = new DebugHistogram(new float[]
+			{
+				0f,
+				0.1f,
+				0.2f,
+				0.3f,
+				0.4f,
+				0.5f,
+				0.6f,
+				0.7f,
+				0.8f,
+				0.9f,
+				1f
+			});
+			Rand.PushState();
+			for (int num5 = 0; num5 < 1000; num5++)
+			{
+				Rand.Seed = num5;
+				debugHistogram.Add(Rand.Value);
+			}
+			Rand.PopState();
+			debugHistogram.Display(stringBuilder);
+			Log.Message(stringBuilder.ToString(), false);
 		}
 
 		public static int RandSeedForHour(this Thing t, int salt)

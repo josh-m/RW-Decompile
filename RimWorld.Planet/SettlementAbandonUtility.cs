@@ -23,6 +23,7 @@ namespace RimWorld.Planet
 			{
 				SettlementAbandonUtility.TryAbandonViaInterface(settlement);
 			};
+			command_Action.order = 30f;
 			if (SettlementAbandonUtility.AllColonistsThere(settlement))
 			{
 				command_Action.Disable("CommandAbandonHomeFailAllColonistsThere".Translate());
@@ -41,7 +42,7 @@ namespace RimWorld.Planet
 			if (map == null)
 			{
 				SettlementAbandonUtility.Abandon(settlement);
-				SoundDefOf.TickHigh.PlayOneShotOnCamera(null);
+				SoundDefOf.Tick_High.PlayOneShotOnCamera(null);
 			}
 			else
 			{
@@ -69,7 +70,7 @@ namespace RimWorld.Planet
 				if (stringBuilder.Length == 0)
 				{
 					SettlementAbandonUtility.Abandon(settlement);
-					SoundDefOf.TickHigh.PlayOneShotOnCamera(null);
+					SoundDefOf.Tick_High.PlayOneShotOnCamera(null);
 				}
 				else
 				{
@@ -84,17 +85,17 @@ namespace RimWorld.Planet
 		private static void Abandon(MapParent settlement)
 		{
 			Find.WorldObjects.Remove(settlement);
-			FactionBase factionBase = settlement as FactionBase;
-			if (factionBase != null)
+			Settlement settlement2 = settlement as Settlement;
+			if (settlement2 != null)
 			{
-				SettlementAbandonUtility.AddAbandonedBase(factionBase);
+				SettlementAbandonUtility.AddAbandonedSettlement(settlement2);
 			}
 			Find.GameEnder.CheckOrUpdateGameOver();
 		}
 
-		private static void AddAbandonedBase(FactionBase factionBase)
+		private static void AddAbandonedSettlement(Settlement factionBase)
 		{
-			WorldObject worldObject = WorldObjectMaker.MakeWorldObject(WorldObjectDefOf.AbandonedFactionBase);
+			WorldObject worldObject = WorldObjectMaker.MakeWorldObject(WorldObjectDefOf.AbandonedSettlement);
 			worldObject.Tile = factionBase.Tile;
 			worldObject.SetFaction(factionBase.Faction);
 			Find.WorldObjects.Add(worldObject);

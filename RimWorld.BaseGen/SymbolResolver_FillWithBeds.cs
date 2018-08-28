@@ -8,14 +8,29 @@ namespace RimWorld.BaseGen
 		public override void Resolve(ResolveParams rp)
 		{
 			Map map = BaseGen.globalSettings.map;
-			bool @bool = Rand.Bool;
-			ThingDef thingDef = rp.singleThingDef ?? Rand.Element<ThingDef>(ThingDefOf.Bed, ThingDefOf.Bedroll, ThingDefOf.SleepingSpot);
-			ThingDef arg_6B_0;
-			if ((arg_6B_0 = rp.singleThingStuff) == null)
+			ThingDef thingDef;
+			if (rp.singleThingDef != null)
 			{
-				arg_6B_0 = GenStuff.RandomStuffByCommonalityFor(thingDef, (rp.faction == null) ? TechLevel.Undefined : rp.faction.def.techLevel);
+				thingDef = rp.singleThingDef;
 			}
-			ThingDef singleThingStuff = arg_6B_0;
+			else if (rp.faction != null && rp.faction.def.techLevel >= TechLevel.Medieval)
+			{
+				thingDef = ThingDefOf.Bed;
+			}
+			else
+			{
+				thingDef = Rand.Element<ThingDef>(ThingDefOf.Bed, ThingDefOf.Bedroll, ThingDefOf.SleepingSpot);
+			}
+			ThingDef singleThingStuff;
+			if (rp.singleThingStuff != null && rp.singleThingStuff.stuffProps.CanMake(thingDef))
+			{
+				singleThingStuff = rp.singleThingStuff;
+			}
+			else
+			{
+				singleThingStuff = GenStuff.RandomStuffInexpensiveFor(thingDef, rp.faction);
+			}
+			bool @bool = Rand.Bool;
 			foreach (IntVec3 current in rp.rect)
 			{
 				if (@bool)

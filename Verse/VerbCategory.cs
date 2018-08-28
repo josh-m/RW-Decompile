@@ -7,6 +7,6 @@ namespace Verse
 		Undefined,
 		BeatFire,
 		Ignite,
-		Nonnative
+		Misc
 	}
 }

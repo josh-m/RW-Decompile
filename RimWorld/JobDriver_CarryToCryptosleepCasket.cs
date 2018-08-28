@@ -28,9 +28,24 @@ namespace RimWorld
 			}
 		}
 
-		public override bool TryMakePreToilReservations()
+		public override bool TryMakePreToilReservations(bool errorOnFailed)
 		{
-			return this.pawn.Reserve(this.Takee, this.job, 1, -1, null) && this.pawn.Reserve(this.DropPod, this.job, 1, -1, null);
+			Pawn pawn = this.pawn;
+			LocalTargetInfo target = this.Takee;
+			Job job = this.job;
+			bool arg_58_0;
+			if (pawn.Reserve(target, job, 1, -1, null, errorOnFailed))
+			{
+				pawn = this.pawn;
+				target = this.DropPod;
+				job = this.job;
+				arg_58_0 = pawn.Reserve(target, job, 1, -1, null, errorOnFailed);
+			}
+			else
+			{
+				arg_58_0 = false;
+			}
+			return arg_58_0;
 		}
 
 		[DebuggerHidden]
@@ -43,7 +58,7 @@ namespace RimWorld
 			yield return Toils_Goto.GotoThing(TargetIndex.A, PathEndMode.OnCell).FailOnDestroyedNullOrForbidden(TargetIndex.A).FailOnDespawnedNullOrForbidden(TargetIndex.B).FailOn(() => this.$this.DropPod.GetDirectlyHeldThings().Count > 0).FailOn(() => !this.$this.Takee.Downed).FailOn(() => !this.$this.pawn.CanReach(this.$this.Takee, PathEndMode.OnCell, Danger.Deadly, false, TraverseMode.ByPawn)).FailOnSomeonePhysicallyInteracting(TargetIndex.A);
 			yield return Toils_Haul.StartCarryThing(TargetIndex.A, false, false, false);
 			yield return Toils_Goto.GotoThing(TargetIndex.B, PathEndMode.InteractionCell);
-			Toil prepare = Toils_General.Wait(500);
+			Toil prepare = Toils_General.Wait(500, TargetIndex.None);
 			prepare.FailOnCannotTouch(TargetIndex.B, PathEndMode.InteractionCell);
 			prepare.WithProgressBarToilDelay(TargetIndex.B, false, -0.5f);
 			yield return prepare;

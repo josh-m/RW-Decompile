@@ -56,7 +56,7 @@ namespace Verse
 							"s named ",
 							current2.defName,
 							". Skipping."
-						}));
+						}), false);
 					}
 					else
 					{
@@ -72,7 +72,7 @@ namespace Verse
 								current2.label,
 								" lacks a defName. Giving name ",
 								text
-							}));
+							}), false);
 							current2.defName = text;
 						}
 						T def;
@@ -104,9 +104,9 @@ namespace Verse
 					typeof(T),
 					" name: ",
 					def.defName
-				}));
-				T expr_46 = def;
-				expr_46.defName += Mathf.RoundToInt(Rand.Value * 1000f);
+				}), false);
+				T expr_47 = def;
+				expr_47.defName += Mathf.RoundToInt(Rand.Value * 1000f);
 			}
 			DefDatabase<T>.defsList.Add(def);
 			DefDatabase<T>.defsByName.Add(def.defName, def);
@@ -118,7 +118,7 @@ namespace Verse
 					typeof(T),
 					"; over ",
 					65535
-				}));
+				}), false);
 			}
 			def.index = (ushort)(DefDatabase<T>.defsList.Count - 1);
 		}
@@ -157,7 +157,7 @@ namespace Verse
 						T t = DefDatabase<T>.defsList[i];
 						if (t.GetType() != typeof(T))
 						{
-							goto IL_9A;
+							goto IL_9B;
 						}
 					}
 					T t2 = DefDatabase<T>.defsList[i];
@@ -171,9 +171,9 @@ namespace Verse
 						DefDatabase<T>.defsList[i],
 						": ",
 						ex
-					}));
+					}), false);
 				}
-				IL_9A:;
+				IL_9B:;
 			}
 			DefDatabase<T>.SetIndices();
 		}
@@ -190,15 +190,31 @@ namespace Verse
 		{
 			foreach (T current in DefDatabase<T>.AllDefs)
 			{
-				foreach (string current2 in current.ConfigErrors())
+				try
 				{
-					Log.Warning(string.Concat(new object[]
+					if (!current.ignoreConfigErrors)
 					{
-						"Config error in ",
-						current,
+						foreach (string current2 in current.ConfigErrors())
+						{
+							Log.Error(string.Concat(new object[]
+							{
+								"Config error in ",
+								current,
+								": ",
+								current2
+							}), false);
+						}
+					}
+				}
+				catch (Exception ex)
+				{
+					Log.Error(string.Concat(new object[]
+					{
+						"Exception in ConfigErrors() of ",
+						current.defName,
 						": ",
-						current2
-					}));
+						ex
+					}), false);
 				}
 			}
 		}
@@ -221,7 +237,7 @@ namespace Verse
 					". There are ",
 					DefDatabase<T>.defsList.Count,
 					" defs of this type loaded."
-				}));
+				}), false);
 				return (T)((object)null);
 			}
 			else

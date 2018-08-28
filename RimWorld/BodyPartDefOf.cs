@@ -8,35 +8,19 @@ namespace RimWorld
 	{
 		public static BodyPartDef Heart;
 
-		public static BodyPartDef LeftLeg;
-
-		public static BodyPartDef RightLeg;
+		public static BodyPartDef Leg;
 
 		public static BodyPartDef Liver;
 
-		public static BodyPartDef LeftLung;
-
-		public static BodyPartDef RightLung;
-
-		public static BodyPartDef LeftKidney;
-
-		public static BodyPartDef RightKidney;
-
 		public static BodyPartDef Brain;
 
-		public static BodyPartDef LeftEye;
+		public static BodyPartDef Eye;
 
-		public static BodyPartDef RightEye;
-
-		public static BodyPartDef LeftArm;
-
-		public static BodyPartDef RightArm;
+		public static BodyPartDef Arm;
 
 		public static BodyPartDef Jaw;
 
-		public static BodyPartDef LeftHand;
-
-		public static BodyPartDef RightHand;
+		public static BodyPartDef Hand;
 
 		public static BodyPartDef Neck;
 
@@ -49,5 +33,10 @@ namespace RimWorld
 		public static BodyPartDef InsectHead;
 
 		public static BodyPartDef Stomach;
+
+		static BodyPartDefOf()
+		{
+			DefOfHelper.EnsureInitializedInCtor(typeof(BodyPartDefOf));
+		}
 	}
 }

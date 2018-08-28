@@ -25,7 +25,7 @@ namespace RimWorld
 			{
 				ThingDef chosenThingDef;
 				if (!(from t in this.categoryDef.DescendantThingDefs
-				where t.tradeability == Tradeability.Stockable && t.techLevel <= this.$this.maxTechLevelGenerate && !generatedDefs.Contains(t) && (this.$this.excludedThingDefs == null || !this.$this.excludedThingDefs.Contains(t)) && (this.$this.excludedCategories == null || !this.$this.excludedCategories.Any((ThingCategoryDef c) => c.DescendantThingDefs.Contains(t)))
+				where t.tradeability.TraderCanSell() && t.techLevel <= this.$this.maxTechLevelGenerate && !generatedDefs.Contains(t) && (this.$this.excludedThingDefs == null || !this.$this.excludedThingDefs.Contains(t)) && (this.$this.excludedCategories == null || !this.$this.excludedCategories.Any((ThingCategoryDef c) => c.DescendantThingDefs.Contains(t)))
 				select t).TryRandomElement(out chosenThingDef))
 				{
 					break;
@@ -40,7 +40,7 @@ namespace RimWorld
 
 		public override bool HandlesThingDef(ThingDef t)
 		{
-			return this.categoryDef.DescendantThingDefs.Contains(t) && t.tradeability != Tradeability.Never && t.techLevel <= this.maxTechLevelBuy && (this.excludedThingDefs == null || !this.excludedThingDefs.Contains(t)) && (this.excludedCategories == null || !this.excludedCategories.Any((ThingCategoryDef c) => c.DescendantThingDefs.Contains(t)));
+			return this.categoryDef.DescendantThingDefs.Contains(t) && t.tradeability != Tradeability.None && t.techLevel <= this.maxTechLevelBuy && (this.excludedThingDefs == null || !this.excludedThingDefs.Contains(t)) && (this.excludedCategories == null || !this.excludedCategories.Any((ThingCategoryDef c) => c.DescendantThingDefs.Contains(t)));
 		}
 	}
 }

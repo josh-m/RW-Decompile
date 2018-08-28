@@ -43,13 +43,15 @@ namespace RimWorld
 
 		public static TaleDef TradedWith;
 
+		public static TaleDef BuriedCorpse;
+
+		public static TaleDef IllnessRevealed;
+
 		public static TaleDef KilledBy;
 
 		public static TaleDef KilledColonist;
 
 		public static TaleDef KilledColonyAnimal;
-
-		public static TaleDef KilledMajorColonyEnemy;
 
 		public static TaleDef BondedWithAnimal;
 
@@ -99,6 +101,8 @@ namespace RimWorld
 
 		public static TaleDef KilledMortar;
 
+		public static TaleDef DefeatedHostileFactionLeader;
+
 		public static TaleDef Exhausted;
 
 		public static TaleDef GaveBirth;
@@ -109,6 +113,9 @@ namespace RimWorld
 
 		public static TaleDef CollapseDodged;
 
-		public static TaleDef RaidArrived;
+		static TaleDefOf()
+		{
+			DefOfHelper.EnsureInitializedInCtor(typeof(TaleDefOf));
+		}
 	}
 }

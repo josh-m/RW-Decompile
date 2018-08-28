@@ -12,6 +12,8 @@ namespace RimWorld
 
 		private ModuleBase snowNoise;
 
+		private const float MaxOutdoorTemp = 10f;
+
 		private static HashSet<IntVec3> reachableCells = new HashSet<IntVec3>();
 
 		public CompProperties_SnowExpand Props
@@ -35,12 +37,17 @@ namespace RimWorld
 			}
 			if (this.parent.IsHashIntervalTick(this.Props.expandInterval))
 			{
-				this.ExpandSnow();
+				this.TryExpandSnow();
 			}
 		}
 
-		private void ExpandSnow()
+		private void TryExpandSnow()
 		{
+			if (this.parent.Map.mapTemperature.OutdoorTemp > 10f)
+			{
+				this.snowRadius = 0f;
+				return;
+			}
 			if (this.snowNoise == null)
 			{
 				this.snowNoise = new Perlin(0.054999999701976776, 2.0, 0.5, 5, Rand.Range(0, 651431), QualityMode.Medium);

@@ -8,7 +8,7 @@ namespace RimWorld
 	{
 		public WorkGiverDef def;
 
-		public virtual bool ShouldSkip(Pawn pawn)
+		public virtual bool ShouldSkip(Pawn pawn, bool forced = false)
 		{
 			return false;
 		}

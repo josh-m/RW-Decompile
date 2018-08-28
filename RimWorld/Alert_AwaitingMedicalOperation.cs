@@ -28,14 +28,14 @@ namespace RimWorld
 			StringBuilder stringBuilder = new StringBuilder();
 			foreach (Pawn current in this.AwaitingMedicalOperation)
 			{
-				stringBuilder.AppendLine("    " + current.NameStringShort);
+				stringBuilder.AppendLine("    " + current.LabelShort.CapitalizeFirst());
 			}
 			return string.Format("PatientsAwaitingMedicalOperationDesc".Translate(), stringBuilder.ToString());
 		}
 
 		public override AlertReport GetReport()
 		{
-			return this.AwaitingMedicalOperation.FirstOrDefault<Pawn>();
+			return AlertReport.CulpritsAre(this.AwaitingMedicalOperation);
 		}
 	}
 }

@@ -24,7 +24,7 @@ namespace Verse
 		{
 			if (xmlRoot.ChildNodes.Count != 1)
 			{
-				Log.Error("Misconfigured SkillGain: " + xmlRoot.OuterXml);
+				Log.Error("Misconfigured SkillGain: " + xmlRoot.OuterXml, false);
 				return;
 			}
 			DirectXmlCrossRefLoader.RegisterObjectWantsCrossRef(this, "skill", xmlRoot.Name);

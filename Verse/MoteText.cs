@@ -19,11 +19,11 @@ namespace Verse
 			}
 		}
 
-		protected override float LifespanSecs
+		protected override bool EndOfLife
 		{
 			get
 			{
-				return this.TimeBeforeStartFadeout + this.def.mote.fadeOutTime;
+				return base.AgeSecs >= this.TimeBeforeStartFadeout + this.def.mote.fadeOutTime;
 			}
 		}
 

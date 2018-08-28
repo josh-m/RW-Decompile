@@ -12,7 +12,12 @@ namespace Verse
 
 		private static readonly Texture2D FemaleIcon = ContentFinder<Texture2D>.Get("UI/Icons/Gender/Female", true);
 
-		public static string GetLabel(this Gender gender)
+		public static string GetGenderLabel(this Pawn pawn)
+		{
+			return pawn.gender.GetLabel(pawn.RaceProps.Animal);
+		}
+
+		public static string GetLabel(this Gender gender, bool animal = false)
 		{
 			if (gender == Gender.None)
 			{
@@ -20,13 +25,13 @@ namespace Verse
 			}
 			if (gender == Gender.Male)
 			{
-				return "Male".Translate();
+				return (!animal) ? "Male".Translate() : "MaleAnimal".Translate();
 			}
 			if (gender != Gender.Female)
 			{
 				throw new ArgumentException();
 			}
-			return "Female".Translate();
+			return (!animal) ? "Female".Translate() : "FemaleAnimal".Translate();
 		}
 
 		public static string GetPronoun(this Gender gender)

@@ -53,7 +53,7 @@ namespace Verse
 			{
 				return;
 			}
-			loc.y = Altitudes.AltitudeFor(AltitudeLayer.MetaOverlays);
+			loc.y = AltitudeLayer.MetaOverlays.AltitudeFor();
 			Vector3 s = new Vector3(scale, 1f, scale);
 			Matrix4x4 matrix = default(Matrix4x4);
 			matrix.SetTRS(loc, Quaternion.identity, s);

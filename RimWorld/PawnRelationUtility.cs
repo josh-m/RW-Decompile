@@ -71,7 +71,7 @@ namespace RimWorld
 		public static void Notify_PawnsSeenByPlayer(IEnumerable<Pawn> seenPawns, out string pawnRelationsInfo, bool informEvenIfSeenBefore = false, bool writeSeenPawnsNames = true)
 		{
 			StringBuilder stringBuilder = new StringBuilder();
-			IEnumerable<Pawn> enumerable = from x in PawnsFinder.AllMapsCaravansAndTravelingTransportPods_FreeColonistsAndPrisoners
+			IEnumerable<Pawn> enumerable = from x in PawnsFinder.AllMapsCaravansAndTravelingTransportPods_Alive_FreeColonistsAndPrisoners
 			where x.relations.everSeenByPlayer
 			select x;
 			bool flag = false;
@@ -146,6 +146,30 @@ namespace RimWorld
 			}
 		}
 
+		public static void Notify_PawnsSeenByPlayer_Letter_Send(IEnumerable<Pawn> seenPawns, string relationsInfoHeader, LetterDef letterDef, bool informEvenIfSeenBefore = false, bool writeSeenPawnsNames = true)
+		{
+			string empty = string.Empty;
+			string empty2 = string.Empty;
+			PawnRelationUtility.Notify_PawnsSeenByPlayer_Letter(seenPawns, ref empty, ref empty2, relationsInfoHeader, informEvenIfSeenBefore, writeSeenPawnsNames);
+			if (!empty2.NullOrEmpty())
+			{
+				Pawn pawn = null;
+				foreach (Pawn current in seenPawns)
+				{
+					if (PawnRelationUtility.GetMostImportantColonyRelative(current) != null)
+					{
+						pawn = current;
+						break;
+					}
+				}
+				if (pawn == null)
+				{
+					pawn = seenPawns.FirstOrDefault<Pawn>();
+				}
+				Find.LetterStack.ReceiveLetter(empty, empty2, letterDef, pawn, null, null);
+			}
+		}
+
 		public static bool TryAppendRelationsWithColonistsInfo(ref string text, Pawn pawn)
 		{
 			string text2 = null;
@@ -164,30 +188,32 @@ namespace RimWorld
 				title = title + " " + "RelationshipAppendedLetterSuffix".Translate();
 			}
 			string genderSpecificLabel = mostImportantColonyRelative.GetMostImportantRelation(pawn).GetGenderSpecificLabel(pawn);
-			string text2 = "\n\n";
 			if (mostImportantColonyRelative.IsColonist)
 			{
-				text2 += "RelationshipAppendedLetterTextColonist".Translate(new object[]
+				text = text + "\n\n" + "RelationshipAppendedLetterTextColonist".Translate(new object[]
 				{
 					mostImportantColonyRelative.LabelShort,
 					genderSpecificLabel
-				});
+				}).AdjustedFor(pawn, "PAWN");
 			}
 			else
 			{
-				text2 += "RelationshipAppendedLetterTextPrisoner".Translate(new object[]
+				text = text + "\n\n" + "RelationshipAppendedLetterTextPrisoner".Translate(new object[]
 				{
 					mostImportantColonyRelative.LabelShort,
 					genderSpecificLabel
-				});
+				}).AdjustedFor(pawn, "PAWN");
 			}
-			text += text2.AdjustedFor(pawn);
 			return true;
 		}
 
 		public static Pawn GetMostImportantColonyRelative(Pawn pawn)
 		{
-			IEnumerable<Pawn> enumerable = from x in PawnsFinder.AllMapsCaravansAndTravelingTransportPods_FreeColonistsAndPrisoners
+			if (pawn.relations == null || !pawn.relations.RelatedToAnyoneOrAnyoneRelatedToMe)
+			{
+				return null;
+			}
+			IEnumerable<Pawn> enumerable = from x in PawnsFinder.AllMapsCaravansAndTravelingTransportPods_Alive_FreeColonistsAndPrisoners
 			where x.relations.everSeenByPlayer
 			select x;
 			float num = 0f;

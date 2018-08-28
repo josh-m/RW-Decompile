@@ -1,3 +1,4 @@
+using RimWorld;
 using RimWorld.Planet;
 using System;
 using System.Collections.Generic;
@@ -14,6 +15,8 @@ namespace Verse
 		private static IntVec3 playerStartSpotInt = IntVec3.Invalid;
 
 		public static List<IntVec3> rootsToUnfog = new List<IntVec3>();
+
+		private static List<GenStepWithParams> tmpGenSteps = new List<GenStepWithParams>();
 
 		public const string ElevationName = "Elevation";
 
@@ -53,7 +56,7 @@ namespace Verse
 			{
 				if (!MapGenerator.playerStartSpotInt.IsValid)
 				{
-					Log.Error("Accessing player start spot before setting it.");
+					Log.Error("Accessing player start spot before setting it.", false);
 					return IntVec3.Zero;
 				}
 				return MapGenerator.playerStartSpotInt;
@@ -64,7 +67,7 @@ namespace Verse
 			}
 		}
 
-		public static Map GenerateMap(IntVec3 mapSize, MapParent parent, MapGeneratorDef mapGenerator, IEnumerable<GenStepDef> extraGenStepDefs = null, Action<Map> extraInitBeforeContentGen = null)
+		public static Map GenerateMap(IntVec3 mapSize, MapParent parent, MapGeneratorDef mapGenerator, IEnumerable<GenStepWithParams> extraGenStepDefs = null, Action<Map> extraInitBeforeContentGen = null)
 		{
 			ProgramState programState = Current.ProgramState;
 			Current.ProgramState = ProgramState.MapInitializing;
@@ -72,13 +75,16 @@ namespace Verse
 			MapGenerator.rootsToUnfog.Clear();
 			MapGenerator.data.Clear();
 			MapGenerator.mapBeingGenerated = null;
+			DeepProfiler.Start("InitNewGeneratedMap");
+			Rand.PushState();
+			int seed = Gen.HashCombineInt(Find.World.info.Seed, parent.Tile);
+			Rand.Seed = seed;
 			Map result;
 			try
 			{
-				DeepProfiler.Start("InitNewGeneratedMap");
 				if (parent != null && parent.HasMap)
 				{
-					Log.Error("Tried to generate a new map and set " + parent + " as its parent, but this world object already has a map. One world object can't have more than 1 map.");
+					Log.Error("Tried to generate a new map and set " + parent + " as its parent, but this world object already has a map. One world object can't have more than 1 map.", false);
 					parent = null;
 				}
 				DeepProfiler.Start("Set up map");
@@ -96,9 +102,11 @@ namespace Verse
 				}
 				if (mapGenerator == null)
 				{
-					mapGenerator = DefDatabase<MapGeneratorDef>.AllDefsListForReading.RandomElementByWeight((MapGeneratorDef x) => x.selectionWeight);
+					Log.Error("Attempted to generate map without generator; falling back on encounter map", false);
+					mapGenerator = MapGeneratorDefOf.Encounter;
 				}
-				IEnumerable<GenStepDef> enumerable = mapGenerator.GenSteps;
+				IEnumerable<GenStepWithParams> enumerable = from x in mapGenerator.genSteps
+				select new GenStepWithParams(x, default(GenStepParams));
 				if (extraGenStepDefs != null)
 				{
 					enumerable = enumerable.Concat(extraGenStepDefs);
@@ -106,7 +114,7 @@ namespace Verse
 				map.areaManager.AddStartingAreas();
 				map.weatherDecider.StartInitialWeather();
 				DeepProfiler.Start("Generate contents into map");
-				MapGenerator.GenerateContentsIntoMap(enumerable, map);
+				MapGenerator.GenerateContentsIntoMap(enumerable, map, seed);
 				DeepProfiler.End();
 				Find.Scenario.PostMapGenerate(map);
 				DeepProfiler.Start("Finalize map init");
@@ -126,36 +134,47 @@ namespace Verse
 				DeepProfiler.End();
 				MapGenerator.mapBeingGenerated = null;
 				Current.ProgramState = programState;
+				Rand.PopState();
 			}
 			return result;
 		}
 
-		public static void GenerateContentsIntoMap(IEnumerable<GenStepDef> genStepDefs, Map map)
+		public static void GenerateContentsIntoMap(IEnumerable<GenStepWithParams> genStepDefs, Map map, int seed)
 		{
-			Rand.Seed = Gen.HashCombineInt(Find.World.info.Seed, map.Tile);
 			MapGenerator.data.Clear();
-			RockNoises.Init(map);
-			foreach (GenStepDef current in from x in genStepDefs
-			orderby x.order, x.index
-			select x)
+			Rand.PushState();
+			try
 			{
-				DeepProfiler.Start("GenStep - " + current);
-				try
+				Rand.Seed = seed;
+				RockNoises.Init(map);
+				MapGenerator.tmpGenSteps.Clear();
+				MapGenerator.tmpGenSteps.AddRange(from x in genStepDefs
+				orderby x.def.order, x.def.index
+				select x);
+				for (int i = 0; i < MapGenerator.tmpGenSteps.Count; i++)
 				{
-					current.genStep.Generate(map);
-				}
-				catch (Exception arg)
-				{
-					Log.Error("Error in GenStep: " + arg);
-				}
-				finally
-				{
-					DeepProfiler.End();
+					DeepProfiler.Start("GenStep - " + MapGenerator.tmpGenSteps[i].def);
+					try
+					{
+						Rand.Seed = Gen.HashCombineInt(seed, MapGenerator.GetSeedPart(MapGenerator.tmpGenSteps, i));
+						MapGenerator.tmpGenSteps[i].def.genStep.Generate(map, MapGenerator.tmpGenSteps[i].parms);
+					}
+					catch (Exception arg)
+					{
+						Log.Error("Error in GenStep: " + arg, false);
+					}
+					finally
+					{
+						DeepProfiler.End();
+					}
 				}
 			}
-			Rand.RandomizeStateFromTime();
-			RockNoises.Reset();
-			MapGenerator.data.Clear();
+			finally
+			{
+				Rand.PopState();
+				RockNoises.Reset();
+				MapGenerator.data.Clear();
+			}
 		}
 
 		public static T GetVar<T>(string name)
@@ -195,6 +214,20 @@ namespace Verse
 			MapGenFloatGrid mapGenFloatGrid = new MapGenFloatGrid(MapGenerator.mapBeingGenerated);
 			MapGenerator.SetVar<MapGenFloatGrid>(name, mapGenFloatGrid);
 			return mapGenFloatGrid;
+		}
+
+		private static int GetSeedPart(List<GenStepWithParams> genSteps, int index)
+		{
+			int seedPart = genSteps[index].def.genStep.SeedPart;
+			int num = 0;
+			for (int i = 0; i < index; i++)
+			{
+				if (MapGenerator.tmpGenSteps[i].def.genStep.SeedPart == seedPart)
+				{
+					num++;
+				}
+			}
+			return seedPart + num;
 		}
 	}
 }

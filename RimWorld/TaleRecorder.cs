@@ -6,12 +6,12 @@ namespace RimWorld
 {
 	public static class TaleRecorder
 	{
-		public static void RecordTale(TaleDef def, params object[] args)
+		public static Tale RecordTale(TaleDef def, params object[] args)
 		{
 			bool flag = Rand.Value < def.ignoreChance;
 			if (Rand.Value < def.ignoreChance && !DebugViewSettings.logTaleRecording)
 			{
-				return;
+				return null;
 			}
 			if (def.colonistOnly)
 			{
@@ -31,27 +31,27 @@ namespace RimWorld
 				}
 				if (flag2 && !flag3)
 				{
-					return;
+					return null;
 				}
 			}
 			Tale tale = TaleFactory.MakeRawTale(def, args);
 			if (tale == null)
 			{
-				return;
+				return null;
 			}
 			if (DebugViewSettings.logTaleRecording)
 			{
-				string arg_107_0 = "Tale {0} from {1}, targets {2}:\n{3}";
-				object[] expr_A5 = new object[4];
-				expr_A5[0] = ((!flag) ? "recorded" : "ignored");
-				expr_A5[1] = def;
-				expr_A5[2] = GenText.ToCommaList(args.Select(new Func<object, string>(Gen.ToStringSafe<object>)), true);
-				expr_A5[3] = TaleTextGenerator.GenerateTextFromTale(TextGenerationPurpose.ArtDescription, tale, Rand.Int, RulePackDefOf.ArtDescription_Sculpture.RulesPlusIncludes);
-				Log.Message(string.Format(arg_107_0, expr_A5));
+				string arg_105_0 = "Tale {0} from {1}, targets {2}:\n{3}";
+				object[] expr_A8 = new object[4];
+				expr_A8[0] = ((!flag) ? "recorded" : "ignored");
+				expr_A8[1] = def;
+				expr_A8[2] = args.Select(new Func<object, string>(Gen.ToStringSafe<object>)).ToCommaList(false);
+				expr_A8[3] = TaleTextGenerator.GenerateTextFromTale(TextGenerationPurpose.ArtDescription, tale, Rand.Int, RulePackDefOf.ArtDescription_Sculpture);
+				Log.Message(string.Format(arg_105_0, expr_A8), false);
 			}
 			if (flag)
 			{
-				return;
+				return null;
 			}
 			Find.TaleManager.Add(tale);
 			for (int j = 0; j < args.Length; j++)
@@ -66,6 +66,7 @@ namespace RimWorld
 					pawn2.records.AccumulateStoryEvent(StoryEventDefOf.TaleCreated);
 				}
 			}
+			return tale;
 		}
 	}
 }

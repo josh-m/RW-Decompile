@@ -15,7 +15,7 @@ namespace RimWorld
 			FloatRange tempRange = pawn.ComfortableTemperatureRange();
 			if (tempRange.Includes(pawn.AmbientTemperature))
 			{
-				return new Job(JobDefOf.WaitSafeTemperature, 500, true);
+				return new Job(JobDefOf.Wait_SafeTemperature, 500, true);
 			}
 			Region region = JobGiver_SeekSafeTemperature.ClosestRegionWithinTemperatureRange(pawn.Position, pawn.Map, tempRange, TraverseParms.For(pawn, Danger.Deadly, TraverseMode.ByPawn, false), RegionType.Set_Passable);
 			if (region != null)
@@ -36,7 +36,7 @@ namespace RimWorld
 			Region foundReg = null;
 			RegionProcessor regionProcessor = delegate(Region r)
 			{
-				if (r.portal != null)
+				if (r.IsDoorway)
 				{
 					return false;
 				}

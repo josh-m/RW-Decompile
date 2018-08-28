@@ -7,9 +7,9 @@ namespace RimWorld
 {
 	public class IncidentWorker_ShortCircuit : IncidentWorker
 	{
-		protected override bool CanFireNowSub(IIncidentTarget target)
+		protected override bool CanFireNowSub(IncidentParms parms)
 		{
-			Map map = (Map)target;
+			Map map = (Map)parms.target;
 			return ShortCircuitUtility.GetShortCircuitablePowerConduits(map).Any<Building>();
 		}
 

@@ -46,7 +46,7 @@ namespace RimWorld
 			return this.stuffToUse;
 		}
 
-		public override List<ThingCountClass> MaterialsNeeded()
+		public override List<ThingDefCountClass> MaterialsNeeded()
 		{
 			return this.def.entityDefToBuild.CostListAdjusted(this.stuffToUse, true);
 		}
@@ -68,6 +68,13 @@ namespace RimWorld
 			{
 				yield return buildCopy;
 			}
+			if (base.Faction == Faction.OfPlayer)
+			{
+				foreach (Command facility in BuildFacilityCommandUtility.BuildFacilityCommands(this.def.entityDefToBuild))
+				{
+					yield return facility;
+				}
+			}
 		}
 
 		public override string GetInspectString()
@@ -80,7 +87,7 @@ namespace RimWorld
 			}
 			stringBuilder.AppendLine("ContainedResources".Translate() + ":");
 			bool flag = true;
-			foreach (ThingCountClass current in this.MaterialsNeeded())
+			foreach (ThingDefCountClass current in this.MaterialsNeeded())
 			{
 				if (!flag)
 				{

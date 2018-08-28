@@ -24,7 +24,7 @@ namespace RimWorld
 		{
 			if (pawn.mindState.nextMoveOrderIsWait)
 			{
-				Job job = new Job(JobDefOf.WaitWander);
+				Job job = new Job(JobDefOf.Wait_Wander);
 				job.expiryInterval = this.waitTicks.RandomInRange;
 				pawn.mindState.nextMoveOrderIsWait = false;
 				return job;
@@ -38,13 +38,11 @@ namespace RimWorld
 					return new Job(JobDefOf.Ignite, thing);
 				}
 			}
-			IntVec3 intVec = RCellFinder.RandomWanderDestFor(pawn, pawn.Position, 10f, null, Danger.Deadly);
-			if (intVec.IsValid)
+			IntVec3 c = RCellFinder.RandomWanderDestFor(pawn, pawn.Position, 10f, null, Danger.Deadly);
+			if (c.IsValid)
 			{
 				pawn.mindState.nextMoveOrderIsWait = true;
-				Job job2 = new Job(JobDefOf.GotoWander, intVec);
-				pawn.Map.pawnDestinationReservationManager.Reserve(pawn, job2, intVec);
-				return job2;
+				return new Job(JobDefOf.GotoWander, c);
 			}
 			return null;
 		}

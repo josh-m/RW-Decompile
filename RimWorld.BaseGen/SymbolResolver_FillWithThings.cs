@@ -36,7 +36,7 @@ namespace RimWorld.BaseGen
 			ThingDef arg_3A_0;
 			if ((arg_3A_0 = rp.singleThingDef) == null)
 			{
-				arg_3A_0 = (from x in ItemCollectionGeneratorUtility.allGeneratableItems
+				arg_3A_0 = (from x in ThingSetMakerUtility.allGeneratableItems
 				where x.IsWeapon || x.IsMedicine || x.IsDrug
 				select x).RandomElement<ThingDef>();
 			}
@@ -54,7 +54,7 @@ namespace RimWorld.BaseGen
 			GenAdj.AdjustForRotation(ref zero, ref size, rot);
 			if (size.x <= 0 || size.z <= 0)
 			{
-				Log.Error("Thing has 0 size.");
+				Log.Error("Thing has 0 size.", false);
 				return;
 			}
 			for (int i = rp.rect.minX; i <= rp.rect.maxX - size.x + 1; i += size.x + num)

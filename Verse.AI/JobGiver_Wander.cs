@@ -7,13 +7,15 @@ namespace Verse.AI
 	{
 		protected float wanderRadius;
 
-		protected Func<Pawn, IntVec3, bool> wanderDestValidator;
+		protected Func<Pawn, IntVec3, IntVec3, bool> wanderDestValidator;
 
 		protected IntRange ticksBetweenWandersRange = new IntRange(20, 100);
 
 		protected LocomotionUrgency locomotionUrgency = LocomotionUrgency.Walk;
 
 		protected Danger maxDanger = Danger.None;
+
+		protected int expiryInterval = -1;
 
 		public override ThinkNode DeepCopy(bool resolve = true)
 		{
@@ -23,16 +25,21 @@ namespace Verse.AI
 			jobGiver_Wander.ticksBetweenWandersRange = this.ticksBetweenWandersRange;
 			jobGiver_Wander.locomotionUrgency = this.locomotionUrgency;
 			jobGiver_Wander.maxDanger = this.maxDanger;
+			jobGiver_Wander.expiryInterval = this.expiryInterval;
 			return jobGiver_Wander;
 		}
 
 		protected override Job TryGiveJob(Pawn pawn)
 		{
+			bool flag = pawn.CurJob != null && pawn.CurJob.def == JobDefOf.GotoWander;
 			bool nextMoveOrderIsWait = pawn.mindState.nextMoveOrderIsWait;
-			pawn.mindState.nextMoveOrderIsWait = !pawn.mindState.nextMoveOrderIsWait;
-			if (nextMoveOrderIsWait)
+			if (!flag)
 			{
-				return new Job(JobDefOf.WaitWander)
+				pawn.mindState.nextMoveOrderIsWait = !pawn.mindState.nextMoveOrderIsWait;
+			}
+			if (nextMoveOrderIsWait && !flag)
+			{
+				return new Job(JobDefOf.Wait_Wander)
 				{
 					expiryInterval = this.ticksBetweenWandersRange.RandomInRange
 				};
@@ -43,10 +50,12 @@ namespace Verse.AI
 				pawn.mindState.nextMoveOrderIsWait = false;
 				return null;
 			}
-			Job job = new Job(JobDefOf.GotoWander, exactWanderDest);
-			pawn.Map.pawnDestinationReservationManager.Reserve(pawn, job, exactWanderDest);
-			job.locomotionUrgency = this.locomotionUrgency;
-			return job;
+			return new Job(JobDefOf.GotoWander, exactWanderDest)
+			{
+				locomotionUrgency = this.locomotionUrgency,
+				expiryInterval = this.expiryInterval,
+				checkOverrideOnExpire = true
+			};
 		}
 
 		protected virtual IntVec3 GetExactWanderDest(Pawn pawn)

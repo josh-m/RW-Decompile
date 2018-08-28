@@ -159,6 +159,14 @@ namespace RimWorld.Planet
 			}
 		}
 
+		public virtual bool ExpandMore
+		{
+			get
+			{
+				return this.def.expandMore;
+			}
+		}
+
 		public virtual bool AppendFactionToInspectString
 		{
 			get
@@ -182,19 +190,27 @@ namespace RimWorld.Planet
 			}
 		}
 
-		[DebuggerHidden]
-		public virtual IEnumerable<IncidentTargetTypeDef> AcceptedTypes()
+		public BiomeDef Biome
 		{
-			if (this.def.incidentTargetTypes != null)
+			get
 			{
-				foreach (IncidentTargetTypeDef type in this.def.incidentTargetTypes)
+				return (!this.Spawned) ? null : Find.WorldGrid[this.Tile].biome;
+			}
+		}
+
+		[DebuggerHidden]
+		public virtual IEnumerable<IncidentTargetTagDef> IncidentTargetTags()
+		{
+			if (this.def.IncidentTargetTags != null)
+			{
+				foreach (IncidentTargetTagDef type in this.def.IncidentTargetTags)
 				{
 					yield return type;
 				}
 			}
 			for (int i = 0; i < this.comps.Count; i++)
 			{
-				foreach (IncidentTargetTypeDef type2 in this.comps[i].AcceptedTypes())
+				foreach (IncidentTargetTagDef type2 in this.comps[i].IncidentTargetTags())
 				{
 					yield return type2;
 				}
@@ -240,7 +256,7 @@ namespace RimWorld.Planet
 					" but this world object (",
 					this,
 					") cannot have faction."
-				}));
+				}), false);
 				return;
 			}
 			this.factionInt = newFaction;
@@ -260,7 +276,7 @@ namespace RimWorld.Planet
 				{
 					if (Prefs.DevMode && char.IsWhiteSpace(text[text.Length - 1]))
 					{
-						Log.ErrorOnce(this.comps[i].GetType() + " CompInspectStringExtra ended with whitespace: " + text, 25612);
+						Log.ErrorOnce(this.comps[i].GetType() + " CompInspectStringExtra ended with whitespace: " + text, 25612, false);
 						text = text.TrimEndNewlines();
 					}
 					if (stringBuilder.Length != 0)
@@ -399,6 +415,13 @@ namespace RimWorld.Planet
 		[DebuggerHidden]
 		public virtual IEnumerable<Gizmo> GetCaravanGizmos(Caravan caravan)
 		{
+			for (int i = 0; i < this.comps.Count; i++)
+			{
+				foreach (Gizmo g in this.comps[i].GetCaravanGizmos(caravan))
+				{
+					yield return g;
+				}
+			}
 		}
 
 		[DebuggerHidden]
@@ -407,6 +430,18 @@ namespace RimWorld.Planet
 			for (int i = 0; i < this.comps.Count; i++)
 			{
 				foreach (FloatMenuOption f in this.comps[i].GetFloatMenuOptions(caravan))
+				{
+					yield return f;
+				}
+			}
+		}
+
+		[DebuggerHidden]
+		public virtual IEnumerable<FloatMenuOption> GetTransportPodsFloatMenuOptions(IEnumerable<IThingHolder> pods, CompLaunchable representative)
+		{
+			for (int i = 0; i < this.comps.Count; i++)
+			{
+				foreach (FloatMenuOption f in this.comps[i].GetTransportPodsFloatMenuOptions(pods, representative))
 				{
 					yield return f;
 				}

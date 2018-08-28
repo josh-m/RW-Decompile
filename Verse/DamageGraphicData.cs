@@ -18,22 +18,31 @@ namespace Verse
 
 		public Rect rect;
 
+		[NoTranslate]
 		public List<string> scratches;
 
+		[NoTranslate]
 		public string cornerTL;
 
+		[NoTranslate]
 		public string cornerTR;
 
+		[NoTranslate]
 		public string cornerBL;
 
+		[NoTranslate]
 		public string cornerBR;
 
+		[NoTranslate]
 		public string edgeLeft;
 
+		[NoTranslate]
 		public string edgeRight;
 
+		[NoTranslate]
 		public string edgeTop;
 
+		[NoTranslate]
 		public string edgeBot;
 
 		[Unsaved]

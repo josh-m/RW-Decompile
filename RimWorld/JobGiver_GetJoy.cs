@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 using Verse;
 using Verse.AI;
 
@@ -7,6 +8,7 @@ namespace RimWorld
 {
 	public class JobGiver_GetJoy : ThinkNode_JobGiver
 	{
+		[Unsaved]
 		private DefMap<JoyGiverDef, float> joyGiverChances;
 
 		protected virtual bool CanDoDuringMedicalRest
@@ -46,25 +48,28 @@ namespace RimWorld
 				this.joyGiverChances[joyGiverDef] = 0f;
 				if (this.JoyGiverAllowed(joyGiverDef))
 				{
-					if (joyGiverDef.Worker.MissingRequiredCapacity(pawn) == null)
+					if (!pawn.needs.joy.tolerances.BoredOf(joyGiverDef.joyKind))
 					{
-						if (joyGiverDef.pctPawnsEverDo < 1f)
+						if (joyGiverDef.Worker.MissingRequiredCapacity(pawn) == null)
 						{
-							Rand.PushState(pawn.thingIDNumber ^ 63216713);
-							if (Rand.Value >= joyGiverDef.pctPawnsEverDo)
+							if (joyGiverDef.pctPawnsEverDo < 1f)
 							{
+								Rand.PushState(pawn.thingIDNumber ^ 63216713);
+								if (Rand.Value >= joyGiverDef.pctPawnsEverDo)
+								{
+									Rand.PopState();
+									goto IL_131;
+								}
 								Rand.PopState();
-								goto IL_FB;
 							}
-							Rand.PopState();
+							float num = tolerances[joyGiverDef.joyKind];
+							float num2 = Mathf.Pow(1f - num, 5f);
+							num2 = Mathf.Max(0.001f, num2);
+							this.joyGiverChances[joyGiverDef] = joyGiverDef.Worker.GetChance(pawn) * num2;
 						}
-						float num = joyGiverDef.Worker.GetChance(pawn);
-						float num2 = 1f - tolerances[joyGiverDef.joyKind];
-						num *= num2 * num2;
-						this.joyGiverChances[joyGiverDef] = num;
 					}
 				}
-				IL_FB:;
+				IL_131:;
 			}
 			for (int j = 0; j < this.joyGiverChances.Count; j++)
 			{

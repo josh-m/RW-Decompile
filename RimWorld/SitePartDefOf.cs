@@ -16,5 +16,10 @@ namespace RimWorld
 		public static SitePartDef AmbushHidden;
 
 		public static SitePartDef AmbushEdge;
+
+		static SitePartDefOf()
+		{
+			DefOfHelper.EnsureInitializedInCtor(typeof(SitePartDefOf));
+		}
 	}
 }

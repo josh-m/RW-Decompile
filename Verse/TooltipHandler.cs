@@ -16,6 +16,8 @@ namespace Verse
 
 		private const float SpaceBetweenTooltips = 2f;
 
+		private static List<ActiveTip> drawingTips = new List<ActiveTip>();
+
 		public static void ClearTooltipsFrom(Rect rect)
 		{
 			if (Event.current.type != EventType.Repaint)
@@ -50,6 +52,10 @@ namespace Verse
 			{
 				return;
 			}
+			if (tip.textGetter == null && tip.text.NullOrEmpty())
+			{
+				return;
+			}
 			if (!Mouse.IsOver(rect))
 			{
 				return;
@@ -81,21 +87,22 @@ namespace Verse
 
 		private static void DrawActiveTips()
 		{
-			List<ActiveTip> list = new List<ActiveTip>();
+			TooltipHandler.drawingTips.Clear();
 			foreach (KeyValuePair<int, ActiveTip> current in TooltipHandler.activeTips)
 			{
 				if ((double)Time.realtimeSinceStartup > current.Value.firstTriggerTime + (double)TooltipHandler.TooltipDelay)
 				{
-					list.Add(current.Value);
+					TooltipHandler.drawingTips.Add(current.Value);
 				}
 			}
-			list.Sort(new Comparison<ActiveTip>(TooltipHandler.CompareTooltipsByPriority));
-			Vector2 pos = TooltipHandler.CalculateInitialTipPosition(list);
-			for (int i = 0; i < list.Count; i++)
+			TooltipHandler.drawingTips.Sort(new Comparison<ActiveTip>(TooltipHandler.CompareTooltipsByPriority));
+			Vector2 pos = TooltipHandler.CalculateInitialTipPosition(TooltipHandler.drawingTips);
+			for (int i = 0; i < TooltipHandler.drawingTips.Count; i++)
 			{
-				pos.y += list[i].DrawTooltip(pos);
+				pos.y += TooltipHandler.drawingTips[i].DrawTooltip(pos);
 				pos.y += 2f;
 			}
+			TooltipHandler.drawingTips.Clear();
 		}
 
 		private static void CleanActiveTooltips()
@@ -128,30 +135,7 @@ namespace Verse
 					num += 2f;
 				}
 			}
-			Vector3 vector = Event.current.mousePosition;
-			float y;
-			if (vector.y + 14f + num < (float)UI.screenHeight)
-			{
-				y = vector.y + 14f;
-			}
-			else if (vector.y - 5f - num >= 0f)
-			{
-				y = vector.y - 5f - num;
-			}
-			else
-			{
-				y = 0f;
-			}
-			float x;
-			if (vector.x + 16f + num2 < (float)UI.screenWidth)
-			{
-				x = vector.x + 16f;
-			}
-			else
-			{
-				x = vector.x - 4f - num2;
-			}
-			return new Vector2(x, y);
+			return GenUI.GetMouseAttachedWindowPos(num2, num);
 		}
 
 		private static int CompareTooltipsByPriority(ActiveTip A, ActiveTip B)

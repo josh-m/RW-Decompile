@@ -5,7 +5,7 @@ namespace Verse
 {
 	public abstract class SubEffecter_Sprayer : SubEffecter
 	{
-		public SubEffecter_Sprayer(SubEffecterDef def) : base(def)
+		public SubEffecter_Sprayer(SubEffecterDef def, Effecter parent) : base(def, parent)
 		{
 		}
 
@@ -15,7 +15,7 @@ namespace Verse
 			switch (this.def.spawnLocType)
 			{
 			case MoteSpawnLocType.OnSource:
-				vector = A.Cell.ToVector3Shifted();
+				vector = A.CenterVector3;
 				break;
 			case MoteSpawnLocType.BetweenPositions:
 			{
@@ -53,18 +53,28 @@ namespace Verse
 				break;
 			}
 			}
+			if (this.parent != null)
+			{
+				Rand.PushState(this.parent.GetHashCode());
+				if (A.CenterVector3 != B.CenterVector3)
+				{
+					vector += (B.CenterVector3 - A.CenterVector3).normalized * this.parent.def.offsetTowardsTarget.RandomInRange;
+				}
+				vector += Gen.RandomHorizontalVector(this.parent.def.positionRadius);
+				Rand.PopState();
+			}
 			Map map = A.Map ?? B.Map;
+			float num = (!this.def.absoluteAngle) ? (B.Cell - A.Cell).AngleFlat : 0f;
 			if (map != null && vector.ShouldSpawnMotesAt(map))
 			{
 				int randomInRange = this.def.burstCount.RandomInRange;
 				for (int i = 0; i < randomInRange; i++)
 				{
 					Mote mote = (Mote)ThingMaker.MakeThing(this.def.moteDef, null);
-					GenSpawn.Spawn(mote, vector.ToIntVec3(), map);
+					GenSpawn.Spawn(mote, vector.ToIntVec3(), map, WipeMode.Vanish);
 					mote.Scale = this.def.scale.RandomInRange;
 					mote.exactPosition = vector + Gen.RandomHorizontalVector(this.def.positionRadius);
 					mote.rotationRate = this.def.rotationRate.RandomInRange;
-					float num = (!this.def.absoluteAngle) ? (B.Cell - A.Cell).AngleFlat : 0f;
 					mote.exactRotation = this.def.rotation.RandomInRange + num;
 					MoteThrown moteThrown = mote as MoteThrown;
 					if (moteThrown != null)

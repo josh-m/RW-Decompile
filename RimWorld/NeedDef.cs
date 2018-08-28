@@ -27,6 +27,7 @@ namespace RimWorld
 
 		public int listPriority;
 
+		[NoTranslate]
 		public string tutorHighlightTag;
 
 		public bool showForCaravanMembers;
@@ -41,6 +42,8 @@ namespace RimWorld
 
 		public bool freezeWhileSleeping;
 
+		public bool freezeInMentalState;
+
 		[DebuggerHidden]
 		public override IEnumerable<string> ConfigErrors()
 		{
@@ -48,7 +51,7 @@ namespace RimWorld
 			{
 				yield return e;
 			}
-			if (this.description.NullOrEmpty())
+			if (this.description.NullOrEmpty() && this.showOnNeedList)
 			{
 				yield return "no description";
 			}

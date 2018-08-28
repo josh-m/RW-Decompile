@@ -25,5 +25,10 @@ namespace RimWorld
 		public static GameConditionDef ToxicFallout;
 
 		public static GameConditionDef Aurora;
+
+		static GameConditionDefOf()
+		{
+			DefOfHelper.EnsureInitializedInCtor(typeof(GameConditionDefOf));
+		}
 	}
 }

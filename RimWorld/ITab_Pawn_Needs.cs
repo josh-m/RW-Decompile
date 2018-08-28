@@ -11,7 +11,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return base.SelPawn.needs != null && base.SelPawn.needs.AllNeeds.Count > 0;
+				return (!base.SelPawn.RaceProps.Animal || base.SelPawn.Faction != null) && base.SelPawn.needs != null && base.SelPawn.needs.AllNeeds.Count > 0;
 			}
 		}
 

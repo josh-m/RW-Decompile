@@ -12,13 +12,13 @@ namespace RimWorld
 
 		private const int SpawnRadius = 6;
 
-		protected override bool CanFireNowSub(IIncidentTarget target)
+		protected override bool CanFireNowSub(IncidentParms parms)
 		{
-			if (!base.CanFireNowSub(target))
+			if (!base.CanFireNowSub(parms))
 			{
 				return false;
 			}
-			Map map = (Map)target;
+			Map map = (Map)parms.target;
 			IntVec3 intVec;
 			return map.weatherManager.growthSeasonMemory.GrowthSeasonOutdoorsNow && this.TryFindRootCell(map, out intVec);
 		}
@@ -45,7 +45,7 @@ namespace RimWorld
 				{
 					plant.Destroy(DestroyMode.Vanish);
 				}
-				Thing thing2 = GenSpawn.Spawn(ThingDefOf.PlantAmbrosia, intVec, map);
+				Thing thing2 = GenSpawn.Spawn(ThingDefOf.Plant_Ambrosia, intVec, map, WipeMode.Vanish);
 				if (thing == null)
 				{
 					thing = thing2;
@@ -55,7 +55,7 @@ namespace RimWorld
 			{
 				return false;
 			}
-			base.SendStandardLetter(thing, new string[0]);
+			base.SendStandardLetter(thing, null, new string[0]);
 			return true;
 		}
 
@@ -66,7 +66,7 @@ namespace RimWorld
 
 		private bool CanSpawnAt(IntVec3 c, Map map)
 		{
-			if (!c.Standable(map) || c.Fogged(map) || map.fertilityGrid.FertilityAt(c) < ThingDefOf.PlantAmbrosia.plant.fertilityMin || !c.GetRoom(map, RegionType.Set_Passable).PsychologicallyOutdoors || c.GetEdifice(map) != null || !GenPlant.GrowthSeasonNow(c, map))
+			if (!c.Standable(map) || c.Fogged(map) || map.fertilityGrid.FertilityAt(c) < ThingDefOf.Plant_Ambrosia.plant.fertilityMin || !c.GetRoom(map, RegionType.Set_Passable).PsychologicallyOutdoors || c.GetEdifice(map) != null || !PlantUtility.GrowthSeasonNow(c, map, false))
 			{
 				return false;
 			}
@@ -78,7 +78,7 @@ namespace RimWorld
 			List<Thing> thingList = c.GetThingList(map);
 			for (int i = 0; i < thingList.Count; i++)
 			{
-				if (thingList[i].def == ThingDefOf.PlantAmbrosia)
+				if (thingList[i].def == ThingDefOf.Plant_Ambrosia)
 				{
 					return false;
 				}

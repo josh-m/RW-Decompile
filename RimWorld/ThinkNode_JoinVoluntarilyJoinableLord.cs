@@ -42,7 +42,7 @@ namespace RimWorld
 			}
 			if (lordJob_VoluntarilyJoinable.VoluntaryJoinPriorityFor(pawn) <= 0f)
 			{
-				lord.Notify_PawnLost(pawn, PawnLostCondition.LeftVoluntarily);
+				lord.Notify_PawnLost(pawn, PawnLostCondition.LeftVoluntarily, null);
 			}
 		}
 
@@ -85,7 +85,7 @@ namespace RimWorld
 			{
 				if (lord != null)
 				{
-					lord.Notify_PawnLost(pawn, PawnLostCondition.LeftVoluntarily);
+					lord.Notify_PawnLost(pawn, PawnLostCondition.LeftVoluntarily, null);
 				}
 				lord2.AddPawn(pawn);
 			}

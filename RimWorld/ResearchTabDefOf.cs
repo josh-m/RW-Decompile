@@ -6,5 +6,10 @@ namespace RimWorld
 	public static class ResearchTabDefOf
 	{
 		public static ResearchTabDef Main;
+
+		static ResearchTabDefOf()
+		{
+			DefOfHelper.EnsureInitializedInCtor(typeof(ResearchTabDefOf));
+		}
 	}
 }

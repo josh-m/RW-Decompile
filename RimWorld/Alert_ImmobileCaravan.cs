@@ -5,9 +5,9 @@ using Verse;
 
 namespace RimWorld
 {
-	public class Alert_ImmobileCaravan : Alert
+	public class Alert_ImmobileCaravan : Alert_Critical
 	{
-		private Caravan FirstImmobileCaravan
+		private IEnumerable<Caravan> ImmobileCaravans
 		{
 			get
 			{
@@ -16,10 +16,9 @@ namespace RimWorld
 				{
 					if (caravans[i].IsPlayerControlled && caravans[i].ImmobilizedByMass)
 					{
-						return caravans[i];
+						yield return caravans[i];
 					}
 				}
-				return null;
 			}
 		}
 
@@ -27,12 +26,11 @@ namespace RimWorld
 		{
 			this.defaultLabel = "ImmobileCaravan".Translate();
 			this.defaultExplanation = "ImmobileCaravanDesc".Translate();
-			this.defaultPriority = AlertPriority.High;
 		}
 
 		public override AlertReport GetReport()
 		{
-			return this.FirstImmobileCaravan;
+			return AlertReport.CulpritsAre(this.ImmobileCaravans);
 		}
 	}
 }

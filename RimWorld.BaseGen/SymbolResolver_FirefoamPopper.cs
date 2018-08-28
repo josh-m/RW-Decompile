@@ -20,7 +20,7 @@ namespace RimWorld.BaseGen
 			}
 			Thing thing = ThingMaker.MakeThing(ThingDefOf.FirefoamPopper, null);
 			thing.SetFaction(rp.faction, null);
-			GenSpawn.Spawn(thing, loc, BaseGen.globalSettings.map);
+			GenSpawn.Spawn(thing, loc, BaseGen.globalSettings.map, WipeMode.Vanish);
 		}
 
 		private bool TryFindSpawnCell(CellRect rect, out IntVec3 result)

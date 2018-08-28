@@ -21,6 +21,13 @@ namespace RimWorld
 			get;
 		}
 
+		string LabelShort
+		{
+			get;
+		}
+
 		bool CurrentlyUsableForBills();
+
+		bool UsableForBillsAfterFueling();
 	}
 }

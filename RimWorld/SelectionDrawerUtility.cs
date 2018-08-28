@@ -50,7 +50,7 @@ namespace RimWorld
 			float num3 = num2 * 0.2f * jumpDistanceFactor;
 			float num4 = 0.5f * (worldSize.x - textureSize.x) + num3;
 			float num5 = 0.5f * (worldSize.y - textureSize.y) + num3;
-			float y = Altitudes.AltitudeFor(AltitudeLayer.MetaOverlays);
+			float y = AltitudeLayer.MetaOverlays.AltitudeFor();
 			bracketLocs[0] = new Vector3(worldPos.x - num4, y, worldPos.z - num5);
 			bracketLocs[1] = new Vector3(worldPos.x + num4, y, worldPos.z - num5);
 			bracketLocs[2] = new Vector3(worldPos.x + num4, y, worldPos.z + num5);

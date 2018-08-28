@@ -32,7 +32,7 @@ namespace RimWorld
 			if (Widgets.ButtonInvisible(rect, false))
 			{
 				TimeAssignmentSelector.selectedAssignment = ta;
-				SoundDefOf.TickHigh.PlayOneShotOnCamera(null);
+				SoundDefOf.Tick_High.PlayOneShotOnCamera(null);
 			}
 			GUI.color = Color.white;
 			if (Mouse.IsOver(rect))

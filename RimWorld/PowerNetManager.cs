@@ -147,7 +147,7 @@ namespace RimWorld
 							" at ",
 							parent.Position,
 							", but there is already a power net here. There can't be two transmitters on the same cell."
-						}));
+						}), false);
 					}
 					delayedAction.compPower.SetUpPowerVars();
 					foreach (IntVec3 current in GenAdj.CellsAdjacentCardinal(parent))
@@ -252,7 +252,7 @@ namespace RimWorld
 			{
 				return;
 			}
-			if (Find.VisibleMap != this.map)
+			if (Find.CurrentMap != this.map)
 			{
 				return;
 			}

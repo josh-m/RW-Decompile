@@ -17,6 +17,18 @@ namespace Verse
 			}
 		}
 
+		public ThingDef FixedIngredient
+		{
+			get
+			{
+				if (!this.IsFixedIngredient)
+				{
+					Log.Error("Called for SingleIngredient on an IngredientCount that is not IsSingleIngredient: " + this, false);
+				}
+				return this.filter.AnyAllowedDef;
+			}
+		}
+
 		public string Summary
 		{
 			get

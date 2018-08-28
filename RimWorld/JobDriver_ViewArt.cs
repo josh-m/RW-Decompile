@@ -14,18 +14,14 @@ namespace RimWorld
 			}
 		}
 
-		protected override Action GetWaitTickAction()
+		protected override void WaitTickAction()
 		{
-			return delegate
-			{
-				float num = this.ArtThing.GetStatValue(StatDefOf.EntertainmentStrengthFactor, true);
-				float num2 = this.ArtThing.GetStatValue(StatDefOf.Beauty, true) / this.ArtThing.def.GetStatValueAbstract(StatDefOf.Beauty, null);
-				num *= ((num2 <= 0f) ? 0f : num2);
-				this.pawn.GainComfortFromCellIfPossible();
-				Pawn pawn = this.pawn;
-				float extraJoyGainFactor = num;
-				JoyUtility.JoyTickCheckEnd(pawn, JoyTickFullJoyAction.EndJob, extraJoyGainFactor);
-			};
+			float num = this.ArtThing.GetStatValue(StatDefOf.Beauty, true) / this.ArtThing.def.GetStatValueAbstract(StatDefOf.Beauty, null);
+			float num2 = (num <= 0f) ? 0f : num;
+			this.pawn.GainComfortFromCellIfPossible();
+			Pawn pawn = this.pawn;
+			float extraJoyGainFactor = num2;
+			JoyUtility.JoyTickCheckEnd(pawn, JoyTickFullJoyAction.EndJob, extraJoyGainFactor, (Building)this.ArtThing);
 		}
 	}
 }

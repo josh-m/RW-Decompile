@@ -38,9 +38,9 @@ namespace RimWorld
 		{
 		}
 
-		public override bool AssignableAsAllowed(AllowedAreaMode mode)
+		public override bool AssignableAsAllowed()
 		{
-			return (byte)(mode & AllowedAreaMode.Any) != 0;
+			return true;
 		}
 
 		public override string GetUniqueLoadID()

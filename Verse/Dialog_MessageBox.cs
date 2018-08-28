@@ -27,6 +27,10 @@ namespace Verse
 
 		public float interactionDelay;
 
+		public Action acceptAction;
+
+		public Action cancelAction;
+
 		private Vector2 scrollPosition = Vector2.zero;
 
 		private float creationRealTime = -1f;
@@ -59,7 +63,7 @@ namespace Verse
 			}
 		}
 
-		public Dialog_MessageBox(string text, string buttonAText = null, Action buttonAAction = null, string buttonBText = null, Action buttonBAction = null, string title = null, bool buttonADestructive = false)
+		public Dialog_MessageBox(string text, string buttonAText = null, Action buttonAAction = null, string buttonBText = null, Action buttonBAction = null, string title = null, bool buttonADestructive = false, Action acceptAction = null, Action cancelAction = null)
 		{
 			this.text = text;
 			this.buttonAText = buttonAText;
@@ -68,26 +72,29 @@ namespace Verse
 			this.buttonBText = buttonBText;
 			this.buttonBAction = buttonBAction;
 			this.title = title;
+			this.acceptAction = acceptAction;
+			this.cancelAction = cancelAction;
 			if (buttonAText.NullOrEmpty())
 			{
 				this.buttonAText = "OK".Translate();
 			}
-			if (buttonAAction == null)
-			{
-				this.closeOnEscapeKey = true;
-			}
 			this.forcePause = true;
 			this.absorbInputAroundWindow = true;
-			this.closeOnEscapeKey = false;
 			this.creationRealTime = RealTime.LastRealTime;
 			this.onlyOneOfTypeAllowed = false;
+			bool flag = buttonAAction == null && buttonBAction == null && this.buttonCAction == null;
+			this.forceCatchAcceptAndCancelEventEvenIfUnfocused = (acceptAction != null || cancelAction != null || flag);
+			this.closeOnAccept = flag;
+			this.closeOnCancel = flag;
 		}
 
 		public static Dialog_MessageBox CreateConfirmation(string text, Action confirmedAct, bool destructive = false, string title = null)
 		{
 			string text2 = "Confirm".Translate();
 			string text3 = "GoBack".Translate();
-			return new Dialog_MessageBox(text, text2, confirmedAct, text3, null, title, destructive);
+			return new Dialog_MessageBox(text, text2, confirmedAct, text3, null, title, destructive, confirmedAct, delegate
+			{
+			});
 		}
 
 		public override void DoWindowContents(Rect inRect)
@@ -141,6 +148,32 @@ namespace Verse
 				{
 					this.Close(true);
 				}
+			}
+		}
+
+		public override void OnCancelKeyPressed()
+		{
+			if (this.cancelAction != null)
+			{
+				this.cancelAction();
+				this.Close(true);
+			}
+			else
+			{
+				base.OnCancelKeyPressed();
+			}
+		}
+
+		public override void OnAcceptKeyPressed()
+		{
+			if (this.acceptAction != null)
+			{
+				this.acceptAction();
+				this.Close(true);
+			}
+			else
+			{
+				base.OnAcceptKeyPressed();
 			}
 		}
 	}

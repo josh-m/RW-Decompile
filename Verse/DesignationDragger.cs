@@ -26,8 +26,6 @@ namespace Verse
 
 		private const int MaxSquareWidth = 50;
 
-		private static readonly Material DragHighlightCellMat = MaterialPool.MatFrom("UI/Overlays/DragHighlightCell", ShaderDatabase.MetaOverlay);
-
 		public bool Dragging
 		{
 			get
@@ -85,10 +83,7 @@ namespace Verse
 			if (this.dragging)
 			{
 				List<IntVec3> list = this.DragCells;
-				for (int i = 0; i < list.Count; i++)
-				{
-					Graphics.DrawMesh(MeshPool.plane10, list[i].ToVector3Shifted() + 10f * Vector3.up, Quaternion.identity, DesignationDragger.DragHighlightCellMat, 0);
-				}
+				this.SelDes.RenderHighlight(list);
 				if (list.Count != this.lastFrameDragCellsDrawn)
 				{
 					this.lastDragRealTime = Time.realtimeSinceStartup;

@@ -11,7 +11,7 @@ namespace RimWorld
 			this.defaultLabel = "DesignatorPlan".Translate();
 			this.defaultDesc = "DesignatorPlanDesc".Translate();
 			this.icon = ContentFinder<Texture2D>.Get("UI/Designators/PlanOn", true);
-			this.soundSucceeded = SoundDefOf.DesignatePlanAdd;
+			this.soundSucceeded = SoundDefOf.Designate_PlanAdd;
 			this.hotKey = KeyBindingDefOf.Misc9;
 		}
 	}

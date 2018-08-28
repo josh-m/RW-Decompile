@@ -1,19 +1,48 @@
 using System;
-using System.Xml;
 
 namespace Verse
 {
-	public sealed class ThingCountClass
+	public sealed class ThingCountClass : IExposable
 	{
-		public ThingDef thingDef;
+		public Thing thing;
 
-		public int count;
+		private int countInt;
 
-		public string Summary
+		public int Count
 		{
 			get
 			{
-				return this.count + "x " + ((this.thingDef == null) ? "null" : this.thingDef.label);
+				return this.countInt;
+			}
+			set
+			{
+				if (value < 0)
+				{
+					Log.Warning(string.Concat(new object[]
+					{
+						"Tried to set ThingCountClass stack count to ",
+						value,
+						". thing=",
+						this.thing
+					}), false);
+					this.countInt = 0;
+					return;
+				}
+				if (this.thing != null && value > this.thing.stackCount)
+				{
+					Log.Warning(string.Concat(new object[]
+					{
+						"Tried to set ThingCountClass stack count to ",
+						value,
+						", but thing's stack count is only ",
+						this.thing.stackCount,
+						". thing=",
+						this.thing
+					}), false);
+					this.countInt = this.thing.stackCount;
+					return;
+				}
+				this.countInt = value;
 			}
 		}
 
@@ -21,21 +50,16 @@ namespace Verse
 		{
 		}
 
-		public ThingCountClass(ThingDef thingDef, int count)
+		public ThingCountClass(Thing thing, int count)
 		{
-			this.thingDef = thingDef;
-			this.count = count;
+			this.thing = thing;
+			this.Count = count;
 		}
 
-		public void LoadDataFromXmlCustom(XmlNode xmlRoot)
+		public void ExposeData()
 		{
-			if (xmlRoot.ChildNodes.Count != 1)
-			{
-				Log.Error("Misconfigured ThingCount: " + xmlRoot.OuterXml);
-				return;
-			}
-			DirectXmlCrossRefLoader.RegisterObjectWantsCrossRef(this, "thingDef", xmlRoot.Name);
-			this.count = (int)ParseHelper.FromString(xmlRoot.FirstChild.Value, typeof(int));
+			Scribe_References.Look<Thing>(ref this.thing, "thing", false);
+			Scribe_Values.Look<int>(ref this.countInt, "count", 1, false);
 		}
 
 		public override string ToString()
@@ -43,21 +67,16 @@ namespace Verse
 			return string.Concat(new object[]
 			{
 				"(",
-				this.count,
+				this.Count,
 				"x ",
-				(this.thingDef == null) ? "null" : this.thingDef.defName,
+				(this.thing == null) ? "null" : this.thing.LabelShort,
 				")"
 			});
 		}
 
-		public override int GetHashCode()
-		{
-			return (int)this.thingDef.shortHash + this.count << 16;
-		}
-
 		public static implicit operator ThingCountClass(ThingCount t)
 		{
-			return new ThingCountClass(t.ThingDef, t.Count);
+			return new ThingCountClass(t.Thing, t.Count);
 		}
 	}
 }

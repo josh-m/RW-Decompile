@@ -4,15 +4,17 @@ using Verse;
 
 namespace RimWorld
 {
-	public class TransferableOneWay : Transferable, IExposable
+	public class TransferableOneWay : Transferable
 	{
 		public List<Thing> things = new List<Thing>();
+
+		private int countToTransfer;
 
 		public override Thing AnyThing
 		{
 			get
 			{
-				return (this.things.Count <= 0) ? null : this.things[0];
+				return (!this.HasAnyThing) ? null : this.things[0];
 			}
 		}
 
@@ -36,7 +38,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return this.AnyThing.LabelCapNoCount;
+				return this.AnyThing.LabelNoCount;
 			}
 		}
 
@@ -60,11 +62,20 @@ namespace RimWorld
 		{
 			get
 			{
-				if (!this.HasAnyThing)
-				{
-					return string.Empty;
-				}
-				return this.AnyThing.GetDescription();
+				return (!this.HasAnyThing) ? string.Empty : this.AnyThing.DescriptionDetailed;
+			}
+		}
+
+		public override int CountToTransfer
+		{
+			get
+			{
+				return this.countToTransfer;
+			}
+			protected set
+			{
+				this.countToTransfer = value;
+				base.EditBuffer = value.ToStringCached();
 			}
 		}
 
@@ -81,12 +92,12 @@ namespace RimWorld
 			}
 		}
 
-		public override int GetMinimum()
+		public override int GetMinimumToTransfer()
 		{
 			return 0;
 		}
 
-		public override int GetMaximum()
+		public override int GetMaximumToTransfer()
 		{
 			return this.MaxCount;
 		}
@@ -96,21 +107,24 @@ namespace RimWorld
 			return new AcceptanceReport("ColonyHasNoMore".Translate());
 		}
 
-		public void ExposeData()
+		public override void ExposeData()
 		{
+			base.ExposeData();
 			if (Scribe.mode == LoadSaveMode.Saving)
 			{
 				this.things.RemoveAll((Thing x) => x.Destroyed);
 			}
+			Scribe_Values.Look<int>(ref this.countToTransfer, "countToTransfer", 0, false);
 			Scribe_Collections.Look<Thing>(ref this.things, "things", LookMode.Reference, new object[0]);
-			int countToTransfer = base.CountToTransfer;
-			Scribe_Values.Look<int>(ref countToTransfer, "countToTransfer", 0, false);
-			base.CountToTransfer = countToTransfer;
+			if (Scribe.mode == LoadSaveMode.LoadingVars)
+			{
+				base.EditBuffer = this.countToTransfer.ToStringCached();
+			}
 			if (Scribe.mode == LoadSaveMode.PostLoadInit)
 			{
 				if (this.things.RemoveAll((Thing x) => x == null) != 0)
 				{
-					Log.Warning("Some of the things were null after loading.");
+					Log.Warning("Some of the things were null after loading.", false);
 				}
 			}
 		}

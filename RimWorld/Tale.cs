@@ -19,6 +19,8 @@ namespace RimWorld
 
 		public TaleData_Surroundings surroundings;
 
+		public string customLabel;
+
 		public int AgeTicks
 		{
 			get
@@ -99,18 +101,22 @@ namespace RimWorld
 		{
 			get
 			{
+				if (!this.customLabel.NullOrEmpty())
+				{
+					return this.customLabel.CapitalizeFirst();
+				}
 				return this.def.LabelCap;
 			}
 		}
 
 		public virtual void GenerateTestData()
 		{
-			if (Find.VisibleMap == null)
+			if (Find.CurrentMap == null)
 			{
-				Log.Error("Can't generate test data because there is no map.");
+				Log.Error("Can't generate test data because there is no map.", false);
 			}
 			this.date = Rand.Range(-108000000, -7200000);
-			this.surroundings = TaleData_Surroundings.GenerateRandom(Find.VisibleMap);
+			this.surroundings = TaleData_Surroundings.GenerateRandom(Find.CurrentMap);
 		}
 
 		public virtual bool Concerns(Thing th)
@@ -125,6 +131,7 @@ namespace RimWorld
 			Scribe_Values.Look<int>(ref this.uses, "uses", 0, false);
 			Scribe_Values.Look<int>(ref this.date, "date", 0, false);
 			Scribe_Deep.Look<TaleData_Surroundings>(ref this.surroundings, "surroundings", new object[0]);
+			Scribe_Values.Look<string>(ref this.customLabel, "customLabel", null, false);
 		}
 
 		public void Notify_NewlyUsed()
@@ -136,28 +143,30 @@ namespace RimWorld
 		{
 			if (this.uses == 0)
 			{
-				Log.Warning("Called reference destroyed method on tale " + this + " but uses count is 0.");
+				Log.Warning("Called reference destroyed method on tale " + this + " but uses count is 0.", false);
 				return;
 			}
 			this.uses--;
 		}
 
 		[DebuggerHidden]
-		public IEnumerable<Rule> GetTextGenerationRules()
+		public IEnumerable<RulePack> GetTextGenerationIncludes()
 		{
 			if (this.def.rulePack != null)
 			{
-				for (int i = 0; i < this.def.rulePack.Rules.Count; i++)
-				{
-					yield return this.def.rulePack.Rules[i];
-				}
+				yield return this.def.rulePack;
 			}
+		}
+
+		[DebuggerHidden]
+		public IEnumerable<Rule> GetTextGenerationRules()
+		{
 			Vector2 location = Vector2.zero;
 			if (this.surroundings != null && this.surroundings.tile >= 0)
 			{
 				location = Find.WorldGrid.LongLatOf(this.surroundings.tile);
 			}
-			yield return new Rule_String("date", GenDate.DateFullStringAt((long)this.date, location));
+			yield return new Rule_String("DATE", GenDate.DateFullStringAt((long)this.date, location));
 			if (this.surroundings != null)
 			{
 				foreach (Rule r in this.surroundings.GetRules())

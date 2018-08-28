@@ -35,7 +35,7 @@ namespace RimWorld
 			}
 			text3 += "\n\n";
 			text3 += "GameUpdatedToNewVersionSteam".Translate();
-			Find.WindowStack.Add(new Dialog_MessageBox(text3, null, null, null, null, null, false));
+			Find.WindowStack.Add(new Dialog_MessageBox(text3, null, null, null, null, null, false, null, null));
 			VersionUpdateDialogMaker.dialogDone = true;
 		}
 	}

@@ -13,6 +13,14 @@ namespace Verse
 	[StaticConstructorOnStartup]
 	public static class Widgets
 	{
+		public enum DraggableResult
+		{
+			Idle,
+			Pressed,
+			Dragged,
+			DraggedThenPressed
+		}
+
 		private enum RangeEnd : byte
 		{
 			None,
@@ -20,7 +28,19 @@ namespace Verse
 			Max
 		}
 
+		public struct DropdownMenuElement<Payload>
+		{
+			public FloatMenuOption option;
+
+			public Payload payload;
+		}
+
+		public static Stack<bool> mouseOverScrollViewStack;
+
 		public static readonly GUIStyle EmptyStyle;
+
+		[TweakValue("Input", 0f, 100f)]
+		private static float DragStartDistanceSquared;
 
 		private static readonly Color InactiveColor;
 
@@ -66,6 +86,11 @@ namespace Verse
 
 		private static readonly Texture2D FloatRangeSliderTex;
 
+		public static readonly Texture2D LightHighlight;
+
+		[TweakValue("Input", 0f, 100f)]
+		private static int IntEntryButtonWidth;
+
 		private static Texture2D LineTexAA;
 
 		private static readonly Rect LineRect;
@@ -88,9 +113,21 @@ namespace Verse
 
 		public const float ListSeparatorHeight = 25f;
 
+		private static bool checkboxPainting;
+
+		private static bool checkboxPaintingState;
+
 		public static readonly Texture2D ButtonSubtleAtlas;
 
 		private static readonly Texture2D ButtonBarTex;
+
+		public const float ButtonSubtleDefaultMarginPct = 0.15f;
+
+		private static int buttonInvisibleDraggable_activeControl;
+
+		private static bool buttonInvisibleDraggable_dragged;
+
+		private static Vector3 buttonInvisibleDraggable_mouseStart;
 
 		public const float RangeControlIdealHeight = 31f;
 
@@ -132,9 +169,21 @@ namespace Verse
 
 		public const float InfoCardButtonSize = 24f;
 
+		private static bool dropdownPainting;
+
+		private static object dropdownPainting_Payload;
+
+		private static Type dropdownPainting_Type;
+
+		private static string dropdownPainting_Text;
+
+		private static Texture2D dropdownPainting_Icon;
+
 		static Widgets()
 		{
+			Widgets.mouseOverScrollViewStack = new Stack<bool>();
 			Widgets.EmptyStyle = new GUIStyle();
+			Widgets.DragStartDistanceSquared = 20f;
 			Widgets.InactiveColor = new Color(0.37f, 0.37f, 0.37f, 0.8f);
 			Widgets.DefaultBarBgTex = BaseContent.BlackTex;
 			Widgets.BarFullTexHor = SolidColorMaterials.NewSolidColorTexture(new Color(0.2f, 0.8f, 0.85f));
@@ -150,6 +199,8 @@ namespace Verse
 			Widgets.ButtonBGAtlasMouseover = ContentFinder<Texture2D>.Get("UI/Widgets/ButtonBGMouseover", true);
 			Widgets.ButtonBGAtlasClick = ContentFinder<Texture2D>.Get("UI/Widgets/ButtonBGClick", true);
 			Widgets.FloatRangeSliderTex = ContentFinder<Texture2D>.Get("UI/Widgets/RangeSlider", true);
+			Widgets.LightHighlight = SolidColorMaterials.NewSolidColorTexture(new Color(1f, 1f, 1f, 0.04f));
+			Widgets.IntEntryButtonWidth = 40;
 			Widgets.LineTexAA = null;
 			Widgets.LineRect = new Rect(0f, 0f, 1f, 1f);
 			Widgets.LineMat = null;
@@ -159,9 +210,14 @@ namespace Verse
 			Widgets.LabelCache = new Dictionary<string, float>();
 			Widgets.SeparatorLabelColor = new Color(0.8f, 0.8f, 0.8f, 1f);
 			Widgets.SeparatorLineColor = new Color(0.3f, 0.3f, 0.3f, 1f);
+			Widgets.checkboxPainting = false;
+			Widgets.checkboxPaintingState = false;
 			Widgets.ButtonSubtleAtlas = ContentFinder<Texture2D>.Get("UI/Widgets/ButtonSubtleAtlas", true);
 			ColorInt colorInt = new ColorInt(78, 109, 129, 130);
 			Widgets.ButtonBarTex = SolidColorMaterials.NewSolidColorTexture(colorInt.ToColor);
+			Widgets.buttonInvisibleDraggable_activeControl = 0;
+			Widgets.buttonInvisibleDraggable_dragged = false;
+			Widgets.buttonInvisibleDraggable_mouseStart = Vector3.zero;
 			Widgets.RangeControlTextColor = new Color(0.6f, 0.6f, 0.6f);
 			Widgets.draggingId = 0;
 			Widgets.curDragEnd = Widgets.RangeEnd.None;
@@ -184,6 +240,11 @@ namespace Verse
 			Widgets.OptionUnselectedBGBorderColor = Widgets.OptionUnselectedBGFillColor * 1.8f;
 			Widgets.OptionSelectedBGFillColor = new Color(0.32f, 0.28f, 0.21f);
 			Widgets.OptionSelectedBGBorderColor = Widgets.OptionSelectedBGFillColor * 1.8f;
+			Widgets.dropdownPainting = false;
+			Widgets.dropdownPainting_Payload = null;
+			Widgets.dropdownPainting_Type = null;
+			Widgets.dropdownPainting_Text = string.Empty;
+			Widgets.dropdownPainting_Icon = null;
 			Color color = new Color(1f, 1f, 1f, 0f);
 			Widgets.LineTexAA = new Texture2D(1, 3, TextureFormat.ARGB32, false);
 			Widgets.LineTexAA.name = "LineTexAA";
@@ -218,9 +279,9 @@ namespace Verse
 					{
 						pawn.Drawer.renderer.graphics.ResolveAllGraphics();
 					}
-					Material matSingle = pawn.Drawer.renderer.graphics.nakedGraphic.MatSingle;
-					resolvedIcon = matSingle.mainTexture;
-					GUI.color = matSingle.color;
+					Material material = pawn.Drawer.renderer.graphics.nakedGraphic.MatAt(Rot4.East, null);
+					resolvedIcon = material.mainTexture;
+					GUI.color = material.color;
 				}
 				else
 				{
@@ -232,7 +293,7 @@ namespace Verse
 			}
 			else
 			{
-				resolvedIcon = thing.Graphic.ExtractInnerGraphicFor(thing).MatSingle.mainTexture;
+				resolvedIcon = thing.Graphic.ExtractInnerGraphicFor(thing).MatAt(thing.def.defaultPlacingRot, null).mainTexture;
 			}
 			if (alpha != 1f)
 			{
@@ -246,7 +307,11 @@ namespace Verse
 
 		public static void ThingIcon(Rect rect, ThingDef thingDef)
 		{
-			GUI.color = thingDef.graphicData.color;
+			if (thingDef.uiIcon == null || thingDef.uiIcon == BaseContent.BadTex)
+			{
+				return;
+			}
+			GUI.color = thingDef.uiIconColor;
 			Widgets.ThingIconWorker(rect, thingDef, thingDef.uiIcon, thingDef.uiIconAngle);
 			GUI.color = Color.white;
 		}
@@ -261,6 +326,7 @@ namespace Verse
 				rect.height *= num;
 				rect.center = center;
 			}
+			rect.position += new Vector2(thingDef.uiIconOffset.x * rect.size.x, thingDef.uiIconOffset.y * rect.size.y);
 			Widgets.DrawTextureRotated(rect, resolvedIcon, resolvedIconAngle);
 		}
 
@@ -385,11 +451,17 @@ namespace Verse
 			GUI.Label(rect, label, Text.CurFontStyle);
 		}
 
-		public static void LabelScrollable(Rect rect, string label, ref Vector2 scrollbarPosition, bool dontConsumeScrollEventsIfNoScrollbar = false)
+		public static void LabelScrollable(Rect rect, string label, ref Vector2 scrollbarPosition, bool dontConsumeScrollEventsIfNoScrollbar = false, bool takeScrollbarSpaceEvenIfNoScrollbar = true)
 		{
-			Rect rect2 = new Rect(0f, 0f, rect.width - 16f, Mathf.Max(Text.CalcHeight(label, rect.width) + 10f, rect.height));
-			bool flag = !dontConsumeScrollEventsIfNoScrollbar || Text.CalcHeight(label, rect.width) > rect.height;
+			bool flag = takeScrollbarSpaceEvenIfNoScrollbar || Text.CalcHeight(label, rect.width) > rect.height;
+			bool flag2 = flag && (!dontConsumeScrollEventsIfNoScrollbar || Text.CalcHeight(label, rect.width - 16f) > rect.height);
+			float num = rect.width;
 			if (flag)
+			{
+				num -= 16f;
+			}
+			Rect rect2 = new Rect(0f, 0f, num, Mathf.Max(Text.CalcHeight(label, num) + 5f, rect.height));
+			if (flag2)
 			{
 				Widgets.BeginScrollView(rect, ref scrollbarPosition, rect2, true);
 			}
@@ -398,7 +470,7 @@ namespace Verse
 				GUI.BeginGroup(rect);
 			}
 			Widgets.Label(rect2, label);
-			if (flag)
+			if (flag2)
 			{
 				Widgets.EndScrollView();
 			}
@@ -408,30 +480,51 @@ namespace Verse
 			}
 		}
 
-		public static void Checkbox(Vector2 topLeft, ref bool checkOn, float size = 24f, bool disabled = false)
+		public static void Checkbox(Vector2 topLeft, ref bool checkOn, float size = 24f, bool disabled = false, bool paintable = false, Texture2D texChecked = null, Texture2D texUnchecked = null)
 		{
-			Widgets.Checkbox(topLeft.x, topLeft.y, ref checkOn, size, disabled);
+			Widgets.Checkbox(topLeft.x, topLeft.y, ref checkOn, size, disabled, paintable, texChecked, texUnchecked);
 		}
 
-		public static void Checkbox(float x, float y, ref bool checkOn, float size = 24f, bool disabled = false)
+		public static void Checkbox(float x, float y, ref bool checkOn, float size = 24f, bool disabled = false, bool paintable = false, Texture2D texChecked = null, Texture2D texUnchecked = null)
 		{
 			if (disabled)
 			{
 				GUI.color = Widgets.InactiveColor;
 			}
 			Rect rect = new Rect(x, y, size, size);
-			Widgets.CheckboxDraw(x, y, checkOn, disabled, size);
-			MouseoverSounds.DoRegion(rect);
-			if (!disabled && Widgets.ButtonInvisible(rect, false))
+			Widgets.CheckboxDraw(x, y, checkOn, disabled, size, texChecked, texUnchecked);
+			if (!disabled)
 			{
-				checkOn = !checkOn;
-				if (checkOn)
+				MouseoverSounds.DoRegion(rect);
+				bool flag = false;
+				Widgets.DraggableResult draggableResult = Widgets.ButtonInvisibleDraggable(rect, false);
+				if (draggableResult == Widgets.DraggableResult.Pressed)
 				{
-					SoundDefOf.CheckboxTurnedOn.PlayOneShotOnCamera(null);
+					checkOn = !checkOn;
+					flag = true;
 				}
-				else
+				else if (draggableResult == Widgets.DraggableResult.Dragged && paintable)
 				{
-					SoundDefOf.CheckboxTurnedOff.PlayOneShotOnCamera(null);
+					checkOn = !checkOn;
+					flag = true;
+					Widgets.checkboxPainting = true;
+					Widgets.checkboxPaintingState = checkOn;
+				}
+				if (paintable && Mouse.IsOver(rect) && Widgets.checkboxPainting && Input.GetMouseButton(0) && checkOn != Widgets.checkboxPaintingState)
+				{
+					checkOn = Widgets.checkboxPaintingState;
+					flag = true;
+				}
+				if (flag)
+				{
+					if (checkOn)
+					{
+						SoundDefOf.Checkbox_TurnedOn.PlayOneShotOnCamera(null);
+					}
+					else
+					{
+						SoundDefOf.Checkbox_TurnedOff.PlayOneShotOnCamera(null);
+					}
 				}
 			}
 			if (disabled)
@@ -440,24 +533,28 @@ namespace Verse
 			}
 		}
 
-		public static void CheckboxLabeled(Rect rect, string label, ref bool checkOn, bool disabled = false)
+		public static void CheckboxLabeled(Rect rect, string label, ref bool checkOn, bool disabled = false, Texture2D texChecked = null, Texture2D texUnchecked = null, bool placeCheckboxNearText = false)
 		{
 			TextAnchor anchor = Text.Anchor;
 			Text.Anchor = TextAnchor.MiddleLeft;
+			if (placeCheckboxNearText)
+			{
+				rect.width = Mathf.Min(rect.width, Text.CalcSize(label).x + 24f + 10f);
+			}
 			Widgets.Label(rect, label);
 			if (!disabled && Widgets.ButtonInvisible(rect, false))
 			{
 				checkOn = !checkOn;
 				if (checkOn)
 				{
-					SoundDefOf.CheckboxTurnedOn.PlayOneShotOnCamera(null);
+					SoundDefOf.Checkbox_TurnedOn.PlayOneShotOnCamera(null);
 				}
 				else
 				{
-					SoundDefOf.CheckboxTurnedOff.PlayOneShotOnCamera(null);
+					SoundDefOf.Checkbox_TurnedOff.PlayOneShotOnCamera(null);
 				}
 			}
-			Widgets.CheckboxDraw(rect.x + rect.width - 24f, rect.y, checkOn, disabled, 24f);
+			Widgets.CheckboxDraw(rect.x + rect.width - 24f, rect.y, checkOn, disabled, 24f, null, null);
 			Text.Anchor = anchor;
 		}
 
@@ -473,12 +570,12 @@ namespace Verse
 			butRect.width -= 24f;
 			if (!selected && Widgets.ButtonInvisible(butRect, false))
 			{
-				SoundDefOf.TickTiny.PlayOneShotOnCamera(null);
+				SoundDefOf.Tick_Tiny.PlayOneShotOnCamera(null);
 				selected = true;
 			}
 			Color color = GUI.color;
 			GUI.color = Color.white;
-			Widgets.CheckboxDraw(rect.xMax - 24f, rect.y, checkOn, false, 24f);
+			Widgets.CheckboxDraw(rect.xMax - 24f, rect.y, checkOn, false, 24f, null, null);
 			GUI.color = color;
 			Rect butRect2 = new Rect(rect.xMax - 24f, rect.y, 24f, 24f);
 			if (Widgets.ButtonInvisible(butRect2, false))
@@ -486,17 +583,17 @@ namespace Verse
 				checkOn = !checkOn;
 				if (checkOn)
 				{
-					SoundDefOf.CheckboxTurnedOn.PlayOneShotOnCamera(null);
+					SoundDefOf.Checkbox_TurnedOn.PlayOneShotOnCamera(null);
 				}
 				else
 				{
-					SoundDefOf.CheckboxTurnedOff.PlayOneShotOnCamera(null);
+					SoundDefOf.Checkbox_TurnedOff.PlayOneShotOnCamera(null);
 				}
 			}
 			return selected && !flag;
 		}
 
-		private static void CheckboxDraw(float x, float y, bool active, bool disabled, float size = 24f)
+		private static void CheckboxDraw(float x, float y, bool active, bool disabled, float size = 24f, Texture2D texChecked = null, Texture2D texUnchecked = null)
 		{
 			Color color = GUI.color;
 			if (disabled)
@@ -506,11 +603,11 @@ namespace Verse
 			Texture2D image;
 			if (active)
 			{
-				image = Widgets.CheckboxOnTex;
+				image = ((!(texChecked != null)) ? Widgets.CheckboxOnTex : texChecked);
 			}
 			else
 			{
-				image = Widgets.CheckboxOffTex;
+				image = ((!(texUnchecked != null)) ? Widgets.CheckboxOffTex : texUnchecked);
 			}
 			Rect position = new Rect(x, y, size, size);
 			GUI.DrawTexture(position, image);
@@ -520,7 +617,7 @@ namespace Verse
 			}
 		}
 
-		public static bool CheckboxMulti(Vector2 topLeft, MultiCheckboxState state, float size)
+		public static MultiCheckboxState CheckboxMulti(Rect rect, MultiCheckboxState state, bool paintable = false)
 		{
 			Texture2D tex;
 			if (state == MultiCheckboxState.On)
@@ -535,21 +632,41 @@ namespace Verse
 			{
 				tex = Widgets.CheckboxPartialTex;
 			}
-			Rect rect = new Rect(topLeft.x, topLeft.y, size, size);
 			MouseoverSounds.DoRegion(rect);
-			if (Widgets.ButtonImage(rect, tex))
+			MultiCheckboxState multiCheckboxState = (state != MultiCheckboxState.Off) ? MultiCheckboxState.Off : MultiCheckboxState.On;
+			bool flag = false;
+			Widgets.DraggableResult draggableResult = Widgets.ButtonImageDraggable(rect, tex);
+			if (paintable && draggableResult == Widgets.DraggableResult.Dragged)
 			{
-				if (state == MultiCheckboxState.Off || state == MultiCheckboxState.Partial)
+				Widgets.checkboxPainting = true;
+				Widgets.checkboxPaintingState = (multiCheckboxState == MultiCheckboxState.On);
+				flag = true;
+			}
+			else if (draggableResult.AnyPressed())
+			{
+				flag = true;
+			}
+			else if (paintable && Widgets.checkboxPainting && Mouse.IsOver(rect))
+			{
+				multiCheckboxState = ((!Widgets.checkboxPaintingState) ? MultiCheckboxState.Off : MultiCheckboxState.On);
+				if (state != multiCheckboxState)
 				{
-					SoundDefOf.CheckboxTurnedOn.PlayOneShotOnCamera(null);
+					flag = true;
+				}
+			}
+			if (flag)
+			{
+				if (multiCheckboxState == MultiCheckboxState.On)
+				{
+					SoundDefOf.Checkbox_TurnedOn.PlayOneShotOnCamera(null);
 				}
 				else
 				{
-					SoundDefOf.CheckboxTurnedOff.PlayOneShotOnCamera(null);
+					SoundDefOf.Checkbox_TurnedOff.PlayOneShotOnCamera(null);
 				}
-				return true;
+				return multiCheckboxState;
 			}
-			return false;
+			return state;
 		}
 
 		public static bool RadioButton(Vector2 topLeft, bool chosen)
@@ -587,6 +704,8 @@ namespace Verse
 
 		private static void RadioButtonDraw(float x, float y, bool chosen)
 		{
+			Color color = GUI.color;
+			GUI.color = Color.white;
 			Texture2D image;
 			if (chosen)
 			{
@@ -598,6 +717,7 @@ namespace Verse
 			}
 			Rect position = new Rect(x, y, 24f, 24f);
 			GUI.DrawTexture(position, image);
+			GUI.color = color;
 		}
 
 		public static bool ButtonText(Rect rect, string label, bool drawBackground = true, bool doMouseoverSound = false, bool active = true)
@@ -606,6 +726,21 @@ namespace Verse
 		}
 
 		public static bool ButtonText(Rect rect, string label, bool drawBackground, bool doMouseoverSound, Color textColor, bool active = true)
+		{
+			return Widgets.ButtonTextWorker(rect, label, drawBackground, doMouseoverSound, textColor, active, false).AnyPressed();
+		}
+
+		public static Widgets.DraggableResult ButtonTextDraggable(Rect rect, string label, bool drawBackground = true, bool doMouseoverSound = false, bool active = true)
+		{
+			return Widgets.ButtonTextDraggable(rect, label, drawBackground, doMouseoverSound, Widgets.NormalOptionColor, active);
+		}
+
+		public static Widgets.DraggableResult ButtonTextDraggable(Rect rect, string label, bool drawBackground, bool doMouseoverSound, Color textColor, bool active = true)
+		{
+			return Widgets.ButtonTextWorker(rect, label, drawBackground, doMouseoverSound, Widgets.NormalOptionColor, active, true);
+		}
+
+		private static Widgets.DraggableResult ButtonTextWorker(Rect rect, string label, bool drawBackground, bool doMouseoverSound, Color textColor, bool active, bool draggable)
 		{
 			TextAnchor anchor = Text.Anchor;
 			Color color = GUI.color;
@@ -645,7 +780,15 @@ namespace Verse
 			Widgets.Label(rect, label);
 			Text.Anchor = anchor;
 			GUI.color = color;
-			return active && Widgets.ButtonInvisible(rect, false);
+			if (active && draggable)
+			{
+				return Widgets.ButtonInvisibleDraggable(rect, false);
+			}
+			if (active)
+			{
+				return (!Widgets.ButtonInvisible(rect, false)) ? Widgets.DraggableResult.Idle : Widgets.DraggableResult.Pressed;
+			}
+			return Widgets.DraggableResult.Idle;
 		}
 
 		public static void DrawRectFast(Rect position, Color color, GUIContent content = null)
@@ -754,6 +897,72 @@ namespace Verse
 			return Widgets.ButtonInvisible(butRect, false);
 		}
 
+		public static Widgets.DraggableResult ButtonImageDraggable(Rect butRect, Texture2D tex)
+		{
+			return Widgets.ButtonImageDraggable(butRect, tex, Color.white);
+		}
+
+		public static Widgets.DraggableResult ButtonImageDraggable(Rect butRect, Texture2D tex, Color baseColor)
+		{
+			return Widgets.ButtonImageDraggable(butRect, tex, baseColor, GenUI.MouseoverColor);
+		}
+
+		public static Widgets.DraggableResult ButtonImageDraggable(Rect butRect, Texture2D tex, Color baseColor, Color mouseoverColor)
+		{
+			if (Mouse.IsOver(butRect))
+			{
+				GUI.color = mouseoverColor;
+			}
+			else
+			{
+				GUI.color = baseColor;
+			}
+			GUI.DrawTexture(butRect, tex);
+			GUI.color = baseColor;
+			return Widgets.ButtonInvisibleDraggable(butRect, false);
+		}
+
+		public static bool ButtonImageFitted(Rect butRect, Texture2D tex)
+		{
+			return Widgets.ButtonImageFitted(butRect, tex, Color.white);
+		}
+
+		public static bool ButtonImageFitted(Rect butRect, Texture2D tex, Color baseColor)
+		{
+			return Widgets.ButtonImageFitted(butRect, tex, baseColor, GenUI.MouseoverColor);
+		}
+
+		public static bool ButtonImageFitted(Rect butRect, Texture2D tex, Color baseColor, Color mouseoverColor)
+		{
+			if (Mouse.IsOver(butRect))
+			{
+				GUI.color = mouseoverColor;
+			}
+			else
+			{
+				GUI.color = baseColor;
+			}
+			Widgets.DrawTextureFitted(butRect, tex, 1f);
+			GUI.color = baseColor;
+			return Widgets.ButtonInvisible(butRect, false);
+		}
+
+		public static bool ButtonImageWithBG(Rect butRect, Texture2D image, Vector2? imageSize = null)
+		{
+			bool result = Widgets.ButtonText(butRect, string.Empty, true, false, true);
+			Rect position;
+			if (imageSize.HasValue)
+			{
+				position = new Rect(Mathf.Floor(butRect.x + butRect.width / 2f - imageSize.Value.x / 2f), Mathf.Floor(butRect.y + butRect.height / 2f - imageSize.Value.y / 2f), imageSize.Value.x, imageSize.Value.y);
+			}
+			else
+			{
+				position = butRect;
+			}
+			GUI.DrawTexture(position, image);
+			return result;
+		}
+
 		public static bool CloseButtonFor(Rect rectToClose)
 		{
 			Rect butRect = new Rect(rectToClose.x + rectToClose.width - 18f - 4f, rectToClose.y + 4f, 18f, 18f);
@@ -767,6 +976,47 @@ namespace Verse
 				MouseoverSounds.DoRegion(butRect);
 			}
 			return GUI.Button(butRect, string.Empty, Widgets.EmptyStyle);
+		}
+
+		public static Widgets.DraggableResult ButtonInvisibleDraggable(Rect butRect, bool doMouseoverSound = false)
+		{
+			if (doMouseoverSound)
+			{
+				MouseoverSounds.DoRegion(butRect);
+			}
+			int controlID = GUIUtility.GetControlID(FocusType.Passive, butRect);
+			if (Input.GetMouseButtonDown(0) && Mouse.IsOver(butRect))
+			{
+				Widgets.buttonInvisibleDraggable_activeControl = controlID;
+				Widgets.buttonInvisibleDraggable_mouseStart = Input.mousePosition;
+				Widgets.buttonInvisibleDraggable_dragged = false;
+			}
+			if (Widgets.buttonInvisibleDraggable_activeControl == controlID)
+			{
+				if (Input.GetMouseButtonUp(0))
+				{
+					Widgets.buttonInvisibleDraggable_activeControl = 0;
+					if (Mouse.IsOver(butRect))
+					{
+						return (!Widgets.buttonInvisibleDraggable_dragged) ? Widgets.DraggableResult.Pressed : Widgets.DraggableResult.DraggedThenPressed;
+					}
+					return Widgets.DraggableResult.Idle;
+				}
+				else
+				{
+					if (!Input.GetMouseButton(0))
+					{
+						Widgets.buttonInvisibleDraggable_activeControl = 0;
+						return Widgets.DraggableResult.Idle;
+					}
+					if (!Widgets.buttonInvisibleDraggable_dragged && (Widgets.buttonInvisibleDraggable_mouseStart - Input.mousePosition).sqrMagnitude > Widgets.DragStartDistanceSquared)
+					{
+						Widgets.buttonInvisibleDraggable_dragged = true;
+						return Widgets.DraggableResult.Dragged;
+					}
+				}
+			}
+			return Widgets.DraggableResult.Idle;
 		}
 
 		public static string TextField(Rect rect, string text)
@@ -881,7 +1131,7 @@ namespace Verse
 			}
 			else
 			{
-				Log.Error("TextField<T> does not support " + typeof(T));
+				Log.Error("TextField<T> does not support " + typeof(T), false);
 			}
 		}
 
@@ -1123,6 +1373,36 @@ namespace Verse
 				freq = num3;
 			}
 			return freq;
+		}
+
+		public static void IntEntry(Rect rect, ref int value, ref string editBuffer, int multiplier = 1)
+		{
+			int num = Mathf.Min(Widgets.IntEntryButtonWidth, (int)rect.width / 5);
+			if (Widgets.ButtonText(new Rect(rect.xMin, rect.yMin, (float)num, rect.height), (-10 * multiplier).ToStringCached(), true, false, true))
+			{
+				value -= 10 * multiplier * GenUI.CurrentAdjustmentMultiplier();
+				editBuffer = value.ToStringCached();
+				SoundDefOf.Checkbox_TurnedOff.PlayOneShotOnCamera(null);
+			}
+			if (Widgets.ButtonText(new Rect(rect.xMin + (float)num, rect.yMin, (float)num, rect.height), (-1 * multiplier).ToStringCached(), true, false, true))
+			{
+				value -= multiplier * GenUI.CurrentAdjustmentMultiplier();
+				editBuffer = value.ToStringCached();
+				SoundDefOf.Checkbox_TurnedOff.PlayOneShotOnCamera(null);
+			}
+			if (Widgets.ButtonText(new Rect(rect.xMax - (float)num, rect.yMin, (float)num, rect.height), "+" + (10 * multiplier).ToStringCached(), true, false, true))
+			{
+				value += 10 * multiplier * GenUI.CurrentAdjustmentMultiplier();
+				editBuffer = value.ToStringCached();
+				SoundDefOf.Checkbox_TurnedOn.PlayOneShotOnCamera(null);
+			}
+			if (Widgets.ButtonText(new Rect(rect.xMax - (float)(num * 2), rect.yMin, (float)num, rect.height), "+" + multiplier.ToStringCached(), true, false, true))
+			{
+				value += multiplier * GenUI.CurrentAdjustmentMultiplier();
+				editBuffer = value.ToStringCached();
+				SoundDefOf.Checkbox_TurnedOn.PlayOneShotOnCamera(null);
+			}
+			Widgets.TextFieldNumeric<int>(new Rect(rect.xMin + (float)(num * 2), rect.yMin, rect.width - (float)(num * 4), rect.height), ref value, ref editBuffer, 0f, 1E+09f);
 		}
 
 		public static void FloatRange(Rect rect, int id, ref FloatRange range, float min = 0f, float max = 1f, string labelKey = null, ToStringStyle valueStyle = ToStringStyle.FloatTwo)
@@ -1718,6 +1998,14 @@ namespace Verse
 
 		public static void BeginScrollView(Rect outRect, ref Vector2 scrollPosition, Rect viewRect, bool showScrollbars = true)
 		{
+			if (Widgets.mouseOverScrollViewStack.Count > 0)
+			{
+				Widgets.mouseOverScrollViewStack.Push(Widgets.mouseOverScrollViewStack.Peek() && outRect.Contains(Event.current.mousePosition));
+			}
+			else
+			{
+				Widgets.mouseOverScrollViewStack.Push(outRect.Contains(Event.current.mousePosition));
+			}
 			if (showScrollbars)
 			{
 				scrollPosition = GUI.BeginScrollView(outRect, scrollPosition, viewRect);
@@ -1730,7 +2018,17 @@ namespace Verse
 
 		public static void EndScrollView()
 		{
+			Widgets.mouseOverScrollViewStack.Pop();
 			GUI.EndScrollView();
+		}
+
+		public static void EnsureMousePositionStackEmpty()
+		{
+			if (Widgets.mouseOverScrollViewStack.Count > 0)
+			{
+				Log.Error("Mouse position stack is not empty. There were more calls to BeginScrollView than EndScrollView. Fixing.", false);
+				Widgets.mouseOverScrollViewStack.Clear();
+			}
 		}
 
 		public static void DrawHighlightSelected(Rect rect)
@@ -1742,13 +2040,18 @@ namespace Verse
 		{
 			if (Mouse.IsOver(rect))
 			{
-				GUI.DrawTexture(rect, TexUI.HighlightTex);
+				Widgets.DrawHighlight(rect);
 			}
 		}
 
 		public static void DrawHighlight(Rect rect)
 		{
 			GUI.DrawTexture(rect, TexUI.HighlightTex);
+		}
+
+		public static void DrawLightHighlight(Rect rect)
+		{
+			GUI.DrawTexture(rect, Widgets.LightHighlight);
 		}
 
 		public static void DrawTitleBG(Rect rect)
@@ -1809,6 +2112,11 @@ namespace Verse
 			return false;
 		}
 
+		public static bool InfoCardButtonCentered(Rect rect, Thing thing)
+		{
+			return Widgets.InfoCardButton(rect.center.x - 12f, rect.center.y - 12f, thing);
+		}
+
 		private static bool InfoCardButtonWorker(float x, float y)
 		{
 			Rect rect = new Rect(x, y, 24f, 24f);
@@ -1820,39 +2128,39 @@ namespace Verse
 
 		public static void DrawTextureFitted(Rect outerRect, Texture tex, float scale)
 		{
-			Widgets.DrawTextureFitted(outerRect, tex, scale, new Vector2((float)tex.width, (float)tex.height), new Rect(0f, 0f, 1f, 1f), 0f);
+			Widgets.DrawTextureFitted(outerRect, tex, scale, new Vector2((float)tex.width, (float)tex.height), new Rect(0f, 0f, 1f, 1f), 0f, null);
 		}
 
-		public static void DrawTextureFitted(Rect outerRect, Texture tex, float scale, Vector2 texProportions, Rect texCoords, float angle = 0f)
+		public static void DrawTextureFitted(Rect outerRect, Texture tex, float scale, Vector2 texProportions, Rect texCoords, float angle = 0f, Material mat = null)
 		{
 			if (Event.current.type != EventType.Repaint)
 			{
 				return;
 			}
-			Rect position = new Rect(0f, 0f, texProportions.x, texProportions.y);
+			Rect rect = new Rect(0f, 0f, texProportions.x, texProportions.y);
 			float num;
-			if (position.width / position.height < outerRect.width / outerRect.height)
+			if (rect.width / rect.height < outerRect.width / outerRect.height)
 			{
-				num = outerRect.height / position.height;
+				num = outerRect.height / rect.height;
 			}
 			else
 			{
-				num = outerRect.width / position.width;
+				num = outerRect.width / rect.width;
 			}
 			num *= scale;
-			position.width *= num;
-			position.height *= num;
-			position.x = outerRect.x + outerRect.width / 2f - position.width / 2f;
-			position.y = outerRect.y + outerRect.height / 2f - position.height / 2f;
-			if (angle == 0f)
+			rect.width *= num;
+			rect.height *= num;
+			rect.x = outerRect.x + outerRect.width / 2f - rect.width / 2f;
+			rect.y = outerRect.y + outerRect.height / 2f - rect.height / 2f;
+			Matrix4x4 matrix = Matrix4x4.identity;
+			if (angle != 0f)
 			{
-				GUI.DrawTextureWithTexCoords(position, tex, texCoords);
+				matrix = GUI.matrix;
+				UI.RotateAroundPivot(angle, rect.center);
 			}
-			else
+			GenUI.DrawTextureWithMaterial(rect, tex, mat, texCoords);
+			if (angle != 0f)
 			{
-				Matrix4x4 matrix = GUI.matrix;
-				UI.RotateAroundPivot(angle, position.center);
-				GUI.DrawTextureWithTexCoords(position, tex, texCoords);
 				GUI.matrix = matrix;
 			}
 		}
@@ -1881,6 +2189,96 @@ namespace Verse
 				UI.RotateAroundPivot(angle, rect.center);
 				GUI.DrawTexture(rect, tex);
 				GUI.matrix = matrix;
+			}
+		}
+
+		public static void NoneLabel(float y, float width, string customLabel = null)
+		{
+			Widgets.NoneLabel(ref y, width, customLabel);
+		}
+
+		public static void NoneLabel(ref float curY, float width, string customLabel = null)
+		{
+			GUI.color = Color.gray;
+			Text.Anchor = TextAnchor.UpperCenter;
+			Widgets.Label(new Rect(0f, curY, width, 30f), customLabel ?? "NoneBrackets".Translate());
+			Text.Anchor = TextAnchor.UpperLeft;
+			curY += 25f;
+			GUI.color = Color.white;
+		}
+
+		public static void NoneLabelCenteredVertically(Rect rect, string customLabel = null)
+		{
+			GUI.color = Color.gray;
+			Text.Anchor = TextAnchor.MiddleCenter;
+			Widgets.Label(rect, customLabel ?? "NoneBrackets".Translate());
+			Text.Anchor = TextAnchor.UpperLeft;
+			GUI.color = Color.white;
+		}
+
+		public static void Dropdown<Target, Payload>(Rect rect, Target target, Func<Target, Payload> getPayload, Func<Target, IEnumerable<Widgets.DropdownMenuElement<Payload>>> menuGenerator, string buttonLabel = null, Texture2D buttonIcon = null, string dragLabel = null, Texture2D dragIcon = null, Action dropdownOpened = null, bool paintable = false)
+		{
+			Widgets.DraggableResult draggableResult;
+			if (buttonIcon != null)
+			{
+				Widgets.DrawHighlightIfMouseover(rect);
+				Widgets.DrawTextureFitted(rect, buttonIcon, 1f);
+				draggableResult = Widgets.ButtonInvisibleDraggable(rect, false);
+			}
+			else
+			{
+				draggableResult = Widgets.ButtonTextDraggable(rect, buttonLabel, true, false, true);
+			}
+			if (draggableResult == Widgets.DraggableResult.Pressed)
+			{
+				List<FloatMenuOption> options = (from opt in menuGenerator(target)
+				select opt.option).ToList<FloatMenuOption>();
+				Find.WindowStack.Add(new FloatMenu(options));
+				if (dropdownOpened != null)
+				{
+					dropdownOpened();
+				}
+			}
+			else if (paintable && draggableResult == Widgets.DraggableResult.Dragged)
+			{
+				Widgets.dropdownPainting = true;
+				Widgets.dropdownPainting_Payload = getPayload(target);
+				Widgets.dropdownPainting_Type = typeof(Payload);
+				Widgets.dropdownPainting_Text = ((dragLabel == null) ? buttonLabel : dragLabel);
+				Widgets.dropdownPainting_Icon = ((!(dragIcon != null)) ? buttonIcon : dragIcon);
+			}
+			else if (paintable && Widgets.dropdownPainting && Mouse.IsOver(rect) && Widgets.dropdownPainting_Type == typeof(Payload))
+			{
+				FloatMenuOption floatMenuOption = (from opt in menuGenerator(target)
+				where object.Equals(opt.payload, Widgets.dropdownPainting_Payload)
+				select opt.option).FirstOrDefault<FloatMenuOption>();
+				if (floatMenuOption != null && !floatMenuOption.Disabled)
+				{
+					Payload x = getPayload(target);
+					floatMenuOption.action();
+					Payload y = getPayload(target);
+					if (!EqualityComparer<Payload>.Default.Equals(x, y))
+					{
+						SoundDefOf.Click.PlayOneShotOnCamera(null);
+					}
+				}
+			}
+		}
+
+		public static void WidgetsOnGUI()
+		{
+			if (Event.current.rawType == EventType.MouseUp || Input.GetMouseButtonUp(0))
+			{
+				Widgets.checkboxPainting = false;
+				Widgets.dropdownPainting = false;
+			}
+			if (Widgets.checkboxPainting)
+			{
+				GenUI.DrawMouseAttachment((!Widgets.checkboxPaintingState) ? Widgets.CheckboxOffTex : Widgets.CheckboxOnTex);
+			}
+			if (Widgets.dropdownPainting)
+			{
+				GenUI.DrawMouseAttachment(Widgets.dropdownPainting_Icon, Widgets.dropdownPainting_Text, 0f, default(Vector2), null);
 			}
 		}
 	}

@@ -7,29 +7,11 @@ namespace RimWorld.Planet
 {
 	public static class CaravanIncidentUtility
 	{
-		public static readonly FloatRange IncidentPointsRandomFactorRange = new FloatRange(0.25f, 1.3f);
-
 		private const int MapCellsPerPawn = 900;
 
 		private const int MinMapSize = 75;
 
 		private const int MaxMapSize = 110;
-
-		private static readonly SimpleCurve StealthFactorCurve = new SimpleCurve
-		{
-			{
-				new CurvePoint(1f, 5f),
-				true
-			},
-			{
-				new CurvePoint(6f, 1f),
-				true
-			},
-			{
-				new CurvePoint(12f, 0.9f),
-				true
-			}
-		};
 
 		public static int CalculateIncidentMapSize(List<Pawn> caravanPawns, List<Pawn> enemies)
 		{
@@ -58,7 +40,7 @@ namespace RimWorld.Planet
 			return true;
 		}
 
-		public static Map SetupCaravanAttackMap(Caravan caravan, List<Pawn> enemies)
+		public static Map SetupCaravanAttackMap(Caravan caravan, List<Pawn> enemies, bool sendLetterIfRelatedPawns)
 		{
 			int num = CaravanIncidentUtility.CalculateIncidentMapSize(caravan.PawnsListForReading, enemies);
 			Map map = CaravanIncidentUtility.GetOrGenerateMapForIncident(caravan, new IntVec3(num, 1, num), WorldObjectDefOf.Ambush);
@@ -69,7 +51,14 @@ namespace RimWorld.Planet
 			for (int i = 0; i < enemies.Count; i++)
 			{
 				IntVec3 loc = CellFinder.RandomSpawnCellForPawnNear(root, map, 4);
-				GenSpawn.Spawn(enemies[i], loc, map, Rot4.Random, false);
+				GenSpawn.Spawn(enemies[i], loc, map, Rot4.Random, WipeMode.Vanish, false);
+			}
+			if (sendLetterIfRelatedPawns)
+			{
+				PawnRelationUtility.Notify_PawnsSeenByPlayer_Letter_Send(enemies, "LetterRelatedPawnsGroupGeneric".Translate(new object[]
+				{
+					Faction.OfPlayer.def.pawnsPlural
+				}), LetterDefOf.NeutralEvent, true, true);
 			}
 			return map;
 		}
@@ -81,14 +70,9 @@ namespace RimWorld.Planet
 			Map orGenerateMap = GetOrGenerateMapUtility.GetOrGenerateMap(tile, size, suggestedMapParentDef);
 			if (flag && orGenerateMap != null)
 			{
-				caravan.StoryState.CopyTo(orGenerateMap.StoryState);
+				orGenerateMap.retainedCaravanData.Notify_GeneratedTempIncidentMapFor(caravan);
 			}
 			return orGenerateMap;
-		}
-
-		public static float CalculateCaravanStealthFactor(int pawnCount)
-		{
-			return CaravanIncidentUtility.StealthFactorCurve.Evaluate((float)pawnCount);
 		}
 	}
 }

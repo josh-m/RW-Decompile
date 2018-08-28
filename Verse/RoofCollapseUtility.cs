@@ -8,23 +8,27 @@ namespace Verse
 
 		public static readonly int RoofSupportRadialCellsCount = GenRadial.NumCellsInRadius(6.9f);
 
-		public static bool WithinRangeOfRoofHolder(IntVec3 c, Map map)
+		public static bool WithinRangeOfRoofHolder(IntVec3 c, Map map, bool assumeNonNoRoofCellsAreRoofed = false)
 		{
-			CellIndices cellIndices = map.cellIndices;
-			Building[] innerArray = map.edificeGrid.InnerArray;
-			for (int i = 0; i < RoofCollapseUtility.RoofSupportRadialCellsCount; i++)
+			bool connected = false;
+			map.floodFiller.FloodFill(c, (IntVec3 x) => (x.Roofed(map) || x == c || (assumeNonNoRoofCellsAreRoofed && !map.areaManager.NoRoof[x])) && x.InHorDistOf(c, 6.9f), delegate(IntVec3 x)
 			{
-				IntVec3 c2 = c + GenRadial.RadialPattern[i];
-				if (c2.InBounds(map))
+				for (int i = 0; i < 5; i++)
 				{
-					Building building = innerArray[cellIndices.CellToIndex(c2)];
-					if (building != null && building.def.holdsRoof)
+					IntVec3 c2 = x + GenAdj.CardinalDirectionsAndInside[i];
+					if (c2.InBounds(map) && c2.InHorDistOf(c, 6.9f))
 					{
-						return true;
+						Building edifice = c2.GetEdifice(map);
+						if (edifice != null && edifice.def.holdsRoof)
+						{
+							connected = true;
+							return true;
+						}
 					}
 				}
-			}
-			return false;
+				return false;
+			}, 2147483647, false, null);
+			return connected;
 		}
 
 		public static bool ConnectedToRoofHolder(IntVec3 c, Map map, bool assumeRoofAtRoot)

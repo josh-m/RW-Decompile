@@ -6,6 +6,7 @@ namespace Verse
 {
 	public abstract class HediffGiver
 	{
+		[TranslationHandle]
 		public HediffDef hediff;
 
 		public List<BodyPartDef> partsToAffect;
@@ -25,7 +26,7 @@ namespace Verse
 
 		public bool TryApply(Pawn pawn, List<Hediff> outAddedHediffs = null)
 		{
-			return HediffGiveUtility.TryApply(pawn, this.hediff, this.partsToAffect, this.canAffectAnyLivePart, this.countToAffect, outAddedHediffs);
+			return HediffGiverUtility.TryApply(pawn, this.hediff, this.partsToAffect, this.canAffectAnyLivePart, this.countToAffect, outAddedHediffs);
 		}
 
 		protected void SendLetter(Pawn pawn, Hediff cause)
@@ -38,11 +39,11 @@ namespace Verse
 					{
 						pawn.LabelShort,
 						this.hediff.LabelCap
-					}), "LetterHediffFromRandomHediffGiver".Translate(new object[]
+					}).CapitalizeFirst(), "LetterHediffFromRandomHediffGiver".Translate(new object[]
 					{
 						pawn.LabelShort,
 						this.hediff.LabelCap
-					}), LetterDefOf.NegativeEvent, pawn, null);
+					}).CapitalizeFirst(), LetterDefOf.NegativeEvent, pawn, null, null);
 				}
 				else
 				{
@@ -50,12 +51,12 @@ namespace Verse
 					{
 						pawn.LabelShort,
 						this.hediff.LabelCap
-					}), "LetterHealthComplications".Translate(new object[]
+					}).CapitalizeFirst(), "LetterHealthComplications".Translate(new object[]
 					{
 						pawn.LabelShort,
 						this.hediff.LabelCap,
 						cause.LabelCap
-					}), LetterDefOf.NegativeEvent, pawn, null);
+					}).CapitalizeFirst(), LetterDefOf.NegativeEvent, pawn, null, null);
 				}
 			}
 		}

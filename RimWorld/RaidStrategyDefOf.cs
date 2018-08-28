@@ -6,5 +6,10 @@ namespace RimWorld
 	public static class RaidStrategyDefOf
 	{
 		public static RaidStrategyDef ImmediateAttack;
+
+		static RaidStrategyDefOf()
+		{
+			DefOfHelper.EnsureInitializedInCtor(typeof(RaidStrategyDefOf));
+		}
 	}
 }

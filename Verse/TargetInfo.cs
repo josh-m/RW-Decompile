@@ -83,11 +83,7 @@ namespace Verse
 		{
 			get
 			{
-				if (this.thingInt != null)
-				{
-					return this.thingInt.DrawPos;
-				}
-				return this.cellInt.ToVector3Shifted();
+				return ((LocalTargetInfo)this).CenterVector3;
 			}
 		}
 
@@ -114,7 +110,7 @@ namespace Verse
 		{
 			if (!allowNullMap && cell.IsValid && map == null)
 			{
-				Log.Warning("Constructed TargetInfo with cell=" + cell + " and a null map.");
+				Log.Warning("Constructed TargetInfo with cell=" + cell + " and a null map.", false);
 			}
 			this.thingInt = null;
 			this.cellInt = cell;
@@ -139,7 +135,7 @@ namespace Verse
 		{
 			if (targ.thingInt != null)
 			{
-				Log.ErrorOnce("Casted TargetInfo to IntVec3 but it had Thing " + targ.thingInt, 6324165);
+				Log.ErrorOnce("Casted TargetInfo to IntVec3 but it had Thing " + targ.thingInt, 6324165, false);
 			}
 			return targ.Cell;
 		}
@@ -148,7 +144,7 @@ namespace Verse
 		{
 			if (targ.cellInt.IsValid)
 			{
-				Log.ErrorOnce("Casted TargetInfo to Thing but it had cell " + targ.cellInt, 631672);
+				Log.ErrorOnce("Casted TargetInfo to Thing but it had cell " + targ.cellInt, 631672, false);
 			}
 			return targ.thingInt;
 		}

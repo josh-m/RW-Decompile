@@ -71,14 +71,14 @@ namespace RimWorld
 			return false;
 		}
 
-		protected override void ModifyPawn(Pawn p)
+		protected override void ModifyPawnPostGenerate(Pawn p, bool redressed)
 		{
-			if (Rand.Value < this.chance && p.needs != null)
+			if (p.needs != null)
 			{
 				Need need = p.needs.TryGetNeed(this.need);
 				if (need != null)
 				{
-					need.ForceSetLevel(this.levelRange.RandomInRange);
+					need.CurLevelPercentage = this.levelRange.RandomInRange;
 				}
 			}
 		}

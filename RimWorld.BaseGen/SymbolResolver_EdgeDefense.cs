@@ -91,7 +91,7 @@ namespace RimWorld.BaseGen
 				Lord singlePawnLord = rp.singlePawnLord ?? LordMaker.MakeNewLord(faction, new LordJob_DefendBase(faction, rp.rect.CenterCell), map, null);
 				for (int i = 0; i < num; i++)
 				{
-					PawnGenerationRequest value = new PawnGenerationRequest(faction.RandomPawnKind(), faction, PawnGenerationContext.NonPlayer, -1, false, false, false, false, true, true, 1f, false, true, true, false, false, false, false, null, null, null, null, null, null, null);
+					PawnGenerationRequest value = new PawnGenerationRequest(faction.RandomPawnKind(), faction, PawnGenerationContext.NonPlayer, -1, false, false, false, false, true, true, 1f, false, true, true, false, false, false, false, null, null, null, null, null, null, null, null);
 					ResolveParams rp2 = rp;
 					rp2.faction = faction;
 					rp2.singlePawnLord = singlePawnLord;
@@ -141,7 +141,7 @@ namespace RimWorld.BaseGen
 			{
 				ResolveParams rp5 = rp;
 				rp5.faction = faction;
-				rp5.singleThingDef = ThingDefOf.TurretGun;
+				rp5.singleThingDef = ThingDefOf.Turret_MiniTurret;
 				rp5.rect = rect3;
 				bool? edgeThingAvoidOtherEdgeThings = rp.edgeThingAvoidOtherEdgeThings;
 				rp5.edgeThingAvoidOtherEdgeThings = new bool?(!edgeThingAvoidOtherEdgeThings.HasValue || edgeThingAvoidOtherEdgeThings.Value);

@@ -5,13 +5,13 @@ using Verse;
 
 namespace RimWorld
 {
-	public abstract class ScenPart_PawnModifier : ScenPart
+	public class ScenPart_PawnModifier : ScenPart
 	{
 		protected float chance = 1f;
 
 		protected PawnGenerationContext context;
 
-		private bool hideOffMap;
+		protected bool hideOffMap;
 
 		private string chanceBuf;
 
@@ -60,15 +60,35 @@ namespace RimWorld
 			this.hideOffMap = false;
 		}
 
-		public override void Notify_PawnGenerated(Pawn pawn, PawnGenerationContext context)
+		public override void Notify_NewPawnGenerating(Pawn pawn, PawnGenerationContext context)
 		{
-			if (this.hideOffMap && PawnGenerationContext.PlayerStarter.Includes(context))
+			if (!this.context.Includes(context))
 			{
 				return;
 			}
-			if (pawn.RaceProps.Humanlike && this.context.Includes(context))
+			if (this.hideOffMap && context == PawnGenerationContext.PlayerStarter)
 			{
-				this.ModifyPawn(pawn);
+				return;
+			}
+			if (Rand.Chance(this.chance) && pawn.RaceProps.Humanlike)
+			{
+				this.ModifyNewPawn(pawn);
+			}
+		}
+
+		public override void Notify_PawnGenerated(Pawn pawn, PawnGenerationContext context, bool redressed)
+		{
+			if (!this.context.Includes(context))
+			{
+				return;
+			}
+			if (this.hideOffMap && context == PawnGenerationContext.PlayerStarter)
+			{
+				return;
+			}
+			if (Rand.Chance(this.chance) && pawn.RaceProps.Humanlike)
+			{
+				this.ModifyPawnPostGenerate(pawn, redressed);
 			}
 		}
 
@@ -78,18 +98,28 @@ namespace RimWorld
 			{
 				return;
 			}
-			if (this.hideOffMap && (this.context == PawnGenerationContext.PlayerStarter || this.context == PawnGenerationContext.All))
+			if (this.hideOffMap && this.context.Includes(PawnGenerationContext.PlayerStarter))
 			{
-				foreach (Pawn current in Find.GameInitData.startingPawns)
+				foreach (Pawn current in Find.GameInitData.startingAndOptionalPawns)
 				{
-					if (current.RaceProps.Humanlike)
+					if (Rand.Chance(this.chance) && current.RaceProps.Humanlike)
 					{
-						this.ModifyPawn(current);
+						this.ModifyHideOffMapStartingPawnPostMapGenerate(current);
 					}
 				}
 			}
 		}
 
-		protected abstract void ModifyPawn(Pawn p);
+		protected virtual void ModifyNewPawn(Pawn p)
+		{
+		}
+
+		protected virtual void ModifyPawnPostGenerate(Pawn p, bool redressed)
+		{
+		}
+
+		protected virtual void ModifyHideOffMapStartingPawnPostMapGenerate(Pawn p)
+		{
+		}
 	}
 }

@@ -55,11 +55,11 @@ namespace Verse
 		public override void DoWindowContents(Rect inRect)
 		{
 			WidgetRow widgetRow = new WidgetRow(0f, 0f, UIDirection.RightThenUp, 99999f, 4f);
-			if (widgetRow.ButtonIcon(TexButton.CenterOnPointsTex, "Center view around points."))
+			if (widgetRow.ButtonIcon(TexButton.CenterOnPointsTex, "Center view around points.", null))
 			{
 				this.curve.View.SetViewRectAround(this.curve);
 			}
-			if (widgetRow.ButtonIcon(TexButton.CurveResetTex, "Reset to growth from 0 to 1."))
+			if (widgetRow.ButtonIcon(TexButton.CurveResetTex, "Reset to growth from 0 to 1.", null))
 			{
 				List<CurvePoint> list = new List<CurvePoint>();
 				list.Add(new CurvePoint(0f, 0f));
@@ -67,32 +67,32 @@ namespace Verse
 				this.curve.SetPoints(list);
 				this.curve.View.SetViewRectAround(this.curve);
 			}
-			if (widgetRow.ButtonIcon(TexButton.QuickZoomHor1Tex, "Reset horizontal zoom to 0-1"))
+			if (widgetRow.ButtonIcon(TexButton.QuickZoomHor1Tex, "Reset horizontal zoom to 0-1", null))
 			{
 				this.curve.View.rect.xMin = 0f;
 				this.curve.View.rect.xMax = 1f;
 			}
-			if (widgetRow.ButtonIcon(TexButton.QuickZoomHor100Tex, "Reset horizontal zoom to 0-100"))
+			if (widgetRow.ButtonIcon(TexButton.QuickZoomHor100Tex, "Reset horizontal zoom to 0-100", null))
 			{
 				this.curve.View.rect.xMin = 0f;
 				this.curve.View.rect.xMax = 100f;
 			}
-			if (widgetRow.ButtonIcon(TexButton.QuickZoomHor20kTex, "Reset horizontal zoom to 0-20,000"))
+			if (widgetRow.ButtonIcon(TexButton.QuickZoomHor20kTex, "Reset horizontal zoom to 0-20,000", null))
 			{
 				this.curve.View.rect.xMin = 0f;
 				this.curve.View.rect.xMax = 20000f;
 			}
-			if (widgetRow.ButtonIcon(TexButton.QuickZoomVer1Tex, "Reset vertical zoom to 0-1"))
+			if (widgetRow.ButtonIcon(TexButton.QuickZoomVer1Tex, "Reset vertical zoom to 0-1", null))
 			{
 				this.curve.View.rect.yMin = 0f;
 				this.curve.View.rect.yMax = 1f;
 			}
-			if (widgetRow.ButtonIcon(TexButton.QuickZoomVer100Tex, "Reset vertical zoom to 0-100"))
+			if (widgetRow.ButtonIcon(TexButton.QuickZoomVer100Tex, "Reset vertical zoom to 0-100", null))
 			{
 				this.curve.View.rect.yMin = 0f;
 				this.curve.View.rect.yMax = 100f;
 			}
-			if (widgetRow.ButtonIcon(TexButton.QuickZoomVer20kTex, "Reset vertical zoom to 0-20,000"))
+			if (widgetRow.ButtonIcon(TexButton.QuickZoomVer20kTex, "Reset vertical zoom to 0-20,000", null))
 			{
 				this.curve.View.rect.yMin = 0f;
 				this.curve.View.rect.yMax = 20000f;

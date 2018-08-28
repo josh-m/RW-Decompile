@@ -26,11 +26,59 @@ namespace RimWorld
 
 		public bool everParticipatedInPrisonBreak;
 
+		public float resistance = -1f;
+
+		public bool getRescuedThoughtOnUndownedBecauseOfPlayer;
+
 		private const int DefaultWaitInsteadOfEscapingTicks = 25000;
 
-		public int MinInteractionInterval = 7500;
+		public const int MinInteractionInterval = 10000;
+
+		public const int MaxInteractionsPerDay = 2;
 
 		private const int CheckInitiatePrisonBreakIntervalTicks = 2500;
+
+		private static readonly SimpleCurve StartingResistancePerRecruitDifficultyCurve = new SimpleCurve
+		{
+			{
+				new CurvePoint(0.1f, 0f),
+				true
+			},
+			{
+				new CurvePoint(0.5f, 15f),
+				true
+			},
+			{
+				new CurvePoint(0.9f, 25f),
+				true
+			},
+			{
+				new CurvePoint(1f, 50f),
+				true
+			}
+		};
+
+		private static readonly SimpleCurve StartingResistanceFactorFromPopulationIntentCurve = new SimpleCurve
+		{
+			{
+				new CurvePoint(-1f, 2f),
+				true
+			},
+			{
+				new CurvePoint(0f, 1.5f),
+				true
+			},
+			{
+				new CurvePoint(1f, 1f),
+				true
+			},
+			{
+				new CurvePoint(2f, 0.8f),
+				true
+			}
+		};
+
+		private static readonly FloatRange StartingResistanceRandomFactorRange = new FloatRange(0.8f, 1.2f);
 
 		public Faction HostFaction
 		{
@@ -46,7 +94,7 @@ namespace RimWorld
 			{
 				if (this.HostFaction == null)
 				{
-					Log.Error("GetsFood without host faction.");
+					Log.Error("GetsFood without host faction.", false);
 					return true;
 				}
 				return this.getsFoodInt;
@@ -77,7 +125,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return this.pawn.mindState.lastAssignedInteractTime < Find.TickManager.TicksGame - this.MinInteractionInterval;
+				return this.pawn.mindState.lastAssignedInteractTime < Find.TickManager.TicksGame - 10000 && this.pawn.mindState.interactionsToday < 2;
 			}
 		}
 
@@ -94,10 +142,7 @@ namespace RimWorld
 					return;
 				}
 				this.releasedInt = value;
-				if (this.pawn.Spawned)
-				{
-					this.pawn.Map.reachability.ClearCache();
-				}
+				ReachabilityUtility.ClearCacheFor(this.pawn);
 			}
 		}
 
@@ -145,6 +190,14 @@ namespace RimWorld
 			}
 		}
 
+		public float Resistance
+		{
+			get
+			{
+				return this.resistance;
+			}
+		}
+
 		public Pawn_GuestTracker()
 		{
 		}
@@ -177,6 +230,8 @@ namespace RimWorld
 			Scribe_Values.Look<IntVec3>(ref this.spotToWaitInsteadOfEscaping, "spotToWaitInsteadOfEscaping", default(IntVec3), false);
 			Scribe_Values.Look<int>(ref this.lastPrisonBreakTicks, "lastPrisonBreakTicks", 0, false);
 			Scribe_Values.Look<bool>(ref this.everParticipatedInPrisonBreak, "everParticipatedInPrisonBreak", false, false);
+			Scribe_Values.Look<bool>(ref this.getRescuedThoughtOnUndownedBecauseOfPlayer, "getRescuedThoughtOnUndownedBecauseOfPlayer", false, false);
+			Scribe_Values.Look<float>(ref this.resistance, "resistance", -1f, false);
 		}
 
 		public void SetGuestStatus(Faction newHost, bool prisoner = false)
@@ -201,7 +256,7 @@ namespace RimWorld
 					this.pawn.Faction,
 					" is hostile to ",
 					newHost
-				}));
+				}), false);
 				return;
 			}
 			if (newHost != null && newHost == this.pawn.Faction && !prisoner)
@@ -212,7 +267,7 @@ namespace RimWorld
 					this.pawn,
 					" a guest of their own faction ",
 					this.pawn.Faction
-				}));
+				}), false);
 				return;
 			}
 			bool flag = prisoner && (!this.IsPrisoner || this.HostFaction != newHost);
@@ -225,12 +280,21 @@ namespace RimWorld
 				Lord lord = this.pawn.GetLord();
 				if (lord != null)
 				{
-					lord.Notify_PawnLost(this.pawn, PawnLostCondition.MadePrisoner);
+					lord.Notify_PawnLost(this.pawn, PawnLostCondition.MadePrisoner, null);
+				}
+				if (newHost == Faction.OfPlayer)
+				{
+					Find.StoryWatcher.watcherPopAdaptation.Notify_PawnEvent(this.pawn, PopAdaptationEvent.GainedPrisoner);
 				}
 				if (this.pawn.Drafted)
 				{
 					this.pawn.drafter.Drafted = false;
 				}
+				float x = this.pawn.RecruitDifficulty(Faction.OfPlayer);
+				this.resistance = Pawn_GuestTracker.StartingResistancePerRecruitDifficultyCurve.Evaluate(x);
+				this.resistance *= Pawn_GuestTracker.StartingResistanceFactorFromPopulationIntentCurve.Evaluate(StorytellerUtilityPopulation.PopulationIntent);
+				this.resistance *= Pawn_GuestTracker.StartingResistanceRandomFactorRange.RandomInRange;
+				this.resistance = (float)GenMath.RoundRandom(this.resistance);
 			}
 			PawnComponentsUtility.AddAndRemoveDynamicComponents(this.pawn, false);
 			this.pawn.health.surgeryBills.Clear();
@@ -238,7 +302,7 @@ namespace RimWorld
 			{
 				this.pawn.ownership.Notify_ChangedGuestStatus();
 			}
-			ReachabilityUtility.ClearCache();
+			ReachabilityUtility.ClearCacheFor(this.pawn);
 			if (this.pawn.Spawned)
 			{
 				this.pawn.Map.mapPawns.UpdateRegistryForPawn(this.pawn);
@@ -248,6 +312,24 @@ namespace RimWorld
 			if (prisoner && this.pawn.playerSettings != null)
 			{
 				this.pawn.playerSettings.Notify_MadePrisoner();
+			}
+		}
+
+		public void CapturedBy(Faction by, Pawn byPawn = null)
+		{
+			if (this.pawn.Faction != null)
+			{
+				this.pawn.Faction.Notify_MemberCaptured(this.pawn, by);
+			}
+			this.SetGuestStatus(by, true);
+			if (this.IsPrisoner && byPawn != null)
+			{
+				TaleRecorder.RecordTale(TaleDefOf.Captured, new object[]
+				{
+					byPawn,
+					this.pawn
+				});
+				byPawn.records.Increment(RecordDefOf.PeopleCaptured);
 			}
 		}
 
@@ -268,27 +350,35 @@ namespace RimWorld
 
 		internal void Notify_PawnUndowned()
 		{
-			if (this.pawn.RaceProps.Humanlike && this.HostFaction == Faction.OfPlayer && (this.pawn.Faction == null || this.pawn.Faction.def.rescueesCanJoin) && !this.IsPrisoner && this.pawn.SpawnedOrAnyParentSpawned)
+			if (this.pawn.RaceProps.Humanlike && (this.HostFaction == Faction.OfPlayer || (this.pawn.IsWildMan() && this.pawn.InBed() && this.pawn.CurrentBed().Faction == Faction.OfPlayer)) && !this.IsPrisoner && this.pawn.SpawnedOrAnyParentSpawned)
 			{
-				Map mapHeld = this.pawn.MapHeld;
-				float num;
-				if (!this.pawn.SafeTemperatureRange().Includes(mapHeld.mapTemperature.OutdoorTemp) || mapHeld.gameConditionManager.ConditionIsActive(GameConditionDefOf.ToxicFallout))
+				if (this.getRescuedThoughtOnUndownedBecauseOfPlayer && this.pawn.needs != null && this.pawn.needs.mood != null)
 				{
-					num = 1f;
+					this.pawn.needs.mood.thoughts.memories.TryGainMemory(ThoughtDefOf.Rescued, null);
 				}
-				else
+				if (this.pawn.Faction == null || this.pawn.Faction.def.rescueesCanJoin)
 				{
-					num = 0.5f;
-				}
-				if (Rand.ValueSeeded(this.pawn.thingIDNumber ^ 8976612) < num)
-				{
-					this.pawn.SetFaction(Faction.OfPlayer, null);
-					Messages.Message("MessageRescueeJoined".Translate(new object[]
+					Map mapHeld = this.pawn.MapHeld;
+					float num;
+					if (!this.pawn.SafeTemperatureRange().Includes(mapHeld.mapTemperature.OutdoorTemp) || mapHeld.gameConditionManager.ConditionIsActive(GameConditionDefOf.ToxicFallout))
 					{
-						this.pawn.LabelShort
-					}).AdjustedFor(this.pawn), this.pawn, MessageTypeDefOf.PositiveEvent);
+						num = 1f;
+					}
+					else
+					{
+						num = 0.5f;
+					}
+					if (Rand.ValueSeeded(this.pawn.thingIDNumber ^ 8976612) < num)
+					{
+						this.pawn.SetFaction(Faction.OfPlayer, null);
+						Messages.Message("MessageRescueeJoined".Translate(new object[]
+						{
+							this.pawn.LabelShort
+						}).AdjustedFor(this.pawn, "PAWN"), this.pawn, MessageTypeDefOf.PositiveEvent, true);
+					}
 				}
 			}
+			this.getRescuedThoughtOnUndownedBecauseOfPlayer = false;
 		}
 	}
 }

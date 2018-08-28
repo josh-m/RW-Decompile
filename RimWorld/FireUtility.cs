@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 using Verse;
-using Verse.AI;
 
 namespace RimWorld
 {
@@ -18,13 +18,14 @@ namespace RimWorld
 			float num = (!c.TerrainFlammableNow(map)) ? 0f : c.GetTerrain(map).GetStatValueAbstract(StatDefOf.Flammability, null);
 			for (int i = 0; i < thingList.Count; i++)
 			{
-				if (thingList[i] is Fire)
+				Thing thing = thingList[i];
+				if (thing is Fire)
 				{
 					return 0f;
 				}
-				if (thingList[i].FlammableNow)
+				if (thing.def.category != ThingCategory.Pawn && thingList[i].FlammableNow)
 				{
-					num = 1f;
+					num = Mathf.Max(num, thing.GetStatValue(StatDefOf.Flammability, true));
 				}
 			}
 			if (num > 0f)
@@ -55,7 +56,7 @@ namespace RimWorld
 			}
 			Fire fire = (Fire)ThingMaker.MakeThing(ThingDefOf.Fire, null);
 			fire.fireSize = fireSize;
-			GenSpawn.Spawn(fire, c, map, Rot4.North, false);
+			GenSpawn.Spawn(fire, c, map, Rot4.North, WipeMode.Vanish, false);
 			return true;
 		}
 
@@ -72,11 +73,11 @@ namespace RimWorld
 			Fire fire = (Fire)ThingMaker.MakeThing(ThingDefOf.Fire, null);
 			fire.fireSize = fireSize;
 			fire.AttachTo(t);
-			GenSpawn.Spawn(fire, t.Position, t.Map, Rot4.North, false);
+			GenSpawn.Spawn(fire, t.Position, t.Map, Rot4.North, WipeMode.Vanish, false);
 			Pawn pawn = t as Pawn;
 			if (pawn != null)
 			{
-				pawn.jobs.EndCurrentJob(JobCondition.InterruptForced, true);
+				pawn.jobs.StopAll(false);
 				pawn.records.Increment(RecordDefOf.TimesOnFire);
 			}
 		}

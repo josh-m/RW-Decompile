@@ -13,7 +13,7 @@ namespace Verse
 
 		public static bool CorrectContextNow(SoundDef def, Map sourceMap)
 		{
-			if (sourceMap != null && (Find.VisibleMap != sourceMap || WorldRendererUtility.WorldRenderedNow))
+			if (sourceMap != null && (Find.CurrentMap != sourceMap || WorldRendererUtility.WorldRenderedNow))
 			{
 				return false;
 			}

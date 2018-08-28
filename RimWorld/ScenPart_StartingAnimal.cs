@@ -147,12 +147,17 @@ namespace RimWorld
 				{
 					animal.Name = PawnBioAndNameGenerator.GeneratePawnName(animal, NameStyle.Full, null);
 				}
-				if (Rand.Value < this.bondToRandomPlayerPawnChance)
+				if (Rand.Value < this.bondToRandomPlayerPawnChance && animal.training.CanAssignToTrain(TrainableDefOf.Obedience).Accepted)
 				{
-					Pawn pawn = Find.GameInitData.startingPawns.RandomElement<Pawn>();
-					if (!pawn.story.traits.HasTrait(TraitDefOf.Psychopath))
+					Pawn pawn = (from p in Find.GameInitData.startingAndOptionalPawns.Take(Find.GameInitData.startingPawnCount)
+					where TrainableUtility.CanBeMaster(p, animal, false) && !p.story.traits.HasTrait(TraitDefOf.Psychopath)
+					select p).RandomElementWithFallback(null);
+					if (pawn != null)
 					{
+						animal.training.Train(TrainableDefOf.Obedience, null, true);
+						animal.training.SetWantedRecursive(TrainableDefOf.Obedience, true);
 						pawn.relations.AddDirectRelation(PawnRelationDefOf.Bond, animal);
+						animal.playerSettings.Master = pawn;
 					}
 				}
 				yield return animal;

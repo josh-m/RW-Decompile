@@ -55,7 +55,7 @@ namespace RimWorld
 			OverlayDrawer.WickMaterialA = MaterialPool.MatFrom("Things/Special/BurningWickA", ShaderDatabase.MetaOverlay);
 			OverlayDrawer.WickMaterialB = MaterialPool.MatFrom("Things/Special/BurningWickB", ShaderDatabase.MetaOverlay);
 			OverlayDrawer.SingleCellForbiddenOffset = 0.3f;
-			OverlayDrawer.BaseAlt = Altitudes.AltitudeFor(AltitudeLayer.MetaOverlays);
+			OverlayDrawer.BaseAlt = AltitudeLayer.MetaOverlays.AltitudeFor();
 		}
 
 		public void DrawOverlay(Thing t, OverlayTypes overlayType)
@@ -161,16 +161,7 @@ namespace RimWorld
 		private void RenderOutOfFuelOverlay(Thing t)
 		{
 			CompRefuelable compRefuelable = t.TryGetComp<CompRefuelable>();
-			ThingDef thingDef;
-			if (compRefuelable != null && compRefuelable.Props.fuelFilter.AnyAllowedDef != null)
-			{
-				thingDef = compRefuelable.Props.fuelFilter.AnyAllowedDef;
-			}
-			else
-			{
-				thingDef = ThingDefOf.Chemfuel;
-			}
-			Material mat = MaterialPool.MatFrom(thingDef.uiIcon, ShaderDatabase.MetaOverlay, Color.white);
+			Material mat = MaterialPool.MatFrom((compRefuelable == null) ? ThingDefOf.Chemfuel.uiIcon : compRefuelable.Props.FuelIcon, ShaderDatabase.MetaOverlay, Color.white);
 			this.RenderPulsingOverlay(t, mat, 5, false);
 			this.RenderPulsingOverlay(t, OverlayDrawer.OutOfFuelMat, 6, true);
 		}

@@ -20,7 +20,7 @@ namespace RimWorld.Planet
 					map,
 					" with enter mode ",
 					enterMode
-				}));
+				}), false);
 				enterMode = CaravanEnterMode.Edge;
 			}
 			IntVec3 enterCell = CaravanEnterMapUtility.GetEnterCell(caravan, map, enterMode, extraCellValidator);
@@ -35,7 +35,7 @@ namespace RimWorld.Planet
 			for (int i = 0; i < CaravanEnterMapUtility.tmpPawns.Count; i++)
 			{
 				IntVec3 loc = spawnCellGetter(CaravanEnterMapUtility.tmpPawns[i]);
-				GenSpawn.Spawn(CaravanEnterMapUtility.tmpPawns[i], loc, map, Rot4.Random, false);
+				GenSpawn.Spawn(CaravanEnterMapUtility.tmpPawns[i], loc, map, Rot4.Random, WipeMode.Vanish, false);
 			}
 			if (dropInventoryMode == CaravanDropInventoryMode.DropInstantly)
 			{
@@ -100,7 +100,7 @@ namespace RimWorld.Planet
 			{
 				return CellFinder.RandomClosewalkCellNear(root, map, 5, null);
 			}
-			Log.Warning("Could not find any valid edge cell.");
+			Log.Warning("Could not find any valid edge cell.", false);
 			return CellFinder.RandomCell(map);
 		}
 
@@ -117,7 +117,7 @@ namespace RimWorld.Planet
 			{
 				return result;
 			}
-			Log.Warning("Could not find any valid cell.");
+			Log.Warning("Could not find any valid cell.", false);
 			return CellFinder.RandomCell(map);
 		}
 

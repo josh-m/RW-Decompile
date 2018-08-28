@@ -54,7 +54,7 @@ namespace RimWorld
 				return;
 			}
 			List<List<Thing>> list = new List<List<Thing>>();
-			foreach (Pawn current in Find.GameInitData.startingPawns)
+			foreach (Pawn current in Find.GameInitData.startingAndOptionalPawns)
 			{
 				list.Add(new List<Thing>
 				{
@@ -83,7 +83,7 @@ namespace RimWorld
 			IntVec3 playerStartSpot = MapGenerator.PlayerStartSpot;
 			List<List<Thing>> thingsGroups = list;
 			bool instaDrop = Find.GameInitData.QuickStarted || this.method != PlayerPawnsArriveMethod.DropPods;
-			DropPodUtility.DropThingGroupsNear(playerStartSpot, map, thingsGroups, 110, instaDrop, true, true, false);
+			DropPodUtility.DropThingGroupsNear(playerStartSpot, map, thingsGroups, 110, instaDrop, true, true);
 		}
 
 		public override void PostMapGenerate(Map map)

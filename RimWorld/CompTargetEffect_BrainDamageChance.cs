@@ -5,7 +5,13 @@ namespace RimWorld
 {
 	public class CompTargetEffect_BrainDamageChance : CompTargetEffect
 	{
-		private const float Chance = 0.3f;
+		protected CompProperties_TargetEffect_BrainDamageChance PropsBrainDamageChance
+		{
+			get
+			{
+				return (CompProperties_TargetEffect_BrainDamageChance)this.props;
+			}
+		}
 
 		public override void DoEffectOn(Pawn user, Thing target)
 		{
@@ -14,7 +20,7 @@ namespace RimWorld
 			{
 				return;
 			}
-			if (Rand.Value <= 0.3f)
+			if (Rand.Value <= this.PropsBrainDamageChance.brainDamageChance)
 			{
 				BodyPartRecord brain = pawn.health.hediffSet.GetBrain();
 				if (brain == null)
@@ -22,10 +28,11 @@ namespace RimWorld
 					return;
 				}
 				int num = Rand.RangeInclusive(1, 5);
-				Thing arg_6B_0 = pawn;
+				Thing arg_7C_0 = pawn;
 				DamageDef flame = DamageDefOf.Flame;
-				int amount = num;
-				arg_6B_0.TakeDamage(new DamageInfo(flame, amount, -1f, user, brain, this.parent.def, DamageInfo.SourceCategory.ThingOrUnknown));
+				float amount = (float)num;
+				BodyPartRecord hitPart = brain;
+				arg_7C_0.TakeDamage(new DamageInfo(flame, amount, 0f, -1f, user, hitPart, this.parent.def, DamageInfo.SourceCategory.ThingOrUnknown, null));
 			}
 		}
 	}

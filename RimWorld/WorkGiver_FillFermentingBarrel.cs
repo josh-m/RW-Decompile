@@ -26,7 +26,7 @@ namespace RimWorld
 			}
 		}
 
-		public static void Reset()
+		public static void ResetStaticData()
 		{
 			WorkGiver_FillFermentingBarrel.TemperatureTrans = "BadTemperature".Translate().ToLower();
 			WorkGiver_FillFermentingBarrel.NoWortTrans = "NoWort".Translate();
@@ -43,7 +43,7 @@ namespace RimWorld
 			CompProperties_TemperatureRuinable compProperties = building_FermentingBarrel.def.GetCompProperties<CompProperties_TemperatureRuinable>();
 			if (ambientTemperature < compProperties.minSafeTemperature + 2f || ambientTemperature > compProperties.maxSafeTemperature - 2f)
 			{
-				JobFailReason.Is(WorkGiver_FillFermentingBarrel.TemperatureTrans);
+				JobFailReason.Is(WorkGiver_FillFermentingBarrel.TemperatureTrans, null);
 				return false;
 			}
 			if (!t.IsForbidden(pawn))
@@ -57,7 +57,7 @@ namespace RimWorld
 					}
 					if (this.FindWort(pawn, building_FermentingBarrel) == null)
 					{
-						JobFailReason.Is(WorkGiver_FillFermentingBarrel.NoWortTrans);
+						JobFailReason.Is(WorkGiver_FillFermentingBarrel.NoWortTrans, null);
 						return false;
 					}
 					return !t.IsBurning();

@@ -37,7 +37,7 @@ namespace Verse
 				List<Hediff> hediffs = this.pawn.health.hediffSet.hediffs;
 				for (int i = 0; i < hediffs.Count; i++)
 				{
-					if (hediffs[i] is Hediff_Injury && !hediffs[i].IsOld())
+					if (hediffs[i] is Hediff_Injury && !hediffs[i].IsPermanent())
 					{
 						num += hediffs[i].Severity;
 					}
@@ -59,14 +59,14 @@ namespace Verse
 			this.ageTicks++;
 			if (this.pawn.IsHashIntervalTick(1000))
 			{
-				if (this.pawn.needs.food != null && this.pawn.needs.food.CurCategory == HungerCategory.Starving && Rand.MTBEventOccurs(0.5f, 60000f, 1000f))
+				if (this.pawn.needs.food != null && this.pawn.needs.food.CurCategory == HungerCategory.Starving && this.pawn.health.hediffSet.HasHediff(HediffDefOf.Malnutrition, false) && this.pawn.health.hediffSet.GetFirstHediffOfDef(HediffDefOf.Malnutrition, false).Severity > 0.25f && Rand.MTBEventOccurs(0.5f, 60000f, 1000f))
 				{
 					if (this.Visible && PawnUtility.ShouldSendNotificationAbout(this.pawn))
 					{
 						Messages.Message("MessageMiscarriedStarvation".Translate(new object[]
 						{
 							this.pawn.LabelIndefinite()
-						}).CapitalizeFirst(), this.pawn, MessageTypeDefOf.NegativeHealthEvent);
+						}).CapitalizeFirst(), this.pawn, MessageTypeDefOf.NegativeHealthEvent, true);
 					}
 					this.Miscarry();
 					return;
@@ -78,7 +78,7 @@ namespace Verse
 						Messages.Message("MessageMiscarriedPoorHealth".Translate(new object[]
 						{
 							this.pawn.LabelIndefinite()
-						}).CapitalizeFirst(), this.pawn, MessageTypeDefOf.NegativeHealthEvent);
+						}).CapitalizeFirst(), this.pawn, MessageTypeDefOf.NegativeHealthEvent, true);
 					}
 					this.Miscarry();
 					return;
@@ -92,7 +92,7 @@ namespace Verse
 					Messages.Message("MessageGaveBirth".Translate(new object[]
 					{
 						this.pawn.LabelIndefinite()
-					}).CapitalizeFirst(), this.pawn, MessageTypeDefOf.PositiveEvent);
+					}).CapitalizeFirst(), this.pawn, MessageTypeDefOf.PositiveEvent, true);
 				}
 				Hediff_Pregnant.DoBirthSpawn(this.pawn, this.father);
 				this.pawn.health.RemoveHediff(this);
@@ -106,12 +106,12 @@ namespace Verse
 
 		public static void DoBirthSpawn(Pawn mother, Pawn father)
 		{
-			int num = (mother.RaceProps.litterSizeCurve == null) ? 1 : Mathf.RoundToInt(Rand.ByCurve(mother.RaceProps.litterSizeCurve, 300));
+			int num = (mother.RaceProps.litterSizeCurve == null) ? 1 : Mathf.RoundToInt(Rand.ByCurve(mother.RaceProps.litterSizeCurve));
 			if (num < 1)
 			{
 				num = 1;
 			}
-			PawnGenerationRequest request = new PawnGenerationRequest(mother.kindDef, mother.Faction, PawnGenerationContext.NonPlayer, -1, false, true, false, false, true, false, 1f, false, true, true, false, false, false, false, null, null, null, null, null, null, null);
+			PawnGenerationRequest request = new PawnGenerationRequest(mother.kindDef, mother.Faction, PawnGenerationContext.NonPlayer, -1, false, true, false, false, true, false, 1f, false, true, true, false, false, false, false, null, null, null, null, null, null, null, null);
 			Pawn pawn = null;
 			for (int i = 0; i < num; i++)
 			{
@@ -143,7 +143,7 @@ namespace Verse
 			}
 			if (mother.Spawned)
 			{
-				FilthMaker.MakeFilth(mother.Position, mother.Map, ThingDefOf.FilthAmnioticFluid, mother.LabelIndefinite(), 5);
+				FilthMaker.MakeFilth(mother.Position, mother.Map, ThingDefOf.Filth_AmnioticFluid, mother.LabelIndefinite(), 5);
 				if (mother.caller != null)
 				{
 					mother.caller.DoCall();
@@ -166,7 +166,7 @@ namespace Verse
 			StringBuilder stringBuilder = new StringBuilder();
 			stringBuilder.Append(base.DebugString());
 			stringBuilder.AppendLine("Gestation progress: " + this.GestationProgress.ToStringPercent());
-			stringBuilder.AppendLine("Time left: " + ((int)((1f - this.GestationProgress) * this.pawn.RaceProps.gestationPeriodDays * 60000f)).ToStringTicksToPeriod(true, false, true));
+			stringBuilder.AppendLine("Time left: " + ((int)((1f - this.GestationProgress) * this.pawn.RaceProps.gestationPeriodDays * 60000f)).ToStringTicksToPeriod());
 			return stringBuilder.ToString();
 		}
 	}

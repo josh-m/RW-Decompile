@@ -103,7 +103,7 @@ namespace RimWorld
 			{
 				"TimePassed".Translate().CapitalizeFirst(),
 				": ",
-				this.progressTicks.ToStringTicksToPeriod(true, false, true),
+				this.progressTicks.ToStringTicksToPeriod(),
 				"\n",
 				"CurrentRadius".Translate().CapitalizeFirst(),
 				": ",
@@ -118,7 +118,7 @@ namespace RimWorld
 					"\n",
 					"RadiusExpandsIn".Translate().CapitalizeFirst(),
 					": ",
-					this.TicksUntilRadiusInteger.ToStringTicksToPeriod(true, false, true)
+					this.TicksUntilRadiusInteger.ToStringTicksToPeriod()
 				});
 			}
 			return text;

@@ -1,26 +1,41 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Verse.Grammar
 {
 	public abstract class Rule
 	{
-		public struct ConstrantConstraint
+		public struct ConstantConstraint
 		{
+			[MayTranslate]
 			public string key;
 
+			[MayTranslate]
 			public string value;
 
 			public bool equality;
 		}
 
+		[MayTranslate]
 		public string keyword;
 
-		public List<Rule.ConstrantConstraint> constantConstraints;
+		public List<Rule.ConstantConstraint> constantConstraints;
 
 		public abstract float BaseSelectionWeight
 		{
 			get;
+		}
+
+		public virtual Rule DeepCopy()
+		{
+			Rule rule = (Rule)Activator.CreateInstance(base.GetType());
+			rule.keyword = this.keyword;
+			if (this.constantConstraints != null)
+			{
+				rule.constantConstraints = this.constantConstraints.ToList<Rule.ConstantConstraint>();
+			}
+			return rule;
 		}
 
 		public abstract string Generate();
@@ -33,9 +48,9 @@ namespace Verse.Grammar
 		{
 			if (this.constantConstraints == null)
 			{
-				this.constantConstraints = new List<Rule.ConstrantConstraint>();
+				this.constantConstraints = new List<Rule.ConstantConstraint>();
 			}
-			this.constantConstraints.Add(new Rule.ConstrantConstraint
+			this.constantConstraints.Add(new Rule.ConstantConstraint
 			{
 				key = key,
 				value = value,

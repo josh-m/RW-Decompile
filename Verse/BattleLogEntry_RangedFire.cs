@@ -1,5 +1,7 @@
 using RimWorld;
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using Verse.Grammar;
 
 namespace Verse
@@ -20,11 +22,14 @@ namespace Verse
 
 		private bool burst;
 
+		[TweakValue("LogFilter", 0f, 1f)]
+		private static float DisplayChance = 0.25f;
+
 		private string InitiatorName
 		{
 			get
 			{
-				return (this.initiatorPawn == null) ? "null" : this.initiatorPawn.NameStringShort;
+				return (this.initiatorPawn == null) ? "null" : this.initiatorPawn.LabelShort;
 			}
 		}
 
@@ -32,15 +37,15 @@ namespace Verse
 		{
 			get
 			{
-				return (this.recipientPawn == null) ? "null" : this.recipientPawn.NameStringShort;
+				return (this.recipientPawn == null) ? "null" : this.recipientPawn.LabelShort;
 			}
 		}
 
-		public BattleLogEntry_RangedFire()
+		public BattleLogEntry_RangedFire() : base(null)
 		{
 		}
 
-		public BattleLogEntry_RangedFire(Thing initiator, Thing target, ThingDef weaponDef, ThingDef projectileDef, bool burst)
+		public BattleLogEntry_RangedFire(Thing initiator, Thing target, ThingDef weaponDef, ThingDef projectileDef, bool burst) : base(null)
 		{
 			if (initiator is Pawn)
 			{
@@ -68,6 +73,19 @@ namespace Verse
 			return t == this.initiatorPawn || t == this.recipientPawn;
 		}
 
+		[DebuggerHidden]
+		public override IEnumerable<Thing> GetConcerns()
+		{
+			if (this.initiatorPawn != null)
+			{
+				yield return this.initiatorPawn;
+			}
+			if (this.recipientPawn != null)
+			{
+				yield return this.recipientPawn;
+			}
+		}
+
 		public override void ClickedFromPOV(Thing pov)
 		{
 			if (this.recipientPawn == null)
@@ -88,46 +106,53 @@ namespace Verse
 			}
 		}
 
-		public override string ToGameStringFromPOV(Thing pov)
+		protected override GrammarRequest GenerateGrammarRequest()
 		{
+			GrammarRequest result = base.GenerateGrammarRequest();
 			if (this.initiatorPawn == null && this.initiatorThing == null)
 			{
-				Log.ErrorOnce("BattleLogEntry_RangedFire has a null initiator.", 60465709);
-				return "[BattleLogEntry_RangedFire error: null pawn reference]";
+				Log.ErrorOnce("BattleLogEntry_RangedFire has a null initiator.", 60465709, false);
 			}
-			Rand.PushState();
-			Rand.Seed = this.randSeed;
-			GrammarRequest request = default(GrammarRequest);
-			request.Includes.Add(RulePackDefOf.Combat_RangedFire);
+			if (this.weaponDef != null && this.weaponDef.Verbs[0].rangedFireRulepack != null)
+			{
+				result.Includes.Add(this.weaponDef.Verbs[0].rangedFireRulepack);
+			}
+			else
+			{
+				result.Includes.Add(RulePackDefOf.Combat_RangedFire);
+			}
 			if (this.initiatorPawn != null)
 			{
-				request.Rules.AddRange(GrammarUtility.RulesForPawn("initiator", this.initiatorPawn, request.Constants));
+				result.Rules.AddRange(GrammarUtility.RulesForPawn("INITIATOR", this.initiatorPawn, result.Constants));
 			}
 			else if (this.initiatorThing != null)
 			{
-				request.Rules.AddRange(GrammarUtility.RulesForDef("initiator", this.initiatorThing));
+				result.Rules.AddRange(GrammarUtility.RulesForDef("INITIATOR", this.initiatorThing));
 			}
 			else
 			{
-				request.Constants["initiator_missing"] = "True";
+				result.Constants["INITIATOR_missing"] = "True";
 			}
 			if (this.recipientPawn != null)
 			{
-				request.Rules.AddRange(GrammarUtility.RulesForPawn("recipient", this.recipientPawn, request.Constants));
+				result.Rules.AddRange(GrammarUtility.RulesForPawn("RECIPIENT", this.recipientPawn, result.Constants));
 			}
 			else if (this.recipientThing != null)
 			{
-				request.Rules.AddRange(GrammarUtility.RulesForDef("recipient", this.recipientThing));
+				result.Rules.AddRange(GrammarUtility.RulesForDef("RECIPIENT", this.recipientThing));
 			}
 			else
 			{
-				request.Constants["recipient_missing"] = "True";
+				result.Constants["RECIPIENT_missing"] = "True";
 			}
-			request.Rules.AddRange(PlayLogEntryUtility.RulesForOptionalWeapon("weapon", this.weaponDef, this.projectileDef));
-			request.Constants["burst"] = this.burst.ToString();
-			string result = GrammarResolver.Resolve("logentry", request, "ranged fire", false);
-			Rand.PopState();
+			result.Rules.AddRange(PlayLogEntryUtility.RulesForOptionalWeapon("WEAPON", this.weaponDef, this.projectileDef));
+			result.Constants["BURST"] = this.burst.ToString();
 			return result;
+		}
+
+		public override bool ShowInCompactView()
+		{
+			return Rand.ChanceSeeded(BattleLogEntry_RangedFire.DisplayChance, this.logID);
 		}
 
 		public override void ExposeData()

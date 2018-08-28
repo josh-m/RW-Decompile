@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using Verse;
 
@@ -12,10 +11,11 @@ namespace RimWorld
 		{
 			get
 			{
-				foreach (Pawn p in PawnsFinder.AllMaps_FreeColonistsAndPrisonersSpawned)
+				foreach (Pawn p in PawnsFinder.AllMapsCaravansAndTravelingTransportPods_Alive_FreeColonistsAndPrisoners_NoCryptosleep)
 				{
-					foreach (Hediff diff in p.health.hediffSet.hediffs)
+					for (int i = 0; i < p.health.hediffSet.hediffs.Count; i++)
 					{
+						Hediff diff = p.health.hediffSet.hediffs[i];
 						if (diff.CurStage != null && diff.CurStage.lifeThreatening && !diff.FullyImmune())
 						{
 							yield return p;
@@ -36,7 +36,7 @@ namespace RimWorld
 			bool flag = false;
 			foreach (Pawn current in this.SickPawns)
 			{
-				stringBuilder.AppendLine("    " + current.NameStringShort);
+				stringBuilder.AppendLine("    " + current.LabelShort);
 				foreach (Hediff current2 in current.health.hediffSet.hediffs)
 				{
 					if (current2.CurStage != null && current2.CurStage.lifeThreatening && current2.Part != null && current2.Part != current.RaceProps.body.corePart)
@@ -55,7 +55,7 @@ namespace RimWorld
 
 		public override AlertReport GetReport()
 		{
-			return AlertReport.CulpritIs(this.SickPawns.FirstOrDefault<Pawn>());
+			return AlertReport.CulpritsAre(this.SickPawns);
 		}
 	}
 }

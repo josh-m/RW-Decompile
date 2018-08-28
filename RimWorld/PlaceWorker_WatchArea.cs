@@ -1,15 +1,16 @@
 using System;
 using System.Linq;
+using UnityEngine;
 using Verse;
 
 namespace RimWorld
 {
 	public class PlaceWorker_WatchArea : PlaceWorker
 	{
-		public override void DrawGhost(ThingDef def, IntVec3 center, Rot4 rot)
+		public override void DrawGhost(ThingDef def, IntVec3 center, Rot4 rot, Color ghostCol)
 		{
-			Map visibleMap = Find.VisibleMap;
-			GenDraw.DrawFieldEdges(WatchBuildingUtility.CalculateWatchCells(def, center, rot, visibleMap).ToList<IntVec3>());
+			Map currentMap = Find.CurrentMap;
+			GenDraw.DrawFieldEdges(WatchBuildingUtility.CalculateWatchCells(def, center, rot, currentMap).ToList<IntVec3>());
 		}
 	}
 }

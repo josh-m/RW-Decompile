@@ -94,7 +94,7 @@ namespace RimWorld
 			this.OwnedBed = newBed;
 			if (newBed.Medical)
 			{
-				Log.Warning(this.pawn.LabelCap + " claimed medical bed.");
+				Log.Warning(this.pawn.LabelCap + " claimed medical bed.", false);
 				this.UnclaimBed();
 			}
 		}
@@ -120,6 +120,7 @@ namespace RimWorld
 				newGrave.assignedPawn.ownership.UnclaimBed();
 			}
 			newGrave.assignedPawn = this.pawn;
+			newGrave.GetStoreSettings().Priority = StoragePriority.Critical;
 			this.AssignedGrave = newGrave;
 		}
 
@@ -128,6 +129,7 @@ namespace RimWorld
 			if (this.AssignedGrave != null)
 			{
 				this.AssignedGrave.assignedPawn = null;
+				this.AssignedGrave.GetStoreSettings().Priority = StoragePriority.Important;
 				this.AssignedGrave = null;
 			}
 		}

@@ -23,7 +23,7 @@ namespace RimWorld
 				this.mat = pawn.RaceProps.FleshType.ChooseWoundOverlay();
 				if (this.mat == null)
 				{
-					Log.ErrorOnce(string.Format("No wound graphics data available for flesh type {0}", pawn.RaceProps.FleshType), 76591733);
+					Log.ErrorOnce(string.Format("No wound graphics data available for flesh type {0}", pawn.RaceProps.FleshType), 76591733, false);
 					this.mat = FleshTypeDefOf.Normal.ChooseWoundOverlay();
 				}
 				this.quat = Quaternion.AngleAxis((float)Rand.Range(0, 360), Vector3.up);
@@ -62,7 +62,7 @@ namespace RimWorld
 				if (hediffs[i].def.displayWound)
 				{
 					Hediff_Injury hediff_Injury = hediffs[i] as Hediff_Injury;
-					if (hediff_Injury == null || !hediff_Injury.IsOld())
+					if (hediff_Injury == null || !hediff_Injury.IsPermanent())
 					{
 						num++;
 					}

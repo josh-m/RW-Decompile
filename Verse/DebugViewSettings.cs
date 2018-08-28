@@ -54,6 +54,8 @@ namespace Verse
 
 		public static bool drawPowerNetGrid;
 
+		public static bool drawOpportunisticJobs;
+
 		public static bool drawTooltipEdges;
 
 		public static bool drawRecordedNoise;
@@ -75,8 +77,6 @@ namespace Verse
 		public static bool drawInfestationChance;
 
 		public static bool drawStealDebug;
-
-		public static bool drawInterceptChecks;
 
 		public static bool drawDeepResources;
 
@@ -126,6 +126,8 @@ namespace Verse
 
 		public static bool writeListHaulables;
 
+		public static bool writeListMergeables;
+
 		public static bool writeTotalSnowDepth;
 
 		public static bool writeCanReachColony;
@@ -144,7 +146,7 @@ namespace Verse
 
 		public static bool writeMemoryUsage;
 
-		public static bool writeGameConditions;
+		public static bool writeMapGameConditions;
 
 		public static bool writeAttackTargets;
 
@@ -158,6 +160,8 @@ namespace Verse
 
 		public static bool logGrammarResolution;
 
+		public static bool logCombatLogMouseover;
+
 		public static bool logMapLoad;
 
 		public static bool logTutor;
@@ -168,23 +172,29 @@ namespace Verse
 
 		public static bool logTaleRecording;
 
+		public static bool logHourlyScreenshot;
+
+		public static bool logFilthSummary;
+
 		public static bool debugApparelOptimize;
 
 		public static bool showAllRoomStats;
 
+		public static bool showFloatMenuWorkGivers;
+
 		public static void drawTerrainWaterToggled()
 		{
-			if (Find.VisibleMap != null)
+			if (Find.CurrentMap != null)
 			{
-				Find.VisibleMap.mapDrawer.WholeMapChanged(MapMeshFlag.Terrain);
+				Find.CurrentMap.mapDrawer.WholeMapChanged(MapMeshFlag.Terrain);
 			}
 		}
 
 		public static void drawShadowsToggled()
 		{
-			if (Find.VisibleMap != null)
+			if (Find.CurrentMap != null)
 			{
-				Find.VisibleMap.mapDrawer.WholeMapChanged((MapMeshFlag)(-1));
+				Find.CurrentMap.mapDrawer.WholeMapChanged((MapMeshFlag)(-1));
 			}
 		}
 	}

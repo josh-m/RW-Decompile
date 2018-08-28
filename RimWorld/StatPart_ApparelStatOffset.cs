@@ -8,6 +8,8 @@ namespace RimWorld
 	{
 		private StatDef apparelStat;
 
+		private bool subtract;
+
 		public override void TransformValue(StatRequest req, ref float val)
 		{
 			if (req.HasThing && req.Thing != null)
@@ -17,7 +19,15 @@ namespace RimWorld
 				{
 					for (int i = 0; i < pawn.apparel.WornApparel.Count; i++)
 					{
-						val += pawn.apparel.WornApparel[i].GetStatValue(this.apparelStat, true);
+						float statValue = pawn.apparel.WornApparel[i].GetStatValue(this.apparelStat, true);
+						if (this.subtract)
+						{
+							val -= statValue;
+						}
+						else
+						{
+							val += statValue;
+						}
 					}
 				}
 			}
@@ -49,7 +59,12 @@ namespace RimWorld
 
 		private string InfoTextLineFrom(Thing gear)
 		{
-			return "    " + gear.LabelCap + ": " + gear.GetStatValue(this.apparelStat, true).ToStringByStyle(this.parentStat.toStringStyle, ToStringNumberSense.Offset);
+			float num = gear.GetStatValue(this.apparelStat, true);
+			if (this.subtract)
+			{
+				num = -num;
+			}
+			return "    " + gear.LabelCap + ": " + num.ToStringByStyle(this.parentStat.toStringStyle, ToStringNumberSense.Offset);
 		}
 
 		private bool PawnWearingRelevantGear(Pawn pawn)

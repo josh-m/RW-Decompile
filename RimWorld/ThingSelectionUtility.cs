@@ -52,23 +52,30 @@ namespace RimWorld
 		{
 			CellRect mapRect = ThingSelectionUtility.GetMapRect(rect);
 			ThingSelectionUtility.yieldedThings.Clear();
-			foreach (IntVec3 c in mapRect)
+			try
 			{
-				if (c.InBounds(Find.VisibleMap))
+				foreach (IntVec3 c in mapRect)
 				{
-					List<Thing> cellThings = Find.VisibleMap.thingGrid.ThingsListAt(c);
-					if (cellThings != null)
+					if (c.InBounds(Find.CurrentMap))
 					{
-						for (int i = 0; i < cellThings.Count; i++)
+						List<Thing> cellThings = Find.CurrentMap.thingGrid.ThingsListAt(c);
+						if (cellThings != null)
 						{
-							Thing t = cellThings[i];
-							if (ThingSelectionUtility.SelectableByMapClick(t) && !t.def.neverMultiSelect && !ThingSelectionUtility.yieldedThings.Contains(t))
+							for (int i = 0; i < cellThings.Count; i++)
 							{
-								yield return t;
+								Thing t = cellThings[i];
+								if (ThingSelectionUtility.SelectableByMapClick(t) && !t.def.neverMultiSelect && !ThingSelectionUtility.yieldedThings.Contains(t))
+								{
+									yield return t;
+								}
 							}
 						}
 					}
 				}
+			}
+			finally
+			{
+				base.<>__Finally0();
 			}
 		}
 
@@ -77,22 +84,29 @@ namespace RimWorld
 		{
 			CellRect mapRect = ThingSelectionUtility.GetMapRect(rect);
 			ThingSelectionUtility.yieldedZones.Clear();
-			foreach (IntVec3 c in mapRect)
+			try
 			{
-				if (c.InBounds(Find.VisibleMap))
+				foreach (IntVec3 c in mapRect)
 				{
-					Zone zone = c.GetZone(Find.VisibleMap);
-					if (zone != null)
+					if (c.InBounds(Find.CurrentMap))
 					{
-						if (zone.IsMultiselectable)
+						Zone zone = c.GetZone(Find.CurrentMap);
+						if (zone != null)
 						{
-							if (!ThingSelectionUtility.yieldedZones.Contains(zone))
+							if (zone.IsMultiselectable)
 							{
-								yield return zone;
+								if (!ThingSelectionUtility.yieldedZones.Contains(zone))
+								{
+									yield return zone;
+								}
 							}
 						}
 					}
 				}
+			}
+			finally
+			{
+				base.<>__Finally0();
 			}
 		}
 

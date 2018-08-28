@@ -1,13 +1,20 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using Verse;
 
 namespace RimWorld
 {
 	public class StorytellerComp_Disease : StorytellerComp
 	{
+		protected StorytellerCompProperties_Disease Props
+		{
+			get
+			{
+				return (StorytellerCompProperties_Disease)this.props;
+			}
+		}
+
 		[DebuggerHidden]
 		public override IEnumerable<FiringIncident> MakeIntervalIncidents(IIncidentTarget target)
 		{
@@ -19,14 +26,17 @@ namespace RimWorld
 					float mtb = biome.diseaseMtbDays;
 					mtb *= Find.Storyteller.difficulty.diseaseIntervalFactor;
 					IncidentDef inc;
-					if (Rand.MTBEventOccurs(mtb, 60000f, 1000f) && (from d in DefDatabase<IncidentDef>.AllDefs
-					where d.Worker.CanFireNow(target) && d.category == IncidentCategory.Disease
-					select d).TryRandomElementByWeight((IncidentDef d) => biome.CommonalityOfDisease(d), out inc))
+					if (Rand.MTBEventOccurs(mtb, 60000f, 1000f) && base.UsableIncidentsInCategory(this.Props.category, target).TryRandomElementByWeight((IncidentDef d) => biome.CommonalityOfDisease(d), out inc))
 					{
 						yield return new FiringIncident(inc, this, this.GenerateParms(inc.category, target));
 					}
 				}
 			}
+		}
+
+		public override string ToString()
+		{
+			return base.ToString() + " " + this.Props.category;
 		}
 	}
 }

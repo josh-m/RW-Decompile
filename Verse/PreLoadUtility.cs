@@ -6,9 +6,9 @@ namespace Verse
 	{
 		public static void CheckVersionAndLoad(string path, ScribeMetaHeaderUtility.ScribeHeaderMode mode, Action loadAct)
 		{
-			Scribe.loader.InitLoadingMetaHeaderOnly(path);
 			try
 			{
+				Scribe.loader.InitLoadingMetaHeaderOnly(path);
 				ScribeMetaHeaderUtility.LoadGameDataHeader(mode, false);
 				Scribe.loader.FinalizeLoading();
 			}
@@ -20,7 +20,7 @@ namespace Verse
 					path,
 					": ",
 					ex
-				}));
+				}), false);
 				Scribe.ForceStop();
 			}
 			if (!ScribeMetaHeaderUtility.TryCreateDialogsForVersionMismatchWarnings(loadAct))

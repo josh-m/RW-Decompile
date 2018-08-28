@@ -24,6 +24,8 @@ namespace RimWorld
 
 		public static DutyDef DefendAndExpandHive;
 
+		public static DutyDef DefendHiveAggressively;
+
 		public static DutyDef LoadAndEnterTransporters;
 
 		public static DutyDef ManClosestTurret;
@@ -65,5 +67,10 @@ namespace RimWorld
 		public static DutyDef PrepareCaravan_GatherPawns;
 
 		public static DutyDef PrepareCaravan_Pause;
+
+		static DutyDefOf()
+		{
+			DefOfHelper.EnsureInitializedInCtor(typeof(DutyDefOf));
+		}
 	}
 }

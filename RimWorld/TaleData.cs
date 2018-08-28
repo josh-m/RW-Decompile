@@ -13,13 +13,13 @@ namespace RimWorld
 		[DebuggerHidden]
 		public virtual IEnumerable<Rule> GetRules(string prefix)
 		{
-			Log.Error(base.GetType() + " cannot do GetRules with a prefix.");
+			Log.Error(base.GetType() + " cannot do GetRules with a prefix.", false);
 		}
 
 		[DebuggerHidden]
 		public virtual IEnumerable<Rule> GetRules()
 		{
-			Log.Error(base.GetType() + " cannot do GetRules without a prefix.");
+			Log.Error(base.GetType() + " cannot do GetRules without a prefix.", false);
 		}
 	}
 }

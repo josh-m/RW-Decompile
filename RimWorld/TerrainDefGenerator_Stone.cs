@@ -6,7 +6,7 @@ using Verse;
 
 namespace RimWorld
 {
-	internal static class TerrainDefGenerator_Stone
+	public static class TerrainDefGenerator_Stone
 	{
 		[DebuggerHidden]
 		public static IEnumerable<TerrainDef> ImpliedTerrainDefs()
@@ -21,14 +21,18 @@ namespace RimWorld
 				TerrainDef smooth = new TerrainDef();
 				rough.texturePath = "Terrain/Surfaces/RoughStone";
 				rough.edgeType = TerrainDef.TerrainEdgeType.FadeRough;
-				rough.pathCost = 1;
+				rough.pathCost = 2;
 				StatUtility.SetStatValueInList(ref rough.statBases, StatDefOf.Beauty, -1f);
 				rough.scatterType = "Rocky";
-				rough.affordances = new List<TerrainAffordance>();
-				rough.affordances.Add(TerrainAffordance.Light);
-				rough.affordances.Add(TerrainAffordance.Heavy);
-				rough.affordances.Add(TerrainAffordance.SmoothableStone);
+				rough.affordances = new List<TerrainAffordanceDef>();
+				rough.affordances.Add(TerrainAffordanceDefOf.Light);
+				rough.affordances.Add(TerrainAffordanceDefOf.Medium);
+				rough.affordances.Add(TerrainAffordanceDefOf.Heavy);
+				rough.affordances.Add(TerrainAffordanceDefOf.SmoothableStone);
 				rough.fertility = 0f;
+				rough.acceptFilth = false;
+				rough.acceptTerrainSourceFilth = false;
+				rough.modContentPack = rock.modContentPack;
 				rough.renderPrecedence = 190 + i;
 				rough.defName = rock.defName + "_Rough";
 				rough.label = "RoughStoneTerrainLabel".Translate(new object[]
@@ -40,17 +44,21 @@ namespace RimWorld
 					rock.label
 				});
 				rough.color = rock.graphicData.color;
-				rock.naturalTerrain = rough;
+				rock.building.naturalTerrain = rough;
 				hewn.texturePath = "Terrain/Surfaces/RoughHewnRock";
 				hewn.edgeType = TerrainDef.TerrainEdgeType.FadeRough;
 				hewn.pathCost = 1;
 				StatUtility.SetStatValueInList(ref hewn.statBases, StatDefOf.Beauty, -1f);
 				hewn.scatterType = "Rocky";
-				hewn.affordances = new List<TerrainAffordance>();
-				hewn.affordances.Add(TerrainAffordance.Light);
-				hewn.affordances.Add(TerrainAffordance.Heavy);
-				hewn.affordances.Add(TerrainAffordance.SmoothableStone);
+				hewn.affordances = new List<TerrainAffordanceDef>();
+				hewn.affordances.Add(TerrainAffordanceDefOf.Light);
+				hewn.affordances.Add(TerrainAffordanceDefOf.Medium);
+				hewn.affordances.Add(TerrainAffordanceDefOf.Heavy);
+				hewn.affordances.Add(TerrainAffordanceDefOf.SmoothableStone);
 				hewn.fertility = 0f;
+				hewn.acceptFilth = true;
+				hewn.acceptTerrainSourceFilth = true;
+				hewn.modContentPack = rock.modContentPack;
 				hewn.renderPrecedence = 50 + i;
 				hewn.defName = rock.defName + "_RoughHewn";
 				hewn.label = "RoughHewnStoneTerrainLabel".Translate(new object[]
@@ -62,18 +70,21 @@ namespace RimWorld
 					rock.label
 				});
 				hewn.color = rock.graphicData.color;
-				rock.leaveTerrain = hewn;
+				rock.building.leaveTerrain = hewn;
 				smooth.texturePath = "Terrain/Surfaces/SmoothStone";
 				smooth.edgeType = TerrainDef.TerrainEdgeType.FadeRough;
 				smooth.pathCost = 0;
 				StatUtility.SetStatValueInList(ref smooth.statBases, StatDefOf.Beauty, 2f);
+				StatUtility.SetStatValueInList(ref smooth.statBases, StatDefOf.MarketValue, 8f);
 				smooth.scatterType = "Rocky";
-				smooth.affordances = new List<TerrainAffordance>();
-				smooth.affordances.Add(TerrainAffordance.Light);
-				smooth.affordances.Add(TerrainAffordance.Heavy);
-				smooth.affordances.Add(TerrainAffordance.SmoothHard);
+				smooth.affordances = new List<TerrainAffordanceDef>();
+				smooth.affordances.Add(TerrainAffordanceDefOf.Light);
+				smooth.affordances.Add(TerrainAffordanceDefOf.Medium);
+				smooth.affordances.Add(TerrainAffordanceDefOf.Heavy);
 				smooth.fertility = 0f;
+				smooth.acceptFilth = true;
 				smooth.acceptTerrainSourceFilth = true;
+				smooth.modContentPack = rock.modContentPack;
 				smooth.renderPrecedence = 140 + i;
 				smooth.defName = rock.defName + "_Smooth";
 				smooth.label = "SmoothStoneTerrainLabel".Translate(new object[]

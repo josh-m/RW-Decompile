@@ -1,10 +1,11 @@
+using RimWorld;
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
 namespace Verse
 {
-	internal class ReachabilityCache
+	public class ReachabilityCache
 	{
 		[StructLayout(LayoutKind.Sequential, Size = 1)]
 		private struct CachedEntry : IEquatable<ReachabilityCache.CachedEntry>
@@ -72,6 +73,8 @@ namespace Verse
 
 		private Dictionary<ReachabilityCache.CachedEntry, bool> cacheDict = new Dictionary<ReachabilityCache.CachedEntry, bool>();
 
+		private static List<ReachabilityCache.CachedEntry> tmpCachedEntries = new List<ReachabilityCache.CachedEntry>();
+
 		public int Count
 		{
 			get
@@ -102,6 +105,41 @@ namespace Verse
 		public void Clear()
 		{
 			this.cacheDict.Clear();
+		}
+
+		public void ClearFor(Pawn p)
+		{
+			ReachabilityCache.tmpCachedEntries.Clear();
+			foreach (KeyValuePair<ReachabilityCache.CachedEntry, bool> current in this.cacheDict)
+			{
+				if (current.Key.TraverseParms.pawn == p)
+				{
+					ReachabilityCache.tmpCachedEntries.Add(current.Key);
+				}
+			}
+			for (int i = 0; i < ReachabilityCache.tmpCachedEntries.Count; i++)
+			{
+				this.cacheDict.Remove(ReachabilityCache.tmpCachedEntries[i]);
+			}
+			ReachabilityCache.tmpCachedEntries.Clear();
+		}
+
+		public void ClearForHostile(Thing hostileTo)
+		{
+			ReachabilityCache.tmpCachedEntries.Clear();
+			foreach (KeyValuePair<ReachabilityCache.CachedEntry, bool> current in this.cacheDict)
+			{
+				Pawn pawn = current.Key.TraverseParms.pawn;
+				if (pawn != null && pawn.HostileTo(hostileTo))
+				{
+					ReachabilityCache.tmpCachedEntries.Add(current.Key);
+				}
+			}
+			for (int i = 0; i < ReachabilityCache.tmpCachedEntries.Count; i++)
+			{
+				this.cacheDict.Remove(ReachabilityCache.tmpCachedEntries[i]);
+			}
+			ReachabilityCache.tmpCachedEntries.Clear();
 		}
 	}
 }

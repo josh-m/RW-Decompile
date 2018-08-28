@@ -48,7 +48,7 @@ namespace Verse
 			{
 				this.plantSwayHead = 0f;
 			}
-			if (Find.VisibleMap == this.map)
+			if (Find.CurrentMap == this.map)
 			{
 				for (int j = 0; j < WindManager.plantMaterials.Count; j++)
 				{
@@ -99,7 +99,7 @@ namespace Verse
 					this.BaseWindSpeedAt(Find.TickManager.TicksAbs + 2500 * i).ToString("F2")
 				}));
 			}
-			Log.Message(stringBuilder.ToString());
+			Log.Message(stringBuilder.ToString(), false);
 		}
 	}
 }

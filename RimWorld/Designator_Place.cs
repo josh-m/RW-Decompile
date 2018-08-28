@@ -15,6 +15,10 @@ namespace RimWorld
 
 		private const float RotButSpacing = 10f;
 
+		public static readonly Color CanPlaceColor = new Color(0.5f, 1f, 0.6f, 0.4f);
+
+		public static readonly Color CannotPlaceColor = new Color(1f, 0f, 0f, 0.4f);
+
 		public abstract BuildableDef PlacingDef
 		{
 			get;
@@ -22,9 +26,9 @@ namespace RimWorld
 
 		public Designator_Place()
 		{
-			this.soundDragSustain = SoundDefOf.DesignateDragBuilding;
-			this.soundDragChanged = SoundDefOf.DesignateDragBuildingChanged;
-			this.soundSucceeded = SoundDefOf.DesignatePlaceBuilding;
+			this.soundDragSustain = SoundDefOf.Designate_DragBuilding;
+			this.soundDragChanged = null;
+			this.soundSucceeded = SoundDefOf.Designate_PlaceBuilding;
 		}
 
 		public override void DoExtraGuiControls(float leftX, float bottomY)
@@ -45,7 +49,7 @@ namespace RimWorld
 						rotationDirection = RotationDirection.Counterclockwise;
 						Event.current.Use();
 					}
-					Widgets.Label(rect, KeyBindingDefOf.DesignatorRotateLeft.MainKeyLabel);
+					Widgets.Label(rect, KeyBindingDefOf.Designator_RotateLeft.MainKeyLabel);
 					Rect rect2 = new Rect(winRect.width / 2f + 5f, 15f, 64f, 64f);
 					if (Widgets.ButtonImage(rect2, TexUI.RotRightTex))
 					{
@@ -53,7 +57,7 @@ namespace RimWorld
 						rotationDirection = RotationDirection.Clockwise;
 						Event.current.Use();
 					}
-					Widgets.Label(rect2, KeyBindingDefOf.DesignatorRotateRight.MainKeyLabel);
+					Widgets.Label(rect2, KeyBindingDefOf.Designator_RotateRight.MainKeyLabel);
 					if (rotationDirection != RotationDirection.None)
 					{
 						this.placingRot.Rotate(rotationDirection);
@@ -88,11 +92,11 @@ namespace RimWorld
 				Color ghostCol;
 				if (this.CanDesignateCell(intVec).Accepted)
 				{
-					ghostCol = new Color(0.5f, 1f, 0.6f, 0.4f);
+					ghostCol = Designator_Place.CanPlaceColor;
 				}
 				else
 				{
-					ghostCol = new Color(1f, 0f, 0f, 0.4f);
+					ghostCol = Designator_Place.CannotPlaceColor;
 				}
 				this.DrawGhost(ghostCol);
 				if (this.CanDesignateCell(intVec).Accepted && this.PlacingDef.specialDisplayRadius > 0.01f)
@@ -123,11 +127,11 @@ namespace RimWorld
 					rotationDirection = RotationDirection.Clockwise;
 				}
 			}
-			if (KeyBindingDefOf.DesignatorRotateRight.KeyDownEvent)
+			if (KeyBindingDefOf.Designator_RotateRight.KeyDownEvent)
 			{
 				rotationDirection = RotationDirection.Clockwise;
 			}
-			if (KeyBindingDefOf.DesignatorRotateLeft.KeyDownEvent)
+			if (KeyBindingDefOf.Designator_RotateLeft.KeyDownEvent)
 			{
 				rotationDirection = RotationDirection.Counterclockwise;
 			}

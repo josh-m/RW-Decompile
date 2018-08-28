@@ -9,8 +9,9 @@ namespace Verse
 	{
 		private const float DebugOptionsGap = 7f;
 
-		protected void DebugAction(string label, Action action)
+		protected bool DebugAction(string label, Action action)
 		{
+			bool result = false;
 			if (!base.FilterAllows(label))
 			{
 				GUI.color = new Color(1f, 1f, 1f, 0.3f);
@@ -19,12 +20,14 @@ namespace Verse
 			{
 				this.Close(true);
 				action();
+				result = true;
 			}
 			GUI.color = Color.white;
 			if (Event.current.type == EventType.Layout)
 			{
 				this.totalOptionsHeight += 24f;
 			}
+			return result;
 		}
 
 		protected void DebugToolMap(string label, Action toolAction)
@@ -53,9 +56,9 @@ namespace Verse
 		{
 			this.DebugToolMap(label, delegate
 			{
-				if (UI.MouseCell().InBounds(Find.VisibleMap))
+				if (UI.MouseCell().InBounds(Find.CurrentMap))
 				{
-					foreach (Pawn current in (from t in Find.VisibleMap.thingGrid.ThingsAt(UI.MouseCell())
+					foreach (Pawn current in (from t in Find.CurrentMap.thingGrid.ThingsAt(UI.MouseCell())
 					where t is Pawn
 					select t).Cast<Pawn>().ToList<Pawn>())
 					{
@@ -104,7 +107,7 @@ namespace Verse
 		protected void DoLabel(string label)
 		{
 			Text.Font = GameFont.Small;
-			this.listing.Label(label, -1f);
+			this.listing.Label(label, -1f, null);
 			this.totalOptionsHeight += Text.CalcHeight(label, 300f) + 2f;
 		}
 

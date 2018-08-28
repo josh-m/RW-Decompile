@@ -24,7 +24,7 @@ namespace Verse.AI.Group
 
 		private bool IsFightingSapper(Pawn p)
 		{
-			return !p.Downed && !p.InMentalState && RaidStrategyWorker_ImmediateAttackSappers.CanBeSapper(p.kindDef);
+			return !p.Downed && !p.InMentalState && (SappersUtility.IsGoodSapper(p) || SappersUtility.IsGoodBackupSapper(p));
 		}
 	}
 }

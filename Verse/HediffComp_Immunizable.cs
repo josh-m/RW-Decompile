@@ -1,3 +1,4 @@
+using RimWorld;
 using System;
 using System.Text;
 using UnityEngine;
@@ -102,6 +103,7 @@ namespace Verse
 				if (immunityRecord != null)
 				{
 					stringBuilder.AppendLine("immunity change per day: " + (immunityRecord.ImmunityChangePerTick(base.Pawn, true, this.parent) * 60000f).ToString("F3"));
+					stringBuilder.AppendLine("  pawn immunity gain speed: " + StatDefOf.ImmunityGainSpeed.ValueToString(base.Pawn.GetStatValue(StatDefOf.ImmunityGainSpeed, true), ToStringNumberSense.Absolute));
 				}
 			}
 			return stringBuilder.ToString();

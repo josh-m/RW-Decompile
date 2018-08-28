@@ -115,7 +115,13 @@ namespace Verse
 			private set;
 		}
 
-		public Predicate<Pawn> Validator
+		public Predicate<Pawn> ValidatorPreGear
+		{
+			get;
+			private set;
+		}
+
+		public Predicate<Pawn> ValidatorPostGear
 		{
 			get;
 			private set;
@@ -157,17 +163,17 @@ namespace Verse
 			private set;
 		}
 
-		public PawnGenerationRequest(PawnKindDef kind, Faction faction = null, PawnGenerationContext context = PawnGenerationContext.NonPlayer, int tile = -1, bool forceGenerateNewPawn = false, bool newborn = false, bool allowDead = false, bool allowDowned = false, bool canGeneratePawnRelations = true, bool mustBeCapableOfViolence = false, float colonistRelationChanceFactor = 1f, bool forceAddFreeWarmLayerIfNeeded = false, bool allowGay = true, bool allowFood = true, bool inhabitant = false, bool certainlyBeenInCryptosleep = false, bool forceRedressWorldPawnIfFormerColonist = false, bool worldPawnFactionDoesntMatter = false, Predicate<Pawn> validator = null, float? minChanceToRedressWorldPawn = null, float? fixedBiologicalAge = null, float? fixedChronologicalAge = null, Gender? fixedGender = null, float? fixedMelanin = null, string fixedLastName = null)
+		public PawnGenerationRequest(PawnKindDef kind, Faction faction = null, PawnGenerationContext context = PawnGenerationContext.NonPlayer, int tile = -1, bool forceGenerateNewPawn = false, bool newborn = false, bool allowDead = false, bool allowDowned = false, bool canGeneratePawnRelations = true, bool mustBeCapableOfViolence = false, float colonistRelationChanceFactor = 1f, bool forceAddFreeWarmLayerIfNeeded = false, bool allowGay = true, bool allowFood = true, bool inhabitant = false, bool certainlyBeenInCryptosleep = false, bool forceRedressWorldPawnIfFormerColonist = false, bool worldPawnFactionDoesntMatter = false, Predicate<Pawn> validatorPreGear = null, Predicate<Pawn> validatorPostGear = null, float? minChanceToRedressWorldPawn = null, float? fixedBiologicalAge = null, float? fixedChronologicalAge = null, Gender? fixedGender = null, float? fixedMelanin = null, string fixedLastName = null)
 		{
 			this = default(PawnGenerationRequest);
 			if (context == PawnGenerationContext.All)
 			{
-				Log.Error("Should not generate pawns with context 'All'");
+				Log.Error("Should not generate pawns with context 'All'", false);
 				context = PawnGenerationContext.NonPlayer;
 			}
 			if (inhabitant && (tile == -1 || Current.Game.FindMap(tile) == null))
 			{
-				Log.Error("Trying to generate an inhabitant but map is null.");
+				Log.Error("Trying to generate an inhabitant but map is null.", false);
 				inhabitant = false;
 			}
 			this.KindDef = kind;
@@ -188,7 +194,8 @@ namespace Verse
 			this.CertainlyBeenInCryptosleep = certainlyBeenInCryptosleep;
 			this.ForceRedressWorldPawnIfFormerColonist = forceRedressWorldPawnIfFormerColonist;
 			this.WorldPawnFactionDoesntMatter = worldPawnFactionDoesntMatter;
-			this.Validator = validator;
+			this.ValidatorPreGear = validatorPreGear;
+			this.ValidatorPostGear = validatorPostGear;
 			this.MinChanceToRedressWorldPawn = minChanceToRedressWorldPawn;
 			this.FixedBiologicalAge = fixedBiologicalAge;
 			this.FixedChronologicalAge = fixedChronologicalAge;
@@ -197,26 +204,11 @@ namespace Verse
 			this.FixedLastName = fixedLastName;
 		}
 
-		public void EnsureNonNullFaction()
-		{
-			if (this.KindDef.RaceProps.Humanlike && this.Faction == null)
-			{
-				this.Faction = FactionUtility.DefaultFactionFrom(this.KindDef.defaultFactionType);
-				Log.Error(string.Concat(new object[]
-				{
-					"Tried to generate pawn of Humanlike race ",
-					this.KindDef,
-					" with null faction. Setting to ",
-					this.Faction
-				}));
-			}
-		}
-
 		public void SetFixedLastName(string fixedLastName)
 		{
 			if (this.FixedLastName != null)
 			{
-				Log.Error("Last name is already a fixed value: " + this.FixedLastName + ".");
+				Log.Error("Last name is already a fixed value: " + this.FixedLastName + ".", false);
 				return;
 			}
 			this.FixedLastName = fixedLastName;
@@ -226,7 +218,7 @@ namespace Verse
 		{
 			if (this.FixedMelanin.HasValue)
 			{
-				Log.Error("Melanin is already a fixed value: " + this.FixedMelanin + ".");
+				Log.Error("Melanin is already a fixed value: " + this.FixedMelanin + ".", false);
 				return;
 			}
 			this.FixedMelanin = new float?(fixedMelanin);
@@ -268,8 +260,10 @@ namespace Verse
 				this.Inhabitant,
 				", certainlyBeenInCryptosleep=",
 				this.CertainlyBeenInCryptosleep,
-				", validator=",
-				this.Validator,
+				", validatorPreGear=",
+				this.ValidatorPreGear,
+				", validatorPostGear=",
+				this.ValidatorPostGear,
 				", fixedBiologicalAge=",
 				this.FixedBiologicalAge,
 				", fixedChronologicalAge=",

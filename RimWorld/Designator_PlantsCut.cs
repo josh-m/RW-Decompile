@@ -11,21 +11,22 @@ namespace RimWorld
 			this.defaultLabel = "DesignatorCutPlants".Translate();
 			this.defaultDesc = "DesignatorCutPlantsDesc".Translate();
 			this.icon = ContentFinder<Texture2D>.Get("UI/Designators/CutPlants", true);
-			this.soundDragSustain = SoundDefOf.DesignateDragStandard;
-			this.soundDragChanged = SoundDefOf.DesignateDragStandardChanged;
+			this.soundDragSustain = SoundDefOf.Designate_DragStandard;
+			this.soundDragChanged = SoundDefOf.Designate_DragStandard_Changed;
 			this.useMouseIcon = true;
-			this.soundSucceeded = SoundDefOf.DesignateCutPlants;
+			this.soundSucceeded = SoundDefOf.Designate_CutPlants;
 			this.hotKey = KeyBindingDefOf.Misc3;
 			this.designationDef = DesignationDefOf.CutPlant;
 		}
 
-		public override Texture2D IconReverseDesignating(Thing t, out float angle)
+		public override Texture2D IconReverseDesignating(Thing t, out float angle, out Vector2 offset)
 		{
 			if (!t.def.plant.IsTree)
 			{
-				return base.IconReverseDesignating(t, out angle);
+				return base.IconReverseDesignating(t, out angle, out offset);
 			}
 			angle = 0f;
+			offset = default(Vector2);
 			return TexCommand.TreeChop;
 		}
 

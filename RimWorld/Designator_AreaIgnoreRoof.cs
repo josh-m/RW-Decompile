@@ -4,7 +4,7 @@ using Verse;
 
 namespace RimWorld
 {
-	public class Designator_AreaIgnoreRoof : Designator
+	public class Designator_AreaIgnoreRoof : Designator_Area
 	{
 		public override int DraggableDimensions
 		{
@@ -28,9 +28,9 @@ namespace RimWorld
 			this.defaultDesc = "DesignatorAreaIgnoreRoofExpandDesc".Translate();
 			this.icon = ContentFinder<Texture2D>.Get("UI/Designators/IgnoreRoofArea", true);
 			this.hotKey = KeyBindingDefOf.Misc11;
-			this.soundDragSustain = SoundDefOf.DesignateDragAreaAdd;
-			this.soundDragChanged = SoundDefOf.DesignateDragAreaAddChanged;
-			this.soundSucceeded = SoundDefOf.DesignateAreaAdd;
+			this.soundDragSustain = SoundDefOf.Designate_DragAreaAdd;
+			this.soundDragChanged = null;
+			this.soundSucceeded = SoundDefOf.Designate_AreaAdd;
 			this.useMouseIcon = true;
 		}
 

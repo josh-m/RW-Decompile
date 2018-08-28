@@ -32,8 +32,8 @@ namespace RimWorld
 				rectA.maxX = center.x + 2 + neDist + offset;
 				rectB.minX = center.x - 1 - swDist + offset;
 				rectB.maxX = center.x - 1 + offset;
-				rectB.minZ = (rectA.minZ = center.z - 2);
-				rectB.maxZ = (rectA.maxZ = center.z + 2);
+				rectB.minZ = (rectA.minZ = center.z - 3);
+				rectB.maxZ = (rectA.maxZ = center.z + 3);
 			}
 			else
 			{
@@ -41,8 +41,8 @@ namespace RimWorld
 				rectA.maxZ = center.z + 2 + neDist + offset;
 				rectB.minZ = center.z - 1 - swDist + offset;
 				rectB.maxZ = center.z - 1 + offset;
-				rectB.minX = (rectA.minX = center.x - 2);
-				rectB.maxX = (rectA.maxX = center.x + 2);
+				rectB.minX = (rectA.minX = center.x - 3);
+				rectB.maxX = (rectA.maxX = center.x + 3);
 			}
 			for (int z = rectA.minZ; z <= rectA.maxZ; z++)
 			{

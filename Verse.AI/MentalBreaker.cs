@@ -11,6 +11,8 @@ namespace Verse.AI
 	{
 		private Pawn pawn;
 
+		private int ticksUntilCanDoMentalBreak;
+
 		private int ticksBelowExtreme;
 
 		private int ticksBelowMajor;
@@ -19,13 +21,15 @@ namespace Verse.AI
 
 		private const int CheckInterval = 150;
 
-		private const float ExtremeBreakMTBDays = 0.7f;
+		private const float ExtremeBreakMTBDays = 0.6f;
 
-		private const float MajorBreakMTBDays = 3f;
+		private const float MajorBreakMTBDays = 1f;
 
-		private const float MinorBreakMTBDays = 10f;
+		private const float MinorBreakMTBDays = 5f;
 
-		private const int MinTicksBelowToBreak = 1500;
+		private const int MinTicksBelowToBreak = 2000;
+
+		private const int MinTicksSinceRecoveryToBreak = 15000;
 
 		private const float MajorBreakMoodSpan = 0.15f;
 
@@ -97,7 +101,7 @@ namespace Verse.AI
 			}
 		}
 
-		private float CurMood
+		public float CurMood
 		{
 			get
 			{
@@ -113,30 +117,22 @@ namespace Verse.AI
 		{
 			get
 			{
-				MentalBreakIntensity intensity = this.CurrentDesiredMoodBreakIntensity;
-				while (true)
+				MentalBreakIntensity intensity;
+				for (intensity = this.CurrentDesiredMoodBreakIntensity; intensity != MentalBreakIntensity.None; intensity = (MentalBreakIntensity)(intensity - MentalBreakIntensity.Minor))
 				{
 					IEnumerable<MentalBreakDef> breaks = from d in DefDatabase<MentalBreakDef>.AllDefsListForReading
 					where d.intensity == intensity && d.Worker.BreakCanOccur(this.$this.pawn)
 					select d;
-					bool yieldedOne = false;
+					bool yieldedAny = false;
 					foreach (MentalBreakDef b in breaks)
 					{
 						yield return b;
 					}
-					if (yieldedOne)
+					if (yieldedAny)
 					{
 						break;
 					}
-					if (intensity == MentalBreakIntensity.Minor)
-					{
-						goto Block_2;
-					}
-					intensity = (MentalBreakIntensity)(intensity - MentalBreakIntensity.Major);
 				}
-				return;
-				Block_2:
-				Log.ErrorOnce("No mental breaks possible for " + this.pawn, 888112);
 			}
 		}
 
@@ -144,20 +140,19 @@ namespace Verse.AI
 		{
 			get
 			{
-				if (this.ticksBelowExtreme >= 1500)
+				if (this.ticksBelowExtreme >= 2000)
 				{
 					return MentalBreakIntensity.Extreme;
 				}
-				if (this.ticksBelowMajor >= 1500)
+				if (this.ticksBelowMajor >= 2000)
 				{
 					return MentalBreakIntensity.Major;
 				}
-				if (this.ticksBelowMinor >= 1500)
+				if (this.ticksBelowMinor >= 2000)
 				{
 					return MentalBreakIntensity.Minor;
 				}
-				Log.ErrorOnce("Got CurrentDesiredBreakIntensity for " + this.pawn + " but he don't desire any break right now.", 123126);
-				return MentalBreakIntensity.Minor;
+				return MentalBreakIntensity.None;
 			}
 		}
 
@@ -174,10 +169,12 @@ namespace Verse.AI
 		{
 			this.ticksBelowExtreme = 0;
 			this.ticksBelowMajor = 0;
+			this.ticksBelowMinor = 0;
 		}
 
 		public void ExposeData()
 		{
+			Scribe_Values.Look<int>(ref this.ticksUntilCanDoMentalBreak, "ticksUntilCanDoMentalBreak", 0, false);
 			Scribe_Values.Look<int>(ref this.ticksBelowExtreme, "ticksBelowExtreme", 0, false);
 			Scribe_Values.Look<int>(ref this.ticksBelowMajor, "ticksBelowMajor", 0, false);
 			Scribe_Values.Look<int>(ref this.ticksBelowMinor, "ticksBelowMinor", 0, false);
@@ -185,6 +182,10 @@ namespace Verse.AI
 
 		public void MentalBreakerTick()
 		{
+			if (this.ticksUntilCanDoMentalBreak > 0 && this.pawn.Awake())
+			{
+				this.ticksUntilCanDoMentalBreak--;
+			}
 			if (this.CanDoRandomMentalBreaks && this.pawn.MentalStateDef == null && this.pawn.IsHashIntervalTick(150))
 			{
 				if (!DebugSettings.enableRandomMentalStates)
@@ -224,14 +225,9 @@ namespace Verse.AI
 					List<Trait> allTraits = this.pawn.story.traits.allTraits;
 					for (int i = 0; i < allTraits.Count; i++)
 					{
-						TraitDegreeData currentData = allTraits[i].CurrentData;
-						if (currentData.randomMentalState != null)
+						if (allTraits[i].CurrentData.MentalStateGiver.CheckGive(this.pawn, 150))
 						{
-							float mtb = currentData.randomMentalStateMtbDaysMoodCurve.Evaluate(this.CurMood);
-							if (Rand.MTBEventOccurs(mtb, 60000f, 150f) && currentData.randomMentalState.Worker.StateCanOccur(this.pawn) && this.pawn.mindState.mentalStateHandler.TryStartMentalState(currentData.randomMentalState, null, false, false, null))
-							{
-								return;
-							}
+							return;
 						}
 					}
 				}
@@ -240,15 +236,19 @@ namespace Verse.AI
 
 		private bool TestMoodMentalBreak()
 		{
-			if (this.ticksBelowExtreme > 1500)
+			if (this.ticksUntilCanDoMentalBreak > 0)
 			{
-				return Rand.MTBEventOccurs(0.7f, 60000f, 150f);
+				return false;
 			}
-			if (this.ticksBelowMajor > 1500)
+			if (this.ticksBelowExtreme > 2000)
 			{
-				return Rand.MTBEventOccurs(3f, 60000f, 150f);
+				return Rand.MTBEventOccurs(0.6f, 60000f, 150f);
 			}
-			return this.ticksBelowMinor > 1500 && Rand.MTBEventOccurs(10f, 60000f, 150f);
+			if (this.ticksBelowMajor > 2000)
+			{
+				return Rand.MTBEventOccurs(1f, 60000f, 150f);
+			}
+			return this.ticksBelowMinor > 2000 && Rand.MTBEventOccurs(5f, 60000f, 150f);
 		}
 
 		public bool TryDoRandomMoodCausedMentalBreak()
@@ -291,6 +291,11 @@ namespace Verse.AI
 			return result;
 		}
 
+		public void Notify_RecoveredFromMentalState()
+		{
+			this.ticksUntilCanDoMentalBreak = 15000;
+		}
+
 		public float MentalBreakThresholdFor(MentalBreakIntensity intensity)
 		{
 			if (intensity == MentalBreakIntensity.Extreme)
@@ -312,27 +317,32 @@ namespace Verse.AI
 		{
 			StringBuilder stringBuilder = new StringBuilder();
 			stringBuilder.AppendLine(this.pawn.ToString());
+			stringBuilder.AppendLine("   ticksUntilCanDoMentalBreak=" + this.ticksUntilCanDoMentalBreak);
 			stringBuilder.AppendLine(string.Concat(new object[]
 			{
 				"   ticksBelowExtreme=",
 				this.ticksBelowExtreme,
 				"/",
-				1500
+				2000
 			}));
 			stringBuilder.AppendLine(string.Concat(new object[]
 			{
 				"   ticksBelowSerious=",
 				this.ticksBelowMajor,
 				"/",
-				1500
+				2000
 			}));
 			stringBuilder.AppendLine(string.Concat(new object[]
 			{
 				"   ticksBelowMinor=",
 				this.ticksBelowMinor,
 				"/",
-				1500
+				2000
 			}));
+			stringBuilder.AppendLine();
+			stringBuilder.AppendLine("Current desired mood break intensity: " + this.CurrentDesiredMoodBreakIntensity.ToString());
+			stringBuilder.AppendLine();
+			stringBuilder.AppendLine("Current possible mood breaks:");
 			float num = (from d in this.CurrentPossibleMoodBreaks
 			select d.Worker.CommonalityFor(this.pawn)).Sum();
 			foreach (MentalBreakDef current in this.CurrentPossibleMoodBreaks)
@@ -342,8 +352,8 @@ namespace Verse.AI
 				{
 					"   ",
 					current,
-					" ",
-					(num2 / num).ToStringPercent("F4")
+					"     ",
+					(num2 / num).ToStringPercent()
 				}));
 			}
 			return stringBuilder.ToString();
@@ -358,7 +368,7 @@ namespace Verse.AI
 			{
 				stringBuilder.AppendLine("  " + current);
 			}
-			Log.Message(stringBuilder.ToString());
+			Log.Message(stringBuilder.ToString(), false);
 		}
 	}
 }

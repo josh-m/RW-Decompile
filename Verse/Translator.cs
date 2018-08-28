@@ -8,7 +8,21 @@ namespace Verse
 	{
 		public static bool CanTranslate(this string key)
 		{
-			return LanguageDatabase.activeLanguage.HaveTextForKey(key);
+			return LanguageDatabase.activeLanguage.HaveTextForKey(key, false);
+		}
+
+		public static string TranslateWithBackup(this string key, string backupKey)
+		{
+			string result;
+			if (key.TryTranslate(out result))
+			{
+				return result;
+			}
+			if (key.TryTranslate(out backupKey))
+			{
+				return result;
+			}
+			return key.Translate();
 		}
 
 		public static bool TryTranslate(this string key, out string result)
@@ -20,12 +34,13 @@ namespace Verse
 			}
 			if (LanguageDatabase.activeLanguage == null)
 			{
-				Log.Error("No active language! Cannot translate from key " + key + ".");
+				Log.Error("No active language! Cannot translate from key " + key + ".", false);
 				result = key;
 				return true;
 			}
 			if (LanguageDatabase.activeLanguage.TryGetTextFromKey(key, out result))
 			{
+				result = Find.ActiveLanguageWorker.PostProcessedKeyedTranslation(result, key, new object[0]);
 				return true;
 			}
 			result = key;
@@ -34,17 +49,8 @@ namespace Verse
 
 		public static string Translate(this string key)
 		{
-			if (key.NullOrEmpty())
-			{
-				return key;
-			}
-			if (LanguageDatabase.activeLanguage == null)
-			{
-				Log.Error("No active language! Cannot translate from key " + key + ".");
-				return key;
-			}
 			string text;
-			if (LanguageDatabase.activeLanguage.TryGetTextFromKey(key, out text))
+			if (key.TryTranslate(out text))
 			{
 				return text;
 			}
@@ -53,18 +59,18 @@ namespace Verse
 			{
 				text = Translator.PseudoTranslated(text);
 			}
-			return text;
+			return Find.ActiveLanguageWorker.PostProcessedKeyedTranslation(text, key, new object[0]);
 		}
 
 		public static string Translate(this string key, params object[] args)
 		{
-			if (key == null || key == string.Empty)
+			if (key.NullOrEmpty())
 			{
 				return key;
 			}
 			if (LanguageDatabase.activeLanguage == null)
 			{
-				Log.Error("No active language! Cannot translate from key " + key + ".");
+				Log.Error("No active language! Cannot translate from key " + key + ".", false);
 				return key;
 			}
 			string text;
@@ -76,23 +82,29 @@ namespace Verse
 					text = Translator.PseudoTranslated(text);
 				}
 			}
-			string result = text;
+			string translation = text;
 			try
 			{
-				result = string.Format(text, args);
+				translation = string.Format(text, args);
 			}
 			catch (Exception ex)
 			{
-				Log.Error("Exception translating '" + text + "': " + ex.ToString());
+				Log.ErrorOnce(string.Concat(new object[]
+				{
+					"Exception translating '",
+					text,
+					"': ",
+					ex
+				}), Gen.HashCombineInt(key.GetHashCode(), 394878901), false);
 			}
-			return result;
+			return Find.ActiveLanguageWorker.PostProcessedKeyedTranslation(translation, key, args);
 		}
 
 		public static bool TryGetTranslatedStringsForFile(string fileName, out List<string> stringList)
 		{
 			if (!LanguageDatabase.activeLanguage.TryGetStringsFromFile(fileName, out stringList) && !LanguageDatabase.defaultLanguage.TryGetStringsFromFile(fileName, out stringList))
 			{
-				Log.Error("No string files for " + fileName + ".");
+				Log.Error("No string files for " + fileName + ".", false);
 				return false;
 			}
 			return true;

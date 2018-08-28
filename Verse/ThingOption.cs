@@ -23,7 +23,7 @@ namespace Verse
 		{
 			if (xmlRoot.ChildNodes.Count != 1)
 			{
-				Log.Error("Misconfigured ThingOption: " + xmlRoot.OuterXml);
+				Log.Error("Misconfigured ThingOption: " + xmlRoot.OuterXml, false);
 				return;
 			}
 			DirectXmlCrossRefLoader.RegisterObjectWantsCrossRef(this, "thingDef", xmlRoot.Name);

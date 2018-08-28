@@ -13,13 +13,13 @@ namespace Verse
 				return;
 			}
 			CellRect currentViewRect = Find.CameraDriver.CurrentViewRect;
-			List<Thing> list = Find.VisibleMap.listerThings.ThingsInGroup(ThingRequestGroup.HasGUIOverlay);
+			List<Thing> list = Find.CurrentMap.listerThings.ThingsInGroup(ThingRequestGroup.HasGUIOverlay);
 			for (int i = 0; i < list.Count; i++)
 			{
 				Thing thing = list[i];
 				if (currentViewRect.Contains(thing.Position))
 				{
-					if (!Find.VisibleMap.fogGrid.IsFogged(thing.Position))
+					if (!Find.CurrentMap.fogGrid.IsFogged(thing.Position))
 					{
 						try
 						{
@@ -33,7 +33,7 @@ namespace Verse
 								thing,
 								": ",
 								ex
-							}));
+							}), false);
 						}
 					}
 				}

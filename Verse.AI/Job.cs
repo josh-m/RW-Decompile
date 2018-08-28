@@ -33,7 +33,7 @@ namespace Verse.AI
 
 		public bool playerForced;
 
-		public List<ThingStackPartClass> placedThings;
+		public List<ThingCountClass> placedThings;
 
 		public int maxNumMeleeAttacks = 2147483647;
 
@@ -89,13 +89,19 @@ namespace Verse.AI
 
 		public bool endIfCantShootTargetFromCurPos;
 
+		public bool checkEncumbrance;
+
+		public float followRadius;
+
+		public bool endAfterTendedOnce;
+
 		private JobDriver cachedDriver;
 
 		public RecipeDef RecipeDef
 		{
 			get
 			{
-				return this.bill.recipe;
+				return (this.bill == null) ? null : this.bill.recipe;
 			}
 		}
 
@@ -226,7 +232,7 @@ namespace Verse.AI
 			Scribe_Values.Look<int>(ref this.expiryInterval, "expiryInterval", -1, false);
 			Scribe_Values.Look<bool>(ref this.checkOverrideOnExpire, "checkOverrideOnExpire", false, false);
 			Scribe_Values.Look<bool>(ref this.playerForced, "playerForced", false, false);
-			Scribe_Collections.Look<ThingStackPartClass>(ref this.placedThings, "placedThings", LookMode.Undefined, new object[0]);
+			Scribe_Collections.Look<ThingCountClass>(ref this.placedThings, "placedThings", LookMode.Undefined, new object[0]);
 			Scribe_Values.Look<int>(ref this.maxNumMeleeAttacks, "maxNumMeleeAttacks", 2147483647, false);
 			Scribe_Values.Look<int>(ref this.maxNumStaticAttacks, "maxNumStaticAttacks", 2147483647, false);
 			Scribe_Values.Look<bool>(ref this.exitMapOnArrival, "exitMapOnArrival", false, false);
@@ -249,6 +255,14 @@ namespace Verse.AI
 			Scribe_Values.Look<bool>(ref this.forceSleep, "forceSleep", false, false);
 			Scribe_Defs.Look<InteractionDef>(ref this.interaction, "interaction");
 			Scribe_Values.Look<bool>(ref this.endIfCantShootTargetFromCurPos, "endIfCantShootTargetFromCurPos", false, false);
+			Scribe_Values.Look<bool>(ref this.checkEncumbrance, "checkEncumbrance", false, false);
+			Scribe_Values.Look<float>(ref this.followRadius, "followRadius", 0f, false);
+			Scribe_Values.Look<bool>(ref this.endAfterTendedOnce, "endAfterTendedOnce", false, false);
+			if (Scribe.mode == LoadSaveMode.PostLoadInit && this.verbToUse != null && this.verbToUse.BuggedAfterLoading)
+			{
+				this.verbToUse = null;
+				Log.Warning(base.GetType() + " had a bugged verbToUse after loading.", false);
+			}
 		}
 
 		public JobDriver MakeDriver(Pawn driverPawn)
@@ -259,7 +273,7 @@ namespace Verse.AI
 			return jobDriver;
 		}
 
-		private JobDriver GetCachedDriver(Pawn driverPawn)
+		public JobDriver GetCachedDriver(Pawn driverPawn)
 		{
 			if (this.cachedDriver == null)
 			{
@@ -275,14 +289,14 @@ namespace Verse.AI
 					this.cachedDriver.pawn.ToStringSafe<Pawn>(),
 					", second pawn=",
 					driverPawn.ToStringSafe<Pawn>()
-				}));
+				}), false);
 			}
 			return this.cachedDriver;
 		}
 
-		public bool TryMakePreToilReservations(Pawn driverPawn)
+		public bool TryMakePreToilReservations(Pawn driverPawn, bool errorOnFailed)
 		{
-			return this.GetCachedDriver(driverPawn).TryMakePreToilReservations();
+			return this.GetCachedDriver(driverPawn).TryMakePreToilReservations(errorOnFailed);
 		}
 
 		public string GetReport(Pawn driverPawn)

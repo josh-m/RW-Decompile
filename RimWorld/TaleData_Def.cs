@@ -25,7 +25,7 @@ namespace RimWorld
 			Scribe_Values.Look<Type>(ref this.tmpDefType, "defType", null, false);
 			if (Scribe.mode == LoadSaveMode.LoadingVars && this.tmpDefName != null)
 			{
-				this.def = GenDefDatabase.GetDef(this.tmpDefType, this.tmpDefName, true);
+				this.def = GenDefDatabase.GetDef(this.tmpDefType, BackCompatibility.BackCompatibleDefName(this.tmpDefType, this.tmpDefName, false), true);
 			}
 		}
 
@@ -35,8 +35,8 @@ namespace RimWorld
 			if (this.def != null)
 			{
 				yield return new Rule_String(prefix + "_label", this.def.label);
-				yield return new Rule_String(prefix + "_labelDefinite", Find.ActiveLanguageWorker.WithDefiniteArticle(this.def.label));
-				yield return new Rule_String(prefix + "_labelIndefinite", Find.ActiveLanguageWorker.WithIndefiniteArticle(this.def.label));
+				yield return new Rule_String(prefix + "_definite", Find.ActiveLanguageWorker.WithDefiniteArticle(this.def.label));
+				yield return new Rule_String(prefix + "_indefinite", Find.ActiveLanguageWorker.WithIndefiniteArticle(this.def.label));
 			}
 		}
 

@@ -27,5 +27,10 @@ namespace RimWorld
 			}
 			return new Job(this.def.jobDef, c2);
 		}
+
+		public override Job TryGiveJobWhileInBed(Pawn pawn)
+		{
+			return new Job(this.def.jobDef, pawn.CurrentBed());
+		}
 	}
 }

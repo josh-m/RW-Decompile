@@ -6,10 +6,13 @@ namespace RimWorld
 {
 	public class InteractionWorker_Nuzzle : InteractionWorker
 	{
-		public override void Interacted(Pawn initiator, Pawn recipient, List<RulePackDef> extraSentencePacks)
+		public override void Interacted(Pawn initiator, Pawn recipient, List<RulePackDef> extraSentencePacks, out string letterText, out string letterLabel, out LetterDef letterDef)
 		{
 			this.AddNuzzledThought(initiator, recipient);
 			this.TryGiveName(initiator, recipient);
+			letterText = null;
+			letterLabel = null;
+			letterDef = null;
 		}
 
 		private void AddNuzzledThought(Pawn initiator, Pawn recipient)

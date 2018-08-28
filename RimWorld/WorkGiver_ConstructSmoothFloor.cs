@@ -14,7 +14,7 @@ namespace RimWorld
 			}
 		}
 
-		public override Job JobOnCell(Pawn pawn, IntVec3 c)
+		public override Job JobOnCell(Pawn pawn, IntVec3 c, bool forced = false)
 		{
 			return new Job(JobDefOf.SmoothFloor, c);
 		}

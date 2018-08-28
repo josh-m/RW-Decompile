@@ -26,6 +26,19 @@ namespace RimWorld
 			}
 		}
 
+		public override string DescriptionDetailed
+		{
+			get
+			{
+				string text = base.DescriptionDetailed;
+				if (this.WornByCorpse)
+				{
+					text = text + "\n" + "WasWornByCorpse".Translate();
+				}
+				return text;
+			}
+		}
+
 		public void Notify_PawnKilled()
 		{
 			if (this.def.apparel.careIfWornByCorpse)
@@ -54,7 +67,7 @@ namespace RimWorld
 			return false;
 		}
 
-		public virtual bool AllowVerbCast(IntVec3 root, Map map, LocalTargetInfo targ)
+		public virtual bool AllowVerbCast(IntVec3 root, Map map, LocalTargetInfo targ, Verb verb)
 		{
 			return true;
 		}

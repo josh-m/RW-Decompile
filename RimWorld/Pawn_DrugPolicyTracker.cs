@@ -111,7 +111,7 @@ namespace RimWorld
 		{
 			if (!drug.IsDrug)
 			{
-				Log.Warning(drug + " is not a drug.");
+				Log.Warning(drug + " is not a drug.", false);
 				return false;
 			}
 			return this.drugTakeRecords.Any((DrugTakeRecord x) => x.drug == drug);
@@ -121,12 +121,12 @@ namespace RimWorld
 		{
 			if (!thingDef.IsIngestible)
 			{
-				Log.Error(thingDef + " is not ingestible.");
+				Log.Error(thingDef + " is not ingestible.", false);
 				return false;
 			}
 			if (!thingDef.IsDrug)
 			{
-				Log.Error("AllowedToTakeScheduledEver on non-drug " + thingDef);
+				Log.Error("AllowedToTakeScheduledEver on non-drug " + thingDef, false);
 				return false;
 			}
 			DrugPolicyEntry drugPolicyEntry = this.CurrentPolicy[thingDef];
@@ -137,12 +137,12 @@ namespace RimWorld
 		{
 			if (!thingDef.IsIngestible)
 			{
-				Log.Error(thingDef + " is not ingestible.");
+				Log.Error(thingDef + " is not ingestible.", false);
 				return false;
 			}
 			if (!thingDef.IsDrug)
 			{
-				Log.Error("AllowedToTakeScheduledEver on non-drug " + thingDef);
+				Log.Error("AllowedToTakeScheduledEver on non-drug " + thingDef, false);
 				return false;
 			}
 			if (!this.AllowedToTakeScheduledEver(thingDef))

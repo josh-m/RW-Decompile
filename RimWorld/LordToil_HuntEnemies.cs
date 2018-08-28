@@ -15,6 +15,14 @@ namespace RimWorld
 			}
 		}
 
+		public override bool ForceHighStoryDanger
+		{
+			get
+			{
+				return true;
+			}
+		}
+
 		public LordToil_HuntEnemies(IntVec3 fallbackLocation)
 		{
 			this.data = new LordToilData_HuntEnemies();

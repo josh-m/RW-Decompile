@@ -46,7 +46,7 @@ namespace RimWorld
 			{
 				return false;
 			}
-			return this.HypothermicAnimals.FirstOrDefault<Pawn>();
+			return AlertReport.CulpritsAre(this.HypothermicAnimals);
 		}
 	}
 }

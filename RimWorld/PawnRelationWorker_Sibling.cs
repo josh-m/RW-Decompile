@@ -121,7 +121,7 @@ namespace RimWorld
 				bool tryMedievalOrBetter = faction != null && faction.def.techLevel >= TechLevel.Medieval;
 				if (!Find.FactionManager.TryGetRandomNonColonyHumanlikeFaction(out faction, tryMedievalOrBetter, true, TechLevel.Undefined))
 				{
-					faction = Faction.OfSpacer;
+					faction = Faction.OfAncients;
 				}
 			}
 			PawnKindDef kindDef = existingChild.kindDef;
@@ -133,7 +133,7 @@ namespace RimWorld
 			Gender? fixedGender = new Gender?(genderToGenerate);
 			float? fixedMelanin = new float?(value3);
 			string fixedLastName = last;
-			PawnGenerationRequest request = new PawnGenerationRequest(kindDef, faction2, PawnGenerationContext.NonPlayer, -1, forceGenerateNewPawn, false, allowDead, allowDowned, canGeneratePawnRelations, false, 1f, false, allowGay, true, false, false, false, false, null, null, new float?(value), new float?(value2), fixedGender, fixedMelanin, fixedLastName);
+			PawnGenerationRequest request = new PawnGenerationRequest(kindDef, faction2, PawnGenerationContext.NonPlayer, -1, forceGenerateNewPawn, false, allowDead, allowDowned, canGeneratePawnRelations, false, 1f, false, allowGay, true, false, false, false, false, null, null, null, new float?(value), new float?(value2), fixedGender, fixedMelanin, fixedLastName);
 			Pawn pawn = PawnGenerator.GeneratePawn(request);
 			if (!Find.WorldPawns.Contains(pawn))
 			{

@@ -12,6 +12,8 @@ namespace Verse
 
 		private List<IPlantToGrowSettable> settables;
 
+		private static List<ThingDef> tmpAvailablePlants = new List<ThingDef>();
+
 		private static readonly Texture2D SetPlantToGrowTex = ContentFinder<Texture2D>.Get("UI/Commands/SetPlantToGrow", true);
 
 		public Command_SetPlantToGrow()
@@ -41,9 +43,10 @@ namespace Verse
 			{
 				this.icon = thingDef.uiIcon;
 				this.iconAngle = thingDef.uiIconAngle;
+				this.iconOffset = thingDef.uiIconOffset;
 				this.defaultLabel = "CommandSelectPlantToGrow".Translate(new object[]
 				{
-					thingDef.label
+					thingDef.LabelCap
 				});
 			}
 		}
@@ -60,41 +63,63 @@ namespace Verse
 			{
 				this.settables.Add(this.settable);
 			}
-			foreach (ThingDef current in GenPlant.ValidPlantTypesForGrowers(this.settables))
+			Command_SetPlantToGrow.tmpAvailablePlants.Clear();
+			foreach (ThingDef current in PlantUtility.ValidPlantTypesForGrowers(this.settables))
 			{
-				if (this.IsPlantAvailable(current))
+				if (this.IsPlantAvailable(current, this.settable.Map))
 				{
-					ThingDef localPlantDef = current;
-					string text = current.LabelCap;
-					if (current.plant.sowMinSkill > 0)
-					{
-						string text2 = text;
-						text = string.Concat(new object[]
-						{
-							text2,
-							" (",
-							"MinSkill".Translate(),
-							": ",
-							current.plant.sowMinSkill,
-							")"
-						});
-					}
-					list.Add(new FloatMenuOption(text, delegate
-					{
-						string s = this.tutorTag + "-" + localPlantDef.defName;
-						if (!TutorSystem.AllowAction(s))
-						{
-							return;
-						}
-						for (int i = 0; i < this.settables.Count; i++)
-						{
-							this.settables[i].SetPlantDefToGrow(localPlantDef);
-						}
-						PlayerKnowledgeDatabase.KnowledgeDemonstrated(ConceptDefOf.SetGrowingZonePlant, KnowledgeAmount.Total);
-						this.WarnAsAppropriate(localPlantDef);
-						TutorSystem.Notify_Event(s);
-					}, MenuOptionPriority.Default, null, null, 29f, (Rect rect) => Widgets.InfoCardButton(rect.x + 5f, rect.y + (rect.height - 24f) / 2f, localPlantDef), null));
+					Command_SetPlantToGrow.tmpAvailablePlants.Add(current);
 				}
+			}
+			Command_SetPlantToGrow.tmpAvailablePlants.SortBy((ThingDef x) => -this.GetPlantListPriority(x), (ThingDef x) => x.label);
+			for (int i = 0; i < Command_SetPlantToGrow.tmpAvailablePlants.Count; i++)
+			{
+				ThingDef plantDef = Command_SetPlantToGrow.tmpAvailablePlants[i];
+				string text = plantDef.LabelCap;
+				if (plantDef.plant.sowMinSkill > 0)
+				{
+					string text2 = text;
+					text = string.Concat(new object[]
+					{
+						text2,
+						" (",
+						"MinSkill".Translate(),
+						": ",
+						plantDef.plant.sowMinSkill,
+						")"
+					});
+				}
+				list.Add(new FloatMenuOption(text, delegate
+				{
+					string s = this.tutorTag + "-" + plantDef.defName;
+					if (!TutorSystem.AllowAction(s))
+					{
+						return;
+					}
+					bool flag = true;
+					for (int j = 0; j < this.settables.Count; j++)
+					{
+						this.settables[j].SetPlantDefToGrow(plantDef);
+						if (flag && plantDef.plant.interferesWithRoof)
+						{
+							foreach (IntVec3 current2 in this.settables[j].Cells)
+							{
+								if (current2.Roofed(this.settables[j].Map))
+								{
+									Messages.Message("MessagePlantIncompatibleWithRoof".Translate(new object[]
+									{
+										Find.ActiveLanguageWorker.Pluralize(plantDef.LabelCap, -1)
+									}), MessageTypeDefOf.CautionInput, false);
+									flag = false;
+									break;
+								}
+							}
+						}
+					}
+					PlayerKnowledgeDatabase.KnowledgeDemonstrated(ConceptDefOf.SetGrowingZonePlant, KnowledgeAmount.Total);
+					this.WarnAsAppropriate(plantDef);
+					TutorSystem.Notify_Event(s);
+				}, MenuOptionPriority.Default, null, null, 29f, (Rect rect) => Widgets.InfoCardButton(rect.x + 5f, rect.y + (rect.height - 24f) / 2f, plantDef), null));
 			}
 			Find.WindowStack.Add(new FloatMenu(list));
 		}
@@ -115,7 +140,7 @@ namespace Verse
 			{
 				foreach (Pawn current in this.settable.Map.mapPawns.FreeColonistsSpawned)
 				{
-					if (current.skills.GetSkill(SkillDefOf.Growing).Level >= plantDef.plant.sowMinSkill && !current.Downed && current.workSettings.WorkIsActive(WorkTypeDefOf.Growing))
+					if (current.skills.GetSkill(SkillDefOf.Plants).Level >= plantDef.plant.sowMinSkill && !current.Downed && current.workSettings.WorkIsActive(WorkTypeDefOf.Growing))
 					{
 						return;
 					}
@@ -124,7 +149,7 @@ namespace Verse
 				{
 					plantDef.label,
 					plantDef.plant.sowMinSkill
-				}).CapitalizeFirst(), null, null, null, null, null, false));
+				}).CapitalizeFirst(), null, null, null, null, null, false, null, null));
 			}
 			if (plantDef.plant.cavePlant)
 			{
@@ -148,13 +173,13 @@ namespace Verse
 				{
 					Messages.Message("MessageWarningCavePlantsExposedToLight".Translate(new object[]
 					{
-						plantDef.label
-					}).CapitalizeFirst(), new TargetInfo(cell, this.settable.Map, false), MessageTypeDefOf.RejectInput);
+						plantDef.LabelCap
+					}).CapitalizeFirst(), new TargetInfo(cell, this.settable.Map, false), MessageTypeDefOf.RejectInput, true);
 				}
 			}
 		}
 
-		private bool IsPlantAvailable(ThingDef plantDef)
+		private bool IsPlantAvailable(ThingDef plantDef, Map map)
 		{
 			List<ResearchProjectDef> sowResearchPrerequisites = plantDef.plant.sowResearchPrerequisites;
 			if (sowResearchPrerequisites == null)
@@ -168,7 +193,28 @@ namespace Verse
 					return false;
 				}
 			}
-			return true;
+			return !plantDef.plant.mustBeWildToSow || map.Biome.AllWildPlants.Contains(plantDef);
+		}
+
+		private float GetPlantListPriority(ThingDef plantDef)
+		{
+			if (plantDef.plant.IsTree)
+			{
+				return 1f;
+			}
+			switch (plantDef.plant.purpose)
+			{
+			case PlantPurpose.Food:
+				return 4f;
+			case PlantPurpose.Health:
+				return 3f;
+			case PlantPurpose.Beauty:
+				return 2f;
+			case PlantPurpose.Misc:
+				return 0f;
+			default:
+				return 0f;
+			}
 		}
 	}
 }

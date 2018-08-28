@@ -22,6 +22,8 @@ namespace Verse
 
 		public float iconDrawScale = 1f;
 
+		public Vector2 iconOffset;
+
 		public Color defaultIconColor = Color.white;
 
 		public KeyBindingDef hotKey;
@@ -82,14 +84,6 @@ namespace Verse
 			}
 		}
 
-		public override float Width
-		{
-			get
-			{
-				return 75f;
-			}
-		}
-
 		public virtual string HighlightTag
 		{
 			get
@@ -106,24 +100,36 @@ namespace Verse
 			}
 		}
 
-		public override GizmoResult GizmoOnGUI(Vector2 topLeft)
+		public override float GetWidth(float maxWidth)
 		{
-			Rect rect = new Rect(topLeft.x, topLeft.y, this.Width, 75f);
+			return 75f;
+		}
+
+		public override GizmoResult GizmoOnGUI(Vector2 topLeft, float maxWidth)
+		{
+			Text.Font = GameFont.Tiny;
+			Rect rect = new Rect(topLeft.x, topLeft.y, this.GetWidth(maxWidth), 75f);
 			bool flag = false;
 			if (Mouse.IsOver(rect))
 			{
 				flag = true;
-				GUI.color = GenUI.MouseoverColor;
+				if (!this.disabled)
+				{
+					GUI.color = GenUI.MouseoverColor;
+				}
 			}
 			Texture2D badTex = this.icon;
 			if (badTex == null)
 			{
 				badTex = BaseContent.BadTex;
 			}
-			GUI.DrawTexture(rect, Command.BGTex);
-			MouseoverSounds.DoRegion(rect, SoundDefOf.MouseoverCommand);
+			Material material = (!this.disabled) ? null : TexUI.GrayscaleGUI;
+			GenUI.DrawTextureWithMaterial(rect, Command.BGTex, material, default(Rect));
+			MouseoverSounds.DoRegion(rect, SoundDefOf.Mouseover_Command);
+			Rect outerRect = rect;
+			outerRect.position += new Vector2(this.iconOffset.x * outerRect.size.x, this.iconOffset.y * outerRect.size.y);
 			GUI.color = this.IconDrawColor;
-			Widgets.DrawTextureFitted(rect, badTex, this.iconDrawScale * 0.85f, this.iconProportions, this.iconTexCoords, this.iconAngle);
+			Widgets.DrawTextureFitted(outerRect, badTex, this.iconDrawScale * 0.85f, this.iconProportions, this.iconTexCoords, this.iconAngle, material);
 			GUI.color = Color.white;
 			bool flag2 = false;
 			KeyCode keyCode = (this.hotKey != null) ? this.hotKey.MainKey : KeyCode.None;
@@ -176,22 +182,31 @@ namespace Verse
 			{
 				UIHighlighter.HighlightOpportunity(rect, this.HighlightTag);
 			}
+			Text.Font = GameFont.Small;
 			if (flag2)
 			{
 				if (this.disabled)
 				{
 					if (!this.disabledReason.NullOrEmpty())
 					{
-						Messages.Message(this.disabledReason, MessageTypeDefOf.RejectInput);
+						Messages.Message(this.disabledReason, MessageTypeDefOf.RejectInput, false);
 					}
 					return new GizmoResult(GizmoState.Mouseover, null);
 				}
-				if (!TutorSystem.AllowAction(this.TutorTagSelect))
+				GizmoResult result;
+				if (Event.current.button == 1)
 				{
-					return new GizmoResult(GizmoState.Mouseover, null);
+					result = new GizmoResult(GizmoState.OpenedFloatMenu, Event.current);
 				}
-				GizmoResult result = new GizmoResult(GizmoState.Interacted, Event.current);
-				TutorSystem.Notify_Event(this.TutorTagSelect);
+				else
+				{
+					if (!TutorSystem.AllowAction(this.TutorTagSelect))
+					{
+						return new GizmoResult(GizmoState.Mouseover, null);
+					}
+					result = new GizmoResult(GizmoState.Interacted, Event.current);
+					TutorSystem.Notify_Event(this.TutorTagSelect);
+				}
 				return result;
 			}
 			else
@@ -216,14 +231,6 @@ namespace Verse
 			{
 				this.CurActivateSound.PlayOneShotOnCamera(null);
 			}
-		}
-
-		public override int GetHashCode()
-		{
-			int seed = 0;
-			seed = Gen.HashCombine<KeyBindingDef>(seed, this.hotKey);
-			seed = Gen.HashCombine<Texture2D>(seed, this.icon);
-			return Gen.HashCombine<string>(seed, this.defaultDesc);
 		}
 
 		public override string ToString()

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using Verse;
 
@@ -62,15 +63,15 @@ namespace RimWorld
 
 		protected override void FillTab()
 		{
-			IStoreSettingsParent selStoreSettingsParent = this.SelStoreSettingsParent;
-			StorageSettings settings = selStoreSettingsParent.GetStoreSettings();
+			IStoreSettingsParent storeSettingsParent = this.SelStoreSettingsParent;
+			StorageSettings settings = storeSettingsParent.GetStoreSettings();
 			Rect position = new Rect(0f, 0f, ITab_Storage.WinSize.x, ITab_Storage.WinSize.y).ContractedBy(10f);
 			GUI.BeginGroup(position);
 			if (this.IsPrioritySettingVisible)
 			{
 				Text.Font = GameFont.Small;
 				Rect rect = new Rect(0f, 0f, 160f, this.TopAreaHeight - 6f);
-				if (Widgets.ButtonText(rect, "Priority".Translate() + ": " + settings.Priority.Label(), true, false, true))
+				if (Widgets.ButtonText(rect, "Priority".Translate() + ": " + settings.Priority.Label().CapitalizeFirst(), true, false, true))
 				{
 					List<FloatMenuOption> list = new List<FloatMenuOption>();
 					foreach (StoragePriority storagePriority in Enum.GetValues(typeof(StoragePriority)))
@@ -89,12 +90,28 @@ namespace RimWorld
 				UIHighlighter.HighlightOpportunity(rect, "StoragePriority");
 			}
 			ThingFilter parentFilter = null;
-			if (selStoreSettingsParent.GetParentStoreSettings() != null)
+			if (storeSettingsParent.GetParentStoreSettings() != null)
 			{
-				parentFilter = selStoreSettingsParent.GetParentStoreSettings().filter;
+				parentFilter = storeSettingsParent.GetParentStoreSettings().filter;
 			}
 			Rect rect2 = new Rect(0f, this.TopAreaHeight, position.width, position.height - this.TopAreaHeight);
-			ThingFilterUI.DoThingFilterConfigWindow(rect2, ref this.scrollPosition, settings.filter, parentFilter, 8, null, null, null);
+			Bill[] first = (from b in BillUtility.GlobalBills()
+			where b is Bill_Production && b.GetStoreZone() == storeSettingsParent && b.recipe.WorkerCounter.CanPossiblyStoreInStockpile((Bill_Production)b, b.GetStoreZone())
+			select b).ToArray<Bill>();
+			ThingFilterUI.DoThingFilterConfigWindow(rect2, ref this.scrollPosition, settings.filter, parentFilter, 8, null, null, null, null);
+			Bill[] second = (from b in BillUtility.GlobalBills()
+			where b is Bill_Production && b.GetStoreZone() == storeSettingsParent && b.recipe.WorkerCounter.CanPossiblyStoreInStockpile((Bill_Production)b, b.GetStoreZone())
+			select b).ToArray<Bill>();
+			IEnumerable<Bill> enumerable = first.Except(second);
+			foreach (Bill current in enumerable)
+			{
+				Messages.Message("MessageBillValidationStoreZoneInsufficient".Translate(new object[]
+				{
+					current.LabelCap,
+					current.billStack.billGiver.LabelShort.CapitalizeFirst(),
+					current.GetStoreZone().label
+				}), current.billStack.billGiver as Thing, MessageTypeDefOf.RejectInput, false);
+			}
 			PlayerKnowledgeDatabase.KnowledgeDemonstrated(ConceptDefOf.StorageTab, KnowledgeAmount.FrameDisplayed);
 			GUI.EndGroup();
 		}

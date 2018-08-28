@@ -43,7 +43,7 @@ namespace RimWorld
 					{
 						bool flag = false;
 						Building building = null;
-						if (WatchBuildingUtility.EverPossibleToWatchFrom(intVec2, toWatch.Position, toWatch.Map, false) && !intVec2.IsForbidden(pawn) && pawn.CanReserve(intVec2, 1, -1, null, false) && pawn.Map.pawnDestinationReservationManager.CanReserve(intVec2, pawn))
+						if (WatchBuildingUtility.EverPossibleToWatchFrom(intVec2, toWatch.Position, toWatch.Map, false) && !intVec2.IsForbidden(pawn) && pawn.CanReserve(intVec2, 1, -1, null, false) && pawn.Map.pawnDestinationReservationManager.CanReserve(intVec2, pawn, false))
 						{
 							if (desireSit)
 							{
@@ -62,12 +62,12 @@ namespace RimWorld
 						{
 							if (desireSit)
 							{
-								Rot4 arg_15D_0 = building.Rotation;
+								Rot4 arg_15E_0 = building.Rotation;
 								Rot4 rot = new Rot4(list[i]);
-								if (arg_15D_0 != rot.Opposite)
+								if (arg_15E_0 != rot.Opposite)
 								{
 									intVec = intVec2;
-									goto IL_17E;
+									goto IL_17F;
 								}
 							}
 							result = intVec2;
@@ -75,7 +75,7 @@ namespace RimWorld
 							return true;
 						}
 					}
-					IL_17E:;
+					IL_17F:;
 				}
 			}
 			if (intVec.IsValid)

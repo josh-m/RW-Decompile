@@ -104,19 +104,19 @@ namespace RimWorld.BaseGen
 				ThingDef stuff = arg_132_0;
 				Thing thing = ThingMaker.MakeThing(ThingDefOf.Door, stuff);
 				thing.SetFaction(rp.faction, null);
-				GenSpawn.Spawn(thing, intVec, map);
+				GenSpawn.Spawn(thing, intVec, map, WipeMode.Vanish);
 			}
 			if (intVec2.IsValid && intVec2 != intVec && !intVec2.AdjacentToCardinal(intVec))
 			{
-				ThingDef arg_1A5_0;
-				if ((arg_1A5_0 = thingDef2) == null)
+				ThingDef arg_1A6_0;
+				if ((arg_1A6_0 = thingDef2) == null)
 				{
-					arg_1A5_0 = (rp.wallStuff ?? BaseGenUtility.RandomCheapWallStuff(rp.faction, false));
+					arg_1A6_0 = (rp.wallStuff ?? BaseGenUtility.RandomCheapWallStuff(rp.faction, false));
 				}
-				ThingDef stuff2 = arg_1A5_0;
+				ThingDef stuff2 = arg_1A6_0;
 				Thing thing2 = ThingMaker.MakeThing(ThingDefOf.Door, stuff2);
 				thing2.SetFaction(rp.faction, null);
-				GenSpawn.Spawn(thing2, intVec2, map);
+				GenSpawn.Spawn(thing2, intVec2, map, WipeMode.Vanish);
 			}
 		}
 

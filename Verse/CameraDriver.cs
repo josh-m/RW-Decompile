@@ -31,11 +31,13 @@ namespace Verse
 
 		private float mouseTouchingScreenBottomEdgeStartTime = -1f;
 
+		private float fixedTimeStepBuffer;
+
 		private static int lastViewRectGetFrame = -1;
 
 		private static CellRect lastViewRect;
 
-		public const float MaxDeltaTime = 0.025f;
+		public const float MaxDeltaTime = 0.1f;
 
 		private const float ScreenDollyEdgeWidth = 20f;
 
@@ -50,8 +52,6 @@ namespace Verse
 		private const float MinSize = 11f;
 
 		private const float MaxSize = 60f;
-
-		private const float ZoomSpeed = 2.6f;
 
 		private const float ZoomTightness = 0.4f;
 
@@ -164,9 +164,9 @@ namespace Verse
 			get
 			{
 				float result = 1f;
-				if (Time.deltaTime > 0.025f)
+				if (Time.deltaTime > 0.1f)
 				{
-					result = 0.025f / Time.deltaTime;
+					result = 0.1f / Time.deltaTime;
 				}
 				return result;
 			}
@@ -194,7 +194,7 @@ namespace Verse
 			{
 				return;
 			}
-			if (Find.VisibleMap == null)
+			if (Find.CurrentMap == null)
 			{
 				return;
 			}
@@ -206,13 +206,13 @@ namespace Verse
 			{
 				return;
 			}
-			if (Find.VisibleMap == null)
+			if (Find.CurrentMap == null)
 			{
 				return;
 			}
 			if (!WorldRendererUtility.WorldRenderedNow)
 			{
-				Find.VisibleMap.weatherManager.DrawAllWeather();
+				Find.CurrentMap.weatherManager.DrawAllWeather();
 			}
 		}
 
@@ -223,7 +223,7 @@ namespace Verse
 			{
 				return;
 			}
-			if (Find.VisibleMap == null)
+			if (Find.CurrentMap == null)
 			{
 				return;
 			}
@@ -246,39 +246,32 @@ namespace Verse
 					num -= Event.current.delta.y * 0.35f;
 					PlayerKnowledgeDatabase.KnowledgeDemonstrated(ConceptDefOf.CameraZoom, KnowledgeAmount.TinyInteraction);
 				}
-				if (KeyBindingDefOf.MapZoomIn.KeyDownEvent)
+				if (KeyBindingDefOf.MapZoom_In.KeyDownEvent)
 				{
 					num += 4f;
 					PlayerKnowledgeDatabase.KnowledgeDemonstrated(ConceptDefOf.CameraZoom, KnowledgeAmount.SmallInteraction);
 				}
-				if (KeyBindingDefOf.MapZoomOut.KeyDownEvent)
+				if (KeyBindingDefOf.MapZoom_Out.KeyDownEvent)
 				{
 					num -= 4f;
 					PlayerKnowledgeDatabase.KnowledgeDemonstrated(ConceptDefOf.CameraZoom, KnowledgeAmount.SmallInteraction);
 				}
-				this.desiredSize -= num * 2.6f * this.rootSize / 35f;
-				if (this.desiredSize < 11f)
-				{
-					this.desiredSize = 11f;
-				}
-				if (this.desiredSize > 60f)
-				{
-					this.desiredSize = 60f;
-				}
+				this.desiredSize -= num * this.config.zoomSpeed * this.rootSize / 35f;
+				this.desiredSize = Mathf.Clamp(this.desiredSize, 11f, 60f);
 				this.desiredDolly = Vector3.zero;
-				if (KeyBindingDefOf.MapDollyLeft.IsDown)
+				if (KeyBindingDefOf.MapDolly_Left.IsDown)
 				{
 					this.desiredDolly.x = -this.config.dollyRateKeys;
 				}
-				if (KeyBindingDefOf.MapDollyRight.IsDown)
+				if (KeyBindingDefOf.MapDolly_Right.IsDown)
 				{
 					this.desiredDolly.x = this.config.dollyRateKeys;
 				}
-				if (KeyBindingDefOf.MapDollyUp.IsDown)
+				if (KeyBindingDefOf.MapDolly_Up.IsDown)
 				{
 					this.desiredDolly.y = this.config.dollyRateKeys;
 				}
-				if (KeyBindingDefOf.MapDollyDown.IsDown)
+				if (KeyBindingDefOf.MapDolly_Down.IsDown)
 				{
 					this.desiredDolly.y = -this.config.dollyRateKeys;
 				}
@@ -289,6 +282,7 @@ namespace Verse
 					this.desiredDolly += this.mouseDragVect * this.config.dollyRateMouseDrag;
 					this.mouseDragVect = Vector2.zero;
 				}
+				this.config.ConfigOnGUI();
 			}
 		}
 
@@ -302,7 +296,7 @@ namespace Verse
 				}
 				return;
 			}
-			if (Find.VisibleMap == null)
+			if (Find.CurrentMap == null)
 			{
 				return;
 			}
@@ -317,39 +311,41 @@ namespace Verse
 			{
 				float d2 = Time.deltaTime * CameraDriver.HitchReduceFactor;
 				this.rootPos += this.velocity * d2 * this.config.moveSpeedScale;
-				if (this.rootPos.x > (float)Find.VisibleMap.Size.x + -2f)
-				{
-					this.rootPos.x = (float)Find.VisibleMap.Size.x + -2f;
-				}
-				if (this.rootPos.z > (float)Find.VisibleMap.Size.z + -2f)
-				{
-					this.rootPos.z = (float)Find.VisibleMap.Size.z + -2f;
-				}
-				if (this.rootPos.x < 2f)
-				{
-					this.rootPos.x = 2f;
-				}
-				if (this.rootPos.z < 2f)
-				{
-					this.rootPos.z = 2f;
-				}
+				this.rootPos.x = Mathf.Clamp(this.rootPos.x, 2f, (float)Find.CurrentMap.Size.x + -2f);
+				this.rootPos.z = Mathf.Clamp(this.rootPos.z, 2f, (float)Find.CurrentMap.Size.z + -2f);
 			}
-			if (this.velocity != Vector3.zero)
+			int num = Gen.FixedTimeStepUpdate(ref this.fixedTimeStepBuffer, 60f);
+			for (int i = 0; i < num; i++)
 			{
-				this.velocity *= this.config.camSpeedDecayFactor;
-				if (this.velocity.magnitude < 0.1f)
+				if (this.velocity != Vector3.zero)
 				{
-					this.velocity = Vector3.zero;
+					this.velocity *= this.config.camSpeedDecayFactor;
+					if (this.velocity.magnitude < 0.1f)
+					{
+						this.velocity = Vector3.zero;
+					}
 				}
+				if (this.config.smoothZoom)
+				{
+					float num2 = Mathf.Lerp(this.rootSize, this.desiredSize, 0.05f);
+					this.desiredSize += (num2 - this.rootSize) * this.config.zoomPreserveFactor;
+					this.rootSize = num2;
+				}
+				else
+				{
+					float num3 = this.desiredSize - this.rootSize;
+					float num4 = num3 * 0.4f;
+					this.desiredSize += this.config.zoomPreserveFactor * num4;
+					this.rootSize += num4;
+				}
+				this.config.ConfigFixedUpdate_60(ref this.velocity);
 			}
-			float num = this.desiredSize - this.rootSize;
-			this.rootSize += num * 0.4f;
 			this.shaker.Update();
 			this.ApplyPositionToGameObject();
 			Current.SubcameraDriver.UpdatePositions(this.MyCamera);
-			if (Find.VisibleMap != null)
+			if (Find.CurrentMap != null)
 			{
-				RememberedCameraPos rememberedCameraPos = Find.VisibleMap.rememberedCameraPos;
+				RememberedCameraPos rememberedCameraPos = Find.CurrentMap.rememberedCameraPos;
 				rememberedCameraPos.rootPos = this.rootPos;
 				rememberedCameraPos.rootSize = this.rootSize;
 			}
@@ -447,12 +443,12 @@ namespace Verse
 			this.rootSize = this.desiredSize;
 		}
 
-		public void JumpToVisibleMapLoc(IntVec3 cell)
+		public void JumpToCurrentMapLoc(IntVec3 cell)
 		{
-			this.JumpToVisibleMapLoc(cell.ToVector3Shifted());
+			this.JumpToCurrentMapLoc(cell.ToVector3Shifted());
 		}
 
-		public void JumpToVisibleMapLoc(Vector3 loc)
+		public void JumpToCurrentMapLoc(Vector3 loc)
 		{
 			this.rootPos = new Vector3(loc.x, this.rootPos.y, loc.z);
 		}

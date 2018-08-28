@@ -2,6 +2,7 @@ using RimWorld;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using UnityEngine;
 
 namespace Verse
@@ -18,13 +19,21 @@ namespace Verse
 
 		public float fertility = -1f;
 
-		public List<ThingCountClass> costList;
+		public List<ThingDefCountClass> costList;
 
-		public int costStuffCount = -1;
+		public int costStuffCount;
 
 		public List<StuffCategoryDef> stuffCategories;
 
-		public TerrainAffordance terrainAffordanceNeeded = TerrainAffordance.Light;
+		public int placingDraggableDimensions;
+
+		public bool clearBuildingArea = true;
+
+		public Rot4 defaultPlacingRot = Rot4.North;
+
+		public float resourcesFractionWhenDeconstructed = 0.75f;
+
+		public TerrainAffordanceDef terrainAffordanceNeeded;
 
 		public List<ThingDef> buildingPrerequisites;
 
@@ -32,17 +41,36 @@ namespace Verse
 
 		public int constructionSkillPrerequisite;
 
-		public int placingDraggableDimensions;
+		public TechLevel minTechLevelToBuild;
 
-		public bool clearBuildingArea = true;
+		public TechLevel maxTechLevelToBuild;
+
+		public AltitudeLayer altitudeLayer = AltitudeLayer.Item;
 
 		public EffecterDef repairEffect;
 
 		public EffecterDef constructEffect;
 
-		public Rot4 defaultPlacingRot = Rot4.North;
+		public bool menuHidden;
 
-		public float resourcesFractionWhenDeconstructed = 0.75f;
+		public float specialDisplayRadius;
+
+		public List<Type> placeWorkers;
+
+		public DesignationCategoryDef designationCategory;
+
+		public DesignatorDropdownGroupDef designatorDropdown;
+
+		public KeyBindingDef designationHotKey;
+
+		[NoTranslate]
+		public string uiIconPath;
+
+		public Vector2 uiIconOffset;
+
+		public Color uiIconColor = Color.white;
+
+		public int uiIconForStackCount = -1;
 
 		[Unsaved]
 		public ThingDef blueprintDef;
@@ -53,36 +81,17 @@ namespace Verse
 		[Unsaved]
 		public ThingDef frameDef;
 
-		public string uiIconPath;
+		[Unsaved]
+		private List<PlaceWorker> placeWorkersInstantiatedInt;
 
-		public AltitudeLayer altitudeLayer = AltitudeLayer.Item;
+		[Unsaved]
+		public Graphic graphic = BaseContent.BadGraphic;
 
 		[Unsaved]
 		public Texture2D uiIcon = BaseContent.BadTex;
 
 		[Unsaved]
 		public float uiIconAngle;
-
-		[Unsaved]
-		public Graphic graphic = BaseContent.BadGraphic;
-
-		public bool menuHidden;
-
-		public float specialDisplayRadius;
-
-		public List<Type> placeWorkers;
-
-		[NoTranslate]
-		public DesignationCategoryDef designationCategory;
-
-		public KeyBindingDef designationHotKey;
-
-		public TechLevel minTechLevelToBuild;
-
-		public TechLevel maxTechLevelToBuild;
-
-		[Unsaved]
-		private List<PlaceWorker> placeWorkersInstantiatedInt;
 
 		public virtual IntVec2 Size
 		{
@@ -100,9 +109,12 @@ namespace Verse
 			}
 		}
 
-		public abstract Color IconDrawColor
+		public bool BuildableByPlayer
 		{
-			get;
+			get
+			{
+				return this.designationCategory != null;
+			}
 		}
 
 		public Material DrawMatSingle
@@ -121,7 +133,7 @@ namespace Verse
 		{
 			get
 			{
-				return Altitudes.AltitudeFor(this.altitudeLayer);
+				return this.altitudeLayer.AltitudeFor();
 			}
 		}
 
@@ -139,6 +151,24 @@ namespace Verse
 					this.placeWorkersInstantiatedInt.Add((PlaceWorker)Activator.CreateInstance(current));
 				}
 				return this.placeWorkersInstantiatedInt;
+			}
+		}
+
+		public bool IsResearchFinished
+		{
+			get
+			{
+				if (this.researchPrerequisites != null)
+				{
+					for (int i = 0; i < this.researchPrerequisites.Count; i++)
+					{
+						if (!this.researchPrerequisites[i].IsFinished)
+						{
+							return false;
+						}
+					}
+				}
+				return true;
 			}
 		}
 
@@ -167,29 +197,30 @@ namespace Verse
 				{
 					this.uiIcon = ContentFinder<Texture2D>.Get(this.uiIconPath, true);
 				}
-				else if (this.graphic != null)
+				else
 				{
-					Graphic_Random graphic_Random = this.graphic as Graphic_Random;
-					Material material;
-					if (graphic_Random != null)
-					{
-						material = graphic_Random.FirstSubgraphic().MatAt(this.defaultPlacingRot, null);
-					}
-					else
-					{
-						material = this.graphic.MatAt(this.defaultPlacingRot, null);
-					}
-					if (material != BaseContent.BadMat)
-					{
-						this.uiIcon = (Texture2D)material.mainTexture;
-						ThingDef thingDef = this as ThingDef;
-						if (thingDef != null && thingDef.rotatable && this.graphic.ShouldDrawRotated && this.defaultPlacingRot == Rot4.South)
-						{
-							this.uiIconAngle = 180f;
-						}
-					}
+					this.ResolveIcon();
 				}
 			});
+		}
+
+		protected virtual void ResolveIcon()
+		{
+			if (this.graphic != null && this.graphic != BaseContent.BadGraphic)
+			{
+				Graphic outerGraphic = this.graphic;
+				if (this.uiIconForStackCount >= 1 && this is ThingDef)
+				{
+					Graphic_StackCount graphic_StackCount = this.graphic as Graphic_StackCount;
+					if (graphic_StackCount != null)
+					{
+						outerGraphic = graphic_StackCount.SubGraphicForStackCount(this.uiIconForStackCount, (ThingDef)this);
+					}
+				}
+				Material material = outerGraphic.ExtractInnerGraphicFor(null).MatAt(this.defaultPlacingRot, null);
+				this.uiIcon = (Texture2D)material.mainTexture;
+				this.uiIconColor = material.color;
+			}
 		}
 
 		public override void ResolveReferences()
@@ -203,6 +234,31 @@ namespace Verse
 			foreach (string error in base.ConfigErrors())
 			{
 				yield return error;
+			}
+		}
+
+		[DebuggerHidden]
+		public override IEnumerable<StatDrawEntry> SpecialDisplayStats(StatRequest req)
+		{
+			foreach (StatDrawEntry stat in base.SpecialDisplayStats(req))
+			{
+				yield return stat;
+			}
+			IEnumerable<TerrainAffordanceDef> affdefs = Enumerable.Empty<TerrainAffordanceDef>();
+			if (this.PlaceWorkers != null)
+			{
+				affdefs = affdefs.Concat(this.PlaceWorkers.SelectMany((PlaceWorker pw) => pw.DisplayAffordances()));
+			}
+			if (this.terrainAffordanceNeeded != null)
+			{
+				affdefs = affdefs.Concat(this.terrainAffordanceNeeded);
+			}
+			string[] affordances = (from ta in affdefs.Distinct<TerrainAffordanceDef>()
+			orderby ta.order
+			select ta.label).ToArray<string>();
+			if (affordances.Length > 0)
+			{
+				yield return new StatDrawEntry(StatCategoryDefOf.Basics, "TerrainRequirement".Translate(), affordances.ToCommaList(false).CapitalizeFirst(), 0, string.Empty);
 			}
 		}
 

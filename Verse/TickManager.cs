@@ -1,6 +1,7 @@
 using RimWorld;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using UnityEngine;
 
 namespace Verse
@@ -19,6 +20,8 @@ namespace Verse
 
 		private int startingYearInt = 5500;
 
+		private Stopwatch clock = new Stopwatch();
+
 		private TickList tickListNormal = new TickList(TickerType.Normal);
 
 		private TickList tickListRare = new TickList(TickerType.Rare);
@@ -26,6 +29,10 @@ namespace Verse
 		private TickList tickListLong = new TickList(TickerType.Long);
 
 		public TimeSlower slower = new TimeSlower();
+
+		private int lastAutoScreenshot;
+
+		private float WorstAllowedFPS = 22f;
 
 		private int lastNothingHappeningCheckTick = -1;
 
@@ -45,7 +52,7 @@ namespace Verse
 			{
 				if (this.gameStartAbsTick == 0)
 				{
-					Log.ErrorOnce("Accessing TicksAbs but gameStartAbsTick is not set yet.", 1049580013);
+					Log.ErrorOnce("Accessing TicksAbs but gameStartAbsTick is not set yet (you most likely want to use GenTicks.TicksAbs instead).", 1049580013, false);
 					return this.ticksGameInt;
 				}
 				return this.ticksGameInt + this.gameStartAbsTick;
@@ -83,9 +90,9 @@ namespace Verse
 					case TimeSpeed.Fast:
 						return 3f;
 					case TimeSpeed.Superfast:
-						if (Find.VisibleMap == null)
+						if (Find.Maps.Count == 0)
 						{
-							return 150f;
+							return 120f;
 						}
 						if (this.NothingHappeningInGame())
 						{
@@ -93,9 +100,9 @@ namespace Verse
 						}
 						return 6f;
 					case TimeSpeed.Ultrafast:
-						if (Find.VisibleMap == null)
+						if (Find.Maps.Count == 0)
 						{
-							return 250f;
+							return 150f;
 						}
 						return 15f;
 					default:
@@ -159,6 +166,14 @@ namespace Verse
 			else
 			{
 				this.curTimeSpeed = TimeSpeed.Normal;
+			}
+		}
+
+		public void Pause()
+		{
+			if (this.curTimeSpeed != TimeSpeed.Paused)
+			{
+				this.TogglePaused();
 			}
 		}
 
@@ -247,20 +262,28 @@ namespace Verse
 		{
 			if (!this.Paused)
 			{
-				if (Mathf.Abs(Time.deltaTime - this.CurTimePerTick) < this.CurTimePerTick * 0.2f)
+				float curTimePerTick = this.CurTimePerTick;
+				if (Mathf.Abs(Time.deltaTime - curTimePerTick) < curTimePerTick * 0.1f)
 				{
-					this.realTimeToTickThrough += this.CurTimePerTick;
+					this.realTimeToTickThrough += curTimePerTick;
 				}
 				else
 				{
 					this.realTimeToTickThrough += Time.deltaTime;
 				}
 				int num = 0;
-				while (this.realTimeToTickThrough > 0f && (float)num < this.TickRateMultiplier * 2f)
+				float tickRateMultiplier = this.TickRateMultiplier;
+				this.clock.Reset();
+				this.clock.Start();
+				while (this.realTimeToTickThrough > 0f && (float)num < tickRateMultiplier * 2f)
 				{
 					this.DoSingleTick();
-					this.realTimeToTickThrough -= this.CurTimePerTick;
+					this.realTimeToTickThrough -= curTimePerTick;
 					num++;
+					if (this.Paused || (float)this.clock.ElapsedMilliseconds > 1000f / this.WorstAllowedFPS)
+					{
+						break;
+					}
 				}
 				if (this.realTimeToTickThrough > 0f)
 				{
@@ -282,7 +305,7 @@ namespace Verse
 			}
 			else
 			{
-				this.ticksGameInt += 250;
+				this.ticksGameInt += 2000;
 			}
 			Shader.SetGlobalFloat(ShaderPropertyIDs.GameSeconds, this.TicksGame.TicksToSeconds());
 			this.tickListNormal.Tick();
@@ -294,7 +317,7 @@ namespace Verse
 			}
 			catch (Exception ex)
 			{
-				Log.Error(ex.ToString());
+				Log.Error(ex.ToString(), false);
 			}
 			try
 			{
@@ -302,7 +325,7 @@ namespace Verse
 			}
 			catch (Exception ex2)
 			{
-				Log.Error(ex2.ToString());
+				Log.Error(ex2.ToString(), false);
 			}
 			try
 			{
@@ -310,7 +333,7 @@ namespace Verse
 			}
 			catch (Exception ex3)
 			{
-				Log.Error(ex3.ToString());
+				Log.Error(ex3.ToString(), false);
 			}
 			try
 			{
@@ -318,7 +341,7 @@ namespace Verse
 			}
 			catch (Exception ex4)
 			{
-				Log.Error(ex4.ToString());
+				Log.Error(ex4.ToString(), false);
 			}
 			try
 			{
@@ -326,7 +349,7 @@ namespace Verse
 			}
 			catch (Exception ex5)
 			{
-				Log.Error(ex5.ToString());
+				Log.Error(ex5.ToString(), false);
 			}
 			try
 			{
@@ -334,7 +357,7 @@ namespace Verse
 			}
 			catch (Exception ex6)
 			{
-				Log.Error(ex6.ToString());
+				Log.Error(ex6.ToString(), false);
 			}
 			try
 			{
@@ -342,7 +365,7 @@ namespace Verse
 			}
 			catch (Exception ex7)
 			{
-				Log.Error(ex7.ToString());
+				Log.Error(ex7.ToString(), false);
 			}
 			try
 			{
@@ -350,7 +373,7 @@ namespace Verse
 			}
 			catch (Exception ex8)
 			{
-				Log.Error(ex8.ToString());
+				Log.Error(ex8.ToString(), false);
 			}
 			for (int j = 0; j < maps.Count; j++)
 			{
@@ -362,7 +385,7 @@ namespace Verse
 			}
 			catch (Exception ex9)
 			{
-				Log.Error(ex9.ToString());
+				Log.Error(ex9.ToString(), false);
 			}
 			GameComponentUtility.GameComponentTick();
 			try
@@ -371,7 +394,7 @@ namespace Verse
 			}
 			catch (Exception ex10)
 			{
-				Log.Error(ex10.ToString());
+				Log.Error(ex10.ToString(), false);
 			}
 			try
 			{
@@ -379,9 +402,22 @@ namespace Verse
 			}
 			catch (Exception ex11)
 			{
-				Log.Error(ex11.ToString());
+				Log.Error(ex11.ToString(), false);
 			}
-			Debug.developerConsoleVisible = false;
+			if (DebugViewSettings.logHourlyScreenshot && Find.TickManager.TicksGame >= this.lastAutoScreenshot + 2500)
+			{
+				ScreenshotTaker.QueueSilentScreenshot();
+				this.lastAutoScreenshot = Find.TickManager.TicksGame / 2500 * 2500;
+			}
+			try
+			{
+				FilthMonitor.FilthMonitorTick();
+			}
+			catch (Exception ex12)
+			{
+				Log.Error(ex12.ToString(), false);
+			}
+			UnityEngine.Debug.developerConsoleVisible = false;
 		}
 
 		public void RemoveAllFromMap(Map map)
@@ -394,6 +430,12 @@ namespace Verse
 		public void DebugSetTicksGame(int newTicksGame)
 		{
 			this.ticksGameInt = newTicksGame;
+		}
+
+		public void Notify_GeneratedPotentiallyHostileMap()
+		{
+			this.Pause();
+			this.slower.SignalForceNormalSpeedShort();
 		}
 	}
 }

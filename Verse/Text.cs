@@ -21,6 +21,8 @@ namespace Verse
 
 		private static readonly float[] lineHeights;
 
+		private static readonly float[] spaceBetweenLines;
+
 		private static GUIContent tmpTextGUIContent;
 
 		private const int NumFonts = 3;
@@ -76,7 +78,15 @@ namespace Verse
 			}
 		}
 
-		internal static GUIStyle CurFontStyle
+		public static float SpaceBetweenLines
+		{
+			get
+			{
+				return Text.spaceBetweenLines[(int)Text.Font];
+			}
+		}
+
+		public static GUIStyle CurFontStyle
 		{
 			get
 			{
@@ -174,6 +184,7 @@ namespace Verse
 			Text.textAreaStyles = new GUIStyle[3];
 			Text.textAreaReadOnlyStyles = new GUIStyle[3];
 			Text.lineHeights = new float[3];
+			Text.spaceBetweenLines = new float[3];
 			Text.tmpTextGUIContent = new GUIContent();
 			Font font = (Font)Resources.Load("Fonts/Calibri_tiny");
 			Font font2 = (Font)Resources.Load("Fonts/Arial_small");
@@ -215,8 +226,8 @@ namespace Verse
 			foreach (GameFont font4 in Enum.GetValues(typeof(GameFont)))
 			{
 				Text.Font = font4;
-				float num2 = Text.CalcHeight("W", 999f);
-				Text.lineHeights[num] = num2;
+				Text.lineHeights[num] = Text.CalcHeight("W", 999f);
+				Text.spaceBetweenLines[num] = Text.CalcHeight("W\nW", 999f) - Text.CalcHeight("W", 999f) * 2f;
 				num++;
 			}
 			Text.Font = GameFont.Small;
@@ -234,16 +245,16 @@ namespace Verse
 			return Text.CurFontStyle.CalcSize(Text.tmpTextGUIContent);
 		}
 
-		internal static void StartOfOnGUI()
+		public static void StartOfOnGUI()
 		{
 			if (!Text.WordWrap)
 			{
-				Log.ErrorOnce("Word wrap was false at end of frame.", 764362);
+				Log.ErrorOnce("Word wrap was false at end of frame.", 764362, false);
 				Text.WordWrap = true;
 			}
 			if (Text.Anchor != TextAnchor.UpperLeft)
 			{
-				Log.ErrorOnce("Alignment was " + Text.Anchor + " at end of frame.", 15558);
+				Log.ErrorOnce("Alignment was " + Text.Anchor + " at end of frame.", 15558, false);
 				Text.Anchor = TextAnchor.UpperLeft;
 			}
 			Text.Font = GameFont.Small;

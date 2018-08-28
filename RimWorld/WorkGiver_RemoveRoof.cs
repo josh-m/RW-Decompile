@@ -29,7 +29,7 @@ namespace RimWorld
 			return pawn.Map.areaManager.NoRoof.ActiveCells;
 		}
 
-		public override bool HasJobOnCell(Pawn pawn, IntVec3 c)
+		public override bool HasJobOnCell(Pawn pawn, IntVec3 c, bool forced = false)
 		{
 			if (!pawn.Map.areaManager.NoRoof[c])
 			{
@@ -45,10 +45,10 @@ namespace RimWorld
 			}
 			LocalTargetInfo target = c;
 			ReservationLayerDef ceiling = ReservationLayerDefOf.Ceiling;
-			return pawn.CanReserve(target, 1, -1, ceiling, false);
+			return pawn.CanReserve(target, 1, -1, ceiling, forced);
 		}
 
-		public override Job JobOnCell(Pawn pawn, IntVec3 c)
+		public override Job JobOnCell(Pawn pawn, IntVec3 c, bool forced = false)
 		{
 			return new Job(JobDefOf.RemoveRoof, c, c);
 		}

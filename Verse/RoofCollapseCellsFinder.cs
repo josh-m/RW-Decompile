@@ -15,12 +15,12 @@ namespace Verse
 			{
 				return;
 			}
-			RoofCollapseCellsFinder.ProcessRoofHolderDespawned(t.OccupiedRect(), t.Position, map, false);
+			RoofCollapseCellsFinder.ProcessRoofHolderDespawned(t.OccupiedRect(), t.Position, map, false, false);
 		}
 
-		public static void ProcessRoofHolderDespawned(CellRect rect, IntVec3 position, Map map, bool removalMode = false)
+		public static void ProcessRoofHolderDespawned(CellRect rect, IntVec3 position, Map map, bool removalMode = false, bool canRemoveThickRoof = false)
 		{
-			RoofCollapseCellsFinder.CheckCollapseFlyingRoofs(rect, map);
+			RoofCollapseCellsFinder.CheckCollapseFlyingRoofs(rect, map, removalMode, canRemoveThickRoof);
 			RoofGrid roofGrid = map.roofGrid;
 			RoofCollapseCellsFinder.roofsCollapsingBecauseTooFar.Clear();
 			for (int i = 0; i < RoofCollapseUtility.RoofSupportRadialCellsCount; i++)
@@ -32,9 +32,9 @@ namespace Verse
 					{
 						if (!map.roofCollapseBuffer.IsMarkedToCollapse(intVec))
 						{
-							if (!RoofCollapseUtility.WithinRangeOfRoofHolder(intVec, map))
+							if (!RoofCollapseUtility.WithinRangeOfRoofHolder(intVec, map, false))
 							{
-								if (removalMode)
+								if (removalMode && (canRemoveThickRoof || intVec.GetRoof(map).VanishOnCollapse))
 								{
 									map.roofGrid.SetRoof(intVec, null);
 								}
@@ -48,7 +48,7 @@ namespace Verse
 					}
 				}
 			}
-			RoofCollapseCellsFinder.CheckCollapseFlyingRoofs(RoofCollapseCellsFinder.roofsCollapsingBecauseTooFar, map, removalMode);
+			RoofCollapseCellsFinder.CheckCollapseFlyingRoofs(RoofCollapseCellsFinder.roofsCollapsingBecauseTooFar, map, removalMode, canRemoveThickRoof);
 			RoofCollapseCellsFinder.roofsCollapsingBecauseTooFar.Clear();
 		}
 
@@ -56,33 +56,33 @@ namespace Verse
 		{
 			for (int i = 0; i < nearCells.Count; i++)
 			{
-				RoofCollapseCellsFinder.ProcessRoofHolderDespawned(new CellRect(nearCells[i].x, nearCells[i].z, 1, 1), nearCells[i], map, true);
+				RoofCollapseCellsFinder.ProcessRoofHolderDespawned(new CellRect(nearCells[i].x, nearCells[i].z, 1, 1), nearCells[i], map, true, true);
 			}
 		}
 
-		public static void CheckCollapseFlyingRoofs(List<IntVec3> nearCells, Map map, bool removalMode = false)
+		public static void CheckCollapseFlyingRoofs(List<IntVec3> nearCells, Map map, bool removalMode = false, bool canRemoveThickRoof = false)
 		{
 			RoofCollapseCellsFinder.visitedCells.Clear();
 			for (int i = 0; i < nearCells.Count; i++)
 			{
-				RoofCollapseCellsFinder.CheckCollapseFlyingRoofAtAndAdjInternal(nearCells[i], map, removalMode);
+				RoofCollapseCellsFinder.CheckCollapseFlyingRoofAtAndAdjInternal(nearCells[i], map, removalMode, canRemoveThickRoof);
 			}
 			RoofCollapseCellsFinder.visitedCells.Clear();
 		}
 
-		public static void CheckCollapseFlyingRoofs(CellRect nearRect, Map map)
+		public static void CheckCollapseFlyingRoofs(CellRect nearRect, Map map, bool removalMode = false, bool canRemoveThickRoof = false)
 		{
 			RoofCollapseCellsFinder.visitedCells.Clear();
 			CellRect.CellRectIterator iterator = nearRect.GetIterator();
 			while (!iterator.Done())
 			{
-				RoofCollapseCellsFinder.CheckCollapseFlyingRoofAtAndAdjInternal(iterator.Current, map, false);
+				RoofCollapseCellsFinder.CheckCollapseFlyingRoofAtAndAdjInternal(iterator.Current, map, removalMode, canRemoveThickRoof);
 				iterator.MoveNext();
 			}
 			RoofCollapseCellsFinder.visitedCells.Clear();
 		}
 
-		private static bool CheckCollapseFlyingRoofAtAndAdjInternal(IntVec3 root, Map map, bool removalMode)
+		private static bool CheckCollapseFlyingRoofAtAndAdjInternal(IntVec3 root, Map map, bool removalMode, bool canRemoveThickRoof)
 		{
 			RoofCollapseBuffer roofCollapseBuffer = map.roofCollapseBuffer;
 			if (removalMode && roofCollapseBuffer.CellsMarkedToCollapse.Count > 0)
@@ -112,7 +112,7 @@ namespace Verse
 										for (int j = cellsMarkedToCollapse.Count - 1; j >= 0; j--)
 										{
 											RoofDef roofDef = map.roofGrid.RoofAt(cellsMarkedToCollapse[j]);
-											if (roofDef != null && roofDef.VanishOnCollapse)
+											if (roofDef != null && (canRemoveThickRoof || roofDef.VanishOnCollapse))
 											{
 												map.roofGrid.SetRoof(cellsMarkedToCollapse[j], null);
 												cellsMarkedToCollapse.RemoveAt(j);

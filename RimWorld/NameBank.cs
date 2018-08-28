@@ -52,13 +52,13 @@ namespace RimWorld
 				select g.Key).ToList<string>();
 				foreach (string current2 in list)
 				{
-					Log.Error("Duplicated name: " + current2);
+					Log.Error("Duplicated name: " + current2, false);
 				}
 				foreach (string current3 in current)
 				{
 					if (current3.Trim() != current3)
 					{
-						Log.Error("Trimmable whitespace on name: [" + current3 + "]");
+						Log.Error("Trimmable whitespace on name: [" + current3 + "]", false);
 					}
 				}
 			}
@@ -82,7 +82,7 @@ namespace RimWorld
 			this.AddNames(slot, gender, GenFile.LinesFromFile("Names/" + fileName));
 		}
 
-		public string GetName(PawnNameSlot slot, Gender gender = Gender.None)
+		public string GetName(PawnNameSlot slot, Gender gender = Gender.None, bool checkIfAlreadyUsed = true)
 		{
 			List<string> list = this.NamesFor(slot, gender);
 			int num = 0;
@@ -95,14 +95,14 @@ namespace RimWorld
 					" slot=",
 					slot,
 					" is empty."
-				}));
+				}), false);
 				return "Errorname";
 			}
 			string text;
 			while (true)
 			{
 				text = list.RandomElement<string>();
-				if (!NameUseChecker.NameWordIsUsed(text))
+				if (checkIfAlreadyUsed && !NameUseChecker.NameWordIsUsed(text))
 				{
 					break;
 				}
