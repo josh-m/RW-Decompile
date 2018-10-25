@@ -140,17 +140,6 @@ namespace RimWorld
 			}
 		}
 
-		public void FactionsDebugDrawOnMap()
-		{
-			if (DebugViewSettings.drawFactions)
-			{
-				for (int i = 0; i < this.allFactions.Count; i++)
-				{
-					this.allFactions[i].DebugDrawOnMap();
-				}
-			}
-		}
-
 		public Faction FirstFactionOfDef(FactionDef facDef)
 		{
 			for (int i = 0; i < this.allFactions.Count; i++)

@@ -38,7 +38,7 @@ namespace RimWorld
 
 		public override int GetOptimalWidth(PawnTable table)
 		{
-			return Mathf.Clamp(Mathf.CeilToInt(354f), this.GetMinWidth(table), this.GetMaxWidth(table));
+			return Mathf.Clamp(Mathf.CeilToInt(251f), this.GetMinWidth(table), this.GetMaxWidth(table));
 		}
 
 		public override int GetMinHeaderHeight(PawnTable table)

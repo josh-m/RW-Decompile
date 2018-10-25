@@ -40,7 +40,7 @@ namespace RimWorld
 					int freeColonistsSpawnedOrInPlayerEjectablePodsCount = this.$this.Map.mapPawns.FreeColonistsSpawnedOrInPlayerEjectablePodsCount;
 					if (freeColonistsSpawnedOrInPlayerEjectablePodsCount <= 1)
 					{
-						Find.WindowStack.Add(Dialog_MessageBox.CreateConfirmation("CasketWarning".Translate().AdjustedFor(actor, "PAWN"), action, false, null));
+						Find.WindowStack.Add(Dialog_MessageBox.CreateConfirmation("CasketWarning".Translate(actor.Named("PAWN")).AdjustedFor(actor, "PAWN"), action, false, null));
 					}
 					else
 					{

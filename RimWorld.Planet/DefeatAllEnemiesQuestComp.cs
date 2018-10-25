@@ -94,11 +94,7 @@ namespace RimWorld.Planet
 			DropPodUtility.DropThingsNear(intVec, map, DefeatAllEnemiesQuestComp.tmpRewards, 110, false, false, false);
 			DefeatAllEnemiesQuestComp.tmpRewards.Clear();
 			FactionRelationKind playerRelationKind = this.requestingFaction.PlayerRelationKind;
-			string text = "LetterDefeatAllEnemiesQuestCompleted".Translate(new object[]
-			{
-				this.requestingFaction.Name,
-				this.relationsImprovement.ToString()
-			});
+			string text = "LetterDefeatAllEnemiesQuestCompleted".Translate(this.requestingFaction.Name, this.relationsImprovement.ToString());
 			this.requestingFaction.TryAffectGoodwillWith(Faction.OfPlayer, this.relationsImprovement, false, false, null, null);
 			this.requestingFaction.TryAppendRelationKindChangedInfo(ref text, playerRelationKind, this.requestingFaction.PlayerRelationKind, null);
 			Find.LetterStack.ReceiveLetter("LetterLabelDefeatAllEnemiesQuestCompleted".Translate(), text, LetterDefOf.PositiveEvent, new GlobalTargetInfo(intVec, map, false), this.requestingFaction, null);
@@ -124,13 +120,8 @@ namespace RimWorld.Planet
 		{
 			if (this.active)
 			{
-				string text = GenThing.ThingsToCommaList(this.rewards, true, true, 5).CapitalizeFirst();
-				return "QuestTargetDestroyInspectString".Translate(new object[]
-				{
-					this.requestingFaction.Name,
-					text,
-					GenThing.GetMarketValue(this.rewards).ToStringMoney(null)
-				}).CapitalizeFirst();
+				string value = GenThing.ThingsToCommaList(this.rewards, true, true, 5).CapitalizeFirst();
+				return "QuestTargetDestroyInspectString".Translate(this.requestingFaction.Name, value, GenThing.GetMarketValue(this.rewards).ToStringMoney(null)).CapitalizeFirst();
 			}
 			return null;
 		}

@@ -237,11 +237,7 @@ namespace Verse
 						CoverInfo coverInfo = this.covers[i];
 						if (coverInfo.BlockChance > 0f)
 						{
-							stringBuilder.AppendLine("     " + "CoverThingBlocksPercentOfShots".Translate(new object[]
-							{
-								coverInfo.Thing.LabelCap,
-								coverInfo.BlockChance.ToStringPercent()
-							}));
+							stringBuilder.AppendLine("     " + "CoverThingBlocksPercentOfShots".Translate(coverInfo.Thing.LabelCap, coverInfo.BlockChance.ToStringPercent(), new NamedArgument(coverInfo.Thing.def, "COVER")));
 						}
 					}
 				}

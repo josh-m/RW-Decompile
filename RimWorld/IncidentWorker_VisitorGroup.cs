@@ -60,42 +60,23 @@ namespace RimWorld
 			}
 			Pawn pawn = list.Find((Pawn x) => parms.faction.leader == x);
 			string label;
-			string text3;
+			string text;
 			if (list.Count == 1)
 			{
-				string text = (!flag) ? string.Empty : "SingleVisitorArrivesTraderInfo".Translate();
-				string text2 = (pawn == null) ? string.Empty : "SingleVisitorArrivesLeaderInfo".Translate();
+				string value = (!flag) ? string.Empty : ("\n\n" + "SingleVisitorArrivesTraderInfo".Translate(list[0].Named("PAWN")).AdjustedFor(list[0], "PAWN"));
+				string value2 = (pawn == null) ? string.Empty : ("\n\n" + "SingleVisitorArrivesLeaderInfo".Translate(list[0].Named("PAWN")).AdjustedFor(list[0], "PAWN"));
 				label = "LetterLabelSingleVisitorArrives".Translate();
-				text3 = "SingleVisitorArrives".Translate(new object[]
-				{
-					list[0].story.Title,
-					parms.faction.Name,
-					list[0].Name,
-					text,
-					text2
-				});
-				text3 = text3.AdjustedFor(list[0], "PAWN");
+				text = "SingleVisitorArrives".Translate(list[0].story.Title, parms.faction.Name, list[0].Name.ToStringFull, value, value2, list[0].Named("PAWN")).AdjustedFor(list[0], "PAWN");
 			}
 			else
 			{
-				string text4 = (!flag) ? string.Empty : "GroupVisitorsArriveTraderInfo".Translate();
-				string text5 = (pawn == null) ? string.Empty : "GroupVisitorsArriveLeaderInfo".Translate(new object[]
-				{
-					pawn.LabelShort
-				});
+				string value3 = (!flag) ? string.Empty : ("\n\n" + "GroupVisitorsArriveTraderInfo".Translate());
+				string value4 = (pawn == null) ? string.Empty : ("\n\n" + "GroupVisitorsArriveLeaderInfo".Translate(pawn.LabelShort, pawn));
 				label = "LetterLabelGroupVisitorsArrive".Translate();
-				text3 = "GroupVisitorsArrive".Translate(new object[]
-				{
-					parms.faction.Name,
-					text4,
-					text5
-				});
+				text = "GroupVisitorsArrive".Translate(parms.faction.Name, value3, value4);
 			}
-			PawnRelationUtility.Notify_PawnsSeenByPlayer_Letter(list, ref label, ref text3, "LetterRelatedPawnsNeutralGroup".Translate(new object[]
-			{
-				Faction.OfPlayer.def.pawnsPlural
-			}), true, true);
-			Find.LetterStack.ReceiveLetter(label, text3, LetterDefOf.NeutralEvent, list[0], parms.faction, null);
+			PawnRelationUtility.Notify_PawnsSeenByPlayer_Letter(list, ref label, ref text, "LetterRelatedPawnsNeutralGroup".Translate(Faction.OfPlayer.def.pawnsPlural), true, true);
+			Find.LetterStack.ReceiveLetter(label, text, LetterDefOf.NeutralEvent, list[0], parms.faction, null);
 			return true;
 		}
 

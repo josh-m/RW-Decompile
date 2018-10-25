@@ -22,10 +22,7 @@ namespace RimWorld
 			{
 				stringBuilder.AppendLine();
 			}
-			stringBuilder.Append("AwokeDaysAgo".Translate(new object[]
-			{
-				this.age.TicksToDays().ToString("F1")
-			}));
+			stringBuilder.Append("AwokeDaysAgo".Translate(this.age.TicksToDays().ToString("F1")));
 			return stringBuilder.ToString();
 		}
 

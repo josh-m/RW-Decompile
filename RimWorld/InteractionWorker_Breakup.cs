@@ -78,18 +78,11 @@ namespace RimWorld
 			if (PawnUtility.ShouldSendNotificationAbout(initiator) || PawnUtility.ShouldSendNotificationAbout(recipient))
 			{
 				StringBuilder stringBuilder = new StringBuilder();
-				stringBuilder.AppendLine("LetterNoLongerLovers".Translate(new object[]
-				{
-					initiator.LabelShort,
-					recipient.LabelShort
-				}));
+				stringBuilder.AppendLine("LetterNoLongerLovers".Translate(initiator.LabelShort, recipient.LabelShort, initiator.Named("PAWN1"), recipient.Named("PAWN2")));
 				if (thought != null)
 				{
 					stringBuilder.AppendLine();
-					stringBuilder.AppendLine("FinalStraw".Translate(new object[]
-					{
-						thought.CurStage.label.CapitalizeFirst()
-					}));
+					stringBuilder.AppendLine("FinalStraw".Translate(thought.CurStage.label.CapitalizeFirst()));
 				}
 				letterLabel = "LetterLabelBreakup".Translate();
 				letterText = stringBuilder.ToString().TrimEndNewlines();

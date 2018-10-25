@@ -134,16 +134,8 @@ namespace RimWorld.Planet
 				Find.TickManager.Notify_GeneratedPotentiallyHostileMap();
 				GlobalTargetInfo target = (!list.Any<Pawn>()) ? GlobalTargetInfo.Invalid : new GlobalTargetInfo(list[0].Position, map, false);
 				string label = "LetterLabelPeaceTalks_Disaster".Translate();
-				string letterText = this.GetLetterText("LetterPeaceTalks_Disaster".Translate(new object[]
-				{
-					this.Faction.def.pawnsPlural.CapitalizeFirst(),
-					this.Faction.Name,
-					Mathf.RoundToInt((float)randomInRange)
-				}), caravan, playerRelationKind);
-				PawnRelationUtility.Notify_PawnsSeenByPlayer_Letter(list, ref label, ref letterText, "LetterRelatedPawnsGroupGeneric".Translate(new object[]
-				{
-					Faction.OfPlayer.def.pawnsPlural
-				}), true, true);
+				string letterText = this.GetLetterText("LetterPeaceTalks_Disaster".Translate(this.Faction.def.pawnsPlural.CapitalizeFirst(), this.Faction.Name, Mathf.RoundToInt((float)randomInRange)), caravan, playerRelationKind);
+				PawnRelationUtility.Notify_PawnsSeenByPlayer_Letter(list, ref label, ref letterText, "LetterRelatedPawnsGroupGeneric".Translate(Faction.OfPlayer.def.pawnsPlural), true, true);
 				Find.LetterStack.ReceiveLetter(label, letterText, LetterDefOf.ThreatBig, target, this.Faction, null);
 			}, "GeneratingMapForNewEncounter", false, null);
 		}
@@ -153,19 +145,12 @@ namespace RimWorld.Planet
 			FactionRelationKind playerRelationKind = base.Faction.PlayerRelationKind;
 			int randomInRange = DiplomacyTuning.Goodwill_PeaceTalksBackfireRange.RandomInRange;
 			base.Faction.TryAffectGoodwillWith(Faction.OfPlayer, randomInRange, false, false, null, null);
-			Find.LetterStack.ReceiveLetter("LetterLabelPeaceTalks_Backfire".Translate(), this.GetLetterText("LetterPeaceTalks_Backfire".Translate(new object[]
-			{
-				base.Faction.Name,
-				randomInRange
-			}), caravan, playerRelationKind), LetterDefOf.NegativeEvent, caravan, base.Faction, null);
+			Find.LetterStack.ReceiveLetter("LetterLabelPeaceTalks_Backfire".Translate(), this.GetLetterText("LetterPeaceTalks_Backfire".Translate(base.Faction.Name, randomInRange), caravan, playerRelationKind), LetterDefOf.NegativeEvent, caravan, base.Faction, null);
 		}
 
 		private void Outcome_TalksFlounder(Caravan caravan)
 		{
-			Find.LetterStack.ReceiveLetter("LetterLabelPeaceTalks_TalksFlounder".Translate(), this.GetLetterText("LetterPeaceTalks_TalksFlounder".Translate(new object[]
-			{
-				base.Faction.Name
-			}), caravan, base.Faction.PlayerRelationKind), LetterDefOf.NeutralEvent, caravan, base.Faction, null);
+			Find.LetterStack.ReceiveLetter("LetterLabelPeaceTalks_TalksFlounder".Translate(), this.GetLetterText("LetterPeaceTalks_TalksFlounder".Translate(base.Faction.Name), caravan, base.Faction.PlayerRelationKind), LetterDefOf.NeutralEvent, caravan, base.Faction, null);
 		}
 
 		private void Outcome_Success(Caravan caravan)
@@ -173,11 +158,7 @@ namespace RimWorld.Planet
 			FactionRelationKind playerRelationKind = base.Faction.PlayerRelationKind;
 			int randomInRange = DiplomacyTuning.Goodwill_PeaceTalksSuccessRange.RandomInRange;
 			base.Faction.TryAffectGoodwillWith(Faction.OfPlayer, randomInRange, false, false, null, null);
-			Find.LetterStack.ReceiveLetter("LetterLabelPeaceTalks_Success".Translate(), this.GetLetterText("LetterPeaceTalks_Success".Translate(new object[]
-			{
-				base.Faction.Name,
-				randomInRange
-			}), caravan, playerRelationKind), LetterDefOf.PositiveEvent, caravan, base.Faction, null);
+			Find.LetterStack.ReceiveLetter("LetterLabelPeaceTalks_Success".Translate(), this.GetLetterText("LetterPeaceTalks_Success".Translate(base.Faction.Name, randomInRange), caravan, playerRelationKind), LetterDefOf.PositiveEvent, caravan, base.Faction, null);
 		}
 
 		private void Outcome_Triumph(Caravan caravan)
@@ -190,12 +171,7 @@ namespace RimWorld.Planet
 			{
 				caravan.AddPawnOrItem(list[i], true);
 			}
-			Find.LetterStack.ReceiveLetter("LetterLabelPeaceTalks_Triumph".Translate(), this.GetLetterText("LetterPeaceTalks_Triumph".Translate(new object[]
-			{
-				base.Faction.Name,
-				randomInRange,
-				GenLabel.ThingsLabel(list, "  - ")
-			}), caravan, playerRelationKind), LetterDefOf.PositiveEvent, caravan, base.Faction, null);
+			Find.LetterStack.ReceiveLetter("LetterLabelPeaceTalks_Triumph".Translate(), this.GetLetterText("LetterPeaceTalks_Triumph".Translate(base.Faction.Name, randomInRange, GenLabel.ThingsLabel(list, "  - ")), caravan, playerRelationKind), LetterDefOf.PositiveEvent, caravan, base.Faction, null);
 		}
 
 		private string GetLetterText(string baseText, Caravan caravan, FactionRelationKind previousRelationKind)
@@ -204,11 +180,7 @@ namespace RimWorld.Planet
 			Pawn pawn = BestCaravanPawnUtility.FindBestDiplomat(caravan);
 			if (pawn != null)
 			{
-				text = text + "\n\n" + "PeaceTalksSocialXPGain".Translate(new object[]
-				{
-					pawn.LabelShort,
-					6000f.ToString("F0")
-				});
+				text = text + "\n\n" + "PeaceTalksSocialXPGain".Translate(pawn.LabelShort, 6000f.ToString("F0"), pawn.Named("PAWN"));
 			}
 			base.Faction.TryAppendRelationKindChangedInfo(ref text, previousRelationKind, base.Faction.PlayerRelationKind, null);
 			return text;

@@ -18,6 +18,14 @@ namespace RimWorld
 			}
 		}
 
+		public virtual bool Disabled
+		{
+			get
+			{
+				return (Find.CurrentMap == null && (!this.def.validWithoutMap || this.def == MainButtonDefOf.World)) || (Find.WorldRoutePlanner.Active && Find.WorldRoutePlanner.FormingCaravan && (!this.def.validWithoutMap || this.def == MainButtonDefOf.World));
+			}
+		}
+
 		public abstract void Activate();
 
 		public virtual void InterfaceTryActivate()
@@ -39,7 +47,7 @@ namespace RimWorld
 				text = this.def.ShortenedLabelCap;
 				num = this.def.ShortenedLabelCapWidth;
 			}
-			if ((!this.def.validWithoutMap || this.def == MainButtonDefOf.World) && Find.CurrentMap == null)
+			if (this.Disabled)
 			{
 				Widgets.DrawAtlas(rect, Widgets.ButtonSubtleAtlas);
 				if (Event.current.type == EventType.MouseDown && Mouse.IsOver(rect))

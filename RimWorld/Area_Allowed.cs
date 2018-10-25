@@ -58,10 +58,7 @@ namespace RimWorld
 				int num = 1;
 				while (true)
 				{
-					this.labelInt = "AreaDefaultLabel".Translate(new object[]
-					{
-						num
-					});
+					this.labelInt = "AreaDefaultLabel".Translate(num);
 					if (areaManager.GetLabeled(this.labelInt) == null)
 					{
 						break;

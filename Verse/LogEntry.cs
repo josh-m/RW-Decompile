@@ -151,10 +151,7 @@ namespace Verse
 
 		public virtual string GetTipString()
 		{
-			return "OccurredTimeAgo".Translate(new object[]
-			{
-				this.Age.ToStringTicksToPeriod()
-			}).CapitalizeFirst() + ".";
+			return "OccurredTimeAgo".Translate(this.Age.ToStringTicksToPeriod()).CapitalizeFirst() + ".";
 		}
 
 		public virtual bool ShowInCompactView()

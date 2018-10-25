@@ -15,10 +15,7 @@ namespace RimWorld
 			{
 				if (!pawn.guest.Released)
 				{
-					Messages.Message("MessagePrisonerIsEscaping".Translate(new object[]
-					{
-						pawn.LabelShort
-					}), pawn, MessageTypeDefOf.ThreatSmall, true);
+					Messages.Message("MessagePrisonerIsEscaping".Translate(pawn.LabelShort, pawn), pawn, MessageTypeDefOf.ThreatSmall, true);
 					Find.TickManager.slower.SignalForceNormalSpeed();
 				}
 				return new Job(JobDefOf.Goto, c)

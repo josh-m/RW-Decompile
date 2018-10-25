@@ -177,6 +177,7 @@ namespace RimWorld
 			{
 				lords[i].ReceiveMemo(Hive.MemoDeSpawned);
 			}
+			HiveUtility.Notify_HiveDespawned(this, map);
 		}
 
 		public override void PostApplyDamage(DamageInfo dinfo, float totalDamageDealt)

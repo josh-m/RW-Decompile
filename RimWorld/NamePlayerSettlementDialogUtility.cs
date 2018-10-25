@@ -1,5 +1,6 @@
 using RimWorld.Planet;
 using System;
+using Verse.Grammar;
 
 namespace RimWorld
 {
@@ -7,7 +8,7 @@ namespace RimWorld
 	{
 		public static bool IsValidName(string s)
 		{
-			return s.Length != 0 && s.Length <= 64;
+			return s.Length != 0 && s.Length <= 64 && !GrammarResolver.ContainsSpecialChars(s);
 		}
 
 		public static void Named(Settlement factionBase, string s)

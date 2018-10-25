@@ -63,12 +63,27 @@ namespace Verse.AI
 					{
 						this.$this.numAttacksMade++;
 					}
-					else if (this.$this.job.endIfCantShootTargetFromCurPos && !this.$this.pawn.stances.FullBodyBusy)
+					else if (!this.$this.pawn.stances.FullBodyBusy)
 					{
 						Verb verb = this.$this.pawn.TryGetAttackVerb(this.$this.TargetA.Thing, !this.$this.pawn.IsColonist);
-						if (verb == null || !verb.CanHitTargetFrom(this.$this.pawn.Position, this.$this.TargetA))
+						if (this.$this.job.endIfCantShootTargetFromCurPos && (verb == null || !verb.CanHitTargetFrom(this.$this.pawn.Position, this.$this.TargetA)))
 						{
 							this.$this.EndJobWith(JobCondition.Incompletable);
+							return;
+						}
+						if (this.$this.job.endIfCantShootInMelee)
+						{
+							if (verb == null)
+							{
+								this.$this.EndJobWith(JobCondition.Incompletable);
+								return;
+							}
+							float num = verb.verbProps.EffectiveMinRange(this.$this.TargetA, this.$this.pawn);
+							if ((float)this.$this.pawn.Position.DistanceToSquared(this.$this.TargetA.Cell) < num * num && this.$this.pawn.Position.AdjacentTo8WayOrInside(this.$this.TargetA.Cell))
+							{
+								this.$this.EndJobWith(JobCondition.Incompletable);
+								return;
+							}
 						}
 					}
 				},

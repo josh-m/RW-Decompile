@@ -42,10 +42,7 @@ namespace RimWorld.Planet
 				if (settlementBase != null && settlementBase.CanTradeNow)
 				{
 					Find.WindowStack.Add(new Dialog_Trade(bestNegotiator, settlementBase, false));
-					PawnRelationUtility.Notify_PawnsSeenByPlayer_Letter_Send(settlementBase.Goods.OfType<Pawn>(), "LetterRelatedPawnsTradingWithSettlement".Translate(new object[]
-					{
-						Faction.OfPlayer.def.pawnsPlural
-					}), LetterDefOf.NeutralEvent, false, true);
+					PawnRelationUtility.Notify_PawnsSeenByPlayer_Letter_Send(settlementBase.Goods.OfType<Pawn>(), "LetterRelatedPawnsTradingWithSettlement".Translate(Faction.OfPlayer.def.pawnsPlural), LetterDefOf.NeutralEvent, false, true);
 				}
 			};
 			if (bestNegotiator == null)

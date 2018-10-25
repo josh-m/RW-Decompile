@@ -48,19 +48,10 @@ namespace RimWorld
 
 		private void GetLetterText(Pawn prisoner, Site site, SitePart sitePart, int days, out string letter, out string label)
 		{
-			letter = string.Format(this.def.letterText.AdjustedFor(prisoner, "PAWN"), new object[]
-			{
-				site.Faction.Name,
-				prisoner.ageTracker.AgeBiologicalYears,
-				prisoner.story.Title,
-				SitePartUtility.GetDescriptionDialogue(site, sitePart)
-			}).CapitalizeFirst();
+			letter = this.def.letterText.Formatted(site.Faction.Name, prisoner.ageTracker.AgeBiologicalYears, prisoner.story.Title, SitePartUtility.GetDescriptionDialogue(site, sitePart), prisoner.Named("PAWN")).AdjustedFor(prisoner, "PAWN").CapitalizeFirst();
 			if (PawnUtility.EverBeenColonistOrTameAnimal(prisoner))
 			{
-				letter = letter + "\n\n" + "PawnWasFormerlyColonist".Translate(new object[]
-				{
-					prisoner.LabelShort
-				});
+				letter = letter + "\n\n" + "PawnWasFormerlyColonist".Translate(prisoner.LabelShort, prisoner);
 			}
 			string text;
 			PawnRelationUtility.Notify_PawnsSeenByPlayer(Gen.YieldSingle<Pawn>(prisoner), out text, true, false);
@@ -72,20 +63,13 @@ namespace RimWorld
 				{
 					text2,
 					"\n\n",
-					"PawnHasTheseRelationshipsWithColonists".Translate(new object[]
-					{
-						prisoner.LabelShort
-					}),
+					"PawnHasTheseRelationshipsWithColonists".Translate(prisoner.LabelShort, prisoner),
 					"\n\n",
 					text
 				});
 				label = label + " " + "RelationshipAppendedLetterSuffix".Translate();
 			}
-			letter = letter + "\n\n" + "PrisonerRescueTimeout".Translate(new object[]
-			{
-				days,
-				prisoner.LabelShort
-			});
+			letter = letter + "\n\n" + "PrisonerRescueTimeout".Translate(days, prisoner.LabelShort, prisoner.Named("PRISONER"));
 		}
 	}
 }

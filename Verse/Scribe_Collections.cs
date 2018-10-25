@@ -363,6 +363,10 @@ namespace Verse
 										{
 											dict.Add(keysWorkingList[i], valuesWorkingList[i]);
 										}
+										catch (OutOfMemoryException)
+										{
+											throw;
+										}
 										catch (Exception ex)
 										{
 											Log.Error(string.Concat(new object[]

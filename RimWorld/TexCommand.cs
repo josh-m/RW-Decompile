@@ -15,8 +15,6 @@ namespace RimWorld
 
 		public static readonly Texture2D HoldOpen = ContentFinder<Texture2D>.Get("UI/Commands/HoldOpen", true);
 
-		public static readonly Texture2D Forbidden = ContentFinder<Texture2D>.Get("UI/Commands/Forbidden", true);
-
 		public static readonly Texture2D GatherSpotActive = ContentFinder<Texture2D>.Get("UI/Commands/GatherSpotActive", true);
 
 		public static readonly Texture2D Install = ContentFinder<Texture2D>.Get("UI/Commands/Install", true);
@@ -32,6 +30,10 @@ namespace RimWorld
 		public static readonly Texture2D ToggleVent = ContentFinder<Texture2D>.Get("UI/Commands/Vent", true);
 
 		public static readonly Texture2D PauseCaravan = ContentFinder<Texture2D>.Get("UI/Commands/PauseCaravan", true);
+
+		public static readonly Texture2D ForbidOff = ContentFinder<Texture2D>.Get("UI/Designators/ForbidOff", true);
+
+		public static readonly Texture2D ForbidOn = ContentFinder<Texture2D>.Get("UI/Designators/ForbidOn", true);
 
 		public static readonly Texture2D RearmTrap = ContentFinder<Texture2D>.Get("UI/Designators/RearmTrap", true);
 

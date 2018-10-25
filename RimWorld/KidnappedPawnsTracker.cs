@@ -38,7 +38,7 @@ namespace RimWorld
 			Scribe_Collections.Look<Pawn>(ref this.kidnappedPawns, "kidnappedPawns", LookMode.Reference, new object[0]);
 		}
 
-		public void KidnapPawn(Pawn pawn, Pawn kidnapper)
+		public void Kidnap(Pawn pawn, Pawn kidnapper)
 		{
 			if (this.kidnappedPawns.Contains(pawn))
 			{

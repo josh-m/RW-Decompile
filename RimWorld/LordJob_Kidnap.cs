@@ -17,11 +17,11 @@ namespace RimWorld
 		{
 			StateGraph stateGraph = new StateGraph();
 			LordToil_KidnapCover lordToil_KidnapCover = new LordToil_KidnapCover();
-			lordToil_KidnapCover.avoidGridMode = AvoidGridMode.Smart;
+			lordToil_KidnapCover.useAvoidGrid = true;
 			stateGraph.AddToil(lordToil_KidnapCover);
 			LordToil_KidnapCover lordToil_KidnapCover2 = new LordToil_KidnapCover();
 			lordToil_KidnapCover2.cover = false;
-			lordToil_KidnapCover2.avoidGridMode = AvoidGridMode.Smart;
+			lordToil_KidnapCover2.useAvoidGrid = true;
 			stateGraph.AddToil(lordToil_KidnapCover2);
 			Transition transition = new Transition(lordToil_KidnapCover, lordToil_KidnapCover2, false, true);
 			transition.AddTrigger(new Trigger_TicksPassed(1200));

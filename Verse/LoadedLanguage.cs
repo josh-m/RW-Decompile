@@ -29,6 +29,8 @@ namespace Verse
 
 		private LanguageWorker workerInt;
 
+		private LanguageWordInfo wordInfo = new LanguageWordInfo();
+
 		private bool dataIsLoaded;
 
 		public List<string> loadErrors = new List<string>();
@@ -157,99 +159,111 @@ namespace Verse
 			}
 			this.dataIsLoaded = true;
 			DeepProfiler.Start("Loading language data: " + this.folderName);
-			foreach (string current in this.FolderPaths)
+			try
 			{
-				string localFolderPath = current;
-				LongEventHandler.ExecuteWhenFinished(delegate
+				foreach (string current in this.FolderPaths)
 				{
-					if (this.icon == BaseContent.BadTex)
+					string localFolderPath = current;
+					LongEventHandler.ExecuteWhenFinished(delegate
 					{
-						FileInfo fileInfo = new FileInfo(Path.Combine(localFolderPath.ToString(), "LangIcon.png"));
-						if (fileInfo.Exists)
+						if (this.icon == BaseContent.BadTex)
 						{
-							this.icon = ModContentLoader<Texture2D>.LoadItem(fileInfo.FullName, null).contentItem;
+							FileInfo fileInfo = new FileInfo(Path.Combine(localFolderPath.ToString(), "LangIcon.png"));
+							if (fileInfo.Exists)
+							{
+								this.icon = ModContentLoader<Texture2D>.LoadItem(fileInfo.FullName, null).contentItem;
+							}
+						}
+					});
+					DirectoryInfo directoryInfo = new DirectoryInfo(Path.Combine(current.ToString(), "CodeLinked"));
+					if (directoryInfo.Exists)
+					{
+						this.loadErrors.Add("Translations aren't called CodeLinked any more. Please rename to Keyed: " + directoryInfo);
+					}
+					else
+					{
+						directoryInfo = new DirectoryInfo(Path.Combine(current.ToString(), "Keyed"));
+					}
+					if (directoryInfo.Exists)
+					{
+						FileInfo[] files = directoryInfo.GetFiles("*.xml", SearchOption.AllDirectories);
+						for (int i = 0; i < files.Length; i++)
+						{
+							FileInfo file = files[i];
+							this.LoadFromFile_Keyed(file);
 						}
 					}
-				});
-				DirectoryInfo directoryInfo = new DirectoryInfo(Path.Combine(current.ToString(), "CodeLinked"));
-				if (directoryInfo.Exists)
-				{
-					this.loadErrors.Add("Translations aren't called CodeLinked any more. Please rename to Keyed: " + directoryInfo);
-				}
-				else
-				{
-					directoryInfo = new DirectoryInfo(Path.Combine(current.ToString(), "Keyed"));
-				}
-				if (directoryInfo.Exists)
-				{
-					FileInfo[] files = directoryInfo.GetFiles("*.xml", SearchOption.AllDirectories);
-					for (int i = 0; i < files.Length; i++)
+					DirectoryInfo directoryInfo2 = new DirectoryInfo(Path.Combine(current.ToString(), "DefLinked"));
+					if (directoryInfo2.Exists)
 					{
-						FileInfo file = files[i];
-						this.LoadFromFile_Keyed(file);
+						this.loadErrors.Add("Translations aren't called DefLinked any more. Please rename to DefInjected: " + directoryInfo2);
 					}
-				}
-				DirectoryInfo directoryInfo2 = new DirectoryInfo(Path.Combine(current.ToString(), "DefLinked"));
-				if (directoryInfo2.Exists)
-				{
-					this.loadErrors.Add("Translations aren't called DefLinked any more. Please rename to DefInjected: " + directoryInfo2);
-				}
-				else
-				{
-					directoryInfo2 = new DirectoryInfo(Path.Combine(current.ToString(), "DefInjected"));
-				}
-				if (directoryInfo2.Exists)
-				{
-					DirectoryInfo[] directories = directoryInfo2.GetDirectories("*", SearchOption.TopDirectoryOnly);
-					for (int j = 0; j < directories.Length; j++)
+					else
 					{
-						DirectoryInfo directoryInfo3 = directories[j];
-						string name = directoryInfo3.Name;
-						Type typeInAnyAssembly = GenTypes.GetTypeInAnyAssembly(name);
-						if (typeInAnyAssembly == null && name.Length > 3)
+						directoryInfo2 = new DirectoryInfo(Path.Combine(current.ToString(), "DefInjected"));
+					}
+					if (directoryInfo2.Exists)
+					{
+						DirectoryInfo[] directories = directoryInfo2.GetDirectories("*", SearchOption.TopDirectoryOnly);
+						for (int j = 0; j < directories.Length; j++)
 						{
-							typeInAnyAssembly = GenTypes.GetTypeInAnyAssembly(name.Substring(0, name.Length - 1));
-						}
-						if (typeInAnyAssembly == null)
-						{
-							this.loadErrors.Add(string.Concat(new string[]
+							DirectoryInfo directoryInfo3 = directories[j];
+							string name = directoryInfo3.Name;
+							Type typeInAnyAssembly = GenTypes.GetTypeInAnyAssembly(name);
+							if (typeInAnyAssembly == null && name.Length > 3)
 							{
-								"Error loading language from ",
-								current,
-								": dir ",
-								directoryInfo3.Name,
-								" doesn't correspond to any def type. Skipping..."
-							}));
-						}
-						else
-						{
-							FileInfo[] files2 = directoryInfo3.GetFiles("*.xml", SearchOption.AllDirectories);
-							for (int k = 0; k < files2.Length; k++)
+								typeInAnyAssembly = GenTypes.GetTypeInAnyAssembly(name.Substring(0, name.Length - 1));
+							}
+							if (typeInAnyAssembly == null)
 							{
-								FileInfo file2 = files2[k];
-								this.LoadFromFile_DefInject(file2, typeInAnyAssembly);
+								this.loadErrors.Add(string.Concat(new string[]
+								{
+									"Error loading language from ",
+									current,
+									": dir ",
+									directoryInfo3.Name,
+									" doesn't correspond to any def type. Skipping..."
+								}));
+							}
+							else
+							{
+								FileInfo[] files2 = directoryInfo3.GetFiles("*.xml", SearchOption.AllDirectories);
+								for (int k = 0; k < files2.Length; k++)
+								{
+									FileInfo file2 = files2[k];
+									this.LoadFromFile_DefInject(file2, typeInAnyAssembly);
+								}
 							}
 						}
 					}
-				}
-				this.EnsureAllDefTypesHaveDefInjectionPackage();
-				DirectoryInfo directoryInfo4 = new DirectoryInfo(Path.Combine(current.ToString(), "Strings"));
-				if (directoryInfo4.Exists)
-				{
-					DirectoryInfo[] directories2 = directoryInfo4.GetDirectories("*", SearchOption.TopDirectoryOnly);
-					for (int l = 0; l < directories2.Length; l++)
+					this.EnsureAllDefTypesHaveDefInjectionPackage();
+					DirectoryInfo directoryInfo4 = new DirectoryInfo(Path.Combine(current.ToString(), "Strings"));
+					if (directoryInfo4.Exists)
 					{
-						DirectoryInfo directoryInfo5 = directories2[l];
-						FileInfo[] files3 = directoryInfo5.GetFiles("*.txt", SearchOption.AllDirectories);
-						for (int m = 0; m < files3.Length; m++)
+						DirectoryInfo[] directories2 = directoryInfo4.GetDirectories("*", SearchOption.TopDirectoryOnly);
+						for (int l = 0; l < directories2.Length; l++)
 						{
-							FileInfo file3 = files3[m];
-							this.LoadFromFile_Strings(file3, directoryInfo4);
+							DirectoryInfo directoryInfo5 = directories2[l];
+							FileInfo[] files3 = directoryInfo5.GetFiles("*.txt", SearchOption.AllDirectories);
+							for (int m = 0; m < files3.Length; m++)
+							{
+								FileInfo file3 = files3[m];
+								this.LoadFromFile_Strings(file3, directoryInfo4);
+							}
 						}
 					}
+					this.wordInfo.LoadFrom(current);
 				}
 			}
-			DeepProfiler.End();
+			catch (Exception arg)
+			{
+				Log.Error("Exception loading language data. Rethrowing. Exception: " + arg, false);
+				throw;
+			}
+			finally
+			{
+				DeepProfiler.End();
+			}
 		}
 
 		private void LoadFromFile_Strings(FileInfo file, DirectoryInfo stringsTopDir)
@@ -430,6 +444,11 @@ namespace Verse
 				return "unknown";
 			}
 			return keyedReplacement.fileSource + ":" + keyedReplacement.fileSourceLine;
+		}
+
+		public Gender ResolveGender(string str, string fallback = null)
+		{
+			return this.wordInfo.ResolveGender(str, fallback);
 		}
 
 		public void InjectIntoData_BeforeImpliedDefs()

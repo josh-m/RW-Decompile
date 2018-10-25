@@ -47,13 +47,15 @@ namespace Verse.AI
 
 		private const float OptimalRangeFactorImportance = 0.3f;
 
+		private const float CoverPreferenceFactor = 0.55f;
+
 		public static bool TryFindCastPosition(CastPositionRequest newReq, out IntVec3 dest)
 		{
 			CastPositionFinder.req = newReq;
 			CastPositionFinder.casterLoc = CastPositionFinder.req.caster.Position;
 			CastPositionFinder.targetLoc = CastPositionFinder.req.target.Position;
 			CastPositionFinder.verb = CastPositionFinder.req.verb;
-			CastPositionFinder.avoidGrid = newReq.caster.GetAvoidGrid();
+			CastPositionFinder.avoidGrid = newReq.caster.GetAvoidGrid(false);
 			if (CastPositionFinder.verb == null)
 			{
 				Log.Error(CastPositionFinder.req.caster + " tried to find casting position without a verb.", false);
@@ -275,7 +277,7 @@ namespace Verse.AI
 			}
 			if (CastPositionFinder.req.wantCoverFromTarget)
 			{
-				num += CoverUtility.CalculateOverallBlockChance(c, CastPositionFinder.req.target.Position, CastPositionFinder.req.caster.Map);
+				num += CoverUtility.CalculateOverallBlockChance(c, CastPositionFinder.req.target.Position, CastPositionFinder.req.caster.Map) * 0.55f;
 			}
 			float num2 = (CastPositionFinder.req.caster.Position - c).LengthHorizontal;
 			if (CastPositionFinder.rangeFromTarget > 100f)

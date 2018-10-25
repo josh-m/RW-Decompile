@@ -30,10 +30,7 @@ namespace RimWorld
 			stringBuilder.AppendLine("  " + this.GetMeleeDamage(req, true).ToString("0.##"));
 			stringBuilder.AppendLine();
 			stringBuilder.AppendLine("StatsReport_Cooldown".Translate() + " (" + "AverageOfAllAttacks".Translate() + ")");
-			stringBuilder.AppendLine("  " + "StatsReport_CooldownFormat".Translate(new object[]
-			{
-				this.GetMeleeCooldown(req, true).ToString("0.##")
-			}));
+			stringBuilder.AppendLine("  " + "StatsReport_CooldownFormat".Translate(this.GetMeleeCooldown(req, true).ToString("0.##")));
 			stringBuilder.AppendLine();
 			stringBuilder.AppendLine("StatsReport_MeleeHitChance".Translate());
 			stringBuilder.AppendLine();

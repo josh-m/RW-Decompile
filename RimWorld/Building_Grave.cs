@@ -260,12 +260,9 @@ namespace RimWorld
 			{
 				if (base.Tile != -1)
 				{
-					string text = GenDate.DateFullStringAt((long)GenDate.TickGameToAbs(this.Corpse.timeOfDeath), Find.WorldGrid.LongLatOf(base.Tile));
+					string value = GenDate.DateFullStringAt((long)GenDate.TickGameToAbs(this.Corpse.timeOfDeath), Find.WorldGrid.LongLatOf(base.Tile));
 					stringBuilder.AppendLine();
-					stringBuilder.Append("DiedOn".Translate(new object[]
-					{
-						text
-					}));
+					stringBuilder.Append("DiedOn".Translate(value));
 				}
 			}
 			else if (this.assignedPawn != null)

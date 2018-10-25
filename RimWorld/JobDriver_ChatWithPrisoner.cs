@@ -48,7 +48,7 @@ namespace RimWorld
 			yield return Toils_Interpersonal.GotoInteractablePosition(TargetIndex.A);
 			yield return Toils_Interpersonal.ConvinceRecruitee(this.pawn, this.Talkee);
 			yield return Toils_Interpersonal.GotoPrisoner(this.pawn, this.Talkee, this.Talkee.guest.interactionMode);
-			yield return Toils_Interpersonal.GotoInteractablePosition(TargetIndex.A);
+			yield return Toils_Interpersonal.GotoInteractablePosition(TargetIndex.A).FailOn(() => !this.$this.Talkee.guest.ScheduledForInteraction);
 			yield return Toils_Interpersonal.SetLastInteractTime(TargetIndex.A);
 			yield return Toils_Interpersonal.TryRecruit(TargetIndex.A);
 		}

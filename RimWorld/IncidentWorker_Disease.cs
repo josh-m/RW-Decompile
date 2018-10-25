@@ -138,14 +138,8 @@ namespace RimWorld
 					{
 						blockedInfo += "\n\n";
 					}
-					string arg_19F_0 = blockedInfo;
-					string arg_19A_0 = "LetterDisease_Blocked";
-					object[] expr_146 = new object[3];
-					expr_146[0] = current2.Key.LabelCap;
-					expr_146[1] = this.def.diseaseIncident.label;
-					expr_146[2] = (from victim in current2.Value
-					select victim.LabelShort).ToCommaList(true);
-					blockedInfo = arg_19F_0 + arg_19A_0.Translate(expr_146);
+					blockedInfo += "LetterDisease_Blocked".Translate(current2.Key.LabelCap, this.def.diseaseIncident.label, (from victim in current2.Value
+					select victim.LabelShort).ToCommaList(true));
 				}
 			}
 			return list;

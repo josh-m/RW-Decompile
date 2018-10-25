@@ -36,7 +36,7 @@ namespace RimWorld
 				}
 			}
 			List<Building> allBuildingsColonist = pawn.Map.listerBuildings.allBuildingsColonist;
-			if (allBuildingsColonist.Count != 0)
+			if (allBuildingsColonist.Count > 0)
 			{
 				int num = 0;
 				while (true)
@@ -47,20 +47,22 @@ namespace RimWorld
 						break;
 					}
 					Building building = allBuildingsColonist.RandomElement<Building>();
-					if (!building.Position.IsForbidden(pawn) && pawn.Map.areaManager.Home[building.Position])
+					if (building.def == ThingDefOf.Wall || building.def.building.ai_chillDestination)
 					{
-						int num2 = 15 + num * 2;
-						if ((pawn.Position - building.Position).LengthHorizontalSquared <= num2 * num2)
+						if (!building.Position.IsForbidden(pawn) && pawn.Map.areaManager.Home[building.Position])
 						{
-							IntVec3 intVec = GenAdjFast.AdjacentCells8Way(building).RandomElement<IntVec3>();
-							if (intVec.Standable(building.Map) && !intVec.IsForbidden(pawn) && pawn.CanReach(intVec, PathEndMode.OnCell, Danger.None, false, TraverseMode.ByPawn) && !intVec.IsInPrisonCell(pawn.Map))
+							int num2 = 15 + num * 2;
+							if ((pawn.Position - building.Position).LengthHorizontalSquared <= num2 * num2)
 							{
-								return intVec;
+								IntVec3 intVec = GenAdjFast.AdjacentCells8Way(building).RandomElement<IntVec3>();
+								if (intVec.Standable(building.Map) && !intVec.IsForbidden(pawn) && pawn.CanReach(intVec, PathEndMode.OnCell, Danger.None, false, TraverseMode.ByPawn) && !intVec.IsInPrisonCell(pawn.Map))
+								{
+									return intVec;
+								}
 							}
 						}
 					}
 				}
-				return pawn.Position;
 			}
 			Pawn pawn2;
 			if ((from c in pawn.Map.mapPawns.FreeColonistsSpawned

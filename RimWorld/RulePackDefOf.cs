@@ -84,6 +84,8 @@ namespace RimWorld
 
 		public static RulePackDef DamageEvent_Tornado;
 
+		public static RulePackDef DamageEvent_TrapSpike;
+
 		public static RulePackDef Event_Stun;
 
 		public static RulePackDef Battle_Solo;

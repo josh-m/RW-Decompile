@@ -83,21 +83,21 @@ namespace Verse
 			});
 		}
 
-		public IntVec3 MostRecentReservationFor(Pawn p)
+		public PawnDestinationReservationManager.PawnDestinationReservation MostRecentReservationFor(Pawn p)
 		{
 			if (p.Faction == null)
 			{
-				return IntVec3.Invalid;
+				return null;
 			}
 			List<PawnDestinationReservationManager.PawnDestinationReservation> list = this.reservedDestinations[p.Faction].list;
 			for (int i = 0; i < list.Count; i++)
 			{
 				if (list[i].claimant == p && !list[i].obsolete)
 				{
-					return list[i].target;
+					return list[i];
 				}
 			}
-			return IntVec3.Invalid;
+			return null;
 		}
 
 		public IntVec3 FirstObsoleteReservationFor(Pawn p)

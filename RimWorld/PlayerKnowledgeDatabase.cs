@@ -63,11 +63,7 @@ namespace RimWorld
 			}
 			catch (Exception ex)
 			{
-				GenUI.ErrorDialog("ProblemSavingFile".Translate(new object[]
-				{
-					GenFilePaths.ConceptKnowledgeFilePath,
-					ex.ToString()
-				}));
+				GenUI.ErrorDialog("ProblemSavingFile".Translate(GenFilePaths.ConceptKnowledgeFilePath, ex.ToString()));
 				Log.Error("Exception saving knowledge database: " + ex, false);
 			}
 		}

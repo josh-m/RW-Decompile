@@ -34,10 +34,7 @@ namespace RimWorld
 			{
 				GameDataSaveLoader.SaveGame(mapName);
 			}, "SavingLongEvent", false, null);
-			Messages.Message("SavedAs".Translate(new object[]
-			{
-				mapName
-			}), MessageTypeDefOf.SilentInput, false);
+			Messages.Message("SavedAs".Translate(mapName), MessageTypeDefOf.SilentInput, false);
 			PlayerKnowledgeDatabase.Save();
 			this.Close(true);
 		}

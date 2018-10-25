@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
-    <ProjectGuid>{6A301472-1C0A-46DE-804E-203EF9C9F94A}</ProjectGuid>
+    <ProjectGuid>{5C00E308-BBE4-4D69-AD93-2B853725F259}</ProjectGuid>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <OutputType>Library</OutputType>
@@ -787,6 +787,7 @@
     <Compile Include="RimWorld\Dialog_LoadTransporters.cs" />
     <Compile Include="RimWorld\Dialog_ManageAreas.cs" />
     <Compile Include="RimWorld\Dialog_ManageDrugPolicies.cs" />
+    <Compile Include="RimWorld\Dialog_ManageFoodRestrictions.cs" />
     <Compile Include="RimWorld\Dialog_ManageOutfits.cs" />
     <Compile Include="RimWorld\Dialog_MedicalDefaults.cs" />
     <Compile Include="RimWorld\Dialog_ModSettings.cs" />
@@ -869,6 +870,8 @@
     <Compile Include="RimWorld\FoodPoisonCause.cs" />
     <Compile Include="RimWorld\FoodPoisonCauseExtension.cs" />
     <Compile Include="RimWorld\FoodPreferability.cs" />
+    <Compile Include="RimWorld\FoodRestriction.cs" />
+    <Compile Include="RimWorld\FoodRestrictionDatabase.cs" />
     <Compile Include="RimWorld\FoodTypeFlags.cs" />
     <Compile Include="RimWorld\FoodTypeFlagsExtension.cs" />
     <Compile Include="RimWorld\FoodUtility.cs" />
@@ -982,7 +985,7 @@
     <Compile Include="RimWorld\HistoryAutoRecorderWorker_WealthPawns.cs" />
     <Compile Include="RimWorld\HistoryAutoRecorderWorker_WealthTotal.cs" />
     <Compile Include="RimWorld\Hive.cs" />
-    <Compile Include="RimWorld\HivesUtility.cs" />
+    <Compile Include="RimWorld\HiveUtility.cs" />
     <Compile Include="RimWorld\HoldOffset.cs" />
     <Compile Include="RimWorld\HoldOffsetSet.cs" />
     <Compile Include="RimWorld\HostilityResponseMode.cs" />
@@ -1090,6 +1093,7 @@
     <Compile Include="RimWorld\InstallationDesignatorDatabase.cs" />
     <Compile Include="RimWorld\InstallBlueprintUtility.cs" />
     <Compile Include="RimWorld\InstructionDef.cs" />
+    <Compile Include="RimWorld\InstructionDefOf.cs" />
     <Compile Include="RimWorld\Instruction_AddBill.cs" />
     <Compile Include="RimWorld\Instruction_Basic.cs" />
     <Compile Include="RimWorld\Instruction_BuildAtRoom.cs" />
@@ -1203,6 +1207,7 @@
     <Compile Include="RimWorld\JobDriver_Milk.cs" />
     <Compile Include="RimWorld\JobDriver_Mine.cs" />
     <Compile Include="RimWorld\JobDriver_Nuzzle.cs" />
+    <Compile Include="RimWorld\JobDriver_OfferHelp.cs" />
     <Compile Include="RimWorld\JobDriver_Open.cs" />
     <Compile Include="RimWorld\JobDriver_OperateDeepDrill.cs" />
     <Compile Include="RimWorld\JobDriver_OperateScanner.cs" />
@@ -1324,6 +1329,7 @@
     <Compile Include="RimWorld\JobGiver_PackFood.cs" />
     <Compile Include="RimWorld\JobGiver_PatientGoToBed.cs" />
     <Compile Include="RimWorld\JobGiver_PickUpOpportunisticWeapon.cs" />
+    <Compile Include="RimWorld\JobGiver_PrepareCaravan_GatherDownedPawns.cs" />
     <Compile Include="RimWorld\JobGiver_PrepareCaravan_GatherItems.cs" />
     <Compile Include="RimWorld\JobGiver_PrepareCaravan_GatherPawns.cs" />
     <Compile Include="RimWorld\JobGiver_PrisonerEscape.cs" />
@@ -1447,6 +1453,7 @@
     <Compile Include="RimWorld\LordToil_PanicFlee.cs" />
     <Compile Include="RimWorld\LordToil_Party.cs" />
     <Compile Include="RimWorld\LordToil_PrepareCaravan_GatherAnimals.cs" />
+    <Compile Include="RimWorld\LordToil_PrepareCaravan_GatherDownedPawns.cs" />
     <Compile Include="RimWorld\LordToil_PrepareCaravan_GatherItems.cs" />
     <Compile Include="RimWorld\LordToil_PrepareCaravan_GatherSlaves.cs" />
     <Compile Include="RimWorld\LordToil_PrepareCaravan_Leave.cs" />
@@ -1553,8 +1560,8 @@
     <Compile Include="RimWorld\Page_CreateWorldParams.cs" />
     <Compile Include="RimWorld\Page_ModsConfig.cs" />
     <Compile Include="RimWorld\Page_ScenarioEditor.cs" />
-    <Compile Include="RimWorld\Page_SelectLandingSite.cs" />
     <Compile Include="RimWorld\Page_SelectScenario.cs" />
+    <Compile Include="RimWorld\Page_SelectStartingSite.cs" />
     <Compile Include="RimWorld\Page_SelectStoryteller.cs" />
     <Compile Include="RimWorld\Page_SelectStorytellerInGame.cs" />
     <Compile Include="RimWorld\ParentRelationUtility.cs" />
@@ -1598,6 +1605,7 @@
     <Compile Include="RimWorld\PawnColumnWorker_DrugPolicy.cs" />
     <Compile Include="RimWorld\PawnColumnWorker_FollowDrafted.cs" />
     <Compile Include="RimWorld\PawnColumnWorker_FollowFieldwork.cs" />
+    <Compile Include="RimWorld\PawnColumnWorker_FoodRestriction.cs" />
     <Compile Include="RimWorld\PawnColumnWorker_Gap.cs" />
     <Compile Include="RimWorld\PawnColumnWorker_Gender.cs" />
     <Compile Include="RimWorld\PawnColumnWorker_HostilityResponse.cs" />
@@ -1705,6 +1713,7 @@
     <Compile Include="RimWorld\Pawn_DraftController.cs" />
     <Compile Include="RimWorld\Pawn_DrugPolicyTracker.cs" />
     <Compile Include="RimWorld\Pawn_FilthTracker.cs" />
+    <Compile Include="RimWorld\Pawn_FoodRestrictionTracker.cs" />
     <Compile Include="RimWorld\Pawn_GuestTracker.cs" />
     <Compile Include="RimWorld\Pawn_GuiltTracker.cs" />
     <Compile Include="RimWorld\Pawn_InteractionsTracker.cs" />
@@ -2563,7 +2572,6 @@
     <Compile Include="RuntimeAudioClipLoader\CustomAudioFileReader.cs" />
     <Compile Include="RuntimeAudioClipLoader\Manager.cs" />
     <Compile Include="SkyfallerUtility.cs" />
-    <Compile Include="Verse.AI.Group\AvoidGridMode.cs" />
     <Compile Include="Verse.AI.Group\Lord.cs" />
     <Compile Include="Verse.AI.Group\LordJob.cs" />
     <Compile Include="Verse.AI.Group\LordJob_DefendPoint.cs" />
@@ -2640,7 +2648,7 @@
     <Compile Include="Verse.AI\AttackTargetFinder.cs" />
     <Compile Include="Verse.AI\AttackTargetReservationManager.cs" />
     <Compile Include="Verse.AI\AttackTargetsCache.cs" />
-    <Compile Include="Verse.AI\AvoidGridMaker.cs" />
+    <Compile Include="Verse.AI\AvoidGrid.cs" />
     <Compile Include="Verse.AI\CastPositionFinder.cs" />
     <Compile Include="Verse.AI\CastPositionRequest.cs" />
     <Compile Include="Verse.AI\CorpseObsessionMentalStateUtility.cs" />
@@ -2829,17 +2837,13 @@
     <Compile Include="Verse.Noise\Arbitrary.cs" />
     <Compile Include="Verse.Noise\AxisAsValueX.cs" />
     <Compile Include="Verse.Noise\AxisAsValueZ.cs" />
-    <Compile Include="Verse.Noise\Billow.cs" />
     <Compile Include="Verse.Noise\Blend.cs" />
     <Compile Include="Verse.Noise\Cache.cs" />
-    <Compile Include="Verse.Noise\Checker.cs" />
     <Compile Include="Verse.Noise\Clamp.cs" />
     <Compile Include="Verse.Noise\Const.cs" />
     <Compile Include="Verse.Noise\ConvertToIsland.cs" />
     <Compile Include="Verse.Noise\Curve.cs" />
-    <Compile Include="Verse.Noise\CurveFromAxis.cs" />
     <Compile Include="Verse.Noise\CurveSimple.cs" />
-    <Compile Include="Verse.Noise\Cylinders.cs" />
     <Compile Include="Verse.Noise\Displace.cs" />
     <Compile Include="Verse.Noise\DistanceFromPlanetViewCenter.cs" />
     <Compile Include="Verse.Noise\DistFromAxis.cs" />
@@ -2865,7 +2869,6 @@
     <Compile Include="Verse.Noise\Scale.cs" />
     <Compile Include="Verse.Noise\ScaleBias.cs" />
     <Compile Include="Verse.Noise\Select.cs" />
-    <Compile Include="Verse.Noise\Spheres.cs" />
     <Compile Include="Verse.Noise\SqueezeHorizontally.cs" />
     <Compile Include="Verse.Noise\SqueezeVertically.cs" />
     <Compile Include="Verse.Noise\Subtract.cs" />
@@ -2873,7 +2876,6 @@
     <Compile Include="Verse.Noise\Translate.cs" />
     <Compile Include="Verse.Noise\Turbulence.cs" />
     <Compile Include="Verse.Noise\Utils.cs" />
-    <Compile Include="Verse.Noise\Voronoi.cs" />
     <Compile Include="Verse.Profile\CollectionsTracker.cs" />
     <Compile Include="Verse.Profile\MapLeakTracker.cs" />
     <Compile Include="Verse.Profile\MemoryTracker.cs" />
@@ -3340,6 +3342,8 @@
     <Compile Include="Verse\GizmoState.cs" />
     <Compile Include="Verse\GlowFlooder.cs" />
     <Compile Include="Verse\GlowGrid.cs" />
+    <Compile Include="Verse\GrammarResolverSimple.cs" />
+    <Compile Include="Verse\GrammarResolverSimpleStringExtensions.cs" />
     <Compile Include="Verse\Graphic.cs" />
     <Compile Include="Verse\GraphicData.cs" />
     <Compile Include="Verse\GraphicDatabase.cs" />
@@ -3467,11 +3471,25 @@
     <Compile Include="Verse\LanguageDataWriter.cs" />
     <Compile Include="Verse\LanguageInfo.cs" />
     <Compile Include="Verse\LanguageReportGenerator.cs" />
+    <Compile Include="Verse\LanguageWordInfo.cs" />
     <Compile Include="Verse\LanguageWorker.cs" />
+    <Compile Include="Verse\LanguageWorker_Catalan.cs" />
+    <Compile Include="Verse\LanguageWorker_Danish.cs" />
     <Compile Include="Verse\LanguageWorker_Default.cs" />
+    <Compile Include="Verse\LanguageWorker_Dutch.cs" />
     <Compile Include="Verse\LanguageWorker_English.cs" />
+    <Compile Include="Verse\LanguageWorker_French.cs" />
+    <Compile Include="Verse\LanguageWorker_German.cs" />
+    <Compile Include="Verse\LanguageWorker_Hungarian.cs" />
+    <Compile Include="Verse\LanguageWorker_Italian.cs" />
     <Compile Include="Verse\LanguageWorker_Korean.cs" />
+    <Compile Include="Verse\LanguageWorker_Norwegian.cs" />
+    <Compile Include="Verse\LanguageWorker_Portuguese.cs" />
+    <Compile Include="Verse\LanguageWorker_Romanian.cs" />
     <Compile Include="Verse\LanguageWorker_Russian.cs" />
+    <Compile Include="Verse\LanguageWorker_Spanish.cs" />
+    <Compile Include="Verse\LanguageWorker_Swedish.cs" />
+    <Compile Include="Verse\LanguageWorker_Turkish.cs" />
     <Compile Include="Verse\LayerLoader.cs" />
     <Compile Include="Verse\LayerSubMesh.cs" />
     <Compile Include="Verse\Letter.cs" />
@@ -3590,6 +3608,8 @@
     <Compile Include="Verse\MultiCheckboxState.cs" />
     <Compile Include="Verse\MustTranslateAttribute.cs" />
     <Compile Include="Verse\Name.cs" />
+    <Compile Include="Verse\NamedArgument.cs" />
+    <Compile Include="Verse\NamedArgumentUtility.cs" />
     <Compile Include="Verse\NameSingle.cs" />
     <Compile Include="Verse\NameTriple.cs" />
     <Compile Include="Verse\NameUseChecker.cs" />
@@ -3932,6 +3952,7 @@
     <Compile Include="Verse\TranslationHandleAttribute.cs" />
     <Compile Include="Verse\TranslationHandleUtility.cs" />
     <Compile Include="Verse\Translator.cs" />
+    <Compile Include="Verse\TranslatorFormattedStringExtensions.cs" />
     <Compile Include="Verse\Traversability.cs" />
     <Compile Include="Verse\TraverseMode.cs" />
     <Compile Include="Verse\TraverseParms.cs" />
@@ -3940,6 +3961,7 @@
     <Compile Include="Verse\TreeNode_ThingCategory.cs" />
     <Compile Include="Verse\TreeOpenMasks.cs" />
     <Compile Include="Verse\Triangulator.cs" />
+    <Compile Include="Verse\TriggerUnfogged.cs" />
     <Compile Include="Verse\TweakValue.cs" />
     <Compile Include="Verse\UI.cs" />
     <Compile Include="Verse\UIDirection.cs" />

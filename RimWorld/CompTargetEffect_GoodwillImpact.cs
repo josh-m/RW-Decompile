@@ -16,18 +16,14 @@ namespace RimWorld
 
 		public override void DoEffectOn(Pawn user, Thing target)
 		{
-			if (user.Faction != null && target.Faction != null)
+			if (user.Faction != null && target.Faction != null && !target.Faction.HostileTo(user.Faction))
 			{
-				Faction arg_69_0 = target.Faction;
+				Faction arg_98_0 = target.Faction;
 				Faction faction = user.Faction;
 				int goodwillImpact = this.PropsGoodwillImpact.goodwillImpact;
-				string reason = "GoodwillChangedReason_UsedItem".Translate(new object[]
-				{
-					this.parent.LabelShort,
-					target.LabelShort
-				});
+				string reason = "GoodwillChangedReason_UsedItem".Translate(this.parent.LabelShort, target.LabelShort, this.parent.Named("ITEM"), target.Named("TARGET"));
 				GlobalTargetInfo? lookTarget = new GlobalTargetInfo?(target);
-				arg_69_0.TryAffectGoodwillWith(faction, goodwillImpact, true, true, reason, lookTarget);
+				arg_98_0.TryAffectGoodwillWith(faction, goodwillImpact, true, true, reason, lookTarget);
 			}
 		}
 	}

@@ -338,6 +338,42 @@ namespace Verse
 			}
 		}
 
+		public static int ScreenWidth
+		{
+			get
+			{
+				return Prefs.data.screenWidth;
+			}
+			set
+			{
+				Prefs.data.screenWidth = value;
+			}
+		}
+
+		public static int ScreenHeight
+		{
+			get
+			{
+				return Prefs.data.screenHeight;
+			}
+			set
+			{
+				Prefs.data.screenHeight = value;
+			}
+		}
+
+		public static bool FullScreen
+		{
+			get
+			{
+				return Prefs.data.fullscreen;
+			}
+			set
+			{
+				Prefs.data.fullscreen = value;
+			}
+		}
+
 		public static bool HatsOnlyOnMap
 		{
 			get
@@ -368,6 +404,7 @@ namespace Verse
 			{
 				Prefs.DevMode = false;
 			}
+			Prefs.Apply();
 		}
 
 		public static void Save()
@@ -381,11 +418,7 @@ namespace Verse
 			}
 			catch (Exception ex)
 			{
-				GenUI.ErrorDialog("ProblemSavingFile".Translate(new object[]
-				{
-					GenFilePaths.PrefsFilePath,
-					ex.ToString()
-				}));
+				GenUI.ErrorDialog("ProblemSavingFile".Translate(GenFilePaths.PrefsFilePath, ex.ToString()));
 				Log.Error("Exception saving prefs: " + ex, false);
 			}
 		}

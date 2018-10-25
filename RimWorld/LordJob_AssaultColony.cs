@@ -54,7 +54,7 @@ namespace RimWorld
 				lordToil = new LordToil_AssaultColonySappers();
 				if (this.useAvoidGridSmart)
 				{
-					lordToil.avoidGridMode = AvoidGridMode.Smart;
+					lordToil.useAvoidGrid = true;
 				}
 				stateGraph.AddToil(lordToil);
 				Transition transition = new Transition(lordToil, lordToil, true, true);
@@ -68,11 +68,11 @@ namespace RimWorld
 			LordToil lordToil2 = new LordToil_AssaultColony(false);
 			if (this.useAvoidGridSmart)
 			{
-				lordToil2.avoidGridMode = AvoidGridMode.Smart;
+				lordToil2.useAvoidGrid = true;
 			}
 			stateGraph.AddToil(lordToil2);
 			LordToil_ExitMap lordToil_ExitMap = new LordToil_ExitMap(LocomotionUrgency.Jog, false);
-			lordToil_ExitMap.avoidGridMode = AvoidGridMode.Smart;
+			lordToil_ExitMap.useAvoidGrid = true;
 			stateGraph.AddToil(lordToil_ExitMap);
 			if (this.sappers)
 			{
@@ -90,11 +90,7 @@ namespace RimWorld
 						transition4.AddSource(lordToil);
 					}
 					transition4.AddTrigger(new Trigger_TicksPassed((!this.sappers) ? LordJob_AssaultColony.AssaultTimeBeforeGiveUp.RandomInRange : LordJob_AssaultColony.SapTimeBeforeGiveUp.RandomInRange));
-					transition4.AddPreAction(new TransitionAction_Message("MessageRaidersGivenUpLeaving".Translate(new object[]
-					{
-						this.assaulterFaction.def.pawnsPlural.CapitalizeFirst(),
-						this.assaulterFaction.Name
-					}), null, 1f));
+					transition4.AddPreAction(new TransitionAction_Message("MessageRaidersGivenUpLeaving".Translate(this.assaulterFaction.def.pawnsPlural.CapitalizeFirst(), this.assaulterFaction.Name), null, 1f));
 					stateGraph.AddTransition(transition4, false);
 					Transition transition5 = new Transition(lordToil2, lordToil_ExitMap, false, true);
 					if (lordToil != null)
@@ -104,11 +100,7 @@ namespace RimWorld
 					FloatRange floatRange = new FloatRange(0.25f, 0.35f);
 					float randomInRange = floatRange.RandomInRange;
 					transition5.AddTrigger(new Trigger_FractionColonyDamageTaken(randomInRange, 900f));
-					transition5.AddPreAction(new TransitionAction_Message("MessageRaidersSatisfiedLeaving".Translate(new object[]
-					{
-						this.assaulterFaction.def.pawnsPlural.CapitalizeFirst(),
-						this.assaulterFaction.Name
-					}), null, 1f));
+					transition5.AddPreAction(new TransitionAction_Message("MessageRaidersSatisfiedLeaving".Translate(this.assaulterFaction.def.pawnsPlural.CapitalizeFirst(), this.assaulterFaction.Name), null, 1f));
 					stateGraph.AddTransition(transition5, false);
 				}
 				if (this.canKidnap)
@@ -119,11 +111,7 @@ namespace RimWorld
 					{
 						transition6.AddSource(lordToil);
 					}
-					transition6.AddPreAction(new TransitionAction_Message("MessageRaidersKidnapping".Translate(new object[]
-					{
-						this.assaulterFaction.def.pawnsPlural.CapitalizeFirst(),
-						this.assaulterFaction.Name
-					}), null, 1f));
+					transition6.AddPreAction(new TransitionAction_Message("MessageRaidersKidnapping".Translate(this.assaulterFaction.def.pawnsPlural.CapitalizeFirst(), this.assaulterFaction.Name), null, 1f));
 					transition6.AddTrigger(new Trigger_KidnapVictimPresent());
 					stateGraph.AddTransition(transition6, false);
 				}
@@ -135,11 +123,7 @@ namespace RimWorld
 					{
 						transition7.AddSource(lordToil);
 					}
-					transition7.AddPreAction(new TransitionAction_Message("MessageRaidersStealing".Translate(new object[]
-					{
-						this.assaulterFaction.def.pawnsPlural.CapitalizeFirst(),
-						this.assaulterFaction.Name
-					}), null, 1f));
+					transition7.AddPreAction(new TransitionAction_Message("MessageRaidersStealing".Translate(this.assaulterFaction.def.pawnsPlural.CapitalizeFirst(), this.assaulterFaction.Name), null, 1f));
 					transition7.AddTrigger(new Trigger_HighValueThingsAround());
 					stateGraph.AddTransition(transition7, false);
 				}
@@ -150,11 +134,7 @@ namespace RimWorld
 				transition8.AddSource(lordToil);
 			}
 			transition8.AddTrigger(new Trigger_BecameNonHostileToPlayer());
-			transition8.AddPreAction(new TransitionAction_Message("MessageRaidersLeaving".Translate(new object[]
-			{
-				this.assaulterFaction.def.pawnsPlural.CapitalizeFirst(),
-				this.assaulterFaction.Name
-			}), null, 1f));
+			transition8.AddPreAction(new TransitionAction_Message("MessageRaidersLeaving".Translate(this.assaulterFaction.def.pawnsPlural.CapitalizeFirst(), this.assaulterFaction.Name), null, 1f));
 			stateGraph.AddTransition(transition8, false);
 			return stateGraph;
 		}

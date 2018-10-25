@@ -25,10 +25,7 @@ namespace Verse
 				}
 				if (verb != null)
 				{
-					stringBuilder.Append("ShotBy".Translate(new object[]
-					{
-						Find.Selector.SingleSelectedThing.LabelShort
-					}) + ": ");
+					stringBuilder.Append("ShotBy".Translate(Find.Selector.SingleSelectedThing.LabelShort, Find.Selector.SingleSelectedThing) + ": ");
 					if (verb.CanHitTarget(target))
 					{
 						stringBuilder.Append(ShotReport.HitReportFor(verb.caster, verb, target).GetTextReadout());

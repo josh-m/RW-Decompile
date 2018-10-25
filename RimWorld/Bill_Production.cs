@@ -175,10 +175,7 @@ namespace RimWorld
 				}
 				if (this.repeatCount == 0)
 				{
-					Messages.Message("MessageBillComplete".Translate(new object[]
-					{
-						this.LabelCap
-					}), (Thing)this.billStack.billGiver, MessageTypeDefOf.TaskCompletion, true);
+					Messages.Message("MessageBillComplete".Translate(this.LabelCap), (Thing)this.billStack.billGiver, MessageTypeDefOf.TaskCompletion, true);
 				}
 			}
 		}
@@ -272,12 +269,7 @@ namespace RimWorld
 				{
 					if (this != BillUtility.Clipboard)
 					{
-						Messages.Message("MessageBillValidationStoreZoneDeleted".Translate(new object[]
-						{
-							this.LabelCap,
-							this.billStack.billGiver.LabelShort.CapitalizeFirst(),
-							this.storeZone.label
-						}), this.billStack.billGiver as Thing, MessageTypeDefOf.NegativeEvent, true);
+						Messages.Message("MessageBillValidationStoreZoneDeleted".Translate(this.LabelCap, this.billStack.billGiver.LabelShort.CapitalizeFirst(), this.storeZone.label), this.billStack.billGiver as Thing, MessageTypeDefOf.NegativeEvent, true);
 					}
 					this.SetStoreMode(BillStoreModeDefOf.DropOnFloor, null);
 				}
@@ -285,12 +277,7 @@ namespace RimWorld
 				{
 					if (this != BillUtility.Clipboard)
 					{
-						Messages.Message("MessageBillValidationStoreZoneUnavailable".Translate(new object[]
-						{
-							this.LabelCap,
-							this.billStack.billGiver.LabelShort.CapitalizeFirst(),
-							this.storeZone.label
-						}), this.billStack.billGiver as Thing, MessageTypeDefOf.NegativeEvent, true);
+						Messages.Message("MessageBillValidationStoreZoneUnavailable".Translate(this.LabelCap, this.billStack.billGiver.LabelShort.CapitalizeFirst(), this.storeZone.label), this.billStack.billGiver as Thing, MessageTypeDefOf.NegativeEvent, true);
 					}
 					this.SetStoreMode(BillStoreModeDefOf.DropOnFloor, null);
 				}
@@ -306,12 +293,7 @@ namespace RimWorld
 				{
 					if (this != BillUtility.Clipboard)
 					{
-						Messages.Message("MessageBillValidationIncludeZoneDeleted".Translate(new object[]
-						{
-							this.LabelCap,
-							this.billStack.billGiver.LabelShort.CapitalizeFirst(),
-							this.includeFromZone.label
-						}), this.billStack.billGiver as Thing, MessageTypeDefOf.NegativeEvent, true);
+						Messages.Message("MessageBillValidationIncludeZoneDeleted".Translate(this.LabelCap, this.billStack.billGiver.LabelShort.CapitalizeFirst(), this.includeFromZone.label), this.billStack.billGiver as Thing, MessageTypeDefOf.NegativeEvent, true);
 					}
 					this.includeFromZone = null;
 				}
@@ -319,12 +301,7 @@ namespace RimWorld
 				{
 					if (this != BillUtility.Clipboard)
 					{
-						Messages.Message("MessageBillValidationIncludeZoneUnavailable".Translate(new object[]
-						{
-							this.LabelCap,
-							this.billStack.billGiver.LabelShort.CapitalizeFirst(),
-							this.includeFromZone.label
-						}), this.billStack.billGiver as Thing, MessageTypeDefOf.NegativeEvent, true);
+						Messages.Message("MessageBillValidationIncludeZoneUnavailable".Translate(this.LabelCap, this.billStack.billGiver.LabelShort.CapitalizeFirst(), this.includeFromZone.label), this.billStack.billGiver as Thing, MessageTypeDefOf.NegativeEvent, true);
 					}
 					this.includeFromZone = null;
 				}

@@ -62,7 +62,7 @@ namespace Verse
 			}
 		}
 
-		public override string Label
+		public override string LabelNoCount
 		{
 			get
 			{
@@ -71,10 +71,7 @@ namespace Verse
 					Log.ErrorOnce("Corpse.Label while Bugged", 57361644, false);
 					return string.Empty;
 				}
-				return "DeadLabel".Translate(new object[]
-				{
-					this.InnerPawn.Label
-				});
+				return "DeadLabel".Translate(this.InnerPawn.Label, this.InnerPawn);
 			}
 		}
 
@@ -277,11 +274,7 @@ namespace Verse
 			{
 				if (PawnUtility.ShouldSendNotificationAbout(this.InnerPawn) && this.InnerPawn.RaceProps.Humanlike)
 				{
-					Messages.Message("MessageEatenByPredator".Translate(new object[]
-					{
-						this.InnerPawn.LabelShort,
-						ingester.LabelIndefinite()
-					}).CapitalizeFirst(), ingester, MessageTypeDefOf.NegativeEvent, true);
+					Messages.Message("MessageEatenByPredator".Translate(this.InnerPawn.LabelShort, ingester.Named("PREDATOR"), this.InnerPawn.Named("EATEN")).CapitalizeFirst(), ingester, MessageTypeDefOf.NegativeEvent, true);
 				}
 				numTaken = 1;
 			}
@@ -380,10 +373,7 @@ namespace Verse
 			{
 				stringBuilder.AppendLine("Faction".Translate() + ": " + this.InnerPawn.Faction.Name);
 			}
-			stringBuilder.AppendLine("DeadTime".Translate(new object[]
-			{
-				this.Age.ToStringTicksToPeriodVague(true, false)
-			}));
+			stringBuilder.AppendLine("DeadTime".Translate(this.Age.ToStringTicksToPeriodVague(true, false)));
 			float num = 1f - this.InnerPawn.health.hediffSet.GetCoverageOfNotMissingNaturalParts(this.InnerPawn.RaceProps.body.corePart);
 			if (num != 0f)
 			{

@@ -114,10 +114,7 @@ namespace RimWorld
 			{
 				if (this.parent.IsInAnyStorage() && this.parent.SpawnedOrAnyParentSpawned)
 				{
-					Messages.Message("MessageRottedAwayInStorage".Translate(new object[]
-					{
-						this.parent.Label
-					}).CapitalizeFirst(), new TargetInfo(this.parent.PositionHeld, this.parent.MapHeld, false), MessageTypeDefOf.NegativeEvent, true);
+					Messages.Message("MessageRottedAwayInStorage".Translate(this.parent.Label, this.parent).CapitalizeFirst(), new TargetInfo(this.parent.PositionHeld, this.parent.MapHeld, false), MessageTypeDefOf.NegativeEvent, true);
 					LessonAutoActivator.TeachOpportunity(ConceptDefOf.SpoilageAndFreezers, OpportunityType.GoodToKnow);
 				}
 				this.parent.Destroy(DestroyMode.Vanish);
@@ -203,17 +200,11 @@ namespace RimWorld
 				}
 				else if (num3 < 0.999f)
 				{
-					stringBuilder.Append("CurrentlyRefrigerated".Translate(new object[]
-					{
-						ticksUntilRotAtCurrentTemp.ToStringTicksToPeriodVague(true, true)
-					}) + ".");
+					stringBuilder.Append("CurrentlyRefrigerated".Translate(ticksUntilRotAtCurrentTemp.ToStringTicksToPeriod()) + ".");
 				}
 				else
 				{
-					stringBuilder.Append("NotRefrigerated".Translate(new object[]
-					{
-						ticksUntilRotAtCurrentTemp.ToStringTicksToPeriodVague(true, true)
-					}) + ".");
+					stringBuilder.Append("NotRefrigerated".Translate(ticksUntilRotAtCurrentTemp.ToStringTicksToPeriod()) + ".");
 				}
 			}
 			return stringBuilder.ToString();

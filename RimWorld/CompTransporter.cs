@@ -244,11 +244,7 @@ namespace RimWorld
 			if (this.parent.IsHashIntervalTick(60) && this.parent.Spawned && this.LoadingInProgressOrReadyToLaunch && this.AnyInGroupHasAnythingLeftToLoad && !this.AnyInGroupNotifiedCantLoadMore && !this.AnyPawnCanLoadAnythingNow)
 			{
 				this.notifiedCantLoadMore = true;
-				Messages.Message("MessageCantLoadMoreIntoTransporters".Translate(new object[]
-				{
-					this.FirstThingLeftToLoadInGroup.LabelNoCount,
-					Faction.OfPlayer.def.pawnsPlural
-				}), this.parent, MessageTypeDefOf.CautionInput, true);
+				Messages.Message("MessageCantLoadMoreIntoTransporters".Translate(this.FirstThingLeftToLoadInGroup.LabelNoCount, Faction.OfPlayer.def.pawnsPlural, this.FirstThingLeftToLoadInGroup), this.parent, MessageTypeDefOf.CautionInput, true);
 			}
 		}
 
@@ -329,10 +325,7 @@ namespace RimWorld
 						}
 					}
 				}
-				loadGroup.defaultLabel = "CommandLoadTransporter".Translate(new object[]
-				{
-					selectedTransportersCount.ToString()
-				});
+				loadGroup.defaultLabel = "CommandLoadTransporter".Translate(selectedTransportersCount.ToString());
 				loadGroup.defaultDesc = "CommandLoadTransporterDesc".Translate();
 				loadGroup.icon = CompTransporter.LoadCommandTex;
 				loadGroup.transComp = this;

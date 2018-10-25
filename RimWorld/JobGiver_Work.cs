@@ -33,7 +33,7 @@ namespace RimWorld
 			}
 			if (timeAssignmentDef == TimeAssignmentDefOf.Sleep)
 			{
-				return 2f;
+				return 3f;
 			}
 			if (timeAssignmentDef == TimeAssignmentDefOf.Joy)
 			{

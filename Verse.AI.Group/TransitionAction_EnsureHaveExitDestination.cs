@@ -16,7 +16,7 @@ namespace Verse.AI.Group
 			IntVec3 destination;
 			if (!CellFinder.TryFindRandomPawnExitCell(pawn, out destination))
 			{
-				RCellFinder.TryFindRandomPawnEntryCell(out destination, pawn.Map, 0f, null);
+				RCellFinder.TryFindRandomPawnEntryCell(out destination, pawn.Map, 0f, false, null);
 			}
 			lordToil_Travel.SetDestination(destination);
 		}

@@ -287,6 +287,26 @@ namespace Verse.AI
 			return f;
 		}
 
+		public static T FailOnThingHavingDesignation<T>(this T f, TargetIndex ind, DesignationDef desDef) where T : IJobEndable
+		{
+			f.AddEndCondition(delegate
+			{
+				Pawn actor = f.GetActor();
+				Job curJob = actor.jobs.curJob;
+				if (curJob.ignoreDesignations)
+				{
+					return JobCondition.Ongoing;
+				}
+				Thing thing = curJob.GetTarget(ind).Thing;
+				if (thing == null || actor.Map.designationManager.DesignationOn(thing, desDef) != null)
+				{
+					return JobCondition.Incompletable;
+				}
+				return JobCondition.Ongoing;
+			});
+			return f;
+		}
+
 		public static T FailOnCellMissingDesignation<T>(this T f, TargetIndex ind, DesignationDef desDef) where T : IJobEndable
 		{
 			f.AddEndCondition(delegate

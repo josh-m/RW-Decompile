@@ -33,11 +33,7 @@ namespace RimWorld
 				TradeShip tradeShip = new TradeShip(def);
 				if (map.listerBuildings.allBuildingsColonist.Any((Building b) => b.def.IsCommsConsole && b.GetComp<CompPowerTrader>().PowerOn))
 				{
-					Find.LetterStack.ReceiveLetter(tradeShip.def.LabelCap, "TraderArrival".Translate(new object[]
-					{
-						tradeShip.name,
-						tradeShip.def.label
-					}), LetterDefOf.PositiveEvent, null);
+					Find.LetterStack.ReceiveLetter(tradeShip.def.LabelCap, "TraderArrival".Translate(tradeShip.name, tradeShip.def.label), LetterDefOf.PositiveEvent, null);
 				}
 				map.passingShipManager.AddShip(tradeShip);
 				tradeShip.GenerateThings();

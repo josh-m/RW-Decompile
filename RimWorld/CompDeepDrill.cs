@@ -69,8 +69,8 @@ namespace RimWorld
 		{
 			ThingDef thingDef;
 			int num;
-			IntVec3 c;
-			bool nextResource = this.GetNextResource(out thingDef, out num, out c);
+			IntVec3 intVec;
+			bool nextResource = this.GetNextResource(out thingDef, out num, out intVec);
 			if (thingDef == null)
 			{
 				return;
@@ -78,7 +78,7 @@ namespace RimWorld
 			int num2 = Mathf.Min(num, thingDef.deepCountPerPortion);
 			if (nextResource)
 			{
-				this.parent.Map.deepResourceGrid.SetAt(c, thingDef, num - num2);
+				this.parent.Map.deepResourceGrid.SetAt(intVec, thingDef, num - num2);
 			}
 			int stackCount = Mathf.Max(1, GenMath.RoundRandom((float)num2 * yieldPct));
 			Thing thing = ThingMaker.MakeThing(thingDef, null);
@@ -92,11 +92,19 @@ namespace RimWorld
 				}
 				else
 				{
-					Messages.Message("DeepDrillExhausted".Translate(new object[]
+					Messages.Message("DeepDrillExhausted".Translate(Find.ActiveLanguageWorker.Pluralize(DeepDrillUtility.GetBaseResource(this.parent.Map).label, -1)), this.parent, MessageTypeDefOf.TaskCompletion, true);
+					for (int i = 0; i < 9; i++)
 					{
-						Find.ActiveLanguageWorker.Pluralize(DeepDrillUtility.GetBaseResource(this.parent.Map).label, -1)
-					}), this.parent, MessageTypeDefOf.TaskCompletion, true);
-					this.parent.SetForbidden(true, true);
+						IntVec3 c = intVec + GenRadial.RadialPattern[i];
+						if (c.InBounds(this.parent.Map))
+						{
+							ThingWithComps firstThingWithComp = c.GetFirstThingWithComp(this.parent.Map);
+							if (firstThingWithComp != null && !firstThingWithComp.GetComp<CompDeepDrill>().ValuableResourcesPresent())
+							{
+								firstThingWithComp.SetForbidden(true, true);
+							}
+						}
+					}
 				}
 			}
 		}

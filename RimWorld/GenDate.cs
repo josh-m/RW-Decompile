@@ -218,39 +218,22 @@ namespace RimWorld
 		public static string DateFullStringAt(long absTicks, Vector2 location)
 		{
 			int num = GenDate.DayOfSeason(absTicks, location.x) + 1;
-			string text = Find.ActiveLanguageWorker.OrdinalNumber(num);
-			return "FullDate".Translate(new object[]
-			{
-				text,
-				GenDate.Quadrum(absTicks, location.x).Label(),
-				GenDate.Year(absTicks, location.x),
-				num
-			});
+			string value = Find.ActiveLanguageWorker.OrdinalNumber(num, Gender.None);
+			return "FullDate".Translate(value, GenDate.Quadrum(absTicks, location.x).Label(), GenDate.Year(absTicks, location.x), num);
 		}
 
 		public static string DateReadoutStringAt(long absTicks, Vector2 location)
 		{
 			int num = GenDate.DayOfSeason(absTicks, location.x) + 1;
-			string text = Find.ActiveLanguageWorker.OrdinalNumber(num);
-			return "DateReadout".Translate(new object[]
-			{
-				text,
-				GenDate.Quadrum(absTicks, location.x).Label(),
-				GenDate.Year(absTicks, location.x),
-				num
-			});
+			string value = Find.ActiveLanguageWorker.OrdinalNumber(num, Gender.None);
+			return "DateReadout".Translate(value, GenDate.Quadrum(absTicks, location.x).Label(), GenDate.Year(absTicks, location.x), num);
 		}
 
 		public static string SeasonDateStringAt(long absTicks, Vector2 longLat)
 		{
 			int num = GenDate.DayOfSeason(absTicks, longLat.x) + 1;
-			string text = Find.ActiveLanguageWorker.OrdinalNumber(num);
-			return "SeasonFullDate".Translate(new object[]
-			{
-				text,
-				GenDate.Season(absTicks, longLat).Label(),
-				num
-			});
+			string value = Find.ActiveLanguageWorker.OrdinalNumber(num, Gender.None);
+			return "SeasonFullDate".Translate(value, GenDate.Season(absTicks, longLat).Label(), num);
 		}
 
 		public static string SeasonDateStringAt(Twelfth twelfth, Vector2 longLat)
@@ -261,13 +244,8 @@ namespace RimWorld
 		public static string QuadrumDateStringAt(long absTicks, float longitude)
 		{
 			int num = GenDate.DayOfQuadrum(absTicks, longitude) + 1;
-			string text = Find.ActiveLanguageWorker.OrdinalNumber(num);
-			return "SeasonFullDate".Translate(new object[]
-			{
-				text,
-				GenDate.Quadrum(absTicks, longitude).Label(),
-				num
-			});
+			string value = Find.ActiveLanguageWorker.OrdinalNumber(num, Gender.None);
+			return "SeasonFullDate".Translate(value, GenDate.Quadrum(absTicks, longitude).Label(), num);
 		}
 
 		public static string QuadrumDateStringAt(Quadrum quadrum)
@@ -304,10 +282,7 @@ namespace RimWorld
 				{
 					return "Period1Second".Translate();
 				}
-				return "PeriodSeconds".Translate(new object[]
-				{
-					num
-				});
+				return "PeriodSeconds".Translate(num);
 			}
 			else if (numTicks < 60000)
 			{
@@ -318,10 +293,7 @@ namespace RimWorld
 					{
 						return "Period1Hour".Translate();
 					}
-					return "PeriodHours".Translate(new object[]
-					{
-						text
-					});
+					return "PeriodHours".Translate(text);
 				}
 				else
 				{
@@ -330,10 +302,7 @@ namespace RimWorld
 					{
 						return "Period1Hour".Translate();
 					}
-					return "PeriodHours".Translate(new object[]
-					{
-						num2
-					});
+					return "PeriodHours".Translate(num2);
 				}
 			}
 			else if (numTicks < 3600000)
@@ -343,10 +312,7 @@ namespace RimWorld
 				{
 					return "Period1Day".Translate();
 				}
-				return "PeriodDays".Translate(new object[]
-				{
-					text2
-				});
+				return "PeriodDays".Translate(text2);
 			}
 			else
 			{
@@ -355,10 +321,7 @@ namespace RimWorld
 				{
 					return "Period1Year".Translate();
 				}
-				return "PeriodYears".Translate(new object[]
-				{
-					text3
-				});
+				return "PeriodYears".Translate(text3);
 			}
 		}
 
@@ -387,10 +350,7 @@ namespace RimWorld
 				}
 				else
 				{
-					text = "PeriodYears".Translate(new object[]
-					{
-						num
-					});
+					text = "PeriodYears".Translate(num);
 				}
 				if (num2 > 0)
 				{
@@ -401,10 +361,7 @@ namespace RimWorld
 					}
 					else
 					{
-						text += "PeriodQuadrums".Translate(new object[]
-						{
-							num2
-						});
+						text += "PeriodQuadrums".Translate(num2);
 					}
 				}
 				return text;
@@ -418,10 +375,7 @@ namespace RimWorld
 				}
 				else
 				{
-					text2 = "PeriodQuadrums".Translate(new object[]
-					{
-						num2
-					});
+					text2 = "PeriodQuadrums".Translate(num2);
 				}
 				if (num3 > 0)
 				{
@@ -432,10 +386,7 @@ namespace RimWorld
 					}
 					else
 					{
-						text2 += "PeriodDays".Translate(new object[]
-						{
-							num3
-						});
+						text2 += "PeriodDays".Translate(num3);
 					}
 				}
 				return text2;
@@ -449,10 +400,7 @@ namespace RimWorld
 				}
 				else
 				{
-					text3 = "PeriodDays".Translate(new object[]
-					{
-						num3
-					});
+					text3 = "PeriodDays".Translate(num3);
 				}
 				int num5 = (int)num4;
 				if (allowHours && num5 > 0)
@@ -464,20 +412,14 @@ namespace RimWorld
 					}
 					else
 					{
-						text3 += "PeriodHours".Translate(new object[]
-						{
-							num5
-						});
+						text3 += "PeriodHours".Translate(num5);
 					}
 				}
 				return text3;
 			}
 			if (!allowHours)
 			{
-				return "PeriodDays".Translate(new object[]
-				{
-					0
-				});
+				return "PeriodDays".Translate(0);
 			}
 			if (num4 > 1f)
 			{
@@ -486,10 +428,7 @@ namespace RimWorld
 				{
 					return "Period1Hour".Translate();
 				}
-				return "PeriodHours".Translate(new object[]
-				{
-					num6
-				});
+				return "PeriodHours".Translate(num6);
 			}
 			else
 			{
@@ -497,10 +436,7 @@ namespace RimWorld
 				{
 					return "Period1Hour".Translate();
 				}
-				return "PeriodHours".Translate(new object[]
-				{
-					num4.ToString("0.#")
-				});
+				return "PeriodHours".Translate(num4.ToString("0.#"));
 			}
 		}
 
@@ -556,10 +492,7 @@ namespace RimWorld
 				{
 					return "Period1Year".Translate();
 				}
-				return "PeriodYears".Translate(new object[]
-				{
-					num2
-				});
+				return "PeriodYears".Translate(num2);
 			}
 			else if (num3 > 0)
 			{
@@ -567,10 +500,7 @@ namespace RimWorld
 				{
 					return "Period1Quadrum".Translate();
 				}
-				return "PeriodQuadrums".Translate(new object[]
-				{
-					num3
-				});
+				return "PeriodQuadrums".Translate(num3);
 			}
 			else if (num4 > 0)
 			{
@@ -578,10 +508,7 @@ namespace RimWorld
 				{
 					return "Period1Day".Translate();
 				}
-				return "PeriodDays".Translate(new object[]
-				{
-					num4
-				});
+				return "PeriodDays".Translate(num4);
 			}
 			else
 			{
@@ -590,10 +517,7 @@ namespace RimWorld
 				{
 					return "Period1Hour".Translate();
 				}
-				return "PeriodHours".Translate(new object[]
-				{
-					num6
-				});
+				return "PeriodHours".Translate(num6);
 			}
 		}
 

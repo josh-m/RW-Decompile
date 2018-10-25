@@ -17,9 +17,8 @@ namespace RimWorld
 			return true;
 		}
 
-		public virtual string GetArrivedLetterPart(Map map, out string preferredLabel, out LetterDef preferredLetterDef, out LookTargets lookTargets)
+		public virtual string GetArrivedLetterPart(Map map, out LetterDef preferredLetterDef, out LookTargets lookTargets)
 		{
-			preferredLabel = this.def.arrivedLetterLabel;
 			preferredLetterDef = this.def.arrivedLetterDef;
 			lookTargets = null;
 			return this.def.arrivedLetter;

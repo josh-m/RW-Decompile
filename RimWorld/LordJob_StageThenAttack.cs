@@ -41,13 +41,11 @@ namespace RimWorld
 			Transition transition = new Transition(lordToil_Stage, startingToil, false, true);
 			transition.AddTrigger(new Trigger_TicksPassed(tickLimit));
 			transition.AddTrigger(new Trigger_FractionPawnsLost(0.3f));
-			transition.AddPreAction(new TransitionAction_Message("MessageRaidersBeginningAssault".Translate(new object[]
-			{
-				this.faction.def.pawnsPlural.CapitalizeFirst(),
-				this.faction.Name
-			}), MessageTypeDefOf.ThreatBig, "MessageRaidersBeginningAssault-" + this.raidSeed, 1f));
+			transition.AddPreAction(new TransitionAction_Message("MessageRaidersBeginningAssault".Translate(this.faction.def.pawnsPlural.CapitalizeFirst(), this.faction.Name), MessageTypeDefOf.ThreatBig, "MessageRaidersBeginningAssault-" + this.raidSeed, 1f));
 			transition.AddPostAction(new TransitionAction_WakeAll());
 			stateGraph.AddTransition(transition, false);
+			Transition transition2 = stateGraph.transitions.Find((Transition x) => x.triggers.Any((Trigger y) => y is Trigger_BecameNonHostileToPlayer));
+			transition2.AddSource(lordToil_Stage);
 			return stateGraph;
 		}
 

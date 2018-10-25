@@ -327,7 +327,7 @@ namespace RimWorld
 		}
 
 		[DebuggerHidden]
-		public IEnumerable<StatDrawEntry> SpecialDisplayStats(ThingDef parentDef)
+		public IEnumerable<StatDrawEntry> SpecialDisplayStats(ThingDef parentDef, StatRequest req)
 		{
 			if (this.joyKind != null)
 			{
@@ -336,6 +336,15 @@ namespace RimWorld
 			if (parentDef.Minifiable)
 			{
 				yield return new StatDrawEntry(StatCategoryDefOf.Building, "StatsReport_WorkToUninstall".Translate(), this.uninstallWork.ToStringWorkAmount(), 0, string.Empty);
+			}
+			if (typeof(Building_TrapDamager).IsAssignableFrom(parentDef.thingClass))
+			{
+				float armorPenetration = StatDefOf.TrapMeleeDamage.Worker.GetValue(req, true) * 0.015f;
+				StatCategoryDef building = StatCategoryDefOf.Building;
+				string label = "TrapArmorPenetration".Translate();
+				string valueString = armorPenetration.ToStringPercent();
+				string overrideReportText = "ArmorPenetrationExplanation".Translate();
+				yield return new StatDrawEntry(building, label, valueString, 0, overrideReportText);
 			}
 		}
 	}

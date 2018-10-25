@@ -19,20 +19,13 @@ namespace RimWorld.Planet
 				return;
 			}
 			StringBuilder stringBuilder = new StringBuilder();
-			stringBuilder.Append("LetterFactionBaseDefeated".Translate(new object[]
-			{
-				factionBase.Label,
-				TimedForcedExit.GetForceExitAndRemoveMapCountdownTimeLeftString(60000)
-			}));
+			stringBuilder.Append("LetterFactionBaseDefeated".Translate(factionBase.Label, TimedForcedExit.GetForceExitAndRemoveMapCountdownTimeLeftString(60000)));
 			if (!SettlementDefeatUtility.HasAnyOtherBase(factionBase))
 			{
 				factionBase.Faction.defeated = true;
 				stringBuilder.AppendLine();
 				stringBuilder.AppendLine();
-				stringBuilder.Append("LetterFactionBaseDefeated_FactionDestroyed".Translate(new object[]
-				{
-					factionBase.Faction.Name
-				}));
+				stringBuilder.Append("LetterFactionBaseDefeated_FactionDestroyed".Translate(factionBase.Faction.Name));
 			}
 			foreach (Faction current in Find.FactionManager.AllFactions)
 			{
@@ -43,10 +36,7 @@ namespace RimWorld.Planet
 					{
 						stringBuilder.AppendLine();
 						stringBuilder.AppendLine();
-						stringBuilder.Append("RelationsWith".Translate(new object[]
-						{
-							current.Name
-						}) + ": " + 20.ToStringWithSign());
+						stringBuilder.Append("RelationsWith".Translate(current.Name) + ": " + 20.ToStringWithSign());
 						current.TryAppendRelationKindChangedInfo(stringBuilder, playerRelationKind, current.PlayerRelationKind, null);
 					}
 				}

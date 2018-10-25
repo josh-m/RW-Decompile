@@ -52,11 +52,7 @@ namespace Verse.AI
 			{
 				return "ReportHaulingUnknown".Translate();
 			}
-			return "ReportHaulingTo".Translate(new object[]
-			{
-				thing.Label,
-				this.job.targetB.Thing.LabelShort
-			});
+			return "ReportHaulingTo".Translate(thing.Label, this.job.targetB.Thing.LabelShort.Named("DESTINATION"), thing.Named("THING"));
 		}
 
 		public override bool TryMakePreToilReservations(bool errorOnFailed)

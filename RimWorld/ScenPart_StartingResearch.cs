@@ -47,10 +47,7 @@ namespace RimWorld
 
 		public override string Summary(Scenario scen)
 		{
-			return "ScenPart_StartingResearchFinished".Translate(new object[]
-			{
-				this.project.LabelCap
-			});
+			return "ScenPart_StartingResearchFinished".Translate(this.project.LabelCap);
 		}
 
 		public override void PostGameStart()

@@ -2222,6 +2222,16 @@ namespace Verse
 			{
 				p.rotationTracker = new Pawn_RotationTracker(p);
 			}
+			if (!p.Destroyed && !p.Dead && p.needs == null)
+			{
+				Log.Error(p.ToStringSafe<Pawn>() + " has null needs tracker even though he's not dead. Fixing...", false);
+				p.needs = new Pawn_NeedsTracker(p);
+				p.needs.SetInitialLevels();
+			}
+			if (p.foodRestriction == null && p.RaceProps.Humanlike && ((p.Faction != null && p.Faction.IsPlayer) || (p.HostFaction != null && p.HostFaction.IsPlayer)))
+			{
+				p.foodRestriction = new Pawn_FoodRestrictionTracker(p);
+			}
 		}
 
 		public static void PawnTrainingTrackerPostLoadInit(Pawn_TrainingTracker tracker, ref DefMap<TrainableDef, bool> wantedTrainables, ref DefMap<TrainableDef, int> steps, ref DefMap<TrainableDef, bool> learned)
@@ -2284,6 +2294,10 @@ namespace Verse
 			if (game.battleLog == null)
 			{
 				game.battleLog = new BattleLog();
+			}
+			if (game.foodRestrictionDatabase == null)
+			{
+				game.foodRestrictionDatabase = new FoodRestrictionDatabase();
 			}
 		}
 
@@ -2565,6 +2579,19 @@ namespace Verse
 			if (zone.ID == -1)
 			{
 				zone.ID = Find.UniqueIDsManager.GetNextZoneID();
+			}
+		}
+
+		public static void FoodRestrictionDatabasePostLoadInit(FoodRestrictionDatabase foodRestrictionDatabase)
+		{
+			if (VersionControl.MajorFromVersionString(ScribeMetaHeaderUtility.loadedGameVersion) == 1 && VersionControl.MinorFromVersionString(ScribeMetaHeaderUtility.loadedGameVersion) == 0 && VersionControl.BuildFromVersionString(ScribeMetaHeaderUtility.loadedGameVersion) < 2057)
+			{
+				List<FoodRestriction> allFoodRestrictions = foodRestrictionDatabase.AllFoodRestrictions;
+				for (int i = 0; i < allFoodRestrictions.Count; i++)
+				{
+					allFoodRestrictions[i].filter.SetAllow(ThingCategoryDefOf.CorpsesHumanlike, true, null, null);
+					allFoodRestrictions[i].filter.SetAllow(ThingCategoryDefOf.CorpsesAnimal, true, null, null);
+				}
 			}
 		}
 	}

@@ -42,10 +42,7 @@ namespace RimWorld
 			{
 				if (current.drugs != null && current.drugs.CurrentPolicy == policy)
 				{
-					return new AcceptanceReport("DrugPolicyInUse".Translate(new object[]
-					{
-						current
-					}));
+					return new AcceptanceReport("DrugPolicyInUse".Translate(current));
 				}
 			}
 			foreach (Pawn current2 in PawnsFinder.AllMapsWorldAndTemporary_AliveOrDead)

@@ -25,7 +25,7 @@ namespace RimWorld
 
 		public override float TemperatureOffset()
 		{
-			return Mathf.Sin(GenDate.YearsPassedFloat / 4f * 3.14159274f * 2f) * 20f;
+			return Mathf.Sin((GenDate.YearsPassedFloat + (float)this.ticksOffset / 3600000f) / 4f * 3.14159274f * 2f) * 20f;
 		}
 	}
 }

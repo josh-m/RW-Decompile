@@ -44,10 +44,7 @@ namespace Verse
 				this.icon = thingDef.uiIcon;
 				this.iconAngle = thingDef.uiIconAngle;
 				this.iconOffset = thingDef.uiIconOffset;
-				this.defaultLabel = "CommandSelectPlantToGrow".Translate(new object[]
-				{
-					thingDef.LabelCap
-				});
+				this.defaultLabel = "CommandSelectPlantToGrow".Translate(thingDef.LabelCap);
 			}
 		}
 
@@ -106,10 +103,7 @@ namespace Verse
 							{
 								if (current2.Roofed(this.settables[j].Map))
 								{
-									Messages.Message("MessagePlantIncompatibleWithRoof".Translate(new object[]
-									{
-										Find.ActiveLanguageWorker.Pluralize(plantDef.LabelCap, -1)
-									}), MessageTypeDefOf.CautionInput, false);
+									Messages.Message("MessagePlantIncompatibleWithRoof".Translate(Find.ActiveLanguageWorker.Pluralize(plantDef.LabelCap, -1)), MessageTypeDefOf.CautionInput, false);
 									flag = false;
 									break;
 								}
@@ -145,11 +139,7 @@ namespace Verse
 						return;
 					}
 				}
-				Find.WindowStack.Add(new Dialog_MessageBox("NoGrowerCanPlant".Translate(new object[]
-				{
-					plantDef.label,
-					plantDef.plant.sowMinSkill
-				}).CapitalizeFirst(), null, null, null, null, null, false, null, null));
+				Find.WindowStack.Add(new Dialog_MessageBox("NoGrowerCanPlant".Translate(plantDef.label, plantDef.plant.sowMinSkill).CapitalizeFirst(), null, null, null, null, null, false, null, null));
 			}
 			if (plantDef.plant.cavePlant)
 			{
@@ -171,10 +161,7 @@ namespace Verse
 				}
 				if (cell.IsValid)
 				{
-					Messages.Message("MessageWarningCavePlantsExposedToLight".Translate(new object[]
-					{
-						plantDef.LabelCap
-					}).CapitalizeFirst(), new TargetInfo(cell, this.settable.Map, false), MessageTypeDefOf.RejectInput, true);
+					Messages.Message("MessageWarningCavePlantsExposedToLight".Translate(plantDef.LabelCap).CapitalizeFirst(), new TargetInfo(cell, this.settable.Map, false), MessageTypeDefOf.RejectInput, true);
 				}
 			}
 		}

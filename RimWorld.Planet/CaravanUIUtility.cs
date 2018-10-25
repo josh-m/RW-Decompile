@@ -141,10 +141,7 @@ namespace RimWorld.Planet
 			string str = (!multiline) ? " " : "\n";
 			if (daysWorthOfFood.Second < 600f && daysWorthOfFood.Second < daysWorthOfFood.First)
 			{
-				text = text + str + "(" + "DaysWorthOfFoodInfoRot".Translate(new object[]
-				{
-					daysWorthOfFood.Second.ToString("0.#") + ")"
-				});
+				text = text + str + "(" + "DaysWorthOfFoodInfoRot".Translate(daysWorthOfFood.Second.ToString("0.#") + ")");
 			}
 			return text;
 		}

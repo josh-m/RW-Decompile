@@ -72,6 +72,16 @@ namespace RimWorld
 
 		private static readonly Texture2D DividerTex = ContentFinder<Texture2D>.Get("UI/Widgets/Divider", true);
 
+		private static readonly Texture2D PregnantIcon = ContentFinder<Texture2D>.Get("UI/Icons/Animal/Pregnant", true);
+
+		private static readonly Texture2D BondIcon = ContentFinder<Texture2D>.Get("UI/Icons/Animal/Bond", true);
+
+		[TweakValue("Interface", 0f, 50f)]
+		private static float PregnancyIconWidth = 24f;
+
+		[TweakValue("Interface", 0f, 50f)]
+		private static float BondIconWidth = 24f;
+
 		public static void DoCountAdjustInterface(Rect rect, Transferable trad, int index, int min, int max, bool flash = false, List<TransferableCountToTransferStoppingPoint> extraStoppingPoints = null, bool readOnly = false)
 		{
 			TransferableUIUtility.stoppingPoints.Clear();
@@ -386,6 +396,32 @@ namespace RimWorld
 				TransferableUIUtility.OpenSorterChangeFloatMenu(sorter2Setter);
 			}
 			GUI.EndGroup();
+		}
+
+		public static void DoExtraAnimalIcons(Transferable trad, Rect rect, ref float curX)
+		{
+			Pawn pawn = trad.AnyThing as Pawn;
+			if (pawn != null && pawn.RaceProps.Animal)
+			{
+				if (pawn.relations.GetFirstDirectRelationPawn(PawnRelationDefOf.Bond, null) != null)
+				{
+					Rect rect2 = new Rect(curX - TransferableUIUtility.BondIconWidth, (rect.height - TransferableUIUtility.BondIconWidth) / 2f, TransferableUIUtility.BondIconWidth, TransferableUIUtility.BondIconWidth);
+					curX -= TransferableUIUtility.BondIconWidth;
+					GUI.DrawTexture(rect2, TransferableUIUtility.BondIcon);
+					string iconTooltipText = TrainableUtility.GetIconTooltipText(pawn);
+					if (!iconTooltipText.NullOrEmpty())
+					{
+						TooltipHandler.TipRegion(rect2, iconTooltipText);
+					}
+				}
+				if (pawn.health.hediffSet.HasHediff(HediffDefOf.Pregnant, true))
+				{
+					Rect rect3 = new Rect(curX - TransferableUIUtility.PregnancyIconWidth, (rect.height - TransferableUIUtility.PregnancyIconWidth) / 2f, TransferableUIUtility.PregnancyIconWidth, TransferableUIUtility.PregnancyIconWidth);
+					curX -= TransferableUIUtility.PregnancyIconWidth;
+					TooltipHandler.TipRegion(rect3, PawnColumnWorker_Pregnant.GetTooltipText(pawn));
+					GUI.DrawTexture(rect3, TransferableUIUtility.PregnantIcon);
+				}
+			}
 		}
 
 		private static void OpenSorterChangeFloatMenu(Action<TransferableSorterDef> sorterSetter)

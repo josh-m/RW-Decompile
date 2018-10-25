@@ -394,7 +394,7 @@ namespace RimWorld
 			int? ticksToArrive = (this.destinationTile != -1) ? new int?(this.TicksToArrive) : null;
 			float num = this.lastMassFlashTime;
 			Rect rect2 = new Rect(12f, 35f, inRect.width - 24f, 40f);
-			string extraDaysWorthOfFoodTipInfo = (this.destinationTile != -1) ? "DaysWorthOfFoodTooltip_OnlyFirstWaypoint".Translate() : null;
+			string extraDaysWorthOfFoodTipInfo = (this.destinationTile != -1) ? ("\n" + "DaysWorthOfFoodTooltip_OnlyFirstWaypoint".Translate()) : null;
 			CaravanUIUtility.DrawCaravanInfo(info, info2, currentTile, ticksToArrive, num, rect2, true, extraDaysWorthOfFoodTipInfo, false);
 			Dialog_FormCaravan.tabsList.Clear();
 			Dialog_FormCaravan.tabsList.Add(new TabRecord("PawnsTab".Translate(), delegate
@@ -484,10 +484,7 @@ namespace RimWorld
 					Pair<float, float> daysWorthOfFood = this.DaysWorthOfFood;
 					if (daysWorthOfFood.First < 5f)
 					{
-						list.Add((daysWorthOfFood.First >= 0.1f) ? "DaysWorthOfFoodWarningDialog".Translate(new object[]
-						{
-							daysWorthOfFood.First.ToString("0.#")
-						}) : "DaysWorthOfFoodWarningDialog_NoFood".Translate());
+						list.Add((daysWorthOfFood.First >= 0.1f) ? "DaysWorthOfFoodWarningDialog".Translate(daysWorthOfFood.First.ToString("0.#")) : "DaysWorthOfFoodWarningDialog_NoFood".Translate());
 					}
 					else if (this.MostFoodWillRotSoon)
 					{
@@ -555,10 +552,7 @@ namespace RimWorld
 					rect6.height = 200f;
 					rect6.xMin -= 200f;
 					Text.Anchor = TextAnchor.UpperRight;
-					Widgets.Label(rect6, "CaravanEstimatedDaysToDestination".Translate(new object[]
-					{
-						((float)this.TicksToArrive / 60000f).ToString("0.#")
-					}));
+					Widgets.Label(rect6, "CaravanEstimatedDaysToDestination".Translate(((float)this.TicksToArrive / 60000f).ToString("0.#")));
 					Text.Anchor = TextAnchor.UpperLeft;
 				}
 			}
@@ -625,27 +619,22 @@ namespace RimWorld
 			{
 				if (!this.TryFindExitSpot(pawnsFromTransferables, false, out intVec))
 				{
-					Messages.Message("CaravanCouldNotFindExitSpot".Translate(new object[]
-					{
-						direction8WayFromTo.LabelShort()
-					}), MessageTypeDefOf.RejectInput, false);
+					Messages.Message("CaravanCouldNotFindExitSpot".Translate(direction8WayFromTo.LabelShort()), MessageTypeDefOf.RejectInput, false);
 					return false;
 				}
-				Messages.Message("CaravanCouldNotFindReachableExitSpot".Translate(new object[]
-				{
-					direction8WayFromTo.LabelShort()
-				}), new GlobalTargetInfo(intVec, this.map, false), MessageTypeDefOf.CautionInput, false);
+				Messages.Message("CaravanCouldNotFindReachableExitSpot".Translate(direction8WayFromTo.LabelShort()), new GlobalTargetInfo(intVec, this.map, false), MessageTypeDefOf.CautionInput, false);
 			}
 			IntVec3 meetingPoint;
 			if (!this.TryFindRandomPackingSpot(intVec, out meetingPoint))
 			{
-				Messages.Message("CaravanCouldNotFindPackingSpot".Translate(new object[]
-				{
-					direction8WayFromTo.LabelShort()
-				}), new GlobalTargetInfo(intVec, this.map, false), MessageTypeDefOf.RejectInput, false);
+				Messages.Message("CaravanCouldNotFindPackingSpot".Translate(direction8WayFromTo.LabelShort()), new GlobalTargetInfo(intVec, this.map, false), MessageTypeDefOf.RejectInput, false);
 				return false;
 			}
-			CaravanFormingUtility.StartFormingCaravan(pawnsFromTransferables, Faction.OfPlayer, this.transferables, meetingPoint, intVec, this.startingTile, this.destinationTile);
+			CaravanFormingUtility.StartFormingCaravan((from x in pawnsFromTransferables
+			where !x.Downed
+			select x).ToList<Pawn>(), (from x in pawnsFromTransferables
+			where x.Downed
+			select x).ToList<Pawn>(), Faction.OfPlayer, this.transferables, meetingPoint, intVec, this.startingTile, this.destinationTile);
 			Messages.Message("CaravanFormationProcessStarted".Translate(), pawnsFromTransferables[0], MessageTypeDefOf.PositiveEvent, false);
 			return true;
 		}
@@ -760,10 +749,7 @@ namespace RimWorld
 			Pawn pawn = pawns.Find((Pawn x) => !x.IsColonist && !pawns.Any((Pawn y) => y.IsColonist && y.CanReach(x, PathEndMode.Touch, Danger.Deadly, false, TraverseMode.ByPawn)));
 			if (pawn != null)
 			{
-				Messages.Message("CaravanPawnIsUnreachable".Translate(new object[]
-				{
-					pawn.LabelShort
-				}).CapitalizeFirst(), pawn, MessageTypeDefOf.RejectInput, false);
+				Messages.Message("CaravanPawnIsUnreachable".Translate(pawn.LabelShort, pawn).CapitalizeFirst(), pawn, MessageTypeDefOf.RejectInput, false);
 				return false;
 			}
 			for (int i = 0; i < this.transferables.Count; i++)
@@ -790,18 +776,11 @@ namespace RimWorld
 						{
 							if (countToTransfer == 1)
 							{
-								Messages.Message("CaravanItemIsUnreachableSingle".Translate(new object[]
-								{
-									this.transferables[i].ThingDef.label
-								}), MessageTypeDefOf.RejectInput, false);
+								Messages.Message("CaravanItemIsUnreachableSingle".Translate(this.transferables[i].ThingDef.label), MessageTypeDefOf.RejectInput, false);
 							}
 							else
 							{
-								Messages.Message("CaravanItemIsUnreachableMulti".Translate(new object[]
-								{
-									countToTransfer,
-									this.transferables[i].ThingDef.label
-								}), MessageTypeDefOf.RejectInput, false);
+								Messages.Message("CaravanItemIsUnreachableMulti".Translate(countToTransfer, this.transferables[i].ThingDef.label), MessageTypeDefOf.RejectInput, false);
 							}
 							return false;
 						}
@@ -813,6 +792,12 @@ namespace RimWorld
 
 		private bool TryFindExitSpot(List<Pawn> pawns, bool reachableForEveryColonist, out IntVec3 spot)
 		{
+			Rot4 rotFromTo = Find.WorldGrid.GetRotFromTo(this.CurrentTile, this.startingTile);
+			return this.TryFindExitSpot(pawns, reachableForEveryColonist, rotFromTo, out spot) || this.TryFindExitSpot(pawns, reachableForEveryColonist, rotFromTo.Rotated(RotationDirection.Clockwise), out spot) || this.TryFindExitSpot(pawns, reachableForEveryColonist, rotFromTo.Rotated(RotationDirection.Counterclockwise), out spot);
+		}
+
+		private bool TryFindExitSpot(List<Pawn> pawns, bool reachableForEveryColonist, Rot4 exitDirection, out IntVec3 spot)
+		{
 			if (this.startingTile < 0)
 			{
 				Log.Error("Can't find exit spot because startingTile is not set.", false);
@@ -820,7 +805,6 @@ namespace RimWorld
 				return false;
 			}
 			Predicate<IntVec3> validator = (IntVec3 x) => !x.Fogged(this.map) && x.Standable(this.map);
-			Rot4 rotFromTo = Find.WorldGrid.GetRotFromTo(this.CurrentTile, this.startingTile);
 			if (reachableForEveryColonist)
 			{
 				return CellFinder.TryFindRandomEdgeCellWith(delegate(IntVec3 x)
@@ -831,24 +815,24 @@ namespace RimWorld
 					}
 					for (int j = 0; j < pawns.Count; j++)
 					{
-						if (pawns[j].IsColonist && !pawns[j].CanReach(x, PathEndMode.Touch, Danger.Deadly, false, TraverseMode.ByPawn))
+						if (pawns[j].IsColonist && !pawns[j].Downed && !pawns[j].CanReach(x, PathEndMode.Touch, Danger.Deadly, false, TraverseMode.ByPawn))
 						{
 							return false;
 						}
 					}
 					return true;
-				}, this.map, rotFromTo, CellFinder.EdgeRoadChance_Always, out spot);
+				}, this.map, exitDirection, CellFinder.EdgeRoadChance_Always, out spot);
 			}
 			IntVec3 intVec = IntVec3.Invalid;
 			int num = -1;
-			foreach (IntVec3 current in CellRect.WholeMap(this.map).GetEdgeCells(rotFromTo).InRandomOrder(null))
+			foreach (IntVec3 current in CellRect.WholeMap(this.map).GetEdgeCells(exitDirection).InRandomOrder(null))
 			{
 				if (validator(current))
 				{
 					int num2 = 0;
 					for (int i = 0; i < pawns.Count; i++)
 					{
-						if (pawns[i].IsColonist && pawns[i].CanReach(current, PathEndMode.Touch, Danger.Deadly, false, TraverseMode.ByPawn))
+						if (pawns[i].IsColonist && !pawns[i].Downed && pawns[i].CanReach(current, PathEndMode.Touch, Danger.Deadly, false, TraverseMode.ByPawn))
 						{
 							num2++;
 						}
@@ -1035,7 +1019,7 @@ namespace RimWorld
 
 		public static List<Pawn> AllSendablePawns(Map map, bool reform)
 		{
-			return CaravanFormingUtility.AllSendablePawns(map, reform, reform, reform);
+			return CaravanFormingUtility.AllSendablePawns(map, true, reform, reform, reform);
 		}
 	}
 }

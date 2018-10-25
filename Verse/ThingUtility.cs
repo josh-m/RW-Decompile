@@ -1,3 +1,4 @@
+using RimWorld;
 using RimWorld.Planet;
 using System;
 using System.Collections.Generic;
@@ -132,6 +133,14 @@ namespace Verse
 			Tool tool2 = tools.MaxBy((Tool tool) => tool.power);
 			ManeuverDef maneuverDef = tool2.Maneuvers.FirstOrDefault<ManeuverDef>();
 			return (maneuverDef == null) ? null : maneuverDef.verb.meleeDamageDef;
+		}
+
+		public static void CheckAutoRebuildOnDestroyed(Thing thing, DestroyMode mode, Map map, BuildableDef buildingDef)
+		{
+			if (Find.PlaySettings.autoRebuild && mode == DestroyMode.KillFinalize && thing.Faction == Faction.OfPlayer && buildingDef.blueprintDef != null && buildingDef.IsResearchFinished && map.areaManager.Home[thing.Position] && GenConstruct.CanPlaceBlueprintAt(buildingDef, thing.Position, thing.Rotation, map, false, null).Accepted)
+			{
+				GenConstruct.PlaceBlueprintForBuild(buildingDef, thing.Position, map, thing.Rotation, Faction.OfPlayer, thing.Stuff);
+			}
 		}
 	}
 }

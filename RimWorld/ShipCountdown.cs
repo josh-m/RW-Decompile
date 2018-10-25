@@ -67,11 +67,7 @@ namespace RimWorld
 				}
 				current.Destroy(DestroyMode.Vanish);
 			}
-			string victoryText = "GameOverShipLaunched".Translate(new object[]
-			{
-				stringBuilder.ToString(),
-				GameVictoryUtility.PawnsLeftBehind()
-			});
+			string victoryText = "GameOverShipLaunched".Translate(stringBuilder.ToString(), GameVictoryUtility.PawnsLeftBehind());
 			GameVictoryUtility.ShowCredits(victoryText);
 		}
 	}

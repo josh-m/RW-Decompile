@@ -49,19 +49,12 @@ namespace RimWorld.Planet
 			bool flag = !settlement.HasMap;
 			Map orGenerateMap = GetOrGenerateMapUtility.GetOrGenerateMap(settlement.Tile, null);
 			string label = "LetterLabelCaravanEnteredEnemyBase".Translate();
-			string text = "LetterCaravanEnteredEnemyBase".Translate(new object[]
-			{
-				caravan.Label,
-				settlement.Label
-			}).CapitalizeFirst();
+			string text = "LetterCaravanEnteredEnemyBase".Translate(caravan.Label, settlement.Label).CapitalizeFirst();
 			SettlementUtility.AffectRelationsOnAttacked(settlement, ref text);
 			if (flag)
 			{
 				Find.TickManager.Notify_GeneratedPotentiallyHostileMap();
-				PawnRelationUtility.Notify_PawnsSeenByPlayer_Letter(orGenerateMap.mapPawns.AllPawns, ref label, ref text, "LetterRelatedPawnsSettlement".Translate(new object[]
-				{
-					Faction.OfPlayer.def.pawnsPlural
-				}), true, true);
+				PawnRelationUtility.Notify_PawnsSeenByPlayer_Letter(orGenerateMap.mapPawns.AllPawns, ref label, ref text, "LetterRelatedPawnsSettlement".Translate(Faction.OfPlayer.def.pawnsPlural), true, true);
 			}
 			Find.LetterStack.ReceiveLetter(label, text, LetterDefOf.NeutralEvent, t, settlement.Faction, null);
 			CaravanEnterMapUtility.Enter(caravan, orGenerateMap, CaravanEnterMode.Edge, CaravanDropInventoryMode.DoNotDrop, true, null);
@@ -82,10 +75,7 @@ namespace RimWorld.Planet
 					{
 						letterText += "\n\n";
 					}
-					letterText = letterText + "RelationsWith".Translate(new object[]
-					{
-						settlement.Faction.Name
-					}) + ": " + -50.ToStringWithSign();
+					letterText = letterText + "RelationsWith".Translate(settlement.Faction.Name) + ": " + -50.ToStringWithSign();
 				}
 				settlement.Faction.TryAppendRelationKindChangedInfo(ref letterText, playerRelationKind, settlement.Faction.PlayerRelationKind, null);
 			}

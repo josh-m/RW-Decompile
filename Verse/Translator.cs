@@ -40,7 +40,6 @@ namespace Verse
 			}
 			if (LanguageDatabase.activeLanguage.TryGetTextFromKey(key, out result))
 			{
-				result = Find.ActiveLanguageWorker.PostProcessedKeyedTranslation(result, key, new object[0]);
 				return true;
 			}
 			result = key;
@@ -59,9 +58,10 @@ namespace Verse
 			{
 				text = Translator.PseudoTranslated(text);
 			}
-			return Find.ActiveLanguageWorker.PostProcessedKeyedTranslation(text, key, new object[0]);
+			return text;
 		}
 
+		[Obsolete("Use TranslatorFormattedStringExtensions")]
 		public static string Translate(this string key, params object[] args)
 		{
 			if (key.NullOrEmpty())
@@ -82,10 +82,10 @@ namespace Verse
 					text = Translator.PseudoTranslated(text);
 				}
 			}
-			string translation = text;
+			string result = text;
 			try
 			{
-				translation = string.Format(text, args);
+				result = string.Format(text, args);
 			}
 			catch (Exception ex)
 			{
@@ -97,7 +97,7 @@ namespace Verse
 					ex
 				}), Gen.HashCombineInt(key.GetHashCode(), 394878901), false);
 			}
-			return Find.ActiveLanguageWorker.PostProcessedKeyedTranslation(translation, key, args);
+			return result;
 		}
 
 		public static bool TryGetTranslatedStringsForFile(string fileName, out List<string> stringList)

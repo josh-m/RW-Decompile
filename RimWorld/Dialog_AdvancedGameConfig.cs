@@ -78,11 +78,7 @@ namespace RimWorld
 					listing_Standard.Gap(10f);
 					listing_Standard.Label("MapSizeExtreme".Translate(), -1f, null);
 				}
-				string label = "MapSizeDesc".Translate(new object[]
-				{
-					current,
-					current * current
-				});
+				string label = "MapSizeDesc".Translate(current, current * current);
 				if (listing_Standard.RadioButton(label, Find.GameInitData.mapSize == current, 0f, null))
 				{
 					Find.GameInitData.mapSize = current;

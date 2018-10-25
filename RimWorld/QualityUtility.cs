@@ -291,19 +291,11 @@ namespace RimWorld
 			}
 			if (compQuality.Quality == QualityCategory.Masterwork)
 			{
-				Messages.Message("MessageCraftedMasterwork".Translate(new object[]
-				{
-					worker.LabelShort,
-					thing.LabelShort
-				}), thing, MessageTypeDefOf.PositiveEvent, true);
+				Messages.Message("MessageCraftedMasterwork".Translate(worker.LabelShort, thing.LabelShort, worker.Named("WORKER"), thing.Named("CRAFTED")), thing, MessageTypeDefOf.PositiveEvent, true);
 			}
 			else if (compQuality.Quality == QualityCategory.Legendary)
 			{
-				Find.LetterStack.ReceiveLetter("LetterCraftedLegendaryLabel".Translate(), "LetterCraftedLegendaryMessage".Translate(new object[]
-				{
-					worker.LabelShort,
-					thing.LabelShort
-				}), LetterDefOf.PositiveEvent, thing, null, null);
+				Find.LetterStack.ReceiveLetter("LetterCraftedLegendaryLabel".Translate(), "LetterCraftedLegendaryMessage".Translate(worker.LabelShort, thing.LabelShort, worker.Named("WORKER"), thing.Named("CRAFTED")), LetterDefOf.PositiveEvent, thing, null, null);
 			}
 		}
 

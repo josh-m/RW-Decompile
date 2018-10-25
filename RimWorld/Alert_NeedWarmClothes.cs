@@ -154,18 +154,9 @@ namespace RimWorld
 			int num = this.MissingWarmClothesCount(map);
 			if (num == this.NeededWarmClothesCount(map))
 			{
-				return "NeedWarmClothesDesc1All".Translate() + "\n\n" + "NeedWarmClothesDesc2".Translate(new object[]
-				{
-					this.LowestTemperatureComing(map).ToStringTemperature("F0")
-				});
+				return "NeedWarmClothesDesc1All".Translate() + "\n\n" + "NeedWarmClothesDesc2".Translate(this.LowestTemperatureComing(map).ToStringTemperature("F0"));
 			}
-			return "NeedWarmClothesDesc1".Translate(new object[]
-			{
-				num
-			}) + "\n\n" + "NeedWarmClothesDesc2".Translate(new object[]
-			{
-				this.LowestTemperatureComing(map).ToStringTemperature("F0")
-			});
+			return "NeedWarmClothesDesc1".Translate(num) + "\n\n" + "NeedWarmClothesDesc2".Translate(this.LowestTemperatureComing(map).ToStringTemperature("F0"));
 		}
 
 		public override AlertReport GetReport()

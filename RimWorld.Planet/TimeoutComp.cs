@@ -63,10 +63,7 @@ namespace RimWorld.Planet
 		{
 			if (this.Active && !base.ParentHasMap)
 			{
-				return "WorldObjectTimeout".Translate(new object[]
-				{
-					this.TicksLeft.ToStringTicksToPeriod()
-				});
+				return "WorldObjectTimeout".Translate(this.TicksLeft.ToStringTicksToPeriod());
 			}
 			return null;
 		}

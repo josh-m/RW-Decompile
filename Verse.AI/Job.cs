@@ -89,6 +89,8 @@ namespace Verse.AI
 
 		public bool endIfCantShootTargetFromCurPos;
 
+		public bool endIfCantShootInMelee;
+
 		public bool checkEncumbrance;
 
 		public float followRadius;
@@ -255,6 +257,7 @@ namespace Verse.AI
 			Scribe_Values.Look<bool>(ref this.forceSleep, "forceSleep", false, false);
 			Scribe_Defs.Look<InteractionDef>(ref this.interaction, "interaction");
 			Scribe_Values.Look<bool>(ref this.endIfCantShootTargetFromCurPos, "endIfCantShootTargetFromCurPos", false, false);
+			Scribe_Values.Look<bool>(ref this.endIfCantShootInMelee, "endIfCantShootInMelee", false, false);
 			Scribe_Values.Look<bool>(ref this.checkEncumbrance, "checkEncumbrance", false, false);
 			Scribe_Values.Look<float>(ref this.followRadius, "followRadius", 0f, false);
 			Scribe_Values.Look<bool>(ref this.endAfterTendedOnce, "endAfterTendedOnce", false, false);

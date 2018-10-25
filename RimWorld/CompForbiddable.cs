@@ -85,16 +85,16 @@ namespace RimWorld
 			{
 				Command_Toggle com = new Command_Toggle();
 				com.hotKey = KeyBindingDefOf.Command_ItemForbid;
-				com.icon = TexCommand.Forbidden;
-				com.isActive = (() => !this.$this.forbiddenInt);
-				com.defaultLabel = "CommandForbid".Translate();
+				com.icon = TexCommand.ForbidOff;
+				com.isActive = (() => !this.$this.Forbidden);
+				com.defaultLabel = "CommandAllow".TranslateWithBackup("DesignatorUnforbid");
 				if (this.forbiddenInt)
 				{
-					com.defaultDesc = "CommandForbiddenDesc".Translate();
+					com.defaultDesc = "CommandForbiddenDesc".TranslateWithBackup("DesignatorUnforbidDesc");
 				}
 				else
 				{
-					com.defaultDesc = "CommandNotForbiddenDesc".Translate();
+					com.defaultDesc = "CommandNotForbiddenDesc".TranslateWithBackup("DesignatorForbidDesc");
 				}
 				if (this.parent.def.IsDoor)
 				{

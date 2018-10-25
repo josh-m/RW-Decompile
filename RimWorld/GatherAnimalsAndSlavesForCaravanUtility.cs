@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Verse;
 using Verse.AI;
 using Verse.AI.Group;
@@ -18,15 +19,15 @@ namespace RimWorld
 			p.mindState.duty.radius = 10f;
 		}
 
-		public static void CheckArrived(Lord lord, IntVec3 meetingPoint, string memo, Predicate<Pawn> shouldCheckIfArrived, Predicate<Pawn> extraValidator = null)
+		public static void CheckArrived(Lord lord, List<Pawn> pawns, IntVec3 meetingPoint, string memo, Predicate<Pawn> shouldCheckIfArrived, Predicate<Pawn> extraValidator = null)
 		{
 			bool flag = true;
-			for (int i = 0; i < lord.ownedPawns.Count; i++)
+			for (int i = 0; i < pawns.Count; i++)
 			{
-				Pawn pawn = lord.ownedPawns[i];
+				Pawn pawn = pawns[i];
 				if (shouldCheckIfArrived(pawn))
 				{
-					if (!pawn.Position.InHorDistOf(meetingPoint, 10f) || !pawn.CanReach(meetingPoint, PathEndMode.ClosestTouch, Danger.Deadly, false, TraverseMode.ByPawn) || (extraValidator != null && !extraValidator(pawn)))
+					if (!pawn.Spawned || !pawn.Position.InHorDistOf(meetingPoint, 10f) || !pawn.CanReach(meetingPoint, PathEndMode.ClosestTouch, Danger.Deadly, false, TraverseMode.ByPawn) || (extraValidator != null && !extraValidator(pawn)))
 					{
 						flag = false;
 						break;

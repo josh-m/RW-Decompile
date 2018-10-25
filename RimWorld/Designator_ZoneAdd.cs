@@ -60,18 +60,11 @@ namespace RimWorld
 					Zone selectedZone = Find.Selector.SelectedZone;
 					if (selectedZone != null)
 					{
-						text = "ExpandOrCreateZone".Translate(new object[]
-						{
-							selectedZone.label,
-							this.NewZoneLabel
-						});
+						text = "ExpandOrCreateZone".Translate(selectedZone.label, this.NewZoneLabel);
 					}
 					else
 					{
-						text = "CreateNewZone".Translate(new object[]
-						{
-							this.NewZoneLabel
-						});
+						text = "CreateNewZone".Translate(this.NewZoneLabel);
 					}
 				}
 				GenUI.DrawMouseAttachment(this.icon, text, 0f, default(Vector2), null);

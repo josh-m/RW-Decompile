@@ -185,55 +185,15 @@ namespace RimWorld
 			}
 		}
 
-		internal float AggregateSkyTargetLerpFactor(Map map)
-		{
-			float num = 0f;
-			for (int i = 0; i < this.activeConditions.Count; i++)
-			{
-				num += (1f - num) * this.activeConditions[i].SkyTargetLerpFactor(map);
-			}
-			if (this.Parent != null)
-			{
-				num += this.Parent.AggregateSkyTargetLerpFactor(map);
-			}
-			return Mathf.Clamp01(num);
-		}
-
-		internal SkyTarget? AggregateSkyTarget(Map map)
-		{
-			SkyTarget value = default(SkyTarget);
-			float num = 0f;
-			this.AggregateSkyTargetWorker(ref value, ref num, map);
-			if (num == 0f)
-			{
-				return null;
-			}
-			return new SkyTarget?(value);
-		}
-
-		private void AggregateSkyTargetWorker(ref SkyTarget total, ref float lfTotal, Map map)
+		public void GetAllGameConditionsAffectingMap(Map map, List<GameCondition> listToFill)
 		{
 			for (int i = 0; i < this.activeConditions.Count; i++)
 			{
-				GameCondition gameCondition = this.activeConditions[i];
-				float num = gameCondition.SkyTargetLerpFactor(map);
-				if (num > 0f)
-				{
-					if (lfTotal == 0f)
-					{
-						total = gameCondition.SkyTarget(map).Value;
-						lfTotal = num;
-					}
-					else
-					{
-						lfTotal += num;
-						total = SkyTarget.LerpDarken(total, gameCondition.SkyTarget(map).Value, num / lfTotal);
-					}
-				}
+				listToFill.Add(this.activeConditions[i]);
 			}
 			if (this.Parent != null)
 			{
-				this.Parent.AggregateSkyTargetWorker(ref total, ref lfTotal, map);
+				this.Parent.GetAllGameConditionsAffectingMap(map, listToFill);
 			}
 		}
 

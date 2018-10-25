@@ -231,16 +231,10 @@ namespace RimWorld
 						float level2 = pawn.health.capacities.GetLevel(current.capacity);
 						float offset = current.GetOffset(pawn.health.capacities.GetLevel(current.capacity));
 						string text2 = this.ValueToString(offset, false, ToStringNumberSense.Absolute);
-						string text3 = Mathf.Min(level2, current.max).ToStringPercent() + ", " + "HealthOffsetScale".Translate(new object[]
-						{
-							current.scale.ToString() + "x"
-						});
+						string text3 = Mathf.Min(level2, current.max).ToStringPercent() + ", " + "HealthOffsetScale".Translate(current.scale.ToString() + "x");
 						if (current.max < 999f)
 						{
-							text3 = text3 + ", " + "HealthFactorMaxImpact".Translate(new object[]
-							{
-								current.max.ToStringPercent()
-							});
+							text3 = text3 + ", " + "HealthFactorMaxImpact".Translate(current.max.ToStringPercent());
 						}
 						stringBuilder.AppendLine(string.Concat(new string[]
 						{
@@ -425,23 +419,14 @@ namespace RimWorld
 							string text4 = current2.capacity.GetLabelFor(pawn).CapitalizeFirst();
 							float factor = current2.GetFactor(pawn.health.capacities.GetLevel(current2.capacity));
 							string text5 = factor.ToStringPercent();
-							string text6 = "HealthFactorPercentImpact".Translate(new object[]
-							{
-								current2.weight.ToStringPercent()
-							});
+							string text6 = "HealthFactorPercentImpact".Translate(current2.weight.ToStringPercent());
 							if (current2.max < 999f)
 							{
-								text6 = text6 + ", " + "HealthFactorMaxImpact".Translate(new object[]
-								{
-									current2.max.ToStringPercent()
-								});
+								text6 = text6 + ", " + "HealthFactorMaxImpact".Translate(current2.max.ToStringPercent());
 							}
 							if (current2.allowedDefect != 0f)
 							{
-								text6 = text6 + ", " + "HealthFactorAllowedDefect".Translate(new object[]
-								{
-									(1f - current2.allowedDefect).ToStringPercent()
-								});
+								text6 = text6 + ", " + "HealthFactorAllowedDefect".Translate((1f - current2.allowedDefect).ToStringPercent());
 							}
 							stringBuilder.AppendLine(string.Concat(new string[]
 							{
@@ -462,19 +447,13 @@ namespace RimWorld
 					float statOffsetFromList3 = pawn.InspirationDef.statOffsets.GetStatOffsetFromList(this.stat);
 					if (statOffsetFromList3 != 0f)
 					{
-						stringBuilder.AppendLine("StatsReport_Inspiration".Translate(new object[]
-						{
-							pawn.Inspiration.def.LabelCap
-						}) + ": " + this.ValueToString(statOffsetFromList3, false, ToStringNumberSense.Offset));
+						stringBuilder.AppendLine("StatsReport_Inspiration".Translate(pawn.Inspiration.def.LabelCap) + ": " + this.ValueToString(statOffsetFromList3, false, ToStringNumberSense.Offset));
 						stringBuilder.AppendLine();
 					}
 					float statFactorFromList3 = pawn.InspirationDef.statFactors.GetStatFactorFromList(this.stat);
 					if (statFactorFromList3 != 1f)
 					{
-						stringBuilder.AppendLine("StatsReport_Inspiration".Translate(new object[]
-						{
-							pawn.Inspiration.def.LabelCap
-						}) + ": " + statFactorFromList3.ToStringByStyle(ToStringStyle.PercentZero, ToStringNumberSense.Factor));
+						stringBuilder.AppendLine("StatsReport_Inspiration".Translate(pawn.Inspiration.def.LabelCap) + ": " + statFactorFromList3.ToStringByStyle(ToStringStyle.PercentZero, ToStringNumberSense.Factor));
 						stringBuilder.AppendLine();
 					}
 				}

@@ -23,6 +23,8 @@ namespace RimWorld
 
 		public string saveKeysPrefix;
 
+		public bool inheritFaction;
+
 		public CompProperties_Spawner()
 		{
 			this.compClass = typeof(CompSpawner);

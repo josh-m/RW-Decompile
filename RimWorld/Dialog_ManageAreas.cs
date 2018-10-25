@@ -10,7 +10,7 @@ namespace RimWorld
 	{
 		private Map map;
 
-		private static Regex validNameRegex = new Regex("^[a-zA-Z0-9 '\\-]*$");
+		private static Regex validNameRegex = new Regex("^[\\p{L}0-9 '\\-]*$");
 
 		public override Vector2 InitialSize
 		{
@@ -76,7 +76,8 @@ namespace RimWorld
 			WidgetRow widgetRow = new WidgetRow(0f, 0f, UIDirection.RightThenUp, 99999f, 4f);
 			widgetRow.Icon(area.ColorTexture, null);
 			widgetRow.Gap(4f);
-			widgetRow.Label(area.Label, 220f);
+			float width = rect.width - widgetRow.FinalX - 4f - Text.CalcSize("Rename".Translate()).x - 16f - 4f - Text.CalcSize("InvertArea".Translate()).x - 16f - 4f - 24f;
+			widgetRow.Label(area.Label, width);
 			if (widgetRow.ButtonText("Rename".Translate(), null, true, false))
 			{
 				Find.WindowStack.Add(new Dialog_RenameArea(area));
@@ -85,10 +86,10 @@ namespace RimWorld
 			{
 				area.Invert();
 			}
-			WidgetRow arg_D3_0 = widgetRow;
+			WidgetRow arg_136_0 = widgetRow;
 			Texture2D deleteX = TexButton.DeleteX;
 			Color? mouseoverColor = new Color?(GenUI.SubtleMouseoverColor);
-			if (arg_D3_0.ButtonIcon(deleteX, null, mouseoverColor))
+			if (arg_136_0.ButtonIcon(deleteX, null, mouseoverColor))
 			{
 				area.Delete();
 			}

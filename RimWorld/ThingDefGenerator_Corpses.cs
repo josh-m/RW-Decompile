@@ -54,14 +54,8 @@ namespace RimWorld
 						d.recipes.Add(RecipeDefOf.RemoveBodyPart);
 					}
 					d.defName = "Corpse_" + raceDef.defName;
-					d.label = "CorpseLabel".Translate(new object[]
-					{
-						raceDef.label
-					});
-					d.description = "CorpseDesc".Translate(new object[]
-					{
-						raceDef.label
-					});
+					d.label = "CorpseLabel".Translate(raceDef.label);
+					d.description = "CorpseDesc".Translate(raceDef.label);
 					d.soundImpactDefault = raceDef.soundImpactDefault;
 					d.SetStatBaseValue(StatDefOf.MarketValue, ThingDefGenerator_Corpses.CalculateMarketValue(raceDef));
 					d.SetStatBaseValue(StatDefOf.Flammability, raceDef.GetStatValueAbstract(StatDefOf.Flammability, null));

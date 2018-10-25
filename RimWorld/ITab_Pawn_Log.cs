@@ -150,7 +150,6 @@ namespace RimWorld
 			else
 			{
 				Text.Anchor = TextAnchor.MiddleCenter;
-				Text.Font = GameFont.Medium;
 				GUI.color = Color.grey;
 				Widgets.Label(new Rect(0f, 0f, this.size.x, this.size.y), "(" + "NoRecentEntries".Translate() + ")");
 				Text.Anchor = TextAnchor.UpperLeft;

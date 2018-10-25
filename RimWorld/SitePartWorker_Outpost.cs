@@ -8,9 +8,9 @@ namespace RimWorld
 {
 	public class SitePartWorker_Outpost : SitePartWorker
 	{
-		public override string GetArrivedLetterPart(Map map, out string preferredLabel, out LetterDef preferredLetterDef, out LookTargets lookTargets)
+		public override string GetArrivedLetterPart(Map map, out LetterDef preferredLetterDef, out LookTargets lookTargets)
 		{
-			string arrivedLetterPart = base.GetArrivedLetterPart(map, out preferredLabel, out preferredLetterDef, out lookTargets);
+			string arrivedLetterPart = base.GetArrivedLetterPart(map, out preferredLetterDef, out lookTargets);
 			lookTargets = (from x in map.mapPawns.AllPawnsSpawned
 			where x.RaceProps.Humanlike && x.HostileTo(Faction.OfPlayer)
 			select x).FirstOrDefault<Pawn>();

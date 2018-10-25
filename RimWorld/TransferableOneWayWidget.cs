@@ -64,6 +64,8 @@ namespace RimWorld
 
 		private TransferableSorterDef sorter2;
 
+		private Dictionary<TransferableOneWay, int> cachedTicksUntilRot = new Dictionary<TransferableOneWay, int>();
+
 		private static List<TransferableCountToTransferStoppingPoint> stoppingPoints = new List<TransferableCountToTransferStoppingPoint>();
 
 		private const float TopAreaHeight = 37f;
@@ -105,16 +107,6 @@ namespace RimWorld
 		public const float TopAreaWidth = 515f;
 
 		private static readonly Texture2D CanGrazeIcon = ContentFinder<Texture2D>.Get("UI/Icons/CanGraze", true);
-
-		private static readonly Texture2D PregnantIcon = ContentFinder<Texture2D>.Get("UI/Icons/Animal/Pregnant", true);
-
-		private static readonly Texture2D BondIcon = ContentFinder<Texture2D>.Get("UI/Icons/Animal/Bond", true);
-
-		[TweakValue("Interface", 0f, 50f)]
-		private static float PregnancyIconWidth = 24f;
-
-		[TweakValue("Interface", 0f, 50f)]
-		private static float BondIconWidth = 24f;
 
 		public float TotalNumbersColumnsWidths
 		{
@@ -412,28 +404,7 @@ namespace RimWorld
 				this.DrawEquippedWeapon(rect12, iconRect, trad);
 				num -= 30f;
 			}
-			Pawn pawn2 = trad.AnyThing as Pawn;
-			if (pawn2 != null && pawn2.def.race.Animal)
-			{
-				Rect rect13 = new Rect(num - TransferableOneWayWidget.BondIconWidth, (rect.height - TransferableOneWayWidget.BondIconWidth) / 2f, TransferableOneWayWidget.BondIconWidth, TransferableOneWayWidget.BondIconWidth);
-				num -= TransferableOneWayWidget.BondIconWidth;
-				Rect rect14 = new Rect(num - TransferableOneWayWidget.PregnancyIconWidth, (rect.height - TransferableOneWayWidget.PregnancyIconWidth) / 2f, TransferableOneWayWidget.PregnancyIconWidth, TransferableOneWayWidget.PregnancyIconWidth);
-				num -= TransferableOneWayWidget.PregnancyIconWidth;
-				string iconTooltipText = TrainableUtility.GetIconTooltipText(pawn2);
-				if (!iconTooltipText.NullOrEmpty())
-				{
-					TooltipHandler.TipRegion(rect13, iconTooltipText);
-				}
-				if (pawn2.relations.GetFirstDirectRelationPawn(PawnRelationDefOf.Bond, null) != null)
-				{
-					GUI.DrawTexture(rect13, TransferableOneWayWidget.BondIcon);
-				}
-				if (pawn2.health.hediffSet.HasHediff(HediffDefOf.Pregnant, true))
-				{
-					TooltipHandler.TipRegion(rect14, PawnColumnWorker_Pregnant.GetTooltipText(pawn2));
-					GUI.DrawTexture(rect14, TransferableOneWayWidget.PregnantIcon);
-				}
-			}
+			TransferableUIUtility.DoExtraAnimalIcons(trad, rect, ref num);
 			Rect idRect = new Rect(0f, 0f, num, rect.height);
 			TransferableUIUtility.DrawTransferableInfo(trad, idRect, Color.white);
 			GenUI.ResetLabelAlign();
@@ -460,16 +431,21 @@ namespace RimWorld
 			{
 				return;
 			}
-			int num = 2147483647;
-			for (int i = 0; i < trad.things.Count; i++)
+			int num;
+			if (!this.cachedTicksUntilRot.TryGetValue(trad, out num))
 			{
-				CompRottable compRottable = trad.things[i].TryGetComp<CompRottable>();
-				if (compRottable != null)
+				num = 2147483647;
+				for (int i = 0; i < trad.things.Count; i++)
 				{
-					num = Mathf.Min(num, DaysUntilRotCalculator.ApproxTicksUntilRot_AssumeTimePassesBy(compRottable, this.tile, null));
+					CompRottable compRottable = trad.things[i].TryGetComp<CompRottable>();
+					if (compRottable != null)
+					{
+						num = Mathf.Min(num, DaysUntilRotCalculator.ApproxTicksUntilRot_AssumeTimePassesBy(compRottable, this.tile, null));
+					}
 				}
+				this.cachedTicksUntilRot.Add(trad, num);
 			}
-			if (num >= 36000000)
+			if (num >= 36000000 || (float)num >= 3.6E+07f)
 			{
 				return;
 			}
@@ -495,10 +471,7 @@ namespace RimWorld
 			GUI.color = Color.green;
 			Widgets.Label(rect, trad.ThingDef.GetStatValueAbstract(StatDefOf.Nutrition, null).ToString("0.##"));
 			GUI.color = Color.white;
-			TooltipHandler.TipRegion(rect, "ItemNutritionTip".Translate(new object[]
-			{
-				(1.6f * ThingDefOf.Human.race.baseHungerRate).ToString("0.##")
-			}));
+			TooltipHandler.TipRegion(rect, "ItemNutritionTip".Translate((1.6f * ThingDefOf.Human.race.baseHungerRate).ToString("0.##")));
 		}
 
 		private bool DrawGrazeability(Rect rect, TransferableOneWay trad)
@@ -549,10 +522,7 @@ namespace RimWorld
 			GUI.color = ((foragedNutritionPerDay != 0f) ? Color.green : Color.gray);
 			Widgets.Label(rect, "+" + foragedNutritionPerDay.ToString("0.##"));
 			GUI.color = Color.white;
-			TooltipHandler.TipRegion(rect, () => "NutritionForagedPerDayTip".Translate(new object[]
-			{
-				StatDefOf.ForagedNutritionPerDay.Worker.GetExplanationFull(StatRequest.For(p), StatDefOf.ForagedNutritionPerDay.toStringNumberSense, foragedNutritionPerDay)
-			}), trad.GetHashCode() ^ 1958671422);
+			TooltipHandler.TipRegion(rect, () => "NutritionForagedPerDayTip".Translate(StatDefOf.ForagedNutritionPerDay.Worker.GetExplanationFull(StatRequest.For(p), StatDefOf.ForagedNutritionPerDay.toStringNumberSense, foragedNutritionPerDay)), trad.GetHashCode() ^ 1958671422);
 		}
 
 		private void DrawNutritionEatenPerDay(Rect rect, TransferableOneWay trad)
@@ -589,12 +559,7 @@ namespace RimWorld
 						stringBuilder.Append(array[i].ToStringHumanShort() + " - " + array[i].ToStringHuman());
 					}
 				}
-				return "NutritionEatenPerDayTip".Translate(new object[]
-				{
-					ThingDefOf.MealSimple.GetStatValueAbstract(StatDefOf.Nutrition, null).ToString("0.##"),
-					stringBuilder.ToString(),
-					p.RaceProps.foodType.ToHumanString()
-				});
+				return "NutritionEatenPerDayTip".Translate(ThingDefOf.MealSimple.GetStatValueAbstract(StatDefOf.Nutrition, null).ToString("0.##"), stringBuilder.ToString(), p.RaceProps.foodType.ToHumanString());
 			}, trad.GetHashCode() ^ 385968958);
 		}
 

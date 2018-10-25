@@ -121,19 +121,22 @@ namespace RimWorld
 					{
 						if (!apparel.IsForbidden(pawn))
 						{
-							float num2 = JobGiver_OptimizeApparel.ApparelScoreGain(pawn, apparel);
-							if (DebugViewSettings.debugApparelOptimize)
+							if (!apparel.IsBurning())
 							{
-								JobGiver_OptimizeApparel.debugSb.AppendLine(apparel.LabelCap + ": " + num2.ToString("F2"));
-							}
-							if (num2 >= 0.05f && num2 >= num)
-							{
-								if (ApparelUtility.HasPartsToWear(pawn, apparel.def))
+								float num2 = JobGiver_OptimizeApparel.ApparelScoreGain(pawn, apparel);
+								if (DebugViewSettings.debugApparelOptimize)
 								{
-									if (pawn.CanReserveAndReach(apparel, PathEndMode.OnCell, pawn.NormalMaxDanger(), 1, -1, null, false))
+									JobGiver_OptimizeApparel.debugSb.AppendLine(apparel.LabelCap + ": " + num2.ToString("F2"));
+								}
+								if (num2 >= 0.05f && num2 >= num)
+								{
+									if (ApparelUtility.HasPartsToWear(pawn, apparel.def))
 									{
-										thing = apparel;
-										num = num2;
+										if (pawn.CanReserveAndReach(apparel, PathEndMode.OnCell, pawn.NormalMaxDanger(), 1, -1, null, false))
+										{
+											thing = apparel;
+											num = num2;
+										}
 									}
 								}
 							}

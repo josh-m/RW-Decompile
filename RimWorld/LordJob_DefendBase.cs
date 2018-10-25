@@ -28,7 +28,7 @@ namespace RimWorld
 			LordToil_DefendBase lordToil_DefendBase2 = new LordToil_DefendBase(this.baseCenter);
 			stateGraph.AddToil(lordToil_DefendBase2);
 			LordToil_AssaultColony lordToil_AssaultColony = new LordToil_AssaultColony(true);
-			lordToil_AssaultColony.avoidGridMode = AvoidGridMode.Smart;
+			lordToil_AssaultColony.useAvoidGrid = true;
 			stateGraph.AddToil(lordToil_AssaultColony);
 			Transition transition = new Transition(lordToil_DefendBase, lordToil_DefendBase2, false, true);
 			transition.AddSource(lordToil_AssaultColony);
@@ -45,12 +45,7 @@ namespace RimWorld
 			transition3.AddTrigger(new Trigger_UrgentlyHungry());
 			transition3.AddTrigger(new Trigger_ChanceOnPlayerHarmNPCBuilding(0.4f));
 			transition3.AddPostAction(new TransitionAction_WakeAll());
-			string message = "MessageDefendersAttacking".Translate(new object[]
-			{
-				this.faction.def.pawnsPlural,
-				this.faction.Name,
-				Faction.OfPlayer.def.pawnsPlural
-			}).CapitalizeFirst();
+			string message = "MessageDefendersAttacking".Translate(this.faction.def.pawnsPlural, this.faction.Name, Faction.OfPlayer.def.pawnsPlural).CapitalizeFirst();
 			transition3.AddPreAction(new TransitionAction_Message(message, MessageTypeDefOf.ThreatBig, null, 1f));
 			stateGraph.AddTransition(transition3, false);
 			return stateGraph;

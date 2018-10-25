@@ -59,6 +59,7 @@ namespace RimWorld
 
 		public override void PostDeSpawn(Map map)
 		{
+			base.PostDeSpawn(map);
 			this.ForceOthersToRebuildCache(map);
 		}
 

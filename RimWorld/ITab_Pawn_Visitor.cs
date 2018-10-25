@@ -27,15 +27,9 @@ namespace RimWorld
 			Listing_Standard listing_Standard = new Listing_Standard();
 			listing_Standard.maxOneColumn = true;
 			listing_Standard.Begin(rect2);
-			Rect rect3 = listing_Standard.GetRect(Text.LineHeight);
-			rect3.width *= 0.75f;
-			bool getsFood = base.SelPawn.guest.GetsFood;
-			Widgets.CheckboxLabeled(rect3, "GetsFood".Translate(), ref getsFood, false, null, null, false);
-			base.SelPawn.guest.GetsFood = getsFood;
-			listing_Standard.Gap(12f);
-			Rect rect4 = listing_Standard.GetRect(28f);
-			rect4.width = 140f;
-			MedicalCareUtility.MedicalCareSetter(rect4, ref base.SelPawn.playerSettings.medCare);
+			Rect rect3 = listing_Standard.GetRect(28f);
+			rect3.width = 140f;
+			MedicalCareUtility.MedicalCareSetter(rect3, ref base.SelPawn.playerSettings.medCare);
 			listing_Standard.Gap(4f);
 			if (isPrisonerOfColony)
 			{
@@ -43,21 +37,18 @@ namespace RimWorld
 				listing_Standard.Label("RecruitmentResistance".Translate() + ": " + base.SelPawn.guest.resistance.ToString("F1"), -1f, null);
 				if (base.SelPawn.guilt.IsGuilty)
 				{
-					listing_Standard.Label("ConsideredGuilty".Translate(new object[]
-					{
-						base.SelPawn.guilt.TicksUntilInnocent.ToStringTicksToPeriod()
-					}), -1f, null);
+					listing_Standard.Label("ConsideredGuilty".Translate(base.SelPawn.guilt.TicksUntilInnocent.ToStringTicksToPeriod()), -1f, null);
 				}
-				Rect rect5 = listing_Standard.GetRect(160f).Rounded();
-				Widgets.DrawMenuSection(rect5);
-				Rect position = rect5.ContractedBy(10f);
+				Rect rect4 = listing_Standard.GetRect(160f).Rounded();
+				Widgets.DrawMenuSection(rect4);
+				Rect position = rect4.ContractedBy(10f);
 				GUI.BeginGroup(position);
-				Rect rect6 = new Rect(0f, 0f, position.width, 30f);
+				Rect rect5 = new Rect(0f, 0f, position.width, 30f);
 				foreach (PrisonerInteractionModeDef current in from pim in DefDatabase<PrisonerInteractionModeDef>.AllDefs
 				orderby pim.listOrder
 				select pim)
 				{
-					if (Widgets.RadioButtonLabeled(rect6, current.LabelCap, base.SelPawn.guest.interactionMode == current))
+					if (Widgets.RadioButtonLabeled(rect5, current.LabelCap, base.SelPawn.guest.interactionMode == current))
 					{
 						base.SelPawn.guest.interactionMode = current;
 						if (current == PrisonerInteractionModeDefOf.Execution && base.SelPawn.MapHeld != null && !this.ColonyHasAnyWardenCapableOfViolence(base.SelPawn.MapHeld))
@@ -65,7 +56,7 @@ namespace RimWorld
 							Messages.Message("MessageCantDoExecutionBecauseNoWardenCapableOfViolence".Translate(), base.SelPawn, MessageTypeDefOf.CautionInput, false);
 						}
 					}
-					rect6.y += 28f;
+					rect5.y += 28f;
 				}
 				GUI.EndGroup();
 				if (Prefs.DevMode)

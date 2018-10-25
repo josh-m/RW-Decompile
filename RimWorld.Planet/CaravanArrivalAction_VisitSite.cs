@@ -66,10 +66,7 @@ namespace RimWorld.Planet
 			}
 			if (site.EnterCooldownBlocksEntering())
 			{
-				return FloatMenuAcceptanceReport.WithFailMessage("MessageEnterCooldownBlocksEntering".Translate(new object[]
-				{
-					site.EnterCooldownDaysLeft().ToString("0.#")
-				}));
+				return FloatMenuAcceptanceReport.WithFailMessage("MessageEnterCooldownBlocksEntering".Translate(site.EnterCooldownDaysLeft().ToString("0.#")));
 			}
 			return true;
 		}

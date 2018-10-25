@@ -48,12 +48,7 @@ namespace RimWorld
 					}
 					else
 					{
-						text = "MessageSuccessfullyRemovedHediff".Translate(new object[]
-						{
-							billDoer.LabelShort,
-							pawn.LabelShort,
-							this.recipe.removesHediff.label
-						});
+						text = "MessageSuccessfullyRemovedHediff".Translate(billDoer.LabelShort, pawn.LabelShort, this.recipe.removesHediff.label.Named("HEDIFF"), billDoer.Named("SURGEON"), pawn.Named("PATIENT"));
 					}
 					Messages.Message(text, pawn, MessageTypeDefOf.PositiveEvent, true);
 				}

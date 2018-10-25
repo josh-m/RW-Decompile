@@ -156,7 +156,7 @@ namespace RimWorld
 			{
 				intVec = CellFinder.RandomCell(map);
 				num++;
-				if (DropCellFinder.CanPhysicallyDropInto(intVec, map, true))
+				if (DropCellFinder.CanPhysicallyDropInto(intVec, map, true) && !intVec.Fogged(map))
 				{
 					if (num > 300)
 					{
@@ -186,18 +186,22 @@ namespace RimWorld
 
 		public static bool TryFindRaidDropCenterClose(out IntVec3 spot, Map map)
 		{
-			Faction faction = map.ParentFaction ?? Faction.OfPlayer;
+			Faction parentFaction = map.ParentFaction;
+			if (parentFaction == null)
+			{
+				return RCellFinder.TryFindRandomCellNearTheCenterOfTheMapWith((IntVec3 x) => DropCellFinder.CanPhysicallyDropInto(x, map, true) && !x.Fogged(map) && x.Standable(map), map, out spot);
+			}
 			int num = 0;
 			while (true)
 			{
 				IntVec3 root = IntVec3.Invalid;
-				if (map.mapPawns.FreeHumanlikesSpawnedOfFaction(faction).Count<Pawn>() > 0)
+				if (map.mapPawns.FreeHumanlikesSpawnedOfFaction(parentFaction).Count<Pawn>() > 0)
 				{
-					root = map.mapPawns.FreeHumanlikesSpawnedOfFaction(faction).RandomElement<Pawn>().Position;
+					root = map.mapPawns.FreeHumanlikesSpawnedOfFaction(parentFaction).RandomElement<Pawn>().Position;
 				}
 				else
 				{
-					if (faction == Faction.OfPlayer)
+					if (parentFaction == Faction.OfPlayer)
 					{
 						List<Building> allBuildingsColonist = map.listerBuildings.allBuildingsColonist;
 						for (int i = 0; i < allBuildingsColonist.Count; i++)
@@ -213,7 +217,7 @@ namespace RimWorld
 						List<Thing> list = map.listerThings.ThingsInGroup(ThingRequestGroup.BuildingArtificial);
 						for (int j = 0; j < list.Count; j++)
 						{
-							if (list[j].Faction == faction && DropCellFinder.TryFindDropSpotNear(list[j].Position, map, out root, true, true))
+							if (list[j].Faction == parentFaction && DropCellFinder.TryFindDropSpotNear(list[j].Position, map, out root, true, true))
 							{
 								break;
 							}
@@ -221,22 +225,22 @@ namespace RimWorld
 					}
 					if (!root.IsValid)
 					{
-						root = DropCellFinder.RandomDropSpot(map);
+						RCellFinder.TryFindRandomCellNearTheCenterOfTheMapWith((IntVec3 x) => DropCellFinder.CanPhysicallyDropInto(x, map, true) && !x.Fogged(map) && x.Standable(map), map, out root);
 					}
 				}
 				spot = CellFinder.RandomClosewalkCellNear(root, map, 10, null);
-				if (DropCellFinder.CanPhysicallyDropInto(spot, map, true))
+				if (DropCellFinder.CanPhysicallyDropInto(spot, map, true) && !spot.Fogged(map))
 				{
 					break;
 				}
 				num++;
 				if (num > 300)
 				{
-					goto Block_9;
+					goto Block_10;
 				}
 			}
 			return true;
-			Block_9:
+			Block_10:
 			spot = CellFinderLoose.RandomCellWith((IntVec3 c) => DropCellFinder.CanPhysicallyDropInto(c, map, true), map, 1000);
 			return false;
 		}

@@ -254,6 +254,14 @@ namespace RimWorld.Planet
 			}
 		}
 
+		public override bool HasName
+		{
+			get
+			{
+				return !this.nameInt.NullOrEmpty();
+			}
+		}
+
 		public int TicksPerMove
 		{
 			get
@@ -686,21 +694,14 @@ namespace RimWorld.Planet
 					num5++;
 				}
 			}
-			stringBuilder.Append("CaravanColonistsCount".Translate(new object[]
-			{
-				num,
-				(num != 1) ? Faction.OfPlayer.def.pawnsPlural : Faction.OfPlayer.def.pawnSingular
-			}));
+			stringBuilder.Append("CaravanColonistsCount".Translate(num, (num != 1) ? Faction.OfPlayer.def.pawnsPlural : Faction.OfPlayer.def.pawnSingular));
 			if (num2 == 1)
 			{
 				stringBuilder.Append(", " + "CaravanAnimal".Translate());
 			}
 			else if (num2 > 1)
 			{
-				stringBuilder.Append(", " + "CaravanAnimalsCount".Translate(new object[]
-				{
-					num2
-				}));
+				stringBuilder.Append(", " + "CaravanAnimalsCount".Translate(num2));
 			}
 			if (num3 == 1)
 			{
@@ -708,18 +709,12 @@ namespace RimWorld.Planet
 			}
 			else if (num3 > 1)
 			{
-				stringBuilder.Append(", " + "CaravanPrisonersCount".Translate(new object[]
-				{
-					num3
-				}));
+				stringBuilder.Append(", " + "CaravanPrisonersCount".Translate(num3));
 			}
 			stringBuilder.AppendLine();
 			if (num5 > 0)
 			{
-				stringBuilder.Append("CaravanPawnsInMentalState".Translate(new object[]
-				{
-					num5
-				}));
+				stringBuilder.Append("CaravanPawnsInMentalState".Translate(num5));
 			}
 			if (num4 > 0)
 			{
@@ -727,10 +722,7 @@ namespace RimWorld.Planet
 				{
 					stringBuilder.Append(", ");
 				}
-				stringBuilder.Append("CaravanPawnsDowned".Translate(new object[]
-				{
-					num4
-				}));
+				stringBuilder.Append("CaravanPawnsDowned".Translate(num4));
 			}
 			if (num5 > 0 || num4 > 0)
 			{
@@ -752,10 +744,7 @@ namespace RimWorld.Planet
 				SettlementBase settlementBase = CaravanVisitUtility.SettlementVisitedNow(this);
 				if (settlementBase != null)
 				{
-					stringBuilder.Append("CaravanVisiting".Translate(new object[]
-					{
-						settlementBase.Label
-					}));
+					stringBuilder.Append("CaravanVisiting".Translate(settlementBase.Label));
 				}
 				else
 				{
@@ -766,10 +755,7 @@ namespace RimWorld.Planet
 			{
 				float num6 = (float)CaravanArrivalTimeEstimator.EstimatedTicksToArrive(this, true) / 60000f;
 				stringBuilder.AppendLine();
-				stringBuilder.Append("CaravanEstimatedTimeToDestination".Translate(new object[]
-				{
-					num6.ToString("0.#")
-				}));
+				stringBuilder.Append("CaravanEstimatedTimeToDestination".Translate(num6.ToString("0.#")));
 			}
 			if (this.AllOwnersDowned)
 			{
@@ -869,11 +855,7 @@ namespace RimWorld.Planet
 							}
 							this.$this.pather.Paused = !this.$this.pather.Paused;
 						},
-						defaultDesc = "CommandToggleCaravanPauseDesc".Translate(new object[]
-						{
-							2f.ToString("0.#"),
-							0.3f.ToStringPercent()
-						}),
+						defaultDesc = "CommandToggleCaravanPauseDesc".Translate(2f.ToString("0.#"), 0.3f.ToStringPercent()),
 						icon = TexCommand.PauseCaravan,
 						defaultLabel = "CommandPauseCaravan".Translate()
 					};
@@ -1028,10 +1010,7 @@ namespace RimWorld.Planet
 				this.RemovePawn(member);
 				if (base.Faction == Faction.OfPlayer)
 				{
-					Find.LetterStack.ReceiveLetter("LetterLabelAllCaravanColonistsDied".Translate(), "LetterAllCaravanColonistsDied".Translate(new object[]
-					{
-						this.Name
-					}).CapitalizeFirst(), LetterDefOf.NegativeEvent, new GlobalTargetInfo(base.Tile), null, null);
+					Find.LetterStack.ReceiveLetter("LetterLabelAllCaravanColonistsDied".Translate(), "LetterAllCaravanColonistsDied".Translate(this.Name).CapitalizeFirst(), LetterDefOf.NegativeEvent, new GlobalTargetInfo(base.Tile), null, null);
 				}
 				this.pawns.Clear();
 				Find.WorldObjects.Remove(this);

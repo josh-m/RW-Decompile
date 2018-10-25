@@ -38,7 +38,7 @@ namespace Verse
 		}
 
 		[DebuggerHidden]
-		public virtual IEnumerable<StatDrawEntry> SpecialDisplayStats()
+		public virtual IEnumerable<StatDrawEntry> SpecialDisplayStats(StatRequest req)
 		{
 		}
 	}

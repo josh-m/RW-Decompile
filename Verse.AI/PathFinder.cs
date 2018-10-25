@@ -243,7 +243,7 @@ namespace Verse.AI
 			int z = dest.Cell.z;
 			int num = this.cellIndices.CellToIndex(start);
 			int num2 = this.cellIndices.CellToIndex(dest.Cell);
-			ByteGrid byteGrid = (pawn == null) ? null : pawn.GetAvoidGrid();
+			ByteGrid byteGrid = (pawn == null) ? null : pawn.GetAvoidGrid(true);
 			bool flag = traverseParms.mode == TraverseMode.PassAllDestroyableThings || traverseParms.mode == TraverseMode.PassAllDestroyableThingsNotWater;
 			bool flag2 = traverseParms.mode != TraverseMode.NoPassClosedDoorsOrWater && traverseParms.mode != TraverseMode.PassAllDestroyableThingsNotWater;
 			bool flag3 = !flag;
@@ -348,18 +348,18 @@ namespace Verse.AI
 											{
 												this.DebugFlash(new IntVec3(num13, 0, num14), 0.22f, "walk");
 											}
-											goto IL_D53;
+											goto IL_E3A;
 										}
 										flag12 = true;
 										num16 += 70;
 										Building building = edificeGrid[num15];
 										if (building == null)
 										{
-											goto IL_D53;
+											goto IL_E3A;
 										}
 										if (!PathFinder.IsDestroyable(building))
 										{
-											goto IL_D53;
+											goto IL_E3A;
 										}
 										num16 += (int)((float)building.HitPoints * 0.2f);
 									}
@@ -376,7 +376,7 @@ namespace Verse.AI
 													{
 														this.DebugFlash(new IntVec3(x2, 0, z2 - 1), 0.9f, "corn");
 													}
-													goto IL_D53;
+													goto IL_E3A;
 												}
 												num16 += 70;
 											}
@@ -388,7 +388,7 @@ namespace Verse.AI
 													{
 														this.DebugFlash(new IntVec3(x2 + 1, 0, z2), 0.9f, "corn");
 													}
-													goto IL_D53;
+													goto IL_E3A;
 												}
 												num16 += 70;
 											}
@@ -402,7 +402,7 @@ namespace Verse.AI
 													{
 														this.DebugFlash(new IntVec3(x2, 0, z2 + 1), 0.9f, "corn");
 													}
-													goto IL_D53;
+													goto IL_E3A;
 												}
 												num16 += 70;
 											}
@@ -414,7 +414,7 @@ namespace Verse.AI
 													{
 														this.DebugFlash(new IntVec3(x2 + 1, 0, z2), 0.9f, "corn");
 													}
-													goto IL_D53;
+													goto IL_E3A;
 												}
 												num16 += 70;
 											}
@@ -428,7 +428,7 @@ namespace Verse.AI
 													{
 														this.DebugFlash(new IntVec3(x2, 0, z2 + 1), 0.9f, "corn");
 													}
-													goto IL_D53;
+													goto IL_E3A;
 												}
 												num16 += 70;
 											}
@@ -440,7 +440,7 @@ namespace Verse.AI
 													{
 														this.DebugFlash(new IntVec3(x2 - 1, 0, z2), 0.9f, "corn");
 													}
-													goto IL_D53;
+													goto IL_E3A;
 												}
 												num16 += 70;
 											}
@@ -454,7 +454,7 @@ namespace Verse.AI
 													{
 														this.DebugFlash(new IntVec3(x2, 0, z2 - 1), 0.9f, "corn");
 													}
-													goto IL_D53;
+													goto IL_E3A;
 												}
 												num16 += 70;
 											}
@@ -466,7 +466,7 @@ namespace Verse.AI
 													{
 														this.DebugFlash(new IntVec3(x2 - 1, 0, z2), 0.9f, "corn");
 													}
-													goto IL_D53;
+													goto IL_E3A;
 												}
 												num16 += 70;
 											}
@@ -507,7 +507,7 @@ namespace Verse.AI
 										if (buildingCost == 2147483647)
 										{
 											this.PfProfilerEndSample();
-											goto IL_D53;
+											goto IL_E3A;
 										}
 										num17 += buildingCost;
 										this.PfProfilerEndSample();
@@ -524,7 +524,7 @@ namespace Verse.AI
 										if (num18 == 2147483647)
 										{
 											this.PfProfilerEndSample();
-											goto IL_D53;
+											goto IL_E3A;
 										}
 										num17 += num18;
 										this.PfProfilerEndSample();
@@ -540,24 +540,49 @@ namespace Verse.AI
 										}
 										if (this.calcGrid[num15].knownCost <= num19 + num20)
 										{
-											goto IL_D53;
+											goto IL_E3A;
 										}
 									}
-									if (status != this.statusClosedValue && status != this.statusOpenValue)
+									if (flag9)
 									{
-										if (flag9)
+										this.calcGrid[num15].heuristicCost = Mathf.RoundToInt((float)this.regionCostCalculator.GetPathCostFromDestToRegion(num15) * PathFinder.RegionHeuristicWeightByNodesOpened.Evaluate((float)num4));
+										if (this.calcGrid[num15].heuristicCost < 0)
 										{
-											this.calcGrid[num15].heuristicCost = Mathf.RoundToInt((float)this.regionCostCalculator.GetPathCostFromDestToRegion(num15) * PathFinder.RegionHeuristicWeightByNodesOpened.Evaluate((float)num4));
+											Log.ErrorOnce(string.Concat(new object[]
+											{
+												"Heuristic cost overflow for ",
+												pawn.ToStringSafe<Pawn>(),
+												" pathing from ",
+												start,
+												" to ",
+												dest,
+												"."
+											}), pawn.GetHashCode() ^ 193840009, false);
+											this.calcGrid[num15].heuristicCost = 0;
 										}
-										else
-										{
-											int dx = Math.Abs(num13 - x);
-											int dz = Math.Abs(num14 - z);
-											int num21 = GenMath.OctileDistance(dx, dz, num9, num10);
-											this.calcGrid[num15].heuristicCost = Mathf.RoundToInt((float)num21 * num8);
-										}
+									}
+									else if (status != this.statusClosedValue && status != this.statusOpenValue)
+									{
+										int dx = Math.Abs(num13 - x);
+										int dz = Math.Abs(num14 - z);
+										int num21 = GenMath.OctileDistance(dx, dz, num9, num10);
+										this.calcGrid[num15].heuristicCost = Mathf.RoundToInt((float)num21 * num8);
 									}
 									int num22 = num19 + this.calcGrid[num15].heuristicCost;
+									if (num22 < 0)
+									{
+										Log.ErrorOnce(string.Concat(new object[]
+										{
+											"Node cost overflow for ",
+											pawn.ToStringSafe<Pawn>(),
+											" pathing from ",
+											start,
+											" to ",
+											dest,
+											"."
+										}), pawn.GetHashCode() ^ 87865822, false);
+										num22 = 0;
+									}
 									this.calcGrid[num15].parentIndex = num;
 									this.calcGrid[num15].knownCost = num19;
 									this.calcGrid[num15].status = this.statusOpenValue;
@@ -567,7 +592,7 @@ namespace Verse.AI
 								}
 							}
 						}
-						IL_D53:;
+						IL_E3A:;
 					}
 					this.PfProfilerEndSample();
 					num3++;
@@ -664,7 +689,7 @@ namespace Verse.AI
 					{
 						return building_Door.TicksToOpenNow;
 					}
-					if (building_Door.CanPhysicallyPass(pawn))
+					if ((pawn != null && building_Door.CanPhysicallyPass(pawn)) || building_Door.FreePassage)
 					{
 						return 0;
 					}
@@ -682,7 +707,7 @@ namespace Verse.AI
 					{
 						return building_Door.TicksToOpenNow;
 					}
-					if (building_Door.CanPhysicallyPass(pawn))
+					if ((pawn != null && building_Door.CanPhysicallyPass(pawn)) || building_Door.FreePassage)
 					{
 						return 0;
 					}

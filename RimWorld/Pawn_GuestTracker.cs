@@ -8,8 +8,6 @@ namespace RimWorld
 	{
 		private Pawn pawn;
 
-		private bool getsFoodInt = true;
-
 		public PrisonerInteractionModeDef interactionMode = PrisonerInteractionModeDefOf.NoInteraction;
 
 		private Faction hostFactionInt;
@@ -88,28 +86,11 @@ namespace RimWorld
 			}
 		}
 
-		public bool GetsFood
-		{
-			get
-			{
-				if (this.HostFaction == null)
-				{
-					Log.Error("GetsFood without host faction.", false);
-					return true;
-				}
-				return this.getsFoodInt;
-			}
-			set
-			{
-				this.getsFoodInt = value;
-			}
-		}
-
 		public bool CanBeBroughtFood
 		{
 			get
 			{
-				return this.GetsFood && this.interactionMode != PrisonerInteractionModeDefOf.Execution && (this.interactionMode != PrisonerInteractionModeDefOf.Release || this.pawn.Downed);
+				return this.interactionMode != PrisonerInteractionModeDefOf.Execution && (this.interactionMode != PrisonerInteractionModeDefOf.Release || this.pawn.Downed);
 			}
 		}
 
@@ -223,7 +204,6 @@ namespace RimWorld
 		{
 			Scribe_References.Look<Faction>(ref this.hostFactionInt, "hostFaction", false);
 			Scribe_Values.Look<bool>(ref this.isPrisonerInt, "prisoner", false, false);
-			Scribe_Values.Look<bool>(ref this.getsFoodInt, "getsFood", false, false);
 			Scribe_Defs.Look<PrisonerInteractionModeDef>(ref this.interactionMode, "interactionMode");
 			Scribe_Values.Look<bool>(ref this.releasedInt, "released", false, false);
 			Scribe_Values.Look<int>(ref this.ticksWhenAllowedToEscapeAgain, "ticksWhenAllowedToEscapeAgain", 0, false);
@@ -273,7 +253,7 @@ namespace RimWorld
 			bool flag = prisoner && (!this.IsPrisoner || this.HostFaction != newHost);
 			this.isPrisonerInt = prisoner;
 			this.hostFactionInt = newHost;
-			this.pawn.ClearMind(false);
+			this.pawn.ClearMind(false, false);
 			if (flag)
 			{
 				this.pawn.DropAndForbidEverything(false);
@@ -371,10 +351,7 @@ namespace RimWorld
 					if (Rand.ValueSeeded(this.pawn.thingIDNumber ^ 8976612) < num)
 					{
 						this.pawn.SetFaction(Faction.OfPlayer, null);
-						Messages.Message("MessageRescueeJoined".Translate(new object[]
-						{
-							this.pawn.LabelShort
-						}).AdjustedFor(this.pawn, "PAWN"), this.pawn, MessageTypeDefOf.PositiveEvent, true);
+						Messages.Message("MessageRescueeJoined".Translate(this.pawn.LabelShort, this.pawn).AdjustedFor(this.pawn, "PAWN"), this.pawn, MessageTypeDefOf.PositiveEvent, true);
 					}
 				}
 			}

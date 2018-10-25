@@ -68,10 +68,7 @@ namespace RimWorld
 		{
 			Pawn innerPawn = this.Corpse.InnerPawn;
 			ResurrectionUtility.ResurrectWithSideEffects(innerPawn);
-			Messages.Message("MessagePawnResurrected".Translate(new object[]
-			{
-				innerPawn.LabelIndefinite()
-			}).CapitalizeFirst(), innerPawn, MessageTypeDefOf.PositiveEvent, true);
+			Messages.Message("MessagePawnResurrected".Translate(innerPawn).CapitalizeFirst(), innerPawn, MessageTypeDefOf.PositiveEvent, true);
 			this.Item.SplitOff(1).Destroy(DestroyMode.Vanish);
 		}
 	}

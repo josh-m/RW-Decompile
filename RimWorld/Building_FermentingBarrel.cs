@@ -191,19 +191,11 @@ namespace RimWorld
 			{
 				if (this.Fermented)
 				{
-					stringBuilder.AppendLine("ContainsBeer".Translate(new object[]
-					{
-						this.wortCount,
-						25
-					}));
+					stringBuilder.AppendLine("ContainsBeer".Translate(this.wortCount, 25));
 				}
 				else
 				{
-					stringBuilder.AppendLine("ContainsWort".Translate(new object[]
-					{
-						this.wortCount,
-						25
-					}));
+					stringBuilder.AppendLine("ContainsWort".Translate(this.wortCount, 25));
 				}
 			}
 			if (!this.Empty)
@@ -214,17 +206,10 @@ namespace RimWorld
 				}
 				else
 				{
-					stringBuilder.AppendLine("FermentationProgress".Translate(new object[]
-					{
-						this.Progress.ToStringPercent(),
-						this.EstimatedTicksLeft.ToStringTicksToPeriod()
-					}));
+					stringBuilder.AppendLine("FermentationProgress".Translate(this.Progress.ToStringPercent(), this.EstimatedTicksLeft.ToStringTicksToPeriod()));
 					if (this.CurrentTempProgressSpeedFactor != 1f)
 					{
-						stringBuilder.AppendLine("FermentationBarrelOutOfIdealTemperature".Translate(new object[]
-						{
-							this.CurrentTempProgressSpeedFactor.ToStringPercent()
-						}));
+						stringBuilder.AppendLine("FermentationBarrelOutOfIdealTemperature".Translate(this.CurrentTempProgressSpeedFactor.ToStringPercent()));
 					}
 				}
 			}

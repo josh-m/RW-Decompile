@@ -142,10 +142,7 @@ namespace Verse
 					}
 					if (count > 0)
 					{
-						yield return new FloatMenuOption(this.designateAllLabel + " (" + "CountToDesignate".Translate(new object[]
-						{
-							count
-						}) + ")", delegate
+						yield return new FloatMenuOption(this.designateAllLabel + " (" + "CountToDesignate".Translate(count) + ")", delegate
 						{
 							for (int k = 0; k < things.Count; k++)
 							{

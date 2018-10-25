@@ -1,5 +1,4 @@
 using System;
-using Verse;
 
 namespace RimWorld
 {
@@ -7,73 +6,76 @@ namespace RimWorld
 	{
 		public static void InjectHardcodedData(Backstory bs)
 		{
-			string a = bs.title.CapitalizeFirst();
-			if (a == "Urbworld sex slave")
+			if (bs.title == "urbworld sex slave")
 			{
 				bs.AddForcedTrait(TraitDefOf.Beauty, 2);
 			}
-			if (a == "Pop idol")
+			if (bs.title == "pop idol")
 			{
 				bs.AddForcedTrait(TraitDefOf.Beauty, 2);
 			}
-			if (a == "Mechanoid nerd")
+			if (bs.title == "mechanoid nerd")
 			{
 				bs.AddDisallowedTrait(TraitDefOf.Gay, 0);
 			}
-			if (a == "Mad scientist")
+			if (bs.title == "mad scientist")
 			{
 				bs.AddForcedTrait(TraitDefOf.Psychopath, 0);
 			}
-			if (a == "Urbworld politican")
+			if (bs.title == "urbworld politican")
 			{
 				bs.AddForcedTrait(TraitDefOf.Greedy, 0);
 			}
-			if (a == "Criminal tinker")
+			if (bs.title == "criminal tinker")
 			{
 				bs.AddForcedTrait(TraitDefOf.Bloodlust, 0);
 			}
-			if (a == "Urbworld enforcer")
+			if (bs.title == "urbworld enforcer")
 			{
 				bs.AddForcedTrait(TraitDefOf.Nerves, 1);
 			}
-			if (a == "Pyro assistant")
+			if (bs.title == "pyro assistant")
 			{
 				bs.AddForcedTrait(TraitDefOf.Pyromaniac, 0);
 			}
-			if (a == "Stiletto assassin")
+			if (bs.title == "stiletto assassin")
 			{
 				bs.AddForcedTrait(TraitDefOf.Psychopath, 0);
 			}
-			if (a == "Discharged soldier")
+			if (bs.title == "discharged soldier")
 			{
 				bs.AddForcedTrait(TraitDefOf.TooSmart, 0);
 			}
-			if (a == "Bloody wanderer")
+			if (bs.title == "bloody wanderer")
 			{
 				bs.AddForcedTrait(TraitDefOf.Bloodlust, 0);
 			}
-			if (a == "New age duelist")
+			if (bs.title == "new age duelist")
 			{
 				bs.AddForcedTrait(TraitDefOf.Industriousness, -1);
 			}
-			if (a == "Pirate doctor")
+			if (bs.title == "pirate doctor")
 			{
 				bs.AddForcedTrait(TraitDefOf.NaturalMood, 1);
 			}
-			if (a == "Cave child")
+			if (bs.title == "cave child")
 			{
 				bs.AddForcedTrait(TraitDefOf.Undergrounder, 0);
 			}
-			if (a == "Space marine medic")
+			if (bs.title == "space marine medic")
 			{
 				bs.AddForcedTrait(TraitDefOf.SpeedOffset, 2);
 				bs.AddForcedTrait(TraitDefOf.ShootingAccuracy, -1);
+			}
+			if (bs.title == "bush sniper")
+			{
+				bs.AddForcedTrait(TraitDefOf.ShootingAccuracy, 1);
 			}
 		}
 
 		public static void InjectHardcodedData(PawnBio bio)
 		{
-			if (bio.name.First == "Xia" && bio.name.Last == "Xue")
+			if (bio.name.First == "Lia" && bio.name.Last == "Lu")
 			{
 				bio.childhood.AddForcedTrait(TraitDefOf.Beauty, 2);
 			}

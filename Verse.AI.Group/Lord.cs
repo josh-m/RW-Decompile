@@ -252,15 +252,11 @@ namespace Verse.AI.Group
 			if (this.faction != null && !this.faction.IsPlayer && this.faction.def.autoFlee && lordJob.AddFleeToil)
 			{
 				LordToil_PanicFlee lordToil_PanicFlee = new LordToil_PanicFlee();
-				lordToil_PanicFlee.avoidGridMode = AvoidGridMode.Smart;
+				lordToil_PanicFlee.useAvoidGrid = true;
 				for (int i = 0; i < this.graph.lordToils.Count; i++)
 				{
 					Transition transition = new Transition(this.graph.lordToils[i], lordToil_PanicFlee, false, true);
-					transition.AddPreAction(new TransitionAction_Message("MessageFightersFleeing".Translate(new object[]
-					{
-						this.faction.def.pawnsPlural.CapitalizeFirst(),
-						this.faction.Name
-					}), null, 1f));
+					transition.AddPreAction(new TransitionAction_Message("MessageFightersFleeing".Translate(this.faction.def.pawnsPlural.CapitalizeFirst(), this.faction.Name), null, 1f));
 					transition.AddTrigger(new Trigger_FractionPawnsLost(0.5f));
 					this.graph.AddTransition(transition, true);
 				}
@@ -373,6 +369,7 @@ namespace Verse.AI.Group
 			{
 				this.Init();
 			}
+			this.curJob.LordJobTick();
 			this.curLordToil.LordToilTick();
 			this.CheckTransitionOnSignal(TriggerSignal.ForTick);
 			this.ticksInToil++;
@@ -408,6 +405,13 @@ namespace Verse.AI.Group
 				faction = otherFaction,
 				previousRelationKind = new FactionRelationKind?(previousRelationKind)
 			});
+			for (int i = 0; i < this.ownedPawns.Count; i++)
+			{
+				if (this.ownedPawns[i].Spawned)
+				{
+					this.ownedPawns[i].jobs.EndCurrentJob(JobCondition.InterruptForced, true);
+				}
+			}
 		}
 
 		public void Notify_PawnLost(Pawn pawn, PawnLostCondition cond, DamageInfo? dinfo = null)
@@ -581,11 +585,6 @@ namespace Verse.AI.Group
 					" - ",
 					current.mindState.duty
 				}));
-			}
-			if (this.faction != null)
-			{
-				stringBuilder.AppendLine("Faction data:");
-				stringBuilder.AppendLine(this.faction.DebugString());
 			}
 			stringBuilder.AppendLine("Raw save data:");
 			stringBuilder.AppendLine(Scribe.saver.DebugOutputFor(this));

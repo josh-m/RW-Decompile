@@ -93,10 +93,7 @@ namespace RimWorld
 					{
 						stringBuilder2.AppendLine("    " + current.LabelShort);
 					}
-					stringBuilder.Append("BreakRiskExtremeDesc".Translate(new object[]
-					{
-						stringBuilder2
-					}));
+					stringBuilder.Append("BreakRiskExtremeDesc".Translate(stringBuilder2));
 				}
 				if (BreakRiskAlertUtility.PawnsAtRiskMajor.Any<Pawn>())
 				{
@@ -109,10 +106,7 @@ namespace RimWorld
 					{
 						stringBuilder3.AppendLine("    " + current2.LabelShort);
 					}
-					stringBuilder.Append("BreakRiskMajorDesc".Translate(new object[]
-					{
-						stringBuilder3
-					}));
+					stringBuilder.Append("BreakRiskMajorDesc".Translate(stringBuilder3));
 				}
 				if (BreakRiskAlertUtility.PawnsAtRiskMinor.Any<Pawn>())
 				{
@@ -125,10 +119,7 @@ namespace RimWorld
 					{
 						stringBuilder4.AppendLine("    " + current3.LabelShort);
 					}
-					stringBuilder.Append("BreakRiskMinorDesc".Translate(new object[]
-					{
-						stringBuilder4
-					}));
+					stringBuilder.Append("BreakRiskMinorDesc".Translate(stringBuilder4));
 				}
 				stringBuilder.AppendLine();
 				stringBuilder.Append("BreakRiskDescEnding".Translate());

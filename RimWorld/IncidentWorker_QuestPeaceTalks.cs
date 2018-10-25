@@ -33,7 +33,7 @@ namespace RimWorld
 			int randomInRange = SiteTuning.QuestSiteTimeoutDaysRange.RandomInRange;
 			peaceTalks.GetComponent<TimeoutComp>().StartTimeout(randomInRange * 60000);
 			Find.WorldObjects.Add(peaceTalks);
-			string text = string.Format(this.def.letterText.AdjustedFor(faction.leader, "PAWN"), faction.def.leaderTitle, faction.Name, randomInRange).CapitalizeFirst();
+			string text = this.def.letterText.Formatted(faction.def.leaderTitle, faction.Name, randomInRange, faction.leader.Named("PAWN")).AdjustedFor(faction.leader, "PAWN").CapitalizeFirst();
 			Find.LetterStack.ReceiveLetter(this.def.letterLabel, text, this.def.letterDef, peaceTalks, faction, null);
 			return true;
 		}

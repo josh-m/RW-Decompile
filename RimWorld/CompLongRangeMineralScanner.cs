@@ -97,13 +97,7 @@ namespace RimWorld
 				int randomInRange = SiteTuning.MineralScannerPreciousLumpTimeoutDaysRange.RandomInRange;
 				site.GetComponent<TimeoutComp>().StartTimeout(randomInRange * 60000);
 				Find.WorldObjects.Add(site);
-				Find.LetterStack.ReceiveLetter("LetterLabelFoundPreciousLump".Translate(), "LetterFoundPreciousLump".Translate(new object[]
-				{
-					this.targetMineable.label,
-					randomInRange,
-					SitePartUtility.GetDescriptionDialogue(site, site.parts.FirstOrDefault<SitePart>()).CapitalizeFirst(),
-					worker.LabelShort
-				}), LetterDefOf.PositiveEvent, site, null, null);
+				Find.LetterStack.ReceiveLetter("LetterLabelFoundPreciousLump".Translate(), "LetterFoundPreciousLump".Translate(this.targetMineable.label, randomInRange, SitePartUtility.GetDescriptionDialogue(site, site.parts.FirstOrDefault<SitePart>()).CapitalizeFirst(), worker.LabelShort, worker.Named("WORKER")), LetterDefOf.PositiveEvent, site, null, null);
 			}
 		}
 

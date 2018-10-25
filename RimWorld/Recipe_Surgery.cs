@@ -59,41 +59,24 @@ namespace RimWorld
 					{
 						patient.Kill(null, null);
 					}
-					Messages.Message("MessageMedicalOperationFailureFatal".Translate(new object[]
-					{
-						surgeon.LabelShort,
-						patient.LabelShort,
-						this.recipe.LabelCap
-					}), patient, MessageTypeDefOf.NegativeHealthEvent, true);
+					Messages.Message("MessageMedicalOperationFailureFatal".Translate(surgeon.LabelShort, patient.LabelShort, this.recipe.LabelCap, surgeon.Named("SURGEON"), patient.Named("PATIENT")), patient, MessageTypeDefOf.NegativeHealthEvent, true);
 				}
 				else if (Rand.Chance(0.5f))
 				{
 					if (Rand.Chance(0.1f))
 					{
-						Messages.Message("MessageMedicalOperationFailureRidiculous".Translate(new object[]
-						{
-							surgeon.LabelShort,
-							patient.LabelShort
-						}), patient, MessageTypeDefOf.NegativeHealthEvent, true);
+						Messages.Message("MessageMedicalOperationFailureRidiculous".Translate(surgeon.LabelShort, patient.LabelShort, surgeon.Named("SURGEON"), patient.Named("PATIENT")), patient, MessageTypeDefOf.NegativeHealthEvent, true);
 						HealthUtility.GiveInjuriesOperationFailureRidiculous(patient);
 					}
 					else
 					{
-						Messages.Message("MessageMedicalOperationFailureCatastrophic".Translate(new object[]
-						{
-							surgeon.LabelShort,
-							patient.LabelShort
-						}), patient, MessageTypeDefOf.NegativeHealthEvent, true);
+						Messages.Message("MessageMedicalOperationFailureCatastrophic".Translate(surgeon.LabelShort, patient.LabelShort, surgeon.Named("SURGEON"), patient.Named("PATIENT")), patient, MessageTypeDefOf.NegativeHealthEvent, true);
 						HealthUtility.GiveInjuriesOperationFailureCatastrophic(patient, part);
 					}
 				}
 				else
 				{
-					Messages.Message("MessageMedicalOperationFailureMinor".Translate(new object[]
-					{
-						surgeon.LabelShort,
-						patient.LabelShort
-					}), patient, MessageTypeDefOf.NegativeHealthEvent, true);
+					Messages.Message("MessageMedicalOperationFailureMinor".Translate(surgeon.LabelShort, patient.LabelShort, surgeon.Named("SURGEON"), patient.Named("PATIENT")), patient, MessageTypeDefOf.NegativeHealthEvent, true);
 					HealthUtility.GiveInjuriesOperationFailureMinor(patient, part);
 				}
 				if (!patient.Dead)

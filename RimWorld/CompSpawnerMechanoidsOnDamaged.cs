@@ -76,32 +76,40 @@ namespace RimWorld
 				LordJob_MechanoidsDefendShip lordJob = new LordJob_MechanoidsDefendShip(this.parent, this.parent.Faction, 21f, invalid);
 				this.lord = LordMaker.MakeNewLord(Faction.OfMechanoids, lordJob, this.parent.Map, null);
 			}
-			PawnKindDef kind;
-			while ((from def in DefDatabase<PawnKindDef>.AllDefs
-			where def.RaceProps.IsMechanoid && def.isFighter && def.combatPower <= this.pointsLeft
-			select def).TryRandomElement(out kind))
+			try
 			{
-				IntVec3 center;
-				if ((from cell in GenAdj.CellsAdjacent8Way(this.parent)
-				where this.CanSpawnMechanoidAt(cell)
-				select cell).TryRandomElement(out center))
+				while (this.pointsLeft > 0f)
 				{
+					PawnKindDef kind;
+					if (!(from def in DefDatabase<PawnKindDef>.AllDefs
+					where def.RaceProps.IsMechanoid && def.isFighter && def.combatPower <= this.pointsLeft
+					select def).TryRandomElement(out kind))
+					{
+						break;
+					}
+					IntVec3 center;
+					if (!(from cell in GenAdj.CellsAdjacent8Way(this.parent)
+					where this.CanSpawnMechanoidAt(cell)
+					select cell).TryRandomElement(out center))
+					{
+						break;
+					}
 					PawnGenerationRequest request = new PawnGenerationRequest(kind, Faction.OfMechanoids, PawnGenerationContext.NonPlayer, -1, true, false, false, false, true, false, 1f, false, true, true, false, false, false, false, null, null, null, null, null, null, null, null);
 					Pawn pawn = PawnGenerator.GeneratePawn(request);
-					if (GenPlace.TryPlaceThing(pawn, center, this.parent.Map, ThingPlaceMode.Near, null, null))
+					if (!GenPlace.TryPlaceThing(pawn, center, this.parent.Map, ThingPlaceMode.Near, null, null))
 					{
-						this.lord.AddPawn(pawn);
-						this.pointsLeft -= pawn.kindDef.combatPower;
-						continue;
+						Find.WorldPawns.PassToWorld(pawn, PawnDiscardDecideMode.Discard);
+						break;
 					}
-					Find.WorldPawns.PassToWorld(pawn, PawnDiscardDecideMode.Discard);
+					this.lord.AddPawn(pawn);
+					this.pointsLeft -= pawn.kindDef.combatPower;
 				}
-				IL_1B9:
-				this.pointsLeft = 0f;
-				SoundDefOf.PsychicPulseGlobal.PlayOneShotOnCamera(this.parent.Map);
-				return;
 			}
-			goto IL_1B9;
+			finally
+			{
+				this.pointsLeft = 0f;
+			}
+			SoundDefOf.PsychicPulseGlobal.PlayOneShotOnCamera(this.parent.Map);
 		}
 
 		private bool CanSpawnMechanoidAt(IntVec3 c)

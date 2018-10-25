@@ -35,28 +35,11 @@ namespace Verse
 			{
 				if (cause == null)
 				{
-					Find.LetterStack.ReceiveLetter("LetterHediffFromRandomHediffGiverLabel".Translate(new object[]
-					{
-						pawn.LabelShort,
-						this.hediff.LabelCap
-					}).CapitalizeFirst(), "LetterHediffFromRandomHediffGiver".Translate(new object[]
-					{
-						pawn.LabelShort,
-						this.hediff.LabelCap
-					}).CapitalizeFirst(), LetterDefOf.NegativeEvent, pawn, null, null);
+					Find.LetterStack.ReceiveLetter("LetterHediffFromRandomHediffGiverLabel".Translate(pawn.LabelShort, this.hediff.LabelCap, pawn.Named("PAWN")).CapitalizeFirst(), "LetterHediffFromRandomHediffGiver".Translate(pawn.LabelShort, this.hediff.LabelCap, pawn.Named("PAWN")).CapitalizeFirst(), LetterDefOf.NegativeEvent, pawn, null, null);
 				}
 				else
 				{
-					Find.LetterStack.ReceiveLetter("LetterHealthComplicationsLabel".Translate(new object[]
-					{
-						pawn.LabelShort,
-						this.hediff.LabelCap
-					}).CapitalizeFirst(), "LetterHealthComplications".Translate(new object[]
-					{
-						pawn.LabelShort,
-						this.hediff.LabelCap,
-						cause.LabelCap
-					}).CapitalizeFirst(), LetterDefOf.NegativeEvent, pawn, null, null);
+					Find.LetterStack.ReceiveLetter("LetterHealthComplicationsLabel".Translate(pawn.LabelShort, this.hediff.LabelCap, pawn.Named("PAWN")).CapitalizeFirst(), "LetterHealthComplications".Translate(pawn.LabelShort, this.hediff.LabelCap, cause.LabelCap, pawn.Named("PAWN")).CapitalizeFirst(), LetterDefOf.NegativeEvent, pawn, null, null);
 				}
 			}
 		}

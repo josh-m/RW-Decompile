@@ -17,25 +17,21 @@ namespace RimWorld
 
 		private static void CreateNewVersionDialog()
 		{
-			string text = LastPlayedVersion.Version.Major + "." + LastPlayedVersion.Version.Minor;
-			string text2 = VersionControl.CurrentMajor + "." + VersionControl.CurrentMinor;
-			string text3 = "GameUpdatedToNewVersionInitial".Translate(new object[]
-			{
-				text,
-				text2
-			});
-			text3 += "\n\n";
+			string value = LastPlayedVersion.Version.Major + "." + LastPlayedVersion.Version.Minor;
+			string value2 = VersionControl.CurrentMajor + "." + VersionControl.CurrentMinor;
+			string text = "GameUpdatedToNewVersionInitial".Translate(value, value2);
+			text += "\n\n";
 			if (BackCompatibility.IsSaveCompatibleWith(LastPlayedVersion.Version.ToString()))
 			{
-				text3 += "GameUpdatedToNewVersionSavesCompatible".Translate();
+				text += "GameUpdatedToNewVersionSavesCompatible".Translate();
 			}
 			else
 			{
-				text3 += "GameUpdatedToNewVersionSavesIncompatible".Translate();
+				text += "GameUpdatedToNewVersionSavesIncompatible".Translate();
 			}
-			text3 += "\n\n";
-			text3 += "GameUpdatedToNewVersionSteam".Translate();
-			Find.WindowStack.Add(new Dialog_MessageBox(text3, null, null, null, null, null, false, null, null));
+			text += "\n\n";
+			text += "GameUpdatedToNewVersionSteam".Translate();
+			Find.WindowStack.Add(new Dialog_MessageBox(text, null, null, null, null, null, false, null, null));
 			VersionUpdateDialogMaker.dialogDone = true;
 		}
 	}

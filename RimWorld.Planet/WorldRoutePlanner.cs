@@ -47,6 +47,14 @@ namespace RimWorld.Planet
 			}
 		}
 
+		public bool FormingCaravan
+		{
+			get
+			{
+				return this.Active && this.currentFormCaravanDialog != null;
+			}
+		}
+
 		private bool ShouldStop
 		{
 			get
@@ -247,10 +255,7 @@ namespace RimWorld.Planet
 				float num = 6f;
 				if (<DoRouteDetailsBox>c__AnonStorey.$this.waypoints.Count >= 2)
 				{
-					Widgets.Label(new Rect(0f, num, <DoRouteDetailsBox>c__AnonStorey.rect.width, 25f), "RoutePlannerEstTimeToFinalDest".Translate(new object[]
-					{
-						<DoRouteDetailsBox>c__AnonStorey.$this.GetTicksToWaypoint(<DoRouteDetailsBox>c__AnonStorey.$this.waypoints.Count - 1).ToStringTicksToDays("0.#")
-					}));
+					Widgets.Label(new Rect(0f, num, <DoRouteDetailsBox>c__AnonStorey.rect.width, 25f), "RoutePlannerEstTimeToFinalDest".Translate(<DoRouteDetailsBox>c__AnonStorey.$this.GetTicksToWaypoint(<DoRouteDetailsBox>c__AnonStorey.$this.waypoints.Count - 1).ToStringTicksToDays("0.#")));
 				}
 				else if (<DoRouteDetailsBox>c__AnonStorey.$this.cantRemoveFirstWaypoint)
 				{
@@ -269,10 +274,7 @@ namespace RimWorld.Planet
 				else if (<DoRouteDetailsBox>c__AnonStorey.$this.currentFormCaravanDialog == null && <DoRouteDetailsBox>c__AnonStorey.$this.CaravanAtTheFirstWaypoint != null)
 				{
 					GUI.color = Color.gray;
-					Widgets.Label(new Rect(0f, num, <DoRouteDetailsBox>c__AnonStorey.rect.width, 25f), "RoutePlannerUsingTicksPerMoveOfCaravan".Translate(new object[]
-					{
-						<DoRouteDetailsBox>c__AnonStorey.$this.CaravanAtTheFirstWaypoint.LabelCap
-					}));
+					Widgets.Label(new Rect(0f, num, <DoRouteDetailsBox>c__AnonStorey.rect.width, 25f), "RoutePlannerUsingTicksPerMoveOfCaravan".Translate(<DoRouteDetailsBox>c__AnonStorey.$this.CaravanAtTheFirstWaypoint.LabelCap));
 				}
 				num += 20f;
 				GUI.color = Color.gray;
@@ -363,10 +365,7 @@ namespace RimWorld.Planet
 			StringBuilder stringBuilder = new StringBuilder();
 			if (num3 != 0)
 			{
-				stringBuilder.AppendLine("EstimatedTimeToTile".Translate(new object[]
-				{
-					num3.ToStringTicksToDays("0.##")
-				}));
+				stringBuilder.AppendLine("EstimatedTimeToTile".Translate(num3.ToStringTicksToDays("0.##")));
 			}
 			stringBuilder.AppendLine("ForagedFoodAmount".Translate() + ": " + Find.WorldGrid[tile].biome.forageability.ToStringPercent());
 			stringBuilder.Append(VirtualPlantsUtility.GetVirtualPlantsStatusExplanationAt(tile, num4));
@@ -426,10 +425,7 @@ namespace RimWorld.Planet
 			}
 			if (this.waypoints.Count >= 25)
 			{
-				Messages.Message("MessageCantAddWaypointBecauseLimit".Translate(new object[]
-				{
-					25
-				}), MessageTypeDefOf.RejectInput, false);
+				Messages.Message("MessageCantAddWaypointBecauseLimit".Translate(25), MessageTypeDefOf.RejectInput, false);
 				return;
 			}
 			RoutePlannerWaypoint routePlannerWaypoint = (RoutePlannerWaypoint)WorldObjectMaker.MakeWorldObject(WorldObjectDefOf.RoutePlannerWaypoint);

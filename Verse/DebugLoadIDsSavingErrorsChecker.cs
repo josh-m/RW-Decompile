@@ -107,16 +107,26 @@ namespace Verse
 				return;
 			}
 			ILoadReferenceable loadReferenceable = obj as ILoadReferenceable;
-			if (loadReferenceable != null && !this.deepSaved.Add(loadReferenceable.GetUniqueLoadID()))
+			if (loadReferenceable != null)
 			{
-				Log.Warning(string.Concat(new string[]
+				try
 				{
-					"DebugLoadIDsSavingErrorsChecker error: tried to register deep-saved object with loadID ",
-					loadReferenceable.GetUniqueLoadID(),
-					", but it's already here. label=",
-					label,
-					" (not cleared after the previous save? different objects have the same load ID? the same object is deep-saved twice?)"
-				}), false);
+					if (!this.deepSaved.Add(loadReferenceable.GetUniqueLoadID()))
+					{
+						Log.Warning(string.Concat(new string[]
+						{
+							"DebugLoadIDsSavingErrorsChecker error: tried to register deep-saved object with loadID ",
+							loadReferenceable.GetUniqueLoadID(),
+							", but it's already here. label=",
+							label,
+							" (not cleared after the previous save? different objects have the same load ID? the same object is deep-saved twice?)"
+						}), false);
+					}
+				}
+				catch (Exception arg)
+				{
+					Log.Error("Error in GetUniqueLoadID(): " + arg, false);
+				}
 			}
 		}
 
@@ -141,7 +151,14 @@ namespace Verse
 			{
 				return;
 			}
-			this.referenced.Add(new DebugLoadIDsSavingErrorsChecker.ReferencedObject(obj.GetUniqueLoadID(), label));
+			try
+			{
+				this.referenced.Add(new DebugLoadIDsSavingErrorsChecker.ReferencedObject(obj.GetUniqueLoadID(), label));
+			}
+			catch (Exception arg)
+			{
+				Log.Error("Error in GetUniqueLoadID(): " + arg, false);
+			}
 		}
 	}
 }

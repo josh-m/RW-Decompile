@@ -29,6 +29,30 @@ namespace RimWorld
 
 		private const float ShadowDayNightThreshold = 0.6f;
 
+		private static SimpleCurve SunPeekAroundDegreesFactorCurve = new SimpleCurve
+		{
+			{
+				new CurvePoint(70f, 1f),
+				true
+			},
+			{
+				new CurvePoint(75f, 0.05f),
+				true
+			}
+		};
+
+		private static SimpleCurve SunOffsetFractionFromLatitudeCurve = new SimpleCurve
+		{
+			{
+				new CurvePoint(70f, 0.2f),
+				true
+			},
+			{
+				new CurvePoint(75f, 1.5f),
+				true
+			}
+		};
+
 		private static int TicksAbsForSunPosInWorldSpace
 		{
 			get
@@ -119,7 +143,7 @@ namespace RimWorld
 		public static Vector3 CurSunPositionInWorldSpace()
 		{
 			int ticksAbsForSunPosInWorldSpace = GenCelestial.TicksAbsForSunPosInWorldSpace;
-			return GenCelestial.SunPositionUnmodified((float)GenDate.DayOfYear((long)ticksAbsForSunPosInWorldSpace, 0f), GenDate.DayPercent((long)ticksAbsForSunPosInWorldSpace, 0f), new Vector3(0f, 0f, -1f));
+			return GenCelestial.SunPositionUnmodified((float)GenDate.DayOfYear((long)ticksAbsForSunPosInWorldSpace, 0f), GenDate.DayPercent((long)ticksAbsForSunPosInWorldSpace, 0f), new Vector3(0f, 0f, -1f), 0f);
 		}
 
 		public static bool IsDaytime(float glow)
@@ -130,23 +154,24 @@ namespace RimWorld
 		private static Vector3 SunPosition(float latitude, int dayOfYear, float dayPercent)
 		{
 			Vector3 target = GenCelestial.SurfaceNormal(latitude);
-			Vector3 current = GenCelestial.SunPositionUnmodified((float)dayOfYear, dayPercent, new Vector3(1f, 0f, 0f));
-			current = Vector3.RotateTowards(current, target, 0.331612557f, 9999999f);
-			float num = Mathf.InverseLerp(60f, 0f, Mathf.Abs(latitude));
-			if (num > 0f)
+			Vector3 current = GenCelestial.SunPositionUnmodified((float)dayOfYear, dayPercent, new Vector3(1f, 0f, 0f), latitude);
+			float num = GenCelestial.SunPeekAroundDegreesFactorCurve.Evaluate(latitude);
+			current = Vector3.RotateTowards(current, target, 0.331612557f * num, 9999999f);
+			float num2 = Mathf.InverseLerp(60f, 0f, Mathf.Abs(latitude));
+			if (num2 > 0f)
 			{
-				current = Vector3.RotateTowards(current, target, 6.28318548f * (17f * num / 360f), 9999999f);
+				current = Vector3.RotateTowards(current, target, 6.28318548f * (17f * num2 / 360f), 9999999f);
 			}
 			return current.normalized;
 		}
 
-		private static Vector3 SunPositionUnmodified(float dayOfYear, float dayPercent, Vector3 initialSunPos)
+		private static Vector3 SunPositionUnmodified(float dayOfYear, float dayPercent, Vector3 initialSunPos, float latitude = 0f)
 		{
 			Vector3 point = initialSunPos * 100f;
 			float num = dayOfYear / 60f;
 			float f = num * 3.14159274f * 2f;
 			float num2 = -Mathf.Cos(f);
-			point.y += num2 * 20f;
+			point.y += num2 * 100f * GenCelestial.SunOffsetFractionFromLatitudeCurve.Evaluate(latitude);
 			float angle = (dayPercent - 0.5f) * 360f;
 			point = Quaternion.AngleAxis(angle, Vector3.up) * point;
 			return point.normalized;
@@ -196,7 +221,34 @@ namespace RimWorld
 					stringBuilder.Append(k.ToString().PadRight(6));
 					for (int l = 0; l < 24; l += 2)
 					{
-						stringBuilder.Append(GenCelestial.CelestialSunGlowPercent((float)i, k, (float)l / 24f).ToString("F3").PadRight(6));
+						stringBuilder.Append(GenCelestial.CelestialSunGlowPercent((float)i, k, (float)l / 24f).ToString("F2").PadRight(6));
+					}
+					stringBuilder.AppendLine();
+				}
+				Log.Message(stringBuilder.ToString(), false);
+			}
+		}
+
+		public static void LogSunAngleForYear()
+		{
+			for (int i = -90; i <= 90; i += 10)
+			{
+				StringBuilder stringBuilder = new StringBuilder();
+				stringBuilder.AppendLine("Sun angles for latitude " + i + ", for each hour of each day of the year");
+				stringBuilder.AppendLine("---------------------------------------");
+				stringBuilder.Append("Day/hr".PadRight(6));
+				for (int j = 0; j < 24; j += 2)
+				{
+					stringBuilder.Append((j.ToString() + "h").PadRight(6));
+				}
+				stringBuilder.AppendLine();
+				for (int k = 0; k < 60; k += 5)
+				{
+					stringBuilder.Append(k.ToString().PadRight(6));
+					for (int l = 0; l < 24; l += 2)
+					{
+						float num = Vector3.Angle(GenCelestial.SurfaceNormal((float)i), GenCelestial.SunPositionUnmodified((float)k, (float)l / 24f, new Vector3(1f, 0f, 0f), 0f));
+						stringBuilder.Append((90f - num).ToString("F0").PadRight(6));
 					}
 					stringBuilder.AppendLine();
 				}

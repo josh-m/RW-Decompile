@@ -108,6 +108,8 @@ namespace RimWorld
 
 		public static JobDef InducePrisonerToEscape;
 
+		public static JobDef OfferHelp;
+
 		public static JobDef MarryAdjacentPawn;
 
 		public static JobDef SpectateCeremony;
@@ -117,6 +119,8 @@ namespace RimWorld
 		public static JobDef PrepareCaravan_GatherItems;
 
 		public static JobDef PrepareCaravan_GatherPawns;
+
+		public static JobDef PrepareCaravan_GatherDownedPawns;
 
 		public static JobDef Ignite;
 

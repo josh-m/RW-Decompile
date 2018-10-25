@@ -84,10 +84,7 @@ namespace RimWorld.Planet
 			}
 			if (sendMessage)
 			{
-				string text = "MessageFormedCaravan".Translate(new object[]
-				{
-					caravan.Name
-				}).CapitalizeFirst();
+				string text = "MessageFormedCaravan".Translate(caravan.Name).CapitalizeFirst();
 				if (caravan.pather.Moving && caravan.pather.ArrivalAction != null)
 				{
 					string text2 = text;
@@ -135,10 +132,7 @@ namespace RimWorld.Planet
 						allPawnsSpawned[i].jobs.CheckForJobOverride();
 					}
 				}
-				string text = "MessagePawnLeftMapAndCreatedCaravan".Translate(new object[]
-				{
-					pawn.LabelShort
-				}).CapitalizeFirst();
+				string text = "MessagePawnLeftMapAndCreatedCaravan".Translate(pawn.LabelShort, pawn).CapitalizeFirst();
 				if (flag)
 				{
 					text = text + " " + "MessagePawnLeftMapAndCreatedCaravan_AnimalsWantToJoin".Translate();

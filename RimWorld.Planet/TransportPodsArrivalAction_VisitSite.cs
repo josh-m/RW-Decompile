@@ -55,10 +55,7 @@ namespace RimWorld.Planet
 			if (flag)
 			{
 				Find.TickManager.Notify_GeneratedPotentiallyHostileMap();
-				PawnRelationUtility.Notify_PawnsSeenByPlayer_Letter_Send(orGenerateMap.mapPawns.AllPawns, "LetterRelatedPawnsInMapWherePlayerLanded".Translate(new object[]
-				{
-					Faction.OfPlayer.def.pawnsPlural
-				}), LetterDefOf.NeutralEvent, true, true);
+				PawnRelationUtility.Notify_PawnsSeenByPlayer_Letter_Send(orGenerateMap.mapPawns.AllPawns, "LetterRelatedPawnsInMapWherePlayerLanded".Translate(Faction.OfPlayer.def.pawnsPlural), LetterDefOf.NeutralEvent, true, true);
 			}
 			Messages.Message("MessageTransportPodsArrived".Translate(), lookTarget, MessageTypeDefOf.TaskCompletion, true);
 			this.arrivalMode.Worker.TravelingTransportPodsArrived(pods, orGenerateMap);
@@ -76,10 +73,7 @@ namespace RimWorld.Planet
 			}
 			if (site.EnterCooldownBlocksEntering())
 			{
-				return FloatMenuAcceptanceReport.WithFailMessage("MessageEnterCooldownBlocksEntering".Translate(new object[]
-				{
-					site.EnterCooldownDaysLeft().ToString("0.#")
-				}));
+				return FloatMenuAcceptanceReport.WithFailMessage("MessageEnterCooldownBlocksEntering".Translate(site.EnterCooldownDaysLeft().ToString("0.#")));
 			}
 			return true;
 		}

@@ -4,7 +4,6 @@ using System.Linq;
 using System.Text;
 using UnityEngine;
 using Verse;
-using Verse.AI;
 
 namespace RimWorld
 {
@@ -51,7 +50,6 @@ namespace RimWorld
 
 		protected override bool TryExecuteWorker(IncidentParms parms)
 		{
-			Map map = (Map)parms.target;
 			this.ResolveRaidPoints(parms);
 			if (!this.TryResolveRaidFaction(parms))
 			{
@@ -109,7 +107,6 @@ namespace RimWorld
 			}
 			Find.LetterStack.ReceiveLetter(letterLabel, letterText, this.GetLetterDef(), list2, parms.faction, stringBuilder.ToString());
 			parms.raidStrategy.Worker.MakeLords(parms, list);
-			AvoidGridMaker.RegenerateAvoidGridsFor(parms.faction, map);
 			LessonAutoActivator.TeachOpportunity(ConceptDefOf.EquippingWeapons, OpportunityType.Critical);
 			if (!PlayerKnowledgeDatabase.IsComplete(ConceptDefOf.ShieldBelts))
 			{

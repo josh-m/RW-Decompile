@@ -110,10 +110,7 @@ namespace RimWorld
 
 		protected virtual string GetRelatedPawnsInfoLetterText(IncidentParms parms)
 		{
-			return "LetterRelatedPawnsGroupGeneric".Translate(new object[]
-			{
-				Faction.OfPlayer.def.pawnsPlural
-			});
+			return "LetterRelatedPawnsGroupGeneric".Translate(Faction.OfPlayer.def.pawnsPlural);
 		}
 	}
 }

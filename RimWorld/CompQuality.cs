@@ -50,10 +50,7 @@ namespace RimWorld
 
 		public override string CompInspectStringExtra()
 		{
-			return "QualityIs".Translate(new object[]
-			{
-				this.Quality.GetLabel().CapitalizeFirst()
-			});
+			return "QualityIs".Translate(this.Quality.GetLabel().CapitalizeFirst());
 		}
 	}
 }

@@ -19,7 +19,7 @@ namespace Verse.AI
 			return seasonalTemp >= pawn.def.GetStatValueAbstract(StatDefOf.ComfyTemperatureMin, null) - 7f && seasonalTemp <= pawn.def.GetStatValueAbstract(StatDefOf.ComfyTemperatureMax, null) + 7f;
 		}
 
-		public override bool TryStart(Pawn pawn, Thought reason, bool causedByMood)
+		public override bool TryStart(Pawn pawn, string reason, bool causedByMood)
 		{
 			base.TrySendLetter(pawn, "LetterRunWildMentalBreak", reason);
 			pawn.ChangeKind(PawnKindDefOf.WildMan);

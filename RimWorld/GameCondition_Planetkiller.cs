@@ -76,10 +76,7 @@ namespace RimWorld
 		private void Impact()
 		{
 			ScreenFader.SetColor(Color.clear);
-			GenGameEnd.EndGameDialogMessage("GameOverPlanetkillerImpact".Translate(new object[]
-			{
-				Find.World.info.name
-			}), false, GameCondition_Planetkiller.FadeColor);
+			GenGameEnd.EndGameDialogMessage("GameOverPlanetkillerImpact".Translate(Find.World.info.name), false, GameCondition_Planetkiller.FadeColor);
 		}
 	}
 }

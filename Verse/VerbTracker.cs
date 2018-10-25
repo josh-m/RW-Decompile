@@ -103,17 +103,11 @@ namespace Verse
 			{
 				if (verb.CasterPawn.story.WorkTagIsDisabled(WorkTags.Violent))
 				{
-					command_VerbTarget.Disable("IsIncapableOfViolence".Translate(new object[]
-					{
-						verb.CasterPawn.LabelShort
-					}));
+					command_VerbTarget.Disable("IsIncapableOfViolence".Translate(verb.CasterPawn.LabelShort, verb.CasterPawn));
 				}
 				else if (!verb.CasterPawn.drafter.Drafted)
 				{
-					command_VerbTarget.Disable("IsNotDrafted".Translate(new object[]
-					{
-						verb.CasterPawn.LabelShort
-					}));
+					command_VerbTarget.Disable("IsNotDrafted".Translate(verb.CasterPawn.LabelShort, verb.CasterPawn));
 				}
 			}
 			return command_VerbTarget;

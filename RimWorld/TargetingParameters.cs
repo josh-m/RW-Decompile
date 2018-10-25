@@ -222,5 +222,19 @@ namespace RimWorld
 			};
 			return targetingParameters;
 		}
+
+		public static TargetingParameters ForOpen(Pawn p)
+		{
+			TargetingParameters targetingParameters = new TargetingParameters();
+			targetingParameters.canTargetPawns = false;
+			targetingParameters.canTargetBuildings = true;
+			targetingParameters.mapObjectTargetsMustBeAutoAttackable = false;
+			targetingParameters.validator = delegate(TargetInfo x)
+			{
+				IOpenable openable = x.Thing as IOpenable;
+				return openable != null && openable.CanOpen;
+			};
+			return targetingParameters;
+		}
 	}
 }

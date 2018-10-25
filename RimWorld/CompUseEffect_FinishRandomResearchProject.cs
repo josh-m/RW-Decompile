@@ -29,10 +29,7 @@ namespace RimWorld
 		private void FinishInstantly(ResearchProjectDef proj, Pawn usedBy)
 		{
 			Find.ResearchManager.FinishProject(proj, false, null);
-			Messages.Message("MessageResearchProjectFinishedByItem".Translate(new object[]
-			{
-				proj.LabelCap
-			}), usedBy, MessageTypeDefOf.PositiveEvent, true);
+			Messages.Message("MessageResearchProjectFinishedByItem".Translate(proj.LabelCap), usedBy, MessageTypeDefOf.PositiveEvent, true);
 		}
 	}
 }

@@ -209,11 +209,7 @@ namespace RimWorld
 						": ",
 						num2.ToStringPercent(),
 						"\n",
-						"ResearchCostComparison".Translate(new object[]
-						{
-							this.selectedProject.baseCost.ToString("F0"),
-							this.selectedProject.CostApparent.ToString("F0")
-						})
+						"ResearchCostComparison".Translate(this.selectedProject.baseCost.ToString("F0"), this.selectedProject.CostApparent.ToString("F0"))
 					});
 				}
 				Rect rect3 = new Rect(0f, num, viewRect.width, 0f);

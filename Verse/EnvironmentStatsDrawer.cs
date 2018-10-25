@@ -216,20 +216,11 @@ namespace Verse
 			}
 			else if (pawn2 == null)
 			{
-				result = "SomeonesRoom".Translate(new object[]
-				{
-					pawn.LabelShort,
-					room.Role.label
-				});
+				result = "SomeonesRoom".Translate(pawn.LabelShort, room.Role.label, pawn.Named("PAWN"));
 			}
 			else
 			{
-				result = "CouplesRoom".Translate(new object[]
-				{
-					pawn.LabelShort,
-					pawn2.LabelShort,
-					room.Role.label
-				});
+				result = "CouplesRoom".Translate(pawn.LabelShort, pawn2.LabelShort, room.Role.label, pawn.Named("PAWN1"), pawn2.Named("PAWN2"));
 			}
 			return result;
 		}

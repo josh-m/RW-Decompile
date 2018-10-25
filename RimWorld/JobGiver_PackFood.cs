@@ -82,7 +82,7 @@ namespace RimWorld
 
 		private bool IsGoodPackableFoodFor(Thing food, Pawn forPawn)
 		{
-			return food.def.IsNutritionGivingIngestible && food.def.EverHaulable && food.def.ingestible.preferability >= FoodPreferability.MealAwful && forPawn.RaceProps.CanEverEat(food);
+			return food.def.IsNutritionGivingIngestible && food.def.EverHaulable && food.def.ingestible.preferability >= FoodPreferability.MealAwful && forPawn.WillEat(food, null);
 		}
 	}
 }

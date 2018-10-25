@@ -33,17 +33,11 @@ namespace RimWorld
 			}
 			Listing_Standard listing_Standard = new Listing_Standard();
 			listing_Standard.Begin(rect);
-			listing_Standard.Label("CreatureTrainability".Translate(new object[]
-			{
-				pawn.def.label
-			}).CapitalizeFirst() + ": " + pawn.RaceProps.trainability.LabelCap, -1f, null);
-			Listing_Standard arg_FE_0 = listing_Standard;
-			string label = "CreatureWildness".Translate(new object[]
-			{
-				pawn.def.label
-			}).CapitalizeFirst() + ": " + pawn.RaceProps.wildness.ToStringPercent();
+			listing_Standard.Label("CreatureTrainability".Translate(pawn.def.label).CapitalizeFirst() + ": " + pawn.RaceProps.trainability.LabelCap, 22f, null);
+			Listing_Standard arg_F6_0 = listing_Standard;
+			string label = "CreatureWildness".Translate(pawn.def.label).CapitalizeFirst() + ": " + pawn.RaceProps.wildness.ToStringPercent();
 			string wildnessExplanation = TrainableUtility.GetWildnessExplanation(pawn.def);
-			arg_FE_0.Label(label, -1f, wildnessExplanation);
+			arg_F6_0.Label(label, 22f, wildnessExplanation);
 			if (pawn.training.HasLearned(TrainableDefOf.Obedience))
 			{
 				Rect rect3 = listing_Standard.GetRect(25f);
@@ -144,10 +138,7 @@ namespace RimWorld
 					{
 						if (!pawn.training.HasLearned(td.prerequisites[i]))
 						{
-							text = text + "\n" + "TrainingNeedsPrerequisite".Translate(new object[]
-							{
-								td.prerequisites[i].LabelCap
-							});
+							text = text + "\n" + "TrainingNeedsPrerequisite".Translate(td.prerequisites[i].LabelCap);
 						}
 					}
 				}

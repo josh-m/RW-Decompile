@@ -42,7 +42,7 @@ namespace Verse
 				{
 					ScribeMetaHeaderUtility.WriteMetaHeader();
 					Scribe_Deep.Look<Scenario>(ref scen, "scenario", new object[0]);
-				});
+				}, false);
 			}
 			catch (Exception ex)
 			{
@@ -89,7 +89,7 @@ namespace Verse
 					ScribeMetaHeaderUtility.WriteMetaHeader();
 					Game game = Current.Game;
 					Scribe_Deep.Look<Game>(ref game, "game", new object[0]);
-				});
+				}, Find.GameInfo.permadeathMode);
 				GameDataSaveLoader.lastSaveTick = Find.TickManager.TicksGame;
 			}
 			catch (Exception arg)

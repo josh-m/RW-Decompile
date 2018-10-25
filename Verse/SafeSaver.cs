@@ -25,7 +25,7 @@ namespace Verse
 			return Path.GetFullPath(path + SafeSaver.OldFileSuffix);
 		}
 
-		public static void Save(string path, string documentElementName, Action saveAction)
+		public static void Save(string path, string documentElementName, Action saveAction, bool leaveOldFile = false)
 		{
 			try
 			{
@@ -89,16 +89,15 @@ namespace Verse
 						}
 						throw;
 					}
-					SafeSaver.RemoveFileIfExists(SafeSaver.GetOldFileFullPath(path), true);
+					if (!leaveOldFile)
+					{
+						SafeSaver.RemoveFileIfExists(SafeSaver.GetOldFileFullPath(path), true);
+					}
 				}
 			}
 			catch (Exception ex4)
 			{
-				GenUI.ErrorDialog("ProblemSavingFile".Translate(new object[]
-				{
-					SafeSaver.GetFileFullPath(path),
-					ex4.ToString()
-				}));
+				GenUI.ErrorDialog("ProblemSavingFile".Translate(SafeSaver.GetFileFullPath(path), ex4.ToString()));
 				throw;
 			}
 		}

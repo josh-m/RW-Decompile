@@ -71,26 +71,14 @@ namespace RimWorld
 			LetterDef textLetterDef;
 			if (num2 == 1)
 			{
-				label = "LetterLabelAnimalInsanitySingle".Translate(new object[]
-				{
-					pawn.LabelShort
-				});
-				text = "AnimalInsanitySingle".Translate(new object[]
-				{
-					pawn.LabelShort
-				});
+				label = "LetterLabelAnimalInsanitySingle".Translate(pawn.LabelShort, pawn.Named("ANIMAL"));
+				text = "AnimalInsanitySingle".Translate(pawn.LabelShort, pawn.Named("ANIMAL"));
 				textLetterDef = LetterDefOf.ThreatSmall;
 			}
 			else
 			{
-				label = "LetterLabelAnimalInsanityMultiple".Translate(new object[]
-				{
-					animalDef.GetLabelPlural(-1)
-				});
-				text = "AnimalInsanityMultiple".Translate(new object[]
-				{
-					animalDef.GetLabelPlural(-1)
-				});
+				label = "LetterLabelAnimalInsanityMultiple".Translate(animalDef.GetLabelPlural(-1));
+				text = "AnimalInsanityMultiple".Translate(animalDef.GetLabelPlural(-1));
 				textLetterDef = LetterDefOf.ThreatBig;
 			}
 			Find.LetterStack.ReceiveLetter(label, text, textLetterDef, pawn, null, null);

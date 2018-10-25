@@ -66,10 +66,7 @@ namespace Verse
 			if (terrain != this.cachedTerrain)
 			{
 				string str = ((double)terrain.fertility <= 0.0001) ? string.Empty : (" " + "FertShort".Translate() + " " + terrain.fertility.ToStringPercent());
-				this.cachedTerrainString = terrain.LabelCap + ((terrain.passability == Traversability.Impassable) ? null : (" (" + "WalkSpeed".Translate(new object[]
-				{
-					this.SpeedPercentString((float)terrain.pathCost)
-				}) + str + ")"));
+				this.cachedTerrainString = terrain.LabelCap + ((terrain.passability == Traversability.Impassable) ? null : (" (" + "WalkSpeed".Translate(this.SpeedPercentString((float)terrain.pathCost)) + str + ")"));
 				this.cachedTerrain = terrain;
 			}
 			Widgets.Label(rect, this.cachedTerrainString);
@@ -87,10 +84,7 @@ namespace Verse
 			{
 				rect = new Rect(MouseoverReadout.BotLeft.x, (float)UI.screenHeight - MouseoverReadout.BotLeft.y - num, 999f, 999f);
 				SnowCategory snowCategory = SnowUtility.GetSnowCategory(depth);
-				string label2 = SnowUtility.GetDescription(snowCategory) + " (" + "WalkSpeed".Translate(new object[]
-				{
-					this.SpeedPercentString((float)SnowUtility.MovementTicksAddOn(snowCategory))
-				}) + ")";
+				string label2 = SnowUtility.GetDescription(snowCategory) + " (" + "WalkSpeed".Translate(this.SpeedPercentString((float)SnowUtility.MovementTicksAddOn(snowCategory))) + ")";
 				Widgets.Label(rect, label2);
 				num += 19f;
 			}

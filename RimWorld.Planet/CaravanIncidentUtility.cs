@@ -55,10 +55,7 @@ namespace RimWorld.Planet
 			}
 			if (sendLetterIfRelatedPawns)
 			{
-				PawnRelationUtility.Notify_PawnsSeenByPlayer_Letter_Send(enemies, "LetterRelatedPawnsGroupGeneric".Translate(new object[]
-				{
-					Faction.OfPlayer.def.pawnsPlural
-				}), LetterDefOf.NeutralEvent, true, true);
+				PawnRelationUtility.Notify_PawnsSeenByPlayer_Letter_Send(enemies, "LetterRelatedPawnsGroupGeneric".Translate(Faction.OfPlayer.def.pawnsPlural), LetterDefOf.NeutralEvent, true, true);
 			}
 			return map;
 		}

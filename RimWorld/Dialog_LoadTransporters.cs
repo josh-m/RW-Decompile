@@ -250,10 +250,7 @@ namespace RimWorld
 			Rect rect = new Rect(0f, 0f, inRect.width, 35f);
 			Text.Font = GameFont.Medium;
 			Text.Anchor = TextAnchor.MiddleCenter;
-			Widgets.Label(rect, "LoadTransporters".Translate(new object[]
-			{
-				this.TransportersLabel
-			}));
+			Widgets.Label(rect, "LoadTransporters".Translate(this.TransportersLabel));
 			Text.Font = GameFont.Small;
 			Text.Anchor = TextAnchor.UpperLeft;
 			CaravanUIUtility.DrawCaravanInfo(new CaravanUIUtility.CaravanInfo(this.MassUsage, this.MassCapacity, string.Empty, this.TilesPerDay, this.cachedTilesPerDayExplanation, this.DaysWorthOfFood, this.ForagedFoodPerDay, this.cachedForagedFoodPerDayExplanation, this.Visibility, this.cachedVisibilityExplanation, this.CaravanMassUsage, this.CaravanMassCapacity, this.cachedCaravanMassCapacityExplanation), null, this.map.Tile, null, this.lastMassFlashTime, new Rect(12f, 35f, inRect.width - 24f, 40f), false, null, false);
@@ -507,10 +504,7 @@ namespace RimWorld
 			Pawn pawn = pawns.Find((Pawn x) => !x.MapHeld.reachability.CanReach(x.PositionHeld, this.transporters[0].parent, PathEndMode.Touch, TraverseParms.For(TraverseMode.PassDoors, Danger.Deadly, false)));
 			if (pawn != null)
 			{
-				Messages.Message("PawnCantReachTransporters".Translate(new object[]
-				{
-					pawn.LabelShort
-				}).CapitalizeFirst(), MessageTypeDefOf.RejectInput, false);
+				Messages.Message("PawnCantReachTransporters".Translate(pawn.LabelShort, pawn).CapitalizeFirst(), MessageTypeDefOf.RejectInput, false);
 				return false;
 			}
 			Map map = this.transporters[0].parent.Map;
@@ -538,18 +532,11 @@ namespace RimWorld
 						{
 							if (countToTransfer == 1)
 							{
-								Messages.Message("TransporterItemIsUnreachableSingle".Translate(new object[]
-								{
-									this.transferables[i].ThingDef.label
-								}), MessageTypeDefOf.RejectInput, false);
+								Messages.Message("TransporterItemIsUnreachableSingle".Translate(this.transferables[i].ThingDef.label), MessageTypeDefOf.RejectInput, false);
 							}
 							else
 							{
-								Messages.Message("TransporterItemIsUnreachableMulti".Translate(new object[]
-								{
-									countToTransfer,
-									this.transferables[i].ThingDef.label
-								}), MessageTypeDefOf.RejectInput, false);
+								Messages.Message("TransporterItemIsUnreachableMulti".Translate(countToTransfer, this.transferables[i].ThingDef.label), MessageTypeDefOf.RejectInput, false);
 							}
 							return false;
 						}
@@ -561,7 +548,7 @@ namespace RimWorld
 
 		private void AddPawnsToTransferables()
 		{
-			List<Pawn> list = CaravanFormingUtility.AllSendablePawns(this.map, false, false, false);
+			List<Pawn> list = CaravanFormingUtility.AllSendablePawns(this.map, false, false, false, false);
 			for (int i = 0; i < list.Count; i++)
 			{
 				this.AddToTransferables(list[i]);

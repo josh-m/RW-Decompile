@@ -129,6 +129,15 @@ namespace RimWorld
 				}
 			}
 			Rect mainRect = new Rect(b.x - 155f, b.y - num2 / 2f - 10f, 310f, num2);
+			if (Find.TutorialState.introDone && Find.WindowStack.IsOpen<Page_ConfigureStartingPawns>())
+			{
+				Rect mainRect2 = mainRect;
+				mainRect2.x = 17f;
+				if ((mainRect.Contains(Event.current.mousePosition) || (this.def == InstructionDefOf.RandomizeCharacter && UI.screenHeight <= 768)) && !mainRect2.Contains(Event.current.mousePosition))
+				{
+					mainRect.x = 17f;
+				}
+			}
 			Find.WindowStack.ImmediateWindow(177706, mainRect, WindowLayer.Super, delegate
 			{
 				Rect rect = mainRect.AtZero();

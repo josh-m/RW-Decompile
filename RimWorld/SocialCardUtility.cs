@@ -262,10 +262,7 @@ namespace RimWorld
 				{
 					if (otherPawn.Dead)
 					{
-						Messages.Message("MessageCantSelectDeadPawn".Translate(new object[]
-						{
-							otherPawn.LabelShort
-						}).CapitalizeFirst(), MessageTypeDefOf.RejectInput, false);
+						Messages.Message("MessageCantSelectDeadPawn".Translate(otherPawn.LabelShort, otherPawn).CapitalizeFirst(), MessageTypeDefOf.RejectInput, false);
 					}
 					else if (otherPawn.SpawnedOrAnyParentSpawned || otherPawn.IsCaravanMember())
 					{
@@ -273,10 +270,7 @@ namespace RimWorld
 					}
 					else
 					{
-						Messages.Message("MessageCantSelectOffMapPawn".Translate(new object[]
-						{
-							otherPawn.LabelShort
-						}).CapitalizeFirst(), MessageTypeDefOf.RejectInput, false);
+						Messages.Message("MessageCantSelectOffMapPawn".Translate(otherPawn.LabelShort, otherPawn).CapitalizeFirst(), MessageTypeDefOf.RejectInput, false);
 					}
 				}
 				else if (Find.GameInitData.startingAndOptionalPawns.Contains(otherPawn))
@@ -490,10 +484,7 @@ namespace RimWorld
 			{
 				stringBuilder.AppendLine(selPawnForSocialInfo.relations.OpinionExplanation(entry.otherPawn));
 				stringBuilder.AppendLine();
-				stringBuilder.Append("SomeonesOpinionOfMe".Translate(new object[]
-				{
-					entry.otherPawn.LabelShort
-				}));
+				stringBuilder.Append("SomeonesOpinionOfMe".Translate(entry.otherPawn.LabelShort, entry.otherPawn));
 				stringBuilder.Append(": ");
 				stringBuilder.Append(entry.opinionOfMe.ToStringWithSign());
 			}

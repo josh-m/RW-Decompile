@@ -4,13 +4,18 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Text.RegularExpressions;
 
 namespace Verse
 {
 	public static class LanguageReportGenerator
 	{
 		private const string FileName = "TranslationReport.txt";
+
+		private static List<string> tmpStr1Symbols = new List<string>();
+
+		private static List<string> tmpStr2Symbols = new List<string>();
+
+		private static StringBuilder tmpSymbol = new StringBuilder();
 
 		public static void SaveTranslationReport()
 		{
@@ -148,10 +153,7 @@ namespace Verse
 			}
 			text = Path.Combine(text, "TranslationReport.txt");
 			File.WriteAllText(text, stringBuilder.ToString());
-			Messages.Message("MessageTranslationReportSaved".Translate(new object[]
-			{
-				Path.GetFullPath(text)
-			}), MessageTypeDefOf.TaskCompletion, false);
+			Messages.Message("MessageTranslationReportSaved".Translate(Path.GetFullPath(text)), MessageTypeDefOf.TaskCompletion, false);
 		}
 
 		private static void AppendGeneralLoadErrors(StringBuilder sb)
@@ -354,9 +356,7 @@ namespace Verse
 			{
 				if (!activeLanguage.keyedReplacements[current].isPlaceholder)
 				{
-					int num2 = LanguageReportGenerator.CountParametersInString(defaultLanguage.keyedReplacements[current].value);
-					int num3 = LanguageReportGenerator.CountParametersInString(activeLanguage.keyedReplacements[current].value);
-					if (num2 != num3)
+					if (!LanguageReportGenerator.SameSimpleGrammarResolverSymbols(defaultLanguage.keyedReplacements[current].value, activeLanguage.keyedReplacements[current].value))
 					{
 						num++;
 						stringBuilder.AppendLine(string.Format("{0} ({1})\n  - '{2}'\n  - '{3}'", new object[]
@@ -482,14 +482,60 @@ namespace Verse
 			sb.Append(stringBuilder);
 		}
 
-		public static int CountParametersInString(string input)
+		public static bool SameSimpleGrammarResolverSymbols(string str1, string str2)
 		{
-			MatchCollection matchCollection = Regex.Matches(input, "(?<!\\{)\\{([0-9]+).*?\\}(?!})");
-			if (matchCollection.Count == 0)
+			LanguageReportGenerator.tmpStr1Symbols.Clear();
+			LanguageReportGenerator.tmpStr2Symbols.Clear();
+			LanguageReportGenerator.CalculateSimpleGrammarResolverSymbols(str1, LanguageReportGenerator.tmpStr1Symbols);
+			LanguageReportGenerator.CalculateSimpleGrammarResolverSymbols(str2, LanguageReportGenerator.tmpStr2Symbols);
+			for (int i = 0; i < LanguageReportGenerator.tmpStr1Symbols.Count; i++)
 			{
-				return 0;
+				if (!LanguageReportGenerator.tmpStr2Symbols.Contains(LanguageReportGenerator.tmpStr1Symbols[i]))
+				{
+					return false;
+				}
 			}
-			return matchCollection.Cast<Match>().Max((Match m) => int.Parse(m.Groups[1].Value)) + 1;
+			return true;
+		}
+
+		private static void CalculateSimpleGrammarResolverSymbols(string str, List<string> outSymbols)
+		{
+			outSymbols.Clear();
+			for (int i = 0; i < str.Length; i++)
+			{
+				if (str[i] == '{')
+				{
+					LanguageReportGenerator.tmpSymbol.Length = 0;
+					bool flag = false;
+					bool flag2 = false;
+					bool flag3 = false;
+					for (i++; i < str.Length; i++)
+					{
+						char c = str[i];
+						if (c == '}')
+						{
+							flag = true;
+							break;
+						}
+						if (c == '_')
+						{
+							flag2 = true;
+						}
+						else if (c == '?')
+						{
+							flag3 = true;
+						}
+						else if (!flag2 && !flag3)
+						{
+							LanguageReportGenerator.tmpSymbol.Append(c);
+						}
+					}
+					if (flag)
+					{
+						outSymbols.Add(LanguageReportGenerator.tmpSymbol.ToString().Trim());
+					}
+				}
+			}
 		}
 	}
 }

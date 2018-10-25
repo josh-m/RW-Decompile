@@ -271,13 +271,13 @@ namespace Verse
 			return !flag;
 		}
 
-		public static Thing HaulPlaceBlockerIn(Thing haulThing, IntVec3 c, Map map, bool checkBlueprints)
+		public static Thing HaulPlaceBlockerIn(Thing haulThing, IntVec3 c, Map map, bool checkBlueprintsAndFrames)
 		{
 			List<Thing> list = map.thingGrid.ThingsListAt(c);
 			for (int i = 0; i < list.Count; i++)
 			{
 				Thing thing = list[i];
-				if (checkBlueprints && thing.def.IsBlueprint)
+				if (checkBlueprintsAndFrames && (thing.def.IsBlueprint || thing.def.IsFrame))
 				{
 					return thing;
 				}

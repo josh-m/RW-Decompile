@@ -25,6 +25,10 @@ namespace Verse
 
 		private const float DefaultMaxWidth = 99999f;
 
+		public const float LabelGap = 2f;
+
+		public const float ButtonExtraSpace = 16f;
+
 		public float FinalX
 		{
 			get

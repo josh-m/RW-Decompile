@@ -74,6 +74,10 @@ namespace Verse
 						}
 						exposable.ExposeData();
 					}
+					catch (OutOfMemoryException)
+					{
+						throw;
+					}
 					catch (Exception ex)
 					{
 						Log.Error(string.Concat(new object[]

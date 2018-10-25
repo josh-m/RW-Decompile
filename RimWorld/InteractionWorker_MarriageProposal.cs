@@ -80,29 +80,17 @@ namespace RimWorld
 				{
 					letterLabel = "LetterLabelAcceptedProposal".Translate();
 					letterDef = LetterDefOf.PositiveEvent;
-					stringBuilder.AppendLine("LetterAcceptedProposal".Translate(new object[]
-					{
-						initiator,
-						recipient
-					}));
+					stringBuilder.AppendLine("LetterAcceptedProposal".Translate(initiator.Named("INITIATOR"), recipient.Named("RECIPIENT")));
 				}
 				else
 				{
 					letterLabel = "LetterLabelRejectedProposal".Translate();
 					letterDef = LetterDefOf.NegativeEvent;
-					stringBuilder.AppendLine("LetterRejectedProposal".Translate(new object[]
-					{
-						initiator,
-						recipient
-					}));
+					stringBuilder.AppendLine("LetterRejectedProposal".Translate(initiator.Named("INITIATOR"), recipient.Named("RECIPIENT")));
 					if (flag2)
 					{
 						stringBuilder.AppendLine();
-						stringBuilder.AppendLine("LetterNoLongerLovers".Translate(new object[]
-						{
-							initiator,
-							recipient
-						}));
+						stringBuilder.AppendLine("LetterNoLongerLovers".Translate(initiator.Named("PAWN1"), recipient.Named("PAWN2")));
 					}
 				}
 				letterText = stringBuilder.ToString().TrimEndNewlines();

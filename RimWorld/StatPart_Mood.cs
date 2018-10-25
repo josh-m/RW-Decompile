@@ -37,10 +37,7 @@ namespace RimWorld
 				Pawn pawn = req.Thing as Pawn;
 				if (pawn != null && this.ActiveFor(pawn))
 				{
-					return "StatsReport_MoodMultiplier".Translate(new object[]
-					{
-						pawn.needs.mood.CurLevel.ToStringPercent()
-					}) + ": x" + this.FactorFromMood(pawn).ToStringPercent();
+					return "StatsReport_MoodMultiplier".Translate(pawn.needs.mood.CurLevel.ToStringPercent()) + ": x" + this.FactorFromMood(pawn).ToStringPercent();
 				}
 			}
 			return null;

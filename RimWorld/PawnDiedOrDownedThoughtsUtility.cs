@@ -141,10 +141,7 @@ namespace RimWorld
 					}
 					else
 					{
-						sb.Append(victimLabelKey.Translate(new object[]
-						{
-							text
-						}));
+						sb.Append(victimLabelKey.Translate(text));
 					}
 					PawnDiedOrDownedThoughtsUtility.BuildMoodThoughtsListString(current, null, thoughtsKind, sb, individualThoughtsHeader, allColonistsThoughtsHeader);
 				}
@@ -175,7 +172,7 @@ namespace RimWorld
 			{
 				foreach (Pawn current in PawnsFinder.AllMapsCaravansAndTravelingTransportPods_Alive)
 				{
-					if (current != victim && current.needs.mood != null)
+					if (current != victim && current.needs != null && current.needs.mood != null)
 					{
 						if (current.MentalStateDef != MentalStateDefOf.SocialFighting || ((MentalState_SocialFighting)current.MentalState).otherPawn != victim)
 						{
@@ -231,7 +228,7 @@ namespace RimWorld
 				List<DirectPawnRelation> directRelations = victim.relations.DirectRelations;
 				for (int i = 0; i < directRelations.Count; i++)
 				{
-					if (!directRelations[i].otherPawn.Dead && directRelations[i].otherPawn.needs.mood != null)
+					if (directRelations[i].otherPawn.needs != null && directRelations[i].otherPawn.needs.mood != null)
 					{
 						if (PawnUtility.ShouldGetThoughtAbout(directRelations[i].otherPawn, victim))
 						{
@@ -247,7 +244,7 @@ namespace RimWorld
 			{
 				foreach (Pawn current in victim.relations.PotentiallyRelatedPawns)
 				{
-					if (!current.Dead && current.needs.mood != null)
+					if (current.needs != null && current.needs.mood != null)
 					{
 						if (PawnUtility.ShouldGetThoughtAbout(current, victim))
 						{
@@ -270,7 +267,7 @@ namespace RimWorld
 					{
 						foreach (Pawn current2 in victim.relations.PotentiallyRelatedPawns)
 						{
-							if (pawn != current2 && !current2.Dead && current2.needs.mood != null)
+							if (pawn != current2 && current2.needs != null && current2.needs.mood != null)
 							{
 								PawnRelationDef mostImportantRelation2 = current2.GetMostImportantRelation(victim);
 								if (mostImportantRelation2 != null)
@@ -309,7 +306,7 @@ namespace RimWorld
 				{
 					foreach (Pawn current3 in PawnsFinder.AllMapsCaravansAndTravelingTransportPods_Alive)
 					{
-						if (!current3.Dead && current3.RaceProps.IsFlesh && current3.needs.mood != null)
+						if (current3.needs != null && current3.RaceProps.IsFlesh && current3.needs.mood != null)
 						{
 							if (PawnUtility.ShouldGetThoughtAbout(current3, victim))
 							{
@@ -346,7 +343,7 @@ namespace RimWorld
 		{
 			foreach (Pawn current in PawnsFinder.AllMapsWorldAndTemporary_Alive)
 			{
-				if (current.needs.mood != null && current != pawn)
+				if (current.needs != null && current.needs.mood != null && current != pawn)
 				{
 					MemoryThoughtHandler memories = current.needs.mood.thoughts.memories;
 					memories.RemoveMemoriesOfDefWhereOtherPawnIs(ThoughtDefOf.KnowColonistDied, pawn);

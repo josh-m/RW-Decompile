@@ -47,12 +47,7 @@ namespace RimWorld
 
 		public override string Summary(Scenario scen)
 		{
-			return "ScenPart_PawnsHaveTrait".Translate(new object[]
-			{
-				this.context.ToStringHuman(),
-				this.chance.ToStringPercent(),
-				this.trait.DataAtDegree(this.degree).label.CapitalizeFirst()
-			}).CapitalizeFirst();
+			return "ScenPart_PawnsHaveTrait".Translate(this.context.ToStringHuman(), this.chance.ToStringPercent(), this.trait.DataAtDegree(this.degree).label.CapitalizeFirst()).CapitalizeFirst();
 		}
 
 		public override void Randomize()

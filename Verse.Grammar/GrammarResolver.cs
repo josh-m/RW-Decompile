@@ -82,6 +82,14 @@ namespace Verse.Grammar
 
 		private static Regex Spaces = new Regex(" +([,.])");
 
+		private static readonly char[] SpecialChars = new char[]
+		{
+			'[',
+			']',
+			'{',
+			'}'
+		};
+
 		public static string Resolve(string rootKeyword, GrammarRequest request, string debugLabel = null, bool forceLog = false, string untranslatedRootKeyword = null)
 		{
 			if (LanguageDatabase.activeLanguage == LanguageDatabase.defaultLanguage)
@@ -252,7 +260,7 @@ namespace Verse.Grammar
 					GrammarResolver.ResolveUnsafe(rootKeyword, request, debugLabel, true, false);
 				}
 			}
-			text = GenText.CapitalizeSentences(Find.ActiveLanguageWorker.PostProcessed(text));
+			text = GenText.CapitalizeSentences(Find.ActiveLanguageWorker.PostProcessed(text), true);
 			text = GrammarResolver.Spaces.Replace(text, (Match match) => match.Groups[1].Value);
 			text = text.Trim();
 			if (flag && flag2)
@@ -393,6 +401,11 @@ namespace Verse.Grammar
 				}
 				return rule.SelectionWeight;
 			}, null);
+		}
+
+		public static bool ContainsSpecialChars(string str)
+		{
+			return str.IndexOfAny(GrammarResolver.SpecialChars) >= 0;
 		}
 	}
 }

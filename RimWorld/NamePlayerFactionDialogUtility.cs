@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Linq;
 using Verse;
+using Verse.Grammar;
 
 namespace RimWorld
 {
@@ -9,7 +10,7 @@ namespace RimWorld
 	{
 		public static bool IsValidName(string s)
 		{
-			return s.Length != 0 && s.Length <= 64 && GenText.IsValidFilename(s);
+			return s.Length != 0 && s.Length <= 64 && GenText.IsValidFilename(s) && !GrammarResolver.ContainsSpecialChars(s);
 		}
 
 		public static void Named(string s)

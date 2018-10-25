@@ -90,11 +90,7 @@ namespace RimWorld
 			if (pawn != null)
 			{
 				text += "\n\n";
-				text += "EnemyRaidLeaderPresent".Translate(new object[]
-				{
-					pawn.Faction.def.pawnsPlural,
-					pawn.LabelShort
-				});
+				text += "EnemyRaidLeaderPresent".Translate(pawn.Faction.def.pawnsPlural, pawn.LabelShort, pawn.Named("LEADER"));
 			}
 			return text;
 		}
@@ -106,11 +102,7 @@ namespace RimWorld
 
 		protected override string GetRelatedPawnsInfoLetterText(IncidentParms parms)
 		{
-			return "LetterRelatedPawnsRaidEnemy".Translate(new object[]
-			{
-				Faction.OfPlayer.def.pawnsPlural,
-				parms.faction.def.pawnsPlural
-			});
+			return "LetterRelatedPawnsRaidEnemy".Translate(Faction.OfPlayer.def.pawnsPlural, parms.faction.def.pawnsPlural);
 		}
 	}
 }

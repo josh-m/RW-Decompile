@@ -7,6 +7,14 @@ namespace RimWorld
 {
 	public class JobDriver_Train : JobDriver_InteractAnimal
 	{
+		protected override bool CanInteractNow
+		{
+			get
+			{
+				return !TrainableUtility.TrainedTooRecently(base.Animal);
+			}
+		}
+
 		[DebuggerHidden]
 		protected override IEnumerable<Toil> MakeNewToils()
 		{

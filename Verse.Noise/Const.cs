@@ -4,17 +4,17 @@ namespace Verse.Noise
 {
 	public class Const : ModuleBase
 	{
-		private double m_value;
+		private double val;
 
 		public double Value
 		{
 			get
 			{
-				return this.m_value;
+				return this.val;
 			}
 			set
 			{
-				this.m_value = value;
+				this.val = value;
 			}
 		}
 
@@ -29,7 +29,7 @@ namespace Verse.Noise
 
 		public override double GetValue(double x, double y, double z)
 		{
-			return this.m_value;
+			return this.val;
 		}
 	}
 }

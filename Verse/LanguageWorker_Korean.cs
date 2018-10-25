@@ -80,16 +80,9 @@ namespace Verse
 			return str;
 		}
 
-		public override string PostProcessedBackstoryDescription(string desc)
+		public override string PostProcessedKeyedTranslation(string translation)
 		{
-			desc = base.PostProcessedBackstoryDescription(desc);
-			desc = this.ReplaceJosa(desc);
-			return desc;
-		}
-
-		public override string PostProcessedKeyedTranslation(string translation, string key, params object[] args)
-		{
-			translation = base.PostProcessedKeyedTranslation(translation, key, args);
+			translation = base.PostProcessedKeyedTranslation(translation);
 			translation = this.ReplaceJosa(translation);
 			return translation;
 		}

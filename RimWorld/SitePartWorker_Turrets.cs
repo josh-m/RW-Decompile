@@ -15,15 +15,15 @@ namespace RimWorld
 
 		private const int MaxTurrets = 11;
 
-		public override string GetArrivedLetterPart(Map map, out string preferredLabel, out LetterDef preferredLetterDef, out LookTargets lookTargets)
+		public override string GetArrivedLetterPart(Map map, out LetterDef preferredLetterDef, out LookTargets lookTargets)
 		{
-			string arrivedLetterPart = base.GetArrivedLetterPart(map, out preferredLabel, out preferredLetterDef, out lookTargets);
-			Thing arg_6F_0;
-			if ((arg_6F_0 = map.listerThings.AllThings.FirstOrDefault((Thing x) => x is Building_TurretGun && x.HostileTo(Faction.OfPlayer))) == null)
+			string arrivedLetterPart = base.GetArrivedLetterPart(map, out preferredLetterDef, out lookTargets);
+			Thing arg_6C_0;
+			if ((arg_6C_0 = map.listerThings.AllThings.FirstOrDefault((Thing x) => x is Building_TurretGun && x.HostileTo(Faction.OfPlayer))) == null)
 			{
-				arg_6F_0 = map.listerThings.AllThings.FirstOrDefault((Thing x) => x is Building_TurretGun);
+				arg_6C_0 = map.listerThings.AllThings.FirstOrDefault((Thing x) => x is Building_TurretGun);
 			}
-			lookTargets = arg_6F_0;
+			lookTargets = arg_6C_0;
 			return arrivedLetterPart;
 		}
 

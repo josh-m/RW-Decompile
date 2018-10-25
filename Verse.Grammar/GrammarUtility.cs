@@ -24,11 +24,11 @@ namespace Verse.Grammar
 			string nameFull;
 			if (name != null)
 			{
-				nameFull = name.ToStringFull;
+				nameFull = Find.ActiveLanguageWorker.WithIndefiniteArticle(name.ToStringFull, gender, false, true);
 			}
 			else
 			{
-				nameFull = Find.ActiveLanguageWorker.WithIndefiniteArticle(kind.label);
+				nameFull = Find.ActiveLanguageWorker.WithIndefiniteArticle(kind.label, gender, false, false);
 			}
 			yield return new Rule_String(pawnSymbol + "_nameFull", nameFull);
 			string nameShort;
@@ -44,22 +44,22 @@ namespace Verse.Grammar
 			string nameShortDef;
 			if (name != null)
 			{
-				nameShortDef = name.ToStringShort;
+				nameShortDef = Find.ActiveLanguageWorker.WithDefiniteArticle(name.ToStringShort, gender, false, true);
 			}
 			else
 			{
-				nameShortDef = Find.ActiveLanguageWorker.WithDefiniteArticle(kind.label);
+				nameShortDef = Find.ActiveLanguageWorker.WithDefiniteArticle(kind.label, gender, false, false);
 			}
 			yield return new Rule_String(pawnSymbol + "_definite", nameShortDef);
 			yield return new Rule_String(pawnSymbol + "_nameDef", nameShortDef);
 			string nameShortIndef;
 			if (name != null)
 			{
-				nameShortIndef = name.ToStringShort;
+				nameShortIndef = Find.ActiveLanguageWorker.WithIndefiniteArticle(name.ToStringShort, gender, false, true);
 			}
 			else
 			{
-				nameShortIndef = Find.ActiveLanguageWorker.WithIndefiniteArticle(kind.label);
+				nameShortIndef = Find.ActiveLanguageWorker.WithIndefiniteArticle(kind.label, gender, false, false);
 			}
 			yield return new Rule_String(pawnSymbol + "_indefinite", nameShortIndef);
 			yield return new Rule_String(pawnSymbol + "_nameIndef", nameShortIndef);
@@ -94,8 +94,8 @@ namespace Verse.Grammar
 			else
 			{
 				yield return new Rule_String(prefix + "_label", def.label);
-				yield return new Rule_String(prefix + "_definite", Find.ActiveLanguageWorker.WithDefiniteArticle(def.label));
-				yield return new Rule_String(prefix + "_indefinite", Find.ActiveLanguageWorker.WithIndefiniteArticle(def.label));
+				yield return new Rule_String(prefix + "_definite", Find.ActiveLanguageWorker.WithDefiniteArticle(def.label, false, false));
+				yield return new Rule_String(prefix + "_indefinite", Find.ActiveLanguageWorker.WithIndefiniteArticle(def.label, false, false));
 				yield return new Rule_String(prefix + "_possessive", "Proits".Translate());
 			}
 		}
@@ -110,8 +110,8 @@ namespace Verse.Grammar
 			else
 			{
 				yield return new Rule_String(prefix + "_label", part.Label);
-				yield return new Rule_String(prefix + "_definite", Find.ActiveLanguageWorker.WithDefiniteArticle(part.Label));
-				yield return new Rule_String(prefix + "_indefinite", Find.ActiveLanguageWorker.WithIndefiniteArticle(part.Label));
+				yield return new Rule_String(prefix + "_definite", Find.ActiveLanguageWorker.WithDefiniteArticle(part.Label, false, false));
+				yield return new Rule_String(prefix + "_indefinite", Find.ActiveLanguageWorker.WithIndefiniteArticle(part.Label, false, false));
 				yield return new Rule_String(prefix + "_possessive", "Proits".Translate());
 			}
 		}

@@ -87,29 +87,17 @@ namespace Verse
 					{
 						if (hediffGrowthMode == HediffGrowthMode.Remission)
 						{
-							Messages.Message("DiseaseGrowthModeChanged_Remission".Translate(new object[]
-							{
-								base.Pawn.LabelShort,
-								base.Def.label
-							}), base.Pawn, MessageTypeDefOf.PositiveEvent, true);
+							Messages.Message("DiseaseGrowthModeChanged_Remission".Translate(base.Pawn.LabelShort, base.Def.label, base.Pawn.Named("PAWN")), base.Pawn, MessageTypeDefOf.PositiveEvent, true);
 						}
 					}
 					else
 					{
-						Messages.Message("DiseaseGrowthModeChanged_Stable".Translate(new object[]
-						{
-							base.Pawn.LabelShort,
-							base.Def.label
-						}), base.Pawn, MessageTypeDefOf.NeutralEvent, true);
+						Messages.Message("DiseaseGrowthModeChanged_Stable".Translate(base.Pawn.LabelShort, base.Def.label, base.Pawn.Named("PAWN")), base.Pawn, MessageTypeDefOf.NeutralEvent, true);
 					}
 				}
 				else
 				{
-					Messages.Message("DiseaseGrowthModeChanged_Growing".Translate(new object[]
-					{
-						base.Pawn.LabelShort,
-						base.Def.label
-					}), base.Pawn, MessageTypeDefOf.NegativeHealthEvent, true);
+					Messages.Message("DiseaseGrowthModeChanged_Growing".Translate(base.Pawn.LabelShort, base.Def.label, base.Pawn.Named("PAWN")), base.Pawn, MessageTypeDefOf.NegativeHealthEvent, true);
 				}
 			}
 		}

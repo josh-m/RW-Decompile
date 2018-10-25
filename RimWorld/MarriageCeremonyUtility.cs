@@ -41,12 +41,12 @@ namespace RimWorld
 			return map.dangerWatcher.DangerRating != StoryDanger.High;
 		}
 
-		public static bool FianceReadyToStartCeremony(Pawn pawn)
+		public static bool FianceReadyToStartCeremony(Pawn pawn, Pawn otherPawn)
 		{
-			return MarriageCeremonyUtility.FianceCanContinueCeremony(pawn) && pawn.health.hediffSet.BleedRateTotal <= 0f && !HealthAIUtility.ShouldSeekMedicalRestUrgent(pawn) && !PawnUtility.WillSoonHaveBasicNeed(pawn) && !MarriageCeremonyUtility.IsCurrentlyMarryingSomeone(pawn) && pawn.GetLord() == null && (!pawn.Drafted && !pawn.InMentalState && pawn.Awake() && !pawn.IsBurning()) && !pawn.InBed();
+			return MarriageCeremonyUtility.FianceCanContinueCeremony(pawn, otherPawn) && pawn.health.hediffSet.BleedRateTotal <= 0f && !HealthAIUtility.ShouldSeekMedicalRestUrgent(pawn) && !PawnUtility.WillSoonHaveBasicNeed(pawn) && !MarriageCeremonyUtility.IsCurrentlyMarryingSomeone(pawn) && pawn.GetLord() == null && (!pawn.Drafted && !pawn.InMentalState && pawn.Awake() && !pawn.IsBurning()) && !pawn.InBed();
 		}
 
-		public static bool FianceCanContinueCeremony(Pawn pawn)
+		public static bool FianceCanContinueCeremony(Pawn pawn, Pawn otherPawn)
 		{
 			if (pawn.health.hediffSet.BleedRateTotal > 0.3f)
 			{
@@ -57,7 +57,7 @@ namespace RimWorld
 				return false;
 			}
 			Hediff firstHediffOfDef = pawn.health.hediffSet.GetFirstHediffOfDef(HediffDefOf.BloodLoss, false);
-			return (firstHediffOfDef == null || firstHediffOfDef.Severity <= 0.2f) && (pawn.Spawned && !pawn.Downed) && !pawn.InMentalState;
+			return (firstHediffOfDef == null || firstHediffOfDef.Severity <= 0.2f) && !pawn.HostileTo(otherPawn) && !pawn.IsWildMan() && (pawn.Spawned && !pawn.Downed) && !pawn.InMentalState;
 		}
 
 		public static bool ShouldGuestKeepAttendingCeremony(Pawn p)

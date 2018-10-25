@@ -312,19 +312,13 @@ namespace RimWorld
 				Log.Error("Too many iterations.", false);
 				Block_3:;
 			}
-			Messages.Message("MessageHediffCuredByItem".Translate(new object[]
-			{
-				hediff.LabelBase.CapitalizeFirst()
-			}), pawn, MessageTypeDefOf.PositiveEvent, true);
+			Messages.Message("MessageHediffCuredByItem".Translate(hediff.LabelBase.CapitalizeFirst()), pawn, MessageTypeDefOf.PositiveEvent, true);
 		}
 
 		private void Cure(BodyPartRecord part, Pawn pawn)
 		{
 			pawn.health.RestorePart(part, null, true);
-			Messages.Message("MessageBodyPartCuredByItem".Translate(new object[]
-			{
-				part.LabelCap
-			}), pawn, MessageTypeDefOf.PositiveEvent, true);
+			Messages.Message("MessageBodyPartCuredByItem".Translate(part.LabelCap), pawn, MessageTypeDefOf.PositiveEvent, true);
 		}
 
 		private bool CanEverKill(Hediff hediff)

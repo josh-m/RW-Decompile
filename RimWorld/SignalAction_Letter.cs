@@ -26,7 +26,7 @@ namespace RimWorld
 				ChoiceLetter choiceLetter = this.letter as ChoiceLetter;
 				if (choiceLetter != null)
 				{
-					choiceLetter.text = string.Format(choiceLetter.text, pawn.LabelShort).AdjustedFor(pawn, "PAWN");
+					choiceLetter.text = choiceLetter.text.Formatted(pawn.LabelShort, pawn.Named("PAWN")).AdjustedFor(pawn, "PAWN");
 				}
 				if (!this.letter.lookTargets.IsValid())
 				{

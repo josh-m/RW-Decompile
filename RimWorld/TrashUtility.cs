@@ -39,7 +39,7 @@ namespace RimWorld
 			{
 				return false;
 			}
-			if ((b.def.building.isInert && !attackAllInert) || b.def.building.isTrap)
+			if (((b.def.building.isInert || b.def.IsFrame) && !attackAllInert) || b.def.building.isTrap)
 			{
 				int num = GenLocalDate.HourOfDay(pawn) / 3;
 				int specialSeed = b.GetHashCode() * 612361 ^ pawn.GetHashCode() * 391 ^ num * 73427324;

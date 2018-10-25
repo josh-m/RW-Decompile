@@ -87,34 +87,25 @@ namespace RimWorld
 					});
 				}
 				bool flag = false;
-				string text = null;
+				string value = null;
 				if (animal.Name == null || animal.Name.Numerical)
 				{
 					flag = true;
-					text = ((animal.Name != null) ? animal.Name.ToStringFull : animal.LabelIndefinite());
+					value = ((animal.Name != null) ? animal.Name.ToStringFull : animal.LabelIndefinite());
 					animal.Name = PawnBioAndNameGenerator.GeneratePawnName(animal, NameStyle.Full, null);
 				}
 				if (PawnUtility.ShouldSendNotificationAbout(humanlike) || PawnUtility.ShouldSendNotificationAbout(animal))
 				{
-					string text2;
+					string text;
 					if (flag)
 					{
-						text2 = "MessageNewBondRelationNewName".Translate(new object[]
-						{
-							humanlike.LabelShort,
-							text,
-							animal.Name.ToStringFull
-						}).AdjustedFor(animal, "PAWN").CapitalizeFirst();
+						text = "MessageNewBondRelationNewName".Translate(humanlike.LabelShort, value, animal.Name.ToStringFull, humanlike.Named("HUMAN"), animal.Named("ANIMAL")).AdjustedFor(animal, "PAWN").CapitalizeFirst();
 					}
 					else
 					{
-						text2 = "MessageNewBondRelation".Translate(new object[]
-						{
-							humanlike.LabelShort,
-							animal.LabelShort
-						}).CapitalizeFirst();
+						text = "MessageNewBondRelation".Translate(humanlike.LabelShort, animal.LabelShort, humanlike.Named("HUMAN"), animal.Named("ANIMAL")).CapitalizeFirst();
 					}
-					Messages.Message(text2, humanlike, MessageTypeDefOf.PositiveEvent, true);
+					Messages.Message(text, humanlike, MessageTypeDefOf.PositiveEvent, true);
 				}
 				return true;
 			}

@@ -18,6 +18,8 @@ namespace RimWorld
 
 		private static float levelLabelWidth = -1f;
 
+		private static List<SkillDef> skillDefsInListOrderCached;
+
 		private const float SkillWidth = 240f;
 
 		public const float SkillHeight = 24f;
@@ -38,7 +40,12 @@ namespace RimWorld
 
 		private static Texture2D SkillBarFillTex = SolidColorMaterials.NewSolidColorTexture(new Color(1f, 1f, 1f, 0.1f));
 
-		private static List<SkillDef> skillDefsInListOrderCached = null;
+		public static void Reset()
+		{
+			SkillUI.skillDefsInListOrderCached = (from sd in DefDatabase<SkillDef>.AllDefs
+			orderby sd.listOrder descending
+			select sd).ToList<SkillDef>();
+		}
 
 		public static void DrawSkillsOf(Pawn p, Vector2 offset, SkillUI.SkillDrawMode mode)
 		{
@@ -51,12 +58,6 @@ namespace RimWorld
 				{
 					SkillUI.levelLabelWidth = x;
 				}
-			}
-			if (SkillUI.skillDefsInListOrderCached == null)
-			{
-				SkillUI.skillDefsInListOrderCached = (from sd in DefDatabase<SkillDef>.AllDefs
-				orderby sd.listOrder descending
-				select sd).ToList<SkillDef>();
 			}
 			for (int j = 0; j < SkillUI.skillDefsInListOrderCached.Count; j++)
 			{
@@ -155,36 +156,22 @@ namespace RimWorld
 					{
 						if (passion == Passion.Major)
 						{
-							stringBuilder.Append("PassionMajor".Translate(new object[]
-							{
-								1.5f.ToStringPercent("F0")
-							}));
+							stringBuilder.Append("PassionMajor".Translate(1.5f.ToStringPercent("F0")));
 						}
 					}
 					else
 					{
-						stringBuilder.Append("PassionMinor".Translate(new object[]
-						{
-							1f.ToStringPercent("F0")
-						}));
+						stringBuilder.Append("PassionMinor".Translate(1f.ToStringPercent("F0")));
 					}
 				}
 				else
 				{
-					stringBuilder.Append("PassionNone".Translate(new object[]
-					{
-						0.35f.ToStringPercent("F0")
-					}));
+					stringBuilder.Append("PassionNone".Translate(0.35f.ToStringPercent("F0")));
 				}
 				if (sk.LearningSaturatedToday)
 				{
 					stringBuilder.AppendLine();
-					stringBuilder.Append("LearnedMaxToday".Translate(new object[]
-					{
-						sk.xpSinceMidnight.ToString("F0"),
-						4000,
-						0.2f.ToStringPercent("F0")
-					}));
+					stringBuilder.Append("LearnedMaxToday".Translate(sk.xpSinceMidnight.ToString("F0"), 4000, 0.2f.ToStringPercent("F0")));
 				}
 			}
 			stringBuilder.AppendLine();

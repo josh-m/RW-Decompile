@@ -111,6 +111,14 @@ namespace RimWorld.Planet
 			}
 		}
 
+		public virtual bool HasName
+		{
+			get
+			{
+				return false;
+			}
+		}
+
 		public virtual Material Material
 		{
 			get

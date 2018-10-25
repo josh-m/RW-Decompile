@@ -69,10 +69,7 @@ namespace RimWorld.Planet
 				float? approxDaysUntilPossibleToGraze = VirtualPlantsUtility.GetApproxDaysUntilPossibleToGraze(tile, ticksAbs, true);
 				if (approxDaysUntilPossibleToGraze.HasValue)
 				{
-					stringBuilder.Append("\n" + "PossibleToGrazeFor".Translate(new object[]
-					{
-						approxDaysUntilPossibleToGraze.Value.ToString("0.#")
-					}));
+					stringBuilder.Append("\n" + "PossibleToGrazeFor".Translate(approxDaysUntilPossibleToGraze.Value.ToString("0.#")));
 				}
 				else
 				{
@@ -83,18 +80,12 @@ namespace RimWorld.Planet
 			{
 				if (!Find.WorldGrid[tile].biome.hasVirtualPlants)
 				{
-					stringBuilder.Append("\n" + "CantGrazeBecauseOfBiome".Translate(new object[]
-					{
-						Find.WorldGrid[tile].biome.label
-					}));
+					stringBuilder.Append("\n" + "CantGrazeBecauseOfBiome".Translate(Find.WorldGrid[tile].biome.label));
 				}
 				float? approxDaysUntilPossibleToGraze2 = VirtualPlantsUtility.GetApproxDaysUntilPossibleToGraze(tile, ticksAbs, false);
 				if (approxDaysUntilPossibleToGraze2.HasValue)
 				{
-					stringBuilder.Append("\n" + "CantGrazeBecauseOfTemp".Translate(new object[]
-					{
-						approxDaysUntilPossibleToGraze2.Value.ToString("0.#")
-					}));
+					stringBuilder.Append("\n" + "CantGrazeBecauseOfTemp".Translate(approxDaysUntilPossibleToGraze2.Value.ToString("0.#")));
 				}
 			}
 			return stringBuilder.ToString();

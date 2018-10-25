@@ -7,7 +7,7 @@ using Verse.Sound;
 
 namespace RimWorld
 {
-	public class Page_SelectLandingSite : Page
+	public class Page_SelectStartingSite : Page
 	{
 		private const float GapBetweenBottomButtons = 10f;
 
@@ -17,7 +17,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return "SelectLandingSite".Translate();
+				return "SelectStartingSite".TranslateWithBackup("SelectLandingSite");
 			}
 		}
 
@@ -37,7 +37,7 @@ namespace RimWorld
 			}
 		}
 
-		public Page_SelectLandingSite()
+		public Page_SelectStartingSite()
 		{
 			this.absorbInputAroundWindow = false;
 			this.shadowAlpha = 0f;
@@ -57,7 +57,7 @@ namespace RimWorld
 			base.PostOpen();
 			Find.GameInitData.ChooseRandomStartingTile();
 			LessonAutoActivator.TeachOpportunity(ConceptDefOf.WorldCameraMovement, OpportunityType.Important);
-			TutorSystem.Notify_Event("PageStart-SelectLandingSite");
+			TutorSystem.Notify_Event("PageStart-SelectStartingSite");
 		}
 
 		public override void PostClose()
@@ -96,7 +96,7 @@ namespace RimWorld
 			int selectedTile = Find.WorldInterface.SelectedTile;
 			if (selectedTile < 0)
 			{
-				Messages.Message("MustSelectLandingSite".Translate(), MessageTypeDefOf.RejectInput, false);
+				Messages.Message("MustSelectStartingSite".TranslateWithBackup("MustSelectLandingSite"), MessageTypeDefOf.RejectInput, false);
 				return false;
 			}
 			StringBuilder stringBuilder = new StringBuilder();

@@ -102,10 +102,7 @@ namespace RimWorld
 			this.ReapplyAllMods();
 			if (doCompletionDialog)
 			{
-				string text = "ResearchFinished".Translate(new object[]
-				{
-					this.currentProj.LabelCap
-				}) + "\n\n" + this.currentProj.description;
+				string text = "ResearchFinished".Translate(this.currentProj.LabelCap) + "\n\n" + this.currentProj.description;
 				DiaNode diaNode = new DiaNode(text);
 				diaNode.options.Add(DiaOption.DefaultOK);
 				DiaOption diaOption = new DiaOption("ResearchScreen".Translate());

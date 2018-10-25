@@ -50,6 +50,17 @@ namespace RimWorld
 		{
 			Scribe_Defs.Look<ThingDef>(ref this.lastTerrainFilthDef, "lastTerrainFilthDef");
 			Scribe_Collections.Look<Filth>(ref this.carriedFilth, "carriedFilth", LookMode.Deep, new object[0]);
+			if (Scribe.mode == LoadSaveMode.PostLoadInit)
+			{
+				if (this.carriedFilth.RemoveAll((Filth x) => x == null) != 0)
+				{
+					Log.Error(this.pawn.ToStringSafe<Pawn>() + " had null carried filth after loading.", false);
+				}
+				if (this.carriedFilth.RemoveAll((Filth x) => x.def == null) != 0)
+				{
+					Log.Error(this.pawn.ToStringSafe<Pawn>() + " had carried filth with null def after loading.", false);
+				}
+			}
 		}
 
 		public void Notify_EnteredNewCell()

@@ -49,11 +49,7 @@ namespace RimWorld
 
 		public override string Summary(Scenario scen)
 		{
-			return "ScenPart_StatFactor".Translate(new object[]
-			{
-				this.stat.label,
-				this.factor.ToStringPercent()
-			});
+			return "ScenPart_StatFactor".Translate(this.stat.label, this.factor.ToStringPercent());
 		}
 
 		public override void Randomize()

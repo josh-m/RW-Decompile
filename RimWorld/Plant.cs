@@ -313,10 +313,7 @@ namespace RimWorld
 				{
 					StringBuilder stringBuilder = new StringBuilder();
 					stringBuilder.Append(this.def.LabelCap);
-					stringBuilder.Append(" (" + "PercentGrowth".Translate(new object[]
-					{
-						this.GrowthPercentString
-					}));
+					stringBuilder.Append(" (" + "PercentGrowth".Translate(this.GrowthPercentString));
 					if (this.Dying)
 					{
 						stringBuilder.Append(", " + "DyingLower".Translate());
@@ -492,10 +489,7 @@ namespace RimWorld
 			{
 				if (this.IsCrop && MessagesRepeatAvoider.MessageShowAllowed("MessagePlantDiedOfPoison-" + this.def.defName, 240f))
 				{
-					Messages.Message("MessagePlantDiedOfPoison".Translate(new object[]
-					{
-						this.GetCustomLabelNoCount(false)
-					}).CapitalizeFirst(), new TargetInfo(base.Position, map, false), MessageTypeDefOf.NegativeEvent, true);
+					Messages.Message("MessagePlantDiedOfPoison".Translate(this.GetCustomLabelNoCount(false)).CapitalizeFirst(), new TargetInfo(base.Position, map, false), MessageTypeDefOf.NegativeEvent, true);
 				}
 				base.TakeDamage(new DamageInfo(DamageDefOf.Rotting, 99999f, 0f, -1f, null, null, null, DamageInfo.SourceCategory.ThingOrUnknown, null));
 			}
@@ -507,18 +501,12 @@ namespace RimWorld
 					{
 						if (MessagesRepeatAvoider.MessageShowAllowed("MessagePlantDiedOfCold-" + this.def.defName, 240f))
 						{
-							Messages.Message("MessagePlantDiedOfCold".Translate(new object[]
-							{
-								this.GetCustomLabelNoCount(false)
-							}).CapitalizeFirst(), new TargetInfo(base.Position, map, false), MessageTypeDefOf.NegativeEvent, true);
+							Messages.Message("MessagePlantDiedOfCold".Translate(this.GetCustomLabelNoCount(false)).CapitalizeFirst(), new TargetInfo(base.Position, map, false), MessageTypeDefOf.NegativeEvent, true);
 						}
 					}
 					else if (cause == Plant.LeaflessCause.Poison && MessagesRepeatAvoider.MessageShowAllowed("MessagePlantDiedOfPoison-" + this.def.defName, 240f))
 					{
-						Messages.Message("MessagePlantDiedOfPoison".Translate(new object[]
-						{
-							this.GetCustomLabelNoCount(false)
-						}).CapitalizeFirst(), new TargetInfo(base.Position, map, false), MessageTypeDefOf.NegativeEvent, true);
+						Messages.Message("MessagePlantDiedOfPoison".Translate(this.GetCustomLabelNoCount(false)).CapitalizeFirst(), new TargetInfo(base.Position, map, false), MessageTypeDefOf.NegativeEvent, true);
 					}
 				}
 				base.TakeDamage(new DamageInfo(DamageDefOf.Rotting, 99999f, 0f, -1f, null, null, null, DamageInfo.SourceCategory.ThingOrUnknown, null));
@@ -588,10 +576,7 @@ namespace RimWorld
 						{
 							key = "MessagePlantDiedOfRot";
 						}
-						Messages.Message(key.Translate(new object[]
-						{
-							this.GetCustomLabelNoCount(false)
-						}).CapitalizeFirst(), new TargetInfo(base.Position, map, false), MessageTypeDefOf.NegativeEvent, true);
+						Messages.Message(key.Translate(this.GetCustomLabelNoCount(false)).CapitalizeFirst(), new TargetInfo(base.Position, map, false), MessageTypeDefOf.NegativeEvent, true);
 					}
 					return;
 				}
@@ -759,10 +744,7 @@ namespace RimWorld
 			StringBuilder stringBuilder = new StringBuilder();
 			if (this.LifeStage == PlantLifeStage.Growing)
 			{
-				stringBuilder.AppendLine("PercentGrowth".Translate(new object[]
-				{
-					this.GrowthPercentString
-				}));
+				stringBuilder.AppendLine("PercentGrowth".Translate(this.GrowthPercentString));
 				stringBuilder.AppendLine("GrowthRate".Translate() + ": " + this.GrowthRate.ToStringPercent());
 				if (!this.Blighted)
 				{
@@ -783,10 +765,7 @@ namespace RimWorld
 						}
 						else
 						{
-							stringBuilder.AppendLine("OutOfIdealTemperatureRange".Translate(new object[]
-							{
-								Mathf.RoundToInt(growthRateFactor_Temperature * 100f).ToString()
-							}));
+							stringBuilder.AppendLine("OutOfIdealTemperatureRange".Translate(Mathf.RoundToInt(growthRateFactor_Temperature * 100f).ToString()));
 						}
 					}
 				}

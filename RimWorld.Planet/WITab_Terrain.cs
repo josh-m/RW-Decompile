@@ -76,10 +76,7 @@ namespace RimWorld.Planet
 					stringBuilder.AppendLine();
 					stringBuilder.AppendLine();
 					stringBuilder.Append(" (");
-					stringBuilder.Append("MovementDifficultyOffsetInWinter".Translate(new object[]
-					{
-						"+" + 2f.ToString("0.#")
-					}));
+					stringBuilder.Append("MovementDifficultyOffsetInWinter".Translate("+" + 2f.ToString("0.#")));
 					stringBuilder.Append(")");
 				}
 				listing_Standard.LabelDouble("MovementDifficulty".Translate(), rightLabel, stringBuilder.ToString());

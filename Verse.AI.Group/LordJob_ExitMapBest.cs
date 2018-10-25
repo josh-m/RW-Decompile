@@ -23,7 +23,7 @@ namespace Verse.AI.Group
 			StateGraph stateGraph = new StateGraph();
 			stateGraph.AddToil(new LordToil_ExitMap(this.locomotion, this.canDig)
 			{
-				avoidGridMode = AvoidGridMode.Smart
+				useAvoidGrid = true
 			});
 			return stateGraph;
 		}

@@ -8,9 +8,9 @@ namespace RimWorld
 {
 	public class PawnColumnWorker_Outfit : PawnColumnWorker
 	{
-		private const int TopAreaHeight = 65;
+		public const int TopAreaHeight = 65;
 
-		private const int ManageOutfitsButtonHeight = 32;
+		public const int ManageOutfitsButtonHeight = 32;
 
 		public override void DoHeader(Rect rect, PawnTable table)
 		{
@@ -98,7 +98,7 @@ namespace RimWorld
 
 		public override int GetOptimalWidth(PawnTable table)
 		{
-			return Mathf.Clamp(Mathf.CeilToInt(354f), this.GetMinWidth(table), this.GetMaxWidth(table));
+			return Mathf.Clamp(Mathf.CeilToInt(251f), this.GetMinWidth(table), this.GetMaxWidth(table));
 		}
 
 		public override int GetMinHeaderHeight(PawnTable table)

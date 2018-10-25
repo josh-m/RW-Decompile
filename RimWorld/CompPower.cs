@@ -249,13 +249,9 @@ namespace RimWorld
 			{
 				return "PowerNotConnected".Translate();
 			}
-			string text = (this.PowerNet.CurrentEnergyGainRate() / CompPower.WattsToWattDaysPerTick).ToString("F0");
-			string text2 = this.PowerNet.CurrentStoredEnergy().ToString("F0");
-			return "PowerConnectedRateStored".Translate(new object[]
-			{
-				text,
-				text2
-			});
+			string value = (this.PowerNet.CurrentEnergyGainRate() / CompPower.WattsToWattDaysPerTick).ToString("F0");
+			string value2 = this.PowerNet.CurrentStoredEnergy().ToString("F0");
+			return "PowerConnectedRateStored".Translate(value, value2);
 		}
 	}
 }

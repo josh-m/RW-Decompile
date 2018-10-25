@@ -135,11 +135,7 @@ namespace RimWorld.Planet
 			}
 			else
 			{
-				Messages.Message("MessageCantGiveGiftBecauseCantCarry".Translate(new object[]
-				{
-					num3.ToStringMass(),
-					num5.ToStringMass()
-				}), MessageTypeDefOf.RejectInput, false);
+				Messages.Message("MessageCantGiveGiftBecauseCantCarry".Translate(num3.ToStringMass(), num5.ToStringMass()), MessageTypeDefOf.RejectInput, false);
 			}
 			return false;
 		}
@@ -221,10 +217,7 @@ namespace RimWorld.Planet
 
 		private static void SendGiftNotAppreciatedMessage(Faction giveTo, GlobalTargetInfo lookTarget)
 		{
-			Messages.Message("MessageGiftGivenButNotAppreciated".Translate(new object[]
-			{
-				giveTo.Name
-			}).CapitalizeFirst(), lookTarget, MessageTypeDefOf.NegativeEvent, true);
+			Messages.Message("MessageGiftGivenButNotAppreciated".Translate(giveTo.Name).CapitalizeFirst(), lookTarget, MessageTypeDefOf.NegativeEvent, true);
 		}
 	}
 }

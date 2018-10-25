@@ -78,19 +78,11 @@ namespace Verse
 				}
 				if (VersionControl.MajorFromVersionString(this.gameVersion) != VersionControl.CurrentMajor || VersionControl.MinorFromVersionString(this.gameVersion) != VersionControl.CurrentMinor)
 				{
-					return "SaveIsFromDifferentGameVersion".Translate(new object[]
-					{
-						VersionControl.CurrentVersionString,
-						this.gameVersion
-					});
+					return "SaveIsFromDifferentGameVersion".Translate(VersionControl.CurrentVersionString, this.gameVersion);
 				}
 				if (VersionControl.BuildFromVersionString(this.gameVersion) != VersionControl.CurrentBuild)
 				{
-					return "SaveIsFromDifferentGameBuild".Translate(new object[]
-					{
-						VersionControl.CurrentVersionString,
-						this.gameVersion
-					});
+					return "SaveIsFromDifferentGameBuild".Translate(VersionControl.CurrentVersionString, this.gameVersion);
 				}
 				return "SaveIsFromThisGameBuild".Translate();
 			}

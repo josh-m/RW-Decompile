@@ -99,7 +99,7 @@ namespace RimWorld
 				if (current.InBounds(initiator.Map))
 				{
 					Room room = current.GetRoom(initiator.Map, RegionType.Set_Passable);
-					if (room != null && room.isPrisonCell)
+					if (room != null && PrisonBreakUtility.IsOrCanBePrisonCell(room))
 					{
 						PrisonBreakUtility.participatingRooms.Add(room);
 					}
@@ -124,10 +124,7 @@ namespace RimWorld
 				{
 					stringBuilder.AppendLine("    " + PrisonBreakUtility.allEscapingPrisoners[i].LabelShort);
 				}
-				letterText = "LetterPrisonBreak".Translate(new object[]
-				{
-					stringBuilder.ToString().TrimEndNewlines()
-				});
+				letterText = "LetterPrisonBreak".Translate(stringBuilder.ToString().TrimEndNewlines());
 				letterLabel = "LetterLabelPrisonBreak".Translate();
 				letterDef = LetterDefOf.ThreatBig;
 				PrisonBreakUtility.allEscapingPrisoners.Clear();
@@ -139,6 +136,30 @@ namespace RimWorld
 				letterDef = null;
 			}
 			Find.TickManager.slower.SignalForceNormalSpeed();
+		}
+
+		private static bool IsOrCanBePrisonCell(Room room)
+		{
+			if (room.isPrisonCell)
+			{
+				return true;
+			}
+			if (room.TouchesMapEdge)
+			{
+				return false;
+			}
+			bool result = false;
+			List<Thing> containedAndAdjacentThings = room.ContainedAndAdjacentThings;
+			for (int i = 0; i < containedAndAdjacentThings.Count; i++)
+			{
+				Pawn pawn = containedAndAdjacentThings[i] as Pawn;
+				if (pawn != null && pawn.IsPrisoner)
+				{
+					result = true;
+					break;
+				}
+			}
+			return result;
 		}
 
 		private static void RemoveRandomRooms(HashSet<Room> participatingRooms, Pawn initiator)

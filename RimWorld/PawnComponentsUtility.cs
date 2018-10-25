@@ -173,6 +173,10 @@ namespace RimWorld
 			}
 			if (pawn.RaceProps.Humanlike)
 			{
+				if ((flag || flag2) && pawn.foodRestriction == null)
+				{
+					pawn.foodRestriction = new Pawn_FoodRestrictionTracker(pawn);
+				}
 				if (flag)
 				{
 					if (pawn.outfits == null)

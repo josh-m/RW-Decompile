@@ -16,7 +16,7 @@ namespace RimWorld
 
 		public ITab_Pawn_Training()
 		{
-			this.size = new Vector2(300f, 130f + 28f * (float)DefDatabase<TrainableDef>.DefCount);
+			this.size = new Vector2(300f, 150f + 28f * (float)DefDatabase<TrainableDef>.DefCount);
 			this.labelKey = "TabTraining";
 			this.tutorTag = "Training";
 		}

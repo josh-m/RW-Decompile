@@ -35,6 +35,20 @@ namespace RimWorld
 			this.hotKey = KeyBindingDefOf.Misc1;
 		}
 
+		public override AcceptanceReport CanDesignateThing(Thing t)
+		{
+			if (t != null && t.def.IsSmoothable && this.CanDesignateCell(t.Position).Accepted)
+			{
+				return AcceptanceReport.WasAccepted;
+			}
+			return false;
+		}
+
+		public override void DesignateThing(Thing t)
+		{
+			this.DesignateSingleCell(t.Position);
+		}
+
 		public override AcceptanceReport CanDesignateCell(IntVec3 c)
 		{
 			if (!c.InBounds(base.Map))

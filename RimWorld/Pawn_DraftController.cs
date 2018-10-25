@@ -123,10 +123,7 @@ namespace RimWorld
 			}
 			if (this.pawn.Downed)
 			{
-				draft.Disable("IsIncapped".Translate(new object[]
-				{
-					this.pawn.LabelShort
-				}));
+				draft.Disable("IsIncapped".Translate(this.pawn.LabelShort, this.pawn));
 			}
 			if (!this.Drafted)
 			{

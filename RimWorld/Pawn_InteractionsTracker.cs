@@ -289,19 +289,15 @@ namespace RimWorld
 		{
 			if (PawnUtility.ShouldSendNotificationAbout(this.pawn) || PawnUtility.ShouldSendNotificationAbout(otherPawn))
 			{
-				Messages.Message("MessageSocialFight".Translate(new object[]
-				{
-					this.pawn.LabelShort,
-					otherPawn.LabelShort
-				}), this.pawn, MessageTypeDefOf.ThreatSmall, true);
+				Messages.Message("MessageSocialFight".Translate(this.pawn.LabelShort, otherPawn.LabelShort, this.pawn.Named("PAWN1"), otherPawn.Named("PAWN2")), this.pawn, MessageTypeDefOf.ThreatSmall, true);
 			}
-			MentalStateHandler arg_76_0 = this.pawn.mindState.mentalStateHandler;
+			MentalStateHandler arg_8F_0 = this.pawn.mindState.mentalStateHandler;
 			MentalStateDef socialFighting = MentalStateDefOf.SocialFighting;
-			arg_76_0.TryStartMentalState(socialFighting, null, false, false, otherPawn, false);
-			MentalStateHandler arg_9A_0 = otherPawn.mindState.mentalStateHandler;
+			arg_8F_0.TryStartMentalState(socialFighting, null, false, false, otherPawn, false);
+			MentalStateHandler arg_B3_0 = otherPawn.mindState.mentalStateHandler;
 			socialFighting = MentalStateDefOf.SocialFighting;
 			Pawn otherPawn2 = this.pawn;
-			arg_9A_0.TryStartMentalState(socialFighting, null, false, false, otherPawn2, false);
+			arg_B3_0.TryStartMentalState(socialFighting, null, false, false, otherPawn2, false);
 			TaleRecorder.RecordTale(TaleDefOf.SocialFight, new object[]
 			{
 				this.pawn,

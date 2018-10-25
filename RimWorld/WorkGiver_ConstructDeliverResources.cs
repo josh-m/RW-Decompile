@@ -240,10 +240,7 @@ namespace RimWorld
 				Pawn pawn2 = pawn.Map.reservationManager.FirstRespectedReserver(miniToInstallOrBuildingToReinstall, pawn);
 				if (pawn2 != null)
 				{
-					JobFailReason.Is("ReservedBy".Translate(new object[]
-					{
-						pawn2.LabelShort
-					}), null);
+					JobFailReason.Is("ReservedBy".Translate(pawn2.LabelShort, pawn2), null);
 				}
 				return null;
 			}

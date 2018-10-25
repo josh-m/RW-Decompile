@@ -15,10 +15,6 @@ namespace RimWorld.Planet
 
 		private int currentGCRate = 1;
 
-		private const float PctOfHumanlikesAlwaysKept = 0.1f;
-
-		private const float PctOfUnnamedColonyAnimalsAlwaysKept = 0.05f;
-
 		private const int AdditionalStoryRelevantPawns = 20;
 
 		private const int GCUpdateInterval = 15000;

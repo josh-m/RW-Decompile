@@ -313,7 +313,7 @@ namespace Verse
 			}
 			yield return new Command_Action
 			{
-				icon = ContentFinder<Texture2D>.Get("UI/Buttons/Delete", true),
+				icon = TexButton.DeleteX,
 				defaultLabel = "CommandDeleteZoneLabel".Translate(),
 				defaultDesc = "CommandDeleteZoneDesc".Translate(),
 				action = new Action(this.Delete),

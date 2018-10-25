@@ -15,19 +15,19 @@ namespace Verse
 		{
 			try
 			{
-				MapDeiniter.PassPawnsToWorld(map);
+				MapDeiniter.DoQueuedPowerTasks(map);
 			}
 			catch (Exception arg)
 			{
-				Log.Error("Error while deiniting map: could not pass pawns to world: " + arg, false);
+				Log.Error("Error while deiniting map: could not execute power related tasks: " + arg, false);
 			}
 			try
 			{
-				MapDeiniter.NotifyFactions(map);
+				MapDeiniter.PassPawnsToWorld(map);
 			}
 			catch (Exception arg2)
 			{
-				Log.Error("Error while deiniting map: could not notify factions: " + arg2, false);
+				Log.Error("Error while deiniting map: could not pass pawns to world: " + arg2, false);
 			}
 			try
 			{
@@ -96,6 +96,11 @@ namespace Verse
 			}
 		}
 
+		private static void DoQueuedPowerTasks(Map map)
+		{
+			map.powerNetManager.UpdatePowerNetsAndConnections_First();
+		}
+
 		private static void PassPawnsToWorld(Map map)
 		{
 			List<Pawn> list = new List<Pawn>();
@@ -115,7 +120,7 @@ namespace Verse
 					if (pawn.IsColonist && flag)
 					{
 						list.Add(pawn);
-						map.ParentFaction.kidnapped.KidnapPawn(pawn, null);
+						map.ParentFaction.kidnapped.Kidnap(pawn, null);
 					}
 					else
 					{
@@ -151,10 +156,7 @@ namespace Verse
 							"  - ",
 							list[j].LabelCap,
 							" (",
-							"capturedBy".Translate(new object[]
-							{
-								map.ParentFaction.Name
-							}),
+							"capturedBy".Translate(map.ParentFaction.Name),
 							")"
 						}));
 					}
@@ -196,15 +198,6 @@ namespace Verse
 			}
 			p.inventory.UnloadEverything = false;
 			Find.WorldPawns.PassToWorld(p, PawnDiscardDecideMode.Decide);
-		}
-
-		private static void NotifyFactions(Map map)
-		{
-			List<Faction> allFactionsListForReading = Find.FactionManager.AllFactionsListForReading;
-			for (int i = 0; i < allFactionsListForReading.Count; i++)
-			{
-				allFactionsListForReading[i].Notify_MapRemoved(map);
-			}
 		}
 
 		private static void NotifyEverythingWhichUsesMapReference(Map map)

@@ -183,7 +183,7 @@ namespace RimWorld
 		public string FullDescriptionFor(Pawn p)
 		{
 			StringBuilder stringBuilder = new StringBuilder();
-			stringBuilder.Append(this.baseDesc.AdjustedFor(p, "PAWN"));
+			stringBuilder.Append(this.baseDesc.Formatted(p.Named("PAWN")).AdjustedFor(p, "PAWN"));
 			stringBuilder.AppendLine();
 			stringBuilder.AppendLine();
 			List<SkillDef> allDefsListForReading = DefDatabase<SkillDef>.AllDefsListForReading;
@@ -211,8 +211,8 @@ namespace RimWorld
 					"DisabledLower".Translate()
 				}));
 			}
-			string desc = stringBuilder.ToString().TrimEndNewlines();
-			return Find.ActiveLanguageWorker.PostProcessedBackstoryDescription(desc);
+			string str = stringBuilder.ToString().TrimEndNewlines();
+			return Find.ActiveLanguageWorker.PostProcessed(str);
 		}
 
 		private bool AllowsWorkType(WorkTypeDef workType)

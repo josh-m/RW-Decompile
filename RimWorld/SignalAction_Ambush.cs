@@ -90,10 +90,7 @@ namespace RimWorld
 					list[k].Rotation = Rot4.Random;
 				}
 			}
-			Find.LetterStack.ReceiveLetter("LetterLabelAmbushInExistingMap".Translate(), "LetterAmbushInExistingMap".Translate(new object[]
-			{
-				Faction.OfPlayer.def.pawnsPlural
-			}).CapitalizeFirst(), LetterDefOf.ThreatBig, list[0], null, null);
+			Find.LetterStack.ReceiveLetter("LetterLabelAmbushInExistingMap".Translate(), "LetterAmbushInExistingMap".Translate(Faction.OfPlayer.def.pawnsPlural).CapitalizeFirst(), LetterDefOf.ThreatBig, list[0], null, null);
 		}
 
 		private IEnumerable<Pawn> GenerateAmbushPawns()

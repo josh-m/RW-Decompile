@@ -260,10 +260,7 @@ namespace RimWorld
 				{
 					if (this.$this.AnyInGroupHasAnythingLeftToLoad)
 					{
-						Find.WindowStack.Add(Dialog_MessageBox.CreateConfirmation("ConfirmSendNotCompletelyLoadedPods".Translate(new object[]
-						{
-							this.$this.FirstThingLeftToLoadInGroup.LabelCapNoCount
-						}), new Action(this.$this.StartChoosingDestination), false, null));
+						Find.WindowStack.Add(Dialog_MessageBox.CreateConfirmation("ConfirmSendNotCompletelyLoadedPods".Translate(this.$this.FirstThingLeftToLoadInGroup.LabelCapNoCount, this.$this.FirstThingLeftToLoadInGroup), new Action(this.$this.StartChoosingDestination), false, null));
 					}
 					else
 					{
@@ -349,10 +346,7 @@ namespace RimWorld
 					MapParent mapParent = target.WorldObject as MapParent;
 					if (mapParent != null)
 					{
-						return "ClickToSeeAvailableOrders_WorldObject".Translate(new object[]
-						{
-							mapParent.LabelCap
-						});
+						return "ClickToSeeAvailableOrders_WorldObject".Translate(mapParent.LabelCap);
 					}
 					return "ClickToSeeAvailableOrders_Empty".Translate();
 				}
@@ -373,10 +367,7 @@ namespace RimWorld
 			int num = Find.WorldGrid.TraversalDistanceBetween(this.parent.Map.Tile, target.Tile, true, 2147483647);
 			if (num > this.MaxLaunchDistance)
 			{
-				Messages.Message("MessageTransportPodsDestinationIsTooFar".Translate(new object[]
-				{
-					CompLaunchable.FuelNeededToLaunchAtDist((float)num).ToString("0.#")
-				}), MessageTypeDefOf.RejectInput, false);
+				Messages.Message("MessageTransportPodsDestinationIsTooFar".Translate(CompLaunchable.FuelNeededToLaunchAtDist((float)num).ToString("0.#")), MessageTypeDefOf.RejectInput, false);
 				return false;
 			}
 			IEnumerable<FloatMenuOption> transportPodsFloatMenuOptionsAt = this.GetTransportPodsFloatMenuOptionsAt(target.Tile);

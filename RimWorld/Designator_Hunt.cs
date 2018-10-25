@@ -110,11 +110,7 @@ namespace RimWorld
 			float manhunterOnDamageChance2 = PawnUtility.GetManhunterOnDamageChance(pawn.kindDef);
 			if (manhunterOnDamageChance >= 0.015f)
 			{
-				string text = "MessageAnimalsGoPsychoHunted".Translate(new object[]
-				{
-					pawn.kindDef.GetLabelPlural(-1).CapitalizeFirst(),
-					manhunterOnDamageChance2.ToStringPercent()
-				}).CapitalizeFirst();
+				string text = "MessageAnimalsGoPsychoHunted".Translate(pawn.kindDef.GetLabelPlural(-1).CapitalizeFirst(), manhunterOnDamageChance2.ToStringPercent(), pawn.Named("ANIMAL")).CapitalizeFirst();
 				Messages.Message(text, pawn, MessageTypeDefOf.CautionInput, false);
 			}
 		}

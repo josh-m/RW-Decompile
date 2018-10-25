@@ -4,7 +4,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Text;
 using UnityEngine;
 
 namespace Verse
@@ -428,8 +427,6 @@ namespace Verse
 
 		private const int InfMaxStacks = 999999;
 
-		private static Dictionary<ThingDef, int> countedContents = new Dictionary<ThingDef, int>();
-
 		Thing IList<Thing>.this[int index]
 		{
 			get
@@ -497,47 +494,11 @@ namespace Verse
 		{
 			get
 			{
-				int count = this.Count;
-				if (count == 0)
+				if (this.Any)
 				{
-					return "NothingLower".Translate();
+					return GenThing.ThingsToCommaList(this, true, true, -1);
 				}
-				StringBuilder stringBuilder = new StringBuilder();
-				bool flag = false;
-				for (int i = 0; i < count; i++)
-				{
-					Thing at = this.GetAt(i);
-					if (at.def.category == ThingCategory.Pawn)
-					{
-						if (flag)
-						{
-							stringBuilder.Append(", ");
-						}
-						stringBuilder.Append(this.GetAt(i).LabelShort);
-						flag = true;
-					}
-					else if (!ThingOwner.countedContents.ContainsKey(at.def))
-					{
-						ThingOwner.countedContents.Add(at.def, at.stackCount);
-					}
-					else
-					{
-						Dictionary<ThingDef, int> dictionary;
-						ThingDef def;
-						(dictionary = ThingOwner.countedContents)[def = at.def] = dictionary[def] + at.stackCount;
-					}
-				}
-				foreach (KeyValuePair<ThingDef, int> current in ThingOwner.countedContents)
-				{
-					if (flag)
-					{
-						stringBuilder.Append(", ");
-					}
-					stringBuilder.Append(GenLabel.ThingLabel(current.Key, null, current.Value));
-					flag = true;
-				}
-				ThingOwner.countedContents.Clear();
-				return stringBuilder.ToString();
+				return "NothingLower".Translate();
 			}
 		}
 

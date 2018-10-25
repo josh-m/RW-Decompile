@@ -14,21 +14,13 @@ namespace RimWorld
 		public override string GetExplanation()
 		{
 			Map map = this.BadMap();
-			int num = JoyUtility.JoyKindsOnMapCount(map);
+			int value = JoyUtility.JoyKindsOnMapCount(map);
 			string label = map.info.parent.Label;
 			ExpectationDef expectationDef = ExpectationsUtility.CurrentExpectationFor(map);
 			int joyKindsNeeded = expectationDef.joyKindsNeeded;
-			string text = "AvailableRecreationTypes".Translate() + ":\n\n" + JoyUtility.JoyKindsOnMapString(map);
-			string text2 = "MissingRecreationTypes".Translate() + ":\n\n" + JoyUtility.JoyKindsNotOnMapString(map);
-			return "NeedJoySourceDesc".Translate(new object[]
-			{
-				num,
-				label,
-				expectationDef.label,
-				joyKindsNeeded,
-				text,
-				text2
-			});
+			string value2 = "AvailableRecreationTypes".Translate() + ":\n\n" + JoyUtility.JoyKindsOnMapString(map);
+			string value3 = "MissingRecreationTypes".Translate() + ":\n\n" + JoyUtility.JoyKindsNotOnMapString(map);
+			return "NeedJoySourceDesc".Translate(value, label, expectationDef.label, joyKindsNeeded, value2, value3);
 		}
 
 		public override AlertReport GetReport()

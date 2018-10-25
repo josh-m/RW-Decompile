@@ -137,10 +137,7 @@ namespace RimWorld
 					{
 						GUI.color = Color.red;
 					}
-					Widgets.Label(rect8, "ModTargetVersion".Translate(new object[]
-					{
-						this.selectedMod.TargetVersion
-					}));
+					Widgets.Label(rect8, "ModTargetVersion".Translate(this.selectedMod.TargetVersion));
 					GUI.color = Color.white;
 					Text.Anchor = TextAnchor.UpperLeft;
 					Text.Font = GameFont.Small;
@@ -181,10 +178,7 @@ namespace RimWorld
 				{
 					if (widgetRow.ButtonText("Unsubscribe", null, true, false))
 					{
-						Find.WindowStack.Add(Dialog_MessageBox.CreateConfirmation("ConfirmUnsubscribe".Translate(new object[]
-						{
-							this.selectedMod.Name
-						}), delegate
+						Find.WindowStack.Add(Dialog_MessageBox.CreateConfirmation("ConfirmUnsubscribe".Translate(this.selectedMod.Name), delegate
 						{
 							this.selectedMod.enabled = false;
 							Workshop.Unsubscribe(this.selectedMod);
@@ -210,10 +204,7 @@ namespace RimWorld
 					{
 						if (!VersionControl.IsWellFormattedVersionString(this.selectedMod.TargetVersion))
 						{
-							Messages.Message("MessageModNeedsWellFormattedTargetVersion".Translate(new object[]
-							{
-								VersionControl.CurrentVersionString
-							}), MessageTypeDefOf.RejectInput, false);
+							Messages.Message("MessageModNeedsWellFormattedTargetVersion".Translate(VersionControl.CurrentVersionString), MessageTypeDefOf.RejectInput, false);
 						}
 						else
 						{
@@ -268,7 +259,14 @@ namespace RimWorld
 				if (!mod.VersionCompatible)
 				{
 					GUI.color = Color.red;
-					text += "ModNotMadeForThisVersion".Translate();
+					if (mod.MadeForNewerVersion)
+					{
+						text += "ModNotMadeForThisVersion_Newer".Translate();
+					}
+					else
+					{
+						text += "ModNotMadeForThisVersion".Translate();
+					}
 				}
 				GUI.color = this.FilteredColor(GUI.color, mod.Name);
 				if (!text.NullOrEmpty())

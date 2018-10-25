@@ -143,10 +143,7 @@ namespace RimWorld
 			stringBuilder.AppendLine(wDef.gerundLabel.CapitalizeFirst());
 			if (p.story.WorkTypeIsDisabled(wDef))
 			{
-				stringBuilder.Append("CannotDoThisWork".Translate(new object[]
-				{
-					p.LabelShort
-				}));
+				stringBuilder.Append("CannotDoThisWork".Translate(p.LabelShort, p));
 			}
 			else
 			{
@@ -159,12 +156,7 @@ namespace RimWorld
 						text = text + current.skillLabel.CapitalizeFirst() + ", ";
 					}
 					text = text.Substring(0, text.Length - 2);
-					stringBuilder.AppendLine("RelevantSkills".Translate(new object[]
-					{
-						text,
-						num.ToString("0.#"),
-						20
-					}));
+					stringBuilder.AppendLine("RelevantSkills".Translate(text, num.ToString("0.#"), 20));
 				}
 				stringBuilder.AppendLine();
 				stringBuilder.Append(wDef.description);

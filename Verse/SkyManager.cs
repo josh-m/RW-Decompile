@@ -20,6 +20,8 @@ namespace Verse
 
 		public const float DuskMaxCelGlow = 0.6f;
 
+		private List<GameCondition> tempAllGameConditionsAffectingMap = new List<GameCondition>();
+
 		public float CurSkyGlow
 		{
 			get
@@ -128,24 +130,28 @@ namespace Verse
 			SkyTarget b = this.map.weatherManager.curWeather.Worker.CurSkyTarget(this.map);
 			SkyTarget a = this.map.weatherManager.lastWeather.Worker.CurSkyTarget(this.map);
 			SkyTarget skyTarget = SkyTarget.Lerp(a, b, this.map.weatherManager.TransitionLerpFactor);
-			float num = this.map.gameConditionManager.AggregateSkyTargetLerpFactor(this.map);
-			if (num > 0.0001f)
+			this.map.gameConditionManager.GetAllGameConditionsAffectingMap(this.map, this.tempAllGameConditionsAffectingMap);
+			for (int i = 0; i < this.tempAllGameConditionsAffectingMap.Count; i++)
 			{
-				SkyTarget value = this.map.gameConditionManager.AggregateSkyTarget(this.map).Value;
-				skyTarget = SkyTarget.LerpDarken(skyTarget, value, num);
-			}
-			List<WeatherEvent> liveEventsListForReading = this.map.weatherManager.eventHandler.LiveEventsListForReading;
-			for (int i = 0; i < liveEventsListForReading.Count; i++)
-			{
-				if (liveEventsListForReading[i].CurrentlyAffectsSky)
+				SkyTarget? skyTarget2 = this.tempAllGameConditionsAffectingMap[i].SkyTarget(this.map);
+				if (skyTarget2.HasValue)
 				{
-					skyTarget = SkyTarget.Lerp(skyTarget, liveEventsListForReading[i].SkyTarget, liveEventsListForReading[i].SkyTargetLerpFactor);
+					skyTarget = SkyTarget.LerpDarken(skyTarget, skyTarget2.Value, this.tempAllGameConditionsAffectingMap[i].SkyTargetLerpFactor(this.map));
+				}
+			}
+			this.tempAllGameConditionsAffectingMap.Clear();
+			List<WeatherEvent> liveEventsListForReading = this.map.weatherManager.eventHandler.LiveEventsListForReading;
+			for (int j = 0; j < liveEventsListForReading.Count; j++)
+			{
+				if (liveEventsListForReading[j].CurrentlyAffectsSky)
+				{
+					skyTarget = SkyTarget.Lerp(skyTarget, liveEventsListForReading[j].SkyTarget, liveEventsListForReading[j].SkyTargetLerpFactor);
 				}
 			}
 			List<Thing> list = this.map.listerThings.ThingsInGroup(ThingRequestGroup.AffectsSky);
-			for (int j = 0; j < list.Count; j++)
+			for (int k = 0; k < list.Count; k++)
 			{
-				CompAffectsSky compAffectsSky = list[j].TryGetComp<CompAffectsSky>();
+				CompAffectsSky compAffectsSky = list[k].TryGetComp<CompAffectsSky>();
 				if (compAffectsSky.LerpFactor > 0f)
 				{
 					if (compAffectsSky.Props.lerpDarken)

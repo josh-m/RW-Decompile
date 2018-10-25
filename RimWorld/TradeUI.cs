@@ -75,6 +75,7 @@ namespace RimWorld
 				TooltipHandler.TipRegion(rect7, "ColonyCount".Translate());
 			}
 			num -= 175f;
+			TransferableUIUtility.DoExtraAnimalIcons(trad, rect, ref num);
 			Rect idRect = new Rect(0f, 0f, num, rect.height);
 			TransferableUIUtility.DrawTransferableInfo(trad, idRect, (!trad.TraderWillTrade) ? TradeUI.NoTradeColor : Color.white);
 			GenUI.ResetLabelAlign();

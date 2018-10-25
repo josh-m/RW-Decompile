@@ -489,10 +489,7 @@ namespace RimWorld
 				return string.Empty;
 			}
 			StringBuilder stringBuilder = new StringBuilder();
-			stringBuilder.AppendLine("OpinionOf".Translate(new object[]
-			{
-				other.LabelShort
-			}) + ": " + this.OpinionOf(other).ToStringWithSign());
+			stringBuilder.AppendLine("OpinionOf".Translate(other.LabelShort, other) + ": " + this.OpinionOf(other).ToStringWithSign());
 			string pawnSituationLabel = SocialCardUtility.GetPawnSituationLabel(other, this.pawn);
 			if (!pawnSituationLabel.NullOrEmpty())
 			{
@@ -766,11 +763,7 @@ namespace RimWorld
 		{
 			if (this.relativeInvolvedInRescueQuest != null && !this.relativeInvolvedInRescueQuest.Dead && this.relativeInvolvedInRescueQuest.needs.mood != null)
 			{
-				Messages.Message("MessageFailedToRescueRelative".Translate(new object[]
-				{
-					this.pawn.LabelShort,
-					this.relativeInvolvedInRescueQuest.LabelShort
-				}), this.relativeInvolvedInRescueQuest, MessageTypeDefOf.PawnDeath, true);
+				Messages.Message("MessageFailedToRescueRelative".Translate(this.pawn.LabelShort, this.relativeInvolvedInRescueQuest.LabelShort, this.pawn.Named("PAWN"), this.relativeInvolvedInRescueQuest.Named("RELATIVE")), this.relativeInvolvedInRescueQuest, MessageTypeDefOf.PawnDeath, true);
 				this.relativeInvolvedInRescueQuest.needs.mood.thoughts.memories.TryGainMemory(ThoughtDefOf.FailedToRescueRelative, this.pawn);
 			}
 			this.relativeInvolvedInRescueQuest = null;
@@ -780,11 +773,7 @@ namespace RimWorld
 		{
 			if (this.relativeInvolvedInRescueQuest != null && !this.relativeInvolvedInRescueQuest.Dead && this.relativeInvolvedInRescueQuest.needs.mood != null)
 			{
-				Messages.Message("MessageRescuedRelative".Translate(new object[]
-				{
-					this.pawn.LabelShort,
-					this.relativeInvolvedInRescueQuest.LabelShort
-				}), this.relativeInvolvedInRescueQuest, MessageTypeDefOf.PositiveEvent, true);
+				Messages.Message("MessageRescuedRelative".Translate(this.pawn.LabelShort, this.relativeInvolvedInRescueQuest.LabelShort, this.pawn.Named("PAWN"), this.relativeInvolvedInRescueQuest.Named("RELATIVE")), this.relativeInvolvedInRescueQuest, MessageTypeDefOf.PositiveEvent, true);
 				this.relativeInvolvedInRescueQuest.needs.mood.thoughts.memories.TryGainMemory(ThoughtDefOf.RescuedRelative, this.pawn);
 			}
 			this.relativeInvolvedInRescueQuest = null;
@@ -834,11 +823,7 @@ namespace RimWorld
 			if (num == 1)
 			{
 				Pawn firstDirectRelationPawn = this.GetFirstDirectRelationPawn(PawnRelationDefOf.Bond, (Pawn x) => isAffected(x));
-				str = "LetterPartBondedAnimalDied".Translate(new object[]
-				{
-					this.pawn.LabelDefinite(),
-					firstDirectRelationPawn.LabelShort
-				}).CapitalizeFirst();
+				str = "LetterPartBondedAnimalDied".Translate(this.pawn.LabelDefinite(), firstDirectRelationPawn.LabelShort, this.pawn.Named("ANIMAL"), firstDirectRelationPawn.Named("HUMAN")).CapitalizeFirst();
 			}
 			else
 			{
@@ -850,10 +835,7 @@ namespace RimWorld
 						stringBuilder.AppendLine("  - " + this.directRelations[j].otherPawn.LabelShort);
 					}
 				}
-				str = "LetterPartBondedAnimalDiedMulti".Translate(new object[]
-				{
-					stringBuilder.ToString().TrimEndNewlines()
-				});
+				str = "LetterPartBondedAnimalDiedMulti".Translate(stringBuilder.ToString().TrimEndNewlines());
 			}
 			label = label + " (" + "LetterLabelSuffixBondedAnimalDied".Translate() + ")";
 			if (!letter.NullOrEmpty())
@@ -891,7 +873,7 @@ namespace RimWorld
 					{
 						stateDef = MentalStateDefOf.Manhunter;
 					}
-					this.directRelations[i].otherPawn.mindState.mentalStateHandler.TryStartMentalState(stateDef, null, true, false, null, false);
+					this.directRelations[i].otherPawn.mindState.mentalStateHandler.TryStartMentalState(stateDef, "MentalStateReason_BondedHumanDeath".Translate(this.pawn), true, false, null, false);
 				}
 			}
 			if (num == 1)
@@ -899,30 +881,17 @@ namespace RimWorld
 				string str;
 				if (pawn.Name != null && !pawn.Name.Numerical)
 				{
-					str = "MessageNamedBondedAnimalMentalBreak".Translate(new object[]
-					{
-						pawn.KindLabelIndefinite(),
-						pawn.Name.ToStringShort,
-						this.pawn.LabelShort
-					});
+					str = "MessageNamedBondedAnimalMentalBreak".Translate(pawn.KindLabelIndefinite(), pawn.Name.ToStringShort, this.pawn.LabelShort, pawn.Named("ANIMAL"), this.pawn.Named("HUMAN"));
 				}
 				else
 				{
-					str = "MessageBondedAnimalMentalBreak".Translate(new object[]
-					{
-						pawn.LabelIndefinite(),
-						this.pawn.LabelShort
-					});
+					str = "MessageBondedAnimalMentalBreak".Translate(pawn.LabelIndefinite(), this.pawn.LabelShort, pawn.Named("ANIMAL"), this.pawn.Named("HUMAN"));
 				}
 				Messages.Message(str.CapitalizeFirst(), pawn, MessageTypeDefOf.ThreatSmall, true);
 			}
 			else if (num > 1)
 			{
-				Messages.Message("MessageBondedAnimalsMentalBreak".Translate(new object[]
-				{
-					num,
-					this.pawn.LabelShort
-				}).CapitalizeFirst(), pawn, MessageTypeDefOf.ThreatSmall, true);
+				Messages.Message("MessageBondedAnimalsMentalBreak".Translate(num, this.pawn.LabelShort, this.pawn.Named("HUMAN")).CapitalizeFirst(), pawn, MessageTypeDefOf.ThreatSmall, true);
 			}
 		}
 
@@ -938,7 +907,7 @@ namespace RimWorld
 				for (int i = 0; i < this.directRelations.Count; i++)
 				{
 					float num = (float)(ticksGame - this.directRelations[i].startTicks) / 60000f;
-					if (this.directRelations[i].def == PawnRelationDefOf.Fiance && this.pawn.thingIDNumber < this.directRelations[i].otherPawn.thingIDNumber && num > 10f && Rand.MTBEventOccurs(2f, 60000f, 1017f) && this.pawn.Map == this.directRelations[i].otherPawn.Map && this.pawn.Map.IsPlayerHome && MarriageCeremonyUtility.AcceptableGameConditionsToStartCeremony(this.pawn.Map) && MarriageCeremonyUtility.FianceReadyToStartCeremony(this.pawn) && MarriageCeremonyUtility.FianceReadyToStartCeremony(this.directRelations[i].otherPawn))
+					if (this.directRelations[i].def == PawnRelationDefOf.Fiance && this.pawn.thingIDNumber < this.directRelations[i].otherPawn.thingIDNumber && num > 10f && Rand.MTBEventOccurs(2f, 60000f, 1017f) && this.pawn.Map == this.directRelations[i].otherPawn.Map && this.pawn.Map.IsPlayerHome && MarriageCeremonyUtility.AcceptableGameConditionsToStartCeremony(this.pawn.Map) && MarriageCeremonyUtility.FianceReadyToStartCeremony(this.pawn, this.directRelations[i].otherPawn) && MarriageCeremonyUtility.FianceReadyToStartCeremony(this.directRelations[i].otherPawn, this.pawn))
 					{
 						this.pawn.Map.lordsStarter.TryStartMarriageCeremony(this.pawn, this.directRelations[i].otherPawn);
 					}

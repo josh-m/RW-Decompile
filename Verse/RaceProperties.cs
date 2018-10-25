@@ -316,11 +316,6 @@ namespace Verse
 			return this.nameGenerator;
 		}
 
-		public bool WillAutomaticallyEat(Thing t)
-		{
-			return t.def.ingestible != null && this.CanEverEat(t);
-		}
-
 		public bool CanEverEat(Thing t)
 		{
 			return this.CanEverEat(t.def);
@@ -456,10 +451,7 @@ namespace Verse
 			{
 				yield return new StatDrawEntry(StatCategoryDefOf.Basics, "AnimalFilthRate".Translate(), (PawnUtility.AnimalFilthChancePerCell(parentDef, parentDef.race.baseBodySize) * 1000f).ToString("F2"), 0, string.Empty)
 				{
-					overrideReportText = "AnimalFilthRateExplanation".Translate(new object[]
-					{
-						1000.ToString()
-					})
+					overrideReportText = "AnimalFilthRateExplanation".Translate(1000.ToString())
 				};
 			}
 			yield return new StatDrawEntry(StatCategoryDefOf.Basics, "PackAnimal".Translate(), (!this.packAnimal) ? "No".Translate() : "Yes".Translate(), 0, string.Empty)

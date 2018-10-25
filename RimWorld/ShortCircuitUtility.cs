@@ -60,38 +60,29 @@ namespace RimWorld
 			{
 				flag = ShortCircuitUtility.TryStartFireNear(culprit);
 			}
-			string text;
+			string value;
 			if (culprit.def == ThingDefOf.PowerConduit)
 			{
-				text = "AnElectricalConduit".Translate();
+				value = "AnElectricalConduit".Translate();
 			}
 			else
 			{
-				text = Find.ActiveLanguageWorker.WithIndefiniteArticlePostProcessed(culprit.Label);
+				value = Find.ActiveLanguageWorker.WithIndefiniteArticlePostProcessed(culprit.Label, false, false);
 			}
 			StringBuilder stringBuilder = new StringBuilder();
 			if (flag)
 			{
-				stringBuilder.Append("ShortCircuitStartedFire".Translate(new object[]
-				{
-					text
-				}));
+				stringBuilder.Append("ShortCircuitStartedFire".Translate(value));
 			}
 			else
 			{
-				stringBuilder.Append("ShortCircuit".Translate(new object[]
-				{
-					text
-				}));
+				stringBuilder.Append("ShortCircuit".Translate(value));
 			}
 			if (num > 0f)
 			{
 				stringBuilder.AppendLine();
 				stringBuilder.AppendLine();
-				stringBuilder.Append("ShortCircuitDischargedEnergy".Translate(new object[]
-				{
-					num.ToString("F0")
-				}));
+				stringBuilder.Append("ShortCircuitDischargedEnergy".Translate(num.ToString("F0")));
 			}
 			if (num2 > 5f)
 			{
@@ -113,10 +104,7 @@ namespace RimWorld
 			CompPowerTrader compPowerTrader = thing.TryGetComp<CompPowerTrader>();
 			if ((compPowerTrader != null && compPowerTrader.PowerOn && compPowerTrader.Props.shortCircuitInRain) || (thing.TryGetComp<CompPowerBattery>() != null && thing.TryGetComp<CompPowerBattery>().StoredEnergy > 100f))
 			{
-				string text = "ShortCircuitRain".Translate(new object[]
-				{
-					thing.Label
-				});
+				string text = "ShortCircuitRain".Translate(thing.Label, thing);
 				TargetInfo target = new TargetInfo(thing.Position, thing.Map, false);
 				if (thing.Faction == Faction.OfPlayer)
 				{

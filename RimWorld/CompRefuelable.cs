@@ -196,10 +196,7 @@ namespace RimWorld
 			}
 			if (this.Props.targetFuelLevelConfigurable)
 			{
-				text = text + "\n" + "ConfiguredTargetFuelLevel".Translate(new object[]
-				{
-					this.TargetFuelLevel.ToStringDecimalIfSmall()
-				});
+				text = text + "\n" + "ConfiguredTargetFuelLevel".Translate(this.TargetFuelLevel.ToStringDecimalIfSmall());
 			}
 			return text;
 		}

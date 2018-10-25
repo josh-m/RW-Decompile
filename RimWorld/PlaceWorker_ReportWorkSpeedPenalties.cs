@@ -16,10 +16,7 @@ namespace RimWorld
 			bool flag2 = StatPart_WorkTableTemperature.Applies(thingDef, map, loc);
 			if (flag || flag2)
 			{
-				string text = "WillGetWorkSpeedPenalty".Translate(new object[]
-				{
-					def.label
-				}).CapitalizeFirst() + ": ";
+				string text = "WillGetWorkSpeedPenalty".Translate(def.label).CapitalizeFirst() + ": ";
 				string text2 = string.Empty;
 				if (flag)
 				{

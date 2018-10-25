@@ -126,10 +126,19 @@ namespace RimWorld.Planet
 			while (num < count7)
 			{
 				Pawn pawn2 = pawns[num];
-				Need_Food food = pawn2.needs.food;
-				DaysWorthOfFoodCalculator.cachedNutritionBetweenHungryAndFed.Add(food.NutritionBetweenHungryAndFed);
-				DaysWorthOfFoodCalculator.cachedTicksUntilHungryWhenFed.Add(food.TicksUntilHungryWhenFed);
-				DaysWorthOfFoodCalculator.cachedMaxFoodLevel.Add(food.MaxLevel);
+				if (pawn2.RaceProps.EatsFood)
+				{
+					Need_Food food = pawn2.needs.food;
+					DaysWorthOfFoodCalculator.cachedNutritionBetweenHungryAndFed.Add(food.NutritionBetweenHungryAndFed);
+					DaysWorthOfFoodCalculator.cachedTicksUntilHungryWhenFed.Add(food.TicksUntilHungryWhenFed);
+					DaysWorthOfFoodCalculator.cachedMaxFoodLevel.Add(food.MaxLevel);
+				}
+				else
+				{
+					DaysWorthOfFoodCalculator.cachedNutritionBetweenHungryAndFed.Add(0f);
+					DaysWorthOfFoodCalculator.cachedTicksUntilHungryWhenFed.Add(0);
+					DaysWorthOfFoodCalculator.cachedMaxFoodLevel.Add(0f);
+				}
 				num++;
 			}
 			float num2 = 0f;
@@ -224,7 +233,7 @@ namespace RimWorld.Planet
 								flag3 = true;
 								if (DaysWorthOfFoodCalculator.tmpDaysWorthOfFoodForPawn[num11] >= num3)
 								{
-									goto IL_5FC;
+									goto IL_63B;
 								}
 							}
 							if (DaysWorthOfFoodCalculator.tmpDaysWorthOfFoodForPawn[num11] < num3)
@@ -232,7 +241,7 @@ namespace RimWorld.Planet
 								flag2 = true;
 							}
 						}
-						IL_5FC:
+						IL_63B:
 						if (flag2)
 						{
 							break;

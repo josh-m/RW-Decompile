@@ -41,10 +41,7 @@ namespace RimWorld
 			LordToil startingToil = stateGraph.AttachSubgraph(new LordJob_AssaultColony(this.faction, true, true, false, false, true).CreateGraph()).StartingToil;
 			Transition transition = new Transition(lordToil_Sleep, startingToil, false, true);
 			transition.AddTrigger(new Trigger_PawnHarmed(1f, false, null));
-			transition.AddPreAction(new TransitionAction_Message("MessageSleepingPawnsWokenUp".Translate(new object[]
-			{
-				this.faction.def.pawnsPlural
-			}).CapitalizeFirst(), MessageTypeDefOf.ThreatBig, null, 1f));
+			transition.AddPreAction(new TransitionAction_Message("MessageSleepingPawnsWokenUp".Translate(this.faction.def.pawnsPlural).CapitalizeFirst(), MessageTypeDefOf.ThreatBig, null, 1f));
 			transition.AddPostAction(new TransitionAction_WakeAll());
 			stateGraph.AddTransition(transition, false);
 			if (this.wakeUpIfColonistClose)

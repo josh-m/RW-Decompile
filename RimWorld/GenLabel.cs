@@ -113,11 +113,7 @@ namespace RimWorld
 			}
 			else
 			{
-				text = "ThingMadeOfStuffLabel".Translate(new object[]
-				{
-					stuffDef.LabelAsStuff,
-					entDef.label
-				});
+				text = "ThingMadeOfStuffLabel".Translate(stuffDef.LabelAsStuff, entDef.label);
 			}
 			if (stackCount > 1)
 			{
@@ -246,17 +242,11 @@ namespace RimWorld
 				string str = string.Empty;
 				if (current.thingTemplate.ParentHolder is Pawn_ApparelTracker)
 				{
-					str = " (" + "WornBy".Translate(new object[]
-					{
-						((Pawn)current.thingTemplate.ParentHolder.ParentHolder).LabelShort
-					}) + ")";
+					str = " (" + "WornBy".Translate(((Pawn)current.thingTemplate.ParentHolder.ParentHolder).LabelShort, (Pawn)current.thingTemplate.ParentHolder.ParentHolder) + ")";
 				}
 				else if (current.thingTemplate.ParentHolder is Pawn_EquipmentTracker)
 				{
-					str = " (" + "EquippedBy".Translate(new object[]
-					{
-						((Pawn)current.thingTemplate.ParentHolder.ParentHolder).LabelShort
-					}) + ")";
+					str = " (" + "EquippedBy".Translate(((Pawn)current.thingTemplate.ParentHolder.ParentHolder).LabelShort, (Pawn)current.thingTemplate.ParentHolder.ParentHolder) + ")";
 				}
 				if (current.count == 1)
 				{
@@ -300,7 +290,7 @@ namespace RimWorld
 							flag = true;
 							if (plural)
 							{
-								text = Find.ActiveLanguageWorker.Pluralize(text, pluralCount);
+								text = Find.ActiveLanguageWorker.Pluralize(text, pawn.gender, pluralCount);
 							}
 						}
 						else if (plural && !pawn.RaceProps.Humanlike && pawn.ageTracker.CurKindLifeStage.labelPlural != null)
@@ -314,7 +304,7 @@ namespace RimWorld
 							flag2 = true;
 							if (plural)
 							{
-								text = Find.ActiveLanguageWorker.Pluralize(text, pluralCount);
+								text = Find.ActiveLanguageWorker.Pluralize(text, pawn.gender, pluralCount);
 							}
 						}
 						else
@@ -336,7 +326,7 @@ namespace RimWorld
 					flag = true;
 					if (plural)
 					{
-						text = Find.ActiveLanguageWorker.Pluralize(text, pluralCount);
+						text = Find.ActiveLanguageWorker.Pluralize(text, pawn.gender, pluralCount);
 					}
 				}
 				else if (plural && !pawn.RaceProps.Humanlike && pawn.ageTracker.CurKindLifeStage.labelPlural != null)
@@ -350,7 +340,7 @@ namespace RimWorld
 					flag2 = true;
 					if (plural)
 					{
-						text = Find.ActiveLanguageWorker.Pluralize(text, pluralCount);
+						text = Find.ActiveLanguageWorker.Pluralize(text, pawn.gender, pluralCount);
 					}
 				}
 				else
@@ -369,7 +359,7 @@ namespace RimWorld
 				flag2 = true;
 				if (plural)
 				{
-					text = Find.ActiveLanguageWorker.Pluralize(text, pluralCount);
+					text = Find.ActiveLanguageWorker.Pluralize(text, pawn.gender, pluralCount);
 				}
 			}
 			else
@@ -378,19 +368,11 @@ namespace RimWorld
 			}
 			if (mustNoteGender && !flag && pawn.gender != Gender.None)
 			{
-				text = "PawnMainDescGendered".Translate(new object[]
-				{
-					pawn.GetGenderLabel(),
-					text
-				});
+				text = "PawnMainDescGendered".Translate(pawn.GetGenderLabel(), text, pawn.Named("PAWN"));
 			}
 			if (mustNoteLifeStage && !flag2 && pawn.ageTracker != null && pawn.ageTracker.CurLifeStage.visible)
 			{
-				text = "PawnMainDescLifestageWrap".Translate(new object[]
-				{
-					text,
-					pawn.ageTracker.CurLifeStage.Adjective
-				});
+				text = "PawnMainDescLifestageWrap".Translate(text, pawn.ageTracker.CurLifeStage.Adjective, pawn);
 			}
 			return text;
 		}
@@ -426,7 +408,7 @@ namespace RimWorld
 							genderNoted = true;
 							if (plural)
 							{
-								text = Find.ActiveLanguageWorker.Pluralize(text, pluralCount);
+								text = Find.ActiveLanguageWorker.Pluralize(text, gender, pluralCount);
 							}
 						}
 						else if (plural && kindDef.labelPlural != null)
@@ -438,7 +420,7 @@ namespace RimWorld
 							text = kindDef.label;
 							if (plural)
 							{
-								text = Find.ActiveLanguageWorker.Pluralize(text, pluralCount);
+								text = Find.ActiveLanguageWorker.Pluralize(text, gender, pluralCount);
 							}
 						}
 					}
@@ -454,7 +436,7 @@ namespace RimWorld
 					genderNoted = true;
 					if (plural)
 					{
-						text = Find.ActiveLanguageWorker.Pluralize(text, pluralCount);
+						text = Find.ActiveLanguageWorker.Pluralize(text, gender, pluralCount);
 					}
 				}
 				else if (plural && kindDef.labelPlural != null)
@@ -466,7 +448,7 @@ namespace RimWorld
 					text = kindDef.label;
 					if (plural)
 					{
-						text = Find.ActiveLanguageWorker.Pluralize(text, pluralCount);
+						text = Find.ActiveLanguageWorker.Pluralize(text, gender, pluralCount);
 					}
 				}
 			}
@@ -479,7 +461,7 @@ namespace RimWorld
 				text = kindDef.label;
 				if (plural)
 				{
-					text = Find.ActiveLanguageWorker.Pluralize(text, pluralCount);
+					text = Find.ActiveLanguageWorker.Pluralize(text, gender, pluralCount);
 				}
 			}
 			return text;

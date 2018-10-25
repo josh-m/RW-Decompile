@@ -110,8 +110,6 @@ namespace Verse.AI
 
 		private const int MeleeHarmForgetDelay = 400;
 
-		private const int CheckJoinColonyIfRescuedIntervalTicks = 30;
-
 		public bool Active
 		{
 			get
@@ -184,6 +182,14 @@ namespace Verse.AI
 			}
 		}
 
+		public bool AnythingPreventsJoiningColonyIfRescued
+		{
+			get
+			{
+				return this.pawn.Faction == Faction.OfPlayer || (this.pawn.IsPrisoner && !this.pawn.HostFaction.HostileTo(Faction.OfPlayer)) || (!this.pawn.IsPrisoner && this.pawn.Faction != null && this.pawn.Faction.HostileTo(Faction.OfPlayer) && !this.pawn.Downed);
+			}
+		}
+
 		public Pawn_MindState()
 		{
 		}
@@ -197,11 +203,14 @@ namespace Verse.AI
 			this.priorityWork = new PriorityWork(pawn);
 		}
 
-		public void Reset()
+		public void Reset(bool clearInspiration = false)
 		{
 			this.mentalStateHandler.Reset();
 			this.mentalBreaker.Reset();
-			this.inspirationHandler.Reset();
+			if (clearInspiration)
+			{
+				this.inspirationHandler.Reset();
+			}
 			this.activeInt = true;
 			this.lastJobTag = JobTag.Misc;
 			this.lastIngestTick = -99999;
@@ -341,31 +350,9 @@ namespace Verse.AI
 					this.anyCloseHostilesRecently = false;
 				}
 			}
-			if (this.WillJoinColonyIfRescued && this.pawn.Spawned && this.pawn.IsHashIntervalTick(30))
+			if (this.WillJoinColonyIfRescued && this.AnythingPreventsJoiningColonyIfRescued)
 			{
-				if (this.pawn.Faction == Faction.OfPlayer)
-				{
-					this.WillJoinColonyIfRescued = false;
-				}
-				else if (this.pawn.IsPrisoner && !this.pawn.HostFaction.HostileTo(Faction.OfPlayer))
-				{
-					this.WillJoinColonyIfRescued = false;
-				}
-				else if (!this.pawn.IsPrisoner && this.pawn.Faction != null && this.pawn.Faction.HostileTo(Faction.OfPlayer) && !this.pawn.Downed)
-				{
-					this.WillJoinColonyIfRescued = false;
-				}
-				else
-				{
-					foreach (Pawn current in this.pawn.Map.mapPawns.FreeColonistsSpawned)
-					{
-						if (current.IsColonistPlayerControlled && current.Position.InHorDistOf(this.pawn.Position, 4f) && GenSight.LineOfSight(this.pawn.Position, current.Position, this.pawn.Map, false, null, 0, 0))
-						{
-							this.JoinColonyBecauseRescuedBy(current);
-							break;
-						}
-					}
-				}
+				this.WillJoinColonyIfRescued = false;
 			}
 			if (this.pawn.Spawned && this.pawn.IsWildMan() && !this.WildManEverReachedOutside && this.pawn.GetRoom(RegionType.Set_Passable) != null && this.pawn.GetRoom(RegionType.Set_Passable).TouchesMapEdge)
 			{
@@ -390,15 +377,19 @@ namespace Verse.AI
 			}
 		}
 
-		private void JoinColonyBecauseRescuedBy(Pawn by)
+		public void JoinColonyBecauseRescuedBy(Pawn by)
 		{
 			this.WillJoinColonyIfRescued = false;
+			if (this.AnythingPreventsJoiningColonyIfRescued)
+			{
+				return;
+			}
 			InteractionWorker_RecruitAttempt.DoRecruit(by, this.pawn, 1f, false);
 			if (this.pawn.needs != null && this.pawn.needs.mood != null)
 			{
 				this.pawn.needs.mood.thoughts.memories.TryGainMemory(ThoughtDefOf.Rescued, null);
 			}
-			Find.LetterStack.ReceiveLetter("LetterLabelRescueQuestFinished".Translate(), "LetterRescueQuestFinished".Translate().AdjustedFor(this.pawn, "PAWN").CapitalizeFirst(), LetterDefOf.PositiveEvent, this.pawn, null, null);
+			Find.LetterStack.ReceiveLetter("LetterLabelRescueQuestFinished".Translate(), "LetterRescueQuestFinished".Translate(this.pawn.Named("PAWN")).AdjustedFor(this.pawn, "PAWN").CapitalizeFirst(), LetterDefOf.PositiveEvent, this.pawn, null, null);
 		}
 
 		public void ResetLastDisturbanceTick()
@@ -549,10 +540,7 @@ namespace Verse.AI
 			{
 				return;
 			}
-			string text = letterTextKey.Translate(new object[]
-			{
-				this.pawn.Label
-			}).AdjustedFor(this.pawn, "PAWN");
+			string text = letterTextKey.Translate(this.pawn.Label, this.pawn.Named("PAWN")).AdjustedFor(this.pawn, "PAWN");
 			GlobalTargetInfo target = this.pawn;
 			int num = 1;
 			if (Find.Storyteller.difficulty.allowBigThreats && Rand.Value < 0.5f)
@@ -568,17 +556,11 @@ namespace Verse.AI
 				{
 					target = new TargetInfo(this.pawn.Position, this.pawn.Map, false);
 					text += "\n\n";
-					text += "AnimalManhunterOthers".Translate(new object[]
-					{
-						this.pawn.kindDef.GetLabelPlural(-1)
-					});
+					text += "AnimalManhunterOthers".Translate(this.pawn.kindDef.GetLabelPlural(-1), this.pawn);
 				}
 			}
-			string text2 = (!this.pawn.RaceProps.Animal) ? this.pawn.def.label : this.pawn.Label;
-			string label = "LetterLabelAnimalManhunterRevenge".Translate(new object[]
-			{
-				text2
-			}).CapitalizeFirst();
+			string value = (!this.pawn.RaceProps.Animal) ? this.pawn.def.label : this.pawn.Label;
+			string label = "LetterLabelAnimalManhunterRevenge".Translate(value).CapitalizeFirst();
 			Find.LetterStack.ReceiveLetter(label, text, (num != 1) ? LetterDefOf.ThreatBig : LetterDefOf.ThreatSmall, target, null, null);
 		}
 

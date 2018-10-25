@@ -30,10 +30,7 @@ namespace Verse
 		protected override void SetName(string name)
 		{
 			this.zone.label = this.curName;
-			Messages.Message("ZoneGainsName".Translate(new object[]
-			{
-				this.curName
-			}), MessageTypeDefOf.TaskCompletion, false);
+			Messages.Message("ZoneGainsName".Translate(this.curName), MessageTypeDefOf.TaskCompletion, false);
 		}
 	}
 }

@@ -50,24 +50,15 @@ namespace RimWorld
 							d.category = ThingCategory.Item;
 							if (sourceDef.race.Humanlike)
 							{
-								d.description = "MeatHumanDesc".Translate(new object[]
-								{
-									sourceDef.label
-								});
+								d.description = "MeatHumanDesc".Translate(sourceDef.label);
 							}
 							else if (sourceDef.race.FleshType == FleshTypeDefOf.Insectoid)
 							{
-								d.description = "MeatInsectDesc".Translate(new object[]
-								{
-									sourceDef.label
-								});
+								d.description = "MeatInsectDesc".Translate(sourceDef.label);
 							}
 							else
 							{
-								d.description = "MeatDesc".Translate(new object[]
-								{
-									sourceDef.label
-								});
+								d.description = "MeatDesc".Translate(sourceDef.label);
 							}
 							d.useHitPoints = true;
 							d.SetStatBaseValue(StatDefOf.MaxHitPoints, 60f);
@@ -111,10 +102,7 @@ namespace RimWorld
 							d.defName = "Meat_" + sourceDef.defName;
 							if (sourceDef.race.meatLabel.NullOrEmpty())
 							{
-								d.label = "MeatLabel".Translate(new object[]
-								{
-									sourceDef.label
-								});
+								d.label = "MeatLabel".Translate(sourceDef.label);
 							}
 							else
 							{

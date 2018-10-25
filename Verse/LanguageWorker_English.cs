@@ -4,20 +4,32 @@ namespace Verse
 {
 	public class LanguageWorker_English : LanguageWorker
 	{
-		public override string WithIndefiniteArticle(string str)
+		public override string WithIndefiniteArticle(string str, Gender gender, bool plural = false, bool name = false)
 		{
 			if (str.NullOrEmpty())
 			{
 				return string.Empty;
 			}
+			if (name)
+			{
+				return str;
+			}
+			if (plural)
+			{
+				return str;
+			}
 			return "a " + str;
 		}
 
-		public override string WithDefiniteArticle(string str)
+		public override string WithDefiniteArticle(string str, Gender gender, bool plural = false, bool name = false)
 		{
 			if (str.NullOrEmpty())
 			{
 				return string.Empty;
+			}
+			if (name)
+			{
+				return str;
 			}
 			return "the " + str;
 		}
@@ -56,7 +68,7 @@ namespace Verse
 			return str;
 		}
 
-		public override string OrdinalNumber(int number)
+		public override string OrdinalNumber(int number, Gender gender = Gender.None)
 		{
 			int num = number % 10;
 			int num2 = number / 10 % 10;
@@ -78,7 +90,7 @@ namespace Verse
 			return number + "th";
 		}
 
-		public override string Pluralize(string str, int count = -1)
+		public override string Pluralize(string str, Gender gender, int count = -1)
 		{
 			if (str.NullOrEmpty())
 			{

@@ -35,14 +35,8 @@ namespace RimWorld
 				rough.modContentPack = rock.modContentPack;
 				rough.renderPrecedence = 190 + i;
 				rough.defName = rock.defName + "_Rough";
-				rough.label = "RoughStoneTerrainLabel".Translate(new object[]
-				{
-					rock.label
-				});
-				rough.description = "RoughStoneTerrainDesc".Translate(new object[]
-				{
-					rock.label
-				});
+				rough.label = "RoughStoneTerrainLabel".Translate(rock.label);
+				rough.description = "RoughStoneTerrainDesc".Translate(rock.label);
 				rough.color = rock.graphicData.color;
 				rock.building.naturalTerrain = rough;
 				hewn.texturePath = "Terrain/Surfaces/RoughHewnRock";
@@ -61,14 +55,8 @@ namespace RimWorld
 				hewn.modContentPack = rock.modContentPack;
 				hewn.renderPrecedence = 50 + i;
 				hewn.defName = rock.defName + "_RoughHewn";
-				hewn.label = "RoughHewnStoneTerrainLabel".Translate(new object[]
-				{
-					rock.label
-				});
-				hewn.description = "RoughHewnStoneTerrainDesc".Translate(new object[]
-				{
-					rock.label
-				});
+				hewn.label = "RoughHewnStoneTerrainLabel".Translate(rock.label);
+				hewn.description = "RoughHewnStoneTerrainDesc".Translate(rock.label);
 				hewn.color = rock.graphicData.color;
 				rock.building.leaveTerrain = hewn;
 				smooth.texturePath = "Terrain/Surfaces/SmoothStone";
@@ -87,14 +75,8 @@ namespace RimWorld
 				smooth.modContentPack = rock.modContentPack;
 				smooth.renderPrecedence = 140 + i;
 				smooth.defName = rock.defName + "_Smooth";
-				smooth.label = "SmoothStoneTerrainLabel".Translate(new object[]
-				{
-					rock.label
-				});
-				smooth.description = "SmoothStoneTerrainDesc".Translate(new object[]
-				{
-					rock.label
-				});
+				smooth.label = "SmoothStoneTerrainLabel".Translate(rock.label);
+				smooth.description = "SmoothStoneTerrainDesc".Translate(rock.label);
 				smooth.color = rock.graphicData.color;
 				rough.smoothedTerrain = smooth;
 				hewn.smoothedTerrain = smooth;

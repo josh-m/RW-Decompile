@@ -24,7 +24,7 @@ namespace RimWorld.Planet
 			CaravanExitMapUtility.ExitMapAndCreateCaravan(pawns, faction, exitFromTile, directionTile, destinationTile, true);
 		}
 
-		public static void StartFormingCaravan(List<Pawn> pawns, Faction faction, List<TransferableOneWay> transferables, IntVec3 meetingPoint, IntVec3 exitSpot, int startingTile, int destinationTile)
+		public static void StartFormingCaravan(List<Pawn> pawns, List<Pawn> downedPawns, Faction faction, List<TransferableOneWay> transferables, IntVec3 meetingPoint, IntVec3 exitSpot, int startingTile, int destinationTile)
 		{
 			if (startingTile < 0)
 			{
@@ -50,7 +50,7 @@ namespace RimWorld.Planet
 					lord.Notify_PawnLost(pawns[i], PawnLostCondition.ForcedToJoinOtherLord, null);
 				}
 			}
-			LordJob_FormAndSendCaravan lordJob = new LordJob_FormAndSendCaravan(list, meetingPoint, exitSpot, startingTile, destinationTile);
+			LordJob_FormAndSendCaravan lordJob = new LordJob_FormAndSendCaravan(list, downedPawns, meetingPoint, exitSpot, startingTile, destinationTile);
 			LordMaker.MakeNewLord(Faction.OfPlayer, lordJob, pawns[0].MapHeld, pawns);
 			for (int j = 0; j < pawns.Count; j++)
 			{
@@ -68,7 +68,7 @@ namespace RimWorld.Planet
 			lord.lordManager.RemoveLord(lord);
 		}
 
-		public static void RemovePawnFromCaravan(Pawn pawn, Lord lord)
+		public static void RemovePawnFromCaravan(Pawn pawn, Lord lord, bool removeFromDowned = true)
 		{
 			bool flag = false;
 			for (int i = 0; i < lord.ownedPawns.Count; i++)
@@ -81,10 +81,7 @@ namespace RimWorld.Planet
 				}
 			}
 			bool flag2 = true;
-			string text = "MessagePawnLostWhileFormingCaravan".Translate(new object[]
-			{
-				pawn.LabelIndefinite()
-			}).CapitalizeFirst();
+			string text = "MessagePawnLostWhileFormingCaravan".Translate(pawn).CapitalizeFirst();
 			if (!flag)
 			{
 				CaravanFormingUtility.StopFormingCaravan(lord);
@@ -97,6 +94,18 @@ namespace RimWorld.Planet
 				{
 					lord.Notify_PawnLost(pawn, PawnLostCondition.ForcedByPlayerAction, null);
 					flag2 = false;
+				}
+				LordJob_FormAndSendCaravan lordJob_FormAndSendCaravan = lord.LordJob as LordJob_FormAndSendCaravan;
+				if (lordJob_FormAndSendCaravan != null && lordJob_FormAndSendCaravan.downedPawns.Contains(pawn))
+				{
+					if (!removeFromDowned)
+					{
+						flag2 = false;
+					}
+					else
+					{
+						lordJob_FormAndSendCaravan.downedPawns.Remove(pawn);
+					}
 				}
 			}
 			if (flag2)
@@ -134,20 +143,23 @@ namespace RimWorld.Planet
 			return list;
 		}
 
-		public static List<Pawn> AllSendablePawns(Map map, bool allowEvenIfDownedOrInMentalState = false, bool allowEvenIfPrisonerNotSecure = false, bool allowCapturableDownedPawns = false)
+		public static List<Pawn> AllSendablePawns(Map map, bool allowEvenIfDowned = false, bool allowEvenIfInMentalState = false, bool allowEvenIfPrisonerNotSecure = false, bool allowCapturableDownedPawns = false)
 		{
 			List<Pawn> list = new List<Pawn>();
 			List<Pawn> allPawnsSpawned = map.mapPawns.AllPawnsSpawned;
 			for (int i = 0; i < allPawnsSpawned.Count; i++)
 			{
 				Pawn pawn = allPawnsSpawned[i];
-				if (allowEvenIfDownedOrInMentalState || (!pawn.Downed && !pawn.InMentalState))
+				if (allowEvenIfDowned || !pawn.Downed)
 				{
-					if (pawn.Faction == Faction.OfPlayer || pawn.IsPrisonerOfColony || (allowCapturableDownedPawns && CaravanFormingUtility.CanListAsAutoCapturable(pawn)))
+					if (allowEvenIfInMentalState || !pawn.InMentalState)
 					{
-						if ((allowEvenIfPrisonerNotSecure || !pawn.IsPrisoner || pawn.guest.PrisonerIsSecure) && (pawn.GetLord() == null || pawn.GetLord().LordJob is LordJob_VoluntarilyJoinable))
+						if (pawn.Faction == Faction.OfPlayer || pawn.IsPrisonerOfColony || (allowCapturableDownedPawns && CaravanFormingUtility.CanListAsAutoCapturable(pawn)))
 						{
-							list.Add(pawn);
+							if ((allowEvenIfPrisonerNotSecure || !pawn.IsPrisoner || pawn.guest.PrisonerIsSecure) && (pawn.GetLord() == null || pawn.GetLord().LordJob is LordJob_VoluntarilyJoinable))
+							{
+								list.Add(pawn);
+							}
 						}
 					}
 				}
@@ -163,9 +175,9 @@ namespace RimWorld.Planet
 		[DebuggerHidden]
 		public static IEnumerable<Gizmo> GetGizmos(Pawn pawn)
 		{
-			if (pawn.IsFormingCaravan())
+			if (CaravanFormingUtility.IsFormingCaravanOrDownedPawnToBeTakenByCaravan(pawn))
 			{
-				Lord lord = pawn.GetLord();
+				Lord lord = CaravanFormingUtility.GetFormAndSendCaravanLord(pawn);
 				yield return new Command_Action
 				{
 					defaultLabel = "CommandCancelFormingCaravan".Translate(),
@@ -185,7 +197,7 @@ namespace RimWorld.Planet
 					icon = CaravanFormingUtility.RemoveFromCaravanCommand,
 					action = delegate
 					{
-						CaravanFormingUtility.RemovePawnFromCaravan(pawn, lord);
+						CaravanFormingUtility.RemovePawnFromCaravan(pawn, lord, true);
 					},
 					hotKey = KeyBindingDefOf.Misc6
 				};
@@ -260,7 +272,14 @@ namespace RimWorld.Planet
 			{
 				lord2.Notify_PawnLost(pawn, PawnLostCondition.ForcedToJoinOtherLord, null);
 			}
-			lord.AddPawn(pawn);
+			if (pawn.Downed)
+			{
+				((LordJob_FormAndSendCaravan)lord.LordJob).downedPawns.Add(pawn);
+			}
+			else
+			{
+				lord.AddPawn(pawn);
+			}
 			if (pawn.Spawned)
 			{
 				pawn.jobs.EndCurrentJob(JobCondition.InterruptForced, true);
@@ -271,6 +290,32 @@ namespace RimWorld.Planet
 		{
 			Lord lord = p.GetLord();
 			return lord != null && lord.LordJob is LordJob_FormAndSendCaravan;
+		}
+
+		public static bool IsFormingCaravanOrDownedPawnToBeTakenByCaravan(Pawn p)
+		{
+			return CaravanFormingUtility.GetFormAndSendCaravanLord(p) != null;
+		}
+
+		public static Lord GetFormAndSendCaravanLord(Pawn p)
+		{
+			if (p.IsFormingCaravan())
+			{
+				return p.GetLord();
+			}
+			if (p.Spawned)
+			{
+				List<Lord> lords = p.Map.lordManager.lords;
+				for (int i = 0; i < lords.Count; i++)
+				{
+					LordJob_FormAndSendCaravan lordJob_FormAndSendCaravan = lords[i].LordJob as LordJob_FormAndSendCaravan;
+					if (lordJob_FormAndSendCaravan != null && lordJob_FormAndSendCaravan.downedPawns.Contains(p))
+					{
+						return lords[i];
+					}
+				}
+			}
+			return null;
 		}
 
 		public static float CapacityLeft(LordJob_FormAndSendCaravan lordJob)

@@ -71,7 +71,7 @@ namespace RimWorld
 				ScenarioUI.DrawScenarioEditInterface(rect3, this.curScen, ref this.infoScrollPosition);
 			}
 			GUI.EndGroup();
-			base.DoBottomButtons(rect, null, null, null, true);
+			base.DoBottomButtons(rect, null, null, null, true, true);
 		}
 
 		private void RandomizeSeedAndScenario()
@@ -163,10 +163,7 @@ namespace RimWorld
 					}
 					if (num > current.def.maxUses)
 					{
-						Messages.Message("TooMany".Translate(new object[]
-						{
-							current.def.maxUses
-						}) + ": " + current.def.label, MessageTypeDefOf.RejectInput, false);
+						Messages.Message("TooMany".Translate(current.def.maxUses) + ": " + current.def.label, MessageTypeDefOf.RejectInput, false);
 						bool result = false;
 						return result;
 					}

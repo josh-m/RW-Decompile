@@ -25,7 +25,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return this.canSpawnHives && HivesUtility.TotalSpawnedHivesCount(this.parent.Map) < 30;
+				return this.canSpawnHives && HiveUtility.TotalSpawnedHivesCount(this.parent.Map) < 30;
 			}
 		}
 

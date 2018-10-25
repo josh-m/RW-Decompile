@@ -229,10 +229,7 @@ namespace RimWorld
 								SkillRequirement skillRequirement = bill.recipe.FirstSkillRequirementPawnDoesntSatisfy(pawn);
 								if (skillRequirement != null)
 								{
-									JobFailReason.Is("UnderRequiredSkill".Translate(new object[]
-									{
-										skillRequirement.minLevel
-									}), bill.Label);
+									JobFailReason.Is("UnderRequiredSkill".Translate(skillRequirement.minLevel), bill.Label);
 								}
 								else
 								{
@@ -243,7 +240,7 @@ namespace RimWorld
 										{
 											if (bill_ProductionWithUft.BoundWorker != pawn || !pawn.CanReserveAndReach(bill_ProductionWithUft.BoundUft, PathEndMode.Touch, Danger.Deadly, 1, -1, null, false) || bill_ProductionWithUft.BoundUft.IsForbidden(pawn))
 											{
-												goto IL_1D9;
+												goto IL_1D0;
 											}
 											return WorkGiver_DoBill.FinishUftJob(pawn, bill_ProductionWithUft.BoundUft, bill_ProductionWithUft);
 										}
@@ -276,7 +273,7 @@ namespace RimWorld
 						}
 					}
 				}
-				IL_1D9:;
+				IL_1D0:;
 			}
 			this.chosenIngThings.Clear();
 			return null;

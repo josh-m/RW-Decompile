@@ -61,10 +61,7 @@ namespace RimWorld
 			{
 				if (current.def.plant != null && current.def.plant.interferesWithRoof)
 				{
-					Messages.Message("MessageRoofIncompatibleWithPlant".Translate(new object[]
-					{
-						Find.ActiveLanguageWorker.WithIndefiniteArticlePostProcessed(current.def.label)
-					}), MessageTypeDefOf.CautionInput, false);
+					Messages.Message("MessageRoofIncompatibleWithPlant".Translate(current), MessageTypeDefOf.CautionInput, false);
 					return true;
 				}
 			}

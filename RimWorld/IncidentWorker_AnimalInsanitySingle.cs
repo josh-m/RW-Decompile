@@ -28,14 +28,8 @@ namespace RimWorld
 				return false;
 			}
 			IncidentWorker_AnimalInsanityMass.DriveInsane(pawn);
-			string text = "AnimalInsanitySingle".Translate(new object[]
-			{
-				pawn.Label
-			});
-			Find.LetterStack.ReceiveLetter("LetterLabelAnimalInsanitySingle".Translate(new object[]
-			{
-				pawn.Label
-			}), text, LetterDefOf.ThreatSmall, pawn, null, null);
+			string text = "AnimalInsanitySingle".Translate(pawn.Label, pawn.Named("ANIMAL"));
+			Find.LetterStack.ReceiveLetter("LetterLabelAnimalInsanitySingle".Translate(pawn.Label, pawn.Named("ANIMAL")), text, LetterDefOf.ThreatSmall, pawn, null, null);
 			return true;
 		}
 

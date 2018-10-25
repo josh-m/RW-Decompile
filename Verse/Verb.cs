@@ -417,7 +417,13 @@ namespace Verse
 				return false;
 			}
 			Thing thing = castTarg.Thing;
-			return (thing.def.category == ThingCategory.Pawn || (thing.def.building != null && thing.def.building.IsTurret)) && ((thing.Faction == Faction.OfPlayer && this.caster.HostileTo(Faction.OfPlayer)) || (this.caster.Faction == Faction.OfPlayer && thing.HostileTo(Faction.OfPlayer)));
+			if (thing.def.category != ThingCategory.Pawn && (thing.def.building == null || !thing.def.building.IsTurret))
+			{
+				return false;
+			}
+			Pawn pawn = thing as Pawn;
+			bool flag = pawn != null && pawn.Downed;
+			return (thing.Faction == Faction.OfPlayer && this.caster.HostileTo(Faction.OfPlayer)) || (this.caster.Faction == Faction.OfPlayer && thing.HostileTo(Faction.OfPlayer) && !flag);
 		}
 
 		public bool CanHitTarget(LocalTargetInfo targ)

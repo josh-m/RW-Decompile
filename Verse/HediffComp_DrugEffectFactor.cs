@@ -37,11 +37,7 @@ namespace Verse
 		{
 			get
 			{
-				return "DrugEffectMultiplier".Translate(new object[]
-				{
-					this.Props.chemical.label,
-					this.CurrentFactor.ToStringPercent()
-				}).CapitalizeFirst();
+				return "DrugEffectMultiplier".Translate(this.Props.chemical.label, this.CurrentFactor.ToStringPercent()).CapitalizeFirst();
 			}
 		}
 

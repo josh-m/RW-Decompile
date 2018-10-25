@@ -22,18 +22,25 @@ namespace RimWorld
 		protected override void SpringSub(Pawn p)
 		{
 			SoundDefOf.TrapSpring.PlayOneShot(new TargetInfo(base.Position, base.Map, false));
-			if (p != null)
+			if (p == null)
 			{
-				float num = this.GetStatValue(StatDefOf.TrapMeleeDamage, true) * Building_TrapDamager.DamageRandomFactorRange.RandomInRange;
-				float num2 = num / Building_TrapDamager.DamageCount;
-				float armorPenetration = num2 * 0.015f;
-				int num3 = 0;
-				while ((float)num3 < Building_TrapDamager.DamageCount)
+				return;
+			}
+			float num = this.GetStatValue(StatDefOf.TrapMeleeDamage, true) * Building_TrapDamager.DamageRandomFactorRange.RandomInRange;
+			float num2 = num / Building_TrapDamager.DamageCount;
+			float armorPenetration = num2 * 0.015f;
+			int num3 = 0;
+			while ((float)num3 < Building_TrapDamager.DamageCount)
+			{
+				DamageInfo dinfo = new DamageInfo(DamageDefOf.Stab, num2, armorPenetration, -1f, this, null, null, DamageInfo.SourceCategory.ThingOrUnknown, null);
+				DamageWorker.DamageResult damageResult = p.TakeDamage(dinfo);
+				if (num3 == 0)
 				{
-					DamageInfo dinfo = new DamageInfo(DamageDefOf.Stab, num2, armorPenetration, -1f, this, null, null, DamageInfo.SourceCategory.ThingOrUnknown, null);
-					p.TakeDamage(dinfo);
-					num3++;
+					BattleLogEntry_DamageTaken battleLogEntry_DamageTaken = new BattleLogEntry_DamageTaken(p, RulePackDefOf.DamageEvent_TrapSpike, null);
+					Find.BattleLog.Add(battleLogEntry_DamageTaken);
+					damageResult.AssociateWithLog(battleLogEntry_DamageTaken);
 				}
+				num3++;
 			}
 		}
 	}

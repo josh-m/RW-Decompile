@@ -42,10 +42,7 @@ namespace RimWorld
 			Text.Anchor = TextAnchor.UpperLeft;
 			Text.Font = GameFont.Small;
 			GUI.color = new Color(1f, 1f, 1f, 0.7f);
-			Widgets.Label(rect2, "SocialSkillIs".Translate(new object[]
-			{
-				this.negotiator.skills.GetSkill(SkillDefOf.Social).Level
-			}));
+			Widgets.Label(rect2, "SocialSkillIs".Translate(this.negotiator.skills.GetSkill(SkillDefOf.Social).Level));
 			Text.Anchor = TextAnchor.UpperRight;
 			Widgets.Label(rect4, this.commTarget.GetInfoText());
 			Faction faction = this.commTarget.GetFaction();

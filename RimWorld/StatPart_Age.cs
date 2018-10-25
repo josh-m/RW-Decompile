@@ -28,10 +28,7 @@ namespace RimWorld
 				Pawn pawn = req.Thing as Pawn;
 				if (pawn != null && pawn.ageTracker != null)
 				{
-					return "StatsReport_AgeMultiplier".Translate(new object[]
-					{
-						pawn.ageTracker.AgeBiologicalYears
-					}) + ": x" + this.AgeMultiplier(pawn).ToStringPercent();
+					return "StatsReport_AgeMultiplier".Translate(pawn.ageTracker.AgeBiologicalYears) + ": x" + this.AgeMultiplier(pawn).ToStringPercent();
 				}
 			}
 			return null;

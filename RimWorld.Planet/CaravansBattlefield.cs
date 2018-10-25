@@ -52,10 +52,7 @@ namespace RimWorld.Planet
 				return;
 			}
 			string forceExitAndRemoveMapCountdownTimeLeftString = TimedForcedExit.GetForceExitAndRemoveMapCountdownTimeLeftString(60000);
-			Find.LetterStack.ReceiveLetter("LetterLabelCaravansBattlefieldVictory".Translate(), "LetterCaravansBattlefieldVictory".Translate(new object[]
-			{
-				forceExitAndRemoveMapCountdownTimeLeftString
-			}), LetterDefOf.PositiveEvent, this, null, null);
+			Find.LetterStack.ReceiveLetter("LetterLabelCaravansBattlefieldVictory".Translate(), "LetterCaravansBattlefieldVictory".Translate(forceExitAndRemoveMapCountdownTimeLeftString), LetterDefOf.PositiveEvent, this, null, null);
 			TaleRecorder.RecordTale(TaleDefOf.CaravanAmbushDefeated, new object[]
 			{
 				base.Map.mapPawns.FreeColonists.RandomElement<Pawn>()

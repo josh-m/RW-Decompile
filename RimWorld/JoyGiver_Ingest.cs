@@ -60,7 +60,7 @@ namespace RimWorld
 
 		protected virtual bool CanIngestForJoy(Pawn pawn, Thing t)
 		{
-			if (!t.def.IsIngestible || t.def.ingestible.joyKind == null || t.def.ingestible.joy <= 0f)
+			if (!t.def.IsIngestible || t.def.ingestible.joyKind == null || t.def.ingestible.joy <= 0f || !pawn.WillEat(t, null))
 			{
 				return false;
 			}

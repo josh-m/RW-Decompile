@@ -37,10 +37,7 @@ namespace RimWorld
 						item.def = edifice.def;
 						item.ticksGame = Find.TickManager.TicksGame;
 						this.strikeRecords.Add(item);
-						Messages.Message("StruckMineable".Translate(new object[]
-						{
-							edifice.def.label
-						}), edifice, MessageTypeDefOf.PositiveEvent, true);
+						Messages.Message("StruckMineable".Translate(edifice.def.label), edifice, MessageTypeDefOf.PositiveEvent, true);
 						TaleRecorder.RecordTale(TaleDefOf.StruckMineable, new object[]
 						{
 							miner,

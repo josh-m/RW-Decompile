@@ -53,19 +53,13 @@ namespace Verse
 			{
 				if (curLang.anyKeyedReplacementsXmlParseError || curLang.anyDefInjectionsXmlParseError)
 				{
-					string text = curLang.lastKeyedReplacementsXmlParseErrorInFile ?? curLang.lastDefInjectionsXmlParseErrorInFile;
-					Messages.Message("MessageCantCleanupTranslationFilesBeucaseOfXmlError".Translate(new object[]
-					{
-						text
-					}), MessageTypeDefOf.RejectInput, false);
+					string value = curLang.lastKeyedReplacementsXmlParseErrorInFile ?? curLang.lastDefInjectionsXmlParseErrorInFile;
+					Messages.Message("MessageCantCleanupTranslationFilesBeucaseOfXmlError".Translate(value), MessageTypeDefOf.RejectInput, false);
 					return;
 				}
 				english.LoadData();
 				curLang.LoadData();
-				Dialog_MessageBox dialog_MessageBox = Dialog_MessageBox.CreateConfirmation("ConfirmCleanupTranslationFiles".Translate(new object[]
-				{
-					curLang.FriendlyNameNative
-				}), delegate
+				Dialog_MessageBox dialog_MessageBox = Dialog_MessageBox.CreateConfirmation("ConfirmCleanupTranslationFiles".Translate(curLang.FriendlyNameNative), delegate
 				{
 					LongEventHandler.QueueLongEvent(new Action(TranslationFilesCleaner.DoCleanupTranslationFiles), "CleaningTranslationFiles".Translate(), true, null);
 				}, true, null);
@@ -106,10 +100,7 @@ namespace Verse
 				{
 					Log.Error("Could not cleanup backstories: " + arg3, false);
 				}
-				Messages.Message("MessageTranslationFilesCleanupDone".Translate(new object[]
-				{
-					TranslationFilesCleaner.GetActiveLanguageCoreModFolderPath()
-				}), MessageTypeDefOf.TaskCompletion, false);
+				Messages.Message("MessageTranslationFilesCleanupDone".Translate(TranslationFilesCleaner.GetActiveLanguageCoreModFolderPath()), MessageTypeDefOf.TaskCompletion, false);
 			}
 			catch (Exception arg4)
 			{

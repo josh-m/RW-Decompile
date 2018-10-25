@@ -9,13 +9,13 @@ namespace RimWorld
 	{
 		private static List<Thing> tmpDrills = new List<Thing>();
 
-		private const float MinPointsFactor = 0.24f;
+		private const float MinPointsFactor = 0.3f;
 
-		private const float MaxPointsFactor = 0.48f;
+		private const float MaxPointsFactor = 0.6f;
 
-		private const float MinPoints = 115f;
+		private const float MinPoints = 200f;
 
-		private const float MaxPoints = 800f;
+		private const float MaxPoints = 1000f;
 
 		protected override bool CanFireNowSub(IncidentParms parms)
 		{
@@ -39,14 +39,14 @@ namespace RimWorld
 			{
 				return false;
 			}
-			IntVec3 intVec = CellFinder.FindNoWipeSpawnLocNear(deepDrill.Position, map, ThingDefOf.TunnelHiveSpawner, Rot4.North, 2, (IntVec3 x) => x.Walkable(map) && x.GetFirstThing(map, deepDrill.def) == null && x.GetFirstThing(map) == null && x.GetFirstThing(map, ThingDefOf.Hive) == null && x.GetFirstThing(map, ThingDefOf.TunnelHiveSpawner) == null);
+			IntVec3 intVec = CellFinder.FindNoWipeSpawnLocNear(deepDrill.Position, map, ThingDefOf.TunnelHiveSpawner, Rot4.North, 2, (IntVec3 x) => x.Walkable(map) && x.GetFirstThing(map, deepDrill.def) == null && x.GetFirstThingWithComp(map) == null && x.GetFirstThing(map, ThingDefOf.Hive) == null && x.GetFirstThing(map, ThingDefOf.TunnelHiveSpawner) == null);
 			if (intVec == deepDrill.Position)
 			{
 				return false;
 			}
 			TunnelHiveSpawner tunnelHiveSpawner = (TunnelHiveSpawner)ThingMaker.MakeThing(ThingDefOf.TunnelHiveSpawner, null);
 			tunnelHiveSpawner.spawnHive = false;
-			tunnelHiveSpawner.insectsPoints = Mathf.Clamp(parms.points * Rand.Range(0.24f, 0.48f), 115f, 800f);
+			tunnelHiveSpawner.insectsPoints = Mathf.Clamp(parms.points * Rand.Range(0.3f, 0.6f), 200f, 1000f);
 			tunnelHiveSpawner.spawnedByInfestationThingComp = true;
 			GenSpawn.Spawn(tunnelHiveSpawner, intVec, map, WipeMode.FullRefund);
 			deepDrill.TryGetComp<CompCreatesInfestations>().Notify_CreatedInfestation();

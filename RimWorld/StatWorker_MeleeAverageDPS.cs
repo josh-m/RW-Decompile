@@ -11,7 +11,32 @@ namespace RimWorld
 		public override bool ShouldShowFor(StatRequest req)
 		{
 			ThingDef thingDef = req.Def as ThingDef;
-			return thingDef != null && thingDef.IsWeapon && !thingDef.tools.NullOrEmpty<Tool>();
+			if (thingDef == null)
+			{
+				return false;
+			}
+			if (!thingDef.IsWeapon && !thingDef.isTechHediff)
+			{
+				return false;
+			}
+			List<VerbProperties> list;
+			List<Tool> list2;
+			this.GetVerbsAndTools(thingDef, out list, out list2);
+			if (!list2.NullOrEmpty<Tool>())
+			{
+				return true;
+			}
+			if (list != null)
+			{
+				for (int i = 0; i < list.Count; i++)
+				{
+					if (list[i].IsMeleeAttack)
+					{
+						return true;
+					}
+				}
+			}
+			return false;
 		}
 
 		public override float GetValueUnfinalized(StatRequest req, bool applyPostProcess = true)
@@ -21,13 +46,20 @@ namespace RimWorld
 			{
 				return 0f;
 			}
+			List<VerbProperties> verbProps;
+			List<Tool> tools;
+			this.GetVerbsAndTools(thingDef, out verbProps, out tools);
 			Pawn attacker = StatWorker_MeleeAverageDPS.GetCurrentWeaponUser(req.Thing);
-			float num = (from x in VerbUtility.GetAllVerbProperties(thingDef.Verbs, thingDef.tools)
+			float num = (from x in VerbUtility.GetAllVerbProperties(verbProps, tools)
 			where x.verbProps.IsMeleeAttack
 			select x).AverageWeighted((VerbUtility.VerbPropertiesWithSource x) => x.verbProps.AdjustedMeleeSelectionWeight(x.tool, attacker, req.Thing, null, false), (VerbUtility.VerbPropertiesWithSource x) => x.verbProps.AdjustedMeleeDamageAmount(x.tool, attacker, req.Thing, null));
-			float num2 = (from x in VerbUtility.GetAllVerbProperties(thingDef.Verbs, thingDef.tools)
+			float num2 = (from x in VerbUtility.GetAllVerbProperties(verbProps, tools)
 			where x.verbProps.IsMeleeAttack
 			select x).AverageWeighted((VerbUtility.VerbPropertiesWithSource x) => x.verbProps.AdjustedMeleeSelectionWeight(x.tool, attacker, req.Thing, null, false), (VerbUtility.VerbPropertiesWithSource x) => x.verbProps.AdjustedCooldown(x.tool, attacker, req.Thing));
+			if (num2 == 0f)
+			{
+				return 0f;
+			}
 			return num / num2;
 		}
 
@@ -38,8 +70,11 @@ namespace RimWorld
 			{
 				return null;
 			}
+			List<VerbProperties> verbProps;
+			List<Tool> tools;
+			this.GetVerbsAndTools(thingDef, out verbProps, out tools);
 			Pawn currentWeaponUser = StatWorker_MeleeAverageDPS.GetCurrentWeaponUser(req.Thing);
-			IEnumerable<VerbUtility.VerbPropertiesWithSource> enumerable = from x in VerbUtility.GetAllVerbProperties(thingDef.Verbs, thingDef.tools)
+			IEnumerable<VerbUtility.VerbPropertiesWithSource> enumerable = from x in VerbUtility.GetAllVerbProperties(verbProps, tools)
 			where x.verbProps.IsMeleeAttack
 			select x;
 			StringBuilder stringBuilder = new StringBuilder();
@@ -77,6 +112,47 @@ namespace RimWorld
 			if (pawn_ApparelTracker != null)
 			{
 				return pawn_ApparelTracker.pawn;
+			}
+			return null;
+		}
+
+		private void GetVerbsAndTools(ThingDef def, out List<VerbProperties> verbs, out List<Tool> tools)
+		{
+			if (def.isTechHediff)
+			{
+				HediffDef hediffDef = this.FindTechHediffHediff(def);
+				if (hediffDef == null)
+				{
+					verbs = null;
+					tools = null;
+					return;
+				}
+				HediffCompProperties_VerbGiver hediffCompProperties_VerbGiver = hediffDef.CompProps<HediffCompProperties_VerbGiver>();
+				if (hediffCompProperties_VerbGiver == null)
+				{
+					verbs = null;
+					tools = null;
+					return;
+				}
+				verbs = hediffCompProperties_VerbGiver.verbs;
+				tools = hediffCompProperties_VerbGiver.tools;
+			}
+			else
+			{
+				verbs = def.Verbs;
+				tools = def.tools;
+			}
+		}
+
+		private HediffDef FindTechHediffHediff(ThingDef techHediff)
+		{
+			List<RecipeDef> allDefsListForReading = DefDatabase<RecipeDef>.AllDefsListForReading;
+			for (int i = 0; i < allDefsListForReading.Count; i++)
+			{
+				if (allDefsListForReading[i].addsHediff != null && allDefsListForReading[i].IsIngredient(techHediff))
+				{
+					return allDefsListForReading[i].addsHediff;
+				}
 			}
 			return null;
 		}

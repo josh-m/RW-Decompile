@@ -43,18 +43,11 @@ namespace RimWorld
 			Func<int, string> textGetter;
 			if (this.refuelable.parent.def.building.hasFuelingPort)
 			{
-				textGetter = ((int x) => "SetPodLauncherTargetFuelLevel".Translate(new object[]
-				{
-					x,
-					CompLaunchable.MaxLaunchDistanceAtFuelLevel((float)x)
-				}));
+				textGetter = ((int x) => "SetPodLauncherTargetFuelLevel".Translate(x, CompLaunchable.MaxLaunchDistanceAtFuelLevel((float)x)));
 			}
 			else
 			{
-				textGetter = ((int x) => "SetTargetFuelLevel".Translate(new object[]
-				{
-					x
-				}));
+				textGetter = ((int x) => "SetTargetFuelLevel".Translate(x));
 			}
 			Dialog_Slider window = new Dialog_Slider(textGetter, 0, num, delegate(int value)
 			{

@@ -76,16 +76,11 @@ namespace RimWorld
 		{
 			if (Rand.Chance(this.SpringChance(p)))
 			{
+				Map map = base.Map;
 				this.Spring(p);
 				if (p.Faction == Faction.OfPlayer || p.HostFaction == Faction.OfPlayer)
 				{
-					Find.LetterStack.ReceiveLetter("LetterFriendlyTrapSprungLabel".Translate(new object[]
-					{
-						p.LabelShort
-					}), "LetterFriendlyTrapSprung".Translate(new object[]
-					{
-						p.LabelShort
-					}), LetterDefOf.NegativeEvent, new TargetInfo(base.Position, base.Map, false), null, null);
+					Find.LetterStack.ReceiveLetter("LetterFriendlyTrapSprungLabel".Translate(p.LabelShort, p), "LetterFriendlyTrapSprung".Translate(p.LabelShort, p), LetterDefOf.NegativeEvent, new TargetInfo(base.Position, map, false), null, null);
 				}
 			}
 		}
@@ -122,7 +117,7 @@ namespace RimWorld
 
 		public bool KnowsOfTrap(Pawn p)
 		{
-			return (p.Faction != null && !p.Faction.HostileTo(base.Faction)) || (p.Faction == null && p.RaceProps.Animal && !p.InAggroMentalState) || (p.guest != null && p.guest.Released) || (!p.IsPrisoner && base.Faction != null && p.HostFaction == base.Faction) || (p.RaceProps.Humanlike && p.IsFormingCaravan()) || (p.IsPrisoner && p.guest.ShouldWaitInsteadOfEscaping && base.Faction == p.HostFaction);
+			return (p.Faction != null && !p.Faction.HostileTo(base.Faction)) || (p.Faction == null && p.RaceProps.Animal && !p.InAggroMentalState) || (p.guest != null && p.guest.Released) || (!p.IsPrisoner && base.Faction != null && p.HostFaction == base.Faction) || (p.RaceProps.Humanlike && p.IsFormingCaravan()) || (p.IsPrisoner && p.guest.ShouldWaitInsteadOfEscaping && base.Faction == p.HostFaction) || (p.Faction == null && p.RaceProps.Humanlike);
 		}
 
 		public override ushort PathFindCostFor(Pawn p)

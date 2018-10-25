@@ -32,11 +32,7 @@ namespace Verse
 					": ",
 					ex
 				}), false);
-				GenUI.ErrorDialog("ProblemSavingFile".Translate(new object[]
-				{
-					filePath,
-					ex.ToString()
-				}));
+				GenUI.ErrorDialog("ProblemSavingFile".Translate(filePath, ex.ToString()));
 			}
 		}
 

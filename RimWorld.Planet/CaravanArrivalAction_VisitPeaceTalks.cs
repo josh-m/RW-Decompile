@@ -12,10 +12,7 @@ namespace RimWorld.Planet
 		{
 			get
 			{
-				return "VisitPeaceTalks".Translate(new object[]
-				{
-					this.peaceTalks.Label
-				});
+				return "VisitPeaceTalks".Translate(this.peaceTalks.Label);
 			}
 		}
 
@@ -23,10 +20,7 @@ namespace RimWorld.Planet
 		{
 			get
 			{
-				return "CaravanVisiting".Translate(new object[]
-				{
-					this.peaceTalks.Label
-				});
+				return "CaravanVisiting".Translate(this.peaceTalks.Label);
 			}
 		}
 
@@ -71,10 +65,7 @@ namespace RimWorld.Planet
 
 		public static IEnumerable<FloatMenuOption> GetFloatMenuOptions(Caravan caravan, PeaceTalks peaceTalks)
 		{
-			return CaravanArrivalActionUtility.GetFloatMenuOptions<CaravanArrivalAction_VisitPeaceTalks>(() => CaravanArrivalAction_VisitPeaceTalks.CanVisit(caravan, peaceTalks), () => new CaravanArrivalAction_VisitPeaceTalks(peaceTalks), "VisitPeaceTalks".Translate(new object[]
-			{
-				peaceTalks.Label
-			}), caravan, peaceTalks.Tile, peaceTalks);
+			return CaravanArrivalActionUtility.GetFloatMenuOptions<CaravanArrivalAction_VisitPeaceTalks>(() => CaravanArrivalAction_VisitPeaceTalks.CanVisit(caravan, peaceTalks), () => new CaravanArrivalAction_VisitPeaceTalks(peaceTalks), "VisitPeaceTalks".Translate(peaceTalks.Label), caravan, peaceTalks.Tile, peaceTalks);
 		}
 	}
 }

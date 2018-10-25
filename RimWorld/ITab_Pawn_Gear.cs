@@ -160,13 +160,10 @@ namespace RimWorld
 			}
 			if (this.CanControlColonist)
 			{
-				if ((thing.def.IsNutritionGivingIngestible || thing.def.IsNonMedicalDrug) && thing.IngestibleNow && base.SelPawn.RaceProps.CanEverEat(thing))
+				if ((thing.def.IsNutritionGivingIngestible || thing.def.IsNonMedicalDrug) && thing.IngestibleNow && base.SelPawn.WillEat(thing, null))
 				{
 					Rect rect3 = new Rect(rect.width - 24f, y, 24f, 24f);
-					TooltipHandler.TipRegion(rect3, "ConsumeThing".Translate(new object[]
-					{
-						thing.LabelNoCount
-					}));
+					TooltipHandler.TipRegion(rect3, "ConsumeThing".Translate(thing.LabelNoCount, thing));
 					if (Widgets.ButtonImage(rect3, TexButton.Ingest))
 					{
 						SoundDefOf.Tick_High.PlayOneShotOnCamera(null);
@@ -256,11 +253,7 @@ namespace RimWorld
 			Rect rect = new Rect(0f, curY, width, 22f);
 			float num = MassUtility.GearAndInventoryMass(this.SelPawnForGear);
 			float num2 = MassUtility.Capacity(this.SelPawnForGear, null);
-			Widgets.Label(rect, "MassCarried".Translate(new object[]
-			{
-				num.ToString("0.##"),
-				num2.ToString("0.##")
-			}));
+			Widgets.Label(rect, "MassCarried".Translate(num.ToString("0.##"), num2.ToString("0.##")));
 			curY += 22f;
 		}
 

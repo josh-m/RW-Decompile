@@ -116,7 +116,7 @@ namespace RimWorld
 		{
 			StringBuilder stringBuilder = new StringBuilder();
 			TraitDegreeData currentData = this.CurrentData;
-			stringBuilder.Append(currentData.description.AdjustedFor(pawn, "PAWN"));
+			stringBuilder.Append(currentData.description.Formatted(pawn.Named("PAWN")).AdjustedFor(pawn, "PAWN"));
 			int count = this.CurrentData.skillGains.Count;
 			if (count > 0)
 			{

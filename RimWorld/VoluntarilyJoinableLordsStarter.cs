@@ -29,11 +29,7 @@ namespace RimWorld
 				return false;
 			}
 			LordMaker.MakeNewLord(firstFiance.Faction, new LordJob_Joinable_MarriageCeremony(firstFiance, secondFiance, intVec), this.map, null);
-			Messages.Message("MessageNewMarriageCeremony".Translate(new object[]
-			{
-				firstFiance.LabelShort,
-				secondFiance.LabelShort
-			}), new TargetInfo(intVec, this.map, false), MessageTypeDefOf.PositiveEvent, true);
+			Messages.Message("MessageNewMarriageCeremony".Translate(firstFiance.LabelShort, secondFiance.LabelShort, firstFiance.Named("PAWN1"), secondFiance.Named("PAWN2")), new TargetInfo(intVec, this.map, false), MessageTypeDefOf.PositiveEvent, true);
 			this.lastLordStartTick = Find.TickManager.TicksGame;
 			return true;
 		}
@@ -51,10 +47,7 @@ namespace RimWorld
 				return false;
 			}
 			LordMaker.MakeNewLord(pawn.Faction, new LordJob_Joinable_Party(intVec, pawn), this.map, null);
-			Find.LetterStack.ReceiveLetter("LetterLabelNewParty".Translate(), "LetterNewParty".Translate(new object[]
-			{
-				pawn.LabelShort
-			}), LetterDefOf.PositiveEvent, new TargetInfo(intVec, this.map, false), null, null);
+			Find.LetterStack.ReceiveLetter("LetterLabelNewParty".Translate(), "LetterNewParty".Translate(pawn.LabelShort, pawn), LetterDefOf.PositiveEvent, new TargetInfo(intVec, this.map, false), null, null);
 			this.lastLordStartTick = Find.TickManager.TicksGame;
 			this.startPartyASAP = false;
 			return true;

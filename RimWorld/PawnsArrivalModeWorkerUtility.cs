@@ -54,7 +54,7 @@ namespace RimWorld
 				{
 					intVec = DropCellFinder.FindRaidDropCenterDistant(map);
 				}
-				else if (!RCellFinder.TryFindRandomPawnEntryCell(out intVec, map, CellFinder.EdgeRoadChance_Hostile, null))
+				else if (!RCellFinder.TryFindRandomPawnEntryCell(out intVec, map, CellFinder.EdgeRoadChance_Hostile, false, null))
 				{
 					intVec = DropCellFinder.FindRaidDropCenterDistant(map);
 				}

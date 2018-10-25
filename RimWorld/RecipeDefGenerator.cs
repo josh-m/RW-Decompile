@@ -27,14 +27,8 @@ namespace RimWorld
 				RecipeMakerProperties rm = def.recipeMaker;
 				RecipeDef r = new RecipeDef();
 				r.defName = "Make_" + def.defName;
-				r.label = "RecipeMake".Translate(new object[]
-				{
-					def.label
-				});
-				r.jobString = "RecipeMakeJobString".Translate(new object[]
-				{
-					def.label
-				});
+				r.label = "RecipeMake".Translate(def.label);
+				r.jobString = "RecipeMakeJobString".Translate(def.label);
 				r.modContentPack = def.modContentPack;
 				r.workAmount = (float)rm.workAmount;
 				r.workSpeedStat = rm.workSpeedStat;
@@ -83,14 +77,8 @@ namespace RimWorld
 			{
 				RecipeDef r = new RecipeDef();
 				r.defName = "Administer_" + def.defName;
-				r.label = "RecipeAdminister".Translate(new object[]
-				{
-					def.label
-				});
-				r.jobString = "RecipeAdministerJobString".Translate(new object[]
-				{
-					def.label
-				});
+				r.label = "RecipeAdminister".Translate(def.label);
+				r.jobString = "RecipeAdministerJobString".Translate(def.label);
 				r.workerClass = typeof(Recipe_AdministerIngestible);
 				r.targetsBodyPart = false;
 				r.anesthetize = false;

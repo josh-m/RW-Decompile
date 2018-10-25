@@ -51,7 +51,7 @@ namespace RimWorld
 			ScenarioUI.DrawScenarioInfo(rect3, this.curScen, ref this.infoScrollPosition);
 			GUI.EndGroup();
 			string midLabel = "ScenarioEditor".Translate();
-			base.DoBottomButtons(rect, null, midLabel, new Action(this.GoToScenarioEditor), true);
+			base.DoBottomButtons(rect, null, midLabel, new Action(this.GoToScenarioEditor), true, true);
 		}
 
 		private bool CanEditScenario(Scenario scen)
@@ -138,10 +138,7 @@ namespace RimWorld
 				WidgetRow widgetRow = new WidgetRow(rect.xMax, rect.y, UIDirection.LeftThenDown, 99999f, 4f);
 				if (scen.Category == ScenarioCategory.CustomLocal && widgetRow.ButtonIcon(TexButton.DeleteX, "Delete".Translate(), new Color?(GenUI.SubtleMouseoverColor)))
 				{
-					Find.WindowStack.Add(Dialog_MessageBox.CreateConfirmation("ConfirmDelete".Translate(new object[]
-					{
-						scen.File.Name
-					}), delegate
+					Find.WindowStack.Add(Dialog_MessageBox.CreateConfirmation("ConfirmDelete".Translate(scen.File.Name), delegate
 					{
 						scen.File.Delete();
 						ScenarioLister.MarkDirty();
@@ -149,10 +146,7 @@ namespace RimWorld
 				}
 				if (scen.Category == ScenarioCategory.SteamWorkshop && widgetRow.ButtonIcon(TexButton.DeleteX, "Unsubscribe".Translate(), new Color?(GenUI.SubtleMouseoverColor)))
 				{
-					Find.WindowStack.Add(Dialog_MessageBox.CreateConfirmation("ConfirmUnsubscribe".Translate(new object[]
-					{
-						scen.File.Name
-					}), delegate
+					Find.WindowStack.Add(Dialog_MessageBox.CreateConfirmation("ConfirmUnsubscribe".Translate(scen.File.Name), delegate
 					{
 						scen.enabled = false;
 						if (this.curScen == scen)

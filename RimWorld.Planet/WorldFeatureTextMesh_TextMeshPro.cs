@@ -124,7 +124,6 @@ namespace RimWorld.Planet
 			{
 				return;
 			}
-			Vector3[] vertices = this.textMesh.mesh.vertices;
 			float num = this.textMesh.bounds.extents.x * 2f;
 			float num2 = Find.WorldGrid.DistOnSurfaceToAngle(num);
 			Matrix4x4 localToWorldMatrix = this.textMesh.transform.localToWorldMatrix;
@@ -134,8 +133,9 @@ namespace RimWorld.Planet
 				TMP_CharacterInfo tMP_CharacterInfo = textInfo.characterInfo[i];
 				if (tMP_CharacterInfo.isVisible)
 				{
+					int materialReferenceIndex = this.textMesh.textInfo.characterInfo[i].materialReferenceIndex;
 					int vertexIndex = tMP_CharacterInfo.vertexIndex;
-					Vector3 vector = vertices[vertexIndex] + vertices[vertexIndex + 1] + vertices[vertexIndex + 2] + vertices[vertexIndex + 3];
+					Vector3 vector = this.textMesh.textInfo.meshInfo[materialReferenceIndex].vertices[vertexIndex] + this.textMesh.textInfo.meshInfo[materialReferenceIndex].vertices[vertexIndex + 1] + this.textMesh.textInfo.meshInfo[materialReferenceIndex].vertices[vertexIndex + 2] + this.textMesh.textInfo.meshInfo[materialReferenceIndex].vertices[vertexIndex + 3];
 					vector /= 4f;
 					float num3 = vector.x / (num / 2f);
 					bool flag = num3 >= 0f;
@@ -145,10 +145,10 @@ namespace RimWorld.Planet
 					float num6 = 200f * Mathf.Tan(num4 / 2f * 0.0174532924f);
 					Vector3 vector2 = new Vector3(Mathf.Sin(num5 * 0.0174532924f) * num6 * ((!flag) ? -1f : 1f), vector.y, Mathf.Cos(num5 * 0.0174532924f) * num6);
 					Vector3 b = vector2 - vector;
-					Vector3 vector3 = vertices[vertexIndex] + b;
-					Vector3 vector4 = vertices[vertexIndex + 1] + b;
-					Vector3 vector5 = vertices[vertexIndex + 2] + b;
-					Vector3 vector6 = vertices[vertexIndex + 3] + b;
+					Vector3 vector3 = this.textMesh.textInfo.meshInfo[materialReferenceIndex].vertices[vertexIndex] + b;
+					Vector3 vector4 = this.textMesh.textInfo.meshInfo[materialReferenceIndex].vertices[vertexIndex + 1] + b;
+					Vector3 vector5 = this.textMesh.textInfo.meshInfo[materialReferenceIndex].vertices[vertexIndex + 2] + b;
+					Vector3 vector6 = this.textMesh.textInfo.meshInfo[materialReferenceIndex].vertices[vertexIndex + 3] + b;
 					Quaternion rotation = Quaternion.Euler(0f, num4 * ((!flag) ? 1f : -1f), 0f);
 					vector3 = rotation * (vector3 - vector2) + vector2;
 					vector4 = rotation * (vector4 - vector2) + vector2;
@@ -158,13 +158,13 @@ namespace RimWorld.Planet
 					vector4 = worldToLocalMatrix.MultiplyPoint(localToWorldMatrix.MultiplyPoint(vector4).normalized * (100f + WorldAltitudeOffsets.WorldText));
 					vector5 = worldToLocalMatrix.MultiplyPoint(localToWorldMatrix.MultiplyPoint(vector5).normalized * (100f + WorldAltitudeOffsets.WorldText));
 					vector6 = worldToLocalMatrix.MultiplyPoint(localToWorldMatrix.MultiplyPoint(vector6).normalized * (100f + WorldAltitudeOffsets.WorldText));
-					vertices[vertexIndex] = vector3;
-					vertices[vertexIndex + 1] = vector4;
-					vertices[vertexIndex + 2] = vector5;
-					vertices[vertexIndex + 3] = vector6;
+					this.textMesh.textInfo.meshInfo[materialReferenceIndex].vertices[vertexIndex] = vector3;
+					this.textMesh.textInfo.meshInfo[materialReferenceIndex].vertices[vertexIndex + 1] = vector4;
+					this.textMesh.textInfo.meshInfo[materialReferenceIndex].vertices[vertexIndex + 2] = vector5;
+					this.textMesh.textInfo.meshInfo[materialReferenceIndex].vertices[vertexIndex + 3] = vector6;
 				}
 			}
-			this.textMesh.mesh.vertices = vertices;
+			this.textMesh.UpdateVertexData(TMP_VertexDataUpdateFlags.All);
 		}
 	}
 }

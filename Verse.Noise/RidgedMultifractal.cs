@@ -5,27 +5,27 @@ namespace Verse.Noise
 {
 	public class RidgedMultifractal : ModuleBase
 	{
-		private double m_frequency = 1.0;
+		private double frequency = 1.0;
 
-		private double m_lacunarity = 2.0;
+		private double lacunarity = 2.0;
 
-		private QualityMode m_quality = QualityMode.Medium;
+		private QualityMode quality = QualityMode.Medium;
 
-		private int m_octaveCount = 6;
+		private int octaveCount = 6;
 
-		private int m_seed;
+		private int seed;
 
-		private double[] m_weights = new double[30];
+		private double[] weights = new double[30];
 
 		public double Frequency
 		{
 			get
 			{
-				return this.m_frequency;
+				return this.frequency;
 			}
 			set
 			{
-				this.m_frequency = value;
+				this.frequency = value;
 			}
 		}
 
@@ -33,11 +33,11 @@ namespace Verse.Noise
 		{
 			get
 			{
-				return this.m_lacunarity;
+				return this.lacunarity;
 			}
 			set
 			{
-				this.m_lacunarity = value;
+				this.lacunarity = value;
 				this.UpdateWeights();
 			}
 		}
@@ -46,11 +46,11 @@ namespace Verse.Noise
 		{
 			get
 			{
-				return this.m_quality;
+				return this.quality;
 			}
 			set
 			{
-				this.m_quality = value;
+				this.quality = value;
 			}
 		}
 
@@ -58,11 +58,11 @@ namespace Verse.Noise
 		{
 			get
 			{
-				return this.m_octaveCount;
+				return this.octaveCount;
 			}
 			set
 			{
-				this.m_octaveCount = Mathf.Clamp(value, 1, 30);
+				this.octaveCount = Mathf.Clamp(value, 1, 30);
 			}
 		}
 
@@ -70,11 +70,11 @@ namespace Verse.Noise
 		{
 			get
 			{
-				return this.m_seed;
+				return this.seed;
 			}
 			set
 			{
-				this.m_seed = value;
+				this.seed = value;
 			}
 		}
 
@@ -97,32 +97,32 @@ namespace Verse.Noise
 			double num = 1.0;
 			for (int i = 0; i < 30; i++)
 			{
-				this.m_weights[i] = Math.Pow(num, -1.0);
-				num *= this.m_lacunarity;
+				this.weights[i] = Math.Pow(num, -1.0);
+				num *= this.lacunarity;
 			}
 		}
 
 		public override double GetValue(double x, double y, double z)
 		{
-			x *= this.m_frequency;
-			y *= this.m_frequency;
-			z *= this.m_frequency;
+			x *= this.frequency;
+			y *= this.frequency;
+			z *= this.frequency;
 			double num = 0.0;
 			double num2 = 1.0;
 			double num3 = 1.0;
 			double num4 = 2.0;
-			for (int i = 0; i < this.m_octaveCount; i++)
+			for (int i = 0; i < this.octaveCount; i++)
 			{
 				double x2 = Utils.MakeInt32Range(x);
 				double y2 = Utils.MakeInt32Range(y);
 				double z2 = Utils.MakeInt32Range(z);
-				long seed = (long)(this.m_seed + i & 2147483647);
-				double num5 = Utils.GradientCoherentNoise3D(x2, y2, z2, seed, this.m_quality);
-				num5 = Math.Abs(num5);
-				num5 = num3 - num5;
-				num5 *= num5;
-				num5 *= num2;
-				num2 = num5 * num4;
+				long num5 = (long)(this.seed + i & 2147483647);
+				double num6 = Utils.GradientCoherentNoise3D(x2, y2, z2, num5, this.quality);
+				num6 = Math.Abs(num6);
+				num6 = num3 - num6;
+				num6 *= num6;
+				num6 *= num2;
+				num2 = num6 * num4;
 				if (num2 > 1.0)
 				{
 					num2 = 1.0;
@@ -131,10 +131,10 @@ namespace Verse.Noise
 				{
 					num2 = 0.0;
 				}
-				num += num5 * this.m_weights[i];
-				x *= this.m_lacunarity;
-				y *= this.m_lacunarity;
-				z *= this.m_lacunarity;
+				num += num6 * this.weights[i];
+				x *= this.lacunarity;
+				y *= this.lacunarity;
+				z *= this.lacunarity;
 			}
 			return num * 1.25 - 1.0;
 		}

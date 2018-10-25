@@ -57,7 +57,7 @@ namespace RimWorld
 		{
 			base.DrawPageTitle(rect);
 			rect.yMin += 45f;
-			base.DoBottomButtons(rect, "Start".Translate(), null, null, true);
+			base.DoBottomButtons(rect, "Start".Translate(), null, null, true, false);
 			rect.yMax -= 38f;
 			Rect rect2 = rect;
 			rect2.width = 140f;
@@ -308,10 +308,7 @@ namespace RimWorld
 					}
 					stringBuilder.Append("  - " + current.gerundLabel.CapitalizeFirst());
 				}
-				string text = "ConfirmRequiredWorkTypeDisabledForEveryone".Translate(new object[]
-				{
-					stringBuilder.ToString()
-				});
+				string text = "ConfirmRequiredWorkTypeDisabledForEveryone".Translate(stringBuilder.ToString());
 				Find.WindowStack.Add(Dialog_MessageBox.CreateConfirmation(text, nextAction, false, null));
 			}
 			else

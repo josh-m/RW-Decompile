@@ -777,9 +777,15 @@ namespace Verse
 			{
 				Text.Anchor = TextAnchor.MiddleLeft;
 			}
+			bool wordWrap = Text.WordWrap;
+			if (rect.height < Text.LineHeight * 2f)
+			{
+				Text.WordWrap = false;
+			}
 			Widgets.Label(rect, label);
 			Text.Anchor = anchor;
 			GUI.color = color;
+			Text.WordWrap = wordWrap;
 			if (active && draggable)
 			{
 				return Widgets.ButtonInvisibleDraggable(rect, false);
@@ -1337,17 +1343,11 @@ namespace Verse
 			}
 			else if (freq < 1f)
 			{
-				label = "TimesPerDay".Translate(new object[]
-				{
-					(1f / freq).ToString("0.##")
-				});
+				label = "TimesPerDay".Translate((1f / freq).ToString("0.##"));
 			}
 			else
 			{
-				label = "EveryDays".Translate(new object[]
-				{
-					freq.ToString("0.##")
-				});
+				label = "EveryDays".Translate(freq.ToString("0.##"));
 			}
 			float num2 = Widgets.HorizontalSlider(rect, num, 0f, 1f, true, label, null, null, -1f);
 			if (num != num2)
@@ -1414,10 +1414,7 @@ namespace Verse
 			string text = range.min.ToStringByStyle(valueStyle, ToStringNumberSense.Absolute) + " - " + range.max.ToStringByStyle(valueStyle, ToStringNumberSense.Absolute);
 			if (labelKey != null)
 			{
-				text = labelKey.Translate(new object[]
-				{
-					text
-				});
+				text = labelKey.Translate(text);
 			}
 			GameFont font = Text.Font;
 			Text.Font = GameFont.Tiny;
@@ -1506,10 +1503,7 @@ namespace Verse
 			string text = range.min.ToStringCached() + " - " + range.max.ToStringCached();
 			if (labelKey != null)
 			{
-				text = labelKey.Translate(new object[]
-				{
-					text
-				});
+				text = labelKey.Translate(text);
 			}
 			GameFont font = Text.Font;
 			Text.Font = GameFont.Tiny;
@@ -1622,10 +1616,7 @@ namespace Verse
 			}
 			else if (range.max == range.min)
 			{
-				label = "OnlyQuality".Translate(new object[]
-				{
-					range.min.GetLabel()
-				});
+				label = "OnlyQuality".Translate(range.min.GetLabel());
 			}
 			else
 			{

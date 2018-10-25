@@ -20,10 +20,7 @@ namespace RimWorld.Planet
 			}
 			else
 			{
-				Dialog_MessageBox window = Dialog_MessageBox.CreateConfirmation("ConfirmAbandonItemDialog".Translate(new object[]
-				{
-					t.Label
-				}), delegate
+				Dialog_MessageBox window = Dialog_MessageBox.CreateConfirmation("ConfirmAbandonItemDialog".Translate(t.Label, t), delegate
 				{
 					Pawn ownerOf = CaravanInventoryUtility.GetOwnerOf(caravan, t);
 					if (ownerOf == null)
@@ -49,10 +46,7 @@ namespace RimWorld.Planet
 			}
 			else
 			{
-				Dialog_MessageBox window = Dialog_MessageBox.CreateConfirmation("ConfirmAbandonItemDialog".Translate(new object[]
-				{
-					t.LabelWithTotalStackCount
-				}), delegate
+				Dialog_MessageBox window = Dialog_MessageBox.CreateConfirmation("ConfirmAbandonItemDialog".Translate(t.LabelWithTotalStackCount), delegate
 				{
 					for (int i = 0; i < t.things.Count; i++)
 					{
@@ -75,10 +69,7 @@ namespace RimWorld.Planet
 
 		public static void TryAbandonSpecificCountViaInterface(Thing t, Caravan caravan)
 		{
-			Find.WindowStack.Add(new Dialog_Slider("AbandonSliderText".Translate(new object[]
-			{
-				t.LabelNoCount
-			}), 1, t.stackCount, delegate(int x)
+			Find.WindowStack.Add(new Dialog_Slider("AbandonSliderText".Translate(t.LabelNoCount), 1, t.stackCount, delegate(int x)
 			{
 				Pawn ownerOf = CaravanInventoryUtility.GetOwnerOf(caravan, t);
 				if (ownerOf == null)
@@ -102,10 +93,7 @@ namespace RimWorld.Planet
 
 		public static void TryAbandonSpecificCountViaInterface(TransferableImmutable t, Caravan caravan)
 		{
-			Find.WindowStack.Add(new Dialog_Slider("AbandonSliderText".Translate(new object[]
-			{
-				t.Label
-			}), 1, t.TotalStackCount, delegate(int x)
+			Find.WindowStack.Add(new Dialog_Slider("AbandonSliderText".Translate(t.Label), 1, t.TotalStackCount, delegate(int x)
 			{
 				int num = x;
 				for (int i = 0; i < t.things.Count; i++)

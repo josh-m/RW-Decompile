@@ -48,10 +48,13 @@ namespace RimWorld
 			{
 				return job2;
 			}
-			Job job3 = this.NoCostFrameMakeJobFor(pawn, blueprint);
-			if (job3 != null)
+			if (this.def.workType != WorkTypeDefOf.Hauling)
 			{
-				return job3;
+				Job job3 = this.NoCostFrameMakeJobFor(pawn, blueprint);
+				if (job3 != null)
+				{
+					return job3;
+				}
 			}
 			return null;
 		}

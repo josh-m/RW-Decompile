@@ -47,7 +47,7 @@ namespace RimWorld
 			}
 			Rect rect2 = rect;
 			string midLabel = text;
-			base.DoBottomButtons(rect2, null, midLabel, midAct, true);
+			base.DoBottomButtons(rect2, null, midLabel, midAct, true, true);
 			Rect rect3 = new Rect(rect.xMax - Page.BottomButSize.x - 200f - 6f, rect.yMax - Page.BottomButSize.y, 200f, Page.BottomButSize.y);
 			Text.Font = GameFont.Tiny;
 			Text.Anchor = TextAnchor.MiddleRight;

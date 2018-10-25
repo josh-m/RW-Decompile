@@ -50,6 +50,8 @@ namespace Verse
 
 		public DrugPolicyDatabase drugPolicyDatabase = new DrugPolicyDatabase();
 
+		public FoodRestrictionDatabase foodRestrictionDatabase = new FoodRestrictionDatabase();
+
 		public TickManager tickManager = new TickManager();
 
 		public Tutor tutor = new Tutor();
@@ -263,6 +265,7 @@ namespace Verse
 			Scribe_Deep.Look<BattleLog>(ref this.battleLog, "battleLog", new object[0]);
 			Scribe_Deep.Look<OutfitDatabase>(ref this.outfitDatabase, "outfitDatabase", new object[0]);
 			Scribe_Deep.Look<DrugPolicyDatabase>(ref this.drugPolicyDatabase, "drugPolicyDatabase", new object[0]);
+			Scribe_Deep.Look<FoodRestrictionDatabase>(ref this.foodRestrictionDatabase, "foodRestrictionDatabase", new object[0]);
 			Scribe_Deep.Look<Tutor>(ref this.tutor, "tutor", new object[0]);
 			Scribe_Deep.Look<DateNotifier>(ref this.dateNotifier, "dateNotifier", new object[0]);
 			Scribe_Deep.Look<UniqueIDsManager>(ref this.uniqueIDsManager, "uniqueIDsManager", new object[0]);

@@ -136,11 +136,7 @@ namespace RimWorld
 			}
 			if (ap.Destroyed && PawnUtility.ShouldSendNotificationAbout(this.pawn) && !this.pawn.Dead)
 			{
-				string text = "MessageWornApparelDeterioratedAway".Translate(new object[]
-				{
-					GenLabel.ThingLabel(ap.def, ap.Stuff, 1),
-					this.pawn
-				});
+				string text = "MessageWornApparelDeterioratedAway".Translate(GenLabel.ThingLabel(ap.def, ap.Stuff, 1), this.pawn);
 				text = text.CapitalizeFirst();
 				Messages.Message(text, this.pawn, MessageTypeDefOf.NegativeEvent, true);
 			}

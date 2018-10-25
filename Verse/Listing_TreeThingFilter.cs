@@ -112,10 +112,7 @@ namespace Verse
 			string text = tDef.DescriptionDetailed;
 			if (flag)
 			{
-				text = text + "\n\n" + "ThisIsSmallVolume".Translate(new object[]
-				{
-					10.ToStringCached()
-				});
+				text = text + "\n\n" + "ThisIsSmallVolume".Translate(10.ToStringCached());
 			}
 			float num = -4f;
 			if (flag)

@@ -93,10 +93,7 @@ namespace RimWorld
 			{
 				return "GrowYearRound".Translate();
 			}
-			return "PeriodDays".Translate(new object[]
-			{
-				list.Count * 5 + "/" + 60
-			}) + " (" + QuadrumUtility.QuadrumsRangeLabel(list) + ")";
+			return "PeriodDays".Translate(list.Count * 5 + "/" + 60) + " (" + QuadrumUtility.QuadrumsRangeLabel(list) + ")";
 		}
 
 		[DebuggerHidden]
@@ -112,7 +109,7 @@ namespace RimWorld
 				defaultLabel = "CommandAllowSow".Translate(),
 				defaultDesc = "CommandAllowSowDesc".Translate(),
 				hotKey = KeyBindingDefOf.Command_ItemForbid,
-				icon = TexCommand.Forbidden,
+				icon = TexCommand.ForbidOff,
 				isActive = (() => this.$this.allowSow),
 				toggleAction = delegate
 				{

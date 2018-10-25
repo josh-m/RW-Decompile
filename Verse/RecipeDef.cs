@@ -437,7 +437,7 @@ namespace Verse
 			{
 				if (this.surgerySuccessChanceFactor >= 99999f)
 				{
-					yield return new StatDrawEntry(StatCategoryDefOf.Surgery, "SurgerySuccessChanceFactor".Translate(), "Always", 0, string.Empty);
+					yield return new StatDrawEntry(StatCategoryDefOf.Surgery, "SurgerySuccessChanceFactor".Translate(), "100%", 0, string.Empty);
 				}
 				else
 				{

@@ -82,16 +82,13 @@ namespace RimWorld
 			};
 			diaOption2.resolveTree = true;
 			diaNode.options.Add(diaOption2);
-			string text = "CaravanDemandTitle".Translate(new object[]
-			{
-				parms.faction.Name
-			});
-			WindowStack arg_206_0 = Find.WindowStack;
+			string text = "CaravanDemandTitle".Translate(parms.faction.Name);
+			WindowStack arg_202_0 = Find.WindowStack;
 			DiaNode nodeRoot = diaNode;
 			Faction faction = parms.faction;
 			bool delayInteractivity = true;
 			string title = text;
-			arg_206_0.Add(new Dialog_NodeTreeWithFactionInfo(nodeRoot, faction, delayInteractivity, false, title));
+			arg_202_0.Add(new Dialog_NodeTreeWithFactionInfo(nodeRoot, faction, delayInteractivity, false, title));
 			Find.Archive.Add(new ArchivedDialog(diaNode.text, text, parms.faction));
 			return true;
 		}
@@ -238,14 +235,7 @@ namespace RimWorld
 
 		private string GenerateMessageText(Faction enemyFaction, int attackerCount, List<ThingCount> demands, Caravan caravan)
 		{
-			return "CaravanDemand".Translate(new object[]
-			{
-				caravan.Name,
-				enemyFaction.Name,
-				attackerCount,
-				GenLabel.ThingsLabel(demands, "  - "),
-				enemyFaction.def.pawnsPlural
-			}).CapitalizeFirst();
+			return "CaravanDemand".Translate(caravan.Name, enemyFaction.Name, attackerCount, GenLabel.ThingsLabel(demands, "  - "), enemyFaction.def.pawnsPlural).CapitalizeFirst();
 		}
 
 		private void TakeFromCaravan(Caravan caravan, List<ThingCount> demands, Faction enemyFaction)
@@ -263,7 +253,14 @@ namespace RimWorld
 						list.Add(current);
 						current.holdingOwner.Take(current);
 					}
-					enemyFaction.kidnapped.KidnapPawn(pawn, null);
+					if (pawn.RaceProps.Humanlike)
+					{
+						enemyFaction.kidnapped.Kidnap(pawn, null);
+					}
+					else if (!Find.WorldPawns.Contains(pawn))
+					{
+						Find.WorldPawns.PassToWorld(pawn, PawnDiscardDecideMode.Decide);
+					}
 				}
 				else
 				{

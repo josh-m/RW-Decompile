@@ -21,6 +21,7 @@ namespace RimWorld
 		{
 			this.FailOnDespawnedNullOrForbidden(TargetIndex.A);
 			this.FailOnBurningImmobile(TargetIndex.A);
+			this.FailOnThingHavingDesignation(TargetIndex.A, DesignationDefOf.Uninstall);
 			this.FailOn(delegate
 			{
 				CompDeepDrill compDeepDrill = this.$this.job.targetA.Thing.TryGetComp<CompDeepDrill>();

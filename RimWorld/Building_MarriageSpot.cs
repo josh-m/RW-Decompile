@@ -29,18 +29,12 @@ namespace RimWorld
 				{
 					if (!MarriageSpotUtility.IsValidMarriageSpotFor(base.Position, pair.First, pair.Second, stringBuilder))
 					{
-						return "MarriageSpotNotUsable".Translate(new object[]
-						{
-							stringBuilder
-						});
+						return "MarriageSpotNotUsable".Translate(stringBuilder);
 					}
 				}
 				else if (!MarriageSpotUtility.IsValidMarriageSpot(base.Position, base.Map, stringBuilder))
 				{
-					return "MarriageSpotNotUsable".Translate(new object[]
-					{
-						stringBuilder
-					});
+					return "MarriageSpotNotUsable".Translate(stringBuilder);
 				}
 			}
 			return "MarriageSpotUsable".Translate();

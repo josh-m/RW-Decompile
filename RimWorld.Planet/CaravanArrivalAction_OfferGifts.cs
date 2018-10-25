@@ -20,10 +20,7 @@ namespace RimWorld.Planet
 		{
 			get
 			{
-				return "CaravanOfferingGifts".Translate(new object[]
-				{
-					this.settlement.Label
-				});
+				return "CaravanOfferingGifts".Translate(this.settlement.Label);
 			}
 		}
 

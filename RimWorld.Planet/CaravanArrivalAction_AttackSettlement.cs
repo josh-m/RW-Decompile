@@ -12,10 +12,7 @@ namespace RimWorld.Planet
 		{
 			get
 			{
-				return "AttackSettlement".Translate(new object[]
-				{
-					this.settlement.Label
-				});
+				return "AttackSettlement".Translate(this.settlement.Label);
 			}
 		}
 
@@ -23,10 +20,7 @@ namespace RimWorld.Planet
 		{
 			get
 			{
-				return "CaravanAttacking".Translate(new object[]
-				{
-					this.settlement.Label
-				});
+				return "CaravanAttacking".Translate(this.settlement.Label);
 			}
 		}
 
@@ -72,20 +66,14 @@ namespace RimWorld.Planet
 			}
 			if (settlement.EnterCooldownBlocksEntering())
 			{
-				return FloatMenuAcceptanceReport.WithFailMessage("MessageEnterCooldownBlocksEntering".Translate(new object[]
-				{
-					settlement.EnterCooldownDaysLeft().ToString("0.#")
-				}));
+				return FloatMenuAcceptanceReport.WithFailMessage("MessageEnterCooldownBlocksEntering".Translate(settlement.EnterCooldownDaysLeft().ToString("0.#")));
 			}
 			return true;
 		}
 
 		public static IEnumerable<FloatMenuOption> GetFloatMenuOptions(Caravan caravan, SettlementBase settlement)
 		{
-			return CaravanArrivalActionUtility.GetFloatMenuOptions<CaravanArrivalAction_AttackSettlement>(() => CaravanArrivalAction_AttackSettlement.CanAttack(caravan, settlement), () => new CaravanArrivalAction_AttackSettlement(settlement), "AttackSettlement".Translate(new object[]
-			{
-				settlement.Label
-			}), caravan, settlement.Tile, settlement);
+			return CaravanArrivalActionUtility.GetFloatMenuOptions<CaravanArrivalAction_AttackSettlement>(() => CaravanArrivalAction_AttackSettlement.CanAttack(caravan, settlement), () => new CaravanArrivalAction_AttackSettlement(settlement), "AttackSettlement".Translate(settlement.Label), caravan, settlement.Tile, settlement);
 		}
 	}
 }

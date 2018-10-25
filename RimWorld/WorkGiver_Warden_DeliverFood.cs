@@ -81,7 +81,7 @@ namespace RimWorld
 				for (int k = 0; k < list2.Count; k++)
 				{
 					Pawn pawn = list2[k] as Pawn;
-					if (pawn.IsPrisonerOfColony && pawn.needs.food.CurLevelPercentage < pawn.needs.food.PercentageThreshHungry + 0.02f && (pawn.carryTracker.CarriedThing == null || !pawn.RaceProps.WillAutomaticallyEat(pawn.carryTracker.CarriedThing)))
+					if (pawn.IsPrisonerOfColony && pawn.needs.food.CurLevelPercentage < pawn.needs.food.PercentageThreshHungry + 0.02f && (pawn.carryTracker.CarriedThing == null || !pawn.WillEat(pawn.carryTracker.CarriedThing, null)))
 					{
 						num += pawn.needs.food.NutritionWanted;
 					}
@@ -92,7 +92,7 @@ namespace RimWorld
 
 		private static float NutritionAvailableForFrom(Pawn p, Thing foodSource)
 		{
-			if (foodSource.def.IsNutritionGivingIngestible && p.RaceProps.WillAutomaticallyEat(foodSource))
+			if (foodSource.def.IsNutritionGivingIngestible && p.WillEat(foodSource, null))
 			{
 				return foodSource.GetStatValue(StatDefOf.Nutrition, true) * (float)foodSource.stackCount;
 			}

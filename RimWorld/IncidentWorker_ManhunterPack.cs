@@ -22,7 +22,7 @@ namespace RimWorld
 			Map map = (Map)parms.target;
 			PawnKindDef pawnKindDef;
 			IntVec3 intVec;
-			return ManhunterPackIncidentUtility.TryFindManhunterAnimalKind(parms.points, map.Tile, out pawnKindDef) && RCellFinder.TryFindRandomPawnEntryCell(out intVec, map, CellFinder.EdgeRoadChance_Animal, null);
+			return ManhunterPackIncidentUtility.TryFindManhunterAnimalKind(parms.points, map.Tile, out pawnKindDef) && RCellFinder.TryFindRandomPawnEntryCell(out intVec, map, CellFinder.EdgeRoadChance_Animal, false, null);
 		}
 
 		protected override bool TryExecuteWorker(IncidentParms parms)
@@ -34,7 +34,7 @@ namespace RimWorld
 				return false;
 			}
 			IntVec3 intVec;
-			if (!RCellFinder.TryFindRandomPawnEntryCell(out intVec, map, CellFinder.EdgeRoadChance_Animal, null))
+			if (!RCellFinder.TryFindRandomPawnEntryCell(out intVec, map, CellFinder.EdgeRoadChance_Animal, false, null))
 			{
 				return false;
 			}
@@ -48,10 +48,7 @@ namespace RimWorld
 				pawn.mindState.mentalStateHandler.TryStartMentalState(MentalStateDefOf.ManhunterPermanent, null, false, false, null, false);
 				pawn.mindState.exitMapAfterTick = Find.TickManager.TicksGame + Rand.Range(60000, 120000);
 			}
-			Find.LetterStack.ReceiveLetter("LetterLabelManhunterPackArrived".Translate(), "ManhunterPackArrived".Translate(new object[]
-			{
-				pawnKindDef.GetLabelPlural(-1)
-			}), LetterDefOf.ThreatBig, list[0], null, null);
+			Find.LetterStack.ReceiveLetter("LetterLabelManhunterPackArrived".Translate(), "ManhunterPackArrived".Translate(pawnKindDef.GetLabelPlural(-1)), LetterDefOf.ThreatBig, list[0], null, null);
 			Find.TickManager.slower.SignalForceNormalSpeedShort();
 			LessonAutoActivator.TeachOpportunity(ConceptDefOf.ForbiddingDoors, OpportunityType.Critical);
 			LessonAutoActivator.TeachOpportunity(ConceptDefOf.AllowedAreas, OpportunityType.Important);

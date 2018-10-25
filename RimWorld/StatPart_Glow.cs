@@ -32,10 +32,7 @@ namespace RimWorld
 		{
 			if (req.HasThing && this.ActiveFor(req.Thing))
 			{
-				return "StatsReport_LightMultiplier".Translate(new object[]
-				{
-					this.GlowLevel(req.Thing).ToStringPercent()
-				}) + ": x" + this.FactorFromGlow(req.Thing).ToStringPercent();
+				return "StatsReport_LightMultiplier".Translate(this.GlowLevel(req.Thing).ToStringPercent()) + ": x" + this.FactorFromGlow(req.Thing).ToStringPercent();
 			}
 			return null;
 		}

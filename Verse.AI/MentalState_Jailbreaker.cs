@@ -10,7 +10,7 @@ namespace Verse.AI
 		public override void MentalStateTick()
 		{
 			base.MentalStateTick();
-			if (this.pawn.IsHashIntervalTick(500) && JailbreakerMentalStateUtility.FindPrisoner(this.pawn) == null)
+			if (this.pawn.IsHashIntervalTick(500) && this.pawn.CurJobDef != JobDefOf.InducePrisonerToEscape && JailbreakerMentalStateUtility.FindPrisoner(this.pawn) == null)
 			{
 				base.RecoverFromState();
 			}

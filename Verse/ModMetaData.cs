@@ -84,6 +84,24 @@ namespace Verse
 			}
 		}
 
+		public bool MadeForNewerVersion
+		{
+			get
+			{
+				if (this.VersionCompatible)
+				{
+					return false;
+				}
+				if (!VersionControl.IsWellFormattedVersionString(this.TargetVersion))
+				{
+					return false;
+				}
+				int num = VersionControl.MinorFromVersionString(this.TargetVersion);
+				int num2 = VersionControl.MajorFromVersionString(this.TargetVersion);
+				return num2 > VersionControl.CurrentMajor || (num2 == VersionControl.CurrentMajor && num > VersionControl.CurrentMinor);
+			}
+		}
+
 		public string Name
 		{
 			get

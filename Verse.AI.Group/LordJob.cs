@@ -64,6 +64,10 @@ namespace Verse.AI.Group
 
 		public abstract StateGraph CreateGraph();
 
+		public virtual void LordJobTick()
+		{
+		}
+
 		public virtual void ExposeData()
 		{
 		}

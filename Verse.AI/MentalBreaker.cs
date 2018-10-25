@@ -266,8 +266,13 @@ namespace Verse.AI
 			{
 				return false;
 			}
-			Thought reason = this.RandomFinalStraw();
-			return mentalBreakDef.Worker.TryStart(this.pawn, reason, true);
+			Thought thought = this.RandomFinalStraw();
+			string text = "MentalStateReason_Mood".Translate();
+			if (thought != null)
+			{
+				text = text + "\n\n" + "FinalStraw".Translate(thought.LabelCap);
+			}
+			return mentalBreakDef.Worker.TryStart(this.pawn, text, true);
 		}
 
 		private Thought RandomFinalStraw()

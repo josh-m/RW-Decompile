@@ -58,21 +58,12 @@ namespace RimWorld
 					{
 						if (this.Props.manWorkType == WorkTags.Violent)
 						{
-							yield return new FloatMenuOption("CannotManThing".Translate(new object[]
-							{
-								this.parent.LabelShort
-							}) + " (" + "IsIncapableOfViolenceLower".Translate(new object[]
-							{
-								pawn.LabelShort
-							}) + ")", null, MenuOptionPriority.Default, null, null, 0f, null, null);
+							yield return new FloatMenuOption("CannotManThing".Translate(this.parent.LabelShort, this.parent) + " (" + "IsIncapableOfViolenceLower".Translate(pawn.LabelShort, pawn) + ")", null, MenuOptionPriority.Default, null, null, 0f, null, null);
 						}
 					}
 					else
 					{
-						FloatMenuOption opt = new FloatMenuOption("OrderManThing".Translate(new object[]
-						{
-							this.parent.LabelShort
-						}), delegate
+						FloatMenuOption opt = new FloatMenuOption("OrderManThing".Translate(this.parent.LabelShort, this.parent), delegate
 						{
 							Job job = new Job(JobDefOf.ManTurret, this.$this.parent);
 							pawn.jobs.TryTakeOrderedJob(job, JobTag.Misc);

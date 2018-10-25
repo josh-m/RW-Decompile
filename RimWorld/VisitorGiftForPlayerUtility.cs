@@ -84,17 +84,8 @@ namespace RimWorld
 			}
 			if (target.IsValid)
 			{
-				LetterStack arg_1B1_0 = Find.LetterStack;
-				string arg_1B1_1 = "LetterLabelVisitorsGaveGift".Translate(new object[]
-				{
-					pawn.Faction.Name
-				});
-				string arg_193_0 = "LetterVisitorsGaveGift";
-				object[] expr_150 = new object[2];
-				expr_150[0] = pawn.Faction.def.pawnsPlural;
-				expr_150[1] = (from g in list
-				select g.LabelCap).ToLineList("   -");
-				arg_1B1_0.ReceiveLetter(arg_1B1_1, arg_193_0.Translate(expr_150).AdjustedFor(pawn, "PAWN"), LetterDefOf.PositiveEvent, target, faction, null);
+				Find.LetterStack.ReceiveLetter("LetterLabelVisitorsGaveGift".Translate(pawn.Faction.Name), "LetterVisitorsGaveGift".Translate(pawn.Faction.def.pawnsPlural, (from g in list
+				select g.LabelCap).ToLineList("   -"), pawn.Named("PAWN")).AdjustedFor(pawn, "PAWN"), LetterDefOf.PositiveEvent, target, faction, null);
 			}
 		}
 

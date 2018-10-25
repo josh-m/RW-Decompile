@@ -58,10 +58,7 @@ namespace RimWorld.Planet
 			{
 				if (reason != null)
 				{
-					reason.Append("CannotLandBiome".Translate(new object[]
-					{
-						tile2.biome.LabelCap
-					}));
+					reason.Append("CannotLandBiome".Translate(tile2.biome.LabelCap));
 				}
 				return false;
 			}
@@ -96,10 +93,7 @@ namespace RimWorld.Planet
 					}
 					else
 					{
-						reason.Append("BaseAlreadyThere".Translate(new object[]
-						{
-							settlementBase.Faction.Name
-						}));
+						reason.Append("BaseAlreadyThere".Translate(settlementBase.Faction.Name));
 					}
 				}
 				return false;
@@ -123,16 +117,16 @@ namespace RimWorld.Planet
 			return true;
 		}
 
-		public static bool TryFindPassableTileWithTraversalDistance(int rootTile, int minDist, int maxDist, out int result, Predicate<int> validator = null, bool ignoreFirstTilePassability = false, bool preferCloserTiles = false)
+		public static bool TryFindPassableTileWithTraversalDistance(int rootTile, int minDist, int maxDist, out int result, Predicate<int> validator = null, bool ignoreFirstTilePassability = false, bool preferCloserTiles = false, bool canTraverseImpassable = false)
 		{
 			TileFinder.tmpTiles.Clear();
-			Find.WorldFloodFiller.FloodFill(rootTile, (int x) => !Find.World.Impassable(x) || (x == rootTile && ignoreFirstTilePassability), delegate(int tile, int traversalDistance)
+			Find.WorldFloodFiller.FloodFill(rootTile, (int x) => canTraverseImpassable || !Find.World.Impassable(x) || (x == rootTile && ignoreFirstTilePassability), delegate(int tile, int traversalDistance)
 			{
 				if (traversalDistance > maxDist)
 				{
 					return true;
 				}
-				if (traversalDistance >= minDist && (validator == null || validator(tile)))
+				if (traversalDistance >= minDist && !Find.World.Impassable(tile) && (validator == null || validator(tile)))
 				{
 					TileFinder.tmpTiles.Add(new Pair<int, int>(tile, traversalDistance));
 				}
@@ -225,7 +219,7 @@ namespace RimWorld.Planet
 				Predicate<int> validator = (int x) => !Find.WorldObjects.AnyWorldObjectAt(x) && TileFinder.IsValidTileForNewSettlement(x, null);
 				bool preferCloserTiles2 = preferCloserTiles;
 				int result;
-				if (TileFinder.TryFindPassableTileWithTraversalDistance(root, minDist2, maxDist2, out result, validator, false, preferCloserTiles2))
+				if (TileFinder.TryFindPassableTileWithTraversalDistance(root, minDist2, maxDist2, out result, validator, false, preferCloserTiles2, false))
 				{
 					return result;
 				}

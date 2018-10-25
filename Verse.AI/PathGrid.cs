@@ -2,7 +2,6 @@ using RimWorld;
 using System;
 using System.Collections.Generic;
 using System.Text;
-using UnityEngine;
 
 namespace Verse.AI
 {
@@ -14,8 +13,6 @@ namespace Verse.AI
 		public int[] pathGrid;
 
 		public const int ImpassableCost = 10000;
-
-		private const int MaxThingsPathCost = 450;
 
 		public PathGrid(Map map)
 		{
@@ -98,20 +95,14 @@ namespace Verse.AI
 
 		public int CalculatedCostAt(IntVec3 c, bool perceivedStatic, IntVec3 prevCell)
 		{
-			int num = 0;
+			bool flag = false;
 			TerrainDef terrainDef = this.map.terrainGrid.TerrainAt(c);
 			if (terrainDef == null || terrainDef.passability == Traversability.Impassable)
 			{
-				num = 10000;
+				return 10000;
 			}
-			else
-			{
-				num += terrainDef.pathCost;
-			}
-			int num2 = SnowUtility.MovementTicksAddOn(this.map.snowGrid.GetCategory(c));
-			num += num2;
+			int num = terrainDef.pathCost;
 			List<Thing> list = this.map.thingGrid.ThingsListAt(c);
-			int num3 = 0;
 			for (int i = 0; i < list.Count; i++)
 			{
 				Thing thing = list[i];
@@ -119,19 +110,31 @@ namespace Verse.AI
 				{
 					return 10000;
 				}
-				if (num3 < 450 && (!PathGrid.IsPathCostIgnoreRepeater(thing.def) || !prevCell.IsValid || !this.ContainsPathCostIgnoreRepeater(prevCell)))
+				if (!PathGrid.IsPathCostIgnoreRepeater(thing.def) || !prevCell.IsValid || !this.ContainsPathCostIgnoreRepeater(prevCell))
 				{
-					num += Mathf.Min(thing.def.pathCost, 450 - num3);
-					num3 += thing.def.pathCost;
+					int pathCost = thing.def.pathCost;
+					if (pathCost > num)
+					{
+						num = pathCost;
+					}
 				}
-				if (prevCell.IsValid && thing is Building_Door)
+				if (thing is Building_Door && prevCell.IsValid)
 				{
 					Building edifice = prevCell.GetEdifice(this.map);
 					if (edifice != null && edifice is Building_Door)
 					{
-						num += 45;
+						flag = true;
 					}
 				}
+			}
+			int num2 = SnowUtility.MovementTicksAddOn(this.map.snowGrid.GetCategory(c));
+			if (num2 > num)
+			{
+				num = num2;
+			}
+			if (flag)
+			{
+				num += 45;
 			}
 			if (perceivedStatic)
 			{

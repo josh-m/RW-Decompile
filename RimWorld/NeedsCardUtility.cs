@@ -157,23 +157,14 @@ namespace RimWorld
 					{
 						if (NeedsCardUtility.thoughtGroup.Count == 1)
 						{
-							stringBuilder.Append("ThoughtExpiresIn".Translate(new object[]
-							{
-								(group.def.DurationTicks - thought_Memory.age).ToStringTicksToPeriod()
-							}));
+							stringBuilder.Append("ThoughtExpiresIn".Translate((group.def.DurationTicks - thought_Memory.age).ToStringTicksToPeriod()));
 						}
 						else
 						{
 							Thought_Memory thought_Memory2 = (Thought_Memory)NeedsCardUtility.thoughtGroup[NeedsCardUtility.thoughtGroup.Count - 1];
-							stringBuilder.Append("ThoughtStartsExpiringIn".Translate(new object[]
-							{
-								(group.def.DurationTicks - thought_Memory.age).ToStringTicksToPeriod()
-							}));
+							stringBuilder.Append("ThoughtStartsExpiringIn".Translate((group.def.DurationTicks - thought_Memory.age).ToStringTicksToPeriod()));
 							stringBuilder.AppendLine();
-							stringBuilder.Append("ThoughtFinishesExpiringIn".Translate(new object[]
-							{
-								(group.def.DurationTicks - thought_Memory2.age).ToStringTicksToPeriod()
-							}));
+							stringBuilder.Append("ThoughtFinishesExpiringIn".Translate((group.def.DurationTicks - thought_Memory2.age).ToStringTicksToPeriod()));
 						}
 					}
 				}

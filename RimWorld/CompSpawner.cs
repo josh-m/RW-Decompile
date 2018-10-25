@@ -113,6 +113,10 @@ namespace RimWorld
 			{
 				Thing thing = ThingMaker.MakeThing(this.PropsSpawner.thingToSpawn, null);
 				thing.stackCount = this.PropsSpawner.spawnCount;
+				if (this.PropsSpawner.inheritFaction && thing.Faction != this.parent.Faction)
+				{
+					thing.SetFaction(this.parent.Faction, null);
+				}
 				Thing t;
 				GenPlace.TryPlaceThing(thing, center, this.parent.Map, ThingPlaceMode.Direct, out t, null, null);
 				if (this.PropsSpawner.spawnForbidden)
@@ -121,10 +125,7 @@ namespace RimWorld
 				}
 				if (this.PropsSpawner.showMessageIfOwned && this.parent.Faction == Faction.OfPlayer)
 				{
-					Messages.Message("MessageCompSpawnerSpawnedItem".Translate(new object[]
-					{
-						this.PropsSpawner.thingToSpawn.LabelCap
-					}).CapitalizeFirst(), thing, MessageTypeDefOf.PositiveEvent, true);
+					Messages.Message("MessageCompSpawnerSpawnedItem".Translate(this.PropsSpawner.thingToSpawn.LabelCap).CapitalizeFirst(), thing, MessageTypeDefOf.PositiveEvent, true);
 				}
 				return true;
 			}
@@ -203,10 +204,7 @@ namespace RimWorld
 		{
 			if (this.PropsSpawner.writeTimeLeftToSpawn && (!this.PropsSpawner.requiresPower || this.PowerOn))
 			{
-				return "NextSpawnedItemIn".Translate(new object[]
-				{
-					GenLabel.ThingLabel(this.PropsSpawner.thingToSpawn, null, this.PropsSpawner.spawnCount)
-				}) + ": " + this.ticksUntilSpawn.ToStringTicksToPeriod();
+				return "NextSpawnedItemIn".Translate(GenLabel.ThingLabel(this.PropsSpawner.thingToSpawn, null, this.PropsSpawner.spawnCount)) + ": " + this.ticksUntilSpawn.ToStringTicksToPeriod();
 			}
 			return null;
 		}

@@ -188,10 +188,7 @@ namespace RimWorld.Planet
 			}
 			if (TransportPodsArrivalAction_LandInSpecificCell.CanLandInSpecificCell(pods, this))
 			{
-				yield return new FloatMenuOption("LandInExistingMap".Translate(new object[]
-				{
-					this.Label
-				}), delegate
+				yield return new FloatMenuOption("LandInExistingMap".Translate(this.Label), delegate
 				{
 					Map myMap = representative.parent.Map;
 					Map map = this.$this.Map;
@@ -234,10 +231,7 @@ namespace RimWorld.Planet
 				{
 					text += "\n";
 				}
-				text += "EnterCooldown".Translate(new object[]
-				{
-					this.EnterCooldownDaysLeft().ToString("0.#")
-				});
+				text += "EnterCooldown".Translate(this.EnterCooldownDaysLeft().ToString("0.#"));
 			}
 			return text;
 		}

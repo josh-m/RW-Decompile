@@ -12,6 +12,10 @@ namespace RimWorld.Planet
 			{
 				text = text + " (" + "NormalQualityOrBetter".Translate() + ")";
 			}
+			if (def.IsApparel)
+			{
+				text = text + " (" + "NotTainted".Translate() + ")";
+			}
 			return text;
 		}
 	}

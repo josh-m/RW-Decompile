@@ -42,11 +42,7 @@ namespace RimWorld
 
 		public override string Summary(Scenario scen)
 		{
-			return "ScenPart_StartWithPawns".Translate(new object[]
-			{
-				this.pawnCount,
-				this.pawnChoiceCount
-			});
+			return "ScenPart_StartWithPawns".Translate(this.pawnCount, this.pawnChoiceCount);
 		}
 
 		public override void Randomize()

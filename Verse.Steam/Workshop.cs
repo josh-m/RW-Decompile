@@ -167,10 +167,7 @@ namespace Verse.Steam
 				Workshop.uploadingHook = null;
 				Dialog_WorkshopOperationInProgress.CloseAll();
 				Log.Error("Workshop: OnItemCreated failure. Result: " + result.m_eResult.GetLabel(), false);
-				Find.WindowStack.Add(new Dialog_MessageBox("WorkshopSubmissionFailed".Translate(new object[]
-				{
-					GenText.SplitCamelCase(result.m_eResult.GetLabel())
-				}), null, null, null, null, null, false, null, null));
+				Find.WindowStack.Add(new Dialog_MessageBox("WorkshopSubmissionFailed".Translate(GenText.SplitCamelCase(result.m_eResult.GetLabel())), null, null, null, null, null, false, null, null));
 				return;
 			}
 			Workshop.uploadingHook.PublishedFileId = result.m_nPublishedFileId;
@@ -198,18 +195,12 @@ namespace Verse.Steam
 				Workshop.uploadingHook = null;
 				Dialog_WorkshopOperationInProgress.CloseAll();
 				Log.Error("Workshop: OnItemSubmitted failure. Result: " + result.m_eResult.GetLabel(), false);
-				Find.WindowStack.Add(new Dialog_MessageBox("WorkshopSubmissionFailed".Translate(new object[]
-				{
-					GenText.SplitCamelCase(result.m_eResult.GetLabel())
-				}), null, null, null, null, null, false, null, null));
+				Find.WindowStack.Add(new Dialog_MessageBox("WorkshopSubmissionFailed".Translate(GenText.SplitCamelCase(result.m_eResult.GetLabel())), null, null, null, null, null, false, null, null));
 			}
 			else
 			{
 				SteamUtility.OpenWorkshopPage(Workshop.uploadingHook.PublishedFileId);
-				Messages.Message("WorkshopUploadSucceeded".Translate(new object[]
-				{
-					Workshop.uploadingHook.Name
-				}), MessageTypeDefOf.TaskCompletion, false);
+				Messages.Message("WorkshopUploadSucceeded".Translate(Workshop.uploadingHook.Name), MessageTypeDefOf.TaskCompletion, false);
 				if (Prefs.LogVerbose)
 				{
 					Log.Message("Workshop: Item submit result: " + result.m_eResult, false);

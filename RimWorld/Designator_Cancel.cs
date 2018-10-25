@@ -87,6 +87,10 @@ namespace RimWorld
 			{
 				return true;
 			}
+			if (t.def.IsSmoothable && base.Map.designationManager.DesignationAt(t.Position, DesignationDefOf.SmoothWall) != null)
+			{
+				return true;
+			}
 			return t.Faction == Faction.OfPlayer && (t is Frame || t is Blueprint);
 		}
 
@@ -107,6 +111,14 @@ namespace RimWorld
 						base.Map.designationManager.RemoveDesignation(designation);
 					}
 				}
+				if (t.def.IsSmoothable)
+				{
+					Designation designation2 = base.Map.designationManager.DesignationAt(t.Position, DesignationDefOf.SmoothWall);
+					if (designation2 != null)
+					{
+						base.Map.designationManager.RemoveDesignation(designation2);
+					}
+				}
 			}
 		}
 
@@ -125,12 +137,22 @@ namespace RimWorld
 		public override void RenderHighlight(List<IntVec3> dragCells)
 		{
 			Designator_Cancel.seenThings.Clear();
-			for (int i = 0; i < dragCells.Count; i++)
+			int i = 0;
+			while (i < dragCells.Count)
 			{
-				if (base.Map.designationManager.HasMapDesignationAt(dragCells[i]))
+				if (!base.Map.designationManager.HasMapDesignationAt(dragCells[i]))
 				{
-					Graphics.DrawMesh(MeshPool.plane10, dragCells[i].ToVector3ShiftedWithAltitude(AltitudeLayer.MetaOverlays.AltitudeFor()), Quaternion.identity, DesignatorUtility.DragHighlightCellMat, 0);
+					goto IL_7E;
 				}
+				Graphics.DrawMesh(MeshPool.plane10, dragCells[i].ToVector3ShiftedWithAltitude(AltitudeLayer.MetaOverlays.AltitudeFor()), Quaternion.identity, DesignatorUtility.DragHighlightCellMat, 0);
+				if (base.Map.designationManager.DesignationAt(dragCells[i], DesignationDefOf.Mine) == null)
+				{
+					goto IL_7E;
+				}
+				IL_113:
+				i++;
+				continue;
+				IL_7E:
 				List<Thing> thingList = dragCells[i].GetThingList(base.Map);
 				for (int j = 0; j < thingList.Count; j++)
 				{
@@ -143,6 +165,7 @@ namespace RimWorld
 						Designator_Cancel.seenThings.Add(thing);
 					}
 				}
+				goto IL_113;
 			}
 			Designator_Cancel.seenThings.Clear();
 		}

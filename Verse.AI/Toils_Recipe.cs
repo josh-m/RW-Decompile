@@ -171,7 +171,7 @@ namespace Verse.AI
 					TaleRecorder.RecordTale(TaleDefOf.CompletedLongCraftingProject, new object[]
 					{
 						actor,
-						list[0].def
+						list[0].GetInnerIfMinified().def
 					});
 				}
 				if (list.Count == 0)

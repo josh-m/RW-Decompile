@@ -104,10 +104,7 @@ namespace RimWorld
 						if (this.pawn.BodySize < td.minBodySize)
 						{
 							visible = true;
-							return new AcceptanceReport("CannotTrainTooSmall".Translate(new object[]
-							{
-								this.pawn.LabelCapNoCount
-							}));
+							return new AcceptanceReport("CannotTrainTooSmall".Translate(this.pawn.LabelCapNoCount, this.pawn));
 						}
 						visible = true;
 						return true;
@@ -126,18 +123,12 @@ namespace RimWorld
 			if (this.pawn.BodySize < td.minBodySize)
 			{
 				visible = true;
-				return new AcceptanceReport("CannotTrainTooSmall".Translate(new object[]
-				{
-					this.pawn.LabelCapNoCount
-				}));
+				return new AcceptanceReport("CannotTrainTooSmall".Translate(this.pawn.LabelCapNoCount, this.pawn));
 			}
 			if (this.pawn.RaceProps.trainability.intelligenceOrder < td.requiredTrainability.intelligenceOrder)
 			{
 				visible = true;
-				return new AcceptanceReport("CannotTrainNotSmartEnough".Translate(new object[]
-				{
-					td.requiredTrainability
-				}));
+				return new AcceptanceReport("CannotTrainNotSmartEnough".Translate(td.requiredTrainability));
 			}
 			visible = true;
 			return true;
@@ -245,18 +236,11 @@ namespace RimWorld
 					if (trainableDef == TrainableDefOf.Tameness)
 					{
 						this.pawn.SetFaction(null, null);
-						Messages.Message("MessageAnimalReturnedWild".Translate(new object[]
-						{
-							this.pawn.LabelShort
-						}), this.pawn, MessageTypeDefOf.NegativeEvent, true);
+						Messages.Message("MessageAnimalReturnedWild".Translate(this.pawn.LabelShort, this.pawn), this.pawn, MessageTypeDefOf.NegativeEvent, true);
 					}
 					else
 					{
-						Messages.Message("MessageAnimalLostSkill".Translate(new object[]
-						{
-							this.pawn.LabelShort,
-							trainableDef.LabelCap
-						}), this.pawn, MessageTypeDefOf.NegativeEvent, true);
+						Messages.Message("MessageAnimalLostSkill".Translate(this.pawn.LabelShort, trainableDef.LabelCap, this.pawn.Named("ANIMAL")), this.pawn, MessageTypeDefOf.NegativeEvent, true);
 					}
 				}
 			}

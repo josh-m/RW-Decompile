@@ -10,7 +10,7 @@ namespace RimWorld
 	{
 		protected override bool FactionCanBeGroupSource(Faction f, Map map, bool desperate = false)
 		{
-			IEnumerable<Faction> source = (from p in map.attackTargetsCache.TargetsHostileToColony
+			IEnumerable<Faction> source = (from p in map.attackTargetsCache.TargetsHostileToColony.Where(new Func<IAttackTarget, bool>(GenHostility.IsActiveThreatToPlayer))
 			select ((Thing)p).Faction).Distinct<Faction>();
 			return base.FactionCanBeGroupSource(f, map, desperate) && !f.def.hidden && f.PlayerRelationKind == FactionRelationKind.Ally && (!source.Any<Faction>() || source.Any((Faction hf) => hf.HostileTo(f)));
 		}
@@ -79,11 +79,7 @@ namespace RimWorld
 			if (pawn != null)
 			{
 				text += "\n\n";
-				text += "FriendlyRaidLeaderPresent".Translate(new object[]
-				{
-					pawn.Faction.def.pawnsPlural,
-					pawn.LabelShort
-				});
+				text += "FriendlyRaidLeaderPresent".Translate(pawn.Faction.def.pawnsPlural, pawn.LabelShort, pawn.Named("LEADER"));
 			}
 			return text;
 		}
@@ -95,11 +91,7 @@ namespace RimWorld
 
 		protected override string GetRelatedPawnsInfoLetterText(IncidentParms parms)
 		{
-			return "LetterRelatedPawnsRaidFriendly".Translate(new object[]
-			{
-				Faction.OfPlayer.def.pawnsPlural,
-				parms.faction.def.pawnsPlural
-			});
+			return "LetterRelatedPawnsRaidFriendly".Translate(Faction.OfPlayer.def.pawnsPlural, parms.faction.def.pawnsPlural);
 		}
 	}
 }

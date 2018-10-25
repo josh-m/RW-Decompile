@@ -112,25 +112,16 @@ namespace RimWorld
 		{
 			Text.Font = GameFont.Small;
 			GUI.color = new Color(1f, 1f, 1f, 0.5f);
-			string text = "VersionIndicator".Translate(new object[]
-			{
-				VersionControl.versionString
-			});
+			string text = "VersionIndicator".Translate(VersionControl.versionString);
 			string versionExtraInfo = VersionControl.GetVersionExtraInfo();
 			if (!versionExtraInfo.NullOrEmpty())
 			{
 				text = text + " (" + versionExtraInfo + ")";
 			}
-			text = text + "\n" + "CompiledOn".Translate(new object[]
-			{
-				VersionControl.buildDate.ToString("MMM d yyyy")
-			});
+			text = text + "\n" + "CompiledOn".Translate(VersionControl.buildDate.ToString("MMM d yyyy"));
 			if (SteamManager.Initialized)
 			{
-				text = text + "\n" + "LoggedIntoSteamAs".Translate(new object[]
-				{
-					SteamUtility.SteamPersonaName
-				});
+				text = text + "\n" + "LoggedIntoSteamAs".Translate(SteamUtility.SteamPersonaName);
 			}
 			Rect rect = new Rect(10f, 10f, 330f, Text.CalcHeight(text, 330f));
 			Widgets.Label(rect, text);

@@ -260,10 +260,7 @@ namespace RimWorld
 			Widgets.Label(rect6, archivable.ArchivedLabel.Truncate(rect6.width, null));
 			GenUI.ResetLabelAlign();
 			Text.WordWrap = true;
-			TooltipHandler.TipRegion(rect3, "PinArchivableTip".Translate(new object[]
-			{
-				200
-			}));
+			TooltipHandler.TipRegion(rect3, "PinArchivableTip".Translate(200));
 			if (Mouse.IsOver(rect4))
 			{
 				TooltipHandler.TipRegion(rect4, archivable.ArchivedTooltip);

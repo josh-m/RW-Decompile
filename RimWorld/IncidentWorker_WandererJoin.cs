@@ -38,8 +38,8 @@ namespace RimWorld
 			PawnGenerationRequest request = new PawnGenerationRequest(pawnKind, ofPlayer, PawnGenerationContext.NonPlayer, -1, true, false, false, false, true, pawnMustBeCapableOfViolence, 20f, false, true, true, false, false, false, false, null, null, null, null, null, fixedGender, null, null);
 			Pawn pawn = PawnGenerator.GeneratePawn(request);
 			GenSpawn.Spawn(pawn, loc, map, WipeMode.Vanish);
-			string text = this.def.letterText.AdjustedFor(pawn, "PAWN");
-			string label = this.def.letterLabel.AdjustedFor(pawn, "PAWN");
+			string text = this.def.letterText.Formatted(pawn.Named("PAWN")).AdjustedFor(pawn, "PAWN");
+			string label = this.def.letterLabel.Formatted(pawn.Named("PAWN")).AdjustedFor(pawn, "PAWN");
 			PawnRelationUtility.TryAppendRelationsWithColonistsInfo(ref text, ref label, pawn);
 			Find.LetterStack.ReceiveLetter(label, text, LetterDefOf.PositiveEvent, pawn, null, null);
 			return true;
@@ -47,7 +47,7 @@ namespace RimWorld
 
 		private bool TryFindEntryCell(Map map, out IntVec3 cell)
 		{
-			return CellFinder.TryFindRandomEdgeCellWith((IntVec3 c) => map.reachability.CanReachColony(c), map, CellFinder.EdgeRoadChance_Neutral, out cell);
+			return CellFinder.TryFindRandomEdgeCellWith((IntVec3 c) => map.reachability.CanReachColony(c) && !c.Fogged(map), map, CellFinder.EdgeRoadChance_Neutral, out cell);
 		}
 	}
 }

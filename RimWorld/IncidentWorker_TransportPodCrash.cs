@@ -14,28 +14,19 @@ namespace RimWorld
 			Pawn pawn = this.FindPawn(things);
 			pawn.guest.getRescuedThoughtOnUndownedBecauseOfPlayer = true;
 			string label = "LetterLabelRefugeePodCrash".Translate();
-			string text = "RefugeePodCrash".Translate().AdjustedFor(pawn, "PAWN");
+			string text = "RefugeePodCrash".Translate(pawn.Named("PAWN")).AdjustedFor(pawn, "PAWN");
 			text += "\n\n";
 			if (pawn.Faction == null)
 			{
-				text += "RefugeePodCrash_Factionless".Translate(new object[]
-				{
-					pawn
-				}).AdjustedFor(pawn, "PAWN");
+				text += "RefugeePodCrash_Factionless".Translate(pawn.Named("PAWN")).AdjustedFor(pawn, "PAWN");
 			}
 			else if (pawn.Faction.HostileTo(Faction.OfPlayer))
 			{
-				text += "RefugeePodCrash_Hostile".Translate(new object[]
-				{
-					pawn
-				}).AdjustedFor(pawn, "PAWN");
+				text += "RefugeePodCrash_Hostile".Translate(pawn.Named("PAWN")).AdjustedFor(pawn, "PAWN");
 			}
 			else
 			{
-				text += "RefugeePodCrash_NonHostile".Translate(new object[]
-				{
-					pawn
-				}).AdjustedFor(pawn, "PAWN");
+				text += "RefugeePodCrash_NonHostile".Translate(pawn.Named("PAWN")).AdjustedFor(pawn, "PAWN");
 			}
 			PawnRelationUtility.TryAppendRelationsWithColonistsInfo(ref text, ref label, pawn);
 			Find.LetterStack.ReceiveLetter(label, text, LetterDefOf.NeutralEvent, new TargetInfo(intVec, map, false), null, null);

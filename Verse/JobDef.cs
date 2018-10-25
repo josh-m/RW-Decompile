@@ -32,6 +32,8 @@ namespace Verse
 
 		public TaleDef taleOnCompletion;
 
+		public bool neverFleeFromEnemies;
+
 		public bool makeTargetPrisoner;
 
 		public int joyDuration = 4000;

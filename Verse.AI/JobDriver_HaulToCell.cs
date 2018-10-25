@@ -43,16 +43,9 @@ namespace Verse.AI
 			}
 			if (text != null)
 			{
-				return "ReportHaulingTo".Translate(new object[]
-				{
-					thing.Label,
-					text
-				});
+				return "ReportHaulingTo".Translate(thing.Label, text.Named("DESTINATION"), thing.Named("THING"));
 			}
-			return "ReportHauling".Translate(new object[]
-			{
-				thing.Label
-			});
+			return "ReportHauling".Translate(thing.Label, thing);
 		}
 
 		public override bool TryMakePreToilReservations(bool errorOnFailed)

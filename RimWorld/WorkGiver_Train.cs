@@ -8,8 +8,6 @@ namespace RimWorld
 {
 	public class WorkGiver_Train : WorkGiver_InteractAnimal
 	{
-		public const int MinTrainInterval = 15000;
-
 		[DebuggerHidden]
 		public override IEnumerable<Thing> PotentialWorkThingsGlobal(Pawn pawn)
 		{
@@ -31,7 +29,7 @@ namespace RimWorld
 			{
 				return null;
 			}
-			if (Find.TickManager.TicksGame < pawn2.mindState.lastAssignedInteractTime + 15000)
+			if (TrainableUtility.TrainedTooRecently(pawn2))
 			{
 				JobFailReason.Is(WorkGiver_InteractAnimal.AnimalInteractedTooRecentlyTrans, null);
 				return null;

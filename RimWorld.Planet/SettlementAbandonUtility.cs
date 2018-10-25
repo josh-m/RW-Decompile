@@ -61,10 +61,7 @@ namespace RimWorld.Planet
 						}
 						stringBuilder2.Append("    " + current.LabelCap);
 					}
-					stringBuilder.Append("ConfirmAbandonHomeWithColonyPawns".Translate(new object[]
-					{
-						stringBuilder2
-					}));
+					stringBuilder.Append("ConfirmAbandonHomeWithColonyPawns".Translate(stringBuilder2));
 				}
 				PawnDiedOrDownedThoughtsUtility.BuildMoodThoughtsListString(map.mapPawns.AllPawns, PawnDiedOrDownedThoughtsKind.Banished, stringBuilder, null, "\n\n" + "ConfirmAbandonHomeNegativeThoughts_Everyone".Translate(), "ConfirmAbandonHomeNegativeThoughts");
 				if (stringBuilder.Length == 0)

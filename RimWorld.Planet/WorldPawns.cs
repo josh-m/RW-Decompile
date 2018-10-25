@@ -20,10 +20,6 @@ namespace RimWorld.Planet
 
 		private Stack<Pawn> pawnsBeingDiscarded = new Stack<Pawn>();
 
-		private const float PctOfHumanlikesAlwaysKept = 0.1f;
-
-		private const float PctOfUnnamedColonyAnimalsAlwaysKept = 0.05f;
-
 		private const int TendIntervalTicks = 7500;
 
 		private const int MothballUpdateInterval = 15000;

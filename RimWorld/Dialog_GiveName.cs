@@ -32,7 +32,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return (!this.useSecondName) ? 200f : 330f;
+				return (!this.useSecondName) ? 200f : 300f;
 			}
 		}
 
@@ -40,7 +40,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return new Vector2(500f, this.Height);
+				return new Vector2(640f, this.Height);
 			}
 		}
 
@@ -79,45 +79,37 @@ namespace RimWorld
 			Rect rect2;
 			if (!this.useSecondName)
 			{
-				Widgets.Label(new Rect(0f, 0f, rect.width, rect.height), this.nameMessageKey.Translate(new object[]
-				{
-					this.suggestingPawn.LabelShort
-				}).CapitalizeFirst());
-				if (this.nameGenerator != null && Widgets.ButtonText(new Rect(rect.width / 2f + 20f, 80f, rect.width / 2f - 20f, 35f), "Randomize".Translate(), true, false, true))
+				Widgets.Label(new Rect(0f, 0f, rect.width, rect.height), this.nameMessageKey.Translate(this.suggestingPawn.LabelShort, this.suggestingPawn).CapitalizeFirst());
+				if (this.nameGenerator != null && Widgets.ButtonText(new Rect(rect.width / 2f + 90f, 80f, rect.width / 2f - 90f, 35f), "Randomize".Translate(), true, false, true))
 				{
 					this.curName = this.nameGenerator();
 				}
-				this.curName = Widgets.TextField(new Rect(0f, 80f, rect.width / 2f - 20f, 35f), this.curName);
-				rect2 = new Rect(rect.width / 2f + 20f, rect.height - 35f, rect.width / 2f - 20f, 35f);
+				this.curName = Widgets.TextField(new Rect(0f, 80f, rect.width / 2f + 70f, 35f), this.curName);
+				rect2 = new Rect(rect.width / 2f + 90f, rect.height - 35f, rect.width / 2f - 90f, 35f);
 			}
 			else
 			{
 				float num = 0f;
-				string text = this.nameMessageKey.Translate(new object[]
-				{
-					this.suggestingPawn.LabelShort
-				}).CapitalizeFirst();
+				string text = this.nameMessageKey.Translate(this.suggestingPawn.LabelShort, this.suggestingPawn).CapitalizeFirst();
 				Widgets.Label(new Rect(0f, num, rect.width, rect.height), text);
 				num += Text.CalcHeight(text, rect.width) + 10f;
-				if (this.nameGenerator != null && Widgets.ButtonText(new Rect(rect.width / 2f, num, rect.width / 2f - 20f, 35f), "Randomize".Translate(), true, false, true))
+				if (this.nameGenerator != null && Widgets.ButtonText(new Rect(rect.width / 2f + 90f, num, rect.width / 2f - 90f, 35f), "Randomize".Translate(), true, false, true))
 				{
 					this.curName = this.nameGenerator();
 				}
-				this.curName = Widgets.TextField(new Rect(0f, num, rect.width / 2f - 20f, 35f), this.curName);
+				this.curName = Widgets.TextField(new Rect(0f, num, rect.width / 2f + 70f, 35f), this.curName);
 				num += 60f;
-				text = this.secondNameMessageKey.Translate(new object[]
-				{
-					this.suggestingPawn.LabelShort
-				});
+				text = this.secondNameMessageKey.Translate(this.suggestingPawn.LabelShort, this.suggestingPawn);
 				Widgets.Label(new Rect(0f, num, rect.width, rect.height), text);
 				num += Text.CalcHeight(text, rect.width) + 10f;
-				if (this.secondNameGenerator != null && Widgets.ButtonText(new Rect(rect.width / 2f, num, rect.width / 2f - 20f, 35f), "Randomize".Translate(), true, false, true))
+				if (this.secondNameGenerator != null && Widgets.ButtonText(new Rect(rect.width / 2f + 90f, num, rect.width / 2f - 90f, 35f), "Randomize".Translate(), true, false, true))
 				{
 					this.curSecondName = this.secondNameGenerator();
 				}
-				this.curSecondName = Widgets.TextField(new Rect(0f, num, rect.width / 2f - 20f, 35f), this.curSecondName);
+				this.curSecondName = Widgets.TextField(new Rect(0f, num, rect.width / 2f + 70f, 35f), this.curSecondName);
 				num += 45f;
-				rect2 = new Rect(0f, rect.height - 35f, rect.width / 2f - 20f, 35f);
+				float num2 = rect.width / 2f - 90f;
+				rect2 = new Rect(rect.width / 2f - num2 / 2f, rect.height - 35f, num2, 35f);
 			}
 			if (Widgets.ButtonText(rect2, "OK".Translate(), true, false, true) || flag)
 			{
@@ -127,19 +119,12 @@ namespace RimWorld
 					{
 						this.Named(this.curName);
 						this.NamedSecond(this.curSecondName);
-						Messages.Message(this.gainedNameMessageKey.Translate(new object[]
-						{
-							this.curName,
-							this.curSecondName
-						}), MessageTypeDefOf.TaskCompletion, false);
+						Messages.Message(this.gainedNameMessageKey.Translate(this.curName, this.curSecondName), MessageTypeDefOf.TaskCompletion, false);
 					}
 					else
 					{
 						this.Named(this.curName);
-						Messages.Message(this.gainedNameMessageKey.Translate(new object[]
-						{
-							this.curName
-						}), MessageTypeDefOf.TaskCompletion, false);
+						Messages.Message(this.gainedNameMessageKey.Translate(this.curName), MessageTypeDefOf.TaskCompletion, false);
 					}
 					Find.WindowStack.TryRemove(this, true);
 				}

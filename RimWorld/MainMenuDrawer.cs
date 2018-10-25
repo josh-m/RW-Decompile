@@ -304,10 +304,7 @@ namespace RimWorld
 				}
 			}
 			text = text.TrimEndNewlines();
-			string label = "TranslationThanks".Translate(new object[]
-			{
-				text
-			}) + "\n\n" + "TranslationHowToContribute".Translate();
+			string label = "TranslationThanks".Translate(text) + "\n\n" + "TranslationHowToContribute".Translate();
 			Widgets.LabelScrollable(rect, label, ref MainMenuDrawer.translationInfoScrollbarPos, false, false);
 			if (Widgets.ButtonText(rect4, "LearnMore".Translate(), true, false, true))
 			{

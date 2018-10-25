@@ -21,6 +21,8 @@ namespace Verse
 
 		private int nextListElementTemporaryId;
 
+		private bool anyInternalException;
+
 		public void InitSaving(string filePath, string documentElementName)
 		{
 			if (Scribe.mode != LoadSaveMode.Inactive)
@@ -67,6 +69,11 @@ namespace Verse
 				Log.Error("Called FinalizeSaving() but current mode is " + Scribe.mode, false);
 				return;
 			}
+			if (this.anyInternalException)
+			{
+				this.ForceStop();
+				throw new Exception("Can't finalize saving due to internal exception. The whole file would be most likely corrupted anyway.");
+			}
 			try
 			{
 				if (this.writer != null)
@@ -89,6 +96,7 @@ namespace Verse
 				this.curPath = null;
 				this.savedNodes.Clear();
 				this.nextListElementTemporaryId = 0;
+				this.anyInternalException = false;
 			}
 			catch (Exception arg)
 			{
@@ -120,7 +128,15 @@ namespace Verse
 					}), false);
 				}
 			}
-			this.writer.WriteElementString(elementName, value);
+			try
+			{
+				this.writer.WriteElementString(elementName, value);
+			}
+			catch (Exception)
+			{
+				this.anyInternalException = true;
+				throw;
+			}
 		}
 
 		public void WriteAttribute(string attributeName, string value)
@@ -130,7 +146,15 @@ namespace Verse
 				Log.Error("Called WriteAttribute(), but writer is null.", false);
 				return;
 			}
-			this.writer.WriteAttributeString(attributeName, value);
+			try
+			{
+				this.writer.WriteAttributeString(attributeName, value);
+			}
+			catch (Exception)
+			{
+				this.anyInternalException = true;
+				throw;
+			}
 		}
 
 		public string DebugOutputFor(IExposable saveable)
@@ -180,7 +204,15 @@ namespace Verse
 			{
 				return false;
 			}
-			this.writer.WriteStartElement(nodeName);
+			try
+			{
+				this.writer.WriteStartElement(nodeName);
+			}
+			catch (Exception)
+			{
+				this.anyInternalException = true;
+				throw;
+			}
 			if (UnityData.isDebugBuild)
 			{
 				this.curPath = this.curPath + "/" + nodeName;
@@ -199,7 +231,15 @@ namespace Verse
 			{
 				return;
 			}
-			this.writer.WriteEndElement();
+			try
+			{
+				this.writer.WriteEndElement();
+			}
+			catch (Exception)
+			{
+				this.anyInternalException = true;
+				throw;
+			}
 			if (UnityData.isDebugBuild && this.curPath != null)
 			{
 				int num = this.curPath.LastIndexOf('/');
@@ -224,6 +264,7 @@ namespace Verse
 			this.curPath = null;
 			this.savedNodes.Clear();
 			this.nextListElementTemporaryId = 0;
+			this.anyInternalException = false;
 			if (Scribe.mode == LoadSaveMode.Saving)
 			{
 				Scribe.mode = LoadSaveMode.Inactive;

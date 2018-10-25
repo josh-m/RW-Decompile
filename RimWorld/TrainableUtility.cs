@@ -12,6 +12,8 @@ namespace RimWorld
 	{
 		private static List<TrainableDef> defsInListOrder = new List<TrainableDef>();
 
+		public const int MinTrainInterval = 15000;
+
 		private static readonly SimpleCurve DecayIntervalDaysFromWildnessCurve = new SimpleCurve
 		{
 			{
@@ -111,12 +113,7 @@ namespace RimWorld
 				if (level < minLevel)
 				{
 					action = null;
-					lab = lab + " (" + "SkillTooLow".Translate(new object[]
-					{
-						SkillDefOf.Animals.LabelCap,
-						level,
-						minLevel
-					}) + ")";
+					lab = lab + " (" + "SkillTooLow".Translate(SkillDefOf.Animals.LabelCap, level, minLevel) + ")";
 				}
 				else if (TrainableUtility.CanBeMaster(col, p, true))
 				{
@@ -147,7 +144,7 @@ namespace RimWorld
 		public static string GetIconTooltipText(Pawn pawn)
 		{
 			string text = string.Empty;
-			if (pawn.playerSettings.Master != null)
+			if (pawn.playerSettings != null && pawn.playerSettings.Master != null)
 			{
 				text += string.Format("{0}: {1}\n", "Master".Translate(), pawn.playerSettings.Master.LabelShort);
 			}
@@ -175,6 +172,11 @@ namespace RimWorld
 		public static bool TamenessCanDecay(ThingDef def)
 		{
 			return def.race.wildness > 0.101f;
+		}
+
+		public static bool TrainedTooRecently(Pawn animal)
+		{
+			return Find.TickManager.TicksGame < animal.mindState.lastAssignedInteractTime + 15000;
 		}
 
 		public static string GetWildnessExplanation(ThingDef def)

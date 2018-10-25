@@ -64,41 +64,47 @@ namespace RimWorld
 
 		public void Hatch()
 		{
-			PawnGenerationRequest request = new PawnGenerationRequest(this.Props.hatcherPawn, this.hatcheeFaction, PawnGenerationContext.NonPlayer, -1, false, true, false, false, true, false, 1f, false, true, true, false, false, false, false, null, null, null, null, null, null, null, null);
-			for (int i = 0; i < this.parent.stackCount; i++)
+			try
 			{
-				Pawn pawn = PawnGenerator.GeneratePawn(request);
-				if (PawnUtility.TrySpawnHatchedOrBornPawn(pawn, this.parent))
+				PawnGenerationRequest request = new PawnGenerationRequest(this.Props.hatcherPawn, this.hatcheeFaction, PawnGenerationContext.NonPlayer, -1, false, true, false, false, true, false, 1f, false, true, true, false, false, false, false, null, null, null, null, null, null, null, null);
+				for (int i = 0; i < this.parent.stackCount; i++)
 				{
-					if (pawn != null)
+					Pawn pawn = PawnGenerator.GeneratePawn(request);
+					if (PawnUtility.TrySpawnHatchedOrBornPawn(pawn, this.parent))
 					{
-						if (this.hatcheeParent != null)
+						if (pawn != null)
 						{
-							if (pawn.playerSettings != null && this.hatcheeParent.playerSettings != null && this.hatcheeParent.Faction == this.hatcheeFaction)
+							if (this.hatcheeParent != null)
 							{
-								pawn.playerSettings.AreaRestriction = this.hatcheeParent.playerSettings.AreaRestriction;
+								if (pawn.playerSettings != null && this.hatcheeParent.playerSettings != null && this.hatcheeParent.Faction == this.hatcheeFaction)
+								{
+									pawn.playerSettings.AreaRestriction = this.hatcheeParent.playerSettings.AreaRestriction;
+								}
+								if (pawn.RaceProps.IsFlesh)
+								{
+									pawn.relations.AddDirectRelation(PawnRelationDefOf.Parent, this.hatcheeParent);
+								}
 							}
-							if (pawn.RaceProps.IsFlesh)
+							if (this.otherParent != null && (this.hatcheeParent == null || this.hatcheeParent.gender != this.otherParent.gender) && pawn.RaceProps.IsFlesh)
 							{
-								pawn.relations.AddDirectRelation(PawnRelationDefOf.Parent, this.hatcheeParent);
+								pawn.relations.AddDirectRelation(PawnRelationDefOf.Parent, this.otherParent);
 							}
 						}
-						if (this.otherParent != null && (this.hatcheeParent == null || this.hatcheeParent.gender != this.otherParent.gender) && pawn.RaceProps.IsFlesh)
+						if (this.parent.Spawned)
 						{
-							pawn.relations.AddDirectRelation(PawnRelationDefOf.Parent, this.otherParent);
+							FilthMaker.MakeFilth(this.parent.Position, this.parent.Map, ThingDefOf.Filth_AmnioticFluid, 1);
 						}
 					}
-					if (this.parent.Spawned)
+					else
 					{
-						FilthMaker.MakeFilth(this.parent.Position, this.parent.Map, ThingDefOf.Filth_AmnioticFluid, 1);
+						Find.WorldPawns.PassToWorld(pawn, PawnDiscardDecideMode.Discard);
 					}
-				}
-				else
-				{
-					Find.WorldPawns.PassToWorld(pawn, PawnDiscardDecideMode.Discard);
 				}
 			}
-			this.parent.Destroy(DestroyMode.Vanish);
+			finally
+			{
+				this.parent.Destroy(DestroyMode.Vanish);
+			}
 		}
 
 		public override void PreAbsorbStack(Thing otherStack, int count)

@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 using Verse;
 
@@ -24,9 +23,7 @@ namespace RimWorld
 				return string.Empty;
 			}
 			float totalHumanEdibleNutrition = map.resourceCounter.TotalHumanEdibleNutrition;
-			int num = map.mapPawns.FreeColonistsSpawnedCount + (from pr in map.mapPawns.PrisonersOfColony
-			where pr.guest.GetsFood
-			select pr).Count<Pawn>();
+			int num = map.mapPawns.FreeColonistsSpawnedCount + map.mapPawns.PrisonersOfColonyCount;
 			int num2 = Mathf.FloorToInt(totalHumanEdibleNutrition / (float)num);
 			return string.Format("LowFoodDesc".Translate(), totalHumanEdibleNutrition.ToString("F0"), num.ToStringCached(), num2.ToStringCached());
 		}

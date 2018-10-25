@@ -119,22 +119,13 @@ namespace Verse
 						}
 						else if ("NextTendIn".CanTranslate())
 						{
-							stringBuilder.AppendLine("NextTendIn".Translate(new object[]
-							{
-								num.ToStringTicksToPeriod()
-							}));
+							stringBuilder.AppendLine("NextTendIn".Translate(num.ToStringTicksToPeriod()));
 						}
 						else
 						{
-							stringBuilder.AppendLine("NextTreatmentIn".Translate(new object[]
-							{
-								num.ToStringTicksToPeriod()
-							}));
+							stringBuilder.AppendLine("NextTreatmentIn".Translate(num.ToStringTicksToPeriod()));
 						}
-						stringBuilder.AppendLine("TreatmentExpiresIn".Translate(new object[]
-						{
-							this.tendTicksLeft.ToStringTicksToPeriod()
-						}));
+						stringBuilder.AppendLine("TreatmentExpiresIn".Translate(this.tendTicksLeft.ToStringTicksToPeriod()));
 					}
 				}
 				return stringBuilder.ToString().TrimEndNewlines();
@@ -210,10 +201,7 @@ namespace Verse
 			{
 				string text = string.Concat(new string[]
 				{
-					"TextMote_Tended".Translate(new object[]
-					{
-						this.parent.Label
-					}).CapitalizeFirst(),
+					"TextMote_Tended".Translate(this.parent.Label).CapitalizeFirst(),
 					"\n",
 					"Quality".Translate(),
 					" ",

@@ -41,11 +41,7 @@ namespace RimWorld
 				gender.GetLabel(false),
 				")"
 			});
-			string text = "LetterIncidentPsychicDrone".Translate(new object[]
-			{
-				gender.ToString().Translate().ToLower(),
-				level.GetLabel()
-			});
+			string text = "LetterIncidentPsychicDrone".Translate(gender.ToString().Translate().ToLower(), level.GetLabel());
 			Find.LetterStack.ReceiveLetter(label, text, LetterDefOf.NegativeEvent, null);
 		}
 	}

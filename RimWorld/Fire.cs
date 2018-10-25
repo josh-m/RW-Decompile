@@ -74,12 +74,9 @@ namespace RimWorld
 			{
 				if (this.parent != null)
 				{
-					return "FireOn".Translate(new object[]
-					{
-						this.parent.LabelCap
-					});
+					return "FireOn".Translate(this.parent.LabelCap, this.parent);
 				}
-				return "Fire".Translate();
+				return this.def.label;
 			}
 		}
 
@@ -87,10 +84,7 @@ namespace RimWorld
 		{
 			get
 			{
-				return "Burning".Translate() + " (" + "FireSizeLower".Translate(new object[]
-				{
-					(this.fireSize * 100f).ToString("F0")
-				}) + ")";
+				return "Burning".Translate() + " (" + "FireSizeLower".Translate((this.fireSize * 100f).ToString("F0")) + ")";
 			}
 		}
 

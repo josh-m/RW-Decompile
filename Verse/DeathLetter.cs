@@ -55,18 +55,15 @@ namespace Verse
 			select "  " + entry.ToGameStringFromPOV(null, false)).ToLineList(null);
 			if (text2.Length > 0)
 			{
-				text = string.Format("{0}\n\n{1}\n{2}", text, "LastEventsInLife".Translate(new object[]
-				{
-					targetPawn.LabelDefinite()
-				}) + ":", text2);
+				text = string.Format("{0}\n\n{1}\n{2}", text, "LastEventsInLife".Translate(targetPawn.LabelDefinite(), targetPawn.Named("PAWN")) + ":", text2);
 			}
 			DiaNode diaNode = new DiaNode(text);
 			diaNode.options.AddRange(this.Choices);
-			WindowStack arg_133_0 = Find.WindowStack;
+			WindowStack arg_13F_0 = Find.WindowStack;
 			DiaNode nodeRoot = diaNode;
 			Faction relatedFaction = this.relatedFaction;
 			bool radioMode = this.radioMode;
-			arg_133_0.Add(new Dialog_NodeTreeWithFactionInfo(nodeRoot, relatedFaction, false, radioMode, this.title));
+			arg_13F_0.Add(new Dialog_NodeTreeWithFactionInfo(nodeRoot, relatedFaction, false, radioMode, this.title));
 		}
 	}
 }

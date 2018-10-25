@@ -84,14 +84,17 @@ namespace RimWorld
 		{
 			foreach (HostilityResponseMode response in Enum.GetValues(typeof(HostilityResponseMode)))
 			{
-				yield return new Widgets.DropdownMenuElement<HostilityResponseMode>
+				if (response != HostilityResponseMode.Attack || !p.story.WorkTagIsDisabled(WorkTags.Violent))
 				{
-					option = new FloatMenuOption(response.GetLabel(), delegate
+					yield return new Widgets.DropdownMenuElement<HostilityResponseMode>
 					{
-						p.playerSettings.hostilityResponse = response;
-					}, MenuOptionPriority.Default, null, null, 0f, null, null),
-					payload = response
-				};
+						option = new FloatMenuOption(response.GetLabel(), delegate
+						{
+							p.playerSettings.hostilityResponse = response;
+						}, MenuOptionPriority.Default, null, null, 0f, null, null),
+						payload = response
+					};
+				}
 			}
 		}
 	}

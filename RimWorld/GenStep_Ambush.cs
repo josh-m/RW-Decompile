@@ -38,6 +38,9 @@ namespace RimWorld
 			rectTrigger.signalTag = signalTag;
 			rectTrigger.Rect = rect;
 			GenSpawn.Spawn(rectTrigger, rect.CenterCell, map, WipeMode.Vanish);
+			TriggerUnfogged triggerUnfogged = (TriggerUnfogged)ThingMaker.MakeThing(ThingDefOf.TriggerUnfogged, null);
+			triggerUnfogged.signalTag = signalTag;
+			GenSpawn.Spawn(triggerUnfogged, rect.CenterCell, map, WipeMode.Vanish);
 		}
 
 		protected virtual RectTrigger MakeRectTrigger()

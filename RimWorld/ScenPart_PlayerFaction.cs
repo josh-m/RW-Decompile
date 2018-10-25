@@ -40,10 +40,7 @@ namespace RimWorld
 
 		public override string Summary(Scenario scen)
 		{
-			return "ScenPart_PlayerFaction".Translate(new object[]
-			{
-				this.factionDef.label
-			});
+			return "ScenPart_PlayerFaction".Translate(this.factionDef.label);
 		}
 
 		public override void Randomize()

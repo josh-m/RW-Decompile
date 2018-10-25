@@ -173,6 +173,10 @@ namespace Verse
 
 		public static bool AllowAdjacentShot(LocalTargetInfo target, Thing caster)
 		{
+			if (!(caster is Pawn))
+			{
+				return true;
+			}
 			Pawn pawn = target.Thing as Pawn;
 			return pawn == null || !pawn.HostileTo(caster) || pawn.Downed;
 		}

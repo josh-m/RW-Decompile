@@ -41,11 +41,7 @@ namespace Verse.AI
 				}
 				else
 				{
-					Messages.Message("MessageMurderousRageChangedTarget".Translate(new object[]
-					{
-						this.pawn.LabelShort,
-						this.target.Label
-					}).AdjustedFor(this.pawn, "PAWN"), this.pawn, MessageTypeDefOf.NegativeEvent, true);
+					Messages.Message("MessageMurderousRageChangedTarget".Translate(this.pawn.LabelShort, this.target.Label, this.pawn.Named("PAWN"), this.target.Named("TARGET")).AdjustedFor(this.pawn, "PAWN"), this.pawn, MessageTypeDefOf.NegativeEvent, true);
 					base.MentalStateTick();
 				}
 			}
@@ -58,7 +54,7 @@ namespace Verse.AI
 				Log.Error("No target. This should have been checked in this mental state's worker.", false);
 				return string.Empty;
 			}
-			return string.Format(this.def.beginLetter, this.pawn.LabelShort, this.target.LabelShort).AdjustedFor(this.pawn, "PAWN").CapitalizeFirst();
+			return this.def.beginLetter.Formatted(this.pawn.LabelShort, this.target.LabelShort, this.pawn.Named("PAWN"), this.target.Named("TARGET")).AdjustedFor(this.pawn, "PAWN").CapitalizeFirst();
 		}
 
 		private bool TryFindNewTarget()

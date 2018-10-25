@@ -40,6 +40,17 @@ namespace RimWorld.Planet
 
 		public override void Arrived(List<ActiveDropPodInfo> pods, int tile)
 		{
+			for (int i = 0; i < pods.Count; i++)
+			{
+				for (int j = 0; j < pods[i].innerContainer.Count; j++)
+				{
+					Pawn pawn = pods[i].innerContainer[j] as Pawn;
+					if (pawn != null && pawn.RaceProps.Humanlike)
+					{
+						GenGuest.AddPrisonerSoldThoughts(pawn);
+					}
+				}
+			}
 			FactionGiftUtility.GiveGift(pods, this.settlement);
 		}
 
@@ -54,11 +65,7 @@ namespace RimWorld.Planet
 			{
 				return Enumerable.Empty<FloatMenuOption>();
 			}
-			return TransportPodsArrivalActionUtility.GetFloatMenuOptions<TransportPodsArrivalAction_GiveGift>(() => TransportPodsArrivalAction_GiveGift.CanGiveGiftTo(pods, settlement), () => new TransportPodsArrivalAction_GiveGift(settlement), "GiveGiftViaTransportPods".Translate(new object[]
-			{
-				settlement.Faction.Name,
-				FactionGiftUtility.GetGoodwillChange(pods, settlement).ToStringWithSign()
-			}), representative, settlement.Tile);
+			return TransportPodsArrivalActionUtility.GetFloatMenuOptions<TransportPodsArrivalAction_GiveGift>(() => TransportPodsArrivalAction_GiveGift.CanGiveGiftTo(pods, settlement), () => new TransportPodsArrivalAction_GiveGift(settlement), "GiveGiftViaTransportPods".Translate(settlement.Faction.Name, FactionGiftUtility.GetGoodwillChange(pods, settlement).ToStringWithSign()), representative, settlement.Tile);
 		}
 	}
 }

@@ -12,18 +12,18 @@ namespace RimWorld
 		public static DiaNode FactionDialogFor(Pawn negotiator, Faction faction)
 		{
 			Map map = negotiator.Map;
-			Pawn p;
-			string text;
+			Pawn pawn;
+			string value;
 			if (faction.leader != null)
 			{
-				p = faction.leader;
-				text = faction.leader.Name.ToStringFull;
+				pawn = faction.leader;
+				value = faction.leader.Name.ToStringFull;
 			}
 			else
 			{
 				Log.Error("Faction " + faction + " has no leader.", false);
-				p = negotiator;
-				text = faction.Name;
+				pawn = negotiator;
+				value = faction.Name;
 			}
 			DiaNode diaNode;
 			if (faction.PlayerRelationKind == FactionRelationKind.Hostile)
@@ -37,26 +37,15 @@ namespace RimWorld
 				{
 					key = "FactionGreetingHostile";
 				}
-				diaNode = new DiaNode(key.Translate(new object[]
-				{
-					text
-				}).AdjustedFor(p, "PAWN"));
+				diaNode = new DiaNode(key.Translate(value).AdjustedFor(pawn, "PAWN"));
 			}
 			else if (faction.PlayerRelationKind == FactionRelationKind.Neutral)
 			{
-				diaNode = new DiaNode("FactionGreetingWary".Translate(new object[]
-				{
-					text,
-					negotiator.LabelShort
-				}).AdjustedFor(p, "PAWN"));
+				diaNode = new DiaNode("FactionGreetingWary".Translate(value, negotiator.LabelShort, negotiator.Named("NEGOTIATOR"), pawn.Named("LEADER")).AdjustedFor(pawn, "PAWN"));
 			}
 			else
 			{
-				diaNode = new DiaNode("FactionGreetingWarm".Translate(new object[]
-				{
-					text,
-					negotiator.LabelShort
-				}).AdjustedFor(p, "PAWN"));
+				diaNode = new DiaNode("FactionGreetingWarm".Translate(value, negotiator.LabelShort, negotiator.Named("NEGOTIATOR"), pawn.Named("LEADER")).AdjustedFor(pawn, "PAWN"));
 			}
 			if (map != null && map.IsPlayerHome)
 			{
@@ -110,18 +99,11 @@ namespace RimWorld
 
 		private static DiaOption RequestAICoreQuest(Map map, Faction faction, Pawn negotiator)
 		{
-			string text = "RequestAICoreInformation".Translate(new object[]
-			{
-				ThingDefOf.AIPersonaCore.label,
-				1500.ToString()
-			});
+			string text = "RequestAICoreInformation".Translate(ThingDefOf.AIPersonaCore.label, 1500.ToString());
 			if (faction.PlayerGoodwill < 40)
 			{
 				DiaOption diaOption = new DiaOption(text);
-				diaOption.Disable("NeedGoodwill".Translate(new object[]
-				{
-					40.ToString("F0")
-				}));
+				diaOption.Disable("NeedGoodwill".Translate(40.ToString("F0")));
 				return diaOption;
 			}
 			IncidentDef def = IncidentDefOf.Quest_ItemStashAICore;
@@ -132,19 +114,13 @@ namespace RimWorld
 			if (flag || !flag2)
 			{
 				DiaOption diaOption2 = new DiaOption(text);
-				diaOption2.Disable("NoKnownAICore".Translate(new object[]
-				{
-					1500
-				}));
+				diaOption2.Disable("NoKnownAICore".Translate(1500));
 				return diaOption2;
 			}
 			if (FactionDialogMaker.AmountSendableSilver(map) < 1500)
 			{
 				DiaOption diaOption3 = new DiaOption(text);
-				diaOption3.Disable("NeedSilverLaunchable".Translate(new object[]
-				{
-					1500
-				}));
+				diaOption3.Disable("NeedSilverLaunchable".Translate(1500));
 				return diaOption3;
 			}
 			DiaOption diaOption4 = new DiaOption(text);
@@ -156,10 +132,7 @@ namespace RimWorld
 				}
 				Current.Game.GetComponent<GameComponent_OnetimeNotification>().sendAICoreRequestReminder = false;
 			};
-			string text2 = "RequestAICoreInformationResult".Translate(new object[]
-			{
-				faction.leader.LabelIndefinite()
-			}).CapitalizeFirst();
+			string text2 = "RequestAICoreInformationResult".Translate(faction.leader).CapitalizeFirst();
 			diaOption4.link = new DiaNode(text2)
 			{
 				options = 
@@ -172,10 +145,7 @@ namespace RimWorld
 
 		private static DiaOption RequestTraderOption(Map map, Faction faction, Pawn negotiator)
 		{
-			string text = "RequestTrader".Translate(new object[]
-			{
-				15
-			});
+			string text = "RequestTrader".Translate(15);
 			if (faction.PlayerRelationKind != FactionRelationKind.Ally)
 			{
 				DiaOption diaOption = new DiaOption(text);
@@ -192,22 +162,13 @@ namespace RimWorld
 			if (num > 0)
 			{
 				DiaOption diaOption3 = new DiaOption(text);
-				diaOption3.Disable("WaitTime".Translate(new object[]
-				{
-					num.ToStringTicksToPeriod()
-				}));
+				diaOption3.Disable("WaitTime".Translate(num.ToStringTicksToPeriod()));
 				return diaOption3;
 			}
 			DiaOption diaOption4 = new DiaOption(text);
-			DiaNode diaNode = new DiaNode("TraderSent".Translate(new object[]
-			{
-				faction.leader.LabelIndefinite()
-			}).CapitalizeFirst());
+			DiaNode diaNode = new DiaNode("TraderSent".Translate(faction.leader).CapitalizeFirst());
 			diaNode.options.Add(FactionDialogMaker.OKToRoot(faction, negotiator));
-			DiaNode diaNode2 = new DiaNode("ChooseTraderKind".Translate(new object[]
-			{
-				faction.leader.LabelIndefinite()
-			}));
+			DiaNode diaNode2 = new DiaNode("ChooseTraderKind".Translate(faction.leader));
 			foreach (TraderKindDef current in from x in faction.def.caravanTraderKinds
 			where x.requestable
 			select x)
@@ -242,10 +203,7 @@ namespace RimWorld
 
 		private static DiaOption RequestMilitaryAidOption(Map map, Faction faction, Pawn negotiator)
 		{
-			string text = "RequestMilitaryAid".Translate(new object[]
-			{
-				25
-			});
+			string text = "RequestMilitaryAid".Translate(25);
 			if (faction.PlayerRelationKind != FactionRelationKind.Ally)
 			{
 				DiaOption diaOption = new DiaOption(text);
@@ -262,10 +220,7 @@ namespace RimWorld
 			if (num > 0)
 			{
 				DiaOption diaOption3 = new DiaOption(text);
-				diaOption3.Disable("WaitTime".Translate(new object[]
-				{
-					num.ToStringTicksToPeriod()
-				}));
+				diaOption3.Disable("WaitTime".Translate(num.ToStringTicksToPeriod()));
 				return diaOption3;
 			}
 			if (NeutralGroupIncidentUtility.AnyBlockingHostileLord(map, faction))
@@ -287,12 +242,8 @@ namespace RimWorld
 				select x).Distinct<Faction>();
 				if (source.Any<Faction>())
 				{
-					string arg_224_0 = "MilitaryAidConfirmMutualEnemy";
-					object[] expr_1E9 = new object[2];
-					expr_1E9[0] = faction.Name;
-					expr_1E9[1] = (from fa in source
-					select fa.Name).ToCommaList(true);
-					DiaNode diaNode = new DiaNode(arg_224_0.Translate(expr_1E9));
+					DiaNode diaNode = new DiaNode("MilitaryAidConfirmMutualEnemy".Translate(faction.Name, (from fa in source
+					select fa.Name).ToCommaList(true)));
 					DiaOption diaOption6 = new DiaOption("CallConfirm".Translate());
 					diaOption6.action = delegate
 					{
@@ -319,10 +270,7 @@ namespace RimWorld
 
 		private static DiaNode CantMakeItInTime(Faction faction, Pawn negotiator)
 		{
-			return new DiaNode("CantSendMilitaryAidInTime".Translate(new object[]
-			{
-				faction.leader.LabelIndefinite()
-			}).CapitalizeFirst())
+			return new DiaNode("CantSendMilitaryAidInTime".Translate(faction.leader).CapitalizeFirst())
 			{
 				options = 
 				{
@@ -333,10 +281,7 @@ namespace RimWorld
 
 		private static DiaNode FightersSent(Faction faction, Pawn negotiator)
 		{
-			return new DiaNode("MilitaryAidSent".Translate(new object[]
-			{
-				faction.leader.LabelIndefinite()
-			}).CapitalizeFirst())
+			return new DiaNode("MilitaryAidSent".Translate(faction.leader).CapitalizeFirst())
 			{
 				options = 
 				{

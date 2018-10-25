@@ -33,13 +33,7 @@ namespace RimWorld
 			site.GetComponent<TimeoutComp>().StartTimeout(randomInRange * 60000);
 			Find.WorldObjects.Add(site);
 			string text = this.def.letterLabel;
-			string text2 = string.Format(this.def.letterText.AdjustedFor(pawn, "PAWN"), new object[]
-			{
-				randomInRange,
-				pawn.ageTracker.AgeBiologicalYears,
-				pawn.story.Title,
-				SitePartUtility.GetDescriptionDialogue(site, site.parts.FirstOrDefault<SitePart>())
-			}).CapitalizeFirst();
+			string text2 = this.def.letterText.Formatted(randomInRange, pawn.ageTracker.AgeBiologicalYears, pawn.story.Title, SitePartUtility.GetDescriptionDialogue(site, site.parts.FirstOrDefault<SitePart>()), pawn.Named("PAWN")).AdjustedFor(pawn, "PAWN").CapitalizeFirst();
 			Pawn mostImportantColonyRelative = PawnRelationUtility.GetMostImportantColonyRelative(pawn);
 			if (mostImportantColonyRelative != null)
 			{
@@ -47,11 +41,7 @@ namespace RimWorld
 				if (mostImportantRelation != null && mostImportantRelation.opinionOffset > 0)
 				{
 					pawn.relations.relativeInvolvedInRescueQuest = mostImportantColonyRelative;
-					text2 = text2 + "\n\n" + "RelatedPawnInvolvedInQuest".Translate(new object[]
-					{
-						mostImportantColonyRelative.LabelShort,
-						mostImportantRelation.GetGenderSpecificLabel(pawn)
-					}).AdjustedFor(pawn, "PAWN");
+					text2 = text2 + "\n\n" + "RelatedPawnInvolvedInQuest".Translate(mostImportantColonyRelative.LabelShort, mostImportantRelation.GetGenderSpecificLabel(pawn), mostImportantColonyRelative.Named("RELATIVE"), pawn.Named("PAWN")).AdjustedFor(pawn, "PAWN");
 				}
 				else
 				{

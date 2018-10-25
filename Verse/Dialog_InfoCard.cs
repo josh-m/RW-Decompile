@@ -98,6 +98,7 @@ namespace Verse
 			this.doCloseButton = true;
 			this.doCloseX = true;
 			this.absorbInputAroundWindow = true;
+			this.closeOnClickedOutside = true;
 			this.soundAppear = SoundDefOf.InfoCard_Open;
 			this.soundClose = SoundDefOf.InfoCard_Close;
 			StatsReportUtility.Reset();

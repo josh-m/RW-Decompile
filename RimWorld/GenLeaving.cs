@@ -159,15 +159,15 @@ namespace RimWorld
 			}
 		}
 
-		public static bool CanBuildingLeaveResources(Thing diedThing, DestroyMode mode)
+		public static bool CanBuildingLeaveResources(Thing destroyedThing, DestroyMode mode)
 		{
-			if (!(diedThing is Building))
+			if (!(destroyedThing is Building))
 			{
 				return false;
 			}
-			if (mode == DestroyMode.KillFinalize && !diedThing.def.leaveResourcesWhenKilled)
+			if (mode == DestroyMode.Deconstruct && typeof(Frame).IsAssignableFrom(destroyedThing.GetType()))
 			{
-				return false;
+				mode = DestroyMode.Cancel;
 			}
 			switch (mode)
 			{
@@ -176,9 +176,9 @@ namespace RimWorld
 			case DestroyMode.WillReplace:
 				return false;
 			case DestroyMode.KillFinalize:
-				return true;
+				return destroyedThing.def.leaveResourcesWhenKilled;
 			case DestroyMode.Deconstruct:
-				return diedThing.def.resourcesFractionWhenDeconstructed != 0f;
+				return destroyedThing.def.resourcesFractionWhenDeconstructed != 0f;
 			case DestroyMode.FailConstruction:
 				return true;
 			case DestroyMode.Cancel:
@@ -190,28 +190,35 @@ namespace RimWorld
 			}
 		}
 
-		public static Func<int, int> GetBuildingResourcesLeaveCalculator(Thing diedThing, DestroyMode mode)
+		private static Func<int, int> GetBuildingResourcesLeaveCalculator(Thing destroyedThing, DestroyMode mode)
 		{
-			if (!GenLeaving.CanBuildingLeaveResources(diedThing, mode))
+			if (!GenLeaving.CanBuildingLeaveResources(destroyedThing, mode))
 			{
 				return (int count) => 0;
+			}
+			if (mode == DestroyMode.Deconstruct && typeof(Frame).IsAssignableFrom(destroyedThing.GetType()))
+			{
+				mode = DestroyMode.Cancel;
 			}
 			switch (mode)
 			{
 			case DestroyMode.Vanish:
 				return (int count) => 0;
+			case DestroyMode.WillReplace:
+				return (int count) => 0;
 			case DestroyMode.KillFinalize:
 				return (int count) => GenMath.RoundRandom((float)count * 0.5f);
 			case DestroyMode.Deconstruct:
-				return (int count) => GenMath.RoundRandom(Mathf.Min((float)count * diedThing.def.resourcesFractionWhenDeconstructed, (float)(count - 1)));
+				return (int count) => GenMath.RoundRandom(Mathf.Min((float)count * destroyedThing.def.resourcesFractionWhenDeconstructed, (float)(count - 1)));
 			case DestroyMode.FailConstruction:
 				return (int count) => GenMath.RoundRandom((float)count * 0.5f);
 			case DestroyMode.Cancel:
 				return (int count) => GenMath.RoundRandom((float)count * 1f);
 			case DestroyMode.Refund:
 				return (int count) => count;
+			default:
+				throw new ArgumentException("Unknown destroy mode " + mode);
 			}
-			throw new ArgumentException("Unknown destroy mode " + mode);
 		}
 
 		public static void DropFilthDueToDamage(Thing t, float damageDealt)

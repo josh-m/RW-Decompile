@@ -37,14 +37,7 @@ namespace RimWorld.Planet
 		{
 			if (this.ActiveRequest)
 			{
-				return "CaravanRequestInfo".Translate(new object[]
-				{
-					TradeRequestUtility.RequestedThingLabel(this.requestThingDef, this.requestCount).CapitalizeFirst(),
-					GenThing.ThingsToCommaList(this.rewards, true, true, -1).CapitalizeFirst(),
-					(this.expiration - Find.TickManager.TicksGame).ToStringTicksToDays("F1"),
-					(this.requestThingDef.GetStatValueAbstract(StatDefOf.MarketValue, null) * (float)this.requestCount).ToStringMoney(null),
-					GenThing.GetMarketValue(this.rewards).ToStringMoney(null)
-				});
+				return "CaravanRequestInfo".Translate(TradeRequestUtility.RequestedThingLabel(this.requestThingDef, this.requestCount).CapitalizeFirst(), GenThing.ThingsToCommaList(this.rewards, true, true, -1).CapitalizeFirst(), (this.expiration - Find.TickManager.TicksGame).ToStringTicksToDays("F1"), (this.requestThingDef.GetStatValueAbstract(StatDefOf.MarketValue, null) * (float)this.requestCount).ToStringMoney(null), GenThing.GetMarketValue(this.rewards).ToStringMoney(null));
 			}
 			return null;
 		}
@@ -111,27 +104,17 @@ namespace RimWorld.Planet
 				}
 				if (!CaravanInventoryUtility.HasThings(caravan, this.requestThingDef, this.requestCount, new Func<Thing, bool>(this.PlayerCanGive)))
 				{
-					Messages.Message("CommandFulfillTradeOfferFailInsufficient".Translate(new object[]
-					{
-						TradeRequestUtility.RequestedThingLabel(this.requestThingDef, this.requestCount)
-					}), MessageTypeDefOf.RejectInput, false);
+					Messages.Message("CommandFulfillTradeOfferFailInsufficient".Translate(TradeRequestUtility.RequestedThingLabel(this.requestThingDef, this.requestCount)), MessageTypeDefOf.RejectInput, false);
 					return;
 				}
-				Find.WindowStack.Add(Dialog_MessageBox.CreateConfirmation("CommandFulfillTradeOfferConfirm".Translate(new object[]
-				{
-					GenLabel.ThingLabel(this.requestThingDef, null, this.requestCount),
-					GenThing.ThingsToCommaList(this.rewards, true, true, -1)
-				}), delegate
+				Find.WindowStack.Add(Dialog_MessageBox.CreateConfirmation("CommandFulfillTradeOfferConfirm".Translate(GenLabel.ThingLabel(this.requestThingDef, null, this.requestCount), GenThing.ThingsToCommaList(this.rewards, true, true, -1)), delegate
 				{
 					this.Fulfill(caravan);
 				}, false, null));
 			};
 			if (!CaravanInventoryUtility.HasThings(caravan, this.requestThingDef, this.requestCount, new Func<Thing, bool>(this.PlayerCanGive)))
 			{
-				command_Action.Disable("CommandFulfillTradeOfferFailInsufficient".Translate(new object[]
-				{
-					TradeRequestUtility.RequestedThingLabel(this.requestThingDef, this.requestCount)
-				}));
+				command_Action.Disable("CommandFulfillTradeOfferFailInsufficient".Translate(TradeRequestUtility.RequestedThingLabel(this.requestThingDef, this.requestCount)));
 			}
 			return command_Action;
 		}

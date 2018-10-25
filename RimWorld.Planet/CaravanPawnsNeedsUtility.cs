@@ -8,7 +8,7 @@ namespace RimWorld.Planet
 	{
 		public static bool CanEatForNutritionEver(ThingDef food, Pawn pawn)
 		{
-			return food.IsNutritionGivingIngestible && pawn.RaceProps.CanEverEat(food) && food.ingestible.preferability > FoodPreferability.NeverForNutrition && (!food.IsDrug || !pawn.IsTeetotaler());
+			return food.IsNutritionGivingIngestible && pawn.WillEat(food, null) && food.ingestible.preferability > FoodPreferability.NeverForNutrition && (!food.IsDrug || !pawn.IsTeetotaler());
 		}
 
 		public static bool CanEatForNutritionNow(ThingDef food, Pawn pawn)

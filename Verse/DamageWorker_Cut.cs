@@ -47,7 +47,9 @@ namespace Verse
 							enumerable = enumerable.Concat(dinfo.HitPart.parent.GetDirectChildParts());
 						}
 					}
-					list2 = enumerable.Except(dinfo.HitPart).InRandomOrder(null).Take(num2).ToList<BodyPartRecord>();
+					list2 = (from x in enumerable.Except(dinfo.HitPart).InRandomOrder(null).Take(num2)
+					where !x.def.conceptual
+					select x).ToList<BodyPartRecord>();
 				}
 				else
 				{

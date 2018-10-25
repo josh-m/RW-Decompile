@@ -40,7 +40,7 @@ namespace RimWorld
 			}
 			else
 			{
-				nameFull = Find.ActiveLanguageWorker.WithIndefiniteArticle(this.name);
+				nameFull = Find.ActiveLanguageWorker.WithIndefiniteArticle(this.name, false, false);
 			}
 			yield return new Rule_String(prefix + "_nameFull", nameFull);
 			string nameShortIndefinite;
@@ -50,7 +50,7 @@ namespace RimWorld
 			}
 			else
 			{
-				nameShortIndefinite = Find.ActiveLanguageWorker.WithIndefiniteArticle(this.name);
+				nameShortIndefinite = Find.ActiveLanguageWorker.WithIndefiniteArticle(this.name, false, false);
 			}
 			yield return new Rule_String(prefix + "_indefinite", nameShortIndefinite);
 			yield return new Rule_String(prefix + "_nameIndef", nameShortIndefinite);
@@ -61,7 +61,7 @@ namespace RimWorld
 			}
 			else
 			{
-				nameShortDefinite = Find.ActiveLanguageWorker.WithDefiniteArticle(this.name);
+				nameShortDefinite = Find.ActiveLanguageWorker.WithDefiniteArticle(this.name, false, false);
 			}
 			yield return new Rule_String(prefix + "_definite", nameShortDefinite);
 			yield return new Rule_String(prefix + "_nameDef", nameShortDefinite);

@@ -92,9 +92,16 @@ namespace RimWorld
 
 		public static void Notify_ColonistUnavailable(Pawn pawn)
 		{
-			foreach (Bill current in BillUtility.GlobalBills())
+			try
 			{
-				current.ValidateSettings();
+				foreach (Bill current in BillUtility.GlobalBills())
+				{
+					current.ValidateSettings();
+				}
+			}
+			catch (Exception arg)
+			{
+				Log.Error("Could not notify bills: " + arg, false);
 			}
 		}
 

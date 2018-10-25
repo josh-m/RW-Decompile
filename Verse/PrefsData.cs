@@ -1,3 +1,4 @@
+using RimWorld;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -11,6 +12,12 @@ namespace Verse
 		public float volumeMusic = 0.4f;
 
 		public float volumeAmbient = 1f;
+
+		public int screenWidth;
+
+		public int screenHeight;
+
+		public bool fullscreen;
 
 		public float uiScale = 1f;
 
@@ -71,6 +78,14 @@ namespace Verse
 			}
 			AudioListener.volume = this.volumeGame;
 			Application.runInBackground = this.runInBackground;
+			if (this.screenWidth == 0 || this.screenHeight == 0)
+			{
+				ResolutionUtility.SetNativeResolutionRaw();
+			}
+			else
+			{
+				ResolutionUtility.SetResolutionRaw(this.screenWidth, this.screenHeight, this.fullscreen);
+			}
 		}
 	}
 }

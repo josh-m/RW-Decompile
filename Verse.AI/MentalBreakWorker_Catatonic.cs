@@ -10,7 +10,7 @@ namespace Verse.AI
 			return pawn.IsColonist && pawn.Spawned && base.BreakCanOccur(pawn);
 		}
 
-		public override bool TryStart(Pawn pawn, Thought reason, bool causedByMood)
+		public override bool TryStart(Pawn pawn, string reason, bool causedByMood)
 		{
 			pawn.health.AddHediff(HediffDefOf.CatatonicBreakdown, null, null, null);
 			base.TrySendLetter(pawn, "LetterCatatonicMentalBreak", reason);

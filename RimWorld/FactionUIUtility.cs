@@ -73,10 +73,7 @@ namespace RimWorld
 					{
 						if (faction.HostileTo(current))
 						{
-							stringBuilder.Append("HostileTo".Translate(new object[]
-							{
-								current.Name
-							}));
+							stringBuilder.Append("HostileTo".Translate(current.Name));
 							if (FactionUIUtility.showAll)
 							{
 								if (current.IsPlayer)
@@ -144,37 +141,21 @@ namespace RimWorld
 						{
 							if (playerRelationKind == FactionRelationKind.Hostile)
 							{
-								text3 += "CurrentGoodwillTip_Hostile".Translate(new object[]
-								{
-									0.ToString("F0")
-								});
+								text3 += "CurrentGoodwillTip_Hostile".Translate(0.ToString("F0"));
 							}
 						}
 						else
 						{
-							text3 += "CurrentGoodwillTip_Neutral".Translate(new object[]
-							{
-								0.ToString("F0"),
-								75.ToString("F0")
-							});
+							text3 += "CurrentGoodwillTip_Neutral".Translate(0.ToString("F0"), 75.ToString("F0"));
 						}
 					}
 					else
 					{
-						text3 += "CurrentGoodwillTip_Ally".Translate(new object[]
-						{
-							0.ToString("F0")
-						});
+						text3 += "CurrentGoodwillTip_Ally".Translate(0.ToString("F0"));
 					}
 					if (faction.def.goodwillDailyGain > 0f || faction.def.goodwillDailyFall > 0f)
 					{
-						text3 = text3 + "\n\n" + "CurrentGoodwillTip_NaturalGoodwill".Translate(new object[]
-						{
-							faction.def.naturalColonyGoodwill.min.ToString("F0"),
-							faction.def.naturalColonyGoodwill.max.ToString("F0"),
-							faction.def.goodwillDailyGain.ToString("0.#"),
-							faction.def.goodwillDailyFall.ToString("0.#")
-						});
+						text3 = text3 + "\n\n" + "CurrentGoodwillTip_NaturalGoodwill".Translate(faction.def.naturalColonyGoodwill.min.ToString("F0"), faction.def.naturalColonyGoodwill.max.ToString("F0"), faction.def.goodwillDailyGain.ToString("0.#"), faction.def.goodwillDailyFall.ToString("0.#"));
 					}
 				}
 				TooltipHandler.TipRegion(rect4, text3);

@@ -58,10 +58,7 @@ namespace RimWorld
 		{
 			if (this.Map.listerBuildings.ColonistsHaveBuilding((Thing b) => b.def.IsCommsConsole))
 			{
-				Messages.Message("MessageShipHasLeftCommsRange".Translate(new object[]
-				{
-					this.FullTitle
-				}), MessageTypeDefOf.SituationResolved, true);
+				Messages.Message("MessageShipHasLeftCommsRange".Translate(this.FullTitle), MessageTypeDefOf.SituationResolved, true);
 			}
 			this.passingShipManager.RemoveShip(this);
 		}
@@ -88,10 +85,7 @@ namespace RimWorld
 
 		public FloatMenuOption CommFloatMenuOption(Building_CommsConsole console, Pawn negotiator)
 		{
-			string label = "CallOnRadio".Translate(new object[]
-			{
-				this.GetCallLabel()
-			});
+			string label = "CallOnRadio".Translate(this.GetCallLabel());
 			Action action = delegate
 			{
 				if (!Building_OrbitalTradeBeacon.AllPowered(this.Map).Any<Building_OrbitalTradeBeacon>())

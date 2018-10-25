@@ -66,7 +66,7 @@ namespace Verse
 
 		public static bool drawGlow;
 
-		public static bool drawFactions;
+		public static bool drawAvoidGrid;
 
 		public static bool drawLords;
 

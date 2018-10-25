@@ -84,7 +84,7 @@ namespace RimWorld
 			{
 				return;
 			}
-			string text = string.Format(this.def.beginLetter.AdjustedFor(this.pawn, "PAWN"), this.pawn.LabelCap);
+			string text = this.def.beginLetter.Formatted(this.pawn.LabelCap, this.pawn.Named("PAWN")).AdjustedFor(this.pawn, "PAWN");
 			string label = (this.def.beginLetterLabel ?? this.def.LabelCap).CapitalizeFirst() + ": " + this.pawn.LabelShortCap;
 			Find.LetterStack.ReceiveLetter(label, text, this.def.beginLetterDef, this.pawn, null, null);
 		}
@@ -99,7 +99,7 @@ namespace RimWorld
 			{
 				return;
 			}
-			string text = string.Format(this.def.endMessage.AdjustedFor(this.pawn, "PAWN"), this.pawn.LabelCap);
+			string text = this.def.endMessage.Formatted(this.pawn.LabelCap, this.pawn.Named("PAWN")).AdjustedFor(this.pawn, "PAWN");
 			Messages.Message(text, this.pawn, MessageTypeDefOf.NeutralEvent, true);
 		}
 	}

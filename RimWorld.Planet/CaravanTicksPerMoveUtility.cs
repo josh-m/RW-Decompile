@@ -111,10 +111,7 @@ namespace RimWorld.Planet
 						"TilesPerDay".Translate()
 					}));
 					explanation.AppendLine();
-					explanation.Append("  " + "MultiplierForCarriedMass".Translate(new object[]
-					{
-						moveSpeedFactorFromMass.ToStringPercent()
-					}));
+					explanation.Append("  " + "MultiplierForCarriedMass".Translate(moveSpeedFactorFromMass.ToStringPercent()));
 				}
 				int num5 = Mathf.Max(Mathf.RoundToInt(num / moveSpeedFactorFromMass), 1);
 				if (explanation != null)

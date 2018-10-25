@@ -33,13 +33,8 @@ namespace RimWorld
 					pawn = current;
 				}
 			}
-			string text = JoyUtility.JoyKindsOnMapString(pawn.Map);
-			return "BoredomDesc".Translate(new object[]
-			{
-				stringBuilder.ToString().TrimEndNewlines(),
-				pawn.LabelShort,
-				text
-			});
+			string value = JoyUtility.JoyKindsOnMapString(pawn.Map);
+			return "BoredomDesc".Translate(stringBuilder.ToString().TrimEndNewlines(), pawn.LabelShort, value, pawn.Named("PAWN"));
 		}
 
 		[DebuggerHidden]

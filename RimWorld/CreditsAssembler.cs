@@ -71,10 +71,7 @@ namespace RimWorld
 			{
 				if (lang.info.credits.Count > 0)
 				{
-					yield return new CreditRecord_Title("Credits_TitleLanguage".Translate(new object[]
-					{
-						lang.FriendlyNameEnglish
-					}));
+					yield return new CreditRecord_Title("Credits_TitleLanguage".Translate(lang.FriendlyNameEnglish));
 				}
 				foreach (CreditsEntry langCred in lang.info.credits)
 				{

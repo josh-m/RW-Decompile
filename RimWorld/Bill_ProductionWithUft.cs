@@ -16,10 +16,7 @@ namespace RimWorld
 				{
 					return (string.Empty + base.StatusString).Trim();
 				}
-				return ("BoundWorkerIs".Translate(new object[]
-				{
-					this.BoundWorker.LabelShort
-				}) + base.StatusString).Trim();
+				return ("BoundWorkerIs".Translate(this.BoundWorker.LabelShort, this.BoundWorker) + base.StatusString).Trim();
 			}
 		}
 

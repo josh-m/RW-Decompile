@@ -344,6 +344,12 @@ namespace Verse
 		}
 
 		[DebugOutput, ModeRestrictionPlay]
+		public static void SunAngle()
+		{
+			GenCelestial.LogSunAngleForYear();
+		}
+
+		[DebugOutput, ModeRestrictionPlay]
 		public static void FallColor()
 		{
 			PlantUtility.LogFallColorForYear();

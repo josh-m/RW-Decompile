@@ -44,32 +44,24 @@ namespace Verse.AI
 			return !TutorSystem.TutorialMode || pawn.Faction != Faction.OfPlayer;
 		}
 
-		public virtual bool TryStart(Pawn pawn, Thought reason, bool causedByMood)
+		public virtual bool TryStart(Pawn pawn, string reason, bool causedByMood)
 		{
-			string text = (reason == null) ? null : reason.LabelCap;
-			MentalStateHandler arg_34_0 = pawn.mindState.mentalStateHandler;
+			MentalStateHandler arg_21_0 = pawn.mindState.mentalStateHandler;
 			MentalStateDef mentalState = this.def.mentalState;
-			string reason2 = text;
-			return arg_34_0.TryStartMentalState(mentalState, reason2, false, causedByMood, null, false);
+			return arg_21_0.TryStartMentalState(mentalState, reason, false, causedByMood, null, false);
 		}
 
-		protected bool TrySendLetter(Pawn pawn, string textKey, Thought reason)
+		protected bool TrySendLetter(Pawn pawn, string textKey, string reason)
 		{
 			if (!PawnUtility.ShouldSendNotificationAbout(pawn))
 			{
 				return false;
 			}
 			string label = this.def.LabelCap + ": " + pawn.LabelShortCap;
-			string text = textKey.Translate(new object[]
-			{
-				pawn.Label
-			}).CapitalizeFirst();
+			string text = textKey.Translate(pawn.Label, pawn.Named("PAWN")).CapitalizeFirst();
 			if (reason != null)
 			{
-				text = text + "\n\n" + "FinalStraw".Translate(new object[]
-				{
-					reason.LabelCap
-				});
+				text = text + "\n\n" + reason;
 			}
 			text = text.AdjustedFor(pawn, "PAWN");
 			Find.LetterStack.ReceiveLetter(label, text, LetterDefOf.NegativeEvent, pawn, null, null);

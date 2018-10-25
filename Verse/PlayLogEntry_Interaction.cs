@@ -104,8 +104,6 @@ namespace Verse
 			if (pov == this.initiator)
 			{
 				request.IncludesBare.Add(this.intDef.logRulesInitiator);
-				request.Rules.AddRange(GrammarUtility.RulesForPawn("ME", this.initiator, request.Constants));
-				request.Rules.AddRange(GrammarUtility.RulesForPawn("OTHER", this.recipient, request.Constants));
 				request.Rules.AddRange(GrammarUtility.RulesForPawn("INITIATOR", this.initiator, request.Constants));
 				request.Rules.AddRange(GrammarUtility.RulesForPawn("RECIPIENT", this.recipient, request.Constants));
 				text = GrammarResolver.Resolve("r_logentry", request, "interaction from initiator", forceLog, null);
@@ -120,8 +118,6 @@ namespace Verse
 				{
 					request.IncludesBare.Add(this.intDef.logRulesInitiator);
 				}
-				request.Rules.AddRange(GrammarUtility.RulesForPawn("ME", this.recipient, request.Constants));
-				request.Rules.AddRange(GrammarUtility.RulesForPawn("OTHER", this.initiator, request.Constants));
 				request.Rules.AddRange(GrammarUtility.RulesForPawn("INITIATOR", this.initiator, request.Constants));
 				request.Rules.AddRange(GrammarUtility.RulesForPawn("RECIPIENT", this.recipient, request.Constants));
 				text = GrammarResolver.Resolve("r_logentry", request, "interaction from recipient", forceLog, null);

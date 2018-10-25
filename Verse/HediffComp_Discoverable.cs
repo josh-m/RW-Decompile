@@ -65,26 +65,15 @@ namespace Verse
 					string text;
 					if (!this.Props.discoverLetterText.NullOrEmpty())
 					{
-						text = string.Format(this.Props.discoverLetterText, base.Pawn.LabelIndefinite()).AdjustedFor(base.Pawn, "PAWN").CapitalizeFirst();
+						text = this.Props.discoverLetterText.Formatted(base.Pawn.LabelIndefinite(), base.Pawn.Named("PAWN")).AdjustedFor(base.Pawn, "PAWN").CapitalizeFirst();
 					}
 					else if (this.parent.Part == null)
 					{
-						text = "NewDisease".Translate(new object[]
-						{
-							base.Pawn.LabelIndefinite(),
-							base.Def.label,
-							base.Pawn.LabelDefinite()
-						}).AdjustedFor(base.Pawn, "PAWN").CapitalizeFirst();
+						text = "NewDisease".Translate(base.Pawn.Named("PAWN"), base.Def.label, base.Pawn.LabelDefinite()).AdjustedFor(base.Pawn, "PAWN").CapitalizeFirst();
 					}
 					else
 					{
-						text = "NewPartDisease".Translate(new object[]
-						{
-							base.Pawn.LabelIndefinite(),
-							this.parent.Part.Label,
-							base.Pawn.LabelDefinite(),
-							base.Def.label
-						}).AdjustedFor(base.Pawn, "PAWN").CapitalizeFirst();
+						text = "NewPartDisease".Translate(base.Pawn.Named("PAWN"), this.parent.Part.Label, base.Pawn.LabelDefinite(), base.Def.label).AdjustedFor(base.Pawn, "PAWN").CapitalizeFirst();
 					}
 					Find.LetterStack.ReceiveLetter(label, text, (this.Props.letterType == null) ? LetterDefOf.NegativeEvent : this.Props.letterType, base.Pawn, null, null);
 				}
@@ -93,26 +82,15 @@ namespace Verse
 					string text2;
 					if (!this.Props.discoverLetterText.NullOrEmpty())
 					{
-						text2 = string.Format(this.Props.discoverLetterText, base.Pawn.LabelIndefinite()).AdjustedFor(base.Pawn, "PAWN").CapitalizeFirst();
+						text2 = this.Props.discoverLetterText.Formatted(base.Pawn.LabelIndefinite(), base.Pawn.Named("PAWN")).AdjustedFor(base.Pawn, "PAWN").CapitalizeFirst();
 					}
 					else if (this.parent.Part == null)
 					{
-						text2 = "NewDiseaseAnimal".Translate(new object[]
-						{
-							base.Pawn.LabelShort,
-							base.Def.LabelCap,
-							base.Pawn.LabelDefinite()
-						}).AdjustedFor(base.Pawn, "PAWN").CapitalizeFirst();
+						text2 = "NewDiseaseAnimal".Translate(base.Pawn.LabelShort, base.Def.LabelCap, base.Pawn.LabelDefinite(), base.Pawn.Named("PAWN")).AdjustedFor(base.Pawn, "PAWN").CapitalizeFirst();
 					}
 					else
 					{
-						text2 = "NewPartDiseaseAnimal".Translate(new object[]
-						{
-							base.Pawn.LabelShort,
-							this.parent.Part.Label,
-							base.Pawn.LabelDefinite(),
-							base.Def.LabelCap
-						}).AdjustedFor(base.Pawn, "PAWN").CapitalizeFirst();
+						text2 = "NewPartDiseaseAnimal".Translate(base.Pawn.LabelShort, this.parent.Part.Label, base.Pawn.LabelDefinite(), base.Def.LabelCap, base.Pawn.Named("PAWN")).AdjustedFor(base.Pawn, "PAWN").CapitalizeFirst();
 					}
 					Messages.Message(text2, base.Pawn, (this.Props.messageType == null) ? MessageTypeDefOf.NegativeHealthEvent : this.Props.messageType, true);
 				}

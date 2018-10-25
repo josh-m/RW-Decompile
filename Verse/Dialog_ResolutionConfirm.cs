@@ -1,3 +1,4 @@
+using RimWorld;
 using System;
 using UnityEngine;
 
@@ -63,10 +64,7 @@ namespace Verse
 		public override void DoWindowContents(Rect inRect)
 		{
 			Text.Font = GameFont.Small;
-			string label = "ConfirmResolutionChange".Translate(new object[]
-			{
-				Mathf.CeilToInt(this.TimeUntilRevert)
-			});
+			string label = "ConfirmResolutionChange".Translate(Mathf.CeilToInt(this.TimeUntilRevert));
 			Widgets.Label(new Rect(0f, 0f, inRect.width, inRect.height), label);
 			if (Widgets.ButtonText(new Rect(0f, inRect.height - 35f, inRect.width / 2f - 20f, 35f), "ResolutionKeep".Translate(), true, false, true))
 			{
@@ -93,7 +91,10 @@ namespace Verse
 					this.oldFullscreen
 				}), false);
 			}
-			Screen.SetResolution(this.oldRes.x, this.oldRes.z, this.oldFullscreen);
+			ResolutionUtility.SetResolutionRaw(this.oldRes.x, this.oldRes.z, this.oldFullscreen);
+			Prefs.FullScreen = this.oldFullscreen;
+			Prefs.ScreenWidth = this.oldRes.x;
+			Prefs.ScreenHeight = this.oldRes.z;
 			Prefs.UIScale = this.oldUIScale;
 		}
 

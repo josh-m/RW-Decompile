@@ -78,7 +78,16 @@ namespace RimWorld
 
 		private bool TryFindDestinationTileActual(int rootTile, int minDist, out int tile)
 		{
-			return TileFinder.TryFindPassableTileWithTraversalDistance(rootTile, minDist, 800, out tile, (int x) => !Find.WorldObjects.AnyWorldObjectAt(x) && Find.WorldGrid[x].biome.canBuildBase && Find.WorldGrid[x].biome.canAutoChoose, true, true);
+			for (int i = 0; i < 2; i++)
+			{
+				bool canTraverseImpassable = i == 1;
+				if (TileFinder.TryFindPassableTileWithTraversalDistance(rootTile, minDist, 800, out tile, (int x) => !Find.WorldObjects.AnyWorldObjectAt(x) && Find.WorldGrid[x].biome.canBuildBase && Find.WorldGrid[x].biome.canAutoChoose, true, true, canTraverseImpassable))
+				{
+					return true;
+				}
+			}
+			tile = -1;
+			return false;
 		}
 	}
 }

@@ -29,11 +29,7 @@ namespace RimWorld
 
 		public override string Summary(Scenario scen)
 		{
-			return "ScenPart_OnPawnDeathExplode".Translate(new object[]
-			{
-				this.damage.label,
-				this.radius.ToString()
-			});
+			return "ScenPart_OnPawnDeathExplode".Translate(this.damage.label, this.radius.ToString());
 		}
 
 		public override void DoEditInterface(Listing_ScenEdit listing)

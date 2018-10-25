@@ -51,10 +51,7 @@ namespace RimWorld
 					accept.resolveTree = true;
 					if (!TradeUtility.ColonyHasEnoughSilver(this.map, this.fee))
 					{
-						accept.Disable("NeedSilverLaunchable".Translate(new object[]
-						{
-							this.fee.ToString()
-						}));
+						accept.Disable("NeedSilverLaunchable".Translate(this.fee.ToString()));
 					}
 					yield return accept;
 					yield return base.Option_Reject;

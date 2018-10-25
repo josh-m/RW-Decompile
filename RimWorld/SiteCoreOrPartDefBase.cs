@@ -36,7 +36,7 @@ namespace RimWorld
 		public string arrivedLetter;
 
 		[MustTranslate]
-		public string arrivedLetterLabel;
+		public string arrivedLetterLabelPart;
 
 		public LetterDef arrivedLetterDef;
 

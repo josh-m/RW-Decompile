@@ -63,10 +63,7 @@ namespace Verse
 				{
 					if (this.Visible && PawnUtility.ShouldSendNotificationAbout(this.pawn))
 					{
-						Messages.Message("MessageMiscarriedStarvation".Translate(new object[]
-						{
-							this.pawn.LabelIndefinite()
-						}).CapitalizeFirst(), this.pawn, MessageTypeDefOf.NegativeHealthEvent, true);
+						Messages.Message("MessageMiscarriedStarvation".Translate(this.pawn).CapitalizeFirst(), this.pawn, MessageTypeDefOf.NegativeHealthEvent, true);
 					}
 					this.Miscarry();
 					return;
@@ -75,10 +72,7 @@ namespace Verse
 				{
 					if (this.Visible && PawnUtility.ShouldSendNotificationAbout(this.pawn))
 					{
-						Messages.Message("MessageMiscarriedPoorHealth".Translate(new object[]
-						{
-							this.pawn.LabelIndefinite()
-						}).CapitalizeFirst(), this.pawn, MessageTypeDefOf.NegativeHealthEvent, true);
+						Messages.Message("MessageMiscarriedPoorHealth".Translate(this.pawn).CapitalizeFirst(), this.pawn, MessageTypeDefOf.NegativeHealthEvent, true);
 					}
 					this.Miscarry();
 					return;
@@ -89,10 +83,7 @@ namespace Verse
 			{
 				if (this.Visible && PawnUtility.ShouldSendNotificationAbout(this.pawn))
 				{
-					Messages.Message("MessageGaveBirth".Translate(new object[]
-					{
-						this.pawn.LabelIndefinite()
-					}).CapitalizeFirst(), this.pawn, MessageTypeDefOf.PositiveEvent, true);
+					Messages.Message("MessageGaveBirth".Translate(this.pawn).CapitalizeFirst(), this.pawn, MessageTypeDefOf.PositiveEvent, true);
 				}
 				Hediff_Pregnant.DoBirthSpawn(this.pawn, this.father);
 				this.pawn.health.RemoveHediff(this);

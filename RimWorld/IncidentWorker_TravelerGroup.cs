@@ -56,28 +56,17 @@ namespace RimWorld
 			string text;
 			if (list.Count == 1)
 			{
-				text = "SingleTravelerPassing".Translate(new object[]
-				{
-					list[0].story.Title,
-					parms.faction.Name,
-					list[0].Name
-				});
+				text = "SingleTravelerPassing".Translate(list[0].story.Title, parms.faction.Name, list[0].Name.ToStringFull, list[0].Named("PAWN"));
 				text = text.AdjustedFor(list[0], "PAWN");
 			}
 			else
 			{
-				text = "GroupTravelersPassing".Translate(new object[]
-				{
-					parms.faction.Name
-				});
+				text = "GroupTravelersPassing".Translate(parms.faction.Name);
 			}
 			Messages.Message(text, list[0], MessageTypeDefOf.NeutralEvent, true);
 			LordJob_TravelAndExit lordJob = new LordJob_TravelAndExit(travelDest);
 			LordMaker.MakeNewLord(parms.faction, lordJob, map, list);
-			PawnRelationUtility.Notify_PawnsSeenByPlayer_Letter_Send(list, "LetterRelatedPawnsNeutralGroup".Translate(new object[]
-			{
-				Faction.OfPlayer.def.pawnsPlural
-			}), LetterDefOf.NeutralEvent, true, true);
+			PawnRelationUtility.Notify_PawnsSeenByPlayer_Letter_Send(list, "LetterRelatedPawnsNeutralGroup".Translate(Faction.OfPlayer.def.pawnsPlural), LetterDefOf.NeutralEvent, true, true);
 			return true;
 		}
 

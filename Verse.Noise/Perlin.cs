@@ -5,27 +5,27 @@ namespace Verse.Noise
 {
 	public class Perlin : ModuleBase
 	{
-		private double m_frequency = 1.0;
+		private double frequency = 1.0;
 
-		private double m_lacunarity = 2.0;
+		private double lacunarity = 2.0;
 
-		private QualityMode m_quality = QualityMode.Medium;
+		private QualityMode quality = QualityMode.Medium;
 
-		private int m_octaveCount = 6;
+		private int octaveCount = 6;
 
-		private double m_persistence = 0.5;
+		private double persistence = 0.5;
 
-		private int m_seed;
+		private int seed;
 
 		public double Frequency
 		{
 			get
 			{
-				return this.m_frequency;
+				return this.frequency;
 			}
 			set
 			{
-				this.m_frequency = value;
+				this.frequency = value;
 			}
 		}
 
@@ -33,11 +33,11 @@ namespace Verse.Noise
 		{
 			get
 			{
-				return this.m_lacunarity;
+				return this.lacunarity;
 			}
 			set
 			{
-				this.m_lacunarity = value;
+				this.lacunarity = value;
 			}
 		}
 
@@ -45,11 +45,11 @@ namespace Verse.Noise
 		{
 			get
 			{
-				return this.m_quality;
+				return this.quality;
 			}
 			set
 			{
-				this.m_quality = value;
+				this.quality = value;
 			}
 		}
 
@@ -57,11 +57,11 @@ namespace Verse.Noise
 		{
 			get
 			{
-				return this.m_octaveCount;
+				return this.octaveCount;
 			}
 			set
 			{
-				this.m_octaveCount = Mathf.Clamp(value, 1, 30);
+				this.octaveCount = Mathf.Clamp(value, 1, 30);
 			}
 		}
 
@@ -69,11 +69,11 @@ namespace Verse.Noise
 		{
 			get
 			{
-				return this.m_persistence;
+				return this.persistence;
 			}
 			set
 			{
-				this.m_persistence = value;
+				this.persistence = value;
 			}
 		}
 
@@ -81,11 +81,11 @@ namespace Verse.Noise
 		{
 			get
 			{
-				return this.m_seed;
+				return this.seed;
 			}
 			set
 			{
-				this.m_seed = value;
+				this.seed = value;
 			}
 		}
 
@@ -107,21 +107,21 @@ namespace Verse.Noise
 		{
 			double num = 0.0;
 			double num2 = 1.0;
-			x *= this.m_frequency;
-			y *= this.m_frequency;
-			z *= this.m_frequency;
-			for (int i = 0; i < this.m_octaveCount; i++)
+			x *= this.frequency;
+			y *= this.frequency;
+			z *= this.frequency;
+			for (int i = 0; i < this.octaveCount; i++)
 			{
 				double x2 = Utils.MakeInt32Range(x);
 				double y2 = Utils.MakeInt32Range(y);
 				double z2 = Utils.MakeInt32Range(z);
-				long seed = (long)(this.m_seed + i) & (long)((ulong)-1);
-				double num3 = Utils.GradientCoherentNoise3D(x2, y2, z2, seed, this.m_quality);
-				num += num3 * num2;
-				x *= this.m_lacunarity;
-				y *= this.m_lacunarity;
-				z *= this.m_lacunarity;
-				num2 *= this.m_persistence;
+				long num3 = (long)(this.seed + i) & (long)((ulong)-1);
+				double num4 = Utils.GradientCoherentNoise3D(x2, y2, z2, num3, this.quality);
+				num += num4 * num2;
+				x *= this.lacunarity;
+				y *= this.lacunarity;
+				z *= this.lacunarity;
+				num2 *= this.persistence;
 			}
 			return num;
 		}

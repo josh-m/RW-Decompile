@@ -55,15 +55,7 @@ namespace RimWorld
 			PawnGenerationRequest request = new PawnGenerationRequest(PawnKindDefOf.SpaceRefugee, null, PawnGenerationContext.NonPlayer, -1, false, false, false, false, true, false, 20f, false, true, true, false, false, false, false, null, null, null, null, null, null, null, null);
 			Pawn refugee = PawnGenerator.GeneratePawn(request);
 			refugee.relations.everSeenByPlayer = true;
-			string text = "RefugeeChasedInitial".Translate(new object[]
-			{
-				refugee.Name.ToStringFull,
-				refugee.story.Title,
-				faction.def.pawnsPlural,
-				faction.Name,
-				refugee.ageTracker.AgeBiologicalYears,
-				PawnUtility.PawnKindsToCommaList(pawnKinds, true)
-			});
+			string text = "RefugeeChasedInitial".Translate(refugee.Name.ToStringFull, refugee.story.Title, faction.def.pawnsPlural, faction.Name, refugee.ageTracker.AgeBiologicalYears, PawnUtility.PawnKindsToCommaList(pawnKinds, true), refugee.Named("PAWN"));
 			text = text.AdjustedFor(refugee, "PAWN");
 			PawnRelationUtility.TryAppendRelationsWithColonistsInfo(ref text, refugee);
 			DiaNode diaNode = new DiaNode(text);
@@ -78,10 +70,7 @@ namespace RimWorld
 			};
 			diaOption.resolveTree = true;
 			diaNode.options.Add(diaOption);
-			string text2 = "RefugeeChasedRejected".Translate(new object[]
-			{
-				refugee.LabelShort
-			});
+			string text2 = "RefugeeChasedRejected".Translate(refugee.LabelShort, refugee);
 			DiaNode diaNode2 = new DiaNode(text2);
 			DiaOption diaOption2 = new DiaOption("OK".Translate());
 			diaOption2.resolveTree = true;
@@ -93,10 +82,7 @@ namespace RimWorld
 			};
 			diaOption3.link = diaNode2;
 			diaNode.options.Add(diaOption3);
-			string title = "RefugeeChasedTitle".Translate(new object[]
-			{
-				map.Parent.Label
-			});
+			string title = "RefugeeChasedTitle".Translate(map.Parent.Label);
 			Find.WindowStack.Add(new Dialog_NodeTreeWithFactionInfo(diaNode, faction, true, true, title));
 			Find.Archive.Add(new ArchivedDialog(diaNode.text, title, faction));
 			return true;
@@ -104,7 +90,8 @@ namespace RimWorld
 
 		private bool TryFindSpawnSpot(Map map, out IntVec3 spawnSpot)
 		{
-			return CellFinder.TryFindRandomEdgeCellWith((IntVec3 c) => map.reachability.CanReachColony(c), map, CellFinder.EdgeRoadChance_Neutral, out spawnSpot);
+			Predicate<IntVec3> validator = (IntVec3 c) => map.reachability.CanReachColony(c) && !c.Fogged(map);
+			return CellFinder.TryFindRandomEdgeCellWith(validator, map, CellFinder.EdgeRoadChance_Neutral, out spawnSpot);
 		}
 
 		private bool TryFindEnemyFaction(out Faction enemyFac)

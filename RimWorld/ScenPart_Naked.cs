@@ -8,10 +8,7 @@ namespace RimWorld
 	{
 		public override string Summary(Scenario scen)
 		{
-			return "ScenPart_PawnsAreNaked".Translate(new object[]
-			{
-				this.context.ToStringHuman()
-			}).CapitalizeFirst();
+			return "ScenPart_PawnsAreNaked".Translate(this.context.ToStringHuman()).CapitalizeFirst();
 		}
 
 		protected override void ModifyPawnPostGenerate(Pawn pawn, bool redressed)

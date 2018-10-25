@@ -19,7 +19,7 @@ namespace RimWorld
 		{
 			this.defaultLabel = "DesignatorForbid".Translate();
 			this.defaultDesc = "DesignatorForbidDesc".Translate();
-			this.icon = ContentFinder<Texture2D>.Get("UI/Commands/Halt", true);
+			this.icon = ContentFinder<Texture2D>.Get("UI/Designators/ForbidOn", true);
 			this.soundDragSustain = SoundDefOf.Designate_DragStandard;
 			this.soundDragChanged = SoundDefOf.Designate_DragStandard_Changed;
 			this.useMouseIcon = true;

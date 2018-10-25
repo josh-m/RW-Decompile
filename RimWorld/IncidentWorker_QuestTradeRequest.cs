@@ -78,16 +78,7 @@ namespace RimWorld
 			{
 				return false;
 			}
-			string text = "LetterCaravanRequest".Translate(new object[]
-			{
-				settlementBase.Label,
-				TradeRequestUtility.RequestedThingLabel(component.requestThingDef, component.requestCount).CapitalizeFirst(),
-				(component.requestThingDef.GetStatValueAbstract(StatDefOf.MarketValue, null) * (float)component.requestCount).ToStringMoney("F0"),
-				GenThing.ThingsToCommaList(component.rewards, true, true, -1).CapitalizeFirst(),
-				GenThing.GetMarketValue(component.rewards).ToStringMoney("F0"),
-				(component.expiration - Find.TickManager.TicksGame).ToStringTicksToDays("F0"),
-				CaravanArrivalTimeEstimator.EstimatedTicksToArrive(map.Tile, settlementBase.Tile, null).ToStringTicksToDays("0.#")
-			});
+			string text = "LetterCaravanRequest".Translate(settlementBase.Label, TradeRequestUtility.RequestedThingLabel(component.requestThingDef, component.requestCount).CapitalizeFirst(), (component.requestThingDef.GetStatValueAbstract(StatDefOf.MarketValue, null) * (float)component.requestCount).ToStringMoney("F0"), GenThing.ThingsToCommaList(component.rewards, true, true, -1).CapitalizeFirst(), GenThing.GetMarketValue(component.rewards).ToStringMoney("F0"), (component.expiration - Find.TickManager.TicksGame).ToStringTicksToDays("F0"), CaravanArrivalTimeEstimator.EstimatedTicksToArrive(map.Tile, settlementBase.Tile, null).ToStringTicksToDays("0.#"));
 			GenThing.TryAppendSingleRewardInfo(ref text, component.rewards);
 			Find.LetterStack.ReceiveLetter("LetterLabelCaravanRequest".Translate(), text, LetterDefOf.PositiveEvent, settlementBase, settlementBase.Faction, null);
 			return true;

@@ -133,6 +133,10 @@ namespace RimWorld
 			Scribe_Collections.Look<Bill>(ref this.bills, "bills", LookMode.Deep, new object[0]);
 			if (Scribe.mode == LoadSaveMode.ResolvingCrossRefs)
 			{
+				if (this.bills.RemoveAll((Bill x) => x == null) != 0)
+				{
+					Log.Error("Some bills were null after loading.", false);
+				}
 				for (int i = 0; i < this.bills.Count; i++)
 				{
 					this.bills[i].billStack = this;

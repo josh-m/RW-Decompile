@@ -5,6 +5,7 @@ using Verse;
 
 namespace RimWorld
 {
+	[StaticConstructorOnStartup]
 	public class Designator_Dropdown : Designator
 	{
 		private List<Designator> elements = new List<Designator>();
@@ -12,6 +13,12 @@ namespace RimWorld
 		private Designator activeDesignator;
 
 		private bool activeDesignatorSet;
+
+		public static readonly Texture2D PlusTex = ContentFinder<Texture2D>.Get("UI/Widgets/PlusOptions", true);
+
+		private const float ButSize = 16f;
+
+		private const float ButPadding = 1f;
 
 		public override string Label
 		{
@@ -66,6 +73,19 @@ namespace RimWorld
 			{
 				return this.activeDesignator.PanelReadoutTitleExtraRightMargin;
 			}
+		}
+
+		public override GizmoResult GizmoOnGUI(Vector2 topLeft, float maxWidth)
+		{
+			GizmoResult result = base.GizmoOnGUI(topLeft, maxWidth);
+			Designator_Dropdown.DrawExtraOptionsIcon(topLeft, this.GetWidth(maxWidth));
+			return result;
+		}
+
+		public static void DrawExtraOptionsIcon(Vector2 topLeft, float width)
+		{
+			Rect position = new Rect(topLeft.x + width - 16f - 1f, topLeft.y + 1f, 16f, 16f);
+			GUI.DrawTexture(position, Designator_Dropdown.PlusTex);
 		}
 
 		public void Add(Designator des)

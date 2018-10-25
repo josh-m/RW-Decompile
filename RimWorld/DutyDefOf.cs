@@ -66,6 +66,8 @@ namespace RimWorld
 
 		public static DutyDef PrepareCaravan_GatherPawns;
 
+		public static DutyDef PrepareCaravan_GatherDownedPawns;
+
 		public static DutyDef PrepareCaravan_Pause;
 
 		static DutyDefOf()

@@ -85,11 +85,7 @@ namespace Verse
 			}
 			catch (Exception ex)
 			{
-				GenUI.ErrorDialog("ProblemSavingFile".Translate(new object[]
-				{
-					GenFilePaths.KeyPrefsFilePath,
-					ex.ToString()
-				}));
+				GenUI.ErrorDialog("ProblemSavingFile".Translate(GenFilePaths.KeyPrefsFilePath, ex.ToString()));
 				Log.Error("Exception saving keyprefs: " + ex, false);
 			}
 		}

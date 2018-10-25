@@ -17,11 +17,7 @@ namespace RimWorld
 				string label = base.Label;
 				if (this.stuffToUse != null)
 				{
-					return "ThingMadeOfStuffLabel".Translate(new object[]
-					{
-						this.stuffToUse.LabelAsStuff,
-						label
-					});
+					return "ThingMadeOfStuffLabel".Translate(this.stuffToUse.LabelAsStuff, label);
 				}
 				return label;
 			}

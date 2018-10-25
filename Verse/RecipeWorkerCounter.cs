@@ -19,7 +19,7 @@ namespace Verse
 			ThingDef thingDef = thingDefCountClass.thingDef;
 			if (thingDefCountClass.thingDef.CountAsResource && !bill.includeEquipped && (bill.includeTainted || !thingDefCountClass.thingDef.IsApparel || !thingDefCountClass.thingDef.apparel.careIfWornByCorpse) && bill.includeFromZone == null && bill.hpRange.min == 0f && bill.hpRange.max == 1f && bill.qualityRange.min == QualityCategory.Awful && bill.qualityRange.max == QualityCategory.Legendary && !bill.limitToAllowedStuff)
 			{
-				return bill.Map.resourceCounter.GetCount(thingDefCountClass.thingDef);
+				return bill.Map.resourceCounter.GetCount(thingDefCountClass.thingDef) + this.GetCarriedCount(bill, thingDef);
 			}
 			int num = 0;
 			if (bill.includeFromZone == null)
@@ -37,6 +37,7 @@ namespace Verse
 						}
 					}
 				}
+				num += this.GetCarriedCount(bill, thingDef);
 			}
 			else
 			{
@@ -122,6 +123,25 @@ namespace Verse
 		public virtual bool CanPossiblyStoreInStockpile(Bill_Production bill, Zone_Stockpile stockpile)
 		{
 			return !this.CanCountProducts(bill) || stockpile.GetStoreSettings().AllowedToAccept(this.recipe.products[0].thingDef);
+		}
+
+		private int GetCarriedCount(Bill_Production bill, ThingDef prodDef)
+		{
+			int num = 0;
+			foreach (Pawn current in bill.Map.mapPawns.FreeColonistsSpawned)
+			{
+				Thing thing = current.carryTracker.CarriedThing;
+				if (thing != null)
+				{
+					int stackCount = thing.stackCount;
+					thing = thing.GetInnerIfMinified();
+					if (this.CountValidThing(thing, bill, prodDef))
+					{
+						num += stackCount;
+					}
+				}
+			}
+			return num;
 		}
 	}
 }

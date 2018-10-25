@@ -27,7 +27,7 @@ namespace RimWorld
 		{
 			get
 			{
-				if (this.lastComfortUseTick > Find.TickManager.TicksGame - 10)
+				if (this.lastComfortUseTick >= Find.TickManager.TicksGame - 10)
 				{
 					return Mathf.Clamp01(this.lastComfortUsed);
 				}

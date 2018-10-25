@@ -58,6 +58,7 @@ namespace Verse
 			this.desList.Add(new Designator_Mine());
 			this.desList.Add(new Designator_Strip());
 			this.desList.Add(new Designator_Open());
+			this.desList.Add(new Designator_SmoothSurface());
 			this.desList.RemoveAll((Designator des) => !Current.Game.Rules.DesignatorAllowed(des));
 		}
 	}

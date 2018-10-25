@@ -51,10 +51,7 @@ namespace RimWorld.Planet
 		{
 			if (this.ForceExitAndRemoveMapCountdownActive)
 			{
-				return "ForceExitAndRemoveMapCountdown".Translate(new object[]
-				{
-					this.ForceExitAndRemoveMapCountdownTimeLeftString
-				}) + ".";
+				return "ForceExitAndRemoveMapCountdown".Translate(this.ForceExitAndRemoveMapCountdownTimeLeftString) + ".";
 			}
 			return null;
 		}

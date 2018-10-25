@@ -20,10 +20,7 @@ namespace RimWorld
 		{
 			if (this.TargetFire != null && this.TargetFire.parent != null)
 			{
-				return "ReportExtinguishingFireOn".Translate(new object[]
-				{
-					this.TargetFire.parent.LabelCap
-				});
+				return "ReportExtinguishingFireOn".Translate(this.TargetFire.parent.LabelCap, this.TargetFire.parent.Named("TARGET"));
 			}
 			return "ReportExtinguishingFire".Translate();
 		}

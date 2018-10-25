@@ -97,6 +97,7 @@ namespace Verse
 		{
 			try
 			{
+				ResolutionUtility.Update();
 				RealTime.Update();
 				bool flag;
 				LongEventHandler.LongEventsUpdate(out flag);

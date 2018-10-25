@@ -63,20 +63,9 @@ namespace RimWorld
 					break;
 				}
 			}
-			string label = "LetterLabelTraderCaravanArrival".Translate(new object[]
-			{
-				parms.faction.Name,
-				traderKindDef.label
-			}).CapitalizeFirst();
-			string text = "LetterTraderCaravanArrival".Translate(new object[]
-			{
-				parms.faction.Name,
-				traderKindDef.label
-			}).CapitalizeFirst();
-			PawnRelationUtility.Notify_PawnsSeenByPlayer_Letter(list, ref label, ref text, "LetterRelatedPawnsNeutralGroup".Translate(new object[]
-			{
-				Faction.OfPlayer.def.pawnsPlural
-			}), true, true);
+			string label = "LetterLabelTraderCaravanArrival".Translate(parms.faction.Name, traderKindDef.label).CapitalizeFirst();
+			string text = "LetterTraderCaravanArrival".Translate(parms.faction.Name, traderKindDef.label).CapitalizeFirst();
+			PawnRelationUtility.Notify_PawnsSeenByPlayer_Letter(list, ref label, ref text, "LetterRelatedPawnsNeutralGroup".Translate(Faction.OfPlayer.def.pawnsPlural), true, true);
 			Find.LetterStack.ReceiveLetter(label, text, LetterDefOf.PositiveEvent, list[0], parms.faction, null);
 			IntVec3 chillSpot;
 			RCellFinder.TryFindRandomSpotJustOutsideColony(list[0], out chillSpot);

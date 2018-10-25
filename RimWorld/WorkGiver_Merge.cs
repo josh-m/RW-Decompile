@@ -33,6 +33,11 @@ namespace RimWorld
 			{
 				return null;
 			}
+			LocalTargetInfo target = t.Position;
+			if (!pawn.CanReserve(target, 1, -1, null, forced))
+			{
+				return null;
+			}
 			foreach (Thing current in slotGroup.HeldThings)
 			{
 				if (current != t)
@@ -43,7 +48,7 @@ namespace RimWorld
 						{
 							if (current.stackCount < current.def.stackLimit)
 							{
-								LocalTargetInfo target = current.Position;
+								target = current.Position;
 								if (pawn.CanReserve(target, 1, -1, null, forced))
 								{
 									if (pawn.CanReserve(current, 1, -1, null, false))

@@ -52,10 +52,7 @@ namespace RimWorld.Planet
 				}
 			}
 			TransportPodsArrivalAction_GiveToCaravan.tmpContainedThings.Clear();
-			Messages.Message("MessageTransportPodsArrivedAndAddedToCaravan".Translate(new object[]
-			{
-				this.caravan.Name
-			}).CapitalizeFirst(), this.caravan, MessageTypeDefOf.TaskCompletion, true);
+			Messages.Message("MessageTransportPodsArrivedAndAddedToCaravan".Translate(this.caravan.Name).CapitalizeFirst(), this.caravan, MessageTypeDefOf.TaskCompletion, true);
 		}
 
 		public static FloatMenuAcceptanceReport CanGiveTo(IEnumerable<IThingHolder> pods, Caravan caravan)
@@ -65,10 +62,7 @@ namespace RimWorld.Planet
 
 		public static IEnumerable<FloatMenuOption> GetFloatMenuOptions(CompLaunchable representative, IEnumerable<IThingHolder> pods, Caravan caravan)
 		{
-			return TransportPodsArrivalActionUtility.GetFloatMenuOptions<TransportPodsArrivalAction_GiveToCaravan>(() => TransportPodsArrivalAction_GiveToCaravan.CanGiveTo(pods, caravan), () => new TransportPodsArrivalAction_GiveToCaravan(caravan), "GiveToCaravan".Translate(new object[]
-			{
-				caravan.Label
-			}), representative, caravan.Tile);
+			return TransportPodsArrivalActionUtility.GetFloatMenuOptions<TransportPodsArrivalAction_GiveToCaravan>(() => TransportPodsArrivalAction_GiveToCaravan.CanGiveTo(pods, caravan), () => new TransportPodsArrivalAction_GiveToCaravan(caravan), "GiveToCaravan".Translate(caravan.Label), representative, caravan.Tile);
 		}
 	}
 }

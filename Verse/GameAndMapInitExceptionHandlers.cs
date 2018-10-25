@@ -26,15 +26,11 @@ namespace Verse
 		public static void ErrorWhileLoadingGame(Exception e)
 		{
 			string text = "ErrorWhileLoadingMap".Translate();
-			string text2;
-			string text3;
-			if (!ScribeMetaHeaderUtility.LoadedModsMatchesActiveMods(out text2, out text3))
+			string value;
+			string value2;
+			if (!ScribeMetaHeaderUtility.LoadedModsMatchesActiveMods(out value, out value2))
 			{
-				text = text + "\n\n" + "ModsMismatchWarningText".Translate(new object[]
-				{
-					text2,
-					text3
-				});
+				text = text + "\n\n" + "ModsMismatchWarningText".Translate(value, value2);
 			}
 			DelayedErrorWindowRequest.Add(text, "ErrorWhileLoadingMapTitle".Translate());
 			Scribe.ForceStop();

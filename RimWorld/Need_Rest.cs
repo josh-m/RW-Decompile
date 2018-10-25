@@ -179,10 +179,7 @@ namespace RimWorld
 					}
 					if (PawnUtility.ShouldSendNotificationAbout(this.pawn))
 					{
-						Messages.Message("MessageInvoluntarySleep".Translate(new object[]
-						{
-							this.pawn.LabelShort
-						}), this.pawn, MessageTypeDefOf.NegativeEvent, true);
+						Messages.Message("MessageInvoluntarySleep".Translate(this.pawn.LabelShort, this.pawn), this.pawn, MessageTypeDefOf.NegativeEvent, true);
 					}
 					TaleRecorder.RecordTale(TaleDefOf.Exhausted, new object[]
 					{

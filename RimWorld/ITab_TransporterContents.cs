@@ -140,20 +140,14 @@ namespace RimWorld
 				Rect butRect = new Rect(rect.x + rect.width - 24f, rect.y + (rect.height - 24f) / 2f, 24f, 24f);
 				if (Widgets.ButtonImage(butRect, CaravanThingsTabUtility.AbandonSpecificCountButtonTex))
 				{
-					Find.WindowStack.Add(new Dialog_Slider("RemoveSliderText".Translate(new object[]
-					{
-						thingDef.label
-					}), 1, count, discardAction, -2147483648));
+					Find.WindowStack.Add(new Dialog_Slider("RemoveSliderText".Translate(thingDef.label), 1, count, discardAction, -2147483648));
 				}
 			}
 			rect.width -= 24f;
 			Rect butRect2 = new Rect(rect.x + rect.width - 24f, rect.y + (rect.height - 24f) / 2f, 24f, 24f);
 			if (Widgets.ButtonImage(butRect2, CaravanThingsTabUtility.AbandonButtonTex))
 			{
-				Find.WindowStack.Add(Dialog_MessageBox.CreateConfirmation("ConfirmRemoveItemDialog".Translate(new object[]
-				{
-					thingDef.label
-				}), delegate
+				Find.WindowStack.Add(Dialog_MessageBox.CreateConfirmation("ConfirmRemoveItemDialog".Translate(thingDef.label), delegate
 				{
 					discardAction(count);
 				}, false, null));

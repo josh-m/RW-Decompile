@@ -117,7 +117,7 @@ namespace Verse
 			return null;
 		}
 
-		public static ThingWithComps GetFirstThing<TComp>(this IntVec3 c, Map map) where TComp : ThingComp
+		public static ThingWithComps GetFirstThingWithComp<TComp>(this IntVec3 c, Map map) where TComp : ThingComp
 		{
 			List<Thing> thingList = c.GetThingList(map);
 			for (int i = 0; i < thingList.Count; i++)
@@ -128,6 +128,20 @@ namespace Verse
 				}
 			}
 			return null;
+		}
+
+		public static T GetFirstThing<T>(this IntVec3 c, Map map) where T : Thing
+		{
+			List<Thing> thingList = c.GetThingList(map);
+			for (int i = 0; i < thingList.Count; i++)
+			{
+				T t = thingList[i] as T;
+				if (t != null)
+				{
+					return t;
+				}
+			}
+			return (T)((object)null);
 		}
 
 		public static Thing GetFirstHaulable(this IntVec3 c, Map map)

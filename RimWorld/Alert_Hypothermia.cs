@@ -37,10 +37,7 @@ namespace RimWorld
 			{
 				stringBuilder.AppendLine("    " + current.LabelShort);
 			}
-			return "AlertHypothermiaDesc".Translate(new object[]
-			{
-				stringBuilder.ToString()
-			});
+			return "AlertHypothermiaDesc".Translate(stringBuilder.ToString());
 		}
 
 		public override AlertReport GetReport()

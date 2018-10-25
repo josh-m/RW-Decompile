@@ -31,8 +31,6 @@ namespace RimWorld
 
 		private List<PredatorThreat> predatorThreats = new List<PredatorThreat>();
 
-		public Dictionary<Map, ByteGrid> avoidGridsSmart = new Dictionary<Map, ByteGrid>();
-
 		public bool defeated;
 
 		public int lastTraderRequestTick = -9999999;
@@ -181,7 +179,6 @@ namespace RimWorld
 		public void ExposeData()
 		{
 			Scribe_References.Look<Pawn>(ref this.leader, "leader", false);
-			Scribe_Collections.Look<Map, ByteGrid>(ref this.avoidGridsSmart, "avoidGridsSmart", LookMode.Reference, LookMode.Deep, ref this.avoidGridsSmartKeysWorkingList, ref this.avoidGridsSmartValuesWorkingList);
 			Scribe_Defs.Look<FactionDef>(ref this.def, "def");
 			Scribe_Values.Look<string>(ref this.name, "name", null, false);
 			Scribe_Values.Look<int>(ref this.loadID, "loadID", 0, false);
@@ -275,10 +272,7 @@ namespace RimWorld
 						{
 							Faction ofPlayer = Faction.OfPlayer;
 							int goodwillChange = Mathf.Min(10, this.def.naturalColonyGoodwill.min - playerGoodwill);
-							string reason = "GoodwillChangedReason_NaturallyOverTime".Translate(new object[]
-							{
-								this.def.naturalColonyGoodwill.min.ToString()
-							});
+							string reason = "GoodwillChangedReason_NaturallyOverTime".Translate(this.def.naturalColonyGoodwill.min.ToString());
 							this.TryAffectGoodwillWith(ofPlayer, goodwillChange, true, true, reason, null);
 							this.naturalGoodwillTimer = 0;
 						}
@@ -291,30 +285,12 @@ namespace RimWorld
 					{
 						Faction ofPlayer = Faction.OfPlayer;
 						int goodwillChange = -Mathf.Min(10, playerGoodwill - this.def.naturalColonyGoodwill.max);
-						string reason = "GoodwillChangedReason_NaturallyOverTime".Translate(new object[]
-						{
-							this.def.naturalColonyGoodwill.max.ToString()
-						});
+						string reason = "GoodwillChangedReason_NaturallyOverTime".Translate(this.def.naturalColonyGoodwill.max.ToString());
 						this.TryAffectGoodwillWith(ofPlayer, goodwillChange, true, true, reason, null);
 						this.naturalGoodwillTimer = 0;
 					}
 				}
 			}
-		}
-
-		public ByteGrid GetAvoidGridSmart(Map map)
-		{
-			ByteGrid result;
-			if (this.avoidGridsSmart.TryGetValue(map, out result))
-			{
-				return result;
-			}
-			return null;
-		}
-
-		public void Notify_MapRemoved(Map map)
-		{
-			this.avoidGridsSmart.Remove(map);
 		}
 
 		public void TryMakeInitialRelationsWith(Faction other)
@@ -464,22 +440,11 @@ namespace RimWorld
 				string text;
 				if (!reason.NullOrEmpty())
 				{
-					text = "MessageGoodwillChangedWithReason".Translate(new object[]
-					{
-						faction.name,
-						num.ToString("F0"),
-						factionRelation.goodwill.ToString("F0"),
-						reason
-					});
+					text = "MessageGoodwillChangedWithReason".Translate(faction.name, num.ToString("F0"), factionRelation.goodwill.ToString("F0"), reason);
 				}
 				else
 				{
-					text = "MessageGoodwillChanged".Translate(new object[]
-					{
-						faction.name,
-						num.ToString("F0"),
-						factionRelation.goodwill.ToString("F0")
-					});
+					text = "MessageGoodwillChanged".Translate(faction.name, num.ToString("F0"), factionRelation.goodwill.ToString("F0"));
 				}
 				Messages.Message(text, (!lookTarget.HasValue) ? GlobalTargetInfo.Invalid : lookTarget.Value, ((float)goodwillChange <= 0f) ? MessageTypeDefOf.NegativeEvent : MessageTypeDefOf.PositiveEvent, true);
 			}
@@ -563,30 +528,15 @@ namespace RimWorld
 			}
 			if (newKind == FactionRelationKind.Hostile)
 			{
-				text += "LetterRelationsChange_Hostile".Translate(new object[]
-				{
-					this.name,
-					this.PlayerGoodwill.ToStringWithSign(),
-					-75.ToStringWithSign(),
-					0.ToStringWithSign()
-				});
+				text += "LetterRelationsChange_Hostile".Translate(this.name, this.PlayerGoodwill.ToStringWithSign(), -75.ToStringWithSign(), 0.ToStringWithSign());
 				if (!reason.NullOrEmpty())
 				{
-					text = text + "\n\n" + "FinalStraw".Translate(new object[]
-					{
-						reason.CapitalizeFirst()
-					});
+					text = text + "\n\n" + "FinalStraw".Translate(reason.CapitalizeFirst());
 				}
 			}
 			else if (newKind == FactionRelationKind.Ally)
 			{
-				text += "LetterRelationsChange_Ally".Translate(new object[]
-				{
-					this.name,
-					this.PlayerGoodwill.ToStringWithSign(),
-					75.ToStringWithSign(),
-					0.ToStringWithSign()
-				});
+				text += "LetterRelationsChange_Ally".Translate(this.name, this.PlayerGoodwill.ToStringWithSign(), 75.ToStringWithSign(), 0.ToStringWithSign());
 				if (!reason.NullOrEmpty())
 				{
 					string text2 = text;
@@ -604,14 +554,7 @@ namespace RimWorld
 			{
 				if (previousKind == FactionRelationKind.Hostile)
 				{
-					text += "LetterRelationsChange_NeutralFromHostile".Translate(new object[]
-					{
-						this.name,
-						this.PlayerGoodwill.ToStringWithSign(),
-						0.ToStringWithSign(),
-						-75.ToStringWithSign(),
-						75.ToStringWithSign()
-					});
+					text += "LetterRelationsChange_NeutralFromHostile".Translate(this.name, this.PlayerGoodwill.ToStringWithSign(), 0.ToStringWithSign(), -75.ToStringWithSign(), 75.ToStringWithSign());
 					if (!reason.NullOrEmpty())
 					{
 						string text2 = text;
@@ -627,14 +570,7 @@ namespace RimWorld
 				}
 				else
 				{
-					text += "LetterRelationsChange_NeutralFromAlly".Translate(new object[]
-					{
-						this.name,
-						this.PlayerGoodwill.ToStringWithSign(),
-						0.ToStringWithSign(),
-						-75.ToStringWithSign(),
-						75.ToStringWithSign()
-					});
+					text += "LetterRelationsChange_NeutralFromAlly".Translate(this.name, this.PlayerGoodwill.ToStringWithSign(), 0.ToStringWithSign(), -75.ToStringWithSign(), 75.ToStringWithSign());
 					if (!reason.NullOrEmpty())
 					{
 						string text2 = text;
@@ -692,10 +628,7 @@ namespace RimWorld
 				int num2 = (int)(-1.3f * num);
 				Faction faction = dinfo.Instigator.Faction;
 				int goodwillChange = num2;
-				string reason = "GoodwillChangedReason_AttackedPawn".Translate(new object[]
-				{
-					member.LabelShort
-				});
+				string reason = "GoodwillChangedReason_AttackedPawn".Translate(member.LabelShort, member);
 				GlobalTargetInfo? lookTarget = new GlobalTargetInfo?(member);
 				this.TryAffectGoodwillWith(faction, goodwillChange, true, true, reason, lookTarget);
 			}
@@ -710,10 +643,7 @@ namespace RimWorld
 			if (this.RelationKindWith(violator) != FactionRelationKind.Hostile)
 			{
 				FactionRelationKind kind = FactionRelationKind.Hostile;
-				string reason = "GoodwillChangedReason_CapturedPawn".Translate(new object[]
-				{
-					member.LabelShort
-				});
+				string reason = "GoodwillChangedReason_CapturedPawn".Translate(member.LabelShort, member);
 				this.TrySetRelationKind(violator, kind, true, reason, new GlobalTargetInfo?(member));
 			}
 		}
@@ -732,20 +662,14 @@ namespace RimWorld
 					Faction ofPlayer = Faction.OfPlayer;
 					int goodwillChange = (!member.RaceProps.Humanlike) ? -15 : -25;
 					bool canSendMessage = flag;
-					string reason = "GoodwillChangedReason_PawnCrushed".Translate(new object[]
-					{
-						member.LabelShort
-					});
+					string reason = "GoodwillChangedReason_PawnCrushed".Translate(member.LabelShort, member);
 					this.TryAffectGoodwillWith(ofPlayer, goodwillChange, canSendMessage, true, reason, new GlobalTargetInfo?(new TargetInfo(member.Position, map, false)));
 				}
 				else if (dinfo.HasValue && (dinfo.Value.Instigator == null || dinfo.Value.Instigator.Faction == null))
 				{
 					Faction ofPlayer = Faction.OfPlayer;
 					int goodwillChange = (!member.RaceProps.Humanlike) ? -3 : -5;
-					string reason = "GoodwillChangedReason_PawnDied".Translate(new object[]
-					{
-						member.LabelShort
-					});
+					string reason = "GoodwillChangedReason_PawnDied".Translate(member.LabelShort, member);
 					GlobalTargetInfo? lookTarget = new GlobalTargetInfo?(member);
 					this.TryAffectGoodwillWith(ofPlayer, goodwillChange, true, true, reason, lookTarget);
 				}
@@ -760,34 +684,14 @@ namespace RimWorld
 		{
 			Pawn pawn = this.leader;
 			this.GenerateNewLeader();
-			Find.LetterStack.ReceiveLetter("LetterLeadersDeathLabel".Translate(new object[]
-			{
-				this.name,
-				this.def.leaderTitle
-			}).CapitalizeFirst(), "LetterLeadersDeath".Translate(new object[]
-			{
-				pawn.Name.ToStringFull,
-				this.name,
-				this.leader.Name.ToStringFull,
-				this.def.leaderTitle
-			}).CapitalizeFirst(), LetterDefOf.NeutralEvent, GlobalTargetInfo.Invalid, this, null);
+			Find.LetterStack.ReceiveLetter("LetterLeadersDeathLabel".Translate(this.name, this.def.leaderTitle).CapitalizeFirst(), "LetterLeadersDeath".Translate(pawn.Name.ToStringFull, this.name, this.leader.Name.ToStringFull, this.def.leaderTitle, pawn.Named("OLDLEADER"), this.leader.Named("NEWLEADER")).CapitalizeFirst(), LetterDefOf.NeutralEvent, GlobalTargetInfo.Invalid, this, null);
 		}
 
 		public void Notify_LeaderLost()
 		{
 			Pawn pawn = this.leader;
 			this.GenerateNewLeader();
-			Find.LetterStack.ReceiveLetter("LetterLeaderChangedLabel".Translate(new object[]
-			{
-				this.name,
-				this.def.leaderTitle
-			}).CapitalizeFirst(), "LetterLeaderChanged".Translate(new object[]
-			{
-				pawn.Name.ToStringFull,
-				this.name,
-				this.leader.Name.ToStringFull,
-				this.def.leaderTitle
-			}).CapitalizeFirst(), LetterDefOf.NeutralEvent, GlobalTargetInfo.Invalid, this, null);
+			Find.LetterStack.ReceiveLetter("LetterLeaderChangedLabel".Translate(this.name, this.def.leaderTitle).CapitalizeFirst(), "LetterLeaderChanged".Translate(pawn.Name.ToStringFull, this.name, this.leader.Name.ToStringFull, this.def.leaderTitle, pawn.Named("OLDLEADER"), this.leader.Named("NEWLEADER")).CapitalizeFirst(), LetterDefOf.NeutralEvent, GlobalTargetInfo.Invalid, this, null);
 		}
 
 		public void Notify_RelationKindChanged(Faction other, FactionRelationKind previousKind, bool canSendLetter, string reason, GlobalTargetInfo lookTarget, out bool sentLetter)
@@ -826,11 +730,7 @@ namespace RimWorld
 					if (list.Count == 1)
 					{
 						label = "LetterLabelSiteNoLongerHostile".Translate();
-						text = "LetterSiteNoLongerHostile".Translate(new object[]
-						{
-							this.Name,
-							list[0].Label
-						});
+						text = "LetterSiteNoLongerHostile".Translate(this.Name, list[0].Label);
 					}
 					else
 					{
@@ -849,10 +749,7 @@ namespace RimWorld
 							}
 						}
 						label = "LetterLabelSiteNoLongerHostileMulti".Translate();
-						text = "LetterSiteNoLongerHostileMulti".Translate(new object[]
-						{
-							this.Name
-						}) + ":\n\n" + stringBuilder;
+						text = "LetterSiteNoLongerHostileMulti".Translate(this.Name) + ":\n\n" + stringBuilder;
 					}
 					Find.LetterStack.ReceiveLetter(label, text, LetterDefOf.NeutralEvent, new LookTargets(from x in list
 					select new GlobalTargetInfo(x.Tile)), null, null);
@@ -883,36 +780,24 @@ namespace RimWorld
 				this.TryAppendRelationKindChangedInfo(ref empty, previousKind, factionRelationKind, reason);
 				if (factionRelationKind == FactionRelationKind.Hostile)
 				{
-					Find.LetterStack.ReceiveLetter("LetterLabelRelationsChange_Hostile".Translate(new object[]
-					{
-						this.name
-					}), empty, LetterDefOf.NegativeEvent, lookTarget, this, null);
+					Find.LetterStack.ReceiveLetter("LetterLabelRelationsChange_Hostile".Translate(this.name), empty, LetterDefOf.NegativeEvent, lookTarget, this, null);
 					sentLetter = true;
 				}
 				else if (factionRelationKind == FactionRelationKind.Ally)
 				{
-					Find.LetterStack.ReceiveLetter("LetterLabelRelationsChange_Ally".Translate(new object[]
-					{
-						this.name
-					}), empty, LetterDefOf.PositiveEvent, lookTarget, this, null);
+					Find.LetterStack.ReceiveLetter("LetterLabelRelationsChange_Ally".Translate(this.name), empty, LetterDefOf.PositiveEvent, lookTarget, this, null);
 					sentLetter = true;
 				}
 				else if (factionRelationKind == FactionRelationKind.Neutral)
 				{
 					if (previousKind == FactionRelationKind.Hostile)
 					{
-						Find.LetterStack.ReceiveLetter("LetterLabelRelationsChange_NeutralFromHostile".Translate(new object[]
-						{
-							this.name
-						}), empty, LetterDefOf.PositiveEvent, lookTarget, this, null);
+						Find.LetterStack.ReceiveLetter("LetterLabelRelationsChange_NeutralFromHostile".Translate(this.name), empty, LetterDefOf.PositiveEvent, lookTarget, this, null);
 						sentLetter = true;
 					}
 					else
 					{
-						Find.LetterStack.ReceiveLetter("LetterLabelRelationsChange_NeutralFromAlly".Translate(new object[]
-						{
-							this.name
-						}), empty, LetterDefOf.NeutralEvent, lookTarget, this, null);
+						Find.LetterStack.ReceiveLetter("LetterLabelRelationsChange_NeutralFromAlly".Translate(this.name), empty, LetterDefOf.NeutralEvent, lookTarget, this, null);
 						sentLetter = true;
 					}
 				}
@@ -967,13 +852,7 @@ namespace RimWorld
 				num += (float)Mathf.Min(member.mindState.timesGuestTendedToByPlayer, 10) * 1f;
 				Faction hostFaction = member.HostFaction;
 				int goodwillChange = (int)num;
-				string reason = (!flag) ? "GoodwillChangedReason_Tended".Translate(new object[]
-				{
-					member.LabelShort
-				}) : "GoodwillChangedReason_ExitedMapHealthy".Translate(new object[]
-				{
-					member.LabelShort
-				});
+				string reason = (!flag) ? "GoodwillChangedReason_Tended".Translate(member.LabelShort, member) : "GoodwillChangedReason_ExitedMapHealthy".Translate(member.LabelShort, member);
 				this.TryAffectGoodwillWith(hostFaction, goodwillChange, true, true, reason, null);
 			}
 			member.mindState.timesGuestTendedToByPlayer = 0;
@@ -1055,10 +934,7 @@ namespace RimWorld
 			{
 				return null;
 			}
-			string text = "CallOnRadio".Translate(new object[]
-			{
-				this.GetCallLabel()
-			});
+			string text = "CallOnRadio".Translate(this.GetCallLabel());
 			string text2 = text;
 			text = string.Concat(new string[]
 			{
@@ -1074,10 +950,7 @@ namespace RimWorld
 				string str;
 				if (this.leader != null)
 				{
-					str = "LeaderUnavailable".Translate(new object[]
-					{
-						this.leader.LabelShort
-					});
+					str = "LeaderUnavailable".Translate(this.leader.LabelShort, this.leader);
 				}
 				else
 				{
@@ -1140,35 +1013,6 @@ namespace RimWorld
 				return this.def.defName;
 			}
 			return "[faction of no def]";
-		}
-
-		public string DebugString()
-		{
-			StringBuilder stringBuilder = new StringBuilder();
-			ByteGrid avoidGridSmart = this.GetAvoidGridSmart(Find.CurrentMap);
-			if (avoidGridSmart != null)
-			{
-				stringBuilder.Append("Avoidgrid val at mouse: ");
-				if (UI.MouseCell().InBounds(Find.CurrentMap))
-				{
-					stringBuilder.AppendLine(avoidGridSmart[UI.MouseCell()].ToString());
-				}
-				stringBuilder.Append("Avoidgrid pathcost at mouse: ");
-				if (UI.MouseCell().InBounds(Find.CurrentMap))
-				{
-					stringBuilder.AppendLine(((int)(avoidGridSmart[UI.MouseCell()] * 8)).ToString());
-				}
-			}
-			return stringBuilder.ToString();
-		}
-
-		public void DebugDrawOnMap()
-		{
-			ByteGrid avoidGridSmart = this.GetAvoidGridSmart(Find.CurrentMap);
-			if (avoidGridSmart != null)
-			{
-				avoidGridSmart.DebugDraw();
-			}
 		}
 	}
 }

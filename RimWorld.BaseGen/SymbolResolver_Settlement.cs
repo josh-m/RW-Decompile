@@ -70,6 +70,11 @@ namespace RimWorld.BaseGen
 			resolveParams5.rect = rp.rect.ContractedBy(num);
 			resolveParams5.faction = faction;
 			BaseGen.symbolStack.Push("basePart_outdoors", resolveParams5);
+			ResolveParams resolveParams6 = rp;
+			resolveParams6.floorDef = TerrainDefOf.Bridge;
+			bool? floorOnlyIfTerrainSupports = rp.floorOnlyIfTerrainSupports;
+			resolveParams6.floorOnlyIfTerrainSupports = new bool?(!floorOnlyIfTerrainSupports.HasValue || floorOnlyIfTerrainSupports.Value);
+			BaseGen.symbolStack.Push("floor", resolveParams6);
 		}
 	}
 }

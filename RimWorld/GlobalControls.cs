@@ -120,20 +120,14 @@ namespace RimWorld
 		private static void DoCountdownTimer(Rect rect, TimedForcedExit timedForcedExit)
 		{
 			string forceExitAndRemoveMapCountdownTimeLeftString = timedForcedExit.ForceExitAndRemoveMapCountdownTimeLeftString;
-			string text = "ForceExitAndRemoveMapCountdown".Translate(new object[]
-			{
-				forceExitAndRemoveMapCountdownTimeLeftString
-			});
+			string text = "ForceExitAndRemoveMapCountdown".Translate(forceExitAndRemoveMapCountdownTimeLeftString);
 			float x = Text.CalcSize(text).x;
 			Rect rect2 = new Rect(rect.xMax - x, rect.y, x, rect.height);
 			if (Mouse.IsOver(rect2))
 			{
 				Widgets.DrawHighlight(rect2);
 			}
-			TooltipHandler.TipRegion(rect2, "ForceExitAndRemoveMapCountdownTip".Translate(new object[]
-			{
-				forceExitAndRemoveMapCountdownTimeLeftString
-			}));
+			TooltipHandler.TipRegion(rect2, "ForceExitAndRemoveMapCountdownTip".Translate(forceExitAndRemoveMapCountdownTimeLeftString));
 			Widgets.Label(rect2, text);
 		}
 	}

@@ -83,6 +83,8 @@ namespace Verse
 
 		public Pawn_DrugPolicyTracker drugs;
 
+		public Pawn_FoodRestrictionTracker foodRestriction;
+
 		public Pawn_TimetableTracker timetable;
 
 		public Pawn_DraftController drafter;
@@ -849,6 +851,10 @@ namespace Verse
 			{
 				this
 			});
+			Scribe_Deep.Look<Pawn_FoodRestrictionTracker>(ref this.foodRestriction, "foodRestriction", new object[]
+			{
+				this
+			});
 			Scribe_Deep.Look<Pawn_TimetableTracker>(ref this.timetable, "timetable", new object[]
 			{
 				this
@@ -1144,7 +1150,7 @@ namespace Verse
 			}
 			if (!this.IsCaravanMember() && !PawnUtility.IsTravelingInTransportPodWorldObject(this))
 			{
-				this.ClearMind(false);
+				this.ClearMind(false, false);
 			}
 			if (this.relations != null)
 			{
@@ -1465,7 +1471,7 @@ namespace Verse
 			{
 				this.ownership.UnclaimAll();
 			}
-			this.ClearMind(false);
+			this.ClearMind(false, true);
 			Lord lord = this.GetLord();
 			if (lord != null)
 			{
@@ -1602,7 +1608,7 @@ namespace Verse
 				{
 					if (base.Faction != null && base.Faction != pawn.Faction)
 					{
-						base.Faction.kidnapped.KidnapPawn(pawn, this);
+						base.Faction.kidnapped.Kidnap(pawn, this);
 					}
 					else
 					{
@@ -1640,7 +1646,7 @@ namespace Verse
 			this.inventory.UnloadEverything = false;
 			if (flag)
 			{
-				this.ClearMind(false);
+				this.ClearMind(false, false);
 			}
 			if (this.relations != null)
 			{
@@ -1689,13 +1695,10 @@ namespace Verse
 				}
 				if (this.RaceProps.Humanlike)
 				{
-					foreach (Pawn current in PawnsFinder.AllMapsCaravansAndTravelingTransportPods_Alive_FreeColonistsAndPrisoners)
-					{
-						current.needs.mood.thoughts.memories.TryGainMemory(ThoughtDefOf.KnowPrisonerSold, null);
-					}
+					GenGuest.AddPrisonerSoldThoughts(this);
 				}
 			}
-			this.ClearMind(false);
+			this.ClearMind(false, false);
 		}
 
 		public void PreKidnapped(Pawn kidnapper)
@@ -1721,7 +1724,7 @@ namespace Verse
 			{
 				this.relations.Notify_PawnKidnapped();
 			}
-			this.ClearMind(false);
+			this.ClearMind(false, false);
 		}
 
 		public override void SetFaction(Faction newFaction, Pawn recruiter = null)
@@ -1784,7 +1787,7 @@ namespace Verse
 			{
 				this.playerSettings.ResetMedicalCare();
 			}
-			this.ClearMind(true);
+			this.ClearMind(true, false);
 			if (!this.Dead && this.needs.mood != null)
 			{
 				this.needs.mood.thoughts.situational.Notify_SituationalThoughtsDirty();
@@ -1822,7 +1825,7 @@ namespace Verse
 			}
 		}
 
-		public void ClearMind(bool ifLayingKeepLaying = false)
+		public void ClearMind(bool ifLayingKeepLaying = false, bool clearInspiration = false)
 		{
 			if (this.pather != null)
 			{
@@ -1830,7 +1833,7 @@ namespace Verse
 			}
 			if (this.mindState != null)
 			{
-				this.mindState.Reset();
+				this.mindState.Reset(clearInspiration);
 			}
 			if (this.jobs != null)
 			{
@@ -2070,18 +2073,11 @@ namespace Verse
 			string text = GenLabel.BestKindLabel(this, true, true, false, -1);
 			if (base.Faction != null && !base.Faction.def.hidden)
 			{
-				text = "PawnMainDescFactionedWrap".Translate(new object[]
-				{
-					text,
-					base.Faction.Name
-				});
+				text = "PawnMainDescFactionedWrap".Translate(text, base.Faction.Name);
 			}
 			if (writeAge && this.ageTracker != null)
 			{
-				text = text + ", " + "AgeIndicator".Translate(new object[]
-				{
-					this.ageTracker.AgeNumberString
-				});
+				text = text + ", " + "AgeIndicator".Translate(this.ageTracker.AgeNumberString);
 			}
 			return text.CapitalizeFirst();
 		}
@@ -2465,10 +2461,7 @@ namespace Verse
 			{
 				return true;
 			}
-			Messages.Message("MessageRefusedArrest".Translate(new object[]
-			{
-				this.LabelShort
-			}), this, MessageTypeDefOf.ThreatSmall, true);
+			Messages.Message("MessageRefusedArrest".Translate(this.LabelShort, this), this, MessageTypeDefOf.ThreatSmall, true);
 			if (base.Faction == null || !arrester.HostileTo(this))
 			{
 				this.mindState.mentalStateHandler.TryStartMentalState(MentalStateDefOf.Berserk, null, false, false, null, false);

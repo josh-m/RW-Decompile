@@ -245,6 +245,7 @@ namespace RimWorld
 		{
 			this.cachedThoughts.Clear();
 			this.cachedSocialThoughts.Clear();
+			this.lastMoodThoughtsRecalculationTick = -99999;
 		}
 
 		private void RemoveExpiredThoughtsFromCache()

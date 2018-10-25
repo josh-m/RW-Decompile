@@ -102,6 +102,8 @@ namespace Verse
 
 		public ExitMapGrid exitMapGrid;
 
+		public AvoidGrid avoidGrid;
+
 		public LinkGrid linkGrid;
 
 		public GlowFlooder glowFlooder;
@@ -427,6 +429,7 @@ namespace Verse
 			this.snowGrid = new SnowGrid(this);
 			this.deepResourceGrid = new DeepResourceGrid(this);
 			this.exitMapGrid = new ExitMapGrid(this);
+			this.avoidGrid = new AvoidGrid(this);
 			this.linkGrid = new LinkGrid(this);
 			this.glowFlooder = new GlowFlooder(this);
 			this.powerNetManager = new PowerNetManager(this);
@@ -502,6 +505,10 @@ namespace Verse
 									Thing thing = current;
 									Scribe_Deep.Look<Thing>(ref thing, "thing", new object[0]);
 								}
+							}
+							catch (OutOfMemoryException)
+							{
+								throw;
 							}
 							catch (Exception ex)
 							{
@@ -630,6 +637,7 @@ namespace Verse
 			this.regionAndRoomUpdater.RebuildAllRegionsAndRooms();
 			this.powerNetManager.UpdatePowerNetsAndConnections_First();
 			this.temperatureCache.temperatureSaveLoad.ApplyLoadedDataToRegions();
+			this.avoidGrid.Regenerate();
 			foreach (Thing current in this.listerThings.AllThings.ToList<Thing>())
 			{
 				try
@@ -908,7 +916,7 @@ namespace Verse
 				}
 				PlantFallColors.SetFallShaderGlobals(this);
 				this.waterInfo.SetTextures();
-				Find.FactionManager.FactionsDebugDrawOnMap();
+				this.avoidGrid.DebugDrawOnMap();
 				this.mapDrawer.MapMeshDrawerUpdate_First();
 				this.powerNetGrid.DrawDebugPowerNetGrid();
 				DoorsDebugDrawer.DrawDebug();

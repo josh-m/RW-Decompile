@@ -103,11 +103,7 @@ namespace RimWorld
 										}
 									}
 									flag = true;
-									stringBuilder.AppendLine("  " + "Relationship".Translate(new object[]
-									{
-										mostImportantRelation.GetGenderSpecificLabelCap(current),
-										current2.KindLabel + " " + current2.LabelShort
-									}));
+									stringBuilder.AppendLine("  " + "Relationship".Translate(mostImportantRelation.GetGenderSpecificLabelCap(current), current2.KindLabel + " " + current2.LabelShort, current2));
 								}
 							}
 						}
@@ -190,19 +186,11 @@ namespace RimWorld
 			string genderSpecificLabel = mostImportantColonyRelative.GetMostImportantRelation(pawn).GetGenderSpecificLabel(pawn);
 			if (mostImportantColonyRelative.IsColonist)
 			{
-				text = text + "\n\n" + "RelationshipAppendedLetterTextColonist".Translate(new object[]
-				{
-					mostImportantColonyRelative.LabelShort,
-					genderSpecificLabel
-				}).AdjustedFor(pawn, "PAWN");
+				text = text + "\n\n" + "RelationshipAppendedLetterTextColonist".Translate(mostImportantColonyRelative.LabelShort, genderSpecificLabel, mostImportantColonyRelative.Named("RELATIVE"), pawn.Named("PAWN")).AdjustedFor(pawn, "PAWN");
 			}
 			else
 			{
-				text = text + "\n\n" + "RelationshipAppendedLetterTextPrisoner".Translate(new object[]
-				{
-					mostImportantColonyRelative.LabelShort,
-					genderSpecificLabel
-				}).AdjustedFor(pawn, "PAWN");
+				text = text + "\n\n" + "RelationshipAppendedLetterTextPrisoner".Translate(mostImportantColonyRelative.LabelShort, genderSpecificLabel, mostImportantColonyRelative.Named("RELATIVE"), pawn.Named("PAWN")).AdjustedFor(pawn, "PAWN");
 			}
 			return true;
 		}

@@ -26,16 +26,8 @@ namespace RimWorld
 			}
 			Faction faction = this.FactionWhichKidnapped(pawn);
 			int num = this.RandomFee(pawn);
-			ChoiceLetter_RansomDemand choiceLetter_RansomDemand = (ChoiceLetter_RansomDemand)LetterMaker.MakeLetter(this.def.letterLabel, "RansomDemand".Translate(new object[]
-			{
-				pawn.LabelShort,
-				faction.Name,
-				num
-			}).AdjustedFor(pawn, "PAWN"), this.def.letterDef);
-			choiceLetter_RansomDemand.title = "RansomDemandTitle".Translate(new object[]
-			{
-				map.Parent.Label
-			});
+			ChoiceLetter_RansomDemand choiceLetter_RansomDemand = (ChoiceLetter_RansomDemand)LetterMaker.MakeLetter(this.def.letterLabel, "RansomDemand".Translate(pawn.LabelShort, faction.Name, num, pawn.Named("PAWN")).AdjustedFor(pawn, "PAWN"), this.def.letterDef);
+			choiceLetter_RansomDemand.title = "RansomDemandTitle".Translate(map.Parent.Label);
 			choiceLetter_RansomDemand.radioMode = true;
 			choiceLetter_RansomDemand.kidnapped = pawn;
 			choiceLetter_RansomDemand.faction = faction;
@@ -56,7 +48,7 @@ namespace RimWorld
 				List<Pawn> kidnappedPawnsListForReading = allFactionsListForReading[i].kidnapped.KidnappedPawnsListForReading;
 				for (int j = 0; j < kidnappedPawnsListForReading.Count; j++)
 				{
-					if (kidnappedPawnsListForReading[j].Faction == Faction.OfPlayer)
+					if (kidnappedPawnsListForReading[j].Faction == Faction.OfPlayer && kidnappedPawnsListForReading[j].RaceProps.Humanlike)
 					{
 						IncidentWorker_RansomDemand.candidates.Add(kidnappedPawnsListForReading[j]);
 					}

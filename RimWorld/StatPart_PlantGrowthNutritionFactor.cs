@@ -21,10 +21,7 @@ namespace RimWorld
 			if (this.TryGetFactor(req, out f))
 			{
 				Plant plant = (Plant)req.Thing;
-				string text = "StatsReport_PlantGrowth".Translate(new object[]
-				{
-					plant.Growth.ToStringPercent()
-				}) + ": x" + f.ToStringPercent();
+				string text = "StatsReport_PlantGrowth".Translate(plant.Growth.ToStringPercent()) + ": x" + f.ToStringPercent();
 				if (!plant.def.plant.Sowable)
 				{
 					text = text + " (" + "StatsReport_PlantGrowth_Wild".Translate() + ")";

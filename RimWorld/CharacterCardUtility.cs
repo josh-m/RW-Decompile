@@ -26,7 +26,7 @@ namespace RimWorld
 
 		public const int MaxTitleLength = 25;
 
-		private static Regex validNameRegex = new Regex("^[a-zA-Z0-9 '\\-]*$");
+		public static Regex ValidNameRegex = new Regex("^[\\p{L}0-9 '\\-]*$");
 
 		public static void DrawCharacterCard(Rect rect, Pawn pawn, Action randomizeCallback = null, Rect creationRect = default(Rect))
 		{
@@ -95,10 +95,7 @@ namespace RimWorld
 					{
 						if (pawn.Downed)
 						{
-							Messages.Message("MessageCantBanishDownedPawn".Translate(new object[]
-							{
-								pawn.LabelShort
-							}).AdjustedFor(pawn, "PAWN"), pawn, MessageTypeDefOf.RejectInput, false);
+							Messages.Message("MessageCantBanishDownedPawn".Translate(pawn.LabelShort, pawn).AdjustedFor(pawn, "PAWN"), pawn, MessageTypeDefOf.RejectInput, false);
 						}
 						else
 						{
@@ -238,7 +235,7 @@ namespace RimWorld
 		public static void DoNameInputRect(Rect rect, ref string name, int maxLength)
 		{
 			string text = Widgets.TextField(rect, name);
-			if (text.Length <= maxLength && CharacterCardUtility.validNameRegex.IsMatch(text))
+			if (text.Length <= maxLength && CharacterCardUtility.ValidNameRegex.IsMatch(text))
 			{
 				name = text;
 			}

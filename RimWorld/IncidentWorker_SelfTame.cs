@@ -32,40 +32,26 @@ namespace RimWorld
 			{
 				pawn.guest.SetGuestStatus(null, false);
 			}
-			string text = pawn.LabelIndefinite();
+			string value = pawn.LabelIndefinite();
 			bool flag = pawn.Name != null;
 			pawn.SetFaction(Faction.OfPlayer, null);
-			string text2;
+			string text;
 			if (!flag && pawn.Name != null)
 			{
 				if (pawn.Name.Numerical)
 				{
-					text2 = "LetterAnimalSelfTameAndNameNumerical".Translate(new object[]
-					{
-						text,
-						pawn.Name.ToStringFull
-					}).CapitalizeFirst();
+					text = "LetterAnimalSelfTameAndNameNumerical".Translate(value, pawn.Name.ToStringFull, pawn.Named("ANIMAL")).CapitalizeFirst();
 				}
 				else
 				{
-					text2 = "LetterAnimalSelfTameAndName".Translate(new object[]
-					{
-						text,
-						pawn.Name.ToStringFull
-					}).CapitalizeFirst();
+					text = "LetterAnimalSelfTameAndName".Translate(value, pawn.Name.ToStringFull, pawn.Named("ANIMAL")).CapitalizeFirst();
 				}
 			}
 			else
 			{
-				text2 = "LetterAnimalSelfTame".Translate(new object[]
-				{
-					pawn.LabelIndefinite()
-				}).CapitalizeFirst();
+				text = "LetterAnimalSelfTame".Translate(pawn).CapitalizeFirst();
 			}
-			Find.LetterStack.ReceiveLetter("LetterLabelAnimalSelfTame".Translate(new object[]
-			{
-				pawn.KindLabel
-			}).CapitalizeFirst(), text2, LetterDefOf.PositiveEvent, pawn, null, null);
+			Find.LetterStack.ReceiveLetter("LetterLabelAnimalSelfTame".Translate(pawn.KindLabel, pawn).CapitalizeFirst(), text, LetterDefOf.PositiveEvent, pawn, null, null);
 			return true;
 		}
 	}

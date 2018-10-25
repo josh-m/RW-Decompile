@@ -144,6 +144,8 @@ namespace RimWorld
 
 		public static ThingDef RectTrigger;
 
+		public static ThingDef TriggerUnfogged;
+
 		public static ThingDef Explosion;
 
 		public static ThingDef Bombardment;

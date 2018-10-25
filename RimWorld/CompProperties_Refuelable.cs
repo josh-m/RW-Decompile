@@ -135,5 +135,27 @@ namespace RimWorld
 				yield return string.Format("Refuelable component set to consume fuel per tick, but parent tickertype is {0} instead of {1}", parentDef.tickerType, TickerType.Normal);
 			}
 		}
+
+		[DebuggerHidden]
+		public override IEnumerable<StatDrawEntry> SpecialDisplayStats(StatRequest req)
+		{
+			foreach (StatDrawEntry s in base.SpecialDisplayStats(req))
+			{
+				yield return s;
+			}
+			if (((ThingDef)req.Def).building.IsTurret)
+			{
+				StatCategoryDef building = StatCategoryDefOf.Building;
+				string text = "RearmCost".Translate();
+				string valueString = GenLabel.ThingLabel(this.fuelFilter.AnyAllowedDef, null, (int)(this.fuelCapacity / this.FuelMultiplierCurrentDifficulty)).CapitalizeFirst();
+				string text2 = "RearmCostExplanation".Translate();
+				yield return new StatDrawEntry(building, text, valueString, 0, text2);
+				building = StatCategoryDefOf.Building;
+				text2 = "ShotsBeforeRearm".Translate();
+				valueString = ((int)this.fuelCapacity).ToString();
+				text = "ShotsBeforeRearmExplanation".Translate();
+				yield return new StatDrawEntry(building, text2, valueString, 0, text);
+			}
+		}
 	}
 }

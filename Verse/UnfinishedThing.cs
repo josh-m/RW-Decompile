@@ -110,16 +110,9 @@ namespace Verse
 				}
 				if (base.Stuff == null)
 				{
-					return "UnfinishedItem".Translate(new object[]
-					{
-						this.Recipe.products[0].thingDef.label
-					});
+					return "UnfinishedItem".Translate(this.Recipe.products[0].thingDef.label);
 				}
-				return "UnfinishedItemWithStuff".Translate(new object[]
-				{
-					base.Stuff.LabelAsStuff,
-					this.Recipe.products[0].thingDef.label
-				});
+				return "UnfinishedItemWithStuff".Translate(base.Stuff.LabelAsStuff, this.Recipe.products[0].thingDef.label);
 			}
 		}
 

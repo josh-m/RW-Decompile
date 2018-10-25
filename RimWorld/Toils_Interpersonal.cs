@@ -36,10 +36,14 @@ namespace RimWorld
 				else if (!actor.pather.Moving)
 				{
 					IntVec3 intVec = IntVec3.Invalid;
-					for (int i = 0; i < 8; i++)
+					for (int i = 0; i < 9; i++)
 					{
-						IntVec3 intVec2 = pawn.Position + GenAdj.AdjacentCells[i];
-						if (intVec2.InBounds(map) && intVec2.Standable(map) && intVec2 != actor.Position && InteractionUtility.IsGoodPositionForInteraction(intVec2, pawn.Position, map) && actor.CanReach(intVec2, PathEndMode.OnCell, Danger.Deadly, false, TraverseMode.ByPawn) && (!intVec.IsValid || actor.Position.DistanceToSquared(intVec2) < actor.Position.DistanceToSquared(intVec)))
+						if (i == 8 && intVec.IsValid)
+						{
+							break;
+						}
+						IntVec3 intVec2 = pawn.Position + GenAdj.AdjacentCellsAndInside[i];
+						if (intVec2.InBounds(map) && intVec2.Walkable(map) && intVec2 != actor.Position && InteractionUtility.IsGoodPositionForInteraction(intVec2, pawn.Position, map) && actor.CanReach(intVec2, PathEndMode.OnCell, Danger.Deadly, false, TraverseMode.ByPawn) && (!intVec.IsValid || actor.Position.DistanceToSquared(intVec2) < actor.Position.DistanceToSquared(intVec)))
 						{
 							intVec = intVec2;
 						}
@@ -97,23 +101,23 @@ namespace RimWorld
 
 		public static Toil ConvinceRecruitee(Pawn pawn, Pawn talkee)
 		{
-			return new Toil
+			Toil toil = new Toil();
+			toil.initAction = delegate
 			{
-				initAction = delegate
+				if (!pawn.interactions.TryInteractWith(talkee, InteractionDefOf.BuildRapport))
 				{
-					if (!pawn.interactions.TryInteractWith(talkee, InteractionDefOf.BuildRapport))
-					{
-						pawn.jobs.curDriver.ReadyForNextToil();
-					}
-					else
-					{
-						pawn.records.Increment(RecordDefOf.PrisonersChatted);
-					}
-				},
-				socialMode = RandomSocialMode.Off,
-				defaultCompleteMode = ToilCompleteMode.Delay,
-				defaultDuration = 350
+					pawn.jobs.curDriver.ReadyForNextToil();
+				}
+				else
+				{
+					pawn.records.Increment(RecordDefOf.PrisonersChatted);
+				}
 			};
+			toil.FailOn(() => !talkee.guest.ScheduledForInteraction);
+			toil.socialMode = RandomSocialMode.Off;
+			toil.defaultCompleteMode = ToilCompleteMode.Delay;
+			toil.defaultDuration = 350;
+			return toil;
 		}
 
 		public static Toil SetLastInteractTime(TargetIndex targetInd)
@@ -179,11 +183,7 @@ namespace RimWorld
 						{
 							pawn.caller.DoCall();
 						}
-						text = "TextMote_TrainSuccess".Translate(new object[]
-						{
-							trainableDef.LabelCap,
-							num.ToStringPercent()
-						});
+						text = "TextMote_TrainSuccess".Translate(trainableDef.LabelCap, num.ToStringPercent());
 						RelationsUtility.TryDevelopBondRelation(actor, pawn, 0.007f);
 						TaleRecorder.RecordTale(TaleDefOf.TrainedAnimal, new object[]
 						{
@@ -194,11 +194,7 @@ namespace RimWorld
 					}
 					else
 					{
-						text = "TextMote_TrainFail".Translate(new object[]
-						{
-							trainableDef.LabelCap,
-							num.ToStringPercent()
-						});
+						text = "TextMote_TrainFail".Translate(trainableDef.LabelCap, num.ToStringPercent());
 					}
 					string text2 = text;
 					text = string.Concat(new object[]

@@ -50,10 +50,7 @@ namespace RimWorld.Planet
 
 		public static bool CanLandInSpecificCell(IEnumerable<IThingHolder> pods, MapParent mapParent)
 		{
-			return mapParent != null && mapParent.Spawned && mapParent.HasMap && (!mapParent.EnterCooldownBlocksEntering() || FloatMenuAcceptanceReport.WithFailMessage("MessageEnterCooldownBlocksEntering".Translate(new object[]
-			{
-				mapParent.EnterCooldownDaysLeft().ToString("0.#")
-			})));
+			return mapParent != null && mapParent.Spawned && mapParent.HasMap && (!mapParent.EnterCooldownBlocksEntering() || FloatMenuAcceptanceReport.WithFailMessage("MessageEnterCooldownBlocksEntering".Translate(mapParent.EnterCooldownDaysLeft().ToString("0.#"))));
 		}
 	}
 }

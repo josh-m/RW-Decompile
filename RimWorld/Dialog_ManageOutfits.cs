@@ -12,11 +12,11 @@ namespace RimWorld
 
 		private Outfit selOutfitInt;
 
-		private const float TopAreaHeight = 40f;
+		public const float TopAreaHeight = 40f;
 
-		private const float TopButtonHeight = 35f;
+		public const float TopButtonHeight = 35f;
 
-		private const float TopButtonWidth = 150f;
+		public const float TopButtonWidth = 150f;
 
 		private static ThingFilter apparelGlobalFilter;
 
@@ -132,7 +132,7 @@ namespace RimWorld
 			ThingFilter parentFilter = Dialog_ManageOutfits.apparelGlobalFilter;
 			int openMask = 16;
 			IEnumerable<SpecialThingFilterDef> forceHiddenFilters = this.HiddenSpecialThingFilters();
-			ThingFilterUI.DoThingFilterConfigWindow(rect7, ref this.scrollPosition, filter, parentFilter, openMask, null, forceHiddenFilters, null, null);
+			ThingFilterUI.DoThingFilterConfigWindow(rect7, ref this.scrollPosition, filter, parentFilter, openMask, null, forceHiddenFilters, false, null, null);
 			GUI.EndGroup();
 		}
 

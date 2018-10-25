@@ -14,10 +14,7 @@ namespace RimWorld.Planet
 				arg_4D_0 = (BestCaravanPawnUtility.FindBestDiplomat(caravan) ?? caravan.PawnsListForReading.Find((Pawn x) => caravan.IsOwner(x)));
 			}
 			Pawn pawn = arg_4D_0;
-			string text = (pawn == null) ? caravan.def.label : "CaravanLeaderCaravanName".Translate(new object[]
-			{
-				pawn.LabelShort
-			}).CapitalizeFirst();
+			string text = (pawn == null) ? caravan.def.label : "CaravanLeaderCaravanName".Translate(pawn.LabelShort, pawn).CapitalizeFirst();
 			for (int i = 1; i <= 1000; i++)
 			{
 				string text2 = text;

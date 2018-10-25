@@ -207,16 +207,13 @@ namespace RimWorld
 				letterDef = LetterDefOf.PositiveEvent;
 			}
 			StringBuilder stringBuilder = new StringBuilder();
+			stringBuilder.AppendLine("LetterNewLovers".Translate(initiator.Named("PAWN1"), recipient.Named("PAWN2")));
+			stringBuilder.AppendLine();
 			if (flag)
 			{
 				if (initiator.GetSpouse() != null)
 				{
-					stringBuilder.AppendLine("LetterAffair".Translate(new object[]
-					{
-						initiator.LabelShort,
-						initiator.GetSpouse().LabelShort,
-						recipient.LabelShort
-					}));
+					stringBuilder.AppendLine("LetterAffair".Translate(initiator.LabelShort, initiator.GetSpouse().LabelShort, recipient.LabelShort, initiator.Named("PAWN1"), recipient.Named("PAWN2"), initiator.GetSpouse().Named("SPOUSE")));
 				}
 				if (recipient.GetSpouse() != null)
 				{
@@ -224,12 +221,7 @@ namespace RimWorld
 					{
 						stringBuilder.AppendLine();
 					}
-					stringBuilder.AppendLine("LetterAffair".Translate(new object[]
-					{
-						recipient.LabelShort,
-						recipient.GetSpouse().LabelShort,
-						initiator.LabelShort
-					}));
+					stringBuilder.AppendLine("LetterAffair".Translate(recipient.LabelShort, recipient.GetSpouse().LabelShort, initiator.LabelShort, recipient.Named("PAWN1"), recipient.GetSpouse().Named("SPOUSE"), initiator.Named("PAWN2")));
 				}
 			}
 			for (int i = 0; i < initiatorOldLoversAndFiances.Count; i++)
@@ -240,11 +232,7 @@ namespace RimWorld
 					{
 						stringBuilder.AppendLine();
 					}
-					stringBuilder.AppendLine("LetterNoLongerLovers".Translate(new object[]
-					{
-						initiator.LabelShort,
-						initiatorOldLoversAndFiances[i].LabelShort
-					}));
+					stringBuilder.AppendLine("LetterNoLongerLovers".Translate(initiator.LabelShort, initiatorOldLoversAndFiances[i].LabelShort, initiator.Named("PAWN1"), initiatorOldLoversAndFiances[i].Named("PAWN2")));
 				}
 			}
 			for (int j = 0; j < recipientOldLoversAndFiances.Count; j++)
@@ -255,11 +243,7 @@ namespace RimWorld
 					{
 						stringBuilder.AppendLine();
 					}
-					stringBuilder.AppendLine("LetterNoLongerLovers".Translate(new object[]
-					{
-						recipient.LabelShort,
-						recipientOldLoversAndFiances[j].LabelShort
-					}));
+					stringBuilder.AppendLine("LetterNoLongerLovers".Translate(recipient.LabelShort, recipientOldLoversAndFiances[j].LabelShort, recipient.Named("PAWN1"), recipientOldLoversAndFiances[j].Named("PAWN2")));
 				}
 			}
 			letterText = stringBuilder.ToString().TrimEndNewlines();

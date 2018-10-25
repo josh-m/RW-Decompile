@@ -51,20 +51,11 @@ namespace RimWorld
 			}
 			if (!myPawn.health.capacities.CapableOf(PawnCapacityDefOf.Talking))
 			{
-				return new FloatMenuOption("CannotUseReason".Translate(new object[]
-				{
-					"IncapableOfCapacity".Translate(new object[]
-					{
-						PawnCapacityDefOf.Talking.label
-					})
-				}), null, MenuOptionPriority.Default, null, null, 0f, null, null);
+				return new FloatMenuOption("CannotUseReason".Translate("IncapableOfCapacity".Translate(PawnCapacityDefOf.Talking.label)), null, MenuOptionPriority.Default, null, null, 0f, null, null);
 			}
 			if (myPawn.skills.GetSkill(SkillDefOf.Social).TotallyDisabled)
 			{
-				return new FloatMenuOption("CannotPrioritizeWorkTypeDisabled".Translate(new object[]
-				{
-					SkillDefOf.Social.LabelCap
-				}), null, MenuOptionPriority.Default, null, null, 0f, null, null);
+				return new FloatMenuOption("CannotPrioritizeWorkTypeDisabled".Translate(SkillDefOf.Social.LabelCap), null, MenuOptionPriority.Default, null, null, 0f, null, null);
 			}
 			if (!this.CanUseCommsNow)
 			{

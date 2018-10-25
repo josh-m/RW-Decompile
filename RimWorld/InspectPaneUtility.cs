@@ -167,10 +167,7 @@ namespace RimWorld
 							pane.SelectNextInCell();
 						}
 						num += 24f;
-						TooltipHandler.TipRegion(rect2, "SelectNextInSquareTip".Translate(new object[]
-						{
-							KeyBindingDefOf.SelectNextInCell.MainKeyLabel
-						}));
+						TooltipHandler.TipRegion(rect2, "SelectNextInSquareTip".Translate(KeyBindingDefOf.SelectNextInCell.MainKeyLabel));
 					}
 					pane.DoInspectPaneButtons(rect, ref num);
 					Rect rect3 = new Rect(0f, 0f, rect.width - num, 50f);

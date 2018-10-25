@@ -59,10 +59,7 @@ namespace RimWorld
 			int num = TrainableUtility.MinimumHandlingSkill(animal);
 			if (num > pawn.skills.GetSkill(SkillDefOf.Animals).Level)
 			{
-				JobFailReason.Is("AnimalsSkillTooLow".Translate(new object[]
-				{
-					num
-				}), null);
+				JobFailReason.Is("AnimalsSkillTooLow".Translate(num), null);
 				return false;
 			}
 			return true;
@@ -77,7 +74,7 @@ namespace RimWorld
 			for (int i = 0; i < innerContainer.Count; i++)
 			{
 				Thing thing = innerContainer[i];
-				if (tamee.RaceProps.CanEverEat(thing) && thing.def.ingestible.preferability <= FoodPreferability.RawTasty && !thing.def.IsDrug)
+				if (tamee.WillEat(thing, pawn) && thing.def.ingestible.preferability <= FoodPreferability.RawTasty && !thing.def.IsDrug)
 				{
 					for (int j = 0; j < thing.stackCount; j++)
 					{

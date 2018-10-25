@@ -52,11 +52,7 @@ namespace RimWorld
 				lordToil_DefendTraderCaravan,
 				lordToil_DefendTraderCaravan2
 			});
-			transition.AddPreAction(new TransitionAction_Message("MessageVisitorsDangerousTemperature".Translate(new object[]
-			{
-				this.faction.def.pawnsPlural.CapitalizeFirst(),
-				this.faction.Name
-			}), null, 1f));
+			transition.AddPreAction(new TransitionAction_Message("MessageVisitorsDangerousTemperature".Translate(this.faction.def.pawnsPlural.CapitalizeFirst(), this.faction.Name), null, 1f));
 			transition.AddPostAction(new TransitionAction_EndAllJobs());
 			transition.AddTrigger(new Trigger_PawnExperiencingDangerousTemperatures());
 			stateGraph.AddTransition(transition, false);
@@ -70,11 +66,7 @@ namespace RimWorld
 				lordToil_ExitMapTraderFighting
 			});
 			transition2.AddTrigger(new Trigger_PawnCannotReachMapEdge());
-			transition2.AddPostAction(new TransitionAction_Message("MessageVisitorsTrappedLeaving".Translate(new object[]
-			{
-				this.faction.def.pawnsPlural.CapitalizeFirst(),
-				this.faction.Name
-			}), null, 1f));
+			transition2.AddPostAction(new TransitionAction_Message("MessageVisitorsTrappedLeaving".Translate(this.faction.def.pawnsPlural.CapitalizeFirst(), this.faction.Name), null, 1f));
 			transition2.AddPostAction(new TransitionAction_WakeAll());
 			transition2.AddPostAction(new TransitionAction_EndAllJobs());
 			stateGraph.AddTransition(transition2, false);
@@ -108,10 +100,7 @@ namespace RimWorld
 			Transition transition8 = new Transition(lordToil_DefendTraderCaravan2, lordToil_ExitMapAndEscortCarriers, false, true);
 			transition8.AddTrigger(new Trigger_TicksPassed((!DebugSettings.instantVisitorsGift) ? Rand.Range(27000, 45000) : 0));
 			transition8.AddPreAction(new TransitionAction_CheckGiveGift());
-			transition8.AddPreAction(new TransitionAction_Message("MessageTraderCaravanLeaving".Translate(new object[]
-			{
-				this.faction.Name
-			}), null, 1f));
+			transition8.AddPreAction(new TransitionAction_Message("MessageTraderCaravanLeaving".Translate(this.faction.Name), null, 1f));
 			transition8.AddPostAction(new TransitionAction_WakeAll());
 			stateGraph.AddTransition(transition8, false);
 			Transition transition9 = new Transition(lordToil_ExitMapAndEscortCarriers, lordToil_ExitMapAndEscortCarriers, true, true);

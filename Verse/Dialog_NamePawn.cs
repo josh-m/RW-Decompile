@@ -80,14 +80,14 @@ namespace Verse
 			Widgets.Label(new Rect(15f, 15f, 500f, 50f), text);
 			Text.Font = GameFont.Small;
 			string text2 = Widgets.TextField(new Rect(15f, 50f, inRect.width / 2f - 20f, 35f), this.curName);
-			if (text2.Length < 16)
+			if (text2.Length < 16 && CharacterCardUtility.ValidNameRegex.IsMatch(text2))
 			{
 				this.curName = text2;
 			}
 			if (this.curTitle != null)
 			{
 				string text3 = Widgets.TextField(new Rect(inRect.width / 2f, 50f, inRect.width / 2f - 20f, 35f), this.curTitle);
-				if (text3.Length < 25)
+				if (text3.Length < 25 && CharacterCardUtility.ValidNameRegex.IsMatch(text3))
 				{
 					this.curTitle = text3;
 				}
@@ -104,14 +104,7 @@ namespace Verse
 					this.pawn.story.Title = this.curTitle;
 				}
 				Find.WindowStack.TryRemove(this, true);
-				string text4 = (!this.pawn.def.race.Animal) ? "PawnGainsName".Translate(new object[]
-				{
-					this.curName,
-					this.pawn.story.Title
-				}).AdjustedFor(this.pawn, "PAWN") : "AnimalGainsName".Translate(new object[]
-				{
-					this.curName
-				});
+				string text4 = (!this.pawn.def.race.Animal) ? "PawnGainsName".Translate(this.curName, this.pawn.story.Title, this.pawn.Named("PAWN")).AdjustedFor(this.pawn, "PAWN") : "AnimalGainsName".Translate(this.curName);
 				Messages.Message(text4, this.pawn, MessageTypeDefOf.PositiveEvent, false);
 			}
 		}

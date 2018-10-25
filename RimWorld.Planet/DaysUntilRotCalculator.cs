@@ -61,7 +61,24 @@ namespace RimWorld.Planet
 				{
 					break;
 				}
-				int num4 = Mathf.Min(num3, 26999);
+				int b;
+				if (num3 >= 10800000)
+				{
+					b = 305999;
+				}
+				else if (num3 >= 3600000)
+				{
+					b = 125999;
+				}
+				else if (num3 >= 600000)
+				{
+					b = 66000;
+				}
+				else
+				{
+					b = 26999;
+				}
+				int num4 = Mathf.Min(num3, b);
 				num += (float)num4 / (float)num3;
 				num2 += num4;
 			}

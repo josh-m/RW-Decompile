@@ -45,13 +45,13 @@ namespace RimWorld
 			StateGraph stateGraph = new StateGraph();
 			LordToil_Travel lordToil_Travel = new LordToil_Travel(this.groupUpLoc);
 			lordToil_Travel.maxDanger = Danger.Deadly;
-			lordToil_Travel.avoidGridMode = AvoidGridMode.Smart;
+			lordToil_Travel.useAvoidGrid = true;
 			stateGraph.StartingToil = lordToil_Travel;
 			LordToil_PrisonerEscape lordToil_PrisonerEscape = new LordToil_PrisonerEscape(this.exitPoint, this.sapperThingID);
-			lordToil_PrisonerEscape.avoidGridMode = AvoidGridMode.Smart;
+			lordToil_PrisonerEscape.useAvoidGrid = true;
 			stateGraph.AddToil(lordToil_PrisonerEscape);
 			LordToil_ExitMap lordToil_ExitMap = new LordToil_ExitMap(LocomotionUrgency.Jog, false);
-			lordToil_ExitMap.avoidGridMode = AvoidGridMode.Smart;
+			lordToil_ExitMap.useAvoidGrid = true;
 			stateGraph.AddToil(lordToil_ExitMap);
 			LordToil_ExitMap lordToil_ExitMap2 = new LordToil_ExitMap(LocomotionUrgency.Jog, true);
 			stateGraph.AddToil(lordToil_ExitMap2);

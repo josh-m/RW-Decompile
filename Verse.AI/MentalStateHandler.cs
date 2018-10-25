@@ -158,12 +158,9 @@ namespace Verse.AI
 				if (!text.NullOrEmpty())
 				{
 					string label = (stateDef.beginLetterLabel ?? stateDef.LabelCap).CapitalizeFirst() + ": " + this.pawn.LabelShortCap;
-					if (reason != null)
+					if (!reason.NullOrEmpty())
 					{
-						text = text + "\n\n" + "FinalStraw".Translate(new object[]
-						{
-							reason.CapitalizeFirst()
-						});
+						text = text + "\n\n" + reason;
 					}
 					Find.LetterStack.ReceiveLetter(label, text, stateDef.beginLetterDef, this.pawn, null, null);
 				}

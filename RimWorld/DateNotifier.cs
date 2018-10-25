@@ -29,10 +29,7 @@ namespace RimWorld
 					}
 					else if (GenDate.DaysPassed > 5)
 					{
-						Messages.Message("MessageSeasonBegun".Translate(new object[]
-						{
-							season.Label()
-						}).CapitalizeFirst(), MessageTypeDefOf.NeutralEvent, true);
+						Messages.Message("MessageSeasonBegun".Translate(season.Label()).CapitalizeFirst(), MessageTypeDefOf.NeutralEvent, true);
 					}
 				}
 				this.lastSeason = season;

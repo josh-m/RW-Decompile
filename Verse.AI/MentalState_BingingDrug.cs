@@ -34,21 +34,11 @@ namespace Verse.AI
 			this.ChooseRandomChemical();
 			if (PawnUtility.ShouldSendNotificationAbout(this.pawn))
 			{
-				string label = "LetterLabelDrugBinge".Translate(new object[]
+				string label = "LetterLabelDrugBinge".Translate(this.chemical.label).CapitalizeFirst() + ": " + this.pawn.LabelShortCap;
+				string text = "LetterDrugBinge".Translate(this.pawn.Label, this.chemical.label, this.pawn).CapitalizeFirst();
+				if (!reason.NullOrEmpty())
 				{
-					this.chemical.label
-				}).CapitalizeFirst() + ": " + this.pawn.LabelShortCap;
-				string text = "LetterDrugBinge".Translate(new object[]
-				{
-					this.pawn.Label,
-					this.chemical.label
-				}).CapitalizeFirst();
-				if (reason != null)
-				{
-					text = text + "\n\n" + "FinalStraw".Translate(new object[]
-					{
-						reason.CapitalizeFirst()
-					});
+					text = text + "\n\n" + reason;
 				}
 				Find.LetterStack.ReceiveLetter(label, text, LetterDefOf.ThreatSmall, this.pawn, null, null);
 			}
@@ -59,11 +49,7 @@ namespace Verse.AI
 			base.PostEnd();
 			if (PawnUtility.ShouldSendNotificationAbout(this.pawn))
 			{
-				Messages.Message("MessageNoLongerBingingOnDrug".Translate(new object[]
-				{
-					this.pawn.LabelShort,
-					this.chemical.label
-				}), this.pawn, MessageTypeDefOf.SituationResolved, true);
+				Messages.Message("MessageNoLongerBingingOnDrug".Translate(this.pawn.LabelShort, this.chemical.label, this.pawn), this.pawn, MessageTypeDefOf.SituationResolved, true);
 			}
 		}
 

@@ -204,10 +204,7 @@ namespace RimWorld
 			listing_Standard.CheckboxLabeled("PauseOnUrgentLetter".Translate(), ref pauseOnUrgentLetter, null);
 			Prefs.PauseOnUrgentLetter = pauseOnUrgentLetter;
 			int maxNumberOfPlayerSettlements = Prefs.MaxNumberOfPlayerSettlements;
-			listing_Standard.Label("MaxNumberOfPlayerSettlements".Translate(new object[]
-			{
-				maxNumberOfPlayerSettlements
-			}), -1f, null);
+			listing_Standard.Label("MaxNumberOfPlayerSettlements".Translate(maxNumberOfPlayerSettlements), -1f, null);
 			int num = Mathf.RoundToInt(listing_Standard.Slider((float)maxNumberOfPlayerSettlements, 1f, 5f));
 			Prefs.MaxNumberOfPlayerSettlements = num;
 			if (maxNumberOfPlayerSettlements != num && num > 1)
@@ -269,10 +266,7 @@ namespace RimWorld
 			if (Current.ProgramState == ProgramState.Playing && Current.Game.Info.permadeathMode && Prefs.AutosaveIntervalDays > 1f)
 			{
 				GUI.color = Color.red;
-				listing_Standard.Label("MaxPermadeathAutosaveIntervalInfo".Translate(new object[]
-				{
-					1f
-				}), -1f, null);
+				listing_Standard.Label("MaxPermadeathAutosaveIntervalInfo".Translate(1f), -1f, null);
 				GUI.color = Color.white;
 			}
 			if (Current.ProgramState == ProgramState.Playing && listing_Standard.ButtonText("ChangeStoryteller".Translate(), "OptionsButton-ChooseStoryteller") && TutorSystem.AllowAction("ChooseStoryteller"))

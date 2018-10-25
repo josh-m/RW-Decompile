@@ -101,50 +101,34 @@ namespace Verse
 			if (!BackCompatibility.IsSaveCompatibleWith(ScribeMetaHeaderUtility.loadedGameVersion) && !ScribeMetaHeaderUtility.VersionsMatch())
 			{
 				text2 = "VersionMismatch".Translate();
-				string text3 = (!ScribeMetaHeaderUtility.loadedGameVersion.NullOrEmpty()) ? ScribeMetaHeaderUtility.loadedGameVersion : ("(" + "UnknownLower".Translate() + ")");
+				string value = (!ScribeMetaHeaderUtility.loadedGameVersion.NullOrEmpty()) ? ScribeMetaHeaderUtility.loadedGameVersion : ("(" + "UnknownLower".Translate() + ")");
 				if (ScribeMetaHeaderUtility.lastMode == ScribeMetaHeaderUtility.ScribeHeaderMode.Map)
 				{
-					text = "SaveGameIncompatibleWarningText".Translate(new object[]
-					{
-						text3,
-						VersionControl.CurrentVersionString
-					});
+					text = "SaveGameIncompatibleWarningText".Translate(value, VersionControl.CurrentVersionString);
 				}
 				else if (ScribeMetaHeaderUtility.lastMode == ScribeMetaHeaderUtility.ScribeHeaderMode.World)
 				{
-					text = "WorldFileVersionMismatch".Translate(new object[]
-					{
-						text3,
-						VersionControl.CurrentVersionString
-					});
+					text = "WorldFileVersionMismatch".Translate(value, VersionControl.CurrentVersionString);
 				}
 				else
 				{
-					text = "FileIncompatibleWarning".Translate(new object[]
-					{
-						text3,
-						VersionControl.CurrentVersionString
-					});
+					text = "FileIncompatibleWarning".Translate(value, VersionControl.CurrentVersionString);
 				}
 			}
 			bool flag = false;
-			string text4;
-			string text5;
-			if (!ScribeMetaHeaderUtility.LoadedModsMatchesActiveMods(out text4, out text5))
+			string value2;
+			string value3;
+			if (!ScribeMetaHeaderUtility.LoadedModsMatchesActiveMods(out value2, out value3))
 			{
 				flag = true;
-				string text6 = "ModsMismatchWarningText".Translate(new object[]
-				{
-					text4,
-					text5
-				});
+				string text3 = "ModsMismatchWarningText".Translate(value2, value3);
 				if (text == null)
 				{
-					text = text6;
+					text = text3;
 				}
 				else
 				{
-					text = text + "\n\n" + text6;
+					text = text + "\n\n" + text3;
 				}
 				if (text2 == null)
 				{
@@ -154,10 +138,10 @@ namespace Verse
 			if (text != null)
 			{
 				ScribeMetaHeaderUtility.<TryCreateDialogsForVersionMismatchWarnings>c__AnonStorey0 <TryCreateDialogsForVersionMismatchWarnings>c__AnonStorey = new ScribeMetaHeaderUtility.<TryCreateDialogsForVersionMismatchWarnings>c__AnonStorey0();
-				ScribeMetaHeaderUtility.<TryCreateDialogsForVersionMismatchWarnings>c__AnonStorey0 arg_152_0 = <TryCreateDialogsForVersionMismatchWarnings>c__AnonStorey;
-				string text7 = text;
+				ScribeMetaHeaderUtility.<TryCreateDialogsForVersionMismatchWarnings>c__AnonStorey0 arg_14A_0 = <TryCreateDialogsForVersionMismatchWarnings>c__AnonStorey;
+				string text4 = text;
 				string title = text2;
-				arg_152_0.dialog = Dialog_MessageBox.CreateConfirmation(text7, confirmedAction, false, title);
+				arg_14A_0.dialog = Dialog_MessageBox.CreateConfirmation(text4, confirmedAction, false, title);
 				<TryCreateDialogsForVersionMismatchWarnings>c__AnonStorey.dialog.buttonAText = "LoadAnyway".Translate();
 				if (flag)
 				{

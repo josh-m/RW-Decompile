@@ -1448,9 +1448,12 @@ namespace Verse
 			}
 			for (int i = 0; i < this.thingCategories.Count; i++)
 			{
-				if (this.thingCategories[i] == category || this.thingCategories[i].Parents.Contains(category))
+				for (ThingCategoryDef thingCategoryDef = this.thingCategories[i]; thingCategoryDef != null; thingCategoryDef = thingCategoryDef.parent)
 				{
-					return true;
+					if (thingCategoryDef == category)
+					{
+						return true;
+					}
 				}
 			}
 			return false;
@@ -1564,7 +1567,7 @@ namespace Verse
 			}
 			if (this.building != null)
 			{
-				foreach (StatDrawEntry s4 in this.building.SpecialDisplayStats(this))
+				foreach (StatDrawEntry s4 in this.building.SpecialDisplayStats(this, req))
 				{
 					yield return s4;
 				}
@@ -1603,13 +1606,37 @@ namespace Verse
 								else
 								{
 									int meleeDamage = verb2.meleeDamageBaseAmount;
-									yield return new StatDrawEntry(StatCategoryDefOf.Weapon, "Damage".Translate(), meleeDamage.ToString(), 0, string.Empty);
+									if (verb2.meleeDamageDef.armorCategory != null)
+									{
+										float armorPenetration = verb2.meleeArmorPenetrationBase;
+										if (armorPenetration < 0f)
+										{
+											armorPenetration = (float)meleeDamage * 0.015f;
+										}
+										StatCategoryDef statCategoryDef = StatCategoryDefOf.Weapon;
+										string text2 = "ArmorPenetration".Translate();
+										string valueString = armorPenetration.ToStringPercent();
+										string text = "ArmorPenetrationExplanation".Translate();
+										yield return new StatDrawEntry(statCategoryDef, text2, valueString, 0, text);
+									}
 								}
 							}
 							else if (!vg.tools.NullOrEmpty<Tool>())
 							{
 								Tool tool = vg.tools[0];
-								yield return new StatDrawEntry(StatCategoryDefOf.Weapon, "Damage".Translate(), tool.power.ToString(), 0, string.Empty);
+								if (ThingUtility.PrimaryMeleeWeaponDamageType(vg.tools).armorCategory != null)
+								{
+									float armorPenetration2 = tool.armorPenetration;
+									if (armorPenetration2 < 0f)
+									{
+										armorPenetration2 = tool.power * 0.015f;
+									}
+									StatCategoryDef statCategoryDef = StatCategoryDefOf.Weapon;
+									string text = "ArmorPenetration".Translate();
+									string valueString = armorPenetration2.ToStringPercent();
+									string text2 = "ArmorPenetrationExplanation".Translate();
+									yield return new StatDrawEntry(statCategoryDef, text, valueString, 0, text2);
+								}
 							}
 						}
 						ThoughtDef thought = DefDatabase<ThoughtDef>.AllDefs.FirstOrDefault((ThoughtDef x) => x.hediff == diff);
@@ -1622,7 +1649,7 @@ namespace Verse
 			}
 			for (int i = 0; i < this.comps.Count; i++)
 			{
-				foreach (StatDrawEntry s6 in this.comps[i].SpecialDisplayStats())
+				foreach (StatDrawEntry s6 in this.comps[i].SpecialDisplayStats(req))
 				{
 					yield return s6;
 				}

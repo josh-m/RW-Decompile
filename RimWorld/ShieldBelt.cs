@@ -139,21 +139,19 @@ namespace RimWorld
 
 		public override bool CheckPreAbsorbDamage(DamageInfo dinfo)
 		{
-			if (this.ShieldState == ShieldState.Active && ((dinfo.Instigator != null && !dinfo.Instigator.Position.AdjacentTo8WayOrInside(base.Wearer.Position)) || dinfo.Def.isExplosive))
+			if (this.ShieldState != ShieldState.Active)
 			{
-				if (dinfo.Instigator != null)
-				{
-					AttachableThing attachableThing = dinfo.Instigator as AttachableThing;
-					if (attachableThing != null && attachableThing.parent == base.Wearer)
-					{
-						return false;
-					}
-				}
+				return false;
+			}
+			if (dinfo.Def == DamageDefOf.EMP)
+			{
+				this.energy = 0f;
+				this.Break();
+				return false;
+			}
+			if (dinfo.Def.isRanged || dinfo.Def.isExplosive)
+			{
 				this.energy -= dinfo.Amount * this.EnergyLossPerDamage;
-				if (dinfo.Def == DamageDefOf.EMP)
-				{
-					this.energy = -1f;
-				}
 				if (this.energy < 0f)
 				{
 					this.Break();

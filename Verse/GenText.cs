@@ -20,6 +20,8 @@ namespace Verse
 
 		private static StringBuilder tmpSb = new StringBuilder();
 
+		private static StringBuilder tmpSbForCapitalizedSentences = new StringBuilder();
+
 		private static StringBuilder tmpStringBuilder = new StringBuilder();
 
 		public static string Possessive(this Pawn p)
@@ -183,12 +185,12 @@ namespace Verse
 
 		public static string KindLabelIndefinite(this Pawn pawn)
 		{
-			return Find.ActiveLanguageWorker.WithIndefiniteArticlePostProcessed(pawn.KindLabel);
+			return Find.ActiveLanguageWorker.WithIndefiniteArticlePostProcessed(pawn.KindLabel, pawn.gender, false, false);
 		}
 
 		public static string KindLabelDefinite(this Pawn pawn)
 		{
-			return Find.ActiveLanguageWorker.WithDefiniteArticlePostProcessed(pawn.KindLabel);
+			return Find.ActiveLanguageWorker.WithDefiniteArticlePostProcessed(pawn.KindLabel, pawn.gender, false, false);
 		}
 
 		public static string RandomSeedString()
@@ -530,7 +532,7 @@ namespace Verse
 			return string.Join(" ", array);
 		}
 
-		public static string CapitalizeSentences(string input)
+		public static string CapitalizeSentences(string input, bool capitalizeFirstSentence = true)
 		{
 			if (input.NullOrEmpty())
 			{
@@ -540,25 +542,25 @@ namespace Verse
 			{
 				return input.ToUpper();
 			}
-			bool flag = true;
-			StringBuilder stringBuilder = new StringBuilder();
+			bool flag = capitalizeFirstSentence;
+			GenText.tmpSbForCapitalizedSentences.Length = 0;
 			for (int i = 0; i < input.Length; i++)
 			{
 				if (flag && char.IsLetterOrDigit(input[i]))
 				{
-					stringBuilder.Append(char.ToUpper(input[i]));
+					GenText.tmpSbForCapitalizedSentences.Append(char.ToUpper(input[i]));
 					flag = false;
 				}
 				else
 				{
-					stringBuilder.Append(input[i]);
+					GenText.tmpSbForCapitalizedSentences.Append(input[i]);
 				}
-				if (input[i] == '\r' || input[i] == '\n' || input[i] == '.' || input[i] == '!' || input[i] == '?')
+				if (input[i] == '\r' || input[i] == '\n' || input[i] == '.' || input[i] == '!' || input[i] == '?' || input[i] == ':')
 				{
 					flag = true;
 				}
 			}
-			return stringBuilder.ToString();
+			return GenText.tmpSbForCapitalizedSentences.ToString();
 		}
 
 		public static string CapitalizeAsTitle(string str)

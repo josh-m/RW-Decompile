@@ -191,6 +191,7 @@ namespace Verse
 				Hive.ResetStaticData();
 				ExpectationsUtility.Reset();
 				WealthWatcher.ResetStaticData();
+				SkillUI.Reset();
 				WorkGiver_FillFermentingBarrel.ResetStaticData();
 				WorkGiver_DoBill.ResetStaticData();
 				WorkGiver_InteractAnimal.ResetStaticData();

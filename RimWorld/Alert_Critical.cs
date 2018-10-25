@@ -32,10 +32,7 @@ namespace RimWorld
 		{
 			if (this.lastActiveFrame < Time.frameCount - 1)
 			{
-				Messages.Message("MessageCriticalAlert".Translate(new object[]
-				{
-					this.GetLabel().CapitalizeFirst()
-				}), new LookTargets(this.GetReport().culprits), MessageTypeDefOf.ThreatBig, true);
+				Messages.Message("MessageCriticalAlert".Translate(this.GetLabel().CapitalizeFirst()), new LookTargets(this.GetReport().culprits), MessageTypeDefOf.ThreatBig, true);
 			}
 			this.lastActiveFrame = Time.frameCount;
 		}

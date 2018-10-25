@@ -60,9 +60,9 @@ namespace RimWorld
 		}
 
 		[DebuggerHidden]
-		public override IEnumerable<StatDrawEntry> SpecialDisplayStats()
+		public override IEnumerable<StatDrawEntry> SpecialDisplayStats(StatRequest req)
 		{
-			foreach (StatDrawEntry s in base.SpecialDisplayStats())
+			foreach (StatDrawEntry s in base.SpecialDisplayStats(req))
 			{
 				yield return s;
 			}

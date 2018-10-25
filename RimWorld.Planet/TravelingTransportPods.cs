@@ -273,7 +273,18 @@ namespace RimWorld.Planet
 			{
 				for (int j = 0; j < this.pods.Count; j++)
 				{
-					this.pods[j].innerContainer.ClearAndDestroyContentsOrPassToWorld(DestroyMode.Vanish);
+					for (int k = 0; k < this.pods[j].innerContainer.Count; k++)
+					{
+						Pawn pawn = this.pods[j].innerContainer[k] as Pawn;
+						if (pawn != null && (pawn.Faction == Faction.OfPlayer || pawn.HostFaction == Faction.OfPlayer))
+						{
+							PawnBanishUtility.Banish(pawn, this.destinationTile);
+						}
+					}
+				}
+				for (int l = 0; l < this.pods.Count; l++)
+				{
+					this.pods[l].innerContainer.ClearAndDestroyContentsOrPassToWorld(DestroyMode.Vanish);
 				}
 				Messages.Message("MessageTransportPodsArrivedAndLost".Translate(), new GlobalTargetInfo(this.destinationTile), MessageTypeDefOf.NegativeEvent, true);
 			}

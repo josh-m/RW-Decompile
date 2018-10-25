@@ -71,10 +71,7 @@ namespace RimWorld
 
 		public override string CompInspectStringExtra()
 		{
-			return "PsychicDroneLevel".Translate(new object[]
-			{
-				this.droneLevel.GetLabelCap()
-			});
+			return "PsychicDroneLevel".Translate(this.droneLevel.GetLabelCap());
 		}
 	}
 }

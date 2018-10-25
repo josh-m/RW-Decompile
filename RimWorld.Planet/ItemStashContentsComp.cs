@@ -42,12 +42,8 @@ namespace RimWorld.Planet
 		{
 			if (this.contents.Any)
 			{
-				string text = GenThing.ThingsToCommaList(this.contents, true, true, 5).CapitalizeFirst();
-				return "ItemStashContents".Translate(new object[]
-				{
-					text,
-					GenThing.GetMarketValue(this.contents).ToStringMoney(null)
-				});
+				string value = GenThing.ThingsToCommaList(this.contents, true, true, 5).CapitalizeFirst();
+				return "ItemStashContents".Translate(value, GenThing.GetMarketValue(this.contents).ToStringMoney(null));
 			}
 			return null;
 		}

@@ -216,16 +216,11 @@ namespace RimWorld
 
 		public static void GiveNameBecauseOfNuzzle(Pawn namer, Pawn namee)
 		{
-			string text = (namee.Name != null) ? namee.Name.ToStringFull : namee.LabelIndefinite();
+			string value = (namee.Name != null) ? namee.Name.ToStringFull : namee.LabelIndefinite();
 			namee.Name = PawnBioAndNameGenerator.GeneratePawnName(namee, NameStyle.Full, null);
 			if (namer.Faction == Faction.OfPlayer)
 			{
-				Messages.Message("MessageNuzzledPawnGaveNameTo".Translate(new object[]
-				{
-					namer,
-					text,
-					namee.Name.ToStringFull
-				}), namee, MessageTypeDefOf.NeutralEvent, true);
+				Messages.Message("MessageNuzzledPawnGaveNameTo".Translate(namer.Named("NAMER"), value, namee.Name.ToStringFull, namee.Named("NAMEE")), namee, MessageTypeDefOf.NeutralEvent, true);
 			}
 		}
 
@@ -361,8 +356,12 @@ namespace RimWorld
 			return false;
 		}
 
-		public static ByteGrid GetAvoidGrid(this Pawn p)
+		public static ByteGrid GetAvoidGrid(this Pawn p, bool onlyIfLordAllows = true)
 		{
+			if (!p.Spawned)
+			{
+				return null;
+			}
 			if (p.Faction == null)
 			{
 				return null;
@@ -375,17 +374,14 @@ namespace RimWorld
 			{
 				return null;
 			}
-			Lord lord = p.GetLord();
-			if (lord != null)
+			if (!onlyIfLordAllows)
 			{
-				if (lord.CurLordToil.avoidGridMode == AvoidGridMode.Ignore)
-				{
-					return null;
-				}
-				if (lord.CurLordToil.avoidGridMode == AvoidGridMode.Smart)
-				{
-					return p.Faction.GetAvoidGridSmart(p.Map);
-				}
+				return p.Map.avoidGrid.Grid;
+			}
+			Lord lord = p.GetLord();
+			if (lord != null && lord.CurLordToil.useAvoidGrid)
+			{
+				return lord.Map.avoidGrid.Grid;
 			}
 			return null;
 		}

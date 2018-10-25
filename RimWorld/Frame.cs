@@ -25,7 +25,7 @@ namespace RimWorld
 
 		protected const float CenterOverdrawFactor = 0.5f;
 
-		private const int LongConstructionProjectThreshold = 10000;
+		private const int LongConstructionProjectThreshold = 9500;
 
 		private static readonly Material UnderfieldMat = MaterialPool.MatFrom("Things/Building/BuildingFrame/Underfield", ShaderDatabase.Transparent);
 
@@ -172,6 +172,17 @@ namespace RimWorld
 			});
 		}
 
+		public override void Destroy(DestroyMode mode = DestroyMode.Vanish)
+		{
+			bool spawned = base.Spawned;
+			Map map = base.Map;
+			base.Destroy(mode);
+			if (spawned)
+			{
+				ThingUtility.CheckAutoRebuildOnDestroyed(this, mode, map, this.def.entityDefToBuild);
+			}
+		}
+
 		public ThingDef UIStuff()
 		{
 			return base.Stuff;
@@ -234,7 +245,7 @@ namespace RimWorld
 				FilthMaker.RemoveAllFilth(base.Position, map);
 			}
 			worker.records.Increment(RecordDefOf.ThingsConstructed);
-			if (thing != null && thing.GetStatValue(StatDefOf.WorkToBuild, true) >= 10000f)
+			if (thing != null && thing.GetStatValue(StatDefOf.WorkToBuild, true) >= 9500f)
 			{
 				TaleRecorder.RecordTale(TaleDefOf.CompletedLongConstructionProject, new object[]
 				{
@@ -264,11 +275,7 @@ namespace RimWorld
 			MoteMaker.ThrowText(this.DrawPos, map, "TextMote_ConstructionFail".Translate(), 6f);
 			if (base.Faction == Faction.OfPlayer && this.WorkToBuild > 1400f)
 			{
-				Messages.Message("MessageConstructionFailed".Translate(new object[]
-				{
-					this.LabelEntityToBuild,
-					worker.LabelShort
-				}), new TargetInfo(base.Position, map, false), MessageTypeDefOf.NegativeEvent, true);
+				Messages.Message("MessageConstructionFailed".Translate(this.LabelEntityToBuild, worker.LabelShort, worker.Named("WORKER")), new TargetInfo(base.Position, map, false), MessageTypeDefOf.NegativeEvent, true);
 			}
 		}
 

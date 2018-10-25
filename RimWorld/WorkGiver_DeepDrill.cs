@@ -39,10 +39,11 @@ namespace RimWorld
 			List<Building> allBuildingsColonist = pawn.Map.listerBuildings.allBuildingsColonist;
 			for (int i = 0; i < allBuildingsColonist.Count; i++)
 			{
-				if (allBuildingsColonist[i].def == ThingDefOf.DeepDrill)
+				Building building = allBuildingsColonist[i];
+				if (building.def == ThingDefOf.DeepDrill)
 				{
-					CompPowerTrader comp = allBuildingsColonist[i].GetComp<CompPowerTrader>();
-					if (comp == null || comp.PowerOn)
+					CompPowerTrader comp = building.GetComp<CompPowerTrader>();
+					if ((comp == null || comp.PowerOn) && building.Map.designationManager.DesignationOn(building, DesignationDefOf.Uninstall) == null)
 					{
 						return false;
 					}
@@ -72,7 +73,7 @@ namespace RimWorld
 				return false;
 			}
 			CompDeepDrill compDeepDrill = building.TryGetComp<CompDeepDrill>();
-			return compDeepDrill.CanDrillNow() && !building.IsBurning();
+			return compDeepDrill.CanDrillNow() && building.Map.designationManager.DesignationOn(building, DesignationDefOf.Uninstall) == null && !building.IsBurning();
 		}
 
 		public override Job JobOnThing(Pawn pawn, Thing t, bool forced = false)

@@ -42,19 +42,13 @@ namespace RimWorld
 			{
 				if (batchPosition == 0 && this.pawn.Spawned)
 				{
-					MoteMaker.ThrowText(this.pawn.DrawPos, this.pawn.Map, "TextMote_TreatSuccess".Translate(new object[]
-					{
-						num.ToStringPercent()
-					}), 6.5f);
+					MoteMaker.ThrowText(this.pawn.DrawPos, this.pawn.Map, "TextMote_TreatSuccess".Translate(num.ToStringPercent()), 6.5f);
 				}
 				this.Severity -= 0.3f;
 			}
 			else if (batchPosition == 0 && this.pawn.Spawned)
 			{
-				MoteMaker.ThrowText(this.pawn.DrawPos, this.pawn.Map, "TextMote_TreatFailed".Translate(new object[]
-				{
-					num.ToStringPercent()
-				}), 6.5f);
+				MoteMaker.ThrowText(this.pawn.DrawPos, this.pawn.Map, "TextMote_TreatFailed".Translate(num.ToStringPercent()), 6.5f);
 			}
 		}
 	}

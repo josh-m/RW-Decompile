@@ -71,15 +71,12 @@ namespace RimWorld
 			}
 			if (flag2 && pawn.Faction != null && billDoer != null && billDoer.Faction != null)
 			{
-				Faction arg_151_0 = pawn.Faction;
+				Faction arg_14D_0 = pawn.Faction;
 				Faction faction = billDoer.Faction;
 				int goodwillChange = -15;
-				string reason = "GoodwillChangedReason_NeedlesslyInstalledWorseBodyPart".Translate(new object[]
-				{
-					this.recipe.addsHediff.label
-				});
+				string reason = "GoodwillChangedReason_NeedlesslyInstalledWorseBodyPart".Translate(this.recipe.addsHediff.label);
 				GlobalTargetInfo? lookTarget = new GlobalTargetInfo?(pawn);
-				arg_151_0.TryAffectGoodwillWith(faction, goodwillChange, true, true, reason, lookTarget);
+				arg_14D_0.TryAffectGoodwillWith(faction, goodwillChange, true, true, reason, lookTarget);
 			}
 		}
 

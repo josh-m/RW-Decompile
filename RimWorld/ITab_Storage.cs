@@ -34,7 +34,8 @@ namespace RimWorld
 		{
 			get
 			{
-				return this.SelStoreSettingsParent.StorageTabVisible;
+				Thing thing = base.SelObject as Thing;
+				return (thing == null || thing.Faction == null || thing.Faction == Faction.OfPlayer) && this.SelStoreSettingsParent.StorageTabVisible;
 			}
 		}
 
@@ -98,19 +99,14 @@ namespace RimWorld
 			Bill[] first = (from b in BillUtility.GlobalBills()
 			where b is Bill_Production && b.GetStoreZone() == storeSettingsParent && b.recipe.WorkerCounter.CanPossiblyStoreInStockpile((Bill_Production)b, b.GetStoreZone())
 			select b).ToArray<Bill>();
-			ThingFilterUI.DoThingFilterConfigWindow(rect2, ref this.scrollPosition, settings.filter, parentFilter, 8, null, null, null, null);
+			ThingFilterUI.DoThingFilterConfigWindow(rect2, ref this.scrollPosition, settings.filter, parentFilter, 8, null, null, false, null, null);
 			Bill[] second = (from b in BillUtility.GlobalBills()
 			where b is Bill_Production && b.GetStoreZone() == storeSettingsParent && b.recipe.WorkerCounter.CanPossiblyStoreInStockpile((Bill_Production)b, b.GetStoreZone())
 			select b).ToArray<Bill>();
 			IEnumerable<Bill> enumerable = first.Except(second);
 			foreach (Bill current in enumerable)
 			{
-				Messages.Message("MessageBillValidationStoreZoneInsufficient".Translate(new object[]
-				{
-					current.LabelCap,
-					current.billStack.billGiver.LabelShort.CapitalizeFirst(),
-					current.GetStoreZone().label
-				}), current.billStack.billGiver as Thing, MessageTypeDefOf.RejectInput, false);
+				Messages.Message("MessageBillValidationStoreZoneInsufficient".Translate(current.LabelCap, current.billStack.billGiver.LabelShort.CapitalizeFirst(), current.GetStoreZone().label), current.billStack.billGiver as Thing, MessageTypeDefOf.RejectInput, false);
 			}
 			PlayerKnowledgeDatabase.KnowledgeDemonstrated(ConceptDefOf.StorageTab, KnowledgeAmount.FrameDisplayed);
 			GUI.EndGroup();

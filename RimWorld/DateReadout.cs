@@ -97,7 +97,7 @@ namespace RimWorld
 				DateReadout.dateStringYear = num2;
 			}
 			Text.Font = GameFont.Small;
-			float num3 = Mathf.Max(Mathf.Max(Text.CalcSize(DateReadout.fastHourStrings[index]).x, Text.CalcSize(DateReadout.dateString).x + 7f), Text.CalcSize(text).x);
+			float num3 = Mathf.Max(Mathf.Max(Text.CalcSize(DateReadout.fastHourStrings[index]).x, Text.CalcSize(DateReadout.dateString).x), Text.CalcSize(text).x) + 7f;
 			dateRect.xMin = dateRect.xMax - num3;
 			if (Mouse.IsOver(dateRect))
 			{
@@ -126,15 +126,7 @@ namespace RimWorld
 					Quadrum quadrum2 = (Quadrum)i;
 					stringBuilder.AppendLine(quadrum2.Label() + " - " + quadrum2.GetSeason(location.y).LabelCap());
 				}
-				return "DateReadoutTip".Translate(new object[]
-				{
-					GenDate.DaysPassed,
-					15,
-					season.LabelCap(),
-					15,
-					GenDate.Quadrum((long)GenTicks.TicksAbs, location.x).Label(),
-					stringBuilder.ToString()
-				});
+				return "DateReadoutTip".Translate(GenDate.DaysPassed, 15, season.LabelCap(), 15, GenDate.Quadrum((long)GenTicks.TicksAbs, location.x).Label(), stringBuilder.ToString());
 			}, 86423));
 		}
 	}

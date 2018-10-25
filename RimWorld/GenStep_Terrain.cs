@@ -257,25 +257,28 @@ namespace RimWorld
 						Vector2 zero = Vector2.zero;
 						for (int num7 = num3; num7 < num4; num7++)
 						{
-							Vector2 p2 = dictionary2[num7].bestNode.ToIntVec2.ToVector2();
-							Vector2 p3 = dictionary2[num7 + 1].bestNode.ToIntVec2.ToVector2();
-							Vector2 p4 = dictionary[num7].bestNode.ToIntVec2.ToVector2();
-							Vector2 p5 = dictionary[num7 + 1].bestNode.ToIntVec2.ToVector2();
-							Vector2 p6 = dictionary3[num7].bestNode.ToIntVec2.ToVector2();
-							Vector2 p7 = dictionary3[num7 + 1].bestNode.ToIntVec2.ToVector2();
-							Vector2 vector2 = GenGeo.InverseQuadBilinear(p, p4, p2, p5, p3);
-							if (vector2.x >= -0.0001f && vector2.x <= 1.0001f && vector2.y >= -0.0001f && vector2.y <= 1.0001f)
+							if (dictionary2.ContainsKey(num7) && dictionary2.ContainsKey(num7 + 1) && dictionary.ContainsKey(num7) && dictionary.ContainsKey(num7 + 1) && dictionary3.ContainsKey(num7) && dictionary3.ContainsKey(num7 + 1))
 							{
-								zero = new Vector2(-vector2.x * (float)num, (vector2.y + (float)num7) * 4f);
-								num6 = num7;
-								break;
-							}
-							Vector2 vector3 = GenGeo.InverseQuadBilinear(p, p4, p6, p5, p7);
-							if (vector3.x >= -0.0001f && vector3.x <= 1.0001f && vector3.y >= -0.0001f && vector3.y <= 1.0001f)
-							{
-								zero = new Vector2(vector3.x * (float)num, (vector3.y + (float)num7) * 4f);
-								num6 = num7;
-								break;
+								Vector2 p2 = dictionary2[num7].bestNode.ToIntVec2.ToVector2();
+								Vector2 p3 = dictionary2[num7 + 1].bestNode.ToIntVec2.ToVector2();
+								Vector2 p4 = dictionary[num7].bestNode.ToIntVec2.ToVector2();
+								Vector2 p5 = dictionary[num7 + 1].bestNode.ToIntVec2.ToVector2();
+								Vector2 p6 = dictionary3[num7].bestNode.ToIntVec2.ToVector2();
+								Vector2 p7 = dictionary3[num7 + 1].bestNode.ToIntVec2.ToVector2();
+								Vector2 vector2 = GenGeo.InverseQuadBilinear(p, p4, p2, p5, p3);
+								if (vector2.x >= -0.0001f && vector2.x <= 1.0001f && vector2.y >= -0.0001f && vector2.y <= 1.0001f)
+								{
+									zero = new Vector2(-vector2.x * (float)num, (vector2.y + (float)num7) * 4f);
+									num6 = num7;
+									break;
+								}
+								Vector2 vector3 = GenGeo.InverseQuadBilinear(p, p4, p6, p5, p7);
+								if (vector3.x >= -0.0001f && vector3.x <= 1.0001f && vector3.y >= -0.0001f && vector3.y <= 1.0001f)
+								{
+									zero = new Vector2(vector3.x * (float)num, (vector3.y + (float)num7) * 4f);
+									num6 = num7;
+									break;
+								}
 							}
 						}
 						if (num6 == -2147483648)

@@ -34,25 +34,15 @@ namespace RimWorld
 			{
 				if (this.allowedAgeRange.max < 10000)
 				{
-					return "ScenPart_StartingPawnAgeRange".Translate(new object[]
-					{
-						this.allowedAgeRange.min,
-						this.allowedAgeRange.max
-					});
+					return "ScenPart_StartingPawnAgeRange".Translate(this.allowedAgeRange.min, this.allowedAgeRange.max);
 				}
-				return "ScenPart_StartingPawnAgeMin".Translate(new object[]
-				{
-					this.allowedAgeRange.min
-				});
+				return "ScenPart_StartingPawnAgeMin".Translate(this.allowedAgeRange.min);
 			}
 			else
 			{
 				if (this.allowedAgeRange.max < 10000)
 				{
-					return "ScenPart_StartingPawnAgeMax".Translate(new object[]
-					{
-						this.allowedAgeRange.max
-					});
+					return "ScenPart_StartingPawnAgeMax".Translate(this.allowedAgeRange.max);
 				}
 				throw new Exception();
 			}

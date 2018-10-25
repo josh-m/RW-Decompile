@@ -48,11 +48,7 @@ namespace RimWorld
 			transition2.AddTrigger(new Trigger_PawnHarmed(0.08f, false, null));
 			transition2.AddTrigger(new Trigger_FractionPawnsLost(0.3f));
 			transition2.AddTrigger(new Trigger_TicksPassed((int)(60000f * Rand.Range(1.5f, 3f))));
-			transition2.AddPreAction(new TransitionAction_Message("MessageSiegersAssaulting".Translate(new object[]
-			{
-				this.faction.def.pawnsPlural,
-				this.faction
-			}), MessageTypeDefOf.ThreatBig, null, 1f));
+			transition2.AddPreAction(new TransitionAction_Message("MessageSiegersAssaulting".Translate(this.faction.def.pawnsPlural, this.faction), MessageTypeDefOf.ThreatBig, null, 1f));
 			transition2.AddPostAction(new TransitionAction_WakeAll());
 			stateGraph.AddTransition(transition2, false);
 			return stateGraph;

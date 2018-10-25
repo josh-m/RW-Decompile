@@ -85,13 +85,7 @@ namespace RimWorld
 			}, !HealthCardUtility.onOperationTab));
 			if (allowOperations)
 			{
-				string label = (!pawn.RaceProps.IsMechanoid) ? "MedicalOperationsShort".Translate(new object[]
-				{
-					pawn.BillStack.Count
-				}) : "MedicalOperationsMechanoidsShort".Translate(new object[]
-				{
-					pawn.BillStack.Count
-				});
+				string label = (!pawn.RaceProps.IsMechanoid) ? "MedicalOperationsShort".Translate(pawn.BillStack.Count) : "MedicalOperationsMechanoidsShort".Translate(pawn.BillStack.Count);
 				list.Add(new TabRecord(label, delegate
 				{
 					HealthCardUtility.onOperationTab = true;
@@ -170,10 +164,7 @@ namespace RimWorld
 				int num2 = HealthUtility.TicksUntilDeathDueToBloodLoss(pawn);
 				if (num2 < 60000)
 				{
-					text = text + " (" + "TimeToDeath".Translate(new object[]
-					{
-						num2.ToStringTicksToPeriod()
-					}) + ")";
+					text = text + " (" + "TimeToDeath".Translate(num2.ToStringTicksToPeriod()) + ")";
 				}
 				else
 				{
@@ -292,10 +283,7 @@ namespace RimWorld
 						text += ", ";
 					}
 					flag = false;
-					text += "MissingMedicalBillIngredient".Translate(new object[]
-					{
-						current.label
-					});
+					text += "MissingMedicalBillIngredient".Translate(current.label);
 				}
 				text += ")";
 				floatMenuOption = new FloatMenuOption(text, null, MenuOptionPriority.Default, null, null, 0f, null, null);
@@ -337,20 +325,12 @@ namespace RimWorld
 					}
 					if (pawn2.Faction != null && !pawn2.Faction.def.hidden && !pawn2.Faction.HostileTo(Faction.OfPlayer) && recipe.Worker.IsViolationOnPawn(pawn2, part, Faction.OfPlayer))
 					{
-						Messages.Message("MessageMedicalOperationWillAngerFaction".Translate(new object[]
-						{
-							pawn2.Faction
-						}), pawn2, MessageTypeDefOf.CautionInput, false);
+						Messages.Message("MessageMedicalOperationWillAngerFaction".Translate(pawn2.Faction), pawn2, MessageTypeDefOf.CautionInput, false);
 					}
 					ThingDef minRequiredMedicine = HealthCardUtility.GetMinRequiredMedicine(recipe);
 					if (minRequiredMedicine != null && pawn2.playerSettings != null && !pawn2.playerSettings.medCare.AllowsMedicine(minRequiredMedicine))
 					{
-						Messages.Message("MessageTooLowMedCare".Translate(new object[]
-						{
-							minRequiredMedicine.label,
-							pawn2.LabelShort,
-							pawn2.playerSettings.medCare.GetLabel()
-						}), pawn2, MessageTypeDefOf.CautionInput, false);
+						Messages.Message("MessageTooLowMedCare".Translate(minRequiredMedicine.label, pawn2.LabelShort, pawn2.playerSettings.medCare.GetLabel(), pawn2.Named("PAWN")), pawn2, MessageTypeDefOf.CautionInput, false);
 					}
 				};
 				floatMenuOption = new FloatMenuOption(text, action, MenuOptionPriority.Default, null, null, 0f, null, null);
@@ -403,10 +383,7 @@ namespace RimWorld
 			{
 				text = pawn.GetGenderLabel() + " ";
 			}
-			text = text + pawn.def.label + ", " + "AgeIndicator".Translate(new object[]
-			{
-				pawn.ageTracker.AgeNumberString
-			});
+			text = text + pawn.def.label + ", " + "AgeIndicator".Translate(pawn.ageTracker.AgeNumberString);
 			Rect rect = new Rect(0f, curY, leftRect.width, 34f);
 			Widgets.Label(rect, text.CapitalizeFirst());
 			TooltipHandler.TipRegion(rect, () => pawn.ageTracker.AgeTooltipString, 73412);
@@ -416,41 +393,57 @@ namespace RimWorld
 			}
 			GUI.color = Color.white;
 			curY += 34f;
-			GUI.color = Color.white;
+			if (pawn.foodRestriction != null && pawn.foodRestriction.Configurable)
+			{
+				Rect rect2 = new Rect(0f, curY, leftRect.width * 0.42f, 23f);
+				Text.Anchor = TextAnchor.MiddleLeft;
+				Widgets.Label(rect2, "FoodRestriction".Translate());
+				GenUI.ResetLabelAlign();
+				Rect rect3 = new Rect(rect2.width, curY, leftRect.width - rect2.width, 23f);
+				if (Widgets.ButtonText(rect3, pawn.foodRestriction.CurrentFoodRestriction.label, true, false, true))
+				{
+					List<FloatMenuOption> list = new List<FloatMenuOption>();
+					List<FoodRestriction> allFoodRestrictions = Current.Game.foodRestrictionDatabase.AllFoodRestrictions;
+					for (int i = 0; i < allFoodRestrictions.Count; i++)
+					{
+						FoodRestriction localRestriction = allFoodRestrictions[i];
+						list.Add(new FloatMenuOption(localRestriction.label, delegate
+						{
+							pawn.foodRestriction.CurrentFoodRestriction = localRestriction;
+						}, MenuOptionPriority.Default, null, null, 0f, null, null));
+					}
+					list.Add(new FloatMenuOption("ManageFoodRestrictions".Translate(), delegate
+					{
+						Find.WindowStack.Add(new Dialog_ManageFoodRestrictions(null));
+					}, MenuOptionPriority.Default, null, null, 0f, null, null));
+					Find.WindowStack.Add(new FloatMenu(list));
+				}
+				curY += 23f;
+			}
 			if (pawn.IsColonist && !pawn.Dead)
 			{
 				bool selfTend = pawn.playerSettings.selfTend;
-				Rect rect2 = new Rect(0f, curY, leftRect.width, 24f);
-				Widgets.CheckboxLabeled(rect2, "SelfTend".Translate(), ref pawn.playerSettings.selfTend, false, null, null, false);
+				Rect rect4 = new Rect(0f, curY, leftRect.width, 24f);
+				Widgets.CheckboxLabeled(rect4, "SelfTend".Translate(), ref pawn.playerSettings.selfTend, false, null, null, false);
 				if (pawn.playerSettings.selfTend && !selfTend)
 				{
 					if (pawn.story.WorkTypeIsDisabled(WorkTypeDefOf.Doctor))
 					{
 						pawn.playerSettings.selfTend = false;
-						Messages.Message("MessageCannotSelfTendEver".Translate(new object[]
-						{
-							pawn.LabelShort
-						}), MessageTypeDefOf.RejectInput, false);
+						Messages.Message("MessageCannotSelfTendEver".Translate(pawn.LabelShort, pawn), MessageTypeDefOf.RejectInput, false);
 					}
 					else if (pawn.workSettings.GetPriority(WorkTypeDefOf.Doctor) == 0)
 					{
-						Messages.Message("MessageSelfTendUnsatisfied".Translate(new object[]
-						{
-							pawn.LabelShort
-						}), MessageTypeDefOf.CautionInput, false);
+						Messages.Message("MessageSelfTendUnsatisfied".Translate(pawn.LabelShort, pawn), MessageTypeDefOf.CautionInput, false);
 					}
 				}
-				TooltipHandler.TipRegion(rect2, "SelfTendTip".Translate(new object[]
-				{
-					Faction.OfPlayer.def.pawnsPlural,
-					0.7f.ToStringPercent()
-				}).CapitalizeFirst());
+				TooltipHandler.TipRegion(rect4, "SelfTendTip".Translate(Faction.OfPlayer.def.pawnsPlural, 0.7f.ToStringPercent()).CapitalizeFirst());
 				curY += 28f;
 			}
 			if (pawn.playerSettings != null && !pawn.Dead && Current.ProgramState == ProgramState.Playing)
 			{
-				Rect rect3 = new Rect(0f, curY, 140f, 28f);
-				MedicalCareUtility.MedicalCareSetter(rect3, ref pawn.playerSettings.medCare);
+				Rect rect5 = new Rect(0f, curY, 140f, 28f);
+				MedicalCareUtility.MedicalCareSetter(rect5, ref pawn.playerSettings.medCare);
 				if (Widgets.ButtonText(new Rect(leftRect.width - 70f, curY, 70f, 28f), "MedGroupDefaults".Translate(), true, false, true))
 				{
 					Find.WindowStack.Add(new Dialog_MedicalDefaults());

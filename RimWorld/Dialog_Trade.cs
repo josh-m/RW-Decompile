@@ -254,17 +254,11 @@ namespace RimWorld
 					string text;
 					if (level < 0.95f)
 					{
-						text = "NegotiatorTalkingImpaired".Translate(new object[]
-						{
-							playerNegotiator.LabelShort
-						});
+						text = "NegotiatorTalkingImpaired".Translate(playerNegotiator.LabelShort, playerNegotiator);
 					}
 					else
 					{
-						text = "NegotiatorHearingImpaired".Translate(new object[]
-						{
-							playerNegotiator.LabelShort
-						});
+						text = "NegotiatorHearingImpaired".Translate(playerNegotiator.LabelShort, playerNegotiator);
 					}
 					text = text + "\n\n" + "NegotiatorCapacityImpaired".Translate();
 					Find.WindowStack.Add(new Dialog_MessageBox(text, null, null, null, null, null, false, null, null));
@@ -317,7 +311,7 @@ namespace RimWorld
 			Text.Font = GameFont.Medium;
 			Rect rect = new Rect(0f, 0f, position.width / 2f, position.height);
 			Text.Anchor = TextAnchor.UpperLeft;
-			Widgets.Label(rect, Faction.OfPlayer.Name);
+			Widgets.Label(rect, Faction.OfPlayer.Name.Truncate(rect.width, null));
 			Rect rect2 = new Rect(position.width / 2f, 0f, position.width / 2f, position.height);
 			Text.Anchor = TextAnchor.UpperRight;
 			string text = TradeSession.trader.TraderName;
@@ -437,10 +431,7 @@ namespace RimWorld
 						this.CountToTransferChanged();
 						SoundDefOf.Tick_High.PlayOneShotOnCamera(null);
 					}
-					TooltipHandler.TipRegion(rect11, "GiftModeTip".Translate(new object[]
-					{
-						faction.Name
-					}));
+					TooltipHandler.TipRegion(rect11, "GiftModeTip".Translate(faction.Name));
 				}
 			}
 			GUI.EndGroup();

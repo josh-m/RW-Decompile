@@ -304,7 +304,7 @@ namespace Verse
 				{
 					return true;
 				}
-				ByteGrid avoidGrid = tp.pawn.GetAvoidGrid();
+				ByteGrid avoidGrid = tp.pawn.GetAvoidGrid(true);
 				if (avoidGrid != null && avoidGrid[this.door.Position] == 255)
 				{
 					return false;

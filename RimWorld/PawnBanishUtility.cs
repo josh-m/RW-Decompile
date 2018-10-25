@@ -97,18 +97,12 @@ namespace RimWorld
 		{
 			StringBuilder stringBuilder = new StringBuilder();
 			bool flag = PawnBanishUtility.WouldBeLeftToDie(banishedPawn, banishedPawn.Tile);
-			stringBuilder.Append("ConfirmBanishPawnDialog".Translate(new object[]
-			{
-				banishedPawn.Label
-			}));
+			stringBuilder.Append("ConfirmBanishPawnDialog".Translate(banishedPawn.Label, banishedPawn));
 			if (flag)
 			{
 				stringBuilder.AppendLine();
 				stringBuilder.AppendLine();
-				stringBuilder.Append("ConfirmBanishPawnDialog_LeftToDie".Translate(new object[]
-				{
-					banishedPawn.LabelShort
-				}).CapitalizeFirst());
+				stringBuilder.Append("ConfirmBanishPawnDialog_LeftToDie".Translate(banishedPawn.LabelShort, banishedPawn).CapitalizeFirst());
 			}
 			List<ThingWithComps> list = (banishedPawn.equipment == null) ? null : banishedPawn.equipment.AllEquipmentListForReading;
 			List<Apparel> list2 = (banishedPawn.apparel == null) ? null : banishedPawn.apparel.WornApparel;
@@ -117,10 +111,7 @@ namespace RimWorld
 			{
 				stringBuilder.AppendLine();
 				stringBuilder.AppendLine();
-				stringBuilder.Append("ConfirmBanishPawnDialog_Items".Translate(new object[]
-				{
-					banishedPawn.LabelShort
-				}).CapitalizeFirst().AdjustedFor(banishedPawn, "PAWN"));
+				stringBuilder.Append("ConfirmBanishPawnDialog_Items".Translate(banishedPawn.LabelShort, banishedPawn).CapitalizeFirst().AdjustedFor(banishedPawn, "PAWN"));
 				stringBuilder.AppendLine();
 				if (list != null)
 				{
@@ -147,10 +138,7 @@ namespace RimWorld
 					}
 				}
 			}
-			PawnDiedOrDownedThoughtsUtility.BuildMoodThoughtsListString(banishedPawn, null, (!flag) ? PawnDiedOrDownedThoughtsKind.Banished : PawnDiedOrDownedThoughtsKind.BanishedToDie, stringBuilder, "\n\n" + "ConfirmBanishPawnDialog_IndividualThoughts".Translate(new object[]
-			{
-				banishedPawn.LabelShort
-			}), "\n\n" + "ConfirmBanishPawnDialog_AllColonistsThoughts".Translate());
+			PawnDiedOrDownedThoughtsUtility.BuildMoodThoughtsListString(banishedPawn, null, (!flag) ? PawnDiedOrDownedThoughtsKind.Banished : PawnDiedOrDownedThoughtsKind.BanishedToDie, stringBuilder, "\n\n" + "ConfirmBanishPawnDialog_IndividualThoughts".Translate(banishedPawn.LabelShort, banishedPawn), "\n\n" + "ConfirmBanishPawnDialog_AllColonistsThoughts".Translate());
 			return stringBuilder.ToString();
 		}
 
@@ -167,10 +155,7 @@ namespace RimWorld
 		{
 			if (PawnBanishUtility.WouldBeLeftToDie(pawn, pawn.Tile))
 			{
-				return "BanishTip".Translate() + "\n\n" + "BanishTipWillDie".Translate(new object[]
-				{
-					pawn.LabelShort
-				}).CapitalizeFirst();
+				return "BanishTip".Translate() + "\n\n" + "BanishTipWillDie".Translate(pawn.LabelShort, pawn).CapitalizeFirst();
 			}
 			return "BanishTip".Translate();
 		}

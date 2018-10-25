@@ -20,7 +20,7 @@ namespace Verse
 
 		private const float SliderTab = 20f;
 
-		public static void DoThingFilterConfigWindow(Rect rect, ref Vector2 scrollPosition, ThingFilter filter, ThingFilter parentFilter = null, int openMask = 1, IEnumerable<ThingDef> forceHiddenDefs = null, IEnumerable<SpecialThingFilterDef> forceHiddenFilters = null, List<ThingDef> suppressSmallVolumeTags = null, Map map = null)
+		public static void DoThingFilterConfigWindow(Rect rect, ref Vector2 scrollPosition, ThingFilter filter, ThingFilter parentFilter = null, int openMask = 1, IEnumerable<ThingDef> forceHiddenDefs = null, IEnumerable<SpecialThingFilterDef> forceHiddenFilters = null, bool forceHideHitPointsConfig = false, List<ThingDef> suppressSmallVolumeTags = null, Map map = null)
 		{
 			Widgets.DrawMenuSection(rect);
 			Text.Font = GameFont.Tiny;
@@ -51,7 +51,7 @@ namespace Verse
 			Rect viewRect = new Rect(0f, 0f, rect.width - 16f, ThingFilterUI.viewHeight);
 			Widgets.BeginScrollView(rect, ref scrollPosition, viewRect, true);
 			float num2 = 2f;
-			if (flag)
+			if (flag && !forceHideHitPointsConfig)
 			{
 				ThingFilterUI.DrawHitPointsFilterConfig(ref num2, viewRect.width, filter);
 			}
@@ -87,7 +87,7 @@ namespace Verse
 		{
 			Rect rect = new Rect(20f, y, width - 20f, 28f);
 			QualityRange allowedQualityLevels = filter.AllowedQualityLevels;
-			Widgets.QualityRange(rect, 2, ref allowedQualityLevels);
+			Widgets.QualityRange(rect, 876813230, ref allowedQualityLevels);
 			filter.AllowedQualityLevels = allowedQualityLevels;
 			y += 28f;
 			y += 5f;

@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Text;
 using UnityEngine;
 using Verse;
@@ -28,10 +27,6 @@ namespace RimWorld.Planet
 
 		private Material cachedMat;
 
-		private static List<SiteCoreOrPartDefBase> tmpDefs = new List<SiteCoreOrPartDefBase>();
-
-		private static List<SiteCoreOrPartDefBase> tmpUsedDefs = new List<SiteCoreOrPartDefBase>();
-
 		private static List<string> tmpSitePartsLabels = new List<string>();
 
 		public override string Label
@@ -44,10 +39,7 @@ namespace RimWorld.Planet
 				}
 				if (this.MainSiteDef == SiteCoreDefOf.PreciousLump && this.core.parms.preciousLumpResources != null)
 				{
-					return "PreciousLumpLabel".Translate(new object[]
-					{
-						this.core.parms.preciousLumpResources.label
-					});
+					return "PreciousLumpLabel".Translate(this.core.parms.preciousLumpResources.label);
 				}
 				return this.MainSiteDef.label;
 			}
@@ -142,10 +134,7 @@ namespace RimWorld.Planet
 		{
 			get
 			{
-				return (!this.MainSiteDef.approachOrderString.NullOrEmpty()) ? string.Format(this.MainSiteDef.approachOrderString, this.Label) : "ApproachSite".Translate(new object[]
-				{
-					this.Label
-				});
+				return (!this.MainSiteDef.approachOrderString.NullOrEmpty()) ? string.Format(this.MainSiteDef.approachOrderString, this.Label) : "ApproachSite".Translate(this.Label);
 			}
 		}
 
@@ -153,10 +142,7 @@ namespace RimWorld.Planet
 		{
 			get
 			{
-				return (!this.MainSiteDef.approachingReportString.NullOrEmpty()) ? string.Format(this.MainSiteDef.approachingReportString, this.Label) : "ApproachingSite".Translate(new object[]
-				{
-					this.Label
-				});
+				return (!this.MainSiteDef.approachingReportString.NullOrEmpty()) ? string.Format(this.MainSiteDef.approachingReportString, this.Label) : "ApproachingSite".Translate(this.Label);
 			}
 		}
 
@@ -214,53 +200,6 @@ namespace RimWorld.Planet
 				this.parts[i].def.Worker.PostMapGenerate(map);
 			}
 			this.anyEnemiesInitially = GenHostility.AnyHostileActiveThreatToPlayer(base.Map);
-			LookTargets lookTargets = new LookTargets();
-			StringBuilder stringBuilder = new StringBuilder();
-			Site.tmpUsedDefs.Clear();
-			Site.tmpDefs.Clear();
-			Site.tmpDefs.Add(this.core.def);
-			for (int j = 0; j < this.parts.Count; j++)
-			{
-				Site.tmpDefs.Add(this.parts[j].def);
-			}
-			LetterDef letterDef = null;
-			string text = null;
-			for (int k = 0; k < Site.tmpDefs.Count; k++)
-			{
-				string text2;
-				LetterDef letterDef2;
-				LookTargets lookTargets2;
-				string arrivedLetterPart = Site.tmpDefs[k].Worker.GetArrivedLetterPart(map, out text2, out letterDef2, out lookTargets2);
-				if (arrivedLetterPart != null)
-				{
-					if (!Site.tmpUsedDefs.Contains(Site.tmpDefs[k]))
-					{
-						Site.tmpUsedDefs.Add(Site.tmpDefs[k]);
-						if (stringBuilder.Length > 0)
-						{
-							stringBuilder.AppendLine();
-							stringBuilder.AppendLine();
-						}
-						stringBuilder.Append(arrivedLetterPart);
-					}
-					if (text == null)
-					{
-						text = text2;
-					}
-					if (letterDef == null)
-					{
-						letterDef = letterDef2;
-					}
-					if (lookTargets2.IsValid())
-					{
-						lookTargets = new LookTargets(lookTargets.targets.Concat(lookTargets2.targets));
-					}
-				}
-			}
-			if (stringBuilder.Length > 0)
-			{
-				Find.LetterStack.ReceiveLetter(text ?? "LetterLabelPlayerEnteredNewSiteGeneric".Translate(), stringBuilder.ToString(), letterDef ?? LetterDefOf.NeutralEvent, (!lookTargets.IsValid()) ? this : lookTargets, null, null);
-			}
 		}
 
 		public override bool ShouldRemoveMapNow(out bool alsoRemoveWorldObject)
@@ -320,13 +259,7 @@ namespace RimWorld.Planet
 			}
 			this.startedCountdown = true;
 			int num = Mathf.RoundToInt(this.core.def.forceExitAndRemoveMapCountdownDurationDays * 60000f);
-			string text = (!this.anyEnemiesInitially) ? "MessageSiteCountdownBecauseNoEnemiesInitially".Translate(new object[]
-			{
-				TimedForcedExit.GetForceExitAndRemoveMapCountdownTimeLeftString(num)
-			}) : "MessageSiteCountdownBecauseNoMoreEnemies".Translate(new object[]
-			{
-				TimedForcedExit.GetForceExitAndRemoveMapCountdownTimeLeftString(num)
-			});
+			string text = (!this.anyEnemiesInitially) ? "MessageSiteCountdownBecauseNoEnemiesInitially".Translate(TimedForcedExit.GetForceExitAndRemoveMapCountdownTimeLeftString(num)) : "MessageSiteCountdownBecauseNoMoreEnemies".Translate(TimedForcedExit.GetForceExitAndRemoveMapCountdownTimeLeftString(num));
 			Messages.Message(text, this, MessageTypeDefOf.PositiveEvent, true);
 			base.GetComponent<TimedForcedExit>().StartForceExitAndRemoveMapCountdown(num);
 			TaleRecorder.RecordTale(TaleDefOf.CaravanAssaultSuccessful, new object[]
@@ -365,17 +298,11 @@ namespace RimWorld.Planet
 				}
 				else if (Site.tmpSitePartsLabels.Count == 1)
 				{
-					stringBuilder.Append("KnownSiteThreat".Translate(new object[]
-					{
-						Site.tmpSitePartsLabels[0].CapitalizeFirst()
-					}));
+					stringBuilder.Append("KnownSiteThreat".Translate(Site.tmpSitePartsLabels[0].CapitalizeFirst()));
 				}
 				else
 				{
-					stringBuilder.Append("KnownSiteThreats".Translate(new object[]
-					{
-						Site.tmpSitePartsLabels.ToCommaList(true).CapitalizeFirst()
-					}));
+					stringBuilder.Append("KnownSiteThreats".Translate(Site.tmpSitePartsLabels.ToCommaList(true).CapitalizeFirst()));
 				}
 			}
 			return stringBuilder.ToString();

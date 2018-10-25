@@ -453,7 +453,7 @@ namespace Verse
 			}
 			if (!this.IsMeleeAttack)
 			{
-				float num = this.EffectiveMinRange(false);
+				float num = this.EffectiveMinRange(true);
 				if (num > 0f && num < GenRadial.MaxRadialPatternRadius)
 				{
 					GenDraw.DrawRadiusRing(center, num);

@@ -42,6 +42,14 @@ namespace RimWorld.Planet
 			}
 		}
 
+		public override bool HasName
+		{
+			get
+			{
+				return !this.nameInt.NullOrEmpty();
+			}
+		}
+
 		public override Material Material
 		{
 			get

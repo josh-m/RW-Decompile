@@ -54,29 +54,32 @@ namespace RimWorld
 			{
 				return false;
 			}
-			CellRect cellRect = GenAdj.OccupiedRect(c, rot, entDef.Size);
-			cellRect.ClipInsideMap(map);
-			CellRect.CellRectIterator iterator = cellRect.GetIterator();
-			while (!iterator.Done())
+			if (entDef.terrainAffordanceNeeded != null)
 			{
-				TerrainDef terrainDef2 = map.terrainGrid.TerrainAt(iterator.Current);
-				if (entDef.terrainAffordanceNeeded != null && !terrainDef2.affordances.Contains(entDef.terrainAffordanceNeeded))
+				CellRect cellRect = GenAdj.OccupiedRect(c, rot, entDef.Size);
+				cellRect.ClipInsideMap(map);
+				CellRect.CellRectIterator iterator = cellRect.GetIterator();
+				while (!iterator.Done())
 				{
-					return false;
-				}
-				List<Thing> thingList = iterator.Current.GetThingList(map);
-				for (int i = 0; i < thingList.Count; i++)
-				{
-					if (thingList[i] != thingToIgnore)
+					TerrainDef terrainDef2 = map.terrainGrid.TerrainAt(iterator.Current);
+					if (!terrainDef2.affordances.Contains(entDef.terrainAffordanceNeeded))
 					{
-						TerrainDef terrainDef3 = thingList[i].def.entityDefToBuild as TerrainDef;
-						if (terrainDef3 != null && !terrainDef3.affordances.Contains(entDef.terrainAffordanceNeeded))
+						return false;
+					}
+					List<Thing> thingList = iterator.Current.GetThingList(map);
+					for (int i = 0; i < thingList.Count; i++)
+					{
+						if (thingList[i] != thingToIgnore)
 						{
-							return false;
+							TerrainDef terrainDef3 = thingList[i].def.entityDefToBuild as TerrainDef;
+							if (terrainDef3 != null && !terrainDef3.affordances.Contains(entDef.terrainAffordanceNeeded))
+							{
+								return false;
+							}
 						}
 					}
+					iterator.MoveNext();
 				}
-				iterator.MoveNext();
 			}
 			return true;
 		}
@@ -187,18 +190,12 @@ namespace RimWorld
 					{
 						if (list[j].def.passability == Traversability.Impassable)
 						{
-							return new AcceptanceReport("InteractionSpotBlocked".Translate(new object[]
-							{
-								list[j].LabelNoCount
-							}).CapitalizeFirst());
+							return new AcceptanceReport("InteractionSpotBlocked".Translate(list[j].LabelNoCount, list[j]).CapitalizeFirst());
 						}
 						Blueprint blueprint = list[j] as Blueprint;
 						if (blueprint != null && blueprint.def.entityDefToBuild.passability == Traversability.Impassable)
 						{
-							return new AcceptanceReport("InteractionSpotWillBeBlocked".Translate(new object[]
-							{
-								blueprint.LabelNoCount
-							}).CapitalizeFirst());
+							return new AcceptanceReport("InteractionSpotWillBeBlocked".Translate(blueprint.LabelNoCount, blueprint).CapitalizeFirst());
 						}
 					}
 				}
@@ -222,7 +219,7 @@ namespace RimWorld
 									ThingDef thingDef2 = blueprint2.def.entityDefToBuild as ThingDef;
 									if (thingDef2 == null)
 									{
-										goto IL_37F;
+										goto IL_38A;
 									}
 									thingDef3 = thingDef2;
 								}
@@ -232,14 +229,10 @@ namespace RimWorld
 								}
 								if (thingDef3.hasInteractionCell && cellRect.Contains(ThingUtility.InteractionCellWhenAt(thingDef3, thing2.Position, thing2.Rotation, thing2.Map)))
 								{
-									return new AcceptanceReport("WouldBlockInteractionSpot".Translate(new object[]
-									{
-										entDef.label,
-										thingDef3.label
-									}).CapitalizeFirst());
+									return new AcceptanceReport("WouldBlockInteractionSpot".Translate(entDef.label, thingDef3.label).CapitalizeFirst());
 								}
 							}
-							IL_37F:;
+							IL_38A:;
 						}
 					}
 				}
@@ -249,52 +242,53 @@ namespace RimWorld
 			{
 				if (map.terrainGrid.TerrainAt(center) == terrainDef)
 				{
-					return new AcceptanceReport("TerrainIsAlready".Translate(new object[]
-					{
-						terrainDef.label
-					}));
+					return new AcceptanceReport("TerrainIsAlready".Translate(terrainDef.label));
 				}
 				if (map.designationManager.DesignationAt(center, DesignationDefOf.SmoothFloor) != null)
 				{
 					return new AcceptanceReport("SpaceBeingSmoothed".Translate());
 				}
 			}
-			if (!GenConstruct.CanBuildOnTerrain(entDef, center, map, rot, thingToIgnore))
+			if (GenConstruct.CanBuildOnTerrain(entDef, center, map, rot, thingToIgnore))
 			{
-				return new AcceptanceReport("TerrainCannotSupport".Translate());
-			}
-			if (!godMode)
-			{
-				CellRect.CellRectIterator iterator2 = cellRect.GetIterator();
-				while (!iterator2.Done())
+				if (!godMode)
 				{
-					thingList = iterator2.Current.GetThingList(map);
-					for (int l = 0; l < thingList.Count; l++)
+					CellRect.CellRectIterator iterator2 = cellRect.GetIterator();
+					while (!iterator2.Done())
 					{
-						Thing thing3 = thingList[l];
-						if (thing3 != thingToIgnore)
+						thingList = iterator2.Current.GetThingList(map);
+						for (int l = 0; l < thingList.Count; l++)
 						{
-							if (!GenConstruct.CanPlaceBlueprintOver(entDef, thing3.def))
+							Thing thing3 = thingList[l];
+							if (thing3 != thingToIgnore)
 							{
-								return new AcceptanceReport("SpaceAlreadyOccupied".Translate());
+								if (!GenConstruct.CanPlaceBlueprintOver(entDef, thing3.def))
+								{
+									return new AcceptanceReport("SpaceAlreadyOccupied".Translate());
+								}
 							}
 						}
+						iterator2.MoveNext();
 					}
-					iterator2.MoveNext();
 				}
-			}
-			if (entDef.PlaceWorkers != null)
-			{
-				for (int m = 0; m < entDef.PlaceWorkers.Count; m++)
+				if (entDef.PlaceWorkers != null)
 				{
-					AcceptanceReport result = entDef.PlaceWorkers[m].AllowsPlacing(entDef, center, rot, map, thingToIgnore);
-					if (!result.Accepted)
+					for (int m = 0; m < entDef.PlaceWorkers.Count; m++)
 					{
-						return result;
+						AcceptanceReport result = entDef.PlaceWorkers[m].AllowsPlacing(entDef, center, rot, map, thingToIgnore);
+						if (!result.Accepted)
+						{
+							return result;
+						}
 					}
 				}
+				return AcceptanceReport.WasAccepted;
 			}
-			return AcceptanceReport.WasAccepted;
+			if (entDef.terrainAffordanceNeeded != null)
+			{
+				return new AcceptanceReport("TerrainCannotSupport_TerrainAffordance".Translate(entDef, entDef.terrainAffordanceNeeded));
+			}
+			return new AcceptanceReport("TerrainCannotSupport".Translate());
 		}
 
 		public static BuildableDef BuiltDefOf(ThingDef def)
@@ -311,11 +305,14 @@ namespace RimWorld
 			TerrainDef terrainDef = newDef as TerrainDef;
 			if (terrainDef != null)
 			{
-				if (oldDef.category == ThingCategory.Building && !terrainDef.affordances.Contains(oldDef.terrainAffordanceNeeded))
+				if (oldDef.IsBlueprint || oldDef.IsFrame)
 				{
-					return false;
+					if (!terrainDef.affordances.Contains(oldDef.entityDefToBuild.terrainAffordanceNeeded))
+					{
+						return false;
+					}
 				}
-				if ((oldDef.IsBlueprint || oldDef.IsFrame) && !terrainDef.affordances.Contains(oldDef.entityDefToBuild.terrainAffordanceNeeded))
+				else if (oldDef.category == ThingCategory.Building && !terrainDef.affordances.Contains(oldDef.terrainAffordanceNeeded))
 				{
 					return false;
 				}

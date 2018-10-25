@@ -19,10 +19,7 @@ namespace RimWorld
 			float f;
 			if (this.TryGetBodySize(req, out f))
 			{
-				return "StatsReport_BodySize".Translate(new object[]
-				{
-					f.ToString("F2")
-				}) + ": x" + f.ToStringPercent();
+				return "StatsReport_BodySize".Translate(f.ToString("F2")) + ": x" + f.ToStringPercent();
 			}
 			return null;
 		}

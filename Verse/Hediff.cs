@@ -383,7 +383,7 @@ namespace Verse
 						MentalStateGiver mentalStateGiver = curStage.mentalStateGivers[k];
 						if (Rand.MTBEventOccurs(mentalStateGiver.mtbDays, 60000f, 60f))
 						{
-							this.pawn.mindState.mentalStateHandler.TryStartMentalState(mentalStateGiver.mentalState, null, false, false, null, false);
+							this.pawn.mindState.mentalStateHandler.TryStartMentalState(mentalStateGiver.mentalState, "MentalStateReason_Hediff".Translate(this.Label), false, false, null, false);
 						}
 					}
 				}
@@ -392,7 +392,7 @@ namespace Verse
 				where x.Worker.BreakCanOccur(this.pawn)
 				select x).TryRandomElementByWeight((MentalBreakDef x) => x.Worker.CommonalityFor(this.pawn), out mentalBreakDef))
 				{
-					mentalBreakDef.Worker.TryStart(this.pawn, null, false);
+					mentalBreakDef.Worker.TryStart(this.pawn, "MentalStateReason_Hediff".Translate(this.Label), false);
 				}
 				if (curStage.vomitMtbDays > 0f && this.pawn.IsHashIntervalTick(600) && Rand.MTBEventOccurs(curStage.vomitMtbDays, 60000f, 600f) && this.pawn.Spawned && this.pawn.Awake())
 				{

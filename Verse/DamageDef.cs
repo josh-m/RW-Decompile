@@ -30,6 +30,10 @@ namespace Verse
 
 		public RulePackDef combatLogRules;
 
+		public float buildingDamageFactor = 1f;
+
+		public float plantDamageFactor = 1f;
+
 		public bool canUseDeflectMetalEffect = true;
 
 		public ImpactSoundTypeDef impactSoundType;
@@ -62,10 +66,6 @@ namespace Verse
 		public bool isExplosive;
 
 		public float explosionSnowMeltAmount = 1f;
-
-		public float explosionBuildingDamageFactor = 1f;
-
-		public float explosionPlantDamageFactor = 1f;
 
 		public bool explosionAffectOutsidePartsOnly = true;
 

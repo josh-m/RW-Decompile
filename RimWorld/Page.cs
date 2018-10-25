@@ -62,7 +62,7 @@ namespace RimWorld
 			return new Rect(0f, num, rect.width, rect.height - 38f - num - 17f);
 		}
 
-		protected void DoBottomButtons(Rect rect, string nextLabel = null, string midLabel = null, Action midAct = null, bool showNext = true)
+		protected void DoBottomButtons(Rect rect, string nextLabel = null, string midLabel = null, Action midAct = null, bool showNext = true, bool doNextOnKeypress = true)
 		{
 			float y = rect.y + rect.height - 38f;
 			Text.Font = GameFont.Small;
@@ -79,7 +79,7 @@ namespace RimWorld
 					nextLabel = "Next".Translate();
 				}
 				Rect rect3 = new Rect(rect.x + rect.width - Page.BottomButSize.x, y, Page.BottomButSize.x, Page.BottomButSize.y);
-				if ((Widgets.ButtonText(rect3, nextLabel, true, false, true) || KeyBindingDefOf.Accept.KeyDownEvent) && this.CanDoNext())
+				if ((Widgets.ButtonText(rect3, nextLabel, true, false, true) || (doNextOnKeypress && KeyBindingDefOf.Accept.KeyDownEvent)) && this.CanDoNext())
 				{
 					this.DoNext();
 				}
@@ -133,6 +133,10 @@ namespace RimWorld
 
 		public override void OnCancelKeyPressed()
 		{
+			if (!this.closeOnCancel)
+			{
+				return;
+			}
 			if (Find.World != null && Find.WorldRoutePlanner.Active)
 			{
 				return;
@@ -151,6 +155,10 @@ namespace RimWorld
 
 		public override void OnAcceptKeyPressed()
 		{
+			if (!this.closeOnAccept)
+			{
+				return;
+			}
 			if (Find.World != null && Find.WorldRoutePlanner.Active)
 			{
 				return;

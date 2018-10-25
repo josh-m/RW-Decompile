@@ -112,15 +112,11 @@ namespace RimWorld
 					if (!this.$this.notifiedPlayerAttacked && PawnUtility.ShouldSendNotificationAbout(prey))
 					{
 						this.$this.notifiedPlayerAttacked = true;
-						Messages.Message("MessageAttackedByPredator".Translate(new object[]
-						{
-							prey.LabelShort,
-							this.$this.pawn.LabelIndefinite()
-						}).CapitalizeFirst(), prey, MessageTypeDefOf.ThreatSmall, true);
+						Messages.Message("MessageAttackedByPredator".Translate(prey.LabelShort, this.$this.pawn.LabelIndefinite(), prey.Named("PREY"), this.$this.pawn.Named("PREDATOR")).CapitalizeFirst(), prey, MessageTypeDefOf.ThreatSmall, true);
 					}
 					this.$this.Map.attackTargetsCache.UpdateTarget(this.$this.pawn);
+					this.$this.firstHit = false;
 				}
-				this.$this.firstHit = false;
 			};
 			Toil followAndAttack = Toils_Combat.FollowAndMeleeAttack(TargetIndex.A, onHitAction).JumpIfDespawnedOrNull(TargetIndex.A, prepareToEatCorpse).JumpIf(() => this.$this.Corpse != null, prepareToEatCorpse).FailOn(() => Find.TickManager.TicksGame > this.$this.startTick + 5000 && (float)(this.$this.job.GetTarget(TargetIndex.A).Cell - this.$this.pawn.Position).LengthHorizontalSquared > 4f);
 			followAndAttack.AddPreTickAction(new Action(this.CheckWarnPlayer));
@@ -164,23 +160,11 @@ namespace RimWorld
 			}
 			if (prey.RaceProps.Humanlike)
 			{
-				Find.LetterStack.ReceiveLetter("LetterLabelPredatorHuntingColonist".Translate(new object[]
-				{
-					this.pawn.LabelShort,
-					prey.LabelDefinite()
-				}).CapitalizeFirst(), "LetterPredatorHuntingColonist".Translate(new object[]
-				{
-					this.pawn.LabelIndefinite(),
-					prey.LabelDefinite()
-				}).CapitalizeFirst(), LetterDefOf.ThreatBig, this.pawn, null, null);
+				Find.LetterStack.ReceiveLetter("LetterLabelPredatorHuntingColonist".Translate(this.pawn.LabelShort, prey.LabelDefinite(), this.pawn.Named("PREDATOR"), prey.Named("PREY")).CapitalizeFirst(), "LetterPredatorHuntingColonist".Translate(this.pawn.LabelIndefinite(), prey.LabelDefinite(), this.pawn.Named("PREDATOR"), prey.Named("PREY")).CapitalizeFirst(), LetterDefOf.ThreatBig, this.pawn, null, null);
 			}
 			else
 			{
-				Messages.Message("MessagePredatorHuntingPlayerAnimal".Translate(new object[]
-				{
-					this.pawn.LabelIndefinite(),
-					prey.LabelDefinite()
-				}).CapitalizeFirst(), this.pawn, MessageTypeDefOf.ThreatBig, true);
+				Messages.Message("MessagePredatorHuntingPlayerAnimal".Translate(this.pawn.LabelIndefinite(), prey.LabelDefinite(), this.pawn.Named("PREDATOR"), prey.Named("PREY")).CapitalizeFirst(), this.pawn, MessageTypeDefOf.ThreatBig, true);
 			}
 			this.pawn.mindState.Notify_PredatorHuntingPlayerNotification();
 			this.notifiedPlayerAttacking = true;

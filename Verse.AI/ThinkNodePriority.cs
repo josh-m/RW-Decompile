@@ -20,6 +20,8 @@ namespace Verse.AI
 
 		public const float AnythingWork = 5.5f;
 
+		public const float AvoidIdle_SleepAssignmentWork = 3f;
+
 		public const float AvoidIdle = 2f;
 	}
 }

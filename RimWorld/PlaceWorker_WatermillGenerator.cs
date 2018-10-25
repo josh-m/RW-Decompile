@@ -17,7 +17,7 @@ namespace RimWorld
 			{
 				if (!map.terrainGrid.TerrainAt(current).affordances.Contains(TerrainAffordanceDefOf.Heavy))
 				{
-					AcceptanceReport result = new AcceptanceReport("TerrainCannotSupport".Translate());
+					AcceptanceReport result = new AcceptanceReport("TerrainCannotSupport_TerrainAffordance".Translate(checkingDef, TerrainAffordanceDefOf.Heavy));
 					return result;
 				}
 			}

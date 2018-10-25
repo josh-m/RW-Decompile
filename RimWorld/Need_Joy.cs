@@ -144,12 +144,7 @@ namespace RimWorld
 			if (mapHeld != null)
 			{
 				ExpectationDef expectationDef = ExpectationsUtility.CurrentExpectationFor(this.pawn);
-				text = text + "\n\n" + "CurrentExpectationsAndRecreation".Translate(new object[]
-				{
-					expectationDef.label,
-					expectationDef.joyToleranceDropPerDay.ToStringPercent(),
-					expectationDef.joyKindsNeeded
-				});
+				text = text + "\n\n" + "CurrentExpectationsAndRecreation".Translate(expectationDef.label, expectationDef.joyToleranceDropPerDay.ToStringPercent(), expectationDef.joyKindsNeeded);
 				text = text + "\n\n" + JoyUtility.JoyKindsOnMapString(this.pawn.MapHeld);
 			}
 			else

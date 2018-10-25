@@ -35,6 +35,14 @@ namespace RimWorld
 			}
 		}
 
+		protected virtual bool CanInteractNow
+		{
+			get
+			{
+				return true;
+			}
+		}
+
 		public override void ExposeData()
 		{
 			base.ExposeData();
@@ -60,11 +68,11 @@ namespace RimWorld
 			yield return Toils_Goto.GotoThing(TargetIndex.A, PathEndMode.Touch);
 			yield return Toils_Interpersonal.WaitToBeAbleToInteract(this.pawn);
 			yield return Toils_Interpersonal.GotoInteractablePosition(TargetIndex.A);
-			yield return JobDriver_InteractAnimal.TalkToAnimal(TargetIndex.A);
+			yield return this.TalkToAnimal(TargetIndex.A);
 			yield return Toils_Goto.GotoThing(TargetIndex.A, PathEndMode.Touch);
 			yield return Toils_Interpersonal.WaitToBeAbleToInteract(this.pawn);
 			yield return Toils_Interpersonal.GotoInteractablePosition(TargetIndex.A);
-			yield return JobDriver_InteractAnimal.TalkToAnimal(TargetIndex.A);
+			yield return this.TalkToAnimal(TargetIndex.A);
 			foreach (Toil t in this.FeedToils())
 			{
 				yield return t;
@@ -72,12 +80,12 @@ namespace RimWorld
 			yield return Toils_Goto.GotoThing(TargetIndex.A, PathEndMode.Touch);
 			yield return Toils_Interpersonal.WaitToBeAbleToInteract(this.pawn);
 			yield return Toils_Interpersonal.GotoInteractablePosition(TargetIndex.A);
-			yield return JobDriver_InteractAnimal.TalkToAnimal(TargetIndex.A);
+			yield return this.TalkToAnimal(TargetIndex.A);
 			foreach (Toil t2 in this.FeedToils())
 			{
 				yield return t2;
 			}
-			yield return Toils_Goto.GotoThing(TargetIndex.A, PathEndMode.Touch);
+			yield return Toils_Goto.GotoThing(TargetIndex.A, PathEndMode.Touch).FailOn(() => !this.$this.CanInteractNow);
 			yield return Toils_Interpersonal.SetLastInteractTime(TargetIndex.A);
 			yield return Toils_Interpersonal.WaitToBeAbleToInteract(this.pawn);
 			yield return Toils_Interpersonal.GotoInteractablePosition(TargetIndex.A);
@@ -109,7 +117,7 @@ namespace RimWorld
 			yield return Toils_Jump.JumpIf(gotoAnimal, () => this.$this.feedNutritionLeft > 0f);
 		}
 
-		private static Toil TalkToAnimal(TargetIndex tameeInd)
+		private Toil TalkToAnimal(TargetIndex tameeInd)
 		{
 			Toil toil = new Toil();
 			toil.initAction = delegate
@@ -118,6 +126,7 @@ namespace RimWorld
 				Pawn recipient = (Pawn)((Thing)actor.CurJob.GetTarget(tameeInd));
 				actor.interactions.TryInteractWith(recipient, InteractionDefOf.AnimalChat);
 			};
+			toil.FailOn(() => !this.CanInteractNow);
 			toil.defaultCompleteMode = ToilCompleteMode.Delay;
 			toil.defaultDuration = 270;
 			return toil;

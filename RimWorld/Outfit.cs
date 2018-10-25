@@ -12,7 +12,7 @@ namespace RimWorld
 
 		public ThingFilter filter = new ThingFilter();
 
-		public static readonly Regex ValidNameRegex = new Regex("^[a-zA-Z0-9 '\\-]*$");
+		public static readonly Regex ValidNameRegex = new Regex("^[\\p{L}0-9 '\\-]*$");
 
 		public Outfit()
 		{

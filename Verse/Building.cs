@@ -2,7 +2,6 @@ using RimWorld;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using Verse.AI;
 using Verse.AI.Group;
 using Verse.Sound;
 
@@ -92,6 +91,7 @@ namespace Verse
 				base.Map.exitMapGrid.Notify_LOSBlockerSpawned();
 			}
 			SmoothSurfaceDesignatorUtility.Notify_BuildingSpawned(this);
+			map.avoidGrid.Notify_BuildingSpawned(this);
 		}
 
 		public override void DeSpawn(DestroyMode mode = DestroyMode.Vanish)
@@ -166,10 +166,7 @@ namespace Verse
 					compLaunchable.Notify_FuelingPortSourceDeSpawned();
 				}
 			}
-			if (this.def.building.ai_combatDangerous)
-			{
-				AvoidGridMaker.Notify_CombatDangerousBuildingDespawned(this, map);
-			}
+			map.avoidGrid.Notify_BuildingDespawned(this);
 		}
 
 		public override void Destroy(DestroyMode mode = DestroyMode.Vanish)
@@ -183,9 +180,9 @@ namespace Verse
 			{
 				SoundDefOf.Building_Deconstructed.PlayOneShot(new TargetInfo(base.Position, map, false));
 			}
-			if (Find.PlaySettings.autoRebuild && mode == DestroyMode.KillFinalize && base.Faction == Faction.OfPlayer && spawned && this.def.blueprintDef != null && this.def.IsResearchFinished && map.areaManager.Home[base.Position] && GenConstruct.CanPlaceBlueprintAt(this.def, base.Position, base.Rotation, map, false, null).Accepted)
+			if (spawned)
 			{
-				GenConstruct.PlaceBlueprintForBuild(this.def, base.Position, map, base.Rotation, Faction.OfPlayer, base.Stuff);
+				ThingUtility.CheckAutoRebuildOnDestroyed(this, mode, map, this.def);
 			}
 		}
 
@@ -293,14 +290,24 @@ namespace Verse
 				{
 					return false;
 				}
-				if (by == Faction.OfPlayer && base.Spawned)
+				if (by == Faction.OfPlayer)
 				{
-					List<Pawn> list = base.Map.mapPawns.SpawnedPawnsInFaction(base.Faction);
-					for (int i = 0; i < list.Count; i++)
+					if (base.Faction == Faction.OfInsects)
 					{
-						if (list[i].RaceProps.Humanlike && GenHostility.IsActiveThreatToPlayer(list[i]))
+						if (HiveUtility.AnyHivePreventsClaiming(this))
 						{
 							return false;
+						}
+					}
+					else if (base.Spawned)
+					{
+						List<Pawn> list = base.Map.mapPawns.SpawnedPawnsInFaction(base.Faction);
+						for (int i = 0; i < list.Count; i++)
+						{
+							if (list[i].RaceProps.Humanlike && GenHostility.IsActiveThreatToPlayer(list[i]))
+							{
+								return false;
+							}
 						}
 					}
 				}

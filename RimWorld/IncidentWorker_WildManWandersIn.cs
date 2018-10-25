@@ -37,10 +37,10 @@ namespace RimWorld
 			Pawn pawn = PawnGenerator.GeneratePawn(PawnKindDefOf.WildMan, faction);
 			pawn.SetFaction(null, null);
 			GenSpawn.Spawn(pawn, loc, map, WipeMode.Vanish);
-			string letterLabel = this.def.letterLabel;
-			string text = string.Format(this.def.letterText.AdjustedFor(pawn, "PAWN"), pawn.LabelShort).CapitalizeFirst();
-			PawnRelationUtility.TryAppendRelationsWithColonistsInfo(ref text, ref letterLabel, pawn);
-			Find.LetterStack.ReceiveLetter(letterLabel, text, this.def.letterDef, pawn, null, null);
+			string label = this.def.letterLabel.Formatted(pawn.LabelShort, pawn.Named("PAWN"));
+			string text = this.def.letterText.Formatted(pawn.LabelShort, pawn.Named("PAWN")).AdjustedFor(pawn, "PAWN").CapitalizeFirst();
+			PawnRelationUtility.TryAppendRelationsWithColonistsInfo(ref text, ref label, pawn);
+			Find.LetterStack.ReceiveLetter(label, text, this.def.letterDef, pawn, null, null);
 			return true;
 		}
 

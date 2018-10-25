@@ -428,10 +428,7 @@ namespace RimWorld.Planet
 			{
 				if (p.story != null && p.story.WorkTagIsDisabled(WorkTags.Violent))
 				{
-					Messages.Message("MessageCantEquipIncapableOfViolence".Translate(new object[]
-					{
-						p.LabelShort
-					}), p, MessageTypeDefOf.RejectInput, false);
+					Messages.Message("MessageCantEquipIncapableOfViolence".Translate(p.LabelShort, p), p, MessageTypeDefOf.RejectInput, false);
 					this.draggedItem = null;
 					return;
 				}

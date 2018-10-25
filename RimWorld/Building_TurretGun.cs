@@ -208,16 +208,21 @@ namespace RimWorld
 			}
 			if (this.holdFire)
 			{
-				Messages.Message("MessageTurretWontFireBecauseHoldFire".Translate(new object[]
-				{
-					this.def.label
-				}), this, MessageTypeDefOf.RejectInput, false);
+				Messages.Message("MessageTurretWontFireBecauseHoldFire".Translate(this.def.label), this, MessageTypeDefOf.RejectInput, false);
 			}
 		}
 
 		public override void Tick()
 		{
 			base.Tick();
+			if (this.CanExtractShell && this.MannedByColonist)
+			{
+				CompChangeableProjectile compChangeableProjectile = this.gun.TryGetComp<CompChangeableProjectile>();
+				if (!compChangeableProjectile.allowedShellsSettings.AllowedToAccept(compChangeableProjectile.LoadedShell))
+				{
+					this.ExtractShell();
+				}
+			}
 			if (this.forcedTarget.IsValid && !this.CanSetForcedTarget)
 			{
 				this.ResetForcedTarget();
@@ -412,10 +417,7 @@ namespace RimWorld
 			{
 				if (compChangeableProjectile.Loaded)
 				{
-					stringBuilder.AppendLine("ShellLoaded".Translate(new object[]
-					{
-						compChangeableProjectile.LoadedShell.LabelCap
-					}));
+					stringBuilder.AppendLine("ShellLoaded".Translate(compChangeableProjectile.LoadedShell.LabelCap, compChangeableProjectile.LoadedShell));
 				}
 				else
 				{
@@ -438,7 +440,7 @@ namespace RimWorld
 			{
 				GenDraw.DrawRadiusRing(base.Position, range);
 			}
-			float num = this.AttackVerb.verbProps.EffectiveMinRange(false);
+			float num = this.AttackVerb.verbProps.EffectiveMinRange(true);
 			if (num < 90f && num > 0.1f)
 			{
 				GenDraw.DrawRadiusRing(base.Position, num);
@@ -484,10 +486,9 @@ namespace RimWorld
 					iconAngle = changeableProjectile.LoadedShell.uiIconAngle,
 					iconOffset = changeableProjectile.LoadedShell.uiIconOffset,
 					iconDrawScale = GenUI.IconDrawScale(changeableProjectile.LoadedShell),
-					alsoClickIfOtherInGroupClicked = false,
 					action = delegate
 					{
-						GenPlace.TryPlaceThing(changeableProjectile.RemoveShell(), this.$this.Position, this.$this.Map, ThingPlaceMode.Near, null, null);
+						this.$this.ExtractShell();
 					}
 				};
 			}
@@ -542,6 +543,11 @@ namespace RimWorld
 					isActive = (() => this.$this.holdFire)
 				};
 			}
+		}
+
+		private void ExtractShell()
+		{
+			GenPlace.TryPlaceThing(this.gun.TryGetComp<CompChangeableProjectile>().RemoveShell(), base.Position, base.Map, ThingPlaceMode.Near, null, null);
 		}
 
 		private void ResetForcedTarget()

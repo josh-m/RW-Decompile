@@ -32,10 +32,7 @@ namespace RimWorld
 			}
 			if (!pawn.Drafted)
 			{
-				failStr = "IsNotDraftedLower".Translate(new object[]
-				{
-					pawn.LabelShort
-				});
+				failStr = "IsNotDraftedLower".Translate(pawn.LabelShort, pawn);
 			}
 			else if (!pawn.IsColonistPlayerControlled)
 			{
@@ -59,10 +56,7 @@ namespace RimWorld
 			}
 			else if (pawn.story.WorkTagIsDisabled(WorkTags.Violent))
 			{
-				failStr = "IsIncapableOfViolenceLower".Translate(new object[]
-				{
-					pawn.LabelShort
-				});
+				failStr = "IsIncapableOfViolenceLower".Translate(pawn.LabelShort, pawn);
 			}
 			else
 			{
@@ -84,10 +78,7 @@ namespace RimWorld
 			failStr = string.Empty;
 			if (!pawn.Drafted)
 			{
-				failStr = "IsNotDraftedLower".Translate(new object[]
-				{
-					pawn.LabelShort
-				});
+				failStr = "IsNotDraftedLower".Translate(pawn.LabelShort, pawn);
 			}
 			else if (!pawn.IsColonistPlayerControlled)
 			{
@@ -99,10 +90,7 @@ namespace RimWorld
 			}
 			else if (pawn.story.WorkTagIsDisabled(WorkTags.Violent))
 			{
-				failStr = "IsIncapableOfViolenceLower".Translate(new object[]
-				{
-					pawn.LabelShort
-				});
+				failStr = "IsIncapableOfViolenceLower".Translate(pawn.LabelShort, pawn);
 			}
 			else if (pawn.meleeVerbs.TryGetMeleeVerb(target.Thing) == null)
 			{
@@ -152,10 +140,7 @@ namespace RimWorld
 				}
 				if (pawn2 != null)
 				{
-					option.Label = option.Label + " (" + reservedText.Translate(new object[]
-					{
-						pawn2.LabelShort
-					}) + ")";
+					option.Label = option.Label + " (" + reservedText.Translate(pawn2.LabelShort, pawn2) + ")";
 				}
 			}
 			if (option.revalidateClickTarget != null && option.revalidateClickTarget != target.Thing)

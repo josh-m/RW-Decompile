@@ -115,11 +115,7 @@ namespace RimWorld.Planet
 				{
 					stringBuilder.AppendLine();
 				}
-				stringBuilder.Append("  - " + offsets[i].First.LabelCap + ": " + "ProximitySingleGoodwillChange".Translate(new object[]
-				{
-					offsets[i].Second.ToStringWithSign(),
-					offsets[i].First.Faction.Name
-				}));
+				stringBuilder.Append("  - " + offsets[i].First.LabelCap + ": " + "ProximitySingleGoodwillChange".Translate(offsets[i].Second.ToStringWithSign(), offsets[i].First.Faction.Name));
 			}
 			return stringBuilder.ToString();
 		}
@@ -131,11 +127,7 @@ namespace RimWorld.Planet
 			if (SettlementProximityGoodwillUtility.tmpGoodwillOffsets.Any<Pair<Settlement, int>>())
 			{
 				SettlementProximityGoodwillUtility.SortProximityGoodwillOffsets(SettlementProximityGoodwillUtility.tmpGoodwillOffsets);
-				Find.WindowStack.Add(Dialog_MessageBox.CreateConfirmation("ConfirmSettleNearFactionBase".Translate(new object[]
-				{
-					SettlementProximityGoodwillUtility.MaxDist - 1,
-					15
-				}) + "\n\n" + SettlementProximityGoodwillUtility.ProximityGoodwillOffsetsToString(SettlementProximityGoodwillUtility.tmpGoodwillOffsets), settleAction, false, null));
+				Find.WindowStack.Add(Dialog_MessageBox.CreateConfirmation("ConfirmSettleNearFactionBase".Translate(SettlementProximityGoodwillUtility.MaxDist - 1, 15) + "\n\n" + SettlementProximityGoodwillUtility.ProximityGoodwillOffsetsToString(SettlementProximityGoodwillUtility.tmpGoodwillOffsets), settleAction, false, null));
 			}
 			else
 			{

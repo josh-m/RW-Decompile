@@ -10,7 +10,7 @@ namespace Verse
 	{
 		public const char HandleIndexCharacter = '-';
 
-		private static Regex StringFormatSymbolsRegex = new Regex("{[0-9]*}");
+		private static Regex StringFormatSymbolsRegex = new Regex("{.*?}");
 
 		private static StringBuilder tmpStringBuilder = new StringBuilder();
 

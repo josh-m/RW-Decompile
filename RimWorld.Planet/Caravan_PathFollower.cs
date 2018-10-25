@@ -200,10 +200,7 @@ namespace RimWorld.Planet
 			if (this.moving && this.arrivalAction != null && !this.arrivalAction.StillValid(this.caravan, this.Destination))
 			{
 				string failMessage = this.arrivalAction.StillValid(this.caravan, this.Destination).FailMessage;
-				Messages.Message("MessageCaravanArrivalActionNoLongerValid".Translate(new object[]
-				{
-					this.caravan.Name
-				}).CapitalizeFirst() + ((failMessage == null) ? string.Empty : (" " + failMessage)), this.caravan, MessageTypeDefOf.NegativeEvent, true);
+				Messages.Message("MessageCaravanArrivalActionNoLongerValid".Translate(this.caravan.Name).CapitalizeFirst() + ((failMessage == null) ? string.Empty : (" " + failMessage)), this.caravan, MessageTypeDefOf.NegativeEvent, true);
 				this.StopDead();
 			}
 			if (this.caravan.CantMove || this.paused)
@@ -273,10 +270,7 @@ namespace RimWorld.Planet
 			}
 			else if (this.caravan.IsPlayerControlled && !this.caravan.VisibleToCameraNow())
 			{
-				Messages.Message("MessageCaravanArrivedAtDestination".Translate(new object[]
-				{
-					this.caravan.Label
-				}).CapitalizeFirst(), this.caravan, MessageTypeDefOf.TaskCompletion, true);
+				Messages.Message("MessageCaravanArrivedAtDestination".Translate(this.caravan.Label).CapitalizeFirst(), this.caravan, MessageTypeDefOf.TaskCompletion, true);
 			}
 		}
 

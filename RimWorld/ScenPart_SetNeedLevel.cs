@@ -42,14 +42,7 @@ namespace RimWorld
 
 		public override string Summary(Scenario scen)
 		{
-			return "ScenPart_SetNeed".Translate(new object[]
-			{
-				this.context.ToStringHuman(),
-				this.chance.ToStringPercent(),
-				this.need.label,
-				this.levelRange.min.ToStringPercent(),
-				this.levelRange.max.ToStringPercent()
-			}).CapitalizeFirst();
+			return "ScenPart_SetNeed".Translate(this.context.ToStringHuman(), this.chance.ToStringPercent(), this.need.label, this.levelRange.min.ToStringPercent(), this.levelRange.max.ToStringPercent()).CapitalizeFirst();
 		}
 
 		public override void Randomize()

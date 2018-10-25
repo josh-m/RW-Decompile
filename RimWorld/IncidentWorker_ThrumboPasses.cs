@@ -44,19 +44,13 @@ namespace RimWorld
 					pawn.mindState.forcedGotoPosition = CellFinder.RandomClosewalkCellNear(invalid, map, 10, null);
 				}
 			}
-			Find.LetterStack.ReceiveLetter("LetterLabelThrumboPasses".Translate(new object[]
-			{
-				thrumbo.label
-			}).CapitalizeFirst(), "LetterThrumboPasses".Translate(new object[]
-			{
-				thrumbo.label
-			}), LetterDefOf.PositiveEvent, pawn, null, null);
+			Find.LetterStack.ReceiveLetter("LetterLabelThrumboPasses".Translate(thrumbo.label).CapitalizeFirst(), "LetterThrumboPasses".Translate(thrumbo.label), LetterDefOf.PositiveEvent, pawn, null, null);
 			return true;
 		}
 
 		private bool TryFindEntryCell(Map map, out IntVec3 cell)
 		{
-			return RCellFinder.TryFindRandomPawnEntryCell(out cell, map, CellFinder.EdgeRoadChance_Animal + 0.2f, null);
+			return RCellFinder.TryFindRandomPawnEntryCell(out cell, map, CellFinder.EdgeRoadChance_Animal + 0.2f, false, null);
 		}
 	}
 }

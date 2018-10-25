@@ -12,10 +12,7 @@ namespace RimWorld.Planet
 		{
 			get
 			{
-				return "VisitSettlement".Translate(new object[]
-				{
-					this.settlement.Label
-				});
+				return "VisitSettlement".Translate(this.settlement.Label);
 			}
 		}
 
@@ -23,10 +20,7 @@ namespace RimWorld.Planet
 		{
 			get
 			{
-				return "CaravanVisiting".Translate(new object[]
-				{
-					this.settlement.Label
-				});
+				return "CaravanVisiting".Translate(this.settlement.Label);
 			}
 		}
 
@@ -57,11 +51,7 @@ namespace RimWorld.Planet
 		{
 			if (caravan.IsPlayerControlled)
 			{
-				Messages.Message("MessageCaravanIsVisitingSettlement".Translate(new object[]
-				{
-					caravan.Label,
-					this.settlement.Label
-				}).CapitalizeFirst(), caravan, MessageTypeDefOf.TaskCompletion, true);
+				Find.LetterStack.ReceiveLetter("LetterLabelCaravanEnteredMap".Translate(this.settlement), "LetterCaravanEnteredMap".Translate(caravan.Label, this.settlement).CapitalizeFirst(), LetterDefOf.NeutralEvent, caravan, null, null);
 			}
 		}
 
@@ -78,10 +68,7 @@ namespace RimWorld.Planet
 
 		public static IEnumerable<FloatMenuOption> GetFloatMenuOptions(Caravan caravan, SettlementBase settlement)
 		{
-			return CaravanArrivalActionUtility.GetFloatMenuOptions<CaravanArrivalAction_VisitSettlement>(() => CaravanArrivalAction_VisitSettlement.CanVisit(caravan, settlement), () => new CaravanArrivalAction_VisitSettlement(settlement), "VisitSettlement".Translate(new object[]
-			{
-				settlement.Label
-			}), caravan, settlement.Tile, settlement);
+			return CaravanArrivalActionUtility.GetFloatMenuOptions<CaravanArrivalAction_VisitSettlement>(() => CaravanArrivalAction_VisitSettlement.CanVisit(caravan, settlement), () => new CaravanArrivalAction_VisitSettlement(settlement), "VisitSettlement".Translate(settlement.Label), caravan, settlement.Tile, settlement);
 		}
 	}
 }

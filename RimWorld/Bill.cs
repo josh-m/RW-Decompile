@@ -164,18 +164,12 @@ namespace RimWorld
 				int level = p.skills.GetSkill(this.recipe.workSkill).Level;
 				if (level < this.allowedSkillRange.min)
 				{
-					JobFailReason.Is("UnderAllowedSkill".Translate(new object[]
-					{
-						this.allowedSkillRange.min
-					}), this.Label);
+					JobFailReason.Is("UnderAllowedSkill".Translate(this.allowedSkillRange.min), this.Label);
 					return false;
 				}
 				if (level > this.allowedSkillRange.max)
 				{
-					JobFailReason.Is("AboveAllowedSkill".Translate(new object[]
-					{
-						this.allowedSkillRange.max
-					}), this.Label);
+					JobFailReason.Is("AboveAllowedSkill".Translate(this.allowedSkillRange.max), this.Label);
 					return false;
 				}
 			}
@@ -334,10 +328,7 @@ namespace RimWorld
 
 		public static void CreateNoPawnsWithSkillDialog(RecipeDef recipe)
 		{
-			string text = "RecipeRequiresSkills".Translate(new object[]
-			{
-				recipe.LabelCap
-			});
+			string text = "RecipeRequiresSkills".Translate(recipe.LabelCap);
 			text += "\n\n";
 			text += recipe.MinSkillString;
 			Find.WindowStack.Add(new Dialog_MessageBox(text, null, null, null, null, null, false, null, null));
@@ -377,12 +368,7 @@ namespace RimWorld
 			{
 				if (this != BillUtility.Clipboard)
 				{
-					Messages.Message("MessageBillValidationPawnUnavailable".Translate(new object[]
-					{
-						this.pawnRestriction.LabelShortCap,
-						this.LabelCap,
-						this.billStack.billGiver.LabelShort.CapitalizeFirst()
-					}), this.billStack.billGiver as Thing, MessageTypeDefOf.NegativeEvent, true);
+					Messages.Message("MessageBillValidationPawnUnavailable".Translate(this.pawnRestriction.LabelShortCap, this.LabelCap, this.billStack.billGiver.LabelShort.CapitalizeFirst()), this.billStack.billGiver as Thing, MessageTypeDefOf.NegativeEvent, true);
 				}
 				this.pawnRestriction = null;
 				return;

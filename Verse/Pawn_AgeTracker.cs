@@ -145,51 +145,33 @@ namespace Verse
 		{
 			get
 			{
-				int num;
-				int num2;
-				int num3;
-				float num4;
-				this.ageBiologicalTicksInt.TicksToPeriod(out num, out num2, out num3, out num4);
+				int value;
+				int value2;
+				int value3;
+				float num;
+				this.ageBiologicalTicksInt.TicksToPeriod(out value, out value2, out value3, out num);
 				long numTicks = (long)GenTicks.TicksAbs - this.birthAbsTicksInt;
-				int num5;
-				int num6;
-				int num7;
-				numTicks.TicksToPeriod(out num5, out num6, out num7, out num4);
-				string text = "FullDate".Translate(new object[]
+				int value4;
+				int value5;
+				int value6;
+				numTicks.TicksToPeriod(out value4, out value5, out value6, out num);
+				string value7 = "FullDate".Translate(Find.ActiveLanguageWorker.OrdinalNumber(this.BirthDayOfSeasonZeroBased + 1, Gender.None), this.BirthQuadrum.Label(), this.BirthYear);
+				string text = string.Concat(new string[]
 				{
-					Find.ActiveLanguageWorker.OrdinalNumber(this.BirthDayOfSeasonZeroBased + 1),
-					this.BirthQuadrum.Label(),
-					this.BirthYear
-				});
-				string text2 = string.Concat(new string[]
-				{
-					"Born".Translate(new object[]
-					{
-						text
-					}),
+					"Born".Translate(value7),
 					"\n",
-					"AgeChronological".Translate(new object[]
-					{
-						num5,
-						num6,
-						num7
-					}),
+					"AgeChronological".Translate(value4, value5, value6),
 					"\n",
-					"AgeBiological".Translate(new object[]
-					{
-						num,
-						num2,
-						num3
-					})
+					"AgeBiological".Translate(value, value2, value3)
 				});
 				if (Prefs.DevMode)
 				{
-					text2 += "\n\nDev mode info:";
-					text2 = text2 + "\nageBiologicalTicksInt: " + this.ageBiologicalTicksInt;
-					text2 = text2 + "\nbirthAbsTicksInt: " + this.birthAbsTicksInt;
-					text2 = text2 + "\nnextLifeStageChangeTick: " + this.nextLifeStageChangeTick;
+					text += "\n\nDev mode info:";
+					text = text + "\nageBiologicalTicksInt: " + this.ageBiologicalTicksInt;
+					text = text + "\nbirthAbsTicksInt: " + this.birthAbsTicksInt;
+					text = text + "\nnextLifeStageChangeTick: " + this.nextLifeStageChangeTick;
 				}
-				return text2;
+				return text;
 			}
 		}
 
@@ -332,12 +314,7 @@ namespace Verse
 			}
 			if (this.pawn.RaceProps.Humanlike && PawnUtility.ShouldSendNotificationAbout(this.pawn) && stringBuilder.Length > 0)
 			{
-				string text = "BirthdayBiologicalAgeInjuries".Translate(new object[]
-				{
-					this.pawn,
-					this.AgeBiologicalYears,
-					stringBuilder
-				}).AdjustedFor(this.pawn, "PAWN");
+				string text = "BirthdayBiologicalAgeInjuries".Translate(this.pawn, this.AgeBiologicalYears, stringBuilder).AdjustedFor(this.pawn, "PAWN");
 				Find.LetterStack.ReceiveLetter("LetterLabelBirthday".Translate(), text, LetterDefOf.NegativeEvent, this.pawn, null, null);
 			}
 		}

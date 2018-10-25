@@ -51,6 +51,7 @@ namespace RimWorld
 			this.doCloseX = true;
 			this.doCloseButton = true;
 			this.absorbInputAroundWindow = true;
+			this.closeOnClickedOutside = true;
 		}
 
 		private void AdjustCount(int offset)
@@ -96,10 +97,7 @@ namespace RimWorld
 			listing_Standard2.Gap(12f);
 			if (this.bill.repeatMode == BillRepeatModeDefOf.RepeatCount)
 			{
-				listing_Standard2.Label("RepeatCount".Translate(new object[]
-				{
-					this.bill.repeatCount
-				}), -1f, null);
+				listing_Standard2.Label("RepeatCount".Translate(this.bill.repeatCount), -1f, null);
 				listing_Standard2.IntEntry(ref this.bill.repeatCount, ref this.repeatCountEditBuffer, 1);
 			}
 			else if (this.bill.repeatMode == BillRepeatModeDefOf.TargetCount)
@@ -108,17 +106,17 @@ namespace RimWorld
 				text += this.bill.recipe.WorkerCounter.CountProducts(this.bill);
 				text += " / ";
 				text += ((this.bill.targetCount >= 999999) ? "Infinite".Translate().ToLower() : this.bill.targetCount.ToString());
-				string text2 = this.bill.recipe.WorkerCounter.ProductsDescription(this.bill);
-				if (!text2.NullOrEmpty())
+				string str = this.bill.recipe.WorkerCounter.ProductsDescription(this.bill);
+				if (!str.NullOrEmpty())
 				{
-					string text3 = text;
+					string text2 = text;
 					text = string.Concat(new string[]
 					{
-						text3,
+						text2,
 						"\n",
 						"CountingProducts".Translate(),
 						": ",
-						text2
+						str.CapitalizeFirst()
 					});
 				}
 				listing_Standard2.Label(text, -1f, null);
@@ -136,14 +134,11 @@ namespace RimWorld
 					{
 						listing_Standard2.CheckboxLabeled("IncludeTainted".Translate(), ref this.bill.includeTainted, null);
 					}
-					Widgets.Dropdown<Bill_Production, Zone_Stockpile>(listing_Standard2.GetRect(30f), this.bill, (Bill_Production b) => b.includeFromZone, (Bill_Production b) => this.GenerateStockpileInclusion(), (this.bill.includeFromZone != null) ? "IncludeSpecific".Translate(new object[]
-					{
-						this.bill.includeFromZone.label
-					}) : "IncludeFromAll".Translate(), null, null, null, null, false);
-					Widgets.FloatRange(listing_Standard2.GetRect(28f), 10, ref this.bill.hpRange, 0f, 1f, "HitPoints", ToStringStyle.PercentZero);
+					Widgets.Dropdown<Bill_Production, Zone_Stockpile>(listing_Standard2.GetRect(30f), this.bill, (Bill_Production b) => b.includeFromZone, (Bill_Production b) => this.GenerateStockpileInclusion(), (this.bill.includeFromZone != null) ? "IncludeSpecific".Translate(this.bill.includeFromZone.label) : "IncludeFromAll".Translate(), null, null, null, null, false);
+					Widgets.FloatRange(listing_Standard2.GetRect(28f), 975643279, ref this.bill.hpRange, 0f, 1f, "HitPoints", ToStringStyle.PercentZero);
 					if (producedThingDef.HasComp(typeof(CompQuality)))
 					{
-						Widgets.QualityRange(listing_Standard2.GetRect(28f), 2, ref this.bill.qualityRange);
+						Widgets.QualityRange(listing_Standard2.GetRect(28f), 1098906561, ref this.bill.qualityRange);
 					}
 					if (producedThingDef.MadeFromStuff)
 					{
@@ -168,13 +163,13 @@ namespace RimWorld
 			listing_Standard.EndSection(listing_Standard2);
 			listing_Standard.Gap(12f);
 			Listing_Standard listing_Standard3 = listing_Standard.BeginSection((float)Dialog_BillConfig.StoreModeSubdialogHeight);
-			string text4 = string.Format(this.bill.GetStoreMode().LabelCap, (this.bill.GetStoreZone() == null) ? string.Empty : this.bill.GetStoreZone().SlotYielderLabel());
+			string text3 = string.Format(this.bill.GetStoreMode().LabelCap, (this.bill.GetStoreZone() == null) ? string.Empty : this.bill.GetStoreZone().SlotYielderLabel());
 			if (this.bill.GetStoreZone() != null && !this.bill.recipe.WorkerCounter.CanPossiblyStoreInStockpile(this.bill, this.bill.GetStoreZone()))
 			{
-				text4 += string.Format(" ({0})", "IncompatibleLower".Translate());
+				text3 += string.Format(" ({0})", "IncompatibleLower".Translate());
 				Text.Font = GameFont.Tiny;
 			}
-			if (listing_Standard3.ButtonText(text4, null))
+			if (listing_Standard3.ButtonText(text3, null))
 			{
 				Text.Font = GameFont.Small;
 				List<FloatMenuOption> list = new List<FloatMenuOption>();
@@ -224,10 +219,7 @@ namespace RimWorld
 			Widgets.Dropdown<Bill_Production, Pawn>(listing_Standard4.GetRect(30f), this.bill, (Bill_Production b) => b.pawnRestriction, (Bill_Production b) => this.GeneratePawnRestrictionOptions(), (this.bill.pawnRestriction != null) ? this.bill.pawnRestriction.LabelShortCap : "AnyWorker".Translate(), null, null, null, null, false);
 			if (this.bill.pawnRestriction == null && this.bill.recipe.workSkill != null)
 			{
-				listing_Standard4.Label("AllowedSkillRange".Translate(new object[]
-				{
-					this.bill.recipe.workSkill.label
-				}), -1f, null);
+				listing_Standard4.Label("AllowedSkillRange".Translate(this.bill.recipe.workSkill.label), -1f, null);
 				listing_Standard4.IntRange(ref this.bill.allowedSkillRange, 0, 20);
 			}
 			listing_Standard.EndSection(listing_Standard4);
@@ -236,20 +228,24 @@ namespace RimWorld
 			rect5.yMin = rect5.yMax - (float)Dialog_BillConfig.IngredientRadiusSubdialogHeight;
 			rect4.yMax = rect5.yMin - 17f;
 			bool flag = this.bill.GetStoreZone() == null || this.bill.recipe.WorkerCounter.CanPossiblyStoreInStockpile(this.bill, this.bill.GetStoreZone());
-			ThingFilterUI.DoThingFilterConfigWindow(rect4, ref this.thingFilterScrollPosition, this.bill.ingredientFilter, this.bill.recipe.fixedIngredientFilter, 4, null, this.bill.recipe.forceHiddenSpecialFilters, this.bill.recipe.GetPremultipliedSmallIngredients(), this.bill.Map);
+			Rect rect6 = rect4;
+			ThingFilter ingredientFilter = this.bill.ingredientFilter;
+			ThingFilter fixedIngredientFilter = this.bill.recipe.fixedIngredientFilter;
+			int openMask = 4;
+			IEnumerable<ThingDef> forceHiddenDefs = null;
+			List<SpecialThingFilterDef> forceHiddenSpecialFilters = this.bill.recipe.forceHiddenSpecialFilters;
+			List<ThingDef> premultipliedSmallIngredients = this.bill.recipe.GetPremultipliedSmallIngredients();
+			ThingFilterUI.DoThingFilterConfigWindow(rect6, ref this.thingFilterScrollPosition, ingredientFilter, fixedIngredientFilter, openMask, forceHiddenDefs, forceHiddenSpecialFilters, false, premultipliedSmallIngredients, this.bill.Map);
 			bool flag2 = this.bill.GetStoreZone() == null || this.bill.recipe.WorkerCounter.CanPossiblyStoreInStockpile(this.bill, this.bill.GetStoreZone());
 			if (flag && !flag2)
 			{
-				Messages.Message("MessageBillValidationStoreZoneInsufficient".Translate(new object[]
-				{
-					this.bill.LabelCap,
-					this.bill.billStack.billGiver.LabelShort.CapitalizeFirst(),
-					this.bill.GetStoreZone().label
-				}), this.bill.billStack.billGiver as Thing, MessageTypeDefOf.RejectInput, false);
+				Messages.Message("MessageBillValidationStoreZoneInsufficient".Translate(this.bill.LabelCap, this.bill.billStack.billGiver.LabelShort.CapitalizeFirst(), this.bill.GetStoreZone().label), this.bill.billStack.billGiver as Thing, MessageTypeDefOf.RejectInput, false);
 			}
 			Listing_Standard listing_Standard5 = new Listing_Standard();
 			listing_Standard5.Begin(rect5);
-			listing_Standard5.Label("IngredientSearchRadius".Translate() + ": " + ((this.bill.ingredientSearchRadius != 999f) ? this.bill.ingredientSearchRadius.ToString("F0") : "Unlimited".Translate()), -1f, null);
+			string str2 = "IngredientSearchRadius".Translate().Truncate(rect5.width * 0.6f, null);
+			string str3 = (this.bill.ingredientSearchRadius != 999f) ? this.bill.ingredientSearchRadius.ToString("F0") : "Unlimited".Translate().Truncate(rect5.width * 0.3f, null);
+			listing_Standard5.Label(str2 + ": " + str3, -1f, null);
 			this.bill.ingredientSearchRadius = listing_Standard5.Slider(this.bill.ingredientSearchRadius, 3f, 100f);
 			if (this.bill.ingredientSearchRadius >= 100f)
 			{
@@ -287,10 +283,10 @@ namespace RimWorld
 				}
 			}
 			stringBuilder.AppendLine();
-			string text5 = this.bill.recipe.IngredientValueGetter.ExtraDescriptionLine(this.bill.recipe);
-			if (text5 != null)
+			string text4 = this.bill.recipe.IngredientValueGetter.ExtraDescriptionLine(this.bill.recipe);
+			if (text4 != null)
 			{
-				stringBuilder.AppendLine(text5);
+				stringBuilder.AppendLine(text4);
 				stringBuilder.AppendLine();
 			}
 			if (!this.bill.recipe.skillRequirements.NullOrEmpty<SkillRequirement>())
@@ -299,12 +295,12 @@ namespace RimWorld
 				stringBuilder.AppendLine(this.bill.recipe.MinSkillString);
 			}
 			Text.Font = GameFont.Small;
-			string text6 = stringBuilder.ToString();
-			if (Text.CalcHeight(text6, rect2.width) > rect2.height)
+			string text5 = stringBuilder.ToString();
+			if (Text.CalcHeight(text5, rect2.width) > rect2.height)
 			{
 				Text.Font = GameFont.Tiny;
 			}
-			listing_Standard6.Label(text6, -1f, null);
+			listing_Standard6.Label(text5, -1f, null);
 			Text.Font = GameFont.Small;
 			listing_Standard6.End();
 			if (this.bill.recipe.products.Count == 1)
@@ -355,10 +351,7 @@ namespace RimWorld
 					{
 						yield return new Widgets.DropdownMenuElement<Pawn>
 						{
-							option = new FloatMenuOption(string.Format("{0} ({1})", pawn.LabelShortCap, "WillNever".Translate(new object[]
-							{
-								workGiver.verb
-							})), null, MenuOptionPriority.Default, null, null, 0f, null, null),
+							option = new FloatMenuOption(string.Format("{0} ({1})", pawn.LabelShortCap, "WillNever".Translate(workGiver.verb)), null, MenuOptionPriority.Default, null, null, 0f, null, null),
 							payload = pawn
 						};
 					}
@@ -436,10 +429,7 @@ namespace RimWorld
 					{
 						yield return new Widgets.DropdownMenuElement<Zone_Stockpile>
 						{
-							option = new FloatMenuOption(string.Format("{0} ({1})", "IncludeSpecific".Translate(new object[]
-							{
-								group.parent.SlotYielderLabel()
-							}), "IncompatibleLower".Translate()), null, MenuOptionPriority.Default, null, null, 0f, null, null),
+							option = new FloatMenuOption(string.Format("{0} ({1})", "IncludeSpecific".Translate(group.parent.SlotYielderLabel()), "IncompatibleLower".Translate()), null, MenuOptionPriority.Default, null, null, 0f, null, null),
 							payload = stockpile
 						};
 					}
@@ -447,10 +437,7 @@ namespace RimWorld
 					{
 						yield return new Widgets.DropdownMenuElement<Zone_Stockpile>
 						{
-							option = new FloatMenuOption("IncludeSpecific".Translate(new object[]
-							{
-								group.parent.SlotYielderLabel()
-							}), delegate
+							option = new FloatMenuOption("IncludeSpecific".Translate(group.parent.SlotYielderLabel()), delegate
 							{
 								this.$this.bill.includeFromZone = stockpile;
 							}, MenuOptionPriority.Default, null, null, 0f, null, null),

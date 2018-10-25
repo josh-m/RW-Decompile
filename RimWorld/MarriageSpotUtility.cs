@@ -50,10 +50,7 @@ namespace RimWorld
 			{
 				if (outFailReason != null)
 				{
-					outFailReason.Append("MarriageSpotDangerous".Translate(new object[]
-					{
-						firstFiance.LabelShort
-					}));
+					outFailReason.Append("MarriageSpotDangerous".Translate(firstFiance.LabelShort, firstFiance));
 				}
 				return false;
 			}
@@ -61,10 +58,7 @@ namespace RimWorld
 			{
 				if (outFailReason != null)
 				{
-					outFailReason.Append("MarriageSpotDangerous".Translate(new object[]
-					{
-						secondFiance.LabelShort
-					}));
+					outFailReason.Append("MarriageSpotDangerous".Translate(secondFiance.LabelShort, secondFiance));
 				}
 				return false;
 			}
@@ -72,10 +66,7 @@ namespace RimWorld
 			{
 				if (outFailReason != null)
 				{
-					outFailReason.Append("MarriageSpotForbidden".Translate(new object[]
-					{
-						firstFiance.LabelShort
-					}));
+					outFailReason.Append("MarriageSpotForbidden".Translate(firstFiance.LabelShort, firstFiance));
 				}
 				return false;
 			}
@@ -83,10 +74,7 @@ namespace RimWorld
 			{
 				if (outFailReason != null)
 				{
-					outFailReason.Append("MarriageSpotForbidden".Translate(new object[]
-					{
-						secondFiance.LabelShort
-					}));
+					outFailReason.Append("MarriageSpotForbidden".Translate(secondFiance.LabelShort, secondFiance));
 				}
 				return false;
 			}
@@ -102,10 +90,7 @@ namespace RimWorld
 			{
 				if (outFailReason != null)
 				{
-					outFailReason.Append("MarriageSpotUnreachable".Translate(new object[]
-					{
-						firstFiance.LabelShort
-					}));
+					outFailReason.Append("MarriageSpotUnreachable".Translate(firstFiance.LabelShort, firstFiance));
 				}
 				return false;
 			}
@@ -113,10 +98,7 @@ namespace RimWorld
 			{
 				if (outFailReason != null)
 				{
-					outFailReason.Append("MarriageSpotUnreachable".Translate(new object[]
-					{
-						secondFiance.LabelShort
-					}));
+					outFailReason.Append("MarriageSpotUnreachable".Translate(secondFiance.LabelShort, secondFiance));
 				}
 				return false;
 			}

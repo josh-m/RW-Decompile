@@ -66,11 +66,7 @@ namespace RimWorld.Planet
 				{
 					return this.settlement.LabelCap;
 				}
-				return "SettlementTrader".Translate(new object[]
-				{
-					this.settlement.LabelCap,
-					this.settlement.Faction.Name
-				});
+				return "SettlementTrader".Translate(this.settlement.LabelCap, this.settlement.Faction.Name);
 			}
 		}
 

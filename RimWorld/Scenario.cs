@@ -186,7 +186,7 @@ namespace RimWorld
 			List<Page> list = new List<Page>();
 			list.Add(new Page_SelectStoryteller());
 			list.Add(new Page_CreateWorldParams());
-			list.Add(new Page_SelectLandingSite());
+			list.Add(new Page_SelectStartingSite());
 			foreach (Page current in this.parts.SelectMany((ScenPart p) => p.GetConfigPages()))
 			{
 				list.Add(current);

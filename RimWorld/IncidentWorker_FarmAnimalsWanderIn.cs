@@ -20,14 +20,14 @@ namespace RimWorld
 			Map map = (Map)parms.target;
 			IntVec3 intVec;
 			PawnKindDef pawnKindDef;
-			return RCellFinder.TryFindRandomPawnEntryCell(out intVec, map, CellFinder.EdgeRoadChance_Animal, null) && this.TryFindRandomPawnKind(map, out pawnKindDef);
+			return RCellFinder.TryFindRandomPawnEntryCell(out intVec, map, CellFinder.EdgeRoadChance_Animal, false, null) && this.TryFindRandomPawnKind(map, out pawnKindDef);
 		}
 
 		protected override bool TryExecuteWorker(IncidentParms parms)
 		{
 			Map map = (Map)parms.target;
 			IntVec3 intVec;
-			if (!RCellFinder.TryFindRandomPawnEntryCell(out intVec, map, CellFinder.EdgeRoadChance_Animal, null))
+			if (!RCellFinder.TryFindRandomPawnEntryCell(out intVec, map, CellFinder.EdgeRoadChance_Animal, false, null))
 			{
 				return false;
 			}
@@ -44,13 +44,7 @@ namespace RimWorld
 				GenSpawn.Spawn(pawn, loc, map, Rot4.Random, WipeMode.Vanish, false);
 				pawn.SetFaction(Faction.OfPlayer, null);
 			}
-			Find.LetterStack.ReceiveLetter("LetterLabelFarmAnimalsWanderIn".Translate(new object[]
-			{
-				pawnKindDef.GetLabelPlural(-1)
-			}).CapitalizeFirst(), "LetterFarmAnimalsWanderIn".Translate(new object[]
-			{
-				pawnKindDef.GetLabelPlural(-1)
-			}), LetterDefOf.PositiveEvent, new TargetInfo(intVec, map, false), null, null);
+			Find.LetterStack.ReceiveLetter("LetterLabelFarmAnimalsWanderIn".Translate(pawnKindDef.GetLabelPlural(-1)).CapitalizeFirst(), "LetterFarmAnimalsWanderIn".Translate(pawnKindDef.GetLabelPlural(-1)), LetterDefOf.PositiveEvent, new TargetInfo(intVec, map, false), null, null);
 			return true;
 		}
 

@@ -26,11 +26,7 @@ namespace RimWorld
 			float gestationProgress = pregnantHediff.GestationProgress;
 			int num = (int)(pawn.RaceProps.gestationPeriodDays * 60000f);
 			int numTicks = (int)(gestationProgress * (float)num);
-			return "PregnantIconDesc".Translate(new object[]
-			{
-				numTicks.ToStringTicksToDays("F0"),
-				num.ToStringTicksToDays("F0")
-			});
+			return "PregnantIconDesc".Translate(numTicks.ToStringTicksToDays("F0"), num.ToStringTicksToDays("F0"));
 		}
 
 		private static Hediff_Pregnant GetPregnantHediff(Pawn pawn)

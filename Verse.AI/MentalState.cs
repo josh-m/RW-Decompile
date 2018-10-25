@@ -58,15 +58,7 @@ namespace Verse.AI
 		{
 			if (!this.def.recoveryMessage.NullOrEmpty() && PawnUtility.ShouldSendNotificationAbout(this.pawn))
 			{
-				string text = null;
-				try
-				{
-					text = string.Format(this.def.recoveryMessage, this.pawn.LabelShort);
-				}
-				catch (Exception arg)
-				{
-					Log.Error("Exception formatting string: " + arg, false);
-				}
+				string text = this.def.recoveryMessage.Formatted(this.pawn.LabelShort, this.pawn.Named("PAWN"));
 				if (!text.NullOrEmpty())
 				{
 					Messages.Message(text.AdjustedFor(this.pawn, "PAWN").CapitalizeFirst(), this.pawn, MessageTypeDefOf.SituationResolved, true);
@@ -146,7 +138,7 @@ namespace Verse.AI
 			{
 				return null;
 			}
-			return string.Format(this.def.beginLetter, this.pawn.LabelShort).AdjustedFor(this.pawn, "PAWN").CapitalizeFirst();
+			return this.def.beginLetter.Formatted(this.pawn.LabelShort, this.pawn.Named("PAWN")).AdjustedFor(this.pawn, "PAWN").CapitalizeFirst();
 		}
 
 		public virtual void Notify_AttackedTarget(LocalTargetInfo hitTarget)

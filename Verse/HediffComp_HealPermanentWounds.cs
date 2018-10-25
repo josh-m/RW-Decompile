@@ -47,12 +47,7 @@ namespace Verse
 			hediff.Severity = 0f;
 			if (PawnUtility.ShouldSendNotificationAbout(base.Pawn))
 			{
-				Messages.Message("MessagePermanentWoundHealed".Translate(new object[]
-				{
-					this.parent.LabelCap,
-					base.Pawn.LabelShort,
-					hediff.Label
-				}), base.Pawn, MessageTypeDefOf.PositiveEvent, true);
+				Messages.Message("MessagePermanentWoundHealed".Translate(this.parent.LabelCap, base.Pawn.LabelShort, hediff.Label, base.Pawn.Named("PAWN")), base.Pawn, MessageTypeDefOf.PositiveEvent, true);
 			}
 		}
 

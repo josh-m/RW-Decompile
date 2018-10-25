@@ -255,16 +255,16 @@ namespace RimWorld
 
 		private void OrderPawnForceTarget(Verb verb)
 		{
-			LocalTargetInfo targetA = this.CurrentTargetUnderMouse(true);
-			if (!targetA.IsValid)
+			LocalTargetInfo localTargetInfo = this.CurrentTargetUnderMouse(true);
+			if (!localTargetInfo.IsValid)
 			{
 				return;
 			}
 			if (verb.verbProps.IsMeleeAttack)
 			{
-				Job job = new Job(JobDefOf.AttackMelee, targetA);
+				Job job = new Job(JobDefOf.AttackMelee, localTargetInfo);
 				job.playerForced = true;
-				Pawn pawn = targetA.Thing as Pawn;
+				Pawn pawn = localTargetInfo.Thing as Pawn;
 				if (pawn != null)
 				{
 					job.killIncappedTarget = pawn.Downed;
@@ -273,11 +273,20 @@ namespace RimWorld
 			}
 			else
 			{
-				JobDef def = (!verb.verbProps.ai_IsWeapon) ? JobDefOf.UseVerbOnThing : JobDefOf.AttackStatic;
-				Job job2 = new Job(def);
-				job2.verbToUse = verb;
-				job2.targetA = targetA;
-				verb.CasterPawn.jobs.TryTakeOrderedJob(job2, JobTag.Misc);
+				float num = verb.verbProps.EffectiveMinRange(localTargetInfo, verb.CasterPawn);
+				if ((float)verb.CasterPawn.Position.DistanceToSquared(localTargetInfo.Cell) < num * num && verb.CasterPawn.Position.AdjacentTo8WayOrInside(localTargetInfo.Cell))
+				{
+					Messages.Message("MessageCantShootInMelee".Translate(), verb.CasterPawn, MessageTypeDefOf.RejectInput, false);
+				}
+				else
+				{
+					JobDef def = (!verb.verbProps.ai_IsWeapon) ? JobDefOf.UseVerbOnThing : JobDefOf.AttackStatic;
+					Job job2 = new Job(def);
+					job2.verbToUse = verb;
+					job2.targetA = localTargetInfo;
+					job2.endIfCantShootInMelee = true;
+					verb.CasterPawn.jobs.TryTakeOrderedJob(job2, JobTag.Misc);
+				}
 			}
 		}
 

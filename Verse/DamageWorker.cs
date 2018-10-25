@@ -118,8 +118,17 @@ namespace Verse
 			}
 			if (victim.def.useHitPoints && dinfo.Def.harmsHealth)
 			{
-				damageResult.totalDamageDealt = Mathf.Min((float)victim.HitPoints, dinfo.Amount);
-				victim.HitPoints -= (int)damageResult.totalDamageDealt;
+				float num = dinfo.Amount;
+				if (victim.def.category == ThingCategory.Building)
+				{
+					num *= dinfo.Def.buildingDamageFactor;
+				}
+				if (victim.def.category == ThingCategory.Plant)
+				{
+					num *= dinfo.Def.plantDamageFactor;
+				}
+				damageResult.totalDamageDealt = (float)Mathf.Min(victim.HitPoints, GenMath.RoundRandom(num));
+				victim.HitPoints -= Mathf.RoundToInt(damageResult.totalDamageDealt);
 				if (victim.HitPoints <= 0)
 				{
 					victim.HitPoints = 0;
@@ -254,16 +263,6 @@ namespace Verse
 			if (this.def.explosionAffectOutsidePartsOnly)
 			{
 				dinfo.SetBodyRegion(BodyPartHeight.Undefined, BodyPartDepth.Outside);
-			}
-			if (t.def.category == ThingCategory.Building)
-			{
-				int num2 = Mathf.RoundToInt(dinfo.Amount * this.def.explosionBuildingDamageFactor);
-				dinfo.SetAmount((float)num2);
-			}
-			else if (t.def.category == ThingCategory.Plant)
-			{
-				int num3 = Mathf.RoundToInt(dinfo.Amount * this.def.explosionPlantDamageFactor);
-				dinfo.SetAmount((float)num3);
 			}
 			BattleLogEntry_ExplosionImpact battleLogEntry_ExplosionImpact = null;
 			Pawn pawn = t as Pawn;

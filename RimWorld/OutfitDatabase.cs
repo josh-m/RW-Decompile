@@ -42,10 +42,7 @@ namespace RimWorld
 			{
 				if (current.outfits != null && current.outfits.CurrentOutfit == outfit)
 				{
-					return new AcceptanceReport("OutfitInUse".Translate(new object[]
-					{
-						current
-					}));
+					return new AcceptanceReport("OutfitInUse".Translate(current));
 				}
 			}
 			foreach (Pawn current2 in PawnsFinder.AllMapsWorldAndTemporary_AliveOrDead)

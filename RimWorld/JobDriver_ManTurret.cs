@@ -60,11 +60,7 @@ namespace RimWorld
 				{
 					if (actor.Faction == Faction.OfPlayer)
 					{
-						Messages.Message("MessageOutOfNearbyShellsFor".Translate(new object[]
-						{
-							actor.LabelShort,
-							building_TurretGun.Label
-						}).CapitalizeFirst(), building_TurretGun, MessageTypeDefOf.NegativeEvent, true);
+						Messages.Message("MessageOutOfNearbyShellsFor".Translate(actor.LabelShort, building_TurretGun.Label, actor.Named("PAWN"), building_TurretGun.Named("GUN")).CapitalizeFirst(), building_TurretGun, MessageTypeDefOf.NegativeEvent, true);
 					}
 					actor.jobs.EndCurrentJob(JobCondition.Incompletable, true);
 				}

@@ -45,7 +45,7 @@ namespace RimWorld
 			this.DoButtons();
 			for (int i = 0; i < this.allButtonsInOrder.Count; i++)
 			{
-				if ((this.allButtonsInOrder[i].validWithoutMap || Find.CurrentMap != null) && this.allButtonsInOrder[i].hotKey != null && this.allButtonsInOrder[i].hotKey.KeyDownEvent)
+				if (!this.allButtonsInOrder[i].Worker.Disabled && this.allButtonsInOrder[i].hotKey != null && this.allButtonsInOrder[i].hotKey.KeyDownEvent)
 				{
 					Event.current.Use();
 					this.allButtonsInOrder[i].Worker.InterfaceTryActivate();

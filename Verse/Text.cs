@@ -27,6 +27,8 @@ namespace Verse
 
 		private const int NumFonts = 3;
 
+		public const float SmallFontHeight = 22f;
+
 		public static GameFont Font
 		{
 			get

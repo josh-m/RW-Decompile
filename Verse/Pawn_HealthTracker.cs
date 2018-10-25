@@ -504,7 +504,7 @@ namespace Verse
 				this.pawn.DropAndForbidEverything(true);
 				this.pawn.stances.CancelBusyStanceSoft();
 			}
-			this.pawn.ClearMind(true);
+			this.pawn.ClearMind(true, false);
 			if (Current.ProgramState == ProgramState.Playing)
 			{
 				Lord lord = this.pawn.GetLord();
@@ -564,10 +564,7 @@ namespace Verse
 			this.healthState = PawnHealthState.Mobile;
 			if (PawnUtility.ShouldSendNotificationAbout(this.pawn))
 			{
-				Messages.Message("MessageNoLongerDowned".Translate(new object[]
-				{
-					this.pawn.LabelCap
-				}), this.pawn, MessageTypeDefOf.PositiveEvent, true);
+				Messages.Message("MessageNoLongerDowned".Translate(this.pawn.LabelCap, this.pawn), this.pawn, MessageTypeDefOf.PositiveEvent, true);
 			}
 			if (this.pawn.Spawned && !this.pawn.InBed())
 			{
@@ -585,29 +582,26 @@ namespace Verse
 			string text = string.Empty;
 			if (dinfo.HasValue)
 			{
-				text = string.Format(dinfo.Value.Def.deathMessage, this.pawn.LabelShort.CapitalizeFirst());
+				text = dinfo.Value.Def.deathMessage.Formatted(this.pawn.LabelShort.CapitalizeFirst(), this.pawn.Named("PAWN"));
 			}
 			else if (hediff != null)
 			{
-				text = "PawnDiedBecauseOf".Translate(new object[]
-				{
-					this.pawn.LabelShort.CapitalizeFirst(),
-					hediff.def.LabelCap
-				});
+				text = "PawnDiedBecauseOf".Translate(this.pawn.LabelShort.CapitalizeFirst(), hediff.def.LabelCap, this.pawn.Named("PAWN"));
 			}
 			else
 			{
-				text = "PawnDied".Translate(new object[]
-				{
-					this.pawn.LabelShort.CapitalizeFirst()
-				});
+				text = "PawnDied".Translate(this.pawn.LabelShort.CapitalizeFirst(), this.pawn.Named("PAWN"));
 			}
 			text = text.AdjustedFor(this.pawn, "PAWN");
 			if (this.pawn.Faction == Faction.OfPlayer)
 			{
-				string label = "Death".Translate();
-				this.pawn.relations.CheckAppendBondedAnimalDiedInfo(ref text, ref label);
-				Find.LetterStack.ReceiveLetter(label, text, LetterDefOf.Death, this.pawn, null, null);
+				string text2 = "Death".Translate() + ": " + this.pawn.LabelShortCap;
+				if (this.pawn.Name != null && !this.pawn.Name.Numerical && this.pawn.RaceProps.Animal)
+				{
+					text2 = text2 + " (" + this.pawn.KindLabel + ")";
+				}
+				this.pawn.relations.CheckAppendBondedAnimalDiedInfo(ref text, ref text2);
+				Find.LetterStack.ReceiveLetter(text2, text, LetterDefOf.Death, this.pawn, null, null);
 			}
 			else
 			{
@@ -751,10 +745,7 @@ namespace Verse
 				}
 				if (flag2 && !this.HasHediffsNeedingTendByPlayer(false) && !HealthAIUtility.ShouldSeekMedicalRest(this.pawn) && !this.hediffSet.HasTendedAndHealingInjury() && PawnUtility.ShouldSendNotificationAbout(this.pawn))
 				{
-					Messages.Message("MessageFullyHealed".Translate(new object[]
-					{
-						this.pawn.LabelCap
-					}), this.pawn, MessageTypeDefOf.PositiveEvent, true);
+					Messages.Message("MessageFullyHealed".Translate(this.pawn.LabelCap, this.pawn), this.pawn, MessageTypeDefOf.PositiveEvent, true);
 				}
 			}
 			if (this.pawn.RaceProps.IsFlesh && this.hediffSet.BleedRateTotal >= 0.1f)
@@ -819,14 +810,7 @@ namespace Verse
 								{
 									if (list.Contains(this.pawn))
 									{
-										Find.LetterStack.ReceiveLetter("LetterLabelTraitDisease".Translate(new object[]
-										{
-											incidentDef.diseaseIncident.label
-										}), "LetterTraitDisease".Translate(new object[]
-										{
-											this.pawn.LabelCap,
-											incidentDef.diseaseIncident.label
-										}).AdjustedFor(this.pawn, "PAWN"), LetterDefOf.NegativeEvent, this.pawn, null, null);
+										Find.LetterStack.ReceiveLetter("LetterLabelTraitDisease".Translate(incidentDef.diseaseIncident.label), "LetterTraitDisease".Translate(this.pawn.LabelCap, incidentDef.diseaseIncident.label, this.pawn.Named("PAWN")).AdjustedFor(this.pawn, "PAWN"), LetterDefOf.NegativeEvent, this.pawn, null, null);
 									}
 									else if (!text.NullOrEmpty())
 									{

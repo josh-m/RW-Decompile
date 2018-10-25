@@ -20,7 +20,7 @@ namespace RimWorld
 					" ",
 					i.ToString(),
 					": ",
-					f.ToStringPercent()
+					f.ToStringPercent("F1")
 				}));
 			}
 			return stringBuilder.ToString();

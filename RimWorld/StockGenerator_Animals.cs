@@ -11,10 +11,10 @@ namespace RimWorld
 	public class StockGenerator_Animals : StockGenerator
 	{
 		[NoTranslate]
-		private List<string> tradeTagsSell;
+		private List<string> tradeTagsSell = new List<string>();
 
 		[NoTranslate]
-		private List<string> tradeTagsBuy;
+		private List<string> tradeTagsBuy = new List<string>();
 
 		private IntRange kindCountRange = new IntRange(1, 1);
 
@@ -22,7 +22,7 @@ namespace RimWorld
 
 		private float maxWildness = 1f;
 
-		private bool checkTemperature;
+		private bool checkTemperature = true;
 
 		private static readonly SimpleCurve SelectionChanceFromWildnessCurve = new SimpleCurve
 		{
@@ -86,7 +86,7 @@ namespace RimWorld
 
 		public override bool HandlesThingDef(ThingDef thingDef)
 		{
-			return thingDef.category == ThingCategory.Pawn && thingDef.race.Animal && thingDef.tradeability != Tradeability.None && (this.tradeTagsSell.Any((string tag) => thingDef.tradeTags.Contains(tag)) || this.tradeTagsBuy.Any((string tag) => thingDef.tradeTags.Contains(tag)));
+			return thingDef.category == ThingCategory.Pawn && thingDef.race.Animal && thingDef.tradeability != Tradeability.None && (this.tradeTagsSell.Any((string tag) => thingDef.tradeTags != null && thingDef.tradeTags.Contains(tag)) || this.tradeTagsBuy.Any((string tag) => thingDef.tradeTags != null && thingDef.tradeTags.Contains(tag)));
 		}
 
 		private bool PawnKindAllowed(PawnKindDef kind, int forTile)

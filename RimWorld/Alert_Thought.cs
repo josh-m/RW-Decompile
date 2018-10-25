@@ -60,10 +60,7 @@ namespace RimWorld
 			{
 				stringBuilder.AppendLine("    " + current.LabelShort);
 			}
-			return this.explanationKey.Translate(new object[]
-			{
-				stringBuilder.ToString()
-			});
+			return this.explanationKey.Translate(stringBuilder.ToString());
 		}
 	}
 }

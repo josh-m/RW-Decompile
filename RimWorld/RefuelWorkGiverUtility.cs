@@ -32,19 +32,13 @@ namespace RimWorld
 					if (RefuelWorkGiverUtility.FindBestFuel(pawn, t) == null)
 					{
 						ThingFilter fuelFilter = t.TryGetComp<CompRefuelable>().Props.fuelFilter;
-						JobFailReason.Is("NoFuelToRefuel".Translate(new object[]
-						{
-							fuelFilter.Summary
-						}), null);
+						JobFailReason.Is("NoFuelToRefuel".Translate(fuelFilter.Summary), null);
 						return false;
 					}
 					if (t.TryGetComp<CompRefuelable>().Props.atomicFueling && RefuelWorkGiverUtility.FindAllFuel(pawn, t) == null)
 					{
 						ThingFilter fuelFilter2 = t.TryGetComp<CompRefuelable>().Props.fuelFilter;
-						JobFailReason.Is("NoFuelToRefuel".Translate(new object[]
-						{
-							fuelFilter2.Summary
-						}), null);
+						JobFailReason.Is("NoFuelToRefuel".Translate(fuelFilter2.Summary), null);
 						return false;
 					}
 					return true;

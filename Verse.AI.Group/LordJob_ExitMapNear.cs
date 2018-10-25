@@ -35,7 +35,7 @@ namespace Verse.AI.Group
 			LordToil_ExitMapNear lordToil_ExitMapNear = new LordToil_ExitMapNear(this.near, this.radius, this.locomotion, this.canDig);
 			if (this.useAvoidGridSmart)
 			{
-				lordToil_ExitMapNear.avoidGridMode = AvoidGridMode.Smart;
+				lordToil_ExitMapNear.useAvoidGrid = true;
 			}
 			stateGraph.AddToil(lordToil_ExitMapNear);
 			return stateGraph;

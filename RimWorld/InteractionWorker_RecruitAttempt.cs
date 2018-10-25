@@ -132,6 +132,10 @@ namespace RimWorld
 			bool flag = recipient.AnimalOrWildMan() && !recipient.IsPrisoner;
 			float x = (float)((recipient.relations == null) ? 0 : recipient.relations.OpinionOf(initiator));
 			bool flag2 = initiator.InspirationDef == InspirationDefOf.Inspired_Recruitment && !flag && recipient.guest.interactionMode != PrisonerInteractionModeDefOf.ReduceResistance;
+			if (DebugSettings.instantRecruit)
+			{
+				recipient.guest.resistance = 0f;
+			}
 			if (!flag && recipient.guest.resistance > 0f && !flag2)
 			{
 				float num = 1f;
@@ -141,11 +145,7 @@ namespace RimWorld
 				num = Mathf.Min(num, recipient.guest.resistance);
 				float resistance = recipient.guest.resistance;
 				recipient.guest.resistance = Mathf.Max(0f, recipient.guest.resistance - num);
-				string text = "TextMote_ResistanceReduced".Translate(new object[]
-				{
-					resistance.ToString("F1"),
-					recipient.guest.resistance.ToString("F1")
-				});
+				string text = "TextMote_ResistanceReduced".Translate(resistance.ToString("F1"), recipient.guest.resistance.ToString("F1"));
 				if (recipient.needs.mood != null && recipient.needs.mood.CurLevelPercentage < 0.4f)
 				{
 					text = text + "\n(" + "lowMood".Translate() + ")";
@@ -157,11 +157,7 @@ namespace RimWorld
 				MoteMaker.ThrowText((initiator.DrawPos + recipient.DrawPos) / 2f, initiator.Map, text, 8f);
 				if (recipient.guest.resistance == 0f)
 				{
-					string text2 = "MessagePrisonerResistanceBroken".Translate(new object[]
-					{
-						recipient.LabelShort,
-						initiator.LabelShort
-					});
+					string text2 = "MessagePrisonerResistanceBroken".Translate(recipient.LabelShort, initiator.LabelShort, initiator.Named("WARDEN"), recipient.Named("PRISONER"));
 					if (recipient.guest.interactionMode == PrisonerInteractionModeDefOf.AttemptRecruit)
 					{
 						text2 = text2 + " " + "MessagePrisonerResistanceBroken_RecruitAttempsWillBegin".Translate();
@@ -200,7 +196,11 @@ namespace RimWorld
 				}
 				if (Rand.Chance(num2))
 				{
-					InteractionWorker_RecruitAttempt.DoRecruit(initiator, recipient, num2, true);
+					InteractionWorker_RecruitAttempt.DoRecruit(initiator, recipient, num2, out letterLabel, out letterText, true, false);
+					if (!letterLabel.NullOrEmpty())
+					{
+						letterDef = LetterDefOf.PositiveEvent;
+					}
 					if (flag2)
 					{
 						initiator.mindState.inspirationHandler.EndInspiration(InspirationDefOf.Inspired_Recruitment);
@@ -209,13 +209,7 @@ namespace RimWorld
 				}
 				else
 				{
-					string text3 = (!flag) ? "TextMote_RecruitFail".Translate(new object[]
-					{
-						num2.ToStringPercent()
-					}) : "TextMote_TameFail".Translate(new object[]
-					{
-						num2.ToStringPercent()
-					});
+					string text3 = (!flag) ? "TextMote_RecruitFail".Translate(num2.ToStringPercent()) : "TextMote_TameFail".Translate(num2.ToStringPercent());
 					if (!flag)
 					{
 						if (recipient.needs.mood != null && recipient.needs.mood.CurLevelPercentage < 0.4f)
@@ -235,8 +229,17 @@ namespace RimWorld
 
 		public static void DoRecruit(Pawn recruiter, Pawn recruitee, float recruitChance, bool useAudiovisualEffects = true)
 		{
+			string text;
+			string text2;
+			InteractionWorker_RecruitAttempt.DoRecruit(recruiter, recruitee, recruitChance, out text, out text2, useAudiovisualEffects, true);
+		}
+
+		public static void DoRecruit(Pawn recruiter, Pawn recruitee, float recruitChance, out string letterLabel, out string letter, bool useAudiovisualEffects = true, bool sendLetter = true)
+		{
+			letterLabel = null;
+			letter = null;
 			recruitChance = Mathf.Clamp01(recruitChance);
-			string text = recruitee.LabelIndefinite();
+			string value = recruitee.LabelIndefinite();
 			if (recruitee.guest != null)
 			{
 				recruitee.guest.SetGuestStatus(null, false);
@@ -250,12 +253,11 @@ namespace RimWorld
 			{
 				if (useAudiovisualEffects)
 				{
-					Find.LetterStack.ReceiveLetter("LetterLabelMessageRecruitSuccess".Translate(), "MessageRecruitSuccess".Translate(new object[]
+					letterLabel = "LetterLabelMessageRecruitSuccess".Translate();
+					if (sendLetter)
 					{
-						recruiter,
-						recruitee,
-						recruitChance.ToStringPercent()
-					}), LetterDefOf.PositiveEvent, recruitee, null, null);
+						Find.LetterStack.ReceiveLetter(letterLabel, "MessageRecruitSuccess".Translate(recruiter, recruitee, recruitChance.ToStringPercent(), recruiter.Named("RECRUITER"), recruitee.Named("RECRUITEE")), LetterDefOf.PositiveEvent, recruitee, null, null);
+					}
 				}
 				TaleRecorder.RecordTale(TaleDefOf.Recruited, new object[]
 				{
@@ -271,29 +273,15 @@ namespace RimWorld
 				{
 					if (!flag)
 					{
-						Messages.Message("MessageTameAndNameSuccess".Translate(new object[]
-						{
-							recruiter.LabelShort,
-							text,
-							recruitChance.ToStringPercent(),
-							recruitee.Name.ToStringFull
-						}).AdjustedFor(recruitee, "PAWN"), recruitee, MessageTypeDefOf.PositiveEvent, true);
+						Messages.Message("MessageTameAndNameSuccess".Translate(recruiter.LabelShort, value, recruitChance.ToStringPercent(), recruitee.Name.ToStringFull, recruiter.Named("RECRUITER"), recruitee.Named("RECRUITEE")).AdjustedFor(recruitee, "PAWN"), recruitee, MessageTypeDefOf.PositiveEvent, true);
 					}
 					else
 					{
-						Messages.Message("MessageTameSuccess".Translate(new object[]
-						{
-							recruiter.LabelShort,
-							text,
-							recruitChance.ToStringPercent()
-						}), recruitee, MessageTypeDefOf.PositiveEvent, true);
+						Messages.Message("MessageTameSuccess".Translate(recruiter.LabelShort, value, recruitChance.ToStringPercent(), recruiter.Named("RECRUITER")), recruitee, MessageTypeDefOf.PositiveEvent, true);
 					}
 					if (recruiter.Spawned && recruitee.Spawned)
 					{
-						MoteMaker.ThrowText((recruiter.DrawPos + recruitee.DrawPos) / 2f, recruiter.Map, "TextMote_TameSuccess".Translate(new object[]
-						{
-							recruitChance.ToStringPercent()
-						}), 8f);
+						MoteMaker.ThrowText((recruiter.DrawPos + recruitee.DrawPos) / 2f, recruiter.Map, "TextMote_TameSuccess".Translate(recruitChance.ToStringPercent()), 8f);
 					}
 				}
 				recruiter.records.Increment(RecordDefOf.AnimalsTamed);

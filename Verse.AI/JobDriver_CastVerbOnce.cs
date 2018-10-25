@@ -8,20 +8,16 @@ namespace Verse.AI
 	{
 		public override string GetReport()
 		{
-			string text;
+			string value;
 			if (base.TargetA.HasThing)
 			{
-				text = base.TargetThingA.LabelCap;
+				value = base.TargetThingA.LabelCap;
 			}
 			else
 			{
-				text = "AreaLower".Translate();
+				value = "AreaLower".Translate();
 			}
-			return "UsingVerb".Translate(new object[]
-			{
-				this.job.verbToUse.verbProps.label,
-				text
-			});
+			return "UsingVerb".Translate(this.job.verbToUse.verbProps.label, value);
 		}
 
 		public override bool TryMakePreToilReservations(bool errorOnFailed)

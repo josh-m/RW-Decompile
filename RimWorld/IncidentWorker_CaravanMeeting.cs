@@ -32,12 +32,7 @@ namespace RimWorld
 			CameraJumper.TryJumpAndSelect(caravan);
 			List<Pawn> pawns = this.GenerateCaravanPawns(faction);
 			Caravan metCaravan = CaravanMaker.MakeCaravan(pawns, faction, -1, false);
-			string text = "CaravanMeeting".Translate(new object[]
-			{
-				caravan.Name,
-				faction.Name,
-				PawnUtility.PawnKindsToCommaList(metCaravan.PawnsListForReading, true)
-			}).CapitalizeFirst();
+			string text = "CaravanMeeting".Translate(caravan.Name, faction.Name, PawnUtility.PawnKindsToCommaList(metCaravan.PawnsListForReading, true)).CapitalizeFirst();
 			DiaNode diaNode = new DiaNode(text);
 			Pawn bestPlayerNegotiator = BestCaravanPawnUtility.FindBestNegotiator(caravan);
 			if (metCaravan.CanTradeNow)
@@ -46,10 +41,7 @@ namespace RimWorld
 				diaOption.action = delegate
 				{
 					Find.WindowStack.Add(new Dialog_Trade(bestPlayerNegotiator, metCaravan, false));
-					PawnRelationUtility.Notify_PawnsSeenByPlayer_Letter_Send(metCaravan.Goods.OfType<Pawn>(), "LetterRelatedPawnsTradingWithOtherCaravan".Translate(new object[]
-					{
-						Faction.OfPlayer.def.pawnsPlural
-					}), LetterDefOf.NeutralEvent, false, true);
+					PawnRelationUtility.Notify_PawnsSeenByPlayer_Letter_Send(metCaravan.Goods.OfType<Pawn>(), "LetterRelatedPawnsTradingWithOtherCaravan".Translate(Faction.OfPlayer.def.pawnsPlural), LetterDefOf.NeutralEvent, false, true);
 				};
 				if (bestPlayerNegotiator == null)
 				{
@@ -78,10 +70,7 @@ namespace RimWorld
 					LordMaker.MakeNewLord(faction, new LordJob_DefendAttackedTraderCaravan(list[0].Position), map, list);
 					Find.TickManager.Notify_GeneratedPotentiallyHostileMap();
 					CameraJumper.TryJumpAndSelect(t);
-					PawnRelationUtility.Notify_PawnsSeenByPlayer_Letter_Send(list, "LetterRelatedPawnsGroupGeneric".Translate(new object[]
-					{
-						Faction.OfPlayer.def.pawnsPlural
-					}), LetterDefOf.NeutralEvent, true, true);
+					PawnRelationUtility.Notify_PawnsSeenByPlayer_Letter_Send(list, "LetterRelatedPawnsGroupGeneric".Translate(Faction.OfPlayer.def.pawnsPlural), LetterDefOf.NeutralEvent, true, true);
 				}, "GeneratingMapForNewEncounter", false, null);
 			};
 			diaOption2.resolveTree = true;
@@ -93,16 +82,13 @@ namespace RimWorld
 			};
 			diaOption3.resolveTree = true;
 			diaNode.options.Add(diaOption3);
-			string text2 = "CaravanMeetingTitle".Translate(new object[]
-			{
-				caravan.Label
-			});
-			WindowStack arg_1F5_0 = Find.WindowStack;
+			string text2 = "CaravanMeetingTitle".Translate(caravan.Label);
+			WindowStack arg_1F1_0 = Find.WindowStack;
 			DiaNode nodeRoot = diaNode;
 			Faction faction2 = faction;
 			bool delayInteractivity = true;
 			string title = text2;
-			arg_1F5_0.Add(new Dialog_NodeTreeWithFactionInfo(nodeRoot, faction2, delayInteractivity, false, title));
+			arg_1F1_0.Add(new Dialog_NodeTreeWithFactionInfo(nodeRoot, faction2, delayInteractivity, false, title));
 			Find.Archive.Add(new ArchivedDialog(diaNode.text, text2, faction));
 			return true;
 		}

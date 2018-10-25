@@ -163,6 +163,17 @@ namespace RimWorld
 			this.ResetStuffToDefault();
 		}
 
+		public override GizmoResult GizmoOnGUI(Vector2 topLeft, float maxWidth)
+		{
+			GizmoResult result = base.GizmoOnGUI(topLeft, maxWidth);
+			ThingDef thingDef = this.entDef as ThingDef;
+			if (thingDef != null && thingDef.MadeFromStuff)
+			{
+				Designator_Dropdown.DrawExtraOptionsIcon(topLeft, this.GetWidth(maxWidth));
+			}
+			return result;
+		}
+
 		public void ResetStuffToDefault()
 		{
 			ThingDef thingDef = this.entDef as ThingDef;
@@ -367,19 +378,12 @@ namespace RimWorld
 				if (!this.AnyColonistWithConstructionSkill(this.entDef.constructionSkillPrerequisite, false))
 				{
 					GUI.color = Color.red;
-					TooltipHandler.TipRegion(rect, "NoColonistWithConstructionSkillTip".Translate(new object[]
-					{
-						Faction.OfPlayer.def.pawnsPlural
-					}));
+					TooltipHandler.TipRegion(rect, "NoColonistWithConstructionSkillTip".Translate(Faction.OfPlayer.def.pawnsPlural));
 				}
 				else if (!this.AnyColonistWithConstructionSkill(this.entDef.constructionSkillPrerequisite, true))
 				{
 					GUI.color = Color.yellow;
-					TooltipHandler.TipRegion(rect, "AllColonistsWithConstructionSkillHaveDisaledConstructingTip".Translate(new object[]
-					{
-						Faction.OfPlayer.def.pawnsPlural,
-						WorkTypeDefOf.Construction.gerundLabel
-					}));
+					TooltipHandler.TipRegion(rect, "AllColonistsWithConstructionSkillHaveDisaledConstructingTip".Translate(Faction.OfPlayer.def.pawnsPlural, WorkTypeDefOf.Construction.gerundLabel));
 				}
 				else
 				{

@@ -33,5 +33,13 @@ namespace RimWorld
 				}
 			}
 		}
+
+		public static void AddPrisonerSoldThoughts(Pawn prisoner)
+		{
+			foreach (Pawn current in PawnsFinder.AllMapsCaravansAndTravelingTransportPods_Alive_FreeColonistsAndPrisoners)
+			{
+				current.needs.mood.thoughts.memories.TryGainMemory(ThoughtDefOf.KnowPrisonerSold, null);
+			}
+		}
 	}
 }

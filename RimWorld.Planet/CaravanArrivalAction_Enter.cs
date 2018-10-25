@@ -12,10 +12,7 @@ namespace RimWorld.Planet
 		{
 			get
 			{
-				return "EnterMap".Translate(new object[]
-				{
-					this.mapParent.Label
-				});
+				return "EnterMap".Translate(this.mapParent.Label);
 			}
 		}
 
@@ -23,10 +20,7 @@ namespace RimWorld.Planet
 		{
 			get
 			{
-				return "CaravanEntering".Translate(new object[]
-				{
-					this.mapParent.Label
-				});
+				return "CaravanEntering".Translate(this.mapParent.Label);
 			}
 		}
 
@@ -64,20 +58,9 @@ namespace RimWorld.Planet
 			CaravanDropInventoryMode dropInventoryMode = (!map.IsPlayerHome) ? CaravanDropInventoryMode.DoNotDrop : CaravanDropInventoryMode.UnloadIndividually;
 			bool draftColonists = this.mapParent.Faction != null && this.mapParent.Faction.HostileTo(Faction.OfPlayer);
 			CaravanEnterMapUtility.Enter(caravan, map, CaravanEnterMode.Edge, dropInventoryMode, draftColonists, null);
-			if (this.mapParent.def == WorldObjectDefOf.Ambush)
+			if (caravan.IsPlayerControlled || this.mapParent.Faction == Faction.OfPlayer)
 			{
-				Find.LetterStack.ReceiveLetter("LetterLabelCaravanEnteredAmbushMap".Translate(), "LetterCaravanEnteredAmbushMap".Translate(new object[]
-				{
-					caravan.Label
-				}).CapitalizeFirst(), LetterDefOf.NeutralEvent, t, null, null);
-			}
-			else if (caravan.IsPlayerControlled || this.mapParent.Faction == Faction.OfPlayer)
-			{
-				Messages.Message("MessageCaravanEnteredWorldObject".Translate(new object[]
-				{
-					caravan.Label,
-					this.mapParent.Label
-				}).CapitalizeFirst(), t, MessageTypeDefOf.TaskCompletion, true);
+				Find.LetterStack.ReceiveLetter("LetterLabelCaravanEnteredMap".Translate(this.mapParent), "LetterCaravanEnteredMap".Translate(caravan.Label, this.mapParent).CapitalizeFirst(), LetterDefOf.NeutralEvent, t, null, null);
 			}
 		}
 
@@ -95,20 +78,14 @@ namespace RimWorld.Planet
 			}
 			if (mapParent.EnterCooldownBlocksEntering())
 			{
-				return FloatMenuAcceptanceReport.WithFailMessage("MessageEnterCooldownBlocksEntering".Translate(new object[]
-				{
-					mapParent.EnterCooldownDaysLeft().ToString("0.#")
-				}));
+				return FloatMenuAcceptanceReport.WithFailMessage("MessageEnterCooldownBlocksEntering".Translate(mapParent.EnterCooldownDaysLeft().ToString("0.#")));
 			}
 			return true;
 		}
 
 		public static IEnumerable<FloatMenuOption> GetFloatMenuOptions(Caravan caravan, MapParent mapParent)
 		{
-			return CaravanArrivalActionUtility.GetFloatMenuOptions<CaravanArrivalAction_Enter>(() => CaravanArrivalAction_Enter.CanEnter(caravan, mapParent), () => new CaravanArrivalAction_Enter(mapParent), "EnterMap".Translate(new object[]
-			{
-				mapParent.Label
-			}), caravan, mapParent.Tile, mapParent);
+			return CaravanArrivalActionUtility.GetFloatMenuOptions<CaravanArrivalAction_Enter>(() => CaravanArrivalAction_Enter.CanEnter(caravan, mapParent), () => new CaravanArrivalAction_Enter(mapParent), "EnterMap".Translate(mapParent.Label), caravan, mapParent.Tile, mapParent);
 		}
 	}
 }

@@ -58,12 +58,7 @@ namespace RimWorld
 
 		public override string Summary(Scenario scen)
 		{
-			return "ScenPart_PawnsHaveHediff".Translate(new object[]
-			{
-				this.context.ToStringHuman(),
-				this.chance.ToStringPercent(),
-				this.hediff.label
-			}).CapitalizeFirst();
+			return "ScenPart_PawnsHaveHediff".Translate(this.context.ToStringHuman(), this.chance.ToStringPercent(), this.hediff.label).CapitalizeFirst();
 		}
 
 		public override void Randomize()

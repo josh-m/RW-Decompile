@@ -38,7 +38,9 @@ namespace RimWorld
 
 		private StoryDanger CalculateDangerRating()
 		{
-			float num = this.map.attackTargetsCache.TargetsHostileToColony.Where(new Func<IAttackTarget, bool>(GenHostility.IsActiveThreatToPlayer)).Sum((IAttackTarget t) => (!(t is Pawn)) ? 0f : ((Pawn)t).kindDef.combatPower);
+			float num = (from x in this.map.attackTargetsCache.TargetsHostileToColony
+			where this.AffectsStoryDanger(x)
+			select x).Sum((IAttackTarget t) => (!(t is Pawn)) ? 0f : ((Pawn)t).kindDef.combatPower);
 			if (num == 0f)
 			{
 				return StoryDanger.None;
@@ -71,6 +73,20 @@ namespace RimWorld
 		public void Notify_ColonistHarmedExternally()
 		{
 			this.lastColonistHarmedTick = Find.TickManager.TicksGame;
+		}
+
+		private bool AffectsStoryDanger(IAttackTarget t)
+		{
+			Pawn pawn = t.Thing as Pawn;
+			if (pawn != null)
+			{
+				Lord lord = pawn.GetLord();
+				if (lord != null && lord.LordJob is LordJob_DefendPoint && pawn.CurJobDef != JobDefOf.AttackMelee && pawn.CurJobDef != JobDefOf.AttackStatic)
+				{
+					return false;
+				}
+			}
+			return GenHostility.IsActiveThreatToPlayer(t);
 		}
 	}
 }

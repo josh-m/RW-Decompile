@@ -142,6 +142,14 @@ namespace Verse
 			Scribe_Collections.Look<Hediff>(ref this.hediffs, "hediffs", LookMode.Deep, new object[0]);
 			if (Scribe.mode == LoadSaveMode.ResolvingCrossRefs)
 			{
+				if (this.hediffs.RemoveAll((Hediff x) => x == null) != 0)
+				{
+					Log.Error(this.pawn.ToStringSafe<Pawn>() + " had some null hediffs.", false);
+				}
+				if (this.hediffs.RemoveAll((Hediff x) => x.def == null) != 0)
+				{
+					Log.Error(this.pawn.ToStringSafe<Pawn>() + " had some hediffs with null defs.", false);
+				}
 				for (int i = 0; i < this.hediffs.Count; i++)
 				{
 					this.hediffs[i].pawn = this.pawn;

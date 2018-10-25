@@ -109,11 +109,7 @@ namespace RimWorld.Planet
 					}
 					if (!this.caravan.notifiedOutOfFood && !CaravanInventoryUtility.TryGetBestFood(this.caravan, pawn, out thing, out pawn2))
 					{
-						Messages.Message("MessageCaravanRanOutOfFood".Translate(new object[]
-						{
-							this.caravan.LabelCap,
-							pawn.Label
-						}), this.caravan, MessageTypeDefOf.ThreatBig, true);
+						Messages.Message("MessageCaravanRanOutOfFood".Translate(this.caravan.LabelCap, pawn.Label, pawn.Named("PAWN")), this.caravan, MessageTypeDefOf.ThreatBig, true);
 						this.caravan.notifiedOutOfFood = true;
 					}
 				}
